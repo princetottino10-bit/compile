@@ -1,0 +1,327 @@
+import React, { useEffect, useMemo, useState } from "react";
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, addDoc, getDocs } from "firebase/firestore";
+
+// =============================================================
+// Compile 勝率集計ツール（単体・ペア・トリオ／先攻後攻）
+// - Firestore 利用不可時はローカル共有へ自動フォールバック
+// - レシオ判定: 双方の合計が <= 8 ならレシオ戦
+// - 表示要件: 試合登録を最上部固定
+// - 勝率表は % を明示。通常=橙系、レシオ=青系
+// - 相性表は 3 文字略称見出し。順序: 通常 → レシオ → 全試合
+// - Pair は >=5 試合、Trio は >=3 試合でランク表示
+// =============================================================
+
+// Firebase（失敗時はフォールバック）
+const firebaseConfig = {
+  apiKey: "AIzaSyD70XPEwan2cziopP1VwPx1sfflpH0My8s",
+  authDomain: "compile-a1d85.firebaseapp.com",
+  projectId: "compile-a1d85",
+  storageBucket: "compile-a1d85.firebasestorage.app",
+  messagingSenderId: "386643917737",
+  appId: "1:386643917737:web:7bfaed04040c5b96ec22b8",
+  measurementId: "G-M44066TFV4",
+};
+let app: ReturnType<typeof initializeApp> | null = null;
+let db: ReturnType<typeof getFirestore> | null = null;
+try {
+  app = initializeApp(firebaseConfig);
+  db = getFirestore(app);
+} catch {
+  db = null;
+}
+
+// 定義（内部はフル名、表示は 3 文字略称）
+const PROTOCOLS_FULL = [
+  "DARKNESS","FIRE","HATE","PSYCHIC",
+  "DEATH","GRAVITY","WATER",
+  "LIFE","LOVE","PLAGUE",
+  "LIGHT","SPEED","SPIRIT",
+  "APATHY","METAL"
+] as const;
+
+type Protocol = typeof PROTOCOLS_FULL[number];
+
+type Trio = [Protocol,Protocol,Protocol];
+type Match = { id: string|number; left: Trio; right: Trio; winner: 'L'|'R'; ratio: boolean };
+
+const ABBR: Record<Protocol,string> = {
+  DARKNESS:"DAR", FIRE:"FIR", HATE:"HAT", PSYCHIC:"PSY",
+  DEATH:"DEA", GRAVITY:"GRA", WATER:"WAT",
+  LIFE:"LIF", LOVE:"LOV", PLAGUE:"PLA",
+  LIGHT:"LIG", SPEED:"SPE", SPIRIT:"SPI",
+  APATHY:"APA", METAL:"MET"
+};
+
+const RATIOS: Record<Protocol,number> = {
+  DARKNESS:5,FIRE:5,HATE:5,PSYCHIC:5,
+  DEATH:3,GRAVITY:3,WATER:3,
+  LIFE:2,LOVE:2,PLAGUE:2,
+  LIGHT:1,SPEED:1,SPIRIT:1,
+  APATHY:0,METAL:0
+};
+
+const ratioSum = (t:Protocol[]) => t.reduce((a,p)=>a+(RATIOS[p]||0),0);
+const isRatioBattle = (a:Protocol[],b:Protocol[]) => ratioSum(a)<=8 && ratioSum(b)<=8;
+const percent = (w:number,g:number) => g? Math.round((w/g)*1000)/10 : 0;
+
+// 共有（Firestore 不可時のモック）
+const MOCK_KEY = "compile_season2_public_mock";
+const mockUpload = async (matches:Match[]) => { localStorage.setItem(MOCK_KEY, JSON.stringify(matches)); };
+const mockLoad   = async ():Promise<Match[]> => JSON.parse(localStorage.getItem(MOCK_KEY) || "[]");
+
+// ===== ユーティリティ（集計） =====
+const makeStats = (list:Match[]) => {
+  const s:any = { single:{}, pair:{}, trio:{}, first:{}, second:{} };
+  const bump = (m:any,k:string,w:boolean) => { if(!m[k]) m[k]={g:0,w:0}; m[k].g++; if(w) m[k].w++; };
+  for(const mt of list){
+    for(const side of [{t:mt.left,w:mt.winner==='L',f:true},{t:mt.right,w:mt.winner==='R',f:false}]){
+      side.t.forEach(p=>bump(s.single,p,side.w));
+      for(let i=0;i<3;i++) for(let j=i+1;j<3;j++) bump(s.pair,[side.t[i],side.t[j]].sort().join(' · '),side.w);
+      bump(s.trio,[...side.t].sort().join(' · '),side.w);
+      side.t.forEach(p=>bump(side.f? s.first:s.second,p,side.w));
+    }
+  }
+  return s;
+};
+
+const rows = (m:any, filterType?:'pair'|'trio'|string) => (
+  Object.entries(m)
+    .map(([k,v]:any)=>({ n:k, g:v.g, w:v.w, l:v.g-v.w, p:percent(v.w,v.g) }))
+    .filter(r=> filterType==='pair' ? r.g>=5 : filterType==='trio' ? r.g>=3 : true)
+    .sort((a,b)=> b.p - a.p)
+);
+
+const matchup = (list:Match[]) => {
+  const r:any = {}; const bump=(k:string,w:boolean)=>{ if(!r[k]) r[k]={g:0,w:0}; r[k].g++; if(w) r[k].w++; };
+  for(const mt of list){
+    const lw = mt.winner==='L', rw = mt.winner==='R';
+    for(const lp of mt.left) for(const rp of mt.right){ bump(`${lp}__${rp}`, lw); bump(`${rp}__${lp}`, rw); }
+  }
+  const m:any = {}; PROTOCOLS_FULL.forEach(a=>{ m[a] = {}; PROTOCOLS_FULL.forEach(b=> m[a][b] = null ); });
+  for(const [k,v] of Object.entries(r) as any){ const [a,b] = (k as string).split('__'); if(v.g>=3) m[a][b] = percent(v.w,v.g); }
+  return m;
+};
+
+// ===== コンポーネント =====
+const RatioTable: React.FC = () => {
+  return (
+    <div className="mt-3 bg-zinc-900 p-3 rounded-2xl text-center">
+      {/* 元のサイズに戻す（試合登録と同サイズ指定なし） */}
+      <h2 className="font-semibold mb-3 text-center">レシオ表</h2>
+      {/* シンプル表記に戻す */}
+      <div className="text-sm leading-6 text-left mx-auto max-w-screen-sm">
+        <div>5点: DARKNESS, FIRE, HATE, PSYCHIC</div>
+        <div>3点: DEATH, GRAVITY, WATER</div>
+        <div>2点: LIFE, LOVE, PLAGUE</div>
+        <div>1点: LIGHT, SPEED, SPIRIT</div>
+        <div>0点: APATHY, METAL</div>
+      </div>
+    </div>
+  );
+};
+
+const Stat: React.FC<{t:string,m:any,color:string}> = ({t,m,color}) => {
+  const sections = ['single','pair','trio','first','second'] as const;
+  return (
+    <div className={`p-3 rounded-2xl shadow-md ${color}`}>
+      <h2 className="font-semibold mb-2 text-center">{t}</h2>
+      {sections.map(x=>{
+        const r = rows(m[x], x as any);
+        if(!r.length) return null;
+        return (
+          <div key={x} className="mb-3 overflow-x-auto">
+            <h3 className="text-sm text-zinc-400 mb-1 text-center">{x}</h3>
+            <table className="text-xs w-full border border-zinc-800 min-w-[420px]">
+              <thead className="bg-zinc-800 text-zinc-300">
+                <tr><th>#</th><th>PROTOCOL</th><th>GAME</th><th>WIN</th><th>LOSE</th><th>WR(%)</th></tr>
+              </thead>
+              <tbody>
+                {r.map((v:any,i:number)=> (
+                  <tr key={`${x}-${v.n}`} className={`border-t border-zinc-800 text-center ${v.p>60?'bg-green-900/30':v.p<40?'bg-red-900/30':''}`}>
+                    <td>{i+1}</td>
+                    <td>{v.n}</td>
+                    <td>{v.g}</td>
+                    <td>{v.w}</td>
+                    <td>{v.l}</td>
+                    <td>{v.p.toFixed(1)}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+const Matrix: React.FC<{t:string,m:any,bg:string}> = ({t,m,bg}) => {
+  return (
+    <div className={`p-4 rounded-2xl mb-6 overflow-x-auto ${bg}`}>
+      <h2 className="text-lg font-semibold mb-2 text-center">{t}</h2>
+      <table className="min-w-[760px] text-xs border border-zinc-800 rounded-md overflow-hidden">
+        <thead className="bg-zinc-800 text-zinc-300">
+          <tr>
+            <th className="px-2 py-1">PRO</th>
+            {PROTOCOLS_FULL.map(p => (
+              <th key={`h-${p}`} className="px-2 py-1">{ABBR[p]}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {PROTOCOLS_FULL.map(a => (
+            <tr key={`r-${a}`}>
+              <th className="bg-zinc-800 sticky left-0 px-2 py-1">{ABBR[a]}</th>
+              {PROTOCOLS_FULL.map(b => {
+                const v = m[a][b];
+                if (v===null) return <td key={`c-${a}-${b}`} className="p-1 text-zinc-700">–</td>;
+                const tone = v>60? 'bg-green-700/40' : v<40? 'bg-red-700/40' : 'bg-zinc-700/40';
+                return <td key={`c-${a}-${b}`} className={`p-1 text-center ${tone}`}>{v.toFixed(1)}</td>;
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+// ===== メイン =====
+export default function App(){
+  const [matches,setMatches] = useState<Match[]>([]);
+  const [left, setLeft]   = useState<Trio>(["DARKNESS","FIRE","HATE"]);
+  const [right,setRight]  = useState<Trio>(["PSYCHIC","GRAVITY","WATER"]);
+  const [winner,setWinner]= useState<'L'|'R'>("L");
+
+  // ローカル保存
+  useEffect(()=>{ const d = localStorage.getItem("compile_matches"); if(d){ try{ setMatches(JSON.parse(d)); }catch{ /* ignore */ } } },[]);
+  useEffect(()=>{ localStorage.setItem("compile_matches", JSON.stringify(matches)); },[matches]);
+
+  // 型安全な選択
+  const handleSelect = (side:'L'|'R') => (i:number) => (e:React.ChangeEvent<HTMLSelectElement>) => {
+    const v = e.target.value as Protocol;
+    if(side==='L') setLeft(p=>{ const c:[Protocol,Protocol,Protocol] = [p[0],p[1],p[2]]; c[i]=v; return c; });
+    else           setRight(p=>{ const c:[Protocol,Protocol,Protocol] = [p[0],p[1],p[2]]; c[i]=v; return c; });
+  };
+
+  const addMatch = () => {
+    const isTrio = (t:Protocol[]): t is Trio => t.length===3;
+    if(!isTrio(left) || !isTrio(right)) return;
+    setMatches(p=>[ ...p, { id: Date.now(), left, right, winner, ratio: isRatioBattle(left,right) } ]);
+  };
+  const removeMatch = (id:Match['id']) => setMatches(p=>p.filter(x=>x.id!==id));
+
+  // 共有
+  const uploadAll = async () => {
+    if(!matches.length) return;
+    if(!db){ await mockUpload(matches); alert("ローカル共有に保存しました"); return; }
+    for(const m of matches) await addDoc(collection(db,"compile_season2"), m as any);
+    alert("Firebaseへアップロードしました");
+  };
+  const loadAll = async () => {
+    if(!db){ setMatches(await mockLoad()); alert("ローカル共有から読込"); return; }
+    const s = await getDocs(collection(db,"compile_season2"));
+    setMatches(s.docs.map(d=>({ id:d.id, ...(d.data() as any) })) as Match[]);
+    alert("Firebaseから読込");
+  };
+
+  // 集計
+  const normalMatches = matches.filter(x=>!x.ratio);
+  const ratioMatches  = matches.filter(x=> x.ratio);
+
+  const ns  = useMemo(()=>makeStats(normalMatches),[matches]);
+  const rs  = useMemo(()=>makeStats(ratioMatches), [matches]);
+  const amat= useMemo(()=>matchup(matches),       [matches]);
+  const nmat= useMemo(()=>matchup(normalMatches), [matches]);
+  const rmat= useMemo(()=>matchup(ratioMatches),  [matches]);
+
+  // --- 簡易テスト（実行時アサート） ---
+  useEffect(()=>{
+    console.assert(PROTOCOLS_FULL.length===15, "Protocols length should be 15");
+    console.assert([ratioSum(["DARKNESS","FIRE","HATE"]) , ratioSum(["APATHY","METAL","LIGHT"])].every(n=>typeof n==="number"), "ratioSum returns number");
+    const t:Trio = ["FIRE","WATER","LIGHT"]; console.assert(t.length===3, "Trio length=3");
+    console.assert(isRatioBattle(["APATHY","METAL","LIGHT"],["APATHY","METAL","LIGHT"])===true, "ratio <=8 should be ratio battle");
+    console.assert(isRatioBattle(["DARKNESS","FIRE","HATE"],["DARKNESS","FIRE","HATE"])===false, ">8 should be non-ratio battle");
+  },[]);
+
+  return (
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 p-0">
+      {/* 上部 固定：試合登録 */}
+      <div className="sticky top-0 z-20 bg-zinc-950/95 backdrop-blur p-3 border-b border-zinc-800">
+        <h2 className="text-base font-semibold mb-2 text-center">試合登録</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          {[{l:'先攻',s:'L' as const},{l:'後攻',s:'R' as const}].map(({l,s})=> (
+            <div key={s} className="border border-zinc-700 rounded-xl p-2">
+              <p className="text-sm text-zinc-400 mb-1 text-center">{l}</p>
+              {(s==='L'? left : right).map((p, i)=> (
+                <select key={`${s}-${i}`} value={p} onChange={handleSelect(s)(i)} className="w-full bg-zinc-800 border border-zinc-700 rounded p-2 text-sm mb-1 focus:ring-2 focus:ring-blue-500">
+                  {PROTOCOLS_FULL.map(x=> <option key={x} value={x}>{x}</option>)}
+                </select>
+              ))}
+              <p className="text-xs text-center text-zinc-400 mt-1">合計レシオ: {ratioSum(s==='L'? left : right)}</p>
+            </div>
+          ))}
+
+          <div className="flex flex-col justify-center items-center border border-zinc-700 rounded-xl p-2 gap-2">
+            <p className="text-sm text-zinc-400">勝者</p>
+            <div className="flex gap-2">
+              <button onClick={()=>setWinner('L')} className={`px-3 py-2 rounded text-sm font-semibold ${winner==='L'? 'bg-blue-600 text-white':'bg-zinc-800 text-zinc-300'}`}>先攻</button>
+              <button onClick={()=>setWinner('R')} className={`px-3 py-2 rounded text-sm font-semibold ${winner==='R'? 'bg-blue-600 text-white':'bg-zinc-800 text-zinc-300'}`}>後攻</button>
+            </div>
+            <button onClick={addMatch} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded w-full sm:w-auto">追加</button>
+            <div className="flex justify-center gap-2 mt-3">
+              <button onClick={uploadAll} className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded text-sm">全体にアップロード</button>
+              <button onClick={loadAll}   className="bg-sky-600 hover:bg-sky-700 text-white px-3 py-2 rounded text-sm">全体データを読み込む</button>
+            </div>
+          </div>
+        </div>
+
+        {/* レシオ表（元の簡易表示に戻す） */}
+        <RatioTable />
+      </div>
+
+      {/* 本体 */}
+      <div className="p-3 md:p-6">
+        {/* 勝率表：通常／レシオ 色分け */}
+        <div className="grid md:grid-cols-2 gap-4 mb-6">
+          <Stat t="通常戦 勝率" m={ns} color="bg-orange-950/40" />
+          <Stat t="レシオ制 勝率" m={rs} color="bg-blue-950/40" />
+        </div>
+
+        {/* 相性表：順序＝通常 → レシオ → 全試合 */}
+        <Matrix t="通常戦 相性表(3試合以上)" m={nmat} bg="bg-gradient-to-r from-orange-950 to-zinc-900" />
+        <Matrix t="レシオ制 相性表(3試合以上)" m={rmat} bg="bg-gradient-to-r from-blue-950 to-zinc-900" />
+        <Matrix t="全試合 相性表(3試合以上)"   m={amat} bg="bg-gradient-to-r from-green-950 to-zinc-900" />
+
+        {/* 登録一覧 */}
+        <div className="bg-zinc-900 p-3 rounded-2xl overflow-x-auto mb-6">
+          <h2 className="font-semibold mb-2 text-center">登録試合一覧({matches.length})</h2>
+          <table className="text-xs w-full border-collapse">
+            <thead className="bg-zinc-800 text-zinc-300">
+              <tr>
+                <th>#</th><th>先攻</th><th>後攻</th><th>勝者</th><th>レシオ</th><th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {matches.map((m,i)=> (
+                <tr key={m.id} className="border-t border-zinc-800 text-center">
+                  <td>{i+1}</td>
+                  <td>{m.left.join(', ')}</td>
+                  <td>{m.right.join(', ')}</td>
+                  <td>{m.winner==='L' ? '先攻' : '後攻'}</td>
+                  <td>{m.ratio ? '◯' : ''}</td>
+                  <td><button onClick={()=>removeMatch(m.id)} className="text-red-400 text-xs">削除</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <footer className="text-center text-xs text-zinc-500 pb-3">
+          2025 りゅー(<a href="https://x.com/suke69" target="_blank" className="text-blue-400 hover:underline">@suke69</a>)
+        </footer>
+      </div>
+    </div>
+  );
+}
