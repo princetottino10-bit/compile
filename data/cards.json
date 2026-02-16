@@ -1,0 +1,1156 @@
+{
+  "protocols": [
+    {
+      "name": "DARKNESS",
+      "displayName": "DARKNESS",
+      "tags": "手札維持／移動／操作",
+      "color": "#6A1B9A",
+      "set": "Main 1",
+      "cards": [
+        {
+          "id": "DARKNESS_1",
+          "number": 1,
+          "cost": 0,
+          "upper": "",
+          "middle": "カードを3枚引く。相手の覆われているカードを1枚移動させる。",
+          "lower": "",
+          "effectTypes": [
+            "draw",
+            "shift"
+          ]
+        },
+        {
+          "id": "DARKNESS_2",
+          "number": 2,
+          "cost": 1,
+          "upper": "",
+          "middle": "相手のカードを1枚反転させる。あなたはそのカードを移動させることができる。",
+          "lower": "",
+          "effectTypes": [
+            "flip",
+            "shift"
+          ]
+        },
+        {
+          "id": "DARKNESS_3",
+          "number": 3,
+          "cost": 2,
+          "upper": "このスタックにあるすべての裏向きのカードの値はそれぞれ4になる。",
+          "middle": "このラインにある、覆われているカードを1枚反転させることができる。",
+          "lower": "",
+          "effectTypes": [
+            "flip"
+          ]
+        },
+        {
+          "id": "DARKNESS_4",
+          "number": 4,
+          "cost": 3,
+          "upper": "",
+          "middle": "他の1ラインにカードを裏向きで1枚プレイする。",
+          "lower": "",
+          "effectTypes": [
+            "play"
+          ]
+        },
+        {
+          "id": "DARKNESS_5",
+          "number": 5,
+          "cost": 4,
+          "upper": "",
+          "middle": "裏向きのカードを1枚移動させる。",
+          "lower": "",
+          "effectTypes": [
+            "shift"
+          ]
+        },
+        {
+          "id": "DARKNESS_6",
+          "number": 6,
+          "cost": 5,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "other"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "DEATH",
+      "displayName": "DEATH",
+      "tags": "削除／手札維持",
+      "color": "#37474F",
+      "set": "Main 1",
+      "cards": [
+        {
+          "id": "DEATH_1",
+          "number": 1,
+          "cost": 0,
+          "upper": "",
+          "middle": "他の各ラインにあるカードを1枚ずつ削除する。",
+          "lower": "",
+          "effectTypes": [
+            "delete"
+          ]
+        },
+        {
+          "id": "DEATH_2",
+          "number": 2,
+          "cost": 1,
+          "upper": "開始：カードを1枚引くことができる。そうした場合、他のカードを1枚削除し、そのあとこのカードを削除する。",
+          "middle": "",
+          "lower": "",
+          "effectTypes": [
+            "draw",
+            "delete"
+          ]
+        },
+        {
+          "id": "DEATH_3",
+          "number": 3,
+          "cost": 2,
+          "upper": "",
+          "middle": "1ラインを選び、そのラインの値が1か2どちらかのすべてのカードを削除する。",
+          "lower": "",
+          "effectTypes": [
+            "delete"
+          ]
+        },
+        {
+          "id": "DEATH_4",
+          "number": 4,
+          "cost": 3,
+          "upper": "",
+          "middle": "裏向きのカードを1枚削除する。",
+          "lower": "",
+          "effectTypes": [
+            "delete"
+          ]
+        },
+        {
+          "id": "DEATH_5",
+          "number": 5,
+          "cost": 4,
+          "upper": "",
+          "middle": "値が0か1のカードを1枚削除する。",
+          "lower": "",
+          "effectTypes": [
+            "delete"
+          ]
+        },
+        {
+          "id": "DEATH_6",
+          "number": 6,
+          "cost": 5,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "other"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "FIRE",
+      "displayName": "FIRE",
+      "tags": "捨て札にして効果を得る",
+      "color": "#E53935",
+      "set": "Main 1",
+      "cards": [
+        {
+          "id": "FIRE_1",
+          "number": 1,
+          "cost": 0,
+          "upper": "",
+          "middle": "他のカードを1枚反転させる。カードを2枚引く。",
+          "lower": "このカードが覆われることになったとき：先にカードを1枚引き、他のカードを1枚反転させる。",
+          "effectTypes": [
+            "draw",
+            "flip"
+          ]
+        },
+        {
+          "id": "FIRE_2",
+          "number": 2,
+          "cost": 1,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。そうした場合、カードを1枚削除する。",
+          "lower": "",
+          "effectTypes": [
+            "delete"
+          ]
+        },
+        {
+          "id": "FIRE_3",
+          "number": 3,
+          "cost": 2,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。そうした場合、カードを1枚戻す。",
+          "lower": "",
+          "effectTypes": [
+            "return"
+          ]
+        },
+        {
+          "id": "FIRE_4",
+          "number": 4,
+          "cost": 3,
+          "upper": "",
+          "middle": "",
+          "lower": "終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。",
+          "effectTypes": [
+            "flip"
+          ]
+        },
+        {
+          "id": "FIRE_5",
+          "number": 5,
+          "cost": 4,
+          "upper": "",
+          "middle": "あなたは手札があれば1枚以上捨て札にする。捨て札にした枚数＋1枚のカードを引く。",
+          "lower": "",
+          "effectTypes": [
+            "draw"
+          ]
+        },
+        {
+          "id": "FIRE_6",
+          "number": 6,
+          "cost": 5,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "other"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "GRAVITY",
+      "displayName": "GRAVITY",
+      "tags": "移動／反転／手札維持",
+      "color": "#5D4037",
+      "set": "Main 1",
+      "cards": [
+        {
+          "id": "GRAVITY_1",
+          "number": 1,
+          "cost": 0,
+          "upper": "",
+          "middle": "このライン内にあるカード2枚ごとに、あなたのデッキの一番上のカード1枚をこのカードの下に裏向きでプレイする。",
+          "lower": "",
+          "effectTypes": [
+            "play"
+          ]
+        },
+        {
+          "id": "GRAVITY_2",
+          "number": 2,
+          "cost": 1,
+          "upper": "",
+          "middle": "カードを2枚引く。このラインから、またはこのラインへとカードを1枚移動させる。",
+          "lower": "",
+          "effectTypes": [
+            "draw",
+            "shift"
+          ]
+        },
+        {
+          "id": "GRAVITY_3",
+          "number": 3,
+          "cost": 2,
+          "upper": "",
+          "middle": "カードを1枚反転させる。そのカードをこのラインへと移動させる。",
+          "lower": "",
+          "effectTypes": [
+            "flip",
+            "shift"
+          ]
+        },
+        {
+          "id": "GRAVITY_4",
+          "number": 4,
+          "cost": 4,
+          "upper": "",
+          "middle": "裏向きのカードを1枚、このラインへと移動させる。",
+          "lower": "",
+          "effectTypes": [
+            "shift"
+          ]
+        },
+        {
+          "id": "GRAVITY_5",
+          "number": 5,
+          "cost": 5,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "other"
+          ]
+        },
+        {
+          "id": "GRAVITY_6",
+          "number": 6,
+          "cost": 6,
+          "upper": "",
+          "middle": "相手は自分のデッキの一番上のカードをこのラインに裏向きで1枚プレイする。",
+          "lower": "",
+          "effectTypes": [
+            "play"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "LIFE",
+      "displayName": "LIFE",
+      "tags": "反転／デッキの上からのプレイ／手札維持",
+      "color": "#43A047",
+      "set": "Main 1",
+      "cards": [
+        {
+          "id": "LIFE_1",
+          "number": 1,
+          "cost": 0,
+          "upper": "終了：このカードが覆われている場合、このカードを削除する。",
+          "middle": "あなたのデッキの一番上のカードを、あなたのカードがある各ラインに裏向きで1枚ずつプレイする。",
+          "lower": "",
+          "effectTypes": [
+            "delete",
+            "play"
+          ]
+        },
+        {
+          "id": "LIFE_2",
+          "number": 2,
+          "cost": 1,
+          "upper": "",
+          "middle": "カード1枚を反転させる。カード1枚を反転させる。",
+          "lower": "",
+          "effectTypes": [
+            "flip"
+          ]
+        },
+        {
+          "id": "LIFE_3",
+          "number": 3,
+          "cost": 2,
+          "upper": "",
+          "middle": "カードを1枚引く。あなたは裏向きのカードを1枚反転させることができる。",
+          "lower": "",
+          "effectTypes": [
+            "draw",
+            "flip"
+          ]
+        },
+        {
+          "id": "LIFE_4",
+          "number": 4,
+          "cost": 3,
+          "upper": "",
+          "middle": "",
+          "lower": "このカードが覆われることになったとき：先にあなたのデッキの一番上のカードを他の1ラインに裏向きで1枚プレイする。",
+          "effectTypes": [
+            "play"
+          ]
+        },
+        {
+          "id": "LIFE_5",
+          "number": 5,
+          "cost": 4,
+          "upper": "",
+          "middle": "このカードが他のカードを覆っている場合、カードを1枚引く。",
+          "lower": "",
+          "effectTypes": [
+            "draw"
+          ]
+        },
+        {
+          "id": "LIFE_6",
+          "number": 6,
+          "cost": 5,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "other"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "LIGHT",
+      "displayName": "LIGHT",
+      "tags": "手札維持／反転／移動",
+      "color": "#FDD835",
+      "set": "Main 1",
+      "cards": [
+        {
+          "id": "LIGHT_1",
+          "number": 1,
+          "cost": 0,
+          "upper": "",
+          "middle": "カードを1枚反転させる。そのカードの値に等しい枚数のカードを引く。",
+          "lower": "",
+          "effectTypes": [
+            "draw",
+            "flip"
+          ]
+        },
+        {
+          "id": "LIGHT_2",
+          "number": 2,
+          "cost": 1,
+          "upper": "",
+          "middle": "",
+          "lower": "終了：カードを1枚引く。",
+          "effectTypes": [
+            "draw"
+          ]
+        },
+        {
+          "id": "LIGHT_3",
+          "number": 3,
+          "cost": 2,
+          "upper": "",
+          "middle": "カードを2枚引く。裏向きのカードを1枚公開する。あなたは公開したカードを移動させるか反転させることができる。",
+          "lower": "",
+          "effectTypes": [
+            "draw",
+            "flip",
+            "shift"
+          ]
+        },
+        {
+          "id": "LIGHT_4",
+          "number": 4,
+          "cost": 3,
+          "upper": "",
+          "middle": "このラインにある裏向きのすべてのカードを、他の1ラインへと移動させる。",
+          "lower": "",
+          "effectTypes": [
+            "shift"
+          ]
+        },
+        {
+          "id": "LIGHT_5",
+          "number": 5,
+          "cost": 4,
+          "upper": "",
+          "middle": "相手は自分の手札を公開する。",
+          "lower": "",
+          "effectTypes": [
+            "other"
+          ]
+        },
+        {
+          "id": "LIGHT_6",
+          "number": 6,
+          "cost": 5,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "other"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "METAL",
+      "displayName": "METAL",
+      "tags": "相手の妨害／手札維持／反転",
+      "color": "#78909C",
+      "set": "Main 1",
+      "cards": [
+        {
+          "id": "METAL_1",
+          "number": 1,
+          "cost": 0,
+          "upper": "このラインでの相手の合計値は2減る。",
+          "middle": "カードを1枚反転させる。",
+          "lower": "",
+          "effectTypes": [
+            "flip"
+          ]
+        },
+        {
+          "id": "METAL_2",
+          "number": 2,
+          "cost": 1,
+          "upper": "",
+          "middle": "カードを2枚引く。相手は次の手番でコンパイルすることはできない。",
+          "lower": "",
+          "effectTypes": [
+            "draw"
+          ]
+        },
+        {
+          "id": "METAL_3",
+          "number": 3,
+          "cost": 2,
+          "upper": "相手はこのラインにカードを裏向きでプレイすることはできない。",
+          "middle": "",
+          "lower": "",
+          "effectTypes": [
+            "play"
+          ]
+        },
+        {
+          "id": "METAL_4",
+          "number": 4,
+          "cost": 3,
+          "upper": "",
+          "middle": "カードを1枚引く。カードが8枚以上ある、ほかの1ライン内のすべてのカードを削除する。",
+          "lower": "",
+          "effectTypes": [
+            "draw",
+            "delete"
+          ]
+        },
+        {
+          "id": "METAL_5",
+          "number": 5,
+          "cost": 5,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "other"
+          ]
+        },
+        {
+          "id": "METAL_6",
+          "number": 6,
+          "cost": 6,
+          "upper": "このカードが覆われるか反転することになったとき：先にこのカードを削除する。",
+          "middle": "",
+          "lower": "",
+          "effectTypes": [
+            "delete",
+            "flip"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "PLAGUE",
+      "displayName": "PLAGUE",
+      "tags": "捨て札の強制／反転",
+      "color": "#827717",
+      "set": "Main 1",
+      "cards": [
+        {
+          "id": "PLAGUE_1",
+          "number": 1,
+          "cost": 0,
+          "upper": "",
+          "middle": "相手は手札を1枚捨て札にする。",
+          "lower": "相手はこのラインにカードをプレイすることはできない。",
+          "effectTypes": [
+            "discard",
+            "play"
+          ]
+        },
+        {
+          "id": "PLAGUE_2",
+          "number": 2,
+          "cost": 1,
+          "upper": "相手が手札を捨て札にしたあと：カードを1枚引く。",
+          "middle": "相手は手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "draw",
+            "discard"
+          ]
+        },
+        {
+          "id": "PLAGUE_3",
+          "number": 3,
+          "cost": 2,
+          "upper": "",
+          "middle": "あなたは手札があれば1枚以上捨て札にする。相手はあなたが捨て札にした枚数＋1枚の手札を捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "discard"
+          ]
+        },
+        {
+          "id": "PLAGUE_4",
+          "number": 4,
+          "cost": 3,
+          "upper": "",
+          "middle": "覆われていない、表向きの他のカードを反転させる。",
+          "lower": "",
+          "effectTypes": [
+            "flip"
+          ]
+        },
+        {
+          "id": "PLAGUE_5",
+          "number": 5,
+          "cost": 4,
+          "upper": "",
+          "middle": "",
+          "lower": "終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。",
+          "effectTypes": [
+            "delete",
+            "flip"
+          ]
+        },
+        {
+          "id": "PLAGUE_6",
+          "number": 6,
+          "cost": 5,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "other"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "PSYCHIC",
+      "displayName": "PSYCHIC",
+      "tags": "手札維持／操作／移動",
+      "color": "#7E57C2",
+      "set": "Main 1",
+      "cards": [
+        {
+          "id": "PSYCHIC_1",
+          "number": 1,
+          "cost": 0,
+          "upper": "",
+          "middle": "カードを2枚引く。相手は自分の手札を2枚捨て札にして、そのあと相手は手札を公開する。",
+          "lower": "",
+          "effectTypes": [
+            "draw",
+            "discard"
+          ]
+        },
+        {
+          "id": "PSYCHIC_2",
+          "number": 2,
+          "cost": 1,
+          "upper": "相手はカードを裏向きでのみプレイすることができる。",
+          "middle": "",
+          "lower": "開始：このカードを反転させる。",
+          "effectTypes": [
+            "flip",
+            "play"
+          ]
+        },
+        {
+          "id": "PSYCHIC_3",
+          "number": 3,
+          "cost": 2,
+          "upper": "",
+          "middle": "相手は自分の手札を2枚捨て札にする。あなたは相手のプロトコルを並べ替える。",
+          "lower": "",
+          "effectTypes": [
+            "rearrange",
+            "discard"
+          ]
+        },
+        {
+          "id": "PSYCHIC_4",
+          "number": 4,
+          "cost": 3,
+          "upper": "",
+          "middle": "相手は手札を1枚捨て札にする。あなたは相手のカードを1枚移動させる。",
+          "lower": "",
+          "effectTypes": [
+            "shift",
+            "discard"
+          ]
+        },
+        {
+          "id": "PSYCHIC_5",
+          "number": 5,
+          "cost": 4,
+          "upper": "",
+          "middle": "",
+          "lower": "終了：あなたは相手のカードを1枚戻すことができる。そうした場合、このカードを反転させる。",
+          "effectTypes": [
+            "flip",
+            "return"
+          ]
+        },
+        {
+          "id": "PSYCHIC_6",
+          "number": 6,
+          "cost": 5,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "other"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "SPEED",
+      "displayName": "SPEED",
+      "tags": "手札維持／プレイ／移動",
+      "color": "#FF8F00",
+      "set": "Main 1",
+      "cards": [
+        {
+          "id": "SPEED_1",
+          "number": 1,
+          "cost": 0,
+          "upper": "",
+          "middle": "カードを1枚プレイする。",
+          "lower": "",
+          "effectTypes": [
+            "play"
+          ]
+        },
+        {
+          "id": "SPEED_2",
+          "number": 2,
+          "cost": 1,
+          "upper": "あなたがキャッシュをクリアしたあと：カードを1枚引く。",
+          "middle": "カードを2枚引く。",
+          "lower": "",
+          "effectTypes": [
+            "draw"
+          ]
+        },
+        {
+          "id": "SPEED_3",
+          "number": 3,
+          "cost": 2,
+          "upper": "このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。",
+          "middle": "",
+          "lower": "",
+          "effectTypes": [
+            "delete",
+            "shift"
+          ]
+        },
+        {
+          "id": "SPEED_4",
+          "number": 4,
+          "cost": 3,
+          "upper": "",
+          "middle": "あなたの他のカードを1枚移動させる。",
+          "lower": "終了：あなたは自分のカードを1枚移動させることができる。そうした場合、このカードを反転させる。",
+          "effectTypes": [
+            "flip",
+            "shift"
+          ]
+        },
+        {
+          "id": "SPEED_5",
+          "number": 5,
+          "cost": 4,
+          "upper": "",
+          "middle": "相手の裏向きのカードを1枚移動させる。",
+          "lower": "",
+          "effectTypes": [
+            "shift"
+          ]
+        },
+        {
+          "id": "SPEED_6",
+          "number": 6,
+          "cost": 5,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "other"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "SPIRIT",
+      "displayName": "SPIRIT",
+      "tags": "反転／移動／手札維持",
+      "color": "#26C6DA",
+      "set": "Main 1",
+      "cards": [
+        {
+          "id": "SPIRIT_1",
+          "number": 1,
+          "cost": 0,
+          "upper": "",
+          "middle": "リフレッシュする。カードを1枚引く。",
+          "lower": "あなたのキャッシュの確認フェイズを省略する。",
+          "effectTypes": [
+            "draw"
+          ]
+        },
+        {
+          "id": "SPIRIT_2",
+          "number": 2,
+          "cost": 1,
+          "upper": "あなたがカードを表向きでプレイするときには、プロトコルを対応させずにプレイすることができる。",
+          "middle": "カードを1枚引く。",
+          "lower": "開始：あなたは手札を1枚捨て札にするか、このカードを反転させる。",
+          "effectTypes": [
+            "draw",
+            "flip",
+            "play"
+          ]
+        },
+        {
+          "id": "SPIRIT_3",
+          "number": 3,
+          "cost": 2,
+          "upper": "",
+          "middle": "あなたはカードを1枚反転させることができる。",
+          "lower": "",
+          "effectTypes": [
+            "flip"
+          ]
+        },
+        {
+          "id": "SPIRIT_4",
+          "number": 4,
+          "cost": 3,
+          "upper": "あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。",
+          "middle": "",
+          "lower": "",
+          "effectTypes": [
+            "shift"
+          ]
+        },
+        {
+          "id": "SPIRIT_5",
+          "number": 5,
+          "cost": 4,
+          "upper": "",
+          "middle": "あなたのプロトコルのうち2枚の位置を入れ替える。",
+          "lower": "",
+          "effectTypes": [
+            "rearrange"
+          ]
+        },
+        {
+          "id": "SPIRIT_6",
+          "number": 6,
+          "cost": 5,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "other"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "WATER",
+      "displayName": "WATER",
+      "tags": "戻す、手札維持、反転",
+      "color": "#1E88E5",
+      "set": "Main 1",
+      "cards": [
+        {
+          "id": "WATER_1",
+          "number": 1,
+          "cost": 0,
+          "upper": "",
+          "middle": "他のカードを1枚反転させる。このカードを反転させる。",
+          "lower": "",
+          "effectTypes": [
+            "flip"
+          ]
+        },
+        {
+          "id": "WATER_2",
+          "number": 2,
+          "cost": 1,
+          "upper": "",
+          "middle": "あなたのデッキの一番上のカードを、他の各ラインに裏向きで1枚ずつプレイする。",
+          "lower": "",
+          "effectTypes": [
+            "play"
+          ]
+        },
+        {
+          "id": "WATER_3",
+          "number": 3,
+          "cost": 2,
+          "upper": "",
+          "middle": "カードを2枚引く。あなたのプロトコルを並べ替える。",
+          "lower": "",
+          "effectTypes": [
+            "draw",
+            "rearrange"
+          ]
+        },
+        {
+          "id": "WATER_4",
+          "number": 4,
+          "cost": 3,
+          "upper": "",
+          "middle": "1ラインを選び、そのラインの値が2のすべてのカードを戻す。",
+          "lower": "",
+          "effectTypes": [
+            "return"
+          ]
+        },
+        {
+          "id": "WATER_5",
+          "number": 5,
+          "cost": 4,
+          "upper": "",
+          "middle": "あなたのカードを1枚戻す。",
+          "lower": "",
+          "effectTypes": [
+            "return"
+          ]
+        },
+        {
+          "id": "WATER_6",
+          "number": 6,
+          "cost": 5,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "other"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "APATHY",
+      "displayName": "APATHY",
+      "tags": "裏向きへの反転",
+      "color": "#9E9E9E",
+      "set": "Aux 1",
+      "cards": [
+        {
+          "id": "APATHY_1",
+          "number": 1,
+          "cost": 0,
+          "upper": "このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。",
+          "middle": "",
+          "lower": "",
+          "effectTypes": [
+            "other"
+          ]
+        },
+        {
+          "id": "APATHY_2",
+          "number": 2,
+          "cost": 1,
+          "upper": "",
+          "middle": "このラインにある他のすべての表向きのカードを同時に反転させる。",
+          "lower": "",
+          "effectTypes": [
+            "flip"
+          ]
+        },
+        {
+          "id": "APATHY_3",
+          "number": 3,
+          "cost": 2,
+          "upper": "このラインにあるカードのすべての中段コマンドを無視する。",
+          "middle": "",
+          "lower": "このカードが覆われることになったとき：先に、このカードを反転させる。",
+          "effectTypes": [
+            "flip"
+          ]
+        },
+        {
+          "id": "APATHY_4",
+          "number": 4,
+          "cost": 3,
+          "upper": "",
+          "middle": "相手の表向きのカードを１枚反転させる。",
+          "lower": "",
+          "effectTypes": [
+            "flip"
+          ]
+        },
+        {
+          "id": "APATHY_5",
+          "number": 5,
+          "cost": 4,
+          "upper": "",
+          "middle": "表向きで覆われているあなたのカード１枚を反転させることができる。",
+          "lower": "",
+          "effectTypes": [
+            "flip"
+          ]
+        },
+        {
+          "id": "APATHY_6",
+          "number": 6,
+          "cost": 5,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "other"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "HATE",
+      "displayName": "HATE",
+      "tags": "互いの削除",
+      "color": "#B71C1C",
+      "set": "Aux 1",
+      "cards": [
+        {
+          "id": "HATE_1",
+          "number": 1,
+          "cost": 0,
+          "upper": "",
+          "middle": "カードを１枚削除する。",
+          "lower": "",
+          "effectTypes": [
+            "delete"
+          ]
+        },
+        {
+          "id": "HATE_2",
+          "number": 2,
+          "cost": 1,
+          "upper": "",
+          "middle": "あなたは手札を３枚捨て札にする。カードを１枚削除する。カードを１枚削除する。",
+          "lower": "",
+          "effectTypes": [
+            "delete"
+          ]
+        },
+        {
+          "id": "HATE_3",
+          "number": 3,
+          "cost": 2,
+          "upper": "",
+          "middle": "値が最も大きく覆われていないあなたのカードを１枚削除する。値が最も大きく覆われていない相手のカードを１枚削除する。",
+          "lower": "",
+          "effectTypes": [
+            "delete"
+          ]
+        },
+        {
+          "id": "HATE_4",
+          "number": 4,
+          "cost": 3,
+          "upper": "あなたがカードを１枚削除したあと：カードを１枚引く。",
+          "middle": "",
+          "lower": "",
+          "effectTypes": [
+            "draw",
+            "delete"
+          ]
+        },
+        {
+          "id": "HATE_5",
+          "number": 5,
+          "cost": 4,
+          "upper": "",
+          "middle": "",
+          "lower": "このカードが覆われることになったとき：先に、このラインにある値が最も小さく覆われているカードを１枚削除する。",
+          "effectTypes": [
+            "delete"
+          ]
+        },
+        {
+          "id": "HATE_6",
+          "number": 6,
+          "cost": 5,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "other"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "LOVE",
+      "displayName": "LOVE",
+      "tags": "手札維持／供与／交換",
+      "color": "#EC407A",
+      "set": "Aux 1",
+      "cards": [
+        {
+          "id": "LOVE_1",
+          "number": 1,
+          "cost": 1,
+          "upper": "",
+          "middle": "あなたは相手のデッキの一番上のカードを引く。",
+          "lower": "終了：あなたの手札一枚を相手に与えることができる。そうした場合、カードを２枚引く。",
+          "effectTypes": [
+            "draw"
+          ]
+        },
+        {
+          "id": "LOVE_2",
+          "number": 2,
+          "cost": 2,
+          "upper": "",
+          "middle": "相手はカードを１枚引く。あなたはリフレッシュする。",
+          "lower": "",
+          "effectTypes": [
+            "draw"
+          ]
+        },
+        {
+          "id": "LOVE_3",
+          "number": 3,
+          "cost": 3,
+          "upper": "",
+          "middle": "あなたは相手の手札からランダムにカードを１枚引く。あなたの手札１枚を相手に与える。",
+          "lower": "",
+          "effectTypes": [
+            "draw"
+          ]
+        },
+        {
+          "id": "LOVE_4",
+          "number": 4,
+          "cost": 4,
+          "upper": "",
+          "middle": "あなたの手札１枚を公開する。カードを１枚反転させる。",
+          "lower": "",
+          "effectTypes": [
+            "flip"
+          ]
+        },
+        {
+          "id": "LOVE_5",
+          "number": 5,
+          "cost": 5,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "other"
+          ]
+        },
+        {
+          "id": "LOVE_6",
+          "number": 6,
+          "cost": 6,
+          "upper": "",
+          "middle": "相手はカードを２枚引く。",
+          "lower": "",
+          "effectTypes": [
+            "draw"
+          ]
+        }
+      ]
+    }
+  ]
+}

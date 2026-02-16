@@ -1,0 +1,16 @@
+# Source files
+*.xlsx
+*.docx
+*.pdf
+nul
+
+# Folders
+Compile 1/
+Compile 2/
+.claude/
+
+# Other HTML (not part of cardlist app)
+index.html
+index-ja.html
+play-reference-ja.html
+control-tracker.html
