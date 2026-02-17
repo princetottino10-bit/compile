@@ -141,16 +141,17 @@
     .nores .ico{font-size:2rem;margin-bottom:10px;opacity:.3}
 
     /* Matrix */
-    .matrix-wrap{overflow-x:auto;margin-bottom:12px;-webkit-overflow-scrolling:touch}
-    .matrix{border-collapse:collapse;width:100%;min-width:480px;font-size:0.65rem}
-    .matrix th,.matrix td{padding:6px 4px;text-align:center;border:1px solid var(--bd)}
-    .matrix th{font-family:'Orbitron',monospace;font-weight:700;font-size:0.6rem;color:var(--txd);background:var(--cbg);position:sticky;top:0}
-    .matrix th:first-child{text-align:left;padding-left:8px;min-width:80px}
-    .matrix .m-pname{font-family:'Orbitron',monospace;font-weight:700;font-size:0.62rem;text-align:left;padding-left:8px;white-space:nowrap}
-    .matrix td.m-cell{cursor:pointer;transition:all .15s;border-radius:0;font-family:'Orbitron',monospace;font-weight:700;font-size:0.7rem}
+    .matrix-wrap{margin-bottom:12px}
+    .matrix{border-collapse:collapse;width:100%;table-layout:fixed;font-size:0.65rem}
+    .matrix th,.matrix td{padding:5px 2px;text-align:center;border:1px solid var(--bd)}
+    .matrix th{font-family:'Orbitron',monospace;font-weight:700;font-size:0.58rem;color:var(--txd);background:var(--cbg)}
+    .matrix th:first-child{text-align:left;padding-left:6px;width:72px}
+    .matrix .m-pname{font-family:'Orbitron',monospace;font-weight:700;font-size:0.56rem;text-align:left;padding-left:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .matrix td.m-cell{cursor:pointer;transition:all .15s;font-family:'Orbitron',monospace;font-weight:700;font-size:0.68rem}
     .matrix td.m-cell:hover,.matrix td.m-cell:active{background:var(--chip-on-bg)}
     .matrix td.m-cell.on{background:var(--pk);color:#fff}
-    .matrix td.m-empty{color:var(--empty-color);font-size:0.6rem}
+    .matrix td.m-empty{color:var(--empty-color);font-size:0.55rem}
+    @media(min-width:640px){.matrix th:first-child{width:100px}.matrix .m-pname{font-size:0.62rem}.matrix td.m-cell{font-size:0.72rem}}
 
     /* Analysis */
     .a-grid{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
@@ -217,8 +218,8 @@
 
   <div id="v-lookup" class="sec">
     <div class="slbl"><b>//</b> 逆引きマトリクス</div>
-    <div class="matrix-wrap" id="matrixWrap"></div>
     <div class="cards" id="lkResult"></div>
+    <div class="matrix-wrap" id="matrixWrap"></div>
   </div>
 
   <div id="v-ana" class="sec">
@@ -435,7 +436,7 @@ function buildMatrix(){
     vals.forEach(function(v){
       var found=p.cards.filter(function(c){return c.value===v});
       if(found.length){
-        html+='<td class="m-cell" data-p="'+p.name+'" data-v="'+v+'" style="color:'+p.color+'">'+found.length+'</td>';
+        html+='<td class="m-cell" data-p="'+p.name+'" data-v="'+v+'" style="color:'+p.color+'">'+v+'</td>';
       } else {
         html+='<td class="m-empty">-</td>';
       }
