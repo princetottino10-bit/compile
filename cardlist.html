@@ -12,163 +12,172 @@
       --pk:#e91e8c;--dk:#0a0a0f;--dkr:#050508;
       --cbg:#12121a;--chv:#1a1a28;
       --tx:#e0e0e8;--txd:#8888a0;
-      --bd:rgba(255,255,255,0.06);--bdh:rgba(233,30,140,0.3);
+      --bd:rgba(255,255,255,0.06);
     }
     html{scroll-behavior:smooth;-webkit-tap-highlight-color:transparent}
     body{font-family:'Noto Sans JP',sans-serif;background:var(--dkr);color:var(--tx);line-height:1.7;min-height:100vh;overflow-x:hidden}
 
-    /* Header */
-    header{position:sticky;top:0;z-index:100;background:rgba(5,5,8,0.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(233,30,140,0.1)}
-    .h-top{display:flex;align-items:center;justify-content:space-between;padding:0 12px;height:48px}
-    .logo{font-family:'Orbitron',monospace;font-weight:900;font-size:0.95rem;letter-spacing:2px;color:#fff;text-decoration:none}
+    header{position:sticky;top:0;z-index:100;background:rgba(5,5,8,0.95);backdrop-filter:blur(16px);border-bottom:1px solid rgba(233,30,140,0.12)}
+    .h-top{display:flex;align-items:center;justify-content:space-between;padding:0 12px;height:44px}
+    .logo{font-family:'Orbitron',monospace;font-weight:900;font-size:0.9rem;letter-spacing:2px;color:#fff}
     .logo span{color:var(--pk)}
+    .view-toggle{display:flex;gap:4px}
+    .view-btn{background:rgba(255,255,255,0.05);border:1px solid var(--bd);color:var(--txd);font-size:0.7rem;padding:4px 8px;border-radius:4px;cursor:pointer}
+    .view-btn.on{background:rgba(233,30,140,0.15);border-color:var(--pk);color:var(--pk)}
 
-    /* Mode tabs */
-    .tabs{display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;border-top:1px solid rgba(255,255,255,0.03);scrollbar-width:none}
+    .tabs{display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
     .tabs::-webkit-scrollbar{display:none}
-    .tab{padding:10px 16px;font-size:0.78rem;font-weight:500;color:var(--txd);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;user-select:none;-webkit-user-select:none}
+    .tab{padding:8px 14px;font-size:0.72rem;font-weight:500;color:var(--txd);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;user-select:none}
     .tab.on{color:var(--pk);border-bottom-color:var(--pk)}
 
-    /* Main */
-    main{padding:12px;max-width:800px;margin:0 auto}
+    main{padding:10px;max-width:880px;margin:0 auto}
 
-    /* Section label */
-    .slbl{font-size:0.68rem;font-weight:700;letter-spacing:1.5px;color:var(--txd);text-transform:uppercase;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--bd)}
+    .slbl{font-size:0.65rem;font-weight:700;letter-spacing:1.5px;color:var(--txd);text-transform:uppercase;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
     .slbl b{color:var(--pk);font-family:'Orbitron',monospace}
+    .clear-btn{font-size:0.6rem;color:var(--txd);background:rgba(255,255,255,0.04);border:1px solid var(--bd);border-radius:4px;padding:2px 8px;cursor:pointer;transition:all .2s}
+    .clear-btn:hover{color:var(--pk);border-color:var(--pk)}
 
-    /* Protocol pills */
-    .pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
-    .pill{padding:6px 12px;font-size:0.72rem;font-weight:700;letter-spacing:.5px;border:1px solid var(--bd);background:rgba(255,255,255,0.03);color:var(--txd);cursor:pointer;border-radius:20px;transition:all .2s;user-select:none;-webkit-user-select:none}
+    .pills{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+    .pill{padding:5px 10px;font-size:0.68rem;font-weight:700;letter-spacing:.5px;border:1px solid var(--bd);background:rgba(255,255,255,0.03);color:var(--txd);cursor:pointer;border-radius:16px;transition:all .2s;user-select:none}
     .pill:active{transform:scale(0.95)}
     .pill.on{color:#fff;border-color:currentColor}
     .pill.set-aux{font-style:italic}
 
-    /* Filter chips */
-    .chips{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:14px}
-    .chip{padding:4px 10px;font-size:0.65rem;border:1px solid var(--bd);background:transparent;color:var(--txd);cursor:pointer;border-radius:12px;transition:all .2s}
+    .chips{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px}
+    .chip{padding:3px 9px;font-size:0.62rem;border:1px solid var(--bd);background:transparent;color:var(--txd);cursor:pointer;border-radius:10px;transition:all .2s}
     .chip.on{background:rgba(233,30,140,0.12);border-color:var(--pk);color:var(--pk)}
 
-    /* Card list */
-    .cards{display:flex;flex-direction:column;gap:10px}
-    .card{background:var(--cbg);border:1px solid var(--bd);border-radius:8px;padding:14px;cursor:pointer;transition:all .2s;position:relative;border-left:3px solid transparent;-webkit-tap-highlight-color:transparent}
+    /* === TILE VIEW (default) === */
+    .cards{display:flex;flex-direction:column;gap:8px}
+    .card{background:var(--cbg);border:1px solid var(--bd);border-radius:8px;padding:12px;cursor:pointer;transition:all .15s;border-left:3px solid transparent}
     .card:active{background:var(--chv);transform:scale(0.99)}
-    .c-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;gap:8px}
-    .c-name{font-family:'Orbitron',monospace;font-size:0.8rem;font-weight:700;letter-spacing:1px}
-    .c-cost{font-family:'Orbitron',monospace;font-size:0.72rem;font-weight:700;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:rgba(255,255,255,0.06);border:1px solid var(--bd);flex-shrink:0}
-    .c-ptag{font-size:0.6rem;padding:2px 6px;border-radius:3px;display:inline-block;margin-bottom:6px}
-    .c-set{font-size:0.55rem;padding:1px 5px;border-radius:3px;display:inline-block;margin-left:4px;background:rgba(255,255,255,0.05);color:var(--txd)}
-
-    /* Command sections on card */
-    .c-cmds{font-size:0.78rem;color:var(--txd);line-height:1.6;display:flex;flex-direction:column;gap:3px}
-    .c-cmd{display:flex;gap:6px;align-items:flex-start}
-    .c-cmd-lbl{font-size:0.6rem;font-weight:700;letter-spacing:.5px;padding:1px 4px;border-radius:3px;flex-shrink:0;margin-top:3px;min-width:20px;text-align:center}
+    .c-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+    .c-head-left{display:flex;align-items:center;gap:8px}
+    .c-val{font-family:'Orbitron',monospace;font-size:0.85rem;font-weight:900;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;border:1.5px solid;flex-shrink:0}
+    .c-name{font-family:'Orbitron',monospace;font-size:0.75rem;font-weight:700;letter-spacing:.5px}
+    .c-set{font-size:0.5rem;padding:1px 5px;border-radius:3px;background:rgba(255,255,255,0.06);color:var(--txd);margin-left:4px}
+    .c-tags{display:flex;flex-wrap:wrap;gap:3px}
+    .etag{font-size:0.55rem;padding:2px 6px;border-radius:3px;background:rgba(255,255,255,0.04);color:var(--txd)}
+    .c-cmds{font-size:0.76rem;color:var(--txd);line-height:1.55;display:flex;flex-direction:column;gap:2px}
+    .c-cmd{display:flex;gap:5px;align-items:flex-start}
+    .c-cmd-lbl{font-size:0.55rem;font-weight:700;padding:1px 3px;border-radius:2px;flex-shrink:0;margin-top:3px;min-width:16px;text-align:center}
     .c-cmd-lbl.up{background:rgba(239,68,68,0.15);color:#ef4444}
     .c-cmd-lbl.mid{background:rgba(59,130,246,0.15);color:#3b82f6}
     .c-cmd-lbl.low{background:rgba(34,197,94,0.15);color:#22c55e}
     .c-cmd-txt{flex:1}
-    .c-cmd-empty{color:rgba(255,255,255,0.15);font-size:0.7rem}
+    .c-cmd-empty{color:rgba(255,255,255,0.12);font-size:0.65rem}
 
-    .c-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
-    .etag{font-size:0.58rem;padding:2px 6px;border-radius:3px;background:rgba(255,255,255,0.04);color:var(--txd)}
+    /* === ROW VIEW === */
+    .cards.row-view{gap:4px}
+    .cards.row-view .card{padding:6px 10px;border-radius:6px;border-left-width:3px}
+    .cards.row-view .c-head{display:none}
+    .cards.row-view .c-tags{display:none}
+    .row-header{display:none;align-items:center;gap:6px;margin-bottom:1px;font-size:0.68rem}
+    .cards.row-view .row-header{display:flex}
+    .row-pname{font-family:'Orbitron',monospace;font-weight:700;font-size:0.65rem;letter-spacing:.5px;min-width:70px}
+    .row-val{font-family:'Orbitron',monospace;font-weight:900;font-size:0.72rem;min-width:18px;text-align:center}
+    .cards.row-view .c-cmds{font-size:0.72rem;gap:1px}
+    .cards.row-view .c-cmd-lbl{font-size:0.5rem;padding:0 2px;min-width:14px;margin-top:2px}
 
     /* Modal */
-    .mover{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:200;align-items:flex-end;justify-content:center;padding:0}
+    .mover{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:200;align-items:flex-end;justify-content:center}
     .mover.on{display:flex}
     .modal{background:var(--dk);border:1px solid var(--bd);border-radius:16px 16px 0 0;width:100%;max-width:560px;max-height:88vh;overflow-y:auto;position:relative;animation:slideUp .25s ease}
     @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
     .m-accent{height:4px;border-radius:16px 16px 0 0}
     .m-handle{width:36px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:10px auto 0}
-    .m-body{padding:20px 16px 32px}
-    .m-close{position:absolute;top:12px;right:12px;background:rgba(255,255,255,0.08);border:none;color:var(--txd);font-size:1.3rem;cursor:pointer;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:1}
-    .m-name{font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:700;letter-spacing:1px;margin-bottom:4px}
-    .m-proto{font-size:0.75rem;font-weight:500;padding:3px 8px;border-radius:4px;display:inline-block;margin-bottom:14px}
-
-    /* Modal command sections */
-    .m-cmd-section{margin-bottom:14px;border:1px solid var(--bd);border-radius:8px;overflow:hidden}
-    .m-cmd-header{display:flex;align-items:center;gap:8px;padding:8px 12px;font-size:0.72rem;font-weight:700;letter-spacing:.5px}
+    .m-body{padding:18px 14px 28px}
+    .m-close{position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.08);border:none;color:var(--txd);font-size:1.2rem;cursor:pointer;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:1}
+    .m-name{font-family:'Orbitron',monospace;font-size:1rem;font-weight:700;letter-spacing:1px;margin-bottom:4px}
+    .m-proto{font-size:0.7rem;font-weight:500;padding:3px 8px;border-radius:4px;display:inline-block;margin-bottom:12px}
+    .m-cmd-section{margin-bottom:10px;border:1px solid var(--bd);border-radius:8px;overflow:hidden}
+    .m-cmd-header{display:flex;align-items:center;gap:6px;padding:7px 10px;font-size:0.68rem;font-weight:700;letter-spacing:.5px}
     .m-cmd-header.up{background:rgba(239,68,68,0.08);color:#ef4444}
     .m-cmd-header.mid{background:rgba(59,130,246,0.08);color:#3b82f6}
     .m-cmd-header.low{background:rgba(34,197,94,0.08);color:#22c55e}
-    .m-cmd-body{padding:10px 12px;font-size:0.88rem;line-height:1.8;color:var(--tx)}
-    .m-cmd-empty{padding:10px 12px;font-size:0.8rem;color:rgba(255,255,255,0.2)}
+    .m-cmd-body{padding:8px 10px;font-size:0.85rem;line-height:1.8;color:var(--tx)}
+    .m-cmd-empty{padding:8px 10px;font-size:0.75rem;color:rgba(255,255,255,0.2)}
+    .m-slbl{font-size:0.62rem;font-weight:700;color:var(--txd);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;margin-top:12px}
+    .m-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+    .m-tags .etag{font-size:0.65rem;padding:3px 8px;border:1px solid rgba(255,255,255,0.08)}
+    .m-codex{margin-top:14px;padding:10px 12px;background:rgba(233,30,140,0.04);border:1px solid rgba(233,30,140,0.12);border-radius:8px;font-size:0.78rem;line-height:1.7;color:var(--txd);white-space:pre-line}
+    .m-codex-title{font-size:0.62rem;font-weight:700;color:var(--pk);letter-spacing:1px;margin-bottom:4px}
 
-    .m-slbl{font-size:0.65rem;font-weight:700;color:var(--txd);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;margin-top:14px}
-    .m-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
-    .m-tags .etag{font-size:0.68rem;padding:4px 10px;border:1px solid rgba(255,255,255,0.08)}
-
-    /* Info */
-    .info-msg{font-size:0.8rem;color:var(--txd);margin-bottom:12px}
+    .info-msg{font-size:0.75rem;color:var(--txd);margin-bottom:10px}
     .info-msg b{font-family:'Orbitron',monospace;color:var(--pk)}
+    .nores{text-align:center;padding:40px 16px;color:var(--txd)}
+    .nores .ico{font-size:2rem;margin-bottom:10px;opacity:.3}
 
-    /* No results */
-    .nores{text-align:center;padding:48px 16px;color:var(--txd)}
-    .nores .ico{font-size:2.5rem;margin-bottom:12px;opacity:.3}
+    /* Lookup mode */
+    .lookup-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;align-items:center}
+    .lookup-result{display:flex;flex-wrap:wrap;gap:6px}
+    .lookup-card{padding:6px 12px;font-size:0.72rem;font-weight:700;background:var(--cbg);border:1px solid var(--bd);border-radius:6px;cursor:pointer;transition:all .15s;border-left:3px solid}
+    .lookup-card:active{background:var(--chv)}
 
-    /* Analysis bars */
-    .a-grid{display:flex;flex-direction:column;gap:12px;margin-bottom:20px}
-    .a-card{background:var(--cbg);border:1px solid var(--bd);border-radius:8px;padding:16px}
-    .a-card h3{font-size:0.82rem;font-weight:700;margin-bottom:10px}
-    .a-stat{font-family:'Orbitron',monospace;font-size:1.8rem;font-weight:900;color:var(--pk);text-align:center}
-    .a-stlbl{font-size:0.7rem;color:var(--txd);text-align:center}
-    .bars{display:flex;flex-direction:column;gap:6px}
-    .brow{display:flex;align-items:center;gap:6px}
-    .blbl{font-size:0.68rem;color:var(--txd);width:58px;flex-shrink:0;text-align:right}
-    .btrk{flex:1;height:18px;background:rgba(255,255,255,0.03);border-radius:4px;overflow:hidden}
+    /* Analysis */
+    .a-grid{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+    .a-card{background:var(--cbg);border:1px solid var(--bd);border-radius:8px;padding:14px}
+    .a-card h3{font-size:0.78rem;font-weight:700;margin-bottom:8px}
+    .a-stat{font-family:'Orbitron',monospace;font-size:1.6rem;font-weight:900;color:var(--pk);text-align:center}
+    .a-stlbl{font-size:0.65rem;color:var(--txd);text-align:center}
+    .bars{display:flex;flex-direction:column;gap:5px}
+    .brow{display:flex;align-items:center;gap:5px}
+    .blbl{font-size:0.65rem;color:var(--txd);width:52px;flex-shrink:0;text-align:right}
+    .btrk{flex:1;height:16px;background:rgba(255,255,255,0.03);border-radius:4px;overflow:hidden}
     .bfill{height:100%;border-radius:4px;transition:width .4s ease}
-    .bval{font-family:'Orbitron',monospace;font-size:0.65rem;color:var(--txd);width:24px;text-align:right}
+    .bval{font-family:'Orbitron',monospace;font-size:0.6rem;color:var(--txd);width:20px;text-align:right}
 
-    /* Section hide/show */
     .sec{display:none}
     .sec.on{display:block}
 
-    /* Desktop */
     @media(min-width:640px){
-      .h-top{padding:0 20px;height:52px}
-      .logo{font-size:1.05rem}
-      main{padding:20px}
-      .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+      .h-top{padding:0 20px;height:48px}
+      .logo{font-size:1rem}
+      main{padding:16px}
+      .cards:not(.row-view){display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
       .modal{border-radius:12px;max-height:85vh;animation:fadeIn .2s ease}
       .mover{align-items:center;padding:20px}
       .m-handle{display:none}
       @keyframes fadeIn{from{opacity:0;transform:scale(0.96)}to{opacity:1;transform:scale(1)}}
     }
     @media(min-width:960px){
-      .cards{grid-template-columns:repeat(3,1fr)}
+      .cards:not(.row-view){grid-template-columns:repeat(3,1fr)}
       .a-grid{flex-direction:row;flex-wrap:wrap}
-      .a-grid>.a-card{flex:1;min-width:200px}
+      .a-grid>.a-card{flex:1;min-width:180px}
     }
-
     ::-webkit-scrollbar{width:4px}
     ::-webkit-scrollbar-track{background:var(--dkr)}
     ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px}
   </style>
 </head>
 <body>
-
 <header>
   <div class="h-top">
     <div class="logo">COMPILE <span>&lt;!&gt;</span></div>
+    <div class="view-toggle">
+      <button class="view-btn on" id="vTile" onclick="setView('tile')">タイル</button>
+      <button class="view-btn" id="vRow" onclick="setView('row')">横長</button>
+    </div>
   </div>
   <div class="tabs" id="tabs">
     <div class="tab on" data-m="list">カード一覧</div>
     <div class="tab" data-m="opp">対戦相手確認</div>
+    <div class="tab" data-m="lookup">逆引き</div>
     <div class="tab" data-m="ana">デッキ分析</div>
   </div>
 </header>
 
 <main>
-  <!-- List Mode -->
   <div id="v-list" class="sec on">
-    <div class="slbl"><b>//</b> プロトコル</div>
+    <div class="slbl"><b>//</b> プロトコル <button class="clear-btn" onclick="clearListFilter()">クリア</button></div>
     <div class="pills" id="pbar"></div>
     <div class="chips" id="fbar"></div>
     <div class="cards" id="cgrid"></div>
     <div class="nores" id="nores" style="display:none"><div class="ico">&#x2315;</div><p>該当するカードが見つかりません</p></div>
   </div>
 
-  <!-- Opponent Mode -->
   <div id="v-opp" class="sec">
-    <div class="slbl"><b>//</b> 相手のプロトコルを3つ選択</div>
+    <div class="slbl"><b>//</b> 相手のプロトコルを3つ選択 <button class="clear-btn" onclick="clearOpp()">クリア</button></div>
     <div class="pills" id="osel"></div>
     <div class="info-msg">選択中: <b id="ocnt">0</b> / 3</div>
     <div class="chips" id="ofbar"></div>
@@ -176,9 +185,19 @@
     <div class="nores" id="onores"><div class="ico">&#x26A1;</div><p>プロトコルを3つ選択してください</p></div>
   </div>
 
-  <!-- Analysis Mode -->
+  <div id="v-lookup" class="sec">
+    <div class="slbl"><b>//</b> プロトコル + Value で逆引き</div>
+    <div class="pills" id="lkProto"></div>
+    <div class="lookup-row">
+      <span style="font-size:0.65rem;color:var(--txd);font-weight:700">VALUE:</span>
+      <div class="chips" id="lkVal" style="margin-bottom:0"></div>
+    </div>
+    <div class="lookup-result" id="lkResult"></div>
+    <div class="nores" id="lknores"><div class="ico">&#x1F50D;</div><p>プロトコルとValueを選択してください</p></div>
+  </div>
+
   <div id="v-ana" class="sec">
-    <div class="slbl"><b>//</b> デッキ分析 — プロトコルを3つ選択</div>
+    <div class="slbl"><b>//</b> デッキ分析 — プロトコルを3つ選択 <button class="clear-btn" onclick="clearAna()">クリア</button></div>
     <div class="pills" id="asel"></div>
     <div class="info-msg">選択中: <b id="acnt">0</b> / 3</div>
     <div id="acontent"><div class="nores"><div class="ico">&#x1F4CA;</div><p>プロトコルを3つ選択してください</p></div></div>
@@ -195,58 +214,64 @@
 </div>
 
 <script>
-// ===== INLINE CARD DATA =====
-const DATA={"protocols":[{"name":"DARKNESS","displayName":"DARKNESS","tags":"手札維持／移動／操作","color":"#6A1B9A","set":"Main 1","cards":[{"id":"DARKNESS_1","number":1,"cost":0,"upper":"","middle":"カードを3枚引く。相手の覆われているカードを1枚移動させる。","lower":"","effectTypes":["draw","shift"]},{"id":"DARKNESS_2","number":2,"cost":1,"upper":"","middle":"相手のカードを1枚反転させる。あなたはそのカードを移動させることができる。","lower":"","effectTypes":["flip","shift"]},{"id":"DARKNESS_3","number":3,"cost":2,"upper":"このスタックにあるすべての裏向きのカードの値はそれぞれ4になる。","middle":"このラインにある、覆われているカードを1枚反転させることができる。","lower":"","effectTypes":["flip"]},{"id":"DARKNESS_4","number":4,"cost":3,"upper":"","middle":"他の1ラインにカードを裏向きで1枚プレイする。","lower":"","effectTypes":["play"]},{"id":"DARKNESS_5","number":5,"cost":4,"upper":"","middle":"裏向きのカードを1枚移動させる。","lower":"","effectTypes":["shift"]},{"id":"DARKNESS_6","number":6,"cost":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["other"]}]},{"name":"DEATH","displayName":"DEATH","tags":"削除／手札維持","color":"#37474F","set":"Main 1","cards":[{"id":"DEATH_1","number":1,"cost":0,"upper":"","middle":"他の各ラインにあるカードを1枚ずつ削除する。","lower":"","effectTypes":["delete"]},{"id":"DEATH_2","number":2,"cost":1,"upper":"開始：カードを1枚引くことができる。そうした場合、他のカードを1枚削除し、そのあとこのカードを削除する。","middle":"","lower":"","effectTypes":["draw","delete"]},{"id":"DEATH_3","number":3,"cost":2,"upper":"","middle":"1ラインを選び、そのラインの値が1か2どちらかのすべてのカードを削除する。","lower":"","effectTypes":["delete"]},{"id":"DEATH_4","number":4,"cost":3,"upper":"","middle":"裏向きのカードを1枚削除する。","lower":"","effectTypes":["delete"]},{"id":"DEATH_5","number":5,"cost":4,"upper":"","middle":"値が0か1のカードを1枚削除する。","lower":"","effectTypes":["delete"]},{"id":"DEATH_6","number":6,"cost":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["other"]}]},{"name":"FIRE","displayName":"FIRE","tags":"捨て札にして効果を得る","color":"#E53935","set":"Main 1","cards":[{"id":"FIRE_1","number":1,"cost":0,"upper":"","middle":"他のカードを1枚反転させる。カードを2枚引く。","lower":"このカードが覆われることになったとき：先にカードを1枚引き、他のカードを1枚反転させる。","effectTypes":["draw","flip"]},{"id":"FIRE_2","number":2,"cost":1,"upper":"","middle":"あなたは手札を1枚捨て札にする。そうした場合、カードを1枚削除する。","lower":"","effectTypes":["delete"]},{"id":"FIRE_3","number":3,"cost":2,"upper":"","middle":"あなたは手札を1枚捨て札にする。そうした場合、カードを1枚戻す。","lower":"","effectTypes":["return"]},{"id":"FIRE_4","number":4,"cost":3,"upper":"","middle":"","lower":"終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。","effectTypes":["flip"]},{"id":"FIRE_5","number":5,"cost":4,"upper":"","middle":"あなたは手札があれば1枚以上捨て札にする。捨て札にした枚数＋1枚のカードを引く。","lower":"","effectTypes":["draw"]},{"id":"FIRE_6","number":6,"cost":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["other"]}]},{"name":"GRAVITY","displayName":"GRAVITY","tags":"移動／反転／手札維持","color":"#5D4037","set":"Main 1","cards":[{"id":"GRAVITY_1","number":1,"cost":0,"upper":"","middle":"このライン内にあるカード2枚ごとに、あなたのデッキの一番上のカード1枚をこのカードの下に裏向きでプレイする。","lower":"","effectTypes":["play"]},{"id":"GRAVITY_2","number":2,"cost":1,"upper":"","middle":"カードを2枚引く。このラインから、またはこのラインへとカードを1枚移動させる。","lower":"","effectTypes":["draw","shift"]},{"id":"GRAVITY_3","number":3,"cost":2,"upper":"","middle":"カードを1枚反転させる。そのカードをこのラインへと移動させる。","lower":"","effectTypes":["flip","shift"]},{"id":"GRAVITY_4","number":4,"cost":4,"upper":"","middle":"裏向きのカードを1枚、このラインへと移動させる。","lower":"","effectTypes":["shift"]},{"id":"GRAVITY_5","number":5,"cost":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["other"]},{"id":"GRAVITY_6","number":6,"cost":6,"upper":"","middle":"相手は自分のデッキの一番上のカードをこのラインに裏向きで1枚プレイする。","lower":"","effectTypes":["play"]}]},{"name":"LIFE","displayName":"LIFE","tags":"反転／デッキの上からのプレイ／手札維持","color":"#43A047","set":"Main 1","cards":[{"id":"LIFE_1","number":1,"cost":0,"upper":"終了：このカードが覆われている場合、このカードを削除する。","middle":"あなたのデッキの一番上のカードを、あなたのカードがある各ラインに裏向きで1枚ずつプレイする。","lower":"","effectTypes":["delete","play"]},{"id":"LIFE_2","number":2,"cost":1,"upper":"","middle":"カード1枚を反転させる。カード1枚を反転させる。","lower":"","effectTypes":["flip"]},{"id":"LIFE_3","number":3,"cost":2,"upper":"","middle":"カードを1枚引く。あなたは裏向きのカードを1枚反転させることができる。","lower":"","effectTypes":["draw","flip"]},{"id":"LIFE_4","number":4,"cost":3,"upper":"","middle":"","lower":"このカードが覆われることになったとき：先にあなたのデッキの一番上のカードを他の1ラインに裏向きで1枚プレイする。","effectTypes":["play"]},{"id":"LIFE_5","number":5,"cost":4,"upper":"","middle":"このカードが他のカードを覆っている場合、カードを1枚引く。","lower":"","effectTypes":["draw"]},{"id":"LIFE_6","number":6,"cost":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["other"]}]},{"name":"LIGHT","displayName":"LIGHT","tags":"手札維持／反転／移動","color":"#FDD835","set":"Main 1","cards":[{"id":"LIGHT_1","number":1,"cost":0,"upper":"","middle":"カードを1枚反転させる。そのカードの値に等しい枚数のカードを引く。","lower":"","effectTypes":["draw","flip"]},{"id":"LIGHT_2","number":2,"cost":1,"upper":"","middle":"","lower":"終了：カードを1枚引く。","effectTypes":["draw"]},{"id":"LIGHT_3","number":3,"cost":2,"upper":"","middle":"カードを2枚引く。裏向きのカードを1枚公開する。あなたは公開したカードを移動させるか反転させることができる。","lower":"","effectTypes":["draw","flip","shift"]},{"id":"LIGHT_4","number":4,"cost":3,"upper":"","middle":"このラインにある裏向きのすべてのカードを、他の1ラインへと移動させる。","lower":"","effectTypes":["shift"]},{"id":"LIGHT_5","number":5,"cost":4,"upper":"","middle":"相手は自分の手札を公開する。","lower":"","effectTypes":["other"]},{"id":"LIGHT_6","number":6,"cost":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["other"]}]},{"name":"METAL","displayName":"METAL","tags":"相手の妨害／手札維持／反転","color":"#78909C","set":"Main 1","cards":[{"id":"METAL_1","number":1,"cost":0,"upper":"このラインでの相手の合計値は2減る。","middle":"カードを1枚反転させる。","lower":"","effectTypes":["flip"]},{"id":"METAL_2","number":2,"cost":1,"upper":"","middle":"カードを2枚引く。相手は次の手番でコンパイルすることはできない。","lower":"","effectTypes":["draw"]},{"id":"METAL_3","number":3,"cost":2,"upper":"相手はこのラインにカードを裏向きでプレイすることはできない。","middle":"","lower":"","effectTypes":["play"]},{"id":"METAL_4","number":4,"cost":3,"upper":"","middle":"カードを1枚引く。カードが8枚以上ある、ほかの1ライン内のすべてのカードを削除する。","lower":"","effectTypes":["draw","delete"]},{"id":"METAL_5","number":5,"cost":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["other"]},{"id":"METAL_6","number":6,"cost":6,"upper":"このカードが覆われるか反転することになったとき：先にこのカードを削除する。","middle":"","lower":"","effectTypes":["delete","flip"]}]},{"name":"PLAGUE","displayName":"PLAGUE","tags":"捨て札の強制／反転","color":"#827717","set":"Main 1","cards":[{"id":"PLAGUE_1","number":1,"cost":0,"upper":"","middle":"相手は手札を1枚捨て札にする。","lower":"相手はこのラインにカードをプレイすることはできない。","effectTypes":["discard","play"]},{"id":"PLAGUE_2","number":2,"cost":1,"upper":"相手が手札を捨て札にしたあと：カードを1枚引く。","middle":"相手は手札を1枚捨て札にする。","lower":"","effectTypes":["draw","discard"]},{"id":"PLAGUE_3","number":3,"cost":2,"upper":"","middle":"あなたは手札があれば1枚以上捨て札にする。相手はあなたが捨て札にした枚数＋1枚の手札を捨て札にする。","lower":"","effectTypes":["discard"]},{"id":"PLAGUE_4","number":4,"cost":3,"upper":"","middle":"覆われていない、表向きの他のカードを反転させる。","lower":"","effectTypes":["flip"]},{"id":"PLAGUE_5","number":5,"cost":4,"upper":"","middle":"","lower":"終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。","effectTypes":["delete","flip"]},{"id":"PLAGUE_6","number":6,"cost":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["other"]}]},{"name":"PSYCHIC","displayName":"PSYCHIC","tags":"手札維持／操作／移動","color":"#7E57C2","set":"Main 1","cards":[{"id":"PSYCHIC_1","number":1,"cost":0,"upper":"","middle":"カードを2枚引く。相手は自分の手札を2枚捨て札にして、そのあと相手は手札を公開する。","lower":"","effectTypes":["draw","discard"]},{"id":"PSYCHIC_2","number":2,"cost":1,"upper":"相手はカードを裏向きでのみプレイすることができる。","middle":"","lower":"開始：このカードを反転させる。","effectTypes":["flip","play"]},{"id":"PSYCHIC_3","number":3,"cost":2,"upper":"","middle":"相手は自分の手札を2枚捨て札にする。あなたは相手のプロトコルを並べ替える。","lower":"","effectTypes":["rearrange","discard"]},{"id":"PSYCHIC_4","number":4,"cost":3,"upper":"","middle":"相手は手札を1枚捨て札にする。あなたは相手のカードを1枚移動させる。","lower":"","effectTypes":["shift","discard"]},{"id":"PSYCHIC_5","number":5,"cost":4,"upper":"","middle":"","lower":"終了：あなたは相手のカードを1枚戻すことができる。そうした場合、このカードを反転させる。","effectTypes":["flip","return"]},{"id":"PSYCHIC_6","number":6,"cost":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["other"]}]},{"name":"SPEED","displayName":"SPEED","tags":"手札維持／プレイ／移動","color":"#FF8F00","set":"Main 1","cards":[{"id":"SPEED_1","number":1,"cost":0,"upper":"","middle":"カードを1枚プレイする。","lower":"","effectTypes":["play"]},{"id":"SPEED_2","number":2,"cost":1,"upper":"あなたがキャッシュをクリアしたあと：カードを1枚引く。","middle":"カードを2枚引く。","lower":"","effectTypes":["draw"]},{"id":"SPEED_3","number":3,"cost":2,"upper":"このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。","middle":"","lower":"","effectTypes":["delete","shift"]},{"id":"SPEED_4","number":4,"cost":3,"upper":"","middle":"あなたの他のカードを1枚移動させる。","lower":"終了：あなたは自分のカードを1枚移動させることができる。そうした場合、このカードを反転させる。","effectTypes":["flip","shift"]},{"id":"SPEED_5","number":5,"cost":4,"upper":"","middle":"相手の裏向きのカードを1枚移動させる。","lower":"","effectTypes":["shift"]},{"id":"SPEED_6","number":6,"cost":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["other"]}]},{"name":"SPIRIT","displayName":"SPIRIT","tags":"反転／移動／手札維持","color":"#26C6DA","set":"Main 1","cards":[{"id":"SPIRIT_1","number":1,"cost":0,"upper":"","middle":"リフレッシュする。カードを1枚引く。","lower":"あなたのキャッシュの確認フェイズを省略する。","effectTypes":["draw"]},{"id":"SPIRIT_2","number":2,"cost":1,"upper":"あなたがカードを表向きでプレイするときには、プロトコルを対応させずにプレイすることができる。","middle":"カードを1枚引く。","lower":"開始：あなたは手札を1枚捨て札にするか、このカードを反転させる。","effectTypes":["draw","flip","play"]},{"id":"SPIRIT_3","number":3,"cost":2,"upper":"","middle":"あなたはカードを1枚反転させることができる。","lower":"","effectTypes":["flip"]},{"id":"SPIRIT_4","number":4,"cost":3,"upper":"あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。","middle":"","lower":"","effectTypes":["shift"]},{"id":"SPIRIT_5","number":5,"cost":4,"upper":"","middle":"あなたのプロトコルのうち2枚の位置を入れ替える。","lower":"","effectTypes":["rearrange"]},{"id":"SPIRIT_6","number":6,"cost":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["other"]}]},{"name":"WATER","displayName":"WATER","tags":"戻す、手札維持、反転","color":"#1E88E5","set":"Main 1","cards":[{"id":"WATER_1","number":1,"cost":0,"upper":"","middle":"他のカードを1枚反転させる。このカードを反転させる。","lower":"","effectTypes":["flip"]},{"id":"WATER_2","number":2,"cost":1,"upper":"","middle":"あなたのデッキの一番上のカードを、他の各ラインに裏向きで1枚ずつプレイする。","lower":"","effectTypes":["play"]},{"id":"WATER_3","number":3,"cost":2,"upper":"","middle":"カードを2枚引く。あなたのプロトコルを並べ替える。","lower":"","effectTypes":["draw","rearrange"]},{"id":"WATER_4","number":4,"cost":3,"upper":"","middle":"1ラインを選び、そのラインの値が2のすべてのカードを戻す。","lower":"","effectTypes":["return"]},{"id":"WATER_5","number":5,"cost":4,"upper":"","middle":"あなたのカードを1枚戻す。","lower":"","effectTypes":["return"]},{"id":"WATER_6","number":6,"cost":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["other"]}]},{"name":"APATHY","displayName":"APATHY","tags":"裏向きへの反転","color":"#9E9E9E","set":"Aux 1","cards":[{"id":"APATHY_1","number":1,"cost":0,"upper":"このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。","middle":"","lower":"","effectTypes":["other"]},{"id":"APATHY_2","number":2,"cost":1,"upper":"","middle":"このラインにある他のすべての表向きのカードを同時に反転させる。","lower":"","effectTypes":["flip"]},{"id":"APATHY_3","number":3,"cost":2,"upper":"このラインにあるカードのすべての中段コマンドを無視する。","middle":"","lower":"このカードが覆われることになったとき：先に、このカードを反転させる。","effectTypes":["flip"]},{"id":"APATHY_4","number":4,"cost":3,"upper":"","middle":"相手の表向きのカードを１枚反転させる。","lower":"","effectTypes":["flip"]},{"id":"APATHY_5","number":5,"cost":4,"upper":"","middle":"表向きで覆われているあなたのカード１枚を反転させることができる。","lower":"","effectTypes":["flip"]},{"id":"APATHY_6","number":6,"cost":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["other"]}]},{"name":"HATE","displayName":"HATE","tags":"互いの削除","color":"#B71C1C","set":"Aux 1","cards":[{"id":"HATE_1","number":1,"cost":0,"upper":"","middle":"カードを１枚削除する。","lower":"","effectTypes":["delete"]},{"id":"HATE_2","number":2,"cost":1,"upper":"","middle":"あなたは手札を３枚捨て札にする。カードを１枚削除する。カードを１枚削除する。","lower":"","effectTypes":["delete"]},{"id":"HATE_3","number":3,"cost":2,"upper":"","middle":"値が最も大きく覆われていないあなたのカードを１枚削除する。値が最も大きく覆われていない相手のカードを１枚削除する。","lower":"","effectTypes":["delete"]},{"id":"HATE_4","number":4,"cost":3,"upper":"あなたがカードを１枚削除したあと：カードを１枚引く。","middle":"","lower":"","effectTypes":["draw","delete"]},{"id":"HATE_5","number":5,"cost":4,"upper":"","middle":"","lower":"このカードが覆われることになったとき：先に、このラインにある値が最も小さく覆われているカードを１枚削除する。","effectTypes":["delete"]},{"id":"HATE_6","number":6,"cost":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["other"]}]},{"name":"LOVE","displayName":"LOVE","tags":"手札維持／供与／交換","color":"#EC407A","set":"Aux 1","cards":[{"id":"LOVE_1","number":1,"cost":1,"upper":"","middle":"あなたは相手のデッキの一番上のカードを引く。","lower":"終了：あなたの手札一枚を相手に与えることができる。そうした場合、カードを２枚引く。","effectTypes":["draw"]},{"id":"LOVE_2","number":2,"cost":2,"upper":"","middle":"相手はカードを１枚引く。あなたはリフレッシュする。","lower":"","effectTypes":["draw"]},{"id":"LOVE_3","number":3,"cost":3,"upper":"","middle":"あなたは相手の手札からランダムにカードを１枚引く。あなたの手札１枚を相手に与える。","lower":"","effectTypes":["draw"]},{"id":"LOVE_4","number":4,"cost":4,"upper":"","middle":"あなたの手札１枚を公開する。カードを１枚反転させる。","lower":"","effectTypes":["flip"]},{"id":"LOVE_5","number":5,"cost":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["other"]},{"id":"LOVE_6","number":6,"cost":6,"upper":"","middle":"相手はカードを２枚引く。","lower":"","effectTypes":["draw"]}]}]};
+const DATA={"protocols":[{"name":"DARKNESS","displayName":"DARKNESS","tags":"手札維持／移動／操作","color":"#6A1B9A","set":"Main 1","cards":[{"id":"DARKNESS_1","number":1,"value":0,"upper":"","middle":"カードを3枚引く。相手の覆われているカードを1枚移動させる。","lower":"","effectTypes":["draw","shift"]},{"id":"DARKNESS_2","number":2,"value":1,"upper":"","middle":"相手のカードを1枚反転させる。あなたはそのカードを移動させることができる。","lower":"","effectTypes":["flip","shift"]},{"id":"DARKNESS_3","number":3,"value":2,"upper":"このスタックにあるすべての裏向きのカードの値はそれぞれ4になる。","middle":"このラインにある、覆われているカードを1枚反転させることができる。","lower":"","effectTypes":["flip"]},{"id":"DARKNESS_4","number":4,"value":3,"upper":"","middle":"他の1ラインにカードを裏向きで1枚プレイする。","lower":"","effectTypes":["play"]},{"id":"DARKNESS_5","number":5,"value":4,"upper":"","middle":"裏向きのカードを1枚移動させる。","lower":"","effectTypes":["shift"]},{"id":"DARKNESS_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"DEATH","displayName":"DEATH","tags":"削除／手札維持","color":"#37474F","set":"Main 1","cards":[{"id":"DEATH_1","number":1,"value":0,"upper":"","middle":"他の各ラインにあるカードを1枚ずつ削除する。","lower":"","effectTypes":["delete"],"codex":"【明確化】DEATH 0の中段コマンドが発動したとき、オーナーは処理が必要なラインを確認する。次に処理するラインを1つずつ選び、各ラインで覆われていないカードを1枚選んで削除し、その削除の結果を処理してから次のラインに移る。"},{"id":"DEATH_2","number":2,"value":1,"upper":"開始：カードを1枚引くことができる。そうした場合、他のカードを1枚削除し、そのあとこのカードを削除する。","middle":"","lower":"","effectTypes":["draw","delete"],"codex":"【エラッタ(2024/10)】上段コマンドは「開始：カードを1枚引くことができる。そうした場合、他のカードを1枚削除し、そのあとこのカードを削除する。」に修正。"},{"id":"DEATH_3","number":3,"value":2,"upper":"","middle":"1ラインを選び、そのラインの値が1か2どちらかのすべてのカードを削除する。","lower":"","effectTypes":["delete"]},{"id":"DEATH_4","number":4,"value":3,"upper":"","middle":"裏向きのカードを1枚削除する。","lower":"","effectTypes":["delete"]},{"id":"DEATH_5","number":5,"value":4,"upper":"","middle":"値が0か1のカードを1枚削除する。","lower":"","effectTypes":["delete"]},{"id":"DEATH_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"FIRE","displayName":"FIRE","tags":"捨て札にして効果を得る","color":"#E53935","set":"Main 1","cards":[{"id":"FIRE_1","number":1,"value":0,"upper":"","middle":"他のカードを1枚反転させる。カードを2枚引く。","lower":"このカードが覆われることになったとき：先にカードを1枚引き、他のカードを1枚反転させる。","effectTypes":["draw","flip"],"codex":"【エラッタ(2024/12)】下段コマンドは「このカードが覆われることになったとき：先に、カードを1枚引く。そのあと、他のカードを1枚反転させる。」に修正。"},{"id":"FIRE_2","number":2,"value":1,"upper":"","middle":"あなたは手札を1枚捨て札にする。そうした場合、カードを1枚削除する。","lower":"","effectTypes":["delete"]},{"id":"FIRE_3","number":3,"value":2,"upper":"","middle":"あなたは手札を1枚捨て札にする。そうした場合、カードを1枚戻す。","lower":"","effectTypes":["return"]},{"id":"FIRE_4","number":4,"value":3,"upper":"","middle":"","lower":"終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。","effectTypes":["flip"]},{"id":"FIRE_5","number":5,"value":4,"upper":"","middle":"あなたは手札があれば1枚以上捨て札にする。捨て札にした枚数＋1枚のカードを引く。","lower":"","effectTypes":["draw"]},{"id":"FIRE_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"GRAVITY","displayName":"GRAVITY","tags":"移動／反転／手札維持","color":"#5D4037","set":"Main 1","cards":[{"id":"GRAVITY_1","number":1,"value":0,"upper":"","middle":"このライン内にあるカード2枚ごとに、あなたのデッキの一番上のカード1枚をこのカードの下に裏向きでプレイする。","lower":"","effectTypes":["play"]},{"id":"GRAVITY_2","number":2,"value":1,"upper":"","middle":"カードを2枚引く。このラインから、またはこのラインへとカードを1枚移動させる。","lower":"","effectTypes":["draw","shift"]},{"id":"GRAVITY_3","number":3,"value":2,"upper":"","middle":"カードを1枚反転させる。そのカードをこのラインへと移動させる。","lower":"","effectTypes":["flip","shift"],"codex":"【明確化】GRAVITY 2は反転したカードが覆われていても移動させる。「そのカード」は特定のカードを指し、覆われたカードの操作制限より優先される。"},{"id":"GRAVITY_4","number":4,"value":4,"upper":"","middle":"裏向きのカードを1枚、このラインへと移動させる。","lower":"","effectTypes":["shift"]},{"id":"GRAVITY_5","number":5,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]},{"id":"GRAVITY_6","number":6,"value":6,"upper":"","middle":"相手は自分のデッキの一番上のカードをこのラインに裏向きで1枚プレイする。","lower":"","effectTypes":["play"]}]},{"name":"LIFE","displayName":"LIFE","tags":"反転／デッキの上からのプレイ／手札維持","color":"#43A047","set":"Main 1","cards":[{"id":"LIFE_1","number":1,"value":0,"upper":"終了：このカードが覆われている場合、このカードを削除する。","middle":"あなたのデッキの一番上のカードを、あなたのカードがある各ラインに裏向きで1枚ずつプレイする。","lower":"","effectTypes":["play"],"codex":"【エラッタ(2024/10)】上段コマンドは「終了：このカードが覆われている場合、このカードを削除する。」に修正。このカードは下段コマンドを持たない。\n【明確化】LIFE 0の中段コマンドが発動したとき、オーナーは処理が必要なラインを確認し、1つずつ処理する。LIFE 0がこの処理中に覆われた場合、中段コマンドは停止する。\n【明確化】デッキからカードをプレイする場合、デッキが空でもシャッフルは強制されない。"},{"id":"LIFE_2","number":2,"value":1,"upper":"","middle":"カード1枚を反転させる。カード1枚を反転させる。","lower":"","effectTypes":["flip"]},{"id":"LIFE_3","number":3,"value":2,"upper":"","middle":"カードを1枚引く。あなたは裏向きのカードを1枚反転させることができる。","lower":"","effectTypes":["draw","flip"]},{"id":"LIFE_4","number":4,"value":3,"upper":"","middle":"","lower":"このカードが覆われることになったとき：先にあなたのデッキの一番上のカードを他の1ラインに裏向きで1枚プレイする。","effectTypes":["play"]},{"id":"LIFE_5","number":5,"value":4,"upper":"","middle":"このカードが他のカードを覆っている場合、カードを1枚引く。","lower":"","effectTypes":["draw"]},{"id":"LIFE_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"LIGHT","displayName":"LIGHT","tags":"手札維持／反転／移動","color":"#FDD835","set":"Main 1","cards":[{"id":"LIGHT_1","number":1,"value":0,"upper":"","middle":"カードを1枚反転させる。そのカードの値に等しい枚数のカードを引く。","lower":"","effectTypes":["draw","flip"],"codex":"【明確化】中段コマンド「カードを1枚反転させる。そのカードの値に等しい枚数のカードを引く。」の処理：覆われていないカード1枚を選び反転させ、発動したテキストを処理する。その後、そのカードの現在の値に等しい枚数を引く。\n【裁定】選んだカードがプレイから除去された場合でも、「そのカード」で直接参照されるため、現在の値をチェックする。"},{"id":"LIGHT_2","number":2,"value":1,"upper":"","middle":"","lower":"終了：カードを1枚引く。","effectTypes":["draw"]},{"id":"LIGHT_3","number":3,"value":2,"upper":"","middle":"カードを2枚引く。裏向きのカードを1枚公開する。あなたは公開したカードを移動させるか反転させることができる。","lower":"","effectTypes":["draw","flip","shift"]},{"id":"LIGHT_4","number":4,"value":3,"upper":"","middle":"このラインにある裏向きのすべてのカードを、他の1ラインへと移動させる。","lower":"","effectTypes":["shift"],"codex":"【明確化】LIGHT 3で移動する裏向きのカードは、スタック内の相対的な位置を維持し、すべて同じラインに移動する。"},{"id":"LIGHT_5","number":5,"value":4,"upper":"","middle":"相手は自分の手札を公開する。","lower":"","effectTypes":["other"]},{"id":"LIGHT_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"METAL","displayName":"METAL","tags":"相手の妨害／手札維持／反転","color":"#78909C","set":"Main 1","cards":[{"id":"METAL_1","number":1,"value":0,"upper":"このラインでの相手の合計値は2減る。","middle":"カードを1枚反転させる。","lower":"","effectTypes":["flip"]},{"id":"METAL_2","number":2,"value":1,"upper":"","middle":"カードを2枚引く。相手は次の手番でコンパイルすることはできない。","lower":"","effectTypes":["draw"],"codex":"【エラッタ(2024/12)】中段コマンドは「カードを2枚引く。相手は次の手番でコンパイルすることはできない。」に修正。\n【明確化】METAL 1はテキストが見えている限り、相手の次の手番でコンパイルを防ぐ。プレイかリフレッシュを選ぶ必要がある。"},{"id":"METAL_3","number":3,"value":2,"upper":"相手はこのラインにカードを裏向きでプレイすることはできない。","middle":"","lower":"","effectTypes":["play"]},{"id":"METAL_4","number":4,"value":3,"upper":"","middle":"カードを1枚引く。カードが8枚以上ある、ほかの1ライン内のすべてのカードを削除する。","lower":"","effectTypes":["draw","delete"]},{"id":"METAL_5","number":5,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]},{"id":"METAL_6","number":6,"value":6,"upper":"このカードが覆われるか反転することになったとき：先にこのカードを削除する。","middle":"","lower":"","effectTypes":["flip"],"codex":"【明確化】METAL 6が上段コマンドで自身を削除した場合、覆っていたカードのテキストが発動するなら、コミットされたカードがフィールドに入る前に発動する。\n【明確化】METAL 6が反転の結果として自身を削除した場合、「反転」コマンドは消費され、他のカードや捨て札のMETAL 6には使えない。"}]},{"name":"PLAGUE","displayName":"PLAGUE","tags":"捨て札の強制／反転","color":"#827717","set":"Main 1","cards":[{"id":"PLAGUE_1","number":1,"value":0,"upper":"","middle":"相手は手札を1枚捨て札にする。","lower":"相手はこのラインにカードをプレイすることはできない。","effectTypes":["discard","play"]},{"id":"PLAGUE_2","number":2,"value":1,"upper":"相手が手札を捨て札にしたあと：カードを1枚引く。","middle":"相手は手札を1枚捨て札にする。","lower":"","effectTypes":["draw","discard"]},{"id":"PLAGUE_3","number":3,"value":2,"upper":"","middle":"あなたは手札があれば1枚以上捨て札にする。相手はあなたが捨て札にした枚数＋1枚の手札を捨て札にする。","lower":"","effectTypes":["discard"]},{"id":"PLAGUE_4","number":4,"value":3,"upper":"","middle":"覆われていない、表向きの他のカードを反転させる。","lower":"","effectTypes":["flip"],"codex":"【エラッタ(2025/9)】中段コマンドは「覆われていない、表向きの他のカードをそれぞれ反転させる。」に修正。機能に変更はないが、意図をより明確にした。\n【明確化】「all」ではなく「each」なので、覆われていないカードのみが対象。発動時、覆われていない表向きのカードをそれぞれ確認し、1枚ずつ処理する。"},{"id":"PLAGUE_5","number":5,"value":4,"upper":"","middle":"","lower":"終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。","effectTypes":["delete","flip"]},{"id":"PLAGUE_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"PSYCHIC","displayName":"PSYCHIC","tags":"手札維持／操作／移動","color":"#7E57C2","set":"Main 1","cards":[{"id":"PSYCHIC_1","number":1,"value":0,"upper":"","middle":"カードを2枚引く。相手は自分の手札を2枚捨て札にして、そのあと相手は手札を公開する。","lower":"","effectTypes":["draw","discard"]},{"id":"PSYCHIC_2","number":2,"value":1,"upper":"相手はカードを裏向きでのみプレイすることができる。","middle":"","lower":"開始：このカードを反転させる。","effectTypes":["other"]},{"id":"PSYCHIC_3","number":3,"value":2,"upper":"","middle":"相手は自分の手札を2枚捨て札にする。あなたは相手のプロトコルを並べ替える。","lower":"","effectTypes":["rearrange","discard"]},{"id":"PSYCHIC_4","number":4,"value":3,"upper":"","middle":"相手は手札を1枚捨て札にする。あなたは相手のカードを1枚移動させる。","lower":"","effectTypes":["shift","discard"]},{"id":"PSYCHIC_5","number":5,"value":4,"upper":"","middle":"","lower":"終了：あなたは相手のカードを1枚戻すことができる。そうした場合、このカードを反転させる。","effectTypes":["flip","return"]},{"id":"PSYCHIC_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"SPEED","displayName":"SPEED","tags":"手札維持／プレイ／移動","color":"#FF8F00","set":"Main 1","cards":[{"id":"SPEED_1","number":1,"value":0,"upper":"","middle":"カードを1枚プレイする。","lower":"","effectTypes":["play"]},{"id":"SPEED_2","number":2,"value":1,"upper":"あなたがキャッシュをクリアしたあと：カードを1枚引く。","middle":"カードを2枚引く。","lower":"","effectTypes":["draw"]},{"id":"SPEED_3","number":3,"value":2,"upper":"このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。","middle":"","lower":"","effectTypes":["shift"],"codex":"【明確化】コンパイル時、ライン内のすべてのカードが同時に削除される。SPEED 2がこの方法で削除される場合、代わりに他のラインに移動させる。SPEED 2の削除のみが防がれ、コンパイル自体は変更されない。"},{"id":"SPEED_4","number":4,"value":3,"upper":"","middle":"あなたの他のカードを1枚移動させる。","lower":"終了：あなたは自分のカードを1枚移動させることができる。そうした場合、このカードを反転させる。","effectTypes":["flip","shift"]},{"id":"SPEED_5","number":5,"value":4,"upper":"","middle":"相手の裏向きのカードを1枚移動させる。","lower":"","effectTypes":["shift"]},{"id":"SPEED_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"SPIRIT","displayName":"SPIRIT","tags":"反転／移動／手札維持","color":"#26C6DA","set":"Main 1","cards":[{"id":"SPIRIT_1","number":1,"value":0,"upper":"","middle":"リフレッシュする。カードを1枚引く。","lower":"あなたのキャッシュの確認フェイズを省略する。","effectTypes":["draw"],"codex":"【明確化】リフレッシュの指示に従う場合、コントロールコンポーネントの使用を含む通常のリフレッシュアクションとなる。"},{"id":"SPIRIT_2","number":2,"value":1,"upper":"あなたがカードを表向きでプレイするときには、プロトコルを対応させずにプレイすることができる。","middle":"カードを1枚引く。","lower":"開始：あなたは手札を1枚捨て札にするか、このカードを反転させる。","effectTypes":["draw","flip","play"],"codex":"【エラッタ(2024/10)】上段コマンドは「あなたがカードを表向きでプレイするときには、プロトコルを対応させずにプレイすることができる。」に修正。"},{"id":"SPIRIT_3","number":3,"value":2,"upper":"","middle":"あなたはカードを1枚反転させることができる。","lower":"","effectTypes":["flip"]},{"id":"SPIRIT_4","number":4,"value":3,"upper":"あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。","middle":"","lower":"","effectTypes":["shift"]},{"id":"SPIRIT_5","number":5,"value":4,"upper":"","middle":"あなたのプロトコルのうち2枚の位置を入れ替える。","lower":"","effectTypes":["rearrange"]},{"id":"SPIRIT_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"WATER","displayName":"WATER","tags":"戻す、手札維持、反転","color":"#1E88E5","set":"Main 1","cards":[{"id":"WATER_1","number":1,"value":0,"upper":"","middle":"他のカードを1枚反転させる。このカードを反転させる。","lower":"","effectTypes":["flip"]},{"id":"WATER_2","number":2,"value":1,"upper":"","middle":"あなたのデッキの一番上のカードを、他の各ラインに裏向きで1枚ずつプレイする。","lower":"","effectTypes":["play"],"codex":"【明確化】WATER 1の中段コマンドが発動したとき、オーナーは処理が必要なラインを確認し、1つずつ処理する。\n【明確化】デッキからカードをプレイする場合、デッキが空でもシャッフルは強制されない。"},{"id":"WATER_3","number":3,"value":2,"upper":"","middle":"カードを2枚引く。あなたのプロトコルを並べ替える。","lower":"","effectTypes":["draw","rearrange"]},{"id":"WATER_4","number":4,"value":3,"upper":"","middle":"1ラインを選び、そのラインの値が2のすべてのカードを戻す。","lower":"","effectTypes":["return"]},{"id":"WATER_5","number":5,"value":4,"upper":"","middle":"あなたのカードを1枚戻す。","lower":"","effectTypes":["return"]},{"id":"WATER_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"APATHY","displayName":"APATHY","tags":"裏向きへの反転","color":"#9E9E9E","set":"Aux 1","cards":[{"id":"APATHY_1","number":1,"value":0,"upper":"このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。","middle":"","lower":"","effectTypes":["other"]},{"id":"APATHY_2","number":2,"value":1,"upper":"","middle":"このラインにある他のすべての表向きのカードを同時に反転させる。","lower":"","effectTypes":["flip"]},{"id":"APATHY_3","number":3,"value":2,"upper":"このラインにあるカードのすべての中段コマンドを無視する。","middle":"","lower":"このカードが覆われることになったとき：先に、このカードを反転させる。","effectTypes":["flip"]},{"id":"APATHY_4","number":4,"value":3,"upper":"","middle":"相手の表向きのカードを１枚反転させる。","lower":"","effectTypes":["flip"]},{"id":"APATHY_5","number":5,"value":4,"upper":"","middle":"表向きで覆われているあなたのカード１枚を反転させることができる。","lower":"","effectTypes":["flip"]},{"id":"APATHY_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"HATE","displayName":"HATE","tags":"互いの削除","color":"#B71C1C","set":"Aux 1","cards":[{"id":"HATE_1","number":1,"value":0,"upper":"","middle":"カードを１枚削除する。","lower":"","effectTypes":["delete"]},{"id":"HATE_2","number":2,"value":1,"upper":"","middle":"あなたは手札を３枚捨て札にする。カードを１枚削除する。カードを１枚削除する。","lower":"","effectTypes":["delete"]},{"id":"HATE_3","number":3,"value":2,"upper":"","middle":"値が最も大きく覆われていないあなたのカードを１枚削除する。値が最も大きく覆われていない相手のカードを１枚削除する。","lower":"","effectTypes":["delete"],"codex":"【エラッタ(2024/10)】中段コマンドは「値が最も大きく覆われていないあなたのカードを1枚削除する。値が最も大きく覆われていない相手のカードを1枚削除する。」に修正。\n【明確化】最大値が同値の場合、プレイヤーが1枚を選ぶ。\n【明確化】HATE 2があなたの最大値カードである場合、最初の条件で自身を削除する。その結果、2番目の条件は発動しない。"},{"id":"HATE_4","number":4,"value":3,"upper":"あなたがカードを１枚削除したあと：カードを１枚引く。","middle":"","lower":"","effectTypes":["draw","delete"]},{"id":"HATE_5","number":5,"value":4,"upper":"","middle":"","lower":"このカードが覆われることになったとき：先に、このラインにある値が最も小さく覆われているカードを１枚削除する。","effectTypes":["delete"]},{"id":"HATE_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"LOVE","displayName":"LOVE","tags":"手札維持／供与／交換","color":"#EC407A","set":"Aux 1","cards":[{"id":"LOVE_1","number":1,"value":1,"upper":"","middle":"あなたは相手のデッキの一番上のカードを引く。","lower":"終了：あなたの手札一枚を相手に与えることができる。そうした場合、カードを２枚引く。","effectTypes":["draw"]},{"id":"LOVE_2","number":2,"value":2,"upper":"","middle":"相手はカードを１枚引く。あなたはリフレッシュする。","lower":"","effectTypes":["draw"]},{"id":"LOVE_3","number":3,"value":3,"upper":"","middle":"あなたは相手の手札からランダムにカードを１枚引く。あなたの手札１枚を相手に与える。","lower":"","effectTypes":["draw"]},{"id":"LOVE_4","number":4,"value":4,"upper":"","middle":"あなたの手札１枚を公開する。カードを１枚反転させる。","lower":"","effectTypes":["flip"]},{"id":"LOVE_5","number":5,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]},{"id":"LOVE_6","number":6,"value":6,"upper":"","middle":"相手はカードを２枚引く。","lower":"","effectTypes":["draw"]}]}]};
 
-// ===== APP =====
-const EL={draw:'引く',delete:'削除',flip:'反転',shift:'移動',return:'戻す',rearrange:'並べ替え',discard:'破棄',play:'プレイ',other:'その他'};
-const EC={draw:'#3b82f6',delete:'#ef4444',flip:'#a855f7',shift:'#f59e0b',return:'#14b8a6',rearrange:'#8b5cf6',discard:'#6b7280',play:'#22c55e',other:'#64748b'};
+const EL={draw:'引く',delete:'削除',flip:'反転',shift:'移動',return:'戻す',rearrange:'並べ替え',discard:'捨て札',play:'プレイ',five:'５',other:'その他'};
+const EC={draw:'#3b82f6',delete:'#ef4444',flip:'#a855f7',shift:'#f59e0b',return:'#14b8a6',rearrange:'#8b5cf6',discard:'#6b7280',play:'#22c55e',five:'#94a3b8',other:'#64748b'};
 
-let mode='list',selProto=null,filt='all',oppFilt='all',oppSel=[],anaSel=[];
+var mode='list',selProto=null,filt='all',oppFilt='all',oppSel=[],anaSel=[],lkProto=null,lkVal=null,viewMode='tile';
 
-function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+function setView(v){
+  viewMode=v;
+  document.getElementById('vTile').classList.toggle('on',v==='tile');
+  document.getElementById('vRow').classList.toggle('on',v==='row');
+  document.querySelectorAll('.cards').forEach(function(el){el.classList.toggle('row-view',v==='row')});
+}
 
 function cmdHtml(label,cls,text){
-  if(text){
-    return '<div class="c-cmd"><span class="c-cmd-lbl '+cls+'">'+label+'</span><span class="c-cmd-txt">'+esc(text)+'</span></div>';
-  }
+  if(text) return '<div class="c-cmd"><span class="c-cmd-lbl '+cls+'">'+label+'</span><span class="c-cmd-txt">'+esc(text)+'</span></div>';
   return '<div class="c-cmd"><span class="c-cmd-lbl '+cls+'">'+label+'</span><span class="c-cmd-txt c-cmd-empty">---</span></div>';
 }
 
 function mkCard(c,p){
-  const d=document.createElement('div');
+  var d=document.createElement('div');
   d.className='card';
-  d.style.borderLeftColor=p.color+'50';
-  const setLabel=p.set!=='Main 1'?'<span class="c-set">'+p.set+'</span>':'';
-  d.innerHTML='<div class="c-top"><div><div class="c-name" style="color:'+p.color+'">'+p.name+'</div><span class="c-ptag" style="background:'+p.color+'18;color:'+p.color+'">'+p.tags+'</span>'+setLabel+'</div><div class="c-cost" style="color:'+p.color+';border-color:'+p.color+'30">'+c.cost+'</div></div>'
+  d.style.borderLeftColor=p.color;
+  var setLabel=p.set!=='Main 1'?'<span class="c-set">'+p.set+'</span>':'';
+  var tags=c.effectTypes.map(function(t){return '<span class="etag" style="color:'+EC[t]+';background:'+EC[t]+'12">'+EL[t]+'</span>'}).join('');
+  d.innerHTML=
+    '<div class="row-header"><span class="row-pname" style="color:'+p.color+'">'+p.name+'</span><span class="row-val" style="color:'+p.color+'">'+c.value+'</span></div>'
+    +'<div class="c-head"><div class="c-head-left"><div class="c-val" style="color:'+p.color+';border-color:'+p.color+'">'+c.value+'</div><div><span class="c-name" style="color:'+p.color+'">'+p.name+'</span>'+setLabel+'</div></div><div class="c-tags">'+tags+'</div></div>'
     +'<div class="c-cmds">'
-    +cmdHtml('上','up',c.upper)
-    +cmdHtml('中','mid',c.middle)
-    +cmdHtml('下','low',c.lower)
-    +'</div>'
-    +'<div class="c-tags">'+c.effectTypes.map(function(t){return '<span class="etag" style="color:'+EC[t]+';background:'+EC[t]+'12">'+EL[t]+'</span>'}).join('')+'</div>';
+    +cmdHtml('上','up',c.upper)+cmdHtml('中','mid',c.middle)+cmdHtml('下','low',c.lower)
+    +'</div>';
   d.addEventListener('click',function(){openModal(c,p)});
   return d;
 }
 
-function modalCmdSection(label,cls,text){
-  if(text){
-    return '<div class="m-cmd-section"><div class="m-cmd-header '+cls+'">'+label+'</div><div class="m-cmd-body">'+esc(text)+'</div></div>';
-  }
+function modalCmd(label,cls,text){
+  if(text) return '<div class="m-cmd-section"><div class="m-cmd-header '+cls+'">'+label+'</div><div class="m-cmd-body">'+esc(text)+'</div></div>';
   return '<div class="m-cmd-section"><div class="m-cmd-header '+cls+'">'+label+'</div><div class="m-cmd-empty">--- 効果なし ---</div></div>';
 }
 
 function openModal(c,p){
   document.getElementById('macc').style.background='linear-gradient(90deg,'+p.color+','+p.color+'50)';
-  var setLabel=p.set!=='Main 1'?' <span style="font-size:0.65rem;opacity:0.7">['+p.set+']</span>':'';
+  var setLabel=p.set!=='Main 1'?' <span style="font-size:0.6rem;opacity:0.7">['+p.set+']</span>':'';
+  var codexHtml='';
+  if(c.codex){
+    codexHtml='<div class="m-codex"><div class="m-codex-title">CODEX</div>'+esc(c.codex)+'</div>';
+  }
   document.getElementById('mbody').innerHTML=
-    '<div class="m-name" style="color:'+p.color+'">'+p.name+' No.'+c.number+' <span style="font-size:0.8rem;opacity:0.7">Cost: '+c.cost+'</span>'+setLabel+'</div>'
+    '<div class="m-name" style="color:'+p.color+'">'+p.name+' '+c.value+setLabel+'</div>'
     +'<div class="m-proto" style="background:'+p.color+'15;color:'+p.color+'">'+p.tags+'</div>'
-    +modalCmdSection('上段コマンド / Upper','up',c.upper)
-    +modalCmdSection('中段コマンド / Middle','mid',c.middle)
-    +modalCmdSection('下段コマンド / Lower','low',c.lower)
+    +modalCmd('上段コマンド / Upper','up',c.upper)
+    +modalCmd('中段コマンド / Middle','mid',c.middle)
+    +modalCmd('下段コマンド / Lower','low',c.lower)
     +'<div class="m-slbl">効果種別</div>'
-    +'<div class="m-tags">'+c.effectTypes.map(function(t){return '<span class="etag" style="color:'+EC[t]+';background:'+EC[t]+'12;border:1px solid '+EC[t]+'25">'+EL[t]+'</span>'}).join('')+'</div>';
+    +'<div class="m-tags">'+c.effectTypes.map(function(t){return '<span class="etag" style="color:'+EC[t]+';background:'+EC[t]+'12;border:1px solid '+EC[t]+'25">'+EL[t]+'</span>'}).join('')+'</div>'
+    +codexHtml;
   document.getElementById('mover').classList.add('on');
 }
 
@@ -262,13 +287,12 @@ document.querySelectorAll('.tab').forEach(function(t){t.addEventListener('click'
   document.getElementById('v-'+mode).classList.add('on');
   if(mode==='opp')renderOpp();
   if(mode==='ana')renderAna();
+  if(mode==='lookup')renderLookup();
 })});
-
 
 // Build protocol pills
 function buildPills(container,onclick,multi){
-  var el=document.getElementById(container);
-  el.innerHTML='';
+  var el=document.getElementById(container);el.innerHTML='';
   if(!multi){
     var a=document.createElement('button');a.className='pill on';a.textContent='ALL';a.dataset.p='all';
     a.onclick=function(){onclick('all',a)};el.appendChild(a);
@@ -282,23 +306,19 @@ function buildPills(container,onclick,multi){
   });
 }
 
-// Build filter chips
 function buildFilterChips(containerId,currentFilt,onchange){
-  var el=document.getElementById(containerId);
-  el.innerHTML='';
-  var all=['all','draw','delete','flip','shift','return','rearrange','discard','play','other'];
-  var labels={all:'すべて',draw:'引く',delete:'削除',flip:'反転',shift:'移動',return:'戻す',rearrange:'並べ替え',discard:'破棄',play:'プレイ',other:'その他'};
+  var el=document.getElementById(containerId);el.innerHTML='';
+  var all=['all','draw','delete','flip','shift','return','rearrange','discard','play','five','other'];
+  var labels={all:'すべて',draw:'引く',delete:'削除',flip:'反転',shift:'移動',return:'戻す',rearrange:'並べ替え',discard:'捨て札',play:'プレイ',five:'５',other:'その他'};
   all.forEach(function(f){
     var b=document.createElement('button');
     b.className='chip'+(f===currentFilt?' on':'');b.textContent=labels[f];b.dataset.f=f;
-    b.onclick=function(){
-      onchange(f);
-      el.querySelectorAll('.chip').forEach(function(x){x.classList.toggle('on',x.dataset.f===f)});
-    };
+    b.onclick=function(){onchange(f);el.querySelectorAll('.chip').forEach(function(x){x.classList.toggle('on',x.dataset.f===f)})};
     el.appendChild(b);
   });
 }
 
+// List mode
 function selectProto(name,btn){
   selProto=name==='all'?null:name;
   document.querySelectorAll('#pbar .pill').forEach(function(b){
@@ -311,8 +331,20 @@ function selectProto(name,btn){
   renderList();
 }
 
+function clearListFilter(){
+  selProto=null;filt='all';
+  document.querySelectorAll('#pbar .pill').forEach(function(b){
+    b.classList.toggle('on',b.dataset.p==='all');
+    if(b.dataset.p==='all'){b.style.color='#fff';b.style.borderColor='var(--pk)'}
+    else{b.style.color='';b.style.borderColor=''}
+  });
+  document.querySelectorAll('#fbar .chip').forEach(function(c){c.classList.toggle('on',c.dataset.f==='all')});
+  renderList();
+}
+
 function renderList(){
   var g=document.getElementById('cgrid');g.innerHTML='';
+  g.classList.toggle('row-view',viewMode==='row');
   var cards=[];
   DATA.protocols.forEach(function(p){
     if(selProto&&p.name!==selProto)return;
@@ -332,19 +364,86 @@ function toggleMulti(arr,name,btn,cntId,max,render){
   render();
 }
 
+function clearOpp(){
+  oppSel=[];oppFilt='all';
+  document.querySelectorAll('#osel .pill').forEach(function(b){b.classList.remove('on');b.style.color='';b.style.borderColor=''});
+  document.querySelectorAll('#ofbar .chip').forEach(function(c){c.classList.toggle('on',c.dataset.f==='all')});
+  document.getElementById('ocnt').textContent='0';
+  renderOpp();
+}
+
 function renderOpp(){
   var g=document.getElementById('ogrid');g.innerHTML='';
+  g.classList.toggle('row-view',viewMode==='row');
   var nr=document.getElementById('onores');
   var fb=document.getElementById('ofbar');
   if(oppSel.length!==3){nr.style.display='';fb.style.display='none';return}
   nr.style.display='none';fb.style.display='';
   var cards=[];
-  oppSel.forEach(function(n){
-    var p=DATA.protocols.find(function(x){return x.name===n});
-    p.cards.forEach(function(c){cards.push({c:c,p:p})});
-  });
+  oppSel.forEach(function(n){var p=DATA.protocols.find(function(x){return x.name===n});p.cards.forEach(function(c){cards.push({c:c,p:p})})});
   if(oppFilt!=='all')cards=cards.filter(function(x){return x.c.effectTypes.indexOf(oppFilt)>=0});
   cards.forEach(function(x){g.appendChild(mkCard(x.c,x.p))});
+}
+
+// Lookup mode
+function buildLookup(){
+  var el=document.getElementById('lkProto');el.innerHTML='';
+  DATA.protocols.forEach(function(p){
+    var b=document.createElement('button');
+    b.className='pill'+(p.set!=='Main 1'?' set-aux':'');
+    b.textContent=p.name;b.dataset.p=p.name;
+    b.onclick=function(){
+      lkProto=p.name;
+      el.querySelectorAll('.pill').forEach(function(x){
+        var on=x.dataset.p===p.name;
+        x.classList.toggle('on',on);
+        if(on){x.style.color=p.color;x.style.borderColor=p.color}
+        else{x.style.color='';x.style.borderColor=''}
+      });
+      renderLookup();
+    };
+    el.appendChild(b);
+  });
+  var vel=document.getElementById('lkVal');vel.innerHTML='';
+  for(var v=0;v<=8;v++){
+    (function(val){
+      var b=document.createElement('button');
+      b.className='chip';b.textContent=val;b.dataset.v=val;
+      b.onclick=function(){
+        lkVal=val;
+        vel.querySelectorAll('.chip').forEach(function(x){x.classList.toggle('on',parseInt(x.dataset.v)===val)});
+        renderLookup();
+      };
+      vel.appendChild(b);
+    })(v);
+  }
+}
+
+function renderLookup(){
+  var res=document.getElementById('lkResult');res.innerHTML='';
+  var nr=document.getElementById('lknores');
+  if(lkProto===null||lkVal===null){nr.style.display='';return}
+  nr.style.display='none';
+  var p=DATA.protocols.find(function(x){return x.name===lkProto});
+  if(!p){nr.style.display='';return}
+  var found=p.cards.filter(function(c){return c.value===lkVal});
+  if(!found.length){res.innerHTML='<div class="nores" style="padding:20px"><p>該当するカードはありません</p></div>';return}
+  found.forEach(function(c){
+    var d=document.createElement('div');
+    d.className='lookup-card';
+    d.style.borderLeftColor=p.color;d.style.color=p.color;
+    d.textContent=p.name+' '+c.value;
+    d.addEventListener('click',function(){openModal(c,p)});
+    res.appendChild(d);
+  });
+}
+
+// Analysis
+function clearAna(){
+  anaSel=[];
+  document.querySelectorAll('#asel .pill').forEach(function(b){b.classList.remove('on');b.style.color='';b.style.borderColor=''});
+  document.getElementById('acnt').textContent='0';
+  renderAna();
 }
 
 function renderAna(){
@@ -357,7 +456,6 @@ function renderAna(){
   var barHtml=Object.entries(counts).filter(function(e){return e[1]>0}).sort(function(a,b){return b[1]-a[1]}).map(function(e){
     return '<div class="brow"><div class="blbl">'+EL[e[0]]+'</div><div class="btrk"><div class="bfill" style="width:'+(e[1]/mx*100)+'%;background:'+EC[e[0]]+'"></div></div><div class="bval">'+e[1]+'</div></div>';
   }).join('');
-
   var perProto=anaSel.map(function(n){
     var p=DATA.protocols.find(function(x){return x.name===n});
     var pc={};Object.keys(EL).forEach(function(k){pc[k]=0});
@@ -367,10 +465,9 @@ function renderAna(){
       return '<div class="brow"><div class="blbl">'+EL[e[0]]+'</div><div class="btrk"><div class="bfill" style="width:'+(e[1]/pmx*100)+'%;background:'+p.color+'"></div></div><div class="bval">'+e[1]+'</div></div>';
     }).join('')+'</div></div>';
   }).join('');
-
   ct.innerHTML=
     '<div class="a-grid"><div class="a-card"><div class="a-stat">'+all.length+'</div><div class="a-stlbl">総カード数</div></div><div class="a-card" style="flex:2"><h3>効果種別分布</h3><div class="bars">'+barHtml+'</div></div></div>'
-    +'<div class="slbl" style="margin-top:16px"><b>//</b> プロトコル別</div>'
+    +'<div class="slbl" style="margin-top:14px"><b>//</b> プロトコル別</div>'
     +'<div class="a-grid">'+perProto+'</div>';
 }
 
@@ -381,6 +478,7 @@ buildPills('asel',function(n,b){toggleMulti(anaSel,n,b,'acnt',3,renderAna)},true
 buildFilterChips('fbar','all',function(f){filt=f;renderList()});
 buildFilterChips('ofbar','all',function(f){oppFilt=f;renderOpp()});
 document.getElementById('ofbar').style.display='none';
+buildLookup();
 renderList();
 </script>
 </body>

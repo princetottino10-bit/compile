@@ -1,0 +1,190 @@
+import sys, io, json, re
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+import openpyxl
+
+wb = openpyxl.load_workbook('Compile ｶｰﾄﾞﾘｽﾄ.xlsx', data_only=True)
+
+def fw_to_int(v):
+    if v is None: return 0
+    if isinstance(v, (int, float)): return int(v)
+    s = str(v)
+    fw = '０１２３４５６７８９'
+    hw = '0123456789'
+    for f, h in zip(fw, hw):
+        s = s.replace(f, h)
+    try: return int(s)
+    except: return 0
+
+def classify(text, proto_name, value):
+    if not text: return []
+    types = []
+
+    # Draw
+    if re.search(r'引[くき]|ドロー', text):
+        types.append('draw')
+
+    # Delete: exclude self-only delete
+    if re.search(r'削除', text):
+        # Skip cards that only talk about preventing/referencing own deletion
+        if re.search(r'削除する代わりに', text):
+            pass  # SPEED 2: prevents own deletion
+        else:
+            sentences = [s for s in re.split(r'[。、]', text) if '削除' in s]
+            has_other_target = False
+            for s in sentences:
+                if '相手' in s:
+                    has_other_target = True
+                elif '他の' in s and '削除' in s:
+                    has_other_target = True  # "他のカードを削除" targets others
+                elif 'このカードを削除' in s and '他の' not in s:
+                    pass  # self-delete only
+                elif 'あなたの' in s and '相手' not in s and '他の' not in s:
+                    pass  # self-only like "あなたのカードを削除"
+                else:
+                    has_other_target = True
+            if has_other_target:
+                types.append('delete')
+
+    # Flip
+    if re.search(r'反転', text):
+        types.append('flip')
+    # Shift
+    if re.search(r'移動', text):
+        types.append('shift')
+    # Return
+    if re.search(r'戻す|戻し', text):
+        types.append('return')
+    # Rearrange
+    if re.search(r'並べ替え|入れ替え', text):
+        types.append('rearrange')
+    # Discard (opponent only)
+    if re.search(r'相手.*捨て札', text):
+        types.append('discard')
+    # Play
+    if re.search(r'プレイ', text):
+        types.append('play')
+
+    # PSYCHIC value 1: override to 'other' only
+    if proto_name == 'PSYCHIC' and value == 1:
+        return ['other']
+
+    # Value 5 cards: tag 'five'
+    if value == 5:
+        return ['five']
+
+    if not types:
+        types.append('other')
+    return types
+
+main_protocols = ['DARKNESS','DEATH','FIRE','GRAVITY','LIFE','LIGHT','METAL','PLAGUE','PSYCHIC','SPEED','SPIRIT','WATER']
+aux_protocols = ['APATHY','HATE','LOVE']
+all_protocols = sorted(main_protocols) + sorted(aux_protocols)
+
+colors = {
+    'APATHY':'#9E9E9E','DARKNESS':'#6A1B9A','DEATH':'#37474F','FIRE':'#E53935',
+    'GRAVITY':'#5D4037','HATE':'#B71C1C','LIFE':'#43A047','LIGHT':'#FDD835',
+    'LOVE':'#EC407A','METAL':'#78909C','PLAGUE':'#827717','PSYCHIC':'#7E57C2',
+    'SPEED':'#FF8F00','SPIRIT':'#26C6DA','WATER':'#1E88E5'
+}
+
+# Codex clarifications in Japanese
+codex = {
+    'DEATH_1': '\u3010\u660e\u78ba\u5316\u3011DEATH 0\u306e\u4e2d\u6bb5\u30b3\u30de\u30f3\u30c9\u304c\u767a\u52d5\u3057\u305f\u3068\u304d\u3001\u30aa\u30fc\u30ca\u30fc\u306f\u51e6\u7406\u304c\u5fc5\u8981\u306a\u30e9\u30a4\u30f3\u3092\u78ba\u8a8d\u3059\u308b\u3002\u6b21\u306b\u51e6\u7406\u3059\u308b\u30e9\u30a4\u30f3\u30921\u3064\u305a\u3064\u9078\u3073\u3001\u5404\u30e9\u30a4\u30f3\u3067\u8986\u308f\u308c\u3066\u3044\u306a\u3044\u30ab\u30fc\u30c9\u30921\u679a\u9078\u3093\u3067\u524a\u9664\u3057\u3001\u305d\u306e\u524a\u9664\u306e\u7d50\u679c\u3092\u51e6\u7406\u3057\u3066\u304b\u3089\u6b21\u306e\u30e9\u30a4\u30f3\u306b\u79fb\u308b\u3002',
+    'DEATH_2': '\u3010\u30a8\u30e9\u30c3\u30bf(2024/10)\u3011\u4e0a\u6bb5\u30b3\u30de\u30f3\u30c9\u306f\u300c\u958b\u59cb\uff1a\u30ab\u30fc\u30c9\u30921\u679a\u5f15\u304f\u3053\u3068\u304c\u3067\u304d\u308b\u3002\u305d\u3046\u3057\u305f\u5834\u5408\u3001\u4ed6\u306e\u30ab\u30fc\u30c9\u30921\u679a\u524a\u9664\u3057\u3001\u305d\u306e\u3042\u3068\u3053\u306e\u30ab\u30fc\u30c9\u3092\u524a\u9664\u3059\u308b\u3002\u300d\u306b\u4fee\u6b63\u3002',
+    'FIRE_1': '\u3010\u30a8\u30e9\u30c3\u30bf(2024/12)\u3011\u4e0b\u6bb5\u30b3\u30de\u30f3\u30c9\u306f\u300c\u3053\u306e\u30ab\u30fc\u30c9\u304c\u8986\u308f\u308c\u308b\u3053\u3068\u306b\u306a\u3063\u305f\u3068\u304d\uff1a\u5148\u306b\u3001\u30ab\u30fc\u30c9\u30921\u679a\u5f15\u304f\u3002\u305d\u306e\u3042\u3068\u3001\u4ed6\u306e\u30ab\u30fc\u30c9\u30921\u679a\u53cd\u8ee2\u3055\u305b\u308b\u3002\u300d\u306b\u4fee\u6b63\u3002',
+    'GRAVITY_3': '\u3010\u660e\u78ba\u5316\u3011GRAVITY 2\u306f\u53cd\u8ee2\u3057\u305f\u30ab\u30fc\u30c9\u304c\u8986\u308f\u308c\u3066\u3044\u3066\u3082\u79fb\u52d5\u3055\u305b\u308b\u3002\u300c\u305d\u306e\u30ab\u30fc\u30c9\u300d\u306f\u7279\u5b9a\u306e\u30ab\u30fc\u30c9\u3092\u6307\u3057\u3001\u8986\u308f\u308c\u305f\u30ab\u30fc\u30c9\u306e\u64cd\u4f5c\u5236\u9650\u3088\u308a\u512a\u5148\u3055\u308c\u308b\u3002',
+    'LIFE_1': '\u3010\u30a8\u30e9\u30c3\u30bf(2024/10)\u3011\u4e0a\u6bb5\u30b3\u30de\u30f3\u30c9\u306f\u300c\u7d42\u4e86\uff1a\u3053\u306e\u30ab\u30fc\u30c9\u304c\u8986\u308f\u308c\u3066\u3044\u308b\u5834\u5408\u3001\u3053\u306e\u30ab\u30fc\u30c9\u3092\u524a\u9664\u3059\u308b\u3002\u300d\u306b\u4fee\u6b63\u3002\u3053\u306e\u30ab\u30fc\u30c9\u306f\u4e0b\u6bb5\u30b3\u30de\u30f3\u30c9\u3092\u6301\u305f\u306a\u3044\u3002\n\u3010\u660e\u78ba\u5316\u3011LIFE 0\u306e\u4e2d\u6bb5\u30b3\u30de\u30f3\u30c9\u304c\u767a\u52d5\u3057\u305f\u3068\u304d\u3001\u30aa\u30fc\u30ca\u30fc\u306f\u51e6\u7406\u304c\u5fc5\u8981\u306a\u30e9\u30a4\u30f3\u3092\u78ba\u8a8d\u3057\u30011\u3064\u305a\u3064\u51e6\u7406\u3059\u308b\u3002LIFE 0\u304c\u3053\u306e\u51e6\u7406\u4e2d\u306b\u8986\u308f\u308c\u305f\u5834\u5408\u3001\u4e2d\u6bb5\u30b3\u30de\u30f3\u30c9\u306f\u505c\u6b62\u3059\u308b\u3002\n\u3010\u660e\u78ba\u5316\u3011\u30c7\u30c3\u30ad\u304b\u3089\u30ab\u30fc\u30c9\u3092\u30d7\u30ec\u30a4\u3059\u308b\u5834\u5408\u3001\u30c7\u30c3\u30ad\u304c\u7a7a\u3067\u3082\u30b7\u30e3\u30c3\u30d5\u30eb\u306f\u5f37\u5236\u3055\u308c\u306a\u3044\u3002',
+    'LIGHT_1': '\u3010\u660e\u78ba\u5316\u3011\u4e2d\u6bb5\u30b3\u30de\u30f3\u30c9\u300c\u30ab\u30fc\u30c9\u30921\u679a\u53cd\u8ee2\u3055\u305b\u308b\u3002\u305d\u306e\u30ab\u30fc\u30c9\u306e\u5024\u306b\u7b49\u3057\u3044\u679a\u6570\u306e\u30ab\u30fc\u30c9\u3092\u5f15\u304f\u3002\u300d\u306e\u51e6\u7406\uff1a\u8986\u308f\u308c\u3066\u3044\u306a\u3044\u30ab\u30fc\u30c91\u679a\u3092\u9078\u3073\u53cd\u8ee2\u3055\u305b\u3001\u767a\u52d5\u3057\u305f\u30c6\u30ad\u30b9\u30c8\u3092\u51e6\u7406\u3059\u308b\u3002\u305d\u306e\u5f8c\u3001\u305d\u306e\u30ab\u30fc\u30c9\u306e\u73fe\u5728\u306e\u5024\u306b\u7b49\u3057\u3044\u679a\u6570\u3092\u5f15\u304f\u3002\n\u3010\u88c1\u5b9a\u3011\u9078\u3093\u3060\u30ab\u30fc\u30c9\u304c\u30d7\u30ec\u30a4\u304b\u3089\u9664\u53bb\u3055\u308c\u305f\u5834\u5408\u3067\u3082\u3001\u300c\u305d\u306e\u30ab\u30fc\u30c9\u300d\u3067\u76f4\u63a5\u53c2\u7167\u3055\u308c\u308b\u305f\u3081\u3001\u73fe\u5728\u306e\u5024\u3092\u30c1\u30a7\u30c3\u30af\u3059\u308b\u3002',
+    'LIGHT_4': '\u3010\u660e\u78ba\u5316\u3011LIGHT 3\u3067\u79fb\u52d5\u3059\u308b\u88cf\u5411\u304d\u306e\u30ab\u30fc\u30c9\u306f\u3001\u30b9\u30bf\u30c3\u30af\u5185\u306e\u76f8\u5bfe\u7684\u306a\u4f4d\u7f6e\u3092\u7dad\u6301\u3057\u3001\u3059\u3079\u3066\u540c\u3058\u30e9\u30a4\u30f3\u306b\u79fb\u52d5\u3059\u308b\u3002',
+    'METAL_2': '\u3010\u30a8\u30e9\u30c3\u30bf(2024/12)\u3011\u4e2d\u6bb5\u30b3\u30de\u30f3\u30c9\u306f\u300c\u30ab\u30fc\u30c9\u30922\u679a\u5f15\u304f\u3002\u76f8\u624b\u306f\u6b21\u306e\u624b\u756a\u3067\u30b3\u30f3\u30d1\u30a4\u30eb\u3059\u308b\u3053\u3068\u306f\u3067\u304d\u306a\u3044\u3002\u300d\u306b\u4fee\u6b63\u3002\n\u3010\u660e\u78ba\u5316\u3011METAL 1\u306f\u30c6\u30ad\u30b9\u30c8\u304c\u898b\u3048\u3066\u3044\u308b\u9650\u308a\u3001\u76f8\u624b\u306e\u6b21\u306e\u624b\u756a\u3067\u30b3\u30f3\u30d1\u30a4\u30eb\u3092\u9632\u3050\u3002\u30d7\u30ec\u30a4\u304b\u30ea\u30d5\u30ec\u30c3\u30b7\u30e5\u3092\u9078\u3076\u5fc5\u8981\u304c\u3042\u308b\u3002',
+    'METAL_6': '\u3010\u660e\u78ba\u5316\u3011METAL 6\u304c\u4e0a\u6bb5\u30b3\u30de\u30f3\u30c9\u3067\u81ea\u8eab\u3092\u524a\u9664\u3057\u305f\u5834\u5408\u3001\u8986\u3063\u3066\u3044\u305f\u30ab\u30fc\u30c9\u306e\u30c6\u30ad\u30b9\u30c8\u304c\u767a\u52d5\u3059\u308b\u306a\u3089\u3001\u30b3\u30df\u30c3\u30c8\u3055\u308c\u305f\u30ab\u30fc\u30c9\u304c\u30d5\u30a3\u30fc\u30eb\u30c9\u306b\u5165\u308b\u524d\u306b\u767a\u52d5\u3059\u308b\u3002\n\u3010\u660e\u78ba\u5316\u3011METAL 6\u304c\u53cd\u8ee2\u306e\u7d50\u679c\u3068\u3057\u3066\u81ea\u8eab\u3092\u524a\u9664\u3057\u305f\u5834\u5408\u3001\u300c\u53cd\u8ee2\u300d\u30b3\u30de\u30f3\u30c9\u306f\u6d88\u8cbb\u3055\u308c\u3001\u4ed6\u306e\u30ab\u30fc\u30c9\u3084\u6368\u3066\u672d\u306eMETAL 6\u306b\u306f\u4f7f\u3048\u306a\u3044\u3002',
+    'PLAGUE_4': '\u3010\u30a8\u30e9\u30c3\u30bf(2025/9)\u3011\u4e2d\u6bb5\u30b3\u30de\u30f3\u30c9\u306f\u300c\u8986\u308f\u308c\u3066\u3044\u306a\u3044\u3001\u8868\u5411\u304d\u306e\u4ed6\u306e\u30ab\u30fc\u30c9\u3092\u305d\u308c\u305e\u308c\u53cd\u8ee2\u3055\u305b\u308b\u3002\u300d\u306b\u4fee\u6b63\u3002\u6a5f\u80fd\u306b\u5909\u66f4\u306f\u306a\u3044\u304c\u3001\u610f\u56f3\u3092\u3088\u308a\u660e\u78ba\u306b\u3057\u305f\u3002\n\u3010\u660e\u78ba\u5316\u3011\u300call\u300d\u3067\u306f\u306a\u304f\u300ceach\u300d\u306a\u306e\u3067\u3001\u8986\u308f\u308c\u3066\u3044\u306a\u3044\u30ab\u30fc\u30c9\u306e\u307f\u304c\u5bfe\u8c61\u3002\u767a\u52d5\u6642\u3001\u8986\u308f\u308c\u3066\u3044\u306a\u3044\u8868\u5411\u304d\u306e\u30ab\u30fc\u30c9\u3092\u305d\u308c\u305e\u308c\u78ba\u8a8d\u3057\u30011\u679a\u305a\u3064\u51e6\u7406\u3059\u308b\u3002',
+    'SPEED_3': '\u3010\u660e\u78ba\u5316\u3011\u30b3\u30f3\u30d1\u30a4\u30eb\u6642\u3001\u30e9\u30a4\u30f3\u5185\u306e\u3059\u3079\u3066\u306e\u30ab\u30fc\u30c9\u304c\u540c\u6642\u306b\u524a\u9664\u3055\u308c\u308b\u3002SPEED 2\u304c\u3053\u306e\u65b9\u6cd5\u3067\u524a\u9664\u3055\u308c\u308b\u5834\u5408\u3001\u4ee3\u308f\u308a\u306b\u4ed6\u306e\u30e9\u30a4\u30f3\u306b\u79fb\u52d5\u3055\u305b\u308b\u3002SPEED 2\u306e\u524a\u9664\u306e\u307f\u304c\u9632\u304c\u308c\u3001\u30b3\u30f3\u30d1\u30a4\u30eb\u81ea\u4f53\u306f\u5909\u66f4\u3055\u308c\u306a\u3044\u3002',
+    'SPIRIT_1': '\u3010\u660e\u78ba\u5316\u3011\u30ea\u30d5\u30ec\u30c3\u30b7\u30e5\u306e\u6307\u793a\u306b\u5f93\u3046\u5834\u5408\u3001\u30b3\u30f3\u30c8\u30ed\u30fc\u30eb\u30b3\u30f3\u30dd\u30fc\u30cd\u30f3\u30c8\u306e\u4f7f\u7528\u3092\u542b\u3080\u901a\u5e38\u306e\u30ea\u30d5\u30ec\u30c3\u30b7\u30e5\u30a2\u30af\u30b7\u30e7\u30f3\u3068\u306a\u308b\u3002',
+    'SPIRIT_2': '\u3010\u30a8\u30e9\u30c3\u30bf(2024/10)\u3011\u4e0a\u6bb5\u30b3\u30de\u30f3\u30c9\u306f\u300c\u3042\u306a\u305f\u304c\u30ab\u30fc\u30c9\u3092\u8868\u5411\u304d\u3067\u30d7\u30ec\u30a4\u3059\u308b\u3068\u304d\u306b\u306f\u3001\u30d7\u30ed\u30c8\u30b3\u30eb\u3092\u5bfe\u5fdc\u3055\u305b\u305a\u306b\u30d7\u30ec\u30a4\u3059\u308b\u3053\u3068\u304c\u3067\u304d\u308b\u3002\u300d\u306b\u4fee\u6b63\u3002',
+    'WATER_2': '\u3010\u660e\u78ba\u5316\u3011WATER 1\u306e\u4e2d\u6bb5\u30b3\u30de\u30f3\u30c9\u304c\u767a\u52d5\u3057\u305f\u3068\u304d\u3001\u30aa\u30fc\u30ca\u30fc\u306f\u51e6\u7406\u304c\u5fc5\u8981\u306a\u30e9\u30a4\u30f3\u3092\u78ba\u8a8d\u3057\u30011\u3064\u305a\u3064\u51e6\u7406\u3059\u308b\u3002\n\u3010\u660e\u78ba\u5316\u3011\u30c7\u30c3\u30ad\u304b\u3089\u30ab\u30fc\u30c9\u3092\u30d7\u30ec\u30a4\u3059\u308b\u5834\u5408\u3001\u30c7\u30c3\u30ad\u304c\u7a7a\u3067\u3082\u30b7\u30e3\u30c3\u30d5\u30eb\u306f\u5f37\u5236\u3055\u308c\u306a\u3044\u3002',
+    'HATE_3': '\u3010\u30a8\u30e9\u30c3\u30bf(2024/10)\u3011\u4e2d\u6bb5\u30b3\u30de\u30f3\u30c9\u306f\u300c\u5024\u304c\u6700\u3082\u5927\u304d\u304f\u8986\u308f\u308c\u3066\u3044\u306a\u3044\u3042\u306a\u305f\u306e\u30ab\u30fc\u30c9\u30921\u679a\u524a\u9664\u3059\u308b\u3002\u5024\u304c\u6700\u3082\u5927\u304d\u304f\u8986\u308f\u308c\u3066\u3044\u306a\u3044\u76f8\u624b\u306e\u30ab\u30fc\u30c9\u30921\u679a\u524a\u9664\u3059\u308b\u3002\u300d\u306b\u4fee\u6b63\u3002\n\u3010\u660e\u78ba\u5316\u3011\u6700\u5927\u5024\u304c\u540c\u5024\u306e\u5834\u5408\u3001\u30d7\u30ec\u30a4\u30e4\u30fc\u304c1\u679a\u3092\u9078\u3076\u3002\n\u3010\u660e\u78ba\u5316\u3011HATE 2\u304c\u3042\u306a\u305f\u306e\u6700\u5927\u5024\u30ab\u30fc\u30c9\u3067\u3042\u308b\u5834\u5408\u3001\u6700\u521d\u306e\u6761\u4ef6\u3067\u81ea\u8eab\u3092\u524a\u9664\u3059\u308b\u3002\u305d\u306e\u7d50\u679c\u30012\u756a\u76ee\u306e\u6761\u4ef6\u306f\u767a\u52d5\u3057\u306a\u3044\u3002',
+}
+
+protocols_data = []
+for pname in all_protocols:
+    ws = wb[pname]
+    header = str(ws.cell(1, 3).value or '')
+    tags = ''
+    if header.find('\u3010') >= 0 and header.find('\u3011') >= 0:
+        tags = header[header.index('\u3010')+1:header.index('\u3011')]
+    set_name = 'Aux 1' if pname in aux_protocols else 'Main 1'
+    cards = []
+    card_num = 1
+    row = 2
+    while row + 2 <= 19:
+        value = fw_to_int(ws.cell(row, 1).value)
+        upper_eff = str(ws.cell(row, 3).value).strip() if ws.cell(row, 3).value else ''
+        middle_eff = str(ws.cell(row+1, 3).value).strip() if ws.cell(row+1, 3).value else ''
+        lower_eff = str(ws.cell(row+2, 3).value).strip() if ws.cell(row+2, 3).value else ''
+        all_text = ' '.join([upper_eff, middle_eff, lower_eff])
+        etypes = classify(all_text, pname, value)
+        card_id = pname + '_' + str(card_num)
+        card = {
+            'id': card_id,
+            'number': card_num,
+            'value': value,
+            'upper': upper_eff,
+            'middle': middle_eff,
+            'lower': lower_eff,
+            'effectTypes': etypes
+        }
+        if card_id in codex:
+            card['codex'] = codex[card_id]
+        cards.append(card)
+        card_num += 1
+        row += 3
+    protocol = {
+        'name': pname,
+        'displayName': pname,
+        'tags': tags,
+        'color': colors.get(pname, '#666'),
+        'set': set_name,
+        'cards': cards
+    }
+    protocols_data.append(protocol)
+
+data = {'protocols': protocols_data}
+with open('data/cards.json', 'w', encoding='utf-8') as f:
+    json.dump(data, f, ensure_ascii=False, indent=2)
+
+# Verify
+print('=== Delete tag check ===')
+for p in protocols_data:
+    for c in p['cards']:
+        all_text = ' '.join([c['upper'], c['middle'], c['lower']])
+        if '\u524a\u9664' in all_text:
+            has_tag = 'delete' in c['effectTypes']
+            print(p['name'] + ' #' + str(c['number']) + ' v=' + str(c['value']) + ' [' + ('DELETE' if has_tag else 'excluded') + '] ' + all_text[:50])
+
+print('')
+print('=== Value 5 cards ===')
+for p in protocols_data:
+    for c in p['cards']:
+        if c['value'] == 5:
+            print(p['name'] + ' #' + str(c['number']) + ' tags=' + str(c['effectTypes']))
+
+print('')
+print('=== PSYCHIC v1 ===')
+for p in protocols_data:
+    if p['name'] == 'PSYCHIC':
+        for c in p['cards']:
+            if c['value'] == 1:
+                print('tags=' + str(c['effectTypes']))
+
+print('')
+print('=== Codex entries ===')
+cnt = 0
+for p in protocols_data:
+    for c in p['cards']:
+        if 'codex' in c:
+            cnt += 1
+            print(p['name'] + ' #' + str(c['number']))
+print('Total codex entries: ' + str(cnt))
+print('')
+print('JSON saved.')
