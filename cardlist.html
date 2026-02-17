@@ -140,8 +140,17 @@
     .nores{text-align:center;padding:40px 16px;color:var(--txdd)}
     .nores .ico{font-size:2rem;margin-bottom:10px;opacity:.3}
 
-    /* Lookup mode */
-    .lookup-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;align-items:center}
+    /* Matrix */
+    .matrix-wrap{overflow-x:auto;margin-bottom:12px;-webkit-overflow-scrolling:touch}
+    .matrix{border-collapse:collapse;width:100%;min-width:480px;font-size:0.65rem}
+    .matrix th,.matrix td{padding:6px 4px;text-align:center;border:1px solid var(--bd)}
+    .matrix th{font-family:'Orbitron',monospace;font-weight:700;font-size:0.6rem;color:var(--txd);background:var(--cbg);position:sticky;top:0}
+    .matrix th:first-child{text-align:left;padding-left:8px;min-width:80px}
+    .matrix .m-pname{font-family:'Orbitron',monospace;font-weight:700;font-size:0.62rem;text-align:left;padding-left:8px;white-space:nowrap}
+    .matrix td.m-cell{cursor:pointer;transition:all .15s;border-radius:0;font-family:'Orbitron',monospace;font-weight:700;font-size:0.7rem}
+    .matrix td.m-cell:hover,.matrix td.m-cell:active{background:var(--chip-on-bg)}
+    .matrix td.m-cell.on{background:var(--pk);color:#fff}
+    .matrix td.m-empty{color:var(--empty-color);font-size:0.6rem}
 
     /* Analysis */
     .a-grid{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
@@ -207,14 +216,9 @@
   </div>
 
   <div id="v-lookup" class="sec">
-    <div class="slbl"><b>//</b> プロトコル + Value で逆引き <button class="clear-btn" onclick="clearLookup()">リセット</button></div>
-    <div class="pills" id="lkProto"></div>
-    <div class="lookup-row">
-      <span style="font-size:0.65rem;color:var(--txd);font-weight:700">VALUE:</span>
-      <div class="chips" id="lkVal" style="margin-bottom:0"></div>
-    </div>
+    <div class="slbl"><b>//</b> 逆引きマトリクス</div>
+    <div class="matrix-wrap" id="matrixWrap"></div>
     <div class="cards" id="lkResult"></div>
-    <div class="nores" id="lknores"><div class="ico">&#x1F50D;</div><p>プロトコルとValueを選択してください</p></div>
   </div>
 
   <div id="v-ana" class="sec">
@@ -241,6 +245,7 @@ const EL={draw:'引く',delete:'削除',flip:'反転',shift:'移動',return:'戻
 const EC={draw:'#3b82f6',delete:'#ef4444',flip:'#a855f7',shift:'#f59e0b',return:'#14b8a6',rearrange:'#8b5cf6',discard:'#6b7280',play:'#22c55e',five:'#94a3b8',other:'#64748b'};
 
 var mode='list',listSel=[],filt='all',anaSel=[],lkProto=null,lkVal=null,viewMode='tile',anaFilt=null;
+
 
 // Theme
 var curTheme=localStorage.getItem('compile-theme')||(window.matchMedia('(prefers-color-scheme:light)').matches?'light':'dark');
@@ -415,57 +420,48 @@ function toggleMulti(arr,name,btn,cntId,max,render){
   render();
 }
 
-// Lookup mode
-function buildLookup(){
-  var el=document.getElementById('lkProto');el.innerHTML='';
+// Lookup mode - matrix
+function buildMatrix(){
+  var wrap=document.getElementById('matrixWrap');
+  // Collect all values across all protocols
+  var vals=[];
+  DATA.protocols.forEach(function(p){p.cards.forEach(function(c){if(vals.indexOf(c.value)<0)vals.push(c.value)})});
+  vals.sort(function(a,b){return a-b});
+  var html='<table class="matrix"><thead><tr><th></th>';
+  vals.forEach(function(v){html+='<th>'+v+'</th>'});
+  html+='</tr></thead><tbody>';
   DATA.protocols.forEach(function(p){
-    var b=document.createElement('button');
-    b.className='pill'+(p.set!=='Main 1'?' set-aux':'');
-    b.textContent=p.name;b.dataset.p=p.name;
-    b.onclick=function(){
-      lkProto=p.name;
-      el.querySelectorAll('.pill').forEach(function(x){
-        var on=x.dataset.p===p.name;
-        x.classList.toggle('on',on);
-        if(on){x.style.color=p.color;x.style.borderColor=p.color}
-        else{x.style.color='';x.style.borderColor=''}
-      });
-      renderLookup();
-    };
-    el.appendChild(b);
+    html+='<tr><td class="m-pname" style="color:'+p.color+'">'+p.name+'</td>';
+    vals.forEach(function(v){
+      var found=p.cards.filter(function(c){return c.value===v});
+      if(found.length){
+        html+='<td class="m-cell" data-p="'+p.name+'" data-v="'+v+'" style="color:'+p.color+'">'+found.length+'</td>';
+      } else {
+        html+='<td class="m-empty">-</td>';
+      }
+    });
+    html+='</tr>';
   });
-  var vel=document.getElementById('lkVal');vel.innerHTML='';
-  for(var v=0;v<=8;v++){
-    (function(val){
-      var b=document.createElement('button');
-      b.className='chip';b.textContent=val;b.dataset.v=val;
-      b.onclick=function(){
-        lkVal=val;
-        vel.querySelectorAll('.chip').forEach(function(x){x.classList.toggle('on',parseInt(x.dataset.v)===val)});
-        renderLookup();
-      };
-      vel.appendChild(b);
-    })(v);
-  }
-}
-
-function clearLookup(){
-  lkProto=null;lkVal=null;
-  document.querySelectorAll('#lkProto .pill').forEach(function(b){b.classList.remove('on');b.style.color='';b.style.borderColor=''});
-  document.querySelectorAll('#lkVal .chip').forEach(function(c){c.classList.remove('on')});
-  renderLookup();
+  html+='</tbody></table>';
+  wrap.innerHTML=html;
+  wrap.querySelectorAll('.m-cell').forEach(function(cell){
+    cell.addEventListener('click',function(){
+      var wasOn=cell.classList.contains('on');
+      wrap.querySelectorAll('.m-cell.on').forEach(function(c){c.classList.remove('on')});
+      if(wasOn){lkProto=null;lkVal=null}
+      else{lkProto=cell.dataset.p;lkVal=parseInt(cell.dataset.v);cell.classList.add('on')}
+      renderLookup();
+    });
+  });
 }
 
 function renderLookup(){
   var res=document.getElementById('lkResult');res.innerHTML='';
   res.classList.toggle('row-view',viewMode==='row');
-  var nr=document.getElementById('lknores');
-  if(lkProto===null||lkVal===null){nr.style.display='';return}
-  nr.style.display='none';
+  if(lkProto===null||lkVal===null)return;
   var p=DATA.protocols.find(function(x){return x.name===lkProto});
-  if(!p){nr.style.display='';return}
+  if(!p)return;
   var found=p.cards.filter(function(c){return c.value===lkVal});
-  if(!found.length){res.innerHTML='<div class="nores" style="padding:20px"><p>該当するカードはありません</p></div>';return}
   found.forEach(function(c){res.appendChild(mkCard(c,p))});
 }
 
@@ -530,7 +526,7 @@ function renderAna(){
 buildPills('pbar',function(n,b){toggleListProto(n,b)},true);
 buildPills('asel',function(n,b){toggleMulti(anaSel,n,b,'acnt',3,renderAna)},true);
 buildFilterChips('fbar','all',function(f){filt=f;renderList()});
-buildLookup();
+buildMatrix();
 renderList();
 </script>
 </body>
