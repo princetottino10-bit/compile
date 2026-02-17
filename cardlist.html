@@ -477,9 +477,9 @@ function renderAna(){
   }
   ct.innerHTML=
     '<div class="a-grid"><div class="a-card"><h3>効果種別分布</h3><div class="bars" id="anaBars">'+barHtml+'</div></div></div>'
+    +filteredHtml
     +'<div class="slbl" style="margin-top:14px"><b>//</b> プロトコル別</div>'
-    +'<div class="a-grid" id="anaPerProto">'+perProto+'</div>'
-    +filteredHtml;
+    +'<div class="a-grid" id="anaPerProto">'+perProto+'</div>';
   // Attach click handlers to bar rows
   ct.querySelectorAll('.brow[data-tag]').forEach(function(row){
     row.addEventListener('click',function(){anaFilterTag(row.dataset.tag)});
