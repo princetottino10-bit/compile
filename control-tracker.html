@@ -571,15 +571,15 @@
     // Decide physical landing side: top or bottom
     const landOnTop = Math.random() < 0.5;
 
-    // Snapshot current physical positions before any flip
+    // Use the same positions as normal control (below each PLAYER name)
     const pos = getPositions();
-    const topPos = Math.min(pos.p1, pos.p2);
-    const bottomPos = Math.max(pos.p1, pos.p2);
+    const p1Pos = pos.p1; // below PLAYER 1 name (bottom zone)
+    const p2Pos = pos.p2; // below PLAYER 2 name (top zone)
 
-    // Ensure last animation frame matches result (odd=top, even=bottom)
+    // Ensure last animation frame matches result (odd=p2, even=p1)
     const totalSteps = landOnTop ? 15 : 14;
     let step = 0;
-    let showingTop = false;
+    let showingP2 = false;
 
     marker.classList.add('spinning');
     // Disable smooth transition for snappy bouncing
@@ -587,14 +587,14 @@
     marker.style.transition = 'box-shadow 0.4s, border-color 0.4s, background 0.4s';
 
     function tick() {
-      showingTop = !showingTop;
+      showingP2 = !showingP2;
       marker.className = 'marker spinning';
-      if (showingTop) {
+      if (showingP2) {
         marker.classList.add('p2-owns');
-        marker.style.top = topPos + 'px';
+        marker.style.top = p2Pos + 'px';
       } else {
         marker.classList.add('p1-owns');
-        marker.style.top = bottomPos + 'px';
+        marker.style.top = p1Pos + 'px';
       }
       if (navigator.vibrate) navigator.vibrate(15);
 
