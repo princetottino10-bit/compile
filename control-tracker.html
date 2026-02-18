@@ -571,10 +571,11 @@
     // Decide physical landing side: top or bottom
     const landOnTop = Math.random() < 0.5;
 
-    // Use the same positions as normal control (below each PLAYER name)
-    const pos = getPositions();
-    const p1Pos = pos.p1; // below PLAYER 1 name (bottom zone)
-    const p2Pos = pos.p2; // below PLAYER 2 name (top zone)
+    // Visual bounce positions (not used for final placement)
+    const vh = window.innerHeight;
+    const markerH = 130;
+    const bounceTop = vh * 0.15;              // upper bounce target
+    const bounceBottom = vh * 0.85 - markerH; // lower bounce target
 
     // Ensure last animation frame matches result (odd=p2, even=p1)
     const totalSteps = landOnTop ? 15 : 14;
@@ -591,10 +592,10 @@
       marker.className = 'marker spinning';
       if (showingP2) {
         marker.classList.add('p2-owns');
-        marker.style.top = p2Pos + 'px';
+        marker.style.top = bounceTop + 'px';
       } else {
         marker.classList.add('p1-owns');
-        marker.style.top = p1Pos + 'px';
+        marker.style.top = bounceBottom + 'px';
       }
       if (navigator.vibrate) navigator.vibrate(15);
 
@@ -620,7 +621,7 @@
           document.body.classList.remove('flipped');
         }
 
-        // Recalc after layout change, then update
+        // Recalc after layout change, then use unified getPositions()
         setTimeout(function() {
           updateVisuals();
           hapticFeedback();
@@ -631,7 +632,6 @@
     }
 
     // Move marker to center first
-    const vh = window.innerHeight;
     marker.style.top = (vh / 2 - 65) + 'px';
     setTimeout(tick, 200);
   }
