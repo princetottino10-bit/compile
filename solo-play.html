@@ -136,12 +136,14 @@
     .fbtn:active{background:rgba(255,255,255,.15)}
 
     /* trash */
-    #trash{height:28px;display:flex;align-items:center;justify-content:center;gap:6px;
+    .trash-zone{height:28px;display:flex;align-items:center;justify-content:center;gap:6px;
            background:rgba(239,68,68,.05);border:2px dashed rgba(239,68,68,.25);
            border-radius:8px;margin:2px 6px;font-size:.62rem;color:rgba(239,68,68,.5);
            font-weight:700;letter-spacing:.5px;
            transition:all .15s;flex-shrink:0;cursor:pointer}
-    #trash.over{background:rgba(239,68,68,.18);border-color:#ef4444;color:#ef4444;border-style:solid}
+    .trash-zone.over{background:rgba(239,68,68,.18);border-color:#ef4444;color:#ef4444;border-style:solid}
+    .trash-zone.p2trash{background:rgba(200,168,78,.05);border-color:rgba(200,168,78,.25);color:rgba(200,168,78,.5)}
+    .trash-zone.p2trash.over{background:rgba(200,168,78,.18);border-color:#c8a84e;color:#c8a84e;border-style:solid}
 
     /* deck bar */
     .dbar{display:flex;align-items:center;gap:6px;padding:3px 8px;background:var(--cbg);
@@ -160,25 +162,28 @@
     .u-btn:not(:disabled):active{background:rgba(255,255,255,.1)}
 
     /* hand */
-    .hand{display:flex;gap:5px;overflow-x:auto;padding:4px 8px;background:var(--dk);
-          border-top:1px solid var(--bd2);min-height:68px;align-items:flex-start;
+    .hand{display:flex;flex-wrap:nowrap;gap:5px;overflow-x:auto;padding:4px 8px;background:var(--dk);
+          border-top:1px solid var(--bd2);min-height:96px;align-items:flex-start;
           -webkit-overflow-scrolling:touch;scrollbar-width:none;flex-shrink:0}
     .hand::-webkit-scrollbar{display:none}
     .hand.over{background:rgba(233,30,140,.08);border-color:var(--pk)}
     .hand.p2h{background:rgba(200,168,78,.03);border-top:none;border-bottom:1px solid var(--bd2)}
     .hand.p2h.over{background:rgba(200,168,78,.1);border-color:#c8a84e}
-    .hcard{flex-shrink:0;width:72px;height:78px;border-radius:7px;padding:5px;
+    .hcard{flex-shrink:0;width:74px;height:108px;border-radius:7px;padding:5px;
            display:flex;flex-direction:column;gap:2px;position:relative;touch-action:none;cursor:grab}
     .hcard.up{border:1.5px solid}
     .hcard.dn{background:var(--dn-bg);border:1.5px dashed var(--dn-bd)}
     .hcard .hv{font-family:Orbitron,monospace;font-size:.88rem;font-weight:900}
     .hcard .hn{font-family:Orbitron,monospace;font-size:.46rem;font-weight:700;
                white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .hcard .hc{font-size:.42rem;color:var(--txd);overflow:hidden;text-overflow:ellipsis;
-               white-space:nowrap;flex:1;line-height:1.3}
     .hcard .hb{display:flex;align-items:center;justify-content:center;flex:1;
                font-size:.9rem;opacity:.4;color:var(--txdd)}
     .hcard .fbtn{width:16px;height:16px;font-size:.4rem}
+    .hcmds{display:flex;flex-direction:column;gap:1px;flex:1;overflow:hidden}
+    .hcmd{font-size:.36rem;line-height:1.25;color:var(--tx);overflow:hidden;text-overflow:ellipsis;
+          white-space:nowrap;padding:1px 3px;border-radius:2px}
+    .hcmd.hcup{background:rgba(239,68,68,.1)}.hcmd.hcmid{background:rgba(59,130,246,.1)}.hcmd.hclow{background:rgba(34,197,94,.1)}
+    .hcl{font-family:Orbitron,monospace;font-weight:700;font-size:.3rem;margin-right:2px}
 
     /* ghost */
     #ghost{position:fixed;pointer-events:none;z-index:500;opacity:.85;
@@ -303,8 +308,10 @@
       <span class="d-info" id="d2t">T:0</span>
       <span class="d-info" id="d2i" style="display:none"></span>
       <span class="spacer"></span>
+      <button class="u-btn" id="oppDraw2" onclick="drawOpp(2)" style="font-size:.44rem;display:none">P1 DECK&rarr;</button>
       <button class="u-btn" id="h2tog" onclick="togH2()" style="font-size:.48rem">P2 HAND</button>
     </div>
+    <div class="trash-zone p2trash" id="trash2" onclick="openTr(2)"><span>P2 TRASH</span><span id="trCnt2"></span></div>
   </div>
   <!-- Field area -->
   <div id="field">
@@ -319,12 +326,13 @@
     </div>
   </div>
   <!-- P1 bottom area (symmetric: field → trash → deck → hand) -->
-  <div id="trash" onclick="openTr()"><span>TRASH</span><span id="trCnt"></span></div>
+  <div class="trash-zone" id="trash" onclick="openTr(1)"><span id="trLbl">TRASH</span><span id="trCnt1"></span></div>
   <div class="dbar">
     <button class="d-btn" id="d1d">DECK:0</button>
     <span class="d-info" id="d1t">T:0</span>
     <span class="d-info" id="d1i" style="display:none"></span>
     <span class="spacer"></span>
+    <button class="u-btn" id="oppDraw1" onclick="drawOpp(1)" style="font-size:.44rem;display:none">P2 DECK&rarr;</button>
     <button class="u-btn" id="uBtn" onclick="doUndo()" disabled>UNDO</button>
   </div>
   <div class="hand" id="h1"></div>
@@ -342,7 +350,7 @@
 <div class="ov" id="trOv">
   <div class="ov-box">
     <div class="ov-hdr">
-      <span class="ov-ttl">TRASH</span>
+      <span class="ov-ttl" id="trOvTtl">TRASH</span>
       <button class="m-x" onclick="closeTr()">&times;</button>
     </div>
     <div id="trList"></div>
@@ -459,6 +467,9 @@ function go(){
   document.getElementById('p2sec').style.display=b?'':'none';
   document.getElementById('fdiv').style.display=b?'':'none';
   document.getElementById('p1lbl').innerHTML=b?'<span class="ptag p1">P1 FIELD</span>':'';
+  document.getElementById('trLbl').textContent=b?'P1 TRASH':'TRASH';
+  document.getElementById('oppDraw1').style.display=b?'':'none';
+  document.getElementById('oppDraw2').style.display=b?'':'none';
   mkLines(1);if(b)mkLines(2);
   initDeckDrag(1);if(b)initDeckDrag(2);
   renderAll();
@@ -558,8 +569,13 @@ function mkHCard(cr,pn){
   el.className='hcard '+(cr.up?'up':'dn');
   if(cr.up){
     el.style.borderColor=cr.proto.color;el.style.background=cr.proto.color+'15';el.style.color=cr.proto.color;
-    var cm=cr.card.m||cr.card.u||cr.card.l||'';if(cm.length>18)cm=cm.substring(0,18)+'…';
-    el.innerHTML='<div class="hv">'+cr.card.v+'</div><div class="hn">'+cr.proto.name+'</div><div class="hc">'+esc(cm)+'</div>';
+    var html='<div class="hv">'+cr.card.v+'</div><div class="hn">'+cr.proto.name+'</div>';
+    html+='<div class="hcmds">';
+    if(cr.card.u){var tu=cr.card.u;if(tu.length>22)tu=tu.substring(0,22)+'…';html+='<div class="hcmd hcup"><span class="hcl lup">U</span>'+esc(tu)+'</div>';}
+    if(cr.card.m){var tm=cr.card.m;if(tm.length>22)tm=tm.substring(0,22)+'…';html+='<div class="hcmd hcmid"><span class="hcl lmid">M</span>'+esc(tm)+'</div>';}
+    if(cr.card.l){var tl=cr.card.l;if(tl.length>22)tl=tl.substring(0,22)+'…';html+='<div class="hcmd hclow"><span class="hcl llow">L</span>'+esc(tl)+'</div>';}
+    html+='</div>';
+    el.innerHTML=html;
   } else {
     el.innerHTML='<div class="hb">?</div>';
   }
@@ -574,7 +590,7 @@ function mkHCard(cr,pn){
 function rDbar(pn){
   var ps=GS.p[pn],pr=pn===1?'d1':'d2';
   var total=ps.deck.length+ps.trash.length;
-  document.getElementById(pr+'d').textContent='DECK:'+ps.deck.length+(ps.trash.length?'(+'+ps.trash.length+')':'');
+  document.getElementById(pr+'d').textContent='DECK:'+ps.deck.length;
   document.getElementById(pr+'d').disabled=!total;
   document.getElementById(pr+'i').textContent='';
   document.getElementById(pr+'t').textContent='T:'+ps.trash.length;
@@ -632,8 +648,12 @@ function initDeckDrag(pn){
 }
 
 function rTrash(){
-  var t=GS.p[1].trash.length;if(GS.mode==='both')t+=GS.p[2].trash.length;
-  document.getElementById('trCnt').textContent=t?'('+t+')':'';
+  var t1=GS.p[1].trash.length;
+  document.getElementById('trCnt1').textContent=t1?'('+t1+')':'';
+  if(GS.mode==='both'){
+    var t2=GS.p[2].trash.length;
+    document.getElementById('trCnt2').textContent=t2?'('+t2+')':'';
+  }
 }
 
 /* ============ DRAG & DROP ============ */
@@ -686,7 +706,7 @@ function startGhost(el,cr,pn,x,y){
 
 function clearHL(){
   document.querySelectorAll('.line').forEach(function(l){l.classList.remove('over')});
-  document.getElementById('trash').classList.remove('over');
+  document.querySelectorAll('.trash-zone').forEach(function(t){t.classList.remove('over')});
   document.querySelectorAll('.hand').forEach(function(h){h.classList.remove('over')});
 }
 
@@ -696,7 +716,7 @@ function moveGhost(x,y){
   clearHL();
   var tgt=hitTest(x,y);
   if(tgt&&tgt.type==='line')tgt.el.classList.add('over');
-  if(tgt&&tgt.type==='trash')document.getElementById('trash').classList.add('over');
+  if(tgt&&tgt.type==='trash')document.getElementById(tgt.pn===2?'trash2':'trash').classList.add('over');
   if(tgt&&tgt.type==='hand')document.getElementById(tgt.pn===1?'h1':'h2').classList.add('over');
 }
 
@@ -725,19 +745,28 @@ function endGhost(x,y){
 }
 
 function hitTest(x,y){
-  var trEl=document.getElementById('trash');
-  var trTop=trEl.getBoundingClientRect().top;
+  /* check trash zones first (exact bounds) */
+  var trZones=[{el:document.getElementById('trash'),pn:1}];
+  var tr2=document.getElementById('trash2');
+  if(tr2&&tr2.offsetParent!==null)trZones.push({el:tr2,pn:2});
+  for(var t=0;t<trZones.length;t++){
+    var rr=trZones[t].el.getBoundingClientRect();
+    if(x>=rr.left&&x<=rr.right&&y>=rr.top&&y<=rr.bottom)return{type:'trash',pn:trZones[t].pn};
+  }
+  /* check lines with extended hit areas */
+  var tr1Top=document.getElementById('trash').getBoundingClientRect().top;
+  var tr2Bot=(tr2&&tr2.offsetParent!==null)?tr2.getBoundingClientRect().bottom:0;
   var lines=document.querySelectorAll('.line');
   for(var i=0;i<lines.length;i++){
     if(lines[i].offsetParent===null)continue;
     var r=lines[i].getBoundingClientRect();
     var pn=parseInt(lines[i].dataset.player);
-    var bot=(pn===1)?Math.max(r.bottom,trTop-2):r.bottom;
-    if(x>=r.left&&x<=r.right&&y>=r.top&&y<=bot)return{type:'line',el:lines[i]};
+    var top=r.top,bot=r.bottom;
+    if(pn===1)bot=Math.max(r.bottom,tr1Top-2);
+    if(pn===2&&tr2Bot)top=Math.min(r.top,tr2Bot+2);
+    if(x>=r.left&&x<=r.right&&y>=top&&y<=bot)return{type:'line',el:lines[i]};
   }
-  var tr=document.getElementById('trash');
-  var rr=tr.getBoundingClientRect();
-  if(x>=rr.left&&x<=rr.right&&y>=rr.top&&y<=rr.bottom)return{type:'trash'};
+  /* check hands */
   var hands=[{el:document.getElementById('h1'),pn:1},{el:document.getElementById('h2'),pn:2}];
   for(var h=0;h<hands.length;h++){
     var he=hands[h].el;if(!he||he.offsetParent===null)continue;
@@ -755,6 +784,12 @@ function refill(ps){
   return true;
 }
 function draw(pn){var now=Date.now();if(now-lastDrawT<200)return;lastDrawT=now;var ps=GS.p[pn];if(!ps.deck.length)refill(ps);if(!ps.deck.length)return;save();var cr=ps.deck.shift();cr.up=true;ps.hand.push(cr);renderAll()}
+function drawOpp(pn){
+  if(GS.mode!=='both')return;
+  var opp=pn===1?2:1,ops=GS.p[opp];
+  if(!ops.deck.length)refill(ops);if(!ops.deck.length)return;
+  save();var cr=ops.deck.shift();cr.up=true;GS.p[pn].hand.push(cr);renderAll();
+}
 
 function removeCard(cr,pn){
   var ps=GS.p[pn];
@@ -784,23 +819,24 @@ function showLS(pn,msg,cb){
 function lsCancel(){document.getElementById('lsOv').classList.remove('on')}
 
 /* ============ TRASH VIEWER ============ */
-function openTr(){
+function openTr(pn){
   if(!GS)return;
+  pn=pn||1;
+  var ps=GS.p[pn];
+  document.getElementById('trOvTtl').textContent=(GS.mode==='both'?'P'+pn+' ':'')+'TRASH';
   var el=document.getElementById('trList');el.innerHTML='';
-  var items=[];
-  GS.p[1].trash.forEach(function(cr){items.push({cr:cr,pn:1})});
-  if(GS.mode==='both')GS.p[2].trash.forEach(function(cr){items.push({cr:cr,pn:2})});
+  var items=ps.trash;
   document.getElementById('trE').style.display=items.length?'none':'';
-  items.forEach(function(it){
-    var cr=it.cr,pn=it.pn,row=document.createElement('div');row.className='tr-row';
+  items.forEach(function(cr){
+    var row=document.createElement('div');row.className='tr-row';
     row.innerHTML='<span class="tr-v" style="color:'+cr.proto.color+';border-color:'+cr.proto.color+'">'+cr.card.v+'</span><span class="tr-n" style="color:'+cr.proto.color+'">'+cr.proto.name+'</span>';
     row.onclick=function(){openMod(cr.card,cr.proto)};
     var r1=document.createElement('button');r1.className='tr-a';r1.textContent='手札へ';
-    r1.onclick=function(e){e.stopPropagation();save();GS.p[pn].trash.splice(GS.p[pn].trash.indexOf(cr),1);cr.up=true;GS.p[pn].hand.push(cr);openTr();renderAll()};
+    r1.onclick=function(e){e.stopPropagation();save();ps.trash.splice(ps.trash.indexOf(cr),1);cr.up=true;ps.hand.push(cr);openTr(pn);renderAll()};
     row.appendChild(r1);
     var r2=document.createElement('button');r2.className='tr-a';r2.textContent='ラインへ';
     r2.onclick=function(e){e.stopPropagation();closeTr();showLS(pn,cr.proto.name+' '+cr.card.v+' →',function(li){
-      save();GS.p[pn].trash.splice(GS.p[pn].trash.indexOf(cr),1);cr.up=true;GS.p[pn].lines[li].push(cr);renderAll();
+      save();ps.trash.splice(ps.trash.indexOf(cr),1);cr.up=true;ps.lines[li].push(cr);renderAll();
     })};
     row.appendChild(r2);
     el.appendChild(row);
