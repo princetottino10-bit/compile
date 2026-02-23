@@ -25,6 +25,22 @@
       --cmd-up-bg2:rgba(239,68,68,.12);--cmd-mid-bg2:rgba(59,130,246,.12);--cmd-low-bg2:rgba(34,197,94,.12);
       --p1-tint:rgba(233,30,140,.03);--p2-tint:rgba(200,168,78,.03);
       --line-bg:rgba(255,255,255,.025);
+      --dn-bg:rgba(255,255,255,.03);--dn-bd:rgba(255,255,255,.12);
+    }
+    html.light{
+      --pk:#d6197e;--dk:#f4f4f8;--dkr:#eaeaef;
+      --cbg:#ffffff;--cbg2:#f7f7fb;--chv:#eff0f5;
+      --tx:#1a1a2e;--txd:#55556e;--txdd:#8888a0;
+      --bd:rgba(0,0,0,.10);--bd2:rgba(0,0,0,.14);
+      --hdr-bg:rgba(245,245,250,.97);--overlay:rgba(0,0,0,.5);
+      --handle:rgba(0,0,0,.18);--close-bg:rgba(0,0,0,.07);
+      --pill-bg:rgba(0,0,0,.03);--pill-on-bg:rgba(0,0,0,.06);
+      --chip-on-bg:rgba(233,30,140,.08);--empty-color:rgba(0,0,0,.22);
+      --logo-color:#1a1a2e;
+      --cmd-up-bg2:rgba(239,68,68,.08);--cmd-mid-bg2:rgba(59,130,246,.08);--cmd-low-bg2:rgba(34,197,94,.08);
+      --p1-tint:rgba(233,30,140,.04);--p2-tint:rgba(200,168,78,.04);
+      --line-bg:rgba(0,0,0,.025);
+      --dn-bg:rgba(0,0,0,.03);--dn-bd:rgba(0,0,0,.12);
     }
     html{-webkit-tap-highlight-color:transparent}
     html,body{height:100%;overflow:hidden}
@@ -70,7 +86,7 @@
     #game{display:none;flex-direction:column;height:calc(100% - 42px)}
 
     /* field */
-    #field{flex:1;display:flex;flex-direction:column;padding:4px 6px;gap:3px;min-height:0;overflow-y:auto;scrollbar-width:none}
+    #field{flex:1;display:flex;flex-direction:column;justify-content:flex-end;padding:4px 6px;gap:3px;min-height:0;overflow-y:auto;scrollbar-width:none}
     #field::-webkit-scrollbar{display:none}
     .f-sec{flex-shrink:0}
     .f-lbl{font-size:.52rem;font-weight:700;text-align:center;padding:2px 0;letter-spacing:1px}
@@ -96,7 +112,7 @@
           margin-top:2px;position:relative;flex-shrink:0;touch-action:none;cursor:grab}
     .chip:first-child{margin-top:0}
     .chip.up{border:1.5px solid}
-    .chip.dn{background:rgba(255,255,255,.03);border:1.5px dashed rgba(255,255,255,.12);color:var(--txdd)}
+    .chip.dn{background:var(--dn-bg);border:1.5px dashed var(--dn-bd);color:var(--txdd)}
     .c-hdr{display:flex;align-items:center;position:relative;min-height:18px;padding-right:20px}
     .c-n{font-size:.44rem;letter-spacing:.3px;overflow:hidden;text-overflow:ellipsis;
          white-space:nowrap;opacity:.8}
@@ -120,15 +136,15 @@
     .fbtn:active{background:rgba(255,255,255,.15)}
 
     /* trash */
-    #trash{height:36px;display:flex;align-items:center;justify-content:center;gap:6px;
+    #trash{height:28px;display:flex;align-items:center;justify-content:center;gap:6px;
            background:rgba(239,68,68,.05);border:2px dashed rgba(239,68,68,.25);
-           border-radius:8px;margin:4px 6px;font-size:.62rem;color:rgba(239,68,68,.5);
+           border-radius:8px;margin:2px 6px;font-size:.62rem;color:rgba(239,68,68,.5);
            font-weight:700;letter-spacing:.5px;
            transition:all .15s;flex-shrink:0;cursor:pointer}
     #trash.over{background:rgba(239,68,68,.18);border-color:#ef4444;color:#ef4444;border-style:solid}
 
     /* deck bar */
-    .dbar{display:flex;align-items:center;gap:6px;padding:5px 8px;background:var(--cbg);
+    .dbar{display:flex;align-items:center;gap:6px;padding:3px 8px;background:var(--cbg);
           border-top:1px solid var(--bd2);flex-shrink:0}
     .dbar.p2bar{border-top:none;border-bottom:1px solid var(--bd2);background:rgba(200,168,78,.04)}
     .d-btn{font-family:Orbitron,monospace;font-weight:700;font-size:.58rem;padding:6px 12px;
@@ -144,21 +160,21 @@
     .u-btn:not(:disabled):active{background:rgba(255,255,255,.1)}
 
     /* hand */
-    .hand{display:flex;gap:5px;overflow-x:auto;padding:6px 8px;background:var(--dk);
-          border-top:1px solid var(--bd2);min-height:76px;align-items:flex-start;
+    .hand{display:flex;gap:5px;overflow-x:auto;padding:4px 8px;background:var(--dk);
+          border-top:1px solid var(--bd2);min-height:68px;align-items:flex-start;
           -webkit-overflow-scrolling:touch;scrollbar-width:none;flex-shrink:0}
     .hand::-webkit-scrollbar{display:none}
     .hand.over{background:rgba(233,30,140,.08);border-color:var(--pk)}
     .hand.p2h{background:rgba(200,168,78,.03);border-top:none;border-bottom:1px solid var(--bd2)}
     .hand.p2h.over{background:rgba(200,168,78,.1);border-color:#c8a84e}
-    .hcard{flex-shrink:0;width:60px;height:66px;border-radius:7px;padding:4px;
-           display:flex;flex-direction:column;gap:1px;position:relative;touch-action:none;cursor:grab}
+    .hcard{flex-shrink:0;width:72px;height:78px;border-radius:7px;padding:5px;
+           display:flex;flex-direction:column;gap:2px;position:relative;touch-action:none;cursor:grab}
     .hcard.up{border:1.5px solid}
-    .hcard.dn{background:rgba(255,255,255,.03);border:1.5px dashed rgba(255,255,255,.12)}
-    .hcard .hv{font-family:Orbitron,monospace;font-size:.78rem;font-weight:900}
-    .hcard .hn{font-family:Orbitron,monospace;font-size:.42rem;font-weight:700;
+    .hcard.dn{background:var(--dn-bg);border:1.5px dashed var(--dn-bd)}
+    .hcard .hv{font-family:Orbitron,monospace;font-size:.88rem;font-weight:900}
+    .hcard .hn{font-family:Orbitron,monospace;font-size:.46rem;font-weight:700;
                white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .hcard .hc{font-size:.38rem;color:var(--txd);overflow:hidden;text-overflow:ellipsis;
+    .hcard .hc{font-size:.42rem;color:var(--txd);overflow:hidden;text-overflow:ellipsis;
                white-space:nowrap;flex:1;line-height:1.3}
     .hcard .hb{display:flex;align-items:center;justify-content:center;flex:1;
                font-size:.9rem;opacity:.4;color:var(--txdd)}
@@ -377,6 +393,7 @@ var DATA=[
 /* ============ GLOBALS ============ */
 var uid=0, GS=null, hist=[], gMode='solo', sel1=[], sel2=[];
 var dragRef=null; // {cr, pn, srcEl}
+var lastDrawT=0;
 
 /* ============ THEME ============ */
 var th=localStorage.getItem('ct')||(matchMedia('(prefers-color-scheme:light)').matches?'light':'dark');
@@ -544,7 +561,6 @@ function mkHCard(cr,pn){
     var cm=cr.card.m||cr.card.u||cr.card.l||'';if(cm.length>18)cm=cm.substring(0,18)+'…';
     el.innerHTML='<div class="hv">'+cr.card.v+'</div><div class="hn">'+cr.proto.name+'</div><div class="hc">'+esc(cm)+'</div>';
   } else {
-    el.style.background='rgba(255,255,255,.03)';el.style.borderColor='rgba(255,255,255,.1)';el.style.borderStyle='dashed';
     el.innerHTML='<div class="hb">?</div>';
   }
   var fb=document.createElement('button');fb.className='fbtn';fb.textContent='\u21BB';
@@ -595,6 +611,7 @@ function initDeckDrag(pn){
       clearHL();
       var tgt=hitTest(e.clientX,e.clientY);
       if(tgt&&tgt.type==='line'){
+        var now=Date.now();if(now-lastDrawT<200){dragRef=null;return}lastDrawT=now;
         var ps=GS.p[pn];if(!ps.deck.length)refill(ps);
         if(ps.deck.length){save();var cr=ps.deck.shift();cr.up=false;
           GS.p[parseInt(tgt.el.dataset.player)].lines[parseInt(tgt.el.dataset.line)].push(cr);renderAll()}
@@ -708,11 +725,15 @@ function endGhost(x,y){
 }
 
 function hitTest(x,y){
+  var trEl=document.getElementById('trash');
+  var trTop=trEl.getBoundingClientRect().top;
   var lines=document.querySelectorAll('.line');
   for(var i=0;i<lines.length;i++){
     if(lines[i].offsetParent===null)continue;
     var r=lines[i].getBoundingClientRect();
-    if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom)return{type:'line',el:lines[i]};
+    var pn=parseInt(lines[i].dataset.player);
+    var bot=(pn===1)?Math.max(r.bottom,trTop-2):r.bottom;
+    if(x>=r.left&&x<=r.right&&y>=r.top&&y<=bot)return{type:'line',el:lines[i]};
   }
   var tr=document.getElementById('trash');
   var rr=tr.getBoundingClientRect();
@@ -733,7 +754,7 @@ function refill(ps){
   for(var i=ps.deck.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=ps.deck[i];ps.deck[i]=ps.deck[j];ps.deck[j]=t}
   return true;
 }
-function draw(pn){var ps=GS.p[pn];if(!ps.deck.length)refill(ps);if(!ps.deck.length)return;save();var cr=ps.deck.shift();cr.up=true;ps.hand.push(cr);renderAll()}
+function draw(pn){var now=Date.now();if(now-lastDrawT<200)return;lastDrawT=now;var ps=GS.p[pn];if(!ps.deck.length)refill(ps);if(!ps.deck.length)return;save();var cr=ps.deck.shift();cr.up=true;ps.hand.push(cr);renderAll()}
 
 function removeCard(cr,pn){
   var ps=GS.p[pn];
