@@ -163,13 +163,23 @@
 
     /* hand */
     .hand{display:flex;flex-wrap:nowrap;gap:5px;overflow-x:auto;padding:4px 8px;background:var(--dk);
-          border-top:1px solid var(--bd2);min-height:96px;align-items:flex-start;
+          border-top:1px solid var(--bd2);min-height:100px;align-items:flex-start;
           -webkit-overflow-scrolling:touch;scrollbar-width:none;flex-shrink:0}
     .hand::-webkit-scrollbar{display:none}
     .hand.over{background:rgba(233,30,140,.08);border-color:var(--pk)}
     .hand.p2h{background:rgba(200,168,78,.03);border-top:none;border-bottom:1px solid var(--bd2)}
     .hand.p2h.over{background:rgba(200,168,78,.1);border-color:#c8a84e}
-    .hcard{flex-shrink:0;width:74px;height:108px;border-radius:7px;padding:5px;
+    .hand-wrap{display:flex;align-items:stretch;flex-shrink:0;
+               border-top:1px solid var(--bd2)}
+    .hand-wrap.p2w{border-top:none;border-bottom:1px solid var(--bd2)}
+    .hand-arr{width:22px;background:var(--cbg);border:none;border-left:1px solid var(--bd);
+              border-right:1px solid var(--bd);color:var(--txd);
+              font-size:.9rem;cursor:pointer;flex-shrink:0;display:flex;align-items:center;
+              justify-content:center;-webkit-tap-highlight-color:transparent}
+    .hand-arr:active{background:var(--cbg2);color:var(--tx)}
+    .hand-wrap .hand{flex:1;min-width:0;border-top:none;border-bottom:none}
+    .hand-wrap .hand.p2h{border-top:none;border-bottom:none}
+    .hcard{flex-shrink:0;width:74px;height:112px;border-radius:7px;padding:5px;
            display:flex;flex-direction:column;gap:2px;position:relative;touch-action:none;cursor:grab}
     .hcard.up{border:1.5px solid}
     .hcard.dn{background:var(--dn-bg);border:1.5px dashed var(--dn-bd)}
@@ -181,7 +191,7 @@
     .hcard .fbtn{width:16px;height:16px;font-size:.4rem}
     .hcmds{display:flex;flex-direction:column;gap:1px;flex:1;overflow:hidden}
     .hcmd{font-size:.36rem;line-height:1.25;color:var(--tx);overflow:hidden;text-overflow:ellipsis;
-          white-space:nowrap;padding:1px 3px;border-radius:2px}
+          display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;padding:1px 3px;border-radius:2px}
     .hcmd.hcup{background:rgba(239,68,68,.1)}.hcmd.hcmid{background:rgba(59,130,246,.1)}.hcmd.hclow{background:rgba(34,197,94,.1)}
     .hcl{font-family:Orbitron,monospace;font-weight:700;font-size:.3rem;margin-right:2px}
 
@@ -302,7 +312,11 @@
 <div id="game">
   <!-- P2 top area (symmetric: hand → deck → field) -->
   <div id="p2top" style="display:none;flex-shrink:0">
-    <div class="hand p2h" id="h2" style="display:none"></div>
+    <div class="hand-wrap p2w" id="h2wrap" style="display:none">
+      <button class="hand-arr" onclick="scrollH('h2',-1)">&lsaquo;</button>
+      <div class="hand p2h" id="h2"></div>
+      <button class="hand-arr" onclick="scrollH('h2',1)">&rsaquo;</button>
+    </div>
     <div class="dbar p2bar">
       <button class="d-btn p2" id="d2d">DECK:0</button>
       <span class="d-info" id="d2t">T:0</span>
@@ -335,7 +349,11 @@
     <button class="u-btn" id="oppDraw1" onclick="drawOpp(1)" style="font-size:.44rem;display:none">P2 DECK&rarr;</button>
     <button class="u-btn" id="uBtn" onclick="doUndo()" disabled>UNDO</button>
   </div>
-  <div class="hand" id="h1"></div>
+  <div class="hand-wrap">
+    <button class="hand-arr" onclick="scrollH('h1',-1)">&lsaquo;</button>
+    <div class="hand" id="h1"></div>
+    <button class="hand-arr" onclick="scrollH('h1',1)">&rsaquo;</button>
+  </div>
 </div>
 
 <div class="mover" id="mover">
@@ -571,9 +589,9 @@ function mkHCard(cr,pn){
     el.style.borderColor=cr.proto.color;el.style.background=cr.proto.color+'15';el.style.color=cr.proto.color;
     var html='<div class="hv">'+cr.card.v+'</div><div class="hn">'+cr.proto.name+'</div>';
     html+='<div class="hcmds">';
-    if(cr.card.u){var tu=cr.card.u;if(tu.length>22)tu=tu.substring(0,22)+'…';html+='<div class="hcmd hcup"><span class="hcl lup">U</span>'+esc(tu)+'</div>';}
-    if(cr.card.m){var tm=cr.card.m;if(tm.length>22)tm=tm.substring(0,22)+'…';html+='<div class="hcmd hcmid"><span class="hcl lmid">M</span>'+esc(tm)+'</div>';}
-    if(cr.card.l){var tl=cr.card.l;if(tl.length>22)tl=tl.substring(0,22)+'…';html+='<div class="hcmd hclow"><span class="hcl llow">L</span>'+esc(tl)+'</div>';}
+    if(cr.card.u)html+='<div class="hcmd hcup"><span class="hcl lup">U</span>'+esc(cr.card.u)+'</div>';
+    if(cr.card.m)html+='<div class="hcmd hcmid"><span class="hcl lmid">M</span>'+esc(cr.card.m)+'</div>';
+    if(cr.card.l)html+='<div class="hcmd hclow"><span class="hcl llow">L</span>'+esc(cr.card.l)+'</div>';
     html+='</div>';
     el.innerHTML=html;
   } else {
@@ -878,7 +896,7 @@ function reset(){
   document.getElementById('game').style.display='none';
   document.getElementById('setup').style.display='';
   document.getElementById('newBtn').style.display='none';
-  document.getElementById('h2').style.display='none';
+  document.getElementById('h2wrap').style.display='none';
   sel1.length=0;sel2.length=0;
   mkPills('pp1',sel1,'cnt1');
   mkPills('pp2',sel2,'cnt2');
@@ -887,10 +905,14 @@ function reset(){
 
 /* ============ P2 HAND TOGGLE ============ */
 function togH2(){
-  var el=document.getElementById('h2');
+  var el=document.getElementById('h2wrap');
   var btn=document.getElementById('h2tog');
   if(el.style.display==='none'){el.style.display='';btn.textContent='HIDE'}
   else{el.style.display='none';btn.textContent='SHOW'}
+}
+function scrollH(id,dir){
+  var el=document.getElementById(id);
+  el.scrollBy({left:dir*160,behavior:'smooth'});
 }
 
 /* ============ INIT ============ */
