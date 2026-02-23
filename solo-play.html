@@ -162,24 +162,24 @@
     .u-btn:not(:disabled):active{background:rgba(255,255,255,.1)}
 
     /* hand */
-    .hand{display:flex;flex-wrap:nowrap;gap:5px;overflow-x:auto;padding:4px 8px;background:var(--dk);
-          border-top:1px solid var(--bd2);min-height:100px;align-items:flex-start;
+    .hand{display:flex;flex-wrap:nowrap;gap:4px;overflow-x:auto;padding:4px 6px;background:var(--dk);
+          border-top:1px solid var(--bd2);min-height:92px;align-items:flex-start;
           -webkit-overflow-scrolling:touch;scrollbar-width:none;flex-shrink:0}
     .hand::-webkit-scrollbar{display:none}
     .hand.over{background:rgba(233,30,140,.08);border-color:var(--pk)}
     .hand.p2h{background:rgba(200,168,78,.03);border-top:none;border-bottom:1px solid var(--bd2)}
     .hand.p2h.over{background:rgba(200,168,78,.1);border-color:#c8a84e}
-    .hand-wrap{display:flex;align-items:stretch;flex-shrink:0;
+    .hand-wrap{display:flex;flex-direction:column;flex-shrink:0;
                border-top:1px solid var(--bd2)}
     .hand-wrap.p2w{border-top:none;border-bottom:1px solid var(--bd2)}
-    .hand-arr{width:22px;background:var(--cbg);border:none;border-left:1px solid var(--bd);
-              border-right:1px solid var(--bd);color:var(--txd);
-              font-size:.9rem;cursor:pointer;flex-shrink:0;display:flex;align-items:center;
+    .hand-wrap .hand{border-top:none;border-bottom:none}
+    .hand-wrap .hand.p2h{border-top:none;border-bottom:none}
+    .hand-nav{display:flex;justify-content:center;gap:16px;padding:2px 0;background:var(--dk)}
+    .hand-arr{width:40px;height:18px;background:var(--pill-bg);border:1px solid var(--bd);color:var(--txd);
+              font-size:.7rem;cursor:pointer;border-radius:4px;display:flex;align-items:center;
               justify-content:center;-webkit-tap-highlight-color:transparent}
     .hand-arr:active{background:var(--cbg2);color:var(--tx)}
-    .hand-wrap .hand{flex:1;min-width:0;border-top:none;border-bottom:none}
-    .hand-wrap .hand.p2h{border-top:none;border-bottom:none}
-    .hcard{flex-shrink:0;width:74px;height:112px;border-radius:7px;padding:5px;
+    .hcard{flex-shrink:0;width:69px;height:108px;border-radius:7px;padding:5px;
            display:flex;flex-direction:column;gap:2px;position:relative;touch-action:none;cursor:grab}
     .hcard.up{border:1.5px solid}
     .hcard.dn{background:var(--dn-bg);border:1.5px dashed var(--dn-bd)}
@@ -313,9 +313,11 @@
   <!-- P2 top area (symmetric: hand → deck → field) -->
   <div id="p2top" style="display:none;flex-shrink:0">
     <div class="hand-wrap p2w" id="h2wrap" style="display:none">
-      <button class="hand-arr" onclick="scrollH('h2',-1)">&lsaquo;</button>
+      <div class="hand-nav">
+        <button class="hand-arr" onclick="scrollH('h2',-1)">&larr;</button>
+        <button class="hand-arr" onclick="scrollH('h2',1)">&rarr;</button>
+      </div>
       <div class="hand p2h" id="h2"></div>
-      <button class="hand-arr" onclick="scrollH('h2',1)">&rsaquo;</button>
     </div>
     <div class="dbar p2bar">
       <button class="d-btn p2" id="d2d">DECK:0</button>
@@ -350,9 +352,11 @@
     <button class="u-btn" id="uBtn" onclick="doUndo()" disabled>UNDO</button>
   </div>
   <div class="hand-wrap">
-    <button class="hand-arr" onclick="scrollH('h1',-1)">&lsaquo;</button>
     <div class="hand" id="h1"></div>
-    <button class="hand-arr" onclick="scrollH('h1',1)">&rsaquo;</button>
+    <div class="hand-nav">
+      <button class="hand-arr" onclick="scrollH('h1',-1)">&larr;</button>
+      <button class="hand-arr" onclick="scrollH('h1',1)">&rarr;</button>
+    </div>
   </div>
 </div>
 
