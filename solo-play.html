@@ -246,6 +246,14 @@
     .both-mode .f-sec{flex:1;min-height:0;display:flex;flex-direction:column}
     .both-mode .f-sec .lines{flex:1;min-height:0}
     .both-mode .ctrl-bar{flex-shrink:0}
+    .both-mode .u-btn{font-size:.7rem;padding:7px 12px}
+    .both-mode .d-btn{font-size:.72rem;padding:8px 14px}
+    .both-mode .d-info{font-size:.65rem}
+    .both-mode .ctrl-mk{font-size:.78rem;padding:8px 22px}
+    .both-mode .l-compile{font-size:.48rem;padding:3px 8px}
+    .both-mode .l-compiled{font-size:.48rem;padding:3px 8px}
+    .both-mode .fbtn{font-size:.56rem;height:24px;padding:0 8px}
+    .both-mode .hand-arr{font-size:.85rem;width:48px;height:22px}
     .hand-nav{display:flex;justify-content:center;gap:16px;padding:2px 0;background:var(--dk)}
     .hand-arr{width:40px;height:18px;background:var(--pill-bg);border:1px solid var(--bd);color:var(--txd);
               font-size:.7rem;cursor:pointer;border-radius:4px;display:flex;align-items:center;
@@ -631,6 +639,8 @@ function go(){
   appPC(pcMode);
   var b=gMode==='both';
   document.body.classList.toggle('both-mode',b);
+  if(b&&zoomLv>75)appZoom(75);
+  if(!b&&zoomLv<100)appZoom(100);
   document.getElementById('p2top').style.display=b?'':'none';
   document.getElementById('p2sec').style.display=b?'':'none';
   document.getElementById('fdiv').style.display=b?'':'none';
@@ -1234,6 +1244,7 @@ function reset(){
   document.getElementById('pcBtn').style.display='none';
   document.body.classList.remove('pc-mode');
   document.body.classList.remove('both-mode');
+  appZoom(100);
   document.getElementById('h2wrap').style.display='none';
   document.getElementById('h1').style.display='';
   document.getElementById('h1count').style.display='none';
