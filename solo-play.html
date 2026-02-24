@@ -167,14 +167,15 @@
           -webkit-tap-highlight-color:transparent}
     .fbtn:active{background:rgba(255,255,255,.15)}
 
-    /* trash */
-    .trash-zone{height:28px;display:flex;align-items:center;justify-content:center;gap:6px;
-           background:rgba(239,68,68,.05);border:2px dashed rgba(239,68,68,.25);
-           border-radius:8px;margin:2px 6px;font-size:.62rem;color:rgba(239,68,68,.5);
-           font-weight:700;letter-spacing:.5px;
-           transition:all .15s;flex-shrink:0;cursor:pointer}
+    /* trash (inline in dbar) */
+    .trash-zone{display:flex;align-items:center;gap:4px;padding:4px 10px;
+           border-radius:5px;border:1.5px dashed rgba(239,68,68,.3);
+           background:rgba(239,68,68,.05);font-family:Orbitron,monospace;
+           font-size:.5rem;font-weight:700;color:rgba(239,68,68,.5);
+           letter-spacing:.5px;cursor:pointer;white-space:nowrap;
+           transition:all .15s;-webkit-tap-highlight-color:transparent}
     .trash-zone.over{background:rgba(239,68,68,.18);border-color:#ef4444;color:#ef4444;border-style:solid}
-    .trash-zone.p2trash{background:rgba(200,168,78,.05);border-color:rgba(200,168,78,.25);color:rgba(200,168,78,.5)}
+    .trash-zone.p2trash{border-color:rgba(200,168,78,.3);background:rgba(200,168,78,.05);color:rgba(200,168,78,.5)}
     .trash-zone.p2trash.over{background:rgba(200,168,78,.18);border-color:#c8a84e;color:#c8a84e;border-style:solid}
 
     /* deck bar */
@@ -254,6 +255,7 @@
     .both-mode .l-compiled{font-size:.48rem;padding:3px 8px}
     .both-mode .fbtn{font-size:.56rem;height:24px;padding:0 8px}
     .both-mode .hand-arr{font-size:.85rem;width:48px;height:22px}
+    .both-mode .trash-zone{font-size:.6rem;padding:5px 12px}
     .hand-nav{display:flex;justify-content:center;gap:16px;padding:2px 0;background:var(--dk)}
     .hand-arr{width:40px;height:18px;background:var(--pill-bg);border:1px solid var(--bd);color:var(--txd);
               font-size:.7rem;cursor:pointer;border-radius:4px;display:flex;align-items:center;
@@ -442,14 +444,13 @@
     <div class="dbar p2bar">
       <button class="d-btn p2" id="d2d">DECK:0</button>
       <button class="u-btn" onclick="doRefresh(2)">REFRESH</button>
-      <span class="d-info" id="d2t">T:0</span>
+      <div class="trash-zone p2trash" id="trash2" onclick="openTr(2)"><span>P2 TRASH</span><span id="trCnt2"></span></div>
       <span class="d-info" id="d2i" style="display:none"></span>
       <span class="spacer"></span>
       <span class="ctrl-mk off" id="ctrl2" onclick="togCtrl(2)" style="display:none">P2 CONTROL &#x25B6;</span>
       <button class="u-btn" id="oppDraw2" onclick="drawOpp(2)" style="display:none">P1 DECK&rarr;</button>
       <button class="u-btn" id="h2tog" onclick="togHand(2)">P2 HAND</button>
     </div>
-    <div class="trash-zone p2trash" id="trash2" onclick="openTr(2)"><span>P2 TRASH</span><span id="trCnt2"></span></div>
   </div>
   <!-- Field area -->
   <div id="field">
@@ -463,12 +464,11 @@
       <div class="lines" id="p1l"></div>
     </div>
   </div>
-  <!-- P1 bottom area (symmetric: field → trash → deck → hand) -->
-  <div class="trash-zone" id="trash" onclick="openTr(1)"><span id="trLbl">TRASH</span><span id="trCnt1"></span></div>
+  <!-- P1 bottom area (deck → hand) -->
   <div class="dbar">
     <button class="d-btn" id="d1d">DECK:0</button>
     <button class="u-btn" onclick="doRefresh(1)">REFRESH</button>
-    <span class="d-info" id="d1t">T:0</span>
+    <div class="trash-zone" id="trash" onclick="openTr(1)"><span id="trLbl">TRASH</span><span id="trCnt1"></span></div>
     <span class="d-info" id="d1i" style="display:none"></span>
     <span class="spacer"></span>
     <span class="ctrl-mk off" id="ctrl1" onclick="togCtrl(1)">&#x25C0; P1 CONTROL</span>
@@ -936,8 +936,7 @@ function rDbar(pn){
   var total=ps.deck.length+ps.trash.length;
   document.getElementById(pr+'d').textContent='DECK:'+ps.deck.length;
   document.getElementById(pr+'d').disabled=!total;
-  document.getElementById(pr+'i').textContent='';
-  document.getElementById(pr+'t').textContent='T:'+ps.trash.length;
+  var di=document.getElementById(pr+'i');if(di)di.textContent='';
 }
 
 function initDeckDrag(pn){
