@@ -45,7 +45,9 @@
     html{-webkit-tap-highlight-color:transparent}
     html,body{height:100%;overflow:hidden}
     body{font-family:'Noto Sans JP',sans-serif;background:var(--dkr);color:var(--tx);
-         line-height:1.5;-webkit-user-select:none;user-select:none}
+         line-height:1.5;-webkit-user-select:none;user-select:none;
+         display:flex;flex-direction:column}
+    #gameWrap{flex:1;display:flex;flex-direction:column;min-height:0;transform-origin:top left}
 
     /* header */
     .hdr{display:flex;align-items:center;justify-content:space-between;padding:0 12px;
@@ -58,7 +60,7 @@
           font-size:.6rem;padding:3px 8px;border-radius:5px;cursor:pointer}
 
     /* setup */
-    #setup{height:calc(100% - 42px);overflow-y:auto;padding:14px}
+    #setup{flex:1;min-height:0;overflow-y:auto;padding:14px}
     .sec-t{font-size:.62rem;font-weight:700;letter-spacing:1.5px;color:var(--txd);
            text-transform:uppercase;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--bd)}
     .sec-t b{color:var(--pk);font-family:Orbitron,monospace}
@@ -83,7 +85,7 @@
     .go-btn.ok{opacity:1;pointer-events:auto}
 
     /* game */
-    #game{display:none;flex-direction:column;height:calc(100% - 42px)}
+    #game{display:none;flex-direction:column;flex:1;min-height:0}
 
     /* field */
     #field{flex:1;display:flex;flex-direction:column;justify-content:flex-end;padding:4px 6px;gap:3px;min-height:0;overflow-y:auto;scrollbar-width:none}
@@ -226,6 +228,25 @@
     .hand-edge:hover{opacity:1}
     .hand-edge.left{left:0;background:linear-gradient(90deg,var(--dk) 60%,transparent)}
     .hand-edge.right{right:0;background:linear-gradient(270deg,var(--dk) 60%,transparent)}
+    /* zoom bar */
+    .zoom-bar{display:flex;align-items:center;justify-content:center;gap:6px;
+              padding:2px 0;flex-shrink:0;background:var(--dk);border-bottom:1px solid var(--bd)}
+    .zoom-lbl{font-family:Orbitron,monospace;font-weight:700;font-size:.45rem;color:var(--txdd);width:14px;text-align:center}
+    .zoom-btn{font-family:Orbitron,monospace;font-size:.6rem;font-weight:700;width:24px;height:20px;
+              border-radius:4px;border:1px solid var(--bd);background:var(--pill-bg);color:var(--tx);
+              cursor:pointer;display:flex;align-items:center;justify-content:center;
+              -webkit-tap-highlight-color:transparent}
+    .zoom-btn:active{background:var(--cbg2)}
+    .zoom-val{font-family:Orbitron,monospace;font-size:.48rem;font-weight:700;color:var(--txd);
+              min-width:36px;text-align:center}
+
+    .both-mode .hand{height:64px;overflow-y:hidden}
+    .both-mode .hand-wrap{flex-shrink:1;min-height:0}
+    .both-mode.pc-mode .hand{max-height:25vh}
+    .both-mode #field{justify-content:center}
+    .both-mode .f-sec{flex:1;min-height:0;display:flex;flex-direction:column}
+    .both-mode .f-sec .lines{flex:1;min-height:0}
+    .both-mode .ctrl-bar{flex-shrink:0}
     .hand-nav{display:flex;justify-content:center;gap:16px;padding:2px 0;background:var(--dk)}
     .hand-arr{width:40px;height:18px;background:var(--pill-bg);border:1px solid var(--bd);color:var(--txd);
               font-size:.7rem;cursor:pointer;border-radius:4px;display:flex;align-items:center;
@@ -360,6 +381,14 @@
 </head>
 <body>
 
+<div class="zoom-bar" id="zoomBar">
+  <span class="zoom-lbl">A</span>
+  <button class="zoom-btn" onclick="chZoom(-10)">−</button>
+  <span class="zoom-val" id="zoomVal">100%</span>
+  <button class="zoom-btn" onclick="chZoom(10)">+</button>
+  <span class="zoom-lbl" style="font-size:.7rem">A</span>
+</div>
+<div id="gameWrap">
 <div class="hdr">
   <div class="logo">COMPILE <em>&lt;!&gt;</em><small>SOLO</small></div>
   <div style="display:flex;gap:5px">
@@ -454,6 +483,8 @@
   </div>
 </div>
 
+</div><!-- /gameWrap -->
+
 <div class="mover" id="mover">
   <div class="modal" id="modal">
     <div class="m-acc" id="macc"></div>
@@ -531,6 +562,16 @@ var pcMode=localStorage.getItem('pcMode')==='1';
 function appPC(on){pcMode=on;document.body.classList.toggle('pc-mode',on);localStorage.setItem('pcMode',on?'1':'0');
   document.getElementById('pcBtn').textContent=on?'MOBILE':'PC'}
 function togPC(){appPC(!pcMode);if(GS)renderAll()}
+var zoomLv=parseInt(localStorage.getItem('zoom'))||100;
+function appZoom(v){zoomLv=v;var s=v/100;var w=document.getElementById('gameWrap');
+  w.style.zoom=s;
+  var zb=document.getElementById('zoomBar');
+  var avail=window.innerHeight-zb.offsetHeight;
+  w.style.height=(avail/s)+'px';
+  document.getElementById('zoomVal').textContent=v+'%';localStorage.setItem('zoom',v)}
+function chZoom(d){var v=Math.max(50,Math.min(200,zoomLv+d));appZoom(v)}
+appZoom(zoomLv);
+window.addEventListener('resize',function(){appZoom(zoomLv)});
 function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
 
 /* ============ SETUP ============ */
@@ -587,6 +628,7 @@ function go(){
   document.getElementById('pcBtn').style.display='';
   appPC(pcMode);
   var b=gMode==='both';
+  document.body.classList.toggle('both-mode',b);
   document.getElementById('p2top').style.display=b?'':'none';
   document.getElementById('p2sec').style.display=b?'':'none';
   document.getElementById('fdiv').style.display=b?'':'none';
@@ -767,7 +809,15 @@ function rField(pn){
   for(var li=0;li<3;li++){
     var le=els[li];
     var stk=ps.lines[li],sum=0;
-    stk.forEach(function(cr){sum+=cr.up?cr.card.v:2});
+    var hasDark2=stk.some(function(cr){return cr.up&&cr.proto.name==='DARKNESS'&&cr.card.v===2});
+    var hasApathy0=stk.some(function(cr){return cr.up&&cr.proto.name==='APATHY'&&cr.card.v===0});
+    var dnVal=hasDark2?4:2;
+    stk.forEach(function(cr){sum+=cr.up?cr.card.v:dnVal});
+    if(hasApathy0){
+      var dnCount=stk.filter(function(cr){return !cr.up}).length;
+      if(GS.mode==='both'){var opn=pn===1?2:1;dnCount+=GS.p[opn].lines[li].filter(function(cr){return !cr.up}).length}
+      sum+=dnCount;
+    }
     document.getElementById(id+'v'+li).textContent=sum;
     if(!stk.length&&!ps.compiled[li]){var e=document.createElement('div');e.className='l-empty';e.textContent='空';le.appendChild(e)}
     else stk.forEach(function(cr,idx){le.appendChild(mkChip(cr,pn,idx<stk.length-1))});
@@ -1181,6 +1231,7 @@ function reset(){
   document.getElementById('newBtn').style.display='none';
   document.getElementById('pcBtn').style.display='none';
   document.body.classList.remove('pc-mode');
+  document.body.classList.remove('both-mode');
   document.getElementById('h2wrap').style.display='none';
   document.getElementById('h1').style.display='';
   document.getElementById('h1count').style.display='none';
