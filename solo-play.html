@@ -43,11 +43,10 @@
       --dn-bg:rgba(0,0,0,.03);--dn-bd:rgba(0,0,0,.12);
     }
     html{-webkit-tap-highlight-color:transparent}
-    html,body{height:100%;overflow:hidden}
+    html,body{height:100%;overflow:hidden;margin:0}
     body{font-family:'Noto Sans JP',sans-serif;background:var(--dkr);color:var(--tx);
-         line-height:1.5;-webkit-user-select:none;user-select:none;
-         display:flex;flex-direction:column}
-    #gameWrap{display:flex;flex-direction:column;transform-origin:top left;overflow:hidden}
+         line-height:1.5;-webkit-user-select:none;user-select:none}
+    #gameWrap{display:flex;flex-direction:column;transform-origin:top left;overflow:hidden;position:absolute}
 
     /* header */
     .hdr{display:flex;align-items:center;justify-content:space-between;padding:0 12px;
@@ -566,8 +565,10 @@ var zoomLv=parseInt(localStorage.getItem('zoom'))||100;
 function appZoom(v){zoomLv=v;var s=v/100;var w=document.getElementById('gameWrap');
   w.style.transform='scale('+s+')';
   var zb=document.getElementById('zoomBar');
-  var avail=window.innerHeight-zb.offsetHeight;
-  w.style.width=(100/s)+'%';
+  var zbH=zb.offsetHeight;
+  var avail=window.innerHeight-zbH;
+  w.style.top=zbH+'px';w.style.left='0';
+  w.style.width=(window.innerWidth/s)+'px';
   w.style.height=(avail/s)+'px';
   document.getElementById('zoomVal').textContent=v+'%';localStorage.setItem('zoom',v)}
 function chZoom(d){var v=Math.max(50,Math.min(200,zoomLv+d));appZoom(v)}
