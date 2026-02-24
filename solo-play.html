@@ -807,6 +807,7 @@ function doUndo(){if(!hist.length)return;GS=restore(hist.pop());document.getElem
 
 /* ============ RENDER ============ */
 function renderAll(){
+  hideTT();
   rField(1);if(GS.mode==='both')rField(2);
   rHand(1);if(GS.mode==='both')rHand(2);
   rDbar(1);if(GS.mode==='both')rDbar(2);
