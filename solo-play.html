@@ -444,10 +444,9 @@
     <div class="dbar p2bar">
       <button class="d-btn p2" id="d2d">DECK:0</button>
       <button class="u-btn" onclick="doRefresh(2)">REFRESH</button>
+      <span class="ctrl-mk off" id="ctrl2" onclick="togCtrl(2)" style="display:none">P2 CONTROL &#x25B6;</span>
       <div class="trash-zone p2trash" id="trash2" onclick="openTr(2)"><span>P2 TRASH</span><span id="trCnt2"></span></div>
       <span class="d-info" id="d2i" style="display:none"></span>
-      <span class="spacer"></span>
-      <span class="ctrl-mk off" id="ctrl2" onclick="togCtrl(2)" style="display:none">P2 CONTROL &#x25B6;</span>
       <button class="u-btn" id="oppDraw2" onclick="drawOpp(2)" style="display:none">P1 DECK&rarr;</button>
       <button class="u-btn" id="h2tog" onclick="togHand(2)">P2 HAND</button>
     </div>
@@ -468,10 +467,9 @@
   <div class="dbar">
     <button class="d-btn" id="d1d">DECK:0</button>
     <button class="u-btn" onclick="doRefresh(1)">REFRESH</button>
+    <span class="ctrl-mk off" id="ctrl1" onclick="togCtrl(1)">&#x25C0; P1 CONTROL</span>
     <div class="trash-zone" id="trash" onclick="openTr(1)"><span id="trLbl">TRASH</span><span id="trCnt1"></span></div>
     <span class="d-info" id="d1i" style="display:none"></span>
-    <span class="spacer"></span>
-    <span class="ctrl-mk off" id="ctrl1" onclick="togCtrl(1)">&#x25C0; P1 CONTROL</span>
     <button class="u-btn" id="h1tog" onclick="togHand(1)" style="display:none">HIDE</button>
     <button class="u-btn" id="oppDraw1" onclick="drawOpp(1)" style="display:none">P2 DECK&rarr;</button>
     <button class="u-btn" id="uBtn" onclick="doUndo()" disabled>UNDO</button>
