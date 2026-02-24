@@ -23,7 +23,8 @@
       --chip-on-bg:rgba(233,30,140,.12);--empty-color:rgba(255,255,255,.12);
       --logo-color:#fff;
       --cmd-up-bg2:rgba(239,68,68,.12);--cmd-mid-bg2:rgba(59,130,246,.12);--cmd-low-bg2:rgba(34,197,94,.12);
-      --p1-tint:rgba(233,30,140,.03);--p2-tint:rgba(200,168,78,.03);
+      --p1-line:rgba(233,30,140,.07);--p1-line-bd:rgba(233,30,140,.3);
+      --p2-line:rgba(200,168,78,.07);--p2-line-bd:rgba(200,168,78,.3);
       --line-bg:rgba(255,255,255,.025);
       --dn-bg:rgba(255,255,255,.03);--dn-bd:rgba(255,255,255,.12);
     }
@@ -38,7 +39,8 @@
       --chip-on-bg:rgba(233,30,140,.08);--empty-color:rgba(0,0,0,.22);
       --logo-color:#1a1a2e;
       --cmd-up-bg2:rgba(239,68,68,.08);--cmd-mid-bg2:rgba(59,130,246,.08);--cmd-low-bg2:rgba(34,197,94,.08);
-      --p1-tint:rgba(233,30,140,.04);--p2-tint:rgba(200,168,78,.04);
+      --p1-line:rgba(233,30,140,.08);--p1-line-bd:rgba(233,30,140,.35);
+      --p2-line:rgba(200,168,78,.08);--p2-line-bd:rgba(200,168,78,.35);
       --line-bg:rgba(0,0,0,.025);
       --dn-bg:rgba(0,0,0,.03);--dn-bd:rgba(0,0,0,.12);
     }
@@ -95,8 +97,8 @@
     .line{flex:1;background:var(--line-bg);border:2px dashed;border-radius:9px;
           padding:3px;display:flex;flex-direction:column;overflow-y:auto;scrollbar-width:none;
           position:relative;transition:border-color .15s,background .15s}
-    .line.p1line{background:rgba(233,30,140,.03);border-color:rgba(233,30,140,.18)}
-    .line.p2line{flex-direction:column-reverse;background:rgba(200,168,78,.03);border-color:rgba(200,168,78,.18)}
+    .line.p1line{background:var(--p1-line);border-color:var(--p1-line-bd)}
+    .line.p2line{flex-direction:column-reverse;background:var(--p2-line);border-color:var(--p2-line-bd)}
     .line.p2line .l-hdr{margin-bottom:0;margin-top:2px}
     .line.p2line .chip{margin-top:0;margin-bottom:2px}
     .line.p2line .chip:last-of-type{margin-bottom:0}
@@ -688,12 +690,17 @@ function doCompile(pn,li){
   save();
   ps.compiled[li]=true;
   var cards=ps.lines[li].splice(0).concat(ps.waits[li].splice(0));
+  if(GS.mode==='both'){
+    var opn=pn===1?2:1;var ops=GS.p[opn];
+    ops.compiled[li]=true;
+    cards=cards.concat(ops.lines[li].splice(0)).concat(ops.waits[li].splice(0));
+  }
   cards.forEach(function(cr){
     var ownerPn=cr.owner||pn;
     GS.p[ownerPn].trash.push(cr);
   });
   if(GS.ctrl===pn)GS.ctrl=0;
-  mkLines(pn);
+  if(GS.mode==='both'&&GS.ctrl===(pn===1?2:1))GS.ctrl=0;
   renderAll();
 }
 
