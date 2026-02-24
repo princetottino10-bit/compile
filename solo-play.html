@@ -97,8 +97,7 @@
     .line{flex:1;background:var(--line-bg);border:2px dashed;border-radius:9px;
           padding:3px;display:flex;flex-direction:column;overflow-y:auto;scrollbar-width:none;
           position:relative;transition:border-color .15s,background .15s}
-    .line.p1line{background:var(--p1-line);border-color:var(--p1-line-bd)}
-    .line.p2line{flex-direction:column-reverse;background:var(--p2-line);border-color:var(--p2-line-bd)}
+    .line.p2line{flex-direction:column-reverse}
     .line.p2line .l-hdr{margin-bottom:0;margin-top:2px}
     .line.p2line .chip{margin-top:0;margin-bottom:2px}
     .line.p2line .chip:last-of-type{margin-bottom:0}
@@ -662,7 +661,7 @@ function mkLines(pn){
   var isP2=pn===2&&GS.mode==='both';
   for(var i=0;i<3;i++){
     var isBoth=GS.mode==='both';
-    var d=document.createElement('div');d.className='line'+(isP2?' p2line':'')+(isBoth&&pn===1?' p1line':'');d.dataset.line=i;d.dataset.player=pn;
+    var d=document.createElement('div');d.className='line'+(isP2?' p2line':'');d.dataset.line=i;d.dataset.player=pn;
     var pr=ps.protos[i];
     var compiled=ps.compiled[i];
     var compileHtml=compiled
@@ -670,7 +669,8 @@ function mkLines(pn){
       :'<button class="l-compile" data-compileline="'+i+'" data-compileplayer="'+pn+'">COMPILE</button>';
     var hdrHtml='<div class="l-hdr"><span class="l-drag" data-dragline="'+i+'" data-dragplayer="'+pn+'">&#x2261;</span><span class="l-proto" style="flex:1">'+pr.name+'</span>'+compileHtml+'<span class="l-val" style="background:'+pr.color+'20" id="'+id+'v'+i+'">0</span></div>';
     d.innerHTML=hdrHtml;
-    if(!isBoth)d.style.borderColor=pr.color+'30';
+    d.style.borderColor=pr.color+'60';
+    d.style.background=pr.color+'18';
     if(compiled){d.style.borderColor='rgba(34,197,94,.3)';d.style.background='rgba(34,197,94,.03)'}
     el.appendChild(d);
   }
