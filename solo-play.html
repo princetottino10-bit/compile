@@ -47,7 +47,7 @@
     body{font-family:'Noto Sans JP',sans-serif;background:var(--dkr);color:var(--tx);
          line-height:1.5;-webkit-user-select:none;user-select:none;
          display:flex;flex-direction:column}
-    #gameWrap{flex:1;display:flex;flex-direction:column;min-height:0;transform-origin:top left}
+    #gameWrap{display:flex;flex-direction:column;transform-origin:top left;overflow:hidden}
 
     /* header */
     .hdr{display:flex;align-items:center;justify-content:space-between;padding:0 12px;
@@ -564,9 +564,10 @@ function appPC(on){pcMode=on;document.body.classList.toggle('pc-mode',on);localS
 function togPC(){appPC(!pcMode);if(GS)renderAll()}
 var zoomLv=parseInt(localStorage.getItem('zoom'))||100;
 function appZoom(v){zoomLv=v;var s=v/100;var w=document.getElementById('gameWrap');
-  w.style.zoom=s;
+  w.style.transform='scale('+s+')';
   var zb=document.getElementById('zoomBar');
   var avail=window.innerHeight-zb.offsetHeight;
+  w.style.width=(100/s)+'%';
   w.style.height=(avail/s)+'px';
   document.getElementById('zoomVal').textContent=v+'%';localStorage.setItem('zoom',v)}
 function chZoom(d){var v=Math.max(50,Math.min(200,zoomLv+d));appZoom(v)}
