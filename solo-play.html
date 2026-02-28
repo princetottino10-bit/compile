@@ -130,7 +130,7 @@
                 letter-spacing:.5px;position:absolute;right:3px;top:1px;pointer-events:none}
     .l-wait.over{background:rgba(233,30,140,.08);border-color:var(--pk)}
     .w-chip{border-radius:4px;padding:2px 6px;font-family:Orbitron,monospace;font-size:.48rem;
-            font-weight:700;white-space:nowrap;flex-shrink:0}
+            font-weight:700;white-space:nowrap;flex-shrink:0;touch-action:none;cursor:grab}
     .w-chip.up{border:1px solid}
     .w-chip.dn{background:var(--dn-bg);border:1px dashed var(--dn-bd);color:var(--txdd)}
     .divider{height:2px;background:linear-gradient(90deg,transparent,rgba(200,168,78,.5),transparent);
@@ -385,6 +385,28 @@
     .pc-mode .hcard .fbtn{height:22px;padding:0 7px;font-size:.5rem}
     .pc-mode .hand-nav{display:none}
     .pc-mode .hand-edge{display:none}
+
+    /* solo mode: lines fill available height */
+    body:not(.both-mode) #p1sec{flex:1;display:flex;flex-direction:column}
+    body:not(.both-mode) #p1sec .lines{flex:1;min-height:0}
+    /* help panel */
+    #helpMod .ov-box{max-height:80vh}
+    .help-sec{margin-bottom:10px}
+    .help-h{font-family:Orbitron,monospace;font-size:.55rem;font-weight:700;color:var(--pk);
+             margin-bottom:4px;letter-spacing:1px}
+    .help-row{font-size:.7rem;line-height:1.9;color:var(--tx)}
+    .help-row b{font-family:Orbitron,monospace;font-size:.6rem}
+    /* toast */
+    #toast{position:fixed;top:54px;left:50%;transform:translateX(-50%);
+           background:var(--cbg2);border:1px solid var(--bd2);border-radius:8px;
+           padding:8px 18px;font-size:.68rem;color:var(--tx);z-index:600;
+           opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+    #toast.show{opacity:1}
+    /* hist panel */
+    #histMod .ov-box{max-height:70vh}
+    .hist-row{display:flex;gap:8px;padding:5px 4px;border-bottom:1px solid var(--bd);font-size:.68rem;align-items:baseline}
+    .hist-t{font-family:Orbitron,monospace;font-size:.55rem;color:var(--txdd);flex-shrink:0}
+    .hist-d{color:var(--tx)}
   </style>
 </head>
 <body>
@@ -401,7 +423,10 @@
   <div class="logo">COMPILE <em>&lt;!&gt;</em><small>SOLO</small></div>
   <div style="display:flex;gap:5px">
     <button class="hbtn" id="newBtn" style="display:none" onclick="cfNew()">NEW</button>
+    <button class="hbtn" id="shareBtn" style="display:none" onclick="shareURL()">SHARE</button>
+    <button class="hbtn" id="histBtn" style="display:none" onclick="openHist()">HIST</button>
     <button class="hbtn" id="pcBtn" style="display:none" onclick="togPC()">PC</button>
+    <button class="hbtn" onclick="openHelp()">?</button>
     <button class="hbtn" id="thBtn" onclick="togTh()">&#x2600;</button>
   </div>
 </div>
@@ -527,6 +552,60 @@
 
 <div id="tooltip"></div>
 <div id="ghost" style="display:none"></div>
+<div id="toast"></div>
+
+<div class="ov" id="histMod">
+  <div class="ov-box">
+    <div class="ov-hdr">
+      <span class="ov-ttl">HISTORY</span>
+      <button class="m-x" onclick="closeHist()">&times;</button>
+    </div>
+    <div id="histList"></div>
+  </div>
+</div>
+
+<div class="ov" id="helpMod">
+  <div class="ov-box">
+    <div class="ov-hdr">
+      <span class="ov-ttl">HELP</span>
+      <button class="m-x" onclick="closeHelp()">&times;</button>
+    </div>
+    <div class="help-sec">
+      <div class="help-h">// カード操作</div>
+      <div class="help-row">・ カードをドラッグ &rarr; <b>LINE</b> / <b>WAIT</b> / <b>TRASH</b> / 手札 へ移動</div>
+      <div class="help-row">・ カードをタップ &rarr; 効果テキストを表示</div>
+      <div class="help-row">・ <b>&#x21BB; 反転</b> ボタンで表/裏を切り替え</div>
+    </div>
+    <div class="help-sec">
+      <div class="help-h">// デッキ &amp; WAIT</div>
+      <div class="help-row">・ <b>DECK</b> をタップ &rarr; 1枚ドロー（手札へ表向き）</div>
+      <div class="help-row">・ <b>DECK</b> をドラッグ &rarr; LINE / WAIT に裏向きで置く</div>
+      <div class="help-row">・ WAIT エリアをタップ &rarr; 全カードをラインへ移動</div>
+      <div class="help-row">・ WAIT のカードをドラッグ &rarr; 別の場所へ移動</div>
+    </div>
+    <div class="help-sec">
+      <div class="help-h">// アクション</div>
+      <div class="help-row">・ <b>COMPILE</b> &rarr; ラインを確定（カードをトラッシュへ）</div>
+      <div class="help-row">・ <b>REFRESH</b> &rarr; 手札を5枚まで補充</div>
+      <div class="help-row">・ <b>CONTROL</b> &rarr; 手番マーカーの切り替え</div>
+      <div class="help-row">・ <b>TRASH</b> をタップ &rarr; 捨て札確認・手札/ラインへ戻し</div>
+      <div class="help-row">・ <b>UNDO</b> &rarr; 直前の操作を取り消し（履歴からも削除）</div>
+    </div>
+    <div class="help-sec">
+      <div class="help-h">// ヘッダーボタン</div>
+      <div class="help-row">・ <b>NEW</b> &mdash; 新しいゲームを開始</div>
+      <div class="help-row">・ <b>SHARE</b> &mdash; 現在の盤面状態をURLでコピー共有</div>
+      <div class="help-row">・ <b>HIST</b> &mdash; 操作履歴パネルを開く</div>
+      <div class="help-row">・ <b>PC</b> &mdash; PCモード切替（カード詳細常時表示）</div>
+      <div class="help-row">・ <b>?</b> &mdash; このヘルプを開く</div>
+      <div class="help-row">・ <b>&#x2600;/&#x263E;</b> &mdash; ライト / ダークテーマ切替</div>
+    </div>
+    <div class="help-sec" style="margin-bottom:0">
+      <div class="help-h">// ライン操作</div>
+      <div class="help-row">・ ライン左端 <b>&#x2261;</b> をドラッグ &rarr; プロトコルの順序を入れ替え</div>
+    </div>
+  </div>
+</div>
 
 <script>
 /* ============ DATA ============ */
@@ -549,7 +628,7 @@ var DATA=[
 ];
 
 /* ============ GLOBALS ============ */
-var uid=0, GS=null, hist=[], gMode='solo', sel1=[], sel2=[];
+var uid=0, GS=null, hist=[], actionLog=[], gMode='solo', sel1=[], sel2=[];
 var dragRef=null; // {cr, pn, srcEl}
 var lastDrawT=0;
 var handHidden={1:false,2:true};
@@ -623,13 +702,15 @@ function mkPS(names,pn){
 function go(){
   if(sel1.length!==3)return;
   if(gMode==='both'&&sel2.length!==3)return;
-  hist=[];
+  hist=[];actionLog=[];
   GS={mode:gMode,p:{},ctrl:0};
   GS.p[1]=mkPS(sel1,1);
   if(gMode==='both')GS.p[2]=mkPS(sel2,2);
   document.getElementById('setup').style.display='none';
   document.getElementById('game').style.display='flex';
   document.getElementById('newBtn').style.display='';
+  document.getElementById('shareBtn').style.display='';
+  document.getElementById('histBtn').style.display='';
   document.getElementById('pcBtn').style.display='';
   appPC(pcMode);
   var b=gMode==='both';
@@ -686,6 +767,7 @@ function doCompile(pn,li){
   var ps=GS.p[pn];
   if(ps.compiled[li])return;
   save();
+  logAction('P'+pn+': ライン'+(li+1)+' コンパイル');
   ps.compiled[li]=true;
   var cards=ps.lines[li].splice(0).concat(ps.waits[li].splice(0));
   if(GS.mode==='both'){
@@ -708,6 +790,7 @@ function doRefresh(pn){
   var need=5-ps.hand.length;
   if(need<=0)return;
   save();
+  logAction('P'+pn+': リフレッシュ');
   for(var i=0;i<need;i++){
     if(!ps.deck.length)refill(ps);
     if(!ps.deck.length)break;
@@ -805,7 +888,7 @@ function restore(j){
   for(var k in o.p){var s=o.p[k];s.deck=fa(s.deck);s.hand=fa(s.hand);s.lines=s.lines.map(fa);s.trash=fa(s.trash);s.protos=s.protos.map(fp);if(!s.compiled)s.compiled=[false,false,false];if(!s.waits)s.waits=[[],[],[]];else s.waits=s.waits.map(fa)}
   return o;
 }
-function doUndo(){if(!hist.length)return;GS=restore(hist.pop());document.getElementById('uBtn').disabled=!hist.length;renderAll()}
+function doUndo(){if(!hist.length)return;if(actionLog.length)actionLog.pop();GS=restore(hist.pop());document.getElementById('uBtn').disabled=!hist.length;renderAll()}
 
 /* ============ RENDER ============ */
 function renderAll(){
@@ -971,8 +1054,8 @@ function initDeckDrag(pn){
         var now=Date.now();if(now-lastDrawT<200){dragRef=null;return}lastDrawT=now;
         var ps=GS.p[pn];if(!ps.deck.length)refill(ps);
         if(ps.deck.length){save();var cr=ps.deck.shift();cr.up=false;
-          if(tgt.type==='wait')GS.p[tgt.pn].waits[tgt.line].push(cr);
-          else GS.p[parseInt(tgt.el.dataset.player)].lines[parseInt(tgt.el.dataset.line)].push(cr);
+          if(tgt.type==='wait'){GS.p[tgt.pn].waits[tgt.line].push(cr);logAction('P'+pn+': デッキ → ウェイト'+(tgt.line+1)+' (裏)')}
+          else{GS.p[parseInt(tgt.el.dataset.player)].lines[parseInt(tgt.el.dataset.line)].push(cr);logAction('P'+pn+': デッキ → ライン'+(parseInt(tgt.el.dataset.line)+1)+' (裏)')}
           renderAll()}
       }
       dragRef=null;
@@ -1074,22 +1157,28 @@ function endGhost(x,y){
   clearHL();
   var tgt=hitTest(x,y);
   if(tgt){
+    var _cr=dragRef.cr,_pn=dragRef.pn;
+    var _desc='P'+_pn+': '+(_cr.up?_cr.proto.name+' '+_cr.card.v:'FACE-DOWN');
     if(tgt.type==='wait'){
-      save();removeCard(dragRef.cr,dragRef.pn);
-      GS.p[tgt.pn].waits[tgt.line].push(dragRef.cr);
+      save();removeCard(_cr,_pn);
+      GS.p[tgt.pn].waits[tgt.line].push(_cr);
+      logAction(_desc+' → ウェイト'+(tgt.line+1));
       renderAll();
     } else if(tgt.type==='line'){
-      save();removeCard(dragRef.cr,dragRef.pn);
-      GS.p[parseInt(tgt.el.dataset.player)].lines[parseInt(tgt.el.dataset.line)].push(dragRef.cr);
+      save();removeCard(_cr,_pn);
+      GS.p[parseInt(tgt.el.dataset.player)].lines[parseInt(tgt.el.dataset.line)].push(_cr);
+      logAction(_desc+' → ライン'+(parseInt(tgt.el.dataset.line)+1));
       renderAll();
     } else if(tgt.type==='trash'){
-      save();removeCard(dragRef.cr,dragRef.pn);
-      GS.p[dragRef.pn].trash.push(dragRef.cr);
+      save();removeCard(_cr,_pn);
+      GS.p[_pn].trash.push(_cr);
+      logAction(_desc+' → トラッシュ');
       renderAll();
     } else if(tgt.type==='hand'){
-      save();removeCard(dragRef.cr,dragRef.pn);
-      dragRef.cr.owner=tgt.pn;
-      GS.p[tgt.pn].hand.push(dragRef.cr);
+      save();removeCard(_cr,_pn);
+      _cr.owner=tgt.pn;
+      GS.p[tgt.pn].hand.push(_cr);
+      logAction(_desc+' → 手札');
       renderAll();
     }
   }
@@ -1144,7 +1233,7 @@ function refill(ps){
   for(var i=ps.deck.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=ps.deck[i];ps.deck[i]=ps.deck[j];ps.deck[j]=t}
   return true;
 }
-function draw(pn){var now=Date.now();if(now-lastDrawT<200)return;lastDrawT=now;var ps=GS.p[pn];if(!ps.deck.length)refill(ps);if(!ps.deck.length)return;save();var cr=ps.deck.shift();cr.up=true;ps.hand.push(cr);renderAll()}
+function draw(pn){var now=Date.now();if(now-lastDrawT<200)return;lastDrawT=now;var ps=GS.p[pn];if(!ps.deck.length)refill(ps);if(!ps.deck.length)return;save();var cr=ps.deck.shift();cr.up=true;ps.hand.push(cr);logAction('P'+pn+': ドロー');renderAll()}
 function drawOpp(pn){
   if(GS.mode!=='both')return;
   var opp=pn===1?2:1,ops=GS.p[opp];
@@ -1239,10 +1328,12 @@ function cfNew(){
   document.getElementById('cfN').onclick=function(){document.getElementById('cfOv').classList.remove('on')};
 }
 function reset(){
-  GS=null;hist=[];
+  GS=null;hist=[];actionLog=[];
   document.getElementById('game').style.display='none';
   document.getElementById('setup').style.display='';
   document.getElementById('newBtn').style.display='none';
+  document.getElementById('shareBtn').style.display='none';
+  document.getElementById('histBtn').style.display='none';
   document.getElementById('pcBtn').style.display='none';
   document.body.classList.remove('pc-mode');
   document.body.classList.remove('both-mode');
@@ -1286,7 +1377,9 @@ function scrollH(id,dir){
 function togCtrl(pn){
   if(!GS)return;
   save();
-  GS.ctrl=GS.ctrl===pn?0:pn;
+  var newCtrl=GS.ctrl===pn?0:pn;
+  GS.ctrl=newCtrl;
+  logAction(newCtrl===pn?'コントロール → P'+pn:'コントロール解除');
   rCtrl();
 }
 function rCtrl(){
@@ -1338,9 +1431,137 @@ document.querySelectorAll('.hand-edge').forEach(function(edge){
   });
 });
 
+/* ============ URL SHARE ============ */
+function encodeGS(){
+  if(!GS)return null;
+  function compactCard(cr){return{n:cr.proto.name,v:cr.card.v,up:cr.up,uid:cr.uid,o:cr.owner||0}}
+  function compactArr(arr){return arr.map(compactCard)}
+  var cp={mode:GS.mode,ctrl:GS.ctrl,handHidden:handHidden,p:{}};
+  for(var k in GS.p){
+    var ps=GS.p[k];
+    cp.p[k]={
+      protos:ps.protos.map(function(p){return p.name}),
+      compiled:ps.compiled.slice(),
+      hand:compactArr(ps.hand),
+      lines:ps.lines.map(compactArr),
+      waits:ps.waits.map(compactArr),
+      trash:compactArr(ps.trash),
+      deck:compactArr(ps.deck)
+    };
+  }
+  return btoa(unescape(encodeURIComponent(JSON.stringify(cp))));
+}
+function decodeGS(encoded){
+  var cp=JSON.parse(decodeURIComponent(escape(atob(encoded))));
+  function fp(n){return DATA.find(function(p){return p.name===n})}
+  function expandCard(ref){
+    var proto=fp(ref.n);
+    var card=proto.cards.find(function(c){return c.v===ref.v});
+    return{card:card,proto:proto,up:ref.up,uid:ref.uid,owner:ref.o||0}
+  }
+  function expandArr(arr){return arr.map(expandCard)}
+  var gs={mode:cp.mode,ctrl:cp.ctrl,p:{}};
+  var maxUid=0;
+  for(var k in cp.p){
+    var cps=cp.p[k];var pn=parseInt(k);
+    var ps={
+      protos:cps.protos.map(fp),
+      compiled:cps.compiled.slice(),
+      hand:expandArr(cps.hand),
+      lines:cps.lines.map(expandArr),
+      waits:cps.waits.map(expandArr),
+      trash:expandArr(cps.trash),
+      deck:expandArr(cps.deck)
+    };
+    gs.p[pn]=ps;
+    var allCards=ps.hand.concat(ps.deck).concat(ps.trash);
+    ps.lines.forEach(function(l){allCards=allCards.concat(l)});
+    ps.waits.forEach(function(w){allCards=allCards.concat(w)});
+    allCards.forEach(function(cr){if(cr.uid>maxUid)maxUid=cr.uid});
+  }
+  uid=maxUid+1;
+  return gs;
+}
+function showToast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show')},2500);
+}
+function shareURL(){
+  var enc=encodeGS();if(!enc)return;
+  var url=location.origin+location.pathname+'?s='+enc;
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(url).then(function(){showToast('URLをコピーしました')}).catch(function(){showToast('コピー失敗')});
+  } else {showToast('コピー失敗')}
+}
+
+/* ============ ACTION LOG ============ */
+function logAction(desc){
+  var t=new Date().toTimeString().slice(0,8);
+  actionLog.push({t:t,d:desc});
+}
+function openHist(){
+  var el=document.getElementById('histList');el.innerHTML='';
+  if(!actionLog.length){
+    el.innerHTML='<div style="text-align:center;color:var(--txdd);padding:14px;font-size:.7rem">履歴なし</div>';
+  } else {
+    var items=actionLog.slice().reverse();
+    items.forEach(function(item){
+      var row=document.createElement('div');row.className='hist-row';
+      var ts=document.createElement('span');ts.className='hist-t';ts.textContent=item.t;
+      var desc=document.createElement('span');desc.className='hist-d';desc.textContent=item.d;
+      row.appendChild(ts);row.appendChild(desc);el.appendChild(row);
+    });
+  }
+  document.getElementById('histMod').classList.add('on');
+}
+function closeHist(){document.getElementById('histMod').classList.remove('on')}
+document.getElementById('histMod').onclick=function(e){if(e.target.id==='histMod')closeHist()};
+function openHelp(){document.getElementById('helpMod').classList.add('on')}
+function closeHelp(){document.getElementById('helpMod').classList.remove('on')}
+document.getElementById('helpMod').onclick=function(e){if(e.target.id==='helpMod')closeHelp()};
+
 /* ============ INIT ============ */
 mkPills('pp1',sel1,'cnt1');
 mkPills('pp2',sel2,'cnt2');
+
+/* ============ URL RESTORE ============ */
+(function(){
+  var sp=new URLSearchParams(location.search);
+  var s=sp.get('s');
+  if(!s)return;
+  try{
+    var raw=JSON.parse(decodeURIComponent(escape(atob(s))));
+    GS=decodeGS(s);
+    gMode=GS.mode;
+    if(raw.handHidden)handHidden={1:!!raw.handHidden[1],2:!!raw.handHidden[2]};
+    document.getElementById('setup').style.display='none';
+    document.getElementById('game').style.display='flex';
+    document.getElementById('newBtn').style.display='';
+    document.getElementById('shareBtn').style.display='';
+    document.getElementById('histBtn').style.display='';
+    document.getElementById('pcBtn').style.display='';
+    appPC(pcMode);
+    var b=gMode==='both';
+    document.body.classList.toggle('both-mode',b);
+    if(b&&zoomLv>75)appZoom(75);
+    if(!b&&zoomLv<100)appZoom(100);
+    document.getElementById('p2top').style.display=b?'':'none';
+    document.getElementById('p2sec').style.display=b?'':'none';
+    document.getElementById('fdiv').style.display=b?'':'none';
+    document.getElementById('p1lbl').innerHTML=b?'<span class="ptag p1">P1 FIELD</span>':'';
+    document.getElementById('trLbl').textContent=b?'P1 TRASH':'TRASH';
+    document.getElementById('oppDraw1').style.display=b?'':'none';
+    document.getElementById('oppDraw2').style.display=b?'':'none';
+    document.getElementById('ctrl2').style.display=b?'':'none';
+    document.getElementById('h1tog').style.display=b?'':'none';
+    if(b){document.getElementById('h1tog').textContent='HIDE';
+      document.getElementById('h2tog').textContent='P2 HAND';}
+    mkLines(1);if(b)mkLines(2);
+    initDeckDrag(1);if(b)initDeckDrag(2);
+    renderAll();
+  }catch(e){/* 無効なURLパラメータは無視 */}
+})();
 </script>
 </body>
 </html>
