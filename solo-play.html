@@ -1436,21 +1436,7 @@ document.querySelectorAll('.hand-edge').forEach(function(edge){
 });
 
 /* ============ URL SHARE ============ */
-async function _compress(str){
-  var cs=new CompressionStream('deflate-raw');
-  var w=cs.writable.getWriter();
-  w.write(new TextEncoder().encode(str));w.close();
-  var buf=await new Response(cs.readable).arrayBuffer();
-  return btoa(String.fromCharCode.apply(null,new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
-}
-async function _decompress(b64url){
-  var b=atob(b64url.replace(/-/g,'+').replace(/_/g,'/'));
-  var bytes=new Uint8Array(b.length);for(var i=0;i<b.length;i++)bytes[i]=b.charCodeAt(i);
-  var ds=new DecompressionStream('deflate-raw');
-  var w=ds.writable.getWriter();w.write(bytes);w.close();
-  return new TextDecoder().decode(await new Response(ds.readable).arrayBuffer());
-}
-async function encodeGS(){
+function encodeGS(){
   if(!GS)return null;
   // カード: [DATAインデックス, 値, 表向き(0/1), owner] — uidは省略して復元時に採番
   function compactCard(cr){return[DATA.indexOf(cr.proto),cr.card.v,cr.up?1:0,cr.owner||0]}
@@ -1468,7 +1454,7 @@ async function encodeGS(){
       deck:compactArr(ps.deck)
     };
   }
-  return await _compress(JSON.stringify(cp));
+  return btoa(unescape(encodeURIComponent(JSON.stringify(cp))));
 }
 function decodeGS(cp){
   var nextUid=1;
@@ -1506,11 +1492,13 @@ function showToast(msg){
   t.textContent=msg;t.classList.add('show');
   setTimeout(function(){t.classList.remove('show')},2500);
 }
-async function shareURL(){
-  var enc=await encodeGS();if(!enc)return;
+function shareURL(){
+  var enc=encodeGS();if(!enc)return;
   var url=location.origin+location.pathname+'?s='+enc;
   if(navigator.clipboard){
-    navigator.clipboard.writeText(url).then(function(){showToast('URLをコピーしました')}).catch(function(){showToast('コピー失敗')});
+    navigator.clipboard.writeText(url)
+      .then(function(){showToast('URLをコピーしました')})
+      .catch(function(){showToast('コピー失敗')});
   } else {showToast('コピー失敗')}
 }
 
@@ -1545,14 +1533,12 @@ mkPills('pp1',sel1,'cnt1');
 mkPills('pp2',sel2,'cnt2');
 
 /* ============ URL RESTORE ============ */
-(async function(){
+(function(){
   var sp=new URLSearchParams(location.search);
   var s=sp.get('s');
   if(!s)return;
   try{
-    var raw;
-    try{raw=JSON.parse(await _decompress(s));}
-    catch(e){raw=JSON.parse(decodeURIComponent(escape(atob(s))));} // 旧形式フォールバック
+    var raw=JSON.parse(decodeURIComponent(escape(atob(s))));
     GS=decodeGS(raw);
     gMode=GS.mode;
     if(raw.handHidden)handHidden={1:!!raw.handHidden[1],2:!!raw.handHidden[2]};
