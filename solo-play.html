@@ -133,8 +133,14 @@
             font-weight:700;white-space:nowrap;flex-shrink:0;touch-action:none;cursor:grab}
     .w-chip.up{border:1px solid}
     .w-chip.dn{background:var(--dn-bg);border:1px dashed var(--dn-bd);color:var(--txdd)}
-    .divider{height:2px;background:linear-gradient(90deg,transparent,rgba(200,168,78,.5),transparent);
-             margin:4px 0;flex-shrink:0}
+    .ctrl-bar{display:flex;align-items:center;justify-content:center;gap:8px;padding:4px 0;flex-shrink:0;
+              border-top:1px solid rgba(200,168,78,.2);border-bottom:1px solid rgba(200,168,78,.2);margin:2px 0}
+    .ctrl-bar-label{font-family:Orbitron,monospace;font-size:.42rem;font-weight:900;letter-spacing:1.5px;color:var(--txdd)}
+    .ctrl-bar-btn{font-family:Orbitron,monospace;font-size:.48rem;font-weight:900;padding:3px 11px;
+                  border-radius:5px;cursor:pointer;letter-spacing:.8px;border:2px solid var(--bd);
+                  background:var(--pill-bg);color:var(--txdd);-webkit-tap-highlight-color:transparent;transition:all .2s}
+    .ctrl-bar-btn.on{background:rgba(255,215,0,.18);border-color:#ffd700;color:#ffd700;box-shadow:0 0 8px rgba(255,215,0,.3)}
+    .ctrl-bar-btn.on.p2on{background:rgba(200,168,78,.18);border-color:#c8a84e;color:#c8a84e;box-shadow:0 0 8px rgba(200,168,78,.3)}
 
     /* card chip (on field) */
     .chip{width:100%;border-radius:6px;padding:4px 5px;
@@ -468,7 +474,6 @@
     <div class="dbar p2bar">
       <button class="d-btn p2" id="d2d">DECK:0</button>
       <button class="u-btn" onclick="doRefresh(2)">REFRESH</button>
-      <span class="ctrl-mk off" id="ctrl2" onclick="togCtrl(2)" style="display:none">P2 CONTROL &#x25B6;</span>
       <div class="trash-zone p2trash" id="trash2" onclick="openTr(2)"><span>P2 TRASH</span><span id="trCnt2"></span></div>
       <span class="d-info" id="d2i" style="display:none"></span>
       <button class="u-btn" id="oppDraw2" onclick="drawOpp(2)" style="display:none">P1 DECK&rarr;</button>
@@ -478,12 +483,14 @@
   <!-- Field area -->
   <div id="field">
     <div id="p2sec" class="f-sec" style="display:none">
-      <div class="f-lbl"><span class="ptag p2">P2 FIELD</span></div>
       <div class="lines" id="p2l"></div>
     </div>
-    <div id="fdiv" class="divider" style="display:none"></div>
+    <div id="fdiv" class="ctrl-bar" style="display:none">
+      <span class="ctrl-bar-label">CONTROL</span>
+      <button class="ctrl-bar-btn" id="ctrl1" onclick="togCtrl(1)">P1 &#x2193;</button>
+      <button class="ctrl-bar-btn p2on" id="ctrl2" onclick="togCtrl(2)">P2 &#x2191;</button>
+    </div>
     <div id="p1sec" class="f-sec">
-      <div class="f-lbl" id="p1lbl"></div>
       <div class="lines" id="p1l"></div>
     </div>
   </div>
@@ -491,7 +498,6 @@
   <div class="dbar">
     <button class="d-btn" id="d1d">DECK:0</button>
     <button class="u-btn" onclick="doRefresh(1)">REFRESH</button>
-    <span class="ctrl-mk off" id="ctrl1" onclick="togCtrl(1)">&#x25C0; P1 CONTROL</span>
     <div class="trash-zone" id="trash" onclick="openTr(1)"><span id="trLbl">TRASH</span><span id="trCnt1"></span></div>
     <span class="d-info" id="d1i" style="display:none"></span>
     <button class="u-btn" id="h1tog" onclick="togHand(1)" style="display:none">HIDE</button>
@@ -720,11 +726,9 @@ function go(){
   document.getElementById('p2top').style.display=b?'':'none';
   document.getElementById('p2sec').style.display=b?'':'none';
   document.getElementById('fdiv').style.display=b?'':'none';
-  document.getElementById('p1lbl').innerHTML=b?'<span class="ptag p1">P1 FIELD</span>':'';
   document.getElementById('trLbl').textContent=b?'P1 TRASH':'TRASH';
   document.getElementById('oppDraw1').style.display=b?'':'none';
   document.getElementById('oppDraw2').style.display=b?'':'none';
-  document.getElementById('ctrl2').style.display=b?'':'none';
   document.getElementById('h1tog').style.display=b?'':'none';
   if(b){document.getElementById('h1tog').textContent='HIDE';
     document.getElementById('h2wrap').style.display='none';
@@ -772,7 +776,6 @@ function doCompile(pn,li){
   var cards=ps.lines[li].splice(0).concat(ps.waits[li].splice(0));
   if(GS.mode==='both'){
     var opn=pn===1?2:1;var ops=GS.p[opn];
-    ops.compiled[li]=true;
     cards=cards.concat(ops.lines[li].splice(0)).concat(ops.waits[li].splice(0));
   }
   cards.forEach(function(cr){
@@ -1385,8 +1388,9 @@ function togCtrl(pn){
 function rCtrl(){
   if(!GS)return;
   var c1=document.getElementById('ctrl1'),c2=document.getElementById('ctrl2');
-  c1.className='ctrl-mk '+(GS.ctrl===1?'on':'off');
-  c2.className='ctrl-mk '+(GS.ctrl===2?'on p2on':'off');
+  if(!c1||!c2)return;
+  c1.classList.toggle('on',GS.ctrl===1);
+  c2.classList.toggle('on',GS.ctrl===2);
 }
 
 /* ============ TOOLTIP ============ */
@@ -1432,54 +1436,69 @@ document.querySelectorAll('.hand-edge').forEach(function(edge){
 });
 
 /* ============ URL SHARE ============ */
-function encodeGS(){
+async function _compress(str){
+  var cs=new CompressionStream('deflate-raw');
+  var w=cs.writable.getWriter();
+  w.write(new TextEncoder().encode(str));w.close();
+  var buf=await new Response(cs.readable).arrayBuffer();
+  return btoa(String.fromCharCode.apply(null,new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+}
+async function _decompress(b64url){
+  var b=atob(b64url.replace(/-/g,'+').replace(/_/g,'/'));
+  var bytes=new Uint8Array(b.length);for(var i=0;i<b.length;i++)bytes[i]=b.charCodeAt(i);
+  var ds=new DecompressionStream('deflate-raw');
+  var w=ds.writable.getWriter();w.write(bytes);w.close();
+  return new TextDecoder().decode(await new Response(ds.readable).arrayBuffer());
+}
+async function encodeGS(){
   if(!GS)return null;
-  function compactCard(cr){return{n:cr.proto.name,v:cr.card.v,up:cr.up,uid:cr.uid,o:cr.owner||0}}
+  // カード: [DATAインデックス, 値, 表向き(0/1), owner] — uidは省略して復元時に採番
+  function compactCard(cr){return[DATA.indexOf(cr.proto),cr.card.v,cr.up?1:0,cr.owner||0]}
   function compactArr(arr){return arr.map(compactCard)}
   var cp={mode:GS.mode,ctrl:GS.ctrl,handHidden:handHidden,p:{}};
   for(var k in GS.p){
     var ps=GS.p[k];
     cp.p[k]={
-      protos:ps.protos.map(function(p){return p.name}),
+      protos:ps.protos.map(function(p){return DATA.indexOf(p)}),
       compiled:ps.compiled.slice(),
       hand:compactArr(ps.hand),
       lines:ps.lines.map(compactArr),
-      waits:ps.waits.map(compactArr),
+      waits:compactArr(ps.waits),
       trash:compactArr(ps.trash),
       deck:compactArr(ps.deck)
     };
   }
-  return btoa(unescape(encodeURIComponent(JSON.stringify(cp))));
+  return await _compress(JSON.stringify(cp));
 }
-function decodeGS(encoded){
-  var cp=JSON.parse(decodeURIComponent(escape(atob(encoded))));
-  function fp(n){return DATA.find(function(p){return p.name===n})}
+function decodeGS(cp){
+  var nextUid=1;
+  // 新形式(配列)と旧形式(オブジェクト)の両方に対応
   function expandCard(ref){
-    var proto=fp(ref.n);
-    var card=proto.cards.find(function(c){return c.v===ref.v});
-    return{card:card,proto:proto,up:ref.up,uid:ref.uid,owner:ref.o||0}
+    var proto,v,up,owner;
+    if(Array.isArray(ref)){
+      proto=DATA[ref[0]];v=ref[1];up=!!ref[2];owner=ref[3]||0;
+    }else{
+      proto=DATA.find(function(p){return p.name===ref.n});v=ref.v;up=ref.up;owner=ref.o||0;
+    }
+    var card=proto.cards.find(function(c){return c.v===v});
+    return{card:card,proto:proto,up:up,uid:nextUid++,owner:owner};
   }
   function expandArr(arr){return arr.map(expandCard)}
+  function expandProto(p){return typeof p==='number'?DATA[p]:DATA.find(function(d){return d.name===p})}
   var gs={mode:cp.mode,ctrl:cp.ctrl,p:{}};
-  var maxUid=0;
   for(var k in cp.p){
     var cps=cp.p[k];var pn=parseInt(k);
-    var ps={
-      protos:cps.protos.map(fp),
+    gs.p[pn]={
+      protos:cps.protos.map(expandProto),
       compiled:cps.compiled.slice(),
       hand:expandArr(cps.hand),
       lines:cps.lines.map(expandArr),
-      waits:cps.waits.map(expandArr),
+      waits:expandArr(cps.waits),
       trash:expandArr(cps.trash),
       deck:expandArr(cps.deck)
     };
-    gs.p[pn]=ps;
-    var allCards=ps.hand.concat(ps.deck).concat(ps.trash);
-    ps.lines.forEach(function(l){allCards=allCards.concat(l)});
-    ps.waits.forEach(function(w){allCards=allCards.concat(w)});
-    allCards.forEach(function(cr){if(cr.uid>maxUid)maxUid=cr.uid});
   }
-  uid=maxUid+1;
+  uid=nextUid;
   return gs;
 }
 function showToast(msg){
@@ -1487,8 +1506,8 @@ function showToast(msg){
   t.textContent=msg;t.classList.add('show');
   setTimeout(function(){t.classList.remove('show')},2500);
 }
-function shareURL(){
-  var enc=encodeGS();if(!enc)return;
+async function shareURL(){
+  var enc=await encodeGS();if(!enc)return;
   var url=location.origin+location.pathname+'?s='+enc;
   if(navigator.clipboard){
     navigator.clipboard.writeText(url).then(function(){showToast('URLをコピーしました')}).catch(function(){showToast('コピー失敗')});
@@ -1526,13 +1545,15 @@ mkPills('pp1',sel1,'cnt1');
 mkPills('pp2',sel2,'cnt2');
 
 /* ============ URL RESTORE ============ */
-(function(){
+(async function(){
   var sp=new URLSearchParams(location.search);
   var s=sp.get('s');
   if(!s)return;
   try{
-    var raw=JSON.parse(decodeURIComponent(escape(atob(s))));
-    GS=decodeGS(s);
+    var raw;
+    try{raw=JSON.parse(await _decompress(s));}
+    catch(e){raw=JSON.parse(decodeURIComponent(escape(atob(s))));} // 旧形式フォールバック
+    GS=decodeGS(raw);
     gMode=GS.mode;
     if(raw.handHidden)handHidden={1:!!raw.handHidden[1],2:!!raw.handHidden[2]};
     document.getElementById('setup').style.display='none';
@@ -1549,11 +1570,9 @@ mkPills('pp2',sel2,'cnt2');
     document.getElementById('p2top').style.display=b?'':'none';
     document.getElementById('p2sec').style.display=b?'':'none';
     document.getElementById('fdiv').style.display=b?'':'none';
-    document.getElementById('p1lbl').innerHTML=b?'<span class="ptag p1">P1 FIELD</span>':'';
     document.getElementById('trLbl').textContent=b?'P1 TRASH':'TRASH';
     document.getElementById('oppDraw1').style.display=b?'':'none';
     document.getElementById('oppDraw2').style.display=b?'':'none';
-    document.getElementById('ctrl2').style.display=b?'':'none';
     document.getElementById('h1tog').style.display=b?'':'none';
     if(b){document.getElementById('h1tog').textContent='HIDE';
       document.getElementById('h2tog').textContent='P2 HAND';}
