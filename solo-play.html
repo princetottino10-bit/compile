@@ -1449,7 +1449,7 @@ function encodeGS(){
       compiled:ps.compiled.slice(),
       hand:compactArr(ps.hand),
       lines:ps.lines.map(compactArr),
-      waits:compactArr(ps.waits),
+      waits:ps.waits.map(compactArr),
       trash:compactArr(ps.trash),
       deck:compactArr(ps.deck)
     };
@@ -1481,7 +1481,7 @@ function decodeGS(cp){
       compiled:cps.compiled.slice(),
       hand:expandArr(cps.hand),
       lines:cps.lines.map(expandArr),
-      waits:expandArr(cps.waits),
+      waits:cps.waits.map(expandArr),
       trash:expandArr(cps.trash),
       deck:expandArr(cps.deck)
     };
@@ -1497,11 +1497,19 @@ function showToast(msg){
 function shareURL(){
   var enc=encodeGS();if(!enc)return;
   var url=location.origin+location.pathname+'?s='+enc;
+  function fallback(){
+    var ta=document.createElement('textarea');
+    ta.value=url;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.focus();ta.select();
+    try{document.execCommand('copy');showToast('URLをコピーしました')}
+    catch(e){showToast('コピー失敗')}
+    document.body.removeChild(ta);
+  }
   if(navigator.clipboard){
     navigator.clipboard.writeText(url)
       .then(function(){showToast('URLをコピーしました')})
-      .catch(function(){showToast('コピー失敗')});
-  } else {showToast('コピー失敗')}
+      .catch(fallback);
+  } else {fallback()}
 }
 
 /* ============ ACTION LOG ============ */
