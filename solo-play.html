@@ -1454,7 +1454,9 @@ function encodeGS(){
       deck:compactArr(ps.deck)
     };
   }
-  return btoa(unescape(encodeURIComponent(JSON.stringify(cp))));
+  // base64url: + → - / → _ = 削除（URLのクエリ文字列で+がスペースになる問題を防ぐ）
+  return btoa(unescape(encodeURIComponent(JSON.stringify(cp))))
+    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
 }
 function decodeGS(cp){
   var nextUid=1;
@@ -1538,7 +1540,8 @@ mkPills('pp2',sel2,'cnt2');
   var s=sp.get('s');
   if(!s)return;
   try{
-    var raw=JSON.parse(decodeURIComponent(escape(atob(s))));
+    var b64=s.replace(/-/g,'+').replace(/_/g,'/');while(b64.length%4)b64+='=';
+    var raw=JSON.parse(decodeURIComponent(escape(atob(b64))));
     GS=decodeGS(raw);
     gMode=GS.mode;
     if(raw.handHidden)handHidden={1:!!raw.handHidden[1],2:!!raw.handHidden[2]};
