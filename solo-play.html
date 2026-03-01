@@ -413,6 +413,39 @@
     .hist-row{display:flex;gap:8px;padding:5px 4px;border-bottom:1px solid var(--bd);font-size:.68rem;align-items:baseline}
     .hist-t{font-family:Orbitron,monospace;font-size:.55rem;color:var(--txdd);flex-shrink:0}
     .hist-d{color:var(--tx)}
+
+    /* win overlay */
+    .win-ov{display:none;position:fixed;inset:0;background:var(--overlay);z-index:500;
+      align-items:center;justify-content:center}
+    .win-ov.on{display:flex}
+    .win-box{background:var(--dk);border:2px solid var(--pk);border-radius:14px;
+      padding:28px 24px;text-align:center;max-width:300px;width:88%;
+      box-shadow:0 0 40px rgba(233,30,140,.3)}
+    .win-title{font-family:Orbitron,monospace;font-size:.8rem;font-weight:900;
+      letter-spacing:2px;color:var(--pk);margin-bottom:8px}
+    .win-msg{font-family:Orbitron,monospace;font-size:1.3rem;font-weight:900;
+      color:var(--tx);margin-bottom:20px;letter-spacing:1px}
+    .win-btn{font-family:Orbitron,monospace;font-size:.72rem;font-weight:700;
+      padding:10px 24px;border-radius:8px;background:var(--pk);color:#fff;
+      border:none;cursor:pointer;letter-spacing:1px}
+
+    /* turn bar */
+    .turn-bar{display:flex;align-items:center;gap:8px;padding:5px 10px;flex-shrink:0;
+      border-top:1px solid var(--bd2);background:var(--cbg);transition:border-color .3s}
+    .turn-ph{font-family:Orbitron,monospace;font-size:.42rem;font-weight:700;
+      letter-spacing:1px;color:var(--txdd);padding:2px 6px;border-radius:3px;
+      background:var(--pill-bg);border:1px solid var(--bd);white-space:nowrap}
+    .turn-lbl{font-family:Orbitron,monospace;font-size:.6rem;font-weight:900;
+      letter-spacing:1px;flex:1;text-align:center;transition:color .3s}
+    .turn-end{font-family:Orbitron,monospace;font-size:.55rem;font-weight:700;
+      padding:5px 12px;border-radius:6px;background:var(--pk);color:#fff;
+      border:none;cursor:pointer;letter-spacing:.5px;white-space:nowrap}
+    .turn-end:disabled{opacity:.3;cursor:default}
+
+    /* compile urgent highlight */
+    .l-compile.urgent{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.6);
+      color:#ef4444;animation:pulse-u 1s ease-in-out infinite}
+    @keyframes pulse-u{0%,100%{opacity:1}50%{opacity:.55}}
   </style>
 </head>
 <body>
@@ -443,6 +476,7 @@
     <div class="mode-row">
       <div class="mode-b on" id="mSolo" onclick="setM('solo')">SOLO<small>一人回し</small></div>
       <div class="mode-b" id="mBoth" onclick="setM('both')">BOTH<small>両面操作</small></div>
+      <div class="mode-b" id="mAi" onclick="setM('ai')">VS AI<small>AI対戦</small></div>
     </div>
   </div>
   <div style="margin-bottom:14px">
@@ -451,7 +485,7 @@
     <div class="pills" id="pp1"></div>
   </div>
   <div id="p2s" style="display:none;margin-bottom:14px">
-    <div class="sec-t"><b>//</b> P2 プロトコル</div>
+    <div class="sec-t"><b>//</b> <span id="p2sLbl">P2 プロトコル</span></div>
     <div class="info">選択中: <b id="cnt2">0</b> / 3</div>
     <div class="pills" id="pp2"></div>
   </div>
@@ -493,6 +527,12 @@
     <div id="p1sec" class="f-sec">
       <div class="lines" id="p1l"></div>
     </div>
+  </div>
+  <!-- Turn bar (both mode only) -->
+  <div class="turn-bar" id="turnBar" style="display:none">
+    <span class="turn-ph" id="turnPh">ACTION</span>
+    <span class="turn-lbl" id="turnLbl">P1 のターン</span>
+    <button class="turn-end" id="endTurnBtn" onclick="endTurn()">END TURN →</button>
   </div>
   <!-- P1 bottom area (deck → hand) -->
   <div class="dbar">
@@ -559,6 +599,15 @@
 <div id="tooltip"></div>
 <div id="ghost" style="display:none"></div>
 <div id="toast"></div>
+
+<!-- Win overlay -->
+<div class="win-ov" id="winOv">
+  <div class="win-box">
+    <div class="win-title" id="winTitle">COMPILE COMPLETE</div>
+    <div class="win-msg" id="winMsg">P1 が勝利！</div>
+    <button class="win-btn" onclick="document.getElementById('winOv').classList.remove('on');reset()">NEW GAME</button>
+  </div>
+</div>
 
 <div class="ov" id="histMod">
   <div class="ov-box">
@@ -668,7 +717,10 @@ function esc(s){var d=document.createElement('div');d.textContent=s;return d.inn
 function setM(m){gMode=m;
   document.getElementById('mSolo').classList.toggle('on',m==='solo');
   document.getElementById('mBoth').classList.toggle('on',m==='both');
-  document.getElementById('p2s').style.display=m==='both'?'':'none';
+  document.getElementById('mAi').classList.toggle('on',m==='ai');
+  var need2=(m==='both'||m==='ai');
+  document.getElementById('p2s').style.display=need2?'':'none';
+  document.getElementById('p2sLbl').textContent=m==='ai'?'AI プロトコル':'P2 プロトコル';
   chkReady();
 }
 
@@ -707,11 +759,12 @@ function mkPS(names,pn){
 
 function go(){
   if(sel1.length!==3)return;
-  if(gMode==='both'&&sel2.length!==3)return;
+  if((gMode==='both'||gMode==='ai')&&sel2.length!==3)return;
   hist=[];actionLog=[];
-  GS={mode:gMode,p:{},ctrl:0};
+  var aiMode=gMode==='ai';
+  GS={mode:aiMode?'both':gMode,p:{},ctrl:0,turn:1,actionDone:false,mustCompile:-1,ai:aiMode};
   GS.p[1]=mkPS(sel1,1);
-  if(gMode==='both')GS.p[2]=mkPS(sel2,2);
+  if(gMode==='both'||gMode==='ai')GS.p[2]=mkPS(sel2,2);
   document.getElementById('setup').style.display='none';
   document.getElementById('game').style.display='flex';
   document.getElementById('newBtn').style.display='';
@@ -719,7 +772,8 @@ function go(){
   document.getElementById('histBtn').style.display='';
   document.getElementById('pcBtn').style.display='';
   appPC(pcMode);
-  var b=gMode==='both';
+  var b=gMode==='both'||gMode==='ai';
+  document.querySelector('.logo small').textContent=gMode==='ai'?'VS·AI':b?'BOTH':'SOLO';
   document.body.classList.toggle('both-mode',b);
   if(b&&zoomLv>75)appZoom(75);
   if(!b&&zoomLv<100)appZoom(100);
@@ -737,6 +791,7 @@ function go(){
   } else {handHidden={1:false,2:true}}
   mkLines(1);if(b)mkLines(2);
   initDeckDrag(1);if(b)initDeckDrag(2);
+  if(b)updateTurnBar();
   renderAll();
 }
 
@@ -749,9 +804,10 @@ function mkLines(pn){
     var d=document.createElement('div');d.className='line'+(isP2?' p2line':'');d.dataset.line=i;d.dataset.player=pn;
     var pr=ps.protos[i];
     var compiled=ps.compiled[i];
+    var urgent=!compiled&&compileConditionMet(pn,i);
     var compileHtml=compiled
       ?'<span class="l-compiled">COMPILED</span>'
-      :'<button class="l-compile" data-compileline="'+i+'" data-compileplayer="'+pn+'">COMPILE</button>';
+      :'<button class="l-compile'+(urgent?' urgent':'')+'" data-compileline="'+i+'" data-compileplayer="'+pn+'">'+(urgent?'COMPILE!':'COMPILE')+'</button>';
     var hdrHtml='<div class="l-hdr"><span class="l-drag" data-dragline="'+i+'" data-dragplayer="'+pn+'">&#x2261;</span><span class="l-proto" style="flex:1">'+pr.name+'</span>'+compileHtml+'<span class="l-val" style="background:'+pr.color+'20" id="'+id+'v'+i+'">0</span></div>';
     d.innerHTML=hdrHtml;
     d.style.borderColor=pr.color+'60';
@@ -785,6 +841,8 @@ function doCompile(pn,li){
   if(GS.ctrl===pn)GS.ctrl=0;
   if(GS.mode==='both'&&GS.ctrl===(pn===1?2:1))GS.ctrl=0;
   renderAll();
+  checkAllWin();
+  if(GS.mode==='both'&&GS.turn===pn&&!GS.actionDone)afterAction();
 }
 
 /* ============ REFRESH ============ */
@@ -801,6 +859,7 @@ function doRefresh(pn){
   }
   if(GS.ctrl===pn)GS.ctrl=0;
   renderAll();
+  if(GS.mode==='both'&&GS.turn===pn&&!GS.actionDone)afterAction();
 }
 
 /* ============ WAIT ZONE ============ */
@@ -889,9 +948,37 @@ function restore(j){
   function fr(c){c.proto=fp(c.proto);return c}
   function fa(a){return a.map(fr)}
   for(var k in o.p){var s=o.p[k];s.deck=fa(s.deck);s.hand=fa(s.hand);s.lines=s.lines.map(fa);s.trash=fa(s.trash);s.protos=s.protos.map(fp);if(!s.compiled)s.compiled=[false,false,false];if(!s.waits)s.waits=[[],[],[]];else s.waits=s.waits.map(fa)}
+  if(o.turn===undefined)o.turn=1;
+  if(o.actionDone===undefined)o.actionDone=false;
+  if(o.mustCompile===undefined)o.mustCompile=-1;
+  if(o.ai===undefined)o.ai=false;
   return o;
 }
 function doUndo(){if(!hist.length)return;if(actionLog.length)actionLog.pop();GS=restore(hist.pop());document.getElementById('uBtn').disabled=!hist.length;renderAll()}
+
+/* ============ LINE VALUE ============ */
+function lineVal(pn,li){
+  var ps=GS.p[pn],stk=ps.lines[li];
+  var hasDark2=stk.some(function(cr){return cr.up&&cr.proto.name==='DARKNESS'&&cr.card.v===2});
+  var hasApathy0=stk.some(function(cr){return cr.up&&cr.proto.name==='APATHY'&&cr.card.v===0});
+  var dnVal=hasDark2?4:2,sum=0;
+  stk.forEach(function(cr){sum+=cr.up?cr.card.v:dnVal});
+  if(hasApathy0){
+    var dnCount=stk.filter(function(cr){return !cr.up}).length;
+    if(GS.mode==='both'){var opn=pn===1?2:1;dnCount+=GS.p[opn].lines[li].filter(function(cr){return !cr.up}).length}
+    sum+=dnCount;
+  }
+  return sum;
+}
+
+/* ============ COMPILE CONDITION ============ */
+function compileConditionMet(pn,li){
+  if(GS.p[pn].compiled[li])return false;
+  var myVal=lineVal(pn,li);
+  if(myVal<10)return false;
+  if(GS.mode==='both'){var opn=pn===1?2:1;return myVal>lineVal(opn,li)}
+  return true;
+}
 
 /* ============ RENDER ============ */
 function renderAll(){
@@ -909,16 +996,8 @@ function rField(pn){
   var els=document.getElementById(id).querySelectorAll('.line');
   for(var li=0;li<3;li++){
     var le=els[li];
-    var stk=ps.lines[li],sum=0;
-    var hasDark2=stk.some(function(cr){return cr.up&&cr.proto.name==='DARKNESS'&&cr.card.v===2});
-    var hasApathy0=stk.some(function(cr){return cr.up&&cr.proto.name==='APATHY'&&cr.card.v===0});
-    var dnVal=hasDark2?4:2;
-    stk.forEach(function(cr){sum+=cr.up?cr.card.v:dnVal});
-    if(hasApathy0){
-      var dnCount=stk.filter(function(cr){return !cr.up}).length;
-      if(GS.mode==='both'){var opn=pn===1?2:1;dnCount+=GS.p[opn].lines[li].filter(function(cr){return !cr.up}).length}
-      sum+=dnCount;
-    }
+    var stk=ps.lines[li];
+    var sum=lineVal(pn,li);
     document.getElementById(id+'v'+li).textContent=sum;
     if(!stk.length&&!ps.compiled[li]){var e=document.createElement('div');e.className='l-empty';e.textContent='空';le.appendChild(e)}
     else stk.forEach(function(cr,idx){le.appendChild(mkChip(cr,pn,idx<stk.length-1))});
@@ -1168,10 +1247,12 @@ function endGhost(x,y){
       logAction(_desc+' → ウェイト'+(tgt.line+1));
       renderAll();
     } else if(tgt.type==='line'){
+      var wasInHand=GS.p[_pn].hand.some(function(x){return x.uid===_cr.uid});
       save();removeCard(_cr,_pn);
       GS.p[parseInt(tgt.el.dataset.player)].lines[parseInt(tgt.el.dataset.line)].push(_cr);
       logAction(_desc+' → ライン'+(parseInt(tgt.el.dataset.line)+1));
       renderAll();
+      if(wasInHand&&GS.mode==='both'&&GS.turn===_pn&&!GS.actionDone)afterAction();
     } else if(tgt.type==='trash'){
       save();removeCard(_cr,_pn);
       GS.p[_pn].trash.push(_cr);
@@ -1332,6 +1413,7 @@ function cfNew(){
 }
 function reset(){
   GS=null;hist=[];actionLog=[];
+  document.querySelector('.logo small').textContent='SOLO';
   document.getElementById('game').style.display='none';
   document.getElementById('setup').style.display='';
   document.getElementById('newBtn').style.display='none';
@@ -1393,6 +1475,153 @@ function rCtrl(){
   c2.classList.toggle('on',GS.ctrl===2);
 }
 
+/* ============ WIN CHECK ============ */
+function checkAllWin(){
+  if(!GS)return;
+  var players=GS.mode==='both'?[1,2]:[1];
+  for(var i=0;i<players.length;i++){
+    var pn=players[i],ps=GS.p[pn];
+    if(ps.compiled[0]&&ps.compiled[1]&&ps.compiled[2]){showWin(pn);return}
+  }
+}
+function showWin(pn){
+  document.getElementById('winTitle').textContent='COMPILE COMPLETE';
+  document.getElementById('winMsg').textContent=(GS.mode==='both'?'P'+pn+' WIN':'YOU WIN');
+  document.getElementById('winOv').classList.add('on');
+}
+
+/* ============ CONTROL AUTO CHECK ============ */
+function checkControlAuto(){
+  if(!GS||GS.mode!=='both')return;
+  var pn=GS.turn,opn=pn===1?2:1,leading=0;
+  for(var li=0;li<3;li++){if(lineVal(pn,li)>lineVal(opn,li))leading++}
+  if(leading>=2&&GS.ctrl!==pn){
+    GS.ctrl=pn;logAction('P'+pn+': コントロール獲得');rCtrl();
+  }
+}
+
+/* ============ TURN STRUCTURE ============ */
+function updateTurnBar(){
+  if(!GS||GS.mode!=='both'){document.getElementById('turnBar').style.display='none';return}
+  var pn=GS.turn,isP1=pn===1,isAiTurn=GS.ai&&pn===2;
+  var bar=document.getElementById('turnBar');
+  bar.style.display='';
+  bar.style.borderTopColor=isP1?'rgba(233,30,140,.35)':'rgba(200,168,78,.35)';
+  bar.style.background=isP1?'rgba(233,30,140,.04)':'rgba(200,168,78,.04)';
+  var lbl=document.getElementById('turnLbl');
+  lbl.textContent=isAiTurn?'AI のターン':'P'+pn+' のターン';
+  lbl.style.color=isP1?'#e91e8c':'#c8a84e';
+  var ph='',done=GS.actionDone;
+  if(isAiTurn)ph='THINKING...';
+  else if(GS.mustCompile>=0&&!done)ph='COMPILE!';
+  else if(!done)ph='ACTION';
+  else ph='END TURN';
+  document.getElementById('turnPh').textContent=ph;
+  var btn=document.getElementById('endTurnBtn');
+  btn.disabled=!done||isAiTurn;
+  btn.style.display=isAiTurn?'none':'';
+}
+
+function afterAction(){
+  if(!GS||GS.mode!=='both')return;
+  GS.actionDone=true;GS.mustCompile=-1;
+  updateTurnBar();
+}
+
+function startGameTurn(){
+  if(!GS||GS.mode!=='both')return;
+  GS.actionDone=false;
+  checkControlAuto();
+  var pn=GS.turn;
+  GS.mustCompile=-1;
+  for(var li=0;li<3;li++){
+    if(compileConditionMet(pn,li)){GS.mustCompile=li;break}
+  }
+  if(GS.mustCompile>=0)logAction('P'+pn+': コンパイル必須（ライン'+(GS.mustCompile+1)+'）');
+  updateTurnBar();
+  renderAll();
+  if(GS.ai&&GS.turn===2)setTimeout(doAiTurn,900);
+}
+
+/* ============ AI TURN ============ */
+function doAiTurn(){
+  if(!GS||!GS.ai||GS.turn!==2)return;
+  var pn=2,delay=650;
+  // コンパイル必須
+  if(GS.mustCompile>=0){
+    setTimeout(function(){
+      doCompile(pn,GS.mustCompile);
+      setTimeout(function(){endTurn()},delay);
+    },delay);
+    return;
+  }
+  var ps=GS.p[pn];
+  // 手札0枚 → リフレッシュ必須
+  if(!ps.hand.length){
+    setTimeout(function(){
+      doRefresh(pn);
+      setTimeout(function(){endTurn()},delay);
+    },delay);
+    return;
+  }
+  // カードをプレイ
+  setTimeout(function(){
+    aiPlayCard(pn);
+    setTimeout(function(){endTurn()},delay);
+  },delay);
+}
+
+function aiPlayCard(pn){
+  var ps=GS.p[pn];
+  if(!ps.hand.length)return;
+  // 表向きプレイ候補：対応プロトコルのラインへ、スコア最高のカード
+  var bestCard=null,bestLine=-1,bestScore=-1;
+  for(var hi=0;hi<ps.hand.length;hi++){
+    var cr=ps.hand[hi];
+    for(var li=0;li<3;li++){
+      if(ps.compiled[li])continue;
+      if(ps.protos[li].name===cr.proto.name){
+        var newVal=lineVal(pn,li)+cr.card.v;
+        var score=cr.card.v+(newVal>=10?100:newVal>=7?10:0);
+        if(score>bestScore){bestScore=score;bestCard=cr;bestLine=li}
+        break;
+      }
+    }
+  }
+  if(bestCard&&bestLine>=0){
+    save();
+    ps.hand.splice(ps.hand.indexOf(bestCard),1);
+    bestCard.up=true;
+    ps.lines[bestLine].push(bestCard);
+    logAction('AI: '+bestCard.proto.name+' '+bestCard.card.v+' → ライン'+(bestLine+1));
+    renderAll();afterAction();
+    return;
+  }
+  // 対応ラインなし → 裏向きで最も値の低い未コンパイルラインへ
+  var cr=ps.hand[Math.floor(Math.random()*ps.hand.length)];
+  var fdLine=0,fdScore=Infinity;
+  for(var li=0;li<3;li++){
+    if(!ps.compiled[li]){var v=lineVal(pn,li);if(v<fdScore){fdScore=v;fdLine=li}}
+  }
+  save();
+  ps.hand.splice(ps.hand.indexOf(cr),1);
+  cr.up=false;
+  ps.lines[fdLine].push(cr);
+  logAction('AI: 裏向き → ライン'+(fdLine+1));
+  renderAll();afterAction();
+}
+
+function endTurn(){
+  if(!GS||GS.mode!=='both')return;
+  var pn=GS.turn;
+  if(!GS.actionDone){showToast('アクションを実行してください');return}
+  if(GS.p[pn].hand.length>5){showToast('手札が'+GS.p[pn].hand.length+'枚です。5枚まで捨ててください');return}
+  save();
+  logAction('P'+pn+': ターン終了');
+  GS.turn=pn===1?2:1;
+  startGameTurn();
+}
+
 /* ============ TOOLTIP ============ */
 function ttContent(cr,covered){
   var c=cr.proto.color;
@@ -1441,7 +1670,7 @@ function encodeGS(){
   // カード: [DATAインデックス, 値, 表向き(0/1), owner] — uidは省略して復元時に採番
   function compactCard(cr){return[DATA.indexOf(cr.proto),cr.card.v,cr.up?1:0,cr.owner||0]}
   function compactArr(arr){return arr.map(compactCard)}
-  var cp={mode:GS.mode,ctrl:GS.ctrl,handHidden:handHidden,p:{}};
+  var cp={mode:GS.mode,ctrl:GS.ctrl,turn:GS.turn||1,actionDone:!!GS.actionDone,ai:!!GS.ai,handHidden:handHidden,p:{}};
   for(var k in GS.p){
     var ps=GS.p[k];
     cp.p[k]={
@@ -1473,7 +1702,7 @@ function decodeGS(cp){
   }
   function expandArr(arr){return arr.map(expandCard)}
   function expandProto(p){return typeof p==='number'?DATA[p]:DATA.find(function(d){return d.name===p})}
-  var gs={mode:cp.mode,ctrl:cp.ctrl,p:{}};
+  var gs={mode:cp.mode,ctrl:cp.ctrl,turn:cp.turn||1,actionDone:!!cp.actionDone,mustCompile:cp.mustCompile!=null?cp.mustCompile:-1,ai:!!cp.ai,p:{}};
   for(var k in cp.p){
     var cps=cp.p[k];var pn=parseInt(k);
     gs.p[pn]={
@@ -1575,7 +1804,10 @@ mkPills('pp2',sel2,'cnt2');
       document.getElementById('h2tog').textContent='P2 HAND';}
     mkLines(1);if(b)mkLines(2);
     initDeckDrag(1);if(b)initDeckDrag(2);
+    if(GS.ai)document.querySelector('.logo small').textContent='VS·AI';
+    if(b)updateTurnBar();
     renderAll();
+    if(GS.ai&&GS.turn===2&&!GS.actionDone)setTimeout(doAiTurn,1200);
   }catch(e){/* 無効なURLパラメータは無視 */}
 })();
 </script>
