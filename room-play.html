@@ -607,6 +607,13 @@
     .chat-stamps{display:flex;flex-wrap:wrap;gap:4px;padding:6px 8px;border-top:1px solid var(--bd)}
     .stamp-btn{font-size:.7rem;padding:3px 7px;border-radius:12px;border:1px solid var(--bd2);
       background:var(--pill-bg);color:var(--tx);cursor:pointer;white-space:nowrap}
+    .chat-input-row{display:flex;gap:4px;padding:5px 8px;border-top:1px solid var(--bd)}
+    .chat-input{flex:1;background:var(--pill-bg);border:1px solid var(--bd2);border-radius:6px;
+      color:var(--tx);font-size:.68rem;padding:4px 7px;font-family:'Noto Sans JP',sans-serif;outline:none}
+    .chat-input:focus{border-color:var(--pk)}
+    .chat-send-btn{background:var(--pk);border:none;border-radius:6px;color:#fff;
+      font-size:.6rem;font-family:Orbitron,monospace;font-weight:700;padding:4px 8px;cursor:pointer;white-space:nowrap}
+    .chat-send-btn:disabled{opacity:.3;cursor:default}
     .stamp-btn:hover{border-color:var(--pk);color:var(--pk)}
     #chatBtn{border-color:rgba(96,165,250,.4);color:#60a5fa}
     #chatBtn.unread{border-color:#ef4444;color:#fff;background:rgba(239,68,68,.15);
@@ -642,6 +649,11 @@
   </div>
   <div class="chat-log" id="chatLog"></div>
   <div class="chat-stamps" id="chatStamps"></div>
+  <div class="chat-input-row" id="chatInputRow" style="display:none">
+    <input type="text" id="chatInput" class="chat-input" placeholder="メッセージ..." maxlength="80"
+      onkeydown="if(event.key==='Enter')sendChatMsg()">
+    <button class="chat-send-btn" id="chatSendBtn" onclick="sendChatMsg()">送信</button>
+  </div>
 </div>
 
 <div class="zoom-bar" id="zoomBar">
@@ -945,6 +957,7 @@ var turnTimerStart=0;
 // チャット
 var chatRef=null;
 var chatUnread=0;
+var chatPendingIds=new Set();
 var STAMPS=['👍 GG','🎉 ナイス！','🤔 考え中…','😱 しまった！','⚡ いくぞ！','💭 ちょっと待って','🏳 参った','😎 余裕'];
 // 観戦
 var isSpectator=false;
@@ -2412,6 +2425,7 @@ function startChatListen(){
   }
   chatRef.limitToLast(30).on('child_added',function(snap){
     var m=snap.val();if(!m)return;
+    if(chatPendingIds.has(snap.key)){chatPendingIds.delete(snap.key);return;}
     appendChatMsg(m);
     var panel=document.getElementById('chatPanel');
     if(!panel.classList.contains('open')){
@@ -2438,7 +2452,18 @@ function appendChatMsg(m){
 }
 function sendStamp(s){
   if(!chatRef||isSpectator)return;
-  chatRef.push({role:myRole,msg:s,t:Date.now()});
+  var ref=chatRef.push({role:myRole,msg:s,t:Date.now()});
+  chatPendingIds.add(ref.key);
+  appendChatMsg({role:myRole,msg:s});
+}
+function sendChatMsg(){
+  if(!chatRef||isSpectator)return;
+  var inp=document.getElementById('chatInput');
+  var txt=inp.value.trim();if(!txt)return;
+  inp.value='';
+  var ref=chatRef.push({role:myRole,msg:txt,t:Date.now()});
+  chatPendingIds.add(ref.key);
+  appendChatMsg({role:myRole,msg:txt});
 }
 function initChat(){
   document.getElementById('chatBtn').style.display='';
@@ -2446,9 +2471,11 @@ function initChat(){
   document.getElementById('chatLog').innerHTML='';
   document.getElementById('chatStamps').innerHTML='';
   chatUnread=0;
+  chatPendingIds=new Set();
   var badge=document.getElementById('chatBadge');
   badge.style.display='none';badge.textContent='';
   document.getElementById('chatBtn').classList.remove('unread');
+  if(!isSpectator)document.getElementById('chatInputRow').style.display='';
   startChatListen();
 }
 
