@@ -1344,9 +1344,9 @@ function mkChip(cr,pn,covered,isOpp){
     if(covered&&(cr.card.m||cr.card.l))needTT=true;
   } else if(hideInfo){
     // 相手の裏向き: FACE-DOWN表示と反転ボタンは残し、実カード名は隠す
-    el.innerHTML='<div class="c-hdr"><span class="c-n" style="opacity:.4">FACE-DOWN</span><span class="c-v" style="background:rgba(255,255,255,.05);opacity:.4">2</span></div>';
+    el.innerHTML='<div class="c-hdr" style="justify-content:center"><span class="c-n" style="opacity:.35;letter-spacing:1px">FACE DOWN</span></div>';
   } else {
-    el.innerHTML='<div class="c-hdr"><span class="c-n" style="opacity:.4">FACE-DOWN</span><span class="c-v" style="background:rgba(255,255,255,.05);opacity:.4">2</span></div>';
+    el.innerHTML='<div class="c-hdr" style="justify-content:center"><span class="c-n" style="opacity:.35;letter-spacing:1px">FACE DOWN</span></div>';
     needTT=true;
   }
   if(needTT&&!hideInfo){
@@ -1393,7 +1393,7 @@ function mkHCard(cr,pn,isOpp){
     html+='</div>';
     el.innerHTML=html;
   } else {
-    el.innerHTML='<div class="c-hdr"><span class="c-n" style="opacity:.4">FACE-DOWN</span><span class="c-v" style="background:rgba(255,255,255,.05);opacity:.4">2</span></div>';
+    el.innerHTML='<div class="c-hdr" style="justify-content:center"><span class="c-n" style="opacity:.35;letter-spacing:1px">FACE DOWN</span></div>';
   }
   var fb=document.createElement('button');fb.className='fbtn';fb.innerHTML='\u21BB 反転';
   fb.onpointerdown=function(e){e.stopPropagation()};
