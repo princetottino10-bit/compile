@@ -136,8 +136,10 @@
                border-radius:3px;border:1px solid var(--bd);background:var(--pill-bg);color:var(--txd);
                cursor:pointer;letter-spacing:.5px;-webkit-tap-highlight-color:transparent;margin-left:auto}
     .l-compile:active{background:var(--cbg2)}
-    .l-compiled{font-family:Orbitron,monospace;font-size:.38rem;font-weight:700;padding:2px 6px;
-                border-radius:3px;background:rgba(34,197,94,.15);color:#22c55e;letter-spacing:.5px;margin-left:auto}
+    .l-compiled{font-family:Orbitron,monospace;font-size:.42rem;font-weight:900;
+      padding:2px 7px;border-radius:9px;letter-spacing:.5px;
+      background:rgba(34,197,94,.2);border:1px solid rgba(34,197,94,.5);color:#4ade80;
+      white-space:nowrap}
     .l-empty{font-size:.52rem;color:var(--empty-color);text-align:center;padding:6px 0}
     .l-wait{margin-top:auto;flex-shrink:0;display:flex;flex-wrap:wrap;gap:2px;
             padding:3px;border-top:1px dashed var(--bd);align-items:flex-start;
@@ -176,14 +178,13 @@
     .chip.up{border:1.5px solid}
     .chip.dn{background:var(--dn-bg);border:1.5px dashed var(--dn-bd);color:var(--txdd)}
     .c-stripe{position:absolute;top:0;left:0;width:4px;height:100%}
-    .c-hdr{display:flex;align-items:center;gap:4px;position:relative;min-height:18px;padding-right:26px}
+    .c-hdr{display:flex;align-items:center;gap:4px;position:relative;min-height:18px}
     .c-n{font-family:Orbitron,monospace;font-size:.5rem;letter-spacing:.3px;overflow:hidden;text-overflow:ellipsis;
          white-space:nowrap;font-weight:700;flex:1}
     .c-v{font-family:Orbitron,monospace;font-size:.72rem;font-weight:900;
-         position:absolute;right:0;top:50%;transform:translateY(-50%);
          min-width:22px;height:22px;border-radius:5px;border:1px solid;
          display:flex;align-items:center;justify-content:center;
-         padding:0 3px;color:#fff;line-height:1}
+         padding:0 3px;color:#fff;line-height:1;flex-shrink:0}
     .c-cmds{font-family:'Noto Sans JP',sans-serif;font-weight:400;font-size:.6rem;
             line-height:1.5;margin-top:3px;color:var(--tx)}
     .c-cmd{padding:2px 4px;border-radius:3px;margin-top:2px}
@@ -201,6 +202,8 @@
           font-family:'Noto Sans JP',sans-serif;font-weight:600;
           -webkit-tap-highlight-color:transparent}
     .fbtn:active{background:rgba(255,255,255,.15)}
+    .tbtn{right:44px;font-size:.55rem;border-color:rgba(239,68,68,.3);color:rgba(239,68,68,.7)}
+    .tbtn:active{background:rgba(239,68,68,.15)}
 
     /* trash (inline in dbar) */
     .trash-zone{display:flex;align-items:center;justify-content:center;gap:4px;padding:4px 10px;
@@ -308,7 +311,7 @@
            display:flex;flex-direction:column;gap:2px;position:relative;touch-action:none;cursor:grab;overflow:hidden}
     .hcard.up{border:1.5px solid}
     .hcard.dn{background:var(--dn-bg);border:1.5px dashed var(--dn-bd)}
-    .hcard .c-hdr{min-height:16px;padding-right:26px}
+    .hcard .c-hdr{min-height:16px}
     .hcard .c-n{font-size:.46rem}
     .hcard .c-v{font-size:.68rem;min-width:20px;height:20px}
     .hcard .fbtn{height:18px;padding:0 5px;font-size:.42rem}
@@ -700,7 +703,7 @@
   <!-- CREATE側 -->
   <div id="createSec">
     <div class="room-code-box" id="roomCodeBox" style="display:none">
-      <div class="room-code-hint">このコードを相手に共有してください</div>
+      <div class="room-code-hint">ルーム番号を相手に共有してください</div>
       <div class="room-code-val" id="roomCodeText"></div>
       <button onclick="copyRoomCode()" style="font-family:Orbitron,monospace;font-size:.58rem;
         font-weight:700;padding:5px 16px;border-radius:6px;border:1.5px solid var(--pk);
@@ -719,13 +722,32 @@
         <option value="120">120秒</option>
       </select>
     </div>
+    <div class="timer-cfg">
+      <span>プロトコル抽選数</span>
+      <select id="poolSizeSel">
+        <option value="0">通常ドラフト</option>
+        <option value="6">6枚 (各1BAN)</option>
+        <option value="8">8枚 (各1BAN)</option>
+        <option value="10">10枚 (各1BAN)</option>
+      </select>
+    </div>
+    <div class="timer-cfg">
+      <span>ルーム番号</span>
+      <input id="createRoomNum" type="number" min="1" max="99" value="1"
+        style="width:60px;padding:4px;border-radius:5px;border:1px solid var(--bd2);
+        background:var(--cbg2);color:var(--tx);font-family:Orbitron,monospace;font-size:.9rem;text-align:center"
+        inputmode="numeric">
+    </div>
     <button class="go-btn ok" id="createBtn" onclick="createRoom()">CREATE ROOM</button>
   </div>
   <!-- JOIN側 -->
   <div id="joinSec" style="display:none">
-    <div class="sec-t" style="margin-top:10px"><b>//</b> ルームコードを入力</div>
-    <input id="joinCodeInput" type="text" maxlength="4" placeholder="XXXX"
-      oninput="this.value=this.value.toUpperCase()">
+    <div class="sec-t" style="margin-top:10px"><b>//</b> ルーム番号を入力</div>
+    <input id="joinCodeInput" type="number" min="1" max="99" placeholder="1〜99"
+      style="width:100%;padding:12px;margin:8px 0;border-radius:7px;border:1.5px solid var(--bd2);
+      background:var(--cbg2);color:var(--tx);font-family:Orbitron,monospace;font-size:1.5rem;
+      font-weight:700;text-align:center;outline:none;-webkit-appearance:none"
+      inputmode="numeric">
     <div style="display:flex;gap:6px;margin-top:4px">
       <button class="go-btn ok" style="flex:2" onclick="joinRoom()">JOIN ROOM</button>
       <button class="go-btn" style="flex:1;border-color:var(--txd);color:var(--txd)" onclick="watchRoom()">WATCH</button>
@@ -979,7 +1001,32 @@ function appTh(t){th=t;document.documentElement.className=t;localStorage.setItem
   document.getElementById('thBtn').textContent=t==='dark'?'\u2600':'\u263E'}
 function togTh(){appTh(th==='dark'?'light':'dark')}
 appTh(th);
-var pcMode=localStorage.getItem('pcMode')==='1';
+var pcMode=localStorage.getItem('pcMode')!=='0';
+(function(){
+  var sess=JSON.parse(localStorage.getItem('lastSession')||'null');
+  if(sess&&sess.code){
+    var btn=document.createElement('button');
+    btn.className='go-btn ok';
+    btn.style.cssText='width:100%;margin-top:8px;font-size:.65rem';
+    btn.textContent='前回の対戦に戻る ('+sess.code+' / P'+sess.role+')';
+    btn.onclick=function(){
+      if(!initFB())return;
+      roomCode=sess.code;myRole=sess.role;
+      mySessionId=Math.random().toString(36).substr(2,9);
+      isSpectator=false;countdownShown=true;
+      fbRef=fbDb.ref('rooms/'+roomCode);
+      chatRef=fbDb.ref('rooms/'+roomCode+'/chat');
+      fbRef.onDisconnect().update({status:'paused'});
+      document.getElementById('lobby').style.display='none';
+      document.getElementById('protoSel').style.display='';
+      var w=document.getElementById('draftWhose');
+      if(w)w.textContent='再接続中: '+roomCode+'...';
+      startFBListen();
+    };
+    var lobby=document.getElementById('lobby');
+    if(lobby)lobby.appendChild(btn);
+  }
+})();
 function appPC(on){pcMode=on;document.body.classList.toggle('pc-mode',on);localStorage.setItem('pcMode',on?'1':'0');
   document.getElementById('pcBtn').textContent=on?'MOBILE':'PC'}
 function togPC(){appPC(!pcMode);if(GS)renderAll()}
@@ -1097,7 +1144,7 @@ function mkLines(pn){
     d.innerHTML=hdrHtml;
     d.style.borderColor=pr.color+'60';
     d.style.background=pr.color+'18';
-    if(compiled){d.style.borderColor='rgba(34,197,94,.3)';d.style.background='rgba(34,197,94,.03)'}
+    if(compiled){d.style.borderColor=pr.color+'40';d.style.background=pr.color+'08';d.style.opacity='.7'}
     el.appendChild(d);
   }
 }
@@ -1144,7 +1191,7 @@ function doRefresh(pn){
     if(!ps.deck.length)break;
     var cr=ps.deck.shift();cr.up=true;ps.hand.push(cr);
   }
-  if(GS.ctrl===pn)GS.ctrl=0;
+  checkControlAuto();
   renderAll();
   if(GS.mode==='both'&&GS.turn===pn&&!GS.actionDone)afterAction();
 }
@@ -1243,7 +1290,7 @@ function restore(j){
   if(o.ai===undefined)o.ai=false;
   return o;
 }
-function doUndo(){if(!hist.length)return;if(actionLog.length)actionLog.pop();GS=restore(hist.pop());var d=!hist.length;document.getElementById('uBtn').disabled=d;document.getElementById('uBtn2').disabled=d;renderAll()}
+function doUndo(){if(!hist.length)return;if(actionLog.length)actionLog.pop();GS=restore(hist.pop());var d=!hist.length;document.getElementById('uBtn').disabled=d;document.getElementById('uBtn2').disabled=d;renderAll();if(GS&&GS.mode==='both')updateTurnBar();}
 
 /* ============ LINE VALUE ============ */
 function lineVal(pn,li){
@@ -1344,9 +1391,9 @@ function mkChip(cr,pn,covered,isOpp){
     if(covered&&(cr.card.m||cr.card.l))needTT=true;
   } else if(hideInfo){
     // 相手の裏向き: FACE-DOWN表示と反転ボタンは残し、実カード名は隠す
-    el.innerHTML='<div class="c-hdr" style="justify-content:center"><span class="c-n" style="opacity:.35;letter-spacing:1px">FACE DOWN</span></div>';
+    el.innerHTML='<div class="c-hdr"><span class="c-n" style="opacity:.35;letter-spacing:1px;flex:1">FACE DOWN</span><span class="c-v" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.35)">2</span></div>';
   } else {
-    el.innerHTML='<div class="c-hdr" style="justify-content:center"><span class="c-n" style="opacity:.35;letter-spacing:1px">FACE DOWN</span></div>';
+    el.innerHTML='<div class="c-hdr"><span class="c-n" style="opacity:.35;letter-spacing:1px;flex:1">FACE DOWN</span><span class="c-v" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.35)">2</span></div>';
     needTT=true;
   }
   if(needTT&&!hideInfo){
@@ -1357,6 +1404,23 @@ function mkChip(cr,pn,covered,isOpp){
   fb.onpointerdown=function(e){e.stopPropagation()};
   fb.onclick=function(e){e.stopPropagation();save();cr.up=!cr.up;renderAll()};
   el.appendChild(fb);
+  if(!isOpp){
+    var tb=document.createElement('button');tb.className='fbtn tbtn';tb.innerHTML='\uD83D\uDDD1';
+    tb.title='トラッシュへ';
+    tb.onpointerdown=function(e){e.stopPropagation()};
+    tb.onclick=function(e){
+      e.stopPropagation();save();
+      var ps2=GS.p[pn];var done=false;
+      for(var i2=0;i2<3;i2++){
+        var idx=ps2.lines[i2].indexOf(cr);
+        if(idx>=0){ps2.lines[i2].splice(idx,1);done=true;break;}
+        idx=ps2.waits[i2].indexOf(cr);
+        if(idx>=0){ps2.waits[i2].splice(idx,1);done=true;break;}
+      }
+      if(done){ps2.trash.push(cr);renderAll();}
+    };
+    el.appendChild(tb);
+  }
   initDrag(el,cr,pn,function(){if(!hideInfo)openMod(cr.card,cr.proto)});
   return el;
 }
@@ -1393,7 +1457,7 @@ function mkHCard(cr,pn,isOpp){
     html+='</div>';
     el.innerHTML=html;
   } else {
-    el.innerHTML='<div class="c-hdr" style="justify-content:center"><span class="c-n" style="opacity:.35;letter-spacing:1px">FACE DOWN</span></div>';
+    el.innerHTML='<div class="c-hdr"><span class="c-n" style="opacity:.35;letter-spacing:1px;flex:1">FACE DOWN</span><span class="c-v" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.35)">2</span></div>';
   }
   var fb=document.createElement('button');fb.className='fbtn';fb.innerHTML='\u21BB 反転';
   fb.onpointerdown=function(e){e.stopPropagation()};
@@ -1829,8 +1893,10 @@ function checkControlAuto(){
   if(!GS||GS.mode!=='both')return;
   var pn=GS.turn,opn=pn===1?2:1,leading=0;
   for(var li=0;li<3;li++){if(lineVal(pn,li)>lineVal(opn,li))leading++}
-  if(leading>=2&&GS.ctrl!==pn){
-    GS.ctrl=pn;logAction('P'+pn+': コントロール獲得');rCtrl();
+  if(leading>=2){
+    if(GS.ctrl!==pn){GS.ctrl=pn;logAction('P'+pn+': コントロール獲得');rCtrl();}
+  } else {
+    if(GS.ctrl===pn){GS.ctrl=0;logAction('P'+pn+': コントロール解除');rCtrl();}
   }
 }
 
@@ -2096,32 +2162,12 @@ function openHist(){
     el.innerHTML='<div style="text-align:center;color:var(--txdd);padding:14px;font-size:.7rem">履歴なし</div>';
     document.getElementById('histMod').classList.add('on');return;
   }
-  // ターンごとにグループ化
-  var turns={};
-  actionLog.forEach(function(e){
-    if(!turns[e.ti])turns[e.ti]={pn:e.pn,items:[]};
-    if(e.d!=='__TURN__')turns[e.ti].items.push(e);
-  });
-  var keys=Object.keys(turns).map(Number).sort(function(a,b){return b-a;}); // 新しい順
-  keys.forEach(function(ti,idx){
-    var g=turns[ti];if(!g.items.length)return;
-    var pc=g.pn===1?'p1c':'p2c';
-    // ターンヘッダー
-    var hdr=document.createElement('div');
-    hdr.className='hist-turn-hdr '+pc+(idx>2?' collapsed':''); // 古いターンは折りたたみ
-    hdr.innerHTML='TURN '+ti+'  <span style="font-size:.52rem;opacity:.7">P'+g.pn+'</span>'
-      +'<span class="hist-turn-arrow">▼</span>';
-    hdr.onclick=function(){hdr.classList.toggle('collapsed');};
-    el.appendChild(hdr);
-    // アクション一覧
-    var body=document.createElement('div');body.className='hist-turn-body';
-    g.items.forEach(function(item){
-      var row=document.createElement('div');row.className='hist-row';
-      var ts=document.createElement('span');ts.className='hist-t';ts.textContent=item.t;
-      var desc=document.createElement('span');desc.className='hist-d '+pc;desc.textContent=item.d;
-      row.appendChild(ts);row.appendChild(desc);body.appendChild(row);
-    });
-    el.appendChild(body);
+  actions.slice().reverse().forEach(function(item){
+    var pc=item.pn===1?'p1c':(item.pn===2?'p2c':'');
+    var row=document.createElement('div');row.className='hist-row';
+    var ts=document.createElement('span');ts.className='hist-t';ts.textContent=item.t;
+    var desc=document.createElement('span');desc.className='hist-d '+pc;desc.textContent=item.d;
+    row.appendChild(ts);row.appendChild(desc);el.appendChild(row);
   });
   document.getElementById('histMod').classList.add('on');
 }
@@ -2211,7 +2257,9 @@ function getDeviceUid(){
 
 function createRoom(){
   if(!initFB())return;
-  roomCode=genCode();myRole=1;mySessionId=Math.random().toString(36).substr(2,9);
+  var rn=parseInt(document.getElementById('createRoomNum').value)||1;
+  roomCode='room'+String(rn).padStart(2,'0');
+  myRole=1;mySessionId=Math.random().toString(36).substr(2,9);
   var devUid=getDeviceUid();
   turnTimeLimit=parseInt(document.getElementById('timeLimitSel').value)||0;
   countdownShown=false;isSpectator=false;
@@ -2228,8 +2276,9 @@ function createRoom(){
 }
 
 function joinRoom(){
-  var code=document.getElementById('joinCodeInput').value.toUpperCase().trim();
-  if(code.length<4){showToast('コードを入力してください');return;}
+  var rn=parseInt(document.getElementById('joinCodeInput').value)||0;
+  if(!rn||rn<1||rn>99){showToast('ルーム番号を入力してください(1〜99)');return;}
+  var code='room'+String(rn).padStart(2,'0');
   if(!initFB())return;
   roomCode=code;
   fbRef=fbDb.ref('rooms/'+roomCode);
@@ -2279,8 +2328,9 @@ function rejoin(role){
 }
 
 function watchRoom(){
-  var code=document.getElementById('joinCodeInput').value.toUpperCase().trim();
-  if(code.length<4){showToast('コードを入力してください');return;}
+  var rn=parseInt(document.getElementById('joinCodeInput').value)||0;
+  if(!rn||rn<1||rn>99){showToast('ルーム番号を入力してください(1〜99)');return;}
+  var code='room'+String(rn).padStart(2,'0');
   if(!initFB())return;
   roomCode=code;
   fbRef=fbDb.ref('rooms/'+roomCode);
@@ -2437,6 +2487,7 @@ function startChatListen(){
     // 観戦者は送信不可
     if(isSpectator)sc.style.display='none';
   }
+  chatRef.off('child_added');
   chatRef.limitToLast(30).on('child_added',function(snap){
     var m=snap.val();if(!m)return;
     if(chatPendingIds.has(snap.key)){chatPendingIds.delete(snap.key);return;}
@@ -2637,6 +2688,7 @@ function initOnlineGameUI(){
   document.getElementById('protoSel').style.display='none';
   document.getElementById('lobby').style.display='none';
   document.getElementById('game').style.display='flex';
+  if(myRole>0)localStorage.setItem('lastSession',JSON.stringify({code:roomCode,role:myRole}));
   document.getElementById('histBtn').style.display='';
   document.getElementById('pcBtn').style.display='';
   document.getElementById('leaveBtn').style.display='';
@@ -2682,6 +2734,7 @@ function fbPush(){
 /* ============ LEAVE ROOM ============ */
 function cfLeave(){
   if(!confirm('ルームを退出しますか？'))return;
+  localStorage.removeItem('lastSession');
   clearTurnTimer();
   if(chatRef){chatRef.off();chatRef=null;}
   chatListening=false;
