@@ -151,14 +151,22 @@
             font-weight:700;white-space:nowrap;flex-shrink:0;touch-action:none;cursor:grab}
     .w-chip.up{border:1px solid}
     .w-chip.dn{background:var(--dn-bg);border:1px dashed var(--dn-bd);color:var(--txdd)}
-    .ctrl-bar{display:flex;align-items:center;justify-content:center;gap:8px;padding:4px 0;flex-shrink:0;
-              border-top:1px solid rgba(200,168,78,.2);border-bottom:1px solid rgba(200,168,78,.2);margin:2px 0}
-    .ctrl-bar-label{font-family:Orbitron,monospace;font-size:.42rem;font-weight:900;letter-spacing:1.5px;color:var(--txdd)}
-    .ctrl-bar-btn{font-family:Orbitron,monospace;font-size:.48rem;font-weight:900;padding:3px 11px;
-                  border-radius:5px;cursor:pointer;letter-spacing:.8px;border:2px solid var(--bd);
-                  background:var(--pill-bg);color:var(--txdd);-webkit-tap-highlight-color:transparent;transition:all .2s}
-    .ctrl-bar-btn.on{background:rgba(255,215,0,.18);border-color:#ffd700;color:#ffd700;box-shadow:0 0 8px rgba(255,215,0,.3)}
-    .ctrl-bar-btn.on.p2on{background:rgba(200,168,78,.18);border-color:#c8a84e;color:#c8a84e;box-shadow:0 0 8px rgba(200,168,78,.3)}
+    .ctrl-bar{display:flex;align-items:center;justify-content:center;gap:10px;padding:6px 8px;flex-shrink:0;
+              border-top:1px solid rgba(200,168,78,.25);border-bottom:1px solid rgba(200,168,78,.25);
+              margin:2px 0;transition:background .3s}
+    .ctrl-bar-label{font-family:Orbitron,monospace;font-size:.46rem;font-weight:900;letter-spacing:1.5px;
+                    color:var(--txdd);min-width:72px;text-align:center;transition:color .3s}
+    .ctrl-bar-btn{font-family:Orbitron,monospace;font-size:.52rem;font-weight:900;padding:5px 14px;
+                  border-radius:6px;cursor:pointer;letter-spacing:.8px;border:2px solid;
+                  background:var(--pill-bg);-webkit-tap-highlight-color:transparent;transition:all .25s}
+    #ctrl1{border-color:rgba(233,30,140,.35);color:rgba(233,30,140,.5)}
+    #ctrl1.on{background:rgba(233,30,140,.2);border-color:var(--pk);color:var(--pk);
+              box-shadow:0 0 12px rgba(233,30,140,.5);animation:ctrl-pulse-p1 1.2s ease-in-out infinite}
+    #ctrl2{border-color:rgba(200,168,78,.35);color:rgba(200,168,78,.5)}
+    #ctrl2.on{background:rgba(200,168,78,.2);border-color:#c8a84e;color:#c8a84e;
+              box-shadow:0 0 12px rgba(200,168,78,.5);animation:ctrl-pulse-p2 1.2s ease-in-out infinite}
+    @keyframes ctrl-pulse-p1{0%,100%{box-shadow:0 0 8px rgba(233,30,140,.35)}50%{box-shadow:0 0 18px rgba(233,30,140,.7)}}
+    @keyframes ctrl-pulse-p2{0%,100%{box-shadow:0 0 8px rgba(200,168,78,.35)}50%{box-shadow:0 0 18px rgba(200,168,78,.7)}}
 
     /* card chip (on field) */
     .chip{width:100%;border-radius:7px;padding:4px 5px 4px 10px;
@@ -1775,6 +1783,12 @@ function rCtrl(){
   if(!c1||!c2)return;
   c1.classList.toggle('on',GS.ctrl===1);
   c2.classList.toggle('on',GS.ctrl===2);
+  var lbl=document.querySelector('.ctrl-bar-label');
+  if(lbl){
+    if(GS.ctrl===1){lbl.textContent='P1 CTRL ▶';lbl.style.color='var(--pk)';}
+    else if(GS.ctrl===2){lbl.textContent='◀ CTRL P2';lbl.style.color='#c8a84e';}
+    else{lbl.textContent='CONTROL';lbl.style.color='';}
+  }
 }
 
 /* ============ WIN CHECK ============ */
