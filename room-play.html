@@ -703,7 +703,7 @@
   <!-- CREATE側 -->
   <div id="createSec">
     <div class="room-code-box" id="roomCodeBox" style="display:none">
-      <div class="room-code-hint">ルーム番号を相手に共有してください</div>
+      <div class="room-code-hint">4桁パスコードを相手に共有してください</div>
       <div class="room-code-val" id="roomCodeText"></div>
       <button onclick="copyRoomCode()" style="font-family:Orbitron,monospace;font-size:.58rem;
         font-weight:700;padding:5px 16px;border-radius:6px;border:1.5px solid var(--pk);
@@ -726,27 +726,18 @@
       <span>プロトコル抽選数</span>
       <select id="poolSizeSel">
         <option value="0">通常ドラフト</option>
-        <option value="6">6枚 (各1BAN)</option>
-        <option value="8">8枚 (各1BAN)</option>
-        <option value="10">10枚 (各1BAN)</option>
+        <option value="10">10枚抽選 (各1BAN)</option>
       </select>
-    </div>
-    <div class="timer-cfg">
-      <span>ルーム番号</span>
-      <input id="createRoomNum" type="number" min="1" max="99" value="1"
-        style="width:60px;padding:4px;border-radius:5px;border:1px solid var(--bd2);
-        background:var(--cbg2);color:var(--tx);font-family:Orbitron,monospace;font-size:.9rem;text-align:center"
-        inputmode="numeric">
     </div>
     <button class="go-btn ok" id="createBtn" onclick="createRoom()">CREATE ROOM</button>
   </div>
   <!-- JOIN側 -->
   <div id="joinSec" style="display:none">
-    <div class="sec-t" style="margin-top:10px"><b>//</b> ルーム番号を入力</div>
-    <input id="joinCodeInput" type="number" min="1" max="99" placeholder="1〜99"
+    <div class="sec-t" style="margin-top:10px"><b>//</b> 4桁パスコードを入力</div>
+    <input id="joinCodeInput" type="text" maxlength="4" placeholder="0000"
       style="width:100%;padding:12px;margin:8px 0;border-radius:7px;border:1.5px solid var(--bd2);
       background:var(--cbg2);color:var(--tx);font-family:Orbitron,monospace;font-size:1.5rem;
-      font-weight:700;text-align:center;outline:none;-webkit-appearance:none"
+      font-weight:700;text-align:center;outline:none;-webkit-appearance:none;letter-spacing:8px"
       inputmode="numeric">
     <div style="display:flex;gap:6px;margin-top:4px">
       <button class="go-btn ok" style="flex:2" onclick="joinRoom()">JOIN ROOM</button>
@@ -2329,8 +2320,7 @@ function getDeviceUid(){
 
 function createRoom(){
   if(!initFB())return;
-  var rn=parseInt(document.getElementById('createRoomNum').value)||1;
-  roomCode='room'+String(rn).padStart(2,'0');
+  roomCode=String(Math.floor(1000+Math.random()*9000));
   myRole=1;mySessionId=Math.random().toString(36).substr(2,9);
   var devUid=getDeviceUid();
   turnTimeLimit=parseInt(document.getElementById('timeLimitSel').value)||0;
@@ -2355,9 +2345,8 @@ function createRoom(){
 }
 
 function joinRoom(){
-  var rn=parseInt(document.getElementById('joinCodeInput').value)||0;
-  if(!rn||rn<1||rn>99){showToast('ルーム番号を入力してください(1〜99)');return;}
-  var code='room'+String(rn).padStart(2,'0');
+  var code=document.getElementById('joinCodeInput').value.trim();
+  if(!code||!/^\d{4}$/.test(code)){showToast('4桁のパスコードを入力してください');return;}
   if(!initFB())return;
   roomCode=code;
   fbRef=fbDb.ref('rooms/'+roomCode);
@@ -2407,9 +2396,8 @@ function rejoin(role){
 }
 
 function watchRoom(){
-  var rn=parseInt(document.getElementById('joinCodeInput').value)||0;
-  if(!rn||rn<1||rn>99){showToast('ルーム番号を入力してください(1〜99)');return;}
-  var code='room'+String(rn).padStart(2,'0');
+  var code=document.getElementById('joinCodeInput').value.trim();
+  if(!code||!/^\d{4}$/.test(code)){showToast('4桁のパスコードを入力してください');return;}
   if(!initFB())return;
   roomCode=code;
   fbRef=fbDb.ref('rooms/'+roomCode);
@@ -2640,38 +2628,75 @@ function initChat(){
 
 /* ============ BAN PHASE ============ */
 function renderBanPhase(d){
+  if(!d.banPool||!d.banPool.length)return;
   var whose=document.getElementById('draftWhose');
-  var grid=document.getElementById('draftGrid');
-  if(!grid||!d.banPool||!d.banPool.length)return;
+  var pills=document.getElementById('protoPills');
+  var sb=document.getElementById('protoSubmit');
+  var wm=document.getElementById('protoWait');
+  var info=document.getElementById('draftInfo');
+
+  // ステップバーはBAN中は非表示
+  ['dstep0','dstep1','dstep2','dstep3'].forEach(function(id){
+    var e=document.getElementById(id);if(e)e.style.display='none';
+  });
+  info.style.display='none';
+
   var myBanKey=myRole===1?'banP1':'banP2';
   var oppBanKey=myRole===1?'banP2':'banP1';
   var myBanDone=d[myBanKey]!=null;
   var oppBanDone=d[oppBanKey]!=null;
-  // P1 bans first
+  // P1→P2の順でBAN
   var myTurnToBan=(myRole===1&&!myBanDone)||(myRole===2&&!myBanDone&&d.banP1!=null);
+
   if(myBanDone){
-    if(whose)whose.textContent=oppBanDone?'BAN完了 — ドラフト開始...':'相手のBANを待機中...';
-    grid.innerHTML='<div style="text-align:center;color:var(--txdd);font-size:.65rem;padding:10px">BANが完了しました</div>';
+    var msg=oppBanDone?'BAN完了 — ドラフト開始...':'相手のBANを待機中...';
+    if(whose){whose.textContent=msg;whose.className='draft-whose';}
+    sb.style.display='none';
+    wm.style.display='';wm.textContent=msg;
+    pills.innerHTML='';
     return;
   }
-  if(!myTurnToBan&&myRole===2&&!d.banP1){
-    if(whose)whose.textContent='P1のBANを待機中...';
-    grid.innerHTML='<div style="text-align:center;color:var(--txdd);font-size:.65rem;padding:10px">P1がBANするのを待っています</div>';
+  if(!myTurnToBan){
+    if(whose){whose.textContent='P1のBANを待機中...';whose.className='draft-whose';}
+    sb.style.display='none';
+    wm.style.display='';wm.textContent='P1がBANするのを待っています';
+    pills.innerHTML='';
     return;
   }
-  if(whose)whose.textContent='BANするプロトコルを1つ選んでください (P'+myRole+')';
-  grid.innerHTML='';
-  var pool=d.banPool;
-  pool.forEach(function(name){
+
+  // 自分のBANターン
+  if(whose){whose.textContent='BANするプロトコルを1つ選んでください (P'+myRole+')';whose.className='draft-whose mine';}
+  wm.style.display='none';
+  sb.style.display='none';
+  sb.className='go-btn';
+  sb.textContent='BAN';
+  sb.disabled=false;
+  sb.onclick=function(){
+    if(!onlineSel.length)return;
+    sb.disabled=true;sb.style.display='none';
+    submitBan(onlineSel[0]);
+    onlineSel=[];
+  };
+
+  onlineSel=[];
+  pills.innerHTML='';
+  d.banPool.forEach(function(name){
     var proto=DATA.find(function(p){return p.name===name;});
-    var btn=document.createElement('button');
-    btn.className='proto-btn';
-    btn.textContent=name;
-    if(proto)btn.style.borderColor=proto.color;
-    btn.style.background='rgba(239,68,68,.08)';
-    btn.style.color=proto?proto.color:'var(--tx)';
-    btn.onclick=function(){submitBan(name);};
-    grid.appendChild(btn);
+    var b=document.createElement('button');
+    b.className='pill'+(proto&&proto.set!=='Main'?' aux':'');
+    b.textContent=name;
+    b.style.color=proto?proto.color:'var(--tx)';
+    b.style.borderColor=proto?proto.color:'var(--bd)';
+    b.onclick=function(){
+      pills.querySelectorAll('.pill').forEach(function(p2){
+        p2.classList.remove('on');p2.style.background='';
+      });
+      onlineSel=[name];
+      b.classList.add('on');
+      b.style.background='rgba(239,68,68,.2)';
+      sb.style.display='';
+    };
+    pills.appendChild(b);
   });
 }
 function submitBan(name){
@@ -2696,6 +2721,14 @@ function renderDraft(d){
   var dp2=d.draftP2||[];
   var taken=dp1.concat(dp2);
   currentDraft=d;
+
+  // BAN phaseから来た場合にステップバーを復元
+  ['dstep0','dstep1','dstep2','dstep3'].forEach(function(id){
+    var e=document.getElementById(id);if(e)e.style.display='';
+  });
+  // submitボタンのonclickをドラフト用に戻す
+  var sb0=document.getElementById('protoSubmit');
+  if(sb0)sb0.onclick=submitDraftPick;
 
   // ラウンド変化時のみ選択リセット
   if(round!==draftDisplayRound){
