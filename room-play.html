@@ -977,8 +977,8 @@ var pendingPush=false, isSyncing=false, mySessionId='';
 var onlineSel=[];
 // ドラフト
 var DRAFT_SEQ=[{p:1,n:1},{p:2,n:2},{p:1,n:2},{p:2,n:1}];
-var draftDisplayRound=-1;
-var currentDraft=null;
+var draftDisplayRound=-1, currentDraft=null;
+var banPhase=false, banPool=[], banPoolSize=0;
 var countdownShown=false;
 // タイマー
 var turnTimeLimit=0;
@@ -1149,11 +1149,45 @@ function mkLines(pn){
   }
 }
 
+/* ============ LINE SWAP ============ */
+function swapLines(pn,a,b){
+  if(!GS)return;
+  save();
+  var ps=GS.p[pn];
+  var tmp;
+  tmp=ps.protos[a];ps.protos[a]=ps.protos[b];ps.protos[b]=tmp;
+  tmp=ps.lines[a];ps.lines[a]=ps.lines[b];ps.lines[b]=tmp;
+  tmp=ps.waits[a];ps.waits[a]=ps.waits[b];ps.waits[b]=tmp;
+  tmp=ps.compiled[a];ps.compiled[a]=ps.compiled[b];ps.compiled[b]=tmp;
+  logAction('P'+pn+': ライン'+(a+1)+'↔'+( b+1)+' 入替');
+  mkLines(pn);renderAll();
+}
+function askSwapThenDo(pn,action){
+  if(!GS||GS.ctrl!==pn){action();return;}
+  var ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;display:flex;align-items:center;justify-content:center;';
+  var box=document.createElement('div');
+  box.style.cssText='background:var(--cbg);border:1.5px solid var(--bd2);border-radius:12px;padding:20px;max-width:280px;width:90%;font-family:Orbitron,monospace;text-align:center;';
+  box.innerHTML='<div style="font-size:.7rem;font-weight:700;color:var(--txd);margin-bottom:12px">CONTROL — ラインを入替えますか？</div>'
+    +'<div style="display:flex;flex-direction:column;gap:6px;">'
+    +'<button class="go-btn" onclick="" id="sw12">ライン 1 ↔ 2</button>'
+    +'<button class="go-btn" onclick="" id="sw23">ライン 2 ↔ 3</button>'
+    +'<button class="go-btn" onclick="" id="sw13">ライン 1 ↔ 3</button>'
+    +'<button class="go-btn ok" id="swno" style="margin-top:4px">入替なし → 続行</button>'
+    +'</div>';
+  ov.appendChild(box);document.body.appendChild(ov);
+  function close(){document.body.removeChild(ov);}
+  box.querySelector('#sw12').onclick=function(){close();swapLines(pn,0,1);action();};
+  box.querySelector('#sw23').onclick=function(){close();swapLines(pn,1,2);action();};
+  box.querySelector('#sw13').onclick=function(){close();swapLines(pn,0,2);action();};
+  box.querySelector('#swno').onclick=function(){close();action();};
+}
+
 /* ============ COMPILE ============ */
 document.addEventListener('click',function(e){
   var btn=e.target.closest('.l-compile');if(!btn)return;
   var li=parseInt(btn.dataset.compileline),pn=parseInt(btn.dataset.compileplayer);
-  doCompile(pn,li);
+  askSwapThenDo(pn,function(){doCompile(pn,li);});
 });
 function doCompile(pn,li){
   if(fbMode&&pn!==myRole&&GS.turn!==myRole){showToast('相手のターンです');return;}
@@ -1165,7 +1199,10 @@ function doCompile(pn,li){
   var cards=ps.lines[li].splice(0).concat(ps.waits[li].splice(0));
   if(GS.mode==='both'){
     var opn=pn===1?2:1;var ops=GS.p[opn];
-    cards=cards.concat(ops.lines[li].splice(0)).concat(ops.waits[li].splice(0));
+    var oppLineCards=ops.lines[li].splice(0);
+    var oppWaitCards=ops.waits[li].splice(0);
+    ops.lines[li]=[];ops.waits[li]=[];
+    cards=cards.concat(oppLineCards).concat(oppWaitCards);
   }
   cards.forEach(function(cr){
     var ownerPn=cr.owner||pn;
@@ -1181,6 +1218,10 @@ function doCompile(pn,li){
 /* ============ REFRESH ============ */
 function doRefresh(pn){
   if(fbMode&&pn!==myRole&&GS.turn!==myRole){showToast('相手のターンです');return;}
+  if(GS&&GS.ctrl===pn){askSwapThenDo(pn,function(){_doRefresh(pn);});return;}
+  _doRefresh(pn);
+}
+function _doRefresh(pn){
   var ps=GS.p[pn];
   var need=5-ps.hand.length;
   if(need<=0)return;
@@ -1338,7 +1379,16 @@ function rField(pn){
     var sum=lineVal(pn,li);
     document.getElementById(id+'v'+li).textContent=sum;
     if(!stk.length&&!ps.compiled[li]){var e=document.createElement('div');e.className='l-empty';e.textContent='空';le.appendChild(e)}
-    else stk.forEach(function(cr,idx){le.appendChild(mkChip(cr,pn,idx<stk.length-1,isOpp))});
+    else{
+      var needRev=document.getElementById('game').classList.contains('p2-view')&&pn===1;
+      if(needRev){
+        stk.slice().reverse().forEach(function(cr){
+          var oi=stk.indexOf(cr);le.appendChild(mkChip(cr,pn,oi<stk.length-1,isOpp));
+        });
+      } else {
+        stk.forEach(function(cr,idx){le.appendChild(mkChip(cr,pn,idx<stk.length-1,isOpp))});
+      }
+    }
     /* wait zone */
     var wz=document.createElement('div');wz.className='l-wait';
     wz.dataset.waitline=li;wz.dataset.waitplayer=pn;
@@ -1431,8 +1481,25 @@ function rHand(pn){
   var isOpp=fbMode&&myRole>0&&pn!==myRole;
   if(isOpp){
     var cnt=ps.hand.length;
-    el.innerHTML=cnt?'<div class="opp-hand-count">相手の手札 <span>'+cnt+'</span> 枚</div>'
-      :'<div style="color:var(--empty-color);font-size:.6rem;display:flex;align-items:center;justify-content:center;width:100%">手札なし</div>';
+    if(!cnt){el.innerHTML='<div style="color:var(--empty-color);font-size:.6rem;display:flex;align-items:center;justify-content:center;width:100%">手札なし</div>';return;}
+    var canTake=GS.mode==='both'&&fbMode&&GS.turn===myRole;
+    if(canTake){
+      ps.hand.forEach(function(cr){
+        var card=mkHCard(cr,pn,true);
+        card.style.cursor='pointer';
+        card.title='クリックで取得';
+        (function(c){card.addEventListener('click',function(e){
+          e.stopPropagation();
+          if(GS.turn!==myRole){showToast('あなたのターンではありません');return;}
+          save();var idx=ps.hand.indexOf(c);
+          if(idx>=0){ps.hand.splice(idx,1);GS.p[myRole].hand.push(c);
+            logAction('P'+myRole+': 相手手札を取得');renderAll();afterAction();}
+        });})(cr);
+        el.appendChild(card);
+      });
+    } else {
+      el.innerHTML='<div class="opp-hand-count">相手の手札 <span>'+cnt+'</span> 枚</div>';
+    }
     return;
   }
   if(!ps.hand.length){el.innerHTML='<div style="color:var(--empty-color);font-size:.6rem;display:flex;align-items:center;justify-content:center;width:100%">手札なし</div>';return}
@@ -1516,7 +1583,12 @@ function initDeckDrag(pn){
       }
       dragRef=null;
     } else if(!moved){
-      draw(pn);
+      if(fbMode&&myRole>0&&pn!==myRole){
+        drawOpp(myRole);
+        if(GS&&GS.mode==='both'&&GS.turn===myRole&&!GS.actionDone)afterAction();
+      } else {
+        draw(pn);
+      }
     }
     dragging=false;sx=null;
   });
@@ -2265,7 +2337,14 @@ function createRoom(){
   countdownShown=false;isSpectator=false;
   fbRef=fbDb.ref('rooms/'+roomCode);
   chatRef=fbDb.ref('rooms/'+roomCode+'/chat');
-  fbRef.set({status:'waiting',created:Date.now(),p1protos:null,p2protos:null,gs:null,pushedBy:'',p1uid:devUid,p2uid:'',draftRound:0,draftP1:[],draftP2:[],turnTimeLimit:turnTimeLimit})
+  var poolSize=parseInt(document.getElementById('poolSizeSel').value)||0;
+  var banPool=[];
+  if(poolSize>0){
+    var allNames=DATA.map(function(p){return p.name;});
+    var shuffled=allNames.slice().sort(function(){return Math.random()-.5;});
+    banPool=shuffled.slice(0,Math.min(poolSize,allNames.length));
+  }
+  fbRef.set({status:'waiting',created:Date.now(),p1protos:null,p2protos:null,gs:null,pushedBy:'',p1uid:devUid,p2uid:'',draftRound:0,draftP1:[],draftP2:[],turnTimeLimit:turnTimeLimit,poolSize:poolSize,banPool:banPool,banP1:null,banP2:null})
     .then(function(){
       document.getElementById('createBtn').style.display='none';
       document.getElementById('roomCodeBox').style.display='';
@@ -2386,6 +2465,21 @@ function onRoomData(d){
 
   // タイマー設定を反映
   if(typeof d.turnTimeLimit==='number')turnTimeLimit=d.turnTimeLimit;
+
+  // BAN phase: poolSize > 0, banPool exists, draft not started
+  if(d.poolSize>0&&d.banPool&&d.banPool.length>0&&!d.p1protos&&myRole>0){
+    banPool=d.banPool;banPoolSize=d.poolSize;
+    if(document.getElementById('protoSel').style.display!=='none'){
+      // Check if both bans done → remove banned from pool and reset poolSize
+      if(d.banP1!=null&&d.banP2!=null&&myRole===1){
+        // P1 initiates the pool reduction
+        var remaining=d.banPool.filter(function(n){return n!==d.banP1&&n!==d.banP2;});
+        fbRef.update({banPool:remaining,poolSize:0});
+      } else {
+        renderBanPhase(d);return;
+      }
+    }
+  }
 
   // ドラフト完了 → カウントダウン → ゲーム開始
   if(d.p1protos&&d.p2protos&&!GS&&!countdownShown&&myRole>=0){
@@ -2544,6 +2638,50 @@ function initChat(){
   startChatListen();
 }
 
+/* ============ BAN PHASE ============ */
+function renderBanPhase(d){
+  var whose=document.getElementById('draftWhose');
+  var grid=document.getElementById('draftGrid');
+  if(!grid||!d.banPool||!d.banPool.length)return;
+  var myBanKey=myRole===1?'banP1':'banP2';
+  var oppBanKey=myRole===1?'banP2':'banP1';
+  var myBanDone=d[myBanKey]!=null;
+  var oppBanDone=d[oppBanKey]!=null;
+  // P1 bans first
+  var myTurnToBan=(myRole===1&&!myBanDone)||(myRole===2&&!myBanDone&&d.banP1!=null);
+  if(myBanDone){
+    if(whose)whose.textContent=oppBanDone?'BAN完了 — ドラフト開始...':'相手のBANを待機中...';
+    grid.innerHTML='<div style="text-align:center;color:var(--txdd);font-size:.65rem;padding:10px">BANが完了しました</div>';
+    return;
+  }
+  if(!myTurnToBan&&myRole===2&&!d.banP1){
+    if(whose)whose.textContent='P1のBANを待機中...';
+    grid.innerHTML='<div style="text-align:center;color:var(--txdd);font-size:.65rem;padding:10px">P1がBANするのを待っています</div>';
+    return;
+  }
+  if(whose)whose.textContent='BANするプロトコルを1つ選んでください (P'+myRole+')';
+  grid.innerHTML='';
+  var pool=d.banPool;
+  pool.forEach(function(name){
+    var proto=DATA.find(function(p){return p.name===name;});
+    var btn=document.createElement('button');
+    btn.className='proto-btn';
+    btn.textContent=name;
+    if(proto)btn.style.borderColor=proto.color;
+    btn.style.background='rgba(239,68,68,.08)';
+    btn.style.color=proto?proto.color:'var(--tx)';
+    btn.onclick=function(){submitBan(name);};
+    grid.appendChild(btn);
+  });
+}
+function submitBan(name){
+  if(!fbRef)return;
+  var update={};
+  if(myRole===1)update.banP1=name;
+  else update.banP2=name;
+  fbRef.update(update);
+}
+
 /* ============ PROTOCOL SELECT ============ */
 function showProtoSel(){
   onlineSel=[];draftDisplayRound=-1;currentDraft=null;
@@ -2602,7 +2740,8 @@ function renderDraft(d){
 
   // ピル再描画
   var pillEl=document.getElementById('protoPills');pillEl.innerHTML='';
-  DATA.forEach(function(p){
+  var draftPool=(d.banPool&&d.banPool.length&&d.poolSize===0)?d.banPool.concat([]):null;
+  DATA.filter(function(pr){return !draftPool||draftPool.indexOf(pr.name)>=0;}).forEach(function(p){
     var b=document.createElement('button');
     b.className='pill'+(p.set!=='Main'?' aux':'');
     b.textContent=p.name;
