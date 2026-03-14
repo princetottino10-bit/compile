@@ -693,6 +693,16 @@
 
 <!-- ロビー画面 -->
 <div id="lobby">
+  <!-- 前回の対戦への復帰エリア（P1/P2共通） -->
+  <div id="rejoinSessionSec" style="display:none;margin-bottom:14px;padding:12px;
+    border:1.5px solid rgba(200,168,78,.3);border-radius:9px;background:rgba(200,168,78,.04)">
+    <div class="sec-t" style="border-color:rgba(200,168,78,.2)"><b style="color:#c8a84e">//</b> 前回の対戦</div>
+    <div class="info" id="rejoinSessionInfo" style="margin-bottom:8px"></div>
+    <div style="display:flex;gap:6px">
+      <button class="go-btn ok" style="flex:2;background:#c8a84e;margin-top:0" onclick="rejoinFromSession()">REJOIN</button>
+      <button class="go-btn ok" style="flex:1;background:transparent;border:1.5px solid var(--txd);color:var(--txd);margin-top:0" onclick="clearLastSession()">CLEAR</button>
+    </div>
+  </div>
   <div style="margin-bottom:14px">
     <div class="sec-t"><b>//</b> ONLINE ROOM</div>
     <div class="mode-row">
@@ -993,31 +1003,6 @@ function appTh(t){th=t;document.documentElement.className=t;localStorage.setItem
 function togTh(){appTh(th==='dark'?'light':'dark')}
 appTh(th);
 var pcMode=localStorage.getItem('pcMode')!=='0';
-(function(){
-  var sess=JSON.parse(localStorage.getItem('lastSession')||'null');
-  if(sess&&sess.code){
-    var btn=document.createElement('button');
-    btn.className='go-btn ok';
-    btn.style.cssText='width:100%;margin-top:8px;font-size:.65rem';
-    btn.textContent='前回の対戦に戻る ('+sess.code+' / P'+sess.role+')';
-    btn.onclick=function(){
-      if(!initFB())return;
-      roomCode=sess.code;myRole=sess.role;
-      mySessionId=Math.random().toString(36).substr(2,9);
-      isSpectator=false;countdownShown=true;
-      fbRef=fbDb.ref('rooms/'+roomCode);
-      chatRef=fbDb.ref('rooms/'+roomCode+'/chat');
-      fbRef.onDisconnect().update({status:'paused'});
-      document.getElementById('lobby').style.display='none';
-      document.getElementById('protoSel').style.display='';
-      var w=document.getElementById('draftWhose');
-      if(w)w.textContent='再接続中: '+roomCode+'...';
-      startFBListen();
-    };
-    var lobby=document.getElementById('lobby');
-    if(lobby)lobby.appendChild(btn);
-  }
-})();
 function appPC(on){pcMode=on;document.body.classList.toggle('pc-mode',on);localStorage.setItem('pcMode',on?'1':'0');
   document.getElementById('pcBtn').textContent=on?'MOBILE':'PC'}
 function togPC(){appPC(!pcMode);if(GS)renderAll()}
@@ -1034,6 +1019,8 @@ function appZoom(v){zoomLv=v;var s=v/100;var w=document.getElementById('gameWrap
 function chZoom(d){var v=Math.max(50,Math.min(200,zoomLv+d));appZoom(v)}
 appZoom(zoomLv);
 window.addEventListener('resize',function(){appZoom(zoomLv)});
+// ページロード時に復帰UIを初期化（関数は末尾定義のためDOMContentLoadedで呼ぶ）
+window.addEventListener('load',function(){if(typeof initRejoinSessionUI==='function')initRejoinSessionUI();});
 function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
 
 /* ============ SETUP ============ */
@@ -1474,9 +1461,10 @@ function rHand(pn){
     var cnt=ps.hand.length;
     if(!cnt){el.innerHTML='<div style="color:var(--empty-color);font-size:.6rem;display:flex;align-items:center;justify-content:center;width:100%">手札なし</div>';return;}
     var canTake=GS.mode==='both'&&fbMode&&GS.turn===myRole;
-    if(canTake){
-      ps.hand.forEach(function(cr){
-        var card=mkHCard(cr,pn,true);
+    // 相手の手札は常にFaceDownカードとして表示（P1/P2で統一）
+    ps.hand.forEach(function(cr){
+      var card=mkHCard(cr,pn,true);
+      if(canTake){
         card.style.cursor='pointer';
         card.title='クリックで取得';
         (function(c){card.addEventListener('click',function(e){
@@ -1486,11 +1474,9 @@ function rHand(pn){
           if(idx>=0){ps.hand.splice(idx,1);GS.p[myRole].hand.push(c);
             logAction('P'+myRole+': 相手手札を取得');renderAll();afterAction();}
         });})(cr);
-        el.appendChild(card);
-      });
-    } else {
-      el.innerHTML='<div class="opp-hand-count">相手の手札 <span>'+cnt+'</span> 枚</div>';
-    }
+      }
+      el.appendChild(card);
+    });
     return;
   }
   if(!ps.hand.length){el.innerHTML='<div style="color:var(--empty-color);font-size:.6rem;display:flex;align-items:center;justify-content:center;width:100%">手札なし</div>';return}
@@ -2668,7 +2654,7 @@ function renderBanPhase(d){
   if(whose){whose.textContent='BANするプロトコルを1つ選んでください (P'+myRole+')';whose.className='draft-whose mine';}
   wm.style.display='none';
   sb.style.display='none';
-  sb.className='go-btn';
+  sb.className='go-btn ok';
   sb.textContent='BAN';
   sb.disabled=false;
   sb.onclick=function(){
@@ -2906,7 +2892,7 @@ function fbPush(){
 /* ============ LEAVE ROOM ============ */
 function cfLeave(){
   if(!confirm('ルームを退出しますか？'))return;
-  localStorage.removeItem('lastSession');
+  // lastSessionは残す（再接続ボタンから復帰できるようにする）
   clearTurnTimer();
   if(chatRef){chatRef.off();chatRef=null;}
   chatListening=false;
@@ -2936,6 +2922,41 @@ function cfLeave(){
   document.getElementById('rejoinSec').style.display='none';
   document.getElementById('protoSubmit').disabled=false;
   showCreate();
+  initRejoinSessionUI();
+}
+
+/* ============ REJOIN FROM SESSION ============ */
+function initRejoinSessionUI(){
+  var sess=JSON.parse(localStorage.getItem('lastSession')||'null');
+  var sec=document.getElementById('rejoinSessionSec');
+  if(sess&&sess.code){
+    var info=document.getElementById('rejoinSessionInfo');
+    info.innerHTML='Room: <b>'+sess.code+'</b> &nbsp;/&nbsp; P'+sess.role+'として参加中だった対戦';
+    sec.style.display='';
+  } else {
+    sec.style.display='none';
+  }
+}
+function rejoinFromSession(){
+  var sess=JSON.parse(localStorage.getItem('lastSession')||'null');
+  if(!sess||!sess.code){showToast('復帰データがありません');return;}
+  if(!initFB())return;
+  roomCode=sess.code;
+  fbRef=fbDb.ref('rooms/'+roomCode);
+  fbRef.once('value').then(function(snap){
+    var d=snap.val();
+    if(!d||(d.status!=='playing'&&d.status!=='paused')){
+      showToast('ルームが見つかりません（終了済みか無効）');
+      clearLastSession();
+      fbRef=null;return;
+    }
+    chatRef=fbDb.ref('rooms/'+roomCode+'/chat');
+    rejoin(sess.role);
+  }).catch(function(e){showToast('接続エラー: '+e.message);fbRef=null;});
+}
+function clearLastSession(){
+  localStorage.removeItem('lastSession');
+  document.getElementById('rejoinSessionSec').style.display='none';
 }
 
 </script>
