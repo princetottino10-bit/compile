@@ -178,7 +178,7 @@
     .chip.up{border:1.5px solid}
     .chip.dn{background:var(--dn-bg);border:1.5px dashed var(--dn-bd);color:var(--txdd)}
     .c-stripe{position:absolute;top:0;left:0;width:4px;height:100%}
-    .c-hdr{display:flex;align-items:center;gap:4px;position:relative;min-height:18px}
+    .c-hdr{display:flex;align-items:center;gap:4px;position:relative;min-height:18px;padding-right:48px}
     .c-n{font-family:Orbitron,monospace;font-size:.5rem;letter-spacing:.3px;overflow:hidden;text-overflow:ellipsis;
          white-space:nowrap;font-weight:700;flex:1}
     .c-v{font-family:Orbitron,monospace;font-size:.72rem;font-weight:900;
@@ -2666,6 +2666,7 @@ function renderBanPhase(d){
 
   onlineSel=[];
   pills.innerHTML='';
+  var oppBanned=d[oppBanKey];
   d.banPool.forEach(function(name){
     var proto=DATA.find(function(p){return p.name===name;});
     var b=document.createElement('button');
@@ -2673,6 +2674,12 @@ function renderBanPhase(d){
     b.textContent=name;
     b.style.color=proto?proto.color:'var(--tx)';
     b.style.borderColor=proto?proto.color:'var(--bd)';
+    if(oppBanned===name){
+      b.classList.add('taken');
+      b.title='相手がBANしました';
+      pills.appendChild(b);
+      return;
+    }
     b.onclick=function(){
       pills.querySelectorAll('.pill').forEach(function(p2){
         p2.classList.remove('on');p2.style.background='';
@@ -2712,9 +2719,9 @@ function renderDraft(d){
   ['dstep0','dstep1','dstep2','dstep3'].forEach(function(id){
     var e=document.getElementById(id);if(e)e.style.display='';
   });
-  // submitボタンのonclickをドラフト用に戻す
+  // submitボタンのonclickをドラフト用に戻す（テキストもリセット）
   var sb0=document.getElementById('protoSubmit');
-  if(sb0)sb0.onclick=submitDraftPick;
+  if(sb0){sb0.onclick=submitDraftPick;sb0.textContent='CONFIRM';}
 
   // ラウンド変化時のみ選択リセット
   if(round!==draftDisplayRound){
