@@ -1125,10 +1125,11 @@ function mkLines(pn){
     var d=document.createElement('div');d.className='line'+(isP2?' p2line':'');d.dataset.line=i;d.dataset.player=pn;
     var pr=ps.protos[i];
     var compiled=ps.compiled[i];
-    var urgent=!compiled&&compileConditionMet(pn,i);
+    var isOppOnline=fbMode&&myRole>0&&pn!==myRole;
+    var urgent=!compiled&&!isOppOnline&&compileConditionMet(pn,i);
     var compileHtml=compiled
       ?'<span class="l-compiled">COMPILED</span>'
-      :'<button class="l-compile'+(urgent?' urgent':'')+'" data-compileline="'+i+'" data-compileplayer="'+pn+'">'+(urgent?'COMPILE!':'COMPILE')+'</button>';
+      :isOppOnline?'':'<button class="l-compile'+(urgent?' urgent':'')+'" data-compileline="'+i+'" data-compileplayer="'+pn+'">'+(urgent?'COMPILE!':'COMPILE')+'</button>';
     var hdrHtml='<div class="l-hdr"><span class="l-drag" data-dragline="'+i+'" data-dragplayer="'+pn+'">&#x2261;</span><span class="l-proto" style="flex:1">'+pr.name+'</span>'+compileHtml+'<span class="l-val" style="background:'+pr.color+'20" id="'+id+'v'+i+'">0</span></div>';
     d.innerHTML=hdrHtml;
     d.style.borderColor=pr.color+'60';
@@ -1176,10 +1177,17 @@ function askSwapThenDo(pn,action){
 document.addEventListener('click',function(e){
   var btn=e.target.closest('.l-compile');if(!btn)return;
   var li=parseInt(btn.dataset.compileline),pn=parseInt(btn.dataset.compileplayer);
-  askSwapThenDo(pn,function(){doCompile(pn,li);});
+  if(fbMode&&pn!==myRole){showToast('自分のプロトコルのみコンパイルできます');return;}
+  var protoName=GS.p[pn].protos[li].name;
+  askSwapThenDo(pn,function(){
+    // スワップ後にプロトコルの新しい位置を探す
+    var newLi=li;
+    for(var j=0;j<3;j++){if(GS.p[pn].protos[j].name===protoName){newLi=j;break;}}
+    doCompile(pn,newLi);
+  });
 });
 function doCompile(pn,li){
-  if(fbMode&&pn!==myRole&&GS.turn!==myRole){showToast('相手のターンです');return;}
+  if(fbMode&&pn!==myRole){showToast('自分のプロトコルのみコンパイルできます');return;}
   var ps=GS.p[pn];
   if(ps.compiled[li])return;
   save();
