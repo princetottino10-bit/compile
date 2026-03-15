@@ -1125,19 +1125,15 @@ function mkLines(pn){
     var d=document.createElement('div');d.className='line'+(isP2?' p2line':'');d.dataset.line=i;d.dataset.player=pn;
     var pr=ps.protos[i];
     var compiled=ps.compiled[i];
-    // 相手がコンパイルしたライン(同番)も視覚的にCOMPILED表示
-    var oppPn=pn===1?2:1;
-    var oppCompiled=GS.mode==='both'&&GS.p[oppPn]&&GS.p[oppPn].compiled[i];
-    var visuallyCompiled=compiled||oppCompiled;
-    var urgent=!visuallyCompiled&&compileConditionMet(pn,i);
-    var compileHtml=visuallyCompiled
+    var urgent=!compiled&&compileConditionMet(pn,i);
+    var compileHtml=compiled
       ?'<span class="l-compiled">COMPILED</span>'
       :'<button class="l-compile'+(urgent?' urgent':'')+'" data-compileline="'+i+'" data-compileplayer="'+pn+'">'+(urgent?'COMPILE!':'COMPILE')+'</button>';
     var hdrHtml='<div class="l-hdr"><span class="l-drag" data-dragline="'+i+'" data-dragplayer="'+pn+'">&#x2261;</span><span class="l-proto" style="flex:1">'+pr.name+'</span>'+compileHtml+'<span class="l-val" style="background:'+pr.color+'20" id="'+id+'v'+i+'">0</span></div>';
     d.innerHTML=hdrHtml;
     d.style.borderColor=pr.color+'60';
     d.style.background=pr.color+'18';
-    if(visuallyCompiled){d.style.borderColor=pr.color+'40';d.style.background=pr.color+'08';d.style.opacity='.7'}
+    if(compiled){d.style.borderColor=pr.color+'40';d.style.background=pr.color+'08';d.style.opacity='.7'}
     el.appendChild(d);
   }
 }
@@ -1371,9 +1367,7 @@ function rField(pn){
     var stk=ps.lines[li];
     var sum=lineVal(pn,li);
     document.getElementById(id+'v'+li).textContent=sum;
-    var oppPs=GS.mode==='both'?GS.p[pn===1?2:1]:null;
-    var oppCompiledLine=oppPs&&oppPs.compiled[li];
-    if(!stk.length&&!ps.compiled[li]&&!oppCompiledLine){var e=document.createElement('div');e.className='l-empty';e.textContent='空';le.appendChild(e)}
+    if(!stk.length&&!ps.compiled[li]){var e=document.createElement('div');e.className='l-empty';e.textContent='空';le.appendChild(e)}
     else if(stk.length){
       stk.forEach(function(cr,idx){le.appendChild(mkChip(cr,pn,idx<stk.length-1,isOpp))});
     }
