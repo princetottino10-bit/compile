@@ -188,7 +188,7 @@
     .chip.up{border:1.5px solid}
     .chip.dn{background:var(--dn-bg);border:1.5px dashed var(--dn-bd);color:var(--txdd)}
     .c-stripe{position:absolute;top:0;left:0;width:4px;height:100%}
-    .c-hdr{display:flex;align-items:center;gap:4px;position:relative;min-height:18px;padding-right:48px}
+    .c-hdr{display:flex;align-items:center;gap:4px;position:relative;min-height:18px;padding-right:72px}
     .c-n{font-family:Orbitron,monospace;font-size:.5rem;letter-spacing:.3px;overflow:hidden;text-overflow:ellipsis;
          white-space:nowrap;font-weight:700;flex:1}
     .c-v{font-family:Orbitron,monospace;font-size:.72rem;font-weight:900;
@@ -1444,23 +1444,21 @@ function mkChip(cr,pn,covered,isOpp){
   fb.onpointerdown=function(e){e.stopPropagation()};
   fb.onclick=function(e){e.stopPropagation();save();cr.up=!cr.up;renderAll()};
   el.appendChild(fb);
-  if(!isOpp){
-    var tb=document.createElement('button');tb.className='fbtn tbtn';tb.innerHTML='\uD83D\uDDD1';
-    tb.title='トラッシュへ';
-    tb.onpointerdown=function(e){e.stopPropagation()};
-    tb.onclick=function(e){
-      e.stopPropagation();save();
-      var ps2=GS.p[pn];var done=false;
-      for(var i2=0;i2<3;i2++){
-        var idx=ps2.lines[i2].indexOf(cr);
-        if(idx>=0){ps2.lines[i2].splice(idx,1);done=true;break;}
-        idx=ps2.waits[i2].indexOf(cr);
-        if(idx>=0){ps2.waits[i2].splice(idx,1);done=true;break;}
-      }
-      if(done){ps2.trash.push(cr);renderAll();}
-    };
-    el.appendChild(tb);
-  }
+  var tb=document.createElement('button');tb.className='fbtn tbtn';tb.innerHTML='\uD83D\uDDD1';
+  tb.title='トラッシュへ';
+  tb.onpointerdown=function(e){e.stopPropagation()};
+  tb.onclick=function(e){
+    e.stopPropagation();save();
+    var ps2=GS.p[pn];var done=false;
+    for(var i2=0;i2<3;i2++){
+      var idx=ps2.lines[i2].indexOf(cr);
+      if(idx>=0){ps2.lines[i2].splice(idx,1);done=true;break;}
+      idx=ps2.waits[i2].indexOf(cr);
+      if(idx>=0){ps2.waits[i2].splice(idx,1);done=true;break;}
+    }
+    if(done){ps2.trash.push(cr);renderAll();}
+  };
+  el.appendChild(tb);
   initDrag(el,cr,pn,function(){if(!hideInfo)openMod(cr.card,cr.proto)});
   return el;
 }
