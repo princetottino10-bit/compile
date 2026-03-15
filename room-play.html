@@ -2375,7 +2375,7 @@ function rejoin(role){
   countdownShown=true;isSpectator=false; // 復帰時はカウントダウン不要
   chatRef=fbDb.ref('rooms/'+roomCode+'/chat');
   var devUid=getDeviceUid();
-  var uidUpdate={};uidUpdate[role===1?'p1uid':'p2uid']=devUid;
+  var uidUpdate={status:'playing'};uidUpdate[role===1?'p1uid':'p2uid']=devUid;
   fbRef.update(uidUpdate);
   document.getElementById('rejoinSec').style.display='none';
   document.getElementById('joinSec').style.display='none';
