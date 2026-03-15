@@ -768,6 +768,21 @@
   // Handle resize
   window.addEventListener('resize', updateMarkerPosition);
 
+  // Wake Lock — アプリ表示中はスリープ防止
+  let wakeLock = null;
+  async function requestWakeLock() {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', function() { wakeLock = null; });
+      }
+    } catch (e) { /* ユーザー拒否 or 非対応 */ }
+  }
+  requestWakeLock();
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'visible') requestWakeLock();
+  });
+
   // Init
   updateVisuals();
 })();
