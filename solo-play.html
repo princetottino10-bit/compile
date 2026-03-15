@@ -119,8 +119,10 @@
                border-radius:3px;border:1px solid var(--bd);background:var(--pill-bg);color:var(--txd);
                cursor:pointer;letter-spacing:.5px;-webkit-tap-highlight-color:transparent;margin-left:auto}
     .l-compile:active{background:var(--cbg2)}
-    .l-compiled{font-family:Orbitron,monospace;font-size:.38rem;font-weight:700;padding:2px 6px;
-                border-radius:3px;background:rgba(34,197,94,.15);color:#22c55e;letter-spacing:.5px;margin-left:auto}
+    .l-compiled{font-family:Orbitron,monospace;font-size:.42rem;font-weight:900;
+      padding:2px 7px;border-radius:9px;letter-spacing:.5px;
+      background:rgba(34,197,94,.2);border:1px solid rgba(34,197,94,.5);color:#4ade80;
+      white-space:nowrap}
     .l-empty{font-size:.52rem;color:var(--empty-color);text-align:center;padding:6px 0}
     .l-wait{margin-top:auto;flex-shrink:0;display:flex;flex-wrap:wrap;gap:2px;
             padding:3px;border-top:1px dashed var(--bd);align-items:flex-start;
@@ -144,26 +146,29 @@
     .ctrl-bar-btn.on.p2on{background:rgba(200,168,78,.18);border-color:#c8a84e;color:#c8a84e;box-shadow:0 0 8px rgba(200,168,78,.3)}
 
     /* card chip (on field) */
-    .chip{width:100%;border-radius:6px;padding:4px 5px;
+    .chip{width:100%;border-radius:7px;padding:4px 5px 4px 10px;
           font-family:Orbitron,monospace;font-size:.58rem;font-weight:700;
-          margin-top:2px;position:relative;flex-shrink:0;touch-action:none;cursor:grab}
+          margin-top:2px;position:relative;flex-shrink:0;touch-action:none;cursor:grab;overflow:hidden}
     .chip:first-child{margin-top:0}
     .chip.up{border:1.5px solid}
     .chip.dn{background:var(--dn-bg);border:1.5px dashed var(--dn-bd);color:var(--txdd)}
-    .c-hdr{display:flex;align-items:center;position:relative;min-height:18px;padding-right:20px}
+    .c-stripe{position:absolute;top:0;left:0;width:4px;height:100%}
+    .c-hdr{display:flex;align-items:center;gap:4px;position:relative;min-height:18px;padding-right:72px}
     .c-n{font-family:Orbitron,monospace;font-size:.5rem;letter-spacing:.3px;overflow:hidden;text-overflow:ellipsis;
-         white-space:nowrap;opacity:.8;color:var(--tx)}
-    .c-v{font-family:Orbitron,monospace;font-size:.72rem;font-weight:900;position:absolute;left:50%;transform:translateX(-50%);
-         padding:1px 6px;border-radius:4px;color:var(--tx)}
+         white-space:nowrap;font-weight:700;flex:1}
+    .c-v{font-family:Orbitron,monospace;font-size:.72rem;font-weight:900;
+         min-width:22px;height:22px;border-radius:5px;border:1px solid;
+         display:flex;align-items:center;justify-content:center;
+         padding:0 3px;color:#fff;line-height:1;flex-shrink:0}
     .c-cmds{font-family:'Noto Sans JP',sans-serif;font-weight:400;font-size:.6rem;
             line-height:1.5;margin-top:3px;color:var(--tx)}
     .c-cmd{padding:2px 4px;border-radius:3px;margin-top:2px}
     .c-cmd-lbl{font-family:Orbitron,monospace;font-size:.4rem;font-weight:700;letter-spacing:.5px;
                margin-right:4px}
     .c-cmd-lbl.lup{color:#f87171}.c-cmd-lbl.lmid{color:#60a5fa}.c-cmd-lbl.llow{color:#4ade80}
-    .c-cmd.cup{background:rgba(239,68,68,.1);border-left:2px solid rgba(239,68,68,.4)}
-    .c-cmd.cmid{background:rgba(59,130,246,.1);border-left:2px solid rgba(59,130,246,.4)}
-    .c-cmd.clow{background:rgba(34,197,94,.1);border-left:2px solid rgba(34,197,94,.4)}
+    .c-cmd.cup{background:rgba(239,68,68,.12);border-left:2px solid rgba(239,68,68,.5)}
+    .c-cmd.cmid{background:rgba(59,130,246,.12);border-left:2px solid rgba(59,130,246,.5)}
+    .c-cmd.clow{background:rgba(34,197,94,.12);border-left:2px solid rgba(34,197,94,.5)}
     .c-cmd-tx{overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
     .fbtn{height:20px;padding:0 6px;border-radius:4px;border:1px solid rgba(255,255,255,.15);
           background:rgba(255,255,255,.06);color:var(--txd);font-size:.46rem;display:flex;
@@ -172,6 +177,8 @@
           font-family:'Noto Sans JP',sans-serif;font-weight:600;
           -webkit-tap-highlight-color:transparent}
     .fbtn:active{background:rgba(255,255,255,.15)}
+    .tbtn{right:44px;font-size:.55rem;border-color:rgba(239,68,68,.3);color:rgba(239,68,68,.7)}
+    .tbtn:active{background:rgba(239,68,68,.15)}
 
     /* trash (inline in dbar) */
     .trash-zone{display:flex;align-items:center;justify-content:center;gap:4px;padding:4px 10px;
@@ -267,13 +274,13 @@
               font-size:.7rem;cursor:pointer;border-radius:4px;display:flex;align-items:center;
               justify-content:center;-webkit-tap-highlight-color:transparent}
     .hand-arr:active{background:var(--cbg2);color:var(--tx)}
-    .hcard{flex-shrink:0;width:76px;height:110px;border-radius:7px;padding:5px;
-           display:flex;flex-direction:column;gap:2px;position:relative;touch-action:none;cursor:grab}
+    .hcard{flex-shrink:0;width:76px;height:110px;border-radius:7px;padding:5px 5px 5px 10px;
+           display:flex;flex-direction:column;gap:2px;position:relative;touch-action:none;cursor:grab;overflow:hidden}
     .hcard.up{border:1.5px solid}
     .hcard.dn{background:var(--dn-bg);border:1.5px dashed var(--dn-bd)}
-    .hcard .c-hdr{min-height:16px;padding-right:0}
+    .hcard .c-hdr{min-height:16px}
     .hcard .c-n{font-size:.46rem}
-    .hcard .c-v{font-size:.72rem}
+    .hcard .c-v{font-size:.68rem;min-width:20px;height:20px}
     .hcard .fbtn{height:18px;padding:0 5px;font-size:.42rem}
     .hcmds{display:flex;flex-direction:column;gap:1px;flex:1;overflow:hidden}
     .hcmd{font-size:.42rem;line-height:1.3;color:var(--tx);overflow:hidden;text-overflow:ellipsis;
@@ -813,7 +820,7 @@ function mkLines(pn){
     d.innerHTML=hdrHtml;
     d.style.borderColor=pr.color+'60';
     d.style.background=pr.color+'18';
-    if(compiled){d.style.borderColor='rgba(34,197,94,.3)';d.style.background='rgba(34,197,94,.03)'}
+    if(compiled){d.style.borderColor=pr.color+'40';d.style.background=pr.color+'08';d.style.opacity='.7'}
     el.appendChild(d);
   }
 }
@@ -833,7 +840,10 @@ function doCompile(pn,li){
   var cards=ps.lines[li].splice(0).concat(ps.waits[li].splice(0));
   if(GS.mode==='both'){
     var opn=pn===1?2:1;var ops=GS.p[opn];
-    cards=cards.concat(ops.lines[li].splice(0)).concat(ops.waits[li].splice(0));
+    var oppLineCards=ops.lines[li].splice(0);
+    var oppWaitCards=ops.waits[li].splice(0);
+    ops.lines[li]=[];ops.waits[li]=[];
+    cards=cards.concat(oppLineCards).concat(oppWaitCards);
   }
   cards.forEach(function(cr){
     var ownerPn=cr.owner||pn;
@@ -1034,8 +1044,10 @@ function mkChip(cr,pn,covered){
   var needTT=false;
   if(cr.up){
     var c=cr.proto.color;
-    el.style.borderColor=c;el.style.background=c+'18';
-    var h='<div class="c-hdr"><span class="c-n">'+cr.proto.name+'</span><span class="c-v" style="background:'+c+'25">'+cr.card.v+'</span></div>';
+    el.style.borderColor=c;el.style.background='linear-gradient(135deg,'+c+'22 0%,'+c+'08 100%)';
+    var h='<div class="c-stripe" style="background:'+c+'"></div>'
+      +'<div class="c-hdr"><span class="c-n" style="color:'+c+'">'+cr.proto.name+'</span>'
+      +'<span class="c-v" style="background:'+c+'44;border-color:'+c+';color:#fff">'+cr.card.v+'</span></div>';
     var cmds='<div class="c-cmds">';
     function cmd(cls,lbl,lcls,txt){return '<div class="c-cmd '+cls+'"><span class="c-cmd-lbl '+lcls+'">'+lbl+'</span><span class="c-cmd-tx">'+esc(txt)+'</span></div>'}
     if(cr.card.u)cmds+=cmd('cup','UP','lup',cr.card.u);
@@ -1048,7 +1060,7 @@ function mkChip(cr,pn,covered){
     el.innerHTML=h+(hasCmds?cmds:'');
     if(covered&&(cr.card.m||cr.card.l))needTT=true;
   } else {
-    el.innerHTML='<div class="c-hdr"><span class="c-n" style="opacity:.4">FACE-DOWN</span><span class="c-v" style="background:rgba(255,255,255,.05);opacity:.4">2</span></div>';
+    el.innerHTML='<div class="c-hdr"><span class="c-n" style="opacity:.35;letter-spacing:1px;flex:1">FACE DOWN</span><span class="c-v" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.35)">2</span></div>';
     needTT=true;
   }
   if(needTT){
@@ -1059,6 +1071,21 @@ function mkChip(cr,pn,covered){
   fb.onpointerdown=function(e){e.stopPropagation()};
   fb.onclick=function(e){e.stopPropagation();save();cr.up=!cr.up;renderAll()};
   el.appendChild(fb);
+  var tb=document.createElement('button');tb.className='fbtn tbtn';tb.innerHTML='\uD83D\uDDD1';
+  tb.title='トラッシュへ';
+  tb.onpointerdown=function(e){e.stopPropagation()};
+  tb.onclick=function(e){
+    e.stopPropagation();save();
+    var ps2=GS.p[pn];var done=false;
+    for(var i2=0;i2<3;i2++){
+      var idx=ps2.lines[i2].indexOf(cr);
+      if(idx>=0){ps2.lines[i2].splice(idx,1);done=true;break;}
+      idx=ps2.waits[i2].indexOf(cr);
+      if(idx>=0){ps2.waits[i2].splice(idx,1);done=true;break;}
+    }
+    if(done){ps2.trash.push(cr);renderAll();}
+  };
+  el.appendChild(tb);
   initDrag(el,cr,pn,function(){openMod(cr.card,cr.proto)});
   return el;
 }
@@ -1075,8 +1102,10 @@ function mkHCard(cr,pn){
   el.className='hcard '+(cr.up?'up':'dn');
   if(cr.up){
     var c=cr.proto.color;
-    el.style.borderColor=c;el.style.background=c+'15';
-    var html='<div class="c-hdr"><span class="c-n">'+cr.proto.name+'</span><span class="c-v" style="background:'+c+'25">'+cr.card.v+'</span></div>';
+    el.style.borderColor=c;el.style.background='linear-gradient(135deg,'+c+'22 0%,'+c+'08 100%)';
+    var html='<div class="c-stripe" style="background:'+c+'"></div>'
+      +'<div class="c-hdr"><span class="c-n" style="color:'+c+'">'+cr.proto.name+'</span>'
+      +'<span class="c-v" style="background:'+c+'44;border-color:'+c+';color:#fff">'+cr.card.v+'</span></div>';
     html+='<div class="hcmds">';
     var pc=pcMode;
     if(pc||cr.card.u)html+='<div class="hcmd hcup"><span class="hcl lup">U</span>'+(cr.card.u?esc(cr.card.u):'<span style="opacity:.25">---</span>')+'</div>';
@@ -1085,7 +1114,7 @@ function mkHCard(cr,pn){
     html+='</div>';
     el.innerHTML=html;
   } else {
-    el.innerHTML='<div class="c-hdr"><span class="c-n" style="opacity:.4">FACE-DOWN</span><span class="c-v" style="background:rgba(255,255,255,.05);opacity:.4">2</span></div>';
+    el.innerHTML='<div class="c-hdr"><span class="c-n" style="opacity:.35;letter-spacing:1px;flex:1">FACE DOWN</span><span class="c-v" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.35)">2</span></div>';
   }
   var fb=document.createElement('button');fb.className='fbtn';fb.innerHTML='\u21BB 反転';
   fb.onpointerdown=function(e){e.stopPropagation()};
