@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head><title>Icon Generator</title></head>
+<body>
+<canvas id="c" width="540" height="540"></canvas>
+<p>Right-click canvas to save as PNG (180x180 shown below)</p>
+<canvas id="c2" width="180" height="180"></canvas>
+<script>
+const S = 540; // render at 3x then downscale
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+
+// Background
+ctx.fillStyle = '#0a0a14';
+ctx.fillRect(0, 0, S, S);
+
+// Draw control marker symbol centered
+const cx = S/2, cy = S/2;
+const R = 180; // radius of triangle circumscribing circle
+
+// Rounded triangle
+function drawRoundedTriangle(cx, cy, R, cornerR) {
+  const angles = [-Math.PI/2, Math.PI/6*7, Math.PI/6*11];
+  // Vertices
+  const verts = [];
+  for (let a of [-Math.PI/2, Math.PI*2/3 - Math.PI/2, Math.PI*4/3 - Math.PI/2]) {
+    verts.push({x: cx + R * Math.cos(a), y: cy + R * Math.sin(a)});
+  }
+
+  ctx.beginPath();
+  for (let i = 0; i < 3; i++) {
+    const curr = verts[i];
+    const next = verts[(i+1)%3];
+    const prev = verts[(i+2)%3];
+
+    // Direction from curr to next and curr to prev
+    const dnx = next.x - curr.x, dny = next.y - curr.y;
+    const dpx = prev.x - curr.x, dpy = prev.y - curr.y;
+    const lnext = Math.sqrt(dnx*dnx + dny*dny);
+    const lprev = Math.sqrt(dpx*dpx + dpy*dpy);
+
+    const t = cornerR / Math.tan(Math.PI/3); // 60 deg interior half-angle
+
+    const p1x = curr.x + (dnx/lnext) * t;
+    const p1y = curr.y + (dny/lnext) * t;
+    const p2x = curr.x + (dpx/lprev) * t;
+    const p2y = curr.y + (dpy/lprev) * t;
+
+    if (i === 0) {
+      ctx.moveTo(p2x, p2y);
+    } else {
+      ctx.lineTo(p2x, p2y);
+    }
+    ctx.quadraticCurveTo(curr.x, curr.y, p1x, p1y);
+  }
+  ctx.closePath();
+}
+
+// Outer triangle (pink glow)
+drawRoundedTriangle(cx, cy + 10, R + 8, 35);
+ctx.fillStyle = '#e91e8c';
+ctx.shadowColor = '#e91e8c';
+ctx.shadowBlur = 40;
+ctx.fill();
+ctx.shadowBlur = 0;
+
+// Main triangle
+drawRoundedTriangle(cx, cy + 10, R, 30);
+ctx.fillStyle = '#e91e8c';
+ctx.fill();
+
+// Inner cutout - 3 lobes and center circle
+// Use composite to cut out
+ctx.save();
+ctx.globalCompositeOperation = 'destination-out';
+
+// 3 petal/lobe shapes between center and vertices
+const lobeR = 58;
+const lobeD = 90; // distance from center to lobe center
+for (let i = 0; i < 3; i++) {
+  const a = -Math.PI/2 + i * Math.PI * 2/3;
+  // Lobe between this vertex direction
+  // Position the lobe between center and the midpoint of opposite edge
+  const midA = a + Math.PI; // opposite direction
+  const lx = cx + lobeD * Math.cos(midA);
+  const ly = (cy+10) + lobeD * Math.sin(midA);
+  ctx.beginPath();
+  ctx.arc(lx, ly, lobeR, 0, Math.PI*2);
+  ctx.fill();
+}
+
+// Center circle
+ctx.beginPath();
+ctx.arc(cx, cy+10, 42, 0, Math.PI*2);
+ctx.fill();
+
+ctx.restore();
+
+// Center dot (solid pink)
+ctx.beginPath();
+ctx.arc(cx, cy+10, 32, 0, Math.PI*2);
+ctx.fillStyle = '#e91e8c';
+ctx.fill();
+
+// Downscale to 180x180
+const c2 = document.getElementById('c2');
+const ctx2 = c2.getContext('2d');
+ctx2.drawImage(c, 0, 0, 180, 180);
+
+// Auto-download
+setTimeout(() => {
+  const link = document.createElement('a');
+  link.download = 'ct-icon-180.png';
+  link.href = c2.toDataURL('image/png');
+  link.click();
+}, 500);
+</script>
+</body>
+</html>
