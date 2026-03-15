@@ -769,6 +769,7 @@
   window.addEventListener('resize', updateMarkerPosition);
 
   // Wake Lock — アプリ表示中はスリープ防止
+  // 方法1: Wake Lock API
   let wakeLock = null;
   async function requestWakeLock() {
     try {
@@ -776,12 +777,31 @@
         wakeLock = await navigator.wakeLock.request('screen');
         wakeLock.addEventListener('release', function() { wakeLock = null; });
       }
-    } catch (e) { /* ユーザー拒否 or 非対応 */ }
+    } catch (e) {}
   }
   requestWakeLock();
   document.addEventListener('visibilitychange', function() {
     if (document.visibilityState === 'visible') requestWakeLock();
   });
+  // 方法2: 無音動画ループ（iOS Safari フォールバック）
+  (function noSleep() {
+    var v = document.createElement('video');
+    v.setAttribute('playsinline','');
+    v.setAttribute('muted','');
+    v.setAttribute('loop','');
+    v.style.cssText='position:fixed;top:-1px;left:-1px;width:1px;height:1px;opacity:0.01';
+    // 最小限のMP4（無音・1フレーム）をdata URIで埋め込み
+    v.src='data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAAAChtZGF0AAACrgYF//+q3EXpvebZSLeWLNgg2SPu73gyNjQgLSBjb3JlIDE1MAAAABhzdHRzAAAAAAAAAAEAAAABAAAEAAAAABRzdHNzAAAAAAAAAAEAAAABAAAAHHN0c2MAAAAAAAAAAgAAAAEAAAABAAAAAQAAAAIAAAABAAAAFHN0c3oAAAAAAAAAAAAAAAEAAAK2AAAAFHRyYWsAAABcdGtoZAAAAAMAAAAAAAAAAAAAAAEAAAAAAAABkAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAQAAAAAAIAAAACAAAAAAkZWR0cwAAABxlbHN0AAAAAAAAAAEAAAGQAAAEAAABAAAAAADMbWRpYQAAACBtZGhkAAAAAAAAAAAAAAAAAAB1MAAB9AAAAAAALG1pbmYAAAAUdm1oZAAAAAEAAAAAAAAAAAAAJGRpbmYAAAAcZHJlZgAAAAAAAAABAAAADHVybCAAAAABAAAAmHN0YmwAAACYc3RzZAAAAAAAAAABAAAAiGF2YzEAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAIAAgASAAAAEgAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABj//wAAADJhdmNDAWQACv/hABhnZAAKrNlBsJaEAAADAAQAAAMACDxYtlgBAAZo6+PLIsD9+PgAAAAAEHBhc3AAAAABAAAAAQAAABRidHJ0AAAAAAAAoAAAAKA=';
+    document.body.appendChild(v);
+    // 最初のタッチ操作で再生開始（iOS要件）
+    function startVideo() {
+      v.play().catch(function(){});
+      document.removeEventListener('touchstart', startVideo);
+      document.removeEventListener('click', startVideo);
+    }
+    document.addEventListener('touchstart', startVideo, {once:true});
+    document.addEventListener('click', startVideo, {once:true});
+  })();
 
   // Init
   updateVisuals();
