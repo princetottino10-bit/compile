@@ -84,6 +84,15 @@
     .draft-whose{font-size:.62rem;font-weight:700;font-family:Orbitron,monospace;
       letter-spacing:.5px;margin-bottom:6px;color:var(--txdd)}
     .draft-whose.mine{color:var(--pk)}
+    .draft-picks{display:flex;gap:8px;flex-wrap:wrap}
+    .draft-picks-side{flex:1;min-width:0}
+    .draft-picks-lbl{font-family:Orbitron,monospace;font-size:.46rem;font-weight:700;
+      letter-spacing:.8px;color:var(--txdd);margin-bottom:4px}
+    .draft-picks-lbl.mine{color:var(--pk)}
+    .draft-picks-row{display:flex;flex-wrap:wrap;gap:4px;min-height:22px}
+    .draft-pick-badge{font-family:Orbitron,monospace;font-size:.58rem;font-weight:700;
+      padding:3px 8px;border-radius:12px;border:1.5px solid;letter-spacing:.3px;
+      white-space:nowrap}
     .mode-row{display:flex;gap:8px;margin-bottom:14px}
     .mode-b{flex:1;padding:10px;border:1.5px solid var(--bd2);border-radius:9px;
             background:var(--cbg);color:var(--txd);font-size:.72rem;font-weight:700;
@@ -548,12 +557,12 @@
     #p2sec .lines { flex-direction:row-reverse; }
     #game.p2-view #p1sec .lines { flex-direction:row-reverse; }
     #game.p2-view #p2sec .lines { flex-direction:row; }
-    /* p2-view: orderプロパティでl-hdr/l-waitの上下を制御 */
-    #game.p2-view #p1sec .line,
+    /* p2-view: l-hdr/l-waitの上下を制御 */
     #game.p2-view #p2sec .line { display:flex; flex-direction:column; }
-    /* p1sec: CTRLバーより上 → hdr内側(下)、wait外側(上) */
-    #game.p2-view #p1sec .l-hdr { order:99; margin-top:auto; margin-bottom:0; }
-    #game.p2-view #p1sec .l-wait { order:-1; margin-top:0; margin-bottom:0; }
+    /* p1sec: column-reverseで自然にl-hdr(DOM first)を底面(中央側)に配置 */
+    #game.p2-view #p1sec .line { display:flex; flex-direction:column-reverse; }
+    #game.p2-view #p1sec .l-hdr { order:0; margin-top:2px; margin-bottom:0; }
+    #game.p2-view #p1sec .l-wait { order:0; margin-top:0; margin-bottom:0; }
     /* p2sec: CTRLバーより下 → hdr内側(上)、wait外側(下) */
     #game.p2-view #p2sec .l-hdr { order:-1; margin-top:0; margin-bottom:0; }
     #game.p2-view #p2sec .l-wait { order:99; margin-top:auto; margin-bottom:0; }
@@ -775,6 +784,7 @@
       <div class="draft-step" id="dstep3"></div>
     </div>
     <div class="draft-whose" id="draftWhose"></div>
+    <div id="draftPicksSec" style="display:none;margin-bottom:10px"></div>
     <div class="info" id="draftInfo" style="display:none">選択中: <b id="protoCnt">0</b> / <b id="protoMax">1</b></div>
     <div class="pills" id="protoPills"></div>
     <div id="protoWait" class="online-wait" style="display:none"></div>
@@ -1114,15 +1124,19 @@ function mkLines(pn){
     var d=document.createElement('div');d.className='line'+(isP2?' p2line':'');d.dataset.line=i;d.dataset.player=pn;
     var pr=ps.protos[i];
     var compiled=ps.compiled[i];
-    var urgent=!compiled&&compileConditionMet(pn,i);
-    var compileHtml=compiled
+    // 相手がコンパイルしたライン(同番)も視覚的にCOMPILED表示
+    var oppPn=pn===1?2:1;
+    var oppCompiled=GS.mode==='both'&&GS.p[oppPn]&&GS.p[oppPn].compiled[i];
+    var visuallyCompiled=compiled||oppCompiled;
+    var urgent=!visuallyCompiled&&compileConditionMet(pn,i);
+    var compileHtml=visuallyCompiled
       ?'<span class="l-compiled">COMPILED</span>'
       :'<button class="l-compile'+(urgent?' urgent':'')+'" data-compileline="'+i+'" data-compileplayer="'+pn+'">'+(urgent?'COMPILE!':'COMPILE')+'</button>';
     var hdrHtml='<div class="l-hdr"><span class="l-drag" data-dragline="'+i+'" data-dragplayer="'+pn+'">&#x2261;</span><span class="l-proto" style="flex:1">'+pr.name+'</span>'+compileHtml+'<span class="l-val" style="background:'+pr.color+'20" id="'+id+'v'+i+'">0</span></div>';
     d.innerHTML=hdrHtml;
     d.style.borderColor=pr.color+'60';
     d.style.background=pr.color+'18';
-    if(compiled){d.style.borderColor=pr.color+'40';d.style.background=pr.color+'08';d.style.opacity='.7'}
+    if(visuallyCompiled){d.style.borderColor=pr.color+'40';d.style.background=pr.color+'08';d.style.opacity='.7'}
     el.appendChild(d);
   }
 }
@@ -1356,16 +1370,11 @@ function rField(pn){
     var stk=ps.lines[li];
     var sum=lineVal(pn,li);
     document.getElementById(id+'v'+li).textContent=sum;
-    if(!stk.length&&!ps.compiled[li]){var e=document.createElement('div');e.className='l-empty';e.textContent='空';le.appendChild(e)}
-    else{
-      var needRev=document.getElementById('game').classList.contains('p2-view')&&pn===1;
-      if(needRev){
-        stk.slice().reverse().forEach(function(cr){
-          var oi=stk.indexOf(cr);le.appendChild(mkChip(cr,pn,oi<stk.length-1,isOpp));
-        });
-      } else {
-        stk.forEach(function(cr,idx){le.appendChild(mkChip(cr,pn,idx<stk.length-1,isOpp))});
-      }
+    var oppPs=GS.mode==='both'?GS.p[pn===1?2:1]:null;
+    var oppCompiledLine=oppPs&&oppPs.compiled[li];
+    if(!stk.length&&!ps.compiled[li]&&!oppCompiledLine){var e=document.createElement('div');e.className='l-empty';e.textContent='空';le.appendChild(e)}
+    else if(stk.length){
+      stk.forEach(function(cr,idx){le.appendChild(mkChip(cr,pn,idx<stk.length-1,isOpp))});
     }
     /* wait zone */
     var wz=document.createElement('div');wz.className='l-wait';
@@ -2735,6 +2744,39 @@ function renderDraft(d){
     if(!el)continue;
     el.className='draft-step'+(s<round?' done':s===round?' active':'');
   }
+
+  // ドラフト済みピック表示（大きめ）
+  (function(){
+    var sec=document.getElementById('draftPicksSec');
+    if(!sec)return;
+    var p1List=dp1.slice();var p2List=dp2.slice();
+    var hasPicks=p1List.length||p2List.length;
+    if(!hasPicks){sec.style.display='none';return;}
+    sec.style.display='';
+    function mkSide(names,label,isMine){
+      var div=document.createElement('div');div.className='draft-picks-side';
+      var lbl=document.createElement('div');lbl.className='draft-picks-lbl'+(isMine?' mine':'');
+      lbl.textContent=label;div.appendChild(lbl);
+      var row=document.createElement('div');row.className='draft-picks-row';
+      names.forEach(function(n){
+        var pr=DATA.find(function(p){return p.name===n;});
+        var b=document.createElement('span');b.className='draft-pick-badge';
+        b.textContent=n;
+        b.style.color=pr?pr.color:'var(--tx)';
+        b.style.borderColor=pr?pr.color:'var(--bd)';
+        b.style.background=pr?pr.color+'18':'transparent';
+        row.appendChild(b);
+      });
+      div.appendChild(row);return div;
+    }
+    sec.innerHTML='';
+    var wrap=document.createElement('div');wrap.className='draft-picks';
+    var myLabel='P'+myRole+' (あなた)';var oppLabel='P'+(myRole===1?2:1)+' (相手)';
+    var p1Side=mkSide(p1List,(myRole===1?myLabel:oppLabel),myRole===1);
+    var p2Side=mkSide(p2List,(myRole===2?myLabel:oppLabel),myRole===2);
+    wrap.appendChild(p1Side);wrap.appendChild(p2Side);
+    sec.appendChild(wrap);
+  })();
 
   if(round>=4)return; // ドラフト完了
 
