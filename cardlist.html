@@ -579,9 +579,9 @@ function openProtocolPreview(p){
     +p.cards.map(function(c){
       return '<div class="proto-preview-card">'
         +'<div class="proto-preview-hd"><span class="proto-preview-name" style="color:'+p.color+'">'+p.name+'</span><span class="proto-preview-val" style="color:'+p.color+'">'+c.value+'</span></div>'
-        +modalCmd('上段コマンド / Upper','up',c.upper)
-        +modalCmd('中段コマンド / Middle','mid',c.middle)
-        +modalCmd('下段コマンド / Lower','low',c.lower)
+        +modalCmd('U','up',c.upper)
+        +modalCmd('M','mid',c.middle)
+        +modalCmd('L','low',c.lower)
         +'</div>';
     }).join('')
     +'</div>'

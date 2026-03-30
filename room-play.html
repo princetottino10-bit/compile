@@ -1890,7 +1890,7 @@ function openProtoPreview(p){
   var cards=(p.cards||[]).map(function(c){
     return '<div class="proto-preview-card">'
       +'<div class="proto-preview-hd"><span class="proto-preview-name" style="color:'+p.color+'">'+p.name+'</span><span class="proto-preview-val" style="color:'+p.color+'">'+c.v+'</span></div>'
-      +mCmd('上段 / Upper','up',c.u)+mCmd('中段 / Middle','mid',c.m)+mCmd('下段 / Lower','low',c.l)
+      +mCmd('U','up',c.u)+mCmd('M','mid',c.m)+mCmd('L','low',c.l)
       +'</div>';
   }).join('');
   document.getElementById('macc').style.background='linear-gradient(90deg,'+p.color+','+p.color+'50)';
