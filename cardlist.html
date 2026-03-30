@@ -476,12 +476,51 @@ function toggleListProto(name,btn){
   var i=listSel.indexOf(name);
   if(i>=0){listSel.splice(i,1);btn.classList.remove('on');btn.style.color='';btn.style.borderColor=''}
   else{var p=DATA.protocols.find(function(x){return x.name===name});listSel.push(name);btn.classList.add('on');btn.style.color=p.color;btn.style.borderColor=p.color}
+  updateListSeriesUI();
   renderList();
+}
+
+function toggleListSeries(setName){
+  var names=DATA.protocols.filter(function(p){return (p.set||'Main 1')===setName}).map(function(p){return p.name});
+  var allSelected=names.length&&names.every(function(name){return listSel.indexOf(name)>=0});
+  names.forEach(function(name){
+    var idx=listSel.indexOf(name);
+    if(allSelected){
+      if(idx>=0)listSel.splice(idx,1);
+    }else if(idx<0){
+      listSel.push(name);
+    }
+  });
+  document.querySelectorAll('#pbar .pill').forEach(function(b){
+    var name=b.dataset.p;
+    if(!name)return;
+    var on=listSel.indexOf(name)>=0;
+    b.classList.toggle('on',on);
+    if(on){
+      var p=DATA.protocols.find(function(x){return x.name===name});
+      b.style.color=p.color;b.style.borderColor=p.color;
+    }else{
+      b.style.color='';b.style.borderColor='';
+    }
+  });
+  updateListSeriesUI();
+  renderList();
+}
+
+function updateListSeriesUI(){
+  document.querySelectorAll('#pbar .set-group-btn').forEach(function(btn){
+    var setName=btn.dataset.set;
+    var names=DATA.protocols.filter(function(p){return (p.set||'Main 1')===setName}).map(function(p){return p.name});
+    var allSelected=names.length&&names.every(function(name){return listSel.indexOf(name)>=0});
+    btn.classList.toggle('on',allSelected);
+    btn.textContent=allSelected?'解除':'選択';
+  });
 }
 
 function clearListFilter(){
   listSel=[];filt='all';
   document.querySelectorAll('#pbar .pill').forEach(function(b){b.classList.remove('on');b.style.color='';b.style.borderColor=''});
+  updateListSeriesUI();
   document.querySelectorAll('#fbar .chip').forEach(function(c){c.classList.toggle('on',c.dataset.f==='all')});
   renderList();
 }
@@ -573,6 +612,25 @@ function renderProtoList(){
   });
 }
 
+function enhanceListSeriesControls(){
+  document.querySelectorAll('#pbar .set-group').forEach(function(group){
+    var hdr=group.querySelector('.set-group-hdr');
+    var label=group.querySelector('.set-label');
+    if(!hdr||!label||hdr.querySelector('.set-group-btn'))return;
+    var spacer=document.createElement('span');
+    spacer.className='set-spacer';
+    var btn=document.createElement('button');
+    btn.type='button';
+    btn.className='set-group-btn';
+    btn.dataset.set=label.textContent;
+    btn.textContent='選択';
+    btn.onclick=function(e){e.stopPropagation();toggleListSeries(btn.dataset.set);};
+    hdr.appendChild(spacer);
+    hdr.appendChild(btn);
+  });
+  updateListSeriesUI();
+}
+
 function openProtocolPreview(p){
   document.getElementById('macc').style.background='linear-gradient(90deg,'+p.color+','+p.color+'50)';
   document.getElementById('mbody').innerHTML=
@@ -653,6 +711,7 @@ function renderAna(){
 // Init
 buildPills('pbar',function(n,b){toggleListProto(n,b)},true);
 buildPills('asel',function(n,b){toggleMulti(anaSel,n,b,'acnt',3,renderAna)},true);
+enhanceListSeriesControls();
 buildFilterChips('fbar','all',function(f){filt=f;renderList()});
 buildMatrix();
 renderList();
