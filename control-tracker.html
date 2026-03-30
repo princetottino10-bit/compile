@@ -180,6 +180,7 @@
     }
 
     .tap-hint {
+      display: none;
       font-size: 0.8rem;
       color: rgba(255, 255, 255, 0.15);
       margin-top: 18px;
@@ -309,6 +310,7 @@
 
     /* ===== Reset Hint ===== */
     .reset-hint {
+      display: none;
       position: fixed;
       bottom: 12px;
       left: 0;
@@ -323,6 +325,7 @@
 
     /* ===== Status text ===== */
     .status-text {
+      display: none;
       position: fixed;
       left: 50%;
       transform: translateX(-50%);
@@ -454,37 +457,63 @@
   let state = 'neutral';
   let spinning = false;
 
+  function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+  }
+
+  function getContentBounds(zone) {
+    const nodes = zone.querySelectorAll('.player-label, .player-name, .control-badge, .tap-hint');
+    let top = Infinity;
+    let bottom = -Infinity;
+
+    nodes.forEach(function(node) {
+      const rect = node.getBoundingClientRect();
+      top = Math.min(top, rect.top);
+      bottom = Math.max(bottom, rect.bottom);
+    });
+
+    if (!isFinite(top) || !isFinite(bottom)) {
+      const rect = zone.getBoundingClientRect();
+      return { top: rect.top, bottom: rect.bottom };
+    }
+
+    return { top: top, bottom: bottom };
+  }
+
+  function getMarkerTopForZone(zoneRect, contentBounds, markerH, gap, minInset, centerY) {
+    const zoneIsUpper = zoneRect.top + zoneRect.height / 2 < centerY;
+
+    if (zoneIsUpper) {
+      return clamp(
+        contentBounds.top - gap - markerH,
+        zoneRect.top + minInset,
+        zoneRect.bottom - markerH - minInset
+      );
+    }
+
+    return clamp(
+      contentBounds.bottom + gap,
+      zoneRect.top + minInset,
+      zoneRect.bottom - markerH - minInset
+    );
+  }
+
   function getPositions() {
     const vh = window.innerHeight;
     const centerY = vh / 2;
     const markerH = 130;
     const half = markerH / 2; // 65
-    const gap = 10;
-
-    // Anchor marker below each PLAYER name
-    const p1Name = zoneP1.querySelector('.player-name');
-    const p2Name = zoneP2.querySelector('.player-name');
-
-    let p1Top, p2Top;
-
-    if (p1Name) {
-      const r = p1Name.getBoundingClientRect();
-      p1Top = r.bottom + gap;
-    } else {
-      p1Top = centerY + 50 + (centerY - 50) / 2 - half;
-    }
-
-    if (p2Name) {
-      const r = p2Name.getBoundingClientRect();
-      p2Top = r.top - gap - markerH;
-    } else {
-      p2Top = (centerY - 50) / 2 - half;
-    }
+    const gap = 18;
+    const p1Rect = zoneP1.getBoundingClientRect();
+    const p2Rect = zoneP2.getBoundingClientRect();
+    const p1Content = getContentBounds(zoneP1);
+    const p2Content = getContentBounds(zoneP2);
+    const minInset = 16;
 
     return {
       neutral: centerY - half,
-      p1: p1Top,
-      p2: p2Top
+      p1: getMarkerTopForZone(p1Rect, p1Content, markerH, gap, minInset, centerY),
+      p2: getMarkerTopForZone(p2Rect, p2Content, markerH, gap, minInset, centerY)
     };
   }
 
@@ -767,6 +796,10 @@
 
   // Handle resize
   window.addEventListener('resize', updateMarkerPosition);
+  window.addEventListener('load', updateMarkerPosition);
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(updateMarkerPosition).catch(function() {});
+  }
 
   // Wake Lock — アプリ表示中はスリープ防止
   // 方法1: Wake Lock API
