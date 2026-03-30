@@ -99,13 +99,13 @@
     .proto-tags{font-size:0.62rem;color:var(--txd);line-height:1.55}
     .proto-preview{display:flex;flex-direction:column;gap:12px}
     .proto-preview-grid{display:grid;grid-template-columns:1fr;gap:10px;align-items:stretch}
-    .proto-preview-card{height:100%;min-height:320px;border:1px solid var(--bd);border-radius:10px;overflow:hidden;background:var(--cbg);display:flex;flex-direction:column}
+    .proto-preview-card{height:100%;min-height:0;border:1px solid var(--bd);border-radius:10px;overflow:hidden;background:var(--cbg);display:flex;flex-direction:column}
     .proto-preview-hd{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-bottom:1px solid var(--bd)}
     .proto-preview-name{font-family:'Orbitron',monospace;font-size:0.78rem;font-weight:700;letter-spacing:.6px}
     .proto-preview-val{font-family:'Orbitron',monospace;font-size:0.7rem;font-weight:900;padding:3px 8px;border-radius:999px;border:1px solid currentColor}
-    .proto-preview-card .m-cmd-section{display:flex;flex-direction:row;align-items:stretch;flex:1;min-height:0}
-    .proto-preview-card .m-cmd-header{width:32px;min-width:32px;justify-content:center;padding:8px 0;font-size:0.6rem}
-    .proto-preview-card .m-cmd-body,.proto-preview-card .m-cmd-empty{flex:1;min-height:0;overflow:auto;font-size:0.78rem;line-height:1.65;padding:8px 10px}
+    .proto-preview-card .m-cmd-section{display:flex;flex-direction:row;align-items:stretch;flex:0 0 auto;min-height:0}
+    .proto-preview-card .m-cmd-header{width:28px;min-width:28px;justify-content:center;padding:7px 0;font-size:0.56rem}
+    .proto-preview-card .m-cmd-body,.proto-preview-card .m-cmd-empty{flex:1;min-height:0;overflow:visible;font-size:0.74rem;line-height:1.55;padding:7px 9px}
     @media(min-width:640px){.proto-preview-grid{grid-template-columns:repeat(2,1fr)}}
 
     /* === TILE VIEW (default) === */

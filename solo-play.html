@@ -90,13 +90,13 @@
     .pick-count b{font-family:'Orbitron',monospace;font-size:.7rem}
     .proto-preview{display:flex;flex-direction:column;gap:12px}
     .proto-preview-grid{display:grid;grid-template-columns:1fr;gap:10px;align-items:stretch}
-    .proto-preview-card{height:100%;min-height:320px;border:1px solid var(--bd);border-radius:10px;overflow:hidden;background:var(--cbg);display:flex;flex-direction:column}
+    .proto-preview-card{height:100%;min-height:0;border:1px solid var(--bd);border-radius:10px;overflow:hidden;background:var(--cbg);display:flex;flex-direction:column}
     .proto-preview-hd{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-bottom:1px solid var(--bd)}
     .proto-preview-name{font-family:'Orbitron',monospace;font-size:.78rem;font-weight:700;letter-spacing:.6px}
     .proto-preview-val{font-family:'Orbitron',monospace;font-size:.7rem;font-weight:900;padding:3px 8px;border-radius:999px;border:1px solid currentColor}
-    .proto-preview-card .m-sec{display:flex;flex-direction:row;align-items:stretch;flex:1;min-height:0}
-    .proto-preview-card .m-sh{width:32px;min-width:32px;justify-content:center;padding:8px 0;font-size:.6rem}
-    .proto-preview-card .m-sb,.proto-preview-card .m-se{flex:1;min-height:0;overflow:auto;font-size:.78rem;line-height:1.65;padding:8px 10px}
+    .proto-preview-card .m-sec{display:flex;flex-direction:row;align-items:stretch;flex:0 0 auto;min-height:0}
+    .proto-preview-card .m-sh{width:28px;min-width:28px;justify-content:center;padding:7px 0;font-size:.56rem}
+    .proto-preview-card .m-sb,.proto-preview-card .m-se{flex:1;min-height:0;overflow:visible;font-size:.74rem;line-height:1.55;padding:7px 9px}
     @media(min-width:640px){.proto-preview-grid{grid-template-columns:repeat(2,1fr)}}
     .mode-row{display:flex;gap:8px;margin-bottom:14px}
     .mode-b{flex:1;padding:12px 10px;border:1px solid var(--bd);border-radius:10px;
