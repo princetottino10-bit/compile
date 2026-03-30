@@ -273,7 +273,7 @@ function applyTheme(t){
 function toggleTheme(){applyTheme(curTheme==='dark'?'light':'dark')}
 applyTheme(curTheme);
 
-function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML.replace(/。/g,'。<br>')}
+function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML.replace(/。/g,'。<br>').replace(/(開始：|終了：|[^。]+(したとき|したあと|した場合|しなかった場合|なったとき)：)/g,'<b style="text-decoration:underline">$1</b>')}
 
 function setView(v){
   viewMode=v;
