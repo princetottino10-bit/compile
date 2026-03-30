@@ -415,7 +415,7 @@ function buildPills(container,onclick,multi){
   setOrder.forEach(function(s){
     if(!groups[s])return;
     var grp=document.createElement('div');grp.className='set-group';
-    var collapsed=s!=='Main 1';
+    var collapsed=true;
     var hdr=document.createElement('div');hdr.className='set-group-hdr'+(collapsed?' collapsed':'');
     hdr.innerHTML='<span class="set-arrow">▼</span><span class="set-label">'+s+'</span>';
     var pills=document.createElement('div');pills.className='set-group-pills'+(collapsed?' collapsed':'');
