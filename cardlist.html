@@ -100,8 +100,9 @@
     .proto-preview-hd{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-bottom:1px solid var(--bd)}
     .proto-preview-name{font-family:'Orbitron',monospace;font-size:0.78rem;font-weight:700;letter-spacing:.6px}
     .proto-preview-val{font-family:'Orbitron',monospace;font-size:0.7rem;font-weight:900;padding:3px 8px;border-radius:999px;border:1px solid currentColor}
-    .proto-preview-card .m-cmd-section{display:flex;flex-direction:column;flex:1;min-height:0}
-    .proto-preview-card .m-cmd-body,.proto-preview-card .m-cmd-empty{flex:1;min-height:0;overflow:auto;font-size:0.78rem;line-height:1.65}
+    .proto-preview-card .m-cmd-section{display:flex;flex-direction:row;align-items:stretch;flex:1;min-height:0}
+    .proto-preview-card .m-cmd-header{width:32px;min-width:32px;justify-content:center;padding:8px 0;font-size:0.6rem}
+    .proto-preview-card .m-cmd-body,.proto-preview-card .m-cmd-empty{flex:1;min-height:0;overflow:auto;font-size:0.78rem;line-height:1.65;padding:8px 10px}
     @media(min-width:640px){.proto-preview-grid{grid-template-columns:repeat(2,1fr)}}
 
     /* === TILE VIEW (default) === */
