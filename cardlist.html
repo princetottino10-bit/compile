@@ -85,6 +85,24 @@
     .chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
     .chip{padding:4px 10px;font-size:0.64rem;border:1px solid var(--bd);background:transparent;color:var(--txdd);cursor:pointer;border-radius:12px;transition:all .2s;font-weight:500}
     .chip.on{background:var(--chip-on-bg);border-color:var(--pk);color:var(--pk);font-weight:700}
+    .protocol-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+    .proto-card{background:var(--cbg);border:1px solid var(--bd);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-height:88px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+    .proto-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--pk),transparent);opacity:.45}
+    .proto-card:hover,.proto-card:active{transform:translateY(-1px);border-color:var(--bd2)}
+    .proto-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+    .proto-name{flex:1;min-width:0;font-family:'Orbitron',monospace;font-size:0.7rem;font-weight:700;letter-spacing:.35px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .proto-view{flex-shrink:0;padding:3px 7px;border-radius:999px;border:1px solid var(--bd);background:var(--pill-bg);color:var(--txd);font-family:'Orbitron',monospace;font-size:0.52rem;font-weight:700;letter-spacing:.8px}
+    .proto-meta{font-size:0.58rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--txd)}
+    .proto-tags{font-size:0.62rem;color:var(--txd);line-height:1.55}
+    .proto-preview{display:flex;flex-direction:column;gap:12px}
+    .proto-preview-grid{display:grid;grid-template-columns:1fr;gap:10px;align-items:stretch}
+    .proto-preview-card{height:100%;min-height:320px;border:1px solid var(--bd);border-radius:10px;overflow:hidden;background:var(--cbg);display:flex;flex-direction:column}
+    .proto-preview-hd{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-bottom:1px solid var(--bd)}
+    .proto-preview-name{font-family:'Orbitron',monospace;font-size:0.78rem;font-weight:700;letter-spacing:.6px}
+    .proto-preview-val{font-family:'Orbitron',monospace;font-size:0.7rem;font-weight:900;padding:3px 8px;border-radius:999px;border:1px solid currentColor}
+    .proto-preview-card .m-cmd-section{display:flex;flex-direction:column;flex:1;min-height:0}
+    .proto-preview-card .m-cmd-body,.proto-preview-card .m-cmd-empty{flex:1;min-height:0;overflow:auto;font-size:0.78rem;line-height:1.65}
+    @media(min-width:640px){.proto-preview-grid{grid-template-columns:repeat(2,1fr)}}
 
     /* === TILE VIEW (default) === */
     .cards{display:flex;flex-direction:column;gap:10px}
@@ -216,6 +234,7 @@
   </div>
   <div class="tabs" id="tabs">
     <div class="tab on" data-m="list">カード一覧</div>
+    <div class="tab" data-m="proto">プロトコル一覧</div>
     <div class="tab" data-m="lookup">逆引き</div>
     <div class="tab" data-m="ana">デッキ分析</div>
   </div>
@@ -234,6 +253,11 @@
     <div class="slbl"><b>//</b> 逆引きマトリクス</div>
     <div class="cards" id="lkResult"></div>
     <div class="matrix-wrap" id="matrixWrap"></div>
+  </div>
+
+  <div id="v-proto" class="sec">
+    <div class="slbl"><b>//</b> プロトコル一覧</div>
+    <div class="protocol-grid" id="protoGrid"></div>
   </div>
 
   <div id="v-ana" class="sec">
@@ -361,7 +385,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'&&document.ge
 })();
 
 // Tabs
-var MODES=['list','lookup','ana'];
+var MODES=['list','proto','lookup','ana'];
 function switchMode(newMode,direction){
   if(newMode===mode)return;
   mode=newMode;
@@ -372,6 +396,7 @@ function switchMode(newMode,direction){
   if(direction)sec.classList.add(direction==='left'?'slide-in-left':'slide-in-right');
   if(mode==='ana')renderAna();
   if(mode==='lookup')renderLookup();
+  if(mode==='proto')renderProtoList();
 }
 document.querySelectorAll('.tab').forEach(function(t){t.addEventListener('click',function(){switchMode(t.dataset.m)})});
 
@@ -524,6 +549,46 @@ function renderLookup(){
   found.forEach(function(c){res.appendChild(mkCard(c,p))});
 }
 
+function renderProtoList(){
+  var grid=document.getElementById('protoGrid');
+  grid.innerHTML='';
+  DATA.protocols.forEach(function(p){
+    var d=document.createElement('div');
+    d.className='proto-card';
+    d.style.borderColor=p.color+'40';
+    d.innerHTML=
+      '<div class="proto-head">'
+      +'<div class="proto-name" style="color:'+p.color+'">'+p.name+'</div>'
+      +'<button class="proto-view" type="button">VIEW</button>'
+      +'</div>'
+      +'<div class="proto-meta">'+(p.set||'Main 1')+'</div>'
+      +'<div class="proto-tags">'+esc(p.tags)+'</div>';
+    d.addEventListener('click',function(){openProtocolPreview(p)});
+    d.querySelector('.proto-view').addEventListener('click',function(e){e.stopPropagation();openProtocolPreview(p)});
+    grid.appendChild(d);
+  });
+}
+
+function openProtocolPreview(p){
+  document.getElementById('macc').style.background='linear-gradient(90deg,'+p.color+','+p.color+'50)';
+  document.getElementById('mbody').innerHTML=
+    '<div class="proto-preview">'
+    +'<div class="m-name" style="color:'+p.color+'">'+p.name+'</div>'
+    +'<div class="m-proto" style="background:'+p.color+'15;color:'+p.color+'">'+p.tags+'</div>'
+    +'<div class="proto-preview-grid">'
+    +p.cards.map(function(c){
+      return '<div class="proto-preview-card">'
+        +'<div class="proto-preview-hd"><span class="proto-preview-name" style="color:'+p.color+'">'+p.name+'</span><span class="proto-preview-val" style="color:'+p.color+'">'+c.value+'</span></div>'
+        +modalCmd('上段コマンド / Upper','up',c.upper)
+        +modalCmd('中段コマンド / Middle','mid',c.middle)
+        +modalCmd('下段コマンド / Lower','low',c.lower)
+        +'</div>';
+    }).join('')
+    +'</div>'
+    +'</div>';
+  document.getElementById('mover').classList.add('on');
+}
+
 // Analysis
 function clearAna(){
   anaSel=[];
@@ -587,6 +652,7 @@ buildPills('asel',function(n,b){toggleMulti(anaSel,n,b,'acnt',3,renderAna)},true
 buildFilterChips('fbar','all',function(f){filt=f;renderList()});
 buildMatrix();
 renderList();
+renderProtoList();
 </script>
 </body>
 </html>
