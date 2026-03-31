@@ -246,7 +246,7 @@
 
 <main>
   <div id="v-list" class="sec on">
-    <div class="slbl"><b>//</b> プロトコル <span><button class="clear-btn" id="expandSeriesBtn" onclick="toggleAllSeriesGroups()">EXPAND</button> <button class="clear-btn" onclick="clearListFilter()">リセット</button></span></div>
+    <div class="slbl"><b>//</b> プロトコル <span><button class="clear-btn" id="expandSeriesBtn" onclick="toggleAllSeriesGroups()">一括展開</button> <button class="clear-btn" onclick="clearListFilter()">リセット</button></span></div>
     <div class="pills" id="pbar"></div>
     <div class="chips" id="fbar"></div>
     <div class="cards" id="cgrid"></div>
@@ -535,7 +535,7 @@ function updateExpandBtn(){
   if(!btn)return;
   var allGroups=document.querySelectorAll('#pbar .set-group-hdr').length;
   var collapsed=document.querySelectorAll('#pbar .set-group-hdr.collapsed').length;
-  btn.textContent=(allGroups&&collapsed===0)?'COLLAPSE':'EXPAND';
+  btn.textContent=(allGroups&&collapsed===0)?'一括収納':'一括展開';
 }
 
 function clearListFilter(){
