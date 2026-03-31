@@ -246,7 +246,7 @@
 
 <main>
   <div id="v-list" class="sec on">
-    <div class="slbl"><b>//</b> プロトコル <button class="clear-btn" onclick="clearListFilter()">リセット</button></div>
+    <div class="slbl"><b>//</b> プロトコル <span><button class="clear-btn" id="expandSeriesBtn" onclick="toggleAllSeriesGroups()">EXPAND</button> <button class="clear-btn" onclick="clearListFilter()">リセット</button></span></div>
     <div class="pills" id="pbar"></div>
     <div class="chips" id="fbar"></div>
     <div class="cards" id="cgrid"></div>
@@ -515,6 +515,27 @@ function updateListSeriesUI(){
     btn.classList.toggle('on',allSelected);
     btn.textContent=allSelected?'解除':'選択';
   });
+  updateExpandBtn();
+}
+
+function toggleAllSeriesGroups(){
+  var allCollapsed=document.querySelectorAll('#pbar .set-group-hdr.collapsed').length===document.querySelectorAll('#pbar .set-group-hdr').length;
+  document.querySelectorAll('#pbar .set-group').forEach(function(group){
+    var hdr=group.querySelector('.set-group-hdr');
+    var pills=group.querySelector('.set-group-pills');
+    if(!hdr||!pills)return;
+    hdr.classList.toggle('collapsed',!allCollapsed);
+    pills.classList.toggle('collapsed',!allCollapsed);
+  });
+  updateExpandBtn();
+}
+
+function updateExpandBtn(){
+  var btn=document.getElementById('expandSeriesBtn');
+  if(!btn)return;
+  var allGroups=document.querySelectorAll('#pbar .set-group-hdr').length;
+  var collapsed=document.querySelectorAll('#pbar .set-group-hdr.collapsed').length;
+  btn.textContent=(allGroups&&collapsed===0)?'COLLAPSE':'EXPAND';
 }
 
 function clearListFilter(){
