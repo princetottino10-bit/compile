@@ -112,6 +112,11 @@ function renderGame(){
   $('hand').innerHTML=g.hand.map(function(c){return '<div class="card">'+esc(defLabel(c.def))+'</div>'}).join('');renderActions();
 }
 function cardHtml(c){return '<div class="card'+(c.faceUp?'':' down')+'">'+esc(defLabel(c.def))+'</div>'}
+function visibleCardDef(uid){
+  var zones=[room.game.hand,room.game.trash||[]];
+  (room.game.lines||[]).forEach(function(line){line.forEach(function(stack){zones.push(stack)})});
+  for(var z of zones){var card=z.find(function(c){return c.uid===uid});if(card)return card.def}
+}
 function renderActions(){
   var box=$('actions');box.innerHTML='';if(room.request){renderRequest(room.request);return}
   (room.legalActions||[]).forEach(function(a){var b=document.createElement('button');b.className='btn';b.textContent=a.type==='refresh'?'リフレッシュ':defLabel((room.game.hand.find(function(c){return c.uid===a.card})||{}).def)+' → L'+(a.line+1)+' '+(a.faceUp?'表':'裏');b.onclick=function(){sendAction(a)};box.appendChild(b)});
@@ -122,7 +127,11 @@ function renderRequest(q){
   if(q.kind==='yesNo'){add('はい',['yes']);add('いいえ',[])}
   else if(q.kind==='pickLine')(q.lines||[]).forEach(function(l){add('ライン '+(l+1),[l])});
   else if(q.kind==='option')(q.options||[]).forEach(function(x,i){add(String(x||('選択肢 '+(i+1))),[i])});
-  else if(q.kind==='pickCard'||q.kind==='pickHand')(q.candidates||[]).forEach(function(uid){add(defLabel((room.game.hand.find(function(c){return c.uid===uid})||{}).def)||uid,[uid])});
+  else if(q.kind==='pickCard'||q.kind==='pickHand')(q.candidates||[]).forEach(function(uid){add(defLabel(visibleCardDef(uid))||uid,[uid])});
+  else if(q.kind==='arrange'){
+    var orders=q.exact==='transposition'?[[1,0,2],[0,2,1],[2,1,0]]:[[1,2,0],[2,0,1],[0,2,1],[1,0,2],[2,1,0]];
+    orders.forEach(function(order){add(order.map(function(i){return(q.current||[])[i]||String(i+1)}).join(' > '),order)});
+  }
   if(q.optional||q.min===0)add('スキップ',[]);
 }
 async function sendAction(action){try{room=await api('action',{code:room.code,version:room.version,action:action});renderRoom()}catch(e){msg('gameStatus',e.message,'err');await sync()}}
