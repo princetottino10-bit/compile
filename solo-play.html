@@ -61,6 +61,7 @@
     .head-actions{display:flex;gap:4px;align-items:center}
     .hbtn{background:var(--pill-bg);border:1px solid var(--bd);color:var(--txd);
           font-size:.7rem;padding:4px 10px;border-radius:6px;cursor:pointer;transition:all .2s}
+    .hbtn{text-decoration:none;display:inline-flex;align-items:center}
     .hbtn:active{transform:scale(.97)}
     .hbtn:hover,.hbtn:active{border-color:var(--pk);color:var(--pk)}
 
@@ -107,6 +108,8 @@
     .mode-b small{display:block;font-family:'Noto Sans JP',sans-serif;font-weight:500;font-size:.58rem;letter-spacing:0;opacity:.78;margin-top:4px}
     .info{font-size:.76rem;color:var(--txd);margin-bottom:10px;line-height:1.7}
     .info b{font-family:Orbitron,monospace;color:var(--pk)}
+    .pick-rand{margin-left:10px;padding:4px 10px;border-radius:6px;border:1px solid var(--bd);background:var(--pill-bg);color:var(--txd);font-family:Orbitron,monospace;font-size:.58rem;font-weight:700;letter-spacing:.8px;cursor:pointer}
+    .pick-rand:hover,.pick-rand:active{border-color:var(--pk);color:var(--pk)}
     .go-btn{width:100%;padding:13px;border:none;border-radius:9px;
             font-family:Orbitron,monospace;font-size:.84rem;font-weight:700;
             letter-spacing:1.2px;cursor:pointer;color:#fff;background:linear-gradient(135deg,var(--pk),var(--pk2));
@@ -263,10 +266,13 @@
     .hand-wrap.p2w{border-top:none;border-bottom:1px solid var(--bd2)}
     .hand-wrap .hand{border-top:none;border-bottom:none}
     .hand-wrap .hand.p2h{border-top:none;border-bottom:none}
-    .hand-count{display:none;align-items:center;justify-content:center;height:28px;
+    .hand-count{display:none;align-items:center;justify-content:center;gap:8px;height:32px;
                 font-family:Orbitron,monospace;font-size:.6rem;font-weight:700;color:var(--txdd);
-                letter-spacing:.5px;background:var(--dk);flex-shrink:0}
+                letter-spacing:.5px;background:var(--dk);flex-shrink:0;cursor:pointer;
+                border-top:1px solid var(--bd2);-webkit-tap-highlight-color:transparent}
     .hand-count.p2hc{background:rgba(200,168,78,.03)}
+    .hand-count:active{color:var(--tx);background:var(--cbg2)}
+    .hand-count .hand-peek-arr{font-size:.9rem;color:var(--pk);line-height:1}
     .hand-edge{position:absolute;top:0;width:28px;height:100%;z-index:10;opacity:0;
                transition:opacity .15s;pointer-events:auto;display:flex;align-items:center;
                justify-content:center;font-size:.8rem;color:var(--txdd)}
@@ -365,7 +371,6 @@
            border:1px solid rgba(233,30,140,.15);border-radius:7px;font-size:.76rem;
            line-height:1.7;color:var(--txd);white-space:pre-line}
     .m-cdx-t{font-size:.6rem;font-weight:700;color:var(--pk);letter-spacing:1px;margin-bottom:3px}
-
     /* overlays */
     .ov{display:none;position:fixed;inset:0;background:var(--overlay);z-index:200;
         align-items:flex-end;justify-content:center}
@@ -430,6 +435,11 @@
     .pc-mode .hcard .fbtn{height:22px;padding:0 7px;font-size:.5rem}
     .pc-mode .hand-nav{display:none}
     .pc-mode .hand-edge{display:none}
+    .pc-mode .hand-wrap.hand-collapsed .hand{display:none!important}
+    .pc-mode .hand-wrap.hand-collapsed:hover .hand,
+    .pc-mode .hand-wrap.hand-collapsed:focus-within .hand{display:flex!important}
+    .pc-mode .hand-wrap.hand-collapsed:hover .hand-count,
+    .pc-mode .hand-wrap.hand-collapsed:focus-within .hand-count{color:var(--tx);background:var(--cbg2)}
 
     /* solo mode: lines fill available height */
     body:not(.both-mode) #p1sec{flex:1;display:flex;flex-direction:column}
@@ -500,6 +510,7 @@
 <div class="hdr">
   <div class="logo">COMPILE <em>&lt;!&gt;</em><small>SOLO</small></div>
   <div class="head-actions">
+    <a class="hbtn" href="room-play.html">ROOM</a>
     <button class="hbtn" id="newBtn" style="display:none" onclick="cfNew()">NEW</button>
     <button class="hbtn" id="shareBtn" style="display:none" onclick="shareURL()">SHARE</button>
     <button class="hbtn" id="histBtn" style="display:none" onclick="openHist()">HIST</button>
@@ -525,7 +536,7 @@
   </div>
   <div id="p2s" style="display:none">
     <div class="sec-t"><b>//</b> <span id="p2sLbl">P2 プロトコル</span></div>
-    <div class="info"><span class="pick-count">P2 <b id="cnt2">0</b> / 3</span></div>
+    <div class="info"><span class="pick-count">P2 <b id="cnt2">0</b> / 3</span><button type="button" class="pick-rand" id="aiRandBtn" style="display:none" onclick="randomP2Protos()">RANDOM</button></div>
     <div class="pills protocol-pills" id="pp2"></div>
   </div>
   <div class="setup-actions">
@@ -640,7 +651,6 @@
 <div id="tooltip"></div>
 <div id="ghost" style="display:none"></div>
 <div id="toast"></div>
-
 <!-- Win overlay -->
 <div class="win-ov" id="winOv">
   <div class="win-box">
@@ -729,13 +739,13 @@ var DATA=[
 {name:"FEAR",tags:"移動、捨て札",color:"#E65100",set:"Main 2",cards:[{v:0,u:"あなたの手番中、相手のカードの中段コマンドはないものとして扱う。",m:"カードを1枚移動させるか反転させる。",l:""},{v:1,u:"",m:"カードを2枚引く。相手は自身の手札をすべて捨て札にして、捨て札にした枚数-1枚のカードを引く。",l:""},{v:2,u:"",m:"相手のカードを1枚戻す。",l:""},{v:3,u:"",m:"このラインにある、相手の覆われているか覆われていないカードを1枚移動させる。",l:""},{v:4,u:"",m:"相手は自身の手札からランダムに1枚捨て札にする。",l:""},{v:5,u:"",m:"あなたは手札を1枚捨て札にする。",l:""}]},
 {name:"ICE",tags:"移動、相手の妨害",color:"#AB47BC",set:"Main 2",cards:[{v:1,u:"",m:"あなたはこのカードを移動させることができる。",l:"相手がこのラインにカードを1枚プレイしたあと：相手は自身の手札を1枚捨て札にする。"},{v:2,u:"",m:"他のカードを1枚移動させる。",l:""},{v:3,u:"終了：このカードが覆われている場合、このカードを移動させることができる。",m:"",l:""},{v:4,u:"",m:"",l:"このカードを反転させることはできない。"},{v:5,u:"",m:"あなたは手札を1枚捨て札にする。",l:""},{v:6,u:"あなたの手札が1枚以上ある場合、あなたはカードを引くことはできない。",m:"",l:""}]},
 {name:"LUCK",tags:"ランダム、削除、プレイ",color:"#FB8C00",set:"Main 2",cards:[{v:0,u:"",m:"値を1つ宣言する。カードを3枚引く。その中から、表面に宣言した値を持つカードを1枚公開する。そのカードをプレイすることができる。",l:""},{v:1,u:"",m:"あなたのデッキの一番上のカードを裏向きでプレイする。そのカードを反転させる（その中段コマンドは無視する）。",l:""},{v:2,u:"",m:"あなたのデッキの一番上のカードを捨て札にする。そのカードの表面の値に等しい枚数のカードを引く。",l:""},{v:3,u:"",m:"プロトコルを1つ宣言する。相手のデッキの一番上のカードを捨て札にする。そのカードが宣言したプロトコルに対応している場合、カードを1枚削除する。",l:""},{v:4,u:"",m:"あなたのデッキの一番上のカードを捨て札にする。そのカードの表面の値と同じ値を持つ、覆われているか覆われていないカードを1枚削除する。",l:""},{v:5,u:"",m:"あなたは手札を1枚捨て札にする。",l:""}]},
-{name:"MIRROR",tags:"移動、繰り返し",color:"#546E7A",set:"Main 2",cards:[{v:0,u:"このラインのあなたの合計値は、このラインにある相手のカード1枚ごとに1増える。",m:"",l:""},{v:1,u:"",m:"",l:"終了：あなたは相手のカードのうち1枚の中段コマンドを、そのコマンドがこのカード上にあるかのうように解決できる"},{v:2,u:"",m:"あなたのスタック1つにあるすべてのカードを、あなたの別のスタック1つにあるすべてのカードと入れ替える。",l:""},{v:3,u:"",m:"あなたのカードを1枚反転させる。そのカードと同じラインにある相手のカードを1枚反転させる。",l:""},{v:4,u:"",m:"",l:"相手がカードを引いたあと：カードを1枚引く。"},{v:5,u:"",m:"あなたは手札を1枚捨て札にする。",l:""}]},
-{name:"PEACE",tags:"相互の捨て札、手札維持",color:"#8D6E63",set:"Main 2",cards:[{v:1,u:"",m:"両プレイヤーはすべての手札を捨て札にする。",l:"終了：あなたの手札が1枚もないい場合、カードを1枚引く。"},{v:2,u:"",m:"カードを1枚引く。カードを1枚裏向きでプレイする。",l:""},{v:3,u:"",m:"あなたは手札を1枚捨て札にすることができる。あなたの手札の枚数より値が大きいカードを1枚反転させる。",l:""},{v:4,u:"",m:"",l:"相手の手番中にあなたが捨て札にしたあと：カードを1枚引く。"},{v:5,u:"",m:"あなたは手札を1枚捨て札にする。",l:""},{v:6,u:"",m:"あなたの手札が2枚以上ある場合、このカードを反転させる。",l:""}]},
-{name:"SMOKE",tags:"裏向き、移動",color:"#757575",set:"Main 2",cards:[{v:0,u:"",m:"裏向きのカードが1枚以上ある各ラインに、あなたのデッキの一番上のカードを裏向きでプレイする。",l:""},{v:1,u:"",m:"あなたのカードを1枚反転させる。あなたはそのカードを移動させることができる。",l:""},{v:2,u:"",m:"このラインのあなたの合計値は、このラインにある裏向きのカードを毎ごとに1増える。",l:""},{v:3,u:"",m:"裏向きのカードが1枚以上あるライン１つに、カードを裏向きで1枚プレイする。",l:""},{v:4,u:"",m:"覆われている裏向きのカードを1枚移動させる。",l:""},{v:5,u:"",m:"あなたは手札を1枚捨て札にする。",l:""}]},
+{name:"MIRROR",tags:"移動、繰り返し",color:"#546E7A",set:"Main 2",cards:[{v:0,u:"このラインのあなたの合計値は、このラインにある相手のカード1枚ごとに1増える。",m:"",l:""},{v:1,u:"",m:"",l:"終了：あなたは相手のカードのうち1枚の中段コマンドを、そのコマンドがこのカード上にあるかのように解決できる"},{v:2,u:"",m:"あなたのスタック1つにあるすべてのカードを、あなたの別のスタック1つにあるすべてのカードと入れ替える。",l:""},{v:3,u:"",m:"あなたのカードを1枚反転させる。そのカードと同じラインにある相手のカードを1枚反転させる。",l:""},{v:4,u:"",m:"",l:"相手がカードを引いたあと：カードを1枚引く。"},{v:5,u:"",m:"あなたは手札を1枚捨て札にする。",l:""}]},
+{name:"PEACE",tags:"相互の捨て札、手札維持",color:"#8D6E63",set:"Main 2",cards:[{v:1,u:"",m:"両プレイヤーはすべての手札を捨て札にする。",l:"終了：あなたの手札が1枚もない場合、カードを1枚引く。"},{v:2,u:"",m:"カードを1枚引く。カードを1枚裏向きでプレイする。",l:""},{v:3,u:"",m:"あなたは手札を1枚捨て札にすることができる。あなたの手札の枚数より値が大きいカードを1枚反転させる。",l:""},{v:4,u:"",m:"",l:"相手の手番中にあなたが捨て札にしたあと：カードを1枚引く。"},{v:5,u:"",m:"あなたは手札を1枚捨て札にする。",l:""},{v:6,u:"",m:"あなたの手札が2枚以上ある場合、このカードを反転させる。",l:""}]},
+{name:"SMOKE",tags:"裏向き、移動",color:"#757575",set:"Main 2",cards:[{v:0,u:"",m:"裏向きのカードが1枚以上ある各ラインに、あなたのデッキの一番上のカードを裏向きでプレイする。",l:""},{v:1,u:"",m:"あなたのカードを1枚反転させる。あなたはそのカードを移動させることができる。",l:""},{v:2,u:"",m:"このラインのあなたの合計値は、このラインにある裏向きのカード1枚ごとに1増える。",l:""},{v:3,u:"",m:"裏向きのカードが1枚以上あるライン１つに、カードを裏向きで1枚プレイする。",l:""},{v:4,u:"",m:"覆われている裏向きのカードを1枚移動させる。",l:""},{v:5,u:"",m:"あなたは手札を1枚捨て札にする。",l:""}]},
 {name:"TIME",tags:"捨て札、捨て札置き場",color:"#FF5722",set:"Main 2",cards:[{v:0,u:"",m:"あなたの捨て札置き場にあるカードを1枚プレイする。あなたの捨て札置き場にあるすべてのカードをデッキに戻してシャッフルする。",l:""},{v:1,u:"",m:"覆われているカードを1枚反転させる。あなたのデッキのカードをすべて捨て札にする。",l:""},{v:2,u:"あなたがデッキをシャッフルしたあと：カードを1枚引き、このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。",m:"あなたの捨て札置き場にカードがある場合、あなたは捨て札置き場にあるすべてのカードをデッキに戻してシャッフルすることができる。",l:""},{v:3,u:"",m:"あなたの捨て札置き場にあるカードを1枚公開する。そのカードをこのカードとは別のラインに裏向きでプレイする。",l:""},{v:4,u:"",m:"カードを2枚引く。あなたは手札を2枚捨て札にする。",l:""},{v:5,u:"",m:"あなたは手札を1枚捨て札にする。",l:""}]},
 {name:"WAR",tags:"対応、捨て札",color:"#D32F2F",set:"Main 2",cards:[{v:0,u:"あなたがリフレッシュしたあと：あなたはこのカードを反転させることができる。",m:"",l:"相手がカードを引いたあと：あなたはカードを1枚削除することができる。"},{v:1,u:"",m:"",l:"相手がリフレッシュしたあと：任意の枚数の手札を捨て札にする。リフレッシュする。"},{v:2,u:"",m:"カードを1枚反転させる。",l:"相手がコンパイルしたあと：相手は手札をすべて捨て札にする。"},{v:3,u:"",m:"カードを1枚引く。",l:"相手が手札を捨て札にしたあと：あなたはカードを裏向きで1枚プレイすることができる。"},{v:4,u:"",m:"相手は手札を1枚捨て札にする。",l:""},{v:5,u:"",m:"あなたは手札を1枚捨て札にする。",l:""}]},
 {name:"ASSIMILATION",tags:"交換、プレイ",color:"#1565C0",set:"Aux 2",cards:[{v:0,u:"",m:"覆われているか覆われていない、相手の裏向きカードのうち1枚をあなたの手札に加える。",l:""},{v:1,u:"",m:"あなたの手札を1枚捨て札にする。リフレッシュする。",l:"誰かがリフレッシュしたあと：相手のデッキの一番上のカードを引く。あなたは手札を1枚捨て札にし、それを相手の捨て札置き場に置く。"},{v:2,u:"",m:"",l:"終了：相手のデッキの一番上のカードを、このスタックに裏向きでプレイする。"},{v:4,u:"",m:"相手のデッキの一番上のカードを引く。相手はあなたのデッキの一番上のカードを引く。",l:""},{v:5,u:"",m:"あなたは手札を1枚捨て札にする。手札を1枚捨て札にする。",l:""},{v:6,u:"",m:"",l:"終了：あなたのデッキの一番上のカードを、相手側の任意のスタックに裏向きでプレイする。"}]},
-{name:"DIVERSITY",tags:"プレイ、比較、コンパイル",color:"#00897B",set:"Aux 2",cards:[{v:0,u:"",m:"フィールドに6種類のプロトコルのコマンドカードがある場合、「DIVERSITY」プロトコルカードをコンパイル完了面にする。",l:"終了：あなたはこのラインに「DIVERSITY」以外のカードをプレイすることができる。"},{v:1,u:"",m:"カードを1枚移動させる。このラインにあるコマンドカードの、プロトコルの種類数に等しい枚数のカードを引く。",l:""},{v:3,u:"このスタックに「DIVERSITY」以外お持て向きのカードがある場合、このラインのあなたの合計値は2増える。",m:"",l:""},{v:4,u:"",m:"フィールドにあるコマンドカードの、プロトコルの種類数未満の値を持つカードを1枚反転させる。",l:""},{v:5,u:"",m:"あなたは手札を1枚捨て札にする。",l:""},{v:6,u:"終了：フィールドにあるコマンドカードの、プロトコルの種類数が3以下の場合、このカードを削除する。",m:"",l:""}]},
+{name:"DIVERSITY",tags:"プレイ、比較、コンパイル",color:"#00897B",set:"Aux 2",cards:[{v:0,u:"",m:"フィールドに6種類のプロトコルのコマンドカードがある場合、「DIVERSITY」プロトコルカードをコンパイル完了面にする。",l:"終了：あなたはこのラインに「DIVERSITY」以外のカードをプレイすることができる。"},{v:1,u:"",m:"カードを1枚移動させる。このラインにあるコマンドカードの、プロトコルの種類数に等しい枚数のカードを引く。",l:""},{v:3,u:"このスタックに「DIVERSITY」以外の表向きのカードがある場合、このラインのあなたの合計値は2増える。",m:"",l:""},{v:4,u:"",m:"フィールドにあるコマンドカードの、プロトコルの種類数未満の値を持つカードを1枚反転させる。",l:""},{v:5,u:"",m:"あなたは手札を1枚捨て札にする。",l:""},{v:6,u:"終了：フィールドにあるコマンドカードの、プロトコルの種類数が3以下の場合、このカードを削除する。",m:"",l:""}]},
 {name:"UNITY",tags:"覆う、反転、コンパイル",color:"#E040FB",set:"Aux 2",cards:[{v:0,u:"",m:"フィールドに他の「UNITY」カードがある場合、カードを1枚反転させるか、カードを1枚引く。",l:"このカードが「UNITY」カードによって覆われることになったとき：先に、カードを1枚反転させるか、カードを1枚引く。"},{v:1,u:"開始：このカードが覆われている場合、あなたはこのカードを移動させることができる。",m:"フィールド「UNITY」カードが5枚以上ある場合、「UNITY」プロトコルカードのコンパイル完了面を表向きにし、そのラインにあるすべてのカードを削除する。",l:"このラインには「UNITY」カードを表向きでプレイすることができる。"},{v:2,u:"",m:"フィールドにある「UNITY」カードの枚数に等しい枚数のカードを引く。",l:""},{v:3,u:"",m:"フィールドに他の「UNITY」カードがある場合、あなたは表向きのカードを1枚反転させることができる。",l:""},{v:4,u:"終了：あなたの手札が1枚もない場合、あなたのデッキのカードをすべて公開し、そこからすべての「UNITY」カードを引いて、あなたのデッキをシャッフルする。",m:"",l:""},{v:5,u:"",m:"あなたの手札を1枚捨て札にする。",l:""}]}
 ];
 
@@ -743,7 +753,7 @@ var DATA=[
 var uid=0, GS=null, hist=[], actionLog=[], gMode='solo', sel1=[], sel2=[];
 var dragRef=null; // {cr, pn, srcEl}
 var lastDrawT=0;
-var handHidden={1:false,2:true};
+var handHidden={1:true,2:true};
 
 /* ============ THEME ============ */
 var th=localStorage.getItem('ct')||(matchMedia('(prefers-color-scheme:light)').matches?'light':'dark');
@@ -751,6 +761,7 @@ function appTh(t){th=t;document.documentElement.className=t;localStorage.setItem
   document.getElementById('thBtn').textContent=t==='dark'?'\u2600':'\u263E'}
 function togTh(){appTh(th==='dark'?'light':'dark')}
 appTh(th);
+// fix: default to mobile unless PC mode was explicitly saved.
 var pcMode=localStorage.getItem('pcMode')==='1';
 function appPC(on){pcMode=on;document.body.classList.toggle('pc-mode',on);localStorage.setItem('pcMode',on?'1':'0');
   document.getElementById('pcBtn').textContent=on?'MOBILE':'PC'}
@@ -782,26 +793,31 @@ function protoPillHtml(p){
 
 /* ============ SETUP ============ */
 function setM(m){gMode=m;
-  document.getElementById('mSolo').classList.toggle('on',m==='solo');
-  document.getElementById('mBoth').classList.toggle('on',m==='both');
-  document.getElementById('mAi').classList.toggle('on',m==='ai');
+  // fix: guard setup mode buttons when setup DOM is unavailable.
+  var mSolo=document.getElementById('mSolo'),mBoth=document.getElementById('mBoth'),mAi=document.getElementById('mAi');if(!mSolo||!mBoth||!mAi)return;
+  mSolo.classList.toggle('on',m==='solo');
+  mBoth.classList.toggle('on',m==='both');
+  mAi.classList.toggle('on',m==='ai');
   var need2=(m==='both'||m==='ai');
-  document.getElementById('p2s').style.display=need2?'':'none';
-  document.getElementById('p2sLbl').textContent=m==='ai'?'AI プロトコル':'P2 プロトコル';
+  var p2s=document.getElementById('p2s');if(p2s)p2s.style.display=need2?'':'none';
+  var p2sLbl=document.getElementById('p2sLbl');if(p2sLbl)p2sLbl.textContent=m==='ai'?'AI プロトコル':'P2 プロトコル';
+  var aiRandBtn=document.getElementById('aiRandBtn');if(aiRandBtn)aiRandBtn.style.display=m==='ai'?'inline-block':'none';
   chkReady();
 }
 
 function mkPills(id,arr,cntId){
-  var el=document.getElementById(id);el.innerHTML='';
+  // fix: guard protocol pills when setup DOM is unavailable.
+  var el=document.getElementById(id);if(!el)return;el.innerHTML='';
   DATA.forEach(function(p){
     var b=document.createElement('button');
     b.className='pill proto-pill'+(p.set!=='Main'?' aux':'');
     b.innerHTML=protoPillHtml(p);
+    if(arr.indexOf(p.name)>=0){b.classList.add('on');b.style.color=p.color;b.style.borderColor=p.color}
     b.onclick=function(){
       var i=arr.indexOf(p.name);
       if(i>=0){arr.splice(i,1);b.classList.remove('on');b.style.color='';b.style.borderColor=''}
       else if(arr.length<3){arr.push(p.name);b.classList.add('on');b.style.color=p.color;b.style.borderColor=p.color}
-      document.getElementById(cntId).textContent=arr.length;
+      var cnt=document.getElementById(cntId);if(cnt)cnt.textContent=arr.length;
       chkReady();
     };
     b.querySelector('.pill-view').onclick=function(e){e.stopPropagation();openProtoPreview(p);};
@@ -809,9 +825,23 @@ function mkPills(id,arr,cntId){
   });
 }
 
+function randomP2Protos(){
+  // fix: let VS AI choose the opponent protocols randomly.
+  if(gMode!=='ai')return;
+  var pool=DATA.map(function(p){return p.name});
+  for(var i=pool.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=pool[i];pool[i]=pool[j];pool[j]=t}
+  sel2.length=0;
+  for(var k=0;k<3&&k<pool.length;k++)sel2.push(pool[k]);
+  mkPills('pp2',sel2,'cnt2');
+  var cnt=document.getElementById('cnt2');if(cnt)cnt.textContent=sel2.length;
+  chkReady();
+}
+
 function chkReady(){
+  // fix: guard start button when setup DOM is unavailable.
+  var goBtn=document.getElementById('goBtn');if(!goBtn)return;
   var ok=sel1.length===3&&(gMode==='solo'||sel2.length===3);
-  document.getElementById('goBtn').classList.toggle('ok',ok);
+  goBtn.classList.toggle('ok',ok);
 }
 
 /* ============ GAME START ============ */
@@ -835,7 +865,8 @@ function go(){
   if(gMode==='both'||gMode==='ai')GS.p[2]=mkPS(sel2,2);
   document.getElementById('setup').style.display='none';
   document.getElementById('game').style.display='flex';
-  document.getElementById('newBtn').style.display='';
+  // fix: guard optional new button.
+  var newBtn=document.getElementById('newBtn');if(newBtn)newBtn.style.display='';
   document.getElementById('shareBtn').style.display='';
   document.getElementById('histBtn').style.display='';
   document.getElementById('pcBtn').style.display='';
@@ -855,8 +886,8 @@ function go(){
   if(b){document.getElementById('h1tog').textContent='HIDE';
     document.getElementById('h2wrap').style.display='none';
     document.getElementById('h2tog').textContent='P2 HAND';
-    handHidden={1:false,2:true};
-  } else {handHidden={1:false,2:true}}
+    handHidden={1:true,2:true};
+  } else {handHidden={1:true,2:true}}
   mkLines(1);if(b)mkLines(2);
   initDeckDrag(1);if(b)initDeckDrag(2);
   if(b)updateTurnBar();
@@ -1058,7 +1089,7 @@ function renderAll(){
   rHand(1);if(GS.mode==='both')rHand(2);
   rDbar(1);if(GS.mode==='both')rDbar(2);
   rTrash();rCtrl();
-  if(GS.mode==='both'){rHandVis(1);rHandVis(2)}
+  rHandVis(1);if(GS.mode==='both')rHandVis(2);
 }
 
 function rField(pn){
@@ -1509,20 +1540,29 @@ function closeMod(){
 }
 document.getElementById('mx').onclick=closeMod;
 document.getElementById('mover').onclick=function(e){if(e.target.id==='mover')closeMod()};
-document.addEventListener('keydown',function(e){if(e.key==='Escape')closeMod()});
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){
+    var ls=document.getElementById('lsOv');if(ls&&ls.classList.contains('on')){lsCancel();return;}
+  }
+  if(e.key==='Escape')closeMod();
+});
 
 /* ============ CONFIRM ============ */
 function cfNew(){
-  document.getElementById('cfOv').classList.add('on');
-  document.getElementById('cfY').onclick=function(){document.getElementById('cfOv').classList.remove('on');reset()};
-  document.getElementById('cfN').onclick=function(){document.getElementById('cfOv').classList.remove('on')};
+  // fix: guard confirm dialog when modal DOM is unavailable.
+  var cfOv=document.getElementById('cfOv');if(!cfOv)return;
+  cfOv.classList.add('on');
+  var cfY=document.getElementById('cfY'),cfN=document.getElementById('cfN');if(!cfY||!cfN)return;
+  cfY.onclick=function(){cfOv.classList.remove('on');reset()};
+  cfN.onclick=function(){cfOv.classList.remove('on')};
 }
 function reset(){
   GS=null;hist=[];actionLog=[];
   document.querySelector('.logo small').textContent='SOLO';
   document.getElementById('game').style.display='none';
   document.getElementById('setup').style.display='';
-  document.getElementById('newBtn').style.display='none';
+  // fix: guard optional new button.
+  var newBtn=document.getElementById('newBtn');if(newBtn)newBtn.style.display='none';
   document.getElementById('shareBtn').style.display='none';
   document.getElementById('histBtn').style.display='none';
   document.getElementById('pcBtn').style.display='none';
@@ -1533,11 +1573,12 @@ function reset(){
   document.getElementById('h1').style.display='';
   document.getElementById('h1count').style.display='none';
   document.getElementById('h1tog').style.display='none';
-  handHidden={1:false,2:true};
+  handHidden={1:true,2:true};
   sel1.length=0;sel2.length=0;
   mkPills('pp1',sel1,'cnt1');
   mkPills('pp2',sel2,'cnt2');
-  document.getElementById('goBtn').classList.remove('ok');
+  // fix: guard start button when setup DOM is unavailable.
+  var goBtn=document.getElementById('goBtn');if(goBtn)goBtn.classList.remove('ok');
 }
 
 /* ============ HAND TOGGLE ============ */
@@ -1552,12 +1593,16 @@ function rHandVis(pn){
   var countEl=document.getElementById(pn===1?'h1count':'h2count');
   var hidden=handHidden[pn];
   wrap.style.display='';
-  hand.style.display=hidden?'none':'';
-  wrap.querySelectorAll('.hand-nav,.hand-edge').forEach(function(e){e.style.display=hidden?'none':''});
+  wrap.classList.toggle('hand-collapsed',hidden);
+  hand.style.display=hidden&&!pcMode?'none':'';
+  wrap.querySelectorAll('.hand-nav,.hand-edge').forEach(function(e){e.style.display=hidden&&!pcMode?'none':''});
   var cnt=GS?GS.p[pn].hand.length:0;
-  countEl.style.display=hidden?'flex':'none';
-  countEl.textContent='HAND: '+cnt+' cards';
-  btn.textContent=hidden?(pn===1?'P1 HAND':'P2 HAND'):'HIDE';
+  countEl.style.display='flex';
+  countEl.innerHTML='<span class="hand-peek-arr">'+(hidden?'↓':'↑')+'</span><span>'+(hidden?'':'HIDE ')+(pn===1?'P1':'P2')+' HAND: '+cnt+' cards</span>';
+  countEl.onclick=function(){togHand(pn)};
+  countEl.setAttribute('role','button');countEl.tabIndex=0;
+  countEl.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();togHand(pn)}};
+  btn.textContent=hidden?'↓ '+(pn===1?'P1 HAND':'P2 HAND'):'↑ HIDE';
 }
 function scrollH(id,dir){
   var el=document.getElementById(id);
@@ -1890,7 +1935,8 @@ mkPills('pp2',sel2,'cnt2');
     if(raw.handHidden)handHidden={1:!!raw.handHidden[1],2:!!raw.handHidden[2]};
     document.getElementById('setup').style.display='none';
     document.getElementById('game').style.display='flex';
-    document.getElementById('newBtn').style.display='';
+    // fix: guard optional new button on URL restore.
+    var newBtn=document.getElementById('newBtn');if(newBtn)newBtn.style.display='';
     document.getElementById('shareBtn').style.display='';
     document.getElementById('histBtn').style.display='';
     document.getElementById('pcBtn').style.display='';
