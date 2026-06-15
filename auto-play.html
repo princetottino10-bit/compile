@@ -268,6 +268,50 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:7px 11px;f
   .ed-actions{bottom:-12px}
 }
 
+/* ---------- 詰めCompile 盤面ビジュアルエディタ ---------- */
+#edOv .ed-screen{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--bg);
+  overflow-y:auto;overflow-x:hidden;padding:8px 10px 16px;gap:7px;touch-action:pan-y}
+#edOv [data-ed-uid]{touch-action:none;cursor:grab}
+#edOv .ed-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;position:sticky;top:-8px;z-index:5;
+  background:var(--bg);padding:4px 0}
+#edOv .ed-title{font-family:var(--fmono);font-weight:900;font-size:.9rem;letter-spacing:.04em;flex:1}
+#edOv .ed-title b{color:var(--pk)}
+#edOv .ed-bar-actions{display:flex;gap:6px;align-items:center}
+#edOv .ed-bar-actions .ed-sel{padding:5px 6px;font-size:.66rem}
+.ed-hint2{font-size:.6rem;color:var(--txd);line-height:1.5}
+#edOv .ed-toolbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+#edOv .ed-toolbar .hbtn.on{border-color:var(--pk);color:#fff;background:linear-gradient(135deg,rgba(233,30,140,.35),rgba(233,30,140,.1))}
+.ed-sel-hint{font-size:.6rem;color:var(--cand);flex:1;min-width:120px}
+.ed-field{display:flex;gap:5px;--cs:.66}
+.ed-field .line{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;background:var(--cbg);
+  border:1px solid var(--bd);border-radius:9px;padding:4px}
+.ed-field .half{min-height:44px;display:flex;flex-direction:column;gap:2px;border-radius:6px;
+  background:rgba(255,255,255,.02);padding:2px;transition:background .12s,box-shadow .12s}
+.ed-field .half.top{justify-content:flex-start}.ed-field .half.bot{justify-content:flex-end}
+.ed-field .stack{display:flex;flex-direction:column;gap:2px}
+.ed-center{display:flex;flex-direction:column;align-items:stretch;gap:3px;padding:2px 0}
+.ed-proto-mini-wrap{display:flex;align-items:center;gap:3px}
+.ed-proto-mini{flex:1;min-width:0;padding:3px 4px;font-size:.56rem}
+.ed-comp-mini{display:flex;align-items:center;gap:2px;font-size:.54rem;color:var(--txd);white-space:nowrap}
+.ed-comp-mini input{accent-color:var(--pk)}
+.ed-line-tag{text-align:center;font-family:var(--fmono);font-size:.52rem;color:var(--txd);letter-spacing:.08em}
+.ed-drop.ed-drop-hot{background:rgba(233,30,140,.18);box-shadow:inset 0 0 0 1.5px var(--pk2)}
+.ed-zones{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.ed-zone-box{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  min-height:42px;border:1px dashed var(--bd2);border-radius:8px;padding:5px 3px;background:var(--cbg)}
+.ed-zone-box .ed-zbl{font-size:.54rem;color:var(--txd);text-align:center;line-height:1.2}
+.ed-zone-box .ed-zct{font-family:var(--fmono);font-weight:900;font-size:.9rem;color:var(--tx)}
+.ed-hands{display:flex;flex-direction:column;gap:6px}
+.ed-hand-lbl{font-family:var(--fmono);font-size:.58rem;color:var(--txd);letter-spacing:.04em;margin-bottom:2px}
+.ed-hand{display:flex;gap:5px;overflow-x:auto;min-height:60px;padding:4px;border:1px solid var(--bd2);
+  border-radius:9px;background:var(--cbg);align-items:stretch}
+.ed-hand .hcard{width:calc(96px*var(--cs,1));--cs:.8;flex-shrink:0}
+#edOv .ed-actions{position:static;display:grid;grid-template-columns:1fr 1fr;gap:7px;background:none;padding:4px 0}
+#edOv .ed-actions .bigbtn,#edOv .ed-actions .optbtn{margin:0;text-align:center}
+.ed-ghost{width:96px}
+.ed-selectable{outline:1.5px dashed var(--gd2);outline-offset:-2px;cursor:pointer}
+body.ed-dragging{cursor:grabbing}
+
 /* ---------- bottom ---------- */
 #bottomBar{flex-shrink:0;border-top:1px solid var(--bd2);
   background:linear-gradient(180deg,rgba(20,20,32,.6),var(--dk));
@@ -361,6 +405,17 @@ html.mobile-ui .chip.cov{padding:2px 5px}
   animation:sheetup .25s cubic-bezier(.16,1,.3,1)}
 @keyframes sheetup{from{transform:translateY(100%)}to{transform:translateY(0)}}
 /* モバイルのカード詳細は、操作対象の自分側を隠さず相手フィールド側へ表示する */
+/* 選択モーダルの最小化(盤面確認用) */
+#modalMin,#modalRestore{position:fixed;z-index:56;display:none;font:700 .66rem var(--fmono);letter-spacing:.03em;
+  border:1px solid var(--bd2);background:rgba(20,20,32,.96);color:var(--tx);border-radius:999px;padding:7px 13px;
+  cursor:pointer;box-shadow:0 6px 20px -6px #000}
+#modalMin{right:12px;top:9px}
+#modalRestore{left:50%;bottom:18px;transform:translateX(-50%);border-color:var(--pk);color:#fff;
+  background:linear-gradient(135deg,var(--pk),#a3136a);box-shadow:0 8px 24px -6px rgba(233,30,140,.7)}
+#modalMin:active,#modalRestore:active{transform:translateY(1px)}
+#modalRestore:active{transform:translateX(-50%) translateY(1px)}
+.ov.minimized{pointer-events:none}
+.ov.minimized .panel{display:none}
 .ov.opponent-visible{background:transparent;padding:0;pointer-events:none}
 .ov.opponent-visible .panel{pointer-events:auto;position:fixed;max-width:none;border-radius:12px;padding:10px 12px;
   box-shadow:0 12px 36px -8px #000,0 0 0 1px rgba(233,30,140,.25);animation:ovin .18s ease}
@@ -542,7 +597,7 @@ html.mobile-ui .chip.cov{padding:2px 5px}
     <button class="hbtn" id="speedBtn" onclick="cycleSpeed()"></button>
     <button class="hbtn" id="undoBtn" onclick="doUndo()">戻す</button>
     <button class="hbtn" onclick="openLog()">ログ</button>
-    <button class="hbtn" onclick="openEditor()">編集</button>
+    <button class="hbtn" onclick="shareCurrentBoard()">SHARE</button>
     <button class="hbtn" onclick="confirmNew()">新規</button>
   </div>
 </header>
@@ -587,8 +642,44 @@ html.mobile-ui .chip.cov{padding:2px 5px}
   <button class="optbtn" id="roomEntryBtn" onclick="openRoomLobby()">🌐 ルーム対戦(オンライン)</button>
 </div></div>
 
+<!-- 詰めCompile: 盤面ビジュアルエディタ -->
+<div class="ov" id="edOv"><div class="ed-screen">
+  <div class="ed-bar">
+    <div class="ed-title">詰め<b>Compile</b> エディタ</div>
+    <div class="ed-bar-actions">
+      <select id="edTurnSel" class="ed-sel" onchange="edState.turn=+this.value">
+        <option value="0">あなたの番</option><option value="1">AIの番</option></select>
+      <select id="edCtrlSel" class="ed-sel" onchange="edState.control=+this.value">
+        <option value="-1">CTRLなし</option><option value="0">CTRLあなた</option><option value="1">CTRL AI</option></select>
+      <button class="hbtn" onclick="edClose()">閉じる</button>
+    </div>
+  </div>
+  <div class="ed-hint2">カードをドラッグでライン/手札/デッキ/トラッシュへ。ラインのカードはタップで表裏反転。トラッシュ/デッキはボタンを押してからカードをタップ。</div>
+  <div class="ed-toolbar">
+    <button id="edFaceToggle" class="hbtn" onclick="edToggleFace()">配置: 表向き</button>
+    <button id="edTrashMode" class="hbtn" onclick="edToggleSelMode('trash')">🗑 トラッシュ</button>
+    <button id="edDeckMode" class="hbtn" onclick="edToggleSelMode('deck')">⤴ デッキに戻す</button>
+    <span id="edSelHint" class="ed-sel-hint"></span>
+  </div>
+  <main id="edField" class="ed-field"></main>
+  <div class="ed-zones" id="edZones"></div>
+  <div class="ed-hands">
+    <div class="ed-hand-block"><div class="ed-hand-lbl">あなたの手札 <span id="edHand0Cnt"></span></div>
+      <div class="ed-hand ed-drop" id="edHand0" data-ed-target="hand:0"></div></div>
+    <div class="ed-hand-block"><div class="ed-hand-lbl">AIの手札 <span id="edHand1Cnt"></span></div>
+      <div class="ed-hand ed-drop" id="edHand1" data-ed-target="hand:1"></div></div>
+  </div>
+  <div class="ed-actions">
+    <button class="bigbtn" onclick="edTest()">この内容でテスト</button>
+    <button class="optbtn" onclick="edShare()">SHAREリンク</button>
+  </div>
+  <div id="edShareBox2"></div>
+</div></div>
+
 <!-- 汎用モーダル (選択肢 / リスト / 詳細 / 並べ替え) -->
 <div class="ov" id="modalOv"><div class="panel" id="modalPanel"></div></div>
+<button id="modalMin" onclick="minimizeModal()">🔽 最小化して盤面を見る</button>
+<button id="modalRestore" onclick="restoreModal()">⤴ 選択に戻る</button>
 
 <!-- ログ -->
 <div class="ov" id="logOv" onclick="this.classList.remove('on')"><div class="panel" onclick="event.stopPropagation()">
@@ -2312,23 +2403,9 @@ function startPuzzleEditor(){
   var ai = aiSetupManual ? selectedSetupNames('#aiProtoGrid') : [];
   if (!aiSetupManual) for (var i=0;i<3;i++) ai.push(rest.splice(Math.floor(Math.random()*rest.length),1)[0]);
   if (ai.length !== 3) { toast('AIのプロトコルを3つ選択してください'); return; }
-  var res = Engine.newGame({ p0:own, p1:ai, seed:Math.floor(Math.random()*1e9), useControl:true, first:0 });
-  var st = res.state;
-  for (var p=0;p<2;p++){
-    st.players[p].deck = [];
-    st.players[p].hand = [];
-    st.players[p].trash = [];
-  }
-  st.lines = [[[],[]],[[],[]],[[],[]]];
-  Object.keys(st.cards).forEach(function(uid){
-    var c = st.cards[uid];
-    c.zone = 'deck' + c.owner; c.faceUp = false;
-    st.players[c.owner].deck.push(uid);
-  });
-  st.turn = 0; st.phase = 'action'; st.control = -1; st.pending = null; st.winner = null;
-  cur = { state:st, requests:[], log:[], trace:[], winner:null, error:null };
   document.getElementById('setupOv').classList.remove('on');
-  openEditor();
+  // 初期は全カードを各プレイヤーの手札に入れた状態で盤面ビジュアルエディタを開く
+  edStartFromProtocols(own, ai);
 }
 
 function startGame(){
@@ -2539,7 +2616,8 @@ function enterReq(req){
   var k = req.kind;
   if (k === 'option'){
     // コントロールや任意効果の選択中は盤面を見ながら判断できるようにする
-    var optMode = (req.prompt === 'control-rearrange' || req.optional) ? 'board' : undefined;
+    // 選択中も盤面を確認できるよう、option系は常にboard表示(SPIRIT1下段の捨て/反転 等)
+    var optMode = 'board';
     modalOptions(reqText(req), req.options.map(optLabel), !!req.optional, function(i){
       answer(req, i === null ? [] : [i]);
     }, undefined, optMode);
@@ -2663,7 +2741,7 @@ function updateMsgBar(){
     mt.textContent = selectedHand ? 'プレイするラインを選択 (もう一度タップで解除)' : 'あなたのターン: 手札をプレイするかリフレッシュ';
   } else {
     mb.classList.add('quiet');
-    mt.textContent = 'AIのターン…';
+    mt.textContent = roomMode ? '相手のターン…' : 'AIのターン…';
   }
 }
 
@@ -2675,7 +2753,11 @@ function tapHand(uid){
     return;
   }
   if (uiMode === 'request' && curReq && curReq.kind === 'pickHand'){
-    if (curReq.candidates.indexOf(uid) >= 0) reqTapCandidate(uid);
+    if (curReq.candidates.indexOf(uid) >= 0){
+      reqTapCandidate(uid);
+      // モバイル: 捨て札選択中も効果を確認できるよう詳細を表示(選択は維持・下部の確定バーで決定)
+      if (MOBILE_UI && uiMode === 'request') openDetail(uid);
+    }
     return;
   }
   if (uiMode === 'request') return;
@@ -3168,7 +3250,12 @@ function openModal(html, mode){
   var ov = document.getElementById('modalOv');
   ov.classList.toggle('board-visible', mode === 'board');
   ov.classList.toggle('opponent-visible', mode === 'opponent');
+  ov.classList.remove('minimized');
   ov.classList.add('on');
+  // 盤面を見ながら選べるモードでは「最小化」ボタンを出す
+  var canMin = (mode === 'board' || mode === 'opponent');
+  document.getElementById('modalMin').style.display = canMin ? 'block' : 'none';
+  document.getElementById('modalRestore').style.display = 'none';
   if (mode === 'opponent') positionOpponentModal();
 }
 function positionOpponentModal(){
@@ -3186,8 +3273,23 @@ function positionOpponentModal(){
 function closeModal(){
   var ov = document.getElementById('modalOv'), panel = document.getElementById('modalPanel');
   ov.classList.remove('on'); ov.classList.remove('board-visible'); ov.classList.remove('opponent-visible');
+  ov.classList.remove('minimized');
+  document.getElementById('modalMin').style.display = 'none';
+  document.getElementById('modalRestore').style.display = 'none';
   panel.classList.remove('editor-panel');
   panel.style.left = panel.style.top = panel.style.width = panel.style.maxHeight = '';
+}
+function minimizeModal(){
+  var ov = document.getElementById('modalOv');
+  if (!ov.classList.contains('on')) return;
+  ov.classList.add('minimized');
+  document.getElementById('modalMin').style.display = 'none';
+  document.getElementById('modalRestore').style.display = 'block';
+}
+function restoreModal(){
+  document.getElementById('modalOv').classList.remove('minimized');
+  document.getElementById('modalRestore').style.display = 'none';
+  document.getElementById('modalMin').style.display = 'block';
 }
 
 function modalOptions(title, labels, optional, cb, noLabel, mode){
@@ -3393,6 +3495,11 @@ function edRefreshOrderButtons(group){
 function openEditor(){
   if (!cur){ toast('先に対戦を開始してください'); return; }
   if (cur.requests.length){ toast('選択を完了してから編集してください'); return; }
+  // 盤面ビジュアルエディタを現在の盤面から開く
+  edStartFromState(cur.state);
+  return;
+  /* ===== 以下は旧フォーム式エディタ(未使用・盤面ビジュアル式へ置換済み) ===== */
+  /* eslint-disable */
   edPlacedOnly = false;
   var st = cur.state;
   var html = '<h2>詰め<b>Compile</b></h2>';
@@ -3525,37 +3632,11 @@ function edUpdateSummary(){
   });
 }
 
+/* 盤面ビジュアルエディタの edState から、そのまま遊べる engine 状態を作る */
 function buildEditedState(){
-  var base = JSON.parse(JSON.stringify(cur.state));
-  base.turn = parseInt(document.getElementById('edTurn').value, 10);
-  base.control = parseInt(document.getElementById('edControl').value, 10);
-  document.querySelectorAll('.ed-proto-name').forEach(function(sel){
-    base.players[+sel.dataset.s].protocols[+sel.dataset.l].name = sel.value;
-  });
-  document.querySelectorAll('.ed-proto-comp').forEach(function(cb){
-    base.players[+cb.dataset.s].protocols[+cb.dataset.l].compiled = cb.checked;
-  });
-  base.cards = {};
-  for (var p=0;p<2;p++){ base.players[p].hand=[]; base.players[p].deck=[]; base.players[p].trash=[]; }
-  base.lines = [[[],[]],[[],[]],[[],[]]];
-  document.querySelectorAll('.ed-card-row').forEach(function(row, idx){
-    var sel = row.querySelector('.ed-zone'), v = sel.value;
-    var uid = 'puzzle:'+idx, owner = +row.querySelector('.ed-owner').value;
-    var c = {uid:uid,def:row.querySelector('.ed-card-def').value,owner:owner,faceUp:false,zone:''};
-    base.cards[uid] = c;
-    var m = v.match(/^line(\d)(\d)([ud])$/);
-    if (m){
-      var l = +m[1], s = +m[2];
-      c.zone = 'field'; c.faceUp = (m[3] === 'u');
-      base.lines[l][s].push(uid);
-    } else {
-      var zm = v.match(/^(hand|deck|trash)(\d)$/);
-      var kind = zm[1], pp = +zm[2];
-      c.zone = kind + pp;
-      c.faceUp = (kind === 'trash');
-      base.players[pp][kind].push(uid);
-    }
-  });
+  if (!edState) throw new Error('編集データがありません');
+  var base = JSON.parse(JSON.stringify(edState));
+  base.useControl = true;
   return base;
 }
 
@@ -3574,6 +3655,21 @@ function shareEditor(){
     box.innerHTML = '<div class="fx-set-lbl">共有リンク</div>'
       + '<textarea class="ed-share-ta" readonly onclick="this.select()">'+esc(url)+'</textarea>'
       + '<button class="optbtn opt-inline" onclick="copyShareUrl()">コピー</button>';
+  } catch(e){ toast('エラー: ' + (e && e.message || e)); }
+}
+
+/* 通常対戦画面のヘッダから、現在の盤面を共有リンク化 */
+function shareCurrentBoard(){
+  if (!cur){ toast('対戦を開始してください'); return; }
+  if (roomMode){ toast('ルーム対戦中は共有できません'); return; }
+  try {
+    var url = stateToUrl(cur.state);
+    var html = '<h2>現在の盤面を<b>SHARE</b></h2>'
+      + '<div class="sub">このリンクを開くと同じ盤面から対戦を始められます。</div>'
+      + '<textarea class="ed-share-ta" readonly onclick="this.select()">' + esc(url) + '</textarea>'
+      + '<button class="optbtn" onclick="copyShareUrl()">リンクをコピー</button>'
+      + '<button class="optbtn ghost" onclick="closeModal()">閉じる</button>';
+    openModal(html);
   } catch(e){ toast('エラー: ' + (e && e.message || e)); }
 }
 
@@ -3687,6 +3783,11 @@ function renderTurnLog(){
     if (fullLog[i].indexOf('---') === 0){ start = i; break; }
   }
   var lines = fullLog.slice(start);
+  // 中断中(選択待ち)は、解決途中のログ(fullLog未記録)も併せて表示し、
+  // そのターン中に何が起きたかを随時確認できるようにする。room は別経路で記録済みのため除外。
+  if (!roomMode && cur && cur.requests && cur.requests.length && cur.log && cur.log.length){
+    lines = lines.concat(cur.log);
+  }
   if (!lines.length){ el.innerHTML = ''; return; }
   el.innerHTML = lines.map(function(l, idx){
     var isHd = l.indexOf('---') === 0;
@@ -3730,7 +3831,11 @@ function maybeReveal(){
     html += '<button class="optbtn ghost" onclick="closeModal()">閉じる</button>';
     openModal(html, 'board');
   } else if (st.revealed.def){
-    toast('公開: ' + cardName(st.revealed.def), 3000);
+    // 単体カードの公開(LIGHT2=LIGHT_3 の「裏向きカードを公開」等)もピーピングとして盤面表示
+    var html2 = '<h2>カードを公開</h2>'
+      + '<div class="reveal-grid">' + revealCardHtml(st.revealed.def) + '</div>'
+      + '<button class="optbtn ghost" onclick="closeModal()">閉じる</button>';
+    openModal(html2, 'board');
   }
 }
 
@@ -4140,6 +4245,248 @@ function roomLeave(){
   if (location.hash === '#room'){ try { history.replaceState(null, '', location.pathname); } catch(e){} }
   buildSetup();
   document.getElementById('setupOv').classList.add('on');
+}
+</script>
+
+<!-- ========================================================================
+     詰めCompile: 盤面ビジュアルエディタ
+       - edState(engine状態)を直接編集。全カードを手札に初期化し、
+         カードをドラッグで各ゾーンへ移動。トラッシュ/デッキは選択ボタン。
+       - 「テスト」「SHARE」は既存の loadCustomState / stateToUrl を利用。
+     ===================================================================== -->
+<script>
+'use strict';
+var edState = null;          // engine 形式の編集中状態
+var edPlaceFaceUp = true;    // ラインへ置くときの向き
+var edSelMode = null;        // null | 'trash' | 'deck'
+var edDrag = null;
+function edClone(o){ return JSON.parse(JSON.stringify(o)); }
+
+/* setup から: 6プロトコル全36枚を各オーナーの手札に入れて開く */
+function edStartFromProtocols(own, ai){
+  var res = Engine.newGame({ p0:own, p1:ai, seed:Math.floor(Math.random()*1e9), useControl:true, first:0 });
+  var st = res.state;
+  for (var p=0;p<2;p++){ st.players[p].deck=[]; st.players[p].hand=[]; st.players[p].trash=[]; }
+  st.lines = [[[],[]],[[],[]],[[],[]]];
+  Object.keys(st.cards).forEach(function(uid){
+    var c = st.cards[uid]; c.zone='hand'+c.owner; c.faceUp=false;
+    st.players[c.owner].hand.push(uid);
+  });
+  st.turn = 0; st.control = -1; st.winner = null;
+  edOpenWith(st);
+}
+/* 既存盤面の編集: 現在状態をそのまま読み込む */
+function edStartFromState(base){ edOpenWith(edClone(base)); }
+function edOpenWith(st){
+  edState = st; edPlaceFaceUp = true; edSelMode = null;
+  var ov = document.getElementById('edOv');
+  ov.classList.add('on');
+  if (!ov._edBound){ ov.addEventListener('pointerdown', edPointerDown); ov._edBound = true; }
+  edRender();
+}
+function edClose(){ document.getElementById('edOv').classList.remove('on'); }
+
+/* ---- カード移動 ---- */
+function edDetach(uid){
+  var st = edState;
+  for (var p=0;p<2;p++) ['hand','deck','trash'].forEach(function(z){
+    var i = st.players[p][z].indexOf(uid); if (i>=0) st.players[p][z].splice(i,1);
+  });
+  for (var l=0;l<3;l++) for (var s=0;s<2;s++){
+    var i = st.lines[l][s].indexOf(uid); if (i>=0) st.lines[l][s].splice(i,1);
+  }
+}
+function edPlace(uid, tgt){
+  var c = edState.cards[uid]; if (!c) return;
+  edDetach(uid);
+  c.owner = tgt.side;
+  if (tgt.zone === 'line'){
+    c.zone = 'field'; c.faceUp = !!tgt.faceUp;
+    edState.lines[tgt.line][tgt.side].push(uid);
+  } else {
+    c.zone = tgt.zone + tgt.side; c.faceUp = (tgt.zone === 'trash');
+    edState.players[tgt.side][tgt.zone].push(uid);
+  }
+  edRender();
+}
+
+/* ---- レンダリング ---- */
+function edChip(uid, side){
+  var c = edState.cards[uid], def = DEFMAP[c.def];
+  var d = document.createElement('div');
+  d.dataset.edUid = uid;
+  if (c.faceUp){
+    d.className = 'chip up art ' + (side===0?'p1c':'p2c');
+    setAccent(d, def.proto.color);
+    d.style.background = artBg(cardArt(c.def), 'linear-gradient(100deg,rgba(7,7,13,.94),rgba(7,7,13,.62))');
+    d.innerHTML = '<span class="top"><span class="badge">'+def.card.value+'</span><span class="nm">'+esc(cardName(c.def))+'</span>'+effIcons(def)+'</span>';
+  } else {
+    d.className = 'chip dn';
+    setAccent(d, def.proto.color);
+    d.innerHTML = '<span class="top"><span class="badge">'+def.card.value+'</span><span class="nm">'+esc(cardName(c.def))+' (裏)</span></span>';
+  }
+  if (edSelMode) d.classList.add('ed-selectable');
+  return d;
+}
+function edHandCard(uid){
+  var c = edState.cards[uid], def = DEFMAP[c.def];
+  var d = document.createElement('div');
+  d.className = 'hcard'; d.dataset.edUid = uid;
+  setAccent(d, def.proto.color);
+  d.style.background = artBg(cardArt(c.def),'linear-gradient(180deg,rgba(7,7,13,.18),rgba(7,7,13,.5) 38%,rgba(7,7,13,.93))');
+  d.innerHTML = '<span class="top"><span class="badge">'+def.card.value+'</span><span class="nm">'+esc(MOBILE_UI?def.proto.name.slice(0,3).toUpperCase():cardName(c.def))+'</span></span>';
+  if (edSelMode) d.classList.add('ed-selectable');
+  return d;
+}
+function edProtoBlock(side, l){
+  var wrap = document.createElement('div'); wrap.className = 'ed-proto-mini-wrap';
+  var sel = document.createElement('select'); sel.className = 'ed-sel ed-proto-mini';
+  COMPILE_CARDS.protocols.forEach(function(p){
+    var o = document.createElement('option'); o.value = p.name; o.textContent = p.name;
+    if (p.name === edState.players[side].protocols[l].name) o.selected = true;
+    sel.appendChild(o);
+  });
+  sel.onchange = function(){ edState.players[side].protocols[l].name = sel.value; };
+  wrap.appendChild(sel);
+  var lab = document.createElement('label'); lab.className = 'ed-comp-mini';
+  var cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !!edState.players[side].protocols[l].compiled;
+  cb.onchange = function(){ edState.players[side].protocols[l].compiled = cb.checked; };
+  lab.appendChild(cb); lab.appendChild(document.createTextNode('済')); wrap.appendChild(lab);
+  return wrap;
+}
+function edRender(){
+  if (!edState) return;
+  document.getElementById('edFaceToggle').textContent = edPlaceFaceUp ? '配置: 表向き' : '配置: 裏向き';
+  document.getElementById('edTrashMode').classList.toggle('on', edSelMode === 'trash');
+  document.getElementById('edDeckMode').classList.toggle('on', edSelMode === 'deck');
+  document.getElementById('edSelHint').textContent = edSelMode
+    ? ('カードをタップで' + (edSelMode==='trash'?'トラッシュ':'デッキ') + 'へ') : '';
+  document.getElementById('edTurnSel').value = String(edState.turn);
+  document.getElementById('edCtrlSel').value = String(edState.control);
+  var f = document.getElementById('edField'); f.innerHTML = '';
+  for (var l=0;l<3;l++){
+    var col = document.createElement('div'); col.className = 'line'; col.dataset.line = l;
+    var topH = document.createElement('div'); topH.className = 'half top ed-drop'; topH.dataset.edTarget = 'line:'+l+':1';
+    var s2 = document.createElement('div'); s2.className = 'stack p2s';
+    edState.lines[l][1].forEach(function(uid){ s2.appendChild(edChip(uid, 1)); });
+    topH.appendChild(s2); col.appendChild(topH);
+    var center = document.createElement('div'); center.className = 'lcenter ed-center';
+    center.appendChild(edProtoBlock(1, l));
+    var tag = document.createElement('div'); tag.className = 'ed-line-tag'; tag.textContent = 'L'+(l+1); center.appendChild(tag);
+    center.appendChild(edProtoBlock(0, l));
+    col.appendChild(center);
+    var botH = document.createElement('div'); botH.className = 'half bot ed-drop'; botH.dataset.edTarget = 'line:'+l+':0';
+    var s1 = document.createElement('div'); s1.className = 'stack p1s';
+    edState.lines[l][0].forEach(function(uid){ s1.appendChild(edChip(uid, 0)); });
+    botH.appendChild(s1); col.appendChild(botH);
+    f.appendChild(col);
+  }
+  [0,1].forEach(function(s){
+    var h = document.getElementById('edHand'+s); h.innerHTML = '';
+    edState.players[s].hand.forEach(function(uid){ h.appendChild(edHandCard(uid)); });
+    document.getElementById('edHand'+s+'Cnt').textContent = '('+edState.players[s].hand.length+')';
+  });
+  var z = document.getElementById('edZones'); z.innerHTML = '';
+  [[0,'deck','あなたのデッキ'],[0,'trash','あなたのトラッシュ'],[1,'deck','AIのデッキ'],[1,'trash','AIのトラッシュ']].forEach(function(q){
+    var el = document.createElement('div'); el.className = 'ed-zone-box ed-drop'; el.dataset.edTarget = q[1]+':'+q[0];
+    el.innerHTML = '<span class="ed-zbl">'+esc(q[2])+'</span><span class="ed-zct">'+edState.players[q[0]][q[1]].length+'</span>';
+    z.appendChild(el);
+  });
+}
+
+/* ---- ツールバー ---- */
+function edToggleFace(){ edPlaceFaceUp = !edPlaceFaceUp; edRender(); }
+function edToggleSelMode(mode){ edSelMode = (edSelMode === mode) ? null : mode; edRender(); }
+
+/* ---- タップ(選択モード / 反転 / 詳細) ---- */
+function edCardActivate(uid){
+  var c = edState.cards[uid]; if (!c) return;
+  if (edSelMode){ edPlace(uid, { zone: edSelMode, side: c.owner }); return; }
+  if (c.zone === 'field'){ c.faceUp = !c.faceUp; edRender(); return; }
+  var def = DEFMAP[c.def];
+  var html = '<h2 style="color:'+def.proto.color+'">'+esc(cardName(c.def))+'</h2>';
+  function cmd(lb,tx){ return tx ? '<div class="detail-cmd"><span class="lbl">'+lb+'</span>'+esc(tx)+'</div>' : ''; }
+  html += cmd('TOP', def.card.upper) + cmd('MID', def.card.middle) + cmd('BOT', def.card.lower);
+  html += '<button class="optbtn ghost" onclick="closeModal()">閉じる</button>';
+  openModal(html);
+}
+
+/* ---- ポインタ式ドラッグ(マウス/タッチ共通) ---- */
+function edPointerDown(e){
+  var card = e.target.closest && e.target.closest('[data-ed-uid]');
+  if (!card) return;
+  edDrag = { uid: card.dataset.edUid, x0: e.clientX, y0: e.clientY, moved: false, ghost: null, src: card };
+  window.addEventListener('pointermove', edPointerMove);
+  window.addEventListener('pointerup', edPointerUp);
+}
+function edPointerMove(e){
+  if (!edDrag) return;
+  var dx = e.clientX - edDrag.x0, dy = e.clientY - edDrag.y0;
+  if (!edDrag.moved){
+    if (Math.sqrt(dx*dx + dy*dy) < 8) return;
+    edDrag.moved = true; edMakeGhost(e); document.body.classList.add('ed-dragging');
+  }
+  if (edDrag.ghost){ edDrag.ghost.style.left = e.clientX+'px'; edDrag.ghost.style.top = e.clientY+'px'; }
+  edHighlight(e);
+}
+function edPointerUp(e){
+  window.removeEventListener('pointermove', edPointerMove);
+  window.removeEventListener('pointerup', edPointerUp);
+  var d = edDrag; edDrag = null;
+  document.body.classList.remove('ed-dragging');
+  edClearHighlight();
+  if (!d) return;
+  if (d.ghost && d.ghost.parentNode) d.ghost.parentNode.removeChild(d.ghost);
+  if (!d.moved){ edCardActivate(d.uid); return; }
+  var tgt = edTargetAt(e.clientX, e.clientY);
+  if (tgt) edPlace(d.uid, tgt);
+}
+function edMakeGhost(e){
+  var g = edDrag.src.cloneNode(true);
+  g.classList.add('ed-ghost');
+  g.style.position = 'fixed'; g.style.left = e.clientX+'px'; g.style.top = e.clientY+'px';
+  g.style.margin = '0'; g.style.pointerEvents = 'none'; g.style.zIndex = '120'; g.style.opacity = '.92';
+  g.style.transform = 'translate(-50%,-50%) scale(.92)';
+  document.body.appendChild(g); edDrag.ghost = g;
+}
+function edTargetAt(x, y){
+  var els = document.elementsFromPoint(x, y);
+  for (var i=0;i<els.length;i++){
+    var t = els[i].closest && els[i].closest('[data-ed-target]');
+    if (t) return edParseTarget(t.dataset.edTarget);
+  }
+  return null;
+}
+function edParseTarget(s){
+  var p = s.split(':');
+  if (p[0] === 'line') return { zone:'line', line:+p[1], side:+p[2], faceUp: edPlaceFaceUp };
+  return { zone:p[0], side:+p[1] };
+}
+function edHighlight(e){
+  edClearHighlight();
+  var els = document.elementsFromPoint(e.clientX, e.clientY);
+  for (var i=0;i<els.length;i++){
+    var t = els[i].closest && els[i].closest('[data-ed-target]');
+    if (t){ t.classList.add('ed-drop-hot'); break; }
+  }
+}
+function edClearHighlight(){
+  var hot = document.querySelectorAll('.ed-drop-hot');
+  for (var i=0;i<hot.length;i++) hot[i].classList.remove('ed-drop-hot');
+}
+
+/* ---- テスト / SHARE ---- */
+function edTest(){
+  try { var st = buildEditedState(); edClose(); loadCustomState(st); }
+  catch(e){ toast('エラー: ' + (e && e.message || e)); }
+}
+function edShare(){
+  try {
+    var url = stateToUrl(buildEditedState());
+    document.getElementById('edShareBox2').innerHTML = '<div class="fx-set-lbl">共有リンク</div>'
+      + '<textarea class="ed-share-ta" readonly onclick="this.select()">'+esc(url)+'</textarea>'
+      + '<button class="optbtn opt-inline" onclick="copyShareUrl()">コピー</button>';
+  } catch(e){ toast('エラー: ' + (e && e.message || e)); }
 }
 </script>
 </body>
