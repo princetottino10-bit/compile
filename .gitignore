@@ -8,6 +8,7 @@ nul
 Compile 1/
 Compile 2/
 .claude/
+supabase/.temp/
 
 # Other HTML (not part of cardlist app)
 index-ja.html
