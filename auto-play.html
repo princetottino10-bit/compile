@@ -159,6 +159,11 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:7px 11px;f
   background:linear-gradient(160deg,var(--act),rgba(0,0,0,.28));border:1px solid var(--acg);text-shadow:0 0 9px var(--acg)}
 .chip .nm{flex:1;min-width:0;text-align:left;font-weight:700;letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 1px 4px #000,0 0 2px #000}
 .chip .tx{color:#d6d6e4;text-align:left;font-size:calc(.58rem*var(--cs));line-height:1.25;max-height:2.5em;overflow:hidden;text-shadow:0 1px 3px #000}
+/* 上段/下段効果の有無を示す最小アイコン (詳細はホバー/タップで表示) */
+.eff{display:flex;align-items:center;gap:5px;flex-shrink:0;font-size:calc(.62rem*var(--cs));line-height:1;font-family:var(--fmono);font-weight:900}
+.eff .e-up{color:#f87171;text-shadow:0 0 6px rgba(248,113,113,.6)}
+.eff .e-low{color:#4ade80;text-shadow:0 0 6px rgba(74,222,128,.6)}
+.chip .eff{margin-left:auto;padding-left:4px}
 .chip.dn{border-style:dashed;color:var(--txdd);
   background:repeating-linear-gradient(45deg,var(--dn-bg) 0 5px,transparent 5px 11px),var(--cbg)}
 .chip.dn .badge{color:var(--txd);background:rgba(255,255,255,.05);border-color:var(--dn-bd);text-shadow:none}
@@ -258,7 +263,7 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:7px 11px;f
 #sideInfo .zone:hover{color:var(--tx)}
 #sideInfo .ai-tag{color:var(--gd2)}
 #sideInfo .ai-tag b{color:var(--gd2)}
-#hand{display:flex;gap:7px;overflow-x:auto;padding:10px 9px;min-height:148px;align-items:stretch}
+#hand{display:flex;gap:7px;overflow-x:auto;padding:7px 9px;min-height:76px;align-items:stretch}
 #hand::-webkit-scrollbar{height:5px}
 #hand::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:3px}
 .hcard{width:calc(138px*var(--cs));flex-shrink:0;position:relative;cursor:pointer;display:flex;flex-direction:column;
@@ -278,15 +283,15 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:7px 11px;f
 .hcard .info:active{background:rgba(255,255,255,.2);color:var(--tx)}
 .hcard .tx{color:#e2e2ee;font-size:calc(.66rem*var(--cs));line-height:1.42;flex:1;overflow:hidden;text-shadow:0 1px 4px #000;
   display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical}
+.hcard .eff{min-height:calc(.95em*var(--cs))}
 .hcard:hover{transform:translateY(-4px);border-color:var(--pk);box-shadow:var(--sh),0 0 20px -6px rgba(233,30,140,.65)}
 .hcard.sel{border-color:var(--pk2);transform:translateY(-7px);box-shadow:0 0 0 1.5px var(--pk2),0 0 26px -4px rgba(233,30,140,.85)}
 .hcard.cand{border-color:var(--cand);box-shadow:0 0 0 1.5px var(--cand),0 0 20px -5px var(--cand)}
 .hcard.selbuf{border-color:#ffd24a;box-shadow:0 0 0 1.5px #ffd24a,0 0 20px -5px #ffd24a}
 /* モバイル縦持ち: 手札カードを大きくしてカード文章を読みやすくする */
 @media (max-width:520px){
-  #hand{min-height:172px}
+  #hand{min-height:86px}
   .hcard{width:calc(158px*var(--cs))}
-  .hcard .tx{font-size:calc(.7rem*var(--cs));-webkit-line-clamp:6}
   /* 縦持ちでは操作ボタン群を2段目に折り返し、上部メニューを欠けさせない */
   header{padding:6px 9px}
   .hdr-actions{flex-basis:100%;justify-content:flex-end}
@@ -294,6 +299,13 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:7px 11px;f
   #turnLog{max-height:26px}
   #sideInfo{padding:3px 11px}
   #msgBar{min-height:32px;padding:6px 13px}
+  /* 盤面全体を縮小して、枚数が増えても画面に収まりやすくする */
+  #field{--cs:.82;gap:4px;padding:4px 5px}
+  .line{padding:4px}
+  .proto{padding:6px 4px}
+  .totals{padding:3px 2px;margin:1px 0}
+  .chip{padding:4px 6px}
+  .chip.cov{padding:2px 6px}
 }
 
 /* ---------- overlays ---------- */
@@ -358,20 +370,32 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:7px 11px;f
 .fx-set-lbl{font-family:var(--fmono);font-size:.58rem;letter-spacing:.1em;color:var(--txdd);margin:10px 0 6px}
 .fx-row-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
 .optbtn.opt-inline{width:auto;flex:1 1 auto;margin-bottom:0;padding:9px 10px;text-align:center;font-size:.74rem}
+/* カード詳細モーダル: カード画像 */
+.dt-art{width:100%;height:160px;border-radius:11px;background-size:cover;background-position:center;
+  margin-bottom:12px;position:relative;box-shadow:var(--sh)}
+.dt-art .badge{position:absolute;top:8px;left:8px;width:32px;height:32px;border-radius:7px;display:flex;
+  align-items:center;justify-content:center;font-family:var(--fmono);font-weight:900;font-size:1.05rem;color:#fff;
+  text-shadow:0 1px 4px #000}
 .detail-cmd{border:1px solid var(--bd);border-radius:9px;padding:8px 11px;margin-bottom:8px;font-size:.74rem;
   background:rgba(255,255,255,.02)}
 .detail-cmd .lbl{font-size:.56rem;color:var(--txdd);display:inline-block;min-width:30px;letter-spacing:.1em;font-family:var(--fmono);margin-right:4px}
 .detail-cmd b{display:block;margin-bottom:3px}
 .detail-cmd>div{margin-top:2px}
 .m-proto{font-size:.66rem;font-weight:500;padding:3px 9px;border-radius:6px;display:inline-block;margin:6px 0 4px}
-/* 手札公開モーダル: ピーピング時にしっかり読めるカードグリッド表示 */
-.reveal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:9px;margin-bottom:14px}
-.reveal-card{position:relative;border-radius:10px;overflow:hidden;aspect-ratio:3/4;border:1px solid var(--bd2);
-  display:flex;flex-direction:column;justify-content:flex-end;padding:7px;box-shadow:var(--sh)}
-.reveal-card .badge{position:absolute;top:7px;left:7px;width:24px;height:24px;border-radius:6px;display:flex;
-  align-items:center;justify-content:center;font-family:var(--fmono);font-weight:900;font-size:.84rem;color:#fff}
-.reveal-card .nm{font-family:var(--fmono);font-size:.64rem;font-weight:700;color:#fff;line-height:1.3;
-  text-shadow:0 1px 5px #000,0 0 10px rgba(0,0,0,.8)}
+/* 手札公開モーダル: ピーピング時にしっかり読めるカードグリッド表示 (アート+全文) */
+.reveal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:9px;margin-bottom:14px}
+.reveal-card{position:relative;border-radius:10px;overflow:hidden;border:1px solid var(--bd2);
+  display:flex;gap:8px;padding:8px;box-shadow:var(--sh);background:var(--cbg2)}
+.reveal-card .art{flex-shrink:0;width:58px;height:78px;border-radius:7px;position:relative;background-size:cover;background-position:center}
+.reveal-card .badge{position:absolute;top:4px;left:4px;width:22px;height:22px;border-radius:5px;display:flex;
+  align-items:center;justify-content:center;font-family:var(--fmono);font-weight:900;font-size:.78rem;color:#fff;
+  text-shadow:0 1px 4px #000}
+.reveal-card .body{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;min-height:0}
+.reveal-card .nm{font-family:var(--fmono);font-size:.7rem;font-weight:700;color:#fff;line-height:1.3}
+.reveal-card .tx{font-size:.62rem;line-height:1.35;color:#d6d6e4}
+.reveal-card .tx .lbl{font-size:.5rem;color:var(--txdd);letter-spacing:.08em;font-family:var(--fmono);
+  margin-right:4px;display:inline-block;min-width:26px}
+.reveal-card .tx>div{margin-top:2px}
 #logList{font-size:.7rem;color:var(--txd);line-height:1.7;max-height:60vh;overflow-y:auto;font-family:'Noto Sans JP',monospace}
 #logList .turn-mark{color:var(--pk2);font-weight:600;margin-top:6px;font-family:var(--fmono);letter-spacing:.04em}
 /* 効果フロートウインドウ */
@@ -414,6 +438,20 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:7px 11px;f
 #toast{position:fixed;bottom:92px;left:50%;transform:translateX(-50%);background:rgba(18,18,30,.97);
   border:1px solid var(--bd2);border-radius:10px;padding:9px 20px;font-size:.76rem;z-index:99;display:none;max-width:90vw;
   box-shadow:0 10px 30px -8px #000,0 0 0 1px rgba(233,30,140,.2)}
+/* カード詳細ツールチップ (PC: マウスオーバーでカード画像+全文を表示) */
+#cardTip{position:fixed;z-index:60;display:none;pointer-events:none;width:240px;
+  background:linear-gradient(180deg,rgba(22,22,34,.98),rgba(12,12,20,.98));
+  border:1px solid var(--bd2);border-radius:11px;padding:10px;
+  box-shadow:0 16px 44px -12px #000,0 0 0 1px rgba(255,255,255,.04)}
+#cardTip.on{display:block}
+#cardTip .ct-art{width:100%;height:120px;border-radius:8px;background-size:cover;background-position:center;
+  margin-bottom:8px;position:relative}
+#cardTip .ct-badge{position:absolute;top:6px;left:6px;width:26px;height:26px;border-radius:6px;display:flex;
+  align-items:center;justify-content:center;font-family:var(--fmono);font-weight:900;font-size:.9rem;color:#fff;
+  text-shadow:0 1px 4px #000}
+#cardTip .ct-nm{font-family:var(--fmono);font-weight:700;font-size:.78rem;margin-bottom:6px;color:#fff}
+#cardTip .detail-cmd{margin-bottom:6px;font-size:.68rem}
+#cardTip .detail-cmd:last-child{margin-bottom:0}
 /* プロトコル並び替え (横並びスワップ) */
 .arr-hint{font-size:.72rem;color:var(--txd);text-align:center;margin-bottom:8px;line-height:1.5}
 .arr-row{display:flex;gap:8px;margin:4px 0 12px;justify-content:center}
@@ -510,6 +548,9 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:7px 11px;f
 <div id="transitBar"></div>
 
 <div id="toast"></div>
+
+<!-- カード詳細ツールチップ (PC: マウスオーバーで全文表示) -->
+<div id="cardTip"></div>
 
 <!-- INLINE:ASSETS:BEGIN — scripts/inline_assets.py が data/*.json と engine.js をここに埋め込む。手動編集禁止 -->
 <script>window.COMPILE_CARDS={"protocols":[{"name":"DARKNESS","displayName":"DARKNESS","tags":"手札維持／移動／操作","color":"#6A1B9A","set":"Main 1","cards":[{"id":"DARKNESS_1","number":1,"value":0,"upper":"","middle":"カードを3枚引く。相手の覆われているカードを1枚移動させる。","lower":"","effectTypes":["draw","shift"]},{"id":"DARKNESS_2","number":2,"value":1,"upper":"","middle":"相手のカードを1枚反転させる。あなたはそのカードを移動させることができる。","lower":"","effectTypes":["flip","shift"]},{"id":"DARKNESS_3","number":3,"value":2,"upper":"このスタックにあるすべての裏向きのカードの値はそれぞれ4になる。","middle":"このラインにある、覆われているカードを1枚反転させることができる。","lower":"","effectTypes":["flip"]},{"id":"DARKNESS_4","number":4,"value":3,"upper":"","middle":"他の1ラインにカードを裏向きで1枚プレイする。","lower":"","effectTypes":["play"]},{"id":"DARKNESS_5","number":5,"value":4,"upper":"","middle":"裏向きのカードを1枚移動させる。","lower":"","effectTypes":["shift"]},{"id":"DARKNESS_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"DEATH","displayName":"DEATH","tags":"削除／手札維持","color":"#37474F","set":"Main 1","cards":[{"id":"DEATH_1","number":1,"value":0,"upper":"","middle":"他の各ラインにあるカードを1枚ずつ削除する。","lower":"","effectTypes":["delete"],"codex":"【明確化】DEATH 0の中段コマンドが発動したとき、オーナーは処理が必要なラインを確認する。次に処理するラインを1つずつ選び、各ラインで覆われていないカードを1枚選んで削除し、その削除の結果を処理してから次のラインに移る。"},{"id":"DEATH_2","number":2,"value":1,"upper":"開始：カードを1枚引くことができる。そうした場合、他のカードを1枚削除し、そのあとこのカードを削除する。","middle":"","lower":"","effectTypes":["draw","delete"],"codex":"【エラッタ(2024/10)】上段コマンドは「開始：カードを1枚引くことができる。そうした場合、他のカードを1枚削除し、そのあとこのカードを削除する。」に修正。"},{"id":"DEATH_3","number":3,"value":2,"upper":"","middle":"1ラインを選び、そのラインの値が1か2どちらかのすべてのカードを削除する。","lower":"","effectTypes":["delete"]},{"id":"DEATH_4","number":4,"value":3,"upper":"","middle":"裏向きのカードを1枚削除する。","lower":"","effectTypes":["delete"]},{"id":"DEATH_5","number":5,"value":4,"upper":"","middle":"値が0か1のカードを1枚削除する。","lower":"","effectTypes":["delete"]},{"id":"DEATH_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"FIRE","displayName":"FIRE","tags":"捨て札にして効果を得る","color":"#E53935","set":"Main 1","cards":[{"id":"FIRE_1","number":1,"value":0,"upper":"","middle":"他のカードを1枚反転させる。カードを2枚引く。","lower":"このカードが覆われることになったとき：先にカードを1枚引き、他のカードを1枚反転させる。","effectTypes":["draw","flip"],"codex":"【エラッタ(2024/12)】下段コマンドは「このカードが覆われることになったとき：先に、カードを1枚引く。そのあと、他のカードを1枚反転させる。」に修正。"},{"id":"FIRE_2","number":2,"value":1,"upper":"","middle":"あなたは手札を1枚捨て札にする。そうした場合、カードを1枚削除する。","lower":"","effectTypes":["delete"]},{"id":"FIRE_3","number":3,"value":2,"upper":"","middle":"あなたは手札を1枚捨て札にする。そうした場合、カードを1枚戻す。","lower":"","effectTypes":["return"]},{"id":"FIRE_4","number":4,"value":3,"upper":"","middle":"","lower":"終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。","effectTypes":["flip"]},{"id":"FIRE_5","number":5,"value":4,"upper":"","middle":"あなたは手札があれば1枚以上捨て札にする。捨て札にした枚数＋1枚のカードを引く。","lower":"","effectTypes":["draw"]},{"id":"FIRE_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"GRAVITY","displayName":"GRAVITY","tags":"移動／反転／手札維持","color":"#5D4037","set":"Main 1","cards":[{"id":"GRAVITY_1","number":1,"value":0,"upper":"","middle":"このライン内にあるカード2枚ごとに、あなたのデッキの一番上のカード1枚をこのカードの下に裏向きでプレイする。","lower":"","effectTypes":["play"]},{"id":"GRAVITY_2","number":2,"value":1,"upper":"","middle":"カードを2枚引く。このラインから、またはこのラインへとカードを1枚移動させる。","lower":"","effectTypes":["draw","shift"]},{"id":"GRAVITY_3","number":3,"value":2,"upper":"","middle":"カードを1枚反転させる。そのカードをこのラインへと移動させる。","lower":"","effectTypes":["flip","shift"],"codex":"【明確化】GRAVITY 2は反転したカードが覆われていても移動させる。「そのカード」は特定のカードを指し、覆われたカードの操作制限より優先される。"},{"id":"GRAVITY_4","number":4,"value":4,"upper":"","middle":"裏向きのカードを1枚、このラインへと移動させる。","lower":"","effectTypes":["shift"]},{"id":"GRAVITY_5","number":5,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]},{"id":"GRAVITY_6","number":6,"value":6,"upper":"","middle":"相手は自分のデッキの一番上のカードをこのラインに裏向きで1枚プレイする。","lower":"","effectTypes":["play"]}]},{"name":"LIFE","displayName":"LIFE","tags":"反転／デッキの上からのプレイ／手札維持","color":"#43A047","set":"Main 1","cards":[{"id":"LIFE_1","number":1,"value":0,"upper":"終了：このカードが覆われている場合、このカードを削除する。","middle":"あなたのデッキの一番上のカードを、あなたのカードがある各ラインに裏向きで1枚ずつプレイする。","lower":"","effectTypes":["play"],"codex":"【エラッタ(2024/10)】上段コマンドは「終了：このカードが覆われている場合、このカードを削除する。」に修正。このカードは下段コマンドを持たない。\n【明確化】LIFE 0の中段コマンドが発動したとき、オーナーは処理が必要なラインを確認し、1つずつ処理する。LIFE 0がこの処理中に覆われた場合、中段コマンドは停止する。\n【明確化】デッキからカードをプレイする場合、デッキが空でもシャッフルは強制されない。"},{"id":"LIFE_2","number":2,"value":1,"upper":"","middle":"カード1枚を反転させる。カード1枚を反転させる。","lower":"","effectTypes":["flip"]},{"id":"LIFE_3","number":3,"value":2,"upper":"","middle":"カードを1枚引く。あなたは裏向きのカードを1枚反転させることができる。","lower":"","effectTypes":["draw","flip"]},{"id":"LIFE_4","number":4,"value":3,"upper":"","middle":"","lower":"このカードが覆われることになったとき：先にあなたのデッキの一番上のカードを他の1ラインに裏向きで1枚プレイする。","effectTypes":["play"]},{"id":"LIFE_5","number":5,"value":4,"upper":"","middle":"このカードが他のカードを覆っている場合、カードを1枚引く。","lower":"","effectTypes":["draw"]},{"id":"LIFE_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"LIGHT","displayName":"LIGHT","tags":"手札維持／反転／移動","color":"#FDD835","set":"Main 1","cards":[{"id":"LIGHT_1","number":1,"value":0,"upper":"","middle":"カードを1枚反転させる。そのカードの値に等しい枚数のカードを引く。","lower":"","effectTypes":["draw","flip"],"codex":"【明確化】中段コマンド「カードを1枚反転させる。そのカードの値に等しい枚数のカードを引く。」の処理：覆われていないカード1枚を選び反転させ、発動したテキストを処理する。その後、そのカードの現在の値に等しい枚数を引く。\n【裁定】選んだカードがプレイから除去された場合でも、「そのカード」で直接参照されるため、現在の値をチェックする。"},{"id":"LIGHT_2","number":2,"value":1,"upper":"","middle":"","lower":"終了：カードを1枚引く。","effectTypes":["draw"]},{"id":"LIGHT_3","number":3,"value":2,"upper":"","middle":"カードを2枚引く。裏向きのカードを1枚公開する。あなたは公開したカードを移動させるか反転させることができる。","lower":"","effectTypes":["draw","flip","shift"]},{"id":"LIGHT_4","number":4,"value":3,"upper":"","middle":"このラインにある裏向きのすべてのカードを、他の1ラインへと移動させる。","lower":"","effectTypes":["shift"],"codex":"【明確化】LIGHT 3で移動する裏向きのカードは、スタック内の相対的な位置を維持し、すべて同じラインに移動する。"},{"id":"LIGHT_5","number":5,"value":4,"upper":"","middle":"相手は自分の手札を公開する。","lower":"","effectTypes":["other"]},{"id":"LIGHT_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"METAL","displayName":"METAL","tags":"相手の妨害／手札維持／反転","color":"#78909C","set":"Main 1","cards":[{"id":"METAL_1","number":1,"value":0,"upper":"このラインでの相手の合計値は2減る。","middle":"カードを1枚反転させる。","lower":"","effectTypes":["flip"]},{"id":"METAL_2","number":2,"value":1,"upper":"","middle":"カードを2枚引く。相手は次の手番でコンパイルすることはできない。","lower":"","effectTypes":["draw"],"codex":"【エラッタ(2024/12)】中段コマンドは「カードを2枚引く。相手は次の手番でコンパイルすることはできない。」に修正。\n【明確化】METAL 1はテキストが見えている限り、相手の次の手番でコンパイルを防ぐ。プレイかリフレッシュを選ぶ必要がある。"},{"id":"METAL_3","number":3,"value":2,"upper":"相手はこのラインにカードを裏向きでプレイすることはできない。","middle":"","lower":"","effectTypes":["play"]},{"id":"METAL_4","number":4,"value":3,"upper":"","middle":"カードを1枚引く。カードが8枚以上ある、ほかの1ライン内のすべてのカードを削除する。","lower":"","effectTypes":["draw","delete"]},{"id":"METAL_5","number":5,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]},{"id":"METAL_6","number":6,"value":6,"upper":"このカードが覆われるか反転することになったとき：先にこのカードを削除する。","middle":"","lower":"","effectTypes":["flip"],"codex":"【明確化】METAL 6が上段コマンドで自身を削除した場合、覆っていたカードのテキストが発動するなら、コミットされたカードがフィールドに入る前に発動する。\n【明確化】METAL 6が反転の結果として自身を削除した場合、「反転」コマンドは消費され、他のカードや捨て札のMETAL 6には使えない。"}]},{"name":"PLAGUE","displayName":"PLAGUE","tags":"捨て札の強制／反転","color":"#827717","set":"Main 1","cards":[{"id":"PLAGUE_1","number":1,"value":0,"upper":"","middle":"相手は手札を1枚捨て札にする。","lower":"相手はこのラインにカードをプレイすることはできない。","effectTypes":["discard","play"]},{"id":"PLAGUE_2","number":2,"value":1,"upper":"相手が手札を捨て札にしたあと：カードを1枚引く。","middle":"相手は手札を1枚捨て札にする。","lower":"","effectTypes":["draw","discard"]},{"id":"PLAGUE_3","number":3,"value":2,"upper":"","middle":"あなたは手札があれば1枚以上捨て札にする。相手はあなたが捨て札にした枚数＋1枚の手札を捨て札にする。","lower":"","effectTypes":["discard"]},{"id":"PLAGUE_4","number":4,"value":3,"upper":"","middle":"覆われていない、表向きの他のカードを反転させる。","lower":"","effectTypes":["flip"],"codex":"【エラッタ(2025/9)】中段コマンドは「覆われていない、表向きの他のカードをそれぞれ反転させる。」に修正。機能に変更はないが、意図をより明確にした。\n【明確化】「all」ではなく「each」なので、覆われていないカードのみが対象。発動時、覆われていない表向きのカードをそれぞれ確認し、1枚ずつ処理する。"},{"id":"PLAGUE_5","number":5,"value":4,"upper":"","middle":"","lower":"終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。","effectTypes":["delete","flip"]},{"id":"PLAGUE_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"PSYCHIC","displayName":"PSYCHIC","tags":"手札維持／操作／移動","color":"#7E57C2","set":"Main 1","cards":[{"id":"PSYCHIC_1","number":1,"value":0,"upper":"","middle":"カードを2枚引く。相手は自分の手札を2枚捨て札にして、そのあと相手は手札を公開する。","lower":"","effectTypes":["draw","discard"]},{"id":"PSYCHIC_2","number":2,"value":1,"upper":"相手はカードを裏向きでのみプレイすることができる。","middle":"","lower":"開始：このカードを反転させる。","effectTypes":["other"]},{"id":"PSYCHIC_3","number":3,"value":2,"upper":"","middle":"相手は自分の手札を2枚捨て札にする。あなたは相手のプロトコルを並べ替える。","lower":"","effectTypes":["rearrange","discard"]},{"id":"PSYCHIC_4","number":4,"value":3,"upper":"","middle":"相手は手札を1枚捨て札にする。あなたは相手のカードを1枚移動させる。","lower":"","effectTypes":["shift","discard"]},{"id":"PSYCHIC_5","number":5,"value":4,"upper":"","middle":"","lower":"終了：あなたは相手のカードを1枚戻すことができる。そうした場合、このカードを反転させる。","effectTypes":["flip","return"]},{"id":"PSYCHIC_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"SPEED","displayName":"SPEED","tags":"手札維持／プレイ／移動","color":"#FF8F00","set":"Main 1","cards":[{"id":"SPEED_1","number":1,"value":0,"upper":"","middle":"カードを1枚プレイする。","lower":"","effectTypes":["play"]},{"id":"SPEED_2","number":2,"value":1,"upper":"あなたがキャッシュをクリアしたあと：カードを1枚引く。","middle":"カードを2枚引く。","lower":"","effectTypes":["draw"]},{"id":"SPEED_3","number":3,"value":2,"upper":"このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。","middle":"","lower":"","effectTypes":["shift"],"codex":"【明確化】コンパイル時、ライン内のすべてのカードが同時に削除される。SPEED 2がこの方法で削除される場合、代わりに他のラインに移動させる。SPEED 2の削除のみが防がれ、コンパイル自体は変更されない。"},{"id":"SPEED_4","number":4,"value":3,"upper":"","middle":"あなたの他のカードを1枚移動させる。","lower":"終了：あなたは自分のカードを1枚移動させることができる。そうした場合、このカードを反転させる。","effectTypes":["flip","shift"]},{"id":"SPEED_5","number":5,"value":4,"upper":"","middle":"相手の裏向きのカードを1枚移動させる。","lower":"","effectTypes":["shift"]},{"id":"SPEED_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"SPIRIT","displayName":"SPIRIT","tags":"反転／移動／手札維持","color":"#26C6DA","set":"Main 1","cards":[{"id":"SPIRIT_1","number":1,"value":0,"upper":"","middle":"リフレッシュする。カードを1枚引く。","lower":"あなたのキャッシュの確認フェイズを省略する。","effectTypes":["draw"],"codex":"【明確化】リフレッシュの指示に従う場合、コントロールコンポーネントの使用を含む通常のリフレッシュアクションとなる。"},{"id":"SPIRIT_2","number":2,"value":1,"upper":"あなたがカードを表向きでプレイするときには、プロトコルを対応させずにプレイすることができる。","middle":"カードを1枚引く。","lower":"開始：あなたは手札を1枚捨て札にするか、このカードを反転させる。","effectTypes":["draw","flip","play"],"codex":"【エラッタ(2024/10)】上段コマンドは「あなたがカードを表向きでプレイするときには、プロトコルを対応させずにプレイすることができる。」に修正。"},{"id":"SPIRIT_3","number":3,"value":2,"upper":"","middle":"あなたはカードを1枚反転させることができる。","lower":"","effectTypes":["flip"]},{"id":"SPIRIT_4","number":4,"value":3,"upper":"あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。","middle":"","lower":"","effectTypes":["shift"]},{"id":"SPIRIT_5","number":5,"value":4,"upper":"","middle":"あなたのプロトコルのうち2枚の位置を入れ替える。","lower":"","effectTypes":["rearrange"]},{"id":"SPIRIT_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"WATER","displayName":"WATER","tags":"戻す、手札維持、反転","color":"#1E88E5","set":"Main 1","cards":[{"id":"WATER_1","number":1,"value":0,"upper":"","middle":"他のカードを1枚反転させる。このカードを反転させる。","lower":"","effectTypes":["flip"]},{"id":"WATER_2","number":2,"value":1,"upper":"","middle":"あなたのデッキの一番上のカードを、他の各ラインに裏向きで1枚ずつプレイする。","lower":"","effectTypes":["play"],"codex":"【明確化】WATER 1の中段コマンドが発動したとき、オーナーは処理が必要なラインを確認し、1つずつ処理する。\n【明確化】デッキからカードをプレイする場合、デッキが空でもシャッフルは強制されない。"},{"id":"WATER_3","number":3,"value":2,"upper":"","middle":"カードを2枚引く。あなたのプロトコルを並べ替える。","lower":"","effectTypes":["draw","rearrange"]},{"id":"WATER_4","number":4,"value":3,"upper":"","middle":"1ラインを選び、そのラインの値が2のすべてのカードを戻す。","lower":"","effectTypes":["return"]},{"id":"WATER_5","number":5,"value":4,"upper":"","middle":"あなたのカードを1枚戻す。","lower":"","effectTypes":["return"]},{"id":"WATER_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"APATHY","displayName":"APATHY","tags":"裏向きへの反転","color":"#9E9E9E","set":"Aux 1","cards":[{"id":"APATHY_1","number":1,"value":0,"upper":"このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。","middle":"","lower":"","effectTypes":["other"]},{"id":"APATHY_2","number":2,"value":1,"upper":"","middle":"このラインにある他のすべての表向きのカードを同時に反転させる。","lower":"","effectTypes":["flip"]},{"id":"APATHY_3","number":3,"value":2,"upper":"このラインにあるカードのすべての中段コマンドを無視する。","middle":"","lower":"このカードが覆われることになったとき：先に、このカードを反転させる。","effectTypes":["flip"]},{"id":"APATHY_4","number":4,"value":3,"upper":"","middle":"相手の表向きのカードを１枚反転させる。","lower":"","effectTypes":["flip"]},{"id":"APATHY_5","number":5,"value":4,"upper":"","middle":"表向きで覆われているあなたのカード１枚を反転させることができる。","lower":"","effectTypes":["flip"]},{"id":"APATHY_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"HATE","displayName":"HATE","tags":"互いの削除","color":"#B71C1C","set":"Aux 1","cards":[{"id":"HATE_1","number":1,"value":0,"upper":"","middle":"カードを１枚削除する。","lower":"","effectTypes":["delete"]},{"id":"HATE_2","number":2,"value":1,"upper":"","middle":"あなたは手札を３枚捨て札にする。カードを１枚削除する。カードを１枚削除する。","lower":"","effectTypes":["delete"]},{"id":"HATE_3","number":3,"value":2,"upper":"","middle":"値が最も大きく覆われていないあなたのカードを１枚削除する。値が最も大きく覆われていない相手のカードを１枚削除する。","lower":"","effectTypes":["delete"],"codex":"【エラッタ(2024/10)】中段コマンドは「値が最も大きく覆われていないあなたのカードを1枚削除する。値が最も大きく覆われていない相手のカードを1枚削除する。」に修正。\n【明確化】最大値が同値の場合、プレイヤーが1枚を選ぶ。\n【明確化】HATE 2があなたの最大値カードである場合、最初の条件で自身を削除する。その結果、2番目の条件は発動しない。"},{"id":"HATE_4","number":4,"value":3,"upper":"あなたがカードを１枚削除したあと：カードを１枚引く。","middle":"","lower":"","effectTypes":["draw","delete"]},{"id":"HATE_5","number":5,"value":4,"upper":"","middle":"","lower":"このカードが覆われることになったとき：先に、このラインにある値が最も小さく覆われているカードを１枚削除する。","effectTypes":["delete"]},{"id":"HATE_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"LOVE","displayName":"LOVE","tags":"手札維持／供与／交換","color":"#EC407A","set":"Aux 1","cards":[{"id":"LOVE_1","number":1,"value":1,"upper":"","middle":"あなたは相手のデッキの一番上のカードを引く。","lower":"終了：あなたの手札一枚を相手に与えることができる。そうした場合、カードを２枚引く。","effectTypes":["draw"]},{"id":"LOVE_2","number":2,"value":2,"upper":"","middle":"相手はカードを１枚引く。あなたはリフレッシュする。","lower":"","effectTypes":["draw"]},{"id":"LOVE_3","number":3,"value":3,"upper":"","middle":"あなたは相手の手札からランダムにカードを１枚引く。あなたの手札１枚を相手に与える。","lower":"","effectTypes":["draw"]},{"id":"LOVE_4","number":4,"value":4,"upper":"","middle":"あなたの手札１枚を公開する。カードを１枚反転させる。","lower":"","effectTypes":["flip"]},{"id":"LOVE_5","number":5,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]},{"id":"LOVE_6","number":6,"value":6,"upper":"","middle":"相手はカードを２枚引く。","lower":"","effectTypes":["draw"]}]}]};</script>
@@ -2044,6 +2085,8 @@ var arrPreview = null; // 並び替えのライブプレビュー {side, protos:
 var fullLog = [];
 var aiTimer = null;
 var lastRevealKey = '';
+/* PC(マウス)のみカード詳細をホバー表示。タッチ端末ではタップ(openDetail)に一本化 */
+var HOVERABLE = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 /* localStorage は file:// 環境で例外を投げることがあるため必ずラップする */
 function lsGet(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
 function lsSet(k,v){ try { localStorage.setItem(k,v); } catch(e){} }
@@ -2362,11 +2405,7 @@ function enterReq(req){
       var html = '<h2>' + esc(reqText(req)) + '</h2>';
       html += hand.length
         ? '<div class="reveal-grid">' + hand.map(function(uid){
-            var defId = cur.state.cards[uid].def, d = DEFMAP[defId], rgb = hexToRgb(d.proto.color);
-            return '<div class="reveal-card" style="background:linear-gradient(180deg,rgba(7,7,13,.15) 0%,rgba(7,7,13,.55) 55%,rgba(7,7,13,.92) 100%),' +
-              'url(&quot;' + cardArt(defId) + '&quot;) center/cover,var(--cbg)">' +
-              '<span class="badge" style="background:rgb(' + rgb.join(',') + ')">' + d.card.value + '</span>' +
-              '<span class="nm">' + esc(cardName(defId)) + '</span></div>';
+            return revealCardHtml(cur.state.cards[uid].def);
           }).join('') + '</div>'
         : '<div class="sub">手札はありません。</div>';
       openModal(html, 'board');
@@ -2627,6 +2666,59 @@ function protoArtGlitched(name){
 }
 function artBg(url, overlay){ return overlay + ',url("' + url + '") center/cover,var(--cbg)'; }
 
+/* 上段/下段効果の有無を示す最小アイコン (▲=常在/上段, ▼=補助/下段) */
+function effIcons(def){
+  var up = def.card.upper, low = def.card.lower;
+  if (!up && !low) return '';
+  return '<span class="eff">' + (up?'<i class="e-up">▲</i>':'') + (low?'<i class="e-low">▼</i>':'') + '</span>';
+}
+
+/* 手札公開(ピーピング)モーダル用: アート+値+名前+全文 */
+function revealCardHtml(defId){
+  var d = DEFMAP[defId]; if (!d) return '';
+  var rgb = hexToRgb(d.proto.color);
+  function row(lbl, tx){ return tx ? '<div><span class="lbl">' + lbl + '</span>' + esc(tx) + '</div>' : ''; }
+  return '<div class="reveal-card">' +
+    '<div class="art" style="background:url(&quot;' + cardArt(defId) + '&quot;) center/cover">' +
+    '<span class="badge" style="background:rgb(' + rgb.join(',') + ')">' + d.card.value + '</span></div>' +
+    '<div class="body"><div class="nm">' + esc(cardName(defId)) + '</div><div class="tx">' +
+    row('TOP', d.card.upper) + row('MID', d.card.middle) + row('BOT', d.card.lower) +
+    '</div></div></div>';
+}
+
+/* ---------- カード詳細ツールチップ (PC: マウスオーバー) ---------- */
+function showCardTip(e, defId){
+  if (!HOVERABLE) return;
+  var def = DEFMAP[defId]; if (!def) return;
+  var tip = document.getElementById('cardTip');
+  var rgb = hexToRgb(def.proto.color);
+  function cmd(lbl, tx){ return tx ? '<div class="detail-cmd"><span class="lbl">' + lbl + '</span>' + esc(tx) + '</div>' : ''; }
+  tip.innerHTML = '<div class="ct-art" style="background:url(&quot;' + cardArt(defId) + '&quot;) center/cover">' +
+    '<span class="ct-badge" style="background:rgb(' + rgb.join(',') + ')">' + def.card.value + '</span></div>' +
+    '<div class="ct-nm">' + esc(cardName(defId)) + '</div>' +
+    cmd('TOP', def.card.upper) + cmd('MID', def.card.middle) + cmd('BOT', def.card.lower);
+  tip.classList.add('on');
+  positionCardTip(e);
+}
+function positionCardTip(e){
+  var tip = document.getElementById('cardTip');
+  if (!tip.classList.contains('on')) return;
+  var w = tip.offsetWidth || 240, h = tip.offsetHeight || 220;
+  var x = e.clientX + 16, y = e.clientY + 16;
+  if (x + w > window.innerWidth - 8) x = Math.max(8, e.clientX - w - 16);
+  if (y + h > window.innerHeight - 8) y = Math.max(8, window.innerHeight - h - 8);
+  tip.style.left = x + 'px';
+  tip.style.top = y + 'px';
+}
+function hideCardTip(){ document.getElementById('cardTip').classList.remove('on'); }
+/* PCのみ: ホバーで該当カードのアート+全文をツールチップ表示 */
+function attachCardTip(el, defId){
+  if (!HOVERABLE) return;
+  el.addEventListener('mouseenter', function(e){ showCardTip(e, defId); });
+  el.addEventListener('mousemove', positionCardTip);
+  el.addEventListener('mouseleave', hideCardTip);
+}
+
 function render(){
   var st = view();
   if (!st) return;
@@ -2819,13 +2911,11 @@ function chipDiv(st, uid, side, uncovered){
     d.className = 'chip up art ' + (side===HUMAN?'p1c':'p2c') + (uncovered?'':' cov');
     setAccent(d, def.proto.color);
     if (uncovered){
-      // uncovered: アート付きフルカード。有効な中段(なければ下段/上段)を表示
+      // uncovered: アート付きフルカード。情報は最低限(値+名前+上段/下段効果アイコン)、全文はホバー/タップで表示
       d.style.background = artBg(cardArt(c.def),
         'linear-gradient(100deg,rgba(7,7,13,.94) 0%,rgba(7,7,13,.8) 58%,rgba(7,7,13,.62) 100%)');
-      var snippet = def.card.middle || def.card.lower || def.card.upper;
       d.innerHTML = '<span class="top"><span class="badge">' + def.card.value + '</span>' +
-        '<span class="nm">' + esc(cardName(c.def)) + '</span></span>' +
-        (snippet ? '<span class="tx">' + esc(snippet) + '</span>' : '');
+        '<span class="nm">' + esc(cardName(c.def)) + '</span>' + effIcons(def) + '</span>';
     } else {
       // covered: アートを残しつつコンパクト。値+名前+上段(常在)コマンドのみ可視 (物理ルール準拠)
       d.style.background = artBg(cardArt(c.def),
@@ -2850,6 +2940,8 @@ function chipDiv(st, uid, side, uncovered){
   } else {
     d.onclick = function(e){ e.stopPropagation(); openDetail(uid); };
   }
+  // PC: 相手の裏向きカード以外はホバーでカード画像+全文を表示
+  if (c.faceUp || side === HUMAN) attachCardTip(d, c.def);
   return d;
 }
 
@@ -2896,9 +2988,10 @@ function renderHand(st){
     d.innerHTML = '<span class="top"><span class="badge">' + def.card.value + '</span>' +
       '<span class="nm">' + esc(cardName(c.def)) + '</span>' +
       '<span class="info">i</span></span>' +
-      '<span class="tx">' + esc(def.card.middle || def.card.upper || def.card.lower || '') + '</span>';
+      effIcons(def);
     d.onclick = function(){ tapHand(uid); };
     d.querySelector('.info').onclick = function(e){ e.stopPropagation(); openDetail(uid); };
+    attachCardTip(d, c.def);   // PC: ホバーでカード画像+全文を表示
     h.appendChild(d);
   });
   prevHandUids = nh;
@@ -3246,7 +3339,10 @@ function openDetail(uid){
   if (!c.faceUp && loc && loc.side === AI && c.zone !== 'trash1'){ toast('相手の裏向きカードは見られません'); return; }
   var def = DEFMAP[c.def];
   var color = def.proto.color;
-  var html = '<h2 style="color:' + color + '">' + esc(cardName(c.def)) + '</h2>';
+  var rgb = hexToRgb(color);
+  var html = '<div class="dt-art" style="background:url(&quot;' + cardArt(c.def) + '&quot;) center/cover">' +
+    '<span class="badge" style="background:rgb(' + rgb.join(',') + ')">' + def.card.value + '</span></div>';
+  html += '<h2 style="color:' + color + '">' + esc(cardName(c.def)) + '</h2>';
   function cmd(lbl, tx){ return tx ? '<div class="detail-cmd"><span class="lbl">' + lbl + '</span>' + esc(tx) + '</div>' : ''; }
   html += cmd('TOP (常在)', def.card.upper) + cmd('MIDDLE (プレイ時)', def.card.middle) + cmd('BOTTOM (補助)', def.card.lower);
   html += '<button class="optbtn ghost" onclick="closeModal()">閉じる</button>';
@@ -3322,12 +3418,7 @@ function maybeReveal(){
     var html = '<h2>' + esc(who) + 'の手札を公開</h2>';
     if (st.revealed.cards.length){
       html += '<div class="reveal-grid">' + st.revealed.cards.map(function(defId){
-        var d = DEFMAP[defId]; if (!d) return '';
-        var rgb = hexToRgb(d.proto.color);
-        return '<div class="reveal-card" style="background:linear-gradient(180deg,rgba(7,7,13,.15) 0%,rgba(7,7,13,.55) 55%,rgba(7,7,13,.92) 100%),' +
-          'url(&quot;' + cardArt(defId) + '&quot;) center/cover,var(--cbg)">' +
-          '<span class="badge" style="background:rgb(' + rgb.join(',') + ')">' + d.card.value + '</span>' +
-          '<span class="nm">' + esc(cardName(defId)) + '</span></div>';
+        return revealCardHtml(defId);
       }).join('') + '</div>';
     } else {
       html += '<div class="sub">手札はありません。</div>';
