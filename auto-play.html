@@ -291,8 +291,11 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:7px 11px;f
 /* モバイル縦持ち: カードを思いっきり小さくし、盤面・手札に多くのカードを収める。
    テキストはタップ(詳細モーダル)で読めるため、最低限の情報だけ見えれば十分 */
 @media (max-width:520px){
-  #hand{min-height:58px;gap:5px;padding:5px 7px}
-  .hcard{width:calc(104px*var(--cs))}
+  #hand{min-height:58px;gap:4px;padding:5px 4px}
+  /* 通常の手札上限5枚を画面幅内に収め、6枚以上のときだけ横スクロールさせる */
+  .hcard{width:calc((100vw - 24px)/5);padding:5px 5px 6px}
+  .hcard .top{gap:4px;margin-bottom:3px}
+  .hcard .info{width:17px;height:17px}
   /* 縦持ちでは操作ボタン群を2段目に折り返し、上部メニューを欠けさせない */
   header{padding:6px 9px}
   .hdr-actions{flex-basis:100%;justify-content:flex-end}
@@ -334,6 +337,14 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:7px 11px;f
   box-shadow:0 -16px 50px -10px rgba(0,0,0,.85),0 0 0 1px rgba(233,30,140,.25);
   animation:sheetup .25s cubic-bezier(.16,1,.3,1)}
 @keyframes sheetup{from{transform:translateY(100%)}to{transform:translateY(0)}}
+/* モバイルのカード詳細は、操作対象の自分側を隠さず相手フィールド側へ表示する */
+.ov.opponent-visible{background:transparent;padding:0;pointer-events:none}
+.ov.opponent-visible .panel{pointer-events:auto;position:fixed;max-width:none;border-radius:12px;padding:10px 12px;
+  box-shadow:0 12px 36px -8px #000,0 0 0 1px rgba(233,30,140,.25);animation:ovin .18s ease}
+.ov.opponent-visible .dt-art{height:82px;margin-bottom:7px}
+.ov.opponent-visible .panel h2{font-size:.78rem;margin-bottom:7px}
+.ov.opponent-visible .detail-cmd{padding:5px 7px;margin-bottom:5px;font-size:.66rem}
+.ov.opponent-visible .optbtn{padding:7px 9px;margin-bottom:4px;font-size:.7rem}
 .panel{background:linear-gradient(180deg,var(--cbg2),var(--cbg));border:1px solid var(--bd2);border-radius:16px;
   max-width:480px;width:100%;max-height:86vh;overflow-y:auto;padding:20px;position:relative;
   box-shadow:0 24px 70px -20px #000,0 0 0 1px rgba(255,255,255,.03),inset 0 1px 0 rgba(255,255,255,.05)}
@@ -2086,8 +2097,10 @@ var arrPreview = null; // 並び替えのライブプレビュー {side, protos:
 var fullLog = [];
 var aiTimer = null;
 var lastRevealKey = '';
-/* PC(マウス)のみカード詳細をホバー表示。タッチ端末ではタップ(openDetail)に一本化 */
+/* PCはホバー、タッチ端末は情報ボタンでカード詳細を表示する */
 var HOVERABLE = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+/* カード本体のプレイ操作はPC/モバイルで共通 */
+var MOBILE_UI = !HOVERABLE;
 /* localStorage は file:// 環境で例外を投げることがあるため必ずラップする */
 function lsGet(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
 function lsSet(k,v){ try { localStorage.setItem(k,v); } catch(e){} }
@@ -2525,20 +2538,18 @@ function tapHand(uid){
   if (uiMode === 'anim'){ flushPlayback(); return; }
   if (playPick){   // U4: 効果プレイの手札選択
     if (playPick.byUid[uid]){ selectedHand = (selectedHand === uid ? null : uid); render(); updateMsgBar(); }
-    else openDetail(uid);
     return;
   }
   if (uiMode === 'request' && curReq && curReq.kind === 'pickHand'){
     if (curReq.candidates.indexOf(uid) >= 0) reqTapCandidate(uid);
-    else openDetail(uid);
     return;
   }
-  if (uiMode === 'request'){ openDetail(uid); return; }
-  if (!cur || cur.state.turn !== HUMAN || cur.requests.length) { openDetail(uid); return; }
+  if (uiMode === 'request') return;
+  if (!cur || cur.state.turn !== HUMAN || cur.requests.length) return;
   // 選択中の手札をもう一度タップ → 選択解除
   if (selectedHand === uid){ selectedHand = null; uiMode='idle'; render(); updateMsgBar(); return; }
-  // それ以外: タップで効果(詳細モーダル)を表示。プレイ可能ならモーダル内のボタンから選択へ進む
-  openDetail(uid);
+  // PC/モバイル共通: カード本体の操作は直接プレイ選択へ進む
+  selectedHand = uid; uiMode = 'hand'; render(); updateMsgBar();
 }
 
 /* 通常プレイ(アクション)と効果プレイ(playPick)を振り分け */
@@ -2938,7 +2949,7 @@ function chipDiv(st, uid, side, uncovered){
     if (selBuf.indexOf(uid)>=0) d.classList.add('selbuf');
     d.onclick = function(e){ e.stopPropagation(); reqTapCandidate(uid); };
   } else {
-    d.onclick = function(e){ e.stopPropagation(); openDetail(uid); };
+    d.onclick = function(e){ e.stopPropagation(); if (MOBILE_UI) openDetail(uid); };
   }
   // PC: 相手の裏向きカード以外はホバーでカード画像+全文を表示
   if (c.faceUp || side === HUMAN) attachCardTip(d, c.def);
@@ -2987,10 +2998,11 @@ function renderHand(st){
       'linear-gradient(180deg,rgba(7,7,13,.18) 0%,rgba(7,7,13,.5) 38%,rgba(7,7,13,.93) 100%)');
     d.innerHTML = '<span class="top"><span class="badge">' + def.card.value + '</span>' +
       '<span class="nm">' + esc(cardName(c.def)) + '</span>' +
-      '<span class="info">i</span></span>' +
+      (MOBILE_UI ? '<span class="info">i</span>' : '') + '</span>' +
       effIcons(def);
     d.onclick = function(){ tapHand(uid); };
-    d.querySelector('.info').onclick = function(e){ e.stopPropagation(); openDetail(uid); };
+    var infoBtn = d.querySelector('.info');
+    if (infoBtn) infoBtn.onclick = function(e){ e.stopPropagation(); openDetail(uid); };
     attachCardTip(d, c.def);   // PC: ホバーでカード画像+全文を表示
     h.appendChild(d);
   });
@@ -3005,9 +3017,24 @@ function openModal(html, mode){
   document.getElementById('modalPanel').innerHTML = html;
   var ov = document.getElementById('modalOv');
   ov.classList.toggle('board-visible', mode === 'board');
+  ov.classList.toggle('opponent-visible', mode === 'opponent');
   ov.classList.add('on');
+  if (mode === 'opponent') positionOpponentModal();
 }
-function closeModal(){ var ov = document.getElementById('modalOv'); ov.classList.remove('on'); ov.classList.remove('board-visible'); }
+function positionOpponentModal(){
+  var field = document.getElementById('field'), panel = document.getElementById('modalPanel');
+  if (!field || !panel) return;
+  var r = field.getBoundingClientRect();
+  panel.style.left = (r.left + 5) + 'px';
+  panel.style.top = (r.top + 4) + 'px';
+  panel.style.width = Math.max(0, r.width - 10) + 'px';
+  panel.style.maxHeight = Math.max(120, (r.height / 2) - 10) + 'px';
+}
+function closeModal(){
+  var ov = document.getElementById('modalOv'), panel = document.getElementById('modalPanel');
+  ov.classList.remove('on'); ov.classList.remove('board-visible'); ov.classList.remove('opponent-visible');
+  panel.style.left = panel.style.top = panel.style.width = panel.style.maxHeight = '';
+}
 
 function modalOptions(title, labels, optional, cb, noLabel, mode){
   var html = '<h2>' + esc(title) + '</h2>';
@@ -3346,14 +3373,14 @@ function openDetail(uid){
   function cmd(lbl, tx){ return tx ? '<div class="detail-cmd"><span class="lbl">' + lbl + '</span>' + esc(tx) + '</div>' : ''; }
   html += cmd('TOP (常在)', def.card.upper) + cmd('MIDDLE (プレイ時)', def.card.middle) + cmd('BOTTOM (補助)', def.card.lower);
   // 自分のターンでプレイ可能な手札カードなら、モーダルからそのままプレイ操作へ進める
-  var canPlayNow = cur && cur.state.turn === HUMAN && !cur.requests.length && !playPick &&
+  var canPlayNow = !MOBILE_UI && cur && cur.state.turn === HUMAN && !cur.requests.length && !playPick &&
     st.players[HUMAN].hand.indexOf(uid) >= 0 &&
     Engine.legalActions(st).some(function(a){ return a.type==='play' && a.card===uid; });
   if (canPlayNow){
     html += '<button class="optbtn" style="border-color:var(--pk);color:#fff;background:linear-gradient(135deg,rgba(233,30,140,.28),rgba(233,30,140,.08))" onclick="beginPlayFromDetail(\'' + uid + '\')">▶ このカードをプレイ</button>';
   }
   html += '<button class="optbtn ghost" onclick="closeModal()">閉じる</button>';
-  openModal(html);
+  openModal(html, MOBILE_UI ? 'opponent' : undefined);
 }
 
 /* 詳細モーダルからプレイ操作を開始 → ライン選択(ボタン)モードへ */
