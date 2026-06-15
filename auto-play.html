@@ -290,27 +290,24 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:7px 11px;f
 .hcard.selbuf{border-color:#ffd24a;box-shadow:0 0 0 1.5px #ffd24a,0 0 20px -5px #ffd24a}
 /* モバイル縦持ち: カードを思いっきり小さくし、盤面・手札に多くのカードを収める。
    テキストはタップ(詳細モーダル)で読めるため、最低限の情報だけ見えれば十分 */
-@media (max-width:520px){
-  #hand{min-height:58px;gap:4px;padding:5px 4px}
-  /* 通常の手札上限5枚を画面幅内に収め、6枚以上のときだけ横スクロールさせる */
-  .hcard{width:calc((100vw - 24px)/5);padding:5px 5px 6px}
-  .hcard .top{gap:4px;margin-bottom:3px}
-  .hcard .info{width:17px;height:17px}
-  /* 縦持ちでは操作ボタン群を2段目に折り返し、上部メニューを欠けさせない */
-  header{padding:6px 9px}
-  .hdr-actions{flex-basis:100%;justify-content:flex-end}
-  /* 場の表示エリアを少しでも稼ぐため、ログ・サイド情報・メッセージ帯を圧縮 */
-  #turnLog{max-height:26px}
-  #sideInfo{padding:3px 11px}
-  #msgBar{min-height:32px;padding:6px 13px}
-  /* 盤面全体を大きく縮小して、枚数が増えても画面に収まりやすくする */
-  #field{--cs:.58;gap:3px;padding:3px 4px}
-  .line{padding:3px}
-  .proto{padding:5px 3px}
-  .totals{padding:2px 2px;margin:1px 0}
-  .chip{padding:3px 5px;gap:1px}
-  .chip.cov{padding:2px 5px}
-}
+html.mobile-ui #hand{min-height:58px;gap:4px;padding:5px 4px}
+/* 6枚程度を画面幅内に並べられる細幅表示。値とプロトコル略称だけを表示する */
+html.mobile-ui .hcard{width:calc((100vw - 28px)/6);padding:5px 3px 6px}
+html.mobile-ui .hcard .top{gap:3px;margin-bottom:0}
+html.mobile-ui .hcard .badge{min-width:20px;width:20px;height:22px;padding:0 2px;border-radius:5px;font-size:.78rem}
+html.mobile-ui .hcard .nm{font-size:.54rem;letter-spacing:.03em;text-align:center}
+html.mobile-ui .hcard .eff{display:none}
+html.mobile-ui header{padding:6px 9px}
+html.mobile-ui .hdr-actions{flex-basis:100%;justify-content:flex-end}
+html.mobile-ui #turnLog{max-height:26px}
+html.mobile-ui #sideInfo{padding:3px 11px}
+html.mobile-ui #msgBar{min-height:32px;padding:6px 13px}
+html.mobile-ui #field{--cs:.58;gap:3px;padding:3px 4px}
+html.mobile-ui .line{padding:3px}
+html.mobile-ui .proto{padding:5px 3px}
+html.mobile-ui .totals{padding:2px 2px;margin:1px 0}
+html.mobile-ui .chip{padding:3px 5px;gap:1px}
+html.mobile-ui .chip.cov{padding:2px 5px}
 
 /* ---------- overlays ---------- */
 .ov{position:fixed;inset:0;background:rgba(4,4,10,.9);
@@ -341,10 +338,10 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:7px 11px;f
 .ov.opponent-visible{background:transparent;padding:0;pointer-events:none}
 .ov.opponent-visible .panel{pointer-events:auto;position:fixed;max-width:none;border-radius:12px;padding:10px 12px;
   box-shadow:0 12px 36px -8px #000,0 0 0 1px rgba(233,30,140,.25);animation:ovin .18s ease}
-.ov.opponent-visible .dt-art{height:82px;margin-bottom:7px}
-.ov.opponent-visible .panel h2{font-size:.78rem;margin-bottom:7px}
-.ov.opponent-visible .detail-cmd{padding:5px 7px;margin-bottom:5px;font-size:.66rem}
-.ov.opponent-visible .optbtn{padding:7px 9px;margin-bottom:4px;font-size:.7rem}
+.ov.opponent-visible .panel h2{font-size:.7rem;margin-bottom:5px}
+.ov.opponent-visible .detail-cmd{padding:4px 6px;margin-bottom:4px;font-size:.6rem;line-height:1.35}
+.ov.opponent-visible .detail-cmd .lbl{font-size:.48rem;min-width:25px}
+.ov.opponent-visible .optbtn{padding:5px 8px;margin-bottom:2px;font-size:.64rem;text-align:center}
 .panel{background:linear-gradient(180deg,var(--cbg2),var(--cbg));border:1px solid var(--bd2);border-radius:16px;
   max-width:480px;width:100%;max-height:86vh;overflow-y:auto;padding:20px;position:relative;
   box-shadow:0 24px 70px -20px #000,0 0 0 1px rgba(255,255,255,.03),inset 0 1px 0 rgba(255,255,255,.05)}
@@ -2101,6 +2098,7 @@ var lastRevealKey = '';
 var HOVERABLE = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 /* カード本体のプレイ操作はPC/モバイルで共通 */
 var MOBILE_UI = !HOVERABLE;
+document.documentElement.classList.toggle('mobile-ui', MOBILE_UI);
 /* localStorage は file:// 環境で例外を投げることがあるため必ずラップする */
 function lsGet(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
 function lsSet(k,v){ try { localStorage.setItem(k,v); } catch(e){} }
@@ -2108,10 +2106,6 @@ function lsSet(k,v){ try { localStorage.setItem(k,v); } catch(e){} }
 var SPEEDS = [{lb:'演出: なし',ms:0},{lb:'演出: 速い',ms:300},{lb:'演出: 普通',ms:620},{lb:'演出: ゆっくり',ms:1000}];
 var speedIdx = (function(){ var v = parseInt(lsGet('apSpeed')); return (v>=0 && v<4) ? v : 2; })();
 var showFX = lsGet('apFX') !== '0';   // 効果フロートウインドウの表示
-/* 表示サイズ倍率 */
-var SCALES = [{lb:'小',v:0.82},{lb:'やや小',v:0.92},{lb:'標準',v:1},{lb:'大',v:1.15},{lb:'特大',v:1.32}];
-var scaleIdx = (function(){ var v = parseInt(lsGet('apScale')); return (v>=0 && v<SCALES.length) ? v : 2; })();
-function applyScale(){ document.documentElement.style.setProperty('--cs', SCALES[scaleIdx].v); }
 var playEntries = null, playIdx = 0, playTimer = null, playDone = null, playedCount = 0;
 var animState = null, animMsg = '', animUid = null;
 var prevFieldUids = {}, prevHandUids = {};   // 登場ポップ演出用: 前回描画時の在席カード
@@ -2126,7 +2120,6 @@ function boot(){
     }
     Engine.init(COMPILE_CARDS, COMPILE_EFFECTS);
     Engine.setTrace(true);
-    applyScale();
     syncSpeedBtn();
     if (!tryLoadShared()) buildSetup();
   } catch(e){
@@ -2142,20 +2135,11 @@ else boot();
 function cycleSpeed(){ openFxMenu(); }
 function openFxMenu(){
   var html = '<h2>表示 <b>設定</b></h2>';
-  html += '<div class="sub">表示サイズ、処理の再生速度、発動効果ウインドウを設定します。</div>';
-  html += '<div class="fx-set-lbl">表示サイズ</div><div id="fxScaleRow" class="fx-row-wrap"></div>';
+  html += '<div class="sub">処理の再生速度と発動効果ウインドウを設定します。</div>';
   html += '<div class="fx-set-lbl">再生速度</div><div id="fxSpeedRow" class="fx-row-wrap"></div>';
   html += '<div class="fx-set-lbl">発動効果ウインドウ</div><div id="fxToggleRow" class="fx-row-wrap"></div>';
   html += '<button class="optbtn ghost" onclick="closeModal()">閉じる</button>';
   openModal(html);
-  var zr = document.getElementById('fxScaleRow');
-  SCALES.forEach(function(s, i){
-    var b = document.createElement('button');
-    b.className = 'optbtn opt-inline' + (i===scaleIdx?' sel-opt':'');
-    b.textContent = s.lb;
-    b.onclick = function(){ scaleIdx = i; lsSet('apScale', i); applyScale(); if(cur)render(); openFxMenu(); };
-    zr.appendChild(b);
-  });
   var sr = document.getElementById('fxSpeedRow');
   SPEEDS.forEach(function(s, i){
     var b = document.createElement('button');
@@ -2547,9 +2531,15 @@ function tapHand(uid){
   if (uiMode === 'request') return;
   if (!cur || cur.state.turn !== HUMAN || cur.requests.length) return;
   // 選択中の手札をもう一度タップ → 選択解除
-  if (selectedHand === uid){ selectedHand = null; uiMode='idle'; render(); updateMsgBar(); return; }
+  if (selectedHand === uid){
+    selectedHand = null; uiMode='idle';
+    if (MOBILE_UI) closeModal();
+    render(); updateMsgBar(); return;
+  }
   // PC/モバイル共通: カード本体の操作は直接プレイ選択へ進む
   selectedHand = uid; uiMode = 'hand'; render(); updateMsgBar();
+  // MOBILEはホバーできないため、タップ時に同等の効果説明を相手フィールド側へ表示する
+  if (MOBILE_UI) openDetail(uid);
 }
 
 /* 通常プレイ(アクション)と効果プレイ(playPick)を振り分け */
@@ -2561,6 +2551,7 @@ function playHere(line, faceUp){
     var req = playPick.req;
     flyFromHand(selectedHand, line);
     playPick = null; selectedHand = null;
+    if (MOBILE_UI) closeModal();
     answer(req, [hit.raw]);
     return;
   }
@@ -2573,6 +2564,7 @@ function playSelected(line, faceUp){
   pushUndo();
   var a = { type:'play', card:selectedHand, line:line, faceUp:faceUp };
   selectedHand = null; uiMode='idle';
+  if (MOBILE_UI) closeModal();
   playedCount = 0;
   onResult(Engine.apply(cur.state, a));
 }
@@ -2996,13 +2988,11 @@ function renderHand(st){
     if (playPick && playPick.byUid[uid]) d.classList.add('cand');   // U4: 効果プレイ候補
     d.style.background = artBg(cardArt(c.def),
       'linear-gradient(180deg,rgba(7,7,13,.18) 0%,rgba(7,7,13,.5) 38%,rgba(7,7,13,.93) 100%)');
+    var handName = MOBILE_UI ? def.proto.name.slice(0, 3).toUpperCase() : cardName(c.def);
     d.innerHTML = '<span class="top"><span class="badge">' + def.card.value + '</span>' +
-      '<span class="nm">' + esc(cardName(c.def)) + '</span>' +
-      (MOBILE_UI ? '<span class="info">i</span>' : '') + '</span>' +
-      effIcons(def);
+      '<span class="nm">' + esc(handName) + '</span></span>' +
+      (MOBILE_UI ? '' : effIcons(def));
     d.onclick = function(){ tapHand(uid); };
-    var infoBtn = d.querySelector('.info');
-    if (infoBtn) infoBtn.onclick = function(e){ e.stopPropagation(); openDetail(uid); };
     attachCardTip(d, c.def);   // PC: ホバーでカード画像+全文を表示
     h.appendChild(d);
   });
@@ -3028,7 +3018,7 @@ function positionOpponentModal(){
   panel.style.left = (r.left + 5) + 'px';
   panel.style.top = (r.top + 4) + 'px';
   panel.style.width = Math.max(0, r.width - 10) + 'px';
-  panel.style.maxHeight = Math.max(120, (r.height / 2) - 10) + 'px';
+  panel.style.maxHeight = Math.max(96, (r.height * .36)) + 'px';
 }
 function closeModal(){
   var ov = document.getElementById('modalOv'), panel = document.getElementById('modalPanel');
@@ -3367,7 +3357,7 @@ function openDetail(uid){
   var def = DEFMAP[c.def];
   var color = def.proto.color;
   var rgb = hexToRgb(color);
-  var html = '<div class="dt-art" style="background:url(&quot;' + cardArt(c.def) + '&quot;) center/cover">' +
+  var html = MOBILE_UI ? '' : '<div class="dt-art" style="background:url(&quot;' + cardArt(c.def) + '&quot;) center/cover">' +
     '<span class="badge" style="background:rgb(' + rgb.join(',') + ')">' + def.card.value + '</span></div>';
   html += '<h2 style="color:' + color + '">' + esc(cardName(c.def)) + '</h2>';
   function cmd(lbl, tx){ return tx ? '<div class="detail-cmd"><span class="lbl">' + lbl + '</span>' + esc(tx) + '</div>' : ''; }
