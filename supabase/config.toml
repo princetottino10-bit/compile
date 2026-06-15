@@ -1,0 +1,5 @@
+project_id = "compile-secure-room"
+
+[functions.secure-room]
+verify_jwt = true
+

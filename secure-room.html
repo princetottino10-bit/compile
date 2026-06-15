@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>COMPILE Secure Room</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box} :root{--bg:#090910;--card:#151520;--card2:#1b1b29;--bd:rgba(255,255,255,.12);--tx:#eeeef6;--dim:#9292aa;--pk:#e91e8c;--gold:#d2ad4f;--ok:#43d17b}
+    body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% -20%,#29122b,transparent 42%),var(--bg);color:var(--tx);font-family:'Noto Sans JP',sans-serif}
+    button,input{font:inherit}.wrap{max-width:880px;margin:auto;padding:18px 14px 60px}.head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.logo{font-family:Orbitron;font-weight:900;letter-spacing:.1em}.logo b{color:var(--pk)}
+    .back{color:var(--dim);text-decoration:none;font-size:.75rem}.panel{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--bd);border-radius:16px;padding:18px;margin-bottom:12px;box-shadow:0 18px 55px -35px #000}.panel h2{font:700 .88rem Orbitron;margin:0 0 12px;letter-spacing:.08em}.sub{color:var(--dim);font-size:.72rem;line-height:1.65;margin-bottom:12px}
+    .row{display:flex;gap:8px;flex-wrap:wrap}.inp{flex:1;min-width:140px;background:#0e0e16;border:1px solid var(--bd);color:var(--tx);padding:11px;border-radius:10px}.btn{border:1px solid var(--bd);background:#222234;color:var(--tx);padding:11px 15px;border-radius:10px;cursor:pointer;font-weight:700}.btn.pri{background:linear-gradient(135deg,var(--pk),#9e145f);border-color:transparent}.btn:disabled{opacity:.35;cursor:default}.btn.ghost{background:transparent}.code{font:900 2rem Orbitron;letter-spacing:.18em;color:var(--gold);text-align:center;padding:12px}.status{font-size:.72rem;color:var(--dim);min-height:1.5em}.status.err{color:#ff6e7a}.status.ok{color:var(--ok)}
+    .protos{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:7px}.proto{border:1px solid var(--bd);background:#11111a;color:var(--dim);padding:10px 7px;border-radius:9px;cursor:pointer;font:700 .62rem Orbitron}.proto.on{color:#fff;border-color:var(--pk);background:rgba(233,30,140,.16)}
+    .gameHead{display:flex;justify-content:space-between;gap:8px;align-items:center}.badge{font:700 .62rem Orbitron;border:1px solid var(--bd);padding:5px 8px;border-radius:999px}.lines{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:12px 0}.line{background:#0f0f17;border:1px solid var(--bd);border-radius:12px;padding:8px;min-height:180px;display:flex;flex-direction:column;gap:6px}.protoName{text-align:center;font:700 .58rem Orbitron;color:var(--gold);padding:4px}.stack{display:flex;flex-direction:column;gap:3px;min-height:55px}.stack.mine{margin-top:auto}.card{border:1px solid var(--bd);border-left:3px solid var(--pk);border-radius:7px;padding:6px;background:#191925;font-size:.64rem}.card.down{color:var(--dim);border-left-color:#666;background:#111119}.tot{text-align:center;font:700 .7rem Orbitron;color:var(--dim)}
+    .hand{display:flex;gap:6px;overflow-x:auto;padding:6px 0}.hand .card{min-width:92px}.actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:7px}.reqChoices{display:flex;flex-wrap:wrap;gap:7px}.hidden{display:none!important}.setupNote{border-color:rgba(210,173,79,.45)}code{font-family:ui-monospace,monospace;color:#ffd36b}.small{font-size:.62rem;color:var(--dim)}
+    @media(max-width:560px){.wrap{padding:12px 8px 40px}.panel{padding:13px}.lines{gap:4px}.line{padding:5px;min-height:155px}.card{font-size:.58rem;padding:5px}.code{font-size:1.55rem}.actions{grid-template-columns:1fr 1fr}.btn{padding:10px 8px;font-size:.72rem}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head"><div class="logo">COMPILE <b>SECURE ROOM</b></div><a class="back" href="index.html">← HOME</a></div>
+
+  <section class="panel setupNote hidden" id="configPanel">
+    <h2>SUPABASE SETUP REQUIRED</h2>
+    <div class="sub">安全な対戦サーバーのコードは実装済みです。Supabaseプロジェクトを接続すると利用できます。秘密鍵をブラウザへ置く必要はありません。</div>
+    <div class="small">設定先: <code>secure-room-config.js</code>　手順: <code>docs/secure-room-setup.md</code></div>
+  </section>
+
+  <section class="panel" id="loginPanel">
+    <h2>PLAYER</h2>
+    <div class="sub">表示名だけで匿名ログインします。メールアドレスやパスワードは不要です。</div>
+    <div class="row"><input class="inp" id="name" maxlength="20" placeholder="表示名"><button class="btn pri" id="loginBtn">接続</button></div>
+    <div class="status" id="loginStatus"></div>
+  </section>
+
+  <section class="panel hidden" id="lobbyPanel">
+    <h2>ROOM</h2>
+    <div class="row"><button class="btn pri" id="createBtn">新しいルームを作る</button><input class="inp" id="roomCode" maxlength="6" placeholder="6桁コード"><button class="btn" id="joinBtn">参加</button></div>
+    <div class="status" id="roomStatus"></div>
+  </section>
+
+  <section class="panel hidden" id="waitingPanel">
+    <h2>ROOM CODE</h2><div class="code" id="codeText"></div><div class="sub" id="waitingText">相手の参加を待っています。</div>
+  </section>
+
+  <section class="panel hidden" id="protocolPanel">
+    <h2>SELECT 3 PROTOCOLS</h2><div class="protos" id="protocols"></div><div class="row" style="margin-top:10px"><button class="btn pri" id="readyBtn" disabled>準備完了</button></div>
+  </section>
+
+  <section class="panel hidden" id="gamePanel">
+    <div class="gameHead"><h2>SECURE MATCH</h2><span class="badge" id="turnBadge"></span></div>
+    <div class="small" id="players"></div><div class="lines" id="lines"></div>
+    <div class="small">YOUR HAND</div><div class="hand" id="hand"></div>
+    <div class="status" id="gameStatus"></div><div class="actions" id="actions"></div>
+  </section>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="secure-room-config.js"></script>
+<script>
+'use strict';
+var cfg=window.COMPILE_ROOM_CONFIG||{}, sb=null, session=null, room=null, timer=null, cards=null, selected=[];
+var $=function(id){return document.getElementById(id)};
+function show(id,on){$(id).classList.toggle('hidden',!on)}
+function msg(id,text,type){$(id).textContent=text||'';$(id).className='status'+(type?' '+type:'')}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function configured(){return /^https:\/\//.test(cfg.url||'')&&String(cfg.anonKey||'').length>20}
+async function boot(){
+  show('configPanel',!configured()); $('loginBtn').disabled=!configured();
+  cards=await fetch('data/cards.json').then(function(r){return r.json()});
+  if(!configured())return;
+  sb=window.supabase.createClient(cfg.url,cfg.anonKey,{auth:{persistSession:true,autoRefreshToken:true}});
+  var got=await sb.auth.getSession();session=got.data.session;if(session)connected();
+}
+async function login(){
+  var name=$('name').value.trim();if(!name){msg('loginStatus','表示名を入力してください','err');return}
+  localStorage.setItem('compileRoomName',name);msg('loginStatus','接続中…');
+  var res=await sb.auth.signInAnonymously({options:{data:{display_name:name}}});
+  if(res.error){msg('loginStatus',res.error.message,'err');return}session=res.data.session;connected();
+}
+function connected(){
+  if(!$('name').value)$('name').value=localStorage.getItem('compileRoomName')||session.user.user_metadata.display_name||'';
+  show('loginPanel',false);show('lobbyPanel',true);msg('roomStatus','安全な匿名セッションで接続しました','ok');
+}
+async function api(op,extra){
+  var token=(await sb.auth.getSession()).data.session?.access_token;if(!token)throw new Error('セッションが切れました');
+  var r=await fetch(cfg.url+'/functions/v1/secure-room',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token,'apikey':cfg.anonKey},body:JSON.stringify(Object.assign({op:op},extra||{}))});
+  var data=await r.json();if(!r.ok)throw new Error(data.error||'通信エラー');return data;
+}
+async function createRoom(){try{room=await api('create',{name:$('name').value||localStorage.getItem('compileRoomName')});enterRoom()}catch(e){msg('roomStatus',e.message,'err')}}
+async function joinRoom(){try{room=await api('join',{name:$('name').value||localStorage.getItem('compileRoomName'),code:$('roomCode').value});enterRoom()}catch(e){msg('roomStatus',e.message,'err')}}
+function enterRoom(){show('lobbyPanel',false);show('waitingPanel',true);$('codeText').textContent=room.code;renderRoom();if(timer)clearInterval(timer);timer=setInterval(sync,1300)}
+async function sync(){if(!room)return;try{room=await api('get',{code:room.code});renderRoom()}catch(e){msg('gameStatus',e.message,'err')}}
+function renderRoom(){
+  $('waitingText').textContent=room.names[1]?'対戦相手が参加しました。':'このコードを相手に共有してください。';
+  var setup=!!room.names[1]&&room.status!=='playing'&&room.status!=='finished';show('protocolPanel',setup);show('waitingPanel',room.status!=='playing'&&room.status!=='finished');
+  if(setup)renderProtocols();
+  show('gamePanel',room.status==='playing'||room.status==='finished');if(room.game)renderGame();
+}
+function renderProtocols(){
+  var other=(room.protocols&&room.protocols[1-room.side])||[];
+  selected=selected.filter(function(name){return other.indexOf(name)<0});
+  $('protocols').innerHTML='';cards.protocols.forEach(function(p){var b=document.createElement('button');var taken=other.indexOf(p.name)>=0;b.className='proto'+(selected.indexOf(p.name)>=0?' on':'');b.textContent=p.name+(taken?' (選択済み)':'');b.disabled=taken;b.onclick=function(){var i=selected.indexOf(p.name);if(i>=0)selected.splice(i,1);else if(selected.length<3)selected.push(p.name);renderProtocols()};$('protocols').appendChild(b)});$('readyBtn').disabled=selected.length!==3
+}
+async function ready(){try{room=await api('protocols',{code:room.code,protocols:selected});$('readyBtn').disabled=true;renderRoom()}catch(e){msg('roomStatus',e.message,'err')}}
+function defLabel(id){if(!id)return'裏向き';for(var p of cards.protocols){for(var c of p.cards)if(c.id===id)return p.name+' '+c.value}return id}
+function renderGame(){
+  var g=room.game,me=room.side,op=1-me;$('players').textContent=(room.names[me]||'YOU')+' vs '+(room.names[op]||'OPPONENT');
+  $('turnBadge').textContent=g.winner!==null?(g.winner===me?'YOU WIN':'YOU LOSE'):(g.turn===me?'YOUR TURN':'OPPONENT');
+  $('lines').innerHTML='';for(var l=0;l<3;l++){var el=document.createElement('div');el.className='line';var opp=g.lines[l][op],mine=g.lines[l][me];el.innerHTML='<div class="protoName">'+esc(g.protocols[op][l].name)+'</div><div class="stack">'+opp.map(cardHtml).join('')+'</div><div class="tot">'+opp.length+' / '+mine.length+'</div><div class="stack mine">'+mine.map(cardHtml).join('')+'</div><div class="protoName">'+esc(g.protocols[me][l].name)+'</div>';$('lines').appendChild(el)}
+  $('hand').innerHTML=g.hand.map(function(c){return '<div class="card">'+esc(defLabel(c.def))+'</div>'}).join('');renderActions();
+}
+function cardHtml(c){return '<div class="card'+(c.faceUp?'':' down')+'">'+esc(defLabel(c.def))+'</div>'}
+function renderActions(){
+  var box=$('actions');box.innerHTML='';if(room.request){renderRequest(room.request);return}
+  (room.legalActions||[]).forEach(function(a){var b=document.createElement('button');b.className='btn';b.textContent=a.type==='refresh'?'リフレッシュ':defLabel((room.game.hand.find(function(c){return c.uid===a.card})||{}).def)+' → L'+(a.line+1)+' '+(a.faceUp?'表':'裏');b.onclick=function(){sendAction(a)};box.appendChild(b)});
+  if(!box.children.length)msg('gameStatus',room.game.winner!==null?'対戦終了':'相手の操作を待っています');else msg('gameStatus','操作はサーバーで検証されます','ok');
+}
+function renderRequest(q){
+  var box=$('actions'),add=function(label,picks){var b=document.createElement('button');b.className='btn';b.textContent=label;b.onclick=function(){sendAction({type:'choose',id:q.id,picks:picks})};box.appendChild(b)};
+  if(q.kind==='yesNo'){add('はい',['yes']);add('いいえ',[])}
+  else if(q.kind==='pickLine')(q.lines||[]).forEach(function(l){add('ライン '+(l+1),[l])});
+  else if(q.kind==='option')(q.options||[]).forEach(function(x,i){add(String(x||('選択肢 '+(i+1))),[i])});
+  else if(q.kind==='pickCard'||q.kind==='pickHand')(q.candidates||[]).forEach(function(uid){add(defLabel((room.game.hand.find(function(c){return c.uid===uid})||{}).def)||uid,[uid])});
+  if(q.optional||q.min===0)add('スキップ',[]);
+}
+async function sendAction(action){try{room=await api('action',{code:room.code,version:room.version,action:action});renderRoom()}catch(e){msg('gameStatus',e.message,'err');await sync()}}
+$('loginBtn').onclick=login;$('createBtn').onclick=createRoom;$('joinBtn').onclick=joinRoom;$('readyBtn').onclick=ready;$('roomCode').oninput=function(){this.value=this.value.toUpperCase().replace(/[^A-Z2-9]/g,'')};
+boot();
+  </script>
+</body>
+</html>
