@@ -1,0 +1,3260 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>COMPILE - Auto Play</title>
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="COMPILE">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --pk:#e91e8c;--pk2:#ff2fa0;--gd:#c8a84e;--gd2:#e6c768;--dk:#0d0d14;--dkr:#06060d;
+  --cbg:#14141f;--cbg2:#1c1c2b;--tx:#ececf4;--txd:#9a9ab4;--txdd:#5f5f7c;
+  --bd:rgba(255,255,255,.07);--bd2:rgba(255,255,255,.14);
+  --dn-bg:rgba(255,255,255,.035);--dn-bd:rgba(255,255,255,.16);
+  --cand:#37d67a;--ac:#8a8aa0;--acg:rgba(138,138,160,.5);--act:rgba(138,138,160,.14);
+  --fmono:'Orbitron',sans-serif;
+  --sh:0 2px 7px rgba(0,0,0,.45);
+  --cs:1;   /* カード表示サイズ倍率 */
+}
+html{-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--dkr);color:var(--tx);
+  display:flex;flex-direction:column;-webkit-user-select:none;user-select:none;line-height:1.5;position:relative}
+/* 空気感: 上部のネオングロー + ドットグリッド + 微細スキャンライン */
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(125% 75% at 50% -12%, rgba(233,30,140,.12), transparent 58%),
+    radial-gradient(95% 65% at 102% 112%, rgba(200,168,78,.07), transparent 55%),
+    radial-gradient(70% 50% at 0% 100%, rgba(80,90,255,.05), transparent 60%),
+    linear-gradient(rgba(255,255,255,.020) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.020) 1px,transparent 1px);
+  background-size:auto,auto,auto,30px 30px,30px 30px}
+body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,.10) 0 1px,transparent 1px 3px)}
+header,#msgBar,#field,#bottomBar{position:relative;z-index:1}
+
+/* ---------- header ---------- */
+header{display:flex;align-items:center;gap:7px;padding:7px 11px;flex-shrink:0;
+  background:linear-gradient(180deg,rgba(12,12,22,.98),rgba(8,8,16,.92));
+  border-bottom:1px solid var(--bd2);box-shadow:0 1px 0 rgba(255,255,255,.04),0 6px 18px -10px rgba(233,30,140,.5)}
+.logo{font-family:var(--fmono);font-weight:900;font-size:.92rem;letter-spacing:.14em;
+  text-shadow:0 0 14px rgba(255,255,255,.18)}
+.logo b{color:var(--pk2);text-shadow:0 0 12px rgba(233,30,140,.7)}
+.hbtn{background:var(--cbg);border:1px solid var(--bd2);color:var(--txd);border-radius:7px;
+  padding:5px 11px;font-size:.7rem;font-family:inherit;cursor:pointer;transition:all .15s}
+.hbtn:hover{border-color:var(--pk);color:var(--tx)}
+.hbtn:active{background:var(--cbg2);transform:translateY(1px)}
+.hbtn:disabled{opacity:.3;pointer-events:none}
+#turnBadge{margin-left:auto;font-family:var(--fmono);font-weight:700;font-size:.62rem;letter-spacing:.08em;
+  color:var(--txd);padding:4px 11px;border-radius:999px;border:1px solid var(--bd2);transition:all .25s}
+#turnBadge.me{color:#fff;border-color:transparent;background:linear-gradient(135deg,var(--pk),#a3136a);
+  box-shadow:0 0 16px -3px rgba(233,30,140,.8)}
+#turnBadge.ai{color:#1a1a14;border-color:transparent;background:linear-gradient(135deg,var(--gd2),var(--gd));
+  box-shadow:0 0 16px -4px rgba(200,168,78,.7)}
+#ctrlBadge{font-family:var(--fmono);font-size:.58rem;letter-spacing:.06em;padding:4px 9px;border-radius:999px;
+  border:1px dashed var(--bd2);color:var(--txdd);transition:all .25s}
+#ctrlBadge.me{color:var(--pk2);border-color:var(--pk);border-style:solid;box-shadow:0 0 12px -4px rgba(233,30,140,.7)}
+#ctrlBadge.ai{color:var(--gd2);border-color:var(--gd);border-style:solid;box-shadow:0 0 12px -4px rgba(200,168,78,.6)}
+
+/* ---------- コントロール帯 (所有側の端に表示) ---------- */
+.ctrlbar{flex-shrink:0;display:none;align-items:center;justify-content:center;gap:9px;padding:5px 12px;z-index:1;
+  font-family:var(--fmono);font-weight:900;font-size:.6rem;letter-spacing:.18em;color:#241d05;position:relative;
+  background:linear-gradient(90deg,transparent,var(--gd) 18%,var(--gd2) 50%,var(--gd) 82%,transparent);
+  box-shadow:0 0 20px -3px rgba(200,168,78,.85)}
+.ctrlbar.on{display:flex;animation:ctrlpulse 1.8s ease-in-out infinite}
+.ctrlbar .ct-ico{font-size:.82rem;line-height:1}
+@keyframes ctrlpulse{50%{box-shadow:0 0 30px 0 rgba(200,168,78,.95)}}
+#ctrlTop.on{animation-name:ctrlpulse}
+/* 自分側(下)はピンク寄りにして所有がより明確に */
+#ctrlBot.on{background:linear-gradient(90deg,transparent,var(--gd) 18%,var(--gd2) 50%,var(--gd) 82%,transparent)}
+
+/* ---------- message bar ---------- */
+#msgBar{flex-shrink:0;padding:8px 13px;font-size:.8rem;min-height:38px;display:flex;align-items:center;gap:10px;
+  background:linear-gradient(90deg,rgba(233,30,140,.14),rgba(233,30,140,.04));
+  border-bottom:1px solid rgba(233,30,140,.22);position:relative}
+#msgBar::before{content:"›";font-family:var(--fmono);font-weight:900;color:var(--pk2);margin-right:-2px}
+#msgBar.quiet{background:transparent;border-bottom-color:var(--bd);color:var(--txd)}
+#msgBar.quiet::before{color:var(--txdd)}
+#msgBar .mb-btn{background:var(--cbg);border:1px solid var(--bd2);border-radius:7px;color:var(--tx);
+  padding:5px 15px;font-size:.72rem;font-family:inherit;cursor:pointer;transition:all .15s}
+#msgBar .mb-btn:hover{border-color:var(--pk)}
+#msgBar .mb-btn.pri{border-color:var(--pk);color:#fff;background:linear-gradient(135deg,var(--pk),#a3136a);
+  box-shadow:0 0 14px -4px rgba(233,30,140,.8)}
+#msgBar .mb-btn:disabled{opacity:.3}
+
+/* ---------- field ---------- */
+#field{flex:1;display:flex;gap:7px;padding:9px;min-height:0;overflow-y:auto}
+/* グリッドの 1fr auto 1fr で中央行(プロトコル)位置を完全固定する */
+.line{flex:1;display:grid;grid-template-rows:1fr auto 1fr;min-width:0;position:relative;padding:6px;border-radius:12px;
+  background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.012));
+  border:1px solid var(--bd);box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 8px 24px -16px #000;overflow:hidden}
+.half{min-height:0;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.half.top{justify-content:flex-end}     /* AIスタックを中央(プロト)側へ寄せる */
+.half.bot{justify-content:flex-start}   /* YOUスタックを中央(プロト)側へ寄せる */
+.lcenter{position:relative;z-index:6}
+.line.cand{border-color:var(--cand);box-shadow:0 0 0 1px var(--cand),0 0 22px -6px var(--cand);cursor:pointer}
+.line.cand::after{content:"▶ ここに";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-family:var(--fmono);font-size:.6rem;letter-spacing:.1em;color:var(--cand);pointer-events:none;
+  text-shadow:0 0 10px var(--cand);opacity:.9}
+.proto{position:relative;font-family:var(--fmono);font-size:calc(.64rem*var(--cs));font-weight:700;letter-spacing:.09em;
+  text-align:center;padding:8px 4px;border-radius:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  color:#fff;border:1px solid var(--acg);
+  background:linear-gradient(180deg,var(--act),transparent);
+  text-shadow:0 0 10px var(--acg),0 1px 4px #000}
+.proto.comp{color:#fff;border-color:var(--ac);
+  background:linear-gradient(180deg,var(--ac),var(--act));
+  box-shadow:0 0 20px -3px var(--acg),inset 0 0 12px -4px rgba(255,255,255,.5)}
+.proto.comp::after{content:"  ✓ COMPILED";font-size:.52rem;opacity:.9}
+/* スタックはプロトコルに密着し、カードは重なって連なる */
+.stack{display:flex;flex-direction:column;gap:0;padding:0;min-height:0;position:relative}
+.stack.p2s{flex-direction:column-reverse}   /* AI: uncovered を外側(上)に */
+.stack.p1s{flex-direction:column}           /* YOU: uncovered を外側(下/手札側)に */
+.stack .chip{position:relative}
+/* 覆われたカードどうしは重ねて、上側(値+上段)だけ覗かせる */
+.stack.p1s .chip.cov + .chip{margin-top:-4px}
+.stack.p2s .chip.cov + .chip{margin-top:-4px}
+/* uncovered のフルカードは隣接する覆われカードの上に出す */
+.stack .chip:not(.cov){z-index:5}
+/* スタックをプロトコルへ密着(わずかに重ねる) */
+.stack.p1s{margin-top:-3px}
+.stack.p2s{margin-bottom:-3px}
+.proto{position:relative;z-index:6}
+/* レーンゲージ: 各サイドの値を10へ向けて可視化 */
+.totals{display:flex;flex-direction:column;gap:3px;padding:5px 2px;margin:2px 0;
+  border-top:1px solid var(--bd);border-bottom:1px solid var(--bd)}
+.gauge{display:flex;align-items:center;gap:5px;font-size:.6rem}
+.gauge .lbl{font-family:var(--fmono);font-weight:700;letter-spacing:.05em;width:24px;flex-shrink:0}
+.gauge .num{font-family:var(--fmono);font-weight:900;font-size:.74rem;width:18px;text-align:center;flex-shrink:0}
+.gauge .bar{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.07);overflow:hidden;position:relative}
+.gauge .bar i{display:block;height:100%;border-radius:3px;transition:width .4s cubic-bezier(.16,1,.3,1)}
+.gauge.g2{flex-direction:row-reverse}
+.gauge.t1 .bar i{background:linear-gradient(90deg,var(--pk),var(--pk2));box-shadow:0 0 8px -1px var(--pk)}
+.gauge.t2 .bar i{background:linear-gradient(90deg,var(--gd),var(--gd2));box-shadow:0 0 8px -1px var(--gd)}
+.gauge.t1{color:var(--pk2)} .gauge.t2{color:var(--gd2)}
+.gauge.ready .num{animation:pulse 1.1s ease-in-out infinite}
+.gauge.ready .bar i{box-shadow:0 0 12px 0 currentColor}
+@keyframes pulse{50%{opacity:.5}}
+
+/* ---------- chips (場のカード) ---------- */
+/* 手札カードと同じ「上段=値+名前 / 下段=効果文」構造で、表裏とも上揃えに統一 */
+.chip{display:flex;flex-direction:column;gap:2px;align-items:stretch;border-radius:8px;padding:5px 7px;font-size:calc(.66rem*var(--cs));cursor:pointer;position:relative;
+  border:1px solid var(--bd2);background:linear-gradient(150deg,var(--cbg2),var(--cbg));box-shadow:var(--sh);
+  transition:transform .12s,box-shadow .2s,border-color .2s,opacity .2s,filter .2s}
+.chip .top{display:flex;align-items:center;gap:7px}
+.chip .badge{flex-shrink:0;width:calc(26px*var(--cs));height:calc(26px*var(--cs));padding:0 3px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--fmono);font-weight:900;font-size:calc(.95rem*var(--cs));line-height:1;color:#fff;border-radius:6px;
+  background:linear-gradient(160deg,var(--act),rgba(0,0,0,.28));border:1px solid var(--acg);text-shadow:0 0 9px var(--acg)}
+.chip .nm{flex:1;min-width:0;text-align:left;font-weight:700;letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 1px 4px #000,0 0 2px #000}
+.chip .tx{color:#d6d6e4;text-align:left;font-size:calc(.58rem*var(--cs));line-height:1.25;max-height:2.5em;overflow:hidden;text-shadow:0 1px 3px #000}
+.chip.dn{border-style:dashed;color:var(--txdd);
+  background:repeating-linear-gradient(45deg,var(--dn-bg) 0 5px,transparent 5px 11px),var(--cbg)}
+.chip.dn .badge{color:var(--txd);background:rgba(255,255,255,.05);border-color:var(--dn-bd);text-shadow:none}
+/* 覆われたカード: コンパクト。上段(値+名前)に加え、上段コマンドを1行だけ表示 */
+.chip.cov{padding:3px 7px;opacity:.96}
+.chip.dn.cov{background:repeating-linear-gradient(45deg,var(--dn-bg) 0 5px,transparent 5px 11px),var(--cbg)}
+.chip.cov .badge{width:calc(20px*var(--cs));height:calc(20px*var(--cs));font-size:calc(.74rem*var(--cs));padding:2px 3px;border-radius:4px}
+.chip.cov .tx{font-size:calc(.52rem*var(--cs));line-height:1.2;max-height:1.3em;white-space:nowrap;opacity:.85;color:#c0c0d4}
+.chip.cov .tx::before{content:"▲ ";color:var(--ac);opacity:.9}
+.chip.up.p1c:not(.cov){border-color:rgba(233,30,140,.5);box-shadow:var(--sh),0 0 15px -6px rgba(233,30,140,.75)}
+.chip.up.p2c:not(.cov){border-color:rgba(200,168,78,.45);box-shadow:var(--sh),0 0 15px -6px rgba(200,168,78,.6)}
+.chip.cand{border-color:var(--cand)!important;box-shadow:0 0 0 1.5px var(--cand),0 0 18px -4px var(--cand)!important;cursor:pointer}
+.chip.cand:hover{transform:translateY(-2px)}
+.chip.selbuf{border-color:#ffd24a!important;box-shadow:0 0 0 1.5px #ffd24a,0 0 18px -4px #ffd24a!important}
+.chip.flash,.hcard.flash{animation:chipflash .6s ease}
+@keyframes chipflash{0%{box-shadow:0 0 0 3px #fff,0 0 26px 2px var(--acg);filter:brightness(1.9)}100%{filter:none}}
+/* 札が「ピロッ」と飛び出す登場演出 (オーバーシュート付き) */
+.chip.pop{animation:cardpop .34s cubic-bezier(.34,1.56,.64,1);transform-origin:center bottom}
+.hcard.pop{animation:cardpop .3s cubic-bezier(.34,1.56,.64,1)}
+@keyframes cardpop{
+  0%{opacity:0;transform:scale(.5) translateY(-12px)}
+  55%{opacity:1;transform:scale(1.1) translateY(0)}
+  75%{transform:scale(.96)}
+  100%{transform:scale(1)}}
+/* 手札→場の飛行ゴースト */
+.flyghost{border-radius:11px;overflow:hidden;will-change:transform,opacity;
+  box-shadow:0 0 30px -4px var(--acg),0 16px 44px -12px #000!important}
+#msgBar.anim{background:linear-gradient(90deg,rgba(55,214,122,.16),rgba(55,214,122,.04));border-bottom-color:rgba(55,214,122,.4)}
+#msgBar.anim::before{content:"⚡";color:var(--cand)}
+/* 手札選択中: ライン全体を大きなタップ領域にし、対象外のラインは控えめにする */
+.line.playable{cursor:pointer;border-color:var(--pk2);
+  box-shadow:0 0 0 1.5px var(--pk2),0 0 26px -6px rgba(233,30,140,.85);
+  animation:lineready 1.4s ease-in-out infinite}
+@keyframes lineready{50%{box-shadow:0 0 0 1.5px var(--pk2),0 0 38px -2px rgba(233,30,140,1)}}
+.line.playable:active{transform:scale(.985)}
+.line.not-target{opacity:.36;filter:saturate(.4)}
+.play-hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:8;
+  max-width:92%;text-align:center;font-family:var(--fmono);font-size:.6rem;font-weight:700;
+  letter-spacing:.06em;line-height:1.3;color:#fff;
+  background:linear-gradient(135deg,var(--pk),#a3136a);padding:5px 9px;border-radius:999px;
+  box-shadow:0 4px 18px -4px rgba(233,30,140,.9);pointer-events:none;text-shadow:0 1px 3px #000}
+.play-choice{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9;
+  display:flex;gap:4px;background:rgba(10,10,16,.94);border:1px solid var(--bd2);border-radius:10px;
+  padding:4px;box-shadow:0 10px 30px -8px #000;max-width:94%}
+.play-choice button{font-family:inherit;font-size:.72rem;font-weight:700;padding:8px 11px;border-radius:7px;
+  border:1px solid var(--pk);color:#fff;background:linear-gradient(135deg,var(--pk),#a3136a);cursor:pointer;
+  box-shadow:0 0 14px -5px rgba(233,30,140,.8);transition:transform .12s}
+.play-choice button:active{transform:translateY(1px)}
+.play-choice button.dnb{background:var(--cbg2);border-color:var(--bd2);color:var(--txd);box-shadow:none}
+
+/* ---------- 詰めCompile編集 ---------- */
+.ed-sel{background:var(--cbg2);border:1px solid var(--bd2);color:var(--tx);border-radius:7px;
+  padding:6px 8px;font-family:inherit;font-size:.72rem;cursor:pointer}
+.ed-sel:focus{border-color:var(--pk)}
+.ed-proto-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.ed-proto-tag{font-family:var(--fmono);font-size:.6rem;letter-spacing:.06em;color:var(--txd);
+  min-width:54px;flex-shrink:0}
+.ed-proto-row .ed-sel{flex:1;min-width:0}
+.ed-comp{display:flex;align-items:center;gap:4px;font-size:.66rem;color:var(--txd);white-space:nowrap;cursor:pointer}
+.ed-comp input{accent-color:var(--pk)}
+.ed-cards{margin-bottom:10px}
+.ed-card-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.ed-chip{font-family:var(--fmono);font-size:.6rem;font-weight:700;letter-spacing:.04em;
+  padding:6px 8px;border-radius:7px;min-width:84px;flex-shrink:0;text-align:center;
+  background:linear-gradient(180deg,var(--act),transparent);border:1px solid var(--ac,var(--bd2));color:var(--ac,var(--tx))}
+.ed-card-row .ed-sel{flex:1;min-width:0}
+.ed-share-ta{width:100%;background:var(--cbg2);border:1px solid var(--bd2);color:var(--tx);
+  border-radius:8px;padding:8px;font-family:var(--fmono);font-size:.6rem;line-height:1.5;
+  resize:none;height:64px;margin-bottom:8px;word-break:break-all}
+
+/* ---------- bottom ---------- */
+#bottomBar{flex-shrink:0;border-top:1px solid var(--bd2);
+  background:linear-gradient(180deg,rgba(20,20,32,.6),var(--dk));
+  box-shadow:0 -6px 20px -12px rgba(233,30,140,.5)}
+/* 現在ターンのログ(ティッカー) */
+#turnLog{font-family:'Noto Sans JP',monospace;font-size:.6rem;line-height:1.5;color:var(--txd);
+  max-height:42px;overflow-y:auto;padding:4px 11px;border-bottom:1px solid var(--bd);cursor:pointer;
+  scrollbar-width:thin;display:flex;flex-direction:column;gap:1px}
+#turnLog::-webkit-scrollbar{width:4px}
+#turnLog::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px}
+#turnLog:empty{display:none}
+#turnLog .tl-line{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#turnLog .tl-line.new{color:var(--cand)}
+#turnLog .tl-hd{color:var(--pk2);font-family:var(--fmono);font-size:.55rem;letter-spacing:.06em}
+#sideInfo{display:flex;gap:13px;align-items:center;font-size:.62rem;color:var(--txd);padding:5px 11px;
+  border-bottom:1px solid var(--bd);font-family:var(--fmono);letter-spacing:.03em}
+#sideInfo .zone{cursor:pointer;transition:color .15s}
+#sideInfo .zone b{color:var(--tx);font-weight:700}
+#sideInfo .zone:hover{color:var(--tx)}
+#sideInfo .ai-tag{color:var(--gd2)}
+#sideInfo .ai-tag b{color:var(--gd2)}
+#hand{display:flex;gap:7px;overflow-x:auto;padding:10px 9px;min-height:96px;align-items:stretch}
+#hand::-webkit-scrollbar{height:5px}
+#hand::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:3px}
+.hcard{width:calc(138px*var(--cs));flex-shrink:0;position:relative;cursor:pointer;display:flex;flex-direction:column;
+  background:linear-gradient(160deg,var(--cbg2),var(--cbg));border:1px solid var(--bd2);
+  border-radius:11px;padding:7px 9px 8px;font-size:calc(.66rem*var(--cs));box-shadow:var(--sh);overflow:hidden;
+  transition:transform .14s cubic-bezier(.16,1,.3,1),box-shadow .2s,border-color .2s}
+.hcard::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--ac);box-shadow:0 0 10px var(--acg)}
+.hcard .top{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.hcard .badge{flex-shrink:0;min-width:calc(26px*var(--cs));height:calc(26px*var(--cs));padding:0 5px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--fmono);font-weight:900;font-size:calc(1.05rem*var(--cs));line-height:1;color:#fff;border-radius:7px;
+  background:linear-gradient(160deg,var(--act),rgba(0,0,0,.3));border:1px solid var(--acg);text-shadow:0 0 10px var(--acg)}
+.hcard .nm{font-family:var(--fmono);font-weight:700;font-size:calc(.66rem*var(--cs));letter-spacing:.02em;flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff;text-shadow:0 1px 5px #000,0 0 3px #000}
+.hcard .tx{color:#e2e2ee;font-size:calc(.6rem*var(--cs));line-height:1.4;flex:1;overflow:hidden;text-shadow:0 1px 4px #000}
+.hcard:hover{transform:translateY(-4px);border-color:var(--pk);box-shadow:var(--sh),0 0 20px -6px rgba(233,30,140,.65)}
+.hcard.sel{border-color:var(--pk2);transform:translateY(-7px);box-shadow:0 0 0 1.5px var(--pk2),0 0 26px -4px rgba(233,30,140,.85)}
+.hcard.cand{border-color:var(--cand);box-shadow:0 0 0 1.5px var(--cand),0 0 20px -5px var(--cand)}
+.hcard.selbuf{border-color:#ffd24a;box-shadow:0 0 0 1.5px #ffd24a,0 0 20px -5px #ffd24a}
+
+/* ---------- overlays ---------- */
+.ov{position:fixed;inset:0;background:rgba(4,4,10,.9);
+  display:none;z-index:50;align-items:center;justify-content:center;padding:18px}
+.ov.on{display:flex;animation:ovin .25s ease}
+@keyframes ovin{from{opacity:0}to{opacity:1}}
+/* 選択中の下部フローティング確定バー */
+#actionBar{position:fixed;left:50%;bottom:108px;transform:translateX(-50%);z-index:46;display:none;
+  align-items:center;gap:10px;padding:8px 10px 8px 16px;border-radius:999px;
+  background:linear-gradient(180deg,rgba(24,24,38,.98),rgba(14,14,24,.98));
+  border:1px solid var(--bd2);box-shadow:0 12px 36px -8px #000,0 0 0 1px rgba(233,30,140,.25),0 0 28px -8px rgba(233,30,140,.5)}
+#actionBar.on{display:flex;animation:abpop .22s cubic-bezier(.34,1.56,.64,1)}
+@keyframes abpop{from{opacity:0;transform:translate(-50%,12px)}to{opacity:1;transform:translateX(-50%)}}
+#actionBar #abText{font-size:.74rem;color:var(--tx);font-weight:500;white-space:nowrap}
+#actionBar .ab-btn{font-family:inherit;font-size:.78rem;font-weight:700;border-radius:999px;padding:8px 18px;cursor:pointer;
+  border:1px solid var(--bd2);background:var(--cbg2);color:var(--txd)}
+#actionBar .ab-btn:active{transform:translateY(1px)}
+#actionBar .ab-btn.pri{border-color:transparent;color:#fff;background:linear-gradient(135deg,var(--pk),#a3136a);
+  box-shadow:0 0 16px -3px rgba(233,30,140,.8)}
+#actionBar .ab-btn.pri:disabled{opacity:.4;box-shadow:none}
+/* 盤面を見せるモード: 背景透過 + パネルを下部に寄せる */
+.ov.board-visible{background:transparent;align-items:flex-end;padding:0;pointer-events:none}
+.ov.board-visible .panel{pointer-events:auto;max-width:520px;border-radius:16px 16px 0 0;max-height:46vh;padding:14px 18px;
+  box-shadow:0 -16px 50px -10px rgba(0,0,0,.85),0 0 0 1px rgba(233,30,140,.25);
+  animation:sheetup .25s cubic-bezier(.16,1,.3,1)}
+@keyframes sheetup{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.panel{background:linear-gradient(180deg,var(--cbg2),var(--cbg));border:1px solid var(--bd2);border-radius:16px;
+  max-width:480px;width:100%;max-height:86vh;overflow-y:auto;padding:20px;position:relative;
+  box-shadow:0 24px 70px -20px #000,0 0 0 1px rgba(255,255,255,.03),inset 0 1px 0 rgba(255,255,255,.05)}
+.panel h2{font-family:var(--fmono);font-size:.98rem;letter-spacing:.1em;margin-bottom:13px;
+  text-shadow:0 0 14px rgba(255,255,255,.14)}
+.panel h2 b{color:var(--pk2);text-shadow:0 0 12px rgba(233,30,140,.7)}
+.panel .sub{font-size:.74rem;color:var(--txd);margin-bottom:14px;line-height:1.6}
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.pchip{position:relative;border:1px solid var(--bd2);border-radius:9px;padding:10px 4px;text-align:center;cursor:pointer;
+  font-family:var(--fmono);font-size:.6rem;font-weight:700;letter-spacing:.04em;overflow:hidden;
+  background:linear-gradient(180deg,var(--act),transparent);transition:transform .14s,box-shadow .2s,border-color .2s}
+.pchip::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--ac);opacity:.6}
+.pchip:hover{transform:translateY(-2px);border-color:var(--ac)}
+.pchip.sel{border-color:var(--ac);color:#fff;background:linear-gradient(180deg,var(--ac),var(--act));
+  box-shadow:0 0 20px -4px var(--acg),inset 0 0 16px -6px rgba(255,255,255,.6)}
+.pchip.sel::before{opacity:1;box-shadow:0 0 10px var(--ac)}
+.pchip small{display:block;font-family:'Noto Sans JP',sans-serif;font-weight:400;color:var(--txdd);
+  font-size:.54rem;margin-top:4px;letter-spacing:0;line-height:1.3}
+.pchip.sel small{color:rgba(255,255,255,.8)}
+.row{display:flex;align-items:center;gap:10px;margin:12px 0;font-size:.78rem;color:var(--txd)}
+.row input{accent-color:var(--pk)}
+.bigbtn{width:100%;background:linear-gradient(135deg,var(--pk),#a3136a);border:none;color:#fff;
+  font-family:var(--fmono);font-weight:700;letter-spacing:.12em;font-size:.85rem;
+  border-radius:11px;padding:14px 0;cursor:pointer;margin-top:6px;position:relative;overflow:hidden;
+  box-shadow:0 0 24px -6px rgba(233,30,140,.85);transition:transform .12s,box-shadow .2s}
+.bigbtn:not(:disabled):hover{box-shadow:0 0 32px -4px rgba(233,30,140,1)}
+.bigbtn:not(:disabled):active{transform:translateY(1px)}
+.bigbtn:disabled{opacity:.32;box-shadow:none;cursor:default}
+.optbtn{display:block;width:100%;background:var(--cbg2);border:1px solid var(--bd2);color:var(--tx);
+  border-radius:10px;padding:12px 13px;font-size:.8rem;font-family:inherit;cursor:pointer;margin-bottom:8px;
+  text-align:left;transition:all .15s}
+.optbtn:hover{border-color:var(--pk);transform:translateX(2px)}
+.optbtn.ghost{color:var(--txd);border-style:dashed}
+.optbtn.sel-opt{border-color:var(--pk);color:#fff;background:linear-gradient(135deg,rgba(233,30,140,.25),rgba(233,30,140,.08));box-shadow:0 0 14px -5px rgba(233,30,140,.7)}
+.fx-set-lbl{font-family:var(--fmono);font-size:.58rem;letter-spacing:.1em;color:var(--txdd);margin:10px 0 6px}
+.fx-row-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
+.optbtn.opt-inline{width:auto;flex:1 1 auto;margin-bottom:0;padding:9px 10px;text-align:center;font-size:.74rem}
+.detail-cmd{border:1px solid var(--bd);border-radius:9px;padding:8px 11px;margin-bottom:8px;font-size:.74rem;
+  background:rgba(255,255,255,.02)}
+.detail-cmd .lbl{font-size:.56rem;color:var(--txdd);display:inline-block;min-width:30px;letter-spacing:.1em;font-family:var(--fmono);margin-right:4px}
+.detail-cmd b{display:block;margin-bottom:3px}
+.detail-cmd>div{margin-top:2px}
+.m-proto{font-size:.66rem;font-weight:500;padding:3px 9px;border-radius:6px;display:inline-block;margin:6px 0 4px}
+#logList{font-size:.7rem;color:var(--txd);line-height:1.7;max-height:60vh;overflow-y:auto;font-family:'Noto Sans JP',monospace}
+#logList .turn-mark{color:var(--pk2);font-weight:600;margin-top:6px;font-family:var(--fmono);letter-spacing:.04em}
+/* 効果フロートウインドウ */
+#fxFloat{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);z-index:48;display:none;
+  width:min(330px,86vw);background:linear-gradient(180deg,rgba(22,22,34,.98),rgba(12,12,20,.98));
+  border:1px solid var(--bd2);border-radius:14px;padding:13px 15px;pointer-events:none;
+  box-shadow:0 22px 60px -16px #000,0 0 0 1px rgba(255,255,255,.05),0 0 40px -10px var(--acg,rgba(233,30,140,.5))}
+#fxFloat.on{display:block;animation:fxin .22s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes fxin{from{opacity:0;transform:translate(-50%,-46%) scale(.88)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+#fxFloat .fx-card{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+#fxFloat .fx-badge{flex-shrink:0;min-width:30px;height:30px;padding:0 6px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--fmono);font-weight:900;font-size:1.1rem;color:#fff;border-radius:7px;
+  background:linear-gradient(160deg,var(--act),rgba(0,0,0,.3));border:1px solid var(--acg);text-shadow:0 0 10px var(--acg)}
+#fxFloat .fx-nm{flex:1;font-family:var(--fmono);font-weight:700;font-size:.82rem;letter-spacing:.03em;color:var(--ac);
+  text-shadow:0 0 12px var(--acg);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#fxFloat .fx-fire{flex-shrink:0;font-family:var(--fmono);font-weight:900;font-size:.6rem;letter-spacing:.1em;color:#fff;
+  padding:3px 8px;border-radius:999px;background:linear-gradient(135deg,var(--pk),#a3136a);box-shadow:0 0 14px -3px rgba(233,30,140,.9)}
+#fxFloat .fx-slots{display:flex;flex-direction:column;gap:5px}
+#fxFloat .fx-slot{border-radius:9px;padding:7px 11px;font-size:.72rem;line-height:1.45;border-left:3px solid;transition:opacity .2s}
+#fxFloat .fx-slot.dim{opacity:.34;filter:saturate(.6)}
+#fxFloat .fx-slot.active{box-shadow:0 0 0 1.5px currentColor,0 0 16px -4px currentColor}
+#fxFloat .fx-slot-lbl{font-family:var(--fmono);font-weight:700;font-size:.54rem;letter-spacing:.1em;display:block;margin-bottom:2px}
+#fxFloat .fx-tx{color:#e6e6f0}
+#fxFloat .fx-up{background:rgba(239,68,68,.13);border-color:#f87171;color:#f87171}
+#fxFloat .fx-mid{background:rgba(59,130,246,.14);border-color:#60a5fa;color:#60a5fa}
+#fxFloat .fx-low{background:rgba(34,197,94,.13);border-color:#4ade80;color:#4ade80}
+/* 移動中(コミット)カード: 効果解決の途中で盤面から離れているカードを浮遊表示 */
+#transitBar{position:fixed;left:50%;top:44%;transform:translateX(-50%);z-index:47;display:none;
+  flex-direction:column;gap:5px;align-items:center;pointer-events:none}
+#transitBar.on{display:flex;animation:fxin .2s ease}
+#transitBar .tr-lbl{font-family:var(--fmono);font-size:.56rem;font-weight:700;letter-spacing:.14em;
+  color:#ffd24a;text-shadow:0 0 10px rgba(255,210,74,.7)}
+#transitBar .tr-chip{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:9px;
+  background:linear-gradient(180deg,rgba(28,24,12,.97),rgba(16,14,8,.97));border:1.5px dashed #ffd24a;
+  box-shadow:0 12px 40px -10px #000,0 0 24px -6px rgba(255,210,74,.6)}
+#transitBar .tr-badge{min-width:24px;height:24px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--fmono);font-weight:900;font-size:.92rem;color:#fff;border-radius:6px;
+  background:rgba(255,210,74,.18);border:1px solid rgba(255,210,74,.6)}
+#transitBar .tr-nm{font-family:var(--fmono);font-weight:700;font-size:.74rem;color:#ffe9a8}
+#toast{position:fixed;bottom:92px;left:50%;transform:translateX(-50%);background:rgba(18,18,30,.97);
+  border:1px solid var(--bd2);border-radius:10px;padding:9px 20px;font-size:.76rem;z-index:99;display:none;max-width:90vw;
+  box-shadow:0 10px 30px -8px #000,0 0 0 1px rgba(233,30,140,.2)}
+/* プロトコル並び替え (横並びスワップ) */
+.arr-hint{font-size:.72rem;color:var(--txd);text-align:center;margin-bottom:8px;line-height:1.5}
+.arr-row{display:flex;gap:8px;margin:4px 0 12px;justify-content:center}
+.arr-slot{flex:1;min-width:0;border:1.5px solid var(--acg,var(--bd2));border-radius:10px;padding:12px 4px;text-align:center;
+  cursor:pointer;position:relative;background:linear-gradient(180deg,var(--act,rgba(255,255,255,.04)),transparent);
+  transition:transform .12s,box-shadow .2s}
+/* 並び替え対象の盤面プロトコルを強調 */
+.proto.arr-target{box-shadow:0 0 0 2px var(--pk),0 0 22px -4px rgba(233,30,140,.7);animation:arrpulse 1.1s ease-in-out infinite}
+@keyframes arrpulse{50%{box-shadow:0 0 0 2px var(--pk2),0 0 30px -2px rgba(233,30,140,.9)}}
+.arr-slot .pos{font-family:var(--fmono);font-size:.48rem;color:var(--txdd);display:block;margin-bottom:8px;letter-spacing:.12em}
+.arr-slot .pn{font-family:var(--fmono);font-weight:700;font-size:.6rem;letter-spacing:.04em;color:var(--ac,#fff);
+  text-shadow:0 0 10px var(--acg);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+.arr-slot.sel{box-shadow:0 0 0 2px var(--pk),0 0 18px -4px rgba(233,30,140,.7);transform:translateY(-3px)}
+.arr-slot.moved{border-style:dashed}
+#winPanel{text-align:center}
+#winPanel .wtitle{font-family:var(--fmono);font-weight:900;font-size:1.8rem;margin:16px 0;letter-spacing:.06em}
+@media (min-width:760px){
+  .chip{font-size:.74rem}
+  .chip .tx{font-size:.66rem}
+  .proto{font-size:.72rem}
+  #hand{justify-content:center}
+  .gauge{font-size:.66rem}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">COMPILE <b>AUTO</b></div>
+  <span id="ctrlBadge">CTRL</span>
+  <span id="turnBadge"></span>
+  <button class="hbtn" id="speedBtn" onclick="cycleSpeed()"></button>
+  <button class="hbtn" id="undoBtn" onclick="doUndo()">戻す</button>
+  <button class="hbtn" onclick="openLog()">ログ</button>
+  <button class="hbtn" onclick="openEditor()">編集</button>
+  <button class="hbtn" onclick="confirmNew()">新規</button>
+</header>
+
+<div id="msgBar" class="quiet"><span id="msgText"></span><span style="flex:1"></span>
+  <button class="mb-btn" id="animSkipBtn" style="display:none" onclick="flushPlayback()">⏩ 飛ばす</button>
+  <button class="mb-btn" id="skipBtn" style="display:none" onclick="reqSkip()">スキップ</button>
+  <button class="mb-btn pri" id="okBtn" style="display:none" onclick="reqConfirm()">確定</button>
+</div>
+
+<div id="ctrlTop" class="ctrlbar"><span class="ct-ico">◆</span><span class="ct-tx"></span></div>
+<main id="field"></main>
+<div id="ctrlBot" class="ctrlbar"><span class="ct-ico">◆</span><span class="ct-tx"></span></div>
+
+<!-- 選択中の確定/スキップ(親指で届く下部フローティング) -->
+<div id="actionBar">
+  <span id="abText"></span>
+  <button class="ab-btn" id="abSkip" onclick="reqSkip()">スキップ</button>
+  <button class="ab-btn pri" id="abOk" onclick="reqConfirm()">確定</button>
+</div>
+
+<div id="bottomBar">
+  <div id="turnLog" onclick="openLog()"></div>
+  <div id="sideInfo"></div>
+  <div id="hand"></div>
+</div>
+
+<!-- セットアップ -->
+<div class="ov on" id="setupOv"><div class="panel">
+  <h2>COMPILE <b>AUTO PLAY</b></h2>
+  <div class="sub">ルール・カード効果を完全自動処理。あなたのプロトコルを3つ選択してください(AIは残りからランダムに編成)。</div>
+  <div class="pgrid" id="protoGrid"></div>
+  <div class="row"><label><input type="checkbox" id="useCtrlCk" checked> コントロールコンポーネントを使う</label></div>
+  <button class="bigbtn" id="startBtn" disabled onclick="startGame()">対戦開始</button>
+</div></div>
+
+<!-- 汎用モーダル (選択肢 / リスト / 詳細 / 並べ替え) -->
+<div class="ov" id="modalOv"><div class="panel" id="modalPanel"></div></div>
+
+<!-- ログ -->
+<div class="ov" id="logOv" onclick="this.classList.remove('on')"><div class="panel" onclick="event.stopPropagation()">
+  <h2>LOG</h2><div id="logList"></div>
+</div></div>
+
+<!-- 勝敗 -->
+<div class="ov" id="winOv"><div class="panel" id="winPanel"></div></div>
+
+<!-- 効果フロートウインドウ -->
+<div id="fxFloat">
+  <div class="fx-card"><span class="fx-badge"></span><span class="fx-nm"></span><span class="fx-fire">⚡発動</span></div>
+  <div class="fx-slots"></div>
+</div>
+
+<!-- 移動中(コミット状態)のカード表示 -->
+<div id="transitBar"></div>
+
+<div id="toast"></div>
+
+<!-- INLINE:ASSETS:BEGIN — scripts/inline_assets.py が data/*.json と engine.js をここに埋め込む。手動編集禁止 -->
+<script>window.COMPILE_CARDS={"protocols":[{"name":"DARKNESS","displayName":"DARKNESS","tags":"手札維持／移動／操作","color":"#6A1B9A","set":"Main 1","cards":[{"id":"DARKNESS_1","number":1,"value":0,"upper":"","middle":"カードを3枚引く。相手の覆われているカードを1枚移動させる。","lower":"","effectTypes":["draw","shift"]},{"id":"DARKNESS_2","number":2,"value":1,"upper":"","middle":"相手のカードを1枚反転させる。あなたはそのカードを移動させることができる。","lower":"","effectTypes":["flip","shift"]},{"id":"DARKNESS_3","number":3,"value":2,"upper":"このスタックにあるすべての裏向きのカードの値はそれぞれ4になる。","middle":"このラインにある、覆われているカードを1枚反転させることができる。","lower":"","effectTypes":["flip"]},{"id":"DARKNESS_4","number":4,"value":3,"upper":"","middle":"他の1ラインにカードを裏向きで1枚プレイする。","lower":"","effectTypes":["play"]},{"id":"DARKNESS_5","number":5,"value":4,"upper":"","middle":"裏向きのカードを1枚移動させる。","lower":"","effectTypes":["shift"]},{"id":"DARKNESS_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"DEATH","displayName":"DEATH","tags":"削除／手札維持","color":"#37474F","set":"Main 1","cards":[{"id":"DEATH_1","number":1,"value":0,"upper":"","middle":"他の各ラインにあるカードを1枚ずつ削除する。","lower":"","effectTypes":["delete"],"codex":"【明確化】DEATH 0の中段コマンドが発動したとき、オーナーは処理が必要なラインを確認する。次に処理するラインを1つずつ選び、各ラインで覆われていないカードを1枚選んで削除し、その削除の結果を処理してから次のラインに移る。"},{"id":"DEATH_2","number":2,"value":1,"upper":"開始：カードを1枚引くことができる。そうした場合、他のカードを1枚削除し、そのあとこのカードを削除する。","middle":"","lower":"","effectTypes":["draw","delete"],"codex":"【エラッタ(2024/10)】上段コマンドは「開始：カードを1枚引くことができる。そうした場合、他のカードを1枚削除し、そのあとこのカードを削除する。」に修正。"},{"id":"DEATH_3","number":3,"value":2,"upper":"","middle":"1ラインを選び、そのラインの値が1か2どちらかのすべてのカードを削除する。","lower":"","effectTypes":["delete"]},{"id":"DEATH_4","number":4,"value":3,"upper":"","middle":"裏向きのカードを1枚削除する。","lower":"","effectTypes":["delete"]},{"id":"DEATH_5","number":5,"value":4,"upper":"","middle":"値が0か1のカードを1枚削除する。","lower":"","effectTypes":["delete"]},{"id":"DEATH_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"FIRE","displayName":"FIRE","tags":"捨て札にして効果を得る","color":"#E53935","set":"Main 1","cards":[{"id":"FIRE_1","number":1,"value":0,"upper":"","middle":"他のカードを1枚反転させる。カードを2枚引く。","lower":"このカードが覆われることになったとき：先にカードを1枚引き、他のカードを1枚反転させる。","effectTypes":["draw","flip"],"codex":"【エラッタ(2024/12)】下段コマンドは「このカードが覆われることになったとき：先に、カードを1枚引く。そのあと、他のカードを1枚反転させる。」に修正。"},{"id":"FIRE_2","number":2,"value":1,"upper":"","middle":"あなたは手札を1枚捨て札にする。そうした場合、カードを1枚削除する。","lower":"","effectTypes":["delete"]},{"id":"FIRE_3","number":3,"value":2,"upper":"","middle":"あなたは手札を1枚捨て札にする。そうした場合、カードを1枚戻す。","lower":"","effectTypes":["return"]},{"id":"FIRE_4","number":4,"value":3,"upper":"","middle":"","lower":"終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。","effectTypes":["flip"]},{"id":"FIRE_5","number":5,"value":4,"upper":"","middle":"あなたは手札があれば1枚以上捨て札にする。捨て札にした枚数＋1枚のカードを引く。","lower":"","effectTypes":["draw"]},{"id":"FIRE_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"GRAVITY","displayName":"GRAVITY","tags":"移動／反転／手札維持","color":"#5D4037","set":"Main 1","cards":[{"id":"GRAVITY_1","number":1,"value":0,"upper":"","middle":"このライン内にあるカード2枚ごとに、あなたのデッキの一番上のカード1枚をこのカードの下に裏向きでプレイする。","lower":"","effectTypes":["play"]},{"id":"GRAVITY_2","number":2,"value":1,"upper":"","middle":"カードを2枚引く。このラインから、またはこのラインへとカードを1枚移動させる。","lower":"","effectTypes":["draw","shift"]},{"id":"GRAVITY_3","number":3,"value":2,"upper":"","middle":"カードを1枚反転させる。そのカードをこのラインへと移動させる。","lower":"","effectTypes":["flip","shift"],"codex":"【明確化】GRAVITY 2は反転したカードが覆われていても移動させる。「そのカード」は特定のカードを指し、覆われたカードの操作制限より優先される。"},{"id":"GRAVITY_4","number":4,"value":4,"upper":"","middle":"裏向きのカードを1枚、このラインへと移動させる。","lower":"","effectTypes":["shift"]},{"id":"GRAVITY_5","number":5,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]},{"id":"GRAVITY_6","number":6,"value":6,"upper":"","middle":"相手は自分のデッキの一番上のカードをこのラインに裏向きで1枚プレイする。","lower":"","effectTypes":["play"]}]},{"name":"LIFE","displayName":"LIFE","tags":"反転／デッキの上からのプレイ／手札維持","color":"#43A047","set":"Main 1","cards":[{"id":"LIFE_1","number":1,"value":0,"upper":"終了：このカードが覆われている場合、このカードを削除する。","middle":"あなたのデッキの一番上のカードを、あなたのカードがある各ラインに裏向きで1枚ずつプレイする。","lower":"","effectTypes":["play"],"codex":"【エラッタ(2024/10)】上段コマンドは「終了：このカードが覆われている場合、このカードを削除する。」に修正。このカードは下段コマンドを持たない。\n【明確化】LIFE 0の中段コマンドが発動したとき、オーナーは処理が必要なラインを確認し、1つずつ処理する。LIFE 0がこの処理中に覆われた場合、中段コマンドは停止する。\n【明確化】デッキからカードをプレイする場合、デッキが空でもシャッフルは強制されない。"},{"id":"LIFE_2","number":2,"value":1,"upper":"","middle":"カード1枚を反転させる。カード1枚を反転させる。","lower":"","effectTypes":["flip"]},{"id":"LIFE_3","number":3,"value":2,"upper":"","middle":"カードを1枚引く。あなたは裏向きのカードを1枚反転させることができる。","lower":"","effectTypes":["draw","flip"]},{"id":"LIFE_4","number":4,"value":3,"upper":"","middle":"","lower":"このカードが覆われることになったとき：先にあなたのデッキの一番上のカードを他の1ラインに裏向きで1枚プレイする。","effectTypes":["play"]},{"id":"LIFE_5","number":5,"value":4,"upper":"","middle":"このカードが他のカードを覆っている場合、カードを1枚引く。","lower":"","effectTypes":["draw"]},{"id":"LIFE_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"LIGHT","displayName":"LIGHT","tags":"手札維持／反転／移動","color":"#FDD835","set":"Main 1","cards":[{"id":"LIGHT_1","number":1,"value":0,"upper":"","middle":"カードを1枚反転させる。そのカードの値に等しい枚数のカードを引く。","lower":"","effectTypes":["draw","flip"],"codex":"【明確化】中段コマンド「カードを1枚反転させる。そのカードの値に等しい枚数のカードを引く。」の処理：覆われていないカード1枚を選び反転させ、発動したテキストを処理する。その後、そのカードの現在の値に等しい枚数を引く。\n【裁定】選んだカードがプレイから除去された場合でも、「そのカード」で直接参照されるため、現在の値をチェックする。"},{"id":"LIGHT_2","number":2,"value":1,"upper":"","middle":"","lower":"終了：カードを1枚引く。","effectTypes":["draw"]},{"id":"LIGHT_3","number":3,"value":2,"upper":"","middle":"カードを2枚引く。裏向きのカードを1枚公開する。あなたは公開したカードを移動させるか反転させることができる。","lower":"","effectTypes":["draw","flip","shift"]},{"id":"LIGHT_4","number":4,"value":3,"upper":"","middle":"このラインにある裏向きのすべてのカードを、他の1ラインへと移動させる。","lower":"","effectTypes":["shift"],"codex":"【明確化】LIGHT 3で移動する裏向きのカードは、スタック内の相対的な位置を維持し、すべて同じラインに移動する。"},{"id":"LIGHT_5","number":5,"value":4,"upper":"","middle":"相手は自分の手札を公開する。","lower":"","effectTypes":["other"]},{"id":"LIGHT_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"METAL","displayName":"METAL","tags":"相手の妨害／手札維持／反転","color":"#78909C","set":"Main 1","cards":[{"id":"METAL_1","number":1,"value":0,"upper":"このラインでの相手の合計値は2減る。","middle":"カードを1枚反転させる。","lower":"","effectTypes":["flip"]},{"id":"METAL_2","number":2,"value":1,"upper":"","middle":"カードを2枚引く。相手は次の手番でコンパイルすることはできない。","lower":"","effectTypes":["draw"],"codex":"【エラッタ(2024/12)】中段コマンドは「カードを2枚引く。相手は次の手番でコンパイルすることはできない。」に修正。\n【明確化】METAL 1はテキストが見えている限り、相手の次の手番でコンパイルを防ぐ。プレイかリフレッシュを選ぶ必要がある。"},{"id":"METAL_3","number":3,"value":2,"upper":"相手はこのラインにカードを裏向きでプレイすることはできない。","middle":"","lower":"","effectTypes":["play"]},{"id":"METAL_4","number":4,"value":3,"upper":"","middle":"カードを1枚引く。カードが8枚以上ある、ほかの1ライン内のすべてのカードを削除する。","lower":"","effectTypes":["draw","delete"]},{"id":"METAL_5","number":5,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]},{"id":"METAL_6","number":6,"value":6,"upper":"このカードが覆われるか反転することになったとき：先にこのカードを削除する。","middle":"","lower":"","effectTypes":["flip"],"codex":"【明確化】METAL 6が上段コマンドで自身を削除した場合、覆っていたカードのテキストが発動するなら、コミットされたカードがフィールドに入る前に発動する。\n【明確化】METAL 6が反転の結果として自身を削除した場合、「反転」コマンドは消費され、他のカードや捨て札のMETAL 6には使えない。"}]},{"name":"PLAGUE","displayName":"PLAGUE","tags":"捨て札の強制／反転","color":"#827717","set":"Main 1","cards":[{"id":"PLAGUE_1","number":1,"value":0,"upper":"","middle":"相手は手札を1枚捨て札にする。","lower":"相手はこのラインにカードをプレイすることはできない。","effectTypes":["discard","play"]},{"id":"PLAGUE_2","number":2,"value":1,"upper":"相手が手札を捨て札にしたあと：カードを1枚引く。","middle":"相手は手札を1枚捨て札にする。","lower":"","effectTypes":["draw","discard"]},{"id":"PLAGUE_3","number":3,"value":2,"upper":"","middle":"あなたは手札があれば1枚以上捨て札にする。相手はあなたが捨て札にした枚数＋1枚の手札を捨て札にする。","lower":"","effectTypes":["discard"]},{"id":"PLAGUE_4","number":4,"value":3,"upper":"","middle":"覆われていない、表向きの他のカードを反転させる。","lower":"","effectTypes":["flip"],"codex":"【エラッタ(2025/9)】中段コマンドは「覆われていない、表向きの他のカードをそれぞれ反転させる。」に修正。機能に変更はないが、意図をより明確にした。\n【明確化】「all」ではなく「each」なので、覆われていないカードのみが対象。発動時、覆われていない表向きのカードをそれぞれ確認し、1枚ずつ処理する。"},{"id":"PLAGUE_5","number":5,"value":4,"upper":"","middle":"","lower":"終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。","effectTypes":["delete","flip"]},{"id":"PLAGUE_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"PSYCHIC","displayName":"PSYCHIC","tags":"手札維持／操作／移動","color":"#7E57C2","set":"Main 1","cards":[{"id":"PSYCHIC_1","number":1,"value":0,"upper":"","middle":"カードを2枚引く。相手は自分の手札を2枚捨て札にして、そのあと相手は手札を公開する。","lower":"","effectTypes":["draw","discard"]},{"id":"PSYCHIC_2","number":2,"value":1,"upper":"相手はカードを裏向きでのみプレイすることができる。","middle":"","lower":"開始：このカードを反転させる。","effectTypes":["other"]},{"id":"PSYCHIC_3","number":3,"value":2,"upper":"","middle":"相手は自分の手札を2枚捨て札にする。あなたは相手のプロトコルを並べ替える。","lower":"","effectTypes":["rearrange","discard"]},{"id":"PSYCHIC_4","number":4,"value":3,"upper":"","middle":"相手は手札を1枚捨て札にする。あなたは相手のカードを1枚移動させる。","lower":"","effectTypes":["shift","discard"]},{"id":"PSYCHIC_5","number":5,"value":4,"upper":"","middle":"","lower":"終了：あなたは相手のカードを1枚戻すことができる。そうした場合、このカードを反転させる。","effectTypes":["flip","return"]},{"id":"PSYCHIC_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"SPEED","displayName":"SPEED","tags":"手札維持／プレイ／移動","color":"#FF8F00","set":"Main 1","cards":[{"id":"SPEED_1","number":1,"value":0,"upper":"","middle":"カードを1枚プレイする。","lower":"","effectTypes":["play"]},{"id":"SPEED_2","number":2,"value":1,"upper":"あなたがキャッシュをクリアしたあと：カードを1枚引く。","middle":"カードを2枚引く。","lower":"","effectTypes":["draw"]},{"id":"SPEED_3","number":3,"value":2,"upper":"このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。","middle":"","lower":"","effectTypes":["shift"],"codex":"【明確化】コンパイル時、ライン内のすべてのカードが同時に削除される。SPEED 2がこの方法で削除される場合、代わりに他のラインに移動させる。SPEED 2の削除のみが防がれ、コンパイル自体は変更されない。"},{"id":"SPEED_4","number":4,"value":3,"upper":"","middle":"あなたの他のカードを1枚移動させる。","lower":"終了：あなたは自分のカードを1枚移動させることができる。そうした場合、このカードを反転させる。","effectTypes":["flip","shift"]},{"id":"SPEED_5","number":5,"value":4,"upper":"","middle":"相手の裏向きのカードを1枚移動させる。","lower":"","effectTypes":["shift"]},{"id":"SPEED_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"SPIRIT","displayName":"SPIRIT","tags":"反転／移動／手札維持","color":"#26C6DA","set":"Main 1","cards":[{"id":"SPIRIT_1","number":1,"value":0,"upper":"","middle":"リフレッシュする。カードを1枚引く。","lower":"あなたのキャッシュの確認フェイズを省略する。","effectTypes":["draw"],"codex":"【明確化】リフレッシュの指示に従う場合、コントロールコンポーネントの使用を含む通常のリフレッシュアクションとなる。"},{"id":"SPIRIT_2","number":2,"value":1,"upper":"あなたがカードを表向きでプレイするときには、プロトコルを対応させずにプレイすることができる。","middle":"カードを1枚引く。","lower":"開始：あなたは手札を1枚捨て札にするか、このカードを反転させる。","effectTypes":["draw","flip","play"],"codex":"【エラッタ(2024/10)】上段コマンドは「あなたがカードを表向きでプレイするときには、プロトコルを対応させずにプレイすることができる。」に修正。"},{"id":"SPIRIT_3","number":3,"value":2,"upper":"","middle":"あなたはカードを1枚反転させることができる。","lower":"","effectTypes":["flip"]},{"id":"SPIRIT_4","number":4,"value":3,"upper":"あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。","middle":"","lower":"","effectTypes":["shift"]},{"id":"SPIRIT_5","number":5,"value":4,"upper":"","middle":"あなたのプロトコルのうち2枚の位置を入れ替える。","lower":"","effectTypes":["rearrange"]},{"id":"SPIRIT_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"WATER","displayName":"WATER","tags":"戻す、手札維持、反転","color":"#1E88E5","set":"Main 1","cards":[{"id":"WATER_1","number":1,"value":0,"upper":"","middle":"他のカードを1枚反転させる。このカードを反転させる。","lower":"","effectTypes":["flip"]},{"id":"WATER_2","number":2,"value":1,"upper":"","middle":"あなたのデッキの一番上のカードを、他の各ラインに裏向きで1枚ずつプレイする。","lower":"","effectTypes":["play"],"codex":"【明確化】WATER 1の中段コマンドが発動したとき、オーナーは処理が必要なラインを確認し、1つずつ処理する。\n【明確化】デッキからカードをプレイする場合、デッキが空でもシャッフルは強制されない。"},{"id":"WATER_3","number":3,"value":2,"upper":"","middle":"カードを2枚引く。あなたのプロトコルを並べ替える。","lower":"","effectTypes":["draw","rearrange"]},{"id":"WATER_4","number":4,"value":3,"upper":"","middle":"1ラインを選び、そのラインの値が2のすべてのカードを戻す。","lower":"","effectTypes":["return"]},{"id":"WATER_5","number":5,"value":4,"upper":"","middle":"あなたのカードを1枚戻す。","lower":"","effectTypes":["return"]},{"id":"WATER_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"APATHY","displayName":"APATHY","tags":"裏向きへの反転","color":"#9E9E9E","set":"Aux 1","cards":[{"id":"APATHY_1","number":1,"value":0,"upper":"このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。","middle":"","lower":"","effectTypes":["other"]},{"id":"APATHY_2","number":2,"value":1,"upper":"","middle":"このラインにある他のすべての表向きのカードを同時に反転させる。","lower":"","effectTypes":["flip"]},{"id":"APATHY_3","number":3,"value":2,"upper":"このラインにあるカードのすべての中段コマンドを無視する。","middle":"","lower":"このカードが覆われることになったとき：先に、このカードを反転させる。","effectTypes":["flip"]},{"id":"APATHY_4","number":4,"value":3,"upper":"","middle":"相手の表向きのカードを１枚反転させる。","lower":"","effectTypes":["flip"]},{"id":"APATHY_5","number":5,"value":4,"upper":"","middle":"表向きで覆われているあなたのカード１枚を反転させることができる。","lower":"","effectTypes":["flip"]},{"id":"APATHY_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"HATE","displayName":"HATE","tags":"互いの削除","color":"#B71C1C","set":"Aux 1","cards":[{"id":"HATE_1","number":1,"value":0,"upper":"","middle":"カードを１枚削除する。","lower":"","effectTypes":["delete"]},{"id":"HATE_2","number":2,"value":1,"upper":"","middle":"あなたは手札を３枚捨て札にする。カードを１枚削除する。カードを１枚削除する。","lower":"","effectTypes":["delete"]},{"id":"HATE_3","number":3,"value":2,"upper":"","middle":"値が最も大きく覆われていないあなたのカードを１枚削除する。値が最も大きく覆われていない相手のカードを１枚削除する。","lower":"","effectTypes":["delete"],"codex":"【エラッタ(2024/10)】中段コマンドは「値が最も大きく覆われていないあなたのカードを1枚削除する。値が最も大きく覆われていない相手のカードを1枚削除する。」に修正。\n【明確化】最大値が同値の場合、プレイヤーが1枚を選ぶ。\n【明確化】HATE 2があなたの最大値カードである場合、最初の条件で自身を削除する。その結果、2番目の条件は発動しない。"},{"id":"HATE_4","number":4,"value":3,"upper":"あなたがカードを１枚削除したあと：カードを１枚引く。","middle":"","lower":"","effectTypes":["draw","delete"]},{"id":"HATE_5","number":5,"value":4,"upper":"","middle":"","lower":"このカードが覆われることになったとき：先に、このラインにある値が最も小さく覆われているカードを１枚削除する。","effectTypes":["delete"]},{"id":"HATE_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"LOVE","displayName":"LOVE","tags":"手札維持／供与／交換","color":"#EC407A","set":"Aux 1","cards":[{"id":"LOVE_1","number":1,"value":1,"upper":"","middle":"あなたは相手のデッキの一番上のカードを引く。","lower":"終了：あなたの手札一枚を相手に与えることができる。そうした場合、カードを２枚引く。","effectTypes":["draw"]},{"id":"LOVE_2","number":2,"value":2,"upper":"","middle":"相手はカードを１枚引く。あなたはリフレッシュする。","lower":"","effectTypes":["draw"]},{"id":"LOVE_3","number":3,"value":3,"upper":"","middle":"あなたは相手の手札からランダムにカードを１枚引く。あなたの手札１枚を相手に与える。","lower":"","effectTypes":["draw"]},{"id":"LOVE_4","number":4,"value":4,"upper":"","middle":"あなたの手札１枚を公開する。カードを１枚反転させる。","lower":"","effectTypes":["flip"]},{"id":"LOVE_5","number":5,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]},{"id":"LOVE_6","number":6,"value":6,"upper":"","middle":"相手はカードを２枚引く。","lower":"","effectTypes":["draw"]}]}]};</script>
+<script>window.COMPILE_EFFECTS={"_meta":{"dslVersion":1,"spec":"docs/effects-dsl.md","source":"data/cards.json (公式エラッタ適用済み・番号は公式0-5を1-6に+1シフト)","notes":["_text は cards.json の原文コピー(検証スクリプトで照合)。","select のデフォルト: owner=any, facing=any, coverage=uncovered, zone=anywhere, count=1, mode=pick。","actor 省略時の行為者はカードの owner。player/actor=opp は相手が自分で選択・実行する。"]},"DARKNESS_1":{"middle":{"_text":"カードを3枚引く。相手の覆われているカードを1枚移動させる。","ops":[{"op":"draw","count":3},{"op":"shift","select":{"owner":"opp","coverage":"covered"}}]}},"DARKNESS_2":{"middle":{"_text":"相手のカードを1枚反転させる。あなたはそのカードを移動させることができる。","ops":[{"op":"flip","select":{"owner":"opp"},"bind":"t"},{"op":"shift","select":{"ref":"t"},"optional":true}]}},"DARKNESS_3":{"upper":{"_text":"このスタックにあるすべての裏向きのカードの値はそれぞれ4になる。","static":{"kind":"setValue","value":4,"filter":{"zone":"thisStack","facing":"down"}}},"middle":{"_text":"このラインにある、覆われているカードを1枚反転させることができる。","ops":[{"op":"flip","select":{"zone":"thisLine","coverage":"covered"},"optional":true}]}},"DARKNESS_4":{"middle":{"_text":"他の1ラインにカードを裏向きで1枚プレイする。","ops":[{"op":"play","source":"hand","facing":"down","dest":"otherLine"}]}},"DARKNESS_5":{"middle":{"_text":"裏向きのカードを1枚移動させる。","ops":[{"op":"shift","select":{"facing":"down"}}]}},"DARKNESS_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"DEATH_1":{"middle":{"_text":"他の各ラインにあるカードを1枚ずつ削除する。","ops":[{"op":"forEachLine","lines":"otherLines","ops":[{"op":"delete","select":{"zone":"currentLine"}}]}]}},"DEATH_2":{"upper":{"_text":"開始：カードを1枚引くことができる。そうした場合、他のカードを1枚削除し、そのあとこのカードを削除する。","trigger":{"on":"start","ops":[{"op":"draw","count":1,"optional":true},{"op":"ifDone","ops":[{"op":"delete","select":{"exclude":"thisCard"}},{"op":"delete","select":{"ref":"this"}}]}]}}},"DEATH_3":{"middle":{"_text":"1ラインを選び、そのラインの値が1か2どちらかのすべてのカードを削除する。","ops":[{"op":"delete","select":{"zone":"chosenLine","value":{"in":[1,2]},"mode":"all"}}]}},"DEATH_4":{"middle":{"_text":"裏向きのカードを1枚削除する。","ops":[{"op":"delete","select":{"facing":"down"}}]}},"DEATH_5":{"middle":{"_text":"値が0か1のカードを1枚削除する。","ops":[{"op":"delete","select":{"value":{"in":[0,1]}}}]}},"DEATH_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"FIRE_1":{"middle":{"_text":"他のカードを1枚反転させる。カードを2枚引く。","ops":[{"op":"flip","select":{"exclude":"thisCard"}},{"op":"draw","count":2}]},"lower":{"_text":"このカードが覆われることになったとき：先にカードを1枚引き、他のカードを1枚反転させる。","trigger":{"on":"wouldBeCovered","ops":[{"op":"draw","count":1},{"op":"flip","select":{"exclude":"thisCard"}}]}}},"FIRE_2":{"middle":{"_text":"あなたは手札を1枚捨て札にする。そうした場合、カードを1枚削除する。","ops":[{"op":"discard","count":1},{"op":"ifDone","ops":[{"op":"delete"}]}]}},"FIRE_3":{"middle":{"_text":"あなたは手札を1枚捨て札にする。そうした場合、カードを1枚戻す。","ops":[{"op":"discard","count":1},{"op":"ifDone","ops":[{"op":"return"}]}]}},"FIRE_4":{"lower":{"_text":"終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。","trigger":{"on":"end","ops":[{"op":"discard","count":1,"optional":true},{"op":"ifDone","ops":[{"op":"flip"}]}]}}},"FIRE_5":{"middle":{"_text":"あなたは手札があれば1枚以上捨て札にする。捨て札にした枚数＋1枚のカードを引く。","ops":[{"op":"discard","count":{"min":1,"max":"any"},"bind":"n"},{"op":"drawByCount","ref":"n","plus":1}]}},"FIRE_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"GRAVITY_1":{"middle":{"_text":"このライン内にあるカード2枚ごとに、あなたのデッキの一番上のカード1枚をこのカードの下に裏向きでプレイする。","ops":[{"op":"repeatPer","per":{"count":"cardsInThisLine","divisor":2},"ops":[{"op":"play","source":"topDeck","facing":"down","dest":"underThisCard"}]}]}},"GRAVITY_2":{"middle":{"_text":"カードを2枚引く。このラインから、またはこのラインへとカードを1枚移動させる。","ops":[{"op":"draw","count":2},{"op":"shift","dest":"fromOrToThisLine"}]}},"GRAVITY_3":{"middle":{"_text":"カードを1枚反転させる。そのカードをこのラインへと移動させる。","ops":[{"op":"flip","bind":"t"},{"op":"shift","select":{"ref":"t"},"dest":"thisLine"}]}},"GRAVITY_4":{"middle":{"_text":"裏向きのカードを1枚、このラインへと移動させる。","ops":[{"op":"shift","select":{"facing":"down"},"dest":"thisLine"}]}},"GRAVITY_5":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"GRAVITY_6":{"middle":{"_text":"相手は自分のデッキの一番上のカードをこのラインに裏向きで1枚プレイする。","ops":[{"op":"play","player":"opp","source":"topDeck","facing":"down","dest":"thisLine"}]}},"LIFE_1":{"upper":{"_text":"終了：このカードが覆われている場合、このカードを削除する。","trigger":{"on":"end","ops":[{"op":"ifState","cond":"thisCovered","ops":[{"op":"delete","select":{"ref":"this"}}]}]}},"middle":{"_text":"あなたのデッキの一番上のカードを、あなたのカードがある各ラインに裏向きで1枚ずつプレイする。","ops":[{"op":"forEachLine","lines":"linesWithYourCards","ops":[{"op":"play","source":"topDeck","facing":"down","dest":"currentLine"}]}]}},"LIFE_2":{"middle":{"_text":"カード1枚を反転させる。カード1枚を反転させる。","ops":[{"op":"flip"},{"op":"flip"}]}},"LIFE_3":{"middle":{"_text":"カードを1枚引く。あなたは裏向きのカードを1枚反転させることができる。","ops":[{"op":"draw","count":1},{"op":"flip","select":{"facing":"down"},"optional":true}]}},"LIFE_4":{"lower":{"_text":"このカードが覆われることになったとき：先にあなたのデッキの一番上のカードを他の1ラインに裏向きで1枚プレイする。","trigger":{"on":"wouldBeCovered","ops":[{"op":"play","source":"topDeck","facing":"down","dest":"otherLine"}]}}},"LIFE_5":{"middle":{"_text":"このカードが他のカードを覆っている場合、カードを1枚引く。","ops":[{"op":"ifState","cond":"thisCovers","ops":[{"op":"draw","count":1}]}]}},"LIFE_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"LIGHT_1":{"middle":{"_text":"カードを1枚反転させる。そのカードの値に等しい枚数のカードを引く。","ops":[{"op":"flip","bind":"t"},{"op":"drawByValue","ref":"t"}]}},"LIGHT_2":{"lower":{"_text":"終了：カードを1枚引く。","trigger":{"on":"end","ops":[{"op":"draw","count":1}]}}},"LIGHT_3":{"middle":{"_text":"カードを2枚引く。裏向きのカードを1枚公開する。あなたは公開したカードを移動させるか反転させることができる。","ops":[{"op":"draw","count":2},{"op":"reveal","select":{"facing":"down"},"bind":"t"},{"op":"choice","optional":true,"options":[[{"op":"shift","select":{"ref":"t"}}],[{"op":"flip","select":{"ref":"t"}}]]}]}},"LIGHT_4":{"middle":{"_text":"このラインにある裏向きのすべてのカードを、他の1ラインへと移動させる。","ops":[{"op":"shift","select":{"zone":"thisLine","facing":"down","mode":"all"},"dest":"oneOtherLine"}]}},"LIGHT_5":{"middle":{"_text":"相手は自分の手札を公開する。","ops":[{"op":"reveal","target":"oppHand"}]}},"LIGHT_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"METAL_1":{"upper":{"_text":"このラインでの相手の合計値は2減る。","static":{"kind":"modifyLineTotal","side":"opp","delta":-2}},"middle":{"_text":"カードを1枚反転させる。","ops":[{"op":"flip"}]}},"METAL_2":{"middle":{"_text":"カードを2枚引く。相手は次の手番でコンパイルすることはできない。","ops":[{"op":"draw","count":2},{"op":"noCompileNextTurn"}]}},"METAL_3":{"upper":{"_text":"相手はこのラインにカードを裏向きでプレイすることはできない。","static":{"kind":"playPermission","rule":"oppNoFaceDownThisLine"}}},"METAL_4":{"middle":{"_text":"カードを1枚引く。カードが8枚以上ある、ほかの1ライン内のすべてのカードを削除する。","ops":[{"op":"draw","count":1},{"op":"delete","select":{"zone":"otherLineWith8plus","mode":"all"}}]}},"METAL_5":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"METAL_6":{"upper":{"_text":"このカードが覆われるか反転することになったとき：先にこのカードを削除する。","trigger":{"on":"wouldBeCoveredOrFlipped","ops":[{"op":"delete","select":{"ref":"this"}}]}}},"PLAGUE_1":{"middle":{"_text":"相手は手札を1枚捨て札にする。","ops":[{"op":"discard","count":1,"player":"opp"}]},"lower":{"_text":"相手はこのラインにカードをプレイすることはできない。","static":{"kind":"playPermission","rule":"oppNoPlayThisLine"}}},"PLAGUE_2":{"upper":{"_text":"相手が手札を捨て札にしたあと：カードを1枚引く。","trigger":{"on":"afterOppDiscard","ops":[{"op":"draw","count":1}]}},"middle":{"_text":"相手は手札を1枚捨て札にする。","ops":[{"op":"discard","count":1,"player":"opp"}]}},"PLAGUE_3":{"middle":{"_text":"あなたは手札があれば1枚以上捨て札にする。相手はあなたが捨て札にした枚数＋1枚の手札を捨て札にする。","ops":[{"op":"discard","count":{"min":1,"max":"any"},"bind":"n"},{"op":"discard","player":"opp","countFrom":{"ref":"n","plus":1}}]}},"PLAGUE_4":{"middle":{"_text":"覆われていない、表向きの他のカードを反転させる。","ops":[{"op":"flip","select":{"facing":"up","coverage":"uncovered","exclude":"thisCard","mode":"each"}}]}},"PLAGUE_5":{"lower":{"_text":"終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。","trigger":{"on":"end","ops":[{"op":"delete","select":{"owner":"opp","facing":"down"},"actor":"opp"},{"op":"flip","select":{"ref":"this"},"optional":true}]}}},"PLAGUE_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"PSYCHIC_1":{"middle":{"_text":"カードを2枚引く。相手は自分の手札を2枚捨て札にして、そのあと相手は手札を公開する。","ops":[{"op":"draw","count":2},{"op":"discard","count":2,"player":"opp"},{"op":"reveal","target":"oppHand"}]}},"PSYCHIC_2":{"upper":{"_text":"相手はカードを裏向きでのみプレイすることができる。","static":{"kind":"playPermission","rule":"oppFaceDownOnly"}},"lower":{"_text":"開始：このカードを反転させる。","trigger":{"on":"start","ops":[{"op":"flip","select":{"ref":"this"}}]}}},"PSYCHIC_3":{"middle":{"_text":"相手は自分の手札を2枚捨て札にする。あなたは相手のプロトコルを並べ替える。","ops":[{"op":"discard","count":2,"player":"opp"},{"op":"rearrange","whose":"opp"}]}},"PSYCHIC_4":{"middle":{"_text":"相手は手札を1枚捨て札にする。あなたは相手のカードを1枚移動させる。","ops":[{"op":"discard","count":1,"player":"opp"},{"op":"shift","select":{"owner":"opp"}}]}},"PSYCHIC_5":{"lower":{"_text":"終了：あなたは相手のカードを1枚戻すことができる。そうした場合、このカードを反転させる。","trigger":{"on":"end","ops":[{"op":"return","select":{"owner":"opp"},"optional":true},{"op":"ifDone","ops":[{"op":"flip","select":{"ref":"this"}}]}]}}},"PSYCHIC_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"SPEED_1":{"middle":{"_text":"カードを1枚プレイする。","ops":[{"op":"play","source":"hand"}]}},"SPEED_2":{"upper":{"_text":"あなたがキャッシュをクリアしたあと：カードを1枚引く。","trigger":{"on":"afterYouClearCache","ops":[{"op":"draw","count":1}]}},"middle":{"_text":"カードを2枚引く。","ops":[{"op":"draw","count":2}]}},"SPEED_3":{"upper":{"_text":"このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。","trigger":{"on":"wouldBeDeletedByCompile","replace":true,"ops":[{"op":"shift","select":{"ref":"this"}}]}}},"SPEED_4":{"middle":{"_text":"あなたの他のカードを1枚移動させる。","ops":[{"op":"shift","select":{"owner":"self","exclude":"thisCard"}}]},"lower":{"_text":"終了：あなたは自分のカードを1枚移動させることができる。そうした場合、このカードを反転させる。","trigger":{"on":"end","ops":[{"op":"shift","select":{"owner":"self"},"optional":true},{"op":"ifDone","ops":[{"op":"flip","select":{"ref":"this"}}]}]}}},"SPEED_5":{"middle":{"_text":"相手の裏向きのカードを1枚移動させる。","ops":[{"op":"shift","select":{"owner":"opp","facing":"down"}}]}},"SPEED_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"SPIRIT_1":{"middle":{"_text":"リフレッシュする。カードを1枚引く。","ops":[{"op":"refresh"},{"op":"draw","count":1}]},"lower":{"_text":"あなたのキャッシュの確認フェイズを省略する。","static":{"kind":"skipCheckCache"}}},"SPIRIT_2":{"upper":{"_text":"あなたがカードを表向きでプレイするときには、プロトコルを対応させずにプレイすることができる。","static":{"kind":"playPermission","rule":"youFaceUpAnyLine"}},"middle":{"_text":"カードを1枚引く。","ops":[{"op":"draw","count":1}]},"lower":{"_text":"開始：あなたは手札を1枚捨て札にするか、このカードを反転させる。","trigger":{"on":"start","ops":[{"op":"choice","options":[[{"op":"discard","count":1}],[{"op":"flip","select":{"ref":"this"}}]]}]}}},"SPIRIT_3":{"middle":{"_text":"あなたはカードを1枚反転させることができる。","ops":[{"op":"flip","optional":true}]}},"SPIRIT_4":{"upper":{"_text":"あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。","trigger":{"on":"afterYouDraw","ops":[{"op":"shift","select":{"ref":"this"},"optional":true}]}}},"SPIRIT_5":{"middle":{"_text":"あなたのプロトコルのうち2枚の位置を入れ替える。","ops":[{"op":"swapProtocols","whose":"self"}]}},"SPIRIT_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"WATER_1":{"middle":{"_text":"他のカードを1枚反転させる。このカードを反転させる。","ops":[{"op":"flip","select":{"exclude":"thisCard"}},{"op":"flip","select":{"ref":"this"}}]}},"WATER_2":{"middle":{"_text":"あなたのデッキの一番上のカードを、他の各ラインに裏向きで1枚ずつプレイする。","ops":[{"op":"forEachLine","lines":"otherLines","ops":[{"op":"play","source":"topDeck","facing":"down","dest":"currentLine"}]}]}},"WATER_3":{"middle":{"_text":"カードを2枚引く。あなたのプロトコルを並べ替える。","ops":[{"op":"draw","count":2},{"op":"rearrange","whose":"self"}]}},"WATER_4":{"middle":{"_text":"1ラインを選び、そのラインの値が2のすべてのカードを戻す。","ops":[{"op":"return","select":{"zone":"chosenLine","value":{"eq":2},"mode":"all"}}]}},"WATER_5":{"middle":{"_text":"あなたのカードを1枚戻す。","ops":[{"op":"return","select":{"owner":"self"}}]}},"WATER_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"APATHY_1":{"upper":{"_text":"このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。","static":{"kind":"modifyLineTotal","side":"self","deltaPer":{"zone":"thisLine","facing":"down"}}}},"APATHY_2":{"middle":{"_text":"このラインにある他のすべての表向きのカードを同時に反転させる。","ops":[{"op":"flip","select":{"zone":"thisLine","facing":"up","exclude":"thisCard","mode":"all"}}]}},"APATHY_3":{"upper":{"_text":"このラインにあるカードのすべての中段コマンドを無視する。","static":{"kind":"ignoreMiddle","zone":"thisLine"}},"lower":{"_text":"このカードが覆われることになったとき：先に、このカードを反転させる。","trigger":{"on":"wouldBeCovered","ops":[{"op":"flip","select":{"ref":"this"}}]}}},"APATHY_4":{"middle":{"_text":"相手の表向きのカードを１枚反転させる。","ops":[{"op":"flip","select":{"owner":"opp","facing":"up"}}]}},"APATHY_5":{"middle":{"_text":"表向きで覆われているあなたのカード１枚を反転させることができる。","ops":[{"op":"flip","select":{"owner":"self","facing":"up","coverage":"covered"},"optional":true}]}},"APATHY_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"HATE_1":{"middle":{"_text":"カードを１枚削除する。","ops":[{"op":"delete"}]}},"HATE_2":{"middle":{"_text":"あなたは手札を３枚捨て札にする。カードを１枚削除する。カードを１枚削除する。","ops":[{"op":"discard","count":3},{"op":"delete"},{"op":"delete"}]}},"HATE_3":{"middle":{"_text":"値が最も大きく覆われていないあなたのカードを１枚削除する。値が最も大きく覆われていない相手のカードを１枚削除する。","ops":[{"op":"delete","select":{"owner":"self","value":"highest"}},{"op":"delete","select":{"owner":"opp","value":"highest"}}]}},"HATE_4":{"upper":{"_text":"あなたがカードを１枚削除したあと：カードを１枚引く。","trigger":{"on":"afterYouDelete","ops":[{"op":"draw","count":1}]}}},"HATE_5":{"lower":{"_text":"このカードが覆われることになったとき：先に、このラインにある値が最も小さく覆われているカードを１枚削除する。","trigger":{"on":"wouldBeCovered","ops":[{"op":"delete","select":{"zone":"thisLine","coverage":"covered","value":"lowest"}}]}}},"HATE_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"LOVE_1":{"middle":{"_text":"あなたは相手のデッキの一番上のカードを引く。","ops":[{"op":"draw","count":1,"fromOppDeck":true}]},"lower":{"_text":"終了：あなたの手札一枚を相手に与えることができる。そうした場合、カードを２枚引く。","trigger":{"on":"end","ops":[{"op":"giveCard","count":1,"optional":true},{"op":"ifDone","ops":[{"op":"draw","count":2}]}]}}},"LOVE_2":{"middle":{"_text":"相手はカードを１枚引く。あなたはリフレッシュする。","ops":[{"op":"draw","count":1,"player":"opp"},{"op":"refresh"}]}},"LOVE_3":{"middle":{"_text":"あなたは相手の手札からランダムにカードを１枚引く。あなたの手札１枚を相手に与える。","ops":[{"op":"takeRandom"},{"op":"giveCard","count":1}]}},"LOVE_4":{"middle":{"_text":"あなたの手札１枚を公開する。カードを１枚反転させる。","ops":[{"op":"reveal","target":"ownHandCard"},{"op":"flip"}]}},"LOVE_5":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"LOVE_6":{"middle":{"_text":"相手はカードを２枚引く。","ops":[{"op":"draw","count":2,"player":"opp"}]}}};</script>
+<script>
+/* =========================================================================
+ * Compile ルールエンジン
+ *   仕様: docs/rules-spec.md / docs/effects-dsl.md
+ *   - 純粋関数 API: apply(state, action) -> { state, requests, log, winner }
+ *   - 選択が必要な地点で request を返して停止し、{type:"choose"} で再開する。
+ *     再開は「基準状態 + 選択列のリプレイ」で実現する(シード付き乱数で決定的)。
+ *   - ブラウザ: window.CompileEngine / Node: module.exports
+ * ========================================================================= */
+(function (global) {
+'use strict';
+
+/* ---------- ユーティリティ ---------- */
+
+function clone(o) {
+  return (typeof structuredClone === 'function') ? structuredClone(o) : JSON.parse(JSON.stringify(o));
+}
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    var t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function rand(st) { const f = mulberry32((st.seed | 0) + st.rngN * 0x9E3779B9); st.rngN++; return f(); }
+function shuffle(st, arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(rand(st) * (i + 1));
+    const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+  }
+}
+
+/* ---------- カード定義データ ---------- */
+
+let DEFS = null;     // defId -> {id, proto, value, eff}
+let PROTOS = null;   // protoName -> [defId x6]
+
+function init(cardsJson, effectsJson) {
+  DEFS = {}; PROTOS = {};
+  for (const p of cardsJson.protocols) {
+    PROTOS[p.name] = [];
+    for (const c of p.cards) {
+      DEFS[c.id] = { id: c.id, proto: p.name, value: c.value, eff: (effectsJson && effectsJson[c.id]) || {} };
+      PROTOS[p.name].push(c.id);
+    }
+  }
+}
+
+/* ---------- 状態アクセスヘルパ ---------- */
+
+function locate(st, uid) {
+  for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++) {
+    const idx = st.lines[l][s].indexOf(uid);
+    if (idx >= 0) return { line: l, side: s, idx };
+  }
+  return null;
+}
+function isTop(st, loc) { return loc.idx === st.lines[loc.line][loc.side].length - 1; }
+function defOf(st, uid) { return DEFS[st.cards[uid].def]; }
+function removeFrom(arr, x) { const i = arr.indexOf(x); if (i >= 0) arr.splice(i, 1); return i >= 0; }
+
+/* トレース: log 1行ごとに盤面スナップショットを記録 (UI のステップ再生用)。
+   setTrace(true) で有効化。テストや AI のロールアウトでは無効のまま */
+let TRACE = false;
+function setTrace(v) { TRACE = !!v; }
+
+function log(ctx, msg, uid) {
+  ctx.log.push(msg);
+  ctx.st.actionLog.push(msg);
+  if (ctx.st.actionLog.length > 300) ctx.st.actionLog.shift();
+  if (TRACE && ctx.trace) ctx.trace.push({ msg, uid: uid || null, st: clone(ctx.st) });
+}
+
+/* ---------- 常在効果(static) ---------- */
+
+/* static は { uid, line, sideIdx(スタック側), ...DSL定義 } の形で列挙する。
+   DSL の side("self"/"opp") はスタック側 index と衝突しないよう sideIdx を別に持つ */
+function activeStatics(st) {
+  const out = [];
+  for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++) {
+    const stack = st.lines[l][s];
+    for (let i = 0; i < stack.length; i++) {
+      const uid = stack[i], c = st.cards[uid];
+      if (!c.faceUp) continue;
+      const eff = DEFS[c.def].eff, top = i === stack.length - 1;
+      if (eff.upper && eff.upper.static) out.push(Object.assign({}, eff.upper.static, { uid, line: l, sideIdx: s }));
+      if (top && eff.lower && eff.lower.static) out.push(Object.assign({}, eff.lower.static, { uid, line: l, sideIdx: s }));
+    }
+  }
+  return out;
+}
+
+function cardValue(st, uid) {
+  const c = st.cards[uid];
+  const loc = locate(st, uid);
+  if (!loc) {
+    // 場外: trash は表向き=印刷値、それ以外(deck/hand)は非公開=2 (Light 0 裁定)
+    return (c.zone.indexOf('trash') === 0) ? DEFS[c.def].value : 2;
+  }
+  let v = c.faceUp ? DEFS[c.def].value : 2;
+  for (const s of activeStatics(st)) {
+    if (s.kind === 'setValue' && s.filter.zone === 'thisStack'
+        && s.line === loc.line && s.sideIdx === loc.side
+        && (s.filter.facing === 'any' || (s.filter.facing === 'down') === !c.faceUp)) {
+      v = s.value;
+    }
+  }
+  return v;
+}
+
+function lineTotal(st, line, side) {
+  let t = 0;
+  for (const uid of st.lines[line][side]) t += cardValue(st, uid);
+  for (const s of activeStatics(st)) {
+    if (s.kind !== 'modifyLineTotal' || s.line !== line) continue;
+    const affect = (s.side === 'self') ? s.sideIdx : 1 - s.sideIdx;
+    if (affect !== side) continue;
+    if (typeof s.delta === 'number') t += s.delta;
+    if (s.deltaPer) {
+      let n = 0;
+      for (let p = 0; p < 2; p++) for (const uid of st.lines[line][p]) if (!st.cards[uid].faceUp) n++;
+      t += n;
+    }
+  }
+  return t;
+}
+
+/* ---------- プレイ許可 ---------- */
+
+function canPlay(st, player, uid, line, faceUp) {
+  for (const s of activeStatics(st)) {
+    if (s.kind !== 'playPermission') continue;
+    if (s.rule === 'oppNoPlayThisLine' && player !== s.sideIdx && line === s.line) return false;
+    if (s.rule === 'oppNoFaceDownThisLine' && player !== s.sideIdx && line === s.line && !faceUp) return false;
+    if (s.rule === 'oppFaceDownOnly' && player !== s.sideIdx && faceUp) return false;
+  }
+  if (faceUp) {
+    let needMatch = true;
+    for (const s of activeStatics(st)) {
+      if (s.kind === 'playPermission' && s.rule === 'youFaceUpAnyLine' && s.sideIdx === player) needMatch = false;
+    }
+    if (needMatch) {
+      const names = [st.players[0].protocols[line].name, st.players[1].protocols[line].name];
+      if (names.indexOf(defOf(st, uid).proto) < 0) return false;
+    }
+  }
+  return true;
+}
+
+function ignoreMiddleAt(st, line) {
+  return activeStatics(st).some(s => s.kind === 'ignoreMiddle' && s.line === line);
+}
+function skipCacheFor(st, side) {
+  return activeStatics(st).some(s => s.kind === 'skipCheckCache' && s.sideIdx === side);
+}
+
+/* ---------- 選択(request / 再開) ---------- */
+
+function choose(ctx, req) {
+  ctx.qn++;
+  req.id = 'q' + ctx.qn;
+  if (ctx.ci < ctx.choices.length) {
+    const picks = ctx.choices[ctx.ci++];
+    validatePicks(req, picks);
+    return picks;
+  }
+  throw { __suspend: req };
+}
+
+function validatePicks(req, picks) {
+  if (!Array.isArray(picks)) bad('picks は配列であること');
+  const k = req.kind;
+  if (k === 'pickCard' || k === 'pickHand') {
+    const min = req.min !== undefined ? req.min : 1;
+    const max = req.max !== undefined ? req.max : 1;
+    if (picks.length < min || picks.length > max) bad(`選択数が不正 (要 ${min}..${max})`);
+    for (const p of picks) if (req.candidates.indexOf(p) < 0) bad('候補外の選択: ' + p);
+    if (new Set(picks).size !== picks.length) bad('重複選択');
+  } else if (k === 'pickLine') {
+    if (picks.length !== 1 || req.lines.indexOf(picks[0]) < 0) bad('ライン選択が不正');
+  } else if (k === 'option') {
+    if (req.optional && picks.length === 0) return;
+    if (picks.length !== 1 || typeof picks[0] !== 'number' || picks[0] < 0 || picks[0] >= req.options.length) bad('選択肢が不正');
+  } else if (k === 'yesNo') {
+    if (picks.length > 1) bad('yes/no 選択が不正');
+  } else if (k === 'arrange') {
+    if (picks.length !== 3 || [0, 1, 2].some(i => picks.indexOf(i) < 0)) bad('並べ替えが不正');
+    if (picks[0] === 0 && picks[1] === 1 && picks[2] === 2) bad('並べ替えは必ず変化させること');
+    if (req.exact === 'transposition') {
+      const moved = picks.filter((v, i) => v !== i).length;
+      if (moved !== 2) bad('2枚の入れ替えであること');
+    }
+  }
+  function bad(m) { throw { __err: m }; }
+}
+
+/* ---------- イベント / トリガー ---------- */
+
+function eventMatches(on, ev, cardSide) {
+  switch (on) {
+    case 'afterOppDiscard':    return ev.on === 'discard' && ev.player !== cardSide;
+    case 'afterYouDraw':       return ev.on === 'draw' && ev.player === cardSide;
+    case 'afterYouDelete':     return ev.on === 'delete' && ev.actor === cardSide;
+    case 'afterYouClearCache': return ev.on === 'clearCache' && ev.player === cardSide;
+    default: return false;
+  }
+}
+
+function collectListeners(st, ev) {
+  const out = [];
+  for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++) {
+    const stack = st.lines[l][s];
+    for (let i = 0; i < stack.length; i++) {
+      const uid = stack[i], c = st.cards[uid];
+      if (!c.faceUp) continue;
+      const eff = DEFS[c.def].eff, top = i === stack.length - 1;
+      for (const slot of ['upper', 'lower']) {
+        const tr = eff[slot] && eff[slot].trigger;
+        if (!tr) continue;
+        if (slot === 'lower' && !top) continue;
+        if (eventMatches(tr.on, ev, s)) out.push({ uid, slot });
+      }
+    }
+  }
+  return out;
+}
+
+function fireEvent(ctx, ev) {
+  if (ctx.depth > 80) throw { __err: '解決の深さ上限を超過 (無限ループの疑い)' };
+  ctx.depth++;
+  try {
+    let pendings = collectListeners(ctx.st, ev);
+    const fired = new Set();
+    while (true) {
+      pendings = pendings.filter(p => !fired.has(p.uid + p.slot) && triggerVisible(ctx.st, p.uid, p.slot));
+      if (!pendings.length) break;
+      let pick;
+      if (pendings.length === 1) pick = pendings[0];
+      else {
+        const ans = choose(ctx, {
+          kind: 'pickCard', player: ctx.st.turn, prompt: 'trigger-order',
+          candidates: pendings.map(p => p.uid), context: ev.on
+        });
+        pick = pendings.find(p => p.uid === ans[0]);
+      }
+      fired.add(pick.uid + pick.slot);
+      execTrigger(ctx, pick.uid, pick.slot);
+    }
+  } finally { ctx.depth--; }
+}
+
+function triggerVisible(st, uid, slot) {
+  const loc = locate(st, uid);
+  if (!loc) return false;
+  const c = st.cards[uid];
+  if (!c.faceUp) return false;
+  if (slot !== 'upper' && !isTop(st, loc)) return false;
+  return true;
+}
+
+function execTrigger(ctx, uid, slot) {
+  const loc = locate(st_of(ctx), uid);
+  if (!loc) return;
+  const tr = defOf(ctx.st, uid).eff[slot].trigger;
+  const fr = { source: uid, slot, controller: loc.side, line: loc.line, bind: {}, done: false };
+  log(ctx, `[${defOf(ctx.st, uid).id}] ${slot === 'upper' ? '上段' : '下段'}効果が発動`, uid);
+  execOps(ctx, fr, tr.ops);
+}
+function st_of(ctx) { return ctx.st; }
+
+/* wouldBeCovered / wouldBeCoveredOrFlipped の事前処理 */
+function fireWouldBeCovered(ctx, uid) {
+  const c = ctx.st.cards[uid];
+  if (!c.faceUp) return;
+  const eff = DEFS[c.def].eff;
+  for (const slot of ['upper', 'lower']) {
+    const tr = eff[slot] && eff[slot].trigger;
+    if (!tr) continue;
+    if (tr.on !== 'wouldBeCovered' && tr.on !== 'wouldBeCoveredOrFlipped') continue;
+    if (!triggerVisible(ctx.st, uid, slot)) continue;
+    execTrigger(ctx, uid, slot);
+  }
+}
+function fireWouldBeFlipped(ctx, uid) {
+  const c = ctx.st.cards[uid];
+  if (!c.faceUp) return;
+  const eff = DEFS[c.def].eff;
+  for (const slot of ['upper', 'lower']) {
+    const tr = eff[slot] && eff[slot].trigger;
+    if (!tr || tr.on !== 'wouldBeCoveredOrFlipped') continue;
+    if (!triggerVisible(ctx.st, uid, slot)) continue;
+    execTrigger(ctx, uid, slot);
+  }
+}
+
+/* ---------- カード移動プリミティブ ---------- */
+
+/* スタックからの離脱 (committed 化)。直下カードの uncover 結果を解決する */
+function extractCard(ctx, uid) {
+  const st = ctx.st;
+  const loc = locate(st, uid);
+  if (!loc) return false;
+  const stack = st.lines[loc.line][loc.side];
+  const wasTop = loc.idx === stack.length - 1;
+  stack.splice(loc.idx, 1);
+  st.cards[uid].zone = 'committed';
+  if (wasTop && stack.length) {
+    const nt = stack[stack.length - 1];
+    if (st.cards[nt].faceUp) resolveMiddle(ctx, nt, 'uncover');
+  }
+  return true;
+}
+
+function landTrash(ctx, uid) {
+  const c = ctx.st.cards[uid];
+  c.zone = 'trash' + c.owner;
+  c.faceUp = true;
+  ctx.st.players[c.owner].trash.push(uid);
+}
+function landHand(ctx, uid) {
+  const c = ctx.st.cards[uid];
+  c.zone = 'hand' + c.owner;
+  ctx.st.players[c.owner].hand.push(uid);
+}
+
+/* 表示用ラベル: 場/移動中の裏向きカードは秘匿情報なので名前を伏せる(L1) */
+function cardLabel(st, uid) {
+  const c = st.cards[uid];
+  if (c && !c.faceUp && (c.zone === 'field' || c.zone === 'committed')) return '裏向きカード';
+  return DEFS[c.def].id;
+}
+
+function doDelete(ctx, uid, actor) {
+  if (!locate(ctx.st, uid)) return false;
+  extractCard(ctx, uid);
+  landTrash(ctx, uid);                       // trash は表向き公開なので削除後に実名でよい
+  log(ctx, `${defOf(ctx.st, uid).id} を削除`, uid);
+  fireEvent(ctx, { on: 'delete', actor, count: 1 });
+  return true;
+}
+
+function doReturn(ctx, uid) {
+  if (!locate(ctx.st, uid)) return false;
+  const label = cardLabel(ctx.st, uid);      // 移動前にラベル確定(裏向きは伏せる)
+  extractCard(ctx, uid);
+  landHand(ctx, uid);
+  log(ctx, `${label} を手札に戻す`, uid);
+  return true;
+}
+
+function doFlip(ctx, uid) {
+  const st = ctx.st;
+  if (!locate(st, uid)) return false;
+  const c = st.cards[uid];
+  if (c.faceUp) {
+    fireWouldBeFlipped(ctx, uid);                  // METAL_6: 先に自己削除
+    if (!locate(st, uid)) return true;             // 反転は消費された扱い
+  }
+  c.faceUp = !c.faceUp;
+  log(ctx, `${DEFS[c.def].id} を${c.faceUp ? '表' : '裏'}に反転`, uid);
+  const loc = locate(st, uid);
+  if (c.faceUp && loc && isTop(st, loc)) resolveMiddle(ctx, uid, 'flip');
+  return true;
+}
+
+function doShift(ctx, uid, destLine) {
+  const st = ctx.st;
+  const loc = locate(st, uid);
+  if (!loc || loc.line === destLine) return false;
+  const side = loc.side;
+  const label = cardLabel(st, uid);            // L1: 裏向きは伏せる
+  const wasCovered = !isTop(st, loc);          // E2: 移動前に覆われていたか
+  // E3: コミット前に移動先を先に提示する
+  log(ctx, `${label} をライン${destLine + 1}へ移動`, uid);
+  extractCard(ctx, uid);                        // 移動元の uncover を解決
+  const dest = st.lines[destLine][side];
+  if (dest.length) fireWouldBeCovered(ctx, dest[dest.length - 1]);
+  dest.push(uid);
+  st.cards[uid].zone = 'field';
+  // E2: 覆われた状態から移動し、移動先で表向き・uncovered になったら中段が場に入る
+  const nloc = locate(st, uid);
+  if (wasCovered && st.cards[uid].faceUp && nloc && isTop(st, nloc)) resolveMiddle(ctx, uid, 'uncover');
+  return true;
+}
+
+/* プレイ(手札/デッキトップ → field)。belowUid 指定で「このカードの下」へ挿入 */
+function playToField(ctx, uid, line, side, faceUp, belowUid) {
+  const st = ctx.st;
+  const c = st.cards[uid];
+  removeFrom(st.players[0].hand, uid); removeFrom(st.players[1].hand, uid);
+  removeFrom(st.players[0].deck, uid); removeFrom(st.players[1].deck, uid);
+  c.zone = 'committed';
+  c.faceUp = faceUp;
+  const stack = st.lines[line][side];
+  if (belowUid) {
+    const i = stack.indexOf(belowUid);
+    stack.splice(i < 0 ? 0 : i, 0, uid);
+  } else {
+    if (stack.length) fireWouldBeCovered(ctx, stack[stack.length - 1]);
+    stack.push(uid);
+  }
+  c.zone = 'field';
+  log(ctx, `P${side + 1}: ${faceUp ? DEFS[c.def].id : 'カード'} をライン${line + 1}に${faceUp ? '表' : '裏'}でプレイ`, uid);
+  const loc = locate(st, uid);
+  if (faceUp && loc && isTop(st, loc)) resolveMiddle(ctx, uid, 'play');
+}
+
+function resolveMiddle(ctx, uid, why) {
+  const st = ctx.st;
+  const loc = locate(st, uid);
+  if (!loc) return;
+  if (ignoreMiddleAt(st, loc.line)) { log(ctx, `${defOf(st, uid).id} の中段は無視された`); return; }
+  const eff = DEFS[st.cards[uid].def].eff;
+  if (!eff.middle) return;
+  if (ctx.depth > 80) throw { __err: '解決の深さ上限を超過 (無限ループの疑い)' };
+  ctx.depth++;
+  try {
+    log(ctx, `[${defOf(st, uid).id}] 中段コマンド解決 (${why})`, uid);
+    const fr = { source: uid, slot: 'middle', controller: loc.side, line: loc.line, bind: {}, done: false };
+    execOps(ctx, fr, eff.middle.ops);
+  } finally { ctx.depth--; }
+}
+
+/* ---------- ドロー / 捨て札 ---------- */
+
+function drawCards(ctx, side, n, fromOpp) {
+  const st = ctx.st;
+  const src = fromOpp ? 1 - side : side;
+  let drawn = 0;
+  for (let i = 0; i < n; i++) {
+    const d = st.players[src];
+    if (!d.deck.length && d.trash.length) {
+      d.deck = d.trash; d.trash = [];
+      for (const u of d.deck) { st.cards[u].zone = 'deck' + src; st.cards[u].faceUp = false; }
+      shuffle(st, d.deck);
+      log(ctx, `P${src + 1}: トラッシュをシャッフルしてデッキを再構成`);
+    }
+    if (!d.deck.length) break;
+    const u = d.deck.shift();
+    const c = st.cards[u];
+    c.zone = 'hand' + side;
+    if (fromOpp) c.owner = side;
+    st.players[side].hand.push(u);
+    drawn++;
+  }
+  if (drawn) {
+    log(ctx, `P${side + 1}: ${drawn}枚ドロー${fromOpp ? '(相手のデッキから)' : ''}`);
+    fireEvent(ctx, { on: 'draw', player: side, count: drawn });
+  }
+  return drawn;
+}
+
+function discardCards(ctx, side, uids) {
+  const st = ctx.st;
+  for (const u of uids) {
+    removeFrom(st.players[side].hand, u);
+    landTrash(ctx, u);
+  }
+  if (uids.length) {
+    log(ctx, `P${side + 1}: ${uids.length}枚捨て札`);
+    fireEvent(ctx, { on: 'discard', player: side, count: uids.length });
+  }
+  return uids.length;
+}
+
+/* 枚数指定の捨て札 (選択込み)。戻り値: 捨てた枚数 */
+function discardN(ctx, side, min, max, promptCtx) {
+  const st = ctx.st;
+  const hand = st.players[side].hand;
+  min = Math.min(min, hand.length);
+  max = Math.min(max, hand.length);
+  if (max <= 0) return 0;
+  let picks;
+  if (hand.length === min && min === max) picks = hand.slice();
+  else picks = choose(ctx, { kind: 'pickHand', player: side, candidates: hand.slice(), min, max, prompt: 'discard', context: promptCtx });
+  return discardCards(ctx, side, picks);
+}
+
+/* ---------- 一括(all)処理 ---------- */
+
+function massRemove(ctx, uids, destKind, actor) {
+  const st = ctx.st;
+  const prevTops = {};
+  for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++) {
+    const stk = st.lines[l][s];
+    if (stk.length) prevTops[l + ':' + s] = stk[stk.length - 1];
+  }
+  const present = uids.filter(u => locate(st, u));
+  for (const u of present) {
+    const loc = locate(st, u);
+    st.lines[loc.line][loc.side].splice(loc.idx, 1);
+    st.cards[u].zone = 'committed';
+  }
+  for (const u of present) (destKind === 'trash' ? landTrash : landHand)(ctx, u);
+  if (present.length) log(ctx, `${present.length}枚を同時に${destKind === 'trash' ? '削除' : '手札に戻'}した`);
+  // 一括処理後、新たに uncovered になった表向きカードの中段が場に入る
+  let news = [];
+  for (const key in prevTops) {
+    const l = +key.split(':')[0], s = +key.split(':')[1];
+    const stk = st.lines[l][s];
+    if (!stk.length) continue;
+    const nt = stk[stk.length - 1];
+    if (nt !== prevTops[key] && st.cards[nt].faceUp) news.push(nt);
+  }
+  while (news.length) {
+    news = news.filter(u => { const lo = locate(st, u); return lo && isTop(st, lo) && st.cards[u].faceUp; });
+    if (!news.length) break;
+    let pick;
+    if (news.length === 1) pick = news[0];
+    else pick = choose(ctx, { kind: 'pickCard', player: st.turn, candidates: news.slice(), prompt: 'uncover-order' })[0];
+    removeFrom(news, pick);
+    resolveMiddle(ctx, pick, 'uncover');
+  }
+  if (destKind === 'trash' && present.length) fireEvent(ctx, { on: 'delete', actor, count: present.length });
+  return present.length;
+}
+
+/* ---------- リフレッシュ / コントロール / コンパイル ---------- */
+
+function useControlBenefit(ctx, side) {
+  const st = ctx.st;
+  if (!st.useControl || st.control !== side) return;
+  st.control = -1;
+  log(ctx, `P${side + 1}: コントロールを消費`);
+  const ans = choose(ctx, {
+    kind: 'option', player: side, optional: false, prompt: 'control-rearrange',
+    options: ['自分のプロトコルを並べ替える', '相手のプロトコルを並べ替える', '並べ替えない']
+  });
+  if (ans[0] === 0) doRearrange(ctx, side, side);
+  else if (ans[0] === 1) doRearrange(ctx, side, 1 - side);
+}
+
+function doRearrange(ctx, chooser, target, exact) {
+  const st = ctx.st;
+  const cur = st.players[target].protocols;
+  const ans = choose(ctx, {
+    kind: 'arrange', player: chooser, target, exact: exact || undefined,
+    current: cur.map(p => p.name), prompt: 'rearrange'
+  });
+  st.players[target].protocols = ans.map(i => cur[i]);
+  log(ctx, `P${target + 1} のプロトコルを並べ替え: ` + st.players[target].protocols.map(p => p.name).join('/'));
+}
+
+function doRefresh(ctx, side) {
+  const st = ctx.st;
+  if (st.players[side].hand.length >= 5) return false;
+  useControlBenefit(ctx, side);
+  drawCards(ctx, side, 5 - st.players[side].hand.length);
+  log(ctx, `P${side + 1}: リフレッシュ`);
+  return true;
+}
+
+function compilableLines(st, side) {
+  const out = [];
+  for (let l = 0; l < 3; l++) {
+    const mine = lineTotal(st, l, side), theirs = lineTotal(st, l, 1 - side);
+    if (mine >= 10 && mine > theirs) out.push(l);
+  }
+  return out;
+}
+
+function doCompile(ctx, side, line) {
+  const st = ctx.st;
+  log(ctx, `P${side + 1}: ライン${line + 1}をコンパイル`);
+  useControlBenefit(ctx, side);
+  // 置換効果 (SPEED_3): コンパイル削除の代わりに移動
+  for (let s = 0; s < 2; s++) {
+    for (const uid of st.lines[line][s].slice()) {
+      const c = st.cards[uid];
+      if (!c.faceUp) continue;
+      const eff = DEFS[c.def].eff;
+      const tr = eff.upper && eff.upper.trigger;
+      if (tr && tr.on === 'wouldBeDeletedByCompile') {
+        const dests = [0, 1, 2].filter(l2 => l2 !== line);
+        const ans = choose(ctx, { kind: 'pickLine', player: s, lines: dests, prompt: 'compile-replace-shift', context: DEFS[c.def].id });
+        const loc = locate(st, uid);
+        st.lines[loc.line][loc.side].splice(loc.idx, 1);
+        const dstack = st.lines[ans[0]][s];
+        if (dstack.length) fireWouldBeCovered(ctx, dstack[dstack.length - 1]);
+        dstack.push(uid);
+        log(ctx, `${DEFS[c.def].id} は削除の代わりにライン${ans[0] + 1}へ移動`);
+      }
+    }
+  }
+  // 全カード同時削除 (トリガーなし)
+  const removed = [];
+  for (let s = 0; s < 2; s++) {
+    for (const uid of st.lines[line][s]) { st.cards[uid].zone = 'committed'; removed.push(uid); }
+    st.lines[line][s] = [];
+  }
+  for (const uid of removed) landTrash(ctx, uid);
+  if (removed.length) fireEvent(ctx, { on: 'delete', actor: side, count: removed.length });
+  // プロトコル反転 / リコンパイル
+  const prot = st.players[side].protocols[line];
+  if (!prot.compiled) {
+    prot.compiled = true;
+    log(ctx, `P${side + 1}: ${prot.name} をコンパイル！`);
+    if (st.players[side].protocols.every(p => p.compiled)) {
+      st.winner = side;
+      log(ctx, `P${side + 1} の勝利！`);
+    }
+  } else {
+    log(ctx, `P${side + 1}: リコンパイル — 相手のデッキトップを獲得`);
+    drawCards(ctx, side, 1, true);
+  }
+}
+
+/* ---------- Start / End / Cache フェイズ ---------- */
+
+function doStartEnd(ctx, phase) {
+  const st = ctx.st;
+  const side = st.turn;
+  let noted = [];
+  for (let l = 0; l < 3; l++) {
+    const stack = st.lines[l][side];
+    for (let i = 0; i < stack.length; i++) {
+      const uid = stack[i], c = st.cards[uid];
+      if (!c.faceUp) continue;
+      const eff = DEFS[c.def].eff, top = i === stack.length - 1;
+      for (const slot of ['upper', 'lower']) {
+        const tr = eff[slot] && eff[slot].trigger;
+        if (!tr || tr.on !== phase) continue;
+        if (slot === 'lower' && !top) continue;
+        noted.push({ uid, slot });
+      }
+    }
+  }
+  while (noted.length) {
+    noted = noted.filter(p => {
+      const loc = locate(st, p.uid);
+      return loc && loc.side === side && triggerVisible(st, p.uid, p.slot);
+    });
+    if (!noted.length) break;
+    let pick;
+    if (noted.length === 1) pick = noted[0];
+    else {
+      const ans = choose(ctx, { kind: 'pickCard', player: side, candidates: noted.map(p => p.uid), prompt: phase + '-order' });
+      pick = noted.find(p => p.uid === ans[0]);
+    }
+    noted.splice(noted.indexOf(pick), 1);
+    execTrigger(ctx, pick.uid, pick.slot);
+  }
+}
+
+function doCheckCache(ctx) {
+  const st = ctx.st;
+  const side = st.turn;
+  if (skipCacheFor(st, side)) { log(ctx, `P${side + 1}: キャッシュ確認を省略`); return; }
+  const hand = st.players[side].hand;
+  if (hand.length <= 5) return;
+  const n = hand.length - 5;
+  const picks = choose(ctx, { kind: 'pickHand', player: side, candidates: hand.slice(), min: n, max: n, prompt: 'clear-cache' });
+  discardCards(ctx, side, picks);
+  log(ctx, `P${side + 1}: キャッシュクリア`);
+  fireEvent(ctx, { on: 'clearCache', player: side });
+}
+
+/* ---------- 効果インタープリタ ---------- */
+
+function slotActive(st, fr) {
+  const loc = locate(st, fr.source);
+  if (!loc) return false;
+  const c = st.cards[fr.source];
+  if (!c.faceUp) return false;
+  if (fr.slot !== 'upper' && !isTop(st, loc)) return false;
+  return true;
+}
+
+function execOps(ctx, fr, ops) {
+  for (const op of ops) {
+    if (!slotActive(ctx.st, fr)) { log(ctx, `[${defOf(ctx.st, fr.source).id}] テキストが無効になり残りを中断`); return; }
+    execOp(ctx, fr, op);
+  }
+}
+
+function actorOf(fr, op) { return op.player === 'opp' || op.actor === 'opp' ? 1 - fr.controller : fr.controller; }
+
+function execOp(ctx, fr, op) {
+  const st = ctx.st;
+  switch (op.op) {
+
+    case 'draw': {
+      const who = actorOf(fr, op);
+      if (op.optional) {
+        const ans = choose(ctx, { kind: 'yesNo', player: who, prompt: 'optional-draw', context: defOf(st, fr.source).id });
+        if (!ans.length) { fr.done = false; return; }
+      }
+      const drawn = drawCards(ctx, who, op.count, !!op.fromOppDeck);
+      fr.done = drawn === op.count;
+      return;
+    }
+
+    case 'discard': {
+      const who = actorOf(fr, op);
+      let min, max;
+      if (op.countFrom) { const n = (fr.bind[op.countFrom.ref] || 0) + (op.countFrom.plus || 0); min = max = n; }
+      else if (typeof op.count === 'object') { min = op.count.min; max = op.count.max === 'any' ? 99 : op.count.max; }
+      else { min = max = op.count; }
+      if (op.optional) {
+        const handLen = st.players[who].hand.length;
+        if (handLen >= 1) {
+          const ans = choose(ctx, { kind: 'yesNo', player: who, prompt: 'optional-discard', context: defOf(st, fr.source).id });
+          if (!ans.length) { fr.done = false; return; }
+        } else { fr.done = false; return; }
+      }
+      const want = max;
+      const did = discardN(ctx, who, min, max, defOf(st, fr.source).id);
+      if (op.bind) fr.bind[op.bind] = did;
+      fr.done = (typeof op.count === 'object') ? did >= Math.min(min, 1) && did > 0 : did === want && want > 0;
+      if (op.countFrom) fr.done = did > 0;
+      return;
+    }
+
+    case 'flip': case 'delete': case 'return': case 'shift': case 'reveal': {
+      execTargetedOp(ctx, fr, op);
+      return;
+    }
+
+    case 'play': {
+      execPlayOp(ctx, fr, op);
+      return;
+    }
+
+    case 'giveCard': {
+      const who = fr.controller;
+      const hand = st.players[who].hand;
+      if (!hand.length) { fr.done = false; return; }
+      if (op.optional) {
+        const ans = choose(ctx, { kind: 'yesNo', player: who, prompt: 'optional-give', context: defOf(st, fr.source).id });
+        if (!ans.length) { fr.done = false; return; }
+      }
+      const picks = hand.length === 1 ? hand.slice()
+        : choose(ctx, { kind: 'pickHand', player: who, candidates: hand.slice(), min: 1, max: 1, prompt: 'give-card' });
+      for (const u of picks) {
+        removeFrom(hand, u);
+        st.cards[u].owner = 1 - who;
+        st.cards[u].zone = 'hand' + (1 - who);
+        st.players[1 - who].hand.push(u);
+      }
+      log(ctx, `P${who + 1}: 手札を1枚相手に渡した`);
+      fr.done = true;
+      return;
+    }
+
+    case 'takeRandom': {
+      const who = fr.controller;
+      const oh = st.players[1 - who].hand;
+      if (!oh.length) { fr.done = false; return; }
+      const i = Math.floor(rand(st) * oh.length);
+      const u = oh.splice(i, 1)[0];
+      st.cards[u].owner = who;
+      st.cards[u].zone = 'hand' + who;
+      st.players[who].hand.push(u);
+      log(ctx, `P${who + 1}: 相手の手札からランダムに1枚引いた`);
+      fr.done = true;
+      return;
+    }
+
+    case 'rearrange': {
+      const target = op.whose === 'opp' ? 1 - fr.controller : fr.controller;
+      doRearrange(ctx, fr.controller, target);
+      fr.done = true;
+      return;
+    }
+
+    case 'swapProtocols': {
+      doRearrange(ctx, fr.controller, fr.controller, 'transposition');
+      fr.done = true;
+      return;
+    }
+
+    case 'refresh': {
+      fr.done = doRefresh(ctx, fr.controller);
+      return;
+    }
+
+    case 'ifDone': {
+      if (fr.done) execOps(ctx, fr, op.ops);
+      return;
+    }
+
+    case 'ifState': {
+      const loc = locate(st, fr.source);
+      let ok = false;
+      if (loc) {
+        if (op.cond === 'thisCovered') ok = !isTop(st, loc);
+        if (op.cond === 'thisCovers') ok = loc.idx > 0;
+      }
+      if (ok) execOps(ctx, fr, op.ops);
+      return;
+    }
+
+    case 'choice': {
+      const labels = op.options.map((branch, i) => branch.map(o => o.op).join('+'));
+      const ans = choose(ctx, {
+        kind: 'option', player: fr.controller, optional: !!op.optional,
+        options: labels, prompt: 'choice', context: defOf(st, fr.source).id
+      });
+      if (ans.length) { execOps(ctx, fr, op.options[ans[0]]); fr.done = true; }
+      else fr.done = false;
+      return;
+    }
+
+    case 'forEachLine': {
+      let lines = [];
+      if (op.lines === 'otherLines') lines = [0, 1, 2].filter(l => l !== fr.line);
+      else if (op.lines === 'linesWithYourCards') lines = [0, 1, 2].filter(l => st.lines[l][fr.controller].length > 0);
+      while (lines.length) {
+        if (!slotActive(st, fr)) return;            // LIFE_1: 処理中に覆われたら中断
+        let l;
+        if (lines.length === 1) l = lines[0];
+        else l = choose(ctx, { kind: 'pickLine', player: fr.controller, lines: lines.slice(), prompt: 'each-line-order', context: defOf(st, fr.source).id })[0];
+        removeFrom(lines, l);
+        fr.currentLine = l;
+        execOps(ctx, fr, op.ops);
+      }
+      fr.currentLine = undefined;
+      fr.done = true;
+      return;
+    }
+
+    case 'repeatPer': {
+      let n = 0;
+      if (op.per.count === 'cardsInThisLine') {
+        n = Math.floor((st.lines[fr.line][0].length + st.lines[fr.line][1].length) / (op.per.divisor || 1));
+      }
+      for (let i = 0; i < n; i++) {
+        if (!slotActive(st, fr)) return;
+        execOps(ctx, fr, op.ops);
+      }
+      fr.done = n > 0;
+      return;
+    }
+
+    case 'drawByValue': {
+      const uid = fr.bind[op.ref];
+      if (uid === undefined) { fr.done = false; return; }
+      const v = cardValue(st, uid);
+      if (v > 0) drawCards(ctx, fr.controller, v);
+      fr.done = true;
+      return;
+    }
+
+    case 'drawByCount': {
+      const n = (fr.bind[op.ref] || 0) + (op.plus || 0);
+      if (n > 0) drawCards(ctx, fr.controller, n);
+      fr.done = true;
+      return;
+    }
+
+    case 'noCompileNextTurn': {
+      st.players[1 - fr.controller].cannotCompile = true;
+      log(ctx, `P${2 - fr.controller}: 次のターンはコンパイル不可`);
+      fr.done = true;
+      return;
+    }
+
+    default:
+      throw { __err: '未知の op: ' + op.op };
+  }
+}
+
+/* ---- 対象を取る op (flip/delete/return/shift/reveal) ---- */
+
+function execTargetedOp(ctx, fr, op) {
+  const st = ctx.st;
+  const sel = op.select || {};
+  const chooser = op.actor === 'opp' ? 1 - fr.controller : fr.controller;
+
+  // reveal target=hand 系
+  if (op.op === 'reveal' && op.target) {
+    if (op.target === 'oppHand') {
+      const oh = st.players[1 - fr.controller].hand;
+      log(ctx, `P${2 - fr.controller}: 手札を公開: ` + oh.map(u => DEFS[st.cards[u].def].id).join(', '));
+      st.revealed = { kind: 'hand', player: 1 - fr.controller, cards: oh.map(u => DEFS[st.cards[u].def].id) };
+      fr.done = true; return;
+    }
+    if (op.target === 'ownHandCard') {
+      const hand = st.players[fr.controller].hand;
+      if (!hand.length) { fr.done = false; return; }
+      const picks = hand.length === 1 ? hand.slice()
+        : choose(ctx, { kind: 'pickHand', player: fr.controller, candidates: hand.slice(), min: 1, max: 1, prompt: 'reveal-hand-card' });
+      log(ctx, `P${fr.controller + 1}: 手札の ${DEFS[st.cards[picks[0]].def].id} を公開`);
+      fr.done = true; return;
+    }
+  }
+
+  // ref 直接参照 ("this card" / "that card")
+  if (sel.ref) {
+    const uid = sel.ref === 'this' ? fr.source : fr.bind[sel.ref];
+    if (uid === undefined || !locate(st, uid)) { fr.done = false; return; }
+    if (op.optional) {
+      const ans = choose(ctx, { kind: 'yesNo', player: chooser, prompt: 'optional-' + op.op, context: defOf(st, uid).id });
+      if (!ans.length) { fr.done = false; return; }
+    }
+    fr.done = performVerb(ctx, fr, op, uid);
+    if (op.bind) fr.bind[op.bind] = uid;
+    return;
+  }
+
+  const mode = sel.mode || 'pick';
+
+  // 対象候補の計算
+  const found = collectCandidates(ctx, fr, op, sel, chooser);
+  if (found === null) { fr.done = false; return; }   // chosenLine 等で候補なし
+  const cands = found;
+
+  if (mode === 'all') {
+    fr.done = performMass(ctx, fr, op, cands);
+    return;
+  }
+
+  if (mode === 'each') {
+    let noted = cands.slice();
+    let any = false;
+    while (noted.length) {
+      if (!slotActive(st, fr)) return;
+      noted = noted.filter(u => matchesSel(st, fr, u, sel));
+      if (!noted.length) break;
+      let u;
+      if (noted.length === 1) u = noted[0];
+      else u = choose(ctx, { kind: 'pickCard', player: chooser, candidates: noted.slice(), prompt: 'each-order', context: defOf(st, fr.source).id })[0];
+      removeFrom(noted, u);
+      if (performVerb(ctx, fr, op, u)) any = true;
+    }
+    fr.done = any;
+    return;
+  }
+
+  // mode: pick
+  if (!cands.length) { fr.done = false; return; }
+  let uid;
+  if (op.optional) {
+    const picks = choose(ctx, {
+      kind: 'pickCard', player: chooser, candidates: cands, min: 0, max: 1,
+      prompt: 'optional-' + op.op, context: defOf(st, fr.source).id
+    });
+    if (!picks.length) { fr.done = false; return; }
+    uid = picks[0];
+  } else if (cands.length === 1) {
+    uid = cands[0];
+  } else {
+    uid = choose(ctx, {
+      kind: 'pickCard', player: chooser, candidates: cands, min: 1, max: 1,
+      prompt: op.op, context: defOf(st, fr.source).id
+    })[0];
+  }
+  fr.done = performVerb(ctx, fr, op, uid);
+  if (op.bind) fr.bind[op.bind] = uid;
+}
+
+function matchesSel(st, fr, uid, sel) {
+  const loc = locate(st, uid);
+  if (!loc) return false;
+  const c = st.cards[uid];
+  const coverage = sel.coverage || (sel.mode === 'all' ? 'all' : 'uncovered');
+  const top = isTop(st, loc);
+  if (coverage === 'uncovered' && !top) return false;
+  if (coverage === 'covered' && top) return false;
+  if (sel.owner === 'self' && loc.side !== fr.controller) return false;
+  if (sel.owner === 'opp' && loc.side !== 1 - fr.controller) return false;
+  if (sel.facing === 'up' && !c.faceUp) return false;
+  if (sel.facing === 'down' && c.faceUp) return false;
+  if (sel.exclude === 'thisCard' && uid === fr.source) return false;
+  if (sel.zone === 'thisLine' && loc.line !== fr.line) return false;
+  if (sel.zone === 'thisStack' && (loc.line !== fr.line)) return false;
+  if (sel.zone === 'currentLine' && loc.line !== fr.currentLine) return false;
+  if (sel.value && typeof sel.value === 'object') {
+    const v = cardValue(st, uid);
+    if (sel.value.in && sel.value.in.indexOf(v) < 0) return false;
+    if (sel.value.eq !== undefined && v !== sel.value.eq) return false;
+  }
+  return true;
+}
+
+function collectCandidates(ctx, fr, op, sel, chooser) {
+  const st = ctx.st;
+  let zoneLines = null; // 制限ライン
+
+  if (sel.zone === 'chosenLine') {
+    const valid = [0, 1, 2].filter(l => allInLine(l).some(u => matchesSel(st, fr, u, stripZone(sel))));
+    if (!valid.length) return null;
+    let l;
+    if (valid.length === 1) l = valid[0];
+    else l = choose(ctx, { kind: 'pickLine', player: chooser, lines: valid, prompt: 'choose-line', context: defOf(st, fr.source).id })[0];
+    zoneLines = [l];
+  } else if (sel.zone === 'otherLineWith8plus') {
+    const valid = [0, 1, 2].filter(l => l !== fr.line && (st.lines[l][0].length + st.lines[l][1].length) >= 8);
+    if (!valid.length) return null;
+    let l;
+    if (valid.length === 1) l = valid[0];
+    else l = choose(ctx, { kind: 'pickLine', player: chooser, lines: valid, prompt: 'choose-line-8plus', context: defOf(st, fr.source).id })[0];
+    zoneLines = [l];
+  }
+
+  let cands = [];
+  for (let l = 0; l < 3; l++) {
+    if (zoneLines && zoneLines.indexOf(l) < 0) continue;
+    for (let s = 0; s < 2; s++) {
+      for (const uid of st.lines[l][s]) {
+        const sel2 = zoneLines ? stripZone(sel) : sel;
+        if (matchesSel(st, fr, uid, sel2)) cands.push(uid);
+      }
+    }
+  }
+
+  // shift dest=thisLine の場合、既にこのラインにあるカードは対象外
+  if (op.op === 'shift' && op.dest === 'thisLine') {
+    cands = cands.filter(u => locate(st, u).line !== fr.line);
+  }
+
+  // highest / lowest
+  if (sel.value === 'highest' || sel.value === 'lowest') {
+    if (cands.length) {
+      const vals = cands.map(u => cardValue(st, u));
+      const best = sel.value === 'highest' ? Math.max.apply(null, vals) : Math.min.apply(null, vals);
+      cands = cands.filter((u, i) => vals[i] === best);
+    }
+  }
+  return cands;
+
+  function allInLine(l) {
+    return st.lines[l][0].concat(st.lines[l][1]);
+  }
+  function stripZone(s) { const o = Object.assign({}, s); delete o.zone; return o; }
+}
+
+function performVerb(ctx, fr, op, uid) {
+  const st = ctx.st;
+  switch (op.op) {
+    case 'flip':   return doFlip(ctx, uid);
+    case 'delete': return doDelete(ctx, uid, fr.controller);
+    case 'return': return doReturn(ctx, uid);
+    case 'reveal': {
+      const c = st.cards[uid];
+      log(ctx, `${DEFS[c.def].id} を公開`);
+      st.revealed = { kind: 'card', uid, def: DEFS[c.def].id };
+      return true;
+    }
+    case 'shift': {
+      const loc = locate(st, uid);
+      if (!loc) return false;
+      let dest;
+      const d = op.dest || 'anyOther';
+      if (d === 'thisLine') dest = fr.line;
+      else if (d === 'fromOrToThisLine') {
+        if (loc.line === fr.line) dest = pickDest([0, 1, 2].filter(l => l !== loc.line));
+        else dest = fr.line;
+      } else { // anyOther
+        dest = pickDest([0, 1, 2].filter(l => l !== loc.line));
+      }
+      if (dest === loc.line) return false;
+      return doShift(ctx, uid, dest);
+
+      function pickDest(lines) {
+        if (lines.length === 1) return lines[0];
+        return choose(ctx, { kind: 'pickLine', player: fr.controller, lines, prompt: 'shift-dest', context: cardLabel(st, uid) })[0];
+      }
+    }
+  }
+  return false;
+}
+
+function performMass(ctx, fr, op, cands) {
+  const st = ctx.st;
+  if (!cands.length) return false;
+  if (op.op === 'delete') return massRemove(ctx, cands, 'trash', fr.controller) > 0;
+  if (op.op === 'return') return massRemove(ctx, cands, 'hand', fr.controller) > 0;
+  if (op.op === 'flip') {
+    // 同時反転 (APATHY_2: 表→裏のみ。中段は発動しない)
+    for (const u of cands.slice()) {
+      if (!locate(st, u)) continue;
+      if (st.cards[u].faceUp) fireWouldBeFlipped(ctx, u); // METAL_6
+      if (!locate(st, u)) continue;
+      st.cards[u].faceUp = !st.cards[u].faceUp;
+    }
+    log(ctx, `${cands.length}枚を同時に反転`);
+    return true;
+  }
+  if (op.op === 'shift') {
+    // LIGHT_4: 1つの他ラインへ相対順を維持して移動
+    const lines = [0, 1, 2].filter(l => l !== fr.line);
+    const dest = choose(ctx, { kind: 'pickLine', player: fr.controller, lines, prompt: 'mass-shift-dest', context: defOf(st, fr.source).id })[0];
+    const prevTops = {};
+    for (let s = 0; s < 2; s++) {
+      const stk = st.lines[fr.line][s];
+      if (stk.length) prevTops[s] = stk[stk.length - 1];
+    }
+    for (let s = 0; s < 2; s++) {
+      const moving = st.lines[fr.line][s].filter(u => cands.indexOf(u) >= 0);
+      if (!moving.length) continue;
+      st.lines[fr.line][s] = st.lines[fr.line][s].filter(u => cands.indexOf(u) < 0);
+      const dstack = st.lines[dest][s];
+      if (dstack.length) fireWouldBeCovered(ctx, dstack[dstack.length - 1]);
+      for (const u of moving) st.lines[dest][s].push(u);
+    }
+    // 移動元で新たに uncovered になった表向きカード
+    for (let s = 0; s < 2; s++) {
+      const stk = st.lines[fr.line][s];
+      if (!stk.length) continue;
+      const nt = stk[stk.length - 1];
+      if (nt !== prevTops[s] && st.cards[nt].faceUp) resolveMiddle(ctx, nt, 'uncover');
+    }
+    log(ctx, `${cands.length}枚をライン${dest + 1}へ同時に移動`);
+    return true;
+  }
+  return false;
+}
+
+/* ---- play op ---- */
+
+function execPlayOp(ctx, fr, op) {
+  const st = ctx.st;
+  const who = actorOf(fr, op);
+  const source = op.source || 'hand';
+
+  // 行き先ライン決定
+  let line;
+  const d = op.dest;
+  if (d === 'thisLine') line = fr.line;
+  else if (d === 'currentLine') line = fr.currentLine;
+  else if (d === 'underThisCard') line = (locate(st, fr.source) || { line: fr.line }).line;
+  else if (d === 'otherLine') {
+    const lines = [0, 1, 2].filter(l => l !== fr.line);
+    line = null; // 後でカードと同時に選択
+    var destChoices = lines;
+  } // dest 未指定 (SPEED_1) は通常プレイ → カード選択後にライン選択
+
+  if (source === 'topDeck') {
+    const deck = st.players[who].deck;
+    if (!deck.length) { fr.done = false; return; }   // デッキ0枚: リシャッフルしない (ルール仕様 §5.2)
+    const uid = deck[0];
+    let l = line;
+    if (l === null || l === undefined) {
+      if (typeof destChoices !== 'undefined') {
+        l = destChoices.length === 1 ? destChoices[0]
+          : choose(ctx, { kind: 'pickLine', player: who, lines: destChoices, prompt: 'play-dest', context: defOf(st, fr.source).id })[0];
+      } else l = fr.line;
+    }
+    const faceUp = op.facing === 'up';
+    if (!canPlay(st, who, uid, l, faceUp)) { fr.done = false; return; }
+    deck.shift();
+    playToField(ctx, uid, l, who, faceUp, op.dest === 'underThisCard' ? fr.source : undefined);
+    fr.done = true;
+    return;
+  }
+
+  // source: hand
+  const hand = st.players[who].hand;
+  if (!hand.length) { fr.done = false; return; }
+
+  if (op.facing === 'down') {
+    // 裏向き固定: カードとラインを選ぶ
+    const lines = (typeof destChoices !== 'undefined') ? destChoices : [0, 1, 2];
+    const validLines = lines.filter(l => canPlay(st, who, hand[0], l, false));
+    if (!validLines.length) { fr.done = false; return; }
+    const cu = hand.length === 1 ? hand[0]
+      : choose(ctx, { kind: 'pickHand', player: who, candidates: hand.slice(), min: 1, max: 1, prompt: 'play-card', context: defOf(st, fr.source).id })[0];
+    const l = validLines.length === 1 ? validLines[0]
+      : choose(ctx, { kind: 'pickLine', player: who, lines: validLines, prompt: 'play-dest', context: defOf(st, fr.source).id })[0];
+    playToField(ctx, cu, l, who, false);
+    fr.done = true;
+    return;
+  }
+
+  // 通常プレイ (SPEED_1): 表/裏自由・通常ルール
+  const opts = [];
+  for (const u of hand) for (let l = 0; l < 3; l++) {
+    if (canPlay(st, who, u, l, true)) opts.push(u + '|' + l + '|u');
+    if (canPlay(st, who, u, l, false)) opts.push(u + '|' + l + '|d');
+  }
+  if (!opts.length) { fr.done = false; return; }
+  const pick = opts.length === 1 ? opts[0]
+    : choose(ctx, { kind: 'pickCard', player: who, candidates: opts, min: 1, max: 1, prompt: 'play-free', context: defOf(st, fr.source).id })[0];
+  const parts = pick.split('|');
+  playToField(ctx, parts[0], +parts[1], who, parts[2] === 'u');
+  fr.done = true;
+}
+
+/* ---------- ターン進行 ---------- */
+
+function runTurnLoop(ctx) {
+  const st = ctx.st;
+  let guard = 0;
+  while (st.winner === null) {
+    if (++guard > 500) throw { __err: 'ターンループ上限超過' };
+    switch (st.phase) {
+      case 'start':
+        log(ctx, `--- P${st.turn + 1} のターン ---`);
+        doStartEnd(ctx, 'start');
+        st.phase = 'checkControl';
+        break;
+      case 'checkControl': {
+        if (st.useControl) {
+          let wins = 0;
+          for (let l = 0; l < 3; l++) if (lineTotal(st, l, st.turn) > lineTotal(st, l, 1 - st.turn)) wins++;
+          if (wins >= 2 && st.control !== st.turn) {
+            st.control = st.turn;
+            log(ctx, `P${st.turn + 1}: コントロールを獲得`);
+          }
+        }
+        st.phase = 'checkCompile';
+        break;
+      }
+      case 'checkCompile': {
+        const p = st.players[st.turn];
+        if (p.cannotCompile) {
+          p.cannotCompile = false;
+          log(ctx, `P${st.turn + 1}: このターンはコンパイルできない`);
+          st.phase = 'action';
+          break;
+        }
+        const lines = compilableLines(st, st.turn);
+        if (lines.length) {
+          let l;
+          if (lines.length === 1) l = lines[0];
+          else l = choose(ctx, { kind: 'pickLine', player: st.turn, lines, prompt: 'compile-line' })[0];
+          doCompile(ctx, st.turn, l);
+          st.phase = 'checkCache';
+        } else st.phase = 'action';
+        break;
+      }
+      case 'action': {
+        const acts = legalActions(st);
+        if (!acts.length) {
+          log(ctx, `P${st.turn + 1}: アクションをスキップ`);
+          st.phase = 'checkCache';
+          break;
+        }
+        return; // プレイヤー入力待ち
+      }
+      case 'checkCache':
+        doCheckCache(ctx);
+        st.phase = 'end';
+        break;
+      case 'end':
+        doStartEnd(ctx, 'end');
+        st.turn = 1 - st.turn;
+        st.phase = 'start';
+        break;
+      default:
+        throw { __err: '不明なフェイズ: ' + st.phase };
+    }
+  }
+}
+
+function legalActions(st) {
+  if (st.winner !== null || st.phase !== 'action') return [];
+  const p = st.turn;
+  const out = [];
+  for (const uid of st.players[p].hand) {
+    for (let l = 0; l < 3; l++) {
+      if (canPlay(st, p, uid, l, true)) out.push({ type: 'play', card: uid, line: l, faceUp: true });
+      if (canPlay(st, p, uid, l, false)) out.push({ type: 'play', card: uid, line: l, faceUp: false });
+    }
+  }
+  if (st.players[p].hand.length < 5) out.push({ type: 'refresh' });
+  return out;
+}
+
+/* ---------- アクション実行 / apply ---------- */
+
+function performAction(ctx, action) {
+  const st = ctx.st;
+  if (action.type === '_begin') return; // newGame: start フェイズから進行
+  if (st.winner !== null) throw { __err: 'ゲームは終了している' };
+  if (st.phase !== 'action') throw { __err: 'アクションフェイズではない' };
+  const p = st.turn;
+  if (action.type === 'play') {
+    if (st.players[p].hand.indexOf(action.card) < 0) throw { __err: '手札にないカード' };
+    if (!canPlay(st, p, action.card, action.line, action.faceUp)) throw { __err: 'そのプレイは許可されていない' };
+    playToField(ctx, action.card, action.line, p, !!action.faceUp);
+    st.phase = 'checkCache';
+  } else if (action.type === 'refresh') {
+    if (st.players[p].hand.length >= 5) throw { __err: '手札が5枚以上ではリフレッシュできない' };
+    doRefresh(ctx, p);
+    st.phase = 'checkCache';
+  } else {
+    throw { __err: '不明なアクション: ' + action.type };
+  }
+}
+
+function runReplay(base, action, choices) {
+  const st = clone(base);
+  st.revealed = null;
+  const ctx = { st, choices, ci: 0, qn: 0, depth: 0, log: [], trace: TRACE ? [] : null };
+  try {
+    performAction(ctx, action);
+    runTurnLoop(ctx);
+    st.pending = null;
+    return { state: st, requests: [], log: ctx.log, trace: ctx.trace || [], winner: st.winner, error: null };
+  } catch (e) {
+    if (e && e.__suspend) {
+      const out = clone(base);
+      out.pending = { base, action, choices };
+      return { state: out, view: ctx.st, requests: [e.__suspend], log: ctx.log, trace: ctx.trace || [], winner: null, error: null };
+    }
+    if (e && e.__err) {
+      return { state: base, requests: [], log: [], winner: base.winner, error: e.__err };
+    }
+    throw e;
+  }
+}
+
+function apply(state, action) {
+  if (!DEFS) throw new Error('Engine.init(cards, effects) を先に呼ぶこと');
+  if (action.type === 'choose') {
+    const pend = state.pending;
+    if (!pend) return { state, requests: [], log: [], winner: state.winner, error: '選択待ちではない' };
+    return runReplay(pend.base, pend.action, pend.choices.concat([action.picks]));
+  }
+  const base = clone(state);
+  base.pending = null;
+  return runReplay(base, action, []);
+}
+
+/* ---------- ゲーム作成 ---------- */
+
+function newGame(opts) {
+  if (!DEFS) throw new Error('Engine.init(cards, effects) を先に呼ぶこと');
+  const seed = opts.seed === undefined ? 1 : opts.seed;
+  const st = {
+    seed, rngN: 0,
+    useControl: opts.useControl !== false,
+    turn: opts.first || 0,
+    phase: 'start',
+    control: -1,
+    winner: null,
+    players: [],
+    lines: [[[], []], [[], []], [[], []]],
+    cards: {},
+    actionLog: [],
+    revealed: null,
+    pending: null
+  };
+  const chosen = [opts.p0, opts.p1];
+  for (let p = 0; p < 2; p++) {
+    const protos = chosen[p];
+    if (!protos || protos.length !== 3) throw new Error('各プレイヤーは3プロトコルを指定すること');
+    const deck = [];
+    for (const name of protos) {
+      if (!PROTOS[name]) throw new Error('未知のプロトコル: ' + name);
+      for (const defId of PROTOS[name]) {
+        const uid = 'p' + p + ':' + defId;
+        st.cards[uid] = { uid, def: defId, owner: p, faceUp: false, zone: 'deck' + p };
+        deck.push(uid);
+      }
+    }
+    st.players.push({
+      protocols: protos.map(n => ({ name: n, compiled: false })),
+      deck, hand: [], trash: [], cannotCompile: false
+    });
+  }
+  shuffle(st, st.players[0].deck);
+  shuffle(st, st.players[1].deck);
+  for (let p = 0; p < 2; p++) {
+    for (let i = 0; i < 5; i++) {
+      const u = st.players[p].deck.shift();
+      st.cards[u].zone = 'hand' + p;
+      st.players[p].hand.push(u);
+    }
+  }
+  return runReplay(st, { type: '_begin' }, []);
+}
+
+/* ---------- 簡易AI (評価関数 + 1手読みロールアウト) ---------- */
+
+function aiScore(st, me) {
+  if (st.winner === me) return 1e9;
+  if (st.winner === 1 - me) return -1e9;
+  const op = 1 - me;
+  let sc = 0;
+  for (let l = 0; l < 3; l++) {
+    const mine = lineTotal(st, l, me), theirs = lineTotal(st, l, op);
+    const myProt = st.players[me].protocols[l], opProt = st.players[op].protocols[l];
+    if (!myProt.compiled) {
+      sc += Math.min(mine, 12) * 1.5;
+      if (mine >= 10 && mine > theirs) sc += 30;       // 次ターンにコンパイル圏
+      else if (mine >= 7) sc += 4;
+    } else {
+      sc += Math.min(mine, 10) * 0.4;                  // リコンパイルは控えめに評価
+    }
+    if (!opProt.compiled) {
+      sc -= Math.min(theirs, 12) * 1.2;
+      if (theirs >= 10 && theirs > mine) sc -= 28;     // 相手のコンパイル圏は阻止したい
+    } else {
+      sc -= Math.min(theirs, 10) * 0.3;
+    }
+    if (mine > theirs) sc += 3;
+  }
+  sc += st.players[me].protocols.filter(p => p.compiled).length * 150;
+  sc -= st.players[op].protocols.filter(p => p.compiled).length * 150;
+  sc += Math.min(st.players[me].hand.length, 6) * 2;
+  sc -= Math.min(st.players[op].hand.length, 6) * 1;
+  if (st.useControl) { if (st.control === me) sc += 5; else if (st.control === op) sc -= 5; }
+  return sc;
+}
+
+/* request にランダムで答える (ロールアウト用) */
+function randomPicks(req) {
+  function ri(n) { return Math.floor(Math.random() * n); }
+  switch (req.kind) {
+    case 'pickCard': case 'pickHand': {
+      const min = req.min !== undefined ? req.min : 1;
+      const max = Math.min(req.max !== undefined ? req.max : 1, req.candidates.length);
+      const n = min + ri(Math.max(0, max - min) + 1);
+      const pool = req.candidates.slice(), picks = [];
+      for (let i = 0; i < n; i++) picks.push(pool.splice(ri(pool.length), 1)[0]);
+      return picks;
+    }
+    case 'pickLine': return [req.lines[ri(req.lines.length)]];
+    case 'option': return (req.optional && Math.random() < 0.3) ? [] : [ri(req.options.length)];
+    case 'yesNo': return Math.random() < 0.5 ? ['yes'] : [];
+    case 'arrange': return req.exact === 'transposition' ? [1, 0, 2] : [1, 2, 0];
+  }
+  return [];
+}
+
+/* state に最初の一手を適用し、残る選択をランダムで埋めて落ち着いた状態を採点 */
+function rolloutScore(state, firstAction, me) {
+  const wasTrace = TRACE; TRACE = false;     // ロールアウト中はトレース不要
+  try {
+    let res = apply(state, firstAction);
+    let guard = 0;
+    while (res && !res.error && res.requests.length && guard++ < 30) {
+      const req = res.requests[0];
+      res = apply(res.state, { type: 'choose', id: req.id, picks: randomPicks(req) });
+    }
+    if (!res || res.error || res.requests.length) return -1e8;
+    return aiScore(res.state, me);
+  } finally { TRACE = wasTrace; }
+}
+
+/* ランダム解決のばらつきを抑えるため、複数回ロールアウトして平均を取る */
+const AI_ROLLOUT_SAMPLES = 6;
+function avgRolloutScore(state, action, me) {
+  let sum = 0;
+  for (let i = 0; i < AI_ROLLOUT_SAMPLES; i++) sum += rolloutScore(state, action, me);
+  return sum / AI_ROLLOUT_SAMPLES;
+}
+
+function aiAction(state) {
+  const me = state.turn;
+  const acts = legalActions(state);
+  if (!acts.length) return null;
+  if (acts.length === 1) return acts[0];
+  let best = null, bestSc = -Infinity;
+  for (const a of acts) {
+    const sc = avgRolloutScore(state, a, me) + Math.random() * 2;  // 同点ゆらぎ
+    if (sc > bestSc) { bestSc = sc; best = a; }
+  }
+  return best;
+}
+
+function enumeratePicks(req) {
+  switch (req.kind) {
+    case 'pickLine': return req.lines.map(l => [l]);
+    case 'yesNo': return [['yes'], []];
+    case 'option': {
+      const o = req.options.map((x, i) => [i]);
+      if (req.optional) o.push([]);
+      return o;
+    }
+    case 'arrange':
+      return req.exact === 'transposition'
+        ? [[1, 0, 2], [0, 2, 1], [2, 1, 0]]
+        : [[1, 2, 0], [2, 0, 1], [0, 2, 1], [1, 0, 2], [2, 1, 0]];
+    case 'pickCard': case 'pickHand': {
+      const min = req.min !== undefined ? req.min : 1;
+      const max = Math.min(req.max !== undefined ? req.max : 1, req.candidates.length);
+      if (max <= 1) {
+        const o = req.candidates.slice(0, 12).map(c => [c]);
+        if (min === 0) o.push([]);
+        return o;
+      }
+      const opts = [];
+      for (let i = 0; i < 8; i++) opts.push(randomPicks(req));
+      if (min === 0) opts.push([]);
+      return opts;
+    }
+  }
+  return [randomPicks(req)];
+}
+
+function aiAnswer(state, req) {
+  const me = req.player;
+  const options = enumeratePicks(req);
+  if (options.length === 1) return options[0];
+  let best = options[0], bestSc = -Infinity;
+  for (const picks of options) {
+    const sc = avgRolloutScore(state, { type: 'choose', id: req.id, picks }, me) + Math.random();
+    if (sc > bestSc) { bestSc = sc; best = picks; }
+  }
+  return best;
+}
+
+/* ---------- 公開 API ---------- */
+
+const Engine = {
+  init, newGame, apply, legalActions, setTrace,
+  lineTotal, cardValue, compilableLines, canPlay, locate,
+  ai: { action: aiAction, answer: aiAnswer, score: aiScore, randomPicks },
+  get defs() { return DEFS; },
+  get protos() { return PROTOS; }
+};
+
+if (typeof module !== 'undefined' && module.exports) module.exports = Engine;
+global.CompileEngine = Engine;
+
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+</script>
+<!-- INLINE:ASSETS:END -->
+<script>
+'use strict';
+var Engine = window.CompileEngine;
+var HUMAN = 0, AI = 1;
+var DEFMAP = {}, PROTOMAP = {};
+var cur = null;
+var undoStack = [];
+var uiMode = 'idle';          // idle | hand | request
+var selectedHand = null;
+var faceChoiceLine = -1;   // 表裏どちらでも置けるラインをタップしたときの選択中ライン
+var selBuf = [];
+var curReq = null;
+var playPick = null;   // U4: 効果による「カードをプレイ」の手札→ライン選択状態
+var arrPreview = null; // 並び替えのライブプレビュー {side, protos:[..3]}
+var fullLog = [];
+var aiTimer = null;
+var lastRevealKey = '';
+/* localStorage は file:// 環境で例外を投げることがあるため必ずラップする */
+function lsGet(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
+function lsSet(k,v){ try { localStorage.setItem(k,v); } catch(e){} }
+/* ステップ再生 */
+var SPEEDS = [{lb:'演出: なし',ms:0},{lb:'演出: 速い',ms:300},{lb:'演出: 普通',ms:620},{lb:'演出: ゆっくり',ms:1000}];
+var speedIdx = (function(){ var v = parseInt(lsGet('apSpeed')); return (v>=0 && v<4) ? v : 2; })();
+var showFX = lsGet('apFX') !== '0';   // 効果フロートウインドウの表示
+/* 表示サイズ倍率 */
+var SCALES = [{lb:'小',v:0.82},{lb:'やや小',v:0.92},{lb:'標準',v:1},{lb:'大',v:1.15},{lb:'特大',v:1.32}];
+var scaleIdx = (function(){ var v = parseInt(lsGet('apScale')); return (v>=0 && v<SCALES.length) ? v : 2; })();
+function applyScale(){ document.documentElement.style.setProperty('--cs', SCALES[scaleIdx].v); }
+var playEntries = null, playIdx = 0, playTimer = null, playDone = null, playedCount = 0;
+var animState = null, animMsg = '', animUid = null;
+var prevFieldUids = {}, prevHandUids = {};   // 登場ポップ演出用: 前回描画時の在席カード
+
+/* ---------- 起動 ---------- */
+function boot(){
+  try {
+    for (var i=0;i<COMPILE_CARDS.protocols.length;i++){
+      var p = COMPILE_CARDS.protocols[i];
+      PROTOMAP[p.name] = p;
+      for (var j=0;j<p.cards.length;j++) DEFMAP[p.cards[j].id] = { card:p.cards[j], proto:p };
+    }
+    Engine.init(COMPILE_CARDS, COMPILE_EFFECTS);
+    Engine.setTrace(true);
+    applyScale();
+    syncSpeedBtn();
+    if (!tryLoadShared()) buildSetup();
+  } catch(e){
+    var g = document.getElementById('protoGrid');
+    if (g) g.innerHTML = '<div style="grid-column:1/-1;color:#ff6b6b;font-size:.72rem;line-height:1.6">'
+      + '初期化エラー: ' + esc(String(e && e.message || e)) + '<br>ページを再読み込みしてください。</div>';
+  }
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+else boot();
+
+/* 演出設定メニュー(速度 + 効果ウインドウ表示) */
+function cycleSpeed(){ openFxMenu(); }
+function openFxMenu(){
+  var html = '<h2>表示 <b>設定</b></h2>';
+  html += '<div class="sub">表示サイズ、処理の再生速度、発動効果ウインドウを設定します。</div>';
+  html += '<div class="fx-set-lbl">表示サイズ</div><div id="fxScaleRow" class="fx-row-wrap"></div>';
+  html += '<div class="fx-set-lbl">再生速度</div><div id="fxSpeedRow" class="fx-row-wrap"></div>';
+  html += '<div class="fx-set-lbl">発動効果ウインドウ</div><div id="fxToggleRow" class="fx-row-wrap"></div>';
+  html += '<button class="optbtn ghost" onclick="closeModal()">閉じる</button>';
+  openModal(html);
+  var zr = document.getElementById('fxScaleRow');
+  SCALES.forEach(function(s, i){
+    var b = document.createElement('button');
+    b.className = 'optbtn opt-inline' + (i===scaleIdx?' sel-opt':'');
+    b.textContent = s.lb;
+    b.onclick = function(){ scaleIdx = i; lsSet('apScale', i); applyScale(); if(cur)render(); openFxMenu(); };
+    zr.appendChild(b);
+  });
+  var sr = document.getElementById('fxSpeedRow');
+  SPEEDS.forEach(function(s, i){
+    var b = document.createElement('button');
+    b.className = 'optbtn opt-inline' + (i===speedIdx?' sel-opt':'');
+    b.textContent = s.lb.replace('演出: ', '');
+    b.onclick = function(){ speedIdx = i; lsSet('apSpeed', i); syncSpeedBtn(); openFxMenu(); };
+    sr.appendChild(b);
+  });
+  var tr = document.getElementById('fxToggleRow');
+  [['表示する', true], ['表示しない', false]].forEach(function(o){
+    var b = document.createElement('button');
+    b.className = 'optbtn opt-inline' + (showFX===o[1]?' sel-opt':'');
+    b.textContent = o[0];
+    b.onclick = function(){ showFX = o[1]; lsSet('apFX', o[1]?'1':'0'); if(!showFX) hideFx(); openFxMenu(); };
+    tr.appendChild(b);
+  });
+}
+function syncSpeedBtn(){ document.getElementById('speedBtn').textContent = '演出'; }
+
+function buildSetup(){
+  var g = document.getElementById('protoGrid');
+  g.innerHTML = '';
+  COMPILE_CARDS.protocols.forEach(function(p){
+    var d = document.createElement('div');
+    d.className = 'pchip';
+    setAccent(d, p.color);
+    d.innerHTML = esc(p.name) + '<small>' + esc(p.tags||'') + '</small>';
+    d.dataset.name = p.name;
+    g.appendChild(d);
+  });
+  // デリゲーションで堅牢に (子要素タップ・再描画にも耐える)
+  g.onclick = function(e){
+    var d = e.target;
+    while (d && d !== g && !d.classList.contains('pchip')) d = d.parentElement;
+    if (!d || d === g) return;
+    if (d.classList.contains('sel')) d.classList.remove('sel');
+    else if (g.querySelectorAll('.sel').length < 3) d.classList.add('sel');
+    syncStartBtn();
+  };
+  syncStartBtn();
+}
+
+function syncStartBtn(){
+  var n = document.querySelectorAll('#protoGrid .sel').length;
+  var b = document.getElementById('startBtn');
+  b.disabled = n !== 3;
+  b.textContent = n === 3 ? '対戦開始' : '対戦開始 (' + n + '/3 選択)';
+}
+
+function startGame(){
+  try { startGameInner(); }
+  catch(e){ toast('エラー: ' + (e && e.message || e)); }
+}
+function startGameInner(){
+  var sel = [].map.call(document.querySelectorAll('#protoGrid .sel'), function(d){ return d.dataset.name; });
+  if (sel.length !== 3) { toast('プロトコルを3つ選択してください (現在 ' + sel.length + ')'); return; }
+  var rest = COMPILE_CARDS.protocols.map(function(p){ return p.name; }).filter(function(n){ return sel.indexOf(n) < 0; });
+  var aiSel = [];
+  for (var i=0;i<3;i++) aiSel.push(rest.splice(Math.floor(Math.random()*rest.length),1)[0]);
+  var first = Math.random() < 0.5 ? 0 : 1;
+  if (aiTimer) clearTimeout(aiTimer);
+  cancelPlayback();
+  playedCount = 0;
+  undoStack = []; fullLog = []; uiMode='idle'; selectedHand=null; selBuf=[]; curReq=null;
+  prevFieldUids = {}; prevHandUids = {};
+  document.getElementById('setupOv').classList.remove('on');
+  document.getElementById('winOv').classList.remove('on');
+  var res = Engine.newGame({
+    p0: sel, p1: aiSel,
+    seed: Math.floor(Math.random()*1e9),
+    useControl: document.getElementById('useCtrlCk').checked,
+    first: first
+  });
+  pushLog(['対戦開始: あなた=' + sel.join('/') + ' AI=' + aiSel.join('/') + (first===0?' (あなたが先手)':' (AIが先手)')]);
+  onResult(res);
+}
+
+function confirmNew(){
+  if (cur && cur.state.winner === null && !confirm('ゲームを終了して新しく始めますか?')) return;
+  if (aiTimer) clearTimeout(aiTimer);
+  document.getElementById('setupOv').classList.add('on');
+}
+
+/* ---------- 結果ハンドリング ---------- */
+function onResult(res){
+  if (res.error){ toast(res.error); render(); return; }
+  cur = res;
+  // 中断中(選択待ち)のログはリプレイで再生成されるため、解決完了時のみ記録する
+  if (!res.requests.length) pushLog(res.log);
+  // ステップ再生: 既に再生済みのトレースを除いた差分のみ再生
+  var entries = (res.trace || []).slice(playedCount);
+  playedCount = res.requests.length ? (res.trace || []).length : 0;
+  startPlayback(entries, settle);
+}
+
+function settle(){
+  uiMode = 'idle'; curReq = null; selBuf = []; selectedHand = null; playPick = null; arrPreview = null;
+  maybeReveal();
+  render();
+  var req = cur.requests[0];
+  if (req){
+    if (req.player === AI){
+      aiTimer = setTimeout(function(){ answer(req, Engine.ai.answer(cur.state, req), true); }, 360);
+    } else {
+      enterReq(req);
+    }
+  } else if (cur.state.winner !== null){
+    showWin();
+  } else if (cur.state.turn === AI){
+    aiTimer = setTimeout(aiAct, 460);
+  }
+}
+
+/* ---------- ステップ再生 ---------- */
+function startPlayback(entries, done){
+  if (!entries.length || !SPEEDS[speedIdx].ms){ done(); return; }
+  uiMode = 'anim'; curReq = null;
+  playEntries = entries; playIdx = 0; playDone = done;
+  document.getElementById('animSkipBtn').style.display = '';
+  stepPlay();
+}
+function stepPlay(){
+  if (playIdx >= playEntries.length){ endPlayback(); return; }
+  var e = playEntries[playIdx++];
+  animState = e.st; animMsg = e.msg; animUid = e.uid;
+  render();
+  maybeShowFx(e);   // 効果発動ステップならフロート表示
+  playTimer = setTimeout(stepPlay, SPEEDS[speedIdx].ms || 300);
+}
+function endPlayback(){
+  if (playTimer){ clearTimeout(playTimer); playTimer = null; }
+  animState = null; animMsg = ''; animUid = null;
+  playEntries = null;
+  document.getElementById('animSkipBtn').style.display = 'none';
+  hideFx();
+  var d = playDone; playDone = null;
+  if (d) d();
+}
+function flushPlayback(){ if (uiMode === 'anim') endPlayback(); }
+function cancelPlayback(){
+  if (playTimer){ clearTimeout(playTimer); playTimer = null; }
+  playEntries = null; playDone = null;
+  animState = null; animMsg = ''; animUid = null;
+  document.getElementById('animSkipBtn').style.display = 'none';
+  hideFx();
+}
+
+/* 効果フロートウインドウ: 上段/中段/下段の発動を検出して表示 */
+function maybeShowFx(e){
+  if (!showFX || !e.uid) return;
+  var st = animState || view();
+  var c = st && st.cards[e.uid];
+  if (!c) return;
+  var def = DEFMAP[c.def]; if (!def) return;
+  var kind = null;
+  if (/中段コマンド解決/.test(e.msg)) kind='mid';
+  else if (/上段効果が発動/.test(e.msg)) kind='up';
+  else if (/下段効果が発動/.test(e.msg)) kind='low';
+  else return;
+  var fl = document.getElementById('fxFloat');
+  setAccent(fl, def.proto.color);
+  fl.className = 'on';
+  fl.querySelector('.fx-badge').textContent = def.card.value;
+  fl.querySelector('.fx-nm').textContent = cardName(c.def);
+  // 全コマンドを表示し、発動したスロットをハイライト・他は淡色に
+  var slots = [
+    { k:'up',  lbl:'上段 / TOP',    tx:def.card.upper },
+    { k:'mid', lbl:'中段 / MIDDLE', tx:def.card.middle },
+    { k:'low', lbl:'下段 / BOTTOM', tx:def.card.lower }
+  ].filter(function(s){ return s.tx; });
+  fl.querySelector('.fx-slots').innerHTML = slots.map(function(s){
+    var active = s.k === kind;
+    return '<div class="fx-slot fx-' + s.k + (active?' active':' dim') + '">' +
+      '<span class="fx-slot-lbl">' + (active?'▶ ':'') + esc(s.lbl) + (active?'  発動!':'') + '</span>' +
+      '<span class="fx-tx">' + esc(s.tx) + '</span></div>';
+  }).join('');
+}
+function hideFx(){ var fl = document.getElementById('fxFloat'); fl.className = ''; }
+
+function answer(req, picks, isAI){
+  if (!isAI) pushUndo();
+  onResult(Engine.apply(cur.state, { type:'choose', id:req.id, picks:picks }));
+}
+
+function aiAct(){
+  if (!cur || cur.state.winner !== null) return;
+  var a = Engine.ai.action(cur.state);
+  if (!a) return;
+  playedCount = 0;
+  onResult(Engine.apply(cur.state, a));
+}
+
+function randomAnswer(req){
+  function ri(n){ return Math.floor(Math.random()*n); }
+  switch(req.kind){
+    case 'pickCard': case 'pickHand': {
+      var min = req.min !== undefined ? req.min : 1;
+      var max = req.max !== undefined ? req.max : 1;
+      max = Math.min(max, req.candidates.length);
+      var n = min + ri(max - min + 1);
+      var pool = req.candidates.slice(), picks = [];
+      for (var i=0;i<n;i++) picks.push(pool.splice(ri(pool.length),1)[0]);
+      return picks;
+    }
+    case 'pickLine': return [req.lines[ri(req.lines.length)]];
+    case 'option': return (req.optional && Math.random()<0.3) ? [] : [ri(req.options.length)];
+    case 'yesNo': return Math.random()<0.5 ? ['yes'] : [];
+    case 'arrange': return req.exact==='transposition' ? [1,0,2] : [1,2,0];
+  }
+  return [];
+}
+
+/* ---------- 人間の選択要求 ---------- */
+var PROMPT_TEXT = {
+  'flip':'反転させるカードを選択', 'delete':'削除するカードを選択', 'return':'手札に戻すカードを選択',
+  'shift':'移動させるカードを選択', 'reveal':'公開するカードを選択',
+  'optional-flip':'反転させるカードを選択(任意)', 'optional-delete':'削除するカードを選択(任意)',
+  'optional-return':'戻すカードを選択(任意)', 'optional-shift':'移動させるカードを選択(任意)',
+  'optional-reveal':'公開するカードを選択(任意)',
+  'discard':'捨て札にするカードを選択', 'clear-cache':'手札が6枚以上: 捨て札にするカードを選択',
+  'shift-dest':'移動先のラインを選択', 'play-dest':'プレイ先のラインを選択',
+  'choose-line':'対象のラインを選択', 'choose-line-8plus':'対象のライン(8枚以上)を選択',
+  'each-line-order':'処理するラインを選択', 'each-order':'処理するカードを選択',
+  'trigger-order':'先に解決する効果を選択', 'uncover-order':'先に解決するカードを選択',
+  'start-order':'解決順を選択', 'end-order':'解決順を選択',
+  'compile-line':'コンパイルするラインを選択', 'compile-replace-shift':'移動先のラインを選択',
+  'mass-shift-dest':'移動先のラインを選択', 'control-rearrange':'コントロール: プロトコルを並べ替えますか?',
+  'rearrange':'新しい並び順を選択', 'give-card':'相手に渡すカードを選択',
+  'reveal-hand-card':'公開する手札を選択', 'play-card':'プレイするカードを選択',
+  'play-free':'プレイするカードとラインを選択', 'choice':'効果を選択',
+  'optional-draw':'カードを引きますか?', 'optional-discard':'捨て札にしますか?', 'optional-give':'手札を渡しますか?'
+};
+var OP_LABEL = { flip:'反転する', shift:'移動する', discard:'手札を捨てる', draw:'カードを引く', 'delete':'削除する', 'return':'戻す' };
+
+function reqText(req){
+  var t = PROMPT_TEXT[req.prompt] || '選択してください';
+  if (req.context){
+    // DEFMAP にある=カードID→カード名、それ以外(「裏向きカード」等)はそのまま表示(秘匿)
+    var label = DEFMAP[req.context] ? cardName(req.context) : req.context;
+    t = '[' + label + '] ' + t;
+  }
+  return t;
+}
+
+function enterReq(req){
+  uiMode = 'request'; curReq = req; selBuf = [];
+  var k = req.kind;
+  if (k === 'option'){
+    // コントロールの並べ替え選択は盤面を見せる
+    var optMode = (req.prompt === 'control-rearrange') ? 'board' : undefined;
+    modalOptions(reqText(req), req.options.map(optLabel), !!req.optional, function(i){
+      answer(req, i === null ? [] : [i]);
+    }, undefined, optMode);
+    return;
+  }
+  if (k === 'yesNo'){
+    modalOptions(reqText(req), ['はい'], true, function(i){
+      answer(req, i === null ? [] : ['yes']);
+    }, 'いいえ');
+    return;
+  }
+  if (k === 'arrange'){ modalArrange(req); return; }
+  if (k === 'pickCard' && req.candidates.length && String(req.candidates[0]).indexOf('|') >= 0){
+    // SPEED_1 等の「カードをプレイ」: 通常の手札→ライン選択UIで行う (U4)
+    var byUid = {};
+    req.candidates.forEach(function(c){
+      var p = c.split('|');   // uid | line | facing(u/d)
+      (byUid[p[0]] = byUid[p[0]] || []).push({ line:+p[1], faceUp:p[2]==='u', raw:c });
+    });
+    playPick = { req: req, byUid: byUid };
+    selectedHand = null;
+    render(); updateMsgBar();
+    return;
+  }
+  // ボード/手札上の選択: render 側で .cand を付与
+  render();
+  updateMsgBar();
+}
+
+function reqSkip(){ if (curReq) answer(curReq, []); }
+function reqConfirm(){
+  if (!curReq) return;
+  answer(curReq, selBuf.slice());
+}
+
+function reqTapCandidate(uid){
+  var req = curReq;
+  var min = req.min !== undefined ? req.min : 1;
+  var max = req.max !== undefined ? req.max : 1;
+  if (min === (max===99?min:max) && max === 1){ answer(req, [uid]); return; }
+  if (max === 1 && min === 0){ answer(req, [uid]); return; }
+  var i = selBuf.indexOf(uid);
+  if (i >= 0) selBuf.splice(i,1);
+  else { if (selBuf.length >= Math.min(max, req.candidates.length)) return; selBuf.push(uid); }
+  render(); updateMsgBar();
+}
+
+function setActionBar(show, okShown, okDisabled, skipShown, text){
+  var ab = document.getElementById('actionBar');
+  if (!show){ ab.classList.remove('on'); return; }
+  ab.classList.add('on');
+  document.getElementById('abText').textContent = text || '';
+  var ao = document.getElementById('abOk'), as = document.getElementById('abSkip');
+  ao.style.display = okShown ? '' : 'none'; ao.disabled = !!okDisabled;
+  as.style.display = skipShown ? '' : 'none';
+}
+
+function updateMsgBar(){
+  var mb = document.getElementById('msgBar');
+  var mt = document.getElementById('msgText');
+  var ok = document.getElementById('okBtn');
+  var sk = document.getElementById('skipBtn');
+  ok.style.display = 'none'; sk.style.display = 'none';
+  setActionBar(false);
+  if (uiMode === 'anim'){
+    mb.classList.remove('quiet'); mb.classList.add('anim');
+    mt.textContent = prettyMsg(animMsg);
+    return;
+  }
+  mb.classList.remove('anim');
+  if (playPick){
+    mb.classList.remove('quiet');
+    mt.textContent = selectedHand ? '効果でプレイ: ラインを選択' : '効果でプレイ: 手札からカードを選択';
+    return;
+  }
+  if (uiMode === 'request' && curReq){
+    mb.classList.remove('quiet');
+    var min = curReq.min !== undefined ? curReq.min : 1;
+    var max = curReq.max !== undefined ? curReq.max : 1;
+    var cnt = max > 1 ? ' (' + selBuf.length + '/' + Math.min(max, (curReq.candidates||[]).length) + ')' : '';
+    mt.textContent = reqText(curReq) + cnt;
+    var skipShown = (min === 0 && (curReq.kind === 'pickCard' || curReq.kind === 'pickHand' || curReq.kind === 'pickLine'));
+    if (skipShown) sk.style.display = '';
+    var okShown = (max > 1 || min !== max);
+    var okDisabled = false;
+    if (okShown){
+      ok.style.display = '';
+      okDisabled = (selBuf.length < Math.min(min, (curReq.candidates||[]).length)) || (selBuf.length === 0 && min > 0);
+      if (min === 0) okDisabled = false;
+      ok.disabled = okDisabled;
+    }
+    // 下部フローティングにも操作を出す(親指で届くように)。テキストは簡潔に
+    if (okShown || skipShown) setActionBar(true, okShown, okDisabled, skipShown, max > 1 ? ('選択 ' + selBuf.length + '/' + Math.min(max,(curReq.candidates||[]).length)) : '');
+    return;
+  }
+  if (!cur){ mt.textContent=''; return; }
+  var st = view();
+  if (cur.state.winner !== null){ mb.classList.add('quiet'); mt.textContent = 'ゲーム終了'; return; }
+  if (cur.state.turn === HUMAN && !cur.requests.length){
+    mb.classList.remove('quiet');
+    mt.textContent = selectedHand ? 'プレイするラインを選択 (もう一度タップで解除)' : 'あなたのターン: 手札をプレイするかリフレッシュ';
+  } else {
+    mb.classList.add('quiet');
+    mt.textContent = 'AIのターン…';
+  }
+}
+
+/* ---------- 行動 (人間) ---------- */
+function tapHand(uid){
+  if (uiMode === 'anim'){ flushPlayback(); return; }
+  if (playPick){   // U4: 効果プレイの手札選択
+    if (playPick.byUid[uid]){ selectedHand = (selectedHand === uid ? null : uid); render(); updateMsgBar(); }
+    else openDetail(uid);
+    return;
+  }
+  if (uiMode === 'request' && curReq && curReq.kind === 'pickHand'){
+    if (curReq.candidates.indexOf(uid) >= 0) reqTapCandidate(uid);
+    else openDetail(uid);
+    return;
+  }
+  if (uiMode === 'request'){ openDetail(uid); return; }
+  if (!cur || cur.state.turn !== HUMAN || cur.requests.length) { openDetail(uid); return; }
+  faceChoiceLine = -1;
+  if (selectedHand === uid){ selectedHand = null; uiMode='idle'; }
+  else { selectedHand = uid; uiMode='hand'; }
+  render(); updateMsgBar();
+}
+
+/* 通常プレイ(アクション)と効果プレイ(playPick)を振り分け */
+function playHere(line, faceUp){
+  if (playPick){
+    var opts = playPick.byUid[selectedHand] || [];
+    var hit = opts.filter(function(o){ return o.line === line && o.faceUp === faceUp; })[0];
+    if (!hit) return;
+    var req = playPick.req;
+    flyFromHand(selectedHand, line);
+    playPick = null; selectedHand = null;
+    answer(req, [hit.raw]);
+    return;
+  }
+  playSelected(line, faceUp);
+}
+
+function playSelected(line, faceUp){
+  if (!selectedHand) return;
+  flyFromHand(selectedHand, line);   // 手札→場の軌道アニメ
+  pushUndo();
+  var a = { type:'play', card:selectedHand, line:line, faceUp:faceUp };
+  selectedHand = null; uiMode='idle';
+  playedCount = 0;
+  onResult(Engine.apply(cur.state, a));
+}
+
+/* 手札カードを場の対象ラインへ飛ばすゴーストアニメ */
+function flyFromHand(uid, line){
+  var fromEl = document.querySelector('#hand .hcard[data-uid="' + uid + '"]');
+  var toEl = document.querySelector('#field .line[data-line="' + line + '"] .half.bot');
+  flyGhost(fromEl, toEl);
+}
+function flyGhost(fromEl, toEl){
+  if (!fromEl || !toEl) return;
+  var fr = fromEl.getBoundingClientRect(), tr = toEl.getBoundingClientRect();
+  if (!fr.width || !tr.width) return;
+  var g = fromEl.cloneNode(true);
+  g.classList.remove('sel','pop','cand','selbuf');
+  g.classList.add('flyghost');
+  var s = g.style;
+  s.position='fixed'; s.left=fr.left+'px'; s.top=fr.top+'px';
+  s.width=fr.width+'px'; s.height=fr.height+'px'; s.margin='0'; s.zIndex='60'; s.pointerEvents='none';
+  s.transition='transform .32s cubic-bezier(.5,0,.25,1),opacity .32s ease-in';
+  document.body.appendChild(g);
+  var dx = (tr.left + tr.width/2) - (fr.left + fr.width/2);
+  var dy = (tr.top + Math.min(tr.height, 70)/2 + 8) - (fr.top + fr.height/2);
+  requestAnimationFrame(function(){
+    g.style.transform = 'translate(' + dx + 'px,' + dy + 'px) scale(.6) rotate(-5deg)';
+    g.style.opacity = '.35';
+  });
+  setTimeout(function(){ if (g.parentNode) g.parentNode.removeChild(g); }, 340);
+}
+
+function doRefreshAction(){
+  pushUndo();
+  playedCount = 0;
+  onResult(Engine.apply(cur.state, { type:'refresh' }));
+}
+
+/* ---------- アンドゥ ---------- */
+function pushUndo(){
+  undoStack.push({ state: cur.state, requests: cur.requests, playedCount: playedCount });
+  if (undoStack.length > 60) undoStack.shift();
+  document.getElementById('undoBtn').disabled = false;
+}
+function doUndo(){
+  if (!undoStack.length || !cur) return;
+  if (aiTimer) clearTimeout(aiTimer);
+  cancelPlayback();
+  var s = undoStack.pop();
+  cur = { state: s.state, requests: s.requests, log: [], winner: s.state.winner, error: null };
+  playedCount = s.playedCount || 0;
+  uiMode='idle'; curReq=null; selBuf=[]; selectedHand=null; playPick=null;
+  closeModal();
+  pushLog(['(1手戻した)']);
+  render();
+  var req = cur.requests[0];
+  if (req && req.player === HUMAN) enterReq(req);
+  else if (!req && cur.state.turn === AI) aiTimer = setTimeout(aiAct, 520);
+  document.getElementById('undoBtn').disabled = !undoStack.length;
+}
+
+/* ---------- 描画 ---------- */
+function view(){
+  if (uiMode === 'anim' && animState) return animState;
+  return (cur && (cur.view || cur.state)) || null;
+}
+function defName(c, uid){ var st = view(); return st.cards[uid] ? cardName(st.cards[uid].def) : uid; }
+/* 表示名: 内部ID(FIRE_3) → カード名(FIRE 2)。cardlist.html と同じ「プロトコル名 + value」形式 */
+function cardName(defId){ var d = DEFMAP[defId]; return d ? d.proto.name + ' ' + d.card.value : defId; }
+/* ログ/実況中の内部IDトークンをカード名に置換 */
+function prettyMsg(s){ return String(s).replace(/[A-Z]+_\d+/g, function(m){ return DEFMAP[m] ? cardName(m) : m; }); }
+
+/* ---------- アクセント色 (プロトコル色) ---------- */
+function hexToRgb(hex){
+  var h = String(hex||'#888888').replace('#','');
+  if (h.length===3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+  var n = parseInt(h,16)||0x888888;
+  return [(n>>16)&255,(n>>8)&255,n&255];
+}
+function setAccent(el, hex){
+  var c = hexToRgb(hex);
+  // 暗いプロトコル色でも視認できるよう白へ45%寄せた明色を主役に
+  var L = c.map(function(v){ return Math.round(v + (255-v)*0.45); });
+  el.style.setProperty('--ac', 'rgb('+L[0]+','+L[1]+','+L[2]+')');
+  el.style.setProperty('--acg', 'rgba('+L[0]+','+L[1]+','+L[2]+',.5)');
+  el.style.setProperty('--act', 'rgba('+c[0]+','+c[1]+','+c[2]+',.18)');
+}
+
+/* ---------- カードアート ---------- */
+var AUX_PROTOS = { APATHY:1, HATE:1, LOVE:1 };
+function artDir(protoName){
+  return AUX_PROTOS[protoName]
+    ? 'Compile 1/Compile_ Aux 1/Toolkit/Illustrations/'
+    : 'Compile 1/Compile_ Main 1/Toolkit/Illustrations/';
+}
+/* カード固有アート: {番号}{protocol}.jpg (例: FIRE_3 → 3fire.jpg) */
+function cardArt(defId){
+  var d = DEFMAP[defId]; if (!d) return null;
+  return encodeURI(artDir(d.proto.name) + d.card.number + d.proto.name.toLowerCase() + '.jpg');
+}
+/* プロトコル見出しアート: Darkness.jpg / Light.png / Speed.png … */
+function protoArt(name){
+  var ext = (name==='LIGHT' || name==='SPEED') ? '.png' : '.jpg';
+  var cap = name.charAt(0) + name.slice(1).toLowerCase();
+  return encodeURI(artDir(name) + cap + ext);
+}
+/* コンパイル面アート: Darkness_Glitched.png 等 (Spirit のみ Spirit_GLitched.png) */
+function protoArtGlitched(name){
+  var cap = name.charAt(0) + name.slice(1).toLowerCase();
+  var suffix = (name === 'SPIRIT') ? '_GLitched.png' : '_Glitched.png';
+  return encodeURI(artDir(name) + cap + suffix);
+}
+function artBg(url, overlay){ return overlay + ',url("' + url + '") center/cover,var(--cbg)'; }
+
+function render(){
+  var st = view();
+  if (!st) return;
+  // header
+  var tb = document.getElementById('turnBadge');
+  if (cur.state.winner !== null){ tb.textContent = '終了'; tb.className=''; }
+  else if (st.turn === HUMAN){ tb.textContent = 'YOUR TURN'; tb.className='me'; }
+  else { tb.textContent = 'AI TURN'; tb.className='ai'; }
+  var cb = document.getElementById('ctrlBadge');
+  cb.style.display = st.useControl ? '' : 'none';
+  cb.className = st.control === 0 ? 'me' : st.control === 1 ? 'ai' : '';
+  cb.textContent = st.control === 0 ? '◆CTRL ▼YOU' : st.control === 1 ? '◆CTRL ▲AI' : '◆CTRL 中立';
+  document.getElementById('undoBtn').disabled = !undoStack.length;
+  renderControlBars(st);
+
+  renderField(st);
+  renderSideInfo(st);
+  renderHand(st);
+  renderTurnLog();
+  renderTransit(st);
+  updateMsgBar();
+  // ステップ再生中: 対象カードをフラッシュ
+  if (uiMode === 'anim' && animUid){
+    var el = document.querySelector('[data-uid="' + animUid + '"]');
+    if (el) el.classList.add('flash');
+  }
+}
+
+/* 移動中(コミット状態)のカードを浮遊表示。効果解決の途中で盤面から離れているカードを見せる */
+function renderTransit(st){
+  var bar = document.getElementById('transitBar');
+  // ライン上にもデッキ/手札/トラッシュにも居ない=移動中のカード
+  var inLine = {};
+  for (var l=0;l<3;l++) for (var s=0;s<2;s++) st.lines[l][s].forEach(function(u){ inLine[u]=1; });
+  var transit = [];
+  for (var uid in st.cards){
+    var c = st.cards[uid];
+    if (c.zone === 'committed' && !inLine[uid]) transit.push(uid);
+  }
+  if (!transit.length || uiMode !== 'anim'){ bar.classList.remove('on'); return; }
+  bar.innerHTML = '<div class="tr-lbl">▼ 移動中</div>' + transit.map(function(uid){
+    var c = st.cards[uid], def = DEFMAP[c.def];
+    var nm = c.faceUp ? cardName(c.def) : (c.owner === HUMAN ? cardName(c.def) + ' (裏)' : '裏向きカード');
+    var val = c.faceUp ? def.card.value : Engine.cardValue(st, uid);
+    return '<div class="tr-chip"><span class="tr-badge">' + val + '</span><span class="tr-nm">' + esc(nm) + '</span></div>';
+  }).join('');
+  bar.classList.add('on');
+}
+
+function renderField(st){
+  var f = document.getElementById('field');
+  f.innerHTML = '';
+  var nf = {};   // 今回フィールドに在るカード(登場ポップ判定用)
+  var legal = (cur.state.turn === HUMAN && !cur.requests.length) ? Engine.legalActions(cur.state) : [];
+  for (var l=0;l<3;l++){
+    var col = document.createElement('div');
+    col.className = 'line';
+    col.dataset.line = l;
+    if (uiMode==='request' && curReq && curReq.kind==='pickLine' && curReq.player===HUMAN && curReq.lines.indexOf(l)>=0){
+      col.classList.add('cand');
+      col.onclick = (function(ln){ return function(){ answer(curReq, [ln]); }; })(l);
+    }
+    // 上半分: AI stack (下端=プロトコル側に密着、uncovered が外側=上)
+    var topH = document.createElement('div'); topH.className = 'half top';
+    var s2 = document.createElement('div'); s2.className = 'stack p2s';
+    st.lines[l][AI].forEach(function(uid, i){
+      var ch = chipDiv(st, uid, AI, i === st.lines[l][AI].length-1);
+      nf[uid] = 1; if (!prevFieldUids[uid]) ch.classList.add('pop');
+      s2.appendChild(ch);
+    });
+    topH.appendChild(s2);
+    col.appendChild(topH);
+    // 中央(固定): AIプロト + ゲージ + YOUプロト
+    var center = document.createElement('div'); center.className = 'lcenter';
+    center.appendChild(protoDiv(st, AI, l));
+    var at = Engine.lineTotal(st,l,AI), mt = Engine.lineTotal(st,l,HUMAN);
+    var aReady = at>=10 && at>mt, mReady = mt>=10 && mt>at;
+    var tt = document.createElement('div'); tt.className='totals';
+    tt.innerHTML =
+      '<div class="gauge g2 t2'+(aReady?' ready':'')+'"><span class="lbl">AI</span>' +
+        '<div class="bar"><i style="width:'+Math.min(at/10*100,100)+'%"></i></div><span class="num">'+at+'</span></div>' +
+      '<div class="gauge t1'+(mReady?' ready':'')+'"><span class="lbl">YOU</span>' +
+        '<div class="bar"><i style="width:'+Math.min(mt/10*100,100)+'%"></i></div><span class="num">'+mt+'</span></div>';
+    center.appendChild(tt);
+    center.appendChild(protoDiv(st, HUMAN, l));
+    col.appendChild(center);
+    // 下半分: YOU stack (上端=プロトコル側に密着、uncovered が外側=下/手札側)
+    var botH = document.createElement('div'); botH.className = 'half bot';
+    var s1 = document.createElement('div'); s1.className = 'stack p1s';
+    st.lines[l][HUMAN].forEach(function(uid, i){
+      var ch = chipDiv(st, uid, HUMAN, i === st.lines[l][HUMAN].length-1);
+      nf[uid] = 1; if (!prevFieldUids[uid]) ch.classList.add('pop');
+      s1.appendChild(ch);
+    });
+    botH.appendChild(s1);
+    col.appendChild(botH);
+    // 手札選択中: ライン全体を大きなプレイ的にする(カードが多くても押しやすい)
+    if ((uiMode === 'hand' || playPick) && selectedHand){
+      var ups, dns;
+      if (playPick){   // U4: 効果プレイ — 候補のライン/向きに従う
+        var opts = (playPick.byUid[selectedHand] || []).filter(function(o){ return o.line === l; });
+        ups = opts.some(function(o){ return o.faceUp; });
+        dns = opts.some(function(o){ return !o.faceUp; });
+      } else {
+        ups = legal.some(function(a){ return a.type==='play' && a.card===selectedHand && a.line===l && a.faceUp; });
+        dns = legal.some(function(a){ return a.type==='play' && a.card===selectedHand && a.line===l && !a.faceUp; });
+      }
+      if (ups || dns){
+        col.classList.add('playable');
+        var hint = document.createElement('div'); hint.className = 'play-hint';
+        hint.textContent = (ups && dns) ? '▶ ここにプレイ' : (ups ? '▶ 表でプレイ' : '▶ 裏でプレイ');
+        col.appendChild(hint);
+        if (faceChoiceLine === l && ups && dns){
+          var pc = document.createElement('div'); pc.className = 'play-choice';
+          var b1=document.createElement('button'); b1.textContent='表'; b1.onclick=(function(ln){return function(e){e.stopPropagation();faceChoiceLine=-1;playHere(ln,true);};})(l);
+          var b2=document.createElement('button'); b2.textContent='裏'; b2.className='dnb'; b2.onclick=(function(ln){return function(e){e.stopPropagation();faceChoiceLine=-1;playHere(ln,false);};})(l);
+          pc.appendChild(b1); pc.appendChild(b2); col.appendChild(pc);
+        }
+        col.onclick = (function(ln, u, d){ return function(e){
+          e.stopPropagation();
+          if (u && d){ faceChoiceLine = (faceChoiceLine===ln?-1:ln); render(); }
+          else playHere(ln, u);
+        }; })(l, ups, dns);
+      } else {
+        col.classList.add('not-target');
+      }
+    }
+    f.appendChild(col);
+  }
+  prevFieldUids = nf;
+}
+
+function protoDiv(st, side, l){
+  // 並び替えプレビュー中は、対象サイドのプロトコルを入れ替え後の見た目で表示
+  var p = (arrPreview && arrPreview.side === side) ? arrPreview.protos[l] : st.players[side].protocols[l];
+  var d = document.createElement('div');
+  d.className = 'proto' + (p.compiled ? ' comp' : '') + (arrPreview && arrPreview.side === side ? ' arr-target' : '');
+  setAccent(d, PROTOMAP[p.name] ? PROTOMAP[p.name].color : '#888');
+  // 未コンパイル=通常アート / コンパイル済み=グリッチアート(コンパイル面)
+  d.style.background = p.compiled
+    ? artBg(protoArtGlitched(p.name), 'linear-gradient(180deg,rgba(7,7,13,.4),rgba(7,7,13,.68))')
+    : artBg(protoArt(p.name), 'linear-gradient(180deg,rgba(7,7,13,.5),rgba(7,7,13,.82))');
+  d.textContent = p.name;
+  d.onclick = function(e){
+    // 選択中/再生中はバブルさせてライン選択等に委ねる
+    if (uiMode === 'request' || playPick || uiMode === 'anim' || (uiMode === 'hand' && selectedHand)) return;
+    e.stopPropagation();
+    openProtoDetail(side, l);
+  };
+  return d;
+}
+
+/* プロトコル詳細(コンパイル状態・所属カード一覧を表示) */
+function openProtoDetail(side, l){
+  if (uiMode === 'anim'){ flushPlayback(); return; }
+  if (uiMode === 'request' || playPick) return;   // 選択中はライン選択を優先
+  var st = view();
+  var p = st.players[side].protocols[l];
+  var pm = PROTOMAP[p.name] || { color:'#888', tags:'' };
+  var color = pm.color;
+  var html = '<h2 style="color:' + color + '">' + esc(p.name) +
+    (p.compiled ? ' <span style="color:var(--cand);font-size:.7rem">✓ COMPILED</span>' : ' <span style="color:var(--txd);font-size:.7rem">LOADING…</span>') + '</h2>';
+  html += '<div class="m-proto" style="background:' + color + '22;color:' + color + '">' + esc(pm.tags || '') + '</div>';
+  html += '<div class="sub">' + (side===HUMAN?'あなた':'AI') + 'の' + ['左','中央','右'][l] + 'プロトコル</div>';
+  // このプロトコルの6枚を一覧
+  var ids = (Engine.protos && Engine.protos[p.name]) || [];
+  html += '<div class="fx-set-lbl">このプロトコルのカード</div>';
+  ids.forEach(function(id){
+    var def = DEFMAP[id]; if (!def) return;
+    html += '<div class="detail-cmd"><b style="color:#fff">' + esc(cardName(id)) + '</b>' +
+      (def.card.upper ? '<div><span class="lbl">TOP</span>' + esc(def.card.upper) + '</div>' : '') +
+      (def.card.middle ? '<div><span class="lbl">MID</span>' + esc(def.card.middle) + '</div>' : '') +
+      (def.card.lower ? '<div><span class="lbl">BOT</span>' + esc(def.card.lower) + '</div>' : '') + '</div>';
+  });
+  html += '<button class="optbtn ghost" onclick="closeModal()">閉じる</button>';
+  openModal(html);
+}
+
+function chipDiv(st, uid, side, uncovered){
+  var c = st.cards[uid];
+  var d = document.createElement('div');
+  var def = DEFMAP[c.def];
+  d.dataset.uid = uid;
+  if (c.faceUp){
+    d.className = 'chip up art ' + (side===HUMAN?'p1c':'p2c') + (uncovered?'':' cov');
+    setAccent(d, def.proto.color);
+    if (uncovered){
+      // uncovered: アート付きフルカード。有効な中段(なければ下段/上段)を表示
+      d.style.background = artBg(cardArt(c.def),
+        'linear-gradient(100deg,rgba(7,7,13,.94) 0%,rgba(7,7,13,.8) 58%,rgba(7,7,13,.62) 100%)');
+      var snippet = def.card.middle || def.card.lower || def.card.upper;
+      d.innerHTML = '<span class="top"><span class="badge">' + def.card.value + '</span>' +
+        '<span class="nm">' + esc(cardName(c.def)) + '</span></span>' +
+        (snippet ? '<span class="tx">' + esc(snippet) + '</span>' : '');
+    } else {
+      // covered: アートを残しつつコンパクト。値+名前+上段(常在)コマンドのみ可視 (物理ルール準拠)
+      d.style.background = artBg(cardArt(c.def),
+        'linear-gradient(100deg,rgba(7,7,13,.9) 0%,rgba(7,7,13,.8) 70%,rgba(7,7,13,.7) 100%)');
+      d.innerHTML = '<span class="top"><span class="badge">' + def.card.value + '</span>' +
+        '<span class="nm">' + esc(cardName(c.def)) + '</span></span>' +
+        (def.card.upper ? '<span class="tx">' + esc(def.card.upper) + '</span>' : '');
+    }
+  } else {
+    d.className = 'chip dn' + (uncovered?'':' cov');
+    var nm;
+    if (side === HUMAN){ setAccent(d, def.proto.color); nm = esc(cardName(c.def)) + ' (裏)'; }  // 自分の裏向きはプロトコル既知
+    else nm = '??? (裏)';
+    d.innerHTML = '<span class="top"><span class="badge">' + Engine.cardValue(st, uid) + '</span>' +
+      '<span class="nm">' + nm + '</span></span>';
+  }
+  if (uiMode==='request' && curReq && curReq.player===HUMAN &&
+      (curReq.kind==='pickCard') && curReq.candidates.indexOf(uid)>=0){
+    d.classList.add('cand');
+    if (selBuf.indexOf(uid)>=0) d.classList.add('selbuf');
+    d.onclick = function(e){ e.stopPropagation(); reqTapCandidate(uid); };
+  } else {
+    d.onclick = function(e){ e.stopPropagation(); openDetail(uid); };
+  }
+  return d;
+}
+
+function renderSideInfo(st){
+  var el = document.getElementById('sideInfo');
+  var p0 = st.players[0], p1 = st.players[1];
+  el.innerHTML =
+    '<span class="zone ai-tag">AI 手札 <b>' + p1.hand.length + '</b></span>' +
+    '<span class="zone ai-tag">デッキ <b>' + p1.deck.length + '</b></span>' +
+    '<span class="zone ai-tag" onclick="openTrash(1)">トラッシュ <b>' + p1.trash.length + '</b></span>' +
+    '<span style="flex:1"></span>' +
+    '<span class="zone">デッキ <b>' + p0.deck.length + '</b></span>' +
+    '<span class="zone" onclick="openTrash(0)">トラッシュ <b>' + p0.trash.length + '</b></span>' +
+    refreshBtnHtml();
+}
+
+function refreshBtnHtml(){
+  if (!cur || cur.requests.length || cur.state.turn !== HUMAN || cur.state.winner !== null) return '';
+  var legal = Engine.legalActions(cur.state);
+  if (!legal.some(function(a){ return a.type==='refresh'; })) return '';
+  return '<button class="hbtn" style="border-color:var(--pk);color:var(--pk2)" onclick="doRefreshAction()">リフレッシュ</button>';
+}
+
+function renderHand(st){
+  var h = document.getElementById('hand');
+  h.innerHTML = '';
+  var nh = {};
+  st.players[HUMAN].hand.forEach(function(uid){
+    var c = st.cards[uid];
+    var def = DEFMAP[c.def];
+    var d = document.createElement('div');
+    d.className = 'hcard';
+    d.dataset.uid = uid;
+    nh[uid] = 1; if (!prevHandUids[uid]) d.classList.add('pop');   // 引いた札がピロッと登場
+    setAccent(d, def.proto.color);
+    if (selectedHand === uid) d.classList.add('sel');
+    if (uiMode==='request' && curReq && curReq.player===HUMAN && curReq.kind==='pickHand' && curReq.candidates.indexOf(uid)>=0){
+      d.classList.add('cand');
+      if (selBuf.indexOf(uid)>=0) d.classList.add('selbuf');
+    }
+    if (playPick && playPick.byUid[uid]) d.classList.add('cand');   // U4: 効果プレイ候補
+    d.style.background = artBg(cardArt(c.def),
+      'linear-gradient(180deg,rgba(7,7,13,.18) 0%,rgba(7,7,13,.5) 38%,rgba(7,7,13,.93) 100%)');
+    d.innerHTML = '<span class="top"><span class="badge">' + def.card.value + '</span>' +
+      '<span class="nm">' + esc(cardName(c.def)) + '</span></span>' +
+      '<span class="tx">' + esc(def.card.middle || def.card.upper || def.card.lower || '') + '</span>';
+    d.onclick = function(){ tapHand(uid); };
+    h.appendChild(d);
+  });
+  prevHandUids = nh;
+  if (!st.players[HUMAN].hand.length){
+    h.innerHTML = '<div style="color:var(--txdd);font-size:.7rem;align-self:center;padding:0 10px">手札なし</div>';
+  }
+}
+
+/* ---------- モーダル ---------- */
+function openModal(html, mode){
+  document.getElementById('modalPanel').innerHTML = html;
+  var ov = document.getElementById('modalOv');
+  ov.classList.toggle('board-visible', mode === 'board');
+  ov.classList.add('on');
+}
+function closeModal(){ var ov = document.getElementById('modalOv'); ov.classList.remove('on'); ov.classList.remove('board-visible'); }
+
+function modalOptions(title, labels, optional, cb, noLabel, mode){
+  var html = '<h2>' + esc(title) + '</h2>';
+  openModal(html, mode);
+  var panel = document.getElementById('modalPanel');
+  labels.forEach(function(lb, i){
+    var b = document.createElement('button');
+    b.className = 'optbtn'; b.textContent = lb;
+    b.onclick = function(){ closeModal(); cb(i); };
+    panel.appendChild(b);
+  });
+  if (optional){
+    var b = document.createElement('button');
+    b.className = 'optbtn ghost'; b.textContent = noLabel || 'スキップ';
+    b.onclick = function(){ closeModal(); cb(null); };
+    panel.appendChild(b);
+  }
+}
+
+function modalList(title, labels, cb){
+  modalOptions(title, labels, false, cb);
+}
+
+function modalArrange(req){
+  // names[i] = 元の位置 i のプロトコル名。perm[pos] = その位置に来る「元の index」
+  var names = req.current;
+  var perm = [0,1,2];
+  var sel = -1;   // 選択中スロット位置
+  var POS = ['左', '中央', '右'];
+  var whose = req.target === HUMAN ? 'あなた' : 'AI';
+  var st = view();
+  var origProtos = st.players[req.target].protocols.slice();   // 並び替え対象の実プロトコル
+
+  function syncPreview(){   // 盤面に入れ替え後の配置をライブ反映
+    arrPreview = { side: req.target, protos: perm.map(function(i){ return origProtos[i]; }) };
+    render();
+  }
+
+  function draw(){
+    var hint = req.exact === 'transposition'
+      ? whose + 'のプロトコル2つをタップして入れ替え'
+      : whose + 'のプロトコルをタップして入れ替え→確定';
+    var html = '<div class="arr-hint">▼ ' + esc(hint) + '(盤面に即反映)</div><div class="arr-row" id="arrRow"></div>';
+    if (req.exact !== 'transposition'){
+      var changed = !(perm[0]===0 && perm[1]===1 && perm[2]===2);
+      html += '<button class="bigbtn" id="arrOk"' + (changed?'':' disabled') + '>この配置で確定</button>';
+    }
+    openModal(html, 'board');   // 盤面を見せる(下部シート + 透過背景)
+    var row = document.getElementById('arrRow');
+    perm.forEach(function(orig, pos){
+      var slot = document.createElement('div');
+      slot.className = 'arr-slot' + (sel===pos?' sel':'') + (orig!==pos?' moved':'');
+      setAccent(slot, PROTOMAP[names[orig]] ? PROTOMAP[names[orig]].color : '#888');
+      slot.innerHTML = '<span class="pos">' + POS[pos] + '</span><span class="pn">' + esc(names[orig]) + '</span>';
+      slot.onclick = function(){ tapSlot(pos); };
+      row.appendChild(slot);
+    });
+    var ok = document.getElementById('arrOk');
+    if (ok) ok.onclick = function(){ commit(); };
+  }
+
+  function commit(){ arrPreview = null; closeModal(); answer(req, perm.slice()); }
+
+  function tapSlot(pos){
+    if (sel === -1){ sel = pos; draw(); return; }
+    if (sel === pos){ sel = -1; draw(); return; }
+    var t = perm[sel]; perm[sel] = perm[pos]; perm[pos] = t;   // スワップ
+    sel = -1;
+    syncPreview();   // 盤面を更新
+    if (req.exact === 'transposition'){ commit(); return; }
+    draw();
+  }
+
+  syncPreview();
+  draw();
+}
+
+/* ---------- 詰めCompile: 盤面エディタ + SHARE ---------- */
+var ZONE_LABELS = (function(){
+  var out = {};
+  [[0,'あなた'],[1,'AI']].forEach(function(pp){
+    var p = pp[0], who = pp[1];
+    out['hand'+p] = who + ': 手札';
+    out['deck'+p] = who + ': デッキ';
+    out['trash'+p] = who + ': トラッシュ';
+    for (var l=0;l<3;l++){
+      out['line'+l+p+'u'] = who + ': L' + (l+1) + ' 表向き';
+      out['line'+l+p+'d'] = who + ': L' + (l+1) + ' 裏向き';
+    }
+  });
+  return out;
+})();
+
+function uidZoneKey(st, uid){
+  var c = st.cards[uid];
+  if (/^(hand|deck|trash)[01]$/.test(c.zone)) return c.zone;
+  for (var l=0;l<3;l++) for (var s=0;s<2;s++){
+    if (st.lines[l][s].indexOf(uid) >= 0) return 'line' + l + s + (c.faceUp ? 'u' : 'd');
+  }
+  return 'hand' + c.owner;
+}
+
+function zoneOptionsHtml(current){
+  var html = '';
+  [[0,'あなた'],[1,'AI']].forEach(function(pp){
+    var p = pp[0], who = pp[1];
+    html += '<optgroup label="' + esc(who) + '">';
+    ['hand'+p,'deck'+p,'trash'+p].forEach(function(k){
+      html += '<option value="'+k+'"'+(k===current?' selected':'')+'>'+esc(ZONE_LABELS[k])+'</option>';
+    });
+    for (var l=0;l<3;l++) ['u','d'].forEach(function(f){
+      var k = 'line'+l+p+f;
+      html += '<option value="'+k+'"'+(k===current?' selected':'')+'>'+esc(ZONE_LABELS[k])+'</option>';
+    });
+    html += '</optgroup>';
+  });
+  return html;
+}
+
+function cardChipInfo(uid){
+  var info = DEFMAP[cur.state.cards[uid].def];
+  return { name: info.proto.name, label: info.proto.name + ' ' + info.card.value, color: info.proto.color };
+}
+
+function cardsInZone(st, key){
+  var m = key.match(/^line(\d)(\d)([ud])$/);
+  if (m){
+    var l = +m[1], s = +m[2], up = (m[3] === 'u');
+    return st.lines[l][s].filter(function(uid){ return !!st.cards[uid].faceUp === up; });
+  }
+  var zm = key.match(/^(hand|deck|trash)(\d)$/);
+  return st.players[+zm[2]][zm[1]].slice();
+}
+
+function openEditor(){
+  if (!cur){ toast('先に対戦を開始してください'); return; }
+  if (cur.requests.length){ toast('選択を完了してから編集してください'); return; }
+  var st = cur.state;
+  var html = '<h2>詰め<b>Compile</b></h2>';
+  html += '<div class="sub">手札・デッキ・トラッシュ・ラインの36枚を自由に配置し、プロトコルやターン・コントロールを編集できます。'
+    + '「この内容で適用」で反映され、設定したターン番のプレイヤーの行動から再開します。SHAREリンクで盤面をそのまま共有できます。</div>';
+
+  html += '<div class="fx-set-lbl">ターン番 / コントロール</div><div class="fx-row-wrap">';
+  html += '<select id="edTurn" class="ed-sel">'
+    + '<option value="0"' + (st.turn===0?' selected':'') + '>あなたの番</option>'
+    + '<option value="1"' + (st.turn===1?' selected':'') + '>AIの番</option>'
+    + '</select>';
+  html += '<select id="edControl" class="ed-sel">'
+    + '<option value="-1"' + (st.control===-1?' selected':'') + '>コントロール: なし</option>'
+    + '<option value="0"' + (st.control===0?' selected':'') + '>コントロール: あなた</option>'
+    + '<option value="1"' + (st.control===1?' selected':'') + '>コントロール: AI</option>'
+    + '</select></div>';
+
+  html += '<div class="fx-set-lbl">プロトコル配置</div>';
+  for (var l=0;l<3;l++){
+    for (var s=0;s<2;s++){
+      var who = s===0 ? 'あなた' : 'AI';
+      var pr = st.players[s].protocols[l];
+      html += '<div class="ed-proto-row"><span class="ed-proto-tag">L'+(l+1)+' '+who+'</span>';
+      html += '<select class="ed-sel ed-proto-name" data-l="'+l+'" data-s="'+s+'">';
+      COMPILE_CARDS.protocols.forEach(function(p){
+        html += '<option value="'+esc(p.name)+'"'+(p.name===pr.name?' selected':'')+'>'+esc(p.name)+'</option>';
+      });
+      html += '</select>';
+      html += '<label class="ed-comp"><input type="checkbox" class="ed-proto-comp" data-l="'+l+'" data-s="'+s+'"'+(pr.compiled?' checked':'')+'> 済</label>';
+      html += '</div>';
+    }
+  }
+
+  html += '<div class="fx-set-lbl">カード配置 (36枚)</div><div class="ed-cards">';
+  var zoneOrder = [];
+  [0,1].forEach(function(p){
+    zoneOrder.push('hand'+p, 'deck'+p, 'trash'+p);
+    for (var l=0;l<3;l++) zoneOrder.push('line'+l+p+'u', 'line'+l+p+'d');
+  });
+  zoneOrder.forEach(function(key){
+    var uids = cardsInZone(st, key);
+    if (!uids.length) return;
+    html += '<div class="fx-set-lbl">' + esc(ZONE_LABELS[key]) + ' (' + uids.length + ')</div>';
+    uids.forEach(function(uid){
+      var info = cardChipInfo(uid);
+      html += '<div class="ed-card-row">';
+      html += '<span class="ed-chip" data-accent="'+esc(info.name)+'">'+esc(info.label)+'</span>';
+      html += '<select class="ed-sel ed-zone" data-uid="'+esc(uid)+'">' + zoneOptionsHtml(key) + '</select>';
+      html += '</div>';
+    });
+  });
+  html += '</div>';
+
+  html += '<button class="bigbtn" onclick="applyEditor()">この内容で適用</button>';
+  html += '<button class="optbtn" onclick="shareEditor()">SHAREリンクを作成</button>';
+  html += '<div id="edShareBox"></div>';
+  html += '<button class="optbtn ghost" onclick="closeModal()">閉じる</button>';
+
+  openModal(html);
+  document.querySelectorAll('.ed-chip').forEach(function(el){
+    var p = PROTOMAP[el.dataset.accent];
+    if (p) setAccent(el, p.color);
+  });
+}
+
+function buildEditedState(){
+  var base = JSON.parse(JSON.stringify(cur.state));
+  base.turn = parseInt(document.getElementById('edTurn').value, 10);
+  base.control = parseInt(document.getElementById('edControl').value, 10);
+  document.querySelectorAll('.ed-proto-name').forEach(function(sel){
+    base.players[+sel.dataset.s].protocols[+sel.dataset.l].name = sel.value;
+  });
+  document.querySelectorAll('.ed-proto-comp').forEach(function(cb){
+    base.players[+cb.dataset.s].protocols[+cb.dataset.l].compiled = cb.checked;
+  });
+  for (var p=0;p<2;p++){ base.players[p].hand=[]; base.players[p].deck=[]; base.players[p].trash=[]; }
+  base.lines = [[[],[]],[[],[]],[[],[]]];
+  document.querySelectorAll('.ed-zone').forEach(function(sel){
+    var uid = sel.dataset.uid, c = base.cards[uid], v = sel.value;
+    var m = v.match(/^line(\d)(\d)([ud])$/);
+    if (m){
+      var l = +m[1], s = +m[2];
+      c.zone = 'field'; c.faceUp = (m[3] === 'u');
+      base.lines[l][s].push(uid);
+    } else {
+      var zm = v.match(/^(hand|deck|trash)(\d)$/);
+      var kind = zm[1], pp = +zm[2];
+      c.zone = kind + pp;
+      c.faceUp = (kind === 'trash');
+      base.players[pp][kind].push(uid);
+    }
+  });
+  return base;
+}
+
+function applyEditor(){
+  try {
+    var st = buildEditedState();
+    closeModal();
+    loadCustomState(st);
+  } catch(e){ toast('エラー: ' + (e && e.message || e)); }
+}
+
+function shareEditor(){
+  try {
+    var url = stateToUrl(buildEditedState());
+    var box = document.getElementById('edShareBox');
+    box.innerHTML = '<div class="fx-set-lbl">共有リンク</div>'
+      + '<textarea class="ed-share-ta" readonly onclick="this.select()">'+esc(url)+'</textarea>'
+      + '<button class="optbtn opt-inline" onclick="copyShareUrl()">コピー</button>';
+  } catch(e){ toast('エラー: ' + (e && e.message || e)); }
+}
+
+function copyShareUrl(){
+  var ta = document.querySelector('.ed-share-ta');
+  if (!ta) return;
+  ta.select();
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value);
+    else document.execCommand('copy');
+    toast('リンクをコピーしました');
+  } catch(e){ toast('コピーできませんでした'); }
+}
+
+function stateToUrl(state){
+  var b64 = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+  return location.origin + location.pathname + '#p=' + b64;
+}
+
+function loadCustomState(state){
+  if (aiTimer) clearTimeout(aiTimer);
+  cancelPlayback();
+  playedCount = 0;
+  undoStack = []; fullLog = []; uiMode = 'idle';
+  selectedHand = null; selBuf = []; curReq = null; playPick = null; arrPreview = null;
+  prevFieldUids = {}; prevHandUids = {};
+  document.getElementById('setupOv').classList.remove('on');
+  document.getElementById('winOv').classList.remove('on');
+  state.phase = 'checkControl';
+  state.pending = null;
+  state.revealed = null;
+  state.winner = null;
+  var res = Engine.apply(state, {type:'_begin'});
+  pushLog(['詰めCompile: 盤面を読み込みました']);
+  onResult(res);
+}
+
+function tryLoadShared(){
+  var m = /#p=([^&]+)/.exec(location.hash);
+  if (!m) return false;
+  try {
+    var json = decodeURIComponent(escape(atob(m[1])));
+    var state = JSON.parse(json);
+    if (!state || !state.cards || !state.lines || !state.players || state.players.length !== 2) return false;
+    loadCustomState(state);
+    return true;
+  } catch(e){ return false; }
+}
+
+function openDetail(uid){
+  if (uiMode === 'anim'){ flushPlayback(); return; }
+  var st = view();
+  var c = st.cards[uid];
+  if (!c) return;
+  // AI の裏向きカードは見られない
+  var loc = Engine.locate(st, uid);
+  if (!c.faceUp && loc && loc.side === AI && c.zone !== 'trash1'){ toast('相手の裏向きカードは見られません'); return; }
+  var def = DEFMAP[c.def];
+  var color = def.proto.color;
+  var html = '<h2 style="color:' + color + '">' + esc(cardName(c.def)) + '</h2>';
+  function cmd(lbl, tx){ return tx ? '<div class="detail-cmd"><span class="lbl">' + lbl + '</span>' + esc(tx) + '</div>' : ''; }
+  html += cmd('TOP (常在)', def.card.upper) + cmd('MIDDLE (プレイ時)', def.card.middle) + cmd('BOTTOM (補助)', def.card.lower);
+  html += '<button class="optbtn ghost" onclick="closeModal()">閉じる</button>';
+  openModal(html);
+}
+
+function openTrash(side){
+  var st = view();
+  var t = st.players[side].trash;
+  var html = '<h2>' + (side===0?'あなた':'AI') + 'のトラッシュ (' + t.length + ')</h2>';
+  if (!t.length) html += '<div class="sub">空</div>';
+  t.slice().reverse().forEach(function(uid){
+    html += '<div class="detail-cmd">' + esc(cardName(st.cards[uid].def)) + '</div>';
+  });
+  html += '<button class="optbtn ghost" onclick="closeModal()">閉じる</button>';
+  openModal(html);
+}
+
+/* ---------- コントロール帯 / ターンログ ---------- */
+function renderControlBars(st){
+  var top = document.getElementById('ctrlTop'), bot = document.getElementById('ctrlBot');
+  top.classList.remove('on'); bot.classList.remove('on');
+  if (!st.useControl) return;
+  if (st.control === AI){
+    top.classList.add('on');
+    top.querySelector('.ct-tx').textContent = 'CONTROL — AI 保持';
+  } else if (st.control === HUMAN){
+    bot.classList.add('on');
+    bot.querySelector('.ct-tx').textContent = 'CONTROL — あなたが保持';
+  }
+}
+
+function renderTurnLog(){
+  var el = document.getElementById('turnLog');
+  // 直近のターン区切り以降を現ターンのログとして表示
+  var start = 0;
+  for (var i = fullLog.length - 1; i >= 0; i--){
+    if (fullLog[i].indexOf('---') === 0){ start = i; break; }
+  }
+  var lines = fullLog.slice(start);
+  if (!lines.length){ el.innerHTML = ''; return; }
+  el.innerHTML = lines.map(function(l, idx){
+    var isHd = l.indexOf('---') === 0;
+    var isNew = idx === lines.length - 1 && !isHd;
+    var txt = isHd ? l.replace(/-/g,'').trim() : prettyMsg(l);
+    return '<div class="tl-line ' + (isHd?'tl-hd':'') + (isNew?' new':'') + '">' + esc(txt) + '</div>';
+  }).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+/* ---------- ログ / 公開情報 / 勝敗 ---------- */
+function pushLog(lines){
+  (lines||[]).forEach(function(l){ fullLog.push(l); });
+  if (fullLog.length > 500) fullLog = fullLog.slice(-400);
+}
+function openLog(){
+  var el = document.getElementById('logList');
+  el.innerHTML = fullLog.map(function(l){
+    return '<div class="' + (l.indexOf('---')===0?'turn-mark':'') + '">' + esc(prettyMsg(l)) + '</div>';
+  }).join('');
+  document.getElementById('logOv').classList.add('on');
+  el.scrollTop = el.scrollHeight;
+}
+
+function maybeReveal(){
+  var st = view();
+  if (!st || !st.revealed) return;
+  var key = JSON.stringify(st.revealed);
+  if (key === lastRevealKey) return;
+  lastRevealKey = key;
+  if (st.revealed.kind === 'hand'){
+    toast((st.revealed.player===AI?'AI':'あなた') + 'の手札: ' + st.revealed.cards.map(cardName).join(', '), 4000);
+  } else if (st.revealed.def){
+    toast('公開: ' + cardName(st.revealed.def), 3000);
+  }
+}
+
+function showWin(){
+  var w = cur.state.winner;
+  var html = '<div class="wtitle" style="color:' + (w===HUMAN?'var(--pk2)':'var(--gd)') + '">' +
+    (w===HUMAN ? 'YOU WIN' : 'AI WINS') + '</div>' +
+    '<div class="sub">' + (w===HUMAN ? '3つのプロトコルをコンパイルしました！' : 'AIが3つのプロトコルをコンパイルしました') + '</div>' +
+    '<button class="bigbtn" onclick="document.getElementById(\'winOv\').classList.remove(\'on\');document.getElementById(\'setupOv\').classList.add(\'on\')">新しいゲーム</button>' +
+    '<button class="optbtn ghost" style="margin-top:10px" onclick="document.getElementById(\'winOv\').classList.remove(\'on\')">盤面を見る</button>';
+  document.getElementById('winPanel').innerHTML = html;
+  document.getElementById('winOv').classList.add('on');
+}
+
+var toastTimer = null;
+function toast(msg, ms){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.style.display='none'; }, ms || 2200);
+}
+
+function optLabel(s){
+  if (/[ぁ-んァ-ン一-龥]/.test(s)) return s;
+  return s.split('+').map(function(x){ return OP_LABEL[x] || x; }).join(' して ');
+}
+
+function esc(s){ var d = document.createElement('div'); d.textContent = s == null ? '' : s; return d.innerHTML; }
+</script>
+</body>
+</html>
