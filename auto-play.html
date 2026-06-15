@@ -389,6 +389,21 @@ html.mobile-ui .chip.cov{padding:2px 5px}
 .pchip small{display:block;font-family:'Noto Sans JP',sans-serif;font-weight:400;color:var(--txdd);
   font-size:.54rem;margin-top:4px;letter-spacing:0;line-height:1.3}
 .pchip.sel small{color:rgba(255,255,255,.8)}
+.pchip.taken{opacity:.22;cursor:not-allowed;filter:saturate(.25);pointer-events:none}
+/* ---------- ルーム対戦(オンライン)ロビー ---------- */
+.room-form{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.room-input{flex:1;min-width:150px;background:var(--cbg);border:1px solid var(--bd2);color:var(--tx);border-radius:8px;padding:10px;font:inherit}
+.room-status{min-height:1.4em;color:var(--txd);font-size:.7rem;margin-top:8px}
+.room-status.err{color:#ff7784}.room-status.ok{color:var(--cand)}
+.room-code{font-family:var(--fmono);font-size:1.8rem;font-weight:900;letter-spacing:.18em;color:var(--gd2);text-align:center;padding:10px}
+.room-wait{text-align:center;color:var(--txd);font-size:.76rem;padding:9px}
+.room-actions{display:flex;gap:7px;flex-wrap:wrap}.room-actions .optbtn{flex:1;margin:0;text-align:center}
+.lobby-list{display:flex;flex-direction:column;gap:7px;margin-top:12px;max-height:290px;overflow-y:auto}
+.lobby-room{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:10px 11px;
+  background:rgba(255,255,255,.025);border:1px solid var(--bd2);border-radius:9px}
+.lobby-room .title{font-weight:700;font-size:.76rem}.lobby-room .meta{font-size:.58rem;color:var(--txd);margin-top:3px}
+.lobby-empty{text-align:center;color:var(--txd);font-size:.7rem;padding:18px 8px;border:1px dashed var(--bd2);border-radius:9px}
+.room-create-grid{display:grid;grid-template-columns:1fr 120px;gap:7px}.room-create-grid .wide{grid-column:1/-1}
 .row{display:flex;align-items:center;gap:10px;margin:12px 0;font-size:.78rem;color:var(--txd)}
 .row input{accent-color:var(--pk)}
 .bigbtn{width:100%;background:linear-gradient(135deg,var(--pk),#a3136a);border:none;color:#fff;
@@ -568,6 +583,8 @@ html.mobile-ui .chip.cov{padding:2px 5px}
   </div>
   <button class="bigbtn" id="startBtn" disabled onclick="startGame()">対戦開始</button>
   <button class="optbtn" id="puzzleBtn" disabled onclick="startPuzzleEditor()">選択した編成で詰めCompileを作る</button>
+  <div class="fx-set-lbl" style="margin-top:16px">オンライン対戦</div>
+  <button class="optbtn" id="roomEntryBtn" onclick="openRoomLobby()">🌐 ルーム対戦(オンライン)</button>
 </div></div>
 
 <!-- 汎用モーダル (選択肢 / リスト / 詳細 / 並べ替え) -->
@@ -2344,6 +2361,11 @@ function startGameInner(){
 }
 
 function confirmNew(){
+  if (roomMode){
+    if (!confirm('ルームを離れて新規対戦に戻りますか?')) return;
+    roomLeave();
+    return;
+  }
   if (cur && cur.state.winner === null && !confirm('ゲームを終了して新しく始めますか?')) return;
   if (aiTimer) clearTimeout(aiTimer);
   buildSetup();
@@ -2447,6 +2469,7 @@ function maybeShowFx(e){
 function hideFx(){ var fl = document.getElementById('fxFloat'); fl.className = ''; }
 
 function answer(req, picks, isAI){
+  if (roomMode){ roomSendAction({ type:'choose', id:req.id, picks:picks }); return; }
   if (!isAI) pushUndo();
   onResult(Engine.apply(cur.state, { type:'choose', id:req.id, picks:picks }));
 }
@@ -2688,6 +2711,13 @@ function playHere(line, faceUp){
 function playSelected(line, faceUp){
   if (!selectedHand) return;
   flyFromHand(selectedHand, line);   // 手札→場の軌道アニメ
+  if (roomMode){
+    var card = selectedHand;
+    selectedHand = null; uiMode='idle';
+    if (MOBILE_UI) closeModal();
+    roomSendAction({ type:'play', card:card, line:line, faceUp:faceUp });
+    return;
+  }
   pushUndo();
   var a = { type:'play', card:selectedHand, line:line, faceUp:faceUp };
   selectedHand = null; uiMode='idle';
@@ -2724,6 +2754,7 @@ function flyGhost(fromEl, toEl){
 }
 
 function doRefreshAction(){
+  if (roomMode){ roomSendAction({ type:'refresh' }); return; }
   pushUndo();
   playedCount = 0;
   onResult(Engine.apply(cur.state, { type:'refresh' }));
@@ -2858,7 +2889,7 @@ function render(){
   var tb = document.getElementById('turnBadge');
   if (cur.state.winner !== null){ tb.textContent = '終了'; tb.className=''; }
   else if (st.turn === HUMAN){ tb.textContent = 'YOUR TURN'; tb.className='me'; }
-  else { tb.textContent = 'AI TURN'; tb.className='ai'; }
+  else { tb.textContent = roomMode ? '相手のターン' : 'AI TURN'; tb.className='ai'; }
   var cb = document.getElementById('ctrlBadge');
   cb.style.display = st.useControl ? '' : 'none';
   cb.className = st.control === 0 ? 'me' : st.control === 1 ? 'ai' : '';
@@ -2894,7 +2925,7 @@ function renderTransit(st){
   bar.innerHTML = '<div class="tr-lbl">▼ 移動中</div>' + transit.map(function(uid){
     var c = st.cards[uid], def = DEFMAP[c.def];
     var nm = c.faceUp ? cardName(c.def) : (c.owner === HUMAN ? cardName(c.def) + ' (裏)' : '裏向きカード');
-    var val = c.faceUp ? def.card.value : Engine.cardValue(st, uid);
+    var val = c.faceUp ? def.card.value : cardValueOf(st, uid);
     return '<div class="tr-chip"><span class="tr-badge">' + val + '</span><span class="tr-nm">' + esc(nm) + '</span></div>';
   }).join('');
   bar.classList.add('on');
@@ -2904,7 +2935,7 @@ function renderField(st){
   var f = document.getElementById('field');
   f.innerHTML = '';
   var nf = {};   // 今回フィールドに在るカード(登場ポップ判定用)
-  var legal = (cur.state.turn === HUMAN && !cur.requests.length) ? Engine.legalActions(cur.state) : [];
+  var legal = legalNow();
   for (var l=0;l<3;l++){
     var col = document.createElement('div');
     col.className = 'line';
@@ -2926,7 +2957,7 @@ function renderField(st){
     // 中央(固定): AIプロト + ゲージ + YOUプロト
     var center = document.createElement('div'); center.className = 'lcenter';
     center.appendChild(protoDiv(st, AI, l));
-    var at = Engine.lineTotal(st,l,AI), mt = Engine.lineTotal(st,l,HUMAN);
+    var at = lineTotalOf(st,l,AI), mt = lineTotalOf(st,l,HUMAN);
     var aReady = at>=10 && at>mt, mReady = mt>=10 && mt>at;
     var tt = document.createElement('div'); tt.className='totals';
     tt.innerHTML =
@@ -3057,9 +3088,10 @@ function chipDiv(st, uid, side, uncovered){
   } else {
     d.className = 'chip dn' + (uncovered?'':' cov');
     var nm;
-    if (side === HUMAN){ setAccent(d, def.proto.color); nm = esc(cardName(c.def)) + ' (裏)'; }  // 自分の裏向きはプロトコル既知
+    // def が無い=相手の伏せ札(サーバー権威モードで秘匿)。自分の伏せ札はプロトコル既知。
+    if (side === HUMAN && def){ setAccent(d, def.proto.color); nm = esc(cardName(c.def)) + ' (裏)'; }
     else nm = '??? (裏)';
-    d.innerHTML = '<span class="top"><span class="badge">' + Engine.cardValue(st, uid) + '</span>' +
+    d.innerHTML = '<span class="top"><span class="badge">' + cardValueOf(st, uid) + '</span>' +
       '<span class="nm">' + nm + '</span></span>';
   }
   if (uiMode==='request' && curReq && curReq.player===HUMAN &&
@@ -3078,8 +3110,9 @@ function chipDiv(st, uid, side, uncovered){
 function renderSideInfo(st){
   var el = document.getElementById('sideInfo');
   var p0 = st.players[0], p1 = st.players[1];
+  var oppLbl = roomMode ? (esc((room && room.names && room.names[1-room.side]) || '相手')) : 'AI';
   el.innerHTML =
-    '<span class="zone ai-tag">AI 手札 <b>' + p1.hand.length + '</b></span>' +
+    '<span class="zone ai-tag">' + oppLbl + ' 手札 <b>' + p1.hand.length + '</b></span>' +
     '<span class="zone ai-tag">デッキ <b>' + p1.deck.length + '</b></span>' +
     '<span class="zone ai-tag" onclick="openTrash(1)">トラッシュ <b>' + p1.trash.length + '</b></span>' +
     '<span style="flex:1"></span>' +
@@ -3090,7 +3123,7 @@ function renderSideInfo(st){
 
 function refreshBtnHtml(){
   if (!cur || cur.requests.length || cur.state.turn !== HUMAN || cur.state.winner !== null) return '';
-  var legal = Engine.legalActions(cur.state);
+  var legal = legalNow();
   if (!legal.some(function(a){ return a.type==='refresh'; })) return '';
   return '<button class="hbtn" style="border-color:var(--pk);color:var(--pk2)" onclick="doRefreshAction()">リフレッシュ</button>';
 }
@@ -3727,6 +3760,360 @@ function optLabel(s){
 }
 
 function esc(s){ var d = document.createElement('div'); d.textContent = s == null ? '' : s; return d.innerHTML; }
+</script>
+
+<!-- ========================================================================
+     ルーム対戦(オンライン)モード
+       - サーバー権威(Supabase Edge Function: secure-room)はそのまま利用。
+       - クライアントだけを AutoPlay に統合し、描画/操作は既存のソロUIを流用する。
+       - サーバーの publicState ビューを、ローカルプレイヤー=index0 に正規化した
+         擬似エンジン状態へ変換して cur に載せ、render() をそのまま使う。
+     ===================================================================== -->
+<script>
+'use strict';
+/* ---------- ルーム状態 ---------- */
+var roomMode = false;          // true の間、操作はサーバーへ送出される
+var room = null;               // 直近の publicState
+var roomSb = null, roomSession = null;
+var roomTimer = null;          // ポーリング
+var roomBusy = false;          // 送信中(ポーリング抑止)
+var roomSel = [];              // プロトコル選択中の一時状態
+var roomDepsLoaded = false;
+var ROOM_CFG = window.COMPILE_ROOM_CONFIG || {};
+/* ロビーUIで上書きする前に、ソロ設定パネルの元HTMLを退避(退出時に復元する) */
+var roomSoloSetupHtml = (function(){ var p = document.querySelector('#setupOv .panel'); return p ? p.innerHTML : ''; })();
+
+/* ---------- 描画シム(ソロ=エンジン / ルーム=サーバー提供値) ---------- */
+function legalNow(){
+  if (roomMode) return (room && room.legalActions) || [];
+  return (cur && cur.state.turn === HUMAN && !cur.requests.length) ? Engine.legalActions(cur.state) : [];
+}
+function lineTotalOf(st, l, side){
+  return (st && st._totals) ? st._totals[l][side] : Engine.lineTotal(st, l, side);
+}
+function cardValueOf(st, uid){
+  var c = st && st.cards[uid];
+  return (c && c._value != null) ? c._value : Engine.cardValue(st, uid);
+}
+
+/* ---------- 依存(Supabase SDK + 設定)を遅延ロード ---------- */
+function roomLoadScript(src){
+  return new Promise(function(resolve, reject){
+    var existing = Array.prototype.slice.call(document.scripts).some(function(s){ return s.src && s.src.indexOf(src) >= 0; });
+    if (existing){ resolve(); return; }
+    var el = document.createElement('script');
+    el.src = src; el.onload = function(){ resolve(); }; el.onerror = function(){ reject(new Error(src + ' を読み込めませんでした')); };
+    document.head.appendChild(el);
+  });
+}
+async function roomLoadDeps(){
+  if (roomDepsLoaded) return;
+  await roomLoadScript('vendor/supabase-2.108.2.js');
+  if (!window.COMPILE_ROOM_CONFIG) { try { await roomLoadScript('secure-room-config.js'); } catch(e){} }
+  ROOM_CFG = window.COMPILE_ROOM_CONFIG || {};
+  roomDepsLoaded = true;
+}
+function roomConfigured(){
+  return /^https:\/\//.test(ROOM_CFG.url || '') && String(ROOM_CFG.anonKey || '').length > 20 && !!window.supabase;
+}
+
+/* ---------- サーバー通信 ---------- */
+async function roomApi(op, extra){
+  var got = await roomSb.auth.getSession();
+  var s = got.data.session;
+  if (!s) throw new Error('セッションが切れました。再接続してください');
+  var r = await fetch(ROOM_CFG.url + '/functions/v1/secure-room', {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + s.access_token, 'apikey': ROOM_CFG.anonKey },
+    body: JSON.stringify(Object.assign({ op:op }, extra || {}))
+  });
+  var d = await r.json();
+  if (!r.ok) throw new Error(d.error || '通信エラー');
+  return d;
+}
+async function roomSendAction(action){
+  if (roomBusy || !room) return;
+  roomBusy = true;
+  try {
+    var next = await roomApi('action', { code: room.code, version: room.version, action: action });
+    roomApplyView(next);
+  } catch(e){
+    toast(e && e.message || '通信エラー');
+    try { await roomPoll(true); } catch(_){}
+  } finally { roomBusy = false; }
+}
+async function roomPoll(force){
+  if (!room || (roomBusy && !force)) return;
+  var next;
+  try { next = await roomApi('get', { code: room.code }); }
+  catch(e){ return; }
+  var changed = next.version !== room.version || next.status !== room.status;
+  if (!changed){ room = next; return; }
+  if (next.status === 'playing' || next.status === 'finished') roomApplyView(next);
+  else { room = next; roomRenderSetup(next.names[1] ? 'protocols' : 'waiting'); }
+}
+function roomStartPolling(){
+  if (roomTimer) clearInterval(roomTimer);
+  roomTimer = setInterval(function(){ roomPoll(); }, 1300);
+}
+function roomStopPolling(){ if (roomTimer) clearInterval(roomTimer); roomTimer = null; }
+
+/* ---------- サーバービュー → AutoPlay 状態アダプタ ---------- */
+function roomCountArr(n){ var a = []; for (var i = 0; i < (n||0); i++) a.push(0); return a; }
+function roomValOf(defId){ var d = defId && DEFMAP[defId]; return d ? d.card.value : 0; }
+/* ローカルプレイヤーを index0(=HUMAN)、相手を index1(=AI) に正規化した擬似状態を作る */
+function buildRoomState(rm){
+  var g = rm.game, me = rm.side, op = 1 - me;
+  function li(owner){ return owner === me ? 0 : 1; }   // local index
+  var cards = {};
+  var lines = [[[],[]],[[],[]],[[],[]]];
+  var totals = [];
+  for (var l = 0; l < 3; l++){
+    totals[l] = [ g.totals[l][me], g.totals[l][op] ];
+    for (var owner = 0; owner < 2; owner++){
+      var lo = li(owner);
+      g.lines[l][owner].forEach(function(card){
+        cards[card.uid] = { uid:card.uid, def:card.def, owner:lo, faceUp:card.faceUp, zone:'field', _value:card.value };
+        lines[l][lo].push(card.uid);
+      });
+    }
+  }
+  var myHand = [];
+  (g.hand || []).forEach(function(card){
+    cards[card.uid] = { uid:card.uid, def:card.def, owner:0, faceUp:true, zone:'hand0', _value:roomValOf(card.def) };
+    myHand.push(card.uid);
+  });
+  var trash = [[],[]];
+  (g.trash || []).forEach(function(list, owner){
+    var lo = li(owner);
+    (list || []).forEach(function(card){
+      if (!cards[card.uid]) cards[card.uid] = { uid:card.uid, def:card.def, owner:lo, faceUp:true, zone:'trash'+lo, _value:roomValOf(card.def) };
+      trash[lo].push(card.uid);
+    });
+  });
+  // 相手の手札は枚数のみ既知(中身は秘匿)。renderHand は自分(index0)の手札しか参照しないためダミーで可。
+  var oppHand = []; for (var i = 0; i < g.counts[op].hand; i++) oppHand.push('opp:h' + i);
+  var players = [];
+  players[0] = { protocols: g.protocols[me], hand: myHand, deck: roomCountArr(g.counts[me].deck), trash: trash[0], cannotCompile:false };
+  players[1] = { protocols: g.protocols[op], hand: oppHand, deck: roomCountArr(g.counts[op].deck), trash: trash[1], cannotCompile:false };
+  return {
+    useControl: true,
+    turn: li(g.turn),
+    phase: g.phase,
+    control: g.control < 0 ? -1 : li(g.control),
+    winner: g.winner === null ? null : li(g.winner),
+    players: players, lines: lines, cards: cards,
+    _totals: totals, _room: true
+  };
+}
+/* サーバーのリクエストは常に自分宛て。player を HUMAN に正規化 */
+function roomNormRequest(rm){
+  if (!rm.request) return null;
+  var nq = JSON.parse(JSON.stringify(rm.request));
+  nq.player = HUMAN;
+  return nq;
+}
+function roomApplyView(rm){
+  room = rm;
+  if (rm.status !== 'playing' && rm.status !== 'finished'){
+    roomRenderSetup(rm.names[1] ? 'protocols' : 'waiting');
+    return;
+  }
+  roomMode = true;
+  document.getElementById('setupOv').classList.remove('on');
+  document.getElementById('undoBtn').disabled = true;
+  var st = buildRoomState(rm);
+  var nq = roomNormRequest(rm);
+  cur = { state: st, requests: nq ? [nq] : [], log: [], trace: [], winner: st.winner, error: null };
+  selectedHand = null; selBuf = []; playPick = null; arrPreview = null;
+  closeModal();
+  if (nq){ enterReq(nq); }
+  else { uiMode = 'idle'; curReq = null; render(); updateMsgBar(); }
+  if (st.winner !== null) roomShowWin(st.winner);
+}
+function roomShowWin(localWinner){
+  var ov = document.getElementById('winOv');
+  var panel = document.getElementById('winPanel');
+  var win = localWinner === HUMAN;
+  panel.innerHTML = '<h2>' + (win ? '🎉 YOU WIN' : 'YOU LOSE') + '</h2>' +
+    '<div class="sub">' + esc((room.names && room.names[room.side]) || 'あなた') + ' vs ' +
+    esc((room.names && room.names[1-room.side]) || '相手') + '</div>' +
+    '<button class="bigbtn" onclick="roomLeave()">ロビーに戻る</button>';
+  ov.classList.add('on');
+}
+
+/* ---------- ロビー / ログイン / プロトコル選択 ---------- */
+async function openRoomLobby(){
+  try {
+    await roomLoadDeps();
+  } catch(e){ toast('オンライン機能を読み込めませんでした'); return; }
+  if (!roomConfigured()){ toast('オンライン対戦は未設定です(secure-room-config.js)'); return; }
+  if (!roomSb){
+    roomSb = window.supabase.createClient(ROOM_CFG.url, ROOM_CFG.anonKey, { auth:{ persistSession:true, autoRefreshToken:true } });
+    var got = await roomSb.auth.getSession(); roomSession = got.data.session;
+  }
+  roomRenderSetup(roomSession ? 'lobby' : 'login');
+}
+function roomSetStatus(text, type){
+  var el = document.getElementById('roomStatus');
+  if (el){ el.textContent = text || ''; el.className = 'room-status' + (type ? ' ' + type : ''); }
+}
+function roomRenderSetup(mode){
+  var ov = document.getElementById('setupOv');
+  var panel = ov.querySelector('.panel');
+  ov.classList.add('on');
+  if (mode !== 'lobby' && roomLobbyTimerStop) roomLobbyTimerStop();
+  var html = '<h2>COMPILE <b>ROOM</b></h2>';
+  if (mode === 'login'){
+    html += '<div class="sub">表示名だけで匿名接続します。メールアドレスやパスワードは不要です。</div>' +
+      '<div class="room-form"><input class="room-input" id="roomName" maxlength="20" placeholder="表示名" value="' + esc(lsGet('compileRoomName') || '') + '">' +
+      '<button class="bigbtn" style="margin:0" onclick="roomLogin()">接続</button></div>';
+  } else if (mode === 'lobby'){
+    html += '<div class="sub">公開ルームへ参加するか、部屋を作成します。招待専用は一覧に出ません。</div>' +
+      '<div class="room-create-grid"><input class="room-input" id="roomTitle" maxlength="30" placeholder="部屋名" value="対戦募集">' +
+      '<select class="room-input" id="roomVis"><option value="public">公開</option><option value="private">招待専用</option></select>' +
+      '<input class="room-input wide" id="roomPw" maxlength="40" type="password" placeholder="パスワード (任意・4文字以上)">' +
+      '<button class="bigbtn wide" style="margin:0" onclick="roomCreate()">ルームを作る</button></div>' +
+      '<div class="fx-set-lbl" style="margin-top:16px">募集中ルーム <button class="hbtn" onclick="roomLoadLobby()">更新</button></div>' +
+      '<div class="lobby-list" id="roomLobbyList"><div class="lobby-empty">読み込み中…</div></div>' +
+      '<div class="fx-set-lbl" style="margin-top:14px">コードで参加</div>' +
+      '<div class="room-form"><input class="room-input" id="roomCode" maxlength="6" placeholder="6桁コード" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z2-9]/g,\'\')">' +
+      '<input class="room-input" id="roomJoinPw" maxlength="40" type="password" placeholder="パスワード (必要な場合)">' +
+      '<button class="optbtn" style="margin:0" onclick="roomJoin()">参加</button></div>';
+  } else if (mode === 'waiting'){
+    html += '<div class="fx-set-lbl">' + esc(room.title || '対戦募集') + '</div><div class="room-code">' + esc(room.code) + '</div>' +
+      '<div class="room-wait">' + (room.names[1] ? '対戦相手が参加しました。プロトコルを選択してください。' : 'このコードを相手へ共有して、参加を待ってください。') + '</div>' +
+      '<div class="room-actions"><button class="optbtn" onclick="roomCopyCode()">コードをコピー</button></div>';
+  } else if (mode === 'protocols'){
+    var other = (room.protocols && room.protocols[1 - room.side]) || [];
+    roomSel = roomSel.filter(function(n){ return other.indexOf(n) < 0; });
+    html += '<div class="sub">使用するプロトコルを3つ選択してください。相手が選んだものは使えません。</div>' +
+      '<div class="pgrid" id="roomProtoGrid">' + COMPILE_CARDS.protocols.map(function(pr){
+        var taken = other.indexOf(pr.name) >= 0, sel = roomSel.indexOf(pr.name) >= 0;
+        return '<div class="pchip' + (taken ? ' taken' : '') + (sel ? ' sel' : '') + '" data-name="' + esc(pr.name) + '" onclick="roomToggleProto(this)">' +
+          esc(pr.name) + '<small>' + esc(taken ? '相手が選択済み' : (pr.tags || '')) + '</small></div>';
+      }).join('') + '</div>' +
+      '<button class="bigbtn" ' + (roomSel.length === 3 ? '' : 'disabled') + ' onclick="roomReadyProtocols()">準備完了 (' + roomSel.length + '/3)</button>';
+  }
+  html += '<div class="room-status" id="roomStatus"></div>' +
+    '<button class="optbtn ghost" style="margin-top:12px" onclick="roomLeave()">← ソロ設定に戻る</button>';
+  panel.innerHTML = html;
+  if (mode === 'lobby'){ roomLoadLobby(); roomLobbyTimerStart(); }
+}
+var _roomLobbyTimer = null;
+function roomLobbyTimerStart(){ roomLobbyTimerStop(); _roomLobbyTimer = setInterval(roomLoadLobby, 5000); }
+function roomLobbyTimerStop(){ if (_roomLobbyTimer){ clearInterval(_roomLobbyTimer); _roomLobbyTimer = null; } }
+async function roomLogin(){
+  var n = (document.getElementById('roomName').value || '').trim();
+  if (!n){ roomSetStatus('表示名を入力してください', 'err'); return; }
+  roomSetStatus('接続中…'); lsSet('compileRoomName', n);
+  var r = await roomSb.auth.signInAnonymously({ options:{ data:{ display_name:n } } });
+  if (r.error){ roomSetStatus(r.error.message, 'err'); return; }
+  roomSession = r.data.session;
+  roomRenderSetup('lobby');
+}
+async function roomLoadLobby(){
+  var list = document.getElementById('roomLobbyList');
+  if (!list) return;
+  try {
+    var data = await roomApi('list');
+    if (!document.getElementById('roomLobbyList')) return;
+    var rooms = data.rooms || [];
+    list.innerHTML = rooms.length ? rooms.map(function(r){
+      return '<div class="lobby-room"><div><div class="title">' + (r.locked ? '🔒 ' : '') + esc(r.title) + '</div>' +
+        '<div class="meta">HOST ' + esc(r.hostName) + ' · ' + esc(r.code) + '</div></div>' +
+        '<button class="optbtn" style="margin:0" onclick="roomJoinListed(\'' + esc(r.code) + '\',' + (r.locked ? 'true' : 'false') + ')">参加</button></div>';
+    }).join('') : '<div class="lobby-empty">現在、募集中の公開ルームはありません。</div>';
+  } catch(e){ if (list) list.innerHTML = '<div class="lobby-empty">一覧を取得できませんでした。</div>'; }
+}
+async function roomCreate(){
+  if (roomBusy) return;
+  var pw = document.getElementById('roomPw').value;
+  if (pw && pw.length < 4){ roomSetStatus('パスワードは4文字以上です', 'err'); return; }
+  roomBusy = true;
+  try {
+    room = await roomApi('create', {
+      name: lsGet('compileRoomName'),
+      title: document.getElementById('roomTitle').value,
+      visibility: document.getElementById('roomVis').value,
+      password: pw
+    });
+    roomEnterRoom();
+  } catch(e){ roomSetStatus(e.message, 'err'); }
+  finally { roomBusy = false; }
+}
+function roomJoinListed(code, locked){
+  var pw = locked ? (prompt('ルームパスワードを入力してください') || '') : '';
+  if (locked && !pw) return;
+  roomJoin(code, pw);
+}
+async function roomJoin(listCode, listPw){
+  var code = listCode || document.getElementById('roomCode').value;
+  var pw = listCode ? listPw : document.getElementById('roomJoinPw').value;
+  if (!code || code.length !== 6){ roomSetStatus('6桁コードを入力してください', 'err'); return; }
+  roomBusy = true;
+  try {
+    room = await roomApi('join', { name: lsGet('compileRoomName'), code: code, password: pw });
+    roomEnterRoom();
+  } catch(e){ roomSetStatus(e.message, 'err'); }
+  finally { roomBusy = false; }
+}
+function roomEnterRoom(){
+  roomLobbyTimerStop();
+  roomSel = [];
+  if (room.status === 'playing' || room.status === 'finished') roomApplyView(room);
+  else roomRenderSetup(room.names[1] ? 'protocols' : 'waiting');
+  roomStartPolling();
+}
+function roomToggleProto(el){
+  var n = el.dataset.name;
+  if (el.classList.contains('taken')) return;
+  var i = roomSel.indexOf(n);
+  if (i >= 0) roomSel.splice(i, 1);
+  else if (roomSel.length < 3) roomSel.push(n);
+  roomRenderSetup('protocols');
+}
+async function roomReadyProtocols(){
+  if (roomSel.length !== 3 || roomBusy) return;
+  roomBusy = true;
+  try {
+    var next = await roomApi('protocols', { code: room.code, protocols: roomSel });
+    room = next;
+    if (next.status === 'playing') roomApplyView(next);
+    else roomRenderSetup('waiting');
+  } catch(e){ roomSetStatus(e.message, 'err'); }
+  finally { roomBusy = false; }
+}
+function roomCopyCode(){
+  if (navigator.clipboard && room) navigator.clipboard.writeText(room.code);
+  roomSetStatus('コードをコピーしました', 'ok');
+}
+/* index.html などから auto-play.html#room で来た場合はロビーを自動で開く。
+   このスクリプトは boot より後に確実に定義されるため、ここで起動を仕掛ける */
+(function(){
+  function autoOpen(){ if (location.hash === '#room') setTimeout(function(){ openRoomLobby(); }, 0); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', autoOpen);
+  else autoOpen();
+  window.addEventListener('hashchange', function(){ if (location.hash === '#room' && !roomMode && !room) openRoomLobby(); });
+})();
+
+/* ルーム退出 → ソロ設定へ戻す */
+function roomLeave(){
+  roomStopPolling(); roomLobbyTimerStop();
+  roomMode = false; room = null;
+  cur = null; uiMode = 'idle'; curReq = null; selBuf = []; selectedHand = null; playPick = null;
+  document.getElementById('winOv').classList.remove('on');
+  document.getElementById('field').innerHTML = '';
+  document.getElementById('hand').innerHTML = '';
+  document.getElementById('sideInfo').innerHTML = '';
+  closeModal();
+  // ロビーUIで上書きしたパネルを、元のソロ設定マークアップへ復元してから再構築
+  var panel = document.querySelector('#setupOv .panel');
+  if (panel && roomSoloSetupHtml) panel.innerHTML = roomSoloSetupHtml;
+  if (location.hash === '#room'){ try { history.replaceState(null, '', location.pathname); } catch(e){} }
+  buildSetup();
+  document.getElementById('setupOv').classList.add('on');
+}
 </script>
 </body>
 </html>
