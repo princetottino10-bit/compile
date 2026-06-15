@@ -1,8 +1,15 @@
 project_id = "compile-secure-room"
 
+[db.ssl_enforcement]
+enabled = true
+
 [auth]
 site_url = "https://princetottino10-bit.github.io/compile/secure-room.html"
+additional_redirect_urls = []
 enable_anonymous_sign_ins = true
+
+[auth.email]
+enable_signup = false
 
 [functions.secure-room]
 verify_jwt = true
