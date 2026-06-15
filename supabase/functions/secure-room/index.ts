@@ -151,6 +151,12 @@ Deno.serve(async (req) => {
     if (op === "create") {
       const name = cleanName(body.name);
       if (!name) return fail(req, "表示名を入力してください");
+      await admin.rpc("cleanup_secure_rooms");
+      const since = new Date(Date.now() - 60_000).toISOString();
+      const { count, error: countError } = await admin.from("secure_rooms")
+        .select("id", { count: "exact", head: true }).eq("host_id", user.id).gte("created_at", since);
+      if (countError) throw countError;
+      if ((count || 0) >= 5) return fail(req, "ルーム作成が多すぎます。1分待ってください", 429);
       let created: any = null;
       for (let i = 0; i < 8 && !created; i++) {
         const { data, error } = await admin.from("secure_rooms").insert({ code: code(), host_id: user.id, host_name: name }).select("*").single();
