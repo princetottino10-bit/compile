@@ -124,6 +124,105 @@ test('裏向きプレイ: 効果は発動せずターンが渡る', () => {
   assert.equal(st.players[0].hand.length, 0);
 });
 
+test('SPIRIT 1: 中段効果でカードを2枚引く', () => {
+  const r = ng({ p0: ['SPIRIT', 'FIRE', 'WATER'] });
+  setHand(r.state, 0, ['SPIRIT_2']);
+  const res = Engine.apply(r.state, { type: 'play', card: uidOf('SPIRIT_2', 0), line: 0, faceUp: true });
+  assert.equal(res.error, null);
+  assert.equal(res.state.players[0].hand.length, 2);
+});
+
+test('SPIRIT 0 + SPIRIT 3: リフレッシュ後の移動でSPIRIT 0を覆うと追加ドローしない', () => {
+  const r = ng({ p0: ['SPIRIT', 'FIRE', 'WATER'] });
+  const st = r.state;
+  place(st, 'SPIRIT_4', 0, 1, true);
+  setHand(st, 0, ['SPIRIT_1']);
+
+  let res = Engine.apply(st, { type: 'play', card: uidOf('SPIRIT_1', 0), line: 0, faceUp: true });
+  res = drive(res, req => {
+    if (req.kind === 'yesNo' && req.prompt === 'optional-shift') return ['yes'];
+    if (req.kind === 'pickLine' && req.prompt === 'shift-dest') return [0];
+    throw new Error('予期しない要求: ' + JSON.stringify(req));
+  });
+
+  assert.deepEqual(res.state.lines[0][0], [uidOf('SPIRIT_1', 0), uidOf('SPIRIT_4', 0)]);
+  assert.equal(res.state.players[0].hand.length, 5);
+  assert.equal(res.log.filter(x => x.includes('SPIRIT_4 をライン')).length, 1);
+  assert.ok(res.log.some(x => x.includes('[SPIRIT_1] テキストが無効になり残りを中断')));
+});
+
+test('SPIRIT 0 + SPIRIT 3: SPIRIT 0が覆われなければ追加ドローでSPIRIT 3が2回移動する', () => {
+  const r = ng({ p0: ['SPIRIT', 'FIRE', 'WATER'] });
+  const st = r.state;
+  place(st, 'SPIRIT_4', 0, 1, true);
+  setHand(st, 0, ['SPIRIT_1']);
+  let shiftCount = 0;
+
+  let res = Engine.apply(st, { type: 'play', card: uidOf('SPIRIT_1', 0), line: 0, faceUp: true });
+  res = drive(res, req => {
+    if (req.kind === 'yesNo' && req.prompt === 'optional-shift') return ['yes'];
+    if (req.kind === 'pickLine' && req.prompt === 'shift-dest') return [shiftCount++ === 0 ? 2 : 1];
+    if (req.kind === 'pickHand' && req.prompt === 'clear-cache') return req.candidates.slice(0, 1);
+    throw new Error('予期しない要求: ' + JSON.stringify(req));
+  });
+
+  assert.deepEqual(res.state.lines[0][0], [uidOf('SPIRIT_1', 0)]);
+  assert.deepEqual(res.state.lines[1][0], [uidOf('SPIRIT_4', 0)]);
+  assert.equal(res.log.filter(x => x.includes('SPIRIT_4 をライン')).length, 2);
+  assert.ok(res.log.some(x => x === 'P1: 1枚ドロー'));
+});
+
+test('LOVE 1: 相手のデッキから引いてもSPIRIT 3が反応する', () => {
+  const r = ng({ p0: ['LOVE', 'SPIRIT', 'WATER'] });
+  const st = r.state;
+  place(st, 'SPIRIT_4', 0, 1, true);
+  setHand(st, 0, ['LOVE_1']);
+
+  let res = Engine.apply(st, { type: 'play', card: uidOf('LOVE_1', 0), line: 0, faceUp: true });
+  res = drive(res, req => {
+    if (req.kind === 'yesNo' && req.prompt === 'optional-shift') return ['yes'];
+    if (req.kind === 'yesNo' && req.prompt === 'optional-give') return [];
+    if (req.kind === 'pickLine' && req.prompt === 'shift-dest') return [2];
+    throw new Error('予期しない要求: ' + JSON.stringify(req));
+  });
+
+  assert.deepEqual(res.state.lines[2][0], [uidOf('SPIRIT_4', 0)]);
+  assert.ok(res.log.some(x => x.includes('[SPIRIT_4] 上段効果が発動')));
+});
+
+test('LOVE 3: 相手の手札から引いてもSPIRIT 3が反応する', () => {
+  const r = ng({ p0: ['LOVE', 'SPIRIT', 'WATER'] });
+  const st = r.state;
+  place(st, 'SPIRIT_4', 0, 1, true);
+  setHand(st, 0, ['LOVE_3']);
+  setHand(st, 1, ['DEATH_1']);
+
+  let res = Engine.apply(st, { type: 'play', card: uidOf('LOVE_3', 0), line: 0, faceUp: true });
+  res = drive(res, req => {
+    if (req.kind === 'yesNo' && req.prompt === 'optional-shift') return ['yes'];
+    if (req.kind === 'pickLine' && req.prompt === 'shift-dest') return [2];
+    throw new Error('予期しない要求: ' + JSON.stringify(req));
+  });
+
+  assert.deepEqual(res.state.lines[2][0], [uidOf('SPIRIT_4', 0)]);
+  assert.ok(res.log.some(x => x.includes('[SPIRIT_4] 上段効果が発動')));
+});
+
+test('選択待ち: 古いリクエストIDの入力を拒否する', () => {
+  const r = ng();
+  const st = r.state;
+  place(st, 'DEATH_4', 1, 0, false);
+  setHand(st, 0, ['FIRE_2', 'FIRE_6']);
+  const waiting = Engine.apply(st, { type: 'play', card: uidOf('FIRE_2', 0), line: 1, faceUp: true });
+  assert.equal(waiting.requests.length, 1);
+
+  const res = Engine.apply(waiting.state, {
+    type: 'choose', id: 'stale-request', picks: [uidOf('DEATH_4', 1)]
+  });
+  assert.equal(res.error, '古い選択操作です');
+  assert.equal(res.state, waiting.state);
+});
+
 /* ---------- カード効果 ---------- */
 
 test('DARKNESS_1: 3枚ドロー + 相手の覆われたカードを移動', () => {

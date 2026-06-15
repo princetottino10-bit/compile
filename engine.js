@@ -752,6 +752,7 @@ function execOp(ctx, fr, op) {
       st.cards[u].zone = 'hand' + who;
       st.players[who].hand.push(u);
       log(ctx, `P${who + 1}: 相手の手札からランダムに1枚引いた`);
+      fireEvent(ctx, { on: 'draw', player: who, count: 1 });
       fr.done = true;
       return;
     }
@@ -1292,7 +1293,7 @@ function runReplay(base, action, choices) {
   } catch (e) {
     if (e && e.__suspend) {
       const out = clone(base);
-      out.pending = { base, action, choices };
+      out.pending = { base, action, choices, requestId: e.__suspend.id };
       return { state: out, view: ctx.st, requests: [e.__suspend], log: ctx.log, trace: ctx.trace || [], winner: null, error: null };
     }
     if (e && e.__err) {
@@ -1307,6 +1308,9 @@ function apply(state, action) {
   if (action.type === 'choose') {
     const pend = state.pending;
     if (!pend) return { state, requests: [], log: [], winner: state.winner, error: '選択待ちではない' };
+    if (action.id !== pend.requestId) {
+      return { state, requests: [], log: [], winner: state.winner, error: '古い選択操作です' };
+    }
     return runReplay(pend.base, pend.action, pend.choices.concat([action.picks]));
   }
   const base = clone(state);

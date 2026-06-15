@@ -593,8 +593,8 @@
       "static": { "kind": "playPermission", "rule": "youFaceUpAnyLine" }
     },
     "middle": {
-      "_text": "カードを1枚引く。",
-      "ops": [ { "op": "draw", "count": 1 } ]
+      "_text": "カードを2枚引く。",
+      "ops": [ { "op": "draw", "count": 2 } ]
     },
     "lower": {
       "_text": "開始：あなたは手札を1枚捨て札にするか、このカードを反転させる。",
