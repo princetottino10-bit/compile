@@ -459,6 +459,10 @@ html.mobile-ui .chip.cov{padding:2px 5px}
 .lobby-room .title{font-weight:700;font-size:.76rem}.lobby-room .meta{font-size:.58rem;color:var(--txd);margin-top:3px}
 .lobby-empty{text-align:center;color:var(--txd);font-size:.7rem;padding:18px 8px;border:1px dashed var(--bd2);border-radius:9px}
 .room-create-grid{display:grid;grid-template-columns:1fr 120px;gap:7px}.room-create-grid .wide{grid-column:1/-1}
+.ed-draft-picked{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;min-height:24px}
+.ed-draft-tag{font-family:var(--fmono);font-size:.62rem;font-weight:700;letter-spacing:.04em;padding:4px 9px;
+  border-radius:999px;border:1px solid var(--bd2);color:var(--txd);background:rgba(255,255,255,.03)}
+.ed-draft-tag.mine{border-color:var(--pk);color:#fff;background:linear-gradient(135deg,rgba(233,30,140,.3),rgba(233,30,140,.08))}
 .row{display:flex;align-items:center;gap:10px;margin:12px 0;font-size:.78rem;color:var(--txd)}
 .row input{accent-color:var(--pk)}
 .bigbtn{width:100%;background:linear-gradient(135deg,var(--pk),#a3136a);border:none;color:#fff;
@@ -3947,6 +3951,11 @@ async function roomSendAction(action){
     try { await roomPoll(true); } catch(_){}
   } finally { roomBusy = false; }
 }
+function roomSetupMode(){
+  if (!room) return 'waiting';
+  if (room.status === 'draft') return 'draft';
+  return room.names[1] ? 'protocols' : 'waiting';
+}
 async function roomPoll(force){
   if (!room || (roomBusy && !force)) return;
   var next;
@@ -3955,7 +3964,7 @@ async function roomPoll(force){
   var changed = next.version !== room.version || next.status !== room.status;
   if (!changed){ room = next; return; }
   if (next.status === 'playing' || next.status === 'finished') roomApplyView(next);
-  else { room = next; roomRenderSetup(next.names[1] ? 'protocols' : 'waiting'); }
+  else { room = next; roomRenderSetup(roomSetupMode()); }
 }
 function roomStartPolling(){
   if (roomTimer) clearInterval(roomTimer);
@@ -4039,7 +4048,7 @@ function roomApplyView(rm){
   var firstEnter = !roomMode;
   room = rm;
   if (rm.status !== 'playing' && rm.status !== 'finished'){
-    roomRenderSetup(rm.names[1] ? 'protocols' : 'waiting');
+    roomRenderSetup(roomSetupMode());
     return;
   }
   roomMode = true;
@@ -4105,6 +4114,7 @@ function roomRenderSetup(mode){
       '<div class="room-create-grid"><input class="room-input" id="roomTitle" maxlength="30" placeholder="部屋名" value="対戦募集">' +
       '<select class="room-input" id="roomVis"><option value="public">公開</option><option value="private">招待専用</option></select>' +
       '<input class="room-input wide" id="roomPw" maxlength="40" type="password" placeholder="パスワード (任意・4文字以上)">' +
+      '<label class="ed-comp wide" style="grid-column:1/-1;justify-content:flex-start;gap:6px"><input type="checkbox" id="roomDraft"> 公式ルールでドラフトする(先攻後攻は自動抽選)</label>' +
       '<button class="bigbtn wide" style="margin:0" onclick="roomCreate()">ルームを作る</button></div>' +
       '<div class="fx-set-lbl" style="margin-top:16px">募集中ルーム <button class="hbtn" onclick="roomLoadLobby()">更新</button></div>' +
       '<div class="lobby-list" id="roomLobbyList"><div class="lobby-empty">読み込み中…</div></div>' +
@@ -4116,6 +4126,29 @@ function roomRenderSetup(mode){
     html += '<div class="fx-set-lbl">' + esc(room.title || '対戦募集') + '</div><div class="room-code">' + esc(room.code) + '</div>' +
       '<div class="room-wait">' + (room.names[1] ? '対戦相手が参加しました。プロトコルを選択してください。' : 'このコードを相手へ共有して、参加を待ってください。') + '</div>' +
       '<div class="room-actions"><button class="optbtn" onclick="roomCopyCode()">コードをコピー</button></div>';
+  } else if (mode === 'draft'){
+    var d = room.draft || {};
+    var mine = d.active === room.side;
+    var myP = (room.protocols && room.protocols[room.side]) || [];
+    var opP = (room.protocols && room.protocols[1 - room.side]) || [];
+    html += '<div class="sub">公式ドラフト: 先手1 → 後手2 → 先手2 → 後手1 の順で各自3つ選びます。'
+      + (d.first === room.side ? '<b>あなたが先手</b>です。' : '<b>相手が先手</b>です。') + '</div>';
+    html += '<div class="fx-set-lbl">あなたの選択 (' + myP.length + '/3)</div><div class="ed-draft-picked">'
+      + (myP.map(function(n){ return '<span class="ed-draft-tag mine">' + esc(n) + '</span>'; }).join('') || '<span class="sub">未選択</span>') + '</div>';
+    html += '<div class="fx-set-lbl">相手の選択 (' + opP.length + '/3)</div><div class="ed-draft-picked">'
+      + (opP.map(function(n){ return '<span class="ed-draft-tag">' + esc(n) + '</span>'; }).join('') || '<span class="sub">未選択</span>') + '</div>';
+    if (mine){
+      html += '<div class="fx-set-lbl">プールから ' + d.toPick + ' 個選択</div>';
+      html += '<div class="pgrid" id="roomDraftGrid">' + (d.pool || []).map(function(n){
+        var sel = roomSel.indexOf(n) >= 0;
+        var pm = PROTOMAP[n] || {};
+        return '<div class="pchip' + (sel ? ' sel' : '') + '" data-name="' + esc(n) + '" onclick="roomDraftToggle(this)">'
+          + esc(n) + '<small>' + esc(pm.tags || '') + '</small></div>';
+      }).join('') + '</div>';
+      html += '<button class="bigbtn" ' + (roomSel.length === d.toPick ? '' : 'disabled') + ' onclick="roomDraftPick()">ドラフト確定 (' + roomSel.length + '/' + d.toPick + ')</button>';
+    } else {
+      html += '<div class="room-wait">相手がドラフト中です…</div>';
+    }
   } else if (mode === 'protocols'){
     var other = (room.protocols && room.protocols[1 - room.side]) || [];
     roomSel = roomSel.filter(function(n){ return other.indexOf(n) < 0; });
@@ -4164,11 +4197,13 @@ async function roomCreate(){
   if (pw && pw.length < 4){ roomSetStatus('パスワードは4文字以上です', 'err'); return; }
   roomBusy = true;
   try {
+    var draftCk = document.getElementById('roomDraft');
     room = await roomApi('create', {
       name: lsGet('compileRoomName'),
       title: document.getElementById('roomTitle').value,
       visibility: document.getElementById('roomVis').value,
-      password: pw
+      password: pw,
+      draft: !!(draftCk && draftCk.checked)
     });
     roomEnterRoom();
   } catch(e){ roomSetStatus(e.message, 'err'); }
@@ -4194,8 +4229,27 @@ function roomEnterRoom(){
   roomLobbyTimerStop();
   roomSel = [];
   if (room.status === 'playing' || room.status === 'finished') roomApplyView(room);
-  else roomRenderSetup(room.names[1] ? 'protocols' : 'waiting');
+  else roomRenderSetup(roomSetupMode());
   roomStartPolling();
+}
+function roomDraftToggle(el){
+  var n = el.dataset.name, d = room.draft || {};
+  var i = roomSel.indexOf(n);
+  if (i >= 0) roomSel.splice(i, 1);
+  else if (roomSel.length < d.toPick) roomSel.push(n);
+  roomRenderSetup('draft');
+}
+async function roomDraftPick(){
+  var d = room.draft || {};
+  if (roomSel.length !== d.toPick || roomBusy) return;
+  roomBusy = true;
+  try {
+    var next = await roomApi('draftpick', { code: room.code, version: room.version, picks: roomSel.slice() });
+    roomSel = [];
+    if (next.status === 'playing') roomApplyView(next);
+    else { room = next; roomRenderSetup('draft'); }
+  } catch(e){ roomSetStatus(e.message, 'err'); }
+  finally { roomBusy = false; }
 }
 function roomToggleProto(el){
   var n = el.dataset.name;

@@ -97,6 +97,13 @@ function sideOf(room: any, userId: string) {
   return -1;
 }
 
+const ALL_PROTOCOLS: string[] = (cards as any).protocols.map((p: any) => p.name);
+/* 公式ドラフト順: 先手1 → 後手2 → 先手2 → 後手1 (各自3つ) */
+function draftSteps(first: number) {
+  const o = 1 - first;
+  return [{ side: first, n: 1 }, { side: o, n: 2 }, { side: first, n: 2 }, { side: o, n: 1 }];
+}
+
 function cardAliases(st: any) {
   const forward: Record<string, string> = {}, reverse: Record<string, string> = {};
   Object.keys(st.cards).sort().forEach((uid, i) => { const alias = "c" + i; forward[uid] = alias; reverse[alias] = uid; });
@@ -125,6 +132,15 @@ function publicState(room: any, side: number) {
     names: [room.host_name, room.guest_name],
     protocols: [room.host_protocols, room.guest_protocols],
   };
+  if (room.status === "draft" && room.draft_state && room.draft_state.on) {
+    const ds = room.draft_state;
+    const steps = draftSteps(ds.first);
+    const cur = steps[ds.step];
+    base.draft = {
+      pool: ds.pool || [], step: ds.step, first: ds.first,
+      active: cur ? cur.side : -1, toPick: cur ? cur.n : 0,
+    };
+  }
   if (!st) return base;
   const aliases = cardAliases(st);
   const opponent = 1 - side;
@@ -216,6 +232,7 @@ Deno.serve(async (req) => {
         const { data, error } = await admin.from("secure_rooms").insert({
           code: code(), host_id: user.id, host_name: name, title, visibility,
           password_salt: password.salt, password_hash: password.hash,
+          draft_state: body.draft ? { on: true } : null,
         }).select("*").single();
         if (!error) created = data;
         else if (error.code !== "23505") throw error;
@@ -235,9 +252,20 @@ Deno.serve(async (req) => {
       if (room.host_id !== user.id && room.guest_id && room.guest_id !== user.id) return fail(req, "満室です", 409);
       if (!room.guest_id && room.host_id !== user.id) {
         if (!(await passwordMatches(room, body.password))) return fail(req, "パスワードが違います", 403);
+        const isDraft = !!(room.draft_state && room.draft_state.on);
+        const upd: any = { guest_id: user.id, guest_name: name, updated_at: new Date().toISOString() };
+        if (isDraft) {
+          // ドラフト開始: 先手後攻をランダム抽選し、全プロトコルをプールに並べる
+          const first = Math.random() < 0.5 ? 0 : 1;
+          upd.status = "draft";
+          upd.host_protocols = [];
+          upd.guest_protocols = [];
+          upd.draft_state = { on: true, pool: ALL_PROTOCOLS.slice(), first, step: 0 };
+        } else {
+          upd.status = "setup";
+        }
         const { data, error } = await admin.from("secure_rooms")
-          .update({ guest_id: user.id, guest_name: name, status: "setup", updated_at: new Date().toISOString() })
-          .eq("id", room.id).is("guest_id", null).select("*").single();
+          .update(upd).eq("id", room.id).is("guest_id", null).select("*").single();
         if (error) return fail(req, "同時参加が発生しました。もう一度お試しください", 409);
         room = data;
       }
@@ -274,6 +302,47 @@ Deno.serve(async (req) => {
         room = started;
       }
       return json(req, publicState(room, side));
+    }
+
+    if (op === "draftpick") {
+      if (room.status !== "draft" || !room.draft_state || !room.draft_state.on) return fail(req, "ドラフト中ではありません", 409);
+      if (Number(body.version) !== Number(room.version)) return fail(req, "状態が更新されています", 409);
+      const ds = room.draft_state;
+      const steps = draftSteps(ds.first);
+      const step = steps[ds.step];
+      if (!step) return fail(req, "ドラフトは終了しています", 409);
+      if (step.side !== side) return fail(req, "あなたのドラフト順ではありません", 403);
+      const picks = Array.isArray(body.picks) ? body.picks.map(String) : [];
+      if (picks.length !== step.n) return fail(req, `このステップでは${step.n}個選んでください`);
+      if (new Set(picks).size !== picks.length || picks.some((p: string) => (ds.pool || []).indexOf(p) < 0)) {
+        return fail(req, "選択が不正です");
+      }
+      const field = side === 0 ? "host_protocols" : "guest_protocols";
+      const nextProtos = (room[field] || []).concat(picks);
+      const nextPool = (ds.pool || []).filter((p: string) => picks.indexOf(p) < 0);
+      const nextStep = ds.step + 1;
+      const upd: any = {
+        [field]: nextProtos,
+        draft_state: { on: true, pool: nextPool, first: ds.first, step: nextStep },
+        version: room.version + 1, updated_at: new Date().toISOString(),
+      };
+      if (nextStep >= steps.length) {
+        const host = side === 0 ? nextProtos : (room.host_protocols || []);
+        const guest = side === 1 ? nextProtos : (room.guest_protocols || []);
+        const result = Engine.newGame({
+          p0: host, p1: guest, seed: crypto.getRandomValues(new Uint32Array(1))[0],
+          useControl: true, first: ds.first,
+        });
+        upd.game_state = result.state;
+        upd.pending_request = result.requests[0] || null;
+        upd.last_log = Array.isArray(result.log) ? result.log : [];
+        upd.status = "playing";
+        upd.draft_state = { on: true, pool: [], first: ds.first, step: nextStep, done: true };
+      }
+      const { data, error } = await admin.from("secure_rooms").update(upd)
+        .eq("id", room.id).eq("version", room.version).select("*").single();
+      if (error) return fail(req, "相手の操作と競合しました。再読み込みします", 409);
+      return json(req, publicState(data, side));
     }
 
     if (op === "action") {
