@@ -229,6 +229,8 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:7px 11px;f
 .ed-zone-group{display:flex;flex-direction:column;gap:6px;padding:8px;border:1px solid var(--bd2);
   border-radius:9px;background:rgba(255,255,255,.02);margin-bottom:12px}
 .ed-card-row{display:flex;align-items:center;gap:8px}
+.ed-card-row .ed-card-def{flex:1.25;min-width:110px}
+.ed-card-row .ed-owner{flex:0 0 74px}
 .ed-chip{font-family:var(--fmono);font-size:.6rem;font-weight:700;letter-spacing:.04em;
   padding:6px 8px;border-radius:7px;min-width:84px;flex-shrink:0;text-align:center;
   background:linear-gradient(180deg,var(--act),transparent);border:1px solid var(--ac,var(--bd2));color:var(--ac,var(--tx))}
@@ -238,6 +240,9 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:7px 11px;f
   background:var(--cbg2);border:1px solid var(--bd2);color:var(--txd);border-radius:4px;cursor:pointer}
 .ed-order button:active{background:var(--bd2);color:var(--tx)}
 .ed-order button:disabled{opacity:.22;cursor:default}
+.ed-remove{width:28px;height:28px;padding:0;flex-shrink:0;background:transparent;border:1px solid var(--bd2);
+  color:var(--txd);border-radius:6px;cursor:pointer;font-family:inherit}
+.ed-add-row{display:grid;grid-template-columns:1.4fr .7fr 1.5fr auto;gap:6px;margin:8px 0 12px}
 .ed-share-ta{width:100%;background:var(--cbg2);border:1px solid var(--bd2);color:var(--tx);
   border-radius:8px;padding:8px;font-family:var(--fmono);font-size:.6rem;line-height:1.5;
   resize:none;height:64px;margin-bottom:8px;word-break:break-all}
@@ -257,6 +262,9 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:7px 11px;f
   .panel.editor-panel{padding:12px;max-height:94vh}
   .ed-tools{top:-12px}.ed-filter-row{grid-template-columns:1fr 1fr}.ed-search{grid-column:1/-1}
   .ed-card-row{gap:5px}.ed-chip{min-width:68px;padding:6px 4px}.ed-order button{width:22px}
+  .ed-card-row{flex-wrap:wrap}.ed-card-row .ed-card-def{flex:1 1 calc(100% - 82px)}
+  .ed-card-row .ed-owner{flex:0 0 76px}.ed-card-row .ed-zone{flex:1 1 calc(100% - 65px)}
+  .ed-add-row{grid-template-columns:1fr 82px}.ed-add-row .ed-zone{grid-column:1/-1}
   .ed-actions{bottom:-12px}
 }
 
@@ -3267,9 +3275,57 @@ function zoneOptionsHtml(current){
   return html;
 }
 
+function cardOptionsHtml(current){
+  var html = '';
+  COMPILE_CARDS.protocols.forEach(function(proto){
+    html += '<optgroup label="'+esc(proto.name)+'">';
+    proto.cards.forEach(function(card){
+      html += '<option value="'+esc(card.id)+'" data-proto="'+esc(proto.name)+'"'
+        +(card.id===current?' selected':'')+'>'+esc(proto.name+' '+card.value)+'</option>';
+    });
+    html += '</optgroup>';
+  });
+  return html;
+}
+
 function cardChipInfo(uid){
   var info = DEFMAP[cur.state.cards[uid].def];
   return { name: info.proto.name, label: info.proto.name + ' ' + info.card.value, color: info.proto.color };
+}
+
+var edCardSeq = 0;
+function editorCardRowHtml(uid, key, defId, owner, idx, total){
+  return '<div class="ed-card-row" data-editor-uid="'+esc(uid)+'">'
+    + '<select class="ed-sel ed-card-def" onchange="edCardChanged(this)">'+cardOptionsHtml(defId)+'</select>'
+    + '<select class="ed-sel ed-owner" aria-label="所有者"><option value="0"'+(owner===0?' selected':'')+'>あなた所有</option>'
+    + '<option value="1"'+(owner===1?' selected':'')+'>AI所有</option></select>'
+    + '<select class="ed-sel ed-zone" data-uid="'+esc(uid)+'" onchange="edZoneChanged(this)">'+zoneOptionsHtml(key)+'</select>'
+    + '<span class="ed-order"><button type="button" onclick="edMoveCard(this,-1)"'+(idx===0?' disabled':'')+'>▲</button>'
+    + '<button type="button" onclick="edMoveCard(this,1)"'+(idx===total-1?' disabled':'')+'>▼</button></span>'
+    + '<button type="button" class="ed-remove" onclick="edRemoveCard(this)" aria-label="カードを削除">×</button></div>';
+}
+
+function edCardChanged(sel){ edFilterCards(); }
+function edZoneChanged(sel){
+  var row = sel.closest('.ed-card-row'), oldGroup = row.parentElement;
+  var newGroup = document.getElementById('edZone-'+sel.value);
+  if (newGroup && newGroup !== oldGroup) newGroup.appendChild(row);
+  edRefreshOrderButtons(oldGroup); edRefreshOrderButtons(newGroup); edUpdateSummary(); edFilterCards();
+}
+function edRemoveCard(btn){
+  var group = btn.closest('.ed-zone-group');
+  btn.closest('.ed-card-row').remove();
+  edRefreshOrderButtons(group); edUpdateSummary(); edFilterCards();
+}
+
+function edAddCard(){
+  var defId = document.getElementById('edAddDef').value;
+  var owner = +document.getElementById('edAddOwner').value;
+  var zone = document.getElementById('edAddZone').value;
+  var group = document.getElementById('edZone-'+zone);
+  var uid = 'custom:'+(++edCardSeq);
+  group.insertAdjacentHTML('beforeend', editorCardRowHtml(uid, zone, defId, owner, group.children.length, group.children.length+1));
+  edRefreshOrderButtons(group); edUpdateSummary(); edFilterCards();
 }
 
 function cardsInZone(st, key){
@@ -3307,8 +3363,8 @@ function openEditor(){
   edPlacedOnly = false;
   var st = cur.state;
   var html = '<h2>詰め<b>Compile</b></h2>';
-  html += '<div class="sub">手札・デッキ・トラッシュ・ラインの36枚を自由に配置し、プロトコルやターン・コントロールを編集できます。'
-    + '「この内容で適用」で反映され、設定したターン番のプレイヤーの行動から再開します。SHAREリンクで盤面をそのまま共有できます。</div>';
+  html += '<div class="sub">全カードから好きな種類・枚数を、手札・デッキ・トラッシュ・ラインへ自由に配置できます。'
+    + '「この内容でテスト」で通常プレイを開始し、SHAREリンクを開いた回答者も同じ盤面から通常どおりプレイできます。</div>';
 
   html += '<div class="fx-set-lbl">ターン番 / コントロール</div><div class="fx-row-wrap">';
   html += '<select id="edTurn" class="ed-sel">'
@@ -3337,7 +3393,7 @@ function openEditor(){
     }
   }
 
-  html += '<div class="fx-set-lbl">カード配置 (36枚)</div><div class="ed-cards">';
+  html += '<div class="fx-set-lbl">カード配置</div><div class="ed-cards">';
   html += '<div class="ed-tools">'
     + '<div class="ed-filter-row"><input id="edSearch" class="ed-search" placeholder="カード名を検索" oninput="edFilterCards()">'
     + '<select id="edSideFilter" class="ed-sel" onchange="edFilterCards()"><option value="">両方</option><option value="0">あなた</option><option value="1">AI</option></select>'
@@ -3346,7 +3402,12 @@ function openEditor(){
     + '<div class="fx-row-wrap"><button class="optbtn opt-inline" onclick="edResetToDecks()">全カードを所有者デッキへ</button>'
     + '<button class="optbtn opt-inline" onclick="edShowPlacedOnly()">配置済みのみ表示</button></div>'
     + '<div class="ed-summary" id="edSummary"></div></div>';
-  html += '<div class="ed-hint">必要なカードを検索して配置してください。残りは「全カードを所有者デッキへ」で自動整理できます。▲▼はゾーン内の順序で、ラインは下のカードほど上に重なります。</div>';
+  html += '<div class="ed-hint">カード種類・所有者・配置先を自由に変更できます。同じカードの複数配置や追加・削除も可能です。▲▼はゾーン内の順序で、ラインは下のカードほど上に重なります。</div>';
+  var firstDef = COMPILE_CARDS.protocols[0].cards[0].id;
+  html += '<div class="ed-add-row"><select id="edAddDef" class="ed-sel">'+cardOptionsHtml(firstDef)+'</select>'
+    + '<select id="edAddOwner" class="ed-sel"><option value="0">あなた所有</option><option value="1">AI所有</option></select>'
+    + '<select id="edAddZone" class="ed-sel ed-zone">'+zoneOptionsHtml('hand0')+'</select>'
+    + '<button class="optbtn opt-inline" type="button" onclick="edAddCard()">カード追加</button></div>';
   var zoneOrder = [];
   [0,1].forEach(function(p){
     zoneOrder.push('hand'+p, 'deck'+p, 'trash'+p);
@@ -3354,19 +3415,11 @@ function openEditor(){
   });
   zoneOrder.forEach(function(key){
     var uids = cardsInZone(st, key);
-    if (!uids.length) return;
-    html += '<div class="ed-zone-section"><div class="fx-set-lbl">' + esc(ZONE_LABELS[key]) + ' (' + uids.length + ')</div>';
-    html += '<div class="ed-zone-group">';
+    html += '<div class="ed-zone-section"><div class="fx-set-lbl">' + esc(ZONE_LABELS[key]) + ' (<span data-zone-count="'+key+'">' + uids.length + '</span>)</div>';
+    html += '<div class="ed-zone-group" id="edZone-'+key+'">';
     uids.forEach(function(uid, idx){
-      var info = cardChipInfo(uid);
-      html += '<div class="ed-card-row" data-owner="'+cur.state.cards[uid].owner+'" data-proto="'+esc(info.name)+'" data-label="'+esc(info.label.toLowerCase())+'">';
-      html += '<span class="ed-chip" data-accent="'+esc(info.name)+'">'+esc(info.label)+'</span>';
-      html += '<select class="ed-sel ed-zone" data-uid="'+esc(uid)+'">' + zoneOptionsHtml(key) + '</select>';
-      html += '<span class="ed-order">'
-        + '<button type="button" onclick="edMoveCard(this,-1)"' + (idx===0?' disabled':'') + '>▲</button>'
-        + '<button type="button" onclick="edMoveCard(this,1)"' + (idx===uids.length-1?' disabled':'') + '>▼</button>'
-        + '</span>';
-      html += '</div>';
+      var card = cur.state.cards[uid];
+      html += editorCardRowHtml(uid, key, card.def, card.owner, idx, uids.length);
     });
     html += '</div></div>';
   });
@@ -3379,12 +3432,7 @@ function openEditor(){
 
   openModal(html);
   document.getElementById('modalPanel').classList.add('editor-panel');
-  document.querySelectorAll('.ed-chip').forEach(function(el){
-    var p = PROTOMAP[el.dataset.accent];
-    if (p) setAccent(el, p.color);
-  });
-  document.querySelectorAll('.ed-zone').forEach(function(sel){ sel.addEventListener('change', edUpdateSummary); });
-  edUpdateSummary();
+  edUpdateSummary(); edFilterCards();
 }
 
 var edPlacedOnly = false;
@@ -3396,9 +3444,14 @@ function edFilterCards(){
     var shown = 0;
     section.querySelectorAll('.ed-card-row').forEach(function(row){
       var zone = row.querySelector('.ed-zone').value;
+      var defSel = row.querySelector('.ed-card-def');
+      var option = defSel.options[defSel.selectedIndex];
+      var protoName = option.dataset.proto || '';
+      var label = option.textContent.toLowerCase();
+      var owner = row.querySelector('.ed-owner').value;
       var placed = !/^deck[01]$/.test(zone);
-      var ok = (!q || row.dataset.label.indexOf(q) >= 0 || row.dataset.proto.toLowerCase().indexOf(q) >= 0)
-        && (!side || row.dataset.owner === side) && (!proto || row.dataset.proto === proto)
+      var ok = (!q || label.indexOf(q) >= 0 || protoName.toLowerCase().indexOf(q) >= 0)
+        && (!side || owner === side) && (!proto || protoName === proto)
         && (!edPlacedOnly || placed);
       row.style.display = ok ? '' : 'none';
       if (ok) shown++;
@@ -3416,15 +3469,15 @@ function edShowPlacedOnly(){
 function edResetToDecks(){
   if (!confirm('手札・場・トラッシュのカードを、すべて所有者のデッキに戻しますか?')) return;
   document.querySelectorAll('.ed-zone').forEach(function(sel){
-    var uid = sel.dataset.uid;
-    sel.value = 'deck' + cur.state.cards[uid].owner;
+    if (!sel.closest('.ed-card-row')) return;
+    sel.value = 'deck' + sel.closest('.ed-card-row').querySelector('.ed-owner').value;
   });
   edUpdateSummary(); edFilterCards();
 }
 
 function edUpdateSummary(){
   var counts = { hand0:0, hand1:0, field0:0, field1:0, trash0:0, trash1:0 };
-  document.querySelectorAll('.ed-zone').forEach(function(sel){
+  document.querySelectorAll('.ed-card-row .ed-zone').forEach(function(sel){
     var v = sel.value, m = v.match(/^line\d(\d)[ud]$/);
     if (m) counts['field'+m[1]]++;
     else if (/^(hand|trash)[01]$/.test(v)) counts[v]++;
@@ -3432,6 +3485,11 @@ function edUpdateSummary(){
   var el = document.getElementById('edSummary');
   if (el) el.textContent = 'あなた: 手札 '+counts.hand0+' / 場 '+counts.field0+' / トラッシュ '+counts.trash0
     + '    AI: 手札 '+counts.hand1+' / 場 '+counts.field1+' / トラッシュ '+counts.trash1;
+  Object.keys(ZONE_LABELS).forEach(function(key){
+    var count = document.querySelector('[data-zone-count="'+key+'"]');
+    var group = document.getElementById('edZone-'+key);
+    if (count && group) count.textContent = group.children.length;
+  });
 }
 
 function buildEditedState(){
@@ -3444,10 +3502,14 @@ function buildEditedState(){
   document.querySelectorAll('.ed-proto-comp').forEach(function(cb){
     base.players[+cb.dataset.s].protocols[+cb.dataset.l].compiled = cb.checked;
   });
+  base.cards = {};
   for (var p=0;p<2;p++){ base.players[p].hand=[]; base.players[p].deck=[]; base.players[p].trash=[]; }
   base.lines = [[[],[]],[[],[]],[[],[]]];
-  document.querySelectorAll('.ed-zone').forEach(function(sel){
-    var uid = sel.dataset.uid, c = base.cards[uid], v = sel.value;
+  document.querySelectorAll('.ed-card-row').forEach(function(row, idx){
+    var sel = row.querySelector('.ed-zone'), v = sel.value;
+    var uid = 'puzzle:'+idx, owner = +row.querySelector('.ed-owner').value;
+    var c = {uid:uid,def:row.querySelector('.ed-card-def').value,owner:owner,faceUp:false,zone:''};
+    base.cards[uid] = c;
     var m = v.match(/^line(\d)(\d)([ud])$/);
     if (m){
       var l = +m[1], s = +m[2];
