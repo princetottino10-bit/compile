@@ -142,6 +142,8 @@ function publicState(room: any, side: number) {
     hand: st.players[side].hand.map((uid: string) => ({ uid: aliases.forward[uid], def: st.cards[uid].def })),
     trash: st.players.map((p: any) => p.trash.map((uid: string) => ({ uid: aliases.forward[uid], def: st.cards[uid].def }))),
   };
+  // 直近アクションの公開ログ(隠し情報は含まれない)。クライアントの発動演出に使う。
+  base.log = Array.isArray(room.last_log) ? room.last_log : [];
   const pending = room.pending_request;
   base.request = pending && pending.player === side ? publicRequest(pending, aliases.forward) : null;
   if (!pending && st.turn === side && st.phase === "action" && st.winner === null) {
@@ -263,7 +265,9 @@ Deno.serve(async (req) => {
       if (room.host_protocols?.length === 3 && room.guest_protocols?.length === 3 && !room.game_state) {
         const result = Engine.newGame({ p0: room.host_protocols, p1: room.guest_protocols, seed: crypto.getRandomValues(new Uint32Array(1))[0], useControl: true });
         const { data: started, error: startError } = await admin.from("secure_rooms").update({
-          game_state: result.state, pending_request: result.requests[0] || null, status: "playing", version: room.version + 1,
+          game_state: result.state, pending_request: result.requests[0] || null,
+          last_log: Array.isArray(result.log) ? result.log : [],
+          status: "playing", version: room.version + 1,
           updated_at: new Date().toISOString(),
         }).eq("id", room.id).eq("version", room.version).select("*").single();
         if (startError) return fail(req, "対戦開始が競合しました", 409);
@@ -285,6 +289,7 @@ Deno.serve(async (req) => {
       const nextVersion = room.version + 1;
       const { data, error } = await admin.from("secure_rooms").update({
         game_state: result.state, pending_request: result.requests[0] || null,
+        last_log: Array.isArray(result.log) ? result.log : [],
         status: result.winner === null ? "playing" : "finished", version: nextVersion,
         last_action_at: new Date().toISOString(), updated_at: new Date().toISOString(),
       }).eq("id", room.id).eq("version", room.version).select("*").single();

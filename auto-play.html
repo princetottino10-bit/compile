@@ -3913,7 +3913,25 @@ function roomNormRequest(rm){
   nq.player = HUMAN;
   return nq;
 }
+/* 公開ログの「発動」行から、ソロと同じステップ再生用の擬似トレースを組む。
+   サーバーは最終状態しか返さないため各ステップの状態は同一(=最終盤面)だが、
+   発動カードのフロート表示と「間」を出すことで①着地→解決の順・②発動表示を再現する */
+function roomFindUidByDef(st, defId){
+  for (var uid in st.cards){ if (st.cards[uid].def === defId) return uid; }
+  return null;
+}
+function roomLogEntries(st, lines){
+  var out = [];
+  (lines || []).forEach(function(line){
+    if (!/中段コマンド解決|上段効果が発動|下段効果が発動/.test(line)) return;
+    var m = line.match(/\[([A-Z]+_\d+)\]/);
+    var uid = m ? roomFindUidByDef(st, m[1]) : null;
+    if (uid) out.push({ st: st, msg: line, uid: uid });
+  });
+  return out;
+}
 function roomApplyView(rm){
+  var firstEnter = !roomMode;
   room = rm;
   if (rm.status !== 'playing' && rm.status !== 'finished'){
     roomRenderSetup(rm.names[1] ? 'protocols' : 'waiting');
@@ -3922,14 +3940,23 @@ function roomApplyView(rm){
   roomMode = true;
   document.getElementById('setupOv').classList.remove('on');
   document.getElementById('undoBtn').disabled = true;
+  if (firstEnter) fullLog = [];
+  cancelPlayback();
   var st = buildRoomState(rm);
   var nq = roomNormRequest(rm);
-  cur = { state: st, requests: nq ? [nq] : [], log: [], trace: [], winner: st.winner, error: null };
+  cur = { state: st, requests: nq ? [nq] : [], log: rm.log || [], trace: [], winner: st.winner, error: null };
   selectedHand = null; selBuf = []; playPick = null; arrPreview = null;
   closeModal();
-  if (nq){ enterReq(nq); }
-  else { uiMode = 'idle'; curReq = null; render(); updateMsgBar(); }
-  if (st.winner !== null) roomShowWin(st.winner);
+  // 公開ゲームログをターンログへ反映(相手の手も見えるようになる)
+  if (rm.log && rm.log.length) fullLog.push.apply(fullLog, rm.log);
+  render();
+  // 発動効果のフロートをソロと同じ再生機構で表示し、終わったら通常状態へ確定
+  var entries = roomLogEntries(st, rm.log || []);
+  startPlayback(entries, function(){
+    if (nq){ enterReq(nq); }
+    else { uiMode = 'idle'; curReq = null; render(); updateMsgBar(); }
+    if (st.winner !== null) roomShowWin(st.winner);
+  });
 }
 function roomShowWin(localWinner){
   var ov = document.getElementById('winOv');
