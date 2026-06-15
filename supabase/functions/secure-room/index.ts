@@ -42,6 +42,41 @@ function cleanCode(value: unknown) {
   return String(value || "").toUpperCase().replace(/[^A-Z2-9]/g, "").slice(0, 6);
 }
 
+function cleanTitle(value: unknown) {
+  return String(value || "対戦募集").trim().replace(/[<>\u0000-\u001f]/g, "").slice(0, 30) || "対戦募集";
+}
+
+function bytesToBase64(bytes: Uint8Array) {
+  return btoa(String.fromCharCode(...bytes));
+}
+
+function base64ToBytes(value: string) {
+  return Uint8Array.from(atob(value), (c) => c.charCodeAt(0));
+}
+
+async function passwordDigest(password: string, salt: Uint8Array) {
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: 120_000 }, key, 256);
+  return bytesToBase64(new Uint8Array(bits));
+}
+
+async function roomPassword(password: unknown) {
+  const value = String(password || "");
+  if (!value) return { salt: null, hash: null };
+  if (value.length < 4 || value.length > 40) throw new Error("パスワードは4〜40文字で入力してください");
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  return { salt: bytesToBase64(salt), hash: await passwordDigest(value, salt) };
+}
+
+async function passwordMatches(room: any, password: unknown) {
+  if (!room.password_hash || !room.password_salt) return true;
+  const actual = await passwordDigest(String(password || ""), base64ToBytes(room.password_salt));
+  if (actual.length !== room.password_hash.length) return false;
+  let diff = 0;
+  for (let i = 0; i < actual.length; i++) diff |= actual.charCodeAt(i) ^ room.password_hash.charCodeAt(i);
+  return diff === 0;
+}
+
 function code() {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   const bytes = crypto.getRandomValues(new Uint8Array(6));
@@ -86,7 +121,7 @@ function publicRequest(request: any, forward: Record<string, string>) {
 function publicState(room: any, side: number) {
   const st = room.game_state;
   const base: any = {
-    code: room.code, status: room.status, version: room.version, side,
+    code: room.code, title: room.title, status: room.status, version: room.version, side,
     names: [room.host_name, room.guest_name],
     protocols: [room.host_protocols, room.guest_protocols],
   };
@@ -96,12 +131,13 @@ function publicState(room: any, side: number) {
   base.game = {
     turn: st.turn, phase: st.phase, control: st.control, winner: st.winner,
     protocols: st.players.map((p: any) => p.protocols),
+    totals: st.lines.map((_: any, line: number) => [Engine.lineTotal(st, line, 0), Engine.lineTotal(st, line, 1)]),
     counts: st.players.map((p: any) => ({ hand: p.hand.length, deck: p.deck.length, trash: p.trash.length })),
     lines: st.lines.map((line: any[]) => line.map((stack: string[], owner: number) =>
       stack.map((uid) => {
         const c = st.cards[uid];
         const hidden = !c.faceUp && owner === opponent;
-        return { uid: aliases.forward[uid], owner, faceUp: c.faceUp, def: hidden ? null : c.def };
+        return { uid: aliases.forward[uid], owner, faceUp: c.faceUp, def: hidden ? null : c.def, value: Engine.cardValue(st, uid) };
       }))),
     hand: st.players[side].hand.map((uid: string) => ({ uid: aliases.forward[uid], def: st.cards[uid].def })),
     trash: st.players.map((p: any) => p.trash.map((uid: string) => ({ uid: aliases.forward[uid], def: st.cards[uid].def }))),
@@ -148,9 +184,25 @@ Deno.serve(async (req) => {
   const op = String(body.op || "");
 
   try {
+    if (op === "list") {
+      const { data, error } = await admin.from("secure_rooms")
+        .select("code,title,host_name,password_hash,created_at")
+        .eq("visibility", "public").eq("status", "waiting").is("guest_id", null)
+        .order("created_at", { ascending: false }).limit(30);
+      if (error) throw error;
+      return json(req, { rooms: (data || []).map((room: any) => ({
+        code: room.code, title: room.title, hostName: room.host_name,
+        locked: !!room.password_hash, createdAt: room.created_at,
+      })) });
+    }
+
     if (op === "create") {
       const name = cleanName(body.name);
       if (!name) return fail(req, "表示名を入力してください");
+      const title = cleanTitle(body.title);
+      const visibility = body.visibility === "private" ? "private" : "public";
+      let password;
+      try { password = await roomPassword(body.password); } catch (error) { return fail(req, String((error as Error).message)); }
       await admin.rpc("cleanup_secure_rooms");
       const since = new Date(Date.now() - 60_000).toISOString();
       const { count, error: countError } = await admin.from("secure_rooms")
@@ -159,7 +211,10 @@ Deno.serve(async (req) => {
       if ((count || 0) >= 5) return fail(req, "ルーム作成が多すぎます。1分待ってください", 429);
       let created: any = null;
       for (let i = 0; i < 8 && !created; i++) {
-        const { data, error } = await admin.from("secure_rooms").insert({ code: code(), host_id: user.id, host_name: name }).select("*").single();
+        const { data, error } = await admin.from("secure_rooms").insert({
+          code: code(), host_id: user.id, host_name: name, title, visibility,
+          password_salt: password.salt, password_hash: password.hash,
+        }).select("*").single();
         if (!error) created = data;
         else if (error.code !== "23505") throw error;
       }
@@ -177,6 +232,7 @@ Deno.serve(async (req) => {
       if (!name) return fail(req, "表示名を入力してください");
       if (room.host_id !== user.id && room.guest_id && room.guest_id !== user.id) return fail(req, "満室です", 409);
       if (!room.guest_id && room.host_id !== user.id) {
+        if (!(await passwordMatches(room, body.password))) return fail(req, "パスワードが違います", 403);
         const { data, error } = await admin.from("secure_rooms")
           .update({ guest_id: user.id, guest_name: name, status: "setup", updated_at: new Date().toISOString() })
           .eq("id", room.id).is("guest_id", null).select("*").single();

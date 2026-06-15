@@ -8,12 +8,15 @@ for (const [i, match] of [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].ent
   new vm.Script(match[1], { filename: `secure-room-inline-${i}.js` });
 }
 
-const sql = fs.readFileSync('supabase/migrations/202606150001_secure_rooms.sql', 'utf8');
+const sql = fs.readdirSync('supabase/migrations').sort()
+  .map((file) => fs.readFileSync(path.join('supabase', 'migrations', file), 'utf8')).join('\n');
 const fn = fs.readFileSync('supabase/functions/secure-room/index.ts', 'utf8');
 const requiredSql = [
   'enable row level security',
   'revoke all on public.secure_rooms from anon, authenticated',
   'pending_request jsonb',
+  'password_hash text',
+  "visibility in ('public', 'private')",
 ];
 for (const text of requiredSql) {
   if (!sql.includes(text)) throw new Error(`migration missing: ${text}`);
@@ -24,6 +27,8 @@ const requiredFn = [
   'cardAliases(',
   'eq("version", room.version)',
   'pending.player !== side',
+  'PBKDF2',
+  '.select("code,title,host_name,password_hash,created_at")',
 ];
 for (const text of requiredFn) {
   if (!fn.includes(text)) throw new Error(`function missing: ${text}`);
