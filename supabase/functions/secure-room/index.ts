@@ -204,13 +204,13 @@ Deno.serve(async (req) => {
   try {
     if (op === "list") {
       const { data, error } = await admin.from("secure_rooms")
-        .select("code,title,host_name,password_hash,created_at")
+        .select("code,title,host_name,password_hash,draft_state,created_at")
         .eq("visibility", "public").eq("status", "waiting").is("guest_id", null)
         .order("created_at", { ascending: false }).limit(30);
       if (error) throw error;
       return json(req, { rooms: (data || []).map((room: any) => ({
         code: room.code, title: room.title, hostName: room.host_name,
-        locked: !!room.password_hash, createdAt: room.created_at,
+        locked: !!room.password_hash, draft: !!room.draft_state, createdAt: room.created_at,
       })) });
     }
 
@@ -265,8 +265,9 @@ Deno.serve(async (req) => {
           upd.status = "setup";
         }
         const { data, error } = await admin.from("secure_rooms")
-          .update(upd).eq("id", room.id).is("guest_id", null).select("*").single();
+          .update(upd).eq("id", room.id).is("guest_id", null).select("*").maybeSingle();
         if (error) return fail(req, "同時参加が発生しました。もう一度お試しください", 409);
+        if (!data) return fail(req, "同時参加が発生しました。もう一度お試しください", 409);
         room = data;
       }
       const side = sideOf(room, user.id);

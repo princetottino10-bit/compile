@@ -457,6 +457,11 @@ html.mobile-ui .chip.cov{padding:2px 5px}
 .lobby-room{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:10px 11px;
   background:rgba(255,255,255,.025);border:1px solid var(--bd2);border-radius:9px}
 .lobby-room .title{font-weight:700;font-size:.76rem}.lobby-room .meta{font-size:.58rem;color:var(--txd);margin-top:3px}
+.lobby-room .badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
+.lobby-room .badge{font-family:var(--fmono);font-size:.48rem;letter-spacing:.05em;border:1px solid var(--bd2);
+  color:var(--txd);border-radius:999px;padding:2px 6px;background:rgba(255,255,255,.035)}
+.lobby-room .badge.lock{border-color:var(--gd);color:var(--gd2)}
+.lobby-room .badge.draft{border-color:var(--pk);color:var(--pk2)}
 .lobby-empty{text-align:center;color:var(--txd);font-size:.7rem;padding:18px 8px;border:1px dashed var(--bd2);border-radius:9px}
 .room-create-grid{display:grid;grid-template-columns:1fr 120px;gap:7px}.room-create-grid .wide{grid-column:1/-1}
 .ed-draft-picked{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;min-height:24px}
@@ -3889,6 +3894,7 @@ var roomBusy = false;          // 送信中(ポーリング抑止)
 var roomSel = [];              // プロトコル選択中の一時状態
 var roomDepsLoaded = false;
 var ROOM_CFG = window.COMPILE_ROOM_CONFIG || {};
+var roomPendingJoin = null;
 /* ロビーUIで上書きする前に、ソロ設定パネルの元HTMLを退避(退出時に復元する) */
 var roomSoloSetupHtml = (function(){ var p = document.querySelector('#setupOv .panel'); return p ? p.innerHTML : ''; })();
 
@@ -4110,6 +4116,7 @@ function roomRenderSetup(mode){
       '<div class="room-form"><input class="room-input" id="roomName" maxlength="20" placeholder="表示名" value="' + esc(lsGet('compileRoomName') || '') + '">' +
       '<button class="bigbtn" style="margin:0" onclick="roomLogin()">接続</button></div>';
   } else if (mode === 'lobby'){
+    var lastCode = lsGet('compileRoomCode') || '';
     html += '<div class="sub">公開ルームへ参加するか、部屋を作成します。招待専用は一覧に出ません。</div>' +
       '<div class="room-create-grid"><input class="room-input" id="roomTitle" maxlength="30" placeholder="部屋名" value="対戦募集">' +
       '<select class="room-input" id="roomVis"><option value="public">公開</option><option value="private">招待専用</option></select>' +
@@ -4118,6 +4125,7 @@ function roomRenderSetup(mode){
       '<button class="bigbtn wide" style="margin:0" onclick="roomCreate()">ルームを作る</button></div>' +
       '<div class="fx-set-lbl" style="margin-top:16px">募集中ルーム <button class="hbtn" onclick="roomLoadLobby()">更新</button></div>' +
       '<div class="lobby-list" id="roomLobbyList"><div class="lobby-empty">読み込み中…</div></div>' +
+      (lastCode ? '<button class="optbtn" style="width:100%;margin-top:10px" onclick="roomJoin(\'' + esc(lastCode) + '\', \'\')">前回のルームに戻る (' + esc(lastCode) + ')</button>' : '') +
       '<div class="fx-set-lbl" style="margin-top:14px">コードで参加</div>' +
       '<div class="room-form"><input class="room-input" id="roomCode" maxlength="6" placeholder="6桁コード" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z2-9]/g,\'\')">' +
       '<input class="room-input" id="roomJoinPw" maxlength="40" type="password" placeholder="パスワード (必要な場合)">' +
@@ -4185,11 +4193,21 @@ async function roomLoadLobby(){
     if (!document.getElementById('roomLobbyList')) return;
     var rooms = data.rooms || [];
     list.innerHTML = rooms.length ? rooms.map(function(r){
-      return '<div class="lobby-room"><div><div class="title">' + (r.locked ? '🔒 ' : '') + esc(r.title) + '</div>' +
-        '<div class="meta">HOST ' + esc(r.hostName) + ' · ' + esc(r.code) + '</div></div>' +
+      return '<div class="lobby-room"><div><div class="title">' + esc(r.title) + '</div>' +
+        '<div class="meta">HOST ' + esc(r.hostName) + ' · ' + esc(r.code) + ' · ' + esc(roomAgeLabel(r.createdAt)) + '</div>' +
+        '<div class="badges">' + (r.locked ? '<span class="badge lock">LOCK</span>' : '<span class="badge">OPEN</span>') +
+        (r.draft ? '<span class="badge draft">DRAFT</span>' : '<span class="badge">SELECT</span>') + '</div></div>' +
         '<button class="optbtn" style="margin:0" onclick="roomJoinListed(\'' + esc(r.code) + '\',' + (r.locked ? 'true' : 'false') + ')">参加</button></div>';
     }).join('') : '<div class="lobby-empty">現在、募集中の公開ルームはありません。</div>';
   } catch(e){ if (list) list.innerHTML = '<div class="lobby-empty">一覧を取得できませんでした。</div>'; }
+}
+function roomAgeLabel(value){
+  var t = Date.parse(value || '');
+  if (!t) return '今';
+  var min = Math.max(0, Math.floor((Date.now() - t) / 60000));
+  if (min < 1) return '今';
+  if (min < 60) return min + '分前';
+  return Math.floor(min / 60) + '時間前';
 }
 async function roomCreate(){
   if (roomBusy) return;
@@ -4210,8 +4228,22 @@ async function roomCreate(){
   finally { roomBusy = false; }
 }
 function roomJoinListed(code, locked){
-  var pw = locked ? (prompt('ルームパスワードを入力してください') || '') : '';
-  if (locked && !pw) return;
+  if (!locked){ roomJoin(code, ''); return; }
+  roomPendingJoin = code;
+  openModal('<h2>ROOM <b>LOCKED</b></h2>' +
+    '<div class="sub">このルームに入るにはパスワードが必要です。</div>' +
+    '<input class="room-input" id="roomListedPw" maxlength="40" type="password" placeholder="パスワード" style="width:100%;margin-bottom:10px">' +
+    '<button class="bigbtn" onclick="roomJoinListedConfirm()">入室</button>' +
+    '<button class="optbtn ghost" onclick="closeModal()">キャンセル</button>');
+  setTimeout(function(){ var input = document.getElementById('roomListedPw'); if (input) input.focus(); }, 0);
+}
+function roomJoinListedConfirm(){
+  var input = document.getElementById('roomListedPw');
+  var pw = input ? input.value : '';
+  if (!pw){ toast('パスワードを入力してください'); return; }
+  var code = roomPendingJoin;
+  roomPendingJoin = null;
+  closeModal();
   roomJoin(code, pw);
 }
 async function roomJoin(listCode, listPw){
@@ -4227,6 +4259,7 @@ async function roomJoin(listCode, listPw){
 }
 function roomEnterRoom(){
   roomLobbyTimerStop();
+  if (room && room.code) lsSet('compileRoomCode', room.code);
   roomSel = [];
   if (room.status === 'playing' || room.status === 'finished') roomApplyView(room);
   else roomRenderSetup(roomSetupMode());

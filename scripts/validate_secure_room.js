@@ -17,6 +17,7 @@ const requiredSql = [
   'pending_request jsonb',
   'password_hash text',
   "visibility in ('public', 'private')",
+  "status in ('waiting','setup','draft','playing','finished')",
 ];
 for (const text of requiredSql) {
   if (!sql.includes(text)) throw new Error(`migration missing: ${text}`);
@@ -28,10 +29,15 @@ const requiredFn = [
   'eq("version", room.version)',
   'pending.player !== side',
   'PBKDF2',
-  '.select("code,title,host_name,password_hash,created_at")',
+  '.select("code,title,host_name,password_hash,draft_state,created_at")',
 ];
 for (const text of requiredFn) {
   if (!fn.includes(text)) throw new Error(`function missing: ${text}`);
+}
+const listSelect = fn.match(/\.select\("([^"]+)"\)\s*\n\s*\.eq\("visibility", "public"\)/);
+if (!listSelect) throw new Error('room list select not found');
+for (const forbidden of ['game_state', 'pending_request', 'password_salt', 'host_id', 'guest_id']) {
+  if (listSelect[1].includes(forbidden)) throw new Error(`room list leaks: ${forbidden}`);
 }
 if (/service_role\s*[:=]\s*["'][A-Za-z0-9._-]{20}/i.test(fs.readFileSync('secure-room-config.js', 'utf8'))) {
   throw new Error('service role key must not be present in browser config');
