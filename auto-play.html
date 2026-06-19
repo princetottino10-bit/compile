@@ -3931,6 +3931,20 @@ async function roomLoadDeps(){
 function roomConfigured(){
   return /^https:\/\//.test(ROOM_CFG.url || '') && String(ROOM_CFG.anonKey || '').length > 20 && !!window.supabase;
 }
+function roomInviteCodeFromHash(){
+  var h = String(location.hash || '').toUpperCase();
+  var m = /^#ROOM(?:=|\/)?([A-Z2-9]{6})$/.exec(h);
+  return m ? m[1] : '';
+}
+function roomHashWantsRoom(){
+  return location.hash === '#room' || !!roomInviteCodeFromHash();
+}
+function roomInviteUrl(code){
+  return location.origin + location.pathname + '#room=' + cleanRoomCode(code);
+}
+function cleanRoomCode(code){
+  return String(code || '').toUpperCase().replace(/[^A-Z2-9]/g, '').slice(0, 6);
+}
 
 /* ---------- サーバー通信 ---------- */
 async function roomApi(op, extra){
@@ -4117,7 +4131,9 @@ function roomRenderSetup(mode){
       '<button class="bigbtn" style="margin:0" onclick="roomLogin()">接続</button></div>';
   } else if (mode === 'lobby'){
     var lastCode = lsGet('compileRoomCode') || '';
+    var inviteCode = roomInviteCodeFromHash();
     html += '<div class="sub">公開ルームへ参加するか、部屋を作成します。招待専用は一覧に出ません。</div>' +
+      '<button class="bigbtn" style="margin:0 0 10px;width:100%" onclick="roomQuickJoin()">今すぐ対戦</button>' +
       '<div class="room-create-grid"><input class="room-input" id="roomTitle" maxlength="30" placeholder="部屋名" value="対戦募集">' +
       '<select class="room-input" id="roomVis"><option value="public">公開</option><option value="private">招待専用</option></select>' +
       '<input class="room-input wide" id="roomPw" maxlength="40" type="password" placeholder="パスワード (任意・4文字以上)">' +
@@ -4127,13 +4143,13 @@ function roomRenderSetup(mode){
       '<div class="lobby-list" id="roomLobbyList"><div class="lobby-empty">読み込み中…</div></div>' +
       (lastCode ? '<button class="optbtn" style="width:100%;margin-top:10px" onclick="roomJoin(\'' + esc(lastCode) + '\', \'\')">前回のルームに戻る (' + esc(lastCode) + ')</button>' : '') +
       '<div class="fx-set-lbl" style="margin-top:14px">コードで参加</div>' +
-      '<div class="room-form"><input class="room-input" id="roomCode" maxlength="6" placeholder="6桁コード" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z2-9]/g,\'\')">' +
+      '<div class="room-form"><input class="room-input" id="roomCode" maxlength="6" placeholder="6桁コード" value="' + esc(inviteCode) + '" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z2-9]/g,\'\')">' +
       '<input class="room-input" id="roomJoinPw" maxlength="40" type="password" placeholder="パスワード (必要な場合)">' +
       '<button class="optbtn" style="margin:0" onclick="roomJoin()">参加</button></div>';
   } else if (mode === 'waiting'){
     html += '<div class="fx-set-lbl">' + esc(room.title || '対戦募集') + '</div><div class="room-code">' + esc(room.code) + '</div>' +
       '<div class="room-wait">' + (room.names[1] ? '対戦相手が参加しました。プロトコルを選択してください。' : 'このコードを相手へ共有して、参加を待ってください。') + '</div>' +
-      '<div class="room-actions"><button class="optbtn" onclick="roomCopyCode()">コードをコピー</button></div>';
+      '<div class="room-actions"><button class="optbtn" onclick="roomCopyCode()">コードをコピー</button><button class="optbtn" onclick="roomCopyInvite()">招待リンクをコピー</button></div>';
   } else if (mode === 'draft'){
     var d = room.draft || {};
     var mine = d.active === room.side;
@@ -4171,7 +4187,10 @@ function roomRenderSetup(mode){
   html += '<div class="room-status" id="roomStatus"></div>' +
     '<button class="optbtn ghost" style="margin-top:12px" onclick="roomLeave()">← ソロ設定に戻る</button>';
   panel.innerHTML = html;
-  if (mode === 'lobby'){ roomLoadLobby(); roomLobbyTimerStart(); }
+  if (mode === 'lobby'){
+    roomLoadLobby(); roomLobbyTimerStart();
+    if (inviteCode) setTimeout(function(){ roomSetStatus('招待コードを入力済みです。参加を押してください。', 'ok'); }, 0);
+  }
 }
 var _roomLobbyTimer = null;
 function roomLobbyTimerStart(){ roomLobbyTimerStop(); _roomLobbyTimer = setInterval(roomLoadLobby, 5000); }
@@ -4208,6 +4227,31 @@ function roomAgeLabel(value){
   if (min < 1) return '今';
   if (min < 60) return min + '分前';
   return Math.floor(min / 60) + '時間前';
+}
+async function roomQuickJoin(){
+  if (roomBusy) return;
+  roomBusy = true;
+  roomSetStatus('対戦相手を探しています...');
+  try {
+    var data = await roomApi('list');
+    var rooms = data.rooms || [];
+    var open = rooms.find(function(r){ return !r.locked; });
+    if (open){
+      roomSetStatus('空いているルームへ参加します...');
+      room = await roomApi('join', { name: lsGet('compileRoomName'), code: open.code, password: '' });
+    } else {
+      roomSetStatus('空きルームがないため、新しい公開ルームを作成します...');
+      room = await roomApi('create', {
+        name: lsGet('compileRoomName'),
+        title: 'クイック対戦',
+        visibility: 'public',
+        password: '',
+        draft: true
+      });
+    }
+    roomEnterRoom();
+  } catch(e){ roomSetStatus(e.message, 'err'); }
+  finally { roomBusy = false; }
 }
 async function roomCreate(){
   if (roomBusy) return;
@@ -4307,13 +4351,19 @@ function roomCopyCode(){
   if (navigator.clipboard && room) navigator.clipboard.writeText(room.code);
   roomSetStatus('コードをコピーしました', 'ok');
 }
+function roomCopyInvite(){
+  if (!room) return;
+  var url = roomInviteUrl(room.code);
+  if (navigator.clipboard) navigator.clipboard.writeText(url);
+  roomSetStatus('招待リンクをコピーしました', 'ok');
+}
 /* index.html などから auto-play.html#room で来た場合はロビーを自動で開く。
    このスクリプトは boot より後に確実に定義されるため、ここで起動を仕掛ける */
 (function(){
-  function autoOpen(){ if (location.hash === '#room') setTimeout(function(){ openRoomLobby(); }, 0); }
+  function autoOpen(){ if (roomHashWantsRoom()) setTimeout(function(){ openRoomLobby(); }, 0); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', autoOpen);
   else autoOpen();
-  window.addEventListener('hashchange', function(){ if (location.hash === '#room' && !roomMode && !room) openRoomLobby(); });
+  window.addEventListener('hashchange', function(){ if (roomHashWantsRoom() && !roomMode && !room) openRoomLobby(); });
 })();
 
 /* ルーム退出 → ソロ設定へ戻す */
@@ -4329,7 +4379,7 @@ function roomLeave(){
   // ロビーUIで上書きしたパネルを、元のソロ設定マークアップへ復元してから再構築
   var panel = document.querySelector('#setupOv .panel');
   if (panel && roomSoloSetupHtml) panel.innerHTML = roomSoloSetupHtml;
-  if (location.hash === '#room'){ try { history.replaceState(null, '', location.pathname); } catch(e){} }
+  if (roomHashWantsRoom()){ try { history.replaceState(null, '', location.pathname); } catch(e){} }
   buildSetup();
   document.getElementById('setupOv').classList.add('on');
 }

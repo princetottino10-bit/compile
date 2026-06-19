@@ -45,6 +45,8 @@ const requiredAutoPlayUi = [
   '現在、募集中の公開ルームはありません',
   '一覧を取得できませんでした',
   '前回のルームに戻る',
+  '今すぐ対戦',
+  '招待リンクをコピー',
 ];
 for (const text of requiredAutoPlayUi) {
   if (!autoPlayHtml.includes(text)) throw new Error(`auto-play room UI text missing: ${text}`);
