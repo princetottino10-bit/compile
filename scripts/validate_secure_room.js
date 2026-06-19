@@ -3,9 +3,13 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
 
-const html = fs.readFileSync('secure-room.html', 'utf8');
-for (const [i, match] of [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].entries()) {
+const secureHtml = fs.readFileSync('secure-room.html', 'utf8');
+for (const [i, match] of [...secureHtml.matchAll(/<script>([\s\S]*?)<\/script>/g)].entries()) {
   new vm.Script(match[1], { filename: `secure-room-inline-${i}.js` });
+}
+const autoPlayHtml = fs.readFileSync('auto-play.html', 'utf8');
+for (const [i, match] of [...autoPlayHtml.matchAll(/<script>([\s\S]*?)<\/script>/g)].entries()) {
+  new vm.Script(match[1], { filename: `auto-play-inline-${i}.js` });
 }
 
 const sql = fs.readdirSync('supabase/migrations').sort()
@@ -33,6 +37,17 @@ const requiredFn = [
 ];
 for (const text of requiredFn) {
   if (!fn.includes(text)) throw new Error(`function missing: ${text}`);
+}
+const requiredAutoPlayUi = [
+  '公開ルームへ参加するか、部屋を作成します',
+  '公式ルールでドラフトする',
+  'このルームに入るにはパスワードが必要です',
+  '現在、募集中の公開ルームはありません',
+  '一覧を取得できませんでした',
+  '前回のルームに戻る',
+];
+for (const text of requiredAutoPlayUi) {
+  if (!autoPlayHtml.includes(text)) throw new Error(`auto-play room UI text missing: ${text}`);
 }
 const listSelect = fn.match(/\.select\("([^"]+)"\)\s*\n\s*\.eq\("visibility", "public"\)/);
 if (!listSelect) throw new Error('room list select not found');
