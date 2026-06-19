@@ -198,6 +198,14 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:7px 11px;f
   box-shadow:0 0 0 1.5px var(--pk2),0 0 26px -6px rgba(233,30,140,.85);
   animation:lineready 1.4s ease-in-out infinite}
 @keyframes lineready{50%{box-shadow:0 0 0 1.5px var(--pk2),0 0 38px -2px rgba(233,30,140,1)}}
+.line.compile-me{border-color:rgba(55,214,122,.72);box-shadow:0 0 0 1.5px rgba(55,214,122,.72),0 0 24px -8px rgba(55,214,122,.9)}
+.line.compile-op{border-color:rgba(200,168,78,.72);box-shadow:0 0 0 1.5px rgba(200,168,78,.7),0 0 22px -8px rgba(200,168,78,.85)}
+.line.compile-me::after,.line.compile-op::after{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  font-family:var(--fmono);font-weight:900;font-size:.54rem;letter-spacing:.09em;border-radius:999px;padding:3px 8px;
+  pointer-events:none;z-index:9;text-shadow:0 1px 5px #000}
+.line.compile-me::after{content:"COMPILE READY";color:var(--cand);background:rgba(55,214,122,.12);border:1px solid rgba(55,214,122,.45)}
+.line.compile-op::after{content:"OPP READY";color:var(--gd2);background:rgba(200,168,78,.12);border:1px solid rgba(200,168,78,.42)}
+.line.playable::after,.line.cand::after{display:none}
 .line.playable:active{transform:scale(.985)}
 .line.not-target{opacity:.36;filter:saturate(.4)}
 .play-hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:8;
@@ -356,6 +364,10 @@ body.ed-dragging{cursor:grabbing}
 .hcard .eff{min-height:calc(.95em*var(--cs))}
 .hcard:hover{transform:translateY(-4px);border-color:var(--pk);box-shadow:var(--sh),0 0 20px -6px rgba(233,30,140,.65)}
 .hcard.sel{border-color:var(--pk2);transform:translateY(-7px);box-shadow:0 0 0 1.5px var(--pk2),0 0 26px -4px rgba(233,30,140,.85)}
+.hcard.playable-card:not(.sel):not(.cand){border-color:rgba(55,214,122,.65);box-shadow:var(--sh),0 0 18px -6px rgba(55,214,122,.9)}
+.hcard.playable-card:not(.sel):not(.cand)::after{content:"PLAY";position:absolute;right:6px;bottom:5px;
+  font-family:var(--fmono);font-weight:900;font-size:.47rem;letter-spacing:.08em;color:var(--cand);
+  padding:2px 5px;border-radius:999px;background:rgba(55,214,122,.12);border:1px solid rgba(55,214,122,.42)}
 .hcard.cand{border-color:var(--cand);box-shadow:0 0 0 1.5px var(--cand),0 0 20px -5px var(--cand)}
 .hcard.selbuf{border-color:#ffd24a;box-shadow:0 0 0 1.5px #ffd24a,0 0 20px -5px #ffd24a}
 /* モバイル縦持ち: カードを思いっきり小さくし、盤面・手札に多くのカードを収める。
@@ -2747,7 +2759,8 @@ function updateMsgBar(){
   if (cur.state.winner !== null){ mb.classList.add('quiet'); mt.textContent = 'ゲーム終了'; return; }
   if (cur.state.turn === HUMAN && !cur.requests.length){
     mb.classList.remove('quiet');
-    mt.textContent = selectedHand ? 'プレイするラインを選択 (もう一度タップで解除)' : 'あなたのターン: 手札をプレイするかリフレッシュ';
+    var playableCount = Object.keys(legalPlayableCards()).length;
+    mt.textContent = selectedHand ? 'プレイするラインを選択 (もう一度タップで解除)' : (playableCount ? 'あなたのターン: 光っているカードをプレイできます' : 'あなたのターン: リフレッシュできます');
   } else {
     mb.classList.add('quiet');
     mt.textContent = roomMode ? '相手のターン…' : 'AIのターン…';
@@ -3027,10 +3040,14 @@ function renderField(st){
   f.innerHTML = '';
   var nf = {};   // 今回フィールドに在るカード(登場ポップ判定用)
   var legal = legalNow();
+  var myCompile = compileReadyLines(st, HUMAN);
+  var opCompile = compileReadyLines(st, AI);
   for (var l=0;l<3;l++){
     var col = document.createElement('div');
     col.className = 'line';
     col.dataset.line = l;
+    if (myCompile[l]) col.classList.add('compile-me');
+    else if (opCompile[l]) col.classList.add('compile-op');
     if (uiMode==='request' && curReq && curReq.kind==='pickLine' && curReq.player===HUMAN && curReq.lines.indexOf(l)>=0){
       col.classList.add('cand');
       col.onclick = (function(ln){ return function(){ answer(curReq, [ln]); }; })(l);
@@ -3223,6 +3240,7 @@ function renderHand(st){
   var h = document.getElementById('hand');
   h.innerHTML = '';
   var nh = {};
+  var playable = legalPlayableCards();
   st.players[HUMAN].hand.forEach(function(uid){
     var c = st.cards[uid];
     var def = DEFMAP[c.def];
@@ -3232,6 +3250,7 @@ function renderHand(st){
     nh[uid] = 1; if (!prevHandUids[uid]) d.classList.add('pop');   // 引いた札がピロッと登場
     setAccent(d, def.proto.color);
     if (selectedHand === uid) d.classList.add('sel');
+    if (playable[uid] && !playPick && uiMode !== 'request') d.classList.add('playable-card');
     if (uiMode==='request' && curReq && curReq.player===HUMAN && curReq.kind==='pickHand' && curReq.candidates.indexOf(uid)>=0){
       d.classList.add('cand');
       if (selBuf.indexOf(uid)>=0) d.classList.add('selbuf');
@@ -3902,6 +3921,22 @@ var roomSoloSetupHtml = (function(){ var p = document.querySelector('#setupOv .p
 function legalNow(){
   if (roomMode) return (room && room.legalActions) || [];
   return (cur && cur.state.turn === HUMAN && !cur.requests.length) ? Engine.legalActions(cur.state) : [];
+}
+function legalPlayableCards(){
+  var out = {};
+  legalNow().forEach(function(a){
+    if (a.type === 'play' && a.card) out[a.card] = true;
+  });
+  return out;
+}
+function compileReadyLines(st, side){
+  var out = {};
+  if (!st || !st.players || !st.players[side] || st.players[side].cannotCompile) return out;
+  for (var l = 0; l < 3; l++){
+    var mine = lineTotalOf(st, l, side), theirs = lineTotalOf(st, l, 1 - side);
+    if (mine >= 10 && mine > theirs) out[l] = true;
+  }
+  return out;
 }
 function lineTotalOf(st, l, side){
   return (st && st._totals) ? st._totals[l][side] : Engine.lineTotal(st, l, side);

@@ -47,6 +47,8 @@ const requiredAutoPlayUi = [
   '前回のルームに戻る',
   '今すぐ対戦',
   '招待リンクをコピー',
+  'COMPILE READY',
+  '光っているカードをプレイできます',
 ];
 for (const text of requiredAutoPlayUi) {
   if (!autoPlayHtml.includes(text)) throw new Error(`auto-play room UI text missing: ${text}`);
