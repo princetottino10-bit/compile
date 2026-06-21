@@ -314,6 +314,11 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:7px 11px;f
 .ed-hand{display:flex;gap:5px;overflow-x:auto;min-height:60px;padding:4px;border:1px solid var(--bd2);
   border-radius:9px;background:var(--cbg);align-items:stretch}
 .ed-hand .hcard{width:calc(96px*var(--cs,1));--cs:.8;flex-shrink:0}
+html.mobile-ui .ed-hand{
+  flex-wrap:wrap;justify-content:center;align-content:flex-start;
+  overflow-x:hidden;overflow-y:auto;max-height:126px;touch-action:pan-y;
+}
+html.mobile-ui .ed-hand .hcard{width:calc((100vw - 48px)/6);min-width:46px;--cs:.64}
 #edOv .ed-actions{position:static;display:grid;grid-template-columns:1fr 1fr;gap:7px;background:none;padding:4px 0}
 #edOv .ed-actions .bigbtn,#edOv .ed-actions .optbtn{margin:0;text-align:center}
 .ed-ghost{width:96px}
@@ -372,7 +377,12 @@ body.ed-dragging{cursor:grabbing}
 .hcard.selbuf{border-color:#ffd24a;box-shadow:0 0 0 1.5px #ffd24a,0 0 20px -5px #ffd24a}
 /* モバイル縦持ち: カードを思いっきり小さくし、盤面・手札に多くのカードを収める。
    テキストはタップ(詳細モーダル)で読めるため、最低限の情報だけ見えれば十分 */
-html.mobile-ui #hand{min-height:58px;gap:4px;padding:5px 4px}
+html.mobile-ui #hand{
+  min-height:58px;max-height:122px;gap:4px;padding:5px 4px;
+  flex-wrap:wrap;justify-content:center;align-content:center;
+  overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  scrollbar-width:thin;touch-action:pan-y;
+}
 /* 6枚程度を画面幅内に並べられる細幅表示。値とプロトコル略称だけを表示する */
 html.mobile-ui .hcard{width:calc((100vw - 28px)/6);padding:5px 3px 6px}
 html.mobile-ui .hcard .top{gap:3px;margin-bottom:0}
@@ -390,6 +400,7 @@ html.mobile-ui .proto{padding:5px 3px}
 html.mobile-ui .totals{padding:2px 2px;margin:1px 0}
 html.mobile-ui .chip{padding:3px 5px;gap:1px}
 html.mobile-ui .chip.cov{padding:2px 5px}
+html.mobile-ui #actionBar{bottom:132px}
 
 /* ---------- overlays ---------- */
 .ov{position:fixed;inset:0;background:rgba(4,4,10,.9);
@@ -619,6 +630,7 @@ html.mobile-ui .chip.cov{padding:2px 5px}
     <button class="hbtn" id="undoBtn" onclick="doUndo()">戻す</button>
     <button class="hbtn" onclick="openLog()">ログ</button>
     <button class="hbtn" onclick="shareCurrentBoard()">SHARE</button>
+    <button class="hbtn" id="puzzleBackBtn" style="display:none" onclick="returnToPuzzleEditor()">EDITOR</button>
     <button class="hbtn" onclick="confirmSurrender()">まいりました</button>
     <button class="hbtn" onclick="confirmNew()">新規</button>
   </div>
@@ -669,9 +681,9 @@ html.mobile-ui .chip.cov{padding:2px 5px}
   <div class="ed-bar">
     <div class="ed-title">詰め<b>Compile</b> エディタ</div>
     <div class="ed-bar-actions">
-      <select id="edTurnSel" class="ed-sel" onchange="edState.turn=+this.value">
+      <select id="edTurnSel" class="ed-sel" onchange="edSetTurn(+this.value)">
         <option value="0">あなたの番</option><option value="1">AIの番</option></select>
-      <select id="edCtrlSel" class="ed-sel" onchange="edState.control=+this.value">
+      <select id="edCtrlSel" class="ed-sel" onchange="edSetControl(+this.value)">
         <option value="-1">CTRLなし</option><option value="0">CTRLあなた</option><option value="1">CTRL AI</option></select>
       <button class="hbtn" onclick="edClose()">閉じる</button>
     </div>
@@ -681,6 +693,7 @@ html.mobile-ui .chip.cov{padding:2px 5px}
     <button id="edFaceToggle" class="hbtn" onclick="edToggleFace()">配置: 表向き</button>
     <button id="edTrashMode" class="hbtn" onclick="edToggleSelMode('trash')">🗑 トラッシュ</button>
     <button id="edDeckMode" class="hbtn" onclick="edToggleSelMode('deck')">⤴ デッキに戻す</button>
+    <button id="edUndoBtn" class="hbtn" onclick="edUndo()" disabled>UNDO</button>
     <span id="edSelHint" class="ed-sel-hint"></span>
   </div>
   <main id="edField" class="ed-field"></main>
@@ -2475,6 +2488,7 @@ function startGameInner(){
   if (!aiSetupManual) for (var i=0;i<3;i++) aiSel.push(rest.splice(Math.floor(Math.random()*rest.length),1)[0]);
   var first = Math.random() < 0.5 ? 0 : 1;
   if (aiTimer) clearTimeout(aiTimer);
+  puzzleReturnState = null;
   cancelPlayback();
   playedCount = 0;
   undoStack = []; fullLog = []; uiMode='idle'; selectedHand=null; selBuf=[]; curReq=null;
@@ -3051,6 +3065,7 @@ function render(){
   cb.className = st.control === 0 ? 'me' : st.control === 1 ? 'ai' : '';
   cb.textContent = st.control === 0 ? '◆CTRL ▼' + playerShort(HUMAN) : st.control === 1 ? '◆CTRL ▲' + playerShort(AI) : '◆CTRL 中立';
   document.getElementById('undoBtn').disabled = !undoStack.length;
+  document.getElementById('puzzleBackBtn').style.display = puzzleReturnState ? '' : 'none';
   renderControlBars(st);
 
   renderField(st);
@@ -3765,8 +3780,125 @@ function copyShareUrl(){
 }
 
 function stateToUrl(state){
-  var b64 = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
-  return location.origin + location.pathname + '#p=' + b64;
+  try {
+    return location.origin + location.pathname + '#q=' + encodeCompactState(state);
+  } catch(e){
+    var b64 = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+    return location.origin + location.pathname + '#p=' + b64;
+  }
+}
+
+var SHARE_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_';
+function shareB64UrlEncode(s){
+  return btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function shareB64UrlDecode(s){
+  s = String(s || '').replace(/-/g,'+').replace(/_/g,'/');
+  while (s.length % 4) s += '=';
+  return decodeURIComponent(escape(atob(s)));
+}
+function protoIndex(name){
+  for (var i=0;i<COMPILE_CARDS.protocols.length;i++) if (COMPILE_CARDS.protocols[i].name === name) return i;
+  return -1;
+}
+function cardIndex(defId){
+  var m = /^(.+)_([1-6])$/.exec(defId);
+  if (!m) return -1;
+  var pi = protoIndex(m[1]);
+  return pi < 0 ? -1 : pi * 6 + (parseInt(m[2],10) - 1);
+}
+function cardIdFromIndex(n){
+  var pi = Math.floor(n / 6), ci = n % 6;
+  var p = COMPILE_CARDS.protocols[pi];
+  if (!p) throw new Error('bad card');
+  return p.name + '_' + (ci + 1);
+}
+function shareChar(n){
+  if (n < 0 || n >= SHARE_ALPHABET.length) throw new Error('bad value');
+  return SHARE_ALPHABET.charAt(n);
+}
+function shareVal(ch){
+  var n = SHARE_ALPHABET.indexOf(ch);
+  if (n < 0) throw new Error('bad share char');
+  return n;
+}
+function zoneCodeFor(state, uid){
+  var c = state.cards[uid];
+  if (!c) return '';
+  if (c.zone === 'hand0') return 'A';
+  if (c.zone === 'deck0') return 'B';
+  if (c.zone === 'trash0') return 'C';
+  if (c.zone === 'hand1') return 'D';
+  if (c.zone === 'deck1') return 'E';
+  if (c.zone === 'trash1') return 'F';
+  for (var l=0;l<3;l++) for (var s=0;s<2;s++){
+    if (state.lines[l][s].indexOf(uid) >= 0) return 'GHIJKL'.charAt(l*2+s) + (c.faceUp ? 'u' : 'd');
+  }
+  throw new Error('bad zone');
+}
+function compactStatePayload(state){
+  var protos = [];
+  for (var s=0;s<2;s++) for (var l=0;l<3;l++){
+    var p = state.players[s].protocols[l] || {};
+    var pi = protoIndex(p.name);
+    if (pi < 0) throw new Error('bad protocol');
+    protos.push(shareChar(pi) + (p.compiled ? '1' : '0'));
+  }
+  var cardRows = Object.keys(state.cards).map(function(uid){
+    var c = state.cards[uid];
+    return { uid: uid, owner: c.owner, card: cardIndex(c.def), zone: zoneCodeFor(state, uid) };
+  }).filter(function(r){ return r.card >= 0; }).sort(function(a,b){
+    return a.owner - b.owner || a.card - b.card || a.uid.localeCompare(b.uid);
+  }).map(function(r){
+    return shareChar(r.card) + r.owner + r.zone;
+  });
+  return [1, state.turn || 0, state.control == null ? -1 : state.control, protos.join(''), cardRows.join('.')].join('~');
+}
+function encodeCompactState(state){
+  return shareB64UrlEncode(compactStatePayload(state));
+}
+function applyCompactZone(st, uid, zone){
+  var c = st.cards[uid];
+  function pushOff(z, side){ c.zone = z + side; st.players[side][z].push(uid); }
+  var ch = zone.charAt(0);
+  if (ch === 'A') return pushOff('hand', 0);
+  if (ch === 'B') return pushOff('deck', 0);
+  if (ch === 'C') return pushOff('trash', 0);
+  if (ch === 'D') return pushOff('hand', 1);
+  if (ch === 'E') return pushOff('deck', 1);
+  if (ch === 'F') return pushOff('trash', 1);
+  var idx = 'GHIJKL'.indexOf(ch);
+  if (idx < 0) throw new Error('bad zone');
+  var line = Math.floor(idx / 2), side = idx % 2;
+  c.zone = 'field'; c.faceUp = zone.charAt(1) !== 'd';
+  st.lines[line][side].push(uid);
+}
+function decodeCompactState(s){
+  var parts = shareB64UrlDecode(s).split('~');
+  if (parts[0] !== '1') throw new Error('bad version');
+  var st = {
+    cards: {}, lines: [[[],[]],[[],[]],[[],[]]], players: [
+      { protocols: [], hand: [], deck: [], trash: [], cannotCompile: false },
+      { protocols: [], hand: [], deck: [], trash: [], cannotCompile: false }
+    ],
+    turn: parseInt(parts[1],10) || 0, phase: 'action', control: parseInt(parts[2],10),
+    useControl: true, winner: null, pending: null, revealed: null
+  };
+  var pp = parts[3] || '';
+  for (var i=0;i<6;i++){
+    var p = COMPILE_CARDS.protocols[shareVal(pp.charAt(i*2))];
+    st.players[i<3?0:1].protocols.push({ name: p.name, compiled: pp.charAt(i*2+1) === '1' });
+  }
+  var rows = parts.slice(4).join('~').split('.');
+  rows.forEach(function(row, i){
+    if (!row) return;
+    var def = cardIdFromIndex(shareVal(row.charAt(0)));
+    var owner = parseInt(row.charAt(1),10) || 0;
+    var uid = 'custom:' + (i + 1);
+    st.cards[uid] = { uid: uid, def: def, owner: owner, faceUp: false, zone: '' };
+    applyCompactZone(st, uid, row.slice(2));
+  });
+  return st;
 }
 
 function loadCustomState(state){
@@ -3788,6 +3920,13 @@ function loadCustomState(state){
 }
 
 function tryLoadShared(){
+  var qm = /#q=([^&]+)/.exec(location.hash);
+  if (qm) {
+    try {
+      loadCustomState(decodeCompactState(qm[1]));
+      return true;
+    } catch(e){ return false; }
+  }
   var m = /#p=([^&]+)/.exec(location.hash);
   if (!m) return false;
   try {
@@ -4517,10 +4656,42 @@ var edState = null;          // engine 形式の編集中状態
 var edPlaceFaceUp = true;    // ラインへ置くときの向き
 var edSelMode = null;        // null | 'trash' | 'deck'
 var edDrag = null;
+var edHistory = [];
+var puzzleReturnState = null;
 function edClone(o){ return JSON.parse(JSON.stringify(o)); }
+function edSnapshot(){
+  if (!edState) return null;
+  return { state: edClone(edState), faceUp: edPlaceFaceUp, selMode: edSelMode };
+}
+function edRestore(snap){
+  if (!snap) return;
+  edState = edClone(snap.state);
+  edPlaceFaceUp = !!snap.faceUp;
+  edSelMode = snap.selMode || null;
+  edRender();
+}
+function edPushHistory(){
+  var snap = edSnapshot();
+  if (!snap) return;
+  edHistory.push(snap);
+  if (edHistory.length > 80) edHistory.shift();
+}
+function edUndo(){
+  if (!edHistory.length) return;
+  edRestore(edHistory.pop());
+}
+function edSetTurn(v){
+  if (!edState || edState.turn === v) return;
+  edPushHistory(); edState.turn = v; edRender();
+}
+function edSetControl(v){
+  if (!edState || edState.control === v) return;
+  edPushHistory(); edState.control = v; edRender();
+}
 
 /* setup から: 6プロトコル全36枚を各オーナーの手札に入れて開く */
 function edStartFromProtocols(own, ai){
+  puzzleReturnState = null;
   var res = Engine.newGame({ p0:own, p1:ai, seed:Math.floor(Math.random()*1e9), useControl:true, first:0 });
   var st = res.state;
   for (var p=0;p<2;p++){ st.players[p].deck=[]; st.players[p].hand=[]; st.players[p].trash=[]; }
@@ -4535,7 +4706,7 @@ function edStartFromProtocols(own, ai){
 /* 既存盤面の編集: 現在状態をそのまま読み込む */
 function edStartFromState(base){ edOpenWith(edClone(base)); }
 function edOpenWith(st){
-  edState = st; edPlaceFaceUp = true; edSelMode = null;
+  edState = st; edPlaceFaceUp = true; edSelMode = null; edHistory = [];
   var ov = document.getElementById('edOv');
   ov.classList.add('on');
   if (!ov._edBound){ ov.addEventListener('pointerdown', edPointerDown); ov._edBound = true; }
@@ -4555,6 +4726,7 @@ function edDetach(uid){
 }
 function edPlace(uid, tgt){
   var c = edState.cards[uid]; if (!c) return;
+  edPushHistory();
   edDetach(uid);
   c.owner = tgt.side;
   if (tgt.zone === 'line'){
@@ -4603,11 +4775,17 @@ function edProtoBlock(side, l){
     if (p.name === edState.players[side].protocols[l].name) o.selected = true;
     sel.appendChild(o);
   });
-  sel.onchange = function(){ edState.players[side].protocols[l].name = sel.value; };
+  sel.onchange = function(){
+    if (edState.players[side].protocols[l].name === sel.value) return;
+    edPushHistory(); edState.players[side].protocols[l].name = sel.value; edRender();
+  };
   wrap.appendChild(sel);
   var lab = document.createElement('label'); lab.className = 'ed-comp-mini';
   var cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !!edState.players[side].protocols[l].compiled;
-  cb.onchange = function(){ edState.players[side].protocols[l].compiled = cb.checked; };
+  cb.onchange = function(){
+    if (!!edState.players[side].protocols[l].compiled === cb.checked) return;
+    edPushHistory(); edState.players[side].protocols[l].compiled = cb.checked; edRender();
+  };
   lab.appendChild(cb); lab.appendChild(document.createTextNode('済')); wrap.appendChild(lab);
   return wrap;
 }
@@ -4616,6 +4794,7 @@ function edRender(){
   document.getElementById('edFaceToggle').textContent = edPlaceFaceUp ? '配置: 表向き' : '配置: 裏向き';
   document.getElementById('edTrashMode').classList.toggle('on', edSelMode === 'trash');
   document.getElementById('edDeckMode').classList.toggle('on', edSelMode === 'deck');
+  document.getElementById('edUndoBtn').disabled = !edHistory.length;
   document.getElementById('edSelHint').textContent = edSelMode
     ? ('カードをタップで' + (edSelMode==='trash'?'トラッシュ':'デッキ') + 'へ') : '';
   document.getElementById('edTurnSel').value = String(edState.turn);
@@ -4652,14 +4831,14 @@ function edRender(){
 }
 
 /* ---- ツールバー ---- */
-function edToggleFace(){ edPlaceFaceUp = !edPlaceFaceUp; edRender(); }
-function edToggleSelMode(mode){ edSelMode = (edSelMode === mode) ? null : mode; edRender(); }
+function edToggleFace(){ edPushHistory(); edPlaceFaceUp = !edPlaceFaceUp; edRender(); }
+function edToggleSelMode(mode){ edPushHistory(); edSelMode = (edSelMode === mode) ? null : mode; edRender(); }
 
 /* ---- タップ(選択モード / 反転 / 詳細) ---- */
 function edCardActivate(uid){
   var c = edState.cards[uid]; if (!c) return;
   if (edSelMode){ edPlace(uid, { zone: edSelMode, side: c.owner }); return; }
-  if (c.zone === 'field'){ c.faceUp = !c.faceUp; edRender(); return; }
+  if (c.zone === 'field'){ edPushHistory(); c.faceUp = !c.faceUp; edRender(); return; }
   var def = DEFMAP[c.def];
   var html = '<h2 style="color:'+def.proto.color+'">'+esc(cardName(c.def))+'</h2>';
   function cmd(lb,tx){ return tx ? '<div class="detail-cmd"><span class="lbl">'+lb+'</span>'+esc(tx)+'</div>' : ''; }
@@ -4734,8 +4913,24 @@ function edClearHighlight(){
 
 /* ---- テスト / SHARE ---- */
 function edTest(){
-  try { var st = buildEditedState(); edClose(); loadCustomState(st); }
+  try {
+    var st = buildEditedState();
+    puzzleReturnState = edSnapshot();
+    edClose(); loadCustomState(st);
+  }
   catch(e){ toast('エラー: ' + (e && e.message || e)); }
+}
+function returnToPuzzleEditor(){
+  if (!puzzleReturnState) return;
+  if (aiTimer) clearTimeout(aiTimer);
+  cancelPlayback();
+  cur = null; uiMode = 'idle'; curReq = null; selectedHand = null; selBuf = []; playPick = null; arrPreview = null;
+  undoStack = []; fullLog = []; playedCount = 0; prevFieldUids = {}; prevHandUids = {};
+  document.getElementById('winOv').classList.remove('on');
+  document.getElementById('setupOv').classList.remove('on');
+  document.getElementById('puzzleBackBtn').style.display = 'none';
+  edRestore(puzzleReturnState);
+  document.getElementById('edOv').classList.add('on');
 }
 function edShare(){
   try {
