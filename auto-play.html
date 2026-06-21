@@ -712,7 +712,7 @@ html.mobile-ui .chip.cov{padding:2px 5px}
 <div class="ov" id="winOv"><div class="panel" id="winPanel"></div></div>
 
 <!-- 効果フロートウインドウ -->
-<div id="fxFloat">
+<div id="fxFloat" onclick="hideFx(); event.stopPropagation()">
   <div class="fx-card"><span class="fx-badge"></span><span class="fx-nm"></span><span class="fx-fire">⚡発動</span></div>
   <div class="fx-slots"></div>
 </div>
@@ -2603,6 +2603,10 @@ function maybeShowFx(e){
   }).join('');
 }
 function hideFx(){ var fl = document.getElementById('fxFloat'); fl.className = ''; }
+document.addEventListener('pointerdown', function(){
+  var fl = document.getElementById('fxFloat');
+  if (fl && fl.classList.contains('on')) hideFx();
+}, true);
 
 function answer(req, picks, isAI){
   if (roomMode){ roomSendAction({ type:'choose', id:req.id, picks:picks }); return; }
