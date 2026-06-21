@@ -5,6 +5,7 @@ import effects from "../_shared/effects.json" with { type: "json" };
 
 const Engine = (globalThis as any).CompileEngine;
 Engine.init(cards, effects);
+Engine.setTrace(true);
 
 const URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -125,6 +126,31 @@ function publicRequest(request: any, forward: Record<string, string>) {
   return out;
 }
 
+function engineState(roomState: any) {
+  const st = structuredClone(roomState);
+  delete st.__trace;
+  if (st.pending && st.pending.base) delete st.pending.base.__trace;
+  return st;
+}
+
+function publicGame(st: any, side: number, aliases = cardAliases(st)) {
+  const opponent = 1 - side;
+  return {
+    turn: st.turn, phase: st.phase, control: st.control, winner: st.winner,
+    protocols: st.players.map((p: any) => p.protocols),
+    totals: st.lines.map((_: any, line: number) => [Engine.lineTotal(st, line, 0), Engine.lineTotal(st, line, 1)]),
+    counts: st.players.map((p: any) => ({ hand: p.hand.length, deck: p.deck.length, trash: p.trash.length })),
+    lines: st.lines.map((line: any[]) => line.map((stack: string[], owner: number) =>
+      stack.map((uid) => {
+        const c = st.cards[uid];
+        const hidden = !c.faceUp && owner === opponent;
+        return { uid: aliases.forward[uid], owner, faceUp: c.faceUp, def: hidden ? null : c.def, value: Engine.cardValue(st, uid) };
+      }))),
+    hand: st.players[side].hand.map((uid: string) => ({ uid: aliases.forward[uid], def: st.cards[uid].def })),
+    trash: st.players.map((p: any) => p.trash.map((uid: string) => ({ uid: aliases.forward[uid], def: st.cards[uid].def }))),
+  };
+}
+
 function publicState(room: any, side: number) {
   const st = room.game_state;
   const base: any = {
@@ -158,6 +184,13 @@ function publicState(room: any, side: number) {
     hand: st.players[side].hand.map((uid: string) => ({ uid: aliases.forward[uid], def: st.cards[uid].def })),
     trash: st.players.map((p: any) => p.trash.map((uid: string) => ({ uid: aliases.forward[uid], def: st.cards[uid].def }))),
   };
+  base.trace = Array.isArray(st.__trace)
+    ? st.__trace.map((entry: any) => ({
+      msg: entry.msg,
+      uid: entry.uid ? aliases.forward[entry.uid] : null,
+      game: publicGame(entry.st, side, aliases),
+    }))
+    : [];
   // 直近アクションの公開ログ(隠し情報は含まれない)。クライアントの発動演出に使う。
   base.log = Array.isArray(room.last_log) ? room.last_log : [];
   const pending = room.pending_request;
@@ -349,7 +382,7 @@ Deno.serve(async (req) => {
     if (op === "action") {
       if (room.status !== "playing" || !room.game_state) return fail(req, "対戦中ではありません", 409);
       if (Number(body.version) !== Number(room.version)) return fail(req, "状態が更新されています", 409);
-      const st = room.game_state;
+      const st = engineState(room.game_state);
       const pending = room.pending_request;
       const action = privateAction(body.action, st);
       if (!action || typeof action.type !== "string") return fail(req, "操作が不正です");
@@ -361,6 +394,7 @@ Deno.serve(async (req) => {
       const nextGame = result.view
         ? { ...result.view, pending: result.state?.pending || null }
         : result.state;
+      nextGame.__trace = Array.isArray(result.trace) ? result.trace : [];
       const { data, error } = await admin.from("secure_rooms").update({
         game_state: nextGame, pending_request: result.requests[0] || null,
         last_log: Array.isArray(result.log) ? result.log : [],

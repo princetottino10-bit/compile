@@ -4137,6 +4137,15 @@ function roomLogEntries(st, lines){
   });
   return out;
 }
+function roomTraceEntries(rm){
+  return (rm.trace || []).map(function(entry){
+    return {
+      st: buildRoomState({ game: entry.game, side: rm.side }),
+      msg: entry.msg || '',
+      uid: entry.uid || null
+    };
+  });
+}
 function roomApplyView(rm){
   var firstEnter = !roomMode;
   room = rm;
@@ -4158,7 +4167,7 @@ function roomApplyView(rm){
   if (rm.log && rm.log.length) fullLog.push.apply(fullLog, rm.log);
   render();
   // 発動効果のフロートをソロと同じ再生機構で表示し、終わったら通常状態へ確定
-  var entries = roomLogEntries(st, rm.log || []);
+  var entries = (rm.trace && rm.trace.length) ? roomTraceEntries(rm) : roomLogEntries(st, rm.log || []);
   startPlayback(entries, function(){
     if (nq){ enterReq(nq); }
     else { uiMode = 'idle'; curReq = null; render(); updateMsgBar(); }

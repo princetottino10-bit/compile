@@ -36,6 +36,10 @@ const requiredFn = [
   'action.player = side',
   'result.view',
   'pending: result.state?.pending || null',
+  'Engine.setTrace(true)',
+  'base.trace = Array.isArray(st.__trace)',
+  'nextGame.__trace = Array.isArray(result.trace)',
+  'engineState(room.game_state)',
   'PBKDF2',
   '.select("code,title,host_name,password_hash,draft_state,created_at")',
 ];
@@ -54,6 +58,7 @@ const requiredAutoPlayUi = [
   'COMPILE READY',
   'まいりました',
   'confirmSurrender',
+  'roomTraceEntries',
   '光っているカードをプレイできます',
 ];
 for (const text of requiredAutoPlayUi) {
