@@ -41,6 +41,8 @@ const requiredFn = [
   'nextGame.__trace = Array.isArray(result.trace)',
   'engineState(room.game_state)',
   'PBKDF2',
+  'cleanup_secure_rooms',
+  '.gte("updated_at", lobbySince)',
   '.select("code,title,host_name,password_hash,draft_state,created_at")',
 ];
 for (const text of requiredFn) {

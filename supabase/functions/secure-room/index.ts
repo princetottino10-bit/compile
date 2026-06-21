@@ -236,9 +236,12 @@ Deno.serve(async (req) => {
 
   try {
     if (op === "list") {
+      await admin.rpc("cleanup_secure_rooms");
+      const lobbySince = new Date(Date.now() - 2 * 60 * 60_000).toISOString();
       const { data, error } = await admin.from("secure_rooms")
         .select("code,title,host_name,password_hash,draft_state,created_at")
         .eq("visibility", "public").eq("status", "waiting").is("guest_id", null)
+        .gte("updated_at", lobbySince)
         .order("created_at", { ascending: false }).limit(30);
       if (error) throw error;
       return json(req, { rooms: (data || []).map((room: any) => ({
