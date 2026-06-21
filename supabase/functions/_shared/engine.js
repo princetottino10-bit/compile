@@ -258,11 +258,11 @@ function triggerVisible(st, uid, slot) {
   return true;
 }
 
-function execTrigger(ctx, uid, slot) {
+function execTrigger(ctx, uid, slot, locked) {
   const loc = locate(st_of(ctx), uid);
   if (!loc) return;
   const tr = defOf(ctx.st, uid).eff[slot].trigger;
-  const fr = { source: uid, slot, controller: loc.side, line: loc.line, bind: {}, done: false };
+  const fr = { source: uid, slot, controller: loc.side, line: loc.line, bind: {}, done: false, locked: !!locked };
   log(ctx, `[${defOf(ctx.st, uid).id}] ${slot === 'upper' ? '上段' : '下段'}効果が発動`, uid);
   execOps(ctx, fr, tr.ops);
 }
@@ -270,16 +270,24 @@ function st_of(ctx) { return ctx.st; }
 
 /* wouldBeCovered / wouldBeCoveredOrFlipped の事前処理 */
 function fireWouldBeCovered(ctx, uid) {
+  runWouldBeCovered(ctx, collectWouldBeCovered(ctx, uid));
+}
+function collectWouldBeCovered(ctx, uid) {
   const c = ctx.st.cards[uid];
-  if (!c.faceUp) return;
+  if (!c || !c.faceUp) return [];
   const eff = DEFS[c.def].eff;
+  const out = [];
   for (const slot of ['upper', 'lower']) {
     const tr = eff[slot] && eff[slot].trigger;
     if (!tr) continue;
     if (tr.on !== 'wouldBeCovered' && tr.on !== 'wouldBeCoveredOrFlipped') continue;
     if (!triggerVisible(ctx.st, uid, slot)) continue;
-    execTrigger(ctx, uid, slot);
+    out.push({ uid, slot });
   }
+  return out;
+}
+function runWouldBeCovered(ctx, triggers) {
+  for (const t of triggers) execTrigger(ctx, t.uid, t.slot, true);
 }
 function fireWouldBeFlipped(ctx, uid) {
   const c = ctx.st.cards[uid];
@@ -396,13 +404,19 @@ function playToField(ctx, uid, line, side, faceUp, belowUid) {
     const i = stack.indexOf(belowUid);
     stack.splice(i < 0 ? 0 : i, 0, uid);
   } else {
-    if (stack.length) fireWouldBeCovered(ctx, stack[stack.length - 1]);
+    const coveredTriggers = stack.length ? collectWouldBeCovered(ctx, stack[stack.length - 1]) : [];
     stack.push(uid);
+    c.zone = 'field';
+    log(ctx, `P${side + 1}: ${faceUp ? DEFS[c.def].id : 'カード'} をライン${line + 1}に${faceUp ? '表' : '裏'}でプレイ`, uid);
+    runWouldBeCovered(ctx, coveredTriggers);
+    const loc = locate(st, uid);
+    if (st.cards[uid].faceUp && loc && isTop(st, loc)) resolveMiddle(ctx, uid, 'play');
+    return;
   }
   c.zone = 'field';
   log(ctx, `P${side + 1}: ${faceUp ? DEFS[c.def].id : 'カード'} をライン${line + 1}に${faceUp ? '表' : '裏'}でプレイ`, uid);
   const loc = locate(st, uid);
-  if (faceUp && loc && isTop(st, loc)) resolveMiddle(ctx, uid, 'play');
+  if (st.cards[uid].faceUp && loc && isTop(st, loc)) resolveMiddle(ctx, uid, 'play');
 }
 
 function resolveMiddle(ctx, uid, why) {
@@ -662,6 +676,7 @@ function slotActive(st, fr) {
   if (!loc) return false;
   const c = st.cards[fr.source];
   if (!c.faceUp) return false;
+  if (fr.locked) return true;
   if (fr.slot !== 'upper' && !isTop(st, loc)) return false;
   return true;
 }
