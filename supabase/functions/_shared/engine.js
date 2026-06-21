@@ -1265,6 +1265,13 @@ function performAction(ctx, action) {
   const st = ctx.st;
   if (action.type === '_begin') return; // newGame: start フェイズから進行
   if (st.winner !== null) throw { __err: 'ゲームは終了している' };
+  if (action.type === 'surrender') {
+    const loser = action.player === 0 || action.player === 1 ? action.player : st.turn;
+    st.winner = 1 - loser;
+    st.phase = 'finished';
+    log(ctx, `P${loser + 1}: まいりました`);
+    return;
+  }
   if (st.phase !== 'action') throw { __err: 'アクションフェイズではない' };
   const p = st.turn;
   if (action.type === 'play') {

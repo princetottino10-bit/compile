@@ -32,6 +32,10 @@ const requiredFn = [
   'cardAliases(',
   'eq("version", room.version)',
   'pending.player !== side',
+  'action.type !== "surrender"',
+  'action.player = side',
+  'result.view',
+  'pending: result.state?.pending || null',
   'PBKDF2',
   '.select("code,title,host_name,password_hash,draft_state,created_at")',
 ];
@@ -48,6 +52,8 @@ const requiredAutoPlayUi = [
   '今すぐ対戦',
   '招待リンクをコピー',
   'COMPILE READY',
+  'まいりました',
+  'confirmSurrender',
   '光っているカードをプレイできます',
 ];
 for (const text of requiredAutoPlayUi) {

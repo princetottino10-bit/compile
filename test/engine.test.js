@@ -88,6 +88,15 @@ test('初期状態: 手札5枚・デッキ13枚・P1のアクション待ち', (
   assert.equal(countAll(st), 36);
 });
 
+test('まいりました: 指定したプレイヤーが敗北する', () => {
+  const r = ng();
+  const res = Engine.apply(r.state, { type: 'surrender', player: 0 });
+  assert.equal(res.error, null);
+  assert.equal(res.winner, 1);
+  assert.equal(res.state.winner, 1);
+  assert.ok(res.log.some(line => line.includes('まいりました')));
+});
+
 test('合法手: 表向きは一致ラインのみ・裏向きは全ライン・手札5枚未満ならリフレッシュ可', () => {
   const r = ng();
   const st = r.state;
@@ -288,6 +297,23 @@ test('キャッシュ確認: 手札6枚で1枚捨てる要求', () => {
   // キャッシュクリアで5枚 → 場の SPEED_2 上段「キャッシュをクリアしたあと: 1枚引く」で6枚
   assert.equal(res.state.players[1].hand.length, 6);
   assert.equal(res.state.players[1].trash.length, 1);
+});
+
+test('pending view includes hand cards drawn by effects', () => {
+  const r = ng({ p1: ['SPEED', 'METAL', 'LIFE'] });
+  const st = r.state;
+  setHand(st, 1, ['SPEED_2', 'METAL_5', 'LIFE_6', 'LIFE_2', 'METAL_1']);
+  setHand(st, 0, ['DARKNESS_6']);
+  let res = Engine.apply(st, { type: 'play', card: uidOf('DARKNESS_6', 0), line: 0, faceUp: false });
+  assert.equal(res.error, null);
+  res = Engine.apply(res.state, { type: 'play', card: uidOf('SPEED_2', 1), line: 0, faceUp: true });
+  assert.equal(res.error, null);
+  assert.equal(res.requests.length, 1);
+  assert.equal(res.requests[0].kind, 'pickHand');
+  assert.ok(res.view, 'pending choices should expose the current board view');
+  for (const uid of res.requests[0].candidates) {
+    assert.ok(res.view.players[1].hand.includes(uid), `${uid} should be visible in pending hand`);
+  }
 });
 
 test('コンパイル: 値10以上かつ相手超過で強制コンパイル・コントロール獲得も確認', () => {

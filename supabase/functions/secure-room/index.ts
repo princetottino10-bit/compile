@@ -351,14 +351,18 @@ Deno.serve(async (req) => {
       if (Number(body.version) !== Number(room.version)) return fail(req, "状態が更新されています", 409);
       const st = room.game_state;
       const pending = room.pending_request;
-      if (pending ? pending.player !== side : st.turn !== side) return fail(req, "あなたの操作待ちではありません", 403);
       const action = privateAction(body.action, st);
       if (!action || typeof action.type !== "string") return fail(req, "操作が不正です");
+      if (action.type !== "surrender" && (pending ? pending.player !== side : st.turn !== side)) return fail(req, "あなたの操作待ちではありません", 403);
+      if (action.type === "surrender") action.player = side;
       const result = Engine.apply(st, action);
       if (result.error) return fail(req, result.error);
       const nextVersion = room.version + 1;
+      const nextGame = result.view
+        ? { ...result.view, pending: result.state?.pending || null }
+        : result.state;
       const { data, error } = await admin.from("secure_rooms").update({
-        game_state: result.state, pending_request: result.requests[0] || null,
+        game_state: nextGame, pending_request: result.requests[0] || null,
         last_log: Array.isArray(result.log) ? result.log : [],
         status: result.winner === null ? "playing" : "finished", version: nextVersion,
         last_action_at: new Date().toISOString(), updated_at: new Date().toISOString(),

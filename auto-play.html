@@ -619,6 +619,7 @@ html.mobile-ui .chip.cov{padding:2px 5px}
     <button class="hbtn" id="undoBtn" onclick="doUndo()">戻す</button>
     <button class="hbtn" onclick="openLog()">ログ</button>
     <button class="hbtn" onclick="shareCurrentBoard()">SHARE</button>
+    <button class="hbtn" onclick="confirmSurrender()">まいりました</button>
     <button class="hbtn" onclick="confirmNew()">新規</button>
   </div>
 </header>
@@ -1995,6 +1996,13 @@ function performAction(ctx, action) {
   const st = ctx.st;
   if (action.type === '_begin') return; // newGame: start フェイズから進行
   if (st.winner !== null) throw { __err: 'ゲームは終了している' };
+  if (action.type === 'surrender') {
+    const loser = action.player === 0 || action.player === 1 ? action.player : st.turn;
+    st.winner = 1 - loser;
+    st.phase = 'finished';
+    log(ctx, `P${loser + 1}: まいりました`);
+    return;
+  }
   if (st.phase !== 'action') throw { __err: 'アクションフェイズではない' };
   const p = st.turn;
   if (action.type === 'play') {
@@ -2468,6 +2476,21 @@ function confirmNew(){
   if (aiTimer) clearTimeout(aiTimer);
   buildSetup();
   document.getElementById('setupOv').classList.add('on');
+}
+function confirmSurrender(){
+  if (!cur || (cur.state && cur.state.winner !== null)){
+    toast('対戦中ではありません');
+    return;
+  }
+  if (!confirm('まいりましたしますか?')) return;
+  cancelPlayback();
+  if (aiTimer) clearTimeout(aiTimer);
+  uiMode = 'idle'; curReq = null; selBuf = []; selectedHand = null; playPick = null; arrPreview = null;
+  if (roomMode){
+    roomSendAction({ type:'surrender' });
+    return;
+  }
+  onResult(Engine.apply(cur.state, { type:'surrender', player:HUMAN }));
 }
 
 /* ---------- 結果ハンドリング ---------- */
