@@ -59,6 +59,9 @@ const requiredAutoPlayUi = [
   'まいりました',
   'confirmSurrender',
   'roomTraceEntries',
+  'roomNewTraceEntries',
+  "typeof nq.target === 'number'",
+  'function playerName(side)',
   '光っているカードをプレイできます',
 ];
 for (const text of requiredAutoPlayUi) {

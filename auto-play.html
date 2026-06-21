@@ -2315,6 +2315,16 @@ window.addEventListener('resize', syncOpponentModalPosition);
 /* localStorage は file:// 環境で例外を投げることがあるため必ずラップする */
 function lsGet(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
 function lsSet(k,v){ try { localStorage.setItem(k,v); } catch(e){} }
+function playerName(side){
+  if (roomMode && room && room.names) return side === HUMAN
+    ? (room.names[room.side] || 'あなた')
+    : (room.names[1 - room.side] || '相手');
+  return side === HUMAN ? 'あなた' : 'AI';
+}
+function playerShort(side){
+  if (roomMode) return playerName(side);
+  return side === HUMAN ? 'YOU' : 'AI';
+}
 /* ステップ再生 */
 var SPEEDS = [{lb:'演出: なし',ms:0},{lb:'演出: 速い',ms:300},{lb:'演出: 普通',ms:620},{lb:'演出: ゆっくり',ms:1000}];
 var speedIdx = (function(){ var v = parseInt(lsGet('apSpeed')); return (v>=0 && v<4) ? v : 2; })();
@@ -2805,7 +2815,7 @@ function updateMsgBar(){
     mt.textContent = selectedHand ? 'プレイするラインを選択 (もう一度タップで解除)' : (playableCount ? 'あなたのターン: 光っているカードをプレイできます' : 'あなたのターン: リフレッシュできます');
   } else {
     mb.classList.add('quiet');
-    mt.textContent = roomMode ? '相手のターン…' : 'AIのターン…';
+    mt.textContent = playerName(AI) + 'のターン…';
   }
 }
 
@@ -3035,11 +3045,11 @@ function render(){
   var tb = document.getElementById('turnBadge');
   if (cur.state.winner !== null){ tb.textContent = '終了'; tb.className=''; }
   else if (st.turn === HUMAN){ tb.textContent = 'YOUR TURN'; tb.className='me'; }
-  else { tb.textContent = roomMode ? '相手のターン' : 'AI TURN'; tb.className='ai'; }
+  else { tb.textContent = roomMode ? playerName(AI) + 'のターン' : 'AI TURN'; tb.className='ai'; }
   var cb = document.getElementById('ctrlBadge');
   cb.style.display = st.useControl ? '' : 'none';
   cb.className = st.control === 0 ? 'me' : st.control === 1 ? 'ai' : '';
-  cb.textContent = st.control === 0 ? '◆CTRL ▼YOU' : st.control === 1 ? '◆CTRL ▲AI' : '◆CTRL 中立';
+  cb.textContent = st.control === 0 ? '◆CTRL ▼' + playerShort(HUMAN) : st.control === 1 ? '◆CTRL ▲' + playerShort(AI) : '◆CTRL 中立';
   document.getElementById('undoBtn').disabled = !undoStack.length;
   renderControlBars(st);
 
@@ -3111,9 +3121,9 @@ function renderField(st){
     var aReady = at>=10 && at>mt, mReady = mt>=10 && mt>at;
     var tt = document.createElement('div'); tt.className='totals';
     tt.innerHTML =
-      '<div class="gauge g2 t2'+(aReady?' ready':'')+'"><span class="lbl">AI</span>' +
+      '<div class="gauge g2 t2'+(aReady?' ready':'')+'"><span class="lbl">' + esc(playerShort(AI)) + '</span>' +
         '<div class="bar"><i style="width:'+Math.min(at/10*100,100)+'%"></i></div><span class="num">'+at+'</span></div>' +
-      '<div class="gauge t1'+(mReady?' ready':'')+'"><span class="lbl">YOU</span>' +
+      '<div class="gauge t1'+(mReady?' ready':'')+'"><span class="lbl">' + esc(playerShort(HUMAN)) + '</span>' +
         '<div class="bar"><i style="width:'+Math.min(mt/10*100,100)+'%"></i></div><span class="num">'+mt+'</span></div>';
     center.appendChild(tt);
     center.appendChild(protoDiv(st, HUMAN, l));
@@ -3198,7 +3208,7 @@ function openProtoDetail(side, l){
   var html = '<h2 style="color:' + color + '">' + esc(p.name) +
     (p.compiled ? ' <span style="color:var(--cand);font-size:.7rem">✓ COMPILED</span>' : ' <span style="color:var(--txd);font-size:.7rem">LOADING…</span>') + '</h2>';
   html += '<div class="m-proto" style="background:' + color + '22;color:' + color + '">' + esc(pm.tags || '') + '</div>';
-  html += '<div class="sub">' + (side===HUMAN?'あなた':'AI') + 'の' + ['左','中央','右'][l] + 'プロトコル</div>';
+  html += '<div class="sub">' + esc(playerName(side)) + 'の' + ['左','中央','右'][l] + 'プロトコル</div>';
   // このプロトコルの6枚を一覧
   var ids = (Engine.protos && Engine.protos[p.name]) || [];
   html += '<div class="fx-set-lbl">このプロトコルのカード</div>';
@@ -3390,7 +3400,7 @@ function modalArrange(req){
   var perm = [0,1,2];
   var sel = -1;   // 選択中スロット位置
   var POS = ['左', '中央', '右'];
-  var whose = req.target === HUMAN ? 'あなた' : 'AI';
+  var whose = playerName(req.target);
   var st = view();
   var origProtos = st.players[req.target].protocols.slice();   // 並び替え対象の実プロトコル
 
@@ -3810,7 +3820,7 @@ function openDetail(uid){
 function openTrash(side){
   var st = view();
   var t = st.players[side].trash;
-  var html = '<h2>' + (side===0?'あなた':'AI') + 'のトラッシュ (' + t.length + ')</h2>';
+  var html = '<h2>' + esc(playerName(side)) + 'のトラッシュ (' + t.length + ')</h2>';
   if (!t.length) html += '<div class="sub">空</div>';
   else html += '<div class="reveal-grid" id="trashCards"></div>';
   html += '<button class="optbtn ghost" onclick="closeModal()">閉じる</button>';
@@ -3838,10 +3848,10 @@ function renderControlBars(st){
   if (!st.useControl) return;
   if (st.control === AI){
     top.classList.add('on');
-    top.querySelector('.ct-tx').textContent = 'CONTROL — AI 保持';
+    top.querySelector('.ct-tx').textContent = 'CONTROL — ' + playerName(AI) + ' 保持';
   } else if (st.control === HUMAN){
     bot.classList.add('on');
-    bot.querySelector('.ct-tx').textContent = 'CONTROL — あなたが保持';
+    bot.querySelector('.ct-tx').textContent = 'CONTROL — ' + playerName(HUMAN) + 'が保持';
   }
 }
 
@@ -3889,7 +3899,7 @@ function maybeReveal(){
   if (key === lastRevealKey) return;
   lastRevealKey = key;
   if (st.revealed.kind === 'hand'){
-    var who = (st.revealed.player===AI?'AI':'あなた');
+    var who = playerName(st.revealed.player);
     var html = '<h2>' + esc(who) + 'の手札を公開</h2>';
     if (st.revealed.cards.length){
       html += '<div class="reveal-grid">' + st.revealed.cards.map(function(defId){
@@ -3956,6 +3966,7 @@ var roomSel = [];              // プロトコル選択中の一時状態
 var roomDepsLoaded = false;
 var ROOM_CFG = window.COMPILE_ROOM_CONFIG || {};
 var roomPendingJoin = null;
+var roomTraceSeenKeys = [];
 /* ロビーUIで上書きする前に、ソロ設定パネルの元HTMLを退避(退出時に復元する) */
 var roomSoloSetupHtml = (function(){ var p = document.querySelector('#setupOv .panel'); return p ? p.innerHTML : ''; })();
 
@@ -4122,6 +4133,7 @@ function roomNormRequest(rm){
   if (!rm.request) return null;
   var nq = JSON.parse(JSON.stringify(rm.request));
   nq.player = HUMAN;
+  if (typeof nq.target === 'number') nq.target = (nq.target === rm.side ? HUMAN : AI);
   return nq;
 }
 /* 公開ログの「発動」行から、ソロと同じステップ再生用の擬似トレースを組む。
@@ -4150,9 +4162,30 @@ function roomTraceEntries(rm){
     };
   });
 }
+function roomTraceKey(entry){
+  return [
+    entry.msg || '',
+    entry.uid || '',
+    JSON.stringify(entry.game && entry.game.lines || [])
+  ].join('|');
+}
+function roomNewTraceEntries(rm, mayContinueReplay){
+  var raw = rm.trace || [];
+  var keys = raw.map(roomTraceKey);
+  var entries = roomTraceEntries(rm);
+  var skip = 0;
+  if (mayContinueReplay && roomTraceSeenKeys.length){
+    while (skip < keys.length && skip < roomTraceSeenKeys.length && keys[skip] === roomTraceSeenKeys[skip]) skip++;
+  }
+  roomTraceSeenKeys = keys;
+  return entries.slice(skip);
+}
 function roomApplyView(rm){
   var firstEnter = !roomMode;
+  var prevRoom = room;
+  var mayContinueReplay = !!(prevRoom && prevRoom.code === rm.code && prevRoom.request);
   room = rm;
+  if (!prevRoom || prevRoom.code !== rm.code) roomTraceSeenKeys = [];
   if (rm.status !== 'playing' && rm.status !== 'finished'){
     roomRenderSetup(roomSetupMode());
     return;
@@ -4171,7 +4204,7 @@ function roomApplyView(rm){
   if (rm.log && rm.log.length) fullLog.push.apply(fullLog, rm.log);
   render();
   // 発動効果のフロートをソロと同じ再生機構で表示し、終わったら通常状態へ確定
-  var entries = (rm.trace && rm.trace.length) ? roomTraceEntries(rm) : roomLogEntries(st, rm.log || []);
+  var entries = (rm.trace && rm.trace.length) ? roomNewTraceEntries(rm, mayContinueReplay) : roomLogEntries(st, rm.log || []);
   startPlayback(entries, function(){
     if (nq){ enterReq(nq); }
     else { uiMode = 'idle'; curReq = null; render(); updateMsgBar(); }
@@ -4456,6 +4489,7 @@ function roomCopyInvite(){
 function roomLeave(){
   roomStopPolling(); roomLobbyTimerStop();
   roomMode = false; room = null;
+  roomTraceSeenKeys = [];
   cur = null; uiMode = 'idle'; curReq = null; selBuf = []; selectedHand = null; playPick = null;
   document.getElementById('winOv').classList.remove('on');
   document.getElementById('field').innerHTML = '';
