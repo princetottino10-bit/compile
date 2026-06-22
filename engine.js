@@ -1396,6 +1396,164 @@ function setAiLevel(v) { AI_LEVEL = Math.max(0, Math.min(2, v | 0)); }
 
 /* --- Phase A: 評価関数 --- */
 
+function aiCount(x, fallback) {
+  if (typeof x === 'number') return x;
+  if (x && typeof x === 'object') {
+    if (typeof x.min === 'number') return x.min;
+    if (typeof x.plus === 'number') return x.plus + 1;
+  }
+  return fallback || 1;
+}
+
+function aiOpsValue(ops, depth) {
+  if (!Array.isArray(ops) || depth > 4) return 0;
+  let v = 0;
+  for (const op of ops) {
+    if (!op || !op.op) continue;
+    const actor = op.player === 'opp' || op.actor === 'opp' ? -1 : 1;
+    switch (op.op) {
+      case 'draw': v += actor * aiCount(op.count, 1) * 16; break;
+      case 'drawByValue': case 'drawByCount': v += actor * 24; break;
+      case 'discard': v += (op.player === 'opp' ? 1 : -1) * aiCount(op.count, 1) * 15; break;
+      case 'delete': v += 34; break;
+      case 'return': v += 23; break;
+      case 'shift': v += 17; break;
+      case 'flip': v += 11; break;
+      case 'play': v += actor * 19; break;
+      case 'refresh': v += 18; break;
+      case 'rearrange': case 'swapProtocols': v += 34; break;
+      case 'noCompileNextTurn': v += 38; break;
+      case 'reveal': v += 5; break;
+      case 'takeRandom': v += 24; break;
+      case 'giveCard': v -= aiCount(op.count, 1) * 11; break;
+      case 'choice': {
+        const vals = (op.options || []).map(o => aiOpsValue(o, depth + 1));
+        v += vals.length ? Math.max(0, Math.max.apply(null, vals)) : 0;
+        break;
+      }
+      case 'ifDone': case 'ifState':
+        v += aiOpsValue(op.ops, depth + 1) * 0.8;
+        break;
+      case 'forEachLine':
+        v += aiOpsValue(op.ops, depth + 1) * 1.5;
+        break;
+      case 'repeatPer':
+        v += aiOpsValue(op.ops, depth + 1) * 1.3;
+        break;
+    }
+  }
+  return v;
+}
+
+function aiMiddleValue(def) {
+  return def && def.eff && def.eff.middle ? aiOpsValue(def.eff.middle.ops, 0) : 0;
+}
+
+function aiTriggerValue(def, slot) {
+  const tr = def && def.eff && def.eff[slot] && def.eff[slot].trigger;
+  return tr ? aiOpsValue(tr.ops, 0) : 0;
+}
+
+function aiLineLeadCount(st, side) {
+  const op = 1 - side;
+  let wins = 0;
+  for (let l = 0; l < 3; l++) if (lineTotal(st, l, side) > lineTotal(st, l, op)) wins++;
+  return wins;
+}
+
+function aiControlLeverage(st, side) {
+  if (!st.useControl) return 0;
+  const op = 1 - side;
+  const myComp = st.players[side].protocols.filter(p => p.compiled).length;
+  const opComp = st.players[op].protocols.filter(p => p.compiled).length;
+  let v = 20 + myComp * 16 + opComp * 22;
+  for (let l = 0; l < 3; l++) {
+    const mine = lineTotal(st, l, side), theirs = lineTotal(st, l, op);
+    if (!st.players[side].protocols[l].compiled && mine >= 10 && mine > theirs) v += 18;
+    if (!st.players[op].protocols[l].compiled && theirs >= 10 && theirs > mine) v += 28;
+  }
+  return v;
+}
+
+function aiHandPotential(st, side) {
+  const op = 1 - side;
+  const vals = [];
+  for (const uid of st.players[side].hand) {
+    const c = st.cards[uid], d = DEFS[c.def];
+    let best = -10;
+    for (let l = 0; l < 3; l++) {
+      if (st.players[side].protocols[l].compiled) continue;
+      const names = [st.players[0].protocols[l].name, st.players[1].protocols[l].name];
+      if (names.indexOf(d.proto) < 0) continue;
+      const mine = lineTotal(st, l, side), theirs = lineTotal(st, l, op);
+      const face = d.value + Math.max(0, aiMiddleValue(d)) * 0.18;
+      const down = 2 + (d.value < 2 ? 2 : 0);
+      let s = Math.max(face, down);
+      const gap = Math.max(0, 10 - mine);
+      if (gap <= Math.max(d.value, 2)) s += 18;
+      if (mine + Math.max(d.value, 2) > theirs) s += 8;
+      best = Math.max(best, s);
+    }
+    vals.push(best);
+  }
+  vals.sort((a, b) => b - a);
+  return vals.slice(0, 4).reduce((a, b) => a + b, 0);
+}
+
+function aiBoardEffectScore(st, side) {
+  let v = 0;
+  for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++) {
+    const stack = st.lines[l][s];
+    for (let i = 0; i < stack.length; i++) {
+      const uid = stack[i], c = st.cards[uid];
+      if (!c.faceUp) continue;
+      const d = DEFS[c.def];
+      let cv = 0;
+      if (d.eff.upper && d.eff.upper.static) cv += 10;
+      if (i === stack.length - 1 && d.eff.lower && d.eff.lower.static) cv += 12;
+      cv += aiTriggerValue(d, 'upper') * 0.18;
+      if (i === stack.length - 1) cv += aiTriggerValue(d, 'lower') * 0.22;
+      v += c.owner === side ? cv : -cv;
+    }
+  }
+  return v;
+}
+
+function aiActionBias(st, action, side) {
+  if (!action) return 0;
+  const op = 1 - side;
+  if (action.type === 'refresh') {
+    let v = (5 - st.players[side].hand.length) * 13;
+    if (st.control === side) v += aiControlLeverage(st, side) * 0.35;
+    return v;
+  }
+  if (action.type !== 'play') return 0;
+  const c = st.cards[action.card], d = DEFS[c.def];
+  const mine = lineTotal(st, action.line, side), theirs = lineTotal(st, action.line, op);
+  const gap = Math.max(0, 10 - mine);
+  let v = 0;
+  if (action.faceUp) {
+    const mv = aiMiddleValue(d);
+    v += mv * 0.35;
+    v += (d.value - 2) * 7;
+    if (gap <= d.value && mine + d.value > theirs && !st.players[side].protocols[action.line].compiled) v += 150;
+    if (mv < 8 && d.value < 2) v -= 20;
+    if (gap <= d.value && !st.players[side].protocols[action.line].compiled) v += 22;
+    if (mine + d.value > theirs) v += 8;
+  } else {
+    v += (2 - d.value) * 5;
+    if (gap <= 2 && mine + 2 > theirs && !st.players[side].protocols[action.line].compiled) v += 115;
+    if (aiMiddleValue(d) > 35) v -= 24;
+    if (gap <= 2 && !st.players[side].protocols[action.line].compiled) v += 12;
+    if (mine + 2 > theirs) v += 5;
+  }
+  return v;
+}
+
+function aiNow() {
+  return (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+}
+
 function aiScore(st, me) {
   if (st.winner === me) return 1e9;
   if (st.winner === 1 - me) return -1e9;
@@ -1404,8 +1562,8 @@ function aiScore(st, me) {
   const myComp = st.players[me].protocols.filter(p => p.compiled).length;
   const opComp = st.players[op].protocols.filter(p => p.compiled).length;
 
-  sc += myComp * 300;
-  sc -= opComp * 300;
+  sc += myComp * 380;
+  sc -= opComp * 410;
 
   const lineInfo = [];
   for (let l = 0; l < 3; l++) {
@@ -1421,17 +1579,18 @@ function aiScore(st, me) {
     if (!li.myComp) {
       const gap = Math.max(0, 10 - li.mine);
       myGaps.push(gap);
+      const lead = li.mine - li.theirs;
       if (li.mine >= 10 && li.mine > li.theirs) {
-        sc += 80;
+        sc += 125 + Math.min(lead, 8) * 7;
       } else if (gap === 0) {
-        sc += 40;
+        sc += 55;
       } else if (gap <= 2) {
-        sc += 30 + (3 - gap) * 10;
+        sc += 42 + (3 - gap) * 14;
       } else if (gap <= 5) {
         sc += gap <= 3 ? 15 : 8;
       }
-      sc += Math.min(li.mine, 14) * 2;
-      if (li.mine > li.theirs) sc += 8;
+      sc += Math.min(li.mine, 14) * 2.4;
+      if (li.mine > li.theirs) sc += 12;
       else if (li.mine > 0 && li.mine === li.theirs) sc += 2;
     } else {
       myGaps.push(-1);
@@ -1441,16 +1600,17 @@ function aiScore(st, me) {
     if (!li.opComp) {
       const oGap = Math.max(0, 10 - li.theirs);
       opGaps.push(oGap);
+      const oLead = li.theirs - li.mine;
       if (li.theirs >= 10 && li.theirs > li.mine) {
-        sc -= 90;
+        sc -= 150 + Math.min(oLead, 8) * 8;
       } else if (oGap === 0) {
-        sc -= 50;
+        sc -= 70;
       } else if (oGap <= 2) {
-        sc -= 35 + (3 - oGap) * 12;
+        sc -= 48 + (3 - oGap) * 16;
       } else if (oGap <= 4) {
         sc -= 10;
       }
-      sc -= Math.min(li.theirs, 14) * 1.5;
+      sc -= Math.min(li.theirs, 14) * 1.9;
     } else {
       opGaps.push(-1);
       sc -= 5;
@@ -1466,15 +1626,15 @@ function aiScore(st, me) {
     const bestN = myNeedLines.slice(0, myNeed);
     const avgGap = bestN.reduce((a, b) => a + b, 0) / myNeed;
     sc += Math.max(0, 30 - avgGap * 5);
-    if (myComp === 2 && bestN[0] <= 2) sc += 50;
-    if (myComp === 2 && bestN[0] === 0) sc += 40;
+    if (myComp === 2 && bestN[0] <= 2) sc += 85;
+    if (myComp === 2 && bestN[0] === 0) sc += 80;
   }
   if (opNeed > 0 && opNeedLines.length >= opNeed) {
     const bestN = opNeedLines.slice(0, opNeed);
     const avgGap = bestN.reduce((a, b) => a + b, 0) / opNeed;
     sc -= Math.max(0, 35 - avgGap * 5);
-    if (opComp === 2 && bestN[0] <= 2) sc -= 60;
-    if (opComp === 2 && bestN[0] === 0) sc -= 50;
+    if (opComp === 2 && bestN[0] <= 2) sc -= 105;
+    if (opComp === 2 && bestN[0] === 0) sc -= 95;
   }
 
   const myHand = st.players[me].hand.length, opHand = st.players[op].hand.length;
@@ -1492,29 +1652,27 @@ function aiScore(st, me) {
     }
     sc += playable * 2;
   }
+  sc += aiHandPotential(st, me) * 0.9;
+  sc -= aiHandPotential(st, op) * 0.75;
+  sc += aiBoardEffectScore(st, me);
 
   if (st.useControl) {
-    let myWins = 0, opWins = 0;
-    for (let l = 0; l < 3; l++) {
-      const li = lineInfo[l];
-      if (li.mine > li.theirs) myWins++;
-      else if (li.theirs > li.mine) opWins++;
-    }
+    let myWins = aiLineLeadCount(st, me), opWins = aiLineLeadCount(st, op);
 
     if (st.control === me) {
-      sc += 25;
+      sc += 55 + aiControlLeverage(st, me) * 0.7;
       if (myComp >= 1) sc += 15;
-      if (myComp >= 2) sc += 25;
+      if (myComp >= 2) sc += 45;
     } else if (st.control === op) {
-      sc -= 25;
+      sc -= 65 + aiControlLeverage(st, op) * 0.75;
       if (opComp >= 1) sc -= 15;
-      if (opComp >= 2) sc -= 25;
+      if (opComp >= 2) sc -= 50;
     }
 
-    if (myWins >= 2 && st.control !== me) sc += 18;
-    if (opWins >= 2 && st.control !== op) sc -= 18;
-    if (myWins >= 2) sc += 10;
-    if (opWins >= 2) sc -= 10;
+    if (myWins >= 2 && st.control !== me) sc += 42;
+    if (opWins >= 2 && st.control !== op) sc -= 52;
+    if (myWins >= 2) sc += 18;
+    if (opWins >= 2) sc -= 24;
   }
 
   if (st.turn === me) sc += 5;
@@ -1540,6 +1698,14 @@ function randomPicks(req) {
     case 'arrange': return req.exact === 'transposition' ? [1, 0, 2] : [1, 2, 0];
   }
   return [];
+}
+
+function aiChoiceScore(st, req, picks, me) {
+  const res = apply(st, { type: 'choose', id: req.id, picks });
+  if (!res || res.error) return -1e8;
+  const out = res.requests && res.requests.length ? resolveRequests(res.state, smartPicks, 8) : res;
+  if (!out || out.error || (out.requests && out.requests.length)) return -1e8;
+  return aiScore(out.state, me);
 }
 
 function smartPicks(st, req) {
@@ -1571,7 +1737,8 @@ function smartPicks(st, req) {
       scored.sort((a, b) => b.s - a.s);
       const min = req.min !== undefined ? req.min : 1;
       const max = Math.min(req.max !== undefined ? req.max : 1, scored.length);
-      return scored.slice(0, Math.max(min, 1)).map(x => x.uid);
+      if (min === 0 && (!scored.length || scored[0].s < 8)) return [];
+      return scored.slice(0, Math.max(min, Math.min(max, 1))).map(x => x.uid);
     }
     case 'pickHand': {
       const scored = req.candidates.map(uid => {
@@ -1597,6 +1764,7 @@ function smartPicks(st, req) {
       });
       scored.sort((a, b) => a.s - b.s);
       const min = req.min !== undefined ? req.min : 1;
+      if (min === 0 && (!scored.length || scored[0].s > 8)) return [];
       return scored.slice(0, Math.max(min, 1)).map(x => x.uid);
     }
     case 'pickLine': {
@@ -1618,27 +1786,23 @@ function smartPicks(st, req) {
       if (req.options.length <= 1) return [0];
       let bestIdx = 0, bestSc = -Infinity;
       for (let i = 0; i < req.options.length; i++) {
-        const res = apply(st, { type: 'choose', id: req.id, picks: [i] });
-        const s = (!res || res.error) ? -1e8 : aiScore(res.state, me);
+        const s = aiChoiceScore(st, req, [i], me);
         if (s > bestSc) { bestSc = s; bestIdx = i; }
       }
       return [bestIdx];
     }
     case 'yesNo': {
-      const yRes = apply(st, { type: 'choose', id: req.id, picks: ['yes'] });
-      const nRes = apply(st, { type: 'choose', id: req.id, picks: [] });
-      const yS = (!yRes || yRes.error) ? -1e8 : aiScore(yRes.state, me);
-      const nS = (!nRes || nRes.error) ? -1e8 : aiScore(nRes.state, me);
+      const yS = aiChoiceScore(st, req, ['yes'], me);
+      const nS = aiChoiceScore(st, req, [], me);
       return yS >= nS ? ['yes'] : [];
     }
     case 'arrange': {
       const perms = req.exact === 'transposition'
         ? [[1, 0, 2], [0, 2, 1], [2, 1, 0]]
-        : [[0, 1, 2], [1, 2, 0], [2, 0, 1], [0, 2, 1], [1, 0, 2], [2, 1, 0]];
+        : [[1, 2, 0], [2, 0, 1], [0, 2, 1], [1, 0, 2], [2, 1, 0]];
       let best = perms[0], bestSc = -Infinity;
       for (const o of perms) {
-        const res = apply(st, { type: 'choose', id: req.id, picks: o });
-        const s = (!res || res.error) ? -1e8 : aiScore(res.state, me);
+        const s = aiChoiceScore(st, req, o, me);
         if (s > bestSc) { bestSc = s; best = o; }
       }
       return best;
@@ -1712,7 +1876,7 @@ function aiActionNormal(state) {
   for (const a of acts) {
     const res = applyAndResolve(state, a, smartPicks);
     const sc = (!res || res.error || res.requests.length)
-      ? -1e8 : aiScore(res.state, me);
+      ? -1e8 : aiScore(res.state, me) + aiActionBias(state, a, me);
     if (sc + Math.random() * 0.5 > bestSc) { bestSc = sc; best = a; }
   }
   return best;
@@ -1728,9 +1892,13 @@ function aiActionHard(state) {
 
   const wasTrace = TRACE; TRACE = false;
   try {
+    const deadline = aiNow() + 600;
     const ordered = orderMoves(acts, state, me);
+    const limit = Math.min(ordered.length, 18);
     let alpha = -Infinity, best = ordered[0].a;
-    for (const { a } of ordered) {
+    for (let i = 0; i < limit; i++) {
+      if (aiNow() > deadline) break;
+      const a = ordered[i].a;
       const res = applyAndResolve(state, a, smartPicks);
       if (!res || res.error || res.requests.length) continue;
       const s1 = res.state;
@@ -1738,23 +1906,25 @@ function aiActionHard(state) {
       if (s1.winner !== null || s1.phase === 'finished' || s1.turn === me) {
         val = aiScore(s1, me);
       } else {
-        val = minimaxMin(s1, me, alpha, Infinity);
+        val = minimaxMin(s1, me, alpha, Infinity, deadline);
       }
+      val += aiActionBias(state, a, me);
       if (val > alpha) { alpha = val; best = a; }
     }
     return best;
   } finally { TRACE = wasTrace; }
 }
 
-function minimaxMin(state, me, alpha, beta) {
+function minimaxMin(state, me, alpha, beta, deadline) {
   if (state.turn === me || state.winner !== null) return aiScore(state, me);
   const op = 1 - me;
   const acts = legalActions(state);
   if (!acts.length) return aiScore(state, me);
   const ordered = orderMoves(acts, state, op);
-  const limit = Math.min(ordered.length, 8);
+  const limit = Math.min(ordered.length, 10);
   let val = Infinity;
   for (let i = 0; i < limit; i++) {
+    if (deadline && aiNow() > deadline) break;
     const res = applyAndResolve(state, ordered[i].a, smartPicks);
     if (!res || res.error || res.requests.length) continue;
     const sc = aiScore(res.state, me);
@@ -1768,7 +1938,7 @@ function minimaxMin(state, me, alpha, beta) {
 function orderMoves(acts, state, side) {
   const scored = acts.map(a => {
     const res = applyAndResolve(state, a, smartPicks);
-    const sc = (!res || res.error) ? -1e8 : aiScore(res.state, side);
+    const sc = (!res || res.error) ? -1e8 : aiScore(res.state, side) + aiActionBias(state, a, side);
     return { a, sc };
   });
   scored.sort((a, b) => b.sc - a.sc);
