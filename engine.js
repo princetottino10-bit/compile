@@ -1389,40 +1389,86 @@ function newGame(opts) {
   return runReplay(st, { type: '_begin' }, []);
 }
 
-/* ---------- 簡易AI (評価関数 + 1手読みロールアウト) ---------- */
+/* ---------- AI ---------- */
+
+let AI_LEVEL = 1; // 0=easy, 1=normal, 2=hard
+function setAiLevel(v) { AI_LEVEL = Math.max(0, Math.min(2, v | 0)); }
+
+/* --- Phase A: 評価関数 --- */
 
 function aiScore(st, me) {
   if (st.winner === me) return 1e9;
   if (st.winner === 1 - me) return -1e9;
   const op = 1 - me;
   let sc = 0;
+  const myComp = st.players[me].protocols.filter(p => p.compiled).length;
+  const opComp = st.players[op].protocols.filter(p => p.compiled).length;
+  sc += myComp * 160;
+  sc -= opComp * 160;
+
+  let myBestGap = Infinity, opBestGap = Infinity;
   for (let l = 0; l < 3; l++) {
     const mine = lineTotal(st, l, me), theirs = lineTotal(st, l, op);
     const myProt = st.players[me].protocols[l], opProt = st.players[op].protocols[l];
     if (!myProt.compiled) {
-      sc += Math.min(mine, 12) * 1.5;
-      if (mine >= 10 && mine > theirs) sc += 30;       // 次ターンにコンパイル圏
-      else if (mine >= 7) sc += 4;
+      const gap = Math.max(0, 10 - mine);
+      sc += Math.min(mine, 14) * 1.6;
+      if (mine >= 10 && mine > theirs) sc += 35;
+      else if (gap <= 3) sc += (4 - gap) * 5;
+      if (gap < myBestGap) myBestGap = gap;
     } else {
-      sc += Math.min(mine, 10) * 0.4;                  // リコンパイルは控えめに評価
+      sc += Math.min(mine, 10) * 0.3;
     }
     if (!opProt.compiled) {
-      sc -= Math.min(theirs, 12) * 1.2;
-      if (theirs >= 10 && theirs > mine) sc -= 28;     // 相手のコンパイル圏は阻止したい
+      const oGap = Math.max(0, 10 - theirs);
+      sc -= Math.min(theirs, 14) * 1.3;
+      if (theirs >= 10 && theirs > mine) sc -= 40;
+      else if (oGap <= 2) sc -= (3 - oGap) * 8;
+      if (oGap < opBestGap) opBestGap = oGap;
     } else {
-      sc -= Math.min(theirs, 10) * 0.3;
+      sc -= Math.min(theirs, 10) * 0.25;
     }
-    if (mine > theirs) sc += 3;
+    if (mine > theirs) sc += 4;
+
+    for (let s = 0; s < 2; s++) {
+      const who = s === 0 ? me : op;
+      const sign = who === me ? 1 : -1;
+      const stack = st.lines[l][who];
+      for (let i = 0; i < stack.length; i++) {
+        const c = st.cards[stack[i]];
+        if (!c.faceUp) continue;
+        const d = DEFS[c.def];
+        const top = i === stack.length - 1;
+        let effVal = 0;
+        if (d.eff.upper && d.eff.upper.trigger) effVal += 2;
+        if (top && d.eff.lower && d.eff.lower.trigger) effVal += 3;
+        if (d.eff.upper && d.eff.upper.static) effVal += 2;
+        if (top && d.eff.lower && d.eff.lower.static) effVal += 2;
+        if (!top) effVal *= 0.3;
+        sc += effVal * sign;
+      }
+    }
   }
-  sc += st.players[me].protocols.filter(p => p.compiled).length * 150;
-  sc -= st.players[op].protocols.filter(p => p.compiled).length * 150;
-  sc += Math.min(st.players[me].hand.length, 6) * 2;
-  sc -= Math.min(st.players[op].hand.length, 6) * 1;
-  if (st.useControl) { if (st.control === me) sc += 5; else if (st.control === op) sc -= 5; }
+
+  if (myComp === 2 && myBestGap <= 3) sc += 25;
+  if (opComp === 2 && opBestGap <= 3) sc -= 30;
+
+  const myHand = st.players[me].hand.length, opHand = st.players[op].hand.length;
+  sc += Math.min(myHand, 7) * 2.5;
+  sc -= Math.min(opHand, 7) * 1.5;
+  if (myHand === 0) sc -= 8;
+
+  if (st.useControl) {
+    const cVal = myComp >= 2 ? 12 : 6;
+    if (st.control === me) sc += cVal; else if (st.control === op) sc -= cVal;
+  }
+
+  if (st.turn === me) sc += 3;
   return sc;
 }
 
-/* request にランダムで答える (ロールアウト用) */
+/* --- Phase B: ヒューリスティックpicks --- */
+
 function randomPicks(req) {
   function ri(n) { return Math.floor(Math.random() * n); }
   switch (req.kind) {
@@ -1442,40 +1488,218 @@ function randomPicks(req) {
   return [];
 }
 
-/* state に最初の一手を適用し、残る選択をランダムで埋めて落ち着いた状態を採点 */
-function rolloutScore(state, firstAction, me) {
-  const wasTrace = TRACE; TRACE = false;     // ロールアウト中はトレース不要
-  try {
-    let res = apply(state, firstAction);
-    let guard = 0;
-    while (res && !res.error && res.requests.length && guard++ < 30) {
-      const req = res.requests[0];
-      res = apply(res.state, { type: 'choose', id: req.id, picks: randomPicks(req) });
+function smartPicks(st, req) {
+  const me = req.player;
+  const op = 1 - me;
+  switch (req.kind) {
+    case 'pickCard': {
+      const scored = req.candidates.map(uid => {
+        const c = st.cards[uid];
+        const loc = locate(st, uid);
+        let s = 0;
+        if (loc && loc.side === op) s += 10;
+        if (loc && isTop(st, loc)) s += 5;
+        s += cardValue(st, uid);
+        return { uid, s };
+      });
+      scored.sort((a, b) => b.s - a.s);
+      const min = req.min !== undefined ? req.min : 1;
+      const max = Math.min(req.max !== undefined ? req.max : 1, scored.length);
+      return scored.slice(0, Math.max(min, 1)).map(x => x.uid);
     }
-    if (!res || res.error || res.requests.length) return -1e8;
-    return aiScore(res.state, me);
+    case 'pickHand': {
+      const scored = req.candidates.map(uid => {
+        const c = st.cards[uid];
+        const d = DEFS[c.def];
+        let s = d.value;
+        let canMatch = false;
+        for (let l = 0; l < 3; l++) {
+          const names = [st.players[0].protocols[l].name, st.players[1].protocols[l].name];
+          if (names.indexOf(d.proto) >= 0) canMatch = true;
+        }
+        if (!canMatch) s -= 3;
+        return { uid, s };
+      });
+      scored.sort((a, b) => a.s - b.s);
+      const min = req.min !== undefined ? req.min : 1;
+      return scored.slice(0, Math.max(min, 1)).map(x => x.uid);
+    }
+    case 'pickLine': {
+      let bestLine = req.lines[0], bestSc = -Infinity;
+      for (const l of req.lines) {
+        const mine = lineTotal(st, l, me), theirs = lineTotal(st, l, op);
+        let s = mine - theirs;
+        if (!st.players[me].protocols[l].compiled && mine >= 7) s += 10;
+        if (s > bestSc) { bestSc = s; bestLine = l; }
+      }
+      return [bestLine];
+    }
+    case 'option': {
+      if (req.options.length <= 1) return [0];
+      let bestIdx = 0, bestSc = -Infinity;
+      for (let i = 0; i < req.options.length; i++) {
+        const res = apply(st, { type: 'choose', id: req.id, picks: [i] });
+        const s = (!res || res.error) ? -1e8 : aiScore(res.state, me);
+        if (s > bestSc) { bestSc = s; bestIdx = i; }
+      }
+      return [bestIdx];
+    }
+    case 'yesNo': {
+      const yRes = apply(st, { type: 'choose', id: req.id, picks: ['yes'] });
+      const nRes = apply(st, { type: 'choose', id: req.id, picks: [] });
+      const yS = (!yRes || yRes.error) ? -1e8 : aiScore(yRes.state, me);
+      const nS = (!nRes || nRes.error) ? -1e8 : aiScore(nRes.state, me);
+      return yS >= nS ? ['yes'] : [];
+    }
+    case 'arrange': {
+      if (req.exact === 'transposition') {
+        const opts = [[1, 0, 2], [0, 2, 1], [2, 1, 0]];
+        let best = opts[0], bestSc = -Infinity;
+        for (const o of opts) {
+          const res = apply(st, { type: 'choose', id: req.id, picks: o });
+          const s = (!res || res.error) ? -1e8 : aiScore(res.state, me);
+          if (s > bestSc) { bestSc = s; best = o; }
+        }
+        return best;
+      }
+      return [1, 2, 0];
+    }
+  }
+  return randomPicks(req);
+}
+
+/* --- 共通: アクション後のリクエスト解決 --- */
+
+function resolveRequests(state, pickFn, limit) {
+  let res = { state, requests: [], error: null, log: [] };
+  if (state.pending) {
+    res = apply(state, { type: '_begin' });
+    if (!res || res.error) return res;
+  }
+  let guard = 0;
+  while (res && !res.error && res.requests.length && guard++ < (limit || 30)) {
+    const req = res.requests[0];
+    res = apply(res.state, { type: 'choose', id: req.id, picks: pickFn(res.state, req) });
+  }
+  return res;
+}
+
+function applyAndResolve(state, action, pickFn) {
+  const wasTrace = TRACE; TRACE = false;
+  try {
+    const res = apply(state, action);
+    if (!res || res.error || !res.requests.length) return res;
+    return resolveRequests(res.state, pickFn, 30);
   } finally { TRACE = wasTrace; }
 }
 
-/* ランダム解決のばらつきを抑えるため、複数回ロールアウトして平均を取る */
+/* --- Easy AI (旧ロジック: 1-ply random rollout) --- */
+
 const AI_ROLLOUT_SAMPLES = 6;
+
+function rolloutScore(state, firstAction, me) {
+  const res = applyAndResolve(state, firstAction, function(_, req) { return randomPicks(req); });
+  if (!res || res.error || res.requests.length) return -1e8;
+  return aiScore(res.state, me);
+}
+
 function avgRolloutScore(state, action, me) {
   let sum = 0;
   for (let i = 0; i < AI_ROLLOUT_SAMPLES; i++) sum += rolloutScore(state, action, me);
   return sum / AI_ROLLOUT_SAMPLES;
 }
 
-function aiAction(state) {
+function aiActionEasy(state) {
   const me = state.turn;
   const acts = legalActions(state);
   if (!acts.length) return null;
   if (acts.length === 1) return acts[0];
   let best = null, bestSc = -Infinity;
   for (const a of acts) {
-    const sc = avgRolloutScore(state, a, me) + Math.random() * 2;  // 同点ゆらぎ
+    const sc = avgRolloutScore(state, a, me) + Math.random() * 2;
     if (sc > bestSc) { bestSc = sc; best = a; }
   }
   return best;
+}
+
+/* --- Normal AI (1-ply + smart picks + 強化評価) --- */
+
+function aiActionNormal(state) {
+  const me = state.turn;
+  const acts = legalActions(state);
+  if (!acts.length) return null;
+  if (acts.length === 1) return acts[0];
+  let best = null, bestSc = -Infinity;
+  for (const a of acts) {
+    const res = applyAndResolve(state, a, smartPicks);
+    const sc = (!res || res.error || res.requests.length)
+      ? -1e8 : aiScore(res.state, me);
+    if (sc + Math.random() * 1.5 > bestSc) { bestSc = sc; best = a; }
+  }
+  return best;
+}
+
+/* --- Hard AI (2-ply minimax + alpha-beta) --- */
+
+function aiActionHard(state) {
+  const me = state.turn;
+  const acts = legalActions(state);
+  if (!acts.length) return null;
+  if (acts.length === 1) return acts[0];
+
+  const wasTrace = TRACE; TRACE = false;
+  try {
+    let alpha = -Infinity, best = acts[0];
+    for (const a of acts) {
+      const res = applyAndResolve(state, a, smartPicks);
+      if (!res || res.error || res.requests.length) continue;
+      const s1 = res.state;
+      let val;
+      if (s1.winner !== null || s1.phase === 'finished') {
+        val = aiScore(s1, me);
+      } else {
+        val = minimaxMin(s1, me, alpha, Infinity);
+      }
+      if (val > alpha) { alpha = val; best = a; }
+    }
+    return best;
+  } finally { TRACE = wasTrace; }
+}
+
+function minimaxMin(state, me, alpha, beta) {
+  const op = 1 - me;
+  if (state.turn === me || state.winner !== null) return aiScore(state, me);
+  const acts = legalActions(state);
+  if (!acts.length) return aiScore(state, me);
+  const subset = acts.length > 12 ? pruneActions(acts, state, op, 12) : acts;
+  let val = Infinity;
+  for (const a of subset) {
+    const res = applyAndResolve(state, a, smartPicks);
+    if (!res || res.error || res.requests.length) continue;
+    const sc = aiScore(res.state, me);
+    if (sc < val) val = sc;
+    if (val <= alpha) return val;
+    if (val < beta) beta = val;
+  }
+  return val === Infinity ? aiScore(state, me) : val;
+}
+
+function pruneActions(acts, state, side, n) {
+  const scored = acts.map(a => {
+    const res = applyAndResolve(state, a, smartPicks);
+    const sc = (!res || res.error) ? -1e8 : aiScore(res.state, side);
+    return { a, sc };
+  });
+  scored.sort((a, b) => b.sc - a.sc);
+  return scored.slice(0, n).map(x => x.a);
+}
+
+/* --- 難易度に応じたディスパッチ --- */
+
+function aiAction(state) {
+  if (AI_LEVEL >= 2) return aiActionHard(state);
+  if (AI_LEVEL >= 1) return aiActionNormal(state);
+  return aiActionEasy(state);
 }
 
 function enumeratePicks(req) {
@@ -1509,6 +1733,9 @@ function enumeratePicks(req) {
 }
 
 function aiAnswer(state, req) {
+  if (AI_LEVEL >= 1) {
+    return smartPicks(state, req);
+  }
   const me = req.player;
   const options = enumeratePicks(req);
   if (options.length === 1) return options[0];
@@ -1523,9 +1750,9 @@ function aiAnswer(state, req) {
 /* ---------- 公開 API ---------- */
 
 const Engine = {
-  init, newGame, apply, legalActions, setTrace,
+  init, newGame, apply, legalActions, setTrace, setAiLevel,
   lineTotal, cardValue, compilableLines, canPlay, locate,
-  ai: { action: aiAction, answer: aiAnswer, score: aiScore, randomPicks },
+  ai: { action: aiAction, answer: aiAnswer, score: aiScore, randomPicks, smartPicks },
   get defs() { return DEFS; },
   get protos() { return PROTOS; }
 };
