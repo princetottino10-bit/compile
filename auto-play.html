@@ -599,6 +599,7 @@ html.mobile-ui #actionBar{bottom:132px}
   transition:transform .12s,box-shadow .2s}
 /* 並び替え対象の盤面プロトコルを強調 */
 .proto.arr-target{box-shadow:0 0 0 2px var(--pk),0 0 22px -4px rgba(233,30,140,.7);animation:arrpulse 1.1s ease-in-out infinite}
+.proto.arr-sel{box-shadow:0 0 0 3px #ffd24a,0 0 28px -3px rgba(255,210,74,.9);transform:translateY(-2px)}
 @keyframes arrpulse{50%{box-shadow:0 0 0 2px var(--pk2),0 0 30px -2px rgba(233,30,140,.9)}}
 .arr-slot .pos{font-family:var(--fmono);font-size:.48rem;color:var(--txdd);display:block;margin-bottom:8px;letter-spacing:.12em}
 .arr-slot .pn{font-family:var(--fmono);font-weight:700;font-size:.6rem;letter-spacing:.04em;color:var(--ac,#fff);
@@ -2644,7 +2645,7 @@ function aiActionHard(state) {
   try {
     const deadline = aiNow() + 600;
     const ordered = orderMoves(acts, state, me);
-    const limit = Math.min(ordered.length, 18);
+    const limit = Math.min(ordered.length, 24);
     let alpha = -Infinity, best = ordered[0].a;
     for (let i = 0; i < limit; i++) {
       if (aiNow() > deadline) break;
@@ -2671,7 +2672,7 @@ function minimaxMin(state, me, alpha, beta, deadline) {
   const acts = legalActions(state);
   if (!acts.length) return aiScore(state, me);
   const ordered = orderMoves(acts, state, op);
-  const limit = Math.min(ordered.length, 10);
+  const limit = Math.min(ordered.length, 12);
   let val = Infinity;
   for (let i = 0; i < limit; i++) {
     if (deadline && aiNow() > deadline) break;
@@ -2778,6 +2779,7 @@ var selBuf = [];
 var curReq = null;
 var playPick = null;   // U4: 効果による「カードをプレイ」の手札→ライン選択状態
 var arrPreview = null; // 並び替えのライブプレビュー {side, protos:[..3]}
+var arrangeUi = null;  // 並び替え中の盤面タップ操作
 var fullLog = [];
 var aiTimer = null;
 var lastRevealKey = '';
@@ -3019,10 +3021,7 @@ var AI_PROTOCOL_PRESETS = [
     ['DEATH','GRAVITY','PSYCHIC'],
     ['PLAGUE','PSYCHIC','HATE'],
     ['FIRE','SPEED','SPIRIT'],
-    ['DARKNESS','SPEED','HATE'],
-    ['PSYCHIC','SPIRIT','HATE'],
-    ['GRAVITY','PSYCHIC','SPIRIT'],
-    ['DARKNESS','LIGHT','LOVE']
+    ['DARKNESS','SPEED','HATE']
   ]
 ];
 
@@ -3045,7 +3044,7 @@ function weightedProtocolFallback(rest, diff){
   if (diff >= 2) pool = sorted.slice(Math.max(0, sorted.length - 3));
   else if (diff <= 0) pool = sorted.slice(0, Math.min(5, sorted.length));
   else {
-    var start = Math.max(0, sorted.length - 6);
+    var start = Math.max(0, sorted.length - 7);
     pool = sorted.slice(start, Math.min(sorted.length, start + 5));
   }
   while (pool.length < 3) pool.push(sorted[pool.length]);
@@ -3064,7 +3063,7 @@ function chooseAiProtocols(own, diff){
   var rest = COMPILE_CARDS.protocols.map(function(p){ return p.name; }).filter(function(n){ return own.indexOf(n) < 0; });
   var preset = AI_PROTOCOL_PRESETS[Math.max(0, Math.min(2, diff | 0))] || [];
   var ok = preset.filter(function(ns){ return noProtocolOverlap(ns, own); });
-  var presetRate = diff >= 2 ? 1 : (diff <= 0 ? 0.35 : 0.2);
+  var presetRate = 0;
   if (ok.length && Math.random() < presetRate) return orderAiProtocolsForOpponent(ok[Math.floor(Math.random() * ok.length)].slice(), own, diff);
   var weighted = weightedProtocolFallback(rest, diff);
   if (weighted.length === 3) return orderAiProtocolsForOpponent(weighted, own, diff);
@@ -3168,7 +3167,7 @@ function confirmSurrender(){
   if (!confirm('まいりましたしますか?')) return;
   cancelPlayback();
   if (aiTimer) clearTimeout(aiTimer);
-  uiMode = 'idle'; curReq = null; selBuf = []; selectedHand = null; playPick = null; arrPreview = null;
+  uiMode = 'idle'; curReq = null; selBuf = []; selectedHand = null; playPick = null; arrPreview = null; arrangeUi = null;
   if (roomMode){
     roomSendAction({ type:'surrender' });
     return;
@@ -3189,7 +3188,7 @@ function onResult(res){
 }
 
 function settle(){
-  uiMode = 'idle'; curReq = null; selBuf = []; selectedHand = null; playPick = null; arrPreview = null;
+  uiMode = 'idle'; curReq = null; selBuf = []; selectedHand = null; playPick = null; arrPreview = null; arrangeUi = null;
   maybeReveal();
   render();
   var req = cur.requests[0];
@@ -3840,7 +3839,8 @@ function protoDiv(st, side, l){
   // 並び替えプレビュー中は、対象サイドのプロトコルを入れ替え後の見た目で表示
   var p = (arrPreview && arrPreview.side === side) ? arrPreview.protos[l] : st.players[side].protocols[l];
   var d = document.createElement('div');
-  d.className = 'proto' + (p.compiled ? ' comp' : '') + (arrPreview && arrPreview.side === side ? ' arr-target' : '');
+  d.className = 'proto' + (p.compiled ? ' comp' : '') + (arrPreview && arrPreview.side === side ? ' arr-target' : '') +
+    (arrangeUi && arrangeUi.req && arrangeUi.req.target === side && arrangeUi.sel === l ? ' arr-sel' : '');
   setAccent(d, PROTOMAP[p.name] ? PROTOMAP[p.name].color : '#888');
   // 未コンパイル=通常アート / コンパイル済み=グリッチアート(コンパイル面)
   d.style.background = p.compiled
@@ -3853,6 +3853,12 @@ function protoDiv(st, side, l){
     e.stopPropagation();
     openProtoDetail(side, l);
   };
+  d.addEventListener('click', function(e){
+    if (!(arrangeUi && arrangeUi.req && uiMode === 'request' && curReq && curReq.kind === 'arrange')) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    if (side === arrangeUi.req.target) arrangeUi.tap(l);
+  }, true);
   return d;
 }
 
@@ -4069,6 +4075,8 @@ function modalArrange(req){
   }
 
   function draw(){
+    if (arrangeUi) arrangeUi.sel = sel;
+    if (arrPreview) render();
     var hint = req.exact === 'transposition'
       ? whose + 'のプロトコル2つをタップして入れ替え'
       : whose + 'のプロトコルをタップして入れ替え→確定';
@@ -4091,7 +4099,7 @@ function modalArrange(req){
     if (ok) ok.onclick = function(){ commit(); };
   }
 
-  function commit(){ arrPreview = null; closeModal(); answer(req, perm.slice()); }
+  function commit(){ arrPreview = null; arrangeUi = null; closeModal(); answer(req, perm.slice()); }
 
   function tapSlot(pos){
     if (sel === -1){ sel = pos; draw(); return; }
@@ -4103,6 +4111,7 @@ function modalArrange(req){
     draw();
   }
 
+  arrangeUi = { req: req, tap: tapSlot, commit: commit, sel: sel };
   syncPreview();
   draw();
 }
@@ -4550,7 +4559,7 @@ function loadCustomState(state){
   cancelPlayback();
   playedCount = 0;
   undoStack = []; fullLog = []; uiMode = 'idle';
-  selectedHand = null; selBuf = []; curReq = null; playPick = null; arrPreview = null;
+  selectedHand = null; selBuf = []; curReq = null; playPick = null; arrPreview = null; arrangeUi = null;
   prevFieldUids = {}; prevHandUids = {};
   document.getElementById('setupOv').classList.remove('on');
   document.getElementById('winOv').classList.remove('on');
@@ -4981,7 +4990,7 @@ function roomApplyView(rm){
   var st = buildRoomState(rm);
   var nq = roomNormRequest(rm);
   cur = { state: st, requests: nq ? [nq] : [], log: rm.log || [], trace: [], winner: st.winner, error: null };
-  selectedHand = null; selBuf = []; playPick = null; arrPreview = null;
+  selectedHand = null; selBuf = []; playPick = null; arrPreview = null; arrangeUi = null;
   closeModal();
   // 公開ゲームログをターンログへ反映(相手の手も見えるようになる)
   if (rm.log && rm.log.length) fullLog.push.apply(fullLog, rm.log);
@@ -5568,7 +5577,7 @@ function returnToPuzzleEditor(){
   if (!puzzleReturnState) return;
   if (aiTimer) clearTimeout(aiTimer);
   cancelPlayback();
-  cur = null; uiMode = 'idle'; curReq = null; selectedHand = null; selBuf = []; playPick = null; arrPreview = null;
+  cur = null; uiMode = 'idle'; curReq = null; selectedHand = null; selBuf = []; playPick = null; arrPreview = null; arrangeUi = null;
   undoStack = []; fullLog = []; playedCount = 0; prevFieldUids = {}; prevHandUids = {};
   document.getElementById('winOv').classList.remove('on');
   document.getElementById('setupOv').classList.remove('on');

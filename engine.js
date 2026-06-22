@@ -1894,7 +1894,7 @@ function aiActionHard(state) {
   try {
     const deadline = aiNow() + 600;
     const ordered = orderMoves(acts, state, me);
-    const limit = Math.min(ordered.length, 18);
+    const limit = Math.min(ordered.length, 24);
     let alpha = -Infinity, best = ordered[0].a;
     for (let i = 0; i < limit; i++) {
       if (aiNow() > deadline) break;
@@ -1921,7 +1921,7 @@ function minimaxMin(state, me, alpha, beta, deadline) {
   const acts = legalActions(state);
   if (!acts.length) return aiScore(state, me);
   const ordered = orderMoves(acts, state, op);
-  const limit = Math.min(ordered.length, 10);
+  const limit = Math.min(ordered.length, 12);
   let val = Infinity;
   for (let i = 0; i < limit; i++) {
     if (deadline && aiNow() > deadline) break;
