@@ -2153,67 +2153,121 @@ function aiScore(st, me) {
   let sc = 0;
   const myComp = st.players[me].protocols.filter(p => p.compiled).length;
   const opComp = st.players[op].protocols.filter(p => p.compiled).length;
-  sc += myComp * 160;
-  sc -= opComp * 160;
 
-  let myBestGap = Infinity, opBestGap = Infinity;
+  sc += myComp * 300;
+  sc -= opComp * 300;
+
+  const lineInfo = [];
   for (let l = 0; l < 3; l++) {
     const mine = lineTotal(st, l, me), theirs = lineTotal(st, l, op);
     const myProt = st.players[me].protocols[l], opProt = st.players[op].protocols[l];
-    if (!myProt.compiled) {
-      const gap = Math.max(0, 10 - mine);
-      sc += Math.min(mine, 14) * 1.6;
-      if (mine >= 10 && mine > theirs) sc += 35;
-      else if (gap <= 3) sc += (4 - gap) * 5;
-      if (gap < myBestGap) myBestGap = gap;
-    } else {
-      sc += Math.min(mine, 10) * 0.3;
-    }
-    if (!opProt.compiled) {
-      const oGap = Math.max(0, 10 - theirs);
-      sc -= Math.min(theirs, 14) * 1.3;
-      if (theirs >= 10 && theirs > mine) sc -= 40;
-      else if (oGap <= 2) sc -= (3 - oGap) * 8;
-      if (oGap < opBestGap) opBestGap = oGap;
-    } else {
-      sc -= Math.min(theirs, 10) * 0.25;
-    }
-    if (mine > theirs) sc += 4;
+    lineInfo.push({ mine, theirs, myComp: myProt.compiled, opComp: opProt.compiled });
+  }
 
-    for (let s = 0; s < 2; s++) {
-      const who = s === 0 ? me : op;
-      const sign = who === me ? 1 : -1;
-      const stack = st.lines[l][who];
-      for (let i = 0; i < stack.length; i++) {
-        const c = st.cards[stack[i]];
-        if (!c.faceUp) continue;
-        const d = DEFS[c.def];
-        const top = i === stack.length - 1;
-        let effVal = 0;
-        if (d.eff.upper && d.eff.upper.trigger) effVal += 2;
-        if (top && d.eff.lower && d.eff.lower.trigger) effVal += 3;
-        if (d.eff.upper && d.eff.upper.static) effVal += 2;
-        if (top && d.eff.lower && d.eff.lower.static) effVal += 2;
-        if (!top) effVal *= 0.3;
-        sc += effVal * sign;
+  const myGaps = [], opGaps = [];
+  for (let l = 0; l < 3; l++) {
+    const li = lineInfo[l];
+
+    if (!li.myComp) {
+      const gap = Math.max(0, 10 - li.mine);
+      myGaps.push(gap);
+      if (li.mine >= 10 && li.mine > li.theirs) {
+        sc += 80;
+      } else if (gap === 0) {
+        sc += 40;
+      } else if (gap <= 2) {
+        sc += 30 + (3 - gap) * 10;
+      } else if (gap <= 5) {
+        sc += gap <= 3 ? 15 : 8;
       }
+      sc += Math.min(li.mine, 14) * 2;
+      if (li.mine > li.theirs) sc += 8;
+      else if (li.mine > 0 && li.mine === li.theirs) sc += 2;
+    } else {
+      myGaps.push(-1);
+      sc += 5;
+    }
+
+    if (!li.opComp) {
+      const oGap = Math.max(0, 10 - li.theirs);
+      opGaps.push(oGap);
+      if (li.theirs >= 10 && li.theirs > li.mine) {
+        sc -= 90;
+      } else if (oGap === 0) {
+        sc -= 50;
+      } else if (oGap <= 2) {
+        sc -= 35 + (3 - oGap) * 12;
+      } else if (oGap <= 4) {
+        sc -= 10;
+      }
+      sc -= Math.min(li.theirs, 14) * 1.5;
+    } else {
+      opGaps.push(-1);
+      sc -= 5;
     }
   }
 
-  if (myComp === 2 && myBestGap <= 3) sc += 25;
-  if (opComp === 2 && opBestGap <= 3) sc -= 30;
+  const myNeedLines = myGaps.filter(g => g >= 0).sort((a, b) => a - b);
+  const opNeedLines = opGaps.filter(g => g >= 0).sort((a, b) => a - b);
+  const myNeed = 3 - myComp;
+  const opNeed = 3 - opComp;
+
+  if (myNeed > 0 && myNeedLines.length >= myNeed) {
+    const bestN = myNeedLines.slice(0, myNeed);
+    const avgGap = bestN.reduce((a, b) => a + b, 0) / myNeed;
+    sc += Math.max(0, 30 - avgGap * 5);
+    if (myComp === 2 && bestN[0] <= 2) sc += 50;
+    if (myComp === 2 && bestN[0] === 0) sc += 40;
+  }
+  if (opNeed > 0 && opNeedLines.length >= opNeed) {
+    const bestN = opNeedLines.slice(0, opNeed);
+    const avgGap = bestN.reduce((a, b) => a + b, 0) / opNeed;
+    sc -= Math.max(0, 35 - avgGap * 5);
+    if (opComp === 2 && bestN[0] <= 2) sc -= 60;
+    if (opComp === 2 && bestN[0] === 0) sc -= 50;
+  }
 
   const myHand = st.players[me].hand.length, opHand = st.players[op].hand.length;
-  sc += Math.min(myHand, 7) * 2.5;
-  sc -= Math.min(opHand, 7) * 1.5;
-  if (myHand === 0) sc -= 8;
-
-  if (st.useControl) {
-    const cVal = myComp >= 2 ? 12 : 6;
-    if (st.control === me) sc += cVal; else if (st.control === op) sc -= cVal;
+  sc += Math.min(myHand, 7) * 3;
+  sc -= Math.min(opHand, 7) * 2;
+  if (myHand === 0) sc -= 15;
+  if (myHand >= 3) {
+    let playable = 0;
+    for (const uid of st.players[me].hand) {
+      const d = DEFS[st.cards[uid].def];
+      for (let l = 0; l < 3; l++) {
+        const names = [st.players[0].protocols[l].name, st.players[1].protocols[l].name];
+        if (names.indexOf(d.proto) >= 0 && !lineInfo[l].myComp) { playable++; break; }
+      }
+    }
+    sc += playable * 2;
   }
 
-  if (st.turn === me) sc += 3;
+  if (st.useControl) {
+    let myWins = 0, opWins = 0;
+    for (let l = 0; l < 3; l++) {
+      const li = lineInfo[l];
+      if (li.mine > li.theirs) myWins++;
+      else if (li.theirs > li.mine) opWins++;
+    }
+
+    if (st.control === me) {
+      sc += 25;
+      if (myComp >= 1) sc += 15;
+      if (myComp >= 2) sc += 25;
+    } else if (st.control === op) {
+      sc -= 25;
+      if (opComp >= 1) sc -= 15;
+      if (opComp >= 2) sc -= 25;
+    }
+
+    if (myWins >= 2 && st.control !== me) sc += 18;
+    if (opWins >= 2 && st.control !== op) sc -= 18;
+    if (myWins >= 2) sc += 10;
+    if (opWins >= 2) sc -= 10;
+  }
+
+  if (st.turn === me) sc += 5;
   return sc;
 }
 
@@ -2245,11 +2299,23 @@ function smartPicks(st, req) {
     case 'pickCard': {
       const scored = req.candidates.map(uid => {
         const c = st.cards[uid];
+        if (!c) return { uid, s: 0 };
         const loc = locate(st, uid);
         let s = 0;
-        if (loc && loc.side === op) s += 10;
-        if (loc && isTop(st, loc)) s += 5;
-        s += cardValue(st, uid);
+        if (loc) {
+          if (loc.side === op) {
+            s += 15;
+            const lt = lineTotal(st, loc.line, op);
+            if (lt >= 8) s += 20;
+            if (!st.players[op].protocols[loc.line].compiled && lt >= 10 && lt > lineTotal(st, loc.line, me)) s += 30;
+          } else {
+            s -= 5;
+            const lt = lineTotal(st, loc.line, me);
+            if (lt >= 8 && !st.players[me].protocols[loc.line].compiled) s -= 15;
+          }
+          if (isTop(st, loc)) s += 8;
+        }
+        s += (c.zone ? cardValue(st, uid) : DEFS[c.def].value) * 2;
         return { uid, s };
       });
       scored.sort((a, b) => b.s - a.s);
@@ -2260,14 +2326,23 @@ function smartPicks(st, req) {
     case 'pickHand': {
       const scored = req.candidates.map(uid => {
         const c = st.cards[uid];
+        if (!c) return { uid, s: 0 };
         const d = DEFS[c.def];
         let s = d.value;
-        let canMatch = false;
+        let bestLineFit = -Infinity;
         for (let l = 0; l < 3; l++) {
           const names = [st.players[0].protocols[l].name, st.players[1].protocols[l].name];
-          if (names.indexOf(d.proto) >= 0) canMatch = true;
+          if (names.indexOf(d.proto) < 0) continue;
+          const lt = lineTotal(st, l, me);
+          const gap = Math.max(0, 10 - lt);
+          if (!st.players[me].protocols[l].compiled && gap <= d.value + 2) {
+            bestLineFit = Math.max(bestLineFit, d.value + 5);
+          } else {
+            bestLineFit = Math.max(bestLineFit, d.value);
+          }
         }
-        if (!canMatch) s -= 3;
+        if (bestLineFit === -Infinity) s -= 5;
+        else s = bestLineFit;
         return { uid, s };
       });
       scored.sort((a, b) => a.s - b.s);
@@ -2278,8 +2353,13 @@ function smartPicks(st, req) {
       let bestLine = req.lines[0], bestSc = -Infinity;
       for (const l of req.lines) {
         const mine = lineTotal(st, l, me), theirs = lineTotal(st, l, op);
-        let s = mine - theirs;
-        if (!st.players[me].protocols[l].compiled && mine >= 7) s += 10;
+        let s = 0;
+        const gap = Math.max(0, 10 - mine);
+        if (!st.players[me].protocols[l].compiled) {
+          s += (14 - gap) * 3;
+          if (mine >= 10 && mine > theirs) s += 50;
+          if (mine > theirs) s += 10;
+        }
         if (s > bestSc) { bestSc = s; bestLine = l; }
       }
       return [bestLine];
@@ -2302,17 +2382,16 @@ function smartPicks(st, req) {
       return yS >= nS ? ['yes'] : [];
     }
     case 'arrange': {
-      if (req.exact === 'transposition') {
-        const opts = [[1, 0, 2], [0, 2, 1], [2, 1, 0]];
-        let best = opts[0], bestSc = -Infinity;
-        for (const o of opts) {
-          const res = apply(st, { type: 'choose', id: req.id, picks: o });
-          const s = (!res || res.error) ? -1e8 : aiScore(res.state, me);
-          if (s > bestSc) { bestSc = s; best = o; }
-        }
-        return best;
+      const perms = req.exact === 'transposition'
+        ? [[1, 0, 2], [0, 2, 1], [2, 1, 0]]
+        : [[0, 1, 2], [1, 2, 0], [2, 0, 1], [0, 2, 1], [1, 0, 2], [2, 1, 0]];
+      let best = perms[0], bestSc = -Infinity;
+      for (const o of perms) {
+        const res = apply(st, { type: 'choose', id: req.id, picks: o });
+        const s = (!res || res.error) ? -1e8 : aiScore(res.state, me);
+        if (s > bestSc) { bestSc = s; best = o; }
       }
-      return [1, 2, 0];
+      return best;
     }
   }
   return randomPicks(req);
@@ -2384,7 +2463,7 @@ function aiActionNormal(state) {
     const res = applyAndResolve(state, a, smartPicks);
     const sc = (!res || res.error || res.requests.length)
       ? -1e8 : aiScore(res.state, me);
-    if (sc + Math.random() * 1.5 > bestSc) { bestSc = sc; best = a; }
+    if (sc + Math.random() * 0.5 > bestSc) { bestSc = sc; best = a; }
   }
   return best;
 }
@@ -2399,13 +2478,14 @@ function aiActionHard(state) {
 
   const wasTrace = TRACE; TRACE = false;
   try {
-    let alpha = -Infinity, best = acts[0];
-    for (const a of acts) {
+    const ordered = orderMoves(acts, state, me);
+    let alpha = -Infinity, best = ordered[0].a;
+    for (const { a } of ordered) {
       const res = applyAndResolve(state, a, smartPicks);
       if (!res || res.error || res.requests.length) continue;
       const s1 = res.state;
       let val;
-      if (s1.winner !== null || s1.phase === 'finished') {
+      if (s1.winner !== null || s1.phase === 'finished' || s1.turn === me) {
         val = aiScore(s1, me);
       } else {
         val = minimaxMin(s1, me, alpha, Infinity);
@@ -2417,14 +2497,15 @@ function aiActionHard(state) {
 }
 
 function minimaxMin(state, me, alpha, beta) {
-  const op = 1 - me;
   if (state.turn === me || state.winner !== null) return aiScore(state, me);
+  const op = 1 - me;
   const acts = legalActions(state);
   if (!acts.length) return aiScore(state, me);
-  const subset = acts.length > 12 ? pruneActions(acts, state, op, 12) : acts;
+  const ordered = orderMoves(acts, state, op);
+  const limit = Math.min(ordered.length, 8);
   let val = Infinity;
-  for (const a of subset) {
-    const res = applyAndResolve(state, a, smartPicks);
+  for (let i = 0; i < limit; i++) {
+    const res = applyAndResolve(state, ordered[i].a, smartPicks);
     if (!res || res.error || res.requests.length) continue;
     const sc = aiScore(res.state, me);
     if (sc < val) val = sc;
@@ -2434,14 +2515,14 @@ function minimaxMin(state, me, alpha, beta) {
   return val === Infinity ? aiScore(state, me) : val;
 }
 
-function pruneActions(acts, state, side, n) {
+function orderMoves(acts, state, side) {
   const scored = acts.map(a => {
     const res = applyAndResolve(state, a, smartPicks);
     const sc = (!res || res.error) ? -1e8 : aiScore(res.state, side);
     return { a, sc };
   });
   scored.sort((a, b) => b.sc - a.sc);
-  return scored.slice(0, n).map(x => x.a);
+  return scored;
 }
 
 /* --- 難易度に応じたディスパッチ --- */
