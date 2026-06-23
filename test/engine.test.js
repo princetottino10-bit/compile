@@ -316,6 +316,29 @@ test('pending view includes hand cards drawn by effects', () => {
   }
 });
 
+test('WATER_4: returned cards are playable by uncovered SPEED_1', () => {
+  const r = ng({ p0: ['WATER', 'SPEED', 'DARKNESS'] });
+  const st = r.state;
+  setHand(st, 0, ['WATER_4']);
+  place(st, 'SPEED_1', 0, 2, true);
+  place(st, 'WATER_3', 0, 2, true);
+  st.players[0].protocols[0].name = 'WATER';
+  let res = Engine.apply(st, { type: 'play', card: uidOf('WATER_4', 0), line: 0, faceUp: true });
+  assert.equal(res.error, null);
+  assert.equal(res.requests.length, 1);
+  assert.equal(res.requests[0].prompt, 'play-free');
+  assert.ok(res.view.players[0].hand.includes(uidOf('WATER_3', 0)));
+  assert.ok(res.requests[0].candidates.some(c => c.startsWith(uidOf('WATER_3', 0) + '|')));
+
+  const pick = res.requests[0].candidates.find(c => c === uidOf('WATER_3', 0) + '|0|u');
+  assert.ok(pick);
+  res = Engine.apply(res.state, { type: 'choose', id: res.requests[0].id, picks: [pick] });
+  assert.equal(res.error, null);
+  const pendingView = res.view || res.state;
+  assert.equal(pendingView.cards[uidOf('WATER_3', 0)].zone, 'field');
+  assert.ok(pendingView.lines[0][0].includes(uidOf('WATER_3', 0)));
+});
+
 test('コンパイル: 値10以上かつ相手超過で強制コンパイル・コントロール獲得も確認', () => {
   const r = ng();
   const st = r.state;

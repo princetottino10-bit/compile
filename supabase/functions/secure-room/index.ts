@@ -151,8 +151,24 @@ function publicGame(st: any, side: number, aliases = cardAliases(st)) {
   };
 }
 
+function pendingViewState(st: any) {
+  const pend = st && st.pending;
+  if (!pend || !pend.base || !pend.action) return st;
+  try {
+    let res = Engine.apply(pend.base, pend.action);
+    for (const picks of pend.choices || []) {
+      if (!res.requests || !res.requests[0]) break;
+      res = Engine.apply(res.state, { type: "choose", id: res.requests[0].id, picks });
+    }
+    return res.view || res.state || st;
+  } catch (_) {
+    return st;
+  }
+}
+
 function publicState(room: any, side: number) {
-  const st = room.game_state;
+  const rawState = room.game_state;
+  const st = pendingViewState(rawState);
   const base: any = {
     code: room.code, title: room.title, status: room.status, version: room.version, side,
     names: [room.host_name, room.guest_name],
