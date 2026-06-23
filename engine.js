@@ -1544,6 +1544,12 @@ function aiActionBias(st, action, side) {
   const mine = lineTotal(st, action.line, side), theirs = lineTotal(st, action.line, op);
   const gap = Math.max(0, 10 - mine);
   let v = 0;
+  const compiledLine = !!st.players[side].protocols[action.line].compiled;
+  if (compiledLine) {
+    const add = action.faceUp ? d.value : 2;
+    const likelyRecompile = mine + add >= 10 && mine + add > theirs;
+    v -= likelyRecompile ? 160 : 75;
+  }
   if (action.faceUp) {
     const mv = aiMiddleValue(d);
     v += mv * 0.35;
