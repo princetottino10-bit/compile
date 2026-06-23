@@ -47,6 +47,10 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:7px 11px;f
 .logo{font-family:var(--fmono);font-weight:900;font-size:.92rem;letter-spacing:.14em;
   text-shadow:0 0 14px rgba(255,255,255,.18)}
 .logo b{color:var(--pk2);text-shadow:0 0 12px rgba(233,30,140,.7)}
+.puzzle-title-badge{display:none;max-width:min(40vw,360px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-size:.64rem;color:var(--txd);border:1px solid var(--bd2);border-radius:999px;padding:4px 10px;background:var(--cbg)}
+.puzzle-title-badge.on{display:inline-block}
+.puzzle-title-badge b{color:var(--pk2);font-weight:900}
 .hbtn{background:var(--cbg);border:1px solid var(--bd2);color:var(--txd);border-radius:7px;
   padding:5px 11px;font-size:.7rem;font-family:inherit;cursor:pointer;transition:all .15s}
 .hbtn:hover{border-color:var(--pk);color:var(--tx)}
@@ -623,6 +627,7 @@ html.mobile-ui #actionBar{bottom:132px}
 <header>
   <div class="hdr-row1">
     <div class="logo">COMPILE <b>AUTO</b></div>
+    <span id="puzzleTitleBadge" class="puzzle-title-badge"></span>
     <span id="ctrlBadge">CTRL</span>
     <span id="turnBadge"></span>
   </div>
@@ -697,6 +702,7 @@ html.mobile-ui #actionBar{bottom:132px}
   </div>
   <div class="ed-hint2">カードをドラッグでライン/手札/デッキ/トラッシュへ。ラインのカードはタップで表裏反転。トラッシュ/デッキはボタンを押してからカードをタップ。</div>
   <div class="ed-toolbar">
+    <input id="edPuzzleTitle" class="ed-search" style="max-width:260px" maxlength="40" placeholder="問題名" oninput="edSetPuzzleTitle(this.value)">
     <button id="edFaceToggle" class="hbtn" onclick="edToggleFace()">配置: 表向き</button>
     <button id="edTrashMode" class="hbtn" onclick="edToggleSelMode('trash')">🗑 トラッシュ</button>
     <button id="edDeckMode" class="hbtn" onclick="edToggleSelMode('deck')">⤴ デッキに戻す</button>
@@ -3699,6 +3705,13 @@ function render(){
   var st = view();
   if (!st) return;
   // header
+  var pt = document.getElementById('puzzleTitleBadge');
+  var puzzleTitle = puzzleTitleFromState(st);
+  if (pt){
+    pt.classList.toggle('on', !!puzzleTitle);
+    pt.innerHTML = puzzleTitle ? '<b>PUZZLE</b> ' + esc(puzzleTitle) : '';
+    pt.title = puzzleTitle;
+  }
   var tb = document.getElementById('turnBadge');
   if (cur.state.winner !== null){ tb.textContent = '終了'; tb.className=''; }
   else if (st.turn === HUMAN){ tb.textContent = 'YOUR TURN'; tb.className='me'; }
@@ -4385,6 +4398,7 @@ function buildEditedState(){
   if (!edState) throw new Error('編集データがありません');
   var base = JSON.parse(JSON.stringify(edState));
   base.useControl = true;
+  base.puzzleTitle = puzzleTitleFromState(base);
   return base;
 }
 
@@ -4398,9 +4412,12 @@ function applyEditor(){
 
 function shareEditor(){
   try {
-    var url = stateToUrl(buildEditedState());
+    var st = buildEditedState();
+    var url = stateToUrl(st);
+    var title = puzzleTitleFromState(st);
     var box = document.getElementById('edShareBox');
     box.innerHTML = '<div class="fx-set-lbl">共有リンク</div>'
+      + (title ? '<div class="sub">問題名: ' + esc(title) + '</div>' : '')
       + '<textarea class="ed-share-ta" readonly onclick="this.select()">'+esc(url)+'</textarea>'
       + '<button class="optbtn opt-inline" onclick="copyShareUrl()">コピー</button>';
   } catch(e){ toast('エラー: ' + (e && e.message || e)); }
@@ -4412,8 +4429,10 @@ function shareCurrentBoard(){
   if (roomMode){ toast('ルーム対戦中は共有できません'); return; }
   try {
     var url = stateToUrl(cur.state);
+    var title = puzzleTitleFromState(cur.state);
     var html = '<h2>現在の盤面を<b>SHARE</b></h2>'
       + '<div class="sub">このリンクを開くと同じ盤面から対戦を始められます。</div>'
+      + (title ? '<div class="sub">問題名: ' + esc(title) + '</div>' : '')
       + '<textarea class="ed-share-ta" readonly onclick="this.select()">' + esc(url) + '</textarea>'
       + '<button class="optbtn" onclick="copyShareUrl()">リンクをコピー</button>'
       + '<button class="optbtn ghost" onclick="closeModal()">閉じる</button>';
@@ -4433,16 +4452,33 @@ function copyShareUrl(){
 }
 
 function stateToUrl(state){
+  function withTitle(url){
+    var title = puzzleTitleFromState(state);
+    return title ? url + '&t=' + encodeURIComponent(title) : url;
+  }
   try {
-    return location.origin + location.pathname + '#r=' + encodeTinyState(state);
+    return withTitle(location.origin + location.pathname + '#r=' + encodeTinyState(state));
   } catch(e){
     try {
-      return location.origin + location.pathname + '#q=' + encodeCompactState(state);
+      return withTitle(location.origin + location.pathname + '#q=' + encodeCompactState(state));
     } catch(e2){
       var b64 = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
-      return location.origin + location.pathname + '#p=' + b64;
+      return withTitle(location.origin + location.pathname + '#p=' + b64);
     }
   }
+}
+
+function puzzleTitleFromState(state){
+  var title = state && (state.puzzleTitle || state.title);
+  title = String(title || '').replace(/\s+/g, ' ').trim();
+  return title.slice(0, 40);
+}
+
+function sharedTitleFromHash(){
+  var m = /(?:#|&)t=([^&]+)/.exec(location.hash || '');
+  if (!m) return '';
+  try { return decodeURIComponent(m[1].replace(/\+/g, ' ')).replace(/\s+/g, ' ').trim().slice(0, 40); }
+  catch(e){ return ''; }
 }
 
 var SHARE_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_';
@@ -4690,6 +4726,7 @@ function decodeCompactState(s){
 
 function normalizeSharedState(state){
   if (!state) return state;
+  state.puzzleTitle = puzzleTitleFromState(state);
   if (state.seed == null) state.seed = 1;
   if (state.rngN == null) state.rngN = 0;
   if (!Array.isArray(state.actionLog)) state.actionLog = [];
@@ -4723,6 +4760,8 @@ function loadCustomState(state){
   document.getElementById('setupOv').classList.remove('on');
   document.getElementById('winOv').classList.remove('on');
   state = normalizeSharedState(state);
+  var sharedTitle = sharedTitleFromHash();
+  if (sharedTitle) state.puzzleTitle = sharedTitle;
   state.phase = 'checkControl';
   var res = Engine.apply(state, {type:'_begin'});
   pushLog(['詰めCompile: 盤面を読み込みました']);
@@ -5524,12 +5563,18 @@ function edStartFromProtocols(own, ai){
 function edStartFromState(base){ edOpenWith(edClone(base)); }
 function edOpenWith(st){
   edState = st; edPlaceFaceUp = true; edSelMode = null; edHistory = [];
+  edState.puzzleTitle = puzzleTitleFromState(edState);
   var ov = document.getElementById('edOv');
   ov.classList.add('on');
   if (!ov._edBound){ ov.addEventListener('pointerdown', edPointerDown); ov._edBound = true; }
   edRender();
 }
 function edClose(){ document.getElementById('edOv').classList.remove('on'); }
+
+function edSetPuzzleTitle(v){
+  if (!edState) return;
+  edState.puzzleTitle = String(v || '').replace(/\s+/g, ' ').trim().slice(0, 40);
+}
 
 /* ---- カード移動 ---- */
 function edDetach(uid){
@@ -5612,6 +5657,8 @@ function edRender(){
   document.getElementById('edTrashMode').classList.toggle('on', edSelMode === 'trash');
   document.getElementById('edDeckMode').classList.toggle('on', edSelMode === 'deck');
   document.getElementById('edUndoBtn').disabled = !edHistory.length;
+  var titleInput = document.getElementById('edPuzzleTitle');
+  if (titleInput && titleInput !== document.activeElement) titleInput.value = puzzleTitleFromState(edState);
   document.getElementById('edSelHint').textContent = edSelMode
     ? ('カードをタップで' + (edSelMode==='trash'?'トラッシュ':'デッキ') + 'へ') : '';
   document.getElementById('edTurnSel').value = String(edState.turn);
@@ -5751,8 +5798,11 @@ function returnToPuzzleEditor(){
 }
 function edShare(){
   try {
-    var url = stateToUrl(buildEditedState());
+    var st = buildEditedState();
+    var url = stateToUrl(st);
+    var title = puzzleTitleFromState(st);
     document.getElementById('edShareBox2').innerHTML = '<div class="fx-set-lbl">共有リンク</div>'
+      + (title ? '<div class="sub">問題名: ' + esc(title) + '</div>' : '')
       + '<textarea class="ed-share-ta" readonly onclick="this.select()">'+esc(url)+'</textarea>'
       + '<button class="optbtn opt-inline" onclick="copyShareUrl()">コピー</button>';
   } catch(e){ toast('エラー: ' + (e && e.message || e)); }
