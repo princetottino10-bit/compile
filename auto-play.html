@@ -1060,20 +1060,23 @@ function fireWouldBeFlipped(ctx, uid) {
 
 /* ---------- カード移動プリミティブ ---------- */
 
-/* スタックからの離脱 (committed 化)。直下カードの uncover 結果を解決する */
+/* スタックからの物理除去 (committed 化)。uncover情報を返す */
 function extractCard(ctx, uid) {
   const st = ctx.st;
   const loc = locate(st, uid);
-  if (!loc) return false;
+  if (!loc) return null;
   const stack = st.lines[loc.line][loc.side];
   const wasTop = loc.idx === stack.length - 1;
   stack.splice(loc.idx, 1);
   st.cards[uid].zone = 'committed';
   if (wasTop && stack.length) {
     const nt = stack[stack.length - 1];
-    if (st.cards[nt].faceUp) resolveMiddle(ctx, nt, 'uncover');
+    if (st.cards[nt].faceUp) return { uncoverUid: nt };
   }
-  return true;
+  return {};
+}
+function fireUncover(ctx, info) {
+  if (info && info.uncoverUid) resolveMiddle(ctx, info.uncoverUid, 'uncover');
 }
 
 function landTrash(ctx, uid) {
@@ -1097,19 +1100,21 @@ function cardLabel(st, uid) {
 
 function doDelete(ctx, uid, actor) {
   if (!locate(ctx.st, uid)) return false;
-  extractCard(ctx, uid);
-  landTrash(ctx, uid);                       // trash は表向き公開なので削除後に実名でよい
+  const info = extractCard(ctx, uid);
+  landTrash(ctx, uid);
   log(ctx, `${defOf(ctx.st, uid).id} を削除`, uid);
   fireEvent(ctx, { on: 'delete', actor, count: 1 });
+  fireUncover(ctx, info);
   return true;
 }
 
 function doReturn(ctx, uid) {
   if (!locate(ctx.st, uid)) return false;
-  const label = cardLabel(ctx.st, uid);      // 移動前にラベル確定(裏向きは伏せる)
-  extractCard(ctx, uid);
+  const label = cardLabel(ctx.st, uid);
+  const info = extractCard(ctx, uid);
   landHand(ctx, uid);
   log(ctx, `${label} を手札に戻す`, uid);
+  fireUncover(ctx, info);
   return true;
 }
 
@@ -1137,7 +1142,7 @@ function doShift(ctx, uid, destLine) {
   const wasCovered = !isTop(st, loc);          // E2: 移動前に覆われていたか
   // E3: コミット前に移動先を先に提示する
   log(ctx, `${label} をライン${destLine + 1}へ移動`, uid);
-  extractCard(ctx, uid);                        // 移動元の uncover を解決
+  const info = extractCard(ctx, uid);
   const dest = st.lines[destLine][side];
   if (dest.length) fireWouldBeCovered(ctx, dest[dest.length - 1]);
   dest.push(uid);
@@ -1145,6 +1150,7 @@ function doShift(ctx, uid, destLine) {
   // E2: 覆われた状態から移動し、移動先で表向き・uncovered になったら中段が場に入る
   const nloc = locate(st, uid);
   if (wasCovered && st.cards[uid].faceUp && nloc && isTop(st, nloc)) resolveMiddle(ctx, uid, 'uncover');
+  fireUncover(ctx, info);
   return true;
 }
 
