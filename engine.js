@@ -417,9 +417,12 @@ function playToField(ctx, uid, line, side, faceUp, belowUid) {
   } else {
     const coveredTriggers = stack.length ? collectWouldBeCovered(ctx, stack[stack.length - 1]) : [];
     stack.push(uid);
-    c.zone = 'field';
     log(ctx, `P${side + 1}: ${faceUp ? DEFS[c.def].id : 'カード'} をライン${line + 1}に${faceUp ? '表' : '裏'}でプレイ`, uid);
+    // 覆われトリガー解決中、覆うカードはcommitted(待機中)のまま対象に取れない
+    c.commitDest = 'line' + line;
     runWouldBeCovered(ctx, coveredTriggers);
+    c.zone = 'field';
+    c.commitDest = null;
     const loc = locate(st, uid);
     if (st.cards[uid].faceUp && loc && isTop(st, loc)) resolveMiddle(ctx, uid, 'play');
     return;
@@ -602,8 +605,12 @@ function doCompile(ctx, side, line) {
         const loc = locate(st, uid);
         st.lines[loc.line][loc.side].splice(loc.idx, 1);
         const dstack = st.lines[ans[0]][s];
+        st.cards[uid].zone = 'committed';
+        st.cards[uid].commitDest = 'line' + ans[0];
         if (dstack.length) fireWouldBeCovered(ctx, dstack[dstack.length - 1]);
         dstack.push(uid);
+        st.cards[uid].zone = 'field';
+        st.cards[uid].commitDest = null;
         log(ctx, `${DEFS[c.def].id} は削除の代わりにライン${ans[0] + 1}へ移動`);
       }
     }
@@ -1119,8 +1126,9 @@ function performMass(ctx, fr, op, cands) {
       if (!moving.length) continue;
       st.lines[fr.line][s] = st.lines[fr.line][s].filter(u => cands.indexOf(u) < 0);
       const dstack = st.lines[dest][s];
+      for (const u of moving) { st.cards[u].zone = 'committed'; st.cards[u].commitDest = 'line' + dest; }
       if (dstack.length) fireWouldBeCovered(ctx, dstack[dstack.length - 1]);
-      for (const u of moving) st.lines[dest][s].push(u);
+      for (const u of moving) { st.lines[dest][s].push(u); st.cards[u].zone = 'field'; st.cards[u].commitDest = null; }
     }
     // 移動元で新たに uncovered になった表向きカード
     for (let s = 0; s < 2; s++) {
