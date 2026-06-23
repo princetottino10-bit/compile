@@ -1923,8 +1923,8 @@ function execPlayOp(ctx, fr, op) {
     return;
   }
 
-  // source: hand
-  const hand = st.players[who].hand;
+  // source: hand (committed=移動中のカードは除外)
+  const hand = st.players[who].hand.filter(u => st.cards[u].zone !== 'committed');
   if (!hand.length) { fr.done = false; return; }
 
   if (op.facing === 'down') {
