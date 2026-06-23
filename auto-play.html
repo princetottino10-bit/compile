@@ -567,17 +567,23 @@ html.mobile-ui #actionBar{bottom:132px}
 #fxFloat .fx-low{background:rgba(34,197,94,.13);border-color:#4ade80;color:#4ade80}
 /* 移動中(コミット)カード: 効果解決の途中で盤面から離れているカードを浮遊表示 */
 #transitBar{position:fixed;left:50%;top:44%;transform:translateX(-50%);z-index:47;display:none;
-  flex-direction:column;gap:5px;align-items:center;pointer-events:none}
+  flex-direction:column;gap:5px;align-items:center;pointer-events:auto;max-width:92vw}
 #transitBar.on{display:flex;animation:fxin .2s ease}
 #transitBar .tr-lbl{font-family:var(--fmono);font-size:.56rem;font-weight:700;letter-spacing:.14em;
   color:#ffd24a;text-shadow:0 0 10px rgba(255,210,74,.7)}
-#transitBar .tr-chip{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:9px;
+#transitBar .tr-chip{display:flex;flex-direction:column;gap:3px;padding:7px 12px;border-radius:9px;
   background:linear-gradient(180deg,rgba(28,24,12,.97),rgba(16,14,8,.97));border:1.5px dashed #ffd24a;
-  box-shadow:0 12px 40px -10px #000,0 0 24px -6px rgba(255,210,74,.6)}
+  box-shadow:0 12px 40px -10px #000,0 0 24px -6px rgba(255,210,74,.6);cursor:pointer;max-width:260px}
+#transitBar .tr-head{display:flex;align-items:center;gap:8px}
 #transitBar .tr-badge{min-width:24px;height:24px;display:flex;align-items:center;justify-content:center;
   font-family:var(--fmono);font-weight:900;font-size:.92rem;color:#fff;border-radius:6px;
   background:rgba(255,210,74,.18);border:1px solid rgba(255,210,74,.6)}
 #transitBar .tr-nm{font-family:var(--fmono);font-weight:700;font-size:.74rem;color:#ffe9a8}
+#transitBar .tr-dest{font-size:.58rem;color:rgba(255,225,168,.6);font-family:var(--fmono)}
+#transitBar .tr-effs{font-size:.6rem;line-height:1.35;color:rgba(255,225,168,.75);border-top:1px solid rgba(255,210,74,.15);
+  padding-top:3px;margin-top:1px}
+#transitBar .tr-effs .el{margin-bottom:2px}
+#transitBar .tr-effs .el b{color:#ffd24a;font-weight:700;margin-right:4px;font-size:.54rem}
 #toast{position:fixed;bottom:92px;left:50%;transform:translateX(-50%);background:rgba(18,18,30,.97);
   border:1px solid var(--bd2);border-radius:10px;padding:9px 20px;font-size:.76rem;z-index:99;display:none;max-width:90vw;
   box-shadow:0 10px 30px -8px #000,0 0 0 1px rgba(233,30,140,.2)}
@@ -3746,7 +3752,6 @@ function render(){
 /* 移動中(コミット状態)のカードを浮遊表示。効果解決の途中で盤面から離れているカードを見せる */
 function renderTransit(st){
   var bar = document.getElementById('transitBar');
-  // ライン上にもデッキ/手札/トラッシュにも居ない=移動中のカード
   var inLine = {};
   for (var l=0;l<3;l++) for (var s=0;s<2;s++) st.lines[l][s].forEach(function(u){ inLine[u]=1; });
   var transit = [];
@@ -3754,12 +3759,25 @@ function renderTransit(st){
     var c = st.cards[uid];
     if (c.zone === 'committed' && !inLine[uid]) transit.push(uid);
   }
-  if (!transit.length || uiMode !== 'anim'){ bar.classList.remove('on'); return; }
+  if (!transit.length){ bar.classList.remove('on'); return; }
   bar.innerHTML = '<div class="tr-lbl">▼ 移動中</div>' + transit.map(function(uid){
     var c = st.cards[uid], def = DEFMAP[c.def];
-    var nm = c.faceUp ? cardName(c.def) : (c.owner === HUMAN ? cardName(c.def) + ' (裏)' : '裏向きカード');
-    var val = c.faceUp ? def.card.value : cardValueOf(st, uid);
-    return '<div class="tr-chip"><span class="tr-badge">' + val + '</span><span class="tr-nm">' + esc(nm) + '</span></div>';
+    var isOwn = c.owner === HUMAN;
+    var visible = c.faceUp || isOwn;
+    var nm = visible ? cardName(c.def) : '裏向きカード';
+    var val = c.faceUp ? def.card.value : (visible ? def.card.value + '?' : '?');
+    var effs = '';
+    if (visible) {
+      var parts = [];
+      if (def.card.upper) parts.push('<div class="el"><b>TOP</b>' + esc(def.card.upper) + '</div>');
+      if (def.card.middle) parts.push('<div class="el"><b>MID</b>' + esc(def.card.middle) + '</div>');
+      if (def.card.lower) parts.push('<div class="el"><b>BOT</b>' + esc(def.card.lower) + '</div>');
+      if (parts.length) effs = '<div class="tr-effs">' + parts.join('') + '</div>';
+    }
+    var dest = '<div class="tr-dest">' + (isOwn ? 'あなた' : 'AI') + 'のカード</div>';
+    return '<div class="tr-chip" data-def="' + c.def + '">' +
+      '<div class="tr-head"><span class="tr-badge">' + val + '</span><span class="tr-nm">' + esc(nm) + '</span></div>' +
+      dest + effs + '</div>';
   }).join('');
   bar.classList.add('on');
 }
