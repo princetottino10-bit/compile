@@ -4688,6 +4688,31 @@ function decodeCompactState(s){
   return st;
 }
 
+function normalizeSharedState(state){
+  if (!state) return state;
+  if (state.seed == null) state.seed = 1;
+  if (state.rngN == null) state.rngN = 0;
+  if (!Array.isArray(state.actionLog)) state.actionLog = [];
+  if (!state.lines) state.lines = [[[],[]],[[],[]],[[],[]]];
+  if (!state.players) state.players = [];
+  for (var s=0;s<2;s++){
+    state.players[s] = state.players[s] || {};
+    if (!Array.isArray(state.players[s].protocols)) state.players[s].protocols = [];
+    ['hand','deck','trash'].forEach(function(z){
+      if (!Array.isArray(state.players[s][z])) state.players[s][z] = [];
+    });
+    state.players[s].cannotCompile = !!state.players[s].cannotCompile;
+  }
+  if (!state.cards) state.cards = {};
+  if (state.turn !== 0 && state.turn !== 1) state.turn = 0;
+  if (state.control !== 0 && state.control !== 1) state.control = -1;
+  state.useControl = state.useControl !== false;
+  state.pending = null;
+  state.revealed = null;
+  state.winner = null;
+  return state;
+}
+
 function loadCustomState(state){
   if (aiTimer) clearTimeout(aiTimer);
   cancelPlayback();
@@ -4697,10 +4722,8 @@ function loadCustomState(state){
   prevFieldUids = {}; prevHandUids = {};
   document.getElementById('setupOv').classList.remove('on');
   document.getElementById('winOv').classList.remove('on');
+  state = normalizeSharedState(state);
   state.phase = 'checkControl';
-  state.pending = null;
-  state.revealed = null;
-  state.winner = null;
   var res = Engine.apply(state, {type:'_begin'});
   pushLog(['詰めCompile: 盤面を読み込みました']);
   onResult(res);
