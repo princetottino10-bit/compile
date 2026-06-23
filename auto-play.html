@@ -433,15 +433,16 @@ html.mobile-ui #actionBar{bottom:132px}
 @keyframes sheetup{from{transform:translateY(100%)}to{transform:translateY(0)}}
 /* モバイルのカード詳細は、操作対象の自分側を隠さず相手フィールド側へ表示する */
 /* 選択モーダルの最小化(盤面確認用) */
-#modalMin,#modalRestore{position:fixed;z-index:56;display:none;font:700 .66rem var(--fmono);letter-spacing:.03em;
-  border:1px solid var(--bd2);background:rgba(20,20,32,.96);color:var(--tx);border-radius:999px;padding:7px 13px;
-  cursor:pointer;box-shadow:0 6px 20px -6px #000}
-#modalMin{right:12px;top:9px}
-#modalRestore{left:50%;bottom:18px;transform:translateX(-50%);border-color:var(--pk);color:#fff;
-  background:linear-gradient(135deg,var(--pk),#a3136a);box-shadow:0 8px 24px -6px rgba(233,30,140,.7)}
-#modalMin:active,#modalRestore:active{transform:translateY(1px)}
+#modalMin{width:100%;border:none;background:none;color:var(--txd);font:700 .62rem var(--fmono);
+  letter-spacing:.06em;padding:6px 0 2px;cursor:pointer;text-align:center;opacity:.7}
+#modalMin:active{opacity:1}
+#modalRestore{position:fixed;z-index:56;display:none;left:50%;bottom:0;transform:translateX(-50%);
+  font:700 .68rem var(--fmono);letter-spacing:.03em;border:1px solid var(--pk);border-bottom:none;
+  border-radius:12px 12px 0 0;padding:8px 22px;cursor:pointer;
+  background:linear-gradient(135deg,var(--pk),#a3136a);color:#fff;
+  box-shadow:0 -6px 20px -4px rgba(233,30,140,.6);animation:fxin .15s ease}
 #modalRestore:active{transform:translateX(-50%) translateY(1px)}
-.ov.minimized{pointer-events:none}
+.ov.minimized{pointer-events:none;background:transparent!important}
 .ov.minimized .panel{display:none}
 .ov.opponent-visible{background:transparent;padding:0;pointer-events:none}
 .ov.opponent-visible .panel{pointer-events:auto;position:fixed;max-width:none;border-radius:12px;padding:10px 12px;
@@ -719,7 +720,6 @@ html.mobile-ui #actionBar{bottom:132px}
 
 <!-- 汎用モーダル (選択肢 / リスト / 詳細 / 並べ替え) -->
 <div class="ov" id="modalOv"><div class="panel" id="modalPanel"></div></div>
-<button id="modalMin" onclick="minimizeModal()">🔽 最小化して盤面を見る</button>
 <button id="modalRestore" onclick="restoreModal()">⤴ 選択に戻る</button>
 
 <!-- ログ -->
@@ -4072,15 +4072,15 @@ function renderHand(st){
 
 /* ---------- モーダル ---------- */
 function openModal(html, mode){
-  document.getElementById('modalPanel').innerHTML = html;
+  var panel = document.getElementById('modalPanel');
   var ov = document.getElementById('modalOv');
+  var canMin = (mode === 'board' || mode === 'opponent');
+  // 最小化ボタンをパネル先頭に挿入
+  panel.innerHTML = (canMin ? '<button id="modalMin" onclick="minimizeModal()">▼ 盤面を見る</button>' : '') + html;
   ov.classList.toggle('board-visible', mode === 'board');
   ov.classList.toggle('opponent-visible', mode === 'opponent');
   ov.classList.remove('minimized');
   ov.classList.add('on');
-  // 盤面を見ながら選べるモードでは「最小化」ボタンを出す
-  var canMin = (mode === 'board' || mode === 'opponent');
-  document.getElementById('modalMin').style.display = canMin ? 'block' : 'none';
   document.getElementById('modalRestore').style.display = 'none';
   if (mode === 'opponent') positionOpponentModal();
 }
@@ -4100,7 +4100,6 @@ function closeModal(){
   var ov = document.getElementById('modalOv'), panel = document.getElementById('modalPanel');
   ov.classList.remove('on'); ov.classList.remove('board-visible'); ov.classList.remove('opponent-visible');
   ov.classList.remove('minimized');
-  document.getElementById('modalMin').style.display = 'none';
   document.getElementById('modalRestore').style.display = 'none';
   panel.classList.remove('editor-panel');
   panel.style.left = panel.style.top = panel.style.width = panel.style.maxHeight = '';
@@ -4109,13 +4108,11 @@ function minimizeModal(){
   var ov = document.getElementById('modalOv');
   if (!ov.classList.contains('on')) return;
   ov.classList.add('minimized');
-  document.getElementById('modalMin').style.display = 'none';
   document.getElementById('modalRestore').style.display = 'block';
 }
 function restoreModal(){
   document.getElementById('modalOv').classList.remove('minimized');
   document.getElementById('modalRestore').style.display = 'none';
-  document.getElementById('modalMin').style.display = 'block';
 }
 
 function modalOptions(title, labels, optional, cb, noLabel, mode){
