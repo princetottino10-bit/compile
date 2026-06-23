@@ -313,6 +313,7 @@ function extractCard(ctx, uid) {
   stack.splice(loc.idx, 1);
   st.cards[uid].zone = 'committed';
   st.cards[uid].commitDest = null;
+  st.commitStack.push(uid);
   if (wasTop && stack.length) {
     const nt = stack[stack.length - 1];
     if (st.cards[nt].faceUp) return { uncoverUid: nt };
@@ -327,12 +328,16 @@ function landTrash(ctx, uid) {
   const c = ctx.st.cards[uid];
   c.zone = 'trash' + c.owner;
   c.faceUp = true;
+  c.commitDest = null;
   ctx.st.players[c.owner].trash.push(uid);
+  removeFrom(ctx.st.commitStack, uid);
 }
 function landHand(ctx, uid) {
   const c = ctx.st.cards[uid];
   c.zone = 'hand' + c.owner;
+  c.commitDest = null;
   ctx.st.players[c.owner].hand.push(uid);
+  removeFrom(ctx.st.commitStack, uid);
 }
 
 /* 表示用ラベル: 場/移動中の裏向きカードは秘匿情報なので名前を伏せる(L1) */
@@ -395,6 +400,8 @@ function doShift(ctx, uid, destLine) {
   if (dest.length) fireWouldBeCovered(ctx, dest[dest.length - 1]);
   dest.push(uid);
   st.cards[uid].zone = 'field';
+  st.cards[uid].commitDest = null;
+  removeFrom(st.commitStack, uid);
   // E2: 覆われた状態から移動し、移動先で表向き・uncovered になったら中段が場に入る
   const nloc = locate(st, uid);
   if (wasCovered && st.cards[uid].faceUp && nloc && isTop(st, nloc)) resolveMiddle(ctx, uid, 'uncover');
@@ -410,6 +417,7 @@ function playToField(ctx, uid, line, side, faceUp, belowUid) {
   c.zone = 'committed';
   c.commitDest = 'line' + line;
   c.faceUp = faceUp;
+  st.commitStack.push(uid);
   const stack = st.lines[line][side];
   if (belowUid) {
     const i = stack.indexOf(belowUid);
@@ -418,16 +426,18 @@ function playToField(ctx, uid, line, side, faceUp, belowUid) {
     const coveredTriggers = stack.length ? collectWouldBeCovered(ctx, stack[stack.length - 1]) : [];
     stack.push(uid);
     log(ctx, `P${side + 1}: ${faceUp ? DEFS[c.def].id : 'カード'} をライン${line + 1}に${faceUp ? '表' : '裏'}でプレイ`, uid);
-    // 覆われトリガー解決中、覆うカードはcommitted(待機中)のまま対象に取れない
     c.commitDest = 'line' + line;
     runWouldBeCovered(ctx, coveredTriggers);
     c.zone = 'field';
     c.commitDest = null;
+    removeFrom(st.commitStack, uid);
     const loc = locate(st, uid);
     if (st.cards[uid].faceUp && loc && isTop(st, loc)) resolveMiddle(ctx, uid, 'play');
     return;
   }
   c.zone = 'field';
+  c.commitDest = null;
+  removeFrom(st.commitStack, uid);
   log(ctx, `P${side + 1}: ${faceUp ? DEFS[c.def].id : 'カード'} をライン${line + 1}に${faceUp ? '表' : '裏'}でプレイ`, uid);
   const loc = locate(st, uid);
   if (st.cards[uid].faceUp && loc && isTop(st, loc)) resolveMiddle(ctx, uid, 'play');
@@ -519,6 +529,7 @@ function massRemove(ctx, uids, destKind, actor) {
     st.lines[loc.line][loc.side].splice(loc.idx, 1);
     st.cards[u].zone = 'committed';
     st.cards[u].commitDest = destKind === 'trash' ? 'trash' : 'hand';
+    st.commitStack.push(u);
   }
   for (const u of present) (destKind === 'trash' ? landTrash : landHand)(ctx, u);
   if (present.length) log(ctx, `${present.length}枚を同時に${destKind === 'trash' ? '削除' : '手札に戻'}した`);
@@ -607,10 +618,12 @@ function doCompile(ctx, side, line) {
         const dstack = st.lines[ans[0]][s];
         st.cards[uid].zone = 'committed';
         st.cards[uid].commitDest = 'line' + ans[0];
+        st.commitStack.push(uid);
         if (dstack.length) fireWouldBeCovered(ctx, dstack[dstack.length - 1]);
         dstack.push(uid);
         st.cards[uid].zone = 'field';
         st.cards[uid].commitDest = null;
+        removeFrom(st.commitStack, uid);
         log(ctx, `${DEFS[c.def].id} は削除の代わりにライン${ans[0] + 1}へ移動`);
       }
     }
@@ -618,7 +631,7 @@ function doCompile(ctx, side, line) {
   // 全カード同時削除 (トリガーなし)
   const removed = [];
   for (let s = 0; s < 2; s++) {
-    for (const uid of st.lines[line][s]) { st.cards[uid].zone = 'committed'; st.cards[uid].commitDest = 'trash'; removed.push(uid); }
+    for (const uid of st.lines[line][s]) { st.cards[uid].zone = 'committed'; st.cards[uid].commitDest = 'trash'; st.commitStack.push(uid); removed.push(uid); }
     st.lines[line][s] = [];
   }
   for (const uid of removed) landTrash(ctx, uid);
@@ -1126,9 +1139,9 @@ function performMass(ctx, fr, op, cands) {
       if (!moving.length) continue;
       st.lines[fr.line][s] = st.lines[fr.line][s].filter(u => cands.indexOf(u) < 0);
       const dstack = st.lines[dest][s];
-      for (const u of moving) { st.cards[u].zone = 'committed'; st.cards[u].commitDest = 'line' + dest; }
+      for (const u of moving) { st.cards[u].zone = 'committed'; st.cards[u].commitDest = 'line' + dest; st.commitStack.push(u); }
       if (dstack.length) fireWouldBeCovered(ctx, dstack[dstack.length - 1]);
-      for (const u of moving) { st.lines[dest][s].push(u); st.cards[u].zone = 'field'; st.cards[u].commitDest = null; }
+      for (const u of moving) { st.lines[dest][s].push(u); st.cards[u].zone = 'field'; st.cards[u].commitDest = null; removeFrom(st.commitStack, u); }
     }
     // 移動元で新たに uncovered になった表向きカード
     for (let s = 0; s < 2; s++) {
@@ -1376,6 +1389,7 @@ function newGame(opts) {
     lines: [[[], []], [[], []], [[], []]],
     cards: {},
     actionLog: [],
+    commitStack: [],
     revealed: null,
     pending: null
   };
