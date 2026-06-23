@@ -567,8 +567,8 @@ html.mobile-ui #actionBar{bottom:132px}
 #fxFloat .fx-low{background:rgba(34,197,94,.13);border-color:#4ade80;color:#4ade80}
 /* 移動中(コミット)カード: 効果解決の途中で盤面から離れているカードを浮遊表示 */
 /* 移動中ゴースト表示: 行き先に半透明+ラベルで表示 */
-.chip.ghost,.hcard.ghost{opacity:.4;pointer-events:none;position:relative;border:1.5px dashed #ffd24a!important}
-.chip.ghost::after,.hcard.ghost::after{content:'移動中';position:absolute;bottom:2px;right:3px;
+.chip.ghost,.hcard.ghost,.trash-card.ghost{opacity:.4;pointer-events:none;position:relative;border:1.5px dashed #ffd24a!important}
+.chip.ghost::after,.hcard.ghost::after,.trash-card.ghost::after{content:'移動中';position:absolute;bottom:2px;right:3px;
   font-size:.5rem;font-weight:700;color:#ffd24a;font-family:var(--fmono);text-shadow:0 0 6px rgba(255,210,74,.6)}
 #transitBar{display:none}
 #toast{position:fixed;bottom:92px;left:50%;transform:translateX(-50%);background:rgba(18,18,30,.97);
@@ -3990,17 +3990,24 @@ function chipDiv(st, uid, side, uncovered){
   return d;
 }
 
+function countCommitDest(st, owner, dest){
+  var n = 0;
+  for (var u in st.cards){ var c = st.cards[u]; if (c.zone==='committed' && c.owner===owner && c.commitDest===dest) n++; }
+  return n;
+}
 function renderSideInfo(st){
   var el = document.getElementById('sideInfo');
   var p0 = st.players[0], p1 = st.players[1];
   var oppLbl = roomMode ? (esc((room && room.names && room.names[1-room.side]) || '相手')) : 'AI';
+  var t0g = countCommitDest(st, 0, 'trash'), t1g = countCommitDest(st, 1, 'trash');
+  var h1g = countCommitDest(st, 1, 'hand');
   el.innerHTML =
-    '<span class="zone ai-tag">' + oppLbl + ' 手札 <b>' + p1.hand.length + '</b></span>' +
+    '<span class="zone ai-tag">' + oppLbl + ' 手札 <b>' + p1.hand.length + (h1g ? '+'+h1g : '') + '</b></span>' +
     '<span class="zone ai-tag">デッキ <b>' + p1.deck.length + '</b></span>' +
-    '<span class="zone ai-tag" onclick="openTrash(1)">トラッシュ <b>' + p1.trash.length + '</b></span>' +
+    '<span class="zone ai-tag" onclick="openTrash(1)">トラッシュ <b>' + p1.trash.length + (t1g ? '+'+t1g : '') + '</b></span>' +
     '<span style="flex:1"></span>' +
     '<span class="zone">デッキ <b>' + p0.deck.length + '</b></span>' +
-    '<span class="zone" onclick="openTrash(0)">トラッシュ <b>' + p0.trash.length + '</b></span>' +
+    '<span class="zone" onclick="openTrash(0)">トラッシュ <b>' + p0.trash.length + (t0g ? '+'+t0g : '') + '</b></span>' +
     refreshBtnHtml();
 }
 
@@ -4895,6 +4902,15 @@ function openTrash(side){
     attachCardTip(d, st.cards[uid].def);
     grid.appendChild(d);
   });
+  // committed→トラッシュ行きのカードをゴースト表示
+  for (var u in st.cards){ var gc = st.cards[u];
+    if (gc.zone==='committed' && gc.commitDest==='trash' && gc.owner===side){
+      var gd = document.createElement('div');
+      gd.className = 'trash-card ghost';
+      gd.innerHTML = revealCardHtml(gc.def);
+      grid.appendChild(gd);
+    }
+  }
 }
 
 /* ---------- コントロール帯 / ターンログ ---------- */
