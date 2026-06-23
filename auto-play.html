@@ -566,15 +566,11 @@ html.mobile-ui #actionBar{bottom:132px}
 #fxFloat .fx-mid{background:rgba(59,130,246,.14);border-color:#60a5fa;color:#60a5fa}
 #fxFloat .fx-low{background:rgba(34,197,94,.13);border-color:#4ade80;color:#4ade80}
 /* 移動中(コミット)カード: 効果解決の途中で盤面から離れているカードを浮遊表示 */
-#transitBar{position:fixed;left:50%;top:44%;transform:translateX(-50%);z-index:47;display:none;
-  flex-direction:column;gap:5px;align-items:center;pointer-events:auto;max-width:92vw}
-#transitBar.on{display:flex;animation:fxin .2s ease}
-#transitBar .tr-lbl{font-family:var(--fmono);font-size:.56rem;font-weight:700;letter-spacing:.14em;
-  color:#ffd24a;text-shadow:0 0 10px rgba(255,210,74,.7)}
-#transitBar .tr-item{display:flex;flex-direction:column;align-items:center;gap:2px}
-#transitBar .chip.transit{border:1.5px dashed #ffd24a;box-shadow:0 0 18px -4px rgba(255,210,74,.5);opacity:.85}
-#transitBar .tr-dest{font-size:.6rem;font-weight:700;color:#ffd24a;font-family:var(--fmono);
-  text-shadow:0 0 8px rgba(255,210,74,.5)}
+/* 移動中ゴースト表示: 行き先に半透明+ラベルで表示 */
+.chip.ghost,.hcard.ghost{opacity:.4;pointer-events:none;position:relative;border:1.5px dashed #ffd24a!important}
+.chip.ghost::after,.hcard.ghost::after{content:'移動中';position:absolute;bottom:2px;right:3px;
+  font-size:.5rem;font-weight:700;color:#ffd24a;font-family:var(--fmono);text-shadow:0 0 6px rgba(255,210,74,.6)}
+#transitBar{display:none}
 #toast{position:fixed;bottom:92px;left:50%;transform:translateX(-50%);background:rgba(18,18,30,.97);
   border:1px solid var(--bd2);border-radius:10px;padding:9px 20px;font-size:.76rem;z-index:99;display:none;max-width:90vw;
   box-shadow:0 10px 30px -8px #000,0 0 0 1px rgba(233,30,140,.2)}
@@ -3808,6 +3804,11 @@ function renderField(st){
       nf[uid] = 1; if (!prevFieldUids[uid]) ch.classList.add('pop');
       s2.appendChild(ch);
     });
+    // committed→このライン行きのAIカードをゴースト表示
+    for (var gu in st.cards){ var gc=st.cards[gu];
+      if (gc.zone==='committed' && gc.commitDest==='line'+l && gc.owner===AI){
+        var gch=chipDiv(st,gu,AI,true); gch.classList.add('ghost'); s2.appendChild(gch);
+    }}
     topH.appendChild(s2);
     col.appendChild(topH);
     // 中央(固定): AIプロト + ゲージ + YOUプロト
@@ -3832,6 +3833,11 @@ function renderField(st){
       nf[uid] = 1; if (!prevFieldUids[uid]) ch.classList.add('pop');
       s1.appendChild(ch);
     });
+    // committed→このライン行きのHUMANカードをゴースト表示
+    for (var gu2 in st.cards){ var gc2=st.cards[gu2];
+      if (gc2.zone==='committed' && gc2.commitDest==='line'+l && gc2.owner===HUMAN){
+        var gch2=chipDiv(st,gu2,HUMAN,true); gch2.classList.add('ghost'); s1.appendChild(gch2);
+    }}
     botH.appendChild(s1);
     col.appendChild(botH);
     // 手札選択中: ライン全体を大きなプレイ的にする(カードが多くても押しやすい)
@@ -4021,8 +4027,24 @@ function renderHand(st){
     attachCardTip(d, c.def);   // PC: ホバーでカード画像+全文を表示
     h.appendChild(d);
   });
+  // committed→手札へ移動中のカードをゴースト表示
+  for (var uid in st.cards){
+    var gc = st.cards[uid];
+    if (gc.zone === 'committed' && gc.commitDest === 'hand' && gc.owner === HUMAN){
+      var gdef = DEFMAP[gc.def];
+      var gd = document.createElement('div');
+      gd.className = 'hcard ghost';
+      setAccent(gd, gdef.proto.color);
+      gd.style.background = artBg(cardArt(gc.def),
+        'linear-gradient(180deg,rgba(7,7,13,.18) 0%,rgba(7,7,13,.5) 38%,rgba(7,7,13,.93) 100%)');
+      var gName = MOBILE_UI ? gdef.proto.name.slice(0, 3).toUpperCase() : cardName(gc.def);
+      gd.innerHTML = '<span class="top"><span class="badge">' + gdef.card.value + '</span>' +
+        '<span class="nm">' + esc(gName) + '</span></span>';
+      h.appendChild(gd);
+    }
+  }
   prevHandUids = nh;
-  if (!st.players[HUMAN].hand.length){
+  if (!st.players[HUMAN].hand.length && !h.children.length){
     h.innerHTML = '<div style="color:var(--txdd);font-size:.7rem;align-self:center;padding:0 10px">手札なし</div>';
   }
 }
