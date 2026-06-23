@@ -312,6 +312,7 @@ function extractCard(ctx, uid) {
   const wasTop = loc.idx === stack.length - 1;
   stack.splice(loc.idx, 1);
   st.cards[uid].zone = 'committed';
+  st.cards[uid].commitDest = null;
   if (wasTop && stack.length) {
     const nt = stack[stack.length - 1];
     if (st.cards[nt].faceUp) return { uncoverUid: nt };
@@ -344,6 +345,7 @@ function cardLabel(st, uid) {
 function doDelete(ctx, uid, actor) {
   if (!locate(ctx.st, uid)) return false;
   const info = extractCard(ctx, uid);
+  ctx.st.cards[uid].commitDest = 'trash';
   fireUncover(ctx, info);
   landTrash(ctx, uid);
   log(ctx, `${defOf(ctx.st, uid).id} を削除`, uid);
@@ -355,6 +357,7 @@ function doReturn(ctx, uid) {
   if (!locate(ctx.st, uid)) return false;
   const label = cardLabel(ctx.st, uid);
   const info = extractCard(ctx, uid);
+  ctx.st.cards[uid].commitDest = 'hand';
   fireUncover(ctx, info);
   landHand(ctx, uid);
   log(ctx, `${label} を手札に戻す`, uid);
@@ -386,6 +389,7 @@ function doShift(ctx, uid, destLine) {
   // E3: コミット前に移動先を先に提示する
   log(ctx, `${label} をライン${destLine + 1}へ移動`, uid);
   const info = extractCard(ctx, uid);
+  st.cards[uid].commitDest = 'line' + destLine;
   fireUncover(ctx, info);
   const dest = st.lines[destLine][side];
   if (dest.length) fireWouldBeCovered(ctx, dest[dest.length - 1]);
@@ -404,6 +408,7 @@ function playToField(ctx, uid, line, side, faceUp, belowUid) {
   removeFrom(st.players[0].hand, uid); removeFrom(st.players[1].hand, uid);
   removeFrom(st.players[0].deck, uid); removeFrom(st.players[1].deck, uid);
   c.zone = 'committed';
+  c.commitDest = 'line' + line;
   c.faceUp = faceUp;
   const stack = st.lines[line][side];
   if (belowUid) {
@@ -510,6 +515,7 @@ function massRemove(ctx, uids, destKind, actor) {
     const loc = locate(st, u);
     st.lines[loc.line][loc.side].splice(loc.idx, 1);
     st.cards[u].zone = 'committed';
+    st.cards[u].commitDest = destKind === 'trash' ? 'trash' : 'hand';
   }
   for (const u of present) (destKind === 'trash' ? landTrash : landHand)(ctx, u);
   if (present.length) log(ctx, `${present.length}枚を同時に${destKind === 'trash' ? '削除' : '手札に戻'}した`);
@@ -605,7 +611,7 @@ function doCompile(ctx, side, line) {
   // 全カード同時削除 (トリガーなし)
   const removed = [];
   for (let s = 0; s < 2; s++) {
-    for (const uid of st.lines[line][s]) { st.cards[uid].zone = 'committed'; removed.push(uid); }
+    for (const uid of st.lines[line][s]) { st.cards[uid].zone = 'committed'; st.cards[uid].commitDest = 'trash'; removed.push(uid); }
     st.lines[line][s] = [];
   }
   for (const uid of removed) landTrash(ctx, uid);

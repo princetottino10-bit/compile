@@ -571,19 +571,10 @@ html.mobile-ui #actionBar{bottom:132px}
 #transitBar.on{display:flex;animation:fxin .2s ease}
 #transitBar .tr-lbl{font-family:var(--fmono);font-size:.56rem;font-weight:700;letter-spacing:.14em;
   color:#ffd24a;text-shadow:0 0 10px rgba(255,210,74,.7)}
-#transitBar .tr-chip{display:flex;flex-direction:column;gap:3px;padding:7px 12px;border-radius:9px;
-  background:linear-gradient(180deg,rgba(28,24,12,.97),rgba(16,14,8,.97));border:1.5px dashed #ffd24a;
-  box-shadow:0 12px 40px -10px #000,0 0 24px -6px rgba(255,210,74,.6);cursor:pointer;max-width:260px}
-#transitBar .tr-head{display:flex;align-items:center;gap:8px}
-#transitBar .tr-badge{min-width:24px;height:24px;display:flex;align-items:center;justify-content:center;
-  font-family:var(--fmono);font-weight:900;font-size:.92rem;color:#fff;border-radius:6px;
-  background:rgba(255,210,74,.18);border:1px solid rgba(255,210,74,.6)}
-#transitBar .tr-nm{font-family:var(--fmono);font-weight:700;font-size:.74rem;color:#ffe9a8}
-#transitBar .tr-dest{font-size:.58rem;color:rgba(255,225,168,.6);font-family:var(--fmono)}
-#transitBar .tr-effs{font-size:.6rem;line-height:1.35;color:rgba(255,225,168,.75);border-top:1px solid rgba(255,210,74,.15);
-  padding-top:3px;margin-top:1px}
-#transitBar .tr-effs .el{margin-bottom:2px}
-#transitBar .tr-effs .el b{color:#ffd24a;font-weight:700;margin-right:4px;font-size:.54rem}
+#transitBar .tr-item{display:flex;flex-direction:column;align-items:center;gap:2px}
+#transitBar .chip.transit{border:1.5px dashed #ffd24a;box-shadow:0 0 18px -4px rgba(255,210,74,.5);opacity:.85}
+#transitBar .tr-dest{font-size:.6rem;font-weight:700;color:#ffd24a;font-family:var(--fmono);
+  text-shadow:0 0 8px rgba(255,210,74,.5)}
 #toast{position:fixed;bottom:92px;left:50%;transform:translateX(-50%);background:rgba(18,18,30,.97);
   border:1px solid var(--bd2);border-radius:10px;padding:9px 20px;font-size:.76rem;z-index:99;display:none;max-width:90vw;
   box-shadow:0 10px 30px -8px #000,0 0 0 1px rgba(233,30,140,.2)}
@@ -1075,6 +1066,7 @@ function extractCard(ctx, uid) {
   const wasTop = loc.idx === stack.length - 1;
   stack.splice(loc.idx, 1);
   st.cards[uid].zone = 'committed';
+  st.cards[uid].commitDest = null;
   if (wasTop && stack.length) {
     const nt = stack[stack.length - 1];
     if (st.cards[nt].faceUp) return { uncoverUid: nt };
@@ -1107,6 +1099,7 @@ function cardLabel(st, uid) {
 function doDelete(ctx, uid, actor) {
   if (!locate(ctx.st, uid)) return false;
   const info = extractCard(ctx, uid);
+  ctx.st.cards[uid].commitDest = 'trash';
   fireUncover(ctx, info);
   landTrash(ctx, uid);
   log(ctx, `${defOf(ctx.st, uid).id} を削除`, uid);
@@ -1118,6 +1111,7 @@ function doReturn(ctx, uid) {
   if (!locate(ctx.st, uid)) return false;
   const label = cardLabel(ctx.st, uid);
   const info = extractCard(ctx, uid);
+  ctx.st.cards[uid].commitDest = 'hand';
   fireUncover(ctx, info);
   landHand(ctx, uid);
   log(ctx, `${label} を手札に戻す`, uid);
@@ -1149,6 +1143,7 @@ function doShift(ctx, uid, destLine) {
   // E3: コミット前に移動先を先に提示する
   log(ctx, `${label} をライン${destLine + 1}へ移動`, uid);
   const info = extractCard(ctx, uid);
+  st.cards[uid].commitDest = 'line' + destLine;
   fireUncover(ctx, info);
   const dest = st.lines[destLine][side];
   if (dest.length) fireWouldBeCovered(ctx, dest[dest.length - 1]);
@@ -1167,6 +1162,7 @@ function playToField(ctx, uid, line, side, faceUp, belowUid) {
   removeFrom(st.players[0].hand, uid); removeFrom(st.players[1].hand, uid);
   removeFrom(st.players[0].deck, uid); removeFrom(st.players[1].deck, uid);
   c.zone = 'committed';
+  c.commitDest = 'line' + line;
   c.faceUp = faceUp;
   const stack = st.lines[line][side];
   if (belowUid) {
@@ -1273,6 +1269,7 @@ function massRemove(ctx, uids, destKind, actor) {
     const loc = locate(st, u);
     st.lines[loc.line][loc.side].splice(loc.idx, 1);
     st.cards[u].zone = 'committed';
+    st.cards[u].commitDest = destKind === 'trash' ? 'trash' : 'hand';
   }
   for (const u of present) (destKind === 'trash' ? landTrash : landHand)(ctx, u);
   if (present.length) log(ctx, `${present.length}枚を同時に${destKind === 'trash' ? '削除' : '手札に戻'}した`);
@@ -1368,7 +1365,7 @@ function doCompile(ctx, side, line) {
   // 全カード同時削除 (トリガーなし)
   const removed = [];
   for (let s = 0; s < 2; s++) {
-    for (const uid of st.lines[line][s]) { st.cards[uid].zone = 'committed'; removed.push(uid); }
+    for (const uid of st.lines[line][s]) { st.cards[uid].zone = 'committed'; st.cards[uid].commitDest = 'trash'; removed.push(uid); }
     st.lines[line][s] = [];
   }
   for (const uid of removed) landTrash(ctx, uid);
@@ -3750,6 +3747,14 @@ function render(){
 }
 
 /* 移動中(コミット状態)のカードを浮遊表示。効果解決の途中で盤面から離れているカードを見せる */
+function commitDestLabel(c){
+  var d = c.commitDest;
+  if (!d) return '移動中';
+  if (d === 'hand') return '→ 手札へ';
+  if (d === 'trash') return '→ 捨て札へ';
+  if (d.indexOf('line') === 0) return '→ ライン' + (parseInt(d.slice(4),10) + 1) + 'へ';
+  return '移動中';
+}
 function renderTransit(st){
   var bar = document.getElementById('transitBar');
   var inLine = {};
@@ -3760,25 +3765,21 @@ function renderTransit(st){
     if (c.zone === 'committed' && !inLine[uid]) transit.push(uid);
   }
   if (!transit.length){ bar.classList.remove('on'); return; }
-  bar.innerHTML = '<div class="tr-lbl">▼ 移動中</div>' + transit.map(function(uid){
-    var c = st.cards[uid], def = DEFMAP[c.def];
-    var isOwn = c.owner === HUMAN;
-    var visible = c.faceUp || isOwn;
-    var nm = visible ? cardName(c.def) : '裏向きカード';
-    var val = c.faceUp ? def.card.value : (visible ? def.card.value + '?' : '?');
-    var effs = '';
-    if (visible) {
-      var parts = [];
-      if (def.card.upper) parts.push('<div class="el"><b>TOP</b>' + esc(def.card.upper) + '</div>');
-      if (def.card.middle) parts.push('<div class="el"><b>MID</b>' + esc(def.card.middle) + '</div>');
-      if (def.card.lower) parts.push('<div class="el"><b>BOT</b>' + esc(def.card.lower) + '</div>');
-      if (parts.length) effs = '<div class="tr-effs">' + parts.join('') + '</div>';
-    }
-    var dest = '<div class="tr-dest">' + (isOwn ? 'あなた' : 'AI') + 'のカード</div>';
-    return '<div class="tr-chip" data-def="' + c.def + '">' +
-      '<div class="tr-head"><span class="tr-badge">' + val + '</span><span class="tr-nm">' + esc(nm) + '</span></div>' +
-      dest + effs + '</div>';
-  }).join('');
+  bar.innerHTML = '<div class="tr-lbl">▼ 移動中</div>';
+  transit.forEach(function(uid){
+    var c = st.cards[uid];
+    var side = c.owner;
+    var wrapper = document.createElement('div');
+    wrapper.className = 'tr-item';
+    var chip = chipDiv(st, uid, side, true);
+    chip.classList.add('transit');
+    wrapper.appendChild(chip);
+    var lbl = document.createElement('div');
+    lbl.className = 'tr-dest';
+    lbl.textContent = commitDestLabel(c);
+    wrapper.appendChild(lbl);
+    bar.appendChild(wrapper);
+  });
   bar.classList.add('on');
 }
 
