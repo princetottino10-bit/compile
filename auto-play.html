@@ -4434,10 +4434,14 @@ function copyShareUrl(){
 
 function stateToUrl(state){
   try {
-    return location.origin + location.pathname + '#q=' + encodeCompactState(state);
+    return location.origin + location.pathname + '#r=' + encodeTinyState(state);
   } catch(e){
-    var b64 = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
-    return location.origin + location.pathname + '#p=' + b64;
+    try {
+      return location.origin + location.pathname + '#q=' + encodeCompactState(state);
+    } catch(e2){
+      var b64 = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+      return location.origin + location.pathname + '#p=' + b64;
+    }
   }
 }
 
@@ -4474,6 +4478,136 @@ function shareVal(ch){
   var n = SHARE_ALPHABET.indexOf(ch);
   if (n < 0) throw new Error('bad share char');
   return n;
+}
+function bitWriter(){
+  var out = '', buf = 0, bits = 0;
+  return {
+    push: function(v, n){
+      if (v < 0 || v >= (1 << n)) throw new Error('bit range');
+      for (var i=n-1;i>=0;i--){
+        buf = (buf << 1) | ((v >> i) & 1);
+        bits++;
+        if (bits === 6){ out += shareChar(buf); buf = 0; bits = 0; }
+      }
+    },
+    done: function(){
+      if (bits) out += shareChar(buf << (6 - bits));
+      return out;
+    }
+  };
+}
+function bitReader(s){
+  var pos = 0, buf = 0, bits = 0;
+  return {
+    read: function(n){
+      var v = 0;
+      while (n-- > 0){
+        if (!bits){
+          if (pos >= s.length) throw new Error('short share');
+          buf = shareVal(s.charAt(pos++));
+          bits = 6;
+        }
+        bits--;
+        v = (v << 1) | ((buf >> bits) & 1);
+      }
+      return v;
+    }
+  };
+}
+function orderedShareCards(state){
+  var seen = {}, out = [];
+  function add(uid){
+    if (!uid || seen[uid] || !state.cards[uid]) return;
+    if (cardIndex(state.cards[uid].def) < 0) return;
+    seen[uid] = 1; out.push(uid);
+  }
+  for (var s=0;s<2;s++){
+    ['hand','deck','trash'].forEach(function(z){
+      (state.players[s][z] || []).forEach(add);
+    });
+  }
+  for (var l=0;l<3;l++) for (var side=0;side<2;side++) (state.lines[l][side] || []).forEach(add);
+  Object.keys(state.cards).forEach(add);
+  return out;
+}
+function zoneTinyFor(state, uid){
+  var c = state.cards[uid];
+  if (c.zone === 'hand0') return 0;
+  if (c.zone === 'deck0') return 1;
+  if (c.zone === 'trash0') return 2;
+  if (c.zone === 'hand1') return 3;
+  if (c.zone === 'deck1') return 4;
+  if (c.zone === 'trash1') return 5;
+  for (var l=0;l<3;l++) for (var s=0;s<2;s++){
+    if (state.lines[l][s].indexOf(uid) >= 0) return 6 + l * 4 + s * 2 + (c.faceUp ? 1 : 0);
+  }
+  throw new Error('bad zone');
+}
+function applyTinyZone(st, uid, z){
+  var c = st.cards[uid];
+  function pushOff(name, side){ c.zone = name + side; st.players[side][name].push(uid); }
+  if (z === 0) return pushOff('hand', 0);
+  if (z === 1) return pushOff('deck', 0);
+  if (z === 2) return pushOff('trash', 0);
+  if (z === 3) return pushOff('hand', 1);
+  if (z === 4) return pushOff('deck', 1);
+  if (z === 5) return pushOff('trash', 1);
+  if (z < 6 || z > 17) throw new Error('bad zone');
+  var q = z - 6, line = Math.floor(q / 4), side = Math.floor((q % 4) / 2);
+  c.zone = 'field'; c.faceUp = (q % 2) === 1;
+  st.lines[line][side].push(uid);
+}
+function encodeTinyState(state){
+  var w = bitWriter();
+  w.push(2, 3);
+  w.push(state.turn || 0, 1);
+  w.push(state.control === 0 ? 1 : state.control === 1 ? 2 : 0, 2);
+  for (var s=0;s<2;s++) for (var l=0;l<3;l++){
+    var p = state.players[s].protocols[l] || {};
+    var pi = protoIndex(p.name);
+    if (pi < 0 || pi > 15) throw new Error('bad protocol');
+    w.push(pi, 4);
+    w.push(p.compiled ? 1 : 0, 1);
+  }
+  var cards = orderedShareCards(state);
+  if (cards.length > 90) throw new Error('too many cards');
+  w.push(cards.length, 7);
+  cards.forEach(function(uid){
+    var c = state.cards[uid];
+    w.push(cardIndex(c.def), 7);
+    w.push(c.owner ? 1 : 0, 1);
+    w.push(zoneTinyFor(state, uid), 5);
+  });
+  return w.done();
+}
+function decodeTinyState(s){
+  var r = bitReader(s);
+  if (r.read(3) !== 2) throw new Error('bad version');
+  var turn = r.read(1);
+  var cc = r.read(2);
+  var st = {
+    cards: {}, lines: [[[],[]],[[],[]],[[],[]]], players: [
+      { protocols: [], hand: [], deck: [], trash: [], cannotCompile: false },
+      { protocols: [], hand: [], deck: [], trash: [], cannotCompile: false }
+    ],
+    turn: turn, phase: 'action', control: cc === 1 ? 0 : cc === 2 ? 1 : -1,
+    useControl: true, winner: null, pending: null, revealed: null
+  };
+  for (var i=0;i<6;i++){
+    var p = COMPILE_CARDS.protocols[r.read(4)];
+    if (!p) throw new Error('bad protocol');
+    st.players[i<3?0:1].protocols.push({ name: p.name, compiled: !!r.read(1) });
+  }
+  var count = r.read(7);
+  for (var j=0;j<count;j++){
+    var uid = 'custom:' + (j + 1);
+    var def = cardIdFromIndex(r.read(7));
+    var owner = r.read(1);
+    var zone = r.read(5);
+    st.cards[uid] = { uid: uid, def: def, owner: owner, faceUp: false, zone: '' };
+    applyTinyZone(st, uid, zone);
+  }
+  return st;
 }
 function zoneCodeFor(state, uid){
   var c = state.cards[uid];
@@ -4573,6 +4707,13 @@ function loadCustomState(state){
 }
 
 function tryLoadShared(){
+  var rm = /#r=([^&]+)/.exec(location.hash);
+  if (rm) {
+    try {
+      loadCustomState(decodeTinyState(rm[1]));
+      return true;
+    } catch(e){ return false; }
+  }
   var qm = /#q=([^&]+)/.exec(location.hash);
   if (qm) {
     try {
