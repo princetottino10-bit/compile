@@ -1339,6 +1339,7 @@ function performAction(ctx, action) {
 function runReplay(base, action, choices) {
   const st = clone(base);
   st.revealed = null;
+  if (!Array.isArray(st.commitStack)) st.commitStack = [];  // 外部由来のstate(詰めCompile共有盤面など)に対する防御
   const ctx = { st, choices, ci: 0, qn: 0, depth: 0, log: [], trace: TRACE ? [] : null };
   try {
     performAction(ctx, action);

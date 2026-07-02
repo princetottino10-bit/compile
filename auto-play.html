@@ -2089,6 +2089,7 @@ function performAction(ctx, action) {
 function runReplay(base, action, choices) {
   const st = clone(base);
   st.revealed = null;
+  if (!Array.isArray(st.commitStack)) st.commitStack = [];  // 外部由来のstate(詰めCompile共有盤面など)に対する防御
   const ctx = { st, choices, ci: 0, qn: 0, depth: 0, log: [], trace: TRACE ? [] : null };
   try {
     performAction(ctx, action);
@@ -4809,6 +4810,7 @@ function normalizeSharedState(state){
   if (state.seed == null) state.seed = 1;
   if (state.rngN == null) state.rngN = 0;
   if (!Array.isArray(state.actionLog)) state.actionLog = [];
+  if (!Array.isArray(state.commitStack)) state.commitStack = [];
   if (!state.lines) state.lines = [[[],[]],[[],[]],[[],[]]];
   if (!state.players) state.players = [];
   for (var s=0;s<2;s++){
