@@ -313,6 +313,7 @@ function extractCard(ctx, uid) {
   stack.splice(loc.idx, 1);
   st.cards[uid].zone = 'committed';
   st.cards[uid].commitDest = null;
+  st.commitStack.push(uid);
   if (wasTop && stack.length) {
     const nt = stack[stack.length - 1];
     if (st.cards[nt].faceUp) return { uncoverUid: nt };
@@ -327,12 +328,16 @@ function landTrash(ctx, uid) {
   const c = ctx.st.cards[uid];
   c.zone = 'trash' + c.owner;
   c.faceUp = true;
+  c.commitDest = null;
   ctx.st.players[c.owner].trash.push(uid);
+  removeFrom(ctx.st.commitStack, uid);
 }
 function landHand(ctx, uid) {
   const c = ctx.st.cards[uid];
   c.zone = 'hand' + c.owner;
+  c.commitDest = null;
   ctx.st.players[c.owner].hand.push(uid);
+  removeFrom(ctx.st.commitStack, uid);
 }
 
 /* 表示用ラベル: 場/移動中の裏向きカードは秘匿情報なので名前を伏せる(L1) */
@@ -395,6 +400,8 @@ function doShift(ctx, uid, destLine) {
   if (dest.length) fireWouldBeCovered(ctx, dest[dest.length - 1]);
   dest.push(uid);
   st.cards[uid].zone = 'field';
+  st.cards[uid].commitDest = null;
+  removeFrom(st.commitStack, uid);
   // E2: 覆われた状態から移動し、移動先で表向き・uncovered になったら中段が場に入る
   const nloc = locate(st, uid);
   if (wasCovered && st.cards[uid].faceUp && nloc && isTop(st, nloc)) resolveMiddle(ctx, uid, 'uncover');
@@ -410,6 +417,7 @@ function playToField(ctx, uid, line, side, faceUp, belowUid) {
   c.zone = 'committed';
   c.commitDest = 'line' + line;
   c.faceUp = faceUp;
+  st.commitStack.push(uid);
   const stack = st.lines[line][side];
   if (belowUid) {
     const i = stack.indexOf(belowUid);
@@ -418,16 +426,18 @@ function playToField(ctx, uid, line, side, faceUp, belowUid) {
     const coveredTriggers = stack.length ? collectWouldBeCovered(ctx, stack[stack.length - 1]) : [];
     stack.push(uid);
     log(ctx, `P${side + 1}: ${faceUp ? DEFS[c.def].id : 'カード'} をライン${line + 1}に${faceUp ? '表' : '裏'}でプレイ`, uid);
-    // 覆われトリガー解決中、覆うカードはcommitted(待機中)のまま対象に取れない
     c.commitDest = 'line' + line;
     runWouldBeCovered(ctx, coveredTriggers);
     c.zone = 'field';
     c.commitDest = null;
+    removeFrom(st.commitStack, uid);
     const loc = locate(st, uid);
     if (st.cards[uid].faceUp && loc && isTop(st, loc)) resolveMiddle(ctx, uid, 'play');
     return;
   }
   c.zone = 'field';
+  c.commitDest = null;
+  removeFrom(st.commitStack, uid);
   log(ctx, `P${side + 1}: ${faceUp ? DEFS[c.def].id : 'カード'} をライン${line + 1}に${faceUp ? '表' : '裏'}でプレイ`, uid);
   const loc = locate(st, uid);
   if (st.cards[uid].faceUp && loc && isTop(st, loc)) resolveMiddle(ctx, uid, 'play');
@@ -519,6 +529,7 @@ function massRemove(ctx, uids, destKind, actor) {
     st.lines[loc.line][loc.side].splice(loc.idx, 1);
     st.cards[u].zone = 'committed';
     st.cards[u].commitDest = destKind === 'trash' ? 'trash' : 'hand';
+    st.commitStack.push(u);
   }
   for (const u of present) (destKind === 'trash' ? landTrash : landHand)(ctx, u);
   if (present.length) log(ctx, `${present.length}枚を同時に${destKind === 'trash' ? '削除' : '手札に戻'}した`);
@@ -607,10 +618,12 @@ function doCompile(ctx, side, line) {
         const dstack = st.lines[ans[0]][s];
         st.cards[uid].zone = 'committed';
         st.cards[uid].commitDest = 'line' + ans[0];
+        st.commitStack.push(uid);
         if (dstack.length) fireWouldBeCovered(ctx, dstack[dstack.length - 1]);
         dstack.push(uid);
         st.cards[uid].zone = 'field';
         st.cards[uid].commitDest = null;
+        removeFrom(st.commitStack, uid);
         log(ctx, `${DEFS[c.def].id} は削除の代わりにライン${ans[0] + 1}へ移動`);
       }
     }
@@ -618,7 +631,7 @@ function doCompile(ctx, side, line) {
   // 全カード同時削除 (トリガーなし)
   const removed = [];
   for (let s = 0; s < 2; s++) {
-    for (const uid of st.lines[line][s]) { st.cards[uid].zone = 'committed'; st.cards[uid].commitDest = 'trash'; removed.push(uid); }
+    for (const uid of st.lines[line][s]) { st.cards[uid].zone = 'committed'; st.cards[uid].commitDest = 'trash'; st.commitStack.push(uid); removed.push(uid); }
     st.lines[line][s] = [];
   }
   for (const uid of removed) landTrash(ctx, uid);
@@ -1126,9 +1139,9 @@ function performMass(ctx, fr, op, cands) {
       if (!moving.length) continue;
       st.lines[fr.line][s] = st.lines[fr.line][s].filter(u => cands.indexOf(u) < 0);
       const dstack = st.lines[dest][s];
-      for (const u of moving) { st.cards[u].zone = 'committed'; st.cards[u].commitDest = 'line' + dest; }
+      for (const u of moving) { st.cards[u].zone = 'committed'; st.cards[u].commitDest = 'line' + dest; st.commitStack.push(u); }
       if (dstack.length) fireWouldBeCovered(ctx, dstack[dstack.length - 1]);
-      for (const u of moving) { st.lines[dest][s].push(u); st.cards[u].zone = 'field'; st.cards[u].commitDest = null; }
+      for (const u of moving) { st.lines[dest][s].push(u); st.cards[u].zone = 'field'; st.cards[u].commitDest = null; removeFrom(st.commitStack, u); }
     }
     // 移動元で新たに uncovered になった表向きカード
     for (let s = 0; s < 2; s++) {
@@ -1326,6 +1339,7 @@ function performAction(ctx, action) {
 function runReplay(base, action, choices) {
   const st = clone(base);
   st.revealed = null;
+  if (!Array.isArray(st.commitStack)) st.commitStack = [];  // 外部由来のstate(詰めCompile共有盤面など)に対する防御
   const ctx = { st, choices, ci: 0, qn: 0, depth: 0, log: [], trace: TRACE ? [] : null };
   try {
     performAction(ctx, action);
@@ -1376,6 +1390,7 @@ function newGame(opts) {
     lines: [[[], []], [[], []], [[], []]],
     cards: {},
     actionLog: [],
+    commitStack: [],
     revealed: null,
     pending: null
   };
@@ -1726,12 +1741,40 @@ function randomPicks(req) {
   return [];
 }
 
+let AI_CHOICE_DEPTH = 0;
+
 function aiChoiceScore(st, req, picks, me) {
-  const res = apply(st, { type: 'choose', id: req.id, picks });
-  if (!res || res.error) return -1e8;
-  const out = res.requests && res.requests.length ? resolveRequests(res.state, smartPicks, 8) : res;
-  if (!out || out.error || (out.requests && out.requests.length)) return -1e8;
-  return aiScore(out.state, me);
+  AI_CHOICE_DEPTH++;
+  try {
+    const res = apply(st, { type: 'choose', id: req.id, picks });
+    if (!res || res.error) return -1e8;
+    const out = res.requests && res.requests.length ? resolveRequests(res.state, smartPicks, 8) : res;
+    if (!out || out.error || (out.requests && out.requests.length)) return -1e8;
+    return aiScore(out.state, me);
+  } finally { AI_CHOICE_DEPTH--; }
+}
+
+function aiPlayFreePicks(st, req, me) {
+  const ranked = req.candidates.map(raw => {
+    const parts = String(raw).split('|');
+    const uid = parts[0], line = +parts[1], faceUp = parts[2] === 'u';
+    const c = st.cards[uid];
+    if (!c || line < 0 || line > 2) return { raw, prelim: -1e8 };
+    const d = DEFS[c.def];
+    let prelim = aiActionBias(st, { type: 'play', card: uid, line, faceUp }, me);
+    prelim += (faceUp ? d.value * 7 + aiMiddleValue(d) * 0.3 : 14);
+    if (!st.players[me].protocols[line].compiled) prelim += 18;
+    return { raw, prelim };
+  }).sort((a, b) => b.prelim - a.prelim);
+  if (!ranked.length) return [];
+  if (AI_CHOICE_DEPTH > 0) return [ranked[0].raw];
+
+  let best = ranked[0].raw, bestScore = -Infinity;
+  for (const item of ranked.slice(0, 6)) {
+    const score = aiChoiceScore(st, req, [item.raw], me) + item.prelim * 0.05;
+    if (score > bestScore) { bestScore = score; best = item.raw; }
+  }
+  return [best];
 }
 
 function smartPicks(st, req) {
@@ -1739,6 +1782,7 @@ function smartPicks(st, req) {
   const op = 1 - me;
   switch (req.kind) {
     case 'pickCard': {
+      if (req.prompt === 'play-free') return aiPlayFreePicks(st, req, me);
       const scored = req.candidates.map(uid => {
         const c = st.cards[uid];
         if (!c) return { uid, s: 0 };
@@ -1805,6 +1849,14 @@ function smartPicks(st, req) {
           if (mine > theirs) s += 10;
         }
         if (s > bestSc) { bestSc = s; bestLine = l; }
+      }
+      if (AI_CHOICE_DEPTH === 0 && req.lines.length > 1) {
+        let simBest = -Infinity, simLine = bestLine;
+        for (const l of req.lines) {
+          const score = aiChoiceScore(st, req, [l], me);
+          if (score > simBest) { simBest = score; simLine = l; }
+        }
+        if (simBest > -1e8) bestLine = simLine;
       }
       return [bestLine];
     }
@@ -1925,7 +1977,7 @@ function aiActionHard(state) {
     for (let i = 0; i < limit; i++) {
       if (aiNow() > deadline) break;
       const a = ordered[i].a;
-      const res = applyAndResolve(state, a, smartPicks);
+      const res = ordered[i].res;
       if (!res || res.error || res.requests.length) continue;
       const s1 = res.state;
       let val;
@@ -1951,9 +2003,12 @@ function minimaxMin(state, me, alpha, beta, deadline) {
   let val = Infinity;
   for (let i = 0; i < limit; i++) {
     if (deadline && aiNow() > deadline) break;
-    const res = applyAndResolve(state, ordered[i].a, smartPicks);
+    const res = ordered[i].res;
     if (!res || res.error || res.requests.length) continue;
-    const sc = aiScore(res.state, me);
+    const s2 = res.state;
+    const sc = (s2.winner === null && s2.turn === me)
+      ? minimaxMaxShallow(s2, me, alpha, beta, deadline)
+      : aiScore(s2, me);
     if (sc < val) val = sc;
     if (val <= alpha) return val;
     if (val < beta) beta = val;
@@ -1961,11 +2016,31 @@ function minimaxMin(state, me, alpha, beta, deadline) {
   return val === Infinity ? aiScore(state, me) : val;
 }
 
+function minimaxMaxShallow(state, me, alpha, beta, deadline) {
+  if (state.winner !== null || state.turn !== me) return aiScore(state, me);
+  const acts = legalActions(state);
+  if (!acts.length) return aiScore(state, me);
+  const ordered = acts.map(a => ({ a, bias: aiActionBias(state, a, me) }))
+    .sort((a, b) => b.bias - a.bias);
+  let val = -Infinity;
+  for (let i = 0; i < Math.min(ordered.length, 6); i++) {
+    if (deadline && aiNow() > deadline) break;
+    const item = ordered[i];
+    const res = applyAndResolve(state, item.a, smartPicks);
+    if (!res || res.error || res.requests.length) continue;
+    const sc = aiScore(res.state, me) + item.bias;
+    if (sc > val) val = sc;
+    if (val >= beta) return val;
+    if (val > alpha) alpha = val;
+  }
+  return val === -Infinity ? aiScore(state, me) : val;
+}
+
 function orderMoves(acts, state, side) {
   const scored = acts.map(a => {
     const res = applyAndResolve(state, a, smartPicks);
     const sc = (!res || res.error) ? -1e8 : aiScore(res.state, side) + aiActionBias(state, a, side);
-    return { a, sc };
+    return { a, sc, res };
   });
   scored.sort((a, b) => b.sc - a.sc);
   return scored;

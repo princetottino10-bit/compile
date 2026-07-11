@@ -1741,12 +1741,40 @@ function randomPicks(req) {
   return [];
 }
 
+let AI_CHOICE_DEPTH = 0;
+
 function aiChoiceScore(st, req, picks, me) {
-  const res = apply(st, { type: 'choose', id: req.id, picks });
-  if (!res || res.error) return -1e8;
-  const out = res.requests && res.requests.length ? resolveRequests(res.state, smartPicks, 8) : res;
-  if (!out || out.error || (out.requests && out.requests.length)) return -1e8;
-  return aiScore(out.state, me);
+  AI_CHOICE_DEPTH++;
+  try {
+    const res = apply(st, { type: 'choose', id: req.id, picks });
+    if (!res || res.error) return -1e8;
+    const out = res.requests && res.requests.length ? resolveRequests(res.state, smartPicks, 8) : res;
+    if (!out || out.error || (out.requests && out.requests.length)) return -1e8;
+    return aiScore(out.state, me);
+  } finally { AI_CHOICE_DEPTH--; }
+}
+
+function aiPlayFreePicks(st, req, me) {
+  const ranked = req.candidates.map(raw => {
+    const parts = String(raw).split('|');
+    const uid = parts[0], line = +parts[1], faceUp = parts[2] === 'u';
+    const c = st.cards[uid];
+    if (!c || line < 0 || line > 2) return { raw, prelim: -1e8 };
+    const d = DEFS[c.def];
+    let prelim = aiActionBias(st, { type: 'play', card: uid, line, faceUp }, me);
+    prelim += (faceUp ? d.value * 7 + aiMiddleValue(d) * 0.3 : 14);
+    if (!st.players[me].protocols[line].compiled) prelim += 18;
+    return { raw, prelim };
+  }).sort((a, b) => b.prelim - a.prelim);
+  if (!ranked.length) return [];
+  if (AI_CHOICE_DEPTH > 0) return [ranked[0].raw];
+
+  let best = ranked[0].raw, bestScore = -Infinity;
+  for (const item of ranked.slice(0, 6)) {
+    const score = aiChoiceScore(st, req, [item.raw], me) + item.prelim * 0.05;
+    if (score > bestScore) { bestScore = score; best = item.raw; }
+  }
+  return [best];
 }
 
 function smartPicks(st, req) {
@@ -1754,6 +1782,7 @@ function smartPicks(st, req) {
   const op = 1 - me;
   switch (req.kind) {
     case 'pickCard': {
+      if (req.prompt === 'play-free') return aiPlayFreePicks(st, req, me);
       const scored = req.candidates.map(uid => {
         const c = st.cards[uid];
         if (!c) return { uid, s: 0 };
@@ -1820,6 +1849,14 @@ function smartPicks(st, req) {
           if (mine > theirs) s += 10;
         }
         if (s > bestSc) { bestSc = s; bestLine = l; }
+      }
+      if (AI_CHOICE_DEPTH === 0 && req.lines.length > 1) {
+        let simBest = -Infinity, simLine = bestLine;
+        for (const l of req.lines) {
+          const score = aiChoiceScore(st, req, [l], me);
+          if (score > simBest) { simBest = score; simLine = l; }
+        }
+        if (simBest > -1e8) bestLine = simLine;
       }
       return [bestLine];
     }
@@ -1940,7 +1977,7 @@ function aiActionHard(state) {
     for (let i = 0; i < limit; i++) {
       if (aiNow() > deadline) break;
       const a = ordered[i].a;
-      const res = applyAndResolve(state, a, smartPicks);
+      const res = ordered[i].res;
       if (!res || res.error || res.requests.length) continue;
       const s1 = res.state;
       let val;
@@ -1966,9 +2003,12 @@ function minimaxMin(state, me, alpha, beta, deadline) {
   let val = Infinity;
   for (let i = 0; i < limit; i++) {
     if (deadline && aiNow() > deadline) break;
-    const res = applyAndResolve(state, ordered[i].a, smartPicks);
+    const res = ordered[i].res;
     if (!res || res.error || res.requests.length) continue;
-    const sc = aiScore(res.state, me);
+    const s2 = res.state;
+    const sc = (s2.winner === null && s2.turn === me)
+      ? minimaxMaxShallow(s2, me, alpha, beta, deadline)
+      : aiScore(s2, me);
     if (sc < val) val = sc;
     if (val <= alpha) return val;
     if (val < beta) beta = val;
@@ -1976,11 +2016,31 @@ function minimaxMin(state, me, alpha, beta, deadline) {
   return val === Infinity ? aiScore(state, me) : val;
 }
 
+function minimaxMaxShallow(state, me, alpha, beta, deadline) {
+  if (state.winner !== null || state.turn !== me) return aiScore(state, me);
+  const acts = legalActions(state);
+  if (!acts.length) return aiScore(state, me);
+  const ordered = acts.map(a => ({ a, bias: aiActionBias(state, a, me) }))
+    .sort((a, b) => b.bias - a.bias);
+  let val = -Infinity;
+  for (let i = 0; i < Math.min(ordered.length, 6); i++) {
+    if (deadline && aiNow() > deadline) break;
+    const item = ordered[i];
+    const res = applyAndResolve(state, item.a, smartPicks);
+    if (!res || res.error || res.requests.length) continue;
+    const sc = aiScore(res.state, me) + item.bias;
+    if (sc > val) val = sc;
+    if (val >= beta) return val;
+    if (val > alpha) alpha = val;
+  }
+  return val === -Infinity ? aiScore(state, me) : val;
+}
+
 function orderMoves(acts, state, side) {
   const scored = acts.map(a => {
     const res = applyAndResolve(state, a, smartPicks);
     const sc = (!res || res.error) ? -1e8 : aiScore(res.state, side) + aiActionBias(state, a, side);
-    return { a, sc };
+    return { a, sc, res };
   });
   scored.sort((a, b) => b.sc - a.sc);
   return scored;

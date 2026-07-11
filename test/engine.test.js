@@ -599,6 +599,20 @@ test('AI: 合法手のみを返す', () => {
   assert.deepEqual(a, { type: 'refresh' });
 });
 
+test('AI: SPEED 0の追加プレイで未コンパイルラインを選ぶ', () => {
+  const r = ng({ p0: ['SPEED', 'METAL', 'DEATH'] });
+  const st = r.state;
+  st.players[0].protocols[0].compiled = true;
+  setHand(st, 0, ['SPEED_1', 'METAL_6']);
+  let res = Engine.apply(st, { type: 'play', card: uidOf('SPEED_1', 0), line: 0, faceUp: true });
+  assert.equal(res.error, null);
+  assert.equal(res.requests[0].prompt, 'play-free');
+  Engine.setAiLevel(2);
+  const picks = Engine.ai.answer(res.state, res.requests[0]);
+  assert.equal(picks.length, 1);
+  assert.ok(picks[0].startsWith(uidOf('METAL_6', 0) + '|1|'));
+});
+
 test('トレース: setTrace(true) でステップごとのスナップショットが返る', () => {
   Engine.setTrace(true);
   try {
