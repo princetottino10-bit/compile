@@ -316,6 +316,20 @@ test('pending view includes hand cards drawn by effects', () => {
   }
 });
 
+test('FIRE_1 覆われトリガー: 覆うカード(未着地)は反転対象にならない', () => {
+  const r = ng({ p0: ['FIRE', 'WATER', 'LIGHT'] });
+  const st = r.state;
+  setHand(st, 0, ['WATER_2']);
+  place(st, 'FIRE_1', 0, 0, true);   // ライン1にFIRE 0(表)
+  place(st, 'LIGHT_1', 0, 1, true);  // 反転対象候補を別ラインに1枚
+  // FIRE_1の上に裏でプレイ → wouldBeCovered発火。flip候補はLIGHT_1のみ(=自動確定)
+  const res = Engine.apply(st, { type: 'play', card: uidOf('WATER_2', 0), line: 0, faceUp: false });
+  assert.equal(res.error, null);
+  assert.equal(res.requests.length, 0, '覆うカードが候補に入ると選択リクエストが発生してしまう');
+  assert.equal(res.state.cards[uidOf('WATER_2', 0)].faceUp, false, '覆うカードは反転されない');
+  assert.equal(res.state.cards[uidOf('LIGHT_1', 0)].faceUp, false, 'flipはLIGHT_1に向かう');
+});
+
 test('コンパイル: 値10以上かつ相手超過で強制コンパイル・コントロール獲得も確認', () => {
   const r = ng();
   const st = r.state;
@@ -374,12 +388,12 @@ test('FIRE_1 lower: covered trigger resolves after the new card is on field', ()
   assert.ok(playStep);
   assert.deepEqual(playStep.st.lines[1][0], [uidOf('FIRE_1', 0), uidOf('FIRE_6', 0)]);
   const st2 = res.state;
-  // FIRE_1 trigger resolves after FIRE_6 is already in the stack.
-  // FIRE_6 is flipped face down by that trigger, so its middle text does not resolve.
+  // FIRE_1のトリガーは覆うカードの着地前に解決される。
+  // FIRE_6は未着地(committed)なのでflip対象にならず、表のまま着地してミドルが解決される。
   assert.deepEqual(st2.lines[1][0], [uidOf('FIRE_1', 0), uidOf('FIRE_6', 0)]);
-  assert.equal(st2.cards[uidOf('FIRE_6', 0)].faceUp, false);
-  assert.equal(st2.players[0].hand.length, 1);
-  assert.equal(st2.players[0].trash.length, 0);
+  assert.equal(st2.cards[uidOf('FIRE_6', 0)].faceUp, true);
+  assert.equal(st2.players[0].hand.length, 0);  // draw1 → FIRE_6ミドルでdiscard1
+  assert.equal(st2.players[0].trash.length, 1);
 });
 
 test('SPEED_3: コンパイル削除の代わりに移動 (置換効果)', () => {

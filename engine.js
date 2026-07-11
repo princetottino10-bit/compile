@@ -1001,6 +1001,7 @@ function matchesSel(st, fr, uid, sel) {
   const loc = locate(st, uid);
   if (!loc) return false;
   const c = st.cards[uid];
+  if (c.zone === 'committed') return false;  // 移動中(未着地)のカードは効果の対象外
   const coverage = sel.coverage || (sel.mode === 'all' ? 'all' : 'uncovered');
   const top = isTop(st, loc);
   if (coverage === 'uncovered' && !top) return false;
