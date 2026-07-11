@@ -1809,7 +1809,7 @@
   },
   "lower": {
    "_text": "このカードは、プロトコルに対応させずに、どちらかのプレイヤー側でプレイすることができる。",
-   "handStatic": "thisAnyLine"
+   "handStatic": "thisAnyLineEitherSide"
   }
  },
  "CORRUPTION_2": {

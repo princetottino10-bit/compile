@@ -184,7 +184,7 @@ function canPlay(st, player, uid, line, faceUp) {
     }
     // CHAOS_4/CORRUPTION_1 lower: このカード自体がプロトコル不問でプレイできる(手札で有効)
     const selfEff = DEFS[st.cards[uid].def].eff;
-    if (selfEff.lower && selfEff.lower.handStatic === 'thisAnyLine') needMatch = false;
+    if (selfEff.lower && (selfEff.lower.handStatic === 'thisAnyLine' || selfEff.lower.handStatic === 'thisAnyLineEitherSide')) needMatch = false;
     if (needMatch) {
       const names = [st.players[0].protocols[line].name, st.players[1].protocols[line].name];
       if (names.indexOf(defOf(st, uid).proto) < 0) return false;
@@ -1770,6 +1770,12 @@ function runTurnLoop(ctx) {
   }
 }
 
+/* CORRUPTION_1: どちらのプレイヤー側でもプレイできるカードか */
+function canPlayEitherSide(st, uid) {
+  const eff = DEFS[st.cards[uid].def].eff;
+  return !!(eff.lower && eff.lower.handStatic === 'thisAnyLineEitherSide');
+}
+
 function legalActions(st) {
   if (st.winner !== null || st.phase !== 'action') return [];
   const p = st.turn;
@@ -1778,6 +1784,10 @@ function legalActions(st) {
     for (let l = 0; l < 3; l++) {
       if (canPlay(st, p, uid, l, true)) out.push({ type: 'play', card: uid, line: l, faceUp: true });
       if (canPlay(st, p, uid, l, false)) out.push({ type: 'play', card: uid, line: l, faceUp: false });
+      if (canPlayEitherSide(st, uid)) { // 相手側スタックへのプレイ
+        out.push({ type: 'play', card: uid, line: l, faceUp: true, side: 1 - p });
+        out.push({ type: 'play', card: uid, line: l, faceUp: false, side: 1 - p });
+      }
     }
   }
   if (st.players[p].hand.length < 5) out.push({ type: 'refresh' });
@@ -1801,8 +1811,10 @@ function performAction(ctx, action) {
   const p = st.turn;
   if (action.type === 'play') {
     if (st.players[p].hand.indexOf(action.card) < 0) throw { __err: '手札にないカード' };
-    if (!canPlay(st, p, action.card, action.line, action.faceUp)) throw { __err: 'そのプレイは許可されていない' };
-    playToField(ctx, action.card, action.line, p, !!action.faceUp);
+    const destSide = (action.side === 0 || action.side === 1) ? action.side : p;
+    if (destSide !== p && !canPlayEitherSide(st, action.card)) throw { __err: '相手側にはプレイできないカード' };
+    if (destSide === p && !canPlay(st, p, action.card, action.line, action.faceUp)) throw { __err: 'そのプレイは許可されていない' };
+    playToField(ctx, action.card, action.line, destSide, !!action.faceUp);
     st.phase = 'checkCache';
   } else if (action.type === 'refresh') {
     if (st.players[p].hand.length >= 5) throw { __err: '手札が5枚以上ではリフレッシュできない' };
@@ -2043,6 +2055,15 @@ function aiActionBias(st, action, side) {
     return v;
   }
   if (action.type !== 'play') return 0;
+  // CORRUPTION_1等の相手側プレイ: 相手の表向きuncoveredカードを覆って無効化できるときだけ前向き
+  if (action.side !== undefined && action.side !== side) {
+    const oppStack = st.lines[action.line][op];
+    if (oppStack.length) {
+      const topC = st.cards[oppStack[oppStack.length - 1]];
+      if (topC.faceUp) return DEFS[topC.def].value * 8 - 20;
+    }
+    return -60;  // 相手に値を与えるだけの手は避ける
+  }
   const c = st.cards[action.card], d = DEFS[c.def];
   const mine = lineTotal(st, action.line, side), theirs = lineTotal(st, action.line, op);
   const gap = Math.max(0, 10 - mine);

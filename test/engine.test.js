@@ -764,6 +764,19 @@ test('M2 UNITY_2: UNITYが5枚以上でプロトコルをコンパイル完了+�
   assert.equal(res.state.lines[0][0].length, 0, 'ラインの自カードは全削除');
 });
 
+test('M2 CORRUPTION_1: どちらのプレイヤー側にもプレイできる', () => {
+  const r = ng({ p0: ['CORRUPTION', 'FIRE', 'WATER'] });
+  const st = r.state;
+  setHand(st, 0, ['CORRUPTION_1']);
+  const acts = Engine.legalActions(st).filter(a => a.card === uidOf('CORRUPTION_1', 0));
+  assert.equal(acts.filter(a => a.side !== undefined).length, 6, '相手側3ライン×表裏');
+  assert.equal(acts.filter(a => a.side === undefined && a.faceUp).length, 3, '自分側もプロトコル不問で表3ライン');
+  const res = Engine.apply(st, { type: 'play', card: uidOf('CORRUPTION_1', 0), line: 1, faceUp: true, side: 1 });
+  assert.equal(res.error, null);
+  assert.deepEqual(res.state.lines[1][1], [uidOf('CORRUPTION_1', 0)], '相手側スタックに置かれる');
+  assert.equal(res.state.turn, 1, 'ターンは正常に渡る');
+});
+
 test('M2 CORRUPTION_2: 相手の手札に戻るカードはデッキトップへ置換される', () => {
   // P2(側1)の場にCORRUPTION_2(下段static)。P1(側0)がWATER_5で自分のカードを戻すと、
   // 「相手(P1)の手札に戻る」ため P1のデッキトップに裏向きで置かれる
