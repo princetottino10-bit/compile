@@ -84,6 +84,8 @@ function activeStatics(st) {
       if (!c.faceUp) continue;
       const eff = DEFS[c.def].eff, top = i === stack.length - 1;
       if (eff.upper && eff.upper.static) out.push(Object.assign({}, eff.upper.static, { uid, line: l, sideIdx: s }));
+      // middle の常在効果 (SMOKE_3等) は uncovered + 表向きのみ有効
+      if (top && eff.middle && eff.middle.static) out.push(Object.assign({}, eff.middle.static, { uid, line: l, sideIdx: s }));
       if (top && eff.lower && eff.lower.static) out.push(Object.assign({}, eff.lower.static, { uid, line: l, sideIdx: s }));
     }
   }
@@ -115,14 +117,52 @@ function lineTotal(st, line, side) {
     if (s.kind !== 'modifyLineTotal' || s.line !== line) continue;
     const affect = (s.side === 'self') ? s.sideIdx : 1 - s.sideIdx;
     if (affect !== side) continue;
-    if (typeof s.delta === 'number') t += s.delta;
+    if (typeof s.delta === 'number') {
+      // 条件付き修正 (DIVERSITY_3: スタックに自プロトコル以外の表向きカードがある場合)
+      if (s.cond === 'stackHasOtherProtoFaceUp') {
+        const proto = DEFS[st.cards[s.uid].def].proto;
+        const ok = st.lines[s.line][s.sideIdx].some(u =>
+          st.cards[u].faceUp && DEFS[st.cards[u].def].proto !== proto);
+        if (!ok) continue;
+      }
+      t += s.delta;
+    }
     if (s.deltaPer) {
       let n = 0;
-      for (let p = 0; p < 2; p++) for (const uid of st.lines[line][p]) if (!st.cards[uid].faceUp) n++;
+      if (s.deltaPer === 'yourHand') {          // CLARITY_1: 手札1枚ごとに+1
+        n = st.players[s.sideIdx].hand.length;
+      } else if (s.deltaPer === 'oppCardsInLine') { // MIRROR_1: このラインの相手カード1枚ごとに+1
+        n = st.lines[line][1 - s.sideIdx].length;
+      } else {                                   // 既定(APATHY_1/SMOKE_3): ラインの裏向き1枚ごとに+1
+        for (let p = 0; p < 2; p++) for (const uid of st.lines[line][p]) if (!st.cards[uid].faceUp) n++;
+      }
       t += n;
     }
   }
   return t;
+}
+
+/* (M2ヘルパー群) */
+/* フィールドにあるコマンドカードのプロトコル種類数 (DIVERSITY) */
+function countProtoKinds(st) {
+  const kinds = new Set();
+  for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++)
+    for (const uid of st.lines[l][s]) kinds.add(DEFS[st.cards[uid].def].proto);
+  return kinds.size;
+}
+/* フィールドにある指定プロトコルのカード枚数 (UNITY)。excludeUid は除外 */
+function countProtoOnField(st, proto, excludeUid) {
+  let n = 0;
+  for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++)
+    for (const uid of st.lines[l][s])
+      if (uid !== excludeUid && DEFS[st.cards[uid].def].proto === proto) n++;
+  return n;
+}
+/* ライン内のプロトコル種類数 (DIVERSITY_2) */
+function countProtoKindsInLine(st, line) {
+  const kinds = new Set();
+  for (let s = 0; s < 2; s++) for (const uid of st.lines[line][s]) kinds.add(DEFS[st.cards[uid].def].proto);
+  return kinds.size;
 }
 
 /* ---------- プレイ許可 ---------- */
@@ -138,7 +178,13 @@ function canPlay(st, player, uid, line, faceUp) {
     let needMatch = true;
     for (const s of activeStatics(st)) {
       if (s.kind === 'playPermission' && s.rule === 'youFaceUpAnyLine' && s.sideIdx === player) needMatch = false;
+      // UNITY_2 lower: このラインには UNITY カードを表向きでプレイできる
+      if (s.kind === 'playPermission' && s.rule === 'protoFaceUpThisLine' && s.line === line
+          && defOf(st, uid).proto === DEFS[st.cards[s.uid].def].proto) needMatch = false;
     }
+    // CHAOS_4/CORRUPTION_1 lower: このカード自体がプロトコル不問でプレイできる(手札で有効)
+    const selfEff = DEFS[st.cards[uid].def].eff;
+    if (selfEff.lower && selfEff.lower.handStatic === 'thisAnyLine') needMatch = false;
     if (needMatch) {
       const names = [st.players[0].protocols[line].name, st.players[1].protocols[line].name];
       if (names.indexOf(defOf(st, uid).proto) < 0) return false;
@@ -148,7 +194,18 @@ function canPlay(st, player, uid, line, faceUp) {
 }
 
 function ignoreMiddleAt(st, line) {
-  return activeStatics(st).some(s => s.kind === 'ignoreMiddle' && s.line === line);
+  return activeStatics(st).some(s => s.kind === 'ignoreMiddle' && (s.scope === 'field' || s.line === line));
+}
+/* FEAR_1: あなたの手番中、相手のカードの中段コマンドはないものとして扱う */
+function middleSuppressed(st, uid) {
+  const loc = locate(st, uid);
+  if (!loc) return false;
+  return activeStatics(st).some(s => s.kind === 'suppressOppMiddle'
+    && s.sideIdx !== loc.side && st.turn === s.sideIdx);
+}
+/* ICE_4: このカードを反転させることはできない */
+function cannotFlip(st, uid) {
+  return activeStatics(st).some(s => s.kind === 'cannotFlipThis' && s.uid === uid);
 }
 function skipCacheFor(st, side) {
   return activeStatics(st).some(s => s.kind === 'skipCheckCache' && s.sideIdx === side);
@@ -196,12 +253,26 @@ function validatePicks(req, picks) {
 
 /* ---------- イベント / トリガー ---------- */
 
-function eventMatches(on, ev, cardSide) {
+function eventMatches(on, ev, cardSide, st, uid) {
   switch (on) {
     case 'afterOppDiscard':    return ev.on === 'discard' && ev.player !== cardSide;
+    case 'afterYouDiscard':    return ev.on === 'discard' && ev.player === cardSide;
+    case 'afterYouDiscardOppTurn': // PEACE_4: 相手の手番中にあなたが捨てたあと
+      return ev.on === 'discard' && ev.player === cardSide && st.turn !== cardSide;
     case 'afterYouDraw':       return ev.on === 'draw' && ev.player === cardSide;
+    case 'afterOppDraw':       return ev.on === 'draw' && ev.player !== cardSide;
     case 'afterYouDelete':     return ev.on === 'delete' && ev.actor === cardSide;
     case 'afterYouClearCache': return ev.on === 'clearCache' && ev.player === cardSide;
+    case 'afterYouShuffle':    return ev.on === 'shuffle' && ev.player === cardSide;
+    case 'afterYouRefresh':    return ev.on === 'refresh' && ev.player === cardSide;
+    case 'afterOppRefresh':    return ev.on === 'refresh' && ev.player !== cardSide;
+    case 'afterAnyRefresh':    return ev.on === 'refresh';
+    case 'afterOppCompile':    return ev.on === 'compile' && ev.player !== cardSide;
+    case 'afterOppPlayInThisLine': { // ICE_1: 相手がこのラインにプレイしたあと
+      if (ev.on !== 'play' || ev.player === cardSide) return false;
+      const loc = locate(st, uid);
+      return !!loc && loc.line === ev.line;
+    }
     default: return false;
   }
 }
@@ -218,7 +289,7 @@ function collectListeners(st, ev) {
         const tr = eff[slot] && eff[slot].trigger;
         if (!tr) continue;
         if (slot === 'lower' && !top) continue;
-        if (eventMatches(tr.on, ev, s)) out.push({ uid, slot });
+        if (eventMatches(tr.on, ev, s, st, uid)) out.push({ uid, slot });
       }
     }
   }
@@ -269,10 +340,10 @@ function execTrigger(ctx, uid, slot, locked) {
 function st_of(ctx) { return ctx.st; }
 
 /* wouldBeCovered / wouldBeCoveredOrFlipped の事前処理 */
-function fireWouldBeCovered(ctx, uid) {
-  runWouldBeCovered(ctx, collectWouldBeCovered(ctx, uid));
+function fireWouldBeCovered(ctx, uid, coveringUid) {
+  runWouldBeCovered(ctx, collectWouldBeCovered(ctx, uid, coveringUid));
 }
-function collectWouldBeCovered(ctx, uid) {
+function collectWouldBeCovered(ctx, uid, coveringUid) {
   const c = ctx.st.cards[uid];
   if (!c || !c.faceUp) return [];
   const eff = DEFS[c.def].eff;
@@ -281,6 +352,8 @@ function collectWouldBeCovered(ctx, uid) {
     const tr = eff[slot] && eff[slot].trigger;
     if (!tr) continue;
     if (tr.on !== 'wouldBeCovered' && tr.on !== 'wouldBeCoveredOrFlipped') continue;
+    // UNITY_1: 特定プロトコルのカードで覆われるときのみ発動
+    if (tr.byProto && (!coveringUid || DEFS[ctx.st.cards[coveringUid].def].proto !== tr.byProto)) continue;
     if (!triggerVisible(ctx.st, uid, slot)) continue;
     out.push({ uid, slot });
   }
@@ -303,6 +376,13 @@ function fireWouldBeFlipped(ctx, uid) {
 
 /* ---------- カード移動プリミティブ ---------- */
 
+/* committed 化の共通処理: commitStack登録 + 通し番号の記録 */
+function markCommitted(st, uid) {
+  st.cards[uid].zone = 'committed';
+  st.cards[uid].commitSeq = ++st.commitSeq;
+  st.commitStack.push(uid);
+}
+
 /* スタックからの物理除去 (committed 化)。uncover情報を返す */
 function extractCard(ctx, uid) {
   const st = ctx.st;
@@ -311,9 +391,8 @@ function extractCard(ctx, uid) {
   const stack = st.lines[loc.line][loc.side];
   const wasTop = loc.idx === stack.length - 1;
   stack.splice(loc.idx, 1);
-  st.cards[uid].zone = 'committed';
+  markCommitted(st, uid);
   st.cards[uid].commitDest = null;
-  st.commitStack.push(uid);
   if (wasTop && stack.length) {
     const nt = stack[stack.length - 1];
     if (st.cards[nt].faceUp) return { uncoverUid: nt };
@@ -322,6 +401,21 @@ function extractCard(ctx, uid) {
 }
 function fireUncover(ctx, info) {
   if (info && info.uncoverUid) resolveMiddle(ctx, info.uncoverUid, 'uncover');
+}
+
+/* ラインへの着地: 自分より後にcommittedになったカードの下へ挿入する。
+   これで複数カードが移動中でも「移動中になった順番」でスタックに入る */
+function landLine(ctx, uid, line, side) {
+  const st = ctx.st;
+  const c = st.cards[uid];
+  const stack = st.lines[line][side];
+  const seq = c.commitSeq || 0;
+  let i = stack.length;
+  while (i > 0 && (st.cards[stack[i - 1]].commitSeq || 0) > seq) i--;
+  stack.splice(i, 0, uid);
+  c.zone = 'field';
+  c.commitDest = null;
+  removeFrom(st.commitStack, uid);
 }
 
 function landTrash(ctx, uid) {
@@ -359,19 +453,34 @@ function doDelete(ctx, uid, actor) {
 }
 
 function doReturn(ctx, uid) {
-  if (!locate(ctx.st, uid)) return false;
-  const label = cardLabel(ctx.st, uid);
+  const st = ctx.st;
+  if (!locate(st, uid)) return false;
+  const label = cardLabel(st, uid);
+  const owner = st.cards[uid].owner;
+  // CORRUPTION_2 lower: カードが相手の手札に戻るとき、代わりに相手のデッキトップに裏向きで置く
+  const redirect = activeStatics(st).some(s => s.kind === 'returnToDeckTop' && s.sideIdx !== owner);
   const info = extractCard(ctx, uid);
-  ctx.st.cards[uid].commitDest = 'hand';
+  st.cards[uid].commitDest = redirect ? 'deck' : 'hand';
   fireUncover(ctx, info);
-  landHand(ctx, uid);
-  log(ctx, `${label} を手札に戻す`, uid);
+  if (redirect) {
+    const c = st.cards[uid];
+    c.zone = 'deck' + owner;
+    c.faceUp = false;
+    c.commitDest = null;
+    st.players[owner].deck.unshift(uid);
+    removeFrom(st.commitStack, uid);
+    log(ctx, `${label} は手札の代わりにデッキの一番上へ戻された`, uid);
+  } else {
+    landHand(ctx, uid);
+    log(ctx, `${label} を手札に戻す`, uid);
+  }
   return true;
 }
 
-function doFlip(ctx, uid) {
+function doFlip(ctx, uid, ignoreMiddleOnce) {
   const st = ctx.st;
   if (!locate(st, uid)) return false;
+  if (cannotFlip(st, uid)) { log(ctx, `${cardLabel(st, uid)} は反転できない`); return false; }
   const c = st.cards[uid];
   if (c.faceUp) {
     fireWouldBeFlipped(ctx, uid);                  // METAL_6: 先に自己削除
@@ -380,7 +489,8 @@ function doFlip(ctx, uid) {
   c.faceUp = !c.faceUp;
   log(ctx, `${DEFS[c.def].id} を${c.faceUp ? '表' : '裏'}に反転`, uid);
   const loc = locate(st, uid);
-  if (c.faceUp && loc && isTop(st, loc)) resolveMiddle(ctx, uid, 'flip');
+  // LUCK_2: 反転による中段は無視する
+  if (c.faceUp && loc && isTop(st, loc) && !ignoreMiddleOnce) resolveMiddle(ctx, uid, 'flip');
   return true;
 }
 
@@ -397,11 +507,8 @@ function doShift(ctx, uid, destLine) {
   st.cards[uid].commitDest = 'line' + destLine;
   fireUncover(ctx, info);
   const dest = st.lines[destLine][side];
-  if (dest.length) fireWouldBeCovered(ctx, dest[dest.length - 1]);
-  dest.push(uid);
-  st.cards[uid].zone = 'field';
-  st.cards[uid].commitDest = null;
-  removeFrom(st.commitStack, uid);
+  if (dest.length) fireWouldBeCovered(ctx, dest[dest.length - 1], uid);
+  landLine(ctx, uid, destLine, side);
   // E2: 覆われた状態から移動し、移動先で表向き・uncovered になったら中段が場に入る
   const nloc = locate(st, uid);
   if (wasCovered && st.cards[uid].faceUp && nloc && isTop(st, nloc)) resolveMiddle(ctx, uid, 'uncover');
@@ -414,16 +521,15 @@ function playToField(ctx, uid, line, side, faceUp, belowUid) {
   const c = st.cards[uid];
   removeFrom(st.players[0].hand, uid); removeFrom(st.players[1].hand, uid);
   removeFrom(st.players[0].deck, uid); removeFrom(st.players[1].deck, uid);
-  c.zone = 'committed';
+  markCommitted(st, uid);
   c.commitDest = 'line' + line;
   c.faceUp = faceUp;
-  st.commitStack.push(uid);
   const stack = st.lines[line][side];
   if (belowUid) {
     const i = stack.indexOf(belowUid);
     stack.splice(i < 0 ? 0 : i, 0, uid);
   } else {
-    const coveredTriggers = stack.length ? collectWouldBeCovered(ctx, stack[stack.length - 1]) : [];
+    const coveredTriggers = stack.length ? collectWouldBeCovered(ctx, stack[stack.length - 1], uid) : [];
     stack.push(uid);
     log(ctx, `P${side + 1}: ${faceUp ? DEFS[c.def].id : 'カード'} をライン${line + 1}に${faceUp ? '表' : '裏'}でプレイ`, uid);
     c.commitDest = 'line' + line;
@@ -433,6 +539,7 @@ function playToField(ctx, uid, line, side, faceUp, belowUid) {
     removeFrom(st.commitStack, uid);
     const loc = locate(st, uid);
     if (st.cards[uid].faceUp && loc && isTop(st, loc)) resolveMiddle(ctx, uid, 'play');
+    fireEvent(ctx, { on: 'play', player: side, line, card: uid });
     return;
   }
   c.zone = 'field';
@@ -441,6 +548,7 @@ function playToField(ctx, uid, line, side, faceUp, belowUid) {
   log(ctx, `P${side + 1}: ${faceUp ? DEFS[c.def].id : 'カード'} をライン${line + 1}に${faceUp ? '表' : '裏'}でプレイ`, uid);
   const loc = locate(st, uid);
   if (st.cards[uid].faceUp && loc && isTop(st, loc)) resolveMiddle(ctx, uid, 'play');
+  fireEvent(ctx, { on: 'play', player: side, line, card: uid });
 }
 
 function resolveMiddle(ctx, uid, why) {
@@ -448,8 +556,9 @@ function resolveMiddle(ctx, uid, why) {
   const loc = locate(st, uid);
   if (!loc) return;
   if (ignoreMiddleAt(st, loc.line)) { log(ctx, `${defOf(st, uid).id} の中段は無視された`); return; }
+  if (middleSuppressed(st, uid)) { log(ctx, `${defOf(st, uid).id} の中段はないものとして扱われた`); return; }
   const eff = DEFS[st.cards[uid].def].eff;
-  if (!eff.middle) return;
+  if (!eff.middle || !eff.middle.ops) return;  // 中段が常在効果のみ(SMOKE_3)の場合はコマンドなし
   if (ctx.depth > 80) throw { __err: '解決の深さ上限を超過 (無限ループの疑い)' };
   ctx.depth++;
   try {
@@ -461,8 +570,15 @@ function resolveMiddle(ctx, uid, why) {
 
 /* ---------- ドロー / 捨て札 ---------- */
 
+/* ICE_6: 手札が1枚以上ある場合ドロー不可 */
+function cannotDraw(st, side) {
+  return st.players[side].hand.length >= 1 &&
+    activeStatics(st).some(s => s.kind === 'cannotDraw' && s.sideIdx === side);
+}
+
 function drawCards(ctx, side, n, fromOpp) {
   const st = ctx.st;
+  if (cannotDraw(st, side)) { log(ctx, `P${side + 1}: ドローできない`); return 0; }
   const src = fromOpp ? 1 - side : side;
   let drawn = 0;
   for (let i = 0; i < n; i++) {
@@ -472,6 +588,7 @@ function drawCards(ctx, side, n, fromOpp) {
       for (const u of d.deck) { st.cards[u].zone = 'deck' + src; st.cards[u].faceUp = false; }
       shuffle(st, d.deck);
       log(ctx, `P${src + 1}: トラッシュをシャッフルしてデッキを再構成`);
+      fireEvent(ctx, { on: 'shuffle', player: src });
     }
     if (!d.deck.length) break;
     const u = d.deck.shift();
@@ -486,6 +603,13 @@ function drawCards(ctx, side, n, fromOpp) {
     fireEvent(ctx, { on: 'draw', player: side, count: drawn });
   }
   return drawn;
+}
+
+/* デッキシャッフル(効果由来)。shuffleイベントを発行 */
+function shuffleDeck(ctx, side) {
+  shuffle(ctx.st, ctx.st.players[side].deck);
+  log(ctx, `P${side + 1}: デッキをシャッフル`);
+  fireEvent(ctx, { on: 'shuffle', player: side });
 }
 
 function discardCards(ctx, side, uids) {
@@ -527,9 +651,8 @@ function massRemove(ctx, uids, destKind, actor) {
   for (const u of present) {
     const loc = locate(st, u);
     st.lines[loc.line][loc.side].splice(loc.idx, 1);
-    st.cards[u].zone = 'committed';
+    markCommitted(st, u);
     st.cards[u].commitDest = destKind === 'trash' ? 'trash' : 'hand';
-    st.commitStack.push(u);
   }
   for (const u of present) (destKind === 'trash' ? landTrash : landHand)(ctx, u);
   if (present.length) log(ctx, `${present.length}枚を同時に${destKind === 'trash' ? '削除' : '手札に戻'}した`);
@@ -587,6 +710,7 @@ function doRefresh(ctx, side) {
   useControlBenefit(ctx, side);
   drawCards(ctx, side, 5 - st.players[side].hand.length);
   log(ctx, `P${side + 1}: リフレッシュ`);
+  fireEvent(ctx, { on: 'refresh', player: side });
   return true;
 }
 
@@ -616,14 +740,10 @@ function doCompile(ctx, side, line) {
         const loc = locate(st, uid);
         st.lines[loc.line][loc.side].splice(loc.idx, 1);
         const dstack = st.lines[ans[0]][s];
-        st.cards[uid].zone = 'committed';
+        markCommitted(st, uid);
         st.cards[uid].commitDest = 'line' + ans[0];
-        st.commitStack.push(uid);
-        if (dstack.length) fireWouldBeCovered(ctx, dstack[dstack.length - 1]);
-        dstack.push(uid);
-        st.cards[uid].zone = 'field';
-        st.cards[uid].commitDest = null;
-        removeFrom(st.commitStack, uid);
+        if (dstack.length) fireWouldBeCovered(ctx, dstack[dstack.length - 1], uid);
+        landLine(ctx, uid, ans[0], s);
         log(ctx, `${DEFS[c.def].id} は削除の代わりにライン${ans[0] + 1}へ移動`);
       }
     }
@@ -631,7 +751,7 @@ function doCompile(ctx, side, line) {
   // 全カード同時削除 (トリガーなし)
   const removed = [];
   for (let s = 0; s < 2; s++) {
-    for (const uid of st.lines[line][s]) { st.cards[uid].zone = 'committed'; st.cards[uid].commitDest = 'trash'; st.commitStack.push(uid); removed.push(uid); }
+    for (const uid of st.lines[line][s]) { markCommitted(st, uid); st.cards[uid].commitDest = 'trash'; removed.push(uid); }
     st.lines[line][s] = [];
   }
   for (const uid of removed) landTrash(ctx, uid);
@@ -649,6 +769,7 @@ function doCompile(ctx, side, line) {
     log(ctx, `P${side + 1}: リコンパイル — 相手のデッキトップを獲得`);
     drawCards(ctx, side, 1, true);
   }
+  fireEvent(ctx, { on: 'compile', player: side, line });
 }
 
 /* ---------- Start / End / Cache フェイズ ---------- */
@@ -741,8 +862,10 @@ function execOp(ctx, fr, op) {
       const who = actorOf(fr, op);
       let min, max;
       if (op.countFrom) { const n = (fr.bind[op.countFrom.ref] || 0) + (op.countFrom.plus || 0); min = max = n; }
+      else if (op.count === 'all') { min = max = st.players[who].hand.length; }  // CHAOS_5/FEAR_2: 手札すべて
       else if (typeof op.count === 'object') { min = op.count.min; max = op.count.max === 'any' ? 99 : op.count.max; }
       else { min = max = op.count; }
+      if (op.count === 'all' && max === 0) { if (op.bind) fr.bind[op.bind] = 0; fr.done = true; return; }
       if (op.optional) {
         const handLen = st.players[who].hand.length;
         if (handLen >= 1) {
@@ -830,11 +953,20 @@ function execOp(ctx, fr, op) {
     case 'ifState': {
       const loc = locate(st, fr.source);
       let ok = false;
-      if (loc) {
+      if (op.cond === 'handEmpty') ok = st.players[fr.controller].hand.length === 0;
+      else if (op.cond === 'handGe2') ok = st.players[fr.controller].hand.length >= 2;
+      else if (op.cond === 'trashNonEmpty') ok = st.players[fr.controller].trash.length > 0;
+      else if (op.cond === 'protoKindsGe6') ok = countProtoKinds(st) >= 6;
+      else if (op.cond === 'protoKindsLe3') ok = countProtoKinds(st) <= 3;
+      else if (op.cond === 'otherProtoCardOnField') ok = countProtoOnField(st, defOf(st, fr.source).proto, fr.source) > 0;
+      else if (op.cond === 'protoCountGe5') ok = countProtoOnField(st, defOf(st, fr.source).proto) >= 5;
+      else if (loc) {
         if (op.cond === 'thisCovered') ok = !isTop(st, loc);
         if (op.cond === 'thisCovers') ok = loc.idx > 0;
+        if (op.cond === 'oppLeadsThisLine') ok = lineTotal(st, loc.line, 1 - fr.controller) > lineTotal(st, loc.line, fr.controller);
       }
       if (ok) execOps(ctx, fr, op.ops);
+      else fr.done = false;
       return;
     }
 
@@ -853,6 +985,10 @@ function execOp(ctx, fr, op) {
       let lines = [];
       if (op.lines === 'otherLines') lines = [0, 1, 2].filter(l => l !== fr.line);
       else if (op.lines === 'linesWithYourCards') lines = [0, 1, 2].filter(l => st.lines[l][fr.controller].length > 0);
+      else if (op.lines === 'linesWithCovered') // CHAOS_1: 覆われているカードがある各ライン
+        lines = [0, 1, 2].filter(l => st.lines[l][0].length > 1 || st.lines[l][1].length > 1);
+      else if (op.lines === 'linesWithFaceDown') // SMOKE_1: 裏向きカードが1枚以上ある各ライン
+        lines = [0, 1, 2].filter(l => [0, 1].some(s => st.lines[l][s].some(u => !st.cards[u].faceUp)));
       while (lines.length) {
         if (!slotActive(st, fr)) return;            // LIFE_1: 処理中に覆われたら中断
         let l;
@@ -880,6 +1016,293 @@ function execOp(ctx, fr, op) {
       return;
     }
 
+    /* ---------- Main 2 / Aux 2 拡張 ---------- */
+
+    case 'oppDrawsFromYourDeck': { // CHAOS_1 lower / ASSIMILATION_4: 相手はあなたのデッキトップを引く
+      fr.done = drawCards(ctx, 1 - fr.controller, op.count || 1, true) > 0;
+      return;
+    }
+
+    case 'revealTopDiscard': { // CLARITY_2 upper: デッキトップ公開、捨ててもよい
+      const deck = st.players[fr.controller].deck;
+      if (!deck.length) { fr.done = false; return; }
+      const top = deck[0];
+      st.revealed = { kind: 'card', uid: top, player: fr.controller };
+      log(ctx, `P${fr.controller + 1}: デッキトップ ${DEFS[st.cards[top].def].id} を公開`, top);
+      const ans = choose(ctx, { kind: 'yesNo', player: fr.controller, prompt: 'optional-discard-top', context: DEFS[st.cards[top].def].id });
+      if (ans.length) {
+        deck.shift();
+        landTrash(ctx, top);
+        log(ctx, `P${fr.controller + 1}: 公開したカードを捨て札`, top);
+        fireEvent(ctx, { on: 'discard', player: fr.controller, count: 1 });
+      }
+      fr.done = true;
+      return;
+    }
+
+    case 'searchDeck': { // CLARITY_3/4, UNITY_5: デッキ公開→該当カードを手札に→シャッフル
+      const p = st.players[fr.controller];
+      let matches;
+      if (op.proto) matches = p.deck.filter(u => DEFS[st.cards[u].def].proto === op.proto);
+      else matches = p.deck.filter(u => DEFS[st.cards[u].def].value === op.value);
+      log(ctx, `P${fr.controller + 1}: デッキを公開`);
+      const take = op.all ? matches : matches.slice(0, 1);
+      for (const u of take) {
+        removeFrom(p.deck, u);
+        st.cards[u].zone = 'hand' + fr.controller;
+        p.hand.push(u);
+      }
+      if (take.length) log(ctx, `P${fr.controller + 1}: ${take.map(u => DEFS[st.cards[u].def].id).join(', ')} を手札に加えた`);
+      shuffleDeck(ctx, fr.controller);
+      fr.done = take.length > 0;
+      return;
+    }
+
+    case 'shuffleTrashIntoDeck': { // CLARITY_5, TIME_1/3
+      const p = st.players[fr.controller];
+      if (!p.trash.length) { fr.done = false; return; }
+      if (op.optional) {
+        const ans = choose(ctx, { kind: 'yesNo', player: fr.controller, prompt: 'optional-' + op.op, context: defOf(st, fr.source).id });
+        if (!ans.length) { fr.done = false; return; }
+      }
+      for (const u of p.trash) { st.cards[u].zone = 'deck' + fr.controller; st.cards[u].faceUp = false; p.deck.push(u); }
+      p.trash = [];
+      log(ctx, `P${fr.controller + 1}: 捨て札置き場をデッキに戻す`);
+      shuffleDeck(ctx, fr.controller);
+      fr.done = true;
+      return;
+    }
+
+    case 'discardTop': { // LUCK_3/5: デッキトップを捨て札にする。bindで参照可
+      const who = op.player === 'opp' ? 1 - fr.controller : fr.controller;
+      const deck = st.players[who].deck;
+      if (!deck.length) { fr.done = false; return; }
+      const u = deck.shift();
+      landTrash(ctx, u);
+      log(ctx, `P${who + 1}: デッキトップ ${DEFS[st.cards[u].def].id} を捨て札`, u);
+      if (op.bind) fr.bind[op.bind] = u;
+      fireEvent(ctx, { on: 'discard', player: who, count: 1 });
+      fr.done = true;
+      return;
+    }
+
+    case 'discardDeck': { // TIME_2: あなたのデッキのカードをすべて捨て札にする
+      const p = st.players[fr.controller];
+      const n = p.deck.length;
+      while (p.deck.length) landTrash(ctx, p.deck.shift());
+      if (n) {
+        log(ctx, `P${fr.controller + 1}: デッキ${n}枚をすべて捨て札`);
+        fireEvent(ctx, { on: 'discard', player: fr.controller, count: n });
+      }
+      fr.done = n > 0;
+      return;
+    }
+
+    case 'declare': { // LUCK_1/4: 値またはプロトコルを宣言する
+      if (op.what === 'value') {
+        const opts = [0, 1, 2, 3, 4, 5, 6];
+        const ans = choose(ctx, { kind: 'option', player: fr.controller, options: opts.map(String), prompt: 'declare-value', context: defOf(st, fr.source).id });
+        fr.bind[op.bind || 'declared'] = opts[ans[0]];
+        log(ctx, `P${fr.controller + 1}: 値 ${opts[ans[0]]} を宣言`);
+      } else {
+        const names = Object.keys(PROTOS);
+        const ans = choose(ctx, { kind: 'option', player: fr.controller, options: names, prompt: 'declare-protocol', context: defOf(st, fr.source).id });
+        fr.bind[op.bind || 'declared'] = names[ans[0]];
+        log(ctx, `P${fr.controller + 1}: プロトコル ${names[ans[0]]} を宣言`);
+      }
+      fr.done = true;
+      return;
+    }
+
+    case 'ifBindMatches': { // LUCK_4: 捨てたカードが宣言と一致した場合
+      const u = fr.bind[op.ref];
+      if (u === undefined) { fr.done = false; return; }
+      const d = DEFS[st.cards[u].def];
+      const declared = fr.bind[op.declared || 'declared'];
+      const ok = op.match === 'protocol' ? d.proto === declared : d.value === declared;
+      if (ok) execOps(ctx, fr, op.ops);
+      else fr.done = false;
+      return;
+    }
+
+    case 'drawRevealPlay': { // LUCK_1: 3枚引き、宣言値のカードを公開してプレイできる
+      const declared = fr.bind[op.declared || 'declared'];
+      const p = st.players[fr.controller];
+      const before = p.hand.length;
+      drawCards(ctx, fr.controller, op.count || 3);
+      const drawn = p.hand.slice(before);
+      const matches = drawn.filter(u => DEFS[st.cards[u].def].value === declared);
+      if (!matches.length) { fr.done = false; return; }
+      let pick = matches[0];
+      if (matches.length > 1) {
+        const ans = choose(ctx, { kind: 'pickHand', player: fr.controller, candidates: matches, min: 1, max: 1, prompt: 'reveal-hand-card', context: defOf(st, fr.source).id });
+        pick = ans[0];
+      }
+      st.revealed = { kind: 'card', uid: pick, player: fr.controller };
+      log(ctx, `P${fr.controller + 1}: ${DEFS[st.cards[pick].def].id} を公開`, pick);
+      const yn = choose(ctx, { kind: 'yesNo', player: fr.controller, prompt: 'optional-play', context: DEFS[st.cards[pick].def].id });
+      if (yn.length) {
+        const faces = [];
+        for (let l = 0; l < 3; l++) {
+          if (canPlay(st, fr.controller, pick, l, true)) faces.push({ l, f: true });
+          if (canPlay(st, fr.controller, pick, l, false)) faces.push({ l, f: false });
+        }
+        if (faces.length) {
+          const opts = faces.map(x => 'ライン' + (x.l + 1) + (x.f ? '(表)' : '(裏)'));
+          const sel = choose(ctx, { kind: 'option', player: fr.controller, options: opts, prompt: 'play-dest', context: DEFS[st.cards[pick].def].id });
+          const f = faces[sel[0]];
+          playToField(ctx, pick, f.l, fr.controller, f.f);
+        }
+      }
+      fr.done = true;
+      return;
+    }
+
+    case 'swapStacks': { // MIRROR_3: 自分の2スタックの全カードを入れ替える
+      const nonEmpty = [0, 1, 2].filter(l => st.lines[l][fr.controller].length > 0);
+      if (nonEmpty.length < 2) { fr.done = false; return; }
+      const a = choose(ctx, { kind: 'pickLine', player: fr.controller, lines: nonEmpty, prompt: 'swap-stack-1', context: defOf(st, fr.source).id })[0];
+      const rest = nonEmpty.filter(l => l !== a);
+      const b = rest.length === 1 ? rest[0]
+        : choose(ctx, { kind: 'pickLine', player: fr.controller, lines: rest, prompt: 'swap-stack-2', context: defOf(st, fr.source).id })[0];
+      const sa = st.lines[a][fr.controller], sb = st.lines[b][fr.controller];
+      st.lines[a][fr.controller] = sb;
+      st.lines[b][fr.controller] = sa;
+      log(ctx, `P${fr.controller + 1}: ライン${a + 1}とライン${b + 1}のスタックを入れ替え`);
+      // 入れ替え後、新たにuncoveredになった表向きカードの中段はプレイに入らない(移動ではなくswap)
+      fr.done = true;
+      return;
+    }
+
+    case 'mirrorMiddle': { // MIRROR_2: 相手カード1枚の中段を、このカード上にあるかのように解決
+      const cands = [];
+      for (let l = 0; l < 3; l++) for (const uid of st.lines[l][1 - fr.controller]) {
+        const c = st.cards[uid];
+        if (c.faceUp && DEFS[c.def].eff.middle && DEFS[c.def].eff.middle.ops) cands.push(uid);
+      }
+      if (!cands.length) { fr.done = false; return; }
+      const pick = cands.length === 1 ? cands[0]
+        : choose(ctx, { kind: 'pickCard', player: fr.controller, candidates: cands, prompt: 'mirror-middle', context: defOf(st, fr.source).id })[0];
+      log(ctx, `[${defOf(st, fr.source).id}] ${DEFS[st.cards[pick].def].id} の中段コマンドをコピー解決`, fr.source);
+      const loc = locate(st, fr.source);
+      const sub = { source: fr.source, slot: 'middle', controller: fr.controller, line: loc ? loc.line : fr.line, bind: {}, done: false };
+      execOps(ctx, sub, DEFS[st.cards[pick].def].eff.middle.ops);
+      fr.done = true;
+      return;
+    }
+
+    case 'randomDiscard': { // FEAR_5: 相手はランダムに1枚捨て札にする
+      const who = op.player === 'opp' ? 1 - fr.controller : fr.controller;
+      const hand = st.players[who].hand;
+      if (!hand.length) { fr.done = false; return; }
+      const i = Math.floor(rand(st) * hand.length);
+      discardCards(ctx, who, [hand[i]]);
+      fr.done = true;
+      return;
+    }
+
+    case 'bothDiscardAll': { // PEACE_1: 両プレイヤーは手札をすべて捨て札にする(順序は発動者が選ぶ)
+      let order = [fr.controller, 1 - fr.controller];
+      if (st.players[0].hand.length && st.players[1].hand.length) {
+        const ans = choose(ctx, { kind: 'option', player: fr.controller, options: ['自分から', '相手から'], prompt: 'discard-order', context: defOf(st, fr.source).id });
+        if (ans[0] === 1) order = [1 - fr.controller, fr.controller];
+      }
+      let n = 0;
+      for (const who of order) n += discardCards(ctx, who, st.players[who].hand.slice());
+      fr.done = n > 0;
+      return;
+    }
+
+    case 'stealToHand': { // ASSIMILATION_1: 相手の裏向きカード1枚をあなたの手札に加える(所有権変更)
+      const cands = [];
+      for (let l = 0; l < 3; l++) for (const uid of st.lines[l][1 - fr.controller]) {
+        if (!st.cards[uid].faceUp) cands.push(uid);
+      }
+      if (!cands.length) { fr.done = false; return; }
+      const pick = cands.length === 1 ? cands[0]
+        : choose(ctx, { kind: 'pickCard', player: fr.controller, candidates: cands, prompt: 'steal-to-hand', context: defOf(st, fr.source).id })[0];
+      const info = extractCard(ctx, pick);
+      st.cards[pick].commitDest = 'hand';
+      fireUncover(ctx, info);
+      st.cards[pick].owner = fr.controller;
+      landHand(ctx, pick);
+      log(ctx, `${cardLabel(st, pick)} を自分の手札に加えた`, pick);
+      fr.done = true;
+      return;
+    }
+
+    case 'discardToOppTrash': { // ASSIMILATION_2 lower: 手札1枚を相手の捨て札置き場に置く
+      const hand = st.players[fr.controller].hand;
+      if (!hand.length) { fr.done = false; return; }
+      const pick = hand.length === 1 ? hand[0]
+        : choose(ctx, { kind: 'pickHand', player: fr.controller, candidates: hand.slice(), min: 1, max: 1, prompt: 'discard', context: defOf(st, fr.source).id })[0];
+      removeFrom(hand, pick);
+      const c = st.cards[pick];
+      c.owner = 1 - fr.controller;   // 相手のトラッシュに入る=相手の山に戻る
+      landTrash(ctx, pick);
+      log(ctx, `P${fr.controller + 1}: 手札1枚を相手の捨て札置き場に置いた`, pick);
+      fr.done = true;
+      return;
+    }
+
+    case 'setProtocolCompiled': { // DIVERSITY_1 / UNITY_2: 自分の該当プロトコルをコンパイル完了にする
+      const proto = op.proto || defOf(st, fr.source).proto;
+      const idx = st.players[fr.controller].protocols.findIndex(p => p.name === proto);
+      if (idx < 0 || st.players[fr.controller].protocols[idx].compiled) { fr.done = false; return; }
+      st.players[fr.controller].protocols[idx].compiled = true;
+      log(ctx, `P${fr.controller + 1}: ${proto} をコンパイル完了にした！`);
+      if (op.deleteLine) {
+        const uids = st.lines[idx][0].concat(st.lines[idx][1]);
+        massRemove(ctx, uids, 'trash', fr.controller);
+      }
+      if (st.players[fr.controller].protocols.every(p => p.compiled)) {
+        st.winner = fr.controller;
+        log(ctx, `P${fr.controller + 1} の勝利！`);
+      }
+      fr.done = true;
+      return;
+    }
+
+    case 'drawDynamic': { // UNITY_3 / DIVERSITY_2: 可変枚数ドロー
+      let n = 0;
+      if (op.count === 'protoOnField') n = countProtoOnField(st, defOf(st, fr.source).proto);
+      else if (op.count === 'protoKindsInThisLine') n = countProtoKindsInLine(st, fr.currentLine !== undefined ? fr.currentLine : fr.line);
+      if (n > 0) drawCards(ctx, fr.controller, n);
+      fr.done = n > 0;
+      return;
+    }
+
+    case 'playFromTrash': { // TIME_1/4: 捨て札置き場のカードをプレイする
+      const trash = st.players[fr.controller].trash;
+      if (!trash.length) { fr.done = false; return; }
+      const pick = trash.length === 1 ? trash[0]
+        : choose(ctx, { kind: 'pickCard', player: fr.controller, candidates: trash.slice(), prompt: 'play-from-trash', context: defOf(st, fr.source).id })[0];
+      if (op.facing === 'down') {
+        // TIME_4: このカードとは別のラインに裏向きでプレイ
+        const lines = [0, 1, 2].filter(l => l !== fr.line);
+        const l = choose(ctx, { kind: 'pickLine', player: fr.controller, lines, prompt: 'play-dest', context: DEFS[st.cards[pick].def].id })[0];
+        st.revealed = { kind: 'card', uid: pick, player: fr.controller };
+        log(ctx, `P${fr.controller + 1}: 捨て札の ${DEFS[st.cards[pick].def].id} を公開`, pick);
+        removeFrom(trash, pick);
+        playToField(ctx, pick, l, fr.controller, false);
+      } else {
+        // TIME_1: 通常プレイ(表は対応ライン、裏は任意)
+        const faces = [];
+        for (let l = 0; l < 3; l++) {
+          if (canPlay(st, fr.controller, pick, l, true)) faces.push({ l, f: true });
+          if (canPlay(st, fr.controller, pick, l, false)) faces.push({ l, f: false });
+        }
+        if (!faces.length) { fr.done = false; return; }
+        const opts = faces.map(x => 'ライン' + (x.l + 1) + (x.f ? '(表)' : '(裏)'));
+        const sel = choose(ctx, { kind: 'option', player: fr.controller, options: opts, prompt: 'play-dest', context: DEFS[st.cards[pick].def].id });
+        const f = faces[sel[0]];
+        removeFrom(trash, pick);
+        playToField(ctx, pick, f.l, fr.controller, f.f);
+      }
+      fr.done = true;
+      return;
+    }
+
     case 'drawByValue': {
       const uid = fr.bind[op.ref];
       if (uid === undefined) { fr.done = false; return; }
@@ -891,7 +1314,7 @@ function execOp(ctx, fr, op) {
 
     case 'drawByCount': {
       const n = (fr.bind[op.ref] || 0) + (op.plus || 0);
-      if (n > 0) drawCards(ctx, fr.controller, n);
+      if (n > 0) drawCards(ctx, actorOf(fr, op), n);
       fr.done = true;
       return;
     }
@@ -1001,6 +1424,7 @@ function matchesSel(st, fr, uid, sel) {
   const loc = locate(st, uid);
   if (!loc) return false;
   const c = st.cards[uid];
+  if (c.zone === 'committed') return false;  // 移動中(未着地)のカードは効果の対象外
   const coverage = sel.coverage || (sel.mode === 'all' ? 'all' : 'uncovered');
   const top = isTop(st, loc);
   if (coverage === 'uncovered' && !top) return false;
@@ -1013,10 +1437,26 @@ function matchesSel(st, fr, uid, sel) {
   if (sel.zone === 'thisLine' && loc.line !== fr.line) return false;
   if (sel.zone === 'thisStack' && (loc.line !== fr.line)) return false;
   if (sel.zone === 'currentLine' && loc.line !== fr.currentLine) return false;
+  if (sel.zone === 'lineWhereOppLeads') { // COURAGE_2: 相手合計が自分より大きいライン
+    if (lineTotal(st, loc.line, 1 - fr.controller) <= lineTotal(st, loc.line, fr.controller)) return false;
+  }
+  if (sel.zone === 'sameLineAsRef') {     // MIRROR_4: bindカードと同じライン
+    const ref = fr.bind[sel.refKey || 't'];
+    const rloc = ref !== undefined ? locate(st, ref) : null;
+    if (!rloc || rloc.line !== loc.line) return false;
+  }
+  if (sel.proto && DEFS[c.def].proto !== sel.proto) return false;
+  if (sel.notProto && DEFS[c.def].proto === sel.notProto) return false;
   if (sel.value && typeof sel.value === 'object') {
     const v = cardValue(st, uid);
     if (sel.value.in && sel.value.in.indexOf(v) < 0) return false;
     if (sel.value.eq !== undefined && v !== sel.value.eq) return false;
+    if (sel.value.ltProtoKinds && v >= countProtoKinds(st)) return false;                    // DIVERSITY_4
+    if (sel.value.gtHandCount && v <= st.players[fr.controller].hand.length) return false;  // PEACE_3
+    if (sel.value.eqBindPrinted) {  // LUCK_5: bindカードの印刷値と同値
+      const ref = fr.bind[sel.value.eqBindPrinted];
+      if (ref === undefined || v !== DEFS[st.cards[ref].def].value) return false;
+    }
   }
   return true;
 }
@@ -1076,7 +1516,7 @@ function collectCandidates(ctx, fr, op, sel, chooser) {
 function performVerb(ctx, fr, op, uid) {
   const st = ctx.st;
   switch (op.op) {
-    case 'flip':   return doFlip(ctx, uid);
+    case 'flip':   return doFlip(ctx, uid, op.ignoreMiddle);
     case 'delete': return doDelete(ctx, uid, fr.controller);
     case 'return': return doReturn(ctx, uid);
     case 'reveal': {
@@ -1091,6 +1531,13 @@ function performVerb(ctx, fr, op, uid) {
       let dest;
       const d = op.dest || 'anyOther';
       if (d === 'thisLine') dest = fr.line;
+      else if (d === 'oppHighestLine') { // COURAGE_4: 相手の最大合計値のライン(同値は選択)
+        const totals = [0, 1, 2].map(l => lineTotal(st, l, 1 - fr.controller));
+        const best = Math.max.apply(null, totals);
+        const lines = [0, 1, 2].filter(l => totals[l] === best && l !== loc.line);
+        if (!lines.length) return false;
+        dest = pickDest(lines);
+      }
       else if (d === 'fromOrToThisLine') {
         if (loc.line === fr.line) dest = pickDest([0, 1, 2].filter(l => l !== loc.line));
         else dest = fr.line;
@@ -1139,9 +1586,9 @@ function performMass(ctx, fr, op, cands) {
       if (!moving.length) continue;
       st.lines[fr.line][s] = st.lines[fr.line][s].filter(u => cands.indexOf(u) < 0);
       const dstack = st.lines[dest][s];
-      for (const u of moving) { st.cards[u].zone = 'committed'; st.cards[u].commitDest = 'line' + dest; st.commitStack.push(u); }
-      if (dstack.length) fireWouldBeCovered(ctx, dstack[dstack.length - 1]);
-      for (const u of moving) { st.lines[dest][s].push(u); st.cards[u].zone = 'field'; st.cards[u].commitDest = null; removeFrom(st.commitStack, u); }
+      for (const u of moving) { markCommitted(st, u); st.cards[u].commitDest = 'line' + dest; }
+      if (dstack.length) fireWouldBeCovered(ctx, dstack[dstack.length - 1], moving[0]);
+      for (const u of moving) landLine(ctx, u, dest, s);
     }
     // 移動元で新たに uncovered になった表向きカード
     for (let s = 0; s < 2; s++) {
@@ -1173,29 +1620,57 @@ function execPlayOp(ctx, fr, op) {
     const lines = [0, 1, 2].filter(l => l !== fr.line);
     line = null; // 後でカードと同時に選択
     var destChoices = lines;
+  }
+  else if (d === 'lineWithFaceDown') { // SMOKE_4: 裏向きカードが1枚以上あるライン
+    const lines = [0, 1, 2].filter(l => [0, 1].some(s => st.lines[l][s].some(u => !st.cards[u].faceUp)));
+    if (!lines.length) { fr.done = false; return; }
+    line = null;
+    destChoices = lines;
   } // dest 未指定 (SPEED_1) は通常プレイ → カード選択後にライン選択
 
-  if (source === 'topDeck') {
-    const deck = st.players[who].deck;
+  if (source === 'topDeck' || source === 'oppTopDeck') {
+    const deckOwner = source === 'oppTopDeck' ? 1 - who : who;
+    const deck = st.players[deckOwner].deck;
     if (!deck.length) { fr.done = false; return; }   // デッキ0枚: リシャッフルしない (ルール仕様 §5.2)
     const uid = deck[0];
+    // ASSIMILATION_3/6: 特定スタックの上に裏向きでプレイ
+    if (d === 'thisStack' || d === 'oppStack') {
+      const stSide = d === 'thisStack' ? (locate(st, fr.source) || { side: fr.controller }).side : 1 - fr.controller;
+      let l2;
+      if (d === 'thisStack') l2 = (locate(st, fr.source) || { line: fr.line }).line;
+      else {
+        const nonEmpty = [0, 1, 2].filter(l3 => st.lines[l3][stSide].length > 0);
+        const lines2 = nonEmpty.length ? nonEmpty : [0, 1, 2];
+        l2 = lines2.length === 1 ? lines2[0]
+          : choose(ctx, { kind: 'pickLine', player: fr.controller, lines: lines2, prompt: 'play-dest', context: defOf(st, fr.source).id })[0];
+      }
+      deck.shift();
+      playToField(ctx, uid, l2, stSide, false);
+      fr.done = true;
+      return;
+    }
     let l = line;
     if (l === null || l === undefined) {
       if (typeof destChoices !== 'undefined') {
         l = destChoices.length === 1 ? destChoices[0]
           : choose(ctx, { kind: 'pickLine', player: who, lines: destChoices, prompt: 'play-dest', context: defOf(st, fr.source).id })[0];
+      } else if (d === 'anyLine') { // LUCK_2: 任意のラインに裏向きでプレイ
+        l = choose(ctx, { kind: 'pickLine', player: who, lines: [0, 1, 2], prompt: 'play-dest', context: defOf(st, fr.source).id })[0];
       } else l = fr.line;
     }
     const faceUp = op.facing === 'up';
     if (!canPlay(st, who, uid, l, faceUp)) { fr.done = false; return; }
     deck.shift();
     playToField(ctx, uid, l, who, faceUp, op.dest === 'underThisCard' ? fr.source : undefined);
+    if (op.bind) fr.bind[op.bind] = uid;   // LUCK_2: プレイしたカードを後続opが参照
     fr.done = true;
     return;
   }
 
   // source: hand (committed=移動中のカードは除外)
-  const hand = st.players[who].hand.filter(u => st.cards[u].zone !== 'committed');
+  let hand = st.players[who].hand.filter(u => st.cards[u].zone !== 'committed');
+  if (op.filterValue !== undefined) hand = hand.filter(u => DEFS[st.cards[u].def].value === op.filterValue);   // CLARITY_3
+  if (op.notProto) hand = hand.filter(u => DEFS[st.cards[u].def].proto !== op.notProto);                        // DIVERSITY_1
   if (!hand.length) { fr.done = false; return; }
 
   if (op.facing === 'down') {
@@ -1213,8 +1688,10 @@ function execPlayOp(ctx, fr, op) {
   }
 
   // 通常プレイ (SPEED_1): 表/裏自由・通常ルール
+  const allowedLines = (line !== undefined && line !== null) ? [line]
+    : (typeof destChoices !== 'undefined') ? destChoices : [0, 1, 2];
   const opts = [];
-  for (const u of hand) for (let l = 0; l < 3; l++) {
+  for (const u of hand) for (const l of allowedLines) {
     if (canPlay(st, who, u, l, true)) opts.push(u + '|' + l + '|u');
     if (canPlay(st, who, u, l, false)) opts.push(u + '|' + l + '|d');
   }
@@ -1340,6 +1817,7 @@ function runReplay(base, action, choices) {
   const st = clone(base);
   st.revealed = null;
   if (!Array.isArray(st.commitStack)) st.commitStack = [];  // 外部由来のstate(詰めCompile共有盤面など)に対する防御
+  if (typeof st.commitSeq !== 'number') st.commitSeq = 0;
   const ctx = { st, choices, ci: 0, qn: 0, depth: 0, log: [], trace: TRACE ? [] : null };
   try {
     performAction(ctx, action);
@@ -1391,6 +1869,7 @@ function newGame(opts) {
     cards: {},
     actionLog: [],
     commitStack: [],
+    commitSeq: 0,
     revealed: null,
     pending: null
   };
