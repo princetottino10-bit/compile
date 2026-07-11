@@ -17,35 +17,49 @@ OPS = {
     "giveCard", "takeRandom", "rearrange", "swapProtocols", "refresh",
     "ifDone", "ifState", "choice", "forEachLine", "repeatPer",
     "drawByValue", "drawByCount", "noCompileNextTurn",
+    # Main 2 / Aux 2
+    "oppDrawsFromYourDeck", "revealTopDiscard", "searchDeck",
+    "shuffleTrashIntoDeck", "discardTop", "discardDeck", "declare",
+    "ifBindMatches", "drawRevealPlay", "swapStacks", "mirrorMiddle",
+    "randomDiscard", "bothDiscardAll", "stealToHand", "discardToOppTrash",
+    "setProtocolCompiled", "drawDynamic", "playFromTrash",
 }
 STATIC_KINDS = {
     "setValue", "modifyLineTotal", "playPermission", "ignoreMiddle", "skipCheckCache",
+    # Main 2 / Aux 2
+    "suppressOppMiddle", "cannotFlipThis", "cannotDraw", "returnToDeckTop",
 }
 TRIGGER_EVENTS = {
     "start", "end", "afterOppDiscard", "afterYouClearCache", "afterYouDraw",
     "afterYouDelete", "wouldBeCovered", "wouldBeCoveredOrFlipped",
     "wouldBeDeletedByCompile",
+    # Main 2 / Aux 2
+    "afterYouDiscard", "afterYouDiscardOppTurn", "afterOppDraw",
+    "afterYouShuffle", "afterYouRefresh", "afterOppRefresh", "afterAnyRefresh",
+    "afterOppCompile", "afterOppPlayInThisLine",
 }
 SELECT_KEYS = {
     "owner", "facing", "coverage", "zone", "value", "exclude", "count",
-    "mode", "ref",
+    "mode", "ref", "refKey", "proto", "notProto",
 }
 SELECT_VALUES = {
     "owner": {"self", "opp", "any"},
     "facing": {"up", "down", "any"},
     "coverage": {"uncovered", "covered", "all", "any"},
     "zone": {"thisLine", "thisStack", "otherLine", "chosenLine",
-             "otherLineWith8plus", "currentLine", "anywhere"},
+             "otherLineWith8plus", "currentLine", "anywhere",
+             "lineWhereOppLeads", "sameLineAsRef"},
     "exclude": {"thisCard"},
     "mode": {"all", "each", "pick"},
 }
 PLAY_DESTS = {
     "otherLine", "thisLine", "anyLine", "underThisCard", "currentLine",
+    "lineWithFaceDown", "thisStack", "oppStack",
 }
-SHIFT_DESTS = {"anyOther", "thisLine", "fromOrToThisLine", "oneOtherLine"}
+SHIFT_DESTS = {"anyOther", "thisLine", "fromOrToThisLine", "oneOtherLine", "oppHighestLine"}
 PERMISSION_RULES = {
     "oppNoFaceDownThisLine", "oppNoPlayThisLine", "oppFaceDownOnly",
-    "youFaceUpAnyLine",
+    "youFaceUpAnyLine", "protoFaceUpThisLine",
 }
 REVEAL_TARGETS = {"oppHand", "ownHandCard"}
 
@@ -69,7 +83,7 @@ def check_select(cid, sel):
             err(f"{cid}: select.{k} の未知の値 '{v}'")
     if "value" in sel:
         v = sel["value"]
-        ok = (isinstance(v, dict) and set(v) <= {"in", "eq"}) or v in ("highest", "lowest")
+        ok = (isinstance(v, dict) and set(v) <= {"in", "eq", "ltProtoKinds", "gtHandCount", "eqBindPrinted"}) or v in ("highest", "lowest")
         if not ok:
             err(f"{cid}: select.value が不正 {v!r}")
 
@@ -104,6 +118,8 @@ def check_slot(cid, slot_name, slot, card_text):
         err(f"{cid}.{slot_name}: _text が cards.json と不一致\n  cards : {card_text!r}\n  effects: {text!r}")
     bodies = [k for k in ("ops", "static", "trigger") if k in slot]
     if len(bodies) != 1:
+        if slot.get("handStatic"):
+            return  # CHAOS_4/CORRUPTION_1: 手札で有効なプレイ許可
         err(f"{cid}.{slot_name}: ops/static/trigger のいずれか1つを持つこと (現在 {bodies})")
         return
     kind = bodies[0]

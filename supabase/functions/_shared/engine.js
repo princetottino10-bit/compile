@@ -1427,6 +1427,7 @@ function newGame(opts) {
 /* ---------- AI ---------- */
 
 let AI_LEVEL = 1; // 0=easy, 1=normal, 2=hard
+const AI_THINK_BUDGET_MS = 560;
 function setAiLevel(v) { AI_LEVEL = Math.max(0, Math.min(2, v | 0)); }
 
 /* --- Phase A: 評価関数 --- */
@@ -1742,13 +1743,19 @@ function randomPicks(req) {
 }
 
 let AI_CHOICE_DEPTH = 0;
+let AI_SEARCH_DEADLINE = 0;
+
+function aiSearchExpired() {
+  return AI_SEARCH_DEADLINE > 0 && aiNow() >= AI_SEARCH_DEADLINE;
+}
 
 function aiChoiceScore(st, req, picks, me) {
+  if (aiSearchExpired()) return -1e8;
   AI_CHOICE_DEPTH++;
   try {
     const res = apply(st, { type: 'choose', id: req.id, picks });
     if (!res || res.error) return -1e8;
-    const out = res.requests && res.requests.length ? resolveRequests(res.state, smartPicks, 8) : res;
+    const out = res.requests && res.requests.length ? resolveRequests(res, smartPicks, 8) : res;
     if (!out || out.error || (out.requests && out.requests.length)) return -1e8;
     return aiScore(out.state, me);
   } finally { AI_CHOICE_DEPTH--; }
@@ -1771,10 +1778,36 @@ function aiPlayFreePicks(st, req, me) {
 
   let best = ranked[0].raw, bestScore = -Infinity;
   for (const item of ranked.slice(0, 6)) {
+    if (aiSearchExpired()) break;
     const score = aiChoiceScore(st, req, [item.raw], me) + item.prelim * 0.05;
     if (score > bestScore) { bestScore = score; best = item.raw; }
   }
   return [best];
+}
+
+function aiStrategicCardPicks(st, req, me, ranked, fallback) {
+  const max = req.max !== undefined ? req.max : 1;
+  const min = req.min !== undefined ? req.min : 1;
+  if (AI_CHOICE_DEPTH > 0 || max !== 1 || req.candidates.length < 2
+      || /(?:^|-)order$/.test(req.prompt || '')) return fallback;
+
+  let pool = ranked;
+  if (pool.length > 8) pool = pool.slice(0, 5).concat(pool.slice(-3));
+  const seen = new Set(), options = [];
+  if (min === 0) options.push([]);
+  for (const item of pool) {
+    if (seen.has(item.uid)) continue;
+    seen.add(item.uid);
+    options.push([item.uid]);
+  }
+
+  let best = fallback, bestScore = -Infinity;
+  for (const picks of options) {
+    if (aiSearchExpired()) break;
+    const score = aiChoiceScore(st, req, picks, me);
+    if (score > bestScore) { bestScore = score; best = picks; }
+  }
+  return bestScore > -1e8 ? best : fallback;
 }
 
 function smartPicks(st, req) {
@@ -1807,8 +1840,9 @@ function smartPicks(st, req) {
       scored.sort((a, b) => b.s - a.s);
       const min = req.min !== undefined ? req.min : 1;
       const max = Math.min(req.max !== undefined ? req.max : 1, scored.length);
-      if (min === 0 && (!scored.length || scored[0].s < 8)) return [];
-      return scored.slice(0, Math.max(min, Math.min(max, 1))).map(x => x.uid);
+      const fallback = min === 0 && (!scored.length || scored[0].s < 8)
+        ? [] : scored.slice(0, Math.max(min, Math.min(max, 1))).map(x => x.uid);
+      return aiStrategicCardPicks(st, req, me, scored, fallback);
     }
     case 'pickHand': {
       const scored = req.candidates.map(uid => {
@@ -1891,14 +1925,14 @@ function smartPicks(st, req) {
 
 /* --- 共通: アクション後のリクエスト解決 --- */
 
-function resolveRequests(state, pickFn, limit) {
-  let res = { state, requests: [], error: null, log: [] };
-  if (state.pending) {
-    res = apply(state, { type: '_begin' });
-    if (!res || res.error) return res;
+function resolveRequests(initial, pickFn, limit) {
+  let res = initial;
+  if (!res || !res.state || !Array.isArray(res.requests)) {
+    return { state: initial, requests: [], error: 'invalid AI resolution input', log: [] };
   }
   let guard = 0;
   while (res && !res.error && res.requests.length && guard++ < (limit || 30)) {
+    if (aiSearchExpired()) break;
     const req = res.requests[0];
     res = apply(res.state, { type: 'choose', id: req.id, picks: pickFn(res.state, req) });
   }
@@ -1910,7 +1944,7 @@ function applyAndResolve(state, action, pickFn) {
   try {
     const res = apply(state, action);
     if (!res || res.error || !res.requests.length) return res;
-    return resolveRequests(res.state, pickFn, 30);
+    return resolveRequests(res, pickFn, 30);
   } finally { TRACE = wasTrace; }
 }
 
@@ -1968,10 +2002,12 @@ function aiActionHard(state) {
   if (!acts.length) return null;
   if (acts.length === 1) return acts[0];
 
-  const wasTrace = TRACE; TRACE = false;
+  const wasTrace = TRACE, previousDeadline = AI_SEARCH_DEADLINE; TRACE = false;
   try {
-    const deadline = aiNow() + 600;
-    const ordered = orderMoves(acts, state, me);
+    const deadline = aiNow() + AI_THINK_BUDGET_MS;
+    AI_SEARCH_DEADLINE = deadline;
+    const ordered = orderMoves(acts, state, me, deadline);
+    if (!ordered.length) return acts[0];
     const limit = Math.min(ordered.length, 24);
     let alpha = -Infinity, best = ordered[0].a;
     for (let i = 0; i < limit; i++) {
@@ -1990,7 +2026,7 @@ function aiActionHard(state) {
       if (val > alpha) { alpha = val; best = a; }
     }
     return best;
-  } finally { TRACE = wasTrace; }
+  } finally { TRACE = wasTrace; AI_SEARCH_DEADLINE = previousDeadline; }
 }
 
 function minimaxMin(state, me, alpha, beta, deadline) {
@@ -1998,7 +2034,7 @@ function minimaxMin(state, me, alpha, beta, deadline) {
   const op = 1 - me;
   const acts = legalActions(state);
   if (!acts.length) return aiScore(state, me);
-  const ordered = orderMoves(acts, state, op);
+  const ordered = orderMoves(acts, state, op, deadline);
   const limit = Math.min(ordered.length, 12);
   let val = Infinity;
   for (let i = 0; i < limit; i++) {
@@ -2036,12 +2072,14 @@ function minimaxMaxShallow(state, me, alpha, beta, deadline) {
   return val === -Infinity ? aiScore(state, me) : val;
 }
 
-function orderMoves(acts, state, side) {
-  const scored = acts.map(a => {
+function orderMoves(acts, state, side, deadline) {
+  const scored = [];
+  for (const a of acts) {
+    if (deadline && aiNow() >= deadline && scored.length) break;
     const res = applyAndResolve(state, a, smartPicks);
     const sc = (!res || res.error) ? -1e8 : aiScore(res.state, side) + aiActionBias(state, a, side);
-    return { a, sc, res };
-  });
+    scored.push({ a, sc, res });
+  }
   scored.sort((a, b) => b.sc - a.sc);
   return scored;
 }

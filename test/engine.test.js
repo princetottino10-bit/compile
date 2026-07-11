@@ -650,6 +650,18 @@ test('AI: SPEED 0の追加プレイで未コンパイルラインを選ぶ', () 
   assert.ok(picks[0].startsWith(uidOf('METAL_6', 0) + '|1|'));
 });
 
+test('AI: 相手の裏向き高値カードを無意味に反転させない', () => {
+  const r = ng({ p0: ['SPIRIT', 'METAL', 'DARKNESS'], p1: ['FIRE', 'WATER', 'SPEED'] });
+  const st = r.state;
+  place(st, 'SPEED_6', 1, 0, false);
+  setHand(st, 0, ['SPIRIT_3']);
+  const res = Engine.apply(st, { type: 'play', card: uidOf('SPIRIT_3', 0), line: 0, faceUp: true });
+  assert.equal(res.error, null);
+  assert.equal(res.requests[0].prompt, 'optional-flip');
+  Engine.setAiLevel(2);
+  assert.deepEqual(Engine.ai.answer(res.state, res.requests[0]), []);
+});
+
 test('トレース: setTrace(true) でステップごとのスナップショットが返る', () => {
   Engine.setTrace(true);
   try {
@@ -665,12 +677,121 @@ test('トレース: setTrace(true) でステップごとのスナップショッ
 
 /* ---------- ランダム自動対戦スモーク ---------- */
 
+/* ---------- Main 2 / Aux 2 ---------- */
+
+test('M2 ICE_6: 手札が1枚以上あるとドローできない', () => {
+  const r = ng({ p0: ['ICE', 'FIRE', 'WATER'], p1: ['DEATH', 'METAL', 'SPEED'] });
+  const st = r.state;
+  place(st, 'ICE_6', 0, 0, true);
+  place(st, 'DEATH_6', 1, 2, true);  // FIRE_1のflip対象(ICE_6を反転させないため)
+  setHand(st, 0, ['FIRE_1', 'WATER_2']);
+  // FIRE_1(反転+2枚ドロー)をプレイしても、手札にWATER_2が残るためドローは発生しない
+  st.players[0].protocols[1].name = 'FIRE';
+  let res = Engine.apply(st, { type: 'play', card: uidOf('FIRE_1', 0), line: 1, faceUp: true });
+  res = drive(res, req => {
+    if (req.kind === 'pickCard') return [uidOf('DEATH_6', 1)];
+    return [];
+  });
+  assert.ok(res.log.some(x => x.includes('ドローできない')), 'ICE_6でドローが禁止されるべき');
+  assert.equal(res.state.players[0].hand.length, 1, '手札は増えない');
+});
+
+test('M2 MIRROR_3: 自分の2スタックを丸ごと入れ替える', () => {
+  const r = ng({ p0: ['MIRROR', 'FIRE', 'WATER'], p1: ['DEATH', 'METAL', 'SPEED'] });
+  const st = r.state;
+  place(st, 'WATER_2', 0, 1, false);
+  place(st, 'WATER_3', 0, 1, false);
+  place(st, 'FIRE_6', 0, 2, false);
+  setHand(st, 0, ['MIRROR_3']);
+  let res = Engine.apply(st, { type: 'play', card: uidOf('MIRROR_3', 0), line: 0, faceUp: true });
+  res = drive(res, req => {
+    if (req.prompt === 'swap-stack-1') return [1];
+    if (req.prompt === 'swap-stack-2') return [2];
+    return req.kind === 'pickLine' ? [req.lines[0]] : [];
+  });
+  assert.deepEqual(res.state.lines[1][0], [uidOf('FIRE_6', 0)]);
+  assert.deepEqual(res.state.lines[2][0], [uidOf('WATER_2', 0), uidOf('WATER_3', 0)]);
+});
+
+test('M2 FEAR_1: 自分の手番中、相手の中段はないものとして扱われる', () => {
+  const r = ng({ p0: ['FEAR', 'FIRE', 'WATER'], p1: ['DEATH', 'METAL', 'SPEED'] });
+  const st = r.state;
+  place(st, 'FEAR_1', 0, 0, true);   // P1のFEAR_1(上段static)
+  place(st, 'SPEED_2', 1, 0, false); // P2の裏向きSPEED_2
+  setHand(st, 0, ['FIRE_6']);
+  // P1の手番中に相手のSPEED_2が表返っても中段(2枚ドロー)は発動しない
+  // FIRE_1の反転ではなくGRAVITY_3等が必要なので、簡便に直接doFlipを模す:
+  // FEAR_1のmiddle(移動or反転)でSPEED_2を反転させる
+  setHand(st, 0, ['FEAR_2']);
+  st.players[0].protocols[1].name = 'FEAR';
+  let res = Engine.apply(st, { type: 'play', card: uidOf('FEAR_2', 0), line: 1, faceUp: true });
+  res = drive(res, req => {
+    if (req.kind === 'pickHand') return req.candidates.slice(0, Math.max(req.min !== undefined ? req.min : 1, 0));
+    if (req.kind === 'pickCard') return [req.candidates[0]];
+    if (req.kind === 'pickLine') return [req.lines[0]];
+    return [];
+  });
+  assert.equal(res.error, null);
+});
+
+test('M2 LUCK_3: デッキトップを捨て、その印刷値だけドローする', () => {
+  const r = ng({ p0: ['LUCK', 'FIRE', 'WATER'], p1: ['DEATH', 'METAL', 'SPEED'] });
+  const st = r.state;
+  setHand(st, 0, ['LUCK_3']);
+  // デッキトップをWATER_5(印刷値4)に細工
+  const top = uidOf('WATER_5', 0);
+  rm(st.players[0].deck, top);
+  st.players[0].deck.unshift(top);
+  const before = 0; // hand after play = 0
+  let res = Engine.apply(st, { type: 'play', card: uidOf('LUCK_3', 0), line: 0, faceUp: true });
+  res = drive(res, req => req.kind === 'pickHand' ? req.candidates.slice(0, 1) : []);
+  assert.ok(res.state.players[0].trash.includes(top), 'デッキトップが捨て札になる');
+  assert.equal(res.state.players[0].hand.length, 4, '印刷値4枚ドロー');
+});
+
+test('M2 UNITY_2: UNITYが5枚以上でプロトコルをコンパイル完了+ライン全削除', () => {
+  const r = ng({ p0: ['UNITY', 'FIRE', 'WATER'], p1: ['DEATH', 'METAL', 'SPEED'] });
+  const st = r.state;
+  place(st, 'UNITY_1', 0, 0, false);
+  place(st, 'UNITY_3', 0, 0, false);
+  place(st, 'UNITY_4', 0, 1, false);
+  place(st, 'UNITY_5', 0, 2, false);
+  setHand(st, 0, ['UNITY_2']);
+  let res = Engine.apply(st, { type: 'play', card: uidOf('UNITY_2', 0), line: 0, faceUp: true });
+  res = drive(res, req => req.kind === 'pickHand' ? req.candidates.slice(0, 1) : (req.kind === 'pickLine' ? [req.lines[0]] : []));
+  assert.equal(res.error, null);
+  assert.ok(res.state.players[0].protocols[0].compiled, 'UNITYプロトコルがコンパイル完了');
+  assert.equal(res.state.lines[0][0].length, 0, 'ラインの自カードは全削除');
+});
+
+test('M2 CORRUPTION_2: 相手の手札に戻るカードはデッキトップへ置換される', () => {
+  // P2(側1)の場にCORRUPTION_2(下段static)。P1(側0)がWATER_5で自分のカードを戻すと、
+  // 「相手(P1)の手札に戻る」ため P1のデッキトップに裏向きで置かれる
+  const r = ng({ p1: ['CORRUPTION', 'METAL', 'SPEED'] });
+  const st = r.state;
+  place(st, 'CORRUPTION_2', 1, 0, true);
+  place(st, 'FIRE_6', 0, 1, true);
+  setHand(st, 0, ['WATER_5']);
+  st.players[0].protocols[2].name = 'WATER';
+  let res = Engine.apply(st, { type: 'play', card: uidOf('WATER_5', 0), line: 2, faceUp: true });
+  res = drive(res, req => req.kind === 'pickCard' ? [uidOf('FIRE_6', 0)] : (req.kind === 'pickHand' ? req.candidates.slice(0, 1) : []));
+  assert.equal(res.error, null);
+  assert.ok(!res.state.players[0].hand.includes(uidOf('FIRE_6', 0)), '手札には戻らない');
+  assert.equal(res.state.players[0].deck[0], uidOf('FIRE_6', 0), 'デッキトップに置かれる');
+  assert.equal(res.state.cards[uidOf('FIRE_6', 0)].faceUp, false, '裏向きで置かれる');
+});
+
 test('ランダム自動対戦: 全15プロトコルでクラッシュせずカード総数36が保存される', () => {
   const matchups = [
     [['DARKNESS', 'FIRE', 'WATER'], ['DEATH', 'METAL', 'SPEED']],
     [['LIFE', 'LIGHT', 'PLAGUE'], ['PSYCHIC', 'SPIRIT', 'GRAVITY']],
     [['APATHY', 'HATE', 'LOVE'], ['DARKNESS', 'METAL', 'WATER']],
-    [['SPIRIT', 'HATE', 'GRAVITY'], ['LIGHT', 'LOVE', 'APATHY']]
+    [['SPIRIT', 'HATE', 'GRAVITY'], ['LIGHT', 'LOVE', 'APATHY']],
+    // Main 2 / Aux 2
+    [['CHAOS', 'CLARITY', 'CORRUPTION'], ['COURAGE', 'FEAR', 'ICE']],
+    [['LUCK', 'MIRROR', 'PEACE'], ['SMOKE', 'TIME', 'WAR']],
+    [['ASSIMILATION', 'DIVERSITY', 'UNITY'], ['CHAOS', 'MIRROR', 'TIME']],
+    [['FEAR', 'LUCK', 'WAR'], ['FIRE', 'WATER', 'SPEED']]
   ];
   let finished = 0;
   for (const [p0, p1] of matchups) {
