@@ -330,6 +330,29 @@ test('FIRE_1 覆われトリガー: 覆うカード(未着地)は反転対象に
   assert.equal(res.state.cards[uidOf('LIGHT_1', 0)].faceUp, false, 'flipはLIGHT_1に向かう');
 });
 
+test('uncover割り込みでも移動カードはcommitted順にスタックへ入る', () => {
+  const r = ng({ p0: ['DARKNESS', 'SPEED', 'WATER'] });
+  const st = r.state;
+  // ライン1: [DARKNESS_5(表), WATER_6(裏)] / ライン3: WATER_3(裏)
+  place(st, 'DARKNESS_5', 0, 0, true);
+  place(st, 'WATER_6', 0, 0, false);
+  place(st, 'WATER_3', 0, 2, false);
+  setHand(st, 0, ['SPEED_4']);
+  st.players[0].protocols[1].name = 'SPEED';
+  // SPEED_4プレイ→WATER_6をライン2へ移動(committed先)→uncoverでDARKNESS_5が
+  // WATER_3をライン2へ移動(committed後・先に着地)→WATER_6が着地
+  let res = Engine.apply(st, { type: 'play', card: uidOf('SPEED_4', 0), line: 1, faceUp: true });
+  assert.equal(res.error, null);
+  res = drive(res, req => {
+    if (req.prompt === 'shift') return [uidOf('WATER_6', 0)];
+    if (req.prompt === 'shift-dest') return [1];
+    throw new Error('想定外の選択: ' + req.prompt);
+  });
+  // committed順(WATER_6→WATER_3)で下から積まれること
+  assert.deepEqual(res.state.lines[1][0],
+    [uidOf('SPEED_4', 0), uidOf('WATER_6', 0), uidOf('WATER_3', 0)]);
+});
+
 test('コンパイル: 値10以上かつ相手超過で強制コンパイル・コントロール獲得も確認', () => {
   const r = ng();
   const st = r.state;
