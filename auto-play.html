@@ -427,10 +427,11 @@ html.mobile-ui #actionBar{bottom:132px}
 #actionBar .ab-btn.pri:disabled{opacity:.4;box-shadow:none}
 /* 盤面を見せるモード: 背景透過 + パネルを下部に寄せる */
 .ov.board-visible{background:transparent;align-items:flex-end;padding:0;pointer-events:none}
-.ov.board-visible .panel{pointer-events:auto;max-width:520px;border-radius:16px 16px 0 0;max-height:46vh;padding:14px 18px;
+.ov.board-visible .panel{pointer-events:auto;max-width:520px;border-radius:16px;max-height:46vh;padding:14px 18px;
   box-shadow:0 -16px 50px -10px rgba(0,0,0,.85),0 0 0 1px rgba(233,30,140,.25);
-  animation:sheetup .25s cubic-bezier(.16,1,.3,1)}
-@keyframes sheetup{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  animation:sheetin .22s ease}
+/* transformで位置を動かすと、アニメが止まる環境でパネルが画面外に残るためopacityのみ */
+@keyframes sheetin{from{opacity:0}to{opacity:1}}
 /* モバイルのカード詳細は、操作対象の自分側を隠さず相手フィールド側へ表示する */
 /* 選択モーダルの最小化(盤面確認用) */
 #modalMin{width:100%;border:none;background:none;color:var(--txd);font:700 .62rem var(--fmono);
@@ -4736,6 +4737,14 @@ function openModal(html, mode){
   ov.classList.remove('minimized');
   ov.classList.add('on');
   document.getElementById('modalRestore').style.display = 'none';
+  // boardモード: シートを手札の上端より上に配置して手札を隠さない
+  if (mode === 'board') {
+    var hand = document.getElementById('hand');
+    var hh = hand ? Math.max(0, window.innerHeight - hand.getBoundingClientRect().top) : 0;
+    ov.style.paddingBottom = (hh + 6) + 'px';
+  } else {
+    ov.style.paddingBottom = '';
+  }
   if (mode === 'opponent') positionOpponentModal();
 }
 function positionOpponentModal(){
@@ -4754,6 +4763,7 @@ function closeModal(){
   var ov = document.getElementById('modalOv'), panel = document.getElementById('modalPanel');
   ov.classList.remove('on'); ov.classList.remove('board-visible'); ov.classList.remove('opponent-visible');
   ov.classList.remove('minimized');
+  ov.style.paddingBottom = '';
   document.getElementById('modalRestore').style.display = 'none';
   panel.classList.remove('editor-panel');
   panel.style.left = panel.style.top = panel.style.width = panel.style.maxHeight = '';
