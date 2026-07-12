@@ -3064,6 +3064,25 @@ function aiStrategicCardPicks(st, req, me, ranked, fallback) {
   return bestScore > -1e8 ? best : fallback;
 }
 
+function aiStrategicHandPicks(st, req, me, ranked, fallback) {
+  const max = req.max !== undefined ? req.max : 1;
+  const min = req.min !== undefined ? req.min : 1;
+  if (AI_CHOICE_DEPTH > 0 || max !== 1 || req.candidates.length < 2) return fallback;
+
+  let pool = ranked;
+  if (pool.length > 8) pool = pool.slice(0, 5).concat(pool.slice(-3));
+  const options = min === 0 ? [[]] : [];
+  for (const item of pool) options.push([item.uid]);
+
+  let best = fallback, bestScore = -Infinity;
+  for (const picks of options) {
+    if (aiSearchExpired()) break;
+    const score = aiChoiceScore(st, req, picks, me);
+    if (score > bestScore) { bestScore = score; best = picks; }
+  }
+  return bestScore > -1e8 ? best : fallback;
+}
+
 function smartPicks(st, req) {
   const me = req.player;
   const op = 1 - me;
@@ -3122,8 +3141,10 @@ function smartPicks(st, req) {
       });
       scored.sort((a, b) => a.s - b.s);
       const min = req.min !== undefined ? req.min : 1;
-      if (min === 0 && (!scored.length || scored[0].s > 8)) return [];
-      return scored.slice(0, Math.max(min, 1)).map(x => x.uid);
+      const max = Math.min(req.max !== undefined ? req.max : 1, scored.length);
+      const fallback = min === 0 && (!scored.length || scored[0].s > 8)
+        ? [] : scored.slice(0, Math.max(min, Math.min(max, 1))).map(x => x.uid);
+      return aiStrategicHandPicks(st, req, me, scored, fallback);
     }
     case 'pickLine': {
       let bestLine = req.lines[0], bestSc = -Infinity;
@@ -3150,12 +3171,16 @@ function smartPicks(st, req) {
     }
     case 'option': {
       if (req.options.length <= 1) return [0];
-      let bestIdx = 0, bestSc = -Infinity;
+      let best = [0], bestSc = -Infinity;
       for (let i = 0; i < req.options.length; i++) {
         const s = aiChoiceScore(st, req, [i], me);
-        if (s > bestSc) { bestSc = s; bestIdx = i; }
+        if (s > bestSc) { bestSc = s; best = [i]; }
       }
-      return [bestIdx];
+      if (req.optional) {
+        const skip = aiChoiceScore(st, req, [], me);
+        if (skip > bestSc) best = [];
+      }
+      return best;
     }
     case 'yesNo': {
       const yS = aiChoiceScore(st, req, ['yes'], me);
@@ -4042,6 +4067,7 @@ function enterReq(req){
 function reqSkip(){ if (curReq) answer(curReq, []); }
 function reqConfirm(){
   if (!curReq) return;
+  if (curReq.kind === 'arrange' && arrangeUi){ arrangeUi.commit(); return; }
   answer(curReq, selBuf.slice());
 }
 
@@ -4087,6 +4113,15 @@ function updateMsgBar(){
   }
   if (uiMode === 'request' && curReq){
     mb.classList.remove('quiet');
+    if (curReq.kind === 'arrange' && arrangeUi){
+      // 盤面直接タップの並べ替え中(モーダルなし)
+      var aw = playerName(curReq.target);
+      mt.textContent = (curReq.exact === 'transposition')
+        ? '⇄ ' + aw + 'の光るプロトコルを2つタップして入れ替え'
+        : '⇄ ' + aw + 'の光るプロトコルをタップして入れ替え → 確定';
+      setActionBar(true, curReq.exact !== 'transposition', !arrangeUi.changed(), false, '');
+      return;
+    }
     var min = curReq.min !== undefined ? curReq.min : 1;
     var max = curReq.max !== undefined ? curReq.max : 1;
     var cnt = max > 1 ? ' (' + selBuf.length + '/' + Math.min(max, (curReq.candidates||[]).length) + ')' : '';
@@ -4772,59 +4807,39 @@ function modalList(title, labels, cb){
 }
 
 function modalArrange(req){
-  // names[i] = 元の位置 i のプロトコル名。perm[pos] = その位置に来る「元の index」
-  var names = req.current;
+  // モーダルシートは使わず、盤面のプロトコルを直接タップして入れ替える。
+  // perm[pos] = その位置に来る「元の index」。盤面にはarrPreviewでライブ反映
   var perm = [0,1,2];
   var sel = -1;   // 選択中スロット位置
-  var POS = ['左', '中央', '右'];
-  var whose = playerName(req.target);
   var st = view();
-  var origProtos = st.players[req.target].protocols.slice();   // 並び替え対象の実プロトコル
+  var origProtos = st.players[req.target].protocols.slice();
 
-  function syncPreview(){   // 盤面に入れ替え後の配置をライブ反映
-    arrPreview = { side: req.target, protos: perm.map(function(i){ return origProtos[i]; }) };
-    render();
-  }
+  function changed(){ return !(perm[0]===0 && perm[1]===1 && perm[2]===2); }
 
   function draw(){
-    if (arrangeUi) arrangeUi.sel = sel;
-    if (arrPreview) render();
-    var hint = req.exact === 'transposition'
-      ? whose + 'のプロトコル2つをタップして入れ替え'
-      : whose + 'のプロトコルをタップして入れ替え→確定';
-    var html = '<div class="arr-hint">▼ ' + esc(hint) + '(盤面に即反映)</div><div class="arr-row" id="arrRow"></div>';
-    if (req.exact !== 'transposition'){
-      var changed = !(perm[0]===0 && perm[1]===1 && perm[2]===2);
-      html += '<button class="bigbtn" id="arrOk"' + (changed?'':' disabled') + '>この配置で確定</button>';
-    }
-    openModal(html, 'board');   // 盤面を見せる(下部シート + 透過背景)
-    var row = document.getElementById('arrRow');
-    perm.forEach(function(orig, pos){
-      var slot = document.createElement('div');
-      slot.className = 'arr-slot' + (sel===pos?' sel':'') + (orig!==pos?' moved':'');
-      setAccent(slot, PROTOMAP[names[orig]] ? PROTOMAP[names[orig]].color : '#888');
-      slot.innerHTML = '<span class="pos">' + POS[pos] + '</span><span class="pn">' + esc(names[orig]) + '</span>';
-      slot.onclick = function(){ tapSlot(pos); };
-      row.appendChild(slot);
-    });
-    var ok = document.getElementById('arrOk');
-    if (ok) ok.onclick = function(){ commit(); };
+    arrangeUi.sel = sel;
+    arrPreview = { side: req.target, protos: perm.map(function(i){ return origProtos[i]; }) };
+    render();
+    updateMsgBar();   // ヒント+確定バーはupdateMsgBarのarrange分岐が表示
   }
 
-  function commit(){ arrPreview = null; arrangeUi = null; closeModal(); answer(req, perm.slice()); }
+  function commit(){ arrPreview = null; arrangeUi = null; setActionBar(false); answer(req, perm.slice()); }
 
   function tapSlot(pos){
     if (sel === -1){ sel = pos; draw(); return; }
     if (sel === pos){ sel = -1; draw(); return; }
     var t = perm[sel]; perm[sel] = perm[pos]; perm[pos] = t;   // スワップ
     sel = -1;
-    syncPreview();   // 盤面を更新
-    if (req.exact === 'transposition'){ commit(); return; }
+    if (req.exact === 'transposition'){
+      arrPreview = { side: req.target, protos: perm.map(function(i){ return origProtos[i]; }) };
+      render();
+      commit();
+      return;
+    }
     draw();
   }
 
-  arrangeUi = { req: req, tap: tapSlot, commit: commit, sel: sel };
-  syncPreview();
+  arrangeUi = { req: req, tap: tapSlot, commit: commit, sel: sel, changed: changed };
   draw();
 }
 
