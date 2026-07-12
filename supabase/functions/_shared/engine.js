@@ -184,7 +184,7 @@ function canPlay(st, player, uid, line, faceUp) {
     }
     // CHAOS_4/CORRUPTION_1 lower: このカード自体がプロトコル不問でプレイできる(手札で有効)
     const selfEff = DEFS[st.cards[uid].def].eff;
-    if (selfEff.lower && selfEff.lower.handStatic === 'thisAnyLine') needMatch = false;
+    if (selfEff.lower && (selfEff.lower.handStatic === 'thisAnyLine' || selfEff.lower.handStatic === 'thisAnyLineEitherSide')) needMatch = false;
     if (needMatch) {
       const names = [st.players[0].protocols[line].name, st.players[1].protocols[line].name];
       if (names.indexOf(defOf(st, uid).proto) < 0) return false;
@@ -1770,6 +1770,12 @@ function runTurnLoop(ctx) {
   }
 }
 
+/* CORRUPTION_1: どちらのプレイヤー側でもプレイできるカードか */
+function canPlayEitherSide(st, uid) {
+  const eff = DEFS[st.cards[uid].def].eff;
+  return !!(eff.lower && eff.lower.handStatic === 'thisAnyLineEitherSide');
+}
+
 function legalActions(st) {
   if (st.winner !== null || st.phase !== 'action') return [];
   const p = st.turn;
@@ -1778,6 +1784,10 @@ function legalActions(st) {
     for (let l = 0; l < 3; l++) {
       if (canPlay(st, p, uid, l, true)) out.push({ type: 'play', card: uid, line: l, faceUp: true });
       if (canPlay(st, p, uid, l, false)) out.push({ type: 'play', card: uid, line: l, faceUp: false });
+      if (canPlayEitherSide(st, uid)) { // 相手側スタックへのプレイ
+        out.push({ type: 'play', card: uid, line: l, faceUp: true, side: 1 - p });
+        out.push({ type: 'play', card: uid, line: l, faceUp: false, side: 1 - p });
+      }
     }
   }
   if (st.players[p].hand.length < 5) out.push({ type: 'refresh' });
@@ -1801,8 +1811,10 @@ function performAction(ctx, action) {
   const p = st.turn;
   if (action.type === 'play') {
     if (st.players[p].hand.indexOf(action.card) < 0) throw { __err: '手札にないカード' };
-    if (!canPlay(st, p, action.card, action.line, action.faceUp)) throw { __err: 'そのプレイは許可されていない' };
-    playToField(ctx, action.card, action.line, p, !!action.faceUp);
+    const destSide = (action.side === 0 || action.side === 1) ? action.side : p;
+    if (destSide !== p && !canPlayEitherSide(st, action.card)) throw { __err: '相手側にはプレイできないカード' };
+    if (destSide === p && !canPlay(st, p, action.card, action.line, action.faceUp)) throw { __err: 'そのプレイは許可されていない' };
+    playToField(ctx, action.card, action.line, destSide, !!action.faceUp);
     st.phase = 'checkCache';
   } else if (action.type === 'refresh') {
     if (st.players[p].hand.length >= 5) throw { __err: '手札が5枚以上ではリフレッシュできない' };
@@ -1906,7 +1918,7 @@ function newGame(opts) {
 /* ---------- AI ---------- */
 
 let AI_LEVEL = 1; // 0=easy, 1=normal, 2=hard
-const AI_THINK_BUDGET_MS = 560;
+const AI_THINK_BUDGET_MS = 590;
 function setAiLevel(v) { AI_LEVEL = Math.max(0, Math.min(2, v | 0)); }
 
 /* --- Phase A: 評価関数 --- */
@@ -2043,6 +2055,15 @@ function aiActionBias(st, action, side) {
     return v;
   }
   if (action.type !== 'play') return 0;
+  // CORRUPTION_1等の相手側プレイ: 相手の表向きuncoveredカードを覆って無効化できるときだけ前向き
+  if (action.side !== undefined && action.side !== side) {
+    const oppStack = st.lines[action.line][op];
+    if (oppStack.length) {
+      const topC = st.cards[oppStack[oppStack.length - 1]];
+      if (topC.faceUp) return DEFS[topC.def].value * 8 - 20;
+    }
+    return -60;  // 相手に値を与えるだけの手は避ける
+  }
   const c = st.cards[action.card], d = DEFS[c.def];
   const mine = lineTotal(st, action.line, side), theirs = lineTotal(st, action.line, op);
   const gap = Math.max(0, 10 - mine);
@@ -2347,6 +2368,12 @@ function smartPicks(st, req) {
       });
       scored.sort((a, b) => a.s - b.s);
       const min = req.min !== undefined ? req.min : 1;
+      const max = Math.min(req.max !== undefined ? req.max : 1, scored.length);
+      if (min === 0 && max === 1 && scored.length && AI_CHOICE_DEPTH === 0) {
+        const skip = aiChoiceScore(st, req, [], me);
+        const discard = aiChoiceScore(st, req, [scored[0].uid], me);
+        return discard > skip ? [scored[0].uid] : [];
+      }
       if (min === 0 && (!scored.length || scored[0].s > 8)) return [];
       return scored.slice(0, Math.max(min, 1)).map(x => x.uid);
     }
@@ -2374,13 +2401,17 @@ function smartPicks(st, req) {
       return [bestLine];
     }
     case 'option': {
-      if (req.options.length <= 1) return [0];
-      let bestIdx = 0, bestSc = -Infinity;
+      if (req.options.length <= 1 && !req.optional) return [0];
+      let best = [0], bestSc = -Infinity;
       for (let i = 0; i < req.options.length; i++) {
         const s = aiChoiceScore(st, req, [i], me);
-        if (s > bestSc) { bestSc = s; bestIdx = i; }
+        if (s > bestSc) { bestSc = s; best = [i]; }
       }
-      return [bestIdx];
+      if (req.optional) {
+        const skip = aiChoiceScore(st, req, [], me);
+        if (skip > bestSc) best = [];
+      }
+      return best;
     }
     case 'yesNo': {
       const yS = aiChoiceScore(st, req, ['yes'], me);

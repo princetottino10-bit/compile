@@ -2672,7 +2672,7 @@ function newGame(opts) {
 /* ---------- AI ---------- */
 
 let AI_LEVEL = 1; // 0=easy, 1=normal, 2=hard
-const AI_THINK_BUDGET_MS = 560;
+const AI_THINK_BUDGET_MS = 590;
 function setAiLevel(v) { AI_LEVEL = Math.max(0, Math.min(2, v | 0)); }
 
 /* --- Phase A: 評価関数 --- */
@@ -3064,25 +3064,6 @@ function aiStrategicCardPicks(st, req, me, ranked, fallback) {
   return bestScore > -1e8 ? best : fallback;
 }
 
-function aiStrategicHandPicks(st, req, me, ranked, fallback) {
-  const max = req.max !== undefined ? req.max : 1;
-  const min = req.min !== undefined ? req.min : 1;
-  if (AI_CHOICE_DEPTH > 0 || max !== 1 || req.candidates.length < 2) return fallback;
-
-  let pool = ranked;
-  if (pool.length > 8) pool = pool.slice(0, 5).concat(pool.slice(-3));
-  const options = min === 0 ? [[]] : [];
-  for (const item of pool) options.push([item.uid]);
-
-  let best = fallback, bestScore = -Infinity;
-  for (const picks of options) {
-    if (aiSearchExpired()) break;
-    const score = aiChoiceScore(st, req, picks, me);
-    if (score > bestScore) { bestScore = score; best = picks; }
-  }
-  return bestScore > -1e8 ? best : fallback;
-}
-
 function smartPicks(st, req) {
   const me = req.player;
   const op = 1 - me;
@@ -3142,9 +3123,13 @@ function smartPicks(st, req) {
       scored.sort((a, b) => a.s - b.s);
       const min = req.min !== undefined ? req.min : 1;
       const max = Math.min(req.max !== undefined ? req.max : 1, scored.length);
-      const fallback = min === 0 && (!scored.length || scored[0].s > 8)
-        ? [] : scored.slice(0, Math.max(min, Math.min(max, 1))).map(x => x.uid);
-      return aiStrategicHandPicks(st, req, me, scored, fallback);
+      if (min === 0 && max === 1 && scored.length && AI_CHOICE_DEPTH === 0) {
+        const skip = aiChoiceScore(st, req, [], me);
+        const discard = aiChoiceScore(st, req, [scored[0].uid], me);
+        return discard > skip ? [scored[0].uid] : [];
+      }
+      if (min === 0 && (!scored.length || scored[0].s > 8)) return [];
+      return scored.slice(0, Math.max(min, 1)).map(x => x.uid);
     }
     case 'pickLine': {
       let bestLine = req.lines[0], bestSc = -Infinity;
@@ -3170,7 +3155,7 @@ function smartPicks(st, req) {
       return [bestLine];
     }
     case 'option': {
-      if (req.options.length <= 1) return [0];
+      if (req.options.length <= 1 && !req.optional) return [0];
       let best = [0], bestSc = -Infinity;
       for (let i = 0; i < req.options.length; i++) {
         const s = aiChoiceScore(st, req, [i], me);

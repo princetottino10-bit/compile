@@ -21,6 +21,9 @@ Baseline.setAiLevel(2);
 const games = Math.max(4, +(process.argv[2] || 24));
 const seedBase = +(process.argv[3] || 20260711);
 const matchups = [
+  [['CHAOS', 'CLARITY', 'LUCK'], ['CORRUPTION', 'COURAGE', 'FEAR']],
+  [['ICE', 'MIRROR', 'TIME'], ['PEACE', 'SMOKE', 'WAR']],
+  [['ASSIMILATION', 'DIVERSITY', 'UNITY'], ['CHAOS', 'CORRUPTION', 'MIRROR']],
   [['DARKNESS', 'FIRE', 'WATER'], ['DEATH', 'METAL', 'SPEED']],
   [['LIFE', 'LIGHT', 'PLAGUE'], ['PSYCHIC', 'SPIRIT', 'GRAVITY']],
   [['APATHY', 'HATE', 'LOVE'], ['DARKNESS', 'METAL', 'WATER']],

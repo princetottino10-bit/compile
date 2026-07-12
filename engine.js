@@ -1918,7 +1918,7 @@ function newGame(opts) {
 /* ---------- AI ---------- */
 
 let AI_LEVEL = 1; // 0=easy, 1=normal, 2=hard
-const AI_THINK_BUDGET_MS = 560;
+const AI_THINK_BUDGET_MS = 590;
 function setAiLevel(v) { AI_LEVEL = Math.max(0, Math.min(2, v | 0)); }
 
 /* --- Phase A: 評価関数 --- */
@@ -2368,6 +2368,12 @@ function smartPicks(st, req) {
       });
       scored.sort((a, b) => a.s - b.s);
       const min = req.min !== undefined ? req.min : 1;
+      const max = Math.min(req.max !== undefined ? req.max : 1, scored.length);
+      if (min === 0 && max === 1 && scored.length && AI_CHOICE_DEPTH === 0) {
+        const skip = aiChoiceScore(st, req, [], me);
+        const discard = aiChoiceScore(st, req, [scored[0].uid], me);
+        return discard > skip ? [scored[0].uid] : [];
+      }
       if (min === 0 && (!scored.length || scored[0].s > 8)) return [];
       return scored.slice(0, Math.max(min, 1)).map(x => x.uid);
     }
@@ -2395,13 +2401,17 @@ function smartPicks(st, req) {
       return [bestLine];
     }
     case 'option': {
-      if (req.options.length <= 1) return [0];
-      let bestIdx = 0, bestSc = -Infinity;
+      if (req.options.length <= 1 && !req.optional) return [0];
+      let best = [0], bestSc = -Infinity;
       for (let i = 0; i < req.options.length; i++) {
         const s = aiChoiceScore(st, req, [i], me);
-        if (s > bestSc) { bestSc = s; bestIdx = i; }
+        if (s > bestSc) { bestSc = s; best = [i]; }
       }
-      return [bestIdx];
+      if (req.optional) {
+        const skip = aiChoiceScore(st, req, [], me);
+        if (skip > bestSc) best = [];
+      }
+      return best;
     }
     case 'yesNo': {
       const yS = aiChoiceScore(st, req, ['yes'], me);
