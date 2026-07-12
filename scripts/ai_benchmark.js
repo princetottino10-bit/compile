@@ -36,6 +36,7 @@ const totals = {
   candidateWins: 0, baselineWins: 0, draws: 0, errors: 0,
   candidateMs: 0, baselineMs: 0, candidateMoves: 0, baselineMoves: 0,
   candidateRecompiles: 0, baselineRecompiles: 0, maxMoveMs: 0, turns: 0,
+  candidateControlGains: 0, baselineControlGains: 0,
 };
 
 for (let i = 0; i < games; i++) {
@@ -56,6 +57,8 @@ for (let i = 0; i < games; i++) {
   totals.baselineMoves += result.moves[1 - candidateSide];
   totals.candidateRecompiles += result.recompiles[candidateSide];
   totals.baselineRecompiles += result.recompiles[1 - candidateSide];
+  totals.candidateControlGains += result.controlGains[candidateSide];
+  totals.baselineControlGains += result.controlGains[1 - candidateSide];
   totals.maxMoveMs = Math.max(totals.maxMoveMs, result.maxMoveMs);
   if (result.error) totals.errors++;
   else if (result.winner === null) totals.draws++;
@@ -80,6 +83,8 @@ const summary = {
   maxMoveMs: +totals.maxMoveMs.toFixed(1),
   candidateRecompileRate: rate(totals.candidateRecompiles, totals.candidateMoves),
   baselineRecompileRate: rate(totals.baselineRecompiles, totals.baselineMoves),
+  avgCandidateControlGains: average(totals.candidateControlGains, games),
+  avgBaselineControlGains: average(totals.baselineControlGains, games),
   avgTurns: average(totals.turns, games),
 };
 console.log(JSON.stringify(summary, null, 2));
@@ -87,12 +92,13 @@ console.log(JSON.stringify(summary, null, 2));
 function playGame(opts) {
   let res = Candidate.newGame({ p0: opts.p0, p1: opts.p1, seed: opts.seed, useControl: true });
   const ais = opts.candidateSide === 0 ? [Candidate, Baseline] : [Baseline, Candidate];
-  const ms = [0, 0], moves = [0, 0], recompiles = [0, 0];
+  const ms = [0, 0], moves = [0, 0], recompiles = [0, 0], controlGains = [0, 0];
   let maxMoveMs = 0, turns = 0, guard = 0, error = null;
 
   while (res.winner === null && guard++ < 500) {
     const side = res.requests.length ? res.requests[0].player : res.state.turn;
     const ai = ais[side];
+    const beforeControl = res.state.control;
     const started = now();
     if (res.requests.length) {
       const req = res.requests[0];
@@ -108,9 +114,10 @@ function playGame(opts) {
     ms[side] += elapsed;
     maxMoveMs = Math.max(maxMoveMs, elapsed);
     for (const line of res.log || []) if (line.includes('リコンパイル')) recompiles[side]++;
+    if (res.state.control !== beforeControl && res.state.control >= 0) controlGains[res.state.control]++;
     if (res.error) { error = res.error; break; }
   }
-  return { winner: res.winner, error, ms, moves, recompiles, maxMoveMs, turns };
+  return { winner: res.winner, error, ms, moves, recompiles, controlGains, maxMoveMs, turns };
 }
 
 function loadEngine(source, filename) {

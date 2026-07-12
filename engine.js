@@ -2096,6 +2096,18 @@ function aiNow() {
   return (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
 }
 
+function aiTransitionScore(before, result, side) {
+  if (!before || !result || !result.state) return 0;
+  const beforeLog = before.actionLog || [];
+  const afterLog = result.state.actionLog || [];
+  const ownTag = `P${side + 1}: リコンパイル`;
+  const oppTag = `P${2 - side}: リコンパイル`;
+  const count = (logs, tag) => logs.reduce((n, line) => n + (String(line).includes(tag) ? 1 : 0), 0);
+  const own = Math.max(0, count(afterLog, ownTag) - count(beforeLog, ownTag));
+  const opp = Math.max(0, count(afterLog, oppTag) - count(beforeLog, oppTag));
+  return opp * 55 - own * 35;
+}
+
 function aiScore(st, me) {
   if (st.winner === me) return 1e9;
   if (st.winner === 1 - me) return -1e9;
@@ -2202,17 +2214,17 @@ function aiScore(st, me) {
     let myWins = aiLineLeadCount(st, me), opWins = aiLineLeadCount(st, op);
 
     if (st.control === me) {
-      sc += 55 + aiControlLeverage(st, me) * 0.7;
+      sc += 65 + aiControlLeverage(st, me) * 0.7;
       if (myComp >= 1) sc += 15;
       if (myComp >= 2) sc += 45;
     } else if (st.control === op) {
-      sc -= 65 + aiControlLeverage(st, op) * 0.75;
+      sc -= 90 + aiControlLeverage(st, op) * 0.75;
       if (opComp >= 1) sc -= 15;
       if (opComp >= 2) sc -= 50;
     }
 
-    if (myWins >= 2 && st.control !== me) sc += 42;
-    if (opWins >= 2 && st.control !== op) sc -= 52;
+    if (myWins >= 2 && st.control !== me) sc += 50;
+    if (opWins >= 2 && st.control !== op) sc -= 78;
     if (myWins >= 2) sc += 18;
     if (opWins >= 2) sc -= 24;
   }
@@ -2257,7 +2269,7 @@ function aiChoiceScore(st, req, picks, me) {
     if (!res || res.error) return -1e8;
     const out = res.requests && res.requests.length ? resolveRequests(res, smartPicks, 8) : res;
     if (!out || out.error || (out.requests && out.requests.length)) return -1e8;
-    return aiScore(out.state, me);
+    return aiScore(out.state, me) + aiTransitionScore(st, out, me);
   } finally { AI_CHOICE_DEPTH--; }
 }
 
@@ -2498,7 +2510,8 @@ function aiActionNormal(state) {
   for (const a of acts) {
     const res = applyAndResolve(state, a, smartPicks);
     const sc = (!res || res.error || res.requests.length)
-      ? -1e8 : aiScore(res.state, me) + aiActionBias(state, a, me);
+      ? -1e8 : aiScore(res.state, me) + aiActionBias(state, a, me)
+        + aiTransitionScore(state, res, me);
     if (sc + Math.random() * 0.5 > bestSc) { bestSc = sc; best = a; }
   }
   return best;
@@ -2532,7 +2545,7 @@ function aiActionHard(state) {
       } else {
         val = minimaxMin(s1, me, alpha, Infinity, deadline);
       }
-      val += aiActionBias(state, a, me);
+      val += aiActionBias(state, a, me) + aiTransitionScore(state, res, me);
       if (val > alpha) { alpha = val; best = a; }
     }
     return best;
@@ -2555,7 +2568,8 @@ function minimaxMin(state, me, alpha, beta, deadline) {
     const sc = (s2.winner === null && s2.turn === me)
       ? minimaxMaxShallow(s2, me, alpha, beta, deadline)
       : aiScore(s2, me);
-    if (sc < val) val = sc;
+    const tactical = sc + aiTransitionScore(state, res, me);
+    if (tactical < val) val = tactical;
     if (val <= alpha) return val;
     if (val < beta) beta = val;
   }
@@ -2574,7 +2588,7 @@ function minimaxMaxShallow(state, me, alpha, beta, deadline) {
     const item = ordered[i];
     const res = applyAndResolve(state, item.a, smartPicks);
     if (!res || res.error || res.requests.length) continue;
-    const sc = aiScore(res.state, me) + item.bias;
+    const sc = aiScore(res.state, me) + item.bias + aiTransitionScore(state, res, me);
     if (sc > val) val = sc;
     if (val >= beta) return val;
     if (val > alpha) alpha = val;
@@ -2587,7 +2601,8 @@ function orderMoves(acts, state, side, deadline) {
   for (const a of acts) {
     if (deadline && aiNow() >= deadline && scored.length) break;
     const res = applyAndResolve(state, a, smartPicks);
-    const sc = (!res || res.error) ? -1e8 : aiScore(res.state, side) + aiActionBias(state, a, side);
+    const sc = (!res || res.error) ? -1e8 : aiScore(res.state, side)
+      + aiActionBias(state, a, side) + aiTransitionScore(state, res, side);
     scored.push({ a, sc, res });
   }
   scored.sort((a, b) => b.sc - a.sc);
@@ -2652,7 +2667,7 @@ function aiAnswer(state, req) {
 const Engine = {
   init, newGame, apply, legalActions, setTrace, setAiLevel,
   lineTotal, cardValue, compilableLines, canPlay, locate,
-  ai: { action: aiAction, answer: aiAnswer, score: aiScore, randomPicks, smartPicks },
+  ai: { action: aiAction, answer: aiAnswer, score: aiScore, transitionScore: aiTransitionScore, randomPicks, smartPicks },
   get defs() { return DEFS; },
   get protos() { return PROTOS; }
 };
