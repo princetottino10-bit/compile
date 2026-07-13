@@ -662,6 +662,14 @@ test('AI: 相手の裏向き高値カードを無意味に反転させない', (
   assert.deepEqual(Engine.ai.answer(res.state, res.requests[0]), []);
 });
 
+test('AI: 相手のリコンパイルによるターンスキップを評価する', () => {
+  const before = { actionLog: [] };
+  const oppRecompile = { state: { actionLog: ['P2: リコンパイル'] } };
+  const ownRecompile = { state: { actionLog: ['P1: リコンパイル'] } };
+  assert.ok(Engine.ai.transitionScore(before, oppRecompile, 0) > 0);
+  assert.ok(Engine.ai.transitionScore(before, ownRecompile, 0) < 0);
+});
+
 test('トレース: setTrace(true) でステップごとのスナップショットが返る', () => {
   Engine.setTrace(true);
   try {
