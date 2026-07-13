@@ -46,7 +46,7 @@ compile-app/ (pnpm workspaces)
 
 ### 設計原則
 
-- **エンジンは聖域**: `engine.js` は純粋関数API・シード付き決定的乱数という優れた設計が既にあり、テストも存在する。JSのまま共有パッケージ化し、型定義だけ与える。書き換えない。
+- **エンジンは聖域**: `engine.js` は純粋関数API・シード付き決定的乱数という優れた設計が既にあり、テストも存在する。JSのまま共有パッケージ化し、型定義だけ与える。書き換えない。唯一の例外として、`ruleset_version` をルール実行コードのハッシュから導出するため（3.1参照）、AI節（`Engine.ai`）を**ロジック無変更で別ファイルへ機械的に分離**する。分離の等価性は既存テストの全通過で検証する。
 - **サーバー権威型を継承**: secure-room Edge Functionで確立済みの「サーバーでエンジン実行 → 合法手検証 → 相手の非公開情報を隠蔽したビューだけ配信」という設計をWebSocketに移植する。
 - **ビューの隠蔽はサーバーの責務**: 相手の手札・デッキ・裏向きカード定義はサーバーから出ない。ただし現行 `index.ts` の別名生成は**そのまま移植しない**（下記3.2参照。現行方式には裏向きカードの正体を推測できる脆弱性がある）。
 
@@ -59,7 +59,7 @@ compile-app/ (pnpm workspaces)
 - エンジンは決定的なので、**ゲーム初期条件 + アクション列のリプレイで状態を完全復元可能**。サーバー再起動時は進行中ルームをDBから復元する。
 - リプレイ復元の成立条件として、`games` に**不変のゲーム初期条件を保存する**:
   - `game_config`（JSON）: 両者のプロトコル3つ（`p0`/`p1`）、`seed`、`first`（先手）、`useControl` 等、`Engine.newGame()` に渡した引数の完全な記録
-  - `ruleset_version`: **手動管理のルールバージョン定数**（`packages/engine` に定義し、ルール挙動に影響する変更時のみ上げる）+ `cards.json`/`effects.json` の内容ハッシュ。エンジンファイル全体のハッシュは**使わない** — AI評価ロジックの調整はこのプロジェクトで頻繁に行われるが、リプレイはログ済みアクションを再生するだけでAIを呼ばないため決定性に影響せず、AI調整のたびに進行中ゲームが無効になるのを避ける。ルール挙動に影響する更新後は旧バージョンのゲームを現行コードでリプレイしない（バージョン不一致の進行中ゲームは復元対象外とし、無効試合として終了処理する: `status='void'`, `end_reason='ruleset_mismatch'`。頻度は低い想定なのでスナップショット互換層は作らない = YAGNI）。バージョン定数の更新漏れはゴールデンテスト（§8）で検出する
+  - `ruleset_version`: **ルール実行コードのハッシュ + `cards.json`/`effects.json` の内容ハッシュ**から機械的に導出する。前提として、`packages/engine` 化の際に `engine.js` のAI節（評価関数・探索。`engine.js:1918` 以降の連続ブロックで、ルール部からの参照はない）を**ロジック無変更で別ファイルへ機械的に分離**する。これによりAI評価ロジックの頻繁な調整ではバージョンが変わらず（リプレイはログ済みアクションを再生するだけでAIを呼ばない）、ルール実行コードの変更は**漏れなく自動で**バージョンに反映される — 手動バージョン定数では「代表ケースを通らないルール変更で更新を忘れる」故障モードが残るため採用しない。副作用として、ルール実行ファイルへのコメント等の無害な変更でもバージョンが変わるが、ルール部の変更は稀でありデプロイ時のドレイン手順（§6）で吸収する。バージョン不一致の進行中ゲームは現行コードでリプレイせず、無効試合として終了処理する（`status='void'`, `end_reason='ruleset_mismatch'`。頻度は低い想定なのでスナップショット互換層は作らない = YAGNI）。ゴールデンテスト（§8）は「意図しないルール挙動の変化」を検出する挙動レベルの安全網として併用する
 - 現行の楽観ロック方式を踏襲: 各ビューにバージョン番号を付け、クライアントのアクションはバージョン一致時のみ受理。
 
 ### 3.2 カードIDの隠蔽（不透明ID）
@@ -82,11 +82,12 @@ compile-app/ (pnpm workspaces)
 - **処理順序**: (1) エンジン適用（メモリ上の複製で実行）→ (2) 同一DBトランザクションで `game_actions` 追記 + `games`/`rooms` 更新（終局時の `status`/`winner`/`end_reason` 確定も同一トランザクション）→ (3) コミット成功後にメモリ状態を確定しビューを配信。コミット失敗時はメモリ状態を破棄し、DBログからのリプレイで復元する。
 - **一意制約**: `game_actions` に `UNIQUE(game_id, seq)`。直列化の破れがあってもDBが二重適用を最終防衛する。
 - **冪等性（再起動をまたいで保証）**: クライアントは `game:action`・`game:choose` の**両方**に `actionId`（UUID）を付与。`game_actions` に `action_id`・`actor`・正規化後payload・適用後 `version` を永続化し、`UNIQUE(game_id, action_id)` を張る。メモリ上の処理済みキャッシュは高速化手段にすぎず正はDBとする。
-- **受信処理の順序を固定**: ACK消失後の再送はクライアントのviewバージョンが必ず古くなっているため、バージョン検査を先に行うと成功済みアクションを「version不一致」で誤拒否する。よって次の順とする:
-  1. 受信 `gameId` が `rooms.active_game_id` と一致しなければ `STALE_GAME` として拒否（3.4のgameId検証）
-  2. `(gameId, actionId)` で既存ログを検索
-  3. 存在すれば `actor`・正規化後payloadの一致を確認し、**成功済みとしてACK**（`appliedVersion` + 最新ビューを返す）。不一致なら不正としてエラー
-  4. 存在しない場合のみviewバージョンと合法性を検査し、通常の適用処理（上記「処理順序」）へ
+- **受信処理の順序を固定**: ACK消失後の再送はクライアントのviewバージョンが必ず古くなっているため、バージョン検査を先に行うと成功済みアクションを「version不一致」で誤拒否する。同様に、終局手・投了の適用でゲームが終了すると `rooms.active_game_id` はNULLへ戻るため、gameId検査を先に行うと終局アクションの再送を `STALE_GAME` で誤拒否し冪等性が破れる。よって次の順とする:
+  1. 送信者が受信 `gameId` のゲーム参加者であることを `games` の参加者列で検証。非参加者は拒否
+  2. `(gameId, actionId)` で既存ログを検索。存在すれば `actor`・正規化後payloadの一致を確認し、**ゲームが終了済みであっても成功済みとしてACK**（`appliedVersion` + そのゲームの送信者向け最新ビューを返す）。不一致なら不正としてエラー
+  3. ログが存在しない場合のみ、受信 `gameId` と `rooms.active_game_id` の一致を検査し、不一致なら `STALE_GAME` として拒否（3.4のgameId検証）
+  4. viewバージョンと合法性を検査し、通常の適用処理（上記「処理順序」）へ
+- **現在バージョンの正はログ**: ゲームの現在バージョンは `games` に重複保持せず、`game_actions` の最新行（`MAX(seq)`）の `version` から導出する（実行中はメモリ上のセッションが保持し、復元時はリプレイ結果と突き合わせる）。
 - **ログは2種別（`kind` 列で区別）**: エンジンに渡していないpayloadを保存しない。
   - `kind='engine_action'`: payloadは公開IDを内部UIDへ逆引きし合法性を検証した後の「エンジンへ実際に渡した正規化済みアクション」（`surrender` の `player` もサーバー確定値）。リプレイヤーはこの種別**のみ**を `Engine.apply()` へ渡す。
   - `kind='game_terminated'`: エンジンアクションで表現できない終了（void等）のドメインイベント。payloadは `{ reason, 裁定に使った期限の種別・時刻 }`。エンジンには渡さず、対戦メタ状態（`games` 行）の終了に使う。
@@ -99,23 +100,26 @@ compile-app/ (pnpm workspaces)
 | C→S | `lobby:list` | 公開ルーム一覧取得 |
 | C→S | `room:create` / `room:join` / `room:leave` | ルーム操作（コード入室・パスワード対応） |
 | C→S | `game:action` | `{ gameId, actionId, expectedVersion, action }` — エンジンアクション（play/refresh/compile等） |
-| C→S | `game:choose` | `{ gameId, actionId, expectedVersion, picks }` — エンジンrequest（選択要求）への応答 |
+| C→S | `game:choose` | `{ gameId, actionId, expectedVersion, requestId, picks }` — エンジンrequest（選択要求）への応答。`requestId` は応答対象の選択要求ID |
 | C→S | `chat:send` | チャット |
 | S→C | `room:state` | ルーム状態（参加者・ステータス） |
 | S→C | `game:view` | 隠蔽済みゲームビュー（バージョン付き、push配信） |
-| S→C | `game:log` | 行動ログ |
+| S→C | `game:log` | `PublicGameLogEntry[]` — 公開射影済みの行動ログ（下記） |
 | S→C | `presence` | 相手の切断・再接続通知 |
 | S→C | `chat:message` | チャット |
 
 - **ACK契約**: `game:action` / `game:choose` はSocket.IOのacknowledgementコールバックで応答する。応答型は `{ ok: boolean, appliedVersion?: number, errorCode?: string, latestView?: BoardView }` として `packages/protocol` に型定義し、成功・冪等再送・バージョン不一致・不正操作をクライアントが機械的に区別できるようにする。
-- **gameId検証**: 受信した `gameId` が `rooms.active_game_id` と一致しない場合は `errorCode='STALE_GAME'` として拒否する。同一ルームで再戦した直後に、旧ゲーム宛の保留・再送メッセージが新ゲームの操作として適用されるのを防ぐ。
+- **gameId検証**: 受信した `gameId` が `rooms.active_game_id` と一致しない場合は `errorCode='STALE_GAME'` として拒否する。同一ルームで再戦した直後に、旧ゲーム宛の保留・再送メッセージが新ゲームの操作として適用されるのを防ぐ。ただし3.3の受信順序のとおり、既存ログに該当する冪等再送はこの検査より先に成功済みACKで応答する（適用は起きない）。
+- **選択応答の `requestId`**: エンジンは choose 応答に現在の選択要求IDとの一致を要求する（`engine.js` の `apply` が `action.id !== pending.requestId` を拒否）。`game:view` の選択要求に `requestId` を含めて配信し、クライアントは応答対象の `requestId` を `game:choose` で送り返す。保存する正規化後payloadは「エンジンへ実際に渡した `{ type: 'choose', id: requestId, picks(内部UID) }`」であり、再送メッセージにも元の `requestId` が含まれるため、成功後に選択要求が先へ進んでいても3.3の冪等payload比較がそのまま成立する（公開ID→内部UIDの対応はゲーム内で不変。3.2参照）。
+- **`game:log` は公開射影**: DBの `game_actions.payload` は内部UIDを含むリプレイ用データであり、**そのままクライアントへ配信してはならない**（内部UIDは `p{side}:{カード定義ID}` 形式のためカード定義が漏れ、3.2の不透明ID設計が無効になる）。S→Cのログは `packages/protocol` に `PublicGameLogEntry` 型を定義し、カード参照を公開IDへ変換し非公開情報を除外した**内部ログとは別の射影**とする（現行Edge Functionが盤面トレースのUIDを公開IDへ変換しているのと同じ規律）。送信データに内部UID・`card_id_secret`・非公開カード定義が含まれないことは漏えい検査テストで保証する（§8）。
 
 ### 3.5 再接続・切断処理
 
 - Socket.IO接続時にCookieセッションを検証し、進行中ゲームがあれば最新ビューを再送して即復帰。
 - 相手には `presence` で切断/復帰を通知。
-- **切断判定はユーザー単位**: 同一ユーザーの接続数をカウントし、全接続が切れたときのみ切断扱いにする（複数タブの1つが閉じただけでは切断としない）。
+- **切断判定は (ゲーム, ユーザー) 単位**: 当該ゲームに参加者としてattach済みの接続数をカウントし、その全attach接続が切れたときのみ切断扱いにする（複数タブの1つが閉じただけでは切断としない）。認証済み接続は進行中ゲームがあれば接続時に自動でattachされる（本節冒頭）。
 - 切断猶予（60秒想定、設定可能）超過で不戦勝処理（システム投了。3.6のタイマー機構に載せる）。
+- **切断猶予は通信断のみに適用**: 対戦中の明示的な `room:leave` は切断ではなく**即時投了**として扱う（4.2のライフサイクル参照）。
 
 ### 3.6 タイマー設計（新規設計）
 
@@ -123,9 +127,9 @@ compile-app/ (pnpm workspaces)
 
 - **時間切れの効果は「システムによる投了」に統一する**。エンジンには `surrender` アクション（`action.player` 指定可）が既にあり、これを利用する。「強制refresh」や「選択要求への既定回答の自動送信」は選択が連鎖するケースの仕様が複雑になるため採用しない。
 - **期限は絶対時刻で永続化**: 進行中ゲームに `deadline_at`（絶対時刻）と `deadline_holder`（現在の応答者 = 選択要求中はその回答者、通常時はターンプレイヤー）を保存する。プロセス内 `setTimeout` は起動中の発火手段にすぎず、正は常にDB。
-- **切断猶予はターン期限と独立に管理**: 自分のターン期限が進行中に相手が切断するなど、2種の期限は同時に併存しうる。切断猶予はプレイヤー別の `disconnect_deadline_p1` / `disconnect_deadline_p2`（切断中のみ非NULL）で永続化し、ターン期限とは別のタイマーとして扱う。
+- **切断猶予はターン期限と独立に管理**: 自分のターン期限が進行中に相手が切断するなど、2種の期限は同時に併存しうる。切断猶予はプレイヤー別の `disconnect_deadline_p0` / `disconnect_deadline_p1`（切断中のみ非NULL）で永続化し、ターン期限とは別のタイマーとして扱う。
 - **更新条件**: 応答者が変わるたび（新しいターン、新しい選択要求の発生）に期限をリセットする。同一応答者への連続選択要求もリセット対象（1回答ごとに制限時間を与える）。
-- **再起動時**: 進行中ゲームの期限3列（`deadline_at`・`disconnect_deadline_p1`・`disconnect_deadline_p2`）を**すべて**読み、タイマーを再登録する。復元時点で既に期限切れのものは即座にタイムアウト処理する。さらに、プロセス停止時にはdisconnectイベントを永続化できないため、**復元した全プレイヤーを一旦未接続として扱い**、切断期限が未設定のプレイヤーにも切断期限を設定する（Socket.IO再接続時に解除）。これを行わないと、ターンタイマー無効のゲームで再起動後に片方が戻らない場合、永久に進行不能になる。
+- **再起動時**: 進行中ゲームの期限3列（`deadline_at`・`disconnect_deadline_p0`・`disconnect_deadline_p1`）を**すべて**読み、タイマーを再登録する。復元時点で既に期限切れのものは即座にタイムアウト処理する。さらに、プロセス停止時にはdisconnectイベントを永続化できないため、**復元した全プレイヤーを一旦未接続として扱い**、切断期限が未設定のプレイヤーにも切断期限を設定する（Socket.IO再接続時に解除）。これを行わないと、ターンタイマー無効のゲームで再起動後に片方が戻らない場合、永久に進行不能になる。
 - **タイマー発火時の再検証**: 発火待ちの間に期限が更新されるなど、`setTimeout` のコールバックは発火時点で古くなっている可能性がある。タイムアウト処理は必ずルームキュー内で実行し、投了を適用する前に (1) ゲームがまだ進行中、(2) DB上の期限が実際に満了済み、(3) `deadline_holder` が期待値と一致、(4) コールバックが保持する期限値（またはタイマー世代番号）がDBの現在値と一致 — を再検証し、満たさない古いコールバックは何もせず破棄する。再接続による切断期限解除と切断タイマー発火の競合も、同じ条件付き更新で扱う。
 - **満了期限の裁定規則**: ターン期限と切断期限は種類をまたいで同時に満了しうる（例: P0のターン期限とP1の切断期限が、再起動やイベントループ遅延の後にまとめて期限切れになる）。タイマーごとに個別に投了処理すると勝者が実行順で変わるため、タイムアウト発火時はルームキュー内で**現在満了している全期限を収集**し、次の規則で裁定する:
   1. 最も早い期限の帰結を適用する
@@ -167,19 +171,21 @@ compile-app/ (pnpm workspaces)
 |---|---|---|
 | `users` | id, username(unique), password_hash, display_name, created_at | アカウント |
 | `sessions` | id, token_hash, user_id, expires_at | サーバーサイドセッション（トークンはハッシュで保存） |
-| `rooms` | id, code(unique), title, host_user_id, **guest_user_id**, status, visibility, password_digest, settings(JSON: ターンタイマー等), **draft_state(JSON)**, **active_game_id**, created_at | ルーム（side対応: host=player0 / guest=player1 で固定） |
-| `games` | id, room_id, p1_user_id, p2_user_id, **status**, winner(NULL可), **end_reason**, **game_config(JSON)**, **ruleset_version**, **card_id_secret**, **deadline_at**, **deadline_holder**, **disconnect_deadline_p1**, **disconnect_deadline_p2**, started_at, ended_at | 対戦記録（戦績の源泉 + リプレイ初期条件 + タイマー正データ） |
+| `rooms` | id, code(unique), title, host_user_id, **guest_user_id**, status, visibility, password_digest, settings(JSON: ターンタイマー等), **draft_state(JSON)**, **active_game_id**, created_at, **updated_at**（TTL判定の基準） | ルーム（side対応: host=player0 / guest=player1 で固定） |
+| `games` | id, **room_id(NULL可・FK `ON DELETE SET NULL`)**, player0_user_id, player1_user_id, **status**, winner(NULL可), **end_reason**, **game_config(JSON)**, **ruleset_version**, **card_id_secret**, **deadline_at**, **deadline_holder**, **disconnect_deadline_p0**, **disconnect_deadline_p1**, started_at, ended_at | 対戦記録（戦績の源泉 + リプレイ初期条件 + タイマー正データ） |
 | `game_actions` | id, game_id, seq, **kind(engine_action/game_terminated)**, actor(player0/1/system), action_id(クライアント採番UUID。systemはNULL), payload(JSON: 種別ごとの内容は3.3参照), version(適用後), created_at — **UNIQUE(game_id, seq)**, **UNIQUE(game_id, action_id)** | アクションログ（リプレイ・復元・冪等性判定用） |
 
-- `game_config` は `Engine.newGame()` に渡した引数の完全な記録（プロトコル・seed・先手・useControl）。`ruleset_version` はエンジンバージョン + カード/効果データのハッシュ（3.1参照）。
+- **プレイヤー表記は `player0` / `player1` で統一**: host=player0 / guest=player1。DB列（`player0_user_id`・`disconnect_deadline_p0` 等）、`game_actions.actor`、`deadline_holder` の値をすべて同一表記にする。例外は `game_config` 内の `p0`/`p1` キーのみで、これは `Engine.newGame()` の引数名の記録としてそのまま保存する。
+- `game_config` は `Engine.newGame()` に渡した引数の完全な記録（プロトコル・seed・先手・useControl）。`ruleset_version` はルール実行コード + カード/効果データのハッシュ（3.1参照）。
 - **待機・ドラフト状態も復元対象**: `draft_state`（ドラフトの現在ステップ・残りプール・各プレイヤーの選択。非ドラフト時のプロトコル選択状況も含む）と `guest_user_id` により、再起動後も待機中・ドラフト中のルームへ参加者を元の席へ戻せる。ルームの認可判定（参加者か・どちらのsideか）は常にDBの列に基づき、メモリ状態に依存しない。
 - **1ルーム最大1進行中ゲーム**: `rooms.active_game_id` が進行中ゲームを一意に指す（MySQLは部分インデックスを持たないため、この列 + ルームキュー内の検査で保証する）。ゲーム終了時にNULLへ戻す。
 - **ルームのライフサイクル**:
   - ホスト退出時はルームを閉鎖する（`status='closed'`。ホスト移譲はしない = YAGNI）
   - ドラフト開始後にどちらかが退出した場合もルーム閉鎖（2人の選択が絡むためドラフトの巻き戻しはしない）。待機中のゲスト退出は `guest_user_id` をNULLへ戻して待機継続
-  - 待機・ドラフト中ルームは最終更新から2時間のTTLで自動閉鎖（サーバー内の定期クリーンアップジョブ。現行 `cleanup_secure_rooms` 相当）
+  - **対戦中の明示的な `room:leave` は即時投了**: 退出プレイヤーの正規化済み `surrender`（`kind='engine_action'`）として記録し、`end_reason='surrender'` で決着させる。切断猶予（3.5の60秒）は通信断にのみ適用し、明示退出には適用しない。投了決着後は通常の退出処理（ホスト退出なら閉鎖、ゲスト退出なら待機継続）に続く
+  - 待機・ドラフト中ルームは `updated_at` から2時間のTTLで自動閉鎖（サーバー内の定期クリーンアップジョブ。現行 `cleanup_secure_rooms` 相当）
   - 閉鎖時に `code` をNULL化してルームコードを解放・再利用可能にする（MySQLのUNIQUEはNULLを複数許容）
-  - `rooms` 行は閉鎖から一定期間（30日想定）後に物理削除してよい。`games`/`game_actions` は戦績・リプレイのため保持し、ルーム削除に追従して消さない
+  - `rooms` 行は閉鎖から一定期間（30日想定）後に物理削除してよい。`games`/`game_actions` は戦績・リプレイのため保持し、ルーム削除に追従して消さない。この両立のため `games.room_id` はNULL可・`ON DELETE SET NULL` とし、戦績・履歴表示は `rooms` に依存させない（必要な情報は `games`/`users` が持つ）
   - ロビー一覧に表示するのは `status='waiting'` かつ公開かつゲスト不在のルームのみ（現行踏襲）
 - ゲームの終わり方は `status` + `end_reason` で明示的に区別する:
   - `status`: `in_progress` / `completed` / `void`
@@ -210,7 +216,7 @@ compile-app/ (pnpm workspaces)
   1. 新イメージをpull（タグはコミットSHA。`latest` は使わず、直前タグを記録してロールバック可能にする）
   2. **Drizzleマイグレーションをappの起動前に実行**（専用の一時コンテナで `drizzle-kit migrate`）。失敗したらデプロイ中断・旧イメージのまま。マイグレーションは**expand/contract方式に限定**する: 先行適用してよいのは旧・新appの双方と互換なスキーマ変更（列・テーブル・インデックスの追加等）のみ。列削除・型変更などの破壊的変更（contract）は、新版の安定稼働を確認した後の**別デプロイ**に分ける
   3. app起動 → `/healthz`（DB疎通含む）のヘルスチェック合格を確認して完了。不合格なら直前タグへロールバック（手順2の制約により、スキーマを戻さなくても旧appは動作する）
-- **ルール挙動に影響する変更（ルールバージョン定数の更新・カードデータ変更）を含むデプロイ**: `ruleset_version` が変わるため進行中ゲームは無効試合になる（3.1）。AI調整のみのデプロイは該当しない。事故を防ぐため、該当デプロイの前に進行中ゲーム数を確認し、必要に応じて新規ゲーム開始を一時停止（ドレイン）してからデプロイする手順を運用に含める。
+- **ルール挙動に影響する変更（ルール実行ファイルまたはカードデータの変更）を含むデプロイ**: `ruleset_version` が変わるため進行中ゲームは無効試合になる（3.1）。AI調整のみのデプロイは該当しない。事故を防ぐため、該当デプロイの前に進行中ゲーム数を確認し、必要に応じて新規ゲーム開始を一時停止（ドレイン）してからデプロイする手順を運用に含める。
 - **バックアップ**: mysqldump日次cron + ローテーションに加え、**暗号化（age等）して外部ストレージへ転送**（VPS障害に耐えるため）。四半期に一度、バックアップからのリストア試験を行う。
 - シークレット（DBパスワード等）は `.env`（gitignore）+ GitHub Actions Secrets。
 
@@ -218,7 +224,7 @@ compile-app/ (pnpm workspaces)
 
 各フェーズ末に動作確認可能な状態を保つ。
 
-1. **Phase 0 — モノレポ土台**: pnpm workspaces、TS設定、engineパッケージ化、既存テストのVitest移設、CI（lint+test）
+1. **Phase 0 — モノレポ土台**: pnpm workspaces、TS設定、engineパッケージ化（AI節の別ファイル分離を含む。3.1参照）、既存テストのVitest移設、CI（lint+test）
 2. **Phase 1 — サーバー骨格**: Fastify + Socket.IO + Drizzle/MySQL起動、認証API、セッション
 3. **Phase 2 — 対戦コア**: ルーム管理、engine統合、ビュー隠蔽（不透明カードID）、ルーム単位直列化 + トランザクション + 冪等性、楽観ロック、再接続、タイマー（時間切れ=システム投了。現行にサーバー側実装はなく新規設計）。合法手検証・ドラフト進行はEdge Functionロジックを移植。socket.io-client結合テストで検証
 4. **Phase 3 — React盤面UI**: CPU戦から先に構築（通信なしで盤面UI完成・検証できるため）。AIモジュール移植
@@ -227,8 +233,8 @@ compile-app/ (pnpm workspaces)
 
 ## 8. テスト戦略
 
-- **engine**: 既存 `test/engine.test.js` をVitestへそのまま移設（挙動保証の要。エンジン本体は無変更なので全テストが通ること）。加えて**ゴールデンテスト**を追加: 代表的な初期条件 + アクション列 + 最終状態ハッシュを固定して保持し、ルール挙動が変わるとCIで検出できるようにする（`ruleset_version` 定数の更新漏れ防止。3.1参照）
-- **server**: socket.io-clientを使った結合テスト — 2クライアントでルーム作成→ドラフト→対戦→決着までの主要フロー、不正アクション拒否、再接続復帰。加えて整合性まわりを重点的に: 同一バージョンの並行アクション（片方のみ受理）、`actionId` 再送の冪等性（**再起動をまたぐ再送を含む**）、タイムアウト発火、期限更新後の古いタイマーコールバックが破棄されること、再起動後のリプレイ復元・タイマー再登録・全プレイヤー未接続扱いからの切断期限設定、複数期限の同時満了の裁定（両者切断、およびターン期限×相手切断期限の異種競合がタイマー実行順に依らず同一結果になること、同時刻で敗者が分かれる場合は `void`/`simultaneous_timeout` になること）、再戦後に旧ゲーム宛の遅延再送が `STALE_GAME` で拒否されること、ログアウト・全端末ログアウト・セッション期限切れ後の既存Socket操作の拒否と切断、不透明カードIDの検証（同一ゲーム内で安定・ゲーム間で無相関・カード定義から導出不能）
+- **engine**: 既存 `test/engine.test.js` をVitestへそのまま移設（挙動保証の要。エンジン本体はAI節のファイル分離以外無変更であり、全テストが通ることが分離の等価性検証を兼ねる）。加えて**ゴールデンテスト**を追加: 代表的な初期条件 + アクション列 + 最終状態ハッシュを固定して保持し、意図しないルール挙動の変化をCIで検出できるようにする（`ruleset_version` はルール実行コードのハッシュから自動導出されるため更新漏れは構造的に起きない。ゴールデンテストはその挙動レベルの安全網。3.1参照）
+- **server**: socket.io-clientを使った結合テスト — 2クライアントでルーム作成→ドラフト→対戦→決着までの主要フロー、不正アクション拒否、再接続復帰。加えて整合性まわりを重点的に: 同一バージョンの並行アクション（片方のみ受理）、`actionId` 再送の冪等性（**再起動をまたぐ再送を含む**）、**終局手・投了それぞれで「コミット成功後にACK消失→再送」が終了済みゲームに対しても成功ACKになること**、**成功後に選択要求が先へ進んだ状態での `game:choose` 再送が冪等成功すること**、タイムアウト発火、期限更新後の古いタイマーコールバックが破棄されること、再起動後のリプレイ復元・タイマー再登録・全プレイヤー未接続扱いからの切断期限設定、複数期限の同時満了の裁定（両者切断、およびターン期限×相手切断期限の異種競合がタイマー実行順に依らず同一結果になること、同時刻で敗者が分かれる場合は `void`/`simultaneous_timeout` になること）、再戦後の旧ゲーム宛の遅延メッセージのうち**未適用のものが `STALE_GAME` で拒否され、適用済みのものが冪等成功ACKになること**、対戦中の明示的 `room:leave` が即時投了として決着すること、ログアウト・全端末ログアウト・セッション期限切れ後の既存Socket操作の拒否と切断、不透明カードIDの検証（同一ゲーム内で安定・ゲーム間で無相関・カード定義から導出不能）、**S→C送信データの漏えい検査（`game:view`・`game:log` 等の全ペイロードに内部UID・`card_id_secret`・非公開カード定義が含まれないこと）**
 - **web**: GameClient抽象のユニットテスト + 主要コンポーネントのレンダリングテスト
 - **E2E**: Playwrightで「2ブラウザでルーム対戦1ゲーム完走」スモーク
 
