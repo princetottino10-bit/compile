@@ -59,7 +59,7 @@ compile-app/ (pnpm workspaces)
 - エンジンは決定的なので、**ゲーム初期条件 + アクション列のリプレイで状態を完全復元可能**。サーバー再起動時は進行中ルームをDBから復元する。
 - リプレイ復元の成立条件として、`games` に**不変のゲーム初期条件を保存する**:
   - `game_config`（JSON）: 両者のプロトコル3つ（`p0`/`p1`）、`seed`、`first`（先手）、`useControl` 等、`Engine.newGame()` に渡した引数の完全な記録
-  - `ruleset_version`: エンジンのバージョン識別子 + `cards.json`/`effects.json` の内容ハッシュ。エンジンやカードデータの更新後は旧バージョンのゲームを現行コードでリプレイしない（バージョン不一致の進行中ゲームは復元対象外とし、無効試合として終了処理する。頻度は低い想定なのでスナップショット互換層は作らない = YAGNI）
+  - `ruleset_version`: エンジンのバージョン識別子 + `cards.json`/`effects.json` の内容ハッシュ。エンジンやカードデータの更新後は旧バージョンのゲームを現行コードでリプレイしない（バージョン不一致の進行中ゲームは復元対象外とし、無効試合として終了処理する: `status='void'`, `end_reason='ruleset_mismatch'`。頻度は低い想定なのでスナップショット互換層は作らない = YAGNI）
 - 現行の楽観ロック方式を踏襲: 各ビューにバージョン番号を付け、クライアントのアクションはバージョン一致時のみ受理。
 
 ### 3.2 カードIDの隠蔽（不透明ID）
@@ -79,9 +79,10 @@ compile-app/ (pnpm workspaces)
 
 - **単一appプロセスに限定**する（本アプリの規模ではスケールアウト不要。将来複数プロセス化する場合はルームアフィニティの導入が前提となることを明記しておく）。
 - **ルーム単位の直列化**: 各ルームにコマンドキューを持ち、アクション・選択応答・タイムアウト処理を1つずつ順に処理する。同一バージョンのメッセージが並行到着しても後着は必ずバージョン不一致で拒否される。
-- **処理順序**: (1) エンジン適用（メモリ上の複製で実行）→ (2) 同一DBトランザクションで `game_actions` 追記 + `games`/`rooms` 更新（終局時の `winner` 確定も同一トランザクション）→ (3) コミット成功後にメモリ状態を確定しビューを配信。コミット失敗時はメモリ状態を破棄し、DBログからのリプレイで復元する。
+- **処理順序**: (1) エンジン適用（メモリ上の複製で実行）→ (2) 同一DBトランザクションで `game_actions` 追記 + `games`/`rooms` 更新（終局時の `status`/`winner`/`end_reason` 確定も同一トランザクション）→ (3) コミット成功後にメモリ状態を確定しビューを配信。コミット失敗時はメモリ状態を破棄し、DBログからのリプレイで復元する。
 - **一意制約**: `game_actions` に `UNIQUE(game_id, seq)`。直列化の破れがあってもDBが二重適用を最終防衛する。
-- **冪等性**: クライアントは各アクションに `actionId`（UUID）を付与。サーバーは直近の処理済み `actionId` と結果ビューを保持し、ACK消失による再送には同じ結果を返す（二重適用しない）。
+- **冪等性（再起動をまたいで保証）**: クライアントは各アクションに `actionId`（UUID）を付与。`game_actions` に `action_id`・`actor`・正規化後payload・適用後 `version` を永続化し、`UNIQUE(game_id, action_id)` を張る。再送を受けたら永続化済み行と `actor`・正規化後payloadが一致することを確認したうえで、成功済みとして最新ビューでACKする（二重適用しない）。メモリ上の処理済みキャッシュは高速化手段にすぎず正はDBとする。これにより、DBコミット後・ACK送信前にプロセスが落ちても、再起動後の再送に正しく応答できる。
+- **ログのpayloadは正規化済みアクション**: `game_actions.payload` には、公開IDを内部UIDへ逆引きし合法性を検証した後の「エンジンへ実際に渡したアクション」を保存する（`surrender` の `player` もサーバーが確定した値を記録）。リプレイが通信プロトコルや公開ID形式に依存しなくなる。
 
 ### 3.4 Socket.IOイベント設計
 
@@ -113,7 +114,8 @@ compile-app/ (pnpm workspaces)
 - **期限は絶対時刻で永続化**: 進行中ゲームに `deadline_at`（絶対時刻）と `deadline_holder`（現在の応答者 = 選択要求中はその回答者、通常時はターンプレイヤー）を保存する。プロセス内 `setTimeout` は起動中の発火手段にすぎず、正は常にDB。
 - **切断猶予はターン期限と独立に管理**: 自分のターン期限が進行中に相手が切断するなど、2種の期限は同時に併存しうる。切断猶予はプレイヤー別の `disconnect_deadline_p1` / `disconnect_deadline_p2`（切断中のみ非NULL）で永続化し、ターン期限とは別のタイマーとして扱う。
 - **更新条件**: 応答者が変わるたび（新しいターン、新しい選択要求の発生）に期限をリセットする。同一応答者への連続選択要求もリセット対象（1回答ごとに制限時間を与える）。
-- **再起動時**: 進行中ゲームの `deadline_at` を読み、タイマーを再登録する。復元時点で既に期限切れのゲームは即座にタイムアウト処理する。
+- **再起動時**: 進行中ゲームの期限3列（`deadline_at`・`disconnect_deadline_p1`・`disconnect_deadline_p2`）を**すべて**読み、タイマーを再登録する。復元時点で既に期限切れのものは即座にタイムアウト処理する。さらに、プロセス停止時にはdisconnectイベントを永続化できないため、**復元した全プレイヤーを一旦未接続として扱い**、切断期限が未設定のプレイヤーにも切断期限を設定する（Socket.IO再接続時に解除）。これを行わないと、ターンタイマー無効のゲームで再起動後に片方が戻らない場合、永久に進行不能になる。
+- **タイマー発火時の再検証**: 発火待ちの間に期限が更新されるなど、`setTimeout` のコールバックは発火時点で古くなっている可能性がある。タイムアウト処理は必ずルームキュー内で実行し、投了を適用する前に (1) ゲームがまだ進行中、(2) DB上の期限が実際に満了済み、(3) `deadline_holder` が期待値と一致、(4) コールバックが保持する期限値（またはタイマー世代番号）がDBの現在値と一致 — を再検証し、満たさない古いコールバックは何もせず破棄する。再接続による切断期限解除と切断タイマー発火の競合も、同じ条件付き更新で扱う。
 - **記録**: タイムアウト・切断不戦勝は `actor = 'system'` のアクションとして `game_actions` に記録し、リプレイで同じ結果を再現できるようにする。
 - ターンタイマー自体は現行同様ルーム設定で有効/無効を選べる（切断猶予は常時有効）。
 
@@ -147,12 +149,15 @@ compile-app/ (pnpm workspaces)
 | `users` | id, username(unique), password_hash, display_name, created_at | アカウント |
 | `sessions` | id, token_hash, user_id, expires_at | サーバーサイドセッション（トークンはハッシュで保存） |
 | `rooms` | id, code(unique), title, host_user_id, status, visibility, password_digest, settings(JSON: ターンタイマー等), created_at | ルーム |
-| `games` | id, room_id, p1_user_id, p2_user_id, winner, **game_config(JSON)**, **ruleset_version**, **card_id_secret**, **deadline_at**, **deadline_holder**, **disconnect_deadline_p1**, **disconnect_deadline_p2**, started_at, ended_at | 対戦記録（戦績の源泉 + リプレイ初期条件 + タイマー正データ） |
-| `game_actions` | id, game_id, seq, actor(player0/1/system), action_id, payload(JSON), created_at — **UNIQUE(game_id, seq)** | アクションログ（リプレイ・復元用） |
+| `games` | id, room_id, p1_user_id, p2_user_id, **status**, winner(NULL可), **end_reason**, **game_config(JSON)**, **ruleset_version**, **card_id_secret**, **deadline_at**, **deadline_holder**, **disconnect_deadline_p1**, **disconnect_deadline_p2**, started_at, ended_at | 対戦記録（戦績の源泉 + リプレイ初期条件 + タイマー正データ） |
+| `game_actions` | id, game_id, seq, actor(player0/1/system), action_id(クライアント採番UUID。systemはNULL), payload(JSON: 正規化済みエンジンアクション), version(適用後), created_at — **UNIQUE(game_id, seq)**, **UNIQUE(game_id, action_id)** | アクションログ（リプレイ・復元・冪等性判定用） |
 
 - `game_config` は `Engine.newGame()` に渡した引数の完全な記録（プロトコル・seed・先手・useControl）。`ruleset_version` はエンジンバージョン + カード/効果データのハッシュ（3.1参照）。
-
-- 戦績APIは `games` の集計（勝敗数・対戦履歴）。レーティング用の列・テーブルは今回作らないが、`games` に必要情報（対戦者・勝敗・時刻）が揃うよう設計しておく。
+- ゲームの終わり方は `status` + `end_reason` で明示的に区別する:
+  - `status`: `in_progress` / `completed` / `void`
+  - `end_reason`（終了時のみ）: `normal`（コンパイル勝利）/ `surrender` / `turn_timeout` / `disconnect` / `ruleset_mismatch`
+  - `winner` は `void` および将来の引き分けでNULL
+- 戦績APIは `games` の集計（勝敗数・対戦履歴）。**集計対象は `status = 'completed'` のみ**とし、`void` は除外する。レーティング用の列・テーブルは今回作らないが、`games` に必要情報（対戦者・勝敗・時刻）が揃うよう設計しておく。
 
 ## 5. フロントエンド設計（React）
 
@@ -171,12 +176,12 @@ compile-app/ (pnpm workspaces)
 
 - **Docker Compose** on VPS:
   - `caddy` — TLS自動取得（Let's Encrypt）。webのビルド成果物と `static/` を直接配信し、`/api` と `/socket.io` のみappへリバースプロキシ
-  - `app` — Node.jsサーバー（API + Socket.IO専用。静的配信はしない）
-  - `mysql` — MySQL 8系、ボリューム永続化
+  - `app` — Node.jsサーバー（API + Socket.IO専用。静的配信はしない）。**ポートは外部公開せずDocker内部ネットワークのみ**に置く。FastifyのtrustProxyをCaddyに限定し、信頼できるプロキシ経由の `X-Forwarded-For` からのみ実IPを取得する（これを誤ると、IPレート制限で全員がCaddyのIPに見える、または外部から偽装されたヘッダーを信用する）
+  - `mysql` — MySQL 8系、ボリューム永続化。ポートは外部公開しない
 - **CI/CD**: GitHub Actions — push → lint/テスト → Dockerイメージビルド → VPSへSSHデプロイ。デプロイ手順は次の順序を固定する:
   1. 新イメージをpull（タグはコミットSHA。`latest` は使わず、直前タグを記録してロールバック可能にする）
-  2. **Drizzleマイグレーションをappの起動前に実行**（専用の一時コンテナで `drizzle-kit migrate`）。失敗したらデプロイ中断・旧イメージのまま
-  3. app起動 → `/healthz`（DB疎通含む）のヘルスチェック合格を確認して完了。不合格なら直前タグへロールバック
+  2. **Drizzleマイグレーションをappの起動前に実行**（専用の一時コンテナで `drizzle-kit migrate`）。失敗したらデプロイ中断・旧イメージのまま。マイグレーションは**expand/contract方式に限定**する: 先行適用してよいのは旧・新appの双方と互換なスキーマ変更（列・テーブル・インデックスの追加等）のみ。列削除・型変更などの破壊的変更（contract）は、新版の安定稼働を確認した後の**別デプロイ**に分ける
+  3. app起動 → `/healthz`（DB疎通含む）のヘルスチェック合格を確認して完了。不合格なら直前タグへロールバック（手順2の制約により、スキーマを戻さなくても旧appは動作する）
 - **バックアップ**: mysqldump日次cron + ローテーションに加え、**暗号化（age等）して外部ストレージへ転送**（VPS障害に耐えるため）。四半期に一度、バックアップからのリストア試験を行う。
 - シークレット（DBパスワード等）は `.env`（gitignore）+ GitHub Actions Secrets。
 
@@ -194,7 +199,7 @@ compile-app/ (pnpm workspaces)
 ## 8. テスト戦略
 
 - **engine**: 既存 `test/engine.test.js` をVitestへそのまま移設（挙動保証の要。エンジン本体は無変更なので全テストが通ること）
-- **server**: socket.io-clientを使った結合テスト — 2クライアントでルーム作成→ドラフト→対戦→決着までの主要フロー、不正アクション拒否、再接続復帰。加えて整合性まわりを重点的に: 同一バージョンの並行アクション（片方のみ受理）、`actionId` 再送の冪等性、タイムアウト発火、再起動後のリプレイ復元とタイマー再登録、不透明カードIDの検証（同一ゲーム内で安定・ゲーム間で無相関・カード定義から導出不能）
+- **server**: socket.io-clientを使った結合テスト — 2クライアントでルーム作成→ドラフト→対戦→決着までの主要フロー、不正アクション拒否、再接続復帰。加えて整合性まわりを重点的に: 同一バージョンの並行アクション（片方のみ受理）、`actionId` 再送の冪等性（**再起動をまたぐ再送を含む**）、タイムアウト発火、期限更新後の古いタイマーコールバックが破棄されること、再起動後のリプレイ復元・タイマー再登録・全プレイヤー未接続扱いからの切断期限設定、不透明カードIDの検証（同一ゲーム内で安定・ゲーム間で無相関・カード定義から導出不能）
 - **web**: GameClient抽象のユニットテスト + 主要コンポーネントのレンダリングテスト
 - **E2E**: Playwrightで「2ブラウザでルーム対戦1ゲーム完走」スモーク
 
