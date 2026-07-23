@@ -433,13 +433,24 @@ html.mobile-ui .hdr-actions{flex-basis:100%;justify-content:flex-end}
 html.mobile-ui #turnLog{max-height:26px}
 html.mobile-ui #sideInfo{padding:3px 11px}
 html.mobile-ui #msgBar{min-height:32px;padding:6px 13px}
-html.mobile-ui #field{--cs:.58;gap:3px;padding:3px 4px}
+html.mobile-ui #field{--cs:.7;gap:3px;padding:3px 4px}
+/* 画面幅に余裕があるほどカード内の文字・値を大きくする(狭い端末は据え置き) */
+@media (min-width:400px){ html.mobile-ui #field{--cs:.78} }
+@media (min-width:480px){ html.mobile-ui #field{--cs:.86} }
+@media (min-width:600px){ html.mobile-ui #field{--cs:.95} }
 html.mobile-ui .line{padding:3px}
 html.mobile-ui .proto{padding:5px 3px}
+/* プロトコル名はゲームの要なので、カード縮尺と別に読める最小サイズを確保 */
+html.mobile-ui .proto{font-size:max(calc(.64rem*var(--cs)),.6rem)}
 html.mobile-ui .totals{padding:2px 2px;margin:1px 0}
 html.mobile-ui .chip{padding:3px 5px;gap:1px}
 html.mobile-ui .chip.cov{padding:2px 5px}
 html.mobile-ui #actionBar{bottom:132px}
+/* アイコン(効果▲▼・⚡バッジ)やプレイ選択が出ても横にあふれさせない */
+html.mobile-ui .stack,html.mobile-ui .half,html.mobile-ui .chip{max-width:100%;box-sizing:border-box}
+html.mobile-ui .chip .top{min-width:0}
+html.mobile-ui .play-choice{max-width:98%}
+html.mobile-ui .play-choice button{white-space:normal;font-size:.62rem;padding:6px 8px}
 
 /* ---------- overlays ---------- */
 .ov{position:fixed;inset:0;background:rgba(4,4,10,.9);
