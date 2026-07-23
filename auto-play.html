@@ -128,6 +128,14 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:7px 11px;f
 .stack.p2s{flex-direction:column-reverse}   /* AI: uncovered を外側(上)に */
 .stack.p1s{flex-direction:column}           /* YOU: uncovered を外側(下/手札側)に */
 .stack .chip{position:relative}
+/* 危険トリガー(こちらの行動に反応する相手の表向き札)の常時バッジ */
+.chip.hazard{box-shadow:inset 0 0 0 1.5px rgba(255,196,60,.55)}
+.hz-badge{position:absolute;top:-5px;right:-5px;z-index:4;width:17px;height:17px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:.6rem;line-height:1;cursor:help;
+  background:radial-gradient(circle at 35% 30%,#ffe08a,#f5a623);color:#3a2400;
+  box-shadow:0 1px 5px rgba(0,0,0,.5),0 0 9px -1px rgba(245,166,35,.9);
+  animation:hzpulse 1.6s ease-in-out infinite}
+@keyframes hzpulse{50%{box-shadow:0 1px 5px rgba(0,0,0,.5),0 0 14px 1px rgba(245,166,35,1)}}
 /* 覆われたカードどうしは重ねて、上側(値+上段)だけ覗かせる */
 .stack.p1s .chip.cov + .chip{margin-top:-4px}
 .stack.p2s .chip.cov + .chip{margin-top:-4px}
@@ -184,6 +192,12 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:7px 11px;f
 .chip.selbuf{border-color:#ffd24a!important;box-shadow:0 0 0 1.5px #ffd24a,0 0 18px -4px #ffd24a!important}
 .chip.flash,.hcard.flash{animation:chipflash .6s ease}
 @keyframes chipflash{0%{box-shadow:0 0 0 3px #fff,0 0 26px 2px var(--acg);filter:brightness(1.9)}100%{filter:none}}
+/* トリガー/効果の発動元カードを強く光らせる(通常flashより長く強い脈動) */
+.chip.flash-trigger,.hcard.flash-trigger{animation:trigfire .9s cubic-bezier(.3,.7,.4,1);z-index:5;position:relative}
+@keyframes trigfire{
+  0%{box-shadow:0 0 0 3px #fff,0 0 34px 6px var(--acg,rgba(255,210,74,.9));filter:brightness(2.1) saturate(1.2)}
+  35%{box-shadow:0 0 0 3px var(--ac,#ffd24a),0 0 30px 4px var(--acg,rgba(255,210,74,.85));filter:brightness(1.5)}
+  100%{box-shadow:0 0 0 0 transparent;filter:none}}
 /* 札が「ピロッ」と飛び出す登場演出 (オーバーシュート付き) */
 .chip.pop{animation:cardpop .34s cubic-bezier(.34,1.56,.64,1);transform-origin:center bottom}
 .hcard.pop{animation:cardpop .3s cubic-bezier(.34,1.56,.64,1)}
@@ -609,6 +623,21 @@ html.mobile-ui #actionBar{bottom:132px}
   text-shadow:0 0 10px var(--acg);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
 .arr-slot.sel{box-shadow:0 0 0 2px var(--pk),0 0 18px -4px rgba(233,30,140,.7);transform:translateY(-3px)}
 .arr-slot.moved{border-style:dashed}
+/* 宣言系リッチUI (LUCK 0=値 / LUCK 3=プロトコル) */
+.decl-sub{font-size:.7rem;color:var(--txd);text-align:center;margin:-4px 0 12px;letter-spacing:.02em}
+.decl-grid{display:grid;gap:8px}
+.decl-grid.decl-val{grid-template-columns:repeat(4,1fr)}
+.decl-grid.decl-proto{grid-template-columns:repeat(3,1fr)}
+.decl-tile{border:1.5px solid var(--bd2);border-radius:12px;padding:16px 6px;cursor:pointer;
+  background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.01));
+  transition:transform .12s cubic-bezier(.34,1.56,.64,1),box-shadow .18s;color:var(--tx);font-family:inherit}
+.decl-tile:hover,.decl-tile:active{transform:translateY(-3px) scale(1.04);
+  box-shadow:0 8px 22px -6px rgba(0,0,0,.6),0 0 0 2px var(--ac,var(--pk))}
+.decl-tile .dt-num{font-family:var(--fmono);font-weight:900;font-size:1.7rem;display:block;
+  text-shadow:0 0 14px rgba(255,255,255,.25)}
+.decl-proto-tile{border-color:var(--acg);background:linear-gradient(180deg,var(--act,rgba(255,255,255,.05)),transparent)}
+.decl-tile .dt-nm{font-family:var(--fmono);font-weight:700;font-size:.68rem;letter-spacing:.03em;
+  color:var(--ac,#fff);text-shadow:0 0 10px var(--acg);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #winPanel{text-align:center}
 #winPanel .wtitle{font-family:var(--fmono);font-weight:900;font-size:1.8rem;margin:16px 0;letter-spacing:.06em}
 @media (min-width:760px){
@@ -3881,13 +3910,28 @@ function startPlayback(entries, done){
   document.getElementById('animSkipBtn').style.display = '';
   stepPlay();
 }
+/* ステップの重要度で再生間隔に緩急をつける。
+   基準msに倍率を掛ける: 重要イベントは溜め、地味なイベントは速く流す */
+function stepWeight(msg){
+  if (!msg) return 1;
+  // 大きな盤面変化・見せ場: 長めに溜める
+  if (/コンパイル|まいりました|勝利|削除|移動|戻す|反転|覆|コントロール|並べ替え|入れ替え/.test(msg)) return 1.5;
+  if (/中段コマンド解決|上段効果が発動|下段効果が発動|公開|宣言/.test(msg)) return 1.35;
+  // ターン境界: 軽く区切る
+  if (/のターン|フェイズ/.test(msg)) return 1.15;
+  // 地味な処理: 速く流す
+  if (/ドロー|捨て札|キャッシュ|シャッフル|プレイ/.test(msg)) return 0.6;
+  return 1;
+}
 function stepPlay(){
   if (playIdx >= playEntries.length){ endPlayback(); return; }
   var e = playEntries[playIdx++];
   animState = e.st; animMsg = e.msg; animUid = e.uid;
   render();
   maybeShowFx(e);   // 効果発動ステップならフロート表示
-  playTimer = setTimeout(stepPlay, SPEEDS[speedIdx].ms || 300);
+  var base = SPEEDS[speedIdx].ms || 300;
+  var wait = Math.round(base * stepWeight(e.msg));
+  playTimer = setTimeout(stepPlay, wait);
 }
 function endPlayback(){
   if (playTimer){ clearTimeout(playTimer); playTimer = null; }
@@ -3995,7 +4039,13 @@ var PROMPT_TEXT = {
   'rearrange':'新しい並び順を選択', 'give-card':'相手に渡すカードを選択',
   'reveal-hand-card':'公開する手札を選択', 'play-card':'プレイするカードを選択',
   'play-free':'プレイするカードとラインを選択', 'choice':'効果を選択',
-  'optional-draw':'カードを引きますか?', 'optional-discard':'捨て札にしますか?', 'optional-give':'手札を渡しますか?'
+  'optional-draw':'カードを引きますか?', 'optional-discard':'捨て札にしますか?', 'optional-give':'手札を渡しますか?',
+  // Main 2 / Aux 2
+  'declare-value':'値を1つ宣言する', 'declare-protocol':'プロトコルを1つ宣言する',
+  'optional-discard-top':'公開したカードを捨て札にしますか?', 'optional-play':'このカードをプレイしますか?',
+  'discard-order':'先に手札を捨てるのはどちら?', 'swap-stack-1':'入れ替えるスタック(1つ目)を選択',
+  'swap-stack-2':'入れ替えるスタック(2つ目)を選択', 'mirror-middle':'コピーする相手の中段を選択',
+  'steal-to-hand':'手札に加える相手の裏向きカードを選択', 'play-from-trash':'プレイする捨て札のカードを選択'
 };
 var OP_LABEL = { flip:'反転する', shift:'移動する', discard:'手札を捨てる', draw:'カードを引く', 'delete':'削除する', 'return':'戻す' };
 
@@ -4012,6 +4062,10 @@ function reqText(req){
 function enterReq(req){
   uiMode = 'request'; curReq = req; selBuf = [];
   var k = req.kind;
+  if (k === 'option' && (req.prompt === 'declare-value' || req.prompt === 'declare-protocol')){
+    modalDeclare(req);
+    return;
+  }
   if (k === 'option'){
     // コントロールや任意効果の選択中は盤面を見ながら判断できるようにする
     // 選択中も盤面を確認できるよう、option系は常にboard表示(SPIRIT1下段の捨て/反転 等)
@@ -4405,10 +4459,13 @@ function render(){
   renderTurnLog();
   renderTransit(st);
   updateMsgBar();
-  // ステップ再生中: 対象カードをフラッシュ
+  // ステップ再生中: 対象カードをフラッシュ。トリガー/効果の発動ステップは発動元を強く光らせる
   if (uiMode === 'anim' && animUid){
     var el = document.querySelector('[data-uid="' + animUid + '"]');
-    if (el) el.classList.add('flash');
+    if (el){
+      var isFire = /効果が発動|中段コマンド解決/.test(animMsg || '');
+      el.classList.add(isFire ? 'flash-trigger' : 'flash');
+    }
   }
 }
 
@@ -4616,6 +4673,30 @@ function openProtoDetail(side, l){
   openModal(html);
 }
 
+// 相手(所有者)の手番=こちらの手番に、こちらの行動へ反応するトリガーの on 一覧
+var REACTIVE_ON = {
+  afterOppDiscard:'あなたが捨て札にすると発動', afterOppDraw:'あなたが引くと発動',
+  afterOppRefresh:'あなたがリフレッシュすると発動', afterAnyRefresh:'誰かがリフレッシュすると発動',
+  afterOppCompile:'あなたがコンパイルすると発動', afterOppPlayInThisLine:'このラインにプレイすると発動',
+  wouldBeCovered:'覆おうとすると先に発動', wouldBeCoveredOrFlipped:'覆う/反転で先に発動'
+};
+/* このカード(表向き)が、見ているプレイヤー(viewer)にとって「踏むと反応する」危険札か。
+   相手側(side!==viewer)の表向きカードで、可視スロットに反応トリガーがある場合に true */
+function reactiveHazard(st, uid, side, uncovered, viewer){
+  if (side === viewer) return null;         // 自分のカードは危険ではない
+  var c = st.cards[uid];
+  if (!c.faceUp) return null;
+  var eff = (window.COMPILE_EFFECTS || {})[c.def]; if (!eff) return null;
+  var hints = [];
+  // upper は覆われていても有効 / lower は uncovered のみ
+  var slots = uncovered ? ['upper','lower'] : ['upper'];
+  slots.forEach(function(slot){
+    var tr = eff[slot] && eff[slot].trigger;
+    if (tr && REACTIVE_ON[tr.on]) hints.push(REACTIVE_ON[tr.on]);
+  });
+  return hints.length ? hints.join(' / ') : null;
+}
+
 function chipDiv(st, uid, side, uncovered){
   var c = st.cards[uid];
   var d = document.createElement('div');
@@ -4657,6 +4738,16 @@ function chipDiv(st, uid, side, uncovered){
   }
   // PC: 相手の裏向きカード以外はホバーでカード画像+全文を表示
   if (c.faceUp || side === HUMAN) attachCardTip(d, c.def);
+  // 危険トリガー(こちらの行動に反応する相手の表向き札)に⚡バッジを常時表示
+  if (!roomMode || side !== HUMAN){
+    var hz = reactiveHazard(st, uid, side, uncovered, HUMAN);
+    if (hz){
+      d.classList.add('hazard');
+      var hb = document.createElement('span');
+      hb.className = 'hz-badge'; hb.textContent = '⚡'; hb.title = hz;
+      d.appendChild(hb);
+    }
+  }
   return d;
 }
 
@@ -4792,6 +4883,33 @@ function minimizeModal(){
 function restoreModal(){
   document.getElementById('modalOv').classList.remove('minimized');
   document.getElementById('modalRestore').style.display = 'none';
+}
+
+/* 宣言系(LUCK 0=値 / LUCK 3=プロトコル)の専用リッチUI。
+   宣言→めくり→判定の「めくり/判定」はトレース再生で自動的に見えるので、
+   ここは宣言そのものを大きく選ばせる演出に集中する */
+function modalDeclare(req){
+  var isValue = req.prompt === 'declare-value';
+  var cardNm = req.context && DEFMAP[req.context] ? cardName(req.context) : req.context;
+  var html = '<h2>' + esc((cardNm ? '[' + cardNm + '] ' : '') + (isValue ? '値を宣言' : 'プロトコルを宣言')) + '</h2>' +
+    '<div class="decl-sub">' + (isValue ? 'この値のカードがめくれるか賭ける' : 'このプロトコルがめくれるか賭ける') + '</div>' +
+    '<div class="decl-grid ' + (isValue ? 'decl-val' : 'decl-proto') + '" id="declGrid"></div>';
+  openModal(html, 'board');
+  var grid = document.getElementById('declGrid');
+  req.options.forEach(function(opt, i){
+    var tile = document.createElement('button');
+    tile.className = 'decl-tile';
+    if (isValue){
+      tile.innerHTML = '<span class="dt-num">' + esc(opt) + '</span>';
+    } else {
+      var col = PROTOMAP[opt] ? PROTOMAP[opt].color : '#888';
+      setAccent(tile, col);
+      tile.classList.add('decl-proto-tile');
+      tile.innerHTML = '<span class="dt-nm">' + esc(opt) + '</span>';
+    }
+    tile.onclick = function(){ closeModal(); answer(req, [i]); };
+    grid.appendChild(tile);
+  });
 }
 
 function modalOptions(title, labels, optional, cb, noLabel, mode){
