@@ -364,6 +364,28 @@ body.ed-dragging{cursor:grabbing}
 #sideInfo .zone:hover{color:var(--tx)}
 #sideInfo .ai-tag{color:var(--gd2)}
 #sideInfo .ai-tag b{color:var(--gd2)}
+/* B: 選択カードの大型プレビュー(手札の直上・盤面を覆わない) */
+#handPreview{display:none}
+#handPreview.on{display:flex;gap:10px;padding:8px 10px;margin:0 6px 4px;border-radius:12px;
+  background:linear-gradient(160deg,rgba(18,18,30,.96),rgba(10,10,18,.98));
+  border:1px solid var(--acg,var(--bd2));box-shadow:0 -6px 22px -8px #000,inset 0 0 0 1px rgba(255,255,255,.03);
+  animation:hpin .16s ease;align-items:stretch;max-height:34vh;overflow:hidden}
+@keyframes hpin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.hp-art{position:relative;flex-shrink:0;width:64px;border-radius:9px;overflow:hidden;border:1px solid var(--acg)}
+.hp-badge{position:absolute;top:4px;left:4px;min-width:22px;height:22px;padding:0 5px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--fmono);font-weight:900;font-size:.95rem;color:#fff;border-radius:6px;
+  background:linear-gradient(160deg,var(--act),rgba(0,0,0,.45));border:1px solid var(--acg);text-shadow:0 0 8px var(--acg)}
+.hp-body{flex:1;min-width:0;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
+.hp-nm{font-family:var(--fmono);font-weight:800;font-size:.8rem;letter-spacing:.03em;color:var(--ac,#fff);
+  text-shadow:0 0 10px var(--acg)}
+.hp-cmd{font-size:.68rem;line-height:1.42;color:#e2e2ee}
+.hp-lbl{display:inline-block;font-family:var(--fmono);font-weight:900;font-size:.5rem;letter-spacing:.08em;
+  padding:1px 5px;border-radius:4px;margin-right:5px;vertical-align:.08em;background:rgba(255,255,255,.08);color:var(--txd)}
+.hp-up .hp-lbl{color:#f87171;background:rgba(248,113,113,.14)}
+.hp-low .hp-lbl{color:#4ade80;background:rgba(74,222,128,.14)}
+html.mobile-ui #handPreview.on{max-height:30vh;gap:8px;padding:6px 8px}
+html.mobile-ui .hp-art{width:52px}
+html.mobile-ui .hp-cmd{font-size:.62rem}
 #hand{display:flex;gap:7px;overflow-x:auto;padding:7px 9px;min-height:76px;align-items:stretch;justify-content:safe center}
 #hand::-webkit-scrollbar{height:5px}
 #hand::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:3px}
@@ -405,8 +427,10 @@ html.mobile-ui #hand{
 html.mobile-ui .hcard{width:calc((100vw - 28px)/6);padding:5px 3px 6px}
 html.mobile-ui .hcard .top{gap:3px;margin-bottom:0}
 html.mobile-ui .hcard .badge{min-width:20px;width:20px;height:22px;padding:0 2px;border-radius:5px;font-size:.78rem}
-html.mobile-ui .hcard .nm{font-size:.54rem;letter-spacing:.03em;text-align:center}
-html.mobile-ui .hcard .eff{display:none}
+html.mobile-ui .hcard .nm{font-size:.54rem;letter-spacing:.03em;text-align:center;flex:1;min-width:0}
+/* モバイルでも上段/下段の有無を色ドットで一目化(タップ不要のスキャン用) */
+html.mobile-ui .hcard .eff{display:flex;gap:1px;margin-left:1px;font-size:.5rem;flex-shrink:0}
+html.mobile-ui .hcard .eff i{line-height:1}
 html.mobile-ui header{padding:6px 9px}
 html.mobile-ui .hdr-actions{flex-basis:100%;justify-content:flex-end}
 html.mobile-ui #turnLog{max-height:26px}
@@ -690,6 +714,7 @@ html.mobile-ui #actionBar{bottom:132px}
 <div id="bottomBar">
   <div id="turnLog" onclick="openLog()"></div>
   <div id="sideInfo"></div>
+  <div id="handPreview"></div>
   <div id="hand"></div>
 </div>
 
@@ -4231,10 +4256,9 @@ function tapHand(uid){
     if (MOBILE_UI) closeModal();
     render(); updateMsgBar(); return;
   }
-  // PC/モバイル共通: カード本体の操作は直接プレイ選択へ進む
+  // PC/モバイル共通: カード本体の操作は直接プレイ選択へ進む。
+  // 効果全文は手札直上の常駐プレビュー(renderHandPreview)で盤面を覆わずに表示する
   selectedHand = uid; uiMode = 'hand'; render(); updateMsgBar();
-  // MOBILEはホバーできないため、タップ時に同等の効果説明を相手フィールド側へ表示する
-  if (MOBILE_UI) openDetail(uid);
 }
 
 /* 通常プレイ(アクション)と効果プレイ(playPick)を振り分け */
@@ -4803,7 +4827,7 @@ function renderHand(st){
       'linear-gradient(180deg,rgba(7,7,13,.18) 0%,rgba(7,7,13,.5) 38%,rgba(7,7,13,.93) 100%)');
     var handName = MOBILE_UI ? def.proto.name.slice(0, 3).toUpperCase() : cardName(c.def);
     d.innerHTML = '<span class="top"><span class="badge">' + def.card.value + '</span>' +
-      '<span class="nm">' + esc(handName) + '</span></span>' +
+      '<span class="nm">' + esc(handName) + '</span>' + (MOBILE_UI ? effIcons(def) : '') + '</span>' +
       (MOBILE_UI ? '' : effIcons(def));
     d.onclick = function(){ tapHand(uid); };
     attachCardTip(d, c.def);   // PC: ホバーでカード画像+全文を表示
@@ -4829,6 +4853,29 @@ function renderHand(st){
   if (!st.players[HUMAN].hand.length && !h.children.length){
     h.innerHTML = '<div style="color:var(--txdd);font-size:.7rem;align-self:center;padding:0 10px">手札なし</div>';
   }
+  renderHandPreview(st);
+}
+
+/* B: 選択中カードの大型プレビューを手札の上に常駐表示(盤面を覆わない)。
+   プレイ選択(uiMode='hand')や効果プレイ(playPick)で手札を選んでいる間に、
+   絵+全文を読みながらライン選択できる */
+function renderHandPreview(st){
+  var pv = document.getElementById('handPreview');
+  if (!pv) return;
+  var uid = selectedHand;
+  var show = uid && st.cards[uid] && (uiMode === 'hand' || (playPick && playPick.byUid && playPick.byUid[uid]));
+  if (!show){ pv.className = ''; pv.innerHTML = ''; return; }
+  var c = st.cards[uid], def = DEFMAP[c.def];
+  if (!def){ pv.className = ''; pv.innerHTML = ''; return; }
+  function cmd(lbl, tx, cls){ return tx ? '<div class="hp-cmd ' + cls + '"><span class="hp-lbl">' + lbl + '</span>' + esc(tx) + '</div>' : ''; }
+  setAccent(pv, def.proto.color);
+  pv.innerHTML =
+    '<div class="hp-art" style="background:url(&quot;' + cardArt(c.def) + '&quot;) center/cover">' +
+      '<span class="hp-badge">' + def.card.value + '</span></div>' +
+    '<div class="hp-body"><div class="hp-nm">' + esc(cardName(c.def)) + '</div>' +
+      cmd('TOP', def.card.upper, 'hp-up') + cmd('MID', def.card.middle, 'hp-mid') + cmd('BOT', def.card.lower, 'hp-low') +
+    '</div>';
+  pv.className = 'on';
 }
 
 /* ---------- モーダル ---------- */
