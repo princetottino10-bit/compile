@@ -1911,7 +1911,11 @@ function execOp(ctx, fr, op) {
         fr.bind[op.bind || 'declared'] = opts[ans[0]];
         log(ctx, `P${fr.controller + 1}: 値 ${opts[ans[0]]} を宣言`);
       } else {
-        const names = Object.keys(PROTOS);
+        // 宣言候補は実際にゲームで使われている6プロトコル(両者の編成)のみ。
+        // 相手のデッキにはこの6種しか入らないため、全30種から選ぶ意味はない
+        const names = [];
+        for (let s = 0; s < 2; s++) for (const p of st.players[s].protocols)
+          if (names.indexOf(p.name) < 0) names.push(p.name);
         const ans = choose(ctx, { kind: 'option', player: fr.controller, options: names, prompt: 'declare-protocol', context: defOf(st, fr.source).id });
         fr.bind[op.bind || 'declared'] = names[ans[0]];
         log(ctx, `P${fr.controller + 1}: プロトコル ${names[ans[0]]} を宣言`);
