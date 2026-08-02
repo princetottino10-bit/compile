@@ -57,6 +57,7 @@ function parseArgs(argv) {
     else if (a === '--budget') o.budget = +argv[++i];
     else if (a === '--seed') o.seed = +argv[++i];
     else if (a === '--breadth') o.breadth = argv[++i].split(',').map(Number);
+    else if (a === '--baseline-breadth') o.baselineBreadth = argv[++i].split(',').map(Number);
     // 特定プロトコルが絡む編成だけに絞る。全体では薄まる効果を狙い撃ちで測るのに使う
     else if (a === '--filter') o.filter = argv[++i].split(',').map(s => s.trim().toUpperCase());
     else if (a === '--weights') {
@@ -65,6 +66,13 @@ function parseArgs(argv) {
       for (const kv of argv[++i].split(',')) {
         const [k, v] = kv.split('=');
         if (k) o.weights[k] = Number(v);
+      }
+    }
+    else if (a === '--baseline-weights') {
+      o.baselineWeights = {};
+      for (const kv of argv[++i].split(',')) {
+        const [k, v] = kv.split('=');
+        if (k) o.baselineWeights[k] = Number(v);
       }
     }
   }
@@ -103,6 +111,8 @@ if (!isMainThread) {
   if (cfg.budget && Cand.setAiThinkBudget) Cand.setAiThinkBudget(cfg.budget);
   if (cfg.breadth && Cand.setAiBreadth) Cand.setAiBreadth.apply(null, cfg.breadth);
   if (cfg.weights && Cand.setAiWeights) Cand.setAiWeights(cfg.weights);
+  if (cfg.baselineBreadth && Base.setAiBreadth) Base.setAiBreadth.apply(null, cfg.baselineBreadth);
+  if (cfg.baselineWeights && Base.setAiWeights) Base.setAiWeights(cfg.baselineWeights);
 
   const out = [];
   for (const job of jobs) out.push(playGame(job));
@@ -190,7 +200,10 @@ let done = 0;
 
 for (const chunk of chunks) {
   const w = new Worker(__filename, {
-    workerData: { candidateSrc, baselineSrc, cards, effects, jobs: chunk, cfg: { budget: opt.budget, breadth: opt.breadth, weights: opt.weights } },
+    workerData: { candidateSrc, baselineSrc, cards, effects, jobs: chunk, cfg: {
+      budget: opt.budget, breadth: opt.breadth, weights: opt.weights,
+      baselineBreadth: opt.baselineBreadth, baselineWeights: opt.baselineWeights,
+    } },
   });
   w.on('message', (rows) => {
     results.push.apply(results, rows);

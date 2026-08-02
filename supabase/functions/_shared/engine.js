@@ -1105,7 +1105,11 @@ function execOp(ctx, fr, op) {
         fr.bind[op.bind || 'declared'] = opts[ans[0]];
         log(ctx, `P${fr.controller + 1}: 値 ${opts[ans[0]]} を宣言`);
       } else {
-        const names = Object.keys(PROTOS);
+        // 宣言候補は実際にゲームで使われている6プロトコル(両者の編成)のみ。
+        // 相手のデッキにはこの6種しか入らないため、全30種から選ぶ意味はない
+        const names = [];
+        for (let s = 0; s < 2; s++) for (const p of st.players[s].protocols)
+          if (names.indexOf(p.name) < 0) names.push(p.name);
         const ans = choose(ctx, { kind: 'option', player: fr.controller, options: names, prompt: 'declare-protocol', context: defOf(st, fr.source).id });
         fr.bind[op.bind || 'declared'] = names[ans[0]];
         log(ctx, `P${fr.controller + 1}: プロトコル ${names[ans[0]]} を宣言`);
@@ -1918,8 +1922,30 @@ function newGame(opts) {
 /* ---------- AI ---------- */
 
 let AI_LEVEL = 1; // 0=easy, 1=normal, 2=hard
-const AI_THINK_BUDGET_MS = 590;
+let AI_THINK_BUDGET_MS = 590;
+const AI_BREADTH = { rootEval: 999, rootSearch: 24, reply: 14, shallow: 6 };
 function setAiLevel(v) { AI_LEVEL = Math.max(0, Math.min(2, v | 0)); }
+/* 1手あたりの思考時間(ms)。ベンチや自己対戦で探索量を振るために外から変更できる */
+function setAiThinkBudget(ms) { AI_THINK_BUDGET_MS = Math.max(1, ms | 0); }
+function setAiBreadth(rootEval, rootSearch, reply, shallow) {
+  if (rootEval > 0) AI_BREADTH.rootEval = rootEval | 0;
+  if (rootSearch > 0) AI_BREADTH.rootSearch = rootSearch | 0;
+  if (reply > 0) AI_BREADTH.reply = reply | 0;
+  if (shallow > 0) AI_BREADTH.shallow = shallow | 0;
+}
+
+/* 評価の重み。ai_arena の --weights で振り、昇格戦を通った値だけ既定値へ反映する。 */
+const AI_W = {
+  ctrlHold: 65, ctrlHoldLev: 0.7,     // コントロールを持っている
+  ctrlOpp: 90, ctrlOppLev: 0.75,      // 相手が持っている
+  leadGain: 50, oppLeadGain: 78,      // 2ラインリード=次のコントロールフェイズで奪える見込み
+  leadBonus: 18, oppLeadBonus: 24,    // リードそのものの価値
+  // 各ラインの合計値差。CONTROLを直接追うのではなく、盤面差を広げた結果として獲得する
+  marginLead: 6, marginTrail: 6,
+  // リフレッシュはターンを丸ごと使う。引ける枚数が少ないほど割に合わない
+  refreshPerCard: 13, refreshTempo: 26,
+};
+function setAiWeights(obj) { for (const k in obj) if (k in AI_W) AI_W[k] = obj[k]; }
 
 /* --- Phase A: 評価関数 --- */
 
@@ -2050,7 +2076,11 @@ function aiActionBias(st, action, side) {
   if (!action) return 0;
   const op = 1 - side;
   if (action.type === 'refresh') {
-    let v = (5 - st.players[side].hand.length) * 13;
+    /* リフレッシュは手札を5枚まで補充するだけでターンを1つ丸ごと使う。
+       手札4枚なら1枚しか引けず、盤面を進める1手より明確に損。
+       引ける枚数に比例した価値からテンポ損を差し引き、少枚数の補充は負にする */
+    const draws = 5 - st.players[side].hand.length;
+    let v = draws * AI_W.refreshPerCard - AI_W.refreshTempo;
     if (st.control === side) v += aiControlLeverage(st, side) * 0.35;
     return v;
   }
@@ -2124,6 +2154,11 @@ function aiScore(st, me) {
     const mine = lineTotal(st, l, me), theirs = lineTotal(st, l, op);
     const myProt = st.players[me].protocols[l], opProt = st.players[op].protocols[l];
     lineInfo.push({ mine, theirs, myComp: myProt.compiled, opComp: opProt.compiled });
+  }
+
+  for (const li of lineInfo) {
+    const margin = Math.max(-12, Math.min(12, li.mine - li.theirs));
+    sc += margin >= 0 ? margin * AI_W.marginLead : margin * AI_W.marginTrail;
   }
 
   const myGaps = [], opGaps = [];
@@ -2211,22 +2246,24 @@ function aiScore(st, me) {
   sc += aiBoardEffectScore(st, me);
 
   if (st.useControl) {
+    const W = AI_W;
     let myWins = aiLineLeadCount(st, me), opWins = aiLineLeadCount(st, op);
 
     if (st.control === me) {
-      sc += 65 + aiControlLeverage(st, me) * 0.7;
+      sc += W.ctrlHold + aiControlLeverage(st, me) * W.ctrlHoldLev;
       if (myComp >= 1) sc += 15;
       if (myComp >= 2) sc += 45;
     } else if (st.control === op) {
-      sc -= 90 + aiControlLeverage(st, op) * 0.75;
+      sc -= W.ctrlOpp + aiControlLeverage(st, op) * W.ctrlOppLev;
       if (opComp >= 1) sc -= 15;
       if (opComp >= 2) sc -= 50;
     }
 
-    if (myWins >= 2 && st.control !== me) sc += 50;
-    if (opWins >= 2 && st.control !== op) sc -= 78;
-    if (myWins >= 2) sc += 18;
-    if (opWins >= 2) sc -= 24;
+    // 2ライン以上リードしていれば次の自分のコントロールフェイズで奪える見込み
+    if (myWins >= 2 && st.control !== me) sc += W.leadGain;
+    if (opWins >= 2 && st.control !== op) sc -= W.oppLeadGain;
+    if (myWins >= 2) sc += W.leadBonus;
+    if (opWins >= 2) sc -= W.oppLeadBonus;
   }
 
   if (st.turn === me) sc += 5;
@@ -2529,26 +2566,47 @@ function aiActionHard(state) {
   try {
     const deadline = aiNow() + AI_THINK_BUDGET_MS;
     AI_SEARCH_DEADLINE = deadline;
-    const ordered = orderMoves(acts, state, me, deadline);
+
+    // 静的orderingで全手を候補に残す(重い解決はしない=ここで時間を使い切らない)
+    const ordered = orderMovesStatic(acts, state, me);
     if (!ordered.length) return acts[0];
-    const limit = Math.min(ordered.length, 24);
-    let alpha = -Infinity, best = ordered[0].a;
+
+    /* --- depth 1: 全手を1-ply評価しきる。ここまでは必ず完走させ、
+       時間切れでも Normal 相当の結果を保証する --- */
+    let best = ordered[0].a, bestVal = -Infinity;
+    const viable = [];
+    const evalLimit = Math.min(ordered.length, AI_BREADTH.rootEval);
+    for (let i = 0; i < evalLimit; i++) {
+      const item = ordered[i];
+      const res = resolveOrdered(item, state);
+      if (!res || res.error || res.requests.length) continue;
+      const bias = aiActionBias(state, item.a, me) + aiTransitionScore(state, res, me);
+      const val = aiScore(res.state, me) + bias;
+      item.val1 = val; item.bias = bias;
+      viable.push(item);
+      if (val > bestVal) { bestVal = val; best = item.a; }
+    }
+    if (!viable.length) return best;
+
+    /* --- depth 2: 時間が残っていれば、1-plyで有望な手から順に相手手番を読む。
+       途中で時間切れになっても depth1 の best が残るので劣化しない --- */
+    viable.sort((a, b) => b.val1 - a.val1);
+    const limit = Math.min(viable.length, AI_BREADTH.rootSearch);
+    let alpha = -Infinity, best2 = null;
     for (let i = 0; i < limit; i++) {
       if (aiNow() > deadline) break;
-      const a = ordered[i].a;
-      const res = ordered[i].res;
-      if (!res || res.error || res.requests.length) continue;
-      const s1 = res.state;
+      const item = viable[i];
+      const s1 = item.res.state;
       let val;
       if (s1.winner !== null || s1.phase === 'finished' || s1.turn === me) {
         val = aiScore(s1, me);
       } else {
         val = minimaxMin(s1, me, alpha, Infinity, deadline);
       }
-      val += aiActionBias(state, a, me) + aiTransitionScore(state, res, me);
-      if (val > alpha) { alpha = val; best = a; }
+      val += item.bias;
+      if (val > alpha) { alpha = val; best2 = item.a; }
     }
-    return best;
+    return best2 || best;
   } finally { TRACE = wasTrace; AI_SEARCH_DEADLINE = previousDeadline; }
 }
 
@@ -2557,12 +2615,12 @@ function minimaxMin(state, me, alpha, beta, deadline) {
   const op = 1 - me;
   const acts = legalActions(state);
   if (!acts.length) return aiScore(state, me);
-  const ordered = orderMoves(acts, state, op, deadline);
-  const limit = Math.min(ordered.length, 12);
+  const ordered = orderMovesStatic(acts, state, op);
+  const limit = Math.min(ordered.length, AI_BREADTH.reply);
   let val = Infinity;
   for (let i = 0; i < limit; i++) {
     if (deadline && aiNow() > deadline) break;
-    const res = ordered[i].res;
+    const res = resolveOrdered(ordered[i], state);
     if (!res || res.error || res.requests.length) continue;
     const s2 = res.state;
     const sc = (s2.winner === null && s2.turn === me)
@@ -2583,7 +2641,7 @@ function minimaxMaxShallow(state, me, alpha, beta, deadline) {
   const ordered = acts.map(a => ({ a, bias: aiActionBias(state, a, me) }))
     .sort((a, b) => b.bias - a.bias);
   let val = -Infinity;
-  for (let i = 0; i < Math.min(ordered.length, 6); i++) {
+  for (let i = 0; i < Math.min(ordered.length, AI_BREADTH.shallow); i++) {
     if (deadline && aiNow() > deadline) break;
     const item = ordered[i];
     const res = applyAndResolve(state, item.a, smartPicks);
@@ -2596,17 +2654,31 @@ function minimaxMaxShallow(state, me, alpha, beta, deadline) {
   return val === -Infinity ? aiScore(state, me) : val;
 }
 
-function orderMoves(acts, state, side, deadline) {
+/* 静的move ordering: applyAndResolve(重い完全シミュレーション)を使わず、
+   軽量な静的評価だけで並べ替える。全手が必ず候補に残るので、探索が時間切れでも
+   「良い手が評価前に捨てられる」事故が起きない。res は遅延評価 (resolveOrdered) */
+function orderMovesStatic(acts, state, side) {
   const scored = [];
   for (const a of acts) {
-    if (deadline && aiNow() >= deadline && scored.length) break;
-    const res = applyAndResolve(state, a, smartPicks);
-    const sc = (!res || res.error) ? -1e8 : aiScore(res.state, side)
-      + aiActionBias(state, a, side) + aiTransitionScore(state, res, side);
-    scored.push({ a, sc, res });
+    let sc = aiActionBias(state, a, side);
+    if (a.type === 'play') {
+      const c = state.cards[a.card];
+      const d = c ? DEFS[c.def] : null;
+      if (d) {
+        // 表向きは値と中段効果、裏向きは固定値2ぶんの盤面寄与を粗く見積もる
+        sc += a.faceUp ? d.value * 6 + aiMiddleValue(d) * 0.25 : 12;
+      }
+    }
+    scored.push({ a, sc, res: undefined });
   }
   scored.sort((a, b) => b.sc - a.sc);
   return scored;
+}
+
+/* ordered項目の完全解決を必要になった時点で1度だけ行う(結果はキャッシュ) */
+function resolveOrdered(item, state) {
+  if (item.res === undefined) item.res = applyAndResolve(state, item.a, smartPicks);
+  return item.res;
 }
 
 /* --- 難易度に応じたディスパッチ --- */
@@ -2665,7 +2737,7 @@ function aiAnswer(state, req) {
 /* ---------- 公開 API ---------- */
 
 const Engine = {
-  init, newGame, apply, legalActions, setTrace, setAiLevel,
+  init, newGame, apply, legalActions, setTrace, setAiLevel, setAiThinkBudget, setAiBreadth, setAiWeights,
   lineTotal, cardValue, compilableLines, canPlay, locate,
   ai: { action: aiAction, answer: aiAnswer, score: aiScore, transitionScore: aiTransitionScore, randomPicks, smartPicks },
   get defs() { return DEFS; },

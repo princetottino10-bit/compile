@@ -1923,17 +1923,27 @@ function newGame(opts) {
 
 let AI_LEVEL = 1; // 0=easy, 1=normal, 2=hard
 let AI_THINK_BUDGET_MS = 590;
+const AI_BREADTH = { rootEval: 999, rootSearch: 24, reply: 14, shallow: 6 };
 function setAiLevel(v) { AI_LEVEL = Math.max(0, Math.min(2, v | 0)); }
 /* 1手あたりの思考時間(ms)。ベンチや自己対戦で探索量を振るために外から変更できる */
 function setAiThinkBudget(ms) { AI_THINK_BUDGET_MS = Math.max(1, ms | 0); }
+function setAiBreadth(rootEval, rootSearch, reply, shallow) {
+  if (rootEval > 0) AI_BREADTH.rootEval = rootEval | 0;
+  if (rootSearch > 0) AI_BREADTH.rootSearch = rootSearch | 0;
+  if (reply > 0) AI_BREADTH.reply = reply | 0;
+  if (shallow > 0) AI_BREADTH.shallow = shallow | 0;
+}
 
-/* 評価の重み。ai_arena の --weights で振って最適点を探せるようにしてある。
-   既定値は従来ハードコードしていた値と同一 */
+/* 評価の重み。ai_arena の --weights で振り、昇格戦を通った値だけ既定値へ反映する。 */
 const AI_W = {
   ctrlHold: 65, ctrlHoldLev: 0.7,     // コントロールを持っている
   ctrlOpp: 90, ctrlOppLev: 0.75,      // 相手が持っている
   leadGain: 50, oppLeadGain: 78,      // 2ラインリード=次のコントロールフェイズで奪える見込み
   leadBonus: 18, oppLeadBonus: 24,    // リードそのものの価値
+  // 各ラインの合計値差。CONTROLを直接追うのではなく、盤面差を広げた結果として獲得する
+  marginLead: 6, marginTrail: 6,
+  // リフレッシュはターンを丸ごと使う。引ける枚数が少ないほど割に合わない
+  refreshPerCard: 13, refreshTempo: 26,
 };
 function setAiWeights(obj) { for (const k in obj) if (k in AI_W) AI_W[k] = obj[k]; }
 
@@ -2066,7 +2076,11 @@ function aiActionBias(st, action, side) {
   if (!action) return 0;
   const op = 1 - side;
   if (action.type === 'refresh') {
-    let v = (5 - st.players[side].hand.length) * 13;
+    /* リフレッシュは手札を5枚まで補充するだけでターンを1つ丸ごと使う。
+       手札4枚なら1枚しか引けず、盤面を進める1手より明確に損。
+       引ける枚数に比例した価値からテンポ損を差し引き、少枚数の補充は負にする */
+    const draws = 5 - st.players[side].hand.length;
+    let v = draws * AI_W.refreshPerCard - AI_W.refreshTempo;
     if (st.control === side) v += aiControlLeverage(st, side) * 0.35;
     return v;
   }
@@ -2140,6 +2154,11 @@ function aiScore(st, me) {
     const mine = lineTotal(st, l, me), theirs = lineTotal(st, l, op);
     const myProt = st.players[me].protocols[l], opProt = st.players[op].protocols[l];
     lineInfo.push({ mine, theirs, myComp: myProt.compiled, opComp: opProt.compiled });
+  }
+
+  for (const li of lineInfo) {
+    const margin = Math.max(-12, Math.min(12, li.mine - li.theirs));
+    sc += margin >= 0 ? margin * AI_W.marginLead : margin * AI_W.marginTrail;
   }
 
   const myGaps = [], opGaps = [];
@@ -2556,7 +2575,8 @@ function aiActionHard(state) {
        時間切れでも Normal 相当の結果を保証する --- */
     let best = ordered[0].a, bestVal = -Infinity;
     const viable = [];
-    for (let i = 0; i < ordered.length; i++) {
+    const evalLimit = Math.min(ordered.length, AI_BREADTH.rootEval);
+    for (let i = 0; i < evalLimit; i++) {
       const item = ordered[i];
       const res = resolveOrdered(item, state);
       if (!res || res.error || res.requests.length) continue;
@@ -2571,7 +2591,7 @@ function aiActionHard(state) {
     /* --- depth 2: 時間が残っていれば、1-plyで有望な手から順に相手手番を読む。
        途中で時間切れになっても depth1 の best が残るので劣化しない --- */
     viable.sort((a, b) => b.val1 - a.val1);
-    const limit = Math.min(viable.length, 24);
+    const limit = Math.min(viable.length, AI_BREADTH.rootSearch);
     let alpha = -Infinity, best2 = null;
     for (let i = 0; i < limit; i++) {
       if (aiNow() > deadline) break;
@@ -2596,7 +2616,7 @@ function minimaxMin(state, me, alpha, beta, deadline) {
   const acts = legalActions(state);
   if (!acts.length) return aiScore(state, me);
   const ordered = orderMovesStatic(acts, state, op);
-  const limit = Math.min(ordered.length, 12);
+  const limit = Math.min(ordered.length, AI_BREADTH.reply);
   let val = Infinity;
   for (let i = 0; i < limit; i++) {
     if (deadline && aiNow() > deadline) break;
@@ -2621,7 +2641,7 @@ function minimaxMaxShallow(state, me, alpha, beta, deadline) {
   const ordered = acts.map(a => ({ a, bias: aiActionBias(state, a, me) }))
     .sort((a, b) => b.bias - a.bias);
   let val = -Infinity;
-  for (let i = 0; i < Math.min(ordered.length, 6); i++) {
+  for (let i = 0; i < Math.min(ordered.length, AI_BREADTH.shallow); i++) {
     if (deadline && aiNow() > deadline) break;
     const item = ordered[i];
     const res = applyAndResolve(state, item.a, smartPicks);
@@ -2717,7 +2737,7 @@ function aiAnswer(state, req) {
 /* ---------- 公開 API ---------- */
 
 const Engine = {
-  init, newGame, apply, legalActions, setTrace, setAiLevel, setAiThinkBudget, setAiWeights,
+  init, newGame, apply, legalActions, setTrace, setAiLevel, setAiThinkBudget, setAiBreadth, setAiWeights,
   lineTotal, cardValue, compilableLines, canPlay, locate,
   ai: { action: aiAction, answer: aiAnswer, score: aiScore, transitionScore: aiTransitionScore, randomPicks, smartPicks },
   get defs() { return DEFS; },
