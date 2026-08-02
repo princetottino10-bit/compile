@@ -14,6 +14,17 @@
 function clone(o) {
   return (typeof structuredClone === 'function') ? structuredClone(o) : JSON.parse(JSON.stringify(o));
 }
+function knowCard(st, uid, side) {
+  const c = st.cards[uid];
+  if (c) c.knownTo = (c.knownTo || 0) | (1 << side);
+}
+function revealCardToAll(st, uid) {
+  const c = st.cards[uid];
+  if (c) c.knownTo = 3;
+}
+function forgetDeckOrder(st, side) {
+  for (const uid of st.players[side].deck) st.cards[uid].knownTo = 0;
+}
 function mulberry32(a) {
   return function () {
     a |= 0; a = a + 0x6D2B79F5 | 0;
@@ -424,13 +435,16 @@ function landTrash(ctx, uid) {
   c.faceUp = true;
   c.commitDest = null;
   ctx.st.players[c.owner].trash.push(uid);
+  revealCardToAll(ctx.st, uid);
   removeFrom(ctx.st.commitStack, uid);
 }
 function landHand(ctx, uid) {
   const c = ctx.st.cards[uid];
   c.zone = 'hand' + c.owner;
+  c.faceUp = false;
   c.commitDest = null;
   ctx.st.players[c.owner].hand.push(uid);
+  knowCard(ctx.st, uid, c.owner);
   removeFrom(ctx.st.commitStack, uid);
 }
 
@@ -487,6 +501,7 @@ function doFlip(ctx, uid, ignoreMiddleOnce) {
     if (!locate(st, uid)) return true;             // 反転は消費された扱い
   }
   c.faceUp = !c.faceUp;
+  if (c.faceUp) revealCardToAll(st, uid);
   log(ctx, `${DEFS[c.def].id} を${c.faceUp ? '表' : '裏'}に反転`, uid);
   const loc = locate(st, uid);
   // LUCK_2: 反転による中段は無視する
@@ -524,6 +539,7 @@ function playToField(ctx, uid, line, side, faceUp, belowUid) {
   markCommitted(st, uid);
   c.commitDest = 'line' + line;
   c.faceUp = faceUp;
+  if (faceUp) revealCardToAll(st, uid);
   const stack = st.lines[line][side];
   if (belowUid) {
     const i = stack.indexOf(belowUid);
@@ -587,6 +603,7 @@ function drawCards(ctx, side, n, fromOpp) {
       d.deck = d.trash; d.trash = [];
       for (const u of d.deck) { st.cards[u].zone = 'deck' + src; st.cards[u].faceUp = false; }
       shuffle(st, d.deck);
+      forgetDeckOrder(st, src);
       log(ctx, `P${src + 1}: トラッシュをシャッフルしてデッキを再構成`);
       fireEvent(ctx, { on: 'shuffle', player: src });
     }
@@ -596,6 +613,7 @@ function drawCards(ctx, side, n, fromOpp) {
     c.zone = 'hand' + side;
     if (fromOpp) c.owner = side;
     st.players[side].hand.push(u);
+    knowCard(st, u, side);
     drawn++;
   }
   if (drawn) {
@@ -608,6 +626,7 @@ function drawCards(ctx, side, n, fromOpp) {
 /* デッキシャッフル(効果由来)。shuffleイベントを発行 */
 function shuffleDeck(ctx, side) {
   shuffle(ctx.st, ctx.st.players[side].deck);
+  forgetDeckOrder(ctx.st, side);
   log(ctx, `P${side + 1}: デッキをシャッフル`);
   fireEvent(ctx, { on: 'shuffle', player: side });
 }
@@ -906,6 +925,7 @@ function execOp(ctx, fr, op) {
         st.cards[u].owner = 1 - who;
         st.cards[u].zone = 'hand' + (1 - who);
         st.players[1 - who].hand.push(u);
+        knowCard(st, u, 1 - who);
       }
       log(ctx, `P${who + 1}: 手札を1枚相手に渡した`);
       fr.done = true;
@@ -921,6 +941,7 @@ function execOp(ctx, fr, op) {
       st.cards[u].owner = who;
       st.cards[u].zone = 'hand' + who;
       st.players[who].hand.push(u);
+      knowCard(st, u, who);
       log(ctx, `P${who + 1}: 相手の手札からランダムに1枚引いた`);
       fireEvent(ctx, { on: 'draw', player: who, count: 1 });
       fr.done = true;
@@ -1028,6 +1049,7 @@ function execOp(ctx, fr, op) {
       if (!deck.length) { fr.done = false; return; }
       const top = deck[0];
       st.revealed = { kind: 'card', uid: top, player: fr.controller };
+      revealCardToAll(st, top);
       log(ctx, `P${fr.controller + 1}: デッキトップ ${DEFS[st.cards[top].def].id} を公開`, top);
       const ans = choose(ctx, { kind: 'yesNo', player: fr.controller, prompt: 'optional-discard-top', context: DEFS[st.cards[top].def].id });
       if (ans.length) {
@@ -1051,6 +1073,7 @@ function execOp(ctx, fr, op) {
         removeFrom(p.deck, u);
         st.cards[u].zone = 'hand' + fr.controller;
         p.hand.push(u);
+        revealCardToAll(st, u);
       }
       if (take.length) log(ctx, `P${fr.controller + 1}: ${take.map(u => DEFS[st.cards[u].def].id).join(', ')} を手札に加えた`);
       shuffleDeck(ctx, fr.controller);
@@ -1143,6 +1166,7 @@ function execOp(ctx, fr, op) {
         pick = ans[0];
       }
       st.revealed = { kind: 'card', uid: pick, player: fr.controller };
+      revealCardToAll(st, pick);
       log(ctx, `P${fr.controller + 1}: ${DEFS[st.cards[pick].def].id} を公開`, pick);
       const yn = choose(ctx, { kind: 'yesNo', player: fr.controller, prompt: 'optional-play', context: DEFS[st.cards[pick].def].id });
       if (yn.length) {
@@ -1346,6 +1370,7 @@ function execTargetedOp(ctx, fr, op) {
   if (op.op === 'reveal' && op.target) {
     if (op.target === 'oppHand') {
       const oh = st.players[1 - fr.controller].hand;
+      for (const uid of oh) revealCardToAll(st, uid);
       log(ctx, `P${2 - fr.controller}: 手札を公開: ` + oh.map(u => DEFS[st.cards[u].def].id).join(', '));
       st.revealed = { kind: 'hand', player: 1 - fr.controller, cards: oh.map(u => DEFS[st.cards[u].def].id) };
       fr.done = true; return;
@@ -1525,6 +1550,7 @@ function performVerb(ctx, fr, op, uid) {
     case 'return': return doReturn(ctx, uid);
     case 'reveal': {
       const c = st.cards[uid];
+      revealCardToAll(st, uid);
       log(ctx, `${DEFS[c.def].id} を公開`);
       st.revealed = { kind: 'card', uid, def: DEFS[c.def].id };
       return true;
@@ -1898,7 +1924,7 @@ function newGame(opts) {
       if (!PROTOS[name]) throw new Error('未知のプロトコル: ' + name);
       for (const defId of PROTOS[name]) {
         const uid = 'p' + p + ':' + defId;
-        st.cards[uid] = { uid, def: defId, owner: p, faceUp: false, zone: 'deck' + p };
+        st.cards[uid] = { uid, def: defId, owner: p, faceUp: false, zone: 'deck' + p, knownTo: 0 };
         deck.push(uid);
       }
     }
@@ -1914,6 +1940,7 @@ function newGame(opts) {
       const u = st.players[p].deck.shift();
       st.cards[u].zone = 'hand' + p;
       st.players[p].hand.push(u);
+      knowCard(st, u, p);
     }
   }
   return runReplay(st, { type: '_begin' }, []);
@@ -1946,6 +1973,23 @@ const AI_W = {
   refreshPerCard: 13, refreshTempo: 26,
 };
 function setAiWeights(obj) { for (const k in obj) if (k in AI_W) AI_W[k] = obj[k]; }
+let AI_SPECIALIST_ENABLED = false;
+let AI_SPECIALIST_SIDE = -1;
+function setAiSpecialist(enabled, side) {
+  AI_SPECIALIST_ENABLED = !!enabled;
+  AI_SPECIALIST_SIDE = side === 0 || side === 1 ? side : -1;
+}
+const AI_DSH_W = {
+  think: 1.5, rootSearch: 32, reply: 18, shallow: 8,
+  opponentInfo: 1,
+  ctrlHold: 65, ctrlHoldLev: 0.7, ctrlOpp: 90, ctrlOppLev: 0.75,
+  leadGain: 50, oppLeadGain: 78, leadBonus: 18, oppLeadBonus: 24,
+  marginLead: 6, marginTrail: 6, refreshPerCard: 13, refreshTempo: 26,
+  hateDownPenalty: 20, speedDownPenalty: 20, speedPairStrategy: 1,
+};
+function setAiSpecialistWeights(obj) {
+  for (const k in obj) if (k in AI_DSH_W && Number.isFinite(obj[k])) AI_DSH_W[k] = obj[k];
+}
 
 /* --- Phase A: 評価関数 --- */
 
@@ -2072,15 +2116,36 @@ function aiBoardEffectScore(st, side) {
   return v;
 }
 
+function aiIsDshSpecialist(st, side) {
+  return AI_SPECIALIST_ENABLED && !!st.players[side]
+    && (AI_SPECIALIST_SIDE < 0 || AI_SPECIALIST_SIDE === side);
+}
+
+function aiWeightsFor(st, side) {
+  return aiIsDshSpecialist(st, side) ? AI_DSH_W : AI_W;
+}
+
+function aiHasDefOnField(st, side, defId) {
+  for (let line = 0; line < 3; line++) {
+    if (st.lines[line][side].some(uid => st.cards[uid].def === defId)) return true;
+  }
+  return false;
+}
+
+function aiHasDefInHand(st, side, defId) {
+  return st.players[side].hand.some(uid => st.cards[uid].def === defId);
+}
+
 function aiActionBias(st, action, side) {
   if (!action) return 0;
   const op = 1 - side;
+  const W = aiWeightsFor(st, side);
   if (action.type === 'refresh') {
     /* リフレッシュは手札を5枚まで補充するだけでターンを1つ丸ごと使う。
        手札4枚なら1枚しか引けず、盤面を進める1手より明確に損。
        引ける枚数に比例した価値からテンポ損を差し引き、少枚数の補充は負にする */
     const draws = 5 - st.players[side].hand.length;
-    let v = draws * AI_W.refreshPerCard - AI_W.refreshTempo;
+    let v = draws * W.refreshPerCard - W.refreshTempo;
     if (st.control === side) v += aiControlLeverage(st, side) * 0.35;
     return v;
   }
@@ -2098,6 +2163,16 @@ function aiActionBias(st, action, side) {
   const mine = lineTotal(st, action.line, side), theirs = lineTotal(st, action.line, op);
   const gap = Math.max(0, 10 - mine);
   let v = 0;
+  if (aiIsDshSpecialist(st, side) && W.speedPairStrategy
+      && (d.id === 'SPEED_1' || d.id === 'SPEED_4')) {
+    const pairOnField = aiHasDefOnField(st, side, 'SPEED_1') || aiHasDefOnField(st, side, 'SPEED_4');
+    if (!pairOnField) {
+      const pairReady = aiHasDefInHand(st, side, 'SPEED_1') && aiHasDefInHand(st, side, 'SPEED_4');
+      if (!pairReady) v -= 180;
+      else if (d.id === 'SPEED_1' && action.faceUp) v += 220;
+      else v -= 160;
+    }
+  }
   const compiledLine = !!st.players[side].protocols[action.line].compiled;
   if (compiledLine) {
     const add = action.faceUp ? d.value : 2;
@@ -2114,6 +2189,8 @@ function aiActionBias(st, action, side) {
     if (mine + d.value > theirs) v += 8;
   } else {
     v += (2 - d.value) * 5;
+    if (['HATE_4', 'HATE_5'].includes(d.id)) v -= W.hateDownPenalty || 0;
+    if (['SPEED_2', 'SPEED_4'].includes(d.id)) v -= W.speedDownPenalty || 0;
     if (gap <= 2 && mine + 2 > theirs && !st.players[side].protocols[action.line].compiled) v += 115;
     if (aiMiddleValue(d) > 35) v -= 24;
     if (gap <= 2 && !st.players[side].protocols[action.line].compiled) v += 12;
@@ -2142,6 +2219,7 @@ function aiScore(st, me) {
   if (st.winner === me) return 1e9;
   if (st.winner === 1 - me) return -1e9;
   const op = 1 - me;
+  const W = aiWeightsFor(st, me);
   let sc = 0;
   const myComp = st.players[me].protocols.filter(p => p.compiled).length;
   const opComp = st.players[op].protocols.filter(p => p.compiled).length;
@@ -2158,7 +2236,7 @@ function aiScore(st, me) {
 
   for (const li of lineInfo) {
     const margin = Math.max(-12, Math.min(12, li.mine - li.theirs));
-    sc += margin >= 0 ? margin * AI_W.marginLead : margin * AI_W.marginTrail;
+    sc += margin >= 0 ? margin * W.marginLead : margin * W.marginTrail;
   }
 
   const myGaps = [], opGaps = [];
@@ -2246,7 +2324,6 @@ function aiScore(st, me) {
   sc += aiBoardEffectScore(st, me);
 
   if (st.useControl) {
-    const W = AI_W;
     let myWins = aiLineLeadCount(st, me), opWins = aiLineLeadCount(st, op);
 
     if (st.control === me) {
@@ -2311,6 +2388,14 @@ function aiChoiceScore(st, req, picks, me) {
 }
 
 function aiPlayFreePicks(st, req, me) {
+  if (aiIsDshSpecialist(st, me) && aiWeightsFor(st, me).speedPairStrategy && req.context === 'SPEED_1'
+      && !aiHasDefOnField(st, me, 'SPEED_1') && !aiHasDefOnField(st, me, 'SPEED_4')) {
+    const speed3 = req.candidates.find(raw => {
+      const parts = String(raw).split('|');
+      return parts[2] === 'u' && st.cards[parts[0]] && st.cards[parts[0]].def === 'SPEED_4';
+    });
+    if (speed3) return [speed3];
+  }
   const ranked = req.candidates.map(raw => {
     const parts = String(raw).split('|');
     const uid = parts[0], line = +parts[1], faceUp = parts[2] === 'u';
@@ -2365,6 +2450,11 @@ function smartPicks(st, req) {
   switch (req.kind) {
     case 'pickCard': {
       if (req.prompt === 'play-free') return aiPlayFreePicks(st, req, me);
+      if (aiIsDshSpecialist(st, me) && aiWeightsFor(st, me).speedPairStrategy
+          && req.prompt === 'optional-shift' && req.context === 'SPEED_4') {
+        const self = req.candidates.find(uid => st.cards[uid] && st.cards[uid].def === 'SPEED_4');
+        if (self) return [self];
+      }
       const scored = req.candidates.map(uid => {
         const c = st.cards[uid];
         if (!c) return { uid, s: 0 };
@@ -2382,6 +2472,16 @@ function smartPicks(st, req) {
             if (lt >= 8 && !st.players[me].protocols[loc.line].compiled) s -= 15;
           }
           if (isTop(st, loc)) s += 8;
+          if (aiIsDshSpecialist(st, me) && req.prompt === 'shift' && req.context === 'SPEED_4') {
+            const stack = st.lines[loc.line][loc.side];
+            const index = stack.indexOf(uid);
+            if (index > 0 && index === stack.length - 1) {
+              const uncovered = st.cards[stack[index - 1]];
+              if (uncovered.faceUp) {
+                s += 24 + Math.max(0, aiMiddleValue(DEFS[uncovered.def])) * 0.8;
+              }
+            }
+          }
         }
         s += (c.zone ? cardValue(st, uid) : DEFS[c.def].value) * 2;
         return { uid, s };
@@ -2564,7 +2664,8 @@ function aiActionHard(state) {
 
   const wasTrace = TRACE, previousDeadline = AI_SEARCH_DEADLINE; TRACE = false;
   try {
-    const deadline = aiNow() + AI_THINK_BUDGET_MS;
+    const specialist = aiIsDshSpecialist(state, me);
+    const deadline = aiNow() + AI_THINK_BUDGET_MS * (specialist ? AI_DSH_W.think : 1);
     AI_SEARCH_DEADLINE = deadline;
 
     // 静的orderingで全手を候補に残す(重い解決はしない=ここで時間を使い切らない)
@@ -2587,11 +2688,11 @@ function aiActionHard(state) {
       if (val > bestVal) { bestVal = val; best = item.a; }
     }
     if (!viable.length) return best;
-
     /* --- depth 2: 時間が残っていれば、1-plyで有望な手から順に相手手番を読む。
        途中で時間切れになっても depth1 の best が残るので劣化しない --- */
     viable.sort((a, b) => b.val1 - a.val1);
-    const limit = Math.min(viable.length, AI_BREADTH.rootSearch);
+    const rootSearch = specialist ? AI_DSH_W.rootSearch : AI_BREADTH.rootSearch;
+    const limit = Math.min(viable.length, rootSearch);
     let alpha = -Infinity, best2 = null;
     for (let i = 0; i < limit; i++) {
       if (aiNow() > deadline) break;
@@ -2613,20 +2714,24 @@ function aiActionHard(state) {
 function minimaxMin(state, me, alpha, beta, deadline) {
   if (state.turn === me || state.winner !== null) return aiScore(state, me);
   const op = 1 - me;
-  const acts = legalActions(state);
+  const fairOpponent = aiIsDshSpecialist(state, me) && AI_DSH_W.opponentInfo > 0;
+  const searchState = fairOpponent ? aiInformationState(state, op) : state;
+  const acts = legalActions(searchState);
   if (!acts.length) return aiScore(state, me);
-  const ordered = orderMovesStatic(acts, state, op);
-  const limit = Math.min(ordered.length, AI_BREADTH.reply);
+  const ordered = orderMovesStatic(acts, searchState, op);
+  const reply = aiIsDshSpecialist(state, me) ? AI_DSH_W.reply : AI_BREADTH.reply;
+  const limit = Math.min(ordered.length, reply);
   let val = Infinity;
   for (let i = 0; i < limit; i++) {
     if (deadline && aiNow() > deadline) break;
-    const res = resolveOrdered(ordered[i], state);
+    const res = resolveOrdered(ordered[i], searchState);
     if (!res || res.error || res.requests.length) continue;
+    if (fairOpponent) aiRestoreKnownCards(res.state, state, me);
     const s2 = res.state;
     const sc = (s2.winner === null && s2.turn === me)
       ? minimaxMaxShallow(s2, me, alpha, beta, deadline)
       : aiScore(s2, me);
-    const tactical = sc + aiTransitionScore(state, res, me);
+    const tactical = sc + aiTransitionScore(searchState, res, me);
     if (tactical < val) val = tactical;
     if (val <= alpha) return val;
     if (val < beta) beta = val;
@@ -2641,7 +2746,8 @@ function minimaxMaxShallow(state, me, alpha, beta, deadline) {
   const ordered = acts.map(a => ({ a, bias: aiActionBias(state, a, me) }))
     .sort((a, b) => b.bias - a.bias);
   let val = -Infinity;
-  for (let i = 0; i < Math.min(ordered.length, AI_BREADTH.shallow); i++) {
+  const shallow = aiIsDshSpecialist(state, me) ? AI_DSH_W.shallow : AI_BREADTH.shallow;
+  for (let i = 0; i < Math.min(ordered.length, shallow); i++) {
     if (deadline && aiNow() > deadline) break;
     const item = ordered[i];
     const res = applyAndResolve(state, item.a, smartPicks);
@@ -2683,10 +2789,113 @@ function resolveOrdered(item, state) {
 
 /* --- 難易度に応じたディスパッチ --- */
 
+function aiCardKnownTo(st, uid, side) {
+  const c = st.cards[uid];
+  if (!c) return false;
+  if (c.knownTo !== undefined) return !!(c.knownTo & (1 << side));
+  if (c.faceUp || (c.zone && c.zone.indexOf('trash') === 0)) return true;
+  return c.zone === 'hand' + side;
+}
+
+function aiPublicHash(st, side) {
+  const parts = [side, st.turn, st.phase, st.control, st.winner, st.commitSeq || 0];
+  for (let p = 0; p < 2; p++) {
+    const player = st.players[p];
+    parts.push('p', p, player.deck.length, player.hand.length, player.trash.length);
+    for (const proto of player.protocols) parts.push(proto.name, proto.compiled ? 1 : 0);
+  }
+  for (let line = 0; line < 3; line++) for (let p = 0; p < 2; p++) {
+    parts.push('l', line, p, st.lines[line][p].length);
+    for (const uid of st.lines[line][p]) {
+      const c = st.cards[uid];
+      parts.push(c.faceUp ? c.def : (aiCardKnownTo(st, uid, side) ? 'k:' + c.def : '?'));
+    }
+  }
+  for (const uid of st.players[side].hand) {
+    parts.push(aiCardKnownTo(st, uid, side) ? st.cards[uid].def : '?');
+  }
+  let h = 2166136261;
+  const text = parts.join('|');
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+function aiUnknownSlotKey(st, uid) {
+  const c = st.cards[uid];
+  for (let p = 0; p < 2; p++) {
+    let i = st.players[p].deck.indexOf(uid);
+    if (i >= 0) return '0:deck:' + p + ':' + String(i).padStart(3, '0');
+    i = st.players[p].hand.indexOf(uid);
+    if (i >= 0) return '1:hand:' + p + ':' + String(i).padStart(3, '0');
+  }
+  for (let line = 0; line < 3; line++) for (let p = 0; p < 2; p++) {
+    const i = st.lines[line][p].indexOf(uid);
+    if (i >= 0) return '2:field:' + line + ':' + p + ':' + String(i).padStart(3, '0');
+  }
+  const ci = (st.commitStack || []).indexOf(uid);
+  if (ci >= 0) return '3:commit:' + String(ci).padStart(3, '0');
+  return '4:other:' + (c.zone || '');
+}
+
+function aiRestoreKnownCards(target, source, side) {
+  for (const uid of Object.keys(source.cards)) {
+    if (target.cards[uid] && aiCardKnownTo(source, uid, side)) {
+      target.cards[uid].def = source.cards[uid].def;
+    }
+  }
+}
+
+/* AIには、本人が知るカードを固定し、未知カードだけを同じ出自のプール内で再配置した状態を渡す。 */
+function aiInformationState(state, side, salt) {
+  const view = clone(state);
+  const baseSeed = aiPublicHash(state, side);
+  const seed = salt ? (baseSeed ^ Math.imul(salt, 0x9e3779b1)) >>> 0 : baseSeed;
+  const rng = mulberry32(seed);
+  const groups = [[], []];
+
+  for (const uid of Object.keys(state.cards)) {
+    const c = state.cards[uid];
+    const hidden = c.zone && (
+      c.zone.indexOf('deck') === 0 || c.zone.indexOf('hand') === 0 ||
+      (!c.faceUp && (c.zone === 'field' || c.zone === 'committed'))
+    );
+    if (!hidden || aiCardKnownTo(state, uid, side)) continue;
+    const origin = uid.indexOf('p1:') === 0 ? 1 : 0;
+    groups[origin].push(uid);
+  }
+
+  const mapping = {};
+  for (const group of groups) {
+    const slots = group.slice().sort((a, b) => aiUnknownSlotKey(state, a).localeCompare(aiUnknownSlotKey(state, b)));
+    const defs = group.map(uid => state.cards[uid].def).sort();
+    for (let i = defs.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      const tmp = defs[i]; defs[i] = defs[j]; defs[j] = tmp;
+    }
+    for (let i = 0; i < slots.length; i++) mapping[slots[i]] = defs[i];
+  }
+
+  function applyKnowledge(s) {
+    if (!s || !s.cards) return;
+    s.seed = seed;
+    s.rngN = 0;
+    for (const uid of Object.keys(mapping)) if (s.cards[uid]) s.cards[uid].def = mapping[uid];
+    if (s.pending && s.pending.base) applyKnowledge(s.pending.base);
+  }
+  applyKnowledge(view);
+  return view;
+}
+
 function aiAction(state) {
-  if (AI_LEVEL >= 2) return aiActionHard(state);
-  if (AI_LEVEL >= 1) return aiActionNormal(state);
-  return aiActionEasy(state);
+  const view = aiInformationState(state, state.turn);
+  if (AI_LEVEL >= 2) {
+    return aiActionHard(view);
+  }
+  if (AI_LEVEL >= 1) return aiActionNormal(view);
+  return aiActionEasy(view);
 }
 
 function enumeratePicks(req) {
@@ -2720,15 +2929,16 @@ function enumeratePicks(req) {
 }
 
 function aiAnswer(state, req) {
+  const view = aiInformationState(state, req.player);
   if (AI_LEVEL >= 1) {
-    return smartPicks(state, req);
+    return smartPicks(view, req);
   }
   const me = req.player;
   const options = enumeratePicks(req);
   if (options.length === 1) return options[0];
   let best = options[0], bestSc = -Infinity;
   for (const picks of options) {
-    const sc = avgRolloutScore(state, { type: 'choose', id: req.id, picks }, me) + Math.random();
+    const sc = avgRolloutScore(view, { type: 'choose', id: req.id, picks }, me) + Math.random();
     if (sc > bestSc) { bestSc = sc; best = picks; }
   }
   return best;
@@ -2737,9 +2947,9 @@ function aiAnswer(state, req) {
 /* ---------- 公開 API ---------- */
 
 const Engine = {
-  init, newGame, apply, legalActions, setTrace, setAiLevel, setAiThinkBudget, setAiBreadth, setAiWeights,
+  init, newGame, apply, legalActions, setTrace, setAiLevel, setAiThinkBudget, setAiBreadth, setAiWeights, setAiSpecialist, setAiSpecialistWeights,
   lineTotal, cardValue, compilableLines, canPlay, locate,
-  ai: { action: aiAction, answer: aiAnswer, score: aiScore, transitionScore: aiTransitionScore, randomPicks, smartPicks },
+  ai: { action: aiAction, answer: aiAnswer, score: aiScore, transitionScore: aiTransitionScore, informationState: aiInformationState, randomPicks, smartPicks },
   get defs() { return DEFS; },
   get protos() { return PROTOS; }
 };

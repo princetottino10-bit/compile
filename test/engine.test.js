@@ -31,6 +31,7 @@ function place(st, defId, side, line, faceUp) {
   st.lines[line][side].push(uid);
   st.cards[uid].zone = 'field';
   st.cards[uid].faceUp = !!faceUp;
+  if (faceUp) st.cards[uid].knownTo = 3;
   return uid;
 }
 
@@ -40,12 +41,14 @@ function setHand(st, side, defIds) {
   while (p.hand.length) {
     const u = p.hand.pop();
     st.cards[u].zone = 'deck' + side;
+    st.cards[u].knownTo = 0;
     p.deck.push(u);
   }
   for (const d of defIds) {
     const uid = uidOf(d, side);
     rm(p.deck, uid);
     st.cards[uid].zone = 'hand' + side;
+    st.cards[uid].knownTo = (st.cards[uid].knownTo || 0) | (1 << side);
     p.hand.push(uid);
   }
 }
@@ -650,10 +653,11 @@ test('AI: SPEED 0の追加プレイで未コンパイルラインを選ぶ', () 
   assert.ok(picks[0].startsWith(uidOf('METAL_6', 0) + '|1|'));
 });
 
-test('AI: 相手の裏向き高値カードを無意味に反転させない', () => {
+test('AI: 正体を知っている相手の裏向き高値カードを無意味に反転させない', () => {
   const r = ng({ p0: ['SPIRIT', 'METAL', 'DARKNESS'], p1: ['FIRE', 'WATER', 'SPEED'] });
   const st = r.state;
-  place(st, 'SPEED_6', 1, 0, false);
+  const hidden = place(st, 'SPEED_6', 1, 0, false);
+  st.cards[hidden].knownTo |= 1;
   setHand(st, 0, ['SPIRIT_3']);
   const res = Engine.apply(st, { type: 'play', card: uidOf('SPIRIT_3', 0), line: 0, faceUp: true });
   assert.equal(res.error, null);
@@ -668,6 +672,137 @@ test('AI: 相手のリコンパイルによるターンスキップを評価す�
   const ownRecompile = { state: { actionLog: ['P1: リコンパイル'] } };
   assert.ok(Engine.ai.transitionScore(before, oppRecompile, 0) > 0);
   assert.ok(Engine.ai.transitionScore(before, ownRecompile, 0) < 0);
+});
+
+test('AI specialist: search profile does not distort the static score', () => {
+  const r = ng({
+    p0: ['DARKNESS', 'SPEED', 'HATE'],
+    p1: ['LIFE', 'LIGHT', 'PLAGUE']
+  });
+  const st = r.state;
+  place(st, 'DARKNESS_3', 0, 0, true);
+  place(st, 'SPEED_6', 0, 0, false);
+  Engine.setAiSpecialist(false);
+  const generic = Engine.ai.score(st, 0);
+  Engine.setAiSpecialist(true);
+  const specialist = Engine.ai.score(st, 0);
+  Engine.setAiSpecialist(false);
+  assert.equal(specialist, generic);
+});
+
+test('AI specialist: SPEED 0/3 pair starts with SPEED 0 and free-plays SPEED 3 faceup', () => {
+  const st = ng({ p0: ['DARKNESS', 'SPEED', 'HATE'], p1: ['LIFE', 'LIGHT', 'PLAGUE'] }).state;
+  setHand(st, 0, ['SPEED_1', 'SPEED_4', 'DARKNESS_6', 'SPEED_6', 'HATE_6']);
+  st.turn = 0;
+  Engine.setAiLevel(2);
+  Engine.setAiThinkBudget(80);
+  Engine.setAiSpecialist(true, 0);
+  try {
+    const action = Engine.ai.action(st);
+    assert.equal(action.type, 'play');
+    assert.equal(action.card, uidOf('SPEED_1', 0));
+    assert.equal(action.faceUp, true);
+    const res = Engine.apply(st, action);
+    assert.equal(res.error, null);
+    assert.equal(res.requests[0].prompt, 'play-free');
+    const picks = Engine.ai.answer(res.state, res.requests[0]);
+    assert.ok(picks[0].startsWith(uidOf('SPEED_4', 0) + '|'));
+    assert.ok(picks[0].endsWith('|u'));
+  } finally {
+    Engine.setAiSpecialist(false);
+    Engine.setAiThinkBudget(590);
+  }
+});
+
+test('AI specialist: SPEED 3 moves itself for its optional end effect', () => {
+  const st = ng({ p0: ['DARKNESS', 'SPEED', 'HATE'] }).state;
+  const speed3 = place(st, 'SPEED_4', 0, 1, true);
+  const other = place(st, 'HATE_6', 0, 2, true);
+  Engine.setAiSpecialist(true, 0);
+  try {
+    const picks = Engine.ai.answer(st, {
+      kind: 'pickCard', player: 0, candidates: [other, speed3], min: 0, max: 1,
+      prompt: 'optional-shift', context: 'SPEED_4'
+    });
+    assert.deepEqual(picks, [speed3]);
+  } finally {
+    Engine.setAiSpecialist(false);
+  }
+});
+
+test('AI specialist: SPEED 3 middle prioritizes moving a card that activates a covered effect', () => {
+  const st = ng({ p0: ['DARKNESS', 'SPEED', 'HATE'] }).state;
+  place(st, 'DARKNESS_1', 0, 0, true);
+  const covering = place(st, 'HATE_6', 0, 0, true);
+  const plain = place(st, 'SPEED_6', 0, 1, true);
+  place(st, 'SPEED_4', 0, 2, true);
+  Engine.setAiSpecialist(true, 0);
+  try {
+    const picks = Engine.ai.answer(st, {
+      kind: 'pickCard', player: 0, candidates: [plain, covering], min: 1, max: 1,
+      prompt: 'shift', context: 'SPEED_4'
+    });
+    assert.deepEqual(picks, [covering]);
+  } finally {
+    Engine.setAiSpecialist(false);
+  }
+});
+
+test('AI knowledge: initial hands are private and decks are unknown', () => {
+  const st = ng().state;
+  for (let side = 0; side < 2; side++) {
+    for (const uid of st.players[side].hand) {
+      assert.ok(st.cards[uid].knownTo & (1 << side));
+      assert.equal(st.cards[uid].knownTo & (1 << (1 - side)), 0);
+    }
+    for (const uid of st.players[side].deck) assert.equal(st.cards[uid].knownTo, 0);
+  }
+});
+
+test('AI knowledge: a facedown card played from hand remains known only to its player', () => {
+  const st = ng().state;
+  const action = Engine.legalActions(st).find(a => a.type === 'play' && !a.faceUp);
+  assert.ok(action);
+  const uid = action.card || action.uid;
+  const res = drive(Engine.apply(st, action), (req, current) => Engine.ai.answer(current.state, req));
+  assert.equal(res.error, null);
+  assert.ok(res.state.cards[uid].knownTo & 1);
+  assert.equal(res.state.cards[uid].knownTo & 2, 0);
+});
+
+test('AI knowledge: hidden physical card assignments do not leak into the information state', () => {
+  const a = ng().state;
+  const b = structuredClone(a);
+  const deck = b.players[1].deck;
+  [deck[0], deck[1]] = [deck[1], deck[0]];
+  const hand = b.players[1].hand;
+  [hand[0], hand[1]] = [hand[1], hand[0]];
+
+  const av = Engine.ai.informationState(a, 0);
+  const bv = Engine.ai.informationState(b, 0);
+  assert.deepEqual(
+    av.players[1].deck.map(uid => av.cards[uid].def),
+    bv.players[1].deck.map(uid => bv.cards[uid].def)
+  );
+  assert.deepEqual(
+    av.players[1].hand.map(uid => av.cards[uid].def),
+    bv.players[1].hand.map(uid => bv.cards[uid].def)
+  );
+  for (const uid of a.players[0].hand) assert.equal(av.cards[uid].def, a.cards[uid].def);
+});
+
+test('AI knowledge: learned cards and pending replay use the same identity', () => {
+  const st = ng().state;
+  const learned = st.players[1].hand[0];
+  st.cards[learned].knownTo |= 1;
+  st.pending = { base: structuredClone(st), action: { type: 'pass' }, choices: [], requestId: 1 };
+  st.pending.base.pending = null;
+
+  const view = Engine.ai.informationState(st, 0);
+  assert.equal(view.cards[learned].def, st.cards[learned].def);
+  for (const uid of Object.keys(view.cards)) {
+    assert.equal(view.pending.base.cards[uid].def, view.cards[uid].def);
+  }
 });
 
 test('トレース: setTrace(true) でステップごとのスナップショットが返る', () => {
