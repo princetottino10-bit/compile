@@ -34,16 +34,31 @@ def main():
     cards = compact(ROOT / "data" / "cards.json")
     effects = compact(ROOT / "data" / "effects.json")
     engine = (ROOT / "engine.js").read_text(encoding="utf-8")
+    art = art_manifest()
 
     block = (
         html[:b_line_end]
         + "\n<script>window.COMPILE_CARDS=" + cards + ";</script>"
         + "\n<script>window.COMPILE_EFFECTS=" + effects + ";</script>"
+        + "\n<script>window.COMPILE_ART=" + art + ";</script>"
         + "\n<script>\n" + engine + "\n</script>\n"
         + html[e:]
     )
     TARGET.write_text(block, encoding="utf-8", newline="\n")
-    print(f"{TARGET.name}: {TARGET.stat().st_size:,} bytes (cards {len(cards):,} / effects {len(effects):,} / engine {len(engine):,})")
+    print(f"{TARGET.name}: {TARGET.stat().st_size:,} bytes (cards {len(cards):,} / effects {len(effects):,} / engine {len(engine):,} / art {len(art):,})")
+
+
+def art_manifest():
+    """art/ に実在する画像のファイル名一覧。
+
+    Main 2 / Aux 2 のカードアートは未生成なので、一覧に無いものは
+    UI 側で画像を要求せず代替表示に切り替える(404 を出さない)。
+    """
+    art_dir = ROOT / "art"
+    if not art_dir.is_dir():
+        return "[]"
+    names = sorted(p.name for p in art_dir.glob("*.webp"))
+    return json.dumps(names, ensure_ascii=False, separators=(",", ":"))
 
 
 if __name__ == "__main__":

@@ -38,6 +38,11 @@ const MATCHUPS = [
   [['DEATH', 'LOVE', 'SPEED'], ['FIRE', 'LIFE', 'PSYCHIC']],
   [['LUCK', 'WAR', 'FEAR'], ['WATER', 'METAL', 'SPEED']],
   [['TIME', 'CLARITY', 'PEACE'], ['DARKNESS', 'PLAGUE', 'ICE']],
+  // Aux 2 の代替コンパイル(UNITY/DIVERSITY)が絡む編成。--filter で狙い撃ちできる
+  [['UNITY', 'DIVERSITY', 'ASSIMILATION'], ['FIRE', 'WATER', 'METAL']],
+  [['UNITY', 'CHAOS', 'TIME'], ['DIVERSITY', 'LUCK', 'WAR']],
+  [['DIVERSITY', 'MIRROR', 'PEACE'], ['UNITY', 'SMOKE', 'ICE']],
+  [['UNITY', 'DIVERSITY', 'CLARITY'], ['DEATH', 'SPEED', 'DARKNESS']],
 ];
 
 /* ---------- 引数 ---------- */
@@ -52,6 +57,16 @@ function parseArgs(argv) {
     else if (a === '--budget') o.budget = +argv[++i];
     else if (a === '--seed') o.seed = +argv[++i];
     else if (a === '--breadth') o.breadth = argv[++i].split(',').map(Number);
+    // 特定プロトコルが絡む編成だけに絞る。全体では薄まる効果を狙い撃ちで測るのに使う
+    else if (a === '--filter') o.filter = argv[++i].split(',').map(s => s.trim().toUpperCase());
+    else if (a === '--weights') {
+      // 例: --weights ctrlHold=80,oppLeadNoCtrl=90  (候補側の評価重みだけ差し替える)
+      o.weights = {};
+      for (const kv of argv[++i].split(',')) {
+        const [k, v] = kv.split('=');
+        if (k) o.weights[k] = Number(v);
+      }
+    }
   }
   return o;
 }
@@ -87,6 +102,7 @@ if (!isMainThread) {
   // 候補側だけ探索設定を変えられる(設定そのものの比較に使う)
   if (cfg.budget && Cand.setAiThinkBudget) Cand.setAiThinkBudget(cfg.budget);
   if (cfg.breadth && Cand.setAiBreadth) Cand.setAiBreadth.apply(null, cfg.breadth);
+  if (cfg.weights && Cand.setAiWeights) Cand.setAiWeights(cfg.weights);
 
   const out = [];
   for (const job of jobs) out.push(playGame(job));
@@ -139,10 +155,15 @@ const baselineSrc = opt.self
 
 /* 対戦表を作る。1つの (編成, seed) につき4通り(先後 × 候補side)を必ず消化して
    先手有利と編成の偏りを打ち消す = 少ない試合数でも分散が小さくなる */
+const POOL = opt.filter
+  ? MATCHUPS.filter(m => opt.filter.some(p => m[0].indexOf(p) >= 0 || m[1].indexOf(p) >= 0))
+  : MATCHUPS;
+if (!POOL.length) { console.error('--filter に一致する編成がありません'); process.exit(1); }
+
 const jobs = [];
 for (let i = 0; i < opt.games; i++) {
   const unit = Math.floor(i / 4);
-  const pair = MATCHUPS[unit % MATCHUPS.length];
+  const pair = POOL[unit % POOL.length];
   const variant = i % 4;
   const swap = variant >= 2;
   jobs.push({
@@ -158,7 +179,8 @@ const chunks = Array.from({ length: workerCount }, () => []);
 jobs.forEach((j, i) => chunks[i % workerCount].push(j));
 
 console.log('候補: working tree' + (opt.budget ? ' budget=' + opt.budget : '')
-  + (opt.breadth ? ' breadth=' + opt.breadth.join('-') : ''));
+  + (opt.breadth ? ' breadth=' + opt.breadth.join('-') : '')
+  + (opt.weights ? ' weights=' + JSON.stringify(opt.weights) : ''));
 console.log('基準: ' + (opt.self ? 'working tree (既定設定)' : opt.baseline));
 console.log('試合数 ' + opt.games + ' / 並列 ' + workerCount + ' worker\n');
 
@@ -168,7 +190,7 @@ let done = 0;
 
 for (const chunk of chunks) {
   const w = new Worker(__filename, {
-    workerData: { candidateSrc, baselineSrc, cards, effects, jobs: chunk, cfg: { budget: opt.budget, breadth: opt.breadth } },
+    workerData: { candidateSrc, baselineSrc, cards, effects, jobs: chunk, cfg: { budget: opt.budget, breadth: opt.breadth, weights: opt.weights } },
   });
   w.on('message', (rows) => {
     results.push.apply(results, rows);
