@@ -2880,28 +2880,6 @@ function aiBoardEffectScore(st, side) {
   return v;
 }
 
-/* Aux 2 の代替コンパイル(合計値10を経由しない勝ち筋)を評価する。
-   UNITY_2   : フィールドのUNITYカードが5枚以上ならUNITYプロトコルを即コンパイル
-   DIVERSITY_1: フィールドのプロトコル種類数が6以上ならDIVERSITYを即コンパイル
-   条件を満たしても該当カードを引いてプレイする必要があるため、
-   コンパイル1本(380)に対しては控えめに置く */
-function aiAltCompileScore(st, side) {
-  let v = 0;
-  const protos = st.players[side].protocols;
-  for (let i = 0; i < protos.length; i++) {
-    if (protos[i].compiled) continue;
-    if (protos[i].name === 'UNITY') {
-      const n = countProtoOnField(st, 'UNITY');
-      v += n >= 5 ? 55 : n * 5;
-    } else if (protos[i].name === 'DIVERSITY') {
-      const k = countProtoKinds(st);
-      v += k >= 6 ? 50 : Math.max(0, k - 2) * 6;
-      if (k <= 3) v -= 8;   // DIVERSITY_6 上段: 種類数3以下だと自壊する
-    }
-  }
-  return v;
-}
-
 function aiActionBias(st, action, side) {
   if (!action) return 0;
   const op = 1 - side;
@@ -3065,12 +3043,6 @@ function aiScore(st, me) {
   sc += aiHandPotential(st, me) * 0.9;
   sc -= aiHandPotential(st, op) * 0.75;
   sc += aiBoardEffectScore(st, me);
-  // Aux 2 の代替コンパイル(別勝ち筋)
-  sc += aiAltCompileScore(st, me);
-  sc -= aiAltCompileScore(st, op) * 1.05;
-  // METAL 1 等のコンパイル封じ: 相手を止めていれば有利、自分が止められていれば不利
-  if (st.players[op].cannotCompile) sc += 18;
-  if (st.players[me].cannotCompile) sc -= 20;
 
   if (st.useControl) {
     const W = AI_W;

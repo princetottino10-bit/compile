@@ -1927,6 +1927,16 @@ function setAiLevel(v) { AI_LEVEL = Math.max(0, Math.min(2, v | 0)); }
 /* 1手あたりの思考時間(ms)。ベンチや自己対戦で探索量を振るために外から変更できる */
 function setAiThinkBudget(ms) { AI_THINK_BUDGET_MS = Math.max(1, ms | 0); }
 
+/* 評価の重み。ai_arena の --weights で振って最適点を探せるようにしてある。
+   既定値は従来ハードコードしていた値と同一 */
+const AI_W = {
+  ctrlHold: 65, ctrlHoldLev: 0.7,     // コントロールを持っている
+  ctrlOpp: 90, ctrlOppLev: 0.75,      // 相手が持っている
+  leadGain: 50, oppLeadGain: 78,      // 2ラインリード=次のコントロールフェイズで奪える見込み
+  leadBonus: 18, oppLeadBonus: 24,    // リードそのものの価値
+};
+function setAiWeights(obj) { for (const k in obj) if (k in AI_W) AI_W[k] = obj[k]; }
+
 /* --- Phase A: 評価関数 --- */
 
 function aiCount(x, fallback) {
@@ -2217,22 +2227,24 @@ function aiScore(st, me) {
   sc += aiBoardEffectScore(st, me);
 
   if (st.useControl) {
+    const W = AI_W;
     let myWins = aiLineLeadCount(st, me), opWins = aiLineLeadCount(st, op);
 
     if (st.control === me) {
-      sc += 65 + aiControlLeverage(st, me) * 0.7;
+      sc += W.ctrlHold + aiControlLeverage(st, me) * W.ctrlHoldLev;
       if (myComp >= 1) sc += 15;
       if (myComp >= 2) sc += 45;
     } else if (st.control === op) {
-      sc -= 90 + aiControlLeverage(st, op) * 0.75;
+      sc -= W.ctrlOpp + aiControlLeverage(st, op) * W.ctrlOppLev;
       if (opComp >= 1) sc -= 15;
       if (opComp >= 2) sc -= 50;
     }
 
-    if (myWins >= 2 && st.control !== me) sc += 50;
-    if (opWins >= 2 && st.control !== op) sc -= 78;
-    if (myWins >= 2) sc += 18;
-    if (opWins >= 2) sc -= 24;
+    // 2ライン以上リードしていれば次の自分のコントロールフェイズで奪える見込み
+    if (myWins >= 2 && st.control !== me) sc += W.leadGain;
+    if (opWins >= 2 && st.control !== op) sc -= W.oppLeadGain;
+    if (myWins >= 2) sc += W.leadBonus;
+    if (opWins >= 2) sc -= W.oppLeadBonus;
   }
 
   if (st.turn === me) sc += 5;
@@ -2705,7 +2717,7 @@ function aiAnswer(state, req) {
 /* ---------- 公開 API ---------- */
 
 const Engine = {
-  init, newGame, apply, legalActions, setTrace, setAiLevel, setAiThinkBudget,
+  init, newGame, apply, legalActions, setTrace, setAiLevel, setAiThinkBudget, setAiWeights,
   lineTotal, cardValue, compilableLines, canPlay, locate,
   ai: { action: aiAction, answer: aiAnswer, score: aiScore, transitionScore: aiTransitionScore, randomPicks, smartPicks },
   get defs() { return DEFS; },
