@@ -109,6 +109,7 @@ if (!isMainThread) {
   Cand.setAiLevel(2); Base.setAiLevel(2);
   // 候補側だけ探索設定を変えられる(設定そのものの比較に使う)
   if (cfg.budget && Cand.setAiThinkBudget) Cand.setAiThinkBudget(cfg.budget);
+  if (cfg.budget && Base.setAiThinkBudget) Base.setAiThinkBudget(cfg.budget);
   if (cfg.breadth && Cand.setAiBreadth) Cand.setAiBreadth.apply(null, cfg.breadth);
   if (cfg.weights && Cand.setAiWeights) Cand.setAiWeights(cfg.weights);
   if (cfg.baselineBreadth && Base.setAiBreadth) Base.setAiBreadth.apply(null, cfg.baselineBreadth);
@@ -225,6 +226,8 @@ function report() {
     bMs += r.baselineMs; bMv += r.baselineMoves;
     turns += r.turns;
   }
+  const errorKinds = {};
+  for (const r of results) if (r.error) errorKinds[r.error] = (errorKinds[r.error] || 0) + 1;
   const n = cw + bw;
   const rate = n ? cw / n : 0;
   const [lo, hi] = wilson(cw, n, 1.96);
@@ -247,6 +250,7 @@ function report() {
   console.log('思考時間/手    候補 ' + avg(cMs, cMv) + 'ms / 基準 ' + avg(bMs, bMv) + 'ms');
   console.log('平均手数       ' + (turns / Math.max(results.length, 1)).toFixed(1));
   console.log('所要           ' + elapsed.toFixed(0) + 's (' + (results.length / elapsed).toFixed(1) + ' 戦/秒)');
+  if (errors) console.log('error kinds     ' + JSON.stringify(errorKinds));
   console.log('='.repeat(56));
   if (verdict.startsWith('⚪')) {
     const need = Math.ceil(n * Math.pow(halfWidth / 0.05, 2));

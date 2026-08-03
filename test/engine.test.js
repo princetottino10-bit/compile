@@ -666,6 +666,46 @@ test('AI: 正体を知っている相手の裏向き高値カードを無意味�
   assert.deepEqual(Engine.ai.answer(res.state, res.requests[0]), []);
 });
 
+test('AI all levels: uses its last card to deny control when opponent has one protocol left', () => {
+  for (const level of [0, 1, 2]) {
+    const st = ng({ p0: ['DARKNESS', 'SPEED', 'HATE'], p1: ['LIFE', 'LIGHT', 'PLAGUE'] }).state;
+    place(st, 'DARKNESS_4', 0, 0, true);
+    place(st, 'SPEED_2', 0, 1, true);
+    place(st, 'LIFE_3', 1, 1, true);
+    place(st, 'LIGHT_3', 1, 2, true);
+    setHand(st, 0, ['HATE_1']);
+    st.players[1].protocols[0].compiled = true;
+    st.players[1].protocols[1].compiled = true;
+    st.control = 0;
+    st.turn = 0;
+    Engine.setAiLevel(level);
+    Engine.setAiThinkBudget(40);
+    const action = Engine.ai.action(st);
+    assert.equal(action.type, 'play', `level ${level}: ${JSON.stringify(action)}`);
+    assert.equal(action.faceUp, false, `level ${level}: ${JSON.stringify(action)}`);
+    const result = Engine.apply(st, action);
+    assert.equal(result.error, null);
+    assert.equal(result.state.control, 0, `level ${level}: control was lost`);
+  }
+  Engine.setAiLevel(2);
+  Engine.setAiThinkBudget(590);
+});
+
+test('AI all levels: does not cover HATE 4 when its lower effect can only delete itself', () => {
+  for (const level of [0, 1, 2]) {
+    const st = ng({ p0: ['HATE', 'SPEED', 'DARKNESS'] }).state;
+    place(st, 'HATE_5', 0, 0, true);
+    setHand(st, 0, ['SPEED_6']);
+    st.turn = 0;
+    Engine.setAiLevel(level);
+    Engine.setAiThinkBudget(40);
+    const action = Engine.ai.action(st);
+    assert.ok(action.type !== 'play' || action.line !== 0, `level ${level}: ${JSON.stringify(action)}`);
+  }
+  Engine.setAiLevel(2);
+  Engine.setAiThinkBudget(590);
+});
+
 test('AI: 相手のリコンパイルによるターンスキップを評価する', () => {
   const before = { actionLog: [] };
   const oppRecompile = { state: { actionLog: ['P2: リコンパイル'] } };
@@ -746,6 +786,70 @@ test('AI specialist: SPEED 3 middle prioritizes moving a card that activates a c
   } finally {
     Engine.setAiSpecialist(false);
   }
+});
+
+test('AI compile safety: uses only public card knowledge to estimate an answer', () => {
+  const st = ng().state;
+  place(st, 'DARKNESS_6', 0, 0, true);
+  place(st, 'DARKNESS_5', 0, 0, true);
+  place(st, 'DARKNESS_1', 0, 0, false);
+  place(st, 'DEATH_5', 1, 0, true);
+  place(st, 'DEATH_4', 1, 0, true);
+  setHand(st, 1, ['DEATH_6']);
+
+  const unknown = Engine.ai.compilePassChance(st, 0, 0, 0);
+  assert.ok(unknown > 0 && unknown < 1);
+  st.cards[uidOf('DEATH_6', 1)].knownTo |= 1;
+  assert.equal(Engine.ai.compilePassChance(st, 0, 0, 0), 0);
+  setHand(st, 1, []);
+  assert.equal(Engine.ai.compilePassChance(st, 0, 0, 0), 1);
+});
+
+test('AI specialist: Darkness 2 compile line assigns another pending protocol to that line', () => {
+  const st = ng({ p0: ['DARKNESS', 'SPEED', 'HATE'] }).state;
+  Engine.setAiSpecialist(true, 0);
+  try {
+    const option = Engine.ai.answer(st, {
+      kind: 'option', player: 0, optional: false, prompt: 'control-rearrange',
+      options: ['self', 'opponent', 'none'], controlReason: 'compile', controlLine: 0,
+      darknessPowered: true,
+      protocols: [{ name: 'DARKNESS', compiled: false }, { name: 'SPEED', compiled: false }, { name: 'HATE', compiled: false }]
+    });
+    assert.deepEqual(option, [0]);
+    const arrangement = Engine.ai.answer(st, {
+      kind: 'arrange', player: 0, target: 0, prompt: 'rearrange',
+      current: ['DARKNESS', 'SPEED', 'HATE'], compiled: [false, false, false],
+      controlReason: 'compile', controlLine: 0, darknessPowered: true
+    });
+    assert.notEqual(['DARKNESS', 'SPEED', 'HATE'][arrangement[0]], 'DARKNESS');
+  } finally {
+    Engine.setAiSpecialist(false);
+  }
+});
+
+test('AI all levels: control moves the final pending protocol onto any compiling line for the win', () => {
+  const st = ng({ p0: ['DARKNESS', 'SPEED', 'HATE'] }).state;
+  for (const level of [0, 1, 2]) {
+    Engine.setAiLevel(level);
+    const option = Engine.ai.answer(st, {
+      kind: 'option', player: 0, optional: false, prompt: 'control-rearrange',
+      options: ['self', 'opponent', 'none'], controlReason: 'compile', controlLine: 0,
+      protocols: [{ name: 'DARKNESS', compiled: true }, { name: 'SPEED', compiled: true }, { name: 'HATE', compiled: false }]
+    });
+    assert.deepEqual(option, [0]);
+    const arrangement = Engine.ai.answer(st, {
+      kind: 'arrange', player: 0, target: 0, prompt: 'rearrange', controlReason: 'compile', controlLine: 0,
+      current: ['DARKNESS', 'SPEED', 'HATE'], compiled: [true, true, false]
+    });
+    assert.equal(arrangement[0], 2);
+  }
+  const alreadyThere = Engine.ai.answer(st, {
+    kind: 'option', player: 0, optional: false, prompt: 'control-rearrange',
+    options: ['self', 'opponent', 'none'], controlReason: 'compile', controlLine: 2,
+    protocols: [{ name: 'DARKNESS', compiled: true }, { name: 'SPEED', compiled: true }, { name: 'HATE', compiled: false }]
+  });
+  assert.deepEqual(alreadyThere, [2]);
+  Engine.setAiLevel(2);
 });
 
 test('AI knowledge: initial hands are private and decks are unknown', () => {

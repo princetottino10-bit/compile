@@ -699,25 +699,31 @@ function massRemove(ctx, uids, destKind, actor) {
 
 /* ---------- リフレッシュ / コントロール / コンパイル ---------- */
 
-function useControlBenefit(ctx, side) {
+function useControlBenefit(ctx, side, reason, line, darknessPowered) {
   const st = ctx.st;
   if (!st.useControl || st.control !== side) return;
   st.control = -1;
   log(ctx, `P${side + 1}: コントロールを消費`);
   const ans = choose(ctx, {
     kind: 'option', player: side, optional: false, prompt: 'control-rearrange',
-    options: ['自分のプロトコルを並べ替える', '相手のプロトコルを並べ替える', '並べ替えない']
+    options: ['自分のプロトコルを並べ替える', '相手のプロトコルを並べ替える', '並べ替えない'],
+    controlReason: reason, controlLine: line, darknessPowered: !!darknessPowered,
+    protocols: st.players[side].protocols.map(protocol => ({ name: protocol.name, compiled: protocol.compiled }))
   });
-  if (ans[0] === 0) doRearrange(ctx, side, side);
+  const controlContext = { controlReason: reason, controlLine: line, darknessPowered: !!darknessPowered };
+  if (ans[0] === 0) doRearrange(ctx, side, side, undefined, controlContext);
   else if (ans[0] === 1) doRearrange(ctx, side, 1 - side);
 }
 
-function doRearrange(ctx, chooser, target, exact) {
+function doRearrange(ctx, chooser, target, exact, controlContext) {
   const st = ctx.st;
   const cur = st.players[target].protocols;
   const ans = choose(ctx, {
     kind: 'arrange', player: chooser, target, exact: exact || undefined,
-    current: cur.map(p => p.name), prompt: 'rearrange'
+    current: cur.map(p => p.name), compiled: cur.map(p => !!p.compiled), prompt: 'rearrange',
+    controlReason: controlContext && controlContext.controlReason,
+    controlLine: controlContext && controlContext.controlLine,
+    darknessPowered: !!(controlContext && controlContext.darknessPowered)
   });
   st.players[target].protocols = ans.map(i => cur[i]);
   log(ctx, `P${target + 1} のプロトコルを並べ替え: ` + st.players[target].protocols.map(p => p.name).join('/'));
@@ -726,7 +732,7 @@ function doRearrange(ctx, chooser, target, exact) {
 function doRefresh(ctx, side) {
   const st = ctx.st;
   if (st.players[side].hand.length >= 5) return false;
-  useControlBenefit(ctx, side);
+  useControlBenefit(ctx, side, 'refresh');
   drawCards(ctx, side, 5 - st.players[side].hand.length);
   log(ctx, `P${side + 1}: リフレッシュ`);
   fireEvent(ctx, { on: 'refresh', player: side });
@@ -745,7 +751,10 @@ function compilableLines(st, side) {
 function doCompile(ctx, side, line) {
   const st = ctx.st;
   log(ctx, `P${side + 1}: ライン${line + 1}をコンパイル`);
-  useControlBenefit(ctx, side);
+  const darknessPowered = st.lines[line][side].some(uid =>
+    st.cards[uid].faceUp && st.cards[uid].def === 'DARKNESS_3'
+  );
+  useControlBenefit(ctx, side, 'compile', line, darknessPowered);
   // 置換効果 (SPEED_3): コンパイル削除の代わりに移動
   for (let s = 0; s < 2; s++) {
     for (const uid of st.lines[line][s].slice()) {
@@ -1970,7 +1979,7 @@ const AI_W = {
   // 各ラインの合計値差。CONTROLを直接追うのではなく、盤面差を広げた結果として獲得する
   marginLead: 6, marginTrail: 6,
   // リフレッシュはターンを丸ごと使う。引ける枚数が少ないほど割に合わない
-  refreshPerCard: 13, refreshTempo: 26,
+  refreshPerCard: 13, refreshTempo: 26, compileSafety: 1,
 };
 function setAiWeights(obj) { for (const k in obj) if (k in AI_W) AI_W[k] = obj[k]; }
 let AI_SPECIALIST_ENABLED = false;
@@ -1985,7 +1994,7 @@ const AI_DSH_W = {
   ctrlHold: 65, ctrlHoldLev: 0.7, ctrlOpp: 90, ctrlOppLev: 0.75,
   leadGain: 50, oppLeadGain: 78, leadBonus: 18, oppLeadBonus: 24,
   marginLead: 6, marginTrail: 6, refreshPerCard: 13, refreshTempo: 26,
-  hateDownPenalty: 20, speedDownPenalty: 20, speedPairStrategy: 1,
+  compileSafety: 1, hateDownPenalty: 20, speedDownPenalty: 20, speedPairStrategy: 1,
 };
 function setAiSpecialistWeights(obj) {
   for (const k in obj) if (k in AI_DSH_W && Number.isFinite(obj[k])) AI_DSH_W[k] = obj[k];
@@ -2215,6 +2224,99 @@ function aiTransitionScore(before, result, side) {
   return opp * 55 - own * 35;
 }
 
+function aiDisruptionValue(ops, depth) {
+  if (!Array.isArray(ops) || depth > 4) return 0;
+  let value = 0;
+  for (const op of ops) {
+    if (!op || !op.op) continue;
+    if (op.op === 'delete' || op.op === 'return') value = Math.max(value, 5);
+    else if (op.op === 'shift') value = Math.max(value, 4);
+    else if (op.op === 'flip') value = Math.max(value, 3);
+    else if (op.op === 'play') value = Math.max(value, 2);
+    else if (op.op === 'rearrange' || op.op === 'swapProtocols') value = Math.max(value, 3);
+    else if (op.op === 'choice') {
+      for (const option of op.options || []) value = Math.max(value, aiDisruptionValue(option, depth + 1));
+    } else if (op.op === 'ifDone' || op.op === 'ifState' || op.op === 'forEachLine' || op.op === 'repeatPer') {
+      value = Math.max(value, aiDisruptionValue(op.ops, depth + 1));
+    }
+  }
+  return value;
+}
+
+function aiDefResponseValue(st, defId, line) {
+  const d = DEFS[defId];
+  let value = 2;
+  const names = [st.players[0].protocols[line].name, st.players[1].protocols[line].name];
+  if (names.indexOf(d.proto) >= 0) {
+    value = Math.max(value, d.value + aiDisruptionValue(d.eff.middle && d.eff.middle.ops, 0));
+  }
+  return value;
+}
+
+function aiCardResponseValue(st, uid, line) {
+  return aiDefResponseValue(st, st.cards[uid].def, line);
+}
+
+/* 次の相手手番を越えてコンパイル条件を保てる確率。未知札は残存プールからのみ推定する。 */
+function aiCompilePassChance(st, side, line, observer) {
+  const opponent = 1 - side;
+  const mine = lineTotal(st, line, side), theirs = lineTotal(st, line, opponent);
+  if (mine < 10 || mine <= theirs) return 0;
+  const requiredSwing = mine - theirs;
+
+  for (const uid of st.players[opponent].hand) {
+    if (aiCardKnownTo(st, uid, observer) && aiCardResponseValue(st, uid, line) >= requiredSwing) return 0;
+  }
+
+  const remaining = new Map();
+  for (const protocol of st.players[opponent].protocols) {
+    for (const defId of PROTOS[protocol.name] || []) remaining.set(defId, (remaining.get(defId) || 0) + 1);
+  }
+  const origin = 'p' + opponent + ':';
+  for (const uid of Object.keys(st.cards)) {
+    if (uid.indexOf(origin) !== 0 || !aiCardKnownTo(st, uid, observer)) continue;
+    const defId = st.cards[uid].def;
+    const count = remaining.get(defId) || 0;
+    if (count <= 1) remaining.delete(defId); else remaining.set(defId, count - 1);
+  }
+
+  let unknownCount = 0, answers = 0;
+  for (const [defId, count] of remaining) {
+    const response = aiDefResponseValue(st, defId, line);
+    unknownCount += count;
+    if (response >= requiredSwing) answers += count;
+  }
+  const unknownHand = st.players[opponent].hand.reduce((n, uid) => n + (aiCardKnownTo(st, uid, observer) ? 0 : 1), 0);
+  if (!unknownHand || !unknownCount || !answers) return 1;
+  let noAnswer = 1;
+  for (let i = 0; i < Math.min(unknownHand, unknownCount); i++) {
+    noAnswer *= Math.max(0, unknownCount - answers - i) / (unknownCount - i);
+  }
+  return Math.max(0, Math.min(1, noAnswer));
+}
+
+function aiCompileSafetyScore(st, observer) {
+  let score = 0;
+  const opponent = 1 - observer;
+  if (st.turn === opponent) {
+    for (let line = 0; line < 3; line++) {
+      if (st.players[observer].protocols[line].compiled) continue;
+      if (lineTotal(st, line, observer) < 10 || lineTotal(st, line, observer) <= lineTotal(st, line, opponent)) continue;
+      const chance = aiCompilePassChance(st, observer, line, observer);
+      score += chance * 90 - (1 - chance) * 35;
+    }
+  }
+  if (st.turn === observer) {
+    for (let line = 0; line < 3; line++) {
+      if (st.players[opponent].protocols[line].compiled) continue;
+      if (lineTotal(st, line, opponent) < 10 || lineTotal(st, line, opponent) <= lineTotal(st, line, observer)) continue;
+      const chance = aiCompilePassChance(st, opponent, line, observer);
+      score -= chance * 100 - (1 - chance) * 30;
+    }
+  }
+  return score;
+}
+
 function aiScore(st, me) {
   if (st.winner === me) return 1e9;
   if (st.winner === 1 - me) return -1e9;
@@ -2322,6 +2424,7 @@ function aiScore(st, me) {
   sc += aiHandPotential(st, me) * 0.9;
   sc -= aiHandPotential(st, op) * 0.75;
   sc += aiBoardEffectScore(st, me);
+  sc += aiCompileSafetyScore(st, me) * W.compileSafety;
 
   if (st.useControl) {
     let myWins = aiLineLeadCount(st, me), opWins = aiLineLeadCount(st, op);
@@ -2341,6 +2444,20 @@ function aiScore(st, me) {
     if (opWins >= 2 && st.control !== op) sc -= W.oppLeadGain;
     if (myWins >= 2) sc += W.leadBonus;
     if (opWins >= 2) sc -= W.oppLeadBonus;
+
+    // With one protocol left, control turns any successful compile into a win.
+    // Treat keeping/taking it as a tactical requirement, not a small positional bonus.
+    if (opComp === 2) {
+      if (st.control === op) sc -= 520;
+      else if (opWins >= 2) sc -= 320;
+      if (st.control === me) sc += 130;
+      if (myWins >= 2) sc += 110;
+    }
+    if (myComp === 2) {
+      if (st.control === me) sc += 420;
+      else if (myWins >= 2) sc += 260;
+      if (st.control === op) sc -= 150;
+    }
   }
 
   if (st.turn === me) sc += 5;
@@ -2444,9 +2561,29 @@ function aiStrategicCardPicks(st, req, me, ranked, fallback) {
   return bestScore > -1e8 ? best : fallback;
 }
 
+function aiForcedControlWinPicks(req) {
+  if (req.controlReason !== 'compile' || !Number.isInteger(req.controlLine)) return null;
+  if (req.kind === 'option' && req.prompt === 'control-rearrange' && Array.isArray(req.protocols)) {
+    const pending = req.protocols.map((protocol, index) => ({ protocol, index }))
+      .filter(item => !item.protocol.compiled);
+    if (pending.length !== 1) return null;
+    return pending[0].index === req.controlLine ? [2] : [0];
+  }
+  if (req.kind === 'arrange' && Array.isArray(req.current) && Array.isArray(req.compiled)) {
+    const pending = req.compiled.map((compiled, index) => ({ compiled, index }))
+      .filter(item => !item.compiled);
+    if (pending.length !== 1 || pending[0].index === req.controlLine) return null;
+    const perms = [[1, 2, 0], [2, 0, 1], [0, 2, 1], [1, 0, 2], [2, 1, 0]];
+    return perms.find(order => order[req.controlLine] === pending[0].index) || null;
+  }
+  return null;
+}
+
 function smartPicks(st, req) {
   const me = req.player;
   const op = 1 - me;
+  const forcedControlWin = aiForcedControlWinPicks(req);
+  if (forcedControlWin) return forcedControlWin;
   switch (req.kind) {
     case 'pickCard': {
       if (req.prompt === 'play-free') return aiPlayFreePicks(st, req, me);
@@ -2550,6 +2687,12 @@ function smartPicks(st, req) {
       return [bestLine];
     }
     case 'option': {
+      if (aiIsDshSpecialist(st, me) && req.prompt === 'control-rearrange'
+          && req.controlReason === 'compile' && req.darknessPowered && Array.isArray(req.protocols)) {
+        const darkness = req.protocols.find(protocol => protocol.name === 'DARKNESS');
+        const otherPending = req.protocols.some(protocol => protocol.name !== 'DARKNESS' && !protocol.compiled);
+        if (darkness && !darkness.compiled && otherPending) return [0];
+      }
       if (req.options.length <= 1 && !req.optional) return [0];
       let best = [0], bestSc = -Infinity;
       for (let i = 0; i < req.options.length; i++) {
@@ -2568,9 +2711,20 @@ function smartPicks(st, req) {
       return yS >= nS ? ['yes'] : [];
     }
     case 'arrange': {
-      const perms = req.exact === 'transposition'
+      let perms = req.exact === 'transposition'
         ? [[1, 0, 2], [0, 2, 1], [2, 1, 0]]
         : [[1, 2, 0], [2, 0, 1], [0, 2, 1], [1, 0, 2], [2, 1, 0]];
+      if (aiIsDshSpecialist(st, me) && req.target === me && req.controlReason === 'compile'
+          && req.darknessPowered && Number.isInteger(req.controlLine)
+          && Array.isArray(req.current) && Array.isArray(req.compiled)) {
+        const darknessIndex = req.current.indexOf('DARKNESS');
+        const candidates = perms.filter(order => {
+          const sourceIndex = order[req.controlLine];
+          return darknessIndex >= 0 && !req.compiled[darknessIndex]
+            && sourceIndex !== darknessIndex && !req.compiled[sourceIndex];
+        });
+        if (candidates.length) perms = candidates;
+      }
       let best = perms[0], bestSc = -Infinity;
       for (const o of perms) {
         const s = aiChoiceScore(st, req, o, me);
@@ -2611,6 +2765,53 @@ function applyAndResolve(state, action, pickFn) {
 
 const AI_ROLLOUT_SAMPLES = 6;
 
+function aiWouldWasteHate4(state, action, side) {
+  if (action.type !== 'play') return false;
+  const destSide = action.side === 0 || action.side === 1 ? action.side : side;
+  if (destSide !== side) return false;
+  const stack = state.lines[action.line][side];
+  if (!stack.length) return false;
+  const hate4 = stack[stack.length - 1];
+  if (!state.cards[hate4].faceUp || state.cards[hate4].def !== 'HATE_5') return false;
+
+  const sourceValue = cardValue(state, hate4);
+  let otherLowest = Infinity;
+  for (let fieldSide = 0; fieldSide < 2; fieldSide++) {
+    const fieldStack = state.lines[action.line][fieldSide];
+    const coveredEnd = fieldSide === side ? fieldStack.length - 1 : fieldStack.length - 2;
+    for (let index = 0; index <= coveredEnd; index++) {
+      const uid = fieldStack[index];
+      if (uid !== hate4) otherLowest = Math.min(otherLowest, cardValue(state, uid));
+    }
+  }
+  return sourceValue < otherLowest;
+}
+
+function aiDecisionActions(state) {
+  let acts = legalActions(state);
+  const side = state.turn;
+  if (aiIsDshSpecialist(state, side) && aiWeightsFor(state, side).speedPairStrategy
+      && !aiHasDefOnField(state, side, 'SPEED_1') && !aiHasDefOnField(state, side, 'SPEED_4')
+      && aiHasDefInHand(state, side, 'SPEED_1') && aiHasDefInHand(state, side, 'SPEED_4')) {
+    const speed0 = acts.filter(action => action.type === 'play' && action.faceUp
+      && state.cards[action.card] && state.cards[action.card].def === 'SPEED_1');
+    if (speed0.length) acts = speed0;
+  }
+  const opponent = 1 - side;
+  const opponentPending = state.players[opponent].protocols.filter(protocol => !protocol.compiled).length;
+  if (state.useControl && opponentPending === 1 && state.control !== opponent) {
+    const safe = acts.filter(action => {
+      const result = applyAndResolve(state, action, smartPicks);
+      if (!result || result.error || result.requests.length) return false;
+      return result.state.winner !== opponent && result.state.control !== opponent;
+    });
+    if (safe.length) acts = safe;
+  }
+
+  const avoidsWaste = acts.filter(action => !aiWouldWasteHate4(state, action, side));
+  return avoidsWaste.length ? avoidsWaste : acts;
+}
+
 function rolloutScore(state, firstAction, me) {
   const res = applyAndResolve(state, firstAction, function(_, req) { return randomPicks(req); });
   if (!res || res.error || res.requests.length) return -1e8;
@@ -2625,7 +2826,7 @@ function avgRolloutScore(state, action, me) {
 
 function aiActionEasy(state) {
   const me = state.turn;
-  const acts = legalActions(state);
+  const acts = aiDecisionActions(state);
   if (!acts.length) return null;
   if (acts.length === 1) return acts[0];
   let best = null, bestSc = -Infinity;
@@ -2640,7 +2841,7 @@ function aiActionEasy(state) {
 
 function aiActionNormal(state) {
   const me = state.turn;
-  const acts = legalActions(state);
+  const acts = aiDecisionActions(state);
   if (!acts.length) return null;
   if (acts.length === 1) return acts[0];
   let best = null, bestSc = -Infinity;
@@ -2658,7 +2859,7 @@ function aiActionNormal(state) {
 
 function aiActionHard(state) {
   const me = state.turn;
-  const acts = legalActions(state);
+  const acts = aiDecisionActions(state);
   if (!acts.length) return null;
   if (acts.length === 1) return acts[0];
 
@@ -2930,6 +3131,8 @@ function enumeratePicks(req) {
 
 function aiAnswer(state, req) {
   const view = aiInformationState(state, req.player);
+  const forcedControlWin = aiForcedControlWinPicks(req);
+  if (forcedControlWin) return forcedControlWin;
   if (AI_LEVEL >= 1) {
     return smartPicks(view, req);
   }
@@ -2949,7 +3152,7 @@ function aiAnswer(state, req) {
 const Engine = {
   init, newGame, apply, legalActions, setTrace, setAiLevel, setAiThinkBudget, setAiBreadth, setAiWeights, setAiSpecialist, setAiSpecialistWeights,
   lineTotal, cardValue, compilableLines, canPlay, locate,
-  ai: { action: aiAction, answer: aiAnswer, score: aiScore, transitionScore: aiTransitionScore, informationState: aiInformationState, randomPicks, smartPicks },
+  ai: { action: aiAction, answer: aiAnswer, score: aiScore, transitionScore: aiTransitionScore, compilePassChance: aiCompilePassChance, informationState: aiInformationState, randomPicks, smartPicks },
   get defs() { return DEFS; },
   get protos() { return PROTOS; }
 };
