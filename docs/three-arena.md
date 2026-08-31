@@ -18,7 +18,8 @@ URL パラメータでプロトコル選択を飛ばせる:
 three-play.html?me=DARKNESS,FIRE,LIGHT&ai=APATHY,FEAR,ICE
 ```
 
-指定がなければ起動時にプロトコル選択画面が出る。
+指定がなければ起動時にタイトル画面 → プロトコル選択画面が出る
+(`?title=0` でタイトルを飛ばせる)。
 
 ### 観戦デモ
 
@@ -148,6 +149,8 @@ js3d/
   fx.js              大物の演出 (光柱・衝撃波・カード粉砕・塵・プロトコル別バースト)
   audio.js           効果音 (WebAudio 合成、素材ファイルなし)
   icons.js           効果種別アイコン (SVGパスを Canvas / DOM で共用)
+  emblems.js         プロトコル紋章30種 (Canvasプリミティブのパラメトリック線画)
+  title.js           タイトル画面 (ブートログ → ロゴ → PRESS START)
   ui.js              HUD・選択ダイアログ・各種カットイン (DOM)
   prompts.js         engine の request.prompt → 日本語
   theme.js           寸法・配色・演出タイミングの単一情報源

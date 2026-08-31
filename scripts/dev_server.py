@@ -8,11 +8,11 @@ ES モジュール (js3d/*.js) の編集がブラウザに反映されないこ�
 """
 
 import http.server
-import socketserver
 import sys
 
 
 class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
+    protocol_version = "HTTP/1.1"
     def end_headers(self):
         self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
         self.send_header("Pragma", "no-cache")
@@ -26,8 +26,9 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
 
 def main():
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
-    socketserver.TCPServer.allow_reuse_address = True
-    with socketserver.TCPServer(("127.0.0.1", port), NoCacheHandler) as httpd:
+    # ブラウザは keep-alive で複数コネクションを張るため、
+    # 単一スレッドの TCPServer だと2本目以降が詰まる。必ずスレッド版を使う。
+    with http.server.ThreadingHTTPServer(("127.0.0.1", port), NoCacheHandler) as httpd:
         print("serving on http://localhost:%d" % port)
         httpd.serve_forever()
 

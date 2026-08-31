@@ -7,10 +7,12 @@ import { createStage } from './stage.js';
 import { createBoard, visualFingerprint } from './board.js';
 import { createPanels } from './panel.js';
 import { runSetup } from './setup.js';
+import { runTitle } from './title.js';
 import { faceImageURL, ART_SETS } from './cardtex.js';
 import * as FX from './fx.js';
 import { buildArena } from './arena.js';
 import { initAudio, sfx, setMuted, isMuted } from './audio.js';
+import { emblemDataURL } from './emblems.js';
 import * as LAYOUT from './layout.js';
 import { BOARD, CARD, COLOR, TIMING } from './theme.js';
 import * as TW from './tween.js';
@@ -71,7 +73,11 @@ async function boot() {
     onCompile: async (info) => {
       /* まず盤上のプロトコルカードを "Compiled" 面へ裏返し、その後にカットイン */
       await panels.flipAt(info.line, info.side, true);
-      await UI.compileCutIn({ ...info, art: glitchArtUrl(info.name) });
+      await UI.compileCutIn({
+        ...info,
+        art: glitchArtUrl(info.name),
+        emblem: emblemDataURL(info.name, info.color, 512, true)
+      });
     }
   });
   buildArena(stage);
@@ -99,11 +105,12 @@ async function boot() {
     document.body.classList.add('demo');
   }
 
-  /* URL で指定がなければ、選択画面で決めてもらう */
+  /* URL で指定がなければ、タイトル → 選択画面 */
   if (!p0) {
     const bootEl0 = document.getElementById('boot');
     bootEl0.classList.add('gone');
     setTimeout(() => { bootEl0.style.display = 'none'; }, 800);
+    if (params.get('title') !== '0') await runTitle(cards.protocols);
     const chosen = await runSetup(cards.protocols);
     p0 = chosen.me;
     p1 = p1 || chosen.ai;

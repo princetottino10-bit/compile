@@ -9,6 +9,7 @@ import * as THREE from '../vendor/three.module.js';
 import { COLOR } from './theme.js';
 import * as LAYOUT from './layout.js';
 import * as TW from './tween.js';
+import { drawEmblem } from './emblems.js';
 
 const TEX_W = 512, TEX_H = 232;
 const PANEL_W = 1.5, PANEL_D = 0.68;
@@ -94,21 +95,25 @@ function paint(ctx, info, art) {
   }
   ctx.restore();
 
+  /* 紋章 */
+  drawEmblem(ctx, info.name, 16, (H - 74) / 2, 74,
+    compiled ? 'rgba(255,255,255,.95)' : rgba(accent, 0.95), 7);
+
   /* 状態ラベル */
   ctx.font = '800 19px system-ui, sans-serif';
   ctx.fillStyle = compiled ? '#ffffff' : rgba(accent, 0.9);
-  ctx.fillText(compiled ? 'COMPILED' : 'LOADING...', 22, 40);
+  ctx.fillText(compiled ? 'COMPILED' : 'LOADING...', 100, 40);
 
   /* プロトコル名 */
-  let px = 54;
+  let px = 50;
   do {
     ctx.font = '900 ' + px + 'px system-ui, sans-serif';
-    if (ctx.measureText(info.name).width <= W - 190) break;
+    if (ctx.measureText(info.name).width <= W - 268) break;
     px -= 2;
-  } while (px > 24);
+  } while (px > 22);
   ctx.fillStyle = '#ffffff';
   ctx.textBaseline = 'middle';
-  ctx.fillText(info.name, 22, H * 0.62);
+  ctx.fillText(info.name, 100, H * 0.62);
   ctx.textBaseline = 'alphabetic';
 
   /* 合計値。10 以上はコンパイル圏内なので塗りを反転させる */

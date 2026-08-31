@@ -113,6 +113,12 @@
     opacity:0;filter:saturate(1.2) contrast(1.15);
     mask-image:radial-gradient(ellipse at 50% 45%,#000 56%,transparent 88%);
     animation:ccArt 2.2s cubic-bezier(.16,1,.3,1) forwards;}
+  .cc-emblem{position:absolute;left:50%;top:50%;width:min(58vh,52vw);
+    transform:translate(-50%,-52%);opacity:0;pointer-events:none;
+    animation:ccEmblem 2.2s cubic-bezier(.16,1,.3,1) forwards;}
+  @keyframes ccEmblem{0%{opacity:0;transform:translate(-50%,-52%) scale(1.3) rotate(-6deg)}
+    16%{opacity:.3}70%{opacity:.22;transform:translate(-50%,-52%) scale(1.02) rotate(0deg)}
+    100%{opacity:0;transform:translate(-50%,-52%) scale(.98)}}
   .cc-slash{position:absolute;left:-20%;right:-20%;height:var(--h,86px);top:var(--t,42%);
     transform:skewY(-4deg) scaleX(0);transform-origin:left center;
     background:linear-gradient(90deg,transparent,var(--accent) 18%,#fff 50%,var(--accent) 82%,transparent);
@@ -287,6 +293,47 @@
   @keyframes slide{0%{transform:translateX(-100%)}100%{transform:translateX(360%)}}
 
 
+
+  /* ---------- タイトル画面 ---------- */
+  #title{position:fixed;inset:0;z-index:58;display:none;overflow:hidden;cursor:pointer;
+    background:radial-gradient(ellipse at 50% 30%,rgba(20,8,34,.42),rgba(3,4,10,.78));
+    opacity:1;transition:opacity .5s;}
+  #title.show{display:block;}
+  #title.gone{opacity:0;}
+  .tt-scan{position:absolute;inset:0;pointer-events:none;opacity:.4;
+    background:repeating-linear-gradient(0deg,rgba(255,255,255,.03) 0 1px,transparent 1px 4px);}
+  .tt-log{position:absolute;left:26px;top:22px;font:500 11px/1.9 ui-monospace,monospace;
+    color:rgba(109,255,194,.75);text-shadow:0 0 8px rgba(109,255,194,.35);}
+  .tt-log div{animation:ttLine .18s ease-out;}
+  @keyframes ttLine{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+  .tt-center{position:absolute;left:0;right:0;top:38%;transform:translateY(-50%);
+    display:flex;flex-direction:column;align-items:center;gap:14px;}
+  .tt-logo{font:900 clamp(52px,11vw,124px)/1 system-ui;letter-spacing:.1em;color:#fff;
+    text-shadow:0 0 44px rgba(255,59,157,.5),0 0 110px rgba(99,243,255,.3);
+    animation:ttLogo 1.1s cubic-bezier(.16,1,.3,1) both;}
+  .tt-logo b{color:var(--pink);}
+  .tt-sub{font:800 15px/1 system-ui;letter-spacing:.72em;color:var(--cyan);
+    text-indent:.72em;animation:ttLogo 1.1s cubic-bezier(.16,1,.3,1) .12s both;}
+  @keyframes ttLogo{0%{opacity:0;transform:translateY(18px) scale(.96);filter:blur(6px)}
+    100%{opacity:1;transform:none;filter:blur(0)}}
+  .tt-start{margin-top:34px;font:800 14px/1 system-ui;letter-spacing:.5em;text-indent:.5em;
+    color:#ffeab4;padding:14px 34px;border:1px solid rgba(239,208,108,.5);border-radius:999px;
+    background:rgba(239,208,108,.07);animation:ttPulse 1.6s ease-in-out .6s infinite both;}
+  @keyframes ttPulse{0%,100%{opacity:.55;box-shadow:0 0 0 0 rgba(239,208,108,.0)}
+    50%{opacity:1;box-shadow:0 0 30px 2px rgba(239,208,108,.22)}}
+  .tt-marquee{position:absolute;left:0;right:0;bottom:64px;overflow:hidden;
+    mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);}
+  .tt-strip{display:flex;gap:34px;width:max-content;padding:6px 0;
+    animation:ttSlide 46s linear infinite;}
+  .tt-strip img{width:44px;height:44px;opacity:.6;}
+  @keyframes ttSlide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  .tt-foot{position:absolute;left:0;right:0;bottom:20px;text-align:center;
+    font:700 9px/1 system-ui;letter-spacing:.24em;color:var(--dim);}
+  @media (prefers-reduced-motion: reduce){
+    .tt-strip{animation:none;}
+    .tt-start{animation:none;opacity:1;}
+  }
+
   /* ---------- プロトコル選択 ---------- */
   #setup{position:fixed;inset:0;z-index:55;display:none;flex-direction:column;
     background:radial-gradient(ellipse at 50% 0%,rgba(28,10,42,.55),transparent 55%),#03040a;
@@ -308,6 +355,8 @@
   .proto::after{content:"";position:absolute;inset:0;
     background:linear-gradient(180deg,rgba(4,6,13,.15),rgba(4,6,13,.92));}
   .proto-name,.proto-set{position:relative;z-index:1;}
+  .proto-emblem{position:absolute;top:8px;right:8px;width:34px;height:34px;z-index:1;
+    opacity:.85;filter:drop-shadow(0 2px 6px rgba(0,0,0,.6));}
   .proto-name{font:800 13px/1 system-ui;letter-spacing:.12em;}
   .proto-set{font:700 8px/1 system-ui;letter-spacing:.14em;color:var(--dim);}
   .proto:hover{border-color:var(--accent);transform:translateY(-2px);}
@@ -388,6 +437,8 @@
       <div id="modalBody"></div>
     </div>
   </div>
+
+  <div id="title"></div>
 
   <div id="setup">
     <div id="setupHead">

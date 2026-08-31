@@ -174,6 +174,7 @@ export function compileCutIn(info) {
   el.innerHTML =
     '<div class="cc-veil"></div>' +
     (info.art ? '<div class="cc-art" style="background-image:url(&quot;' + info.art + '&quot;)"></div>' : '') +
+    (info.emblem ? '<img class="cc-emblem" alt="" src="' + info.emblem + '">' : '') +
     '<div class="cc-slash"></div><div class="cc-slash thin"></div>' +
     '<div class="cc-body">' +
       '<div class="cc-kicker">PROTOCOL COMPILED</div>' +

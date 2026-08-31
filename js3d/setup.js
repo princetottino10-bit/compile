@@ -3,6 +3,8 @@
  *   30 プロトコルから3つ選ぶ。相手は残りから自動で組む。
  * ========================================================================= */
 
+import { emblemDataURL } from './emblems.js';
+
 const AI_LABELS = ['かんたん', 'ふつう', 'つよい'];
 
 export function runSetup(protocols) {
@@ -40,6 +42,7 @@ export function runSetup(protocols) {
     b.innerHTML =
       '<span class="proto-art" style="background-image:url(&quot;art/' +
         p.name.charAt(0) + p.name.slice(1).toLowerCase() + '.webp&quot;)"></span>' +
+      '<img class="proto-emblem" alt="" src="' + emblemDataURL(p.name, p.color || '#63f3ff', 96, true) + '">' +
       '<span class="proto-name">' + p.name + '</span>' +
       '<span class="proto-set">' + (p.set || '') + '</span>';
     b.onclick = () => {
