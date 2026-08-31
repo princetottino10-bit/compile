@@ -8,6 +8,8 @@ import { createBoard, visualFingerprint } from './board.js';
 import { createPanels } from './panel.js';
 import { runSetup } from './setup.js';
 import { runTitle } from './title.js';
+import * as ROOM from './room.js';
+import { runRoomLobby } from './roomui.js';
 import { faceImageURL, ART_SETS } from './cardtex.js';
 import * as FX from './fx.js';
 import { buildArena } from './arena.js';
@@ -30,12 +32,28 @@ let hoverUid = null;
 let backFacing = false;         // Shift 相当: 裏向きでプレイ
 let pads = [];                  // 着地パッド (line × side)
 let demoMode = false;           // AI 同士の観戦 (?demo=1)
+let roomMode = false;           // オンライン対戦 (secure-room)
+let roomRm = null;              // 直近の publicState
+let roomTracker = null;         // trace の差分追跡
+let roomPollTimer = null;
 
 /* 表示用の状態。
    engine は選択待ちで中断すると state に「アクション前の基準状態」を返し、
    途中経過は view に入れる。盤面の描画・HUD は必ずこちらを見る。
    一方 apply / legalActions に渡すのは基準状態 (cur.state) の方。 */
 function shown() { return (cur && (cur.view || cur.state)) || null; }
+
+/* 合法手: ソロはエンジン、ルームはサーバー提供値 */
+function legalNow() {
+  if (roomMode) return (roomRm && roomRm.legalActions) || [];
+  if (!cur || cur.state.turn !== ME || cur.requests.length || cur.state.winner !== null) return [];
+  return Engine.legalActions(cur.state);
+}
+
+/* ライン合計: ルーム状態はサーバー計算値 (_totals) を持つ */
+function totalOf(st, line, side) {
+  return st._totals ? st._totals[line][side] : Engine.lineTotal(st, line, side);
+}
 
 /* ---------- 起動 ---------- */
 boot().catch((e) => {
@@ -105,16 +123,31 @@ async function boot() {
     document.body.classList.add('demo');
   }
 
-  /* URL で指定がなければ、タイトル → 選択画面 */
+  /* URL で指定がなければ、タイトル → 選択画面 (オンラインもここから) */
   if (!p0) {
     const bootEl0 = document.getElementById('boot');
     bootEl0.classList.add('gone');
     setTimeout(() => { bootEl0.style.display = 'none'; }, 800);
     if (params.get('title') !== '0') await runTitle(cards.protocols);
-    const chosen = await runSetup(cards.protocols);
-    p0 = chosen.me;
-    p1 = p1 || chosen.ai;
-    Engine.setAiLevel(chosen.level);
+    for (;;) {
+      const chosen = await runSetup(cards.protocols);
+      if (!chosen.online) {
+        p0 = chosen.me;
+        p1 = p1 || chosen.ai;
+        Engine.setAiLevel(chosen.level);
+        break;
+      }
+      /* オンライン対戦へ */
+      try {
+        await ROOM.roomLoadDeps();
+      } catch (e) { UI.toast('オンライン機能を読み込めませんでした'); continue; }
+      if (!ROOM.roomConfigured()) { UI.toast('オンライン対戦は未設定です (secure-room-config.js)'); continue; }
+      const result = await runRoomLobby(cards.protocols);
+      if (!result) continue;            // 戻る → ソロ設定へ
+      document.getElementById('boot').style.display = 'none';
+      await roomEnterGame(result.rm);
+      return;                            // 以降はポーリング駆動
+    }
   }
 
   const res = Engine.newGame({ seed: (Math.random() * 1e9) | 0, p0, p1, first: 0 });
@@ -137,6 +170,12 @@ async function boot() {
     },
     timing: TIMING,
     testResult: async (win) => { await finaleFx(!!win); await UI.resultCutIn(!!win); },
+    /* 合成した publicState を流し込んでルーム描画経路を検証する (ポーリングなし) */
+    testRoomView: async (rm, instant) => {
+      roomMode = true;
+      if (!roomTracker) roomTracker = ROOM.createTraceTracker();
+      await roomApplyView(rm, instant !== false);
+    },
     /* キャンバスを取り出す (記録・共有用)。
        preserveDrawingBuffer を有効にしてあるので、いつ呼んでも直前の描画が残っている。 */
     capture: (quality) => {
@@ -250,7 +289,8 @@ function buildPads() {
 function updatePads() {
   const st = cur && cur.state;   // 合法手の判定は基準状態で行う
   for (const pad of pads) pad.userData.pulse = 0;
-  if (!st || busy || selectedUid === null || st.turn !== ME || cur.requests.length) return;
+  if (!st || busy || selectedUid === null || cur.requests.length) return;
+  if ((roomMode ? shown() : st).turn !== ME) return;
 
   for (const pad of pads) {
     const { line, side } = pad.userData;
@@ -265,7 +305,7 @@ function updatePads() {
 }
 
 function canPlaceHere(st, uid, line, side) {
-  const acts = Engine.legalActions(st);
+  const acts = legalNow();
   for (const a of acts) {
     if (a.type !== 'play' || a.card !== uid || a.line !== line) continue;
     const aSide = a.side === undefined ? st.turn : a.side;
@@ -366,8 +406,8 @@ function bindInput() {
   });
 
   el.addEventListener('pointerdown', async (ev) => {
-    if (demoMode || busy || !cur || cur.state.winner !== null) return;
-    if (cur.requests.length || cur.state.turn !== ME) return;
+    if (demoMode || busy || !cur || shown().winner !== null) return;
+    if (cur.requests.length || shown().turn !== ME) return;
     const hit = pick(ev);
     if (!hit) { deselect(); return; }
 
@@ -434,11 +474,22 @@ function bindInput() {
 
   const refreshBtn = document.getElementById('btnRefresh');
   if (refreshBtn) refreshBtn.onclick = async () => {
-    if (busy || !cur || cur.state.turn !== ME || cur.requests.length) return;
-    const ok = Engine.legalActions(cur.state).some(a => a.type === 'refresh');
+    if (busy || !cur || shown().turn !== ME || cur.requests.length) return;
+    const ok = legalNow().some(a => a.type === 'refresh');
     if (!ok) { UI.toast('いまは補充できません'); return; }
     deselect();
     await step({ type: 'refresh' });
+  };
+  const leaveBtn = document.getElementById('btnLeave');
+  if (leaveBtn) leaveBtn.onclick = async () => {
+    if (!roomMode) return;
+    const st = shown();
+    if (st && st.winner === null) {
+      if (!confirm('投了して退出しますか？')) return;
+      try { await ROOM.roomApi('action', { code: roomRm.code, version: roomRm.version, action: { type: 'surrender' } }); }
+      catch (e) { /* 決着はサーバー側で確定する */ }
+    }
+    location.reload();                  // シーンを作り直すのが最も確実
   };
   const muteBtn = document.getElementById('btnMute');
   if (muteBtn) muteBtn.onclick = () => {
@@ -517,6 +568,99 @@ function deselect() { select(null); }
 function withoutTrace(fn) {
   Engine.setTrace(false);
   try { return fn(); } finally { Engine.setTrace(true); }
+}
+
+/* ==================== ルーム対戦 (オンライン) ==================== */
+
+function roomValOf(defId) {
+  const d = defId && defIndex[defId];
+  return d ? d.value : 0;
+}
+
+/* サーバーの publicState を受けて、差分アニメ + HUD 更新まで行う */
+async function roomApplyView(rm, instant) {
+  const mayContinue = !!(roomRm && roomRm.code === rm.code && roomRm.request);
+  const entries = roomTracker.take(rm, mayContinue, roomValOf);
+  roomRm = rm;
+  const prev = cur ? shown() : null;
+  const st = ROOM.buildRoomState(rm, roomValOf);
+  const nq = ROOM.normRequest(rm);
+  cur = { state: st, requests: nq ? [nq] : [], log: rm.log || [], trace: entries, winner: st.winner, error: null };
+  if (instant || !prev) {
+    board.syncInstant(st);
+  } else {
+    busy = true;
+    await replayResolution(prev, { trace: entries }, null);
+    busy = false;
+  }
+  refreshHud();
+  await afterTurn();          // roomMode 分岐: ターン告知と決着のみ
+  await roomDrainRequest();
+}
+
+async function roomStep(action) {
+  if (busy || !roomRm) return;
+  busy = true;
+  updatePads();
+  try {
+    const next = await ROOM.roomApi('action', { code: roomRm.code, version: roomRm.version, action });
+    busy = false;
+    await roomApplyView(next);
+  } catch (e) {
+    busy = false;
+    UI.toast((e && e.message) || '通信エラー');
+    await roomPoll(true);
+  }
+}
+
+let roomAsking = false;
+async function roomDrainRequest() {
+  if (!roomMode || roomAsking || !cur || !cur.requests.length) return;
+  const req = cur.requests[0];
+  roomAsking = true;
+  UI.setPrompt(req.prompt || '選択してください', 'ask');
+  try {
+    const picks = await UI.askChoice(req, choiceCtx());
+    UI.setPrompt('');
+    await roomStep({ type: 'choose', id: req.id, picks });
+  } finally { roomAsking = false; }
+}
+
+async function roomPoll(force) {
+  if (!roomMode || !roomRm) return;
+  if (busy && !force) return;
+  let next;
+  try { next = await ROOM.roomApi('get', { code: roomRm.code }); } catch (e) { return; }
+  if (next.version === roomRm.version && next.status === roomRm.status) { roomRm = next; return; }
+  await roomApplyView(next);
+}
+
+let roomResultShown = false;
+async function roomMaybeFinish() {
+  const st = shown();
+  if (!st || st.winner === null || roomResultShown) return;
+  roomResultShown = true;
+  clearInterval(roomPollTimer);
+  const win = st.winner === ME;
+  UI.setPrompt(win ? 'あなたの勝ち' : '敗北', 'end');
+  sfx(win ? 'win' : 'lose');
+  await finaleFx(win);
+  await UI.resultCutIn(win);
+  UI.toast('決着。「退出」でロビーへ戻れます', 6000);
+}
+
+/* ロビーから playing の publicState を受けて対戦開始 */
+async function roomEnterGame(rm) {
+  roomMode = true;
+  roomResultShown = false;
+  lastTurn = null;
+  roomTracker = ROOM.createTraceTracker();
+  const leaveBtn = document.getElementById('btnLeave');
+  if (leaveBtn) leaveBtn.style.display = '';
+  await roomApplyView(rm, true);
+  await stage.home(600);
+  clearInterval(roomPollTimer);
+  roomPollTimer = setInterval(() => { roomPoll(); }, 1300);
 }
 
 /* ---------- ターン / 効果の演出 ---------- */
@@ -606,6 +750,7 @@ async function replayResolution(prev, res, action) {
 
 /* ---------- 進行 ---------- */
 async function step(action) {
+  if (roomMode) { await roomStep(action); return; }
   if (busy) return;
   busy = true;
   updatePads();
@@ -627,6 +772,7 @@ async function step(action) {
 
 /* 選択要求を処理し切る */
 async function drainRequests() {
+  if (roomMode) { await roomDrainRequest(); return; }
   let guard = 0;
   while (cur && cur.requests && cur.requests.length && guard++ < 80) {
     const req = cur.requests[0];
@@ -655,6 +801,7 @@ async function drainRequests() {
 
 /* AI のターンを回す */
 async function afterTurn() {
+  if (roomMode) { await announceTurn(); await roomMaybeFinish(); return; }
   await announceTurn();
   let guardAi = 0;
   while (cur && cur.state.winner === null && (demoMode || cur.state.turn === AI)
@@ -687,8 +834,8 @@ function refreshHud() {
   const rows = [];
   for (let line = 0; line < 3; line++) {
     rows.push({
-      meTotal: Engine.lineTotal(st, line, ME),
-      oppTotal: Engine.lineTotal(st, line, AI),
+      meTotal: totalOf(st, line, ME),
+      oppTotal: totalOf(st, line, AI),
       meProto: st.players[ME].protocols[line].name,
       oppProto: st.players[AI].protocols[line].name,
       compiledMe: st.players[ME].protocols[line].compiled,
@@ -706,7 +853,7 @@ function refreshHud() {
       const meta = protoIndex[proto.name] || {};
       return {
         name: proto.name,
-        total: Engine.lineTotal(st, line, side),
+        total: totalOf(st, line, side),
         color: meta.color || '#63f3ff',
         set: meta.set,
         compiled: proto.compiled
@@ -719,10 +866,13 @@ function refreshHud() {
     { deck: st.players[AI].deck.length, trash: st.players[AI].trash.length, hand: st.players[AI].hand.length }
   );
   const mine = st.turn === ME && st.winner === null;
-  UI.setTurnBadge(st.winner !== null ? '決着' : (mine ? 'あなたのターン' : '相手のターン'), mine);
+  const oppName = roomMode && roomRm && roomRm.names ? (roomRm.names[1 - roomRm.side] || '相手') : '相手';
+  UI.setTurnBadge(st.winner !== null ? '決着' : (mine ? 'あなたのターン' : oppName + 'のターン'), mine);
+  const oppLabel = document.querySelector('#oppCounts div:first-child');
+  if (oppLabel) oppLabel.textContent = roomMode ? oppName : 'OPPONENT';
   syncFacingHint();
 
-  const acts = mine && !cur.requests.length ? Engine.legalActions(cur.state) : [];
+  const acts = mine && !cur.requests.length ? legalNow() : [];
   if (mine && !cur.requests.length) {
     const playable = new Set(acts.filter(a => a.type === 'play').map(a => a.card));
     board.highlightPlayable(st, Array.from(playable));

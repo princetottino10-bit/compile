@@ -218,6 +218,28 @@ engine の `trace` は各ログ時点の状態スナップショットを持つ�
 - タブが非表示のときは `requestAnimationFrame` が止まるため、`stage.js` の
   ウォッチドッグ (`setInterval`) がトゥイーンだけ進めて進行が固まらないようにしている
 
+## ルーム対戦 (オンライン)
+
+プロトコル選択画面の「🌐 オンライン対戦」から。サーバー権威 (Supabase Edge
+Function: secure-room) は auto-play と共通で、3D側は通信・状態変換・ロビーだけを
+持ち、描画はソロと同じ差分アニメ経路を流用する。
+
+```
+room.js     API / publicState → 擬似エンジン状態 (ローカル=index0 正規化) / trace差分
+roomui.js   ロビーUI (ログイン → クイック/作成/参加 → 待機 → ドラフト or 3択)
+main.js     roomStep / roomPoll(1.3s) / roomApplyView が Engine の代わりを務める
+```
+
+- 相手の手札と両者の山札は秘匿のため、枚数分のプレースホルダ uid
+  (`opp:h0` / `me:d0`...) を立てて裏向きカードとして描く
+- 合計値はサーバー計算 (`_totals`)、合法手もサーバー提供 (`legalActions`)
+- 新規に現れたカード (秘匿→公開) は持ち主の山札 / 相手手札の弧から湧く
+- 合成 publicState を `__3d.testRoomView(rm)` で流し込んで描画経路を検証できる
+
+**注意**: Supabase プロジェクト (`secure-room-config.js` の url) が休止/削除されて
+いると DNS ごと消えて「Failed to fetch」になる。docs/secure-room-setup.md の手順で
+プロジェクトを復旧し、url / anonKey を差し替えること。
+
 ## デバッグ
 
 `window.__3d` に以下を公開している (開発用):

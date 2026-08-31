@@ -410,6 +410,19 @@ export function createBoard(stage, defIndex, me, hooks) {
       const card = cardOf(next, uid);
       const slot = slotFor(next, uid);
       if (!slot) { card.visible = false; return Promise.resolve(); }
+      /* 前の状態に存在しなかったカード (ルームの秘匿→公開) は、
+         持ち主の山札 (自分) / 手札の弧 (相手) から湧かせる */
+      if (!a && !prev.cards[uid]) {
+        const owner = next.cards[uid].owner;
+        if (owner === me) {
+          const pp = LAYOUT.pilePos('deck', me, me, 8);
+          card.position.set(pp.pos[0], pp.pos[1], pp.pos[2]);
+          card.rotation.set(Math.PI, 0, 0);
+        } else {
+          card.position.set(0, 1.02, -4.25);
+          card.rotation.set(-2.42, 0, 0);
+        }
+      }
       card.visible = true;
       const l = b;
       const faceX = l.zone === 'hand' ? null : facingX(next, uid);

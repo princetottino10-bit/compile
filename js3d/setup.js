@@ -68,6 +68,11 @@ export function runSetup(protocols) {
   root.classList.add('show');
 
   return new Promise((resolve) => {
+    const onlineBtn = document.getElementById('setupOnline');
+    if (onlineBtn) onlineBtn.onclick = () => {
+      root.classList.remove('show');
+      resolve({ online: true });
+    };
     startBtn.onclick = () => {
       if (picked.length !== 3) return;
       const rest = protocols.map(p => p.name).filter(n => !picked.includes(n));

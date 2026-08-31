@@ -294,6 +294,60 @@
 
 
 
+
+  /* ---------- ルーム対戦ロビー ---------- */
+  #roomOv{position:fixed;inset:0;z-index:57;display:none;align-items:center;justify-content:center;
+    background:radial-gradient(ellipse at 50% 20%,rgba(16,10,34,.6),rgba(3,4,10,.88));}
+  #roomOv.show{display:flex;}
+  .ro-panel{width:min(680px,94vw);max-height:88vh;overflow-y:auto;padding:24px 26px;
+    border-radius:16px;background:linear-gradient(180deg,rgba(11,15,28,.97),rgba(5,7,15,.98));
+    border:1px solid rgba(99,243,255,.24);box-shadow:0 30px 90px rgba(0,0,0,.7);
+    display:flex;flex-direction:column;gap:12px;}
+  .ro-head{font:900 16px/1 system-ui;letter-spacing:.22em;}
+  .ro-head b{color:var(--pink);}
+  .ro-sub{margin:0;font:500 12px/1.7 system-ui;color:var(--dim);}
+  .ro-lbl{font:800 10px/1 system-ui;letter-spacing:.2em;color:var(--cyan);margin-top:6px;}
+  .ro-row{display:flex;gap:8px;}
+  .ro-grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .ro-grid2>div{display:flex;flex-direction:column;gap:7px;}
+  .ro-input{padding:11px 13px;border-radius:9px;border:1px solid rgba(255,255,255,.14);
+    background:rgba(255,255,255,.05);color:var(--ink);font:600 13px system-ui;flex:1;min-width:0;}
+  .ro-input:focus{outline:none;border-color:var(--cyan);}
+  .ro-check{font:600 11px system-ui;color:var(--dim);display:flex;gap:6px;align-items:center;}
+  .ro-btn{padding:11px 18px;border-radius:9px;cursor:pointer;border:1px solid rgba(99,243,255,.35);
+    background:rgba(99,243,255,.1);color:#cfefff;font:800 12px system-ui;letter-spacing:.08em;}
+  .ro-btn:hover{background:rgba(99,243,255,.2);}
+  .ro-big{padding:14px;border-radius:10px;cursor:pointer;border:0;
+    font:900 13px system-ui;letter-spacing:.16em;color:#04120c;
+    background:linear-gradient(100deg,var(--mint),var(--cyan));}
+  .ro-big:disabled{opacity:.35;cursor:not-allowed;}
+  .ro-ghost{padding:9px;border-radius:9px;cursor:pointer;background:none;
+    border:1px solid rgba(255,255,255,.12);color:var(--dim);font:700 11px system-ui;}
+  .ro-ghost:hover{color:var(--ink);border-color:rgba(255,255,255,.3);}
+  .ro-status{min-height:16px;font:700 11px system-ui;color:var(--dim);}
+  .ro-status[data-type="err"]{color:#ff8cc0;}
+  .ro-status[data-type="ok"]{color:var(--mint);}
+  .ro-code{font:900 34px/1 ui-monospace,monospace;letter-spacing:.4em;color:var(--gold);
+    text-align:center;padding:14px;border:1px dashed rgba(239,208,108,.4);border-radius:10px;}
+  .ro-list{display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;}
+  .ro-room{padding:10px 13px;text-align:left;border-radius:9px;cursor:pointer;
+    border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:var(--ink);
+    font:700 12px system-ui;display:flex;justify-content:space-between;gap:8px;}
+  .ro-room:hover{border-color:var(--cyan);}
+  .ro-room small{color:var(--dim);font:600 10px ui-monospace,monospace;letter-spacing:.14em;}
+  .ro-chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .ro-chip{display:flex;align-items:center;gap:6px;padding:6px 12px 6px 7px;border-radius:999px;
+    cursor:pointer;border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.04);
+    color:var(--ink);font:700 11px system-ui;letter-spacing:.05em;}
+  .ro-chip img{width:20px;height:20px;}
+  .ro-chip:hover{border-color:var(--accent,var(--cyan));}
+  .ro-chip.on{border-color:var(--accent);background:rgba(255,255,255,.1);
+    box-shadow:0 0 0 1px var(--accent);}
+  .ro-chip.taken{opacity:.32;cursor:not-allowed;}
+  .ro-tag{display:inline-block;margin:2px 4px 2px 0;padding:4px 11px;border-radius:999px;
+    border:1px solid rgba(255,255,255,.16);font:700 10.5px system-ui;color:var(--dim);}
+  .ro-tag.mine{border-color:var(--mint);color:#c9ffe9;}
+
   /* ---------- タイトル画面 ---------- */
   #title{position:fixed;inset:0;z-index:58;display:none;overflow:hidden;cursor:pointer;
     background:radial-gradient(ellipse at 50% 30%,rgba(20,8,34,.42),rgba(3,4,10,.78));
@@ -372,7 +426,7 @@
     border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);color:var(--dim);transition:all .18s;}
   .lvl:hover{border-color:var(--cyan);color:var(--ink);}
   .lvl.on{border-color:var(--mint);background:rgba(109,255,194,.14);color:#c9ffe9;}
-  #setupStart{margin-left:auto;padding:13px 34px;border-radius:999px;cursor:pointer;
+  #setupStart{padding:13px 34px;border-radius:999px;cursor:pointer;
     font:900 12px/1 system-ui;letter-spacing:.2em;color:#04120c;border:0;
     background:linear-gradient(100deg,var(--mint),var(--cyan));
     box-shadow:0 10px 34px rgba(109,255,194,.24);transition:all .2s;}
@@ -421,6 +475,7 @@
     <button id="btnFace" class="btn" type="button">表向きでプレイ</button>
     <button id="btnRefresh" class="btn" type="button">手札を補充</button>
     <button id="btnMute" class="btn" type="button" title="効果音">🔊</button>
+    <button id="btnLeave" class="btn" type="button" style="display:none">退出</button>
   </div>
 
   <div id="flash"></div>
@@ -439,6 +494,7 @@
   </div>
 
   <div id="title"></div>
+  <div id="roomOv"></div>
 
   <div id="setup">
     <div id="setupHead">
@@ -449,6 +505,7 @@
     <div id="setupGrid"></div>
     <div id="setupFoot">
       <div id="setupLevels"></div>
+      <button id="setupOnline" class="lvl" type="button" style="margin-left:auto">🌐 オンライン対戦</button>
       <button id="setupStart" type="button" disabled>対戦開始</button>
     </div>
   </div>
