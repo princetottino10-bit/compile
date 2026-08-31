@@ -615,14 +615,19 @@ async function roomStep(action) {
 
 let roomAsking = false;
 async function roomDrainRequest() {
-  if (!roomMode || roomAsking || !cur || !cur.requests.length) return;
-  const req = cur.requests[0];
+  if (!roomMode || roomAsking) return;
   roomAsking = true;
-  UI.setPrompt(req.prompt || '選択してください', 'ask');
   try {
-    const picks = await UI.askChoice(req, choiceCtx());
-    UI.setPrompt('');
-    await roomStep({ type: 'choose', id: req.id, picks });
+    /* 選択に答えた直後にサーバが次のリクエストを返すことがあるため、
+       尽きるまでループで処理する (roomStep 内からの再入は roomAsking が防ぐ) */
+    let guard = 0;
+    while (cur && cur.requests.length && shown().winner === null && guard++ < 40) {
+      const req = cur.requests[0];
+      UI.setPrompt(req.prompt || '選択してください', 'ask');
+      const picks = await UI.askChoice(req, choiceCtx());
+      UI.setPrompt('');
+      await roomStep({ type: 'choose', id: req.id, picks });
+    }
   } finally { roomAsking = false; }
 }
 
@@ -631,7 +636,11 @@ async function roomPoll(force) {
   if (busy && !force) return;
   let next;
   try { next = await ROOM.roomApi('get', { code: roomRm.code }); } catch (e) { return; }
-  if (next.version === roomRm.version && next.status === roomRm.status) { roomRm = next; return; }
+  if (next.version === roomRm.version && next.status === roomRm.status) {
+    roomRm = next;
+    await roomDrainRequest();          // 取りこぼしたリクエストの再開
+    return;
+  }
   await roomApplyView(next);
 }
 

@@ -24,7 +24,7 @@ export const BOARD = {
   /* 覆うたびのずらし量。
      ルール「覆われても値と上段コマンドが常に見えること」を満たす幅を確保する
      (カード奥行 × cardtex の REVEAL_RATIO をわずかに上回る値) */
-  coverStep: 0.40,
+  coverStep: 0.44,
   coverLift: 0.016,
   handZ: 4.0,
   handY: 1.02

@@ -159,6 +159,8 @@ export function runRoomLobby(protocols) {
     /* ---------- 入室後 (待機 / ドラフト / プロトコル選択) ---------- */
     function enterRoom() {
       clearInterval(lobbyTimer);
+      /* 再入室では既に対戦中のことがある (join が playing を返す) */
+      if (room.status === 'playing' || room.status === 'finished') { done({ rm: room }); return; }
       sel = [];
       renderRoom();
       clearInterval(pollTimer);

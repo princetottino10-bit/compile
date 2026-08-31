@@ -26,8 +26,8 @@ let backTexture = null;
 export const ART_SETS = new Set(['Main 1', 'Aux 1', 'Main 2', 'Aux 2']);
 
 /* 覆われたときも見えている必要がある上端の割合 (theme.js の coverStep と連動) */
-export const REVEAL_RATIO = 0.285;
-const REVEAL_PX = Math.floor(DH * REVEAL_RATIO);   // = 204
+export const REVEAL_RATIO = 0.314;
+const REVEAL_PX = Math.floor(DH * REVEAL_RATIO);   // = 224
 
 /* ---------- 画像ロード (失敗は null として記憶し、再試行しない) ---------- */
 function loadArt(url, onReady) {
@@ -115,26 +115,26 @@ function measureTextBlock(ctx, text, maxW, opts) {
 /* 役割ラベルのチップ (高さ26)。塗り (bg) か枠線 (fg) のどちらか */
 function chip(ctx, x, y, glyph, label, fg, bg) {
   const text = glyph + ' ' + label;
-  ctx.font = '800 17px system-ui, sans-serif';
-  const w = ctx.measureText(text).width + 20;
+  ctx.font = '800 15px system-ui, sans-serif';
+  const w = ctx.measureText(text).width + 16;
   if (bg) {
     ctx.fillStyle = bg;
-    roundRect(ctx, x, y, w, 26, 7);
+    roundRect(ctx, x, y, w, 22, 6);
     ctx.fill();
   } else {
     ctx.strokeStyle = fg;
     ctx.lineWidth = 1.5;
-    roundRect(ctx, x, y, w, 26, 7);
+    roundRect(ctx, x, y, w, 22, 6);
     ctx.stroke();
   }
   ctx.fillStyle = bg ? '#04060e' : fg;
   ctx.textBaseline = 'middle';
-  ctx.fillText(text, x + 10, y + 14);
+  ctx.fillText(text, x + 8, y + 12);
   ctx.textBaseline = 'alphabetic';
 }
 
 /* ---------- 表面 ---------- */
-const HEAD_H = 104;
+const HEAD_H = 96;
 const TEXT_X = 26;                 // ゾーン内テキストの左端 (左バーの分を空ける)
 const TEXT_W = DW - TEXT_X - 22;
 
@@ -155,63 +155,37 @@ function paintFace(ctx, def, art) {
   ctx.save();
   roundRect(ctx, 0, 0, DW, DH, 30); ctx.clip();
 
-  /* --- 各ゾーンの高さを先に見積もる --- */
-  /* 上段: ヘッダと合わせて REVEAL_PX (覆われても見える範囲) に必ず収める */
-  let topH = 0;
-  if (def.upper) {
-    const need = measureTextBlock(ctx, def.upper, TEXT_W, { start: 21 });
-    topH = Math.min(REVEAL_PX - HEAD_H, 26 + 6 + need + 14);
-  }
-  const artTop = HEAD_H + topH;
-
-  const midOpts = { start: 25, min: 16, weight: '600' };
-  const botOpts = { start: 21, min: 14 };
-  const needM = def.middle ? 26 + 6 + measureTextBlock(ctx, def.middle, TEXT_W, midOpts) + 16 : 0;
-  const needB = def.lower ? 26 + 6 + measureTextBlock(ctx, def.lower, TEXT_W, botOpts) + 14 : 0;
-
-  /* アートは最低 150px 残し、足りなければ本文側を等分で縮める */
-  let artBottom = DH - needM - needB;
-  const artMin = artTop + 150;
-  if (artBottom < artMin) artBottom = artMin;
-  const textSpace = DH - artBottom;
-  const shrink = needM + needB > 0 ? Math.min(1, textSpace / (needM + needB)) : 1;
-  const boxM = Math.floor(needM * shrink);
-  const boxB = Math.floor(needB * shrink);
-
-  /* --- アート (枠の外へはみ出さないようクリップ) --- */
-  const artH = artBottom - artTop;
+  /* --- アート: ヘッダ下の全面を背景に敷く (実物のカードと同じ) --- */
+  const artTop = HEAD_H;
+  const artH = DH - artTop;
   if (art) {
     ctx.save();
     ctx.beginPath();
     ctx.rect(0, artTop, DW, artH);
     ctx.clip();
-    const s = Math.max(DW / art.width, artH / art.height);
-    const dw = art.width * s, dh = art.height * s;
+    const sc = Math.max(DW / art.width, artH / art.height);
+    const dw = art.width * sc, dh = art.height * sc;
     ctx.drawImage(art, (DW - dw) / 2, artTop + (artH - dh) / 2, dw, dh);
     ctx.restore();
   } else {
-    const g = ctx.createRadialGradient(DW / 2, artTop + artH * 0.45, 20, DW / 2, artTop + artH * 0.45, DW * 0.8);
+    const g = ctx.createRadialGradient(DW / 2, artTop + artH * 0.4, 20, DW / 2, artTop + artH * 0.4, DW * 0.9);
     g.addColorStop(0, rgba(accent, 0.5));
     g.addColorStop(1, 'rgba(4,6,14,0)');
     ctx.fillStyle = '#080b16'; ctx.fillRect(0, artTop, DW, artH);
     ctx.fillStyle = g; ctx.fillRect(0, artTop, DW, artH);
-    ctx.font = '700 110px system-ui, sans-serif';
-    ctx.fillStyle = rgba(accent, 0.45);
+    ctx.font = '700 120px system-ui, sans-serif';
+    ctx.fillStyle = rgba(accent, 0.4);
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(def.proto.slice(0, 2), DW / 2, artTop + artH * 0.46);
+    ctx.fillText(def.proto.slice(0, 2), DW / 2, artTop + artH * 0.4);
     ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
   }
   /* 明るいアートが 3D 上で白飛びしないよう、薄い暗幕とビネット */
-  ctx.fillStyle = 'rgba(4,6,14,.2)';
+  ctx.fillStyle = 'rgba(4,6,14,.18)';
   ctx.fillRect(0, artTop, DW, artH);
-  const vig = ctx.createRadialGradient(DW / 2, artTop + artH * 0.45, DW * 0.2, DW / 2, artTop + artH * 0.45, DW * 0.8);
+  const vig = ctx.createRadialGradient(DW / 2, artTop + artH * 0.42, DW * 0.24, DW / 2, artTop + artH * 0.42, DW * 0.85);
   vig.addColorStop(0, 'rgba(4,6,14,0)');
-  vig.addColorStop(1, 'rgba(4,6,14,.55)');
+  vig.addColorStop(1, 'rgba(4,6,14,.5)');
   ctx.fillStyle = vig; ctx.fillRect(0, artTop, DW, artH);
-  const fade = ctx.createLinearGradient(0, artBottom - 70, 0, artBottom);
-  fade.addColorStop(0, 'rgba(5,7,15,0)');
-  fade.addColorStop(1, 'rgba(5,7,15,.95)');
-  ctx.fillStyle = fade; ctx.fillRect(0, artBottom - 70, DW, 70);
 
   /* --- ヘッダ: プロトコル名 + 効果アイコン + 値 --- */
   const head = ctx.createLinearGradient(0, 0, DW, 0);
@@ -221,7 +195,7 @@ function paintFace(ctx, def, art) {
   ctx.fillStyle = head;
   ctx.fillRect(0, 0, DW, HEAD_H);
 
-  const badge = 86;
+  const badge = 78;
   const bx = DW - badge - 14, by = (HEAD_H - badge) / 2;
   ctx.fillStyle = accent;
   roundRect(ctx, bx, by, badge, badge, 14); ctx.fill();
@@ -233,7 +207,7 @@ function paintFace(ctx, def, art) {
 
   /* 効果種別アイコン (覆われても見えるヘッダに置く) */
   const types = (def.effectTypes || []).slice(0, 3);
-  const iconSize = 42, iconGap = 8;
+  const iconSize = 38, iconGap = 8;
   let ix = bx - 12 - types.length * (iconSize + iconGap);
   const iconLeft = ix;
   for (const t of types) {
@@ -243,7 +217,7 @@ function paintFace(ctx, def, art) {
 
   /* プロトコル名 (バッジとアイコンを避けて縮める) */
   const nameMax = (types.length ? iconLeft : bx) - 30;
-  let namePx = 46;
+  let namePx = 42;
   do {
     ctx.font = '800 ' + namePx + 'px system-ui, sans-serif';
     if (ctx.measureText(def.proto).width <= nameMax) break;
@@ -257,47 +231,60 @@ function paintFace(ctx, def, art) {
   ctx.fillStyle = accent;
   ctx.fillRect(0, HEAD_H - 4, DW, 4);
 
-  /* --- 上段 (常在: 覆われても効く) --- */
-  if (topH) {
-    ctx.fillStyle = 'rgba(6,9,18,.94)';
-    ctx.fillRect(0, HEAD_H, DW, topH);
-    ctx.fillStyle = rgba(accent, 0.9);
-    ctx.fillRect(0, HEAD_H, 6, topH);
-    chip(ctx, TEXT_X, HEAD_H + 8, '▲', '上段・常在', rgba(accent, 0.95), null);
-    fitTextBlock(ctx, def.upper, TEXT_X, HEAD_H + 8 + 26 + 6, TEXT_W, topH - 26 - 20,
-      { start: 21, min: 14, color: '#dce6f5' });
-    ctx.fillStyle = 'rgba(255,255,255,.14)';
-    ctx.fillRect(0, HEAD_H + topH - 1, DW, 1);
+  /* --- 3つのコマンドボックス (実物どおり 上 / 中央 / 下 に固定) ---
+     上段はヘッダ直下 (覆われても見える REVEAL_PX 内)、中段はカード中央、
+     下段はカード下端。空のゾーンは描かず、アートがそのまま見える。 */
+  const BOX_X = 10, BOX_W = DW - 20;
+  const TXT_X = BOX_X + 20, TXT_W = BOX_W - 40;
+
+  function zonePanel(y, h, emphasis) {
+    ctx.fillStyle = 'rgba(5,8,16,.9)';
+    roundRect(ctx, BOX_X, y, BOX_W, h, 12); ctx.fill();
+    if (emphasis) {
+      ctx.fillStyle = rgba(accent, 0.12);
+      roundRect(ctx, BOX_X, y, BOX_W, h, 12); ctx.fill();
+    }
+    ctx.strokeStyle = emphasis ? rgba(accent, 0.55) : 'rgba(255,255,255,.12)';
+    ctx.lineWidth = 2;
+    roundRect(ctx, BOX_X, y, BOX_W, h, 12); ctx.stroke();
+    /* 左のアクセントバー */
+    ctx.fillStyle = emphasis ? accent : rgba(accent, 0.55);
+    roundRect(ctx, BOX_X + 5, y + 7, 5, h - 14, 3); ctx.fill();
   }
 
-  /* --- 中段 (即時: プレイ/反転/暴露で解決) — 最も読ませたい --- */
-  let zy = artBottom;
-  if (def.middle) {
-    ctx.fillStyle = '#0a0e1a';
-    ctx.fillRect(0, zy, DW, boxM);
-    ctx.fillStyle = rgba(accent, 0.10);
-    ctx.fillRect(0, zy, DW, boxM);
-    ctx.fillStyle = rgba(accent, 0.95);
-    ctx.fillRect(0, zy, 6, boxM);
-    chip(ctx, TEXT_X, zy + 8, '◆', '中段・即時', null, accent);
-    fitTextBlock(ctx, def.middle, TEXT_X, zy + 8 + 26 + 6, TEXT_W, boxM - 26 - 22,
-      { ...midOpts, color: '#f4f8fe' });
-    zy += boxM;
+  /* 上段 (常在: 覆われても効く) — ヘッダ直下、REVEAL_PX に必ず収める */
+  if (def.upper) {
+    const yT = HEAD_H + 6;
+    const hT = Math.min(REVEAL_PX - yT,
+      22 + 5 + measureTextBlock(ctx, def.upper, TXT_W, { start: 24, weight: '600' }) + 12);
+    zonePanel(yT, hT, false);
+    chip(ctx, TXT_X, yT + 6, '▲', '上段・常在', rgba(accent, 0.95), null);
+    fitTextBlock(ctx, def.upper, TXT_X, yT + 6 + 22 + 4, TXT_W, hT - 22 - 16,
+      { start: 24, min: 17, weight: '600', color: '#e6eef8' });
   }
 
-  /* --- 下段 (補助: 覆われていないときのみ) --- */
+  /* 下段 (補助: 覆われていないときのみ) — 下端に固定 */
+  let bottomTop = DH;
   if (def.lower) {
-    ctx.fillStyle = '#080b15';
-    ctx.fillRect(0, zy, DW, DH - zy);
-    ctx.fillStyle = 'rgba(255,255,255,.04)';
-    ctx.fillRect(0, zy, DW, DH - zy);
-    ctx.fillStyle = 'rgba(255,255,255,.22)';
-    ctx.fillRect(0, zy, 6, DH - zy);
-    ctx.fillStyle = 'rgba(255,255,255,.1)';
-    ctx.fillRect(0, zy, DW, 1);
-    chip(ctx, TEXT_X, zy + 8, '▼', '下段・補助', 'rgba(178,196,214,.95)', null);
-    fitTextBlock(ctx, def.lower, TEXT_X, zy + 8 + 26 + 6, TEXT_W, boxB - 26 - 20,
-      { ...botOpts, color: '#b7c8d8' });
+    const hB = Math.min(196, 22 + 5 + measureTextBlock(ctx, def.lower, TXT_W, { start: 24, weight: '600' }) + 12);
+    const yB = DH - 12 - hB;
+    bottomTop = yB;
+    zonePanel(yB, hB, false);
+    chip(ctx, TXT_X, yB + 6, '▼', '下段・補助', 'rgba(190,206,222,.95)', null);
+    fitTextBlock(ctx, def.lower, TXT_X, yB + 6 + 22 + 4, TXT_W, hB - 22 - 16,
+      { start: 24, min: 17, weight: '600', color: '#d3dfec' });
+  }
+
+  /* 中段 (即時: プレイ/反転/暴露で解決) — カード中央に固定。最も読ませたい */
+  if (def.middle) {
+    const hM = Math.min(240, 22 + 7 + measureTextBlock(ctx, def.middle, TXT_W, { start: 24, weight: '600' }) + 14);
+    let yM = Math.round(440 - hM / 2);                    // 中央アンカー
+    yM = Math.max(yM, REVEAL_PX + 10);                    // 上段と被らない
+    yM = Math.min(yM, bottomTop - 10 - hM);               // 下段と被らない
+    zonePanel(yM, hM, true);
+    chip(ctx, TXT_X, yM + 7, '◆', '中段・即時', null, accent);
+    fitTextBlock(ctx, def.middle, TXT_X, yM + 7 + 22 + 5, TXT_W, hM - 22 - 20,
+      { start: 24, min: 16, weight: '600', color: '#f4f8fe' });
   }
 
   ctx.restore();
@@ -392,7 +379,7 @@ export function backTex() {
   bg.addColorStop(1, 'rgba(8,11,21,.97)');
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, DW, bh);
-  const bsize = 86;
+  const bsize = 78;
   const bbx = DW - bsize - 14, bby = (bh - bsize) / 2;
   ctx.fillStyle = 'rgba(160,190,215,.92)';
   roundRect(ctx, bbx, bby, bsize, bsize, 14); ctx.fill();

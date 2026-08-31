@@ -6,8 +6,11 @@
 ## 起動
 
 ```bash
-python scripts/dev_server.py 8080
+python scripts/dev_server.py 8765
 ```
+
+ポートは **8765** を使う (オンライン対戦の Edge Function が CORS で
+`http://localhost:8765` を既定許可しているため。8080 だと弾かれる)。
 
 `http://localhost:8080/three-play.html` を開く。
 `file://` では ES モジュールと `data/*.json` の取得ができないため、必ず HTTP で開くこと。
@@ -236,9 +239,18 @@ main.js     roomStep / roomPoll(1.3s) / roomApplyView が Engine の代わりを
 - 新規に現れたカード (秘匿→公開) は持ち主の山札 / 相手手札の弧から湧く
 - 合成 publicState を `__3d.testRoomView(rm)` で流し込んで描画経路を検証できる
 
-**注意**: Supabase プロジェクト (`secure-room-config.js` の url) が休止/削除されて
+**注意1**: Supabase プロジェクト (`secure-room-config.js` の url) が休止/削除されて
 いると DNS ごと消えて「Failed to fetch」になる。docs/secure-room-setup.md の手順で
 プロジェクトを復旧し、url / anonKey を差し替えること。
+
+**注意2**: Edge Function は `supabase/functions/_shared/cards.json` を同梱ビルドする。
+**デプロイ版が古いと Main 2 / Aux 2 のプロトコルが「不正」扱いで弾かれる**
+(2026-09-01 時点のデプロイ版がこの状態)。更新は:
+
+```bash
+npx supabase login
+npx supabase functions deploy secure-room --project-ref <project-ref>
+```
 
 ## デバッグ
 
