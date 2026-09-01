@@ -402,8 +402,11 @@ function bindInput() {
       el.style.cursor = uid ? 'pointer' : 'default';
     }
     /* 盤面のカードは向きが読みにくいので、拡大プレビューで補う */
-    showPreview(uid);
+    showPreview(uid, ev.clientX, ev.clientY);
   });
+
+  /* カーソルが盤面から出たらプレビューを消す */
+  el.addEventListener('pointerleave', () => showPreview(null));
 
   el.addEventListener('pointerdown', async (ev) => {
     if (demoMode || busy || !cur || shown().winner !== null) return;
@@ -502,25 +505,40 @@ function bindInput() {
   if (faceBtn) faceBtn.onclick = () => { backFacing = !backFacing; updatePads(); syncFacingHint(); };
 }
 
-/* ---------- 拡大プレビュー ---------- */
+/* ---------- 拡大プレビュー (カーソル追従) ---------- */
 let previewUid = null;
+const PREVIEW_W = 280;
+const PREVIEW_H = Math.round(PREVIEW_W * 716 / 512);
 
-function showPreview(uid) {
+function positionPreview(box, px, py) {
+  let x = px + 26;
+  if (x + PREVIEW_W > window.innerWidth - 10) x = px - 26 - PREVIEW_W;
+  const y = Math.max(10, Math.min(window.innerHeight - PREVIEW_H - 10, py - PREVIEW_H / 2));
+  box.style.left = x + 'px';
+  box.style.top = y + 'px';
+}
+
+function showPreview(uid, px, py) {
   const box = document.getElementById('preview');
   if (!box) return;
   const st = shown();
   const card = uid && st && st.cards[uid];
-  const visible = card && (card.faceUp || ((card.knownTo || 0) & (1 << ME)));
+  const visible = card && card.def && (card.faceUp || ((card.knownTo || 0) & (1 << ME)));
   if (!visible) {
     if (previewUid !== null) { previewUid = null; box.classList.remove('show'); }
     return;
   }
-  if (uid === previewUid) return;
+  /* 同じカードならカーソルに追従させるだけ */
+  if (uid === previewUid) {
+    if (px !== undefined) positionPreview(box, px, py);
+    return;
+  }
   previewUid = uid;
   const def = defIndex[card.def];
   const url = def && faceImageURL(def);
   if (!url) { box.classList.remove('show'); return; }
   box.innerHTML = '<img alt="" src="' + url + '">';
+  if (px !== undefined) positionPreview(box, px, py);
   box.classList.add('show');
 }
 
