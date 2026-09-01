@@ -2504,6 +2504,37 @@ function aiChoiceScore(st, req, picks, me) {
   } finally { AI_CHOICE_DEPTH--; }
 }
 
+/* 複数枚選択 (max>1) の組合せ探索。
+   全組合せは指数的なので、静的スコア順 (ordered) を軸に
+   「先頭k枚 / 末尾k枚 / 境界の1枚入替え」だけを候補にし、
+   apply→評価で比較する。候補は最大8通り。 */
+function aiBestCombo(st, req, ordered, min, max, fallback) {
+  const combos = [], seen = new Set();
+  const add = (arr) => {
+    if (arr.length < min || arr.length > max) return;
+    const key = arr.slice().sort().join('|');
+    if (!seen.has(key)) { seen.add(key); combos.push(arr); }
+  };
+  if (fallback) add(fallback.slice());
+  if (min === 0) add([]);
+  for (let k = Math.max(1, min); k <= Math.min(max, ordered.length); k++) {
+    add(ordered.slice(0, k));
+    add(ordered.slice(ordered.length - k));
+  }
+  const base = Math.max(1, min);
+  for (let alt = base; alt < Math.min(ordered.length, base + 2); alt++) {
+    add(ordered.slice(0, base - 1).concat([ordered[alt]]));
+  }
+  if (combos.length < 2) return null;
+  let best = null, bestScore = -Infinity;
+  for (const picks of combos.slice(0, 8)) {
+    if (aiSearchExpired()) break;
+    const score = aiChoiceScore(st, req, picks, req.player);
+    if (score > bestScore) { bestScore = score; best = picks; }
+  }
+  return bestScore > -1e8 ? best : null;
+}
+
 function aiPlayFreePicks(st, req, me) {
   if (aiIsDshSpecialist(st, me) && aiWeightsFor(st, me).speedPairStrategy && req.context === 'SPEED_1'
       && !aiHasDefOnField(st, me, 'SPEED_1') && !aiHasDefOnField(st, me, 'SPEED_4')) {
@@ -2539,8 +2570,12 @@ function aiPlayFreePicks(st, req, me) {
 function aiStrategicCardPicks(st, req, me, ranked, fallback) {
   const max = req.max !== undefined ? req.max : 1;
   const min = req.min !== undefined ? req.min : 1;
-  if (AI_CHOICE_DEPTH > 0 || max !== 1 || req.candidates.length < 2
+  if (AI_CHOICE_DEPTH > 0 || req.candidates.length < 2
       || /(?:^|-)order$/.test(req.prompt || '')) return fallback;
+  if (max !== 1) {
+    const deep = aiBestCombo(st, req, ranked.map(x => x.uid), min, max, fallback);
+    return deep || fallback;
+  }
 
   let pool = ranked;
   if (pool.length > 8) pool = pool.slice(0, 5).concat(pool.slice(-3));
@@ -2660,8 +2695,13 @@ function smartPicks(st, req) {
         const discard = aiChoiceScore(st, req, [scored[0].uid], me);
         return discard > skip ? [scored[0].uid] : [];
       }
-      if (min === 0 && (!scored.length || scored[0].s > 8)) return [];
-      return scored.slice(0, Math.max(min, 1)).map(x => x.uid);
+      const fallbackHand = min === 0 && (!scored.length || scored[0].s > 8)
+        ? [] : scored.slice(0, Math.max(min, 1)).map(x => x.uid);
+      if (AI_CHOICE_DEPTH === 0 && max > 1 && scored.length > 1) {
+        const deep = aiBestCombo(st, req, scored.map(x => x.uid), min, max, fallbackHand);
+        if (deep) return deep;
+      }
+      return fallbackHand;
     }
     case 'pickLine': {
       let bestLine = req.lines[0], bestSc = -Infinity;
