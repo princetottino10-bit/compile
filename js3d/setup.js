@@ -5,7 +5,9 @@
 
 import { emblemDataURL } from './emblems.js';
 
-const AI_LABELS = ['かんたん', 'ふつう', 'つよい'];
+const AI_LABELS = ['かんたん', 'ふつう', 'つよい', '最強'];
+/* 最強はこの固定編成 + 特化戦略で戦う (auto-play と同じ) */
+export const STRONGEST_AI = ['DARKNESS', 'SPEED', 'HATE'];
 
 export function runSetup(protocols) {
   const root = document.getElementById('setup');
@@ -27,6 +29,19 @@ export function runSetup(protocols) {
     b.onclick = () => {
       level = i;
       levelWrap.querySelectorAll('.lvl').forEach((el, j) => el.classList.toggle('on', j === i));
+      /* 最強はAIが DARKNESS/SPEED/HATE を使うため、プレイヤーは選べない */
+      if (level === 3) {
+        for (const n of STRONGEST_AI) {
+          const idx = picked.indexOf(n);
+          if (idx >= 0) picked.splice(idx, 1);
+        }
+      }
+      grid.querySelectorAll('.proto').forEach((el) => {
+        const locked = level === 3 && STRONGEST_AI.includes(el.dataset.name);
+        el.classList.toggle('locked', locked);
+        el.classList.toggle('on', picked.includes(el.dataset.name));
+      });
+      sync();
     };
     levelWrap.appendChild(b);
   });
@@ -46,6 +61,7 @@ export function runSetup(protocols) {
       '<span class="proto-name">' + p.name + '</span>' +
       '<span class="proto-set">' + (p.set || '') + '</span>';
     b.onclick = () => {
+      if (b.classList.contains('locked')) return;
       const i = picked.indexOf(p.name);
       if (i >= 0) picked.splice(i, 1);
       else if (picked.length < 3) picked.push(p.name);
@@ -75,11 +91,15 @@ export function runSetup(protocols) {
     };
     startBtn.onclick = () => {
       if (picked.length !== 3) return;
-      const rest = protocols.map(p => p.name).filter(n => !picked.includes(n));
-      /* 相手は残りからランダムに3つ */
-      const ai = [];
-      while (ai.length < 3 && rest.length) {
-        ai.push(rest.splice(Math.floor(Math.random() * rest.length), 1)[0]);
+      let ai;
+      if (level === 3) {
+        ai = STRONGEST_AI.slice();
+      } else {
+        const rest = protocols.map(p => p.name).filter(n => !picked.includes(n));
+        ai = [];
+        while (ai.length < 3 && rest.length) {
+          ai.push(rest.splice(Math.floor(Math.random() * rest.length), 1)[0]);
+        }
       }
       root.classList.remove('show');
       setTimeout(() => { root.style.display = 'none'; }, 500);

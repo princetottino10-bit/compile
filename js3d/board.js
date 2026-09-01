@@ -240,46 +240,77 @@ export function createBoard(stage, defIndex, me, hooks) {
     /* 演出中は他カードの強調を落として、動いている1枚に視線を集める */
     for (const [, other] of cards) if (other !== card) clearHighlight(other);
 
-    /* 1) 構え: 手前にせり出して静止 */
-    const holdPos = byMe
-      ? new THREE.Vector3(card.position.x * 0.34, 2.45, 2.45)
-      : new THREE.Vector3(card.position.x * 0.34, 2.55, -1.95);
-    const from = card.position.clone();
-    const r0 = { x: card.rotation.x, y: card.rotation.y, z: card.rotation.z };
-    const holdRotX = byMe ? -0.34 : -0.34 + Math.PI;
-
-    setHighlight(card, accent, 0.14, 0.5);
-    sfx('lift');
-
-    await TW.tween(TIMING.playLift, (t) => {
-      card.position.lerpVectors(from, holdPos, TW.Ease.outCubic(t));
-      card.rotation.x = TW.lerpAngle(r0.x, holdRotX, t);
-      card.rotation.y = TW.lerpAngle(r0.y, byMe ? 0 : Math.PI, t);
-      card.rotation.z = TW.lerpAngle(r0.z, 0, t);
-      card.scale.setScalar(TW.lerp(card.scale.x, 1.34, t));
-    }, TW.Ease.outCubic);
-
-    /* 2) カメラを着地点へ寄せる (移動と並行) */
     const target = new THREE.Vector3(...slot.pos);
-    stage.focusOn(target, TIMING.playArc * 0.82, 0.78);
-
-    /* 3) 弧を描いて着地。裏向きプレイなら空中で裏返す */
-    const spin = byMe ? Math.PI * 2 : -Math.PI * 2;
     const endRotX = faceUp ? 0 : Math.PI;
-    const p0 = card.position.clone();
-    const tmp = new THREE.Vector3();
-    await TW.tween(TIMING.playArc, (t) => {
-      TW.arcPoint(tmp, p0, target, t, 1.25);
-      card.position.copy(tmp);
-      /* 落下の最後だけ一気に加速させる */
-      card.position.y = TW.lerp(tmp.y, target.y, TW.Ease.inCubic(t) * 0.55);
-      card.rotation.x = TW.lerpAngle(holdRotX, endRotX, TW.Ease.inOutCubic(t));
-      card.rotation.y = slot.rot[1] + spin * (1 - TW.Ease.outQuart(t)) * 0.5;
-      card.rotation.z = TW.lerp(card.rotation.z, slot.rot[2], t);
-      card.scale.setScalar(TW.lerp(1.34, 1, TW.Ease.outQuad(t)));
-    }, TW.Ease.inQuad);
+    setHighlight(card, accent, 0.14, 0.5);
 
-    /* 4) 着地の瞬間 */
+    /* ドラッグでパッド上まで運ばれたカードは、その場から真下へ叩きつける。
+       画面中央の「構え」へ引き戻すと不自然なため、経路を分ける */
+    const dx = card.position.x - target.x;
+    const dz = card.position.z - target.z;
+    const nearDrop = Math.hypot(dx, dz) < 1.7 && card.position.y > 0.45;
+
+    if (nearDrop) {
+      stage.focusOn(target, 260, 0.6);
+      const from = card.position.clone();
+      const r0 = { x: card.rotation.x, y: card.rotation.y, z: card.rotation.z };
+      const apex = new THREE.Vector3(target.x, Math.max(from.y, 1.35), target.z);
+      /* ひと呼吸ためて真上へ */
+      await TW.tween(150, (t) => {
+        card.position.lerpVectors(from, apex, t);
+        card.rotation.x = TW.lerpAngle(r0.x, endRotX * t + 0.3 * (1 - t), t);
+        card.rotation.y = TW.lerpAngle(r0.y, slot.rot[1], t);
+        card.rotation.z = TW.lerpAngle(r0.z, slot.rot[2], t);
+        card.scale.setScalar(TW.lerp(card.scale.x, 1.18, t));
+      }, TW.Ease.outQuad);
+      /* 叩きつけ */
+      await TW.tween(130, (t) => {
+        card.position.y = TW.lerp(apex.y, target.y, t);
+        card.rotation.x = TW.lerpAngle(card.rotation.x, endRotX, t);
+        card.scale.setScalar(TW.lerp(1.18, 1, t));
+      }, TW.Ease.inQuad);
+    } else {
+      /* クリック/AIプレイ: 構え → 弧 → 着地 */
+      const holdPos = byMe
+        ? new THREE.Vector3(card.position.x * 0.34, 2.45, 2.45)
+        : new THREE.Vector3(card.position.x * 0.34, 2.55, -1.95);
+      const from = card.position.clone();
+      const r0 = { x: card.rotation.x, y: card.rotation.y, z: card.rotation.z };
+      const holdRotX = byMe ? -0.34 : -0.34 + Math.PI;
+      sfx('lift');
+
+      await TW.tween(TIMING.playLift, (t) => {
+        card.position.lerpVectors(from, holdPos, TW.Ease.outCubic(t));
+        card.rotation.x = TW.lerpAngle(r0.x, holdRotX, t);
+        card.rotation.y = TW.lerpAngle(r0.y, byMe ? 0 : Math.PI, t);
+        card.rotation.z = TW.lerpAngle(r0.z, 0, t);
+        card.scale.setScalar(TW.lerp(card.scale.x, 1.34, t));
+      }, TW.Ease.outCubic);
+
+      /* カメラを着地点へ寄せる (移動と並行) */
+      stage.focusOn(target, TIMING.playArc * 0.82, 0.78);
+
+      /* 弧を描いて落ちる。放物線の頂点を前半に置き、後半は素直に落下させる
+         (以前は落下カーブに二重補間が入っていて、フワッと落ちて最後に
+         カクッと吸い付く違和感があった)。裏向きプレイは空中で裏返る */
+      const spinDir = byMe ? 1 : -1;
+      const p0 = card.position.clone();
+      await TW.tween(TIMING.playArc, (raw) => {
+        const th = TW.Ease.inOutQuad(raw);                  // 水平は緩→急→緩
+        card.position.x = TW.lerp(p0.x, target.x, th);
+        card.position.z = TW.lerp(p0.z, target.z, th);
+        /* 垂直: 出発高度から頂点(+0.55)を経て、sin一発で滑らかに接地。
+           sin は t=1 で速度が残るため「落ち切って当たる」感じが出る */
+        const peak = Math.sin(Math.PI * Math.min(1, raw * 1.12)) * 0.55;
+        card.position.y = TW.lerp(p0.y, target.y, TW.Ease.inQuad(raw)) + peak;
+        card.rotation.x = TW.lerpAngle(holdRotX, endRotX, TW.Ease.inOutCubic(raw));
+        card.rotation.y = slot.rot[1] + spinDir * Math.PI * (1 - TW.Ease.outCubic(raw));
+        card.rotation.z = TW.lerp(card.rotation.z, slot.rot[2], raw);
+        card.scale.setScalar(TW.lerp(1.34, 1, TW.Ease.outQuad(raw)));
+      }, TW.Ease.linear);
+    }
+
+    /* 着地の瞬間 */
     card.position.set(...slot.pos);
     card.rotation.set(endRotX, slot.rot[1], slot.rot[2]);
     card.scale.setScalar(1);
@@ -289,12 +320,15 @@ export function createBoard(stage, defIndex, me, hooks) {
     stage.shake(0.085, 300);
     setHighlight(card, accent, 0.42, 0.95);
 
-    /* 沈み込み + 発光の減衰 */
+    /* 着地のつぶれ + 沈み込み + 発光の減衰 */
     const baseY = slot.pos[1];
     await TW.tween(TIMING.playSettle + 240, (t) => {
-      card.position.y = baseY + Math.sin(Math.PI * Math.min(1, t * 1.6)) * -0.028;
+      const k = Math.sin(Math.PI * Math.min(1, t * 1.6)) * (1 - t);
+      card.position.y = baseY - k * 0.028;
+      card.scale.set(1 + k * 0.07, 1, 1 - k * 0.05);       // 接地面方向につぶす
       setHighlight(card, accent, 0.42 * (1 - t), 0.95 * (1 - t));
     }, TW.Ease.outCubic);
+    card.scale.setScalar(1);
     clearHighlight(card);
     card.userData.glowAlways = false;
     card.position.y = baseY;

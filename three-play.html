@@ -426,6 +426,7 @@
   .proto.on .proto-art{opacity:.85;}
   .proto.on .proto-name{color:#fff;}
   .proto.dim{opacity:.42;}
+  .proto.locked{opacity:.3;cursor:not-allowed;filter:grayscale(.7);}
   #setupFoot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
     padding:14px 26px 20px;border-top:1px solid rgba(255,255,255,.07);background:rgba(4,6,13,.7);}
   #setupLevels{display:flex;gap:6px;}
@@ -461,7 +462,6 @@
     <div id="turnBadge" class="mine">起動中</div>
   </div>
 
-  <div id="lines"></div>
   <div id="prompt" class="hidden"></div>
 
   <div id="oppCounts" class="counts">
@@ -479,8 +479,8 @@
   <div id="log"></div>
 
   <div id="dock">
-    <button id="btnFace" class="btn" type="button">表向きでプレイ</button>
-    <button id="btnRefresh" class="btn" type="button">手札を補充</button>
+    <button id="btnFace" class="btn" type="button">表向き</button>
+    <button id="btnRefresh" class="btn" type="button">リフレッシュ</button>
     <button id="btnMute" class="btn" type="button" title="効果音">🔊</button>
     <button id="btnLeave" class="btn" type="button" style="display:none">退出</button>
   </div>

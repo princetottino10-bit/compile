@@ -134,7 +134,7 @@ async function boot() {
       if (!chosen.online) {
         p0 = chosen.me;
         p1 = p1 || chosen.ai;
-        Engine.setAiLevel(chosen.level);
+        applyAiDifficulty(chosen.level);
         break;
       }
       /* オンライン対戦へ */
@@ -247,6 +247,20 @@ function glitchArtUrl(protoName) {
   return protoIndex[protoName] && ART_SETS.has(protoIndex[protoName].set)
     ? 'art/' + cap + '_Glitched.webp'
     : null;
+}
+
+/* 難易度 → エンジン設定。
+   auto-play と同じく上位2段は探索AI。最強は思考時間増 + DSH特化戦略 */
+function applyAiDifficulty(level) {
+  if (level <= 0) {
+    Engine.setAiLevel(1);                        // かんたん: ヒューリスティックのみ
+  } else if (level === 1) {
+    Engine.setAiLevel(2);                        // ふつう: 探索 590ms
+  } else {
+    Engine.setAiLevel(2);
+    Engine.setAiThinkBudget(1200);               // つよい/最強: 思考時間2倍
+  }
+  if (Engine.setAiSpecialist) Engine.setAiSpecialist(level >= 3, 1);
 }
 
 /* ---------- 着地パッド (ラインの当たり判定 + 視覚) ---------- */
@@ -536,7 +550,7 @@ function syncFacingHint() {
   const b = document.getElementById('btnFace');
   if (b) {
     b.classList.toggle('on', backFacing);
-    b.textContent = backFacing ? '裏向きでプレイ' : '表向きでプレイ';
+    b.textContent = backFacing ? '裏向き' : '表向き';
   }
 }
 
@@ -905,7 +919,7 @@ function refreshHud() {
   if (refreshBtn) {
     const onlyRefresh = acts.length > 0 && acts.every(a => a.type === 'refresh');
     refreshBtn.classList.toggle('urge', onlyRefresh);
-    if (onlyRefresh) UI.setPrompt('プレイできるカードがありません。手札を補充してください', 'ask');
+    if (onlyRefresh) UI.setPrompt('プレイできるカードがありません。リフレッシュしてください', 'ask');
   }
   updatePads();
 }
