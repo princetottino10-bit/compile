@@ -404,8 +404,8 @@ function bindInput() {
       if (hoverUid && hoverUid !== selectedUid) raiseHandCard(hoverUid);
       el.style.cursor = uid ? 'pointer' : 'default';
     }
-    /* 盤面のカードは向きが読みにくいので、拡大プレビューで補う */
-    showPreview(uid, ev.clientX, ev.clientY);
+    /* 盤面のカードは向きが読みにくいので、余白に拡大プレビュー */
+    showPreview(uid);
   });
 
   /* カーソルが盤面から出たらプレビューを消す */
@@ -510,20 +510,10 @@ function bindInput() {
   if (faceBtn) faceBtn.onclick = () => { backFacing = !backFacing; updatePads(); syncFacingHint(); };
 }
 
-/* ---------- 拡大プレビュー (カーソル追従) ---------- */
+/* ---------- 拡大プレビュー (余白に固定表示) ---------- */
 let previewUid = null;
-const PREVIEW_W = 280;
-const PREVIEW_H = Math.round(PREVIEW_W * 716 / 512);
 
-function positionPreview(box, px, py) {
-  let x = px + 26;
-  if (x + PREVIEW_W > window.innerWidth - 10) x = px - 26 - PREVIEW_W;
-  const y = Math.max(10, Math.min(window.innerHeight - PREVIEW_H - 10, py - PREVIEW_H / 2));
-  box.style.left = x + 'px';
-  box.style.top = y + 'px';
-}
-
-function showPreview(uid, px, py) {
+function showPreview(uid) {
   const box = document.getElementById('preview');
   if (!box) return;
   const st = shown();
@@ -533,17 +523,12 @@ function showPreview(uid, px, py) {
     if (previewUid !== null) { previewUid = null; box.classList.remove('show'); }
     return;
   }
-  /* 同じカードならカーソルに追従させるだけ */
-  if (uid === previewUid) {
-    if (px !== undefined) positionPreview(box, px, py);
-    return;
-  }
+  if (uid === previewUid) return;
   previewUid = uid;
   const def = defIndex[card.def];
   const url = def && faceImageURL(def);
   if (!url) { box.classList.remove('show'); return; }
   box.innerHTML = '<img alt="" src="' + url + '">';
-  if (px !== undefined) positionPreview(box, px, py);
   box.classList.add('show');
 }
 
