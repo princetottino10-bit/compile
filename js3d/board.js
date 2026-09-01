@@ -22,7 +22,15 @@ const UNKNOWN_DEF = {
 export function locOf(st, uid) {
   const c = st.cards[uid];
   if (!c) return null;
-  if (c.zone === 'field' || c.zone === 'committed') {
+  if (c.zone === 'committed') {
+    /* 移動中: 行き先ラインが決まっていれば上空にホバー表示する */
+    const dest = c.commitDest;
+    if (typeof dest === 'string' && dest.startsWith('line')) {
+      return { zone: 'transit', line: +dest.slice(4), side: c.owner };
+    }
+    return { zone: 'limbo' };
+  }
+  if (c.zone === 'field') {
     for (let line = 0; line < 3; line++) {
       for (let side = 0; side < 2; side++) {
         const idx = st.lines[line][side].indexOf(uid);
@@ -58,6 +66,7 @@ export function visualFingerprint(st) {
   const up = [];
   for (const uid of Object.keys(st.cards)) if (st.cards[uid].faceUp) up.push(uid);
   parts.push(up.sort().join(','));
+  parts.push((st.commitStack || []).join(','));
   return parts.join('|');
 }
 
@@ -151,6 +160,7 @@ export function createBoard(stage, defIndex, me, hooks) {
     const l = locOf(st, uid);
     if (!l) return null;
     if (l.zone === 'field') return LAYOUT.stackSlot(l.line, l.side, l.idx, me);
+    if (l.zone === 'transit') return LAYOUT.transitSlot(l.line, l.side, me);
     if (l.zone === 'hand') {
       const n = st.players[l.side].hand.length;
       return l.side === me ? LAYOUT.handSlot(l.idx, n) : LAYOUT.oppHandSlot(l.idx, n);
@@ -439,7 +449,8 @@ export function createBoard(stage, defIndex, me, hooks) {
     for (const { uid, a, b } of jobs) {
       if (a && a.zone === 'deck' && b.zone === 'hand') kinds.add('draw');
       else if (b.zone === 'trash') kinds.add('trash');
-      else if (a && a.zone === 'field' && b.zone === 'field' && a.line !== undefined && b.line !== undefined && (a.line !== b.line || a.side !== b.side)) kinds.add('shift');
+      else if (a && (a.zone === 'field' || a.zone === 'transit') && (b.zone === 'field' || b.zone === 'transit')
+        && (a.line !== b.line || a.side !== b.side || a.zone !== b.zone)) kinds.add('shift');
       else if (prev.cards[uid] && next.cards[uid] && prev.cards[uid].faceUp !== next.cards[uid].faceUp) kinds.add('flip');
     }
     let sDelay = 0;
@@ -476,10 +487,11 @@ export function createBoard(stage, defIndex, me, hooks) {
         dur = TIMING.toTrash; arc = 0.9; ease = TW.Ease.inQuad;
         /* 盤面からトラッシュ=削除。赤い飛散を出す */
         if (a && a.zone === 'field') FX.fxDeleteBurst(scene, card.position.clone(), 0xff4d5e);
-      } else if (a && a.zone === 'field' && l.zone === 'field') {
-        dur = TIMING.shift; arc = 0.55;
+      } else if (a && (a.zone === 'field' || a.zone === 'transit') && (l.zone === 'field' || l.zone === 'transit')) {
+        dur = TIMING.shift; arc = l.zone === 'transit' ? 0.3 : 0.55;
         FX.fxShiftStreak(scene, card.position.clone(), toPos, accent);
-        FX.fxMoveGhost(scene, card.position.clone(), card.rotation.y, accent);
+        /* 残像は出発時 (盤面から浮いた瞬間) だけ */
+        if (a.zone === 'field') FX.fxMoveGhost(scene, card.position.clone(), card.rotation.y, accent);
       } else if (!a || a.zone === l.zone) { dur = TIMING.handSort; arc = 0.06; }
 
       /* 反転したカードは着地後に閃光 */

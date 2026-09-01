@@ -43,6 +43,19 @@ export function stackSlot(line, side, idx, me) {
   };
 }
 
+/* 移動中 (committed): 移動先ラインの上空でホバーさせる。
+   ルール上「シフト解決まで宙に浮いて対象に取れない」状態を可視化する */
+export function transitSlot(line, side, me) {
+  const near = side === me;
+  const dir = near ? 1 : -1;
+  const baseZ = near ? BOARD.stackZ[1] : BOARD.stackZ[0];
+  return {
+    pos: [BOARD.laneX[line], 1.05, baseZ + dir * 0.42],
+    rot: [dir * -0.16, near ? 0 : Math.PI, 0.05],
+    scale: 1.06
+  };
+}
+
 /* 山札 / 捨札 */
 export function pilePos(kind, side, me, depth) {
   const near = side === me;
