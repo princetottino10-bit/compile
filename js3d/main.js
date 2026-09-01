@@ -13,7 +13,7 @@ import { runRoomLobby } from './roomui.js';
 import { faceImageURL, ART_SETS } from './cardtex.js';
 import * as FX from './fx.js';
 import { buildArena } from './arena.js';
-import { initAudio, sfx, setMuted, isMuted } from './audio.js';
+import { initAudio, sfx, setMuted, isMuted, startBgm, stopBgm, setBgmTension, bgmActive } from './audio.js';
 import { emblemDataURL } from './emblems.js';
 import * as LAYOUT from './layout.js';
 import { BOARD, CARD, COLOR, TIMING } from './theme.js';
@@ -320,8 +320,11 @@ function canPlaceHere(st, uid, line, side) {
 /* ---------- 入力 ---------- */
 function bindInput() {
   const el = stage.renderer.domElement;
-  /* 最初の操作で音声を解錠 (ブラウザの自動再生制限) */
-  window.addEventListener('pointerdown', () => initAudio(), { once: false });
+  /* 最初の操作で音声を解錠しBGMを開始 (ブラウザの自動再生制限) */
+  window.addEventListener('pointerdown', () => {
+    initAudio();
+    if (!isMuted() && !bgmActive()) startBgm();
+  }, { once: false });
   const ray = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
 
@@ -500,6 +503,8 @@ function bindInput() {
     setMuted(!isMuted());
     muteBtn.textContent = isMuted() ? '🔇' : '🔊';
     muteBtn.classList.toggle('on', isMuted());
+    if (isMuted()) stopBgm();
+    else startBgm();
   };
   const faceBtn = document.getElementById('btnFace');
   if (faceBtn) faceBtn.onclick = () => { backFacing = !backFacing; updatePads(); syncFacingHint(); };
@@ -697,6 +702,8 @@ let resultShown = false;
 /* 決着の合図: 3ライン同時に光柱を立てて盤面を白く飛ばす */
 async function finaleFx(win) {
   const accent = win ? COLOR.mint : COLOR.pink;
+  /* 盤面中央を大きく回り込みながら締める */
+  stage.cinematicHold(new THREE.Vector3(0, 0, 0), 3400, { radius: 5.2, height: 2.6, sweep: 1.5 });
   for (let i = 0; i < 3; i++) {
     FX.compilePillar(stage.scene, BOARD.laneX[i], accent, 1800);
   }
@@ -874,6 +881,7 @@ function refreshHud() {
     st.players[ME].protocols.filter(p => p.compiled).length,
     st.players[AI].protocols.filter(p => p.compiled).length
   );
+  updateBgmTension(st);
   panels.update([0, 1, 2].map((line) => {
     const cell = (side) => {
       const proto = st.players[side].protocols[line];
@@ -922,6 +930,19 @@ function cardName(idOrUid) {
   const d = defIndex[idOrUid] || (st.cards[idOrUid] && defIndex[st.cards[idOrUid].def]);
   /* 表記は cardlist.html / auto-play.html と揃える: プロトコル名 + 値 */
   return d ? d.proto + ' ' + d.value : null;
+}
+
+/* 盤面の切迫度から BGM の緊張度を決める:
+   最大ライン合計が 10 に近いほど、コンパイル済みが多いほど高い */
+function updateBgmTension(st) {
+  if (!bgmActive()) return;
+  let maxLine = 0, compiled = 0;
+  for (let side = 0; side < 2; side++) {
+    compiled += st.players[side].protocols.filter(p => p.compiled).length;
+    for (let line = 0; line < 3; line++) maxLine = Math.max(maxLine, totalOf(st, line, side));
+  }
+  const t = Math.min(1, (maxLine / 10) * 0.6 + (compiled / 6) * 0.4);
+  setBgmTension(t);
 }
 
 function choiceCtx() {

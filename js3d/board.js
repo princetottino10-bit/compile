@@ -61,6 +61,11 @@ export function visualFingerprint(st) {
   return parts.join('|');
 }
 
+/* カードが反転したか (前後で faceUp が変わったか) */
+function faceChangedFor(prev, next, uid) {
+  return !!(prev.cards[uid] && next.cards[uid] && prev.cards[uid].faceUp !== next.cards[uid].faceUp);
+}
+
 /* 位置キーが同じなら「動いていない」 */
 function locKey(l) {
   if (!l) return 'none';
@@ -318,9 +323,9 @@ export function createBoard(stage, defIndex, me, hooks) {
     const accent = (proto && proto.color) || (ev.side === me ? COLOR.self : COLOR.opp);
     const center = new THREE.Vector3(laneX, 0, 0);
 
-    /* 1) チャージ: ラインが白熱し、カメラが寄る */
+    /* 1) チャージ: ラインが白熱し、カメラがレーンへ低く回り込む */
     sfx('charge');
-    stage.focusOn(center, 620, 0.72);
+    stage.cinematicHold(center, 2100, { radius: 3.9, height: 2.0, sweep: 0.85 });
     await FX.laneCharge(scene, laneX, accent, 620);
 
     /* 2) 解放: 光柱 + 衝撃波 + 画面フラッシュ */
@@ -428,10 +433,24 @@ export function createBoard(stage, defIndex, me, hooks) {
       const faceX = l.zone === 'hand' ? null : facingX(next, uid);
 
       let dur = TIMING.shift, ease = TW.Ease.inOutCubic, arc = 0.2;
-      if (a && a.zone === 'deck' && l.zone === 'hand') { dur = TIMING.drawFly; arc = 0.75; ease = TW.Ease.outCubic; }
-      else if (l.zone === 'trash') { dur = TIMING.toTrash; arc = 0.9; ease = TW.Ease.inQuad; }
-      else if (a && a.zone === 'field' && l.zone === 'field') { dur = TIMING.shift; arc = 0.55; }
-      else if (!a || a.zone === l.zone) { dur = TIMING.handSort; arc = 0.06; }
+      const accent = new THREE.Color((defIndex[next.cards[uid].def] || UNKNOWN_DEF).color);
+      const toPos = new THREE.Vector3(...slot.pos);
+      if (a && a.zone === 'deck' && l.zone === 'hand') {
+        dur = TIMING.drawFly; arc = 0.75; ease = TW.Ease.outCubic;
+        FX.fxDrawTrail(scene, card.position.clone(), toPos, COLOR.cyan);
+      } else if (l.zone === 'trash') {
+        dur = TIMING.toTrash; arc = 0.9; ease = TW.Ease.inQuad;
+        /* 盤面からトラッシュ=削除。赤い飛散を出す */
+        if (a && a.zone === 'field') FX.fxDeleteBurst(scene, card.position.clone(), 0xff4d5e);
+      } else if (a && a.zone === 'field' && l.zone === 'field') {
+        dur = TIMING.shift; arc = 0.55;
+        FX.fxShiftStreak(scene, card.position.clone(), toPos, accent);
+      } else if (!a || a.zone === l.zone) { dur = TIMING.handSort; arc = 0.06; }
+
+      /* 反転したカードは着地後に閃光 */
+      if (faceChangedFor(prev, next, uid)) {
+        setTimeout(() => FX.fxFlipFlash(scene, toPos, accent), ms(dur) * 0.5);
+      }
 
       return moveTo(card, slot, faceX, ms(dur), ease, arc);
     });

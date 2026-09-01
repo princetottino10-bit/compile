@@ -441,3 +441,106 @@ export function compileBurst(scene, laneX, colorHex, protoName, ms) {
   const family = BURST_FAMILY[protoName] || 'rings';
   return BURSTS[family](scene, laneX, new THREE.Color(colorHex), ms || 1500);
 }
+
+/* -------------------------------------------------------------------------
+ * 効果種別の軽量エフェクト
+ *   カードの動き (draw/flip/shift/trash/delete) に色と光を添える。
+ *   大物の compileBurst と違い、盤面のテンポを崩さない短い演出。
+ * ------------------------------------------------------------------------- */
+
+/* draw: カードが山札から出るときの、上へ伸びる光の尾 */
+export function fxDrawTrail(scene, from, to, colorHex) {
+  const geo = new THREE.BufferGeometry();
+  const N = 16;
+  const pos = new Float32Array(N * 3);
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const mat = new THREE.LineBasicMaterial({
+    color: colorHex, transparent: true, opacity: 0.7,
+    blending: THREE.AdditiveBlending, depthWrite: false
+  });
+  const line = new THREE.Line(geo, mat);
+  line.frustumCulled = false;
+  scene.add(line);
+  const a = new THREE.Vector3().copy(from);
+  const b = new THREE.Vector3().copy(to);
+  return TW.tween(360, (t) => {
+    for (let i = 0; i < N; i++) {
+      const k = Math.max(0, Math.min(1, t * 1.4 - (i / N) * 0.4));
+      const p = new THREE.Vector3().lerpVectors(a, b, k);
+      p.y += Math.sin(Math.PI * k) * 0.5;
+      pos[i * 3] = p.x; pos[i * 3 + 1] = p.y; pos[i * 3 + 2] = p.z;
+    }
+    geo.attributes.position.needsUpdate = true;
+    mat.opacity = 0.7 * (1 - t);
+  }, TW.Ease.outCubic, () => { scene.remove(line); geo.dispose(); mat.dispose(); });
+}
+
+/* flip: 反転する瞬間の平たい閃光リング */
+export function fxFlipFlash(scene, pos, colorHex) {
+  const geo = new THREE.RingGeometry(0.2, 0.32, 40);
+  geo.rotateX(-Math.PI / 2);
+  const mat = new THREE.MeshBasicMaterial({
+    color: colorHex, transparent: true, opacity: 0.9,
+    blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide
+  });
+  const ring = new THREE.Mesh(geo, mat);
+  ring.position.set(pos.x, pos.y + 0.05, pos.z);
+  ring.renderOrder = 3;
+  scene.add(ring);
+  return TW.tween(340, (t) => {
+    const s = 1 + t * 3.4;
+    ring.scale.set(s, 1, s);
+    mat.opacity = 0.9 * (1 - t);
+  }, TW.Ease.outQuart, () => { scene.remove(ring); geo.dispose(); mat.dispose(); });
+}
+
+/* shift: 移動元→先を結ぶ残像の帯 */
+export function fxShiftStreak(scene, from, to, colorHex) {
+  const mid = new THREE.Vector3().addVectors(from, to).multiplyScalar(0.5);
+  const len = from.distanceTo(to);
+  const geo = new THREE.PlaneGeometry(len, 0.5);
+  geo.rotateX(-Math.PI / 2);
+  const mat = new THREE.MeshBasicMaterial({
+    color: colorHex, transparent: true, opacity: 0,
+    blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide
+  });
+  const m = new THREE.Mesh(geo, mat);
+  m.position.set(mid.x, 0.05, mid.z);
+  m.rotation.y = -Math.atan2(to.z - from.z, to.x - from.x);
+  scene.add(m);
+  return TW.tween(400, (t) => {
+    mat.opacity = Math.sin(Math.PI * t) * 0.5;
+  }, TW.Ease.linear, () => { scene.remove(m); geo.dispose(); mat.dispose(); });
+}
+
+/* delete: 赤い粒子がカード位置から弾け散る */
+export function fxDeleteBurst(scene, pos, colorHex) {
+  const N = 26;
+  const g = new THREE.BufferGeometry();
+  const p = new Float32Array(N * 3);
+  for (let i = 0; i < N; i++) { p[i * 3] = pos.x; p[i * 3 + 1] = pos.y + 0.1; p[i * 3 + 2] = pos.z; }
+  g.setAttribute('position', new THREE.BufferAttribute(p, 3));
+  const vel = [];
+  for (let i = 0; i < N; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const sp = 1.5 + Math.random() * 2.5;
+    vel.push([Math.cos(a) * sp, 2 + Math.random() * 3, Math.sin(a) * sp]);
+  }
+  const mat = new THREE.PointsMaterial({
+    color: colorHex, size: 0.12, transparent: true, opacity: 1,
+    blending: THREE.AdditiveBlending, depthWrite: false
+  });
+  const pts = new THREE.Points(g, mat);
+  pts.frustumCulled = false;
+  scene.add(pts);
+  return TW.tween(560, (t) => {
+    const s = t * 0.56;
+    for (let i = 0; i < N; i++) {
+      p[i * 3] = pos.x + vel[i][0] * s;
+      p[i * 3 + 1] = pos.y + 0.1 + vel[i][1] * s - 4.6 * s * s;
+      p[i * 3 + 2] = pos.z + vel[i][2] * s;
+    }
+    g.attributes.position.needsUpdate = true;
+    mat.opacity = 1 - t;
+  }, TW.Ease.linear, () => { scene.remove(pts); g.dispose(); mat.dispose(); });
+}

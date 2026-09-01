@@ -209,6 +209,32 @@ export function createStage(container) {
     );
   }
 
+  /* 決めのカメラ: レーン中心を低い位置から見上げ、ゆっくり回り込む。
+     onFrame ではなく tween 内で毎フレーム更新する (演出時間ぶん占有)。 */
+  function cinematicHold(target, ms, opts) {
+    const o = opts || {};
+    const tgt = new THREE.Vector3(target.x, target.y || 0, target.z);
+    const radius = o.radius || 3.6;
+    const height = o.height || 2.4;
+    const startAng = o.startAngle !== undefined ? o.startAngle : -Math.PI / 2 - 0.5;
+    const sweep = o.sweep !== undefined ? o.sweep : 1.0;
+    const p0 = camState.pos.clone(), l0 = camState.look.clone();
+    const easeIn = 0.16;
+    return TW.tween(ms, (t) => {
+      const ang = startAng + sweep * TW.Ease.inOutCubic(t);
+      const camPos = new THREE.Vector3(
+        tgt.x + Math.cos(ang) * radius,
+        height,
+        tgt.z + Math.sin(ang) * radius
+      );
+      const look = new THREE.Vector3(tgt.x, tgt.y + 0.5, tgt.z);
+      /* 最初だけ現在位置から滑らかに入る */
+      const blend = Math.min(1, t / easeIn);
+      camState.pos.lerpVectors(p0, camPos, blend);
+      camState.look.lerpVectors(l0, look, blend);
+    }, TW.Ease.linear);
+  }
+
   function shake(strength, ms) {
     camState.shake = strength;
     camState.shakeDecay = strength / Math.max(1, ms || 380);
@@ -267,7 +293,7 @@ export function createStage(container) {
 
   return {
     THREE, renderer, scene, camera, composer, bloom,
-    setCamera, home, focusOn, shake, onFrame, resize,
+    setCamera, home, focusOn, cinematicHold, shake, onFrame, resize,
     lights: { key, rimSelf, rimOpp, fill }
   };
 }
