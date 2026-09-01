@@ -447,6 +447,9 @@
   }
 
   @media (max-width:860px){
+    /* タップ用: プレビューは中央に大きく (タップで表示、他をタップで消える) */
+    #preview{left:50%;top:44%;height:60vh;transform:translate(-50%,-50%) scale(.95);transform-origin:center;}
+    #preview.show{transform:translate(-50%,-50%) scale(1);}
     #lines{top:auto;bottom:74px;gap:6px;}
     .lane{width:104px;padding:5px 7px 6px;}
     #log{display:none;}

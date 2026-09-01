@@ -105,9 +105,10 @@ export function makeCard(def) {
     emissive: new THREE.Color(0x000000),
     emissiveIntensity: 1
   }));
-  /* 法線を -Y に向ける。z 軸まわりの反転なら天地が保たれる
-     (x 軸と両方回すと法線が +Y に戻ってしまい、裏面が描かれなくなる) */
-  back.rotation.z = Math.PI;
+  /* 法線を -Y に向ける。カードは rotation.x=PI で裏返るため、
+     裏面も x 軸で反転させておくと裏向き時に天地が揃う
+     (z 軸反転だと裏向きプレイで上下逆に見える) */
+  back.rotation.x = Math.PI;
   back.position.y = -CARD.thickness / 2 - 0.0004;
 
   const core = new THREE.Mesh(coreGeometry(), new THREE.MeshStandardMaterial({

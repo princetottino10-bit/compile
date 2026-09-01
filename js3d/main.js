@@ -5,6 +5,7 @@
 import * as THREE from '../vendor/three.module.js';
 import { createStage } from './stage.js';
 import { createBoard, visualFingerprint } from './board.js';
+import { createControlMarker } from './control.js';
 import { createPanels } from './panel.js';
 import { runSetup } from './setup.js';
 import { runTitle } from './title.js';
@@ -29,6 +30,7 @@ let cur = null;                 // { state, requests, log, winner }
 let busy = false;               // 演出中はクリックを無視
 let selectedUid = null;
 let hoverUid = null;
+let ctrlMarker = null;
 let backFacing = false;         // Shift 相当: 裏向きでプレイ
 let pads = [];                  // 着地パッド (line × side)
 let demoMode = false;           // AI 同士の観戦 (?demo=1)
@@ -87,6 +89,8 @@ async function boot() {
   mark('engineInit');
 
   stage = createStage(document.getElementById('stage'));
+  ctrlMarker = createControlMarker(stage.scene);
+  stage.onFrame((dt) => ctrlMarker.tick(dt));
   board = createBoard(stage, defIndex, ME, {
     onCompile: async (info) => {
       /* まず盤上のプロトコルカードを "Compiled" 面へ裏返し、その後にカットイン */
@@ -426,9 +430,12 @@ function bindInput() {
   el.addEventListener('pointerleave', () => showPreview(null));
 
   el.addEventListener('pointerdown', async (ev) => {
+    /* タップ環境はホバーが無いので、触れたカードをまずプレビューする。
+       操作できない場面 (相手ターン・選択待ち) でもテキストは読めるようにする */
+    const hit = pick(ev);
+    showPreview((hit && hit.obj.userData.uid) || null);
     if (demoMode || busy || !cur || shown().winner !== null) return;
     if (cur.requests.length || shown().turn !== ME) return;
-    const hit = pick(ev);
     if (!hit) { deselect(); return; }
 
     const ud = hit.obj.userData;
@@ -864,6 +871,11 @@ async function afterTurn() {
 /* ---------- HUD ---------- */
 function refreshHud() {
   const st = shown();
+  if (ctrlMarker) {
+    /* コントロール変種を使わない対戦ではマーカーを隠す */
+    ctrlMarker.group.visible = st.useControl !== false;
+    ctrlMarker.update(typeof st.control === 'number' ? st.control : -1, ME, true);
+  }
   const rows = [];
   for (let line = 0; line < 3; line++) {
     rows.push({
