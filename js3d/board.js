@@ -479,6 +479,7 @@ export function createBoard(stage, defIndex, me, hooks) {
       } else if (a && a.zone === 'field' && l.zone === 'field') {
         dur = TIMING.shift; arc = 0.55;
         FX.fxShiftStreak(scene, card.position.clone(), toPos, accent);
+        FX.fxMoveGhost(scene, card.position.clone(), card.rotation.y, accent);
       } else if (!a || a.zone === l.zone) { dur = TIMING.handSort; arc = 0.06; }
 
       /* 反転したカードは着地後に閃光 */

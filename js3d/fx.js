@@ -513,6 +513,36 @@ export function fxShiftStreak(scene, from, to, colorHex) {
   }, TW.Ease.linear, () => { scene.remove(m); geo.dispose(); mat.dispose(); });
 }
 
+/* shift: 移動元に「ここから動いた」残像を残す。
+   枠線だけのカード型ゴーストがゆっくり消えることで、
+   速い移動でも出発点と移動中であることが読み取れる */
+export function fxMoveGhost(scene, pos, rotY, colorHex) {
+  const geo = new THREE.PlaneGeometry(1.0, 1.4);
+  geo.rotateX(-Math.PI / 2);
+  const edges = new THREE.EdgesGeometry(geo);
+  const mat = new THREE.LineBasicMaterial({
+    color: colorHex, transparent: true, opacity: 0.9,
+    blending: THREE.AdditiveBlending, depthWrite: false
+  });
+  const fillMat = new THREE.MeshBasicMaterial({
+    color: colorHex, transparent: true, opacity: 0.14,
+    blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide
+  });
+  const grp = new THREE.Group();
+  grp.add(new THREE.LineSegments(edges, mat));
+  grp.add(new THREE.Mesh(geo, fillMat));
+  grp.position.set(pos.x, Math.max(0.04, pos.y), pos.z);
+  grp.rotation.y = rotY || 0;
+  scene.add(grp);
+  return TW.tween(720, (t) => {
+    mat.opacity = 0.9 * (1 - t);
+    fillMat.opacity = 0.14 * (1 - t);
+    grp.scale.setScalar(1 - t * 0.12);
+  }, TW.Ease.outQuad, () => {
+    scene.remove(grp); geo.dispose(); edges.dispose(); mat.dispose(); fillMat.dispose();
+  });
+}
+
 /* delete: 赤い粒子がカード位置から弾け散る */
 export function fxDeleteBurst(scene, pos, colorHex) {
   const N = 26;
