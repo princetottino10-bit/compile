@@ -228,6 +228,10 @@ function choose(ctx, req) {
   ctx.qn++;
   req.id = 'q' + ctx.qn;
   if (ctx.ci < ctx.choices.length) {
+    /* 再実行で選択済みの地点を通過するとき、その瞬間の状態をトレースに残す。
+       これで UI 側の「表示中の盤面と一致するステップまで早送り」が
+       どの選択でも必ず一致点を見つけられる (巻き戻り再生の防止) */
+    if (TRACE && ctx.trace) ctx.trace.push({ msg: '', uid: null, st: clone(ctx.st) });
     const picks = ctx.choices[ctx.ci++];
     validatePicks(req, picks);
     return picks;

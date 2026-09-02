@@ -228,6 +228,10 @@ function choose(ctx, req) {
   ctx.qn++;
   req.id = 'q' + ctx.qn;
   if (ctx.ci < ctx.choices.length) {
+    /* 再実行で選択済みの地点を通過するとき、その瞬間の状態をトレースに残す。
+       これで UI 側の「表示中の盤面と一致するステップまで早送り」が
+       どの選択でも必ず一致点を見つけられる (巻き戻り再生の防止) */
+    if (TRACE && ctx.trace) ctx.trace.push({ msg: '', uid: null, st: clone(ctx.st) });
     const picks = ctx.choices[ctx.ci++];
     validatePicks(req, picks);
     return picks;
@@ -1389,6 +1393,7 @@ function execTargetedOp(ctx, fr, op) {
       if (!hand.length) { fr.done = false; return; }
       const picks = hand.length === 1 ? hand.slice()
         : choose(ctx, { kind: 'pickHand', player: fr.controller, candidates: hand.slice(), min: 1, max: 1, prompt: 'reveal-hand-card' });
+      revealCardToAll(st, picks[0]);   // ログだけでなく knownTo も公開状態にする
       log(ctx, `P${fr.controller + 1}: 手札の ${DEFS[st.cards[picks[0]].def].id} を公開`);
       fr.done = true; return;
     }
@@ -2145,6 +2150,32 @@ function aiHasDefInHand(st, side, defId) {
   return st.players[side].hand.some(uid => st.cards[uid].def === defId);
 }
 
+/* 中段の対象取り効果 (shift/flip/delete/return) が今の盤面で
+   空撃ちになるかの近似判定。fr を仮組みして matchesSel を再利用する。
+   bind 依存のセレクタは判定できないため「対象あり」扱いで除外 */
+function aiMiddleFizzles(st, side, action, d) {
+  const mid = d.eff && d.eff.middle && d.eff.middle.ops;
+  if (!Array.isArray(mid)) return false;
+  const fr = { controller: side, source: action.card, line: action.line,
+    currentLine: action.line, bind: {} };
+  let sawTargeted = false;
+  for (const op of mid) {
+    if (['shift', 'flip', 'delete', 'return'].indexOf(op.op) < 0) continue;
+    const sel = op.select;
+    if (!sel || sel.ref) continue;
+    if (sel.zone === 'sameLineAsRef' || (sel.value && sel.value.eqBindPrinted)) continue;
+    sawTargeted = true;
+    for (let l = 0; l < 3; l++) {
+      for (let s2 = 0; s2 < 2; s2++) {
+        for (const uid of st.lines[l][s2]) {
+          if (matchesSel(st, fr, uid, sel)) return false;   // 対象あり
+        }
+      }
+    }
+  }
+  return sawTargeted;   // 対象取り効果があり、どれも空
+}
+
 function aiActionBias(st, action, side) {
   if (!action) return 0;
   const op = 1 - side;
@@ -2172,6 +2203,11 @@ function aiActionBias(st, action, side) {
   const mine = lineTotal(st, action.line, side), theirs = lineTotal(st, action.line, op);
   const gap = Math.max(0, 10 - mine);
   let v = 0;
+  /* 対象がいない盤面で対象取りの中段を表で切るのは効果の空撃ち。
+     裏でプレイするか温存する方が価値が残る (例: 序盤の SPEED 3) */
+  if (action.faceUp && aiMiddleFizzles(st, side, action, d)) {
+    v -= 12 + aiMiddleValue(d) * 0.6;
+  }
   if (aiIsDshSpecialist(st, side) && W.speedPairStrategy
       && (d.id === 'SPEED_1' || d.id === 'SPEED_4')) {
     const pairOnField = aiHasDefOnField(st, side, 'SPEED_1') || aiHasDefOnField(st, side, 'SPEED_4');
@@ -2504,6 +2540,37 @@ function aiChoiceScore(st, req, picks, me) {
   } finally { AI_CHOICE_DEPTH--; }
 }
 
+/* 複数枚選択 (max>1) の組合せ探索。
+   全組合せは指数的なので、静的スコア順 (ordered) を軸に
+   「先頭k枚 / 末尾k枚 / 境界の1枚入替え」だけを候補にし、
+   apply→評価で比較する。候補は最大8通り。 */
+function aiBestCombo(st, req, ordered, min, max, fallback) {
+  const combos = [], seen = new Set();
+  const add = (arr) => {
+    if (arr.length < min || arr.length > max) return;
+    const key = arr.slice().sort().join('|');
+    if (!seen.has(key)) { seen.add(key); combos.push(arr); }
+  };
+  if (fallback) add(fallback.slice());
+  if (min === 0) add([]);
+  for (let k = Math.max(1, min); k <= Math.min(max, ordered.length); k++) {
+    add(ordered.slice(0, k));
+    add(ordered.slice(ordered.length - k));
+  }
+  const base = Math.max(1, min);
+  for (let alt = base; alt < Math.min(ordered.length, base + 2); alt++) {
+    add(ordered.slice(0, base - 1).concat([ordered[alt]]));
+  }
+  if (combos.length < 2) return null;
+  let best = null, bestScore = -Infinity;
+  for (const picks of combos.slice(0, 8)) {
+    if (aiSearchExpired()) break;
+    const score = aiChoiceScore(st, req, picks, req.player);
+    if (score > bestScore) { bestScore = score; best = picks; }
+  }
+  return bestScore > -1e8 ? best : null;
+}
+
 function aiPlayFreePicks(st, req, me) {
   if (aiIsDshSpecialist(st, me) && aiWeightsFor(st, me).speedPairStrategy && req.context === 'SPEED_1'
       && !aiHasDefOnField(st, me, 'SPEED_1') && !aiHasDefOnField(st, me, 'SPEED_4')) {
@@ -2539,8 +2606,12 @@ function aiPlayFreePicks(st, req, me) {
 function aiStrategicCardPicks(st, req, me, ranked, fallback) {
   const max = req.max !== undefined ? req.max : 1;
   const min = req.min !== undefined ? req.min : 1;
-  if (AI_CHOICE_DEPTH > 0 || max !== 1 || req.candidates.length < 2
+  if (AI_CHOICE_DEPTH > 0 || req.candidates.length < 2
       || /(?:^|-)order$/.test(req.prompt || '')) return fallback;
+  if (max !== 1) {
+    const deep = aiBestCombo(st, req, ranked.map(x => x.uid), min, max, fallback);
+    return deep || fallback;
+  }
 
   let pool = ranked;
   if (pool.length > 8) pool = pool.slice(0, 5).concat(pool.slice(-3));
@@ -2660,8 +2731,13 @@ function smartPicks(st, req) {
         const discard = aiChoiceScore(st, req, [scored[0].uid], me);
         return discard > skip ? [scored[0].uid] : [];
       }
-      if (min === 0 && (!scored.length || scored[0].s > 8)) return [];
-      return scored.slice(0, Math.max(min, 1)).map(x => x.uid);
+      const fallbackHand = min === 0 && (!scored.length || scored[0].s > 8)
+        ? [] : scored.slice(0, Math.max(min, 1)).map(x => x.uid);
+      if (AI_CHOICE_DEPTH === 0 && max > 1 && scored.length > 1) {
+        const deep = aiBestCombo(st, req, scored.map(x => x.uid), min, max, fallbackHand);
+        if (deep) return deep;
+      }
+      return fallbackHand;
     }
     case 'pickLine': {
       let bestLine = req.lines[0], bestSc = -Infinity;
@@ -2855,9 +2931,59 @@ function aiActionNormal(state) {
   return best;
 }
 
+/* --- 終盤ソルバー ---
+   自分が2プロトコル済みのとき、「どの相手応手に対しても次の自分の
+   コンパイル判定で3本目が確定する」手を実際にエンジンを回して探す。
+   apply は相手ターン開始のコンパイル判定まで自動進行するため、
+   winner === me を確かめるだけで読み切りになる。
+   相手の選択解決は smartPicks 近似 (厳密解ではないが実戦上十分)。 */
+function aiForcedWinAction(state, me, deadline) {
+  const acts = legalActions(state);
+  for (const a of acts) {
+    if (deadline && aiNow() > deadline) return null;
+    const res = applyAndResolve(state, a, smartPicks);
+    if (!res || res.error || res.requests.length) continue;
+    const s1 = res.state;
+    if (s1.winner === me) return a;                     // 効果や相手の山切れで即決着
+    if (s1.winner !== null) continue;
+    if (s1.turn !== 1 - me || s1.phase !== 'action') continue;
+    let all = true;
+    for (const r of legalActions(s1)) {
+      if (deadline && aiNow() > deadline) { all = false; break; }
+      const r2 = applyAndResolve(s1, r, smartPicks);
+      if (!r2 || r2.error || r2.requests.length || r2.state.winner !== me) { all = false; break; }
+    }
+    if (all) return a;
+  }
+  return null;
+}
+
+/* 逆向き: この手を指すと、相手がどう返してきても止められない即負け筋が
+   残るかどうか。s1 (自分の手を指した直後) を渡す。
+   相手の応手 r の後、自分の全応手 q でも相手の勝ちを防げなければ true */
+function aiIsLosingAfter(s1, me, deadline) {
+  const op = 1 - me;
+  for (const r of legalActions(s1)) {
+    if (deadline && aiNow() > deadline) return false;   // 読み切れない=咎めない
+    const r2 = applyAndResolve(s1, r, smartPicks);
+    if (!r2 || r2.error || r2.requests.length) continue;
+    const s2 = r2.state;
+    if (s2.winner === op) return true;                  // 応手だけで決着
+    if (s2.winner !== null || s2.turn !== me || s2.phase !== 'action') continue;
+    let escapable = false;
+    for (const q of legalActions(s2)) {
+      if (deadline && aiNow() > deadline) return false;
+      const q2 = applyAndResolve(s2, q, smartPicks);
+      if (q2 && !q2.error && !q2.requests.length && q2.state.winner !== op) { escapable = true; break; }
+    }
+    if (!escapable) return true;                        // どう受けても相手の3本目が通る
+  }
+  return false;
+}
+
 /* --- Hard AI (2-ply minimax + alpha-beta) --- */
 
-function aiActionHard(state) {
+function aiActionHard(state, collect) {
   const me = state.turn;
   const acts = aiDecisionActions(state);
   if (!acts.length) return null;
@@ -2865,6 +2991,14 @@ function aiActionHard(state) {
 
   const wasTrace = TRACE, previousDeadline = AI_SEARCH_DEADLINE; TRACE = false;
   try {
+    /* 終盤: 自分が2本済みなら、読み切りの勝ち筋を評価探索より先に探す。
+       専用の時間枠で行い、本体探索の予算はこの後から数え始める */
+    const myCompiled = state.players[me].protocols.filter(pr => pr.compiled).length;
+    if (myCompiled === 2) {
+      const forced = aiForcedWinAction(state, me, aiNow() + AI_THINK_BUDGET_MS * 0.6);
+      if (forced) return forced;
+    }
+
     const specialist = aiIsDshSpecialist(state, me);
     const deadline = aiNow() + AI_THINK_BUDGET_MS * (specialist ? AI_DSH_W.think : 1);
     AI_SEARCH_DEADLINE = deadline;
@@ -2906,7 +3040,30 @@ function aiActionHard(state) {
         val = minimaxMin(s1, me, alpha, Infinity, deadline);
       }
       val += item.bias;
+      item.val2 = val;
       if (val > alpha) { alpha = val; best2 = item.a; }
+    }
+    if (collect) {
+      for (const item of viable) {
+        collect.push({ a: item.a, val: item.val2 !== undefined ? item.val2 : item.val1 });
+      }
+    }
+
+    /* 終盤の受け: 相手が2本済みなら、評価順に「指しても即負け筋が
+       残らない」手を選び直す。全候補が負け筋なら評価どおりに指す */
+    const opCompiled = state.players[1 - me].protocols.filter(pr => pr.compiled).length;
+    if (opCompiled === 2 && viable.length > 1) {
+      const vetoDeadline = aiNow() + AI_THINK_BUDGET_MS * 0.8;
+      const valOf = (x) => (x.val2 !== undefined ? x.val2 : x.val1);
+      const byVal = viable.slice().sort((x, y) => valOf(y) - valOf(x));
+      const floor = valOf(byVal[0]) - 120;   // 誤検知で大差の悪手に乗り換えない
+      for (const item of byVal) {
+        if (aiNow() > vetoDeadline || valOf(item) < floor) break;
+        const s1 = item.res.state;
+        if (s1.winner === me) return item.a;
+        if (s1.winner !== null) continue;
+        if (!aiIsLosingAfter(s1, me, vetoDeadline)) return item.a;
+      }
     }
     return best2 || best;
   } finally { TRACE = wasTrace; AI_SEARCH_DEADLINE = previousDeadline; }
@@ -3087,14 +3244,58 @@ function aiInformationState(state, side, salt) {
     if (s.pending && s.pending.base) applyKnowledge(s.pending.base);
   }
   applyKnowledge(view);
+  view.__unknownCount = groups[0].length + groups[1].length;
   return view;
 }
 
+/* PIMC (Perfect Information Monte Carlo):
+   相手の非公開カードの並びを salt 違いで K 通りサンプリングし、
+   各世界で探索した最善手の多数決を取る。1つの決定化に過剰適応した
+   「読み切ったつもりの手」を避けられる。思考予算は K 等分する */
+let AI_PIMC = 1;
+function setAiPimc(k) { AI_PIMC = Math.max(1, Math.min(9, k | 0)); }
+
+function aiActionPimc(state) {
+  const me = state.turn;
+  const baseView = aiInformationState(state, me);
+  if (AI_PIMC <= 1 || !baseView.__unknownCount) return aiActionHard(baseView);
+  /* 基準世界ではフル予算で深く探索し、僅差の上位候補だけを
+     別の決定化で1手評価し直して平均する。深さを犠牲にせず、
+     「基準世界の並びにしか通用しない手」を退けられる */
+  const collect = [];
+  const best = aiActionHard(baseView, collect);
+  if (collect.length < 2) return best;
+  collect.sort((a, b) => b.val - a.val);
+  const top = collect.slice(0, 3).filter(t => t.val > collect[0].val - 60);
+  if (top.length < 2) return best;
+
+  const wasTrace = TRACE; TRACE = false;
+  try {
+    const sums = top.map(t => t.val);
+    const counts = top.map(() => 1);
+    for (let k = 1; k < AI_PIMC; k++) {
+      const view = aiInformationState(state, me, k);
+      for (let i = 0; i < top.length; i++) {
+        const res = applyAndResolve(view, top[i].a, smartPicks);
+        counts[i]++;
+        if (!res || res.error || res.requests.length) { sums[i] += -1e6; continue; }
+        sums[i] += aiScore(res.state, me) + aiActionBias(view, top[i].a, me)
+          + aiTransitionScore(view, res, me);
+      }
+    }
+    let bi = 0;
+    for (let i = 1; i < top.length; i++) {
+      if (sums[i] / counts[i] > sums[bi] / counts[bi]) bi = i;
+    }
+    return top[bi].a;
+  } finally { TRACE = wasTrace; }
+}
+
 function aiAction(state) {
-  const view = aiInformationState(state, state.turn);
   if (AI_LEVEL >= 2) {
-    return aiActionHard(view);
+    return aiActionPimc(state);
   }
+  const view = aiInformationState(state, state.turn);
   if (AI_LEVEL >= 1) return aiActionNormal(view);
   return aiActionEasy(view);
 }
@@ -3150,7 +3351,7 @@ function aiAnswer(state, req) {
 /* ---------- 公開 API ---------- */
 
 const Engine = {
-  init, newGame, apply, legalActions, setTrace, setAiLevel, setAiThinkBudget, setAiBreadth, setAiWeights, setAiSpecialist, setAiSpecialistWeights,
+  init, newGame, apply, legalActions, setTrace, setAiLevel, setAiThinkBudget, setAiBreadth, setAiPimc, setAiWeights, setAiSpecialist, setAiSpecialistWeights,
   lineTotal, cardValue, compilableLines, canPlay, locate,
   ai: { action: aiAction, answer: aiAnswer, score: aiScore, transitionScore: aiTransitionScore, compilePassChance: aiCompilePassChance, informationState: aiInformationState, randomPicks, smartPicks },
   get defs() { return DEFS; },
