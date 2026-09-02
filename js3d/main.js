@@ -90,6 +90,7 @@ async function boot() {
 
   stage = createStage(document.getElementById('stage'));
   ctrlMarker = createControlMarker(stage.scene);
+  ctrlMarker.group.visible = false;          // 対戦開始 (refreshHud) まで隠す
   stage.onFrame((dt) => ctrlMarker.tick(dt));
   board = createBoard(stage, defIndex, ME, {
     onCompile: async (info) => {
@@ -660,6 +661,9 @@ function roomValOf(defId) {
 
 /* サーバーの publicState を受けて、差分アニメ + HUD 更新まで行う */
 async function roomApplyView(rm, instant) {
+  /* サーバー側の状態が進んだら、進行中の盤面ピックは破棄して取り直す
+     (放置すると pickBar が残り、resolve されない Promise が宙に浮く) */
+  cancelBoardPick();
   const mayContinue = !!(roomRm && roomRm.code === rm.code && roomRm.request);
   const entries = roomTracker.take(rm, mayContinue, roomValOf);
   roomRm = rm;
@@ -707,6 +711,7 @@ async function roomDrainRequest() {
       UI.setPrompt(req.prompt || '選択してください', 'ask');
       const picks = await askUser(req);
       UI.setPrompt('');
+      if (picks === PICK_CANCEL) continue;   // 外部更新で取り直し
       await roomStep({ type: 'choose', id: req.id, picks });
     }
   } finally { roomAsking = false; }
@@ -898,6 +903,7 @@ async function askUser(req) {
   }
   if (req.kind === 'pickCard' || req.kind === 'pickHand' || req.kind === 'pickLine') {
     const picks = await pickOnBoard(req);
+    if (picks === PICK_CANCEL) return PICK_CANCEL;
     if (picks) return picks;
   }
   return UI.askChoice(req, choiceCtx());
@@ -907,6 +913,18 @@ async function askUser(req) {
    候補が盤面/手札のカードそのものなら、モーダルを出さずに
    候補をハイライトしてタップで選ばせる。null ならモーダルへ */
 let boardPick = null;
+const PICK_CANCEL = '__pickCancel__';   // 外部要因 (ポーリング等) による中断
+
+function cancelBoardPick() {
+  if (!boardPick) return;
+  const bp = boardPick;
+  boardPick = null;
+  board.clearCandidates();
+  for (const pad of pads) pad.userData.hover = false;
+  const el = document.getElementById('pickBar');
+  if (el) el.remove();
+  bp.resolve(PICK_CANCEL);
+}
 
 function pickOnBoard(req) {
   const st = shown();
@@ -1103,7 +1121,13 @@ function arrangeOnBoard(req) {
   let sel = -1;
 
   return new Promise((resolve) => {
-    const finish = (picks) => { ov.remove(); resolve(picks); };
+    const onResize = () => render();
+    window.addEventListener('resize', onResize);
+    const finish = (picks) => {
+      window.removeEventListener('resize', onResize);
+      ov.remove();
+      resolve(picks);
+    };
 
     const render = () => {
       const isIdentity = perm[0] === 0 && perm[1] === 1 && perm[2] === 2;
@@ -1163,6 +1187,7 @@ async function drainRequests() {
       await TW.wait(260);
       picks = withoutTrace(() => Engine.ai.answer(cur.state, req));
     }
+    if (picks === PICK_CANCEL) continue;
     const prev = shown();
     busy = true;
     const res = Engine.apply(cur.state, { type: 'choose', id: req.id, picks });
@@ -1219,6 +1244,17 @@ function checkRevealed(st) {
     return d ? { img: faceImageURL(d), label: d.proto + ' ' + d.value } : null;
   }).filter(Boolean));
 }
+
+/* 画面リサイズ/回転: カメラは stage が追従するが、手札や山札の実配置は
+   状態遷移時にしか書き直されないため、ここで取り直す */
+let relayoutTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(relayoutTimer);
+  relayoutTimer = setTimeout(() => {
+    const st = shown();
+    if (st && board && !busy) board.syncInstant(st);
+  }, 220);
+});
 
 /* ---------- HUD ---------- */
 function refreshHud() {

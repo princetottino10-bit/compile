@@ -1389,6 +1389,7 @@ function execTargetedOp(ctx, fr, op) {
       if (!hand.length) { fr.done = false; return; }
       const picks = hand.length === 1 ? hand.slice()
         : choose(ctx, { kind: 'pickHand', player: fr.controller, candidates: hand.slice(), min: 1, max: 1, prompt: 'reveal-hand-card' });
+      revealCardToAll(st, picks[0]);   // ログだけでなく knownTo も公開状態にする
       log(ctx, `P${fr.controller + 1}: 手札の ${DEFS[st.cards[picks[0]].def].id} を公開`);
       fr.done = true; return;
     }

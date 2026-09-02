@@ -28,6 +28,11 @@ export function locOf(st, uid) {
     if (typeof dest === 'string' && dest.startsWith('line')) {
       return { zone: 'transit', line: +dest.slice(4), side: c.owner };
     }
+    /* トラッシュ/手札/山札へ向かう途中 (uncover 効果の解決待ち等) も
+       消さずに行き先方向で待機させる */
+    if (dest === 'trash' || dest === 'hand' || dest === 'deck') {
+      return { zone: 'transitPile', dest, side: c.owner };
+    }
     return { zone: 'limbo' };
   }
   if (c.zone === 'field') {
@@ -161,6 +166,7 @@ export function createBoard(stage, defIndex, me, hooks) {
     if (!l) return null;
     if (l.zone === 'field') return LAYOUT.stackSlot(l.line, l.side, l.idx, me);
     if (l.zone === 'transit') return LAYOUT.transitSlot(l.line, l.side, me);
+    if (l.zone === 'transitPile') return LAYOUT.transitPileSlot(l.dest, l.side, me);
     if (l.zone === 'hand') {
       const n = st.players[l.side].hand.length;
       return l.side === me ? LAYOUT.handSlot(l.idx, n) : LAYOUT.oppHandSlot(l.idx, n);
@@ -487,7 +493,8 @@ export function createBoard(stage, defIndex, me, hooks) {
       const faceX = l.zone === 'hand' ? null : facingX(next, uid);
 
       let dur = TIMING.shift, ease = TW.Ease.inOutCubic, arc = 0.2;
-      const accent = new THREE.Color((defIndex[next.cards[uid].def] || UNKNOWN_DEF).color);
+      /* 見る権利のないカードは実プロトコル色を出さない (色で正体が割れる) */
+      const accent = new THREE.Color(defFor(next, uid).color);
       const toPos = new THREE.Vector3(...slot.pos);
       if (a && a.zone === 'deck' && l.zone === 'hand') {
         dur = TIMING.drawFly; arc = 0.75; ease = TW.Ease.outCubic;
