@@ -4,7 +4,7 @@
  * ========================================================================= */
 import * as THREE from '../vendor/three.module.js';
 import { createStage } from './stage.js';
-import { createBoard, visualFingerprint } from './board.js';
+import { createBoard, visualFingerprint, locOf } from './board.js';
 import { createControlMarker } from './control.js';
 import { createPanels } from './panel.js';
 import { runSetup } from './setup.js';
@@ -450,6 +450,15 @@ function bindInput() {
     }
     if (ud.isPad && selectedUid) {
       await dropOnPad(ud);
+      return;
+    }
+    /* スタックが伸びるとパッドがカードに覆われてタップできないため、
+       選択中は盤面カードへのタップも「そのラインへのプレイ」として扱う */
+    if (selectedUid && ud.uid) {
+      const loc = locOf(shown(), ud.uid);
+      if (loc && loc.zone === 'field') {
+        await dropOnPad({ line: loc.line, side: loc.side });
+      }
     }
   });
 
@@ -542,6 +551,16 @@ function showPreview(uid) {
   const card = uid && st && st.cards[uid];
   const visible = card && card.def && (card.faceUp || ((card.knownTo || 0) & (1 << ME)));
   if (!visible) {
+    /* 存在するが見えないカード (相手の裏向き等) は「非公開」の案内を出す。
+       無反応だと壊れて見えるため */
+    if (card) {
+      if (uid === previewUid) return;
+      previewUid = uid;
+      box.innerHTML = '<div class="pv-hidden"><b>FACE DOWN</b>' +
+        '<span>非公開のカード</span><span>盤面では値2として扱う</span></div>';
+      box.classList.add('show');
+      return;
+    }
     if (previewUid !== null) { previewUid = null; box.classList.remove('show'); }
     return;
   }
