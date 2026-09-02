@@ -164,6 +164,7 @@ async function boot() {
     legal: () => Engine.legalActions(cur.state),
     diag: () => ({ busy, selectedUid, tweens: TW.activeCount(), marks: window.__bootMarks }),
     arrange: (req) => arrangeOnBoard(req),
+    pickTest: (req) => pickOnBoard(req),
     /* 演出だけを再生して確認する (盤面の状態は変えない) */
     testCompile: (line, side) => {
       const st = shown();
@@ -435,7 +436,33 @@ function bindInput() {
        操作できない場面 (相手ターン・選択待ち) でもテキストは読めるようにする */
     const hit = pick(ev);
     showPreview((hit && hit.obj.userData.uid) || null);
-    /* 盤面対象選択モード中はタップを選択トグルとして扱う */
+    /* 盤面対象選択モード中はタップを選択として扱う。
+       ラインの判定はメッシュに頼らず、盤面平面の座標から最寄りレーンを取る
+       (パネルやパッドの当たり判定に依存しない) */
+    const laneFromEvent = () => {
+      const pt = planePoint(ev);
+      if (!pt || Math.abs(pt.z) > 3.4) return null;
+      let bl = null, bd = 1.1;
+      BOARD.laneX.forEach((x, i) => {
+        const dd = Math.abs(pt.x - x);
+        if (dd < bd) { bd = dd; bl = i; }
+      });
+      return bl;
+    };
+    if (boardPick && boardPick.kind === 'free') {
+      const uid2 = hit && hit.obj.userData.uid;
+      if (uid2 && boardPick.byUid[uid2]) { tapFreePick({ uid: uid2 }); return; }
+      if (boardPick.sel) {
+        const line = laneFromEvent();
+        if (line !== null) tapFreePick({ isPad: true, line });
+      }
+      return;
+    }
+    if (boardPick && boardPick.kind === 'line') {
+      const line = laneFromEvent();
+      if (line !== null && boardPick.req.lines.indexOf(line) >= 0) finishLinePick([line]);
+      return;
+    }
     if (boardPick && hit && hit.obj.userData.uid) {
       toggleBoardPick(hit.obj.userData.uid);
       return;
@@ -793,6 +820,10 @@ async function cueFor(step, st) {
   const card = st.cards[uid];
   const def = card && defIndex[card.def];
   if (!def) return;
+  /* 見る権利のないカード (相手の裏向きプレイ等) の正体をカットインで
+     晒さない。演出はパルスだけに留める */
+  const visible = card.faceUp || ((card.knownTo || 0) & (1 << ME));
+  if (!visible) { await board.pulse(uid, def.color, 380); return; }
   /* trace のメッセージからどの段が発動したかを読み取る */
   const msg = step.msg || '';
   let zone = null;
@@ -865,7 +896,7 @@ async function askUser(req) {
       if (m !== '__board__') return m;      // 「盤面で選ぶに戻る」でループ
     }
   }
-  if (req.kind === 'pickCard' || req.kind === 'pickHand') {
+  if (req.kind === 'pickCard' || req.kind === 'pickHand' || req.kind === 'pickLine') {
     const picks = await pickOnBoard(req);
     if (picks) return picks;
   }
@@ -879,6 +910,27 @@ let boardPick = null;
 
 function pickOnBoard(req) {
   const st = shown();
+  /* ライン選択: パッドを光らせて直接タップ */
+  if (req.kind === 'pickLine') {
+    if (!Array.isArray(req.lines) || !req.lines.length) return Promise.resolve(null);
+    return new Promise((resolve) => {
+      boardPick = { kind: 'line', req, resolve };
+      renderLinePick();
+    });
+  }
+  /* play-free (SPEED 0 等の「カードを1枚プレイする」): 通常プレイと同じ
+     手札タップ → パッドタップ の2段で選ぶ */
+  if (req.kind === 'pickCard' && req.prompt === 'play-free') {
+    return new Promise((resolve) => {
+      const byUid = {};
+      for (const raw of req.candidates) {
+        const parts = String(raw).split('|');
+        (byUid[parts[0]] = byUid[parts[0]] || []).push({ line: +parts[1], face: parts[2], raw });
+      }
+      boardPick = { kind: 'free', req, byUid, sel: null, resolve };
+      renderFreePick();
+    });
+  }
   const usable = Array.isArray(req.candidates) && req.candidates.length
     && req.candidates.every((u) => {
       if (typeof u !== 'string' || u.indexOf('|') >= 0) return false;
@@ -915,6 +967,91 @@ function renderBoardPick() {
   const ok = el.querySelector('#pkOk');
   if (ok) ok.onclick = () => finishBoardPick(bp.chosen.slice());
   el.querySelector('#pkList').onclick = () => finishBoardPick(null);
+}
+
+function renderFreePick() {
+  const bp = boardPick;
+  if (!bp) return;
+  if (bp.sel) {
+    board.markCandidates([bp.sel], [bp.sel]);
+    const lines = new Set(bp.byUid[bp.sel].map(o => o.line));
+    for (const pad of pads) pad.userData.hover = pad.userData.side === ME && lines.has(pad.userData.line);
+  } else {
+    board.markCandidates(Object.keys(bp.byUid), []);
+    for (const pad of pads) pad.userData.hover = false;
+  }
+  let el = document.getElementById('pickBar');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'pickBar';
+    el.className = 'arr-bar';
+    document.body.appendChild(el);
+  }
+  el.innerHTML =
+    (bp.sel ? '<button class="arr-btn" id="pkBack" type="button">カードを選び直す</button>' : '') +
+    '<button class="arr-btn" id="pkList" type="button">リストで選ぶ</button>';
+  const back = el.querySelector('#pkBack');
+  if (back) back.onclick = () => { bp.sel = null; renderFreePick(); };
+  el.querySelector('#pkList').onclick = () => finishFreePick(null);
+}
+
+function tapFreePick(hitUd) {
+  const bp = boardPick;
+  if (!bp) return;
+  const uid = hitUd.uid;
+  if (uid && bp.byUid[uid]) {
+    bp.sel = (bp.sel === uid) ? null : uid;
+    renderFreePick();
+    return;
+  }
+  if (!bp.sel) return;
+  /* パッド or ライン上のカードのタップで着地先を決める */
+  let line = hitUd.isPad ? hitUd.line : null;
+  if (line === null && uid) {
+    const l = locOf(shown(), uid);
+    if (l && (l.zone === 'field' || l.zone === 'transit')) line = l.line;
+  }
+  if (line === null) return;
+  const opts = bp.byUid[bp.sel].filter(o => o.line === line);
+  if (!opts.length) return;
+  /* 表裏どちらも置けるラインは、表向き/裏向きトグルの状態に従う */
+  const want = backFacing ? 'd' : 'u';
+  const chosen = opts.find(o => o.face === want) || opts[0];
+  finishFreePick([chosen.raw]);
+}
+
+function finishFreePick(picks) {
+  const bp = boardPick;
+  boardPick = null;
+  board.clearCandidates();
+  for (const pad of pads) pad.userData.hover = false;
+  const el = document.getElementById('pickBar');
+  if (el) el.remove();
+  bp.resolve(picks);
+}
+
+function renderLinePick() {
+  const bp = boardPick;
+  if (!bp) return;
+  for (const pad of pads) pad.userData.hover = bp.req.lines.indexOf(pad.userData.line) >= 0;
+  let el = document.getElementById('pickBar');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'pickBar';
+    el.className = 'arr-bar';
+    document.body.appendChild(el);
+  }
+  el.innerHTML = '<button class="arr-btn" id="pkList" type="button">リストで選ぶ</button>';
+  el.querySelector('#pkList').onclick = () => finishLinePick(null);
+}
+
+function finishLinePick(picks) {
+  const bp = boardPick;
+  boardPick = null;
+  for (const pad of pads) pad.userData.hover = false;
+  const el = document.getElementById('pickBar');
+  if (el) el.remove();
+  bp.resolve(picks);
 }
 
 function toggleBoardPick(uid) {
@@ -1154,7 +1291,13 @@ function refreshHud() {
 
 function cardName(idOrUid) {
   const st = shown();
-  const d = defIndex[idOrUid] || (st.cards[idOrUid] && defIndex[st.cards[idOrUid].def]);
+  /* uid 指定は可視性を確認してから実名を出す (def ID 直指定は公開情報) */
+  const c = st.cards[idOrUid];
+  if (c) {
+    const visible = c.faceUp || ((c.knownTo || 0) & (1 << ME));
+    if (!visible) return null;
+  }
+  const d = defIndex[idOrUid] || (c && defIndex[c.def]);
   /* 表記は cardlist.html / auto-play.html と揃える: プロトコル名 + 値 */
   return d ? d.proto + ' ' + d.value : null;
 }
