@@ -8,7 +8,7 @@ import { RenderPass } from '../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../vendor/jsm/postprocessing/OutputPass.js';
 import { RoomEnvironment } from '../vendor/jsm/environments/RoomEnvironment.js';
-import { COLOR, CAMERA, BOARD, CARD, TIMING } from './theme.js';
+import { COLOR, CAMERA, BOARD, CARD, TIMING, VIEW } from './theme.js';
 import * as TW from './tween.js';
 
 /* 床: 手続き的なグリッドと、ライン位置のホットバンド */
@@ -190,8 +190,14 @@ export function createStage(container) {
     }, ease || TW.Ease.inOutCubic);
   }
 
+  /* 縦長画面では高く・近く・広角にして3レーンを収める */
+  function homePose() {
+    const k = VIEW.k;
+    const p = CAMERA.home.pos;
+    return [p[0], p[1] + (12.4 - p[1]) * k, p[2] + (5.2 - p[2]) * k];
+  }
   function home(ms) {
-    return setCamera(CAMERA.home.pos, CAMERA.home.look, ms === undefined ? 520 : ms);
+    return setCamera(homePose(), CAMERA.home.look, ms === undefined ? 520 : ms);
   }
 
   /* 指定ワールド座標に寄る。tightness=0 で定位置、1 で最も寄る */
@@ -243,10 +249,16 @@ export function createStage(container) {
   /* --- リサイズ --- */
   function resize() {
     const w = container.clientWidth, h = container.clientHeight;
-    camera.aspect = w / h;
+    const aspect = w / Math.max(1, h);
+    camera.aspect = aspect;
+    const prevK = VIEW.k;
+    VIEW.k = Math.max(0, Math.min(1, (1.45 - aspect) / (1.45 - 0.6)));
+    camera.fov = CAMERA.fov + 14 * VIEW.k;
     camera.updateProjectionMatrix();
     renderer.setSize(w, h);
     composer.setSize(w, h);
+    /* 縦横が切り替わったら定位置を取り直す (演出中でも最後に home へ戻る) */
+    if (Math.abs(prevK - VIEW.k) > 0.15) home(320);
   }
   window.addEventListener('resize', resize);
 

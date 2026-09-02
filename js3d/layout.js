@@ -3,16 +3,18 @@
  *   engine の state から「どのカードがどこに立つか」を決めるだけの純関数群。
  *   me = 視点プレイヤー。me 側が手前(+Z)、相手が奥(-Z)。
  * ========================================================================= */
-import { BOARD, CARD } from './theme.js';
+import { BOARD, CARD, VIEW } from './theme.js';
 
 /* 手札: カメラに正対する緩い扇 */
 export function handSlot(i, n) {
   const t = n <= 1 ? 0 : (i / (n - 1) - 0.5);      // -0.5 .. 0.5
-  const width = Math.min(n * 0.66, 4.05);
+  const k = VIEW.k;                                 // 縦長画面では小さく・奥に
+  const width = Math.min(n * 0.66, 4.05) * (1 - 0.18 * k);
   return {
-    pos: [t * width, BOARD.handY - Math.abs(t) * 0.26, BOARD.handZ + Math.abs(t) * 0.30],
+    pos: [t * width, BOARD.handY - Math.abs(t) * 0.26,
+      BOARD.handZ + 0.55 * k + Math.abs(t) * 0.30],
     rot: [1.02, 0, -t * 0.40],
-    scale: 1.06
+    scale: 1.06 - 0.22 * k
   };
 }
 
@@ -22,7 +24,7 @@ export function handSlotRaised(i, n) {
   return {
     pos: [s.pos[0], s.pos[1] + 0.50, s.pos[2] - 0.30],
     rot: [0.86, 0, s.rot[2] * 0.35],
-    scale: 1.24
+    scale: 1.24 - 0.2 * VIEW.k
   };
 }
 
@@ -59,8 +61,9 @@ export function transitSlot(line, side, me) {
 /* 山札 / 捨札 */
 export function pilePos(kind, side, me, depth) {
   const near = side === me;
-  const z = near ? 2.75 : -2.75;
-  const x = (kind === 'deck' ? 3.45 : -3.45) * (near ? 1 : -1);
+  const k = VIEW.k;                                 // 縦長では画面内に寄せる
+  const z = (near ? 2.75 : -2.75) * (1 + 0.16 * k);
+  const x = (kind === 'deck' ? 3.45 : -3.45) * (near ? 1 : -1) * (1 - 0.2 * k);
   return {
     pos: [x, CARD.thickness / 2 + (depth || 0) * 0.013, z],
     rot: [0, near ? 0 : Math.PI, 0],
