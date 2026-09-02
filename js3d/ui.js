@@ -221,6 +221,32 @@ export function turnCutIn(mine) {
 
 /* 効果発動の帯 (カード名 + 効果テキスト) */
 let fxTimer = null;
+/* マスターデュエル風の発動カットイン:
+   発動したカードが金色のオーラをまとって迫り出し、
+   発動した段のテキストが光る。連続発動は内容を差し替える */
+let cutTimer = null;
+export function showActivation(o) {
+  let el = $('#fxCut');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'fxCut';
+    document.body.appendChild(el);
+  }
+  const accent = o.color || '#efd06c';
+  el.style.setProperty('--accent', accent);
+  const chip = o.zone && ZONE_CHIP[o.zone] ? ZONE_CHIP[o.zone][0] : '◆ 効果';
+  el.innerHTML =
+    '<div class="fc-card"><img alt="" src="' + o.img + '"></div>' +
+    '<div class="fc-text"><span class="fc-zone">' + chip + '</span>' +
+      '<span class="fc-body">' + (o.text || '') + '</span></div>';
+  /* 付け直してポップインを毎回再生する */
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+  clearTimeout(cutTimer);
+  cutTimer = setTimeout(() => el.classList.remove('show'), 2400);
+}
+
 const ZONE_CHIP = {
   upper: ['▲ 上段・常在', 'rgba(150,200,255,.95)'],
   middle: ['◆ 中段・即時', null],

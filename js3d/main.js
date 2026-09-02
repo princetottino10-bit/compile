@@ -795,7 +795,9 @@ async function cueFor(step, st) {
   else if (msg.indexOf('上段') >= 0) zone = 'upper';
   else if (msg.indexOf('下段') >= 0) zone = 'lower';
   const text = zone ? def[zone] : (def.middle || def.upper || def.lower);
-  if (text) UI.showEffect(def.proto + ' ' + def.value, text, def.color, def.effectTypes, zone);
+  if (text) {
+    UI.showActivation({ img: faceImageURL(def), text, zone, color: def.color });
+  }
   await board.pulse(uid, def.color, 380);
 }
 
