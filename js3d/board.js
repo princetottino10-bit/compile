@@ -236,7 +236,14 @@ export function createBoard(stage, defIndex, me, hooks) {
   /* ---------- カードプレイの着地演出 (最優先の手触り) ---------- */
   async function playLanding(next, uid, opts) {
     const card = cardOf(next, uid);
-    const slot = slotFor(next, uid);
+    let slot = slotFor(next, uid);
+    /* プレイ直後は効果解決までエンジン上 committed (移動中) になるが、
+       手札からのプレイは最初からスタックへ着地して見せたい */
+    const l = locOf(next, uid);
+    if (l && l.zone === 'transit') {
+      const side = opts.actor;
+      slot = LAYOUT.stackSlot(l.line, side, next.lines[l.line][side].length, me);
+    }
     if (!slot) return;
     const faceUp = !!next.cards[uid].faceUp;
     const byMe = opts.actor === me;
@@ -562,6 +569,29 @@ export function createBoard(stage, defIndex, me, hooks) {
   }
 
   return {
+    /* 対象選択モード: 候補を光らせ、他を沈める */
+    markCandidates(uids, chosen) {
+      const cset = new Set(uids), chset = new Set(chosen || []);
+      for (const [uid, card] of cards) {
+        if (!card.visible) continue;
+        if (chset.has(uid)) {
+          setHighlight(card, new THREE.Color(0xefd06c), 0.5, 1.0);
+          setDim(card, false);
+        } else if (cset.has(uid)) {
+          setHighlight(card, new THREE.Color(0x63f3ff), 0.24, 0.7);
+          setDim(card, false);
+        } else {
+          if (!card.userData.locked) clearHighlight(card);
+          setDim(card, true);
+        }
+      }
+    },
+    clearCandidates() {
+      for (const [, card] of cards) {
+        if (!card.userData.locked) clearHighlight(card);
+        setDim(card, false);
+      }
+    },
     group, cards, cardOf, slotFor, syncInstant, applyTransition,
     moveTo, highlightPlayable, pulse, locOf, playLanding,
     setHighlight, clearHighlight, detectCompiles, compileSequence, visualFingerprint,

@@ -6,6 +6,7 @@
 import * as THREE from '../vendor/three.module.js';
 import * as TW from './tween.js';
 import { sfx } from './audio.js';
+import { shockwave } from './fx.js';
 
 const X = -2.85;              // lane0 とトラッシュの間の余白
 const Z = { neutral: 0, me: 1.35, opp: -1.35 };
@@ -71,11 +72,17 @@ export function createControlMarker(scene) {
       puck.material.emissiveIntensity = ctrl === -1 ? 0.5 : 1.5;
       ring.material.color.setHex(col);
       if (!animate) { grp.position.z = to; return; }
-      sfx('select');
+      /* 獲得/使用の瞬間を衝撃波と音で知らせる */
+      sfx(ctrl === -1 ? 'flip' : 'effect');
+      shockwave(scene, new THREE.Vector3(X, 0.1, from), col, 2.2, 500);
       TW.tween(520, (t) => {
         grp.position.z = TW.lerp(from, to, TW.Ease.inOutCubic(t));
         grp.position.y = 0.06 + Math.sin(Math.PI * t) * 0.55;
-      }, TW.Ease.linear);
+        grp.rotation.y += 0.22;
+      }, TW.Ease.linear, () => {
+        shockwave(scene, new THREE.Vector3(X, 0.1, to), col, 2.8, 620);
+        sfx('land');
+      });
     },
     has(ctrl) { return holder === ctrl; }
   };

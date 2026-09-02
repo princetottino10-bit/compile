@@ -11,7 +11,7 @@ import { runSetup } from './setup.js';
 import { runTitle } from './title.js';
 import * as ROOM from './room.js';
 import { runRoomLobby } from './roomui.js';
-import { faceImageURL, ART_SETS } from './cardtex.js';
+import { faceImageURL, activationImageURL, ART_SETS } from './cardtex.js';
 import * as FX from './fx.js';
 import { buildArena } from './arena.js';
 import { initAudio, sfx, setMuted, isMuted, startBgm, stopBgm, setBgmTension, bgmActive } from './audio.js';
@@ -435,6 +435,11 @@ function bindInput() {
        操作できない場面 (相手ターン・選択待ち) でもテキストは読めるようにする */
     const hit = pick(ev);
     showPreview((hit && hit.obj.userData.uid) || null);
+    /* 盤面対象選択モード中はタップを選択トグルとして扱う */
+    if (boardPick && hit && hit.obj.userData.uid) {
+      toggleBoardPick(hit.obj.userData.uid);
+      return;
+    }
     if (demoMode || busy || !cur || shown().winner !== null) return;
     if (cur.requests.length || shown().turn !== ME) return;
     if (!hit) { deselect(); return; }
@@ -796,7 +801,10 @@ async function cueFor(step, st) {
   else if (msg.indexOf('下段') >= 0) zone = 'lower';
   const text = zone ? def[zone] : (def.middle || def.upper || def.lower);
   if (text) {
-    UI.showActivation({ img: faceImageURL(def), text, zone, color: def.color });
+    UI.showActivation({
+      img: (zone && activationImageURL(def, zone)) || faceImageURL(def),
+      text, zone, color: def.color
+    });
   }
   await board.pulse(uid, def.color, 380);
 }
@@ -846,7 +854,7 @@ async function step(action) {
 }
 
 /* 選択要求を処理し切る */
-/* 選択リクエストをユーザーに聞く。並べ替えは盤面の直接タップを優先し、
+/* 選択リクエストをユーザーに聞く。盤面の直接タップを優先し、
    使えない状況ではモーダルにフォールバックする */
 async function askUser(req) {
   if (req.kind === 'arrange' && Array.isArray(req.current) && req.current.length === 3) {
@@ -857,7 +865,81 @@ async function askUser(req) {
       if (m !== '__board__') return m;      // 「盤面で選ぶに戻る」でループ
     }
   }
+  if (req.kind === 'pickCard' || req.kind === 'pickHand') {
+    const picks = await pickOnBoard(req);
+    if (picks) return picks;
+  }
   return UI.askChoice(req, choiceCtx());
+}
+
+/* 対象選択を盤面の直接タップで行う。
+   候補が盤面/手札のカードそのものなら、モーダルを出さずに
+   候補をハイライトしてタップで選ばせる。null ならモーダルへ */
+let boardPick = null;
+
+function pickOnBoard(req) {
+  const st = shown();
+  const usable = Array.isArray(req.candidates) && req.candidates.length
+    && req.candidates.every((u) => {
+      if (typeof u !== 'string' || u.indexOf('|') >= 0) return false;
+      const l = locOf(st, u);
+      return l && (l.zone === 'field' || l.zone === 'hand' || l.zone === 'transit');
+    });
+  if (!usable) return Promise.resolve(null);
+  const min = req.min === undefined ? 1 : req.min;
+  const max = req.max === undefined ? 1 : req.max;
+  return new Promise((resolve) => {
+    boardPick = { req, min, max, chosen: [], resolve };
+    renderBoardPick();
+  });
+}
+
+function renderBoardPick() {
+  const bp = boardPick;
+  if (!bp) return;
+  board.markCandidates(bp.req.candidates, bp.chosen);
+  let el = document.getElementById('pickBar');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'pickBar';
+    el.className = 'arr-bar';
+    document.body.appendChild(el);
+  }
+  const instant = bp.max === 1 && bp.min >= 1;   // 1枚必須はタップで即決
+  el.innerHTML =
+    (instant ? '' :
+      '<button class="arr-btn ok" id="pkOk" type="button"' +
+        (bp.chosen.length < bp.min ? ' disabled' : '') + '>決定 (' +
+        bp.chosen.length + '/' + bp.max + ')</button>') +
+    '<button class="arr-btn" id="pkList" type="button">リストで選ぶ</button>';
+  const ok = el.querySelector('#pkOk');
+  if (ok) ok.onclick = () => finishBoardPick(bp.chosen.slice());
+  el.querySelector('#pkList').onclick = () => finishBoardPick(null);
+}
+
+function toggleBoardPick(uid) {
+  const bp = boardPick;
+  if (!bp || bp.req.candidates.indexOf(uid) < 0) return;
+  const i = bp.chosen.indexOf(uid);
+  if (i >= 0) bp.chosen.splice(i, 1);
+  else {
+    if (bp.max === 1) bp.chosen.length = 0;
+    bp.chosen.push(uid);
+  }
+  if (bp.max === 1 && bp.min >= 1 && bp.chosen.length === 1) {
+    finishBoardPick(bp.chosen.slice());
+    return;
+  }
+  renderBoardPick();
+}
+
+function finishBoardPick(picks) {
+  const bp = boardPick;
+  boardPick = null;
+  board.clearCandidates();
+  const el = document.getElementById('pickBar');
+  if (el) el.remove();
+  bp.resolve(picks);
 }
 
 /* 並べ替え: 対象側のプロトコルパネルにチップを重ね、2枚タップで入れ替える。

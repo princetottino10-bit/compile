@@ -88,10 +88,22 @@ function paint(ctx, info, art) {
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, H);
 
-  /* コンパイル済みは走査線を重ねて「書き換わった」感じを出す */
+  /* コンパイル済みは走査線 + 巨大チェックで一目で分かる状態にする */
   if (compiled) {
+    ctx.fillStyle = rgba(accent, 0.3);
+    ctx.fillRect(0, 0, W, H);
     ctx.fillStyle = rgba(accent, 0.16);
     for (let y = 0; y < H; y += 8) ctx.fillRect(0, y, W, 3);
+    /* 右側の大チェックマーク */
+    ctx.strokeStyle = 'rgba(255,255,255,.92)';
+    ctx.lineWidth = 16;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(W - 168, H * 0.52);
+    ctx.lineTo(W - 130, H * 0.74);
+    ctx.lineTo(W - 62, H * 0.24);
+    ctx.stroke();
+    ctx.lineCap = 'butt';
   }
   ctx.restore();
 
@@ -116,7 +128,17 @@ function paint(ctx, info, art) {
   ctx.fillText(info.name, 100, H * 0.62);
   ctx.textBaseline = 'alphabetic';
 
-  /* 合計値。10 以上はコンパイル圏内なので塗りを反転させる */
+  /* 合計値。10 以上はコンパイル圏内なので塗りを反転させる。
+     済パネルはチェックマークを優先して合計を出さない */
+  if (compiled) {
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 6;
+    roundRect(ctx, 3, 3, W - 6, H - 6, 20); ctx.stroke();
+    ctx.strokeStyle = rgba(accent, 0.9);
+    ctx.lineWidth = 2;
+    roundRect(ctx, 12, 12, W - 24, H - 24, 14); ctx.stroke();
+    return;
+  }
   const hot = info.total >= 10;
   const bw = 116, bh = 96, bx = W - bw - 20, by = (H - bh) / 2 + 8;
   ctx.fillStyle = hot ? accent : 'rgba(255,255,255,.09)';

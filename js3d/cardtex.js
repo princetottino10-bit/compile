@@ -18,6 +18,7 @@ import { drawIcon } from './icons.js';
 const DW = 512, DH = 716;
 
 const faceCache = new Map();   // defId -> THREE.CanvasTexture
+const faceZones = new Map();   // defId -> {upper/middle/lower: [x,y,w,h]} (デザイン座標)
 const faceCanvas = new Map();  // defId -> HTMLCanvasElement (プレビュー用)
 const artCache = new Map();    // url -> HTMLImageElement | null (失敗)
 let backTexture = null;
@@ -195,19 +196,19 @@ function paintFace(ctx, def, art) {
   ctx.fillStyle = head;
   ctx.fillRect(0, 0, DW, HEAD_H);
 
-  const badge = 78;
+  const badge = 88;
   const bx = DW - badge - 14, by = (HEAD_H - badge) / 2;
   ctx.fillStyle = accent;
   roundRect(ctx, bx, by, badge, badge, 14); ctx.fill();
   ctx.fillStyle = '#04060e';
-  ctx.font = '900 62px system-ui, sans-serif';
+  ctx.font = '900 72px system-ui, sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(String(def.value), bx + badge / 2, by + badge / 2 + 3);
   ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
 
   /* 効果種別アイコン (覆われても見えるヘッダに置く) */
   const types = (def.effectTypes || []).slice(0, 3);
-  const iconSize = 38, iconGap = 8;
+  const iconSize = 36, iconGap = 7;
   let ix = bx - 12 - types.length * (iconSize + iconGap);
   const iconLeft = ix;
   for (const t of types) {
@@ -217,7 +218,7 @@ function paintFace(ctx, def, art) {
 
   /* プロトコル名 (バッジとアイコンを避けて縮める) */
   const nameMax = (types.length ? iconLeft : bx) - 30;
-  let namePx = 42;
+  let namePx = 54;
   do {
     ctx.font = '800 ' + namePx + 'px system-ui, sans-serif';
     if (ctx.measureText(def.proto).width <= nameMax) break;
@@ -252,11 +253,14 @@ function paintFace(ctx, def, art) {
     roundRect(ctx, BOX_X + 5, y + 7, 5, h - 14, 3); ctx.fill();
   }
 
+  const zoneRects = {};
+
   /* 上段 (常在: 覆われても効く) — ヘッダ直下、REVEAL_PX に必ず収める */
   if (def.upper) {
     const yT = HEAD_H + 6;
     const hT = Math.min(REVEAL_PX - yT,
       22 + 5 + measureTextBlock(ctx, def.upper, TXT_W, { start: 24, weight: '600' }) + 12);
+    zoneRects.upper = [BOX_X, yT, BOX_W, hT];
     zonePanel(yT, hT, false);
     chip(ctx, TXT_X, yT + 6, '▲', '上段・常在', rgba(accent, 0.95), null);
     fitTextBlock(ctx, def.upper, TXT_X, yT + 6 + 22 + 4, TXT_W, hT - 22 - 16,
@@ -269,6 +273,7 @@ function paintFace(ctx, def, art) {
     const hB = Math.min(196, 22 + 5 + measureTextBlock(ctx, def.lower, TXT_W, { start: 24, weight: '600' }) + 12);
     const yB = DH - 12 - hB;
     bottomTop = yB;
+    zoneRects.lower = [BOX_X, yB, BOX_W, hB];
     zonePanel(yB, hB, false);
     chip(ctx, TXT_X, yB + 6, '▼', '下段・補助', 'rgba(190,206,222,.95)', null);
     fitTextBlock(ctx, def.lower, TXT_X, yB + 6 + 22 + 4, TXT_W, hB - 22 - 16,
@@ -281,6 +286,7 @@ function paintFace(ctx, def, art) {
     let yM = Math.round(440 - hM / 2);                    // 中央アンカー
     yM = Math.max(yM, REVEAL_PX + 10);                    // 上段と被らない
     yM = Math.min(yM, bottomTop - 10 - hM);               // 下段と被らない
+    zoneRects.middle = [BOX_X, yM, BOX_W, hM];
     zonePanel(yM, hM, true);
     chip(ctx, TXT_X, yM + 7, '◆', '中段・即時', null, accent);
     fitTextBlock(ctx, def.middle, TXT_X, yM + 7 + 22 + 5, TXT_W, hM - 22 - 20,
@@ -294,6 +300,7 @@ function paintFace(ctx, def, art) {
   ctx.lineWidth = 5;
   roundRect(ctx, 3, 3, DW - 6, DH - 6, 28); ctx.stroke();
   ctx.restore();
+  return zoneRects;
 }
 
 /* defId のテクスチャを返す (キャッシュ) */
@@ -304,7 +311,7 @@ export function faceTexture(def) {
   const cv = document.createElement('canvas');
   cv.width = CARD.texW; cv.height = CARD.texH;
   const ctx = cv.getContext('2d');
-  paintFace(ctx, def, null);
+  faceZones.set(key, paintFace(ctx, def, null));
 
   const tex = new THREE.CanvasTexture(cv);
   tex.colorSpace = THREE.SRGBColorSpace;
@@ -325,6 +332,35 @@ export function faceImageURL(def) {
   faceTexture(def);                       // 未生成なら作らせる
   const cv = faceCanvas.get(def.id);
   return cv ? cv.toDataURL('image/png') : null;
+}
+
+/* 発動カットイン用: 発動したゾーン以外をグレーアウトし、
+   発動ゾーンを金縁で光らせた画像を返す (毎回描き直し、キャッシュしない) */
+export function activationImageURL(def, zone) {
+  faceTexture(def);
+  const base = faceCanvas.get(def.id);
+  if (!base) return null;
+  const cv = document.createElement('canvas');
+  cv.width = base.width; cv.height = base.height;
+  const ctx = cv.getContext('2d');
+  ctx.drawImage(base, 0, 0);
+  /* 全体に暗幕 → 発動ゾーンだけベースから再コピーして金縁で光らせる */
+  ctx.fillStyle = 'rgba(3,5,10,.62)';
+  ctx.fillRect(0, 0, cv.width, cv.height);
+  const rects = faceZones.get(def.id) || {};
+  const r = zone && rects[zone];
+  if (r) {
+    const sx = cv.width / DW, sy = cv.height / DH;
+    const x = r[0] * sx, y = r[1] * sy, w = r[2] * sx, h = r[3] * sy;
+    ctx.drawImage(base, x, y, w, h, x, y, w, h);
+    ctx.strokeStyle = '#ffe9a3';
+    ctx.lineWidth = 5;
+    ctx.shadowColor = '#efd06c';
+    ctx.shadowBlur = 18;
+    ctx.strokeRect(x + 2, y + 2, w - 4, h - 4);
+    ctx.shadowBlur = 0;
+  }
+  return cv.toDataURL('image/png');
 }
 
 /* ---------- 裏面 (全カード共通) ---------- */
@@ -379,12 +415,12 @@ export function backTex() {
   bg.addColorStop(1, 'rgba(8,11,21,.97)');
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, DW, bh);
-  const bsize = 78;
+  const bsize = 88;
   const bbx = DW - bsize - 14, bby = (bh - bsize) / 2;
   ctx.fillStyle = 'rgba(160,190,215,.92)';
   roundRect(ctx, bbx, bby, bsize, bsize, 14); ctx.fill();
   ctx.fillStyle = '#04060e';
-  ctx.font = '900 62px system-ui, sans-serif';
+  ctx.font = '900 72px system-ui, sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText('2', bbx + bsize / 2, bby + bsize / 2 + 3);
   ctx.textAlign = 'left';

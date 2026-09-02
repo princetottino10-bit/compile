@@ -2145,6 +2145,32 @@ function aiHasDefInHand(st, side, defId) {
   return st.players[side].hand.some(uid => st.cards[uid].def === defId);
 }
 
+/* 中段の対象取り効果 (shift/flip/delete/return) が今の盤面で
+   空撃ちになるかの近似判定。fr を仮組みして matchesSel を再利用する。
+   bind 依存のセレクタは判定できないため「対象あり」扱いで除外 */
+function aiMiddleFizzles(st, side, action, d) {
+  const mid = d.eff && d.eff.middle && d.eff.middle.ops;
+  if (!Array.isArray(mid)) return false;
+  const fr = { controller: side, source: action.card, line: action.line,
+    currentLine: action.line, bind: {} };
+  let sawTargeted = false;
+  for (const op of mid) {
+    if (['shift', 'flip', 'delete', 'return'].indexOf(op.op) < 0) continue;
+    const sel = op.select;
+    if (!sel || sel.ref) continue;
+    if (sel.zone === 'sameLineAsRef' || (sel.value && sel.value.eqBindPrinted)) continue;
+    sawTargeted = true;
+    for (let l = 0; l < 3; l++) {
+      for (let s2 = 0; s2 < 2; s2++) {
+        for (const uid of st.lines[l][s2]) {
+          if (matchesSel(st, fr, uid, sel)) return false;   // 対象あり
+        }
+      }
+    }
+  }
+  return sawTargeted;   // 対象取り効果があり、どれも空
+}
+
 function aiActionBias(st, action, side) {
   if (!action) return 0;
   const op = 1 - side;
@@ -2172,6 +2198,11 @@ function aiActionBias(st, action, side) {
   const mine = lineTotal(st, action.line, side), theirs = lineTotal(st, action.line, op);
   const gap = Math.max(0, 10 - mine);
   let v = 0;
+  /* 対象がいない盤面で対象取りの中段を表で切るのは効果の空撃ち。
+     裏でプレイするか温存する方が価値が残る (例: 序盤の SPEED 3) */
+  if (action.faceUp && aiMiddleFizzles(st, side, action, d)) {
+    v -= 12 + aiMiddleValue(d) * 0.6;
+  }
   if (aiIsDshSpecialist(st, side) && W.speedPairStrategy
       && (d.id === 'SPEED_1' || d.id === 'SPEED_4')) {
     const pairOnField = aiHasDefOnField(st, side, 'SPEED_1') || aiHasDefOnField(st, side, 'SPEED_4');
