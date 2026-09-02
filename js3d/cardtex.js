@@ -19,6 +19,8 @@ const DW = 512, DH = 716;
 
 const faceCache = new Map();   // defId -> THREE.CanvasTexture
 const faceZones = new Map();   // defId -> {upper/middle/lower: [x,y,w,h]} (デザイン座標)
+const faceVersion = new Map(); // defId -> 描き直し回数 (アート読込で+1、dataURLキャッシュの無効化キー)
+const urlCache = new Map();    // defId+':'+version(+':'+zone) -> dataURL (PNGエンコードは重い)
 const faceCanvas = new Map();  // defId -> HTMLCanvasElement (プレビュー用)
 const artCache = new Map();    // url -> HTMLImageElement | null (失敗)
 let backTexture = null;
@@ -323,21 +325,46 @@ export function faceTexture(def) {
   loadArt(artUrlFor(def), (img) => {
     paintFace(ctx, def, img);
     tex.needsUpdate = true;
+    faceVersion.set(key, (faceVersion.get(key) || 0) + 1);
   });
   return tex;
+}
+
+/* 対局の切り替わりで、次の対局に不要な分のテクスチャを解放する。
+   keep: 残す defId の集合 (使用プロトコルのカード群) */
+export function pruneFaceCache(keepIds) {
+  const keep = new Set(keepIds);
+  for (const [key, tex] of faceCache) {
+    if (keep.has(key)) continue;
+    tex.dispose();
+    faceCache.delete(key);
+    faceCanvas.delete(key);
+    faceZones.delete(key);
+    faceVersion.delete(key);
+  }
+  for (const key of urlCache.keys()) {
+    if (!keep.has(key.split(':')[0])) urlCache.delete(key);
+  }
 }
 
 /* カード面を画像として取り出す (拡大プレビュー用) */
 export function faceImageURL(def) {
   faceTexture(def);                       // 未生成なら作らせる
+  const key = def.id + ':' + (faceVersion.get(def.id) || 0);
+  if (urlCache.has(key)) return urlCache.get(key);
   const cv = faceCanvas.get(def.id);
-  return cv ? cv.toDataURL('image/png') : null;
+  if (!cv) return null;
+  const url = cv.toDataURL('image/png');
+  urlCache.set(key, url);
+  return url;
 }
 
 /* 発動カットイン用: 発動したゾーン以外をグレーアウトし、
    発動ゾーンを金縁で光らせた画像を返す (毎回描き直し、キャッシュしない) */
 export function activationImageURL(def, zone) {
   faceTexture(def);
+  const key = def.id + ':' + (faceVersion.get(def.id) || 0) + ':' + zone;
+  if (urlCache.has(key)) return urlCache.get(key);
   const base = faceCanvas.get(def.id);
   if (!base) return null;
   const cv = document.createElement('canvas');
@@ -360,7 +387,9 @@ export function activationImageURL(def, zone) {
     ctx.strokeRect(x + 2, y + 2, w - 4, h - 4);
     ctx.shadowBlur = 0;
   }
-  return cv.toDataURL('image/png');
+  const url = cv.toDataURL('image/png');
+  urlCache.set(key, url);
+  return url;
 }
 
 /* ---------- 裏面 (全カード共通) ---------- */

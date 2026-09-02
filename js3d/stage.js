@@ -78,7 +78,10 @@ export function createStage(container) {
     /* キャンバスを PNG で取り出せるようにする (記録・共有用) */
     preserveDrawingBuffer: true
   });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  /* モバイル/小画面はピクセル比と影解像度を落として GPU 負荷を抑える */
+  const lowPower = Math.min(window.innerWidth, window.innerHeight) < 700
+    || (navigator.maxTouchPoints || 0) > 1;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, lowPower ? 1.5 : 2));
   renderer.setSize(container.clientWidth, container.clientHeight);
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -109,7 +112,7 @@ export function createStage(container) {
   const key = new THREE.DirectionalLight(0xdce8ff, 1.35);
   key.position.set(2.6, 8.2, 4.2);
   key.castShadow = true;
-  key.shadow.mapSize.set(2048, 2048);
+  key.shadow.mapSize.set(lowPower ? 1024 : 2048, lowPower ? 1024 : 2048);
   key.shadow.camera.near = 1;
   key.shadow.camera.far = 22;
   key.shadow.camera.left = -7; key.shadow.camera.right = 7;

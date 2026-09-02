@@ -311,7 +311,11 @@ function burstFlame(scene, laneX, color, ms) {
       p.sp.position.x += Math.sin(raw * p.spd * 6 + p.wob) * 0.006;
       p.sp.material.opacity = 0.9 * (1 - raw);
     }
-  }, TW.Ease.linear, () => { scene.remove(group); });
+  }, TW.Ease.linear, () => {
+    scene.remove(group);
+    mat.dispose();
+    for (const p of sprites) p.sp.material.dispose();
+  });
 }
 
 /* 結晶: 床から生えて消える鋭い柱 */
@@ -343,7 +347,8 @@ function burstCrystal(scene, laneX, color, ms) {
     }
   }, TW.Ease.linear, () => {
     scene.remove(group);
-    for (const m of shards) m.geometry.dispose();
+    for (const m of shards) { m.geometry.dispose(); m.material.dispose(); }
+    mat.dispose();
   });
 }
 
@@ -369,7 +374,10 @@ function burstMist(scene, laneX, color, ms) {
       p.sp.position.y += p.vy * 0.014;
       p.sp.material.opacity = p.peak * Math.sin(Math.PI * raw);
     }
-  }, TW.Ease.linear, () => { scene.remove(group); });
+  }, TW.Ease.linear, () => {
+    scene.remove(group);
+    for (const p of sprites) p.sp.material.dispose();
+  });
 }
 
 /* 波紋: 同心のリングが層になって昇る */
@@ -400,7 +408,7 @@ function burstRings(scene, laneX, color, ms) {
     }
   }, TW.Ease.linear, () => {
     scene.remove(group);
-    for (const m of rings) m.geometry.dispose();
+    for (const m of rings) { m.geometry.dispose(); m.material.dispose(); }
   });
 }
 
@@ -429,6 +437,8 @@ function burstStreaks(scene, laneX, color, ms) {
   }, TW.Ease.linear, () => {
     scene.remove(group);
     geo.dispose();
+    mat.dispose();
+    for (const p of streaks) p.m.material.dispose();
   });
 }
 

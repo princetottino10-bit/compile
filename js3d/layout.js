@@ -59,12 +59,13 @@ export function transitSlot(line, side, me) {
 }
 
 /* 移動中 (行き先がトラッシュ/手札/山札): 行き先方向の上空で待機 */
-export function transitPileSlot(dest, side, me) {
+export function transitPileSlot(dest, side, me, idx) {
   const near = side === me;
   const dir = near ? 1 : -1;
   const x = (dest === 'trash' ? -2.6 : 2.6) * dir;
+  const k = idx || 0;
   return {
-    pos: [x, 1.0, dir * 2.0],
+    pos: [x - dir * k * 0.22, 1.0 + k * 0.02, dir * 2.0],
     rot: [dir * -0.16, near ? 0 : Math.PI, dest === 'trash' ? -0.06 : 0.06],
     scale: 1.0
   };

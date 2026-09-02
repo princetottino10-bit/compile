@@ -88,6 +88,13 @@ export function pushLog(lines) {
  * 選択ダイアログ: engine の request を人間に聞く
  *   resolve には picks 配列を渡す。
  * ------------------------------------------------------------------------- */
+let activeModalFinish = null;
+
+/* 外部要因 (オンラインの状態更新等) で表示中のモーダルを破棄する */
+export function cancelChoice(val) {
+  if (activeModalFinish) activeModalFinish(val);
+}
+
 export function askChoice(req, ctx) {
   const wrap = $('#modal');
   const body = $('#modalBody');
@@ -97,11 +104,13 @@ export function askChoice(req, ctx) {
   wrap.classList.remove('peek');
   return new Promise((resolve) => {
     const finish = (picks) => {
+      activeModalFinish = null;
       wrap.classList.remove('show');
       wrap.classList.remove('peek');
       body.innerHTML = '';
       resolve(picks);
     };
+    activeModalFinish = finish;
 
     title.textContent = reqText(req, ctx.cardName) || labelOf(req.kind);
     body.innerHTML = '';

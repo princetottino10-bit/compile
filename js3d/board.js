@@ -31,7 +31,11 @@ export function locOf(st, uid) {
     /* トラッシュ/手札/山札へ向かう途中 (uncover 効果の解決待ち等) も
        消さずに行き先方向で待機させる */
     if (dest === 'trash' || dest === 'hand' || dest === 'deck') {
-      return { zone: 'transitPile', dest, side: c.owner };
+      const peers = (st.commitStack || []).filter((u) => {
+        const o = st.cards[u];
+        return o && o.zone === 'committed' && o.commitDest === dest && o.owner === c.owner;
+      });
+      return { zone: 'transitPile', dest, side: c.owner, idx: Math.max(0, peers.indexOf(uid)) };
     }
     return { zone: 'limbo' };
   }
@@ -71,7 +75,7 @@ export function visualFingerprint(st) {
   const up = [];
   for (const uid of Object.keys(st.cards)) if (st.cards[uid].faceUp) up.push(uid);
   parts.push(up.sort().join(','));
-  parts.push((st.commitStack || []).join(','));
+  parts.push((st.commitStack || []).map(u => u + ':' + ((st.cards[u] || {}).commitDest || '')).join(','));
   return parts.join('|');
 }
 
@@ -166,7 +170,7 @@ export function createBoard(stage, defIndex, me, hooks) {
     if (!l) return null;
     if (l.zone === 'field') return LAYOUT.stackSlot(l.line, l.side, l.idx, me);
     if (l.zone === 'transit') return LAYOUT.transitSlot(l.line, l.side, me);
-    if (l.zone === 'transitPile') return LAYOUT.transitPileSlot(l.dest, l.side, me);
+    if (l.zone === 'transitPile') return LAYOUT.transitPileSlot(l.dest, l.side, me, l.idx);
     if (l.zone === 'hand') {
       const n = st.players[l.side].hand.length;
       return l.side === me ? LAYOUT.handSlot(l.idx, n) : LAYOUT.oppHandSlot(l.idx, n);

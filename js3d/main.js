@@ -11,7 +11,7 @@ import { runSetup } from './setup.js';
 import { runTitle } from './title.js';
 import * as ROOM from './room.js';
 import { runRoomLobby } from './roomui.js';
-import { faceImageURL, activationImageURL, ART_SETS } from './cardtex.js';
+import { faceImageURL, activationImageURL, pruneFaceCache, ART_SETS } from './cardtex.js';
 import * as FX from './fx.js';
 import { buildArena } from './arena.js';
 import { initAudio, sfx, setMuted, isMuted, startBgm, stopBgm, setBgmTension, bgmActive } from './audio.js';
@@ -155,6 +155,12 @@ async function boot() {
     }
   }
 
+  /* 前の対局で使ったプロトコルのテクスチャを解放してから始める */
+  const keepIds = ['__unknown__'];
+  for (const name of p0.concat(p1)) {
+    for (const id of Object.keys(defIndex)) if (defIndex[id].proto === name) keepIds.push(id);
+  }
+  pruneFaceCache(keepIds);
   const res = Engine.newGame({ seed: (Math.random() * 1e9) | 0, p0, p1, first: 0 });
   cur = res;
   window.__3d = {
@@ -661,9 +667,9 @@ function roomValOf(defId) {
 
 /* サーバーの publicState を受けて、差分アニメ + HUD 更新まで行う */
 async function roomApplyView(rm, instant) {
-  /* サーバー側の状態が進んだら、進行中の盤面ピックは破棄して取り直す
-     (放置すると pickBar が残り、resolve されない Promise が宙に浮く) */
-  cancelBoardPick();
+  /* サーバー側の状態が進んだら、進行中の待ち受けUI (盤面ピック/並べ替え/
+     モーダル) は破棄して取り直す (放置すると古い req.id で答えて desync する) */
+  cancelPendingAsk();
   const mayContinue = !!(roomRm && roomRm.code === rm.code && roomRm.request);
   const entries = roomTracker.take(rm, mayContinue, roomValOf);
   roomRm = rm;
@@ -896,6 +902,7 @@ async function askUser(req) {
   if (req.kind === 'arrange' && Array.isArray(req.current) && req.current.length === 3) {
     for (let hop = 0; hop < 10; hop++) {
       const picks = await arrangeOnBoard(req);
+      if (picks === PICK_CANCEL) return PICK_CANCEL;
       if (picks) return picks;
       const m = await UI.askChoice(req, choiceCtx());
       if (m !== '__board__') return m;      // 「盤面で選ぶに戻る」でループ
@@ -914,6 +921,14 @@ async function askUser(req) {
    候補をハイライトしてタップで選ばせる。null ならモーダルへ */
 let boardPick = null;
 const PICK_CANCEL = '__pickCancel__';   // 外部要因 (ポーリング等) による中断
+let activeArrange = null;               // 表示中の並べ替えオーバーレイ
+
+/* 表示中の待ち受けUI (盤面ピック / 並べ替え / モーダル) をすべて破棄する */
+function cancelPendingAsk() {
+  cancelBoardPick();
+  if (activeArrange) activeArrange.cancel();
+  UI.cancelChoice(PICK_CANCEL);
+}
 
 function cancelBoardPick() {
   if (!boardPick) return;
@@ -1124,10 +1139,12 @@ function arrangeOnBoard(req) {
     const onResize = () => render();
     window.addEventListener('resize', onResize);
     const finish = (picks) => {
+      activeArrange = null;
       window.removeEventListener('resize', onResize);
       ov.remove();
       resolve(picks);
     };
+    activeArrange = { cancel: () => finish(PICK_CANCEL) };
 
     const render = () => {
       const isIdentity = perm[0] === 0 && perm[1] === 1 && perm[2] === 2;
@@ -1250,10 +1267,12 @@ function checkRevealed(st) {
 let relayoutTimer = null;
 window.addEventListener('resize', () => {
   clearTimeout(relayoutTimer);
-  relayoutTimer = setTimeout(() => {
+  const attempt = (n) => {
     const st = shown();
-    if (st && board && !busy) board.syncInstant(st);
-  }, 220);
+    if (st && board && !busy) { board.syncInstant(st); return; }
+    if (n < 20) relayoutTimer = setTimeout(() => attempt(n + 1), 300);   // 演出中は後で再試行
+  };
+  relayoutTimer = setTimeout(() => attempt(0), 220);
 });
 
 /* ---------- HUD ---------- */
