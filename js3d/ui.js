@@ -92,9 +92,13 @@ export function askChoice(req, ctx) {
   const wrap = $('#modal');
   const body = $('#modalBody');
   const title = $('#modalTitle');
+  const peek = $('#modalPeek');
+  if (peek) peek.onclick = () => wrap.classList.toggle('peek');
+  wrap.classList.remove('peek');
   return new Promise((resolve) => {
     const finish = (picks) => {
       wrap.classList.remove('show');
+      wrap.classList.remove('peek');
       body.innerHTML = '';
       resolve(picks);
     };
@@ -215,18 +219,28 @@ export function turnCutIn(mine) {
 
 /* 効果発動の帯 (カード名 + 効果テキスト) */
 let fxTimer = null;
-export function showEffect(name, text, color, effectTypes) {
+const ZONE_CHIP = {
+  upper: ['▲ 上段・常在', 'rgba(150,200,255,.95)'],
+  middle: ['◆ 中段・即時', null],
+  lower: ['▼ 下段・補助', 'rgba(190,206,222,.95)']
+};
+
+export function showEffect(name, text, color, effectTypes, zone) {
   const el = $('#fxBanner');
   if (!el) return;
   if (!name) { el.classList.remove('show'); return; }
   const accent = color || '#63f3ff';
   el.style.setProperty('--accent', accent);
   const icons = (effectTypes || []).slice(0, 3).map(t => svgIcon(t, accent, 15)).join('');
-  el.innerHTML = '<span class="fx-name">' + (icons ? icons + ' ' : '') + name + '</span>' +
+  const chip = zone && ZONE_CHIP[zone]
+    ? '<span class="fx-zone" style="' + (ZONE_CHIP[zone][1] ? 'color:' + ZONE_CHIP[zone][1] : '') + '">'
+      + ZONE_CHIP[zone][0] + '</span>'
+    : '';
+  el.innerHTML = '<span class="fx-name">' + (icons ? icons + ' ' : '') + name + '</span>' + chip +
     '<span class="fx-text">' + (text || '') + '</span>';
   el.classList.add('show');
   clearTimeout(fxTimer);
-  fxTimer = setTimeout(() => el.classList.remove('show'), 2600);
+  fxTimer = setTimeout(() => el.classList.remove('show'), 3400);
 }
 
 /* 決着のカットイン */

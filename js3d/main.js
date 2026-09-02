@@ -163,6 +163,7 @@ async function boot() {
     play: (uid, line, faceUp) => step({ type: 'play', card: uid, line, faceUp: faceUp !== false }),
     legal: () => Engine.legalActions(cur.state),
     diag: () => ({ busy, selectedUid, tweens: TW.activeCount(), marks: window.__bootMarks }),
+    arrange: (req) => arrangeOnBoard(req),
     /* 演出だけを再生して確認する (盤面の状態は変えない) */
     testCompile: (line, side) => {
       const st = shown();
@@ -653,7 +654,7 @@ async function roomDrainRequest() {
     while (cur && cur.requests.length && shown().winner === null && guard++ < 40) {
       const req = cur.requests[0];
       UI.setPrompt(req.prompt || '選択してください', 'ask');
-      const picks = await UI.askChoice(req, choiceCtx());
+      const picks = await askUser(req);
       UI.setPrompt('');
       await roomStep({ type: 'choose', id: req.id, picks });
     }
@@ -761,8 +762,14 @@ async function cueFor(step, st) {
   const card = st.cards[uid];
   const def = card && defIndex[card.def];
   if (!def) return;
-  const text = def.middle || def.upper || def.lower;
-  if (text) UI.showEffect(def.proto + ' ' + def.value, text, def.color, def.effectTypes);
+  /* trace のメッセージからどの段が発動したかを読み取る */
+  const msg = step.msg || '';
+  let zone = null;
+  if (msg.indexOf('中段') >= 0) zone = 'middle';
+  else if (msg.indexOf('上段') >= 0) zone = 'upper';
+  else if (msg.indexOf('下段') >= 0) zone = 'lower';
+  const text = zone ? def[zone] : (def.middle || def.upper || def.lower);
+  if (text) UI.showEffect(def.proto + ' ' + def.value, text, def.color, def.effectTypes, zone);
   await board.pulse(uid, def.color, 380);
 }
 
@@ -811,6 +818,86 @@ async function step(action) {
 }
 
 /* 選択要求を処理し切る */
+/* 選択リクエストをユーザーに聞く。並べ替えは盤面の直接タップを優先し、
+   使えない状況ではモーダルにフォールバックする */
+async function askUser(req) {
+  if (req.kind === 'arrange' && Array.isArray(req.current) && req.current.length === 3) {
+    const picks = await arrangeOnBoard(req);
+    if (picks) return picks;
+  }
+  return UI.askChoice(req, choiceCtx());
+}
+
+/* 並べ替え: 対象側のプロトコルパネルにチップを重ね、2枚タップで入れ替える。
+   exact === 'transposition' (1回だけ入れ替え) は2枚目のタップで即確定。
+   戻り値は picks (新しい位置ごとの旧インデックス) か、null (モーダルへ)。 */
+function arrangeOnBoard(req) {
+  const targetSide = req.target !== undefined ? req.target : ME;
+  const list = (panels && panels.panels || []).filter(p => p.side === targetSide);
+  if (list.length !== 3 || !stage) return Promise.resolve(null);
+
+  const ov = document.createElement('div');
+  ov.id = 'arrOv';
+  document.body.appendChild(ov);
+
+  const rect = stage.renderer.domElement.getBoundingClientRect();
+  const toScreen = (pos) => {
+    const v = new THREE.Vector3(pos.x, pos.y, pos.z).project(stage.camera);
+    return [rect.left + (v.x * 0.5 + 0.5) * rect.width,
+            rect.top + (-v.y * 0.5 + 0.5) * rect.height];
+  };
+
+  const perm = [0, 1, 2];            // 位置 -> 旧インデックス
+  const single = req.exact === 'transposition';
+  let sel = -1;
+
+  return new Promise((resolve) => {
+    const finish = (picks) => { ov.remove(); resolve(picks); };
+
+    const render = () => {
+      const isIdentity = perm[0] === 0 && perm[1] === 1 && perm[2] === 2;
+      ov.innerHTML =
+        '<div class="arr-hint">' +
+          (single ? '入れ替える2つのプロトコルをタップ' : 'タップで2つを入れ替え。よければ確定') +
+        '</div>' +
+        list.map((p) => {
+          const line = p.line;
+          const [x, y] = toScreen(p.group.position);
+          const name = req.current[perm[line]];
+          const done = req.compiled && req.compiled[perm[line]];
+          return '<button type="button" class="arr-chip' + (sel === line ? ' on' : '') +
+            (done ? ' done' : '') + '" data-line="' + line + '"' +
+            ' style="left:' + x + 'px;top:' + y + 'px">' +
+            (done ? '✓ ' : '') + name + '</button>';
+        }).join('') +
+        '<div class="arr-bar">' +
+          (single ? '' : '<button type="button" class="arr-btn ok" id="arrOk"' + (isIdentity ? ' disabled' : '') + '>確定</button>') +
+          '<button type="button" class="arr-btn" id="arrReset">やり直し</button>' +
+          '<button type="button" class="arr-btn" id="arrList">リストで選ぶ</button>' +
+        '</div>';
+
+      ov.querySelectorAll('.arr-chip').forEach((b) => {
+        b.onclick = () => {
+          const line = +b.dataset.line;
+          if (sel === -1) { sel = line; render(); return; }
+          if (sel === line) { sel = -1; render(); return; }
+          const t = perm[sel]; perm[sel] = perm[line]; perm[line] = t;
+              sel = -1;
+          if (single) { finish(perm.slice()); return; }
+          render();
+        };
+      });
+      const ok = ov.querySelector('#arrOk');
+      if (ok) ok.onclick = () => finish(perm.slice());
+      ov.querySelector('#arrReset').onclick = () => {
+        perm[0] = 0; perm[1] = 1; perm[2] = 2; sel = -1; render();
+      };
+      ov.querySelector('#arrList').onclick = () => finish(null);
+    };
+    render();
+  });
+}
+
 async function drainRequests() {
   if (roomMode) { await roomDrainRequest(); return; }
   let guard = 0;
@@ -819,7 +906,7 @@ async function drainRequests() {
     let picks;
     if (req.player === ME && !demoMode) {
       UI.setPrompt(req.prompt || '選択してください', 'ask');
-      picks = await UI.askChoice(req, choiceCtx());
+      picks = await askUser(req);
     } else {
       UI.setPrompt('相手が選択しています…', 'wait');
       await TW.wait(260);

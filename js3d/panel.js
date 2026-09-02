@@ -177,6 +177,13 @@ export function createPanels(stage, me) {
   }
 
   function repaint(p, info) {
+    /* プロトコルの並べ替えでこのパネルの担当が変わったら、
+       前のプロトコルのアートを捨てて読み直す */
+    if (p.artName !== info.name) {
+      p.artName = info.name;
+      p.art.loading = null;
+      p.art.compiled = null;
+    }
     const url = ART_SETS.has(info.set) ? protoArtUrl(info.name, false) : null;
     const glitchUrl = ART_SETS.has(info.set) ? protoArtUrl(info.name, true) : null;
 
@@ -187,6 +194,7 @@ export function createPanels(stage, me) {
 
     if (url && !p.art.loading) {
       loadArt(url, (img) => {
+        if (p.artName !== info.name) return;   // 読込中にまた入れ替わった
         p.art.loading = img;
         paint(p.loading.ctx, { ...info, compiled: false }, img);
         p.loading.tex.needsUpdate = true;
@@ -194,6 +202,7 @@ export function createPanels(stage, me) {
     }
     if (glitchUrl && !p.art.compiled) {
       loadArt(glitchUrl, (img) => {
+        if (p.artName !== info.name) return;
         p.art.compiled = img;
         paint(p.compiled.ctx, { ...info, compiled: true }, img);
         p.compiled.tex.needsUpdate = true;
