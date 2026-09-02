@@ -2897,7 +2897,7 @@ function aiActionNormal(state) {
 
 /* --- Hard AI (2-ply minimax + alpha-beta) --- */
 
-function aiActionHard(state) {
+function aiActionHard(state, collect) {
   const me = state.turn;
   const acts = aiDecisionActions(state);
   if (!acts.length) return null;
@@ -2946,7 +2946,13 @@ function aiActionHard(state) {
         val = minimaxMin(s1, me, alpha, Infinity, deadline);
       }
       val += item.bias;
+      item.val2 = val;
       if (val > alpha) { alpha = val; best2 = item.a; }
+    }
+    if (collect) {
+      for (const item of viable) {
+        collect.push({ a: item.a, val: item.val2 !== undefined ? item.val2 : item.val1 });
+      }
     }
     return best2 || best;
   } finally { TRACE = wasTrace; AI_SEARCH_DEADLINE = previousDeadline; }
@@ -3127,14 +3133,58 @@ function aiInformationState(state, side, salt) {
     if (s.pending && s.pending.base) applyKnowledge(s.pending.base);
   }
   applyKnowledge(view);
+  view.__unknownCount = groups[0].length + groups[1].length;
   return view;
 }
 
+/* PIMC (Perfect Information Monte Carlo):
+   相手の非公開カードの並びを salt 違いで K 通りサンプリングし、
+   各世界で探索した最善手の多数決を取る。1つの決定化に過剰適応した
+   「読み切ったつもりの手」を避けられる。思考予算は K 等分する */
+let AI_PIMC = 1;
+function setAiPimc(k) { AI_PIMC = Math.max(1, Math.min(9, k | 0)); }
+
+function aiActionPimc(state) {
+  const me = state.turn;
+  const baseView = aiInformationState(state, me);
+  if (AI_PIMC <= 1 || !baseView.__unknownCount) return aiActionHard(baseView);
+  /* 基準世界ではフル予算で深く探索し、僅差の上位候補だけを
+     別の決定化で1手評価し直して平均する。深さを犠牲にせず、
+     「基準世界の並びにしか通用しない手」を退けられる */
+  const collect = [];
+  const best = aiActionHard(baseView, collect);
+  if (collect.length < 2) return best;
+  collect.sort((a, b) => b.val - a.val);
+  const top = collect.slice(0, 3).filter(t => t.val > collect[0].val - 60);
+  if (top.length < 2) return best;
+
+  const wasTrace = TRACE; TRACE = false;
+  try {
+    const sums = top.map(t => t.val);
+    const counts = top.map(() => 1);
+    for (let k = 1; k < AI_PIMC; k++) {
+      const view = aiInformationState(state, me, k);
+      for (let i = 0; i < top.length; i++) {
+        const res = applyAndResolve(view, top[i].a, smartPicks);
+        counts[i]++;
+        if (!res || res.error || res.requests.length) { sums[i] += -1e6; continue; }
+        sums[i] += aiScore(res.state, me) + aiActionBias(view, top[i].a, me)
+          + aiTransitionScore(view, res, me);
+      }
+    }
+    let bi = 0;
+    for (let i = 1; i < top.length; i++) {
+      if (sums[i] / counts[i] > sums[bi] / counts[bi]) bi = i;
+    }
+    return top[bi].a;
+  } finally { TRACE = wasTrace; }
+}
+
 function aiAction(state) {
-  const view = aiInformationState(state, state.turn);
   if (AI_LEVEL >= 2) {
-    return aiActionHard(view);
+    return aiActionPimc(state);
   }
+  const view = aiInformationState(state, state.turn);
   if (AI_LEVEL >= 1) return aiActionNormal(view);
   return aiActionEasy(view);
 }
@@ -3190,7 +3240,7 @@ function aiAnswer(state, req) {
 /* ---------- 公開 API ---------- */
 
 const Engine = {
-  init, newGame, apply, legalActions, setTrace, setAiLevel, setAiThinkBudget, setAiBreadth, setAiWeights, setAiSpecialist, setAiSpecialistWeights,
+  init, newGame, apply, legalActions, setTrace, setAiLevel, setAiThinkBudget, setAiBreadth, setAiPimc, setAiWeights, setAiSpecialist, setAiSpecialistWeights,
   lineTotal, cardValue, compilableLines, canPlay, locate,
   ai: { action: aiAction, answer: aiAnswer, score: aiScore, transitionScore: aiTransitionScore, compilePassChance: aiCompilePassChance, informationState: aiInformationState, randomPicks, smartPicks },
   get defs() { return DEFS; },

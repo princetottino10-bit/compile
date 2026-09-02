@@ -57,6 +57,8 @@ function parseArgs(argv) {
     else if (a === '--budget') o.budget = +argv[++i];
     else if (a === '--seed') o.seed = +argv[++i];
     else if (a === '--breadth') o.breadth = argv[++i].split(',').map(Number);
+    else if (a === '--pimc') o.pimc = +argv[++i];
+    else if (a === '--baseline-pimc') o.baselinePimc = +argv[++i];
     else if (a === '--baseline-breadth') o.baselineBreadth = argv[++i].split(',').map(Number);
     // 特定プロトコルが絡む編成だけに絞る。全体では薄まる効果を狙い撃ちで測るのに使う
     else if (a === '--filter') o.filter = argv[++i].split(',').map(s => s.trim().toUpperCase());
@@ -111,6 +113,8 @@ if (!isMainThread) {
   if (cfg.budget && Cand.setAiThinkBudget) Cand.setAiThinkBudget(cfg.budget);
   if (cfg.budget && Base.setAiThinkBudget) Base.setAiThinkBudget(cfg.budget);
   if (cfg.breadth && Cand.setAiBreadth) Cand.setAiBreadth.apply(null, cfg.breadth);
+  if (cfg.pimc && Cand.setAiPimc) Cand.setAiPimc(cfg.pimc);
+  if (cfg.baselinePimc && Base.setAiPimc) Base.setAiPimc(cfg.baselinePimc);
   if (cfg.weights && Cand.setAiWeights) Cand.setAiWeights(cfg.weights);
   if (cfg.baselineBreadth && Base.setAiBreadth) Base.setAiBreadth.apply(null, cfg.baselineBreadth);
   if (cfg.baselineWeights && Base.setAiWeights) Base.setAiWeights(cfg.baselineWeights);
@@ -203,6 +207,7 @@ for (const chunk of chunks) {
   const w = new Worker(__filename, {
     workerData: { candidateSrc, baselineSrc, cards, effects, jobs: chunk, cfg: {
       budget: opt.budget, breadth: opt.breadth, weights: opt.weights,
+      pimc: opt.pimc, baselinePimc: opt.baselinePimc,
       baselineBreadth: opt.baselineBreadth, baselineWeights: opt.baselineWeights,
     } },
   });
