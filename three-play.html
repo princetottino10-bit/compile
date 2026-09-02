@@ -298,6 +298,19 @@
   #modal.peek #modalPeek{border-color:var(--gold);color:var(--gold);pointer-events:auto;}
   #modalCard{transition:opacity .18s ease-out,transform .2s cubic-bezier(.16,1,.3,1);}
 
+  /* ---------- 手札公開の帯 ---------- */
+  #revealOv{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.96);z-index:34;
+    padding:16px 20px 12px;border-radius:16px;background:rgba(6,9,18,.96);
+    border:1px solid rgba(99,243,255,.3);box-shadow:0 30px 90px rgba(0,0,0,.75);
+    opacity:0;pointer-events:none;transition:opacity .18s,transform .2s cubic-bezier(.16,1,.3,1);}
+  #revealOv.show{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1);}
+  #revealOv .rv-title{font:800 12px/1 system-ui;letter-spacing:.12em;color:#cfefff;margin-bottom:10px;}
+  #revealOv .rv-cards{display:flex;gap:8px;max-width:86vw;overflow-x:auto;}
+  #revealOv figure{margin:0;text-align:center;}
+  #revealOv img{height:26vh;max-height:230px;border-radius:8px;display:block;}
+  #revealOv figcaption{font:600 10px/1.6 system-ui;color:var(--dim);}
+  #revealOv .rv-hint{margin-top:8px;font:600 10px/1 system-ui;color:var(--dim);text-align:center;}
+
   /* ---------- 盤面の並べ替えチップ ---------- */
   #arrOv{position:fixed;inset:0;z-index:33;pointer-events:none;}
   .arr-hint{position:fixed;left:50%;top:64px;transform:translateX(-50%);

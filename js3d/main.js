@@ -758,8 +758,9 @@ const MAX_STEPS = 14;          // 長い連鎖はここで打ち切って最終�
 
 function meaningfulSteps(prev, res) {
   if (!res || !res.trace || !res.trace.length) return [];
+  const shownFp = visualFingerprint(prev);
   const steps = [];
-  let last = visualFingerprint(prev);
+  let last = shownFp;
   for (const t of res.trace) {
     if (!t.st) continue;
     const fp = visualFingerprint(t.st);
@@ -769,7 +770,13 @@ function meaningfulSteps(prev, res) {
       continue;
     }
     last = fp;
-    steps.push({ st: t.st, uid: t.uid, msg: t.msg });
+    steps.push({ st: t.st, fp, uid: t.uid, msg: t.msg });
+  }
+  /* 選択に答えると、エンジンはアクションを基準状態から再実行する。
+     頭から再生すると盤面が巻き戻って見えるので、いま画面に出ている絵と
+     一致する最後のステップまで早送りし、その続きだけを再生する */
+  for (let i = steps.length - 1; i >= 0; i--) {
+    if (steps[i].fp === shownFp) return steps.slice(i + 1);
   }
   return steps;
 }
@@ -978,9 +985,24 @@ async function afterTurn() {
   }
 }
 
+/* 手札公開 (PSYCHIC 0 等): st.revealed の変化を検知して公開ハンドを見せる */
+let lastRevealTag = '';
+function checkRevealed(st) {
+  const r = st && st.revealed;
+  if (!r || r.player === ME || !Array.isArray(r.cards)) return;
+  const tag = r.player + ':' + r.cards.join(',');
+  if (tag === lastRevealTag) return;
+  lastRevealTag = tag;
+  UI.showRevealedHand(r.cards.map((id) => {
+    const d = defIndex[id];
+    return d ? { img: faceImageURL(d), label: d.proto + ' ' + d.value } : null;
+  }).filter(Boolean));
+}
+
 /* ---------- HUD ---------- */
 function refreshHud() {
   const st = shown();
+  checkRevealed(st);
   if (ctrlMarker) {
     /* コントロール変種を使わない対戦ではマーカーを隠す */
     ctrlMarker.group.visible = st.useControl !== false;
@@ -1076,9 +1098,20 @@ function choiceCtx() {
         const name = cardName(p[0]) || '裏向きのカード';
         return name + ' <small>→ ライン' + (+p[1] + 1) + ' / ' + (p[2] === 'u' ? '表向き' : '裏向き') + '</small>';
       }
-      const c = shown().cards[cand];
+      const st = shown();
+      const c = st.cards[cand];
       const d = c && defIndex[c.def];
-      if (!d) return '裏向きのカード';
+      const visible = c && (c.faceUp || ((c.knownTo || 0) & (1 << ME)));
+      if (!d || !visible) {
+        /* 中身は伏せたまま、どのカードかは位置で区別できるようにする */
+        const l = locOf(st, cand);
+        if (l && l.zone === 'field') {
+          const proto = st.players[l.side].protocols[l.line];
+          return '裏向きのカード <small>' + (l.side === ME ? '自分' : '相手') + 'の ' +
+            (proto ? proto.name : 'ライン' + (l.line + 1)) + '・下から' + (l.idx + 1) + '枚目</small>';
+        }
+        return '裏向きのカード';
+      }
       return d.proto + ' ' + d.value;
     },
     lineLabel: (l) => shown().players[ME].protocols[l].name,

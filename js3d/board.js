@@ -348,15 +348,17 @@ export function createBoard(stage, defIndex, me, hooks) {
   /* ---------- コンパイル演出 ----------
      ライン上のカードは差分移動ではなく、その場で砕いて散らす。 */
   function detectCompiles(prev, next) {
+    /* ライン位置ではなくプロトコル名で比較する。
+       並べ替えでコンパイル済みが別ラインへ移っても誤発火しない */
     const out = [];
     for (let side = 0; side < 2; side++) {
-      for (let line = 0; line < 3; line++) {
-        const before = prev.players[side].protocols[line];
-        const after = next.players[side].protocols[line];
-        if (before && after && !before.compiled && after.compiled) {
-          out.push({ side, line, name: after.name });
+      const before = {};
+      for (const pr of prev.players[side].protocols) before[pr.name] = pr.compiled;
+      next.players[side].protocols.forEach((pr, line) => {
+        if (pr.compiled && before[pr.name] === false) {
+          out.push({ side, line, name: pr.name });
         }
-      }
+      });
     }
     return out;
   }

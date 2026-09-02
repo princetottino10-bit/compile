@@ -245,6 +245,26 @@ export function showEffect(name, text, color, effectTypes, zone) {
   fxTimer = setTimeout(() => el.classList.remove('show'), 3400);
 }
 
+/* 手札公開の帯: 公開されたカードを並べて見せる (タップか6秒で閉じる) */
+export function showRevealedHand(items) {
+  if (!items || !items.length) return;
+  let el = $('#revealOv');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'revealOv';
+    document.body.appendChild(el);
+  }
+  el.innerHTML = '<div class="rv-title">相手の手札が公開された</div>' +
+    '<div class="rv-cards">' + items.map((it) =>
+      '<figure><img alt="" src="' + it.img + '"><figcaption>' + it.label + '</figcaption></figure>'
+    ).join('') + '</div><div class="rv-hint">タップで閉じる</div>';
+  el.classList.add('show');
+  const close = () => el.classList.remove('show');
+  el.onclick = close;
+  clearTimeout(el._t);
+  el._t = setTimeout(close, 6000);
+}
+
 /* 決着のカットイン */
 export function resultCutIn(win) {
   const el = $('#resultCut');

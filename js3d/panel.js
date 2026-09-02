@@ -226,10 +226,13 @@ export function createPanels(stage, me) {
   function update(rows) {
     for (const p of panels) {
       const info = rows[p.line][p.side];
+      /* 並べ替えで担当プロトコルが変わった場合は「コンパイルの反転演出」
+         ではないので、アニメなしで面を合わせる */
+      const nameChanged = p.artName !== undefined && p.artName !== info.name;
       repaint(p, info);
-      /* 初回はアニメなしで面を合わせる */
-      if (p.shown === null) {
+      if (p.shown === null || nameChanged) {
         p.group.rotation.x = info.compiled ? Math.PI : 0;
+        p.group.position.y = 0.012;
       } else if (p.shown !== info.compiled) {
         flip(p, info.compiled);
       }
