@@ -172,6 +172,7 @@ async function boot() {
     diag: () => ({ busy, selectedUid, tweens: TW.activeCount(), marks: window.__bootMarks }),
     arrange: (req) => arrangeOnBoard(req),
     pickTest: (req) => pickOnBoard(req),
+    fp: (st) => visualFingerprint(st),
     /* 演出だけを再生して確認する (盤面の状態は変えない) */
     testCompile: (line, side) => {
       const st = shown();
@@ -670,7 +671,10 @@ async function roomApplyView(rm, instant) {
   /* サーバー側の状態が進んだら、進行中の待ち受けUI (盤面ピック/並べ替え/
      モーダル) は破棄して取り直す (放置すると古い req.id で答えて desync する) */
   cancelPendingAsk();
-  const mayContinue = !!(roomRm && roomRm.code === rm.code && roomRm.request);
+  /* 続き再生は同じルームなら常に試す。従来は「自分宛リクエスト継続中」に
+     限定していたため、相手の多段解決ではポーリングのたびにアクション頭から
+     フル再生され、盤面が巻き戻って見えた。安全性は traceKey の前方一致が担保 */
+  const mayContinue = !!(roomRm && roomRm.code === rm.code);
   const entries = roomTracker.take(rm, mayContinue, roomValOf);
   roomRm = rm;
   const prev = cur ? shown() : null;
