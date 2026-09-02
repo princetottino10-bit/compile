@@ -2895,6 +2895,56 @@ function aiActionNormal(state) {
   return best;
 }
 
+/* --- 終盤ソルバー ---
+   自分が2プロトコル済みのとき、「どの相手応手に対しても次の自分の
+   コンパイル判定で3本目が確定する」手を実際にエンジンを回して探す。
+   apply は相手ターン開始のコンパイル判定まで自動進行するため、
+   winner === me を確かめるだけで読み切りになる。
+   相手の選択解決は smartPicks 近似 (厳密解ではないが実戦上十分)。 */
+function aiForcedWinAction(state, me, deadline) {
+  const acts = legalActions(state);
+  for (const a of acts) {
+    if (deadline && aiNow() > deadline) return null;
+    const res = applyAndResolve(state, a, smartPicks);
+    if (!res || res.error || res.requests.length) continue;
+    const s1 = res.state;
+    if (s1.winner === me) return a;                     // 効果や相手の山切れで即決着
+    if (s1.winner !== null) continue;
+    if (s1.turn !== 1 - me || s1.phase !== 'action') continue;
+    let all = true;
+    for (const r of legalActions(s1)) {
+      if (deadline && aiNow() > deadline) { all = false; break; }
+      const r2 = applyAndResolve(s1, r, smartPicks);
+      if (!r2 || r2.error || r2.requests.length || r2.state.winner !== me) { all = false; break; }
+    }
+    if (all) return a;
+  }
+  return null;
+}
+
+/* 逆向き: この手を指すと、相手がどう返してきても止められない即負け筋が
+   残るかどうか。s1 (自分の手を指した直後) を渡す。
+   相手の応手 r の後、自分の全応手 q でも相手の勝ちを防げなければ true */
+function aiIsLosingAfter(s1, me, deadline) {
+  const op = 1 - me;
+  for (const r of legalActions(s1)) {
+    if (deadline && aiNow() > deadline) return false;   // 読み切れない=咎めない
+    const r2 = applyAndResolve(s1, r, smartPicks);
+    if (!r2 || r2.error || r2.requests.length) continue;
+    const s2 = r2.state;
+    if (s2.winner === op) return true;                  // 応手だけで決着
+    if (s2.winner !== null || s2.turn !== me || s2.phase !== 'action') continue;
+    let escapable = false;
+    for (const q of legalActions(s2)) {
+      if (deadline && aiNow() > deadline) return false;
+      const q2 = applyAndResolve(s2, q, smartPicks);
+      if (q2 && !q2.error && !q2.requests.length && q2.state.winner !== op) { escapable = true; break; }
+    }
+    if (!escapable) return true;                        // どう受けても相手の3本目が通る
+  }
+  return false;
+}
+
 /* --- Hard AI (2-ply minimax + alpha-beta) --- */
 
 function aiActionHard(state, collect) {
@@ -2905,6 +2955,14 @@ function aiActionHard(state, collect) {
 
   const wasTrace = TRACE, previousDeadline = AI_SEARCH_DEADLINE; TRACE = false;
   try {
+    /* 終盤: 自分が2本済みなら、読み切りの勝ち筋を評価探索より先に探す。
+       専用の時間枠で行い、本体探索の予算はこの後から数え始める */
+    const myCompiled = state.players[me].protocols.filter(pr => pr.compiled).length;
+    if (myCompiled === 2) {
+      const forced = aiForcedWinAction(state, me, aiNow() + AI_THINK_BUDGET_MS * 0.6);
+      if (forced) return forced;
+    }
+
     const specialist = aiIsDshSpecialist(state, me);
     const deadline = aiNow() + AI_THINK_BUDGET_MS * (specialist ? AI_DSH_W.think : 1);
     AI_SEARCH_DEADLINE = deadline;
@@ -2952,6 +3010,23 @@ function aiActionHard(state, collect) {
     if (collect) {
       for (const item of viable) {
         collect.push({ a: item.a, val: item.val2 !== undefined ? item.val2 : item.val1 });
+      }
+    }
+
+    /* 終盤の受け: 相手が2本済みなら、評価順に「指しても即負け筋が
+       残らない」手を選び直す。全候補が負け筋なら評価どおりに指す */
+    const opCompiled = state.players[1 - me].protocols.filter(pr => pr.compiled).length;
+    if (opCompiled === 2 && viable.length > 1) {
+      const vetoDeadline = aiNow() + AI_THINK_BUDGET_MS * 0.8;
+      const valOf = (x) => (x.val2 !== undefined ? x.val2 : x.val1);
+      const byVal = viable.slice().sort((x, y) => valOf(y) - valOf(x));
+      const floor = valOf(byVal[0]) - 120;   // 誤検知で大差の悪手に乗り換えない
+      for (const item of byVal) {
+        if (aiNow() > vetoDeadline || valOf(item) < floor) break;
+        const s1 = item.res.state;
+        if (s1.winner === me) return item.a;
+        if (s1.winner !== null) continue;
+        if (!aiIsLosingAfter(s1, me, vetoDeadline)) return item.a;
       }
     }
     return best2 || best;
