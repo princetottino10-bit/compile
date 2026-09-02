@@ -124,12 +124,14 @@ export function askChoice(req, ctx) {
       req.options.forEach((o, i) => addBtn(optionLabel(o), () => finish([i])));
       if (req.optional) addBtn('何もしない', () => finish([]));
     } else if (req.kind === 'arrange') {
+      /* 現在の並びのまま (恒等順列) はルール上選べないので出さない */
       const perms = req.exact === 'transposition'
         ? [[1, 0, 2], [0, 2, 1], [2, 1, 0]]
-        : [[0, 1, 2], [1, 2, 0], [2, 0, 1], [0, 2, 1], [1, 0, 2], [2, 1, 0]];
+        : [[1, 2, 0], [2, 0, 1], [0, 2, 1], [1, 0, 2], [2, 1, 0]];
       for (const p of perms) {
         addBtn(p.map(i => (ctx.protoName ? ctx.protoName(i) : i + 1)).join(' → '), () => finish(p));
       }
+      addBtn('盤面で選ぶに戻る', () => finish('__board__'));
     } else {
       /* pickCard / pickHand: 候補をカード名で並べる */
       const min = req.min === undefined ? 1 : req.min;

@@ -822,8 +822,12 @@ async function step(action) {
    使えない状況ではモーダルにフォールバックする */
 async function askUser(req) {
   if (req.kind === 'arrange' && Array.isArray(req.current) && req.current.length === 3) {
-    const picks = await arrangeOnBoard(req);
-    if (picks) return picks;
+    for (let hop = 0; hop < 10; hop++) {
+      const picks = await arrangeOnBoard(req);
+      if (picks) return picks;
+      const m = await UI.askChoice(req, choiceCtx());
+      if (m !== '__board__') return m;      // 「盤面で選ぶに戻る」でループ
+    }
   }
   return UI.askChoice(req, choiceCtx());
 }
@@ -915,7 +919,7 @@ async function drainRequests() {
     const prev = shown();
     busy = true;
     const res = Engine.apply(cur.state, { type: 'choose', id: req.id, picks });
-    if (res.error) { UI.toast(res.error); busy = false; break; }
+    if (res.error) { UI.toast(res.error); busy = false; continue; }   // 再質問へ
     cur = res;
     if (!res.requests.length) UI.pushLog(res.log);
     await replayResolution(prev, res, null);
