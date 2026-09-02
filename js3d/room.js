@@ -132,6 +132,17 @@ export function buildRoomState(rm, valOf) {
     }
   });
 
+  /* 移動中 (committed) のカード: transit 演出のために zone を再現する */
+  const commitStack = [];
+  for (const card of (g.committed || [])) {
+    cards[card.uid] = {
+      uid: card.uid, def: card.def, owner: li(card.owner), faceUp: card.faceUp,
+      zone: 'committed', commitDest: card.commitDest,
+      knownTo: card.def ? 3 : 0, _value: valOf && card.def ? valOf(card.def) : 2
+    };
+    commitStack.push(card.uid);
+  }
+
   const oppHand = [];
   pushPlaceholders(cards, oppHand, 'opp:h', g.counts[op].hand, 'hand1', 1);
   const myDeck = [];
@@ -150,6 +161,11 @@ export function buildRoomState(rm, valOf) {
       { protocols: g.protocols[op], hand: oppHand, deck: opDeck, trash: trash[1], cannotCompile: false }
     ],
     lines, cards,
+    commitStack,
+    /* 手札公開: player はローカル座席に変換 */
+    revealed: g.revealed
+      ? { kind: g.revealed.kind, player: li(g.revealed.player), cards: g.revealed.cards }
+      : null,
     _totals: totals, _room: true
   };
 }

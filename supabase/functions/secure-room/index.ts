@@ -148,6 +148,21 @@ function publicGame(st: any, side: number, aliases = cardAliases(st)) {
       }))),
     hand: st.players[side].hand.map((uid: string) => ({ uid: aliases.forward[uid], def: st.cards[uid].def })),
     trash: st.players.map((p: any) => p.trash.map((uid: string) => ({ uid: aliases.forward[uid], def: st.cards[uid].def }))),
+    /* 手札公開 (PSYCHIC 0 等): 公開されたカードは両者に見える */
+    revealed: st.revealed && Array.isArray(st.revealed.cards)
+      ? { kind: st.revealed.kind, player: st.revealed.player, cards: st.revealed.cards.slice() }
+      : null,
+    /* 移動中 (committed) のカード: クライアントの transit 演出用。
+       正体は可視性ルールに従う (相手の裏向きは def を伏せる) */
+    committed: (st.commitStack || []).map((uid: string) => {
+      const c = st.cards[uid];
+      if (!c || c.zone !== 'committed') return null;
+      const hidden = !c.faceUp && c.owner === opponent;
+      return {
+        uid: aliases.forward[uid], owner: c.owner, faceUp: c.faceUp,
+        def: hidden ? null : c.def, commitDest: c.commitDest || null,
+      };
+    }).filter(Boolean),
   };
 }
 
