@@ -1182,7 +1182,7 @@ function execOp(ctx, fr, op) {
         const ans = choose(ctx, { kind: 'pickHand', player: fr.controller, candidates: matches, min: 1, max: 1, prompt: 'reveal-hand-card', context: defOf(st, fr.source).id });
         pick = ans[0];
       }
-      st.revealed = { kind: 'card', uid: pick, player: fr.controller };
+      st.revealed = { kind: 'card', uid: pick, player: fr.controller, cards: [DEFS[st.cards[pick].def].id] };
       revealCardToAll(st, pick);
       log(ctx, `P${fr.controller + 1}: ${DEFS[st.cards[pick].def].id} を公開`, pick);
       const yn = choose(ctx, { kind: 'yesNo', player: fr.controller, prompt: 'optional-play', context: DEFS[st.cards[pick].def].id });
@@ -1194,7 +1194,8 @@ function execOp(ctx, fr, op) {
         }
         if (faces.length) {
           const opts = faces.map(x => 'ライン' + (x.l + 1) + (x.f ? '(表)' : '(裏)'));
-          const sel = choose(ctx, { kind: 'option', player: fr.controller, options: opts, prompt: 'play-dest', context: DEFS[st.cards[pick].def].id });
+          const sel = choose(ctx, { kind: 'option', player: fr.controller, options: opts, faces: faces.slice(),
+            prompt: 'play-dest', context: DEFS[st.cards[pick].def].id });
           const f = faces[sel[0]];
           playToField(ctx, pick, f.l, fr.controller, f.f);
         }
@@ -1339,7 +1340,8 @@ function execOp(ctx, fr, op) {
         }
         if (!faces.length) { fr.done = false; return; }
         const opts = faces.map(x => 'ライン' + (x.l + 1) + (x.f ? '(表)' : '(裏)'));
-        const sel = choose(ctx, { kind: 'option', player: fr.controller, options: opts, prompt: 'play-dest', context: DEFS[st.cards[pick].def].id });
+        const sel = choose(ctx, { kind: 'option', player: fr.controller, options: opts, faces: faces.slice(),
+          prompt: 'play-dest', context: DEFS[st.cards[pick].def].id });
         const f = faces[sel[0]];
         removeFrom(trash, pick);
         playToField(ctx, pick, f.l, fr.controller, f.f);

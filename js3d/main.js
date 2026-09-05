@@ -468,7 +468,7 @@ function bindInput() {
     }
     if (boardPick && boardPick.kind === 'line') {
       const line = laneFromEvent();
-      if (line !== null && boardPick.req.lines.indexOf(line) >= 0) finishLinePick([line]);
+      if (line !== null && boardPick.lines.indexOf(line) >= 0) finishLinePick(boardPick.toPicks(line));
       return;
     }
     if (boardPick && hit && hit.obj.userData.uid) {
@@ -912,7 +912,8 @@ async function askUser(req) {
       if (m !== '__board__') return m;      // 「盤面で選ぶに戻る」でループ
     }
   }
-  if (req.kind === 'pickCard' || req.kind === 'pickHand' || req.kind === 'pickLine') {
+  if (req.kind === 'pickCard' || req.kind === 'pickHand' || req.kind === 'pickLine'
+      || (req.kind === 'option' && req.prompt === 'play-dest')) {
     const picks = await pickOnBoard(req);
     if (picks === PICK_CANCEL) return PICK_CANCEL;
     if (picks) return picks;
@@ -951,7 +952,21 @@ function pickOnBoard(req) {
   if (req.kind === 'pickLine') {
     if (!Array.isArray(req.lines) || !req.lines.length) return Promise.resolve(null);
     return new Promise((resolve) => {
-      boardPick = { kind: 'line', req, resolve };
+      boardPick = { kind: 'line', req, lines: req.lines.slice(), toPicks: (l) => [l], resolve };
+      renderLinePick();
+    });
+  }
+  /* option 型のプレイ先 (ライン×表裏の組合せ): レーンをタップし、表裏はトグルに従う */
+  if (req.kind === 'option' && req.prompt === 'play-dest' && Array.isArray(req.faces) && req.faces.length) {
+    const lines = [...new Set(req.faces.map(x => x.l))];
+    const toPicks = (l) => {
+      const want = !backFacing;
+      let i = req.faces.findIndex(x => x.l === l && x.f === want);
+      if (i < 0) i = req.faces.findIndex(x => x.l === l);
+      return [i];
+    };
+    return new Promise((resolve) => {
+      boardPick = { kind: 'line', req, lines, toPicks, resolve };
       renderLinePick();
     });
   }
@@ -1070,7 +1085,7 @@ function finishFreePick(picks) {
 function renderLinePick() {
   const bp = boardPick;
   if (!bp) return;
-  for (const pad of pads) pad.userData.hover = bp.req.lines.indexOf(pad.userData.line) >= 0;
+  for (const pad of pads) pad.userData.hover = bp.lines.indexOf(pad.userData.line) >= 0;
   let el = document.getElementById('pickBar');
   if (!el) {
     el = document.createElement('div');
