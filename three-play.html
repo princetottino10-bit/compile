@@ -316,8 +316,8 @@
   #fxCut .fc-body{font:800 12.5px/1.5 system-ui;color:#ffffff;
     text-shadow:0 0 14px var(--accent,#efd06c);}
   @media (max-width:860px){
-    #fxCut{right:2vw;top:38%;width:min(150px,34vw);}
-    #fxCut .fc-body{font-size:11px;}
+    #fxCut{right:2vw;top:30%;width:min(120px,28vw);}
+    #fxCut .fc-body{font-size:10.5px;}
   }
   @media (prefers-reduced-motion: reduce){ #fxCut .fc-card{animation:none;} }
 
@@ -525,6 +525,8 @@
   }
 
   @media (max-width:860px){
+    /* 選択バーは手札に重ねず、プロンプト直下の空き領域に置く (.arr-bar より後ろで上書き) */
+    .arr-bar{top:13vh;bottom:auto;}
     #toast{bottom:19vh;}   /* 選択バー (.arr-bar, 12vh) と重ねない */
     /* タップ用: プレビューは中央に大きく (タップで表示、他をタップで消える) */
     #preview{left:50%;top:44%;height:60vh;transform:translate(-50%,-50%) scale(.95);transform-origin:center;}

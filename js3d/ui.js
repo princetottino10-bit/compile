@@ -256,6 +256,13 @@ export function showActivation(o) {
   cutTimer = setTimeout(() => el.classList.remove('show'), 2400);
 }
 
+/* 選択操作に入るときなど、盤面を隠さないようカットインを即座に畳む */
+export function hideActivation() {
+  const el = $('#fxCut');
+  if (el) el.classList.remove('show');
+  clearTimeout(cutTimer);
+}
+
 const ZONE_CHIP = {
   upper: ['▲ 上段・常在', 'rgba(150,200,255,.95)'],
   middle: ['◆ 中段・即時', null],

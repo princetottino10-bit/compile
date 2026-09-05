@@ -11,6 +11,7 @@ import { runSetup } from './setup.js';
 import { runTitle } from './title.js';
 import * as ROOM from './room.js';
 import { runRoomLobby } from './roomui.js';
+import { reqText } from './prompts.js';
 import { faceImageURL, activationImageURL, pruneFaceCache, ART_SETS } from './cardtex.js';
 import * as FX from './fx.js';
 import { buildArena } from './arena.js';
@@ -718,7 +719,7 @@ async function roomDrainRequest() {
     let guard = 0;
     while (cur && cur.requests.length && shown().winner === null && guard++ < 40) {
       const req = cur.requests[0];
-      UI.setPrompt(req.prompt || '選択してください', 'ask');
+      UI.setPrompt(reqText(req, cardName) || '選択してください', 'ask');
       const picks = await askUser(req);
       UI.setPrompt('');
       if (picks === PICK_CANCEL) continue;   // 外部更新で取り直し
@@ -1001,6 +1002,7 @@ function pickOnBoard(req) {
 function renderBoardPick() {
   const bp = boardPick;
   if (!bp) return;
+  UI.hideActivation();
   board.markCandidates(bp.req.candidates, bp.chosen);
   let el = document.getElementById('pickBar');
   if (!el) {
@@ -1024,6 +1026,7 @@ function renderBoardPick() {
 function renderFreePick() {
   const bp = boardPick;
   if (!bp) return;
+  UI.hideActivation();
   if (bp.sel) {
     board.markCandidates([bp.sel], [bp.sel]);
     const lines = new Set(bp.byUid[bp.sel].map(o => o.line));
@@ -1085,6 +1088,7 @@ function finishFreePick(picks) {
 function renderLinePick() {
   const bp = boardPick;
   if (!bp) return;
+  UI.hideActivation();
   for (const pad of pads) pad.userData.hover = bp.lines.indexOf(pad.userData.line) >= 0;
   let el = document.getElementById('pickBar');
   if (!el) {
@@ -1216,7 +1220,7 @@ async function drainRequests() {
     const req = cur.requests[0];
     let picks;
     if (req.player === ME && !demoMode) {
-      UI.setPrompt(req.prompt || '選択してください', 'ask');
+      UI.setPrompt(reqText(req, cardName) || '選択してください', 'ask');
       picks = await askUser(req);
     } else {
       UI.setPrompt('相手が選択しています…', 'wait');
