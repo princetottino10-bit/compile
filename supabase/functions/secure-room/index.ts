@@ -134,7 +134,6 @@ function engineState(roomState: any) {
 }
 
 function publicGame(st: any, side: number, aliases = cardAliases(st)) {
-  const opponent = 1 - side;
   return {
     turn: st.turn, phase: st.phase, control: st.control, winner: st.winner,
     protocols: st.players.map((p: any) => p.protocols),
@@ -143,7 +142,7 @@ function publicGame(st: any, side: number, aliases = cardAliases(st)) {
     lines: st.lines.map((line: any[]) => line.map((stack: string[], owner: number) =>
       stack.map((uid) => {
         const c = st.cards[uid];
-        const hidden = !c.faceUp && owner === opponent;
+        const hidden = !c.faceUp && !((c.knownTo || 0) & (1 << side));
         return { uid: aliases.forward[uid], owner, faceUp: c.faceUp, def: hidden ? null : c.def, value: Engine.cardValue(st, uid) };
       }))),
     hand: st.players[side].hand.map((uid: string) => ({ uid: aliases.forward[uid], def: st.cards[uid].def })),
@@ -157,7 +156,7 @@ function publicGame(st: any, side: number, aliases = cardAliases(st)) {
     committed: (st.commitStack || []).map((uid: string) => {
       const c = st.cards[uid];
       if (!c || c.zone !== 'committed') return null;
-      const hidden = !c.faceUp && c.owner === opponent;
+      const hidden = !c.faceUp && !((c.knownTo || 0) & (1 << side));
       return {
         uid: aliases.forward[uid], owner: c.owner, faceUp: c.faceUp,
         def: hidden ? null : c.def, commitDest: c.commitDest || null,
@@ -184,7 +183,6 @@ function publicState(room: any, side: number) {
   }
   if (!st) return base;
   const aliases = cardAliases(st);
-  const opponent = 1 - side;
   base.game = {
     turn: st.turn, phase: st.phase, control: st.control, winner: st.winner,
     protocols: st.players.map((p: any) => p.protocols),
@@ -193,7 +191,7 @@ function publicState(room: any, side: number) {
     lines: st.lines.map((line: any[]) => line.map((stack: string[], owner: number) =>
       stack.map((uid) => {
         const c = st.cards[uid];
-        const hidden = !c.faceUp && owner === opponent;
+        const hidden = !c.faceUp && !((c.knownTo || 0) & (1 << side));
         return { uid: aliases.forward[uid], owner, faceUp: c.faceUp, def: hidden ? null : c.def, value: Engine.cardValue(st, uid) };
       }))),
     hand: st.players[side].hand.map((uid: string) => ({ uid: aliases.forward[uid], def: st.cards[uid].def })),

@@ -423,6 +423,7 @@ function fireUncover(ctx, info) {
 function landLine(ctx, uid, line, side) {
   const st = ctx.st;
   const c = st.cards[uid];
+  if (!c.faceUp) knowCard(st, uid, side);   // 自分側の裏向きは見てよい
   const stack = st.lines[line][side];
   const seq = c.commitSeq || 0;
   let i = stack.length;
@@ -544,6 +545,9 @@ function playToField(ctx, uid, line, side, faceUp, belowUid) {
   c.commitDest = 'line' + line;
   c.faceUp = faceUp;
   if (faceUp) revealCardToAll(st, uid);
+  /* ルール: 自分側のフィールドにある裏向きカードは見てよい (相手のデッキから
+     置かれたカードも着地後は閲覧可)。着地する側のプレイヤーに既知化する */
+  else knowCard(st, uid, side);
   const stack = st.lines[line][side];
   if (belowUid) {
     const i = stack.indexOf(belowUid);
