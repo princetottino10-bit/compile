@@ -47,8 +47,14 @@ let roomPollTimer = null;
 function shown() { return (cur && (cur.view || cur.state)) || null; }
 
 /* 合法手: ソロはエンジン、ルームはサーバー提供値 */
+const seatToLocal = (seat) => (roomRm && seat === roomRm.side ? 0 : 1);
+const localToSeat = (local) => (roomRm ? (local === 0 ? roomRm.side : 1 - roomRm.side) : local);
+
 function legalNow() {
-  if (roomMode) return (roomRm && roomRm.legalActions) || [];
+  if (roomMode) {
+    return ((roomRm && roomRm.legalActions) || []).map((a) =>
+      a.side === undefined ? a : Object.assign({}, a, { side: seatToLocal(a.side) }));
+  }
   if (!cur || cur.state.turn !== ME || cur.requests.length || cur.state.winner !== null) return [];
   return Engine.legalActions(cur.state);
 }
@@ -334,16 +340,16 @@ function updatePads() {
 }
 
 function canPlaceHere(st, uid, line, side) {
-  const acts = legalNow();
-  for (const a of acts) {
+  let up = false, down = false;
+  for (const a of legalNow()) {
     if (a.type !== 'play' || a.card !== uid || a.line !== line) continue;
     const aSide = a.side === undefined ? st.turn : a.side;
     if (aSide !== side) continue;
-    if (a.faceUp && !backFacing) return 'faceUp';
-    if (!a.faceUp && backFacing) return 'faceDown';
-    if (a.faceUp) return 'faceUp';
+    if (a.faceUp) up = true; else down = true;
   }
-  return null;
+  /* 表裏トグルの希望を優先し、片方しか合法でなければそちら */
+  if (backFacing) return down ? 'faceDown' : (up ? 'faceUp' : null);
+  return up ? 'faceUp' : (down ? 'faceDown' : null);
 }
 
 /* ---------- 入力 ---------- */
@@ -458,6 +464,7 @@ function bindInput() {
       });
       return bl;
     };
+    if (boardPick && boardPick.kind === 'yesno') return;
     if (boardPick && boardPick.kind === 'free') {
       const uid2 = hit && hit.obj.userData.uid;
       if (uid2 && boardPick.byUid[uid2]) { tapFreePick({ uid: uid2 }); return; }
@@ -475,6 +482,11 @@ function bindInput() {
     if (boardPick && hit && hit.obj.userData.uid) {
       toggleBoardPick(hit.obj.userData.uid);
       return;
+    }
+    /* 捨て札の山をタップ: 中身は公開情報なので一覧を出す */
+    if (hit && hit.obj.userData.uid) {
+      const lt = locOf(shown(), hit.obj.userData.uid);
+      if (lt && lt.zone === 'trash') { showTrash(lt.side); return; }
     }
     if (demoMode || busy || !cur || shown().winner !== null) return;
     if (cur.requests.length || shown().turn !== ME) return;
@@ -699,7 +711,10 @@ async function roomStep(action) {
   busy = true;
   updatePads();
   try {
-    const next = await ROOM.roomApi('action', { code: roomRm.code, version: roomRm.version, action });
+    /* 相手側へのプレイ (CORRUPTION 0 等) の side はローカル→座席番号へ */
+    const wire = action && action.side !== undefined
+      ? Object.assign({}, action, { side: localToSeat(action.side) }) : action;
+    const next = await ROOM.roomApi('action', { code: roomRm.code, version: roomRm.version, action: wire });
     busy = false;
     await roomApplyView(next);
   } catch (e) {
@@ -913,7 +928,7 @@ async function askUser(req) {
       if (m !== '__board__') return m;      // 「盤面で選ぶに戻る」でループ
     }
   }
-  if (req.kind === 'pickCard' || req.kind === 'pickHand' || req.kind === 'pickLine'
+  if (req.kind === 'pickCard' || req.kind === 'pickHand' || req.kind === 'pickLine' || req.kind === 'yesNo'
       || (req.kind === 'option' && req.prompt === 'play-dest')) {
     const picks = await pickOnBoard(req);
     if (picks === PICK_CANCEL) return PICK_CANCEL;
@@ -955,6 +970,26 @@ function pickOnBoard(req) {
     return new Promise((resolve) => {
       boardPick = { kind: 'line', req, lines: req.lines.slice(), toPicks: (l) => [l], resolve };
       renderLinePick();
+    });
+  }
+  /* はい/いいえ は盤面を隠さず下部バーで答える */
+  if (req.kind === 'yesNo') {
+    return new Promise((resolve) => {
+      boardPick = { kind: 'yesno', req, resolve };
+      UI.hideActivation();
+      let el = document.getElementById('pickBar');
+      if (!el) {
+        el = document.createElement('div');
+        el.id = 'pickBar';
+        el.className = 'arr-bar';
+        document.body.appendChild(el);
+      }
+      el.innerHTML =
+        '<button class="arr-btn ok" id="pkYes" type="button">はい</button>' +
+        '<button class="arr-btn" id="pkNo" type="button">選ばない</button>';
+      const done = (picks) => { boardPick = null; el.remove(); resolve(picks); };
+      el.querySelector('#pkYes').onclick = () => done(['yes']);
+      el.querySelector('#pkNo').onclick = () => done([]);
     });
   }
   /* option 型のプレイ先 (ライン×表裏の組合せ): レーンをタップし、表裏はトグルに従う */
@@ -1015,8 +1050,9 @@ function renderBoardPick() {
   el.innerHTML =
     (instant ? '' :
       '<button class="arr-btn ok" id="pkOk" type="button"' +
-        (bp.chosen.length < bp.min ? ' disabled' : '') + '>決定 (' +
-        bp.chosen.length + '/' + bp.max + ')</button>') +
+        (bp.chosen.length < bp.min ? ' disabled' : '') + '>' +
+        (bp.chosen.length === 0 && bp.min === 0 ? '選ばない' : '決定 (' + bp.chosen.length + '/' + bp.max + ')') +
+        '</button>') +
     '<button class="arr-btn" id="pkList" type="button">リストで選ぶ</button>';
   const ok = el.querySelector('#pkOk');
   if (ok) ok.onclick = () => finishBoardPick(bp.chosen.slice());
@@ -1269,6 +1305,18 @@ async function afterTurn() {
       location.reload();
     }
   }
+}
+
+/* 捨て札一覧 (両者とも公開情報) */
+function showTrash(side) {
+  const st = shown();
+  const list = st.players[side].trash.slice().reverse();
+  const items = list.map((u) => {
+    const d = defIndex[st.cards[u].def];
+    return d ? { img: faceImageURL(d), label: d.proto + ' ' + d.value } : null;
+  }).filter(Boolean);
+  if (!items.length) { UI.toast('捨て札はありません'); return; }
+  UI.showPile((side === ME ? 'あなた' : '相手') + 'の捨て札 (' + items.length + '枚・新しい順)', items);
 }
 
 /* 手札公開 (PSYCHIC 0 等): st.revealed の変化を検知して公開ハンドを見せる */

@@ -288,7 +288,11 @@ export function showEffect(name, text, color, effectTypes, zone) {
 }
 
 /* 手札公開の帯: 公開されたカードを並べて見せる (タップか6秒で閉じる) */
-export function showRevealedHand(items) {
+export function showPile(title, items) {
+  showRevealedHand(items, title);
+}
+
+export function showRevealedHand(items, titleOverride) {
   if (!items || !items.length) return;
   let el = $('#revealOv');
   if (!el) {
@@ -297,7 +301,7 @@ export function showRevealedHand(items) {
     document.body.appendChild(el);
   }
   el.innerHTML = '<div class="rv-title">' +
-      (items.length === 1 ? '相手が手札を1枚公開した' : '相手の手札が公開された') + '</div>' +
+      (titleOverride || (items.length === 1 ? '相手が手札を1枚公開した' : '相手の手札が公開された')) + '</div>' +
     '<div class="rv-cards">' + items.map((it) =>
       '<figure><img alt="" src="' + it.img + '"><figcaption>' + it.label + '</figcaption></figure>'
     ).join('') + '</div><div class="rv-hint">タップで閉じる</div>';

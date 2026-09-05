@@ -178,7 +178,7 @@ function countProtoKindsInLine(st, line) {
 
 /* ---------- プレイ許可 ---------- */
 
-function canPlay(st, player, uid, line, faceUp) {
+function canPlay(st, player, uid, line, faceUp, anyProto) {
   for (const s of activeStatics(st)) {
     if (s.kind !== 'playPermission') continue;
     if (s.rule === 'oppNoPlayThisLine' && player !== s.sideIdx && line === s.line) return false;
@@ -186,7 +186,7 @@ function canPlay(st, player, uid, line, faceUp) {
     if (s.rule === 'oppFaceDownOnly' && player !== s.sideIdx && faceUp) return false;
   }
   if (faceUp) {
-    let needMatch = true;
+    let needMatch = !anyProto;   // DIVERSITY_1 下段: プロトコル不問で表向きプレイ可
     for (const s of activeStatics(st)) {
       if (s.kind === 'playPermission' && s.rule === 'youFaceUpAnyLine' && s.sideIdx === player) needMatch = false;
       // UNITY_2 lower: このラインには UNITY カードを表向きでプレイできる
@@ -449,7 +449,8 @@ function landHand(ctx, uid) {
   c.faceUp = false;
   c.commitDest = null;
   ctx.st.players[c.owner].hand.push(uid);
-  knowCard(ctx.st, uid, c.owner);
+  /* 手札に戻った時点で相手の記憶は切れる (再び裏向きで出したとき正体は非公開) */
+  c.knownTo = 1 << c.owner;
   removeFrom(ctx.st.commitStack, uid);
 }
 
@@ -1085,7 +1086,11 @@ function execOp(ctx, fr, op) {
       if (op.proto) matches = p.deck.filter(u => DEFS[st.cards[u].def].proto === op.proto);
       else matches = p.deck.filter(u => DEFS[st.cards[u].def].value === op.value);
       log(ctx, `P${fr.controller + 1}: デッキを公開`);
-      const take = op.all ? matches : matches.slice(0, 1);
+      for (const u of matches) revealCardToAll(st, u);   // 公開したカードは両者に既知
+      let take;
+      if (op.all || matches.length <= 1) take = matches.slice(0, op.all ? undefined : 1);
+      else take = choose(ctx, { kind: 'pickCard', player: fr.controller, candidates: matches.slice(),
+        min: 1, max: 1, prompt: 'search-pick', context: defOf(st, fr.source).id });
       for (const u of take) {
         removeFrom(p.deck, u);
         st.cards[u].zone = 'hand' + fr.controller;
@@ -1744,7 +1749,7 @@ function execPlayOp(ctx, fr, op) {
     : (typeof destChoices !== 'undefined') ? destChoices : [0, 1, 2];
   const opts = [];
   for (const u of hand) for (const l of allowedLines) {
-    if (canPlay(st, who, u, l, true)) opts.push(u + '|' + l + '|u');
+    if (canPlay(st, who, u, l, true, !!op.anyProto)) opts.push(u + '|' + l + '|u');
     if (canPlay(st, who, u, l, false)) opts.push(u + '|' + l + '|d');
   }
   if (!opts.length) { fr.done = false; return; }

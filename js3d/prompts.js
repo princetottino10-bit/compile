@@ -25,7 +25,8 @@ export const PROMPT_TEXT = {
   'optional-discard-top': '公開したカードを捨て札にしますか?', 'optional-play': 'このカードをプレイしますか?',
   'discard-order': '先に手札を捨てるのはどちら?', 'swap-stack-1': '入れ替えるスタック(1つ目)を選択',
   'swap-stack-2': '入れ替えるスタック(2つ目)を選択', 'mirror-middle': 'コピーする相手の中段を選択',
-  'steal-to-hand': '手札に加える相手の裏向きカードを選択', 'play-from-trash': 'プレイする捨て札のカードを選択'
+  'steal-to-hand': '手札に加える相手の裏向きカードを選択', 'play-from-trash': 'プレイする捨て札のカードを選択',
+  'search-pick': '手札に加えるカードを選択'
 };
 
 export const OP_LABEL = {
