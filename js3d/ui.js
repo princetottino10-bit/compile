@@ -289,7 +289,8 @@ export function showRevealedHand(items) {
     el.id = 'revealOv';
     document.body.appendChild(el);
   }
-  el.innerHTML = '<div class="rv-title">相手の手札が公開された</div>' +
+  el.innerHTML = '<div class="rv-title">' +
+      (items.length === 1 ? '相手が手札を1枚公開した' : '相手の手札が公開された') + '</div>' +
     '<div class="rv-cards">' + items.map((it) =>
       '<figure><img alt="" src="' + it.img + '"><figcaption>' + it.label + '</figcaption></figure>'
     ).join('') + '</div><div class="rv-hint">タップで閉じる</div>';
