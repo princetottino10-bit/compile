@@ -244,20 +244,30 @@ export function createBoard(stage, defIndex, me, hooks) {
   }
 
   /* ---------- カードプレイの着地演出 (最優先の手触り) ---------- */
-  async function playLanding(next, uid, opts) {
+  async function playLanding(prev, next, uid, opts) {
     const card = cardOf(next, uid);
     let slot = slotFor(next, uid);
+    const play = opts && opts.action;
+    /* プレイの着地点は、解決後の state から逆算しない。選択時に表示した
+       「次の空きスロット」(プレイ前の束の枚数) と同じ座標を使う。
+       即時効果で committed になったり、相手側に置くプレイでも、カードが
+       いったん別の位置へ吸い付いて見えるのを防ぐ。 */
+    if (play && play.type === 'play' && Number.isInteger(play.line)) {
+      const side = play.side === 0 || play.side === 1 ? play.side : prev.turn;
+      const stack = prev.lines[play.line] && prev.lines[play.line][side];
+      if (stack) slot = LAYOUT.stackSlot(play.line, side, stack.length, me);
+    }
     /* プレイ直後は効果解決までエンジン上 committed (移動中) になるが、
        手札からのプレイは最初からスタックへ着地して見せたい */
     const l = locOf(next, uid);
-    if (l && l.zone === 'transit') {
+    if (!play && l && l.zone === 'transit') {
       const side = opts.actor;
       slot = LAYOUT.stackSlot(l.line, side, next.lines[l.line][side].length, me);
     }
     if (!slot) return;
-    const faceUp = !!next.cards[uid].faceUp;
+    const faceUp = play ? !!play.faceUp : !!next.cards[uid].faceUp;
     const byMe = opts.actor === me;
-    const accent = new THREE.Color(next.cards[uid].faceUp
+    const accent = new THREE.Color(faceUp
       ? (defIndex[next.cards[uid].def] || UNKNOWN_DEF).color
       : (opts.actor === me ? COLOR.self : COLOR.opp));
 
@@ -433,7 +443,7 @@ export function createBoard(stage, defIndex, me, hooks) {
     /* プレイされたカードは専用演出 */
     const played = action && action.type === 'play' ? action.card : null;
     if (played) {
-      await playLanding(next, played, { actor: prev.turn });
+      await playLanding(prev, next, played, { actor: prev.turn, action });
     }
 
     /* コンパイルが起きたラインは、通常の移動ではなく崩壊させる */
