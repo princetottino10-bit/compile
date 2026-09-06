@@ -423,7 +423,7 @@ function fireUncover(ctx, info) {
 function landLine(ctx, uid, line, side) {
   const st = ctx.st;
   const c = st.cards[uid];
-  if (!c.faceUp) knowCard(st, uid, side);   // 自分側の裏向きは見てよい
+  if (!c.faceUp) c.knownTo = 1 << side;   // 自分側の裏向きはその側だけが見てよい
   const stack = st.lines[line][side];
   const seq = c.commitSeq || 0;
   let i = stack.length;
@@ -487,6 +487,7 @@ function doReturn(ctx, uid) {
     c.zone = 'deck' + owner;
     c.faceUp = false;
     c.commitDest = null;
+    c.knownTo = 0;   // デッキに入った時点で誰も見えない
     st.players[owner].deck.unshift(uid);
     removeFrom(st.commitStack, uid);
     log(ctx, `${label} は手札の代わりにデッキの一番上へ戻された`, uid);
@@ -508,7 +509,12 @@ function doFlip(ctx, uid, ignoreMiddleOnce) {
   }
   c.faceUp = !c.faceUp;
   if (c.faceUp) revealCardToAll(st, uid);
-  log(ctx, `${DEFS[c.def].id} を${c.faceUp ? '表' : '裏'}に反転`, uid);
+  else {
+    /* 裏になった時点で相手は中身を確認できなくなる (自分側のカードなら自分は閲覧可) */
+    const lf = locate(st, uid);
+    c.knownTo = lf ? (1 << lf.side) : 0;
+  }
+  log(ctx, `${cardLabel(st, uid)} を${c.faceUp ? '表' : '裏'}に反転`, uid);
   const loc = locate(st, uid);
   // LUCK_2: 反転による中段は無視する
   if (c.faceUp && loc && isTop(st, loc) && !ignoreMiddleOnce) resolveMiddle(ctx, uid, 'flip');
@@ -548,7 +554,7 @@ function playToField(ctx, uid, line, side, faceUp, belowUid) {
   if (faceUp) revealCardToAll(st, uid);
   /* ルール: 自分側のフィールドにある裏向きカードは見てよい (相手のデッキから
      置かれたカードも着地後は閲覧可)。着地する側のプレイヤーに既知化する */
-  else knowCard(st, uid, side);
+  else c.knownTo = 1 << side;   // 相手が公開時に見ていても、裏で出した以上は非公開
   const stack = st.lines[line][side];
   if (belowUid) {
     const i = stack.indexOf(belowUid);
@@ -622,7 +628,7 @@ function drawCards(ctx, side, n, fromOpp) {
     c.zone = 'hand' + side;
     if (fromOpp) c.owner = side;
     st.players[side].hand.push(u);
-    knowCard(st, u, side);
+    c.knownTo = 1 << side;   // 引いた本人だけが知る (デッキ上で公開されていても再び非公開)
     drawn++;
   }
   if (drawn) {
@@ -943,7 +949,7 @@ function execOp(ctx, fr, op) {
         st.cards[u].owner = 1 - who;
         st.cards[u].zone = 'hand' + (1 - who);
         st.players[1 - who].hand.push(u);
-        knowCard(st, u, 1 - who);
+        st.cards[u].knownTo = 1 << (1 - who);   // 渡した側は以後見えない
       }
       log(ctx, `P${who + 1}: 手札を1枚相手に渡した`);
       fr.done = true;
@@ -959,7 +965,7 @@ function execOp(ctx, fr, op) {
       st.cards[u].owner = who;
       st.cards[u].zone = 'hand' + who;
       st.players[who].hand.push(u);
-      knowCard(st, u, who);
+      st.cards[u].knownTo = 1 << who;   // 取られた側は以後見えない
       log(ctx, `P${who + 1}: 相手の手札からランダムに1枚引いた`);
       fireEvent(ctx, { on: 'draw', player: who, count: 1 });
       fr.done = true;
@@ -1066,8 +1072,8 @@ function execOp(ctx, fr, op) {
       const deck = st.players[fr.controller].deck;
       if (!deck.length) { fr.done = false; return; }
       const top = deck[0];
-      st.revealed = { kind: 'card', uid: top, player: fr.controller };
-      revealCardToAll(st, top);
+      st.revealed = { kind: 'card', uid: top, player: fr.controller, cards: [DEFS[st.cards[top].def].id] };
+      /* 公開はその瞬間だけ (オーバーレイ)。捨てなければデッキ上で非公開のまま */
       log(ctx, `P${fr.controller + 1}: デッキトップ ${DEFS[st.cards[top].def].id} を公開`, top);
       const ans = choose(ctx, { kind: 'yesNo', player: fr.controller, prompt: 'optional-discard-top', context: DEFS[st.cards[top].def].id });
       if (ans.length) {
@@ -1086,7 +1092,8 @@ function execOp(ctx, fr, op) {
       if (op.proto) matches = p.deck.filter(u => DEFS[st.cards[u].def].proto === op.proto);
       else matches = p.deck.filter(u => DEFS[st.cards[u].def].value === op.value);
       log(ctx, `P${fr.controller + 1}: デッキを公開`);
-      for (const u of matches) revealCardToAll(st, u);   // 公開したカードは両者に既知
+      st.revealed = { kind: 'deck', player: fr.controller, cards: p.deck.map(u => DEFS[st.cards[u].def].id) };
+      for (const u of matches) knowCard(st, u, fr.controller);   // 選ぶ本人だけが中身を見る (シャッフルで再び非公開)
       let take;
       if (op.all || matches.length <= 1) take = matches.slice(0, op.all ? undefined : 1);
       else take = choose(ctx, { kind: 'pickCard', player: fr.controller, candidates: matches.slice(),
@@ -1095,7 +1102,7 @@ function execOp(ctx, fr, op) {
         removeFrom(p.deck, u);
         st.cards[u].zone = 'hand' + fr.controller;
         p.hand.push(u);
-        revealCardToAll(st, u);
+        st.cards[u].knownTo = 1 << fr.controller;
       }
       if (take.length) log(ctx, `P${fr.controller + 1}: ${take.map(u => DEFS[st.cards[u].def].id).join(', ')} を手札に加えた`);
       shuffleDeck(ctx, fr.controller);
@@ -1188,7 +1195,7 @@ function execOp(ctx, fr, op) {
         pick = ans[0];
       }
       st.revealed = { kind: 'card', uid: pick, player: fr.controller, cards: [DEFS[st.cards[pick].def].id] };
-      revealCardToAll(st, pick);
+      knowCard(st, pick, fr.controller);   // 本人は見る。相手はオーバーレイの瞬間だけ
       log(ctx, `P${fr.controller + 1}: ${DEFS[st.cards[pick].def].id} を公開`, pick);
       const yn = choose(ctx, { kind: 'yesNo', player: fr.controller, prompt: 'optional-play', context: DEFS[st.cards[pick].def].id });
       if (yn.length) {
@@ -1227,9 +1234,13 @@ function execOp(ctx, fr, op) {
 
     case 'mirrorMiddle': { // MIRROR_2: 相手カード1枚の中段を、このカード上にあるかのように解決
       const cands = [];
-      for (let l = 0; l < 3; l++) for (const uid of st.lines[l][1 - fr.controller]) {
-        const c = st.cards[uid];
-        if (c.faceUp && DEFS[c.def].eff.middle && DEFS[c.def].eff.middle.ops) cands.push(uid);
+      for (let l = 0; l < 3; l++) {
+        const stack = st.lines[l][1 - fr.controller];
+        stack.forEach((uid, idx) => {
+          const c = st.cards[uid];
+          /* 覆い指定のない効果は既定で「覆われていないカード」が対象 */
+          if (idx === stack.length - 1 && c.faceUp && DEFS[c.def].eff.middle && DEFS[c.def].eff.middle.ops) cands.push(uid);
+        });
       }
       if (!cands.length) { fr.done = false; return; }
       const pick = cands.length === 1 ? cands[0]
@@ -1329,9 +1340,11 @@ function execOp(ctx, fr, op) {
       const pick = trash.length === 1 ? trash[0]
         : choose(ctx, { kind: 'pickCard', player: fr.controller, candidates: trash.slice(), prompt: 'play-from-trash', context: defOf(st, fr.source).id })[0];
       if (op.facing === 'down') {
-        // TIME_4: このカードとは別のラインに裏向きでプレイ
-        const lines = [0, 1, 2].filter(l => l !== fr.line);
-        const l = choose(ctx, { kind: 'pickLine', player: fr.controller, lines, prompt: 'play-dest', context: DEFS[st.cards[pick].def].id })[0];
+        // TIME_4: このカードとは別のラインに裏向きでプレイ (プレイ制約の常在効果を通す)
+        const lines = [0, 1, 2].filter(l => l !== fr.line && canPlay(st, fr.controller, pick, l, false));
+        if (!lines.length) { fr.done = false; return; }
+        const l = lines.length === 1 ? lines[0]
+          : choose(ctx, { kind: 'pickLine', player: fr.controller, lines, prompt: 'play-dest', context: DEFS[st.cards[pick].def].id })[0];
         st.revealed = { kind: 'card', uid: pick, player: fr.controller };
         log(ctx, `P${fr.controller + 1}: 捨て札の ${DEFS[st.cards[pick].def].id} を公開`, pick);
         removeFrom(trash, pick);
@@ -1394,7 +1407,7 @@ function execTargetedOp(ctx, fr, op) {
   if (op.op === 'reveal' && op.target) {
     if (op.target === 'oppHand') {
       const oh = st.players[1 - fr.controller].hand;
-      for (const uid of oh) revealCardToAll(st, uid);
+      /* 公開はその瞬間だけ (オーバーレイ)。閲覧権は残さない */
       log(ctx, `P${2 - fr.controller}: 手札を公開: ` + oh.map(u => DEFS[st.cards[u].def].id).join(', '));
       st.revealed = { kind: 'hand', player: 1 - fr.controller, cards: oh.map(u => DEFS[st.cards[u].def].id) };
       fr.done = true; return;
@@ -1404,8 +1417,7 @@ function execTargetedOp(ctx, fr, op) {
       if (!hand.length) { fr.done = false; return; }
       const picks = hand.length === 1 ? hand.slice()
         : choose(ctx, { kind: 'pickHand', player: fr.controller, candidates: hand.slice(), min: 1, max: 1, prompt: 'reveal-hand-card' });
-      revealCardToAll(st, picks[0]);   // ログだけでなく knownTo も公開状態にする
-      /* UI の公開オーバーレイ用 (手札全公開と同じ経路で見せる) */
+      /* 公開はその瞬間だけ (オーバーレイ)。閲覧権は残さない */
       st.revealed = { kind: 'card', player: fr.controller, cards: [DEFS[st.cards[picks[0]].def].id] };
       log(ctx, `P${fr.controller + 1}: 手札の ${DEFS[st.cards[picks[0]].def].id} を公開`);
       fr.done = true; return;
@@ -1491,7 +1503,7 @@ function matchesSel(st, fr, uid, sel) {
   if (sel.facing === 'down' && c.faceUp) return false;
   if (sel.exclude === 'thisCard' && uid === fr.source) return false;
   if (sel.zone === 'thisLine' && loc.line !== fr.line) return false;
-  if (sel.zone === 'thisStack' && (loc.line !== fr.line)) return false;
+  if (sel.zone === 'thisStack' && (loc.line !== fr.line || loc.side !== fr.controller)) return false;   // スタック=片側
   if (sel.zone === 'currentLine' && loc.line !== fr.currentLine) return false;
   if (sel.zone === 'lineWhereOppLeads') { // COURAGE_2: 相手合計が自分より大きいライン
     if (lineTotal(st, loc.line, 1 - fr.controller) <= lineTotal(st, loc.line, fr.controller)) return false;
@@ -1577,9 +1589,9 @@ function performVerb(ctx, fr, op, uid) {
     case 'return': return doReturn(ctx, uid);
     case 'reveal': {
       const c = st.cards[uid];
-      revealCardToAll(st, uid);
+      /* ルール: 公開後は元の状態に戻す → 閲覧権は残さず、公開の瞬間だけオーバーレイで見せる */
       log(ctx, `${DEFS[c.def].id} を公開`);
-      st.revealed = { kind: 'card', uid, def: DEFS[c.def].id };
+      st.revealed = { kind: 'card', uid, player: fr.controller, cards: [DEFS[c.def].id] };
       return true;
     }
     case 'shift': {
@@ -1625,6 +1637,9 @@ function performMass(ctx, fr, op, cands) {
       if (st.cards[u].faceUp) fireWouldBeFlipped(ctx, u); // METAL_6
       if (!locate(st, u)) continue;
       st.cards[u].faceUp = !st.cards[u].faceUp;
+      /* 閲覧権の再計算: 表=公開、裏=その側のプレイヤーだけ */
+      if (st.cards[u].faceUp) revealCardToAll(st, u);
+      else { const lm = locate(st, u); st.cards[u].knownTo = lm ? (1 << lm.side) : 0; }
     }
     log(ctx, `${cands.length}枚を同時に反転`);
     return true;
@@ -1666,6 +1681,16 @@ function execPlayOp(ctx, fr, op) {
   const st = ctx.st;
   const who = actorOf(fr, op);
   const source = op.source || 'hand';
+  /* 「プレイすることができる」(optional) は先に意思確認する。
+     プレイできるカードが無ければ聞かずに不発 */
+  if (op.optional) {
+    const canOffer = source === 'hand'
+      ? st.players[who].hand.some(u => st.cards[u].zone !== 'committed')
+      : st.players[source === 'oppTopDeck' ? 1 - who : who].deck.length > 0;
+    if (!canOffer) { fr.done = false; return; }
+    const ans = choose(ctx, { kind: 'yesNo', player: who, prompt: 'optional-play', context: defOf(st, fr.source).id });
+    if (!ans.length) { fr.done = false; return; }
+  }
 
   // 行き先ライン決定
   let line;

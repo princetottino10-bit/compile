@@ -29,7 +29,14 @@ function check(st, lastLog) {
       const c = st.cards[u];
       if (c.faceUp && (c.knownTo||0) !== 3) hit('faceup-not-public', c.def, lastLog);
       if (!c.faceUp && !((c.knownTo||0) & (1<<s))) hit('facedown-own-side-hidden', c.def, lastLog);
+      /* 見えてはいけない: 裏向きは反対側に見えない */
+      if (!c.faceUp && ((c.knownTo||0) & (1<<(1-s)))) hit('facedown-leaks-to-opponent', c.def, lastLog);
     }
+  }
+  /* 見えてはいけない: 手札は相手に見えない、デッキは誰にも見えない */
+  for (let p = 0; p < 2; p++) {
+    for (const u of st.players[p].hand) if ((st.cards[u].knownTo||0) & (1<<(1-p))) hit('hand-leaks-to-opponent', st.cards[u].def, lastLog);
+    for (const u of st.players[p].deck) if (st.cards[u].knownTo) hit('deck-known', st.cards[u].def, lastLog);
   }
 }
 function hit(kind, def, lastLog) {
