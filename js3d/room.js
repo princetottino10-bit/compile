@@ -59,6 +59,41 @@ export async function roomLogin(displayName) {
   return r.data.session;
 }
 
+export function roomIsAnonymous(session) {
+  return !!(session && session.user && session.user.is_anonymous);
+}
+
+async function setDisplayName(displayName) {
+  const r = await client().auth.updateUser({ data: { display_name: displayName } });
+  if (r.error) throw new Error(r.error.message);
+  return r.data.user;
+}
+
+/* レート戦用の恒久アカウント。Supabase Auth の Email provider を使う。 */
+export async function roomSignIn(email, password, displayName) {
+  const r = await client().auth.signInWithPassword({ email, password });
+  if (r.error) throw new Error(r.error.message);
+  if (displayName) await setDisplayName(displayName);
+  const session = await roomSession();
+  if (!session) throw new Error('ログイン状態を確認できませんでした');
+  return session;
+}
+
+export async function roomSignUp(email, password, displayName) {
+  const r = await client().auth.signUp({ email, password, options: { data: { display_name: displayName } } });
+  if (r.error) throw new Error(r.error.message);
+  if (!r.data.session) throw new Error('確認メールを送信しました。メール内のリンクを開いてからログインしてください。');
+  return r.data.session;
+}
+
+export async function roomSignInWithGitHub() {
+  const r = await client().auth.signInWithOAuth({
+    provider: 'github',
+    options: { redirectTo: location.origin + location.pathname }
+  });
+  if (r.error) throw new Error(r.error.message);
+}
+
 export async function roomApi(op, extra) {
   const cfg = window.COMPILE_ROOM_CONFIG;
   const s = await roomSession();

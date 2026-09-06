@@ -1122,6 +1122,22 @@ test('CLARITY_2: デッキトップを捨て札にしてもCORRUPTION_3は発動
   assert.deepEqual(res.state.players[1].hand, [uidOf('METAL_1', 1)], '相手に手札破棄を要求しない');
 });
 
+test('CLARITY_4: 値5のサーチ候補が複数なら、選んだ1枚を手札に加える', () => {
+  const r = ng({ p0: ['CLARITY', 'FIRE', 'WATER'] });
+  const st = r.state;
+  setHand(st, 0, ['CLARITY_4']);
+  const wanted = uidOf('FIRE_6', 0);
+  let res = Engine.apply(st, { type: 'play', card: uidOf('CLARITY_4', 0), line: 0, faceUp: true });
+  assert.equal(res.error, null);
+  assert.equal(res.requests[0].prompt, 'search-pick');
+  assert.ok(res.requests[0].candidates.length >= 2, '複数の値5カードが候補になる');
+  assert.ok(res.requests[0].candidates.includes(wanted));
+  res = Engine.apply(res.state, { type: 'choose', id: res.requests[0].id, picks: [wanted] });
+  assert.equal(res.error, null);
+  assert.ok(res.state.players[0].hand.includes(wanted));
+  assert.ok(!res.state.players[0].hand.includes(uidOf('WATER_6', 0)));
+});
+
 test('DIVERSITY_2: 自身を移動した後は移動先ラインの種類数を引く', () => {
   const r = ng({ p0: ['DIVERSITY', 'DARKNESS', 'FIRE'] });
   const st = r.state;

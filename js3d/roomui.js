@@ -4,7 +4,7 @@
  *   status が playing になった publicState を resolve して返す。
  *   戻るを押した場合は null を resolve する (呼び出し側でソロ設定へ)。
  * ========================================================================= */
-import { roomApi, roomLogin, roomSession } from './room.js';
+import { roomApi, roomIsAnonymous, roomLogin, roomSession, roomSignIn, roomSignInWithGitHub, roomSignUp } from './room.js';
 import { emblemDataURL } from './emblems.js';
 
 const $ = (sel) => document.querySelector(sel);
@@ -29,6 +29,8 @@ export function runRoomLobby(protocols) {
   let pollTimer = null;
   let lobbyTimer = null;
   let finished = false;
+  let session = null;
+  let wantRated = false;
 
   root.classList.add('show');
 
@@ -64,16 +66,56 @@ export function runRoomLobby(protocols) {
 
     /* ---------- ログイン ---------- */
     async function showLogin() {
-      frame('ONLINE — 接続',
-        '<p class="ro-sub">対戦相手に表示される名前を決めてください。</p>' +
-        '<div class="ro-row"><input class="ro-input" id="roomName" maxlength="12" placeholder="表示名" value="' + esc(lsGet('compileRoomName')) + '">' +
-        '<button class="ro-btn" id="roomGo" type="button">接続</button></div>');
-      $('#roomGo').onclick = async () => {
+      clearInterval(lobbyTimer);
+      const rateNote = wantRated
+        ? '<p class="ro-sub">レート戦はメールアドレスで作成したアカウントが必要です。</p>' :
+          '<p class="ro-sub">通常戦はゲスト接続でも遊べます。レート戦はメールアカウントでログインしてください。</p>';
+      frame(wantRated ? 'RATED — ログイン' : 'ONLINE — 接続',
+        rateNote +
+        '<div class="ro-row"><input class="ro-input" id="roomName" maxlength="12" placeholder="表示名" value="' + esc(lsGet('compileRoomName')) + '"></div>' +
+        '<div class="ro-row"><input class="ro-input" id="roomEmail" type="email" autocomplete="email" placeholder="メールアドレス"></div>' +
+        '<div class="ro-row"><input class="ro-input" id="roomPass" type="password" autocomplete="current-password" minlength="8" placeholder="パスワード（8文字以上）"></div>' +
+        '<div class="ro-row"><button class="ro-btn" id="roomSignIn" type="button">ログイン</button>' +
+        '<button class="ro-btn" id="roomSignUp" type="button">新規登録</button>' +
+        (wantRated ? '' : '<button class="ro-ghost" id="roomGo" type="button">ゲストで続ける</button>') + '</div>');
+      $('#roomOv .ro-panel').insertAdjacentHTML('beforeend',
+        '<button class="ro-ghost" id="roomGitHub" type="button">GitHubでログイン</button>');
+      const values = () => ({
+        name: ($('#roomName').value || '').trim(), email: ($('#roomEmail').value || '').trim(), password: $('#roomPass').value || ''
+      });
+      const validate = () => {
+        const v = values();
+        if (!v.name) throw new Error('表示名を入力してください');
+        if (!v.email) throw new Error('メールアドレスを入力してください');
+        if (v.password.length < 8) throw new Error('パスワードは8文字以上です');
+        lsSet('compileRoomName', v.name);
+        return v;
+      };
+      $('#roomSignIn').onclick = async () => {
+        try {
+          const v = validate(); status('ログイン中…');
+          session = await roomSignIn(v.email, v.password, v.name); showLobby();
+        } catch (e) { status(e.message || 'ログインできませんでした', 'err'); }
+      };
+      $('#roomSignUp').onclick = async () => {
+        try {
+          const v = validate(); status('アカウントを作成中…');
+          session = await roomSignUp(v.email, v.password, v.name); showLobby();
+        } catch (e) { status(e.message || '登録できませんでした', 'err'); }
+      };
+      $('#roomGitHub').onclick = async () => {
+        const name = ($('#roomName').value || '').trim();
+        if (name) lsSet('compileRoomName', name);
+        try { await roomSignInWithGitHub(); }
+        catch (e) { status(e.message || 'GitHubでログインできませんでした', 'err'); }
+      };
+      const guest = $('#roomGo');
+      if (guest) guest.onclick = async () => {
         const n = ($('#roomName').value || '').trim();
         if (!n) { status('表示名を入力してください', 'err'); return; }
         lsSet('compileRoomName', n);
         status('接続中…');
-        try { await roomLogin(n); showLobby(); }
+        try { session = await roomLogin(n); showLobby(); }
         catch (e) { status(e.message, 'err'); }
       };
     }
@@ -83,7 +125,7 @@ export function runRoomLobby(protocols) {
       frame('ONLINE — ロビー',
         '<div class="ro-row"><button class="ro-big" id="roomQuick" type="button">クイックマッチ</button>' +
         '<button class="ro-ghost" id="roomStats" type="button">戦績・CSV</button></div>' +
-        '<label class="ro-check"><input type="checkbox" id="roomRated"> レート戦（結果を記録してレートを更新）</label>' +
+        '<label class="ro-check"><input type="checkbox" id="roomRated"' + (wantRated ? ' checked' : '') + '> レート戦（結果を記録してレートを更新）</label>' +
         '<div class="ro-grid2">' +
           '<div><div class="ro-lbl">ルームを作る</div>' +
             '<input class="ro-input" id="roomPw" maxlength="40" type="password" placeholder="パスワード (任意)">' +
@@ -102,6 +144,8 @@ export function runRoomLobby(protocols) {
         status('空きルームを探しています…');
         const data = await roomApi('list');
         const rated = $('#roomRated').checked;
+        wantRated = rated;
+        if (rated && roomIsAnonymous(session)) { await showLogin(); return; }
         const open = (data.rooms || []).find(r => !r.locked && !!r.rated === rated);
         room = open
           ? await roomApi('join', { name: name(), code: open.code, password: '' })
@@ -110,6 +154,8 @@ export function runRoomLobby(protocols) {
       });
       $('#roomCreate').onclick = guard(async () => {
         const pw = $('#roomPw').value;
+        wantRated = $('#roomRated').checked;
+        if (wantRated && roomIsAnonymous(session)) { await showLogin(); return; }
         if (pw && pw.length < 4) { status('パスワードは4文字以上です', 'err'); return; }
         room = await roomApi('create', {
           name: name(), title: name() + ' のルーム',
@@ -139,6 +185,7 @@ export function runRoomLobby(protocols) {
           el.querySelectorAll('.ro-room').forEach(b => {
             b.onclick = guard(async () => {
               const pw = prompt('パスワード (不要なら空欄)') || '';
+              if (b.textContent.includes('★') && roomIsAnonymous(session)) { wantRated = true; await showLogin(); return; }
               room = await roomApi('join', { name: name(), code: b.dataset.code, password: pw });
               enterRoom();
             });
@@ -310,8 +357,8 @@ export function runRoomLobby(protocols) {
     /* ---------- 起動 ---------- */
     (async () => {
       try {
-        const s = await roomSession();
-        if (s) showLobby(); else showLogin();
+        session = await roomSession();
+        if (session) showLobby(); else showLogin();
       } catch (e) { showLogin(); }
     })();
   });
