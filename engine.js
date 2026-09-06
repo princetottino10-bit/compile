@@ -462,8 +462,12 @@ function cardLabel(st, uid) {
 }
 
 function doDelete(ctx, uid, actor) {
-  if (!locate(ctx.st, uid)) return false;
+  const loc = locate(ctx.st, uid);
+  if (!loc) return false;
   const info = extractCard(ctx, uid);
+  /* CORRUPTION 0 のように相手側スタックへ置かれたカードは、場から
+     削除される時点でそのスタック側の捨て札へ入る。 */
+  if (typeof loc.side === 'number') ctx.st.cards[uid].owner = loc.side;
   ctx.st.cards[uid].commitDest = 'trash';
   fireUncover(ctx, info);
   landTrash(ctx, uid);
@@ -685,6 +689,7 @@ function massRemove(ctx, uids, destKind, actor) {
   for (const u of present) {
     const loc = locate(st, u);
     st.lines[loc.line][loc.side].splice(loc.idx, 1);
+    if (destKind === 'trash') st.cards[u].owner = loc.side;
     markCommitted(st, u);
     st.cards[u].commitDest = destKind === 'trash' ? 'trash' : 'hand';
   }
@@ -800,7 +805,10 @@ function doCompile(ctx, side, line) {
   // 全カード同時削除 (トリガーなし)
   const removed = [];
   for (let s = 0; s < 2; s++) {
-    for (const uid of st.lines[line][s]) { markCommitted(st, uid); st.cards[uid].commitDest = 'trash'; removed.push(uid); }
+    for (const uid of st.lines[line][s]) {
+      st.cards[uid].owner = s;
+      markCommitted(st, uid); st.cards[uid].commitDest = 'trash'; removed.push(uid);
+    }
     st.lines[line][s] = [];
   }
   for (const uid of removed) landTrash(ctx, uid);

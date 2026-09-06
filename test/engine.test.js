@@ -1056,6 +1056,21 @@ test('M2 CORRUPTION_1: どちらのプレイヤー側にもプレイできる', 
   assert.equal(res.state.turn, 1, 'ターンは正常に渡る');
 });
 
+test('CORRUPTION_1: 相手側に置いたカードは削除時にその側の捨て札へ入る', () => {
+  const r = ng({ p0: ['CORRUPTION', 'FIRE', 'WATER'] });
+  const st = r.state;
+  const corruption = uidOf('CORRUPTION_1', 0);
+  setHand(st, 0, ['CORRUPTION_1']);
+  let res = Engine.apply(st, { type: 'play', card: corruption, line: 1, faceUp: true, side: 1 });
+  assert.equal(res.error, null);
+  setHand(res.state, 1, ['DEATH_1']);
+  res = Engine.apply(res.state, { type: 'play', card: uidOf('DEATH_1', 1), line: 0, faceUp: true });
+  res = drive(res, req => req.kind === 'pickCard' ? [corruption]
+    : (req.kind === 'pickLine' ? req.lines.slice(0, 1) : []));
+  assert.ok(res.state.players[1].trash.includes(corruption));
+  assert.equal(res.state.cards[corruption].owner, 1);
+});
+
 test('M2 CORRUPTION_2: 相手の手札に戻るカードはデッキトップへ置換される', () => {
   // P2(側1)の場にCORRUPTION_2(下段static)。P1(側0)がWATER_5で自分のカードを戻すと、
   // 「相手(P1)の手札に戻る」ため P1のデッキトップに裏向きで置かれる
