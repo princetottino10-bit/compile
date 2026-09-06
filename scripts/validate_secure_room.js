@@ -43,7 +43,9 @@ const requiredFn = [
   'PBKDF2',
   'cleanup_secure_rooms',
   '.gte("updated_at", lobbySince)',
-  '.select("code,title,host_name,password_hash,draft_state,created_at")',
+  '.select("code,title,host_name,password_hash,draft_state,rated,created_at")',
+  'record_rated_match',
+  'op === "history"',
 ];
 for (const text of requiredFn) {
   if (!fn.includes(text)) throw new Error(`function missing: ${text}`);

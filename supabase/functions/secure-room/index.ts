@@ -129,6 +129,21 @@ function publicRequest(request: any, forward: Record<string, string>) {
   return out;
 }
 
+async function recordRatedMatch(room: any, winner: number) {
+  if (!room.rated || !room.host_id || !room.guest_id || !room.host_name || !room.guest_name) return;
+  const { error } = await admin.rpc("record_rated_match", {
+    p_room_id: room.id,
+    p_host_id: room.host_id,
+    p_guest_id: room.guest_id,
+    p_host_name: room.host_name,
+    p_guest_name: room.guest_name,
+    p_host_protocols: room.host_protocols || [],
+    p_guest_protocols: room.guest_protocols || [],
+    p_winner: winner,
+  });
+  if (error) throw error;
+}
+
 function engineState(roomState: any) {
   const st = structuredClone(roomState);
   delete st.__trace;
@@ -174,6 +189,7 @@ function publicState(room: any, side: number) {
     code: room.code, title: room.title, status: room.status, version: room.version, side,
     names: [room.host_name, room.guest_name],
     protocols: [room.host_protocols, room.guest_protocols],
+    rated: !!room.rated,
   };
   if (room.status === "draft" && room.draft_state && room.draft_state.on) {
     const ds = room.draft_state;
@@ -255,15 +271,39 @@ Deno.serve(async (req) => {
       await admin.rpc("cleanup_secure_rooms");
       const lobbySince = new Date(Date.now() - 2 * 60 * 60_000).toISOString();
       const { data, error } = await admin.from("secure_rooms")
-        .select("code,title,host_name,password_hash,draft_state,created_at")
+        .select("code,title,host_name,password_hash,draft_state,rated,created_at")
         .eq("visibility", "public").eq("status", "waiting").is("guest_id", null)
         .gte("updated_at", lobbySince)
         .order("created_at", { ascending: false }).limit(30);
       if (error) throw error;
       return json(req, { rooms: (data || []).map((room: any) => ({
         code: room.code, title: room.title, hostName: room.host_name,
-        locked: !!room.password_hash, draft: !!room.draft_state, createdAt: room.created_at,
+        locked: !!room.password_hash, draft: !!room.draft_state, rated: !!room.rated, createdAt: room.created_at,
       })) });
+    }
+
+    if (op === "history") {
+      const [{ data: profile, error: profileError }, { data: matches, error: matchesError }] = await Promise.all([
+        admin.from("rated_players").select("rating,games,wins").eq("user_id", user.id).maybeSingle(),
+        admin.from("rated_matches")
+          .select("id,host_id,guest_id,host_name,guest_name,host_protocols,guest_protocols,winner,host_rating_before,host_rating_after,guest_rating_before,guest_rating_after,ended_at")
+          .or(`host_id.eq.${user.id},guest_id.eq.${user.id}`).order("ended_at", { ascending: false }).limit(500),
+      ]);
+      if (profileError || matchesError) throw profileError || matchesError;
+      return json(req, {
+        rating: profile?.rating ?? 1500, games: profile?.games ?? 0, wins: profile?.wins ?? 0,
+        matches: (matches || []).map((match: any) => {
+          const host = match.host_id === user.id;
+          return {
+            id: match.id, endedAt: match.ended_at, result: match.winner === (host ? 0 : 1) ? "win" : "loss",
+            opponent: host ? match.guest_name : match.host_name,
+            myProtocols: host ? match.host_protocols : match.guest_protocols,
+            opponentProtocols: host ? match.guest_protocols : match.host_protocols,
+            ratingBefore: host ? match.host_rating_before : match.guest_rating_before,
+            ratingAfter: host ? match.host_rating_after : match.guest_rating_after,
+          };
+        }),
+      });
     }
 
     if (op === "create") {
@@ -285,6 +325,7 @@ Deno.serve(async (req) => {
           code: code(), host_id: user.id, host_name: name, title, visibility,
           password_salt: password.salt, password_hash: password.hash,
           draft_state: body.draft ? { on: true } : null,
+          rated: body.rated === true,
         }).select("*").single();
         if (!error) created = data;
         else if (error.code !== "23505") throw error;
@@ -421,6 +462,10 @@ Deno.serve(async (req) => {
         last_action_at: new Date().toISOString(), updated_at: new Date().toISOString(),
       }).eq("id", room.id).eq("version", room.version).select("*").single();
       if (error) return fail(req, "相手の操作と競合しました。再読み込みします", 409);
+      if (result.winner !== null && room.rated) {
+        try { await recordRatedMatch(room, result.winner); }
+        catch (ratingError) { console.error("rated match record failed", ratingError); }
+      }
       return json(req, publicState(data, side));
     }
     return fail(req, "未知の操作です", 404);

@@ -270,10 +270,11 @@ function validatePicks(req, picks) {
 
 function eventMatches(on, ev, cardSide, st, uid) {
   switch (on) {
-    case 'afterOppDiscard':    return ev.on === 'discard' && ev.player !== cardSide;
-    case 'afterYouDiscard':    return ev.on === 'discard' && ev.player === cardSide;
+    // 「手札を捨て札にしたあと」はデッキからの捨て札では発動しない。
+    case 'afterOppDiscard':    return ev.on === 'discard' && ev.from === 'hand' && ev.player !== cardSide;
+    case 'afterYouDiscard':    return ev.on === 'discard' && ev.from === 'hand' && ev.player === cardSide;
     case 'afterYouDiscardOppTurn': // PEACE_4: 相手の手番中にあなたが捨てたあと
-      return ev.on === 'discard' && ev.player === cardSide && st.turn !== cardSide;
+      return ev.on === 'discard' && ev.from === 'hand' && ev.player === cardSide && st.turn !== cardSide;
     case 'afterYouDraw':       return ev.on === 'draw' && ev.player === cardSide;
     case 'afterOppDraw':       return ev.on === 'draw' && ev.player !== cardSide;
     case 'afterYouDelete':     return ev.on === 'delete' && ev.actor === cardSide;
@@ -658,7 +659,7 @@ function discardCards(ctx, side, uids) {
   }
   if (uids.length) {
     log(ctx, `P${side + 1}: ${uids.length}枚捨て札`);
-    fireEvent(ctx, { on: 'discard', player: side, count: uids.length });
+    fireEvent(ctx, { on: 'discard', from: 'hand', player: side, count: uids.length });
   }
   return uids.length;
 }
@@ -1965,6 +1966,18 @@ function apply(state, action) {
       return { state, requests: [], log: [], winner: state.winner, error: '古い選択操作です' };
     }
     return runReplay(pend.base, pend.action, pend.choices.concat([action.picks]));
+  }
+  if (action.type === 'back') {
+    const pend = state.pending;
+    if (!pend) return { state, requests: [], log: [], winner: state.winner, error: '選択待ちではない' };
+    if (action.id !== pend.requestId) {
+      return { state, requests: [], log: [], winner: state.winner, error: '古い選択操作です' };
+    }
+    if (!pend.choices.length) {
+      return { state, requests: [], log: [], winner: state.winner, error: '戻せる選択がありません' };
+    }
+    // 保留アクションを一つ前の回答数で再生し直し、直前の選択要求へ戻る。
+    return runReplay(pend.base, pend.action, pend.choices.slice(0, -1));
   }
   const base = clone(state);
   base.pending = null;

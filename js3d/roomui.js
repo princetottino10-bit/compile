@@ -81,7 +81,9 @@ export function runRoomLobby(protocols) {
     /* ---------- ロビー ---------- */
     async function showLobby() {
       frame('ONLINE — ロビー',
-        '<button class="ro-big" id="roomQuick" type="button">クイックマッチ</button>' +
+        '<div class="ro-row"><button class="ro-big" id="roomQuick" type="button">クイックマッチ</button>' +
+        '<button class="ro-ghost" id="roomStats" type="button">戦績・CSV</button></div>' +
+        '<label class="ro-check"><input type="checkbox" id="roomRated"> レート戦（結果を記録してレートを更新）</label>' +
         '<div class="ro-grid2">' +
           '<div><div class="ro-lbl">ルームを作る</div>' +
             '<input class="ro-input" id="roomPw" maxlength="40" type="password" placeholder="パスワード (任意)">' +
@@ -99,10 +101,11 @@ export function runRoomLobby(protocols) {
       $('#roomQuick').onclick = guard(async () => {
         status('空きルームを探しています…');
         const data = await roomApi('list');
-        const open = (data.rooms || []).find(r => !r.locked);
+        const rated = $('#roomRated').checked;
+        const open = (data.rooms || []).find(r => !r.locked && !!r.rated === rated);
         room = open
           ? await roomApi('join', { name: name(), code: open.code, password: '' })
-          : await roomApi('create', { name: name(), title: 'クイック対戦', visibility: 'public', password: '', draft: true });
+          : await roomApi('create', { name: name(), title: rated ? 'レート戦' : 'クイック対戦', visibility: 'public', password: '', draft: true, rated });
         enterRoom();
       });
       $('#roomCreate').onclick = guard(async () => {
@@ -111,10 +114,11 @@ export function runRoomLobby(protocols) {
         room = await roomApi('create', {
           name: name(), title: name() + ' のルーム',
           visibility: pw ? 'private' : 'public',
-          password: pw, draft: $('#roomDraft').checked
+          password: pw, draft: $('#roomDraft').checked, rated: $('#roomRated').checked
         });
         enterRoom();
       });
+      $('#roomStats').onclick = guard(showHistory);
       $('#roomJoin').onclick = guard(async () => {
         const code = $('#roomCode').value;
         if (code.length !== 6) { status('6桁のコードを入力してください', 'err'); return; }
@@ -130,7 +134,7 @@ export function runRoomLobby(protocols) {
           const rooms = data.rooms || [];
           el.innerHTML = rooms.length
             ? rooms.map(r => '<button class="ro-room" data-code="' + esc(r.code) + '" type="button">' +
-                esc(r.title || r.code) + (r.locked ? ' 🔒' : '') + '<small>' + esc(r.code) + '</small></button>').join('')
+                esc(r.title || r.code) + (r.rated ? ' ★' : '') + (r.locked ? ' 🔒' : '') + '<small>' + esc(r.code) + '</small></button>').join('')
             : '<span class="ro-sub">現在募集中のルームはありません</span>';
           el.querySelectorAll('.ro-room').forEach(b => {
             b.onclick = guard(async () => {
@@ -144,6 +148,42 @@ export function runRoomLobby(protocols) {
       loadList();
       clearInterval(lobbyTimer);
       lobbyTimer = setInterval(loadList, 5000);
+    }
+
+    function csvCell(value) {
+      const text = String(value == null ? '' : value);
+      return /[",\r\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+    }
+
+    async function showHistory() {
+      clearInterval(lobbyTimer);
+      frame('RATED — 戦績', '<p class="ro-sub">読み込み中…</p>', '← ロビーへ戻る');
+      $('#roomBack').onclick = () => showLobby();
+      const data = await roomApi('history');
+      const rows = data.matches || [];
+      const rate = data.rating || 1500;
+      const wins = data.wins || 0;
+      const games = data.games || 0;
+      const list = rows.length
+        ? rows.map(m => '<div class="ro-room"><b>' + (m.result === 'win' ? 'WIN' : 'LOSS') + '</b>　' + esc(m.opponent) +
+          '<small>' + esc((m.myProtocols || []).join(' / ')) + ' vs ' + esc((m.opponentProtocols || []).join(' / ')) +
+          '　' + m.ratingBefore + ' → ' + m.ratingAfter + '　' + new Date(m.endedAt).toLocaleString('ja-JP') + '</small></div>').join('')
+        : '<span class="ro-sub">レート戦の記録はまだありません。</span>';
+      const panel = $('#roomOv .ro-panel');
+      panel.querySelector('.ro-status').insertAdjacentHTML('beforebegin',
+        '<p class="ro-sub">レート <b>' + rate + '</b>　' + wins + '勝 ' + (games - wins) + '敗 (' + games + '戦)</p>' +
+        '<button class="ro-btn" id="roomCsv" type="button">CSVをエクスポート</button><div class="ro-list">' + list + '</div>');
+      $('#roomCsv').onclick = () => {
+        const header = ['終了日時', '結果', '相手', '自分のプロトコル', '相手のプロトコル', 'レート前', 'レート後'];
+        const csv = [header].concat(rows.map(m => [
+          new Date(m.endedAt).toISOString(), m.result === 'win' ? 'WIN' : 'LOSS', m.opponent,
+          (m.myProtocols || []).join(' / '), (m.opponentProtocols || []).join(' / '), m.ratingBefore, m.ratingAfter
+        ])).map(line => line.map(csvCell).join(',')).join('\r\n');
+        const url = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' }));
+        const a = document.createElement('a');
+        a.href = url; a.download = 'compile-rated-matches.csv'; a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      };
     }
 
     function guard(fn) {
@@ -209,7 +249,7 @@ export function runRoomLobby(protocols) {
     function renderRoom() {
       const m = mode();
       if (m === 'waiting') {
-        frame('ONLINE — 待機中',
+        frame('ONLINE — 待機中' + (room.rated ? ' ★ RATED' : ''),
           '<div class="ro-code">' + esc(room.code) + '</div>' +
           '<p class="ro-sub">' + (room.names[1]
             ? '対戦相手が参加しました。'

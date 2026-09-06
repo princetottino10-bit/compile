@@ -912,6 +912,7 @@ async function roomDrainRequest() {
       const picks = await askUser(req);
       UI.setPrompt('');
       if (picks === PICK_CANCEL) continue;   // 外部更新で取り直し
+      if (picks === PICK_BACK) { await roomStep({ type: 'back', id: req.id }); continue; }
       await roomStep({ type: 'choose', id: req.id, picks });
     }
   } finally {
@@ -1127,6 +1128,7 @@ async function askUser(req) {
    候補をハイライトしてタップで選ばせる。null ならモーダルへ */
 let boardPick = null;
 const PICK_CANCEL = '__pickCancel__';   // 外部要因 (ポーリング等) による中断
+const PICK_BACK = '__pickBack__';       // 効果の一段前の選択へ戻る
 let activeArrange = null;               // 表示中の並べ替えオーバーレイ
 
 /* 表示中の待ち受けUI (盤面ピック / 並べ替え / モーダル) をすべて破棄する */
@@ -1326,9 +1328,14 @@ function renderLinePick() {
     document.body.appendChild(el);
   }
   const hasFocus = Array.isArray(bp.req.focus) ? bp.req.focus.length > 0 : !!bp.req.focus;
+  const canBack = !!(cur && cur.state && cur.state.pending && cur.state.pending.requestId === bp.req.id
+    && Array.isArray(cur.state.pending.choices) && cur.state.pending.choices.length);
   el.innerHTML = '<span class="effect-target-legend">' +
     (hasFocus ? '金色: 移動対象　緑色: 移動先' : '緑色のラインから選択') +
-    '</span><button class="arr-btn" id="pkList" type="button">リストで選ぶ</button>';
+    '</span>' + (canBack ? '<button class="arr-btn" id="pkBack" type="button">対象を選び直す</button>' : '') +
+    '<button class="arr-btn" id="pkList" type="button">リストで選ぶ</button>';
+  const back = el.querySelector('#pkBack');
+  if (back) back.onclick = () => finishLinePick(PICK_BACK);
   el.querySelector('#pkList').onclick = () => finishLinePick(null);
 }
 
@@ -1482,7 +1489,9 @@ async function drainRequests() {
     if (picks === PICK_CANCEL) continue;
     const prev = shown();
     busy = true;
-    const res = Engine.apply(cur.state, { type: 'choose', id: req.id, picks });
+    const res = Engine.apply(cur.state, picks === PICK_BACK
+      ? { type: 'back', id: req.id }
+      : { type: 'choose', id: req.id, picks });
     if (res.error) { UI.toast(res.error); busy = false; continue; }   // 再質問へ
     cur = res;
     if (!res.requests.length) UI.pushLog(res.log);

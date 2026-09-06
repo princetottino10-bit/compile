@@ -197,6 +197,19 @@ test('移動先を選ぶ間は、選んだ移動カードを request.focus で�
   assert.deepEqual(res.requests[0].lines.sort(), [0, 2]);
 });
 
+test('選択を一段戻す: 移動先から移動カードの選択へ戻れる', () => {
+  const r = ng({ p0: ['SPIRIT', 'FIRE', 'WATER'] });
+  const st = r.state;
+  place(st, 'SPIRIT_4', 0, 1, true);
+  setHand(st, 0, ['SPIRIT_1']);
+  let res = Engine.apply(st, { type: 'play', card: uidOf('SPIRIT_1', 0), line: 0, faceUp: true });
+  res = Engine.apply(res.state, { type: 'choose', id: res.requests[0].id, picks: ['yes'] });
+  assert.equal(res.requests[0].prompt, 'shift-dest');
+  res = Engine.apply(res.state, { type: 'back', id: res.requests[0].id });
+  assert.equal(res.error, null);
+  assert.equal(res.requests[0].prompt, 'optional-shift');
+});
+
 test('LOVE 1: 相手のデッキから引いてもSPIRIT 3が反応する', () => {
   const r = ng({ p0: ['LOVE', 'SPIRIT', 'WATER'] });
   const st = r.state;
@@ -1086,6 +1099,27 @@ test('M2 CORRUPTION_2: 相手の手札に戻るカードはデッキトップへ
   assert.ok(!res.state.players[0].hand.includes(uidOf('FIRE_6', 0)), '手札には戻らない');
   assert.equal(res.state.players[0].deck[0], uidOf('FIRE_6', 0), 'デッキトップに置かれる');
   assert.equal(res.state.cards[uidOf('FIRE_6', 0)].faceUp, false, '裏向きで置かれる');
+});
+
+test('CLARITY_2: デッキトップを捨て札にしてもCORRUPTION_3は発動しない', () => {
+  const r = ng({ p0: ['CLARITY', 'CORRUPTION', 'FIRE'] });
+  const st = r.state;
+  place(st, 'CLARITY_2', 0, 0, true);
+  place(st, 'CORRUPTION_3', 0, 1, true);
+  setHand(st, 0, []);
+
+  // P1の手番を通して、P1開始時のCLARITYの上段を発火させる。
+  let res = Engine.apply(st, { type: 'refresh' });
+  assert.equal(res.error, null);
+  setHand(res.state, 1, ['DEATH_2', 'METAL_1']);
+  res = Engine.apply(res.state, { type: 'play', card: uidOf('DEATH_2', 1), line: 0, faceUp: true });
+  assert.equal(res.error, null);
+  assert.equal(res.requests.length, 1);
+  assert.equal(res.requests[0].kind, 'yesNo');
+
+  res = Engine.apply(res.state, { type: 'choose', id: res.requests[0].id, picks: ['yes'] });
+  assert.equal(res.error, null);
+  assert.deepEqual(res.state.players[1].hand, [uidOf('METAL_1', 1)], '相手に手札破棄を要求しない');
 });
 
 test('DIVERSITY_2: 自身を移動した後は移動先ラインの種類数を引く', () => {
