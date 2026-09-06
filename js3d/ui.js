@@ -250,6 +250,35 @@ export function compileCutIn(info) {
 }
 
 /* ターン開始のバナー */
+/* フェイズの開始を示す小さな帯。
+   ターン構造 (開始 → コントロール確認 → コンパイル確認 → アクション →
+   キャッシュ確認 → 終了) のどこに居るのかを、演出の前に一言で出す。 */
+const PHASE_LABEL = {
+  start: '開始フェイズ',
+  checkControl: 'コントロール確認',
+  checkCompile: 'コンパイル確認',
+  action: 'アクション',
+  checkCache: 'キャッシュ確認',
+  end: '終了フェイズ'
+};
+
+export function showPhase(phase, mine) {
+  const label = PHASE_LABEL[phase];
+  if (!label) return;
+  let el = $('#phaseChip');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'phaseChip';
+    document.body.appendChild(el);
+  }
+  el.style.setProperty('--accent', mine ? '#6dffc2' : '#ff3b9d');
+  el.innerHTML = '<span class="ph-who">' + (mine ? 'あなた' : '相手') + '</span>' +
+    '<span class="ph-name">' + label + '</span>';
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 1400);
+}
+
 export function turnCutIn(mine) {
   const el = $('#turnCut');
   if (!el) return Promise.resolve();

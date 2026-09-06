@@ -999,13 +999,35 @@ async function finaleFx(win) {
   await TW.wait(320);
 }
 
+async function announceTurnFor(turn) {
+  if (turn === undefined || turn === null || turn === lastTurn) return;
+  lastTurn = turn;
+  sfx('turn');
+  await UI.turnCutIn(turn === ME);
+}
+
 async function announceTurn() {
   const st = shown();
   if (!st || st.winner !== null) return;
-  if (st.turn === lastTurn) return;
-  lastTurn = st.turn;
-  sfx('turn');
-  await UI.turnCutIn(st.turn === ME);
+  await announceTurnFor(st.turn);
+}
+
+/* フェイズの開始を、そのフェイズの演出より先に見せる。
+   コンパイルは相手の手番の直後ではなく「自分のターンのコンパイル確認」で
+   起きるので、ターン交代とフェイズを再生の途中に差し込まないと、
+   相手のターンの出来事のように見えてしまう。 */
+let lastPhaseTag = '';
+async function markPhase(st) {
+  if (!st || st.winner !== null) return;
+  await announceTurnFor(st.turn);
+  const phase = st.phase;
+  /* アクションは盤面の操作そのもので分かるので帯を出さない */
+  if (!phase || phase === 'action' || phase === 'finished') return;
+  const tag = st.turn + ':' + phase;
+  if (tag === lastPhaseTag) return;
+  lastPhaseTag = tag;
+  UI.showPhase(phase, st.turn === ME);
+  await TW.wait(240);
 }
 
 /* -------------------------------------------------------------------------
@@ -1088,6 +1110,7 @@ async function replayResolution(prev, res, action) {
   let from = prev;
   let first = true;
   for (const step of use) {
+    await markPhase(step.st);
     await board.applyTransition(from, step.st, first ? action : null, { speed: 0.72 });
     await cueFor(step, step.st);
     from = step.st;
