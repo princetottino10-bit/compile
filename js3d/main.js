@@ -1327,10 +1327,13 @@ function checkRevealed(st) {
   const tag = r.player + ':' + r.cards.join(',');
   if (tag === lastRevealTag) return;
   lastRevealTag = tag;
+  const title = r.kind === 'deck' ? '相手のデッキが公開された (' + r.cards.length + '枚)'
+    : r.kind === 'hand' ? '相手の手札が公開された'
+    : '相手がカードを公開した';
   UI.showRevealedHand(r.cards.map((id) => {
     const d = defIndex[id];
     return d ? { img: faceImageURL(d), label: d.proto + ' ' + d.value } : null;
-  }).filter(Boolean));
+  }).filter(Boolean), title);
 }
 
 /* 画面リサイズ/回転: カメラは stage が追従するが、手札や山札の実配置は
