@@ -9,6 +9,7 @@ import { createControlMarker } from './control.js';
 import { createPanels } from './panel.js';
 import { runSetup } from './setup.js';
 import { runTitle } from './title.js';
+import { mountTrainingTools } from './training.js';
 import * as ROOM from './room.js';
 import { runRoomLobby } from './roomui.js';
 import { reqText } from './prompts.js';
@@ -43,6 +44,11 @@ let roomTracker = null;         // trace の差分追跡
 let roomPollTimer = null;
 let handCompactMode = null;
 let roomLoggedVersion = null;
+let trainingMode = false;
+let trainingDef = null;
+let trainingSerial = 0;
+let trainingHistory = [];
+let trainingTools = null;
 
 /* 表示用の状態。
    engine は選択待ちで中断すると state に「アクション前の基準状態」を返し、
@@ -159,30 +165,31 @@ async function boot() {
     document.body.classList.add('demo');
   }
 
-  /* URL で指定がなければ、タイトル → 選択画面 (オンラインもここから) */
+  /* URL で指定がなければ、タイトル → モード選択 → 各モードの準備へ */
   if (!p0) {
     const bootEl0 = document.getElementById('boot');
     bootEl0.classList.add('gone');
     setTimeout(() => { bootEl0.style.display = 'none'; }, 800);
-    if (params.get('title') !== '0') await runTitle(cards.protocols);
+    let nextMode = params.get('title') !== '0' ? await runTitle(cards.protocols) : 'single';
     for (;;) {
-      const chosen = await runSetup(cards.protocols);
-      if (!chosen.online) {
-        p0 = chosen.me;
-        p1 = p1 || chosen.ai;
-        applyAiDifficulty(chosen.level);
-        break;
+      if (nextMode === 'online') {
+        try {
+          await ROOM.roomLoadDeps();
+        } catch (e) { UI.toast('オンライン機能を読み込めませんでした'); nextMode = 'single'; continue; }
+        if (!ROOM.roomConfigured()) { UI.toast('オンライン対戦は未設定です (secure-room-config.js)'); nextMode = 'single'; continue; }
+        const result = await runRoomLobby(cards.protocols);
+        if (!result) { nextMode = 'single'; continue; }
+        document.getElementById('boot').style.display = 'none';
+        await roomEnterGame(result.rm);
+        return;
       }
-      /* オンライン対戦へ */
-      try {
-        await ROOM.roomLoadDeps();
-      } catch (e) { UI.toast('オンライン機能を読み込めませんでした'); continue; }
-      if (!ROOM.roomConfigured()) { UI.toast('オンライン対戦は未設定です (secure-room-config.js)'); continue; }
-      const result = await runRoomLobby(cards.protocols);
-      if (!result) continue;            // 戻る → ソロ設定へ
-      document.getElementById('boot').style.display = 'none';
-      await roomEnterGame(result.rm);
-      return;                            // 以降はポーリング駆動
+      const chosen = await runSetup(cards.protocols, { training: nextMode === 'training', allowOnline: false });
+      if (chosen.online) { nextMode = 'online'; continue; }
+      p0 = chosen.me;
+      p1 = p1 || chosen.ai;
+      trainingMode = !!chosen.training;
+      applyAiDifficulty(chosen.level);
+      break;
     }
   }
 
@@ -193,7 +200,7 @@ async function boot() {
   }
   pruneFaceCache(keepIds);
   const res = Engine.newGame({ seed: (Math.random() * 1e9) | 0, p0, p1, first: 0 });
-  cur = res;
+  cur = trainingMode ? makeTrainingState(res) : res;
   window.__3d = {
     stage, board, THREE, LAYOUT,
     get cur() { return cur; },
@@ -235,6 +242,7 @@ async function boot() {
   };
   mark('newGame');
   board.syncInstant(shown());
+  if (trainingMode) mountTraining(cards);
   mark('sync');
   const bootEl = document.getElementById('boot');
   bootEl.classList.add('gone');
@@ -243,8 +251,73 @@ async function boot() {
 
   await stage.home(0);
   refreshHud();
-  await drainRequests();
-  await afterTurn();
+  if (trainingMode) {
+    UI.setPrompt('カードを選び、光る6つの枠へ自由に配置できます', 'ask');
+  } else {
+    await drainRequests();
+    await afterTurn();
+  }
+}
+
+/* ---------- トレーニング: ルール進行を持たない自由配置盤面 ---------- */
+function makeTrainingState(res) {
+  const st = res.state;
+  st.useControl = false;
+  st.turn = ME;
+  st.phase = 'action';
+  st.winner = null;
+  st.lines = [[[], []], [[], []], [[], []]];
+  for (const p of st.players) { p.deck = []; p.hand = []; p.trash = []; p.cannotCompile = false; }
+  for (const card of Object.values(st.cards)) {
+    card.zone = 'training-pool'; card.faceUp = false; card.knownTo = 3;
+  }
+  return { state: st, requests: [], log: [], trace: [], winner: null, error: null };
+}
+
+function mountTraining(cards) {
+  trainingTools?.remove();
+  const sync = () => {
+    board.syncInstant(cur.state);
+    refreshHud();
+    updatePads();
+  };
+  trainingTools = mountTrainingTools(cards, defIndex, {
+    select: (def) => { trainingDef = def; sfx('select'); updatePads(); },
+    undo: () => {
+      const uid = trainingHistory.pop();
+      if (!uid) { UI.toast('戻せる配置はありません'); return; }
+      for (const line of cur.state.lines) for (const stack of line) {
+        const i = stack.indexOf(uid); if (i >= 0) stack.splice(i, 1);
+      }
+      delete cur.state.cards[uid];
+      sync(); sfx('trash');
+    },
+    clear: () => {
+      for (const line of cur.state.lines) for (const stack of line) {
+        for (const uid of stack) if (uid.startsWith('training:')) delete cur.state.cards[uid];
+        stack.length = 0;
+      }
+      trainingHistory = [];
+      sync(); sfx('trash');
+    }
+  });
+  window.__3d.training = {
+    place: (defId, line, side, faceUp = true) => trainingPlace(defIndex[defId], line, side, faceUp),
+    clear: () => trainingTools?.querySelector('#trClear')?.click()
+  };
+}
+
+function trainingPlace(def, line, side, faceUp) {
+  if (!trainingMode || !def || line < 0 || line > 2 || side < 0 || side > 1) return false;
+  const uid = 'training:' + (++trainingSerial);
+  const st = cur.state;
+  st.cards[uid] = { uid, def: def.id, owner: side, faceUp: !!faceUp, zone: 'field', knownTo: 3 };
+  st.lines[line][side].push(uid);
+  trainingHistory.push(uid);
+  board.syncInstant(st);
+  refreshHud();
+  sfx('land');
+  return true;
 }
 
 /* 着地パッドの意匠: 角丸の枠 + 内側のごく薄い塗り */
@@ -346,6 +419,19 @@ function buildPads() {
 
 /* 選択中カードの着地候補を光らせる */
 function updatePads() {
+  if (trainingMode) {
+    for (const pad of pads) {
+      pad.userData.pulse = trainingDef ? 0.92 : 0;
+      if (cur && trainingDef) {
+        const slot = LAYOUT.stackSlot(pad.userData.line, pad.userData.side,
+          cur.state.lines[pad.userData.line][pad.userData.side].length, ME);
+        pad.position.set(...slot.pos);
+      }
+    }
+    const choices = document.getElementById('playChoices');
+    if (choices) { choices.replaceChildren(); choices.hidden = true; }
+    return;
+  }
   updatePlayChoices();
   const st = cur && cur.state;   // 合法手の判定は基準状態で行う
   for (const pad of pads) pad.userData.pulse = 0;
@@ -503,6 +589,29 @@ function bindInput() {
       });
       return bl;
     };
+    if (trainingMode && trainingDef) {
+      const ud = hit && hit.obj && hit.obj.userData;
+      let line = ud && ud.isPad ? ud.line : null;
+      let side = ud && ud.isPad ? ud.side : null;
+      if (line === null && ud && ud.uid) {
+        const loc = locOf(shown(), ud.uid);
+        if (loc && loc.zone === 'field') { line = loc.line; side = loc.side; }
+      }
+      /* 自由配置では、配置枠の上をカード表示やプロトコル板が覆っていても
+         タップを取り逃がさない。盤面平面上の位置から6つの半レーンを判定する。 */
+      if (line === null) {
+        const pt = planePoint(ev);
+        const lane = laneFromEvent();
+        if (pt && lane !== null) {
+          line = lane;
+          side = pt.z < 0 ? AI : ME;
+        }
+      }
+      if (line !== null && side !== null) {
+        trainingPlace(trainingDef, line, side, !backFacing);
+        return;
+      }
+    }
     if (boardPick && boardPick.kind === 'yesno') return;
     if (boardPick && boardPick.kind === 'free') {
       /* 候補でないカードが重なっていても、その下の候補まで拾いに行く */
@@ -1804,7 +1913,8 @@ function refreshHud() {
   );
   const mine = st.turn === ME && st.winner === null;
   const oppName = roomMode && roomRm && roomRm.names ? (roomRm.names[1 - roomRm.side] || '相手') : '相手';
-  UI.setTurnBadge(st.winner !== null ? '決着' : (mine ? 'あなたのターン' : oppName + 'のターン'), mine);
+  UI.setTurnBadge(trainingMode ? 'TRAINING — FREE PLACE' :
+    (st.winner !== null ? '決着' : (mine ? 'あなたのターン' : oppName + 'のターン')), mine || trainingMode);
   const oppLabel = document.querySelector('#oppCounts div:first-child');
   if (oppLabel) oppLabel.textContent = roomMode ? oppName : 'OPPONENT';
   syncFacingHint();
@@ -1820,9 +1930,10 @@ function refreshHud() {
   /* 打てる札がなく補充しか残っていないときは、ボタンで誘導する */
   const refreshBtn = document.getElementById('btnRefresh');
   if (refreshBtn) {
+    refreshBtn.hidden = trainingMode;
     const onlyRefresh = acts.length > 0 && acts.every(a => a.type === 'refresh');
     refreshBtn.classList.toggle('urge', onlyRefresh);
-    if (onlyRefresh) UI.setPrompt('プレイできるカードがありません。リフレッシュしてください', 'ask');
+    if (!trainingMode && onlyRefresh) UI.setPrompt('プレイできるカードがありません。リフレッシュしてください', 'ask');
   }
   updatePads();
 }

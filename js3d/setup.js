@@ -9,7 +9,8 @@ const AI_LABELS = ['かんたん', 'ふつう', 'つよい', '最強'];
 /* 最強はこの固定編成 + 特化戦略で戦う (auto-play と同じ) */
 export const STRONGEST_AI = ['DARKNESS', 'SPEED', 'HATE'];
 
-export function runSetup(protocols) {
+export function runSetup(protocols, options = {}) {
+  const training = !!options.training;
   const root = document.getElementById('setup');
   const grid = document.getElementById('setupGrid');
   const startBtn = document.getElementById('setupStart');
@@ -18,6 +19,15 @@ export function runSetup(protocols) {
 
   const picked = [];
   let level = 1;
+
+  document.querySelector('#setupHead h1').innerHTML = training ? '<b>//</b> TRAINING SETUP' : '<b>//</b> PROTOCOL SELECT';
+  document.querySelector('#setupHead p').textContent = training
+    ? '盤面のプロトコルを3つ選ぶ。開始後は全180枚を自由に置ける。'
+    : '使用するプロトコルを3つ選ぶ。相手は残りから自動で編成される。';
+  startBtn.textContent = training ? 'トレーニング開始' : '対戦開始';
+  const onlineBtn = document.getElementById('setupOnline');
+  onlineBtn.hidden = training || options.allowOnline === false;
+  levelWrap.hidden = training;
 
   /* 難易度 */
   levelWrap.innerHTML = '';
@@ -84,7 +94,6 @@ export function runSetup(protocols) {
   root.classList.add('show');
 
   return new Promise((resolve) => {
-    const onlineBtn = document.getElementById('setupOnline');
     if (onlineBtn) onlineBtn.onclick = () => {
       root.classList.remove('show');
       resolve({ online: true });
@@ -92,7 +101,11 @@ export function runSetup(protocols) {
     startBtn.onclick = () => {
       if (picked.length !== 3) return;
       let ai;
-      if (level === 3) {
+      if (training) {
+        /* 自由配置では対戦相手のランダムなプロトコルが混ざると盤面の
+           読み合わせがしづらい。両側を同じ3種にして検証対象を明確にする。 */
+        ai = picked.slice();
+      } else if (level === 3) {
         ai = STRONGEST_AI.slice();
       } else {
         const rest = protocols.map(p => p.name).filter(n => !picked.includes(n));
@@ -103,7 +116,7 @@ export function runSetup(protocols) {
       }
       root.classList.remove('show');
       setTimeout(() => { root.style.display = 'none'; }, 500);
-      resolve({ me: picked.slice(), ai, level });
+      resolve({ me: picked.slice(), ai, level, training });
     };
   });
 }
