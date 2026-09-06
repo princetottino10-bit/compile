@@ -22,6 +22,7 @@ import { BOARD, CARD, COLOR, TIMING } from './theme.js';
 import * as TW from './tween.js';
 import * as UI from './ui.js';
 import { placementPad } from './input.js';
+import { placementChoices, renderPlayChoices } from './playchoices.js';
 
 const Engine = window.CompileEngine;
 const ME = 0;      // 視点 = 人間プレイヤー
@@ -320,6 +321,7 @@ function buildPads() {
 
 /* 選択中カードの着地候補を光らせる */
 function updatePads() {
+  updatePlayChoices();
   const st = cur && cur.state;   // 合法手の判定は基準状態で行う
   for (const pad of pads) pad.userData.pulse = 0;
   if (!st || busy || selectedUid === null || cur.requests.length) return;
@@ -558,21 +560,15 @@ function bindInput() {
   async function dropOnPad(ud) {
     const mode = canPlaceHere(cur.state, selectedUid, ud.line, ud.side);
     if (!mode) { UI.toast('そのラインにはプレイできません'); return; }
-    const uid = selectedUid;
-    deselect();
-    const card = board.cards.get(uid);
-    if (card) { card.renderOrder = 0; board.setSelected(card, false); }
-    const action = { type: 'play', card: uid, line: ud.line, faceUp: mode === 'faceUp' };
-    if (ud.side !== cur.state.turn) action.side = ud.side;
-    await step(action);
+    const card = board.cards.get(selectedUid);
+    if (card) { card.renderOrder = 0; raiseHandCard(selectedUid); }
+    focusPlayChoice(ud.line, ud.side);
   }
 
   window.addEventListener('keydown', (ev) => {
-    if (ev.key === 'Shift') { backFacing = true; updatePads(); syncFacingHint(); }
     if (ev.key === 'Escape') deselect();
   });
   window.addEventListener('keyup', (ev) => {
-    if (ev.key === 'Shift') { backFacing = false; updatePads(); syncFacingHint(); }
   });
 
   const refreshBtn = document.getElementById('btnRefresh');
@@ -682,6 +678,48 @@ function select(uid) {
 }
 
 function deselect() { select(null); }
+
+function currentPlacementChoices() {
+  if (!cur || busy || demoMode || shown().winner !== null) return [];
+  if (boardPick?.kind === 'free') {
+    return (boardPick.byUid[boardPick.sel] || []).map(o => ({
+      type: 'play', card: boardPick.sel, line: o.line, side: ME,
+      faceUp: o.face === 'u', raw: o.raw
+    }));
+  }
+  if (cur.requests.length || shown().turn !== ME) return [];
+  return placementChoices(legalNow(), selectedUid, shown().turn);
+}
+
+function updatePlayChoices() {
+  const root = document.getElementById('playChoices');
+  if (!root || !cur) return;
+  const options = currentPlacementChoices();
+  const uid = boardPick?.kind === 'free' ? boardPick.sel : selectedUid;
+  renderPlayChoices(root, options, shown().players.map(p => p.protocols),
+    options.length ? cardName(uid) : '', async action => {
+      // Recheck against the latest state before committing a possibly stale button.
+      const valid = currentPlacementChoices().find(a => a.card === action.card && a.line === action.line
+        && a.side === action.side && a.faceUp === action.faceUp && a.raw === action.raw);
+      if (!valid) { updatePlayChoices(); return; }
+      showPreview(null);
+      if (boardPick?.kind === 'free') { finishFreePick([valid.raw]); return; }
+      const { side, ...wire } = valid;
+      if (side !== shown().turn) wire.side = side;
+      deselect();
+      await step(wire);
+    }, () => {
+      if (boardPick?.kind === 'free') { boardPick.sel = null; renderFreePick(); }
+      else { deselect(); showPreview(null); }
+    });
+}
+
+function focusPlayChoice(line, side) {
+  updatePlayChoices();
+  const root = document.getElementById('playChoices');
+  const cell = root?.querySelector(`section[data-line="${line}"][data-side="${side}"]`);
+  if (cell) { cell.classList.add('focused'); cell.scrollIntoView({ block: 'nearest' }); }
+}
 
 /* AI の思考中だけ trace を止める (state の clone が入って探索が重くなるため) */
 function withoutTrace(fn) {
@@ -1078,6 +1116,7 @@ function renderBoardPick() {
 function renderFreePick() {
   const bp = boardPick;
   if (!bp) return;
+  updatePlayChoices();
   UI.hideActivation();
   if (bp.sel) {
     board.markCandidates([bp.sel], [bp.sel]);
@@ -1122,14 +1161,13 @@ function tapFreePick(hitUd) {
   const opts = bp.byUid[bp.sel].filter(o => o.line === line);
   if (!opts.length) return;
   /* 表裏どちらも置けるラインは、表向き/裏向きトグルの状態に従う */
-  const want = backFacing ? 'd' : 'u';
-  const chosen = opts.find(o => o.face === want) || opts[0];
-  finishFreePick([chosen.raw]);
+  focusPlayChoice(line, ME);
 }
 
 function finishFreePick(picks) {
   const bp = boardPick;
   boardPick = null;
+  updatePlayChoices();
   board.clearCandidates();
   for (const pad of pads) pad.userData.hover = false;
   const el = document.getElementById('pickBar');

@@ -169,6 +169,10 @@ export function setSelected(card, on, colorHex) {
       color: 0xffd86a, transparent: true, opacity: 0.95, linewidth: 2
     }));
     outline.position.y = CARD.thickness / 2 + 0.003;
+    /* 装飾は入力を受けない。Line の標準判定幅はカード幅ほどあり、
+       visible=false でも Raycaster が拾うため、隣のカードの操作を奪う。 */
+    tint.raycast = () => {};
+    outline.raycast = () => {};
     card.add(tint, outline);
     ud.selectTint = tint;
     ud.selectOutline = outline;
