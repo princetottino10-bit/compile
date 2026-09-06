@@ -62,9 +62,14 @@ export function stackSlot(line, side, idx, me) {
 export function transitSlot(line, side, me) {
   const near = side === me;
   const dir = near ? 1 : -1;
-  const baseZ = near ? BOARD.stackZ[1] : BOARD.stackZ[0];
+  /* スタックの真上に浮かべると、覆っている札を画面上で完全に隠してしまい
+     「移動中のカードが邪魔で下のカードが選べない」状態になった。
+     両陣営の積み札に挟まれた中央の空き帯へ、低く浮かせて逃がす。
+     高さと奥行きは、横長/縦長どちらのカメラでも積み札に重ならない値を
+     実測で選んでいる (test/transit.test.js が投影して検証する)。
+     持ち主は傾き (dir) と向きで示す。 */
   return {
-    pos: [BOARD.laneX[line], 1.05, baseZ + dir * 0.42],
+    pos: [BOARD.laneX[line], near ? 0.7 : 0.4, near ? 0.4 : 0.3],
     rot: [dir * -0.16, near ? 0 : Math.PI, 0.05],
     scale: 1.06
   };
