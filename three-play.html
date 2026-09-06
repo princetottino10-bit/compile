@@ -310,7 +310,9 @@
   /* ---------- 拡大プレビュー ---------- */
   /* 余白に固定表示する大型カードプレビュー (MD/MTGアリーナ式)。
      盤面は中央に集まるので、左の縦帯の余白に大きく出す。 */
-  #preview{position:fixed;left:2vw;top:52%;z-index:26;height:64vh;
+  /* 高さだけで決めると、縦長のウィンドウや大画面で盤面を覆うほど大きくなる。
+     画面の幅と実寸でも頭打ちにする (カードの縦横比 512:716 で幅が決まる) */
+  #preview{position:fixed;left:2vw;top:52%;z-index:26;height:min(56vh,32vw,420px);
     opacity:0;pointer-events:none;transform:translateY(-50%) scale(.95);
     transform-origin:left center;
     transition:opacity .12s ease-out,transform .14s cubic-bezier(.16,1,.3,1);}

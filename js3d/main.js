@@ -171,6 +171,14 @@ async function boot() {
     bootEl0.classList.add('gone');
     setTimeout(() => { bootEl0.style.display = 'none'; }, 800);
     let nextMode = params.get('title') !== '0' ? await runTitle(cards.protocols) : 'single';
+    /* Google 等のログインはページを離れて戻ってくる。
+       戻り先はタイトルなので、目印があればオンラインへ直行する。 */
+    try {
+      if (localStorage.getItem('compileOnlineResume') === '1') {
+        localStorage.removeItem('compileOnlineResume');
+        nextMode = 'online';
+      }
+    } catch (e) { /* private mode */ }
     for (;;) {
       if (nextMode === 'online') {
         try {
@@ -1246,17 +1254,27 @@ async function replayResolution(prev, res, action) {
   let from = prev;
   let first = true;
   for (const step of use) {
-    await markPhase(step.st);
-    await checkAnnounce(step.st);
-    /* フェイズの合図だけのステップは絵が同じなので、演出を挟まず次へ進む */
-    if (step.phaseOnly) continue;
+    /* フェイズだけが進むコマは、絵が同じなので合図を出して次へ進む。
+       この形なら「開始フェイズ → 開始効果」の順に見える。 */
+    if (step.phaseOnly) {
+      await markPhase(step.st);
+      await checkAnnounce(step.st);
+      continue;
+    }
+    /* 絵が動くコマは、動かしてから合図を出す。
+       1コマの中で「カードの着地」と「手番交代」が同時に起きることがあり、
+       先に告知すると、相手のターンになってからカードが積まれて見えた。 */
     await board.applyTransition(from, step.st, first ? action : null, { speed: 0.72 });
     await cueFor(step, step.st);
+    await markPhase(step.st);
+    await checkAnnounce(step.st);
     from = step.st;
     first = false;
   }
   /* 最後は必ず本物の状態へ合わせる */
   await board.applyTransition(from, final, first ? action : null, first ? null : { speed: 0.72 });
+  /* 盤面が最終形になってから、そこまでに進んだ手番/フェイズを告げる */
+  await markPhase(final);
 }
 
 /* ---------- 進行 ---------- */

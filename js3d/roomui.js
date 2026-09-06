@@ -130,6 +130,11 @@ export function runRoomLobby(protocols) {
     /* ---------- ロビー ---------- */
     async function showLobby() {
       frame('ONLINE — ロビー',
+        /* 事故で閉じたときの戻り道。参加者本人ならサーバーが再入室を許す */
+        (lsGet('compileRoomLast')
+          ? '<div class="ro-row"><button class="ro-big" id="roomResume" type="button">中断した対戦に戻る (' +
+              esc(lsGet('compileRoomLast')) + ')</button></div>'
+          : '') +
         '<div class="ro-row"><button class="ro-big" id="roomQuick" type="button">クイックマッチ</button>' +
         '<button class="ro-ghost" id="roomStats" type="button">戦績・CSV</button></div>' +
         '<label class="ro-check"><input type="checkbox" id="roomRated"' + (wantRated ? ' checked' : '') + '> レート戦（結果を記録してレートを更新）</label>' +
@@ -170,6 +175,20 @@ export function runRoomLobby(protocols) {
           password: pw, draft: $('#roomDraft').checked, rated: $('#roomRated').checked
         });
         enterRoom();
+      });
+      const resumeBtn = $('#roomResume');
+      if (resumeBtn) resumeBtn.onclick = guard(async () => {
+        const code = lsGet('compileRoomLast');
+        status('対戦に復帰しています…');
+        try {
+          room = await roomApi('join', { name: name(), code, password: '' });
+          enterRoom();
+        } catch (e) {
+          /* 部屋が消えている / 別アカウントになっている場合は目印を消す */
+          lsSet('compileRoomLast', '');
+          status(e.message || 'その対戦には戻れませんでした', 'err');
+          setTimeout(showLobby, 1200);
+        }
       });
       $('#roomStats').onclick = guard(showHistory);
       $('#roomJoin').onclick = guard(async () => {
@@ -253,6 +272,8 @@ export function runRoomLobby(protocols) {
     /* ---------- 入室後 (待機 / ドラフト / プロトコル選択) ---------- */
     function enterRoom() {
       clearInterval(lobbyTimer);
+      /* 事故で閉じても戻れるよう、部屋のコードを覚えておく */
+      if (room && room.code) lsSet('compileRoomLast', room.code);
       /* 再入室では既に対戦中のことがある (join が playing を返す) */
       if (room.status === 'playing' || room.status === 'finished') { done({ rm: room }); return; }
       sel = [];

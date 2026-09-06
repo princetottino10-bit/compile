@@ -2365,10 +2365,11 @@ function aiActionBias(st, action, side) {
   const gap = Math.max(0, 10 - mine);
   let v = 0;
   /* 対象がいない盤面で対象取りの中段を表で切るのは効果の空撃ち。
-     裏でプレイするか温存する方が価値が残る (例: 序盤の SPEED 3) */
-  if (action.faceUp && aiMiddleFizzles(st, side, action, d)) {
-    v -= 12 + aiMiddleValue(d) * 0.6;
-  }
+     カードを1枚使って何も起きないので、温存 (または裏向き) の方が価値が残る。
+     例: 自分の場が空のときの SPEED 3「あなたの他のカードを1枚移動させる」。
+     効果ぶんの加点も打ち消す (下の faceUp 分岐で mv を 0 にする)。 */
+  const fizzles = !!action.faceUp && aiMiddleFizzles(st, side, action, d);
+  if (fizzles) v -= 45 + aiMiddleValue(d) * 0.6;
   if (aiIsDshSpecialist(st, side) && W.speedPairStrategy
       && (d.id === 'SPEED_1' || d.id === 'SPEED_4')) {
     const pairOnField = aiHasDefOnField(st, side, 'SPEED_1') || aiHasDefOnField(st, side, 'SPEED_4');
@@ -2386,7 +2387,7 @@ function aiActionBias(st, action, side) {
     v -= likelyRecompile ? 160 : 75;
   }
   if (action.faceUp) {
-    const mv = aiMiddleValue(d);
+    const mv = fizzles ? 0 : aiMiddleValue(d);
     v += mv * 0.35;
     v += (d.value - 2) * 7;
     if (gap <= d.value && mine + d.value > theirs && !st.players[side].protocols[action.line].compiled) v += 150;

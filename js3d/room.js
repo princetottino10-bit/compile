@@ -108,20 +108,31 @@ export async function roomSignUp(email, password, displayName) {
   return r.data.session;
 }
 
+/* OAuth はページを離れる。戻り先はタイトル画面なので、
+   オンラインへ直行するための目印を残しておく (main.js が読む)。 */
+function markOnlineResume() {
+  try { localStorage.setItem('compileOnlineResume', '1'); } catch (e) { /* private mode */ }
+}
+function clearOnlineResume() {
+  try { localStorage.removeItem('compileOnlineResume'); } catch (e) { /* private mode */ }
+}
+
 export async function roomSignInWithGitHub() {
+  markOnlineResume();
   const r = await client().auth.signInWithOAuth({
     provider: 'github',
     options: { redirectTo: location.origin + location.pathname }
   });
-  if (r.error) throw new Error(r.error.message);
+  if (r.error) { clearOnlineResume(); throw new Error(r.error.message); }
 }
 
 export async function roomSignInWithGoogle() {
+  markOnlineResume();
   const r = await client().auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo: location.origin + location.pathname }
   });
-  if (r.error) throw new Error(r.error.message);
+  if (r.error) { clearOnlineResume(); throw new Error(r.error.message); }
 }
 
 export async function roomApi(op, extra) {
