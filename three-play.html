@@ -202,6 +202,18 @@
   #fxBanner .fx-text{font:600 12px/1.4 system-ui;color:var(--ink);overflow:hidden;
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
 
+  /* 効果で選択を求める間だけ表示する、操作の発動元と内容。 */
+  #effectContext{position:fixed;left:50%;top:118px;transform:translateX(-50%);z-index:22;
+    display:none;align-items:center;gap:9px;max-width:min(720px,90vw);padding:8px 13px;border-radius:10px;
+    border:1px solid var(--accent,#63f3ff);background:rgba(5,10,20,.94);box-shadow:0 8px 28px rgba(0,0,0,.42);
+    color:var(--ink);font:700 11px/1.3 system-ui;pointer-events:none;}
+  #effectContext.show{display:flex;}
+  #effectContext b{flex:none;color:var(--accent,#63f3ff);font:900 11px/1 system-ui;letter-spacing:.12em;}
+  #effectContext span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  #effectContext em{flex:none;padding:3px 6px;border:1px solid color-mix(in srgb,var(--accent,#63f3ff) 72%,transparent);
+    border-radius:5px;color:var(--accent,#63f3ff);font-style:normal;font-size:9px;letter-spacing:.08em;}
+  @media(max-width:860px){#effectContext{top:112px;max-width:calc(100vw - 20px);padding:7px 10px;font-size:10px;}}
+
   /* ---------- 決着カットイン ---------- */
   #resultCut{position:fixed;inset:0;z-index:48;display:none;overflow:hidden;pointer-events:none;}
   #resultCut.show{display:block;}
@@ -574,6 +586,7 @@
   <div id="turnCut"></div>
   <div id="resultCut"></div>
   <div id="fxBanner"></div>
+  <div id="effectContext" role="status" aria-live="polite"></div>
 
   <div id="toast"></div>
 
