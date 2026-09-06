@@ -71,17 +71,69 @@ export function setCounts(me, opp) {
   set('#oppDeck', opp.deck); set('#oppTrash', opp.trash); set('#oppHand', opp.hand);
 }
 
+/* ログの整形。カード名を実際の表記へ直し、触れるようにする。
+   main.js が defIndex と座席を知っているので、そちらから差し込む。 */
+let logFormatter = null;
+let logCardTap = null;
+export function bindLogFormatter(format, onCardTap) {
+  logFormatter = format;
+  logCardTap = onCardTap;
+}
+
 export function pushLog(lines) {
   const el = $('#log');
   if (!el || !lines || !lines.length) return;
   for (const l of lines) {
-    const div = document.createElement('div');
-    div.className = 'log-row';
-    div.textContent = typeof l === 'string' ? l : (l.msg || JSON.stringify(l));
-    el.appendChild(div);
+    const raw = typeof l === 'string' ? l : (l.msg || '');
+    const row = document.createElement('div');
+    row.className = 'log-row';
+    const parts = logFormatter ? logFormatter(raw) : [{ text: raw }];
+    if (parts.turn !== undefined) {
+      row.classList.add('turn');
+      if (parts.turn === 0) row.dataset.mine = '1';
+      row.textContent = parts.label;
+    } else {
+      for (const part of parts) {
+        if (part.card) {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'log-card';
+          b.textContent = part.text;
+          b.onclick = () => { if (logCardTap) logCardTap(part.card); };
+          row.appendChild(b);
+        } else {
+          row.appendChild(document.createTextNode(part.text));
+        }
+      }
+    }
+    el.appendChild(row);
   }
-  while (el.children.length > 60) el.removeChild(el.firstChild);
+  while (el.children.length > 80) el.removeChild(el.firstChild);
   el.scrollTop = el.scrollHeight;
+}
+
+/* カードのテキストだけを小さく出す。
+   盤面の拡大プレビューはスマホだと邪魔になるので、ログから引くときはこちら。
+   o: { title, color, rows: [{ zone, text }] } */
+export function showCardNote(o) {
+  let el = $('#cardNote');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'cardNote';
+    document.body.appendChild(el);
+  }
+  el.style.setProperty('--accent', o.color || '#63f3ff');
+  el.innerHTML =
+    '<div class="cn-head"><b>' + o.title + '</b>' +
+      '<button type="button" class="cn-close" aria-label="閉じる">×</button></div>' +
+    (o.rows.length
+      ? o.rows.map(r => '<div class="cn-row"><span class="cn-zone">' + r.zone + '</span>' +
+          '<span class="cn-text">' + r.text + '</span></div>').join('')
+      : '<div class="cn-row"><span class="cn-text">テキストなし</span></div>');
+  el.classList.add('show');
+  el.querySelector('.cn-close').onclick = () => el.classList.remove('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 9000);
 }
 
 /* -------------------------------------------------------------------------
@@ -254,12 +306,12 @@ export function compileCutIn(info) {
    ターン構造 (開始 → コントロール確認 → コンパイル確認 → アクション →
    キャッシュ確認 → 終了) のどこに居るのかを、演出の前に一言で出す。 */
 const PHASE_LABEL = {
-  start: '開始フェイズ',
-  checkControl: 'コントロール確認',
-  checkCompile: 'コンパイル確認',
-  action: 'アクション',
-  checkCache: 'キャッシュ確認',
-  end: '終了フェイズ'
+  start: ['START', '開始フェイズ'],
+  checkControl: ['CONTROL CHECK', 'コントロール確認'],
+  checkCompile: ['COMPILE CHECK', 'コンパイル確認'],
+  action: ['ACTION', 'アクション'],
+  checkCache: ['CACHE CHECK', 'キャッシュ確認'],
+  end: ['END', '終了フェイズ']
 };
 
 export function showPhase(phase, mine) {
@@ -272,11 +324,20 @@ export function showPhase(phase, mine) {
     document.body.appendChild(el);
   }
   el.style.setProperty('--accent', mine ? '#6dffc2' : '#ff3b9d');
-  el.innerHTML = '<span class="ph-who">' + (mine ? 'あなた' : '相手') + '</span>' +
-    '<span class="ph-name">' + label + '</span>';
+  el.dataset.side = mine ? 'me' : 'opp';
+  /* アニメーションを毎回頭から流すため、作り直してから show を付ける */
+  el.classList.remove('show');
+  el.innerHTML =
+    '<div class="ph-band"></div>' +
+    '<div class="ph-body">' +
+      '<span class="ph-en">' + label[0] + '</span>' +
+      '<span class="ph-rule"></span>' +
+      '<span class="ph-ja">' + (mine ? 'あなた' : '相手') + ' / ' + label[1] + '</span>' +
+    '</div>';
+  void el.offsetWidth;
   el.classList.add('show');
   clearTimeout(el._t);
-  el._t = setTimeout(() => el.classList.remove('show'), 1400);
+  el._t = setTimeout(() => el.classList.remove('show'), 1500);
 }
 
 /* 宣言の演出 (LUCK 0 / LUCK 3)。

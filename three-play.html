@@ -220,17 +220,44 @@
   @keyframes dcPop{from{transform:scale(.9);}to{transform:scale(1);}}
   @media (prefers-reduced-motion: reduce){ #declareCut .dc-body{animation:none;transform:none;} }
 
-  /* フェイズ開始の合図。演出より先に出したいので効果帯より上に重ねる。 */
-  #phaseChip{position:fixed;left:50%;top:86px;transform:translateX(-50%) translateY(-6px);z-index:23;
-    display:flex;align-items:center;gap:8px;padding:5px 12px;border-radius:999px;
-    background:rgba(6,9,18,.92);border:1px solid var(--accent,#63f3ff);
-    box-shadow:0 10px 30px rgba(0,0,0,.5);opacity:0;pointer-events:none;
-    transition:opacity .18s,transform .18s;}
-  #phaseChip.show{opacity:1;transform:translateX(-50%) translateY(0);}
-  #phaseChip .ph-who{font:800 9px/1 system-ui;letter-spacing:.1em;color:var(--accent,#63f3ff);
-    padding:3px 6px;border:1px solid currentColor;border-radius:5px;}
-  #phaseChip .ph-name{font:800 11px/1 system-ui;letter-spacing:.08em;color:var(--ink);}
-  @media (max-width:860px){ #phaseChip{top:68px;} }
+  /* ---------- フェイズの合図 ----------
+     ターンの構造 (START → CONTROL CHECK → COMPILE CHECK → ACTION →
+     CACHE CHECK → END) を、横に走る帯で見せる。 */
+  #phaseChip{position:fixed;left:0;right:0;top:84px;z-index:23;height:52px;
+    display:flex;align-items:center;justify-content:center;pointer-events:none;
+    opacity:0;transition:opacity .18s;}
+  #phaseChip.show{opacity:1;}
+  #phaseChip .ph-band{position:absolute;left:0;right:0;top:50%;height:34px;transform:translateY(-50%) scaleX(0);
+    transform-origin:left center;
+    background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--accent) 26%,transparent) 22%,
+      color-mix(in srgb,var(--accent) 12%,transparent) 78%,transparent);
+    border-top:1px solid color-mix(in srgb,var(--accent) 55%,transparent);
+    border-bottom:1px solid color-mix(in srgb,var(--accent) 55%,transparent);}
+  #phaseChip.show .ph-band{animation:phBand 1.5s cubic-bezier(.16,1,.3,1) forwards;}
+  #phaseChip[data-side="opp"] .ph-band{transform-origin:right center;}
+  #phaseChip .ph-body{position:relative;display:flex;align-items:center;gap:12px;
+    padding:0 18px;opacity:0;}
+  #phaseChip.show .ph-body{animation:phBody 1.5s cubic-bezier(.16,1,.3,1) forwards;}
+  #phaseChip .ph-en{font:900 clamp(16px,3.4vw,24px)/1 system-ui;letter-spacing:.28em;color:#fff;
+    text-shadow:0 0 22px var(--accent);}
+  #phaseChip .ph-rule{width:1px;height:18px;background:color-mix(in srgb,var(--accent) 70%,transparent);}
+  #phaseChip .ph-ja{font:800 10px/1 system-ui;letter-spacing:.16em;color:var(--accent);}
+  @keyframes phBand{0%{transform:translateY(-50%) scaleX(0)}
+    22%{transform:translateY(-50%) scaleX(1)}
+    76%{transform:translateY(-50%) scaleX(1);opacity:1}
+    100%{transform:translateY(-50%) scaleX(1);opacity:0}}
+  @keyframes phBody{0%{opacity:0;transform:translateX(-14px)}
+    26%{opacity:1;transform:translateX(0)}
+    80%{opacity:1}100%{opacity:0}}
+  #phaseChip[data-side="opp"] .ph-body{animation-name:phBodyOpp;}
+  @keyframes phBodyOpp{0%{opacity:0;transform:translateX(14px)}
+    26%{opacity:1;transform:translateX(0)}
+    80%{opacity:1}100%{opacity:0}}
+  @media (prefers-reduced-motion: reduce){
+    #phaseChip .ph-band,#phaseChip .ph-body{animation:none!important;opacity:1;transform:translateY(-50%) scaleX(1);}
+    #phaseChip .ph-body{transform:none;}
+  }
+  @media (max-width:860px){ #phaseChip{top:66px;height:44px;} #phaseChip .ph-band{height:28px;} }
 
   /* 効果で選択を求める間だけ表示する、操作の発動元と内容。 */
   #effectContext{position:fixed;left:50%;top:118px;transform:translateX(-50%);z-index:22;
@@ -304,7 +331,35 @@
     padding:9px 11px;border-radius:11px;background:rgba(5,8,16,.6);border:1px solid var(--edge);
     backdrop-filter:blur(12px);font:500 10px/1.6 system-ui;color:var(--dim);
     scrollbar-width:thin;pointer-events:auto;}
-  .log-row{padding:1px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+  .log-row{padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04);color:var(--dim);}
+  /* ターンの切れ目は帯にして、どこから誰の番か目で追えるようにする */
+  .log-row.turn{margin:6px 0 3px;padding:3px 8px;border:0;border-radius:999px;
+    font:800 9px/1.5 system-ui;letter-spacing:.14em;text-align:center;
+    background:rgba(255,59,157,.16);color:#ffbcd9;}
+  .log-row.turn:first-child{margin-top:0;}
+  .log-row.turn[data-mine]{background:rgba(109,255,194,.16);color:#a9ffdc;}
+  /* ログの中のカード名は触れる。押すとテキストだけの小さな表示を出す */
+  .log-card{appearance:none;border:1px solid rgba(99,243,255,.34);background:rgba(99,243,255,.1);
+    color:#cfefff;font:700 10px/1.4 system-ui;padding:1px 6px;margin:0 2px;border-radius:6px;
+    cursor:pointer;}
+  .log-card:hover,.log-card:focus-visible{background:rgba(99,243,255,.22);outline:none;}
+
+  /* ---------- カードのテキストだけの小さな表示 (ログから引く) ---------- */
+  #cardNote{position:fixed;left:14px;bottom:14px;z-index:33;width:min(290px,86vw);
+    padding:10px 12px;border-radius:12px;background:rgba(6,9,18,.97);
+    border:1px solid var(--accent,#63f3ff);box-shadow:0 18px 50px rgba(0,0,0,.6);
+    opacity:0;pointer-events:none;transform:translateY(6px);transition:opacity .16s,transform .16s;}
+  #cardNote.show{opacity:1;pointer-events:auto;transform:translateY(0);}
+  #cardNote .cn-head{display:flex;align-items:center;justify-content:space-between;gap:8px;
+    margin-bottom:6px;font:800 12px/1.2 system-ui;color:var(--accent,#63f3ff);}
+  #cardNote .cn-close{appearance:none;border:0;background:none;color:var(--dim);
+    font:700 15px/1 system-ui;cursor:pointer;padding:0 2px;}
+  #cardNote .cn-row{display:flex;gap:7px;padding:3px 0;border-top:1px solid rgba(255,255,255,.06);}
+  #cardNote .cn-zone{flex:0 0 auto;font:800 9px/1.7 system-ui;color:var(--accent,#63f3ff);opacity:.9;}
+  #cardNote .cn-text{font:500 11px/1.6 system-ui;color:var(--ink);}
+  @media (max-width:860px){
+    #cardNote{left:10px;right:10px;width:auto;bottom:66px;}
+  }
 
   /* ---------- モーダル ---------- */
   /* 選択中も盤面が見えるよう、暗幕とぼかしは使わず下部に寄せる */
@@ -410,7 +465,31 @@
     background:rgba(8,11,21,.9);border:1px solid rgba(255,255,255,.2);color:var(--ink);transition:all .16s;}
   .arr-btn.ok{border-color:rgba(109,255,194,.5);color:var(--mint);}
   .arr-btn.ok:disabled{opacity:.35;cursor:not-allowed;}
+  /* 質問つきの選択バー: 何に答えているのかをボタンのすぐ上に置く */
+  .arr-bar.with-ask{flex-direction:column;align-items:center;gap:8px;max-width:min(520px,92vw);
+    padding:10px 14px;border-radius:14px;background:rgba(6,9,18,.95);
+    border:1px solid rgba(99,243,255,.34);box-shadow:0 18px 50px rgba(0,0,0,.6);}
+  .arr-bar .arr-ask{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;justify-content:center;
+    font:600 12px/1.6 system-ui;color:var(--ink);text-align:center;}
+  .arr-bar .arr-ask b{font:800 11px/1.4 system-ui;letter-spacing:.06em;color:var(--cyan);}
+  .arr-bar .arr-btns{display:flex;gap:10px;}
   .arr-btn:hover:not(:disabled){border-color:var(--cyan);}
+
+  /* ---------- 対局後の導線 ---------- */
+  #endBar{position:fixed;left:50%;bottom:18vh;transform:translateX(-50%) translateY(8px);z-index:45;
+    display:none;flex-direction:column;align-items:center;gap:12px;padding:16px 22px;border-radius:16px;
+    background:rgba(6,9,18,.96);border:1px solid rgba(99,243,255,.4);
+    box-shadow:0 24px 70px rgba(0,0,0,.7);opacity:0;transition:opacity .2s,transform .2s;}
+  #endBar.show{display:flex;opacity:1;transform:translateX(-50%) translateY(0);}
+  #endBar .end-title{font:900 16px/1 system-ui;letter-spacing:.16em;color:var(--ink);}
+  #endBar .end-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+  #endFloat{position:fixed;right:14px;bottom:64px;z-index:45;display:none;}
+  #endFloat.show{display:block;}
+  @media (max-width:860px){
+    #endBar{left:10px;right:10px;transform:none;width:auto;bottom:14vh;}
+    #endBar.show{transform:none;}
+    #endFloat{right:10px;bottom:70px;}
+  }
 
   /* ---------- トースト ---------- */
   #toast{position:fixed;left:50%;bottom:74px;transform:translateX(-50%) translateY(12px);z-index:40;

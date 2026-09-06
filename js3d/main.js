@@ -113,6 +113,7 @@ async function boot() {
   /* trace を有効にすると、どのカードが効果を発動したかを演出に使える。
      AI 探索中は重くなるので、思考の直前だけ切る (withoutTrace)。 */
   Engine.setTrace(true);
+  UI.bindLogFormatter(logParts, showCardNoteFor);
   mark('engineInit');
 
   stage = createStage(document.getElementById('stage'));
@@ -963,7 +964,7 @@ async function roomMaybeFinish() {
   sfx(win ? 'win' : 'lose');
   await finaleFx(win);
   await UI.resultCutIn(win);
-  UI.toast('決着。「退出」でロビーへ戻れます', 6000);
+  showEndActions(win);
 }
 
 /* ロビーから playing の publicState を受けて対戦開始 */
@@ -1046,9 +1047,20 @@ function meaningfulSteps(prev, res) {
   const steps = [];
   let last = shownFp;
   let pendingCue = null;
+  let lastPhase = prev ? prev.phase + ':' + prev.turn : null;
   for (const t of res.trace) {
     if (!t.st) continue;
     const fp = visualFingerprint(t.st);
+    /* フェイズの切り替わりは、絵が変わらなくても1ステップとして残す。
+       そうしないと「開始フェイズ」の帯が、開始効果の演出と同時に出てしまう。 */
+    const phaseTag = t.st.phase + ':' + t.st.turn;
+    if (fp === last && phaseTag !== lastPhase) {
+      lastPhase = phaseTag;
+      steps.push({ st: t.st, fp, uid: null, msg: '', cue: pendingCue, phaseOnly: true });
+      pendingCue = null;
+      continue;
+    }
+    lastPhase = phaseTag;
     if (fp === last) {
       /* 絵は変わらないが、発動カードの合図だけは拾っておく */
       if (t.uid) {
@@ -1114,6 +1126,8 @@ async function replayResolution(prev, res, action) {
   for (const step of use) {
     await markPhase(step.st);
     await checkAnnounce(step.st);
+    /* フェイズの合図だけのステップは絵が同じなので、演出を挟まず次へ進む */
+    if (step.phaseOnly) continue;
     await board.applyTransition(from, step.st, first ? action : null, { speed: 0.72 });
     await cueFor(step, step.st);
     from = step.st;
@@ -1234,10 +1248,16 @@ function pickOnBoard(req) {
         el.className = 'arr-bar';
         document.body.appendChild(el);
       }
+      /* 質問と はい/いいえ を離すと、何に答えているのか分からなくなる。
+         同じ帯にまとめて出す。 */
+      el.classList.add('with-ask');
       el.innerHTML =
-        '<button class="arr-btn ok" id="pkYes" type="button">はい</button>' +
-        '<button class="arr-btn" id="pkNo" type="button">選ばない</button>';
-      const done = (picks) => { boardPick = null; el.remove(); resolve(picks); };
+        pickBarAsk(req) +
+        '<div class="arr-btns">' +
+          '<button class="arr-btn ok" id="pkYes" type="button">はい</button>' +
+          '<button class="arr-btn" id="pkNo" type="button">選ばない</button>' +
+        '</div>';
+      const done = (picks) => { boardPick = null; el.classList.remove('with-ask'); el.remove(); resolve(picks); };
       el.querySelector('#pkYes').onclick = () => done(['yes']);
       el.querySelector('#pkNo').onclick = () => done([]);
     });
@@ -1284,6 +1304,15 @@ function pickOnBoard(req) {
   });
 }
 
+/* 選択バーの見出し。何に答えているのかをボタンのすぐ横に置く。
+   上部の帯にだけ質問を出すと、下のボタンとの距離で意味が分からなくなる。 */
+function pickBarAsk(req) {
+  const src = req && req.context ? cardName(req.context) : '';
+  const ask = reqText({ ...req, context: null }, cardName) || '選んでください';
+  return '<div class="arr-ask">' + (src ? '<b>' + src + '</b>' : '') +
+    '<span>' + ask + '</span></div>';
+}
+
 function renderBoardPick() {
   const bp = boardPick;
   if (!bp) return;
@@ -1300,15 +1329,25 @@ function renderBoardPick() {
     document.body.appendChild(el);
   }
   const instant = bp.max === 1 && bp.min >= 1;   // 1枚必須はタップで即決
+  /* 2段階以上の効果は、一つ前の選択へ戻れる (エンジンが回答を1つ減らして再生する) */
+  const canBack = !!(cur && cur.state && cur.state.pending && cur.state.pending.requestId === bp.req.id
+    && Array.isArray(cur.state.pending.choices) && cur.state.pending.choices.length);
+  el.classList.add('with-ask');
   el.innerHTML =
+    pickBarAsk(bp.req) +
+    '<div class="arr-btns">' +
     (instant ? '' :
       '<button class="arr-btn ok" id="pkOk" type="button"' +
         (bp.chosen.length < bp.min ? ' disabled' : '') + '>' +
         (bp.chosen.length === 0 && bp.min === 0 ? '選ばない' : '決定 (' + bp.chosen.length + '/' + bp.max + ')') +
         '</button>') +
-    '<button class="arr-btn" id="pkList" type="button">リストで選ぶ</button>';
+    (canBack ? '<button class="arr-btn" id="pkBack" type="button">一つ前へ戻る</button>' : '') +
+    '<button class="arr-btn" id="pkList" type="button">リストで選ぶ</button>' +
+    '</div>';
   const ok = el.querySelector('#pkOk');
   if (ok) ok.onclick = () => finishBoardPick(bp.chosen.slice());
+  const back = el.querySelector('#pkBack');
+  if (back) back.onclick = () => finishBoardPick(PICK_BACK);
   el.querySelector('#pkList').onclick = () => finishBoardPick(null);
 }
 
@@ -1391,10 +1430,14 @@ function renderLinePick() {
   const hasFocus = Array.isArray(bp.req.focus) ? bp.req.focus.length > 0 : !!bp.req.focus;
   const canBack = !!(cur && cur.state && cur.state.pending && cur.state.pending.requestId === bp.req.id
     && Array.isArray(cur.state.pending.choices) && cur.state.pending.choices.length);
-  el.innerHTML = '<span class="effect-target-legend">' +
+  el.classList.add('with-ask');
+  el.innerHTML = pickBarAsk(bp.req) +
+    '<div class="arr-btns">' +
+    '<span class="effect-target-legend">' +
     (hasFocus ? '金色: 移動対象　緑色: 移動先' : '緑色のラインから選択') +
     '</span>' + (canBack ? '<button class="arr-btn" id="pkBack" type="button">対象を選び直す</button>' : '') +
-    '<button class="arr-btn" id="pkList" type="button">リストで選ぶ</button>';
+    '<button class="arr-btn" id="pkList" type="button">リストで選ぶ</button>' +
+    '</div>';
   const back = el.querySelector('#pkBack');
   if (back) back.onclick = () => finishLinePick(PICK_BACK);
   el.querySelector('#pkList').onclick = () => finishLinePick(null);
@@ -1590,8 +1633,49 @@ async function afterTurn() {
     if (demoMode) {
       await TW.wait(900);
       location.reload();
+      return;
     }
+    showEndActions(win);
   }
+}
+
+/* 対局後の導線。盤面は残したまま、次の行動を選べるようにする */
+function showEndActions(win) {
+  let el = document.getElementById('endBar');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'endBar';
+    document.body.appendChild(el);
+  }
+  el.innerHTML =
+    '<div class="end-title">' + (win ? 'あなたの勝ち' : '敗北') + '</div>' +
+    '<div class="end-btns">' +
+      '<button class="arr-btn ok" id="endAgain" type="button">もう一度</button>' +
+      '<button class="arr-btn" id="endTop" type="button">タイトルへ</button>' +
+      '<button class="arr-btn" id="endBoard" type="button">盤面を見る</button>' +
+    '</div>';
+  el.classList.add('show');
+  /* どちらもページを作り直す。シーンを組み直すのが最も確実 */
+  el.querySelector('#endAgain').onclick = () => { location.hash = ''; location.reload(); };
+  el.querySelector('#endTop').onclick = () => { location.hash = ''; location.reload(); };
+  el.querySelector('#endBoard').onclick = () => {
+    el.classList.remove('show');
+    UI.setPrompt('盤面を確認中 — 右下の「タイトルへ」で戻れます', 'end');
+    showEndFloat();
+  };
+}
+
+/* 「盤面を見る」で隠したあと、戻る手段だけ小さく残す */
+function showEndFloat() {
+  let el = document.getElementById('endFloat');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'endFloat';
+    document.body.appendChild(el);
+    el.innerHTML = '<button class="btn" type="button">タイトルへ</button>';
+    el.querySelector('button').onclick = () => { location.hash = ''; location.reload(); };
+  }
+  el.classList.add('show');
 }
 
 /* 捨て札一覧 (両者とも公開情報) */
@@ -1739,6 +1823,54 @@ function refreshHud() {
     if (onlyRefresh) UI.setPrompt('プレイできるカードがありません。リフレッシュしてください', 'ask');
   }
   updatePads();
+}
+
+/* ---------- ログの整形 ----------
+   エンジンのログはカードを def ID (DARKNESS_6) で書くが、カードに印刷されて
+   いる表記は「DARKNESS 5」なので、そのままだと盤面と数字が食い違う。
+   表記を直したうえで、カード名は触れる部品として切り出す。 */
+const LOG_DEF_RE = /[A-Z]+_\d/g;
+
+function mySeat() { return (roomMode && roomRm) ? roomRm.side : ME; }
+
+function logSeatText(text) {
+  const mine = 'P' + (mySeat() + 1), opp = 'P' + (2 - mySeat());
+  return text.split(mine).join('あなた').split(opp).join('相手');
+}
+
+function logParts(msg) {
+  const text = String(msg == null ? '' : msg);
+  const turn = text.match(/^---\s*P(\d)\s*のターン\s*---$/);
+  if (turn) {
+    const mine = (+turn[1] - 1) === mySeat();
+    const out = [];
+    out.turn = mine ? 0 : 1;
+    out.label = mine ? 'あなたのターン' : '相手のターン';
+    return out;
+  }
+  const parts = [];
+  let last = 0, m;
+  LOG_DEF_RE.lastIndex = 0;
+  while ((m = LOG_DEF_RE.exec(text)) !== null) {
+    const d = defIndex[m[0]];
+    if (!d) continue;
+    if (m.index > last) parts.push({ text: logSeatText(text.slice(last, m.index)) });
+    parts.push({ card: m[0], text: d.proto + ' ' + d.value });
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) parts.push({ text: logSeatText(text.slice(last)) });
+  return parts.length ? parts : [{ text: logSeatText(text) }];
+}
+
+/* ログのカード名をタップ: 拡大プレビューではなく、テキストだけの小さな表示 */
+function showCardNoteFor(defId) {
+  const d = defIndex[defId];
+  if (!d) return;
+  const rows = [];
+  if (d.upper) rows.push({ zone: '上段', text: d.upper });
+  if (d.middle) rows.push({ zone: '中段', text: d.middle });
+  if (d.lower) rows.push({ zone: '下段', text: d.lower });
+  UI.showCardNote({ title: d.proto + ' ' + d.value, color: d.color, rows });
 }
 
 function cardName(idOrUid) {
