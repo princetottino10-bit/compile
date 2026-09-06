@@ -165,11 +165,48 @@ export function buildArena(stage) {
     group.add(fin);
   }
 
+  /* --- 手番側のフロア発光 ---
+     いま誰の手番かを、盤面そのものの色で分かるようにする。
+     自分側=ミント / 相手側=ピンクで、ターン告知の配色と揃える。 */
+  const turnGlow = [
+    { color: COLOR.mint, z: HALF_Z / 2 },      // 0 = 自分 (手前)
+    { color: COLOR.pink, z: -HALF_Z / 2 }      // 1 = 相手 (奥)
+  ].map(({ color, z }) => {
+    const g = new THREE.PlaneGeometry(HALF_X * 2, HALF_Z);
+    g.rotateX(-Math.PI / 2);
+    const mat = new THREE.MeshBasicMaterial({
+      color, transparent: true, opacity: 0,
+      blending: THREE.AdditiveBlending, depthWrite: false
+    });
+    const mesh = new THREE.Mesh(g, mat);
+    mesh.position.set(0, 0.0025, z);
+    mesh.renderOrder = -1;                     // カードやパッドの下に敷く
+    group.add(mesh);
+    return mat;
+  });
+  const turnTarget = [0, 0];
+  const GLOW_ON = 0.1;
+
+  /* side: 0=自分 / 1=相手 / null=どちらでもない (決着など) */
+  function setTurnSide(side) {
+    turnTarget[0] = side === 0 ? GLOW_ON : 0;
+    turnTarget[1] = side === 1 ? GLOW_ON : 0;
+  }
+
   stage.onFrame((dt, elapsed) => {
     skyMat.uniforms.uTime.value = elapsed;
     for (const r of rings) r.ring.rotation.z += r.speed * dt;
     sky.position.copy(stage.camera.position);
+    /* 手番の色はゆっくり入れ替える (瞬間的に切り替えると気が散る) */
+    const k = Math.min(1, dt * 2.6);
+    for (let i = 0; i < 2; i++) {
+      const mat = turnGlow[i];
+      const target = turnTarget[i];
+      /* 手番側だけ、ごく浅く呼吸させる */
+      const breathe = target > 0 ? target * (1 + 0.18 * Math.sin(elapsed * 1.6)) : 0;
+      mat.opacity += (breathe - mat.opacity) * k;
+    }
   });
 
-  return { group, rings };
+  return { group, rings, setTurnSide };
 }

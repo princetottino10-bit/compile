@@ -1273,3 +1273,43 @@ test('SPIRIT_2: 開始時に手札が無ければ、選択を挟まず自身が�
   const done = drive(res, (req) => { throw new Error('選択を求めた: ' + JSON.stringify(req)); });
   assert.equal(done.state.cards[self].faceUp, false, '捨てる手札が無いので反転するはず');
 });
+
+test('LIGHT_4 の一斉移動: 行き先の HATE_5 は「覆われることになったとき」に1度だけ発動する', () => {
+  const r = ng({ p0: ['LIGHT', 'FIRE', 'WATER'], p1: ['HATE', 'METAL', 'SPEED'] });
+  const st = r.state;
+  /* ライン0: 両者の裏向きカードが並ぶ (LIGHT 3 はどちらの裏向きも動かす) */
+  const mineDown = place(st, 'FIRE_2', 0, 0, false);
+  const oppDown = place(st, 'METAL_2', 1, 0, false);
+  /* ライン1: 相手のスタックは HATE_5 が一番上。その下に覆われたカードがある */
+  const victim = place(st, 'METAL_1', 1, 1, true);
+  const hate = place(st, 'HATE_5', 1, 1, true);
+  setHand(st, 0, ['LIGHT_4']);
+
+  const res = Engine.apply(st, { type: 'play', card: uidOf('LIGHT_4', 0), line: 0, faceUp: true });
+  assert.equal(res.error, null);
+  const done = drive(res, (req) => (req.kind === 'pickLine' ? [1] : []));
+  const fin = done.state;
+
+  /* 裏向きは両者ぶんライン1へ移る */
+  assert.ok(fin.lines[1][0].includes(mineDown), '自分の裏向きが移動');
+  assert.ok(fin.lines[1][1].includes(oppDown), '相手の裏向きも移動');
+  /* HATE 4 は覆われる前に発動し、そのラインの覆われた最小値を削除する */
+  assert.match(fin.cards[victim].zone, /^trash/, '覆われていた METAL_1 が削除される');
+  assert.equal(fin.cards[hate].zone, 'field', 'HATE_5 自身は残る');
+});
+
+test('DARKNESS_4: 「裏向きで1枚プレイする」は任意ではなく、手札があれば必ず出す', () => {
+  const r = ng({ p0: ['DARKNESS', 'FIRE', 'WATER'] });
+  const st = r.state;
+  setHand(st, 0, ['DARKNESS_4', 'FIRE_2', 'WATER_2']);
+  const res = Engine.apply(st, { type: 'play', card: uidOf('DARKNESS_4', 0), line: 0, faceUp: true });
+  assert.equal(res.error, null);
+  const req = res.requests[0];
+  assert.ok(req, '出すカードを選ばせる');
+  assert.notEqual(req.kind, 'yesNo', 'やるかどうかを聞いてはいけない');
+  assert.equal(req.min, 1, '選ばない選択肢は無い');
+  const done = drive(res, (q) => (q.kind === 'pickLine' ? [q.lines[0]] : [q.candidates[0]]));
+  const fin = done.state;
+  const downs = [0, 1, 2].reduce((n, l) => n + fin.lines[l][0].filter(u => !fin.cards[u].faceUp).length, 0);
+  assert.equal(downs, 1, '裏向きのカードが1枚出ている');
+});

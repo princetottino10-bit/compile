@@ -28,7 +28,7 @@ const Engine = window.CompileEngine;
 const ME = 0;      // 視点 = 人間プレイヤー
 const AI = 1;
 
-let stage, board, panels, defIndex = {}, protoIndex = {};
+let stage, board, panels, arena, defIndex = {}, protoIndex = {};
 let cur = null;                 // { state, requests, log, winner }
 let busy = false;               // 演出中はクリックを無視
 let selectedUid = null;
@@ -130,7 +130,7 @@ async function boot() {
       });
     }
   });
-  buildArena(stage);
+  arena = buildArena(stage);
   FX.createDust(stage, 900);
   panels = createPanels(stage, ME);
   buildPads();
@@ -1002,7 +1002,9 @@ async function finaleFx(win) {
 async function announceTurnFor(turn) {
   if (turn === undefined || turn === null || turn === lastTurn) return;
   lastTurn = turn;
-  sfx('turn');
+  if (arena && arena.setTurnSide) arena.setTurnSide(turn);
+  /* 自分の番が回ってきたときは、相手の番とは別の音で知らせる */
+  sfx(turn === ME ? 'yourTurn' : 'turn');
   await UI.turnCutIn(turn === ME);
 }
 
@@ -1643,6 +1645,8 @@ window.addEventListener('resize', () => {
 function refreshHud() {
   const st = shown();
   checkRevealed(st);
+  /* 盤面そのものの色で手番を示す (決着後はどちらも消す) */
+  if (arena && arena.setTurnSide) arena.setTurnSide(st && st.winner === null ? st.turn : null);
   if (ctrlMarker) {
     /* コントロール変種を使わない対戦ではマーカーを隠す */
     ctrlMarker.group.visible = st.useControl !== false;

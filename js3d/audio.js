@@ -138,6 +138,14 @@ const SOUNDS = {
     tone({ freq: 520, dur: 0.11, type: 'triangle', vol: 0.12 });
     tone({ freq: 780, dur: 0.15, type: 'triangle', vol: 0.1, delay: 0.09 });
   },
+  /* 自分の番が回ってきた合図。相手の番より明るく、上へ抜ける三音 */
+  yourTurn() {
+    [660, 880, 1320].forEach((f, i) => {
+      tone({ freq: f, dur: 0.18, type: 'triangle', vol: 0.14, delay: i * 0.07 });
+      tone({ freq: f * 2, dur: 0.16, type: 'sine', vol: 0.045, delay: i * 0.07 });
+    });
+    tone({ freq: 1760, dur: 0.5, type: 'sine', vol: 0.05, delay: 0.22 });
+  },
   win() {
     [523, 659, 784, 1046, 1318].forEach((f, i) => {
       tone({ freq: f, dur: 0.34, type: 'triangle', vol: 0.16, delay: i * 0.12 });
