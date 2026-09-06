@@ -114,6 +114,7 @@ async function boot() {
   FX.createDust(stage, 900);
   panels = createPanels(stage, ME);
   buildPads();
+  stage.onFrame(() => positionPlayChoices());
   bindInput();
   mark('stage');
 
@@ -773,13 +774,35 @@ function updatePlayChoices() {
       if (boardPick?.kind === 'free') { boardPick.sel = null; renderFreePick(); }
       else { deselect(); showPreview(null); }
     });
+  positionPlayChoices();
 }
 
 function focusPlayChoice(line, side) {
   updatePlayChoices();
   const root = document.getElementById('playChoices');
   const cell = root?.querySelector(`section[data-line="${line}"][data-side="${side}"]`);
-  if (cell) { cell.classList.add('focused'); cell.scrollIntoView({ block: 'nearest' }); }
+  if (cell) cell.classList.add('focused');
+}
+
+const choiceWorld = new THREE.Vector3();
+function positionPlayChoices() {
+  const root = document.getElementById('playChoices');
+  if (!root || root.hidden || !stage) return;
+  const rect = stage.renderer.domElement.getBoundingClientRect();
+  for (const cell of root.querySelectorAll('.placement-lane')) {
+    const line = Number(cell.dataset.line), side = Number(cell.dataset.side);
+    const pad = pads.find(p => p.userData.line === line && p.userData.side === side);
+    if (!pad) { cell.hidden = true; continue; }
+    pad.getWorldPosition(choiceWorld);
+    choiceWorld.y += 0.09;      // カードより少し上: 札とボタンを同時に読める
+    choiceWorld.project(stage.camera);
+    const visible = choiceWorld.z >= -1 && choiceWorld.z <= 1
+      && choiceWorld.x >= -1.25 && choiceWorld.x <= 1.25 && choiceWorld.y >= -1.25 && choiceWorld.y <= 1.25;
+    cell.hidden = !visible;
+    if (!visible) continue;
+    cell.style.left = (rect.left + (choiceWorld.x + 1) * rect.width / 2) + 'px';
+    cell.style.top = (rect.top + (1 - choiceWorld.y) * rect.height / 2) + 'px';
+  }
 }
 
 /* AI の思考中だけ trace を止める (state の clone が入って探索が重くなるため) */
@@ -939,16 +962,22 @@ function meaningfulSteps(prev, res) {
   const shownFp = visualFingerprint(prev);
   const steps = [];
   let last = shownFp;
+  let pendingCue = null;
   for (const t of res.trace) {
     if (!t.st) continue;
     const fp = visualFingerprint(t.st);
     if (fp === last) {
       /* 絵は変わらないが、発動カードの合図だけは拾っておく */
-      if (t.uid && steps.length) steps[steps.length - 1].alsoUid = steps[steps.length - 1].alsoUid || t.uid;
+      if (t.uid) {
+        const cue = { uid: t.uid, msg: t.msg };
+        if (steps.length) steps[steps.length - 1].cue = cue;
+        else pendingCue = cue;
+      }
       continue;
     }
     last = fp;
-    steps.push({ st: t.st, fp, uid: t.uid, msg: t.msg });
+    steps.push({ st: t.st, fp, uid: t.uid, msg: t.msg, cue: pendingCue });
+    pendingCue = null;
   }
   /* 選択に答えると、エンジンはアクションを基準状態から再実行する。
      頭から再生すると盤面が巻き戻って見えるので、いま画面に出ている絵と
@@ -961,7 +990,8 @@ function meaningfulSteps(prev, res) {
 
 /* そのステップの主役カードを光らせ、効果テキストを出す */
 async function cueFor(step, st) {
-  const uid = step.uid || step.alsoUid;
+  const cue = step.cue || step;
+  const uid = cue.uid || step.uid;
   if (!uid) return;
   const card = st.cards[uid];
   const def = card && defIndex[card.def];
@@ -971,7 +1001,7 @@ async function cueFor(step, st) {
   const visible = card.faceUp || ((card.knownTo || 0) & (1 << ME));
   if (!visible) { await board.pulse(uid, def.color, 380); return; }
   /* trace のメッセージからどの段が発動したかを読み取る */
-  const msg = step.msg || '';
+  const msg = cue.msg || step.msg || '';
   let zone = null;
   if (msg.indexOf('中段') >= 0) zone = 'middle';
   else if (msg.indexOf('上段') >= 0) zone = 'upper';
@@ -1153,6 +1183,8 @@ function pickOnBoard(req) {
 function renderBoardPick() {
   const bp = boardPick;
   if (!bp) return;
+  /* キャッシュ確認など手札から選ぶ要求は、収納中でも必ず読める状態へ戻す。 */
+  if (bp.req.kind === 'pickHand') setHandDrawer(true);
   UI.hideActivation();
   clearLineTargets();
   board.markCandidates(bp.req.candidates, bp.chosen);

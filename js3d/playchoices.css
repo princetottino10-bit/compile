@@ -1,20 +1,31 @@
-#btnFace { display: none; }
-#btnHand { display: none; }
+#btnFace, #btnHand { display: none; }
 #playChoices[hidden] { display: none; }
-#playChoices { position: fixed; z-index: 28; right: 14px; bottom: 84px; width: min(420px, 38vw); box-sizing: border-box; padding: 12px; border: 1px solid #497b80; border-radius: 14px; background: #09121ff5; color: #ebf9ff; font: 13px/1.5 system-ui, sans-serif; max-height: 48vh; overflow-y: auto; }
-.placement-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
-#playChoices button { min-height: 44px; border: 1px solid #567881; border-radius: 8px; background: #192d3d; color: #effaff; padding: 6px 10px; cursor: pointer; font: inherit; }
-.placement-heading button { flex-shrink: 0; }
-.placement-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.placement-grid + .placement-grid { margin-top: 12px; }
-.placement-grid h3 { font-size: 12px; overflow-wrap: anywhere; margin: 0 0 6px; }
-.placement-grid button { width: 100%; margin-top: 5px; }
-#playChoices .place-faceup { background: #174137; border-color: #73cdb2; }
-#playChoices button:hover, #playChoices button:focus-visible { outline: 2px solid #ffdb8a; outline-offset: 1px; }
-.placement-grid section.focused { outline: 2px solid #ffdb8a; outline-offset: 3px; border-radius: 5px; }
+
+/* 配置選択は盤面上の着地パッドに追従する。親はクリックを通し、チップだけが操作を受ける。 */
+#playChoices { position: fixed; z-index: 28; inset: 0; pointer-events: none; font: 800 12px/1 system-ui, sans-serif; }
+.placement-lane { position: absolute; display: flex; align-items: center; gap: 4px;
+  transform: translate(-50%, -50%); padding: 5px; border: 1px solid rgba(109,255,194,.82);
+  border-radius: 999px; background: rgba(5,14,23,.94); box-shadow: 0 0 22px rgba(109,255,194,.32);
+  backdrop-filter: blur(9px); pointer-events: auto; transition: transform .16s, box-shadow .16s; }
+.placement-lane[data-side="1"] { border-color: rgba(255,59,157,.82); box-shadow: 0 0 22px rgba(255,59,157,.32); }
+.placement-lane-label { max-width: 74px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  padding: 0 3px; letter-spacing: .06em; color: #d8fff0; }
+.placement-lane[data-side="1"] .placement-lane-label { color: #ffd8ea; }
+#playChoices button { min-width: 38px; min-height: 36px; border: 1px solid #567881; border-radius: 999px;
+  background: #192d3d; color: #effaff; padding: 5px 9px; cursor: pointer; font: inherit; pointer-events: auto; }
+#playChoices .place-faceup { background: #174137; border-color: #73cdb2; color: #e4fff5; }
+#playChoices .place-facedown { background: #25243a; border-color: #9997d7; }
+#playChoices button:hover, #playChoices button:focus-visible { outline: 2px solid #ffdb8a; outline-offset: 2px; }
+.placement-lane.focused { transform: translate(-50%, -50%) scale(1.12); box-shadow: 0 0 32px #ffdb8a; }
+.placement-cancel { position: fixed; right: 14px; bottom: 84px; border-color: rgba(99,243,255,.4) !important;
+  background: rgba(8,12,22,.9) !important; }
 .effect-target-legend { display: inline-flex; min-height: 38px; align-items: center; padding: 0 8px; border: 1px solid #567881; border-radius: 8px; background: #0c1725; color: #d5ebf0; font-size: 12px; }
+
 @media (max-width: 860px) {
   #btnHand { display: inline-flex; }
-  #playChoices { top: calc(120px + env(safe-area-inset-top)); bottom: auto; left: 10px; right: 10px; width: auto; max-height: 37vh; padding: 10px; }
+  .placement-lane { gap: 3px; padding: 4px; }
+  .placement-lane-label { max-width: 58px; font-size: 10px; }
+  #playChoices button { min-width: 42px; min-height: 42px; }
+  .placement-cancel { right: 10px; bottom: calc(70px + env(safe-area-inset-bottom)); }
   body.choosing-placement #preview { top: auto; left: 50%; bottom: 95px; height: min(31vh, 260px); transform: translateX(-50%); }
 }

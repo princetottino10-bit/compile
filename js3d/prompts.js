@@ -15,7 +15,7 @@ export const PROMPT_TEXT = {
   'each-line-order': '処理するラインを選択', 'each-order': '処理するカードを選択',
   'trigger-order': '先に解決する効果を選択', 'uncover-order': '先に解決するカードを選択',
   'start-order': '解決順を選択', 'end-order': '解決順を選択',
-  'compile-line': 'コンパイルするラインを選択', 'compile-replace-shift': '移動先のラインを選択',
+  'compile-line': 'コンパイルするラインを選択', 'compile-replace-shift': 'コンパイル削除を置換：移動先のラインを選択',
   'mass-shift-dest': '移動先のラインを選択', 'control-rearrange': 'コントロール: プロトコルを並べ替えますか?',
   'rearrange': '新しい並び順を選択', 'give-card': '相手に渡すカードを選択',
   'reveal-hand-card': '公開する手札を選択', 'play-card': 'プレイするカードを選択',

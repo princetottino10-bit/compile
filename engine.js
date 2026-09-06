@@ -779,7 +779,13 @@ function doCompile(ctx, side, line) {
       const tr = eff.upper && eff.upper.trigger;
       if (tr && tr.on === 'wouldBeDeletedByCompile') {
         const dests = [0, 1, 2].filter(l2 => l2 !== line);
-        const ans = choose(ctx, { kind: 'pickLine', player: s, lines: dests, prompt: 'compile-replace-shift', context: DEFS[c.def].id });
+        /* SPEED 2 の置換は「消えなかった」だけでは発動元が伝わりにくい。
+           ログ・盤面ハイライト・移動先選択を同じ uid で結ぶ。 */
+        log(ctx, `[${DEFS[c.def].id}] 上段効果が発動: コンパイル削除を移動に置換`, uid);
+        const ans = choose(ctx, {
+          kind: 'pickLine', player: s, lines: dests, prompt: 'compile-replace-shift',
+          context: DEFS[c.def].id, focus: uid
+        });
         const loc = locate(st, uid);
         st.lines[loc.line][loc.side].splice(loc.idx, 1);
         const dstack = st.lines[ans[0]][s];

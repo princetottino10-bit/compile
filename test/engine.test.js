@@ -268,6 +268,21 @@ test('DARKNESS_1: 3枚ドロー + 相手の覆われたカードを移動', () =
   assert.deepEqual(st2.lines[0][1], [uidOf('DEATH_4', 1)]);
 });
 
+test('キャッシュ確認: 5枚から表向きのドロー効果で7枚になれば、2枚の破棄が必須', () => {
+  const r = ng();
+  const st = r.state;
+  setHand(st, 0, ['DARKNESS_1', 'DARKNESS_2', 'DARKNESS_3', 'DARKNESS_4', 'DARKNESS_5']);
+  const res = Engine.apply(st, { type: 'play', card: uidOf('DARKNESS_1', 0), line: 0, faceUp: true });
+  assert.equal(res.error, null);
+  assert.equal((res.view || res.state).players[0].hand.length, 7);
+  assert.equal(res.requests.length, 1);
+  const req = res.requests[0];
+  assert.equal(req.kind, 'pickHand');
+  assert.equal(req.prompt, 'clear-cache');
+  assert.equal(req.min, 2);
+  assert.equal(req.max, 2);
+});
+
 test('FIRE_2: 捨て札にした場合のみ削除 (そうした場合)', () => {
   const r = ng();
   const st = r.state;
@@ -451,13 +466,17 @@ test('SPEED_3: コンパイル削除の代わりに移動 (置換効果)', () =>
   // P1 ターン: コントロール選択 → SPEED_3 の移動先選択 → コンパイル完了
   res = drive(res, req => {
     if (req.prompt === 'control-rearrange') return [2];
-    if (req.prompt === 'compile-replace-shift') return [0];
+    if (req.prompt === 'compile-replace-shift') {
+      assert.equal(req.focus, uidOf('SPEED_3', 1));
+      return [0];
+    }
     throw new Error('予期しない要求: ' + req.prompt);
   });
   const st2 = res.state;
   assert.deepEqual(st2.lines[0][1], [uidOf('SPEED_3', 1)]);  // 削除されず移動
   assert.equal(st2.players[1].trash.length, 0);
   assert.equal(st2.players[0].protocols[2].compiled, true);
+  assert.ok(res.log.some(x => x.includes('[SPEED_3] 上段効果が発動')));
   assert.equal(countAll(st2), 36);
 });
 
