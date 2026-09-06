@@ -93,6 +93,8 @@ boot().catch((e) => {
 async function boot() {
   const T0 = performance.now();
   const mark = (label) => { window.__bootMarks = window.__bootMarks || []; window.__bootMarks.push(label + ':' + Math.round(performance.now() - T0)); };
+  /* OAuth の戻り先では、ゲーム初期化より先にセッション復元と URL の掃除を行う。 */
+  await ROOM.roomRestoreOAuthRedirect();
   const [cards, effects] = await Promise.all([
     fetch('data/cards.json').then(r => r.json()),
     fetch('data/effects.json').then(r => r.json())

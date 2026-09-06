@@ -68,8 +68,8 @@ export function runRoomLobby(protocols) {
     async function showLogin() {
       clearInterval(lobbyTimer);
       const rateNote = wantRated
-        ? '<p class="ro-sub">レート戦はメールアドレスで作成したアカウントが必要です。</p>' :
-          '<p class="ro-sub">通常戦はゲスト接続でも遊べます。レート戦はメールアカウントでログインしてください。</p>';
+        ? '<p class="ro-sub">レート戦はゲスト以外のアカウントでログインしてください。</p>' :
+          '<p class="ro-sub">通常戦はゲスト接続でも遊べます。レート戦にはメール・Google・GitHubのアカウントを使います。</p>';
       frame(wantRated ? 'RATED — ログイン' : 'ONLINE — 接続',
         rateNote +
         '<div class="ro-row"><input class="ro-input" id="roomName" maxlength="12" placeholder="表示名" value="' + esc(lsGet('compileRoomName')) + '"></div>' +

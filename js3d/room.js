@@ -42,7 +42,8 @@ function client() {
   if (!sb) {
     const cfg = window.COMPILE_ROOM_CONFIG;
     sb = window.supabase.createClient(cfg.url, cfg.anonKey, {
-      auth: { persistSession: true, autoRefreshToken: true }
+      /* OAuth の認可コードは URL に残さず、SDK が起動時にセッションへ交換する。 */
+      auth: { persistSession: true, autoRefreshToken: true, flowType: 'pkce' }
     });
   }
   return sb;
@@ -51,6 +52,27 @@ function client() {
 export async function roomSession() {
   const got = await client().auth.getSession();
   return got.data.session;
+}
+
+/* OAuth コールバックで SDK がセッションを復元した直後に、一時パラメータを
+   アドレスバーと履歴から消す。通常起動では依存 SDK を読み込まない。 */
+export async function roomRestoreOAuthRedirect() {
+  const query = new URLSearchParams(location.search);
+  const hasCallback = /(?:^#|[&])(?:access_token|error)=/.test(location.hash) ||
+    query.has('code') || query.has('error') || query.has('error_description');
+  if (!hasCallback) return false;
+  try {
+    await roomLoadDeps();
+    await roomSession();
+  } finally {
+    const clean = new URL(location.href);
+    clean.hash = '';
+    clean.searchParams.delete('code');
+    clean.searchParams.delete('error');
+    clean.searchParams.delete('error_description');
+    history.replaceState(null, document.title, clean.pathname + clean.search);
+  }
+  return true;
 }
 
 export async function roomLogin(displayName) {
