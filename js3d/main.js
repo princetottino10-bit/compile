@@ -548,7 +548,7 @@ function bindInput() {
     const uid = selectedUid;
     deselect();
     const card = board.cards.get(uid);
-    if (card) card.renderOrder = 0;
+    if (card) { card.renderOrder = 0; board.setSelected(card, false); }
     const action = { type: 'play', card: uid, line: ud.line, faceUp: mode === 'faceUp' };
     if (ud.side !== cur.state.turn) action.side = ud.side;
     await step(action);
@@ -652,14 +652,18 @@ function restHandCard(uid) {
 
 function select(uid) {
   if (selectedUid && selectedUid !== uid) {
-    board.clearHighlight(board.cardOf(shown(), selectedUid));
+    const prev = board.cardOf(shown(), selectedUid);
+    board.clearHighlight(prev);
+    board.setSelected(prev, false);
     restHandCard(selectedUid);
   }
   selectedUid = uid;
   if (uid) {
     sfx('select');
     raiseHandCard(uid);
-    board.setHighlight(board.cardOf(shown(), uid), COLOR.cyan, 0.10, 0.55);
+    const card = board.cardOf(shown(), uid);
+    board.setHighlight(card, 0xffd86a, 0.22, 0.85);
+    board.setSelected(card, true, 0xffd86a);      // 選んだ札は金色に染める
   }
   updatePads();
 }

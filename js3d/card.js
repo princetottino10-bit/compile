@@ -152,6 +152,36 @@ export function clearHighlight(card) {
   setHighlight(card, 0x000000, 0, 0);
 }
 
+/* 選択中のカード: 色付きの半透明ティントと太い縁取りで「選んだ1枚」を一目で分からせる。
+   ハイライト(発光)だけでは候補との差が付きにくいため、面の色そのものを変える */
+export function setSelected(card, on, colorHex) {
+  const ud = card.userData;
+  if (!ud.selectTint) {
+    const geo = planeGeometry();
+    const tint = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
+      color: 0xffd86a, transparent: true, opacity: 0.18, depthWrite: false,
+      blending: THREE.AdditiveBlending
+    }));
+    tint.position.y = CARD.thickness / 2 + 0.002;
+    tint.renderOrder = 3;
+    const edges = new THREE.EdgesGeometry(new THREE.PlaneGeometry(CARD.w * 1.06, CARD.h * 1.05).rotateX(-Math.PI / 2));
+    const outline = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({
+      color: 0xffd86a, transparent: true, opacity: 0.95, linewidth: 2
+    }));
+    outline.position.y = CARD.thickness / 2 + 0.003;
+    card.add(tint, outline);
+    ud.selectTint = tint;
+    ud.selectOutline = outline;
+    tint.visible = false; outline.visible = false;
+  }
+  const c = new THREE.Color(colorHex || 0xffd86a);
+  ud.selectTint.material.color.copy(c);
+  ud.selectOutline.material.color.copy(c);
+  ud.selectTint.visible = !!on;
+  ud.selectOutline.visible = !!on;
+  ud.selected = !!on;
+}
+
 /* いま操作できないカードを沈める (MD の「発動できない札」に相当) */
 export function setDim(card, dim) {
   const v = dim ? 0.55 : 1;

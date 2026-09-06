@@ -5,7 +5,7 @@
  *     カードプレイの着地は専用の演出パスを通る (最優先で作り込む箇所)。
  * ========================================================================= */
 import * as THREE from '../vendor/three.module.js';
-import { makeCard, setHighlight, clearHighlight, setDim, retexture, glowTexture } from './card.js';
+import { makeCard, setHighlight, clearHighlight, setDim, setSelected, retexture, glowTexture } from './card.js';
 import { spawnImpactRing, spawnFlashPillar } from './stage.js';
 import * as FX from './fx.js';
 import { sfx } from './audio.js';
@@ -580,6 +580,7 @@ export function createBoard(stage, defIndex, me, hooks) {
   }
 
   return {
+    setSelected(card, on, colorHex) { if (card) setSelected(card, on, colorHex); },
     /* 対象選択モード: 候補を光らせ、他を沈める */
     markCandidates(uids, chosen) {
       const cset = new Set(uids), chset = new Set(chosen || []);
@@ -587,12 +588,15 @@ export function createBoard(stage, defIndex, me, hooks) {
         if (!card.visible) continue;
         if (chset.has(uid)) {
           setHighlight(card, new THREE.Color(0xefd06c), 0.5, 1.0);
+          setSelected(card, true, 0xffd86a);          // 選んだ札は金色に染める
           setDim(card, false);
         } else if (cset.has(uid)) {
           setHighlight(card, new THREE.Color(0x63f3ff), 0.24, 0.7);
+          setSelected(card, false);
           setDim(card, false);
         } else {
           if (!card.userData.locked) clearHighlight(card);
+          setSelected(card, false);
           setDim(card, true);
         }
       }
@@ -600,6 +604,7 @@ export function createBoard(stage, defIndex, me, hooks) {
     clearCandidates() {
       for (const [, card] of cards) {
         if (!card.userData.locked) clearHighlight(card);
+        setSelected(card, false);
         setDim(card, false);
       }
     },
