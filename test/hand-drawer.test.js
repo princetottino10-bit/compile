@@ -42,3 +42,22 @@ test('large hands split into two readable rows instead of stacking inaccessible 
     VIEW.k = original.k; VIEW.handOpen = original.handOpen;
   }
 });
+
+test('portrait hand uses straight rows so it stays out of the board tap area', async () => {
+  const { VIEW } = await import('../js3d/theme.js');
+  const { handSlot } = await import('../js3d/layout.js');
+  const original = { k: VIEW.k, handOpen: VIEW.handOpen };
+  try {
+    VIEW.k = 1; VIEW.handOpen = true;
+    const slots = Array.from({ length: 9 }, (_, i) => handSlot(i, 9));
+    for (const slot of slots) assert.equal(slot.rot[2], 0, 'portrait cards must not fan sideways');
+    for (let i = 1; i < 5; i++) {
+      assert.ok(Math.abs(slots[i].pos[0] - slots[i - 1].pos[0]) > .8, 'front-row cards remain individually touchable');
+      assert.equal(slots[i].pos[1], slots[0].pos[1], 'the front row is level');
+    }
+    assert.ok(slots[5].pos[2] < slots[0].pos[2], 'second row stays behind the front row');
+    assert.ok(slots[5].pos[1] > slots[0].pos[1], 'second row is lifted rather than covering the front row');
+  } finally {
+    VIEW.k = original.k; VIEW.handOpen = original.handOpen;
+  }
+});

@@ -5,8 +5,26 @@
  * ========================================================================= */
 import { BOARD, CARD, VIEW } from './theme.js';
 
-/* 手札: カメラに正対する緩い扇 */
+/* 手札: PC は扇、縦持ちではまっすぐな段組み */
 export function handSlot(i, n) {
+  const tucked = VIEW.handOpen ? 0 : 1;
+  /* 縦持ちで扇を維持すると、両端の札が盤面へ大きく食い込み、
+     その札が Raycaster を先に拾って盤面操作まで奪ってしまう。
+     5枚ごとの水平な段にして、カードと盤面の操作領域を分ける。 */
+  if (VIEW.k >= .5) {
+    const perRow = 5;
+    const row = Math.floor(i / perRow);
+    const rowStart = row * perRow;
+    const rowCount = Math.min(perRow, n - rowStart);
+    const rowIndex = i - rowStart;
+    const t = rowCount <= 1 ? 0 : (rowIndex / (rowCount - 1) - .5);
+    return {
+      pos: [t * Math.min(rowCount * .82, 3.7), BOARD.handY + row * .32 - tucked * .22,
+        BOARD.handZ + .66 - row * .48 + tucked * .48],
+      rot: [1.02, 0, 0],
+      scale: .70 * (tucked ? .9 : 1) * (row ? .94 : 1)
+    };
+  }
   /* 8枚以上は2列にする。1列のまま重ねると中央の札が完全に隠れ、
      見た目だけでなくRaycasterでも選べなくなる。 */
   const split = n > 7;
@@ -17,7 +35,6 @@ export function handSlot(i, n) {
   const t = rowCount <= 1 ? 0 : (rowIndex / (rowCount - 1) - 0.5); // -0.5 .. 0.5
   const k = VIEW.k;                                 // 縦長画面では小さく・奥に
   const width = Math.min(rowCount * (split ? 0.82 : 0.66), split ? 4.4 : 4.05) * (1 - 0.18 * k);
-  const tucked = VIEW.handOpen ? 0 : 1;
   const rowY = backRow ? 0.46 : 0;
   const rowZ = backRow ? -0.54 : 0;
   const rowScale = backRow ? 0.90 : 1;

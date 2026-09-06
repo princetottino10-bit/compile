@@ -78,9 +78,10 @@
   /* ---------- 下部の操作 ---------- */
   #dock{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:12;
     display:flex;gap:8px;align-items:center;}
-  .btn{padding:9px 16px;border-radius:999px;cursor:pointer;
+  .btn{width:104px;min-height:38px;padding:0 10px;border-radius:999px;cursor:pointer;
     border:1px solid rgba(99,243,255,.28);background:rgba(8,12,22,.86);color:var(--ink);
-    font:800 10px/1 system-ui;letter-spacing:.14em;backdrop-filter:blur(10px);transition:all .2s;}
+    display:inline-flex;align-items:center;justify-content:center;text-align:center;
+    font:800 10px/1 system-ui;letter-spacing:.1em;white-space:nowrap;backdrop-filter:blur(10px);transition:all .2s;}
   .btn:hover{border-color:var(--cyan);background:rgba(99,243,255,.13);
     box-shadow:0 0 22px rgba(99,243,255,.18);transform:translateY(-1px);}
   .btn.on{border-color:var(--gold);background:rgba(239,208,108,.16);color:#ffeab4;}
@@ -720,6 +721,9 @@
       padding:12px 14px;font-size:11px;line-height:1.7;background:rgba(5,8,16,.94);border-color:rgba(99,243,255,.36);}
     #btnLog[hidden]{display:inline-block!important;}
     #meCounts,#oppCounts{display:none;}
+    /* 下部の操作は全て同じ大きさにし、指の届く1列へ固定する。 */
+    #dock{left:10px;right:10px;bottom:12px;transform:none;gap:5px;justify-content:center;}
+    #dock .btn{flex:1 1 0;width:auto;min-width:0;min-height:38px;padding:0 3px;font-size:8.5px;letter-spacing:.02em;}
   }
 </style>
 </head>
@@ -753,6 +757,7 @@
     <button id="btnRefresh" class="btn" type="button">リフレッシュ</button>
     <button id="btnLog" class="btn" type="button" hidden>LOG</button>
     <button id="btnMute" class="btn" type="button" title="効果音">🔊</button>
+    <button id="btnMenu" class="btn" type="button">MENU</button>
     <button id="btnLeave" class="btn" type="button" style="display:none">退出</button>
   </div>
 

@@ -650,6 +650,13 @@ function bindInput() {
     }
     if (demoMode || busy || !cur || shown().winner !== null) return;
     if (cur.requests.length || shown().turn !== ME) return;
+    /* 縦持ちは、画面下の手札が見た目では盤面と離れていても透視投影上は
+       盤面レイに重なることがある。選択済みなら配置枠のワールド座標を
+       優先し、手札に当たり判定を奪われず盤面へ置けるようにする。 */
+    if (selectedUid && isCompactHandUI()) {
+      const directPad = padUnder(planePoint(ev));
+      if (directPad) { await dropOnPad(directPad.userData); return; }
+    }
     /* 選択中の手札や盤面のカードが重なっても、光る配置先を直接判定する。
        座席は legalNow() でローカルへ変換済みの pad.side を使う。 */
     /* 盤面の積み札を押した時は、投影座標ではなく実際に当たった札の
@@ -736,17 +743,23 @@ function bindInput() {
     deselect();
     await step({ type: 'refresh' });
   };
-  const leaveBtn = document.getElementById('btnLeave');
-  if (leaveBtn) leaveBtn.onclick = async () => {
-    if (!roomMode) return;
+  const goToMenu = async () => {
+    if (!roomMode) {
+      location.href = location.pathname;
+      return;
+    }
     const st = shown();
     if (st && st.winner === null) {
-      if (!confirm('投了して退出しますか？')) return;
+      if (!confirm('投了してメニューに戻りますか？')) return;
       try { await ROOM.roomApi('action', { code: roomRm.code, version: roomRm.version, action: { type: 'surrender' } }); }
       catch (e) { /* 決着はサーバー側で確定する */ }
     }
-    location.reload();                  // シーンを作り直すのが最も確実
+    location.href = location.pathname;
   };
+  const leaveBtn = document.getElementById('btnLeave');
+  if (leaveBtn) leaveBtn.onclick = goToMenu;
+  const menuBtn = document.getElementById('btnMenu');
+  if (menuBtn) menuBtn.onclick = goToMenu;
   const muteBtn = document.getElementById('btnMute');
   if (muteBtn) muteBtn.onclick = () => {
     initAudio();
@@ -1085,8 +1098,6 @@ async function roomEnterGame(rm) {
   lastTurn = null;
   roomLoggedVersion = null;
   roomTracker = ROOM.createTraceTracker();
-  const leaveBtn = document.getElementById('btnLeave');
-  if (leaveBtn) leaveBtn.style.display = '';
   await roomApplyView(rm, true);
   await stage.home(600);
   clearInterval(roomPollTimer);
