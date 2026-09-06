@@ -1207,3 +1207,26 @@ function randomAnswer(req, rng) {
       throw new Error('未知の request kind: ' + req.kind);
   }
 }
+
+test('CLARITY_4: デッキ検索の候補は、何のカードかが要求に添えられる', () => {
+  const r = ng({ p0: ['CLARITY', 'FIRE', 'WATER'], first: 0 });
+  const st = r.state;
+  setHand(st, 0, ['CLARITY_4']);
+  const res = Engine.apply(st, { type: 'play', card: uidOf('CLARITY_4', 0), line: 0, faceUp: true });
+  assert.strictEqual(res.error, null);
+  const req = res.requests[0];
+  assert.ok(req, '値5が複数あるので選択を求めるはず');
+  assert.strictEqual(req.prompt, 'search-pick');
+  assert.ok(req.candidates.length > 1, '候補が2枚以上');
+  /* 候補は自分のデッキの中にあり、盤面にも手札にも無い。
+     何のカードかが分からないと選びようがないので、要求自体に持たせる。 */
+  assert.ok(Array.isArray(req.defs), '要求に defs が必要');
+  assert.strictEqual(req.defs.length, req.candidates.length);
+  req.candidates.forEach((uid, i) => {
+    assert.strictEqual(req.defs[i], (res.view || res.state).cards[uid].def);
+  });
+  /* 提示された順に選べる */
+  const pick = req.candidates[1];
+  const done = drive(res, () => [pick]);
+  assert.ok(done.state.players[0].hand.includes(pick), '選んだカードが手札に入る');
+});

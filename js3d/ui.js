@@ -95,6 +95,46 @@ export function cancelChoice(val) {
   if (activeModalFinish) activeModalFinish(val);
 }
 
+/* 山札の中から選ぶ (CLARITY 3 のサーチ等)。
+   候補は盤面にも手札にも無いので、カードの絵と名前を並べて直接選ばせる。
+   デッキ公開のオーバーレイに隠れると「勝手に決まった」ように見えるため、
+   公開表示は閉じ、こちらを最前面に出す。
+   items: { img, label, value } / 戻り値: [value] (選ばない場合は []) */
+export function pickFaces(items, opts) {
+  const o = opts || {};
+  return new Promise((resolve) => {
+    const reveal = $('#revealOv');
+    if (reveal) { clearTimeout(reveal._t); reveal.classList.remove('show'); }
+    let el = $('#pickOv');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'pickOv';
+      document.body.appendChild(el);
+    }
+    const finish = (picks) => {
+      activeModalFinish = null;
+      el.classList.remove('show');
+      el.innerHTML = '';
+      resolve(picks);
+    };
+    activeModalFinish = finish;
+    el.innerHTML = '<div class="rv-title">' + (o.title || 'カードを選ぶ') + '</div>' +
+      '<div class="rv-cards">' + items.map((it, i) =>
+        '<button type="button" class="rv-pick" data-i="' + i + '">' +
+          '<img alt="" src="' + it.img + '"><span>' + it.label + '</span></button>').join('') +
+      '</div>' +
+      (o.optional
+        ? '<div class="rv-hint"><button type="button" class="arr-btn" id="pkSkip">選ばない</button></div>'
+        : '<div class="rv-hint">タップして選ぶ</div>');
+    el.classList.add('show');
+    el.querySelectorAll('.rv-pick').forEach((b) => {
+      b.onclick = () => finish([items[+b.dataset.i].value]);
+    });
+    const skip = el.querySelector('#pkSkip');
+    if (skip) skip.onclick = () => finish([]);
+  });
+}
+
 export function askChoice(req, ctx) {
   const wrap = $('#modal');
   const body = $('#modalBody');

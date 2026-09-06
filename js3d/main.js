@@ -21,7 +21,7 @@ import * as LAYOUT from './layout.js';
 import { BOARD, CARD, COLOR, TIMING, VIEW } from './theme.js';
 import * as TW from './tween.js';
 import * as UI from './ui.js';
-import { placementPad } from './input.js';
+import { pickCard, placementPad } from './input.js';
 import { placementChoices, renderPlayChoices } from './playchoices.js';
 
 const Engine = window.CompileEngine;
@@ -381,20 +381,22 @@ function bindInput() {
   const ray = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
 
-  function pick(ev) {
+  /* accept を渡すと、条件に合わないカードは読み飛ばして下のカードを拾う。
+     指に追従中の札や持ち上がった手札が、選びたいカードを隠さないようにする。 */
+  function pick(ev, accept) {
     const r = el.getBoundingClientRect();
     ndc.x = ((ev.clientX - r.left) / r.width) * 2 - 1;
     ndc.y = -((ev.clientY - r.top) / r.height) * 2 + 1;
     ray.setFromCamera(ndc, stage.camera);
     /* 手札のアニメーション直後でも、見えているカードの行列で判定する。 */
     stage.scene.updateMatrixWorld(true);
-    const hits = ray.intersectObjects([...board.hitList(), ...pads], true);
-    for (const h of hits) {
-      let o = h.object;
-      while (o && !o.userData.uid && !o.userData.isPad) o = o.parent;
-      if (o) return { obj: o, point: h.point };
-    }
-    return null;
+    return pickCard(ray, [...board.hitList(), ...pads], accept);
+  }
+
+  /* いま画面上で浮いているカード (掴んでいる/選択で持ち上がった手札) */
+  function isFloating(uid) {
+    if (!uid) return false;
+    return uid === selectedUid || !!(drag && drag.uid === uid);
   }
 
   /* ---- ドラッグ&ドロップ ----
@@ -500,8 +502,10 @@ function bindInput() {
     };
     if (boardPick && boardPick.kind === 'yesno') return;
     if (boardPick && boardPick.kind === 'free') {
-      const uid2 = hit && hit.obj.userData.uid;
-      if (uid2 && boardPick.byUid[uid2]) { tapFreePick({ uid: uid2 }); return; }
+      /* 候補でないカードが重なっていても、その下の候補まで拾いに行く */
+      const free = pick(ev, (ud) => ud.uid && !!boardPick.byUid[ud.uid]);
+      const uid2 = free && free.obj.userData.uid;
+      if (uid2) { tapFreePick({ uid: uid2 }); return; }
       if (boardPick.sel) {
         const line = laneFromEvent();
         if (line !== null) tapFreePick({ isPad: true, line });
@@ -513,9 +517,19 @@ function bindInput() {
       if (line !== null && boardPick.lines.indexOf(line) >= 0) finishLinePick(boardPick.toPicks(line));
       return;
     }
-    if (boardPick && hit && hit.obj.userData.uid) {
-      toggleBoardPick(hit.obj.userData.uid);
-      return;
+    if (boardPick) {
+      /* 対象選択では候補だけを当たり判定に使う。重なった非候補は透かす */
+      const cands = Array.isArray(boardPick.req && boardPick.req.candidates) ? boardPick.req.candidates : null;
+      const target = cands
+        ? pick(ev, (ud) => ud.uid && cands.indexOf(ud.uid) >= 0)
+        : (hit && hit.obj.userData.uid ? hit : null);
+      if (target && target.obj.userData.uid) { toggleBoardPick(target.obj.userData.uid); return; }
+      if (cands) {
+        /* 候補外でも捨て札の山だけは中身を見せる (公開情報) */
+        const lt = hit && hit.obj.userData.uid && locOf(shown(), hit.obj.userData.uid);
+        if (lt && lt.zone === 'trash') showTrash(lt.side);
+        return;
+      }
     }
     /* 捨て札の山をタップ: 中身は公開情報なので一覧を出す */
     if (hit && hit.obj.userData.uid) {
@@ -528,7 +542,11 @@ function bindInput() {
        座席は legalNow() でローカルへ変換済みの pad.side を使う。 */
     /* 盤面の積み札を押した時は、投影座標ではなく実際に当たった札の
        所属レーンを使う。自分側のスタックが高くなっても当たり先がずれない。 */
-    const hitData = hit && hit.obj.userData;
+    /* 持ち上がった手札が盤面に重なっている時は、その札を透かして下の積み札を拾う。
+       指が手札の並びの上にある場合は従来通り (同じカードの再タップ=選択解除)。 */
+    const seeThrough = selectedUid && isFloating(hit && hit.obj.userData.uid) && laneFromEvent() !== null;
+    const under = seeThrough ? pick(ev, (ud) => ud.uid && !isFloating(ud.uid)) : hit;
+    const hitData = under && under.obj.userData;
     if (selectedUid && hitData && hitData.uid) {
       const loc = locOf(shown(), hitData.uid);
       if (loc && loc.zone === 'field') {
@@ -1112,6 +1130,23 @@ async function askUser(req) {
       if (picks) return picks;
       const m = await UI.askChoice(req, choiceCtx());
       if (m !== '__board__') return m;      // 「盤面で選ぶに戻る」でループ
+    }
+  }
+  /* デッキ検索の候補は盤面にも手札にも無く、オンラインでは中身も届かない。
+     要求に添えられた defs からカードの絵を並べて選ばせる。 */
+  if (req.kind === 'pickCard' && Array.isArray(req.defs)
+      && req.defs.length === (req.candidates || []).length) {
+    const items = req.candidates.map((uid, i) => {
+      const d = defIndex[req.defs[i]];
+      return d ? { img: faceImageURL(d), label: d.proto + ' ' + d.value, value: uid } : null;
+    });
+    if (items.every(Boolean)) {
+      const picks = await UI.pickFaces(items, {
+        title: (req.context ? cardName(req.context) + ': ' : '') + '手札に加えるカードを選ぶ',
+        optional: (req.min === undefined ? 1 : req.min) === 0
+      });
+      if (picks === PICK_CANCEL) return PICK_CANCEL;
+      if (picks) return picks;
     }
   }
   if (req.kind === 'pickCard' || req.kind === 'pickHand' || req.kind === 'pickLine' || req.kind === 'yesNo'

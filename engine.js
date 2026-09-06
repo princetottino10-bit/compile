@@ -1111,7 +1111,11 @@ function execOp(ctx, fr, op) {
       for (const u of matches) knowCard(st, u, fr.controller);   // 選ぶ本人だけが中身を見る (シャッフルで再び非公開)
       let take;
       if (op.all || matches.length <= 1) take = matches.slice(0, op.all ? undefined : 1);
+      /* 候補はデッキの中にあり、盤面にも手札にも出ていない。
+         何のカードかは公開済みなので、要求そのものに添えて選べるようにする
+         (オンラインでは相手のデッキ内容を渡さないため、これが唯一の手掛かり)。 */
       else take = choose(ctx, { kind: 'pickCard', player: fr.controller, candidates: matches.slice(),
+        defs: matches.map(u => DEFS[st.cards[u].def].id),
         min: 1, max: 1, prompt: 'search-pick', context: defOf(st, fr.source).id });
       for (const u of take) {
         removeFrom(p.deck, u);
