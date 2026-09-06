@@ -1620,7 +1620,12 @@ function performVerb(ctx, fr, op, uid) {
         dest = pickDest([0, 1, 2].filter(l => l !== loc.line));
       }
       if (dest === loc.line) return false;
-      return doShift(ctx, uid, dest);
+      const shifted = doShift(ctx, uid, dest);
+      /* DIVERSITY 1 のように、後続の効果文が「このライン」と指す場合は
+         移動後のラインを明示的に引き継ぐ。通常の移動効果まで意味が変わら
+         ないよう、DSL 側で setCurrentLine を指定した場合だけ更新する。 */
+      if (shifted && op.setCurrentLine) fr.currentLine = dest;
+      return shifted;
 
       function pickDest(lines) {
         if (lines.length === 1) return lines[0];

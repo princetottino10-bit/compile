@@ -1073,6 +1073,25 @@ test('M2 CORRUPTION_2: 相手の手札に戻るカードはデッキトップへ
   assert.equal(res.state.cards[uidOf('FIRE_6', 0)].faceUp, false, '裏向きで置かれる');
 });
 
+test('DIVERSITY_2: 自身を移動した後は移動先ラインの種類数を引く', () => {
+  const r = ng({ p0: ['DIVERSITY', 'DARKNESS', 'FIRE'] });
+  const st = r.state;
+  const self = uidOf('DIVERSITY_2', 0);
+  /* 移動先には DARKNESS/FIRE があり、自身が移れば3種類になる。 */
+  place(st, 'DARKNESS_1', 0, 1, true);
+  place(st, 'FIRE_1', 0, 1, true);
+  setHand(st, 0, ['DIVERSITY_2']);
+  const res = Engine.apply(st, { type: 'play', card: self, line: 0, faceUp: true });
+  const done = drive(res, (req) => {
+    if (req.kind === 'pickCard') return [self];
+    if (req.kind === 'pickLine') return [1];
+    throw new Error('unexpected request: ' + req.kind);
+  });
+  /* FIRE_1 を覆う下段の1ドローに加え、DIVERSITYの可変3ドロー。 */
+  assert.equal(done.state.players[0].hand.length, 4);
+  assert.ok(done.log.some(line => line.includes('3枚ドロー')));
+});
+
 test('ランダム自動対戦: 全15プロトコルでクラッシュせずカード総数36が保存される', () => {
   const matchups = [
     [['DARKNESS', 'FIRE', 'WATER'], ['DEATH', 'METAL', 'SPEED']],

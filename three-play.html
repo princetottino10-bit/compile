@@ -545,6 +545,9 @@
     #lines{top:auto;bottom:74px;gap:6px;}
     .lane{width:104px;padding:5px 7px 6px;}
     #log{display:none;}
+    #log.open{display:block;left:10px;right:10px;top:auto;bottom:66px;width:auto;max-height:42vh;
+      padding:12px 14px;font-size:11px;line-height:1.7;background:rgba(5,8,16,.94);border-color:rgba(99,243,255,.36);}
+    #btnLog[hidden]{display:inline-block!important;}
     #meCounts,#oppCounts{display:none;}
   }
 </style>
@@ -577,6 +580,7 @@
     <button id="btnFace" class="btn" type="button">表向き</button>
     <button id="btnHand" class="btn" type="button" hidden aria-expanded="true">手札を隠す</button>
     <button id="btnRefresh" class="btn" type="button">リフレッシュ</button>
+    <button id="btnLog" class="btn" type="button" hidden>LOG</button>
     <button id="btnMute" class="btn" type="button" title="効果音">🔊</button>
     <button id="btnLeave" class="btn" type="button" style="display:none">退出</button>
   </div>

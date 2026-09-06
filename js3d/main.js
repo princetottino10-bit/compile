@@ -42,6 +42,7 @@ let roomRm = null;              // 直近の publicState
 let roomTracker = null;         // trace の差分追跡
 let roomPollTimer = null;
 let handCompactMode = null;
+let roomLoggedVersion = null;
 
 /* 表示用の状態。
    engine は選択待ちで中断すると state に「アクション前の基準状態」を返し、
@@ -625,6 +626,14 @@ function bindInput() {
     if (isMuted()) stopBgm();
     else startBgm();
   };
+  const logBtn = document.getElementById('btnLog');
+  if (logBtn) logBtn.onclick = () => {
+    const log = document.getElementById('log');
+    if (!log) return;
+    const open = log.classList.toggle('open');
+    logBtn.classList.toggle('on', open);
+    logBtn.textContent = open ? 'LOGを閉じる' : 'LOG';
+  };
   const faceBtn = document.getElementById('btnFace');
   if (faceBtn) faceBtn.onclick = () => { backFacing = !backFacing; updatePads(); syncFacingHint(); };
   const handBtn = document.getElementById('btnHand');
@@ -853,6 +862,12 @@ async function roomApplyView(rm, instant) {
   const st = ROOM.buildRoomState(rm, roomValOf);
   const nq = ROOM.normRequest(rm);
   cur = { state: st, requests: nq ? [nq] : [], log: rm.log || [], trace: entries, winner: st.winner, error: null };
+  /* last_log はサーバーが直近の解決分だけ公開している。ポーリングのたびに
+     同じ内容を積まないよう、ルームの版番号ごとに一度だけ表示する。 */
+  if (Array.isArray(rm.log) && rm.version !== roomLoggedVersion) {
+    UI.pushLog(rm.log);
+    roomLoggedVersion = rm.version;
+  }
   if (instant || !prev) {
     board.syncInstant(st);
   } else {
@@ -937,6 +952,7 @@ async function roomEnterGame(rm) {
   roomMode = true;
   roomResultShown = false;
   lastTurn = null;
+  roomLoggedVersion = null;
   roomTracker = ROOM.createTraceTracker();
   const leaveBtn = document.getElementById('btnLeave');
   if (leaveBtn) leaveBtn.style.display = '';
@@ -1524,13 +1540,18 @@ function showTrash(side) {
 let lastRevealTag = '';
 function checkRevealed(st) {
   const r = st && st.revealed;
-  if (!r || r.player === ME || !Array.isArray(r.cards)) return;
+  if (!r || !Array.isArray(r.cards)) return;
+  /* CLARITY 1 のデッキトップ公開は自分の効果でも公開情報。従来は自分が
+     公開したものを一律で抑止していたため、カードが一切見えなかった。 */
+  const showOwn = r.kind === 'deck' || r.kind === 'card';
+  if (r.player === ME && !showOwn) return;
   const tag = r.player + ':' + r.cards.join(',');
   if (tag === lastRevealTag) return;
   lastRevealTag = tag;
-  const title = r.kind === 'deck' ? '相手のデッキが公開された (' + r.cards.length + '枚)'
-    : r.kind === 'hand' ? '相手の手札が公開された'
-    : '相手がカードを公開した';
+  const who = r.player === ME ? 'あなた' : '相手';
+  const title = r.kind === 'deck' ? who + 'のデッキが公開された (' + r.cards.length + '枚)'
+    : r.kind === 'hand' ? who + 'の手札が公開された'
+    : who + 'がカードを公開した';
   UI.showRevealedHand(r.cards.map((id) => {
     const d = defIndex[id];
     return d ? { img: faceImageURL(d), label: d.proto + ' ' + d.value } : null;

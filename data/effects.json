@@ -2989,7 +2989,8 @@
       "_text": "カードを1枚移動させる。このラインにあるコマンドカードの、プロトコルの種類数に等しい枚数のカードを引く。",
       "ops": [
         {
-          "op": "shift"
+          "op": "shift",
+          "setCurrentLine": true
         },
         {
           "op": "drawDynamic",
