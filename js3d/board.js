@@ -76,6 +76,9 @@ export function visualFingerprint(st) {
   for (const uid of Object.keys(st.cards)) if (st.cards[uid].faceUp) up.push(uid);
   parts.push(up.sort().join(','));
   parts.push((st.commitStack || []).map(u => u + ':' + ((st.cards[u] || {}).commitDest || '')).join(','));
+  /* 宣言 (LUCK 0/3) は盤面を変えないが、演出として1ステップぶん見せたい */
+  const a = st.announce;
+  if (a) parts.push('announce:' + a.kind + ':' + a.player + ':' + a.value + ':' + (a.hit ? 'hit' : 'miss'));
   return parts.join('|');
 }
 

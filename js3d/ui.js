@@ -279,6 +279,32 @@ export function showPhase(phase, mine) {
   el._t = setTimeout(() => el.classList.remove('show'), 1400);
 }
 
+/* 宣言の演出 (LUCK 0 / LUCK 3)。
+   何を宣言したか、当たったか外れたかを画面の中央で見せる。
+   o: { label, value, tone: 'call'|'hit'|'miss', note } */
+export function declareCutIn(o) {
+  let el = $('#declareCut');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'declareCut';
+    document.body.appendChild(el);
+  }
+  const tone = o.tone || 'call';
+  el.dataset.tone = tone;
+  el.innerHTML =
+    '<div class="dc-body">' +
+      '<div class="dc-label">' + (o.label || '宣言') + '</div>' +
+      '<div class="dc-value">' + (o.value === undefined ? '' : o.value) + '</div>' +
+      (o.note ? '<div class="dc-note">' + o.note + '</div>' : '') +
+    '</div>';
+  el.classList.add('show');
+  const hold = tone === 'call' ? 900 : 1150;
+  return new Promise((resolve) => setTimeout(() => {
+    el.classList.remove('show');
+    setTimeout(resolve, 180);
+  }, hold));
+}
+
 export function turnCutIn(mine) {
   const el = $('#turnCut');
   if (!el) return Promise.resolve();

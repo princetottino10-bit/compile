@@ -164,6 +164,8 @@ export function buildRoomState(rm, valOf) {
     useControl: true,
     turn: li(g.turn),
     phase: g.phase,
+    /* 宣言の演出はローカル視点の側番号で持つ */
+    announce: g.announce ? { ...g.announce, player: li(g.announce.player) } : null,
     control: g.control < 0 ? -1 : li(g.control),
     winner: g.winner === null ? null : li(g.winner),
     players: [

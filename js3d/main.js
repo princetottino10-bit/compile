@@ -1113,6 +1113,7 @@ async function replayResolution(prev, res, action) {
   let first = true;
   for (const step of use) {
     await markPhase(step.st);
+    await checkAnnounce(step.st);
     await board.applyTransition(from, step.st, first ? action : null, { speed: 0.72 });
     await cueFor(step, step.st);
     from = step.st;
@@ -1603,6 +1604,34 @@ function showTrash(side) {
   }).filter(Boolean);
   if (!items.length) { UI.toast('捨て札はありません'); return; }
   UI.showPile((side === ME ? 'あなた' : '相手') + 'の捨て札 (' + items.length + '枚・新しい順)', items);
+}
+
+/* 宣言 (LUCK 0 / LUCK 3): 宣言した内容と当否を画面中央で見せる */
+let lastAnnounceTag = '';
+async function checkAnnounce(st) {
+  const a = st && st.announce;
+  if (!a) return;
+  const tag = [a.kind, a.player, a.what, a.value, a.card, a.hit].join('|');
+  if (tag === lastAnnounceTag) return;
+  lastAnnounceTag = tag;
+  const who = a.player === ME ? 'あなた' : '相手';
+  const src = a.context ? cardName(a.context) : '';
+  if (a.kind === 'declare') {
+    await UI.declareCutIn({
+      label: who + 'の宣言 / ' + (a.what === 'protocol' ? 'プロトコル' : '値'),
+      value: a.value, tone: 'call', note: src
+    });
+    return;
+  }
+  if (a.kind === 'declareResult') {
+    const d = a.card ? defIndex[a.card] : null;
+    await UI.declareCutIn({
+      label: a.hit ? '的中' : 'はずれ',
+      value: a.value,
+      tone: a.hit ? 'hit' : 'miss',
+      note: d ? d.proto + ' ' + d.value : (a.card || '該当なし')
+    });
+  }
 }
 
 /* 手札公開 (PSYCHIC 0 等): st.revealed の変化を検知して公開ハンドを見せる */

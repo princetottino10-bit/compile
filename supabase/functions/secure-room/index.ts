@@ -92,6 +92,13 @@ async function userFor(req: Request) {
   return error ? null : data.user;
 }
 
+/* レート戦は本人が続けて使うアカウントに限る。
+   匿名セッションは端末やブラウザを変えるだけで別人になり、
+   負けたら作り直せてしまうのでレートが意味を失う。 */
+function isRatedEligible(user: any) {
+  return !!user && user.is_anonymous !== true;
+}
+
 function sideOf(room: any, userId: string) {
   if (room.host_id === userId) return 0;
   if (room.guest_id === userId) return 1;
@@ -169,6 +176,8 @@ function publicGame(st: any, side: number, aliases = cardAliases(st)) {
     revealed: st.revealed && Array.isArray(st.revealed.cards)
       ? { kind: st.revealed.kind, player: st.revealed.player, cards: st.revealed.cards.slice() }
       : null,
+    /* 宣言 (LUCK 0/3) とその結果。声に出す情報なので両者に見せる */
+    announce: st.announce ? { ...st.announce } : null,
     /* 移動中 (committed) のカード: クライアントの transit 演出用。
        正体は可視性ルールに従う (相手の裏向きは def を伏せる) */
     committed: (st.commitStack || []).map((uid: string) => {
@@ -310,6 +319,7 @@ Deno.serve(async (req) => {
       const name = cleanName(body.name);
       if (!name) return fail(req, "表示名を入力してください");
       const title = cleanTitle(body.title);
+      if (body.rated === true && !isRatedEligible(user)) return fail(req, "レート戦にはログインが必要です", 403);
       const visibility = body.visibility === "private" ? "private" : "public";
       let password;
       try { password = await roomPassword(body.password); } catch (error) { return fail(req, String((error as Error).message)); }
@@ -342,6 +352,7 @@ Deno.serve(async (req) => {
     if (op === "join") {
       const name = cleanName(body.name);
       if (!name) return fail(req, "表示名を入力してください");
+      if (room.rated && !isRatedEligible(user)) return fail(req, "レート戦にはログインが必要です", 403);
       if (room.host_id !== user.id && room.guest_id && room.guest_id !== user.id) return fail(req, "満室です", 409);
       if (!room.guest_id && room.host_id !== user.id) {
         if (!(await passwordMatches(room, body.password))) return fail(req, "パスワードが違います", 403);

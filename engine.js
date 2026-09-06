@@ -1181,6 +1181,8 @@ function execOp(ctx, fr, op) {
         const opts = [0, 1, 2, 3, 4, 5, 6];
         const ans = choose(ctx, { kind: 'option', player: fr.controller, options: opts.map(String), prompt: 'declare-value', context: defOf(st, fr.source).id });
         fr.bind[op.bind || 'declared'] = opts[ans[0]];
+        st.announce = { kind: 'declare', player: fr.controller, what: 'value',
+          value: opts[ans[0]], context: defOf(st, fr.source).id };
         log(ctx, `P${fr.controller + 1}: 値 ${opts[ans[0]]} を宣言`);
       } else {
         // 宣言候補は実際にゲームで使われている6プロトコル(両者の編成)のみ。
@@ -1190,6 +1192,8 @@ function execOp(ctx, fr, op) {
           if (names.indexOf(p.name) < 0) names.push(p.name);
         const ans = choose(ctx, { kind: 'option', player: fr.controller, options: names, prompt: 'declare-protocol', context: defOf(st, fr.source).id });
         fr.bind[op.bind || 'declared'] = names[ans[0]];
+        st.announce = { kind: 'declare', player: fr.controller, what: 'protocol',
+          value: names[ans[0]], context: defOf(st, fr.source).id };
         log(ctx, `P${fr.controller + 1}: プロトコル ${names[ans[0]]} を宣言`);
       }
       fr.done = true;
@@ -1202,6 +1206,9 @@ function execOp(ctx, fr, op) {
       const d = DEFS[st.cards[u].def];
       const declared = fr.bind[op.declared || 'declared'];
       const ok = op.match === 'protocol' ? d.proto === declared : d.value === declared;
+      st.announce = { kind: 'declareResult', player: fr.controller, hit: ok,
+        what: op.match === 'protocol' ? 'protocol' : 'value',
+        value: declared, card: d.id, context: defOf(st, fr.source).id };
       if (ok) execOps(ctx, fr, op.ops);
       else fr.done = false;
       return;
@@ -1214,13 +1221,19 @@ function execOp(ctx, fr, op) {
       drawCards(ctx, fr.controller, op.count || 3);
       const drawn = p.hand.slice(before);
       const matches = drawn.filter(u => DEFS[st.cards[u].def].value === declared);
-      if (!matches.length) { fr.done = false; return; }
+      if (!matches.length) {
+        st.announce = { kind: 'declareResult', player: fr.controller, hit: false, what: 'value',
+          value: declared, card: null, context: defOf(st, fr.source).id };
+        fr.done = false; return;
+      }
       let pick = matches[0];
       if (matches.length > 1) {
         const ans = choose(ctx, { kind: 'pickHand', player: fr.controller, candidates: matches, min: 1, max: 1, prompt: 'reveal-hand-card', context: defOf(st, fr.source).id });
         pick = ans[0];
       }
       st.revealed = { kind: 'card', uid: pick, player: fr.controller, cards: [DEFS[st.cards[pick].def].id] };
+      st.announce = { kind: 'declareResult', player: fr.controller, hit: true, what: 'value',
+        value: declared, card: DEFS[st.cards[pick].def].id, context: defOf(st, fr.source).id };
       knowCard(st, pick, fr.controller);   // 本人は見る。相手はオーバーレイの瞬間だけ
       log(ctx, `P${fr.controller + 1}: ${DEFS[st.cards[pick].def].id} を公開`, pick);
       const yn = choose(ctx, { kind: 'yesNo', player: fr.controller, prompt: 'optional-play', context: DEFS[st.cards[pick].def].id });
@@ -1996,6 +2009,7 @@ function performAction(ctx, action) {
 function runReplay(base, action, choices) {
   const st = clone(base);
   st.revealed = null;
+  st.announce = null;
   if (!Array.isArray(st.commitStack)) st.commitStack = [];  // 外部由来のstate(詰めCompile共有盤面など)に対する防御
   if (typeof st.commitSeq !== 'number') st.commitSeq = 0;
   const ctx = { st, choices, ci: 0, qn: 0, depth: 0, log: [], trace: TRACE ? [] : null };
