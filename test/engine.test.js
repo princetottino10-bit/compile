@@ -1230,3 +1230,46 @@ test('CLARITY_4: デッキ検索の候補は、何のカードかが要求に添
   const done = drive(res, () => [pick]);
   assert.ok(done.state.players[0].hand.includes(pick), '選んだカードが手札に入る');
 });
+
+test('CORRUPTION_6: 手札が無いときは「1枚捨て札」を選べず、カードが削除される', () => {
+  const r = ng({ p0: ['CORRUPTION', 'FIRE', 'WATER'] });
+  const st = r.state;
+  const self = place(st, 'CORRUPTION_6', 0, 1, true);
+  setHand(st, 0, ['FIRE_2']);          // 最後の1枚を出すと手札が空で終了時を迎える
+  /* 裏向きに出して、出したカード自身の効果を挟まない */
+  const res = Engine.apply(st, { type: 'play', card: uidOf('FIRE_2', 0), line: 0, faceUp: false });
+  assert.equal(res.error, null);
+  /* 捨てる手札が無い以上、選べるのは削除だけ。選択を求めてはいけない */
+  const done = drive(res, (req) => { throw new Error('選択を求めた: ' + JSON.stringify(req)); });
+  assert.match(done.state.cards[self].zone, /^trash/, 'CORRUPTION 6 は削除されるはず');
+});
+
+test('CORRUPTION_6: 手札があるときは捨て札と削除の両方から選べる', () => {
+  const r = ng({ p0: ['CORRUPTION', 'FIRE', 'WATER'] });
+  const st = r.state;
+  const self = place(st, 'CORRUPTION_6', 0, 1, true);
+  setHand(st, 0, ['FIRE_2', 'WATER_2']);
+  const res = Engine.apply(st, { type: 'play', card: uidOf('FIRE_2', 0), line: 0, faceUp: false });
+  assert.equal(res.error, null);
+  const req = res.requests[0];
+  assert.ok(req && req.kind === 'option', '2択を求めるはず');
+  assert.equal(req.options.length, 2);
+  const done = drive(res, () => [0]);   // 捨て札を選ぶ
+  assert.equal(done.state.cards[self].zone, 'field', '捨てたならカードは残る');
+  assert.equal(done.state.players[0].hand.length, 0, '手札を1枚捨てている');
+});
+
+test('SPIRIT_2: 開始時に手札が無ければ、選択を挟まず自身が反転する', () => {
+  const r = ng({ p0: ['SPIRIT', 'FIRE', 'WATER'], p1: ['DEATH', 'METAL', 'SPEED'] });
+  const st = r.state;
+  const self = place(st, 'SPIRIT_2', 0, 0, true);
+  setHand(st, 0, ['FIRE_2']);
+  /* P1に手番を渡して戻すと、P0の開始時トリガが手札0枚で走る */
+  let res = Engine.apply(st, { type: 'play', card: uidOf('FIRE_2', 0), line: 1, faceUp: false });
+  assert.equal(res.error, null);
+  res = drive(res, () => []);
+  res = Engine.apply(res.state, { type: 'play', card: res.state.players[1].hand[0], line: 2, faceUp: false });
+  assert.equal(res.error, null);
+  const done = drive(res, (req) => { throw new Error('選択を求めた: ' + JSON.stringify(req)); });
+  assert.equal(done.state.cards[self].faceUp, false, '捨てる手札が無いので反転するはず');
+});

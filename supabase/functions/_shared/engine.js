@@ -1031,12 +1031,19 @@ function execOp(ctx, fr, op) {
     }
 
     case 'choice': {
-      const labels = op.options.map((branch, i) => branch.map(o => o.op).join('+'));
+      /* 実行できない選択肢は出さない。
+         「手札を1枚捨て札にするか、このカードを削除する」で手札が空でも
+         捨て札側を選べると、何も起きないままカードが残ってしまう。
+         ルール上は実行できる方を選ばなければならない。 */
+      const viable = op.options.filter(branch => branchViable(st, fr, branch));
+      if (!viable.length) { fr.done = false; return; }
+      if (viable.length === 1 && !op.optional) { execOps(ctx, fr, viable[0]); fr.done = true; return; }
+      const labels = viable.map((branch) => branch.map(o => o.op).join('+'));
       const ans = choose(ctx, {
         kind: 'option', player: fr.controller, optional: !!op.optional,
         options: labels, prompt: 'choice', context: defOf(st, fr.source).id
       });
-      if (ans.length) { execOps(ctx, fr, op.options[ans[0]]); fr.done = true; }
+      if (ans.length) { execOps(ctx, fr, viable[ans[0]]); fr.done = true; }
       else fr.done = false;
       return;
     }
@@ -1505,6 +1512,43 @@ function execTargetedOp(ctx, fr, op) {
   }
   fr.done = performVerb(ctx, fr, op, uid);
   if (op.bind) fr.bind[op.bind] = uid;
+}
+
+/* choice の選択肢が実際に何かを起こせるかを、選択を挟まずに判定する。
+   判定できない op は従来通り「選べる」とみなす (誤って選択肢を消さない)。 */
+function branchViable(st, fr, ops) {
+  return (ops || []).some(op => opViable(st, fr, op));
+}
+
+function opViable(st, fr, op) {
+  switch (op.op) {
+    case 'discard': return st.players[actorOf(fr, op)].hand.length > 0;
+    case 'draw': {
+      const p = st.players[actorOf(fr, op)];
+      return p.deck.length > 0 || p.trash.length > 0;
+    }
+    case 'flip': case 'delete': case 'return': case 'shift': return hasTarget(st, fr, op);
+    default: return true;
+  }
+}
+
+function hasTarget(st, fr, op) {
+  const sel = op.select || {};
+  if (sel.ref) {
+    const uid = sel.ref === 'this' ? fr.source : fr.bind[sel.ref];
+    return uid !== undefined && !!locate(st, uid);
+  }
+  /* ライン選択を伴う指定は、どのラインでも良いものとして緩めに数える */
+  const loose = Object.assign({}, sel);
+  if (loose.zone === 'chosenLine' || loose.zone === 'otherLineWith8plus') delete loose.zone;
+  for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++) {
+    for (const uid of st.lines[l][s]) {
+      if (!matchesSel(st, fr, uid, loose)) continue;
+      if (op.op === 'shift' && op.dest === 'thisLine' && l === fr.line) continue;
+      return true;
+    }
+  }
+  return false;
 }
 
 function matchesSel(st, fr, uid, sel) {
