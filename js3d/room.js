@@ -79,6 +79,16 @@ export async function roomApi(op, extra) {
 
 /* ---------- publicState → 擬似エンジン状態 ---------- */
 
+export function normLegalActions(rm) {
+  return (rm?.legalActions || []).map(action => action.side === undefined ? action
+    : { ...action, side: action.side === rm.side ? 0 : 1 });
+}
+
+export function toRoomAction(action, seat) {
+  return action?.side === undefined ? action
+    : { ...action, side: action.side === 0 ? seat : 1 - seat };
+}
+
 /* 3D は st.cards に居るカードしか描かないため、秘匿カードも uid を立てる */
 function pushPlaceholders(cards, list, prefix, count, zone, owner) {
   for (let i = 0; i < (count || 0); i++) {

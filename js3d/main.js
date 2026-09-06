@@ -21,6 +21,7 @@ import * as LAYOUT from './layout.js';
 import { BOARD, CARD, COLOR, TIMING } from './theme.js';
 import * as TW from './tween.js';
 import * as UI from './ui.js';
+import { placementPad } from './input.js';
 
 const Engine = window.CompileEngine;
 const ME = 0;      // 視点 = 人間プレイヤー
@@ -47,13 +48,10 @@ let roomPollTimer = null;
 function shown() { return (cur && (cur.view || cur.state)) || null; }
 
 /* 合法手: ソロはエンジン、ルームはサーバー提供値 */
-const seatToLocal = (seat) => (roomRm && seat === roomRm.side ? 0 : 1);
-const localToSeat = (local) => (roomRm ? (local === 0 ? roomRm.side : 1 - roomRm.side) : local);
 
 function legalNow() {
   if (roomMode) {
-    return ((roomRm && roomRm.legalActions) || []).map((a) =>
-      a.side === undefined ? a : Object.assign({}, a, { side: seatToLocal(a.side) }));
+    return ROOM.normLegalActions(roomRm);
   }
   if (!cur || cur.state.turn !== ME || cur.requests.length || cur.state.winner !== null) return [];
   return Engine.legalActions(cur.state);
@@ -447,6 +445,16 @@ function bindInput() {
   el.addEventListener('pointerleave', () => showPreview(null));
 
   el.addEventListener('pointerdown', async (ev) => {
+    if (drag) {
+      const stale = board.cards.get(drag.uid);
+      if (stale) {
+        stale.renderOrder = 0;
+        if (drag.uid === selectedUid) raiseHandCard(drag.uid);
+        else restHandCard(drag.uid);
+      }
+      drag = null;
+      for (const pad of pads) pad.userData.hover = false;
+    }
     /* タップ環境はホバーが無いので、触れたカードをまずプレビューする。
        操作できない場面 (相手ターン・選択待ち) でもテキストは読めるようにする */
     const hit = pick(ev);
@@ -490,6 +498,11 @@ function bindInput() {
     }
     if (demoMode || busy || !cur || shown().winner !== null) return;
     if (cur.requests.length || shown().turn !== ME) return;
+    /* 選択中の手札や盤面のカードが重なっても、光る配置先を直接判定する。
+       座席は legalNow() でローカルへ変換済みの pad.side を使う。 */
+    const targetPad = placementPad(ray, pads, hit && hit.obj.userData.uid,
+      selectedUid, shown().players[ME].hand);
+    if (targetPad) { await dropOnPad(targetPad); return; }
     if (!hit) { deselect(); return; }
 
     const ud = hit.obj.userData;
@@ -716,8 +729,7 @@ async function roomStep(action) {
   updatePads();
   try {
     /* 相手側へのプレイ (CORRUPTION 0 等) の side はローカル→座席番号へ */
-    const wire = action && action.side !== undefined
-      ? Object.assign({}, action, { side: localToSeat(action.side) }) : action;
+    const wire = ROOM.toRoomAction(action, roomRm.side);
     const next = await ROOM.roomApi('action', { code: roomRm.code, version: roomRm.version, action: wire });
     busy = false;
     await roomApplyView(next);
