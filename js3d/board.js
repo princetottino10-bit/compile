@@ -608,6 +608,17 @@ export function createBoard(stage, defIndex, me, hooks) {
         setDim(card, false);
       }
     },
+    /* 次のライン選択に進んだ後も、直前に選んだ移動対象を金色で残す。 */
+    markEffectFocus(uids) {
+      const focus = new Set(Array.isArray(uids) ? uids : (uids ? [uids] : []));
+      for (const [uid, card] of cards) {
+        if (!card.visible) continue;
+        if (focus.has(uid)) {
+          setHighlight(card, new THREE.Color(0xefd06c), 0.52, 1.0);
+          setSelected(card, true, 0xffd86a);
+        }
+      }
+    },
     group, cards, cardOf, slotFor, syncInstant, applyTransition,
     moveTo, highlightPlayable, pulse, locOf, playLanding,
     setHighlight, clearHighlight, detectCompiles, compileSequence, visualFingerprint,

@@ -1618,7 +1618,10 @@ function performVerb(ctx, fr, op, uid) {
 
       function pickDest(lines) {
         if (lines.length === 1) return lines[0];
-        return choose(ctx, { kind: 'pickLine', player: fr.controller, lines, prompt: 'shift-dest', context: cardLabel(st, uid) })[0];
+        return choose(ctx, {
+          kind: 'pickLine', player: fr.controller, lines, prompt: 'shift-dest',
+          context: cardLabel(st, uid), focus: uid
+        })[0];
       }
     }
   }
@@ -1647,7 +1650,10 @@ function performMass(ctx, fr, op, cands) {
   if (op.op === 'shift') {
     // LIGHT_4: 1つの他ラインへ相対順を維持して移動
     const lines = [0, 1, 2].filter(l => l !== fr.line);
-    const dest = choose(ctx, { kind: 'pickLine', player: fr.controller, lines, prompt: 'mass-shift-dest', context: defOf(st, fr.source).id })[0];
+    const dest = choose(ctx, {
+      kind: 'pickLine', player: fr.controller, lines, prompt: 'mass-shift-dest',
+      context: defOf(st, fr.source).id, focus: cands.slice()
+    })[0];
     const prevTops = {};
     for (let s = 0; s < 2; s++) {
       const stk = st.lines[fr.line][s];

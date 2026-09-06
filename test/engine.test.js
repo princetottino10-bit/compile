@@ -184,6 +184,19 @@ test('SPIRIT 0 + SPIRIT 3: SPIRIT 0が覆われなければ追加ドローでSPI
   assert.ok(res.log.some(x => x === 'P1: 1枚ドロー'));
 });
 
+test('移動先を選ぶ間は、選んだ移動カードを request.focus で保持する', () => {
+  const r = ng({ p0: ['SPIRIT', 'FIRE', 'WATER'] });
+  const st = r.state;
+  const target = place(st, 'SPIRIT_4', 0, 1, true);
+  setHand(st, 0, ['SPIRIT_1']);
+  let res = Engine.apply(st, { type: 'play', card: uidOf('SPIRIT_1', 0), line: 0, faceUp: true });
+  assert.equal(res.requests[0].prompt, 'optional-shift');
+  res = Engine.apply(res.state, { type: 'choose', id: res.requests[0].id, picks: ['yes'] });
+  assert.equal(res.requests[0].prompt, 'shift-dest');
+  assert.deepEqual(res.requests[0].focus, target);
+  assert.deepEqual(res.requests[0].lines.sort(), [0, 2]);
+});
+
 test('LOVE 1: 相手のデッキから引いてもSPIRIT 3が反応する', () => {
   const r = ng({ p0: ['LOVE', 'SPIRIT', 'WATER'] });
   const st = r.state;

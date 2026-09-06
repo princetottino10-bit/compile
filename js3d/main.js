@@ -18,7 +18,7 @@ import { buildArena } from './arena.js';
 import { initAudio, sfx, setMuted, isMuted, startBgm, stopBgm, setBgmTension, bgmActive } from './audio.js';
 import { emblemDataURL } from './emblems.js';
 import * as LAYOUT from './layout.js';
-import { BOARD, CARD, COLOR, TIMING } from './theme.js';
+import { BOARD, CARD, COLOR, TIMING, VIEW } from './theme.js';
 import * as TW from './tween.js';
 import * as UI from './ui.js';
 import { placementPad } from './input.js';
@@ -41,6 +41,7 @@ let roomMode = false;           // オンライン対戦 (secure-room)
 let roomRm = null;              // 直近の publicState
 let roomTracker = null;         // trace の差分追跡
 let roomPollTimer = null;
+let handCompactMode = null;
 
 /* 表示用の状態。
    engine は選択待ちで中断すると state に「アクション前の基準状態」を返し、
@@ -329,9 +330,12 @@ function updatePads() {
 
   for (const pad of pads) {
     const { line, side } = pad.userData;
-    const ok = canPlaceHere(st, selectedUid, line, side);
-    if (!ok) continue;
-    pad.userData.pulse = ok === 'faceUp' ? 0.95 : 0.6;
+    const choices = placementChoices(legalNow(), selectedUid, st.turn)
+      .filter(a => a.line === line && a.side === side);
+    if (!choices.length) continue;
+    /* 表裏を選ぶ前の段階では「置けるレーン」だけを判定する。
+       同じプロトコルの表向きが優先表示されていても、裏向きの合法手を消さない。 */
+    pad.userData.pulse = choices.some(a => a.faceUp) ? 0.95 : 0.6;
     /* 積み上がった高さに追従させる */
     const idx = st.lines[line][side].length;
     const slot = LAYOUT.stackSlot(line, side, idx, ME);
@@ -339,17 +343,9 @@ function updatePads() {
   }
 }
 
-function canPlaceHere(st, uid, line, side) {
-  let up = false, down = false;
-  for (const a of legalNow()) {
-    if (a.type !== 'play' || a.card !== uid || a.line !== line) continue;
-    const aSide = a.side === undefined ? st.turn : a.side;
-    if (aSide !== side) continue;
-    if (a.faceUp) up = true; else down = true;
-  }
-  /* 表裏トグルの希望を優先し、片方しか合法でなければそちら */
-  if (backFacing) return down ? 'faceDown' : (up ? 'faceUp' : null);
-  return up ? 'faceUp' : (down ? 'faceDown' : null);
+function canPlaceOnLine(st, uid, line, side) {
+  return placementChoices(legalNow(), uid, st.turn)
+    .some(a => a.line === line && a.side === side);
 }
 
 /* ---------- 入力 ---------- */
@@ -368,6 +364,8 @@ function bindInput() {
     ndc.x = ((ev.clientX - r.left) / r.width) * 2 - 1;
     ndc.y = -((ev.clientY - r.top) / r.height) * 2 + 1;
     ray.setFromCamera(ndc, stage.camera);
+    /* 手札のアニメーション直後でも、見えているカードの行列で判定する。 */
+    stage.scene.updateMatrixWorld(true);
     const hits = ray.intersectObjects([...board.hitList(), ...pads], true);
     for (const h of hits) {
       let o = h.object;
@@ -403,6 +401,7 @@ function bindInput() {
   }
 
   el.addEventListener('pointermove', (ev) => {
+    updateDesktopHandDrawer(ev);
     if (busy) return;
 
     /* 掴んでいる間: カードを指に追従させ、パッドをホバー強調 */
@@ -444,7 +443,10 @@ function bindInput() {
   });
 
   /* カーソルが盤面から出たらプレビューを消す */
-  el.addEventListener('pointerleave', () => showPreview(null));
+  el.addEventListener('pointerleave', () => {
+    showPreview(null);
+    if (!isCompactHandUI() && !drag && selectedUid === null) setHandDrawer(false);
+  });
 
   el.addEventListener('pointerdown', async (ev) => {
     if (drag) {
@@ -502,6 +504,16 @@ function bindInput() {
     if (cur.requests.length || shown().turn !== ME) return;
     /* 選択中の手札や盤面のカードが重なっても、光る配置先を直接判定する。
        座席は legalNow() でローカルへ変換済みの pad.side を使う。 */
+    /* 盤面の積み札を押した時は、投影座標ではなく実際に当たった札の
+       所属レーンを使う。自分側のスタックが高くなっても当たり先がずれない。 */
+    const hitData = hit && hit.obj.userData;
+    if (selectedUid && hitData && hitData.uid) {
+      const loc = locOf(shown(), hitData.uid);
+      if (loc && loc.zone === 'field') {
+        await dropOnPad({ line: loc.line, side: loc.side });
+        return;
+      }
+    }
     const targetPad = placementPad(ray, pads, hit && hit.obj.userData.uid,
       selectedUid, shown().players[ME].hand);
     if (targetPad) { await dropOnPad(targetPad); return; }
@@ -519,14 +531,6 @@ function bindInput() {
     if (ud.isPad && selectedUid) {
       await dropOnPad(ud);
       return;
-    }
-    /* スタックが伸びるとパッドがカードに覆われてタップできないため、
-       選択中は盤面カードへのタップも「そのラインへのプレイ」として扱う */
-    if (selectedUid && ud.uid) {
-      const loc = locOf(shown(), ud.uid);
-      if (loc && loc.zone === 'field') {
-        await dropOnPad({ line: loc.line, side: loc.side });
-      }
     }
   });
 
@@ -558,8 +562,9 @@ function bindInput() {
   });
 
   async function dropOnPad(ud) {
-    const mode = canPlaceHere(cur.state, selectedUid, ud.line, ud.side);
-    if (!mode) { UI.toast('そのラインにはプレイできません'); return; }
+    if (!canPlaceOnLine(cur.state, selectedUid, ud.line, ud.side)) {
+      UI.toast('そのラインにはプレイできません'); return;
+    }
     const card = board.cards.get(selectedUid);
     if (card) { card.renderOrder = 0; raiseHandCard(selectedUid); }
     focusPlayChoice(ud.line, ud.side);
@@ -601,6 +606,9 @@ function bindInput() {
   };
   const faceBtn = document.getElementById('btnFace');
   if (faceBtn) faceBtn.onclick = () => { backFacing = !backFacing; updatePads(); syncFacingHint(); };
+  const handBtn = document.getElementById('btnHand');
+  if (handBtn) handBtn.onclick = () => setHandDrawer(!VIEW.handOpen);
+  syncHandDrawerForViewport();
 }
 
 /* ---------- 拡大プレビュー (余白に固定表示) ---------- */
@@ -643,7 +651,59 @@ function syncFacingHint() {
   }
 }
 
+function isCompactHandUI() {
+  return window.matchMedia('(max-width: 860px)').matches;
+}
+
+function syncHandDrawerButton() {
+  const button = document.getElementById('btnHand');
+  if (!button) return;
+  const compact = isCompactHandUI();
+  button.hidden = !compact;
+  button.textContent = VIEW.handOpen ? '手札を隠す' : '手札を出す';
+  button.setAttribute('aria-expanded', String(VIEW.handOpen));
+}
+
+function setHandDrawer(open, instant = false) {
+  VIEW.handOpen = !!open;
+  document.body.classList.toggle('hand-tucked', !VIEW.handOpen);
+  syncHandDrawerButton();
+  const st = shown();
+  if (!st || !board) return;
+  if (instant) {
+    board.syncInstant(st);
+    if (selectedUid) raiseHandCard(selectedUid);
+    return;
+  }
+  for (const [i, uid] of st.players[ME].hand.entries()) {
+    const slot = uid === selectedUid
+      ? LAYOUT.handSlotRaised(i, st.players[ME].hand.length)
+      : LAYOUT.handSlot(i, st.players[ME].hand.length);
+    board.moveTo(board.cardOf(st, uid), slot, null, 180, TW.Ease.outCubic, 0);
+  }
+}
+
+function syncHandDrawerForViewport() {
+  const compact = isCompactHandUI();
+  if (handCompactMode !== compact) {
+    handCompactMode = compact;
+    /* PC は盤面を優先して畳んだ状態から、スマホはボタンで畳めるよう最初は表示する。 */
+    setHandDrawer(compact, true);
+  } else {
+    syncHandDrawerButton();
+  }
+}
+
+function updateDesktopHandDrawer(ev) {
+  if (isCompactHandUI() || !stage || selectedUid !== null) return;
+  const r = stage.renderer.domElement.getBoundingClientRect();
+  const fromBottom = r.bottom - ev.clientY;
+  if (!VIEW.handOpen && fromBottom <= 120) setHandDrawer(true);
+  else if (VIEW.handOpen && fromBottom > 230) setHandDrawer(false);
+}
+
 function raiseHandCard(uid) {
+  if (!VIEW.handOpen) setHandDrawer(true);
   const st = shown();
   const i = st.players[ME].hand.indexOf(uid);
   if (i < 0) return;
@@ -668,6 +728,7 @@ function select(uid) {
   }
   selectedUid = uid;
   if (uid) {
+    setHandDrawer(true);
     sfx('select');
     raiseHandCard(uid);
     const card = board.cardOf(shown(), uid);
@@ -1010,6 +1071,7 @@ function cancelBoardPick() {
   const bp = boardPick;
   boardPick = null;
   board.clearCandidates();
+  clearLineTargets();
   for (const pad of pads) pad.userData.hover = false;
   const el = document.getElementById('pickBar');
   if (el) el.remove();
@@ -1092,6 +1154,7 @@ function renderBoardPick() {
   const bp = boardPick;
   if (!bp) return;
   UI.hideActivation();
+  clearLineTargets();
   board.markCandidates(bp.req.candidates, bp.chosen);
   let el = document.getElementById('pickBar');
   if (!el) {
@@ -1179,7 +1242,9 @@ function renderLinePick() {
   const bp = boardPick;
   if (!bp) return;
   UI.hideActivation();
-  for (const pad of pads) pad.userData.hover = bp.lines.indexOf(pad.userData.line) >= 0;
+  board.clearCandidates();
+  board.markEffectFocus(bp.req.focus);
+  setLineTargets(bp.lines);
   let el = document.getElementById('pickBar');
   if (!el) {
     el = document.createElement('div');
@@ -1187,17 +1252,40 @@ function renderLinePick() {
     el.className = 'arr-bar';
     document.body.appendChild(el);
   }
-  el.innerHTML = '<button class="arr-btn" id="pkList" type="button">リストで選ぶ</button>';
+  const hasFocus = Array.isArray(bp.req.focus) ? bp.req.focus.length > 0 : !!bp.req.focus;
+  el.innerHTML = '<span class="effect-target-legend">' +
+    (hasFocus ? '金色: 移動対象　緑色: 移動先' : '緑色のラインから選択') +
+    '</span><button class="arr-btn" id="pkList" type="button">リストで選ぶ</button>';
   el.querySelector('#pkList').onclick = () => finishLinePick(null);
 }
 
 function finishLinePick(picks) {
   const bp = boardPick;
   boardPick = null;
-  for (const pad of pads) pad.userData.hover = false;
+  board.clearCandidates();
+  clearLineTargets();
   const el = document.getElementById('pickBar');
   if (el) el.remove();
   bp.resolve(picks);
+}
+
+function setLineTargets(lines) {
+  const set = new Set(lines || []);
+  const st = shown();
+  for (const pad of pads) {
+    const on = set.has(pad.userData.line);
+    pad.userData.pulse = on ? 0.95 : 0;
+    pad.userData.hover = on;
+    if (on && st) {
+      const idx = st.lines[pad.userData.line][pad.userData.side].length;
+      const slot = LAYOUT.stackSlot(pad.userData.line, pad.userData.side, idx, ME);
+      pad.position.set(slot.pos[0], 0.006 + idx * BOARD.coverLift, slot.pos[2]);
+    }
+  }
+}
+
+function clearLineTargets() {
+  for (const pad of pads) { pad.userData.pulse = 0; pad.userData.hover = false; }
 }
 
 function toggleBoardPick(uid) {
@@ -1394,6 +1482,7 @@ function checkRevealed(st) {
    状態遷移時にしか書き直されないため、ここで取り直す */
 let relayoutTimer = null;
 window.addEventListener('resize', () => {
+  syncHandDrawerForViewport();
   clearTimeout(relayoutTimer);
   const attempt = (n) => {
     const st = shown();

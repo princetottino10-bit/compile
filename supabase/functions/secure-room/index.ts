@@ -123,6 +123,9 @@ function publicRequest(request: any, forward: Record<string, string>) {
   if (!request) return null;
   const out = structuredClone(request);
   if (Array.isArray(out.candidates)) out.candidates = out.candidates.map((x: any) => aliasCandidate(x, forward));
+  /* 現在選んでいる移動対象。選択要求は本人にしか渡さず、uid も対局内別名にする。 */
+  if (Array.isArray(out.focus)) out.focus = out.focus.map((x: any) => aliasCandidate(x, forward));
+  else if (out.focus) out.focus = aliasCandidate(out.focus, forward);
   return out;
 }
 

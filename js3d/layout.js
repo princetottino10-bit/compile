@@ -10,11 +10,13 @@ export function handSlot(i, n) {
   const t = n <= 1 ? 0 : (i / (n - 1) - 0.5);      // -0.5 .. 0.5
   const k = VIEW.k;                                 // 縦長画面では小さく・奥に
   const width = Math.min(n * 0.66, 4.05) * (1 - 0.18 * k);
+  const tucked = VIEW.handOpen ? 0 : 1;
   return {
-    pos: [t * width, BOARD.handY - Math.abs(t) * 0.26,
-      BOARD.handZ + 0.55 * k + Math.abs(t) * 0.30],
+    /* 盤面を読むときはカードを画面下へ引き、少し縮めて重なりも減らす。 */
+    pos: [t * width, BOARD.handY - Math.abs(t) * 0.26 - tucked * (0.32 + 0.20 * k),
+      BOARD.handZ + 0.55 * k + Math.abs(t) * 0.30 + tucked * (0.96 + 0.42 * k)],
     rot: [1.02, 0, -t * 0.40],
-    scale: 1.06 - 0.22 * k
+    scale: (1.06 - 0.22 * k) * (tucked ? 0.82 : 1)
   };
 }
 
