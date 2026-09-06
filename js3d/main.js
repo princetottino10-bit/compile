@@ -49,6 +49,26 @@ let handCompactMode = null;
    一方 apply / legalActions に渡すのは基準状態 (cur.state) の方。 */
 function shown() { return (cur && (cur.view || cur.state)) || null; }
 
+/* 効果の途中で選択を求めるとカットインは盤面を見せるため畳む。
+   その代わり、この細い帯を残して「どのカードの何を解決中か」を常に示す。 */
+function setEffectContext(req) {
+  const el = document.getElementById('effectContext');
+  if (!el) return;
+  const def = req && req.context && defIndex[req.context];
+  if (!def) {
+    el.classList.remove('show');
+    el.replaceChildren();
+    return;
+  }
+  const tag = document.createElement('em'); tag.textContent = '効果処理中';
+  const title = document.createElement('b'); title.textContent = cardName(req.context);
+  const detail = document.createElement('span');
+  detail.textContent = reqText({ ...req, context: null }, cardName) || '選択してください';
+  el.style.setProperty('--accent', def.color || '#63f3ff');
+  el.replaceChildren(tag, title, detail);
+  el.classList.add('show');
+}
+
 /* 合法手: ソロはエンジン、ルームはサーバー提供値 */
 
 function legalNow() {
@@ -872,13 +892,17 @@ async function roomDrainRequest() {
     let guard = 0;
     while (cur && cur.requests.length && shown().winner === null && guard++ < 40) {
       const req = cur.requests[0];
+      setEffectContext(req);
       UI.setPrompt(reqText(req, cardName) || '選択してください', 'ask');
       const picks = await askUser(req);
       UI.setPrompt('');
       if (picks === PICK_CANCEL) continue;   // 外部更新で取り直し
       await roomStep({ type: 'choose', id: req.id, picks });
     }
-  } finally { roomAsking = false; }
+  } finally {
+    roomAsking = false;
+    if (!cur || !cur.requests || !cur.requests.length) setEffectContext(null);
+  }
 }
 
 async function roomPoll(force) {
@@ -1091,6 +1115,7 @@ let activeArrange = null;               // 表示中の並べ替えオーバー�
 
 /* 表示中の待ち受けUI (盤面ピック / 並べ替え / モーダル) をすべて破棄する */
 function cancelPendingAsk() {
+  setEffectContext(null);
   cancelBoardPick();
   if (activeArrange) activeArrange.cancel();
   UI.cancelChoice(PICK_CANCEL);
@@ -1430,6 +1455,7 @@ async function drainRequests() {
     const req = cur.requests[0];
     let picks;
     if (req.player === ME && !demoMode) {
+      setEffectContext(req);
       UI.setPrompt(reqText(req, cardName) || '選択してください', 'ask');
       picks = await askUser(req);
     } else {
@@ -1448,6 +1474,7 @@ async function drainRequests() {
     busy = false;
     refreshHud();
   }
+  setEffectContext(null);
   UI.setPrompt('');
   await stage.home(TIMING.camEase);
 }
