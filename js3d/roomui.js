@@ -4,7 +4,7 @@
  *   status が playing になった publicState を resolve して返す。
  *   戻るを押した場合は null を resolve する (呼び出し側でソロ設定へ)。
  * ========================================================================= */
-import { roomApi, roomIsAnonymous, roomLogin, roomSession, roomSignIn, roomSignInWithGitHub, roomSignUp } from './room.js';
+import { roomApi, roomIsAnonymous, roomLogin, roomSession, roomSignIn, roomSignInWithGitHub, roomSignInWithGoogle, roomSignUp } from './room.js';
 import { emblemDataURL } from './emblems.js';
 
 const $ = (sel) => document.querySelector(sel);
@@ -79,7 +79,8 @@ export function runRoomLobby(protocols) {
         '<button class="ro-btn" id="roomSignUp" type="button">新規登録</button>' +
         (wantRated ? '' : '<button class="ro-ghost" id="roomGo" type="button">ゲストで続ける</button>') + '</div>');
       $('#roomOv .ro-panel').insertAdjacentHTML('beforeend',
-        '<button class="ro-ghost" id="roomGitHub" type="button">GitHubでログイン</button>');
+        '<div class="ro-row"><button class="ro-ghost" id="roomGoogle" type="button">Googleでログイン</button>' +
+        '<button class="ro-ghost" id="roomGitHub" type="button">GitHubでログイン</button></div>');
       const values = () => ({
         name: ($('#roomName').value || '').trim(), email: ($('#roomEmail').value || '').trim(), password: $('#roomPass').value || ''
       });
@@ -108,6 +109,12 @@ export function runRoomLobby(protocols) {
         if (name) lsSet('compileRoomName', name);
         try { await roomSignInWithGitHub(); }
         catch (e) { status(e.message || 'GitHubでログインできませんでした', 'err'); }
+      };
+      $('#roomGoogle').onclick = async () => {
+        const name = ($('#roomName').value || '').trim();
+        if (name) lsSet('compileRoomName', name);
+        try { await roomSignInWithGoogle(); }
+        catch (e) { status(e.message || 'Googleでログインできませんでした', 'err'); }
       };
       const guest = $('#roomGo');
       if (guest) guest.onclick = async () => {

@@ -94,6 +94,14 @@ export async function roomSignInWithGitHub() {
   if (r.error) throw new Error(r.error.message);
 }
 
+export async function roomSignInWithGoogle() {
+  const r = await client().auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: location.origin + location.pathname }
+  });
+  if (r.error) throw new Error(r.error.message);
+}
+
 export async function roomApi(op, extra) {
   const cfg = window.COMPILE_ROOM_CONFIG;
   const s = await roomSession();
