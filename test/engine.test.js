@@ -1313,3 +1313,26 @@ test('DARKNESS_4: 「裏向きで1枚プレイする」は任意ではなく、�
   const downs = [0, 1, 2].reduce((n, l) => n + fin.lines[l][0].filter(u => !fin.cards[u].faceUp).length, 0);
   assert.equal(downs, 1, '裏向きのカードが1枚出ている');
 });
+
+test('LIGHT_4: 移動してきたカードは、覆われる側のトリガーが解決する時点ではまだ場に無い', () => {
+  const r = ng({ p0: ['LIGHT', 'FIRE', 'WATER'], p1: ['HATE', 'METAL', 'SPEED'] });
+  const st = r.state;
+  /* ライン0: 自分の裏向き2枚と相手の裏向き1枚。すべてライン1へ動く */
+  const mineA = place(st, 'FIRE_2', 0, 0, false);
+  const mineB = place(st, 'WATER_2', 0, 0, false);
+  place(st, 'METAL_2', 1, 0, false);
+  /* ライン1: 相手のスタックは 値3 の覆われたカード + 一番上に HATE_5 */
+  const oppCovered = place(st, 'METAL_4', 1, 1, true);
+  place(st, 'HATE_5', 1, 1, true);
+  setHand(st, 0, ['LIGHT_4']);
+
+  const res = Engine.apply(st, { type: 'play', card: uidOf('LIGHT_4', 0), line: 0, faceUp: true });
+  assert.equal(res.error, null);
+  const fin = drive(res, (req) => (req.kind === 'pickLine' ? [1] : [])).state;
+
+  /* 覆われることになった時点で、移動中のカードはまだライン1に居ない。
+     裏向き(値2)が最小値だからといって削除されてはいけない。 */
+  assert.match(fin.cards[oppCovered].zone, /^trash/, '覆われていた相手のカードが削除される');
+  assert.equal(fin.cards[mineA].zone, 'field', '移動してきたカードは削除されない');
+  assert.equal(fin.cards[mineB].zone, 'field', '移動してきたカードは削除されない');
+});

@@ -1727,14 +1727,26 @@ function performMass(ctx, fr, op, cands) {
       const stk = st.lines[fr.line][s];
       if (stk.length) prevTops[s] = stk[stk.length - 1];
     }
+    /* 一斉移動は同時に起きる。片側ずつ着地させると、先に着いたカードが
+       後から解決するトリガーの対象になってしまう (覆われた時点ではまだ
+       場に居ないはずのカードが削除された)。
+       「全部まとめて浮かせる → 覆われる側のトリガー → まとめて着地」の順で処理する。 */
+    const movingBySide = [];
     for (let s = 0; s < 2; s++) {
       const moving = st.lines[fr.line][s].filter(u => cands.indexOf(u) >= 0);
+      movingBySide.push(moving);
       if (!moving.length) continue;
       st.lines[fr.line][s] = st.lines[fr.line][s].filter(u => cands.indexOf(u) < 0);
-      const dstack = st.lines[dest][s];
       for (const u of moving) { markCommitted(st, u); st.cards[u].commitDest = 'line' + dest; }
+    }
+    for (let s = 0; s < 2; s++) {
+      const moving = movingBySide[s];
+      if (!moving.length) continue;
+      const dstack = st.lines[dest][s];
       if (dstack.length) fireWouldBeCovered(ctx, dstack[dstack.length - 1], moving[0]);
-      for (const u of moving) landLine(ctx, u, dest, s);
+    }
+    for (let s = 0; s < 2; s++) {
+      for (const u of movingBySide[s]) landLine(ctx, u, dest, s);
     }
     // 移動元で新たに uncovered になった表向きカード
     for (let s = 0; s < 2; s++) {
@@ -2140,6 +2152,17 @@ function aiCount(x, fallback) {
   return fallback || 1;
 }
 
+/* 対象が自分のカードなら、同じ動詞でも価値は逆になる。
+   HATE 2 の「自分の最大値を削除 → 相手の最大値を削除」を両方プラスで
+   数えていたため、自分の場を壊すだけの手を高く見積もっていた。
+   持ち主の指定が無い (どちらでも選べる) ものは、相手を選ぶ前提のまま。 */
+function aiOpSelfTargeted(op) {
+  const sel = op.select;
+  if (!sel) return false;
+  if (sel.ref === 'this') return true;
+  return sel.owner === 'self';
+}
+
 function aiOpsValue(ops, depth) {
   if (!Array.isArray(ops) || depth > 4) return 0;
   let v = 0;
@@ -2150,8 +2173,8 @@ function aiOpsValue(ops, depth) {
       case 'draw': v += actor * aiCount(op.count, 1) * 16; break;
       case 'drawByValue': case 'drawByCount': v += actor * 24; break;
       case 'discard': v += (op.player === 'opp' ? 1 : -1) * aiCount(op.count, 1) * 15; break;
-      case 'delete': v += 34; break;
-      case 'return': v += 23; break;
+      case 'delete': v += aiOpSelfTargeted(op) ? -30 : 34; break;
+      case 'return': v += aiOpSelfTargeted(op) ? -14 : 23; break;
       case 'shift': v += 17; break;
       case 'flip': v += 11; break;
       case 'play': v += actor * 19; break;
