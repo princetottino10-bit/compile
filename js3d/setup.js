@@ -5,9 +5,14 @@
 
 import { emblemDataURL } from './emblems.js';
 
-const AI_LABELS = ['かんたん', 'ふつう', 'つよい', '最強'];
+const AI_LABELS = ['かんたん', 'ふつう', 'つよい', '最強', 'ロック特化'];
 /* 最強はこの固定編成 + 特化戦略で戦う (auto-play と同じ) */
 export const STRONGEST_AI = ['DARKNESS', 'SPEED', 'HATE'];
+/* ロック特化: サイキック①を覆って「相手は裏向きでしかプレイできない」を永続させる。
+   ダークネス②で覆われた①を表にするか、スピード③の終了時の移動で①を覆う */
+export const LOCK_AI = ['PSYCHIC', 'DARKNESS', 'SPEED'];
+/* 難易度ごとの AI 固定編成 (無い難易度はランダム編成) */
+const FIXED_AI = { 3: STRONGEST_AI, 4: LOCK_AI };
 
 export function runSetup(protocols, options = {}) {
   const training = !!options.training;
@@ -39,15 +44,14 @@ export function runSetup(protocols, options = {}) {
     b.onclick = () => {
       level = i;
       levelWrap.querySelectorAll('.lvl').forEach((el, j) => el.classList.toggle('on', j === i));
-      /* 最強はAIが DARKNESS/SPEED/HATE を使うため、プレイヤーは選べない */
-      if (level === 3) {
-        for (const n of STRONGEST_AI) {
-          const idx = picked.indexOf(n);
-          if (idx >= 0) picked.splice(idx, 1);
-        }
+      /* 固定編成の難易度では、AI が使うプロトコルをプレイヤーは選べない */
+      const fixed = FIXED_AI[level] || [];
+      for (const n of fixed) {
+        const idx = picked.indexOf(n);
+        if (idx >= 0) picked.splice(idx, 1);
       }
       grid.querySelectorAll('.proto').forEach((el) => {
-        const locked = level === 3 && STRONGEST_AI.includes(el.dataset.name);
+        const locked = fixed.includes(el.dataset.name);
         el.classList.toggle('locked', locked);
         el.classList.toggle('on', picked.includes(el.dataset.name));
       });
@@ -105,8 +109,8 @@ export function runSetup(protocols, options = {}) {
         /* 自由配置では対戦相手のランダムなプロトコルが混ざると盤面の
            読み合わせがしづらい。両側を同じ3種にして検証対象を明確にする。 */
         ai = picked.slice();
-      } else if (level === 3) {
-        ai = STRONGEST_AI.slice();
+      } else if (FIXED_AI[level]) {
+        ai = FIXED_AI[level].slice();
       } else {
         const rest = protocols.map(p => p.name).filter(n => !picked.includes(n));
         ai = [];

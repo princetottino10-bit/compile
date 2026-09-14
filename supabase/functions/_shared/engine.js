@@ -2190,7 +2190,8 @@ function aiOpsValue(ops, depth) {
       case 'delete': v += aiOpSelfTargeted(op) ? -30 : 34; break;
       case 'return': v += aiOpSelfTargeted(op) ? -14 : 23; break;
       case 'shift': v += 17; break;
-      case 'flip': v += 11; break;
+      /* 「このカードを反転させる」は自分の表のテキストを失う代償。加点しない */
+      case 'flip': v += (op.select && op.select.ref === 'this') ? -14 : 11; break;
       case 'play': v += actor * 19; break;
       case 'refresh': v += 18; break;
       case 'rearrange': case 'swapProtocols': v += 34; break;
@@ -2270,6 +2271,68 @@ function aiHandPotential(st, side) {
   }
   vals.sort((a, b) => b - a);
   return vals.slice(0, 4).reduce((a, b) => a + b, 0);
+}
+
+/* 「相手はカードを裏向きでのみプレイできる」(サイキック①) の価値。
+   上段の常在効果は覆われても生き、下段の「開始: このカードを反転」は
+   覆われると止まる。覆われたロックは相手の表向きプレイ (＝中段効果) を
+   ずっと封じるので、盤面評価で大きく扱う。一番上に居るロックは、
+   持ち主の次の開始フェイズで裏返るので、相手の1ターンぶんだけの価値。 */
+const AI_LOCK_PERMANENT = 260;
+const AI_LOCK_TEMPORARY = 55;
+function aiLockScore(st, side) {
+  let v = 0;
+  for (const s of activeStatics(st)) {
+    if (s.kind !== 'playPermission' || s.rule !== 'oppFaceDownOnly') continue;
+    const stack = st.lines[s.line][s.sideIdx];
+    const covered = stack.indexOf(s.uid) < stack.length - 1;
+    const w = covered ? AI_LOCK_PERMANENT : AI_LOCK_TEMPORARY;
+    v += s.sideIdx === side ? w : -w;
+  }
+  return v;
+}
+
+/* ロックの「芽」への備え (公開情報だけで計算する)。
+   相手のサイキック①がまだ表にも捨て札にも出ていないなら、
+   相手の「覆われた裏向きカード」はどれも、あとで表にされて
+   永続ロックになりうる。1枚あたりの危険度を、見えていない相手カードの
+   枚数で割った確率で見積もり、少しだけ減点する。
+   実際の正体は見ない (情報集合ビューでも同じ値になる)。 */
+function aiLockThreat(st, side) {
+  const op = 1 - side;
+  const lockDefs = [];
+  for (const id of Object.keys(DEFS)) {
+    const up = DEFS[id].eff && DEFS[id].eff.upper;
+    if (up && up.static && up.static.rule === 'oppFaceDownOnly') lockDefs.push(id);
+  }
+  const opProtos = st.players[op].protocols.map(p => p.name);
+  const candidates = lockDefs.filter(id => opProtos.indexOf(DEFS[id].proto) >= 0);
+  if (!candidates.length) return 0;
+
+  /* すでに公開されている (表向きで場にある / 捨て札にある) なら芽ではない */
+  const visible = new Set();
+  for (let l = 0; l < 3; l++) for (let s2 = 0; s2 < 2; s2++) {
+    for (const uid of st.lines[l][s2]) if (st.cards[uid].faceUp) visible.add(st.cards[uid].def);
+  }
+  for (const p of st.players) for (const uid of p.trash) visible.add(st.cards[uid].def);
+  const hiddenLocks = candidates.filter(id => !visible.has(id)).length;
+  if (!hiddenLocks) return 0;
+
+  let hidden = st.players[op].hand.length + st.players[op].deck.length;
+  let seeds = 0;
+  for (let l = 0; l < 3; l++) {
+    const stack = st.lines[l][op];
+    for (let i = 0; i < stack.length; i++) {
+      const c = st.cards[stack[i]];
+      if (c.faceUp) continue;
+      hidden++;
+      if (i < stack.length - 1) seeds++;          // 覆われた裏向き = 表にされると即永続ロック
+    }
+  }
+  if (!seeds || !hidden) return 0;
+  const chance = Math.min(1, hiddenLocks / hidden);
+  /* 表にする手段 (相手の手札) も見えないので、半分の確度で見る */
+  return seeds * chance * AI_LOCK_PERMANENT * 0.5;
 }
 
 function aiBoardEffectScore(st, side) {
@@ -2622,6 +2685,9 @@ function aiScore(st, me) {
   sc += aiHandPotential(st, me) * 0.9;
   sc -= aiHandPotential(st, op) * 0.75;
   sc += aiBoardEffectScore(st, me);
+  sc += aiLockScore(st, me);
+  sc -= aiLockThreat(st, me);
+  sc += aiLockThreat(st, 1 - me);
   sc += aiCompileSafetyScore(st, me) * W.compileSafety;
 
   if (st.useControl) {
@@ -2768,7 +2834,11 @@ function aiPlayFreePicks(st, req, me) {
 function aiStrategicCardPicks(st, req, me, ranked, fallback) {
   const max = req.max !== undefined ? req.max : 1;
   const min = req.min !== undefined ? req.min : 1;
-  if (AI_CHOICE_DEPTH > 0 || req.candidates.length < 2
+  /* 「選ばない」を選べる要求では、候補が1枚でも「選ぶ/選ばない」の2択になる。
+     ここで評価を飛ばすと、自分のカードを対象にする有益な効果
+     (覆われたサイキック①を表にする等) を静的スコアだけで捨ててしまう。 */
+  const choices = req.candidates.length + (min === 0 ? 1 : 0);
+  if (AI_CHOICE_DEPTH > 0 || choices < 2
       || /(?:^|-)order$/.test(req.prompt || '')) return fallback;
   if (max !== 1) {
     const deep = aiBestCombo(st, req, ranked.map(x => x.uid), min, max, fallback);

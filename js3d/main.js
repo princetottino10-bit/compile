@@ -386,7 +386,11 @@ function applyAiDifficulty(level) {
     Engine.setAiLevel(2);
     Engine.setAiThinkBudget(1200);               // つよい/最強: 思考時間2倍
   }
-  if (Engine.setAiSpecialist) Engine.setAiSpecialist(level >= 3, 1);
+  /* 最強 = DARKNESS/SPEED/HATE 特化、ロック特化 = サイキック①の永続ロック狙い */
+  if (Engine.setAiSpecialist) {
+    if (level === 4) Engine.setAiSpecialist(true, 1, 'psylock');
+    else Engine.setAiSpecialist(level >= 3, 1, 'dsh');
+  }
 }
 
 /* ---------- 着地パッド (ラインの当たり判定 + 視覚) ---------- */

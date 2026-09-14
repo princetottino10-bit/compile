@@ -2139,9 +2139,12 @@ const AI_W = {
 function setAiWeights(obj) { for (const k in obj) if (k in AI_W) AI_W[k] = obj[k]; }
 let AI_SPECIALIST_ENABLED = false;
 let AI_SPECIALIST_SIDE = -1;
-function setAiSpecialist(enabled, side) {
+/* 'dsh': DARKNESS/SPEED/HATE 特化 (最強) / 'psylock': サイキック①の永続ロック狙い */
+let AI_SPECIALIST_KIND = 'dsh';
+function setAiSpecialist(enabled, side, kind) {
   AI_SPECIALIST_ENABLED = !!enabled;
   AI_SPECIALIST_SIDE = side === 0 || side === 1 ? side : -1;
+  AI_SPECIALIST_KIND = kind === 'psylock' ? 'psylock' : 'dsh';
 }
 const AI_DSH_W = {
   think: 1.5, rootSearch: 32, reply: 18, shallow: 8,
@@ -2190,7 +2193,8 @@ function aiOpsValue(ops, depth) {
       case 'delete': v += aiOpSelfTargeted(op) ? -30 : 34; break;
       case 'return': v += aiOpSelfTargeted(op) ? -14 : 23; break;
       case 'shift': v += 17; break;
-      case 'flip': v += 11; break;
+      /* 「このカードを反転させる」は自分の表のテキストを失う代償。加点しない */
+      case 'flip': v += (op.select && op.select.ref === 'this') ? -14 : 11; break;
       case 'play': v += actor * 19; break;
       case 'refresh': v += 18; break;
       case 'rearrange': case 'swapProtocols': v += 34; break;
@@ -2272,6 +2276,104 @@ function aiHandPotential(st, side) {
   return vals.slice(0, 4).reduce((a, b) => a + b, 0);
 }
 
+/* 「相手はカードを裏向きでのみプレイできる」(サイキック①) の価値。
+   上段の常在効果は覆われても生き、下段の「開始: このカードを反転」は
+   覆われると止まる。覆われたロックは相手の表向きプレイ (＝中段効果) を
+   ずっと封じるので、盤面評価で大きく扱う。一番上に居るロックは、
+   持ち主の次の開始フェイズで裏返るので、相手の1ターンぶんだけの価値。 */
+const AI_LOCK_PERMANENT = 260;
+const AI_LOCK_TEMPORARY = 55;
+function aiLockScore(st, side) {
+  let v = 0;
+  for (const s of activeStatics(st)) {
+    if (s.kind !== 'playPermission' || s.rule !== 'oppFaceDownOnly') continue;
+    const stack = st.lines[s.line][s.sideIdx];
+    const covered = stack.indexOf(s.uid) < stack.length - 1;
+    const w = covered ? AI_LOCK_PERMANENT : AI_LOCK_TEMPORARY;
+    v += s.sideIdx === side ? w : -w;
+  }
+  return v;
+}
+
+/* ロックの「芽」への備え (公開情報だけで計算する)。
+   相手のサイキック①がまだ表にも捨て札にも出ていないなら、相手の裏向きカードは
+   あとで表にされて永続ロックになりうる。どれだけ危ないかは「表にする手段」で決まる:
+   ・ライン限定の反転 (ダークネス②「このラインの覆われたカードを反転」):
+     そのプロトコルに一致するラインでは、上に出すこと自体で覆ってから反転できる。
+     一番上の裏向きでも種になるので特に怪しい。
+   ・どこでも覆われたカードを反転 (タイム②、カオス①など): 覆われた裏向きが種。
+   正体は見ず、見えていない相手カードの枚数から確率で見積もる。 */
+let AI_LOCK_ENABLERS = null;
+function aiLockEnablers() {
+  if (AI_LOCK_ENABLERS) return AI_LOCK_ENABLERS;
+  const locks = [], lineOnly = [], anywhere = [];
+  const walk = (ops, cb) => {
+    for (const op of ops || []) {
+      if (!op) continue;
+      cb(op);
+      if (Array.isArray(op.ops)) walk(op.ops, cb);
+      if (Array.isArray(op.options)) for (const br of op.options) walk(br, cb);
+    }
+  };
+  for (const id of Object.keys(DEFS)) {
+    const eff = DEFS[id].eff || {};
+    if (eff.upper && eff.upper.static && eff.upper.static.rule === 'oppFaceDownOnly') locks.push(id);
+    const mid = eff.middle && eff.middle.ops;
+    walk(mid, (op) => {
+      if (op.op !== 'flip' || !op.select || op.select.ref) return;
+      const sel = op.select;
+      if (sel.coverage !== 'covered') return;
+      if (sel.facing === 'up') return;              // 表→裏にするだけ = ロック崩し側
+      if (sel.owner === 'self') return;
+      (sel.zone === 'thisLine' ? lineOnly : anywhere).push(id);
+    });
+  }
+  AI_LOCK_ENABLERS = { locks, lineOnly: [...new Set(lineOnly)], anywhere: [...new Set(anywhere)] };
+  return AI_LOCK_ENABLERS;
+}
+
+function aiLockThreat(st, side) {
+  const op = 1 - side;
+  const E = aiLockEnablers();
+  const opProtos = st.players[op].protocols.map(p => p.name);
+  const own = (id) => opProtos.indexOf(DEFS[id].proto) >= 0;
+
+  const visible = new Set();
+  for (let l = 0; l < 3; l++) for (let s2 = 0; s2 < 2; s2++) {
+    for (const uid of st.lines[l][s2]) if (st.cards[uid].faceUp) visible.add(st.cards[uid].def);
+  }
+  for (const p of st.players) for (const uid of p.trash) visible.add(st.cards[uid].def);
+  const hiddenOf = (ids) => ids.filter(id => own(id) && !visible.has(id));
+
+  const hiddenLocks = hiddenOf(E.locks).length;
+  if (!hiddenLocks) return 0;
+  const lineEnablers = hiddenOf(E.lineOnly);
+  const anyEnablers = hiddenOf(E.anywhere).length;
+
+  let hidden = st.players[op].hand.length + st.players[op].deck.length;
+  for (let l = 0; l < 3; l++) for (const uid of st.lines[l][op]) if (!st.cards[uid].faceUp) hidden++;
+  if (!hidden) return 0;
+  const chance = Math.min(1, hiddenLocks / hidden);
+
+  let risk = 0;
+  for (let l = 0; l < 3; l++) {
+    const stack = st.lines[l][op];
+    const lineProtos = [st.players[0].protocols[l].name, st.players[1].protocols[l].name];
+    /* このラインに表向きで出せるライン限定の反転手段があるか */
+    const lineReady = lineEnablers.some(id => lineProtos.indexOf(DEFS[id].proto) >= 0);
+    for (let i = 0; i < stack.length; i++) {
+      if (st.cards[stack[i]].faceUp) continue;
+      const covered = i < stack.length - 1;
+      let w = 0;
+      if (lineReady) w = 0.85;                      // 上に出して覆い、そのまま反転できる
+      else if (covered && anyEnablers) w = 0.6;
+      else if (covered) w = 0.2;                   // 手段は見えないが、覆われてはいる
+      risk += w * chance * AI_LOCK_PERMANENT;
+    }
+  }
+  return risk;
+}
+
 function aiBoardEffectScore(st, side) {
   let v = 0;
   for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++) {
@@ -2292,8 +2394,72 @@ function aiBoardEffectScore(st, side) {
 }
 
 function aiIsDshSpecialist(st, side) {
-  return AI_SPECIALIST_ENABLED && !!st.players[side]
+  return AI_SPECIALIST_ENABLED && AI_SPECIALIST_KIND === 'dsh' && !!st.players[side]
     && (AI_SPECIALIST_SIDE < 0 || AI_SPECIALIST_SIDE === side);
+}
+
+function aiIsLockSpecialist(st, side) {
+  return AI_SPECIALIST_ENABLED && AI_SPECIALIST_KIND === 'psylock' && !!st.players[side]
+    && (AI_SPECIALIST_SIDE < 0 || AI_SPECIALIST_SIDE === side);
+}
+
+/* サイキック①ロック特化の手筋。
+   1. サイキック①は裏向きで、ダークネス②を表で出せるラインへ仕込む
+   2. ダークネス②をそのラインに表で出し、覆われた①を表にする (= 永続ロック)
+   3. 別ルート: 前のターンに出したスピード③が一番上で表なら、①を表で別ラインに出し、
+      スピード③の終了時の移動で①を覆う。そのためにスピード③は先に出しておく
+   4. それ以外で①を表で出すのは1ターンだけの一時ロックなので原則しない
+   5. ①を仕込む前にダークネス②を使い切らない
+   完成したあとは通常の評価 (ロックの価値) に任せる。 */
+const AI_LOCK_CARD = 'PSYCHIC_2';
+const AI_LOCK_KEY = 'DARKNESS_3';
+const AI_LOCK_COVER = 'SPEED_4';
+function aiLockSpecialistBias(st, side, action, d, fizzles) {
+  const lockLive = activeStatics(st).some(s => s.rule === 'oppFaceDownOnly' && s.sideIdx === side
+    && st.lines[s.line][s.sideIdx].indexOf(s.uid) < st.lines[s.line][s.sideIdx].length - 1);
+  if (lockLive) return 0;
+  const lineHasKeyProto = (l) => [st.players[0].protocols[l].name, st.players[1].protocols[l].name]
+    .indexOf(DEFS[AI_LOCK_KEY].proto) >= 0;
+  const myDownLockLine = (() => {
+    for (let l = 0; l < 3; l++) {
+      if (st.lines[l][side].some(uid => st.cards[uid].def === AI_LOCK_CARD && !st.cards[uid].faceUp)) return l;
+    }
+    return -1;
+  })();
+  const keyInHand = aiHasDefInHand(st, side, AI_LOCK_KEY);
+  const lockAvailable = aiHasDefInHand(st, side, AI_LOCK_CARD)
+    || st.players[side].deck.some(uid => st.cards[uid].def === AI_LOCK_CARD);
+  /* 終了時に移動できるスピード③ (一番上・表向き) が居るライン */
+  const coverReadyLine = (() => {
+    for (let l = 0; l < 3; l++) {
+      const stack = st.lines[l][side];
+      const top = stack[stack.length - 1];
+      if (top && st.cards[top].def === AI_LOCK_COVER && st.cards[top].faceUp) return l;
+    }
+    return -1;
+  })();
+
+  if (d.id === AI_LOCK_CARD) {
+    if (action.faceUp) {
+      /* スピード③を覆わない場所に出せば、終了時の移動で①を覆える */
+      if (coverReadyLine >= 0 && action.line !== coverReadyLine) return 170;
+      return -45;                                           // 覆う手段が無いと1ターンで裏返る
+    }
+    if (myDownLockLine >= 0) return -20;                   // 仕込みは1枚で足りる
+    if (!lineHasKeyProto(action.line)) return -30;         // ②で拾えないラインに置いても続かない
+    return keyInHand ? 150 : 95;
+  }
+  /* スピード③は中段が空撃ちでも、終了時の移動 (覆う手段) が本命なので先に出しておく */
+  if (d.id === AI_LOCK_COVER && action.faceUp && coverReadyLine < 0 && lockAvailable) {
+    return 80 + (fizzles ? 45 + aiMiddleValue(d) * 0.6 : 0);
+  }
+  if (d.id === AI_LOCK_KEY && action.faceUp) {
+    if (myDownLockLine === action.line) return 170;         // 上に出して覆い、そのまま表にする
+    const lockStillComing = myDownLockLine < 0 && (aiHasDefInHand(st, side, AI_LOCK_CARD)
+      || st.players[side].deck.some(uid => st.cards[uid].def === AI_LOCK_CARD));
+    if (lockStillComing) return -55;                        // 鍵は①を仕込むまで温存する
+  }
+  return 0;
 }
 
 function aiWeightsFor(st, side) {
@@ -2320,21 +2486,32 @@ function aiMiddleFizzles(st, side, action, d) {
   const fr = { controller: side, source: action.card, line: action.line,
     currentLine: action.line, bind: {} };
   let sawTargeted = false;
-  for (const op of mid) {
-    if (['shift', 'flip', 'delete', 'return'].indexOf(op.op) < 0) continue;
-    const sel = op.select;
-    if (!sel || sel.ref) continue;
-    if (sel.zone === 'sameLineAsRef' || (sel.value && sel.value.eqBindPrinted)) continue;
-    sawTargeted = true;
-    for (let l = 0; l < 3; l++) {
-      for (let s2 = 0; s2 < 2; s2++) {
-        for (const uid of st.lines[l][s2]) {
-          if (matchesSel(st, fr, uid, sel)) return false;   // 対象あり
+  /* 中段は「置いたあと」に解決する。置いた札が一番上の札を覆うので、
+     覆われたカードを対象にする効果 (ダークネス②など) は、置く前の盤面では
+     対象が無くても、置いた瞬間に対象ができる。一時的に積んでから判定する。 */
+  const dest = st.lines[action.line] && st.lines[action.line][side];
+  const pushed = dest && dest.indexOf(action.card) < 0;
+  if (pushed) dest.push(action.card);
+  try {
+    for (const op of mid) {
+      if (['shift', 'flip', 'delete', 'return'].indexOf(op.op) < 0) continue;
+      const sel = op.select;
+      if (!sel || sel.ref) continue;
+      if (sel.zone === 'sameLineAsRef' || (sel.value && sel.value.eqBindPrinted)) continue;
+      sawTargeted = true;
+      for (let l = 0; l < 3; l++) {
+        for (let s2 = 0; s2 < 2; s2++) {
+          for (const uid of st.lines[l][s2]) {
+            if (uid === action.card) continue;                // 自分自身は対象に数えない
+            if (matchesSel(st, fr, uid, sel)) return false;   // 対象あり
+          }
         }
       }
     }
+    return sawTargeted;   // 対象取り効果があり、どれも空
+  } finally {
+    if (pushed) dest.pop();
   }
-  return sawTargeted;   // 対象取り効果があり、どれも空
 }
 
 function aiActionBias(st, action, side) {
@@ -2370,6 +2547,7 @@ function aiActionBias(st, action, side) {
      効果ぶんの加点も打ち消す (下の faceUp 分岐で mv を 0 にする)。 */
   const fizzles = !!action.faceUp && aiMiddleFizzles(st, side, action, d);
   if (fizzles) v -= 45 + aiMiddleValue(d) * 0.6;
+  if (aiIsLockSpecialist(st, side)) v += aiLockSpecialistBias(st, side, action, d, fizzles);
   if (aiIsDshSpecialist(st, side) && W.speedPairStrategy
       && (d.id === 'SPEED_1' || d.id === 'SPEED_4')) {
     const pairOnField = aiHasDefOnField(st, side, 'SPEED_1') || aiHasDefOnField(st, side, 'SPEED_4');
@@ -2622,6 +2800,9 @@ function aiScore(st, me) {
   sc += aiHandPotential(st, me) * 0.9;
   sc -= aiHandPotential(st, op) * 0.75;
   sc += aiBoardEffectScore(st, me);
+  sc += aiLockScore(st, me);
+  sc -= aiLockThreat(st, me);
+  sc += aiLockThreat(st, 1 - me);
   sc += aiCompileSafetyScore(st, me) * W.compileSafety;
 
   if (st.useControl) {
@@ -2768,7 +2949,11 @@ function aiPlayFreePicks(st, req, me) {
 function aiStrategicCardPicks(st, req, me, ranked, fallback) {
   const max = req.max !== undefined ? req.max : 1;
   const min = req.min !== undefined ? req.min : 1;
-  if (AI_CHOICE_DEPTH > 0 || req.candidates.length < 2
+  /* 「選ばない」を選べる要求では、候補が1枚でも「選ぶ/選ばない」の2択になる。
+     ここで評価を飛ばすと、自分のカードを対象にする有益な効果
+     (覆われたサイキック①を表にする等) を静的スコアだけで捨ててしまう。 */
+  const choices = req.candidates.length + (min === 0 ? 1 : 0);
+  if (AI_CHOICE_DEPTH > 0 || choices < 2
       || /(?:^|-)order$/.test(req.prompt || '')) return fallback;
   if (max !== 1) {
     const deep = aiBestCombo(st, req, ranked.map(x => x.uid), min, max, fallback);
@@ -3515,7 +3700,7 @@ function aiAnswer(state, req) {
 const Engine = {
   init, newGame, apply, legalActions, setTrace, setAiLevel, setAiThinkBudget, setAiBreadth, setAiPimc, setAiWeights, setAiSpecialist, setAiSpecialistWeights,
   lineTotal, cardValue, compilableLines, canPlay, locate,
-  ai: { action: aiAction, answer: aiAnswer, score: aiScore, transitionScore: aiTransitionScore, compilePassChance: aiCompilePassChance, informationState: aiInformationState, randomPicks, smartPicks },
+  ai: { action: aiAction, answer: aiAnswer, score: aiScore, middleFizzles: aiMiddleFizzles, transitionScore: aiTransitionScore, compilePassChance: aiCompilePassChance, informationState: aiInformationState, randomPicks, smartPicks },
   get defs() { return DEFS; },
   get protos() { return PROTOS; }
 };
