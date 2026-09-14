@@ -3422,7 +3422,8 @@ function aiActionHard(state, collect) {
     }
     if (collect) {
       for (const item of viable) {
-        collect.push({ a: item.a, val: item.val2 !== undefined ? item.val2 : item.val1 });
+        collect.push({ a: item.a, val: item.val2 !== undefined ? item.val2 : item.val1,
+          val1: item.val1, val2: item.val2, bias: item.bias });
       }
     }
 
@@ -3707,6 +3708,16 @@ function enumeratePicks(req) {
   return [randomPicks(req)];
 }
 
+/* 診断用 (scripts/ai_blunders.js --diagnose): 探索 AI と同じ手順で1手選び、
+   ルートの各候補の評価 (1手読み val1 / 2手読み val2 / bias) を返す。
+   candidates が空なら、評価探索の前に終盤の読み切りで決まった手。挙動は変えない */
+function aiRootValues(state) {
+  const collect = [];
+  const view = aiInformationState(state, state.turn);
+  const best = aiActionHard(view, collect);
+  return { best, candidates: collect };
+}
+
 function aiAnswer(state, req) {
   const view = aiInformationState(state, req.player);
   const forcedControlWin = aiForcedControlWinPicks(req);
@@ -3730,7 +3741,7 @@ function aiAnswer(state, req) {
 const Engine = {
   init, newGame, apply, legalActions, setTrace, setAiLevel, setAiThinkBudget, setAiBreadth, setAiPimc, setAiWeights, setAiSpecialist, setAiSpecialistWeights,
   lineTotal, cardValue, compilableLines, canPlay, locate,
-  ai: { action: aiAction, answer: aiAnswer, score: aiScore, middleFizzles: aiMiddleFizzles, transitionScore: aiTransitionScore, compilePassChance: aiCompilePassChance, informationState: aiInformationState, randomPicks, smartPicks },
+  ai: { action: aiAction, answer: aiAnswer, score: aiScore, middleFizzles: aiMiddleFizzles, transitionScore: aiTransitionScore, compilePassChance: aiCompilePassChance, informationState: aiInformationState, rootValues: aiRootValues, randomPicks, smartPicks },
   get defs() { return DEFS; },
   get protos() { return PROTOS; }
 };

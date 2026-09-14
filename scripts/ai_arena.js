@@ -79,6 +79,7 @@ function parseArgs(argv) {
     else if (a === '--baseline') o.baseline = argv[++i];
     else if (a === '--workers') o.workers = +argv[++i];
     else if (a === '--budget') o.budget = +argv[++i];
+    else if (a === '--baseline-budget') o.baselineBudget = +argv[++i];
     else if (a === '--seed') o.seed = +argv[++i];
     else if (a === '--breadth') o.breadth = argv[++i].split(',').map(Number);
     else if (a === '--pimc') o.pimc = +argv[++i];
@@ -149,7 +150,9 @@ if (!isMainThread) {
   Cand.setAiLevel(2); Base.setAiLevel(2);
   // 候補側だけ探索設定を変えられる(設定そのものの比較に使う)
   if (cfg.budget && Cand.setAiThinkBudget) Cand.setAiThinkBudget(cfg.budget);
-  if (cfg.budget && Base.setAiThinkBudget) Base.setAiThinkBudget(cfg.budget);
+  /* --baseline-budget があれば基準側だけ別の思考時間にする (探索時間の効き目を測る) */
+  const baseBudget = cfg.baselineBudget || cfg.budget;
+  if (baseBudget && Base.setAiThinkBudget) Base.setAiThinkBudget(baseBudget);
   if (cfg.breadth && Cand.setAiBreadth) Cand.setAiBreadth.apply(null, cfg.breadth);
   if (cfg.pimc && Cand.setAiPimc) Cand.setAiPimc(cfg.pimc);
   if (cfg.baselinePimc && Base.setAiPimc) Base.setAiPimc(cfg.baselinePimc);
@@ -316,7 +319,7 @@ if (candidateDeck) {
     : opponent === 'psylock' ? 'ロック特化 (psylock + ' + DEFAULT_DECK.psylock.join(',') + ')'
     : opponent === 'same' ? '同じ特化・同じ編成 (ミラー)' : '通常 AI・ランダム編成'));
 }
-console.log('基準: ' + (opt.self ? 'working tree (既定設定)' : opt.baseline)
+console.log('基準: ' + (opt.self ? 'working tree (既定設定)' : opt.baseline) + (opt.baselineBudget ? ' budget=' + opt.baselineBudget : '')
   + (opt.baselineWeights ? ' weights=' + JSON.stringify(opt.baselineWeights) : ''));
 console.log('試合数 ' + opt.games + ' / 並列 ' + workerCount + ' worker\n');
 
@@ -327,7 +330,7 @@ let done = 0;
 for (const chunk of chunks) {
   const w = new Worker(__filename, {
     workerData: { candidateSrc, baselineSrc, cards, effects, jobs: chunk, cfg: {
-      budget: opt.budget, breadth: opt.breadth, weights: opt.weights,
+      budget: opt.budget, baselineBudget: opt.baselineBudget, breadth: opt.breadth, weights: opt.weights,
       pimc: opt.pimc, baselinePimc: opt.baselinePimc,
       baselineBreadth: opt.baselineBreadth, baselineWeights: opt.baselineWeights,
       specialist: candidateDeck ? (opt.specialist || null) : null,
