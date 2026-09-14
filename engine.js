@@ -3414,11 +3414,20 @@ function aiActionHard(state, collect) {
       if (s1.winner !== null || s1.phase === 'finished' || s1.turn === me) {
         val = aiScore(s1, me);
       } else {
-        val = minimaxMin(s1, me, alpha, Infinity, deadline);
+        /* alpha は bias 込みの値なので、この手の bias を引いてから枝刈りの基準にする */
+        val = minimaxMin(s1, me, alpha - item.bias, Infinity, deadline);
+        /* 締め切りで応手を読み切れなかった値は「見た応手の中の最小」で楽観的に高い。
+           その手は読めなかったものとして扱う */
+        if (aiNow() > deadline) break;
       }
       val += item.bias;
       item.val2 = val;
       if (val > alpha) { alpha = val; best2 = item.a; }
+    }
+    /* 読んだ手がすべて負け確定なら、まだ読んでいない手の方がましな可能性がある */
+    if (best2 && alpha <= -1e8) {
+      const unread = viable.find(item => item.val2 === undefined);
+      if (unread) best2 = unread.a;
     }
     if (collect) {
       for (const item of viable) {
@@ -3432,19 +3441,31 @@ function aiActionHard(state, collect) {
     const opCompiled = state.players[1 - me].protocols.filter(pr => pr.compiled).length;
     if (opCompiled === 2 && viable.length > 1) {
       const vetoDeadline = aiNow() + AI_THINK_BUDGET_MS * 0.8;
-      const valOf = (x) => (x.val2 !== undefined ? x.val2 : x.val1);
-      const byVal = viable.slice().sort((x, y) => valOf(y) - valOf(x));
-      const floor = valOf(byVal[0]) - 120;   // 誤検知で大差の悪手に乗り換えない
-      for (const item of byVal) {
-        if (aiNow() > vetoDeadline || valOf(item) < floor) break;
-        const s1 = item.res.state;
-        if (s1.winner === me) return item.a;
-        if (s1.winner !== null) continue;
-        if (!aiIsLosingAfter(s1, me, vetoDeadline)) return item.a;
+      for (const group of aiVetoOrder(viable)) {
+        for (const item of group) {
+          if (aiNow() > vetoDeadline) break;
+          const s1 = item.res.state;
+          if (s1.winner === me) return item.a;
+          if (s1.winner !== null) continue;
+          if (!aiIsLosingAfter(s1, me, vetoDeadline)) return item.a;
+        }
       }
     }
     return best2 || best;
   } finally { TRACE = wasTrace; AI_SEARCH_DEADLINE = previousDeadline; }
+}
+
+/* 終盤の受けで「即負け筋が残らない手」を探す順番。
+   2手読み (val2: 相手の最善応手のあと) と1手読み (val1) は段数が違って比べられないので、
+   読んだ手を val2 順に先に並べ、読めなかった手は val1 順にその後ろへ回す。
+   各グループの中では、先頭から 120 以上劣る手には乗り換えない (誤検知で大差の悪手を選ばない) */
+function aiVetoOrder(viable) {
+  const pick = (key) => {
+    const list = viable.filter(x => (key === 'val2') === (x.val2 !== undefined))
+      .sort((x, y) => y[key] - x[key]);
+    return list.length ? list.filter(x => x[key] >= list[0][key] - 120) : [];
+  };
+  return [pick('val2'), pick('val1')];
 }
 
 function minimaxMin(state, me, alpha, beta, deadline) {
@@ -3741,7 +3762,7 @@ function aiAnswer(state, req) {
 const Engine = {
   init, newGame, apply, legalActions, setTrace, setAiLevel, setAiThinkBudget, setAiBreadth, setAiPimc, setAiWeights, setAiSpecialist, setAiSpecialistWeights,
   lineTotal, cardValue, compilableLines, canPlay, locate,
-  ai: { action: aiAction, answer: aiAnswer, score: aiScore, middleFizzles: aiMiddleFizzles, transitionScore: aiTransitionScore, compilePassChance: aiCompilePassChance, informationState: aiInformationState, rootValues: aiRootValues, randomPicks, smartPicks },
+  ai: { action: aiAction, answer: aiAnswer, score: aiScore, middleFizzles: aiMiddleFizzles, transitionScore: aiTransitionScore, compilePassChance: aiCompilePassChance, informationState: aiInformationState, rootValues: aiRootValues, vetoOrder: aiVetoOrder, randomPicks, smartPicks },
   get defs() { return DEFS; },
   get protos() { return PROTOS; }
 };

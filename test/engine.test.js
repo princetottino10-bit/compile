@@ -751,6 +751,26 @@ test('AI all levels: does not cover HATE 4 when its lower effect can only delete
   Engine.setAiThinkBudget(590);
 });
 
+test('AI: 終盤の受けは、2手読みした手と1手読みだけの手の値を混ぜて並べない', () => {
+  /* 悪手マイニングで拾った局面 (相手2本済み) のルート評価。
+     2手読みした手は相手の最善応手のあとの値で、1手読みだけの手より数百低く出る。
+     混ぜて並べると、読んでいない DARKNESS_3 裏 L0 (-14) が先頭になり、そのまま選ばれていた */
+  const item = (name, val1, val2) => ({ name, val1, val2 });
+  const viable = [
+    item('DARKNESS_3 裏 L2', 338, -193), item('METAL_5 裏 L2', 323, -259),
+    item('DARKNESS_3 裏 L0', -14), item('METAL_5 裏 L0', -29), item('リフレッシュ', -34),
+    item('DARKNESS_3 表 L1', -89), item('DARKNESS_3 裏 L1', -106), item('METAL_5 裏 L1', -121),
+  ];
+  const [read, unread] = Engine.ai.vetoOrder(viable);
+  assert.deepEqual(read.map(x => x.name), ['DARKNESS_3 裏 L2', 'METAL_5 裏 L2'], '読んだ手を val2 順に先に試す');
+  assert.deepEqual(unread.map(x => x.name),
+    ['DARKNESS_3 裏 L0', 'METAL_5 裏 L0', 'リフレッシュ', 'DARKNESS_3 表 L1', 'DARKNESS_3 裏 L1', 'METAL_5 裏 L1'],
+    '読めなかった手は後ろへ、val1 順');
+  /* 各グループの先頭から 120 以上劣る手には乗り換えない */
+  const [read2] = Engine.ai.vetoOrder([item('a', 0, 100), item('b', 0, -30), item('c', 0, -20)]);
+  assert.deepEqual(read2.map(x => x.name), ['a', 'c']);
+});
+
 test('AI: 相手のリコンパイルによるターンスキップを評価する', () => {
   const before = { actionLog: [] };
   const oppRecompile = { state: { actionLog: ['P2: リコンパイル'] } };
