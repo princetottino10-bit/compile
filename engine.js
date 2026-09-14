@@ -2362,11 +2362,17 @@ function aiLockThreat(st, side) {
   const opProtos = st.players[op].protocols.map(p => p.name);
   const own = (id) => opProtos.indexOf(DEFS[id].proto) >= 0;
 
+  /* 見えたかどうかは相手のデッキ由来のカード (uid が "p<op>:") だけで判断する。
+     同じプロトコルを互いに持つとき、自分の PSYCHIC_2 / DARKNESS_3 が表や捨て札にあっても
+     相手の同名カードの所在は分からない。置き場所 (どちら側のラインや捨て札か) は
+     CORRUPTION_1 や相手の捨て札へ送る効果で持ち主とずれるので使わない */
+  const opOrigin = 'p' + op + ':';
   const visible = new Set();
+  const seen = (uid) => { if (uid.indexOf(opOrigin) === 0) visible.add(st.cards[uid].def); };
   for (let l = 0; l < 3; l++) for (let s2 = 0; s2 < 2; s2++) {
-    for (const uid of st.lines[l][s2]) if (st.cards[uid].faceUp) visible.add(st.cards[uid].def);
+    for (const uid of st.lines[l][s2]) if (st.cards[uid].faceUp) seen(uid);
   }
-  for (const p of st.players) for (const uid of p.trash) visible.add(st.cards[uid].def);
+  for (const p of st.players) for (const uid of p.trash) seen(uid);
   const hiddenOf = (ids) => ids.filter(id => own(id) && !visible.has(id));
 
   const hiddenLocks = hiddenOf(E.locks).length;

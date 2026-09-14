@@ -114,6 +114,44 @@ test('備え: 相手のサイキック①が見えていない間は、相手の
     `サイキック①が隠れている方が危険として低く評価される (${Math.round(hiddenSeed)} < ${Math.round(revealed)})`);
 });
 
+test('備え: 自分の同名カードが見えても、相手のサイキック①や反転手段が見えたことにはしない', () => {
+  /* 両者が同じプロトコルを持つ (例: ロック特化 PSYCHIC/DARKNESS/SPEED vs 最強 DARKNESS/SPEED/HATE)。
+     自分の PSYCHIC_2 / DARKNESS_3 を捨て札に置いても、相手の同名カードの所在は分からないまま */
+  const make = (ownDef, ownInTrash, oppProtos, oppLine, oppDown) => {
+    const st = Engine.newGame({ p0: ['PSYCHIC', 'DARKNESS', 'FIRE'], p1: oppProtos, seed: 9, first: 0 }).state;
+    const me = st.players[0];
+    const mine = uidOf(ownDef, 0);
+    rm(me.deck, mine); rm(me.hand, mine);
+    if (ownInTrash) { me.trash.push(mine); st.cards[mine].zone = 'trash0'; st.cards[mine].faceUp = true; st.cards[mine].knownTo = 3; }
+    else { me.deck.push(mine); st.cards[mine].zone = 'deck0'; st.cards[mine].faceUp = false; st.cards[mine].knownTo = 0; }
+    const p = st.players[1];
+    for (const def of oppDown) {
+      const u = uidOf(def, 1);
+      rm(p.deck, u); rm(p.hand, u);
+      st.lines[oppLine][1].push(u); st.cards[u].zone = 'field'; st.cards[u].faceUp = false; st.cards[u].knownTo = 2;
+    }
+    return st;
+  };
+  const score = (...args) => Engine.ai.score(make(...args), 0);
+  /* 相手のライン0に覆われた裏向き。自分の PSYCHIC_2 の所在で脅威が変わってはいけない */
+  const lockCase = [['PSYCHIC', 'METAL', 'LIGHT'], 0, ['METAL_2', 'METAL_3']];
+  assert.ok(score('PSYCHIC_2', false, ...lockCase) < score('PSYCHIC_2', false, ['WATER', 'METAL', 'LIGHT'], 0, ['METAL_2', 'METAL_3']),
+    '前提: 相手が PSYCHIC を持つと脅威として見る');
+  assert.equal(score('PSYCHIC_2', true, ...lockCase), score('PSYCHIC_2', false, ...lockCase),
+    '自分の PSYCHIC_2 が捨て札にあっても、相手の PSYCHIC_2 はまだ見えていない');
+  /* 自分の PSYCHIC_2 が相手の捨て札に送られても (持ち主の付け替え)、相手の PSYCHIC_2 は見えていない */
+  const sent = make('PSYCHIC_2', true, ...lockCase);
+  const mine = uidOf('PSYCHIC_2', 0);
+  rm(sent.players[0].trash, mine); sent.players[1].trash.push(mine);
+  sent.cards[mine].zone = 'trash1'; sent.cards[mine].owner = 1;
+  assert.equal(Engine.ai.score(sent, 0), score('PSYCHIC_2', false, ...lockCase),
+    '相手の捨て札に入った自分の PSYCHIC_2 を、相手のカードとして数えない');
+  /* 相手のダークネスのライン (ライン1) の一番上の裏向き。自分の DARKNESS_3 の所在で脅威が変わってはいけない */
+  const keyCase = [['PSYCHIC', 'DARKNESS', 'LIGHT'], 1, ['LIGHT_3']];
+  assert.equal(score('DARKNESS_3', true, ...keyCase), score('DARKNESS_3', false, ...keyCase),
+    '自分の DARKNESS_3 が捨て札にあっても、相手の DARKNESS_3 はまだ見えていない');
+});
+
 test('備え: ダークネスのラインに裏向きで置かれたカードは、一番上でも特に怪しい', () => {
   /* 相手 (side1) は PSYCHIC と DARKNESS を持つ。ライン1が相手の DARKNESS */
   const make = (line) => {

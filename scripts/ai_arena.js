@@ -20,6 +20,7 @@
  *   node scripts/ai_arena.js --self --specialist psylock --opponent same --weights spKeyHold=-20
  *   --opponent normal : 通常 AI・ランダム編成 (候補のプロトコルとは重ねない)
  *   --opponent dsh    : 最強 (dsh 特化 + DARKNESS,SPEED,HATE)
+ *   --opponent psylock: ロック特化 (psylock 特化 + PSYCHIC,DARKNESS,SPEED)
  *   --opponent same   : 候補と同じ特化・同じデッキ (重みの比較用ミラー)
  *   --pool lock       : サイキック①ロックが起きやすい編成を対戦表に足す (--filter PSYCHIC と併用)
  *   --deck を省くと dsh は DARKNESS,SPEED,HATE、psylock は PSYCHIC,DARKNESS,SPEED
@@ -246,8 +247,8 @@ if (!POOL.length) { console.error('--filter に一致する編成がありませ
 if (opt.specialist && ['dsh', 'psylock'].indexOf(opt.specialist) < 0) {
   console.error('--specialist は dsh か psylock'); process.exit(1);
 }
-if (opt.opponent && ['normal', 'dsh', 'same'].indexOf(opt.opponent) < 0) {
-  console.error('--opponent は normal / dsh / same'); process.exit(1);
+if (opt.opponent && ['normal', 'dsh', 'psylock', 'same'].indexOf(opt.opponent) < 0) {
+  console.error('--opponent は normal / dsh / psylock / same'); process.exit(1);
 }
 const ALL_PROTOCOLS = [...new Set(MATCHUPS.flat(2))].sort();
 const candidateDeck = opt.deck || (opt.specialist ? DEFAULT_DECK[opt.specialist] : null);
@@ -277,7 +278,7 @@ if (candidateDeck) {
     const unit = Math.floor(i / 2);
     const seed = opt.seed + unit;
     let oppDeck, baseSpecialist = null;
-    if (opponent === 'dsh') { oppDeck = DSH_DECK; baseSpecialist = 'dsh'; }
+    if (opponent === 'dsh' || opponent === 'psylock') { oppDeck = DEFAULT_DECK[opponent]; baseSpecialist = opponent; }
     else if (opponent === 'same') { oppDeck = candidateDeck; baseSpecialist = opt.specialist || null; }
     else oppDeck = seededDeck(seed * 7919 + 13, candidateDeck);
     const candidateSide = i % 2;
@@ -312,6 +313,7 @@ if (candidateDeck) {
     + (opt.specialistWeights ? ' specialistWeights=' + JSON.stringify(opt.specialistWeights) : ''));
   const opponent = opt.opponent || 'normal';
   console.log('相手: ' + (opponent === 'dsh' ? '最強 (dsh + ' + DSH_DECK.join(',') + ')'
+    : opponent === 'psylock' ? 'ロック特化 (psylock + ' + DEFAULT_DECK.psylock.join(',') + ')'
     : opponent === 'same' ? '同じ特化・同じ編成 (ミラー)' : '通常 AI・ランダム編成'));
 }
 console.log('基準: ' + (opt.self ? 'working tree (既定設定)' : opt.baseline)
