@@ -264,6 +264,10 @@ export function createStage(container) {
     if (Math.abs(prevK - VIEW.k) > 0.15) home(320);
   }
   window.addEventListener('resize', resize);
+  /* 起動時にも一度判定する。resize イベントを待つだけだと、スマホのように
+     最初から縦で開いた場合に VIEW.k が 0 (横画面扱い) のまま残り、
+     縦持ち用の手札 (扇ではなく段組み) やカメラが一度も有効にならなかった。 */
+  resize();
 
   /* --- ループ --- */
   const frameCbs = [];

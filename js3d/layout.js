@@ -12,17 +12,24 @@ export function handSlot(i, n) {
      その札が Raycaster を先に拾って盤面操作まで奪ってしまう。
      5枚ごとの水平な段にして、カードと盤面の操作領域を分ける。 */
   if (VIEW.k >= .5) {
+    /* 縦持ちのカメラは手札をほぼ真上から見下ろす。PC と同じように札を立てると
+       画面上で縦に潰れて読めないので、ほぼ寝かせてカメラに正対させる。
+       幅いっぱいに大きく並べ、読みやすさを最優先にする。 */
     const perRow = 5;
     const row = Math.floor(i / perRow);
     const rowStart = row * perRow;
     const rowCount = Math.min(perRow, n - rowStart);
     const rowIndex = i - rowStart;
     const t = rowCount <= 1 ? 0 : (rowIndex / (rowCount - 1) - .5);
+    /* 画面幅に収まる範囲でできるだけ大きく。5枚並びで両端が切れないよう、
+       並べた全幅 (間隔×(枚数-1) + 1枚ぶん) を 4.7 以内に抑える */
+    const PORTRAIT_SCALE = Math.min(1.12, 4.7 / (CARD.w * (1.04 * Math.max(0, perRow - 1) + 1)));
+    const step = PORTRAIT_SCALE * CARD.w * 1.04;         // 隣と重ならない間隔
     return {
-      pos: [t * Math.min(rowCount * .82, 3.7), BOARD.handY + row * .32 - tucked * .22,
-        BOARD.handZ + .66 - row * .48 + tucked * .48],
-      rot: [1.02, 0, 0],
-      scale: .70 * (tucked ? .9 : 1) * (row ? .94 : 1)
+      pos: [t * step * Math.max(0, rowCount - 1), BOARD.handY + 0.35 + row * .12 - tucked * .22,
+        BOARD.handZ + 0.95 - row * 1.62 + tucked * 1.2],
+      rot: [0.18, 0, 0],
+      scale: PORTRAIT_SCALE * (tucked ? .9 : 1) * (row ? .94 : 1)
     };
   }
   /* 8枚以上は2列にする。1列のまま重ねると中央の札が完全に隠れ、
@@ -50,6 +57,10 @@ export function handSlot(i, n) {
 /* 手札のホバー / 選択状態 */
 export function handSlotRaised(i, n) {
   const s = handSlot(i, n);
+  if (VIEW.k >= .5) {
+    /* 縦持ちは寝かせたまま少し浮かせて大きくする (立てると潰れて見える) */
+    return { pos: [s.pos[0], s.pos[1] + 0.45, s.pos[2] - 0.35], rot: [0.12, 0, 0], scale: s.scale * 1.12 };
+  }
   return {
     pos: [s.pos[0], s.pos[1] + 0.50, s.pos[2] - 0.30],
     rot: [0.86, 0, s.rot[2] * 0.35],
