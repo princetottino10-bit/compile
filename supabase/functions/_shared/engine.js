@@ -2135,8 +2135,29 @@ const AI_W = {
   marginLead: 6, marginTrail: 6,
   // リフレッシュはターンを丸ごと使う。引ける枚数が少ないほど割に合わない
   refreshPerCard: 13, refreshTempo: 26, compileSafety: 1,
+  // 対象の無い中段を表で切る (空撃ち) 減点: fizzle + 中段の効果値 × fizzleMid
+  fizzle: 45, fizzleMid: 0.6,
 };
-function setAiWeights(obj) { for (const k in obj) if (k in AI_W) AI_W[k] = obj[k]; }
+/* サイキック①ロックまわりの重み。通常 AI・特化 AI の区別なく共通で使う。
+   lockPermanent/lockTemporary: 覆われた (永続) / 一番上 (1ターン) のロックの価値
+   threat*: 相手の裏向きカードがロックになりうる危険度 (aiLockThreat)
+   sp*: ロック特化の手筋の加点 (aiLockSpecialistBias) */
+const AI_LOCK_W = {
+  lockPermanent: 260, lockTemporary: 55,
+  threatLine: 0.85, threatAny: 0.6, threatCovered: 0.2,
+  spLockCoverRoute: 170, spLockUpNoCover: -45, spLockDup: -20, spLockBadLine: -30,
+  spLockKeyInHand: 150, spLockNoKey: 95, spCover: 80, spKeyOnLock: 170, spKeyHold: -55,
+};
+/* 知らないキーは無視して配列で返す (計測スクリプトが打ち間違いに気づけるように) */
+function setAiWeights(obj) {
+  const unknown = [];
+  for (const k in obj) {
+    if (k in AI_W) AI_W[k] = obj[k];
+    else if (k in AI_LOCK_W) AI_LOCK_W[k] = obj[k];
+    else unknown.push(k);
+  }
+  return unknown;
+}
 let AI_SPECIALIST_ENABLED = false;
 let AI_SPECIALIST_SIDE = -1;
 /* 'dsh': DARKNESS/SPEED/HATE 特化 (最強) / 'psylock': サイキック①の永続ロック狙い */
@@ -2155,7 +2176,12 @@ const AI_DSH_W = {
   compileSafety: 1, hateDownPenalty: 20, speedDownPenalty: 20, speedPairStrategy: 1,
 };
 function setAiSpecialistWeights(obj) {
-  for (const k in obj) if (k in AI_DSH_W && Number.isFinite(obj[k])) AI_DSH_W[k] = obj[k];
+  const unknown = [];
+  for (const k in obj) {
+    if (k in AI_DSH_W && Number.isFinite(obj[k])) AI_DSH_W[k] = obj[k];
+    else unknown.push(k);
+  }
+  return unknown;
 }
 
 /* --- Phase A: 評価関数 --- */
@@ -2281,15 +2307,13 @@ function aiHandPotential(st, side) {
    覆われると止まる。覆われたロックは相手の表向きプレイ (＝中段効果) を
    ずっと封じるので、盤面評価で大きく扱う。一番上に居るロックは、
    持ち主の次の開始フェイズで裏返るので、相手の1ターンぶんだけの価値。 */
-const AI_LOCK_PERMANENT = 260;
-const AI_LOCK_TEMPORARY = 55;
 function aiLockScore(st, side) {
   let v = 0;
   for (const s of activeStatics(st)) {
     if (s.kind !== 'playPermission' || s.rule !== 'oppFaceDownOnly') continue;
     const stack = st.lines[s.line][s.sideIdx];
     const covered = stack.indexOf(s.uid) < stack.length - 1;
-    const w = covered ? AI_LOCK_PERMANENT : AI_LOCK_TEMPORARY;
+    const w = covered ? AI_LOCK_W.lockPermanent : AI_LOCK_W.lockTemporary;
     v += s.sideIdx === side ? w : -w;
   }
   return v;
@@ -2365,10 +2389,10 @@ function aiLockThreat(st, side) {
       if (st.cards[stack[i]].faceUp) continue;
       const covered = i < stack.length - 1;
       let w = 0;
-      if (lineReady) w = 0.85;                      // 上に出して覆い、そのまま反転できる
-      else if (covered && anyEnablers) w = 0.6;
-      else if (covered) w = 0.2;                   // 手段は見えないが、覆われてはいる
-      risk += w * chance * AI_LOCK_PERMANENT;
+      if (lineReady) w = AI_LOCK_W.threatLine;      // 上に出して覆い、そのまま反転できる
+      else if (covered && anyEnablers) w = AI_LOCK_W.threatAny;
+      else if (covered) w = AI_LOCK_W.threatCovered; // 手段は見えないが、覆われてはいる
+      risk += w * chance * AI_LOCK_W.lockPermanent;
     }
   }
   return risk;
@@ -2442,22 +2466,22 @@ function aiLockSpecialistBias(st, side, action, d, fizzles) {
   if (d.id === AI_LOCK_CARD) {
     if (action.faceUp) {
       /* スピード③を覆わない場所に出せば、終了時の移動で①を覆える */
-      if (coverReadyLine >= 0 && action.line !== coverReadyLine) return 170;
-      return -45;                                           // 覆う手段が無いと1ターンで裏返る
+      if (coverReadyLine >= 0 && action.line !== coverReadyLine) return AI_LOCK_W.spLockCoverRoute;
+      return AI_LOCK_W.spLockUpNoCover;                     // 覆う手段が無いと1ターンで裏返る
     }
-    if (myDownLockLine >= 0) return -20;                   // 仕込みは1枚で足りる
-    if (!lineHasKeyProto(action.line)) return -30;         // ②で拾えないラインに置いても続かない
-    return keyInHand ? 150 : 95;
+    if (myDownLockLine >= 0) return AI_LOCK_W.spLockDup;   // 仕込みは1枚で足りる
+    if (!lineHasKeyProto(action.line)) return AI_LOCK_W.spLockBadLine; // ②で拾えないラインに置いても続かない
+    return keyInHand ? AI_LOCK_W.spLockKeyInHand : AI_LOCK_W.spLockNoKey;
   }
   /* スピード③は中段が空撃ちでも、終了時の移動 (覆う手段) が本命なので先に出しておく */
   if (d.id === AI_LOCK_COVER && action.faceUp && coverReadyLine < 0 && lockAvailable) {
-    return 80 + (fizzles ? 45 + aiMiddleValue(d) * 0.6 : 0);
+    return AI_LOCK_W.spCover + (fizzles ? AI_W.fizzle + aiMiddleValue(d) * AI_W.fizzleMid : 0);
   }
   if (d.id === AI_LOCK_KEY && action.faceUp) {
-    if (myDownLockLine === action.line) return 170;         // 上に出して覆い、そのまま表にする
+    if (myDownLockLine === action.line) return AI_LOCK_W.spKeyOnLock; // 上に出して覆い、そのまま表にする
     const lockStillComing = myDownLockLine < 0 && (aiHasDefInHand(st, side, AI_LOCK_CARD)
       || st.players[side].deck.some(uid => st.cards[uid].def === AI_LOCK_CARD));
-    if (lockStillComing) return -55;                        // 鍵は①を仕込むまで温存する
+    if (lockStillComing) return AI_LOCK_W.spKeyHold;        // 鍵は①を仕込むまで温存する
   }
   return 0;
 }
@@ -2546,7 +2570,7 @@ function aiActionBias(st, action, side) {
      例: 自分の場が空のときの SPEED 3「あなたの他のカードを1枚移動させる」。
      効果ぶんの加点も打ち消す (下の faceUp 分岐で mv を 0 にする)。 */
   const fizzles = !!action.faceUp && aiMiddleFizzles(st, side, action, d);
-  if (fizzles) v -= 45 + aiMiddleValue(d) * 0.6;
+  if (fizzles) v -= AI_W.fizzle + aiMiddleValue(d) * AI_W.fizzleMid;
   if (aiIsLockSpecialist(st, side)) v += aiLockSpecialistBias(st, side, action, d, fizzles);
   if (aiIsDshSpecialist(st, side) && W.speedPairStrategy
       && (d.id === 'SPEED_1' || d.id === 'SPEED_4')) {

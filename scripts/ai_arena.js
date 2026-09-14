@@ -14,6 +14,16 @@
  *   node scripts/ai_arena.js --budget 1000 --breadth 28,24,14   # 候補側の設定を変える
  *   node scripts/ai_arena.js --self --budget 1000              # 同一エンジンで設定だけ比較
  *
+ * 特化 AI の計測 (候補側だけ setAiSpecialist を有効にし、固定デッキで戦わせる):
+ *   node scripts/ai_arena.js --self --specialist psylock --deck PSYCHIC,DARKNESS,SPEED --opponent normal
+ *   node scripts/ai_arena.js --self --specialist psylock --opponent dsh
+ *   node scripts/ai_arena.js --self --specialist psylock --opponent same --weights spKeyHold=-20
+ *   --opponent normal : 通常 AI・ランダム編成 (候補のプロトコルとは重ねない)
+ *   --opponent dsh    : 最強 (dsh 特化 + DARKNESS,SPEED,HATE)
+ *   --opponent same   : 候補と同じ特化・同じデッキ (重みの比較用ミラー)
+ *   --pool lock       : サイキック①ロックが起きやすい編成を対戦表に足す (--filter PSYCHIC と併用)
+ *   --deck を省くと dsh は DARKNESS,SPEED,HATE、psylock は PSYCHIC,DARKNESS,SPEED
+ *
  * 判定: 候補の勝率の95%信頼区間が 50% を跨がなければ有意差あり。
  */
 
@@ -27,6 +37,8 @@ const { Worker, isMainThread, parentPort, workerData } = require('node:worker_th
 const ROOT = path.join(__dirname, '..');
 
 /* ---------- 対戦カード(編成)。Main1/Main2/Aux を偏りなく混ぜる ---------- */
+const DSH_DECK = ['DARKNESS', 'SPEED', 'HATE'];
+const DEFAULT_DECK = { dsh: DSH_DECK, psylock: ['PSYCHIC', 'DARKNESS', 'SPEED'] };
 const MATCHUPS = [
   [['DARKNESS', 'FIRE', 'WATER'], ['DEATH', 'METAL', 'SPEED']],
   [['LIFE', 'LIGHT', 'PLAGUE'], ['PSYCHIC', 'SPIRIT', 'GRAVITY']],
@@ -43,6 +55,17 @@ const MATCHUPS = [
   [['UNITY', 'CHAOS', 'TIME'], ['DIVERSITY', 'LUCK', 'WAR']],
   [['DIVERSITY', 'MIRROR', 'PEACE'], ['UNITY', 'SMOKE', 'ICE']],
   [['UNITY', 'DIVERSITY', 'CLARITY'], ['DEATH', 'SPEED', 'DARKNESS']],
+];
+/* サイキック① (PSYCHIC_2) と、覆われた裏向きを表にする手段 (DARKNESS_3 / TIME_2 / CHAOS_1)
+   が揃う編成。通常の MATCHUPS ではロックがほぼ起きず係数の差が薄まるので、
+   --pool lock のときだけ足す (既定の対戦表は変えない) */
+const LOCK_MATCHUPS = [
+  [['PSYCHIC', 'DARKNESS', 'FIRE'], ['METAL', 'LIGHT', 'WATER']],
+  [['PSYCHIC', 'DARKNESS', 'SPEED'], ['DEATH', 'GRAVITY', 'PLAGUE']],
+  [['PSYCHIC', 'TIME', 'WAR'], ['DARKNESS', 'HATE', 'LIFE']],
+  [['CHAOS', 'PSYCHIC', 'ICE'], ['SPIRIT', 'LOVE', 'COURAGE']],
+  [['PSYCHIC', 'DARKNESS', 'LUCK'], ['TIME', 'APATHY', 'FEAR']],
+  [['PSYCHIC', 'SPEED', 'CHAOS'], ['DARKNESS', 'WATER', 'CORRUPTION']],
 ];
 
 /* ---------- 引数 ---------- */
@@ -70,6 +93,12 @@ function parseArgs(argv) {
         if (k) o.weights[k] = Number(v);
       }
     }
+    else if (a === '--pool') o.pool = argv[++i];
+    else if (a === '--specialist') o.specialist = argv[++i];
+    else if (a === '--deck') o.deck = argv[++i].split(',').map(s => s.trim().toUpperCase());
+    else if (a === '--opponent') o.opponent = argv[++i];
+    else if (a === '--specialist-weights') o.specialistWeights = parseKv(argv[++i]);
+    else if (a === '--baseline-specialist-weights') o.baselineSpecialistWeights = parseKv(argv[++i]);
     else if (a === '--baseline-weights') {
       o.baselineWeights = {};
       for (const kv of argv[++i].split(',')) {
@@ -79,6 +108,14 @@ function parseArgs(argv) {
     }
   }
   return o;
+}
+function parseKv(text) {
+  const out = {};
+  for (const kv of text.split(',')) {
+    const [k, v] = kv.split('=');
+    if (k) out[k] = Number(v);
+  }
+  return out;
 }
 
 /* ---------- 統計: Wilson score interval ---------- */
@@ -115,20 +152,49 @@ if (!isMainThread) {
   if (cfg.breadth && Cand.setAiBreadth) Cand.setAiBreadth.apply(null, cfg.breadth);
   if (cfg.pimc && Cand.setAiPimc) Cand.setAiPimc(cfg.pimc);
   if (cfg.baselinePimc && Base.setAiPimc) Base.setAiPimc(cfg.baselinePimc);
-  if (cfg.weights && Cand.setAiWeights) Cand.setAiWeights(cfg.weights);
   if (cfg.baselineBreadth && Base.setAiBreadth) Base.setAiBreadth.apply(null, cfg.baselineBreadth);
-  if (cfg.baselineWeights && Base.setAiWeights) Base.setAiWeights(cfg.baselineWeights);
+  /* 打ち間違えた重みが黙って無視されると「差なし」と誤読するので、ここで止める */
+  const checkUnknown = (label, unknown) => {
+    if (Array.isArray(unknown) && unknown.length) throw new Error(label + ' に未知のキーか不正な値: ' + unknown.join(','));
+  };
+  if (cfg.weights && Cand.setAiWeights) checkUnknown('--weights', Cand.setAiWeights(cfg.weights));
+  if (cfg.baselineWeights && Base.setAiWeights) checkUnknown('--baseline-weights', Base.setAiWeights(cfg.baselineWeights));
+  if (cfg.specialistWeights) checkUnknown('--specialist-weights', Cand.setAiSpecialistWeights(cfg.specialistWeights));
+  if (cfg.baselineSpecialistWeights) checkUnknown('--baseline-specialist-weights', Base.setAiSpecialistWeights(cfg.baselineSpecialistWeights));
 
   const out = [];
   for (const job of jobs) out.push(playGame(job));
   parentPort.postMessage(out);
 
+  /* 覆われた表向きのサイキック① (= 永続ロック) を持っている側 */
+  function permanentLocks(st) {
+    const out = [false, false];
+    for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++) {
+      const stack = st.lines[l][s];
+      for (let i = 0; i < stack.length - 1; i++) {
+        const c = st.cards[stack[i]];
+        if (c.faceUp && c.def === 'PSYCHIC_2') out[s] = true;
+      }
+    }
+    return out;
+  }
+
   function playGame(job) {
-    const ais = job.candidateSide === 0 ? [Cand, Base] : [Base, Cand];
+    const cs = job.candidateSide;
+    const ais = cs === 0 ? [Cand, Base] : [Base, Cand];
+    /* 特化 AI は side 指定で有効にする (side 未指定だと探索中の相手手番まで特化扱いになる) */
+    if (Cand.setAiSpecialist) Cand.setAiSpecialist(!!cfg.specialist, cs, cfg.specialist);
+    if (Base.setAiSpecialist) Base.setAiSpecialist(!!job.baseSpecialist, 1 - cs, job.baseSpecialist);
     let res = Cand.newGame({ p0: job.p0, p1: job.p1, seed: job.seed, useControl: true });
     let guard = 0, error = null;
     const ms = [0, 0], moves = [0, 0];
+    const locked = [false, false];
     while (res.winner === null && guard++ < 700) {
+      if (cfg.trackLocks) {
+        const lk = permanentLocks(res.state);
+        if (lk[0]) locked[0] = true;
+        if (lk[1]) locked[1] = true;
+      }
       const side = res.requests.length ? res.requests[0].player : res.state.turn;
       const ai = ais[side];
       const t = now();
@@ -143,9 +209,10 @@ if (!isMainThread) {
       }
       if (res.error) { error = res.error; break; }
     }
-    const cs = job.candidateSide;
     return {
       winner: res.winner, error,
+      candidateLocked: locked[cs], baselineLocked: locked[1 - cs],
+      candidateFirst: cs === 0,   // newGame は first 未指定なら p0 が先手
       candidateWon: res.winner !== null && res.winner === cs,
       decided: res.winner !== null,
       candidateMs: ms[cs], candidateMoves: moves[cs],
@@ -170,13 +237,57 @@ const baselineSrc = opt.self
 
 /* 対戦表を作る。1つの (編成, seed) につき4通り(先後 × 候補side)を必ず消化して
    先手有利と編成の偏りを打ち消す = 少ない試合数でも分散が小さくなる */
+const BASE_POOL = opt.pool === 'lock' ? MATCHUPS.concat(LOCK_MATCHUPS) : MATCHUPS;
 const POOL = opt.filter
-  ? MATCHUPS.filter(m => opt.filter.some(p => m[0].indexOf(p) >= 0 || m[1].indexOf(p) >= 0))
-  : MATCHUPS;
+  ? BASE_POOL.filter(m => opt.filter.some(p => m[0].indexOf(p) >= 0 || m[1].indexOf(p) >= 0))
+  : BASE_POOL;
 if (!POOL.length) { console.error('--filter に一致する編成がありません'); process.exit(1); }
 
+if (opt.specialist && ['dsh', 'psylock'].indexOf(opt.specialist) < 0) {
+  console.error('--specialist は dsh か psylock'); process.exit(1);
+}
+if (opt.opponent && ['normal', 'dsh', 'same'].indexOf(opt.opponent) < 0) {
+  console.error('--opponent は normal / dsh / same'); process.exit(1);
+}
+const ALL_PROTOCOLS = [...new Set(MATCHUPS.flat(2))].sort();
+const candidateDeck = opt.deck || (opt.specialist ? DEFAULT_DECK[opt.specialist] : null);
+if (candidateDeck) {
+  const bad = candidateDeck.filter(p => ALL_PROTOCOLS.indexOf(p) < 0);
+  if (candidateDeck.length !== 3 || bad.length) {
+    console.error('--deck は既知のプロトコル3つ (不明: ' + bad.join(',') + ')'); process.exit(1);
+  }
+}
+
+/* 固定デッキ戦: 候補は常に candidateDeck。相手の編成は unit ごとに seed から決め、
+   同じ (相手編成, seed) を候補の先手・後手で1回ずつ消化して先手有利を打ち消す */
+function seededDeck(seed, exclude) {
+  let a = seed >>> 0;
+  const rnd = () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const pool = ALL_PROTOCOLS.filter(p => exclude.indexOf(p) < 0);
+  const out = [];
+  while (out.length < 3) out.push(pool.splice(Math.floor(rnd() * pool.length), 1)[0]);
+  return out;
+}
+
 const jobs = [];
-for (let i = 0; i < opt.games; i++) {
+if (candidateDeck) {
+  const opponent = opt.opponent || 'normal';
+  for (let i = 0; i < opt.games; i++) {
+    const unit = Math.floor(i / 2);
+    const seed = opt.seed + unit;
+    let oppDeck, baseSpecialist = null;
+    if (opponent === 'dsh') { oppDeck = DSH_DECK; baseSpecialist = 'dsh'; }
+    else if (opponent === 'same') { oppDeck = candidateDeck; baseSpecialist = opt.specialist || null; }
+    else oppDeck = seededDeck(seed * 7919 + 13, candidateDeck);
+    const candidateSide = i % 2;
+    jobs.push({
+      p0: candidateSide === 0 ? candidateDeck : oppDeck,
+      p1: candidateSide === 0 ? oppDeck : candidateDeck,
+      candidateSide, seed, baseSpecialist,
+    });
+  }
+} else for (let i = 0; i < opt.games; i++) {
   const unit = Math.floor(i / 4);
   const pair = POOL[unit % POOL.length];
   const variant = i % 4;
@@ -196,7 +307,15 @@ jobs.forEach((j, i) => chunks[i % workerCount].push(j));
 console.log('候補: working tree' + (opt.budget ? ' budget=' + opt.budget : '')
   + (opt.breadth ? ' breadth=' + opt.breadth.join('-') : '')
   + (opt.weights ? ' weights=' + JSON.stringify(opt.weights) : ''));
-console.log('基準: ' + (opt.self ? 'working tree (既定設定)' : opt.baseline));
+if (candidateDeck) {
+  console.log('候補の編成: ' + candidateDeck.join(',') + (opt.specialist ? ' / 特化 ' + opt.specialist : ' / 通常 AI')
+    + (opt.specialistWeights ? ' specialistWeights=' + JSON.stringify(opt.specialistWeights) : ''));
+  const opponent = opt.opponent || 'normal';
+  console.log('相手: ' + (opponent === 'dsh' ? '最強 (dsh + ' + DSH_DECK.join(',') + ')'
+    : opponent === 'same' ? '同じ特化・同じ編成 (ミラー)' : '通常 AI・ランダム編成'));
+}
+console.log('基準: ' + (opt.self ? 'working tree (既定設定)' : opt.baseline)
+  + (opt.baselineWeights ? ' weights=' + JSON.stringify(opt.baselineWeights) : ''));
 console.log('試合数 ' + opt.games + ' / 並列 ' + workerCount + ' worker\n');
 
 const started = Date.now();
@@ -209,6 +328,9 @@ for (const chunk of chunks) {
       budget: opt.budget, breadth: opt.breadth, weights: opt.weights,
       pimc: opt.pimc, baselinePimc: opt.baselinePimc,
       baselineBreadth: opt.baselineBreadth, baselineWeights: opt.baselineWeights,
+      specialist: candidateDeck ? (opt.specialist || null) : null,
+      specialistWeights: opt.specialistWeights, baselineSpecialistWeights: opt.baselineSpecialistWeights,
+      trackLocks: true,
     } },
   });
   w.on('message', (rows) => {
@@ -256,6 +378,17 @@ function report() {
   console.log('平均手数       ' + (turns / Math.max(results.length, 1)).toFixed(1));
   console.log('所要           ' + elapsed.toFixed(0) + 's (' + (results.length / elapsed).toFixed(1) + ' 戦/秒)');
   if (errors) console.log('error kinds     ' + JSON.stringify(errorKinds));
+  const split = (pred) => {
+    let w = 0, m = 0;
+    for (const r of results) if (r.decided && pred(r)) { m++; if (r.candidateWon) w++; }
+    return m ? (w / m * 100).toFixed(1) + '% (' + w + '/' + m + ')' : '-';
+  };
+  console.log('先手/後手      ' + split(r => r.candidateFirst) + ' / ' + split(r => !r.candidateFirst));
+  const cl = results.filter(r => r.candidateLocked).length, bl = results.filter(r => r.baselineLocked).length;
+  if (cl || bl) {
+    console.log('永続ロック成立 候補 ' + cl + '戦 (勝率 ' + split(r => r.candidateLocked) + ') / 基準 '
+      + bl + '戦 (候補勝率 ' + split(r => r.baselineLocked) + ')');
+  }
   console.log('='.repeat(56));
   if (verdict.startsWith('⚪')) {
     const need = Math.ceil(n * Math.pow(halfWidth / 0.05, 2));
