@@ -771,6 +771,38 @@ test('AI: 終盤の受けは、2手読みした手と1手読みだけの手の�
   assert.deepEqual(read2.map(x => x.name), ['a', 'c']);
 });
 
+/* 済ラインもリードの数に入る。済ラインに置いて2ラインリードを作る手・相手の2ラインリードを
+   崩す手は、コントロール争いに効くので「進まないラインに置く」減点を受けない */
+function compiledLeadState(opts) {
+  const st = ng().state;                       // p0: DARKNESS/FIRE/WATER, p1: DEATH/METAL/SPEED
+  st.players[0].protocols[0].compiled = true;
+  place(st, 'DARKNESS_3', 0, 0, true);         // 済ライン: 自分 2 / 相手 3
+  place(st, 'DEATH_4', 1, 0, true);
+  if (opts.myLead) place(st, 'FIRE_4', 0, 1, true);       // ライン1 は自分がリード
+  if (opts.oppLead) place(st, 'SPEED_4', 1, 2, true);     // ライン2 は相手がリード
+  setHand(st, 0, ['DARKNESS_5']);
+  st.turn = 0;
+  st.control = opts.control === undefined ? -1 : opts.control;
+  return st;
+}
+const compiledDown = { type: 'play', card: uidOf('DARKNESS_5', 0), line: 0, faceUp: false };   // 裏で 2+2 = 4 > 3
+
+test('AI事前評価: 済ラインに置いて2ラインリードになる手は、済ラインの減点を受けない', () => {
+  const swing = Engine.ai.actionBias(compiledLeadState({ myLead: true }), compiledDown, 0);
+  const flat = Engine.ai.actionBias(compiledLeadState({}), compiledDown, 0);
+  assert.ok(swing - flat >= 70, `2ラインリードになる方が高い (差 ${Math.round(swing - flat)})`);
+  const held = Engine.ai.actionBias(compiledLeadState({ myLead: true, control: 0 }), compiledDown, 0);
+  assert.ok(held - flat < 5, `既にコントロールを持っていれば従来どおり (差 ${Math.round(held - flat)})`);
+});
+
+test('AI事前評価: 済ラインに置いて相手の2ラインリードを崩す手は、済ラインの減点を受けない', () => {
+  const block = Engine.ai.actionBias(compiledLeadState({ oppLead: true }), compiledDown, 0);
+  const flat = Engine.ai.actionBias(compiledLeadState({}), compiledDown, 0);
+  assert.ok(block - flat >= 70, `相手のリードを崩す方が高い (差 ${Math.round(block - flat)})`);
+  const theirs = Engine.ai.actionBias(compiledLeadState({ oppLead: true, control: 1 }), compiledDown, 0);
+  assert.ok(theirs - flat < 5, `相手が既にコントロールを持っていれば従来どおり (差 ${Math.round(theirs - flat)})`);
+});
+
 test('AI: 相手のリコンパイルによるターンスキップを評価する', () => {
   const before = { actionLog: [] };
   const oppRecompile = { state: { actionLog: ['P2: リコンパイル'] } };

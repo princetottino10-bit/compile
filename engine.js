@@ -2141,6 +2141,8 @@ const AI_W = {
   // compiledUp/Down: コンパイル済みラインへ表/裏で出す減点、recompile: そこで再コンパイルしそうなとき
   // midUp: 表向きの中段効果の重み、lowUp: 効果の弱い値0-1を表で出す減点、lowDown: 低値を裏で出す加点 (値1あたり)
   compiledUp: 75, compiledDown: 75, recompile: 160, midUp: 0.35, lowUp: 20, lowDown: 5,
+  // 済ラインへのプレイで自分の2ラインリードを作る/相手の2ラインリードを崩すとき、compiledUp/Down の減点を戻す割合。0 で従来どおり
+  compiledLead: 1,
 };
 /* サイキック①ロックまわりの重み。通常 AI・特化 AI の区別なく共通で使う。
    lockPermanent/lockTemporary: 覆われた (永続) / 一番上 (1ターン) のロックの価値
@@ -2179,6 +2181,8 @@ const AI_DSH_W = {
   marginLead: 6, marginTrail: 6, refreshPerCard: 13, refreshTempo: 26,
   compileSafety: 1, hateDownPenalty: 20, speedDownPenalty: 20, speedPairStrategy: 1,
   compiledUp: 75, compiledDown: 75, recompile: 160, midUp: 0.35, lowUp: 20, lowDown: 5,
+  // 済ラインへのプレイで自分の2ラインリードを作る/相手の2ラインリードを崩すとき、compiledUp/Down の減点を戻す割合。0 で従来どおり
+  compiledLead: 0,   // 最強同士のミラー 480 戦で 49.8% [45.3, 54.2]。効果が出ていないので切っておく
 };
 function setAiSpecialistWeights(obj) {
   const unknown = [];
@@ -2266,6 +2270,21 @@ function aiLineLeadCount(st, side) {
   let wins = 0;
   for (let l = 0; l < 3; l++) if (lineTotal(st, l, side) > lineTotal(st, l, op)) wins++;
   return wins;
+}
+
+/* 済ライン line の自分の合計が after になったとき、コントロール争いが動くか (0 / 1)。
+   自分: 2ラインリード未満 → 以上 (コントロールを持っていないとき)。
+   相手: 2ラインリード以上 → 未満 (相手がコントロールを持っていないとき)。効果による他ラインの変化は見ない */
+function aiCompiledLeadSwing(st, side, line, after) {
+  if (!st.useControl) return 0;
+  const op = 1 - side;
+  const theirs = lineTotal(st, line, op), before = lineTotal(st, line, side);
+  const mineLead = aiLineLeadCount(st, side), opLead = aiLineLeadCount(st, op);
+  const gainMine = before <= theirs && after > theirs;
+  const breakOp = theirs > before && theirs <= after;
+  if (gainMine && mineLead + 1 >= 2 && st.control !== side) return 1;
+  if (breakOp && opLead >= 2 && opLead - 1 < 2 && st.control !== op) return 1;
+  return 0;
 }
 
 function aiControlLeverage(st, side) {
@@ -2597,7 +2616,13 @@ function aiActionBias(st, action, side) {
   if (compiledLine) {
     const add = action.faceUp ? d.value : 2;
     const likelyRecompile = mine + add >= 10 && mine + add > theirs;
-    v -= likelyRecompile ? W.recompile : (action.faceUp ? W.compiledUp : W.compiledDown);
+    if (likelyRecompile) v -= W.recompile;
+    else {
+      /* 済ラインもリードの数には入る。ここで相手を越えれば2ラインリード (次の開始でコントロール獲得)、
+         相手のリードを崩せば奪取を防げる。その場合は「進まないラインに置く」減点を戻す */
+      const penalty = action.faceUp ? W.compiledUp : W.compiledDown;
+      v -= penalty * (1 - W.compiledLead * aiCompiledLeadSwing(st, side, action.line, mine + add));
+    }
   }
   if (action.faceUp) {
     const mv = fizzles ? 0 : aiMiddleValue(d);
@@ -3767,7 +3792,7 @@ function aiAnswer(state, req) {
 const Engine = {
   init, newGame, apply, legalActions, setTrace, setAiLevel, setAiThinkBudget, setAiBreadth, setAiPimc, setAiWeights, setAiSpecialist, setAiSpecialistWeights,
   lineTotal, cardValue, compilableLines, canPlay, locate,
-  ai: { action: aiAction, answer: aiAnswer, score: aiScore, middleFizzles: aiMiddleFizzles, transitionScore: aiTransitionScore, compilePassChance: aiCompilePassChance, informationState: aiInformationState, rootValues: aiRootValues, vetoOrder: aiVetoOrder, randomPicks, smartPicks },
+  ai: { action: aiAction, answer: aiAnswer, score: aiScore, middleFizzles: aiMiddleFizzles, transitionScore: aiTransitionScore, compilePassChance: aiCompilePassChance, informationState: aiInformationState, rootValues: aiRootValues, vetoOrder: aiVetoOrder, actionBias: aiActionBias, randomPicks, smartPicks },
   get defs() { return DEFS; },
   get protos() { return PROTOS; }
 };
