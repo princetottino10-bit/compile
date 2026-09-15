@@ -2137,6 +2137,10 @@ const AI_W = {
   refreshPerCard: 13, refreshTempo: 26, compileSafety: 1,
   // 対象の無い中段を表で切る (空撃ち) 減点: fizzle + 中段の効果値 × fizzleMid
   fizzle: 45, fizzleMid: 0.6,
+  // 手の事前評価 (aiActionBias) の表向き/裏向きまわり。
+  // compiledUp/Down: コンパイル済みラインへ表/裏で出す減点、recompile: そこで再コンパイルしそうなとき
+  // midUp: 表向きの中段効果の重み、lowUp: 効果の弱い値0-1を表で出す減点、lowDown: 低値を裏で出す加点 (値1あたり)
+  compiledUp: 75, compiledDown: 75, recompile: 160, midUp: 0.35, lowUp: 20, lowDown: 5,
 };
 /* サイキック①ロックまわりの重み。通常 AI・特化 AI の区別なく共通で使う。
    lockPermanent/lockTemporary: 覆われた (永続) / 一番上 (1ターン) のロックの価値
@@ -2174,6 +2178,7 @@ const AI_DSH_W = {
   leadGain: 50, oppLeadGain: 78, leadBonus: 18, oppLeadBonus: 24,
   marginLead: 6, marginTrail: 6, refreshPerCard: 13, refreshTempo: 26,
   compileSafety: 1, hateDownPenalty: 20, speedDownPenalty: 20, speedPairStrategy: 1,
+  compiledUp: 75, compiledDown: 75, recompile: 160, midUp: 0.35, lowUp: 20, lowDown: 5,
 };
 function setAiSpecialistWeights(obj) {
   const unknown = [];
@@ -2592,18 +2597,18 @@ function aiActionBias(st, action, side) {
   if (compiledLine) {
     const add = action.faceUp ? d.value : 2;
     const likelyRecompile = mine + add >= 10 && mine + add > theirs;
-    v -= likelyRecompile ? 160 : 75;
+    v -= likelyRecompile ? W.recompile : (action.faceUp ? W.compiledUp : W.compiledDown);
   }
   if (action.faceUp) {
     const mv = fizzles ? 0 : aiMiddleValue(d);
-    v += mv * 0.35;
+    v += mv * W.midUp;
     v += (d.value - 2) * 7;
     if (gap <= d.value && mine + d.value > theirs && !st.players[side].protocols[action.line].compiled) v += 150;
-    if (mv < 8 && d.value < 2) v -= 20;
+    if (mv < 8 && d.value < 2) v -= W.lowUp;
     if (gap <= d.value && !st.players[side].protocols[action.line].compiled) v += 22;
     if (mine + d.value > theirs) v += 8;
   } else {
-    v += (2 - d.value) * 5;
+    v += (2 - d.value) * W.lowDown;
     if (['HATE_4', 'HATE_5'].includes(d.id)) v -= W.hateDownPenalty || 0;
     if (['SPEED_2', 'SPEED_4'].includes(d.id)) v -= W.speedDownPenalty || 0;
     if (gap <= 2 && mine + 2 > theirs && !st.players[side].protocols[action.line].compiled) v += 115;
