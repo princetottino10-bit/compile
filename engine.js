@@ -566,10 +566,13 @@ function playToField(ctx, uid, line, side, faceUp, belowUid) {
     stack.splice(i < 0 ? 0 : i, 0, uid);
   } else {
     const coveredTriggers = stack.length ? collectWouldBeCovered(ctx, stack[stack.length - 1], uid) : [];
-    stack.push(uid);
     log(ctx, `P${side + 1}: ${faceUp ? DEFS[c.def].id : 'カード'} をライン${line + 1}に${faceUp ? '表' : '裏'}でプレイ`, uid);
     c.commitDest = 'line' + line;
+    /* 「覆われることになったとき」は、まだ覆われる前に解決する。
+       先にスタックへ積んでから解決すると、HATE 4 が自分を「覆われたカード」として
+       削除するなど、移動で覆われたとき (doShift は着地前に解決) と結果が食い違った。 */
     runWouldBeCovered(ctx, coveredTriggers);
+    stack.push(uid);
     c.zone = 'field';
     c.commitDest = null;
     removeFrom(st.commitStack, uid);

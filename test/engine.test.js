@@ -453,7 +453,9 @@ test('FIRE_1 lower: covered trigger resolves after the new card is on field', ()
   assert.equal(res.requests.length, 0);
   const playStep = res.trace.find(t => t.msg.includes('FIRE_6') && t.msg.includes('プレイ'));
   assert.ok(playStep);
-  assert.deepEqual(playStep.st.lines[1][0], [uidOf('FIRE_1', 0), uidOf('FIRE_6', 0)]);
+  /* プレイの時点ではまだ着地していない (覆われる側のトリガーが先に解決される) */
+  assert.deepEqual(playStep.st.lines[1][0], [uidOf('FIRE_1', 0)]);
+  assert.equal(playStep.st.cards[uidOf('FIRE_6', 0)].zone, 'committed');
   const st2 = res.state;
   // FIRE_1のトリガーは覆うカードの着地前に解決される。
   // FIRE_6は未着地(committed)なのでflip対象にならず、表のまま着地してミドルが解決される。
@@ -736,19 +738,48 @@ test('AI all levels: uses its last card to deny control when opponent has one pr
   Engine.setAiThinkBudget(590);
 });
 
-test('AI all levels: does not cover HATE 4 when its lower effect can only delete itself', () => {
-  for (const level of [0, 1, 2]) {
-    const st = ng({ p0: ['HATE', 'SPEED', 'DARKNESS'] }).state;
-    place(st, 'HATE_5', 0, 0, true);
-    setHand(st, 0, ['SPEED_6']);
-    st.turn = 0;
-    Engine.setAiLevel(level);
-    Engine.setAiThinkBudget(40);
-    const action = Engine.ai.action(st);
-    assert.ok(action.type !== 'play' || action.line !== 0, `level ${level}: ${JSON.stringify(action)}`);
-  }
-  Engine.setAiLevel(2);
-  Engine.setAiThinkBudget(590);
+test('HATE_4 (HATE_5): 覆われることになったとき、自分自身はまだ覆われていないので削除されない', () => {
+  /* 一番上の HATE_5 を裏向きのプレイで覆う。覆われたカードが他に無いので何も削除されない */
+  const st = ng({ p0: ['HATE', 'SPEED', 'DARKNESS'] }).state;
+  const hate = place(st, 'HATE_5', 0, 0, true);
+  setHand(st, 0, ['SPEED_6']);
+  let res = Engine.apply(st, { type: 'play', card: uidOf('SPEED_6', 0), line: 0, faceUp: false });
+  assert.equal(res.error, null);
+  res = drive(res, () => []);
+  assert.equal(res.state.cards[hate].zone, 'field', 'HATE 4 は場に残る');
+  assert.deepEqual(res.state.lines[0][0], [hate, uidOf('SPEED_6', 0)]);
+
+  /* 下に覆われたカードがあれば、そちら (最小値) が削除される */
+  const st2 = ng({ p0: ['HATE', 'SPEED', 'DARKNESS'] }).state;
+  const under = place(st2, 'DARKNESS_2', 0, 0, true);
+  const hate2 = place(st2, 'HATE_5', 0, 0, true);
+  setHand(st2, 0, ['SPEED_6']);
+  let r2 = Engine.apply(st2, { type: 'play', card: uidOf('SPEED_6', 0), line: 0, faceUp: false });
+  r2 = drive(r2, () => []);
+  assert.match(r2.state.cards[under].zone, /^trash/, '覆われていた DARKNESS が削除される');
+  assert.equal(r2.state.cards[hate2].zone, 'field');
+});
+
+test('「覆われることになったとき」はプレイで覆われても移動で覆われても同じ結果になる', () => {
+  const play = ng({ p0: ['HATE', 'SPEED', 'DARKNESS'] }).state;
+  const hateA = place(play, 'HATE_5', 0, 0, true);
+  setHand(play, 0, ['SPEED_1']);
+  let ra = drive(Engine.apply(play, { type: 'play', card: uidOf('SPEED_1', 0), line: 0, faceUp: false }), () => []);
+
+  const shift = ng({ p0: ['HATE', 'SPEED', 'DARKNESS'] }).state;
+  const hateB = place(shift, 'HATE_5', 0, 0, true);
+  place(shift, 'SPEED_1', 0, 1, false);
+  setHand(shift, 0, ['SPEED_4']);           // 中段: 自分の他のカードを1枚移動
+  let rb = Engine.apply(shift, { type: 'play', card: uidOf('SPEED_4', 0), line: 2, faceUp: true });
+  rb = drive(rb, (req) => {
+    if (req.kind === 'pickLine') return [req.lines.includes(0) ? 0 : req.lines[0]];
+    /* 終了時の SPEED 3 の任意移動 (optional-shift) は使わない。中段の移動だけ答える */
+    if (req.kind === 'pickCard' && req.prompt === 'shift') return [uidOf('SPEED_1', 0)];
+    return [];
+  });
+  assert.deepEqual(rb.state.lines[0][0], [hateB, uidOf('SPEED_1', 0)], 'SPEED 0 が HATE 4 の上に移動している');
+  assert.equal(ra.state.cards[hateA].zone, 'field');
+  assert.equal(rb.state.cards[hateB].zone, 'field');
 });
 
 test('AI: 終盤の受けは、2手読みした手と1手読みだけの手の値を混ぜて並べない', () => {
