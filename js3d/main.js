@@ -1887,7 +1887,7 @@ function checkRevealed(st) {
 /* 画面リサイズ/回転: カメラは stage が追従するが、手札や山札の実配置は
    状態遷移時にしか書き直されないため、ここで取り直す */
 let relayoutTimer = null;
-window.addEventListener('resize', () => {
+function onViewportChanged() {
   syncHandDrawerForViewport();
   clearTimeout(relayoutTimer);
   const attempt = (n) => {
@@ -1896,7 +1896,10 @@ window.addEventListener('resize', () => {
     if (n < 20) relayoutTimer = setTimeout(() => attempt(n + 1), 300);   // 演出中は後で再試行
   };
   relayoutTimer = setTimeout(() => attempt(0), 220);
-});
+}
+window.addEventListener('resize', onViewportChanged);
+/* stage が実際の大きさの変化を検知したとき (回転直後の遅れて確定する大きさなど) */
+window.addEventListener('compile:viewport', onViewportChanged);
 
 /* ---------- HUD ---------- */
 function refreshHud() {

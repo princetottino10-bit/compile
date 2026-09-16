@@ -250,8 +250,13 @@ export function createStage(container) {
   }
 
   /* --- リサイズ --- */
+  let appliedW = -1, appliedH = -1;
   function resize() {
     const w = container.clientWidth, h = container.clientHeight;
+    /* 同じ大きさなら何もしない (下の監視経路から何度呼ばれても安全にする) */
+    if (w === appliedW && h === appliedH) return;
+    if (w < 2 || h < 2) return;                         // 非表示中の 0 サイズは採らない
+    appliedW = w; appliedH = h;
     const aspect = w / Math.max(1, h);
     camera.aspect = aspect;
     const prevK = VIEW.k;
@@ -262,11 +267,21 @@ export function createStage(container) {
     composer.setSize(w, h);
     /* 縦横が切り替わったら定位置を取り直す (演出中でも最後に home へ戻る) */
     if (Math.abs(prevK - VIEW.k) > 0.15) home(320);
+    /* 手札の並びなど、盤面側の配置も取り直させる */
+    window.dispatchEvent(new CustomEvent('compile:viewport', { detail: { w, h, k: VIEW.k } }));
   }
+  /* 画面の向きが変わった瞬間は、ブラウザがまだ新しい大きさを返さないことがある。
+     resize イベント1回に頼ると、それを取りこぼした時点で二度と追従しなくなった。
+     実際の大きさの変化を複数の経路で拾い、最後は毎フレームの照合で必ず追いつく。 */
   window.addEventListener('resize', resize);
-  /* 起動時にも一度判定する。resize イベントを待つだけだと、スマホのように
-     最初から縦で開いた場合に VIEW.k が 0 (横画面扱い) のまま残り、
-     縦持ち用の手札 (扇ではなく段組み) やカメラが一度も有効にならなかった。 */
+  window.addEventListener('orientationchange', () => {
+    resize();
+    setTimeout(resize, 120);
+    setTimeout(resize, 450);
+  });
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', resize);
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(() => resize()).observe(container);
+  /* 起動時にも一度判定する (最初から縦で開くスマホで横画面扱いのまま残らないように) */
   resize();
 
   /* --- ループ --- */
@@ -290,6 +305,8 @@ export function createStage(container) {
 
   function tick(catchUp) {
     lastTick = performance.now();
+    /* 最後の砦: イベントを全部取りこぼしても、大きさがずれていたらここで合わせる */
+    if (container.clientWidth !== appliedW || container.clientHeight !== appliedH) resize();
     /* 通常フレームは 50ms で頭打ち。ウォッチドッグ経由は間隔が長いので緩める */
     const dt = Math.min(catchUp ? 1.2 : 0.05, clock.getDelta());
     elapsed += dt;
