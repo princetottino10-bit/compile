@@ -813,9 +813,9 @@ html.mobile-ui .play-choice button{white-space:normal;font-size:.62rem;padding:6
 <div id="cardTip"></div>
 
 <!-- INLINE:ASSETS:BEGIN — scripts/inline_assets.py が data/*.json と engine.js をここに埋め込む。手動編集禁止 -->
-<script>window.COMPILE_CARDS={"protocols":[{"name":"DARKNESS","displayName":"DARKNESS","tags":"手札維持／移動／操作","color":"#6A1B9A","set":"Main 1","cards":[{"id":"DARKNESS_1","number":1,"value":0,"upper":"","middle":"カードを3枚引く。相手の覆われているカードを1枚移動させる。","lower":"","effectTypes":["draw","shift"]},{"id":"DARKNESS_2","number":2,"value":1,"upper":"","middle":"相手のカードを1枚反転させる。あなたはそのカードを移動させることができる。","lower":"","effectTypes":["flip","shift"]},{"id":"DARKNESS_3","number":3,"value":2,"upper":"このスタックにあるすべての裏向きのカードの値はそれぞれ4になる。","middle":"このラインにある、覆われているカードを1枚反転させることができる。","lower":"","effectTypes":["flip"]},{"id":"DARKNESS_4","number":4,"value":3,"upper":"","middle":"他の1ラインにカードを裏向きで1枚プレイする。","lower":"","effectTypes":["play"]},{"id":"DARKNESS_5","number":5,"value":4,"upper":"","middle":"裏向きのカードを1枚移動させる。","lower":"","effectTypes":["shift"]},{"id":"DARKNESS_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"DEATH","displayName":"DEATH","tags":"削除／手札維持","color":"#37474F","set":"Main 1","cards":[{"id":"DEATH_1","number":1,"value":0,"upper":"","middle":"他の各ラインにあるカードを1枚ずつ削除する。","lower":"","effectTypes":["delete"],"codex":"【明確化】DEATH 0の中段コマンドが発動したとき、オーナーは処理が必要なラインを確認する。次に処理するラインを1つずつ選び、各ラインで覆われていないカードを1枚選んで削除し、その削除の結果を処理してから次のラインに移る。"},{"id":"DEATH_2","number":2,"value":1,"upper":"開始：カードを1枚引くことができる。そうした場合、他のカードを1枚削除し、そのあとこのカードを削除する。","middle":"","lower":"","effectTypes":["draw","delete"],"codex":"【エラッタ(2024/10)】上段コマンドは「開始：カードを1枚引くことができる。そうした場合、他のカードを1枚削除し、そのあとこのカードを削除する。」に修正。"},{"id":"DEATH_3","number":3,"value":2,"upper":"","middle":"1ラインを選び、そのラインの値が1か2どちらかのすべてのカードを削除する。","lower":"","effectTypes":["delete"]},{"id":"DEATH_4","number":4,"value":3,"upper":"","middle":"裏向きのカードを1枚削除する。","lower":"","effectTypes":["delete"]},{"id":"DEATH_5","number":5,"value":4,"upper":"","middle":"値が0か1のカードを1枚削除する。","lower":"","effectTypes":["delete"]},{"id":"DEATH_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"FIRE","displayName":"FIRE","tags":"捨て札にして効果を得る","color":"#E53935","set":"Main 1","cards":[{"id":"FIRE_1","number":1,"value":0,"upper":"","middle":"他のカードを1枚反転させる。カードを2枚引く。","lower":"このカードが覆われることになったとき：先にカードを1枚引き、他のカードを1枚反転させる。","effectTypes":["draw","flip"],"codex":"【エラッタ(2024/12)】下段コマンドは「このカードが覆われることになったとき：先に、カードを1枚引く。そのあと、他のカードを1枚反転させる。」に修正。"},{"id":"FIRE_2","number":2,"value":1,"upper":"","middle":"あなたは手札を1枚捨て札にする。そうした場合、カードを1枚削除する。","lower":"","effectTypes":["delete"]},{"id":"FIRE_3","number":3,"value":2,"upper":"","middle":"あなたは手札を1枚捨て札にする。そうした場合、カードを1枚戻す。","lower":"","effectTypes":["return"]},{"id":"FIRE_4","number":4,"value":3,"upper":"","middle":"","lower":"終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。","effectTypes":["flip"]},{"id":"FIRE_5","number":5,"value":4,"upper":"","middle":"あなたは手札があれば1枚以上捨て札にする。捨て札にした枚数＋1枚のカードを引く。","lower":"","effectTypes":["draw"]},{"id":"FIRE_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"GRAVITY","displayName":"GRAVITY","tags":"移動／反転／手札維持","color":"#5D4037","set":"Main 1","cards":[{"id":"GRAVITY_1","number":1,"value":0,"upper":"","middle":"このライン内にあるカード2枚ごとに、あなたのデッキの一番上のカード1枚をこのカードの下に裏向きでプレイする。","lower":"","effectTypes":["play"]},{"id":"GRAVITY_2","number":2,"value":1,"upper":"","middle":"カードを2枚引く。このラインから、またはこのラインへとカードを1枚移動させる。","lower":"","effectTypes":["draw","shift"]},{"id":"GRAVITY_3","number":3,"value":2,"upper":"","middle":"カードを1枚反転させる。そのカードをこのラインへと移動させる。","lower":"","effectTypes":["flip","shift"],"codex":"【明確化】GRAVITY 2は反転したカードが覆われていても移動させる。「そのカード」は特定のカードを指し、覆われたカードの操作制限より優先される。"},{"id":"GRAVITY_4","number":4,"value":4,"upper":"","middle":"裏向きのカードを1枚、このラインへと移動させる。","lower":"","effectTypes":["shift"]},{"id":"GRAVITY_5","number":5,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]},{"id":"GRAVITY_6","number":6,"value":6,"upper":"","middle":"相手は自分のデッキの一番上のカードをこのラインに裏向きで1枚プレイする。","lower":"","effectTypes":["play"]}]},{"name":"LIFE","displayName":"LIFE","tags":"反転／デッキの上からのプレイ／手札維持","color":"#43A047","set":"Main 1","cards":[{"id":"LIFE_1","number":1,"value":0,"upper":"終了：このカードが覆われている場合、このカードを削除する。","middle":"あなたのデッキの一番上のカードを、あなたのカードがある各ラインに裏向きで1枚ずつプレイする。","lower":"","effectTypes":["play"],"codex":"【エラッタ(2024/10)】上段コマンドは「終了：このカードが覆われている場合、このカードを削除する。」に修正。このカードは下段コマンドを持たない。\n【明確化】LIFE 0の中段コマンドが発動したとき、オーナーは処理が必要なラインを確認し、1つずつ処理する。LIFE 0がこの処理中に覆われた場合、中段コマンドは停止する。\n【明確化】デッキからカードをプレイする場合、デッキが空でもシャッフルは強制されない。"},{"id":"LIFE_2","number":2,"value":1,"upper":"","middle":"カード1枚を反転させる。カード1枚を反転させる。","lower":"","effectTypes":["flip"]},{"id":"LIFE_3","number":3,"value":2,"upper":"","middle":"カードを1枚引く。あなたは裏向きのカードを1枚反転させることができる。","lower":"","effectTypes":["draw","flip"]},{"id":"LIFE_4","number":4,"value":3,"upper":"","middle":"","lower":"このカードが覆われることになったとき：先にあなたのデッキの一番上のカードを他の1ラインに裏向きで1枚プレイする。","effectTypes":["play"]},{"id":"LIFE_5","number":5,"value":4,"upper":"","middle":"このカードが他のカードを覆っている場合、カードを1枚引く。","lower":"","effectTypes":["draw"]},{"id":"LIFE_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"LIGHT","displayName":"LIGHT","tags":"手札維持／反転／移動","color":"#FDD835","set":"Main 1","cards":[{"id":"LIGHT_1","number":1,"value":0,"upper":"","middle":"カードを1枚反転させる。そのカードの値に等しい枚数のカードを引く。","lower":"","effectTypes":["draw","flip"],"codex":"【明確化】中段コマンド「カードを1枚反転させる。そのカードの値に等しい枚数のカードを引く。」の処理：覆われていないカード1枚を選び反転させ、発動したテキストを処理する。その後、そのカードの現在の値に等しい枚数を引く。\n【裁定】選んだカードがプレイから除去された場合でも、「そのカード」で直接参照されるため、現在の値をチェックする。"},{"id":"LIGHT_2","number":2,"value":1,"upper":"","middle":"","lower":"終了：カードを1枚引く。","effectTypes":["draw"]},{"id":"LIGHT_3","number":3,"value":2,"upper":"","middle":"カードを2枚引く。裏向きのカードを1枚公開する。あなたは公開したカードを移動させるか反転させることができる。","lower":"","effectTypes":["draw","flip","shift"]},{"id":"LIGHT_4","number":4,"value":3,"upper":"","middle":"このラインにある裏向きのすべてのカードを、他の1ラインへと移動させる。","lower":"","effectTypes":["shift"],"codex":"【明確化】LIGHT 3で移動する裏向きのカードは、スタック内の相対的な位置を維持し、すべて同じラインに移動する。"},{"id":"LIGHT_5","number":5,"value":4,"upper":"","middle":"相手は自分の手札を公開する。","lower":"","effectTypes":["other"]},{"id":"LIGHT_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"METAL","displayName":"METAL","tags":"相手の妨害／手札維持／反転","color":"#78909C","set":"Main 1","cards":[{"id":"METAL_1","number":1,"value":0,"upper":"このラインでの相手の合計値は2減る。","middle":"カードを1枚反転させる。","lower":"","effectTypes":["flip"]},{"id":"METAL_2","number":2,"value":1,"upper":"","middle":"カードを2枚引く。相手は次の手番でコンパイルすることはできない。","lower":"","effectTypes":["draw"],"codex":"【エラッタ(2024/12)】中段コマンドは「カードを2枚引く。相手は次の手番でコンパイルすることはできない。」に修正。\n【明確化】METAL 1はテキストが見えている限り、相手の次の手番でコンパイルを防ぐ。プレイかリフレッシュを選ぶ必要がある。"},{"id":"METAL_3","number":3,"value":2,"upper":"相手はこのラインにカードを裏向きでプレイすることはできない。","middle":"","lower":"","effectTypes":["play"]},{"id":"METAL_4","number":4,"value":3,"upper":"","middle":"カードを1枚引く。カードが8枚以上ある、ほかの1ライン内のすべてのカードを削除する。","lower":"","effectTypes":["draw","delete"]},{"id":"METAL_5","number":5,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]},{"id":"METAL_6","number":6,"value":6,"upper":"このカードが覆われるか反転することになったとき：先にこのカードを削除する。","middle":"","lower":"","effectTypes":["flip"],"codex":"【明確化】METAL 6が上段コマンドで自身を削除した場合、覆っていたカードのテキストが発動するなら、コミットされたカードがフィールドに入る前に発動する。\n【明確化】METAL 6が反転の結果として自身を削除した場合、「反転」コマンドは消費され、他のカードや捨て札のMETAL 6には使えない。"}]},{"name":"PLAGUE","displayName":"PLAGUE","tags":"捨て札の強制／反転","color":"#827717","set":"Main 1","cards":[{"id":"PLAGUE_1","number":1,"value":0,"upper":"","middle":"相手は手札を1枚捨て札にする。","lower":"相手はこのラインにカードをプレイすることはできない。","effectTypes":["discard","play"]},{"id":"PLAGUE_2","number":2,"value":1,"upper":"相手が手札を捨て札にしたあと：カードを1枚引く。","middle":"相手は手札を1枚捨て札にする。","lower":"","effectTypes":["draw","discard"]},{"id":"PLAGUE_3","number":3,"value":2,"upper":"","middle":"あなたは手札があれば1枚以上捨て札にする。相手はあなたが捨て札にした枚数＋1枚の手札を捨て札にする。","lower":"","effectTypes":["discard"]},{"id":"PLAGUE_4","number":4,"value":3,"upper":"","middle":"覆われていない、表向きの他のカードを反転させる。","lower":"","effectTypes":["flip"],"codex":"【エラッタ(2025/9)】中段コマンドは「覆われていない、表向きの他のカードをそれぞれ反転させる。」に修正。機能に変更はないが、意図をより明確にした。\n【明確化】「all」ではなく「each」なので、覆われていないカードのみが対象。発動時、覆われていない表向きのカードをそれぞれ確認し、1枚ずつ処理する。"},{"id":"PLAGUE_5","number":5,"value":4,"upper":"","middle":"","lower":"終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。","effectTypes":["delete","flip"]},{"id":"PLAGUE_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"PSYCHIC","displayName":"PSYCHIC","tags":"手札維持／操作／移動","color":"#7E57C2","set":"Main 1","cards":[{"id":"PSYCHIC_1","number":1,"value":0,"upper":"","middle":"カードを2枚引く。相手は自分の手札を2枚捨て札にして、そのあと相手は手札を公開する。","lower":"","effectTypes":["draw","discard"]},{"id":"PSYCHIC_2","number":2,"value":1,"upper":"相手はカードを裏向きでのみプレイすることができる。","middle":"","lower":"開始：このカードを反転させる。","effectTypes":["other"]},{"id":"PSYCHIC_3","number":3,"value":2,"upper":"","middle":"相手は自分の手札を2枚捨て札にする。あなたは相手のプロトコルを並べ替える。","lower":"","effectTypes":["rearrange","discard"]},{"id":"PSYCHIC_4","number":4,"value":3,"upper":"","middle":"相手は手札を1枚捨て札にする。あなたは相手のカードを1枚移動させる。","lower":"","effectTypes":["shift","discard"]},{"id":"PSYCHIC_5","number":5,"value":4,"upper":"","middle":"","lower":"終了：あなたは相手のカードを1枚戻すことができる。そうした場合、このカードを反転させる。","effectTypes":["flip","return"]},{"id":"PSYCHIC_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"SPEED","displayName":"SPEED","tags":"手札維持／プレイ／移動","color":"#FF8F00","set":"Main 1","cards":[{"id":"SPEED_1","number":1,"value":0,"upper":"","middle":"カードを1枚プレイする。","lower":"","effectTypes":["play"]},{"id":"SPEED_2","number":2,"value":1,"upper":"あなたがキャッシュをクリアしたあと：カードを1枚引く。","middle":"カードを2枚引く。","lower":"","effectTypes":["draw"]},{"id":"SPEED_3","number":3,"value":2,"upper":"このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。","middle":"","lower":"","effectTypes":["shift"],"codex":"【明確化】コンパイル時、ライン内のすべてのカードが同時に削除される。SPEED 2がこの方法で削除される場合、代わりに他のラインに移動させる。SPEED 2の削除のみが防がれ、コンパイル自体は変更されない。"},{"id":"SPEED_4","number":4,"value":3,"upper":"","middle":"あなたの他のカードを1枚移動させる。","lower":"終了：あなたは自分のカードを1枚移動させることができる。そうした場合、このカードを反転させる。","effectTypes":["flip","shift"]},{"id":"SPEED_5","number":5,"value":4,"upper":"","middle":"相手の裏向きのカードを1枚移動させる。","lower":"","effectTypes":["shift"]},{"id":"SPEED_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"SPIRIT","displayName":"SPIRIT","tags":"反転／移動／手札維持","color":"#26C6DA","set":"Main 1","cards":[{"id":"SPIRIT_1","number":1,"value":0,"upper":"","middle":"リフレッシュする。カードを1枚引く。","lower":"あなたのキャッシュの確認フェイズを省略する。","effectTypes":["draw"],"codex":"【明確化】リフレッシュの指示に従う場合、コントロールコンポーネントの使用を含む通常のリフレッシュアクションとなる。"},{"id":"SPIRIT_2","number":2,"value":1,"upper":"あなたがカードを表向きでプレイするときには、プロトコルを対応させずにプレイすることができる。","middle":"カードを2枚引く。","lower":"開始：あなたは手札を1枚捨て札にするか、このカードを反転させる。","effectTypes":["draw","flip","play"],"codex":"【エラッタ(2024/10)】上段コマンドは「あなたがカードを表向きでプレイするときには、プロトコルを対応させずにプレイすることができる。」に修正。"},{"id":"SPIRIT_3","number":3,"value":2,"upper":"","middle":"あなたはカードを1枚反転させることができる。","lower":"","effectTypes":["flip"]},{"id":"SPIRIT_4","number":4,"value":3,"upper":"あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。","middle":"","lower":"","effectTypes":["shift"]},{"id":"SPIRIT_5","number":5,"value":4,"upper":"","middle":"あなたのプロトコルのうち2枚の位置を入れ替える。","lower":"","effectTypes":["rearrange"]},{"id":"SPIRIT_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"WATER","displayName":"WATER","tags":"戻す、手札維持、反転","color":"#1E88E5","set":"Main 1","cards":[{"id":"WATER_1","number":1,"value":0,"upper":"","middle":"他のカードを1枚反転させる。このカードを反転させる。","lower":"","effectTypes":["flip"]},{"id":"WATER_2","number":2,"value":1,"upper":"","middle":"あなたのデッキの一番上のカードを、他の各ラインに裏向きで1枚ずつプレイする。","lower":"","effectTypes":["play"],"codex":"【明確化】WATER 1の中段コマンドが発動したとき、オーナーは処理が必要なラインを確認し、1つずつ処理する。\n【明確化】デッキからカードをプレイする場合、デッキが空でもシャッフルは強制されない。"},{"id":"WATER_3","number":3,"value":2,"upper":"","middle":"カードを2枚引く。あなたのプロトコルを並べ替える。","lower":"","effectTypes":["draw","rearrange"]},{"id":"WATER_4","number":4,"value":3,"upper":"","middle":"1ラインを選び、そのラインの値が2のすべてのカードを戻す。","lower":"","effectTypes":["return"]},{"id":"WATER_5","number":5,"value":4,"upper":"","middle":"あなたのカードを1枚戻す。","lower":"","effectTypes":["return"]},{"id":"WATER_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"APATHY","displayName":"APATHY","tags":"裏向きへの反転","color":"#9E9E9E","set":"Aux 1","cards":[{"id":"APATHY_1","number":1,"value":0,"upper":"このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。","middle":"","lower":"","effectTypes":["other"]},{"id":"APATHY_2","number":2,"value":1,"upper":"","middle":"このラインにある他のすべての表向きのカードを同時に反転させる。","lower":"","effectTypes":["flip"]},{"id":"APATHY_3","number":3,"value":2,"upper":"このラインにあるカードのすべての中段コマンドを無視する。","middle":"","lower":"このカードが覆われることになったとき：先に、このカードを反転させる。","effectTypes":["flip"]},{"id":"APATHY_4","number":4,"value":3,"upper":"","middle":"相手の表向きのカードを１枚反転させる。","lower":"","effectTypes":["flip"]},{"id":"APATHY_5","number":5,"value":4,"upper":"","middle":"表向きで覆われているあなたのカード１枚を反転させることができる。","lower":"","effectTypes":["flip"]},{"id":"APATHY_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"HATE","displayName":"HATE","tags":"互いの削除","color":"#B71C1C","set":"Aux 1","cards":[{"id":"HATE_1","number":1,"value":0,"upper":"","middle":"カードを１枚削除する。","lower":"","effectTypes":["delete"]},{"id":"HATE_2","number":2,"value":1,"upper":"","middle":"あなたは手札を３枚捨て札にする。カードを１枚削除する。カードを１枚削除する。","lower":"","effectTypes":["delete"]},{"id":"HATE_3","number":3,"value":2,"upper":"","middle":"値が最も大きく覆われていないあなたのカードを１枚削除する。値が最も大きく覆われていない相手のカードを１枚削除する。","lower":"","effectTypes":["delete"],"codex":"【エラッタ(2024/10)】中段コマンドは「値が最も大きく覆われていないあなたのカードを1枚削除する。値が最も大きく覆われていない相手のカードを1枚削除する。」に修正。\n【明確化】最大値が同値の場合、プレイヤーが1枚を選ぶ。\n【明確化】HATE 2があなたの最大値カードである場合、最初の条件で自身を削除する。その結果、2番目の条件は発動しない。"},{"id":"HATE_4","number":4,"value":3,"upper":"あなたがカードを１枚削除したあと：カードを１枚引く。","middle":"","lower":"","effectTypes":["draw","delete"]},{"id":"HATE_5","number":5,"value":4,"upper":"","middle":"","lower":"このカードが覆われることになったとき：先に、このラインにある値が最も小さく覆われているカードを１枚削除する。","effectTypes":["delete"]},{"id":"HATE_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"LOVE","displayName":"LOVE","tags":"手札維持／供与／交換","color":"#EC407A","set":"Aux 1","cards":[{"id":"LOVE_1","number":1,"value":1,"upper":"","middle":"あなたは相手のデッキの一番上のカードを引く。","lower":"終了：あなたの手札一枚を相手に与えることができる。そうした場合、カードを２枚引く。","effectTypes":["draw"]},{"id":"LOVE_2","number":2,"value":2,"upper":"","middle":"相手はカードを１枚引く。あなたはリフレッシュする。","lower":"","effectTypes":["draw"]},{"id":"LOVE_3","number":3,"value":3,"upper":"","middle":"あなたは相手の手札からランダムにカードを１枚引く。あなたの手札１枚を相手に与える。","lower":"","effectTypes":["draw"]},{"id":"LOVE_4","number":4,"value":4,"upper":"","middle":"あなたの手札１枚を公開する。カードを１枚反転させる。","lower":"","effectTypes":["flip"]},{"id":"LOVE_5","number":5,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]},{"id":"LOVE_6","number":6,"value":6,"upper":"","middle":"相手はカードを２枚引く。","lower":"","effectTypes":["draw"]}]},{"name":"CHAOS","displayName":"CHAOS","tags":"手札維持／並べ替え／覆われているカード","color":"#7B1FA2","set":"Main 2","cards":[{"id":"CHAOS_1","number":1,"value":0,"upper":"","middle":"各ラインで、覆われているカードを1枚ずつ反転させる。","lower":"開始：あなたは相手のデッキの一番上のカードを引く。相手はあなたのデッキの一番上のカードを引く。","effectTypes":["draw","flip"]},{"id":"CHAOS_2","number":2,"value":1,"upper":"","middle":"あなたのプロトコルを並べ替える。相手のプロトコルを並べ替える。","lower":"","effectTypes":["rearrange"]},{"id":"CHAOS_3","number":3,"value":2,"upper":"","middle":"あなたの覆われているカードを1枚移動させる。","lower":"","effectTypes":["shift"]},{"id":"CHAOS_4","number":4,"value":3,"upper":"","middle":"","lower":"このカードはプロトコルを対応させずプレイすることができる。","effectTypes":["play"]},{"id":"CHAOS_5","number":5,"value":4,"upper":"","middle":"","lower":"終了：あなたのすべての手札を捨て札にする。捨て札にした枚数と同じ枚数のカードを引く。","effectTypes":["draw","discard"]},{"id":"CHAOS_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"CLARITY","displayName":"CLARITY","tags":"手札維持／公開","color":"#5C6BC0","set":"Main 2","cards":[{"id":"CLARITY_1","number":1,"value":0,"upper":"このラインのあなたの合計値は、あなたの手札1枚ごとに1枚増える。","middle":"","lower":"","effectTypes":["other"]},{"id":"CLARITY_2","number":2,"value":1,"upper":"開始：あなたのデッキの一番上のカードを公開する。そのカードを捨て札にすることができる。","middle":"相手は自身の手札をすべて公開する。","lower":"このカードが覆われることになったとき：先にカードを3枚引く。","effectTypes":["draw","discard"]},{"id":"CLARITY_3","number":3,"value":2,"upper":"","middle":"あなたのデッキのカードをすべて公開する。公開した中から値が1のカードを1枚引く。あなたのデッキをシャッフルする。値が1のカードを1枚プレイする。","lower":"","effectTypes":["draw","play"]},{"id":"CLARITY_4","number":4,"value":3,"upper":"","middle":"あなたのデッキのカードをすべて公開する。公開した中から値が5のカードを1枚引く。あなたのデッキをシャッフルする。","lower":"","effectTypes":["draw"]},{"id":"CLARITY_5","number":5,"value":4,"upper":"","middle":"あなたの捨て札置き場にあるすべてのカードをデッキに戻してシャッフルすることができる。","lower":"","effectTypes":["return"]},{"id":"CLARITY_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"CORRUPTION","displayName":"CORRUPTION","tags":"反転／捨て札","color":"#689F38","set":"Main 2","cards":[{"id":"CORRUPTION_1","number":1,"value":0,"upper":"開始：このスタック内の、覆われているか覆われていない他の表向きのカードを1枚反転させる。","middle":"","lower":"このカードは、プロトコルに対応させずに、どちらかのプレイヤー側でプレイすることができる。","effectTypes":["flip","play"]},{"id":"CORRUPTION_2","number":2,"value":1,"upper":"","middle":"カードを1枚戻す。","lower":"カードが相手の手札に戻るとき：そうする代わりに、そのカードを相手のデッキの一番上に裏向きで置く。","effectTypes":["return"]},{"id":"CORRUPTION_3","number":3,"value":2,"upper":"あなたが手札を捨て札にしたあと：相手は手札を1枚捨て札にする。","middle":"カードを1枚引く。あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["draw","discard"]},{"id":"CORRUPTION_4","number":4,"value":3,"upper":"","middle":"あなたは覆われている表向きのカードを1枚反転させることができる。","lower":"","effectTypes":["flip"]},{"id":"CORRUPTION_5","number":5,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]},{"id":"CORRUPTION_6","number":6,"value":6,"upper":"終了：あなたは手札を1枚捨て札にするか、このカードを削除する。","middle":"","lower":"","effectTypes":["delete","discard"]}]},{"name":"COURAGE","displayName":"COURAGE","tags":"手札維持／比較","color":"#C62828","set":"Main 2","cards":[{"id":"COURAGE_1","number":1,"value":0,"upper":"開始：あなたの手札が1枚もない場合、カードを1枚引く。","middle":"カードを1枚引く。","lower":"終了：あなたは手札を1枚捨て札にすることができる。そうした場合、相手は手札を1枚捨て札にする。","effectTypes":["draw","discard"]},{"id":"COURAGE_2","number":2,"value":1,"upper":"","middle":"あなたの合計値より相手の合計値が大きいライン1つにある、相手のカードを1枚削除する。","lower":"","effectTypes":["delete"]},{"id":"COURAGE_3","number":3,"value":2,"upper":"","middle":"カードを1枚引く。","lower":"終了：このラインで、あなたの合計値より相手の合計値が大きい場合、カードを1枚引く。","effectTypes":["draw"]},{"id":"COURAGE_4","number":4,"value":3,"upper":"","middle":"","lower":"終了：相手の最も大きい合計値のラインに、このカードを移動させることができる。","effectTypes":["shift"]},{"id":"COURAGE_5","number":5,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]},{"id":"COURAGE_6","number":6,"value":6,"upper":"終了：このラインで、あなたの合計値より相手の合計値が大きい場合、このカードを反転させる。","middle":"","lower":"","effectTypes":["flip"]}]},{"name":"FEAR","displayName":"FEAR","tags":"移動／捨て札","color":"#E65100","set":"Main 2","cards":[{"id":"FEAR_1","number":1,"value":0,"upper":"あなたの手番中、相手のカードの中段コマンドはないものとして扱う。","middle":"カードを1枚移動させるか反転させる。","lower":"","effectTypes":["flip","shift"]},{"id":"FEAR_2","number":2,"value":1,"upper":"","middle":"カードを2枚引く。相手は自身の手札をすべて捨て札にして、捨て札にした枚数-1枚のカードを引く。","lower":"","effectTypes":["draw"]},{"id":"FEAR_3","number":3,"value":2,"upper":"","middle":"相手のカードを1枚戻す。","lower":"","effectTypes":["return"]},{"id":"FEAR_4","number":4,"value":3,"upper":"","middle":"このラインにある、相手の覆われているか覆われていないカードを1枚移動させる。","lower":"","effectTypes":["shift"]},{"id":"FEAR_5","number":5,"value":4,"upper":"","middle":"相手は自身の手札からランダムに1枚捨て札にする。","lower":"","effectTypes":["discard"]},{"id":"FEAR_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"ICE","displayName":"ICE","tags":"移動／相手の妨害","color":"#AB47BC","set":"Main 2","cards":[{"id":"ICE_1","number":1,"value":1,"upper":"","middle":"あなたはこのカードを移動させることができる。","lower":"相手がこのラインにカードを1枚プレイしたあと：相手は自身の手札を1枚捨て札にする。","effectTypes":["shift","discard","play"]},{"id":"ICE_2","number":2,"value":2,"upper":"","middle":"他のカードを1枚移動させる。","lower":"","effectTypes":["shift"]},{"id":"ICE_3","number":3,"value":3,"upper":"終了：このカードが覆われている場合、このカードを移動させることができる。","middle":"","lower":"","effectTypes":["shift"]},{"id":"ICE_4","number":4,"value":4,"upper":"","middle":"","lower":"このカードを反転させることはできない。","effectTypes":["flip"]},{"id":"ICE_5","number":5,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]},{"id":"ICE_6","number":6,"value":6,"upper":"あなたの手札が1枚以上ある場合、あなたはカードを引くことはできない。","middle":"","lower":"","effectTypes":["draw"]}]},{"name":"LUCK","displayName":"LUCK","tags":"ランダム／削除／プレイ","color":"#FB8C00","set":"Main 2","cards":[{"id":"LUCK_1","number":1,"value":0,"upper":"","middle":"値を1つ宣言する。カードを3枚引く。その中から、表面に宣言した値を持つカードを1枚公開する。そのカードをプレイすることができる。","lower":"","effectTypes":["draw","play"]},{"id":"LUCK_2","number":2,"value":1,"upper":"","middle":"あなたのデッキの一番上のカードを裏向きでプレイする。そのカードを反転させる（その中段コマンドは無視する）。","lower":"","effectTypes":["flip","play"]},{"id":"LUCK_3","number":3,"value":2,"upper":"","middle":"あなたのデッキの一番上のカードを捨て札にする。そのカードの表面の値に等しい枚数のカードを引く。","lower":"","effectTypes":["draw","discard"]},{"id":"LUCK_4","number":4,"value":3,"upper":"","middle":"プロトコルを1つ宣言する。相手のデッキの一番上のカードを捨て札にする。そのカードが宣言したプロトコルに対応している場合、カードを1枚削除する。","lower":"","effectTypes":["delete","discard"]},{"id":"LUCK_5","number":5,"value":4,"upper":"","middle":"あなたのデッキの一番上のカードを捨て札にする。そのカードの表面の値と同じ値を持つ、覆われているか覆われていないカードを1枚削除する。","lower":"","effectTypes":["delete","discard"]},{"id":"LUCK_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"MIRROR","displayName":"MIRROR","tags":"移動／繰り返し","color":"#546E7A","set":"Main 2","cards":[{"id":"MIRROR_1","number":1,"value":0,"upper":"このラインのあなたの合計値は、このラインにある相手のカード1枚ごとに1増える。","middle":"","lower":"","effectTypes":["other"]},{"id":"MIRROR_2","number":2,"value":1,"upper":"","middle":"","lower":"終了：あなたは相手のカードのうち1枚の中段コマンドを、そのコマンドがこのカード上にあるかのように解決できる","effectTypes":["other"]},{"id":"MIRROR_3","number":3,"value":2,"upper":"","middle":"あなたのスタック1つにあるすべてのカードを、あなたの別のスタック1つにあるすべてのカードと入れ替える。","lower":"","effectTypes":["other"]},{"id":"MIRROR_4","number":4,"value":3,"upper":"","middle":"あなたのカードを1枚反転させる。そのカードと同じラインにある相手のカードを1枚反転させる。","lower":"","effectTypes":["flip"]},{"id":"MIRROR_5","number":5,"value":4,"upper":"","middle":"","lower":"相手がカードを引いたあと：カードを1枚引く。","effectTypes":["draw"]},{"id":"MIRROR_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"PEACE","displayName":"PEACE","tags":"相互の捨て札／手札維持","color":"#8D6E63","set":"Main 2","cards":[{"id":"PEACE_1","number":1,"value":1,"upper":"","middle":"両プレイヤーはすべての手札を捨て札にする。","lower":"終了：あなたの手札が1枚もない場合、カードを1枚引く。","effectTypes":["draw","discard","play"]},{"id":"PEACE_2","number":2,"value":2,"upper":"","middle":"カードを1枚引く。カードを1枚裏向きでプレイする。","lower":"","effectTypes":["draw","play"]},{"id":"PEACE_3","number":3,"value":3,"upper":"","middle":"あなたは手札を1枚捨て札にすることができる。あなたの手札の枚数より値が大きいカードを1枚反転させる。","lower":"","effectTypes":["flip","discard"]},{"id":"PEACE_4","number":4,"value":4,"upper":"","middle":"","lower":"相手の手番中にあなたが捨て札にしたあと：カードを1枚引く。","effectTypes":["draw"]},{"id":"PEACE_5","number":5,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]},{"id":"PEACE_6","number":6,"value":6,"upper":"","middle":"あなたの手札が2枚以上ある場合、このカードを反転させる。","lower":"","effectTypes":["flip"]}]},{"name":"SMOKE","displayName":"SMOKE","tags":"裏向き／移動","color":"#757575","set":"Main 2","cards":[{"id":"SMOKE_1","number":1,"value":0,"upper":"","middle":"裏向きのカードが1枚以上ある各ラインに、あなたのデッキの一番上のカードを裏向きでプレイする。","lower":"","effectTypes":["play"]},{"id":"SMOKE_2","number":2,"value":1,"upper":"","middle":"あなたのカードを1枚反転させる。あなたはそのカードを移動させることができる。","lower":"","effectTypes":["flip","shift"]},{"id":"SMOKE_3","number":3,"value":2,"upper":"","middle":"このラインのあなたの合計値は、このラインにある裏向きのカード1枚ごとに1増える。","lower":"","effectTypes":["other"]},{"id":"SMOKE_4","number":4,"value":3,"upper":"","middle":"裏向きのカードが1枚以上あるライン１つに、カードを裏向きで1枚プレイする。","lower":"","effectTypes":["play"]},{"id":"SMOKE_5","number":5,"value":4,"upper":"","middle":"覆われている裏向きのカードを1枚移動させる。","lower":"","effectTypes":["shift"]},{"id":"SMOKE_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"TIME","displayName":"TIME","tags":"捨て札／捨て札置き場","color":"#FF5722","set":"Main 2","cards":[{"id":"TIME_1","number":1,"value":0,"upper":"","middle":"あなたの捨て札置き場にあるカードを1枚プレイする。あなたの捨て札置き場にあるすべてのカードをデッキに戻してシャッフルする。","lower":"","effectTypes":["return","play"]},{"id":"TIME_2","number":2,"value":1,"upper":"","middle":"覆われているカードを1枚反転させる。あなたのデッキのカードをすべて捨て札にする。","lower":"","effectTypes":["flip","discard"]},{"id":"TIME_3","number":3,"value":2,"upper":"あなたがデッキをシャッフルしたあと：カードを1枚引き、このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。","middle":"あなたの捨て札置き場にカードがある場合、あなたは捨て札置き場にあるすべてのカードをデッキに戻してシャッフルすることができる。","lower":"","effectTypes":["draw","shift","return"]},{"id":"TIME_4","number":4,"value":3,"upper":"","middle":"あなたの捨て札置き場にあるカードを1枚公開する。そのカードをこのカードとは別のラインに裏向きでプレイする。","lower":"","effectTypes":["play"]},{"id":"TIME_5","number":5,"value":4,"upper":"","middle":"カードを2枚引く。あなたは手札を2枚捨て札にする。","lower":"","effectTypes":["draw","discard"]},{"id":"TIME_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"WAR","displayName":"WAR","tags":"対応／捨て札","color":"#D32F2F","set":"Main 2","cards":[{"id":"WAR_1","number":1,"value":0,"upper":"あなたがリフレッシュしたあと：あなたはこのカードを反転させることができる。","middle":"","lower":"相手がカードを引いたあと：あなたはカードを1枚削除することができる。","effectTypes":["delete","flip"]},{"id":"WAR_2","number":2,"value":1,"upper":"","middle":"","lower":"相手がリフレッシュしたあと：任意の枚数の手札を捨て札にする。リフレッシュする。","effectTypes":["discard"]},{"id":"WAR_3","number":3,"value":2,"upper":"","middle":"カードを1枚反転させる。","lower":"相手がコンパイルしたあと：相手は手札をすべて捨て札にする。","effectTypes":["flip","discard"]},{"id":"WAR_4","number":4,"value":3,"upper":"","middle":"カードを1枚引く。","lower":"相手が手札を捨て札にしたあと：あなたはカードを裏向きで1枚プレイすることができる。","effectTypes":["draw","play"]},{"id":"WAR_5","number":5,"value":4,"upper":"","middle":"相手は手札を1枚捨て札にする。","lower":"","effectTypes":["discard"]},{"id":"WAR_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"ASSIMILATION","displayName":"ASSIMILATION","tags":"交換／プレイ","color":"#1565C0","set":"Aux 2","cards":[{"id":"ASSIMILATION_1","number":1,"value":0,"upper":"","middle":"覆われているか覆われていない、相手の裏向きカードのうち1枚をあなたの手札に加える。","lower":"","effectTypes":["other"]},{"id":"ASSIMILATION_2","number":2,"value":1,"upper":"","middle":"あなたの手札を1枚捨て札にする。リフレッシュする。","lower":"誰かがリフレッシュしたあと：相手のデッキの一番上のカードを引く。あなたは手札を1枚捨て札にし、それを相手の捨て札置き場に置く。","effectTypes":["draw","discard"]},{"id":"ASSIMILATION_3","number":3,"value":2,"upper":"","middle":"","lower":"終了：相手のデッキの一番上のカードを、このスタックに裏向きでプレイする。","effectTypes":["play"]},{"id":"ASSIMILATION_4","number":4,"value":4,"upper":"","middle":"相手のデッキの一番上のカードを引く。相手はあなたのデッキの一番上のカードを引く。","lower":"","effectTypes":["draw"]},{"id":"ASSIMILATION_5","number":5,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]},{"id":"ASSIMILATION_6","number":6,"value":6,"upper":"","middle":"","lower":"終了：あなたのデッキの一番上のカードを、相手側の任意のスタックに裏向きでプレイする。","effectTypes":["play"]}]},{"name":"DIVERSITY","displayName":"DIVERSITY","tags":"プレイ／比較／コンパイル","color":"#00897B","set":"Aux 2","cards":[{"id":"DIVERSITY_1","number":1,"value":0,"upper":"","middle":"フィールドに6種類のプロトコルのコマンドカードがある場合、「DIVERSITY」プロトコルカードをコンパイル完了面にする。","lower":"終了：あなたはこのラインに「DIVERSITY」以外のカードをプレイすることができる。","effectTypes":["play"]},{"id":"DIVERSITY_2","number":2,"value":1,"upper":"","middle":"カードを1枚移動させる。このラインにあるコマンドカードの、プロトコルの種類数に等しい枚数のカードを引く。","lower":"","effectTypes":["draw","shift"]},{"id":"DIVERSITY_3","number":3,"value":3,"upper":"このスタックに「DIVERSITY」以外の表向きのカードがある場合、このラインのあなたの合計値は2増える。","middle":"","lower":"","effectTypes":["other"]},{"id":"DIVERSITY_4","number":4,"value":4,"upper":"","middle":"フィールドにあるコマンドカードの、プロトコルの種類数未満の値を持つカードを1枚反転させる。","lower":"","effectTypes":["flip"]},{"id":"DIVERSITY_5","number":5,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]},{"id":"DIVERSITY_6","number":6,"value":6,"upper":"終了：フィールドにあるコマンドカードの、プロトコルの種類数が3以下の場合、このカードを削除する。","middle":"","lower":"","effectTypes":["delete"]}]},{"name":"UNITY","displayName":"UNITY","tags":"覆う／反転／コンパイル","color":"#E040FB","set":"Aux 2","cards":[{"id":"UNITY_1","number":1,"value":0,"upper":"","middle":"フィールドに他の「UNITY」カードがある場合、カードを1枚反転させるか、カードを1枚引く。","lower":"このカードが「UNITY」カードによって覆われることになったとき：先に、カードを1枚反転させるか、カードを1枚引く。","effectTypes":["draw","flip"]},{"id":"UNITY_2","number":2,"value":1,"upper":"開始：このカードが覆われている場合、あなたはこのカードを移動させることができる。","middle":"フィールド「UNITY」カードが5枚以上ある場合、「UNITY」プロトコルカードのコンパイル完了面を表向きにし、そのラインにあるすべてのカードを削除する。","lower":"このラインには「UNITY」カードを表向きでプレイすることができる。","effectTypes":["delete","shift","play"]},{"id":"UNITY_3","number":3,"value":2,"upper":"","middle":"フィールドにある「UNITY」カードの枚数に等しい枚数のカードを引く。","lower":"","effectTypes":["draw"]},{"id":"UNITY_4","number":4,"value":3,"upper":"","middle":"フィールドに他の「UNITY」カードがある場合、あなたは表向きのカードを1枚反転させることができる。","lower":"","effectTypes":["flip"]},{"id":"UNITY_5","number":5,"value":4,"upper":"終了：あなたの手札が1枚もない場合、あなたのデッキのカードをすべて公開し、そこからすべての「UNITY」カードを引いて、あなたのデッキをシャッフルする。","middle":"","lower":"","effectTypes":["other"]},{"id":"UNITY_6","number":6,"value":5,"upper":"","middle":"あなたの手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]}]};</script>
-<script>window.COMPILE_EFFECTS={"_meta":{"dslVersion":1,"spec":"docs/effects-dsl.md","source":"data/cards.json (公式エラッタ適用済み・番号は公式0-5を1-6に+1シフト)","notes":["_text は cards.json の原文コピー(検証スクリプトで照合)。","select のデフォルト: owner=any, facing=any, coverage=uncovered, zone=anywhere, count=1, mode=pick。","actor 省略時の行為者はカードの owner。player/actor=opp は相手が自分で選択・実行する。"]},"DARKNESS_1":{"middle":{"_text":"カードを3枚引く。相手の覆われているカードを1枚移動させる。","ops":[{"op":"draw","count":3},{"op":"shift","select":{"owner":"opp","coverage":"covered"}}]}},"DARKNESS_2":{"middle":{"_text":"相手のカードを1枚反転させる。あなたはそのカードを移動させることができる。","ops":[{"op":"flip","select":{"owner":"opp"},"bind":"t"},{"op":"shift","select":{"ref":"t"},"optional":true}]}},"DARKNESS_3":{"upper":{"_text":"このスタックにあるすべての裏向きのカードの値はそれぞれ4になる。","static":{"kind":"setValue","value":4,"filter":{"zone":"thisStack","facing":"down"}}},"middle":{"_text":"このラインにある、覆われているカードを1枚反転させることができる。","ops":[{"op":"flip","select":{"zone":"thisLine","coverage":"covered"},"optional":true}]}},"DARKNESS_4":{"middle":{"_text":"他の1ラインにカードを裏向きで1枚プレイする。","ops":[{"op":"play","source":"hand","facing":"down","dest":"otherLine"}]}},"DARKNESS_5":{"middle":{"_text":"裏向きのカードを1枚移動させる。","ops":[{"op":"shift","select":{"facing":"down"}}]}},"DARKNESS_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"DEATH_1":{"middle":{"_text":"他の各ラインにあるカードを1枚ずつ削除する。","ops":[{"op":"forEachLine","lines":"otherLines","ops":[{"op":"delete","select":{"zone":"currentLine"}}]}]}},"DEATH_2":{"upper":{"_text":"開始：カードを1枚引くことができる。そうした場合、他のカードを1枚削除し、そのあとこのカードを削除する。","trigger":{"on":"start","ops":[{"op":"draw","count":1,"optional":true},{"op":"ifDone","ops":[{"op":"delete","select":{"exclude":"thisCard"}},{"op":"delete","select":{"ref":"this"}}]}]}}},"DEATH_3":{"middle":{"_text":"1ラインを選び、そのラインの値が1か2どちらかのすべてのカードを削除する。","ops":[{"op":"delete","select":{"zone":"chosenLine","value":{"in":[1,2]},"mode":"all"}}]}},"DEATH_4":{"middle":{"_text":"裏向きのカードを1枚削除する。","ops":[{"op":"delete","select":{"facing":"down"}}]}},"DEATH_5":{"middle":{"_text":"値が0か1のカードを1枚削除する。","ops":[{"op":"delete","select":{"value":{"in":[0,1]}}}]}},"DEATH_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"FIRE_1":{"middle":{"_text":"他のカードを1枚反転させる。カードを2枚引く。","ops":[{"op":"flip","select":{"exclude":"thisCard"}},{"op":"draw","count":2}]},"lower":{"_text":"このカードが覆われることになったとき：先にカードを1枚引き、他のカードを1枚反転させる。","trigger":{"on":"wouldBeCovered","ops":[{"op":"draw","count":1},{"op":"flip","select":{"exclude":"thisCard"}}]}}},"FIRE_2":{"middle":{"_text":"あなたは手札を1枚捨て札にする。そうした場合、カードを1枚削除する。","ops":[{"op":"discard","count":1},{"op":"ifDone","ops":[{"op":"delete"}]}]}},"FIRE_3":{"middle":{"_text":"あなたは手札を1枚捨て札にする。そうした場合、カードを1枚戻す。","ops":[{"op":"discard","count":1},{"op":"ifDone","ops":[{"op":"return"}]}]}},"FIRE_4":{"lower":{"_text":"終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。","trigger":{"on":"end","ops":[{"op":"discard","count":1,"optional":true},{"op":"ifDone","ops":[{"op":"flip"}]}]}}},"FIRE_5":{"middle":{"_text":"あなたは手札があれば1枚以上捨て札にする。捨て札にした枚数＋1枚のカードを引く。","ops":[{"op":"discard","count":{"min":1,"max":"any"},"bind":"n"},{"op":"drawByCount","ref":"n","plus":1}]}},"FIRE_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"GRAVITY_1":{"middle":{"_text":"このライン内にあるカード2枚ごとに、あなたのデッキの一番上のカード1枚をこのカードの下に裏向きでプレイする。","ops":[{"op":"repeatPer","per":{"count":"cardsInThisLine","divisor":2},"ops":[{"op":"play","source":"topDeck","facing":"down","dest":"underThisCard"}]}]}},"GRAVITY_2":{"middle":{"_text":"カードを2枚引く。このラインから、またはこのラインへとカードを1枚移動させる。","ops":[{"op":"draw","count":2},{"op":"shift","dest":"fromOrToThisLine"}]}},"GRAVITY_3":{"middle":{"_text":"カードを1枚反転させる。そのカードをこのラインへと移動させる。","ops":[{"op":"flip","bind":"t"},{"op":"shift","select":{"ref":"t"},"dest":"thisLine"}]}},"GRAVITY_4":{"middle":{"_text":"裏向きのカードを1枚、このラインへと移動させる。","ops":[{"op":"shift","select":{"facing":"down"},"dest":"thisLine"}]}},"GRAVITY_5":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"GRAVITY_6":{"middle":{"_text":"相手は自分のデッキの一番上のカードをこのラインに裏向きで1枚プレイする。","ops":[{"op":"play","player":"opp","source":"topDeck","facing":"down","dest":"thisLine"}]}},"LIFE_1":{"upper":{"_text":"終了：このカードが覆われている場合、このカードを削除する。","trigger":{"on":"end","ops":[{"op":"ifState","cond":"thisCovered","ops":[{"op":"delete","select":{"ref":"this"}}]}]}},"middle":{"_text":"あなたのデッキの一番上のカードを、あなたのカードがある各ラインに裏向きで1枚ずつプレイする。","ops":[{"op":"forEachLine","lines":"linesWithYourCards","ops":[{"op":"play","source":"topDeck","facing":"down","dest":"currentLine"}]}]}},"LIFE_2":{"middle":{"_text":"カード1枚を反転させる。カード1枚を反転させる。","ops":[{"op":"flip"},{"op":"flip"}]}},"LIFE_3":{"middle":{"_text":"カードを1枚引く。あなたは裏向きのカードを1枚反転させることができる。","ops":[{"op":"draw","count":1},{"op":"flip","select":{"facing":"down"},"optional":true}]}},"LIFE_4":{"lower":{"_text":"このカードが覆われることになったとき：先にあなたのデッキの一番上のカードを他の1ラインに裏向きで1枚プレイする。","trigger":{"on":"wouldBeCovered","ops":[{"op":"play","source":"topDeck","facing":"down","dest":"otherLine"}]}}},"LIFE_5":{"middle":{"_text":"このカードが他のカードを覆っている場合、カードを1枚引く。","ops":[{"op":"ifState","cond":"thisCovers","ops":[{"op":"draw","count":1}]}]}},"LIFE_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"LIGHT_1":{"middle":{"_text":"カードを1枚反転させる。そのカードの値に等しい枚数のカードを引く。","ops":[{"op":"flip","bind":"t"},{"op":"drawByValue","ref":"t"}]}},"LIGHT_2":{"lower":{"_text":"終了：カードを1枚引く。","trigger":{"on":"end","ops":[{"op":"draw","count":1}]}}},"LIGHT_3":{"middle":{"_text":"カードを2枚引く。裏向きのカードを1枚公開する。あなたは公開したカードを移動させるか反転させることができる。","ops":[{"op":"draw","count":2},{"op":"reveal","select":{"facing":"down"},"bind":"t"},{"op":"choice","optional":true,"options":[[{"op":"shift","select":{"ref":"t"}}],[{"op":"flip","select":{"ref":"t"}}]]}]}},"LIGHT_4":{"middle":{"_text":"このラインにある裏向きのすべてのカードを、他の1ラインへと移動させる。","ops":[{"op":"shift","select":{"zone":"thisLine","facing":"down","mode":"all"},"dest":"oneOtherLine"}]}},"LIGHT_5":{"middle":{"_text":"相手は自分の手札を公開する。","ops":[{"op":"reveal","target":"oppHand"}]}},"LIGHT_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"METAL_1":{"upper":{"_text":"このラインでの相手の合計値は2減る。","static":{"kind":"modifyLineTotal","side":"opp","delta":-2}},"middle":{"_text":"カードを1枚反転させる。","ops":[{"op":"flip"}]}},"METAL_2":{"middle":{"_text":"カードを2枚引く。相手は次の手番でコンパイルすることはできない。","ops":[{"op":"draw","count":2},{"op":"noCompileNextTurn"}]}},"METAL_3":{"upper":{"_text":"相手はこのラインにカードを裏向きでプレイすることはできない。","static":{"kind":"playPermission","rule":"oppNoFaceDownThisLine"}}},"METAL_4":{"middle":{"_text":"カードを1枚引く。カードが8枚以上ある、ほかの1ライン内のすべてのカードを削除する。","ops":[{"op":"draw","count":1},{"op":"delete","select":{"zone":"otherLineWith8plus","mode":"all"}}]}},"METAL_5":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"METAL_6":{"upper":{"_text":"このカードが覆われるか反転することになったとき：先にこのカードを削除する。","trigger":{"on":"wouldBeCoveredOrFlipped","ops":[{"op":"delete","select":{"ref":"this"}}]}}},"PLAGUE_1":{"middle":{"_text":"相手は手札を1枚捨て札にする。","ops":[{"op":"discard","count":1,"player":"opp"}]},"lower":{"_text":"相手はこのラインにカードをプレイすることはできない。","static":{"kind":"playPermission","rule":"oppNoPlayThisLine"}}},"PLAGUE_2":{"upper":{"_text":"相手が手札を捨て札にしたあと：カードを1枚引く。","trigger":{"on":"afterOppDiscard","ops":[{"op":"draw","count":1}]}},"middle":{"_text":"相手は手札を1枚捨て札にする。","ops":[{"op":"discard","count":1,"player":"opp"}]}},"PLAGUE_3":{"middle":{"_text":"あなたは手札があれば1枚以上捨て札にする。相手はあなたが捨て札にした枚数＋1枚の手札を捨て札にする。","ops":[{"op":"discard","count":{"min":1,"max":"any"},"bind":"n"},{"op":"discard","player":"opp","countFrom":{"ref":"n","plus":1}}]}},"PLAGUE_4":{"middle":{"_text":"覆われていない、表向きの他のカードを反転させる。","ops":[{"op":"flip","select":{"facing":"up","coverage":"uncovered","exclude":"thisCard","mode":"each"}}]}},"PLAGUE_5":{"lower":{"_text":"終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。","trigger":{"on":"end","ops":[{"op":"delete","select":{"owner":"opp","facing":"down"},"actor":"opp"},{"op":"flip","select":{"ref":"this"},"optional":true}]}}},"PLAGUE_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"PSYCHIC_1":{"middle":{"_text":"カードを2枚引く。相手は自分の手札を2枚捨て札にして、そのあと相手は手札を公開する。","ops":[{"op":"draw","count":2},{"op":"discard","count":2,"player":"opp"},{"op":"reveal","target":"oppHand"}]}},"PSYCHIC_2":{"upper":{"_text":"相手はカードを裏向きでのみプレイすることができる。","static":{"kind":"playPermission","rule":"oppFaceDownOnly"}},"lower":{"_text":"開始：このカードを反転させる。","trigger":{"on":"start","ops":[{"op":"flip","select":{"ref":"this"}}]}}},"PSYCHIC_3":{"middle":{"_text":"相手は自分の手札を2枚捨て札にする。あなたは相手のプロトコルを並べ替える。","ops":[{"op":"discard","count":2,"player":"opp"},{"op":"rearrange","whose":"opp"}]}},"PSYCHIC_4":{"middle":{"_text":"相手は手札を1枚捨て札にする。あなたは相手のカードを1枚移動させる。","ops":[{"op":"discard","count":1,"player":"opp"},{"op":"shift","select":{"owner":"opp"}}]}},"PSYCHIC_5":{"lower":{"_text":"終了：あなたは相手のカードを1枚戻すことができる。そうした場合、このカードを反転させる。","trigger":{"on":"end","ops":[{"op":"return","select":{"owner":"opp"},"optional":true},{"op":"ifDone","ops":[{"op":"flip","select":{"ref":"this"}}]}]}}},"PSYCHIC_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"SPEED_1":{"middle":{"_text":"カードを1枚プレイする。","ops":[{"op":"play","source":"hand"}]}},"SPEED_2":{"upper":{"_text":"あなたがキャッシュをクリアしたあと：カードを1枚引く。","trigger":{"on":"afterYouClearCache","ops":[{"op":"draw","count":1}]}},"middle":{"_text":"カードを2枚引く。","ops":[{"op":"draw","count":2}]}},"SPEED_3":{"upper":{"_text":"このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。","trigger":{"on":"wouldBeDeletedByCompile","replace":true,"ops":[{"op":"shift","select":{"ref":"this"}}]}}},"SPEED_4":{"middle":{"_text":"あなたの他のカードを1枚移動させる。","ops":[{"op":"shift","select":{"owner":"self","exclude":"thisCard"}}]},"lower":{"_text":"終了：あなたは自分のカードを1枚移動させることができる。そうした場合、このカードを反転させる。","trigger":{"on":"end","ops":[{"op":"shift","select":{"owner":"self"},"optional":true},{"op":"ifDone","ops":[{"op":"flip","select":{"ref":"this"}}]}]}}},"SPEED_5":{"middle":{"_text":"相手の裏向きのカードを1枚移動させる。","ops":[{"op":"shift","select":{"owner":"opp","facing":"down"}}]}},"SPEED_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"SPIRIT_1":{"middle":{"_text":"リフレッシュする。カードを1枚引く。","ops":[{"op":"refresh"},{"op":"draw","count":1}]},"lower":{"_text":"あなたのキャッシュの確認フェイズを省略する。","static":{"kind":"skipCheckCache"}}},"SPIRIT_2":{"upper":{"_text":"あなたがカードを表向きでプレイするときには、プロトコルを対応させずにプレイすることができる。","static":{"kind":"playPermission","rule":"youFaceUpAnyLine"}},"middle":{"_text":"カードを2枚引く。","ops":[{"op":"draw","count":2}]},"lower":{"_text":"開始：あなたは手札を1枚捨て札にするか、このカードを反転させる。","trigger":{"on":"start","ops":[{"op":"choice","options":[[{"op":"discard","count":1}],[{"op":"flip","select":{"ref":"this"}}]]}]}}},"SPIRIT_3":{"middle":{"_text":"あなたはカードを1枚反転させることができる。","ops":[{"op":"flip","optional":true}]}},"SPIRIT_4":{"upper":{"_text":"あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。","trigger":{"on":"afterYouDraw","ops":[{"op":"shift","select":{"ref":"this"},"optional":true}]}}},"SPIRIT_5":{"middle":{"_text":"あなたのプロトコルのうち2枚の位置を入れ替える。","ops":[{"op":"swapProtocols","whose":"self"}]}},"SPIRIT_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"WATER_1":{"middle":{"_text":"他のカードを1枚反転させる。このカードを反転させる。","ops":[{"op":"flip","select":{"exclude":"thisCard"}},{"op":"flip","select":{"ref":"this"}}]}},"WATER_2":{"middle":{"_text":"あなたのデッキの一番上のカードを、他の各ラインに裏向きで1枚ずつプレイする。","ops":[{"op":"forEachLine","lines":"otherLines","ops":[{"op":"play","source":"topDeck","facing":"down","dest":"currentLine"}]}]}},"WATER_3":{"middle":{"_text":"カードを2枚引く。あなたのプロトコルを並べ替える。","ops":[{"op":"draw","count":2},{"op":"rearrange","whose":"self"}]}},"WATER_4":{"middle":{"_text":"1ラインを選び、そのラインの値が2のすべてのカードを戻す。","ops":[{"op":"return","select":{"zone":"chosenLine","value":{"eq":2},"mode":"all"}}]}},"WATER_5":{"middle":{"_text":"あなたのカードを1枚戻す。","ops":[{"op":"return","select":{"owner":"self"}}]}},"WATER_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"APATHY_1":{"upper":{"_text":"このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。","static":{"kind":"modifyLineTotal","side":"self","deltaPer":{"zone":"thisLine","facing":"down"}}}},"APATHY_2":{"middle":{"_text":"このラインにある他のすべての表向きのカードを同時に反転させる。","ops":[{"op":"flip","select":{"zone":"thisLine","facing":"up","exclude":"thisCard","mode":"all"}}]}},"APATHY_3":{"upper":{"_text":"このラインにあるカードのすべての中段コマンドを無視する。","static":{"kind":"ignoreMiddle","zone":"thisLine"}},"lower":{"_text":"このカードが覆われることになったとき：先に、このカードを反転させる。","trigger":{"on":"wouldBeCovered","ops":[{"op":"flip","select":{"ref":"this"}}]}}},"APATHY_4":{"middle":{"_text":"相手の表向きのカードを１枚反転させる。","ops":[{"op":"flip","select":{"owner":"opp","facing":"up"}}]}},"APATHY_5":{"middle":{"_text":"表向きで覆われているあなたのカード１枚を反転させることができる。","ops":[{"op":"flip","select":{"owner":"self","facing":"up","coverage":"covered"},"optional":true}]}},"APATHY_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"HATE_1":{"middle":{"_text":"カードを１枚削除する。","ops":[{"op":"delete"}]}},"HATE_2":{"middle":{"_text":"あなたは手札を３枚捨て札にする。カードを１枚削除する。カードを１枚削除する。","ops":[{"op":"discard","count":3},{"op":"delete"},{"op":"delete"}]}},"HATE_3":{"middle":{"_text":"値が最も大きく覆われていないあなたのカードを１枚削除する。値が最も大きく覆われていない相手のカードを１枚削除する。","ops":[{"op":"delete","select":{"owner":"self","value":"highest"}},{"op":"delete","select":{"owner":"opp","value":"highest"}}]}},"HATE_4":{"upper":{"_text":"あなたがカードを１枚削除したあと：カードを１枚引く。","trigger":{"on":"afterYouDelete","ops":[{"op":"draw","count":1}]}}},"HATE_5":{"lower":{"_text":"このカードが覆われることになったとき：先に、このラインにある値が最も小さく覆われているカードを１枚削除する。","trigger":{"on":"wouldBeCovered","ops":[{"op":"delete","select":{"zone":"thisLine","coverage":"covered","value":"lowest"}}]}}},"HATE_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"LOVE_1":{"middle":{"_text":"あなたは相手のデッキの一番上のカードを引く。","ops":[{"op":"draw","count":1,"fromOppDeck":true}]},"lower":{"_text":"終了：あなたの手札一枚を相手に与えることができる。そうした場合、カードを２枚引く。","trigger":{"on":"end","ops":[{"op":"giveCard","count":1,"optional":true},{"op":"ifDone","ops":[{"op":"draw","count":2}]}]}}},"LOVE_2":{"middle":{"_text":"相手はカードを１枚引く。あなたはリフレッシュする。","ops":[{"op":"draw","count":1,"player":"opp"},{"op":"refresh"}]}},"LOVE_3":{"middle":{"_text":"あなたは相手の手札からランダムにカードを１枚引く。あなたの手札１枚を相手に与える。","ops":[{"op":"takeRandom"},{"op":"giveCard","count":1}]}},"LOVE_4":{"middle":{"_text":"あなたの手札１枚を公開する。カードを１枚反転させる。","ops":[{"op":"reveal","target":"ownHandCard"},{"op":"flip"}]}},"LOVE_5":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"LOVE_6":{"middle":{"_text":"相手はカードを２枚引く。","ops":[{"op":"draw","count":2,"player":"opp"}]}},"CHAOS_1":{"middle":{"_text":"各ラインで、覆われているカードを1枚ずつ反転させる。","ops":[{"op":"forEachLine","lines":"linesWithCovered","ops":[{"op":"flip","select":{"coverage":"covered","zone":"currentLine"}}]}]},"lower":{"_text":"開始：あなたは相手のデッキの一番上のカードを引く。相手はあなたのデッキの一番上のカードを引く。","trigger":{"on":"start","ops":[{"op":"draw","count":1,"fromOppDeck":true},{"op":"oppDrawsFromYourDeck","count":1}]}}},"CHAOS_2":{"middle":{"_text":"あなたのプロトコルを並べ替える。相手のプロトコルを並べ替える。","ops":[{"op":"rearrange","whose":"self"},{"op":"rearrange","whose":"opp"}]}},"CHAOS_3":{"middle":{"_text":"あなたの覆われているカードを1枚移動させる。","ops":[{"op":"shift","select":{"owner":"self","coverage":"covered"}}]}},"CHAOS_4":{"lower":{"_text":"このカードはプロトコルを対応させずプレイすることができる。","handStatic":"thisAnyLine"}},"CHAOS_5":{"lower":{"_text":"終了：あなたのすべての手札を捨て札にする。捨て札にした枚数と同じ枚数のカードを引く。","trigger":{"on":"end","ops":[{"op":"discard","count":"all","bind":"n"},{"op":"drawByCount","ref":"n"}]}}},"CHAOS_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"CLARITY_1":{"upper":{"_text":"このラインのあなたの合計値は、あなたの手札1枚ごとに1枚増える。","static":{"kind":"modifyLineTotal","side":"self","deltaPer":"yourHand"}}},"CLARITY_2":{"upper":{"_text":"開始：あなたのデッキの一番上のカードを公開する。そのカードを捨て札にすることができる。","trigger":{"on":"start","ops":[{"op":"revealTopDiscard"}]}},"middle":{"_text":"相手は自身の手札をすべて公開する。","ops":[{"op":"reveal","target":"oppHand"}]},"lower":{"_text":"このカードが覆われることになったとき：先にカードを3枚引く。","trigger":{"on":"wouldBeCovered","ops":[{"op":"draw","count":3}]}}},"CLARITY_3":{"middle":{"_text":"あなたのデッキのカードをすべて公開する。公開した中から値が1のカードを1枚引く。あなたのデッキをシャッフルする。値が1のカードを1枚プレイする。","ops":[{"op":"searchDeck","value":1},{"op":"play","filterValue":1}]}},"CLARITY_4":{"middle":{"_text":"あなたのデッキのカードをすべて公開する。公開した中から値が5のカードを1枚引く。あなたのデッキをシャッフルする。","ops":[{"op":"searchDeck","value":5}]}},"CLARITY_5":{"middle":{"_text":"あなたの捨て札置き場にあるすべてのカードをデッキに戻してシャッフルすることができる。","ops":[{"op":"shuffleTrashIntoDeck","optional":true}]}},"CLARITY_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"CORRUPTION_1":{"upper":{"_text":"開始：このスタック内の、覆われているか覆われていない他の表向きのカードを1枚反転させる。","trigger":{"on":"start","ops":[{"op":"flip","select":{"zone":"thisStack","coverage":"any","facing":"up","exclude":"thisCard"}}]}},"lower":{"_text":"このカードは、プロトコルに対応させずに、どちらかのプレイヤー側でプレイすることができる。","handStatic":"thisAnyLineEitherSide"}},"CORRUPTION_2":{"middle":{"_text":"カードを1枚戻す。","ops":[{"op":"return"}]},"lower":{"_text":"カードが相手の手札に戻るとき：そうする代わりに、そのカードを相手のデッキの一番上に裏向きで置く。","static":{"kind":"returnToDeckTop"}}},"CORRUPTION_3":{"upper":{"_text":"あなたが手札を捨て札にしたあと：相手は手札を1枚捨て札にする。","trigger":{"on":"afterYouDiscard","ops":[{"op":"discard","player":"opp","count":1}]}},"middle":{"_text":"カードを1枚引く。あなたは手札を1枚捨て札にする。","ops":[{"op":"draw","count":1},{"op":"discard","count":1}]}},"CORRUPTION_4":{"middle":{"_text":"あなたは覆われている表向きのカードを1枚反転させることができる。","ops":[{"op":"flip","optional":true,"select":{"coverage":"covered","facing":"up"}}]}},"CORRUPTION_5":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"CORRUPTION_6":{"upper":{"_text":"終了：あなたは手札を1枚捨て札にするか、このカードを削除する。","trigger":{"on":"end","ops":[{"op":"choice","options":[[{"op":"discard","count":1}],[{"op":"delete","select":{"ref":"this"}}]]}]}}},"COURAGE_1":{"upper":{"_text":"開始：あなたの手札が1枚もない場合、カードを1枚引く。","trigger":{"on":"start","ops":[{"op":"ifState","cond":"handEmpty","ops":[{"op":"draw","count":1}]}]}},"middle":{"_text":"カードを1枚引く。","ops":[{"op":"draw","count":1}]},"lower":{"_text":"終了：あなたは手札を1枚捨て札にすることができる。そうした場合、相手は手札を1枚捨て札にする。","trigger":{"on":"end","ops":[{"op":"discard","count":1,"optional":true},{"op":"ifDone","ops":[{"op":"discard","player":"opp","count":1}]}]}}},"COURAGE_2":{"middle":{"_text":"あなたの合計値より相手の合計値が大きいライン1つにある、相手のカードを1枚削除する。","ops":[{"op":"delete","select":{"owner":"opp","zone":"lineWhereOppLeads"}}]}},"COURAGE_3":{"middle":{"_text":"カードを1枚引く。","ops":[{"op":"draw","count":1}]},"lower":{"_text":"終了：このラインで、あなたの合計値より相手の合計値が大きい場合、カードを1枚引く。","trigger":{"on":"end","ops":[{"op":"ifState","cond":"oppLeadsThisLine","ops":[{"op":"draw","count":1}]}]}}},"COURAGE_4":{"lower":{"_text":"終了：相手の最も大きい合計値のラインに、このカードを移動させることができる。","trigger":{"on":"end","ops":[{"op":"shift","select":{"ref":"this"},"dest":"oppHighestLine","optional":true}]}}},"COURAGE_5":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"COURAGE_6":{"upper":{"_text":"終了：このラインで、あなたの合計値より相手の合計値が大きい場合、このカードを反転させる。","trigger":{"on":"end","ops":[{"op":"ifState","cond":"oppLeadsThisLine","ops":[{"op":"flip","select":{"ref":"this"}}]}]}}},"FEAR_1":{"upper":{"_text":"あなたの手番中、相手のカードの中段コマンドはないものとして扱う。","static":{"kind":"suppressOppMiddle"}},"middle":{"_text":"カードを1枚移動させるか反転させる。","ops":[{"op":"choice","options":[[{"op":"shift"}],[{"op":"flip"}]]}]}},"FEAR_2":{"middle":{"_text":"カードを2枚引く。相手は自身の手札をすべて捨て札にして、捨て札にした枚数-1枚のカードを引く。","ops":[{"op":"draw","count":2},{"op":"discard","player":"opp","count":"all","bind":"n"},{"op":"drawByCount","ref":"n","plus":-1,"player":"opp"}]}},"FEAR_3":{"middle":{"_text":"相手のカードを1枚戻す。","ops":[{"op":"return","select":{"owner":"opp"}}]}},"FEAR_4":{"middle":{"_text":"このラインにある、相手の覆われているか覆われていないカードを1枚移動させる。","ops":[{"op":"shift","select":{"owner":"opp","zone":"thisLine","coverage":"any"}}]}},"FEAR_5":{"middle":{"_text":"相手は自身の手札からランダムに1枚捨て札にする。","ops":[{"op":"randomDiscard","player":"opp"}]}},"FEAR_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"ICE_1":{"middle":{"_text":"あなたはこのカードを移動させることができる。","ops":[{"op":"shift","select":{"ref":"this"},"optional":true}]},"lower":{"_text":"相手がこのラインにカードを1枚プレイしたあと：相手は自身の手札を1枚捨て札にする。","trigger":{"on":"afterOppPlayInThisLine","ops":[{"op":"discard","player":"opp","count":1}]}}},"ICE_2":{"middle":{"_text":"他のカードを1枚移動させる。","ops":[{"op":"shift","select":{"exclude":"thisCard"}}]}},"ICE_3":{"upper":{"_text":"終了：このカードが覆われている場合、このカードを移動させることができる。","trigger":{"on":"end","ops":[{"op":"ifState","cond":"thisCovered","ops":[{"op":"shift","select":{"ref":"this"},"optional":true}]}]}}},"ICE_4":{"lower":{"_text":"このカードを反転させることはできない。","static":{"kind":"cannotFlipThis"}}},"ICE_5":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"ICE_6":{"upper":{"_text":"あなたの手札が1枚以上ある場合、あなたはカードを引くことはできない。","static":{"kind":"cannotDraw"}}},"LUCK_1":{"middle":{"_text":"値を1つ宣言する。カードを3枚引く。その中から、表面に宣言した値を持つカードを1枚公開する。そのカードをプレイすることができる。","ops":[{"op":"declare","what":"value","bind":"declared"},{"op":"drawRevealPlay","count":3,"declared":"declared"}]}},"LUCK_2":{"middle":{"_text":"あなたのデッキの一番上のカードを裏向きでプレイする。そのカードを反転させる（その中段コマンドは無視する）。","ops":[{"op":"play","source":"topDeck","facing":"down","dest":"anyLine","bind":"p"},{"op":"flip","select":{"ref":"p"},"ignoreMiddle":true}]}},"LUCK_3":{"middle":{"_text":"あなたのデッキの一番上のカードを捨て札にする。そのカードの表面の値に等しい枚数のカードを引く。","ops":[{"op":"discardTop","bind":"t"},{"op":"drawByValue","ref":"t"}]}},"LUCK_4":{"middle":{"_text":"プロトコルを1つ宣言する。相手のデッキの一番上のカードを捨て札にする。そのカードが宣言したプロトコルに対応している場合、カードを1枚削除する。","ops":[{"op":"declare","what":"protocol","bind":"declared"},{"op":"discardTop","player":"opp","bind":"t"},{"op":"ifBindMatches","ref":"t","match":"protocol","declared":"declared","ops":[{"op":"delete"}]}]}},"LUCK_5":{"middle":{"_text":"あなたのデッキの一番上のカードを捨て札にする。そのカードの表面の値と同じ値を持つ、覆われているか覆われていないカードを1枚削除する。","ops":[{"op":"discardTop","bind":"t"},{"op":"delete","select":{"coverage":"any","value":{"eqBindPrinted":"t"}}}]}},"LUCK_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"MIRROR_1":{"upper":{"_text":"このラインのあなたの合計値は、このラインにある相手のカード1枚ごとに1増える。","static":{"kind":"modifyLineTotal","side":"self","deltaPer":"oppCardsInLine"}}},"MIRROR_2":{"lower":{"_text":"終了：あなたは相手のカードのうち1枚の中段コマンドを、そのコマンドがこのカード上にあるかのように解決できる","trigger":{"on":"end","ops":[{"op":"mirrorMiddle","optional":true}]}}},"MIRROR_3":{"middle":{"_text":"あなたのスタック1つにあるすべてのカードを、あなたの別のスタック1つにあるすべてのカードと入れ替える。","ops":[{"op":"swapStacks"}]}},"MIRROR_4":{"middle":{"_text":"あなたのカードを1枚反転させる。そのカードと同じラインにある相手のカードを1枚反転させる。","ops":[{"op":"flip","select":{"owner":"self"},"bind":"t"},{"op":"flip","select":{"owner":"opp","zone":"sameLineAsRef","refKey":"t"}}]}},"MIRROR_5":{"lower":{"_text":"相手がカードを引いたあと：カードを1枚引く。","trigger":{"on":"afterOppDraw","ops":[{"op":"draw","count":1}]}}},"MIRROR_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"PEACE_1":{"middle":{"_text":"両プレイヤーはすべての手札を捨て札にする。","ops":[{"op":"bothDiscardAll"}]},"lower":{"_text":"終了：あなたの手札が1枚もない場合、カードを1枚引く。","trigger":{"on":"end","ops":[{"op":"ifState","cond":"handEmpty","ops":[{"op":"draw","count":1}]}]}}},"PEACE_2":{"middle":{"_text":"カードを1枚引く。カードを1枚裏向きでプレイする。","ops":[{"op":"draw","count":1},{"op":"play","facing":"down"}]}},"PEACE_3":{"middle":{"_text":"あなたは手札を1枚捨て札にすることができる。あなたの手札の枚数より値が大きいカードを1枚反転させる。","ops":[{"op":"discard","count":1,"optional":true},{"op":"flip","select":{"value":{"gtHandCount":true}}}]}},"PEACE_4":{"lower":{"_text":"相手の手番中にあなたが捨て札にしたあと：カードを1枚引く。","trigger":{"on":"afterYouDiscardOppTurn","ops":[{"op":"draw","count":1}]}}},"PEACE_5":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"PEACE_6":{"middle":{"_text":"あなたの手札が2枚以上ある場合、このカードを反転させる。","ops":[{"op":"ifState","cond":"handGe2","ops":[{"op":"flip","select":{"ref":"this"}}]}]}},"SMOKE_1":{"middle":{"_text":"裏向きのカードが1枚以上ある各ラインに、あなたのデッキの一番上のカードを裏向きでプレイする。","ops":[{"op":"forEachLine","lines":"linesWithFaceDown","ops":[{"op":"play","source":"topDeck","facing":"down","dest":"currentLine"}]}]}},"SMOKE_2":{"middle":{"_text":"あなたのカードを1枚反転させる。あなたはそのカードを移動させることができる。","ops":[{"op":"flip","select":{"owner":"self"},"bind":"t"},{"op":"shift","select":{"ref":"t"},"optional":true}]}},"SMOKE_3":{"middle":{"_text":"このラインのあなたの合計値は、このラインにある裏向きのカード1枚ごとに1増える。","static":{"kind":"modifyLineTotal","side":"self","deltaPer":{"zone":"thisLine","facing":"down"}}}},"SMOKE_4":{"middle":{"_text":"裏向きのカードが1枚以上あるライン１つに、カードを裏向きで1枚プレイする。","ops":[{"op":"play","facing":"down","dest":"lineWithFaceDown"}]}},"SMOKE_5":{"middle":{"_text":"覆われている裏向きのカードを1枚移動させる。","ops":[{"op":"shift","select":{"facing":"down","coverage":"covered"}}]}},"SMOKE_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"TIME_1":{"middle":{"_text":"あなたの捨て札置き場にあるカードを1枚プレイする。あなたの捨て札置き場にあるすべてのカードをデッキに戻してシャッフルする。","ops":[{"op":"playFromTrash"},{"op":"shuffleTrashIntoDeck"}]}},"TIME_2":{"middle":{"_text":"覆われているカードを1枚反転させる。あなたのデッキのカードをすべて捨て札にする。","ops":[{"op":"flip","select":{"coverage":"covered"}},{"op":"discardDeck"}]}},"TIME_3":{"upper":{"_text":"あなたがデッキをシャッフルしたあと：カードを1枚引き、このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。","trigger":{"on":"afterYouShuffle","ops":[{"op":"draw","count":1},{"op":"shift","select":{"ref":"this"},"optional":true}]}},"middle":{"_text":"あなたの捨て札置き場にカードがある場合、あなたは捨て札置き場にあるすべてのカードをデッキに戻してシャッフルすることができる。","ops":[{"op":"shuffleTrashIntoDeck","optional":true}]}},"TIME_4":{"middle":{"_text":"あなたの捨て札置き場にあるカードを1枚公開する。そのカードをこのカードとは別のラインに裏向きでプレイする。","ops":[{"op":"playFromTrash","facing":"down"}]}},"TIME_5":{"middle":{"_text":"カードを2枚引く。あなたは手札を2枚捨て札にする。","ops":[{"op":"draw","count":2},{"op":"discard","count":2}]}},"TIME_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"WAR_1":{"upper":{"_text":"あなたがリフレッシュしたあと：あなたはこのカードを反転させることができる。","trigger":{"on":"afterYouRefresh","ops":[{"op":"flip","select":{"ref":"this"},"optional":true}]}},"lower":{"_text":"相手がカードを引いたあと：あなたはカードを1枚削除することができる。","trigger":{"on":"afterOppDraw","ops":[{"op":"delete","optional":true}]}}},"WAR_2":{"lower":{"_text":"相手がリフレッシュしたあと：任意の枚数の手札を捨て札にする。リフレッシュする。","trigger":{"on":"afterOppRefresh","ops":[{"op":"discard","count":{"min":0,"max":"any"}},{"op":"refresh"}]}}},"WAR_3":{"middle":{"_text":"カードを1枚反転させる。","ops":[{"op":"flip"}]},"lower":{"_text":"相手がコンパイルしたあと：相手は手札をすべて捨て札にする。","trigger":{"on":"afterOppCompile","ops":[{"op":"discard","player":"opp","count":"all"}]}}},"WAR_4":{"middle":{"_text":"カードを1枚引く。","ops":[{"op":"draw","count":1}]},"lower":{"_text":"相手が手札を捨て札にしたあと：あなたはカードを裏向きで1枚プレイすることができる。","trigger":{"on":"afterOppDiscard","ops":[{"op":"play","facing":"down","optional":true}]}}},"WAR_5":{"middle":{"_text":"相手は手札を1枚捨て札にする。","ops":[{"op":"discard","player":"opp","count":1}]}},"WAR_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"ASSIMILATION_1":{"middle":{"_text":"覆われているか覆われていない、相手の裏向きカードのうち1枚をあなたの手札に加える。","ops":[{"op":"stealToHand"}]}},"ASSIMILATION_2":{"middle":{"_text":"あなたの手札を1枚捨て札にする。リフレッシュする。","ops":[{"op":"discard","count":1},{"op":"refresh"}]},"lower":{"_text":"誰かがリフレッシュしたあと：相手のデッキの一番上のカードを引く。あなたは手札を1枚捨て札にし、それを相手の捨て札置き場に置く。","trigger":{"on":"afterAnyRefresh","ops":[{"op":"draw","count":1,"fromOppDeck":true},{"op":"discardToOppTrash"}]}}},"ASSIMILATION_3":{"lower":{"_text":"終了：相手のデッキの一番上のカードを、このスタックに裏向きでプレイする。","trigger":{"on":"end","ops":[{"op":"play","source":"oppTopDeck","dest":"thisStack","facing":"down"}]}}},"ASSIMILATION_4":{"middle":{"_text":"相手のデッキの一番上のカードを引く。相手はあなたのデッキの一番上のカードを引く。","ops":[{"op":"draw","count":1,"fromOppDeck":true},{"op":"oppDrawsFromYourDeck","count":1}]}},"ASSIMILATION_5":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"ASSIMILATION_6":{"lower":{"_text":"終了：あなたのデッキの一番上のカードを、相手側の任意のスタックに裏向きでプレイする。","trigger":{"on":"end","ops":[{"op":"play","source":"topDeck","dest":"oppStack","facing":"down"}]}}},"DIVERSITY_1":{"middle":{"_text":"フィールドに6種類のプロトコルのコマンドカードがある場合、「DIVERSITY」プロトコルカードをコンパイル完了面にする。","ops":[{"op":"ifState","cond":"protoKindsGe6","ops":[{"op":"setProtocolCompiled","proto":"DIVERSITY"}]}]},"lower":{"_text":"終了：あなたはこのラインに「DIVERSITY」以外のカードをプレイすることができる。","trigger":{"on":"end","ops":[{"op":"play","dest":"thisLine","notProto":"DIVERSITY","optional":true}]}}},"DIVERSITY_2":{"middle":{"_text":"カードを1枚移動させる。このラインにあるコマンドカードの、プロトコルの種類数に等しい枚数のカードを引く。","ops":[{"op":"shift"},{"op":"drawDynamic","count":"protoKindsInThisLine"}]}},"DIVERSITY_3":{"upper":{"_text":"このスタックに「DIVERSITY」以外の表向きのカードがある場合、このラインのあなたの合計値は2増える。","static":{"kind":"modifyLineTotal","side":"self","delta":2,"cond":"stackHasOtherProtoFaceUp"}}},"DIVERSITY_4":{"middle":{"_text":"フィールドにあるコマンドカードの、プロトコルの種類数未満の値を持つカードを1枚反転させる。","ops":[{"op":"flip","select":{"value":{"ltProtoKinds":true}}}]}},"DIVERSITY_5":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"DIVERSITY_6":{"upper":{"_text":"終了：フィールドにあるコマンドカードの、プロトコルの種類数が3以下の場合、このカードを削除する。","trigger":{"on":"end","ops":[{"op":"ifState","cond":"protoKindsLe3","ops":[{"op":"delete","select":{"ref":"this"}}]}]}}},"UNITY_1":{"middle":{"_text":"フィールドに他の「UNITY」カードがある場合、カードを1枚反転させるか、カードを1枚引く。","ops":[{"op":"ifState","cond":"otherProtoCardOnField","ops":[{"op":"choice","options":[[{"op":"flip"}],[{"op":"draw","count":1}]]}]}]},"lower":{"_text":"このカードが「UNITY」カードによって覆われることになったとき：先に、カードを1枚反転させるか、カードを1枚引く。","trigger":{"on":"wouldBeCovered","byProto":"UNITY","ops":[{"op":"choice","options":[[{"op":"flip"}],[{"op":"draw","count":1}]]}]}}},"UNITY_2":{"upper":{"_text":"開始：このカードが覆われている場合、あなたはこのカードを移動させることができる。","trigger":{"on":"start","ops":[{"op":"ifState","cond":"thisCovered","ops":[{"op":"shift","select":{"ref":"this"},"optional":true}]}]}},"middle":{"_text":"フィールド「UNITY」カードが5枚以上ある場合、「UNITY」プロトコルカードのコンパイル完了面を表向きにし、そのラインにあるすべてのカードを削除する。","ops":[{"op":"ifState","cond":"protoCountGe5","ops":[{"op":"setProtocolCompiled","proto":"UNITY","deleteLine":true}]}]},"lower":{"_text":"このラインには「UNITY」カードを表向きでプレイすることができる。","static":{"kind":"playPermission","rule":"protoFaceUpThisLine"}}},"UNITY_3":{"middle":{"_text":"フィールドにある「UNITY」カードの枚数に等しい枚数のカードを引く。","ops":[{"op":"drawDynamic","count":"protoOnField"}]}},"UNITY_4":{"middle":{"_text":"フィールドに他の「UNITY」カードがある場合、あなたは表向きのカードを1枚反転させることができる。","ops":[{"op":"ifState","cond":"otherProtoCardOnField","ops":[{"op":"flip","optional":true,"select":{"facing":"up"}}]}]}},"UNITY_5":{"upper":{"_text":"終了：あなたの手札が1枚もない場合、あなたのデッキのカードをすべて公開し、そこからすべての「UNITY」カードを引いて、あなたのデッキをシャッフルする。","trigger":{"on":"end","ops":[{"op":"ifState","cond":"handEmpty","ops":[{"op":"searchDeck","proto":"UNITY","all":true}]}]}}},"UNITY_6":{"middle":{"_text":"あなたの手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}}};</script>
-<script>window.COMPILE_ART=["1apathy.webp", "1assimilation.webp", "1chaos.webp", "1clarity.webp", "1corruption.webp", "1courage.webp", "1darkness.webp", "1death.webp", "1diversity.webp", "1fear.webp", "1fire.webp", "1gravity.webp", "1hate.webp", "1ice.webp", "1life.webp", "1light.webp", "1love.webp", "1luck.webp", "1metal.webp", "1mirror.webp", "1peace.webp", "1plague.webp", "1psychic.webp", "1smoke.webp", "1speed.webp", "1spirit.webp", "1time.webp", "1unity.webp", "1war.webp", "1water.webp", "2apathy.webp", "2assimilation.webp", "2chaos.webp", "2clarity.webp", "2corruption.webp", "2courage.webp", "2darkness.webp", "2death.webp", "2diversity.webp", "2fear.webp", "2fire.webp", "2gravity.webp", "2hate.webp", "2ice.webp", "2life.webp", "2light.webp", "2love.webp", "2luck.webp", "2metal.webp", "2mirror.webp", "2peace.webp", "2plague.webp", "2psychic.webp", "2smoke.webp", "2speed.webp", "2spirit.webp", "2time.webp", "2unity.webp", "2war.webp", "2water.webp", "3apathy.webp", "3assimilation.webp", "3chaos.webp", "3clarity.webp", "3corruption.webp", "3courage.webp", "3darkness.webp", "3death.webp", "3diversity.webp", "3fear.webp", "3fire.webp", "3gravity.webp", "3hate.webp", "3ice.webp", "3life.webp", "3light.webp", "3love.webp", "3luck.webp", "3metal.webp", "3mirror.webp", "3peace.webp", "3plague.webp", "3psychic.webp", "3smoke.webp", "3speed.webp", "3spirit.webp", "3time.webp", "3unity.webp", "3war.webp", "3water.webp", "4apathy.webp", "4assimilation.webp", "4chaos.webp", "4clarity.webp", "4corruption.webp", "4courage.webp", "4darkness.webp", "4death.webp", "4diversity.webp", "4fear.webp", "4fire.webp", "4gravity.webp", "4hate.webp", "4ice.webp", "4life.webp", "4light.webp", "4love.webp", "4luck.webp", "4metal.webp", "4mirror.webp", "4peace.webp", "4plague.webp", "4psychic.webp", "4smoke.webp", "4speed.webp", "4spirit.webp", "4time.webp", "4unity.webp", "4war.webp", "4water.webp", "5apathy.webp", "5assimilation.webp", "5chaos.webp", "5clarity.webp", "5corruption.webp", "5courage.webp", "5darkness.webp", "5death.webp", "5diversity.webp", "5fear.webp", "5fire.webp", "5gravity.webp", "5hate.webp", "5ice.webp", "5life.webp", "5light.webp", "5love.webp", "5luck.webp", "5metal.webp", "5mirror.webp", "5peace.webp", "5plague.webp", "5psychic.webp", "5smoke.webp", "5speed.webp", "5spirit.webp", "5time.webp", "5unity.webp", "5war.webp", "5water.webp", "6apathy.webp", "6assimilation.webp", "6chaos.webp", "6clarity.webp", "6corruption.webp", "6courage.webp", "6darkness.webp", "6death.webp", "6diversity.webp", "6fear.webp", "6fire.webp", "6gravity.webp", "6hate.webp", "6ice.webp", "6life.webp", "6light.webp", "6love.webp", "6luck.webp", "6metal.webp", "6mirror.webp", "6peace.webp", "6plague.webp", "6psychic.webp", "6smoke.webp", "6speed.webp", "6spirit.webp", "6time.webp", "6unity.webp", "6war.webp", "6water.webp", "Apathy.webp", "Apathy_Glitched.webp", "Assimilation.webp", "Assimilation_Glitched.webp", "Chaos.webp", "Chaos_Glitched.webp", "Clarity.webp", "Clarity_Glitched.webp", "Corruption.webp", "Corruption_Glitched.webp", "Courage.webp", "Courage_Glitched.webp", "Darkness.webp", "Darkness_Glitched.webp", "Death.webp", "Death_Glitched.webp", "Diversity.webp", "Diversity_Glitched.webp", "Fear.webp", "Fear_Glitched.webp", "Fire.webp", "Fire_Glitched.webp", "Gravity.webp", "Gravity_Glitched.webp", "Hate.webp", "Hate_Glitched.webp", "Ice.webp", "Ice_Glitched.webp", "Life.webp", "Life_Glitched.webp", "Light.webp", "Light_Glitched.webp", "Love.webp", "Love_Glitched.webp", "Luck.webp", "Luck_Glitched.webp", "Metal.webp", "Metal_Glitched.webp", "Mirror.webp", "Mirror_Glitched.webp", "Peace.webp", "Peace_Glitched.webp", "Plague.webp", "Plague_Glitched.webp", "Psychic.webp", "Psychic_Glitched.webp", "Smoke.webp", "Smoke_Glitched.webp", "Speed.webp", "Speed_Glitched.webp", "Spirit.webp", "Spirit_Glitched.webp", "Time.webp", "Time_Glitched.webp", "Unity.webp", "Unity_Glitched.webp", "War.webp", "War_Glitched.webp", "Water.webp", "Water_Glitched.webp"];</script>
+<script>window.COMPILE_CARDS={"protocols":[{"name":"DARKNESS","displayName":"DARKNESS","tags":"手札維持／移動／操作","color":"#6A1B9A","set":"Main 1","cards":[{"id":"DARKNESS_1","number":1,"value":0,"upper":"","middle":"カードを3枚引く。相手の覆われているカードを1枚移動させる。","lower":"","effectTypes":["draw","shift"]},{"id":"DARKNESS_2","number":2,"value":1,"upper":"","middle":"相手のカードを1枚反転させる。あなたはそのカードを移動させることができる。","lower":"","effectTypes":["flip","shift"]},{"id":"DARKNESS_3","number":3,"value":2,"upper":"このスタックにあるすべての裏向きのカードの値はそれぞれ4になる。","middle":"このラインにある、覆われているカードを1枚反転させることができる。","lower":"","effectTypes":["flip"]},{"id":"DARKNESS_4","number":4,"value":3,"upper":"","middle":"他の1ラインにカードを裏向きで1枚プレイする。","lower":"","effectTypes":["play"]},{"id":"DARKNESS_5","number":5,"value":4,"upper":"","middle":"裏向きのカードを1枚移動させる。","lower":"","effectTypes":["shift"]},{"id":"DARKNESS_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"DEATH","displayName":"DEATH","tags":"削除／手札維持","color":"#37474F","set":"Main 1","cards":[{"id":"DEATH_1","number":1,"value":0,"upper":"","middle":"他の各ラインにあるカードを1枚ずつ削除する。","lower":"","effectTypes":["delete"],"codex":"【明確化】DEATH 0の中段コマンドが発動したとき、オーナーは処理が必要なラインを確認する。次に処理するラインを1つずつ選び、各ラインで覆われていないカードを1枚選んで削除し、その削除の結果を処理してから次のラインに移る。"},{"id":"DEATH_2","number":2,"value":1,"upper":"開始：カードを1枚引くことができる。そうした場合、他のカードを1枚削除し、そのあとこのカードを削除する。","middle":"","lower":"","effectTypes":["draw","delete"],"codex":"【エラッタ(2024/10)】上段コマンドは「開始：カードを1枚引くことができる。そうした場合、他のカードを1枚削除し、そのあとこのカードを削除する。」に修正。"},{"id":"DEATH_3","number":3,"value":2,"upper":"","middle":"1ラインを選び、そのラインの値が1か2どちらかのすべてのカードを削除する。","lower":"","effectTypes":["delete"]},{"id":"DEATH_4","number":4,"value":3,"upper":"","middle":"裏向きのカードを1枚削除する。","lower":"","effectTypes":["delete"]},{"id":"DEATH_5","number":5,"value":4,"upper":"","middle":"値が0か1のカードを1枚削除する。","lower":"","effectTypes":["delete"]},{"id":"DEATH_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"FIRE","displayName":"FIRE","tags":"捨て札にして効果を得る","color":"#E53935","set":"Main 1","cards":[{"id":"FIRE_1","number":1,"value":0,"upper":"","middle":"他のカードを1枚反転させる。カードを2枚引く。","lower":"このカードが覆われることになったとき：先にカードを1枚引き、他のカードを1枚反転させる。","effectTypes":["draw","flip"],"codex":"【エラッタ(2024/12)】下段コマンドは「このカードが覆われることになったとき：先に、カードを1枚引く。そのあと、他のカードを1枚反転させる。」に修正。"},{"id":"FIRE_2","number":2,"value":1,"upper":"","middle":"あなたは手札を1枚捨て札にする。そうした場合、カードを1枚削除する。","lower":"","effectTypes":["delete"]},{"id":"FIRE_3","number":3,"value":2,"upper":"","middle":"あなたは手札を1枚捨て札にする。そうした場合、カードを1枚戻す。","lower":"","effectTypes":["return"]},{"id":"FIRE_4","number":4,"value":3,"upper":"","middle":"","lower":"終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。","effectTypes":["flip"]},{"id":"FIRE_5","number":5,"value":4,"upper":"","middle":"あなたは手札があれば1枚以上捨て札にする。捨て札にした枚数＋1枚のカードを引く。","lower":"","effectTypes":["draw"]},{"id":"FIRE_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"GRAVITY","displayName":"GRAVITY","tags":"移動／反転／手札維持","color":"#5D4037","set":"Main 1","cards":[{"id":"GRAVITY_1","number":1,"value":0,"upper":"","middle":"このライン内にあるカード2枚ごとに、あなたのデッキの一番上のカード1枚をこのカードの下に裏向きでプレイする。","lower":"","effectTypes":["play"]},{"id":"GRAVITY_2","number":2,"value":1,"upper":"","middle":"カードを2枚引く。このラインから、またはこのラインへとカードを1枚移動させる。","lower":"","effectTypes":["draw","shift"]},{"id":"GRAVITY_3","number":3,"value":2,"upper":"","middle":"カードを1枚反転させる。そのカードをこのラインへと移動させる。","lower":"","effectTypes":["flip","shift"],"codex":"【明確化】GRAVITY 2は反転したカードが覆われていても移動させる。「そのカード」は特定のカードを指し、覆われたカードの操作制限より優先される。"},{"id":"GRAVITY_4","number":4,"value":4,"upper":"","middle":"裏向きのカードを1枚、このラインへと移動させる。","lower":"","effectTypes":["shift"]},{"id":"GRAVITY_5","number":5,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]},{"id":"GRAVITY_6","number":6,"value":6,"upper":"","middle":"相手は自分のデッキの一番上のカードをこのラインに裏向きで1枚プレイする。","lower":"","effectTypes":["play"]}]},{"name":"LIFE","displayName":"LIFE","tags":"反転／デッキの上からのプレイ／手札維持","color":"#43A047","set":"Main 1","cards":[{"id":"LIFE_1","number":1,"value":0,"upper":"終了：このカードが覆われている場合、このカードを削除する。","middle":"あなたのデッキの一番上のカードを、あなたのカードがある各ラインに裏向きで1枚ずつプレイする。","lower":"","effectTypes":["play"],"codex":"【エラッタ(2024/10)】上段コマンドは「終了：このカードが覆われている場合、このカードを削除する。」に修正。このカードは下段コマンドを持たない。\n【明確化】LIFE 0の中段コマンドが発動したとき、オーナーは処理が必要なラインを確認し、1つずつ処理する。LIFE 0がこの処理中に覆われた場合、中段コマンドは停止する。\n【明確化】デッキからカードをプレイする場合、デッキが空でもシャッフルは強制されない。"},{"id":"LIFE_2","number":2,"value":1,"upper":"","middle":"カード1枚を反転させる。カード1枚を反転させる。","lower":"","effectTypes":["flip"]},{"id":"LIFE_3","number":3,"value":2,"upper":"","middle":"カードを1枚引く。あなたは裏向きのカードを1枚反転させることができる。","lower":"","effectTypes":["draw","flip"]},{"id":"LIFE_4","number":4,"value":3,"upper":"","middle":"","lower":"このカードが覆われることになったとき：先にあなたのデッキの一番上のカードを他の1ラインに裏向きで1枚プレイする。","effectTypes":["play"]},{"id":"LIFE_5","number":5,"value":4,"upper":"","middle":"このカードが他のカードを覆っている場合、カードを1枚引く。","lower":"","effectTypes":["draw"]},{"id":"LIFE_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"LIGHT","displayName":"LIGHT","tags":"手札維持／反転／移動","color":"#FDD835","set":"Main 1","cards":[{"id":"LIGHT_1","number":1,"value":0,"upper":"","middle":"カードを1枚反転させる。そのカードの値に等しい枚数のカードを引く。","lower":"","effectTypes":["draw","flip"],"codex":"【明確化】中段コマンド「カードを1枚反転させる。そのカードの値に等しい枚数のカードを引く。」の処理：覆われていないカード1枚を選び反転させ、発動したテキストを処理する。その後、そのカードの現在の値に等しい枚数を引く。\n【裁定】選んだカードがプレイから除去された場合でも、「そのカード」で直接参照されるため、現在の値をチェックする。"},{"id":"LIGHT_2","number":2,"value":1,"upper":"","middle":"","lower":"終了：カードを1枚引く。","effectTypes":["draw"]},{"id":"LIGHT_3","number":3,"value":2,"upper":"","middle":"カードを2枚引く。裏向きのカードを1枚公開する。あなたは公開したカードを移動させるか反転させることができる。","lower":"","effectTypes":["draw","flip","shift"]},{"id":"LIGHT_4","number":4,"value":3,"upper":"","middle":"このラインにある裏向きのすべてのカードを、他の1ラインへと移動させる。","lower":"","effectTypes":["shift"],"codex":"【明確化】LIGHT 3で移動する裏向きのカードは、スタック内の相対的な位置を維持し、すべて同じラインに移動する。"},{"id":"LIGHT_5","number":5,"value":4,"upper":"","middle":"相手は自分の手札を公開する。","lower":"","effectTypes":["other"]},{"id":"LIGHT_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"METAL","displayName":"METAL","tags":"相手の妨害／手札維持／反転","color":"#78909C","set":"Main 1","cards":[{"id":"METAL_1","number":1,"value":0,"upper":"このラインでの相手の合計値は2減る。","middle":"カードを1枚反転させる。","lower":"","effectTypes":["flip"]},{"id":"METAL_2","number":2,"value":1,"upper":"","middle":"カードを2枚引く。相手は次の手番でコンパイルすることはできない。","lower":"","effectTypes":["draw"],"codex":"【エラッタ(2024/12)】中段コマンドは「カードを2枚引く。相手は次の手番でコンパイルすることはできない。」に修正。\n【明確化】METAL 1はテキストが見えている限り、相手の次の手番でコンパイルを防ぐ。プレイかリフレッシュを選ぶ必要がある。"},{"id":"METAL_3","number":3,"value":2,"upper":"相手はこのラインにカードを裏向きでプレイすることはできない。","middle":"","lower":"","effectTypes":["play"]},{"id":"METAL_4","number":4,"value":3,"upper":"","middle":"カードを1枚引く。カードが8枚以上ある、ほかの1ライン内のすべてのカードを削除する。","lower":"","effectTypes":["draw","delete"]},{"id":"METAL_5","number":5,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]},{"id":"METAL_6","number":6,"value":6,"upper":"このカードが覆われるか反転することになったとき：先にこのカードを削除する。","middle":"","lower":"","effectTypes":["flip"],"codex":"【明確化】METAL 6が上段コマンドで自身を削除した場合、覆っていたカードのテキストが発動するなら、コミットされたカードがフィールドに入る前に発動する。\n【明確化】METAL 6が反転の結果として自身を削除した場合、「反転」コマンドは消費され、他のカードや捨て札のMETAL 6には使えない。"}]},{"name":"PLAGUE","displayName":"PLAGUE","tags":"捨て札の強制／反転","color":"#827717","set":"Main 1","cards":[{"id":"PLAGUE_1","number":1,"value":0,"upper":"","middle":"相手は手札を1枚捨て札にする。","lower":"相手はこのラインにカードをプレイすることはできない。","effectTypes":["discard","play"]},{"id":"PLAGUE_2","number":2,"value":1,"upper":"相手が手札を捨て札にしたあと：カードを1枚引く。","middle":"相手は手札を1枚捨て札にする。","lower":"","effectTypes":["draw","discard"]},{"id":"PLAGUE_3","number":3,"value":2,"upper":"","middle":"あなたは手札があれば1枚以上捨て札にする。相手はあなたが捨て札にした枚数＋1枚の手札を捨て札にする。","lower":"","effectTypes":["discard"]},{"id":"PLAGUE_4","number":4,"value":3,"upper":"","middle":"覆われていない、表向きの他のカードを反転させる。","lower":"","effectTypes":["flip"],"codex":"【エラッタ(2025/9)】中段コマンドは「覆われていない、表向きの他のカードをそれぞれ反転させる。」に修正。機能に変更はないが、意図をより明確にした。\n【明確化】「all」ではなく「each」なので、覆われていないカードのみが対象。発動時、覆われていない表向きのカードをそれぞれ確認し、1枚ずつ処理する。"},{"id":"PLAGUE_5","number":5,"value":4,"upper":"","middle":"","lower":"終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。","effectTypes":["delete","flip"]},{"id":"PLAGUE_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"PSYCHIC","displayName":"PSYCHIC","tags":"手札維持／操作／移動","color":"#7E57C2","set":"Main 1","cards":[{"id":"PSYCHIC_1","number":1,"value":0,"upper":"","middle":"カードを2枚引く。相手は自分の手札を2枚捨て札にして、そのあと相手は手札を公開する。","lower":"","effectTypes":["draw","discard"]},{"id":"PSYCHIC_2","number":2,"value":1,"upper":"相手はカードを裏向きでのみプレイすることができる。","middle":"","lower":"開始：このカードを反転させる。","effectTypes":["other"]},{"id":"PSYCHIC_3","number":3,"value":2,"upper":"","middle":"相手は自分の手札を2枚捨て札にする。あなたは相手のプロトコルを並べ替える。","lower":"","effectTypes":["rearrange","discard"]},{"id":"PSYCHIC_4","number":4,"value":3,"upper":"","middle":"相手は手札を1枚捨て札にする。あなたは相手のカードを1枚移動させる。","lower":"","effectTypes":["shift","discard"]},{"id":"PSYCHIC_5","number":5,"value":4,"upper":"","middle":"","lower":"終了：あなたは相手のカードを1枚戻すことができる。そうした場合、このカードを反転させる。","effectTypes":["flip","return"]},{"id":"PSYCHIC_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"SPEED","displayName":"SPEED","tags":"手札維持／プレイ／移動","color":"#FF8F00","set":"Main 1","cards":[{"id":"SPEED_1","number":1,"value":0,"upper":"","middle":"カードを1枚プレイする。","lower":"","effectTypes":["play"]},{"id":"SPEED_2","number":2,"value":1,"upper":"あなたがキャッシュをクリアしたあと：カードを1枚引く。","middle":"カードを2枚引く。","lower":"","effectTypes":["draw"]},{"id":"SPEED_3","number":3,"value":2,"upper":"このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。","middle":"","lower":"","effectTypes":["shift"],"codex":"【明確化】コンパイル時、ライン内のすべてのカードが同時に削除される。SPEED 2がこの方法で削除される場合、代わりに他のラインに移動させる。SPEED 2の削除のみが防がれ、コンパイル自体は変更されない。"},{"id":"SPEED_4","number":4,"value":3,"upper":"","middle":"あなたの他のカードを1枚移動させる。","lower":"終了：あなたは自分のカードを1枚移動させることができる。そうした場合、このカードを反転させる。","effectTypes":["flip","shift"]},{"id":"SPEED_5","number":5,"value":4,"upper":"","middle":"相手の裏向きのカードを1枚移動させる。","lower":"","effectTypes":["shift"]},{"id":"SPEED_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"SPIRIT","displayName":"SPIRIT","tags":"反転／移動／手札維持","color":"#26C6DA","set":"Main 1","cards":[{"id":"SPIRIT_1","number":1,"value":0,"upper":"","middle":"リフレッシュする。カードを1枚引く。","lower":"あなたのキャッシュの確認フェイズを省略する。","effectTypes":["draw"],"codex":"【明確化】リフレッシュの指示に従う場合、コントロールコンポーネントの使用を含む通常のリフレッシュアクションとなる。"},{"id":"SPIRIT_2","number":2,"value":1,"upper":"あなたがカードを表向きでプレイするときには、プロトコルを対応させずにプレイすることができる。","middle":"カードを2枚引く。","lower":"開始：あなたは手札を1枚捨て札にするか、このカードを反転させる。","effectTypes":["draw","flip","play"],"codex":"【エラッタ(2024/10)】上段コマンドは「あなたがカードを表向きでプレイするときには、プロトコルを対応させずにプレイすることができる。」に修正。"},{"id":"SPIRIT_3","number":3,"value":2,"upper":"","middle":"あなたはカードを1枚反転させることができる。","lower":"","effectTypes":["flip"]},{"id":"SPIRIT_4","number":4,"value":3,"upper":"あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。","middle":"","lower":"","effectTypes":["shift"]},{"id":"SPIRIT_5","number":5,"value":4,"upper":"","middle":"あなたのプロトコルのうち2枚の位置を入れ替える。","lower":"","effectTypes":["rearrange"]},{"id":"SPIRIT_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"WATER","displayName":"WATER","tags":"戻す、手札維持、反転","color":"#1E88E5","set":"Main 1","cards":[{"id":"WATER_1","number":1,"value":0,"upper":"","middle":"他のカードを1枚反転させる。このカードを反転させる。","lower":"","effectTypes":["flip"]},{"id":"WATER_2","number":2,"value":1,"upper":"","middle":"あなたのデッキの一番上のカードを、他の各ラインに裏向きで1枚ずつプレイする。","lower":"","effectTypes":["play"],"codex":"【明確化】WATER 1の中段コマンドが発動したとき、オーナーは処理が必要なラインを確認し、1つずつ処理する。\n【明確化】デッキからカードをプレイする場合、デッキが空でもシャッフルは強制されない。"},{"id":"WATER_3","number":3,"value":2,"upper":"","middle":"カードを2枚引く。あなたのプロトコルを並べ替える。","lower":"","effectTypes":["draw","rearrange"]},{"id":"WATER_4","number":4,"value":3,"upper":"","middle":"1ラインを選び、そのラインの値が2のすべてのカードを戻す。","lower":"","effectTypes":["return"]},{"id":"WATER_5","number":5,"value":4,"upper":"","middle":"あなたのカードを1枚戻す。","lower":"","effectTypes":["return"]},{"id":"WATER_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"APATHY","displayName":"APATHY","tags":"裏向きへの反転","color":"#9E9E9E","set":"Aux 1","cards":[{"id":"APATHY_1","number":1,"value":0,"upper":"このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。","middle":"","lower":"","effectTypes":["other"]},{"id":"APATHY_2","number":2,"value":1,"upper":"","middle":"このラインにある他のすべての表向きのカードを同時に反転させる。","lower":"","effectTypes":["flip"]},{"id":"APATHY_3","number":3,"value":2,"upper":"このラインにあるカードのすべての中段コマンドを無視する。","middle":"","lower":"このカードが覆われることになったとき：先に、このカードを反転させる。","effectTypes":["flip"]},{"id":"APATHY_4","number":4,"value":3,"upper":"","middle":"相手の表向きのカードを１枚反転させる。","lower":"","effectTypes":["flip"]},{"id":"APATHY_5","number":5,"value":4,"upper":"","middle":"表向きで覆われているあなたのカード１枚を反転させることができる。","lower":"","effectTypes":["flip"]},{"id":"APATHY_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"HATE","displayName":"HATE","tags":"互いの削除","color":"#B71C1C","set":"Aux 1","cards":[{"id":"HATE_1","number":1,"value":0,"upper":"","middle":"カードを１枚削除する。","lower":"","effectTypes":["delete"]},{"id":"HATE_2","number":2,"value":1,"upper":"","middle":"あなたは手札を３枚捨て札にする。カードを１枚削除する。カードを１枚削除する。","lower":"","effectTypes":["delete"]},{"id":"HATE_3","number":3,"value":2,"upper":"","middle":"値が最も大きく覆われていないあなたのカードを１枚削除する。値が最も大きく覆われていない相手のカードを１枚削除する。","lower":"","effectTypes":["delete"],"codex":"【エラッタ(2024/10)】中段コマンドは「値が最も大きく覆われていないあなたのカードを1枚削除する。値が最も大きく覆われていない相手のカードを1枚削除する。」に修正。\n【明確化】最大値が同値の場合、プレイヤーが1枚を選ぶ。\n【明確化】HATE 2があなたの最大値カードである場合、最初の条件で自身を削除する。その結果、2番目の条件は発動しない。"},{"id":"HATE_4","number":4,"value":3,"upper":"あなたがカードを１枚削除したあと：カードを１枚引く。","middle":"","lower":"","effectTypes":["draw","delete"]},{"id":"HATE_5","number":5,"value":4,"upper":"","middle":"","lower":"このカードが覆われることになったとき：先に、このラインにある値が最も小さく覆われているカードを１枚削除する。","effectTypes":["delete"]},{"id":"HATE_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"LOVE","displayName":"LOVE","tags":"手札維持／供与／交換","color":"#EC407A","set":"Aux 1","cards":[{"id":"LOVE_1","number":1,"value":1,"upper":"","middle":"あなたは相手のデッキの一番上のカードを引く。","lower":"終了：あなたの手札一枚を相手に与えることができる。そうした場合、カードを２枚引く。","effectTypes":["draw"]},{"id":"LOVE_2","number":2,"value":2,"upper":"","middle":"相手はカードを１枚引く。あなたはリフレッシュする。","lower":"","effectTypes":["draw"]},{"id":"LOVE_3","number":3,"value":3,"upper":"","middle":"あなたは相手の手札からランダムにカードを１枚引く。あなたの手札１枚を相手に与える。","lower":"","effectTypes":["draw"]},{"id":"LOVE_4","number":4,"value":4,"upper":"","middle":"あなたの手札１枚を公開する。カードを１枚反転させる。","lower":"","effectTypes":["flip"]},{"id":"LOVE_5","number":5,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]},{"id":"LOVE_6","number":6,"value":6,"upper":"","middle":"相手はカードを２枚引く。","lower":"","effectTypes":["draw"]}]},{"name":"CHAOS","displayName":"CHAOS","tags":"手札維持／並べ替え／覆われているカード","color":"#7B1FA2","set":"Main 2","cards":[{"id":"CHAOS_1","number":1,"value":0,"upper":"","middle":"各ラインで、覆われているカードを1枚ずつ反転させる。","lower":"開始：あなたは相手のデッキの一番上のカードを引く。相手はあなたのデッキの一番上のカードを引く。","effectTypes":["draw","flip"]},{"id":"CHAOS_2","number":2,"value":1,"upper":"","middle":"あなたのプロトコルを並べ替える。相手のプロトコルを並べ替える。","lower":"","effectTypes":["rearrange"]},{"id":"CHAOS_3","number":3,"value":2,"upper":"","middle":"あなたの覆われているカードを1枚移動させる。","lower":"","effectTypes":["shift"]},{"id":"CHAOS_4","number":4,"value":3,"upper":"","middle":"","lower":"このカードはプロトコルを対応させずプレイすることができる。","effectTypes":["play"]},{"id":"CHAOS_5","number":5,"value":4,"upper":"","middle":"","lower":"終了：あなたのすべての手札を捨て札にする。捨て札にした枚数と同じ枚数のカードを引く。","effectTypes":["draw","discard"]},{"id":"CHAOS_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"CLARITY","displayName":"CLARITY","tags":"手札維持／公開","color":"#5C6BC0","set":"Main 2","cards":[{"id":"CLARITY_1","number":1,"value":0,"upper":"このラインのあなたの合計値は、あなたの手札1枚ごとに1枚増える。","middle":"","lower":"","effectTypes":["other"]},{"id":"CLARITY_2","number":2,"value":1,"upper":"開始：あなたのデッキの一番上のカードを公開する。そのカードを捨て札にすることができる。","middle":"相手は自身の手札をすべて公開する。","lower":"このカードが覆われることになったとき：先にカードを3枚引く。","effectTypes":["draw","discard"]},{"id":"CLARITY_3","number":3,"value":2,"upper":"","middle":"あなたのデッキのカードをすべて公開する。公開した中から値が1のカードを1枚引く。あなたのデッキをシャッフルする。値が1のカードを1枚プレイする。","lower":"","effectTypes":["draw","play"]},{"id":"CLARITY_4","number":4,"value":3,"upper":"","middle":"あなたのデッキのカードをすべて公開する。公開した中から値が5のカードを1枚引く。あなたのデッキをシャッフルする。","lower":"","effectTypes":["draw"]},{"id":"CLARITY_5","number":5,"value":4,"upper":"","middle":"あなたの捨て札置き場にあるすべてのカードをデッキに戻してシャッフルすることができる。","lower":"","effectTypes":["return"]},{"id":"CLARITY_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"CORRUPTION","displayName":"CORRUPTION","tags":"反転／捨て札","color":"#689F38","set":"Main 2","cards":[{"id":"CORRUPTION_1","number":1,"value":0,"upper":"開始：このスタック内の、覆われているか覆われていない他の表向きのカードを1枚反転させる。","middle":"","lower":"このカードは、プロトコルに対応させずに、どちらかのプレイヤー側でプレイすることができる。","effectTypes":["flip","play"]},{"id":"CORRUPTION_2","number":2,"value":1,"upper":"","middle":"カードを1枚戻す。","lower":"カードが相手の手札に戻るとき：そうする代わりに、そのカードを相手のデッキの一番上に裏向きで置く。","effectTypes":["return"]},{"id":"CORRUPTION_3","number":3,"value":2,"upper":"あなたが手札を捨て札にしたあと：相手は手札を1枚捨て札にする。","middle":"カードを1枚引く。あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["draw","discard"]},{"id":"CORRUPTION_4","number":4,"value":3,"upper":"","middle":"あなたは覆われている表向きのカードを1枚反転させることができる。","lower":"","effectTypes":["flip"]},{"id":"CORRUPTION_5","number":5,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]},{"id":"CORRUPTION_6","number":6,"value":6,"upper":"終了：あなたは手札を1枚捨て札にするか、このカードを削除する。","middle":"","lower":"","effectTypes":["delete","discard"]}]},{"name":"COURAGE","displayName":"COURAGE","tags":"手札維持／比較","color":"#C62828","set":"Main 2","cards":[{"id":"COURAGE_1","number":1,"value":0,"upper":"開始：あなたの手札が1枚もない場合、カードを1枚引く。","middle":"カードを1枚引く。","lower":"終了：あなたは手札を1枚捨て札にすることができる。そうした場合、相手は手札を1枚捨て札にする。","effectTypes":["draw","discard"]},{"id":"COURAGE_2","number":2,"value":1,"upper":"","middle":"あなたの合計値より相手の合計値が大きいライン1つにある、相手のカードを1枚削除する。","lower":"","effectTypes":["delete"]},{"id":"COURAGE_3","number":3,"value":2,"upper":"","middle":"カードを1枚引く。","lower":"終了：このラインで、あなたの合計値より相手の合計値が大きい場合、カードを1枚引く。","effectTypes":["draw"]},{"id":"COURAGE_4","number":4,"value":3,"upper":"","middle":"","lower":"終了：相手の最も大きい合計値のラインに、このカードを移動させることができる。","effectTypes":["shift"]},{"id":"COURAGE_5","number":5,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]},{"id":"COURAGE_6","number":6,"value":6,"upper":"終了：このラインで、あなたの合計値より相手の合計値が大きい場合、このカードを反転させる。","middle":"","lower":"","effectTypes":["flip"]}]},{"name":"FEAR","displayName":"FEAR","tags":"移動／捨て札","color":"#E65100","set":"Main 2","cards":[{"id":"FEAR_1","number":1,"value":0,"upper":"あなたの手番中、相手のカードの中段コマンドはないものとして扱う。","middle":"カードを1枚移動させるか反転させる。","lower":"","effectTypes":["flip","shift"]},{"id":"FEAR_2","number":2,"value":1,"upper":"","middle":"カードを2枚引く。相手は自身の手札をすべて捨て札にして、捨て札にした枚数-1枚のカードを引く。","lower":"","effectTypes":["draw"]},{"id":"FEAR_3","number":3,"value":2,"upper":"","middle":"相手のカードを1枚戻す。","lower":"","effectTypes":["return"]},{"id":"FEAR_4","number":4,"value":3,"upper":"","middle":"このラインにある、相手の覆われているか覆われていないカードを1枚移動させる。","lower":"","effectTypes":["shift"]},{"id":"FEAR_5","number":5,"value":4,"upper":"","middle":"相手は自身の手札からランダムに1枚捨て札にする。","lower":"","effectTypes":["discard"]},{"id":"FEAR_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"ICE","displayName":"ICE","tags":"移動／相手の妨害","color":"#AB47BC","set":"Main 2","cards":[{"id":"ICE_1","number":1,"value":1,"upper":"","middle":"あなたはこのカードを移動させることができる。","lower":"相手がこのラインにカードを1枚プレイしたあと：相手は自身の手札を1枚捨て札にする。","effectTypes":["shift","discard","play"]},{"id":"ICE_2","number":2,"value":2,"upper":"","middle":"他のカードを1枚移動させる。","lower":"","effectTypes":["shift"]},{"id":"ICE_3","number":3,"value":3,"upper":"終了：このカードが覆われている場合、このカードを移動させることができる。","middle":"","lower":"","effectTypes":["shift"]},{"id":"ICE_4","number":4,"value":4,"upper":"","middle":"","lower":"このカードを反転させることはできない。","effectTypes":["flip"]},{"id":"ICE_5","number":5,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]},{"id":"ICE_6","number":6,"value":6,"upper":"あなたの手札が1枚以上ある場合、あなたはカードを引くことはできない。","middle":"","lower":"","effectTypes":["draw"]}]},{"name":"LUCK","displayName":"LUCK","tags":"ランダム／削除／プレイ","color":"#FB8C00","set":"Main 2","cards":[{"id":"LUCK_1","number":1,"value":0,"upper":"","middle":"値を1つ宣言する。カードを3枚引く。その中から、表面に宣言した値を持つカードを1枚公開する。そのカードをプレイすることができる。","lower":"","effectTypes":["draw","play"]},{"id":"LUCK_2","number":2,"value":1,"upper":"","middle":"あなたのデッキの一番上のカードを裏向きでプレイする。そのカードを反転させる（その中段コマンドは無視する）。","lower":"","effectTypes":["flip","play"]},{"id":"LUCK_3","number":3,"value":2,"upper":"","middle":"あなたのデッキの一番上のカードを捨て札にする。そのカードの表面の値に等しい枚数のカードを引く。","lower":"","effectTypes":["draw","discard"]},{"id":"LUCK_4","number":4,"value":3,"upper":"","middle":"プロトコルを1つ宣言する。相手のデッキの一番上のカードを捨て札にする。そのカードが宣言したプロトコルに対応している場合、カードを1枚削除する。","lower":"","effectTypes":["delete","discard"]},{"id":"LUCK_5","number":5,"value":4,"upper":"","middle":"あなたのデッキの一番上のカードを捨て札にする。そのカードの表面の値と同じ値を持つ、覆われているか覆われていないカードを1枚削除する。","lower":"","effectTypes":["delete","discard"]},{"id":"LUCK_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"MIRROR","displayName":"MIRROR","tags":"移動／繰り返し","color":"#546E7A","set":"Main 2","cards":[{"id":"MIRROR_1","number":1,"value":0,"upper":"このラインのあなたの合計値は、このラインにある相手のカード1枚ごとに1増える。","middle":"","lower":"","effectTypes":["other"]},{"id":"MIRROR_2","number":2,"value":1,"upper":"","middle":"","lower":"終了：あなたは相手のカードのうち1枚の中段コマンドを、そのコマンドがこのカード上にあるかのように解決できる","effectTypes":["other"]},{"id":"MIRROR_3","number":3,"value":2,"upper":"","middle":"あなたのスタック1つにあるすべてのカードを、あなたの別のスタック1つにあるすべてのカードと入れ替える。","lower":"","effectTypes":["other"]},{"id":"MIRROR_4","number":4,"value":3,"upper":"","middle":"あなたのカードを1枚反転させる。そのカードと同じラインにある相手のカードを1枚反転させる。","lower":"","effectTypes":["flip"]},{"id":"MIRROR_5","number":5,"value":4,"upper":"","middle":"","lower":"相手がカードを引いたあと：カードを1枚引く。","effectTypes":["draw"]},{"id":"MIRROR_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"PEACE","displayName":"PEACE","tags":"相互の捨て札／手札維持","color":"#8D6E63","set":"Main 2","cards":[{"id":"PEACE_1","number":1,"value":1,"upper":"","middle":"両プレイヤーはすべての手札を捨て札にする。","lower":"終了：あなたの手札が1枚もない場合、カードを1枚引く。","effectTypes":["draw","discard","play"]},{"id":"PEACE_2","number":2,"value":2,"upper":"","middle":"カードを1枚引く。カードを1枚裏向きでプレイする。","lower":"","effectTypes":["draw","play"]},{"id":"PEACE_3","number":3,"value":3,"upper":"","middle":"あなたは手札を1枚捨て札にすることができる。あなたの手札の枚数より値が大きいカードを1枚反転させる。","lower":"","effectTypes":["flip","discard"]},{"id":"PEACE_4","number":4,"value":4,"upper":"","middle":"","lower":"相手の手番中にあなたが捨て札にしたあと：カードを1枚引く。","effectTypes":["draw"]},{"id":"PEACE_5","number":5,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]},{"id":"PEACE_6","number":6,"value":6,"upper":"","middle":"あなたの手札が2枚以上ある場合、このカードを反転させる。","lower":"","effectTypes":["flip"]}]},{"name":"SMOKE","displayName":"SMOKE","tags":"裏向き／移動","color":"#757575","set":"Main 2","cards":[{"id":"SMOKE_1","number":1,"value":0,"upper":"","middle":"裏向きのカードが1枚以上ある各ラインに、あなたのデッキの一番上のカードを裏向きでプレイする。","lower":"","effectTypes":["play"]},{"id":"SMOKE_2","number":2,"value":1,"upper":"","middle":"あなたのカードを1枚反転させる。あなたはそのカードを移動させることができる。","lower":"","effectTypes":["flip","shift"]},{"id":"SMOKE_3","number":3,"value":2,"upper":"このラインのあなたの合計値は、このラインにある裏向きのカード1枚ごとに1増える。","middle":"","lower":"","effectTypes":["other"]},{"id":"SMOKE_4","number":4,"value":3,"upper":"","middle":"裏向きのカードが1枚以上あるライン１つに、カードを裏向きで1枚プレイする。","lower":"","effectTypes":["play"]},{"id":"SMOKE_5","number":5,"value":4,"upper":"","middle":"覆われている裏向きのカードを1枚移動させる。","lower":"","effectTypes":["shift"]},{"id":"SMOKE_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"TIME","displayName":"TIME","tags":"捨て札／捨て札置き場","color":"#FF5722","set":"Main 2","cards":[{"id":"TIME_1","number":1,"value":0,"upper":"","middle":"あなたの捨て札置き場にあるカードを1枚プレイする。あなたの捨て札置き場にあるすべてのカードをデッキに戻してシャッフルする。","lower":"","effectTypes":["return","play"]},{"id":"TIME_2","number":2,"value":1,"upper":"","middle":"覆われているカードを1枚反転させる。あなたのデッキのカードをすべて捨て札にする。","lower":"","effectTypes":["flip","discard"]},{"id":"TIME_3","number":3,"value":2,"upper":"あなたがデッキをシャッフルしたあと：カードを1枚引き、このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。","middle":"あなたの捨て札置き場にカードがある場合、あなたは捨て札置き場にあるすべてのカードをデッキに戻してシャッフルすることができる。","lower":"","effectTypes":["draw","shift","return"]},{"id":"TIME_4","number":4,"value":3,"upper":"","middle":"あなたの捨て札置き場にあるカードを1枚公開する。そのカードをこのカードとは別のラインに裏向きでプレイする。","lower":"","effectTypes":["play"]},{"id":"TIME_5","number":5,"value":4,"upper":"","middle":"カードを2枚引く。あなたは手札を2枚捨て札にする。","lower":"","effectTypes":["draw","discard"]},{"id":"TIME_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"WAR","displayName":"WAR","tags":"対応／捨て札","color":"#D32F2F","set":"Main 2","cards":[{"id":"WAR_1","number":1,"value":0,"upper":"あなたがリフレッシュしたあと：あなたはこのカードを反転させることができる。","middle":"","lower":"相手がカードを引いたあと：あなたはカードを1枚削除することができる。","effectTypes":["delete","flip"]},{"id":"WAR_2","number":2,"value":1,"upper":"","middle":"","lower":"相手がリフレッシュしたあと：任意の枚数の手札を捨て札にする。リフレッシュする。","effectTypes":["discard"]},{"id":"WAR_3","number":3,"value":2,"upper":"","middle":"カードを1枚反転させる。","lower":"相手がコンパイルしたあと：相手は手札をすべて捨て札にする。","effectTypes":["flip","discard"]},{"id":"WAR_4","number":4,"value":3,"upper":"","middle":"カードを1枚引く。","lower":"相手が手札を捨て札にしたあと：あなたはカードを裏向きで1枚プレイすることができる。","effectTypes":["draw","play"]},{"id":"WAR_5","number":5,"value":4,"upper":"","middle":"相手は手札を1枚捨て札にする。","lower":"","effectTypes":["discard"]},{"id":"WAR_6","number":6,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]},{"name":"ASSIMILATION","displayName":"ASSIMILATION","tags":"交換／プレイ","color":"#1565C0","set":"Aux 2","cards":[{"id":"ASSIMILATION_1","number":1,"value":0,"upper":"","middle":"覆われているか覆われていない、相手の裏向きカードのうち1枚をあなたの手札に加える。","lower":"","effectTypes":["other"]},{"id":"ASSIMILATION_2","number":2,"value":1,"upper":"","middle":"あなたの手札を1枚捨て札にする。リフレッシュする。","lower":"誰かがリフレッシュしたあと：相手のデッキの一番上のカードを引く。あなたは手札を1枚捨て札にし、それを相手の捨て札置き場に置く。","effectTypes":["draw","discard"]},{"id":"ASSIMILATION_3","number":3,"value":2,"upper":"","middle":"","lower":"終了：相手のデッキの一番上のカードを、このスタックに裏向きでプレイする。","effectTypes":["play"]},{"id":"ASSIMILATION_4","number":4,"value":4,"upper":"","middle":"相手のデッキの一番上のカードを引く。相手はあなたのデッキの一番上のカードを引く。","lower":"","effectTypes":["draw"]},{"id":"ASSIMILATION_5","number":5,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]},{"id":"ASSIMILATION_6","number":6,"value":6,"upper":"","middle":"","lower":"終了：あなたのデッキの一番上のカードを、相手側の任意のスタックに裏向きでプレイする。","effectTypes":["play"]}]},{"name":"DIVERSITY","displayName":"DIVERSITY","tags":"プレイ／比較／コンパイル","color":"#00897B","set":"Aux 2","cards":[{"id":"DIVERSITY_1","number":1,"value":0,"upper":"","middle":"フィールドに6種類のプロトコルのコマンドカードがある場合、「DIVERSITY」プロトコルカードをコンパイル完了面にする。","lower":"終了：あなたはこのラインに「DIVERSITY」以外のカードをプレイすることができる。","effectTypes":["play"]},{"id":"DIVERSITY_2","number":2,"value":1,"upper":"","middle":"カードを1枚移動させる。このラインにあるコマンドカードの、プロトコルの種類数に等しい枚数のカードを引く。","lower":"","effectTypes":["draw","shift"]},{"id":"DIVERSITY_3","number":3,"value":3,"upper":"このスタックに「DIVERSITY」以外の表向きのカードがある場合、このラインのあなたの合計値は2増える。","middle":"","lower":"","effectTypes":["other"]},{"id":"DIVERSITY_4","number":4,"value":4,"upper":"","middle":"フィールドにあるコマンドカードの、プロトコルの種類数未満の値を持つカードを1枚反転させる。","lower":"","effectTypes":["flip"]},{"id":"DIVERSITY_5","number":5,"value":5,"upper":"","middle":"あなたは手札を1枚捨て札にする。","lower":"","effectTypes":["five"]},{"id":"DIVERSITY_6","number":6,"value":6,"upper":"終了：フィールドにあるコマンドカードの、プロトコルの種類数が3以下の場合、このカードを削除する。","middle":"","lower":"","effectTypes":["delete"]}]},{"name":"UNITY","displayName":"UNITY","tags":"覆う／反転／コンパイル","color":"#E040FB","set":"Aux 2","cards":[{"id":"UNITY_1","number":1,"value":0,"upper":"","middle":"フィールドに他の「UNITY」カードがある場合、カードを1枚反転させるか、カードを1枚引く。","lower":"このカードが「UNITY」カードによって覆われることになったとき：先に、カードを1枚反転させるか、カードを1枚引く。","effectTypes":["draw","flip"]},{"id":"UNITY_2","number":2,"value":1,"upper":"開始：このカードが覆われている場合、あなたはこのカードを移動させることができる。","middle":"フィールド「UNITY」カードが5枚以上ある場合、「UNITY」プロトコルカードのコンパイル完了面を表向きにし、そのラインにあるすべてのカードを削除する。","lower":"このラインには「UNITY」カードを表向きでプレイすることができる。","effectTypes":["delete","shift","play"]},{"id":"UNITY_3","number":3,"value":2,"upper":"","middle":"フィールドにある「UNITY」カードの枚数に等しい枚数のカードを引く。","lower":"","effectTypes":["draw"]},{"id":"UNITY_4","number":4,"value":3,"upper":"","middle":"フィールドに他の「UNITY」カードがある場合、あなたは表向きのカードを1枚反転させることができる。","lower":"","effectTypes":["flip"]},{"id":"UNITY_5","number":5,"value":4,"upper":"終了：あなたの手札が1枚もない場合、あなたのデッキのカードをすべて公開し、そこからすべての「UNITY」カードを引いて、あなたのデッキをシャッフルする。","middle":"","lower":"","effectTypes":["other"]},{"id":"UNITY_6","number":6,"value":5,"upper":"","middle":"あなたの手札を1枚捨て札にする。","lower":"","effectTypes":["five"]}]}]};</script>
+<script>window.COMPILE_EFFECTS={"_meta":{"dslVersion":1,"spec":"docs/effects-dsl.md","source":"data/cards.json (公式エラッタ適用済み・番号は公式0-5を1-6に+1シフト)","notes":["_text は cards.json の原文コピー(検証スクリプトで照合)。","select のデフォルト: owner=any, facing=any, coverage=uncovered, zone=anywhere, count=1, mode=pick。","actor 省略時の行為者はカードの owner。player/actor=opp は相手が自分で選択・実行する。"]},"DARKNESS_1":{"middle":{"_text":"カードを3枚引く。相手の覆われているカードを1枚移動させる。","ops":[{"op":"draw","count":3},{"op":"shift","select":{"owner":"opp","coverage":"covered"}}]}},"DARKNESS_2":{"middle":{"_text":"相手のカードを1枚反転させる。あなたはそのカードを移動させることができる。","ops":[{"op":"flip","select":{"owner":"opp"},"bind":"t"},{"op":"shift","select":{"ref":"t"},"optional":true}]}},"DARKNESS_3":{"upper":{"_text":"このスタックにあるすべての裏向きのカードの値はそれぞれ4になる。","static":{"kind":"setValue","value":4,"filter":{"zone":"thisStack","facing":"down"}}},"middle":{"_text":"このラインにある、覆われているカードを1枚反転させることができる。","ops":[{"op":"flip","select":{"zone":"thisLine","coverage":"covered"},"optional":true}]}},"DARKNESS_4":{"middle":{"_text":"他の1ラインにカードを裏向きで1枚プレイする。","ops":[{"op":"play","source":"hand","facing":"down","dest":"otherLine"}]}},"DARKNESS_5":{"middle":{"_text":"裏向きのカードを1枚移動させる。","ops":[{"op":"shift","select":{"facing":"down"}}]}},"DARKNESS_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"DEATH_1":{"middle":{"_text":"他の各ラインにあるカードを1枚ずつ削除する。","ops":[{"op":"forEachLine","lines":"otherLines","ops":[{"op":"delete","select":{"zone":"currentLine"}}]}]}},"DEATH_2":{"upper":{"_text":"開始：カードを1枚引くことができる。そうした場合、他のカードを1枚削除し、そのあとこのカードを削除する。","trigger":{"on":"start","ops":[{"op":"draw","count":1,"optional":true},{"op":"ifDone","ops":[{"op":"delete","select":{"exclude":"thisCard"}},{"op":"delete","select":{"ref":"this"}}]}]}}},"DEATH_3":{"middle":{"_text":"1ラインを選び、そのラインの値が1か2どちらかのすべてのカードを削除する。","ops":[{"op":"delete","select":{"zone":"chosenLine","value":{"in":[1,2]},"mode":"all"}}]}},"DEATH_4":{"middle":{"_text":"裏向きのカードを1枚削除する。","ops":[{"op":"delete","select":{"facing":"down"}}]}},"DEATH_5":{"middle":{"_text":"値が0か1のカードを1枚削除する。","ops":[{"op":"delete","select":{"value":{"in":[0,1]}}}]}},"DEATH_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"FIRE_1":{"middle":{"_text":"他のカードを1枚反転させる。カードを2枚引く。","ops":[{"op":"flip","select":{"exclude":"thisCard"}},{"op":"draw","count":2}]},"lower":{"_text":"このカードが覆われることになったとき：先にカードを1枚引き、他のカードを1枚反転させる。","trigger":{"on":"wouldBeCovered","ops":[{"op":"draw","count":1},{"op":"flip","select":{"exclude":"thisCard"}}]}}},"FIRE_2":{"middle":{"_text":"あなたは手札を1枚捨て札にする。そうした場合、カードを1枚削除する。","ops":[{"op":"discard","count":1},{"op":"ifDone","ops":[{"op":"delete"}]}]}},"FIRE_3":{"middle":{"_text":"あなたは手札を1枚捨て札にする。そうした場合、カードを1枚戻す。","ops":[{"op":"discard","count":1},{"op":"ifDone","ops":[{"op":"return"}]}]}},"FIRE_4":{"lower":{"_text":"終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。","trigger":{"on":"end","ops":[{"op":"discard","count":1,"optional":true},{"op":"ifDone","ops":[{"op":"flip"}]}]}}},"FIRE_5":{"middle":{"_text":"あなたは手札があれば1枚以上捨て札にする。捨て札にした枚数＋1枚のカードを引く。","ops":[{"op":"discard","count":{"min":1,"max":"any"},"bind":"n"},{"op":"drawByCount","ref":"n","plus":1}]}},"FIRE_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"GRAVITY_1":{"middle":{"_text":"このライン内にあるカード2枚ごとに、あなたのデッキの一番上のカード1枚をこのカードの下に裏向きでプレイする。","ops":[{"op":"repeatPer","per":{"count":"cardsInThisLine","divisor":2},"ops":[{"op":"play","source":"topDeck","facing":"down","dest":"underThisCard"}]}]}},"GRAVITY_2":{"middle":{"_text":"カードを2枚引く。このラインから、またはこのラインへとカードを1枚移動させる。","ops":[{"op":"draw","count":2},{"op":"shift","dest":"fromOrToThisLine"}]}},"GRAVITY_3":{"middle":{"_text":"カードを1枚反転させる。そのカードをこのラインへと移動させる。","ops":[{"op":"flip","bind":"t"},{"op":"shift","select":{"ref":"t"},"dest":"thisLine"}]}},"GRAVITY_4":{"middle":{"_text":"裏向きのカードを1枚、このラインへと移動させる。","ops":[{"op":"shift","select":{"facing":"down"},"dest":"thisLine"}]}},"GRAVITY_5":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"GRAVITY_6":{"middle":{"_text":"相手は自分のデッキの一番上のカードをこのラインに裏向きで1枚プレイする。","ops":[{"op":"play","player":"opp","source":"topDeck","facing":"down","dest":"thisLine"}]}},"LIFE_1":{"upper":{"_text":"終了：このカードが覆われている場合、このカードを削除する。","trigger":{"on":"end","ops":[{"op":"ifState","cond":"thisCovered","ops":[{"op":"delete","select":{"ref":"this"}}]}]}},"middle":{"_text":"あなたのデッキの一番上のカードを、あなたのカードがある各ラインに裏向きで1枚ずつプレイする。","ops":[{"op":"forEachLine","lines":"linesWithYourCards","ops":[{"op":"play","source":"topDeck","facing":"down","dest":"currentLine"}]}]}},"LIFE_2":{"middle":{"_text":"カード1枚を反転させる。カード1枚を反転させる。","ops":[{"op":"flip"},{"op":"flip"}]}},"LIFE_3":{"middle":{"_text":"カードを1枚引く。あなたは裏向きのカードを1枚反転させることができる。","ops":[{"op":"draw","count":1},{"op":"flip","select":{"facing":"down"},"optional":true}]}},"LIFE_4":{"lower":{"_text":"このカードが覆われることになったとき：先にあなたのデッキの一番上のカードを他の1ラインに裏向きで1枚プレイする。","trigger":{"on":"wouldBeCovered","ops":[{"op":"play","source":"topDeck","facing":"down","dest":"otherLine"}]}}},"LIFE_5":{"middle":{"_text":"このカードが他のカードを覆っている場合、カードを1枚引く。","ops":[{"op":"ifState","cond":"thisCovers","ops":[{"op":"draw","count":1}]}]}},"LIFE_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"LIGHT_1":{"middle":{"_text":"カードを1枚反転させる。そのカードの値に等しい枚数のカードを引く。","ops":[{"op":"flip","bind":"t"},{"op":"drawByValue","ref":"t"}]}},"LIGHT_2":{"lower":{"_text":"終了：カードを1枚引く。","trigger":{"on":"end","ops":[{"op":"draw","count":1}]}}},"LIGHT_3":{"middle":{"_text":"カードを2枚引く。裏向きのカードを1枚公開する。あなたは公開したカードを移動させるか反転させることができる。","ops":[{"op":"draw","count":2},{"op":"reveal","select":{"facing":"down"},"bind":"t"},{"op":"choice","optional":true,"options":[[{"op":"shift","select":{"ref":"t"}}],[{"op":"flip","select":{"ref":"t"}}]]}]}},"LIGHT_4":{"middle":{"_text":"このラインにある裏向きのすべてのカードを、他の1ラインへと移動させる。","ops":[{"op":"shift","select":{"zone":"thisLine","facing":"down","mode":"all"},"dest":"oneOtherLine"}]}},"LIGHT_5":{"middle":{"_text":"相手は自分の手札を公開する。","ops":[{"op":"reveal","target":"oppHand"}]}},"LIGHT_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"METAL_1":{"upper":{"_text":"このラインでの相手の合計値は2減る。","static":{"kind":"modifyLineTotal","side":"opp","delta":-2}},"middle":{"_text":"カードを1枚反転させる。","ops":[{"op":"flip"}]}},"METAL_2":{"middle":{"_text":"カードを2枚引く。相手は次の手番でコンパイルすることはできない。","ops":[{"op":"draw","count":2},{"op":"noCompileNextTurn"}]}},"METAL_3":{"upper":{"_text":"相手はこのラインにカードを裏向きでプレイすることはできない。","static":{"kind":"playPermission","rule":"oppNoFaceDownThisLine"}}},"METAL_4":{"middle":{"_text":"カードを1枚引く。カードが8枚以上ある、ほかの1ライン内のすべてのカードを削除する。","ops":[{"op":"draw","count":1},{"op":"delete","select":{"zone":"otherLineWith8plus","mode":"all"}}]}},"METAL_5":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"METAL_6":{"upper":{"_text":"このカードが覆われるか反転することになったとき：先にこのカードを削除する。","trigger":{"on":"wouldBeCoveredOrFlipped","ops":[{"op":"delete","select":{"ref":"this"}}]}}},"PLAGUE_1":{"middle":{"_text":"相手は手札を1枚捨て札にする。","ops":[{"op":"discard","count":1,"player":"opp"}]},"lower":{"_text":"相手はこのラインにカードをプレイすることはできない。","static":{"kind":"playPermission","rule":"oppNoPlayThisLine"}}},"PLAGUE_2":{"upper":{"_text":"相手が手札を捨て札にしたあと：カードを1枚引く。","trigger":{"on":"afterOppDiscard","ops":[{"op":"draw","count":1}]}},"middle":{"_text":"相手は手札を1枚捨て札にする。","ops":[{"op":"discard","count":1,"player":"opp"}]}},"PLAGUE_3":{"middle":{"_text":"あなたは手札があれば1枚以上捨て札にする。相手はあなたが捨て札にした枚数＋1枚の手札を捨て札にする。","ops":[{"op":"discard","count":{"min":1,"max":"any"},"bind":"n"},{"op":"discard","player":"opp","countFrom":{"ref":"n","plus":1}}]}},"PLAGUE_4":{"middle":{"_text":"覆われていない、表向きの他のカードを反転させる。","ops":[{"op":"flip","select":{"facing":"up","coverage":"uncovered","exclude":"thisCard","mode":"each"}}]}},"PLAGUE_5":{"lower":{"_text":"終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。","trigger":{"on":"end","ops":[{"op":"delete","select":{"owner":"opp","facing":"down"},"actor":"opp"},{"op":"flip","select":{"ref":"this"},"optional":true}]}}},"PLAGUE_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"PSYCHIC_1":{"middle":{"_text":"カードを2枚引く。相手は自分の手札を2枚捨て札にして、そのあと相手は手札を公開する。","ops":[{"op":"draw","count":2},{"op":"discard","count":2,"player":"opp"},{"op":"reveal","target":"oppHand"}]}},"PSYCHIC_2":{"upper":{"_text":"相手はカードを裏向きでのみプレイすることができる。","static":{"kind":"playPermission","rule":"oppFaceDownOnly"}},"lower":{"_text":"開始：このカードを反転させる。","trigger":{"on":"start","ops":[{"op":"flip","select":{"ref":"this"}}]}}},"PSYCHIC_3":{"middle":{"_text":"相手は自分の手札を2枚捨て札にする。あなたは相手のプロトコルを並べ替える。","ops":[{"op":"discard","count":2,"player":"opp"},{"op":"rearrange","whose":"opp"}]}},"PSYCHIC_4":{"middle":{"_text":"相手は手札を1枚捨て札にする。あなたは相手のカードを1枚移動させる。","ops":[{"op":"discard","count":1,"player":"opp"},{"op":"shift","select":{"owner":"opp"}}]}},"PSYCHIC_5":{"lower":{"_text":"終了：あなたは相手のカードを1枚戻すことができる。そうした場合、このカードを反転させる。","trigger":{"on":"end","ops":[{"op":"return","select":{"owner":"opp"},"optional":true},{"op":"ifDone","ops":[{"op":"flip","select":{"ref":"this"}}]}]}}},"PSYCHIC_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"SPEED_1":{"middle":{"_text":"カードを1枚プレイする。","ops":[{"op":"play","source":"hand"}]}},"SPEED_2":{"upper":{"_text":"あなたがキャッシュをクリアしたあと：カードを1枚引く。","trigger":{"on":"afterYouClearCache","ops":[{"op":"draw","count":1}]}},"middle":{"_text":"カードを2枚引く。","ops":[{"op":"draw","count":2}]}},"SPEED_3":{"upper":{"_text":"このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。","trigger":{"on":"wouldBeDeletedByCompile","replace":true,"ops":[{"op":"shift","select":{"ref":"this"}}]}}},"SPEED_4":{"middle":{"_text":"あなたの他のカードを1枚移動させる。","ops":[{"op":"shift","select":{"owner":"self","exclude":"thisCard"}}]},"lower":{"_text":"終了：あなたは自分のカードを1枚移動させることができる。そうした場合、このカードを反転させる。","trigger":{"on":"end","ops":[{"op":"shift","select":{"owner":"self"},"optional":true},{"op":"ifDone","ops":[{"op":"flip","select":{"ref":"this"}}]}]}}},"SPEED_5":{"middle":{"_text":"相手の裏向きのカードを1枚移動させる。","ops":[{"op":"shift","select":{"owner":"opp","facing":"down"}}]}},"SPEED_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"SPIRIT_1":{"middle":{"_text":"リフレッシュする。カードを1枚引く。","ops":[{"op":"refresh"},{"op":"draw","count":1}]},"lower":{"_text":"あなたのキャッシュの確認フェイズを省略する。","static":{"kind":"skipCheckCache"}}},"SPIRIT_2":{"upper":{"_text":"あなたがカードを表向きでプレイするときには、プロトコルを対応させずにプレイすることができる。","static":{"kind":"playPermission","rule":"youFaceUpAnyLine"}},"middle":{"_text":"カードを2枚引く。","ops":[{"op":"draw","count":2}]},"lower":{"_text":"開始：あなたは手札を1枚捨て札にするか、このカードを反転させる。","trigger":{"on":"start","ops":[{"op":"choice","options":[[{"op":"discard","count":1}],[{"op":"flip","select":{"ref":"this"}}]]}]}}},"SPIRIT_3":{"middle":{"_text":"あなたはカードを1枚反転させることができる。","ops":[{"op":"flip","optional":true}]}},"SPIRIT_4":{"upper":{"_text":"あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。","trigger":{"on":"afterYouDraw","ops":[{"op":"shift","select":{"ref":"this"},"optional":true}]}}},"SPIRIT_5":{"middle":{"_text":"あなたのプロトコルのうち2枚の位置を入れ替える。","ops":[{"op":"swapProtocols","whose":"self"}]}},"SPIRIT_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"WATER_1":{"middle":{"_text":"他のカードを1枚反転させる。このカードを反転させる。","ops":[{"op":"flip","select":{"exclude":"thisCard"}},{"op":"flip","select":{"ref":"this"}}]}},"WATER_2":{"middle":{"_text":"あなたのデッキの一番上のカードを、他の各ラインに裏向きで1枚ずつプレイする。","ops":[{"op":"forEachLine","lines":"otherLines","ops":[{"op":"play","source":"topDeck","facing":"down","dest":"currentLine"}]}]}},"WATER_3":{"middle":{"_text":"カードを2枚引く。あなたのプロトコルを並べ替える。","ops":[{"op":"draw","count":2},{"op":"rearrange","whose":"self"}]}},"WATER_4":{"middle":{"_text":"1ラインを選び、そのラインの値が2のすべてのカードを戻す。","ops":[{"op":"return","select":{"zone":"chosenLine","value":{"eq":2},"mode":"all"}}]}},"WATER_5":{"middle":{"_text":"あなたのカードを1枚戻す。","ops":[{"op":"return","select":{"owner":"self"}}]}},"WATER_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"APATHY_1":{"upper":{"_text":"このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。","static":{"kind":"modifyLineTotal","side":"self","deltaPer":{"zone":"thisLine","facing":"down"}}}},"APATHY_2":{"middle":{"_text":"このラインにある他のすべての表向きのカードを同時に反転させる。","ops":[{"op":"flip","select":{"zone":"thisLine","facing":"up","exclude":"thisCard","mode":"all"}}]}},"APATHY_3":{"upper":{"_text":"このラインにあるカードのすべての中段コマンドを無視する。","static":{"kind":"ignoreMiddle","zone":"thisLine"}},"lower":{"_text":"このカードが覆われることになったとき：先に、このカードを反転させる。","trigger":{"on":"wouldBeCovered","ops":[{"op":"flip","select":{"ref":"this"}}]}}},"APATHY_4":{"middle":{"_text":"相手の表向きのカードを１枚反転させる。","ops":[{"op":"flip","select":{"owner":"opp","facing":"up"}}]}},"APATHY_5":{"middle":{"_text":"表向きで覆われているあなたのカード１枚を反転させることができる。","ops":[{"op":"flip","select":{"owner":"self","facing":"up","coverage":"covered"},"optional":true}]}},"APATHY_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"HATE_1":{"middle":{"_text":"カードを１枚削除する。","ops":[{"op":"delete"}]}},"HATE_2":{"middle":{"_text":"あなたは手札を３枚捨て札にする。カードを１枚削除する。カードを１枚削除する。","ops":[{"op":"discard","count":3},{"op":"delete"},{"op":"delete"}]}},"HATE_3":{"middle":{"_text":"値が最も大きく覆われていないあなたのカードを１枚削除する。値が最も大きく覆われていない相手のカードを１枚削除する。","ops":[{"op":"delete","select":{"owner":"self","value":"highest"}},{"op":"delete","select":{"owner":"opp","value":"highest"}}]}},"HATE_4":{"upper":{"_text":"あなたがカードを１枚削除したあと：カードを１枚引く。","trigger":{"on":"afterYouDelete","ops":[{"op":"draw","count":1}]}}},"HATE_5":{"lower":{"_text":"このカードが覆われることになったとき：先に、このラインにある値が最も小さく覆われているカードを１枚削除する。","trigger":{"on":"wouldBeCovered","ops":[{"op":"delete","select":{"zone":"thisLine","coverage":"covered","value":"lowest"}}]}}},"HATE_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"LOVE_1":{"middle":{"_text":"あなたは相手のデッキの一番上のカードを引く。","ops":[{"op":"draw","count":1,"fromOppDeck":true}]},"lower":{"_text":"終了：あなたの手札一枚を相手に与えることができる。そうした場合、カードを２枚引く。","trigger":{"on":"end","ops":[{"op":"giveCard","count":1,"optional":true},{"op":"ifDone","ops":[{"op":"draw","count":2}]}]}}},"LOVE_2":{"middle":{"_text":"相手はカードを１枚引く。あなたはリフレッシュする。","ops":[{"op":"draw","count":1,"player":"opp"},{"op":"refresh"}]}},"LOVE_3":{"middle":{"_text":"あなたは相手の手札からランダムにカードを１枚引く。あなたの手札１枚を相手に与える。","ops":[{"op":"takeRandom"},{"op":"giveCard","count":1}]}},"LOVE_4":{"middle":{"_text":"あなたの手札１枚を公開する。カードを１枚反転させる。","ops":[{"op":"reveal","target":"ownHandCard"},{"op":"flip"}]}},"LOVE_5":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"LOVE_6":{"middle":{"_text":"相手はカードを２枚引く。","ops":[{"op":"draw","count":2,"player":"opp"}]}},"CHAOS_1":{"middle":{"_text":"各ラインで、覆われているカードを1枚ずつ反転させる。","ops":[{"op":"forEachLine","lines":"linesWithCovered","ops":[{"op":"flip","select":{"coverage":"covered","zone":"currentLine"}}]}]},"lower":{"_text":"開始：あなたは相手のデッキの一番上のカードを引く。相手はあなたのデッキの一番上のカードを引く。","trigger":{"on":"start","ops":[{"op":"draw","count":1,"fromOppDeck":true},{"op":"oppDrawsFromYourDeck","count":1}]}}},"CHAOS_2":{"middle":{"_text":"あなたのプロトコルを並べ替える。相手のプロトコルを並べ替える。","ops":[{"op":"rearrange","whose":"self"},{"op":"rearrange","whose":"opp"}]}},"CHAOS_3":{"middle":{"_text":"あなたの覆われているカードを1枚移動させる。","ops":[{"op":"shift","select":{"owner":"self","coverage":"covered"}}]}},"CHAOS_4":{"lower":{"_text":"このカードはプロトコルを対応させずプレイすることができる。","handStatic":"thisAnyLine"}},"CHAOS_5":{"lower":{"_text":"終了：あなたのすべての手札を捨て札にする。捨て札にした枚数と同じ枚数のカードを引く。","trigger":{"on":"end","ops":[{"op":"discard","count":"all","bind":"n"},{"op":"drawByCount","ref":"n"}]}}},"CHAOS_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"CLARITY_1":{"upper":{"_text":"このラインのあなたの合計値は、あなたの手札1枚ごとに1枚増える。","static":{"kind":"modifyLineTotal","side":"self","deltaPer":"yourHand"}}},"CLARITY_2":{"upper":{"_text":"開始：あなたのデッキの一番上のカードを公開する。そのカードを捨て札にすることができる。","trigger":{"on":"start","ops":[{"op":"revealTopDiscard"}]}},"middle":{"_text":"相手は自身の手札をすべて公開する。","ops":[{"op":"reveal","target":"oppHand"}]},"lower":{"_text":"このカードが覆われることになったとき：先にカードを3枚引く。","trigger":{"on":"wouldBeCovered","ops":[{"op":"draw","count":3}]}}},"CLARITY_3":{"middle":{"_text":"あなたのデッキのカードをすべて公開する。公開した中から値が1のカードを1枚引く。あなたのデッキをシャッフルする。値が1のカードを1枚プレイする。","ops":[{"op":"searchDeck","value":1},{"op":"play","filterValue":1}]}},"CLARITY_4":{"middle":{"_text":"あなたのデッキのカードをすべて公開する。公開した中から値が5のカードを1枚引く。あなたのデッキをシャッフルする。","ops":[{"op":"searchDeck","value":5}]}},"CLARITY_5":{"middle":{"_text":"あなたの捨て札置き場にあるすべてのカードをデッキに戻してシャッフルすることができる。","ops":[{"op":"shuffleTrashIntoDeck","optional":true}]}},"CLARITY_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"CORRUPTION_1":{"upper":{"_text":"開始：このスタック内の、覆われているか覆われていない他の表向きのカードを1枚反転させる。","trigger":{"on":"start","ops":[{"op":"flip","select":{"zone":"thisStack","coverage":"any","facing":"up","exclude":"thisCard"}}]}},"lower":{"_text":"このカードは、プロトコルに対応させずに、どちらかのプレイヤー側でプレイすることができる。","handStatic":"thisAnyLineEitherSide"}},"CORRUPTION_2":{"middle":{"_text":"カードを1枚戻す。","ops":[{"op":"return"}]},"lower":{"_text":"カードが相手の手札に戻るとき：そうする代わりに、そのカードを相手のデッキの一番上に裏向きで置く。","static":{"kind":"returnToDeckTop"}}},"CORRUPTION_3":{"upper":{"_text":"あなたが手札を捨て札にしたあと：相手は手札を1枚捨て札にする。","trigger":{"on":"afterYouDiscard","ops":[{"op":"discard","player":"opp","count":1}]}},"middle":{"_text":"カードを1枚引く。あなたは手札を1枚捨て札にする。","ops":[{"op":"draw","count":1},{"op":"discard","count":1}]}},"CORRUPTION_4":{"middle":{"_text":"あなたは覆われている表向きのカードを1枚反転させることができる。","ops":[{"op":"flip","optional":true,"select":{"coverage":"covered","facing":"up"}}]}},"CORRUPTION_5":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"CORRUPTION_6":{"upper":{"_text":"終了：あなたは手札を1枚捨て札にするか、このカードを削除する。","trigger":{"on":"end","ops":[{"op":"choice","options":[[{"op":"discard","count":1}],[{"op":"delete","select":{"ref":"this"}}]]}]}}},"COURAGE_1":{"upper":{"_text":"開始：あなたの手札が1枚もない場合、カードを1枚引く。","trigger":{"on":"start","ops":[{"op":"ifState","cond":"handEmpty","ops":[{"op":"draw","count":1}]}]}},"middle":{"_text":"カードを1枚引く。","ops":[{"op":"draw","count":1}]},"lower":{"_text":"終了：あなたは手札を1枚捨て札にすることができる。そうした場合、相手は手札を1枚捨て札にする。","trigger":{"on":"end","ops":[{"op":"discard","count":1,"optional":true},{"op":"ifDone","ops":[{"op":"discard","player":"opp","count":1}]}]}}},"COURAGE_2":{"middle":{"_text":"あなたの合計値より相手の合計値が大きいライン1つにある、相手のカードを1枚削除する。","ops":[{"op":"delete","select":{"owner":"opp","zone":"lineWhereOppLeads"}}]}},"COURAGE_3":{"middle":{"_text":"カードを1枚引く。","ops":[{"op":"draw","count":1}]},"lower":{"_text":"終了：このラインで、あなたの合計値より相手の合計値が大きい場合、カードを1枚引く。","trigger":{"on":"end","ops":[{"op":"ifState","cond":"oppLeadsThisLine","ops":[{"op":"draw","count":1}]}]}}},"COURAGE_4":{"lower":{"_text":"終了：相手の最も大きい合計値のラインに、このカードを移動させることができる。","trigger":{"on":"end","ops":[{"op":"shift","select":{"ref":"this"},"dest":"oppHighestLine","optional":true}]}}},"COURAGE_5":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"COURAGE_6":{"upper":{"_text":"終了：このラインで、あなたの合計値より相手の合計値が大きい場合、このカードを反転させる。","trigger":{"on":"end","ops":[{"op":"ifState","cond":"oppLeadsThisLine","ops":[{"op":"flip","select":{"ref":"this"}}]}]}}},"FEAR_1":{"upper":{"_text":"あなたの手番中、相手のカードの中段コマンドはないものとして扱う。","static":{"kind":"suppressOppMiddle"}},"middle":{"_text":"カードを1枚移動させるか反転させる。","ops":[{"op":"choice","options":[[{"op":"shift"}],[{"op":"flip"}]]}]}},"FEAR_2":{"middle":{"_text":"カードを2枚引く。相手は自身の手札をすべて捨て札にして、捨て札にした枚数-1枚のカードを引く。","ops":[{"op":"draw","count":2},{"op":"discard","player":"opp","count":"all","bind":"n"},{"op":"drawByCount","ref":"n","plus":-1,"player":"opp"}]}},"FEAR_3":{"middle":{"_text":"相手のカードを1枚戻す。","ops":[{"op":"return","select":{"owner":"opp"}}]}},"FEAR_4":{"middle":{"_text":"このラインにある、相手の覆われているか覆われていないカードを1枚移動させる。","ops":[{"op":"shift","select":{"owner":"opp","zone":"thisLine","coverage":"any"}}]}},"FEAR_5":{"middle":{"_text":"相手は自身の手札からランダムに1枚捨て札にする。","ops":[{"op":"randomDiscard","player":"opp"}]}},"FEAR_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"ICE_1":{"middle":{"_text":"あなたはこのカードを移動させることができる。","ops":[{"op":"shift","select":{"ref":"this"},"optional":true}]},"lower":{"_text":"相手がこのラインにカードを1枚プレイしたあと：相手は自身の手札を1枚捨て札にする。","trigger":{"on":"afterOppPlayInThisLine","ops":[{"op":"discard","player":"opp","count":1}]}}},"ICE_2":{"middle":{"_text":"他のカードを1枚移動させる。","ops":[{"op":"shift","select":{"exclude":"thisCard"}}]}},"ICE_3":{"upper":{"_text":"終了：このカードが覆われている場合、このカードを移動させることができる。","trigger":{"on":"end","ops":[{"op":"ifState","cond":"thisCovered","ops":[{"op":"shift","select":{"ref":"this"},"optional":true}]}]}}},"ICE_4":{"lower":{"_text":"このカードを反転させることはできない。","static":{"kind":"cannotFlipThis"}}},"ICE_5":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"ICE_6":{"upper":{"_text":"あなたの手札が1枚以上ある場合、あなたはカードを引くことはできない。","static":{"kind":"cannotDraw"}}},"LUCK_1":{"middle":{"_text":"値を1つ宣言する。カードを3枚引く。その中から、表面に宣言した値を持つカードを1枚公開する。そのカードをプレイすることができる。","ops":[{"op":"declare","what":"value","bind":"declared"},{"op":"drawRevealPlay","count":3,"declared":"declared"}]}},"LUCK_2":{"middle":{"_text":"あなたのデッキの一番上のカードを裏向きでプレイする。そのカードを反転させる（その中段コマンドは無視する）。","ops":[{"op":"play","source":"topDeck","facing":"down","dest":"anyLine","bind":"p"},{"op":"flip","select":{"ref":"p"},"ignoreMiddle":true}]}},"LUCK_3":{"middle":{"_text":"あなたのデッキの一番上のカードを捨て札にする。そのカードの表面の値に等しい枚数のカードを引く。","ops":[{"op":"discardTop","bind":"t"},{"op":"drawByValue","ref":"t"}]}},"LUCK_4":{"middle":{"_text":"プロトコルを1つ宣言する。相手のデッキの一番上のカードを捨て札にする。そのカードが宣言したプロトコルに対応している場合、カードを1枚削除する。","ops":[{"op":"declare","what":"protocol","bind":"declared"},{"op":"discardTop","player":"opp","bind":"t"},{"op":"ifBindMatches","ref":"t","match":"protocol","declared":"declared","ops":[{"op":"delete"}]}]}},"LUCK_5":{"middle":{"_text":"あなたのデッキの一番上のカードを捨て札にする。そのカードの表面の値と同じ値を持つ、覆われているか覆われていないカードを1枚削除する。","ops":[{"op":"discardTop","bind":"t"},{"op":"delete","select":{"coverage":"any","value":{"eqBindPrinted":"t"}}}]}},"LUCK_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"MIRROR_1":{"upper":{"_text":"このラインのあなたの合計値は、このラインにある相手のカード1枚ごとに1増える。","static":{"kind":"modifyLineTotal","side":"self","deltaPer":"oppCardsInLine"}}},"MIRROR_2":{"lower":{"_text":"終了：あなたは相手のカードのうち1枚の中段コマンドを、そのコマンドがこのカード上にあるかのように解決できる","trigger":{"on":"end","ops":[{"op":"mirrorMiddle","optional":true}]}}},"MIRROR_3":{"middle":{"_text":"あなたのスタック1つにあるすべてのカードを、あなたの別のスタック1つにあるすべてのカードと入れ替える。","ops":[{"op":"swapStacks"}]}},"MIRROR_4":{"middle":{"_text":"あなたのカードを1枚反転させる。そのカードと同じラインにある相手のカードを1枚反転させる。","ops":[{"op":"flip","select":{"owner":"self"},"bind":"t"},{"op":"flip","select":{"owner":"opp","zone":"sameLineAsRef","refKey":"t"}}]}},"MIRROR_5":{"lower":{"_text":"相手がカードを引いたあと：カードを1枚引く。","trigger":{"on":"afterOppDraw","ops":[{"op":"draw","count":1}]}}},"MIRROR_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"PEACE_1":{"middle":{"_text":"両プレイヤーはすべての手札を捨て札にする。","ops":[{"op":"bothDiscardAll"}]},"lower":{"_text":"終了：あなたの手札が1枚もない場合、カードを1枚引く。","trigger":{"on":"end","ops":[{"op":"ifState","cond":"handEmpty","ops":[{"op":"draw","count":1}]}]}}},"PEACE_2":{"middle":{"_text":"カードを1枚引く。カードを1枚裏向きでプレイする。","ops":[{"op":"draw","count":1},{"op":"play","facing":"down"}]}},"PEACE_3":{"middle":{"_text":"あなたは手札を1枚捨て札にすることができる。あなたの手札の枚数より値が大きいカードを1枚反転させる。","ops":[{"op":"discard","count":1,"optional":true},{"op":"flip","select":{"value":{"gtHandCount":true}}}]}},"PEACE_4":{"lower":{"_text":"相手の手番中にあなたが捨て札にしたあと：カードを1枚引く。","trigger":{"on":"afterYouDiscardOppTurn","ops":[{"op":"draw","count":1}]}}},"PEACE_5":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"PEACE_6":{"middle":{"_text":"あなたの手札が2枚以上ある場合、このカードを反転させる。","ops":[{"op":"ifState","cond":"handGe2","ops":[{"op":"flip","select":{"ref":"this"}}]}]}},"SMOKE_1":{"middle":{"_text":"裏向きのカードが1枚以上ある各ラインに、あなたのデッキの一番上のカードを裏向きでプレイする。","ops":[{"op":"forEachLine","lines":"linesWithFaceDown","ops":[{"op":"play","source":"topDeck","facing":"down","dest":"currentLine"}]}]}},"SMOKE_2":{"middle":{"_text":"あなたのカードを1枚反転させる。あなたはそのカードを移動させることができる。","ops":[{"op":"flip","select":{"owner":"self"},"bind":"t"},{"op":"shift","select":{"ref":"t"},"optional":true}]}},"SMOKE_3":{"upper":{"_text":"このラインのあなたの合計値は、このラインにある裏向きのカード1枚ごとに1増える。","static":{"kind":"modifyLineTotal","side":"self","deltaPer":{"zone":"thisLine","facing":"down"}}}},"SMOKE_4":{"middle":{"_text":"裏向きのカードが1枚以上あるライン１つに、カードを裏向きで1枚プレイする。","ops":[{"op":"play","facing":"down","dest":"lineWithFaceDown"}]}},"SMOKE_5":{"middle":{"_text":"覆われている裏向きのカードを1枚移動させる。","ops":[{"op":"shift","select":{"facing":"down","coverage":"covered"}}]}},"SMOKE_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"TIME_1":{"middle":{"_text":"あなたの捨て札置き場にあるカードを1枚プレイする。あなたの捨て札置き場にあるすべてのカードをデッキに戻してシャッフルする。","ops":[{"op":"playFromTrash"},{"op":"shuffleTrashIntoDeck"}]}},"TIME_2":{"middle":{"_text":"覆われているカードを1枚反転させる。あなたのデッキのカードをすべて捨て札にする。","ops":[{"op":"flip","select":{"coverage":"covered"}},{"op":"discardDeck"}]}},"TIME_3":{"upper":{"_text":"あなたがデッキをシャッフルしたあと：カードを1枚引き、このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。","trigger":{"on":"afterYouShuffle","ops":[{"op":"draw","count":1},{"op":"shift","select":{"ref":"this"},"optional":true}]}},"middle":{"_text":"あなたの捨て札置き場にカードがある場合、あなたは捨て札置き場にあるすべてのカードをデッキに戻してシャッフルすることができる。","ops":[{"op":"shuffleTrashIntoDeck","optional":true}]}},"TIME_4":{"middle":{"_text":"あなたの捨て札置き場にあるカードを1枚公開する。そのカードをこのカードとは別のラインに裏向きでプレイする。","ops":[{"op":"playFromTrash","facing":"down"}]}},"TIME_5":{"middle":{"_text":"カードを2枚引く。あなたは手札を2枚捨て札にする。","ops":[{"op":"draw","count":2},{"op":"discard","count":2}]}},"TIME_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"WAR_1":{"upper":{"_text":"あなたがリフレッシュしたあと：あなたはこのカードを反転させることができる。","trigger":{"on":"afterYouRefresh","ops":[{"op":"flip","select":{"ref":"this"},"optional":true}]}},"lower":{"_text":"相手がカードを引いたあと：あなたはカードを1枚削除することができる。","trigger":{"on":"afterOppDraw","ops":[{"op":"delete","optional":true}]}}},"WAR_2":{"lower":{"_text":"相手がリフレッシュしたあと：任意の枚数の手札を捨て札にする。リフレッシュする。","trigger":{"on":"afterOppRefresh","ops":[{"op":"discard","count":{"min":0,"max":"any"}},{"op":"refresh"}]}}},"WAR_3":{"middle":{"_text":"カードを1枚反転させる。","ops":[{"op":"flip"}]},"lower":{"_text":"相手がコンパイルしたあと：相手は手札をすべて捨て札にする。","trigger":{"on":"afterOppCompile","ops":[{"op":"discard","player":"opp","count":"all"}]}}},"WAR_4":{"middle":{"_text":"カードを1枚引く。","ops":[{"op":"draw","count":1}]},"lower":{"_text":"相手が手札を捨て札にしたあと：あなたはカードを裏向きで1枚プレイすることができる。","trigger":{"on":"afterOppDiscard","ops":[{"op":"play","facing":"down","optional":true}]}}},"WAR_5":{"middle":{"_text":"相手は手札を1枚捨て札にする。","ops":[{"op":"discard","player":"opp","count":1}]}},"WAR_6":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"ASSIMILATION_1":{"middle":{"_text":"覆われているか覆われていない、相手の裏向きカードのうち1枚をあなたの手札に加える。","ops":[{"op":"stealToHand"}]}},"ASSIMILATION_2":{"middle":{"_text":"あなたの手札を1枚捨て札にする。リフレッシュする。","ops":[{"op":"discard","count":1},{"op":"refresh"}]},"lower":{"_text":"誰かがリフレッシュしたあと：相手のデッキの一番上のカードを引く。あなたは手札を1枚捨て札にし、それを相手の捨て札置き場に置く。","trigger":{"on":"afterAnyRefresh","ops":[{"op":"draw","count":1,"fromOppDeck":true},{"op":"discardToOppTrash"}]}}},"ASSIMILATION_3":{"lower":{"_text":"終了：相手のデッキの一番上のカードを、このスタックに裏向きでプレイする。","trigger":{"on":"end","ops":[{"op":"play","source":"oppTopDeck","dest":"thisStack","facing":"down"}]}}},"ASSIMILATION_4":{"middle":{"_text":"相手のデッキの一番上のカードを引く。相手はあなたのデッキの一番上のカードを引く。","ops":[{"op":"draw","count":1,"fromOppDeck":true},{"op":"oppDrawsFromYourDeck","count":1}]}},"ASSIMILATION_5":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"ASSIMILATION_6":{"lower":{"_text":"終了：あなたのデッキの一番上のカードを、相手側の任意のスタックに裏向きでプレイする。","trigger":{"on":"end","ops":[{"op":"play","source":"topDeck","dest":"oppStack","facing":"down"}]}}},"DIVERSITY_1":{"middle":{"_text":"フィールドに6種類のプロトコルのコマンドカードがある場合、「DIVERSITY」プロトコルカードをコンパイル完了面にする。","ops":[{"op":"ifState","cond":"protoKindsGe6","ops":[{"op":"setProtocolCompiled","proto":"DIVERSITY"}]}]},"lower":{"_text":"終了：あなたはこのラインに「DIVERSITY」以外のカードをプレイすることができる。","trigger":{"on":"end","ops":[{"op":"play","dest":"thisLine","notProto":"DIVERSITY","optional":true,"anyProto":true}]}}},"DIVERSITY_2":{"middle":{"_text":"カードを1枚移動させる。このラインにあるコマンドカードの、プロトコルの種類数に等しい枚数のカードを引く。","ops":[{"op":"shift","setCurrentLine":true},{"op":"drawDynamic","count":"protoKindsInThisLine"}]}},"DIVERSITY_3":{"upper":{"_text":"このスタックに「DIVERSITY」以外の表向きのカードがある場合、このラインのあなたの合計値は2増える。","static":{"kind":"modifyLineTotal","side":"self","delta":2,"cond":"stackHasOtherProtoFaceUp"}}},"DIVERSITY_4":{"middle":{"_text":"フィールドにあるコマンドカードの、プロトコルの種類数未満の値を持つカードを1枚反転させる。","ops":[{"op":"flip","select":{"value":{"ltProtoKinds":true}}}]}},"DIVERSITY_5":{"middle":{"_text":"あなたは手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}},"DIVERSITY_6":{"upper":{"_text":"終了：フィールドにあるコマンドカードの、プロトコルの種類数が3以下の場合、このカードを削除する。","trigger":{"on":"end","ops":[{"op":"ifState","cond":"protoKindsLe3","ops":[{"op":"delete","select":{"ref":"this"}}]}]}}},"UNITY_1":{"middle":{"_text":"フィールドに他の「UNITY」カードがある場合、カードを1枚反転させるか、カードを1枚引く。","ops":[{"op":"ifState","cond":"otherProtoCardOnField","ops":[{"op":"choice","options":[[{"op":"flip"}],[{"op":"draw","count":1}]]}]}]},"lower":{"_text":"このカードが「UNITY」カードによって覆われることになったとき：先に、カードを1枚反転させるか、カードを1枚引く。","trigger":{"on":"wouldBeCovered","byProto":"UNITY","ops":[{"op":"choice","options":[[{"op":"flip"}],[{"op":"draw","count":1}]]}]}}},"UNITY_2":{"upper":{"_text":"開始：このカードが覆われている場合、あなたはこのカードを移動させることができる。","trigger":{"on":"start","ops":[{"op":"ifState","cond":"thisCovered","ops":[{"op":"shift","select":{"ref":"this"},"optional":true}]}]}},"middle":{"_text":"フィールド「UNITY」カードが5枚以上ある場合、「UNITY」プロトコルカードのコンパイル完了面を表向きにし、そのラインにあるすべてのカードを削除する。","ops":[{"op":"ifState","cond":"protoCountGe5","ops":[{"op":"setProtocolCompiled","proto":"UNITY","deleteLine":true}]}]},"lower":{"_text":"このラインには「UNITY」カードを表向きでプレイすることができる。","static":{"kind":"playPermission","rule":"protoFaceUpThisLine"}}},"UNITY_3":{"middle":{"_text":"フィールドにある「UNITY」カードの枚数に等しい枚数のカードを引く。","ops":[{"op":"drawDynamic","count":"protoOnField"}]}},"UNITY_4":{"middle":{"_text":"フィールドに他の「UNITY」カードがある場合、あなたは表向きのカードを1枚反転させることができる。","ops":[{"op":"ifState","cond":"otherProtoCardOnField","ops":[{"op":"flip","optional":true,"select":{"facing":"up"}}]}]}},"UNITY_5":{"upper":{"_text":"終了：あなたの手札が1枚もない場合、あなたのデッキのカードをすべて公開し、そこからすべての「UNITY」カードを引いて、あなたのデッキをシャッフルする。","trigger":{"on":"end","ops":[{"op":"ifState","cond":"handEmpty","ops":[{"op":"searchDeck","proto":"UNITY","all":true}]}]}}},"UNITY_6":{"middle":{"_text":"あなたの手札を1枚捨て札にする。","ops":[{"op":"discard","count":1}]}}};</script>
+<script>window.COMPILE_ART=["1apathy.webp","1assimilation.webp","1chaos.webp","1clarity.webp","1corruption.webp","1courage.webp","1darkness.webp","1death.webp","1diversity.webp","1fear.webp","1fire.webp","1gravity.webp","1hate.webp","1ice.webp","1life.webp","1light.webp","1love.webp","1luck.webp","1metal.webp","1mirror.webp","1peace.webp","1plague.webp","1psychic.webp","1smoke.webp","1speed.webp","1spirit.webp","1time.webp","1unity.webp","1war.webp","1water.webp","2apathy.webp","2assimilation.webp","2chaos.webp","2clarity.webp","2corruption.webp","2courage.webp","2darkness.webp","2death.webp","2diversity.webp","2fear.webp","2fire.webp","2gravity.webp","2hate.webp","2ice.webp","2life.webp","2light.webp","2love.webp","2luck.webp","2metal.webp","2mirror.webp","2peace.webp","2plague.webp","2psychic.webp","2smoke.webp","2speed.webp","2spirit.webp","2time.webp","2unity.webp","2war.webp","2water.webp","3apathy.webp","3assimilation.webp","3chaos.webp","3clarity.webp","3corruption.webp","3courage.webp","3darkness.webp","3death.webp","3diversity.webp","3fear.webp","3fire.webp","3gravity.webp","3hate.webp","3ice.webp","3life.webp","3light.webp","3love.webp","3luck.webp","3metal.webp","3mirror.webp","3peace.webp","3plague.webp","3psychic.webp","3smoke.webp","3speed.webp","3spirit.webp","3time.webp","3unity.webp","3war.webp","3water.webp","4apathy.webp","4assimilation.webp","4chaos.webp","4clarity.webp","4corruption.webp","4courage.webp","4darkness.webp","4death.webp","4diversity.webp","4fear.webp","4fire.webp","4gravity.webp","4hate.webp","4ice.webp","4life.webp","4light.webp","4love.webp","4luck.webp","4metal.webp","4mirror.webp","4peace.webp","4plague.webp","4psychic.webp","4smoke.webp","4speed.webp","4spirit.webp","4time.webp","4unity.webp","4war.webp","4water.webp","5apathy.webp","5assimilation.webp","5chaos.webp","5clarity.webp","5corruption.webp","5courage.webp","5darkness.webp","5death.webp","5diversity.webp","5fear.webp","5fire.webp","5gravity.webp","5hate.webp","5ice.webp","5life.webp","5light.webp","5love.webp","5luck.webp","5metal.webp","5mirror.webp","5peace.webp","5plague.webp","5psychic.webp","5smoke.webp","5speed.webp","5spirit.webp","5time.webp","5unity.webp","5war.webp","5water.webp","6apathy.webp","6assimilation.webp","6chaos.webp","6clarity.webp","6corruption.webp","6courage.webp","6darkness.webp","6death.webp","6diversity.webp","6fear.webp","6fire.webp","6gravity.webp","6hate.webp","6ice.webp","6life.webp","6light.webp","6love.webp","6luck.webp","6metal.webp","6mirror.webp","6peace.webp","6plague.webp","6psychic.webp","6smoke.webp","6speed.webp","6spirit.webp","6time.webp","6unity.webp","6war.webp","6water.webp","Apathy.webp","Apathy_Glitched.webp","Assimilation.webp","Assimilation_Glitched.webp","Chaos.webp","Chaos_Glitched.webp","Clarity.webp","Clarity_Glitched.webp","Corruption.webp","Corruption_Glitched.webp","Courage.webp","Courage_Glitched.webp","Darkness.webp","Darkness_Glitched.webp","Death.webp","Death_Glitched.webp","Diversity.webp","Diversity_Glitched.webp","Fear.webp","Fear_Glitched.webp","Fire.webp","Fire_Glitched.webp","Gravity.webp","Gravity_Glitched.webp","Hate.webp","Hate_Glitched.webp","Ice.webp","Ice_Glitched.webp","Life.webp","Life_Glitched.webp","Light.webp","Light_Glitched.webp","Love.webp","Love_Glitched.webp","Luck.webp","Luck_Glitched.webp","Metal.webp","Metal_Glitched.webp","Mirror.webp","Mirror_Glitched.webp","Peace.webp","Peace_Glitched.webp","Plague.webp","Plague_Glitched.webp","Psychic.webp","Psychic_Glitched.webp","Smoke.webp","Smoke_Glitched.webp","Speed.webp","Speed_Glitched.webp","Spirit.webp","Spirit_Glitched.webp","Time.webp","Time_Glitched.webp","Unity.webp","Unity_Glitched.webp","War.webp","War_Glitched.webp","Water.webp","Water_Glitched.webp"];</script>
 <script>
 /* =========================================================================
  * Compile ルールエンジン
@@ -997,7 +997,7 @@ function countProtoKindsInLine(st, line) {
 
 /* ---------- プレイ許可 ---------- */
 
-function canPlay(st, player, uid, line, faceUp) {
+function canPlay(st, player, uid, line, faceUp, anyProto) {
   for (const s of activeStatics(st)) {
     if (s.kind !== 'playPermission') continue;
     if (s.rule === 'oppNoPlayThisLine' && player !== s.sideIdx && line === s.line) return false;
@@ -1005,7 +1005,7 @@ function canPlay(st, player, uid, line, faceUp) {
     if (s.rule === 'oppFaceDownOnly' && player !== s.sideIdx && faceUp) return false;
   }
   if (faceUp) {
-    let needMatch = true;
+    let needMatch = !anyProto;   // DIVERSITY_1 下段: プロトコル不問で表向きプレイ可
     for (const s of activeStatics(st)) {
       if (s.kind === 'playPermission' && s.rule === 'youFaceUpAnyLine' && s.sideIdx === player) needMatch = false;
       // UNITY_2 lower: このラインには UNITY カードを表向きでプレイできる
@@ -1047,6 +1047,10 @@ function choose(ctx, req) {
   ctx.qn++;
   req.id = 'q' + ctx.qn;
   if (ctx.ci < ctx.choices.length) {
+    /* 再実行で選択済みの地点を通過するとき、その瞬間の状態をトレースに残す。
+       これで UI 側の「表示中の盤面と一致するステップまで早送り」が
+       どの選択でも必ず一致点を見つけられる (巻き戻り再生の防止) */
+    if (TRACE && ctx.trace) ctx.trace.push({ msg: '', uid: null, st: clone(ctx.st) });
     const picks = ctx.choices[ctx.ci++];
     validatePicks(req, picks);
     return picks;
@@ -1085,10 +1089,11 @@ function validatePicks(req, picks) {
 
 function eventMatches(on, ev, cardSide, st, uid) {
   switch (on) {
-    case 'afterOppDiscard':    return ev.on === 'discard' && ev.player !== cardSide;
-    case 'afterYouDiscard':    return ev.on === 'discard' && ev.player === cardSide;
+    // 「手札を捨て札にしたあと」はデッキからの捨て札では発動しない。
+    case 'afterOppDiscard':    return ev.on === 'discard' && ev.from === 'hand' && ev.player !== cardSide;
+    case 'afterYouDiscard':    return ev.on === 'discard' && ev.from === 'hand' && ev.player === cardSide;
     case 'afterYouDiscardOppTurn': // PEACE_4: 相手の手番中にあなたが捨てたあと
-      return ev.on === 'discard' && ev.player === cardSide && st.turn !== cardSide;
+      return ev.on === 'discard' && ev.from === 'hand' && ev.player === cardSide && st.turn !== cardSide;
     case 'afterYouDraw':       return ev.on === 'draw' && ev.player === cardSide;
     case 'afterOppDraw':       return ev.on === 'draw' && ev.player !== cardSide;
     case 'afterYouDelete':     return ev.on === 'delete' && ev.actor === cardSide;
@@ -1238,6 +1243,7 @@ function fireUncover(ctx, info) {
 function landLine(ctx, uid, line, side) {
   const st = ctx.st;
   const c = st.cards[uid];
+  if (!c.faceUp) c.knownTo = 1 << side;   // 自分側の裏向きはその側だけが見てよい
   const stack = st.lines[line][side];
   const seq = c.commitSeq || 0;
   let i = stack.length;
@@ -1263,7 +1269,8 @@ function landHand(ctx, uid) {
   c.faceUp = false;
   c.commitDest = null;
   ctx.st.players[c.owner].hand.push(uid);
-  knowCard(ctx.st, uid, c.owner);
+  /* 手札に戻った時点で相手の記憶は切れる (再び裏向きで出したとき正体は非公開) */
+  c.knownTo = 1 << c.owner;
   removeFrom(ctx.st.commitStack, uid);
 }
 
@@ -1275,8 +1282,12 @@ function cardLabel(st, uid) {
 }
 
 function doDelete(ctx, uid, actor) {
-  if (!locate(ctx.st, uid)) return false;
+  const loc = locate(ctx.st, uid);
+  if (!loc) return false;
   const info = extractCard(ctx, uid);
+  /* CORRUPTION 0 のように相手側スタックへ置かれたカードは、場から
+     削除される時点でそのスタック側の捨て札へ入る。 */
+  if (typeof loc.side === 'number') ctx.st.cards[uid].owner = loc.side;
   ctx.st.cards[uid].commitDest = 'trash';
   fireUncover(ctx, info);
   landTrash(ctx, uid);
@@ -1300,6 +1311,7 @@ function doReturn(ctx, uid) {
     c.zone = 'deck' + owner;
     c.faceUp = false;
     c.commitDest = null;
+    c.knownTo = 0;   // デッキに入った時点で誰も見えない
     st.players[owner].deck.unshift(uid);
     removeFrom(st.commitStack, uid);
     log(ctx, `${label} は手札の代わりにデッキの一番上へ戻された`, uid);
@@ -1321,7 +1333,12 @@ function doFlip(ctx, uid, ignoreMiddleOnce) {
   }
   c.faceUp = !c.faceUp;
   if (c.faceUp) revealCardToAll(st, uid);
-  log(ctx, `${DEFS[c.def].id} を${c.faceUp ? '表' : '裏'}に反転`, uid);
+  else {
+    /* 裏になった時点で相手は中身を確認できなくなる (自分側のカードなら自分は閲覧可) */
+    const lf = locate(st, uid);
+    c.knownTo = lf ? (1 << lf.side) : 0;
+  }
+  log(ctx, `${cardLabel(st, uid)} を${c.faceUp ? '表' : '裏'}に反転`, uid);
   const loc = locate(st, uid);
   // LUCK_2: 反転による中段は無視する
   if (c.faceUp && loc && isTop(st, loc) && !ignoreMiddleOnce) resolveMiddle(ctx, uid, 'flip');
@@ -1359,6 +1376,9 @@ function playToField(ctx, uid, line, side, faceUp, belowUid) {
   c.commitDest = 'line' + line;
   c.faceUp = faceUp;
   if (faceUp) revealCardToAll(st, uid);
+  /* ルール: 自分側のフィールドにある裏向きカードは見てよい (相手のデッキから
+     置かれたカードも着地後は閲覧可)。着地する側のプレイヤーに既知化する */
+  else c.knownTo = 1 << side;   // 相手が公開時に見ていても、裏で出した以上は非公開
   const stack = st.lines[line][side];
   if (belowUid) {
     const i = stack.indexOf(belowUid);
@@ -1432,7 +1452,7 @@ function drawCards(ctx, side, n, fromOpp) {
     c.zone = 'hand' + side;
     if (fromOpp) c.owner = side;
     st.players[side].hand.push(u);
-    knowCard(st, u, side);
+    c.knownTo = 1 << side;   // 引いた本人だけが知る (デッキ上で公開されていても再び非公開)
     drawn++;
   }
   if (drawn) {
@@ -1458,7 +1478,7 @@ function discardCards(ctx, side, uids) {
   }
   if (uids.length) {
     log(ctx, `P${side + 1}: ${uids.length}枚捨て札`);
-    fireEvent(ctx, { on: 'discard', player: side, count: uids.length });
+    fireEvent(ctx, { on: 'discard', from: 'hand', player: side, count: uids.length });
   }
   return uids.length;
 }
@@ -1489,6 +1509,7 @@ function massRemove(ctx, uids, destKind, actor) {
   for (const u of present) {
     const loc = locate(st, u);
     st.lines[loc.line][loc.side].splice(loc.idx, 1);
+    if (destKind === 'trash') st.cards[u].owner = loc.side;
     markCommitted(st, u);
     st.cards[u].commitDest = destKind === 'trash' ? 'trash' : 'hand';
   }
@@ -1583,7 +1604,13 @@ function doCompile(ctx, side, line) {
       const tr = eff.upper && eff.upper.trigger;
       if (tr && tr.on === 'wouldBeDeletedByCompile') {
         const dests = [0, 1, 2].filter(l2 => l2 !== line);
-        const ans = choose(ctx, { kind: 'pickLine', player: s, lines: dests, prompt: 'compile-replace-shift', context: DEFS[c.def].id });
+        /* SPEED 2 の置換は「消えなかった」だけでは発動元が伝わりにくい。
+           ログ・盤面ハイライト・移動先選択を同じ uid で結ぶ。 */
+        log(ctx, `[${DEFS[c.def].id}] 上段効果が発動: コンパイル削除を移動に置換`, uid);
+        const ans = choose(ctx, {
+          kind: 'pickLine', player: s, lines: dests, prompt: 'compile-replace-shift',
+          context: DEFS[c.def].id, focus: uid
+        });
         const loc = locate(st, uid);
         st.lines[loc.line][loc.side].splice(loc.idx, 1);
         const dstack = st.lines[ans[0]][s];
@@ -1598,7 +1625,10 @@ function doCompile(ctx, side, line) {
   // 全カード同時削除 (トリガーなし)
   const removed = [];
   for (let s = 0; s < 2; s++) {
-    for (const uid of st.lines[line][s]) { markCommitted(st, uid); st.cards[uid].commitDest = 'trash'; removed.push(uid); }
+    for (const uid of st.lines[line][s]) {
+      st.cards[uid].owner = s;
+      markCommitted(st, uid); st.cards[uid].commitDest = 'trash'; removed.push(uid);
+    }
     st.lines[line][s] = [];
   }
   for (const uid of removed) landTrash(ctx, uid);
@@ -1753,7 +1783,7 @@ function execOp(ctx, fr, op) {
         st.cards[u].owner = 1 - who;
         st.cards[u].zone = 'hand' + (1 - who);
         st.players[1 - who].hand.push(u);
-        knowCard(st, u, 1 - who);
+        st.cards[u].knownTo = 1 << (1 - who);   // 渡した側は以後見えない
       }
       log(ctx, `P${who + 1}: 手札を1枚相手に渡した`);
       fr.done = true;
@@ -1769,7 +1799,7 @@ function execOp(ctx, fr, op) {
       st.cards[u].owner = who;
       st.cards[u].zone = 'hand' + who;
       st.players[who].hand.push(u);
-      knowCard(st, u, who);
+      st.cards[u].knownTo = 1 << who;   // 取られた側は以後見えない
       log(ctx, `P${who + 1}: 相手の手札からランダムに1枚引いた`);
       fireEvent(ctx, { on: 'draw', player: who, count: 1 });
       fr.done = true;
@@ -1820,12 +1850,19 @@ function execOp(ctx, fr, op) {
     }
 
     case 'choice': {
-      const labels = op.options.map((branch, i) => branch.map(o => o.op).join('+'));
+      /* 実行できない選択肢は出さない。
+         「手札を1枚捨て札にするか、このカードを削除する」で手札が空でも
+         捨て札側を選べると、何も起きないままカードが残ってしまう。
+         ルール上は実行できる方を選ばなければならない。 */
+      const viable = op.options.filter(branch => branchViable(st, fr, branch));
+      if (!viable.length) { fr.done = false; return; }
+      if (viable.length === 1 && !op.optional) { execOps(ctx, fr, viable[0]); fr.done = true; return; }
+      const labels = viable.map((branch) => branch.map(o => o.op).join('+'));
       const ans = choose(ctx, {
         kind: 'option', player: fr.controller, optional: !!op.optional,
         options: labels, prompt: 'choice', context: defOf(st, fr.source).id
       });
-      if (ans.length) { execOps(ctx, fr, op.options[ans[0]]); fr.done = true; }
+      if (ans.length) { execOps(ctx, fr, viable[ans[0]]); fr.done = true; }
       else fr.done = false;
       return;
     }
@@ -1876,8 +1913,8 @@ function execOp(ctx, fr, op) {
       const deck = st.players[fr.controller].deck;
       if (!deck.length) { fr.done = false; return; }
       const top = deck[0];
-      st.revealed = { kind: 'card', uid: top, player: fr.controller };
-      revealCardToAll(st, top);
+      st.revealed = { seq: (st.actionLog || []).length, kind: 'card', uid: top, player: fr.controller, cards: [DEFS[st.cards[top].def].id] };
+      /* 公開はその瞬間だけ (オーバーレイ)。捨てなければデッキ上で非公開のまま */
       log(ctx, `P${fr.controller + 1}: デッキトップ ${DEFS[st.cards[top].def].id} を公開`, top);
       const ans = choose(ctx, { kind: 'yesNo', player: fr.controller, prompt: 'optional-discard-top', context: DEFS[st.cards[top].def].id });
       if (ans.length) {
@@ -1896,12 +1933,21 @@ function execOp(ctx, fr, op) {
       if (op.proto) matches = p.deck.filter(u => DEFS[st.cards[u].def].proto === op.proto);
       else matches = p.deck.filter(u => DEFS[st.cards[u].def].value === op.value);
       log(ctx, `P${fr.controller + 1}: デッキを公開`);
-      const take = op.all ? matches : matches.slice(0, 1);
+      st.revealed = { seq: (st.actionLog || []).length, kind: 'deck', player: fr.controller, cards: p.deck.map(u => DEFS[st.cards[u].def].id) };
+      for (const u of matches) knowCard(st, u, fr.controller);   // 選ぶ本人だけが中身を見る (シャッフルで再び非公開)
+      let take;
+      if (op.all || matches.length <= 1) take = matches.slice(0, op.all ? undefined : 1);
+      /* 候補はデッキの中にあり、盤面にも手札にも出ていない。
+         何のカードかは公開済みなので、要求そのものに添えて選べるようにする
+         (オンラインでは相手のデッキ内容を渡さないため、これが唯一の手掛かり)。 */
+      else take = choose(ctx, { kind: 'pickCard', player: fr.controller, candidates: matches.slice(),
+        defs: matches.map(u => DEFS[st.cards[u].def].id),
+        min: 1, max: 1, prompt: 'search-pick', context: defOf(st, fr.source).id });
       for (const u of take) {
         removeFrom(p.deck, u);
         st.cards[u].zone = 'hand' + fr.controller;
         p.hand.push(u);
-        revealCardToAll(st, u);
+        st.cards[u].knownTo = 1 << fr.controller;
       }
       if (take.length) log(ctx, `P${fr.controller + 1}: ${take.map(u => DEFS[st.cards[u].def].id).join(', ')} を手札に加えた`);
       shuffleDeck(ctx, fr.controller);
@@ -1954,6 +2000,8 @@ function execOp(ctx, fr, op) {
         const opts = [0, 1, 2, 3, 4, 5, 6];
         const ans = choose(ctx, { kind: 'option', player: fr.controller, options: opts.map(String), prompt: 'declare-value', context: defOf(st, fr.source).id });
         fr.bind[op.bind || 'declared'] = opts[ans[0]];
+        st.announce = { seq: (st.actionLog || []).length, kind: 'declare', player: fr.controller, what: 'value',
+          value: opts[ans[0]], context: defOf(st, fr.source).id };
         log(ctx, `P${fr.controller + 1}: 値 ${opts[ans[0]]} を宣言`);
       } else {
         // 宣言候補は実際にゲームで使われている6プロトコル(両者の編成)のみ。
@@ -1963,6 +2011,8 @@ function execOp(ctx, fr, op) {
           if (names.indexOf(p.name) < 0) names.push(p.name);
         const ans = choose(ctx, { kind: 'option', player: fr.controller, options: names, prompt: 'declare-protocol', context: defOf(st, fr.source).id });
         fr.bind[op.bind || 'declared'] = names[ans[0]];
+        st.announce = { seq: (st.actionLog || []).length, kind: 'declare', player: fr.controller, what: 'protocol',
+          value: names[ans[0]], context: defOf(st, fr.source).id };
         log(ctx, `P${fr.controller + 1}: プロトコル ${names[ans[0]]} を宣言`);
       }
       fr.done = true;
@@ -1975,6 +2025,9 @@ function execOp(ctx, fr, op) {
       const d = DEFS[st.cards[u].def];
       const declared = fr.bind[op.declared || 'declared'];
       const ok = op.match === 'protocol' ? d.proto === declared : d.value === declared;
+      st.announce = { seq: (st.actionLog || []).length, kind: 'declareResult', player: fr.controller, hit: ok,
+        what: op.match === 'protocol' ? 'protocol' : 'value',
+        value: declared, card: d.id, context: defOf(st, fr.source).id };
       if (ok) execOps(ctx, fr, op.ops);
       else fr.done = false;
       return;
@@ -1987,14 +2040,20 @@ function execOp(ctx, fr, op) {
       drawCards(ctx, fr.controller, op.count || 3);
       const drawn = p.hand.slice(before);
       const matches = drawn.filter(u => DEFS[st.cards[u].def].value === declared);
-      if (!matches.length) { fr.done = false; return; }
+      if (!matches.length) {
+        st.announce = { seq: (st.actionLog || []).length, kind: 'declareResult', player: fr.controller, hit: false, what: 'value',
+          value: declared, card: null, context: defOf(st, fr.source).id };
+        fr.done = false; return;
+      }
       let pick = matches[0];
       if (matches.length > 1) {
         const ans = choose(ctx, { kind: 'pickHand', player: fr.controller, candidates: matches, min: 1, max: 1, prompt: 'reveal-hand-card', context: defOf(st, fr.source).id });
         pick = ans[0];
       }
-      st.revealed = { kind: 'card', uid: pick, player: fr.controller };
-      revealCardToAll(st, pick);
+      st.revealed = { seq: (st.actionLog || []).length, kind: 'card', uid: pick, player: fr.controller, cards: [DEFS[st.cards[pick].def].id] };
+      st.announce = { seq: (st.actionLog || []).length, kind: 'declareResult', player: fr.controller, hit: true, what: 'value',
+        value: declared, card: DEFS[st.cards[pick].def].id, context: defOf(st, fr.source).id };
+      knowCard(st, pick, fr.controller);   // 本人は見る。相手はオーバーレイの瞬間だけ
       log(ctx, `P${fr.controller + 1}: ${DEFS[st.cards[pick].def].id} を公開`, pick);
       const yn = choose(ctx, { kind: 'yesNo', player: fr.controller, prompt: 'optional-play', context: DEFS[st.cards[pick].def].id });
       if (yn.length) {
@@ -2005,7 +2064,8 @@ function execOp(ctx, fr, op) {
         }
         if (faces.length) {
           const opts = faces.map(x => 'ライン' + (x.l + 1) + (x.f ? '(表)' : '(裏)'));
-          const sel = choose(ctx, { kind: 'option', player: fr.controller, options: opts, prompt: 'play-dest', context: DEFS[st.cards[pick].def].id });
+          const sel = choose(ctx, { kind: 'option', player: fr.controller, options: opts, faces: faces.slice(),
+            prompt: 'play-dest', context: DEFS[st.cards[pick].def].id });
           const f = faces[sel[0]];
           playToField(ctx, pick, f.l, fr.controller, f.f);
         }
@@ -2032,9 +2092,13 @@ function execOp(ctx, fr, op) {
 
     case 'mirrorMiddle': { // MIRROR_2: 相手カード1枚の中段を、このカード上にあるかのように解決
       const cands = [];
-      for (let l = 0; l < 3; l++) for (const uid of st.lines[l][1 - fr.controller]) {
-        const c = st.cards[uid];
-        if (c.faceUp && DEFS[c.def].eff.middle && DEFS[c.def].eff.middle.ops) cands.push(uid);
+      for (let l = 0; l < 3; l++) {
+        const stack = st.lines[l][1 - fr.controller];
+        stack.forEach((uid, idx) => {
+          const c = st.cards[uid];
+          /* 覆い指定のない効果は既定で「覆われていないカード」が対象 */
+          if (idx === stack.length - 1 && c.faceUp && DEFS[c.def].eff.middle && DEFS[c.def].eff.middle.ops) cands.push(uid);
+        });
       }
       if (!cands.length) { fr.done = false; return; }
       const pick = cands.length === 1 ? cands[0]
@@ -2134,10 +2198,12 @@ function execOp(ctx, fr, op) {
       const pick = trash.length === 1 ? trash[0]
         : choose(ctx, { kind: 'pickCard', player: fr.controller, candidates: trash.slice(), prompt: 'play-from-trash', context: defOf(st, fr.source).id })[0];
       if (op.facing === 'down') {
-        // TIME_4: このカードとは別のラインに裏向きでプレイ
-        const lines = [0, 1, 2].filter(l => l !== fr.line);
-        const l = choose(ctx, { kind: 'pickLine', player: fr.controller, lines, prompt: 'play-dest', context: DEFS[st.cards[pick].def].id })[0];
-        st.revealed = { kind: 'card', uid: pick, player: fr.controller };
+        // TIME_4: このカードとは別のラインに裏向きでプレイ (プレイ制約の常在効果を通す)
+        const lines = [0, 1, 2].filter(l => l !== fr.line && canPlay(st, fr.controller, pick, l, false));
+        if (!lines.length) { fr.done = false; return; }
+        const l = lines.length === 1 ? lines[0]
+          : choose(ctx, { kind: 'pickLine', player: fr.controller, lines, prompt: 'play-dest', context: DEFS[st.cards[pick].def].id })[0];
+        st.revealed = { seq: (st.actionLog || []).length, kind: 'card', uid: pick, player: fr.controller };
         log(ctx, `P${fr.controller + 1}: 捨て札の ${DEFS[st.cards[pick].def].id} を公開`, pick);
         removeFrom(trash, pick);
         playToField(ctx, pick, l, fr.controller, false);
@@ -2150,7 +2216,8 @@ function execOp(ctx, fr, op) {
         }
         if (!faces.length) { fr.done = false; return; }
         const opts = faces.map(x => 'ライン' + (x.l + 1) + (x.f ? '(表)' : '(裏)'));
-        const sel = choose(ctx, { kind: 'option', player: fr.controller, options: opts, prompt: 'play-dest', context: DEFS[st.cards[pick].def].id });
+        const sel = choose(ctx, { kind: 'option', player: fr.controller, options: opts, faces: faces.slice(),
+          prompt: 'play-dest', context: DEFS[st.cards[pick].def].id });
         const f = faces[sel[0]];
         removeFrom(trash, pick);
         playToField(ctx, pick, f.l, fr.controller, f.f);
@@ -2198,9 +2265,9 @@ function execTargetedOp(ctx, fr, op) {
   if (op.op === 'reveal' && op.target) {
     if (op.target === 'oppHand') {
       const oh = st.players[1 - fr.controller].hand;
-      for (const uid of oh) revealCardToAll(st, uid);
+      /* 公開はその瞬間だけ (オーバーレイ)。閲覧権は残さない */
       log(ctx, `P${2 - fr.controller}: 手札を公開: ` + oh.map(u => DEFS[st.cards[u].def].id).join(', '));
-      st.revealed = { kind: 'hand', player: 1 - fr.controller, cards: oh.map(u => DEFS[st.cards[u].def].id) };
+      st.revealed = { seq: (st.actionLog || []).length, kind: 'hand', player: 1 - fr.controller, cards: oh.map(u => DEFS[st.cards[u].def].id) };
       fr.done = true; return;
     }
     if (op.target === 'ownHandCard') {
@@ -2208,6 +2275,8 @@ function execTargetedOp(ctx, fr, op) {
       if (!hand.length) { fr.done = false; return; }
       const picks = hand.length === 1 ? hand.slice()
         : choose(ctx, { kind: 'pickHand', player: fr.controller, candidates: hand.slice(), min: 1, max: 1, prompt: 'reveal-hand-card' });
+      /* 公開はその瞬間だけ (オーバーレイ)。閲覧権は残さない */
+      st.revealed = { seq: (st.actionLog || []).length, kind: 'card', player: fr.controller, cards: [DEFS[st.cards[picks[0]].def].id] };
       log(ctx, `P${fr.controller + 1}: 手札の ${DEFS[st.cards[picks[0]].def].id} を公開`);
       fr.done = true; return;
     }
@@ -2277,6 +2346,43 @@ function execTargetedOp(ctx, fr, op) {
   if (op.bind) fr.bind[op.bind] = uid;
 }
 
+/* choice の選択肢が実際に何かを起こせるかを、選択を挟まずに判定する。
+   判定できない op は従来通り「選べる」とみなす (誤って選択肢を消さない)。 */
+function branchViable(st, fr, ops) {
+  return (ops || []).some(op => opViable(st, fr, op));
+}
+
+function opViable(st, fr, op) {
+  switch (op.op) {
+    case 'discard': return st.players[actorOf(fr, op)].hand.length > 0;
+    case 'draw': {
+      const p = st.players[actorOf(fr, op)];
+      return p.deck.length > 0 || p.trash.length > 0;
+    }
+    case 'flip': case 'delete': case 'return': case 'shift': return hasTarget(st, fr, op);
+    default: return true;
+  }
+}
+
+function hasTarget(st, fr, op) {
+  const sel = op.select || {};
+  if (sel.ref) {
+    const uid = sel.ref === 'this' ? fr.source : fr.bind[sel.ref];
+    return uid !== undefined && !!locate(st, uid);
+  }
+  /* ライン選択を伴う指定は、どのラインでも良いものとして緩めに数える */
+  const loose = Object.assign({}, sel);
+  if (loose.zone === 'chosenLine' || loose.zone === 'otherLineWith8plus') delete loose.zone;
+  for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++) {
+    for (const uid of st.lines[l][s]) {
+      if (!matchesSel(st, fr, uid, loose)) continue;
+      if (op.op === 'shift' && op.dest === 'thisLine' && l === fr.line) continue;
+      return true;
+    }
+  }
+  return false;
+}
+
 function matchesSel(st, fr, uid, sel) {
   const loc = locate(st, uid);
   if (!loc) return false;
@@ -2292,7 +2398,7 @@ function matchesSel(st, fr, uid, sel) {
   if (sel.facing === 'down' && c.faceUp) return false;
   if (sel.exclude === 'thisCard' && uid === fr.source) return false;
   if (sel.zone === 'thisLine' && loc.line !== fr.line) return false;
-  if (sel.zone === 'thisStack' && (loc.line !== fr.line)) return false;
+  if (sel.zone === 'thisStack' && (loc.line !== fr.line || loc.side !== fr.controller)) return false;   // スタック=片側
   if (sel.zone === 'currentLine' && loc.line !== fr.currentLine) return false;
   if (sel.zone === 'lineWhereOppLeads') { // COURAGE_2: 相手合計が自分より大きいライン
     if (lineTotal(st, loc.line, 1 - fr.controller) <= lineTotal(st, loc.line, fr.controller)) return false;
@@ -2378,9 +2484,9 @@ function performVerb(ctx, fr, op, uid) {
     case 'return': return doReturn(ctx, uid);
     case 'reveal': {
       const c = st.cards[uid];
-      revealCardToAll(st, uid);
+      /* ルール: 公開後は元の状態に戻す → 閲覧権は残さず、公開の瞬間だけオーバーレイで見せる */
       log(ctx, `${DEFS[c.def].id} を公開`);
-      st.revealed = { kind: 'card', uid, def: DEFS[c.def].id };
+      st.revealed = { seq: (st.actionLog || []).length, kind: 'card', uid, player: fr.controller, cards: [DEFS[c.def].id] };
       return true;
     }
     case 'shift': {
@@ -2403,11 +2509,19 @@ function performVerb(ctx, fr, op, uid) {
         dest = pickDest([0, 1, 2].filter(l => l !== loc.line));
       }
       if (dest === loc.line) return false;
-      return doShift(ctx, uid, dest);
+      const shifted = doShift(ctx, uid, dest);
+      /* DIVERSITY 1 のように、後続の効果文が「このライン」と指す場合は
+         移動後のラインを明示的に引き継ぐ。通常の移動効果まで意味が変わら
+         ないよう、DSL 側で setCurrentLine を指定した場合だけ更新する。 */
+      if (shifted && op.setCurrentLine) fr.currentLine = dest;
+      return shifted;
 
       function pickDest(lines) {
         if (lines.length === 1) return lines[0];
-        return choose(ctx, { kind: 'pickLine', player: fr.controller, lines, prompt: 'shift-dest', context: cardLabel(st, uid) })[0];
+        return choose(ctx, {
+          kind: 'pickLine', player: fr.controller, lines, prompt: 'shift-dest',
+          context: cardLabel(st, uid), focus: uid
+        })[0];
       }
     }
   }
@@ -2426,6 +2540,9 @@ function performMass(ctx, fr, op, cands) {
       if (st.cards[u].faceUp) fireWouldBeFlipped(ctx, u); // METAL_6
       if (!locate(st, u)) continue;
       st.cards[u].faceUp = !st.cards[u].faceUp;
+      /* 閲覧権の再計算: 表=公開、裏=その側のプレイヤーだけ */
+      if (st.cards[u].faceUp) revealCardToAll(st, u);
+      else { const lm = locate(st, u); st.cards[u].knownTo = lm ? (1 << lm.side) : 0; }
     }
     log(ctx, `${cands.length}枚を同時に反転`);
     return true;
@@ -2433,20 +2550,35 @@ function performMass(ctx, fr, op, cands) {
   if (op.op === 'shift') {
     // LIGHT_4: 1つの他ラインへ相対順を維持して移動
     const lines = [0, 1, 2].filter(l => l !== fr.line);
-    const dest = choose(ctx, { kind: 'pickLine', player: fr.controller, lines, prompt: 'mass-shift-dest', context: defOf(st, fr.source).id })[0];
+    const dest = choose(ctx, {
+      kind: 'pickLine', player: fr.controller, lines, prompt: 'mass-shift-dest',
+      context: defOf(st, fr.source).id, focus: cands.slice()
+    })[0];
     const prevTops = {};
     for (let s = 0; s < 2; s++) {
       const stk = st.lines[fr.line][s];
       if (stk.length) prevTops[s] = stk[stk.length - 1];
     }
+    /* 一斉移動は同時に起きる。片側ずつ着地させると、先に着いたカードが
+       後から解決するトリガーの対象になってしまう (覆われた時点ではまだ
+       場に居ないはずのカードが削除された)。
+       「全部まとめて浮かせる → 覆われる側のトリガー → まとめて着地」の順で処理する。 */
+    const movingBySide = [];
     for (let s = 0; s < 2; s++) {
       const moving = st.lines[fr.line][s].filter(u => cands.indexOf(u) >= 0);
+      movingBySide.push(moving);
       if (!moving.length) continue;
       st.lines[fr.line][s] = st.lines[fr.line][s].filter(u => cands.indexOf(u) < 0);
-      const dstack = st.lines[dest][s];
       for (const u of moving) { markCommitted(st, u); st.cards[u].commitDest = 'line' + dest; }
+    }
+    for (let s = 0; s < 2; s++) {
+      const moving = movingBySide[s];
+      if (!moving.length) continue;
+      const dstack = st.lines[dest][s];
       if (dstack.length) fireWouldBeCovered(ctx, dstack[dstack.length - 1], moving[0]);
-      for (const u of moving) landLine(ctx, u, dest, s);
+    }
+    for (let s = 0; s < 2; s++) {
+      for (const u of movingBySide[s]) landLine(ctx, u, dest, s);
     }
     // 移動元で新たに uncovered になった表向きカード
     for (let s = 0; s < 2; s++) {
@@ -2467,6 +2599,16 @@ function execPlayOp(ctx, fr, op) {
   const st = ctx.st;
   const who = actorOf(fr, op);
   const source = op.source || 'hand';
+  /* 「プレイすることができる」(optional) は先に意思確認する。
+     プレイできるカードが無ければ聞かずに不発 */
+  if (op.optional) {
+    const canOffer = source === 'hand'
+      ? st.players[who].hand.some(u => st.cards[u].zone !== 'committed')
+      : st.players[source === 'oppTopDeck' ? 1 - who : who].deck.length > 0;
+    if (!canOffer) { fr.done = false; return; }
+    const ans = choose(ctx, { kind: 'yesNo', player: who, prompt: 'optional-play', context: defOf(st, fr.source).id });
+    if (!ans.length) { fr.done = false; return; }
+  }
 
   // 行き先ライン決定
   let line;
@@ -2550,7 +2692,7 @@ function execPlayOp(ctx, fr, op) {
     : (typeof destChoices !== 'undefined') ? destChoices : [0, 1, 2];
   const opts = [];
   for (const u of hand) for (const l of allowedLines) {
-    if (canPlay(st, who, u, l, true)) opts.push(u + '|' + l + '|u');
+    if (canPlay(st, who, u, l, true, !!op.anyProto)) opts.push(u + '|' + l + '|u');
     if (canPlay(st, who, u, l, false)) opts.push(u + '|' + l + '|d');
   }
   if (!opts.length) { fr.done = false; return; }
@@ -2686,6 +2828,7 @@ function performAction(ctx, action) {
 function runReplay(base, action, choices) {
   const st = clone(base);
   st.revealed = null;
+  st.announce = null;
   if (!Array.isArray(st.commitStack)) st.commitStack = [];  // 外部由来のstate(詰めCompile共有盤面など)に対する防御
   if (typeof st.commitSeq !== 'number') st.commitSeq = 0;
   const ctx = { st, choices, ci: 0, qn: 0, depth: 0, log: [], trace: TRACE ? [] : null };
@@ -2716,6 +2859,18 @@ function apply(state, action) {
       return { state, requests: [], log: [], winner: state.winner, error: '古い選択操作です' };
     }
     return runReplay(pend.base, pend.action, pend.choices.concat([action.picks]));
+  }
+  if (action.type === 'back') {
+    const pend = state.pending;
+    if (!pend) return { state, requests: [], log: [], winner: state.winner, error: '選択待ちではない' };
+    if (action.id !== pend.requestId) {
+      return { state, requests: [], log: [], winner: state.winner, error: '古い選択操作です' };
+    }
+    if (!pend.choices.length) {
+      return { state, requests: [], log: [], winner: state.winner, error: '戻せる選択がありません' };
+    }
+    // 保留アクションを一つ前の回答数で再生し直し、直前の選択要求へ戻る。
+    return runReplay(pend.base, pend.action, pend.choices.slice(0, -1));
   }
   const base = clone(state);
   base.pending = null;
@@ -2799,13 +2954,47 @@ const AI_W = {
   marginLead: 6, marginTrail: 6,
   // リフレッシュはターンを丸ごと使う。引ける枚数が少ないほど割に合わない
   refreshPerCard: 13, refreshTempo: 26, compileSafety: 1,
+  // 対象の無い中段を表で切る (空撃ち) 減点: fizzle + 中段の効果値 × fizzleMid
+  fizzle: 45, fizzleMid: 0.6,
+  // 手の事前評価 (aiActionBias) の表向き/裏向きまわり。
+  // compiledUp/Down: コンパイル済みラインへ表/裏で出す減点、recompile: そこで再コンパイルしそうなとき
+  // midUp: 表向きの中段効果の重み、lowUp: 効果の弱い値0-1を表で出す減点、lowDown: 低値を裏で出す加点 (値1あたり)
+  compiledUp: 75, compiledDown: 75, recompile: 160, midUp: 0.35, lowUp: 20, lowDown: 5,
+  // 済ラインへのプレイで自分の2ラインリードを作る/相手の2ラインリードを崩すとき、compiledUp/Down の減点を戻す割合。0 で従来どおり
+  compiledLead: 1,
+  /* 「〜できる」の任意コストを、払わない選択も込みで見る (0 で従来どおり必ず払う扱い)。
+     anyLineBase/anyLineGain: 「プロトコルを対応させずに表向きでプレイできる」(SPIRIT 1) の価値。
+     ライン制限を外したときの手札評価の増分を上乗せする。0 で従来どおり常時効果の一律10点 */
+  optionalCost: 1, anyLineBase: 26, anyLineGain: 0.9,
 };
-function setAiWeights(obj) { for (const k in obj) if (k in AI_W) AI_W[k] = obj[k]; }
+/* サイキック①ロックまわりの重み。通常 AI・特化 AI の区別なく共通で使う。
+   lockPermanent/lockTemporary: 覆われた (永続) / 一番上 (1ターン) のロックの価値
+   threat*: 相手の裏向きカードがロックになりうる危険度 (aiLockThreat)
+   sp*: ロック特化の手筋の加点 (aiLockSpecialistBias) */
+const AI_LOCK_W = {
+  lockPermanent: 260, lockTemporary: 55,
+  threatLine: 0.85, threatAny: 0.6, threatCovered: 0.2,
+  spLockCoverRoute: 170, spLockUpNoCover: -45, spLockDup: -20, spLockBadLine: -30,
+  spLockKeyInHand: 150, spLockNoKey: 95, spCover: 80, spKeyOnLock: 170, spKeyHold: -55,
+};
+/* 知らないキーは無視して配列で返す (計測スクリプトが打ち間違いに気づけるように) */
+function setAiWeights(obj) {
+  const unknown = [];
+  for (const k in obj) {
+    if (k in AI_W) AI_W[k] = obj[k];
+    else if (k in AI_LOCK_W) AI_LOCK_W[k] = obj[k];
+    else unknown.push(k);
+  }
+  return unknown;
+}
 let AI_SPECIALIST_ENABLED = false;
 let AI_SPECIALIST_SIDE = -1;
-function setAiSpecialist(enabled, side) {
+/* 'dsh': DARKNESS/SPEED/HATE 特化 (最強) / 'psylock': サイキック①の永続ロック狙い */
+let AI_SPECIALIST_KIND = 'dsh';
+function setAiSpecialist(enabled, side, kind) {
   AI_SPECIALIST_ENABLED = !!enabled;
   AI_SPECIALIST_SIDE = side === 0 || side === 1 ? side : -1;
+  AI_SPECIALIST_KIND = kind === 'psylock' ? 'psylock' : 'dsh';
 }
 const AI_DSH_W = {
   think: 1.5, rootSearch: 32, reply: 18, shallow: 8,
@@ -2814,9 +3003,18 @@ const AI_DSH_W = {
   leadGain: 50, oppLeadGain: 78, leadBonus: 18, oppLeadBonus: 24,
   marginLead: 6, marginTrail: 6, refreshPerCard: 13, refreshTempo: 26,
   compileSafety: 1, hateDownPenalty: 20, speedDownPenalty: 20, speedPairStrategy: 1,
+  compiledUp: 75, compiledDown: 75, recompile: 160, midUp: 0.35, lowUp: 20, lowDown: 5,
+  // 済ラインへのプレイで自分の2ラインリードを作る/相手の2ラインリードを崩すとき、compiledUp/Down の減点を戻す割合。0 で従来どおり
+  optionalCost: 1, anyLineBase: 26, anyLineGain: 0.9,
+  compiledLead: 0,   // 最強同士のミラー 480 戦で 49.8% [45.3, 54.2]。効果が出ていないので切っておく
 };
 function setAiSpecialistWeights(obj) {
-  for (const k in obj) if (k in AI_DSH_W && Number.isFinite(obj[k])) AI_DSH_W[k] = obj[k];
+  const unknown = [];
+  for (const k in obj) {
+    if (k in AI_DSH_W && Number.isFinite(obj[k])) AI_DSH_W[k] = obj[k];
+    else unknown.push(k);
+  }
+  return unknown;
 }
 
 /* --- Phase A: 評価関数 --- */
@@ -2830,20 +3028,49 @@ function aiCount(x, fallback) {
   return fallback || 1;
 }
 
+/* 対象が自分のカードなら、同じ動詞でも価値は逆になる。
+   HATE 2 の「自分の最大値を削除 → 相手の最大値を削除」を両方プラスで
+   数えていたため、自分の場を壊すだけの手を高く見積もっていた。
+   持ち主の指定が無い (どちらでも選べる) ものは、相手を選ぶ前提のまま。 */
+function aiOpSelfTargeted(op) {
+  const sel = op.select;
+  if (!sel) return false;
+  if (sel.ref === 'this') return true;
+  return sel.owner === 'self';
+}
+
+/* 「〜できる」(optional) の op は、損なら払わなければよい。直後の ifDone (「そうした場合」) と
+   ひとまとめにして、合計が損なら 0 として数える。
+   例: FIRE 3「終了：手札を1枚捨ててもよい。そうした場合カードを1枚反転」は
+   従来 -15 + 8.8 = -6.2 で、置くと損な効果として扱われていた */
+function aiOptionalPack(ops, i, depth) {
+  const self = aiOpsValue([Object.assign({}, ops[i], { optional: false })], depth);
+  let used = 1, v = self;
+  if (ops[i + 1] && ops[i + 1].op === 'ifDone') { v += aiOpsValue([ops[i + 1]], depth); used = 2; }
+  return { v: Math.max(0, v), used };
+}
+
 function aiOpsValue(ops, depth) {
   if (!Array.isArray(ops) || depth > 4) return 0;
   let v = 0;
-  for (const op of ops) {
+  for (let oi = 0; oi < ops.length; oi++) {
+    const op = ops[oi];
     if (!op || !op.op) continue;
+    if (op.optional && AI_W.optionalCost) {
+      const pack = aiOptionalPack(ops, oi, depth);
+      v += pack.v; oi += pack.used - 1;
+      continue;
+    }
     const actor = op.player === 'opp' || op.actor === 'opp' ? -1 : 1;
     switch (op.op) {
       case 'draw': v += actor * aiCount(op.count, 1) * 16; break;
       case 'drawByValue': case 'drawByCount': v += actor * 24; break;
       case 'discard': v += (op.player === 'opp' ? 1 : -1) * aiCount(op.count, 1) * 15; break;
-      case 'delete': v += 34; break;
-      case 'return': v += 23; break;
+      case 'delete': v += aiOpSelfTargeted(op) ? -30 : 34; break;
+      case 'return': v += aiOpSelfTargeted(op) ? -14 : 23; break;
       case 'shift': v += 17; break;
-      case 'flip': v += 11; break;
+      /* 「このカードを反転させる」は自分の表のテキストを失う代償。加点しない */
+      case 'flip': v += (op.select && op.select.ref === 'this') ? -14 : 11; break;
       case 'play': v += actor * 19; break;
       case 'refresh': v += 18; break;
       case 'rearrange': case 'swapProtocols': v += 34; break;
@@ -2886,6 +3113,21 @@ function aiLineLeadCount(st, side) {
   return wins;
 }
 
+/* 済ライン line の自分の合計が after になったとき、コントロール争いが動くか (0 / 1)。
+   自分: 2ラインリード未満 → 以上 (コントロールを持っていないとき)。
+   相手: 2ラインリード以上 → 未満 (相手がコントロールを持っていないとき)。効果による他ラインの変化は見ない */
+function aiCompiledLeadSwing(st, side, line, after) {
+  if (!st.useControl) return 0;
+  const op = 1 - side;
+  const theirs = lineTotal(st, line, op), before = lineTotal(st, line, side);
+  const mineLead = aiLineLeadCount(st, side), opLead = aiLineLeadCount(st, op);
+  const gainMine = before <= theirs && after > theirs;
+  const breakOp = theirs > before && theirs <= after;
+  if (gainMine && mineLead + 1 >= 2 && st.control !== side) return 1;
+  if (breakOp && opLead >= 2 && opLead - 1 < 2 && st.control !== op) return 1;
+  return 0;
+}
+
 function aiControlLeverage(st, side) {
   if (!st.useControl) return 0;
   const op = 1 - side;
@@ -2900,7 +3142,7 @@ function aiControlLeverage(st, side) {
   return v;
 }
 
-function aiHandPotential(st, side) {
+function aiHandPotential(st, side, anyLine) {
   const op = 1 - side;
   const vals = [];
   for (const uid of st.players[side].hand) {
@@ -2909,7 +3151,7 @@ function aiHandPotential(st, side) {
     for (let l = 0; l < 3; l++) {
       if (st.players[side].protocols[l].compiled) continue;
       const names = [st.players[0].protocols[l].name, st.players[1].protocols[l].name];
-      if (names.indexOf(d.proto) < 0) continue;
+      if (!anyLine && names.indexOf(d.proto) < 0) continue;
       const mine = lineTotal(st, l, side), theirs = lineTotal(st, l, op);
       const face = d.value + Math.max(0, aiMiddleValue(d)) * 0.18;
       const down = 2 + (d.value < 2 ? 2 : 0);
@@ -2925,6 +3167,118 @@ function aiHandPotential(st, side) {
   return vals.slice(0, 4).reduce((a, b) => a + b, 0);
 }
 
+/* 「相手はカードを裏向きでのみプレイできる」(サイキック①) の価値。
+   上段の常在効果は覆われても生き、下段の「開始: このカードを反転」は
+   覆われると止まる。覆われたロックは相手の表向きプレイ (＝中段効果) を
+   ずっと封じるので、盤面評価で大きく扱う。一番上に居るロックは、
+   持ち主の次の開始フェイズで裏返るので、相手の1ターンぶんだけの価値。 */
+function aiLockScore(st, side) {
+  let v = 0;
+  for (const s of activeStatics(st)) {
+    if (s.kind !== 'playPermission' || s.rule !== 'oppFaceDownOnly') continue;
+    const stack = st.lines[s.line][s.sideIdx];
+    const covered = stack.indexOf(s.uid) < stack.length - 1;
+    const w = covered ? AI_LOCK_W.lockPermanent : AI_LOCK_W.lockTemporary;
+    v += s.sideIdx === side ? w : -w;
+  }
+  return v;
+}
+
+/* ロックの「芽」への備え (公開情報だけで計算する)。
+   相手のサイキック①がまだ表にも捨て札にも出ていないなら、相手の裏向きカードは
+   あとで表にされて永続ロックになりうる。どれだけ危ないかは「表にする手段」で決まる:
+   ・ライン限定の反転 (ダークネス②「このラインの覆われたカードを反転」):
+     そのプロトコルに一致するラインでは、上に出すこと自体で覆ってから反転できる。
+     一番上の裏向きでも種になるので特に怪しい。
+   ・どこでも覆われたカードを反転 (タイム②、カオス①など): 覆われた裏向きが種。
+   正体は見ず、見えていない相手カードの枚数から確率で見積もる。 */
+let AI_LOCK_ENABLERS = null;
+function aiLockEnablers() {
+  if (AI_LOCK_ENABLERS) return AI_LOCK_ENABLERS;
+  const locks = [], lineOnly = [], anywhere = [];
+  const walk = (ops, cb) => {
+    for (const op of ops || []) {
+      if (!op) continue;
+      cb(op);
+      if (Array.isArray(op.ops)) walk(op.ops, cb);
+      if (Array.isArray(op.options)) for (const br of op.options) walk(br, cb);
+    }
+  };
+  for (const id of Object.keys(DEFS)) {
+    const eff = DEFS[id].eff || {};
+    if (eff.upper && eff.upper.static && eff.upper.static.rule === 'oppFaceDownOnly') locks.push(id);
+    const mid = eff.middle && eff.middle.ops;
+    walk(mid, (op) => {
+      if (op.op !== 'flip' || !op.select || op.select.ref) return;
+      const sel = op.select;
+      if (sel.coverage !== 'covered') return;
+      if (sel.facing === 'up') return;              // 表→裏にするだけ = ロック崩し側
+      if (sel.owner === 'self') return;
+      (sel.zone === 'thisLine' ? lineOnly : anywhere).push(id);
+    });
+  }
+  AI_LOCK_ENABLERS = { locks, lineOnly: [...new Set(lineOnly)], anywhere: [...new Set(anywhere)] };
+  return AI_LOCK_ENABLERS;
+}
+
+function aiLockThreat(st, side) {
+  const op = 1 - side;
+  const E = aiLockEnablers();
+  const opProtos = st.players[op].protocols.map(p => p.name);
+  const own = (id) => opProtos.indexOf(DEFS[id].proto) >= 0;
+
+  /* 見えたかどうかは相手のデッキ由来のカード (uid が "p<op>:") だけで判断する。
+     同じプロトコルを互いに持つとき、自分の PSYCHIC_2 / DARKNESS_3 が表や捨て札にあっても
+     相手の同名カードの所在は分からない。置き場所 (どちら側のラインや捨て札か) は
+     CORRUPTION_1 や相手の捨て札へ送る効果で持ち主とずれるので使わない */
+  const opOrigin = 'p' + op + ':';
+  const visible = new Set();
+  const seen = (uid) => { if (uid.indexOf(opOrigin) === 0) visible.add(st.cards[uid].def); };
+  for (let l = 0; l < 3; l++) for (let s2 = 0; s2 < 2; s2++) {
+    for (const uid of st.lines[l][s2]) if (st.cards[uid].faceUp) seen(uid);
+  }
+  for (const p of st.players) for (const uid of p.trash) seen(uid);
+  const hiddenOf = (ids) => ids.filter(id => own(id) && !visible.has(id));
+
+  const hiddenLocks = hiddenOf(E.locks).length;
+  if (!hiddenLocks) return 0;
+  const lineEnablers = hiddenOf(E.lineOnly);
+  const anyEnablers = hiddenOf(E.anywhere).length;
+
+  let hidden = st.players[op].hand.length + st.players[op].deck.length;
+  for (let l = 0; l < 3; l++) for (const uid of st.lines[l][op]) if (!st.cards[uid].faceUp) hidden++;
+  if (!hidden) return 0;
+  const chance = Math.min(1, hiddenLocks / hidden);
+
+  let risk = 0;
+  for (let l = 0; l < 3; l++) {
+    const stack = st.lines[l][op];
+    const lineProtos = [st.players[0].protocols[l].name, st.players[1].protocols[l].name];
+    /* このラインに表向きで出せるライン限定の反転手段があるか */
+    const lineReady = lineEnablers.some(id => lineProtos.indexOf(DEFS[id].proto) >= 0);
+    for (let i = 0; i < stack.length; i++) {
+      if (st.cards[stack[i]].faceUp) continue;
+      const covered = i < stack.length - 1;
+      let w = 0;
+      if (lineReady) w = AI_LOCK_W.threatLine;      // 上に出して覆い、そのまま反転できる
+      else if (covered && anyEnablers) w = AI_LOCK_W.threatAny;
+      else if (covered) w = AI_LOCK_W.threatCovered; // 手段は見えないが、覆われてはいる
+      risk += w * chance * AI_LOCK_W.lockPermanent;
+    }
+  }
+  return risk;
+}
+
+/* 「プロトコルを対応させずに表向きでプレイできる」の価値 (SPIRIT 1 の上段)。
+   手札をどのラインにも回せるので、10 に届くラインへ好きな札を置ける。
+   ライン制限を外して手札を評価し直し、増えたぶんを価値とする */
+function aiAnyLineValue(st, side) {
+  const W = aiWeightsFor(st, side);
+  if (!W.anyLineBase) return 10;
+  const gain = Math.max(0, aiHandPotential(st, side, true) - aiHandPotential(st, side, false));
+  return W.anyLineBase + gain * W.anyLineGain;
+}
+
 function aiBoardEffectScore(st, side) {
   let v = 0;
   for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++) {
@@ -2934,7 +3288,10 @@ function aiBoardEffectScore(st, side) {
       if (!c.faceUp) continue;
       const d = DEFS[c.def];
       let cv = 0;
-      if (d.eff.upper && d.eff.upper.static) cv += 10;
+      if (d.eff.upper && d.eff.upper.static) {
+        cv += d.eff.upper.static.rule === 'youFaceUpAnyLine'
+          ? aiAnyLineValue(st, c.owner) : 10;
+      }
       if (i === stack.length - 1 && d.eff.lower && d.eff.lower.static) cv += 12;
       cv += aiTriggerValue(d, 'upper') * 0.18;
       if (i === stack.length - 1) cv += aiTriggerValue(d, 'lower') * 0.22;
@@ -2945,8 +3302,72 @@ function aiBoardEffectScore(st, side) {
 }
 
 function aiIsDshSpecialist(st, side) {
-  return AI_SPECIALIST_ENABLED && !!st.players[side]
+  return AI_SPECIALIST_ENABLED && AI_SPECIALIST_KIND === 'dsh' && !!st.players[side]
     && (AI_SPECIALIST_SIDE < 0 || AI_SPECIALIST_SIDE === side);
+}
+
+function aiIsLockSpecialist(st, side) {
+  return AI_SPECIALIST_ENABLED && AI_SPECIALIST_KIND === 'psylock' && !!st.players[side]
+    && (AI_SPECIALIST_SIDE < 0 || AI_SPECIALIST_SIDE === side);
+}
+
+/* サイキック①ロック特化の手筋。
+   1. サイキック①は裏向きで、ダークネス②を表で出せるラインへ仕込む
+   2. ダークネス②をそのラインに表で出し、覆われた①を表にする (= 永続ロック)
+   3. 別ルート: 前のターンに出したスピード③が一番上で表なら、①を表で別ラインに出し、
+      スピード③の終了時の移動で①を覆う。そのためにスピード③は先に出しておく
+   4. それ以外で①を表で出すのは1ターンだけの一時ロックなので原則しない
+   5. ①を仕込む前にダークネス②を使い切らない
+   完成したあとは通常の評価 (ロックの価値) に任せる。 */
+const AI_LOCK_CARD = 'PSYCHIC_2';
+const AI_LOCK_KEY = 'DARKNESS_3';
+const AI_LOCK_COVER = 'SPEED_4';
+function aiLockSpecialistBias(st, side, action, d, fizzles) {
+  const lockLive = activeStatics(st).some(s => s.rule === 'oppFaceDownOnly' && s.sideIdx === side
+    && st.lines[s.line][s.sideIdx].indexOf(s.uid) < st.lines[s.line][s.sideIdx].length - 1);
+  if (lockLive) return 0;
+  const lineHasKeyProto = (l) => [st.players[0].protocols[l].name, st.players[1].protocols[l].name]
+    .indexOf(DEFS[AI_LOCK_KEY].proto) >= 0;
+  const myDownLockLine = (() => {
+    for (let l = 0; l < 3; l++) {
+      if (st.lines[l][side].some(uid => st.cards[uid].def === AI_LOCK_CARD && !st.cards[uid].faceUp)) return l;
+    }
+    return -1;
+  })();
+  const keyInHand = aiHasDefInHand(st, side, AI_LOCK_KEY);
+  const lockAvailable = aiHasDefInHand(st, side, AI_LOCK_CARD)
+    || st.players[side].deck.some(uid => st.cards[uid].def === AI_LOCK_CARD);
+  /* 終了時に移動できるスピード③ (一番上・表向き) が居るライン */
+  const coverReadyLine = (() => {
+    for (let l = 0; l < 3; l++) {
+      const stack = st.lines[l][side];
+      const top = stack[stack.length - 1];
+      if (top && st.cards[top].def === AI_LOCK_COVER && st.cards[top].faceUp) return l;
+    }
+    return -1;
+  })();
+
+  if (d.id === AI_LOCK_CARD) {
+    if (action.faceUp) {
+      /* スピード③を覆わない場所に出せば、終了時の移動で①を覆える */
+      if (coverReadyLine >= 0 && action.line !== coverReadyLine) return AI_LOCK_W.spLockCoverRoute;
+      return AI_LOCK_W.spLockUpNoCover;                     // 覆う手段が無いと1ターンで裏返る
+    }
+    if (myDownLockLine >= 0) return AI_LOCK_W.spLockDup;   // 仕込みは1枚で足りる
+    if (!lineHasKeyProto(action.line)) return AI_LOCK_W.spLockBadLine; // ②で拾えないラインに置いても続かない
+    return keyInHand ? AI_LOCK_W.spLockKeyInHand : AI_LOCK_W.spLockNoKey;
+  }
+  /* スピード③は中段が空撃ちでも、終了時の移動 (覆う手段) が本命なので先に出しておく */
+  if (d.id === AI_LOCK_COVER && action.faceUp && coverReadyLine < 0 && lockAvailable) {
+    return AI_LOCK_W.spCover + (fizzles ? AI_W.fizzle + aiMiddleValue(d) * AI_W.fizzleMid : 0);
+  }
+  if (d.id === AI_LOCK_KEY && action.faceUp) {
+    if (myDownLockLine === action.line) return AI_LOCK_W.spKeyOnLock; // 上に出して覆い、そのまま表にする
+    const lockStillComing = myDownLockLine < 0 && (aiHasDefInHand(st, side, AI_LOCK_CARD)
+      || st.players[side].deck.some(uid => st.cards[uid].def === AI_LOCK_CARD));
+    if (lockStillComing) return AI_LOCK_W.spKeyHold;        // 鍵は①を仕込むまで温存する
+  }
+  return 0;
 }
 
 function aiWeightsFor(st, side) {
@@ -2962,6 +3383,43 @@ function aiHasDefOnField(st, side, defId) {
 
 function aiHasDefInHand(st, side, defId) {
   return st.players[side].hand.some(uid => st.cards[uid].def === defId);
+}
+
+/* 中段の対象取り効果 (shift/flip/delete/return) が今の盤面で
+   空撃ちになるかの近似判定。fr を仮組みして matchesSel を再利用する。
+   bind 依存のセレクタは判定できないため「対象あり」扱いで除外 */
+function aiMiddleFizzles(st, side, action, d) {
+  const mid = d.eff && d.eff.middle && d.eff.middle.ops;
+  if (!Array.isArray(mid)) return false;
+  const fr = { controller: side, source: action.card, line: action.line,
+    currentLine: action.line, bind: {} };
+  let sawTargeted = false;
+  /* 中段は「置いたあと」に解決する。置いた札が一番上の札を覆うので、
+     覆われたカードを対象にする効果 (ダークネス②など) は、置く前の盤面では
+     対象が無くても、置いた瞬間に対象ができる。一時的に積んでから判定する。 */
+  const dest = st.lines[action.line] && st.lines[action.line][side];
+  const pushed = dest && dest.indexOf(action.card) < 0;
+  if (pushed) dest.push(action.card);
+  try {
+    for (const op of mid) {
+      if (['shift', 'flip', 'delete', 'return'].indexOf(op.op) < 0) continue;
+      const sel = op.select;
+      if (!sel || sel.ref) continue;
+      if (sel.zone === 'sameLineAsRef' || (sel.value && sel.value.eqBindPrinted)) continue;
+      sawTargeted = true;
+      for (let l = 0; l < 3; l++) {
+        for (let s2 = 0; s2 < 2; s2++) {
+          for (const uid of st.lines[l][s2]) {
+            if (uid === action.card) continue;                // 自分自身は対象に数えない
+            if (matchesSel(st, fr, uid, sel)) return false;   // 対象あり
+          }
+        }
+      }
+    }
+    return sawTargeted;   // 対象取り効果があり、どれも空
+  } finally {
+    if (pushed) dest.pop();
+  }
 }
 
 function aiActionBias(st, action, side) {
@@ -2991,6 +3449,13 @@ function aiActionBias(st, action, side) {
   const mine = lineTotal(st, action.line, side), theirs = lineTotal(st, action.line, op);
   const gap = Math.max(0, 10 - mine);
   let v = 0;
+  /* 対象がいない盤面で対象取りの中段を表で切るのは効果の空撃ち。
+     カードを1枚使って何も起きないので、温存 (または裏向き) の方が価値が残る。
+     例: 自分の場が空のときの SPEED 3「あなたの他のカードを1枚移動させる」。
+     効果ぶんの加点も打ち消す (下の faceUp 分岐で mv を 0 にする)。 */
+  const fizzles = !!action.faceUp && aiMiddleFizzles(st, side, action, d);
+  if (fizzles) v -= AI_W.fizzle + aiMiddleValue(d) * AI_W.fizzleMid;
+  if (aiIsLockSpecialist(st, side)) v += aiLockSpecialistBias(st, side, action, d, fizzles);
   if (aiIsDshSpecialist(st, side) && W.speedPairStrategy
       && (d.id === 'SPEED_1' || d.id === 'SPEED_4')) {
     const pairOnField = aiHasDefOnField(st, side, 'SPEED_1') || aiHasDefOnField(st, side, 'SPEED_4');
@@ -3005,18 +3470,24 @@ function aiActionBias(st, action, side) {
   if (compiledLine) {
     const add = action.faceUp ? d.value : 2;
     const likelyRecompile = mine + add >= 10 && mine + add > theirs;
-    v -= likelyRecompile ? 160 : 75;
+    if (likelyRecompile) v -= W.recompile;
+    else {
+      /* 済ラインもリードの数には入る。ここで相手を越えれば2ラインリード (次の開始でコントロール獲得)、
+         相手のリードを崩せば奪取を防げる。その場合は「進まないラインに置く」減点を戻す */
+      const penalty = action.faceUp ? W.compiledUp : W.compiledDown;
+      v -= penalty * (1 - W.compiledLead * aiCompiledLeadSwing(st, side, action.line, mine + add));
+    }
   }
   if (action.faceUp) {
-    const mv = aiMiddleValue(d);
-    v += mv * 0.35;
+    const mv = fizzles ? 0 : aiMiddleValue(d);
+    v += mv * W.midUp;
     v += (d.value - 2) * 7;
     if (gap <= d.value && mine + d.value > theirs && !st.players[side].protocols[action.line].compiled) v += 150;
-    if (mv < 8 && d.value < 2) v -= 20;
+    if (mv < 8 && d.value < 2) v -= W.lowUp;
     if (gap <= d.value && !st.players[side].protocols[action.line].compiled) v += 22;
     if (mine + d.value > theirs) v += 8;
   } else {
-    v += (2 - d.value) * 5;
+    v += (2 - d.value) * W.lowDown;
     if (['HATE_4', 'HATE_5'].includes(d.id)) v -= W.hateDownPenalty || 0;
     if (['SPEED_2', 'SPEED_4'].includes(d.id)) v -= W.speedDownPenalty || 0;
     if (gap <= 2 && mine + 2 > theirs && !st.players[side].protocols[action.line].compiled) v += 115;
@@ -3243,6 +3714,9 @@ function aiScore(st, me) {
   sc += aiHandPotential(st, me) * 0.9;
   sc -= aiHandPotential(st, op) * 0.75;
   sc += aiBoardEffectScore(st, me);
+  sc += aiLockScore(st, me);
+  sc -= aiLockThreat(st, me);
+  sc += aiLockThreat(st, 1 - me);
   sc += aiCompileSafetyScore(st, me) * W.compileSafety;
 
   if (st.useControl) {
@@ -3323,6 +3797,37 @@ function aiChoiceScore(st, req, picks, me) {
   } finally { AI_CHOICE_DEPTH--; }
 }
 
+/* 複数枚選択 (max>1) の組合せ探索。
+   全組合せは指数的なので、静的スコア順 (ordered) を軸に
+   「先頭k枚 / 末尾k枚 / 境界の1枚入替え」だけを候補にし、
+   apply→評価で比較する。候補は最大8通り。 */
+function aiBestCombo(st, req, ordered, min, max, fallback) {
+  const combos = [], seen = new Set();
+  const add = (arr) => {
+    if (arr.length < min || arr.length > max) return;
+    const key = arr.slice().sort().join('|');
+    if (!seen.has(key)) { seen.add(key); combos.push(arr); }
+  };
+  if (fallback) add(fallback.slice());
+  if (min === 0) add([]);
+  for (let k = Math.max(1, min); k <= Math.min(max, ordered.length); k++) {
+    add(ordered.slice(0, k));
+    add(ordered.slice(ordered.length - k));
+  }
+  const base = Math.max(1, min);
+  for (let alt = base; alt < Math.min(ordered.length, base + 2); alt++) {
+    add(ordered.slice(0, base - 1).concat([ordered[alt]]));
+  }
+  if (combos.length < 2) return null;
+  let best = null, bestScore = -Infinity;
+  for (const picks of combos.slice(0, 8)) {
+    if (aiSearchExpired()) break;
+    const score = aiChoiceScore(st, req, picks, req.player);
+    if (score > bestScore) { bestScore = score; best = picks; }
+  }
+  return bestScore > -1e8 ? best : null;
+}
+
 function aiPlayFreePicks(st, req, me) {
   if (aiIsDshSpecialist(st, me) && aiWeightsFor(st, me).speedPairStrategy && req.context === 'SPEED_1'
       && !aiHasDefOnField(st, me, 'SPEED_1') && !aiHasDefOnField(st, me, 'SPEED_4')) {
@@ -3358,8 +3863,16 @@ function aiPlayFreePicks(st, req, me) {
 function aiStrategicCardPicks(st, req, me, ranked, fallback) {
   const max = req.max !== undefined ? req.max : 1;
   const min = req.min !== undefined ? req.min : 1;
-  if (AI_CHOICE_DEPTH > 0 || max !== 1 || req.candidates.length < 2
+  /* 「選ばない」を選べる要求では、候補が1枚でも「選ぶ/選ばない」の2択になる。
+     ここで評価を飛ばすと、自分のカードを対象にする有益な効果
+     (覆われたサイキック①を表にする等) を静的スコアだけで捨ててしまう。 */
+  const choices = req.candidates.length + (min === 0 ? 1 : 0);
+  if (AI_CHOICE_DEPTH > 0 || choices < 2
       || /(?:^|-)order$/.test(req.prompt || '')) return fallback;
+  if (max !== 1) {
+    const deep = aiBestCombo(st, req, ranked.map(x => x.uid), min, max, fallback);
+    return deep || fallback;
+  }
 
   let pool = ranked;
   if (pool.length > 8) pool = pool.slice(0, 5).concat(pool.slice(-3));
@@ -3479,8 +3992,13 @@ function smartPicks(st, req) {
         const discard = aiChoiceScore(st, req, [scored[0].uid], me);
         return discard > skip ? [scored[0].uid] : [];
       }
-      if (min === 0 && (!scored.length || scored[0].s > 8)) return [];
-      return scored.slice(0, Math.max(min, 1)).map(x => x.uid);
+      const fallbackHand = min === 0 && (!scored.length || scored[0].s > 8)
+        ? [] : scored.slice(0, Math.max(min, 1)).map(x => x.uid);
+      if (AI_CHOICE_DEPTH === 0 && max > 1 && scored.length > 1) {
+        const deep = aiBestCombo(st, req, scored.map(x => x.uid), min, max, fallbackHand);
+        if (deep) return deep;
+      }
+      return fallbackHand;
     }
     case 'pickLine': {
       let bestLine = req.lines[0], bestSc = -Infinity;
@@ -3658,25 +4176,107 @@ function aiActionEasy(state) {
 
 /* --- Normal AI (1-ply + smart picks + 強化評価) --- */
 
+/* 同じ局面の繰り返しを覚えておく。
+   FEAR 2 と ICE 3 + MIRROR 1 のように、互いのカードを手札へ戻し合う組合せでは
+   1手先だけを見る AI が同じ2手を永久に繰り返し、勝負がつかなかった。
+   局面の鍵は公開情報だけで作る (相手の非公開カードは見ない)。 */
+const AI_SEEN_POSITIONS = new Map();
+function aiPositionKey(st) {
+  const parts = [st.turn, st.control];
+  for (let p = 0; p < 2; p++) {
+    const player = st.players[p];
+    parts.push(player.hand.length, player.deck.length, player.trash.length);
+    for (const proto of player.protocols) parts.push(proto.compiled ? 1 : 0);
+  }
+  for (let l = 0; l < 3; l++) for (let p = 0; p < 2; p++) {
+    parts.push('|');
+    for (const uid of st.lines[l][p]) parts.push(st.cards[uid].faceUp ? st.cards[uid].def : 'd');
+  }
+  return parts.join(',');
+}
+function aiRepetitionPenalty(nextState) {
+  const seen = AI_SEEN_POSITIONS.get(aiPositionKey(nextState)) || 0;
+  return seen ? 90 * seen : 0;
+}
+function aiRememberPosition(st) {
+  const key = aiPositionKey(st);
+  AI_SEEN_POSITIONS.set(key, (AI_SEEN_POSITIONS.get(key) || 0) + 1);
+  if (AI_SEEN_POSITIONS.size > 600) {
+    const first = AI_SEEN_POSITIONS.keys().next().value;
+    AI_SEEN_POSITIONS.delete(first);
+  }
+}
+
 function aiActionNormal(state) {
   const me = state.turn;
   const acts = aiDecisionActions(state);
   if (!acts.length) return null;
+  aiRememberPosition(state);
   if (acts.length === 1) return acts[0];
   let best = null, bestSc = -Infinity;
   for (const a of acts) {
     const res = applyAndResolve(state, a, smartPicks);
     const sc = (!res || res.error || res.requests.length)
       ? -1e8 : aiScore(res.state, me) + aiActionBias(state, a, me)
-        + aiTransitionScore(state, res, me);
+        + aiTransitionScore(state, res, me) - aiRepetitionPenalty(res.state);
     if (sc + Math.random() * 0.5 > bestSc) { bestSc = sc; best = a; }
   }
   return best;
 }
 
+/* --- 終盤ソルバー ---
+   自分が2プロトコル済みのとき、「どの相手応手に対しても次の自分の
+   コンパイル判定で3本目が確定する」手を実際にエンジンを回して探す。
+   apply は相手ターン開始のコンパイル判定まで自動進行するため、
+   winner === me を確かめるだけで読み切りになる。
+   相手の選択解決は smartPicks 近似 (厳密解ではないが実戦上十分)。 */
+function aiForcedWinAction(state, me, deadline) {
+  const acts = legalActions(state);
+  for (const a of acts) {
+    if (deadline && aiNow() > deadline) return null;
+    const res = applyAndResolve(state, a, smartPicks);
+    if (!res || res.error || res.requests.length) continue;
+    const s1 = res.state;
+    if (s1.winner === me) return a;                     // 効果や相手の山切れで即決着
+    if (s1.winner !== null) continue;
+    if (s1.turn !== 1 - me || s1.phase !== 'action') continue;
+    let all = true;
+    for (const r of legalActions(s1)) {
+      if (deadline && aiNow() > deadline) { all = false; break; }
+      const r2 = applyAndResolve(s1, r, smartPicks);
+      if (!r2 || r2.error || r2.requests.length || r2.state.winner !== me) { all = false; break; }
+    }
+    if (all) return a;
+  }
+  return null;
+}
+
+/* 逆向き: この手を指すと、相手がどう返してきても止められない即負け筋が
+   残るかどうか。s1 (自分の手を指した直後) を渡す。
+   相手の応手 r の後、自分の全応手 q でも相手の勝ちを防げなければ true */
+function aiIsLosingAfter(s1, me, deadline) {
+  const op = 1 - me;
+  for (const r of legalActions(s1)) {
+    if (deadline && aiNow() > deadline) return false;   // 読み切れない=咎めない
+    const r2 = applyAndResolve(s1, r, smartPicks);
+    if (!r2 || r2.error || r2.requests.length) continue;
+    const s2 = r2.state;
+    if (s2.winner === op) return true;                  // 応手だけで決着
+    if (s2.winner !== null || s2.turn !== me || s2.phase !== 'action') continue;
+    let escapable = false;
+    for (const q of legalActions(s2)) {
+      if (deadline && aiNow() > deadline) return false;
+      const q2 = applyAndResolve(s2, q, smartPicks);
+      if (q2 && !q2.error && !q2.requests.length && q2.state.winner !== op) { escapable = true; break; }
+    }
+    if (!escapable) return true;                        // どう受けても相手の3本目が通る
+  }
+  return false;
+}
+
 /* --- Hard AI (2-ply minimax + alpha-beta) --- */
 
-function aiActionHard(state) {
+function aiActionHard(state, collect) {
   const me = state.turn;
   const acts = aiDecisionActions(state);
   if (!acts.length) return null;
@@ -3684,6 +4284,14 @@ function aiActionHard(state) {
 
   const wasTrace = TRACE, previousDeadline = AI_SEARCH_DEADLINE; TRACE = false;
   try {
+    /* 終盤: 自分が2本済みなら、読み切りの勝ち筋を評価探索より先に探す。
+       専用の時間枠で行い、本体探索の予算はこの後から数え始める */
+    const myCompiled = state.players[me].protocols.filter(pr => pr.compiled).length;
+    if (myCompiled === 2) {
+      const forced = aiForcedWinAction(state, me, aiNow() + AI_THINK_BUDGET_MS * 0.6);
+      if (forced) return forced;
+    }
+
     const specialist = aiIsDshSpecialist(state, me);
     const deadline = aiNow() + AI_THINK_BUDGET_MS * (specialist ? AI_DSH_W.think : 1);
     AI_SEARCH_DEADLINE = deadline;
@@ -3722,13 +4330,58 @@ function aiActionHard(state) {
       if (s1.winner !== null || s1.phase === 'finished' || s1.turn === me) {
         val = aiScore(s1, me);
       } else {
-        val = minimaxMin(s1, me, alpha, Infinity, deadline);
+        /* alpha は bias 込みの値なので、この手の bias を引いてから枝刈りの基準にする */
+        val = minimaxMin(s1, me, alpha - item.bias, Infinity, deadline);
+        /* 締め切りで応手を読み切れなかった値は「見た応手の中の最小」で楽観的に高い。
+           その手は読めなかったものとして扱う */
+        if (aiNow() > deadline) break;
       }
       val += item.bias;
+      item.val2 = val;
       if (val > alpha) { alpha = val; best2 = item.a; }
+    }
+    /* 読んだ手がすべて負け確定なら、まだ読んでいない手の方がましな可能性がある */
+    if (best2 && alpha <= -1e8) {
+      const unread = viable.find(item => item.val2 === undefined);
+      if (unread) best2 = unread.a;
+    }
+    if (collect) {
+      for (const item of viable) {
+        collect.push({ a: item.a, val: item.val2 !== undefined ? item.val2 : item.val1,
+          val1: item.val1, val2: item.val2, bias: item.bias });
+      }
+    }
+
+    /* 終盤の受け: 相手が2本済みなら、評価順に「指しても即負け筋が
+       残らない」手を選び直す。全候補が負け筋なら評価どおりに指す */
+    const opCompiled = state.players[1 - me].protocols.filter(pr => pr.compiled).length;
+    if (opCompiled === 2 && viable.length > 1) {
+      const vetoDeadline = aiNow() + AI_THINK_BUDGET_MS * 0.8;
+      for (const group of aiVetoOrder(viable)) {
+        for (const item of group) {
+          if (aiNow() > vetoDeadline) break;
+          const s1 = item.res.state;
+          if (s1.winner === me) return item.a;
+          if (s1.winner !== null) continue;
+          if (!aiIsLosingAfter(s1, me, vetoDeadline)) return item.a;
+        }
+      }
     }
     return best2 || best;
   } finally { TRACE = wasTrace; AI_SEARCH_DEADLINE = previousDeadline; }
+}
+
+/* 終盤の受けで「即負け筋が残らない手」を探す順番。
+   2手読み (val2: 相手の最善応手のあと) と1手読み (val1) は段数が違って比べられないので、
+   読んだ手を val2 順に先に並べ、読めなかった手は val1 順にその後ろへ回す。
+   各グループの中では、先頭から 120 以上劣る手には乗り換えない (誤検知で大差の悪手を選ばない) */
+function aiVetoOrder(viable) {
+  const pick = (key) => {
+    const list = viable.filter(x => (key === 'val2') === (x.val2 !== undefined))
+      .sort((x, y) => y[key] - x[key]);
+    return list.length ? list.filter(x => x[key] >= list[0][key] - 120) : [];
+  };
+  return [pick('val2'), pick('val1')];
 }
 
 function minimaxMin(state, me, alpha, beta, deadline) {
@@ -3906,14 +4559,58 @@ function aiInformationState(state, side, salt) {
     if (s.pending && s.pending.base) applyKnowledge(s.pending.base);
   }
   applyKnowledge(view);
+  view.__unknownCount = groups[0].length + groups[1].length;
   return view;
 }
 
+/* PIMC (Perfect Information Monte Carlo):
+   相手の非公開カードの並びを salt 違いで K 通りサンプリングし、
+   各世界で探索した最善手の多数決を取る。1つの決定化に過剰適応した
+   「読み切ったつもりの手」を避けられる。思考予算は K 等分する */
+let AI_PIMC = 1;
+function setAiPimc(k) { AI_PIMC = Math.max(1, Math.min(9, k | 0)); }
+
+function aiActionPimc(state) {
+  const me = state.turn;
+  const baseView = aiInformationState(state, me);
+  if (AI_PIMC <= 1 || !baseView.__unknownCount) return aiActionHard(baseView);
+  /* 基準世界ではフル予算で深く探索し、僅差の上位候補だけを
+     別の決定化で1手評価し直して平均する。深さを犠牲にせず、
+     「基準世界の並びにしか通用しない手」を退けられる */
+  const collect = [];
+  const best = aiActionHard(baseView, collect);
+  if (collect.length < 2) return best;
+  collect.sort((a, b) => b.val - a.val);
+  const top = collect.slice(0, 3).filter(t => t.val > collect[0].val - 60);
+  if (top.length < 2) return best;
+
+  const wasTrace = TRACE; TRACE = false;
+  try {
+    const sums = top.map(t => t.val);
+    const counts = top.map(() => 1);
+    for (let k = 1; k < AI_PIMC; k++) {
+      const view = aiInformationState(state, me, k);
+      for (let i = 0; i < top.length; i++) {
+        const res = applyAndResolve(view, top[i].a, smartPicks);
+        counts[i]++;
+        if (!res || res.error || res.requests.length) { sums[i] += -1e6; continue; }
+        sums[i] += aiScore(res.state, me) + aiActionBias(view, top[i].a, me)
+          + aiTransitionScore(view, res, me);
+      }
+    }
+    let bi = 0;
+    for (let i = 1; i < top.length; i++) {
+      if (sums[i] / counts[i] > sums[bi] / counts[bi]) bi = i;
+    }
+    return top[bi].a;
+  } finally { TRACE = wasTrace; }
+}
+
 function aiAction(state) {
-  const view = aiInformationState(state, state.turn);
   if (AI_LEVEL >= 2) {
-    return aiActionHard(view);
+    return aiActionPimc(state);
   }
+  const view = aiInformationState(state, state.turn);
   if (AI_LEVEL >= 1) return aiActionNormal(view);
   return aiActionEasy(view);
 }
@@ -3948,6 +4645,16 @@ function enumeratePicks(req) {
   return [randomPicks(req)];
 }
 
+/* 診断用 (scripts/ai_blunders.js --diagnose): 探索 AI と同じ手順で1手選び、
+   ルートの各候補の評価 (1手読み val1 / 2手読み val2 / bias) を返す。
+   candidates が空なら、評価探索の前に終盤の読み切りで決まった手。挙動は変えない */
+function aiRootValues(state) {
+  const collect = [];
+  const view = aiInformationState(state, state.turn);
+  const best = aiActionHard(view, collect);
+  return { best, candidates: collect };
+}
+
 function aiAnswer(state, req) {
   const view = aiInformationState(state, req.player);
   const forcedControlWin = aiForcedControlWinPicks(req);
@@ -3969,9 +4676,9 @@ function aiAnswer(state, req) {
 /* ---------- 公開 API ---------- */
 
 const Engine = {
-  init, newGame, apply, legalActions, setTrace, setAiLevel, setAiThinkBudget, setAiBreadth, setAiWeights, setAiSpecialist, setAiSpecialistWeights,
+  init, newGame, apply, legalActions, setTrace, setAiLevel, setAiThinkBudget, setAiBreadth, setAiPimc, setAiWeights, setAiSpecialist, setAiSpecialistWeights,
   lineTotal, cardValue, compilableLines, canPlay, locate,
-  ai: { action: aiAction, answer: aiAnswer, score: aiScore, transitionScore: aiTransitionScore, compilePassChance: aiCompilePassChance, informationState: aiInformationState, randomPicks, smartPicks },
+  ai: { action: aiAction, answer: aiAnswer, score: aiScore, middleFizzles: aiMiddleFizzles, transitionScore: aiTransitionScore, compilePassChance: aiCompilePassChance, informationState: aiInformationState, rootValues: aiRootValues, vetoOrder: aiVetoOrder, actionBias: aiActionBias, opsValue: aiOpsValue, boardEffect: aiBoardEffectScore, randomPicks, smartPicks },
   get defs() { return DEFS; },
   get protos() { return PROTOS; }
 };

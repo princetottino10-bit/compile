@@ -171,6 +171,7 @@ async function boot() {
     const bootEl0 = document.getElementById('boot');
     bootEl0.classList.add('gone');
     setTimeout(() => { bootEl0.style.display = 'none'; }, 800);
+    document.body.classList.add('pregame');
     let nextMode = params.get('title') !== '0' ? await runTitle(cards.protocols) : 'single';
     /* Google 等のログインはページを離れて戻ってくる。
        戻り先はタイトルなので、目印があればオンラインへ直行する。 */
@@ -187,13 +188,16 @@ async function boot() {
         } catch (e) { UI.toast('オンライン機能を読み込めませんでした'); nextMode = 'single'; continue; }
         if (!ROOM.roomConfigured()) { UI.toast('オンライン対戦は未設定です (secure-room-config.js)'); nextMode = 'single'; continue; }
         const result = await runRoomLobby(cards.protocols);
-        if (!result) { nextMode = 'single'; continue; }
+        /* 「戻る」はモード選択へ (ソロのプロトコル選択ではなく) */
+        if (!result) { nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
         document.getElementById('boot').style.display = 'none';
+        document.body.classList.remove('pregame');
         await roomEnterGame(result.rm);
         return;
       }
       const chosen = await runSetup(cards.protocols, { training: nextMode === 'training', allowOnline: false });
       if (chosen.online) { nextMode = 'online'; continue; }
+      document.body.classList.remove('pregame');
       p0 = chosen.me;
       p1 = p1 || chosen.ai;
       trainingMode = !!chosen.training;
@@ -1806,6 +1810,8 @@ function showEndActions(win) {
   el.querySelector('#endBoard').onclick = () => {
     el.classList.remove('show');
     UI.setPrompt('盤面を確認中 — 右下の「タイトルへ」で戻れます', 'end');
+    /* 決着演出の斜めの寄りのままでは盤面が読めないので定位置へ戻す */
+    stage.home(600);
     showEndFloat();
   };
 }
@@ -1840,7 +1846,7 @@ let lastAnnounceTag = '';
 async function checkAnnounce(st) {
   const a = st && st.announce;
   if (!a) return;
-  const tag = [a.kind, a.player, a.what, a.value, a.card, a.hit].join('|');
+  const tag = [a.seq, a.kind, a.player, a.what, a.value, a.card, a.hit].join('|');
   if (tag === lastAnnounceTag) return;
   lastAnnounceTag = tag;
   const who = a.player === ME ? 'あなた' : '相手';
@@ -1872,7 +1878,8 @@ function checkRevealed(st) {
      公開したものを一律で抑止していたため、カードが一切見えなかった。 */
   const showOwn = r.kind === 'deck' || r.kind === 'card';
   if (r.player === ME && !showOwn) return;
-  const tag = r.player + ':' + r.cards.join(',');
+  /* seq (発生順) を含めないと、同じ内容の公開が2回目以降に出なくなる */
+  const tag = (r.seq === undefined ? '' : r.seq + '#') + r.player + ':' + r.cards.join(',');
   if (tag === lastRevealTag) return;
   lastRevealTag = tag;
   const who = r.player === ME ? 'あなた' : '相手';
@@ -1984,8 +1991,26 @@ const LOG_DEF_RE = /[A-Z]+_\d/g;
 function mySeat() { return (roomMode && roomRm) ? roomRm.side : ME; }
 
 function logSeatText(text) {
+  if (demoMode) return text;                      // 観戦は P1/P2 のまま
   const mine = 'P' + (mySeat() + 1), opp = 'P' + (2 - mySeat());
-  return text.split(mine).join('あなた').split(opp).join('相手');
+  /* "P1:" や "P1 の" の形だけ置き換える (英字混じりの文言を壊さない) */
+  return text.replace(/(^|[\s(（\[])P([12])(?=[:\s：の])/g, (m, pre, n) =>
+    pre + ('P' + n === mine ? 'あなた' : 'P' + n === opp ? '相手' : 'P' + n));
+}
+
+/* 「ライン2」だけでは列が分からないので、行為者側のプロトコル名を添える */
+function logLineText(text, actorSeat) {
+  const st = shown();
+  if (!st || !st.players) return text;
+  const side = actorSeat === null ? null
+    : (roomMode && roomRm ? (actorSeat === roomRm.side ? 0 : 1) : actorSeat);
+  return text.replace(/ライン([123])(?!〈)/g, (m, n) => {
+    const l = +n - 1;
+    const names = side === null
+      ? [st.players[0].protocols[l].name, st.players[1].protocols[l].name]
+      : [st.players[side].protocols[l].name];
+    return m + '〈' + names.join('/') + '〉';
+  });
 }
 
 function logParts(msg) {
@@ -1998,18 +2023,23 @@ function logParts(msg) {
     out.label = mine ? 'あなたのターン' : '相手のターン';
     return out;
   }
+  const actor = text.match(/^P([12])[:\s]/);
+  const actorSeat = actor ? +actor[1] - 1 : null;
+  /* 裏向きプレイは "カード をライン…" と余分な空白が入るので詰める */
+  const body = text.replace(/^(P[12]: )カード を/, '$1カードを');
+  const plain = (t) => logLineText(logSeatText(t), actorSeat);
   const parts = [];
   let last = 0, m;
   LOG_DEF_RE.lastIndex = 0;
-  while ((m = LOG_DEF_RE.exec(text)) !== null) {
+  while ((m = LOG_DEF_RE.exec(body)) !== null) {
     const d = defIndex[m[0]];
     if (!d) continue;
-    if (m.index > last) parts.push({ text: logSeatText(text.slice(last, m.index)) });
+    if (m.index > last) parts.push({ text: plain(body.slice(last, m.index)) });
     parts.push({ card: m[0], text: d.proto + ' ' + d.value });
     last = m.index + m[0].length;
   }
-  if (last < text.length) parts.push({ text: logSeatText(text.slice(last)) });
-  return parts.length ? parts : [{ text: logSeatText(text) }];
+  if (last < body.length) parts.push({ text: plain(body.slice(last)) });
+  return parts.length ? parts : [{ text: plain(body) }];
 }
 
 /* ログのカード名をタップ: 拡大プレビューではなく、テキストだけの小さな表示 */

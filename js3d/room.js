@@ -252,7 +252,7 @@ export function buildRoomState(rm, valOf) {
     commitStack,
     /* 手札公開: player はローカル座席に変換 */
     revealed: g.revealed
-      ? { kind: g.revealed.kind, player: li(g.revealed.player), cards: g.revealed.cards }
+      ? { kind: g.revealed.kind, player: li(g.revealed.player), cards: g.revealed.cards, seq: g.revealed.seq }
       : null,
     _totals: totals, _room: true
   };

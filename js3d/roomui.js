@@ -56,7 +56,7 @@ export function runRoomLobby(protocols) {
           '<div class="ro-head"><b>//</b> ' + title + '</div>' +
           bodyHtml +
           '<div class="ro-status" id="roomStatus"></div>' +
-          '<button class="ro-ghost" id="roomBack" type="button">' + (backLabel || '← ソロ設定に戻る') + '</button>' +
+          '<button class="ro-ghost" id="roomBack" type="button">' + (backLabel || '← モード選択に戻る') + '</button>' +
         '</div>';
       $('#roomBack').onclick = () => {
         clearInterval(pollTimer); clearInterval(lobbyTimer);
@@ -72,15 +72,17 @@ export function runRoomLobby(protocols) {
           '<p class="ro-sub">通常戦はゲスト接続でも遊べます。レート戦にはメール・Google・GitHubのアカウントを使います。</p>';
       frame(wantRated ? 'RATED — ログイン' : 'ONLINE — 接続',
         rateNote +
+        /* 一番使う Google/GitHub を先頭に。以前は戻るボタンの下に離れていて見落とされた */
+        '<div class="ro-row"><button class="ro-big" id="roomGoogle" type="button">Googleでログイン</button>' +
+        '<button class="ro-btn" id="roomGitHub" type="button">GitHubでログイン</button></div>' +
+        '<div class="ro-lbl" style="margin-top:12px">メールで' + (wantRated ? 'ログイン' : 'ログイン / ゲスト接続') + '</div>' +
         '<div class="ro-row"><input class="ro-input" id="roomName" maxlength="12" placeholder="表示名" value="' + esc(lsGet('compileRoomName')) + '"></div>' +
         '<div class="ro-row"><input class="ro-input" id="roomEmail" type="email" autocomplete="email" placeholder="メールアドレス"></div>' +
         '<div class="ro-row"><input class="ro-input" id="roomPass" type="password" autocomplete="current-password" minlength="8" placeholder="パスワード（8文字以上）"></div>' +
         '<div class="ro-row"><button class="ro-btn" id="roomSignIn" type="button">ログイン</button>' +
         '<button class="ro-btn" id="roomSignUp" type="button">新規登録</button>' +
-        (wantRated ? '' : '<button class="ro-ghost" id="roomGo" type="button">ゲストで続ける</button>') + '</div>');
-      $('#roomOv .ro-panel').insertAdjacentHTML('beforeend',
-        '<div class="ro-row"><button class="ro-ghost" id="roomGoogle" type="button">Googleでログイン</button>' +
-        '<button class="ro-ghost" id="roomGitHub" type="button">GitHubでログイン</button></div>');
+        (wantRated ? '' : '<button class="ro-ghost" id="roomGo" type="button">ゲストで続ける</button>') + '</div>',
+        '← モード選択に戻る');
       const values = () => ({
         name: ($('#roomName').value || '').trim(), email: ($('#roomEmail').value || '').trim(), password: $('#roomPass').value || ''
       });

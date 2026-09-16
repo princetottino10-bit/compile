@@ -174,7 +174,7 @@ function publicGame(st: any, side: number, aliases = cardAliases(st)) {
     trash: st.players.map((p: any) => p.trash.map((uid: string) => ({ uid: aliases.forward[uid], def: st.cards[uid].def }))),
     /* 手札公開 (PSYCHIC 0 等): 公開されたカードは両者に見える */
     revealed: st.revealed && Array.isArray(st.revealed.cards)
-      ? { kind: st.revealed.kind, player: st.revealed.player, cards: st.revealed.cards.slice() }
+      ? { kind: st.revealed.kind, player: st.revealed.player, cards: st.revealed.cards.slice(), seq: st.revealed.seq }
       : null,
     /* 宣言 (LUCK 0/3) とその結果。声に出す情報なので両者に見せる */
     announce: st.announce ? { ...st.announce } : null,
@@ -211,20 +211,10 @@ function publicState(room: any, side: number) {
   }
   if (!st) return base;
   const aliases = cardAliases(st);
-  base.game = {
-    turn: st.turn, phase: st.phase, control: st.control, winner: st.winner,
-    protocols: st.players.map((p: any) => p.protocols),
-    totals: st.lines.map((_: any, line: number) => [Engine.lineTotal(st, line, 0), Engine.lineTotal(st, line, 1)]),
-    counts: st.players.map((p: any) => ({ hand: p.hand.length, deck: p.deck.length, trash: p.trash.length })),
-    lines: st.lines.map((line: any[]) => line.map((stack: string[], owner: number) =>
-      stack.map((uid) => {
-        const c = st.cards[uid];
-        const hidden = !c.faceUp && !((c.knownTo || 0) & (1 << side));
-        return { uid: aliases.forward[uid], owner, faceUp: c.faceUp, def: hidden ? null : c.def, value: Engine.cardValue(st, uid) };
-      }))),
-    hand: st.players[side].hand.map((uid: string) => ({ uid: aliases.forward[uid], def: st.cards[uid].def })),
-    trash: st.players.map((p: any) => p.trash.map((uid: string) => ({ uid: aliases.forward[uid], def: st.cards[uid].def }))),
-  };
+  /* 再生用の途中経過 (trace) と同じ関数で作る。以前は手書きで別々に列挙していて、
+     公開 (revealed)・宣言 (announce)・移動中 (committed) が現在の盤面に載らず、
+     部屋に戻ったときや途中経過の無い更新で演出が出ない・移動中の札が消えることがあった。 */
+  base.game = publicGame(st, side, aliases);
   base.trace = Array.isArray(st.__trace)
     ? st.__trace.map((entry: any) => ({
       msg: entry.msg,

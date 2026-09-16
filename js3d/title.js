@@ -13,7 +13,8 @@ const BOOT_LINES = [
   '> awaiting operator input _'
 ];
 
-export function runTitle(protocols) {
+export function runTitle(protocols, opts) {
+  const menuOnly = !!(opts && opts.menuOnly);    // ロビー等から戻るとき: 起動演出を飛ばしてメニューだけ
   const root = document.getElementById('title');
   if (!root) return Promise.resolve('single');
   const emblems = protocols
@@ -79,5 +80,6 @@ export function runTitle(protocols) {
     };
     root.querySelector('#ttStart').onclick = start;
     window.addEventListener('keydown', onKey);
+    if (menuOnly) { clearInterval(logTimer); log.innerHTML = ''; start(); }
   });
 }

@@ -126,7 +126,7 @@ export function pilePos(kind, side, me, depth) {
   const near = side === me;
   const k = VIEW.k;                                 // 縦長では画面内に寄せる
   const z = (near ? 2.75 : -2.75) * (1 + 0.16 * k);
-  const x = (kind === 'deck' ? 3.45 : -3.45) * (near ? 1 : -1) * (1 - 0.2 * k);
+  const x = (kind === 'deck' ? 3.45 : -3.45) * (near ? 1 : -1) * (1 - 0.34 * k);   // 縦持ちは画面幅に収める
   return {
     pos: [x, CARD.thickness / 2 + (depth || 0) * 0.013, z],
     rot: [0, near ? 0 : Math.PI, 0],

@@ -7,8 +7,11 @@ import * as THREE from '../vendor/three.module.js';
 import * as TW from './tween.js';
 import { sfx } from './audio.js';
 import { shockwave } from './fx.js';
+import { VIEW } from './theme.js';
 
-const X = -2.85;              // lane0 とトラッシュの間の余白
+const X_WIDE = -2.85;         // lane0 とトラッシュの間の余白
+/* 縦持ちは画面が狭いので内側へ寄せる (山札・捨て札の pilePos と同じ縮め方) */
+const X = () => X_WIDE * (1 - 0.34 * VIEW.k);
 const Z = { neutral: 0, me: 1.35, opp: -1.35 };
 const MINT = 0x6dffc2, PINK = 0xff3b9d, DIM = 0x44536e;
 
@@ -48,7 +51,7 @@ export function createControlMarker(scene) {
   label.position.y = 0.047;
 
   grp.add(puck, ring, label);
-  grp.position.set(X, 0.06, Z.neutral);
+  grp.position.set(X(), 0.06, Z.neutral);
   grp.rotation.y = Math.PI / 6;
   scene.add(grp);
 
@@ -60,6 +63,7 @@ export function createControlMarker(scene) {
     tick(dt) {
       spin += dt * (holder === -1 ? 0.15 : 0.55);
       grp.rotation.y = Math.PI / 6 + spin;
+      grp.position.x += (X() - grp.position.x) * Math.min(1, dt * 6);   // 向きが変わったら追従
     },
     /* me: 自分の座席番号。ctrl: st.control (-1/0/1) */
     update(ctrl, me, animate) {
@@ -74,13 +78,13 @@ export function createControlMarker(scene) {
       if (!animate) { grp.position.z = to; return; }
       /* 獲得/使用の瞬間を衝撃波と音で知らせる */
       sfx(ctrl === -1 ? 'flip' : 'effect');
-      shockwave(scene, new THREE.Vector3(X, 0.1, from), col, 2.2, 500);
+      shockwave(scene, new THREE.Vector3(X(), 0.1, from), col, 2.2, 500);
       TW.tween(520, (t) => {
         grp.position.z = TW.lerp(from, to, TW.Ease.inOutCubic(t));
         grp.position.y = 0.06 + Math.sin(Math.PI * t) * 0.55;
         grp.rotation.y += 0.22;
       }, TW.Ease.linear, () => {
-        shockwave(scene, new THREE.Vector3(X, 0.1, to), col, 2.8, 620);
+        shockwave(scene, new THREE.Vector3(X(), 0.1, to), col, 2.8, 620);
         sfx('land');
       });
     },

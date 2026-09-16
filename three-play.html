@@ -503,6 +503,8 @@
 
   /* デモ中は操作系を隠す */
   body.demo #dock, body.demo #preview{display:none;}
+  /* タイトル・モード選択の間は対局中のボタンを出さない (裏から透けていた) */
+  body.pregame #dock, body.pregame #topbar, body.pregame #lines, body.pregame .counts{display:none!important;}
   body.demo #brand::after{content:"DEMO";margin-left:10px;padding:3px 9px;border-radius:999px;
     font-size:9px;letter-spacing:.2em;color:#04120c;background:var(--mint);}
 
@@ -575,15 +577,18 @@
   .ro-tag.mine{border-color:var(--mint);color:#c9ffe9;}
 
   /* ---------- タイトル画面 ---------- */
+  /* タイトルの下に対局中のボタンが透けていたので、ほぼ不透明にする */
   #title{position:fixed;inset:0;z-index:58;display:none;overflow:hidden;cursor:pointer;
-    background:radial-gradient(ellipse at 50% 30%,rgba(20,8,34,.42),rgba(3,4,10,.78));
+    background:radial-gradient(ellipse at 50% 30%,rgba(20,8,34,.92),rgba(3,4,10,.985));
     opacity:1;transition:opacity .5s;}
   #title.show{display:block;}
   #title.gone{opacity:0;}
   .tt-scan{position:absolute;inset:0;pointer-events:none;opacity:.4;
     background:repeating-linear-gradient(0deg,rgba(255,255,255,.03) 0 1px,transparent 1px 4px);}
-  .tt-log{position:absolute;left:26px;top:22px;font:500 11px/1.9 ui-monospace,monospace;
+  .tt-log{position:absolute;left:26px;top:48px;font:500 11px/1.9 ui-monospace,monospace;
     color:rgba(109,255,194,.75);text-shadow:0 0 8px rgba(109,255,194,.35);}
+  /* 起動ログはロゴの下に敷き、狭い画面では小さくする */
+  @media (max-width:860px){ .tt-log{top:44px;left:14px;font-size:9px;line-height:1.7;max-width:70vw;} .tt-foot{bottom:52px;} }
   .tt-log div{animation:ttLine .18s ease-out;}
   @keyframes ttLine{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
   .tt-center{position:absolute;left:0;right:0;top:38%;transform:translateY(-50%);

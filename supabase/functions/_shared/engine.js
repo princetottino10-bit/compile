@@ -1094,7 +1094,7 @@ function execOp(ctx, fr, op) {
       const deck = st.players[fr.controller].deck;
       if (!deck.length) { fr.done = false; return; }
       const top = deck[0];
-      st.revealed = { kind: 'card', uid: top, player: fr.controller, cards: [DEFS[st.cards[top].def].id] };
+      st.revealed = { seq: (st.actionLog || []).length, kind: 'card', uid: top, player: fr.controller, cards: [DEFS[st.cards[top].def].id] };
       /* 公開はその瞬間だけ (オーバーレイ)。捨てなければデッキ上で非公開のまま */
       log(ctx, `P${fr.controller + 1}: デッキトップ ${DEFS[st.cards[top].def].id} を公開`, top);
       const ans = choose(ctx, { kind: 'yesNo', player: fr.controller, prompt: 'optional-discard-top', context: DEFS[st.cards[top].def].id });
@@ -1114,7 +1114,7 @@ function execOp(ctx, fr, op) {
       if (op.proto) matches = p.deck.filter(u => DEFS[st.cards[u].def].proto === op.proto);
       else matches = p.deck.filter(u => DEFS[st.cards[u].def].value === op.value);
       log(ctx, `P${fr.controller + 1}: デッキを公開`);
-      st.revealed = { kind: 'deck', player: fr.controller, cards: p.deck.map(u => DEFS[st.cards[u].def].id) };
+      st.revealed = { seq: (st.actionLog || []).length, kind: 'deck', player: fr.controller, cards: p.deck.map(u => DEFS[st.cards[u].def].id) };
       for (const u of matches) knowCard(st, u, fr.controller);   // 選ぶ本人だけが中身を見る (シャッフルで再び非公開)
       let take;
       if (op.all || matches.length <= 1) take = matches.slice(0, op.all ? undefined : 1);
@@ -1181,7 +1181,7 @@ function execOp(ctx, fr, op) {
         const opts = [0, 1, 2, 3, 4, 5, 6];
         const ans = choose(ctx, { kind: 'option', player: fr.controller, options: opts.map(String), prompt: 'declare-value', context: defOf(st, fr.source).id });
         fr.bind[op.bind || 'declared'] = opts[ans[0]];
-        st.announce = { kind: 'declare', player: fr.controller, what: 'value',
+        st.announce = { seq: (st.actionLog || []).length, kind: 'declare', player: fr.controller, what: 'value',
           value: opts[ans[0]], context: defOf(st, fr.source).id };
         log(ctx, `P${fr.controller + 1}: 値 ${opts[ans[0]]} を宣言`);
       } else {
@@ -1192,7 +1192,7 @@ function execOp(ctx, fr, op) {
           if (names.indexOf(p.name) < 0) names.push(p.name);
         const ans = choose(ctx, { kind: 'option', player: fr.controller, options: names, prompt: 'declare-protocol', context: defOf(st, fr.source).id });
         fr.bind[op.bind || 'declared'] = names[ans[0]];
-        st.announce = { kind: 'declare', player: fr.controller, what: 'protocol',
+        st.announce = { seq: (st.actionLog || []).length, kind: 'declare', player: fr.controller, what: 'protocol',
           value: names[ans[0]], context: defOf(st, fr.source).id };
         log(ctx, `P${fr.controller + 1}: プロトコル ${names[ans[0]]} を宣言`);
       }
@@ -1206,7 +1206,7 @@ function execOp(ctx, fr, op) {
       const d = DEFS[st.cards[u].def];
       const declared = fr.bind[op.declared || 'declared'];
       const ok = op.match === 'protocol' ? d.proto === declared : d.value === declared;
-      st.announce = { kind: 'declareResult', player: fr.controller, hit: ok,
+      st.announce = { seq: (st.actionLog || []).length, kind: 'declareResult', player: fr.controller, hit: ok,
         what: op.match === 'protocol' ? 'protocol' : 'value',
         value: declared, card: d.id, context: defOf(st, fr.source).id };
       if (ok) execOps(ctx, fr, op.ops);
@@ -1222,7 +1222,7 @@ function execOp(ctx, fr, op) {
       const drawn = p.hand.slice(before);
       const matches = drawn.filter(u => DEFS[st.cards[u].def].value === declared);
       if (!matches.length) {
-        st.announce = { kind: 'declareResult', player: fr.controller, hit: false, what: 'value',
+        st.announce = { seq: (st.actionLog || []).length, kind: 'declareResult', player: fr.controller, hit: false, what: 'value',
           value: declared, card: null, context: defOf(st, fr.source).id };
         fr.done = false; return;
       }
@@ -1231,8 +1231,8 @@ function execOp(ctx, fr, op) {
         const ans = choose(ctx, { kind: 'pickHand', player: fr.controller, candidates: matches, min: 1, max: 1, prompt: 'reveal-hand-card', context: defOf(st, fr.source).id });
         pick = ans[0];
       }
-      st.revealed = { kind: 'card', uid: pick, player: fr.controller, cards: [DEFS[st.cards[pick].def].id] };
-      st.announce = { kind: 'declareResult', player: fr.controller, hit: true, what: 'value',
+      st.revealed = { seq: (st.actionLog || []).length, kind: 'card', uid: pick, player: fr.controller, cards: [DEFS[st.cards[pick].def].id] };
+      st.announce = { seq: (st.actionLog || []).length, kind: 'declareResult', player: fr.controller, hit: true, what: 'value',
         value: declared, card: DEFS[st.cards[pick].def].id, context: defOf(st, fr.source).id };
       knowCard(st, pick, fr.controller);   // 本人は見る。相手はオーバーレイの瞬間だけ
       log(ctx, `P${fr.controller + 1}: ${DEFS[st.cards[pick].def].id} を公開`, pick);
@@ -1384,7 +1384,7 @@ function execOp(ctx, fr, op) {
         if (!lines.length) { fr.done = false; return; }
         const l = lines.length === 1 ? lines[0]
           : choose(ctx, { kind: 'pickLine', player: fr.controller, lines, prompt: 'play-dest', context: DEFS[st.cards[pick].def].id })[0];
-        st.revealed = { kind: 'card', uid: pick, player: fr.controller };
+        st.revealed = { seq: (st.actionLog || []).length, kind: 'card', uid: pick, player: fr.controller };
         log(ctx, `P${fr.controller + 1}: 捨て札の ${DEFS[st.cards[pick].def].id} を公開`, pick);
         removeFrom(trash, pick);
         playToField(ctx, pick, l, fr.controller, false);
@@ -1448,7 +1448,7 @@ function execTargetedOp(ctx, fr, op) {
       const oh = st.players[1 - fr.controller].hand;
       /* 公開はその瞬間だけ (オーバーレイ)。閲覧権は残さない */
       log(ctx, `P${2 - fr.controller}: 手札を公開: ` + oh.map(u => DEFS[st.cards[u].def].id).join(', '));
-      st.revealed = { kind: 'hand', player: 1 - fr.controller, cards: oh.map(u => DEFS[st.cards[u].def].id) };
+      st.revealed = { seq: (st.actionLog || []).length, kind: 'hand', player: 1 - fr.controller, cards: oh.map(u => DEFS[st.cards[u].def].id) };
       fr.done = true; return;
     }
     if (op.target === 'ownHandCard') {
@@ -1457,7 +1457,7 @@ function execTargetedOp(ctx, fr, op) {
       const picks = hand.length === 1 ? hand.slice()
         : choose(ctx, { kind: 'pickHand', player: fr.controller, candidates: hand.slice(), min: 1, max: 1, prompt: 'reveal-hand-card' });
       /* 公開はその瞬間だけ (オーバーレイ)。閲覧権は残さない */
-      st.revealed = { kind: 'card', player: fr.controller, cards: [DEFS[st.cards[picks[0]].def].id] };
+      st.revealed = { seq: (st.actionLog || []).length, kind: 'card', player: fr.controller, cards: [DEFS[st.cards[picks[0]].def].id] };
       log(ctx, `P${fr.controller + 1}: 手札の ${DEFS[st.cards[picks[0]].def].id} を公開`);
       fr.done = true; return;
     }
@@ -1667,7 +1667,7 @@ function performVerb(ctx, fr, op, uid) {
       const c = st.cards[uid];
       /* ルール: 公開後は元の状態に戻す → 閲覧権は残さず、公開の瞬間だけオーバーレイで見せる */
       log(ctx, `${DEFS[c.def].id} を公開`);
-      st.revealed = { kind: 'card', uid, player: fr.controller, cards: [DEFS[c.def].id] };
+      st.revealed = { seq: (st.actionLog || []).length, kind: 'card', uid, player: fr.controller, cards: [DEFS[c.def].id] };
       return true;
     }
     case 'shift': {
@@ -3357,17 +3357,49 @@ function aiActionEasy(state) {
 
 /* --- Normal AI (1-ply + smart picks + 強化評価) --- */
 
+/* 同じ局面の繰り返しを覚えておく。
+   FEAR 2 と ICE 3 + MIRROR 1 のように、互いのカードを手札へ戻し合う組合せでは
+   1手先だけを見る AI が同じ2手を永久に繰り返し、勝負がつかなかった。
+   局面の鍵は公開情報だけで作る (相手の非公開カードは見ない)。 */
+const AI_SEEN_POSITIONS = new Map();
+function aiPositionKey(st) {
+  const parts = [st.turn, st.control];
+  for (let p = 0; p < 2; p++) {
+    const player = st.players[p];
+    parts.push(player.hand.length, player.deck.length, player.trash.length);
+    for (const proto of player.protocols) parts.push(proto.compiled ? 1 : 0);
+  }
+  for (let l = 0; l < 3; l++) for (let p = 0; p < 2; p++) {
+    parts.push('|');
+    for (const uid of st.lines[l][p]) parts.push(st.cards[uid].faceUp ? st.cards[uid].def : 'd');
+  }
+  return parts.join(',');
+}
+function aiRepetitionPenalty(nextState) {
+  const seen = AI_SEEN_POSITIONS.get(aiPositionKey(nextState)) || 0;
+  return seen ? 90 * seen : 0;
+}
+function aiRememberPosition(st) {
+  const key = aiPositionKey(st);
+  AI_SEEN_POSITIONS.set(key, (AI_SEEN_POSITIONS.get(key) || 0) + 1);
+  if (AI_SEEN_POSITIONS.size > 600) {
+    const first = AI_SEEN_POSITIONS.keys().next().value;
+    AI_SEEN_POSITIONS.delete(first);
+  }
+}
+
 function aiActionNormal(state) {
   const me = state.turn;
   const acts = aiDecisionActions(state);
   if (!acts.length) return null;
+  aiRememberPosition(state);
   if (acts.length === 1) return acts[0];
   let best = null, bestSc = -Infinity;
   for (const a of acts) {
     const res = applyAndResolve(state, a, smartPicks);
     const sc = (!res || res.error || res.requests.length)
       ? -1e8 : aiScore(res.state, me) + aiActionBias(state, a, me)
-        + aiTransitionScore(state, res, me);
+        + aiTransitionScore(state, res, me) - aiRepetitionPenalty(res.state);
     if (sc + Math.random() * 0.5 > bestSc) { bestSc = sc; best = a; }
   }
   return best;
