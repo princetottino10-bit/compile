@@ -2143,6 +2143,10 @@ const AI_W = {
   compiledUp: 75, compiledDown: 75, recompile: 160, midUp: 0.35, lowUp: 20, lowDown: 5,
   // 済ラインへのプレイで自分の2ラインリードを作る/相手の2ラインリードを崩すとき、compiledUp/Down の減点を戻す割合。0 で従来どおり
   compiledLead: 1,
+  /* 「〜できる」の任意コストを、払わない選択も込みで見る (0 で従来どおり必ず払う扱い)。
+     anyLineBase/anyLineGain: 「プロトコルを対応させずに表向きでプレイできる」(SPIRIT 1) の価値。
+     ライン制限を外したときの手札評価の増分を上乗せする。0 で従来どおり常時効果の一律10点 */
+  optionalCost: 1, anyLineBase: 26, anyLineGain: 0.9,
 };
 /* サイキック①ロックまわりの重み。通常 AI・特化 AI の区別なく共通で使う。
    lockPermanent/lockTemporary: 覆われた (永続) / 一番上 (1ターン) のロックの価値
@@ -2182,6 +2186,7 @@ const AI_DSH_W = {
   compileSafety: 1, hateDownPenalty: 20, speedDownPenalty: 20, speedPairStrategy: 1,
   compiledUp: 75, compiledDown: 75, recompile: 160, midUp: 0.35, lowUp: 20, lowDown: 5,
   // 済ラインへのプレイで自分の2ラインリードを作る/相手の2ラインリードを崩すとき、compiledUp/Down の減点を戻す割合。0 で従来どおり
+  optionalCost: 1, anyLineBase: 26, anyLineGain: 0.9,
   compiledLead: 0,   // 最強同士のミラー 480 戦で 49.8% [45.3, 54.2]。効果が出ていないので切っておく
 };
 function setAiSpecialistWeights(obj) {
@@ -2215,11 +2220,28 @@ function aiOpSelfTargeted(op) {
   return sel.owner === 'self';
 }
 
+/* 「〜できる」(optional) の op は、損なら払わなければよい。直後の ifDone (「そうした場合」) と
+   ひとまとめにして、合計が損なら 0 として数える。
+   例: FIRE 3「終了：手札を1枚捨ててもよい。そうした場合カードを1枚反転」は
+   従来 -15 + 8.8 = -6.2 で、置くと損な効果として扱われていた */
+function aiOptionalPack(ops, i, depth) {
+  const self = aiOpsValue([Object.assign({}, ops[i], { optional: false })], depth);
+  let used = 1, v = self;
+  if (ops[i + 1] && ops[i + 1].op === 'ifDone') { v += aiOpsValue([ops[i + 1]], depth); used = 2; }
+  return { v: Math.max(0, v), used };
+}
+
 function aiOpsValue(ops, depth) {
   if (!Array.isArray(ops) || depth > 4) return 0;
   let v = 0;
-  for (const op of ops) {
+  for (let oi = 0; oi < ops.length; oi++) {
+    const op = ops[oi];
     if (!op || !op.op) continue;
+    if (op.optional && AI_W.optionalCost) {
+      const pack = aiOptionalPack(ops, oi, depth);
+      v += pack.v; oi += pack.used - 1;
+      continue;
+    }
     const actor = op.player === 'opp' || op.actor === 'opp' ? -1 : 1;
     switch (op.op) {
       case 'draw': v += actor * aiCount(op.count, 1) * 16; break;
@@ -2301,7 +2323,7 @@ function aiControlLeverage(st, side) {
   return v;
 }
 
-function aiHandPotential(st, side) {
+function aiHandPotential(st, side, anyLine) {
   const op = 1 - side;
   const vals = [];
   for (const uid of st.players[side].hand) {
@@ -2310,7 +2332,7 @@ function aiHandPotential(st, side) {
     for (let l = 0; l < 3; l++) {
       if (st.players[side].protocols[l].compiled) continue;
       const names = [st.players[0].protocols[l].name, st.players[1].protocols[l].name];
-      if (names.indexOf(d.proto) < 0) continue;
+      if (!anyLine && names.indexOf(d.proto) < 0) continue;
       const mine = lineTotal(st, l, side), theirs = lineTotal(st, l, op);
       const face = d.value + Math.max(0, aiMiddleValue(d)) * 0.18;
       const down = 2 + (d.value < 2 ? 2 : 0);
@@ -2428,6 +2450,16 @@ function aiLockThreat(st, side) {
   return risk;
 }
 
+/* 「プロトコルを対応させずに表向きでプレイできる」の価値 (SPIRIT 1 の上段)。
+   手札をどのラインにも回せるので、10 に届くラインへ好きな札を置ける。
+   ライン制限を外して手札を評価し直し、増えたぶんを価値とする */
+function aiAnyLineValue(st, side) {
+  const W = aiWeightsFor(st, side);
+  if (!W.anyLineBase) return 10;
+  const gain = Math.max(0, aiHandPotential(st, side, true) - aiHandPotential(st, side, false));
+  return W.anyLineBase + gain * W.anyLineGain;
+}
+
 function aiBoardEffectScore(st, side) {
   let v = 0;
   for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++) {
@@ -2437,7 +2469,10 @@ function aiBoardEffectScore(st, side) {
       if (!c.faceUp) continue;
       const d = DEFS[c.def];
       let cv = 0;
-      if (d.eff.upper && d.eff.upper.static) cv += 10;
+      if (d.eff.upper && d.eff.upper.static) {
+        cv += d.eff.upper.static.rule === 'youFaceUpAnyLine'
+          ? aiAnyLineValue(st, c.owner) : 10;
+      }
       if (i === stack.length - 1 && d.eff.lower && d.eff.lower.static) cv += 12;
       cv += aiTriggerValue(d, 'upper') * 0.18;
       if (i === stack.length - 1) cv += aiTriggerValue(d, 'lower') * 0.22;
@@ -3792,7 +3827,7 @@ function aiAnswer(state, req) {
 const Engine = {
   init, newGame, apply, legalActions, setTrace, setAiLevel, setAiThinkBudget, setAiBreadth, setAiPimc, setAiWeights, setAiSpecialist, setAiSpecialistWeights,
   lineTotal, cardValue, compilableLines, canPlay, locate,
-  ai: { action: aiAction, answer: aiAnswer, score: aiScore, middleFizzles: aiMiddleFizzles, transitionScore: aiTransitionScore, compilePassChance: aiCompilePassChance, informationState: aiInformationState, rootValues: aiRootValues, vetoOrder: aiVetoOrder, actionBias: aiActionBias, randomPicks, smartPicks },
+  ai: { action: aiAction, answer: aiAnswer, score: aiScore, middleFizzles: aiMiddleFizzles, transitionScore: aiTransitionScore, compilePassChance: aiCompilePassChance, informationState: aiInformationState, rootValues: aiRootValues, vetoOrder: aiVetoOrder, actionBias: aiActionBias, opsValue: aiOpsValue, boardEffect: aiBoardEffectScore, randomPicks, smartPicks },
   get defs() { return DEFS; },
   get protos() { return PROTOS; }
 };

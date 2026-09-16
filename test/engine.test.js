@@ -803,6 +803,28 @@ test('AI事前評価: 済ラインに置いて相手の2ラインリードを崩
   assert.ok(theirs - flat < 5, `相手が既にコントロールを持っていれば従来どおり (差 ${Math.round(theirs - flat)})`);
 });
 
+test('AI評価: 「〜できる」の任意コストは、払わない選択も込みで見る', () => {
+  const fire4 = Engine.defs.FIRE_4.eff.lower.trigger.ops;          // 手札1枚捨ててもよい → 反転
+  assert.ok(Engine.ai.opsValue(fire4, 0) >= 0, '任意コストの効果を損として数えない');
+  const mandatory = [{ op: 'discard', count: 1 }];                 // 「捨てる」は必須なので損のまま
+  assert.ok(Engine.ai.opsValue(mandatory, 0) < 0);
+});
+
+test('AI評価: プロトコル不問で表向きに出せる常時効果は、他ラインに回したい札があるほど高い', () => {
+  const build = (needLine) => {
+    const st = ng({ p0: ['SPIRIT', 'FIRE', 'WATER'], p1: ['DEATH', 'METAL', 'SPEED'] }).state;
+    place(st, 'SPIRIT_2', 0, 0, true);                 // 上段: 対応させずに表でプレイできる
+    place(st, 'WATER_6', 0, needLine, true);           // そのラインは 6 まで来ていて、値4であと一歩
+    place(st, 'WATER_2', 0, needLine, true);
+    setHand(st, 0, ['FIRE_5']);                        // 値4。表で出せるのは本来 FIRE のライン1 だけ
+    return st;
+  };
+  const cross = Engine.ai.boardEffect(build(2), 0);    // 伸ばしたいのは WATER のライン2 → 制限を外す価値あり
+  const same = Engine.ai.boardEffect(build(1), 0);     // 伸ばしたいラインに元から出せる
+  assert.ok(cross > same, `回したい札があるほど高い (${Math.round(cross)} vs ${Math.round(same)})`);
+  assert.ok(same > 10, '素の常時効果より高く見る');
+});
+
 test('AI: 相手のリコンパイルによるターンスキップを評価する', () => {
   const before = { actionLog: [] };
   const oppRecompile = { state: { actionLog: ['P2: リコンパイル'] } };
