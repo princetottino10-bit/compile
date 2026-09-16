@@ -85,11 +85,13 @@ export function glowTexture() {
 export function makeCard(def) {
   const group = new THREE.Group();
 
+  /* カード面は印刷物として読ませたいので、金属的な映り込みを乗せない。
+     反射が文字の上に白く乗ると、特に手札で効果文がにじんで見えた。 */
   const front = new THREE.Mesh(planeGeometry(), new THREE.MeshStandardMaterial({
     map: faceTexture(def),
-    roughness: 0.38,
-    metalness: 0.16,
-    envMapIntensity: 0.3,
+    roughness: 0.62,
+    metalness: 0,
+    envMapIntensity: 0.12,
     emissive: new THREE.Color(0x000000),
     emissiveIntensity: 1
   }));

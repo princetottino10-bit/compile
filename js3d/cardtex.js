@@ -24,6 +24,14 @@ const urlCache = new Map();    // defId+':'+version(+':'+zone) -> dataURL (PNG�
 const faceCanvas = new Map();  // defId -> HTMLCanvasElement (プレビュー用)
 const artCache = new Map();    // url -> HTMLImageElement | null (失敗)
 let backTexture = null;
+/* 斜めに寝かせた手札の文字をにじませないよう、GPU が許す最大の異方性フィルタを使う */
+let maxAnisotropy = 8;
+export function setMaxAnisotropy(n) {
+  if (!(n > 0)) return;
+  maxAnisotropy = n;
+  for (const tex of faceCache.values()) { tex.anisotropy = n; tex.needsUpdate = true; }
+  if (backTexture) { backTexture.anisotropy = n; backTexture.needsUpdate = true; }
+}
 
 /* カードアートが存在するセット (Main 2 / Aux 2 は scripts/build_card_art_2.py で生成) */
 export const ART_SETS = new Set(['Main 1', 'Aux 1', 'Main 2', 'Aux 2']);
@@ -317,7 +325,7 @@ export function faceTexture(def) {
 
   const tex = new THREE.CanvasTexture(cv);
   tex.colorSpace = THREE.SRGBColorSpace;
-  tex.anisotropy = 8;
+  tex.anisotropy = maxAnisotropy;
   faceCache.set(key, tex);
   faceCanvas.set(key, cv);
 
@@ -466,6 +474,6 @@ export function backTex() {
 
   backTexture = new THREE.CanvasTexture(cv);
   backTexture.colorSpace = THREE.SRGBColorSpace;
-  backTexture.anisotropy = 8;
+  backTexture.anisotropy = maxAnisotropy;
   return backTexture;
 }

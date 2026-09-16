@@ -78,10 +78,13 @@ export function createStage(container) {
     /* キャンバスを PNG で取り出せるようにする (記録・共有用) */
     preserveDrawingBuffer: true
   });
-  /* モバイル/小画面はピクセル比と影解像度を落として GPU 負荷を抑える */
+  /* モバイル/小画面は影解像度を落として GPU 負荷を抑える。
+     描画解像度 (ピクセル比) は 2 まで許す。1.5 で頭打ちにすると、表示倍率 3 の
+     スマホやタッチ対応ノート PC で手札の文字が半分の解像度で描かれてにじんでいた。 */
   const lowPower = Math.min(window.innerWidth, window.innerHeight) < 700
     || (navigator.maxTouchPoints || 0) > 1;
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, lowPower ? 1.5 : 2));
+  const pixelRatio = () => Math.min(window.devicePixelRatio || 1, 2);
+  renderer.setPixelRatio(pixelRatio());
   renderer.setSize(container.clientWidth, container.clientHeight);
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -253,6 +256,11 @@ export function createStage(container) {
   let appliedW = -1, appliedH = -1;
   function resize() {
     const w = container.clientWidth, h = container.clientHeight;
+    /* 表示倍率が変わった (別モニタへ移動・ブラウザの拡大縮小) ときも取り直す */
+    if (renderer.getPixelRatio() !== pixelRatio()) {
+      renderer.setPixelRatio(pixelRatio());
+      appliedW = -1;
+    }
     /* 同じ大きさなら何もしない (下の監視経路から何度呼ばれても安全にする) */
     if (w === appliedW && h === appliedH) return;
     if (w < 2 || h < 2) return;                         // 非表示中の 0 サイズは採らない

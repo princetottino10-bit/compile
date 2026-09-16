@@ -13,7 +13,7 @@ import { mountTrainingTools } from './training.js';
 import * as ROOM from './room.js';
 import { runRoomLobby } from './roomui.js';
 import { reqText } from './prompts.js';
-import { faceImageURL, activationImageURL, pruneFaceCache, ART_SETS } from './cardtex.js';
+import { faceImageURL, activationImageURL, pruneFaceCache, ART_SETS, setMaxAnisotropy } from './cardtex.js';
 import * as FX from './fx.js';
 import { buildArena } from './arena.js';
 import { initAudio, sfx, setMuted, isMuted, startBgm, stopBgm, setBgmTension, bgmActive } from './audio.js';
@@ -125,6 +125,7 @@ async function boot() {
   mark('engineInit');
 
   stage = createStage(document.getElementById('stage'));
+  setMaxAnisotropy(stage.renderer.capabilities.getMaxAnisotropy());
   ctrlMarker = createControlMarker(stage.scene);
   ctrlMarker.group.visible = false;          // 対戦開始 (refreshHud) まで隠す
   stage.onFrame((dt) => ctrlMarker.tick(dt));
