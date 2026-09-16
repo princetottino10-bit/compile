@@ -25,11 +25,16 @@ export function handSlot(i, n) {
        並べた全幅 (間隔×(枚数-1) + 1枚ぶん) を 4.7 以内に抑える */
     const PORTRAIT_SCALE = Math.min(1.12, 4.7 / (CARD.w * (1.04 * Math.max(0, perRow - 1) + 1)));
     const step = PORTRAIT_SCALE * CARD.w * 1.04;         // 隣と重ならない間隔
+    /* 6枚目以降は1列目の「後ろ」に重ね、見出し (プロトコル名と数字) だけ覗かせる。
+       1列ぶん丸ごと上へずらすと自分の場のスタックの隣に並び、
+       プレイ済みのカードに見えてしまった。手札の帯の中に収める。 */
+    const PEEK = 0.62;                                   // 後ろの列が覗く量 (カード高さの約半分)
     return {
-      pos: [t * step * Math.max(0, rowCount - 1), BOARD.handY + 0.35 + row * .12 - tucked * .22,
-        BOARD.handZ + 0.95 - row * 1.62 + tucked * 1.2],
+      pos: [t * step * Math.max(0, rowCount - 1),
+        BOARD.handY + 0.35 - row * 0.12 - tucked * .22,    // 後ろの列は低くして前の列に隠れる
+        BOARD.handZ + 0.95 - row * PEEK + tucked * 1.2],
       rot: [0.18, 0, 0],
-      scale: PORTRAIT_SCALE * (tucked ? .9 : 1) * (row ? .94 : 1)
+      scale: PORTRAIT_SCALE * (tucked ? .9 : 1)
     };
   }
   /* 8枚以上は2列にする。1列のまま重ねると中央の札が完全に隠れ、
