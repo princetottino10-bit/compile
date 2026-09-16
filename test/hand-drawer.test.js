@@ -56,7 +56,13 @@ test('portrait hand uses straight rows so it stays out of the board tap area', a
       assert.equal(slots[i].pos[1], slots[0].pos[1], 'the front row is level');
     }
     assert.ok(slots[5].pos[2] < slots[0].pos[2], 'second row stays behind the front row');
-    assert.ok(slots[5].pos[1] > slots[0].pos[1], 'second row is lifted rather than covering the front row');
+    /* 2列目は前列の下に潜らせる。持ち上げると前列の上に被さり、丸ごと上へずらすと
+       自分の場のスタックの隣に並んで「場に出ている」ように見えた */
+    assert.ok(slots[5].pos[1] < slots[0].pos[1], 'second row tucks under the front row instead of covering it');
+    const cardDepth = 1.4 * slots[0].scale;
+    const peek = slots[0].pos[2] - slots[5].pos[2];
+    assert.ok(peek > cardDepth * 0.3, 'enough of the second row peeks out to read and tap its header');
+    assert.ok(peek < cardDepth * 0.6, 'second row stays inside the hand band instead of climbing into the field');
   } finally {
     VIEW.k = original.k; VIEW.handOpen = original.handOpen;
   }
