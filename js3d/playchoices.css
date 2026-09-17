@@ -23,9 +23,16 @@
 
 @media (max-width: 860px) {
   #btnHand { display: inline-flex; }
-  .placement-lane { gap: 3px; padding: 4px; }
-  .placement-lane-label { max-width: 58px; font-size: 10px; }
-  #playChoices button { min-width: 42px; min-height: 42px; }
-  .placement-cancel { right: 10px; bottom: calc(70px + env(safe-area-inset-bottom)); }
-  body.choosing-placement #preview { top: auto; left: 50%; bottom: 95px; height: min(31vh, 260px); transform: translateX(-50%); }
+  /* スマホはレーンが近く、盤面に追従させるとチップ同士が重なって読めない。
+     画面下の固定バーにラインごとのボタンを並べる (左から ライン1・2・3)。 */
+  #playChoices { inset: auto 8px calc(62px + env(safe-area-inset-bottom)) 8px;
+    display: flex; flex-wrap: wrap; gap: 6px; }
+  .placement-lane { position: static; transform: none; flex: 1 1 28%;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 5px; padding: 7px 7px 8px; border-radius: 12px; }
+  .placement-lane.focused { transform: none; }
+  .placement-lane-label { grid-column: 1 / -1; max-width: none; font-size: 11px; text-align: center; }
+  #playChoices button { min-width: 0; min-height: 44px; }
+  .placement-lane button:only-of-type { grid-column: 1 / -1; }
+  .placement-cancel { position: fixed; right: 10px; bottom: calc(70px + env(safe-area-inset-bottom)); }
+  body.choosing-placement .placement-cancel { position: static; grid-column: 1 / -1; flex: 1 1 100%; min-height: 40px; order: 9; }
 }

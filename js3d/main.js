@@ -1095,6 +1095,14 @@ const choiceWorld = new THREE.Vector3();
 function positionPlayChoices() {
   const root = document.getElementById('playChoices');
   if (!root || root.hidden || !stage) return;
+  /* スマホは画面下の固定バーに並べる (CSS 側で配置)。追従させると重なって読めない */
+  if (isCompactHandUI()) {
+    for (const cell of root.querySelectorAll('.placement-lane')) {
+      cell.hidden = false;
+      cell.style.left = cell.style.top = '';
+    }
+    return;
+  }
   const rect = stage.renderer.domElement.getBoundingClientRect();
   for (const cell of root.querySelectorAll('.placement-lane')) {
     const line = Number(cell.dataset.line), side = Number(cell.dataset.side);
