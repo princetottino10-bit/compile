@@ -375,6 +375,12 @@
   @media (max-width:860px){
     #cardNote{left:10px;right:10px;width:auto;bottom:66px;}
     #cardNote[data-place="top"]{top:58px;bottom:auto;}
+    /* カードを触ったときの情報は右上の空きに置き、盤面と手札を隠さない */
+    #cardNote[data-place="corner"]{left:auto;right:8px;top:62px;bottom:auto;width:min(63vw,250px);
+      max-height:52vh;overflow-y:auto;}
+    #cardNote.large[data-place="corner"] .cn-head{font-size:14px;}
+    #cardNote.large[data-place="corner"] .cn-text{font-size:12.5px;line-height:1.55;}
+    #cardNote.large[data-place="corner"] .cn-zone{font-size:10px;line-height:1.8;min-width:30px;}
   }
 
   /* ---------- モーダル ---------- */

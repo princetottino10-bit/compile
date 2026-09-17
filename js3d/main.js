@@ -880,12 +880,8 @@ function showCardInspector(uid) {
     || (st.players.some(pl => pl.hand.includes(uid)) ? { zone: 'hand' }
       : st.players.some(pl => pl.trash.includes(uid)) ? { zone: 'trash' } : null);
   const visible = card.def && (card.faceUp || ((card.knownTo || 0) & (1 << ME)));
-  let place = 'top';
-  const obj = board && board.cards.get(uid);
-  if (obj && stage) {
-    const v = obj.position.clone().project(stage.camera);
-    place = v.y < 0 ? 'top' : 'bottom';           // NDC: 下半分なら上に出す
-  }
+  /* 盤面と手札を隠さない右上の空きに出す。盤面をタップすれば消える */
+  const place = 'corner';
   if (!visible) {
     UI.showCardNote({ title: '裏向きのカード', color: '#8fa8c8', badge: '非公開', place, large: true, persist: true,
       note: '盤面では値2として扱う', rows: [] });
