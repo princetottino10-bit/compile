@@ -360,8 +360,21 @@
   #cardNote .cn-row{display:flex;gap:7px;padding:3px 0;border-top:1px solid rgba(255,255,255,.06);}
   #cardNote .cn-zone{flex:0 0 auto;font:800 9px/1.7 system-ui;color:var(--accent,#63f3ff);opacity:.9;}
   #cardNote .cn-text{font:500 11px/1.6 system-ui;color:var(--ink);}
+  #cardNote .cn-badge{margin-left:auto;margin-right:6px;padding:2px 7px;border-radius:999px;
+    font:800 9px/1.4 system-ui;letter-spacing:.06em;color:var(--accent,#63f3ff);
+    border:1px solid color-mix(in srgb,var(--accent,#63f3ff) 55%,transparent);}
+  #cardNote .cn-note{font:600 10px/1.5 system-ui;color:var(--dim);margin:-2px 0 4px;}
+  #cardNote .cn-row.off .cn-text{color:var(--dim);text-decoration:line-through;text-decoration-color:rgba(255,255,255,.25);}
+  #cardNote .cn-row.off .cn-zone{opacity:.45;}
+  /* スマホで盤面のカードを触ったときの読みやすい表示 */
+  #cardNote.large{padding:12px 14px;}
+  #cardNote.large .cn-head{font-size:16px;margin-bottom:8px;}
+  #cardNote.large .cn-zone{font-size:11px;line-height:1.9;min-width:34px;}
+  #cardNote.large .cn-text{font-size:14px;line-height:1.65;}
+  #cardNote.large .cn-row{padding:6px 0;}
   @media (max-width:860px){
     #cardNote{left:10px;right:10px;width:auto;bottom:66px;}
+    #cardNote[data-place="top"]{top:58px;bottom:auto;}
   }
 
   /* ---------- モーダル ---------- */

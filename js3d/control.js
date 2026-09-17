@@ -10,8 +10,9 @@ import { shockwave } from './fx.js';
 import { VIEW } from './theme.js';
 
 const X_WIDE = -2.85;         // lane0 とトラッシュの間の余白
-/* 縦持ちは画面が狭いので内側へ寄せる (山札・捨て札の pilePos と同じ縮め方) */
-const X = () => X_WIDE * (1 - 0.34 * VIEW.k);
+/* 縦持ちはレーンの外側の細い余白へ寄せ、小さくする (山札・捨て札と同じ扱い) */
+const X = () => X_WIDE + (-2.52 - X_WIDE) * VIEW.k;
+const SCALE = () => 1 - 0.38 * VIEW.k;
 const Z = { neutral: 0, me: 1.35, opp: -1.35 };
 const MINT = 0x6dffc2, PINK = 0xff3b9d, DIM = 0x44536e;
 
@@ -64,6 +65,8 @@ export function createControlMarker(scene) {
       spin += dt * (holder === -1 ? 0.15 : 0.55);
       grp.rotation.y = Math.PI / 6 + spin;
       grp.position.x += (X() - grp.position.x) * Math.min(1, dt * 6);   // 向きが変わったら追従
+      const sc = SCALE();
+      grp.scale.setScalar(grp.scale.x + (sc - grp.scale.x) * Math.min(1, dt * 6));
     },
     /* me: 自分の座席番号。ctrl: st.control (-1/0/1) */
     update(ctrl, me, animate) {

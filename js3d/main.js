@@ -568,13 +568,14 @@ function bindInput() {
       if (hoverUid && hoverUid !== selectedUid) raiseHandCard(hoverUid);
       el.style.cursor = uid ? 'pointer' : 'default';
     }
-    /* 盤面のカードは向きが読みにくいので、余白に拡大プレビュー */
-    showPreview(uid);
+    /* 盤面のカードは向きが読みにくいので、余白に拡大プレビュー。
+       スマホはタップ (pointerdown) だけで切り替える: 指の移動で消えないように */
+    if (!isCompactHandUI()) showPreview(uid);
   });
 
   /* カーソルが盤面から出たらプレビューを消す */
   el.addEventListener('pointerleave', () => {
-    showPreview(null);
+    if (!isCompactHandUI()) showPreview(null);   // タッチは指を離すと leave が来るので消さない
     if (!isCompactHandUI() && !drag && selectedUid === null) setHandDrawer(false);
   });
 
@@ -804,9 +805,68 @@ function bindInput() {
 /* ---------- 拡大プレビュー (余白に固定表示) ---------- */
 let previewUid = null;
 
+/* スマホ: カードを触ったら、画像の拡大ではなく文字で効果を読ませる。
+   画面中央に大きな画像を出すと盤面が隠れ、それでも文字は小さかった。
+   触ったカードを隠さないよう、画面の下半分のカードなら上に、上半分なら下に出す。 */
+function fieldLoc(st, uid) {
+  for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++) {
+    const idx = st.lines[l][s].indexOf(uid);
+    if (idx >= 0) return { line: l, side: s, idx };
+  }
+  return null;
+}
+
+function showCardInspector(uid) {
+  const st = shown();
+  const card = uid && st && st.cards[uid];
+  if (!card) { UI.hideCardNote(); return; }
+  const loc = fieldLoc(st, uid)
+    || (st.players.some(pl => pl.hand.includes(uid)) ? { zone: 'hand' }
+      : st.players.some(pl => pl.trash.includes(uid)) ? { zone: 'trash' } : null);
+  const visible = card.def && (card.faceUp || ((card.knownTo || 0) & (1 << ME)));
+  let place = 'top';
+  const obj = board && board.cards.get(uid);
+  if (obj && stage) {
+    const v = obj.position.clone().project(stage.camera);
+    place = v.y < 0 ? 'top' : 'bottom';           // NDC: 下半分なら上に出す
+  }
+  if (!visible) {
+    UI.showCardNote({ title: '裏向きのカード', color: '#8fa8c8', badge: '非公開', place, large: true, persist: true,
+      note: '盤面では値2として扱う', rows: [] });
+    return;
+  }
+  const d = defIndex[card.def];
+  if (!d) { UI.hideCardNote(); return; }
+  let badge = '', note = '';
+  let upperOff = false, middleOff = false, lowerOff = false;
+  if (loc && loc.line !== undefined) {
+    const stack = st.lines[loc.line][loc.side];
+    const covered = stack.indexOf(uid) < stack.length - 1;
+    badge = (loc.side === ME ? 'あなたの場' : '相手の場') + (covered ? '・覆われている' : '');
+    if (!card.faceUp) { badge += '・裏向き'; note = '裏向きなので効果はない (値2)'; upperOff = middleOff = lowerOff = true; }
+    else if (covered) { note = '覆われているので、有効なのは上段だけ'; middleOff = lowerOff = true; }
+  } else if (loc && loc.zone === 'hand') {
+    badge = '手札';
+  } else if (loc && loc.zone === 'trash') {
+    badge = '捨て札';
+  }
+  const rows = [];
+  if (d.upper) rows.push({ zone: '上段', text: d.upper, inactive: upperOff });
+  if (d.middle) rows.push({ zone: '中段', text: d.middle, inactive: middleOff });
+  if (d.lower) rows.push({ zone: '下段', text: d.lower, inactive: lowerOff });
+  UI.showCardNote({ title: d.proto + ' ' + d.value, color: d.color, badge, note, rows, place, large: true, persist: true });
+}
+
 function showPreview(uid) {
   const box = document.getElementById('preview');
   if (!box) return;
+  if (isCompactHandUI()) {
+    if (uid === previewUid) return;
+    previewUid = uid;
+    box.classList.remove('show');
+    showCardInspector(uid);
+    return;
+  }
   const st = shown();
   const card = uid && st && st.cards[uid];
   const visible = card && card.def && (card.faceUp || ((card.knownTo || 0) & (1 << ME)));

@@ -126,11 +126,13 @@ export function pilePos(kind, side, me, depth) {
   const near = side === me;
   const k = VIEW.k;                                 // 縦長では画面内に寄せる
   const z = (near ? 2.75 : -2.75) * (1 + 0.16 * k);
-  const x = (kind === 'deck' ? 3.45 : -3.45) * (near ? 1 : -1) * (1 - 0.34 * k);   // 縦持ちは画面幅に収める
+  /* 縦持ちは画面幅がレーンでほぼ埋まる。レーンの外側 (|x|>2.12) の細い余白に
+     小さくして置き、積み札やプロトコル板に重ならないようにする */
+  const x = (kind === 'deck' ? 1 : -1) * (near ? 1 : -1) * (3.45 + (2.52 - 3.45) * k);
   return {
     pos: [x, CARD.thickness / 2 + (depth || 0) * 0.013, z],
     rot: [0, near ? 0 : Math.PI, 0],
-    scale: 1
+    scale: 1 - 0.46 * k
   };
 }
 

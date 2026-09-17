@@ -123,17 +123,28 @@ export function showCardNote(o) {
     document.body.appendChild(el);
   }
   el.style.setProperty('--accent', o.color || '#63f3ff');
+  /* place: 'top' | 'bottom'。触ったカード自身を隠さない側に出す */
+  el.dataset.place = o.place || 'bottom';
+  el.classList.toggle('large', !!o.large);
   el.innerHTML =
     '<div class="cn-head"><b>' + o.title + '</b>' +
+      (o.badge ? '<span class="cn-badge">' + o.badge + '</span>' : '') +
       '<button type="button" class="cn-close" aria-label="閉じる">×</button></div>' +
+    (o.note ? '<div class="cn-note">' + o.note + '</div>' : '') +
     (o.rows.length
-      ? o.rows.map(r => '<div class="cn-row"><span class="cn-zone">' + r.zone + '</span>' +
+      ? o.rows.map(r => '<div class="cn-row' + (r.inactive ? ' off' : '') + '"><span class="cn-zone">' + r.zone + '</span>' +
           '<span class="cn-text">' + r.text + '</span></div>').join('')
       : '<div class="cn-row"><span class="cn-text">テキストなし</span></div>');
   el.classList.add('show');
   el.querySelector('.cn-close').onclick = () => el.classList.remove('show');
   clearTimeout(el._t);
-  el._t = setTimeout(() => el.classList.remove('show'), 9000);
+  /* 盤面から開いたときは、別の場所を触るまで出したままにする */
+  if (!o.persist) el._t = setTimeout(() => el.classList.remove('show'), 9000);
+}
+
+export function hideCardNote() {
+  const el = $('#cardNote');
+  if (el) { clearTimeout(el._t); el.classList.remove('show'); }
 }
 
 /* -------------------------------------------------------------------------
