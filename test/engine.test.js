@@ -856,6 +856,66 @@ test('AI評価: プロトコル不問で表向きに出せる常時効果は、�
   assert.ok(same > 10, '素の常時効果より高く見る');
 });
 
+/* 覆っていたカードが場から離れると、下の表向きカードの中段が再発動する。
+   WATER 4 (あなたのカードを1枚戻す) を WATER 1 (デッキの上を他の各ラインに裏向きで置く) に重ね、
+   WATER 4 自身を戻すと、WATER 1 の中段をもう一度撃てて、WATER 4 も手札に戻る */
+test('AI: 覆ったカードを戻して自分の中段を再発動させる (WATER 1 + WATER 4)', () => {
+  const st = ng({ p0: ['WATER', 'FIRE', 'METAL'], p1: ['DEATH', 'SPEED', 'LOVE'] }).state;
+  place(st, 'WATER_2', 0, 0, true);
+  setHand(st, 0, ['WATER_5', 'FIRE_6']);
+  st.turn = 0;
+  let res = Engine.apply(st, { type: 'play', card: uidOf('WATER_5', 0), line: 0, faceUp: true });
+  let guard = 0;
+  while (res.requests.length && guard++ < 8) {
+    const req = res.requests[0];
+    res = Engine.apply(res.state, { type: 'choose', id: req.id, picks: Engine.ai.smartPicks(res.state, req, 0) });
+  }
+  assert.ok(res.state.players[0].hand.includes(uidOf('WATER_5', 0)), 'WATER 4 は手札に戻る');
+  assert.equal(Engine.lineTotal(res.state, 1, 0) + Engine.lineTotal(res.state, 2, 0), 4,
+    '再発動で他の2ラインに裏向きが1枚ずつ');
+});
+
+test('AI: 戻す候補が複数あるときは、下の中段を再発動できるカードを戻す', () => {
+  const st = ng({ p0: ['WATER', 'FIRE', 'METAL'], p1: ['DEATH', 'SPEED', 'LOVE'] }).state;
+  place(st, 'WATER_2', 0, 0, true);                 // 中段の強い表向き
+  const cover = place(st, 'WATER_6', 0, 0, false);  // それを覆っている裏向き (値2)
+  const other = place(st, 'FIRE_5', 0, 1, false);   // 別ラインの裏向き (値2)
+  st.turn = 0;
+  const req = { kind: 'pickCard', player: 0, candidates: [other, cover], min: 1, max: 1, prompt: 'return', context: 'WATER_5', id: 'q1' };
+  assert.deepEqual(Engine.ai.smartPicks(st, req, 0), [cover], '覆いを外して再発動させる方を選ぶ');
+});
+
+/* 開始フェイズはコンパイル判定より先。「開始：このカードを反転させる」を持つカードは
+   次の開始で裏向き=値2になるので、8点のラインに PSYCHIC 1 (値1) を表で出すと 10 点でコンパイルできる */
+test('AI: 開始時に自分が裏返る札は、裏向きの値2でコンパイル圏に届くと見る', () => {
+  const build = () => {
+    const st = ng({ p0: ['PSYCHIC', 'FIRE', 'WATER'], p1: ['DEATH', 'METAL', 'SPEED'] }).state;
+    place(st, 'FIRE_6', 0, 1, true);     // ライン1: 5
+    place(st, 'FIRE_4', 0, 1, true);     // +3 = 8点
+    setHand(st, 0, ['PSYCHIC_2']);
+    st.turn = 0;
+    return st;
+  };
+  const st = build();
+  const act = { type: 'play', card: uidOf('PSYCHIC_2', 0), line: 1, faceUp: true };
+  const other = { type: 'play', card: uidOf('PSYCHIC_2', 0), line: 0, faceUp: true };
+  assert.ok(Engine.ai.actionBias(st, act, 0) > Engine.ai.actionBias(st, other, 0) + 100,
+    '8点のラインに置く手を、コンパイル圏に届く手として高く見る');
+});
+
+test('AI評価: 選ばされる効果は損として数え、覆って止める価値を見る (SPIRIT 1 の開始時)', () => {
+  const spirit2 = Engine.defs.SPIRIT_2.eff.lower.trigger.ops;   // 手札を1枚捨てるか、このカードを反転
+  assert.ok(Engine.ai.opsValue(spirit2, 0) < 0, '任意ではないので損のまま');
+  const build = (cover) => {
+    const st = ng({ p0: ['SPIRIT', 'FIRE', 'WATER'], p1: ['DEATH', 'METAL', 'SPEED'] }).state;
+    place(st, 'SPIRIT_2', 0, 0, true);
+    if (cover) place(st, 'FIRE_6', 0, 0, false);                // 裏向きで覆う (盤面評価には出ない)
+    return st;
+  };
+  assert.ok(Engine.ai.boardEffect(build(true), 0) > Engine.ai.boardEffect(build(false), 0),
+    '覆えば開始時のデメリットが止まる');
+});
+
 test('AI: 相手のリコンパイルによるターンスキップを評価する', () => {
   const before = { actionLog: [] };
   const oppRecompile = { state: { actionLog: ['P2: リコンパイル'] } };

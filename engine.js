@@ -2150,6 +2150,16 @@ const AI_W = {
      anyLineBase/anyLineGain: 「プロトコルを対応させずに表向きでプレイできる」(SPIRIT 1) の価値。
      ライン制限を外したときの手札評価の増分を上乗せする。0 で従来どおり常時効果の一律10点 */
   optionalCost: 1, anyLineBase: 26, anyLineGain: 0.9,
+  /* valueUp: 表向きで出すときの (値-2) あたりの加点。値の低い札ほどテキストが強いので下げる方向。
+     裏向きはカードのテキストを丸ごと捨てるので原則マイナス:
+     downFlat (一律) + 捨てる中段の価値 * downText。ただし人が裏向きを選ぶ場面では緩める。
+     downMismatch: そのラインに表で出せない札 (裏ならどのラインにも置ける) に残す割合
+     downCombo: あとで表に返す手段 (反転効果) を持っているときに残す割合。コントロール争いと
+     コンパイル圏に届く手は 0 にする */
+  valueUp: 7, downFlat: 55, downText: 0.35, downMismatch: 0.3, downCombo: 0.4,
+  /* 一番上のカードを場から動かすと、下の表向きカードの中段が再発動する。
+     自分の中段なら狙って外し、相手の中段なら外さない (uncoverBase + 中段の価値 * uncoverMid) */
+  uncoverBase: 22, uncoverMid: 0.8,
 };
 /* サイキック①ロックまわりの重み。通常 AI・特化 AI の区別なく共通で使う。
    lockPermanent/lockTemporary: 覆われた (永続) / 一番上 (1ターン) のロックの価値
@@ -2190,6 +2200,8 @@ const AI_DSH_W = {
   compiledUp: 75, compiledDown: 75, recompile: 160, midUp: 0.35, lowUp: 20, lowDown: 5,
   // 済ラインへのプレイで自分の2ラインリードを作る/相手の2ラインリードを崩すとき、compiledUp/Down の減点を戻す割合。0 で従来どおり
   optionalCost: 1, anyLineBase: 26, anyLineGain: 0.9,
+  valueUp: 7, downFlat: 55, downText: 0.35, downMismatch: 0.3, downCombo: 0.4,
+  uncoverBase: 22, uncoverMid: 0.8,
   compiledLead: 0,   // 最強同士のミラー 480 戦で 49.8% [45.3, 54.2]。効果が出ていないので切っておく
 };
 function setAiSpecialistWeights(obj) {
@@ -2263,8 +2275,13 @@ function aiOpsValue(ops, depth) {
       case 'takeRandom': v += 24; break;
       case 'giveCard': v -= aiCount(op.count, 1) * 11; break;
       case 'choice': {
+        /* 選択肢のうち一番良いものを選ぶ。断れる (optional) ときだけ 0 で下げ止める。
+           SPIRIT 1 の「手札を1枚捨てるか、このカードを反転させる」は断れないので損のまま */
         const vals = (op.options || []).map(o => aiOpsValue(o, depth + 1));
-        v += vals.length ? Math.max(0, Math.max.apply(null, vals)) : 0;
+        if (vals.length) {
+          const best = Math.max.apply(null, vals);
+          v += op.optional ? Math.max(0, best) : best;
+        }
         break;
       }
       case 'ifDone': case 'ifState':
@@ -2554,6 +2571,63 @@ function aiLockSpecialistBias(st, side, action, d, fizzles) {
   return 0;
 }
 
+/* 自分の裏向きカードを表に返せる手段 (反転効果) を持っているか。コンボの仕込みの判定に使う */
+let AI_FLIPPER_IDS = null;
+function aiFlipperIds() {
+  if (AI_FLIPPER_IDS) return AI_FLIPPER_IDS;
+  AI_FLIPPER_IDS = new Set();
+  const hasFlip = (ops, depth) => {
+    if (!Array.isArray(ops) || depth > 3) return false;
+    return ops.some(op => op && (
+      (op.op === 'flip' && !(op.select && op.select.ref === 'this'))
+      || hasFlip(op.ops, depth + 1)
+      || (op.options || []).some(o => hasFlip(o, depth + 1))));
+  };
+  for (const id in DEFS) {
+    const e = DEFS[id].eff || {};
+    for (const slot of ['middle', 'upper', 'lower']) {
+      const sl = e[slot];
+      if (!sl) continue;
+      if (hasFlip(sl.ops, 0) || (sl.trigger && hasFlip(sl.trigger.ops, 0))) { AI_FLIPPER_IDS.add(id); break; }
+    }
+  }
+  return AI_FLIPPER_IDS;
+}
+
+function aiHasFlipper(st, side) {
+  const ids = aiFlipperIds();
+  if (st.players[side].hand.some(uid => ids.has(st.cards[uid].def))) return true;
+  for (let l = 0; l < 3; l++) {
+    const stack = st.lines[l][side];
+    const top = stack[stack.length - 1];
+    if (top && st.cards[top].faceUp && ids.has(st.cards[top].def)) return true;
+  }
+  return false;
+}
+
+/* 裏向きで出す損。テキストを丸ごと捨てるので原則マイナスだが、人が裏向きを選ぶ場面では緩める:
+   - そのラインに表で出せない札 (裏ならどのラインにも置ける)
+   - あとで表に返す手段を持っている (コンボの仕込み)
+   - コントロールを渡さない / 取り返す一手、コンパイル圏に届く一手 → 0 */
+function aiFaceDownCost(st, side, action, d, mine, theirs, gap, W) {
+  let cost = W.downFlat + Math.max(0, aiMiddleValue(d)) * W.downText;
+  if (!cost) return 0;
+  const compiled = !!st.players[side].protocols[action.line].compiled;
+  if (!compiled && gap <= 2 && mine + 2 > theirs) return 0;          // コンパイル圏に届く
+  if (aiCompiledLeadSwing(st, side, action.line, mine + 2)) return 0;  // コントロール争いが動く
+  if (!canPlay(st, side, action.card, action.line, true)) cost *= W.downMismatch;
+  if (aiHasFlipper(st, side)) cost *= W.downCombo;
+  return cost;
+}
+
+/* 「開始：このカードを反転させる」を持つ札 (PSYCHIC 1 など)。開始フェイズはコンパイル判定より
+   先に解決されるので、次の開始では裏向き=値2として数える。8点のラインに値1で出して 10 点にできる */
+function aiFlipsSelfAtStart(d) {
+  const tr = d.eff && d.eff.lower && d.eff.lower.trigger;
+  if (!tr || tr.on !== 'start' || !Array.isArray(tr.ops)) return false;
+  return tr.ops.some(op => op && op.op === 'flip' && op.select && op.select.ref === 'this' && !op.optional);
+}
+
 function aiWeightsFor(st, side) {
   return aiIsDshSpecialist(st, side) ? AI_DSH_W : AI_W;
 }
@@ -2664,13 +2738,16 @@ function aiActionBias(st, action, side) {
   }
   if (action.faceUp) {
     const mv = fizzles ? 0 : aiMiddleValue(d);
+    /* 次の開始で裏返る札は、そのとき値2として数えられる (開始フェイズはコンパイル判定より先) */
+    const reach = aiFlipsSelfAtStart(d) ? Math.max(d.value, 2) : d.value;
     v += mv * W.midUp;
-    v += (d.value - 2) * 7;
-    if (gap <= d.value && mine + d.value > theirs && !st.players[side].protocols[action.line].compiled) v += 150;
+    v += (d.value - 2) * W.valueUp;
+    if (gap <= reach && mine + reach > theirs && !st.players[side].protocols[action.line].compiled) v += 150;
     if (mv < 8 && d.value < 2) v -= W.lowUp;
-    if (gap <= d.value && !st.players[side].protocols[action.line].compiled) v += 22;
-    if (mine + d.value > theirs) v += 8;
+    if (gap <= reach && !st.players[side].protocols[action.line].compiled) v += 22;
+    if (mine + reach > theirs) v += 8;
   } else {
+    v -= aiFaceDownCost(st, side, action, d, mine, theirs, gap, W);
     v += (2 - d.value) * W.lowDown;
     if (['HATE_4', 'HATE_5'].includes(d.id)) v -= W.hateDownPenalty || 0;
     if (['SPEED_2', 'SPEED_4'].includes(d.id)) v -= W.speedDownPenalty || 0;
@@ -3125,13 +3202,17 @@ function smartPicks(st, req) {
             if (lt >= 8 && !st.players[me].protocols[loc.line].compiled) s -= 15;
           }
           if (isTop(st, loc)) s += 8;
-          if (aiIsDshSpecialist(st, me) && req.prompt === 'shift' && req.context === 'SPEED_4') {
+          /* 場から動かすと下の表向きカードの中段が再発動する (WATER 1 に WATER 4 を重ねて戻す等)。
+             自分のものなら狙い、相手のものなら避ける */
+          if (/^(optional-)?(return|delete|shift)$/.test(req.prompt || '')) {
             const stack = st.lines[loc.line][loc.side];
             const index = stack.indexOf(uid);
             if (index > 0 && index === stack.length - 1) {
-              const uncovered = st.cards[stack[index - 1]];
-              if (uncovered.faceUp) {
-                s += 24 + Math.max(0, aiMiddleValue(DEFS[uncovered.def])) * 0.8;
+              const below = st.cards[stack[index - 1]];
+              if (below.faceUp) {
+                const W = aiWeightsFor(st, me);
+                const gain = W.uncoverBase + Math.max(0, aiMiddleValue(DEFS[below.def])) * W.uncoverMid;
+                s += loc.side === me ? gain : -gain;
               }
             }
           }
