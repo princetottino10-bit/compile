@@ -719,37 +719,83 @@
   .tt-options b{display:block;margin-bottom:12px;color:var(--cyan);font:900 12px/1 system-ui;letter-spacing:.2em;}
   .tt-options button{width:100%;margin-top:8px;padding:11px 13px;font-size:11px;}
 
-  /* ---------- トレーニング: 自由配置ツール ---------- */
-  #trainingTools{position:fixed;left:14px;top:82px;z-index:18;width:266px;padding:12px;
-    background:rgba(5,8,17,.89);border:1px solid rgba(109,255,194,.32);border-radius:13px;
-    box-shadow:0 16px 44px rgba(0,0,0,.5),0 0 26px rgba(109,255,194,.08);backdrop-filter:blur(14px);}
-  .tr-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font:900 11px/1 system-ui;letter-spacing:.16em;color:#c9ffe9;}
-  .tr-head span{padding:4px 6px;border:1px solid rgba(109,255,194,.35);border-radius:5px;color:var(--mint);font-size:8px;}
-  #trainingTools button{cursor:pointer;border:1px solid rgba(255,255,255,.14);border-radius:8px;background:rgba(255,255,255,.05);color:var(--ink);
-    font:800 10px/1.1 system-ui;letter-spacing:.05em;transition:background .16s,border-color .16s,transform .16s;}
-  #trainingTools button:hover{border-color:var(--mint);background:rgba(109,255,194,.12);transform:translateY(-1px);}
-  .tr-card{width:100%;padding:11px;color:#c9ffe9!important;border-color:rgba(109,255,194,.4)!important;}
-  .tr-selected{min-height:28px;padding:9px 2px 3px;color:var(--mint);font:800 11px/1.35 system-ui;letter-spacing:.04em;}
-  #trainingTools p{margin:7px 0 10px;color:var(--dim);font:600 9px/1.45 system-ui;}
-  .tr-row{display:flex;gap:6px;}.tr-row button{flex:1;padding:9px 5px;}.tr-row button:last-child{color:#ffc7e4!important;}
-  .tr-picker{position:fixed;left:50%;top:50%;width:min(700px,calc(100vw - 28px));max-height:min(76vh,720px);padding:14px;
-    transform:translate(-50%,-50%);border:1px solid rgba(99,243,255,.38);border-radius:15px;background:rgba(5,8,17,.97);
-    box-shadow:0 24px 80px rgba(0,0,0,.72);backdrop-filter:blur(18px);}
-  .tr-picker[hidden]{display:none;}.tr-picker-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;color:#cfefff;font:900 13px/1 system-ui;letter-spacing:.12em;}
-  .tr-picker-head button{padding:7px 11px!important;}.tr-picker input{width:100%;padding:11px 12px;border:1px solid rgba(99,243,255,.28);border-radius:8px;
-    background:rgba(255,255,255,.06);color:var(--ink);font:700 12px/1 system-ui;outline:none;}.tr-picker input:focus{border-color:var(--cyan);}
-  .tr-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:7px;max-height:min(57vh,560px);margin-top:10px;overflow:auto;padding-right:4px;}
-  .tr-item{display:flex;min-width:0;gap:8px;padding:6px!important;text-align:left;align-items:center;}.tr-item img{width:37px;height:52px;object-fit:cover;border-radius:3px;}
-  .tr-item span{min-width:0;}.tr-item b{display:block;color:#cfefff;font:900 10px/1.2 system-ui;letter-spacing:.08em;}.tr-item small{display:-webkit-box;margin-top:4px;overflow:hidden;color:var(--dim);font:600 8px/1.25 system-ui;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+  /* ---------- トレーニング: 検証盤面の操作パネル ----------
+     PC は盤面の左に縦長、スマホは操作ボタンの上に引き出し。
+     効果の選択中は選択パネルを優先して、こちらは薄くする */
+  #trainingTools{position:fixed;left:14px;top:64px;z-index:18;width:312px;max-height:calc(100vh - 150px);
+    display:flex;flex-direction:column;border-radius:14px;overflow:hidden;
+    background:linear-gradient(180deg,rgba(10,14,26,.96),rgba(5,8,17,.96));
+    border:1px solid rgba(109,255,194,.28);box-shadow:0 18px 50px rgba(0,0,0,.55);transition:opacity .2s;}
+  body.training-busy #trainingTools{opacity:.18;pointer-events:none;}
+  /* 左はトレーニングパネルが使うので、ログは右の情報欄の間へ */
+  body.training #log{left:auto;right:14px;top:180px;}
+  #trainingTools button{cursor:pointer;color:var(--ink);font-family:system-ui;}
+  .tr-top{display:flex;align-items:center;gap:8px;padding:10px 10px 8px 14px;border-bottom:1px solid rgba(255,255,255,.07);}
+  .tr-title{font:900 11px/1 system-ui;letter-spacing:.2em;color:var(--mint);}
+  .tr-seg{display:flex;margin-left:auto;padding:2px;border-radius:999px;background:rgba(255,255,255,.06);}
+  .tr-seg button{padding:6px 11px;border:0;border-radius:999px;background:transparent;font:800 11px/1 system-ui!important;color:var(--dim)!important;}
+  .tr-seg button.on{background:rgba(109,255,194,.2);color:var(--mint)!important;box-shadow:inset 0 0 0 1px rgba(109,255,194,.5);}
+  .tr-fold{min-width:28px;height:28px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:transparent;font-size:12px!important;}
+  .tr-body{overflow-y:auto;padding:10px 12px 12px;display:flex;flex-direction:column;gap:10px;}
+  #trainingTools.collapsed .tr-body{display:none;}
+  #trainingTools.collapsed.has-sel .tr-body{display:flex;}
+  #trainingTools.collapsed .tr-fold{width:auto;padding:0 12px;border-color:rgba(109,255,194,.5);color:var(--mint);font:800 11px/1 system-ui!important;}
+  .tr-sides{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+  .tr-sides button{padding:8px 0;border-radius:9px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);
+    font:800 11px/1 system-ui;letter-spacing:.06em;color:var(--dim)!important;}
+  .tr-sides button.me.on{border-color:rgba(109,255,194,.6);color:var(--mint)!important;background:rgba(109,255,194,.1);}
+  .tr-sides button.opp.on{border-color:rgba(255,59,157,.6);color:#ff9fcf!important;background:rgba(255,59,157,.1);}
+  .tr-groups{display:flex;flex-direction:column;gap:8px;}
+  .tr-group{--pc:var(--cyan);}
+  .tr-gname{font:900 9px/1 system-ui;letter-spacing:.16em;color:color-mix(in srgb,var(--pc) 60%,#fff);margin:0 0 4px 2px;}
+  .tr-tiles{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;}
+  .tr-tile{position:relative;padding:0;aspect-ratio:5/7;border-radius:5px;overflow:hidden;
+    border:1px solid color-mix(in srgb,var(--pc) 35%,transparent);background:#0a0e1a;transition:transform .12s,border-color .12s;}
+  .tr-tile img{width:100%;height:100%;object-fit:cover;display:block;}
+  .tr-tile b{position:absolute;right:2px;top:2px;min-width:14px;padding:1px 3px;border-radius:4px;
+    background:rgba(0,0,0,.72);font:900 10px/1.1 system-ui;color:#fff;}
+  .tr-tile.used img{opacity:.42;filter:saturate(.5);}
+  .tr-zone{position:absolute;left:0;right:0;bottom:0;padding:2px 0;font:800 8px/1.1 system-ui;font-style:normal;
+    text-align:center;letter-spacing:.06em;background:rgba(0,0,0,.78);color:var(--ink);}
+  .tr-zone.z-field{color:var(--mint);}.tr-zone.z-hand{color:var(--cyan);}.tr-zone.z-trash{color:#ff9fcf;}
+  .tr-tile:hover{transform:translateY(-2px);border-color:var(--pc);}
+  .tr-tile.on{border:2px solid var(--gold);box-shadow:0 0 14px rgba(239,208,108,.55);}
+  .tr-tile.on img{opacity:1;filter:none;}
+  .tr-sel{--pc:var(--cyan);padding:10px;border-radius:11px;background:rgba(255,255,255,.035);
+    border:1px solid color-mix(in srgb,var(--pc) 45%,transparent);display:flex;flex-direction:column;gap:8px;}
+  .tr-sel.empty{align-items:center;border-style:dashed;border-color:rgba(255,255,255,.14);}
+  .tr-sel.empty span{font:600 11px/1.5 system-ui;color:var(--dim);}
+  .tr-sel-head{display:flex;align-items:center;gap:8px;}
+  .tr-sel-head b{font:900 13px/1 system-ui;letter-spacing:.08em;color:color-mix(in srgb,var(--pc) 55%,#fff);}
+  .tr-sel-head span{padding:2px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.18);font:700 9px/1.4 system-ui;color:var(--dim);}
+  .tr-x{margin-left:auto;width:24px;height:24px;border-radius:7px;border:0;background:rgba(255,255,255,.06);}
+  .tr-face{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+  .tr-face button{padding:8px 0;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:transparent;font:800 11px/1 system-ui;color:var(--dim)!important;}
+  .tr-face button.on{border-color:var(--gold);color:var(--gold)!important;background:rgba(239,208,108,.1);}
+  .tr-hint{margin:0;font:600 10px/1.5 system-ui;color:var(--dim);}
+  .tr-acts{display:flex;gap:5px;flex-wrap:wrap;}
+  .tr-act{flex:1;padding:9px 6px;border-radius:8px;border:1px solid rgba(99,243,255,.3);background:rgba(99,243,255,.07);font:800 11px/1 system-ui;}
+  .tr-act:hover{border-color:var(--cyan);background:rgba(99,243,255,.15);}
+  .tr-tools{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+  .tr-tools span{font:700 10px/1 system-ui;color:var(--dim);margin-right:2px;}
+  .tr-tools button{flex:1;padding:8px 4px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);font:800 10px/1 system-ui;}
+  .tr-tools button:hover{border-color:var(--mint);}
+  .tr-foot{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding-top:2px;border-top:1px solid rgba(255,255,255,.07);}
+  .tr-foot button{margin-top:8px;padding:9px 0;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:transparent;font:800 11px/1 system-ui;}
+  .tr-foot button:disabled{opacity:.35;cursor:not-allowed;}
+  .tr-foot button.warn{color:#ffb3d6!important;border-color:rgba(255,59,157,.35);}
   @media (prefers-reduced-motion: reduce){
     .tt-strip{animation:none;}
     .tt-start{animation:none;opacity:1;}
   }
   @media (max-width:700px){
     .tt-center{top:40%;}.tt-menu{grid-template-columns:1fr;gap:7px;margin-top:16px;}.tt-menu button{padding:11px 15px;font-size:12px;}.tt-menu button small{display:inline;margin:0 0 0 8px;}
-    #trainingTools{left:10px;right:10px;top:auto;bottom:67px;width:auto;padding:9px 11px;}.tr-head{margin-bottom:6px;}.tr-selected{display:inline-block;min-height:0;padding:0 8px;}.tr-card{width:auto;padding:8px 10px!important;}
-    #trainingTools p{display:none;}.tr-row{position:absolute;right:11px;bottom:9px;width:138px;}.tr-row button{padding:8px 3px;font-size:8px;}
-    .tr-picker{padding:11px;}.tr-list{grid-template-columns:1fr 1fr;max-height:58vh;}
+    #trainingTools{left:8px;right:8px;top:auto;bottom:62px;width:auto;max-height:52vh;}
+    .tr-tiles{gap:3px;}
+    #trainingTools.has-sel .tr-sides,#trainingTools.has-sel .tr-groups,
+    #trainingTools.has-sel .tr-tools,#trainingTools.has-sel .tr-foot{display:none;}
+    #trainingTools.has-sel .tr-body{padding-top:8px;}
+    #trainingTools.has-sel .tr-top{padding-top:7px;padding-bottom:6px;}
   }
 
   /* ---------- プロトコル選択 ---------- */

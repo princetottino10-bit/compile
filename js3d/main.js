@@ -46,10 +46,9 @@ let roomPollTimer = null;
 let handCompactMode = null;
 let roomLoggedVersion = null;
 let trainingMode = false;
-let trainingDef = null;
-let trainingSerial = 0;
-let trainingHistory = [];
 let trainingTools = null;
+/* トレーニングの操作状態: 選択中のカード・表示中の側・効果の有無・置く向き */
+const training = { sel: null, side: 0, effects: true, faceUp: true, collapsed: false, undo: [], protos: null };
 
 /* 表示用の状態。
    engine は選択待ちで中断すると state に「アクション前の基準状態」を返し、
@@ -158,6 +157,8 @@ async function boot() {
   };
   let p0 = pick('me', null);
   let p1 = pick('ai', null);
+  /* ?training=1&me=...&ai=... でトレーニング盤面を直接開く (確認用) */
+  if (params.get('training') === '1' && p0) { trainingMode = true; p1 = p1 || p0.slice(); }
 
   if (demoMode && !p0) {
     const pool = cards.protocols.map(x => x.name);
@@ -213,8 +214,9 @@ async function boot() {
     for (const id of Object.keys(defIndex)) if (defIndex[id].proto === name) keepIds.push(id);
   }
   pruneFaceCache(keepIds);
-  const res = Engine.newGame({ seed: (Math.random() * 1e9) | 0, p0, p1, first: 0 });
-  cur = trainingMode ? makeTrainingState(res) : res;
+  const res = Engine.newGame({ seed: (Math.random() * 1e9) | 0, p0, p1, first: 0, training: trainingMode });
+  cur = res;
+  if (trainingMode) training.protos = [p0.slice(), p1.slice()];
   window.__3d = {
     stage, board, THREE, LAYOUT,
     get cur() { return cur; },
@@ -257,7 +259,7 @@ async function boot() {
   };
   mark('newGame');
   board.syncInstant(shown());
-  if (trainingMode) mountTraining(cards);
+  if (trainingMode) mountTraining();
   mark('sync');
   const bootEl = document.getElementById('boot');
   bootEl.classList.add('gone');
@@ -267,72 +269,113 @@ async function boot() {
   await stage.home(0);
   refreshHud();
   if (trainingMode) {
-    UI.setPrompt('カードを選び、光る6つの枠へ自由に配置できます', 'ask');
+    UI.setPrompt('');
+    UI.toast('カードを選んで、光っている枠をタップすると置けます', 3200);
   } else {
     await drainRequests();
     await afterTurn();
   }
 }
 
-/* ---------- トレーニング: ルール進行を持たない自由配置盤面 ---------- */
-function makeTrainingState(res) {
-  const st = res.state;
-  st.useControl = false;
-  st.turn = ME;
-  st.phase = 'action';
-  st.winner = null;
-  st.lines = [[[], []], [[], []], [[], []]];
-  for (const p of st.players) { p.deck = []; p.hand = []; p.trash = []; p.cannotCompile = false; }
-  for (const card of Object.values(st.cards)) {
-    card.zone = 'training-pool'; card.faceUp = false; card.knownTo = 3;
+/* ---------- トレーニング: ターン進行なしの検証盤面 ----------
+   盤面の変更はすべてエンジンの training* 操作で行う。効果ありなら
+   通常のプレイと同じ経路で解決され、選択要求は両者ぶんともユーザーが答える。 */
+function trainingCardsOf(st, side) {
+  const out = [];
+  for (const uid of Object.keys(st.cards)) {
+    if (!uid.startsWith('p' + side + ':')) continue;
+    const c = st.cards[uid];
+    const zone = String(c.zone).replace(/[01]$/, '');
+    out.push({ uid, def: c.def, zone: ['hand', 'trash', 'deck'].includes(zone) ? zone : 'field', faceUp: c.faceUp });
   }
-  return { state: st, requests: [], log: [], trace: [], winner: null, error: null };
+  return out;
 }
 
-function mountTraining(cards) {
+function renderTraining() {
+  if (!trainingTools || !cur) return;
+  const st = shown();
+  if (training.sel && !st.cards[training.sel]) training.sel = null;
+  trainingTools.render({
+    side: training.side, effects: training.effects, faceUp: training.faceUp,
+    collapsed: training.collapsed, canUndo: training.undo.length > 0, sel: training.sel,
+    protocols: st.players.map(p => p.protocols.map(x => ({ name: x.name, color: protoIndex[x.name] && protoIndex[x.name].color }))),
+    cards: trainingCardsOf(st, training.side)
+  });
+  document.body.classList.toggle('training-collapsed', training.collapsed);
+}
+
+function trainingSelect(uid) {
+  training.sel = uid;
+  if (uid) {
+    training.side = uid.startsWith('p1:') ? 1 : 0;
+    sfx('select');
+  }
+  board.clearCandidates();
+  const obj = uid && board.cards.get(uid);
+  if (obj) board.setSelected(obj, true);         // 盤面の他のカードは沈めない
+  updatePads();
+  renderTraining();
+}
+
+async function trainingStep(action) {
+  if (busy || !cur || cur.requests.length) return;
+  const withEffects = action.type === 'trainingPlace' || action.type === 'trainingFlip' || action.type === 'trainingMove';
+  const before = cur;
+  training.undo.push(before);
+  if (training.undo.length > 80) training.undo.shift();
+  document.body.classList.add('training-busy');
+  board.clearCandidates();
+  for (const pad of pads) pad.userData.pulse = 0;
+  try {
+    await step(withEffects ? { ...action, effects: training.effects } : action);
+  } finally {
+    document.body.classList.remove('training-busy');
+  }
+  if (cur === before) training.undo.pop();              // エラーで盤面が変わらなかった
+  else if (isCompactHandUI()) training.collapsed = true; // スマホ: 結果の盤面を見せる
+  if (action.type === 'trainingPlace' || action.type === 'trainingMove') training.sel = null;
+  trainingSelect(training.sel && shown().cards[training.sel] ? training.sel : null);
+}
+
+function mountTraining() {
   trainingTools?.remove();
-  const sync = () => {
-    board.syncInstant(cur.state);
+  document.body.classList.add('training');
+  training.sel = null;
+  training.undo = [];
+  const resync = () => {
+    board.clearCandidates();
+    board.syncInstant(shown());
     refreshHud();
-    updatePads();
+    trainingSelect(null);
   };
-  trainingTools = mountTrainingTools(cards, defIndex, {
-    select: (def) => { trainingDef = def; sfx('select'); updatePads(); },
+  trainingTools = mountTrainingTools(defIndex, {
+    select: (uid) => { if (!uid) training.collapsed = false; trainingSelect(uid); },
+    setSide: (side) => { training.side = side; trainingSelect(null); },
+    setEffects: (on) => { training.effects = on; renderTraining(); },
+    setFaceUp: (up) => { training.faceUp = up; renderTraining(); },
+    fold: () => { training.collapsed = !training.collapsed; renderTraining(); },
+    act: (action) => trainingStep(action),
     undo: () => {
-      const uid = trainingHistory.pop();
-      if (!uid) { UI.toast('戻せる配置はありません'); return; }
-      for (const line of cur.state.lines) for (const stack of line) {
-        const i = stack.indexOf(uid); if (i >= 0) stack.splice(i, 1);
-      }
-      delete cur.state.cards[uid];
-      sync(); sfx('trash');
+      if (busy || !training.undo.length) return;
+      cur = training.undo.pop();
+      resync();
+      sfx('trash');
     },
-    clear: () => {
-      for (const line of cur.state.lines) for (const stack of line) {
-        for (const uid of stack) if (uid.startsWith('training:')) delete cur.state.cards[uid];
-        stack.length = 0;
-      }
-      trainingHistory = [];
-      sync(); sfx('trash');
+    reset: () => {
+      if (busy) return;
+      const [a, b] = training.protos;
+      cur = Engine.newGame({ seed: (Math.random() * 1e9) | 0, p0: a, p1: b, training: true });
+      training.undo = [];
+      resync();
+      UI.toast('盤面をリセットしました');
     }
   });
   window.__3d.training = {
-    place: (defId, line, side, faceUp = true) => trainingPlace(defIndex[defId], line, side, faceUp),
-    clear: () => trainingTools?.querySelector('#trClear')?.click()
+    act: (action) => trainingStep(action),
+    select: (uid) => trainingSelect(uid),
+    state: training
   };
-}
-
-function trainingPlace(def, line, side, faceUp) {
-  if (!trainingMode || !def || line < 0 || line > 2 || side < 0 || side > 1) return false;
-  const uid = 'training:' + (++trainingSerial);
-  const st = cur.state;
-  st.cards[uid] = { uid, def: def.id, owner: side, faceUp: !!faceUp, zone: 'field', knownTo: 3 };
-  st.lines[line][side].push(uid);
-  trainingHistory.push(uid);
-  board.syncInstant(st);
-  refreshHud();
-  sfx('land');
-  return true;
+  renderTraining();
 }
 
 /* 着地パッドの意匠: 角丸の枠 + 内側のごく薄い塗り */
@@ -439,9 +482,12 @@ function buildPads() {
 /* 選択中カードの着地候補を光らせる */
 function updatePads() {
   if (trainingMode) {
+    const selCard = training.sel && cur && shown().cards[training.sel];
     for (const pad of pads) {
-      pad.userData.pulse = trainingDef ? 0.92 : 0;
-      if (cur && trainingDef) {
+      /* 置けるのは選んだカードの持ち主の側だけ */
+      const on = !!selCard && !busy && pad.userData.side === selCard.owner;
+      pad.userData.pulse = on ? 0.92 : 0;
+      if (on) {
         const slot = LAYOUT.stackSlot(pad.userData.line, pad.userData.side,
           cur.state.lines[pad.userData.line][pad.userData.side].length, ME);
         pad.position.set(...slot.pos);
@@ -609,28 +655,36 @@ function bindInput() {
       });
       return bl;
     };
-    if (trainingMode && trainingDef) {
+    if (trainingMode && !busy && cur && !cur.requests.length && !boardPick) {
       const ud = hit && hit.obj && hit.obj.userData;
-      let line = ud && ud.isPad ? ud.line : null;
-      let side = ud && ud.isPad ? ud.side : null;
-      if (line === null && ud && ud.uid) {
-        const loc = locOf(shown(), ud.uid);
-        if (loc && loc.zone === 'field') { line = loc.line; side = loc.side; }
-      }
-      /* 自由配置では、配置枠の上をカード表示やプロトコル板が覆っていても
-         タップを取り逃がさない。盤面平面上の位置から6つの半レーンを判定する。 */
-      if (line === null) {
-        const pt = planePoint(ev);
-        const lane = laneFromEvent();
-        if (pt && lane !== null) {
-          line = lane;
-          side = pt.z < 0 ? AI : ME;
+      const selCard = training.sel && shown().cards[training.sel];
+      if (selCard) {
+        const owner = selCard.owner;
+        let line = ud && ud.isPad && ud.side === owner ? ud.line : null;
+        /* 持ち主側のスタックのカードを触ったら、その上に置く */
+        if (line === null && ud && ud.uid && ud.uid !== training.sel) {
+          const loc = locOf(shown(), ud.uid);
+          if (loc && loc.zone === 'field' && loc.side === owner) line = loc.line;
+        }
+        /* カード以外 (レーンの床やプロトコル板) は盤面平面の位置で判定する */
+        if (line === null && !(ud && ud.uid)) {
+          const pt = planePoint(ev);
+          const lane = laneFromEvent();
+          if (pt && lane !== null && (pt.z < 0 ? AI : ME) === owner) line = lane;
+        }
+        if (line !== null) {
+          await trainingStep({ type: 'trainingPlace', card: training.sel, line, faceUp: training.faceUp });
+          return;
         }
       }
-      if (line !== null && side !== null) {
-        trainingPlace(trainingDef, line, side, !backFacing);
+      if (ud && ud.uid && shown().cards[ud.uid]) {
+        const lt = locOf(shown(), ud.uid);
+        if (lt && lt.zone === 'trash' && !selCard) { showTrash(lt.side); return; }
+        trainingSelect(ud.uid === training.sel ? null : ud.uid);
         return;
       }
+      /* 置き先を少し外しただけで選択が消えると困るので、空振りでは何もしない (× で外す) */
+      return;
     }
     if (boardPick && boardPick.kind === 'yesno') return;
     if (boardPick && boardPick.kind === 'free') {
@@ -1208,6 +1262,7 @@ async function finaleFx(win) {
 }
 
 async function announceTurnFor(turn) {
+  if (trainingMode) return;                         // 検証盤面に手番はない
   if (turn === undefined || turn === null || turn === lastTurn) return;
   lastTurn = turn;
   if (arena && arena.setTurnSide) arena.setTurnSide(turn);
@@ -1228,7 +1283,7 @@ async function announceTurn() {
    相手のターンの出来事のように見えてしまう。 */
 let lastPhaseTag = '';
 async function markPhase(st) {
-  if (!st || st.winner !== null) return;
+  if (!st || st.winner !== null || trainingMode) return;
   await announceTurnFor(st.turn);
   const phase = st.phase;
   /* アクションは盤面の操作そのもので分かるので帯を出さない */
@@ -1813,7 +1868,7 @@ async function drainRequests() {
   while (cur && cur.requests && cur.requests.length && guard++ < 80) {
     const req = cur.requests[0];
     let picks;
-    if (req.player === ME && !demoMode) {
+    if ((req.player === ME || trainingMode) && !demoMode) {
       UI.setPrompt('');
       setEffectContext(req);
       picks = await askUser(req);
@@ -1997,7 +2052,7 @@ function refreshHud() {
   const st = shown();
   checkRevealed(st);
   /* 盤面そのものの色で手番を示す (決着後はどちらも消す) */
-  if (arena && arena.setTurnSide) arena.setTurnSide(st && st.winner === null ? st.turn : null);
+  if (arena && arena.setTurnSide) arena.setTurnSide(st && st.winner === null && !trainingMode ? st.turn : null);
   if (ctrlMarker) {
     /* コントロール変種を使わない対戦ではマーカーを隠す */
     ctrlMarker.group.visible = st.useControl !== false;
@@ -2040,7 +2095,7 @@ function refreshHud() {
   );
   const mine = st.turn === ME && st.winner === null;
   const oppName = roomMode && roomRm && roomRm.names ? (roomRm.names[1 - roomRm.side] || '相手') : '相手';
-  UI.setTurnBadge(trainingMode ? 'TRAINING — FREE PLACE' :
+  UI.setTurnBadge(trainingMode ? 'TRAINING' :
     (st.winner !== null ? '決着' : (mine ? 'あなたのターン' : oppName + 'のターン')), mine || trainingMode);
   const oppLabel = document.querySelector('#oppCounts div:first-child');
   if (oppLabel) oppLabel.textContent = roomMode ? oppName : 'OPPONENT';
