@@ -491,6 +491,82 @@
   .arr-bar .arr-btns{display:flex;gap:10px;}
   .arr-btn:hover:not(:disabled){border-color:var(--cyan);}
 
+  /* ---------- 効果の選択UI (盤面の帯・一覧ダイアログ共通) ----------
+     発動元カードの色を --accent として、見出しの縁とチップに使う */
+  .sel-head{--accent:var(--cyan);display:flex;flex-direction:column;align-items:flex-start;gap:6px;width:100%;}
+  .sel-src{display:inline-flex;align-items:center;gap:7px;padding:4px 10px 4px 5px;border-radius:999px;cursor:pointer;
+    background:color-mix(in srgb,var(--accent) 12%,rgba(8,11,21,.9));
+    border:1px solid color-mix(in srgb,var(--accent) 55%,transparent);color:var(--ink);transition:background .15s;}
+  .sel-src i{width:14px;height:14px;border-radius:4px;background:var(--accent);box-shadow:0 0 10px var(--accent);}
+  .sel-src b{font:800 11px/1 system-ui;letter-spacing:.08em;}
+  .sel-src span{font:700 9px/1 system-ui;letter-spacing:.1em;color:var(--dim);padding-left:6px;
+    border-left:1px solid rgba(255,255,255,.18);}
+  .sel-src:hover{background:color-mix(in srgb,var(--accent) 24%,rgba(8,11,21,.9));}
+  .sel-q{font:800 15px/1.45 system-ui;letter-spacing:.02em;color:var(--ink);text-wrap:balance;}
+  .sel-meta{display:flex;gap:6px;align-items:center;}
+  .sel-tag{padding:2px 8px;border-radius:999px;font:800 9px/1.5 system-ui;letter-spacing:.14em;
+    color:var(--dim);border:1px solid rgba(255,255,255,.2);}
+  .sel-count{font:600 11px/1 system-ui;color:var(--dim);font-variant-numeric:tabular-nums;}
+  .sel-count b{font-size:15px;color:var(--gold);}
+  .sel-hint{font:600 11px/1.5 system-ui;color:var(--dim);display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .sel-key{display:inline-block;width:10px;height:10px;border-radius:3px;}
+  .sel-key.gold{background:var(--gold);box-shadow:0 0 8px var(--gold);}
+  .sel-key.mint{background:var(--mint);box-shadow:0 0 8px var(--mint);margin-left:6px;}
+  .sel-arrow{font-style:normal;color:var(--dim);margin:0 8px;}
+
+  /* 盤面の帯 */
+  /* PC: 盤面の左の空きに縦長パネルとして置く (手札・レーンに重ねない) */
+  .arr-bar.sel-bar{left:24px;top:50%;bottom:auto;transform:translateY(-50%);width:300px;max-width:none;
+    align-items:stretch;gap:10px;padding:12px 14px;border-radius:16px;
+    background:linear-gradient(180deg,rgba(12,16,30,.97),rgba(6,8,17,.97));
+    border:1px solid rgba(99,243,255,.22);box-shadow:0 20px 60px rgba(0,0,0,.65);}
+  .arr-bar.sel-bar .arr-btns{justify-content:flex-end;flex-wrap:wrap;gap:8px;}
+  .arr-bar.sel-bar .arr-btn.ok{flex:1;}
+  .arr-bar.sel-bar .arr-btn{padding:10px 18px;white-space:nowrap;}
+  .arr-btn.ok{background:linear-gradient(100deg,rgba(109,255,194,.2),rgba(99,243,255,.14));min-width:92px;}
+  .arr-btn.ghost{background:transparent;border-color:transparent;color:var(--dim);letter-spacing:.06em;}
+  .arr-btn.ghost:hover{color:var(--ink);border-color:rgba(255,255,255,.2);}
+  .sel-chosen{display:flex;flex-wrap:wrap;gap:6px;}
+  .sel-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 8px 5px 5px;border-radius:8px;cursor:pointer;
+    background:rgba(239,208,108,.12);border:1px solid rgba(239,208,108,.5);color:var(--ink);font:700 11px/1 system-ui;}
+  .sel-chip b{display:grid;place-items:center;width:17px;height:17px;border-radius:5px;background:var(--gold);color:#1a1405;font-size:10px;}
+  .sel-chip i{font-style:normal;color:var(--dim);margin-left:2px;}
+
+  /* 一覧ダイアログ */
+  #modalTitle .sel-head{margin-bottom:2px;}
+  #modalBody.sel-cards .mchoice,#modalBody .sel-line{display:flex;align-items:center;gap:12px;}
+  .sel-thumb{--pc:#8fa8c8;flex:none;width:34px;height:47px;border-radius:5px;overflow:hidden;display:grid;place-items:center;
+    background:rgba(255,255,255,.05);border:1px solid color-mix(in srgb,var(--pc) 60%,transparent);}
+  .sel-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+  .sel-thumb i{font:800 16px/1 system-ui;font-style:normal;color:var(--dim);}
+  .sel-cl{flex:1;min-width:0;}
+  .sel-no{display:grid;place-items:center;width:22px;height:22px;border-radius:7px;background:var(--gold);color:#1a1405;font:900 12px/1 system-ui;}
+  .mchoice.ghost{background:transparent;border-color:transparent;color:var(--dim);text-align:center;}
+  .mchoice.sel-ok{text-align:center;font-size:13px;letter-spacing:.12em;}
+  .sel-ln{flex:none;display:grid;place-items:center;width:30px;height:30px;border-radius:8px;
+    border:1px solid rgba(255,255,255,.2);font:900 14px/1 system-ui;color:var(--dim);}
+  .sel-lp{display:flex;flex-direction:column;gap:3px;}
+  .sel-lp b{font:800 13px/1 system-ui;letter-spacing:.08em;}
+  .sel-lp small{margin:0;font:600 10px/1 system-ui;color:var(--dim);}
+  .sel-lp em{font-style:normal;font-weight:800;}
+  .sel-grid{display:grid;gap:8px;}
+  .sel-protos{grid-template-columns:repeat(3,1fr);}
+  .sel-proto{--pc:var(--cyan);position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:5px;
+    padding:14px 12px 12px;border-radius:10px;cursor:pointer;text-align:left;overflow:hidden;color:var(--ink);
+    background:linear-gradient(135deg,color-mix(in srgb,var(--pc) 22%,transparent),rgba(255,255,255,.02) 70%);
+    border:1px solid color-mix(in srgb,var(--pc) 45%,transparent);transition:transform .14s,border-color .14s,box-shadow .14s;}
+  .sel-proto::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--pc);box-shadow:0 0 12px var(--pc);}
+  .sel-proto b{font:900 13px/1 system-ui;letter-spacing:.1em;}
+  .sel-proto small{font:700 9px/1 system-ui;letter-spacing:.12em;color:var(--dim);}
+  .sel-proto:hover,.sel-proto:focus-visible{transform:translateY(-2px);border-color:var(--pc);
+    box-shadow:0 8px 24px color-mix(in srgb,var(--pc) 30%,transparent);outline:none;}
+  .sel-values{grid-template-columns:repeat(7,1fr);}
+  .sel-value{aspect-ratio:3/4;border-radius:10px;cursor:pointer;color:var(--ink);font:900 26px/1 system-ui;
+    font-variant-numeric:tabular-nums;background:linear-gradient(180deg,rgba(99,243,255,.1),rgba(255,255,255,.02));
+    border:1px solid rgba(99,243,255,.28);transition:transform .14s,border-color .14s,color .14s;}
+  .sel-value:hover,.sel-value:focus-visible{transform:translateY(-3px);border-color:var(--gold);color:var(--gold);outline:none;}
+  @media (prefers-reduced-motion:reduce){ .sel-proto,.sel-value,.mchoice{transition:none;} }
+
   /* ---------- 対局後の導線 ---------- */
   #endBar{position:fixed;left:50%;bottom:18vh;transform:translateX(-50%) translateY(8px);z-index:45;
     display:none;flex-direction:column;align-items:center;gap:12px;padding:16px 22px;border-radius:16px;
@@ -730,6 +806,15 @@
   @media (max-width:860px){
     /* 選択バーは手札に重ねず、プロンプト直下の空き領域に置く (.arr-bar より後ろで上書き) */
     .arr-bar{top:13vh;bottom:auto;}
+    /* 狭い画面では帯を画面幅いっぱいに (中央寄せの max-content だとボタンが潰れる) */
+    .arr-bar.sel-bar{left:10px;right:10px;width:auto;max-width:none;transform:none;top:52px;}
+    .arr-bar.sel-bar .arr-btn{flex:1;padding:12px 10px;}
+    .arr-bar.sel-bar .arr-btn.ghost{flex:0 0 auto;}
+    .sel-q{font-size:14px;}
+    .sel-protos{grid-template-columns:repeat(2,1fr);}
+    .sel-values{grid-template-columns:repeat(4,1fr);}
+    .sel-value{aspect-ratio:auto;padding:14px 0;}
+    #modalCard{width:calc(100vw - 20px);max-height:62vh;}
     #toast{bottom:19vh;}   /* 選択バー (.arr-bar, 12vh) と重ねない */
     /* タップ用: プレビューは中央に大きく (タップで表示、他をタップで消える) */
     #preview{left:50%;top:44%;height:60vh;transform:translate(-50%,-50%) scale(.95);transform-origin:center;}

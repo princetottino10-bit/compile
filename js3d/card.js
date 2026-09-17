@@ -188,6 +188,14 @@ export function setSelected(card, on, colorHex) {
   ud.selected = !!on;
 }
 
+/* 選べる候補: 面は光らせず (アートが白く褪せて、候補外より目立たなくなる)、
+   選択と同じ縁取りだけを水色で出す。選んだ札は setSelected の金色が上書きする */
+export function setCandidate(card, on) {
+  setSelected(card, !!on, 0x63f3ff);
+  if (card.userData.selectTint) card.userData.selectTint.visible = false;
+  card.userData.selected = false;
+}
+
 /* いま操作できないカードを沈める (MD の「発動できない札」に相当) */
 export function setDim(card, dim) {
   const v = dim ? 0.55 : 1;

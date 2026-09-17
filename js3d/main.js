@@ -13,6 +13,7 @@ import { mountTrainingTools } from './training.js';
 import * as ROOM from './room.js';
 import { runRoomLobby } from './roomui.js';
 import { reqText } from './prompts.js';
+import { selectHead, bindSelectHead } from './selectui.js';
 import { faceImageURL, activationImageURL, pruneFaceCache, ART_SETS, setMaxAnisotropy } from './cardtex.js';
 import * as FX from './fx.js';
 import { buildArena } from './arena.js';
@@ -223,6 +224,7 @@ async function boot() {
     diag: () => ({ busy, selectedUid, tweens: TW.activeCount(), marks: window.__bootMarks }),
     arrange: (req) => arrangeOnBoard(req),
     pickTest: (req) => pickOnBoard(req),
+    askTest: (req) => askUser(req),
     fp: (st) => visualFingerprint(st),
     /* 演出だけを再生して確認する (盤面の状態は変えない) */
     testCompile: (line, side) => {
@@ -861,6 +863,12 @@ function showPreview(uid) {
   const box = document.getElementById('preview');
   if (!box) return;
   if (isCompactHandUI()) {
+    /* 対象選択中に候補を触ったのは「選ぶ」操作。効果パネルで選択帯を隠さない */
+    if (uid && boardPick && Array.isArray(boardPick.req.candidates) && boardPick.req.candidates.includes(uid)) {
+      previewUid = null;
+      UI.hideCardNote();
+      return;
+    }
     if (uid === previewUid) return;
     previewUid = uid;
     box.classList.remove('show');
@@ -1464,8 +1472,9 @@ function pickOnBoard(req) {
         pickBarAsk(req) +
         '<div class="arr-btns">' +
           '<button class="arr-btn ok" id="pkYes" type="button">はい</button>' +
-          '<button class="arr-btn" id="pkNo" type="button">選ばない</button>' +
+          '<button class="arr-btn" id="pkNo" type="button">しない</button>' +
         '</div>';
+      bindPickBar(el);
       const done = (picks) => { boardPick = null; el.classList.remove('with-ask'); el.remove(); resolve(picks); };
       el.querySelector('#pkYes').onclick = () => done(['yes']);
       el.querySelector('#pkNo').onclick = () => done([]);
@@ -1515,11 +1524,14 @@ function pickOnBoard(req) {
 
 /* 選択バーの見出し。何に答えているのかをボタンのすぐ横に置く。
    上部の帯にだけ質問を出すと、下のボタンとの距離で意味が分からなくなる。 */
-function pickBarAsk(req) {
-  const src = req && req.context ? cardName(req.context) : '';
-  const ask = reqText({ ...req, context: null }, cardName) || '選んでください';
-  return '<div class="arr-ask">' + (src ? '<b>' + src + '</b>' : '') +
-    '<span>' + ask + '</span></div>';
+function pickBarAsk(req, meta) {
+  return selectHead(req, sourceInfo(req && req.context), meta);
+}
+
+/* 帯の組み立て後に呼ぶ: 発動元チップのタップで効果文を出す */
+function bindPickBar(el) {
+  el.classList.add('sel-bar');
+  bindSelectHead(el, showCardNoteFor);
 }
 
 function renderBoardPick() {
@@ -1542,17 +1554,26 @@ function renderBoardPick() {
   const canBack = !!(cur && cur.state && cur.state.pending && cur.state.pending.requestId === bp.req.id
     && Array.isArray(cur.state.pending.choices) && cur.state.pending.choices.length);
   el.classList.add('with-ask');
+  const where = bp.req.kind === 'pickHand' ? '手札の光っているカード' : '光っているカード';
   el.innerHTML =
-    pickBarAsk(bp.req) +
+    pickBarAsk(bp.req, { optional: bp.min === 0, count: bp.chosen.length, max: bp.max }) +
+    /* 何を選んだかを帯の中でも読めるようにする (盤面の金色だけでは見落とす) */
+    (bp.chosen.length
+      ? '<div class="sel-chosen">' + bp.chosen.map((u, i) =>
+          '<button type="button" class="sel-chip" data-uid="' + u + '"><b>' + (i + 1) + '</b>' +
+          (cardName(u) || '裏向きのカード') + '<i>×</i></button>').join('') + '</div>'
+      : '<div class="sel-hint">' + where + 'をタップ</div>') +
     '<div class="arr-btns">' +
+    (canBack ? '<button class="arr-btn" id="pkBack" type="button">← 戻る</button>' : '') +
+    '<button class="arr-btn ghost" id="pkList" type="button">一覧で選ぶ</button>' +
     (instant ? '' :
       '<button class="arr-btn ok" id="pkOk" type="button"' +
         (bp.chosen.length < bp.min ? ' disabled' : '') + '>' +
-        (bp.chosen.length === 0 && bp.min === 0 ? '選ばない' : '決定 (' + bp.chosen.length + '/' + bp.max + ')') +
+        (bp.chosen.length === 0 && bp.min === 0 ? '選ばない' : '決定') +
         '</button>') +
-    (canBack ? '<button class="arr-btn" id="pkBack" type="button">一つ前へ戻る</button>' : '') +
-    '<button class="arr-btn" id="pkList" type="button">リストで選ぶ</button>' +
     '</div>';
+  bindPickBar(el);
+  el.querySelectorAll('.sel-chip').forEach(c => { c.onclick = () => toggleBoardPick(c.dataset.uid); });
   const ok = el.querySelector('#pkOk');
   if (ok) ok.onclick = () => finishBoardPick(bp.chosen.slice());
   const back = el.querySelector('#pkBack');
@@ -1641,12 +1662,14 @@ function renderLinePick() {
     && Array.isArray(cur.state.pending.choices) && cur.state.pending.choices.length);
   el.classList.add('with-ask');
   el.innerHTML = pickBarAsk(bp.req) +
+    '<div class="sel-hint">' +
+    (hasFocus ? '<i class="sel-key gold"></i>移動するカード　<i class="sel-key mint"></i>移動先のライン' : '光っているラインをタップ') +
+    '</div>' +
     '<div class="arr-btns">' +
-    '<span class="effect-target-legend">' +
-    (hasFocus ? '金色: 移動対象　緑色: 移動先' : '緑色のラインから選択') +
-    '</span>' + (canBack ? '<button class="arr-btn" id="pkBack" type="button">対象を選び直す</button>' : '') +
-    '<button class="arr-btn" id="pkList" type="button">リストで選ぶ</button>' +
+    (canBack ? '<button class="arr-btn" id="pkBack" type="button">← 対象を選び直す</button>' : '') +
+    '<button class="arr-btn ghost" id="pkList" type="button">一覧で選ぶ</button>' +
     '</div>';
+  bindPickBar(el);
   const back = el.querySelector('#pkBack');
   if (back) back.onclick = () => finishLinePick(PICK_BACK);
   el.querySelector('#pkList').onclick = () => finishLinePick(null);
@@ -2139,9 +2162,40 @@ function updateBgmTension(st) {
   setBgmTension(t);
 }
 
+/* 選択UIの見出しに出す発動元カード (公開情報の def ID) */
+function sourceInfo(defId) {
+  const d = defId && defIndex[defId];
+  return d ? { def: d.id, name: d.proto + ' ' + d.value, color: d.color } : null;
+}
+
 function choiceCtx() {
   return {
     cardName,
+    sourceInfo,
+    onSource: (defId) => showCardNoteFor(defId),
+    protoInfo: (name) => {
+      const st = shown();
+      const mine = st.players[ME].protocols.some(p => p.name === name);
+      const opp = st.players[1 - ME].protocols.some(p => p.name === name);
+      return { color: protoIndex[name] && protoIndex[name].color,
+        owner: mine && opp ? '両者' : mine ? '自分' : opp ? '相手' : '' };
+    },
+    lineInfo: (l) => {
+      const st = shown();
+      const info = (side) => {
+        const p = st.players[side].protocols[l];
+        return { name: p.name, color: (protoIndex[p.name] && protoIndex[p.name].color) || '#cfefff' };
+      };
+      return { mine: info(ME), opp: info(1 - ME) };
+    },
+    cardThumb: (cand) => {
+      const uid = String(cand).split('|')[0];
+      const c = shown().cards[uid];
+      if (!c) return null;
+      const d = defIndex[c.def];
+      const visible = d && (c.faceUp || ((c.knownTo || 0) & (1 << ME)));
+      return visible ? { img: faceImageURL(d), color: d.color } : { img: null, color: '#8fa8c8' };
+    },
     cardLabel: (cand) => {
       /* play-free 等は "uid|line|facing" の複合候補 */
       if (String(cand).indexOf('|') >= 0) {
