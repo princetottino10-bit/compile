@@ -3090,6 +3090,9 @@ const AI_W = {
      1枚ぶんの差ではなく、手番1つぶんとして数える。
      emptyHand: 手札が尽きた損得 / lowHand: あと1枚で尽きる */
   emptyHand: 34, lowHand: 10,
+  /* 相手の手番を挟んだ先の得は、そのまま足すと「1ターン休んで次に大きく動く」手
+     (リフレッシュ) を過大評価する。読んだ先の伸びぶんだけ割り引く */
+  futureDiscount: 0.55,
 };
 /* サイキック①ロックまわりの重み。通常 AI・特化 AI の区別なく共通で使う。
    lockPermanent/lockTemporary: 覆われた (永続) / 一番上 (1ターン) のロックの価値
@@ -3133,6 +3136,7 @@ const AI_DSH_W = {
   valueUp: 7, downFlat: 55, downText: 0.35, downMismatch: 0.3, downCombo: 0.4,
   uncoverBase: 22, uncoverMid: 0.8,
   emptyHand: 34, lowHand: 10,
+  futureDiscount: 0.55,
   compiledLead: 0,   // 最強同士のミラー 480 戦で 49.8% [45.3, 54.2]。効果が出ていないので切っておく
 };
 function setAiSpecialistWeights(obj) {
@@ -4601,9 +4605,14 @@ function minimaxMin(state, me, alpha, beta, deadline) {
     if (!res || res.error || res.requests.length) continue;
     if (fairOpponent) aiRestoreKnownCards(res.state, state, me);
     const s2 = res.state;
-    const sc = (s2.winner === null && s2.turn === me)
-      ? minimaxMaxShallow(s2, me, alpha, beta, deadline)
-      : aiScore(s2, me);
+    let sc;
+    if (s2.winner === null && s2.turn === me) {
+      /* 自分の次の手まで読んだ値は、相手の手番を1つ挟んだ先の話。
+         満額で数えるとリフレッシュのような「溜める手」が強く見えすぎる */
+      const base = aiScore(s2, me);
+      const deep = minimaxMaxShallow(s2, me, alpha, beta, deadline);
+      sc = base + (deep - base) * aiWeightsFor(s2, me).futureDiscount;
+    } else sc = aiScore(s2, me);
     const tactical = sc + aiTransitionScore(searchState, res, me);
     if (tactical < val) val = tactical;
     if (val <= alpha) return val;
