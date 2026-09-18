@@ -3,7 +3,7 @@
  *   盤面そのものは 3D が担当し、ここは数値・ログ・選択ダイアログだけを持つ。
  * ========================================================================= */
 
-import { reqText, optionLabel } from './prompts.js';
+import { selectHead, bindSelectHead, optionBody, choiceLabel } from './selectui.js';
 import { svgIcon } from './icons.js';
 
 const $ = (sel) => document.querySelector(sel);
@@ -215,8 +215,17 @@ export function askChoice(req, ctx) {
     };
     activeModalFinish = finish;
 
-    title.textContent = reqText(req, ctx.cardName) || labelOf(req.kind);
+    const source = ctx.sourceInfo ? ctx.sourceInfo(req.context) : null;
+    const multi = (req.kind === 'pickCard' || req.kind === 'pickHand') && (req.max === undefined ? 1 : req.max) > 1;
+    const head = (count) => {
+      title.innerHTML = selectHead(req, source, {
+        optional: req.optional || req.min === 0, count, max: multi ? req.max : 0
+      });
+      bindSelectHead(title, ctx.onSource);
+    };
+    head(0);
     body.innerHTML = '';
+    body.className = '';
 
     const addBtn = (label, onClick, cls) => {
       const b = document.createElement('button');
@@ -231,10 +240,24 @@ export function askChoice(req, ctx) {
       addBtn('はい', () => finish(['yes']), 'yes');
       addBtn('いいえ', () => finish([]));
     } else if (req.kind === 'pickLine') {
-      for (const l of req.lines) addBtn('ライン ' + (l + 1) + ' <small>' + (ctx.lineLabel ? ctx.lineLabel(l) : '') + '</small>', () => finish([l]));
+      /* ラインは両者のプロトコル名で見分ける (番号だけでは盤面と対応が取りにくい) */
+      body.className = 'sel-lines';
+      for (const l of req.lines) {
+        const info = ctx.lineInfo ? ctx.lineInfo(l) : null;
+        addBtn('<span class="sel-ln">' + (l + 1) + '</span>' +
+          (info ? '<span class="sel-lp"><b style="color:' + info.mine.color + '">' + info.mine.name + '</b>' +
+            '<small>相手 <em style="color:' + info.opp.color + '">' + info.opp.name + '</em></small></span>' : ''),
+          () => finish([l]), 'sel-line');
+      }
     } else if (req.kind === 'option') {
-      req.options.forEach((o, i) => addBtn(optionLabel(o), () => finish([i])));
-      if (req.optional) addBtn('何もしない', () => finish([]));
+      const special = optionBody(req, ctx);
+      if (special) {
+        body.insertAdjacentHTML('beforeend', special.html);
+        special.bind(body, finish);
+      } else {
+        req.options.forEach((o, i) => addBtn(choiceLabel(o), () => finish([i])));
+      }
+      if (req.optional) addBtn('何もしない', () => finish([]), 'ghost');
     } else if (req.kind === 'arrange') {
       /* 現在の並びのまま (恒等順列) はルール上選べないので出さない */
       const perms = req.exact === 'transposition'
@@ -251,9 +274,16 @@ export function askChoice(req, ctx) {
       const chosen = [];
       const rerender = () => {
         body.innerHTML = '';
+        body.className = 'sel-cards';
+        if (multi) head(chosen.length);
         for (const uid of req.candidates) {
           const on = chosen.includes(uid);
-          const b = addBtn(ctx.cardLabel ? ctx.cardLabel(uid) : uid, () => {
+          const thumb = ctx.cardThumb ? ctx.cardThumb(uid) : null;
+          const label = (thumb ? '<span class="sel-thumb"' + (thumb.color ? ' style="--pc:' + thumb.color + '"' : '') + '>' +
+              (thumb.img ? '<img alt="" src="' + thumb.img + '">' : '<i>?</i>') + '</span>' : '') +
+            '<span class="sel-cl">' + (ctx.cardLabel ? ctx.cardLabel(uid) : uid) + '</span>' +
+            (on && multi ? '<span class="sel-no">' + (chosen.indexOf(uid) + 1) + '</span>' : '');
+          const b = addBtn(label, () => {
             const i = chosen.indexOf(uid);
             if (i >= 0) chosen.splice(i, 1);
             else if (chosen.length < max) chosen.push(uid);
@@ -266,12 +296,11 @@ export function askChoice(req, ctx) {
           }
         }
         if (max > 1 || min === 0) {
-          const ok = addBtn('決定 (' + chosen.length + '/' + max + ')', () => {
+          const ok = addBtn(chosen.length === 0 && min === 0 ? '選ばない' : '決定', () => {
             if (chosen.length >= min) finish(chosen.slice());
-          }, 'yes');
+          }, 'yes sel-ok');
           if (chosen.length < min) ok.disabled = true;
         }
-        if (min === 0) addBtn('選ばない', () => finish([]));
       };
       rerender();
     }
@@ -500,9 +529,3 @@ export function resultCutIn(win) {
   }, 3600));
 }
 
-function labelOf(kind) {
-  return {
-    pickCard: 'カードを選ぶ', pickHand: '手札を選ぶ', pickLine: 'ラインを選ぶ',
-    yesNo: '確認', option: '効果を選ぶ', arrange: '並び順を決める'
-  }[kind] || '選択';
-}

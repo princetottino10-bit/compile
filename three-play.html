@@ -375,6 +375,12 @@
   @media (max-width:860px){
     #cardNote{left:10px;right:10px;width:auto;bottom:66px;}
     #cardNote[data-place="top"]{top:58px;bottom:auto;}
+    /* カードを触ったときの情報は右上の空きに置き、盤面と手札を隠さない */
+    #cardNote[data-place="corner"]{left:auto;right:8px;top:62px;bottom:auto;width:min(63vw,250px);
+      max-height:52vh;overflow-y:auto;}
+    #cardNote.large[data-place="corner"] .cn-head{font-size:14px;}
+    #cardNote.large[data-place="corner"] .cn-text{font-size:12.5px;line-height:1.55;}
+    #cardNote.large[data-place="corner"] .cn-zone{font-size:10px;line-height:1.8;min-width:30px;}
   }
 
   /* ---------- モーダル ---------- */
@@ -490,6 +496,82 @@
   .arr-bar .arr-ask b{font:800 11px/1.4 system-ui;letter-spacing:.06em;color:var(--cyan);}
   .arr-bar .arr-btns{display:flex;gap:10px;}
   .arr-btn:hover:not(:disabled){border-color:var(--cyan);}
+
+  /* ---------- 効果の選択UI (盤面の帯・一覧ダイアログ共通) ----------
+     発動元カードの色を --accent として、見出しの縁とチップに使う */
+  .sel-head{--accent:var(--cyan);display:flex;flex-direction:column;align-items:flex-start;gap:6px;width:100%;}
+  .sel-src{display:inline-flex;align-items:center;gap:7px;padding:4px 10px 4px 5px;border-radius:999px;cursor:pointer;
+    background:color-mix(in srgb,var(--accent) 12%,rgba(8,11,21,.9));
+    border:1px solid color-mix(in srgb,var(--accent) 55%,transparent);color:var(--ink);transition:background .15s;}
+  .sel-src i{width:14px;height:14px;border-radius:4px;background:var(--accent);box-shadow:0 0 10px var(--accent);}
+  .sel-src b{font:800 11px/1 system-ui;letter-spacing:.08em;}
+  .sel-src span{font:700 9px/1 system-ui;letter-spacing:.1em;color:var(--dim);padding-left:6px;
+    border-left:1px solid rgba(255,255,255,.18);}
+  .sel-src:hover{background:color-mix(in srgb,var(--accent) 24%,rgba(8,11,21,.9));}
+  .sel-q{font:800 15px/1.45 system-ui;letter-spacing:.02em;color:var(--ink);text-wrap:balance;}
+  .sel-meta{display:flex;gap:6px;align-items:center;}
+  .sel-tag{padding:2px 8px;border-radius:999px;font:800 9px/1.5 system-ui;letter-spacing:.14em;
+    color:var(--dim);border:1px solid rgba(255,255,255,.2);}
+  .sel-count{font:600 11px/1 system-ui;color:var(--dim);font-variant-numeric:tabular-nums;}
+  .sel-count b{font-size:15px;color:var(--gold);}
+  .sel-hint{font:600 11px/1.5 system-ui;color:var(--dim);display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .sel-key{display:inline-block;width:10px;height:10px;border-radius:3px;}
+  .sel-key.gold{background:var(--gold);box-shadow:0 0 8px var(--gold);}
+  .sel-key.mint{background:var(--mint);box-shadow:0 0 8px var(--mint);margin-left:6px;}
+  .sel-arrow{font-style:normal;color:var(--dim);margin:0 8px;}
+
+  /* 盤面の帯 */
+  /* PC: 盤面の左の空きに縦長パネルとして置く (手札・レーンに重ねない) */
+  .arr-bar.sel-bar{left:24px;top:50%;bottom:auto;transform:translateY(-50%);width:300px;max-width:none;
+    align-items:stretch;gap:10px;padding:12px 14px;border-radius:16px;
+    background:linear-gradient(180deg,rgba(12,16,30,.97),rgba(6,8,17,.97));
+    border:1px solid rgba(99,243,255,.22);box-shadow:0 20px 60px rgba(0,0,0,.65);}
+  .arr-bar.sel-bar .arr-btns{justify-content:flex-end;flex-wrap:wrap;gap:8px;}
+  .arr-bar.sel-bar .arr-btn.ok{flex:1;}
+  .arr-bar.sel-bar .arr-btn{padding:10px 18px;white-space:nowrap;}
+  .arr-btn.ok{background:linear-gradient(100deg,rgba(109,255,194,.2),rgba(99,243,255,.14));min-width:92px;}
+  .arr-btn.ghost{background:transparent;border-color:transparent;color:var(--dim);letter-spacing:.06em;}
+  .arr-btn.ghost:hover{color:var(--ink);border-color:rgba(255,255,255,.2);}
+  .sel-chosen{display:flex;flex-wrap:wrap;gap:6px;}
+  .sel-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 8px 5px 5px;border-radius:8px;cursor:pointer;
+    background:rgba(239,208,108,.12);border:1px solid rgba(239,208,108,.5);color:var(--ink);font:700 11px/1 system-ui;}
+  .sel-chip b{display:grid;place-items:center;width:17px;height:17px;border-radius:5px;background:var(--gold);color:#1a1405;font-size:10px;}
+  .sel-chip i{font-style:normal;color:var(--dim);margin-left:2px;}
+
+  /* 一覧ダイアログ */
+  #modalTitle .sel-head{margin-bottom:2px;}
+  #modalBody.sel-cards .mchoice,#modalBody .sel-line{display:flex;align-items:center;gap:12px;}
+  .sel-thumb{--pc:#8fa8c8;flex:none;width:34px;height:47px;border-radius:5px;overflow:hidden;display:grid;place-items:center;
+    background:rgba(255,255,255,.05);border:1px solid color-mix(in srgb,var(--pc) 60%,transparent);}
+  .sel-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+  .sel-thumb i{font:800 16px/1 system-ui;font-style:normal;color:var(--dim);}
+  .sel-cl{flex:1;min-width:0;}
+  .sel-no{display:grid;place-items:center;width:22px;height:22px;border-radius:7px;background:var(--gold);color:#1a1405;font:900 12px/1 system-ui;}
+  .mchoice.ghost{background:transparent;border-color:transparent;color:var(--dim);text-align:center;}
+  .mchoice.sel-ok{text-align:center;font-size:13px;letter-spacing:.12em;}
+  .sel-ln{flex:none;display:grid;place-items:center;width:30px;height:30px;border-radius:8px;
+    border:1px solid rgba(255,255,255,.2);font:900 14px/1 system-ui;color:var(--dim);}
+  .sel-lp{display:flex;flex-direction:column;gap:3px;}
+  .sel-lp b{font:800 13px/1 system-ui;letter-spacing:.08em;}
+  .sel-lp small{margin:0;font:600 10px/1 system-ui;color:var(--dim);}
+  .sel-lp em{font-style:normal;font-weight:800;}
+  .sel-grid{display:grid;gap:8px;}
+  .sel-protos{grid-template-columns:repeat(3,1fr);}
+  .sel-proto{--pc:var(--cyan);position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:5px;
+    padding:14px 12px 12px;border-radius:10px;cursor:pointer;text-align:left;overflow:hidden;color:var(--ink);
+    background:linear-gradient(135deg,color-mix(in srgb,var(--pc) 22%,transparent),rgba(255,255,255,.02) 70%);
+    border:1px solid color-mix(in srgb,var(--pc) 45%,transparent);transition:transform .14s,border-color .14s,box-shadow .14s;}
+  .sel-proto::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--pc);box-shadow:0 0 12px var(--pc);}
+  .sel-proto b{font:900 13px/1 system-ui;letter-spacing:.1em;}
+  .sel-proto small{font:700 9px/1 system-ui;letter-spacing:.12em;color:var(--dim);}
+  .sel-proto:hover,.sel-proto:focus-visible{transform:translateY(-2px);border-color:var(--pc);
+    box-shadow:0 8px 24px color-mix(in srgb,var(--pc) 30%,transparent);outline:none;}
+  .sel-values{grid-template-columns:repeat(7,1fr);}
+  .sel-value{aspect-ratio:3/4;border-radius:10px;cursor:pointer;color:var(--ink);font:900 26px/1 system-ui;
+    font-variant-numeric:tabular-nums;background:linear-gradient(180deg,rgba(99,243,255,.1),rgba(255,255,255,.02));
+    border:1px solid rgba(99,243,255,.28);transition:transform .14s,border-color .14s,color .14s;}
+  .sel-value:hover,.sel-value:focus-visible{transform:translateY(-3px);border-color:var(--gold);color:var(--gold);outline:none;}
+  @media (prefers-reduced-motion:reduce){ .sel-proto,.sel-value,.mchoice{transition:none;} }
 
   /* ---------- 対局後の導線 ---------- */
   #endBar{position:fixed;left:50%;bottom:18vh;transform:translateX(-50%) translateY(8px);z-index:45;
@@ -643,37 +725,83 @@
   .tt-options b{display:block;margin-bottom:12px;color:var(--cyan);font:900 12px/1 system-ui;letter-spacing:.2em;}
   .tt-options button{width:100%;margin-top:8px;padding:11px 13px;font-size:11px;}
 
-  /* ---------- トレーニング: 自由配置ツール ---------- */
-  #trainingTools{position:fixed;left:14px;top:82px;z-index:18;width:266px;padding:12px;
-    background:rgba(5,8,17,.89);border:1px solid rgba(109,255,194,.32);border-radius:13px;
-    box-shadow:0 16px 44px rgba(0,0,0,.5),0 0 26px rgba(109,255,194,.08);backdrop-filter:blur(14px);}
-  .tr-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font:900 11px/1 system-ui;letter-spacing:.16em;color:#c9ffe9;}
-  .tr-head span{padding:4px 6px;border:1px solid rgba(109,255,194,.35);border-radius:5px;color:var(--mint);font-size:8px;}
-  #trainingTools button{cursor:pointer;border:1px solid rgba(255,255,255,.14);border-radius:8px;background:rgba(255,255,255,.05);color:var(--ink);
-    font:800 10px/1.1 system-ui;letter-spacing:.05em;transition:background .16s,border-color .16s,transform .16s;}
-  #trainingTools button:hover{border-color:var(--mint);background:rgba(109,255,194,.12);transform:translateY(-1px);}
-  .tr-card{width:100%;padding:11px;color:#c9ffe9!important;border-color:rgba(109,255,194,.4)!important;}
-  .tr-selected{min-height:28px;padding:9px 2px 3px;color:var(--mint);font:800 11px/1.35 system-ui;letter-spacing:.04em;}
-  #trainingTools p{margin:7px 0 10px;color:var(--dim);font:600 9px/1.45 system-ui;}
-  .tr-row{display:flex;gap:6px;}.tr-row button{flex:1;padding:9px 5px;}.tr-row button:last-child{color:#ffc7e4!important;}
-  .tr-picker{position:fixed;left:50%;top:50%;width:min(700px,calc(100vw - 28px));max-height:min(76vh,720px);padding:14px;
-    transform:translate(-50%,-50%);border:1px solid rgba(99,243,255,.38);border-radius:15px;background:rgba(5,8,17,.97);
-    box-shadow:0 24px 80px rgba(0,0,0,.72);backdrop-filter:blur(18px);}
-  .tr-picker[hidden]{display:none;}.tr-picker-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;color:#cfefff;font:900 13px/1 system-ui;letter-spacing:.12em;}
-  .tr-picker-head button{padding:7px 11px!important;}.tr-picker input{width:100%;padding:11px 12px;border:1px solid rgba(99,243,255,.28);border-radius:8px;
-    background:rgba(255,255,255,.06);color:var(--ink);font:700 12px/1 system-ui;outline:none;}.tr-picker input:focus{border-color:var(--cyan);}
-  .tr-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:7px;max-height:min(57vh,560px);margin-top:10px;overflow:auto;padding-right:4px;}
-  .tr-item{display:flex;min-width:0;gap:8px;padding:6px!important;text-align:left;align-items:center;}.tr-item img{width:37px;height:52px;object-fit:cover;border-radius:3px;}
-  .tr-item span{min-width:0;}.tr-item b{display:block;color:#cfefff;font:900 10px/1.2 system-ui;letter-spacing:.08em;}.tr-item small{display:-webkit-box;margin-top:4px;overflow:hidden;color:var(--dim);font:600 8px/1.25 system-ui;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+  /* ---------- トレーニング: 検証盤面の操作パネル ----------
+     PC は盤面の左に縦長、スマホは操作ボタンの上に引き出し。
+     効果の選択中は選択パネルを優先して、こちらは薄くする */
+  #trainingTools{position:fixed;left:14px;top:64px;z-index:18;width:312px;max-height:calc(100vh - 150px);
+    display:flex;flex-direction:column;border-radius:14px;overflow:hidden;
+    background:linear-gradient(180deg,rgba(10,14,26,.96),rgba(5,8,17,.96));
+    border:1px solid rgba(109,255,194,.28);box-shadow:0 18px 50px rgba(0,0,0,.55);transition:opacity .2s;}
+  body.training-busy #trainingTools{opacity:.18;pointer-events:none;}
+  /* 左はトレーニングパネルが使うので、ログは右の情報欄の間へ */
+  body.training #log{left:auto;right:14px;top:180px;}
+  #trainingTools button{cursor:pointer;color:var(--ink);font-family:system-ui;}
+  .tr-top{display:flex;align-items:center;gap:8px;padding:10px 10px 8px 14px;border-bottom:1px solid rgba(255,255,255,.07);}
+  .tr-title{font:900 11px/1 system-ui;letter-spacing:.2em;color:var(--mint);}
+  .tr-seg{display:flex;margin-left:auto;padding:2px;border-radius:999px;background:rgba(255,255,255,.06);}
+  .tr-seg button{padding:6px 11px;border:0;border-radius:999px;background:transparent;font:800 11px/1 system-ui!important;color:var(--dim)!important;}
+  .tr-seg button.on{background:rgba(109,255,194,.2);color:var(--mint)!important;box-shadow:inset 0 0 0 1px rgba(109,255,194,.5);}
+  .tr-fold{min-width:28px;height:28px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:transparent;font-size:12px!important;}
+  .tr-body{overflow-y:auto;padding:10px 12px 12px;display:flex;flex-direction:column;gap:10px;}
+  #trainingTools.collapsed .tr-body{display:none;}
+  #trainingTools.collapsed.has-sel .tr-body{display:flex;}
+  #trainingTools.collapsed .tr-fold{width:auto;padding:0 12px;border-color:rgba(109,255,194,.5);color:var(--mint);font:800 11px/1 system-ui!important;}
+  .tr-sides{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+  .tr-sides button{padding:8px 0;border-radius:9px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);
+    font:800 11px/1 system-ui;letter-spacing:.06em;color:var(--dim)!important;}
+  .tr-sides button.me.on{border-color:rgba(109,255,194,.6);color:var(--mint)!important;background:rgba(109,255,194,.1);}
+  .tr-sides button.opp.on{border-color:rgba(255,59,157,.6);color:#ff9fcf!important;background:rgba(255,59,157,.1);}
+  .tr-groups{display:flex;flex-direction:column;gap:8px;}
+  .tr-group{--pc:var(--cyan);}
+  .tr-gname{font:900 9px/1 system-ui;letter-spacing:.16em;color:color-mix(in srgb,var(--pc) 60%,#fff);margin:0 0 4px 2px;}
+  .tr-tiles{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;}
+  .tr-tile{position:relative;padding:0;aspect-ratio:5/7;border-radius:5px;overflow:hidden;
+    border:1px solid color-mix(in srgb,var(--pc) 35%,transparent);background:#0a0e1a;transition:transform .12s,border-color .12s;}
+  .tr-tile img{width:100%;height:100%;object-fit:cover;display:block;}
+  .tr-tile b{position:absolute;right:2px;top:2px;min-width:14px;padding:1px 3px;border-radius:4px;
+    background:rgba(0,0,0,.72);font:900 10px/1.1 system-ui;color:#fff;}
+  .tr-tile.used img{opacity:.42;filter:saturate(.5);}
+  .tr-zone{position:absolute;left:0;right:0;bottom:0;padding:2px 0;font:800 8px/1.1 system-ui;font-style:normal;
+    text-align:center;letter-spacing:.06em;background:rgba(0,0,0,.78);color:var(--ink);}
+  .tr-zone.z-field{color:var(--mint);}.tr-zone.z-hand{color:var(--cyan);}.tr-zone.z-trash{color:#ff9fcf;}
+  .tr-tile:hover{transform:translateY(-2px);border-color:var(--pc);}
+  .tr-tile.on{border:2px solid var(--gold);box-shadow:0 0 14px rgba(239,208,108,.55);}
+  .tr-tile.on img{opacity:1;filter:none;}
+  .tr-sel{--pc:var(--cyan);padding:10px;border-radius:11px;background:rgba(255,255,255,.035);
+    border:1px solid color-mix(in srgb,var(--pc) 45%,transparent);display:flex;flex-direction:column;gap:8px;}
+  .tr-sel.empty{align-items:center;border-style:dashed;border-color:rgba(255,255,255,.14);}
+  .tr-sel.empty span{font:600 11px/1.5 system-ui;color:var(--dim);}
+  .tr-sel-head{display:flex;align-items:center;gap:8px;}
+  .tr-sel-head b{font:900 13px/1 system-ui;letter-spacing:.08em;color:color-mix(in srgb,var(--pc) 55%,#fff);}
+  .tr-sel-head span{padding:2px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.18);font:700 9px/1.4 system-ui;color:var(--dim);}
+  .tr-x{margin-left:auto;width:24px;height:24px;border-radius:7px;border:0;background:rgba(255,255,255,.06);}
+  .tr-face{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+  .tr-face button{padding:8px 0;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:transparent;font:800 11px/1 system-ui;color:var(--dim)!important;}
+  .tr-face button.on{border-color:var(--gold);color:var(--gold)!important;background:rgba(239,208,108,.1);}
+  .tr-hint{margin:0;font:600 10px/1.5 system-ui;color:var(--dim);}
+  .tr-acts{display:flex;gap:5px;flex-wrap:wrap;}
+  .tr-act{flex:1;padding:9px 6px;border-radius:8px;border:1px solid rgba(99,243,255,.3);background:rgba(99,243,255,.07);font:800 11px/1 system-ui;}
+  .tr-act:hover{border-color:var(--cyan);background:rgba(99,243,255,.15);}
+  .tr-tools{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+  .tr-tools span{font:700 10px/1 system-ui;color:var(--dim);margin-right:2px;}
+  .tr-tools button{flex:1;padding:8px 4px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);font:800 10px/1 system-ui;}
+  .tr-tools button:hover{border-color:var(--mint);}
+  .tr-foot{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding-top:2px;border-top:1px solid rgba(255,255,255,.07);}
+  .tr-foot button{margin-top:8px;padding:9px 0;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:transparent;font:800 11px/1 system-ui;}
+  .tr-foot button:disabled{opacity:.35;cursor:not-allowed;}
+  .tr-foot button.warn{color:#ffb3d6!important;border-color:rgba(255,59,157,.35);}
   @media (prefers-reduced-motion: reduce){
     .tt-strip{animation:none;}
     .tt-start{animation:none;opacity:1;}
   }
   @media (max-width:700px){
     .tt-center{top:40%;}.tt-menu{grid-template-columns:1fr;gap:7px;margin-top:16px;}.tt-menu button{padding:11px 15px;font-size:12px;}.tt-menu button small{display:inline;margin:0 0 0 8px;}
-    #trainingTools{left:10px;right:10px;top:auto;bottom:67px;width:auto;padding:9px 11px;}.tr-head{margin-bottom:6px;}.tr-selected{display:inline-block;min-height:0;padding:0 8px;}.tr-card{width:auto;padding:8px 10px!important;}
-    #trainingTools p{display:none;}.tr-row{position:absolute;right:11px;bottom:9px;width:138px;}.tr-row button{padding:8px 3px;font-size:8px;}
-    .tr-picker{padding:11px;}.tr-list{grid-template-columns:1fr 1fr;max-height:58vh;}
+    #trainingTools{left:8px;right:8px;top:auto;bottom:62px;width:auto;max-height:52vh;}
+    .tr-tiles{gap:3px;}
+    #trainingTools.has-sel .tr-sides,#trainingTools.has-sel .tr-groups,
+    #trainingTools.has-sel .tr-tools,#trainingTools.has-sel .tr-foot{display:none;}
+    #trainingTools.has-sel .tr-body{padding-top:8px;}
+    #trainingTools.has-sel .tr-top{padding-top:7px;padding-bottom:6px;}
   }
 
   /* ---------- プロトコル選択 ---------- */
@@ -730,6 +858,15 @@
   @media (max-width:860px){
     /* 選択バーは手札に重ねず、プロンプト直下の空き領域に置く (.arr-bar より後ろで上書き) */
     .arr-bar{top:13vh;bottom:auto;}
+    /* 狭い画面では帯を画面幅いっぱいに (中央寄せの max-content だとボタンが潰れる) */
+    .arr-bar.sel-bar{left:10px;right:10px;width:auto;max-width:none;transform:none;top:52px;}
+    .arr-bar.sel-bar .arr-btn{flex:1;padding:12px 10px;}
+    .arr-bar.sel-bar .arr-btn.ghost{flex:0 0 auto;}
+    .sel-q{font-size:14px;}
+    .sel-protos{grid-template-columns:repeat(2,1fr);}
+    .sel-values{grid-template-columns:repeat(4,1fr);}
+    .sel-value{aspect-ratio:auto;padding:14px 0;}
+    #modalCard{width:calc(100vw - 20px);max-height:62vh;}
     #toast{bottom:19vh;}   /* 選択バー (.arr-bar, 12vh) と重ねない */
     /* タップ用: プレビューは中央に大きく (タップで表示、他をタップで消える) */
     #preview{left:50%;top:44%;height:60vh;transform:translate(-50%,-50%) scale(.95);transform-origin:center;}

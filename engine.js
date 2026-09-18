@@ -1939,6 +1939,8 @@ function runTurnLoop(ctx) {
         }
         return; // プレイヤー入力待ち
       }
+      case 'training':
+        return; // トレーニング: ターンを進めず、次の操作を待つ
       case 'checkCache':
         doCheckCache(ctx);
         st.phase = 'end';
@@ -1978,6 +1980,99 @@ function legalActions(st) {
   return out;
 }
 
+/* ---------- トレーニング ----------
+   ルールの進行 (ターン・フェイズ) を持たない検証盤面。
+   カードを置く・反転する・移動するなどを任意の順で行い、effects が真なら
+   通常のプレイ・反転・削除・手札に戻すと同じ経路で効果を解決する。
+   効果の「自分」は操作したカードの持ち主。操作のあとは phase='training' に戻る。 */
+function trainingDetach(st, uid) {
+  for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++) removeFrom(st.lines[l][s], uid);
+  for (const pl of st.players) { removeFrom(pl.hand, uid); removeFrom(pl.deck, uid); removeFrom(pl.trash, uid); }
+  removeFrom(st.commitStack, uid);
+  st.cards[uid].commitDest = null;
+}
+
+function trainingLand(st, uid, to) {
+  const c = st.cards[uid];
+  const pl = st.players[c.owner];
+  if (to === 'hand') { c.zone = 'hand' + c.owner; c.faceUp = false; pl.hand.push(uid); }
+  else if (to === 'trash') { c.zone = 'trash' + c.owner; c.faceUp = true; pl.trash.push(uid); }
+  else { c.zone = 'deck' + c.owner; c.faceUp = false; pl.deck.unshift(uid); }
+}
+
+const TRAINING_ZONE = { hand: '手札', trash: '捨て札', deck: '山札の上' };
+
+function performTraining(ctx, a) {
+  const st = ctx.st;
+  const c = a.card === undefined ? null : st.cards[a.card];
+  if (a.card !== undefined && !c) throw { __err: 'カードが見つからない' };
+  const effects = !!a.effects;
+  if (c) st.turn = c.owner;            // 効果の「自分」= カードの持ち主
+  switch (a.type) {
+    case 'trainingPlace': {
+      if (!(a.line >= 0 && a.line <= 2)) throw { __err: 'ラインの指定が不正' };
+      const faceUp = !!a.faceUp;
+      if (effects) {
+        if (locate(st, a.card)) {
+          const info = extractCard(ctx, a.card);
+          removeFrom(st.commitStack, a.card);
+          fireUncover(ctx, info);
+        } else trainingDetach(st, a.card);
+        playToField(ctx, a.card, a.line, c.owner, faceUp);
+      } else {
+        trainingDetach(st, a.card);
+        c.faceUp = faceUp;
+        c.zone = 'field';
+        st.lines[a.line][c.owner].push(a.card);
+        log(ctx, `P${c.owner + 1}: ${DEFS[c.def].id} をライン${a.line + 1}に${faceUp ? '表' : '裏'}で配置 (効果なし)`, a.card);
+      }
+      break;
+    }
+    case 'trainingFlip': {
+      if (!locate(st, a.card)) throw { __err: '場のカードではない' };
+      if (effects) doFlip(ctx, a.card);
+      else {
+        c.faceUp = !c.faceUp;
+        log(ctx, `${DEFS[c.def].id} を${c.faceUp ? '表' : '裏'}にする (効果なし)`, a.card);
+      }
+      break;
+    }
+    case 'trainingMove': {
+      const to = a.to === 'hand' || a.to === 'trash' ? a.to : 'deck';
+      const onField = !!locate(st, a.card);
+      if (effects && onField && to === 'trash') doDelete(ctx, a.card, c.owner);
+      else if (effects && onField && to === 'hand') doReturn(ctx, a.card);
+      else if (effects && !onField && to === 'trash' && st.players[c.owner].hand.includes(a.card)) {
+        discardCards(ctx, c.owner, [a.card]);
+      } else {
+        const info = onField ? extractCard(ctx, a.card) : null;
+        trainingDetach(st, a.card);
+        trainingLand(st, a.card, to);
+        log(ctx, `${DEFS[c.def].id} を${TRAINING_ZONE[to]}へ`, a.card);
+        if (effects) fireUncover(ctx, info);
+      }
+      break;
+    }
+    case 'trainingDraw': {
+      const side = a.side === 1 ? 1 : 0;
+      st.turn = side;
+      drawCards(ctx, side, Math.max(1, a.count | 0));
+      break;
+    }
+    case 'trainingPhase': {
+      st.turn = a.side === 1 ? 1 : 0;
+      log(ctx, `--- P${st.turn + 1} の${a.which === 'end' ? '終了' : '開始'}時効果 ---`);
+      doStartEnd(ctx, a.which === 'end' ? 'end' : 'start');
+      break;
+    }
+    default:
+      throw { __err: '不明なトレーニング操作' };
+  }
+  /* 検証盤面なので、山札以外は両者に公開する */
+  for (const card of Object.values(st.cards)) if (!String(card.zone).startsWith('deck')) card.knownTo = 3;
+  st.phase = 'training';
+}
+
 /* ---------- アクション実行 / apply ---------- */
 
 function performAction(ctx, action) {
@@ -1989,6 +2084,11 @@ function performAction(ctx, action) {
     st.winner = 1 - loser;
     st.phase = 'finished';
     log(ctx, `P${loser + 1}: まいりました`);
+    return;
+  }
+  if (typeof action.type === 'string' && action.type.startsWith('training')) {
+    if (!st.training) throw { __err: 'トレーニング中ではない' };
+    performTraining(ctx, action);
     return;
   }
   if (st.phase !== 'action') throw { __err: 'アクションフェイズではない' };
@@ -2102,6 +2202,13 @@ function newGame(opts) {
   }
   shuffle(st, st.players[0].deck);
   shuffle(st, st.players[1].deck);
+  /* トレーニング: 手札を配らず、ターン進行なしの検証盤面として始める */
+  if (opts.training) {
+    st.training = true;
+    st.useControl = false;
+    st.phase = 'training';
+    return runReplay(st, { type: '_begin' }, []);
+  }
   for (let p = 0; p < 2; p++) {
     for (let i = 0; i < 5; i++) {
       const u = st.players[p].deck.shift();

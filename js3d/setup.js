@@ -27,9 +27,14 @@ export function runSetup(protocols, options = {}) {
 
   document.querySelector('#setupHead h1').innerHTML = training ? '<b>//</b> TRAINING SETUP' : '<b>//</b> PROTOCOL SELECT';
   document.querySelector('#setupHead p').textContent = training
-    ? '盤面のプロトコルを3つ選ぶ。開始後は全180枚を自由に置ける。'
+    ? 'まず自分のプロトコルを3つ選ぶ。次に相手の3つを選ぶ。置けるのはこの6つのカードだけ。'
     : '使用するプロトコルを3つ選ぶ。相手は残りから自動で編成される。';
-  startBtn.textContent = training ? 'トレーニング開始' : '対戦開始';
+  startBtn.textContent = training ? '次へ: 相手のプロトコル' : '対戦開始';
+  /* トレーニングは 自分 → 相手 の2段階で選ぶ */
+  let trainingMine = null;
+  let sameBtn = document.getElementById('setupSame');
+  if (sameBtn) sameBtn.remove();
+  sameBtn = null;
   const onlineBtn = document.getElementById('setupOnline');
   onlineBtn.hidden = training || options.allowOnline === false;
   levelWrap.hidden = training;
@@ -102,13 +107,37 @@ export function runSetup(protocols, options = {}) {
       root.classList.remove('show');
       resolve({ online: true });
     };
+    const finishTraining = (mine, opp) => {
+      if (sameBtn) sameBtn.remove();
+      root.classList.remove('show');
+      setTimeout(() => { root.style.display = 'none'; }, 500);
+      resolve({ me: mine, ai: opp, level, training });
+    };
     startBtn.onclick = () => {
       if (picked.length !== 3) return;
       let ai;
+      if (training && !trainingMine) {
+        trainingMine = picked.slice();
+        picked.length = 0;
+        document.querySelector('#setupHead h1').innerHTML = '<b>//</b> TRAINING — 相手のプロトコル';
+        document.querySelector('#setupHead p').textContent =
+          '自分: ' + trainingMine.join(' / ') + '　相手の3つを選ぶ (同じプロトコルも選べる)';
+        startBtn.textContent = 'トレーニング開始';
+        grid.querySelectorAll('.proto').forEach(el => el.classList.remove('on'));
+        sameBtn = document.createElement('button');
+        sameBtn.id = 'setupSame';
+        sameBtn.type = 'button';
+        sameBtn.className = 'lvl';
+        sameBtn.style.marginLeft = 'auto';
+        sameBtn.textContent = '自分と同じ3つ';
+        sameBtn.onclick = () => finishTraining(trainingMine.slice(), trainingMine.slice());
+        startBtn.before(sameBtn);
+        sync();
+        return;
+      }
       if (training) {
-        /* 自由配置では対戦相手のランダムなプロトコルが混ざると盤面の
-           読み合わせがしづらい。両側を同じ3種にして検証対象を明確にする。 */
-        ai = picked.slice();
+        finishTraining(trainingMine.slice(), picked.slice());
+        return;
       } else if (FIXED_AI[level]) {
         ai = FIXED_AI[level].slice();
       } else {
