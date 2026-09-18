@@ -2160,6 +2160,10 @@ const AI_W = {
   /* 一番上のカードを場から動かすと、下の表向きカードの中段が再発動する。
      自分の中段なら狙って外し、相手の中段なら外さない (uncoverBase + 中段の価値 * uncoverMid) */
   uncoverBase: 22, uncoverMid: 0.8,
+  /* 手札が0枚の側は、次の自分のターンをリフレッシュに使わされる (裏向きでも出す札が無い)。
+     1枚ぶんの差ではなく、手番1つぶんとして数える。
+     emptyHand: 手札が尽きた損得 / lowHand: あと1枚で尽きる */
+  emptyHand: 34, lowHand: 10,
 };
 /* サイキック①ロックまわりの重み。通常 AI・特化 AI の区別なく共通で使う。
    lockPermanent/lockTemporary: 覆われた (永続) / 一番上 (1ターン) のロックの価値
@@ -2202,6 +2206,7 @@ const AI_DSH_W = {
   optionalCost: 1, anyLineBase: 26, anyLineGain: 0.9,
   valueUp: 7, downFlat: 55, downText: 0.35, downMismatch: 0.3, downCombo: 0.4,
   uncoverBase: 22, uncoverMid: 0.8,
+  emptyHand: 34, lowHand: 10,
   compiledLead: 0,   // 最強同士のミラー 480 戦で 49.8% [45.3, 54.2]。効果が出ていないので切っておく
 };
 function setAiSpecialistWeights(obj) {
@@ -2960,7 +2965,11 @@ function aiScore(st, me) {
   const myHand = st.players[me].hand.length, opHand = st.players[op].hand.length;
   sc += Math.min(myHand, 7) * 3;
   sc -= Math.min(opHand, 7) * 2;
-  if (myHand === 0) sc -= 15;
+  /* 手札を枯らすと、その側はリフレッシュに1ターン使う。手番を奪う価値として数える */
+  if (opHand === 0) sc += W.emptyHand;
+  else if (opHand === 1) sc += W.lowHand;
+  if (myHand === 0) sc -= W.emptyHand * 0.9;
+  else if (myHand === 1) sc -= W.lowHand * 0.9;
   if (myHand >= 3) {
     let playable = 0;
     for (const uid of st.players[me].hand) {
