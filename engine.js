@@ -3976,8 +3976,12 @@ function aiActionPimc(state) {
 
   const wasTrace = TRACE; TRACE = false;
   try {
-    const sums = top.map(t => t.val);
+    /* 世界ごとの値は同じ深さで揃える (基準世界も1手読みの値を使う)。
+       基準世界だけ2手読みの値を混ぜると、1手読みだけ高い手 (リフレッシュのように
+       手札が増えるだけの手) が平均で得をする。読んだ深さぶんの補正は別に足す */
+    const sums = top.map(t => (t.val1 === undefined ? t.val : t.val1));
     const counts = top.map(() => 1);
+    const searchAdj = top.map(t => (t.val2 === undefined || t.val1 === undefined) ? 0 : t.val2 - t.val1);
     for (let k = 1; k < AI_PIMC; k++) {
       const view = aiInformationState(state, me, k);
       for (let i = 0; i < top.length; i++) {
@@ -3988,9 +3992,10 @@ function aiActionPimc(state) {
           + aiTransitionScore(view, res, me);
       }
     }
+    const mean = (i) => sums[i] / counts[i] + searchAdj[i];
     let bi = 0;
     for (let i = 1; i < top.length; i++) {
-      if (sums[i] / counts[i] > sums[bi] / counts[bi]) bi = i;
+      if (mean(i) > mean(bi)) bi = i;
     }
     return top[bi].a;
   } finally { TRACE = wasTrace; }
