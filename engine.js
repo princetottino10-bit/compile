@@ -2223,7 +2223,7 @@ function newGame(opts) {
 /* ---------- AI ---------- */
 
 let AI_LEVEL = 1; // 0=easy, 1=normal, 2=hard
-let AI_THINK_BUDGET_MS = 590;
+let AI_THINK_BUDGET_MS = 900;   /* 590ms では読み切れずに打ち切られる局面があった (実測の所要は約690ms) */
 const AI_BREADTH = { rootEval: 999, rootSearch: 24, reply: 14, shallow: 6 };
 function setAiLevel(v) { AI_LEVEL = Math.max(0, Math.min(2, v | 0)); }
 /* 1手あたりの思考時間(ms)。ベンチや自己対戦で探索量を振るために外から変更できる */
