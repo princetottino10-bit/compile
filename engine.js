@@ -2274,6 +2274,9 @@ const AI_W = {
   /* 相手の手番を挟んだ先の得は、そのまま足すと「1ターン休んで次に大きく動く」手
      (リフレッシュ) を過大評価する。読んだ先の伸びぶんだけ割り引く */
   futureDiscount: 0.55,
+  /* 相手がコンパイル圏に届いているのに盤面を進めない手 (リフレッシュ) は、
+     そのまま通される。届いているラインの数だけテンポ損を上乗せする */
+  refreshUrgency: 120,
 };
 /* サイキック①ロックまわりの重み。通常 AI・特化 AI の区別なく共通で使う。
    lockPermanent/lockTemporary: 覆われた (永続) / 一番上 (1ターン) のロックの価値
@@ -2318,6 +2321,7 @@ const AI_DSH_W = {
   uncoverBase: 22, uncoverMid: 0.8,
   emptyHand: 34, lowHand: 10,
   futureDiscount: 0.55,
+  refreshUrgency: 120,
   compiledLead: 0,   // 最強同士のミラー 480 戦で 49.8% [45.3, 54.2]。効果が出ていないので切っておく
 };
 function setAiSpecialistWeights(obj) {
@@ -2807,6 +2811,12 @@ function aiActionBias(st, action, side) {
     const draws = 5 - st.players[side].hand.length;
     let v = draws * W.refreshPerCard - W.refreshTempo;
     if (st.control === side) v += aiControlLeverage(st, side) * 0.35;
+    /* 相手がコンパイル圏に届いているラインぶん、手を止める損を重くする */
+    for (let l = 0; l < 3; l++) {
+      if (st.players[op].protocols[l].compiled) continue;
+      const theirs = lineTotal(st, l, op);
+      if (theirs >= 8 && theirs >= lineTotal(st, l, side)) v -= W.refreshUrgency;
+    }
     return v;
   }
   if (action.type !== 'play') return 0;

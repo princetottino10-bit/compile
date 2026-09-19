@@ -2274,6 +2274,9 @@ const AI_W = {
   /* 相手の手番を挟んだ先の得は、そのまま足すと「1ターン休んで次に大きく動く」手
      (リフレッシュ) を過大評価する。読んだ先の伸びぶんだけ割り引く */
   futureDiscount: 0.55,
+  /* 相手がコンパイル圏に届いているのに盤面を進めない手 (リフレッシュ) は、
+     そのまま通される。届いているラインの数だけテンポ損を上乗せする */
+  refreshUrgency: 120,
 };
 /* サイキック①ロックまわりの重み。通常 AI・特化 AI の区別なく共通で使う。
    lockPermanent/lockTemporary: 覆われた (永続) / 一番上 (1ターン) のロックの価値
@@ -2318,6 +2321,7 @@ const AI_DSH_W = {
   uncoverBase: 22, uncoverMid: 0.8,
   emptyHand: 34, lowHand: 10,
   futureDiscount: 0.55,
+  refreshUrgency: 120,
   compiledLead: 0,   // 最強同士のミラー 480 戦で 49.8% [45.3, 54.2]。効果が出ていないので切っておく
 };
 function setAiSpecialistWeights(obj) {
@@ -2807,6 +2811,12 @@ function aiActionBias(st, action, side) {
     const draws = 5 - st.players[side].hand.length;
     let v = draws * W.refreshPerCard - W.refreshTempo;
     if (st.control === side) v += aiControlLeverage(st, side) * 0.35;
+    /* 相手がコンパイル圏に届いているラインぶん、手を止める損を重くする */
+    for (let l = 0; l < 3; l++) {
+      if (st.players[op].protocols[l].compiled) continue;
+      const theirs = lineTotal(st, l, op);
+      if (theirs >= 8 && theirs >= lineTotal(st, l, side)) v -= W.refreshUrgency;
+    }
     return v;
   }
   if (action.type !== 'play') return 0;
@@ -3976,8 +3986,12 @@ function aiActionPimc(state) {
 
   const wasTrace = TRACE; TRACE = false;
   try {
-    const sums = top.map(t => t.val);
+    /* 世界ごとの値は同じ深さで揃える (基準世界も1手読みの値を使う)。
+       基準世界だけ2手読みの値を混ぜると、1手読みだけ高い手 (リフレッシュのように
+       手札が増えるだけの手) が平均で得をする。読んだ深さぶんの補正は別に足す */
+    const sums = top.map(t => (t.val1 === undefined ? t.val : t.val1));
     const counts = top.map(() => 1);
+    const searchAdj = top.map(t => (t.val2 === undefined || t.val1 === undefined) ? 0 : t.val2 - t.val1);
     for (let k = 1; k < AI_PIMC; k++) {
       const view = aiInformationState(state, me, k);
       for (let i = 0; i < top.length; i++) {
@@ -3988,9 +4002,10 @@ function aiActionPimc(state) {
           + aiTransitionScore(view, res, me);
       }
     }
+    const mean = (i) => sums[i] / counts[i] + searchAdj[i];
     let bi = 0;
     for (let i = 1; i < top.length; i++) {
-      if (sums[i] / counts[i] > sums[bi] / counts[bi]) bi = i;
+      if (mean(i) > mean(bi)) bi = i;
     }
     return top[bi].a;
   } finally { TRACE = wasTrace; }
