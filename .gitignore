@@ -9,6 +9,7 @@ Compile 1/
 Compile 2/
 .claude/
 supabase/.temp/
+__pycache__/
 
 # Other HTML (not part of cardlist app)
 index-ja.html
