@@ -121,6 +121,8 @@ if (!isMainThread) {
 
   /* コンパイル圏 (10点以上でリード) に届いたラインの数。
      2枚で初めて届いたなら、効果の組み合わせではなく点数の足し算による手筋 */
+  const compiledCount = (st, me) => st.players[me].protocols.filter(p => p.compiled).length;
+
   function reachCount(st, me) {
     let n = 0;
     for (let l = 0; l < 3; l++) {
@@ -143,15 +145,17 @@ if (!isMainThread) {
     for (const a of plays) {
       const r = myMoveOnly(view, me, a);
       if (!r) continue;
-      single.push({ a, v: Sim.ai.score(r.state, me), reach: reachCount(r.state, me), next: r.done ? null : r.state });
+      single.push({ a, v: Sim.ai.score(r.state, me), reach: reachCount(r.state, me),
+        comp: compiledCount(r.state, me), next: r.done ? null : r.state });
     }
     if (single.length < 2) return [];
     const best1 = Math.max(...single.map(x => x.v));
     const reach0 = reachCount(view, me);
+    const comp0 = compiledCount(view, me);
     const byCard = new Map();
     for (const x of single) {
       const key = view.cards[x.a.card].def;
-      if (!byCard.has(key) || byCard.get(key).v < x.v) byCard.set(key, { v: x.v, reach: x.reach });
+      if (!byCard.has(key) || byCard.get(key).v < x.v) byCard.set(key, { v: x.v, reach: x.reach, comp: x.comp });
     }
 
     const rows = [];
@@ -169,6 +173,9 @@ if (!isMainThread) {
         const vB = bAlone.v;
         const interaction = v2 - first.v - vB + v0;
         if (interaction < cfg.margin) continue;
+        /* 2手で勝つ・負ける局面は評価が桁違い (±1e9) になる。
+           実戦では間に相手の手番が入るので、組み合わせの力とは言えない */
+        if ([v0, first.v, vB, v2].some(x => Math.abs(x) > 1e7)) continue;
         rows.push({
           flagged: true,
           game: { p0: job.p0, p1: job.p1, seed: job.seed }, ply: pos.ply, side: me,
@@ -176,7 +183,8 @@ if (!isMainThread) {
           chosen: describe(view, me, first.a), best: describe(first.next, me, b),
           interaction: Math.round(interaction),
           /* 2枚で初めてコンパイル圏に届いたか (効果ではなく点数の足し算による手筋) */
-          threshold: reachCount(r2.state, me) > Math.max(first.reach, bAlone.reach, reach0),
+          threshold: reachCount(r2.state, me) > Math.max(first.reach, bAlone.reach, reach0)
+            || compiledCount(r2.state, me) > Math.max(first.comp, bAlone.comp, comp0),
           v: { none: Math.round(v0), a: Math.round(first.v), b: Math.round(vB), ab: Math.round(v2), best1: Math.round(best1) },
           state: st
         });
