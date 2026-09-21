@@ -3096,6 +3096,10 @@ const AI_W = {
   /* 相手がコンパイル圏に届いているのに盤面を進めない手 (リフレッシュ) は、
      そのまま通される。届いているラインの数だけテンポ損を上乗せする */
   refreshUrgency: 120,
+  /* 選択の答えを実際に試す深さ。1 なら「選択の中の選択」まで試す。
+     GRAVITY の連鎖 (反転で GRAVITY 1 を表に → その中段の移動で GRAVITY 2 を上に重ねる
+     → 残りの移動で GRAVITY 1 の中段がもう一度入り、計4枚引く) は2段目の選択で決まる */
+  choiceDepth: 1,
 };
 /* サイキック①ロックまわりの重み。通常 AI・特化 AI の区別なく共通で使う。
    lockPermanent/lockTemporary: 覆われた (永続) / 一番上 (1ターン) のロックの価値
@@ -3141,6 +3145,7 @@ const AI_DSH_W = {
   emptyHand: 34, lowHand: 10,
   futureDiscount: 0.55,
   refreshUrgency: 120,
+  choiceDepth: 1,
   compiledLead: 0,   // 最強同士のミラー 480 戦で 49.8% [45.3, 54.2]。効果が出ていないので切っておく
 };
 function setAiSpecialistWeights(obj) {
@@ -4059,10 +4064,11 @@ function aiPlayFreePicks(st, req, me) {
     return { raw, prelim };
   }).sort((a, b) => b.prelim - a.prelim);
   if (!ranked.length) return [];
-  if (AI_CHOICE_DEPTH > 0) return [ranked[0].raw];
+  if (AI_CHOICE_DEPTH > aiWeightsFor(st, me).choiceDepth) return [ranked[0].raw];
 
   let best = ranked[0].raw, bestScore = -Infinity;
-  for (const item of ranked.slice(0, 6)) {
+  /* 深い段ほど候補を絞る (試す数が段ごとに掛け算で増えるため) */
+  for (const item of ranked.slice(0, AI_CHOICE_DEPTH === 0 ? 6 : 3)) {
     if (aiSearchExpired()) break;
     const score = aiChoiceScore(st, req, [item.raw], me) + item.prelim * 0.05;
     if (score > bestScore) { bestScore = score; best = item.raw; }
@@ -4077,15 +4083,18 @@ function aiStrategicCardPicks(st, req, me, ranked, fallback) {
      ここで評価を飛ばすと、自分のカードを対象にする有益な効果
      (覆われたサイキック①を表にする等) を静的スコアだけで捨ててしまう。 */
   const choices = req.candidates.length + (min === 0 ? 1 : 0);
-  if (AI_CHOICE_DEPTH > 0 || choices < 2
+  if (AI_CHOICE_DEPTH > aiWeightsFor(st, me).choiceDepth || choices < 2
       || /(?:^|-)order$/.test(req.prompt || '')) return fallback;
   if (max !== 1) {
     const deep = aiBestCombo(st, req, ranked.map(x => x.uid), min, max, fallback);
     return deep || fallback;
   }
 
+  /* 深い段ほど候補を絞る。静的評価の上位と下位を残すのは、
+     下位 (自分のカードを動かす等) に連鎖の起点があることが多いため */
+  const width = AI_CHOICE_DEPTH === 0 ? 8 : 5;
   let pool = ranked;
-  if (pool.length > 8) pool = pool.slice(0, 5).concat(pool.slice(-3));
+  if (pool.length > width) pool = pool.slice(0, width - 3).concat(pool.slice(-3));
   const seen = new Set(), options = [];
   if (min === 0) options.push([]);
   for (const item of pool) {
@@ -4227,7 +4236,7 @@ function smartPicks(st, req) {
         }
         if (s > bestSc) { bestSc = s; bestLine = l; }
       }
-      if (AI_CHOICE_DEPTH === 0 && req.lines.length > 1) {
+      if (AI_CHOICE_DEPTH <= aiWeightsFor(st, me).choiceDepth && req.lines.length > 1) {
         let simBest = -Infinity, simLine = bestLine;
         for (const l of req.lines) {
           const score = aiChoiceScore(st, req, [l], me);
