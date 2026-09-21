@@ -5,6 +5,7 @@
 実行する。マジックパケットはブロードキャストなので、外出先やクラウドからは
 そのままでは届かない (ルータ側の転送設定が別途必要)。
 
+    python scripts/wake_pc.py --setup                    # 対話式で設定する
     python scripts/wake_pc.py 3C:7C:3F:11:22:33          # MAC を直に指定
     python scripts/wake_pc.py 3C:7C:3F:11:22:33 \
         --save mypc --ip 192.168.1.20 --default          # 設定に保存
@@ -13,7 +14,8 @@
     python scripts/wake_pc.py --list                     # 保存済みを見る
 
 設定の保存先は ~/.config/wake_pc.json (環境変数 WAKE_PC_CONFIG か --config で変更可)。
-PC側の事前設定は docs/wake-pc.md を参照。
+起こされる側のPCの設定は docs/wake-pc.md を参照 (Windows なら
+scripts/wake_pc_setup.ps1 で大半を自動化できる)。
 """
 
 import argparse
@@ -204,7 +206,129 @@ def wait_for_host(ip, seconds, check_port=None):
     return False
 
 
+# ---------------------------------------------------------------- MAC の自動判別
+
+# 環境によって使えるものが違うので、上から順に試す
+ARP_COMMANDS = [
+    ["ip", "neigh", "show"],  # 最近の Linux
+    ["arp", "-n"],            # Linux / Termux
+    ["arp", "-a"],            # Windows / macOS
+    ["arp"],                  # macOS
+]
+
+
+def parse_arp_output(text, ip):
+    """ARP コマンドの出力から、その IP の行の MAC を取り出す。"""
+    here = re.compile(r"(?<![\d.])%s(?![\d.])" % re.escape(ip))
+    # macOS は 3c:7c:3f:1:22:33 のように先頭の 0 を落とすので 1桁も受ける
+    mac_re = re.compile(r"(?<![0-9A-Fa-f:-])([0-9A-Fa-f]{1,2}(?:[:-][0-9A-Fa-f]{1,2}){5})(?![0-9A-Fa-f:-])")
+    for line in text.splitlines():
+        if not here.search(line):
+            continue
+        found = mac_re.search(line)
+        if not found:
+            continue
+        octets = re.split(r"[:-]", found.group(1))
+        mac = ":".join("%02X" % int(o, 16) for o in octets)
+        if mac in ("00:00:00:00:00:00", "FF:FF:FF:FF:FF:FF"):
+            continue  # incomplete / ブロードキャストの行
+        return mac
+    return None
+
+
+def arp_lookup(ip):
+    """今つながっている相手の MAC を ARP テーブルから引く。無ければ None。"""
+    host_is_up(ip)  # テーブルに載せるための ping。失敗しても続ける
+    for base in ARP_COMMANDS:
+        try:
+            done = subprocess.run(
+                base + [ip], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                universal_newlines=True, errors="replace", timeout=5,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            continue
+        mac = parse_arp_output(done.stdout or "", ip)
+        if mac:
+            return mac
+    return None
+
+
 # ---------------------------------------------------------------- サブコマンド
+
+def ask(label, default=None):
+    suffix = " [%s]" % default if default else ""
+    try:
+        answer = input("%s%s: " % (label, suffix)).strip()
+    except EOFError:
+        answer = ""
+    return answer or (default or "")
+
+
+def cmd_setup(cfg, path):
+    """対話式でターゲットを1つ作って保存する。"""
+    if not sys.stdin.isatty():
+        print("--setup は対話式です。端末から実行するか、--save を使ってください。", file=sys.stderr)
+        return 1
+
+    print("Wake-on-LAN の設定をします。")
+    print("起こしたいPCは、いまは電源を入れて同じLANに繋いでおいてください (MAC を自動で拾います)。")
+    print("PC側のBIOS/NICの設定がまだなら docs/wake-pc.md を先に読んでください。")
+    print()
+
+    name = ask("この設定の名前", "mypc")
+    if name in (cfg.get("targets") or {}):
+        if ask("%s は既にあります。上書きしますか? (y/N)" % name, "N").lower() not in ("y", "yes"):
+            print("やめました。")
+            return 1
+
+    ip = ask("そのPCのIPアドレス (分かれば。空欄可)")
+    guess = None
+    if ip:
+        print("  %s の MAC を調べています..." % ip)
+        guess = arp_lookup(ip)
+        print("  見つかりました: %s" % guess if guess else "  分かりませんでした。MAC を手で入れてください。")
+
+    while True:
+        text = ask("MAC アドレス", guess)
+        if not text:
+            print("  MAC アドレスは省略できません。")
+            continue
+        try:
+            mac = parse_mac(text)
+            break
+        except ValueError as exc:
+            print("  %s" % exc)
+
+    entry = {"mac": format_mac(mac)}
+    if ip:
+        entry["ip"] = ip
+
+    hint = ", ".join(local_broadcasts()) or "推定できませんでした"
+    bcast = ask("ブロードキャストアドレス (空欄なら自動: %s)" % hint)
+    if bcast:
+        entry["broadcast"] = bcast
+
+    if ip:
+        port = ask("起動確認に使う TCP ポート (空欄なら ping で確認)")
+        if port:
+            try:
+                entry["check_port"] = int(port)
+            except ValueError:
+                print("  ポート番号として読めないので、ping で確認します: %s" % port)
+
+    cfg.setdefault("targets", {})[name] = entry
+    if not cfg.get("default") or ask("既定のターゲットにしますか? (Y/n)", "Y").lower() in ("y", "yes"):
+        cfg["default"] = name
+    save_config(path, cfg)
+
+    print()
+    print("保存しました: %s" % path)
+    print("これから起こすときは:")
+    print("    python scripts/wake_pc.py" + ("" if cfg.get("default") == name else " " + name))
+    if ip:
+        print("    python scripts/wake_pc.py %s --wait 120   # 起動を待つ" % name)
+    return 0
+
 
 def cmd_list(cfg, path):
     targets = cfg.get("targets") or {}
@@ -300,6 +424,7 @@ def main(argv=None):
     parser.add_argument("--default", action="store_true", help="--save と併せて、既定のターゲットにする")
     parser.add_argument("--delete", metavar="NAME", help="保存済みのターゲットを削除する")
     parser.add_argument("--list", action="store_true", help="保存済みのターゲットを一覧する")
+    parser.add_argument("--setup", action="store_true", help="対話式で設定する (MAC は可能なら自動判別)")
     parser.add_argument("--dry-run", action="store_true", help="実際には送らず、宛先だけ表示する")
     parser.add_argument("--config", help="設定ファイルのパス")
     args = parser.parse_args(argv)
@@ -307,6 +432,8 @@ def main(argv=None):
     path = config_path(args.config)
     cfg = load_config(path)
 
+    if args.setup:
+        return cmd_setup(cfg, path)
     if args.list:
         return cmd_list(cfg, path)
     if args.delete:

@@ -1,12 +1,36 @@
 # Wake-on-LAN でPCを起こす
 
-`scripts/wake_pc.py` は、起こしたいPCと同じLANにいる端末 (スマホの Termux /
-Raspberry Pi / 別のPC) から実行して、マジックパケットを投げるスクリプトです。
+起こしたいPCと同じLANにいる端末 (スマホの Termux / Raspberry Pi / 別のPC) から
+`scripts/wake_pc.py` を実行して、マジックパケットを投げます。
 Python 3 の標準ライブラリだけで動くので、追加インストールは要りません。
 
-## PC側の事前設定
+設定は2か所あります。
 
-これをやっていないとパケットを投げても起きません。
+| どこ | 何を | やり方 |
+| --- | --- | --- |
+| 起こされる側のPC | BIOS/UEFI、NIC、高速スタートアップ | `scripts/wake_pc_setup.ps1` (BIOS 以外は自動) |
+| 送信する側の端末 | 相手の MAC・IP を覚えさせる | `python scripts/wake_pc.py --setup` |
+
+## 1. 起こされる側のPCの設定
+
+これをやっていないとパケットを投げても起きません。Windows なら、管理者権限の
+PowerShell を開いて、リポジトリのルートで次を実行すると、下の 2 と 3 が自動で入り、
+5 の MAC アドレスも表示されます。
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\wake_pc_setup.ps1
+
+# 何も変えずに、やろうとしている内容だけ見る
+powershell -ExecutionPolicy Bypass -File scripts\wake_pc_setup.ps1 -WhatIf
+
+# 有線アダプタが複数あるときは名前で指定する
+powershell -ExecutionPolicy Bypass -File scripts\wake_pc_setup.ps1 -Name "イーサネット"
+```
+
+最後に、送信側で叩くコマンド (MAC と IP 入り) が表示されるので、それを控えます。
+**1 の BIOS/UEFI だけはスクリプトから変えられない**ので手で設定してください。
+
+手でやる場合、または Windows 以外の場合:
 
 1. **BIOS/UEFI** — `Wake on LAN` / `Power On By PCI-E` / `Resume by LAN` などの
    項目を有効にする。名前はメーカーによって違います。
@@ -22,15 +46,31 @@ Python 3 の標準ライブラリだけで動くので、追加インストー�
 5. **MAC アドレスを控える** — `ipconfig /all` の「物理アドレス」、または
    `getmac /v` で有線アダプタのものを見ます。
 
-## 使い方
+## 2. 送信する側の端末の設定
 
-初回に一度だけ保存しておくと、以降は引数なしで起こせます。
+対話式で聞いていくので、これを一度やれば以降は引数なしで起こせます。
+**起こしたいPCの電源を入れた状態で**実行すると、IP を答えるだけで MAC を
+ARP テーブルから拾ってくれます。
 
 ```sh
-# 保存 (MAC は必須。--ip は起動確認に使うので、固定IPかDHCP予約があると便利)
-python scripts/wake_pc.py 3C:7C:3F:11:22:33 --save mypc --ip 192.168.1.20 --default
+python scripts/wake_pc.py --setup
+```
 
-# 起こす
+聞かれるのは、設定の名前 / 相手の IP / MAC / ブロードキャストアドレス /
+起動確認に使うポート の5つです。必須なのは MAC だけで、あとは空欄で構いません。
+保存先は `~/.config/wake_pc.json` です。
+
+手で指定するなら:
+
+```sh
+python scripts/wake_pc.py 3C:7C:3F:11:22:33 --save mypc --ip 192.168.1.20 --default
+```
+
+## 使い方
+
+```sh
+
+# 既定のターゲットを起こす
 python scripts/wake_pc.py
 
 # 名前を指定して起こし、繋がるまで待つ
@@ -64,6 +104,9 @@ python scripts/wake_pc.py --delete mypc
   ユニキャストが届きません。ブロードキャスト送信ができているか確認する。
 - スマホの Termux から実行する場合、Wi-Fi が同じLANに繋がっていることを確認する。
   モバイル回線からは届きません。
+- `wake_pc_setup.ps1` を実行したあとも起きない → BIOS/UEFI の Wake on LAN が
+  まだ無効な可能性が高いです。スクリプト末尾の `powercfg /devicequery wake_armed`
+  の出力に、そのネットワークアダプタが載っているかも確認してください。
 
 ## 外出先から起こす
 
