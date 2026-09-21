@@ -11,6 +11,8 @@ Python 3 の標準ライブラリだけで動くので、追加インストー�
 | 起こされる側のPC | BIOS/UEFI、NIC、高速スタートアップ | `scripts/wake_pc_setup.ps1` (BIOS 以外は自動) |
 | 送信する側の端末 | 相手の MAC・IP を覚えさせる | `python scripts/wake_pc.py --setup` |
 
+送信側が iPhone の場合はこのスクリプトを直接は使えないことがあります。「[iPhone から起こす](#iphone-から起こす)」を読んでください。
+
 ## 1. 起こされる側のPCの設定
 
 これをやっていないとパケットを投げても起きません。Windows なら、管理者権限の
@@ -94,6 +96,49 @@ python scripts/wake_pc.py --delete mypc
 
 設定は `~/.config/wake_pc.json` に保存されます。`--config` か環境変数
 `WAKE_PC_CONFIG` で場所を変えられます (このリポジトリには入れないでください)。
+
+## iPhone から起こす
+
+iOS はアプリの外から UDP ブロードキャストを投げるのが難しく、Python を動かせる
+a-Shell にも `wol` コマンドがありますが、**パケットが出ないという報告が未解決のまま
+残っています** ([a-shell#840](https://github.com/holzschu/a-shell/issues/840))。
+そのため iPhone を送信側にするなら、次の順で検討します。
+
+### A. 家に常時起動の機器がある場合 (おすすめ)
+
+Raspberry Pi・NAS・Mac・OpenWrt のルータなど、つけっぱなしの機器が同じLANにあるなら、
+そこに `wake_pc.py` を置いて、iPhone からは SSH で叩くのが一番確実です。
+
+ショートカットApp の **「SSHでスクリプトを実行」** アクションが使えるので、
+ショートカット名を「PC起こして」にしておけば Siri から呼べます。
+
+```
+ホスト : 192.168.1.10      (常時起動の機器のIP)
+ポート : 22
+ユーザ : pi
+認証   : パスワード または SSH 鍵
+コマンド: python3 ~/compile/scripts/wake_pc.py mypc
+```
+
+Termius などの SSH クライアントアプリから手で叩いても同じです。
+
+なお NAS やルータ自体に WoL 機能が付いていることがあります
+(Synology DSM、OpenWrt、ASUS のルータなど)。付いているならそれが一番簡単です。
+
+### B. 常時起動の機器が無い場合
+
+App Store の Wake-on-LAN アプリを使います。MAC アドレスとブロードキャストアドレスを
+入れるだけで、多くはショートカットApp にも対応しているので Siri から呼べます。
+
+この場合 `wake_pc.py` は出番がありませんが、**起こされる側のPCの設定
+(`wake_pc_setup.ps1` と BIOS) はそのまま必要**です。アプリに入れる MAC は、
+`wake_pc_setup.ps1` が最後に表示するものを使ってください。
+
+### C. a-Shell で試す (無料、ダメ元)
+
+a-Shell に `wake_pc.py` を取り込んで `python3 wake_pc.py --setup` から普通に使えます。
+初回に「ローカルネットワーク上のデバイスへのアクセス」を許可してください。
+`--dry-run` を外して送っても PC が起きないなら、上の A か B に切り替えます。
 
 ## 起きないとき
 
