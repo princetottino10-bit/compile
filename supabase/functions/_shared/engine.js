@@ -2263,7 +2263,7 @@ const AI_W = {
      downMismatch: そのラインに表で出せない札 (裏ならどのラインにも置ける) に残す割合
      downCombo: あとで表に返す手段 (反転効果) を持っているときに残す割合。コントロール争いと
      コンパイル圏に届く手は 0 にする */
-  valueUp: 7, downFlat: 55, downText: 0.35, downMismatch: 0.3, downCombo: 0.4,
+  valueUp: 7, downFlat: 0, downText: 0.7, downMismatch: 0.3, downCombo: 0.4,
   /* 一番上のカードを場から動かすと、下の表向きカードの中段が再発動する。
      自分の中段なら狙って外し、相手の中段なら外さない (uncoverBase + 中段の価値 * uncoverMid) */
   uncoverBase: 22, uncoverMid: 0.8,
@@ -2324,7 +2324,7 @@ const AI_DSH_W = {
   compiledUp: 75, compiledDown: 75, recompile: 160, midUp: 0.35, lowUp: 20, lowDown: 5,
   // 済ラインへのプレイで自分の2ラインリードを作る/相手の2ラインリードを崩すとき、compiledUp/Down の減点を戻す割合。0 で従来どおり
   optionalCost: 1, anyLineBase: 26, anyLineGain: 0.9,
-  valueUp: 7, downFlat: 55, downText: 0.35, downMismatch: 0.3, downCombo: 0.4,
+  valueUp: 7, downFlat: 0, downText: 0.7, downMismatch: 0.3, downCombo: 0.4,
   uncoverBase: 22, uncoverMid: 0.8,
   emptyHand: 34, lowHand: 10,
   futureDiscount: 0.55,
@@ -2734,7 +2734,9 @@ function aiHasFlipper(st, side) {
   return false;
 }
 
-/* 裏向きで出す損。テキストを丸ごと捨てるので原則マイナスだが、人が裏向きを選ぶ場面では緩める:
+/* 裏向きで出す損 = そのカードのテキストを丸ごと捨てるぶん (downText × 中段の価値)。
+   一律の定数 (downFlat) は 960戦×2 の計測で強さに効かなかったので 0 にしてある。
+   人が裏向きを選ぶ場面では緩める:
    - そのラインに表で出せない札 (裏ならどのラインにも置ける)
    - あとで表に返す手段を持っている (コンボの仕込み)
    - コントロールを渡さない / 取り返す一手、コンパイル圏に届く一手 → 0 */
