@@ -3100,6 +3100,9 @@ const AI_W = {
      GRAVITY の連鎖 (反転で GRAVITY 1 を表に → その中段の移動で GRAVITY 2 を上に重ねる
      → 残りの移動で GRAVITY 1 の中段がもう一度入り、計4枚引く) は2段目の選択で決まる */
   choiceDepth: 1,
+  /* 解決順の選択 (同時に誘発した効果をどれから解くか) も、候補がこの数以下なら
+     実際に解決して盤面で比べる。0 なら従来どおり固定の順位で答える */
+  orderSim: 4,
 };
 /* サイキック①ロックまわりの重み。通常 AI・特化 AI の区別なく共通で使う。
    lockPermanent/lockTemporary: 覆われた (永続) / 一番上 (1ターン) のロックの価値
@@ -3146,6 +3149,7 @@ const AI_DSH_W = {
   futureDiscount: 0.55,
   refreshUrgency: 120,
   choiceDepth: 1,
+  orderSim: 4,
   compiledLead: 0,   // 最強同士のミラー 480 戦で 49.8% [45.3, 54.2]。効果が出ていないので切っておく
 };
 function setAiSpecialistWeights(obj) {
@@ -4082,9 +4086,13 @@ function aiStrategicCardPicks(st, req, me, ranked, fallback) {
   /* 「選ばない」を選べる要求では、候補が1枚でも「選ぶ/選ばない」の2択になる。
      ここで評価を飛ばすと、自分のカードを対象にする有益な効果
      (覆われたサイキック①を表にする等) を静的スコアだけで捨ててしまう。 */
+  const W = aiWeightsFor(st, me);
   const choices = req.candidates.length + (min === 0 ? 1 : 0);
-  if (AI_CHOICE_DEPTH > aiWeightsFor(st, me).choiceDepth || choices < 2
-      || /(?:^|-)order$/.test(req.prompt || '')) return fallback;
+  if (AI_CHOICE_DEPTH > W.choiceDepth || choices < 2) return fallback;
+  /* 解決順は候補が増えやすい (誘発が3つ4つ同時に乗る)。少ないときだけ試す */
+  if (/(?:^|-)order$/.test(req.prompt || '') && (!W.orderSim || req.candidates.length > W.orderSim)) {
+    return fallback;
+  }
   if (max !== 1) {
     const deep = aiBestCombo(st, req, ranked.map(x => x.uid), min, max, fallback);
     return deep || fallback;

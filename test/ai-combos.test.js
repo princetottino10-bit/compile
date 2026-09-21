@@ -340,3 +340,44 @@ test('手筋 強制コンパイルで行動を奪う: 相手の裏向きを相�
   assert.ok(act && act.card === uidOf('SPEED_5', 0) && act.faceUp && act.line === 2,
     'SPEED 4 を自分のリーチのラインに表で出す (実際: ' + JSON.stringify(act) + ')');
 });
+
+/* ---------- 解決順もシミュレーションで選ぶ ----------
+   同時に誘発した効果をどれから解くかは、以前は固定の順位で答えていた。
+   候補が少ないときは実際に解決して、良いほうを選ぶ (orderSim)。
+   ここでは両方の順番を自分で解決して、AI の答えが良いほうと一致することを確かめる */
+test('解決順: 両方の順番を試して、良いほうを選ぶ', () => {
+  Engine.setAiLevel(1);
+  const build = () => {
+    const st = game(['FIRE', 'PLAGUE', 'WATER'], ['METAL', 'LIGHT', 'HATE']);
+    place(st, 'FIRE_4', 0, 0, true);          // 終了: 手札を1枚捨てて、カードを1枚反転
+    place(st, 'PLAGUE_5', 0, 1, true);        // 終了: 相手は自分の裏向きを1枚削除
+    place(st, 'METAL_6', 1, 0, true);         // 相手の表向き (裏向きは持っていない)
+    setHand(st, 0, ['FIRE_2', 'WATER_3', 'WATER_4']);
+    return st;
+  };
+  /* 終了フェイズだけを解決する (手を出すと、その効果の選択が先に入るため) */
+  const st0 = build();
+  st0.turn = 0;
+  st0.phase = 'end';
+  let res = Engine.apply(st0, { type: '_begin' });
+  const q = res.requests.find ? res.requests[0] : null;
+  assert.ok(q && /(?:^|-)order$/.test(q.prompt || ''), '終了時の解決順を聞かれる (実際: ' + (q && q.prompt) + ')');
+  assert.ok(q.candidates.length >= 2);
+
+  /* それぞれの順番で最後まで解決して点数を出す */
+  const scoreFor = (pick) => {
+    let r = Engine.apply(res.state, { type: 'choose', id: q.id, picks: [pick] });
+    for (let guard = 0; r && !r.error && r.requests.length && guard < 30; guard++) {
+      const qq = r.requests[0];
+      r = Engine.apply(r.state, { type: 'choose', id: qq.id, picks: Engine.ai.answer(r.state, qq) });
+    }
+    assert.equal(r.error, null);
+    return Engine.ai.score(r.state, 0);
+  };
+  const scored = q.candidates.map(uid => ({ uid, s: scoreFor(uid) })).sort((a, b) => b.s - a.s);
+  const picked = Engine.ai.answer(res.state, q);
+  const pickedScore = scored.find(x => x.uid === picked[0]);
+  assert.ok(pickedScore && pickedScore.s >= scored[0].s,
+    '良いほうの順番を選ぶ (' + scored.map(x => res.state.cards[x.uid].def + ':' + Math.round(x.s)).join(' / ')
+    + ' → 選んだ: ' + res.state.cards[picked[0]].def + ')');
+});
