@@ -3,18 +3,23 @@
 
 /* 配置選択は盤面上の着地パッドに追従する。親はクリックを通し、チップだけが操作を受ける。 */
 #playChoices { position: fixed; z-index: 28; inset: 0; pointer-events: none; font: 800 12px/1 system-ui, sans-serif; }
+/* スタックの1枚目の上に固定で出すので、半透明にして下の札を透かす (ぼかしも掛けない)。
+   触れている間だけ濃くして押しやすくする */
 .placement-lane { position: absolute; display: flex; align-items: center; gap: 4px;
-  transform: translate(-50%, -50%); padding: 5px; border: 1px solid rgba(109,255,194,.82);
-  border-radius: 999px; background: rgba(5,14,23,.94); box-shadow: 0 0 22px rgba(109,255,194,.32);
-  backdrop-filter: blur(9px); pointer-events: auto; transition: transform .16s, box-shadow .16s; }
+  transform: translate(-50%, -50%); padding: 5px; border: 1px solid rgba(109,255,194,.7);
+  border-radius: 999px; background: rgba(5,14,23,.34); box-shadow: 0 0 16px rgba(109,255,194,.22);
+  pointer-events: auto; transition: transform .16s, box-shadow .16s, background .16s; }
+.placement-lane:hover, .placement-lane.focused, .placement-lane:focus-within { background: rgba(5,14,23,.86); }
 .placement-lane[data-side="1"] { border-color: rgba(255,59,157,.82); box-shadow: 0 0 22px rgba(255,59,157,.32); }
 .placement-lane-label { max-width: 74px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   padding: 0 3px; letter-spacing: .06em; color: #d8fff0; }
 .placement-lane[data-side="1"] .placement-lane-label { color: #ffd8ea; }
 #playChoices button { min-width: 38px; min-height: 36px; border: 1px solid #567881; border-radius: 999px;
   background: #192d3d; color: #effaff; padding: 5px 9px; cursor: pointer; font: inherit; pointer-events: auto; }
-#playChoices .place-faceup { background: #174137; border-color: #73cdb2; color: #e4fff5; }
-#playChoices .place-facedown { background: #25243a; border-color: #9997d7; }
+#playChoices .place-faceup { background: rgba(23,65,55,.55); border-color: #73cdb2; color: #e4fff5; }
+#playChoices .place-facedown { background: rgba(37,36,58,.55); border-color: #9997d7; }
+#playChoices button:hover { background-color: rgba(40,80,90,.95); }
+#playChoices button { text-shadow: 0 1px 4px rgba(0,0,0,.9); }
 #playChoices button:hover, #playChoices button:focus-visible { outline: 2px solid #ffdb8a; outline-offset: 2px; }
 .placement-lane.focused { transform: translate(-50%, -50%) scale(1.12); box-shadow: 0 0 32px #ffdb8a; }
 .placement-cancel { position: fixed; right: 14px; bottom: 24px; border-color: rgba(99,243,255,.4) !important;

@@ -404,6 +404,13 @@ export function activationImageURL(def, zone) {
   return url;
 }
 
+/* 裏面を画像として取り出す (スタック一覧で、見る権利のない裏向きに使う) */
+let backURL = null;
+export function backImageURL() {
+  if (!backURL) backURL = backTex().image.toDataURL('image/png');
+  return backURL;
+}
+
 /* ---------- 裏面 (全カード共通) ---------- */
 export function backTex() {
   if (backTexture) return backTexture;

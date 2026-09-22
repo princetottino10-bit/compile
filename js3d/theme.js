@@ -37,13 +37,14 @@ export const VIEW = { k: 0, handOpen: true };
 
 /* --- カメラ --- */
 export const CAMERA = {
-  fov: 46,
+  /* 画角を絞って盤面を上下いっぱいに映す (奥の枠が画面の上端近くに来る) */
+  fov: 36,
   near: 0.1,
   far: 120,
   /* 通常の観戦位置 */
   home: { pos: [0, 8.9, 7.0], look: [0, 0, -0.2] },
   /* カード着地に寄るときの近接パラメータ */
-  focus: { height: 5.15, pull: 3.55, swing: 0.32, lookSwing: 0.5 }
+  focus: { height: 6.2, pull: 4.3, swing: 0.32, lookSwing: 0.5 }
 };
 
 /* --- 配色 (既存プロトタイプのサイバーパンク暗色を踏襲) --- */

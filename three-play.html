@@ -75,8 +75,9 @@
     padding:9px 11px;border-radius:11px;background:rgba(5,8,16,.66);border:1px solid var(--edge);
     backdrop-filter:blur(12px);font:700 9px/1.5 system-ui;letter-spacing:.1em;color:var(--dim);pointer-events:none;}
   .counts b{color:var(--ink);font-size:12px;margin-left:6px;}
-  #meCounts{right:14px;bottom:104px;}
-  #oppCounts{right:14px;top:96px;}
+  /* 右上に「相手 / 自分」の順でまとめる (右下は山札と重なる) */
+  #oppCounts{right:14px;top:52px;}
+  #meCounts{right:14px;top:126px;}
 
   /* ---------- 操作ボタン ----------
      手札の前には置かない。MENU と音は最上部のバー、ログは右のサイドバー、
@@ -436,7 +437,7 @@
     visibility:hidden;transition:visibility 0s .26s;}
   #logDock.open #log{visibility:visible;transition:none;}
   #log:empty::before{content:"まだ何も起きていません";color:var(--dim);}
-  #btnLog{position:absolute;right:100%;top:132px;width:28px;height:78px;padding:0;cursor:pointer;
+  #btnLog{position:absolute;right:100%;top:168px;width:28px;height:78px;padding:0;cursor:pointer;
     border-radius:10px 0 0 10px;border:1px solid rgba(99,243,255,.3);border-right:0;
     background:rgba(8,12,22,.9);color:#cfefff;backdrop-filter:blur(10px);
     writing-mode:vertical-rl;font:800 10px/1 system-ui;letter-spacing:.2em;

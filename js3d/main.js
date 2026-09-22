@@ -14,7 +14,7 @@ import * as ROOM from './room.js';
 import { runRoomLobby } from './roomui.js';
 import { reqText } from './prompts.js';
 import { selectHead, bindSelectHead } from './selectui.js';
-import { faceImageURL, pruneFaceCache, ART_SETS, setMaxAnisotropy } from './cardtex.js';
+import { faceImageURL, backImageURL, pruneFaceCache, ART_SETS, setMaxAnisotropy } from './cardtex.js';
 import * as FX from './fx.js';
 import { buildArena } from './arena.js';
 import { initAudio, sfx, setMuted, isMuted, startBgm, stopBgm, setBgmTension, bgmActive } from './audio.js';
@@ -583,6 +583,18 @@ function bindInput() {
     return hit;
   }
 
+  /* プロトコル板に当たっていれば、その板 (そのラインのスタックを一覧で見せる) */
+  function panelAt(ev) {
+    if (!panels) return null;
+    const r = el.getBoundingClientRect();
+    ndc.x = ((ev.clientX - r.left) / r.width) * 2 - 1;
+    ndc.y = -((ev.clientY - r.top) / r.height) * 2 + 1;
+    ray.setFromCamera(ndc, stage.camera);
+    const meshes = panels.panels.flatMap(p => [p.loading.mesh, p.compiled.mesh]);
+    const h = ray.intersectObjects(meshes, false)[0];
+    return h ? panels.panels.find(p => p.loading.mesh === h.object || p.compiled.mesh === h.object) : null;
+  }
+
   /* いま画面上で浮いているカード (掴んでいる/選択で持ち上がった手札) */
   function isFloating(uid) {
     if (!uid) return false;
@@ -652,6 +664,8 @@ function bindInput() {
       if (hoverUid && hoverUid !== selectedUid) raiseHandCard(hoverUid);
       el.style.cursor = uid ? 'pointer' : 'default';
     }
+    /* プロトコル板も押せる (スタックの一覧) */
+    if (!uid) el.style.cursor = panelAt(ev) ? 'pointer' : 'default';
     /* 盤面のカードは向きが読みにくいので、余白に拡大プレビュー。
        スマホはタップ (pointerdown) だけで切り替える: 指の移動で消えないように */
     if (!isCompactHandUI()) showPreview(uid);
@@ -758,6 +772,11 @@ function bindInput() {
       const lt = locOf(shown(), hit.obj.userData.uid);
       if (lt && lt.zone === 'trash') { showTrash(lt.side); return; }
     }
+    /* プロトコル板をタップ: そのラインのスタックを一覧で見せる (配置先を選んでいる間は除く) */
+    if (!(hit && hit.obj.userData.uid) && !selectedUid) {
+      const pl = panelAt(ev);
+      if (pl) { showStack(pl.line, pl.side); return; }
+    }
     if (demoMode || busy || !cur || shown().winner !== null) return;
     if (cur.requests.length || shown().turn !== ME) return;
     /* 縦持ちは、画面下の手札が見た目では盤面と離れていても透視投影上は
@@ -855,6 +874,7 @@ function bindInput() {
   };
   const goToMenu = async () => {
     if (!roomMode) {
+      if (!confirm('メニューに戻りますか？')) return;
       location.href = location.pathname;
       return;
     }
@@ -1206,8 +1226,10 @@ function positionPlayChoices() {
     const pad = pads.find(p => p.userData.line === line && p.userData.side === side);
     if (!pad) { cell.hidden = true; continue; }
     pad.getWorldPosition(choiceWorld);
-    /* ラインの上に浮かせる。スマホは指で押すので高めに出し、置き先の札と重ねない */
-    choiceWorld.y += isCompactHandUI() ? 0.8 : 0.09;
+    /* ボタンはスタックの1枚目の位置に固定する (スタックが伸びても動かさない)。
+       札に重なるので、ボタンは半透明にして下の札を透かす (playchoices.css) */
+    choiceWorld.z = BOARD.stackZ[choiceWorld.z > 0 ? 1 : 0];
+    choiceWorld.y = isCompactHandUI() ? 0.8 : 0.09;
     choiceWorld.project(stage.camera);
     const visible = choiceWorld.z >= -1 && choiceWorld.z <= 1
       && choiceWorld.x >= -1.25 && choiceWorld.x <= 1.25 && choiceWorld.y >= -1.25 && choiceWorld.y <= 1.25;
@@ -2135,6 +2157,25 @@ function showTrash(side) {
   }).filter(Boolean);
   if (!items.length) { UI.toast('捨て札はありません'); return; }
   UI.showPile((side === ME ? 'あなた' : '相手') + 'の捨て札 (' + items.length + '枚・新しい順)', items);
+}
+
+/* プロトコル板をタップ: そのラインのスタックを上から一覧で見せる。
+   見る権利のない裏向きは裏面のまま (中身は出さない) */
+function showStack(line, side) {
+  const st = shown();
+  const proto = st.players[side].protocols[line];
+  const owner = side === ME ? 'あなた' : '相手';
+  const stack = st.lines[line][side].slice().reverse();
+  if (!stack.length) { UI.toast(owner + 'の ' + proto.name + ' にカードはありません'); return; }
+  const items = stack.map((u) => {
+    const c = st.cards[u];
+    const known = c.faceUp || ((c.knownTo || 0) & (1 << ME));
+    const d = known && defIndex[c.def];
+    if (!d) return { img: backImageURL(), label: '裏向き (値2)' };
+    return { img: faceImageURL(d), label: d.proto + ' ' + d.value + (c.faceUp ? '' : ' / 裏向き (値2)') };
+  });
+  UI.showPile(owner + 'の ' + proto.name + ' のスタック (' + items.length + '枚・上から / 合計 ' +
+    totalOf(st, line, side) + ')', items);
 }
 
 /* 宣言 (LUCK 0 / LUCK 3): 宣言した内容と当否を画面中央で見せる */

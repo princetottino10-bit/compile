@@ -186,8 +186,9 @@ export function setSelected(card, on, colorHex) {
   if (!ud.selectTint) {
     const geo = planeGeometry();
     const tint = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
-      color: 0xffd86a, transparent: true, opacity: 0.18, depthWrite: false,
-      blending: THREE.AdditiveBlending
+      /* 面は照明を受けない (絵そのままの明るさ) ので、加算の色は薄めにする */
+      color: 0xffd86a, transparent: true, opacity: 0.08, depthWrite: false,
+      blending: THREE.AdditiveBlending, toneMapped: false
     }));
     tint.position.y = CARD.thickness / 2 + 0.002;
     tint.renderOrder = 3;

@@ -7,6 +7,9 @@ import { BOARD, CARD, VIEW } from './theme.js';
 
 /* 手札を起こす角度 (水平から) */
 const HAND_TILT = 1.02;
+/* 盤面を大きく映す (画角 36) と手札が画面の下へ沈むので、画面の上方向へ持ち上げる (y, z)。
+   開いた手札は札の上端が画面の約 79%、伏せた手札は約 90% (見出しの帯と絵の上だけ見える) */
+const HAND_LIFT = [0.32, -0.39];
 
 /* 手札: PC は扇、縦持ちではまっすぐな段組み */
 export function handSlot(i, n) {
@@ -63,8 +66,8 @@ export function handSlot(i, n) {
   return {
     /* 盤面を読むときはカードを画面下へ引き、少し縮めて重なりも減らす。 */
     pos: [t * width,
-      BOARD.handY + rowY - droop * up[0] + layer * nrm[0] - tucked * (0.12 + 0.08 * k),
-      BOARD.handZ + rowZ + 0.55 * k - droop * up[1] + layer * nrm[1] + tucked * (0.38 + 0.20 * k)],
+      BOARD.handY + HAND_LIFT[0] + rowY - droop * up[0] + layer * nrm[0] - tucked * (0.14 + 0.08 * k),
+      BOARD.handZ + HAND_LIFT[1] + rowZ + 0.55 * k - droop * up[1] + layer * nrm[1] + tucked * (0.45 + 0.20 * k)],
     rot: [HAND_TILT, -t * 0.26, 0],
     scale: (1.06 - 0.22 * k) * (tucked ? 0.92 : 1) * rowScale
   };
@@ -137,7 +140,7 @@ export function transitPileSlot(dest, side, me, idx) {
 export function pilePos(kind, side, me, depth) {
   const near = side === me;
   const k = VIEW.k;                                 // 縦長では画面内に寄せる
-  const z = (near ? 2.75 : -2.75) * (1 + 0.16 * k);
+  const z = (near ? 2.3 : -2.3) * (1 + 0.16 * k);
   /* 縦持ちは画面幅がレーンでほぼ埋まる。レーンの外側 (|x|>2.12) の細い余白に
      小さくして置き、積み札やプロトコル板に重ならないようにする */
   const x = (kind === 'deck' ? 1 : -1) * (near ? 1 : -1) * (3.45 + (2.52 - 3.45) * k);
