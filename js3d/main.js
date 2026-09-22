@@ -426,7 +426,7 @@ function trainingSelect(uid) {
   training.sel = uid;
   if (uid) {
     training.side = uid.startsWith('p1:') ? 1 : 0;
-    sfx('select');
+    sfx('pick');
     /* 選んだカードの効果を詳細パネルで読めるようにする */
     showTrainingCard(uid);
   }
@@ -1257,7 +1257,7 @@ function select(uid) {
   selectedUid = uid;
   if (uid) {
     setHandDrawer(true);
-    sfx('select');
+    sfx('pick');
     raiseHandCard(uid);
     const card = board.cardOf(shown(), uid);
     board.setHighlight(card, 0xffd86a, 0.22, 0.85);

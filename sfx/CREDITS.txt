@@ -1,0 +1,11 @@
+効果音の素材 (sfx/*.mp3)
+
+Kenney (www.kenney.nl) の次の素材を、使う音だけ mp3 (モノラル・頭の無音を削除) に変換したものです。
+ライセンスはどちらも Creative Commons CC0 (パブリックドメイン。商用・改変可、表記不要)。
+
+- Casino Audio 1.1  https://kenney.nl/assets/casino-audio
+  card-place-*, card-slide-*, card-shove-*, card-fan-1
+- Sci-fi Sounds 1.0  https://kenney.nl/assets/sci-fi-sounds
+  forceField_*, explosionCrunch_000, lowFrequency_explosion_001, impactMetal_*
+
+Thanks, Kenney!
