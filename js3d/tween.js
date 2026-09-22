@@ -46,14 +46,18 @@ export function tween(ms, onUpdate, ease, onDone) {
   });
 }
 
+/* 演出の速さ (設定)。1 = ふつう。すべてのトゥイーンと待ち時間にかける */
+let speed = 1;
+export function setSpeed(v) { speed = Math.max(0.25, Math.min(4, +v || 1)); }
+
 /* 進行待ち: 描画フレームに依存させない (タブが裏でも進行が固まらない) */
 export function wait(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms / speed));
 }
 
 export function update(dtMs) {
   if (!active.size) return;
-  for (const t of Array.from(active)) t.step(dtMs);
+  for (const t of Array.from(active)) t.step(dtMs * speed);
 }
 
 export function activeCount() { return active.size; }

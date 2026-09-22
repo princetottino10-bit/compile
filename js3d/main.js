@@ -12,13 +12,15 @@ import { runTitle } from './title.js';
 import { mountTrainingTools } from './training.js';
 import * as ROOM from './room.js';
 import * as PZ from './puzzle.js';
+import { settings, onSettings, openSettings } from './settings.js';
+import { recordSoloResult } from './stats.js';
 import { runRoomLobby } from './roomui.js';
 import { reqText } from './prompts.js';
 import { selectHead, bindSelectHead } from './selectui.js';
 import { faceImageURL, backImageURL, pruneFaceCache, ART_SETS, setMaxAnisotropy } from './cardtex.js';
 import * as FX from './fx.js';
 import { buildArena } from './arena.js';
-import { initAudio, sfx, setMuted, isMuted, startBgm, stopBgm, setBgmTension, bgmActive } from './audio.js';
+import { initAudio, sfx, setMuted, isMuted, startBgm, stopBgm, setBgmTension, bgmActive, setSfxVolume, setBgmVolume } from './audio.js';
 import { emblemDataURL } from './emblems.js';
 import * as LAYOUT from './layout.js';
 import { BOARD, CARD, COLOR, TIMING, VIEW } from './theme.js';
@@ -148,6 +150,8 @@ async function boot() {
   panels = createPanels(stage, ME);
   buildPads();
   stage.onFrame((dt, t) => { positionPlayChoices(); trackHandTop(); trackHandRight(); if (panels) panels.tick(t); });
+  /* 設定 (演出の速さ・音量) を反映し、変わったらすぐ当てる */
+  onSettings((s) => { TW.setSpeed(s.speed); setSfxVolume(s.sfx); setBgmVolume(s.bgm); });
   bindInput();
   mark('stage');
 
@@ -165,7 +169,10 @@ async function boot() {
   /* 共有された問題: 盤面・課題・クリア条件が URL に入っている */
   if (params.get('puzzle')) {
     puzzle = PZ.decodePuzzle(params.get('puzzle'));
-    if (puzzle) { p0 = puzzle.spec.sides[0].protos.slice(); p1 = puzzle.spec.sides[1].protos.slice(); }
+    if (puzzle) {
+      p0 = puzzle.spec.sides[0].protos.slice(); p1 = puzzle.spec.sides[1].protos.slice();
+      document.body.classList.add('puzzle');
+    }
     else UI.toast('問題のリンクが壊れています');
   }
 
@@ -503,7 +510,9 @@ function glitchArtUrl(protoName) {
 
 /* 難易度 → エンジン設定。
    auto-play と同じく上位2段は探索AI。最強は思考時間増 + DSH特化戦略 */
+let aiDifficulty = null;   // 戦績に残す難易度 (0..4)。URL で直接始めた対戦は不明
 function applyAiDifficulty(level) {
+  aiDifficulty = level;
   if (level <= 0) {
     Engine.setAiLevel(1);                        // かんたん: ヒューリスティックのみ
   } else if (level === 1) {
@@ -966,6 +975,10 @@ function bindInput() {
   if (leaveBtn) leaveBtn.onclick = goToMenu;
   const menuBtn = document.getElementById('btnMenu');
   if (menuBtn) menuBtn.onclick = goToMenu;
+  const hintBtn = document.getElementById('btnHint');
+  if (hintBtn) hintBtn.onclick = () => showHint();
+  const settingsBtn = document.getElementById('btnSettings');
+  if (settingsBtn) settingsBtn.onclick = () => openSettings();
   const muteBtn = document.getElementById('btnMute');
   if (muteBtn) muteBtn.onclick = () => {
     initAudio();
@@ -1096,6 +1109,40 @@ function showPreview(uid) {
   if (!o || uid === previewUid) return;
   previewUid = uid;
   UI.showCardPanel(o);
+}
+
+/* ヒント: いまの自分の手番で AI ならどう指すかを出す (CPU 戦のみ)。
+   AI は見えている情報だけで考える。出したカードを選び、置き先を光らせる */
+async function showHint() {
+  const st = shown();
+  if (roomMode || trainingMode || puzzle || busy || !cur || cur.requests.length || !st
+      || st.turn !== ME || st.winner !== null || st.phase !== 'action') {
+    UI.toast('自分の手番で使えます');
+    return;
+  }
+  UI.toast('考え中…', 1600);
+  await new Promise(r => setTimeout(r, 60));   // 「考え中…」を描いてから重い探索に入る
+  let a = null;
+  try { a = withoutTrace(() => Engine.ai.action(cur.state)); } catch (e) { a = null; }
+  if (!a) { UI.toast('ヒントを出せませんでした'); return; }
+  if (a.type === 'refresh') {
+    UI.toast('ヒント: リフレッシュする', 3600);
+    const r = document.getElementById('btnRefresh');
+    if (r) { r.classList.add('urge'); setTimeout(() => refreshHud(), 3600); }
+    return;
+  }
+  if (a.type === 'play') {
+    const side = a.side ?? ME;
+    const lineName = st.players[side].protocols[a.line].name;
+    UI.toast('ヒント: ' + (cardName(a.card) || 'カード') + ' を ' + (side === ME ? '' : '相手の ') + lineName +
+      ' のラインに' + (a.faceUp ? '表' : '裏') + 'で置く', 4200);
+    if (st.players[ME].hand.includes(a.card)) {
+      select(a.card);
+      focusPlayChoice(a.line, side);
+    }
+    return;
+  }
+  UI.toast('ヒント: ' + a.type);
 }
 
 function syncFacingHint() {
@@ -1433,6 +1480,7 @@ async function roomMaybeFinish() {
 
 /* ロビーから playing の publicState を受けて対戦開始 */
 async function roomEnterGame(rm) {
+  document.body.classList.add('room');
   roomMode = true;
   roomResultShown = false;
   lastTurn = null;
@@ -1505,6 +1553,10 @@ async function markPhase(st) {
 const MAX_STEPS = 14;          // 長い連鎖はここで打ち切って最終状態へ飛ばす
 /* チェーン表示の間 (ms): 割り込んで積まれたとき / 1つ解決したとき */
 const CHAIN_HOLD = { add: 1100, resolve: 650, each: 750 };
+/* 設定で「一時停止する」をオフにしたら待たない */
+function chainPause(kind) {
+  return settings().pauses ? TW.wait(CHAIN_HOLD[kind]) : Promise.resolve();
+}
 
 function meaningfulSteps(prev, res) {
   if (!res || !res.trace || !res.trace.length) return [];
@@ -1634,8 +1686,8 @@ async function replayResolution(prev, res, action) {
     for (const cue of step.acts) {
       const grew = cue.chain ? showChainNow(cue.chain, step.st) > 0 : false;
       await cueFor({ cue }, step.st);
-      if (grew) await TW.wait(CHAIN_HOLD.add);
-      else if (actCount > 1) await TW.wait(CHAIN_HOLD.each);
+      if (grew) await chainPause('add');
+      else if (actCount > 1) await chainPause('each');
     }
   };
   /* いま出しているチェーンの長さ。伸びたら (割り込み) 止めて積んだところを見せ、
@@ -1669,7 +1721,7 @@ async function replayResolution(prev, res, action) {
     /* プロトコル板 (並び・合計値) もこのコマに合わせる。並べ替えは板が動き終わるまで待つ */
     await syncPanels(step.st, true);
     /* この絵の時点のチェーン。1つ解決して短くなったら、解決したことが分かるよう少し待つ */
-    if (showChainNow(step.chain, step.st) < 0) await TW.wait(CHAIN_HOLD.resolve);
+    if (showChainNow(step.chain, step.st) < 0) await chainPause('resolve');
     if (step.acts && step.acts.length) await showActs(step);
     else await cueFor(step, step.st);
     await markPhase(step.st);
@@ -2232,6 +2284,10 @@ async function afterTurn() {
   if (cur.state.winner !== null && !resultShown) {
     resultShown = true;
     const win = cur.state.winner === ME;
+    if (!trainingMode && !puzzle && !demoMode && !roomMode) {
+      const st0 = cur.state;
+      recordSoloResult(st0.players[ME].protocols.map(p => p.name), st0.players[AI].protocols.map(p => p.name), win, aiDifficulty);
+    }
     UI.setPrompt(win ? 'あなたの勝ち' : '敗北', 'end');
     sfx(win ? 'win' : 'lose');
     await finaleFx(win);

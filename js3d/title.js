@@ -3,6 +3,8 @@
  * ========================================================================= */
 import { emblemDataURL } from './emblems.js';
 import { initAudio, isMuted, setMuted, sfx } from './audio.js';
+import { openSettings } from './settings.js';
+import { openStats } from './stats.js';
 
 const BOOT_LINES = [
   '> COMPILE OS v3.1 — boot sequence initiated',
@@ -62,14 +64,22 @@ export function runTitle(protocols, opts) {
           '<button data-mode="single" type="button">SINGLE GAME <small>CPUと対戦</small></button>' +
           '<button data-mode="online" type="button">ONLINE GAME <small>ルーム・レート戦</small></button>' +
           '<button data-mode="training" type="button">TRAINING <small>自由配置・検証盤面</small></button>' +
-          '<button data-mode="options" type="button">OPTION <small>サウンド設定</small></button>' +
+          '<button data-mode="record" type="button">RECORD <small>CPU 戦の戦績</small></button>' +
+          '<button data-mode="options" type="button">OPTION <small>演出・音の設定</small></button>' +
         '</nav><section class="tt-options" id="ttOptions" hidden><b>OPTION</b>' +
           '<button id="ttSound" type="button"></button><button id="ttOptionsBack" type="button">戻る</button></section>';
       center.querySelector('.tt-menu').onclick = (ev) => {
         const button = ev.target.closest('button[data-mode]');
         if (!button) return;
         sfx('select');
-        if (button.dataset.mode === 'options') showOptions();
+        if (button.dataset.mode === 'options') {
+          /* 設定画面 (演出の速さ・音量・待ち時間) にサウンドの ON/OFF を添える */
+          openSettings([{ label: isMuted() ? 'サウンド: OFF' : 'サウンド: ON', onClick: (b) => {
+            setMuted(!isMuted());
+            b.textContent = isMuted() ? 'サウンド: OFF' : 'サウンド: ON';
+            if (!isMuted()) sfx('tick');
+          } }]);
+        } else if (button.dataset.mode === 'record') openStats();
         else finish(button.dataset.mode);
       };
     };
