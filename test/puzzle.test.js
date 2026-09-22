@@ -58,6 +58,21 @@ test('問題: 壊れたリンクは null', async () => {
   assert.equal(PZ.decodePuzzle(''), null);
 });
 
+test('問題の判定: 裏向きで1枚置いて 10 にした手番は「コンパイルできる状態」になる (手番の終わりの盤面で判定)', async () => {
+  const PZ = await loadPz();
+  Engine.setTrace(true);
+  const spec = { sides: [
+    { protos: ['SPEED', 'FIRE', 'LIFE'], lines: [[], [['FIRE_6', true], ['FIRE_2', true], ['FIRE_3', true]], []], hand: ['SPEED_3'] },
+    { protos: ['METAL', 'LIGHT', 'WATER'], lines: [[], [['LIGHT_4', true]], []], hand: [] }
+  ] };
+  let res = Engine.newPuzzle(spec, { seed: 1 });
+  res = Engine.apply(res.state, { type: 'play', card: 'p0:SPEED_3', line: 1, faceUp: false });
+  assert.equal(res.error, null);
+  const endSt = PZ.endOfTurnState(res.trace, 0, res.state);
+  assert.equal(Engine.lineTotal(endSt, 1, 0), 10, '置いた裏向きのカード (値2) が合計に入っている');
+  assert.equal(PZ.judgePuzzle('ready', endSt, res.state, 0, (s, l, side) => Engine.lineTotal(s, l, side)).ok, true);
+});
+
 test('問題の判定: コンパイルできる状態 / 相手を止める / 勝利', async () => {
   const PZ = await loadPz();
   const st = trainingBoard();

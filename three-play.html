@@ -1052,6 +1052,42 @@
   #puzzleBar button{flex:none;padding:7px 12px;border-radius:999px;cursor:pointer;border:1px solid rgba(255,255,255,.2);
     background:transparent;color:var(--ink);font:800 10px/1 system-ui;}
   body.picking #puzzleBar{display:none;}
+  /* ---------- チュートリアル ---------- */
+  .tu-card{width:min(440px,100%);border-color:rgba(99,243,255,.4);}
+  /* 説明は上に寄せ、盤面 (説明している場所) が見えるよう暗くしすぎない */
+  #tutorialIntro{align-items:flex-start;padding-top:58px;background:rgba(2,3,9,.22);}
+  .tu-head{display:flex;flex-direction:column;align-items:flex-start;gap:8px;}
+  .tu-head .pz-tag{padding:3px 8px;border-radius:999px;background:var(--cyan);color:#021318;font:900 10px/1.2 system-ui;letter-spacing:.1em;}
+  .tu-head b{font:800 17px/1.3 system-ui;color:#fff;letter-spacing:.04em;}
+  .tu-text{margin:0;font:500 14px/1.75 system-ui;color:var(--ink);min-height:4.9em;}
+  .tu-text b{color:#ffeab4;font-weight:800;}
+  .tu-task{margin:0;display:flex;gap:10px;align-items:baseline;padding:10px 12px;border-radius:10px;
+    background:rgba(109,255,194,.08);border:1px solid rgba(109,255,194,.3);font:700 13px/1.5 system-ui;color:#c9ffe9;}
+  .tu-task span{flex:none;font:900 10px/1 system-ui;letter-spacing:.12em;color:var(--mint);}
+  .tu-foot{display:flex;align-items:center;gap:8px;}
+  .tu-dots{display:flex;gap:5px;margin-right:auto;}
+  .tu-dots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.2);}
+  .tu-dots i.on{background:var(--cyan);}
+  .tu-foot button{padding:10px 18px;border-radius:999px;cursor:pointer;border:1px solid rgba(255,255,255,.2);
+    background:transparent;color:var(--ink);font:800 11px/1 system-ui;letter-spacing:.06em;}
+  .tu-foot .pz-main{border:0;padding:11px 22px;color:#021318;background:linear-gradient(100deg,var(--cyan),var(--mint));}
+  body.tutorial #puzzleBar{border-color:rgba(99,243,255,.4);}
+  body.tutorial #puzzleBar .pz-tag{background:var(--cyan);color:#021318;}
+  body.tutorial #puzzleBar .pz-text small{color:#bfefff;}
+  .tt-menu button[data-mode="tutorial"]{border-color:rgba(99,243,255,.36);}
+  .tt-menu button[data-mode="tutorial"]:hover{border-color:var(--cyan);background:rgba(99,243,255,.12);box-shadow:0 0 26px rgba(99,243,255,.16);}
+  @media (orientation:landscape) and (max-height:500px){
+    .tu-card{width:min(380px,100%);gap:8px;padding:11px 13px;}
+    #tutorialIntro{padding-top:40px;}
+    .tu-head b{font-size:14px;}
+    .tu-text{font-size:12px;line-height:1.55;min-height:0;}
+    .tu-foot button{padding:8px 14px;}
+    .tu-task{padding:7px 10px;font-size:12px;}
+    /* 右上のターン表示・ボタンと重ならないよう、左に寄せる */
+    #puzzleBar{top:4px;left:calc(8px + env(safe-area-inset-left));transform:none;max-width:calc(100vw - 310px);
+      padding:5px 6px 5px 10px;gap:8px;}
+    #puzzleBar .pz-text small{display:none;}
+  }
   .tr-foot button.warn{color:#ffb3d6!important;border-color:rgba(255,59,157,.35);}
   @media (prefers-reduced-motion: reduce){
     .tt-strip{animation:none;}

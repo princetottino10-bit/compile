@@ -12,6 +12,7 @@ import { runTitle } from './title.js';
 import { mountTrainingTools } from './training.js';
 import * as ROOM from './room.js';
 import * as PZ from './puzzle.js';
+import * as TU from './tutorial.js';
 import { settings, onSettings, openSettings } from './settings.js';
 import { recordSoloResult } from './stats.js';
 import { openReview } from './review.js';
@@ -52,6 +53,10 @@ let roomLoggedVersion = null;
 let trainingMode = false;
 /* 共有された問題を解いている (?puzzle=...)。{ spec, task, goal } */
 let puzzle = null;
+/* チュートリアルのレッスン (?tutorial=1..)。{ index, lesson } */
+let tutorial = null;
+let tutorialOver = false;
+let tutorialWaitShown = false;
 let trainingTools = null;
 /* トレーニングの操作状態: 選択中のカード・表示中の側・効果の有無・置く向き */
 const training = { sel: null, side: 0, effects: true, faceUp: true, collapsed: false, undo: [], protos: null };
@@ -182,6 +187,15 @@ async function boot() {
     else UI.toast('問題のリンクが壊れています');
   }
 
+  /* チュートリアル: レッスンの盤面から始める */
+  const tuNo = parseInt(params.get('tutorial'), 10);
+  if (tuNo >= 1 && tuNo <= TU.LESSONS.length && !puzzle) {
+    tutorial = { index: tuNo - 1, lesson: TU.LESSONS[tuNo - 1] };
+    p0 = tutorial.lesson.spec.sides[0].protos.slice(); p1 = tutorial.lesson.spec.sides[1].protos.slice();
+    document.body.classList.add('tutorial');
+    applyAiDifficulty(0);
+  }
+
   if (demoMode && !p0) {
     const pool = cards.protocols.map(x => x.name);
     const draw = () => pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
@@ -224,6 +238,7 @@ async function boot() {
         await roomEnterGame(result.rm);
         return;
       }
+      if (nextMode === 'tutorial') { location.href = location.pathname + '?tutorial=1'; return; }
       const chosen = await runSetup(cards.protocols, { training: nextMode === 'training', allowOnline: false });
       if (chosen.online) { nextMode = 'online'; continue; }
       if (chosen.back) { nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
@@ -243,10 +258,12 @@ async function boot() {
   }
   pruneFaceCache(keepIds);
   /* 先攻・後攻はコイントスで決める (トレーニングと問題は自分から) */
-  const firstPlayer = trainingMode || puzzle || demoMode ? ME : (Math.random() < 0.5 ? ME : AI);
+  const firstPlayer = trainingMode || puzzle || tutorial || demoMode ? ME : (Math.random() < 0.5 ? ME : AI);
   const res = puzzle
     ? Engine.newPuzzle(puzzle.spec, { seed: 1 })
-    : Engine.newGame({ seed: (Math.random() * 1e9) | 0, p0, p1, first: firstPlayer, training: trainingMode });
+    : tutorial
+      ? Engine.newPuzzle(tutorial.lesson.spec, { seed: 1 })
+      : Engine.newGame({ seed: (Math.random() * 1e9) | 0, p0, p1, first: firstPlayer, training: trainingMode });
   cur = res;
   if (trainingMode) training.protos = [p0.slice(), p1.slice()];
   window.__3d = {
@@ -302,11 +319,18 @@ async function boot() {
   await stage.home(0);
   refreshHud();
   if (puzzle) PZ.showPuzzleBar(puzzle, retryPuzzle);
+  if (tutorial) {
+    await TU.showLessonIntro(tutorial.index);
+    TU.showLessonBar(tutorial.index, {
+      onHelp: () => TU.showLessonIntro(tutorial.index),
+      onRetry: () => location.reload()
+    });
+  }
   if (trainingMode) {
     UI.setPrompt('');
     UI.toast('カードを選んで、光っている枠をタップすると置けます', 3200);
   } else {
-    if (!puzzle && !demoMode) UI.toast(firstPlayer === ME ? 'コイントス: あなたが先攻です' : 'コイントス: あなたは後攻です', 2600);
+    if (!puzzle && !tutorial && !demoMode) UI.toast(firstPlayer === ME ? 'コイントス: あなたが先攻です' : 'コイントス: あなたは後攻です', 2600);
     await drainRequests();
     await afterTurn();
   }
@@ -321,12 +345,44 @@ async function puzzleAfterTurn() {
   if (!st || puzzleJudged) return;
   if (st.winner === null && st.turn === ME) return;       // まだ自分の手番
   puzzleJudged = true;
-  let endSt = null;
-  for (const t of (cur.trace || [])) if (t.st && t.st.turn === ME) endSt = t.st;
-  const result = PZ.judgePuzzle(puzzle.goal, endSt || shown(), shown(), ME, totalOf);
+  const endSt = PZ.endOfTurnState(cur.trace, ME, shown());
+  const result = PZ.judgePuzzle(puzzle.goal, endSt, shown(), ME, totalOf);
   sfx(result.ok === false ? 'lose' : 'win');
   UI.setTurnBadge(result.ok === true ? '正解' : result.ok === false ? '不正解' : '手番終了', result.ok !== false);
   PZ.showPuzzleResult(result, retryPuzzle);
+}
+
+/* ---------- チュートリアル ----------
+   操作を1つ解決し終えるたびに、レッスンの判定をかける。終わったら相手の手番を進めない */
+async function tutorialAfterStep() {
+  if (tutorialOver) return true;
+  const st = cur && cur.state;
+  if (!st) return false;
+  const r = TU.judgeStep(tutorial.lesson, { st, trace: cur.trace, me: ME, total: totalOf });
+  if (!r) {
+    /* 自分の手番は終わったが、判定は相手の手番のあと (コンパイル待ち) */
+    if (st.turn !== ME && st.winner === null && tutorial.lesson.wait && !tutorialWaitShown) {
+      tutorialWaitShown = true;
+      UI.toast(tutorial.lesson.wait, 3400);
+    }
+    return false;
+  }
+  tutorialOver = true;
+  refreshHud();
+  if (st.winner === ME) {
+    sfx('win');
+    await finaleFx(true);
+    await UI.resultCutIn(true);
+  } else sfx(r.ok ? 'win' : 'lose');
+  UI.setTurnBadge(r.ok ? 'クリア' : 'もう一度', r.ok);
+  const i = tutorial.index;
+  TU.showLessonResult(i, r, {
+    onNext: () => { location.href = location.pathname + '?tutorial=' + (i + 2); },
+    onRetry: () => location.reload(),
+    onPlay: () => { location.href = location.pathname; },
+    onTop: () => { location.href = 'index.html'; }
+  });
+  return true;
 }
 
 function retryPuzzle() {
@@ -2245,6 +2301,7 @@ async function drainRequests() {
 async function afterTurn() {
   if (roomMode) { await announceTurn(); await roomMaybeFinish(); return; }
   if (puzzle) { await puzzleAfterTurn(); return; }
+  if (tutorial && await tutorialAfterStep()) return;
   await announceTurn();
   let guardAi = 0;
   while (cur && cur.state.winner === null && (demoMode || cur.state.turn === AI)

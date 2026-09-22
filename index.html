@@ -49,6 +49,24 @@
     .card.c4:hover{border-color:rgba(34,197,94,.4)}
     .card.c5:hover{border-color:rgba(168,85,247,.4)}
     .card.c6:hover{border-color:rgba(55,214,122,.4)}
+    /* はじめての方へ: チュートリアルの入口 */
+    .tutorial{display:block;text-decoration:none;color:var(--tx);margin-bottom:10px;padding:20px 20px 18px;border-radius:14px;
+      border:1.5px solid rgba(99,243,255,.35);position:relative;overflow:hidden;
+      background:radial-gradient(120% 90% at 100% 0%,rgba(99,243,255,.14),transparent 60%),var(--cbg);
+      transition:border-color .2s,transform .15s}
+    .tutorial:hover,.tutorial:focus-visible{border-color:#63f3ff}
+    .tutorial:active{transform:scale(.98)}
+    .tutorial .kicker{font-size:.68rem;font-weight:700;color:#63f3ff;letter-spacing:1px}
+    .tutorial .title{display:block;font-family:Orbitron,monospace;font-size:1.15rem;font-weight:900;letter-spacing:1.5px;margin-top:6px}
+    .tutorial .desc{display:block;font-size:.74rem;color:var(--tx);margin-top:6px;line-height:1.6}
+    .tutorial ol{list-style:none;counter-reset:l;display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+    .tutorial li{counter-increment:l;font-size:.64rem;color:var(--txd);padding:4px 9px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03)}
+    .tutorial li::before{content:counter(l) ". ";color:#63f3ff;font-weight:700}
+    .tutorial .go{display:inline-block;margin-top:14px;font-family:Orbitron,monospace;font-size:.72rem;font-weight:700;
+      letter-spacing:1px;color:#021318;background:linear-gradient(100deg,#63f3ff,#6dffc2);padding:8px 16px;border-radius:999px}
+    .ref{display:block;text-align:right;font-size:.68rem;color:var(--txd);margin:0 4px 22px;text-decoration:none}
+    .ref:hover{color:var(--tx)}
     .footer{text-align:center;margin-top:36px;font-size:.55rem;color:var(--txd);
       font-family:Orbitron,monospace;letter-spacing:.5px;line-height:1.8}
   </style>
@@ -57,6 +75,20 @@
 <div class="wrap">
   <div class="logo">COMPILE <em>&lt;!&gt;</em></div>
   <div class="sub">COMPANION TOOLS</div>
+  <a class="tutorial" href="three-play.html?tutorial=1">
+    <span class="kicker">はじめての方へ</span>
+    <span class="title">TUTORIAL</span>
+    <span class="desc">実際の盤面で、ルールを1つずつ試しながら覚えます。5レッスン・5分ほど。</span>
+    <ol>
+      <li>表向きで置く</li>
+      <li>裏向き・コンパイル</li>
+      <li>リフレッシュ</li>
+      <li>効果で止める</li>
+      <li>3つ目で勝つ</li>
+    </ol>
+    <span class="go">はじめる →</span>
+  </a>
+  <a class="ref" href="play-reference-ja.html">ルールの早見表 →</a>
   <div class="cards">
     <a class="card c5" href="three-play.html">
       <div class="stripe" style="background:#a855f7"></div>

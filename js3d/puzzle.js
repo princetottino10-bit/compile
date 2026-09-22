@@ -67,6 +67,14 @@ export function decodePuzzle(code) {
   }
 }
 
+/* 手番を終えた時点の盤面: 途中経過 (trace) で相手の手番に移った最初の盤面。
+   trace の各盤面はその出来事の直前のものなので、自分の手番中の最後の記録では
+   最後に置いたカードがまだ入っていない。移っていなければ (決着など) いまの盤面 */
+export function endOfTurnState(trace, me, fallback) {
+  for (const t of (trace || [])) if (t.st && t.st.turn !== me) return t.st;
+  return fallback;
+}
+
 export function puzzleUrl(code) {
   return location.origin + location.pathname + '?puzzle=' + code;
 }

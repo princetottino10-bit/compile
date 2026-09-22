@@ -63,6 +63,7 @@ export function runTitle(protocols, opts) {
         '<nav class="tt-menu" aria-label="ゲームモード">' +
           '<button data-mode="single" type="button">SINGLE GAME <small>CPUと対戦</small></button>' +
           '<button data-mode="online" type="button">ONLINE GAME <small>ルーム・レート戦</small></button>' +
+          '<button data-mode="tutorial" type="button">TUTORIAL <small>はじめての方へ・ルールを1つずつ</small></button>' +
           '<button data-mode="training" type="button">TRAINING <small>自由配置・検証盤面</small></button>' +
           '<button data-mode="record" type="button">RECORD <small>CPU 戦の戦績</small></button>' +
           '<button data-mode="options" type="button">OPTION <small>演出・音の設定</small></button>' +
