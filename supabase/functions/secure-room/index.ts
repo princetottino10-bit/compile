@@ -394,7 +394,9 @@ Deno.serve(async (req) => {
       if (error) return fail(req, "状態が更新されています。再試行してください", 409);
       room = data;
       if (room.host_protocols?.length === 3 && room.guest_protocols?.length === 3 && !room.game_state) {
-        const result = Engine.newGame({ p0: room.host_protocols, p1: room.guest_protocols, seed: crypto.getRandomValues(new Uint32Array(1))[0], useControl: true });
+        /* 先攻・後攻はランダム (以前は部屋を作った側が必ず先攻だった) */
+        const first = Math.random() < 0.5 ? 0 : 1;
+        const result = Engine.newGame({ p0: room.host_protocols, p1: room.guest_protocols, seed: crypto.getRandomValues(new Uint32Array(1))[0], useControl: true, first });
         const { data: started, error: startError } = await admin.from("secure_rooms").update({
           game_state: result.state, pending_request: result.requests[0] || null,
           last_log: Array.isArray(result.log) ? result.log : [],

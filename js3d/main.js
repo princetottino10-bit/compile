@@ -223,9 +223,11 @@ async function boot() {
     for (const id of Object.keys(defIndex)) if (defIndex[id].proto === name) keepIds.push(id);
   }
   pruneFaceCache(keepIds);
+  /* 先攻・後攻はコイントスで決める (トレーニングと問題は自分から) */
+  const firstPlayer = trainingMode || puzzle || demoMode ? ME : (Math.random() < 0.5 ? ME : AI);
   const res = puzzle
     ? Engine.newPuzzle(puzzle.spec, { seed: 1 })
-    : Engine.newGame({ seed: (Math.random() * 1e9) | 0, p0, p1, first: 0, training: trainingMode });
+    : Engine.newGame({ seed: (Math.random() * 1e9) | 0, p0, p1, first: firstPlayer, training: trainingMode });
   cur = res;
   if (trainingMode) training.protos = [p0.slice(), p1.slice()];
   window.__3d = {
@@ -284,6 +286,7 @@ async function boot() {
     UI.setPrompt('');
     UI.toast('カードを選んで、光っている枠をタップすると置けます', 3200);
   } else {
+    if (!puzzle && !demoMode) UI.toast(firstPlayer === ME ? 'コイントス: あなたが先攻です' : 'コイントス: あなたは後攻です', 2600);
     await drainRequests();
     await afterTurn();
   }
