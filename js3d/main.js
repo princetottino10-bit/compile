@@ -14,6 +14,7 @@ import * as ROOM from './room.js';
 import * as PZ from './puzzle.js';
 import { settings, onSettings, openSettings } from './settings.js';
 import { recordSoloResult } from './stats.js';
+import { openReview } from './review.js';
 import { runRoomLobby } from './roomui.js';
 import { reqText } from './prompts.js';
 import { selectHead, bindSelectHead } from './selectui.js';
@@ -59,7 +60,12 @@ const training = { sel: null, side: 0, effects: true, faceUp: true, collapsed: f
    engine は選択待ちで中断すると state に「アクション前の基準状態」を返し、
    途中経過は view に入れる。盤面の描画・HUD は必ずこちらを見る。
    一方 apply / legalActions に渡すのは基準状態 (cur.state) の方。 */
-function shown() { return (cur && (cur.view || cur.state)) || null; }
+/* 感想戦で見返している盤面 (null なら今の盤面) */
+let reviewView = null;
+function shown() { return reviewView || (cur && (cur.view || cur.state)) || null; }
+
+/* 感想戦の棋譜: 手を指す前の盤面と、その手 (CPU 戦のみ) */
+const gameHistory = [];
 
 /* 効果の選択中は、通常の上部プロンプトを畳み、この帯だけにまとめる。 */
 function setEffectContext(req) {
@@ -252,6 +258,7 @@ async function boot() {
     arrange: (req) => arrangeOnBoard(req),
     pickTest: (req) => pickOnBoard(req),
     askTest: (req) => askUser(req),
+    reviewTest: () => startReview(false),
     fp: (st) => visualFingerprint(st),
     /* 演出だけを再生して確認する (盤面の状態は変えない) */
     testCompile: (line, side) => {
@@ -1747,11 +1754,15 @@ async function step(action) {
   busy = true;
   updatePads();
   const prev = shown();
+  const before = cur.state;
   const res = Engine.apply(cur.state, action);
   if (res.error) {
     UI.toast(res.error);
     busy = false;
     return;
+  }
+  if (!trainingMode && !demoMode && (action.type === 'play' || action.type === 'refresh')) {
+    gameHistory.push({ st: before, action });
   }
   cur = res;
   if (!res.requests.length) UI.pushLog(res.log);
@@ -2315,8 +2326,11 @@ function showEndActions(win) {
       '<button class="arr-btn ok" id="endAgain" type="button">もう一度</button>' +
       '<button class="arr-btn" id="endTop" type="button">タイトルへ</button>' +
       '<button class="arr-btn" id="endBoard" type="button">盤面を見る</button>' +
+      (gameHistory.length && !roomMode && !puzzle ? '<button class="arr-btn" id="endReview" type="button">感想戦</button>' : '') +
     '</div>';
   el.classList.add('show');
+  const reviewBtn = el.querySelector('#endReview');
+  if (reviewBtn) reviewBtn.onclick = () => { el.classList.remove('show'); startReview(win); };
   /* どちらもページを作り直す。シーンを組み直すのが最も確実 */
   el.querySelector('#endAgain').onclick = () => { location.hash = ''; location.reload(); };
   el.querySelector('#endTop').onclick = () => { location.hash = ''; location.reload(); };
@@ -2327,6 +2341,45 @@ function showEndActions(win) {
     stage.home(600);
     showEndFloat();
   };
+}
+
+/* 感想戦: 棋譜を1手ずつ戻して見る。自分の手番では AI のおすすめも出す */
+function startReview(win) {
+  const final = cur.state;
+  UI.setPrompt('');
+  stage.home(400);
+  openReview(gameHistory, final, {
+    show: (st) => {
+      reviewView = st === final ? null : st;
+      board.clearCandidates();
+      board.syncInstant(shown());
+      syncPanels(shown(), false);
+      refreshHud();
+    },
+    describe: describeAction,
+    suggest: (st) => withoutTrace(() => Engine.ai.action(st)),
+    same: (a, b) => !!a && !!b && a.type === b.type && a.card === b.card && a.line === b.line
+      && !!a.faceUp === !!b.faceUp && (a.side ?? null) === (b.side ?? null),
+    isMine: (st) => st.turn === ME,
+    onExit: () => { reviewView = null; showEndActions(win); }
+  });
+}
+
+/* 棋譜の1手を文にする。相手の裏向きは中身を出さない */
+function describeAction(a, st, noWho) {
+  const who = noWho ? '' : (st.turn === ME ? 'あなた: ' : '相手: ');
+  if (!a) return '';
+  if (a.type === 'play') {
+    const side = a.side ?? st.turn;
+    const c = st.cards[a.card];
+    const visible = c && (a.faceUp || st.turn === ME || ((c.knownTo || 0) & (1 << ME)));
+    const d = visible && defIndex[c.def];
+    return who + (d ? d.proto + ' ' + d.value : '裏向きのカード') + ' を ' +
+      (side !== st.turn ? '相手の ' : '') + st.players[side].protocols[a.line].name + ' のラインに' +
+      (a.faceUp ? '表' : '裏') + 'で置く';
+  }
+  if (a.type === 'refresh') return who + 'リフレッシュ';
+  return who + a.type;
 }
 
 /* 「盤面を見る」で隠したあと、戻る手段だけ小さく残す */
