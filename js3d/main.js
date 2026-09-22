@@ -147,7 +147,7 @@ async function boot() {
   FX.createDust(stage, 900);
   panels = createPanels(stage, ME);
   buildPads();
-  stage.onFrame(() => { positionPlayChoices(); trackHandTop(); trackHandRight(); });
+  stage.onFrame((dt, t) => { positionPlayChoices(); trackHandTop(); trackHandRight(); if (panels) panels.tick(t); });
   bindInput();
   mark('stage');
 
@@ -1203,6 +1203,33 @@ function currentPlacementChoices() {
   return placementChoices(legalNow(), selectedUid, shown().turn);
 }
 
+/* 置いたあとのラインの合計値。効果の解決はせず、札を置いた盤面の合計 (常時効果の増減は入る)。
+   オンラインはサーバーの合計値が基準なので、置く前後の差を足す */
+function placementPreview(action) {
+  const st = shown();
+  if (!st || !action || !st.cards[action.card]) return null;
+  const side = action.side ?? st.turn;
+  const line = action.line;
+  if (!(line >= 0 && line <= 2)) return null;
+  try {
+    const base = structuredClone(st);
+    delete base._totals;
+    const sim = structuredClone(base);
+    for (const pl of sim.players) {
+      const i = pl.hand.indexOf(action.card);
+      if (i >= 0) pl.hand.splice(i, 1);
+    }
+    const c = sim.cards[action.card];
+    c.zone = 'field';
+    c.faceUp = !!action.faceUp;
+    sim.lines[line][side].push(action.card);
+    const from = totalOf(st, line, side);
+    return { from, to: from + Engine.lineTotal(sim, line, side) - Engine.lineTotal(base, line, side) };
+  } catch (e) {
+    return null;
+  }
+}
+
 function updatePlayChoices() {
   const root = document.getElementById('playChoices');
   if (!root || !cur) return;
@@ -1223,7 +1250,7 @@ function updatePlayChoices() {
     }, () => {
       if (boardPick?.kind === 'free') { boardPick.sel = null; renderFreePick(); }
       else { deselect(); showPreview(null); }
-    });
+    }, (action) => placementPreview(action));
   positionPlayChoices();
 }
 
@@ -2392,7 +2419,9 @@ function panelRows(st) {
         total: totalOf(st, line, side),
         color: meta.color || '#63f3ff',
         set: meta.set,
-        compiled: proto.compiled
+        compiled: proto.compiled,
+        /* 次のその側の手番の開始でコンパイル (済みならリコンパイル) が起きる */
+        threat: totalOf(st, line, side) >= 10 && totalOf(st, line, side) > totalOf(st, line, 1 - side)
       };
     };
     return [cell(0), cell(1)];

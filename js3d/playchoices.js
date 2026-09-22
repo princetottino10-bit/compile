@@ -4,7 +4,8 @@ export function placementChoices(actions, uid, turn) {
     .map(a => ({ ...a, side: a.side ?? turn }));
 }
 
-export function renderPlayChoices(root, options, protocols, title, choose, cancel) {
+/* preview(action) -> { from, to }: 置く前と置いたあとのラインの合計値 (無ければ出さない) */
+export function renderPlayChoices(root, options, protocols, title, choose, cancel, preview) {
   root.replaceChildren();
   root.hidden = !title;
   document.body.classList.toggle('choosing-placement', !!title);
@@ -27,12 +28,29 @@ export function renderPlayChoices(root, options, protocols, title, choose, cance
       const label = document.createElement('span');
       label.className = 'placement-lane-label';
       label.textContent = protocols[side][line].name;
+      const first = preview ? preview(choices[0]) : null;
+      if (first) {
+        const now = document.createElement('i');
+        now.className = 'placement-now';
+        now.textContent = first.from;
+        label.append(' ', now);
+      }
       cell.append(label);
       for (const action of choices) {
         const button = document.createElement('button'); button.type = 'button';
-        button.textContent = action.faceUp ? '表' : '裏';
+        const p = preview ? preview(action) : null;
+        const face = action.faceUp ? '表' : '裏';
+        /* 置いたあとの合計値を添える (「表 →10」)。今の合計値はライン名の横 */
+        if (p) {
+          const b = document.createElement('b'); b.textContent = face;
+          const small = document.createElement('small'); small.textContent = '→' + p.to;
+          button.append(b, small);
+        } else {
+          button.textContent = face;
+        }
         button.className = action.faceUp ? 'place-faceup' : 'place-facedown';
-        button.setAttribute('aria-label', label.textContent + 'に' + (action.faceUp ? '表で置く' : '裏で置く'));
+        button.setAttribute('aria-label', protocols[side][line].name + 'に' + (action.faceUp ? '表で置く' : '裏で置く') +
+          (p ? ' (合計 ' + p.from + ' → ' + p.to + ')' : ''));
         button.onclick = () => choose(action); cell.append(button);
       }
       root.append(cell);

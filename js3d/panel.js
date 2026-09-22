@@ -158,6 +158,8 @@ export function createPanels(stage, me) {
   /* 表裏で別テクスチャを貼るため、板は2枚のメッシュで作る */
   const geo = new THREE.PlaneGeometry(PANEL_W, PANEL_D);
   geo.rotateX(-Math.PI / 2);
+  const glowGeo = new THREE.PlaneGeometry(PANEL_W * 1.1, PANEL_D * 1.35);
+  glowGeo.rotateX(-Math.PI / 2);
   const panels = [];
 
   function makeFace(flipped) {
@@ -188,7 +190,17 @@ export function createPanels(stage, me) {
       group.rotation.set(slot.rot[0], slot.rot[1], slot.rot[2]);
       stage.scene.add(group);
 
-      panels.push({ line, side, group, loading, compiled, shown: null, art: {} });
+      /* 次の手番の開始でコンパイルが起きるラインの目印: 板の下に敷く光 (自分=ミント / 相手=ピンク) */
+      const glow = new THREE.Mesh(glowGeo, new THREE.MeshBasicMaterial({
+        color: side === me ? COLOR.mint : COLOR.pink, transparent: true, opacity: 0,
+        blending: THREE.AdditiveBlending, depthWrite: false
+      }));
+      glow.position.set(slot.pos[0], 0.004, slot.pos[2]);
+      glow.visible = false;
+      glow.renderOrder = 0;
+      stage.scene.add(glow);
+
+      panels.push({ line, side, group, loading, compiled, glow, threat: false, shown: null, art: {} });
     }
   }
 
@@ -259,6 +271,7 @@ export function createPanels(stage, me) {
       }
     }
     const moving = new Set(moves.map(m => m.p));
+    for (const p of panels) p.threat = !!rows[p.line][p.side].threat;
     for (const p of panels) {
       if (moving.has(p)) continue;
       const info = rows[p.line][p.side];
@@ -304,5 +317,13 @@ export function createPanels(stage, me) {
     return flip(p, toCompiled);
   }
 
-  return { update, flipAt, panels };
+  /* 毎フレーム: コンパイルが起きるラインの光を脈打たせる */
+  function tick(t) {
+    for (const p of panels) {
+      p.glow.visible = p.threat;
+      if (p.threat) p.glow.material.opacity = 0.32 + 0.22 * Math.sin((t || 0) * 3.6 + p.line);
+    }
+  }
+
+  return { update, flipAt, tick, panels };
 }
