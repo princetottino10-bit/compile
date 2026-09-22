@@ -17,10 +17,6 @@
 #playChoices button { min-width: 38px; min-height: 36px; border: 1px solid #567881; border-radius: 999px;
   background: #192d3d; color: #effaff; padding: 5px 9px; cursor: pointer; font: inherit; pointer-events: auto; }
 #playChoices .place-faceup { background: rgba(23,65,55,.55); border-color: #73cdb2; color: #e4fff5; }
-/* 置いたあとの合計値 (表 →10) */
-#playChoices button { display: inline-flex; align-items: baseline; justify-content: center; gap: 3px; }
-#playChoices button small { font: 800 10px/1 system-ui, sans-serif; opacity: .9; font-variant-numeric: tabular-nums; }
-.placement-now { font-style: normal; font-variant-numeric: tabular-nums; opacity: .8; }
 #playChoices .place-facedown { background: rgba(37,36,58,.55); border-color: #9997d7; }
 #playChoices button:hover { background-color: rgba(40,80,90,.95); }
 #playChoices button { text-shadow: 0 1px 4px rgba(0,0,0,.9); }
