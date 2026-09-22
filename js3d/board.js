@@ -70,7 +70,9 @@ export function visualFingerprint(st) {
     parts.push(st.players[p].hand.join(','));
     parts.push(st.players[p].trash.length);
     parts.push(st.players[p].deck.length);
-    parts.push(st.players[p].protocols.map(x => (x.compiled ? '1' : '0')).join(''));
+    /* プロトコルの並びも絵の一部。並べ替えを独立したコマにしないと、
+       直後のコンパイル演出と同じコマにまとまり、入れ替わる前に演出が出ていた */
+    parts.push(st.players[p].protocols.map(x => x.name + (x.compiled ? '*' : '')).join(','));
   }
   const up = [];
   for (const uid of Object.keys(st.cards)) if (st.cards[uid].faceUp) up.push(uid);

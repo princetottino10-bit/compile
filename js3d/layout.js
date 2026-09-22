@@ -58,11 +58,12 @@ export function handSlot(i, n) {
   const rowScale = backRow ? 0.90 : 1;
   /* 扇は札の面の中で回す (rot.y)。札の縦軸まわりにひねると (rot.z) 隣の札と面が交差し、
      重なりの境目がギザギザにめり込んで汚く見えた。
-     端の札を下げるのも面の中で行い、重ね順は「右の札ほど手前」に面の法線方向でずらす */
+     端の札を下げるのも面の中で行い、重ね順は「左の札ほど手前」に面の法線方向でずらす。
+     値は札の右上にあるので、右の札が上に来ると隣の札の値が隠れてしまう */
   const up = [Math.sin(HAND_TILT), -Math.cos(HAND_TILT)];        // 札の面の「上」(y, z)
   const nrm = [Math.cos(HAND_TILT), Math.sin(HAND_TILT)];        // 札の面の法線 (y, z)
   const droop = (2 * t) * (2 * t) * 0.16;
-  const layer = rowIndex * 0.024;
+  const layer = (rowCount - 1 - rowIndex) * 0.024;
   return {
     /* 盤面を読むときはカードを画面下へ引き、少し縮めて重なりも減らす。 */
     pos: [t * width,

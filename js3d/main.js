@@ -1589,6 +1589,8 @@ async function replayResolution(prev, res, action) {
        先に告知すると、相手のターンになってからカードが積まれて見えた。 */
     /* チェーンの途中は動きもゆっくり見せる */
     await board.applyTransition(from, step.st, first ? action : null, { speed: chainShown ? 1.05 : 0.72 });
+    /* プロトコル板 (並び・合計値) もこのコマに合わせる。並べ替えは板が動き終わるまで待つ */
+    await syncPanels(step.st, true);
     /* この絵の時点のチェーン。1つ解決して短くなったら、解決したことが分かるよう少し待つ */
     if (showChainNow(step.chain, step.st) < 0) await TW.wait(CHAIN_HOLD.resolve);
     if (step.acts && step.acts.length) await showActs(step);
@@ -1604,6 +1606,7 @@ async function replayResolution(prev, res, action) {
   else UI.hideChain();
   /* 最後は必ず本物の状態へ合わせる */
   await board.applyTransition(from, final, first ? action : null, first ? null : { speed: 0.72 });
+  await syncPanels(final, true);
   /* 盤面が最終形になってから、そこまでに進んだ手番/フェイズを告げる */
   await markPhase(final);
 }
@@ -2305,6 +2308,30 @@ window.addEventListener('resize', onViewportChanged);
 window.addEventListener('compile:viewport', onViewportChanged);
 
 /* ---------- HUD ---------- */
+/* プロトコル板の表示内容 ([line][side]) */
+function panelRows(st) {
+  return [0, 1, 2].map((line) => {
+    const cell = (side) => {
+      const proto = st.players[side].protocols[line];
+      const meta = protoIndex[proto.name] || {};
+      return {
+        name: proto.name,
+        total: totalOf(st, line, side),
+        color: meta.color || '#63f3ff',
+        set: meta.set,
+        compiled: proto.compiled
+      };
+    };
+    return [cell(0), cell(1)];
+  });
+}
+
+/* 再生の途中でプロトコル板を合わせる。並べ替えは板を滑らせて見せ、終わるまで待つ */
+function syncPanels(st, animate) {
+  if (!panels || !st) return Promise.resolve();
+  return panels.update(panelRows(st), { animate });
+}
+
 function refreshHud() {
   const st = shown();
   checkRevealed(st);
@@ -2332,20 +2359,7 @@ function refreshHud() {
     st.players[AI].protocols.filter(p => p.compiled).length
   );
   updateBgmTension(st);
-  panels.update([0, 1, 2].map((line) => {
-    const cell = (side) => {
-      const proto = st.players[side].protocols[line];
-      const meta = protoIndex[proto.name] || {};
-      return {
-        name: proto.name,
-        total: totalOf(st, line, side),
-        color: meta.color || '#63f3ff',
-        set: meta.set,
-        compiled: proto.compiled
-      };
-    };
-    return [cell(0), cell(1)];
-  }));
+  panels.update(panelRows(st));
   UI.setCounts(
     { deck: st.players[ME].deck.length, trash: st.players[ME].trash.length, hand: st.players[ME].hand.length },
     { deck: st.players[AI].deck.length, trash: st.players[AI].trash.length, hand: st.players[AI].hand.length }

@@ -432,7 +432,7 @@
   /* ---------- ログ (右のサイドバー) ----------
      閉じているときは右端のつまみだけを出し、押すと盤面の右から引き出す */
   /* 下端はリフレッシュ・選択解除の段より上で止め、開いていても押せるようにする */
-  #logDock{position:fixed;right:env(safe-area-inset-right);top:52px;bottom:74px;z-index:14;width:min(280px,40vw);
+  #logDock{position:fixed;right:env(safe-area-inset-right);top:52px;bottom:74px;z-index:14;width:min(240px,34vw);
     transform:translateX(100%);transition:transform .26s cubic-bezier(.16,1,.3,1);}
   #logDock.open{transform:translateX(0);}
   #log{height:100%;overflow-y:auto;padding:12px 14px;border-radius:12px 0 0 12px;
@@ -1044,7 +1044,7 @@
     .counts b{font-size:10px;margin-left:3px;}
     #oppCounts{top:48px;right:calc(10px + env(safe-area-inset-right));}
     #meCounts{top:112px;right:calc(10px + env(safe-area-inset-right));bottom:auto;}
-    #logDock{top:40px;bottom:52px;width:min(250px,36vw);}
+    #logDock{top:40px;bottom:52px;width:min(210px,31vw);}
     #log{font-size:10px;}
     #btnLog{top:132px;height:70px;}
     #effectContext{top:44px;}

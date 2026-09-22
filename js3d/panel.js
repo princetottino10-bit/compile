@@ -239,8 +239,28 @@ export function createPanels(stage, me) {
     });
   }
 
-  function update(rows) {
+  /* rows: [line][side] の表示内容。opts.animate なら、並べ替えで担当が変わった板を
+     元のラインから新しいラインへ滑らせて見せる (どれとどれが入れ替わったか分かるように)。
+     戻り値は動きが終わる Promise */
+  function update(rows, opts) {
+    const moves = [];
+    if (opts && opts.animate) {
+      for (const side of [0, 1]) {
+        const was = {};
+        for (const p of panels) if (p.side === side && p.artName !== undefined) was[p.artName] = p.line;
+        for (const p of panels) {
+          if (p.side !== side) continue;
+          const info = rows[p.line][p.side];
+          const from = was[info.name];
+          if (p.artName !== undefined && p.artName !== info.name && from !== undefined && from !== p.line) {
+            moves.push({ p, info, from });
+          }
+        }
+      }
+    }
+    const moving = new Set(moves.map(m => m.p));
     for (const p of panels) {
+      if (moving.has(p)) continue;
       const info = rows[p.line][p.side];
       /* 並べ替えで担当プロトコルが変わった場合は「コンパイルの反転演出」
          ではないので、アニメなしで面を合わせる */
@@ -254,6 +274,26 @@ export function createPanels(stage, me) {
       }
       p.shown = info.compiled;
     }
+    return Promise.all(moves.map((m, i) => slideFrom(m.p, m.info, m.from, i)));
+  }
+
+  /* 板を元のライン (fromLine) の位置から自分のラインへ弧を描いて滑らせる。
+     すれ違う板どうしが重ならないよう、弧の高さを交互に変える */
+  function slideFrom(p, info, fromLine, order) {
+    repaint(p, info);
+    p.group.rotation.x = info.compiled ? Math.PI : 0;
+    p.shown = info.compiled;
+    const slot = LAYOUT.protoSlot(p.line, p.side, me);
+    const x0 = LAYOUT.protoSlot(fromLine, p.side, me).pos[0];
+    const x1 = slot.pos[0];
+    const lift = 0.35 + (order % 2) * 0.3;
+    p.group.position.x = x0;
+    return TW.tween(560, (t) => {
+      p.group.position.x = x0 + (x1 - x0) * t;
+      p.group.position.y = slot.pos[1] + Math.sin(Math.PI * t) * lift;
+    }, TW.Ease.inOutCubic, () => {
+      p.group.position.set(slot.pos[0], slot.pos[1], slot.pos[2]);
+    });
   }
 
   /* コンパイル演出から明示的に呼ぶ (板を裏返す瞬間を演出に合わせたいとき) */
