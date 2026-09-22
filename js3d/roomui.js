@@ -12,6 +12,13 @@ const $ = (sel) => document.querySelector(sel);
 function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
 function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* private mode */ } }
 
+/* ドラフトのルールを1行で (例: 候補ランダム10個・BAN 各1つ) */
+function ruleText(rules) {
+  const r = rules || {};
+  return 'ドラフト: ' + (r.poolSize ? '候補ランダム' + r.poolSize + '個' : '全プロトコル') +
+    (r.bans ? '・BAN 各' + r.bans + 'つ' : '');
+}
+
 function esc(s) {
   const d = document.createElement('div');
   d.textContent = s == null ? '' : s;
@@ -144,6 +151,14 @@ export function runRoomLobby(protocols) {
           '<div><div class="ro-lbl">ルームを作る</div>' +
             '<input class="ro-input" id="roomPw" maxlength="40" type="password" placeholder="パスワード (任意)">' +
             '<label class="ro-check"><input type="checkbox" id="roomDraft" checked> 公式ドラフトで開始</label>' +
+            /* ドラフトのルール: 候補の抽選数と BAN 数 */
+            '<div class="ro-rules" id="roomRules">' +
+              '<label>候補<select class="ro-input" id="roomPool">' +
+                '<option value="0">全プロトコル</option><option value="12">ランダム12個</option>' +
+                '<option value="10">ランダム10個</option><option value="8">ランダム8個</option></select></label>' +
+              '<label>BAN<select class="ro-input" id="roomBans">' +
+                '<option value="0">なし</option><option value="1">各1つ</option><option value="2">各2つ</option></select></label>' +
+            '</div>' +
             '<button class="ro-btn" id="roomCreate" type="button">作成</button></div>' +
           '<div><div class="ro-lbl">コードで参加</div>' +
             '<input class="ro-input" id="roomCode" maxlength="6" placeholder="6桁コード">' +
@@ -152,6 +167,12 @@ export function runRoomLobby(protocols) {
         '</div>' +
         '<div class="ro-lbl" style="margin-top:14px">公開ルーム</div><div class="ro-list" id="roomList">読込中…</div>');
       $('#roomCode').oninput = function () { this.value = this.value.toUpperCase().replace(/[^A-Z2-9]/g, ''); };
+      /* ルールはドラフトのときだけ選べる。記憶しておき、次に作るときも同じにする */
+      const syncRules = () => { $('#roomRules').classList.toggle('off', !$('#roomDraft').checked); };
+      $('#roomPool').value = lsGet('compileDraftPool') || '0';
+      $('#roomBans').value = lsGet('compileDraftBans') || '0';
+      $('#roomDraft').onchange = syncRules;
+      syncRules();
 
       const name = () => lsGet('compileRoomName');
       $('#roomQuick').onclick = guard(async () => {
@@ -171,10 +192,17 @@ export function runRoomLobby(protocols) {
         wantRated = $('#roomRated').checked;
         if (wantRated && roomIsAnonymous(session)) { await showLogin(); return; }
         if (pw && pw.length < 4) { status('パスワードは4文字以上です', 'err'); return; }
+        const draftRules = { poolSize: +$('#roomPool').value, bans: +$('#roomBans').value };
+        if (draftRules.poolSize && draftRules.poolSize < 6 + draftRules.bans * 2) {
+          status('候補が足りません (各自3つ + BAN ' + draftRules.bans * 2 + ' つ = ' + (6 + draftRules.bans * 2) + ' 個以上)', 'err');
+          return;
+        }
+        lsSet('compileDraftPool', String(draftRules.poolSize));
+        lsSet('compileDraftBans', String(draftRules.bans));
         room = await roomApi('create', {
           name: name(), title: name() + ' のルーム',
           visibility: pw ? 'private' : 'public',
-          password: pw, draft: $('#roomDraft').checked, rated: $('#roomRated').checked
+          password: pw, draft: $('#roomDraft').checked, draftRules, rated: $('#roomRated').checked
         });
         enterRoom();
       });
@@ -208,7 +236,8 @@ export function runRoomLobby(protocols) {
           const rooms = data.rooms || [];
           el.innerHTML = rooms.length
             ? rooms.map(r => '<button class="ro-room" data-code="' + esc(r.code) + '" type="button">' +
-                esc(r.title || r.code) + (r.rated ? ' ★' : '') + (r.locked ? ' 🔒' : '') + '<small>' + esc(r.code) + '</small></button>').join('')
+                esc(r.title || r.code) + (r.rated ? ' ★' : '') + (r.locked ? ' 🔒' : '') +
+                '<small>' + esc(r.code) + (r.draft ? '　' + esc(ruleText(r.draftRules)) : '　ドラフトなし') + '</small></button>').join('')
             : '<span class="ro-sub">現在募集中のルームはありません</span>';
           el.querySelectorAll('.ro-room').forEach(b => {
             b.onclick = guard(async () => {
@@ -345,15 +374,26 @@ export function runRoomLobby(protocols) {
         const myP = (room.protocols && room.protocols[room.side]) || [];
         const opP = (room.protocols && room.protocols[1 - room.side]) || [];
         const picked = (list, cls) => list.map(n => '<span class="ro-tag ' + cls + '">' + esc(n) + '</span>').join('') || '<span class="ro-sub">未選択</span>';
+        const isBan = d.kind === 'ban';
+        const banned = d.banned || [[], []];
+        const bans = (d.rules && d.rules.bans) || 0;
         frame('ONLINE — ドラフト',
-          '<p class="ro-sub">公式ドラフト: 先手1 → 後手2 → 先手2 → 後手1。' +
+          '<p class="ro-sub">' + esc(ruleText(d.rules)) + '　' +
+            (bans ? 'BAN を先手から1つずつ交互に → ' : '') + '先手1 → 後手2 → 先手2 → 後手1。' +
             (d.first === room.side ? 'あなたが先手です。' : '相手が先手です。') + '</p>' +
           '<div class="ro-lbl">あなた (' + myP.length + '/3)</div><div>' + picked(myP, 'mine') + '</div>' +
           '<div class="ro-lbl">相手 (' + opP.length + '/3)</div><div>' + picked(opP, '') + '</div>' +
+          (bans
+            ? '<div class="ro-lbl">BAN 済み</div><div>' +
+                (banned[room.side].concat(banned[1 - room.side]).map(n => '<span class="ro-tag ban">' + esc(n) + '</span>').join('')
+                  || '<span class="ro-sub">まだありません</span>') + '</div>'
+            : '') +
           (mine
-            ? '<div class="ro-lbl">プールから ' + d.toPick + ' 個選択</div>' + chipGrid(d.pool || [], [], d.toPick) +
-              '<button class="ro-big" id="roomPick" type="button"' + (sel.length === d.toPick ? '' : ' disabled') + '>確定 (' + sel.length + '/' + d.toPick + ')</button>'
-            : '<p class="ro-sub">相手がドラフト中です…</p>'),
+            ? '<div class="ro-lbl">' + (isBan ? '相手に使わせたくないプロトコルを ' + d.toPick + ' 個 BAN' : 'プールから ' + d.toPick + ' 個選択') + '</div>' +
+              chipGrid(d.pool || [], [], d.toPick) +
+              '<button class="ro-big' + (isBan ? ' ban' : '') + '" id="roomPick" type="button"' + (sel.length === d.toPick ? '' : ' disabled') + '>' +
+                (isBan ? 'BAN する' : '確定') + ' (' + sel.length + '/' + d.toPick + ')</button>'
+            : '<p class="ro-sub">相手が' + (isBan ? 'BAN を選んでいます…' : 'ドラフト中です…') + '</p>'),
           '← 退出してソロ設定に戻る');
         if (mine) {
           bindChips(d.toPick, renderRoom);

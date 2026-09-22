@@ -782,6 +782,13 @@
     background:rgba(255,255,255,.05);color:var(--ink);font:600 13px system-ui;flex:1;min-width:0;}
   .ro-input:focus{outline:none;border-color:var(--cyan);}
   .ro-check{font:600 11px system-ui;color:var(--dim);display:flex;gap:6px;align-items:center;}
+  /* ドラフトのルール (候補の数・BAN)。ドラフトを外すと薄くして触れなくする */
+  .ro-rules{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+  .ro-rules label{display:flex;flex-direction:column;gap:4px;font:700 10px/1 system-ui;letter-spacing:.12em;color:var(--dim);}
+  .ro-rules select{padding:8px 9px;}
+  .ro-rules.off{opacity:.35;pointer-events:none;}
+  .ro-tag.ban{border-color:rgba(255,59,157,.6);color:#ffb3d6;text-decoration:line-through;text-decoration-color:rgba(255,59,157,.7);}
+  .ro-big.ban{background:linear-gradient(100deg,#ff3b9d,#ff7ab8);}
   .ro-btn{padding:11px 18px;border-radius:9px;cursor:pointer;border:1px solid rgba(99,243,255,.35);
     background:rgba(99,243,255,.1);color:#cfefff;font:800 12px system-ui;letter-spacing:.08em;}
   .ro-btn:hover{background:rgba(99,243,255,.2);}

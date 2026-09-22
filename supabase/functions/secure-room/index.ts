@@ -106,10 +106,36 @@ function sideOf(room: any, userId: string) {
 }
 
 const ALL_PROTOCOLS: string[] = (cards as any).protocols.map((p: any) => p.name);
-/* 公式ドラフト順: 先手1 → 後手2 → 先手2 → 後手1 (各自3つ) */
-function draftSteps(first: number) {
+
+/* ドラフトのルール。poolSize: 候補として抽選するプロトコルの数 (0 = 全部)、bans: 各自の BAN 数。
+   候補は「各自3つ + BAN ぶん」より少なくできない */
+function cleanDraftRules(raw: any) {
+  const bans = Math.max(0, Math.min(3, Math.floor(Number(raw && raw.bans) || 0)));
+  let poolSize = Math.floor(Number(raw && raw.poolSize) || 0);
+  if (poolSize > 0) poolSize = Math.max(6 + bans * 2, Math.min(ALL_PROTOCOLS.length, poolSize));
+  if (poolSize >= ALL_PROTOCOLS.length) poolSize = 0;
+  return { poolSize, bans };
+}
+
+function shuffled<T>(list: T[]): T[] {
+  const a = list.slice();
+  const rnd = crypto.getRandomValues(new Uint32Array(a.length));
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = rnd[i] % (i + 1);
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/* ドラフト順: まず BAN を先手から1つずつ交互に、次に公式順で選ぶ (先手1 → 後手2 → 先手2 → 後手1、各自3つ) */
+function draftSteps(first: number, bans = 0) {
   const o = 1 - first;
-  return [{ side: first, n: 1 }, { side: o, n: 2 }, { side: first, n: 2 }, { side: o, n: 1 }];
+  const steps: { side: number; n: number; kind: string }[] = [];
+  for (let i = 0; i < bans * 2; i++) steps.push({ side: i % 2 === 0 ? first : o, n: 1, kind: "ban" });
+  return steps.concat([
+    { side: first, n: 1, kind: "pick" }, { side: o, n: 2, kind: "pick" },
+    { side: first, n: 2, kind: "pick" }, { side: o, n: 1, kind: "pick" },
+  ]);
 }
 
 function cardAliases(st: any) {
@@ -202,11 +228,13 @@ function publicState(room: any, side: number) {
   };
   if (room.status === "draft" && room.draft_state && room.draft_state.on) {
     const ds = room.draft_state;
-    const steps = draftSteps(ds.first);
+    const rules = cleanDraftRules(ds.rules);
+    const steps = draftSteps(ds.first, rules.bans);
     const cur = steps[ds.step];
     base.draft = {
       pool: ds.pool || [], step: ds.step, first: ds.first,
-      active: cur ? cur.side : -1, toPick: cur ? cur.n : 0,
+      active: cur ? cur.side : -1, toPick: cur ? cur.n : 0, kind: cur ? cur.kind : "pick",
+      banned: ds.banned || [[], []], rules,
     };
   }
   if (!st) return base;
@@ -286,6 +314,7 @@ Deno.serve(async (req) => {
       return json(req, { rooms: (data || []).map((room: any) => ({
         code: room.code, title: room.title, hostName: room.host_name,
         locked: !!room.password_hash, draft: !!room.draft_state, rated: !!room.rated, createdAt: room.created_at,
+        draftRules: room.draft_state ? cleanDraftRules(room.draft_state.rules) : null,
       })) });
     }
 
@@ -332,7 +361,7 @@ Deno.serve(async (req) => {
         const { data, error } = await admin.from("secure_rooms").insert({
           code: code(), host_id: user.id, host_name: name, title, visibility,
           password_salt: password.salt, password_hash: password.hash,
-          draft_state: body.draft ? { on: true } : null,
+          draft_state: body.draft ? { on: true, rules: cleanDraftRules(body.draftRules) } : null,
           rated: body.rated === true,
         }).select("*").single();
         if (!error) created = data;
@@ -357,12 +386,14 @@ Deno.serve(async (req) => {
         const isDraft = !!(room.draft_state && room.draft_state.on);
         const upd: any = { guest_id: user.id, guest_name: name, updated_at: new Date().toISOString() };
         if (isDraft) {
-          // ドラフト開始: 先手後攻をランダム抽選し、全プロトコルをプールに並べる
+          // ドラフト開始: 先手後攻をランダム抽選し、ルールどおりの数だけプロトコルを抽選してプールに並べる
           const first = Math.random() < 0.5 ? 0 : 1;
+          const rules = cleanDraftRules(room.draft_state.rules);
+          const pool = rules.poolSize ? shuffled(ALL_PROTOCOLS).slice(0, rules.poolSize) : ALL_PROTOCOLS.slice();
           upd.status = "draft";
           upd.host_protocols = [];
           upd.guest_protocols = [];
-          upd.draft_state = { on: true, pool: ALL_PROTOCOLS.slice(), first, step: 0 };
+          upd.draft_state = { on: true, rules, pool, first, step: 0, banned: [[], []] };
         } else {
           upd.status = "setup";
         }
@@ -413,7 +444,8 @@ Deno.serve(async (req) => {
       if (room.status !== "draft" || !room.draft_state || !room.draft_state.on) return fail(req, "ドラフト中ではありません", 409);
       if (Number(body.version) !== Number(room.version)) return fail(req, "状態が更新されています", 409);
       const ds = room.draft_state;
-      const steps = draftSteps(ds.first);
+      const rules = cleanDraftRules(ds.rules);
+      const steps = draftSteps(ds.first, rules.bans);
       const step = steps[ds.step];
       if (!step) return fail(req, "ドラフトは終了しています", 409);
       if (step.side !== side) return fail(req, "あなたのドラフト順ではありません", 403);
@@ -423,12 +455,16 @@ Deno.serve(async (req) => {
         return fail(req, "選択が不正です");
       }
       const field = side === 0 ? "host_protocols" : "guest_protocols";
-      const nextProtos = (room[field] || []).concat(picks);
+      /* BAN は自分のプロトコルにはならず、プールから外れるだけ */
+      const isBan = step.kind === "ban";
+      const nextProtos = isBan ? (room[field] || []) : (room[field] || []).concat(picks);
+      const banned = [((ds.banned || [])[0] || []).slice(), ((ds.banned || [])[1] || []).slice()];
+      if (isBan) banned[side] = banned[side].concat(picks);
       const nextPool = (ds.pool || []).filter((p: string) => picks.indexOf(p) < 0);
       const nextStep = ds.step + 1;
       const upd: any = {
         [field]: nextProtos,
-        draft_state: { on: true, pool: nextPool, first: ds.first, step: nextStep },
+        draft_state: { on: true, rules, pool: nextPool, first: ds.first, step: nextStep, banned },
         version: room.version + 1, updated_at: new Date().toISOString(),
       };
       if (nextStep >= steps.length) {
@@ -442,7 +478,7 @@ Deno.serve(async (req) => {
         upd.pending_request = result.requests[0] || null;
         upd.last_log = Array.isArray(result.log) ? result.log : [];
         upd.status = "playing";
-        upd.draft_state = { on: true, pool: [], first: ds.first, step: nextStep, done: true };
+        upd.draft_state = { on: true, rules, pool: [], first: ds.first, step: nextStep, banned, done: true };
       }
       const { data, error } = await admin.from("secure_rooms").update(upd)
         .eq("id", room.id).eq("version", room.version).select("*").single();
