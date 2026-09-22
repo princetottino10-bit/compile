@@ -75,9 +75,9 @@
   #meCounts{right:14px;bottom:104px;}
   #oppCounts{right:14px;top:96px;}
 
-  /* ---------- 下部の操作 ---------- */
-  #dock{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:12;
-    display:flex;gap:8px;align-items:center;}
+  /* ---------- 操作ボタン ----------
+     手札の前に置くと札に重なって邪魔なので、ログと一緒に左上へまとめる */
+  #dock{position:fixed;left:14px;top:38px;z-index:12;display:flex;gap:6px;align-items:center;}
   .btn{width:104px;min-height:38px;padding:0 10px;border-radius:999px;cursor:pointer;
     border:1px solid rgba(99,243,255,.28);background:rgba(8,12,22,.86);color:var(--ink);
     display:inline-flex;align-items:center;justify-content:center;text-align:center;
@@ -85,6 +85,9 @@
   .btn:hover{border-color:var(--cyan);background:rgba(99,243,255,.13);
     box-shadow:0 0 22px rgba(99,243,255,.18);transform:translateY(-1px);}
   .btn.on{border-color:var(--gold);background:rgba(239,208,108,.16);color:#ffeab4;}
+  .btn[hidden]{display:none;}
+  #dock .btn{width:auto;min-width:52px;min-height:30px;padding:0 13px;}
+  .btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;}
   /* 打つ手が補充しかないときは、そこへ誘導する */
   .btn.urge{border-color:var(--mint);background:rgba(109,255,194,.18);color:#c9ffe9;
     animation:btnUrge 1.5s ease-in-out infinite;}
@@ -258,7 +261,7 @@
     #phaseChip .ph-band,#phaseChip .ph-body{animation:none!important;opacity:1;transform:translateY(-50%) scaleX(1);}
     #phaseChip .ph-body{transform:none;}
   }
-  @media (max-width:860px){ #phaseChip{top:66px;height:44px;} #phaseChip .ph-band{height:28px;} }
+  @media (max-width:860px) and (orientation:portrait){ #phaseChip{top:66px;height:44px;} #phaseChip .ph-band{height:28px;} }
 
   /* 効果で選択を求める間だけ表示する、操作の発動元と内容。 */
   #effectContext{position:fixed;left:50%;top:118px;transform:translateX(-50%);z-index:22;
@@ -272,7 +275,7 @@
     border-radius:5px;color:var(--accent,#63f3ff);font-style:normal;font-size:9px;letter-spacing:.08em;}
   /* 選択バーを出している間は、同じ内容の帯を重ねない */
   body.picking #effectContext{display:none;}
-  @media(max-width:860px){#effectContext{top:112px;max-width:calc(100vw - 20px);padding:7px 10px;font-size:10px;}}
+  @media (max-width:860px) and (orientation:portrait){#effectContext{top:112px;max-width:calc(100vw - 20px);padding:7px 10px;font-size:10px;}}
 
   /* ---------- チェーン表示 (効果の途中で別の効果が割り込んだとき) ----------
      マスターデュエルのチェーンのように、処理中の効果を番号付きで積む。
@@ -300,7 +303,7 @@
   #chainUi .ch-name{display:flex;flex-direction:column;gap:3px;font:800 12px/1.2 system-ui;letter-spacing:.06em;
     color:var(--ink);text-shadow:0 2px 8px rgba(0,0,0,.9);white-space:nowrap;}
   #chainUi .ch-name small{font:700 10px/1 system-ui;color:var(--pc);letter-spacing:.1em;}
-  @media (max-width:860px){
+  @media (max-width:860px) and (orientation:portrait){
     #chainUi{right:auto;left:8px;top:104px;transform:none;flex-direction:row;gap:14px;}
     #chainUi .ch-link{flex-direction:column;gap:4px;}
     #chainUi .ch-link.now{transform:translateY(4px);}
@@ -312,6 +315,20 @@
     #chainUi .ch-name small{font-size:8px;}
   }
   @media (prefers-reduced-motion:reduce){ #chainUi .ch-link.enter{animation:none;} }
+
+  /* ---------- 縦持ちのスマホ: 横向きにしてもらう ----------
+     スマホは横持ち専用 (PC と同じ UI)。縦向きのタッチ端末では盤面の上に案内を出す */
+  #rotateHint{position:fixed;inset:0;z-index:90;display:none;flex-direction:column;align-items:center;justify-content:center;
+    gap:18px;padding:24px;text-align:center;background:radial-gradient(ellipse at 50% 40%,#12162a,#03040a 70%);color:var(--ink);}
+  #rotateHint .rh-phone{width:58px;height:96px;border:3px solid var(--cyan);border-radius:12px;position:relative;
+    box-shadow:0 0 24px rgba(99,243,255,.35);animation:rhTurn 2.4s cubic-bezier(.65,0,.35,1) infinite;}
+  #rotateHint .rh-phone::after{content:"";position:absolute;left:50%;bottom:7px;width:14px;height:3px;margin-left:-7px;
+    border-radius:2px;background:var(--cyan);opacity:.7;}
+  @keyframes rhTurn{0%,25%{transform:rotate(0deg);}55%,100%{transform:rotate(-90deg);}}
+  #rotateHint b{font:900 18px/1.4 system-ui;letter-spacing:.08em;}
+  #rotateHint span{font:600 12px/1.6 system-ui;color:var(--dim);}
+  @media (orientation:portrait) and (max-width:860px) and (pointer:coarse){ #rotateHint{display:flex;} }
+  @media (prefers-reduced-motion:reduce){ #rotateHint .rh-phone{animation:none;transform:rotate(-90deg);} }
 
   /* ---------- 決着カットイン ---------- */
   #resultCut{position:fixed;inset:0;z-index:48;display:none;overflow:hidden;pointer-events:none;}
@@ -353,14 +370,15 @@
      盤面は中央に集まるので、左の縦帯の余白に大きく出す。 */
   /* 高さだけで決めると、縦長のウィンドウや大画面で盤面を覆うほど大きくなる。
      画面の幅と実寸でも頭打ちにする (カードの縦横比 512:716 で幅が決まる) */
-  #preview{position:fixed;left:2vw;top:52%;z-index:26;height:min(56vh,32vw,420px);
+  /* 大きさは効果発動のカットイン (#fxCut) と揃える */
+  #preview{position:fixed;left:2vw;top:52%;z-index:26;width:min(240px,26vw);
     opacity:0;pointer-events:none;transform:translateY(-50%) scale(.95);
     transform-origin:left center;
     transition:opacity .12s ease-out,transform .14s cubic-bezier(.16,1,.3,1);}
   #preview.show{opacity:1;transform:translateY(-50%) scale(1);}
-  #preview img{display:block;height:100%;width:auto;border-radius:16px;
+  #preview img{display:block;width:100%;height:auto;border-radius:16px;
     box-shadow:0 30px 80px rgba(0,0,0,.8),0 0 0 1px rgba(255,255,255,.12),0 0 54px rgba(99,243,255,.1);}
-  .pv-hidden{height:100%;aspect-ratio:512/716;border-radius:16px;display:flex;flex-direction:column;
+  .pv-hidden{width:100%;aspect-ratio:512/716;border-radius:16px;display:flex;flex-direction:column;
     align-items:center;justify-content:center;gap:10px;
     background:linear-gradient(160deg,#0d1326,#070a16);border:1px solid rgba(255,255,255,.14);
     box-shadow:0 30px 80px rgba(0,0,0,.8);}
@@ -371,10 +389,12 @@
   #preview.show{z-index:31;}
 
   /* ---------- ログ ---------- */
-  #log{position:fixed;left:14px;top:46px;z-index:10;width:236px;max-height:150px;overflow-y:auto;
+  #log{position:fixed;left:14px;top:76px;z-index:10;width:236px;max-height:150px;overflow-y:auto;display:none;
     padding:9px 11px;border-radius:11px;background:rgba(5,8,16,.6);border:1px solid var(--edge);
     backdrop-filter:blur(12px);font:500 10px/1.6 system-ui;color:var(--dim);
     scrollbar-width:thin;pointer-events:auto;}
+  #log.open{display:block;}
+  #log:empty::before{content:"まだ何も起きていません";color:var(--dim);}
   .log-row{padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04);color:var(--dim);}
   /* ターンの切れ目は帯にして、どこから誰の番か目で追えるようにする */
   .log-row.turn{margin:6px 0 3px;padding:3px 8px;border:0;border-radius:999px;
@@ -413,7 +433,7 @@
   #cardNote.large .cn-zone{font-size:11px;line-height:1.9;min-width:34px;}
   #cardNote.large .cn-text{font-size:14px;line-height:1.65;}
   #cardNote.large .cn-row{padding:6px 0;}
-  @media (max-width:860px){
+  @media (max-width:860px) and (orientation:portrait){
     #cardNote{left:10px;right:10px;width:auto;bottom:66px;}
     #cardNote[data-place="top"]{top:58px;bottom:auto;}
     /* カードを触ったときの情報は右上の空きに置き、盤面と手札を隠さない */
@@ -428,7 +448,8 @@
   /* 選択中も盤面が見えるよう、暗幕とぼかしは使わず下部に寄せる */
   #modal{position:fixed;inset:0;z-index:30;display:none;flex-direction:column;align-items:center;
     justify-content:flex-end;gap:8px;
-    background:linear-gradient(180deg,rgba(2,3,9,0) 42%,rgba(2,3,9,.6) 88%);padding-bottom:10vh;}
+    background:linear-gradient(180deg,rgba(2,3,9,0) 42%,rgba(2,3,9,.6) 88%);
+    padding-bottom:calc(var(--hand-gap, 14vh) + 12px);}
   #modal.show{display:flex;}
   #modalCard{width:min(560px,92vw);max-height:52vh;overflow-y:auto;padding:16px 20px;
     border-radius:16px;background:linear-gradient(180deg,rgba(11,15,28,.97),rgba(5,7,15,.98));
@@ -474,7 +495,7 @@
   #fxCut .fc-zone{font:800 10px/1 system-ui;letter-spacing:.12em;color:var(--accent,#efd06c);}
   #fxCut .fc-body{font:800 12.5px/1.5 system-ui;color:#ffffff;
     text-shadow:0 0 14px var(--accent,#efd06c);}
-  @media (max-width:860px){
+  @media (max-width:860px) and (orientation:portrait){
     #fxCut{right:2vw;top:30%;width:min(120px,28vw);}
     #fxCut .fc-body{font-size:10.5px;}
   }
@@ -509,7 +530,7 @@
   #pickOv .rv-pick img{height:30vh;max-height:250px;border-radius:8px;display:block;}
   #pickOv .rv-pick span{font:700 11px/1.4 system-ui;color:#e8f4ff;}
   #pickOv .rv-hint{margin-top:10px;font:600 10px/1 system-ui;color:var(--dim);text-align:center;}
-  @media (max-width:860px){ #pickOv .rv-pick img{height:24vh;} }
+  @media (max-width:860px) and (orientation:portrait){ #pickOv .rv-pick img{height:24vh;} }
 
   /* ---------- 盤面の並べ替えチップ ---------- */
   #arrOv{position:fixed;inset:0;z-index:33;pointer-events:none;}
@@ -570,6 +591,19 @@
   .arr-bar.sel-bar .arr-btns{justify-content:flex-end;flex-wrap:wrap;gap:8px;}
   .arr-bar.sel-bar .arr-btn.ok{flex:1;}
   .arr-bar.sel-bar .arr-btn{padding:10px 18px;white-space:nowrap;}
+  /* 効果を使うかの確認は、手札のすぐ上の中央に出す (--hand-gap は main.js が手札の上端から計算)。
+     盤面に重なるので、目ボタンで一時的に隠して盤面を見られる */
+  .arr-bar.sel-bar.confirm{left:50%;top:auto;bottom:calc(var(--hand-gap, 14vh) + 12px);
+    transform:translateX(-50%);width:min(440px,calc(100vw - 32px));}
+  .arr-bar.sel-bar.confirm .arr-btns{flex-wrap:nowrap;}
+  .sel-peek{flex:none;width:42px;height:34px;border-radius:11px;cursor:pointer;font-size:19px;line-height:1;
+    background:rgba(8,11,21,.85);border:1px solid rgba(99,243,255,.3);color:#cfefff;
+    transition:border-color .16s,color .16s,background .16s;}
+  .sel-peek:hover{border-color:var(--cyan);background:rgba(99,243,255,.12);}
+  .sel-peek:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;}
+  .arr-bar.sel-bar.confirm.peek{background:transparent;border-color:transparent;box-shadow:none;pointer-events:none;}
+  .arr-bar.sel-bar.confirm.peek > :not(.arr-btns),.arr-bar.sel-bar.confirm.peek .arr-btn{visibility:hidden;}
+  .arr-bar.sel-bar.confirm.peek .sel-peek{pointer-events:auto;border-color:var(--gold);color:var(--gold);}
   .arr-btn.ok{background:linear-gradient(100deg,rgba(109,255,194,.2),rgba(99,243,255,.14));min-width:92px;}
   .arr-btn.ghost{background:transparent;border-color:transparent;color:var(--dim);letter-spacing:.06em;}
   .arr-btn.ghost:hover{color:var(--ink);border-color:rgba(255,255,255,.2);}
@@ -624,7 +658,7 @@
   #endBar .end-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
   #endFloat{position:fixed;right:14px;bottom:64px;z-index:45;display:none;}
   #endFloat.show{display:block;}
-  @media (max-width:860px){
+  @media (max-width:860px) and (orientation:portrait){
     #endBar{left:10px;right:10px;transform:none;width:auto;bottom:14vh;}
     #endBar.show{transform:none;}
     #endFloat{right:10px;bottom:70px;}
@@ -724,7 +758,7 @@
   .tt-log{position:absolute;left:26px;top:48px;font:500 11px/1.9 ui-monospace,monospace;
     color:rgba(109,255,194,.75);text-shadow:0 0 8px rgba(109,255,194,.35);}
   /* 起動ログはロゴの下に敷き、狭い画面では小さくする */
-  @media (max-width:860px){ .tt-log{top:44px;left:14px;font-size:9px;line-height:1.7;max-width:70vw;} .tt-foot{bottom:52px;} }
+  @media (max-width:860px) and (orientation:portrait){ .tt-log{top:44px;left:14px;font-size:9px;line-height:1.7;max-width:70vw;} .tt-foot{bottom:52px;} }
   .tt-log div{animation:ttLine .18s ease-out;}
   @keyframes ttLine{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
   .tt-center{position:absolute;left:0;right:0;top:38%;transform:translateY(-50%);
@@ -769,7 +803,7 @@
   /* ---------- トレーニング: 検証盤面の操作パネル ----------
      PC は盤面の左に縦長、スマホは操作ボタンの上に引き出し。
      効果の選択中は選択パネルを優先して、こちらは薄くする */
-  #trainingTools{position:fixed;left:14px;top:64px;z-index:18;width:312px;max-height:calc(100vh - 150px);
+  #trainingTools{position:fixed;left:14px;top:80px;z-index:18;width:312px;max-height:calc(100vh - 150px);
     display:flex;flex-direction:column;border-radius:14px;overflow:hidden;
     background:linear-gradient(180deg,rgba(10,14,26,.96),rgba(5,8,17,.96));
     border:1px solid rgba(109,255,194,.28);box-shadow:0 18px 50px rgba(0,0,0,.55);transition:opacity .2s;}
@@ -896,13 +930,15 @@
     #setupHead,#setupFoot{padding-left:14px;padding-right:14px;}
   }
 
-  @media (max-width:860px){
+  @media (max-width:860px) and (orientation:portrait){
     /* 選択バーは手札に重ねず、プロンプト直下の空き領域に置く (.arr-bar より後ろで上書き) */
     .arr-bar{top:13vh;bottom:auto;}
     /* 狭い画面では帯を画面幅いっぱいに (中央寄せの max-content だとボタンが潰れる) */
     .arr-bar.sel-bar{left:10px;right:10px;width:auto;max-width:none;transform:none;top:52px;}
     .arr-bar.sel-bar .arr-btn{flex:1;padding:12px 10px;}
     .arr-bar.sel-bar .arr-btn.ghost{flex:0 0 auto;}
+    .arr-bar.sel-bar.confirm{left:10px;right:10px;width:auto;transform:none;top:52px;bottom:auto;}
+    #modal{padding-bottom:10vh;}
     .sel-q{font-size:14px;}
     .sel-protos{grid-template-columns:repeat(2,1fr);}
     .sel-values{grid-template-columns:repeat(4,1fr);}
@@ -910,14 +946,15 @@
     #modalCard{width:calc(100vw - 20px);max-height:62vh;}
     #toast{bottom:19vh;}   /* 選択バー (.arr-bar, 12vh) と重ねない */
     /* タップ用: プレビューは中央に大きく (タップで表示、他をタップで消える) */
-    #preview{left:50%;right:auto;top:44%;height:60vh;transform:translate(-50%,-50%) scale(.95);transform-origin:center;}
+    #preview{left:50%;right:auto;top:44%;width:auto;height:60vh;transform:translate(-50%,-50%) scale(.95);transform-origin:center;}
+    #preview img{height:100%;width:auto;}
+    .pv-hidden{height:100%;width:auto;}
     #preview.show{transform:translate(-50%,-50%) scale(1);}
     #lines{top:auto;bottom:74px;gap:6px;}
     .lane{width:104px;padding:5px 7px 6px;}
     #log{display:none;}
     #log.open{display:block;left:10px;right:10px;top:auto;bottom:66px;width:auto;max-height:42vh;
       padding:12px 14px;font-size:11px;line-height:1.7;background:rgba(5,8,16,.94);border-color:rgba(99,243,255,.36);}
-    #btnLog[hidden]{display:inline-block!important;}
     /* 枚数は見えないと困る。上部に小さく1行ずつ出す (自分=下、相手=上) */
     #oppCounts{top:52px;right:8px;left:auto;bottom:auto;}
     #meCounts{top:76px;right:8px;left:auto;bottom:auto;}
@@ -925,12 +962,38 @@
       font-size:8px;letter-spacing:.06em;background:rgba(5,8,16,.74);}
     #meCounts b,#oppCounts b{font-size:10px;margin-left:3px;}
     /* 下部の操作は全て同じ大きさにし、指の届く1列へ固定する。 */
-    #dock{left:10px;right:10px;bottom:12px;transform:none;gap:5px;justify-content:center;}
+    #dock{left:10px;right:10px;top:auto;bottom:12px;transform:none;gap:5px;justify-content:center;}
     #dock .btn{flex:1 1 0;width:auto;min-width:0;min-height:38px;padding:0 3px;font-size:8.5px;letter-spacing:.02em;}
   }
+  /* ---------- 横持ちのスマホ (高さの低い画面) ----------
+     PC と同じ配置のまま、縦が足りないぶんを詰める。
+     左上のボタン列は2段にしてラインの帯に重ねず、枚数表示とログは小さくする */
+  @media (orientation:landscape) and (max-height:500px){
+    #brand{display:none;}
+    #topbar{justify-content:flex-end;padding:8px 10px;}
+    #dock{left:10px;top:8px;display:grid;grid-template-columns:repeat(2,auto);gap:5px;}
+    #dock .btn{min-width:0;min-height:28px;padding:0 10px;font-size:9px;letter-spacing:.04em;}
+    .lane{width:120px;}
+    .counts{padding:5px 8px;gap:2px;font-size:8px;}
+    .counts b{font-size:10px;margin-left:3px;}
+    #oppCounts{top:48px;right:10px;}
+    #meCounts{top:112px;right:10px;bottom:auto;}
+    #log{top:74px;left:10px;width:220px;max-height:calc(100vh - 150px);font-size:10px;}
+    #effectContext{top:44px;}
+    .arr-bar.sel-bar{left:10px;top:50%;width:260px;max-height:calc(100vh - 20px);overflow-y:auto;padding:9px 11px;}
+    .sel-q{font-size:13px;}
+    #modalCard{max-height:calc(100vh - var(--hand-gap, 14vh) - 84px);}
+    #trainingTools{top:74px;max-height:calc(100vh - 84px);width:280px;}
+  }
+
 </style>
 </head>
 <body>
+  <div id="rotateHint" role="alert">
+    <div class="rh-phone" aria-hidden="true"></div>
+    <b>スマホを横向きにしてください</b>
+    <span>COMPILE は横向きで遊ぶように作っています</span>
+  </div>
   <div id="stage"></div>
 
   <div id="topbar">
@@ -958,7 +1021,7 @@
     <button id="btnFace" class="btn" type="button">表向き</button>
     <button id="btnHand" class="btn" type="button" hidden aria-expanded="true">手札を隠す</button>
     <button id="btnRefresh" class="btn" type="button">リフレッシュ</button>
-    <button id="btnLog" class="btn" type="button" hidden>LOG</button>
+    <button id="btnLog" class="btn" type="button" aria-pressed="false">LOG</button>
     <button id="btnMute" class="btn" type="button" title="効果音">🔊</button>
     <button id="btnMenu" class="btn" type="button">MENU</button>
     <button id="btnLeave" class="btn" type="button" style="display:none">退出</button>

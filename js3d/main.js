@@ -144,7 +144,7 @@ async function boot() {
   FX.createDust(stage, 900);
   panels = createPanels(stage, ME);
   buildPads();
-  stage.onFrame(() => positionPlayChoices());
+  stage.onFrame(() => { positionPlayChoices(); trackHandTop(); });
   bindInput();
   mark('stage');
 
@@ -844,20 +844,28 @@ function bindInput() {
     else startBgm();
   };
   const logBtn = document.getElementById('btnLog');
-  if (logBtn) logBtn.onclick = () => {
-    const log = document.getElementById('log');
-    if (!log) return;
-    const open = log.classList.toggle('open');
-    /* 開いたら一番新しい行を見せる (押した直後に何が起きたか読みたい) */
-    if (open) log.scrollTop = log.scrollHeight;
-    logBtn.classList.toggle('on', open);
-    logBtn.textContent = open ? 'LOGを閉じる' : 'LOG';
-  };
+  if (logBtn) logBtn.onclick = () => setLogOpen(!document.getElementById('log')?.classList.contains('open'));
+  /* PC は最初からログを開いておく。スマホは画面が狭いので押したときだけ */
+  setLogOpen(!isCompactHandUI() && !window.matchMedia('(max-height: 500px)').matches);
   const faceBtn = document.getElementById('btnFace');
   if (faceBtn) faceBtn.onclick = () => { backFacing = !backFacing; updatePads(); syncFacingHint(); };
   const handBtn = document.getElementById('btnHand');
   if (handBtn) handBtn.onclick = () => setHandDrawer(!VIEW.handOpen);
   syncHandDrawerForViewport();
+}
+
+function setLogOpen(open) {
+  const log = document.getElementById('log');
+  const logBtn = document.getElementById('btnLog');
+  if (!log) return;
+  log.classList.toggle('open', open);
+  /* 開いたら一番新しい行を見せる (押した直後に何が起きたか読みたい) */
+  if (open) log.scrollTop = log.scrollHeight;
+  if (!logBtn) return;
+  logBtn.classList.toggle('on', open);
+  logBtn.setAttribute('aria-pressed', String(open));
+  /* 縦持ちはログが手札の上に重なるので、閉じ方をはっきり書く */
+  logBtn.textContent = open && isCompactHandUI() ? 'LOGを閉じる' : 'LOG';
 }
 
 /* ---------- 拡大プレビュー (余白に固定表示) ---------- */
@@ -961,8 +969,9 @@ function syncFacingHint() {
   }
 }
 
+/* 縦持ちのスマホ用の UI か。スマホは横持ち専用にしたので、横向きでは PC と同じ UI を使う */
 function isCompactHandUI() {
-  return window.matchMedia('(max-width: 860px)').matches;
+  return window.matchMedia('(max-width: 860px) and (orientation: portrait)').matches;
 }
 
 function syncHandDrawerButton() {
@@ -1091,6 +1100,35 @@ function focusPlayChoice(line, side) {
   const root = document.getElementById('playChoices');
   const cell = root?.querySelector(`section[data-line="${line}"][data-side="${side}"]`);
   if (cell) cell.classList.add('focused');
+}
+
+/* 手札の上端が画面下からどれだけ上にあるかを CSS 変数 --hand-gap に置く。
+   効果を使うかの確認や一覧ダイアログを「手札のすぐ上」に出すのに使う。
+   札は奥 (-Z) が上端で、手札は rot.x だけ起こしてあるので、その向きに半分ずらした点を投影する。
+   PC は手札がマウスに合わせて上下するので、確認が動かないよう開いたときの位置で測る */
+const handTopWorld = new THREE.Vector3();
+let handTopTick = 0;
+let handGapPx = '';
+function openHandSlot() {
+  const was = VIEW.handOpen;
+  VIEW.handOpen = true;
+  try { return LAYOUT.handSlot(0, 1); } finally { VIEW.handOpen = was; }
+}
+function trackHandTop() {
+  if (!stage || (handTopTick++ % 8)) return;
+  const s = openHandSlot();
+  const half = CARD.h * s.scale / 2;
+  handTopWorld.set(s.pos[0], s.pos[1] + Math.sin(s.rot[0]) * half, s.pos[2] - Math.cos(s.rot[0]) * half);
+  handTopWorld.project(stage.camera);
+  const rect = stage.renderer.domElement.getBoundingClientRect();
+  const top = rect.top + (1 - handTopWorld.y) * rect.height / 2;
+  if (!Number.isFinite(top)) return;
+  /* 画面の外や上半分に出るような値 (カメラの切替中など) は使わない */
+  const gap = Math.round(Math.min(window.innerHeight * 0.5, Math.max(0, window.innerHeight - top)));
+  const px = gap + 'px';
+  if (px === handGapPx) return;
+  handGapPx = px;
+  document.documentElement.style.setProperty('--hand-gap', px);
 }
 
 const choiceWorld = new THREE.Vector3();
@@ -1553,15 +1591,24 @@ function pickOnBoard(req) {
       }
       /* 質問と はい/いいえ を離すと、何に答えているのか分からなくなる。
          同じ帯にまとめて出す。 */
-      el.classList.add('with-ask');
+      /* 手札のすぐ上に出す。盤面に重なるので、目ボタンで隠して盤面を見られる */
+      el.classList.add('with-ask', 'confirm');
       el.innerHTML =
         pickBarAsk(req) +
         '<div class="arr-btns">' +
+          '<button class="sel-peek" id="pkPeek" type="button" title="盤面を見る" aria-label="盤面を見る" aria-pressed="false">&#128065;</button>' +
           '<button class="arr-btn ok" id="pkYes" type="button">はい</button>' +
           '<button class="arr-btn" id="pkNo" type="button">しない</button>' +
         '</div>';
       bindPickBar(el);
-      const done = (picks) => { boardPick = null; el.classList.remove('with-ask'); removePickBar(); resolve(picks); };
+      const done = (picks) => {
+        boardPick = null;
+        el.classList.remove('with-ask', 'confirm', 'peek');
+        removePickBar();
+        resolve(picks);
+      };
+      const peekBtn = el.querySelector('#pkPeek');
+      peekBtn.onclick = () => peekBtn.setAttribute('aria-pressed', String(el.classList.toggle('peek')));
       el.querySelector('#pkYes').onclick = () => done(['yes']);
       el.querySelector('#pkNo').onclick = () => done([]);
     });
