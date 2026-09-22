@@ -24,7 +24,8 @@
 @media (max-width: 860px) {
   #btnHand { display: inline-flex; }
   /* ラインの上に出す。プロトコル名はすぐ下のライン表示にあるので、ここでは省いて幅を詰める */
-  .placement-lane { gap: 4px; padding: 4px 5px; }
+  /* 表と裏は縦に積む (横に並べるとラインの幅を超えて隣と重なる) */
+  .placement-lane { flex-direction: column; gap: 4px; padding: 5px 4px; border-radius: 16px; }
   .placement-lane-label { display: none; }
   #playChoices button { min-width: 44px; min-height: 40px; padding: 5px 8px; }
   .placement-cancel { position: fixed; right: 10px; bottom: calc(70px + env(safe-area-inset-bottom)); }
