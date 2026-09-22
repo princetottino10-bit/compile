@@ -2,7 +2,7 @@
  * 3Dビュー: タイトルとモード選択
  * ========================================================================= */
 import { emblemDataURL } from './emblems.js';
-import { initAudio, isMuted, setMuted, sfx } from './audio.js';
+import { initAudio, sfx } from './audio.js';
 import { openSettings } from './settings.js';
 import { openStats } from './stats.js';
 
@@ -44,19 +44,6 @@ export function runTitle(protocols, opts) {
       clearInterval(logTimer); window.removeEventListener('keydown', onKey); root.classList.add('gone');
       setTimeout(() => { root.classList.remove('show', 'gone'); root.innerHTML = ''; resolve(mode); }, 420);
     };
-    const showOptions = () => {
-      const box = root.querySelector('#ttOptions');
-      if (!box) return;
-      box.hidden = false;
-      const sound = box.querySelector('#ttSound');
-      sound.textContent = isMuted() ? 'サウンド: OFF' : 'サウンド: ON';
-      sound.onclick = () => {
-        setMuted(!isMuted());
-        sound.textContent = isMuted() ? 'サウンド: OFF' : 'サウンド: ON';
-        if (!isMuted()) sfx('tick');
-      };
-      box.querySelector('#ttOptionsBack').onclick = () => { box.hidden = true; };
-    };
     const showMenu = () => {
       const center = root.querySelector('#ttCenter');
       center.innerHTML = '<div class="tt-logo"><b>//</b> COMPILE</div><div class="tt-sub">3D ARENA</div>' +
@@ -67,20 +54,14 @@ export function runTitle(protocols, opts) {
           '<button data-mode="training" type="button">TRAINING <small>自由配置・検証盤面</small></button>' +
           '<button data-mode="record" type="button">RECORD <small>CPU 戦の戦績</small></button>' +
           '<button data-mode="options" type="button">OPTION <small>演出・音の設定</small></button>' +
-        '</nav><section class="tt-options" id="ttOptions" hidden><b>OPTION</b>' +
-          '<button id="ttSound" type="button"></button><button id="ttOptionsBack" type="button">戻る</button></section>';
+        '</nav>';
       center.querySelector('.tt-menu').onclick = (ev) => {
         const button = ev.target.closest('button[data-mode]');
         if (!button) return;
         sfx('select');
-        if (button.dataset.mode === 'options') {
-          /* 設定画面 (演出の速さ・音量・待ち時間) にサウンドの ON/OFF を添える */
-          openSettings([{ label: isMuted() ? 'サウンド: OFF' : 'サウンド: ON', onClick: (b) => {
-            setMuted(!isMuted());
-            b.textContent = isMuted() ? 'サウンド: OFF' : 'サウンド: ON';
-            if (!isMuted()) sfx('tick');
-          } }]);
-        } else if (button.dataset.mode === 'record') openStats();
+        /* 設定 (演出の速さ・効果音の音量・待ち時間)。音の ON/OFF は対戦中の 🔊 で */
+        if (button.dataset.mode === 'options') openSettings();
+        else if (button.dataset.mode === 'record') openStats();
         else finish(button.dataset.mode);
       };
     };

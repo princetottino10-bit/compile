@@ -17,7 +17,6 @@ import { settings, onSettings, openSettings } from './settings.js';
 import { recordSoloResult } from './stats.js';
 import { openReview } from './review.js';
 import { runRoomLobby } from './roomui.js';
-import { reqText } from './prompts.js';
 import { selectHead, bindSelectHead } from './selectui.js';
 import { faceImageURL, backImageURL, pruneFaceCache, ART_SETS, setMaxAnisotropy } from './cardtex.js';
 import * as FX from './fx.js';
@@ -41,7 +40,6 @@ let busy = false;               // 演出中はクリックを無視
 let selectedUid = null;
 let hoverUid = null;
 let ctrlMarker = null;
-let backFacing = false;         // Shift 相当: 裏向きでプレイ
 let pads = [];                  // 着地パッド (line × side)
 let demoMode = false;           // AI 同士の観戦 (?demo=1)
 let roomMode = false;           // オンライン対戦 (secure-room)
@@ -73,25 +71,6 @@ function shown() { return reviewView || (cur && (cur.view || cur.state)) || null
 
 /* 感想戦の棋譜: 手を指す前の盤面と、その手 (CPU 戦のみ) */
 const gameHistory = [];
-
-/* 効果の選択中は、通常の上部プロンプトを畳み、この帯だけにまとめる。 */
-function setEffectContext(req) {
-  const el = document.getElementById('effectContext');
-  if (!el) return;
-  const def = req && req.context && defIndex[req.context];
-  if (!def) {
-    el.classList.remove('show');
-    el.replaceChildren();
-    return;
-  }
-  const tag = document.createElement('em'); tag.textContent = '効果処理中';
-  const title = document.createElement('b'); title.textContent = cardName(req.context);
-  const detail = document.createElement('span');
-  detail.textContent = reqText({ ...req, context: null }, cardName) || '選択してください';
-  el.style.setProperty('--accent', def.color || '#63f3ff');
-  el.replaceChildren(tag, title, detail);
-  el.classList.add('show');
-}
 
 /* 合法手: ソロはエンジン、ルームはサーバー提供値 */
 
@@ -344,7 +323,6 @@ async function puzzleAfterTurn() {
   const endSt = PZ.endOfTurnState(cur.trace, ME, shown());
   const result = PZ.judgePuzzle(puzzle.goal, endSt, shown(), ME, totalOf);
   sfx(result.ok === false ? 'lose' : 'win');
-  UI.setTurnBadge(result.ok === true ? '正解' : result.ok === false ? '不正解' : '手番終了', result.ok !== false);
   PZ.showPuzzleResult(result, retryPuzzle);
 }
 
@@ -370,7 +348,6 @@ async function tutorialAfterStep() {
     await finaleFx(true);
     await UI.resultCutIn(true);
   } else sfx(r.ok ? 'win' : 'lose');
-  UI.setTurnBadge(r.ok ? 'クリア' : 'もう一度', r.ok);
   /* 「次へ」は押さなくてよい: 読む時間が過ぎたら次のレッスン (失敗ならやり直し) へ */
   const i = tutorial.index;
   const last = i === TU.LESSONS.length - 1;
@@ -1107,8 +1084,6 @@ function bindInput() {
     }
     location.href = location.pathname;
   };
-  const leaveBtn = document.getElementById('btnLeave');
-  if (leaveBtn) leaveBtn.onclick = goToMenu;
   const menuBtn = document.getElementById('btnMenu');
   if (menuBtn) menuBtn.onclick = goToMenu;
   const settingsBtn = document.getElementById('btnSettings');
@@ -1130,8 +1105,6 @@ function bindInput() {
   let logWasOpen = false;
   try { logWasOpen = localStorage.getItem('compileLogOpen') === '1'; } catch (e) { /* private mode */ }
   setLogOpen(logWasOpen);
-  const faceBtn = document.getElementById('btnFace');
-  if (faceBtn) faceBtn.onclick = () => { backFacing = !backFacing; updatePads(); syncFacingHint(); };
   const handBtn = document.getElementById('btnHand');
   if (handBtn) handBtn.onclick = () => {
     /* ボタンで隠したら、マウスを下へ動かしても勝手に出さない (出すボタンかカード選択で戻す) */
@@ -1245,14 +1218,6 @@ function showPreview(uid) {
   if (!o || uid === previewUid) return;
   previewUid = uid;
   UI.showCardPanel(o);
-}
-
-function syncFacingHint() {
-  const b = document.getElementById('btnFace');
-  if (b) {
-    b.classList.toggle('on', backFacing);
-    b.textContent = backFacing ? '裏向き' : '表向き';
-  }
 }
 
 /* 縦持ちのスマホ用の UI か。スマホは横持ち専用にしたので、横向きでは PC と同じ UI を使う */
@@ -1442,10 +1407,27 @@ function trackHandRight() {
   const btn = document.getElementById('btnRefresh');
   const w = btn ? btn.offsetWidth : 110;
   const px = Math.round(Math.max(rect.left + rect.width / 2, Math.min(x, window.innerWidth - w - 14))) + 'px';
-  if (px === handRightPx) return;
-  handRightPx = px;
-  document.documentElement.style.setProperty('--hand-right', px);
+  if (px !== handRightPx) {
+    handRightPx = px;
+    document.documentElement.style.setProperty('--hand-right', px);
+  }
+  /* 手札を隠す/出すボタンは、リフレッシュと左右対称に手札の左脇へ置く */
+  const was2 = VIEW.handOpen;
+  VIEW.handOpen = true;
+  let s0;
+  try { s0 = LAYOUT.handSlot(0, n); } finally { VIEW.handOpen = was2; }
+  handEdgeWorld.set(s0.pos[0] - CARD.w * s0.scale / 2, s0.pos[1], s0.pos[2]);
+  handEdgeWorld.project(stage.camera);
+  const dock = document.getElementById('dock');
+  const dw = dock ? dock.offsetWidth : 90;
+  const lx = rect.left + (handEdgeWorld.x + 1) * rect.width / 2 - 16 - dw;
+  if (!Number.isFinite(lx)) return;
+  const lpx = Math.round(Math.min(rect.left + rect.width / 2 - dw, Math.max(lx, 14))) + 'px';
+  if (lpx === handLeftPx) return;
+  handLeftPx = lpx;
+  document.documentElement.style.setProperty('--hand-left', lpx);
 }
+let handLeftPx = '';
 
 /* 山札・捨て札の枚数の札を、盤面の山のそば (盤の中央寄り) に置く。
    右上にまとめていた枚数表示の代わり。カメラが動くので数フレームごとに合わせ直す */
@@ -1568,7 +1550,6 @@ async function roomDrainRequest() {
     while (cur && cur.requests.length && shown().winner === null && guard++ < 40) {
       const req = cur.requests[0];
       UI.setPrompt('');
-      setEffectContext(req);
       const picks = await askUser(req);
       UI.setPrompt('');
       if (picks === PICK_CANCEL) continue;   // 外部更新で取り直し
@@ -1577,7 +1558,6 @@ async function roomDrainRequest() {
     }
   } finally {
     roomAsking = false;
-    if (!cur || !cur.requests || !cur.requests.length) setEffectContext(null);
   }
 }
 
@@ -1985,7 +1965,6 @@ let activeArrange = null;               // 表示中の並べ替えオーバー�
 
 /* 表示中の待ち受けUI (盤面ピック / 並べ替え / モーダル) をすべて破棄する */
 function cancelPendingAsk() {
-  setEffectContext(null);
   cancelBoardPick();
   if (activeArrange) activeArrange.cancel();
   UI.cancelChoice(PICK_CANCEL);
@@ -2016,7 +1995,6 @@ function pickOnBoard(req) {
   if (req.kind === 'yesNo') {
     return new Promise((resolve) => {
       boardPick = { kind: 'yesno', req, resolve };
-      UI.hideActivation();
       let el = document.getElementById('pickBar');
       if (!el) {
         el = document.createElement('div');
@@ -2047,11 +2025,11 @@ function pickOnBoard(req) {
       el.querySelector('#pkNo').onclick = () => done([]);
     });
   }
-  /* option 型のプレイ先 (ライン×表裏の組合せ): レーンをタップし、表裏はトグルに従う */
+  /* option 型のプレイ先 (ライン×表裏の組合せ): レーンをタップすると表を優先する */
   if (req.kind === 'option' && req.prompt === 'play-dest' && Array.isArray(req.faces) && req.faces.length) {
     const lines = [...new Set(req.faces.map(x => x.l))];
     const toPicks = (l) => {
-      const want = !backFacing;
+      const want = true;
       let i = req.faces.findIndex(x => x.l === l && x.f === want);
       if (i < 0) i = req.faces.findIndex(x => x.l === l);
       return [i];
@@ -2133,7 +2111,6 @@ function renderBoardPick() {
   if (!bp) return;
   /* キャッシュ確認など手札から選ぶ要求は、収納中でも必ず読める状態へ戻す。 */
   if (bp.req.kind === 'pickHand') setHandDrawer(true);
-  UI.hideActivation();
   clearLineTargets();
   board.markCandidates(bp.req.candidates, bp.chosen);
   let el = document.getElementById('pickBar');
@@ -2184,7 +2161,6 @@ function renderFreePick() {
   const bp = boardPick;
   if (!bp) return;
   updatePlayChoices();
-  UI.hideActivation();
   if (bp.sel) {
     board.markCandidates([bp.sel], [bp.sel]);
     const lines = new Set(bp.byUid[bp.sel].map(o => o.line));
@@ -2244,7 +2220,6 @@ function finishFreePick(picks) {
 function renderLinePick() {
   const bp = boardPick;
   if (!bp) return;
-  UI.hideActivation();
   board.clearCandidates();
   board.markEffectFocus(bp.req.focus);
   setLineTargets(bp.lines);
@@ -2417,7 +2392,6 @@ async function drainRequests() {
     let picks;
     if ((req.player === ME || trainingMode) && !demoMode) {
       UI.setPrompt('');
-      setEffectContext(req);
       picks = await askUser(req);
     } else {
       UI.setPrompt('相手が選択しています…', 'wait');
@@ -2436,7 +2410,6 @@ async function drainRequests() {
     busy = false;
     refreshHud();
   }
-  setEffectContext(null);
   UI.setPrompt('');
   await stage.home(TIMING.camEase);
 }
@@ -2450,7 +2423,6 @@ async function afterTurn() {
   let guardAi = 0;
   while (cur && cur.state.winner === null && (demoMode || cur.state.turn === AI)
          && !cur.requests.length && guardAi++ < 40) {
-    UI.setTurnBadge(demoMode ? 'DEMO 自動対戦' : '相手のターン', cur.state.turn === ME);
     await TW.wait(demoMode ? 420 : 260);
     const action = withoutTrace(() => Engine.ai.action(cur.state));
     if (!action) break;
@@ -2697,28 +2669,12 @@ function refreshHud() {
     ctrlMarker.group.visible = st.useControl !== false;
     ctrlMarker.update(typeof st.control === 'number' ? st.control : -1, ME, true);
   }
-  const rows = [];
-  for (let line = 0; line < 3; line++) {
-    rows.push({
-      meTotal: totalOf(st, line, ME),
-      oppTotal: totalOf(st, line, AI),
-      meProto: st.players[ME].protocols[line].name,
-      oppProto: st.players[AI].protocols[line].name,
-      compiledMe: st.players[ME].protocols[line].compiled,
-      compiledOpp: st.players[AI].protocols[line].compiled
-    });
-  }
-  UI.renderLines(rows);
   panels.update(panelRows(st));
   UI.setCounts(
     { deck: st.players[ME].deck.length, trash: st.players[ME].trash.length },
     { deck: st.players[AI].deck.length, trash: st.players[AI].trash.length }
   );
   const mine = st.turn === ME && st.winner === null;
-  const oppName = roomMode && roomRm && roomRm.names ? (roomRm.names[1 - roomRm.side] || '相手') : '相手';
-  UI.setTurnBadge(trainingMode ? 'TRAINING' :
-    (st.winner !== null ? '決着' : (mine ? 'あなたのターン' : oppName + 'のターン')), mine || trainingMode);
-  syncFacingHint();
 
   const acts = mine && !cur.requests.length ? legalNow() : [];
   if (tutorial) coachUpdate();

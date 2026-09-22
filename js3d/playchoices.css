@@ -1,4 +1,3 @@
-#btnFace { display: none; }
 #playChoices[hidden] { display: none; }
 
 /* 配置選択は盤面上の着地パッドに追従する。親はクリックを通し、チップだけが操作を受ける。 */

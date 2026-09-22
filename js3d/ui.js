@@ -24,35 +24,6 @@ export function setPrompt(text, tone) {
   el.classList.toggle('hidden', !text);
 }
 
-export function setTurnBadge(text, isMine) {
-  const el = $('#turnBadge');
-  if (!el) return;
-  el.textContent = text;
-  el.classList.toggle('mine', !!isMine);
-}
-
-/* ライン別の合計値表示。
-   勝利条件は「3プロトコルすべてをコンパイル」なので、
-   どのラインが済んでいるかを最優先で読ませる。 */
-export function renderLines(rows) {
-  const el = $('#lines');
-  if (!el) return;
-  const cell = (proto, total, done, who) => (
-    '<div class="lane-' + who + (done ? ' done' : '') + '">' +
-      '<span class="lane-proto">' + (done ? '<i class="chk">✓</i>' : '') + proto + '</span>' +
-      '<b>' + total + '</b>' +
-    '</div>'
-  );
-  el.innerHTML = rows.map((r) => (
-    '<div class="lane' + (r.compiledMe ? ' done-me' : '') + (r.compiledOpp ? ' done-opp' : '') + '">' +
-      cell(r.oppProto, r.oppTotal, r.compiledOpp, 'opp') +
-      '<div class="lane-bar"><i style="width:' + Math.min(100, r.meTotal / 10 * 100) + '%"></i>' +
-        '<u style="width:' + Math.min(100, r.oppTotal / 10 * 100) + '%"></u></div>' +
-      cell(r.meProto, r.meTotal, r.compiledMe, 'me') +
-    '</div>'
-  )).join('');
-}
-
 export function setCounts(me, opp) {
   const set = (id, v) => { const e = $(id); if (e) e.textContent = v; };
   set('#meDeck', me.deck); set('#meTrash', me.trash);
@@ -418,28 +389,24 @@ export function turnCutIn(mine) {
 
 /* -------------------------------------------------------------------------
  * カードの詳細パネル (マスターデュエル式)
- *   最後に触ったカード・発動したカードを左上に出したままにする (あとから来たほうに入れ替わる)。
+ *   最後に触ったカードを左上に出したままにする (あとから触ったほうに入れ替わる)。
+ *   効果の発動は右上の帯 (showFxBanner) に出す。
  *   絵は小さく添えるだけにして、効果の文を読ませる。
  *   o: { title, value, proto, color, img, badge, note, hidden, facedown,
  *        rows: [{ key: 'upper'|'middle'|'lower', text, inactive }] }
- *   opts.fire: 発動した段 ('upper' 等)。その段を光らせ、枠をしばらく光らせる
- *   opts.transient: 縦持ちのスマホ用。発動の表示だけ出して、少しで閉じる
+ *   opts.transient: 縦持ちのスマホ用。少しで閉じる
  * ------------------------------------------------------------------------- */
 const PANEL_ZONE = { upper: '▲ 上段', middle: '◆ 中段', lower: '▼ 下段' };
-let fireTimer = null;
 let hideTimer = null;
 
 export function showCardPanel(o, opts) {
   const el = $('#preview');
   if (!el || !o) return;
-  const fire = (opts && opts.fire) || null;
-  clearTimeout(fireTimer);
   clearTimeout(hideTimer);
   el.style.setProperty('--accent', o.color || '#63f3ff');
   const rows = o.rows || [];
   el.innerHTML =
     '<div class="cp-head"><b>' + (o.proto || o.title) + '</b>' +
-      (fire ? '<span class="cp-fire">発動</span>' : '') +
       (o.value !== undefined && o.value !== null ? '<span class="cp-val">' + o.value + '</span>' : '') +
     '</div>' +
     '<div class="cp-top">' +
@@ -452,31 +419,18 @@ export function showCardPanel(o, opts) {
       '</div>' +
     '</div>' +
     (rows.length
-      ? '<div class="cp-rows">' + rows.map(r => {
-          const on = fire && r.key === fire;
-          return '<div class="cp-row' + (on ? ' fire' : r.inactive ? ' off' : '') + '">' +
-            '<span class="cp-zone">' + (PANEL_ZONE[r.key] || '') + '</span><p>' + r.text + '</p></div>';
-        }).join('') + '</div>'
+      ? '<div class="cp-rows">' + rows.map(r => '<div class="cp-row' + (r.inactive ? ' off' : '') + '">' +
+          '<span class="cp-zone">' + (PANEL_ZONE[r.key] || '') + '</span><p>' + r.text + '</p></div>').join('') + '</div>'
       : '');
-  /* 発動は枠を付け直して光を毎回再生する。光はしばらくで収め、表示は残す */
-  el.classList.remove('firing');
-  if (fire) {
-    void el.offsetWidth;
-    el.classList.add('firing');
-    fireTimer = setTimeout(() => el.classList.remove('firing'), 2400);
-  }
   el.classList.add('show');
-  const lit = el.querySelector('.cp-row.fire');
-  if (lit) lit.scrollIntoView({ block: 'nearest' });
   if (opts && opts.transient) hideTimer = setTimeout(hideCardPanel, 2400);
 }
 
 export function hideCardPanel() {
   const el = $('#preview');
   if (!el) return;
-  clearTimeout(fireTimer);
   clearTimeout(hideTimer);
-  el.classList.remove('show', 'firing');
+  el.classList.remove('show');
 }
 
 /* -------------------------------------------------------------------------
@@ -569,13 +523,6 @@ export function hideChain() {
   const el = $('#chainUi');
   chainKey = '';
   if (el) el.classList.remove('show');
-}
-
-/* 選択操作に入るときは、発動の光だけ止める (表示は残す) */
-export function hideActivation() {
-  const el = $('#preview');
-  clearTimeout(fireTimer);
-  if (el) el.classList.remove('firing');
 }
 
 /* 手札公開の帯: 公開されたカードを並べて見せる (タップか6秒で閉じる) */
