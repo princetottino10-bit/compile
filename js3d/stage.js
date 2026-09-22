@@ -110,9 +110,10 @@ export function createStage(container) {
   scene.environment = envRT.texture;
 
   /* --- ライト --- */
-  scene.add(new THREE.AmbientLight(0x5f7290, 0.55));
+  /* カードの絵が読めることを最優先にする。環境光をやや上げ、当てる光は抑える */
+  scene.add(new THREE.AmbientLight(0x6b7f9c, 0.78));
 
-  const key = new THREE.DirectionalLight(0xdce8ff, 1.35);
+  const key = new THREE.DirectionalLight(0xdce8ff, 0.85);
   key.position.set(2.6, 8.2, 4.2);
   key.castShadow = true;
   key.shadow.mapSize.set(lowPower ? 1024 : 2048, lowPower ? 1024 : 2048);
@@ -124,16 +125,17 @@ export function createStage(container) {
   key.shadow.radius = 2.4;
   scene.add(key);
 
-  const rimSelf = new THREE.PointLight(COLOR.mint, 7.5, 7.5, 2.2);
+  /* 手前と奥の縁取り。強いとカード面が白く飛ぶので、床を染める程度に留める */
+  const rimSelf = new THREE.PointLight(COLOR.mint, 2.2, 6.2, 2.4);
   rimSelf.position.set(0, 0.45, 2.55);
   scene.add(rimSelf);
 
-  const rimOpp = new THREE.PointLight(COLOR.pink, 6.5, 7.5, 2.2);
+  const rimOpp = new THREE.PointLight(COLOR.pink, 2.0, 6.2, 2.4);
   rimOpp.position.set(0, 0.45, -2.55);
   scene.add(rimOpp);
 
   /* 手札を正面から起こすフィル (カメラ側から) */
-  const fill = new THREE.DirectionalLight(0xbcd4ff, 0.3);
+  const fill = new THREE.DirectionalLight(0xbcd4ff, 0.42);
   fill.position.set(0, 4.5, 9.5);
   fill.target.position.set(0, 0.4, 3.2);
   scene.add(fill, fill.target);

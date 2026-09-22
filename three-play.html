@@ -270,6 +270,8 @@
   #effectContext span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   #effectContext em{flex:none;padding:3px 6px;border:1px solid color-mix(in srgb,var(--accent,#63f3ff) 72%,transparent);
     border-radius:5px;color:var(--accent,#63f3ff);font-style:normal;font-size:9px;letter-spacing:.08em;}
+  /* 選択バーを出している間は、同じ内容の帯を重ねない */
+  body.picking #effectContext{display:none;}
   @media(max-width:860px){#effectContext{top:112px;max-width:calc(100vw - 20px);padding:7px 10px;font-size:10px;}}
 
   /* ---------- 決着カットイン ---------- */
@@ -376,7 +378,7 @@
     #cardNote{left:10px;right:10px;width:auto;bottom:66px;}
     #cardNote[data-place="top"]{top:58px;bottom:auto;}
     /* カードを触ったときの情報は右上の空きに置き、盤面と手札を隠さない */
-    #cardNote[data-place="corner"]{left:auto;right:8px;top:62px;bottom:auto;width:min(63vw,250px);
+    #cardNote[data-place="corner"]{left:auto;right:8px;top:104px;bottom:auto;width:min(63vw,250px);
       max-height:52vh;overflow-y:auto;}
     #cardNote.large[data-place="corner"] .cn-head{font-size:14px;}
     #cardNote.large[data-place="corner"] .cn-text{font-size:12.5px;line-height:1.55;}
@@ -877,7 +879,12 @@
     #log.open{display:block;left:10px;right:10px;top:auto;bottom:66px;width:auto;max-height:42vh;
       padding:12px 14px;font-size:11px;line-height:1.7;background:rgba(5,8,16,.94);border-color:rgba(99,243,255,.36);}
     #btnLog[hidden]{display:inline-block!important;}
-    #meCounts,#oppCounts{display:none;}
+    /* 枚数は見えないと困る。上部に小さく1行ずつ出す (自分=下、相手=上) */
+    #oppCounts{top:52px;right:8px;left:auto;bottom:auto;}
+    #meCounts{top:76px;right:8px;left:auto;bottom:auto;}
+    #meCounts,#oppCounts{flex-direction:row;gap:8px;padding:4px 8px;border-radius:8px;
+      font-size:8px;letter-spacing:.06em;background:rgba(5,8,16,.74);}
+    #meCounts b,#oppCounts b{font-size:10px;margin-left:3px;}
     /* 下部の操作は全て同じ大きさにし、指の届く1列へ固定する。 */
     #dock{left:10px;right:10px;bottom:12px;transform:none;gap:5px;justify-content:center;}
     #dock .btn{flex:1 1 0;width:auto;min-width:0;min-height:38px;padding:0 3px;font-size:8.5px;letter-spacing:.02em;}

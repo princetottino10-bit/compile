@@ -96,7 +96,8 @@ export function makeCard(def) {
     emissiveIntensity: 1
   }));
   front.position.y = CARD.thickness / 2 + 0.0004;
-  front.castShadow = true;
+  /* カードは影を落とさない (手札の影が盤面に落ちて読みづらかった) */
+  front.castShadow = false;
   front.receiveShadow = true;
 
   const back = new THREE.Mesh(planeGeometry(), new THREE.MeshStandardMaterial({
@@ -116,7 +117,7 @@ export function makeCard(def) {
   const core = new THREE.Mesh(coreGeometry(), new THREE.MeshStandardMaterial({
     color: COLOR.cardEdge, roughness: 0.62, metalness: 0.45, envMapIntensity: 0.6
   }));
-  core.castShadow = true;
+  core.castShadow = false;
 
   const frame = new THREE.Mesh(frameGeometry(), new THREE.MeshStandardMaterial({
     color: new THREE.Color(def.color || '#63f3ff').multiplyScalar(0.55),

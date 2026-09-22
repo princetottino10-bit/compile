@@ -848,6 +848,8 @@ function bindInput() {
     const log = document.getElementById('log');
     if (!log) return;
     const open = log.classList.toggle('open');
+    /* 開いたら一番新しい行を見せる (押した直後に何が起きたか読みたい) */
+    if (open) log.scrollTop = log.scrollHeight;
     logBtn.classList.toggle('on', open);
     logBtn.textContent = open ? 'LOGを閉じる' : 'LOG';
   };
@@ -1095,21 +1097,14 @@ const choiceWorld = new THREE.Vector3();
 function positionPlayChoices() {
   const root = document.getElementById('playChoices');
   if (!root || root.hidden || !stage) return;
-  /* スマホは画面下の固定バーに並べる (CSS 側で配置)。追従させると重なって読めない */
-  if (isCompactHandUI()) {
-    for (const cell of root.querySelectorAll('.placement-lane')) {
-      cell.hidden = false;
-      cell.style.left = cell.style.top = '';
-    }
-    return;
-  }
   const rect = stage.renderer.domElement.getBoundingClientRect();
   for (const cell of root.querySelectorAll('.placement-lane')) {
     const line = Number(cell.dataset.line), side = Number(cell.dataset.side);
     const pad = pads.find(p => p.userData.line === line && p.userData.side === side);
     if (!pad) { cell.hidden = true; continue; }
     pad.getWorldPosition(choiceWorld);
-    choiceWorld.y += 0.09;      // カードより少し上: 札とボタンを同時に読める
+    /* ラインの上に浮かせる。スマホは指で押すので高めに出し、置き先の札と重ねない */
+    choiceWorld.y += isCompactHandUI() ? 0.8 : 0.09;
     choiceWorld.project(stage.camera);
     const visible = choiceWorld.z >= -1 && choiceWorld.z <= 1
       && choiceWorld.x >= -1.25 && choiceWorld.x <= 1.25 && choiceWorld.y >= -1.25 && choiceWorld.y <= 1.25;
@@ -1497,8 +1492,7 @@ function cancelBoardPick() {
   board.clearCandidates();
   clearLineTargets();
   for (const pad of pads) pad.userData.hover = false;
-  const el = document.getElementById('pickBar');
-  if (el) el.remove();
+  removePickBar();
   bp.resolve(PICK_CANCEL);
 }
 
@@ -1534,7 +1528,7 @@ function pickOnBoard(req) {
           '<button class="arr-btn" id="pkNo" type="button">しない</button>' +
         '</div>';
       bindPickBar(el);
-      const done = (picks) => { boardPick = null; el.classList.remove('with-ask'); el.remove(); resolve(picks); };
+      const done = (picks) => { boardPick = null; el.classList.remove('with-ask'); removePickBar(); resolve(picks); };
       el.querySelector('#pkYes').onclick = () => done(['yes']);
       el.querySelector('#pkNo').onclick = () => done([]);
     });
@@ -1587,10 +1581,19 @@ function pickBarAsk(req, meta) {
   return selectHead(req, sourceInfo(req && req.context), meta);
 }
 
-/* 帯の組み立て後に呼ぶ: 発動元チップのタップで効果文を出す */
+/* 帯の組み立て後に呼ぶ: 発動元チップのタップで効果文を出す。
+   選択バーには発動元と質問が入っているので、出している間は上の「効果処理中」の帯を隠す */
 function bindPickBar(el) {
   el.classList.add('sel-bar');
+  document.body.classList.add('picking');
   bindSelectHead(el, showCardNoteFor);
+}
+
+/* 選択バーを畳む (どの経路で終わっても body の印を戻す) */
+function removePickBar() {
+  const el = document.getElementById('pickBar');
+  if (el) el.remove();
+  document.body.classList.remove('picking');
 }
 
 function renderBoardPick() {
@@ -1697,8 +1700,7 @@ function finishFreePick(picks) {
   updatePlayChoices();
   board.clearCandidates();
   for (const pad of pads) pad.userData.hover = false;
-  const el = document.getElementById('pickBar');
-  if (el) el.remove();
+  removePickBar();
   bp.resolve(picks);
 }
 
@@ -1739,8 +1741,7 @@ function finishLinePick(picks) {
   boardPick = null;
   board.clearCandidates();
   clearLineTargets();
-  const el = document.getElementById('pickBar');
-  if (el) el.remove();
+  removePickBar();
   bp.resolve(picks);
 }
 
@@ -1783,8 +1784,7 @@ function finishBoardPick(picks) {
   const bp = boardPick;
   boardPick = null;
   board.clearCandidates();
-  const el = document.getElementById('pickBar');
-  if (el) el.remove();
+  removePickBar();
   bp.resolve(picks);
 }
 
