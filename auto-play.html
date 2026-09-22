@@ -898,7 +898,11 @@ function log(ctx, msg, uid) {
   ctx.log.push(msg);
   ctx.st.actionLog.push(msg);
   if (ctx.st.actionLog.length > 300) ctx.st.actionLog.shift();
-  if (TRACE && ctx.trace) ctx.trace.push({ msg, uid: uid || null, st: clone(ctx.st) });
+  /* chain: いま処理中の効果の並び (外側 → 内側)。効果の途中で別の効果が割り込んだとき
+     (FIRE 0 の「覆われるとき」等) に、クライアントがチェーン表示に使う */
+  if (TRACE && ctx.trace) {
+    ctx.trace.push({ msg, uid: uid || null, chain: ctx.chain ? ctx.chain.slice() : [], st: clone(ctx.st) });
+  }
 }
 
 /* ---------- 常在効果(static) ---------- */
@@ -1169,8 +1173,13 @@ function execTrigger(ctx, uid, slot, locked) {
   if (!loc) return;
   const tr = defOf(ctx.st, uid).eff[slot].trigger;
   const fr = { source: uid, slot, controller: loc.side, line: loc.line, bind: {}, done: false, locked: !!locked };
-  log(ctx, `[${defOf(ctx.st, uid).id}] ${slot === 'upper' ? '上段' : '下段'}効果が発動`, uid);
-  execOps(ctx, fr, tr.ops);
+  if (ctx.chain) ctx.chain.push(uid + '|' + slot);
+  try {
+    log(ctx, `[${defOf(ctx.st, uid).id}] ${slot === 'upper' ? '上段' : '下段'}効果が発動`, uid);
+    execOps(ctx, fr, tr.ops);
+  } finally {
+    if (ctx.chain) ctx.chain.pop();
+  }
 }
 function st_of(ctx) { return ctx.st; }
 
@@ -1419,11 +1428,15 @@ function resolveMiddle(ctx, uid, why) {
   if (!eff.middle || !eff.middle.ops) return;  // 中段が常在効果のみ(SMOKE_3)の場合はコマンドなし
   if (ctx.depth > 80) throw { __err: '解決の深さ上限を超過 (無限ループの疑い)' };
   ctx.depth++;
+  if (ctx.chain) ctx.chain.push(uid + '|middle');
   try {
     log(ctx, `[${defOf(st, uid).id}] 中段コマンド解決 (${why})`, uid);
     const fr = { source: uid, slot: 'middle', controller: loc.side, line: loc.line, bind: {}, done: false };
     execOps(ctx, fr, eff.middle.ops);
-  } finally { ctx.depth--; }
+  } finally {
+    ctx.depth--;
+    if (ctx.chain) ctx.chain.pop();
+  }
 }
 
 /* ---------- ドロー / 捨て札 ---------- */
@@ -2934,7 +2947,7 @@ function runReplay(base, action, choices) {
   st.announce = null;
   if (!Array.isArray(st.commitStack)) st.commitStack = [];  // 外部由来のstate(詰めCompile共有盤面など)に対する防御
   if (typeof st.commitSeq !== 'number') st.commitSeq = 0;
-  const ctx = { st, choices, ci: 0, qn: 0, depth: 0, log: [], trace: TRACE ? [] : null };
+  const ctx = { st, choices, ci: 0, qn: 0, depth: 0, log: [], trace: TRACE ? [] : null, chain: TRACE ? [] : null };
   try {
     performAction(ctx, action);
     runTurnLoop(ctx);

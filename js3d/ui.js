@@ -452,6 +452,40 @@ export function showActivation(o) {
   cutTimer = setTimeout(() => el.classList.remove('show'), 2400);
 }
 
+/* 効果の途中で別の効果が割り込んだときの「処理中の効果の山」。
+   links: 外側 (1番) → 内側 (いま解決中) の順に { img, name, zone, color }。
+   1番を下に、いま解決中を一番上に積む。2つ以上のときだけ出す (割り込みが無ければ出さない) */
+const CHAIN_ZONE = { play: 'プレイ', middle: '中段', upper: '上段', lower: '下段' };
+let chainKey = '';
+export function showChain(links) {
+  let el = $('#chainUi');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'chainUi';
+    el.setAttribute('aria-live', 'polite');
+    document.body.appendChild(el);
+  }
+  if (!links || links.length < 2) { hideChain(); return; }
+  const key = links.map(k => k.name + k.zone).join('>');
+  if (key === chainKey && el.classList.contains('show')) return;
+  const grew = key.indexOf(chainKey) === 0 && links.length > chainKey.split('>').length;
+  chainKey = key;
+  el.innerHTML = links.map((k, i) =>
+    '<div class="ch-link' + (i === links.length - 1 ? ' now' : '') + (grew && i === links.length - 1 ? ' enter' : '') + '"'
+      + ' style="--pc:' + (k.color || '#63f3ff') + '">'
+      + '<div class="ch-card">' + (k.img ? '<img alt="" src="' + k.img + '">' : '<i></i>') + '</div>'
+      + '<b class="ch-no">' + (i + 1) + '</b>'
+      + '<span class="ch-name">' + k.name + '<small>' + (CHAIN_ZONE[k.zone] || '') + '</small></span>'
+      + '</div>').join('');
+  el.classList.add('show');
+}
+
+export function hideChain() {
+  const el = $('#chainUi');
+  chainKey = '';
+  if (el) el.classList.remove('show');
+}
+
 /* 選択操作に入るときなど、盤面を隠さないようカットインを即座に畳む */
 export function hideActivation() {
   const el = $('#fxCut');

@@ -1311,6 +1311,8 @@ function meaningfulSteps(prev, res) {
   let lastPhase = prev ? prev.phase + ':' + prev.turn : null;
   for (const t of res.trace) {
     if (!t.st) continue;
+    /* このコマまでに起きた効果の割り込み (チェーン表示) を、最後に通った記録で持つ */
+    if (steps.length) steps[steps.length - 1].tr = t;
     const fp = visualFingerprint(t.st);
     /* フェイズの切り替わりは、絵が変わらなくても1ステップとして残す。
        そうしないと「開始フェイズ」の帯が、開始効果の演出と同時に出てしまう。 */
@@ -1332,7 +1334,7 @@ function meaningfulSteps(prev, res) {
       continue;
     }
     last = fp;
-    steps.push({ st: t.st, fp, uid: t.uid, msg: t.msg, cue: pendingCue });
+    steps.push({ st: t.st, fp, uid: t.uid, msg: t.msg, cue: pendingCue, tr: t });
     pendingCue = null;
   }
   /* 選択に答えると、エンジンはアクションを基準状態から再実行する。
@@ -1372,9 +1374,35 @@ async function cueFor(step, st) {
   await board.pulse(uid, def.color, 380);
 }
 
+/* チェーン表示: 記録に残った「処理中の効果の並び」を、カード名と絵にする。
+   カードを出す手では、出したカードの処理中 (まだアクションフェイズ) なら1番に置く。
+   相手の裏向きなど、見る権利のないカードは名前を伏せる */
+function chainLinksAt(t, action) {
+  if (!t || !Array.isArray(t.chain)) return [];
+  const st = t.st;
+  const links = t.chain.map((x) => { const i = x.lastIndexOf('|'); return { uid: x.slice(0, i), zone: x.slice(i + 1) }; });
+  const playing = action && action.card && (action.type === 'play' || action.type === 'trainingPlace');
+  if (playing && st && (st.phase === 'action' || st.phase === 'training')
+      && (!links.length || links[0].uid !== action.card)) {
+    links.unshift({ uid: action.card, zone: 'play' });
+  }
+  /* 同じカードが続けて並ぶのはチェーンではない */
+  const out = [];
+  for (const k of links) if (!out.length || out[out.length - 1].uid !== k.uid) out.push(k);
+  return out.map((k) => {
+    const c = st && st.cards[k.uid];
+    const d = c && defIndex[c.def];
+    const visible = d && (c.faceUp || ((c.knownTo || 0) & (1 << ME)) || k.zone !== 'play');
+    return visible
+      ? { img: faceImageURL(d), name: d.proto + ' ' + d.value, zone: k.zone, color: d.color }
+      : { img: null, name: '裏向きのカード', zone: k.zone, color: '#8fa8c8' };
+  });
+}
+
 async function replayResolution(prev, res, action) {
   const steps = meaningfulSteps(prev, res);
   const final = shown();
+  UI.hideChain();
 
   /* ステップが多すぎるときは間引いて、テンポを保つ */
   window.__lastSteps = steps.length;
@@ -1396,12 +1424,17 @@ async function replayResolution(prev, res, action) {
        1コマの中で「カードの着地」と「手番交代」が同時に起きることがあり、
        先に告知すると、相手のターンになってからカードが積まれて見えた。 */
     await board.applyTransition(from, step.st, first ? action : null, { speed: 0.72 });
+    UI.showChain(chainLinksAt(step.tr, action));
     await cueFor(step, step.st);
     await markPhase(step.st);
     await checkAnnounce(step.st);
     from = step.st;
     first = false;
   }
+  /* 選択の途中で止まっているなら、どの効果の途中かを残したまま聞く */
+  const lastTr = res.trace && res.trace.length ? res.trace[res.trace.length - 1] : null;
+  if (res.requests && res.requests.length) UI.showChain(chainLinksAt(lastTr, action));
+  else UI.hideChain();
   /* 最後は必ず本物の状態へ合わせる */
   await board.applyTransition(from, final, first ? action : null, first ? null : { speed: 0.72 });
   /* 盤面が最終形になってから、そこまでに進んだ手番/フェイズを告げる */
