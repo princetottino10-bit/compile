@@ -3152,7 +3152,7 @@ const AI_DSH_W = {
   ctrlHold: 65, ctrlHoldLev: 0.7, ctrlOpp: 90, ctrlOppLev: 0.75,
   leadGain: 50, oppLeadGain: 78, leadBonus: 18, oppLeadBonus: 24,
   marginLead: 6, marginTrail: 6, refreshPerCard: 13, refreshTempo: 26,
-  compileSafety: 1, hateDownPenalty: 20, speedDownPenalty: 20, speedPairStrategy: 1,
+  compileSafety: 1, hateDownPenalty: 20, speedDownPenalty: 20, speedPairStrategy: 1, speedPairKeep: 40,
   compiledUp: 75, compiledDown: 75, recompile: 160, midUp: 0.35, lowUp: 20, lowDown: 5,
   // 済ラインへのプレイで自分の2ラインリードを作る/相手の2ラインリードを崩すとき、compiledUp/Down の減点を戻す割合。0 で従来どおり
   optionalCost: 1, anyLineBase: 26, anyLineGain: 0.9,
@@ -3947,6 +3947,14 @@ function aiScore(st, me) {
   }
   sc += aiHandPotential(st, me) * 0.9;
   sc -= aiHandPotential(st, op) * 0.75;
+  /* 特化 (DSH): SPEED 0 と SPEED 3 は揃えて使う (0 を表で出し、追加プレイで 3)。
+     どちらも場に出ていない間は、手札に残しておく価値を持たせる。
+     値の低い SPEED 0 は、捨てる効果で真っ先に選ばれてセットが崩れていた */
+  if (aiIsDshSpecialist(st, me) && W.speedPairStrategy && W.speedPairKeep
+      && !aiHasDefOnField(st, me, 'SPEED_1') && !aiHasDefOnField(st, me, 'SPEED_4')) {
+    const s0 = aiHasDefInHand(st, me, 'SPEED_1'), s3 = aiHasDefInHand(st, me, 'SPEED_4');
+    sc += W.speedPairKeep * ((s0 ? 1 : 0) + (s3 ? 1 : 0) + (s0 && s3 ? 1 : 0));
+  }
   sc += aiBoardEffectScore(st, me);
   sc += aiLockScore(st, me);
   sc -= aiLockThreat(st, me);
@@ -4240,6 +4248,11 @@ function smartPicks(st, req) {
       }
       const fallbackHand = min === 0 && (!scored.length || scored[0].s > 8)
         ? [] : scored.slice(0, Math.max(min, 1)).map(x => x.uid);
+      /* 1枚必須 (捨てる・渡す等) も、選んだあとの盤面で比べる。値の低い札から機械的に選ぶと、
+         組み合わせで使う札 (SPEED 0 → SPEED 3 の 0 など) を真っ先に捨てていた */
+      if (max === 1 && min >= 1 && scored.length > 1) {
+        return aiStrategicCardPicks(st, req, me, scored, fallbackHand);
+      }
       if (AI_CHOICE_DEPTH === 0 && max > 1 && scored.length > 1) {
         const deep = aiBestCombo(st, req, scored.map(x => x.uid), min, max, fallbackHand);
         if (deep) return deep;

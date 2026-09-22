@@ -964,6 +964,28 @@ test('AI specialist: SPEED 0/3 pair starts with SPEED 0 and free-plays SPEED 3 f
   }
 });
 
+test('AI specialist: 手札を捨てるとき SPEED 0/3 のセットを崩さない', () => {
+  const st = ng({ p0: ['DARKNESS', 'SPEED', 'HATE'], p1: ['LIFE', 'LIGHT', 'PLAGUE'] }).state;
+  /* 7枚持って裏で1枚出すと、終了時に6枚 → 1枚捨てる (キャッシュの削除) */
+  setHand(st, 0, ['SPEED_1', 'SPEED_4', 'SPEED_6', 'DARKNESS_2', 'DARKNESS_5', 'HATE_2', 'HATE_3']);
+  st.turn = 0;
+  Engine.setAiLevel(2);
+  Engine.setAiThinkBudget(200);
+  Engine.setAiSpecialist(true, 0);
+  try {
+    const res = Engine.apply(st, { type: 'play', card: uidOf('HATE_3', 0), line: 2, faceUp: false });
+    assert.equal(res.error, null);
+    const req = res.requests[0];
+    assert.ok(req && req.kind === 'pickHand', '手札を捨てる要求が来る (実際: ' + JSON.stringify(req && [req.kind, req.prompt]) + ')');
+    const picks = Engine.ai.answer(res.state, req);
+    const defs = picks.map(u => res.state.cards[u].def);
+    assert.ok(!defs.includes('SPEED_1') && !defs.includes('SPEED_4'), 'SPEED 0/3 を捨てない (捨てた: ' + defs.join(',') + ')');
+  } finally {
+    Engine.setAiSpecialist(false);
+    Engine.setAiThinkBudget(590);
+  }
+});
+
 test('AI specialist: SPEED 3 moves itself for its optional end effect', () => {
   const st = ng({ p0: ['DARKNESS', 'SPEED', 'HATE'] }).state;
   const speed3 = place(st, 'SPEED_4', 0, 1, true);
