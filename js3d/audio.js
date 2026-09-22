@@ -199,9 +199,10 @@ export function sfx(name) {
  * ------------------------------------------------------------------------- */
 let bgm = null;
 
-const BGM_ROOT = 55;           // A1
-const BGM_VOICES = [1, 1.5, 2, 3];   // ルートに対する倍音 (5度・オクターブ等)
+const BGM_ROOT = 55;           // A1 (きらめきの音階の基準。この音自体は鳴らさない)
 
+/* BGM: 高音のきらめきが間をあけて鳴るだけ。
+   以前は低音の和音 (ドローン) を鳴らし続けていたが、ずっと「ブーー」と聞こえて耳障りなのでやめた */
 export function startBgm() {
   if (!actx || bgm) return;
   const bus = actx.createGain();
@@ -209,37 +210,9 @@ export function startBgm() {
   bus.gain.linearRampToValueAtTime(0.5 * bgmLevel, actx.currentTime + 3);
   bus.connect(master);
 
-  /* うねるローパス */
-  const filter = actx.createBiquadFilter();
-  filter.type = 'lowpass';
-  filter.frequency.value = 340;
-  filter.Q.value = 6;
-  const lfo = actx.createOscillator();
-  lfo.frequency.value = 0.05;
-  const lfoGain = actx.createGain();
-  lfoGain.gain.value = 180;
-  lfo.connect(lfoGain); lfoGain.connect(filter.frequency);
-  lfo.start();
-  filter.connect(bus);
-
-  /* パッド: ルートの倍音を重ねる */
-  const voices = BGM_VOICES.map((mult, i) => {
-    const osc = actx.createOscillator();
-    osc.type = i % 2 ? 'sawtooth' : 'triangle';
-    osc.frequency.value = BGM_ROOT * mult;
-    osc.detune.value = (Math.random() - 0.5) * 8;
-    const g = actx.createGain();
-    g.gain.value = 0.12 / BGM_VOICES.length;
-    osc.connect(g); g.connect(filter);
-    osc.start();
-    return { osc, g, mult };
-  });
-
-  /* まばらなきらめき (高音の点) */
   const sparkleGain = actx.createGain();
   sparkleGain.gain.value = 0.0;
   sparkleGain.connect(bus);
-  let sparkleTimer = null;
   const scale = [0, 3, 5, 7, 10, 12];   // 短調ペンタ寄り
   function sparkle() {
     if (!bgm) return;
@@ -256,42 +229,27 @@ export function startBgm() {
       o.connect(g); g.connect(sparkleGain);
       o.start(t0); o.stop(t0 + 1.7);
     }
-    sparkleTimer = setTimeout(sparkle, 900 + Math.random() * 2600);
+    bgm.sparkleTimer = setTimeout(sparkle, 900 + Math.random() * 2600);
   }
-  sparkle();
 
-  bgm = { bus, filter, lfo, lfoGain, voices, sparkleGain, tension: 0, sparkleTimer };
+  bgm = { bus, sparkleGain, tension: 0, sparkleTimer: null };
   setBgmTension(0);
+  sparkle();
 }
 
-/* tension 0..1: 明るさ (フィルタ) と高倍音の音量を上げる */
+/* tension 0..1: きらめきの頻度と音量を上げる */
 export function setBgmTension(v) {
   if (!bgm) return;
   const t = Math.max(0, Math.min(1, v));
   bgm.tension = t;
-  const now = actx.currentTime;
-  bgm.filter.frequency.setTargetAtTime(300 + t * 900, now, 1.5);
-  bgm.sparkleGain.gain.setTargetAtTime(0.4 + t * 0.6, now, 1.5);
-  /* 高い倍音を緊張とともに持ち上げる */
-  for (const v2 of bgm.voices) {
-    const base = 0.12 / BGM_VOICES.length;
-    const boost = v2.mult >= 2 ? (0.6 + t * 0.9) : 1;
-    v2.g.gain.setTargetAtTime(base * boost, now, 1.5);
-  }
+  bgm.sparkleGain.gain.setTargetAtTime(0.4 + t * 0.6, actx.currentTime, 1.5);
 }
 
 export function stopBgm() {
   if (!bgm) return;
-  const now = actx.currentTime;
-  bgm.bus.gain.setTargetAtTime(0, now, 0.4);
-  const b = bgm; bgm = null;
-  clearTimeout(b.sparkleTimer);
-  setTimeout(() => {
-    try {
-      b.voices.forEach(v => v.osc.stop());
-      b.lfo.stop();
-    } catch (e) { /* already stopped */ }
-  }, 900);
+  bgm.bus.gain.setTargetAtTime(0, actx.currentTime, 0.4);
+  clearTimeout(bgm.sparkleTimer);
+  bgm = null;
 }
 
 export function bgmActive() { return !!bgm; }
