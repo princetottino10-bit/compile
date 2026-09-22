@@ -293,7 +293,7 @@
      マスターデュエルのチェーンのように、処理中の効果を番号付きで積む。
      1番が一番下、いま解決中が一番上。PC は右端、スマホは上部に横並び */
   /* 左は拡大表示と選択パネルが使うので、右端 (LOG のつまみより内側) に積む */
-  #chainUi{position:fixed;right:calc(2vw + 34px);top:50%;transform:translateY(-50%);z-index:24;
+  #chainUi{position:fixed;right:calc(2vw + 34px + env(safe-area-inset-right));top:50%;transform:translateY(-50%);z-index:24;
     display:none;flex-direction:column-reverse;gap:10px;pointer-events:none;}
   #chainUi.show{display:flex;}
   #chainUi .ch-link{position:relative;display:flex;align-items:center;gap:10px;opacity:.62;
@@ -426,6 +426,8 @@
   @media (prefers-reduced-motion: reduce){ #preview{transition:opacity .12s;} #preview.firing{animation:none;} }
   /* ログと重なるので表示中は手前へ */
   #preview.show{z-index:31;}
+  /* トレーニングは左にトレーニングの道具があるので、右 (枚数表示の下) に出す */
+  body.training #preview{left:auto;right:calc(48px + env(safe-area-inset-right));top:200px;max-height:calc(100vh - 214px);}
 
   /* ---------- ログ (右のサイドバー) ----------
      閉じているときは右端のつまみだけを出し、押すと盤面の右から引き出す */
@@ -1037,6 +1039,7 @@
     #btnLog{top:132px;height:70px;}
     #effectContext{top:44px;}
     #preview{left:calc(8px + env(safe-area-inset-left));top:40px;width:min(200px,24vw);max-height:calc(100vh - 48px);}
+    body.training #preview{left:auto;right:calc(44px + env(safe-area-inset-right));top:172px;max-height:calc(100vh - 180px);}
     .cp-head{padding:6px 8px 6px 10px;}
     .cp-head b{font-size:13px;}
     .cp-val{min-width:22px;height:22px;font-size:14px;}

@@ -219,6 +219,14 @@ function publicState(room: any, side: number) {
     ? st.__trace.map((entry: any) => ({
       msg: entry.msg,
       uid: entry.uid ? aliases.forward[entry.uid] : null,
+      /* 処理中の効果の並び ("uid|段")。クライアントのチェーン表示に使う */
+      chain: Array.isArray(entry.chain)
+        ? entry.chain.map((link: string) => {
+          const i = link.lastIndexOf("|");
+          const alias = aliases.forward[link.slice(0, i)];
+          return alias ? alias + link.slice(i) : null;
+        }).filter(Boolean)
+        : [],
       game: publicGame(entry.st, side, aliases),
     }))
     : [];

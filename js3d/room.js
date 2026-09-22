@@ -289,7 +289,8 @@ export function createTraceTracker() {
       return raw.slice(skip).map(entry => ({
         st: buildRoomState({ game: entry.game, side: rm.side }, valOf),
         msg: entry.msg || '',
-        uid: entry.uid || null
+        uid: entry.uid || null,
+        chain: Array.isArray(entry.chain) ? entry.chain : []
       }));
     }
   };

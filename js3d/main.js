@@ -1426,6 +1426,8 @@ async function markPhase(st) {
  *   「反転 → 移動 → 削除」が一息に飛ばず、1つずつ見えるようになる。
  * ------------------------------------------------------------------------- */
 const MAX_STEPS = 14;          // 長い連鎖はここで打ち切って最終状態へ飛ばす
+/* チェーン表示の間 (ms): 割り込んで積まれたとき / 1つ解決したとき */
+const CHAIN_HOLD = { add: 1100, resolve: 650 };
 
 function meaningfulSteps(prev, res) {
   if (!res || !res.trace || !res.trace.length) return [];
@@ -1444,7 +1446,7 @@ function meaningfulSteps(prev, res) {
     const phaseTag = t.st.phase + ':' + t.st.turn;
     if (fp === last && phaseTag !== lastPhase) {
       lastPhase = phaseTag;
-      steps.push({ st: t.st, fp, uid: null, msg: '', cue: pendingCue, phaseOnly: true });
+      steps.push({ st: t.st, fp, uid: null, msg: '', cue: pendingCue, phaseOnly: true, chain: t.chain });
       pendingCue = null;
       continue;
     }
@@ -1452,14 +1454,15 @@ function meaningfulSteps(prev, res) {
     if (fp === last) {
       /* 絵は変わらないが、発動カードの合図だけは拾っておく */
       if (t.uid) {
-        const cue = { uid: t.uid, msg: t.msg };
+        /* 発動の合図と一緒に、その瞬間の「処理中の効果の並び」も持つ (割り込みの判定に使う) */
+        const cue = { uid: t.uid, msg: t.msg, chain: t.chain };
         if (steps.length) steps[steps.length - 1].cue = cue;
         else pendingCue = cue;
       }
       continue;
     }
     last = fp;
-    steps.push({ st: t.st, fp, uid: t.uid, msg: t.msg, cue: pendingCue, tr: t });
+    steps.push({ st: t.st, fp, uid: t.uid, msg: t.msg, cue: pendingCue, tr: t, chain: t.chain });
     pendingCue = null;
   }
   /* 選択に答えると、エンジンはアクションを基準状態から再実行する。
@@ -1531,9 +1534,24 @@ async function replayResolution(prev, res, action) {
 
   /* ステップが多すぎるときは間引いて、テンポを保つ */
   window.__lastSteps = steps.length;
+  const chainLen = (c) => (Array.isArray(c) ? c.length : 0);
   const use = steps.length > MAX_STEPS
-    ? steps.filter((_, i) => i % Math.ceil(steps.length / MAX_STEPS) === 0)
+    ? steps.filter((s, i) => i % Math.ceil(steps.length / MAX_STEPS) === 0
+      /* チェーンが積まれる・解決するコマは残す (飛ばすと何が起きたか分からない) */
+      || chainLen(s.chain) !== chainLen(i > 0 ? steps[i - 1].chain : null)
+      || chainLen(s.cue && s.cue.chain) > 0)
     : steps;
+  /* いま出しているチェーンの長さ。伸びたら (割り込み) 止めて積んだところを見せ、
+     縮んだら (1つ解決) 少し待ってから次へ進む */
+  let chainShown = 0;
+  const showChainNow = (chain, st) => {
+    const links = Array.isArray(chain) ? chainLinksAt({ chain, st }, action) : [];
+    UI.showChain(links);
+    const n = links.length >= 2 ? links.length : 0;
+    const delta = n - chainShown;
+    chainShown = n;
+    return delta;
+  };
 
   let from = prev;
   let first = true;
@@ -1548,9 +1566,15 @@ async function replayResolution(prev, res, action) {
     /* 絵が動くコマは、動かしてから合図を出す。
        1コマの中で「カードの着地」と「手番交代」が同時に起きることがあり、
        先に告知すると、相手のターンになってからカードが積まれて見えた。 */
-    await board.applyTransition(from, step.st, first ? action : null, { speed: 0.72 });
-    UI.showChain(chainLinksAt(step.tr, action));
+    /* チェーンの途中は動きもゆっくり見せる */
+    await board.applyTransition(from, step.st, first ? action : null, { speed: chainShown ? 1.05 : 0.72 });
+    /* この絵の時点のチェーン。1つ解決して短くなったら、解決したことが分かるよう少し待つ */
+    if (showChainNow(step.chain, step.st) < 0) await TW.wait(CHAIN_HOLD.resolve);
+    /* 次に発動する効果が割り込み (チェーンが伸びる) なら、積んだところで止めて見せる */
+    const cueChain = step.cue && step.cue.chain;
+    const grew = cueChain ? showChainNow(cueChain, step.st) > 0 : false;
     await cueFor(step, step.st);
+    if (grew) await TW.wait(CHAIN_HOLD.add);
     await markPhase(step.st);
     await checkAnnounce(step.st);
     from = step.st;
