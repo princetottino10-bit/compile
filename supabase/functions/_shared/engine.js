@@ -2233,6 +2233,70 @@ function newGame(opts) {
   return runReplay(st, { type: '_begin' }, []);
 }
 
+/* 共有された「問題」の盤面から対戦を始める。
+   spec.sides[p] = { protos: [3], compiled: [3], lines: [[[defId, faceUp], ...] x3], hand: [defId], trash: [defId], deck: [defId] }
+   deck に無い札は山札の底へ足す。P1 (p=0) の手番の開始 (開始フェイズ) から始める */
+function newPuzzle(spec, opts) {
+  if (!DEFS) throw new Error('Engine.init(cards, effects) を先に呼ぶこと');
+  const sides = spec && spec.sides;
+  if (!Array.isArray(sides) || sides.length !== 2) throw new Error('問題の盤面が不正');
+  const o = opts || {};
+  const res0 = newGame({ p0: sides[0].protos, p1: sides[1].protos, seed: o.seed === undefined ? 1 : o.seed, training: true });
+  const st = clone(res0.state);
+  st.training = false;
+  st.useControl = !!spec.useControl;
+  st.control = st.useControl && (spec.control === 0 || spec.control === 1) ? spec.control : -1;
+  st.turn = 0;
+  st.phase = 'start';
+  st.pending = null;
+  st.winner = null;
+  for (let p = 0; p < 2; p++) {
+    const sd = sides[p];
+    const pl = st.players[p];
+    const all = pl.deck.slice();
+    const used = new Set();
+    const take = (defId) => {
+      const uid = 'p' + p + ':' + defId;
+      if (!st.cards[uid] || used.has(uid)) throw new Error('問題の盤面が不正: ' + defId);
+      used.add(uid);
+      return uid;
+    };
+    pl.hand = []; pl.trash = []; pl.deck = [];
+    (sd.compiled || []).forEach((v, i) => { if (pl.protocols[i]) pl.protocols[i].compiled = !!v; });
+    for (let l = 0; l < 3; l++) {
+      st.lines[l][p] = [];
+      for (const [defId, faceUp] of ((sd.lines || [])[l] || [])) {
+        const uid = take(defId);
+        const c = st.cards[uid];
+        c.zone = 'field'; c.faceUp = !!faceUp;
+        c.knownTo = faceUp ? 3 : (1 << p);
+        st.lines[l][p].push(uid);
+      }
+    }
+    for (const defId of (sd.hand || [])) {
+      const uid = take(defId);
+      st.cards[uid].zone = 'hand' + p; st.cards[uid].faceUp = false; st.cards[uid].knownTo = 1 << p;
+      pl.hand.push(uid);
+    }
+    for (const defId of (sd.trash || [])) {
+      const uid = take(defId);
+      st.cards[uid].zone = 'trash' + p; st.cards[uid].faceUp = true; st.cards[uid].knownTo = 3;
+      pl.trash.push(uid);
+    }
+    for (const defId of (sd.deck || [])) {
+      const uid = take(defId);
+      st.cards[uid].zone = 'deck' + p; st.cards[uid].faceUp = false; st.cards[uid].knownTo = 0;
+      pl.deck.push(uid);
+    }
+    for (const uid of all) {
+      if (used.has(uid)) continue;
+      st.cards[uid].zone = 'deck' + p; st.cards[uid].faceUp = false; st.cards[uid].knownTo = 0;
+      pl.deck.push(uid);
+    }
+  }
+  return runReplay(st, { type: '_begin' }, []);
+}
+
 /* ---------- AI ---------- */
 
 let AI_LEVEL = 1; // 0=easy, 1=normal, 2=hard
@@ -3216,8 +3280,57 @@ function aiChoiceScore(st, req, picks, me) {
     if (!res || res.error) return -1e8;
     const out = res.requests && res.requests.length ? resolveRequests(res, smartPicks, 8) : res;
     if (!out || out.error || (out.requests && out.requests.length)) return -1e8;
-    return aiScore(out.state, me) + aiTransitionScore(st, out, me);
+    return aiScore(out.state, me) + aiTransitionScore(st, out, me) - aiComboKeepCost(st, req, picks, me);
   } finally { AI_CHOICE_DEPTH--; }
+}
+
+/* 組み合わせて使う札 (docs/ai-combos.md の手筋)。どちらかを捨てると手筋が消える。
+   値の低い札 (SPEED 0 / FIRE 0 / LIFE 0 など) ほど「捨ててよい札」に見えるので、明示して守る */
+const AI_COMBO_PAIRS = [
+  ['SPEED_1', 'SPEED_4'],     // SPEED 0 → 追加プレイで SPEED 3
+  ['WATER_2', 'WATER_5'],     // WATER 1 の上に WATER 4、自分を戻して WATER 1 を撃ち直す
+  ['SPIRIT_1', 'SPIRIT_4'],   // SPIRIT 0 で引くたびに SPIRIT 3 を動かす
+  ['SPIRIT_4', 'SPIRIT_2'],   // SPIRIT 3 で SPIRIT 1 のデメリットを覆う
+  ['GRAVITY_2', 'GRAVITY_3'], // GRAVITY 1 を裏で置き、GRAVITY 2 で連鎖
+  ['FIRE_1', 'LIFE_1'],       // FIRE 0 の上に撒いた裏向きを表に返す
+  ['FIRE_1', 'WATER_2'],
+  ['LIFE_4', 'LIFE_1'],       // LIFE 3 の覆われ時 → LIFE 0
+  ['FIRE_4', 'PLAGUE_5'],     // FIRE 3 で裏返し、PLAGUE 4 で削除させる
+  ['SPIRIT_2', 'DEATH_1']     // SPIRIT 1 の表向きプレイ中に DEATH 0
+];
+const AI_COMBO_KEEP = { hand: 60, field: 40, deck: 15 };
+
+/* 捨てる・渡す選択で、組み合わせの相方が生きている札を手放す損。
+   相方が手札にある (セットが揃っている) ときが一番重く、場にある・山札に残っている順に軽い */
+function aiComboKeepCost(st, req, picks, me) {
+  if (req.kind !== 'pickHand' || req.player !== me || !/discard|cache|give/.test(req.prompt || '')) return 0;
+  if (!Array.isArray(picks) || !picks.length) return 0;
+  const p = st.players[me];
+  const where = (defId) => {
+    const uid = 'p' + me + ':' + defId;
+    if (!st.cards[uid]) return null;
+    if (p.hand.includes(uid) && !picks.includes(uid)) return 'hand';
+    if (p.deck.includes(uid)) return 'deck';
+    for (let l = 0; l < 3; l++) if (st.lines[l][me].includes(uid)) return 'field';
+    return null;
+  };
+  let cost = 0;
+  for (const uid of picks) {
+    const c = st.cards[uid];
+    if (!c) continue;
+    let best = 0;
+    for (const [a, b] of AI_COMBO_PAIRS) {
+      const partner = c.def === a ? b : c.def === b ? a : null;
+      if (!partner) continue;
+      const w = where(partner);
+      if (w) best = Math.max(best, AI_COMBO_KEEP[w]);
+    }
+    /* FIRE 0 は、場にあるときは手札の FIRE を上に重ねるたびに得をする (FIRE の札を守る) */
+    const fire0OnField = [0, 1, 2].some(l => st.lines[l][me].includes('p' + me + ':FIRE_1'));
+    if (fire0OnField && DEFS[c.def].proto === 'FIRE' && c.def !== 'FIRE_1') best = Math.max(best, AI_COMBO_KEEP.field * 0.5);
+    cost += best;
+  }
+  return cost;
 }
 
 /* 複数枚選択 (max>1) の組合せ探索。
@@ -4132,7 +4245,7 @@ function aiAnswer(state, req) {
 /* ---------- 公開 API ---------- */
 
 const Engine = {
-  init, newGame, apply, legalActions, setTrace, setAiLevel, setAiThinkBudget, setAiBreadth, setAiPimc, setAiWeights, setAiSpecialist, setAiSpecialistWeights,
+  init, newGame, newPuzzle, apply, legalActions, setTrace, setAiLevel, setAiThinkBudget, setAiBreadth, setAiPimc, setAiWeights, setAiSpecialist, setAiSpecialistWeights,
   lineTotal, cardValue, compilableLines, canPlay, locate,
   ai: { action: aiAction, answer: aiAnswer, score: aiScore, middleFizzles: aiMiddleFizzles, transitionScore: aiTransitionScore, compilePassChance: aiCompilePassChance, informationState: aiInformationState, rootValues: aiRootValues, vetoOrder: aiVetoOrder, actionBias: aiActionBias, opsValue: aiOpsValue, boardEffect: aiBoardEffectScore, randomPicks, smartPicks },
   get defs() { return DEFS; },
