@@ -6,7 +6,21 @@
 <title>COMPILE - Room (移動しました)</title>
 <link rel="apple-touch-icon" href="icon-180.png">
 <!-- ルーム対戦は AutoPlay に統合されました。auto-play.html#room へ転送します。 -->
-<script>location.replace('auto-play.html#room');</script>
+<script>
+/* Supabase の既定の戻り先はこのページ。3D アリーナ (three-play.html) から始めたログインなら、
+   ログイン情報 (# のトークンや ?code=) を捨てずに 3D アリーナへ送り返す */
+(function () {
+  try {
+    var h = location.hash || '', q = location.search || '';
+    var auth = /access_token|refresh_token|error_description/.test(h) || /[?&]code=/.test(q);
+    if (auth && localStorage.getItem('compileOnlineResume') === '1') {
+      location.replace('three-play.html' + q + h);
+      return;
+    }
+  } catch (e) { /* private mode */ }
+  location.replace('auto-play.html#room');
+})();
+</script>
 <style>
   html,body{height:100%;margin:0;background:#0a0a0f;color:#e0e0e8;
     font-family:'Noto Sans JP',sans-serif;display:flex;align-items:center;justify-content:center}
