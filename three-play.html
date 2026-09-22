@@ -815,6 +815,24 @@
     cursor:pointer;border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.04);
     color:var(--ink);font:700 11px system-ui;letter-spacing:.05em;}
   .ro-chip img{width:20px;height:20px;}
+  /* チップの横の「?」: そのプロトコルの6枚を見る */
+  .ro-chipwrap{display:inline-flex;align-items:center;gap:3px;}
+  .ro-info{width:24px;height:24px;border-radius:999px;cursor:pointer;flex:none;
+    border:1px solid rgba(255,255,255,.22);background:rgba(8,11,21,.8);color:var(--dim);font:900 11px/1 system-ui;}
+  .ro-info:hover,.ro-info:focus-visible{color:var(--ink);border-color:var(--cyan);outline:none;}
+  #roCardsOv{position:fixed;inset:0;z-index:60;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+    background:rgba(2,3,9,.82);padding:16px;cursor:pointer;}
+  #roCardsOv.show{display:flex;}
+  #roCardsOv .rc-title{font:800 13px/1 system-ui;letter-spacing:.12em;color:#cfefff;}
+  #roCardsOv .rc-cards{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:min(980px,96vw);max-height:78vh;overflow-y:auto;}
+  #roCardsOv figure{margin:0;text-align:center;}
+  #roCardsOv img{height:min(34vh,260px);border-radius:8px;display:block;}
+  #roCardsOv figcaption{font:600 10px/1.6 system-ui;color:var(--dim);}
+  #roCardsOv .rc-hint{font:600 10px/1 system-ui;color:var(--dim);}
+  /* ロビー: いまのアカウント */
+  .ro-account{display:flex;align-items:center;justify-content:space-between;gap:8px;font:600 11px/1.4 system-ui;color:var(--dim);}
+  .ro-account b{color:var(--ink);}
+  .ro-account .ro-ghost{padding:5px 10px;font-size:10px;}
   .ro-chip:hover{border-color:var(--accent,var(--cyan));}
   .ro-chip.on{border-color:var(--accent);background:rgba(255,255,255,.1);
     box-shadow:0 0 0 1px var(--accent);}

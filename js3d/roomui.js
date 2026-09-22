@@ -4,7 +4,7 @@
  *   status が playing になった publicState を resolve して返す。
  *   戻るを押した場合は null を resolve する (呼び出し側でソロ設定へ)。
  * ========================================================================= */
-import { roomApi, roomIsAnonymous, roomLogin, roomSession, roomSignIn, roomSignInWithGitHub, roomSignInWithGoogle, roomSignUp } from './room.js';
+import { roomApi, roomIsAnonymous, roomLogin, roomSession, roomSignIn, roomSignInWithGitHub, roomSignInWithGoogle, roomSignOut, roomSignUp } from './room.js';
 import { emblemDataURL } from './emblems.js';
 
 const $ = (sel) => document.querySelector(sel);
@@ -25,7 +25,8 @@ function esc(s) {
   return d.innerHTML;
 }
 
-export function runRoomLobby(protocols) {
+/* opts.cardsOf(name) -> [{ img, label }]: そのプロトコルの6枚 (ドラフト中に中身を見る) */
+export function runRoomLobby(protocols, opts = {}) {
   const root = $('#roomOv');
   const protoMap = {};
   for (const p of protocols) protoMap[p.name] = p;
@@ -137,8 +138,21 @@ export function runRoomLobby(protocols) {
     }
 
     /* ---------- ロビー ---------- */
+    /* いま誰でログインしているか (ゲストか、Google 等のアカウントか) */
+    function accountLabel() {
+      const u = session && session.user;
+      if (!u) return '未ログイン';
+      if (roomIsAnonymous(session)) return 'ゲスト' + (lsGet('compileRoomName') ? ' (' + lsGet('compileRoomName') + ')' : '');
+      const m = u.user_metadata || {};
+      const via = (u.app_metadata && u.app_metadata.provider) || 'email';
+      const provider = { google: 'Google', github: 'GitHub', email: 'メール' }[via] || via;
+      return (m.full_name || m.name || m.user_name || u.email || 'アカウント') + ' (' + provider + ')';
+    }
+
     async function showLobby() {
       frame('ONLINE — ロビー',
+        '<div class="ro-account"><span>ログイン中: <b>' + esc(accountLabel()) + '</b></span>' +
+          '<button class="ro-ghost" id="roomLogout" type="button">ログアウト</button></div>' +
         /* 事故で閉じたときの戻り道。参加者本人ならサーバーが再入室を許す */
         (lsGet('compileRoomLast')
           ? '<div class="ro-row"><button class="ro-big" id="roomResume" type="button">中断した対戦に戻る (' +
@@ -167,6 +181,12 @@ export function runRoomLobby(protocols) {
         '</div>' +
         '<div class="ro-lbl" style="margin-top:14px">公開ルーム</div><div class="ro-list" id="roomList">読込中…</div>');
       $('#roomCode').oninput = function () { this.value = this.value.toUpperCase().replace(/[^A-Z2-9]/g, ''); };
+      $('#roomLogout').onclick = guard(async () => {
+        await roomSignOut();
+        session = null;
+        status('ログアウトしました', 'ok');
+        await showLogin();
+      });
       /* ルールはドラフトのときだけ選べる。記憶しておき、次に作るときも同じにする */
       const syncRules = () => { $('#roomRules').classList.toggle('off', !$('#roomDraft').checked); };
       $('#roomPool').value = lsGet('compileDraftPool') || '0';
@@ -333,13 +353,42 @@ export function runRoomLobby(protocols) {
         const p = protoMap[n] || {};
         const isTaken = taken.includes(n);
         const isSel = sel.includes(n);
-        return '<button type="button" class="ro-chip' + (isSel ? ' on' : '') + (isTaken ? ' taken' : '') + '" data-name="' + esc(n) + '"' +
+        return '<span class="ro-chipwrap"><button type="button" class="ro-chip' + (isSel ? ' on' : '') + (isTaken ? ' taken' : '') + '" data-name="' + esc(n) + '"' +
           ' style="--accent:' + (p.color || '#63f3ff') + '">' +
-          '<img alt="" src="' + emblemDataURL(n, p.color || '#63f3ff', 48, true) + '">' + esc(n) + '</button>';
+          '<img alt="" src="' + emblemDataURL(n, p.color || '#63f3ff', 48, true) + '">' + esc(n) + '</button>' +
+          (opts.cardsOf ? '<button type="button" class="ro-info" data-info="' + esc(n) + '" aria-label="' + esc(n) + ' のカードを見る" title="カードを見る">?</button>' : '') +
+          '</span>';
       }).join('') + '</div>';
     }
 
+    /* プロトコルの6枚を並べて見せる (ロビーより手前。どこかに触れると閉じる) */
+    function showProtoCards(name) {
+      const items = opts.cardsOf ? opts.cardsOf(name) : [];
+      if (!items.length) return;
+      let ov = document.getElementById('roCardsOv');
+      if (!ov) {
+        ov = document.createElement('div');
+        ov.id = 'roCardsOv';
+        document.body.appendChild(ov);
+      }
+      ov.innerHTML = '<div class="rc-title">' + esc(name) + ' のカード</div>' +
+        '<div class="rc-cards">' + items.map(it => '<figure><img alt="" src="' + it.img + '"><figcaption>' + esc(it.label) + '</figcaption></figure>').join('') + '</div>' +
+        '<div class="rc-hint">どこかに触れると閉じます</div>';
+      ov.classList.add('show');
+      ov.onclick = () => ov.classList.remove('show');
+      /* カードの絵は後から読み込まれるので、少し待ってから絵の入った画像に差し替える */
+      clearTimeout(ov._t);
+      ov._t = setTimeout(() => {
+        if (!ov.classList.contains('show')) return;
+        const imgs = ov.querySelectorAll('.rc-cards img');
+        (opts.cardsOf(name) || []).forEach((it, i) => { if (imgs[i]) imgs[i].src = it.img; });
+      }, 900);
+    }
+
     function bindChips(limit, rerender) {
+      root.querySelectorAll('.ro-info').forEach(b => {
+        b.onclick = (ev) => { ev.stopPropagation(); showProtoCards(b.dataset.info); };
+      });
       root.querySelectorAll('.ro-chip').forEach(b => {
         b.onclick = () => {
           if (b.classList.contains('taken')) return;

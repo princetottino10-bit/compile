@@ -198,7 +198,12 @@ async function boot() {
           await ROOM.roomLoadDeps();
         } catch (e) { UI.toast('オンライン機能を読み込めませんでした'); nextMode = 'single'; continue; }
         if (!ROOM.roomConfigured()) { UI.toast('オンライン対戦は未設定です (secure-room-config.js)'); nextMode = 'single'; continue; }
-        const result = await runRoomLobby(cards.protocols);
+        const result = await runRoomLobby(cards.protocols, {
+          /* ドラフト中にプロトコルの6枚を見る */
+          cardsOf: (name) => (protoIndex[name] ? protoIndex[name].cards : [])
+            .map(c => defIndex[c.id]).filter(Boolean)
+            .map(d => ({ img: faceImageURL(d), label: d.proto + ' ' + d.value }))
+        });
         /* 「戻る」はモード選択へ (ソロのプロトコル選択ではなく) */
         if (!result) { nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
         document.getElementById('boot').style.display = 'none';

@@ -49,6 +49,12 @@ function client() {
   return sb;
 }
 
+/* ログアウト (Google / GitHub / メール / ゲストの切り替えに使う) */
+export async function roomSignOut() {
+  const r = await client().auth.signOut();
+  if (r.error) throw new Error(r.error.message);
+}
+
 export async function roomSession() {
   const got = await client().auth.getSession();
   return got.data.session;
