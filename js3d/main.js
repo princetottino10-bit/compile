@@ -982,8 +982,6 @@ function bindInput() {
   if (leaveBtn) leaveBtn.onclick = goToMenu;
   const menuBtn = document.getElementById('btnMenu');
   if (menuBtn) menuBtn.onclick = goToMenu;
-  const hintBtn = document.getElementById('btnHint');
-  if (hintBtn) hintBtn.onclick = () => showHint();
   const settingsBtn = document.getElementById('btnSettings');
   if (settingsBtn) settingsBtn.onclick = () => openSettings();
   const muteBtn = document.getElementById('btnMute');
@@ -1116,40 +1114,6 @@ function showPreview(uid) {
   if (!o || uid === previewUid) return;
   previewUid = uid;
   UI.showCardPanel(o);
-}
-
-/* ヒント: いまの自分の手番で AI ならどう指すかを出す (CPU 戦のみ)。
-   AI は見えている情報だけで考える。出したカードを選び、置き先を光らせる */
-async function showHint() {
-  const st = shown();
-  if (roomMode || trainingMode || puzzle || busy || !cur || cur.requests.length || !st
-      || st.turn !== ME || st.winner !== null || st.phase !== 'action') {
-    UI.toast('自分の手番で使えます');
-    return;
-  }
-  UI.toast('考え中…', 1600);
-  await new Promise(r => setTimeout(r, 60));   // 「考え中…」を描いてから重い探索に入る
-  let a = null;
-  try { a = withoutTrace(() => Engine.ai.action(cur.state)); } catch (e) { a = null; }
-  if (!a) { UI.toast('ヒントを出せませんでした'); return; }
-  if (a.type === 'refresh') {
-    UI.toast('ヒント: リフレッシュする', 3600);
-    const r = document.getElementById('btnRefresh');
-    if (r) { r.classList.add('urge'); setTimeout(() => refreshHud(), 3600); }
-    return;
-  }
-  if (a.type === 'play') {
-    const side = a.side ?? ME;
-    const lineName = st.players[side].protocols[a.line].name;
-    UI.toast('ヒント: ' + (cardName(a.card) || 'カード') + ' を ' + (side === ME ? '' : '相手の ') + lineName +
-      ' のラインに' + (a.faceUp ? '表' : '裏') + 'で置く', 4200);
-    if (st.players[ME].hand.includes(a.card)) {
-      select(a.card);
-      focusPlayChoice(a.line, side);
-    }
-    return;
-  }
-  UI.toast('ヒント: ' + a.type);
 }
 
 function syncFacingHint() {
