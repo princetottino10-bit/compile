@@ -381,3 +381,45 @@ test('解決順: 両方の順番を試して、良いほうを選ぶ', () => {
     '良いほうの順番を選ぶ (' + scored.map(x => res.state.cards[x.uid].def + ':' + Math.round(x.s)).join(' / ')
     + ' → 選んだ: ' + res.state.cards[picked[0]].def + ')');
 });
+
+/* ---------- 相手の手番の途中での選択 ----------
+   相手がカードを表で出した処理の続きで自分のコンパイルが起き、コントロールの並べ替えを聞かれる場面。
+   AI は相手の手札を推測し直した世界で試算するが、以前はその世界で「相手が出したカード」まで
+   別のカードに振り直していて、試算のたびに相手の1手を再生するところで失敗していた。
+   全部の試算が失敗すると先頭の答え (自分を並べ替える → 先頭の並べ方) に落ち、
+   済みプロトコルがコンパイルするラインに来てリコンパイルに化けていた (実戦 60局で18回) */
+test('コントロールの並べ替え: 相手の手番の途中でも、並べ替えでコンパイルをリコンパイルに化かさない', () => {
+  Engine.setAiLevel(1);
+  let res = Engine.newGame({ p0: ['DARKNESS', 'FIRE', 'WATER'], p1: ['DEATH', 'METAL', 'SPEED'], seed: 7000, useControl: true });
+  let checked = 0;
+  for (let guard = 0; res && !res.error && res.state.winner === null && guard < 700; guard++) {
+    if (res.requests.length) {
+      const q = res.requests[0];
+      if (q.prompt === 'control-rearrange' && q.controlReason === 'compile') {
+        const protos = res.state.players[q.player].protocols;
+        const before = protos.filter(p => p.compiled).length;
+        const willCompileNew = !protos[q.controlLine].compiled;
+        /* AI の答えで最後まで解決して、コンパイルの本数を確かめる */
+        let r = Engine.apply(res.state, { type: 'choose', id: q.id, picks: Engine.ai.answer(res.state, q) });
+        for (let k = 0; r && !r.error && r.requests.length && k < 12; k++) {
+          const qq = r.requests[0];
+          r = Engine.apply(r.state, { type: 'choose', id: qq.id, picks: Engine.ai.answer(r.state, qq) });
+        }
+        assert.equal(r.error, null);
+        if (willCompileNew && before > 0) {
+          const after = r.state.players[q.player].protocols.filter(p => p.compiled).length;
+          assert.ok(after > before, '未コンパイルのラインを並べ替えでリコンパイルに化かさない (' + before + '本 → ' + after + '本)');
+          checked++;
+        }
+        res = r;
+        continue;
+      }
+      res = Engine.apply(res.state, { type: 'choose', id: q.id, picks: Engine.ai.answer(res.state, q) });
+      continue;
+    }
+    const a = Engine.ai.action(res.state);
+    if (!a) break;
+    res = Engine.apply(res.state, a);
+  }
+  assert.ok(checked >= 1, 'この対局で問題の場面が起きること (' + checked + '回)');
+});

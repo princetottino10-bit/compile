@@ -3947,6 +3947,12 @@ function aiInformationState(state, side, salt) {
   const seed = salt ? (baseSeed ^ Math.imul(salt, 0x9e3779b1)) >>> 0 : baseSeed;
   const rng = mulberry32(seed);
   const groups = [[], []];
+  /* 解決途中の手 (相手がカードを出した処理の続きで、自分の選択が来ている等) で
+     表向きに出されたカードは公開済み。これを振り直すと、試算のたびに
+     「その1手」を再生し直すところで別のカードに化けて、全部の試算が失敗する
+     (コントロールでの並べ替えが既定の答えに落ち、リコンパイルに化けていた) */
+  const pendAction = state.pending && state.pending.action;
+  const revealedByAction = pendAction && pendAction.type === 'play' && pendAction.faceUp ? pendAction.card : null;
 
   for (const uid of Object.keys(state.cards)) {
     const c = state.cards[uid];
@@ -3954,7 +3960,7 @@ function aiInformationState(state, side, salt) {
       c.zone.indexOf('deck') === 0 || c.zone.indexOf('hand') === 0 ||
       (!c.faceUp && (c.zone === 'field' || c.zone === 'committed'))
     );
-    if (!hidden || aiCardKnownTo(state, uid, side)) continue;
+    if (!hidden || aiCardKnownTo(state, uid, side) || uid === revealedByAction) continue;
     const origin = uid.indexOf('p1:') === 0 ? 1 : 0;
     groups[origin].push(uid);
   }
