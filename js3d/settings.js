@@ -5,7 +5,7 @@
  * ========================================================================= */
 
 const KEY = 'compileSettings';
-const DEFAULTS = { speed: 1, sfx: 80, bgm: 60, pauses: true };
+const DEFAULTS = { speed: 1, sfx: 80, pauses: true };
 const SPEEDS = [
   { v: 1, label: 'ふつう' },
   { v: 1.6, label: 'はやい' },
@@ -57,8 +57,6 @@ export function openSettings(extra) {
     '</div></div>' +
     '<label class="st-row"><span>効果音の音量 <i id="stSfxV">' + s.sfx + '</i></span>' +
       '<input type="range" min="0" max="100" step="5" id="stSfx" value="' + s.sfx + '"></label>' +
-    '<label class="st-row"><span>BGM の音量 <i id="stBgmV">' + s.bgm + '</i></span>' +
-      '<input type="range" min="0" max="100" step="5" id="stBgm" value="' + s.bgm + '"></label>' +
     '<label class="st-row st-check"><span>効果の発動・チェーンで一時停止する<small>オフにすると、発動した効果を1つずつ止めずに進めます</small></span>' +
       '<input type="checkbox" id="stPauses"' + (s.pauses ? ' checked' : '') + '></label>' +
     (extra && extra.length ? '<div class="pz-row">' + extra.map((x, i) => '<button type="button" data-extra="' + i + '">' + x.label + '</button>').join('') + '</div>' : '') +
@@ -78,7 +76,6 @@ export function openSettings(extra) {
     input.oninput = () => { el.querySelector(out).textContent = input.value; setSetting(key, +input.value); };
   };
   range('#stSfx', 'sfx', '#stSfxV');
-  range('#stBgm', 'bgm', '#stBgmV');
   el.querySelector('#stPauses').onchange = (ev) => setSetting('pauses', ev.target.checked);
   el.querySelectorAll('[data-extra]').forEach(b => {
     b.onclick = () => { const x = extra[+b.dataset.extra]; if (x) x.onClick(b); };

@@ -22,7 +22,7 @@ import { selectHead, bindSelectHead } from './selectui.js';
 import { faceImageURL, backImageURL, pruneFaceCache, ART_SETS, setMaxAnisotropy } from './cardtex.js';
 import * as FX from './fx.js';
 import { buildArena } from './arena.js';
-import { initAudio, sfx, setMuted, isMuted, startBgm, stopBgm, setBgmTension, bgmActive, setSfxVolume, setBgmVolume } from './audio.js';
+import { initAudio, sfx, setMuted, isMuted, setSfxVolume } from './audio.js';
 import { emblemDataURL } from './emblems.js';
 import * as LAYOUT from './layout.js';
 import { BOARD, CARD, COLOR, TIMING, VIEW } from './theme.js';
@@ -162,7 +162,7 @@ async function boot() {
   buildPads();
   stage.onFrame((dt, t) => { positionPlayChoices(); trackHandTop(); trackHandRight(); if (panels) panels.tick(t); });
   /* 設定 (演出の速さ・音量) を反映し、変わったらすぐ当てる */
-  onSettings((s) => { TW.setSpeed(s.speed); setSfxVolume(s.sfx); setBgmVolume(s.bgm); });
+  onSettings((s) => { TW.setSpeed(s.speed); setSfxVolume(s.sfx); });
   bindInput();
   mark('stage');
 
@@ -676,10 +676,9 @@ function canPlaceOnLine(st, uid, line, side) {
 /* ---------- 入力 ---------- */
 function bindInput() {
   const el = stage.renderer.domElement;
-  /* 最初の操作で音声を解錠しBGMを開始 (ブラウザの自動再生制限) */
+  /* 最初の操作で音声を解錠する (ブラウザの自動再生制限) */
   window.addEventListener('pointerdown', () => {
     initAudio();
-    if (!isMuted() && !bgmActive()) startBgm();
   }, { once: false });
   const ray = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
@@ -1047,8 +1046,6 @@ function bindInput() {
     setMuted(!isMuted());
     muteBtn.textContent = isMuted() ? '🔇' : '🔊';
     muteBtn.classList.toggle('on', isMuted());
-    if (isMuted()) stopBgm();
-    else startBgm();
   };
   const logBtn = document.getElementById('btnLog');
   if (logBtn) logBtn.onclick = () => {
@@ -2569,7 +2566,6 @@ function refreshHud() {
     st.players[ME].protocols.filter(p => p.compiled).length,
     st.players[AI].protocols.filter(p => p.compiled).length
   );
-  updateBgmTension(st);
   panels.update(panelRows(st));
   UI.setCounts(
     { deck: st.players[ME].deck.length, trash: st.players[ME].trash.length, hand: st.players[ME].hand.length },
@@ -2687,19 +2683,6 @@ function cardName(idOrUid) {
   const d = defIndex[idOrUid] || (c && defIndex[c.def]);
   /* 表記は cardlist.html / auto-play.html と揃える: プロトコル名 + 値 */
   return d ? d.proto + ' ' + d.value : null;
-}
-
-/* 盤面の切迫度から BGM の緊張度を決める:
-   最大ライン合計が 10 に近いほど、コンパイル済みが多いほど高い */
-function updateBgmTension(st) {
-  if (!bgmActive()) return;
-  let maxLine = 0, compiled = 0;
-  for (let side = 0; side < 2; side++) {
-    compiled += st.players[side].protocols.filter(p => p.compiled).length;
-    for (let line = 0; line < 3; line++) maxLine = Math.max(maxLine, totalOf(st, line, side));
-  }
-  const t = Math.min(1, (maxLine / 10) * 0.6 + (compiled / 6) * 0.4);
-  setBgmTension(t);
 }
 
 /* 選択UIの見出しに出す発動元カード (公開情報の def ID) */

@@ -42,17 +42,13 @@ export function initAudio() {
   }
 }
 
-/* 音量 (0..100)。効果音は 80、BGM は 60 がこれまでの音量 */
+/* 効果音の音量 (0..100)。80 がこれまでの音量。
+   BGM は無し (以前の合成 BGM は低音がずっと「ブーー」と鳴って耳障りだったので削除) */
 let sfxBus = null;
 let sfxLevel = 1;
-let bgmLevel = 1;
 export function setSfxVolume(pct) {
   sfxLevel = Math.max(0, Math.min(1.25, (+pct || 0) / 80));
   if (sfxBus) sfxBus.gain.setTargetAtTime(sfxLevel, actx.currentTime, 0.05);
-}
-export function setBgmVolume(pct) {
-  bgmLevel = Math.max(0, Math.min(1.7, (+pct || 0) / 60));
-  if (bgm && actx) bgm.bus.gain.setTargetAtTime(0.5 * bgmLevel, actx.currentTime, 0.2);
 }
 
 export function setMuted(v) { muted = !!v; }
@@ -191,65 +187,3 @@ export function sfx(name) {
     try { fn(); } catch (e) { /* 音は落としてもゲームは止めない */ }
   }
 }
-
-/* -------------------------------------------------------------------------
- * アンビエントBGM (合成ドローン)
- *   低音のパッド + ゆっくりうねるフィルタ + まばらな高音のきらめき。
- *   tension (0..1) で明るさ・厚みが増す (コンパイル圏内で緊張を上げる)。
- * ------------------------------------------------------------------------- */
-let bgm = null;
-
-const BGM_ROOT = 55;           // A1 (きらめきの音階の基準。この音自体は鳴らさない)
-
-/* BGM: 高音のきらめきが間をあけて鳴るだけ。
-   以前は低音の和音 (ドローン) を鳴らし続けていたが、ずっと「ブーー」と聞こえて耳障りなのでやめた */
-export function startBgm() {
-  if (!actx || bgm) return;
-  const bus = actx.createGain();
-  bus.gain.value = 0.0;
-  bus.gain.linearRampToValueAtTime(0.5 * bgmLevel, actx.currentTime + 3);
-  bus.connect(master);
-
-  const sparkleGain = actx.createGain();
-  sparkleGain.gain.value = 0.0;
-  sparkleGain.connect(bus);
-  const scale = [0, 3, 5, 7, 10, 12];   // 短調ペンタ寄り
-  function sparkle() {
-    if (!bgm) return;
-    if (Math.random() < 0.4 + bgm.tension * 0.4) {
-      const semi = scale[Math.floor(Math.random() * scale.length)] + 24;
-      const f = BGM_ROOT * Math.pow(2, semi / 12);
-      const t0 = actx.currentTime;
-      const o = actx.createOscillator();
-      o.type = 'sine'; o.frequency.value = f;
-      const g = actx.createGain();
-      g.gain.setValueAtTime(0, t0);
-      g.gain.linearRampToValueAtTime(0.06 + bgm.tension * 0.05, t0 + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.6);
-      o.connect(g); g.connect(sparkleGain);
-      o.start(t0); o.stop(t0 + 1.7);
-    }
-    bgm.sparkleTimer = setTimeout(sparkle, 900 + Math.random() * 2600);
-  }
-
-  bgm = { bus, sparkleGain, tension: 0, sparkleTimer: null };
-  setBgmTension(0);
-  sparkle();
-}
-
-/* tension 0..1: きらめきの頻度と音量を上げる */
-export function setBgmTension(v) {
-  if (!bgm) return;
-  const t = Math.max(0, Math.min(1, v));
-  bgm.tension = t;
-  bgm.sparkleGain.gain.setTargetAtTime(0.4 + t * 0.6, actx.currentTime, 1.5);
-}
-
-export function stopBgm() {
-  if (!bgm) return;
-  bgm.bus.gain.setTargetAtTime(0, actx.currentTime, 0.4);
-  clearTimeout(bgm.sparkleTimer);
-  bgm = null;
-}
-
-export function bgmActive() { return !!bgm; }
