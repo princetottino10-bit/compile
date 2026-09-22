@@ -582,10 +582,26 @@ export function showRevealedHand(items, titleOverride) {
       '<figure><img alt="" src="' + it.img + '"><figcaption>' + it.label + '</figcaption></figure>'
     ).join('') + '</div><div class="rv-hint">タップで閉じる</div>';
   el.classList.add('show');
-  const close = () => el.classList.remove('show');
+  /* 一覧そのもの、またはほかの場所に触れたら閉じる。ほかの場所への最初のタッチは閉じるだけにして、
+     下の盤面の操作 (手札を選ぶ等) まで一緒に起こさない */
+  const outside = (ev) => {
+    if (el.contains(ev.target)) return;
+    ev.stopPropagation();
+    ev.preventDefault();
+    close();
+  };
+  const close = () => {
+    el.classList.remove('show');
+    clearTimeout(el._t);
+    document.removeEventListener('pointerdown', outside, true);
+  };
   el.onclick = close;
   clearTimeout(el._t);
   el._t = setTimeout(close, 6000);
+  document.removeEventListener('pointerdown', el._outside || outside, true);
+  el._outside = outside;
+  /* 開いたタッチそのもので閉じないよう、次のタッチから見張る */
+  setTimeout(() => { if (el.classList.contains('show')) document.addEventListener('pointerdown', outside, true); }, 0);
 }
 
 /* 決着のカットイン */

@@ -1427,7 +1427,7 @@ async function markPhase(st) {
  * ------------------------------------------------------------------------- */
 const MAX_STEPS = 14;          // 長い連鎖はここで打ち切って最終状態へ飛ばす
 /* チェーン表示の間 (ms): 割り込んで積まれたとき / 1つ解決したとき */
-const CHAIN_HOLD = { add: 1100, resolve: 650 };
+const CHAIN_HOLD = { add: 1100, resolve: 650, each: 750 };
 
 function meaningfulSteps(prev, res) {
   if (!res || !res.trace || !res.trace.length) return [];
@@ -1435,6 +1435,7 @@ function meaningfulSteps(prev, res) {
   const steps = [];
   let last = shownFp;
   let pendingCue = null;
+  let pendingActs = [];
   let lastPhase = prev ? prev.phase + ':' + prev.turn : null;
   for (const t of res.trace) {
     if (!t.st) continue;
@@ -1446,7 +1447,7 @@ function meaningfulSteps(prev, res) {
     const phaseTag = t.st.phase + ':' + t.st.turn;
     if (fp === last && phaseTag !== lastPhase) {
       lastPhase = phaseTag;
-      steps.push({ st: t.st, fp, uid: null, msg: '', cue: pendingCue, phaseOnly: true, chain: t.chain });
+      steps.push({ st: t.st, fp, uid: null, msg: '', cue: pendingCue, acts: [], phaseOnly: true, chain: t.chain });
       pendingCue = null;
       continue;
     }
@@ -1458,12 +1459,19 @@ function meaningfulSteps(prev, res) {
         const cue = { uid: t.uid, msg: t.msg, chain: t.chain };
         if (steps.length) steps[steps.length - 1].cue = cue;
         else pendingCue = cue;
+        /* 効果の発動 (上段/中段/下段) は、絵が変わる前にいくつ起きても全部残す。
+           最後の1つだけにすると、続けて発動した効果が見えないまま処理された */
+        if (/[上中下]段/.test(t.msg || '')) {
+          if (steps.length) steps[steps.length - 1].acts.push(cue);
+          else pendingActs.push(cue);
+        }
       }
       continue;
     }
     last = fp;
-    steps.push({ st: t.st, fp, uid: t.uid, msg: t.msg, cue: pendingCue, tr: t, chain: t.chain });
+    steps.push({ st: t.st, fp, uid: t.uid, msg: t.msg, cue: pendingCue, acts: pendingActs, tr: t, chain: t.chain });
     pendingCue = null;
+    pendingActs = [];
   }
   /* 選択に答えると、エンジンはアクションを基準状態から再実行する。
      頭から再生すると盤面が巻き戻って見えるので、いま画面に出ている絵と
@@ -1539,8 +1547,20 @@ async function replayResolution(prev, res, action) {
     ? steps.filter((s, i) => i % Math.ceil(steps.length / MAX_STEPS) === 0
       /* チェーンが積まれる・解決するコマは残す (飛ばすと何が起きたか分からない) */
       || chainLen(s.chain) !== chainLen(i > 0 ? steps[i - 1].chain : null)
-      || chainLen(s.cue && s.cue.chain) > 0)
+      || chainLen(s.cue && s.cue.chain) > 0
+      || (s.acts && s.acts.length > 0))
     : steps;
+  /* この解決で発動した効果の数。2つ以上なら、1つずつ間をあけて見せる */
+  const actCount = use.reduce((n, s) => n + ((s.acts && s.acts.length) || 0), 0);
+  /* 次に発動する効果を1つずつ見せる。割り込み (チェーンが伸びる) なら、積んだところで長めに止める */
+  const showActs = async (step) => {
+    for (const cue of step.acts) {
+      const grew = cue.chain ? showChainNow(cue.chain, step.st) > 0 : false;
+      await cueFor({ cue }, step.st);
+      if (grew) await TW.wait(CHAIN_HOLD.add);
+      else if (actCount > 1) await TW.wait(CHAIN_HOLD.each);
+    }
+  };
   /* いま出しているチェーンの長さ。伸びたら (割り込み) 止めて積んだところを見せ、
      縮んだら (1つ解決) 少し待ってから次へ進む */
   let chainShown = 0;
@@ -1561,6 +1581,7 @@ async function replayResolution(prev, res, action) {
     if (step.phaseOnly) {
       await markPhase(step.st);
       await checkAnnounce(step.st);
+      if (step.acts && step.acts.length) await showActs(step);
       continue;
     }
     /* 絵が動くコマは、動かしてから合図を出す。
@@ -1570,11 +1591,8 @@ async function replayResolution(prev, res, action) {
     await board.applyTransition(from, step.st, first ? action : null, { speed: chainShown ? 1.05 : 0.72 });
     /* この絵の時点のチェーン。1つ解決して短くなったら、解決したことが分かるよう少し待つ */
     if (showChainNow(step.chain, step.st) < 0) await TW.wait(CHAIN_HOLD.resolve);
-    /* 次に発動する効果が割り込み (チェーンが伸びる) なら、積んだところで止めて見せる */
-    const cueChain = step.cue && step.cue.chain;
-    const grew = cueChain ? showChainNow(cueChain, step.st) > 0 : false;
-    await cueFor(step, step.st);
-    if (grew) await TW.wait(CHAIN_HOLD.add);
+    if (step.acts && step.acts.length) await showActs(step);
+    else await cueFor(step, step.st);
     await markPhase(step.st);
     await checkAnnounce(step.st);
     from = step.st;
@@ -1707,7 +1725,7 @@ function pickOnBoard(req) {
       el.innerHTML =
         pickBarAsk(req) +
         '<div class="arr-btns">' +
-          '<button class="sel-peek" id="pkPeek" type="button" title="盤面を見る" aria-label="盤面を見る" aria-pressed="false">&#128065;</button>' +
+          PEEK_BTN +
           '<button class="arr-btn ok" id="pkYes" type="button">はい</button>' +
           '<button class="arr-btn" id="pkNo" type="button">しない</button>' +
         '</div>';
@@ -1718,8 +1736,7 @@ function pickOnBoard(req) {
         removePickBar();
         resolve(picks);
       };
-      const peekBtn = el.querySelector('#pkPeek');
-      peekBtn.onclick = () => peekBtn.setAttribute('aria-pressed', String(el.classList.toggle('peek')));
+      bindPeek(el);
       el.querySelector('#pkYes').onclick = () => done(['yes']);
       el.querySelector('#pkNo').onclick = () => done([]);
     });
@@ -1764,6 +1781,15 @@ function pickOnBoard(req) {
     boardPick = { req, min, max, chosen: [], resolve };
     renderBoardPick();
   });
+}
+
+/* 手札の上に出す帯の目ボタン: 押すと帯を隠して盤面を見られる。もう一度で戻る */
+const PEEK_BTN = '<button class="sel-peek" id="pkPeek" type="button" title="盤面を見る" aria-label="盤面を見る" aria-pressed="false">&#128065;</button>';
+function bindPeek(el) {
+  const btn = el.querySelector('#pkPeek');
+  if (!btn) return;
+  btn.setAttribute('aria-pressed', String(el.classList.contains('peek')));
+  btn.onclick = () => btn.setAttribute('aria-pressed', String(el.classList.toggle('peek')));
 }
 
 /* 選択バーの見出し。何に答えているのかをボタンのすぐ横に置く。
@@ -1816,7 +1842,10 @@ function renderBoardPick() {
   const canBack = !!(cur && cur.state && cur.state.pending && cur.state.pending.requestId === bp.req.id
     && Array.isArray(cur.state.pending.choices) && cur.state.pending.choices.length);
   el.classList.add('with-ask');
-  const where = bp.req.kind === 'pickHand' ? '手札の光っているカード' : '光っているカード';
+  /* 手札から選ぶ (捨てる・キャッシュの削除など) は、手札のすぐ上に出す (確認と同じ場所・大きさ) */
+  const nearHand = bp.req.kind === 'pickHand';
+  el.classList.toggle('confirm', nearHand);
+  const where = nearHand ? '手札の光っているカード' : '光っているカード';
   el.innerHTML =
     pickBarAsk(bp.req, { optional: bp.min === 0, count: bp.chosen.length, max: bp.max }) +
     /* 何を選んだかを帯の中でも読めるようにする (盤面の金色だけでは見落とす) */
@@ -1826,6 +1855,7 @@ function renderBoardPick() {
           (cardName(u) || '裏向きのカード') + '<i>×</i></button>').join('') + '</div>'
       : '<div class="sel-hint">' + where + 'をタップ</div>') +
     '<div class="arr-btns">' +
+    (nearHand ? PEEK_BTN : '') +
     (canBack ? '<button class="arr-btn" id="pkBack" type="button">← 戻る</button>' : '') +
     '<button class="arr-btn ghost" id="pkList" type="button">一覧で選ぶ</button>' +
     (instant ? '' :
@@ -1835,6 +1865,7 @@ function renderBoardPick() {
         '</button>') +
     '</div>';
   bindPickBar(el);
+  bindPeek(el);
   el.querySelectorAll('.sel-chip').forEach(c => { c.onclick = () => toggleBoardPick(c.dataset.uid); });
   const ok = el.querySelector('#pkOk');
   if (ok) ok.onclick = () => finishBoardPick(bp.chosen.slice());
@@ -1922,6 +1953,7 @@ function renderLinePick() {
   const canBack = !!(cur && cur.state && cur.state.pending && cur.state.pending.requestId === bp.req.id
     && Array.isArray(cur.state.pending.choices) && cur.state.pending.choices.length);
   el.classList.add('with-ask');
+  el.classList.remove('confirm');
   el.innerHTML = pickBarAsk(bp.req) +
     '<div class="sel-hint">' +
     (hasFocus ? '<i class="sel-key gold"></i>移動するカード　<i class="sel-key mint"></i>移動先のライン' : '光っているラインをタップ') +
@@ -2006,13 +2038,6 @@ function arrangeOnBoard(req) {
   ov.id = 'arrOv';
   document.body.appendChild(ov);
 
-  const rect = stage.renderer.domElement.getBoundingClientRect();
-  const toScreen = (pos) => {
-    const v = new THREE.Vector3(pos.x, pos.y, pos.z).project(stage.camera);
-    return [rect.left + (v.x * 0.5 + 0.5) * rect.width,
-            rect.top + (-v.y * 0.5 + 0.5) * rect.height];
-  };
-
   const perm = [0, 1, 2];            // 位置 -> 旧インデックス
   const single = req.exact === 'transposition';
   let sel = -1;
@@ -2030,25 +2055,28 @@ function arrangeOnBoard(req) {
 
     const render = () => {
       const isIdentity = perm[0] === 0 && perm[1] === 1 && perm[2] === 2;
+      /* 操作は手札のすぐ上の帯 (効果の確認・手札を捨てるときと同じ場所・大きさ)。
+         盤面を大きく映すと帯がプロトコル板に重なるので、並び (左・中・右) も帯の中に出す */
       ov.innerHTML =
-        '<div class="arr-hint">' +
-          (single ? '入れ替える2つのプロトコルをタップ' : 'タップで2つを入れ替え。よければ確定') +
-        '</div>' +
-        list.map((p) => {
-          const line = p.line;
-          const [x, y] = toScreen(p.group.position);
-          const name = req.current[perm[line]];
-          const done = req.compiled && req.compiled[perm[line]];
-          return '<button type="button" class="arr-chip' + (sel === line ? ' on' : '') +
-            (done ? ' done' : '') + '" data-line="' + line + '"' +
-            ' style="left:' + x + 'px;top:' + y + 'px">' +
-            (done ? '✓ ' : '') + name + '</button>';
-        }).join('') +
-        '<div class="arr-bar">' +
-          (single ? '' : '<button type="button" class="arr-btn ok" id="arrOk"' + (isIdentity ? ' disabled' : '') + '>確定</button>') +
-          '<button type="button" class="arr-btn" id="arrReset">やり直し</button>' +
-          '<button type="button" class="arr-btn" id="arrList">リストで選ぶ</button>' +
+        '<div class="arr-bar with-ask sel-bar confirm">' +
+          pickBarAsk(req) +
+          '<div class="arr-order">' + list.slice().sort((a, b) => a.line - b.line).map((p) => {
+            const line = p.line;
+            const name = req.current[perm[line]];
+            const done = req.compiled && req.compiled[perm[line]];
+            return '<button type="button" class="arr-chip' + (sel === line ? ' on' : '') +
+              (done ? ' done' : '') + '" data-line="' + line + '">' + (done ? '✓ ' : '') + name + '</button>';
+          }).join('') + '</div>' +
+          '<div class="sel-hint">' +
+            (single ? '入れ替える2つをタップ' : '2つタップで入れ替え。よければ確定') +
+          '</div>' +
+          '<div class="arr-btns">' +
+            '<button type="button" class="arr-btn ghost" id="arrList">一覧で選ぶ</button>' +
+            '<button type="button" class="arr-btn" id="arrReset">やり直し</button>' +
+            (single ? '' : '<button type="button" class="arr-btn ok" id="arrOk"' + (isIdentity ? ' disabled' : '') + '>確定</button>') +
+          '</div>' +
         '</div>';
+      bindSelectHead(ov, showCardNoteFor);
 
       ov.querySelectorAll('.arr-chip').forEach((b) => {
         b.onclick = () => {

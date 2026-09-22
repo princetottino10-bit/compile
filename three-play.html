@@ -578,8 +578,6 @@
   .arr-chip:hover{border-color:var(--cyan);background:rgba(99,243,255,.14);}
   .arr-chip.on{border-color:var(--gold);color:var(--gold);transform:translate(-50%,-50%) scale(1.1);}
   .arr-chip.done{opacity:.75;border-style:dashed;}
-  #arrOv .arr-bar{bottom:calc(var(--hand-gap, 14vh) + 12px);gap:8px;}
-  #arrOv .arr-btn{padding:7px 14px;font-size:11px;}
   .arr-bar{position:fixed;left:50%;bottom:12vh;transform:translateX(-50%);display:flex;gap:10px;pointer-events:auto;}
   .arr-btn{padding:10px 22px;border-radius:999px;cursor:pointer;font:800 12px/1 system-ui;letter-spacing:.1em;
     background:rgba(8,11,21,.9);border:1px solid rgba(255,255,255,.2);color:var(--ink);transition:all .16s;}
@@ -657,6 +655,18 @@
   .arr-bar.sel-bar.confirm.peek{background:transparent;border-color:transparent;box-shadow:none;pointer-events:none;}
   .arr-bar.sel-bar.confirm.peek > :not(.arr-btns),.arr-bar.sel-bar.confirm.peek .arr-btn{visibility:hidden;}
   .arr-bar.sel-bar.confirm.peek .sel-peek{pointer-events:auto;border-color:var(--gold);color:var(--gold);}
+  /* 手札の上の帯 (確認・手札を捨てる・並べ替え) は低く: 発動元と質問を1行に、決定は右端に */
+  .arr-bar.sel-bar.confirm{gap:8px;padding:10px 14px;}
+  .arr-bar.sel-bar.confirm .sel-head{flex-direction:row;align-items:center;flex-wrap:wrap;gap:6px 10px;}
+  .arr-bar.sel-bar.confirm .sel-q{font-size:14px;}
+  .arr-bar.sel-bar.confirm .arr-btns{justify-content:flex-end;}
+  .arr-bar.sel-bar.confirm .arr-btn{padding:8px 16px;}
+  /* 並べ替え: 左・中・右の並びを帯の中に出す。タップで2つを入れ替える */
+  .arr-order{display:flex;gap:6px;}
+  .arr-order .arr-chip{position:static;transform:none;flex:1;padding:8px 6px;font-size:11px;text-align:center;
+    box-shadow:none;background:rgba(255,255,255,.04);}
+  .arr-order .arr-chip.on{transform:none;background:rgba(239,208,108,.14);}
+  .arr-bar.sel-bar.confirm .sel-chosen{justify-content:center;}
   .arr-btn.ok{background:linear-gradient(100deg,rgba(109,255,194,.2),rgba(99,243,255,.14));min-width:92px;}
   .arr-btn.ghost{background:transparent;border-color:transparent;color:var(--dim);letter-spacing:.06em;}
   .arr-btn.ghost:hover{color:var(--ink);border-color:rgba(255,255,255,.2);}
