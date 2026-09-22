@@ -25,6 +25,12 @@ export function choiceLabel(o) {
   return esc(o);
 }
 
+/* 指示文のうち「何を選ぶか」の語を強調する (例: 反転させる<em>カード</em>を選択) */
+const TARGET_WORD = /(カード|ライン|手札|スタック|プロトコル|効果|並び順|値)(?=を|\(|（)/;
+function emphasize(html) {
+  return html.replace(TARGET_WORD, '<em>$1</em>');
+}
+
 /* 見出し。source: { def, name, color } (無ければ省略)
    meta: { optional, count, max } */
 export function selectHead(req, source, meta) {
@@ -37,7 +43,7 @@ export function selectHead(req, source, meta) {
       ? '<button type="button" class="sel-src" data-def="' + esc(source.def) + '" title="効果を読む">' +
           '<i></i><b>' + esc(source.name) + '</b><span>効果</span></button>'
       : '') +
-    '<div class="sel-q">' + esc(questionText(req)) + '</div>' +
+    '<div class="sel-q">' + emphasize(esc(questionText(req))) + '</div>' +
     (tags.length ? '<div class="sel-meta">' + tags.join('') + '</div>' : '') +
     '</div>';
 }

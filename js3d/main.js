@@ -14,7 +14,7 @@ import * as ROOM from './room.js';
 import { runRoomLobby } from './roomui.js';
 import { reqText } from './prompts.js';
 import { selectHead, bindSelectHead } from './selectui.js';
-import { faceImageURL, activationImageURL, pruneFaceCache, ART_SETS, setMaxAnisotropy } from './cardtex.js';
+import { faceImageURL, pruneFaceCache, ART_SETS, setMaxAnisotropy } from './cardtex.js';
 import * as FX from './fx.js';
 import { buildArena } from './arena.js';
 import { initAudio, sfx, setMuted, isMuted, startBgm, stopBgm, setBgmTension, bgmActive } from './audio.js';
@@ -886,23 +886,29 @@ function fieldLoc(st, uid) {
   return null;
 }
 
-function showCardInspector(uid) {
-  const st = shown();
+/* カードの詳細 (拡大表示のパネル・スマホの効果表示で共通)。
+   見る権利のないカードは中身を出さず「裏向きのカード」とだけ返す */
+const ROW_LABEL = { upper: '上段', middle: '中段', lower: '下段' };
+function defDetail(d, rows) {
+  return {
+    title: d.proto + ' ' + d.value, proto: d.proto, value: d.value, color: d.color, img: faceImageURL(d),
+    rows: rows || ['upper', 'middle', 'lower'].filter(k => d[k]).map(k => ({ key: k, zone: ROW_LABEL[k], text: d[k] }))
+  };
+}
+
+function cardDetail(uid, st = shown()) {
   const card = uid && st && st.cards[uid];
-  if (!card) { UI.hideCardNote(); return; }
+  if (!card) return null;
+  const visible = card.def && (card.faceUp || ((card.knownTo || 0) & (1 << ME)));
+  if (!visible) {
+    return { hidden: true, title: '裏向きのカード', proto: '裏向きのカード', value: 2, color: '#8fa8c8',
+      badge: '非公開', note: '盤面では値2として扱う', rows: [] };
+  }
+  const d = defIndex[card.def];
+  if (!d) return null;
   const loc = fieldLoc(st, uid)
     || (st.players.some(pl => pl.hand.includes(uid)) ? { zone: 'hand' }
       : st.players.some(pl => pl.trash.includes(uid)) ? { zone: 'trash' } : null);
-  const visible = card.def && (card.faceUp || ((card.knownTo || 0) & (1 << ME)));
-  /* 盤面と手札を隠さない右上の空きに出す。盤面をタップすれば消える */
-  const place = 'corner';
-  if (!visible) {
-    UI.showCardNote({ title: '裏向きのカード', color: '#8fa8c8', badge: '非公開', place, large: true, persist: true,
-      note: '盤面では値2として扱う', rows: [] });
-    return;
-  }
-  const d = defIndex[card.def];
-  if (!d) { UI.hideCardNote(); return; }
   let badge = '', note = '';
   let upperOff = false, middleOff = false, lowerOff = false;
   if (loc && loc.line !== undefined) {
@@ -916,17 +922,23 @@ function showCardInspector(uid) {
   } else if (loc && loc.zone === 'trash') {
     badge = '捨て札';
   }
-  const rows = [];
-  if (d.upper) rows.push({ zone: '上段', text: d.upper, inactive: upperOff });
-  if (d.middle) rows.push({ zone: '中段', text: d.middle, inactive: middleOff });
-  if (d.lower) rows.push({ zone: '下段', text: d.lower, inactive: lowerOff });
-  UI.showCardNote({ title: d.proto + ' ' + d.value, color: d.color, badge, note, rows, place, large: true, persist: true });
+  const off = { upper: upperOff, middle: middleOff, lower: lowerOff };
+  const rows = ['upper', 'middle', 'lower'].filter(k => d[k])
+    .map(k => ({ key: k, zone: ROW_LABEL[k], text: d[k], inactive: off[k] }));
+  const facedown = !card.faceUp && !!(loc && loc.line !== undefined);
+  return { ...defDetail(d, rows), badge, note, facedown };
+}
+
+function showCardInspector(uid) {
+  const o = cardDetail(uid);
+  if (!o) { UI.hideCardNote(); return; }
+  /* 盤面と手札を隠さない右上の空きに出す。盤面をタップすれば消える */
+  UI.showCardNote({ ...o, place: 'corner', large: true, persist: true });
 }
 
 /* 発動の拡大表示と触ったときの拡大表示は同じ場所の同じ枠。あとから出たほうに入れ替える */
 function clearPreview() {
   previewUid = null;
-  document.getElementById('preview')?.classList.remove('show');
 }
 
 function showPreview(uid) {
@@ -945,32 +957,12 @@ function showPreview(uid) {
     showCardInspector(uid);
     return;
   }
-  const st = shown();
-  const card = uid && st && st.cards[uid];
-  const visible = card && card.def && (card.faceUp || ((card.knownTo || 0) & (1 << ME)));
-  if (!visible) {
-    /* 存在するが見えないカード (相手の裏向き等) は「非公開」の案内を出す。
-       無反応だと壊れて見えるため */
-    if (card) {
-      if (uid === previewUid) return;
-      previewUid = uid;
-      box.innerHTML = '<div class="pv-hidden"><b>FACE DOWN</b>' +
-        '<span>非公開のカード</span><span>盤面では値2として扱う</span></div>';
-      UI.hideActivation();
-      box.classList.add('show');
-      return;
-    }
-    if (previewUid !== null) { previewUid = null; box.classList.remove('show'); }
-    return;
-  }
-  if (uid === previewUid) return;
+  /* 見えないカード (相手の裏向き等) も「非公開」の案内を出す。無反応だと壊れて見えるため */
+  const o = cardDetail(uid);
+  /* カードから外れても消さない: 最後に触ったカードを出したままにする */
+  if (!o || uid === previewUid) return;
   previewUid = uid;
-  const def = defIndex[card.def];
-  const url = def && faceImageURL(def);
-  if (!url) { box.classList.remove('show'); return; }
-  box.innerHTML = '<img alt="" src="' + url + '">';
-  UI.hideActivation();
-  box.classList.add('show');
+  UI.showCardPanel(o);
 }
 
 function syncFacingHint() {
@@ -1439,13 +1431,12 @@ async function cueFor(step, st) {
   if (msg.indexOf('中段') >= 0) zone = 'middle';
   else if (msg.indexOf('上段') >= 0) zone = 'upper';
   else if (msg.indexOf('下段') >= 0) zone = 'lower';
-  const text = zone ? def[zone] : (def.middle || def.upper || def.lower);
-  if (text) {
-    if (!isCompactHandUI()) clearPreview();
-    UI.showActivation({
-      img: (zone && activationImageURL(def, zone)) || faceImageURL(def),
-      text, zone, color: def.color
-    });
+  /* 効果が発動したとき (どの段かが分かるとき) だけ、詳細パネルをそのカードに替えて段を光らせる。
+     プレイや削除などの手では替えない (裏向きでプレイした札が「発動」に見えてしまう) */
+  if (zone && card.faceUp && def[zone]) {
+    clearPreview();
+    const o = cardDetail(uid, st) || defDetail(def);
+    UI.showActivation({ ...o, fire: zone, transient: isCompactHandUI() });
   }
   await board.pulse(uid, def.color, 380);
 }
@@ -1701,10 +1692,18 @@ function pickBarAsk(req, meta) {
 
 /* 帯の組み立て後に呼ぶ: 発動元チップのタップで効果文を出す。
    選択バーには発動元と質問が入っているので、出している間は上の「効果処理中」の帯を隠す */
+let pickPanelReq = null;
 function bindPickBar(el) {
   el.classList.add('sel-bar');
   document.body.classList.add('picking');
   bindSelectHead(el, showCardNoteFor);
+  /* 選んでいる間は、何の効果で選んでいるのかを左の詳細パネルに出しておく (マスターデュエルと同じ)。
+     同じ選択の描き直し (候補を1枚選んだ等) では出し直さない */
+  const req = boardPick && boardPick.req;
+  if (!req || req === pickPanelReq || isCompactHandUI()) return;
+  pickPanelReq = req;
+  const d = req.context && defIndex[req.context];
+  if (d) { previewUid = null; UI.showCardPanel(defDetail(d)); }
 }
 
 /* 選択バーを畳む (どの経路で終わっても body の印を戻す) */
@@ -1712,6 +1711,7 @@ function removePickBar() {
   const el = document.getElementById('pickBar');
   if (el) el.remove();
   document.body.classList.remove('picking');
+  pickPanelReq = null;
 }
 
 function renderBoardPick() {
@@ -2307,11 +2307,13 @@ function logParts(msg) {
 function showCardNoteFor(defId) {
   const d = defIndex[defId];
   if (!d) return;
-  const rows = [];
-  if (d.upper) rows.push({ zone: '上段', text: d.upper });
-  if (d.middle) rows.push({ zone: '中段', text: d.middle });
-  if (d.lower) rows.push({ zone: '下段', text: d.lower });
-  UI.showCardNote({ title: d.proto + ' ' + d.value, color: d.color, rows });
+  const o = defDetail(d);
+  if (!isCompactHandUI()) {
+    previewUid = null;
+    UI.showCardPanel(o);
+    return;
+  }
+  UI.showCardNote(o);
 }
 
 function cardName(idOrUid) {

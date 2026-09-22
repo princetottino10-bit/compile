@@ -8,6 +8,10 @@ import * as THREE from '../vendor/three.module.js';
 import { CARD, COLOR } from './theme.js';
 import { faceTexture, backTex } from './cardtex.js';
 
+/* 中身を知らないカードの def ID (board.js の UNKNOWN_DEF) と、透かしの濃さ */
+const UNKNOWN_ID = '__unknown__';
+const GHOST_OPACITY = 0.55;
+
 let sharedPlane = null;   // 角丸の板 (水平)
 let sharedCore = null;    // 厚み用の芯
 let sharedFrame = null;   // 縁の金属枠
@@ -129,8 +133,20 @@ export function makeCard(def) {
   }));
   frame.position.y = CARD.thickness / 2 + 0.0016;
 
-  group.add(core, front, back, frame);
-  group.userData = { def, front, back, core, frame, uid: null, glowColor: null, glowStrength: 0 };
+  /* 透かし: 裏面の外側に表の絵を半透明で重ねる。自分の裏向きなど、
+     中身を知っているカードだけ出す (知らないカードは UNKNOWN の絵なので出さない)。
+     裏面と同じく x 軸で反転させておくと、裏向きのとき天地が表と揃う */
+  const ghost = new THREE.Mesh(planeGeometry(), new THREE.MeshBasicMaterial({
+    map: faceTexture(def), transparent: true, opacity: GHOST_OPACITY, depthWrite: false
+  }));
+  ghost.rotation.x = Math.PI;
+  ghost.position.y = -CARD.thickness / 2 - 0.0012;
+  ghost.renderOrder = 1;
+  ghost.raycast = () => {};
+  ghost.visible = def.id !== UNKNOWN_ID;
+
+  group.add(core, front, back, frame, ghost);
+  group.userData = { def, front, back, core, frame, ghost, uid: null, glowColor: null, glowStrength: 0 };
   return group;
 }
 
@@ -202,6 +218,7 @@ export function setDim(card, dim) {
   const v = dim ? 0.55 : 1;
   card.userData.front.material.color.setScalar(v);
   card.userData.back.material.color.setScalar(v);
+  if (card.userData.ghost) card.userData.ghost.material.color.setScalar(v);
 }
 
 /* 額縁も一緒に光らせる (発光の主役はあくまで縁) */
@@ -217,6 +234,12 @@ export function retexture(card, def) {
   card.userData.def = def;
   card.userData.front.material.map = faceTexture(def);
   card.userData.front.material.needsUpdate = true;
+  const ghost = card.userData.ghost;
+  if (ghost) {
+    ghost.material.map = card.userData.front.material.map;
+    ghost.material.needsUpdate = true;
+    ghost.visible = def.id !== UNKNOWN_ID;
+  }
   if (card.userData.frame) {
     card.userData.frame.material.color
       .set(def.color || '#63f3ff').multiplyScalar(0.55);

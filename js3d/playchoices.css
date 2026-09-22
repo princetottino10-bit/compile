@@ -29,7 +29,6 @@
   .placement-lane-label { display: none; }
   #playChoices button { min-width: 44px; min-height: 40px; padding: 5px 8px; }
   .placement-cancel { position: fixed; right: 10px; bottom: calc(70px + env(safe-area-inset-bottom)); }
-  body.choosing-placement #preview { top: auto; left: 50%; bottom: 95px; height: min(31vh, 260px); transform: translateX(-50%); }
 }
 
 /* 横持ちのスマホはラインの間隔が狭い。名前を省き、表と裏を縦に積んで隣と重ねない */

@@ -426,30 +426,72 @@ export function turnCutIn(mine) {
 
 /* 効果発動の帯 (カード名 + 効果テキスト) */
 let fxTimer = null;
-/* マスターデュエル風の発動カットイン:
-   発動したカードが金色のオーラをまとって迫り出し、
-   発動した段のテキストが光る。連続発動は内容を差し替える */
-let cutTimer = null;
-export function showActivation(o) {
-  let el = $('#fxCut');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'fxCut';
-    document.body.appendChild(el);
-  }
-  const accent = o.color || '#efd06c';
-  el.style.setProperty('--accent', accent);
-  const chip = o.zone && ZONE_CHIP[o.zone] ? ZONE_CHIP[o.zone][0] : '◆ 効果';
+/* -------------------------------------------------------------------------
+ * カードの詳細パネル (マスターデュエル式)
+ *   最後に触ったカード・発動したカードを左上に出したままにする (あとから来たほうに入れ替わる)。
+ *   絵は小さく添えるだけにして、効果の文を読ませる。
+ *   o: { title, value, proto, color, img, badge, note, hidden, facedown,
+ *        rows: [{ key: 'upper'|'middle'|'lower', text, inactive }] }
+ *   opts.fire: 発動した段 ('upper' 等)。その段を光らせ、枠をしばらく光らせる
+ *   opts.transient: 縦持ちのスマホ用。発動の表示だけ出して、少しで閉じる
+ * ------------------------------------------------------------------------- */
+const PANEL_ZONE = { upper: '▲ 上段', middle: '◆ 中段', lower: '▼ 下段' };
+let fireTimer = null;
+let hideTimer = null;
+
+export function showCardPanel(o, opts) {
+  const el = $('#preview');
+  if (!el || !o) return;
+  const fire = (opts && opts.fire) || null;
+  clearTimeout(fireTimer);
+  clearTimeout(hideTimer);
+  el.style.setProperty('--accent', o.color || '#63f3ff');
+  const rows = o.rows || [];
   el.innerHTML =
-    '<div class="fc-card"><img alt="" src="' + o.img + '"></div>' +
-    '<div class="fc-text"><span class="fc-zone">' + chip + '</span>' +
-      '<span class="fc-body">' + (o.text || '') + '</span></div>';
-  /* 付け直してポップインを毎回再生する */
-  el.classList.remove('show');
-  void el.offsetWidth;
+    '<div class="cp-head"><b>' + (o.proto || o.title) + '</b>' +
+      (fire ? '<span class="cp-fire">発動</span>' : '') +
+      (o.value !== undefined && o.value !== null ? '<span class="cp-val">' + o.value + '</span>' : '') +
+    '</div>' +
+    '<div class="cp-top">' +
+      '<div class="cp-img' + (o.facedown ? ' facedown' : '') + '">' +
+        (o.img ? '<img alt="" src="' + o.img + '">' : '<i></i>') + '</div>' +
+      '<div class="cp-meta">' +
+        (o.hidden ? '' : '<span class="cp-proto">' + (o.proto || '') + '</span>') +
+        (o.badge ? '<span class="cp-tag">' + o.badge + '</span>' : '') +
+        (o.note ? '<span class="cp-note">' + o.note + '</span>' : '') +
+      '</div>' +
+    '</div>' +
+    (rows.length
+      ? '<div class="cp-rows">' + rows.map(r => {
+          const on = fire && r.key === fire;
+          return '<div class="cp-row' + (on ? ' fire' : r.inactive ? ' off' : '') + '">' +
+            '<span class="cp-zone">' + (PANEL_ZONE[r.key] || '') + '</span><p>' + r.text + '</p></div>';
+        }).join('') + '</div>'
+      : '');
+  /* 発動は枠を付け直して光を毎回再生する。光はしばらくで収め、表示は残す */
+  el.classList.remove('firing');
+  if (fire) {
+    void el.offsetWidth;
+    el.classList.add('firing');
+    fireTimer = setTimeout(() => el.classList.remove('firing'), 2400);
+  }
   el.classList.add('show');
-  clearTimeout(cutTimer);
-  cutTimer = setTimeout(() => el.classList.remove('show'), 2400);
+  const lit = el.querySelector('.cp-row.fire');
+  if (lit) lit.scrollIntoView({ block: 'nearest' });
+  if (opts && opts.transient) hideTimer = setTimeout(hideCardPanel, 2400);
+}
+
+export function hideCardPanel() {
+  const el = $('#preview');
+  if (!el) return;
+  clearTimeout(fireTimer);
+  clearTimeout(hideTimer);
+  el.classList.remove('show', 'firing');
+}
+
+/* 効果の発動: 詳細パネルに出し、発動した段を光らせる */
+export function showActivation(o) {
+  showCardPanel(o, { fire: o.fire, transient: o.transient });
 }
 
 /* 効果の途中で別の効果が割り込んだときの「処理中の効果の山」。
@@ -486,11 +528,11 @@ export function hideChain() {
   if (el) el.classList.remove('show');
 }
 
-/* 選択操作に入るときなど、盤面を隠さないようカットインを即座に畳む */
+/* 選択操作に入るときは、発動の光だけ止める (表示は残す) */
 export function hideActivation() {
-  const el = $('#fxCut');
-  if (el) el.classList.remove('show');
-  clearTimeout(cutTimer);
+  const el = $('#preview');
+  clearTimeout(fireTimer);
+  if (el) el.classList.remove('firing');
 }
 
 const ZONE_CHIP = {
