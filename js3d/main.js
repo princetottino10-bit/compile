@@ -226,6 +226,7 @@ async function boot() {
       }
       const chosen = await runSetup(cards.protocols, { training: nextMode === 'training', allowOnline: false });
       if (chosen.online) { nextMode = 'online'; continue; }
+      if (chosen.back) { nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
       document.body.classList.remove('pregame');
       p0 = chosen.me;
       p1 = p1 || chosen.ai;

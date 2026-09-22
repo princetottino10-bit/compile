@@ -35,6 +35,7 @@ export function runSetup(protocols, options = {}) {
   let sameBtn = document.getElementById('setupSame');
   if (sameBtn) sameBtn.remove();
   sameBtn = null;
+  const backBtn = document.getElementById('setupBack');
   const onlineBtn = document.getElementById('setupOnline');
   onlineBtn.hidden = training || options.allowOnline === false;
   levelWrap.hidden = training;
@@ -102,7 +103,30 @@ export function runSetup(protocols, options = {}) {
 
   root.classList.add('show');
 
+  /* トレーニングの1段目 (自分のプロトコル) を表示し直す */
+  const showTrainingMine = () => {
+    document.querySelector('#setupHead h1').innerHTML = '<b>//</b> TRAINING SETUP';
+    document.querySelector('#setupHead p').textContent =
+      'まず自分のプロトコルを3つ選ぶ。次に相手の3つを選ぶ。置けるのはこの6つのカードだけ。';
+    startBtn.textContent = '次へ: 相手のプロトコル';
+    if (sameBtn) { sameBtn.remove(); sameBtn = null; }
+    picked.length = 0;
+    picked.push(...trainingMine);
+    trainingMine = null;
+    grid.querySelectorAll('.proto').forEach(el => el.classList.toggle('on', picked.includes(el.dataset.name)));
+    backBtn.textContent = '← モード選択';
+    sync();
+  };
+
   return new Promise((resolve) => {
+    /* 戻る: トレーニングの2段目なら1段目へ、それ以外はモード選択へ */
+    backBtn.textContent = '← モード選択';
+    backBtn.onclick = () => {
+      if (training && trainingMine) { showTrainingMine(); return; }
+      if (sameBtn) sameBtn.remove();
+      root.classList.remove('show');
+      resolve({ back: true });
+    };
     if (onlineBtn) onlineBtn.onclick = () => {
       root.classList.remove('show');
       resolve({ online: true });
@@ -123,6 +147,7 @@ export function runSetup(protocols, options = {}) {
         document.querySelector('#setupHead p').textContent =
           '自分: ' + trainingMine.join(' / ') + '　相手の3つを選ぶ (同じプロトコルも選べる)';
         startBtn.textContent = 'トレーニング開始';
+        backBtn.textContent = '← 自分のプロトコル';
         grid.querySelectorAll('.proto').forEach(el => el.classList.remove('on'));
         sameBtn = document.createElement('button');
         sameBtn.id = 'setupSame';
