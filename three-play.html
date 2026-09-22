@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>COMPILE — 3D ARENA</title>
 <style>
+  /* iPhone の Safari は横向きにすると文字を自動で拡大する。スマホ向けに詰めた文字が
+     実機では大きく膨らみ、効果の選択などの UI が画面を覆っていたので止める */
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
   :root{
     --pink:#ff3b9d; --cyan:#63f3ff; --mint:#6dffc2; --gold:#efd06c;
     --ink:#e9eef8; --dim:rgba(233,238,248,.52);
