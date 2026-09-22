@@ -1787,7 +1787,7 @@ function renderBoardPick() {
     el.className = 'arr-bar';
     document.body.appendChild(el);
   }
-  const instant = bp.max === 1 && bp.min >= 1;   // 1枚必須はタップで即決
+  const instant = pickIsInstant(bp);   // 盤面の1枚必須はタップで即決
   /* 2段階以上の効果は、一つ前の選択へ戻れる (エンジンが回答を1つ減らして再生する) */
   const canBack = !!(cur && cur.state && cur.state.pending && cur.state.pending.requestId === bp.req.id
     && Array.isArray(cur.state.pending.choices) && cur.state.pending.choices.length);
@@ -1949,11 +1949,17 @@ function toggleBoardPick(uid) {
     if (bp.max === 1) bp.chosen.length = 0;
     bp.chosen.push(uid);
   }
-  if (bp.max === 1 && bp.min >= 1 && bp.chosen.length === 1) {
+  if (pickIsInstant(bp) && bp.chosen.length === 1) {
     finishBoardPick(bp.chosen.slice());
     return;
   }
   renderBoardPick();
+}
+
+/* 1枚必須の選択をタップで即決するか。手札から選ぶ (捨てる・キャッシュの削除・渡す等) は
+   取り消せないので、1枚でも「選んで → 決定」にする。選び直しはもう1枚をタップ */
+function pickIsInstant(bp) {
+  return bp.max === 1 && bp.min >= 1 && bp.req.kind !== 'pickHand';
 }
 
 function finishBoardPick(picks) {

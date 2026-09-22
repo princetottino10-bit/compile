@@ -22,7 +22,7 @@
 #playChoices button { text-shadow: 0 1px 4px rgba(0,0,0,.9); }
 #playChoices button:hover, #playChoices button:focus-visible { outline: 2px solid #ffdb8a; outline-offset: 2px; }
 .placement-lane.focused { transform: translate(-50%, -50%) scale(1.12); box-shadow: 0 0 32px #ffdb8a; }
-.placement-cancel { position: fixed; right: 14px; bottom: 24px; border-color: rgba(99,243,255,.4) !important;
+.placement-cancel { position: fixed; right: calc(14px + env(safe-area-inset-right)); bottom: 24px; border-color: rgba(99,243,255,.4) !important;
   background: rgba(8,12,22,.9) !important; }
 .effect-target-legend { display: inline-flex; min-height: 38px; align-items: center; padding: 0 8px; border: 1px solid #567881; border-radius: 8px; background: #0c1725; color: #d5ebf0; font-size: 12px; }
 
@@ -41,5 +41,5 @@
   .placement-lane { flex-direction: column; gap: 3px; padding: 4px 3px; border-radius: 14px; }
   .placement-lane-label { display: none; }
   #playChoices button { min-width: 40px; min-height: 30px; padding: 4px 7px; font-size: 11px; }
-  .placement-cancel { right: 10px; bottom: 12px; }
+  .placement-cancel { right: calc(10px + env(safe-area-inset-right)); bottom: 12px; }
 }

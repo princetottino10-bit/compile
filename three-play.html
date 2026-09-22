@@ -25,7 +25,8 @@
 
   /* ---------- 上部: ターン + ライン ---------- */
   #topbar{position:fixed;left:0;right:0;top:0;z-index:10;display:flex;
-    align-items:flex-start;justify-content:space-between;gap:14px;padding:12px 14px;pointer-events:none;}
+    align-items:flex-start;justify-content:space-between;gap:14px;pointer-events:none;
+    padding:12px calc(14px + env(safe-area-inset-right)) 12px calc(14px + env(safe-area-inset-left));}
   #brand{display:flex;align-items:center;gap:9px;font:800 13px/1 system-ui;letter-spacing:.22em;}
   #topRight{display:flex;align-items:center;gap:6px;margin-left:auto;}
   #topRight .btn{width:auto;min-width:0;min-height:26px;padding:0 12px;font-size:10px;pointer-events:auto;}
@@ -76,8 +77,8 @@
     backdrop-filter:blur(12px);font:700 9px/1.5 system-ui;letter-spacing:.1em;color:var(--dim);pointer-events:none;}
   .counts b{color:var(--ink);font-size:12px;margin-left:6px;}
   /* 右上に「相手 / 自分」の順でまとめる (右下は山札と重なる) */
-  #oppCounts{right:14px;top:52px;}
-  #meCounts{right:14px;top:126px;}
+  #oppCounts{right:calc(14px + env(safe-area-inset-right));top:52px;}
+  #meCounts{right:calc(14px + env(safe-area-inset-right));top:126px;}
 
   /* ---------- 操作ボタン ----------
      手札の前には置かない。MENU と音は最上部のバー、ログは右のサイドバー、
@@ -379,7 +380,9 @@
   /* ---------- カードの詳細パネル (マスターデュエル式) ----------
      最後に触ったカード・発動したカードを左上に出したままにする。
      絵は小さく添えるだけにして、効果の文を読ませる。発動した段は金色に光る */
-  #preview{position:fixed;left:14px;top:52px;z-index:26;width:clamp(220px,22vw,290px);max-height:calc(100vh - 140px);
+  /* iPhone を横にするとノッチが左右の端に来るので、端から離す (safe-area) */
+  #preview{position:fixed;left:calc(14px + env(safe-area-inset-left));top:52px;z-index:26;
+    width:clamp(190px,17vw,240px);max-height:calc(100vh - 140px);
     display:flex;flex-direction:column;overflow:hidden;border-radius:10px;
     background:linear-gradient(180deg,rgba(12,16,29,.95),rgba(6,9,18,.95));
     border:1px solid color-mix(in srgb,var(--accent,#63f3ff) 40%,rgba(255,255,255,.08));
@@ -393,14 +396,14 @@
     50%{box-shadow:0 0 30px 6px var(--accent,#efd06c),0 22px 56px rgba(0,0,0,.6);}}
   .cp-head{display:flex;align-items:center;gap:8px;padding:8px 10px 8px 12px;
     background:linear-gradient(90deg,color-mix(in srgb,var(--accent,#63f3ff) 62%,#0a0f1c),color-mix(in srgb,var(--accent,#63f3ff) 16%,#0a0f1c));}
-  .cp-head b{flex:1;min-width:0;font:900 15px/1.15 system-ui;letter-spacing:.1em;color:#fff;
+  .cp-head b{flex:1;min-width:0;font:900 14px/1.15 system-ui;letter-spacing:.08em;color:#fff;
     text-shadow:0 1px 6px rgba(0,0,0,.55);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .cp-val{flex:none;display:grid;place-items:center;min-width:26px;height:26px;border-radius:7px;
     font:900 16px/1 system-ui;color:#0a0f1c;background:#fff;font-variant-numeric:tabular-nums;}
   .cp-fire{flex:none;padding:4px 8px;border-radius:999px;font:900 10px/1 system-ui;letter-spacing:.14em;
     color:#1a1405;background:var(--gold);box-shadow:0 0 12px rgba(239,208,108,.6);}
   .cp-top{display:flex;gap:10px;padding:10px 12px 8px;}
-  .cp-img{position:relative;flex:none;width:clamp(52px,27%,80px);aspect-ratio:512/716;border-radius:6px;overflow:hidden;
+  .cp-img{position:relative;flex:none;width:clamp(46px,26%,64px);aspect-ratio:512/716;border-radius:6px;overflow:hidden;
     border:1px solid rgba(255,255,255,.18);background:repeating-linear-gradient(45deg,#1a2238 0 6px,#121829 6px 12px);}
   .cp-img img{display:block;width:100%;height:100%;object-fit:cover;}
   .cp-img i{display:block;width:100%;height:100%;}
@@ -414,7 +417,7 @@
   .cp-rows{display:flex;flex-direction:column;gap:6px;padding:2px 12px 12px;overflow-y:auto;scrollbar-width:thin;}
   .cp-row{padding:7px 9px;border-radius:7px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);}
   .cp-zone{display:block;margin-bottom:3px;font:800 10px/1.2 system-ui;letter-spacing:.1em;color:var(--accent,#63f3ff);}
-  .cp-row p{margin:0;font:500 12.5px/1.6 system-ui;color:var(--ink);}
+  .cp-row p{margin:0;font:500 12px/1.55 system-ui;color:var(--ink);}
   .cp-row.off{opacity:.5;}
   .cp-row.off p{text-decoration:line-through;text-decoration-color:rgba(255,255,255,.3);}
   .cp-row.fire{border-color:var(--gold);background:rgba(239,208,108,.12);box-shadow:0 0 16px -4px var(--gold);}
@@ -427,7 +430,7 @@
   /* ---------- ログ (右のサイドバー) ----------
      閉じているときは右端のつまみだけを出し、押すと盤面の右から引き出す */
   /* 下端はリフレッシュ・選択解除の段より上で止め、開いていても押せるようにする */
-  #logDock{position:fixed;right:0;top:52px;bottom:74px;z-index:14;width:min(280px,40vw);
+  #logDock{position:fixed;right:env(safe-area-inset-right);top:52px;bottom:74px;z-index:14;width:min(280px,40vw);
     transform:translateX(100%);transition:transform .26s cubic-bezier(.16,1,.3,1);}
   #logDock.open{transform:translateX(0);}
   #log{height:100%;overflow-y:auto;padding:12px 14px;border-radius:12px 0 0 12px;
@@ -562,16 +565,19 @@
 
   /* ---------- 盤面の並べ替えチップ ---------- */
   #arrOv{position:fixed;inset:0;z-index:33;pointer-events:none;}
-  .arr-hint{position:fixed;left:50%;top:64px;transform:translateX(-50%);
-    padding:8px 18px;border-radius:999px;background:rgba(8,11,21,.9);
-    border:1px solid rgba(99,243,255,.3);color:#cfefff;font:700 12px/1 system-ui;letter-spacing:.06em;}
+  /* 並べ替えは小さく: 盤面のプロトコル板の上に名前だけの札を浮かべ、操作は手札のすぐ上に */
+  .arr-hint{position:fixed;left:50%;top:56px;transform:translateX(-50%);
+    padding:6px 14px;border-radius:999px;background:rgba(8,11,21,.86);
+    border:1px solid rgba(99,243,255,.3);color:#cfefff;font:700 11px/1 system-ui;letter-spacing:.06em;}
   .arr-chip{position:fixed;transform:translate(-50%,-50%);pointer-events:auto;cursor:pointer;
-    padding:10px 16px;border-radius:10px;font:800 13px/1 system-ui;letter-spacing:.08em;
-    background:rgba(8,11,21,.92);border:2px solid rgba(99,243,255,.45);color:#eaf4ff;
-    box-shadow:0 8px 26px rgba(0,0,0,.6);transition:all .14s;}
+    padding:6px 12px;border-radius:8px;font:800 11px/1 system-ui;letter-spacing:.08em;
+    background:rgba(8,11,21,.8);border:2px solid rgba(99,243,255,.45);color:#eaf4ff;
+    box-shadow:0 6px 18px rgba(0,0,0,.5);transition:all .14s;}
   .arr-chip:hover{border-color:var(--cyan);background:rgba(99,243,255,.14);}
   .arr-chip.on{border-color:var(--gold);color:var(--gold);transform:translate(-50%,-50%) scale(1.1);}
   .arr-chip.done{opacity:.75;border-style:dashed;}
+  #arrOv .arr-bar{bottom:calc(var(--hand-gap, 14vh) + 12px);gap:8px;}
+  #arrOv .arr-btn{padding:7px 14px;font-size:11px;}
   .arr-bar{position:fixed;left:50%;bottom:12vh;transform:translateX(-50%);display:flex;gap:10px;pointer-events:auto;}
   .arr-btn{padding:10px 22px;border-radius:999px;cursor:pointer;font:800 12px/1 system-ui;letter-spacing:.1em;
     background:rgba(8,11,21,.9);border:1px solid rgba(255,255,255,.2);color:var(--ink);transition:all .16s;}
@@ -623,7 +629,7 @@
      「何を」の語は金色。発動元・ヒント・ボタンは帯の下段に小さくまとめる。
      左の詳細パネルとは重ねない幅にする */
   .arr-bar.sel-bar:not(.confirm){left:50%;top:60px;transform:translateX(-50%);z-index:20;
-    width:min(720px,calc(100vw - 2 * (clamp(220px,22vw,290px) + 30px)));
+    width:min(720px,calc(100vw - 2 * (clamp(190px,17vw,240px) + 30px + env(safe-area-inset-left))));
     flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 12px;
     padding:12px 22px 10px;border-radius:3px;border:0;
     border-top:1px solid rgba(160,190,230,.42);border-bottom:1px solid rgba(160,190,230,.42);
@@ -660,6 +666,9 @@
 
   /* 一覧ダイアログ */
   #modalTitle .sel-head{margin-bottom:2px;}
+  #modalBody.sel-arrange{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px;}
+  #modalBody.sel-arrange .mchoice{padding:8px 10px;font-size:11px;text-align:center;}
+  #modalBody.sel-arrange .mchoice:hover{transform:none;}
   #modalBody.sel-cards .mchoice,#modalBody .sel-line{display:flex;align-items:center;gap:12px;}
   .sel-thumb{--pc:#8fa8c8;flex:none;width:34px;height:47px;border-radius:5px;overflow:hidden;display:grid;place-items:center;
     background:rgba(255,255,255,.05);border:1px solid color-mix(in srgb,var(--pc) 60%,transparent);}
@@ -849,7 +858,7 @@
   /* ---------- トレーニング: 検証盤面の操作パネル ----------
      PC は盤面の左に縦長、スマホは操作ボタンの上に引き出し。
      効果の選択中は選択パネルを優先して、こちらは薄くする */
-  #trainingTools{position:fixed;left:14px;top:64px;z-index:18;width:312px;max-height:calc(100vh - 150px);
+  #trainingTools{position:fixed;left:calc(14px + env(safe-area-inset-left));top:64px;z-index:18;width:312px;max-height:calc(100vh - 150px);
     display:flex;flex-direction:column;border-radius:14px;overflow:hidden;
     background:linear-gradient(180deg,rgba(10,14,26,.96),rgba(5,8,17,.96));
     border:1px solid rgba(109,255,194,.28);box-shadow:0 18px 50px rgba(0,0,0,.55);transition:opacity .2s;}
@@ -1016,18 +1025,18 @@
      枚数表示とログは小さくする */
   @media (orientation:landscape) and (max-height:500px){
     #brand{display:none;}
-    #topbar{justify-content:flex-end;padding:8px 10px;}
+    #topbar{justify-content:flex-end;padding:8px calc(10px + env(safe-area-inset-right)) 8px calc(10px + env(safe-area-inset-left));}
     #btnRefresh{min-height:32px;padding:0 13px;font-size:10px;}
     .lane{width:120px;}
     .counts{padding:5px 8px;gap:2px;font-size:8px;}
     .counts b{font-size:10px;margin-left:3px;}
-    #oppCounts{top:48px;right:10px;}
-    #meCounts{top:112px;right:10px;bottom:auto;}
+    #oppCounts{top:48px;right:calc(10px + env(safe-area-inset-right));}
+    #meCounts{top:112px;right:calc(10px + env(safe-area-inset-right));bottom:auto;}
     #logDock{top:40px;bottom:52px;width:min(250px,36vw);}
     #log{font-size:10px;}
     #btnLog{top:132px;height:70px;}
     #effectContext{top:44px;}
-    #preview{left:8px;top:40px;width:min(230px,28vw);max-height:calc(100vh - 48px);}
+    #preview{left:calc(8px + env(safe-area-inset-left));top:40px;width:min(200px,24vw);max-height:calc(100vh - 48px);}
     .cp-head{padding:6px 8px 6px 10px;}
     .cp-head b{font-size:13px;}
     .cp-val{min-width:22px;height:22px;font-size:14px;}
@@ -1039,10 +1048,10 @@
     #chainUi .ch-no{font-size:22px;}
     #chainUi .ch-name{font-size:10px;}
     .arr-bar.sel-bar{max-height:calc(100vh - 20px);overflow-y:auto;padding:9px 11px;}
-    .arr-bar.sel-bar:not(.confirm){top:40px;width:max(300px,calc(100vw - 2 * (min(230px,28vw) + 18px)));padding:7px 12px 6px;gap:5px 10px;}
+    .arr-bar.sel-bar:not(.confirm){top:40px;width:max(300px,calc(100vw - 2 * (min(200px,24vw) + 18px + env(safe-area-inset-left))));padding:7px 12px 6px;gap:5px 10px;}
     .arr-bar.sel-bar:not(.confirm) .sel-q{font-size:13px;}
     .arr-bar.sel-bar:not(.confirm) .arr-btn{padding:6px 12px;font-size:10px;}
-    .arr-bar.sel-bar.confirm{width:min(380px,calc(100vw - 2 * (min(230px,28vw) + 18px)));}
+    .arr-bar.sel-bar.confirm{width:min(380px,calc(100vw - 2 * (min(200px,24vw) + 18px + env(safe-area-inset-left))));}
     .sel-q{font-size:13px;}
     #modalCard{max-height:calc(100vh - var(--hand-gap, 14vh) - 84px);}
     #trainingTools{top:40px;max-height:calc(100vh - 50px);width:280px;}

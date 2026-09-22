@@ -263,14 +263,17 @@ export function askChoice(req, ctx) {
       const perms = req.exact === 'transposition'
         ? [[1, 0, 2], [0, 2, 1], [2, 1, 0]]
         : [[1, 2, 0], [2, 0, 1], [0, 2, 1], [1, 0, 2], [2, 1, 0]];
+      body.className = 'sel-arrange';
       for (const p of perms) {
         addBtn(p.map(i => (ctx.protoName ? ctx.protoName(i) : i + 1)).join(' → '), () => finish(p));
       }
-      addBtn('盤面で選ぶに戻る', () => finish('__board__'));
+      addBtn('盤面で選ぶに戻る', () => finish('__board__'), 'ghost');
     } else {
       /* pickCard / pickHand: 候補をカード名で並べる */
       const min = req.min === undefined ? 1 : req.min;
       const max = req.max === undefined ? 1 : req.max;
+      /* 手札から選ぶ (捨てる等) は、1枚でも選んでから決定する */
+      const confirmHand = req.kind === 'pickHand';
       const chosen = [];
       const rerender = () => {
         body.innerHTML = '';
@@ -286,8 +289,9 @@ export function askChoice(req, ctx) {
           const b = addBtn(label, () => {
             const i = chosen.indexOf(uid);
             if (i >= 0) chosen.splice(i, 1);
+            else if (max === 1) { chosen.length = 0; chosen.push(uid); }
             else if (chosen.length < max) chosen.push(uid);
-            if (max === 1 && chosen.length === 1) { finish(chosen.slice()); return; }
+            if (!confirmHand && max === 1 && chosen.length === 1) { finish(chosen.slice()); return; }
             rerender();
           }, on ? 'on' : '');
           if (ctx.onHoverCandidate) {
@@ -295,7 +299,7 @@ export function askChoice(req, ctx) {
             b.onmouseleave = () => ctx.onHoverCandidate(uid, false);
           }
         }
-        if (max > 1 || min === 0) {
+        if (max > 1 || min === 0 || confirmHand) {
           const ok = addBtn(chosen.length === 0 && min === 0 ? '選ばない' : '決定', () => {
             if (chosen.length >= min) finish(chosen.slice());
           }, 'yes sel-ok');
