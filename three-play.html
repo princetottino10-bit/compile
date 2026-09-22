@@ -1050,6 +1050,15 @@
     #effectContext{top:44px;}
     #preview{left:calc(8px + env(safe-area-inset-left));top:40px;width:min(200px,24vw);max-height:calc(100vh - 48px);}
     body.training #preview{left:auto;right:calc(44px + env(safe-area-inset-right));top:172px;max-height:calc(100vh - 180px);}
+    /* 詳細パネルは小さく (盤面の左のラインを覆わない) */
+    #preview{width:min(170px,21vw);max-height:62vh;}
+    .cp-head b{font-size:12px;}
+    .cp-img{width:40px;}
+    .cp-meta{gap:4px;}
+    .cp-tag{font-size:9px;padding:1px 6px;}
+    .cp-note{font-size:9.5px;}
+    .cp-row p{font-size:10px;line-height:1.45;}
+    .cp-zone{font-size:9px;margin-bottom:2px;}
     .cp-head{padding:6px 8px 6px 10px;}
     .cp-head b{font-size:13px;}
     .cp-val{min-width:22px;height:22px;font-size:14px;}
@@ -1068,6 +1077,22 @@
     .sel-q{font-size:13px;}
     #modalCard{max-height:calc(100vh - var(--hand-gap, 14vh) - 84px);}
     #trainingTools{top:40px;max-height:calc(100vh - 50px);width:280px;}
+    /* 効果の指示の帯は1行に詰める (高さが足りず、選ぶ対象のカードに被っていた)。
+       発動元は色の点だけ、ヒントと選んだ札の一覧は省く (盤面の光と数で分かる)。
+       ほかの帯の指定より後ろ・同じ強さで書くため :is(.confirm,:not(.confirm)) を付ける */
+    .arr-bar.sel-bar:is(.confirm,:not(.confirm)){flex-direction:row;flex-wrap:nowrap;align-items:center;gap:6px;padding:5px 8px;border-radius:10px;}
+    .arr-bar.sel-bar:is(.confirm,:not(.confirm)):has(.arr-order){flex-wrap:wrap;}
+    .arr-bar.sel-bar:is(.confirm,:not(.confirm)) .sel-head{flex:1;min-width:0;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:6px;width:auto;}
+    .arr-bar.sel-bar:is(.confirm,:not(.confirm)) .sel-src{padding:3px;}
+    .arr-bar.sel-bar:is(.confirm,:not(.confirm)) .sel-src b,.arr-bar.sel-bar:is(.confirm,:not(.confirm)) .sel-src span{display:none;}
+    .arr-bar.sel-bar:is(.confirm,:not(.confirm)) .sel-q{font-size:11.5px;line-height:1.3;min-width:0;overflow:hidden;
+      display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+    .arr-bar.sel-bar:is(.confirm,:not(.confirm)) .sel-hint,.arr-bar.sel-bar:is(.confirm,:not(.confirm)) .sel-chosen,.arr-bar.sel-bar:is(.confirm,:not(.confirm)) .sel-tag{display:none;}
+    .arr-bar.sel-bar:is(.confirm,:not(.confirm)) .arr-btns{flex:none;flex-wrap:nowrap;gap:5px;}
+    .arr-bar.sel-bar:is(.confirm,:not(.confirm)) .arr-btn{padding:6px 10px;font-size:10px;min-width:0;}
+    .arr-bar.sel-bar:is(.confirm,:not(.confirm)) .sel-peek{width:32px;height:28px;font-size:15px;}
+    .arr-bar.sel-bar:is(.confirm,:not(.confirm)) .arr-order{width:100%;order:3;}
+    .arr-bar.sel-bar:not(.confirm){top:6px;}
   }
 
 </style>
