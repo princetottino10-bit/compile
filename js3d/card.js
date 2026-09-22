@@ -89,20 +89,26 @@ export function glowTexture() {
 export function makeCard(def) {
   const group = new THREE.Group();
 
-  /* カード面は印刷物として読ませたいので、金属的な映り込みを乗せない。
-     反射が文字の上に白く乗ると、特に手札で効果文がにじんで見えた。 */
-  const front = new THREE.Mesh(planeGeometry(), new THREE.MeshStandardMaterial({
+  /* カード面は印刷物として読ませたいので、照明を受けない面にして絵をそのままの色で出す。
+     照明を受ける面だと、カメラに正対する手札が常に露出オーバーになり、
+     色が白っぽく抜けて「ぴかぴか」に見えていた (トーンマップも通さない) */
+  const front = new THREE.Mesh(planeGeometry(), new THREE.MeshBasicMaterial({
     map: faceTexture(def),
-    roughness: 0.62,
-    metalness: 0,
-    envMapIntensity: 0.12,
-    emissive: new THREE.Color(0x000000),
-    emissiveIntensity: 1
+    toneMapped: false
   }));
   front.position.y = CARD.thickness / 2 + 0.0004;
   /* カードは影を落とさない (手札の影が盤面に落ちて読みづらかった) */
   front.castShadow = false;
-  front.receiveShadow = true;
+
+  /* 発光 (効果の発動・選んだ札など) は、面の上に加算で色を重ねて表す */
+  const shine = new THREE.Mesh(planeGeometry(), new THREE.MeshBasicMaterial({
+    color: 0x000000, transparent: true, opacity: 0, depthWrite: false,
+    blending: THREE.AdditiveBlending, toneMapped: false
+  }));
+  shine.position.y = CARD.thickness / 2 + 0.0008;
+  shine.renderOrder = 2;
+  shine.visible = false;
+  shine.raycast = () => {};
 
   const back = new THREE.Mesh(planeGeometry(), new THREE.MeshStandardMaterial({
     map: backTex(),
@@ -123,11 +129,12 @@ export function makeCard(def) {
   }));
   core.castShadow = false;
 
+  /* 縁は控えめな金属に。強い映り込みだと、持ち上げた手札の縁が発光して見えた */
   const frame = new THREE.Mesh(frameGeometry(), new THREE.MeshStandardMaterial({
     color: new THREE.Color(def.color || '#63f3ff').multiplyScalar(0.55),
-    roughness: 0.24,
-    metalness: 0.95,
-    envMapIntensity: 1.1,
+    roughness: 0.45,
+    metalness: 0.5,
+    envMapIntensity: 0.3,
     emissive: new THREE.Color(0x000000),
     emissiveIntensity: 0
   }));
@@ -145,8 +152,8 @@ export function makeCard(def) {
   ghost.raycast = () => {};
   ghost.visible = def.id !== UNKNOWN_ID;
 
-  group.add(core, front, back, frame, ghost);
-  group.userData = { def, front, back, core, frame, ghost, uid: null, glowColor: null, glowStrength: 0 };
+  group.add(core, front, shine, back, frame, ghost);
+  group.userData = { def, front, shine, back, core, frame, ghost, uid: null, glowColor: null, glowStrength: 0 };
   return group;
 }
 
@@ -155,8 +162,9 @@ export function makeCard(def) {
 export function setHighlight(card, colorHex, strength, glowStrength) {
   const ud = card.userData;
   const c = new THREE.Color(colorHex);
-  ud.front.material.emissive.copy(c);
-  ud.front.material.emissiveIntensity = strength;
+  ud.shine.material.color.copy(c);
+  ud.shine.material.opacity = Math.min(1, strength);
+  ud.shine.visible = strength > 0.001;
   ud.back.material.emissive.copy(c);
   ud.back.material.emissiveIntensity = strength * 0.8;
   if (ud.frame) {

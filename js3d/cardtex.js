@@ -37,8 +37,8 @@ export function setMaxAnisotropy(n) {
 export const ART_SETS = new Set(['Main 1', 'Aux 1', 'Main 2', 'Aux 2']);
 
 /* 覆われたときも見えている必要がある上端の割合 (theme.js の coverStep と連動) */
-export const REVEAL_RATIO = 0.314;
-const REVEAL_PX = Math.floor(DH * REVEAL_RATIO);   // = 224
+export const REVEAL_RATIO = 0.334;
+const REVEAL_PX = Math.floor(DH * REVEAL_RATIO);   // = 239
 
 /* ---------- 画像ロード (失敗は null として記憶し、再試行しない) ---------- */
 function loadArt(url, onReady) {
@@ -146,10 +146,10 @@ function chip(ctx, x, y, glyph, label, fg, bg) {
 
 /* ---------- 表面 ---------- */
 /* 見出し (プロトコル名と値)。手札でも読めるよう、名前と値は大きめに取る */
-const HEAD_H = 106;
-const BADGE = 98;            // 値のバッジの一辺
-const BADGE_FONT = 82;       // 値の数字
-const NAME_FONT = 62;        // プロトコル名 (長い名前は幅に合わせて縮める)
+const HEAD_H = 122;
+const BADGE = 112;           // 値のバッジの一辺
+const BADGE_FONT = 94;       // 値の数字
+const NAME_FONT = 72;        // プロトコル名 (長い名前は幅に合わせて縮める)
 const TEXT_X = 26;                 // ゾーン内テキストの左端 (左バーの分を空ける)
 const TEXT_W = DW - TEXT_X - 22;
 

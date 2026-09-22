@@ -547,6 +547,42 @@ function bindInput() {
     return pickCard(ray, [...board.hitList(), ...pads], accept);
   }
 
+  /* 手札の当たり判定は、持ち上がる前の定位置 (LAYOUT.handSlot) で取る。
+     触ると札が持ち上がるので、札そのもので判定すると下半分に触れたとき札が上へ逃げ、
+     「札の上のほうしか反応しない」状態になっていた。定位置の札が重なる所は手前の札 */
+  const restProxy = new THREE.Mesh(
+    new THREE.PlaneGeometry(CARD.w, CARD.h).rotateX(-Math.PI / 2),
+    new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }));
+  function handRestAt(ev) {
+    const st = shown();
+    if (!st || drag) return null;
+    const hand = st.players[ME].hand;
+    const r = el.getBoundingClientRect();
+    ndc.x = ((ev.clientX - r.left) / r.width) * 2 - 1;
+    ndc.y = -((ev.clientY - r.top) / r.height) * 2 + 1;
+    ray.setFromCamera(ndc, stage.camera);
+    let best = null, bestD = Infinity;
+    hand.forEach((uid, i) => {
+      const s = LAYOUT.handSlot(i, hand.length);
+      restProxy.position.set(s.pos[0], s.pos[1], s.pos[2]);
+      restProxy.rotation.set(s.rot[0], s.rot[1], s.rot[2]);
+      restProxy.scale.setScalar(s.scale);
+      restProxy.updateMatrixWorld(true);
+      const h = ray.intersectObject(restProxy, false)[0];
+      if (h && h.distance < bestD) { bestD = h.distance; best = uid; }
+    });
+    return best;
+  }
+  /* 手札の定位置に触れていれば、その札を当たりにする (盤面の配置先・パッドは除く) */
+  function pickWithHand(ev, accept) {
+    const hit = pick(ev, accept);
+    if (hit && hit.obj.userData.isPad) return hit;
+    const rest = handRestAt(ev);
+    const card = rest && board.cards.get(rest);
+    if (card && (!accept || accept(card.userData))) return { obj: card, point: null };
+    return hit;
+  }
+
   /* いま画面上で浮いているカード (掴んでいる/選択で持ち上がった手札) */
   function isFloating(uid) {
     if (!uid) return false;
@@ -604,7 +640,7 @@ function bindInput() {
       return;
     }
 
-    const hit = pick(ev);
+    const hit = pickWithHand(ev);
     const uid = hit && hit.obj.userData.uid;
     const st = shown();
     const inMyHand = uid && st && st.players[ME].hand.includes(uid);
@@ -640,7 +676,7 @@ function bindInput() {
     }
     /* タップ環境はホバーが無いので、触れたカードをまずプレビューする。
        操作できない場面 (相手ターン・選択待ち) でもテキストは読めるようにする */
-    const hit = pick(ev);
+    const hit = pickWithHand(ev);
     showPreview((hit && hit.obj.userData.uid) || null);
     /* 盤面対象選択モード中はタップを選択として扱う。
        ラインの判定はメッシュに頼らず、盤面平面の座標から最寄りレーンを取る
@@ -689,7 +725,7 @@ function bindInput() {
     if (boardPick && boardPick.kind === 'yesno') return;
     if (boardPick && boardPick.kind === 'free') {
       /* 候補でないカードが重なっていても、その下の候補まで拾いに行く */
-      const free = pick(ev, (ud) => ud.uid && !!boardPick.byUid[ud.uid]);
+      const free = pickWithHand(ev, (ud) => ud.uid && !!boardPick.byUid[ud.uid]);
       const uid2 = free && free.obj.userData.uid;
       if (uid2) { tapFreePick({ uid: uid2 }); return; }
       if (boardPick.sel) {
@@ -707,7 +743,7 @@ function bindInput() {
       /* 対象選択では候補だけを当たり判定に使う。重なった非候補は透かす */
       const cands = Array.isArray(boardPick.req && boardPick.req.candidates) ? boardPick.req.candidates : null;
       const target = cands
-        ? pick(ev, (ud) => ud.uid && cands.indexOf(ud.uid) >= 0)
+        ? pickWithHand(ev, (ud) => ud.uid && cands.indexOf(ud.uid) >= 0)
         : (hit && hit.obj.userData.uid ? hit : null);
       if (target && target.obj.userData.uid) { toggleBoardPick(target.obj.userData.uid); return; }
       if (cands) {

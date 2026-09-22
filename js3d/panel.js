@@ -11,8 +11,10 @@ import * as LAYOUT from './layout.js';
 import * as TW from './tween.js';
 import { drawEmblem } from './emblems.js';
 
-const TEX_W = 512, TEX_H = 232;
-const PANEL_W = 1.5, PANEL_D = 0.68;
+/* 板は大きめに (ラインの間隔 1.62 と、スタックの1枚目の手前まで)。
+   テクスチャは 2 倍の解像度で描き、斜めから見ても文字がつぶれないようにする */
+const TEX_W = 512, TEX_H = 262, TEX_SCALE = 2;
+const PANEL_W = 1.56, PANEL_D = 0.80;
 
 /* アートが存在するセット (Main 2 / Aux 2 は scripts/build_card_art_2.py で生成) */
 const ART_SETS = new Set(['Main 1', 'Aux 1', 'Main 2', 'Aux 2']);
@@ -56,6 +58,7 @@ function paint(ctx, info, art) {
   const W = TEX_W, H = TEX_H;
   const accent = info.color || '#63f3ff';
   const compiled = !!info.compiled;
+  ctx.setTransform(TEX_SCALE, 0, 0, TEX_SCALE, 0, 0);
   ctx.clearRect(0, 0, W, H);
 
   /* 下地 */
@@ -108,30 +111,30 @@ function paint(ctx, info, art) {
   ctx.restore();
 
   /* 紋章 */
-  drawEmblem(ctx, info.name, 16, (H - 74) / 2, 74,
+  drawEmblem(ctx, info.name, 16, (H - 84) / 2, 84,
     compiled ? 'rgba(255,255,255,.95)' : rgba(accent, 0.95), 7);
 
   /* 状態ラベル */
-  ctx.font = '800 19px system-ui, sans-serif';
+  ctx.font = '800 22px system-ui, sans-serif';
   ctx.fillStyle = compiled ? '#ffffff' : rgba(accent, 0.9);
-  ctx.fillText(compiled ? 'COMPILED' : 'LOADING...', 100, 40);
+  ctx.fillText(compiled ? 'COMPILED' : 'LOADING...', 112, 48);
 
   /* プロトコル名 */
-  let px = 50;
+  let px = 60;
   do {
     ctx.font = '900 ' + px + 'px system-ui, sans-serif';
-    if (ctx.measureText(info.name).width <= W - 268) break;
+    if (ctx.measureText(info.name).width <= W - 270) break;
     px -= 2;
   } while (px > 22);
   ctx.fillStyle = '#ffffff';
   ctx.textBaseline = 'middle';
-  ctx.fillText(info.name, 100, H * 0.62);
+  ctx.fillText(info.name, 112, H * 0.62);
   ctx.textBaseline = 'alphabetic';
 
   /* 合計値。10 以上はコンパイル圏内なので塗りを反転させる。
      済パネルでも合計はライン比較 (コントロール等) に効くため表示する */
   const hot = !compiled && info.total >= 10;
-  const bw = 116, bh = 96, bx = W - bw - 20, by = (H - bh) / 2 + 8;
+  const bw = 128, bh = 112, bx = W - bw - 18, by = (H - bh) / 2 + 8;
   ctx.fillStyle = hot ? accent : (compiled ? 'rgba(4,6,12,.72)' : 'rgba(255,255,255,.09)');
   roundRect(ctx, bx, by, bw, bh, 16); ctx.fill();
   if (!hot) {
@@ -139,7 +142,7 @@ function paint(ctx, info, art) {
     ctx.lineWidth = 2;
     roundRect(ctx, bx, by, bw, bh, 16); ctx.stroke();
   }
-  ctx.font = '900 66px system-ui, sans-serif';
+  ctx.font = '900 80px system-ui, sans-serif';
   ctx.fillStyle = hot ? '#05070f' : '#ffffff';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(String(info.total), bx + bw / 2, by + bh / 2 + 2);
@@ -159,7 +162,7 @@ export function createPanels(stage, me) {
 
   function makeFace(flipped) {
     const cv = document.createElement('canvas');
-    cv.width = TEX_W; cv.height = TEX_H;
+    cv.width = TEX_W * TEX_SCALE; cv.height = TEX_H * TEX_SCALE;
     const tex = new THREE.CanvasTexture(cv);
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.anisotropy = 8;

@@ -169,8 +169,14 @@ export function createStage(container) {
   shadowCatcher.receiveShadow = true;
   scene.add(shadowCatcher);
 
-  /* --- ポストプロセス (発光) --- */
-  const composer = new EffectComposer(renderer);
+  /* --- ポストプロセス (発光) ---
+     レンダラの antialias はポストプロセスの描画先には効かない。そのままだと
+     カードの縁や盤面の線がすべてギザギザになったので、描画先をマルチサンプルにする */
+  const drawSize = renderer.getDrawingBufferSize(new THREE.Vector2());
+  const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(drawSize.x, drawSize.y, {
+    type: THREE.HalfFloatType, samples: lowPower ? 2 : 4
+  }));
+  composer.setSize(container.clientWidth, container.clientHeight);
   composer.addPass(new RenderPass(scene, camera));
   const bloom = new UnrealBloomPass(
     new THREE.Vector2(container.clientWidth, container.clientHeight),
@@ -261,6 +267,7 @@ export function createStage(container) {
     /* 表示倍率が変わった (別モニタへ移動・ブラウザの拡大縮小) ときも取り直す */
     if (renderer.getPixelRatio() !== pixelRatio()) {
       renderer.setPixelRatio(pixelRatio());
+      composer.setPixelRatio(pixelRatio());
       appliedW = -1;
     }
     /* 同じ大きさなら何もしない (下の監視経路から何度呼ばれても安全にする) */

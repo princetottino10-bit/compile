@@ -5,6 +5,9 @@
  * ========================================================================= */
 import { BOARD, CARD, VIEW } from './theme.js';
 
+/* 手札を起こす角度 (水平から) */
+const HAND_TILT = 1.02;
+
 /* 手札: PC は扇、縦持ちではまっすぐな段組み */
 export function handSlot(i, n) {
   const tucked = VIEW.handOpen ? 0 : 1;
@@ -50,11 +53,19 @@ export function handSlot(i, n) {
   const rowY = backRow ? 0.46 : 0;
   const rowZ = backRow ? -0.54 : 0;
   const rowScale = backRow ? 0.90 : 1;
+  /* 扇は札の面の中で回す (rot.y)。札の縦軸まわりにひねると (rot.z) 隣の札と面が交差し、
+     重なりの境目がギザギザにめり込んで汚く見えた。
+     端の札を下げるのも面の中で行い、重ね順は「右の札ほど手前」に面の法線方向でずらす */
+  const up = [Math.sin(HAND_TILT), -Math.cos(HAND_TILT)];        // 札の面の「上」(y, z)
+  const nrm = [Math.cos(HAND_TILT), Math.sin(HAND_TILT)];        // 札の面の法線 (y, z)
+  const droop = (2 * t) * (2 * t) * 0.16;
+  const layer = rowIndex * 0.024;
   return {
     /* 盤面を読むときはカードを画面下へ引き、少し縮めて重なりも減らす。 */
-    pos: [t * width, BOARD.handY + rowY - Math.abs(t) * 0.26 - tucked * (0.12 + 0.08 * k),
-      BOARD.handZ + rowZ + 0.55 * k + Math.abs(t) * 0.30 + tucked * (0.38 + 0.20 * k)],
-    rot: [1.02, 0, -t * 0.40],
+    pos: [t * width,
+      BOARD.handY + rowY - droop * up[0] + layer * nrm[0] - tucked * (0.12 + 0.08 * k),
+      BOARD.handZ + rowZ + 0.55 * k - droop * up[1] + layer * nrm[1] + tucked * (0.38 + 0.20 * k)],
+    rot: [HAND_TILT, -t * 0.26, 0],
     scale: (1.06 - 0.22 * k) * (tucked ? 0.92 : 1) * rowScale
   };
 }
@@ -67,8 +78,9 @@ export function handSlotRaised(i, n) {
     return { pos: [s.pos[0], s.pos[1] + 0.45, s.pos[2] - 0.35], rot: [0.12, 0, 0], scale: s.scale * 1.12 };
   }
   return {
-    pos: [s.pos[0], s.pos[1] + 0.50, s.pos[2] - 0.30],
-    rot: [0.86, 0, s.rot[2] * 0.35],
+    /* 持ち上げた札は隣の札より手前 (カメラ側) に出す。同じ面にいると隣とめり込む */
+    pos: [s.pos[0], s.pos[1] + 0.58, s.pos[2] - 0.17],
+    rot: [0.86, s.rot[1] * 0.35, 0],
     scale: 1.24 - 0.2 * VIEW.k
   };
 }
