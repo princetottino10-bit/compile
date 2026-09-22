@@ -1135,6 +1135,31 @@
     .arr-bar.sel-bar:is(.confirm,:not(.confirm)) .sel-peek{width:32px;height:28px;font-size:15px;}
     .arr-bar.sel-bar:is(.confirm,:not(.confirm)) .arr-order{width:100%;order:3;}
     .arr-bar.sel-bar:not(.confirm){top:6px;}
+    /* 帯の文字の部分は触っても下の盤面に届く (帯の下にある相手のカードもそのまま選べる)。
+       反応するのはボタンと発動元の点だけ。下のカードが見えるよう半透明にする */
+    .arr-bar.sel-bar:is(.confirm,:not(.confirm)){pointer-events:none;background:rgba(6,9,18,.6);
+      border-color:rgba(99,243,255,.28);box-shadow:none;}
+    .arr-bar.sel-bar:is(.confirm,:not(.confirm)) :is(button,.sel-src){pointer-events:auto;}
+    .arr-bar.sel-bar:is(.confirm,:not(.confirm)) .sel-q{text-shadow:0 1px 4px rgba(0,0,0,.95);}
+    /* 選んでいる間は、左の詳細パネルを見出しだけにする (左のラインのカードを隠さない) */
+    body.picking #preview .cp-top,body.picking #preview .cp-rows{display:none;}
+    /* 一覧で選ぶ: 文字とボタンを小さく、カードは2列に並べる */
+    #modalCard{width:min(460px,92vw);padding:10px 12px;}
+    #modalTitle{margin-bottom:8px;}
+    #modalTitle .sel-q{font-size:13px;}
+    #modalBody{gap:5px;}
+    #modalBody .mchoice{padding:7px 10px;font-size:11px;border-radius:8px;}
+    #modalBody.sel-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));}
+    #modalBody.sel-cards .mchoice{gap:8px;}
+    #modalBody.sel-cards .sel-ok,#modalBody.sel-cards .ghost{grid-column:1 / -1;}
+    .sel-thumb{width:24px;height:34px;}
+    .sel-ln{width:24px;height:24px;font-size:12px;}
+    .sel-lp b{font-size:11px;}
+    .sel-lp small{font-size:9px;}
+    .sel-proto{padding:9px 9px 8px;}
+    .sel-proto b{font-size:11px;}
+    .sel-value{font-size:18px;}
+    #modalPeek{width:38px;height:38px;font-size:18px;}
   }
 
 </style>
