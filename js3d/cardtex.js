@@ -145,7 +145,11 @@ function chip(ctx, x, y, glyph, label, fg, bg) {
 }
 
 /* ---------- 表面 ---------- */
-const HEAD_H = 96;
+/* 見出し (プロトコル名と値)。手札でも読めるよう、名前と値は大きめに取る */
+const HEAD_H = 106;
+const BADGE = 98;            // 値のバッジの一辺
+const BADGE_FONT = 82;       // 値の数字
+const NAME_FONT = 62;        // プロトコル名 (長い名前は幅に合わせて縮める)
 const TEXT_X = 26;                 // ゾーン内テキストの左端 (左バーの分を空ける)
 const TEXT_W = DW - TEXT_X - 22;
 
@@ -206,12 +210,12 @@ function paintFace(ctx, def, art) {
   ctx.fillStyle = head;
   ctx.fillRect(0, 0, DW, HEAD_H);
 
-  const badge = 88;
-  const bx = DW - badge - 14, by = (HEAD_H - badge) / 2;
+  const badge = BADGE;
+  const bx = DW - badge - 12, by = (HEAD_H - badge) / 2;
   ctx.fillStyle = accent;
   roundRect(ctx, bx, by, badge, badge, 14); ctx.fill();
   ctx.fillStyle = '#04060e';
-  ctx.font = '900 72px system-ui, sans-serif';
+  ctx.font = '900 ' + BADGE_FONT + 'px system-ui, sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(String(def.value), bx + badge / 2, by + badge / 2 + 3);
   ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
@@ -228,7 +232,7 @@ function paintFace(ctx, def, art) {
 
   /* プロトコル名 (バッジとアイコンを避けて縮める) */
   const nameMax = (types.length ? iconLeft : bx) - 30;
-  let namePx = 54;
+  let namePx = NAME_FONT;
   do {
     ctx.font = '800 ' + namePx + 'px system-ui, sans-serif';
     if (ctx.measureText(def.proto).width <= nameMax) break;
@@ -452,12 +456,12 @@ export function backTex() {
   bg.addColorStop(1, 'rgba(8,11,21,.97)');
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, DW, bh);
-  const bsize = 88;
-  const bbx = DW - bsize - 14, bby = (bh - bsize) / 2;
+  const bsize = BADGE;
+  const bbx = DW - bsize - 12, bby = (bh - bsize) / 2;
   ctx.fillStyle = 'rgba(160,190,215,.92)';
   roundRect(ctx, bbx, bby, bsize, bsize, 14); ctx.fill();
   ctx.fillStyle = '#04060e';
-  ctx.font = '900 72px system-ui, sans-serif';
+  ctx.font = '900 ' + BADGE_FONT + 'px system-ui, sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText('2', bbx + bsize / 2, bby + bsize / 2 + 3);
   ctx.textAlign = 'left';
