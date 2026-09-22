@@ -56,7 +56,9 @@ let puzzle = null;
 /* チュートリアルのレッスン (?tutorial=1..)。{ index, lesson } */
 let tutorial = null;
 let tutorialOver = false;
-let tutorialWaitShown = false;
+let tutorialAsk = null;       // 答えを求められている選択 (req.prompt)。案内の切り替えに使う
+let tutorialFocus = null;     // いまの案内で光らせる場所
+let tutorialPending = false;  // 手を指してから判定が出るまで (この間は案内を変えない)
 let trainingTools = null;
 /* トレーニングの操作状態: 選択中のカード・表示中の側・効果の有無・置く向き */
 const training = { sel: null, side: 0, effects: true, faceUp: true, collapsed: false, undo: [], protos: null };
@@ -319,13 +321,7 @@ async function boot() {
   await stage.home(0);
   refreshHud();
   if (puzzle) PZ.showPuzzleBar(puzzle, retryPuzzle);
-  if (tutorial) {
-    await TU.showLessonIntro(tutorial.index);
-    TU.showLessonBar(tutorial.index, {
-      onHelp: () => TU.showLessonIntro(tutorial.index),
-      onRetry: () => location.reload()
-    });
-  }
+  if (tutorial) coachUpdate();
   if (trainingMode) {
     UI.setPrompt('');
     UI.toast('カードを選んで、光っている枠をタップすると置けます', 3200);
@@ -355,19 +351,19 @@ async function puzzleAfterTurn() {
 /* ---------- チュートリアル ----------
    操作を1つ解決し終えるたびに、レッスンの判定をかける。終わったら相手の手番を進めない */
 async function tutorialAfterStep() {
+  tutorialPending = false;
   if (tutorialOver) return true;
   const st = cur && cur.state;
   if (!st) return false;
   const r = TU.judgeStep(tutorial.lesson, { st, trace: cur.trace, me: ME, total: totalOf });
   if (!r) {
-    /* 自分の手番は終わったが、判定は相手の手番のあと (コンパイル待ち) */
-    if (st.turn !== ME && st.winner === null && tutorial.lesson.wait && !tutorialWaitShown) {
-      tutorialWaitShown = true;
-      UI.toast(tutorial.lesson.wait, 3400);
-    }
+    /* 自分の手番は終わったが、判定は相手の手番のあと (コンパイル待ちの案内に切り替わる) */
+    coachUpdate();
     return false;
   }
   tutorialOver = true;
+  tutorialFocus = null;
+  applyTutorialFocus();
   refreshHud();
   if (st.winner === ME) {
     sfx('win');
@@ -375,14 +371,91 @@ async function tutorialAfterStep() {
     await UI.resultCutIn(true);
   } else sfx(r.ok ? 'win' : 'lose');
   UI.setTurnBadge(r.ok ? 'クリア' : 'もう一度', r.ok);
+  /* 「次へ」は押さなくてよい: 読む時間が過ぎたら次のレッスン (失敗ならやり直し) へ */
   const i = tutorial.index;
-  TU.showLessonResult(i, r, {
-    onNext: () => { location.href = location.pathname + '?tutorial=' + (i + 2); },
-    onRetry: () => location.reload(),
-    onPlay: () => { location.href = location.pathname; },
-    onTop: () => { location.href = 'index.html'; }
+  const last = i === TU.LESSONS.length - 1;
+  TU.showCoachResult(i, r, () => {
+    if (r.ok && last) {
+      TU.showTutorialDone({
+        onPlay: () => { location.href = location.pathname; },
+        onTop: () => { location.href = 'index.html'; },
+        onRestart: () => startLesson(0)
+      });
+    } else startLesson(r.ok ? i + 1 : i);
   });
   return true;
+}
+
+/* レッスンをその場で始める (ページを読み直さない) */
+async function startLesson(index) {
+  tutorial = { index, lesson: TU.LESSONS[index] };
+  tutorialOver = false;
+  tutorialAsk = null;
+  tutorialFocus = null;
+  tutorialPending = false;
+  deselect();
+  showPreview(null);
+  cur = Engine.newPuzzle(tutorial.lesson.spec, { seed: 1 });
+  gameHistory.length = 0;
+  lastTurn = null;
+  resultShown = false;
+  board.syncInstant(shown());
+  syncPanels(shown(), false);
+  refreshHud();
+  try { history.replaceState(null, '', location.pathname + '?tutorial=' + (index + 1)); } catch (e) { /* file:// など */ }
+  stage.home(400);
+  await drainRequests();
+  await afterTurn();
+}
+
+/* 「やり直す」: 動いている最中や選択の途中は、読み直して確実に最初から */
+function restartLesson() {
+  if (busy || tutorialAsk || !tutorial) { location.reload(); return; }
+  startLesson(tutorial.index);
+}
+
+/* いまの操作の状態 (選んだカード・求められている選択・相手待ち) */
+function tutorialCtx() {
+  const st = cur && cur.state;
+  const view = shown();
+  const c = selectedUid && view && view.cards[selectedUid];
+  return {
+    sel: c ? c.def : null,
+    ask: tutorialAsk,
+    waiting: !!st && st.winner === null && st.turn !== ME
+  };
+}
+
+/* 案内を状態に合わせて出し直し、押す場所を光らせる。
+   まとめて次の一瞬に行い、手を解決している間 (busy) は変えない
+   (置く直前に選択が外れるので、そのままだと最初の案内に一瞬戻ってしまう) */
+let coachTick = null;
+function coachUpdate(force) {
+  if (!tutorial || tutorialOver) return;
+  clearTimeout(coachTick);
+  coachTick = setTimeout(() => {
+    /* 手を解決している間・判定待ちの間は変えない (選択を求められたときだけは force で出す) */
+    if (!tutorial || tutorialOver || busy || (tutorialPending && !force)) return;
+    const n = TU.coachStep(tutorial.lesson, tutorialCtx());
+    const prevCard = (tutorialFocus && tutorialFocus.card) || null;
+    tutorialFocus = n >= 0 ? tutorial.lesson.steps[n].focus || null : null;
+    TU.showCoach(tutorial.index, n, restartLesson);
+    applyTutorialFocus();
+    /* 明るくする手札が変わったら、手札の明るさを付け直す */
+    if (((tutorialFocus && tutorialFocus.card) || null) !== prevCard) refreshHud();
+  }, 0);
+}
+
+function applyTutorialFocus() {
+  document.querySelectorAll('.tu-focus').forEach(e => e.classList.remove('tu-focus'));
+  const f = tutorial && !tutorialOver ? tutorialFocus : null;
+  if (!f) return;
+  if (f.button) document.getElementById(f.button)?.classList.add('tu-focus');
+  if (f.line) {
+    const line = shown().players[ME].protocols.findIndex(p => p.name === f.line);
+    const cls = f.face === 'up' ? 'place-faceup' : 'place-facedown';
+    document.querySelector('#playChoices section[data-side="0"][data-line="' + line + '"] .' + cls)?.classList.add('tu-focus');
+  }
 }
 
 function retryPuzzle() {
@@ -1264,6 +1337,7 @@ function select(uid) {
     board.setSelected(card, true, 0xffd86a);      // 選んだ札は金色に染める
   }
   updatePads();
+  if (tutorial) coachUpdate();
 }
 
 function deselect() { select(null); }
@@ -1302,6 +1376,7 @@ function updatePlayChoices() {
       else { deselect(); showPreview(null); }
     });
   positionPlayChoices();
+  if (tutorial) applyTutorialFocus();
 }
 
 function focusPlayChoice(line, side) {
@@ -1770,6 +1845,7 @@ async function step(action) {
   if (roomMode) { await roomStep(action); return; }
   if (busy) return;
   busy = true;
+  if (tutorial) tutorialPending = true;
   updatePads();
   const prev = shown();
   const before = cur.state;
@@ -1777,6 +1853,7 @@ async function step(action) {
   if (res.error) {
     UI.toast(res.error);
     busy = false;
+    tutorialPending = false;
     return;
   }
   if (!trainingMode && !demoMode && (action.type === 'play' || action.type === 'refresh')) {
@@ -1795,6 +1872,14 @@ async function step(action) {
 /* 選択リクエストをユーザーに聞く。盤面の直接タップを優先し、
    使えない状況ではモーダルにフォールバックする */
 async function askUser(req) {
+  if (!tutorial) return askUserInner(req);
+  tutorialAsk = req.prompt || req.kind;
+  coachUpdate(true);
+  try { return await askUserInner(req); }
+  finally { tutorialAsk = null; coachUpdate(); }
+}
+
+async function askUserInner(req) {
   if (req.kind === 'arrange' && Array.isArray(req.current) && req.current.length === 3) {
     for (let hop = 0; hop < 10; hop++) {
       const picks = await arrangeOnBoard(req);
@@ -2580,8 +2665,13 @@ function refreshHud() {
   syncFacingHint();
 
   const acts = mine && !cur.requests.length ? legalNow() : [];
+  if (tutorial) coachUpdate();
   if (mine && !cur.requests.length) {
-    const playable = new Set(acts.filter(a => a.type === 'play').map(a => a.card));
+    let playable = new Set(acts.filter(a => a.type === 'play').map(a => a.card));
+    /* チュートリアル: 案内しているカードだけ明るくする */
+    if (tutorial && tutorialFocus && tutorialFocus.card) {
+      playable = new Set([...playable].filter(u => st.cards[u] && st.cards[u].def === tutorialFocus.card));
+    }
     board.highlightPlayable(st, Array.from(playable));
   } else {
     board.highlightPlayable(st, []);

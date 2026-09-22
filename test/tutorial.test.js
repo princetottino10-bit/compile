@@ -58,8 +58,29 @@ test('すべてのレッスンの盤面が作れて、自分の手番から始�
     assert.equal(res.state.turn, ME);
     assert.equal(res.state.phase, 'action');
     assert.equal(res.requests.length, 0);
-    assert.ok(lesson.intro.length && lesson.task && lesson.how);
+    assert.ok(lesson.steps.length && lesson.task);
   }
+});
+
+test('案内は「次へ」なしで、選んだカード・求められた選択・待ちの状態から決まる', async () => {
+  const { LESSONS, coachStep } = await loadTu();
+  const c = (o) => ({ sel: null, ask: null, waiting: false, ...o });
+  /* レッスン1: 何も選んでいない → SPEED 1 を選ぶ → 表を押す / 別のカードなら選び直し */
+  assert.equal(coachStep(LESSONS[0], c({})), 0);
+  assert.equal(coachStep(LESSONS[0], c({ sel: 'SPEED_2' })), 1);
+  assert.equal(coachStep(LESSONS[0], c({ sel: 'FIRE_6' })), 2);
+  assert.deepEqual(LESSONS[0].steps[1].focus, { line: 'SPEED', face: 'up' });
+  /* レッスン2: 選んだら「裏」、手番を終えたらコンパイル待ち */
+  assert.equal(coachStep(LESSONS[1], c({ sel: 'SPEED_3' })), 1);
+  assert.equal(coachStep(LESSONS[1], c({ waiting: true })), 2);
+  /* レッスン4: 捨てる選択 → 削除する選択 */
+  assert.equal(coachStep(LESSONS[3], c({ ask: 'discard' })), 3);
+  assert.equal(coachStep(LESSONS[3], c({ ask: 'delete' })), 4);
+  /* レッスンが想定していない選択 (違うカードの効果) を求められたら汎用の案内 (-1) */
+  assert.equal(coachStep(LESSONS[0], c({ ask: 'discard' })), -1);
+  assert.equal(coachStep(LESSONS[3], c({ ask: 'shift' })), -1);
+  /* どのレッスンも先頭の案内は条件なしで出せる */
+  for (const lesson of LESSONS) assert.equal(lesson.steps[0].when, undefined);
 });
 
 test('レッスン1: SPEED 1 を SPEED のラインに表向きで置けばクリア、ほかは失敗', async () => {

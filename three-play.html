@@ -1052,6 +1052,58 @@
   #puzzleBar button{flex:none;padding:7px 12px;border-radius:999px;cursor:pointer;border:1px solid rgba(255,255,255,.2);
     background:transparent;color:var(--ink);font:800 10px/1 system-ui;}
   body.picking #puzzleBar{display:none;}
+  /* ---------- チュートリアル: 上の案内パネル (次へは押さない。操作に合わせて切り替わる) ---------- */
+  #tutorialCoach{position:fixed;left:50%;top:8px;transform:translateX(-50%);z-index:14;display:none;flex-direction:column;gap:6px;
+    width:min(560px,calc(100vw - 2 * (clamp(190px,17vw,240px) + 30px)));padding:10px 14px 11px;border-radius:14px;overflow:hidden;
+    background:linear-gradient(180deg,rgba(10,16,30,.95),rgba(6,10,20,.93));border:1px solid rgba(99,243,255,.45);
+    box-shadow:0 12px 34px rgba(0,0,0,.5),0 0 22px rgba(99,243,255,.12);color:var(--ink);}
+  #tutorialCoach.show{display:flex;animation:tcIn .28s ease-out;}
+  @keyframes tcIn{from{opacity:0;transform:translate(-50%,-8px);}to{opacity:1;transform:translate(-50%,0);}}
+  #tutorialCoach .tc-head{display:flex;align-items:center;gap:8px;min-width:0;}
+  #tutorialCoach .tc-tag{flex:none;padding:3px 8px;border-radius:999px;background:var(--cyan);color:#021318;font:900 9.5px/1.2 system-ui;letter-spacing:.1em;}
+  #tutorialCoach .tc-head b{flex:1;min-width:0;font:800 12.5px/1.3 system-ui;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  #tutorialCoach .tc-retry{flex:none;padding:5px 10px;border-radius:999px;cursor:pointer;border:1px solid rgba(255,255,255,.2);
+    background:transparent;color:var(--dim);font:800 10px/1 system-ui;}
+  #tutorialCoach .tc-retry:hover{color:var(--ink);border-color:var(--cyan);}
+  #tutorialCoach .tc-say{margin:0;font:600 13.5px/1.6 system-ui;color:var(--ink);}
+  #tutorialCoach .tc-say b{color:#ffeab4;font-weight:800;}
+  #tutorialCoach .tc-goal{margin:0;display:flex;gap:8px;align-items:baseline;font:700 11px/1.4 system-ui;color:#bfefff;opacity:.85;}
+  #tutorialCoach .tc-goal span{flex:none;font:900 9px/1 system-ui;letter-spacing:.14em;color:var(--mint);}
+  #tutorialCoach.result{cursor:pointer;}
+  #tutorialCoach .tc-verdict{font:900 15px/1.2 system-ui!important;letter-spacing:.12em;}
+  #tutorialCoach.ok{border-color:rgba(109,255,194,.6);}
+  #tutorialCoach.ok .tc-verdict{color:var(--mint)!important;}
+  #tutorialCoach.ng{border-color:rgba(255,59,157,.55);}
+  #tutorialCoach.ng .tc-verdict{color:var(--pink)!important;}
+  #tutorialCoach .tc-next{margin:0;font:800 11px/1.3 system-ui;color:var(--dim);display:flex;gap:8px;align-items:baseline;}
+  #tutorialCoach .tc-next small{font-weight:600;opacity:.7;}
+  #tutorialCoach .tc-bar{position:absolute;left:0;bottom:0;height:3px;width:100%;transform-origin:left;
+    background:linear-gradient(90deg,var(--cyan),var(--mint));animation:tcBar linear forwards;}
+  #tutorialCoach.ng .tc-bar{background:linear-gradient(90deg,var(--pink),#ffb3d6);}
+  @keyframes tcBar{from{transform:scaleX(0);}to{transform:scaleX(1);}}
+  /* 盤面で選ぶ間は、上の選択の帯や狙うカード (相手の山の上側) と重ならないよう左に寄せる */
+  body.picking #tutorialCoach{left:calc(10px + env(safe-area-inset-left));top:max(36%,200px);transform:none;width:min(290px,32vw);}
+  body.picking #tutorialCoach.show{animation:none;}
+  body.picking #tutorialCoach .tc-goal{display:none;}
+  /* 押す場所を光らせる */
+  .tu-focus{animation:tuPulse 1.1s ease-in-out infinite!important;position:relative;z-index:1;}
+  @keyframes tuPulse{0%,100%{box-shadow:0 0 0 0 rgba(99,243,255,.85),0 0 14px rgba(99,243,255,.5);}
+    50%{box-shadow:0 0 0 7px rgba(99,243,255,0),0 0 26px rgba(99,243,255,.9);}}
+  #playChoices button.tu-focus{border-color:var(--cyan)!important;background:rgba(99,243,255,.28)!important;color:#fff!important;}
+  #btnRefresh.tu-focus{border-color:var(--cyan)!important;color:#fff!important;}
+  @media (prefers-reduced-motion: reduce){
+    .tu-focus{animation:none!important;outline:2px solid var(--cyan);outline-offset:3px;}
+    #tutorialCoach.show{animation:none;}
+    #tutorialCoach .tc-bar{animation:none;transform:scaleX(1);}
+  }
+  @media (orientation:landscape) and (max-height:500px){
+    #tutorialCoach{top:4px;left:calc(8px + env(safe-area-inset-left));transform:none;width:auto;max-width:calc(100vw - 310px);
+      padding:7px 10px 8px;gap:4px;}
+    #tutorialCoach.show{animation:none;}
+    #tutorialCoach .tc-say{font-size:11.5px;line-height:1.5;}
+    #tutorialCoach .tc-goal{display:none;}
+    body.picking #tutorialCoach{top:28%;width:min(250px,34vw);max-width:none;}
+  }
   /* ---------- チュートリアル ---------- */
   .tu-card{width:min(440px,100%);border-color:rgba(99,243,255,.4);}
   /* 説明は上に寄せ、盤面 (説明している場所) が見えるよう暗くしすぎない */
@@ -1384,7 +1436,7 @@
       "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c",
       "./js3d/input.js": "./js3d/input.js?v=d00c8166fa",
       "./js3d/layout.js": "./js3d/layout.js?v=016cb7203e",
-      "./js3d/main.js": "./js3d/main.js?v=7bd9c0fad5",
+      "./js3d/main.js": "./js3d/main.js?v=82981235c1",
       "./js3d/panel.js": "./js3d/panel.js?v=25f5aa57b6",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=a13c858baf",
       "./js3d/prompts.js": "./js3d/prompts.js?v=348dff836d",
@@ -1400,7 +1452,7 @@
       "./js3d/theme.js": "./js3d/theme.js?v=d34b657394",
       "./js3d/title.js": "./js3d/title.js?v=f8ab9bd969",
       "./js3d/training.js": "./js3d/training.js?v=8f9e8ce6d0",
-      "./js3d/tutorial.js": "./js3d/tutorial.js?v=8b1a8e5451",
+      "./js3d/tutorial.js": "./js3d/tutorial.js?v=1954db29c2",
       "./js3d/tween.js": "./js3d/tween.js?v=99b25c0d63",
       "./js3d/ui.js": "./js3d/ui.js?v=56b5e61a06"
     }
@@ -1408,6 +1460,6 @@
   </script>
   <link rel="stylesheet" href="js3d/playchoices.css?v=07b06f8a4b">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=7bd9c0fad5"></script>
+  <script type="module" src="js3d/main.js?v=82981235c1"></script>
 </body>
 </html>
