@@ -923,6 +923,12 @@ function showCardInspector(uid) {
   UI.showCardNote({ title: d.proto + ' ' + d.value, color: d.color, badge, note, rows, place, large: true, persist: true });
 }
 
+/* 発動の拡大表示と触ったときの拡大表示は同じ場所の同じ枠。あとから出たほうに入れ替える */
+function clearPreview() {
+  previewUid = null;
+  document.getElementById('preview')?.classList.remove('show');
+}
+
 function showPreview(uid) {
   const box = document.getElementById('preview');
   if (!box) return;
@@ -950,6 +956,7 @@ function showPreview(uid) {
       previewUid = uid;
       box.innerHTML = '<div class="pv-hidden"><b>FACE DOWN</b>' +
         '<span>非公開のカード</span><span>盤面では値2として扱う</span></div>';
+      UI.hideActivation();
       box.classList.add('show');
       return;
     }
@@ -962,6 +969,7 @@ function showPreview(uid) {
   const url = def && faceImageURL(def);
   if (!url) { box.classList.remove('show'); return; }
   box.innerHTML = '<img alt="" src="' + url + '">';
+  UI.hideActivation();
   box.classList.add('show');
 }
 
@@ -1433,6 +1441,7 @@ async function cueFor(step, st) {
   else if (msg.indexOf('下段') >= 0) zone = 'lower';
   const text = zone ? def[zone] : (def.middle || def.upper || def.lower);
   if (text) {
+    if (!isCompactHandUI()) clearPreview();
     UI.showActivation({
       img: (zone && activationImageURL(def, zone)) || faceImageURL(def),
       text, zone, color: def.color
