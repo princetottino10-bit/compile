@@ -144,7 +144,7 @@ async function boot() {
   FX.createDust(stage, 900);
   panels = createPanels(stage, ME);
   buildPads();
-  stage.onFrame(() => { positionPlayChoices(); trackHandTop(); });
+  stage.onFrame(() => { positionPlayChoices(); trackHandTop(); trackHandRight(); });
   bindInput();
   mark('stage');
 
@@ -844,9 +844,15 @@ function bindInput() {
     else startBgm();
   };
   const logBtn = document.getElementById('btnLog');
-  if (logBtn) logBtn.onclick = () => setLogOpen(!document.getElementById('log')?.classList.contains('open'));
-  /* PC は最初からログを開いておく。スマホは画面が狭いので押したときだけ */
-  setLogOpen(!isCompactHandUI() && !window.matchMedia('(max-height: 500px)').matches);
+  if (logBtn) logBtn.onclick = () => {
+    const open = !document.getElementById('logDock')?.classList.contains('open');
+    setLogOpen(open);
+    try { localStorage.setItem('compileLogOpen', open ? '1' : '0'); } catch (e) { /* private mode */ }
+  };
+  /* 前回サイドバーを開いていたら開いて始める (最初は閉じておき、盤面を広く見せる) */
+  let logWasOpen = false;
+  try { logWasOpen = localStorage.getItem('compileLogOpen') === '1'; } catch (e) { /* private mode */ }
+  setLogOpen(logWasOpen);
   const faceBtn = document.getElementById('btnFace');
   if (faceBtn) faceBtn.onclick = () => { backFacing = !backFacing; updatePads(); syncFacingHint(); };
   const handBtn = document.getElementById('btnHand');
@@ -854,18 +860,16 @@ function bindInput() {
   syncHandDrawerForViewport();
 }
 
+/* ログは右のサイドバー。端のつまみで開閉する */
 function setLogOpen(open) {
+  const dock = document.getElementById('logDock');
   const log = document.getElementById('log');
   const logBtn = document.getElementById('btnLog');
-  if (!log) return;
-  log.classList.toggle('open', open);
+  if (!dock || !log) return;
+  dock.classList.toggle('open', open);
   /* 開いたら一番新しい行を見せる (押した直後に何が起きたか読みたい) */
   if (open) log.scrollTop = log.scrollHeight;
-  if (!logBtn) return;
-  logBtn.classList.toggle('on', open);
-  logBtn.setAttribute('aria-pressed', String(open));
-  /* 縦持ちはログが手札の上に重なるので、閉じ方をはっきり書く */
-  logBtn.textContent = open && isCompactHandUI() ? 'LOGを閉じる' : 'LOG';
+  if (logBtn) logBtn.setAttribute('aria-expanded', String(open));
 }
 
 /* ---------- 拡大プレビュー (余白に固定表示) ---------- */
@@ -1129,6 +1133,31 @@ function trackHandTop() {
   if (px === handGapPx) return;
   handGapPx = px;
   document.documentElement.style.setProperty('--hand-gap', px);
+}
+
+/* リフレッシュは手札の右脇に置く。いちばん右の札の右端を投影し、その少し右へ。
+   手札の枚数で幅が変わるので、枚数が変わるたびに付いていく */
+const handEdgeWorld = new THREE.Vector3();
+let handRightPx = '';
+function trackHandRight() {
+  if (!stage || (handTopTick % 8) !== 1) return;
+  const st = shown();
+  const n = Math.max(1, st ? st.players[ME].hand.length : 1);
+  const was = VIEW.handOpen;
+  VIEW.handOpen = true;
+  let s;
+  try { s = LAYOUT.handSlot(n - 1, n); } finally { VIEW.handOpen = was; }
+  handEdgeWorld.set(s.pos[0] + CARD.w * s.scale / 2, s.pos[1], s.pos[2]);
+  handEdgeWorld.project(stage.camera);
+  const rect = stage.renderer.domElement.getBoundingClientRect();
+  const x = rect.left + (handEdgeWorld.x + 1) * rect.width / 2 + 16;
+  if (!Number.isFinite(x)) return;
+  const btn = document.getElementById('btnRefresh');
+  const w = btn ? btn.offsetWidth : 110;
+  const px = Math.round(Math.max(rect.left + rect.width / 2, Math.min(x, window.innerWidth - w - 14))) + 'px';
+  if (px === handRightPx) return;
+  handRightPx = px;
+  document.documentElement.style.setProperty('--hand-right', px);
 }
 
 const choiceWorld = new THREE.Vector3();
@@ -2199,6 +2228,7 @@ function refreshHud() {
     refreshBtn.hidden = trainingMode;
     const onlyRefresh = acts.length > 0 && acts.every(a => a.type === 'refresh');
     refreshBtn.classList.toggle('urge', onlyRefresh);
+    refreshBtn.classList.toggle('idle', !acts.some(a => a.type === 'refresh'));
     if (!trainingMode && onlyRefresh) UI.setPrompt('プレイできるカードがありません。リフレッシュしてください', 'ask');
   }
   updatePads();
