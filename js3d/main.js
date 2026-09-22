@@ -162,7 +162,7 @@ async function boot() {
   FX.createDust(stage, 900);
   panels = createPanels(stage, ME);
   buildPads();
-  stage.onFrame((dt, t) => { positionPlayChoices(); trackHandTop(); trackHandRight(); if (panels) panels.tick(t); });
+  stage.onFrame((dt, t) => { positionPlayChoices(); trackHandTop(); trackHandRight(); trackPileCounts(); if (panels) panels.tick(t); });
   /* 設定 (演出の速さ・音量) を反映し、変わったらすぐ当てる */
   onSettings((s) => { TW.setSpeed(s.speed); setSfxVolume(s.sfx); });
   bindInput();
@@ -1133,7 +1133,11 @@ function bindInput() {
   const faceBtn = document.getElementById('btnFace');
   if (faceBtn) faceBtn.onclick = () => { backFacing = !backFacing; updatePads(); syncFacingHint(); };
   const handBtn = document.getElementById('btnHand');
-  if (handBtn) handBtn.onclick = () => setHandDrawer(!VIEW.handOpen);
+  if (handBtn) handBtn.onclick = () => {
+    /* ボタンで隠したら、マウスを下へ動かしても勝手に出さない (出すボタンかカード選択で戻す) */
+    handPinnedClosed = VIEW.handOpen;
+    setHandDrawer(!VIEW.handOpen);
+  };
   syncHandDrawerForViewport();
 }
 
@@ -1256,17 +1260,19 @@ function isCompactHandUI() {
   return window.matchMedia('(max-width: 860px) and (orientation: portrait)').matches;
 }
 
+/* 手札を隠す/出すボタンは常に出す (盤面の下側を見たいとき用) */
+let handPinnedClosed = false;
 function syncHandDrawerButton() {
   const button = document.getElementById('btnHand');
   if (!button) return;
-  const compact = isCompactHandUI();
-  button.hidden = !compact;
+  button.hidden = false;
   button.textContent = VIEW.handOpen ? '手札を隠す' : '手札を出す';
   button.setAttribute('aria-expanded', String(VIEW.handOpen));
 }
 
 function setHandDrawer(open, instant = false) {
   VIEW.handOpen = !!open;
+  if (open) handPinnedClosed = false;
   document.body.classList.toggle('hand-tucked', !VIEW.handOpen);
   syncHandDrawerButton();
   const st = shown();
@@ -1296,7 +1302,7 @@ function syncHandDrawerForViewport() {
 }
 
 function updateDesktopHandDrawer(ev) {
-  if (isCompactHandUI() || !stage || selectedUid !== null) return;
+  if (isCompactHandUI() || !stage || selectedUid !== null || handPinnedClosed) return;
   const r = stage.renderer.domElement.getBoundingClientRect();
   const fromBottom = r.bottom - ev.clientY;
   if (!VIEW.handOpen && fromBottom <= 120) setHandDrawer(true);
@@ -1304,6 +1310,7 @@ function updateDesktopHandDrawer(ev) {
 }
 
 function raiseHandCard(uid) {
+  handPinnedClosed = false;
   if (!VIEW.handOpen) setHandDrawer(true);
   const st = shown();
   const i = st.players[ME].hand.indexOf(uid);
@@ -1438,6 +1445,29 @@ function trackHandRight() {
   if (px === handRightPx) return;
   handRightPx = px;
   document.documentElement.style.setProperty('--hand-right', px);
+}
+
+/* 山札・捨て札の枚数の札を、盤面の山のそば (盤の中央寄り) に置く。
+   右上にまとめていた枚数表示の代わり。カメラが動くので数フレームごとに合わせ直す */
+const pileWorld = new THREE.Vector3();
+let pileTick = 0;
+function trackPileCounts() {
+  if (!stage || (pileTick++ % 3)) return;
+  const root = document.getElementById('pileCounts');
+  if (!root) return;
+  const rect = stage.renderer.domElement.getBoundingClientRect();
+  for (const el of root.children) {
+    const side = +el.dataset.side;
+    const p = LAYOUT.pilePos(el.dataset.kind, side, ME, 0);
+    const edge = CARD.h * p.scale / 2 + 0.16;
+    /* 手前の山は奥側 (画面の上)、奥の山は手前側 (画面の下) に置く */
+    pileWorld.set(p.pos[0], 0, p.pos[2] + (side === ME ? -edge : edge));
+    pileWorld.project(stage.camera);
+    const x = rect.left + (pileWorld.x + 1) * rect.width / 2;
+    const y = rect.top + (1 - pileWorld.y) * rect.height / 2;
+    if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+    el.style.transform = 'translate(' + Math.round(x) + 'px,' + Math.round(y) + 'px) translate(-50%,-50%)';
+  }
 }
 
 const choiceWorld = new THREE.Vector3();
@@ -1676,7 +1706,7 @@ function meaningfulSteps(prev, res) {
     const phaseTag = t.st.phase + ':' + t.st.turn;
     if (fp === last && phaseTag !== lastPhase) {
       lastPhase = phaseTag;
-      steps.push({ st: t.st, fp, uid: null, msg: '', cue: pendingCue, acts: [], phaseOnly: true, chain: t.chain });
+      steps.push({ st: t.st, fp, uid: null, msg: '', cue: pendingCue, acts: [], phaseOnly: true, tr: t, chain: t.chain });
       pendingCue = null;
       continue;
     }
@@ -1729,12 +1759,14 @@ async function cueFor(step, st) {
   if (msg.indexOf('中段') >= 0) zone = 'middle';
   else if (msg.indexOf('上段') >= 0) zone = 'upper';
   else if (msg.indexOf('下段') >= 0) zone = 'lower';
-  /* 効果が発動したとき (どの段かが分かるとき) だけ、詳細パネルをそのカードに替えて段を光らせる。
-     プレイや削除などの手では替えない (裏向きでプレイした札が「発動」に見えてしまう) */
+  /* 効果が発動したとき (どの段かが分かるとき) だけ、右上に発動の帯を滑り込ませる (マスターデュエル風)。
+     プレイや削除などの手では出さない (裏向きでプレイした札が「発動」に見えてしまう)。
+     左上の詳細パネルは触ったカードのまま替えない */
   if (zone && card.faceUp && def[zone]) {
-    clearPreview();
-    const o = cardDetail(uid, st) || defDetail(def);
-    UI.showActivation({ ...o, fire: zone, transient: isCompactHandUI() });
+    UI.showFxBanner({
+      name: def.proto + ' ' + def.value, color: def.color,
+      zone, text: def[zone], mine: card.owner === ME
+    }, 2800 / settings().speed);
   }
   await board.pulse(uid, def.color, 380);
 }
@@ -1764,8 +1796,30 @@ function chainLinksAt(t, action) {
   });
 }
 
+/* ログは演出の進みに合わせて1行ずつ書き足す (手の解決が終わるまで待たない)。
+   ログの行は、途中経過 (trace) のうち文のあるコマと順番どおりに対応している。
+   選択を挟むとエンジンは手を頭から再実行した記録を返すので、書き足し済みの行と先頭から比べて新しい行だけ足す */
+let logShown = [];
+const logText = (l) => (typeof l === 'string' ? l : (l && l.msg) || '');
+function logUpTo(res, traceIdx) {
+  const lines = res.log || [];
+  let target = lines.length;
+  if (Number.isFinite(traceIdx) && Array.isArray(res.trace)) {
+    let n = 0;
+    for (let i = 0; i <= traceIdx && i < res.trace.length; i++) if (res.trace[i] && res.trace[i].msg) n++;
+    target = Math.min(n, lines.length);
+  }
+  let same = 0;
+  while (same < logShown.length && same < lines.length && logText(logShown[same]) === logText(lines[same])) same++;
+  if (target > same) UI.pushLog(lines.slice(same, target));
+  logShown = lines.slice(0, Math.max(target, same));
+}
+
 async function replayResolution(prev, res, action) {
   const steps = meaningfulSteps(prev, res);
+  /* オンラインは版ごとに届いたログをまとめて出す (roomApplyView) */
+  const liveLog = !roomMode && Array.isArray(res.log);
+  const logStep = (step) => { if (liveLog && step.tr) logUpTo(res, res.trace.indexOf(step.tr)); };
   const final = shown();
   UI.hideChain();
 
@@ -1799,6 +1853,7 @@ async function replayResolution(prev, res, action) {
     const n = links.length >= 2 ? links.length : 0;
     const delta = n - chainShown;
     chainShown = n;
+    if (delta > 0) sfx('chain', n);     // チェーンがつながった
     return delta;
   };
 
@@ -1807,6 +1862,7 @@ async function replayResolution(prev, res, action) {
   for (const step of use) {
     /* フェイズだけが進むコマは、絵が同じなので合図を出して次へ進む。
        この形なら「開始フェイズ → 開始効果」の順に見える。 */
+    logStep(step);
     if (step.phaseOnly) {
       await markPhase(step.st);
       await checkAnnounce(step.st);
@@ -1828,6 +1884,11 @@ async function replayResolution(prev, res, action) {
     await checkAnnounce(step.st);
     from = step.st;
     first = false;
+  }
+  /* 残りの行 (間引いたコマの分) を書き足す。手を解決し終えたら、次の手のために覚えを捨てる */
+  if (liveLog) {
+    logUpTo(res, Infinity);
+    if (!res.requests || !res.requests.length) logShown = [];
   }
   /* 選択の途中で止まっているなら、どの効果の途中かを残したまま聞く */
   const lastTr = res.trace && res.trace.length ? res.trace[res.trace.length - 1] : null;
@@ -1860,7 +1921,6 @@ async function step(action) {
     gameHistory.push({ st: before, action });
   }
   cur = res;
-  if (!res.requests.length) UI.pushLog(res.log);
   await replayResolution(prev, res, action);
   refreshHud();
   busy = false;
@@ -2317,12 +2377,15 @@ function arrangeOnBoard(req) {
             (single ? '入れ替える2つをタップ' : '2つタップで入れ替え。よければ確定') +
           '</div>' +
           '<div class="arr-btns">' +
+            /* 帯が自分の山に重なるので、目ボタンで隠して盤面を見られるようにする (他の帯と同じ) */
+            PEEK_BTN +
             '<button type="button" class="arr-btn ghost" id="arrList">一覧で選ぶ</button>' +
             '<button type="button" class="arr-btn" id="arrReset">やり直し</button>' +
             (single ? '' : '<button type="button" class="arr-btn ok" id="arrOk"' + (isIdentity ? ' disabled' : '') + '>確定</button>') +
           '</div>' +
         '</div>';
       bindSelectHead(ov, showCardNoteFor);
+      bindPeek(ov.querySelector('.arr-bar'));
 
       ov.querySelectorAll('.arr-chip').forEach((b) => {
         b.onclick = () => {
@@ -2369,7 +2432,6 @@ async function drainRequests() {
       : { type: 'choose', id: req.id, picks });
     if (res.error) { UI.toast(res.error); busy = false; continue; }   // 再質問へ
     cur = res;
-    if (!res.requests.length) UI.pushLog(res.log);
     await replayResolution(prev, res, null);
     busy = false;
     refreshHud();
@@ -2647,21 +2709,15 @@ function refreshHud() {
     });
   }
   UI.renderLines(rows);
-  UI.renderProgress(
-    st.players[ME].protocols.filter(p => p.compiled).length,
-    st.players[AI].protocols.filter(p => p.compiled).length
-  );
   panels.update(panelRows(st));
   UI.setCounts(
-    { deck: st.players[ME].deck.length, trash: st.players[ME].trash.length, hand: st.players[ME].hand.length },
-    { deck: st.players[AI].deck.length, trash: st.players[AI].trash.length, hand: st.players[AI].hand.length }
+    { deck: st.players[ME].deck.length, trash: st.players[ME].trash.length },
+    { deck: st.players[AI].deck.length, trash: st.players[AI].trash.length }
   );
   const mine = st.turn === ME && st.winner === null;
   const oppName = roomMode && roomRm && roomRm.names ? (roomRm.names[1 - roomRm.side] || '相手') : '相手';
   UI.setTurnBadge(trainingMode ? 'TRAINING' :
     (st.winner !== null ? '決着' : (mine ? 'あなたのターン' : oppName + 'のターン')), mine || trainingMode);
-  const oppLabel = document.querySelector('#oppCounts div:first-child');
-  if (oppLabel) oppLabel.textContent = roomMode ? oppName : 'OPPONENT';
   syncFacingHint();
 
   const acts = mine && !cur.requests.length ? legalNow() : [];

@@ -4,7 +4,6 @@
  * ========================================================================= */
 
 import { selectHead, bindSelectHead, optionBody, choiceLabel } from './selectui.js';
-import { svgIcon } from './icons.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -54,21 +53,10 @@ export function renderLines(rows) {
   )).join('');
 }
 
-/* コンパイル進捗 (●●○) */
-export function renderProgress(mineDone, oppDone) {
-  const set = (id, n) => {
-    const e = $(id);
-    if (!e) return;
-    e.innerHTML = [0, 1, 2].map(i => '<i class="' + (i < n ? 'on' : '') + '"></i>').join('');
-  };
-  set('#meProgress', mineDone);
-  set('#oppProgress', oppDone);
-}
-
 export function setCounts(me, opp) {
   const set = (id, v) => { const e = $(id); if (e) e.textContent = v; };
-  set('#meDeck', me.deck); set('#meTrash', me.trash); set('#meHand', me.hand);
-  set('#oppDeck', opp.deck); set('#oppTrash', opp.trash); set('#oppHand', opp.hand);
+  set('#meDeck', me.deck); set('#meTrash', me.trash);
+  set('#oppDeck', opp.deck); set('#oppTrash', opp.trash);
 }
 
 /* ログの整形。カード名を実際の表記へ直し、触れるようにする。
@@ -428,8 +416,6 @@ export function turnCutIn(mine) {
   }, 1250));
 }
 
-/* 効果発動の帯 (カード名 + 効果テキスト) */
-let fxTimer = null;
 /* -------------------------------------------------------------------------
  * カードの詳細パネル (マスターデュエル式)
  *   最後に触ったカード・発動したカードを左上に出したままにする (あとから来たほうに入れ替わる)。
@@ -493,9 +479,45 @@ export function hideCardPanel() {
   el.classList.remove('show', 'firing');
 }
 
-/* 効果の発動: 詳細パネルに出し、発動した段を光らせる */
-export function showActivation(o) {
-  showCardPanel(o, { fire: o.fire, transient: o.transient });
+/* -------------------------------------------------------------------------
+ * 効果の発動 (マスターデュエル風): 右上に帯が滑り込み、発動した段の文を出す。
+ *   少しで右へ滑って消える。続けて発動したら、新しいほうに差し替える。
+ *   左上の詳細パネル (触ったカード) は替えない。
+ *   o: { name, color, zone: 'upper'|'middle'|'lower', text, mine }
+ * ------------------------------------------------------------------------- */
+const FX_ZONE = { upper: '▲ 上段', middle: '◆ 中段', lower: '▼ 下段' };
+let fxBannerTimer = null;
+export function showFxBanner(o, ms) {
+  let el = $('#fxBanner');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'fxBanner';
+    el.setAttribute('role', 'status');
+    el.setAttribute('aria-live', 'polite');
+    document.body.appendChild(el);
+  }
+  clearTimeout(fxBannerTimer);
+  el.style.setProperty('--pc', o.color || '#63f3ff');
+  el.innerHTML =
+    '<div class="fx-body">' +
+      '<div class="fx-head"><b>' + o.name + '</b><span class="fx-tag">発動</span>' +
+        '<span class="fx-who ' + (o.mine ? 'me' : 'opp') + '">' + (o.mine ? 'あなた' : '相手') + '</span></div>' +
+      '<p><span class="fx-zone">' + (FX_ZONE[o.zone] || '') + '</span>' + o.text + '</p>' +
+    '</div>' +
+    '<i class="fx-sweep"></i>';
+  /* 毎回滑り込ませ直す (続けて発動しても、新しい発動だと分かるように) */
+  el.classList.remove('show', 'out');
+  void el.offsetWidth;
+  el.classList.add('show');
+  fxBannerTimer = setTimeout(hideFxBanner, ms || 2800);
+}
+
+export function hideFxBanner() {
+  const el = $('#fxBanner');
+  clearTimeout(fxBannerTimer);
+  if (!el || !el.classList.contains('show')) return;
+  el.classList.add('out');
+  fxBannerTimer = setTimeout(() => el.classList.remove('show', 'out'), 320);
 }
 
 /* 効果の途中で別の効果が割り込んだときの「処理中の効果の山」。
@@ -524,6 +546,23 @@ export function showChain(links) {
       + '<span class="ch-name">' + k.name + '<small>' + (CHAIN_ZONE[k.zone] || '') + '</small></span>'
       + '</div>').join('');
   el.classList.add('show');
+  if (grew) chainBurst(el, el.querySelector('.ch-link.enter'), links.length);
+}
+
+/* チェーンがつながった瞬間: 積まれたカードの上に「CHAIN n」を大きく一瞬出す。
+   チェーン表示の中 (position:fixed の箱) に絶対配置で置き、カードの配置 (offset*) から中心を求める。
+   カードは滑り込み中 (transform 付き) なので、画面座標ではなく変形を含まない配置を使う */
+function chainBurst(root, link, n) {
+  const card = link && link.querySelector('.ch-card');
+  if (!card) return;
+  const b = document.createElement('div');
+  b.className = 'ch-burst';
+  b.setAttribute('aria-hidden', 'true');
+  b.innerHTML = '<small>CHAIN</small><b>' + n + '</b>';
+  b.style.left = Math.round(link.offsetLeft + card.offsetLeft + card.offsetWidth / 2) + 'px';
+  b.style.top = Math.round(link.offsetTop + card.offsetTop + card.offsetHeight / 2) + 'px';
+  root.appendChild(b);
+  setTimeout(() => b.remove(), 1200);
 }
 
 export function hideChain() {
@@ -537,30 +576,6 @@ export function hideActivation() {
   const el = $('#preview');
   clearTimeout(fireTimer);
   if (el) el.classList.remove('firing');
-}
-
-const ZONE_CHIP = {
-  upper: ['▲ 上段・常在', 'rgba(150,200,255,.95)'],
-  middle: ['◆ 中段・即時', null],
-  lower: ['▼ 下段・補助', 'rgba(190,206,222,.95)']
-};
-
-export function showEffect(name, text, color, effectTypes, zone) {
-  const el = $('#fxBanner');
-  if (!el) return;
-  if (!name) { el.classList.remove('show'); return; }
-  const accent = color || '#63f3ff';
-  el.style.setProperty('--accent', accent);
-  const icons = (effectTypes || []).slice(0, 3).map(t => svgIcon(t, accent, 15)).join('');
-  const chip = zone && ZONE_CHIP[zone]
-    ? '<span class="fx-zone" style="' + (ZONE_CHIP[zone][1] ? 'color:' + ZONE_CHIP[zone][1] : '') + '">'
-      + ZONE_CHIP[zone][0] + '</span>'
-    : '';
-  el.innerHTML = '<span class="fx-name">' + (icons ? icons + ' ' : '') + name + '</span>' + chip +
-    '<span class="fx-text">' + (text || '') + '</span>';
-  el.classList.add('show');
-  clearTimeout(fxTimer);
-  fxTimer = setTimeout(() => el.classList.remove('show'), 3400);
 }
 
 /* 手札公開の帯: 公開されたカードを並べて見せる (タップか6秒で閉じる) */

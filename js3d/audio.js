@@ -253,6 +253,20 @@ const SOUNDS = {
     }
   },
 
+  /* チェーンがつながった: 金属の打音 + つながるたびに高くなる上昇音 (n = チェーンの長さ) */
+  chain(n) {
+    const k = Math.max(2, Math.min(6, n || 2)) - 2;
+    const up = Math.pow(1.12, k);
+    sample(['impactMetal_002', 'impactMetal_004'], { vol: 0.34, rate: 0.9 + k * 0.08, verb: 0.35 });
+    noise({ freq: 600, end: 4200, dur: 0.28, vol: 0.09, q: 2.2, attack: 0.01, verb: 0.3 });
+    [0, 4, 7].forEach((semi, i) => {
+      const f = 587 * up * Math.pow(2, semi / 12);
+      tone({ freq: f, dur: 0.22, type: 'triangle', vol: 0.11, delay: 0.04 + i * 0.055, verb: 0.35 });
+      tone({ freq: f * 2, dur: 0.18, type: 'sine', vol: 0.035, delay: 0.04 + i * 0.055, verb: 0.35 });
+    });
+    tone({ freq: 587 * up * 2, dur: 0.6, type: 'sine', vol: 0.05, delay: 0.2, verb: 0.5 });
+  },
+
   /* 効果発動: 電気の立ち上がり + 澄んだ2音 */
   effect() {
     sample(['forceField_000', 'forceField_002'], { vol: 0.16, rate: 1.2, verb: 0.3 });
@@ -306,12 +320,12 @@ const SOUNDS = {
   }
 };
 
-/* 名前で再生。未解錠・ミュート・未知名は無視 */
-export function sfx(name) {
+/* 名前で再生。未解錠・ミュート・未知名は無視。arg は音ごとの引数 (chain の長さ等) */
+export function sfx(name, arg) {
   if (!actx || muted || actx.state !== 'running') return;
   const fn = SOUNDS[name];
   if (fn) {
-    try { fn(); } catch (e) { /* 音は落としてもゲームは止めない */ }
+    try { fn(arg); } catch (e) { /* 音は落としてもゲームは止めない */ }
   }
 }
 

@@ -62,11 +62,19 @@
   .lane-opp.done{background:rgba(255,59,157,.9);color:#22040f;}
   .lane-opp.done b{color:#22040f;}
 
-  /* コンパイル進捗 (●●○) */
-  .progress{display:flex;gap:4px;margin-top:3px;}
-  .progress i{width:16px;height:4px;border-radius:2px;background:rgba(255,255,255,.14);}
-  #meProgress i.on{background:var(--mint);box-shadow:0 0 9px var(--mint);}
-  #oppProgress i.on{background:var(--pink);box-shadow:0 0 9px var(--pink);}
+  /* 山札・捨て札の枚数 (盤面の山のそば) */
+  #pileCounts{position:fixed;inset:0;z-index:9;pointer-events:none;}
+  .pile-count{position:absolute;left:0;top:0;display:inline-flex;align-items:baseline;gap:5px;white-space:nowrap;
+    padding:3px 9px;border-radius:999px;background:rgba(5,8,16,.72);border:1px solid rgba(255,255,255,.14);
+    font:700 10px/1.3 system-ui;letter-spacing:.06em;color:var(--dim);will-change:transform;}
+  .pile-count b{font:900 13px/1 system-ui;color:var(--ink);font-variant-numeric:tabular-nums;}
+  .pile-count.me{border-color:rgba(109,255,194,.35);}
+  .pile-count.opp{border-color:rgba(255,59,157,.35);}
+  body.pregame #pileCounts{display:none;}
+  @media (orientation:landscape) and (max-height:500px){
+    .pile-count{padding:2px 7px;font-size:9px;}
+    .pile-count b{font-size:11px;}
+  }
   .lane-bar{position:relative;height:4px;margin:5px 0;border-radius:3px;background:rgba(255,255,255,.07);overflow:hidden;}
   .lane-bar i,.lane-bar u{position:absolute;top:0;height:2px;border-radius:2px;transition:width .45s cubic-bezier(.16,1,.3,1);}
   .lane-bar i{bottom:0;top:auto;background:var(--mint);box-shadow:0 0 9px var(--mint);}
@@ -74,18 +82,9 @@
   .lane.done-me{border-color:rgba(109,255,194,.5);box-shadow:0 0 22px rgba(109,255,194,.13);}
   .lane.done-opp{border-color:rgba(255,59,157,.5);box-shadow:0 0 22px rgba(255,59,157,.13);}
 
-  /* ---------- 左右のカウンタ ---------- */
-  .counts{position:fixed;z-index:10;display:flex;flex-direction:column;gap:5px;
-    padding:9px 11px;border-radius:11px;background:rgba(5,8,16,.66);border:1px solid var(--edge);
-    backdrop-filter:blur(12px);font:700 9px/1.5 system-ui;letter-spacing:.1em;color:var(--dim);pointer-events:none;}
-  .counts b{color:var(--ink);font-size:12px;margin-left:6px;}
-  /* 右上に「相手 / 自分」の順でまとめる (右下は山札と重なる) */
-  #oppCounts{right:calc(14px + env(safe-area-inset-right));top:52px;}
-  #meCounts{right:calc(14px + env(safe-area-inset-right));top:126px;}
-
   /* ---------- 操作ボタン ----------
      手札の前には置かない。MENU と音は最上部のバー、ログは右のサイドバー、
-     リフレッシュは手札の横。ここには縦持ちの「手札を隠す」だけが残る */
+     リフレッシュは手札の横。ここには「手札を隠す/出す」だけが残る (盤面の下側を見るとき用) */
   #dock{position:fixed;left:14px;bottom:14px;z-index:12;display:flex;gap:6px;align-items:center;}
   .btn{width:104px;min-height:38px;padding:0 10px;border-radius:999px;cursor:pointer;
     border:1px solid rgba(99,243,255,.28);background:rgba(8,12,22,.86);color:var(--ink);
@@ -207,20 +206,6 @@
     66%{opacity:1}100%{opacity:0;transform:translateY(-50%) scale(1.03)}}
   @keyframes tcSub{0%{opacity:0}30%{opacity:1}66%{opacity:1}100%{opacity:0}}
 
-  /* ---------- 効果発動バナー ---------- */
-  #fxBanner{position:fixed;left:50%;top:118px;transform:translateX(-50%) translateY(-8px);z-index:20;
-    display:flex;align-items:center;gap:12px;padding:9px 20px 9px 14px;border-radius:999px;
-    background:linear-gradient(100deg,rgba(8,11,22,.95),rgba(12,16,30,.9));
-    border:1px solid var(--accent,#63f3ff);box-shadow:0 0 34px rgba(99,243,255,.2),0 14px 40px rgba(0,0,0,.5);
-    opacity:0;pointer-events:none;transition:opacity .22s,transform .22s;max-width:min(660px,86vw);}
-  #fxBanner.show{opacity:1;transform:translateX(-50%) translateY(0);}
-  #fxBanner .fx-name{font:900 12px/1 system-ui;letter-spacing:.16em;color:var(--accent,#63f3ff);
-    white-space:nowrap;padding-right:12px;border-right:1px solid rgba(255,255,255,.14);}
-  #fxBanner .fx-zone{font:800 10px/1 system-ui;letter-spacing:.1em;color:var(--accent,#63f3ff);
-    padding:3px 7px;border:1px solid currentColor;border-radius:6px;opacity:.95;}
-  #fxBanner .fx-text{font:600 12px/1.4 system-ui;color:var(--ink);overflow:hidden;
-    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
-
   /* 宣言の演出 (LUCK 0 / LUCK 3): 画面中央で宣言と当否を見せる */
   #declareCut{position:fixed;inset:0;z-index:42;display:flex;align-items:center;justify-content:center;
     pointer-events:none;opacity:0;transition:opacity .18s;}
@@ -296,14 +281,63 @@
      マスターデュエルのチェーンのように、処理中の効果を番号付きで積む。
      1番が一番下、いま解決中が一番上。PC は右端、スマホは上部に横並び */
   /* 左は拡大表示と選択パネルが使うので、右端 (LOG のつまみより内側) に積む */
+  /* ---------- 効果の発動 (マスターデュエル風): 右上に滑り込む帯 ---------- */
+  #fxBanner{position:fixed;right:calc(8px + env(safe-area-inset-right));top:44px;z-index:27;display:none;
+    width:min(300px,34vw);padding:7px 11px 8px 12px;border-radius:10px;overflow:hidden;pointer-events:none;
+    background:linear-gradient(100deg,color-mix(in srgb,var(--pc) 26%,rgba(8,12,24,.97)) 0%,rgba(8,12,24,.95) 45%);
+    border:1px solid color-mix(in srgb,var(--pc) 55%,transparent);border-left:3px solid var(--pc);
+    box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 22px color-mix(in srgb,var(--pc) 28%,transparent);}
+  #fxBanner.show{display:block;animation:fxIn .4s cubic-bezier(.16,1,.3,1) both;}
+  #fxBanner.out{animation:fxOut .28s ease-in both;}
+  @keyframes fxIn{from{transform:translateX(calc(100% + 30px));opacity:.3;}to{transform:none;opacity:1;}}
+  @keyframes fxOut{from{transform:none;opacity:1;}to{transform:translateX(calc(100% + 30px));opacity:0;}}
+  #fxBanner .fx-body{display:flex;flex-direction:column;gap:4px;min-width:0;}
+  #fxBanner .fx-head{display:flex;align-items:center;gap:7px;}
+  #fxBanner .fx-head b{font:900 12.5px/1.1 system-ui;letter-spacing:.08em;color:#fff;white-space:nowrap;}
+  #fxBanner .fx-tag{flex:none;padding:1px 7px;border-radius:999px;background:var(--gold);color:#1a1405;font:900 9.5px/1.4 system-ui;letter-spacing:.08em;}
+  #fxBanner .fx-who{margin-left:auto;flex:none;font:800 9.5px/1 system-ui;letter-spacing:.12em;}
+  #fxBanner .fx-who.me{color:var(--mint);}
+  #fxBanner .fx-who.opp{color:var(--pink);}
+  #fxBanner p{margin:0;font:600 11.5px/1.5 system-ui;color:var(--ink);}
+  #fxBanner .fx-zone{margin-right:5px;font:800 9.5px/1 system-ui;letter-spacing:.06em;color:var(--gold);}
+  #fxBanner .fx-sweep{position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.15) 50%,transparent 70%);transform:translateX(-100%);}
+  #fxBanner.show .fx-sweep{animation:fxSweep .8s .2s ease-out both;}
+  @keyframes fxSweep{from{transform:translateX(-100%);}to{transform:translateX(100%);}}
+  @media (max-width:860px) and (orientation:portrait){
+    #fxBanner{width:min(300px,78vw);top:48px;}
+  }
+  @media (orientation:landscape) and (max-height:500px){
+    #fxBanner{top:38px;width:min(260px,34vw);padding:5px 9px 6px 10px;}
+    #fxBanner .fx-head b{font-size:11px;}
+    #fxBanner p{font-size:10.5px;line-height:1.4;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    #fxBanner.show,#fxBanner.out{animation:none;}
+    #fxBanner.show .fx-sweep{animation:none;opacity:0;}
+  }
   #chainUi{position:fixed;right:calc(2vw + 34px + env(safe-area-inset-right));top:50%;transform:translateY(-50%);z-index:24;
     display:none;flex-direction:column-reverse;gap:10px;pointer-events:none;}
   #chainUi.show{display:flex;}
   #chainUi .ch-link{position:relative;display:flex;align-items:center;gap:10px;opacity:.62;
     transition:opacity .2s,transform .2s;}
   #chainUi .ch-link.now{opacity:1;transform:translateX(-6px);}
-  #chainUi .ch-link.enter{animation:chIn .32s cubic-bezier(.16,1,.3,1);}
-  @keyframes chIn{from{opacity:0;transform:translateX(30px) scale(.9);}to{opacity:1;transform:translateX(-6px);}}
+  /* つながった瞬間は、弾むように入れて強く光らせる */
+  #chainUi .ch-link.enter{animation:chIn .5s cubic-bezier(.22,1.45,.36,1);}
+  @keyframes chIn{0%{opacity:0;transform:translateX(70px) scale(1.3);filter:brightness(2.4);}
+    55%{opacity:1;filter:brightness(1.5);}100%{opacity:1;transform:translateX(-6px);filter:none;}}
+  #chainUi .ch-link.enter .ch-card{animation:chGlow .95s ease-out;}
+  @keyframes chGlow{0%{box-shadow:0 0 0 0 var(--pc),0 0 70px var(--pc);}
+    100%{box-shadow:0 0 0 16px transparent,0 0 22px color-mix(in srgb,var(--pc) 60%,transparent),0 8px 22px rgba(0,0,0,.6);}}
+  #chainUi .ch-burst{position:absolute;z-index:2;pointer-events:none;display:flex;flex-direction:column;align-items:center;
+    transform:translate(-50%,-50%);font-style:italic;text-shadow:0 0 18px rgba(239,208,108,.9),0 2px 8px rgba(0,0,0,.8);
+    animation:chBurst 1.05s cubic-bezier(.16,1,.3,1) forwards;}
+  #chainUi .ch-burst small{font:900 11px/1 system-ui;letter-spacing:.3em;color:#fff;}
+  #chainUi .ch-burst b{font:900 46px/1 system-ui;color:var(--gold);-webkit-text-stroke:1px rgba(0,0,0,.35);}
+  @keyframes chBurst{0%{opacity:0;transform:translate(-50%,-50%) scale(2.2);}
+    18%{opacity:1;transform:translate(-50%,-50%) scale(1);}
+    70%{opacity:1;transform:translate(-50%,-50%) scale(1.04);}
+    100%{opacity:0;transform:translate(-50%,-60%) scale(1.08);}}
   /* 鎖: 上下のカードを細い線でつなぐ */
   #chainUi .ch-link + .ch-link::after{content:"";position:absolute;left:30px;bottom:100%;width:3px;height:10px;
     background:linear-gradient(180deg,var(--pc),rgba(255,255,255,.25));border-radius:2px;}
@@ -322,14 +356,19 @@
     #chainUi{right:auto;left:8px;top:104px;transform:none;flex-direction:row;gap:14px;}
     #chainUi .ch-link{flex-direction:column;gap:4px;}
     #chainUi .ch-link.now{transform:translateY(4px);}
-    @keyframes chIn{from{opacity:0;transform:translateY(-16px) scale(.9);}to{opacity:1;transform:translateY(4px);}}
+    @keyframes chIn{0%{opacity:0;transform:translateY(-34px) scale(1.3);filter:brightness(2.4);}
+      55%{opacity:1;filter:brightness(1.5);}100%{opacity:1;transform:translateY(4px);filter:none;}}
+    #chainUi .ch-burst b{font-size:34px;}
     #chainUi .ch-link + .ch-link::after{left:auto;right:100%;bottom:auto;top:26px;width:14px;height:3px;}
     #chainUi .ch-card{width:44px;}
     #chainUi .ch-no{font-size:22px;left:-6px;bottom:18px;}
     #chainUi .ch-name{font-size:9px;align-items:center;}
     #chainUi .ch-name small{font-size:8px;}
   }
-  @media (prefers-reduced-motion:reduce){ #chainUi .ch-link.enter{animation:none;} }
+  @media (prefers-reduced-motion:reduce){
+    #chainUi .ch-link.enter,#chainUi .ch-link.enter .ch-card{animation:none;}
+    #chainUi .ch-burst{animation:none;opacity:0;}
+  }
 
   /* ---------- 縦持ちのスマホ: 横向きにしてもらう ----------
      スマホは横持ち専用 (PC と同じ UI)。縦向きのタッチ端末では盤面の上に案内を出す */
@@ -743,7 +782,7 @@
   /* デモ中は操作系を隠す */
   body.demo #dock, body.demo #preview, body.demo #btnRefresh{display:none;}
   /* タイトル・モード選択の間は対局中のボタンを出さない (裏から透けていた) */
-  body.pregame #dock, body.pregame #topbar, body.pregame #lines, body.pregame .counts,
+  body.pregame #dock, body.pregame #topbar, body.pregame #lines,
   body.pregame #logDock, body.pregame #btnRefresh{display:none!important;}
   body.demo #brand::after{content:"DEMO";margin-left:10px;padding:3px 9px;border-radius:999px;
     font-size:9px;letter-spacing:.2em;color:#04120c;background:var(--mint);}
@@ -1232,12 +1271,6 @@
     #brand{display:none;}
     #logDock{top:100px;bottom:66px;width:min(300px,80vw);}
     #btnLog{top:12px;}
-    /* 枚数は見えないと困る。上部に小さく1行ずつ出す (自分=下、相手=上) */
-    #oppCounts{top:52px;right:8px;left:auto;bottom:auto;}
-    #meCounts{top:76px;right:8px;left:auto;bottom:auto;}
-    #meCounts,#oppCounts{flex-direction:row;gap:8px;padding:4px 8px;border-radius:8px;
-      font-size:8px;letter-spacing:.06em;background:rgba(5,8,16,.74);}
-    #meCounts b,#oppCounts b{font-size:10px;margin-left:3px;}
     /* 下部の操作は指の届く高さに。手札を隠すは左、リフレッシュは右 */
     #dock{left:10px;bottom:12px;}
     #dock .btn{min-height:38px;padding:0 14px;font-size:9px;letter-spacing:.04em;}
@@ -1251,10 +1284,6 @@
     #topbar{justify-content:flex-end;padding:8px calc(10px + env(safe-area-inset-right)) 8px calc(10px + env(safe-area-inset-left));}
     #btnRefresh{min-height:32px;padding:0 13px;font-size:10px;}
     .lane{width:120px;}
-    .counts{padding:5px 8px;gap:2px;font-size:8px;}
-    .counts b{font-size:10px;margin-left:3px;}
-    #oppCounts{top:48px;right:calc(10px + env(safe-area-inset-right));}
-    #meCounts{top:112px;right:calc(10px + env(safe-area-inset-right));bottom:auto;}
     #logDock{top:40px;bottom:52px;width:min(210px,31vw);}
     #log{font-size:10px;}
     #btnLog{top:132px;height:70px;}
@@ -1354,15 +1383,12 @@
 
   <div id="prompt" class="hidden"></div>
 
-  <div id="oppCounts" class="counts">
-    <div>OPPONENT</div>
-    <div>DECK<b id="oppDeck">0</b> TRASH<b id="oppTrash">0</b> HAND<b id="oppHand">0</b></div>
-    <div class="progress" id="oppProgress"></div>
-  </div>
-  <div id="meCounts" class="counts">
-    <div>YOU</div>
-    <div>DECK<b id="meDeck">0</b> TRASH<b id="meTrash">0</b> HAND<b id="meHand">0</b></div>
-    <div class="progress" id="meProgress"></div>
+  <!-- 山札・捨て札の枚数: 盤面の山のそばに出す (位置は main.js が山から計算) -->
+  <div id="pileCounts" aria-label="山札と捨て札の枚数">
+    <span class="pile-count me" data-kind="deck" data-side="0">山札<b id="meDeck">0</b></span>
+    <span class="pile-count me" data-kind="trash" data-side="0">捨て札<b id="meTrash">0</b></span>
+    <span class="pile-count opp" data-kind="deck" data-side="1">山札<b id="oppDeck">0</b></span>
+    <span class="pile-count opp" data-kind="trash" data-side="1">捨て札<b id="oppTrash">0</b></span>
   </div>
 
   <div id="preview"></div>
@@ -1381,7 +1407,7 @@
   <div id="compileCut"></div>
   <div id="turnCut"></div>
   <div id="resultCut"></div>
-  <div id="fxBanner"></div>
+  <div id="fxBanner" role="status" aria-live="polite"></div>
   <div id="effectContext" role="status" aria-live="polite"></div>
 
   <div id="toast"></div>
@@ -1418,7 +1444,7 @@
     <div id="bootBar"><i></i></div>
   </div>
 
-  <script src="engine.js?v=71967062e2"></script>
+  <script src="engine.js?v=f904631ab3"></script>
   <script type="importmap">
   {
     "imports": {
@@ -1426,7 +1452,7 @@
       "three/addons/": "./vendor/jsm/",
       "./vendor/three.module.js": "./vendor/three.module.js?v=985eb92490",
       "./js3d/arena.js": "./js3d/arena.js?v=698f865c22",
-      "./js3d/audio.js": "./js3d/audio.js?v=d58603fae9",
+      "./js3d/audio.js": "./js3d/audio.js?v=1a37ce1073",
       "./js3d/board.js": "./js3d/board.js?v=6ed63caed0",
       "./js3d/card.js": "./js3d/card.js?v=80ddf2419a",
       "./js3d/cardtex.js": "./js3d/cardtex.js?v=58e37f0f36",
@@ -1436,7 +1462,7 @@
       "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c",
       "./js3d/input.js": "./js3d/input.js?v=d00c8166fa",
       "./js3d/layout.js": "./js3d/layout.js?v=016cb7203e",
-      "./js3d/main.js": "./js3d/main.js?v=82981235c1",
+      "./js3d/main.js": "./js3d/main.js?v=ad098ebd9e",
       "./js3d/panel.js": "./js3d/panel.js?v=25f5aa57b6",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=a13c858baf",
       "./js3d/prompts.js": "./js3d/prompts.js?v=348dff836d",
@@ -1454,12 +1480,12 @@
       "./js3d/training.js": "./js3d/training.js?v=8f9e8ce6d0",
       "./js3d/tutorial.js": "./js3d/tutorial.js?v=1954db29c2",
       "./js3d/tween.js": "./js3d/tween.js?v=99b25c0d63",
-      "./js3d/ui.js": "./js3d/ui.js?v=56b5e61a06"
+      "./js3d/ui.js": "./js3d/ui.js?v=4d9e3b2a3f"
     }
   }
   </script>
-  <link rel="stylesheet" href="js3d/playchoices.css?v=07b06f8a4b">
+  <link rel="stylesheet" href="js3d/playchoices.css?v=7ea2c1d813">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=82981235c1"></script>
+  <script type="module" src="js3d/main.js?v=ad098ebd9e"></script>
 </body>
 </html>
