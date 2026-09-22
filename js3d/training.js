@@ -96,9 +96,15 @@ export function mountTrainingTools(defs, handlers) {
         '<div class="tr-foot">' +
           '<button type="button" data-act="undo"' + (m.canUndo ? '' : ' disabled') + '>↶ 1手戻す</button>' +
           '<button type="button" data-act="reset" class="warn">盤面をリセット</button></div>' +
+        '<button type="button" class="tr-share" data-act="share">この盤面を問題として共有</button>' +
       '</div>';
   }
 
+  /* 一覧のカードに触れたら、その効果を詳細パネルに出す */
+  root.addEventListener('pointerover', (ev) => {
+    const t = ev.target.closest && ev.target.closest('[data-uid]');
+    if (t && handlers.peek) handlers.peek(t.dataset.uid);
+  });
   root.addEventListener('click', (ev) => {
     const t = ev.target.closest('button');
     if (!t || !model || t.disabled) return;
@@ -110,6 +116,7 @@ export function mountTrainingTools(defs, handlers) {
     if (act === 'fold') handlers.fold();
     else if (act === 'deselect') handlers.select(null);
     else if (act === 'undo') handlers.undo();
+    else if (act === 'share') handlers.share && handlers.share();
     else if (act === 'reset') handlers.reset();
     else if (act === 'draw') handlers.act({ type: 'trainingDraw', side: model.side });
     else if (act === 'start' || act === 'end') handlers.act({ type: 'trainingPhase', side: model.side, which: act });

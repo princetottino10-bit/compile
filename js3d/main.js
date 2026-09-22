@@ -11,6 +11,7 @@ import { runSetup } from './setup.js';
 import { runTitle } from './title.js';
 import { mountTrainingTools } from './training.js';
 import * as ROOM from './room.js';
+import * as PZ from './puzzle.js';
 import { runRoomLobby } from './roomui.js';
 import { reqText } from './prompts.js';
 import { selectHead, bindSelectHead } from './selectui.js';
@@ -46,6 +47,8 @@ let roomPollTimer = null;
 let handCompactMode = null;
 let roomLoggedVersion = null;
 let trainingMode = false;
+/* 共有された問題を解いている (?puzzle=...)。{ spec, task, goal } */
+let puzzle = null;
 let trainingTools = null;
 /* トレーニングの操作状態: 選択中のカード・表示中の側・効果の有無・置く向き */
 const training = { sel: null, side: 0, effects: true, faceUp: true, collapsed: false, undo: [], protos: null };
@@ -159,6 +162,12 @@ async function boot() {
   let p1 = pick('ai', null);
   /* ?training=1&me=...&ai=... でトレーニング盤面を直接開く (確認用) */
   if (params.get('training') === '1' && p0) { trainingMode = true; p1 = p1 || p0.slice(); }
+  /* 共有された問題: 盤面・課題・クリア条件が URL に入っている */
+  if (params.get('puzzle')) {
+    puzzle = PZ.decodePuzzle(params.get('puzzle'));
+    if (puzzle) { p0 = puzzle.spec.sides[0].protos.slice(); p1 = puzzle.spec.sides[1].protos.slice(); }
+    else UI.toast('問題のリンクが壊れています');
+  }
 
   if (demoMode && !p0) {
     const pool = cards.protocols.map(x => x.name);
@@ -214,7 +223,9 @@ async function boot() {
     for (const id of Object.keys(defIndex)) if (defIndex[id].proto === name) keepIds.push(id);
   }
   pruneFaceCache(keepIds);
-  const res = Engine.newGame({ seed: (Math.random() * 1e9) | 0, p0, p1, first: 0, training: trainingMode });
+  const res = puzzle
+    ? Engine.newPuzzle(puzzle.spec, { seed: 1 })
+    : Engine.newGame({ seed: (Math.random() * 1e9) | 0, p0, p1, first: 0, training: trainingMode });
   cur = res;
   if (trainingMode) training.protos = [p0.slice(), p1.slice()];
   window.__3d = {
@@ -268,6 +279,7 @@ async function boot() {
 
   await stage.home(0);
   refreshHud();
+  if (puzzle) PZ.showPuzzleBar(puzzle, retryPuzzle);
   if (trainingMode) {
     UI.setPrompt('');
     UI.toast('カードを選んで、光っている枠をタップすると置けます', 3200);
@@ -275,6 +287,33 @@ async function boot() {
     await drainRequests();
     await afterTurn();
   }
+}
+
+/* ---------- 問題 (共有された盤面を解く) ----------
+   自分の手番だけを遊ぶ。相手の選択 (効果で相手が選ぶ等) は AI が答えるが、相手の手番は進めない。
+   手番を終えたら、手番を終えた時点 (相手の開始フェイズより前) の盤面でクリア条件を判定する */
+let puzzleJudged = false;
+async function puzzleAfterTurn() {
+  const st = cur && cur.state;
+  if (!st || puzzleJudged) return;
+  if (st.winner === null && st.turn === ME) return;       // まだ自分の手番
+  puzzleJudged = true;
+  let endSt = null;
+  for (const t of (cur.trace || [])) if (t.st && t.st.turn === ME) endSt = t.st;
+  const result = PZ.judgePuzzle(puzzle.goal, endSt || shown(), shown(), ME, totalOf);
+  sfx(result.ok === false ? 'lose' : 'win');
+  UI.setTurnBadge(result.ok === true ? '正解' : result.ok === false ? '不正解' : '手番終了', result.ok !== false);
+  PZ.showPuzzleResult(result, retryPuzzle);
+}
+
+function retryPuzzle() {
+  location.reload();
+}
+
+/* トレーニングの盤面を「問題」として共有する */
+function sharePuzzle() {
+  if (!cur) return;
+  PZ.openShareDialog((task, goal) => PZ.encodePuzzle(shown(), task, goal));
 }
 
 /* ---------- トレーニング: ターン進行なしの検証盤面 ----------
@@ -309,6 +348,8 @@ function trainingSelect(uid) {
   if (uid) {
     training.side = uid.startsWith('p1:') ? 1 : 0;
     sfx('select');
+    /* 選んだカードの効果を詳細パネルで読めるようにする */
+    showTrainingCard(uid);
   }
   board.clearCandidates();
   const obj = uid && board.cards.get(uid);
@@ -317,9 +358,34 @@ function trainingSelect(uid) {
   renderTraining();
 }
 
+/* トレーニングはどちらの札も全部見える。一覧を触ったカードも、盤面のカードと同じく詳細パネルに出す */
+function showTrainingCard(uid) {
+  const c = uid && shown().cards[uid];
+  const d = c && defIndex[c.def];
+  if (!d) return;
+  previewUid = null;
+  UI.showCardPanel(cardDetail(uid) || defDetail(d));
+}
+
 async function trainingStep(action) {
   if (busy || !cur || cur.requests.length) return;
   const withEffects = action.type === 'trainingPlace' || action.type === 'trainingFlip' || action.type === 'trainingMove';
+  /* 置くだけのときは演出なしで、すぐ盤面に反映する */
+  if (!training.effects && (withEffects || action.type === 'trainingDraw')) {
+    const res = Engine.apply(cur.state, { ...action, effects: false });
+    if (res.error) { UI.toast(res.error); return; }
+    training.undo.push(cur);
+    if (training.undo.length > 80) training.undo.shift();
+    cur = res;
+    UI.pushLog(res.log);
+    board.clearCandidates();
+    board.syncInstant(shown());
+    refreshHud();
+    if (isCompactHandUI()) training.collapsed = true;
+    if (action.type === 'trainingPlace' || action.type === 'trainingMove') training.sel = null;
+    trainingSelect(training.sel && shown().cards[training.sel] ? training.sel : null);
+    return;
+  }
   const before = cur;
   training.undo.push(before);
   if (training.undo.length > 80) training.undo.shift();
@@ -354,6 +420,8 @@ function mountTraining() {
     setEffects: (on) => { training.effects = on; renderTraining(); },
     setFaceUp: (up) => { training.faceUp = up; renderTraining(); },
     fold: () => { training.collapsed = !training.collapsed; renderTraining(); },
+    peek: (uid) => showTrainingCard(uid),
+    share: () => sharePuzzle(),
     act: (action) => trainingStep(action),
     undo: () => {
       if (busy || !training.undo.length) return;
@@ -955,7 +1023,8 @@ function defDetail(d, rows) {
 function cardDetail(uid, st = shown()) {
   const card = uid && st && st.cards[uid];
   if (!card) return null;
-  const visible = card.def && (card.faceUp || ((card.knownTo || 0) & (1 << ME)));
+  /* トレーニングは検証用の盤面なので、どちらの裏向きも中身を出す */
+  const visible = card.def && (trainingMode || card.faceUp || ((card.knownTo || 0) & (1 << ME)));
   if (!visible) {
     return { hidden: true, title: '裏向きのカード', proto: '裏向きのカード', value: 2, color: '#8fa8c8',
       badge: '非公開', note: '盤面では値2として扱う', rows: [] };
@@ -2139,6 +2208,7 @@ async function drainRequests() {
 /* AI のターンを回す */
 async function afterTurn() {
   if (roomMode) { await announceTurn(); await roomMaybeFinish(); return; }
+  if (puzzle) { await puzzleAfterTurn(); return; }
   await announceTurn();
   let guardAi = 0;
   while (cur && cur.state.winner === null && (demoMode || cur.state.turn === AI)
