@@ -12,25 +12,47 @@ let muted = false;
 
 export function initAudio() {
   if (actx) {
-    if (actx.state === 'suspended') actx.resume();
+    if (actx.state === 'suspended') actx.resume().catch(() => {});
     return;
   }
   const AC = window.AudioContext || window.webkitAudioContext;
   if (!AC) return;
-  actx = new AC();
-  const comp = actx.createDynamicsCompressor();
-  comp.threshold.value = -18;
-  comp.ratio.value = 6;
-  master = actx.createGain();
-  master.gain.value = 0.42;
-  master.connect(comp);
-  comp.connect(actx.destination);
+  /* 音を作れないブラウザ (アプリ内ブラウザ等) では、例外を出さずに音なしで進める */
+  try {
+    actx = new AC();
+    const comp = actx.createDynamicsCompressor();
+    comp.threshold.value = -18;
+    comp.ratio.value = 6;
+    master = actx.createGain();
+    master.gain.value = 0.42;
+    master.connect(comp);
+    comp.connect(actx.destination);
+    /* 効果音はこのバスを通す (設定の効果音の音量) */
+    sfxBus = actx.createGain();
+    sfxBus.gain.value = sfxLevel;
+    sfxBus.connect(master);
 
-  /* 共有ノイズバッファ (2秒) */
-  const len = actx.sampleRate * 2;
-  noiseBuf = actx.createBuffer(1, len, actx.sampleRate);
-  const data = noiseBuf.getChannelData(0);
-  for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+    /* 共有ノイズバッファ (2秒) */
+    const len = actx.sampleRate * 2;
+    noiseBuf = actx.createBuffer(1, len, actx.sampleRate);
+    const data = noiseBuf.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+  } catch (e) {
+    actx = null; master = null; sfxBus = null;
+  }
+}
+
+/* 音量 (0..100)。効果音は 80、BGM は 60 がこれまでの音量 */
+let sfxBus = null;
+let sfxLevel = 1;
+let bgmLevel = 1;
+export function setSfxVolume(pct) {
+  sfxLevel = Math.max(0, Math.min(1.25, (+pct || 0) / 80));
+  if (sfxBus) sfxBus.gain.setTargetAtTime(sfxLevel, actx.currentTime, 0.05);
+}
+export function setBgmVolume(pct) {
+  bgmLevel = Math.max(0, Math.min(1.7, (+pct || 0) / 60));
+  if (bgm && actx) bgm.bus.gain.setTargetAtTime(0.5 * bgmLevel, actx.currentTime, 0.2);
 }
 
 export function setMuted(v) { muted = !!v; }
@@ -44,7 +66,7 @@ function envGain(t0, vol, attack, dur) {
   g.gain.setValueAtTime(0, t0);
   g.gain.linearRampToValueAtTime(vol, t0 + attack);
   g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-  g.connect(master);
+  g.connect(sfxBus || master);
   return g;
 }
 
@@ -184,7 +206,7 @@ export function startBgm() {
   if (!actx || bgm) return;
   const bus = actx.createGain();
   bus.gain.value = 0.0;
-  bus.gain.linearRampToValueAtTime(0.5, actx.currentTime + 3);
+  bus.gain.linearRampToValueAtTime(0.5 * bgmLevel, actx.currentTime + 3);
   bus.connect(master);
 
   /* うねるローパス */

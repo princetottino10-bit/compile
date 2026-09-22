@@ -73,10 +73,16 @@ export function runTitle(protocols, opts) {
         else finish(button.dataset.mode);
       };
     };
+    /* 先にメニューを出し、音はそのあと (失敗しても進める)。以前は音の初期化が先で、
+       音を作れないブラウザ (アプリ内ブラウザ等) では例外でメニューが出ず、
+       started だけ立って二度と押せなくなっていた */
     const start = () => {
       if (started) return;
-      started = true; initAudio(); sfx('turn');
-      root.querySelector('#ttStart').remove(); showMenu();
+      started = true;
+      const btn = root.querySelector('#ttStart');
+      if (btn) btn.remove();
+      showMenu();
+      try { initAudio(); sfx('turn'); } catch (e) { /* 音なしで続ける */ }
     };
     root.querySelector('#ttStart').onclick = start;
     window.addEventListener('keydown', onKey);
