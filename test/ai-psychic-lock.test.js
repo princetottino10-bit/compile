@@ -279,3 +279,48 @@ test('ロック特化 (スピード③ルート): スピード③が構えてい
     Engine.setAiSpecialist(false);
   }
 });
+
+/* SPEED 3 の終了時の移動 (任意) を最後まで解決する。自分の選択は AI に答えさせる */
+function playAndDrain(st, action) {
+  let res = Engine.apply(st, action);
+  assert.equal(res.error, null);
+  let guard = 0;
+  while (res.requests.length && guard++ < 10) {
+    const req = res.requests[0];
+    res = Engine.apply(res.state, { type: 'choose', id: req.id, picks: Engine.ai.answer(res.state, req) });
+    assert.equal(res.error, null);
+  }
+  return res.state;
+}
+
+test('ロック特化: ①を覆う前のスピード③は、終了時に動かして裏返さない (覆う道具として表のまま残す)', () => {
+  Engine.setAiSpecialist(true, 0, 'psylock');
+  try {
+    const st = Engine.newGame({ p0: ['PSYCHIC', 'DARKNESS', 'SPEED'], p1: ['FIRE', 'WATER', 'LIFE'], seed: 3, first: 0 }).state;
+    setHand(st, 0, ['SPEED_4', 'PSYCHIC_2', 'DARKNESS_3', 'PSYCHIC_5', 'DARKNESS_6']);
+    /* 1ターン目: スピード③を SPEED のラインに表で出す (ロック特化の構え) */
+    const fin = playAndDrain(st, { type: 'play', card: uidOf('SPEED_4', 0), line: 2, faceUp: true });
+    const sp = fin.cards[uidOf('SPEED_4', 0)];
+    assert.equal(sp.faceUp, true, 'スピード③は表のまま');
+    assert.ok(fin.lines[2][0].includes(uidOf('SPEED_4', 0)), 'スピード③は動かさない');
+  } finally {
+    Engine.setAiSpecialist(false);
+  }
+});
+
+test('ロック特化: 表のサイキック①が覆われずにあれば、スピード③の終了時の移動で覆ってロックを完成させる', () => {
+  Engine.setAiSpecialist(true, 0, 'psylock');
+  try {
+    const st = Engine.newGame({ p0: ['PSYCHIC', 'DARKNESS', 'SPEED'], p1: ['METAL', 'LIGHT', 'WATER'], seed: 9, first: 0 }).state;
+    place(st, 'SPEED_4', 0, 2, true);
+    const psy = place(st, 'PSYCHIC_2', 0, 0, true);
+    setHand(st, 0, ['PSYCHIC_4', 'DARKNESS_2']);
+    const fin = playAndDrain(st, { type: 'play', card: uidOf('DARKNESS_2', 0), line: 1, faceUp: false });
+    const stack = fin.lines[0][0];
+    assert.ok(stack.indexOf(psy) >= 0 && stack.indexOf(psy) < stack.length - 1,
+      'サイキック①が覆われている: ' + stack.map(u => fin.cards[u].def).join(','));
+    assert.equal(fin.cards[psy].faceUp, true, '①は表のまま');
+  } finally {
+    Engine.setAiSpecialist(false);
+  }
+});

@@ -3609,6 +3609,31 @@ function aiLockSpecialistBias(st, side, action, d, fizzles) {
   return 0;
 }
 
+/* ロック特化: スピード③の終了時の移動 (任意。使うとスピード③が裏返る) を見送るか。
+   ①を覆う前にこれを使うと、覆う道具 (表のスピード③) を失い、値も 3 → 2 になる。
+   ロックが未完成で、①が手札にあり、いま覆える表の①が場に無いなら見送る。
+   表の①が一番上にあるときは、移動で覆えばロックが完成するので通常の評価に任せる */
+function aiLockKeepsCover(st, side) {
+  if (!aiIsLockSpecialist(st, side)) return false;
+  const lockLive = activeStatics(st).some(s => s.rule === 'oppFaceDownOnly' && s.sideIdx === side
+    && st.lines[s.line][s.sideIdx].indexOf(s.uid) < st.lines[s.line][s.sideIdx].length - 1);
+  if (lockLive) return false;
+  let coverable = false, lockOnField = false;
+  for (let l = 0; l < 3; l++) {
+    const stack = st.lines[l][side];
+    stack.forEach((uid, i) => {
+      if (st.cards[uid].def !== AI_LOCK_CARD) return;
+      lockOnField = true;
+      if (st.cards[uid].faceUp && i === stack.length - 1) coverable = true;
+    });
+  }
+  if (coverable) return false;
+  /* 次の手番に①を表で出して覆うルートが本当に使える (①が手札にある) ときだけ残す。
+     山札にあるだけの段階で温存すると、裏向きのスピード③をダークネスのラインで値4にする
+     仕込みを逃して、ミラー400戦で勝率 45% に落ちた */
+  return aiHasDefInHand(st, side, AI_LOCK_CARD);
+}
+
 /* 自分の裏向きカードを表に返せる手段 (反転効果) を持っているか。コンボの仕込みの判定に使う */
 let AI_FLIPPER_IDS = null;
 function aiFlipperIds() {
@@ -4300,6 +4325,7 @@ function smartPicks(st, req) {
         const self = req.candidates.find(uid => st.cards[uid] && st.cards[uid].def === 'SPEED_4');
         if (self) return [self];
       }
+      if (req.prompt === 'optional-shift' && req.context === AI_LOCK_COVER && aiLockKeepsCover(st, me)) return [];
       const scored = req.candidates.map(uid => {
         const c = st.cards[uid];
         if (!c) return { uid, s: 0 };
