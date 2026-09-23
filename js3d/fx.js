@@ -8,6 +8,7 @@
 import * as THREE from '../vendor/three.module.js';
 import { CARD, COLOR, BOARD } from './theme.js';
 import * as TW from './tween.js';
+import { PROTOCOL_BURSTS } from './fx-protocols.js';
 
 /* -------------------------------------------------------------------------
  * ライン全体を貫く光の柱 (コンパイルの主役)
@@ -257,17 +258,21 @@ export function screenFlash(stage, colorHex, ms, strength) {
 
 /* -------------------------------------------------------------------------
  * プロトコル別のコンパイル・バースト
- *   30種を5系統に丸める: flame(炎粉) / crystal(結晶) / mist(霧) /
- *   rings(波紋) / streaks(光条)。光柱と同時に重ねて個性を出す。
+ *   プロトコルの名前から連想できる動きを17系統から選ぶ。光柱と同時に重ねて個性を出す。
+ *   flame/crystal/mist/rings/streaks はこのファイル、残りは fx-protocols.js
  * ------------------------------------------------------------------------- */
 export const BURST_FAMILY = {
-  FIRE: 'flame', HATE: 'flame', COURAGE: 'flame', WAR: 'flame', TIME: 'flame', CHAOS: 'flame',
-  ICE: 'crystal', METAL: 'crystal', CLARITY: 'crystal', MIRROR: 'crystal', UNITY: 'crystal',
-  DARKNESS: 'mist', DEATH: 'mist', PLAGUE: 'mist', APATHY: 'mist', FEAR: 'mist',
-  SMOKE: 'mist', CORRUPTION: 'mist', GRAVITY: 'mist',
-  PSYCHIC: 'rings', LOVE: 'rings', PEACE: 'rings', SPIRIT: 'rings', ASSIMILATION: 'rings',
-  SPEED: 'streaks', LIGHT: 'streaks', WATER: 'streaks', LIFE: 'streaks', LUCK: 'streaks',
-  DIVERSITY: 'streaks'
+  FIRE: 'flame', COURAGE: 'flame', WAR: 'flame',
+  HATE: 'lightning', CHAOS: 'glitch', TIME: 'clock',
+  ICE: 'crystal', METAL: 'crystal', CLARITY: 'crystal', MIRROR: 'crystal',
+  DARKNESS: 'vortex', GRAVITY: 'vortex',
+  DEATH: 'ash', APATHY: 'ash',
+  PLAGUE: 'miasma', CORRUPTION: 'miasma',
+  SMOKE: 'mist', FEAR: 'mist',
+  PSYCHIC: 'rings', PEACE: 'rings',
+  SPIRIT: 'wisps', LIFE: 'bloom', LOVE: 'bloom', WATER: 'rain',
+  SPEED: 'streaks', LIGHT: 'streaks',
+  UNITY: 'hex', ASSIMILATION: 'hex', DIVERSITY: 'prism', LUCK: 'sparkle'
 };
 
 /* 丸い減衰スプライト (霧・火の粉で共用) */
@@ -442,10 +447,10 @@ function burstStreaks(scene, laneX, color, ms) {
   });
 }
 
-const BURSTS = {
+const BURSTS = Object.assign({
   flame: burstFlame, crystal: burstCrystal, mist: burstMist,
   rings: burstRings, streaks: burstStreaks
-};
+}, PROTOCOL_BURSTS);
 
 export function compileBurst(scene, laneX, colorHex, protoName, ms) {
   const family = BURST_FAMILY[protoName] || 'rings';
@@ -583,4 +588,106 @@ export function fxDeleteBurst(scene, pos, colorHex) {
     g.attributes.position.needsUpdate = true;
     mat.opacity = 1 - t;
   }, TW.Ease.linear, () => { scene.remove(pts); g.dispose(); mat.dispose(); });
+}
+
+/* delete: 盤面のカードがその場で砕ける (捨て札へ飛ぶ前)。
+   見えている面の絵で砕くので、裏向きの札は裏面のまま (正体を明かさない) */
+export function fxDeleteShatter(scene, card, colorHex) {
+  const faceDown = Math.abs(Math.cos(card.rotation.x)) > 0.5 && Math.cos(card.rotation.x) < 0;
+  const face = faceDown ? card.userData.back : card.userData.front;
+  const map = face && face.material && face.material.map;
+  const COLS = 3, ROWS = 4;
+  const pw = CARD.w / COLS, ph = CARD.h / ROWS;
+  const group = new THREE.Group();
+  group.position.copy(card.position);
+  group.rotation.copy(card.rotation);
+  const pieces = [];
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    const geo = new THREE.PlaneGeometry(pw * 0.96, ph * 0.96);
+    geo.rotateX(-Math.PI / 2);
+    const uv = geo.attributes.uv;
+    for (let i = 0; i < uv.count; i++) uv.setXY(i, (c + uv.getX(i)) / COLS, (ROWS - 1 - r + uv.getY(i)) / ROWS);
+    const mat = new THREE.MeshBasicMaterial({ map: map || null, color: map ? 0xffffff : colorHex, transparent: true, opacity: 1, side: THREE.DoubleSide });
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set((c - (COLS - 1) / 2) * pw, faceDown ? -0.01 : 0.01, (r - (ROWS - 1) / 2) * ph);
+    group.add(m);
+    const out = new THREE.Vector3(m.position.x, 0, m.position.z).normalize();
+    pieces.push({ m, mat, base: m.position.clone(),
+      vel: new THREE.Vector3(out.x * 1.6 + (Math.random() - 0.5), 1.2 + Math.random() * 1.6, out.z * 1.6 + (Math.random() - 0.5)),
+      spin: new THREE.Vector3((Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10) });
+  }
+  /* 砕ける瞬間の赤い閃光 */
+  const flashGeo = new THREE.PlaneGeometry(CARD.w * 1.3, CARD.h * 1.3);
+  flashGeo.rotateX(-Math.PI / 2);
+  const flashMat = new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+  group.add(new THREE.Mesh(flashGeo, flashMat));
+  scene.add(group);
+  return TW.tween(620, (t) => {
+    const s = t * 0.62;
+    for (const p of pieces) {
+      p.m.position.set(p.base.x + p.vel.x * s, p.base.y + p.vel.y * s - 4.6 * s * s, p.base.z + p.vel.z * s);
+      p.m.rotation.set(p.spin.x * s, p.spin.y * s, p.spin.z * s);
+      p.mat.opacity = Math.max(0, 1 - t * 1.3);
+    }
+    flashMat.opacity = 0.9 * Math.max(0, 1 - t * 3);
+  }, TW.Ease.linear, () => {
+    scene.remove(group);
+    for (const p of pieces) { p.m.geometry.dispose(); p.mat.dispose(); }
+    flashGeo.dispose(); flashMat.dispose();
+  });
+}
+
+/* shift: 移動中のカードに光の尾を付ける。カードの位置を毎フレーム追い、
+   通った跡に光の粒を落としていく (どこからどこへ動いたかが目で追える) */
+export function fxShiftTrail(scene, card, colorHex, ms) {
+  const N = 28;
+  const group = new THREE.Group();
+  const tex = trailTexture();
+  const parts = [];
+  for (let i = 0; i < N; i++) {
+    const mat = new THREE.SpriteMaterial({ map: tex, color: colorHex, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+    const sp = new THREE.Sprite(mat);
+    sp.scale.set(0.5, 0.5, 1);
+    group.add(sp);
+    parts.push({ sp, mat, born: -1 });
+  }
+  scene.add(group);
+  const life = 0.35;
+  let next = 0;
+  const total = (ms || 400) / 1000 + life;
+  return TW.tween(total * 1000, (t, raw) => {
+    const now = raw * total;
+    if (now <= (ms || 400) / 1000 && now >= next) {
+      const p = parts[Math.floor(next / 0.015) % N];
+      p.sp.position.copy(card.position);
+      p.born = now;
+      next += 0.015;
+    }
+    for (const p of parts) {
+      if (p.born < 0) continue;
+      const k = (now - p.born) / life;
+      p.mat.opacity = k >= 1 ? 0 : 0.55 * (1 - k);
+      const s = 0.55 * (1 - k * 0.6);
+      p.sp.scale.set(s, s, 1);
+    }
+  }, TW.Ease.linear, () => {
+    scene.remove(group);
+    for (const p of parts) p.mat.dispose();
+  });
+}
+
+let trailTex = null;
+function trailTexture() {
+  if (trailTex) return trailTex;
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = 64;
+  const ctx = cv.getContext('2d');
+  const g = ctx.createRadialGradient(32, 32, 1, 32, 32, 31);
+  g.addColorStop(0, 'rgba(255,255,255,1)');
+  g.addColorStop(0.3, 'rgba(255,255,255,.35)');
+  g.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 64, 64);
+  trailTex = new THREE.CanvasTexture(cv);
+  return trailTex;
 }

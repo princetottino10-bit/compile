@@ -512,6 +512,7 @@ export function createBoard(stage, defIndex, me, hooks) {
       const faceX = l.zone === 'hand' ? null : facingX(next, uid);
 
       let dur = TIMING.shift, ease = TW.Ease.inOutCubic, arc = 0.2;
+      let shattered = false;
       /* 見る権利のないカードは実プロトコル色を出さない (色で正体が割れる) */
       const accent = new THREE.Color(defFor(next, uid).color);
       const toPos = new THREE.Vector3(...slot.pos);
@@ -520,13 +521,18 @@ export function createBoard(stage, defIndex, me, hooks) {
         FX.fxDrawTrail(scene, card.position.clone(), toPos, COLOR.cyan);
       } else if (l.zone === 'trash') {
         dur = TIMING.toTrash; arc = 0.9; ease = TW.Ease.inQuad;
-        /* 盤面からトラッシュ=削除。赤い飛散を出す */
-        if (a && a.zone === 'field') FX.fxDeleteBurst(scene, card.position.clone(), 0xff4d5e);
+        /* 盤面からトラッシュ=削除。その場で砕け、赤い飛散を出してから捨て札に現れる */
+        if (a && a.zone === 'field') {
+          FX.fxDeleteShatter(scene, card, 0xff4d5e);
+          FX.fxDeleteBurst(scene, card.position.clone(), 0xff4d5e);
+          shattered = true;
+        }
       } else if (a && (a.zone === 'field' || a.zone === 'transit') && (l.zone === 'field' || l.zone === 'transit')) {
         dur = TIMING.shift; arc = l.zone === 'transit' ? 0.3 : 0.55;
         FX.fxShiftStreak(scene, card.position.clone(), toPos, accent);
         /* 残像は出発時 (盤面から浮いた瞬間) だけ */
         if (a.zone === 'field') FX.fxMoveGhost(scene, card.position.clone(), card.rotation.y, accent);
+        FX.fxShiftTrail(scene, card, accent, ms(dur));
       } else if (!a || a.zone === l.zone) { dur = TIMING.handSort; arc = 0.06; }
 
       /* 反転したカードは着地後に閃光 */
@@ -534,6 +540,11 @@ export function createBoard(stage, defIndex, me, hooks) {
         setTimeout(() => FX.fxFlipFlash(scene, toPos, accent), ms(dur) * 0.5);
       }
 
+      if (shattered) {
+        /* 砕けた札は見えないまま捨て札へ運び、着いたところで現す */
+        card.visible = false;
+        return moveTo(card, slot, faceX, ms(dur), ease, arc).then(() => { card.visible = true; });
+      }
       return moveTo(card, slot, faceX, ms(dur), ease, arc);
     });
 
