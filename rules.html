@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>COMPILE - ルールの早見表</title>
+  <meta name="description" content="ボードゲーム『コンパイル』のルールの早見表。勝ち方、手番の流れ、カードの置き方、コンパイル、効果の読み方を1ページに。">
+  <meta name="theme-color" content="#03040a">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="RULES">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="companion.css?v=613064e92f">
+  <style>
+    html { scroll-behavior: smooth; scroll-padding-top: 70px; }
+
+    .win {
+      position: relative;
+      overflow: hidden;
+      padding: 22px 22px 20px;
+      border-radius: 16px;
+      border: 1px solid rgba(109, 255, 194, .45);
+      background:
+        radial-gradient(90% 120% at 100% 0%, rgba(109, 255, 194, .14), transparent 60%),
+        var(--panel);
+    }
+    .win small { display: block; margin-bottom: 8px; font: 900 10px/1 system-ui, sans-serif; letter-spacing: .24em; color: var(--mint); }
+    .win p { margin: 0; font: 900 clamp(18px, 3.4vw, 24px)/1.5 system-ui, sans-serif; letter-spacing: .04em; }
+    .win p b { color: var(--mint); }
+
+    .keys { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+    .key {
+      padding: 14px 14px 12px;
+      border-radius: 13px;
+      border: 1px solid var(--edge);
+      background: var(--panel);
+    }
+    .key b { display: block; font: 900 22px/1.1 system-ui, sans-serif; color: var(--cyan); letter-spacing: .02em; }
+    .key span { display: block; margin-top: 6px; font: 600 11.5px/1.55 system-ui, sans-serif; color: var(--dim); }
+
+    .toc { display: flex; flex-wrap: wrap; gap: 6px; margin: 18px 0 4px; }
+    .toc a { text-decoration: none; }
+
+    section { margin-top: 38px; }
+    h2 {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin: 0 0 14px;
+      font: 900 17px/1.3 system-ui, sans-serif;
+      letter-spacing: .12em;
+    }
+    h2 i { font-style: normal; font-size: 11px; letter-spacing: .2em; color: var(--pink); }
+    .lead { margin: -6px 0 14px; font: 600 12.5px/1.8 system-ui, sans-serif; color: var(--dim); }
+
+    p, li { font: 500 14px/1.85 system-ui, sans-serif; }
+    ul, ol { margin: 0; padding-left: 1.3em; }
+    li + li { margin-top: 4px; }
+    li::marker { color: var(--dim); }
+    b.hl { color: #fff; }
+    em { font-style: normal; color: var(--gold); font-weight: 800; }
+
+    /* 手番の流れ */
+    .flow { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; counter-reset: step; }
+    .step {
+      position: relative;
+      padding: 14px 13px 13px;
+      border-radius: 13px;
+      border: 1px solid var(--edge);
+      background: var(--panel);
+    }
+    .step::before {
+      counter-increment: step;
+      content: counter(step);
+      display: block;
+      margin-bottom: 8px;
+      font: 900 22px/1 system-ui, sans-serif;
+      color: var(--cyan);
+      text-shadow: 0 0 14px rgba(99, 243, 255, .4);
+    }
+    .step b { display: block; margin-bottom: 6px; font: 900 13px/1.3 system-ui, sans-serif; letter-spacing: .06em; }
+    .step p { margin: 0; font-size: 12px; line-height: 1.7; color: var(--dim); }
+    .step p strong { color: var(--ink); }
+    .step.act { border-color: rgba(109, 255, 194, .55); box-shadow: 0 0 0 1px rgba(109, 255, 194, .25); }
+    .step.act::before { color: var(--mint); text-shadow: 0 0 14px rgba(109, 255, 194, .45); }
+
+    .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .cp-panel h3 { margin: 0 0 8px; font: 900 13px/1.3 system-ui, sans-serif; letter-spacing: .08em; }
+    .cp-panel h3 small { margin-left: 6px; font-weight: 700; font-size: 11px; color: var(--dim); letter-spacing: .04em; }
+    .cp-panel p { margin: 0; }
+    .cp-panel p + p, .cp-panel p + ul, .cp-panel ul + p { margin-top: 8px; }
+    .face-up { border-color: rgba(99, 243, 255, .35); }
+    .face-down { border-color: rgba(255, 255, 255, .16); }
+
+    /* カードの3つの段 */
+    .zones { display: grid; gap: 8px; }
+    .zone {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 14px;
+      align-items: start;
+      padding: 13px 16px;
+      border-radius: 13px;
+      border: 1px solid var(--edge);
+      background: var(--panel);
+    }
+    .zone > b { font: 900 13px/1.5 system-ui, sans-serif; letter-spacing: .08em; }
+    .zone > b small { display: block; font: 700 10px/1.4 system-ui, sans-serif; letter-spacing: .14em; color: var(--dim); }
+    .zone p { margin: 0; }
+    .zone.up > b { color: var(--z-up); }
+    .zone.mid > b { color: var(--z-mid); }
+    .zone.low > b { color: var(--z-low); }
+
+    /* 用語 */
+    dl.terms { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0; }
+    dl.terms > div { padding: 12px 14px; border-radius: 12px; border: 1px solid var(--edge); background: var(--panel); }
+    dl.terms dt { margin-bottom: 4px; font: 900 13px/1.4 system-ui, sans-serif; letter-spacing: .06em; color: var(--cyan); }
+    dl.terms dd { margin: 0; font: 500 13px/1.75 system-ui, sans-serif; }
+
+    .note {
+      margin-top: 44px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px dashed var(--edge-2);
+      font: 600 12px/1.8 system-ui, sans-serif;
+      color: var(--dim);
+    }
+    .next { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+    .next a { text-decoration: none; }
+
+    @media (max-width: 900px) {
+      .flow { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .keys { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 640px) {
+      .flow { grid-template-columns: 1fr; }
+      .step { display: grid; grid-template-columns: 30px 1fr; column-gap: 10px; padding: 12px 14px; }
+      .step::before { grid-row: span 2; margin: 0; }
+      .grid2, dl.terms { grid-template-columns: 1fr; }
+      .zone { grid-template-columns: 1fr; gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="cp-top">
+    <a class="cp-brand" href="index.html">COMPILE <em>&lt;!&gt;</em></a>
+    <nav class="cp-nav" aria-label="ツール">
+      <a href="three-play.html">3D ARENA</a>
+      <a href="cardlist.html">CARD LIST</a>
+      <a href="picker.html">PICKER</a>
+      <a href="rules.html" aria-current="page">RULES</a>
+      <a href="control-tracker.html">CONTROL</a>
+    </nav>
+  </header>
+
+  <main class="cp-wrap">
+    <div class="cp-head">
+      <h1 class="cp-h1"><b>//</b> RULES</h1>
+      <p class="cp-sub">ルールの早見表</p>
+    </div>
+
+    <div class="win">
+      <small>勝ち方</small>
+      <p>自分の3つのプロトコルを、<b>すべてコンパイル</b>したら勝ち。</p>
+    </div>
+
+    <div class="keys">
+      <div class="key"><b>10 以上</b><span>ラインの合計が 10 以上で、相手より大きいとコンパイル</span></div>
+      <div class="key"><b>裏向き＝2</b><span>裏向きのカードの値は 2。どのラインにも置ける</span></div>
+      <div class="key"><b>手札 5 枚</b><span>5 枚未満ならリフレッシュで 5 枚まで引ける。手番の終わりは 5 枚まで</span></div>
+      <div class="key"><b>2 ライン</b><span>2 ライン以上で相手を上回ると、コントロールを取る</span></div>
+    </div>
+
+    <nav class="toc" aria-label="目次">
+      <a class="lvl sm" href="#setup">準備</a>
+      <a class="lvl sm" href="#turn">手番の流れ</a>
+      <a class="lvl sm" href="#play">カードの置き方</a>
+      <a class="lvl sm" href="#compile">コンパイル</a>
+      <a class="lvl sm" href="#control">コントロール</a>
+      <a class="lvl sm" href="#zones">カードの3つの段</a>
+      <a class="lvl sm" href="#effects">効果の読み方</a>
+      <a class="lvl sm" href="#info">見えている情報</a>
+    </nav>
+
+    <section id="setup">
+      <h2><i>01</i>準備</h2>
+      <ol>
+        <li>プロトコルを <b class="hl">1 → 2 → 2 → 1</b> の順に交互に取る (最初の人が1つ、次の人が2つ、最初の人が2つ、次の人が1つ)。取った順に左から並べる。</li>
+        <li>自分の3つのプロトコルのカード (6 枚ずつ、計 18 枚) をシャッフルして山札にする。</li>
+        <li>それぞれ 5 枚引く。<b class="hl">最初にプロトコルを取った人が先手</b>。コントロールはどちらのものでもない状態から始める。</li>
+      </ol>
+      <p class="lead" style="margin-top:12px">向かい合った2人のプロトコルの列が1本の「ライン」。ラインは左・中・右の3本で、カードはそれぞれの自分側に重ねていく。</p>
+    </section>
+
+    <section id="turn">
+      <h2><i>02</i>手番の流れ</h2>
+      <p class="lead">毎手番、この順に進む。行動を選ぶのは ④ (コンパイルした手番は ④ がない)。</p>
+      <div class="flow">
+        <div class="step"><b>開始</b><p>その時点で自分の場に見えている<strong>「開始：」</strong>の効果を、好きな順に1つずつ使う。</p></div>
+        <div class="step"><b>コントロール確認</b><p><strong>2 ライン以上</strong>で相手の合計を上回っていれば、コントロールを取る。</p></div>
+        <div class="step"><b>コンパイル確認</b><p>合計 <strong>10 以上かつ相手より大きい</strong>ラインがあれば、<strong>必ず</strong>コンパイル (1手番に1ライン)。コンパイルしたら ④ はない。</p></div>
+        <div class="step act"><b>アクション</b><p>カードを<strong>1枚置く</strong>か、<strong>リフレッシュ</strong>するか。どちらか1つ。</p></div>
+        <div class="step"><b>キャッシュ確認</b><p>手札が <strong>6 枚以上</strong>なら、5 枚になるまで捨て札にする (キャッシュをクリア)。</p></div>
+        <div class="step"><b>終了</b><p>自分の場に見えている<strong>「終了：」</strong>の効果を、好きな順に1つずつ使う。</p></div>
+      </div>
+      <p class="lead" style="margin-top:12px">「開始：」「終了：」は、その段階に入った時点で見えていたものだけが対象。途中で見えなくなったものは使わない。</p>
+    </section>
+
+    <section id="play">
+      <h2><i>03</i>カードの置き方とリフレッシュ</h2>
+      <div class="grid2">
+        <div class="cp-panel face-up">
+          <h3>表向きで置く</h3>
+          <p>カードのプロトコルが、そのラインにある<b class="hl">自分か相手のプロトコルと同じ</b>ときだけ置ける。置く先は自分側。</p>
+          <p>置くと、カードの<b class="hl">中段の効果が発動</b>する。</p>
+        </div>
+        <div class="cp-panel face-down">
+          <h3>裏向きで置く</h3>
+          <p><b class="hl">どのラインにも</b>置ける。効果は出ない。値は <em>2</em>。</p>
+          <p>裏向きのカードの面を見られるのは持ち主だけ。</p>
+        </div>
+        <div class="cp-panel">
+          <h3>重ねる</h3>
+          <p>すでにカードがあれば、新しいカードが一番上になり、下のカードを<b class="hl">覆う</b>。ラインの合計は、自分側のカードの値をすべて足したもの。</p>
+        </div>
+        <div class="cp-panel">
+          <h3>リフレッシュ</h3>
+          <p>手札が <b class="hl">5 枚未満</b>のときだけできる。<b class="hl">5 枚になるまで引く</b>。</p>
+          <p>コントロールを持っていたら、引く前にコントロールを戻し、どちらか一方のプロトコルを並べ替えてもよい。</p>
+        </div>
+      </div>
+      <p class="lead" style="margin-top:12px">カードの効果で、ここに書いた置き方の決まりが変わることがある (プロトコルが違っても表向きで置ける、など)。</p>
+    </section>
+
+    <section id="compile">
+      <h2><i>04</i>コンパイル</h2>
+      <p class="lead">③ で条件を満たすラインがあると、自動で行われる。選べるのは、条件を満たすラインが2本以上あるときにどれにするかだけ。</p>
+      <ol>
+        <li>コントロールを持っていたら、コントロールを戻し、どちらか一方のプロトコルを並べ替えてもよい。</li>
+        <li>そのラインの<b class="hl">両者のカードをすべて削除</b>する (それぞれの持ち主の捨て札へ)。このとき効果は発動しない。</li>
+        <li>自分のそのプロトコルを<b class="hl">コンパイル済み</b>にする。</li>
+        <li>すでにコンパイル済みのラインをもう一度コンパイルしたとき (リコンパイル) は、代わりに<b class="hl">相手の山札の一番上を1枚引き、自分のカードにする</b>。</li>
+      </ol>
+      <p class="lead" style="margin-top:12px">途中で合計が 10 を下回っても止まらない。3つ目をコンパイル済みにした瞬間に勝ち。</p>
+    </section>
+
+    <section id="control">
+      <h2><i>05</i>コントロール</h2>
+      <div class="cp-panel">
+        <p>② で、<b class="hl">2 ライン以上</b>で相手の合計を上回っていれば、コントロールを取る (相手が持っていても奪える)。</p>
+        <p>持っているときに<b class="hl">リフレッシュかコンパイルをする</b>と、コントロールを戻し、そのとき<b class="hl">自分か相手のどちらかのプロトコルを並べ替えてもよい</b>。並べ替えなくても、コントロールは戻る。</p>
+      </div>
+    </section>
+
+    <section id="zones">
+      <h2><i>06</i>カードの3つの段</h2>
+      <p class="lead">カードの効果は上・中・下の3段に分かれていて、効くタイミングが違う。</p>
+      <div class="zones">
+        <div class="zone up"><b>▲ 上段<small>ずっと効く</small></b><p>表向きなら<b class="hl">覆われていても</b>効き続ける。</p></div>
+        <div class="zone mid"><b>◆ 中段<small>その場で1回</small></b><p>表向きで置いたとき・表になったとき・上のカードがどいて一番上になったときに発動する。<b class="hl">覆われたまま表になっても発動しない</b>。</p></div>
+        <div class="zone low"><b>▼ 下段<small>一番上のときだけ</small></b><p>表向き<b class="hl">かつ一番上</b>にあるあいだだけ効く。「終了：」「〜たとき：」のような条件つきのものが多い。</p></div>
+      </div>
+    </section>
+
+    <section id="effects">
+      <h2><i>07</i>効果の読み方</h2>
+      <dl class="terms">
+        <div><dt>対象になるカード</dt><dd>ふつうは<b class="hl">覆われていないカード</b>だけ。「覆われている」と書いてあれば覆われたカードも選べる。「このカード」は覆われていても指せる。</dd></div>
+        <div><dt>「すべての」と「それぞれ」</dt><dd>「すべての」は覆われたものも含めて<b class="hl">一度に</b>処理する。「それぞれ」は<b class="hl">1枚 (1ライン) ずつ</b>処理し、その結果を片付けてから次へ。</dd></div>
+        <div><dt>引く</dt><dd>山札の上から<b class="hl">まとめて</b>手札へ。山札が足りなければ、捨て札をシャッフルして山札にし、続きを引く。</dd></div>
+        <div><dt>捨て札にする</dt><dd>手札から自分で選んで捨て札へ。捨て札は<b class="hl">いつも表向き</b>で、誰でも見られる。</dd></div>
+        <div><dt>削除 / 戻す</dt><dd>削除は場から捨て札へ。戻すは場から<b class="hl">持ち主の手札</b>へ。</dd></div>
+        <div><dt>反転</dt><dd>表と裏を入れ替える。表になって一番上なら、中段が発動する。</dd></div>
+        <div><dt>移動</dt><dd>カードを<b class="hl">同じ側の別のライン</b>へ動かす。動かしたことで下のカードが一番上になれば、その効果を先に片付けてから着地する。</dd></div>
+        <div><dt>公開 / 並べ替え</dt><dd>公開は見せて元に戻すだけ。並べ替えはプロトコルの位置を入れ替える (<b class="hl">必ず変える</b>。カードは動かない)。</dd></div>
+        <div><dt>「〜できる」と「そうした場合」</dt><dd>「〜できる」以外は<b class="hl">必ず行う</b>。できない部分は飛ばす。「そうした場合」の続きは、前の行動が実際にできたときだけ。</dd></div>
+        <div><dt>効果が重なったとき</dt><dd><b class="hl">あとから発動したものから</b>片付ける。同時に発動したものは、手番の人が順番を決める。「〜たあと：」は、その行動と結果がすべて終わってから。</dd></div>
+        <div><dt>途中で消えた効果</dt><dd>効果の途中で、そのカードが覆われる・裏になる・場を離れると、残りの効果はなくなる。</dd></div>
+        <div><dt>効果を使う人</dt><dd>対象の選び方などを決めるのは、<b class="hl">そのカードの持ち主</b>。</dd></div>
+      </dl>
+    </section>
+
+    <section id="info">
+      <h2><i>08</i>見えている情報</h2>
+      <div class="grid2">
+        <div class="cp-panel"><h3>山札・手札 <small>枚数だけ公開</small></h3><p>中身は見えない (手札は本人だけ見られる)。</p></div>
+        <div class="cp-panel"><h3>裏向きのカード <small>持ち主だけ</small></h3><p>場の裏向きのカードの面は、持ち主だけが見られる。</p></div>
+        <div class="cp-panel"><h3>表向きのカード・プロトコル <small>全公開</small></h3><p>場の表向きのカードと、両者のプロトコル (コンパイル済みかどうかも) は誰でも見られる。</p></div>
+        <div class="cp-panel"><h3>捨て札 <small>全公開</small></h3><p>いつも表向き。誰でも中身を確認できる。</p></div>
+      </div>
+    </section>
+
+    <p class="note">この早見表は、3D アリーナが実装しているルールをもとに自分の言葉でまとめた非公式のものです。カードに書かれた効果は、ここに書いた一般的な決まりより優先されます。</p>
+
+    <div class="next">
+      <a class="cp-go" href="three-play.html?tutorial=1">チュートリアルで試す (5 分)</a>
+      <a class="cp-ghost" href="cardlist.html">カードリスト</a>
+    </div>
+
+    <p class="cp-foot">FAN-MADE COMPANION APP · NOT AFFILIATED WITH THE OFFICIAL GAME</p>
+  </main>
+</body>
+</html>

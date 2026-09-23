@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""three-play.html と、コンパニオンツール (cardlist.html / picker.html) が読み込むスクリプト・CSS に、
+"""three-play.html と、コンパニオンツール (cardlist.html / picker.html / rules.html) が読み込むスクリプト・CSS に、
 中身から作った版 (?v=ハッシュ) を付ける。
 
 GitHub Pages はどのファイルも max-age=600 で配るため、更新しても最大10分は古いものが使われ、
@@ -22,7 +22,8 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PAGE = os.path.join(ROOT, 'three-play.html')
 # カードリスト・ピッカー: companion.js と、それが読むアリーナの紋章・アイコンだけを使う
-COMPANION_PAGES = ['cardlist.html', 'picker.html']
+# (ルールの早見表は companion.css だけ。import map が無いページは CSS の版だけ付ける)
+COMPANION_PAGES = ['cardlist.html', 'picker.html', 'rules.html']
 COMPANION_MODULES = ['companion.js', 'js3d/emblems.js', 'js3d/icons.js']
 
 

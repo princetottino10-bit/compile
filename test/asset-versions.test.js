@@ -44,3 +44,8 @@ test('カードリスト・ピッカー: companion.js と紋章・アイコン�
     assert.ok(src.includes('href="companion.css?v=' + version('companion.css') + '"'), page + ': companion.css');
   }
 });
+
+test('ルールの早見表: companion.css に中身どおりの版が付いている', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'rules.html'), 'utf8');
+  assert.ok(src.includes('href="companion.css?v=' + version('companion.css') + '"'), 'rules.html: companion.css');
+});
