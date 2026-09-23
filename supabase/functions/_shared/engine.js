@@ -2398,6 +2398,10 @@ const AI_DSH_W = {
   leadGain: 50, oppLeadGain: 78, leadBonus: 18, oppLeadBonus: 24,
   marginLead: 6, marginTrail: 6, refreshPerCard: 13, refreshTempo: 26,
   compileSafety: 1, hateDownPenalty: 20, speedDownPenalty: 20, speedPairStrategy: 1, speedPairKeep: 40,
+  /* FIRE 0 + WATER 4 の構え (aiFire0Water4Ready) の価値。FIRE 0 が WATER 4 を表で出せるラインの一番上に表で居て、
+     WATER 4 が手札にあれば、毎手番 WATER 4 を重ねて自分を戻す (2枚反転・3枚ドロー) を繰り返せる。
+     1手先の読みでは次の手番の得が見えないので、構えを作る手 (WATER 2 の並べ替え・SPEED 3 の移動) のために置く */
+  fire0Water4Ready: 60,
   compiledUp: 75, compiledDown: 75, recompile: 160, midUp: 0.35, lowUp: 20, lowDown: 5,
   // 済ラインへのプレイで自分の2ラインリードを作る/相手の2ラインリードを崩すとき、compiledUp/Down の減点を戻す割合。0 で従来どおり
   optionalCost: 1, anyLineBase: 26, anyLineGain: 0.9,
@@ -2876,6 +2880,19 @@ function aiHasDefInHand(st, side, defId) {
   return st.players[side].hand.some(uid => st.cards[uid].def === defId);
 }
 
+/* FIRE 0 + WATER 4 (docs/ai-combos.md): 手札に WATER 4 があり、FIRE 0 が表で一番上に居るラインに
+   WATER 4 を表で出せる (そのラインのどちらかのプロトコルが WATER) なら、次の手番にコンボを撃てる */
+function aiFire0Water4Ready(st, side) {
+  const water4 = st.players[side].hand.find(uid => st.cards[uid].def === 'WATER_5');
+  if (!water4) return false;
+  for (let line = 0; line < 3; line++) {
+    const stack = st.lines[line][side];
+    const top = stack[stack.length - 1];
+    if (top && st.cards[top].def === 'FIRE_1' && st.cards[top].faceUp && canPlay(st, side, water4, line, true)) return true;
+  }
+  return false;
+}
+
 /* 中段の対象取り効果 (shift/flip/delete/return) が今の盤面で
    空撃ちになるかの近似判定。fr を仮組みして matchesSel を再利用する。
    bind 依存のセレクタは判定できないため「対象あり」扱いで除外 */
@@ -2956,7 +2973,9 @@ function aiActionBias(st, action, side) {
   if (aiIsDshSpecialist(st, side) && W.speedPairStrategy
       && (d.id === 'SPEED_1' || d.id === 'SPEED_4')) {
     const pairOnField = aiHasDefOnField(st, side, 'SPEED_1') || aiHasDefOnField(st, side, 'SPEED_4');
-    if (!pairOnField) {
+    /* SPEED 0 の追加プレイで FIRE 0 + WATER 4 を撃てるときは、SPEED 3 と揃えなくてよい */
+    const comboPlay = d.id === 'SPEED_1' && action.faceUp && W.fire0Water4Ready && aiFire0Water4Ready(st, side);
+    if (!pairOnField && !comboPlay) {
       const pairReady = aiHasDefInHand(st, side, 'SPEED_1') && aiHasDefInHand(st, side, 'SPEED_4');
       if (!pairReady) v -= 180;
       else if (d.id === 'SPEED_1' && action.faceUp) v += 220;
@@ -3225,6 +3244,8 @@ function aiScore(st, me) {
     const s0 = aiHasDefInHand(st, me, 'SPEED_1'), s3 = aiHasDefInHand(st, me, 'SPEED_4');
     sc += W.speedPairKeep * ((s0 ? 1 : 0) + (s3 ? 1 : 0) + (s0 && s3 ? 1 : 0));
   }
+  /* 特化 (DSH): FIRE 0 + WATER 4 の構え。WATER 4 は自分を戻すので、撃ったあとも構えは残る */
+  if (aiIsDshSpecialist(st, me) && W.fire0Water4Ready && aiFire0Water4Ready(st, me)) sc += W.fire0Water4Ready;
   sc += aiBoardEffectScore(st, me);
   sc += aiLockScore(st, me);
   sc -= aiLockThreat(st, me);
@@ -3319,6 +3340,7 @@ const AI_COMBO_PAIRS = [
   ['GRAVITY_2', 'GRAVITY_3'], // GRAVITY 1 を裏で置き、GRAVITY 2 で連鎖
   ['FIRE_1', 'LIFE_1'],       // FIRE 0 の上に撒いた裏向きを表に返す
   ['FIRE_1', 'WATER_2'],
+  ['FIRE_1', 'WATER_5'],      // FIRE 0 の上に WATER 4、自分を戻して FIRE 0 の中段を撃ち直す
   ['LIFE_4', 'LIFE_1'],       // LIFE 3 の覆われ時 → LIFE 0
   ['FIRE_4', 'PLAGUE_5'],     // FIRE 3 で裏返し、PLAGUE 4 で削除させる
   ['SPIRIT_2', 'DEATH_1']     // SPIRIT 1 の表向きプレイ中に DEATH 0
@@ -3391,7 +3413,8 @@ function aiBestCombo(st, req, ordered, min, max, fallback) {
 
 function aiPlayFreePicks(st, req, me) {
   if (aiIsDshSpecialist(st, me) && aiWeightsFor(st, me).speedPairStrategy && req.context === 'SPEED_1'
-      && !aiHasDefOnField(st, me, 'SPEED_1') && !aiHasDefOnField(st, me, 'SPEED_4')) {
+      && !aiHasDefOnField(st, me, 'SPEED_1') && !aiHasDefOnField(st, me, 'SPEED_4')
+      && !(aiWeightsFor(st, me).fire0Water4Ready && aiFire0Water4Ready(st, me))) {
     const speed3 = req.candidates.find(raw => {
       const parts = String(raw).split('|');
       return parts[2] === 'u' && st.cards[parts[0]] && st.cards[parts[0]].def === 'SPEED_4';

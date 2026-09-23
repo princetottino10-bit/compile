@@ -423,3 +423,63 @@ test('コントロールの並べ替え: 相手の手番の途中でも、並べ
   }
   assert.ok(checked >= 1, 'この対局で問題の場面が起きること (' + checked + '回)');
 });
+
+/* ---------- FIRE 0 + WATER 4 (対戦者から: 最強の FIRE/WATER/SPEED 用) ----------
+   FIRE 0 (FIRE_1) の上に WATER 4 (WATER_5) を表で出すと、覆われる前に FIRE 0 が1枚引いて1枚反転。
+   WATER 4 の中段で WATER 4 自身を戻すと、FIRE 0 の覆いが外れて中段 (1枚反転・2枚引く) がもう一度入る。
+   合計 2枚反転・3枚ドロー、WATER 4 は手札に戻る。WATER 4 を表で出せるのは WATER のラインだけなので、
+   FIRE 0 が WATER のラインに表で置かれていることが条件 */
+const FWS = ['FIRE', 'WATER', 'SPEED'];
+function withDsh(fn) {
+  Engine.setAiSpecialist(true, 0, 'dsh');
+  try { return fn(); } finally { Engine.setAiSpecialist(false); }
+}
+const lineOf = (st, uid) => [0, 1, 2].find(l => st.lines[l][0].includes(uid) || st.lines[l][1].includes(uid));
+
+test('手筋 Fire0 + Water4: FIRE 0 (WATER ライン) の上に WATER 4 を表で出し、WATER 4 自身を戻す', () => withDsh(() => {
+  const st = game(FWS, ['METAL', 'LIGHT', 'HATE']);
+  place(st, 'FIRE_1', 0, 1, true);          // WATER ライン (1) に FIRE 0
+  /* 反転の的 (相手の表向き2枚)。表に返し直しても害の無い札にする */
+  place(st, 'METAL_5', 1, 0, true);
+  place(st, 'LIGHT_6', 1, 1, true);
+  setHand(st, 0, ['WATER_5', 'SPEED_2']);
+  const act = aiAct(st);
+  assert.ok(act.type === 'play' && st.cards[act.card].def === 'WATER_5' && act.line === 1 && act.faceUp,
+    'WATER 4 を FIRE 0 の上に表で出す (実際: ' + JSON.stringify(act) + ')');
+  const res = resolveWithAi(Engine.apply(st, act));
+  assert.ok(res.state.players[0].hand.includes(uidOf('WATER_5', 0)), 'WATER 4 は自分自身を戻して手札に帰る');
+  assert.equal(res.state.players[0].hand.length, 5, '1枚出して3枚引き、WATER 4 が戻る (2 → 5)');
+}));
+
+test('手筋 Speed0 → Water4: SPEED 0 の追加プレイで、FIRE 0 の上に WATER 4 を表で出す', () => withDsh(() => {
+  const st = game(FWS, ['METAL', 'LIGHT', 'HATE']);
+  place(st, 'FIRE_1', 0, 1, true);
+  place(st, 'METAL_5', 1, 0, true);
+  place(st, 'LIGHT_6', 1, 1, true);
+  setHand(st, 0, ['SPEED_1', 'WATER_5', 'FIRE_6']);
+  const act = aiAct(st);
+  assert.ok(act.type === 'play' && st.cards[act.card].def === 'SPEED_1', 'SPEED 0 を出す (実際: ' + JSON.stringify(act) + ')');
+  const answers = [];
+  resolveWithAi(Engine.apply(st, act), answers);
+  const free = answers.find(x => x.q.prompt === 'play-free');
+  assert.ok(free, '追加プレイを聞かれる');
+  assert.equal(free.picks[0], uidOf('WATER_5', 0) + '|1|u', '追加プレイは WATER 4 を FIRE 0 のライン (1) に表で');
+}));
+
+test('手筋 Water2 の並べ替え: WATER 4 を持っているとき、FIRE 0 のラインを WATER にする', () => withDsh(() => {
+  const st = game(FWS, ['METAL', 'LIGHT', 'HATE']);
+  place(st, 'FIRE_1', 0, 0, true);          // FIRE ライン (0) の FIRE 0。このままでは WATER 4 を表で重ねられない
+  place(st, 'METAL_5', 1, 0, true);
+  place(st, 'LIGHT_6', 1, 1, true);
+  setHand(st, 0, ['WATER_3', 'WATER_5', 'FIRE_6']);
+  const play = Engine.legalActions(st).find(a => a.type === 'play' && a.card === uidOf('WATER_3', 0) && a.line === 1 && a.faceUp);
+  Engine.setAiLevel(2);
+  Engine.setAiThinkBudget(300);
+  const answers = [];
+  const res = resolveWithAi(Engine.apply(st, play), answers);
+  const arr = answers.find(x => x.q.kind === 'arrange');
+  assert.ok(arr, '並べ替えを聞かれる');
+  const line = lineOf(res.state, uidOf('FIRE_1', 0));
+  assert.equal(res.state.players[0].protocols[line].name, 'WATER',
+    'FIRE 0 のラインが WATER になる (並べ替え ' + JSON.stringify(arr.picks) + ' → ' + res.state.players[0].protocols.map(p => p.name).join('/') + ')');
+}));
