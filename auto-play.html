@@ -990,11 +990,13 @@ function lineTotal(st, line, side) {
 }
 
 /* (M2ヘルパー群) */
+/* 裏向きのカードにはプロトコルが無い (値2の札として扱う)。
+   プロトコルの種類・枚数を数える効果 (DIVERSITY / UNITY) は表向きのカードだけを数える */
 /* フィールドにあるコマンドカードのプロトコル種類数 (DIVERSITY) */
 function countProtoKinds(st) {
   const kinds = new Set();
   for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++)
-    for (const uid of st.lines[l][s]) kinds.add(DEFS[st.cards[uid].def].proto);
+    for (const uid of st.lines[l][s]) if (st.cards[uid].faceUp) kinds.add(DEFS[st.cards[uid].def].proto);
   return kinds.size;
 }
 /* フィールドにある指定プロトコルのカード枚数 (UNITY)。excludeUid は除外 */
@@ -1002,13 +1004,13 @@ function countProtoOnField(st, proto, excludeUid) {
   let n = 0;
   for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++)
     for (const uid of st.lines[l][s])
-      if (uid !== excludeUid && DEFS[st.cards[uid].def].proto === proto) n++;
+      if (uid !== excludeUid && st.cards[uid].faceUp && DEFS[st.cards[uid].def].proto === proto) n++;
   return n;
 }
 /* ライン内のプロトコル種類数 (DIVERSITY_2) */
 function countProtoKindsInLine(st, line) {
   const kinds = new Set();
-  for (let s = 0; s < 2; s++) for (const uid of st.lines[line][s]) kinds.add(DEFS[st.cards[uid].def].proto);
+  for (let s = 0; s < 2; s++) for (const uid of st.lines[line][s]) if (st.cards[uid].faceUp) kinds.add(DEFS[st.cards[uid].def].proto);
   return kinds.size;
 }
 
@@ -3193,6 +3195,9 @@ const AI_W = {
   /* 解決順の選択 (同時に誘発した効果をどれから解くか) も、候補がこの数以下なら
      実際に解決して盤面で比べる。0 なら従来どおり固定の順位で答える */
   orderSim: 4,
+  /* DIVERSITY 0 の構え (aiDiversityReady): 手札に DIVERSITY 0 があり、場に DIVERSITY 以外が5種類そろっていれば
+     次の手番に出すだけでコンパイルできる。1手先の読みでは見えないので、そろえる手のために置く */
+  diversityReady: 120,
 };
 /* サイキック①ロックまわりの重み。通常 AI・特化 AI の区別なく共通で使う。
    lockPermanent/lockTemporary: 覆われた (永続) / 一番上 (1ターン) のロックの価値
@@ -3244,6 +3249,7 @@ const AI_DSH_W = {
   refreshUrgency: 120,
   choiceDepth: 1,
   orderSim: 4,
+  diversityReady: 120,
   compiledLead: 0,   // 最強同士のミラー 480 戦で 49.8% [45.3, 54.2]。効果が出ていないので切っておく
 };
 function setAiSpecialistWeights(obj) {
@@ -3712,6 +3718,22 @@ function aiHasDefInHand(st, side, defId) {
   return st.players[side].hand.some(uid => st.cards[uid].def === defId);
 }
 
+/* DIVERSITY 0 (docs/ai-combos.md): 手札の DIVERSITY 0 を表で出せて、自分の DIVERSITY が未コンパイルで、
+   場に DIVERSITY 以外のプロトコルが表向きで5種類あれば、次の手番に出すだけでコンパイルできる */
+function aiDiversityReady(st, side) {
+  const d0 = st.players[side].hand.find(uid => st.cards[uid].def === 'DIVERSITY_1');
+  if (!d0) return false;
+  const prot = st.players[side].protocols.find(p => p.name === 'DIVERSITY');
+  if (!prot || prot.compiled) return false;
+  const kinds = new Set();
+  for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++) for (const uid of st.lines[l][s]) {
+    if (st.cards[uid].faceUp) kinds.add(DEFS[st.cards[uid].def].proto);
+  }
+  kinds.delete('DIVERSITY');
+  if (kinds.size < 5) return false;
+  return [0, 1, 2].some(line => canPlay(st, side, d0, line, true));
+}
+
 /* FIRE 0 + WATER 4 (docs/ai-combos.md): 手札に WATER 4 があり、FIRE 0 が表で一番上に居るラインに
    WATER 4 を表で出せる (そのラインのどちらかのプロトコルが WATER) なら、次の手番にコンボを撃てる */
 function aiFire0Water4Ready(st, side) {
@@ -4076,6 +4098,7 @@ function aiScore(st, me) {
     const s0 = aiHasDefInHand(st, me, 'SPEED_1'), s3 = aiHasDefInHand(st, me, 'SPEED_4');
     sc += W.speedPairKeep * ((s0 ? 1 : 0) + (s3 ? 1 : 0) + (s0 && s3 ? 1 : 0));
   }
+  if (W.diversityReady && aiDiversityReady(st, me)) sc += W.diversityReady;
   /* 特化 (DSH): FIRE 0 + WATER 4 の構え。WATER 4 は自分を戻すので、撃ったあとも構えは残る */
   if (aiIsDshSpecialist(st, me) && W.fire0Water4Ready && aiFire0Water4Ready(st, me)) sc += W.fire0Water4Ready;
   sc += aiBoardEffectScore(st, me);
@@ -4416,13 +4439,13 @@ function smartPicks(st, req) {
       scored.sort((a, b) => a.s - b.s);
       const min = req.min !== undefined ? req.min : 1;
       const max = Math.min(req.max !== undefined ? req.max : 1, scored.length);
-      if (min === 0 && max === 1 && scored.length && AI_CHOICE_DEPTH === 0) {
-        const skip = aiChoiceScore(st, req, [], me);
-        const discard = aiChoiceScore(st, req, [scored[0].uid], me);
-        return discard > skip ? [scored[0].uid] : [];
-      }
       const fallbackHand = min === 0 && (!scored.length || scored[0].s > 8)
         ? [] : scored.slice(0, Math.max(min, 1)).map(x => x.uid);
+      /* 「捨ててもよい」は、捨てない + 候補ごとに捨てた盤面で比べる。以前は一番値の低い札しか試さず、
+         組み合わせで使う値0の札 (DIVERSITY 0 / SPEED 0 など) を真っ先に捨てていた */
+      if (min === 0 && max === 1 && scored.length && AI_CHOICE_DEPTH === 0) {
+        return aiStrategicCardPicks(st, req, me, scored, fallbackHand);
+      }
       /* 1枚必須 (捨てる・渡す等) も、選んだあとの盤面で比べる。値の低い札から機械的に選ぶと、
          組み合わせで使う札 (SPEED 0 → SPEED 3 の 0 など) を真っ先に捨てていた */
       if (max === 1 && min >= 1 && scored.length > 1) {

@@ -483,3 +483,43 @@ test('手筋 Water2 の並べ替え: WATER 4 を持っているとき、FIRE 0 �
   assert.equal(res.state.players[0].protocols[line].name, 'WATER',
     'FIRE 0 のラインが WATER になる (並べ替え ' + JSON.stringify(arr.picks) + ' → ' + res.state.players[0].protocols.map(p => p.name).join('/') + ')');
 }));
+
+/* ---------- DIVERSITY 0 の即コンパイル (対戦者の評価で採用) ----------
+   DIVERSITY 0 (DIVERSITY_1) は、場に6種類のプロトコルの札があれば DIVERSITY をコンパイル完了にする。
+   場の種類は表向きの札だけを数える (裏向きにはプロトコルが無い)。あと1種類なら、先に足りない種類を表で出して構える */
+const DIVERSITY_KINDS = (st) => {
+  const kinds = new Set();
+  for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++) for (const u of st.lines[l][s]) if (st.cards[u].faceUp) kinds.add(st.cards[u].def.split('_')[0]);
+  return kinds;
+};
+
+test('手筋 Diversity0 の構え: 5種類そろえた直後の「1枚捨てる」で DIVERSITY 0 を捨てない', () => {
+  const st = game(['DIVERSITY', 'FIRE', 'WATER'], ['METAL', 'LIGHT', 'LIFE']);
+  place(st, 'FIRE_5', 0, 1, true);          // 終了時の効果が無い札
+  place(st, 'METAL_5', 1, 0, true);
+  place(st, 'LIGHT_6', 1, 1, true);
+  place(st, 'LIFE_3', 1, 2, true);          // 場: FIRE METAL LIGHT LIFE。WATER を表で足すと5種類
+  setHand(st, 0, ['DIVERSITY_1', 'WATER_6', 'FIRE_6', 'FIRE_2']);
+  const play = Engine.legalActions(st).find(a => a.type === 'play' && a.card === uidOf('WATER_6', 0) && a.line === 2 && a.faceUp);
+  Engine.setAiLevel(2);
+  Engine.setAiThinkBudget(300);
+  const answers = [];
+  const res = resolveWithAi(Engine.apply(st, play), answers);
+  const discard = answers.find(x => x.q.prompt === 'discard');
+  assert.ok(discard, 'WATER 5 の「1枚捨てる」を聞かれる');
+  assert.notEqual(discard.picks[0], uidOf('DIVERSITY_1', 0), '値0でも DIVERSITY 0 は捨てない (FIRE を捨てる)');
+  assert.ok(res.state.players[0].hand.includes(uidOf('DIVERSITY_1', 0)), '次の手番に DIVERSITY 0 を出せる');
+});
+
+test('手筋 Diversity0: 6種類そろう局面では出してすぐコンパイル', () => {
+  const st = game(['DIVERSITY', 'FIRE', 'WATER'], ['METAL', 'LIGHT', 'LIFE']);
+  place(st, 'FIRE_4', 0, 1, true);
+  place(st, 'WATER_4', 0, 2, true);
+  place(st, 'METAL_5', 1, 0, true);
+  place(st, 'LIGHT_6', 1, 1, true);
+  place(st, 'LIFE_3', 1, 2, true);
+  setHand(st, 0, ['DIVERSITY_1', 'FIRE_6', 'WATER_2']);
+  const act = aiAct(st);
+  const res = resolveWithAi(Engine.apply(st, act));
+  assert.ok(res.state.players[0].protocols[0].compiled, 'DIVERSITY がコンパイル完了 (実際: ' + JSON.stringify(act) + ')');
+});

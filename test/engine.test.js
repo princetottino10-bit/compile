@@ -1252,10 +1252,10 @@ test('M2 LUCK_3: デッキトップを捨て、その印刷値だけドローす
 test('M2 UNITY_2: UNITYが5枚以上でプロトコルをコンパイル完了+ライン全削除', () => {
   const r = ng({ p0: ['UNITY', 'FIRE', 'WATER'], p1: ['DEATH', 'METAL', 'SPEED'] });
   const st = r.state;
-  place(st, 'UNITY_1', 0, 0, false);
-  place(st, 'UNITY_3', 0, 0, false);
-  place(st, 'UNITY_4', 0, 1, false);
-  place(st, 'UNITY_5', 0, 2, false);
+  place(st, 'UNITY_1', 0, 0, true);
+  place(st, 'UNITY_3', 0, 0, true);
+  place(st, 'UNITY_4', 0, 1, true);
+  place(st, 'UNITY_5', 0, 2, true);
   setHand(st, 0, ['UNITY_2']);
   let res = Engine.apply(st, { type: 'play', card: uidOf('UNITY_2', 0), line: 0, faceUp: true });
   res = drive(res, req => req.kind === 'pickHand' ? req.candidates.slice(0, 1) : (req.kind === 'pickLine' ? [req.lines[0]] : []));
@@ -1346,6 +1346,32 @@ test('CLARITY_4: 値5のサーチ候補が複数なら、選んだ1枚を手札�
   assert.ok(!res.state.players[0].hand.includes(uidOf('WATER_6', 0)));
 });
 
+/* 裏向きのカードにはプロトコルが無い。DIVERSITY / UNITY の種類・枚数には数えない */
+test('裏向きはプロトコルの種類に数えない: DIVERSITY_1 は表向き6種類でだけコンパイル', () => {
+  const setup = (lifeUp) => {
+    const st = ng({ p0: ['DIVERSITY', 'FIRE', 'WATER'], p1: ['METAL', 'LIGHT', 'LIFE'] }).state;
+    place(st, 'FIRE_5', 0, 1, true);
+    place(st, 'WATER_6', 0, 2, true);
+    place(st, 'METAL_5', 1, 0, true);
+    place(st, 'LIGHT_6', 1, 1, true);
+    place(st, 'LIFE_3', 1, 2, lifeUp);
+    setHand(st, 0, ['DIVERSITY_1']);
+    const res = Engine.apply(st, { type: 'play', card: uidOf('DIVERSITY_1', 0), line: 0, faceUp: true });
+    return drive(res, req => req.kind === 'yesNo' ? [] : (req.candidates ? req.candidates.slice(0, 1) : [req.lines ? req.lines[0] : 0]));
+  };
+  assert.ok(setup(true).state.players[0].protocols[0].compiled, '表向きで6種類ならコンパイル');
+  assert.ok(!setup(false).state.players[0].protocols[0].compiled, 'LIFE が裏向きなら5種類なのでコンパイルしない');
+});
+test('裏向きはプロトコルの枚数に数えない: UNITY_3 は表向きの UNITY だけ引く', () => {
+  const st = ng({ p0: ['UNITY', 'FIRE', 'WATER'], p1: ['DEATH', 'METAL', 'SPEED'] }).state;
+  place(st, 'UNITY_1', 0, 1, true);
+  place(st, 'UNITY_4', 0, 2, false);
+  setHand(st, 0, ['UNITY_3']);
+  const before = st.players[0].hand.length;
+  const res = drive(Engine.apply(st, { type: 'play', card: uidOf('UNITY_3', 0), line: 0, faceUp: true }), () => []);
+  /* 場の表向き UNITY は UNITY_1 と出した UNITY_3 の2枚 → 2枚引く (裏の UNITY_4 は数えない) */
+  assert.equal(res.state.players[0].hand.length, before - 1 + 2);
+});
 test('DIVERSITY_2: 自身を移動した後は移動先ラインの種類数を引く', () => {
   const r = ng({ p0: ['DIVERSITY', 'DARKNESS', 'FIRE'] });
   const st = r.state;
