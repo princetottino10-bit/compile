@@ -245,8 +245,18 @@ function coachEl() {
     el.setAttribute('role', 'status');
     el.setAttribute('aria-live', 'polite');
     document.body.appendChild(el);
+    /* 案内の下端を CSS に渡す。横持ちのスマホでは左上の詳細パネルをこの下に出す (重ならないように) */
+    if (typeof ResizeObserver === 'function') new ResizeObserver(syncCoachBottom).observe(el);
+    window.addEventListener('resize', syncCoachBottom);
   }
   return el;
+}
+
+function syncCoachBottom() {
+  const el = document.getElementById('tutorialCoach');
+  const shown = !!el && el.classList.contains('show');
+  document.body.classList.toggle('coach-on', shown);
+  if (shown) document.documentElement.style.setProperty('--coach-bottom', Math.round(el.getBoundingClientRect().bottom) + 'px');
 }
 
 let coachTimer = null;
@@ -268,6 +278,7 @@ export function showCoach(index, stepNo, onRetry) {
     '<p class="tc-say">' + (stepNo < 0 ? ASK_TEXT : lesson.steps[stepNo].text) + '</p>' +
     '<p class="tc-goal"><span>課題</span>' + esc(lesson.task) + '</p>';
   el.querySelector('.tc-retry').onclick = (ev) => { ev.stopPropagation(); onRetry(); };
+  syncCoachBottom();
 }
 
 /* 結果を出し、読む時間が過ぎたら (パネルに触れたらすぐ) onDone。取り消し関数を返す */
@@ -288,6 +299,7 @@ export function showCoachResult(index, result, onDone) {
   const go = () => { if (done) return; done = true; clearTimeout(coachTimer); onDone(); };
   coachTimer = setTimeout(go, ms);
   el.onclick = go;
+  syncCoachBottom();
   return () => { done = true; clearTimeout(coachTimer); };
 }
 
@@ -296,6 +308,7 @@ export function hideCoach() {
   clearTimeout(coachTimer);
   const el = document.getElementById('tutorialCoach');
   if (el) { el.className = ''; el.onclick = null; }
+  syncCoachBottom();
 }
 
 /* 全レッスンを終えたときのまとめ */

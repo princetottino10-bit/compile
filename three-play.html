@@ -1110,6 +1110,11 @@
     #tutorialCoach .tc-say{font-size:11.5px;line-height:1.5;}
     #tutorialCoach .tc-goal{display:none;}
     body.picking #tutorialCoach{top:28%;width:min(250px,34vw);max-width:none;}
+    /* 案内と詳細パネルはどちらも左上に来るので、案内が出ている間は詳細パネルを案内の真下に出す。
+       下端 (自分の捨て札の山の上) は変えず、カード絵の段を省いて効果の文を読ませる */
+    body.coach-on:not(.picking) #preview{top:calc(var(--coach-bottom, 40px) + 6px);
+      max-height:calc(50vh + 36px - var(--coach-bottom, 40px) - 6px);}
+    body.coach-on:not(.picking) #preview .cp-top{display:none;}
   }
   /* ---------- チュートリアル ---------- */
   .tu-card{width:min(440px,100%);border-color:rgba(99,243,255,.4);}
@@ -1511,7 +1516,7 @@
       "./js3d/theme.js": "./js3d/theme.js?v=ca159ed681",
       "./js3d/title.js": "./js3d/title.js?v=5c4c1af943",
       "./js3d/training.js": "./js3d/training.js?v=8f9e8ce6d0",
-      "./js3d/tutorial.js": "./js3d/tutorial.js?v=1954db29c2",
+      "./js3d/tutorial.js": "./js3d/tutorial.js?v=7c05630e03",
       "./js3d/tween.js": "./js3d/tween.js?v=99b25c0d63",
       "./js3d/ui.js": "./js3d/ui.js?v=e6d2d57e13"
     }
