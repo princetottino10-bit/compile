@@ -724,7 +724,8 @@
   .arr-bar.sel-bar:not(.confirm){pointer-events:none;padding:8px 18px 8px;gap:6px 12px;
     background:linear-gradient(180deg,rgba(15,20,36,.86),rgba(7,10,20,.86));}
   .arr-bar.sel-bar:not(.confirm) :is(button,.sel-chip,a){pointer-events:auto;}
-  .arr-bar.sel-bar:not(.confirm) .sel-hint{display:none;}
+  /* 「〜をタップ」だけの行は省き、移動の色分けの説明 (金=移動するカード / ミント=移動先) は残す */
+  .arr-bar.sel-bar:not(.confirm) .sel-hint:not(:has(.sel-key)){display:none;}
   .arr-bar.sel-bar:not(.confirm) .sel-q{font-size:15px;}
   .sel-q em{font-style:normal;color:var(--gold);}
   body.picking #prompt{opacity:0;}
