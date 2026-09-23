@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>COMPILE - Protocol Picker</title>
+  <meta name="description" content="ボードゲーム『コンパイル』を対面で遊ぶときの、プロトコル抽選ツール。ランダム・レシオ制の P1 vs P2 に対応。">
+  <meta name="theme-color" content="#03040a">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PICKER">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="companion.css?v=613064e92f">
+  <script type="importmap">
+  {
+    "imports": {
+      "./companion.js": "./companion.js?v=5e681c247a",
+      "./js3d/emblems.js": "./js3d/emblems.js?v=6d1c077a2e",
+      "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c"
+    }
+  }
+  </script>
+  <style>
+    /* ---------- 抽選のしかた ---------- */
+    .modes {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .mode {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 14px 14px 13px;
+      border-radius: 13px;
+      text-align: left;
+      cursor: pointer;
+      border: 1px solid var(--edge);
+      background: var(--panel);
+      transition: border-color .18s, background .18s, box-shadow .18s;
+    }
+    .mode b { font: 900 13px/1.25 system-ui, sans-serif; letter-spacing: .06em; }
+    .mode span { font: 600 11px/1.5 system-ui, sans-serif; color: var(--dim); }
+    .mode i {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      font: 900 9px/1 system-ui, sans-serif;
+      font-style: normal;
+      letter-spacing: .12em;
+      color: var(--dimmer);
+    }
+    .mode:hover { border-color: var(--edge-2); }
+    .mode[aria-pressed="true"] {
+      border-color: var(--mint);
+      background: linear-gradient(180deg, rgba(109, 255, 194, .12), rgba(109, 255, 194, .03)), var(--panel);
+      box-shadow: 0 0 0 1px var(--mint), 0 0 26px rgba(109, 255, 194, .12);
+    }
+    .mode[aria-pressed="true"] i { color: var(--mint); }
+
+    /* ---------- 条件 ---------- */
+    .params {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 14px 22px;
+      margin-top: 14px;
+    }
+    .param { display: flex; flex-direction: column; gap: 7px; }
+    .param > span {
+      font: 800 10px/1 system-ui, sans-serif;
+      letter-spacing: .16em;
+      color: var(--dim);
+    }
+    .param.p1 > span { color: var(--mint); }
+    .param.p2 > span { color: var(--pink); }
+    .stepper { display: inline-flex; align-items: center; gap: 4px; }
+    .stepper button {
+      width: 36px;
+      height: 38px;
+      border-radius: 10px;
+      border: 1px solid var(--edge-2);
+      background: rgba(255, 255, 255, .03);
+      color: var(--ink);
+      font: 800 16px/1 system-ui, sans-serif;
+      cursor: pointer;
+    }
+    .stepper button:hover { border-color: var(--cyan); }
+    .num {
+      width: 52px;
+      height: 38px;
+      text-align: center;
+      border-radius: 10px;
+      border: 1px solid var(--edge-2);
+      background: var(--panel);
+      color: var(--ink);
+      font: 800 16px/1 system-ui, sans-serif;
+      -moz-appearance: textfield;
+    }
+    .num::-webkit-inner-spin-button, .num::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    .num:focus { outline: none; border-color: var(--cyan); }
+    .range { display: inline-flex; align-items: center; gap: 6px; color: var(--dim); font-weight: 800; }
+    .seg { display: inline-flex; gap: 4px; }
+    .go-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-left: auto; }
+    .go-note { font: 600 11px/1.5 system-ui, sans-serif; color: var(--dim); }
+
+    /* ---------- 結果 ---------- */
+    .result { margin-top: 18px; }
+    .res-grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
+    .res-grid.pair { grid-template-columns: 1fr 1fr; }
+    .side {
+      --side: var(--cyan);
+      border: 1px solid color-mix(in srgb, var(--side) 45%, transparent);
+      border-radius: 16px;
+      padding: 14px;
+      background:
+        radial-gradient(120% 80% at 0% 0%, color-mix(in srgb, var(--side) 12%, transparent), transparent 60%),
+        var(--panel);
+      animation: pop .32s cubic-bezier(.16, 1, .3, 1) both;
+    }
+    .side.p1 { --side: var(--mint); }
+    .side.p2 { --side: var(--pink); animation-delay: .06s; }
+    @keyframes pop { from { transform: translateY(10px); opacity: 0; } to { transform: none; opacity: 1; } }
+    .side-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .side-head b { font: 900 18px/1 system-ui, sans-serif; letter-spacing: .2em; color: var(--side); }
+    .side-head .first {
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: var(--gold);
+      color: #1a1405;
+      font: 900 10px/1 system-ui, sans-serif;
+      letter-spacing: .12em;
+    }
+    .side-head .sum { margin-left: auto; font: 800 12px/1 system-ui, sans-serif; color: var(--dim); letter-spacing: .08em; }
+    .side-head .sum strong { font-size: 20px; color: var(--ink); margin-left: 4px; }
+    .picks { display: grid; gap: 8px; }
+    .pick {
+      --accent: var(--cyan);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 64px;
+      padding: 10px 14px 10px 10px;
+      border-radius: 12px;
+      border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+      background: #070a14;
+      animation: pop .32s cubic-bezier(.16, 1, .3, 1) both;
+    }
+    .pick .proto-art { opacity: .42; background-position: center 30%; }
+    .pick::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(4, 6, 13, .9) 0%, rgba(4, 6, 13, .55) 55%, rgba(4, 6, 13, .8));
+    }
+    .pick > :not(.proto-art) { position: relative; z-index: 1; }
+    .pick .ord { width: 18px; text-align: center; font: 900 12px/1 system-ui, sans-serif; color: var(--dim); }
+    .pick img { width: 38px; height: 38px; flex: none; filter: drop-shadow(0 2px 8px rgba(0, 0, 0, .6)); }
+    .pick-name { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .pick-name b { font: 900 15px/1.1 system-ui, sans-serif; letter-spacing: .1em; }
+    .pick-name span { font: 700 9.5px/1 system-ui, sans-serif; letter-spacing: .14em; color: var(--dim); }
+    .pick .r {
+      margin-left: auto;
+      min-width: 40px;
+      padding: 6px 8px;
+      border-radius: 9px;
+      text-align: center;
+      font: 900 16px/1 system-ui, sans-serif;
+      color: #fff;
+      border: 1px solid var(--edge-2);
+      background: rgba(3, 4, 10, .6);
+    }
+    .pick .r small { display: block; margin-bottom: 3px; font: 800 8px/1 system-ui, sans-serif; letter-spacing: .14em; color: var(--dim); }
+    .rest { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .rest > span { font: 800 10px/1 system-ui, sans-serif; letter-spacing: .14em; color: var(--dim); margin-right: 4px; }
+    .res-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .res-actions .cp-go { min-height: 40px; padding: 0 22px; font-size: 12px; }
+    .res-msg {
+      padding: 18px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 59, 157, .45);
+      background: rgba(255, 59, 157, .08);
+      color: #ffc7e4;
+      font: 700 13px/1.7 system-ui, sans-serif;
+    }
+    .res-idle {
+      padding: 26px 16px;
+      text-align: center;
+      border-radius: 14px;
+      border: 1px dashed var(--edge-2);
+      color: var(--dim);
+      font: 700 12.5px/1.8 system-ui, sans-serif;
+    }
+
+    /* ---------- 使うプロトコル ---------- */
+    .pool-tools { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+    .proto .rb {
+      position: absolute !important;
+      left: 8px;
+      top: 8px;
+      padding: 3px 6px;
+      border-radius: 6px;
+      font: 900 10px/1 system-ui, sans-serif;
+      letter-spacing: .06em;
+      color: #fff;
+      background: rgba(3, 4, 10, .72);
+      border: 1px solid var(--edge-2);
+    }
+    .proto .rb.none { color: var(--dimmer); }
+
+    /* ---------- レシオ表 ---------- */
+    .ratio-note { margin: 0 0 12px; font: 600 12px/1.7 system-ui, sans-serif; color: var(--dim); }
+    .ratio-note b { color: var(--gold); }
+    .ratio-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 6px 14px;
+    }
+    .ratio-set { grid-column: 1 / -1; margin: 10px 0 2px; font: 800 10px/1 system-ui, sans-serif; letter-spacing: .18em; color: var(--dim); }
+    .ratio-row {
+      --accent: var(--cyan);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 6px 6px 8px;
+      border-radius: 11px;
+      border: 1px solid var(--edge);
+      background: var(--panel);
+    }
+    .ratio-row img { width: 26px; height: 26px; flex: none; }
+    .ratio-row b { flex: 1; min-width: 0; font: 800 12px/1 system-ui, sans-serif; letter-spacing: .08em; overflow: hidden; text-overflow: ellipsis; }
+    .ratio-row .stepper button { width: 32px; height: 34px; font-size: 15px; }
+    .ratio-row .num { width: 44px; height: 34px; }
+    .ratio-row.unset .num { border-style: dashed; color: var(--dimmer); }
+    .ratio-row.changed { border-color: color-mix(in srgb, var(--gold) 45%, transparent); }
+    .buckets {
+      margin: 14px 0 0;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--edge);
+      background: #05070f;
+      font: 600 12.5px/1.9 ui-monospace, Consolas, monospace;
+      color: var(--ink);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    @media (max-width: 860px) {
+      .modes { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 640px) {
+      .res-grid.pair { grid-template-columns: 1fr; }
+      .mode { padding: 12px; }
+      .mode b { font-size: 12px; }
+      .mode span { font-size: 10.5px; }
+      .go-row { margin-left: 0; width: 100%; }
+      .go-row .cp-go { flex: 1; }
+      .proto .rb { left: 6px; top: 6px; font-size: 9px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="cp-top">
+    <a class="cp-brand" href="index.html">COMPILE <em>&lt;!&gt;</em></a>
+    <nav class="cp-nav" aria-label="ツール">
+      <a href="three-play.html">3D ARENA</a>
+      <a href="cardlist.html">CARD LIST</a>
+      <a href="picker.html" aria-current="page">PICKER</a>
+      <a href="rules.html">RULES</a>
+      <a href="control-tracker.html">CONTROL</a>
+    </nav>
+  </header>
+
+  <main class="cp-wrap">
+    <div class="cp-head">
+      <h1 class="cp-h1"><b>//</b> PROTOCOL PICKER</h1>
+      <p class="cp-sub">対面で遊ぶときの、プロトコル抽選</p>
+    </div>
+
+    <div class="cp-label"><b>01</b> 抽選のしかた</div>
+    <div class="modes" id="modes" role="group" aria-label="抽選のしかた"></div>
+
+    <div class="params" id="params"></div>
+
+    <section class="result" id="result" aria-live="polite">
+      <div class="res-idle">抽選のしかたを選んで、<b>抽選する</b> を押してください。</div>
+    </section>
+
+    <div class="cp-label"><b>02</b> 使うプロトコル <span class="cp-label-side" id="poolCount"></span></div>
+    <div class="pool-tools" id="poolTools"></div>
+    <div class="proto-grid" id="pool"></div>
+
+    <div class="cp-label"><b>03</b> レシオ表
+      <span class="cp-label-side">
+        <button type="button" class="lvl sm" id="ratioReset">初期値に戻す</button>
+        <button type="button" class="lvl sm" id="ratioClear">全部クリア</button>
+      </span>
+    </div>
+    <p class="ratio-note">レシオ (点数) は自由に書き換えられます。変更はこの端末に保存されます。<b>空欄のプロトコルはレシオ抽選に入りません。</b>ランダム抽選には入ります。</p>
+    <div class="ratio-grid" id="ratio"></div>
+    <pre class="buckets" id="buckets"></pre>
+    <div class="res-actions"><button type="button" class="cp-ghost" id="copyBuckets">レシオ表をコピー</button></div>
+
+    <p class="cp-foot">FAN-MADE COMPANION APP · NOT AFFILIATED WITH THE OFFICIAL GAME</p>
+  </main>
+
+  <script type="module">
+    import {
+      SETS, esc, loadProtocols, protoArt, emblem, protoTile, protoChip, store, copyText, toast
+    } from './companion.js';
+
+    const SHARE_URL = 'https://princetottino10-bit.github.io/compile/picker.html';
+    const KEY = 'compile.picker.v2';
+
+    /* 旧ピッカーのレシオ表 (オリジナル)。ここにないプロトコルは初期値が空欄 */
+    const ORIGINAL_RATIO = {
+      FIRE: 5, DARKNESS: 5, PSYCHIC: 5, HATE: 5,
+      WATER: 3, DEATH: 3, GRAVITY: 3,
+      LOVE: 2, PLAGUE: 2, LIFE: 2,
+      LIGHT: 1, SPEED: 1, SPIRIT: 1,
+      APATHY: 0, METAL: 0
+    };
+
+    const MODES = {
+      draftRandom: { no: 'A', label: 'ランダム P1 vs P2', desc: '2人ぶんを 1-2-2-1… の順に配る', pair: true, ratio: false },
+      draftRatio: { no: 'B', label: 'レシオ P1 vs P2', desc: '合計レシオが範囲内の2セット (重複なし)', pair: true, ratio: true },
+      ratioOne: { no: 'C', label: 'レシオで N 枚', desc: '合計レシオが範囲内の1セット', pair: false, ratio: true },
+      randomOne: { no: 'D', label: 'ランダムで N 枚', desc: '使うプロトコルから N 枚', pair: false, ratio: false }
+    };
+
+    let PROTOS = [];
+    let BY = {};
+    let lastResult = null;
+
+    /* ---------- 状態 (この端末に保存) ---------- */
+    const defaults = () => ({
+      mode: 'draftRatio', n: 3, p1Min: 7, p1Max: 8, p2Min: 7, p2Max: 8, side: 'P1',
+      sets: { 'Main 1': true, 'Aux 1': true, 'Main 2': true, 'Aux 2': true },
+      off: [], ratio: { ...ORIGINAL_RATIO }
+    });
+    const S = Object.assign(defaults(), store.get(KEY, {}));
+    /* 旧ピッカーで Aux を外していたら引き継ぐ (同じドメインなので読める) */
+    if (!store.get(KEY, null)) {
+      try { if (localStorage.getItem('compile.auxExcluded') === '1') S.sets['Aux 1'] = false; } catch (e) { /* 読めなければそのまま */ }
+    }
+    const save = () => store.set(KEY, S);
+
+    const clampInt = (v, lo, hi, fb) => {
+      const n = parseInt(v, 10);
+      return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : fb;
+    };
+    const ratioOf = (name) => (Object.prototype.hasOwnProperty.call(S.ratio, name) ? S.ratio[name] : null);
+
+    const enabled = () => PROTOS.filter(p => S.sets[p.set] !== false && !S.off.includes(p.name)).map(p => p.name);
+    const ratioPool = () => enabled().filter(n => ratioOf(n) != null);
+
+    /* ---------- 抽選 (旧ピッカーと同じ考え方) ---------- */
+    function shuffle(a) {
+      const b = a.slice();
+      for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; }
+      return b;
+    }
+
+    /* 合計が min..max に収まる N 枚の組を順に渡す (安いものから詰めて枝刈り)。
+       30 個すべてにレシオを入れて 6 枚にすると組は 60 万通りになるので、配列に貯めずに流す */
+    function eachCombo(pool, N, min, max, fn) {
+      const items = pool.map(k => ({ k, c: ratioOf(k) })).sort((a, b) => a.c - b.c);
+      const keys = items.map(x => x.k), costs = items.map(x => x.c);
+      const pre = [0];
+      for (let i = 0; i < costs.length; i++) pre[i + 1] = pre[i] + costs[i];
+      const pick = new Array(N);
+      (function rec(s, d, sum) {
+        const r = N - d;
+        if (s + r > keys.length) return;
+        if (r > 0 && sum + pre[s + r] - pre[s] > max) return;
+        if (d === N) { if (sum >= min && sum <= max) fn(pick, sum); return; }
+        for (let i = s; i <= keys.length - r; i++) {
+          if (sum + costs[i] > max) break;
+          pick[d] = keys[i];
+          rec(i + 1, d + 1, sum + costs[i]);
+        }
+      })(0, 0, 0);
+    }
+    const countCombos = (pool, N, min, max) => { let n = 0; eachCombo(pool, N, min, max, () => { n++; }); return n; };
+    const allCombos = (pool, N, min, max) => { const a = []; eachCombo(pool, N, min, max, (p, sum) => a.push({ arr: p.slice(), sum })); return a; };
+    /* 条件に合う組から一様に1つ (見た数だけの確率で入れ替える)。無ければ null */
+    function randomCombo(pool, N, min, max) {
+      let seen = 0, got = null;
+      eachCombo(pool, N, min, max, (p, sum) => { seen++; if (Math.random() * seen < 1) got = { arr: p.slice(), sum }; });
+      return got;
+    }
+
+    function draw() {
+      const m = MODES[S.mode], N = S.n;
+      const pool = m.ratio ? ratioPool() : enabled();
+      const need = m.pair ? N * 2 : N;
+      if (m.ratio && !pool.length) return { error: 'レシオが入っている、使うプロトコルがありません。下のレシオ表で値を入れてください。' };
+      if (pool.length < need) return { error: '使えるプロトコルが ' + pool.length + ' 枚しかありません (' + need + ' 枚必要)。' + (m.ratio ? 'レシオが空欄のものは数えていません。' : '') };
+      const first = Math.random() < 0.5 ? 'p1' : 'p2';
+
+      if (S.mode === 'randomOne') return { mode: S.mode, n: N, sides: [{ id: 'one', picks: shuffle(pool).slice(0, N) }] };
+
+      if (S.mode === 'ratioOne') {
+        const min = S.side === 'P1' ? S.p1Min : S.p2Min, max = S.side === 'P1' ? S.p1Max : S.p2Max;
+        const c = randomCombo(pool, N, min, max);
+        if (!c) return { error: '合計 ' + min + '〜' + max + ' になる ' + N + ' 枚の組み合わせがありません。' };
+        return { mode: S.mode, n: N, side: S.side, range: [min, max], sides: [{ id: 'one', picks: shuffle(c.arr), sum: c.sum }] };
+      }
+
+      if (S.mode === 'draftRatio') {
+        const n1 = countCombos(pool, N, S.p1Min, S.p1Max);
+        if (!n1) return { error: 'P1 の条件 (合計 ' + S.p1Min + '〜' + S.p1Max + ') に合う組み合わせがありません。' };
+        /* 組が少なければ全部を順に試す (旧ピッカーと同じ)。多ければ無作為に選び直す */
+        let tries = 0;
+        const all1 = n1 <= 20000 ? shuffle(allCombos(pool, N, S.p1Min, S.p1Max)) : null;
+        const nextP1 = () => (all1 ? all1[tries++] : (tries++ < 300 ? randomCombo(pool, N, S.p1Min, S.p1Max) : null));
+        for (let c1 = nextP1(); c1; c1 = nextP1()) {
+          const c2 = randomCombo(pool.filter(x => !c1.arr.includes(x)), N, S.p2Min, S.p2Max);
+          if (c2) return { mode: S.mode, n: N, first, sides: [
+            { id: 'p1', picks: shuffle(c1.arr), sum: c1.sum },
+            { id: 'p2', picks: shuffle(c2.arr), sum: c2.sum }
+          ] };
+        }
+        return { error: 'P1 と P2 で重ならない2セットが作れません。範囲を広げるか、使うプロトコルを増やしてください。' };
+      }
+
+      /* draftRandom: 1-2-2-1 の順で配る */
+      const bag = shuffle(pool);
+      const pat = [['p1', 1], ['p2', 2], ['p1', 2], ['p2', 1]];
+      const left = { p1: N, p2: N }, got = { p1: [], p2: [] };
+      for (let i = 0; (left.p1 > 0 || left.p2 > 0) && i < 200; i++) {
+        const [who, t] = pat[i % pat.length], take = Math.min(t, left[who]);
+        if (take > 0) { got[who].push(...bag.splice(0, take)); left[who] -= take; }
+      }
+      return { mode: S.mode, n: N, first, rest: bag, sides: [{ id: 'p1', picks: got.p1 }, { id: 'p2', picks: got.p2 }] };
+    }
+
+    /* ---------- 共有用のテキスト (旧ピッカーと同じ書式) ---------- */
+    function resultText(r) {
+      const withR = (k) => k + (MODES[r.mode].ratio ? '(' + ratioOf(k) + ')' : '');
+      const list = (a) => a.map((k, i) => (i + 1) + '. ' + withR(k)).join('\n');
+      let t;
+      if (r.mode === 'randomOne') t = '🎲 ' + r.n + '枚ランダム\n- ' + r.sides[0].picks.join('\n- ');
+      else if (r.mode === 'ratioOne') t = '🧮 レシオ構築(' + r.side + '/' + r.range[0] + '-' + r.range[1] + '/' + r.n + '枚)\n- ' +
+        r.sides[0].picks.map(withR).join('\n- ') + '\n合計:' + r.sides[0].sum;
+      else if (r.mode === 'draftRatio') t = '🌀 レシオドラフト(' + r.n + '枚)\n先攻:' + r.first.toUpperCase() +
+        '\n\nP1 合計=' + r.sides[0].sum + '\n' + list(r.sides[0].picks) + '\n\nP2 合計=' + r.sides[1].sum + '\n' + list(r.sides[1].picks);
+      else t = '🎲 ランダムドラフト(' + r.n + '枚)\n先攻:' + r.first.toUpperCase() +
+        '\n\nP1\n' + list(r.sides[0].picks) + '\n\nP2\n' + list(r.sides[1].picks) +
+        '\n\n残り:' + r.rest.length + (r.rest.length ? '\n- ' + r.rest.join(', ') : '');
+      return t + '\n\n🔗 Compile Picker: ' + SHARE_URL;
+    }
+
+    /* ---------- 描画 ---------- */
+    function renderModes() {
+      document.getElementById('modes').innerHTML = Object.entries(MODES).map(([id, m]) =>
+        '<button type="button" class="mode" data-mode="' + id + '" aria-pressed="' + (S.mode === id) + '">' +
+        '<i>' + m.no + '</i><b>' + esc(m.label.replace('N', S.n)) + '</b><span>' + esc(m.desc.replace('N', S.n)) + '</span></button>').join('');
+    }
+
+    function stepper(id, value, lo, hi) {
+      return '<span class="stepper"><button type="button" data-step="' + id + '" data-d="-1" aria-label="減らす">−</button>' +
+        '<input class="num" type="number" inputmode="numeric" id="' + id + '" value="' + value + '" min="' + lo + '" max="' + hi + '">' +
+        '<button type="button" data-step="' + id + '" data-d="1" aria-label="増やす">＋</button></span>';
+    }
+
+    function renderParams() {
+      const m = MODES[S.mode];
+      let h = '<label class="param"><span>枚数 (1人あたり)</span>' + stepper('n', S.n, 2, 6) + '</label>';
+      if (m.ratio) {
+        const range = (who, lo, hi) => '<div class="param ' + who.toLowerCase() + '"><span>' + who + ' の合計レシオ</span><span class="range">' +
+          stepper(who.toLowerCase() + 'Min', lo, 0, 60) + '〜' + stepper(who.toLowerCase() + 'Max', hi, 0, 60) + '</span></div>';
+        if (m.pair || S.side === 'P1') h += range('P1', S.p1Min, S.p1Max);
+        if (m.pair || S.side === 'P2') h += range('P2', S.p2Min, S.p2Max);
+        if (!m.pair) h += '<div class="param"><span>どちらの範囲で</span><span class="seg">' +
+          ['P1', 'P2'].map(s => '<button type="button" class="lvl" data-side="' + s + '" aria-pressed="' + (S.side === s) + '">' + s + '</button>').join('') + '</span></div>';
+      }
+      h += '<div class="go-row"><button type="button" class="cp-go" id="go">抽選する</button></div>';
+      document.getElementById('params').innerHTML = h;
+    }
+
+    function pickRow(name, i, showRatio) {
+      const p = BY[name];
+      const r = ratioOf(name);
+      return '<div class="pick" style="--accent:' + esc(p.color) + ';animation-delay:' + (i * 0.05) + 's">' +
+        '<span class="proto-art" style="background-image:url(&quot;' + protoArt(name) + '&quot;)"></span>' +
+        '<span class="ord">' + (i + 1) + '</span><img alt="" src="' + emblem(p, 96) + '">' +
+        '<span class="pick-name"><b>' + esc(name) + '</b><span>' + esc(p.set) + '</span></span>' +
+        (showRatio ? '<span class="r"><small>RATIO</small>' + (r == null ? '–' : r) + '</span>' : '') + '</div>';
+    }
+
+    function renderResult() {
+      const el = document.getElementById('result');
+      const r = lastResult;
+      if (!r) return;
+      if (r.error) { el.innerHTML = '<div class="res-msg">' + esc(r.error) + '</div>'; return; }
+      const m = MODES[r.mode];
+      const sideHtml = (s) => {
+        const label = s.id === 'one' ? (m.ratio ? r.side : 'PICK') : s.id.toUpperCase();
+        const first = r.first && r.first === s.id ? '<span class="first">先攻</span>' : '';
+        const sum = s.sum != null ? '<span class="sum">合計<strong>' + s.sum + '</strong></span>' : '';
+        return '<div class="side ' + (s.id === 'p2' ? 'p2' : 'p1') + '"><div class="side-head"><b>' + label + '</b>' + first + sum + '</div>' +
+          '<div class="picks">' + s.picks.map((k, i) => pickRow(k, i, m.ratio)).join('') + '</div></div>';
+      };
+      let h = '<div class="res-grid' + (m.pair ? ' pair' : '') + '">' + r.sides.map(sideHtml).join('') + '</div>';
+      if (r.rest && r.rest.length) h += '<div class="rest"><span>残り ' + r.rest.length + '</span>' +
+        r.rest.map(k => protoChip(BY[k], false)).join('') + '</div>';
+      h += '<div class="res-actions"><button type="button" class="cp-go" id="again">もう一度</button>' +
+        '<button type="button" class="cp-ghost" id="share">共有</button>' +
+        '<button type="button" class="cp-ghost" id="copy">テキストをコピー</button></div>';
+      el.innerHTML = h;
+    }
+
+    function renderPool() {
+      const on = enabled();
+      document.getElementById('poolCount').textContent = on.length + ' / ' + PROTOS.length;
+      document.getElementById('poolTools').innerHTML = SETS.map(s =>
+        '<button type="button" class="lvl" data-set="' + esc(s) + '" aria-pressed="' + (S.sets[s] !== false) + '">' + esc(s) + '</button>').join('') +
+        '<button type="button" class="lvl" id="poolAll">ぜんぶ使う</button>';
+      document.getElementById('pool').innerHTML = PROTOS.map(p => {
+        const setOff = S.sets[p.set] === false;
+        const r = ratioOf(p.name);
+        return protoTile(p, {
+          cls: (setOff || S.off.includes(p.name)) ? 'off' : '',
+          attrs: 'aria-pressed="' + !(setOff || S.off.includes(p.name)) + '"' + (setOff ? ' disabled title="' + esc(p.set) + ' を使っていません"' : ''),
+          extra: '<span class="rb' + (r == null ? ' none' : '') + '">R ' + (r == null ? '–' : r) + '</span>'
+        });
+      }).join('');
+    }
+
+    function bucketText() {
+      const groups = new Map();
+      const unset = [];
+      for (const p of PROTOS) {
+        const r = ratioOf(p.name);
+        if (r == null) { unset.push(p.name); continue; }
+        if (!groups.has(r)) groups.set(r, []);
+        groups.get(r).push(p.name);
+      }
+      const lines = ['レシオ表'];
+      [...groups.keys()].sort((a, b) => b - a).forEach(v => lines.push('【' + v + '】' + groups.get(v).sort().join(',')));
+      if (unset.length) lines.push('【未設定】' + unset.join(','));
+      return lines.join('\n');
+    }
+
+    function renderRatio() {
+      let h = '', set = null;
+      for (const p of PROTOS) {
+        if (p.set !== set) { set = p.set; h += '<div class="ratio-set">' + esc(set) + '</div>'; }
+        const r = ratioOf(p.name);
+        const orig = Object.prototype.hasOwnProperty.call(ORIGINAL_RATIO, p.name) ? ORIGINAL_RATIO[p.name] : null;
+        h += '<div class="ratio-row' + (r == null ? ' unset' : '') + (r !== orig ? ' changed' : '') + '" style="--accent:' + esc(p.color) + '">' +
+          '<img alt="" src="' + emblem(p, 52) + '"><b>' + esc(p.name) + '</b>' +
+          '<span class="stepper"><button type="button" data-rstep="' + p.name + '" data-d="-1" aria-label="' + p.name + ' を減らす">−</button>' +
+          '<input class="num" type="number" inputmode="numeric" min="0" max="20" data-ratio="' + p.name + '" value="' + (r == null ? '' : r) + '" placeholder="–" aria-label="' + p.name + ' のレシオ">' +
+          '<button type="button" data-rstep="' + p.name + '" data-d="1" aria-label="' + p.name + ' を増やす">＋</button></span></div>';
+      }
+      document.getElementById('ratio').innerHTML = h;
+      document.getElementById('buckets').textContent = bucketText();
+    }
+
+    function setRatio(name, v) {
+      if (v === '' || v == null || Number.isNaN(v)) delete S.ratio[name];
+      else S.ratio[name] = Math.min(20, Math.max(0, v));
+      save();
+      renderRatio();
+      renderPool();
+    }
+
+    function renderAll() { renderModes(); renderParams(); renderPool(); renderRatio(); }
+
+    /* ---------- 操作 ---------- */
+    document.addEventListener('click', async (e) => {
+      const t = e.target.closest('button');
+      if (!t) return;
+      if (t.dataset.mode) { S.mode = t.dataset.mode; save(); renderModes(); renderParams(); return; }
+      if (t.dataset.side) { S.side = t.dataset.side; save(); renderParams(); return; }
+      if (t.dataset.step) {
+        const input = document.getElementById(t.dataset.step);
+        input.value = clampInt(+input.value + (+t.dataset.d), +input.min, +input.max, +input.value);
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        return;
+      }
+      if (t.dataset.rstep) {
+        const cur = ratioOf(t.dataset.rstep);
+        /* 空欄から ＋ で 0 に。0 から − では空欄にしない (0 も正しい値)。空欄に戻すのは入力欄を消す */
+        const next = cur == null ? (+t.dataset.d > 0 ? 0 : null) : Math.max(0, cur + (+t.dataset.d));
+        setRatio(t.dataset.rstep, next);
+        return;
+      }
+      if (t.dataset.set) { S.sets[t.dataset.set] = S.sets[t.dataset.set] === false; save(); renderPool(); return; }
+      if (t.id === 'poolAll') { SETS.forEach(s => { S.sets[s] = true; }); S.off = []; save(); renderPool(); return; }
+      if (t.classList.contains('proto') && t.closest('#pool')) {
+        const n = t.dataset.name;
+        S.off = S.off.includes(n) ? S.off.filter(x => x !== n) : S.off.concat(n);
+        save(); renderPool(); return;
+      }
+      if (t.id === 'go' || t.id === 'again') {
+        lastResult = draw(); renderResult();
+        if (t.id === 'go' && window.innerWidth < 860) document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+      if (t.id === 'copy' && lastResult && !lastResult.error) { copyText(resultText(lastResult)); return; }
+      if (t.id === 'share' && lastResult && !lastResult.error) {
+        const text = resultText(lastResult);
+        if (navigator.share) { try { await navigator.share({ text }); } catch (err) { /* 閉じただけ */ } }
+        else copyText(text);
+        return;
+      }
+      if (t.id === 'ratioReset') { S.ratio = { ...ORIGINAL_RATIO }; save(); renderRatio(); renderPool(); toast('初期値に戻しました'); return; }
+      if (t.id === 'ratioClear') { S.ratio = {}; save(); renderRatio(); renderPool(); return; }
+      if (t.id === 'copyBuckets') { copyText(document.getElementById('buckets').textContent); }
+    });
+
+    document.addEventListener('change', (e) => {
+      const t = e.target;
+      if (t.dataset.ratio) {
+        const v = t.value.trim();
+        setRatio(t.dataset.ratio, v === '' ? null : clampInt(v, 0, 20, null));
+        return;
+      }
+      if (!t.classList.contains('num')) return;
+      const lo = +t.min, hi = +t.max;
+      if (t.id === 'n') { S.n = clampInt(t.value, lo, hi, S.n); renderModes(); }
+      else if (t.id in S) S[t.id] = clampInt(t.value, lo, hi, S[t.id]);
+      /* 下限と上限が逆にならないように */
+      if (S.p1Min > S.p1Max) S.p1Max = S.p1Min;
+      if (S.p2Min > S.p2Max) S.p2Max = S.p2Min;
+      save();
+      renderParams();
+    });
+
+    /* ---------- はじめ ---------- */
+    try {
+      PROTOS = await loadProtocols();
+      BY = Object.fromEntries(PROTOS.map(p => [p.name, p]));
+      renderAll();
+    } catch (err) {
+      document.getElementById('result').innerHTML =
+        '<div class="res-msg">カードデータを読み込めませんでした。ページを読み直してください。</div>';
+      console.error(err);
+    }
+  </script>
+</body>
+</html>

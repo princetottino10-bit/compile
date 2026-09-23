@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
-"""three-play.html が読み込むスクリプト・CSS に、中身から作った版 (?v=ハッシュ) を付ける。
+"""three-play.html と、コンパニオンツール (cardlist.html / picker.html / rules.html) が読み込むスクリプト・CSS に、
+中身から作った版 (?v=ハッシュ) を付ける。
 
 GitHub Pages はどのファイルも max-age=600 で配るため、更新しても最大10分は古いものが使われ、
 ページを読み直しても js3d/*.js だけ古いまま (新しい HTML + 古いモジュール) になることがある。
 import map で各モジュールの URL を「中身が変わったら変わる URL」にしておけば、
 HTML さえ新しければ必ず新しいモジュールが読まれる。
 
-js3d/ や engine.js を変えたら、コミット前にこれを実行する (test/asset-versions.test.js が確かめる)。
+js3d/ や engine.js、companion.js / companion.css を変えたら、コミット前にこれを実行する
+(test/asset-versions.test.js が確かめる)。
     python scripts/stamp_assets.py
 """
 import glob
@@ -19,6 +21,10 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PAGE = os.path.join(ROOT, 'three-play.html')
+# カードリスト・ピッカー: companion.js と、それが読むアリーナの紋章・アイコンだけを使う
+# (ルールの早見表は companion.css だけ。import map が無いページは CSS の版だけ付ける)
+COMPANION_PAGES = ['cardlist.html', 'picker.html', 'rules.html']
+COMPANION_MODULES = ['companion.js', 'js3d/emblems.js', 'js3d/icons.js']
 
 
 def version(rel):
@@ -43,7 +49,25 @@ def build_import_map():
     return json.dumps({'imports': imports}, ensure_ascii=False, indent=2)
 
 
+def stamp_companion(name):
+    path = os.path.join(ROOT, name)
+    html = io.open(path, encoding='utf-8').read()
+    imports = json.dumps({'imports': {'./' + rel: stamped(rel) for rel in COMPANION_MODULES}}, ensure_ascii=False, indent=2)
+    out = re.sub(r'(<script type="importmap">\s*)\{.*?\}(\s*</script>)',
+                 lambda m: m.group(1) + imports.replace('\n', '\n  ') + m.group(2),
+                 html, count=1, flags=re.S)
+    out = re.sub(r'<link rel="stylesheet" href="companion\.css(\?v=[0-9a-f]+)?">',
+                 '<link rel="stylesheet" href="companion.css?v=' + version('companion.css') + '">', out, count=1)
+    if out == html:
+        print(name + ': 変更なし')
+        return
+    io.open(path, 'w', encoding='utf-8', newline='\n').write(out)
+    print(name + ': 版を更新しました')
+
+
 def main():
+    for name in COMPANION_PAGES:
+        stamp_companion(name)
     html = io.open(PAGE, encoding='utf-8').read()
     out = re.sub(r'(<script type="importmap">\s*)\{.*?\}(\s*</script>)',
                  lambda m: m.group(1) + build_import_map().replace('\n', '\n  ') + m.group(2),

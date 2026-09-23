@@ -2,741 +2,669 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>COMPILE - カードリスト</title>
+  <meta name="description" content="ボードゲーム『コンパイル』全30プロトコル・180枚のカードリスト。効果の検索、逆引き、デッキ分析。">
+  <meta name="theme-color" content="#03040a">
   <link rel="apple-touch-icon" href="icon-180.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="COMPILE">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="companion.css?v=613064e92f">
+  <script type="importmap">
+  {
+    "imports": {
+      "./companion.js": "./companion.js?v=5e681c247a",
+      "./js3d/emblems.js": "./js3d/emblems.js?v=6d1c077a2e",
+      "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c"
+    }
+  }
+  </script>
   <style>
-    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-    :root,html.dark{
-      --pk:#e91e8c;--pk2:#ff2fa0;--dk:#0d0d14;--dkr:#080810;
-      --cbg:#13131e;--cbg2:#181826;--chv:#1e1e30;
-      --tx:#e8e8f0;--txd:#9898b0;--txdd:#686880;
-      --bd:rgba(255,255,255,0.07);--bd2:rgba(255,255,255,0.12);
-      --hdr-bg:rgba(8,8,16,0.96);--overlay:rgba(0,0,0,0.88);
-      --handle:rgba(255,255,255,0.18);--close-bg:rgba(255,255,255,0.1);
-      --pill-bg:rgba(255,255,255,0.03);--pill-on-bg:rgba(255,255,255,0.06);
-      --chip-on-bg:rgba(233,30,140,0.12);--brow-on:rgba(233,30,140,0.08);
-      --brow-hv:rgba(255,255,255,0.03);--btrk-bg:rgba(255,255,255,0.03);
-      --tag-bg:rgba(255,255,255,0.04);--tag-bd:rgba(255,255,255,0.1);
-      --empty-color:rgba(255,255,255,0.1);--codex-bg:rgba(233,30,140,0.04);
-      --codex-bd:rgba(233,30,140,0.15);--logo-color:#fff;
-      --scrollbar-bg:rgba(255,255,255,0.12);
-      --cmd-up-bg:rgba(239,68,68,0.15);--cmd-mid-bg:rgba(59,130,246,0.15);--cmd-low-bg:rgba(34,197,94,0.15);
-      --cmd-up-bg2:rgba(239,68,68,0.1);--cmd-mid-bg2:rgba(59,130,246,0.1);--cmd-low-bg2:rgba(34,197,94,0.1);
+    /* ---------- タブ ---------- */
+    .tabs {
+      position: sticky;
+      top: var(--top-h, 55px);
+      z-index: 20;
+      display: flex;
+      gap: 4px;
+      margin: 0 -16px;
+      padding: 8px 16px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      background: rgba(3, 4, 10, .86);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--edge);
     }
-    html.light{
-      --pk:#c4167a;--pk2:#d81888;--dk:#ffffff;--dkr:#f2f2f5;
-      --cbg:#ffffff;--cbg2:#f5f5f8;--chv:#eeeef2;
-      --tx:#1a1a2e;--txd:#555568;--txdd:#8888a0;
-      --bd:rgba(0,0,0,0.08);--bd2:rgba(0,0,0,0.15);
-      --hdr-bg:rgba(255,255,255,0.96);--overlay:rgba(0,0,0,0.5);
-      --handle:rgba(0,0,0,0.15);--close-bg:rgba(0,0,0,0.06);
-      --pill-bg:rgba(0,0,0,0.03);--pill-on-bg:rgba(0,0,0,0.06);
-      --chip-on-bg:rgba(196,22,122,0.1);--brow-on:rgba(196,22,122,0.08);
-      --brow-hv:rgba(0,0,0,0.03);--btrk-bg:rgba(0,0,0,0.05);
-      --tag-bg:rgba(0,0,0,0.04);--tag-bd:rgba(0,0,0,0.1);
-      --empty-color:rgba(0,0,0,0.15);--codex-bg:rgba(196,22,122,0.04);
-      --codex-bd:rgba(196,22,122,0.15);--logo-color:#1a1a2e;
-      --scrollbar-bg:rgba(0,0,0,0.12);
-      --cmd-up-bg:rgba(239,68,68,0.1);--cmd-mid-bg:rgba(59,130,246,0.1);--cmd-low-bg:rgba(34,197,94,0.1);
-      --cmd-up-bg2:rgba(239,68,68,0.06);--cmd-mid-bg2:rgba(59,130,246,0.06);--cmd-low-bg2:rgba(34,197,94,0.06);
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab {
+      flex: none;
+      padding: 10px 16px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      background: none;
+      cursor: pointer;
+      font: 800 12px/1 system-ui, sans-serif;
+      letter-spacing: .1em;
+      color: var(--dim);
+      transition: color .18s, border-color .18s, background .18s;
     }
-    html{scroll-behavior:smooth;-webkit-tap-highlight-color:transparent}
-    body{font-family:'Noto Sans JP',sans-serif;background:var(--dkr);color:var(--tx);line-height:1.7;min-height:100vh;overflow-x:hidden}
+    .tab:hover { color: var(--ink); }
+    .tab[aria-selected="true"] { color: #fff; border-color: rgba(255, 59, 157, .55); background: rgba(255, 59, 157, .13); }
+    .view { display: none; padding-top: 6px; }
+    .view.on { display: block; animation: fade .25s ease both; }
+    @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
-    header{position:sticky;top:0;z-index:100;background:var(--hdr-bg);backdrop-filter:blur(20px);border-bottom:1px solid rgba(233,30,140,0.15)}
-    .h-top{display:flex;align-items:center;justify-content:space-between;padding:0 14px;height:46px}
-    .logo{font-family:'Orbitron',monospace;font-weight:900;font-size:0.95rem;letter-spacing:2px;color:var(--logo-color)}
-    .logo span{color:var(--pk)}
-    .view-toggle{display:flex;gap:4px}
-    .view-btn{background:var(--pill-bg);border:1px solid var(--bd);color:var(--txd);font-size:0.7rem;padding:4px 10px;border-radius:6px;cursor:pointer;transition:all .2s}
-    .view-btn.on{background:var(--chip-on-bg);border-color:var(--pk);color:var(--pk)}
-
-    .tabs{display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-    .tabs::-webkit-scrollbar{display:none}
-    .tab{padding:9px 14px;font-size:0.73rem;font-weight:500;color:var(--txdd);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;user-select:none}
-    .tab.on{color:var(--pk);border-bottom-color:var(--pk);font-weight:700}
-
-    main{padding:12px;max-width:900px;margin:0 auto}
-
-    .slbl{font-size:0.66rem;font-weight:700;letter-spacing:1.5px;color:var(--txd);text-transform:uppercase;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
-    .slbl b{color:var(--pk);font-family:'Orbitron',monospace}
-    .clear-btn{font-size:0.6rem;color:var(--txdd);background:var(--tag-bg);border:1px solid var(--bd);border-radius:4px;padding:2px 8px;cursor:pointer;transition:all .2s}
-    .clear-btn:hover,.clear-btn:active{color:var(--pk);border-color:var(--pk)}
-
-    .pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
-    .pill{padding:6px 12px;font-size:0.7rem;font-weight:700;letter-spacing:.5px;border:1px solid var(--bd);background:var(--pill-bg);color:var(--txdd);cursor:pointer;border-radius:20px;transition:all .2s;user-select:none}
-    .pill:active{transform:scale(0.95)}
-    .pill.on{border-color:currentColor;background:var(--pill-on-bg)}
-    .pill.set-aux{}
-    .set-group{margin-bottom:8px}
-    .set-group-hdr{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;margin-bottom:6px}
-    .set-group-hdr .set-label{font-size:0.6rem;font-weight:700;letter-spacing:1px;color:var(--txdd);text-transform:uppercase}
-    .set-group-hdr .set-arrow{font-size:0.5rem;color:var(--txdd);transition:transform .2s}
-    .set-group-hdr.collapsed .set-arrow{transform:rotate(-90deg)}
-    .set-group-hdr .set-spacer{margin-left:auto}
-    .set-group-btn{font-size:0.55rem;font-weight:700;letter-spacing:.8px;color:var(--txdd);background:var(--tag-bg);border:1px solid var(--bd);border-radius:999px;padding:2px 8px;cursor:pointer;transition:all .2s}
-    .set-group-btn.on{color:var(--pk);border-color:var(--pk);background:var(--chip-on-bg)}
-    .set-group-pills{display:flex;flex-wrap:wrap;gap:6px}
-    .set-group-pills.collapsed{display:none}
-
-    .chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
-    .chip{padding:4px 10px;font-size:0.64rem;border:1px solid var(--bd);background:transparent;color:var(--txdd);cursor:pointer;border-radius:12px;transition:all .2s;font-weight:500}
-    .chip.on{background:var(--chip-on-bg);border-color:var(--pk);color:var(--pk);font-weight:700}
-    .protocol-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-    .proto-card{background:var(--cbg);border:1px solid var(--bd);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-height:88px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
-    .proto-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--pk),transparent);opacity:.45}
-    .proto-card:hover,.proto-card:active{transform:translateY(-1px);border-color:var(--bd2)}
-    .proto-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
-    .proto-name{flex:1;min-width:0;font-family:'Orbitron',monospace;font-size:0.7rem;font-weight:700;letter-spacing:.35px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .proto-view{flex-shrink:0;padding:3px 7px;border-radius:999px;border:1px solid var(--bd);background:var(--pill-bg);color:var(--txd);font-family:'Orbitron',monospace;font-size:0.52rem;font-weight:700;letter-spacing:.8px}
-    .proto-meta{font-size:0.58rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--txd)}
-    .proto-tags{font-size:0.62rem;color:var(--txd);line-height:1.55}
-    .proto-preview{display:flex;flex-direction:column;gap:12px}
-    .proto-preview-grid{display:grid;grid-template-columns:1fr;gap:10px;align-items:stretch}
-    .proto-preview-card{height:100%;min-height:0;border:1px solid var(--bd);border-radius:10px;overflow:hidden;background:var(--cbg);display:flex;flex-direction:column}
-    .proto-preview-hd{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-bottom:1px solid var(--bd)}
-    .proto-preview-name{font-family:'Orbitron',monospace;font-size:0.78rem;font-weight:700;letter-spacing:.6px}
-    .proto-preview-val{font-family:'Orbitron',monospace;font-size:0.7rem;font-weight:900;padding:3px 8px;border-radius:999px;border:1px solid currentColor}
-    .proto-preview-card .m-cmd-section{display:flex;flex-direction:row;align-items:stretch;flex:0 0 auto;min-height:0}
-    .proto-preview-card .m-cmd-header{width:28px;min-width:28px;justify-content:center;padding:7px 0;font-size:0.56rem}
-    .proto-preview-card .m-cmd-body,.proto-preview-card .m-cmd-empty{flex:1;min-height:0;overflow:visible;font-size:0.74rem;line-height:1.55;padding:7px 9px}
-    @media(min-width:640px){.proto-preview-grid{grid-template-columns:repeat(2,1fr)}}
-
-    /* === TILE VIEW (default) === */
-    .cards{display:flex;flex-direction:column;gap:10px}
-    .card{background:var(--cbg);border:1px solid var(--bd);border-radius:10px;padding:14px;cursor:pointer;transition:all .15s;border-left:3px solid transparent}
-    .card:active{background:var(--chv);transform:scale(0.99)}
-    .c-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-    .c-head-left{display:flex;align-items:center;gap:8px}
-    .c-val{font-family:'Orbitron',monospace;font-size:0.9rem;font-weight:900;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:7px;border:1.5px solid;flex-shrink:0}
-    .c-name{font-family:'Orbitron',monospace;font-size:0.78rem;font-weight:700;letter-spacing:.5px}
-    .c-set{font-size:0.52rem;padding:2px 6px;border-radius:4px;background:var(--tag-bg);color:var(--txd);margin-left:6px}
-    .c-tags{display:flex;flex-wrap:wrap;gap:4px}
-    .etag{font-size:0.58rem;padding:2px 7px;border-radius:4px;background:var(--tag-bg);color:var(--txd);font-weight:500}
-    .c-cmds{font-size:0.8rem;color:var(--txd);line-height:1.65;display:flex;flex-direction:column;gap:3px}
-    .c-cmd{display:flex;gap:6px;align-items:flex-start}
-    .c-cmd-lbl{font-size:0.56rem;font-weight:700;padding:2px 4px;border-radius:3px;flex-shrink:0;margin-top:4px;min-width:18px;text-align:center}
-    .c-cmd-lbl.up{background:var(--cmd-up-bg);color:#ef4444}
-    .c-cmd-lbl.mid{background:var(--cmd-mid-bg);color:#3b82f6}
-    .c-cmd-lbl.low{background:var(--cmd-low-bg);color:#22c55e}
-    .c-cmd-txt{flex:1}
-    .c-cmd-empty{color:var(--empty-color);font-size:0.68rem}
-
-    /* === ROW VIEW === */
-    .cards.row-view{gap:4px}
-    .cards.row-view .card{padding:7px 10px;border-radius:6px;border-left-width:3px}
-    .cards.row-view .c-head{display:none}
-    .cards.row-view .c-tags{display:none}
-    .row-header{display:none;align-items:center;gap:6px;margin-bottom:2px;font-size:0.7rem}
-    .cards.row-view .row-header{display:flex}
-    .row-pname{font-family:'Orbitron',monospace;font-weight:700;font-size:0.68rem;letter-spacing:.5px;min-width:74px}
-    .row-val{font-family:'Orbitron',monospace;font-weight:900;font-size:0.75rem;min-width:20px;text-align:center}
-    .cards.row-view .c-cmds{font-size:0.74rem;gap:1px}
-    .cards.row-view .c-cmd-lbl{font-size:0.52rem;padding:1px 3px;min-width:15px;margin-top:2px}
-
-    /* Modal */
-    .mover{display:none;position:fixed;inset:0;background:var(--overlay);z-index:200;align-items:flex-end;justify-content:center}
-    .mover.on{display:flex}
-    .modal{background:var(--dk);border:1px solid var(--bd2);border-radius:16px 16px 0 0;width:100%;max-width:560px;max-height:88vh;overflow-y:auto;position:relative;animation:slideUp .25s ease}
-    @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-    .m-accent{height:4px;border-radius:16px 16px 0 0}
-    .m-handle{width:36px;height:4px;background:var(--handle);border-radius:2px;margin:10px auto 0}
-    .m-body{padding:20px 16px 30px}
-    .m-close{position:absolute;top:10px;right:10px;background:var(--close-bg);border:none;color:var(--txd);font-size:1.2rem;cursor:pointer;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:1}
-    .m-name{font-family:'Orbitron',monospace;font-size:1.05rem;font-weight:700;letter-spacing:1px;margin-bottom:4px}
-    .m-proto{font-size:0.72rem;font-weight:500;padding:3px 10px;border-radius:5px;display:inline-block;margin-bottom:14px}
-    .m-cmd-section{margin-bottom:10px;border:1px solid var(--bd2);border-radius:8px;overflow:hidden}
-    .m-cmd-header{display:flex;align-items:center;gap:6px;padding:8px 12px;font-size:0.7rem;font-weight:700;letter-spacing:.5px}
-    .m-cmd-header.up{background:var(--cmd-up-bg2);color:#ef4444}
-    .m-cmd-header.mid{background:var(--cmd-mid-bg2);color:#3b82f6}
-    .m-cmd-header.low{background:var(--cmd-low-bg2);color:#22c55e}
-    .m-cmd-body{padding:10px 12px;font-size:0.88rem;line-height:1.85;color:var(--tx)}
-    .m-cmd-empty{padding:8px 12px;font-size:0.78rem;color:var(--empty-color)}
-    .m-slbl{font-size:0.64rem;font-weight:700;color:var(--txd);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;margin-top:14px}
-    .m-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
-    .m-tags .etag{font-size:0.68rem;padding:3px 9px;border:1px solid var(--tag-bd);border-radius:5px}
-    .m-codex{margin-top:16px;padding:12px 14px;background:var(--codex-bg);border:1px solid var(--codex-bd);border-radius:8px;font-size:0.8rem;line-height:1.75;color:var(--txd);white-space:pre-line}
-    .m-codex-title{font-size:0.64rem;font-weight:700;color:var(--pk);letter-spacing:1px;margin-bottom:4px}
-
-    .info-msg{font-size:0.76rem;color:var(--txd);margin-bottom:10px}
-    .info-msg b{font-family:'Orbitron',monospace;color:var(--pk)}
-    .nores{text-align:center;padding:40px 16px;color:var(--txdd)}
-    .nores .ico{font-size:2rem;margin-bottom:10px;opacity:.3}
-
-    /* Lookup card preview */
-    #lkResult:not(:empty){position:sticky;top:90px;z-index:50;padding-bottom:12px;background:var(--dkr);margin-bottom:4px}
-
-    /* Matrix */
-    .matrix-wrap{margin-bottom:12px}
-    .matrix{border-collapse:collapse;width:100%;table-layout:fixed;font-size:0.65rem}
-    .matrix th,.matrix td{padding:5px 2px;text-align:center;border:1px solid var(--bd)}
-    .matrix th{font-family:'Orbitron',monospace;font-weight:700;font-size:0.58rem;color:var(--txd);background:var(--cbg)}
-    .matrix th:first-child{text-align:left;padding-left:6px;width:72px}
-    .matrix .m-pname{font-family:'Orbitron',monospace;font-weight:700;font-size:0.56rem;text-align:left;padding-left:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .matrix td.m-cell{cursor:pointer;transition:all .15s;font-family:'Orbitron',monospace;font-weight:700;font-size:0.68rem}
-    .matrix td.m-cell:hover,.matrix td.m-cell:active{background:var(--chip-on-bg)}
-    .matrix td.m-cell.on{background:var(--pk);color:#fff}
-    .matrix td.m-empty{color:var(--empty-color);font-size:0.55rem}
-    @media(min-width:640px){.matrix th:first-child{width:100px}.matrix .m-pname{font-size:0.62rem}.matrix td.m-cell{font-size:0.72rem}}
-
-    /* Analysis */
-    .a-grid{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
-    .a-card{background:var(--cbg);border:1px solid var(--bd);border-radius:10px;padding:14px}
-    .a-card h3{font-size:0.8rem;font-weight:700;margin-bottom:8px}
-    .bars{display:flex;flex-direction:column;gap:6px}
-    .brow{display:flex;align-items:center;gap:6px;cursor:pointer;border-radius:4px;padding:2px 0;transition:background .15s}
-    .brow:hover,.brow:active{background:var(--brow-hv)}
-    .brow.on{background:var(--brow-on)}
-    .blbl{font-size:0.68rem;color:var(--txd);width:56px;flex-shrink:0;text-align:right;font-weight:500}
-    .btrk{flex:1;height:18px;background:var(--btrk-bg);border-radius:5px;overflow:hidden}
-    .bfill{height:100%;border-radius:5px;transition:width .4s ease}
-    .bval{font-family:'Orbitron',monospace;font-size:0.64rem;color:var(--txd);width:22px;text-align:right;font-weight:700}
-    .a-cards-section{margin-top:12px}
-
-    .sec{display:none}
-    .sec.on{display:block}
-    .sec.slide-in-left{animation:slideInLeft .2s ease}
-    .sec.slide-in-right{animation:slideInRight .2s ease}
-    @keyframes slideInLeft{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
-    @keyframes slideInRight{from{opacity:0;transform:translateX(-40px)}to{opacity:1;transform:translateX(0)}}
-
-    @media(min-width:640px){
-      .h-top{padding:0 20px;height:50px}
-      .logo{font-size:1.05rem}
-      main{padding:16px}
-      .cards:not(.row-view){display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-      .modal{border-radius:12px;max-height:85vh;animation:fadeIn .2s ease}
-      .mover{align-items:center;padding:20px}
-      .m-handle{display:none}
-      @keyframes fadeIn{from{opacity:0;transform:scale(0.96)}to{opacity:1;transform:scale(1)}}
+    /* ---------- 絞り込み ---------- */
+    .filters { display: flex; flex-direction: column; gap: 12px; margin: 16px 0 14px; }
+    .search { position: relative; }
+    .search svg { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--dim); pointer-events: none; }
+    .search .cp-input { padding-left: 40px; }
+    .frow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+    .frow > .flbl { width: 64px; flex: none; font: 800 10px/1 system-ui, sans-serif; letter-spacing: .16em; color: var(--dim); }
+    .fx-chip { display: inline-flex; align-items: center; gap: 6px; }
+    .fx-chip svg { flex: none; }
+    details.pick-protos { border: 1px solid var(--edge); border-radius: 12px; background: rgba(8, 11, 21, .6); }
+    details.pick-protos > summary {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 14px;
+      cursor: pointer;
+      list-style: none;
+      font: 800 11px/1 system-ui, sans-serif;
+      letter-spacing: .12em;
+      color: var(--dim);
     }
-    @media(min-width:960px){
-      .cards:not(.row-view){grid-template-columns:repeat(3,1fr)}
-      .a-grid{flex-direction:row;flex-wrap:wrap}
-      .a-grid>.a-card{flex:1;min-width:200px}
+    details.pick-protos > summary::-webkit-details-marker { display: none; }
+    details.pick-protos > summary::before { content: "▸"; color: var(--pink); transition: transform .18s; }
+    details.pick-protos[open] > summary::before { transform: rotate(90deg); }
+    details.pick-protos > summary .sel-names { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); letter-spacing: .06em; }
+    .pp-body { padding: 0 14px 14px; display: flex; flex-direction: column; gap: 10px; }
+    .pp-set { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .pp-set > button.lvl { min-width: 72px; }
+    .result-bar { display: flex; align-items: center; gap: 10px; margin: 4px 0 12px; }
+    .result-bar .n { font: 900 12px/1 system-ui, sans-serif; letter-spacing: .12em; color: var(--mint); }
+    .result-bar .grow { flex: 1; }
+
+    /* ---------- カード ---------- */
+    .cards { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); }
+    .card {
+      --pc: var(--cyan);
+      position: relative;
+      display: flex;
+      gap: 12px;
+      padding: 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, .08);
+      background: linear-gradient(180deg, rgba(13, 17, 32, .95), rgba(7, 10, 19, .95));
+      text-align: left;
+      cursor: pointer;
+      transition: border-color .18s, transform .18s, box-shadow .18s;
     }
-    ::-webkit-scrollbar{width:4px}
-    ::-webkit-scrollbar-track{background:var(--dkr)}
-    ::-webkit-scrollbar-thumb{background:var(--scrollbar-bg);border-radius:2px}
+    .card::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 12px;
+      bottom: 12px;
+      width: 3px;
+      border-radius: 0 3px 3px 0;
+      background: var(--pc);
+      box-shadow: 0 0 12px var(--pc);
+    }
+    .card:hover { border-color: color-mix(in srgb, var(--pc) 60%, transparent); transform: translateY(-2px); box-shadow: 0 12px 30px rgba(0, 0, 0, .45); }
+    .c-art {
+      position: relative;
+      flex: none;
+      width: 92px;
+      aspect-ratio: 360 / 490;
+      border-radius: 9px;
+      overflow: hidden;
+      background: #0a0f1c;
+      border: 1px solid rgba(255, 255, 255, .08);
+    }
+    .c-art img.art { width: 100%; height: 100%; object-fit: cover; }
+    .c-art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(3, 4, 10, .55), transparent 40%, transparent 70%, rgba(3, 4, 10, .6)); }
+    .c-val {
+      position: absolute;
+      left: 6px;
+      top: 5px;
+      z-index: 1;
+      font: 900 26px/1 system-ui, sans-serif;
+      color: #fff;
+      text-shadow: 0 0 10px var(--pc), 0 2px 6px rgba(0, 0, 0, .9);
+    }
+    .c-emb { position: absolute; right: 5px; bottom: 5px; z-index: 1; width: 24px; height: 24px; }
+    .c-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 7px; }
+    .c-head { display: flex; align-items: center; gap: 8px; }
+    .c-name { font: 900 13px/1.1 system-ui, sans-serif; letter-spacing: .12em; color: color-mix(in srgb, var(--pc) 45%, #fff); }
+    .c-set { font: 700 9px/1 system-ui, sans-serif; letter-spacing: .12em; color: var(--dimmer); }
+    .c-fx { margin-left: auto; display: flex; gap: 4px; }
+    .c-fx span {
+      display: grid;
+      place-items: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, .04);
+      border: 1px solid rgba(255, 255, 255, .08);
+    }
+    .zones { display: flex; flex-direction: column; gap: 5px; }
+    .z {
+      display: flex;
+      gap: 7px;
+      margin: 0;
+      font: 500 12.5px/1.6 system-ui, sans-serif;
+      color: var(--ink);
+    }
+    .z > i { flex: none; width: 14px; text-align: center; font-size: 10px; line-height: 20px; font-style: normal; }
+    .z > span { flex: 1; min-width: 0; }
+    .z.upper > i { color: var(--z-up); }
+    .z.middle > i { color: var(--z-mid); }
+    .z.lower > i { color: var(--z-low); }
+    .z b.cond { font-weight: 800; color: #fff; text-decoration: underline; text-decoration-color: rgba(255, 255, 255, .35); text-underline-offset: 3px; }
+    .z mark { background: rgba(239, 208, 108, .28); color: #fff; border-radius: 3px; padding: 0 1px; }
+    .z-none { display: block; font: 600 12px/1.6 system-ui, sans-serif; color: var(--dimmer); }
+
+    /* リスト表示: 絵を小さく、1列で詰める */
+    .cards.list { grid-template-columns: 1fr; gap: 6px; }
+    .cards.list .card { padding: 8px 10px; gap: 10px; }
+    .cards.list .c-art { width: 44px; }
+    .cards.list .c-val { font-size: 17px; left: 4px; top: 3px; }
+    .cards.list .c-emb { display: none; }
+    .cards.list .c-main { gap: 4px; }
+    .cards.list .z { font-size: 12px; line-height: 1.5; }
+
+    /* ---------- プロトコル ---------- */
+    .set-head { margin: 22px 0 10px; font: 800 11px/1 system-ui, sans-serif; letter-spacing: .2em; color: var(--dim); }
+    .set-head b { color: var(--pink); }
+    .protos-big .proto { height: 132px; }
+    .proto-tags { font: 600 10.5px/1.4 system-ui, sans-serif; color: var(--dim); letter-spacing: .02em; }
+
+    /* ---------- 逆引き ---------- */
+    .mx-wrap { overflow: auto; border: 1px solid var(--edge); border-radius: 14px; background: rgba(8, 11, 21, .7); max-height: calc(100vh - 190px); }
+    .mx { border-collapse: separate; border-spacing: 0; width: 100%; font: 800 13px/1 system-ui, sans-serif; }
+    .mx th, .mx td { padding: 0; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, .05); }
+    .mx thead th {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      height: 38px;
+      background: #0b0f1d;
+      color: var(--dim);
+      font-size: 11px;
+      letter-spacing: .12em;
+    }
+    .mx thead th:first-child { left: 0; z-index: 4; text-align: left; padding-left: 12px; }
+    .mx .rh {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      background: #090c18;
+      text-align: left;
+      padding: 0 12px 0 10px;
+      white-space: nowrap;
+      border-right: 1px solid var(--edge);
+    }
+    .mx .rh span { display: inline-flex; align-items: center; gap: 8px; font-size: 11.5px; letter-spacing: .08em; color: color-mix(in srgb, var(--pc) 40%, #fff); }
+    .mx .rh img { width: 22px; height: 22px; }
+    .mx .grp td { position: sticky; left: 0; padding: 12px 12px 6px; text-align: left; background: #06080f; font-size: 10px; letter-spacing: .2em; color: var(--dim); }
+    .mx .cell {
+      width: 100%;
+      min-width: 42px;
+      height: 40px;
+      border: 0;
+      background: none;
+      cursor: pointer;
+      font: 900 15px/1 system-ui, sans-serif;
+      color: color-mix(in srgb, var(--pc) 35%, #fff);
+      transition: background .15s;
+    }
+    .mx .cell:hover { background: color-mix(in srgb, var(--pc) 25%, transparent); color: #fff; }
+    .mx .nil { color: rgba(255, 255, 255, .12); }
+    .mx tr:hover .rh { background: #0e1224; }
+
+    /* ---------- デッキ分析 ---------- */
+    .ana-pick { display: flex; flex-direction: column; gap: 10px; }
+    .ana-count { font: 900 14px/1 system-ui, sans-serif; letter-spacing: .12em; color: var(--mint); }
+    .ana-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); margin-top: 12px; }
+    .ana-card h3 { margin: 0 0 12px; display: flex; align-items: center; gap: 8px; font: 900 12px/1 system-ui, sans-serif; letter-spacing: .14em; }
+    .ana-card h3 img { width: 22px; height: 22px; }
+    .bars { display: flex; flex-direction: column; gap: 6px; }
+    .brow {
+      display: grid;
+      grid-template-columns: 96px 1fr 28px;
+      align-items: center;
+      gap: 10px;
+      padding: 4px 6px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      background: none;
+      color: var(--ink);
+      cursor: pointer;
+      text-align: left;
+    }
+    .brow:hover { background: rgba(255, 255, 255, .04); }
+    .brow.on { border-color: var(--gold); background: rgba(239, 208, 108, .1); }
+    .blbl { display: inline-flex; align-items: center; gap: 6px; font: 700 12px/1 system-ui, sans-serif; }
+    .btrk { height: 8px; border-radius: 99px; background: rgba(255, 255, 255, .05); overflow: hidden; }
+    .bfill { height: 100%; border-radius: 99px; }
+    .bval { font: 900 12px/1 system-ui, sans-serif; text-align: right; color: var(--dim); }
+    .hist { display: flex; align-items: flex-end; gap: 8px; height: 110px; padding-top: 6px; }
+    .hist div { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; }
+    .hist i { width: 100%; max-width: 34px; border-radius: 6px 6px 2px 2px; background: linear-gradient(180deg, var(--cyan), rgba(99, 243, 255, .25)); }
+    .hist b { font: 900 11px/1 system-ui, sans-serif; color: var(--dim); }
+    .hist small { font: 800 10px/1 system-ui, sans-serif; color: var(--ink); }
+    .ana-sel { display: grid; gap: 8px; grid-template-columns: repeat(3, 1fr); }
+    .ana-sel .proto { height: 84px; }
+
+    /* ---------- カードの詳しい表示 ---------- */
+    .dt { display: grid; grid-template-columns: 220px 1fr; gap: 22px; padding: 22px; }
+    .dt-art { position: relative; border-radius: 14px; overflow: hidden; aspect-ratio: 360 / 490; border: 1px solid var(--edge-2); background: #0a0f1c; box-shadow: 0 0 40px color-mix(in srgb, var(--accent) 25%, transparent); }
+    .dt-art img.art { width: 100%; height: 100%; object-fit: cover; }
+    .dt-art .c-val { font-size: 46px; left: 12px; top: 10px; }
+    .dt-art .c-emb { width: 40px; height: 40px; right: 10px; bottom: 10px; }
+    .dt-art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(3, 4, 10, .5), transparent 35%, transparent 75%, rgba(3, 4, 10, .6)); }
+    .dt-title { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 4px 40px 4px 0; }
+    .dt-title b { font: 900 24px/1 system-ui, sans-serif; letter-spacing: .14em; color: color-mix(in srgb, var(--accent) 40%, #fff); }
+    .dt-title span { font: 800 11px/1 system-ui, sans-serif; letter-spacing: .14em; color: var(--dim); }
+    .dt-tags { margin: 0 0 16px; font: 600 12px/1.6 system-ui, sans-serif; color: var(--dim); }
+    .dz { border-radius: 12px; border: 1px solid var(--edge); overflow: hidden; margin-bottom: 8px; }
+    .dz-h { padding: 8px 12px; font: 900 10.5px/1 system-ui, sans-serif; letter-spacing: .14em; }
+    .dz.upper .dz-h { color: var(--z-up); background: rgba(255, 107, 107, .1); }
+    .dz.middle .dz-h { color: var(--z-mid); background: rgba(99, 179, 255, .1); }
+    .dz.lower .dz-h { color: var(--z-low); background: rgba(109, 255, 194, .08); }
+    .dz-b { padding: 10px 12px 12px; font: 500 14px/1.75 system-ui, sans-serif; }
+    .dz-b b.cond { font-weight: 800; color: #fff; text-decoration: underline; text-decoration-color: rgba(255, 255, 255, .35); text-underline-offset: 3px; }
+    .dz.empty .dz-b { color: var(--dimmer); font-size: 12px; }
+    .dt-fx { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0; }
+    .dt-fx span { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--edge-2); font: 800 11px/1 system-ui, sans-serif; }
+    .codex { margin-top: 14px; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(239, 208, 108, .35); background: rgba(239, 208, 108, .06); font: 500 12.5px/1.75 system-ui, sans-serif; }
+    .codex b { display: block; margin-bottom: 4px; font: 900 10px/1 system-ui, sans-serif; letter-spacing: .2em; color: var(--gold); }
+    .sib { grid-column: 1 / -1; }
+    .sib-h { margin: 0 0 10px; font: 800 10.5px/1 system-ui, sans-serif; letter-spacing: .16em; color: var(--dim); }
+    .sib-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+    .sib-row button { position: relative; padding: 0; border-radius: 9px; overflow: hidden; aspect-ratio: 360 / 490; cursor: pointer; border: 1px solid var(--edge); background: #0a0f1c; opacity: .55; transition: opacity .18s, border-color .18s; }
+    .sib-row button img { width: 100%; height: 100%; object-fit: cover; }
+    .sib-row button b { position: absolute; left: 6px; top: 4px; font: 900 16px/1 system-ui, sans-serif; color: #fff; text-shadow: 0 1px 6px #000; }
+    .sib-row button:hover { opacity: .9; }
+    .sib-row button[aria-current="true"] { opacity: 1; border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+
+    /* プロトコルの詳しい表示 */
+    .pv-hero { position: relative; height: 170px; background-size: cover; background-position: center 30%; }
+    .pv-hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(7, 10, 20, .1), #070a14); }
+    .pv-hero img { position: absolute; left: 22px; bottom: 16px; z-index: 1; width: 64px; height: 64px; }
+    .pv-hero .t { position: absolute; left: 100px; bottom: 22px; z-index: 1; }
+    .pv-hero .t b { display: block; font: 900 26px/1 system-ui, sans-serif; letter-spacing: .16em; }
+    .pv-hero .t span { font: 800 11px/1 system-ui, sans-serif; letter-spacing: .14em; color: var(--dim); }
+    .pv-body { padding: 4px 22px 22px; }
+    .pv-list { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); margin-top: 12px; }
+    .pv-list .card { padding: 8px; }
+    .pv-list .c-art { width: 70px; }
+
+    @media (max-width: 700px) {
+      .tabs { margin: 0 -12px; padding: 8px 12px; }
+      .tab { padding: 9px 13px; font-size: 11.5px; }
+      .cards { grid-template-columns: 1fr; }
+      .c-art { width: 78px; }
+      .frow > .flbl { width: 100%; }
+      .dt { grid-template-columns: 1fr; padding: 18px 16px; gap: 14px; }
+      .dt-art { width: 150px; margin: 0 auto; }
+      .sib-row { gap: 5px; }
+      .pv-hero { height: 140px; }
+      .pv-body { padding: 4px 16px 18px; }
+      .pv-list { grid-template-columns: 1fr; }
+      .ana-sel .proto { height: 64px; }
+      .brow { grid-template-columns: 84px 1fr 24px; }
+      .protos-big .proto { height: 104px; }
+    }
   </style>
 </head>
 <body>
-<header>
-  <div class="h-top">
-    <div class="logo">COMPILE <span>&lt;!&gt;</span></div>
-    <div class="view-toggle">
-      <button class="view-btn on" id="vTile" onclick="setView('tile')">タイル</button>
-      <button class="view-btn" id="vRow" onclick="setView('row')">横長</button>
-      <button class="view-btn" id="themeBtn" onclick="toggleTheme()" style="margin-left:4px">☀</button>
+  <header class="cp-top">
+    <a class="cp-brand" href="index.html">COMPILE <em>&lt;!&gt;</em></a>
+    <nav class="cp-nav" aria-label="ツール">
+      <a href="three-play.html">3D ARENA</a>
+      <a href="cardlist.html" aria-current="page">CARD LIST</a>
+      <a href="picker.html">PICKER</a>
+      <a href="rules.html">RULES</a>
+      <a href="control-tracker.html">CONTROL</a>
+    </nav>
+  </header>
+
+  <main class="cp-wrap">
+    <div class="cp-head">
+      <h1 class="cp-h1"><b>//</b> CARD LIST</h1>
+      <p class="cp-sub">全プロトコルのカード・逆引き・デッキ分析</p>
+      <span class="cp-count" id="total"></span>
     </div>
-  </div>
-  <div class="tabs" id="tabs">
-    <div class="tab on" data-m="list">カード一覧</div>
-    <div class="tab" data-m="proto">プロトコル一覧</div>
-    <div class="tab" data-m="lookup">逆引き</div>
-    <div class="tab" data-m="ana">デッキ分析</div>
-  </div>
-</header>
 
-<main>
-  <div id="v-list" class="sec on">
-    <div class="slbl"><b>//</b> プロトコル <span><button class="clear-btn" id="expandSeriesBtn" onclick="toggleAllSeriesGroups()">一括展開</button> <button class="clear-btn" onclick="clearListFilter()">リセット</button></span></div>
-    <div class="pills" id="pbar"></div>
-    <div class="chips" id="fbar"></div>
-    <div class="cards" id="cgrid"></div>
-    <div class="nores" id="nores" style="display:none"><div class="ico">&#x2315;</div><p>該当するカードが見つかりません</p></div>
-  </div>
+    <div class="tabs" role="tablist" aria-label="表示">
+      <button type="button" class="tab" role="tab" data-tab="list">カード</button>
+      <button type="button" class="tab" role="tab" data-tab="proto">プロトコル</button>
+      <button type="button" class="tab" role="tab" data-tab="lookup">逆引き</button>
+      <button type="button" class="tab" role="tab" data-tab="ana">デッキ分析</button>
+    </div>
 
-  <div id="v-lookup" class="sec">
-    <div class="slbl"><b>//</b> 逆引きマトリクス</div>
-    <div class="cards" id="lkResult"></div>
-    <div class="matrix-wrap" id="matrixWrap"></div>
-  </div>
+    <!-- カード -->
+    <section class="view" id="v-list" role="tabpanel">
+      <div class="filters">
+        <label class="search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          <input class="cp-input" id="q" type="search" placeholder="効果の文を検索（例: 反転、手札、削除）" autocomplete="off" aria-label="効果の文を検索">
+        </label>
+        <details class="pick-protos" id="ppBox">
+          <summary>プロトコル <span class="sel-names" id="ppNames">すべて</span></summary>
+          <div class="pp-body" id="ppBody"></div>
+        </details>
+        <div class="frow" id="fxRow"><span class="flbl">効果</span></div>
+      </div>
+      <div class="result-bar">
+        <span class="n" id="hits"></span>
+        <span class="grow"></span>
+        <button type="button" class="lvl sm" id="reset">リセット</button>
+        <span class="seg">
+          <button type="button" class="lvl sm" data-view="tile">タイル</button>
+          <button type="button" class="lvl sm" data-view="list">リスト</button>
+        </span>
+      </div>
+      <div class="cards" id="grid"></div>
+    </section>
 
-  <div id="v-proto" class="sec">
-    <div class="slbl"><b>//</b> プロトコル一覧</div>
-    <div class="protocol-grid" id="protoGrid"></div>
-  </div>
+    <!-- プロトコル -->
+    <section class="view" id="v-proto" role="tabpanel"><div id="protoSets"></div></section>
 
-  <div id="v-ana" class="sec">
-    <div class="slbl"><b>//</b> デッキ分析 — プロトコルを3つ選択 <button class="clear-btn" onclick="clearAna()">リセット</button></div>
-    <div class="pills" id="asel"></div>
-    <div class="info-msg">選択中: <b id="acnt">0</b> / 3</div>
-    <div id="acontent"><div class="nores"><div class="ico">&#x1F4CA;</div><p>プロトコルを3つ選択してください</p></div></div>
-  </div>
-</main>
+    <!-- 逆引き -->
+    <section class="view" id="v-lookup" role="tabpanel">
+      <p class="cp-sub" style="margin:16px 0 12px">プロトコルと値から、カードを探します。数字を押すとそのカードを開きます。</p>
+      <div class="mx-wrap"><table class="mx" id="mx"></table></div>
+    </section>
 
-<div class="mover" id="mover">
-  <div class="modal" id="modal">
-    <div class="m-accent" id="macc"></div>
-    <div class="m-handle"></div>
-    <button class="m-close" id="mcls">&times;</button>
-    <div class="m-body" id="mbody"></div>
-  </div>
-</div>
+    <!-- デッキ分析 -->
+    <section class="view" id="v-ana" role="tabpanel">
+      <div class="cp-label"><b>//</b> プロトコルを3つ選ぶ <span class="cp-label-side"><span class="ana-count" id="anaCount">0 / 3</span><button type="button" class="lvl sm" id="anaReset">リセット</button></span></div>
+      <div class="ana-pick" id="anaPick"></div>
+      <div id="anaOut"></div>
+    </section>
 
-<script>
-const DATA={"protocols": [{"name": "DARKNESS", "displayName": "DARKNESS", "tags": "手札維持／移動／操作", "color": "#4A148C", "set": "Main 1", "cards": [{"id": "DARKNESS_1", "number": 1, "value": 0, "upper": "", "middle": "カードを3枚引く。相手の覆われているカードを1枚移動させる。", "lower": "", "effectTypes": ["draw", "shift"]}, {"id": "DARKNESS_2", "number": 2, "value": 1, "upper": "", "middle": "相手のカードを1枚反転させる。あなたはそのカードを移動させることができる。", "lower": "", "effectTypes": ["flip", "shift"]}, {"id": "DARKNESS_3", "number": 3, "value": 2, "upper": "このスタックにあるすべての裏向きのカードの値はそれぞれ4になる。", "middle": "このラインにある、覆われているカードを1枚反転させることができる。", "lower": "", "effectTypes": ["flip"]}, {"id": "DARKNESS_4", "number": 4, "value": 3, "upper": "", "middle": "他の1ラインにカードを裏向きで1枚プレイする。", "lower": "", "effectTypes": ["play"]}, {"id": "DARKNESS_5", "number": 5, "value": 4, "upper": "", "middle": "裏向きのカードを1枚移動させる。", "lower": "", "effectTypes": ["shift"]}, {"id": "DARKNESS_6", "number": 6, "value": 5, "upper": "", "middle": "あなたは手札を1枚捨て札にする。", "lower": "", "effectTypes": ["five"]}]}, {"name": "DEATH", "displayName": "DEATH", "tags": "削除／手札維持", "color": "#37474F", "set": "Main 1", "cards": [{"id": "DEATH_1", "number": 1, "value": 0, "upper": "", "middle": "他の各ラインにあるカードを1枚ずつ削除する。", "lower": "", "effectTypes": ["delete"], "codex": "【明確化】DEATH 0の中段コマンドが発動したとき、オーナーは処理が必要なラインを確認する。次に処理するラインを1つずつ選び、各ラインで覆われていないカードを1枚選んで削除し、その削除の結果を処理してから次のラインに移る。"}, {"id": "DEATH_2", "number": 2, "value": 1, "upper": "開始：カードを1枚引くことができる。そうした場合、他のカードを1枚削除し、そのあとこのカードを削除する。", "middle": "", "lower": "", "effectTypes": ["draw", "delete"], "codex": "【エラッタ(2024/10)】上段コマンドは「開始：カードを1枚引くことができる。そうした場合、他のカードを1枚削除し、そのあとこのカードを削除する。」に修正。"}, {"id": "DEATH_3", "number": 3, "value": 2, "upper": "", "middle": "1ラインを選び、そのラインの値が1か2どちらかのすべてのカードを削除する。", "lower": "", "effectTypes": ["delete"]}, {"id": "DEATH_4", "number": 4, "value": 3, "upper": "", "middle": "裏向きのカードを1枚削除する。", "lower": "", "effectTypes": ["delete"]}, {"id": "DEATH_5", "number": 5, "value": 4, "upper": "", "middle": "値が0か1のカードを1枚削除する。", "lower": "", "effectTypes": ["delete"]}, {"id": "DEATH_6", "number": 6, "value": 5, "upper": "", "middle": "あなたは手札を1枚捨て札にする。", "lower": "", "effectTypes": ["five"]}]}, {"name": "FIRE", "displayName": "FIRE", "tags": "捨て札にして効果を得る", "color": "#D84315", "set": "Main 1", "cards": [{"id": "FIRE_1", "number": 1, "value": 0, "upper": "", "middle": "他のカードを1枚反転させる。カードを2枚引く。", "lower": "このカードが覆われることになったとき：先にカードを1枚引き、他のカードを1枚反転させる。", "effectTypes": ["draw", "flip"], "codex": "【エラッタ(2024/12)】下段コマンドは「このカードが覆われることになったとき：先に、カードを1枚引く。そのあと、他のカードを1枚反転させる。」に修正。"}, {"id": "FIRE_2", "number": 2, "value": 1, "upper": "", "middle": "あなたは手札を1枚捨て札にする。そうした場合、カードを1枚削除する。", "lower": "", "effectTypes": ["delete"]}, {"id": "FIRE_3", "number": 3, "value": 2, "upper": "", "middle": "あなたは手札を1枚捨て札にする。そうした場合、カードを1枚戻す。", "lower": "", "effectTypes": ["return"]}, {"id": "FIRE_4", "number": 4, "value": 3, "upper": "", "middle": "", "lower": "終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。", "effectTypes": ["flip"]}, {"id": "FIRE_5", "number": 5, "value": 4, "upper": "", "middle": "あなたは手札があれば1枚以上捨て札にする。捨て札にした枚数＋1枚のカードを引く。", "lower": "", "effectTypes": ["draw"]}, {"id": "FIRE_6", "number": 6, "value": 5, "upper": "", "middle": "あなたは手札を1枚捨て札にする。", "lower": "", "effectTypes": ["five"]}]}, {"name": "GRAVITY", "displayName": "GRAVITY", "tags": "移動／反転／手札維持", "color": "#9C27B0", "set": "Main 1", "cards": [{"id": "GRAVITY_1", "number": 1, "value": 0, "upper": "", "middle": "このライン内にあるカード2枚ごとに、あなたのデッキの一番上のカード1枚をこのカードの下に裏向きでプレイする。", "lower": "", "effectTypes": ["play"]}, {"id": "GRAVITY_2", "number": 2, "value": 1, "upper": "", "middle": "カードを2枚引く。このラインから、またはこのラインへとカードを1枚移動させる。", "lower": "", "effectTypes": ["draw", "shift"]}, {"id": "GRAVITY_3", "number": 3, "value": 2, "upper": "", "middle": "カードを1枚反転させる。そのカードをこのラインへと移動させる。", "lower": "", "effectTypes": ["flip", "shift"], "codex": "【明確化】GRAVITY 2は反転したカードが覆われていても移動させる。「そのカード」は特定のカードを指し、覆われたカードの操作制限より優先される。"}, {"id": "GRAVITY_4", "number": 4, "value": 4, "upper": "", "middle": "裏向きのカードを1枚、このラインへと移動させる。", "lower": "", "effectTypes": ["shift"]}, {"id": "GRAVITY_5", "number": 5, "value": 5, "upper": "", "middle": "あなたは手札を1枚捨て札にする。", "lower": "", "effectTypes": ["five"]}, {"id": "GRAVITY_6", "number": 6, "value": 6, "upper": "", "middle": "相手は自分のデッキの一番上のカードをこのラインに裏向きで1枚プレイする。", "lower": "", "effectTypes": ["play"]}]}, {"name": "LIFE", "displayName": "LIFE", "tags": "反転／デッキの上からのプレイ／手札維持", "color": "#43A047", "set": "Main 1", "cards": [{"id": "LIFE_1", "number": 1, "value": 0, "upper": "終了：このカードが覆われている場合、このカードを削除する。", "middle": "あなたのデッキの一番上のカードを、あなたのカードがある各ラインに裏向きで1枚ずつプレイする。", "lower": "", "effectTypes": ["play"], "codex": "【エラッタ(2024/10)】上段コマンドは「終了：このカードが覆われている場合、このカードを削除する。」に修正。このカードは下段コマンドを持たない。\n【明確化】LIFE 0の中段コマンドが発動したとき、オーナーは処理が必要なラインを確認し、1つずつ処理する。LIFE 0がこの処理中に覆われた場合、中段コマンドは停止する。\n【明確化】デッキからカードをプレイする場合、デッキが空でもシャッフルは強制されない。"}, {"id": "LIFE_2", "number": 2, "value": 1, "upper": "", "middle": "カード1枚を反転させる。カード1枚を反転させる。", "lower": "", "effectTypes": ["flip"]}, {"id": "LIFE_3", "number": 3, "value": 2, "upper": "", "middle": "カードを1枚引く。あなたは裏向きのカードを1枚反転させることができる。", "lower": "", "effectTypes": ["draw", "flip"]}, {"id": "LIFE_4", "number": 4, "value": 3, "upper": "", "middle": "", "lower": "このカードが覆われることになったとき：先にあなたのデッキの一番上のカードを他の1ラインに裏向きで1枚プレイする。", "effectTypes": ["play"]}, {"id": "LIFE_5", "number": 5, "value": 4, "upper": "", "middle": "このカードが他のカードを覆っている場合、カードを1枚引く。", "lower": "", "effectTypes": ["draw"]}, {"id": "LIFE_6", "number": 6, "value": 5, "upper": "", "middle": "あなたは手札を1枚捨て札にする。", "lower": "", "effectTypes": ["five"]}]}, {"name": "LIGHT", "displayName": "LIGHT", "tags": "手札維持／反転／移動", "color": "#FFB300", "set": "Main 1", "cards": [{"id": "LIGHT_1", "number": 1, "value": 0, "upper": "", "middle": "カードを1枚反転させる。そのカードの値に等しい枚数のカードを引く。", "lower": "", "effectTypes": ["draw", "flip"], "codex": "【明確化】中段コマンド「カードを1枚反転させる。そのカードの値に等しい枚数のカードを引く。」の処理：覆われていないカード1枚を選び反転させ、発動したテキストを処理する。その後、そのカードの現在の値に等しい枚数を引く。\n【裁定】選んだカードがプレイから除去された場合でも、「そのカード」で直接参照されるため、現在の値をチェックする。"}, {"id": "LIGHT_2", "number": 2, "value": 1, "upper": "", "middle": "", "lower": "終了：カードを1枚引く。", "effectTypes": ["draw"]}, {"id": "LIGHT_3", "number": 3, "value": 2, "upper": "", "middle": "カードを2枚引く。裏向きのカードを1枚公開する。あなたは公開したカードを移動させるか反転させることができる。", "lower": "", "effectTypes": ["draw", "flip", "shift"]}, {"id": "LIGHT_4", "number": 4, "value": 3, "upper": "", "middle": "このラインにある裏向きのすべてのカードを、他の1ラインへと移動させる。", "lower": "", "effectTypes": ["shift"], "codex": "【明確化】LIGHT 3で移動する裏向きのカードは、スタック内の相対的な位置を維持し、すべて同じラインに移動する。"}, {"id": "LIGHT_5", "number": 5, "value": 4, "upper": "", "middle": "相手は自分の手札を公開する。", "lower": "", "effectTypes": ["other"]}, {"id": "LIGHT_6", "number": 6, "value": 5, "upper": "", "middle": "あなたは手札を1枚捨て札にする。", "lower": "", "effectTypes": ["five"]}]}, {"name": "METAL", "displayName": "METAL", "tags": "相手の妨害／手札維持／反転", "color": "#78909C", "set": "Main 1", "cards": [{"id": "METAL_1", "number": 1, "value": 0, "upper": "このラインでの相手の合計値は2減る。", "middle": "カードを1枚反転させる。", "lower": "", "effectTypes": ["flip"]}, {"id": "METAL_2", "number": 2, "value": 1, "upper": "", "middle": "カードを2枚引く。相手は次の手番でコンパイルすることはできない。", "lower": "", "effectTypes": ["draw"], "codex": "【エラッタ(2024/12)】中段コマンドは「カードを2枚引く。相手は次の手番でコンパイルすることはできない。」に修正。\n【明確化】METAL 1はテキストが見えている限り、相手の次の手番でコンパイルを防ぐ。プレイかリフレッシュを選ぶ必要がある。"}, {"id": "METAL_3", "number": 3, "value": 2, "upper": "相手はこのラインにカードを裏向きでプレイすることはできない。", "middle": "", "lower": "", "effectTypes": ["play"]}, {"id": "METAL_4", "number": 4, "value": 3, "upper": "", "middle": "カードを1枚引く。カードが8枚以上ある、ほかの1ライン内のすべてのカードを削除する。", "lower": "", "effectTypes": ["draw", "delete"]}, {"id": "METAL_5", "number": 5, "value": 5, "upper": "", "middle": "あなたは手札を1枚捨て札にする。", "lower": "", "effectTypes": ["five"]}, {"id": "METAL_6", "number": 6, "value": 6, "upper": "このカードが覆われるか反転することになったとき：先にこのカードを削除する。", "middle": "", "lower": "", "effectTypes": ["flip"], "codex": "【明確化】METAL 6が上段コマンドで自身を削除した場合、覆っていたカードのテキストが発動するなら、コミットされたカードがフィールドに入る前に発動する。\n【明確化】METAL 6が反転の結果として自身を削除した場合、「反転」コマンドは消費され、他のカードや捨て札のMETAL 6には使えない。"}]}, {"name": "PLAGUE", "displayName": "PLAGUE", "tags": "捨て札の強制／反転", "color": "#558B2F", "set": "Main 1", "cards": [{"id": "PLAGUE_1", "number": 1, "value": 0, "upper": "", "middle": "相手は手札を1枚捨て札にする。", "lower": "相手はこのラインにカードをプレイすることはできない。", "effectTypes": ["discard", "play"]}, {"id": "PLAGUE_2", "number": 2, "value": 1, "upper": "相手が手札を捨て札にしたあと：カードを1枚引く。", "middle": "相手は手札を1枚捨て札にする。", "lower": "", "effectTypes": ["draw", "discard"]}, {"id": "PLAGUE_3", "number": 3, "value": 2, "upper": "", "middle": "あなたは手札があれば1枚以上捨て札にする。相手はあなたが捨て札にした枚数＋1枚の手札を捨て札にする。", "lower": "", "effectTypes": ["discard"]}, {"id": "PLAGUE_4", "number": 4, "value": 3, "upper": "", "middle": "覆われていない、表向きの他のカードを反転させる。", "lower": "", "effectTypes": ["flip"], "codex": "【エラッタ(2025/9)】中段コマンドは「覆われていない、表向きの他のカードをそれぞれ反転させる。」に修正。機能に変更はないが、意図をより明確にした。\n【明確化】「all」ではなく「each」なので、覆われていないカードのみが対象。発動時、覆われていない表向きのカードをそれぞれ確認し、1枚ずつ処理する。"}, {"id": "PLAGUE_5", "number": 5, "value": 4, "upper": "", "middle": "", "lower": "終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。", "effectTypes": ["delete", "flip"]}, {"id": "PLAGUE_6", "number": 6, "value": 5, "upper": "", "middle": "あなたは手札を1枚捨て札にする。", "lower": "", "effectTypes": ["five"]}]}, {"name": "PSYCHIC", "displayName": "PSYCHIC", "tags": "手札維持／操作／移動", "color": "#7E57C2", "set": "Main 1", "cards": [{"id": "PSYCHIC_1", "number": 1, "value": 0, "upper": "", "middle": "カードを2枚引く。相手は自分の手札を2枚捨て札にして、そのあと相手は手札を公開する。", "lower": "", "effectTypes": ["draw", "discard"]}, {"id": "PSYCHIC_2", "number": 2, "value": 1, "upper": "相手はカードを裏向きでのみプレイすることができる。", "middle": "", "lower": "開始：このカードを反転させる。", "effectTypes": ["other"]}, {"id": "PSYCHIC_3", "number": 3, "value": 2, "upper": "", "middle": "相手は自分の手札を2枚捨て札にする。あなたは相手のプロトコルを並べ替える。", "lower": "", "effectTypes": ["rearrange", "discard"]}, {"id": "PSYCHIC_4", "number": 4, "value": 3, "upper": "", "middle": "相手は手札を1枚捨て札にする。あなたは相手のカードを1枚移動させる。", "lower": "", "effectTypes": ["shift", "discard"]}, {"id": "PSYCHIC_5", "number": 5, "value": 4, "upper": "", "middle": "", "lower": "終了：あなたは相手のカードを1枚戻すことができる。そうした場合、このカードを反転させる。", "effectTypes": ["flip", "return"]}, {"id": "PSYCHIC_6", "number": 6, "value": 5, "upper": "", "middle": "あなたは手札を1枚捨て札にする。", "lower": "", "effectTypes": ["five"]}]}, {"name": "SPEED", "displayName": "SPEED", "tags": "手札維持／プレイ／移動", "color": "#29B6F6", "set": "Main 1", "cards": [{"id": "SPEED_1", "number": 1, "value": 0, "upper": "", "middle": "カードを1枚プレイする。", "lower": "", "effectTypes": ["play"]}, {"id": "SPEED_2", "number": 2, "value": 1, "upper": "あなたがキャッシュをリセットしたあと：カードを1枚引く。", "middle": "カードを2枚引く。", "lower": "", "effectTypes": ["draw"]}, {"id": "SPEED_3", "number": 3, "value": 2, "upper": "このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。", "middle": "", "lower": "", "effectTypes": ["shift"], "codex": "【明確化】コンパイル時、ライン内のすべてのカードが同時に削除される。SPEED 2がこの方法で削除される場合、代わりに他のラインに移動させる。SPEED 2の削除のみが防がれ、コンパイル自体は変更されない。"}, {"id": "SPEED_4", "number": 4, "value": 3, "upper": "", "middle": "あなたの他のカードを1枚移動させる。", "lower": "終了：あなたは自分のカードを1枚移動させることができる。そうした場合、このカードを反転させる。", "effectTypes": ["flip", "shift"]}, {"id": "SPEED_5", "number": 5, "value": 4, "upper": "", "middle": "相手の裏向きのカードを1枚移動させる。", "lower": "", "effectTypes": ["shift"]}, {"id": "SPEED_6", "number": 6, "value": 5, "upper": "", "middle": "あなたは手札を1枚捨て札にする。", "lower": "", "effectTypes": ["five"]}]}, {"name": "SPIRIT", "displayName": "SPIRIT", "tags": "反転／移動／手札維持", "color": "#26C6DA", "set": "Main 1", "cards": [{"id": "SPIRIT_1", "number": 1, "value": 0, "upper": "", "middle": "リフレッシュする。カードを1枚引く。", "lower": "あなたのキャッシュの確認フェイズを省略する。", "effectTypes": ["draw"], "codex": "【明確化】リフレッシュの指示に従う場合、コントロールコンポーネントの使用を含む通常のリフレッシュアクションとなる。"}, {"id": "SPIRIT_2", "number": 2, "value": 1, "upper": "あなたがカードを表向きでプレイするときには、プロトコルを対応させずにプレイすることができる。", "middle": "カードを2枚引く。", "lower": "開始：あなたは手札を1枚捨て札にするか、このカードを反転させる。", "effectTypes": ["draw", "flip", "play"], "codex": "【エラッタ(2024/10)】上段コマンドは「あなたがカードを表向きでプレイするときには、プロトコルを対応させずにプレイすることができる。」に修正。"}, {"id": "SPIRIT_3", "number": 3, "value": 2, "upper": "", "middle": "あなたはカードを1枚反転させることができる。", "lower": "", "effectTypes": ["flip"]}, {"id": "SPIRIT_4", "number": 4, "value": 3, "upper": "あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。", "middle": "", "lower": "", "effectTypes": ["shift"]}, {"id": "SPIRIT_5", "number": 5, "value": 4, "upper": "", "middle": "あなたのプロトコルのうち2枚の位置を入れ替える。", "lower": "", "effectTypes": ["rearrange"]}, {"id": "SPIRIT_6", "number": 6, "value": 5, "upper": "", "middle": "あなたは手札を1枚捨て札にする。", "lower": "", "effectTypes": ["five"]}]}, {"name": "WATER", "displayName": "WATER", "tags": "戻す／手札維持／反転", "color": "#1E88E5", "set": "Main 1", "cards": [{"id": "WATER_1", "number": 1, "value": 0, "upper": "", "middle": "他のカードを1枚反転させる。このカードを反転させる。", "lower": "", "effectTypes": ["flip"]}, {"id": "WATER_2", "number": 2, "value": 1, "upper": "", "middle": "あなたのデッキの一番上のカードを、他の各ラインに裏向きで1枚ずつプレイする。", "lower": "", "effectTypes": ["play"], "codex": "【明確化】WATER 1の中段コマンドが発動したとき、オーナーは処理が必要なラインを確認し、1つずつ処理する。\n【明確化】デッキからカードをプレイする場合、デッキが空でもシャッフルは強制されない。"}, {"id": "WATER_3", "number": 3, "value": 2, "upper": "", "middle": "カードを2枚引く。あなたのプロトコルを並べ替える。", "lower": "", "effectTypes": ["draw", "rearrange"]}, {"id": "WATER_4", "number": 4, "value": 3, "upper": "", "middle": "1ラインを選び、そのラインの値が2のすべてのカードを戻す。", "lower": "", "effectTypes": ["return"]}, {"id": "WATER_5", "number": 5, "value": 4, "upper": "", "middle": "あなたのカードを1枚戻す。", "lower": "", "effectTypes": ["return"]}, {"id": "WATER_6", "number": 6, "value": 5, "upper": "", "middle": "あなたは手札を1枚捨て札にする。", "lower": "", "effectTypes": ["five"]}]}, {"name": "APATHY", "displayName": "APATHY", "tags": "裏向きへの反転", "color": "#9E9E9E", "set": "Aux 1", "cards": [{"id": "APATHY_1", "number": 1, "value": 0, "upper": "このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。", "middle": "", "lower": "", "effectTypes": ["other"]}, {"id": "APATHY_2", "number": 2, "value": 1, "upper": "", "middle": "このラインにある他のすべての表向きのカードを同時に反転させる。", "lower": "", "effectTypes": ["flip"]}, {"id": "APATHY_3", "number": 3, "value": 2, "upper": "このラインにあるカードのすべての中段コマンドを無視する。", "middle": "", "lower": "このカードが覆われることになったとき：先に、このカードを反転させる。", "effectTypes": ["flip"]}, {"id": "APATHY_4", "number": 4, "value": 3, "upper": "", "middle": "相手の表向きのカードを１枚反転させる。", "lower": "", "effectTypes": ["flip"]}, {"id": "APATHY_5", "number": 5, "value": 4, "upper": "", "middle": "表向きで覆われているあなたのカード１枚を反転させることができる。", "lower": "", "effectTypes": ["flip"]}, {"id": "APATHY_6", "number": 6, "value": 5, "upper": "", "middle": "あなたは手札を1枚捨て札にする。", "lower": "", "effectTypes": ["five"]}]}, {"name": "HATE", "displayName": "HATE", "tags": "互いの削除", "color": "#B71C1C", "set": "Aux 1", "cards": [{"id": "HATE_1", "number": 1, "value": 0, "upper": "", "middle": "カードを１枚削除する。", "lower": "", "effectTypes": ["delete"]}, {"id": "HATE_2", "number": 2, "value": 1, "upper": "", "middle": "あなたは手札を３枚捨て札にする。カードを１枚削除する。カードを１枚削除する。", "lower": "", "effectTypes": ["delete"]}, {"id": "HATE_3", "number": 3, "value": 2, "upper": "", "middle": "値が最も大きく覆われていないあなたのカードを１枚削除する。値が最も大きく覆われていない相手のカードを１枚削除する。", "lower": "", "effectTypes": ["delete"], "codex": "【エラッタ(2024/10)】中段コマンドは「値が最も大きく覆われていないあなたのカードを1枚削除する。値が最も大きく覆われていない相手のカードを1枚削除する。」に修正。\n【明確化】最大値が同値の場合、プレイヤーが1枚を選ぶ。\n【明確化】HATE 2があなたの最大値カードである場合、最初の条件で自身を削除する。その結果、2番目の条件は発動しない。"}, {"id": "HATE_4", "number": 4, "value": 3, "upper": "あなたがカードを１枚削除したあと：カードを１枚引く。", "middle": "", "lower": "", "effectTypes": ["draw", "delete"]}, {"id": "HATE_5", "number": 5, "value": 4, "upper": "", "middle": "", "lower": "このカードが覆われることになったとき：先に、このラインにある値が最も小さく覆われているカードを１枚削除する。", "effectTypes": ["delete"]}, {"id": "HATE_6", "number": 6, "value": 5, "upper": "", "middle": "あなたは手札を1枚捨て札にする。", "lower": "", "effectTypes": ["five"]}]}, {"name": "LOVE", "displayName": "LOVE", "tags": "手札維持／供与／交換", "color": "#EC407A", "set": "Aux 1", "cards": [{"id": "LOVE_1", "number": 1, "value": 1, "upper": "", "middle": "あなたは相手のデッキの一番上のカードを引く。", "lower": "終了：あなたの手札一枚を相手に与えることができる。そうした場合、カードを２枚引く。", "effectTypes": ["draw"]}, {"id": "LOVE_2", "number": 2, "value": 2, "upper": "", "middle": "相手はカードを１枚引く。あなたはリフレッシュする。", "lower": "", "effectTypes": ["draw"]}, {"id": "LOVE_3", "number": 3, "value": 3, "upper": "", "middle": "あなたは相手の手札からランダムにカードを１枚引く。あなたの手札１枚を相手に与える。", "lower": "", "effectTypes": ["draw"]}, {"id": "LOVE_4", "number": 4, "value": 4, "upper": "", "middle": "あなたの手札１枚を公開する。カードを１枚反転させる。", "lower": "", "effectTypes": ["flip"]}, {"id": "LOVE_5", "number": 5, "value": 5, "upper": "", "middle": "あなたは手札を1枚捨て札にする。", "lower": "", "effectTypes": ["five"]}, {"id": "LOVE_6", "number": 6, "value": 6, "upper": "", "middle": "相手はカードを２枚引く。", "lower": "", "effectTypes": ["draw"]}]}, {"name": "CHAOS", "displayName": "CHAOS", "tags": "手札維持／並べ替え／覆われているカード", "color": "#7B1FA2", "set": "Main 2", "cards": [{"id": "CHAOS_1", "number": 1, "value": 0, "upper": "", "middle": "各ラインで、覆われているカードを1枚ずつ反転させる。", "lower": "開始：あなたは相手のデッキの一番上のカードを引く。相手はあなたのデッキの一番上のカードを引く。", "effectTypes": ["draw", "flip"]}, {"id": "CHAOS_2", "number": 2, "value": 1, "upper": "", "middle": "あなたのプロトコルを並べ替える。相手のプロトコルを並べ替える。", "lower": "", "effectTypes": ["rearrange"]}, {"id": "CHAOS_3", "number": 3, "value": 2, "upper": "", "middle": "あなたの覆われているカードを1枚移動させる。", "lower": "", "effectTypes": ["shift"]}, {"id": "CHAOS_4", "number": 4, "value": 3, "upper": "", "middle": "", "lower": "このカードはプロトコルを対応させずプレイすることができる。", "effectTypes": ["play"]}, {"id": "CHAOS_5", "number": 5, "value": 4, "upper": "", "middle": "", "lower": "終了：あなたのすべての手札を捨て札にする。捨て札にした枚数と同じ枚数のカードを引く。", "effectTypes": ["draw", "discard"]}, {"id": "CHAOS_6", "number": 6, "value": 5, "upper": "", "middle": "あなたは手札を1枚捨て札にする。", "lower": "", "effectTypes": ["five"]}]}, {"name": "CLARITY", "displayName": "CLARITY", "tags": "手札維持／公開", "color": "#5C6BC0", "set": "Main 2", "cards": [{"id": "CLARITY_1", "number": 1, "value": 0, "upper": "このラインのあなたの合計値は、あなたの手札1枚ごとに1枚増える。", "middle": "", "lower": "", "effectTypes": ["other"]}, {"id": "CLARITY_2", "number": 2, "value": 1, "upper": "開始：あなたのデッキの一番上のカードを公開する。そのカードを捨て札にすることができる。", "middle": "相手は自身の手札をすべて公開する。", "lower": "このカードが覆われることになったとき：先にカードを3枚引く。", "effectTypes": ["draw", "discard"]}, {"id": "CLARITY_3", "number": 3, "value": 2, "upper": "", "middle": "あなたのデッキのカードをすべて公開する。公開した中から値が1のカードを1枚引く。あなたのデッキをシャッフルする。値が1のカードを1枚プレイする。", "lower": "", "effectTypes": ["draw", "play"]}, {"id": "CLARITY_4", "number": 4, "value": 3, "upper": "", "middle": "あなたのデッキのカードをすべて公開する。公開した中から値が5のカードを1枚引く。あなたのデッキをシャッフルする。", "lower": "", "effectTypes": ["draw"]}, {"id": "CLARITY_5", "number": 5, "value": 4, "upper": "", "middle": "あなたの捨て札置き場にあるすべてのカードをデッキに戻してシャッフルすることができる。", "lower": "", "effectTypes": ["return"]}, {"id": "CLARITY_6", "number": 6, "value": 5, "upper": "", "middle": "あなたは手札を1枚捨て札にする。", "lower": "", "effectTypes": ["five"]}]}, {"name": "CORRUPTION", "displayName": "CORRUPTION", "tags": "反転／捨て札", "color": "#689F38", "set": "Main 2", "cards": [{"id": "CORRUPTION_1", "number": 1, "value": 0, "upper": "開始：このスタック内の、覆われているか覆われていない他の表向きのカードを1枚反転させる。", "middle": "", "lower": "このカードは、プロトコルに対応させずに、どちらかのプレイヤー側でプレイすることができる。", "effectTypes": ["flip", "play"]}, {"id": "CORRUPTION_2", "number": 2, "value": 1, "upper": "", "middle": "カードを1枚戻す。", "lower": "カードが相手の手札に戻るとき：そうする代わりに、そのカードを相手のデッキの一番上に裏向きで置く。", "effectTypes": ["return"]}, {"id": "CORRUPTION_3", "number": 3, "value": 2, "upper": "あなたが手札を捨て札にしたあと：相手は手札を1枚捨て札にする。", "middle": "カードを1枚引く。あなたは手札を1枚捨て札にする。", "lower": "", "effectTypes": ["draw", "discard"]}, {"id": "CORRUPTION_4", "number": 4, "value": 3, "upper": "", "middle": "あなたは覆われている表向きのカードを1枚反転させることができる。", "lower": "", "effectTypes": ["flip"]}, {"id": "CORRUPTION_5", "number": 5, "value": 5, "upper": "", "middle": "あなたは手札を1枚捨て札にする。", "lower": "", "effectTypes": ["five"]}, {"id": "CORRUPTION_6", "number": 6, "value": 6, "upper": "終了：あなたは手札を1枚捨て札にするか、このカードを削除する。", "middle": "", "lower": "", "effectTypes": ["delete", "discard"]}]}, {"name": "COURAGE", "displayName": "COURAGE", "tags": "手札維持／比較", "color": "#C62828", "set": "Main 2", "cards": [{"id": "COURAGE_1", "number": 1, "value": 0, "upper": "開始：あなたの手札が1枚もない場合、カードを1枚引く。", "middle": "カードを1枚引く。", "lower": "終了：あなたは手札を1枚捨て札にすることができる。そうした場合、相手は手札を1枚捨て札にする。", "effectTypes": ["draw", "discard"]}, {"id": "COURAGE_2", "number": 2, "value": 1, "upper": "", "middle": "あなたの合計値より相手の合計値が大きいライン1つにある、相手のカードを1枚削除する。", "lower": "", "effectTypes": ["delete"]}, {"id": "COURAGE_3", "number": 3, "value": 2, "upper": "", "middle": "カードを1枚引く。", "lower": "終了：このラインで、あなたの合計値より相手の合計値が大きい場合、カードを1枚引く。", "effectTypes": ["draw"]}, {"id": "COURAGE_4", "number": 4, "value": 3, "upper": "", "middle": "", "lower": "終了：相手の最も大きい合計値のラインに、このカードを移動させることができる。", "effectTypes": ["shift"]}, {"id": "COURAGE_5", "number": 5, "value": 5, "upper": "", "middle": "あなたは手札を1枚捨て札にする。", "lower": "", "effectTypes": ["five"]}, {"id": "COURAGE_6", "number": 6, "value": 6, "upper": "終了：このラインで、あなたの合計値より相手の合計値が大きい場合、このカードを反転させる。", "middle": "", "lower": "", "effectTypes": ["flip"]}]}, {"name": "FEAR", "displayName": "FEAR", "tags": "移動／捨て札", "color": "#E65100", "set": "Main 2", "cards": [{"id": "FEAR_1", "number": 1, "value": 0, "upper": "あなたの手番中、相手のカードの中段コマンドはないものとして扱う。", "middle": "カードを1枚移動させるか反転させる。", "lower": "", "effectTypes": ["flip", "shift"]}, {"id": "FEAR_2", "number": 2, "value": 1, "upper": "", "middle": "カードを2枚引く。相手は自身の手札をすべて捨て札にして、捨て札にした枚数-1枚のカードを引く。", "lower": "", "effectTypes": ["draw"]}, {"id": "FEAR_3", "number": 3, "value": 2, "upper": "", "middle": "相手のカードを1枚戻す。", "lower": "", "effectTypes": ["return"]}, {"id": "FEAR_4", "number": 4, "value": 3, "upper": "", "middle": "このラインにある、相手の覆われているか覆われていないカードを1枚移動させる。", "lower": "", "effectTypes": ["shift"]}, {"id": "FEAR_5", "number": 5, "value": 4, "upper": "", "middle": "相手は自身の手札からランダムに1枚捨て札にする。", "lower": "", "effectTypes": ["discard"]}, {"id": "FEAR_6", "number": 6, "value": 5, "upper": "", "middle": "あなたは手札を1枚捨て札にする。", "lower": "", "effectTypes": ["five"]}]}, {"name": "ICE", "displayName": "ICE", "tags": "移動／相手の妨害", "color": "#AB47BC", "set": "Main 2", "cards": [{"id": "ICE_1", "number": 1, "value": 1, "upper": "", "middle": "あなたはこのカードを移動させることができる。", "lower": "相手がこのラインにカードを1枚プレイしたあと：相手は自身の手札を1枚捨て札にする。", "effectTypes": ["shift", "discard", "play"]}, {"id": "ICE_2", "number": 2, "value": 2, "upper": "", "middle": "他のカードを1枚移動させる。", "lower": "", "effectTypes": ["shift"]}, {"id": "ICE_3", "number": 3, "value": 3, "upper": "終了：このカードが覆われている場合、このカードを移動させることができる。", "middle": "", "lower": "", "effectTypes": ["shift"]}, {"id": "ICE_4", "number": 4, "value": 4, "upper": "", "middle": "", "lower": "このカードを反転させることはできない。", "effectTypes": ["flip"]}, {"id": "ICE_5", "number": 5, "value": 5, "upper": "", "middle": "あなたは手札を1枚捨て札にする。", "lower": "", "effectTypes": ["five"]}, {"id": "ICE_6", "number": 6, "value": 6, "upper": "あなたの手札が1枚以上ある場合、あなたはカードを引くことはできない。", "middle": "", "lower": "", "effectTypes": ["draw"]}]}, {"name": "LUCK", "displayName": "LUCK", "tags": "ランダム／削除／プレイ", "color": "#FB8C00", "set": "Main 2", "cards": [{"id": "LUCK_1", "number": 1, "value": 0, "upper": "", "middle": "値を1つ宣言する。カードを3枚引く。その中から、表面に宣言した値を持つカードを1枚公開する。そのカードをプレイすることができる。", "lower": "", "effectTypes": ["draw", "play"]}, {"id": "LUCK_2", "number": 2, "value": 1, "upper": "", "middle": "あなたのデッキの一番上のカードを裏向きでプレイする。そのカードを反転させる（その中段コマンドは無視する）。", "lower": "", "effectTypes": ["flip", "play"]}, {"id": "LUCK_3", "number": 3, "value": 2, "upper": "", "middle": "あなたのデッキの一番上のカードを捨て札にする。そのカードの表面の値に等しい枚数のカードを引く。", "lower": "", "effectTypes": ["draw", "discard"]}, {"id": "LUCK_4", "number": 4, "value": 3, "upper": "", "middle": "プロトコルを1つ宣言する。相手のデッキの一番上のカードを捨て札にする。そのカードが宣言したプロトコルに対応している場合、カードを1枚削除する。", "lower": "", "effectTypes": ["delete", "discard"]}, {"id": "LUCK_5", "number": 5, "value": 4, "upper": "", "middle": "あなたのデッキの一番上のカードを捨て札にする。そのカードの表面の値と同じ値を持つ、覆われているか覆われていないカードを1枚削除する。", "lower": "", "effectTypes": ["delete", "discard"]}, {"id": "LUCK_6", "number": 6, "value": 5, "upper": "", "middle": "あなたは手札を1枚捨て札にする。", "lower": "", "effectTypes": ["five"]}]}, {"name": "MIRROR", "displayName": "MIRROR", "tags": "移動／繰り返し", "color": "#546E7A", "set": "Main 2", "cards": [{"id": "MIRROR_1", "number": 1, "value": 0, "upper": "このラインのあなたの合計値は、このラインにある相手のカード1枚ごとに1増える。", "middle": "", "lower": "", "effectTypes": ["other"]}, {"id": "MIRROR_2", "number": 2, "value": 1, "upper": "", "middle": "", "lower": "終了：あなたは相手のカードのうち1枚の中段コマンドを、そのコマンドがこのカード上にあるかのように解決できる", "effectTypes": ["other"]}, {"id": "MIRROR_3", "number": 3, "value": 2, "upper": "", "middle": "あなたのスタック1つにあるすべてのカードを、あなたの別のスタック1つにあるすべてのカードと入れ替える。", "lower": "", "effectTypes": ["other"]}, {"id": "MIRROR_4", "number": 4, "value": 3, "upper": "", "middle": "あなたのカードを1枚反転させる。そのカードと同じラインにある相手のカードを1枚反転させる。", "lower": "", "effectTypes": ["flip"]}, {"id": "MIRROR_5", "number": 5, "value": 4, "upper": "", "middle": "", "lower": "相手がカードを引いたあと：カードを1枚引く。", "effectTypes": ["draw"]}, {"id": "MIRROR_6", "number": 6, "value": 5, "upper": "", "middle": "あなたは手札を1枚捨て札にする。", "lower": "", "effectTypes": ["five"]}]}, {"name": "PEACE", "displayName": "PEACE", "tags": "相互の捨て札／手札維持", "color": "#8D6E63", "set": "Main 2", "cards": [{"id": "PEACE_1", "number": 1, "value": 1, "upper": "", "middle": "両プレイヤーはすべての手札を捨て札にする。", "lower": "終了：あなたの手札が1枚もない場合、カードを1枚引く。", "effectTypes": ["draw", "discard", "play"]}, {"id": "PEACE_2", "number": 2, "value": 2, "upper": "", "middle": "カードを1枚引く。カードを1枚裏向きでプレイする。", "lower": "", "effectTypes": ["draw", "play"]}, {"id": "PEACE_3", "number": 3, "value": 3, "upper": "", "middle": "あなたは手札を1枚捨て札にすることができる。あなたの手札の枚数より値が大きいカードを1枚反転させる。", "lower": "", "effectTypes": ["flip", "discard"]}, {"id": "PEACE_4", "number": 4, "value": 4, "upper": "", "middle": "", "lower": "相手の手番中にあなたが捨て札にしたあと：カードを1枚引く。", "effectTypes": ["draw"]}, {"id": "PEACE_5", "number": 5, "value": 5, "upper": "", "middle": "あなたは手札を1枚捨て札にする。", "lower": "", "effectTypes": ["five"]}, {"id": "PEACE_6", "number": 6, "value": 6, "upper": "", "middle": "あなたの手札が2枚以上ある場合、このカードを反転させる。", "lower": "", "effectTypes": ["flip"]}]}, {"name": "SMOKE", "displayName": "SMOKE", "tags": "裏向き／移動", "color": "#757575", "set": "Main 2", "cards": [{"id": "SMOKE_1", "number": 1, "value": 0, "upper": "", "middle": "裏向きのカードが1枚以上ある各ラインに、あなたのデッキの一番上のカードを裏向きでプレイする。", "lower": "", "effectTypes": ["play"]}, {"id": "SMOKE_2", "number": 2, "value": 1, "upper": "", "middle": "あなたのカードを1枚反転させる。あなたはそのカードを移動させることができる。", "lower": "", "effectTypes": ["flip", "shift"]}, {"id": "SMOKE_3", "number": 3, "value": 2, "upper": "", "middle": "このラインのあなたの合計値は、このラインにある裏向きのカード1枚ごとに1増える。", "lower": "", "effectTypes": ["other"]}, {"id": "SMOKE_4", "number": 4, "value": 3, "upper": "", "middle": "裏向きのカードが1枚以上あるライン１つに、カードを裏向きで1枚プレイする。", "lower": "", "effectTypes": ["play"]}, {"id": "SMOKE_5", "number": 5, "value": 4, "upper": "", "middle": "覆われている裏向きのカードを1枚移動させる。", "lower": "", "effectTypes": ["shift"]}, {"id": "SMOKE_6", "number": 6, "value": 5, "upper": "", "middle": "あなたは手札を1枚捨て札にする。", "lower": "", "effectTypes": ["five"]}]}, {"name": "TIME", "displayName": "TIME", "tags": "捨て札／捨て札置き場", "color": "#FF5722", "set": "Main 2", "cards": [{"id": "TIME_1", "number": 1, "value": 0, "upper": "", "middle": "あなたの捨て札置き場にあるカードを1枚プレイする。あなたの捨て札置き場にあるすべてのカードをデッキに戻してシャッフルする。", "lower": "", "effectTypes": ["return", "play"]}, {"id": "TIME_2", "number": 2, "value": 1, "upper": "", "middle": "覆われているカードを1枚反転させる。あなたのデッキのカードをすべて捨て札にする。", "lower": "", "effectTypes": ["flip", "discard"]}, {"id": "TIME_3", "number": 3, "value": 2, "upper": "あなたがデッキをシャッフルしたあと：カードを1枚引き、このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。", "middle": "あなたの捨て札置き場にカードがある場合、あなたは捨て札置き場にあるすべてのカードをデッキに戻してシャッフルすることができる。", "lower": "", "effectTypes": ["draw", "shift", "return"]}, {"id": "TIME_4", "number": 4, "value": 3, "upper": "", "middle": "あなたの捨て札置き場にあるカードを1枚公開する。そのカードをこのカードとは別のラインに裏向きでプレイする。", "lower": "", "effectTypes": ["play"]}, {"id": "TIME_5", "number": 5, "value": 4, "upper": "", "middle": "カードを2枚引く。あなたは手札を2枚捨て札にする。", "lower": "", "effectTypes": ["draw", "discard"]}, {"id": "TIME_6", "number": 6, "value": 5, "upper": "", "middle": "あなたは手札を1枚捨て札にする。", "lower": "", "effectTypes": ["five"]}]}, {"name": "WAR", "displayName": "WAR", "tags": "対応／捨て札", "color": "#D32F2F", "set": "Main 2", "cards": [{"id": "WAR_1", "number": 1, "value": 0, "upper": "あなたがリフレッシュしたあと：あなたはこのカードを反転させることができる。", "middle": "", "lower": "相手がカードを引いたあと：あなたはカードを1枚削除することができる。", "effectTypes": ["delete", "flip"]}, {"id": "WAR_2", "number": 2, "value": 1, "upper": "", "middle": "", "lower": "相手がリフレッシュしたあと：任意の枚数の手札を捨て札にする。リフレッシュする。", "effectTypes": ["discard"]}, {"id": "WAR_3", "number": 3, "value": 2, "upper": "", "middle": "カードを1枚反転させる。", "lower": "相手がコンパイルしたあと：相手は手札をすべて捨て札にする。", "effectTypes": ["flip", "discard"]}, {"id": "WAR_4", "number": 4, "value": 3, "upper": "", "middle": "カードを1枚引く。", "lower": "相手が手札を捨て札にしたあと：あなたはカードを裏向きで1枚プレイすることができる。", "effectTypes": ["draw", "play"]}, {"id": "WAR_5", "number": 5, "value": 4, "upper": "", "middle": "相手は手札を1枚捨て札にする。", "lower": "", "effectTypes": ["discard"]}, {"id": "WAR_6", "number": 6, "value": 5, "upper": "", "middle": "あなたは手札を1枚捨て札にする。", "lower": "", "effectTypes": ["five"]}]}, {"name": "ASSIMILATION", "displayName": "ASSIMILATION", "tags": "交換／プレイ", "color": "#1565C0", "set": "Aux 2", "cards": [{"id": "ASSIMILATION_1", "number": 1, "value": 0, "upper": "", "middle": "覆われているか覆われていない、相手の裏向きカードのうち1枚をあなたの手札に加える。", "lower": "", "effectTypes": ["other"]}, {"id": "ASSIMILATION_2", "number": 2, "value": 1, "upper": "", "middle": "あなたの手札を1枚捨て札にする。リフレッシュする。", "lower": "誰かがリフレッシュしたあと：相手のデッキの一番上のカードを引く。あなたは手札を1枚捨て札にし、それを相手の捨て札置き場に置く。", "effectTypes": ["draw", "discard"]}, {"id": "ASSIMILATION_3", "number": 3, "value": 2, "upper": "", "middle": "", "lower": "終了：相手のデッキの一番上のカードを、このスタックに裏向きでプレイする。", "effectTypes": ["play"]}, {"id": "ASSIMILATION_4", "number": 4, "value": 4, "upper": "", "middle": "相手のデッキの一番上のカードを引く。相手はあなたのデッキの一番上のカードを引く。", "lower": "", "effectTypes": ["draw"]}, {"id": "ASSIMILATION_5", "number": 5, "value": 5, "upper": "", "middle": "あなたは手札を1枚捨て札にする。", "lower": "", "effectTypes": ["five"]}, {"id": "ASSIMILATION_6", "number": 6, "value": 6, "upper": "", "middle": "", "lower": "終了：あなたのデッキの一番上のカードを、相手側の任意のスタックに裏向きでプレイする。", "effectTypes": ["play"]}]}, {"name": "DIVERSITY", "displayName": "DIVERSITY", "tags": "プレイ／比較／コンパイル", "color": "#00897B", "set": "Aux 2", "cards": [{"id": "DIVERSITY_1", "number": 1, "value": 0, "upper": "", "middle": "フィールドに6種類のプロトコルのコマンドカードがある場合、「DIVERSITY」プロトコルカードをコンパイル完了面にする。", "lower": "終了：あなたはこのラインに「DIVERSITY」以外のカードをプレイすることができる。", "effectTypes": ["play"]}, {"id": "DIVERSITY_2", "number": 2, "value": 1, "upper": "", "middle": "カードを1枚移動させる。このラインにあるコマンドカードの、プロトコルの種類数に等しい枚数のカードを引く。", "lower": "", "effectTypes": ["draw", "shift"]}, {"id": "DIVERSITY_3", "number": 3, "value": 3, "upper": "このスタックに「DIVERSITY」以外の表向きのカードがある場合、このラインのあなたの合計値は2増える。", "middle": "", "lower": "", "effectTypes": ["other"]}, {"id": "DIVERSITY_4", "number": 4, "value": 4, "upper": "", "middle": "フィールドにあるコマンドカードの、プロトコルの種類数未満の値を持つカードを1枚反転させる。", "lower": "", "effectTypes": ["flip"]}, {"id": "DIVERSITY_5", "number": 5, "value": 5, "upper": "", "middle": "あなたは手札を1枚捨て札にする。", "lower": "", "effectTypes": ["five"]}, {"id": "DIVERSITY_6", "number": 6, "value": 6, "upper": "終了：フィールドにあるコマンドカードの、プロトコルの種類数が3以下の場合、このカードを削除する。", "middle": "", "lower": "", "effectTypes": ["delete"]}]}, {"name": "UNITY", "displayName": "UNITY", "tags": "覆う／反転／コンパイル", "color": "#E040FB", "set": "Aux 2", "cards": [{"id": "UNITY_1", "number": 1, "value": 0, "upper": "", "middle": "フィールドに他の「UNITY」カードがある場合、カードを1枚反転させるか、カードを1枚引く。", "lower": "このカードが「UNITY」カードによって覆われることになったとき：先に、カードを1枚反転させるか、カードを1枚引く。", "effectTypes": ["draw", "flip"]}, {"id": "UNITY_2", "number": 2, "value": 1, "upper": "開始：このカードが覆われている場合、あなたはこのカードを移動させることができる。", "middle": "フィールド「UNITY」カードが5枚以上ある場合、「UNITY」プロトコルカードのコンパイル完了面を表向きにし、そのラインにあるすべてのカードを削除する。", "lower": "このラインには「UNITY」カードを表向きでプレイすることができる。", "effectTypes": ["delete", "shift", "play"]}, {"id": "UNITY_3", "number": 3, "value": 2, "upper": "", "middle": "フィールドにある「UNITY」カードの枚数に等しい枚数のカードを引く。", "lower": "", "effectTypes": ["draw"]}, {"id": "UNITY_4", "number": 4, "value": 3, "upper": "", "middle": "フィールドに他の「UNITY」カードがある場合、あなたは表向きのカードを1枚反転させることができる。", "lower": "", "effectTypes": ["flip"]}, {"id": "UNITY_5", "number": 5, "value": 4, "upper": "終了：あなたの手札が1枚もない場合、あなたのデッキのカードをすべて公開し、そこからすべての「UNITY」カードを引いて、あなたのデッキをシャッフルする。", "middle": "", "lower": "", "effectTypes": ["other"]}, {"id": "UNITY_6", "number": 6, "value": 5, "upper": "", "middle": "あなたの手札を1枚捨て札にする。", "lower": "", "effectTypes": ["five"]}]}]};
+    <p class="cp-foot">FAN-MADE COMPANION APP · NOT AFFILIATED WITH THE OFFICIAL GAME</p>
+  </main>
 
-const EL={draw:'引く',delete:'削除',flip:'反転',shift:'移動',return:'戻す',rearrange:'並べ替え',discard:'捨て札',play:'プレイ',five:'５',other:'その他'};
-const EC={draw:'#3b82f6',delete:'#ef4444',flip:'#a855f7',shift:'#f59e0b',return:'#14b8a6',rearrange:'#8b5cf6',discard:'#6b7280',play:'#22c55e',five:'#94a3b8',other:'#64748b'};
+  <script type="module">
+    import {
+      SETS, EFFECTS, EFFECT_LABEL, EFFECT_COLOR, ZONES, esc, cardText, loadProtocols,
+      protoArt, cardArt, emblem, effectIcon, protoTile, protoChip, store, sheet
+    } from './companion.js';
 
-var mode='list',listSel=[],filt='all',anaSel=[],lkProto=null,lkVal=null,viewMode='tile',anaFilt=null;
+    const KEY = 'compile.cardlist.v2';
+    const TABS = ['list', 'proto', 'lookup', 'ana'];
+    const S = Object.assign({ tab: 'list', view: 'tile', fx: 'all', sel: [], q: '', ana: [], anaFx: null }, store.get(KEY, {}));
+    S.q = '';
+    const save = () => store.set(KEY, { view: S.view });
 
+    let PROTOS = [], BY = {}, ALL = [];
+    const $ = (id) => document.getElementById(id);
+    const sh = sheet();
 
-// Theme
-var curTheme=localStorage.getItem('compile-theme')||(window.matchMedia('(prefers-color-scheme:light)').matches?'light':'dark');
-function applyTheme(t){
-  curTheme=t;document.documentElement.className=t;
-  localStorage.setItem('compile-theme',t);
-  document.getElementById('themeBtn').textContent=t==='dark'?'\u2600':'\u263E';
-  document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]').content=t==='dark'?'black-translucent':'default';
-}
-function toggleTheme(){applyTheme(curTheme==='dark'?'light':'dark')}
-applyTheme(curTheme);
-
-function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML.replace(/。/g,'。<br>').replace(/(開始：|終了：|[^。]+(たとき|たあと|た場合|なかった場合)：)/g,'<b style="text-decoration:underline">$1</b>')}
-
-function setView(v){
-  viewMode=v;
-  document.getElementById('vTile').classList.toggle('on',v==='tile');
-  document.getElementById('vRow').classList.toggle('on',v==='row');
-  document.querySelectorAll('.cards').forEach(function(el){el.classList.toggle('row-view',v==='row')});
-}
-
-function cmdHtml(label,cls,text){
-  if(text) return '<div class="c-cmd"><span class="c-cmd-lbl '+cls+'">'+label+'</span><span class="c-cmd-txt">'+esc(text)+'</span></div>';
-  return '<div class="c-cmd"><span class="c-cmd-lbl '+cls+'">'+label+'</span><span class="c-cmd-txt c-cmd-empty">---</span></div>';
-}
-
-function mkCard(c,p){
-  var d=document.createElement('div');
-  d.className='card';
-  d.style.borderLeftColor=p.color;
-  var setLabel=p.set!=='Main 1'?'<span class="c-set">'+p.set+'</span>':'';
-  var tags=c.effectTypes.map(function(t){return '<span class="etag" style="color:'+EC[t]+';background:'+EC[t]+'12">'+EL[t]+'</span>'}).join('');
-  d.innerHTML=
-    '<div class="row-header"><span class="row-pname" style="color:'+p.color+'">'+p.name+'</span><span class="row-val" style="color:'+p.color+'">'+c.value+'</span></div>'
-    +'<div class="c-head"><div class="c-head-left"><div class="c-val" style="color:'+p.color+';border-color:'+p.color+'">'+c.value+'</div><div><span class="c-name" style="color:'+p.color+'">'+p.name+'</span>'+setLabel+'</div></div><div class="c-tags">'+tags+'</div></div>'
-    +'<div class="c-cmds">'
-    +cmdHtml('上','up',c.upper)+cmdHtml('中','mid',c.middle)+cmdHtml('下','low',c.lower)
-    +'</div>';
-  d.addEventListener('click',function(){openModal(c,p)});
-  return d;
-}
-
-function modalCmd(label,cls,text){
-  if(text) return '<div class="m-cmd-section"><div class="m-cmd-header '+cls+'">'+label+'</div><div class="m-cmd-body">'+esc(text)+'</div></div>';
-  return '<div class="m-cmd-section"><div class="m-cmd-header '+cls+'">'+label+'</div><div class="m-cmd-empty">--- 効果なし ---</div></div>';
-}
-
-function openModal(c,p){
-  document.getElementById('macc').style.background='linear-gradient(90deg,'+p.color+','+p.color+'50)';
-  var setLabel=p.set!=='Main 1'?' <span style="font-size:0.6rem;opacity:0.7">['+p.set+']</span>':'';
-  var codexHtml='';
-  if(c.codex){
-    codexHtml='<div class="m-codex"><div class="m-codex-title">CODEX</div>'+esc(c.codex)+'</div>';
-  }
-  document.getElementById('mbody').innerHTML=
-    '<div class="m-name" style="color:'+p.color+'">'+p.name+' '+c.value+setLabel+'</div>'
-    +'<div class="m-proto" style="background:'+p.color+'15;color:'+p.color+'">'+p.tags+'</div>'
-    +modalCmd('上段コマンド / Upper','up',c.upper)
-    +modalCmd('中段コマンド / Middle','mid',c.middle)
-    +modalCmd('下段コマンド / Lower','low',c.lower)
-    +'<div class="m-slbl">効果種別</div>'
-    +'<div class="m-tags">'+c.effectTypes.map(function(t){return '<span class="etag" style="color:'+EC[t]+';background:'+EC[t]+'12;border:1px solid '+EC[t]+'25">'+EL[t]+'</span>'}).join('')+'</div>'
-    +codexHtml;
-  document.getElementById('mover').classList.add('on');
-}
-
-function closeModal(){
-  var m=document.getElementById('modal');
-  m.style.transition='transform .2s ease';
-  m.style.transform='translateY(100%)';
-  setTimeout(function(){document.getElementById('mover').classList.remove('on');m.style.transition='';m.style.transform=''},200);
-}
-document.getElementById('mcls').onclick=closeModal;
-document.getElementById('mover').onclick=function(e){if(e.target.id==='mover')closeModal()};
-document.addEventListener('keydown',function(e){if(e.key==='Escape'&&document.getElementById('mover').classList.contains('on'))closeModal()});
-
-// Swipe-to-dismiss on modal
-(function(){
-  var modal=document.getElementById('modal'),startY=0,curY=0,dragging=false;
-  modal.addEventListener('touchstart',function(e){
-    if(modal.scrollTop>0)return;
-    startY=e.touches[0].clientY;curY=startY;dragging=true;
-  },{passive:true});
-  modal.addEventListener('touchmove',function(e){
-    if(!dragging)return;
-    curY=e.touches[0].clientY;
-    var dy=curY-startY;
-    if(dy<0){dy=0;modal.style.transform=''}
-    else{modal.style.transform='translateY('+dy+'px)';modal.style.transition='none';
-      if(dy>0)e.preventDefault();}
-  },{passive:false});
-  modal.addEventListener('touchend',function(){
-    if(!dragging)return;dragging=false;
-    var dy=curY-startY;
-    if(dy>80){closeModal()}
-    else{modal.style.transition='transform .2s ease';modal.style.transform='';setTimeout(function(){modal.style.transition=''},200)}
-  });
-})();
-
-// Tabs
-var MODES=['list','proto','lookup','ana'];
-function switchMode(newMode,direction){
-  if(newMode===mode)return;
-  mode=newMode;
-  document.querySelectorAll('.tab').forEach(function(x){x.classList.toggle('on',x.dataset.m===mode)});
-  document.querySelectorAll('.sec').forEach(function(s){s.classList.remove('on');s.classList.remove('slide-in-left');s.classList.remove('slide-in-right')});
-  var sec=document.getElementById('v-'+mode);
-  sec.classList.add('on');
-  if(direction)sec.classList.add(direction==='left'?'slide-in-left':'slide-in-right');
-  if(mode==='ana')renderAna();
-  if(mode==='lookup')renderLookup();
-  if(mode==='proto')renderProtoList();
-}
-document.querySelectorAll('.tab').forEach(function(t){t.addEventListener('click',function(){switchMode(t.dataset.m)})});
-
-// Swipe to switch tabs on main
-(function(){
-  var main=document.querySelector('main'),startX=0,startY=0,tracking=false;
-  main.addEventListener('touchstart',function(e){
-    if(document.getElementById('mover').classList.contains('on'))return;
-    startX=e.touches[0].clientX;startY=e.touches[0].clientY;tracking=true;
-  },{passive:true});
-  main.addEventListener('touchmove',function(e){
-    if(!tracking)return;
-    var dx=Math.abs(e.touches[0].clientX-startX),dy=Math.abs(e.touches[0].clientY-startY);
-    if(dy>30&&dy>dx)tracking=false;
-  },{passive:true});
-  main.addEventListener('touchend',function(e){
-    if(!tracking)return;tracking=false;
-    var endX=e.changedTouches[0].clientX,endY=e.changedTouches[0].clientY;
-    var dx=endX-startX,adx=Math.abs(dx),ady=Math.abs(endY-startY);
-    if(adx<50||adx<ady*1.5)return;
-    var idx=MODES.indexOf(mode);
-    if(dx<0&&idx<MODES.length-1)switchMode(MODES[idx+1],'left');
-    else if(dx>0&&idx>0)switchMode(MODES[idx-1],'right');
-  });
-})();
-
-// Build protocol pills
-function buildPills(container,onclick,multi){
-  var el=document.getElementById(container);el.innerHTML='';
-  if(!multi){
-    var a=document.createElement('button');a.className='pill on';a.textContent='ALL';a.dataset.p='all';
-    a.onclick=function(){onclick('all',a)};el.appendChild(a);
-  }
-  var setOrder=['Main 1','Aux 1','Main 2','Aux 2'];
-  var groups={};
-  DATA.protocols.forEach(function(p){
-    var s=p.set||'Main 1';
-    if(!groups[s])groups[s]=[];
-    groups[s].push(p);
-  });
-  setOrder.forEach(function(s){
-    if(!groups[s])return;
-    var grp=document.createElement('div');grp.className='set-group';
-    var collapsed=true;
-    var hdr=document.createElement('div');hdr.className='set-group-hdr'+(collapsed?' collapsed':'');
-    hdr.innerHTML='<span class="set-arrow">▼</span><span class="set-label">'+s+'</span>';
-    var pills=document.createElement('div');pills.className='set-group-pills'+(collapsed?' collapsed':'');
-    hdr.onclick=function(){hdr.classList.toggle('collapsed');pills.classList.toggle('collapsed')};
-    groups[s].forEach(function(p){
-      var b=document.createElement('button');b.className='pill';
-      b.textContent=p.name;b.dataset.p=p.name;
-      b.onclick=function(){onclick(p.name,b)};
-      pills.appendChild(b);
-    });
-    grp.appendChild(hdr);grp.appendChild(pills);el.appendChild(grp);
-  });
-}
-
-function buildFilterChips(containerId,currentFilt,onchange){
-  var el=document.getElementById(containerId);el.innerHTML='';
-  var all=['all','draw','delete','flip','shift','return','rearrange','discard','play','five','other'];
-  var labels={all:'すべて',draw:'引く',delete:'削除',flip:'反転',shift:'移動',return:'戻す',rearrange:'並べ替え',discard:'捨て札',play:'プレイ',five:'５',other:'その他'};
-  all.forEach(function(f){
-    var b=document.createElement('button');
-    b.className='chip'+(f===currentFilt?' on':'');b.textContent=labels[f];b.dataset.f=f;
-    b.onclick=function(){onchange(f);el.querySelectorAll('.chip').forEach(function(x){x.classList.toggle('on',x.dataset.f===f)})};
-    el.appendChild(b);
-  });
-}
-
-// List mode - multi-select
-function toggleListProto(name,btn){
-  var i=listSel.indexOf(name);
-  if(i>=0){listSel.splice(i,1);btn.classList.remove('on');btn.style.color='';btn.style.borderColor=''}
-  else{var p=DATA.protocols.find(function(x){return x.name===name});listSel.push(name);btn.classList.add('on');btn.style.color=p.color;btn.style.borderColor=p.color}
-  updateListSeriesUI();
-  renderList();
-}
-
-function toggleListSeries(setName){
-  var names=DATA.protocols.filter(function(p){return (p.set||'Main 1')===setName}).map(function(p){return p.name});
-  var allSelected=names.length&&names.every(function(name){return listSel.indexOf(name)>=0});
-  names.forEach(function(name){
-    var idx=listSel.indexOf(name);
-    if(allSelected){
-      if(idx>=0)listSel.splice(idx,1);
-    }else if(idx<0){
-      listSel.push(name);
+    /* ---------- カード1枚 ---------- */
+    function highlight(html, q) {
+      if (!q) return html;
+      /* タグの中は触らない */
+      const re = new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'g');
+      return html.split(/(<[^>]+>)/).map(s => (s.startsWith('<') ? s : s.replace(re, '<mark>$1</mark>'))).join('');
     }
-  });
-  document.querySelectorAll('#pbar .pill').forEach(function(b){
-    var name=b.dataset.p;
-    if(!name)return;
-    var on=listSel.indexOf(name)>=0;
-    b.classList.toggle('on',on);
-    if(on){
-      var p=DATA.protocols.find(function(x){return x.name===name});
-      b.style.color=p.color;b.style.borderColor=p.color;
-    }else{
-      b.style.color='';b.style.borderColor='';
+
+    function cardHtml(p, c, q) {
+      const zones = ZONES.filter(([k]) => c[k]).map(([k, mark]) =>
+        '<span class="z ' + k + '"><i>' + mark + '</i><span>' + highlight(cardText(c[k]), q) + '</span></span>').join('');
+      return '<button type="button" class="card" data-id="' + esc(c.id) + '" style="--pc:' + esc(p.color) + '">' +
+        '<span class="c-art"><img class="art" alt="" loading="lazy" decoding="async" src="' + cardArt(p.name, c) + '">' +
+        '<span class="c-val">' + c.value + '</span><img class="c-emb" alt="" src="' + emblem(p, 48) + '"></span>' +
+        '<span class="c-main"><span class="c-head"><span class="c-name">' + esc(p.name) + ' ' + c.value + '</span>' +
+        '<span class="c-set">' + esc(p.set) + '</span>' +
+        '<span class="c-fx">' + c.effectTypes.map(t => '<span title="' + esc(EFFECT_LABEL[t]) + '">' + effectIcon(t, null, 13) + '</span>').join('') + '</span></span>' +
+        '<span class="zones">' + (zones || '<span class="z-none">効果なし</span>') + '</span></span></button>';
     }
-  });
-  updateListSeriesUI();
-  renderList();
-}
 
-function updateListSeriesUI(){
-  document.querySelectorAll('#pbar .set-group-btn').forEach(function(btn){
-    var setName=btn.dataset.set;
-    var names=DATA.protocols.filter(function(p){return (p.set||'Main 1')===setName}).map(function(p){return p.name});
-    var allSelected=names.length&&names.every(function(name){return listSel.indexOf(name)>=0});
-    btn.classList.toggle('on',allSelected);
-    btn.textContent=allSelected?'解除':'選択';
-  });
-  updateExpandBtn();
-}
+    /* ---------- カードの詳しい表示 ---------- */
+    function openCard(id) {
+      const hit = ALL.find(x => x.c.id === id);
+      if (!hit) return;
+      const { p, c } = hit;
+      const zone = ([k, mark, jp]) => '<div class="dz ' + k + (c[k] ? '' : ' empty') + '"><div class="dz-h">' + mark + ' ' + jp + 'コマンド</div>' +
+        '<div class="dz-b">' + (c[k] ? cardText(c[k]) : '効果なし') + '</div></div>';
+      const html = '<div class="dt">' +
+        '<div class="dt-art"><img class="art" alt="" src="' + cardArt(p.name, c) + '"><span class="c-val">' + c.value + '</span>' +
+        '<img class="c-emb" alt="" src="' + emblem(p, 96) + '"></div>' +
+        '<div><div class="dt-title"><b>' + esc(p.name) + ' ' + c.value + '</b><span>' + esc(p.set) + '</span></div>' +
+        '<p class="dt-tags">' + esc(p.tags) + '</p>' + ZONES.map(zone).join('') +
+        '<div class="dt-fx">' + c.effectTypes.map(t => '<span style="color:' + EFFECT_COLOR[t] + ';border-color:' + EFFECT_COLOR[t] + '55">' +
+          effectIcon(t, null, 14) + esc(EFFECT_LABEL[t]) + '</span>').join('') + '</div>' +
+        (c.codex ? '<div class="codex"><b>CODEX</b>' + esc(c.codex) + '</div>' : '') + '</div>' +
+        '<div class="sib"><p class="sib-h">' + esc(p.name) + ' の6枚</p><div class="sib-row">' +
+        p.cards.map(x => '<button type="button" data-sib="' + esc(x.id) + '" aria-current="' + (x.id === c.id) + '" aria-label="' + esc(p.name) + ' ' + x.value + '">' +
+          '<img alt="" loading="lazy" src="' + cardArt(p.name, x) + '"><b>' + x.value + '</b></button>').join('') + '</div></div></div>';
+      const body = sh.open(html, p.color);
+      body.querySelectorAll('[data-sib]').forEach(b => b.addEventListener('click', () => openCard(b.dataset.sib)));
+    }
 
-function toggleAllSeriesGroups(){
-  var allCollapsed=document.querySelectorAll('#pbar .set-group-hdr.collapsed').length===document.querySelectorAll('#pbar .set-group-hdr').length;
-  document.querySelectorAll('#pbar .set-group').forEach(function(group){
-    var hdr=group.querySelector('.set-group-hdr');
-    var pills=group.querySelector('.set-group-pills');
-    if(!hdr||!pills)return;
-    hdr.classList.toggle('collapsed',!allCollapsed);
-    pills.classList.toggle('collapsed',!allCollapsed);
-  });
-  updateExpandBtn();
-}
+    function openProto(name) {
+      const p = BY[name];
+      const html = '<div class="pv-hero" style="background-image:url(&quot;' + protoArt(p.name) + '&quot;)"><img alt="" src="' + emblem(p, 128) + '">' +
+        '<div class="t"><b>' + esc(p.name) + '</b><span>' + esc(p.set) + '</span></div></div>' +
+        '<div class="pv-body"><p class="dt-tags">' + esc(p.tags) + '</p>' +
+        '<button type="button" class="cp-ghost" id="pvList">カード一覧でこのプロトコルを見る →</button>' +
+        '<div class="pv-list cards">' + p.cards.map(c => cardHtml(p, c)).join('') + '</div></div>';
+      const body = sh.open(html, p.color);
+      body.querySelectorAll('.card').forEach(b => b.addEventListener('click', () => openCard(b.dataset.id)));
+      body.querySelector('#pvList').addEventListener('click', () => {
+        S.sel = [p.name]; S.fx = 'all'; S.q = ''; $('q').value = '';
+        sh.close(); renderFilters(); renderList(); setTab('list');
+        window.scrollTo({ top: 0 });
+      });
+    }
 
-function updateExpandBtn(){
-  var btn=document.getElementById('expandSeriesBtn');
-  if(!btn)return;
-  var allGroups=document.querySelectorAll('#pbar .set-group-hdr').length;
-  var collapsed=document.querySelectorAll('#pbar .set-group-hdr.collapsed').length;
-  btn.textContent=(allGroups&&collapsed===0)?'一括収納':'一括展開';
-}
+    /* ---------- カード一覧 ---------- */
+    function renderFilters() {
+      /* プロトコル: セットごとに、まとめて選ぶボタン + 紋章チップ */
+      $('ppBody').innerHTML = SETS.map(set => {
+        const ps = PROTOS.filter(p => p.set === set);
+        const all = ps.every(p => S.sel.includes(p.name));
+        return '<div class="pp-set"><button type="button" class="lvl sm" data-set="' + esc(set) + '" aria-pressed="' + all + '">' + esc(set) + '</button>' +
+          ps.map(p => protoChip(p, S.sel.includes(p.name))).join('') + '</div>';
+      }).join('');
+      $('ppNames').textContent = S.sel.length ? S.sel.join(', ') : 'すべて';
+      $('fxRow').innerHTML = '<span class="flbl">効果</span>' +
+        ['all'].concat(EFFECTS).map(f => '<button type="button" class="lvl sm fx-chip" data-fx="' + f + '" aria-pressed="' + (S.fx === f) + '">' +
+          (f === 'all' ? 'すべて' : effectIcon(f, null, 13) + esc(EFFECT_LABEL[f])) + '</button>').join('');
+      document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', b.dataset.view === S.view));
+    }
 
-function clearListFilter(){
-  listSel=[];filt='all';
-  document.querySelectorAll('#pbar .pill').forEach(function(b){b.classList.remove('on');b.style.color='';b.style.borderColor=''});
-  updateListSeriesUI();
-  document.querySelectorAll('#fbar .chip').forEach(function(c){c.classList.toggle('on',c.dataset.f==='all')});
-  renderList();
-}
+    function renderList() {
+      const q = S.q.trim();
+      const hits = ALL.filter(({ p, c }) =>
+        (!S.sel.length || S.sel.includes(p.name)) &&
+        (S.fx === 'all' || c.effectTypes.includes(S.fx)) &&
+        (!q || [c.upper, c.middle, c.lower, p.name, p.tags].some(t => t && t.toUpperCase().includes(q.toUpperCase()))));
+      $('hits').textContent = hits.length + ' 枚';
+      const g = $('grid');
+      g.className = 'cards' + (S.view === 'list' ? ' list' : '');
+      g.innerHTML = hits.length
+        ? hits.map(({ p, c }) => cardHtml(p, c, q)).join('')
+        : '<div class="cp-empty">該当するカードがありません</div>';
+    }
 
-function renderList(){
-  var g=document.getElementById('cgrid');g.innerHTML='';
-  g.classList.toggle('row-view',viewMode==='row');
-  var cards=[];
-  DATA.protocols.forEach(function(p){
-    if(listSel.length>0&&listSel.indexOf(p.name)<0)return;
-    p.cards.forEach(function(c){cards.push({c:c,p:p})});
-  });
-  if(filt!=='all')cards=cards.filter(function(x){return x.c.effectTypes.indexOf(filt)>=0});
-  document.getElementById('nores').style.display=cards.length?'none':'';
-  cards.forEach(function(x){g.appendChild(mkCard(x.c,x.p))});
-}
+    /* ---------- プロトコル ---------- */
+    function renderProtos() {
+      $('protoSets').innerHTML = SETS.map(set =>
+        '<div class="set-head"><b>//</b> ' + esc(set) + '</div><div class="proto-grid protos-big">' +
+        PROTOS.filter(p => p.set === set).map(p => protoTile(p, {
+          tag: p.set,
+          extra: ''
+        }).replace('</button>', '<span class="proto-tags">' + esc(p.tags) + '</span></button>')).join('') + '</div>').join('');
+    }
 
-// Multi-select helper (for analysis)
-function toggleMulti(arr,name,btn,cntId,max,render){
-  var i=arr.indexOf(name);
-  if(i>=0){arr.splice(i,1);btn.classList.remove('on');btn.style.color='';btn.style.borderColor=''}
-  else if(arr.length<max){arr.push(name);var p=DATA.protocols.find(function(x){return x.name===name});btn.classList.add('on');btn.style.color=p.color;btn.style.borderColor=p.color}
-  document.getElementById(cntId).textContent=arr.length;
-  render();
-}
-
-// Lookup mode - matrix
-function buildMatrix(){
-  var wrap=document.getElementById('matrixWrap');
-  // Collect all values across all protocols
-  var vals=[];
-  DATA.protocols.forEach(function(p){p.cards.forEach(function(c){if(vals.indexOf(c.value)<0)vals.push(c.value)})});
-  vals.sort(function(a,b){return a-b});
-  var html='<table class="matrix"><thead><tr><th></th>';
-  vals.forEach(function(v){html+='<th>'+v+'</th>'});
-  html+='</tr></thead><tbody>';
-  DATA.protocols.forEach(function(p){
-    html+='<tr><td class="m-pname" style="color:'+p.color+'">'+p.name+'</td>';
-    vals.forEach(function(v){
-      var found=p.cards.filter(function(c){return c.value===v});
-      if(found.length){
-        html+='<td class="m-cell" data-p="'+p.name+'" data-v="'+v+'" style="color:'+p.color+'">'+v+'</td>';
-      } else {
-        html+='<td class="m-empty">-</td>';
+    /* ---------- 逆引き ---------- */
+    function renderLookup() {
+      const vals = [...new Set(ALL.map(x => x.c.value))].sort((a, b) => a - b);
+      let h = '<thead><tr><th>PROTOCOL</th>' + vals.map(v => '<th>' + v + '</th>').join('') + '</tr></thead><tbody>';
+      for (const set of SETS) {
+        h += '<tr class="grp"><td colspan="' + (vals.length + 1) + '">' + esc(set) + '</td></tr>';
+        for (const p of PROTOS.filter(x => x.set === set)) {
+          h += '<tr style="--pc:' + esc(p.color) + '"><th class="rh" scope="row"><span><img alt="" src="' + emblem(p, 44) + '">' + esc(p.name) + '</span></th>';
+          for (const v of vals) {
+            const c = p.cards.find(x => x.value === v);
+            h += c ? '<td><button type="button" class="cell" data-id="' + esc(c.id) + '" aria-label="' + esc(p.name) + ' ' + v + '">' + v + '</button></td>'
+              : '<td class="nil">·</td>';
+          }
+          h += '</tr>';
+        }
       }
-    });
-    html+='</tr>';
-  });
-  html+='</tbody></table>';
-  wrap.innerHTML=html;
-  wrap.querySelectorAll('.m-cell').forEach(function(cell){
-    cell.addEventListener('click',function(){
-      var wasOn=cell.classList.contains('on');
-      wrap.querySelectorAll('.m-cell.on').forEach(function(c){c.classList.remove('on')});
-      if(wasOn){lkProto=null;lkVal=null}
-      else{lkProto=cell.dataset.p;lkVal=parseInt(cell.dataset.v);cell.classList.add('on')}
-      renderLookup();
-    });
-  });
-}
-
-function renderLookup(){
-  var res=document.getElementById('lkResult');res.innerHTML='';
-  res.classList.toggle('row-view',viewMode==='row');
-  if(lkProto===null||lkVal===null)return;
-  var p=DATA.protocols.find(function(x){return x.name===lkProto});
-  if(!p)return;
-  var found=p.cards.filter(function(c){return c.value===lkVal});
-  found.forEach(function(c){res.appendChild(mkCard(c,p))});
-}
-
-function renderProtoList(){
-  var grid=document.getElementById('protoGrid');
-  grid.innerHTML='';
-  DATA.protocols.forEach(function(p){
-    var d=document.createElement('div');
-    d.className='proto-card';
-    d.style.borderColor=p.color+'40';
-    d.innerHTML=
-      '<div class="proto-head">'
-      +'<div class="proto-name" style="color:'+p.color+'">'+p.name+'</div>'
-      +'<button class="proto-view" type="button">VIEW</button>'
-      +'</div>'
-      +'<div class="proto-meta">'+(p.set||'Main 1')+'</div>'
-      +'<div class="proto-tags">'+esc(p.tags)+'</div>';
-    d.addEventListener('click',function(){openProtocolPreview(p)});
-    d.querySelector('.proto-view').addEventListener('click',function(e){e.stopPropagation();openProtocolPreview(p)});
-    grid.appendChild(d);
-  });
-}
-
-function enhanceListSeriesControls(){
-  document.querySelectorAll('#pbar .set-group').forEach(function(group){
-    var hdr=group.querySelector('.set-group-hdr');
-    var label=group.querySelector('.set-label');
-    if(!hdr||!label||hdr.querySelector('.set-group-btn'))return;
-    var spacer=document.createElement('span');
-    spacer.className='set-spacer';
-    var btn=document.createElement('button');
-    btn.type='button';
-    btn.className='set-group-btn';
-    btn.dataset.set=label.textContent;
-    btn.textContent='選択';
-    btn.onclick=function(e){e.stopPropagation();toggleListSeries(btn.dataset.set);};
-    hdr.appendChild(spacer);
-    hdr.appendChild(btn);
-  });
-  updateListSeriesUI();
-}
-
-function openProtocolPreview(p){
-  document.getElementById('macc').style.background='linear-gradient(90deg,'+p.color+','+p.color+'50)';
-  document.getElementById('mbody').innerHTML=
-    '<div class="proto-preview">'
-    +'<div class="m-name" style="color:'+p.color+'">'+p.name+'</div>'
-    +'<div class="m-proto" style="background:'+p.color+'15;color:'+p.color+'">'+p.tags+'</div>'
-    +'<div class="proto-preview-grid">'
-    +p.cards.map(function(c){
-      return '<div class="proto-preview-card">'
-        +'<div class="proto-preview-hd"><span class="proto-preview-name" style="color:'+p.color+'">'+p.name+'</span><span class="proto-preview-val" style="color:'+p.color+'">'+c.value+'</span></div>'
-        +modalCmd('U','up',c.upper)
-        +modalCmd('M','mid',c.middle)
-        +modalCmd('L','low',c.lower)
-        +'</div>';
-    }).join('')
-    +'</div>'
-    +'</div>';
-  document.getElementById('mover').classList.add('on');
-}
-
-// Analysis
-function clearAna(){
-  anaSel=[];
-  document.querySelectorAll('#asel .pill').forEach(function(b){b.classList.remove('on');b.style.color='';b.style.borderColor=''});
-  document.getElementById('acnt').textContent='0';
-  renderAna();
-}
-
-function anaFilterTag(tag){
-  anaFilt=anaFilt===tag?null:tag;
-  renderAna();
-}
-
-function renderAna(){
-  var ct=document.getElementById('acontent');
-  if(anaSel.length!==3){anaFilt=null;ct.innerHTML='<div class="nores"><div class="ico">&#x1F4CA;</div><p>プロトコルを3つ選択してください</p></div>';return}
-  var all=[];anaSel.forEach(function(n){var p=DATA.protocols.find(function(x){return x.name===n});p.cards.forEach(function(c){all.push({c:c,p:p})})});
-  var counts={};Object.keys(EL).forEach(function(k){counts[k]=0});
-  all.forEach(function(x){x.c.effectTypes.forEach(function(t){counts[t]=(counts[t]||0)+1})});
-  var mx=Math.max.apply(null,Object.values(counts).concat([1]));
-  var barHtml=Object.entries(counts).filter(function(e){return e[1]>0}).sort(function(a,b){return b[1]-a[1]}).map(function(e){
-    return '<div class="brow'+(anaFilt===e[0]?' on':'')+'" data-tag="'+e[0]+'"><div class="blbl">'+EL[e[0]]+'</div><div class="btrk"><div class="bfill" style="width:'+(e[1]/mx*100)+'%;background:'+EC[e[0]]+'"></div></div><div class="bval">'+e[1]+'</div></div>';
-  }).join('');
-  var perProto=anaSel.map(function(n){
-    var p=DATA.protocols.find(function(x){return x.name===n});
-    var pc={};Object.keys(EL).forEach(function(k){pc[k]=0});
-    p.cards.forEach(function(c){c.effectTypes.forEach(function(t){pc[t]++})});
-    var pmx=Math.max.apply(null,Object.values(pc).concat([1]));
-    return '<div class="a-card"><h3 style="color:'+p.color+'">'+p.name+(p.set!=='Main 1'?' <small style="opacity:.6">['+p.set+']</small>':'')+'</h3><div class="bars">'+Object.entries(pc).filter(function(e){return e[1]>0}).sort(function(a,b){return b[1]-a[1]}).map(function(e){
-      return '<div class="brow'+(anaFilt===e[0]?' on':'')+'" data-tag="'+e[0]+'"><div class="blbl">'+EL[e[0]]+'</div><div class="btrk"><div class="bfill" style="width:'+(e[1]/pmx*100)+'%;background:'+p.color+'"></div></div><div class="bval">'+e[1]+'</div></div>';
-    }).join('')+'</div></div>';
-  }).join('');
-  var filteredHtml='';
-  if(anaFilt){
-    var filtered=all.filter(function(x){return x.c.effectTypes.indexOf(anaFilt)>=0});
-    filteredHtml='<div class="slbl" style="margin-top:14px"><b>//</b> 「'+EL[anaFilt]+'」のカード（'+filtered.length+'枚）</div><div class="cards'+(viewMode==='row'?' row-view':'')+'" id="anaCards">';
-    filteredHtml+='</div>';
-  }
-  ct.innerHTML=
-    '<div class="a-grid"><div class="a-card"><h3>効果種別分布</h3><div class="bars" id="anaBars">'+barHtml+'</div></div></div>'
-    +filteredHtml
-    +'<div class="slbl" style="margin-top:14px"><b>//</b> プロトコル別</div>'
-    +'<div class="a-grid" id="anaPerProto">'+perProto+'</div>';
-  // Attach click handlers to bar rows
-  ct.querySelectorAll('.brow[data-tag]').forEach(function(row){
-    row.addEventListener('click',function(){anaFilterTag(row.dataset.tag)});
-  });
-  // Render filtered cards
-  if(anaFilt){
-    var cg=document.getElementById('anaCards');
-    if(cg){
-      var filtered=all.filter(function(x){return x.c.effectTypes.indexOf(anaFilt)>=0});
-      filtered.forEach(function(x){cg.appendChild(mkCard(x.c,x.p))});
+      $('mx').innerHTML = h + '</tbody>';
     }
-  }
-}
 
-// Init
-buildPills('pbar',function(n,b){toggleListProto(n,b)},true);
-buildPills('asel',function(n,b){toggleMulti(anaSel,n,b,'acnt',3,renderAna)},true);
-enhanceListSeriesControls();
-buildFilterChips('fbar','all',function(f){filt=f;renderList()});
-buildMatrix();
-renderList();
-renderProtoList();
-</script>
+    /* ---------- デッキ分析 ---------- */
+    function bars(counts, max, colorOf) {
+      return '<div class="bars">' + Object.entries(counts).filter(e => e[1] > 0).sort((a, b) => b[1] - a[1]).map(([t, n]) =>
+        '<button type="button" class="brow' + (S.anaFx === t ? ' on' : '') + '" data-afx="' + t + '"><span class="blbl">' + effectIcon(t, null, 13) + esc(EFFECT_LABEL[t]) + '</span>' +
+        '<span class="btrk"><span class="bfill" style="display:block;width:' + (n / max * 100) + '%;background:' + colorOf(t) + '"></span></span>' +
+        '<span class="bval">' + n + '</span></button>').join('') + '</div>';
+    }
+
+    function renderAna() {
+      $('anaCount').textContent = S.ana.length + ' / 3';
+      $('anaPick').innerHTML = SETS.map(set => '<div class="pp-set">' +
+        PROTOS.filter(p => p.set === set).map(p => protoChip(p, S.ana.includes(p.name))).join('') + '</div>').join('');
+      const out = $('anaOut');
+      if (S.ana.length !== 3) {
+        S.anaFx = null;
+        out.innerHTML = '<div class="cp-empty" style="margin-top:14px">プロトコルを3つ選ぶと、効果の偏りや値の分布が出ます。</div>';
+        return;
+      }
+      const ps = S.ana.map(n => BY[n]);
+      const cards = ps.flatMap(p => p.cards.map(c => ({ p, c })));
+      const count = (list) => {
+        const o = Object.fromEntries(EFFECTS.map(k => [k, 0]));
+        list.forEach(({ c }) => c.effectTypes.forEach(t => { o[t]++; }));
+        return o;
+      };
+      const total = count(cards);
+      const mx = Math.max(1, ...Object.values(total));
+      const byVal = {};
+      cards.forEach(({ c }) => { byVal[c.value] = (byVal[c.value] || 0) + 1; });
+      const vals = [0, 1, 2, 3, 4, 5, 6];
+      const hmx = Math.max(1, ...Object.values(byVal));
+      let h = '<div class="ana-sel" style="margin-top:14px">' + ps.map(p => protoTile(p, { attrs: 'data-open="' + esc(p.name) + '"' })).join('') + '</div>' +
+        '<div class="ana-grid"><div class="cp-panel ana-card"><h3>効果の種類 (18枚)</h3>' + bars(total, mx, t => EFFECT_COLOR[t]) + '</div>' +
+        '<div class="cp-panel ana-card"><h3>値の分布</h3><div class="hist">' + vals.map(v =>
+          '<div><small>' + (byVal[v] || 0) + '</small><i style="height:' + ((byVal[v] || 0) / hmx * 72) + 'px"></i><b>' + v + '</b></div>').join('') + '</div></div></div>';
+      if (S.anaFx) {
+        const f = cards.filter(({ c }) => c.effectTypes.includes(S.anaFx));
+        h += '<div class="cp-label"><b>//</b> 「' + esc(EFFECT_LABEL[S.anaFx]) + '」のカード (' + f.length + '枚)</div>' +
+          '<div class="cards' + (S.view === 'list' ? ' list' : '') + '">' + f.map(({ p, c }) => cardHtml(p, c)).join('') + '</div>';
+      }
+      h += '<div class="cp-label"><b>//</b> プロトコル別</div><div class="ana-grid">' + ps.map(p => {
+        const o = count(p.cards.map(c => ({ c })));
+        return '<div class="cp-panel ana-card"><h3 style="color:' + esc(p.color) + '"><img alt="" src="' + emblem(p, 44) + '">' + esc(p.name) +
+          '<span class="c-set">' + esc(p.set) + '</span></h3>' + bars(o, Math.max(1, ...Object.values(o)), () => p.color) + '</div>';
+      }).join('') + '</div>';
+      out.innerHTML = h;
+    }
+
+    /* ---------- タブ ---------- */
+    function setTab(tab, push) {
+      if (!TABS.includes(tab)) tab = 'list';
+      S.tab = tab;
+      document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.tab === tab));
+      document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'v-' + tab));
+      if (tab === 'ana') renderAna();
+      if (push !== false && location.hash !== '#' + tab) history.replaceState(null, '', '#' + tab);
+    }
+
+    /* ---------- 操作 ---------- */
+    document.addEventListener('click', (e) => {
+      const b = e.target.closest('button');
+      if (!b || b.closest('#cpSheet')) return;
+      if (b.dataset.tab) { setTab(b.dataset.tab); return; }
+      if (b.dataset.view) { S.view = b.dataset.view; save(); renderFilters(); renderList(); if (S.tab === 'ana') renderAna(); return; }
+      if (b.dataset.fx) { S.fx = b.dataset.fx; renderFilters(); renderList(); return; }
+      if (b.dataset.set) {
+        const names = PROTOS.filter(p => p.set === b.dataset.set).map(p => p.name);
+        const all = names.every(n => S.sel.includes(n));
+        S.sel = all ? S.sel.filter(n => !names.includes(n)) : [...new Set(S.sel.concat(names))];
+        renderFilters(); renderList(); return;
+      }
+      if (b.classList.contains('pchip') && b.closest('#ppBody')) {
+        const n = b.dataset.name;
+        S.sel = S.sel.includes(n) ? S.sel.filter(x => x !== n) : S.sel.concat(n);
+        renderFilters(); renderList(); return;
+      }
+      if (b.classList.contains('pchip') && b.closest('#anaPick')) {
+        const n = b.dataset.name;
+        if (S.ana.includes(n)) S.ana = S.ana.filter(x => x !== n);
+        else if (S.ana.length < 3) S.ana = S.ana.concat(n);
+        renderAna(); return;
+      }
+      if (b.dataset.afx) { S.anaFx = S.anaFx === b.dataset.afx ? null : b.dataset.afx; renderAna(); return; }
+      if (b.id === 'anaReset') { S.ana = []; S.anaFx = null; renderAna(); return; }
+      if (b.id === 'reset') { S.sel = []; S.fx = 'all'; S.q = ''; $('q').value = ''; renderFilters(); renderList(); return; }
+      if (b.dataset.open) { openProto(b.dataset.open); return; }
+      if (b.classList.contains('proto') && b.closest('#protoSets')) { openProto(b.dataset.name); return; }
+      if (b.dataset.id) { openCard(b.dataset.id); }
+    });
+
+    let qTimer = 0;
+    $('q').addEventListener('input', (e) => {
+      clearTimeout(qTimer);
+      qTimer = setTimeout(() => { S.q = e.target.value; renderList(); }, 120);
+    });
+
+    window.addEventListener('hashchange', () => setTab(location.hash.slice(1), false));
+
+    /* スマホ: 左右のスワイプでタブを移る */
+    (function () {
+      let x0 = 0, y0 = 0, on = false;
+      const main = document.querySelector('main');
+      main.addEventListener('touchstart', (e) => {
+        if (e.target.closest('.mx-wrap, .tabs, input')) { on = false; return; }
+        x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; on = true;
+      }, { passive: true });
+      main.addEventListener('touchend', (e) => {
+        if (!on) return;
+        on = false;
+        const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+        if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.6) return;
+        const i = TABS.indexOf(S.tab) + (dx < 0 ? 1 : -1);
+        if (i >= 0 && i < TABS.length) { setTab(TABS[i]); window.scrollTo({ top: 0 }); }
+      });
+    })();
+
+    /* タブを上部バーのすぐ下に貼り付ける */
+    const fitTop = () => document.documentElement.style.setProperty('--top-h', document.querySelector('.cp-top').offsetHeight + 'px');
+    fitTop();
+    window.addEventListener('resize', fitTop);
+
+    /* ---------- はじめ ---------- */
+    try {
+      PROTOS = await loadProtocols();
+      BY = Object.fromEntries(PROTOS.map(p => [p.name, p]));
+      ALL = PROTOS.flatMap(p => p.cards.map(c => ({ p, c })));
+      $('total').textContent = PROTOS.length + ' PROTOCOLS · ' + ALL.length + ' CARDS';
+      renderFilters();
+      renderList();
+      renderProtos();
+      renderLookup();
+      setTab(location.hash.slice(1) || 'list', false);
+    } catch (err) {
+      $('grid').innerHTML = '<div class="cp-empty">カードデータを読み込めませんでした。ページを読み直してください。</div>';
+      setTab('list', false);
+      console.error(err);
+    }
+  </script>
 </body>
 </html>
