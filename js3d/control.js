@@ -1,6 +1,8 @@
 /* =========================================================================
  * 3Dビュー: コントロールコンポーネント (実卓の物理マーカー)
- *   六角形のパックが盤面左脇に置かれ、保持者の側へ滑って移動する。
+ *   コントロールトラッカー (control-tracker.html) と同じ意匠のマーカー:
+ *   角を落とした三角形の枠に、三方へ腕の伸びた窓と中心の丸。
+ *   盤面左脇に置かれ、保持者の側へ滑って移動する。
  *   中立 (-1) は中央で淡く、保持中は保持者の色で強く光る。
  * ========================================================================= */
 import * as THREE from '../vendor/three.module.js';
@@ -16,42 +18,54 @@ const SCALE = () => 1 - 0.38 * VIEW.k;
 const Z = { neutral: 0, me: 1.35, opp: -1.35 };
 const MINT = 0x6dffc2, PINK = 0xff3b9d, DIM = 0x44536e;
 
+/* トラッカーのマーカー画像 (2048px) の輪郭を、中心をそろえて 120° 対称に整えたもの。
+   単位はワールド座標 (外形の半径 ≈ 0.42)、y は上向き */
+const OUTER = [[-0.064, 0.415], [-0.392, -0.152], [-0.328, -0.263], [0.328, -0.263], [0.392, -0.152], [0.064, 0.415]];
+const WINDOW = [[-0.078, 0.223], [0.078, 0.223], [0.078, 0.133], [0.155, 0.001], [0.232, -0.044], [0.154, -0.179],
+  [0.076, -0.135], [-0.076, -0.135], [-0.154, -0.179], [-0.232, -0.044], [-0.155, 0.001], [-0.078, 0.133]];
+const DOT_R = 0.079;
+const THICK = 0.05;
+
+function tokenGeometry() {
+  const shape = new THREE.Shape(OUTER.map(([x, y]) => new THREE.Vector2(x, y)));
+  shape.holes.push(new THREE.Path(WINDOW.map(([x, y]) => new THREE.Vector2(x, y))));
+  const g = new THREE.ExtrudeGeometry(shape, {
+    depth: THICK, bevelEnabled: true, bevelThickness: 0.01, bevelSize: 0.008, bevelSegments: 2
+  });
+  /* 押し出しは +z 方向。卓に寝かせ、厚みの中心を y=0 に */
+  g.rotateX(-Math.PI / 2);
+  g.translate(0, -THICK / 2, 0);
+  return g;
+}
+
 export function createControlMarker(scene) {
   const grp = new THREE.Group();
 
-  const puck = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.34, 0.38, 0.09, 6),
-    new THREE.MeshStandardMaterial({
-      color: 0x0a0f1c, roughness: 0.35, metalness: 0.7,
-      emissive: new THREE.Color(DIM), emissiveIntensity: 0.5
-    })
-  );
+  /* 光るのは上面だけ。側面まで光らせると窓の縁がにじんで形が読めない */
+  const face = new THREE.MeshStandardMaterial({
+    color: 0x0a0f1c, roughness: 0.35, metalness: 0.4,
+    emissive: new THREE.Color(DIM), emissiveIntensity: 0.5
+  });
+  const side = new THREE.MeshStandardMaterial({
+    color: 0x0a0f1c, roughness: 0.4, metalness: 0.8,
+    emissive: new THREE.Color(DIM), emissiveIntensity: 0.12
+  });
+  /* ExtrudeGeometry の材質グループ: 0 = 上下の面, 1 = 側面 */
+  const puck = new THREE.Mesh(tokenGeometry(), [face, side]);
   puck.castShadow = true;
+  /* CylinderGeometry の材質グループ: 0 = 側面, 1 = 上面, 2 = 底面 */
+  const dot = new THREE.Mesh(new THREE.CylinderGeometry(DOT_R, DOT_R, THICK + 0.02, 40), [side, face, side]);
+  dot.castShadow = true;
 
+  /* 足元の光の輪 */
   const ring = new THREE.Mesh(
-    new THREE.TorusGeometry(0.4, 0.028, 10, 6),
-    new THREE.MeshBasicMaterial({ color: DIM, transparent: true, opacity: 0.85 })
+    new THREE.TorusGeometry(0.46, 0.022, 10, 48),
+    new THREE.MeshBasicMaterial({ color: DIM, transparent: true, opacity: 0.7 })
   );
   ring.rotation.x = Math.PI / 2;
-  ring.position.y = 0.02;
+  ring.position.y = -0.03;
 
-  /* 上面の "CTRL" 刻印 */
-  const cv = document.createElement('canvas');
-  cv.width = cv.height = 128;
-  const ctx = cv.getContext('2d');
-  ctx.clearRect(0, 0, 128, 128);
-  ctx.font = '900 34px system-ui, sans-serif';
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillStyle = '#eaf4ff';
-  ctx.fillText('CTRL', 64, 66);
-  const label = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.5, 0.5),
-    new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, opacity: 0.9 })
-  );
-  label.rotation.x = -Math.PI / 2;
-  label.position.y = 0.047;
-
-  grp.add(puck, ring, label);
+  grp.add(puck, dot, ring);
   grp.position.set(X(), 0.06, Z.neutral);
   grp.rotation.y = Math.PI / 6;
   scene.add(grp);
@@ -75,8 +89,9 @@ export function createControlMarker(scene) {
       const to = ctrl === -1 ? Z.neutral : (ctrl === me ? Z.me : Z.opp);
       const col = ctrl === -1 ? DIM : (ctrl === me ? MINT : PINK);
       holder = ctrl;
-      puck.material.emissive.setHex(col);
-      puck.material.emissiveIntensity = ctrl === -1 ? 0.5 : 1.5;
+      face.emissive.setHex(col);
+      face.emissiveIntensity = ctrl === -1 ? 0.5 : 1.5;
+      side.emissive.setHex(col);
       ring.material.color.setHex(col);
       if (!animate) { grp.position.z = to; return; }
       /* 獲得/使用の瞬間を衝撃波と音で知らせる */
