@@ -643,7 +643,7 @@ function applyAiDifficulty(level) {
     Engine.setAiLevel(2);
     Engine.setAiThinkBudget(1200);               // つよい/最強: 思考時間2倍
   }
-  /* 最強 = DARKNESS/SPEED/HATE 特化、ロック特化 = サイキック①の永続ロック狙い */
+  /* 最強 = dsh 特化 + FIRE/WATER/SPEED (setup.js STRONGEST_AI)、ロック特化 = サイキック①の永続ロック狙い */
   if (Engine.setAiSpecialist) {
     if (level === 4) Engine.setAiSpecialist(true, 1, 'psylock');
     else Engine.setAiSpecialist(level >= 3, 1, 'dsh');
@@ -1408,6 +1408,20 @@ function trackHandTop() {
 /* リフレッシュは手札の右脇に置く。いちばん右の札の右端を投影し、その少し右へ。
    手札の枚数で幅が変わるので、枚数が変わるたびに付いていく */
 const handEdgeWorld = new THREE.Vector3();
+const handEdgeEuler = new THREE.Euler();
+/* 手札の端の札の、画面上いちばん外側の x (NDC)。扇に傾いた札は角が外へ張り出すので、
+   中心 ± 半幅ではなく4つの角を傾けてから投影する。dir: 1 = 右端, -1 = 左端 */
+function handCardEdgeX(slot, dir) {
+  handEdgeEuler.set(slot.rot[0], slot.rot[1], slot.rot[2]);
+  let edge = -Infinity;
+  for (const cx of [-0.5, 0.5]) for (const cz of [-0.5, 0.5]) {
+    handEdgeWorld.set(cx * CARD.w * slot.scale, 0, cz * CARD.h * slot.scale).applyEuler(handEdgeEuler);
+    handEdgeWorld.x += slot.pos[0]; handEdgeWorld.y += slot.pos[1]; handEdgeWorld.z += slot.pos[2];
+    handEdgeWorld.project(stage.camera);
+    edge = Math.max(edge, dir * handEdgeWorld.x);
+  }
+  return dir * edge;
+}
 let handRightPx = '';
 function trackHandRight() {
   if (!stage || (handTopTick % 8) !== 1) return;
@@ -1417,10 +1431,8 @@ function trackHandRight() {
   VIEW.handOpen = true;
   let s;
   try { s = LAYOUT.handSlot(n - 1, n); } finally { VIEW.handOpen = was; }
-  handEdgeWorld.set(s.pos[0] + CARD.w * s.scale / 2, s.pos[1], s.pos[2]);
-  handEdgeWorld.project(stage.camera);
   const rect = stage.renderer.domElement.getBoundingClientRect();
-  const x = rect.left + (handEdgeWorld.x + 1) * rect.width / 2 + 16;
+  const x = rect.left + (handCardEdgeX(s, 1) + 1) * rect.width / 2 + 16;
   if (!Number.isFinite(x)) return;
   const btn = document.getElementById('btnRefresh');
   const w = btn ? btn.offsetWidth : 110;
@@ -1434,11 +1446,9 @@ function trackHandRight() {
   VIEW.handOpen = true;
   let s0;
   try { s0 = LAYOUT.handSlot(0, n); } finally { VIEW.handOpen = was2; }
-  handEdgeWorld.set(s0.pos[0] - CARD.w * s0.scale / 2, s0.pos[1], s0.pos[2]);
-  handEdgeWorld.project(stage.camera);
   const dock = document.getElementById('dock');
   const dw = dock ? dock.offsetWidth : 90;
-  const lx = rect.left + (handEdgeWorld.x + 1) * rect.width / 2 - 16 - dw;
+  const lx = rect.left + (handCardEdgeX(s0, -1) + 1) * rect.width / 2 - 16 - dw;
   if (!Number.isFinite(lx)) return;
   const lpx = Math.round(Math.min(rect.left + rect.width / 2 - dw, Math.max(lx, 14))) + 'px';
   if (lpx === handLeftPx) return;

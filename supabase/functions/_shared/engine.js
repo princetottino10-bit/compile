@@ -2384,7 +2384,7 @@ function setAiWeights(obj) {
 }
 let AI_SPECIALIST_ENABLED = false;
 let AI_SPECIALIST_SIDE = -1;
-/* 'dsh': DARKNESS/SPEED/HATE 特化 (最強) / 'psylock': サイキック①の永続ロック狙い */
+/* 'dsh': 最強の特化戦略 (重みは DARKNESS/SPEED/HATE で調整、今の最強は FIRE/WATER/SPEED) / 'psylock': サイキック①の永続ロック狙い */
 let AI_SPECIALIST_KIND = 'dsh';
 function setAiSpecialist(enabled, side, kind) {
   AI_SPECIALIST_ENABLED = !!enabled;

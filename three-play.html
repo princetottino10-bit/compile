@@ -1293,6 +1293,12 @@
   /* ---------- 横持ちのスマホ (高さの低い画面) ----------
      PC と同じ配置のまま、縦が足りないぶんを詰める。
      枚数表示とログは小さくする */
+  /* ---------- タブレットの横持ち (4:3 前後) ----------
+     盤面が横に詰まり、左上の詳細パネルが相手の山札に掛かる。パネルを細くし、
+     下端は自分の捨て札の山 (画面の約71%の高さ) と、その上の枚数表示より上で止める */
+  @media (orientation:landscape) and (min-height:501px) and (max-aspect-ratio:3/2){
+    #preview{width:clamp(150px,14vw,240px);max-height:calc(71vh - 90px);}
+  }
   @media (orientation:landscape) and (max-height:500px){
     #brand{display:none;}
     #topbar{justify-content:flex-end;padding:8px calc(10px + env(safe-area-inset-right)) 8px calc(10px + env(safe-area-inset-left));}
@@ -1457,7 +1463,7 @@
     <div id="bootBar"><i></i></div>
   </div>
 
-  <script src="engine.js?v=f904631ab3"></script>
+  <script src="engine.js?v=7685241557"></script>
   <script type="importmap">
   {
     "imports": {
@@ -1475,7 +1481,7 @@
       "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c",
       "./js3d/input.js": "./js3d/input.js?v=d00c8166fa",
       "./js3d/layout.js": "./js3d/layout.js?v=0aa43d3108",
-      "./js3d/main.js": "./js3d/main.js?v=b0b696674e",
+      "./js3d/main.js": "./js3d/main.js?v=44b8e40c53",
       "./js3d/panel.js": "./js3d/panel.js?v=25f5aa57b6",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=a13c858baf",
       "./js3d/prompts.js": "./js3d/prompts.js?v=348dff836d",
@@ -1487,7 +1493,7 @@
       "./js3d/roomui.js": "./js3d/roomui.js?v=d9490737ea",
       "./js3d/selectui.js": "./js3d/selectui.js?v=69a3f90eb7",
       "./js3d/settings.js": "./js3d/settings.js?v=3308854d20",
-      "./js3d/setup.js": "./js3d/setup.js?v=feb7cfc2cf",
+      "./js3d/setup.js": "./js3d/setup.js?v=c71be53f06",
       "./js3d/solodraft.js": "./js3d/solodraft.js?v=9863c9528c",
       "./js3d/stage.js": "./js3d/stage.js?v=203ed8ec22",
       "./js3d/stats.js": "./js3d/stats.js?v=8db644b518",
@@ -1502,6 +1508,6 @@
   </script>
   <link rel="stylesheet" href="js3d/playchoices.css?v=3e42a70860">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=b0b696674e"></script>
+  <script type="module" src="js3d/main.js?v=44b8e40c53"></script>
 </body>
 </html>

@@ -15,7 +15,7 @@ import { PROTOCOL_STRENGTH } from './protocol-strength.js';
 
 const AI_LABELS = ['かんたん', 'ふつう', 'つよい', '最強', 'ロック特化'];
 /* 最強はこの固定編成 + 特化戦略で戦う (auto-play と同じ) */
-export const STRONGEST_AI = ['DARKNESS', 'SPEED', 'HATE'];
+export const STRONGEST_AI = ['FIRE', 'WATER', 'SPEED'];
 /* ロック特化: サイキック①を覆って「相手は裏向きでしかプレイできない」を永続させる。
    ダークネス②で覆われた①を表にするか、スピード③の終了時の移動で①を覆う */
 export const LOCK_AI = ['PSYCHIC', 'DARKNESS', 'SPEED'];

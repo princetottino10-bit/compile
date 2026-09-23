@@ -19,11 +19,11 @@
  *   node scripts/ai_arena.js --self --specialist psylock --opponent dsh
  *   node scripts/ai_arena.js --self --specialist psylock --opponent same --weights spKeyHold=-20
  *   --opponent normal : 通常 AI・ランダム編成 (候補のプロトコルとは重ねない)
- *   --opponent dsh    : 最強 (dsh 特化 + DARKNESS,SPEED,HATE)
+ *   --opponent dsh    : 最強 (dsh 特化 + FIRE,WATER,SPEED)
  *   --opponent psylock: ロック特化 (psylock 特化 + PSYCHIC,DARKNESS,SPEED)
  *   --opponent same   : 候補と同じ特化・同じデッキ (重みの比較用ミラー)
  *   --pool lock       : サイキック①ロックが起きやすい編成を対戦表に足す (--filter PSYCHIC と併用)
- *   --deck を省くと dsh は DARKNESS,SPEED,HATE、psylock は PSYCHIC,DARKNESS,SPEED
+ *   --deck を省くと dsh は FIRE,WATER,SPEED、psylock は PSYCHIC,DARKNESS,SPEED
  *
  * 判定: 候補の勝率の95%信頼区間が 50% を跨がなければ有意差あり。
  */
@@ -38,7 +38,9 @@ const { Worker, isMainThread, parentPort, workerData } = require('node:worker_th
 const ROOT = path.join(__dirname, '..');
 
 /* ---------- 対戦カード(編成)。Main1/Main2/Aux を偏りなく混ぜる ---------- */
-const DSH_DECK = ['DARKNESS', 'SPEED', 'HATE'];
+/* 最強の固定編成 (js3d/setup.js STRONGEST_AI と揃える)。2026-09-23 に DARKNESS/SPEED/HATE から変更:
+   旧最強と 400戦 244勝 (61%) */
+const DSH_DECK = ['FIRE', 'WATER', 'SPEED'];
 const DEFAULT_DECK = { dsh: DSH_DECK, psylock: ['PSYCHIC', 'DARKNESS', 'SPEED'] };
 const MATCHUPS = [
   [['DARKNESS', 'FIRE', 'WATER'], ['DEATH', 'METAL', 'SPEED']],
