@@ -4,9 +4,10 @@
  *   全体・自分のプロトコル別・相手のプロトコル別・デッキ別の勝率を出す。
  * ========================================================================= */
 
+import { levelLabel } from './aidecks.js';
+
 const KEY = 'compileSoloRecords';
 const MAX = 500;
-const LEVELS = ['かんたん', 'ふつう', 'つよい', '最強', 'ロック特化'];
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -19,7 +20,7 @@ function records() {
   }
 }
 
-/* 1戦を記録する。me / opp: プロトコル名3つ、win: 勝ったか、level: 難易度 (0..4 / 不明なら null) */
+/* 1戦を記録する。me / opp: プロトコル名3つ、win: 勝ったか、level: 難易度 (aidecks.js の番号 / 不明なら null) */
 export function recordSoloResult(me, opp, win, level) {
   const list = records();
   list.push({ me: me.slice(), opp: opp.slice(), win: !!win, level: level === undefined ? null : level, at: Date.now() });
@@ -60,7 +61,7 @@ export function openStats() {
     document.body.appendChild(el);
   }
   const wins = list.filter(r => r.win).length;
-  const byLevel = tally(list.filter(r => r.level !== null), r => [LEVELS[r.level] || '不明']);
+  const byLevel = tally(list.filter(r => r.level !== null), r => [levelLabel(r.level)]);
   el.innerHTML = '<div class="pz-card sr-card" role="dialog" aria-modal="true" aria-label="戦績">' +
     '<div class="pz-head"><b>戦績 (CPU 戦)</b><button type="button" class="pz-x" aria-label="閉じる">×</button></div>' +
     '<p class="sr-total">' + list.length + '戦 <b>' + wins + '勝</b> ' + (list.length - wins) + '敗' +

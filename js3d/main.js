@@ -632,7 +632,7 @@ function glitchArtUrl(protoName) {
 
 /* 難易度 → エンジン設定。
    auto-play と同じく上位2段は探索AI。最強は思考時間増 + DSH特化戦略 */
-let aiDifficulty = null;   // 戦績に残す難易度 (0..4)。URL で直接始めた対戦は不明
+let aiDifficulty = null;   // 戦績に残す難易度 (aidecks.js の番号)。URL で直接始めた対戦は不明
 function applyAiDifficulty(level) {
   aiDifficulty = level;
   if (level <= 0) {
@@ -641,9 +641,9 @@ function applyAiDifficulty(level) {
     Engine.setAiLevel(2);                        // ふつう: 探索 590ms
   } else {
     Engine.setAiLevel(2);
-    Engine.setAiThinkBudget(1200);               // つよい/最強: 思考時間2倍
+    Engine.setAiThinkBudget(1200);               // つよい/最強/挑戦者: 思考時間2倍
   }
-  /* 最強 = dsh 特化 + FIRE/WATER/SPEED (setup.js STRONGEST_AI)、ロック特化 = サイキック①の永続ロック狙い */
+  /* 最強・挑戦者 = dsh 特化 + 固定デッキ (aidecks.js)、ロック特化 = サイキック①の永続ロック狙い */
   if (Engine.setAiSpecialist) {
     if (level === 4) Engine.setAiSpecialist(true, 1, 'psylock');
     else Engine.setAiSpecialist(level >= 3, 1, 'dsh');

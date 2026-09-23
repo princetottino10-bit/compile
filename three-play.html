@@ -1199,6 +1199,12 @@
     border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);color:var(--dim);transition:all .18s;}
   .lvl:hover{border-color:var(--cyan);color:var(--ink);}
   .lvl.on{border-color:var(--mint);background:rgba(109,255,194,.14);color:#c9ffe9;}
+  /* 挑戦者のデッキ選び (挑戦者のボタンの横) */
+  .lv-pick{appearance:none;-webkit-appearance:none;padding:8px 30px 8px 14px;border-radius:999px;cursor:pointer;
+    font:800 10px/1.1 system-ui;letter-spacing:.06em;color:#c9ffe9;border:1px solid var(--mint);
+    background:rgba(109,255,194,.10) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%236dffc2' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 12px center;}
+  .lv-pick:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;}
+  .lv-pick option{background:#0a0f1c;color:#e8f6ff;}
   #setupStart{padding:13px 34px;border-radius:999px;cursor:pointer;
     font:900 12px/1 system-ui;letter-spacing:.2em;color:#04120c;border:0;
     background:linear-gradient(100deg,var(--mint),var(--cyan));
@@ -1259,6 +1265,7 @@
     .proto-info{width:18px;height:18px;right:4px;bottom:4px;font-size:10px;}
     #setupFoot{padding:6px calc(14px + env(safe-area-inset-right)) 8px calc(14px + env(safe-area-inset-left));gap:6px;}
     #setupFoot .lvl{padding:6px 10px;font-size:9px;}
+    #setupFoot .lv-pick{padding:6px 26px 6px 10px;font-size:9px;max-width:46vw;}
     #setupStart{padding:9px 20px;font-size:11px;}
   }
 
@@ -1470,6 +1477,7 @@
       "three": "./vendor/three.module.js?v=985eb92490",
       "three/addons/": "./vendor/jsm/",
       "./vendor/three.module.js": "./vendor/three.module.js?v=985eb92490",
+      "./js3d/aidecks.js": "./js3d/aidecks.js?v=76d3104067",
       "./js3d/arena.js": "./js3d/arena.js?v=698f865c22",
       "./js3d/audio.js": "./js3d/audio.js?v=1a37ce1073",
       "./js3d/board.js": "./js3d/board.js?v=6ed63caed0",
@@ -1481,7 +1489,7 @@
       "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c",
       "./js3d/input.js": "./js3d/input.js?v=d00c8166fa",
       "./js3d/layout.js": "./js3d/layout.js?v=0aa43d3108",
-      "./js3d/main.js": "./js3d/main.js?v=44b8e40c53",
+      "./js3d/main.js": "./js3d/main.js?v=ef4491411a",
       "./js3d/panel.js": "./js3d/panel.js?v=25f5aa57b6",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=a13c858baf",
       "./js3d/prompts.js": "./js3d/prompts.js?v=348dff836d",
@@ -1493,10 +1501,10 @@
       "./js3d/roomui.js": "./js3d/roomui.js?v=d9490737ea",
       "./js3d/selectui.js": "./js3d/selectui.js?v=69a3f90eb7",
       "./js3d/settings.js": "./js3d/settings.js?v=3308854d20",
-      "./js3d/setup.js": "./js3d/setup.js?v=c71be53f06",
+      "./js3d/setup.js": "./js3d/setup.js?v=f26cba4024",
       "./js3d/solodraft.js": "./js3d/solodraft.js?v=9863c9528c",
       "./js3d/stage.js": "./js3d/stage.js?v=203ed8ec22",
-      "./js3d/stats.js": "./js3d/stats.js?v=8db644b518",
+      "./js3d/stats.js": "./js3d/stats.js?v=3b81a76384",
       "./js3d/theme.js": "./js3d/theme.js?v=ca159ed681",
       "./js3d/title.js": "./js3d/title.js?v=5c4c1af943",
       "./js3d/training.js": "./js3d/training.js?v=8f9e8ce6d0",
@@ -1508,6 +1516,6 @@
   </script>
   <link rel="stylesheet" href="js3d/playchoices.css?v=3e42a70860">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=44b8e40c53"></script>
+  <script type="module" src="js3d/main.js?v=ef4491411a"></script>
 </body>
 </html>

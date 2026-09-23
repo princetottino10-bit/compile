@@ -12,15 +12,9 @@ import { emblemDataURL } from './emblems.js';
 import { showProtocolCards } from './protocards.js';
 import { POOLS, poolNames, clampCandidates, draftSteps, shuffled, randomDecks, cpuDraftPick } from './solodraft.js';
 import { PROTOCOL_STRENGTH } from './protocol-strength.js';
-
-const AI_LABELS = ['かんたん', 'ふつう', 'つよい', '最強', 'ロック特化'];
-/* 最強はこの固定編成 + 特化戦略で戦う (auto-play と同じ) */
-export const STRONGEST_AI = ['FIRE', 'WATER', 'SPEED'];
-/* ロック特化: サイキック①を覆って「相手は裏向きでしかプレイできない」を永続させる。
-   ダークネス②で覆われた①を表にするか、スピード③の終了時の移動で①を覆う */
-export const LOCK_AI = ['PSYCHIC', 'DARKNESS', 'SPEED'];
-/* 難易度ごとの AI 固定編成 (無い難易度はランダム編成)。固定編成は「自由に選ぶ」でだけ使える */
-const FIXED_AI = { 3: STRONGEST_AI, 4: LOCK_AI };
+/* 難易度と固定デッキ (最強・ロック特化・挑戦者)。固定デッキは「自由に選ぶ」でだけ使える */
+import { LEVEL_LABELS as AI_LABELS, CHALLENGERS, CHALLENGER_BASE, isChallenger, fixedDeck, challengerName } from './aidecks.js';
+export { STRONGEST_AI, LOCK_AI } from './aidecks.js';
 
 const MODES = [
   { key: 'free', label: '自由に選ぶ' },
@@ -61,6 +55,7 @@ export function runSetup(protocols, options = {}) {
   let mode = training ? 'free' : lsGet('compileSoloMode', 'free');
   let draftSize = +lsGet('compileSoloDraftPool', '0');
   let draftBans = +lsGet('compileSoloDraftBans', '0');
+  let challenger = Math.min(CHALLENGERS.length - 1, Math.max(0, +lsGet('compileSoloChallenger', '0') || 0));
   let trainingMine = null;     // トレーニングは 自分 → 相手 の2段階で選ぶ
   let draft = null;            // ドラフト中の状態
   let onDraftDone = () => {};  // ドラフトが終わったら (Promise の中で差し替える)
@@ -70,7 +65,7 @@ export function runSetup(protocols, options = {}) {
   onlineBtn.hidden = training || options.allowOnline === false;
 
   const pool = () => poolNames(protocols, poolKey);
-  const fixedLocked = () => (mode === 'free' ? FIXED_AI[level] || [] : []);
+  const fixedLocked = () => (mode === 'free' ? fixedDeck(level) || [] : []);
 
   /* ---------- 見出し・ルールの段 ---------- */
   function renderHead() {
@@ -111,16 +106,31 @@ export function runSetup(protocols, options = {}) {
      強さはドラフトで取り合う */
   function renderLevels() {
     levelWrap.hidden = training || !!draft;
-    /* 固定編成 (最強・ロック特化) は自分で選ぶときだけ */
-    if (mode !== 'free' && FIXED_AI[level]) level = 2;
-    const labels = mode === 'draft' ? AI_LABELS.slice(0, 3) : AI_LABELS;
+    /* 固定デッキ (最強・ロック特化・挑戦者) は自分で選ぶときだけ */
+    if (mode !== 'free' && fixedDeck(level)) level = 2;
+    /* 挑戦者は1つのボタンにまとめ、選んだらデッキを横の選択肢から選ぶ */
+    const items = AI_LABELS.map((label, i) => [i, label]);
+    if (mode !== 'draft') items.push([CHALLENGER_BASE + challenger, '挑戦者']);
+    const shown = mode === 'draft' ? items.slice(0, 3) : items;
+    const lockedLevel = (i) => mode !== 'free' && !!fixedDeck(i);
     levelWrap.innerHTML = (mode === 'draft' ? '<span class="lv-lbl">CPU のドラフト</span>' : '') +
-      labels.map((label, i) => '<button type="button" class="lvl' + (i === level ? ' on' : '') +
-      (mode !== 'free' && FIXED_AI[i] ? ' locked' : '') + '" data-level="' + i + '"' +
-      (mode !== 'free' && FIXED_AI[i] ? ' disabled title="自由に選ぶときだけ"' : '') + '>' + label + '</button>').join('');
+      shown.map(([i, label]) => '<button type="button" class="lvl' + (i === level ? ' on' : '') +
+      (lockedLevel(i) ? ' locked' : '') + '" data-level="' + i + '"' +
+      (lockedLevel(i) ? ' disabled title="自由に選ぶときだけ"' : '') + '>' + label + '</button>').join('') +
+      (isChallenger(level)
+        ? '<select class="lv-pick" aria-label="挑戦者のデッキ">' + CHALLENGERS.map((c, k) =>
+          '<option value="' + k + '"' + (k === challenger ? ' selected' : '') + '>' + esc(challengerName(c)) + '</option>').join('') + '</select>'
+        : '');
     levelWrap.querySelectorAll('[data-level]').forEach(b => {
       b.onclick = () => { level = +b.dataset.level; refresh(); };
     });
+    const pick = levelWrap.querySelector('.lv-pick');
+    if (pick) pick.onchange = () => {
+      challenger = +pick.value;
+      lsSet('compileSoloChallenger', String(challenger));
+      level = CHALLENGER_BASE + challenger;
+      refresh();
+    };
   }
 
   /* ---------- プロトコルの一覧 ---------- */
@@ -368,7 +378,7 @@ export function runSetup(protocols, options = {}) {
       }
       if (picked.length !== 3) return;
       let ai;
-      if (FIXED_AI[level]) ai = FIXED_AI[level].slice();
+      if (fixedDeck(level)) ai = fixedDeck(level).slice();
       else {
         const rest = pool().filter(n => !picked.includes(n));
         ai = shuffled(rest).slice(0, 3);
