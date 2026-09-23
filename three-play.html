@@ -158,32 +158,65 @@
   /* ---------- ターン開始バナー ---------- */
   #turnCut{position:fixed;inset:0;z-index:43;display:none;overflow:hidden;pointer-events:none;}
   #turnCut.show{display:block;}
-  .tc-band{position:absolute;left:-15%;right:-15%;top:calc(50% - 46px);height:92px;
-    transform:skewY(-3deg) scaleX(0);transform-origin:var(--from,left) center;
-    background:linear-gradient(90deg,transparent,var(--accent) 26%,var(--accent) 74%,transparent);
-    opacity:.22;animation:tcBand 1.25s cubic-bezier(.16,1,.3,1) forwards;}
-  .tc-line{position:absolute;left:-15%;right:-15%;height:2px;
-    background:linear-gradient(90deg,transparent,var(--accent),transparent);
-    transform:scaleX(0);transform-origin:var(--from,left) center;
+  /* ターン開始のカットイン: 暗い帯が斜めに滑り込み、Orbitron の文字が端から切り抜かれて現れ、光が走り抜ける。
+     自分の番はミントで左から、相手の番はピンクで右から (--from / --dir) */
+  .tc-band{position:absolute;left:-10%;right:-10%;top:calc(50% - 64px);height:136px;
+    transform:skewY(-4deg) scaleX(0);transform-origin:var(--from,left) center;
+    background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 22%,rgba(4,6,14,.94)) 0%,rgba(4,6,14,.92) 22%,rgba(4,6,14,.92) 78%,color-mix(in srgb,var(--accent) 22%,rgba(4,6,14,.94)) 100%);
+    box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 70%,transparent),0 0 46px color-mix(in srgb,var(--accent) 35%,transparent);
+    animation:tcBand 1.25s cubic-bezier(.16,1,.3,1) forwards;}
+  .tc-glow{position:absolute;left:50%;top:50%;width:min(760px,90vw);height:220px;transform:translate(-50%,-50%);
+    background:radial-gradient(ellipse at center,color-mix(in srgb,var(--accent) 40%,transparent),transparent 65%);
+    opacity:0;animation:tcGlow 1.25s ease-out forwards;}
+  .tc-line{position:absolute;left:-10%;right:-10%;height:3px;
+    background:linear-gradient(90deg,transparent,var(--accent),#fff,var(--accent),transparent);
+    transform:skewY(-4deg) scaleX(0);transform-origin:var(--from,left) center;
     animation:tcLine 1.25s cubic-bezier(.16,1,.3,1) forwards;}
-  .tc-line.a{top:calc(50% - 48px);}
-  .tc-line.b{top:calc(50% + 46px);animation-delay:.05s;}
-  .tc-text{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;
-    font:900 clamp(30px,6.4vw,74px)/1 system-ui;letter-spacing:.2em;color:#fff;
-    text-shadow:0 0 34px var(--accent),0 4px 30px rgba(0,0,0,.8);
-    opacity:0;animation:tcText 1.25s cubic-bezier(.16,1,.3,1) forwards;}
-  .tc-sub{position:absolute;left:0;right:0;top:calc(50% + 54px);text-align:center;
-    font:800 10px/1 system-ui;letter-spacing:.44em;color:var(--accent);
-    opacity:0;animation:tcSub 1.25s cubic-bezier(.16,1,.3,1) .08s forwards;}
-  @keyframes tcBand{0%{transform:skewY(-3deg) scaleX(0);opacity:0}
-    22%{transform:skewY(-3deg) scaleX(1);opacity:.28}
-    64%{opacity:.24}100%{transform:skewY(-3deg) scaleX(1);opacity:0}}
-  @keyframes tcLine{0%{transform:scaleX(0);opacity:0}20%{transform:scaleX(1);opacity:1}
-    66%{opacity:.9}100%{transform:scaleX(1);opacity:0}}
-  @keyframes tcText{0%{opacity:0;letter-spacing:.62em;transform:translateY(-50%) scale(.96)}
-    24%{opacity:1;letter-spacing:.2em;transform:translateY(-50%) scale(1)}
-    66%{opacity:1}100%{opacity:0;transform:translateY(-50%) scale(1.03)}}
-  @keyframes tcSub{0%{opacity:0}30%{opacity:1}66%{opacity:1}100%{opacity:0}}
+  .tc-line.a{top:calc(50% - 68px);}
+  .tc-line.b{top:calc(50% + 72px);animation-delay:.06s;}
+  .tc-chev{position:absolute;top:calc(50% - 16px);height:32px;display:flex;gap:6px;
+    font:900 30px/32px var(--font-hud);color:var(--accent);opacity:0;
+    text-shadow:0 0 14px var(--accent);animation:tcChev 1.25s cubic-bezier(.16,1,.3,1) forwards;}
+  .tc-chev.l{left:6vw;}
+  .tc-chev.r{right:6vw;}
+  .tc-chev i{font-style:normal;animation:tcChevBlink .5s linear infinite;}
+  .tc-chev i:nth-child(2){animation-delay:.08s;} .tc-chev i:nth-child(3){animation-delay:.16s;}
+  .tc-text{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%) skewY(-4deg);text-align:center;
+    font:900 clamp(30px,6vw,72px)/1 var(--font-logo);letter-spacing:.14em;margin-top:-10px;
+    color:transparent;-webkit-background-clip:text;background-clip:text;
+    background-image:linear-gradient(100deg,#fff 0%,#fff 40%,color-mix(in srgb,var(--accent) 50%,#fff) 47%,#fff 50%,color-mix(in srgb,var(--accent) 50%,#fff) 53%,#fff 60%,#fff 100%);
+    background-size:250% 100%;background-position:100% 0;
+    filter:drop-shadow(0 0 18px var(--accent)) drop-shadow(0 4px 20px rgba(0,0,0,.8));
+    clip-path:inset(0 100% 0 0);
+    animation:tcText 1.25s cubic-bezier(.16,1,.3,1) forwards,tcGlint 1.25s ease-in-out forwards;}
+  #turnCut.opp .tc-text{clip-path:inset(0 0 0 100%);animation-name:tcTextR,tcGlint;}
+  .tc-sub{position:absolute;left:0;right:0;top:calc(50% + 48px);transform:skewY(-4deg);text-align:center;
+    font:700 12px/1 var(--font-hud);letter-spacing:.6em;text-indent:.6em;color:var(--accent);
+    opacity:0;animation:tcSub 1.25s cubic-bezier(.16,1,.3,1) .1s forwards;}
+  @keyframes tcBand{0%{transform:skewY(-4deg) scaleX(0);opacity:0}
+    18%{transform:skewY(-4deg) scaleX(1);opacity:1}
+    72%{opacity:1}100%{transform:skewY(-4deg) scaleX(1);opacity:0}}
+  @keyframes tcGlow{0%{opacity:0}20%{opacity:.9}70%{opacity:.6}100%{opacity:0}}
+  @keyframes tcLine{0%{transform:skewY(-4deg) scaleX(0);opacity:0}16%{transform:skewY(-4deg) scaleX(1);opacity:1}
+    70%{opacity:.9}100%{transform:skewY(-4deg) scaleX(1);opacity:0}}
+  @keyframes tcChev{0%{opacity:0;transform:translateX(calc(var(--dir,1) * -40px))}
+    22%{opacity:1;transform:none}70%{opacity:1}100%{opacity:0;transform:translateX(calc(var(--dir,1) * 30px))}}
+  @keyframes tcChevBlink{0%,100%{opacity:1}50%{opacity:.35}}
+  @keyframes tcText{0%{clip-path:inset(0 100% 0 0);letter-spacing:.34em}
+    26%{clip-path:inset(0 0 0 0);letter-spacing:.14em}
+    72%{clip-path:inset(0 0 0 0);opacity:1}100%{clip-path:inset(0 0 0 0);opacity:0}}
+  @keyframes tcTextR{0%{clip-path:inset(0 0 0 100%);letter-spacing:.34em}
+    26%{clip-path:inset(0 0 0 0);letter-spacing:.14em}
+    72%{clip-path:inset(0 0 0 0);opacity:1}100%{clip-path:inset(0 0 0 0);opacity:0}}
+  @keyframes tcGlint{0%,28%{background-position:100% 0}62%,100%{background-position:0 0}}
+  @keyframes tcSub{0%{opacity:0}30%{opacity:1}70%{opacity:1}100%{opacity:0}}
+  /* 動きを減らす設定: 滑り込み・切り抜き・点滅をやめ、その場でふわっと出して消す */
+  @media (prefers-reduced-motion: reduce){
+    .tc-band,.tc-line{transform:skewY(-4deg);}
+    .tc-text,#turnCut.opp .tc-text{clip-path:none;background-position:50% 0;}
+    .tc-band,.tc-line,.tc-text,#turnCut.opp .tc-text,.tc-chev,.tc-glow{animation:tcSub 1.25s linear forwards!important;}
+    .tc-chev i{animation:none;}
+  }
 
   /* 宣言の演出 (LUCK 0 / LUCK 3): 画面中央で宣言と当否を見せる */
   #declareCut{position:fixed;inset:0;z-index:42;display:flex;align-items:center;justify-content:center;
@@ -1542,7 +1575,7 @@
       "./js3d/training.js": "./js3d/training.js?v=8f9e8ce6d0",
       "./js3d/tutorial.js": "./js3d/tutorial.js?v=7c05630e03",
       "./js3d/tween.js": "./js3d/tween.js?v=99b25c0d63",
-      "./js3d/ui.js": "./js3d/ui.js?v=8d6f611fe1"
+      "./js3d/ui.js": "./js3d/ui.js?v=f70a0643ce"
     }
   }
   </script>

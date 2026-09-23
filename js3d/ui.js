@@ -375,10 +375,16 @@ export function turnCutIn(mine) {
   if (!el) return Promise.resolve();
   el.style.setProperty('--accent', mine ? '#6dffc2' : '#ff3b9d');
   el.style.setProperty('--from', mine ? 'left' : 'right');
+  el.style.setProperty('--dir', mine ? '1' : '-1');
+  el.classList.toggle('opp', !mine);
+  const chev = mine ? '›' : '‹';
+  const chevs = '<i>' + chev + '</i><i>' + chev + '</i><i>' + chev + '</i>';
   el.innerHTML =
+    '<div class="tc-glow"></div>' +
     '<div class="tc-band"></div>' +
     '<div class="tc-line a"></div><div class="tc-line b"></div>' +
-    '<div class="tc-text">' + (mine ? 'YOUR TURN' : 'OPPONENT') + '</div>' +
+    '<div class="tc-chev l">' + chevs + '</div><div class="tc-chev r">' + chevs + '</div>' +
+    '<div class="tc-text">' + (mine ? 'YOUR TURN' : 'OPPONENT TURN') + '</div>' +
     '<div class="tc-sub">' + (mine ? 'COMMAND READY' : 'STAND BY') + '</div>';
   el.classList.add('show');
   return new Promise((resolve) => setTimeout(() => {
