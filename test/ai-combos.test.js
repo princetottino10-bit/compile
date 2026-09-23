@@ -511,15 +511,30 @@ test('手筋 Diversity0 の構え: 5種類そろえた直後の「1枚捨てる�
   assert.ok(res.state.players[0].hand.includes(uidOf('DIVERSITY_1', 0)), '次の手番に DIVERSITY 0 を出せる');
 });
 
-test('手筋 Diversity0: 6種類そろう局面では出してすぐコンパイル', () => {
+test('手筋 Diversity0 は最後の1本に取っておく: 他が未コンパイルなら、6種類そろっていても出さない', () => {
   const st = game(['DIVERSITY', 'FIRE', 'WATER'], ['METAL', 'LIGHT', 'LIFE']);
-  place(st, 'FIRE_4', 0, 1, true);
-  place(st, 'WATER_4', 0, 2, true);
+  place(st, 'FIRE_5', 0, 1, true);
+  place(st, 'WATER_6', 0, 2, true);
+  place(st, 'METAL_5', 1, 0, true);
+  place(st, 'LIGHT_6', 1, 1, true);
+  place(st, 'LIFE_3', 1, 2, true);
+  setHand(st, 0, ['DIVERSITY_1', 'FIRE_6', 'WATER_2']);
+  const act = aiAct(st);
+  assert.ok(!(act.type === 'play' && st.cards[act.card].def === 'DIVERSITY_1' && act.faceUp),
+    'DIVERSITY 0 は手札に残す (実際: ' + JSON.stringify(act) + ')');
+});
+
+test('手筋 Diversity0: 他の2本が済んでいれば、6種類そろえて出して勝つ', () => {
+  const st = game(['DIVERSITY', 'FIRE', 'WATER'], ['METAL', 'LIGHT', 'LIFE']);
+  st.players[0].protocols[1].compiled = true;
+  st.players[0].protocols[2].compiled = true;
+  place(st, 'FIRE_5', 0, 1, true);
+  place(st, 'WATER_6', 0, 2, true);
   place(st, 'METAL_5', 1, 0, true);
   place(st, 'LIGHT_6', 1, 1, true);
   place(st, 'LIFE_3', 1, 2, true);
   setHand(st, 0, ['DIVERSITY_1', 'FIRE_6', 'WATER_2']);
   const act = aiAct(st);
   const res = resolveWithAi(Engine.apply(st, act));
-  assert.ok(res.state.players[0].protocols[0].compiled, 'DIVERSITY がコンパイル完了 (実際: ' + JSON.stringify(act) + ')');
+  assert.equal(res.state.winner, 0, 'DIVERSITY 0 で3本目をコンパイルして勝つ (実際: ' + JSON.stringify(act) + ')');
 });

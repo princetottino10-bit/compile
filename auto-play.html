@@ -3198,6 +3198,9 @@ const AI_W = {
   /* DIVERSITY 0 の構え (aiDiversityReady): 手札に DIVERSITY 0 があり、場に DIVERSITY 以外が5種類そろっていれば
      次の手番に出すだけでコンパイルできる。1手先の読みでは見えないので、そろえる手のために置く */
   diversityReady: 120,
+  /* DIVERSITY 0 は10点を積まずに1本通す切り札。3本目 (最後) に使えば、相手が点数のラインを止めていても勝てる。
+     diversityLast: 他の2本が済んだあとの構えの価値 / diversityEarly: 1本目・2本目で使ってしまう減点 */
+  diversityLast: 380, diversityEarly: 420,
 };
 /* サイキック①ロックまわりの重み。通常 AI・特化 AI の区別なく共通で使う。
    lockPermanent/lockTemporary: 覆われた (永続) / 一番上 (1ターン) のロックの価値
@@ -3249,7 +3252,7 @@ const AI_DSH_W = {
   refreshUrgency: 120,
   choiceDepth: 1,
   orderSim: 4,
-  diversityReady: 120,
+  diversityReady: 120, diversityLast: 380, diversityEarly: 420,
   compiledLead: 0,   // 最強同士のミラー 480 戦で 49.8% [45.3, 54.2]。効果が出ていないので切っておく
 };
 function setAiSpecialistWeights(obj) {
@@ -3733,6 +3736,11 @@ function aiDiversityReady(st, side) {
   if (kinds.size < 5) return false;
   return [0, 1, 2].some(line => canPlay(st, side, d0, line, true));
 }
+/* DIVERSITY 以外が2本とも済んでいる = DIVERSITY 0 の即コンパイルがそのまま勝ちになる */
+function aiDiversityIsLast(st, side) {
+  const ps = st.players[side].protocols;
+  return ps.some(p => p.name === 'DIVERSITY' && !p.compiled) && ps.filter(p => p.name !== 'DIVERSITY' && p.compiled).length === 2;
+}
 
 /* FIRE 0 + WATER 4 (docs/ai-combos.md): 手札に WATER 4 があり、FIRE 0 が表で一番上に居るラインに
    WATER 4 を表で出せる (そのラインのどちらかのプロトコルが WATER) なら、次の手番にコンボを撃てる */
@@ -3824,6 +3832,10 @@ function aiActionBias(st, action, side) {
   const fizzles = !!action.faceUp && aiMiddleFizzles(st, side, action, d);
   if (fizzles) v -= AI_W.fizzle + aiMiddleValue(d) * AI_W.fizzleMid;
   if (aiIsLockSpecialist(st, side)) v += aiLockSpecialistBias(st, side, action, d, fizzles);
+  /* DIVERSITY 0 の即コンパイルは3本目まで取っておく (出すだけで通る切り札を1本目・2本目に使わない) */
+  if (d.id === 'DIVERSITY_1' && action.faceUp && W.diversityEarly && aiDiversityReady(st, side) && !aiDiversityIsLast(st, side)) {
+    v -= W.diversityEarly;
+  }
   if (aiIsDshSpecialist(st, side) && W.speedPairStrategy
       && (d.id === 'SPEED_1' || d.id === 'SPEED_4')) {
     const pairOnField = aiHasDefOnField(st, side, 'SPEED_1') || aiHasDefOnField(st, side, 'SPEED_4');
@@ -4098,7 +4110,7 @@ function aiScore(st, me) {
     const s0 = aiHasDefInHand(st, me, 'SPEED_1'), s3 = aiHasDefInHand(st, me, 'SPEED_4');
     sc += W.speedPairKeep * ((s0 ? 1 : 0) + (s3 ? 1 : 0) + (s0 && s3 ? 1 : 0));
   }
-  if (W.diversityReady && aiDiversityReady(st, me)) sc += W.diversityReady;
+  if (W.diversityReady && aiDiversityReady(st, me)) sc += aiDiversityIsLast(st, me) ? W.diversityLast : W.diversityReady;
   /* 特化 (DSH): FIRE 0 + WATER 4 の構え。WATER 4 は自分を戻すので、撃ったあとも構えは残る */
   if (aiIsDshSpecialist(st, me) && W.fire0Water4Ready && aiFire0Water4Ready(st, me)) sc += W.fire0Water4Ready;
   sc += aiBoardEffectScore(st, me);
