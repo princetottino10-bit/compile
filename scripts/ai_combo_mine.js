@@ -17,6 +17,9 @@
  * 使い方:
  *   node scripts/ai_combo_mine.js --games 40 --out _shots/combos.jsonl
  *   node scripts/ai_combo_mine.js --summary _shots/combos.jsonl
+ *
+ * デッキを決めて掘る (そのデッキ側の局面だけを調べる。デッキ側は最強と同じ dsh 特化で指す):
+ *   node scripts/ai_combo_mine.js --deck FIRE,WATER,SPEED --games 36 --out _shots/combos_fws.jsonl
  */
 
 const fs = require('node:fs');
@@ -50,7 +53,7 @@ const MATCHUPS = [
 
 function parseArgs(argv) {
   const o = { games: 40, workers: 0, seed: 20261101, budget: 900, every: 3, margin: 40,
-    out: path.join(ROOT, '_shots', 'combos.jsonl'), summary: null, filter: null };
+    out: path.join(ROOT, '_shots', 'combos.jsonl'), summary: null, filter: null, deck: null };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--games') o.games = +argv[++i];
@@ -62,6 +65,7 @@ function parseArgs(argv) {
     else if (a === '--out') o.out = argv[++i];
     else if (a === '--summary') o.summary = argv[++i];
     else if (a === '--filter') o.filter = argv[++i].split(',').map(s => s.trim().toUpperCase());
+    else if (a === '--deck') o.deck = argv[++i].split(',').map(s => s.trim().toUpperCase());
     else { console.error('未知の引数: ' + a); process.exit(1); }
   }
   return o;
@@ -200,12 +204,15 @@ if (!isMainThread) {
   }
 
   for (const job of jobs) {
+    /* デッキ指定: デッキ側は最強と同じ戦い方で指し、その側の局面だけを調べる */
+    if (Play.setAiSpecialist) Play.setAiSpecialist(job.deckSide !== undefined, job.deckSide, 'dsh');
     let res = Play.newGame({ p0: job.p0, p1: job.p1, seed: job.seed, useControl: true });
     let decision = 0, guard = 0;
     while (res && !res.error && res.winner === null && guard++ < 700) {
       if (!res.requests.length && res.state.phase === 'action') {
         const me = res.state.turn;
-        if (res.state.players[me].hand.length >= 2 && (decision++ % cfg.every) === job.offset) {
+        const mine = job.deckSide === undefined || me === job.deckSide;
+        if (mine && res.state.players[me].hand.length >= 2 && (decision++ % cfg.every) === job.offset) {
           for (const row of analyse(job, { state: structuredClone(res.state), side: me, ply: guard })) {
             parentPort.postMessage({ row });
           }
@@ -252,13 +259,30 @@ const cards = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'cards.json'), 
 const effects = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'effects.json'), 'utf8'));
 const src = fs.readFileSync(path.join(ROOT, 'engine.js'), 'utf8');
 
-const POOL = opt.filter ? MATCHUPS.filter(m => opt.filter.some(p => m[0].includes(p) || m[1].includes(p))) : MATCHUPS;
-if (!POOL.length) { console.error('--filter に一致する編成がありません'); process.exit(1); }
 const jobs = [];
-for (let i = 0; i < opt.games; i++) {
-  const pair = POOL[i % POOL.length];
-  const swap = (i >> 1) % 2 === 1;
-  jobs.push({ p0: swap ? pair[1] : pair[0], p1: swap ? pair[0] : pair[1], seed: opt.seed + i, offset: i % opt.every });
+if (opt.deck) {
+  /* 相手は対戦表に出てくる編成のうち、デッキとプロトコルが重ならないもの */
+  const seen = new Set();
+  const rivals = [];
+  for (const m of MATCHUPS) for (const d of m) {
+    const key = d.join(',');
+    if (seen.has(key) || d.some(p => opt.deck.includes(p))) continue;
+    seen.add(key);
+    rivals.push(d);
+  }
+  for (let i = 0; i < opt.games; i++) {
+    const rival = rivals[i % rivals.length];
+    const deckSide = (i >> 1) % 2;                  // 先手・後手を半々に
+    jobs.push({ p0: deckSide ? rival : opt.deck, p1: deckSide ? opt.deck : rival, deckSide, seed: opt.seed + i, offset: i % opt.every });
+  }
+} else {
+  const POOL = opt.filter ? MATCHUPS.filter(m => opt.filter.some(p => m[0].includes(p) || m[1].includes(p))) : MATCHUPS;
+  if (!POOL.length) { console.error('--filter に一致する編成がありません'); process.exit(1); }
+  for (let i = 0; i < opt.games; i++) {
+    const pair = POOL[i % POOL.length];
+    const swap = (i >> 1) % 2 === 1;
+    jobs.push({ p0: swap ? pair[1] : pair[0], p1: swap ? pair[0] : pair[1], seed: opt.seed + i, offset: i % opt.every });
+  }
 }
 const workerCount = Math.max(1, Math.min(opt.workers || (os.cpus().length - 1), jobs.length));
 const chunks = Array.from({ length: workerCount }, () => []);
