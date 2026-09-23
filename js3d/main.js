@@ -1712,7 +1712,19 @@ async function markPhase(st) {
  * ------------------------------------------------------------------------- */
 const MAX_STEPS = 14;          // 長い連鎖はここで打ち切って最終状態へ飛ばす
 /* チェーン表示の間 (ms): 割り込んで積まれたとき / 1つ解決したとき */
-const CHAIN_HOLD = { add: 1100, resolve: 650, each: 750 };
+const CHAIN_HOLD = { add: 1500, resolve: 1000, each: 1000 };
+/* 効果の解決を1コマずつ見せるときの、1コマの最短の長さ (ms、「ふつう」の速さで)。
+   同じカードが続けて動くなら目はそのまま追えるが、別の場所へ移ると
+   目を移して何が起きたか分かるまでに約1秒かかる */
+const STEP_PACE = { same: 500, moved: 1000 };
+/* 解決中のカードの動きの長さ (TIMING に掛ける倍率。大きいほどゆっくり) */
+const STEP_MOTION = 1.25;
+/* 効果の帯 (発動した段の文章) を出しておく長さ。20字前後を読み切れる長さ */
+const FX_BANNER_MS = 3200;
+async function holdStep(t0, target) {
+  const spent = (performance.now() - t0) * settings().speed;
+  if (spent < target) await TW.wait(target - spent);
+}
 /* 設定で「一時停止する」をオフにしたら待たない */
 function chainPause(kind) {
   return settings().pauses ? TW.wait(CHAIN_HOLD[kind]) : Promise.resolve();
@@ -1796,7 +1808,7 @@ async function cueFor(step, st) {
     UI.showFxBanner({
       name: def.proto + ' ' + def.value, color: def.color,
       zone, text: def[zone], mine: card.owner === ME
-    }, 2800 / settings().speed);
+    }, FX_BANNER_MS / settings().speed);
   }
   await board.pulse(uid, def.color, 380);
 }
@@ -1889,6 +1901,7 @@ async function replayResolution(prev, res, action) {
 
   let from = prev;
   let first = true;
+  let lastUid = null;
   for (const step of use) {
     /* フェイズだけが進むコマは、絵が同じなので合図を出して次へ進む。
        この形なら「開始フェイズ → 開始効果」の順に見える。 */
@@ -1902,14 +1915,19 @@ async function replayResolution(prev, res, action) {
     /* 絵が動くコマは、動かしてから合図を出す。
        1コマの中で「カードの着地」と「手番交代」が同時に起きることがあり、
        先に告知すると、相手のターンになってからカードが積まれて見えた。 */
-    /* チェーンの途中は動きもゆっくり見せる */
-    await board.applyTransition(from, step.st, first ? action : null, { speed: chainShown ? 1.05 : 0.72 });
+    const t0 = performance.now();
+    const uid = step.uid || (step.cue && step.cue.uid) || null;
+    /* チェーンの途中は動きもさらにゆっくり見せる */
+    await board.applyTransition(from, step.st, first ? action : null, { speed: chainShown ? STEP_MOTION * 1.3 : STEP_MOTION });
     /* プロトコル板 (並び・合計値) もこのコマに合わせる。並べ替えは板が動き終わるまで待つ */
     await syncPanels(step.st, true);
     /* この絵の時点のチェーン。1つ解決して短くなったら、解決したことが分かるよう少し待つ */
     if (showChainNow(step.chain, step.st) < 0) await chainPause('resolve');
     if (step.acts && step.acts.length) await showActs(step);
     else await cueFor(step, step.st);
+    /* 次のコマへ進む前に、このコマを追えるだけの間を取る */
+    await holdStep(t0, uid && uid === lastUid ? STEP_PACE.same : STEP_PACE.moved);
+    lastUid = uid;
     await markPhase(step.st);
     await checkAnnounce(step.st);
     from = step.st;
@@ -1925,7 +1943,7 @@ async function replayResolution(prev, res, action) {
   if (res.requests && res.requests.length) UI.showChain(chainLinksAt(lastTr, action));
   else UI.hideChain();
   /* 最後は必ず本物の状態へ合わせる */
-  await board.applyTransition(from, final, first ? action : null, first ? null : { speed: 0.72 });
+  await board.applyTransition(from, final, first ? action : null, first ? null : { speed: STEP_MOTION });
   await syncPanels(final, true);
   /* 盤面が最終形になってから、そこまでに進んだ手番/フェイズを告げる */
   await markPhase(final);
