@@ -1515,8 +1515,15 @@
   @keyframes selSlide{from{opacity:0;transform:translateX(48px)}to{opacity:1;transform:none}}
   @media (prefers-reduced-motion: reduce){ .arr-bar.sel-bar:not(.confirm){animation:none;} }
   body.picking #fxBanner{display:none!important;}
+  /* 手札から選ぶ (捨てる・キャッシュの削除など) 帯も右上に。手札の上の中央は盤面を覆っていた */
+  .arr-bar.sel-bar.confirm.hand-pick{left:auto;right:calc(8px + env(safe-area-inset-right));top:44px;bottom:auto;
+    transform:none;width:min(360px,40vw);border-radius:10px;
+    border:1px solid rgba(99,243,255,.32);border-left:3px solid var(--cyan);
+    animation:selSlide .28s cubic-bezier(.16,1,.3,1);}
+  .arr-bar.sel-bar.confirm.hand-pick .sel-peek{display:none;}
+  @media (prefers-reduced-motion: reduce){ .arr-bar.sel-bar.confirm.hand-pick{animation:none;} }
   @media (orientation:landscape) and (max-height:500px){
-    .arr-bar.sel-bar:not(.confirm){top:38px;width:min(320px,40vw);}
+    .arr-bar.sel-bar:not(.confirm),.arr-bar.sel-bar.confirm.hand-pick{top:38px;width:min(320px,40vw);}
   }
 </style>
 </head>
@@ -1619,7 +1626,7 @@
       "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c",
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=c8378abf22",
-      "./js3d/main.js": "./js3d/main.js?v=f7b78215b6",
+      "./js3d/main.js": "./js3d/main.js?v=84d13686e7",
       "./js3d/panel.js": "./js3d/panel.js?v=9156d673b5",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=a13c858baf",
       "./js3d/prompts.js": "./js3d/prompts.js?v=348dff836d",
@@ -1646,6 +1653,6 @@
   </script>
   <link rel="stylesheet" href="js3d/playchoices.css?v=3e42a70860">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=f7b78215b6"></script>
+  <script type="module" src="js3d/main.js?v=84d13686e7"></script>
 </body>
 </html>

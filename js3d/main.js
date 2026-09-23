@@ -2178,6 +2178,7 @@ function renderBoardPick() {
   /* 手札から選ぶ (捨てる・キャッシュの削除など) は、手札のすぐ上に出す (確認と同じ場所・大きさ) */
   const nearHand = bp.req.kind === 'pickHand';
   el.classList.toggle('confirm', nearHand);
+  el.classList.toggle('hand-pick', nearHand);   // 手札から選ぶ帯も右上に出す (three-play.html)
   const where = nearHand ? '手札の光っているカード' : '光っているカード';
   el.innerHTML =
     pickBarAsk(bp.req, { optional: bp.min === 0, count: bp.chosen.length, max: bp.max }) +
