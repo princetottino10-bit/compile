@@ -277,6 +277,14 @@ export function askChoice(req, ctx) {
  * コンパイルのカットイン
  *   CSS アニメーションで一気に見せる。終わるまで待てるよう Promise を返す。
  * ------------------------------------------------------------------------- */
+/* コンパイルの進み具合: 3つの枠のうち済んだぶんを埋め、今コンパイルした枠を光らせる */
+function ccPips(remaining) {
+  const done = Math.max(1, 3 - (remaining || 0));
+  let html = '<div class="cc-pips" aria-label="' + done + ' / 3 コンパイル">';
+  for (let i = 0; i < 3; i++) html += '<i class="' + (i < done - 1 ? 'on' : i === done - 1 ? 'now' : '') + '"></i>';
+  return html + '</div>';
+}
+
 export function compileCutIn(info) {
   const el = $('#compileCut');
   if (!el) return Promise.resolve();
@@ -286,10 +294,13 @@ export function compileCutIn(info) {
     '<div class="cc-veil"></div>' +
     (info.art ? '<div class="cc-art" style="background-image:url(&quot;' + info.art + '&quot;)"></div>' : '') +
     (info.emblem ? '<img class="cc-emblem" alt="" src="' + info.emblem + '">' : '') +
+    '<div class="cc-ghost" aria-hidden="true"><span>COMPILED COMPILED COMPILED COMPILED</span></div>' +
+    '<div class="cc-ring"></div><div class="cc-ring r2"></div><div class="cc-ring r3"></div>' +
     '<div class="cc-slash"></div><div class="cc-slash thin"></div>' +
     '<div class="cc-body">' +
       '<div class="cc-kicker">PROTOCOL COMPILED</div>' +
-      '<div class="cc-name">' + info.name + '</div>' +
+      '<div class="cc-name" data-text="' + info.name + '">' + info.name + '</div>' +
+      ccPips(info.remaining) +
       '<div class="cc-sub">' + (info.remaining > 0 ? 'あと ' + info.remaining + ' プロトコル' : 'ALL PROTOCOLS COMPILED') + '</div>' +
       '<div class="cc-owner">' + (info.mine ? 'YOU' : 'OPPONENT') + '</div>' +
     '</div>' +

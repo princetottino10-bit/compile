@@ -36,7 +36,8 @@ function emphasize(html) {
 export function selectHead(req, source, meta) {
   const m = meta || {};
   const tags = [];
-  if (m.optional) tags.push('<span class="sel-tag">任意</span>');
+  /* 指示文に「(任意)」があれば札は重ねない */
+  if (m.optional && !/任意/.test(questionText(req))) tags.push('<span class="sel-tag">任意</span>');
   if (m.max > 1) tags.push('<span class="sel-count"><b>' + (m.count || 0) + '</b> / ' + m.max + '</span>');
   return '<div class="sel-head"' + (source && source.color ? ' style="--accent:' + source.color + '"' : '') + '>' +
     (source
