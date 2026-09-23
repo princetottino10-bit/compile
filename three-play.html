@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>COMPILE — 3D ARENA</title>
 <link rel="apple-touch-icon" href="icons/arena-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Oxanium:wght@500;600;700;800&display=swap">
 <link rel="icon" href="icons/arena-180.png">
 <meta name="apple-mobile-web-app-title" content="3D ARENA">
 <style>
@@ -1407,6 +1410,16 @@
     #modalPeek{width:38px;height:38px;font-size:18px;}
   }
 
+  /* ---------- 書体 ----------
+     ロゴ・勝敗など大きく見せる英字は Orbitron、見出し・ボタン・プロトコル名・数字は Oxanium。
+     どちらも日本語を持たないので、日本語は後ろの system-ui で出る (js3d/theme.js の FONT と揃える) */
+  :root{--font-logo:'Orbitron',system-ui,sans-serif;--font-hud:'Oxanium',system-ui,sans-serif;}
+  #brand,.tt-logo,.rc-title,.cc-name,#boot h1,#endBar .end-title{font-family:var(--font-logo)!important;}
+  .tt-sub,.tt-start,.tt-menu button,.rc-sub,.cc-kicker,.cc-sub,.cc-owner,.pile-count,.pile-count b,
+  #declareCut .dc-label,#declareCut .dc-value,#phaseChip .ph-en,#fxBanner .fx-head b,#fxBanner .fx-tag,
+  #chainUi .ch-burst b,#chainUi .ch-no,#chainUi .ch-name,.cp-head b,.cp-val,.cp-proto,
+  .sel-value,.sel-no,.sel-proto b,#setupHead h1,#setupCount,.proto-name,.lvl,.lv-pick,#setupStart,
+  #tutorialCoach .tc-tag,#puzzleBar .pz-tag,.tu-head .pz-tag,.sd-tag,.ro-code,#topbar button{font-family:var(--font-hud)!important;}
 </style>
 </head>
 <body>
@@ -1500,7 +1513,7 @@
       "./js3d/backdrops.js": "./js3d/backdrops.js?v=dd19f3c84a",
       "./js3d/board.js": "./js3d/board.js?v=885dacc957",
       "./js3d/card.js": "./js3d/card.js?v=80ddf2419a",
-      "./js3d/cardtex.js": "./js3d/cardtex.js?v=58e37f0f36",
+      "./js3d/cardtex.js": "./js3d/cardtex.js?v=f5557d921c",
       "./js3d/control.js": "./js3d/control.js?v=e4875b9ac1",
       "./js3d/emblems.js": "./js3d/emblems.js?v=6d1c077a2e",
       "./js3d/fx-protocols.js": "./js3d/fx-protocols.js?v=e8df5c181f",
@@ -1508,8 +1521,8 @@
       "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c",
       "./js3d/input.js": "./js3d/input.js?v=d00c8166fa",
       "./js3d/layout.js": "./js3d/layout.js?v=0aa43d3108",
-      "./js3d/main.js": "./js3d/main.js?v=ef4491411a",
-      "./js3d/panel.js": "./js3d/panel.js?v=25f5aa57b6",
+      "./js3d/main.js": "./js3d/main.js?v=555d690f91",
+      "./js3d/panel.js": "./js3d/panel.js?v=9156d673b5",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=a13c858baf",
       "./js3d/prompts.js": "./js3d/prompts.js?v=348dff836d",
       "./js3d/protocards.js": "./js3d/protocards.js?v=c97f3992ab",
@@ -1524,7 +1537,7 @@
       "./js3d/solodraft.js": "./js3d/solodraft.js?v=9863c9528c",
       "./js3d/stage.js": "./js3d/stage.js?v=203ed8ec22",
       "./js3d/stats.js": "./js3d/stats.js?v=3b81a76384",
-      "./js3d/theme.js": "./js3d/theme.js?v=ca159ed681",
+      "./js3d/theme.js": "./js3d/theme.js?v=2d90495a27",
       "./js3d/title.js": "./js3d/title.js?v=54c791b21a",
       "./js3d/training.js": "./js3d/training.js?v=8f9e8ce6d0",
       "./js3d/tutorial.js": "./js3d/tutorial.js?v=7c05630e03",
@@ -1535,6 +1548,6 @@
   </script>
   <link rel="stylesheet" href="js3d/playchoices.css?v=3e42a70860">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=ef4491411a"></script>
+  <script type="module" src="js3d/main.js?v=555d690f91"></script>
 </body>
 </html>

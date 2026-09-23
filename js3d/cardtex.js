@@ -11,7 +11,7 @@
  *   本文は枠に収まるまで自動縮小し、切り捨てを出さない。
  * ========================================================================= */
 import * as THREE from '../vendor/three.module.js';
-import { CARD } from './theme.js';
+import { CARD, FONT } from './theme.js';
 import { drawIcon } from './icons.js';
 
 /* 座標は 512x716 のデザイン空間で書き、実テクスチャへは拡大して描く */
@@ -188,7 +188,7 @@ function paintFace(ctx, def, art) {
     g.addColorStop(1, 'rgba(4,6,14,0)');
     ctx.fillStyle = '#080b16'; ctx.fillRect(0, artTop, DW, artH);
     ctx.fillStyle = g; ctx.fillRect(0, artTop, DW, artH);
-    ctx.font = '700 120px system-ui, sans-serif';
+    ctx.font = '700 120px ' + FONT.hud;
     ctx.fillStyle = rgba(accent, 0.4);
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(def.proto.slice(0, 2), DW / 2, artTop + artH * 0.4);
@@ -215,7 +215,7 @@ function paintFace(ctx, def, art) {
   ctx.fillStyle = accent;
   roundRect(ctx, bx, by, badge, badge, 14); ctx.fill();
   ctx.fillStyle = '#04060e';
-  ctx.font = '900 ' + BADGE_FONT + 'px system-ui, sans-serif';
+  ctx.font = '800 ' + BADGE_FONT + 'px ' + FONT.hud;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(String(def.value), bx + badge / 2, by + badge / 2 + 3);
   ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
@@ -234,7 +234,7 @@ function paintFace(ctx, def, art) {
   const nameMax = (types.length ? iconLeft : bx) - 30;
   let namePx = NAME_FONT;
   do {
-    ctx.font = '800 ' + namePx + 'px system-ui, sans-serif';
+    ctx.font = '800 ' + namePx + 'px ' + FONT.hud;
     if (ctx.measureText(def.proto).width <= nameMax) break;
     namePx -= 2;
   } while (namePx > 22);
@@ -446,11 +446,11 @@ export function backTex() {
   ctx.lineWidth = 2;
   ctx.beginPath(); ctx.arc(cx, cy, 146, 0, Math.PI * 2); ctx.stroke();
 
-  ctx.font = '900 88px system-ui, sans-serif';
+  ctx.font = '900 88px ' + FONT.logo;
   ctx.fillStyle = 'rgba(233,240,255,.9)';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText('//', cx, cy + 4);
-  ctx.font = '800 22px system-ui, sans-serif';
+  ctx.font = '800 22px ' + FONT.logo;
   ctx.fillStyle = 'rgba(233,240,255,.62)';
   ctx.fillText('C O M P I L E', cx, cy + 190);
   ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
@@ -468,11 +468,11 @@ export function backTex() {
   ctx.fillStyle = 'rgba(160,190,215,.92)';
   roundRect(ctx, bbx, bby, bsize, bsize, 14); ctx.fill();
   ctx.fillStyle = '#04060e';
-  ctx.font = '900 ' + BADGE_FONT + 'px system-ui, sans-serif';
+  ctx.font = '800 ' + BADGE_FONT + 'px ' + FONT.hud;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText('2', bbx + bsize / 2, bby + bsize / 2 + 3);
   ctx.textAlign = 'left';
-  ctx.font = '800 30px system-ui, sans-serif';
+  ctx.font = '700 30px ' + FONT.hud;
   ctx.fillStyle = 'rgba(233,240,255,.86)';
   ctx.fillText('FACE DOWN', 18, bh / 2 + 1);
   ctx.textBaseline = 'alphabetic';

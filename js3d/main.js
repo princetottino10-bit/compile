@@ -96,6 +96,13 @@ boot().catch((e) => {
   UI.toast('初期化に失敗: ' + e.message, 6000);
 });
 
+/* ロゴ (Orbitron) と見出し・数字 (Oxanium) の書体を読み込む。届かなくても先へ進む (system-ui で描く) */
+function loadFonts(timeoutMs) {
+  if (!document.fonts || !document.fonts.load) return Promise.resolve();
+  const loads = ['900 40px Orbitron', '800 40px Oxanium', '700 40px Oxanium'].map(f => document.fonts.load(f).catch(() => null));
+  return Promise.race([Promise.all(loads), new Promise(r => setTimeout(r, timeoutMs))]);
+}
+
 async function boot() {
   const T0 = performance.now();
   const mark = (label) => { window.__bootMarks = window.__bootMarks || []; window.__bootMarks.push(label + ':' + Math.round(performance.now() - T0)); };
@@ -123,6 +130,9 @@ async function boot() {
   Engine.setTrace(true);
   UI.bindLogFormatter(logParts, showCardNoteFor);
   mark('engineInit');
+  /* カードやプロトコルの札は canvas に文字を描くので、書体が届いてから作る (最大1.5秒待つ) */
+  await loadFonts(1500);
+  mark('fonts');
 
   stage = createStage(document.getElementById('stage'));
   setMaxAnisotropy(stage.renderer.capabilities.getMaxAnisotropy());

@@ -6,7 +6,7 @@
  *   コンパイルすると板が裏返り、以後はっきり違う見た目になる。
  * ========================================================================= */
 import * as THREE from '../vendor/three.module.js';
-import { COLOR } from './theme.js';
+import { COLOR, FONT } from './theme.js';
 import * as LAYOUT from './layout.js';
 import * as TW from './tween.js';
 import { drawEmblem } from './emblems.js';
@@ -115,14 +115,14 @@ function paint(ctx, info, art) {
     compiled ? 'rgba(255,255,255,.95)' : rgba(accent, 0.95), 7);
 
   /* 状態ラベル */
-  ctx.font = '800 22px system-ui, sans-serif';
+  ctx.font = '700 22px ' + FONT.hud;
   ctx.fillStyle = compiled ? '#ffffff' : rgba(accent, 0.9);
   ctx.fillText(compiled ? 'COMPILED' : 'LOADING...', 112, 48);
 
   /* プロトコル名 */
   let px = 60;
   do {
-    ctx.font = '900 ' + px + 'px system-ui, sans-serif';
+    ctx.font = '800 ' + px + 'px ' + FONT.hud;
     if (ctx.measureText(info.name).width <= W - 270) break;
     px -= 2;
   } while (px > 22);
@@ -142,7 +142,7 @@ function paint(ctx, info, art) {
     ctx.lineWidth = 2;
     roundRect(ctx, bx, by, bw, bh, 16); ctx.stroke();
   }
-  ctx.font = '900 80px system-ui, sans-serif';
+  ctx.font = '800 80px ' + FONT.hud;
   ctx.fillStyle = hot ? '#05070f' : '#ffffff';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(String(info.total), bx + bw / 2, by + bh / 2 + 2);

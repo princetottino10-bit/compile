@@ -14,6 +14,14 @@ export const CARD = {
   texH: 896
 };
 
+/* --- 書体 ---
+   logo: ロゴ・勝敗など大きく見せる英字 (Orbitron)。hud: 見出し・ボタン・プロトコル名・数字 (Oxanium)。
+   どちらも日本語を持たないので、日本語は自動で system-ui になる。three-play.html で読み込む */
+export const FONT = {
+  logo: "'Orbitron', system-ui, sans-serif",
+  hud: "'Oxanium', system-ui, sans-serif"
+};
+
 /* --- 盤面レイアウト --- */
 export const BOARD = {
   laneX: [-1.62, 0, 1.62],   // 3ライン (LEFT / MID / RIGHT)
