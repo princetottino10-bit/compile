@@ -4,6 +4,7 @@
  * ========================================================================= */
 
 import { selectHead, bindSelectHead, optionBody, choiceLabel } from './selectui.js';
+import { drawVictoryBackdrop, drawDefeatBackdrop } from './backdrops.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -573,6 +574,7 @@ export function resultCutIn(win) {
   el.style.setProperty('--accent', win ? '#6dffc2' : '#ff3b9d');
   el.innerHTML =
     '<div class="rc-veil"></div>' +
+    '<canvas class="rc-art" aria-hidden="true"></canvas>' +
     '<div class="rc-rays"></div>' +
     '<div class="rc-body">' +
       '<div class="rc-title">' + (win ? 'VICTORY' : 'DEFEAT') + '</div>' +
@@ -580,6 +582,8 @@ export function resultCutIn(win) {
       '<div class="rc-sub">' + (win ? 'ALL PROTOCOLS COMPILED' : 'SYSTEM OVERWRITTEN') + '</div>' +
     '</div>';
   el.classList.add('show');
+  const art = el.querySelector('.rc-art');
+  try { (win ? drawVictoryBackdrop : drawDefeatBackdrop)(art); } catch (e) { art.remove(); }
   return new Promise((resolve) => setTimeout(() => {
     el.classList.remove('show');
     el.innerHTML = '';

@@ -2,6 +2,7 @@
  * 3Dビュー: タイトルとモード選択
  * ========================================================================= */
 import { emblemDataURL } from './emblems.js';
+import { drawTitleBackdrop } from './backdrops.js';
 import { initAudio, sfx } from './audio.js';
 import { openSettings } from './settings.js';
 import { openStats } from './stats.js';
@@ -23,12 +24,17 @@ export function runTitle(protocols, opts) {
     .map(p => '<img alt="" src="' + emblemDataURL(p.name, p.color || '#63f3ff', 72, true) + '">')
     .join('');
   root.innerHTML =
+    '<canvas class="tt-art" aria-hidden="true"></canvas>' +
     '<div class="tt-scan"></div><div class="tt-log" id="ttLog"></div>' +
     '<div class="tt-center" id="ttCenter"><div class="tt-logo"><b>//</b> COMPILE</div>' +
       '<div class="tt-sub">3D ARENA</div><button class="tt-start" id="ttStart" type="button">PRESS START</button></div>' +
     '<div class="tt-marquee"><div class="tt-strip">' + emblems + emblems + '</div></div>' +
     '<div class="tt-foot">engine.js — 全30プロトコル / 180枚</div>';
   root.classList.add('show');
+  const art = root.querySelector('.tt-art');
+  const paint = () => { if (art.isConnected) { try { drawTitleBackdrop(art); } catch (e) { /* 描けなくても従来の背景で進む */ } } };
+  paint();
+  window.addEventListener('resize', paint);
   const log = root.querySelector('#ttLog');
   let li = 0;
   const logTimer = setInterval(() => {

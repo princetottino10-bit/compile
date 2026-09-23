@@ -352,6 +352,10 @@
   #resultCut.show{display:block;}
   .rc-veil{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(4,5,12,.72),rgba(2,3,8,.97));
     opacity:0;animation:rcVeil 3.6s cubic-bezier(.16,1,.3,1) forwards;}
+  .rc-art{position:absolute;inset:0;width:100%;height:100%;opacity:0;
+    animation:rcArt 3.6s cubic-bezier(.16,1,.3,1) forwards;}
+  @keyframes rcArt{0%{opacity:0;transform:scale(1.12)}10%{opacity:.95;transform:scale(1)}
+    86%{opacity:.9;transform:scale(1.03)}100%{opacity:0;transform:scale(1.05)}}
   .rc-rays{position:absolute;left:50%;top:50%;width:200vmax;height:200vmax;
     transform:translate(-50%,-50%) rotate(0deg);opacity:0;
     background:repeating-conic-gradient(from 0deg,var(--accent) 0deg 1.1deg,transparent 1.1deg 9deg);
@@ -859,6 +863,11 @@
     opacity:1;transition:opacity .5s;}
   #title.show{display:block;}
   #title.gone{opacity:0;}
+  /* 背景の絵 (js3d/backdrops.js)。ゆっくり寄って奥行きを出す */
+  .tt-art{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.9;
+    animation:ttArt 18s ease-in-out infinite alternate;}
+  @keyframes ttArt{from{transform:scale(1)}to{transform:scale(1.06)}}
+  @media (prefers-reduced-motion: reduce){ .tt-art{animation:none;} }
   .tt-scan{position:absolute;inset:0;pointer-events:none;opacity:.4;
     background:repeating-linear-gradient(0deg,rgba(255,255,255,.03) 0 1px,transparent 1px 4px);}
   .tt-log{position:absolute;left:26px;top:48px;font:500 11px/1.9 ui-monospace,monospace;
@@ -1488,6 +1497,7 @@
       "./js3d/aidecks.js": "./js3d/aidecks.js?v=76d3104067",
       "./js3d/arena.js": "./js3d/arena.js?v=698f865c22",
       "./js3d/audio.js": "./js3d/audio.js?v=1a37ce1073",
+      "./js3d/backdrops.js": "./js3d/backdrops.js?v=dd19f3c84a",
       "./js3d/board.js": "./js3d/board.js?v=885dacc957",
       "./js3d/card.js": "./js3d/card.js?v=80ddf2419a",
       "./js3d/cardtex.js": "./js3d/cardtex.js?v=58e37f0f36",
@@ -1515,11 +1525,11 @@
       "./js3d/stage.js": "./js3d/stage.js?v=203ed8ec22",
       "./js3d/stats.js": "./js3d/stats.js?v=3b81a76384",
       "./js3d/theme.js": "./js3d/theme.js?v=ca159ed681",
-      "./js3d/title.js": "./js3d/title.js?v=5c4c1af943",
+      "./js3d/title.js": "./js3d/title.js?v=54c791b21a",
       "./js3d/training.js": "./js3d/training.js?v=8f9e8ce6d0",
       "./js3d/tutorial.js": "./js3d/tutorial.js?v=7c05630e03",
       "./js3d/tween.js": "./js3d/tween.js?v=99b25c0d63",
-      "./js3d/ui.js": "./js3d/ui.js?v=e6d2d57e13"
+      "./js3d/ui.js": "./js3d/ui.js?v=8d6f611fe1"
     }
   }
   </script>
