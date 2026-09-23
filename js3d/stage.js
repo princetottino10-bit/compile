@@ -278,12 +278,14 @@ export function createStage(container) {
     camera.aspect = aspect;
     const prevK = VIEW.k;
     VIEW.k = Math.max(0, Math.min(1, (1.45 - aspect) / (1.45 - 0.6)));
+    const prevShort = VIEW.short;
+    VIEW.short = h <= 500 && aspect > 1.2;
     camera.fov = CAMERA.fov + 14 * VIEW.k;
     camera.updateProjectionMatrix();
     renderer.setSize(w, h);
     composer.setSize(w, h);
     /* 縦横が切り替わったら定位置を取り直す (演出中でも最後に home へ戻る) */
-    if (Math.abs(prevK - VIEW.k) > 0.15) home(320);
+    if (Math.abs(prevK - VIEW.k) > 0.15 || prevShort !== VIEW.short) home(320);
     /* 手札の並びなど、盤面側の配置も取り直させる */
     window.dispatchEvent(new CustomEvent('compile:viewport', { detail: { w, h, k: VIEW.k } }));
   }

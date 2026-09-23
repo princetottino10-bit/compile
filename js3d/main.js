@@ -1459,14 +1459,15 @@ function trackPileCounts() {
   for (const el of root.children) {
     const side = +el.dataset.side;
     const p = LAYOUT.pilePos(el.dataset.kind, side, ME, 0);
-    const edge = CARD.h * p.scale / 2 + 0.16;
-    /* 手前の山は奥側 (画面の上)、奥の山は手前側 (画面の下) に置く */
+    const edge = CARD.h * p.scale / 2;
+    /* 手前の山は奥側 (画面の上)、奥の山は手前側 (画面の下) の縁の外に、山のカードにかぶせずに置く */
     pileWorld.set(p.pos[0], 0, p.pos[2] + (side === ME ? -edge : edge));
     pileWorld.project(stage.camera);
     const x = rect.left + (pileWorld.x + 1) * rect.width / 2;
     const y = rect.top + (1 - pileWorld.y) * rect.height / 2;
     if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
-    el.style.transform = 'translate(' + Math.round(x) + 'px,' + Math.round(y) + 'px) translate(-50%,-50%)';
+    el.style.transform = 'translate(' + Math.round(x) + 'px,' + Math.round(y) + 'px) translate(-50%,' +
+      (side === ME ? 'calc(-100% - 4px)' : '4px') + ')';
   }
 }
 

@@ -33,7 +33,8 @@ export const BOARD = {
 /* --- ビューポート応答 ---
    k: 0=横長(デスクトップ) .. 1=縦長(スマホ縦持ち)。stage.resize が更新し、
    カメラと手札レイアウトがこれを参照して構図を変える */
-export const VIEW = { k: 0, handOpen: true };
+/* k: 縦長の度合い (0 = 横長 .. 1 = 縦長)。short: 高さの低い横画面 (横持ちのスマホ) */
+export const VIEW = { k: 0, handOpen: true, short: false };
 
 /* --- カメラ --- */
 export const CAMERA = {

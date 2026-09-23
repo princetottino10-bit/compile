@@ -141,7 +141,8 @@ export function transitPileSlot(dest, side, me, idx) {
 export function pilePos(kind, side, me, depth) {
   const near = side === me;
   const k = VIEW.k;                                 // 縦長では画面内に寄せる
-  const z = (near ? 2.3 : -2.3) * (1 + 0.16 * k);
+  /* 横持ちのスマホは手札の脇のボタン (手札を隠す・リフレッシュ) が自分の山にかぶるので、自分の山を奥へ寄せる */
+  const z = (near ? 2.3 - (VIEW.short ? 0.6 : 0) : -2.3) * (1 + 0.16 * k);
   /* 縦持ちは画面幅がレーンでほぼ埋まる。レーンの外側 (|x|>2.12) の細い余白に
      小さくして置き、積み札やプロトコル板に重ならないようにする */
   const x = (kind === 'deck' ? 1 : -1) * (near ? 1 : -1) * (3.45 + (2.52 - 3.45) * k);

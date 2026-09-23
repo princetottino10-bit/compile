@@ -46,7 +46,8 @@
   .pile-count b{font:900 13px/1 system-ui;color:var(--ink);font-variant-numeric:tabular-nums;}
   .pile-count.me{border-color:rgba(109,255,194,.35);}
   .pile-count.opp{border-color:rgba(255,59,157,.35);}
-  body.pregame #pileCounts{display:none;}
+  /* 選んでいる間は隠す (選択の帯や案内の下からのぞかない) */
+  body.pregame #pileCounts,body.picking #pileCounts{display:none;}
   @media (orientation:landscape) and (max-height:500px){
     .pile-count{padding:2px 7px;font-size:9px;}
     .pile-count b{font-size:11px;}
@@ -723,7 +724,8 @@
   }
 
   /* ---------- トースト ---------- */
-  #toast{position:fixed;left:50%;bottom:74px;transform:translateX(-50%) translateY(12px);z-index:40;
+  /* 通知は手札の上端より上に出す (手札を隠さない。--hand-gap は main.js が手札の位置から計算) */
+  #toast{position:fixed;left:50%;bottom:calc(var(--hand-gap, 62px) + 12px);transform:translateX(-50%) translateY(12px);z-index:40;
     padding:10px 20px;border-radius:999px;opacity:0;pointer-events:none;transition:all .28s cubic-bezier(.16,1,.3,1);
     background:rgba(8,11,20,.94);border:1px solid rgba(255,59,157,.4);color:#ffd9ec;
     font:700 11px/1 system-ui;letter-spacing:.05em;box-shadow:0 12px 40px rgba(0,0,0,.55);}
@@ -1300,8 +1302,13 @@
     #btnLog{top:132px;height:70px;}
     #preview{left:calc(8px + env(safe-area-inset-left));top:40px;width:min(200px,24vw);max-height:calc(100vh - 48px);}
     body.training #preview{left:auto;right:calc(44px + env(safe-area-inset-right));top:172px;max-height:calc(100vh - 180px);}
-    /* 詳細パネルは小さく (盤面の左のラインを覆わない) */
-    #preview{width:min(170px,21vw);max-height:62vh;}
+    /* 詳細パネルは小さく (盤面の左のラインを覆わない)。下端は自分の捨て札の山より上で止める */
+    #preview{width:min(170px,21vw);max-height:calc(50vh - 4px);}
+    /* チェーンは右上の発動の帯の下に潜らないよう下げ、カードの絵を小さく */
+    #chainUi{top:calc(50% + 30px);gap:6px;}
+    #chainUi .ch-card{width:40px;}
+    #chainUi .ch-no{font-size:22px;}
+    #chainUi .ch-name{font-size:10px;}
     .cp-head b{font-size:12px;}
     .cp-img{width:40px;}
     .cp-meta{gap:4px;}
@@ -1467,8 +1474,8 @@
       "./js3d/fx.js": "./js3d/fx.js?v=66d3fe9a7c",
       "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c",
       "./js3d/input.js": "./js3d/input.js?v=d00c8166fa",
-      "./js3d/layout.js": "./js3d/layout.js?v=016cb7203e",
-      "./js3d/main.js": "./js3d/main.js?v=c1c8205720",
+      "./js3d/layout.js": "./js3d/layout.js?v=0aa43d3108",
+      "./js3d/main.js": "./js3d/main.js?v=b0b696674e",
       "./js3d/panel.js": "./js3d/panel.js?v=25f5aa57b6",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=a13c858baf",
       "./js3d/prompts.js": "./js3d/prompts.js?v=348dff836d",
@@ -1482,9 +1489,9 @@
       "./js3d/settings.js": "./js3d/settings.js?v=3308854d20",
       "./js3d/setup.js": "./js3d/setup.js?v=feb7cfc2cf",
       "./js3d/solodraft.js": "./js3d/solodraft.js?v=9863c9528c",
-      "./js3d/stage.js": "./js3d/stage.js?v=c24b3924a0",
+      "./js3d/stage.js": "./js3d/stage.js?v=203ed8ec22",
       "./js3d/stats.js": "./js3d/stats.js?v=8db644b518",
-      "./js3d/theme.js": "./js3d/theme.js?v=d34b657394",
+      "./js3d/theme.js": "./js3d/theme.js?v=ca159ed681",
       "./js3d/title.js": "./js3d/title.js?v=5c4c1af943",
       "./js3d/training.js": "./js3d/training.js?v=8f9e8ce6d0",
       "./js3d/tutorial.js": "./js3d/tutorial.js?v=1954db29c2",
@@ -1495,6 +1502,6 @@
   </script>
   <link rel="stylesheet" href="js3d/playchoices.css?v=3e42a70860">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=c1c8205720"></script>
+  <script type="module" src="js3d/main.js?v=b0b696674e"></script>
 </body>
 </html>
