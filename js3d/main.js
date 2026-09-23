@@ -51,6 +51,9 @@ let roomLoggedVersion = null;
 let trainingMode = false;
 /* 共有された問題を解いている (?puzzle=...)。{ spec, task, goal } */
 let puzzle = null;
+/* 選択画面で決まった先手 (ドラフト) と、始めに知らせること (ランダム編成) */
+let chosenFirst = null;
+let setupNote = '';
 /* チュートリアルのレッスン (?tutorial=1..)。{ index, lesson } */
 let tutorial = null;
 let tutorialOver = false;
@@ -206,12 +209,8 @@ async function boot() {
           await ROOM.roomLoadDeps();
         } catch (e) { UI.toast('オンライン機能を読み込めませんでした'); nextMode = 'single'; continue; }
         if (!ROOM.roomConfigured()) { UI.toast('オンライン対戦は未設定です (secure-room-config.js)'); nextMode = 'single'; continue; }
-        const result = await runRoomLobby(cards.protocols, {
-          /* ドラフト中にプロトコルの6枚を見る */
-          cardsOf: (name) => (protoIndex[name] ? protoIndex[name].cards : [])
-            .map(c => defIndex[c.id]).filter(Boolean)
-            .map(d => ({ img: faceImageURL(d), label: d.proto + ' ' + d.value }))
-        });
+        /* ドラフト中にプロトコルの6枚を見る */
+        const result = await runRoomLobby(cards.protocols, { cardsOf: protocolCards });
         /* 「戻る」はモード選択へ (ソロのプロトコル選択ではなく) */
         if (!result) { nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
         document.getElementById('boot').style.display = 'none';
@@ -220,7 +219,7 @@ async function boot() {
         return;
       }
       if (nextMode === 'tutorial') { location.href = location.pathname + '?tutorial=1'; return; }
-      const chosen = await runSetup(cards.protocols, { training: nextMode === 'training', allowOnline: false });
+      const chosen = await runSetup(cards.protocols, { training: nextMode === 'training', allowOnline: false, cardsOf: protocolCards });
       if (chosen.online) { nextMode = 'online'; continue; }
       if (chosen.back) { nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
       document.body.classList.remove('pregame');
@@ -228,6 +227,9 @@ async function boot() {
       p1 = p1 || chosen.ai;
       trainingMode = !!chosen.training;
       applyAiDifficulty(chosen.level);
+      /* ドラフトは先手後攻もドラフトの先手に合わせる。ランダム編成は中身を知らせる */
+      if (chosen.first) chosenFirst = chosen.first === 'me' ? ME : AI;
+      if (chosen.random) setupNote = 'ランダム: あなた ' + p0.join(' / ') + '　相手 ' + p1.join(' / ');
       break;
     }
   }
@@ -238,8 +240,9 @@ async function boot() {
     for (const id of Object.keys(defIndex)) if (defIndex[id].proto === name) keepIds.push(id);
   }
   pruneFaceCache(keepIds);
-  /* 先攻・後攻はコイントスで決める (トレーニングと問題は自分から) */
-  const firstPlayer = trainingMode || puzzle || tutorial || demoMode ? ME : (Math.random() < 0.5 ? ME : AI);
+  /* 先攻・後攻はコイントスで決める (トレーニングと問題は自分から。ドラフトはドラフトの先手) */
+  const firstPlayer = trainingMode || puzzle || tutorial || demoMode ? ME
+    : chosenFirst !== null ? chosenFirst : (Math.random() < 0.5 ? ME : AI);
   const res = puzzle
     ? Engine.newPuzzle(puzzle.spec, { seed: 1 })
     : tutorial
@@ -305,7 +308,12 @@ async function boot() {
     UI.setPrompt('');
     UI.toast('カードを選んで、光っている枠をタップすると置けます', 3200);
   } else {
-    if (!puzzle && !tutorial && !demoMode) UI.toast(firstPlayer === ME ? 'コイントス: あなたが先攻です' : 'コイントス: あなたは後攻です', 2600);
+    if (!puzzle && !tutorial && !demoMode) {
+      const turnNote = chosenFirst !== null
+        ? (firstPlayer === ME ? 'ドラフトの先手: あなたが先攻です' : 'ドラフトの後手: あなたは後攻です')
+        : (firstPlayer === ME ? 'コイントス: あなたが先攻です' : 'コイントス: あなたは後攻です');
+      UI.toast(setupNote ? setupNote + '　' + turnNote : turnNote, setupNote ? 4200 : 2600);
+    }
     await drainRequests();
     await afterTurn();
   }
@@ -1143,6 +1151,16 @@ function fieldLoc(st, uid) {
 /* カードの詳細 (拡大表示のパネル・スマホの効果表示で共通)。
    見る権利のないカードは中身を出さず「裏向きのカード」とだけ返す */
 const ROW_LABEL = { upper: '上段', middle: '中段', lower: '下段' };
+/* プロトコルの6枚 (絵・値・効果の文)。選択画面とオンラインのドラフトの「?」で見せる */
+function protocolCards(name) {
+  return (protoIndex[name] ? protoIndex[name].cards : [])
+    .map(c => defIndex[c.id]).filter(Boolean)
+    .map(d => ({
+      img: faceImageURL(d), label: d.proto + ' ' + d.value,
+      rows: ['upper', 'middle', 'lower'].filter(k => d[k]).map(k => ({ key: k, text: d[k] }))
+    }));
+}
+
 function defDetail(d, rows) {
   return {
     title: d.proto + ' ' + d.value, proto: d.proto, value: d.value, color: d.color, img: faceImageURL(d),

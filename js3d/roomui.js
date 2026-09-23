@@ -6,6 +6,7 @@
  * ========================================================================= */
 import { roomApi, roomIsAnonymous, roomLogin, roomSession, roomSignIn, roomSignInWithGitHub, roomSignInWithGoogle, roomSignOut, roomSignUp } from './room.js';
 import { emblemDataURL } from './emblems.js';
+import { showProtocolCards } from './protocards.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -25,7 +26,7 @@ function esc(s) {
   return d.innerHTML;
 }
 
-/* opts.cardsOf(name) -> [{ img, label }]: そのプロトコルの6枚 (ドラフト中に中身を見る) */
+/* opts.cardsOf(name) -> そのプロトコルの6枚 (protocards.js の形。ドラフト中に中身を見る) */
 export function runRoomLobby(protocols, opts = {}) {
   const root = $('#roomOv');
   const protoMap = {};
@@ -361,33 +362,13 @@ export function runRoomLobby(protocols, opts = {}) {
       }).join('') + '</div>';
     }
 
-    /* プロトコルの6枚を並べて見せる (ロビーより手前。どこかに触れると閉じる) */
-    function showProtoCards(name) {
-      const items = opts.cardsOf ? opts.cardsOf(name) : [];
-      if (!items.length) return;
-      let ov = document.getElementById('roCardsOv');
-      if (!ov) {
-        ov = document.createElement('div');
-        ov.id = 'roCardsOv';
-        document.body.appendChild(ov);
-      }
-      ov.innerHTML = '<div class="rc-title">' + esc(name) + ' のカード</div>' +
-        '<div class="rc-cards">' + items.map(it => '<figure><img alt="" src="' + it.img + '"><figcaption>' + esc(it.label) + '</figcaption></figure>').join('') + '</div>' +
-        '<div class="rc-hint">どこかに触れると閉じます</div>';
-      ov.classList.add('show');
-      ov.onclick = () => ov.classList.remove('show');
-      /* カードの絵は後から読み込まれるので、少し待ってから絵の入った画像に差し替える */
-      clearTimeout(ov._t);
-      ov._t = setTimeout(() => {
-        if (!ov.classList.contains('show')) return;
-        const imgs = ov.querySelectorAll('.rc-cards img');
-        (opts.cardsOf(name) || []).forEach((it, i) => { if (imgs[i]) imgs[i].src = it.img; });
-      }, 900);
-    }
-
     function bindChips(limit, rerender) {
       root.querySelectorAll('.ro-info').forEach(b => {
-        b.onclick = (ev) => { ev.stopPropagation(); showProtoCards(b.dataset.info); };
+        b.onclick = (ev) => {
+          ev.stopPropagation();
+          const p = protoMap[b.dataset.info] || {};
+          showProtocolCards(b.dataset.info, p.color, opts.cardsOf);
+        };
       });
       root.querySelectorAll('.ro-chip').forEach(b => {
         b.onclick = () => {
