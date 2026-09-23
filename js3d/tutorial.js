@@ -407,7 +407,10 @@ export function showCoach(index, stepNo, onRetry) {
   syncCoachBottom();
 }
 
-/* 結果を出し、読む時間が過ぎたら (パネルに触れたらすぐ) onDone。取り消し関数を返す */
+/* 結果を出している間の「画面のどこでもタップ」の受け口。閉じるときに必ず外す */
+let resultUnhook = null;
+
+/* 結果を出し、読む時間が過ぎたら (画面をタップしたらすぐ) onDone。取り消し関数を返す */
 export function showCoachResult(index, result, onDone) {
   coachKey = '';
   clearTimeout(coachTimer);
@@ -419,19 +422,34 @@ export function showCoachResult(index, result, onDone) {
     '<div class="tc-head"><span class="tc-tag">' + lessonTag(index) + '</span>' +
       '<b class="tc-verdict">' + (result.ok ? 'クリア！' : 'もう一度') + '</b></div>' +
     '<p class="tc-say">' + esc(result.text) + '</p>' +
-    '<p class="tc-next">' + (result.ok ? (last ? 'まとめへ' : '次のレッスンへ') : 'もう一度やってみよう') + '…<small>タップですぐ進む</small></p>' +
+    '<p class="tc-next">' + (result.ok ? (last ? 'まとめへ' : '次のレッスンへ') : 'もう一度やってみよう') + '…<small>画面のどこかをタップですぐ進む</small></p>' +
     '<i class="tc-bar" style="animation-duration:' + ms + 'ms"></i>';
   let done = false;
-  const go = () => { if (done) return; done = true; clearTimeout(coachTimer); onDone(); };
+  /* 結果を読んでいる間は、画面のどこをタップしても進む。そのタップは盤面の操作に渡さない
+     (押した瞬間に進め、続く pointerup / click も握りつぶす)。ボタン (メニュー・設定など) はそのまま使える */
+  const swallow = (ev) => { ev.stopPropagation(); ev.preventDefault(); };
+  const onTap = (ev) => {
+    const btn = ev.target.closest && ev.target.closest('button, a, input, select, textarea');
+    if (btn && !el.contains(btn)) return;
+    swallow(ev);
+    document.addEventListener('pointerup', swallow, { capture: true, once: true });
+    document.addEventListener('click', swallow, { capture: true, once: true });
+    go();
+  };
+  const unhook = () => { document.removeEventListener('pointerdown', onTap, true); if (resultUnhook === unhook) resultUnhook = null; };
+  if (resultUnhook) resultUnhook();
+  resultUnhook = unhook;
+  const go = () => { if (done) return; done = true; clearTimeout(coachTimer); unhook(); onDone(); };
   coachTimer = setTimeout(go, ms);
-  el.onclick = go;
+  document.addEventListener('pointerdown', onTap, true);
   syncCoachBottom();
-  return () => { done = true; clearTimeout(coachTimer); };
+  return () => { done = true; clearTimeout(coachTimer); unhook(); };
 }
 
 export function hideCoach() {
   coachKey = '';
   clearTimeout(coachTimer);
+  if (resultUnhook) resultUnhook();
   const el = document.getElementById('tutorialCoach');
   if (el) { el.className = ''; el.onclick = null; }
   syncCoachBottom();
