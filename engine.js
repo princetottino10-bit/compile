@@ -2327,22 +2327,18 @@ const AI_W = {
   // 対象の無い中段を表で切る (空撃ち) 減点: fizzle + 中段の効果値 × fizzleMid
   fizzle: 45, fizzleMid: 0.6,
   // 手の事前評価 (aiActionBias) の表向き/裏向きまわり。
-  // compiledUp/Down: コンパイル済みラインへ表/裏で出す減点、recompile: そこで再コンパイルしそうなとき
-  // midUp: 表向きの中段効果の重み、lowUp: 効果の弱い値0-1を表で出す減点、lowDown: 低値を裏で出す加点 (値1あたり)
-  compiledUp: 75, compiledDown: 75, recompile: 160, midUp: 0.35, lowUp: 20, lowDown: 5,
-  // 済ラインへのプレイで自分の2ラインリードを作る/相手の2ラインリードを崩すとき、compiledUp/Down の減点を戻す割合。0 で従来どおり
-  compiledLead: 1,
+  // recompile: 済ラインで再コンパイルしそうなときの減点、midUp: 表向きの中段効果の重み。
+  // 表で出すか裏で出すかは値の大小で誘導しない (裏向きは aiFaceDownAllowed の原則で絞る。監修 2026-09-23)
+  recompile: 160, midUp: 0.35,
+  /* refreshRecompile: コントロールを持ってリフレッシュし、相手の済みプロトコルを相手のコンパイル圏のラインへ
+     並べ替えて空のリコンパイルをさせられるときの加点 (相手の1本を止める)。
+     comboDiscard: 「手札を1枚捨てる」札を出すと組み合わせの札を捨てるしかないときの減点 (aiComboKeepCost の倍率)。
+     捨てるくらいならリフレッシュする */
+  refreshRecompile: 260, comboDiscard: 3,
   /* 「〜できる」の任意コストを、払わない選択も込みで見る (0 で従来どおり必ず払う扱い)。
      anyLineBase/anyLineGain: 「プロトコルを対応させずに表向きでプレイできる」(SPIRIT 1) の価値。
      ライン制限を外したときの手札評価の増分を上乗せする。0 で従来どおり常時効果の一律10点 */
   optionalCost: 1, anyLineBase: 26, anyLineGain: 0.9,
-  /* valueUp: 表向きで出すときの (値-2) あたりの加点。値の低い札ほどテキストが強いので下げる方向。
-     裏向きはカードのテキストを丸ごと捨てるので原則マイナス:
-     downFlat (一律) + 捨てる中段の価値 * downText。ただし人が裏向きを選ぶ場面では緩める。
-     downMismatch: そのラインに表で出せない札 (裏ならどのラインにも置ける) に残す割合
-     downCombo: あとで表に返す手段 (反転効果) を持っているときに残す割合。コントロール争いと
-     コンパイル圏に届く手は 0 にする */
-  valueUp: 7, downFlat: 0, downText: 0.7, downMismatch: 0.3, downCombo: 0.4,
   /* 一番上のカードを場から動かすと、下の表向きカードの中段が再発動する。
      自分の中段なら狙って外し、相手の中段なら外さない (uncoverBase + 中段の価値 * uncoverMid) */
   uncoverBase: 22, uncoverMid: 0.8,
@@ -2412,10 +2408,8 @@ const AI_DSH_W = {
      WATER 4 が手札にあれば、毎手番 WATER 4 を重ねて自分を戻す (2枚反転・3枚ドロー) を繰り返せる。
      1手先の読みでは次の手番の得が見えないので、構えを作る手 (WATER 2 の並べ替え・SPEED 3 の移動) のために置く */
   fire0Water4Ready: 60,
-  compiledUp: 75, compiledDown: 75, recompile: 160, midUp: 0.35, lowUp: 20, lowDown: 5,
-  // 済ラインへのプレイで自分の2ラインリードを作る/相手の2ラインリードを崩すとき、compiledUp/Down の減点を戻す割合。0 で従来どおり
+  recompile: 160, midUp: 0.35, refreshRecompile: 260, comboDiscard: 3,
   optionalCost: 1, anyLineBase: 26, anyLineGain: 0.9,
-  valueUp: 7, downFlat: 0, downText: 0.7, downMismatch: 0.3, downCombo: 0.4,
   uncoverBase: 22, uncoverMid: 0.8,
   emptyHand: 34, lowHand: 10,
   futureDiscount: 0.55,
@@ -2423,7 +2417,6 @@ const AI_DSH_W = {
   choiceDepth: 1,
   orderSim: 4,
   diversityReady: 120, diversityLast: 380, diversityEarly: 420, diversityHoldLine: 90,
-  compiledLead: 0,   // 最強同士のミラー 480 戦で 49.8% [45.3, 54.2]。効果が出ていないので切っておく
 };
 function setAiSpecialistWeights(obj) {
   const unknown = [];
@@ -2533,21 +2526,6 @@ function aiLineLeadCount(st, side) {
   let wins = 0;
   for (let l = 0; l < 3; l++) if (lineTotal(st, l, side) > lineTotal(st, l, op)) wins++;
   return wins;
-}
-
-/* 済ライン line の自分の合計が after になったとき、コントロール争いが動くか (0 / 1)。
-   自分: 2ラインリード未満 → 以上 (コントロールを持っていないとき)。
-   相手: 2ラインリード以上 → 未満 (相手がコントロールを持っていないとき)。効果による他ラインの変化は見ない */
-function aiCompiledLeadSwing(st, side, line, after) {
-  if (!st.useControl) return 0;
-  const op = 1 - side;
-  const theirs = lineTotal(st, line, op), before = lineTotal(st, line, side);
-  const mineLead = aiLineLeadCount(st, side), opLead = aiLineLeadCount(st, op);
-  const gainMine = before <= theirs && after > theirs;
-  const breakOp = theirs > before && theirs <= after;
-  if (gainMine && mineLead + 1 >= 2 && st.control !== side) return 1;
-  if (breakOp && opLead >= 2 && opLead - 1 < 2 && st.control !== op) return 1;
-  return 0;
 }
 
 function aiControlLeverage(st, side) {
@@ -2851,23 +2829,6 @@ function aiHasFlipper(st, side) {
   return false;
 }
 
-/* 裏向きで出す損 = そのカードのテキストを丸ごと捨てるぶん (downText × 中段の価値)。
-   一律の定数 (downFlat) は 960戦×2 の計測で強さに効かなかったので 0 にしてある。
-   人が裏向きを選ぶ場面では緩める:
-   - そのラインに表で出せない札 (裏ならどのラインにも置ける)
-   - あとで表に返す手段を持っている (コンボの仕込み)
-   - コントロールを渡さない / 取り返す一手、コンパイル圏に届く一手 → 0 */
-function aiFaceDownCost(st, side, action, d, mine, theirs, gap, W) {
-  let cost = W.downFlat + Math.max(0, aiMiddleValue(d)) * W.downText;
-  if (!cost) return 0;
-  const compiled = !!st.players[side].protocols[action.line].compiled;
-  if (!compiled && gap <= 2 && mine + 2 > theirs) return 0;          // コンパイル圏に届く
-  if (aiCompiledLeadSwing(st, side, action.line, mine + 2)) return 0;  // コントロール争いが動く
-  if (!canPlay(st, side, action.card, action.line, true)) cost *= W.downMismatch;
-  if (aiHasFlipper(st, side)) cost *= W.downCombo;
-  return cost;
-}
-
 /* 「開始：このカードを反転させる」を持つ札 (PSYCHIC 1 など)。開始フェイズはコンパイル判定より
    先に解決されるので、次の開始では裏向き=値2として数える。8点のラインに値1で出して 10 点にできる */
 function aiFlipsSelfAtStart(d) {
@@ -2967,6 +2928,32 @@ function aiMiddleFizzles(st, side, action, d) {
   }
 }
 
+/* コントロールを持ってリフレッシュするとき、相手のプロトコルを並べ替えて空のリコンパイルをさせられるライン。
+   相手が未済プロトコルで10以上・リードしているラインと、相手の済みプロトコルのラインを入れ替え、
+   入れ替えた先で相手が新たにコンパイル圏にならなければ成立。無ければ -1 */
+function aiRecompileBurnLine(st, side) {
+  if (!st.useControl || st.control !== side) return -1;
+  const op = 1 - side, prot = st.players[op].protocols;
+  const reach = (l) => lineTotal(st, l, op) >= 10 && lineTotal(st, l, op) > lineTotal(st, l, side);
+  for (let l = 0; l < 3; l++) {
+    if (prot[l].compiled || !reach(l)) continue;
+    for (let c = 0; c < 3; c++) if (c !== l && prot[c].compiled && !reach(c)) return l;
+  }
+  return -1;
+}
+
+/* 「あなたは手札を1枚捨て札にする」札を表で出すと、残りの手札が組み合わせの札だけで
+   それを捨てるしかないときの損 (捨てる札の中で一番軽い aiComboKeepCost を枚数ぶん) */
+function aiComboDiscardCost(st, side, action, d) {
+  const ops = (d.eff && d.eff.middle && d.eff.middle.ops) || [];
+  const n = ops.filter(o => o.op === 'discard' && !o.optional && !o.player).reduce((a, o) => a + (o.count || 1), 0);
+  if (!n) return 0;
+  const req = { kind: 'pickHand', player: side, prompt: 'discard' };
+  const costs = st.players[side].hand.filter(uid => uid !== action.card)
+    .map(uid => aiComboKeepCost(st, req, [uid], side)).sort((a, b) => a - b);
+  return costs.slice(0, n).reduce((a, b) => a + b, 0);
+}
+
 function aiActionBias(st, action, side) {
   if (!action) return 0;
   const op = 1 - side;
@@ -2978,9 +2965,12 @@ function aiActionBias(st, action, side) {
     const draws = 5 - st.players[side].hand.length;
     let v = draws * W.refreshPerCard - W.refreshTempo;
     if (st.control === side) v += aiControlLeverage(st, side) * 0.35;
+    /* 相手のコンパイル圏のラインに相手の済みプロトコルを並べ替えれば、そのラインは空のリコンパイルで消える */
+    const burn = aiRecompileBurnLine(st, side);
+    if (burn >= 0) v += W.refreshRecompile;
     /* 相手がコンパイル圏に届いているラインぶん、手を止める損を重くする */
     for (let l = 0; l < 3; l++) {
-      if (st.players[op].protocols[l].compiled) continue;
+      if (l === burn || st.players[op].protocols[l].compiled) continue;
       const theirs = lineTotal(st, l, op);
       if (theirs >= 8 && theirs >= lineTotal(st, l, side)) v -= W.refreshUrgency;
     }
@@ -3031,32 +3021,20 @@ function aiActionBias(st, action, side) {
     const add = action.faceUp ? d.value : 2;
     const likelyRecompile = mine + add >= 10 && mine + add > theirs;
     if (likelyRecompile) v -= W.recompile;
-    else {
-      /* 済ラインもリードの数には入る。ここで相手を越えれば2ラインリード (次の開始でコントロール獲得)、
-         相手のリードを崩せば奪取を防げる。その場合は「進まないラインに置く」減点を戻す */
-      const penalty = action.faceUp ? W.compiledUp : W.compiledDown;
-      v -= penalty * (1 - W.compiledLead * aiCompiledLeadSwing(st, side, action.line, mine + add));
-    }
   }
   if (action.faceUp) {
     const mv = fizzles ? 0 : aiMiddleValue(d);
     /* 次の開始で裏返る札は、そのとき値2として数えられる (開始フェイズはコンパイル判定より先) */
     const reach = aiFlipsSelfAtStart(d) ? Math.max(d.value, 2) : d.value;
     v += mv * W.midUp;
-    v += (d.value - 2) * W.valueUp;
     if (reachLine && gap <= reach && mine + reach > theirs && !st.players[side].protocols[action.line].compiled) v += 150;
-    if (mv < 8 && d.value < 2) v -= W.lowUp;
     if (reachLine && gap <= reach && !st.players[side].protocols[action.line].compiled) v += 22;
     if (mine + reach > theirs) v += 8;
+    if (!fizzles) v -= aiComboDiscardCost(st, side, action, d) * W.comboDiscard;
   } else {
-    v -= aiFaceDownCost(st, side, action, d, mine, theirs, gap, W);
-    v += (2 - d.value) * W.lowDown;
+    /* 裏向きの損得はここで足し引きしない (出してよい場面は aiFaceDownAllowed で決める) */
     if (['HATE_4', 'HATE_5'].includes(d.id)) v -= W.hateDownPenalty || 0;
     if (['SPEED_2', 'SPEED_4'].includes(d.id)) v -= W.speedDownPenalty || 0;
-    if (reachLine && gap <= 2 && mine + 2 > theirs && !st.players[side].protocols[action.line].compiled) v += 115;
-    if (aiMiddleValue(d) > 35) v -= 24;
-    if (reachLine && gap <= 2 && !st.players[side].protocols[action.line].compiled) v += 12;
-    if (mine + 2 > theirs) v += 5;
   }
   return v;
 }
@@ -3472,7 +3450,15 @@ function aiPlayFreePicks(st, req, me) {
     });
     if (speed3) return [speed3];
   }
-  const ranked = req.candidates.map(raw => {
+  /* 追加プレイも手番のプレイと同じく、あえて裏で出すのは aiFaceDownAllowed の場面だけ */
+  let cands = req.candidates;
+  if (!aiIsLockSpecialist(st, me)) {
+    const asAct = (raw) => { const p = String(raw).split('|'); return { type: 'play', card: p[0], line: +p[1], faceUp: p[2] === 'u' }; };
+    const acts = cands.map(asAct);
+    const kept = cands.filter((raw, i) => acts[i].faceUp || aiFaceDownAllowed(st, me, acts[i], acts));
+    if (kept.length) cands = kept;
+  }
+  const ranked = cands.map(raw => {
     const parts = String(raw).split('|');
     const uid = parts[0], line = +parts[1], faceUp = parts[2] === 'u';
     const c = st.cards[uid];
@@ -3777,6 +3763,52 @@ function aiWouldWasteHate4(state, action, side) {
   return sourceValue < otherLowest;
 }
 
+/* あえて裏向きで出してよいか (対戦者の原則。docs/ai-combos.md「裏向きの原則」)。
+   1. 表で出せる札が無い
+   2. コンボ: 自分の一番上の札の「覆われることになったとき」を起こす (FIRE 0 など)
+   3. コンパイル: 裏の2点でそのラインがコンパイル圏 (10以上で相手より上) に届き、表で届く手が無い
+   4. コントロール: 裏の2点で自分が2ラインのリードを取る / 相手の2ラインのリードを崩す。表で同じことができる手が無い */
+function aiFaceDownAllowed(st, side, action, acts) {
+  const ups = acts.filter(a => a.type === 'play' && a.faceUp);
+  if (!ups.length) return true;
+  const destSide = action.side === 0 || action.side === 1 ? action.side : side;
+  const op = 1 - side;
+  if (destSide === side) {
+    const stack = st.lines[action.line][side];
+    const top = stack[stack.length - 1];
+    const tc = top && st.cards[top];
+    const tr = tc && tc.faceUp && DEFS[tc.def].eff && DEFS[tc.def].eff.lower && DEFS[tc.def].eff.lower.trigger;
+    /* 「覆われることになったとき」を起こすコンボ。表で同じ札を覆えるならそちらで起こす */
+    if (tr && tr.on === 'wouldBeCovered'
+        && !ups.some(u => u.line === action.line && (u.side === undefined || u.side === side))) return true;
+  }
+  if (destSide !== side) return false;
+  const total = (l, s) => lineTotal(st, l, s);
+  const addFor = (a) => (a.faceUp ? DEFS[st.cards[a.card].def].value : 2);
+  const reach = (l, add) => !st.players[side].protocols[l].compiled && total(l, side) + add >= 10 && total(l, side) + add > total(l, op);
+  if (reach(action.line, 2) && !ups.some(u => (u.side === undefined || u.side === side) && reach(u.line, addFor(u)))) return true;
+  if (st.useControl) {
+    const leads = (line, add, who) => [0, 1, 2].filter(l => {
+      const m = total(l, side) + (l === line ? add : 0), t = total(l, op);
+      return who === side ? m > t : t > m;
+    }).length;
+    const effect = (line, add) => ({
+      gain: st.control !== side && leads(-1, 0, side) < 2 && leads(line, add, side) >= 2,   // この1枚で2ライン目のリードができる
+      deny: leads(-1, 0, op) >= 2 && leads(line, add, op) < 2
+    });
+    const mine = effect(action.line, 2);
+    if (mine.gain || mine.deny) {
+      const sameByUp = ups.some(u => {
+        if (u.side !== undefined && u.side !== side) return false;
+        const e = effect(u.line, addFor(u));
+        return (!mine.gain || e.gain) && (!mine.deny || e.deny);
+      });
+      if (!sameByUp) return true;
+    }
+  }
+  return false;
+}
+
 function aiDecisionActions(state) {
   let acts = legalActions(state);
   const side = state.turn;
@@ -3786,6 +3818,13 @@ function aiDecisionActions(state) {
     const speed0 = acts.filter(action => action.type === 'play' && action.faceUp
       && state.cards[action.card] && state.cards[action.card].def === 'SPEED_1');
     if (speed0.length) acts = speed0;
+  }
+  /* 裏向きは原則として表で使う。あえて裏で出してよいのは aiFaceDownAllowed の場面だけ
+     (対戦者の原則: コンボ / コントロールを取る・渡さない / コンパイルに届かせる、ほかに手が無いとき)。
+     ロック特化はサイキック①を裏で仕込むのが手筋なので対象外 */
+  if (!aiIsLockSpecialist(state, side)) {
+    const kept = acts.filter(a => !(a.type === 'play' && !a.faceUp) || aiFaceDownAllowed(state, side, a, acts));
+    if (kept.length) acts = kept;
   }
   const opponent = 1 - side;
   const opponentPending = state.players[opponent].protocols.filter(protocol => !protocol.compiled).length;
