@@ -40,7 +40,8 @@ export function handSlot(i, n) {
         BOARD.handY + 0.35 - row * 0.12 - tucked * .22,    // 後ろの列は低くして前の列に隠れる
         BOARD.handZ + 0.95 - row * PEEK + tucked * 1.2],
       rot: [0.18, 0, 0],
-      scale: PORTRAIT_SCALE * (tucked ? .9 : 1)
+      scale: PORTRAIT_SCALE * (tucked ? .9 : 1),
+      hidden: !!tucked && VIEW.handHidden
     };
   }
   /* 8枚以上は2列にする。1列のまま重ねると中央の札が完全に隠れ、
@@ -70,7 +71,9 @@ export function handSlot(i, n) {
       BOARD.handY + HAND_LIFT[0] + rowY - droop * up[0] + layer * nrm[0] - tucked * (0.14 + 0.08 * k),
       BOARD.handZ + HAND_LIFT[1] + rowZ + 0.55 * k - droop * up[1] + layer * nrm[1] + tucked * (0.45 + 0.20 * k)],
     rot: [HAND_TILT, -t * 0.26, 0],
-    scale: (1.06 - 0.22 * k) * (tucked ? 0.92 : 1) * rowScale
+    scale: (1.06 - 0.22 * k) * (tucked ? 0.92 : 1) * rowScale,
+    /* 手札を隠すボタン: 画面下へ引いたあと見えなくする (盤面の手前側を読めるように) */
+    hidden: !!tucked && VIEW.handHidden
   };
 }
 
@@ -89,20 +92,73 @@ export function handSlotRaised(i, n) {
   };
 }
 
-/* 盤面スタック: line=0..2, side=カードの持ち主, idx=下から何枚目か */
-export function stackSlot(line, side, idx, me) {
+/* 覆われた札のずらし幅。
+   上段 (覆われても効く) がある表向きの札は、上段の文が見える幅 (BOARD.coverStep)。
+   上段の無い札・裏向きの札は、名前と値の帯だけ見えればよいので詰める (STEP_HEAD)。
+   長くなりすぎたら (STACK_SPAN を超えたら) 上段の無い札からさらに詰め、それでも収まらなければ全体を縮める */
+/* STACK_SPAN: 一番下から一番上までの長さの上限。手前 (自分側) は手札とボタンがあるので短い */
+const STEP_HEAD = 0.26, STEP_MIN = 0.2, STACK_SPAN = { near: 1.7, far: 2.2 };
+let coverShowsUpper = null;   // (st, uid) => 覆われても上段を見せる必要があるか。main.js が登録する
+export function setStackCardInfo(fn) { coverShowsUpper = fn; }
+
+/* 1列ぶんのずらし幅を決め、長さ span に収める (上段の無い札から詰め、それでも長ければ全体を縮める) */
+function fitSteps(steps, span) {
+  let total = steps.reduce((a, b) => a + b, 0);
+  if (total > span) {
+    const heads = steps.filter(x => x === STEP_HEAD).length;
+    const cut = heads ? Math.min(total - span, heads * (STEP_HEAD - STEP_MIN)) / heads : 0;
+    for (let i = 0; i < steps.length; i++) if (steps[i] === STEP_HEAD) steps[i] -= cut;
+    total = steps.reduce((a, b) => a + b, 0);
+    if (total > span) for (let i = 0; i < steps.length; i++) steps[i] *= span / total;
+  }
+  const out = [0];
+  for (let i = 0; i < steps.length; i++) out.push(out[i] + steps[i]);
+  return out;
+}
+
+/* st のそのスタックで、下から idx 枚目の置き方 { offset, dx, scale }。
+   詰めても span に収まらないときは2列にする: 下 (古い) 半分を左の列、残りを右の列に、少し縮めて並べる。
+   一番上の札は右の列の一番手前に来るので、全体が見える */
+const COL2_SCALE = 0.78, COL2_DX = 0.41;
+function stackPlace(st, line, side, idx, span) {
+  const stack = st.lines[line][side];
+  const n = Math.max(idx + 1, stack.length);
+  const stepOf = (i) => (stack[i] && coverShowsUpper && coverShowsUpper(st, stack[i]) ? BOARD.coverStep : STEP_HEAD);
+  const steps = [];
+  for (let i = 0; i < n - 1; i++) steps.push(stepOf(i));
+  const tightest = steps.reduce((a, x) => a + (x === STEP_HEAD ? STEP_MIN : x), 0);
+  if (tightest <= span || n < 4) return { offset: fitSteps(steps, span)[idx], dx: 0, scale: 1 };
+  const split = Math.ceil(n / 2);
+  const col = idx < split ? 0 : 1;
+  const from = col ? split : 0, to = col ? n : split;
+  const colSteps = [];
+  for (let i = from; i < to - 1; i++) colSteps.push(stepOf(i) * COL2_SCALE);
+  return {
+    offset: fitSteps(colSteps, span)[idx - from],
+    dx: col ? COL2_DX : -COL2_DX,
+    scale: COL2_SCALE
+  };
+}
+
+/* 盤面スタック: line=0..2, side=カードの持ち主, idx=下から何枚目か。
+   st を渡すと、下の札の中身に合わせて詰める (渡さなければ一律の間隔) */
+export function stackSlot(line, side, idx, me, st) {
   const near = side === me;
   const dir = near ? 1 : -1;
   const baseZ = near ? BOARD.stackZ[1] : BOARD.stackZ[0];
+  const p = st && st.lines && st.lines[line]
+    ? stackPlace(st, line, side, idx, near ? STACK_SPAN.near : STACK_SPAN.far)
+    : { offset: idx * BOARD.coverStep, dx: 0, scale: 1 };
+  /* 2列のときは、相手側から見ても「下の半分が左」になるよう向きに合わせて左右を反転する */
   return {
     pos: [
-      BOARD.laneX[line],
+      BOARD.laneX[line] + p.dx * dir,
       CARD.thickness / 2 + idx * BOARD.coverLift,
-      baseZ + dir * idx * BOARD.coverStep
+      baseZ + dir * p.offset
     ],
     /* 相手のスタックは相手から読める向き (実卓と同じ) */
     rot: [0, near ? 0 : Math.PI, 0],
-    scale: 1
+    scale: p.scale
   };
 }
 
@@ -175,7 +231,7 @@ export function boardPlacements(st, me) {
           zone: 'field',
           line, side, idx,
           top: idx === stack.length - 1,
-          slot: stackSlot(line, side, idx, me)
+          slot: stackSlot(line, side, idx, me, st)
         });
       }
     }

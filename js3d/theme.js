@@ -42,7 +42,8 @@ export const BOARD = {
    k: 0=横長(デスクトップ) .. 1=縦長(スマホ縦持ち)。stage.resize が更新し、
    カメラと手札レイアウトがこれを参照して構図を変える */
 /* k: 縦長の度合い (0 = 横長 .. 1 = 縦長)。short: 高さの低い横画面 (横持ちのスマホ) */
-export const VIEW = { k: 0, handOpen: true, short: false };
+/* handHidden: 手札を隠すボタンで畳んだとき (完全に見えなくする)。PC の自動の畳み (下に少し覗かせる) とは別 */
+export const VIEW = { k: 0, handOpen: true, handHidden: false, short: false };
 
 /* --- カメラ --- */
 export const CAMERA = {

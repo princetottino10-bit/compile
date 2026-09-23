@@ -2,12 +2,18 @@
    指に追従中のカードや、選択で持ち上がった手札が真上に来ても、
    accept を通らなければ読み飛ばして下のカードへ降りる。
    accept を省略すると従来通り最前面のカード (またはパッド) を返す。 */
+function shown(obj) {
+  for (let o = obj; o; o = o.parent) if (!o.visible) return false;
+  return true;
+}
+
 export function pickCard(ray, objects, accept) {
   const hits = ray.intersectObjects(objects, true);
   for (const hit of hits) {
     let obj = hit.object;
     while (obj && !obj.userData.uid && !obj.userData.isPad) obj = obj.parent;
     if (!obj) continue;
+    if (!shown(obj)) continue;                 // 隠した手札など、見えていない札はタップを奪わない
     if (accept && !accept(obj.userData)) continue;
     return { obj, point: hit.point };
   }

@@ -173,7 +173,7 @@ export function createBoard(stage, defIndex, me, hooks) {
   function slotFor(st, uid) {
     const l = locOf(st, uid);
     if (!l) return null;
-    if (l.zone === 'field') return LAYOUT.stackSlot(l.line, l.side, l.idx, me);
+    if (l.zone === 'field') return LAYOUT.stackSlot(l.line, l.side, l.idx, me, st);
     if (l.zone === 'transit') return LAYOUT.transitSlot(l.line, l.side, me);
     if (l.zone === 'transitPile') return LAYOUT.transitPileSlot(l.dest, l.side, me, l.idx);
     if (l.zone === 'hand') {
@@ -219,7 +219,7 @@ export function createBoard(stage, defIndex, me, hooks) {
         place(card, slot, l.zone === 'hand' ? null : faceX);
         if (l.zone === 'hand') card.rotation.x = slot.rot[0];
       }
-      card.visible = true;
+      card.visible = !slot.hidden;
       seen.add(uid);
     }
     for (const [uid, card] of cards) if (!seen.has(uid)) card.visible = false;
@@ -260,14 +260,14 @@ export function createBoard(stage, defIndex, me, hooks) {
     if (play && play.type === 'play' && Number.isInteger(play.line)) {
       const side = play.side === 0 || play.side === 1 ? play.side : prev.turn;
       const stack = prev.lines[play.line] && prev.lines[play.line][side];
-      if (stack) slot = LAYOUT.stackSlot(play.line, side, stack.length, me);
+      if (stack) slot = LAYOUT.stackSlot(play.line, side, stack.length, me, prev);
     }
     /* プレイ直後は効果解決までエンジン上 committed (移動中) になるが、
        手札からのプレイは最初からスタックへ着地して見せたい */
     const l = locOf(next, uid);
     if (!play && l && l.zone === 'transit') {
       const side = opts.actor;
-      slot = LAYOUT.stackSlot(l.line, side, next.lines[l.line][side].length, me);
+      slot = LAYOUT.stackSlot(l.line, side, next.lines[l.line][side].length, me, next);
     }
     if (!slot) return;
     const faceUp = play ? !!play.faceUp : !!next.cards[uid].faceUp;
@@ -543,9 +543,9 @@ export function createBoard(stage, defIndex, me, hooks) {
       if (shattered) {
         /* 砕けた札は見えないまま捨て札へ運び、着いたところで現す */
         card.visible = false;
-        return moveTo(card, slot, faceX, ms(dur), ease, arc).then(() => { card.visible = true; });
+        return moveTo(card, slot, faceX, ms(dur), ease, arc).then(() => { card.visible = !slot.hidden; });
       }
-      return moveTo(card, slot, faceX, ms(dur), ease, arc);
+      return moveTo(card, slot, faceX, ms(dur), ease, arc).then(() => { if (slot.hidden) card.visible = false; });
     });
 
     await Promise.all(anims);

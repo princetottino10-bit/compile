@@ -133,6 +133,13 @@ async function boot() {
   /* カードやプロトコルの札は canvas に文字を描くので、書体が届いてから作る (最大1.5秒待つ) */
   await loadFonts(1500);
   mark('fonts');
+  /* 盤面のスタックは、覆われた札に上段 (覆われても効く) があるときだけ上段が見える幅でずらし、無ければ詰める */
+  LAYOUT.setStackCardInfo((st, uid) => {
+    const c = st.cards[uid];
+    if (!c || !c.faceUp) return false;
+    const d = defIndex[c.def];
+    return !!(d && d.upper && String(d.upper).trim());
+  });
 
   stage = createStage(document.getElementById('stage'));
   setMaxAnisotropy(stage.renderer.capabilities.getMaxAnisotropy());
@@ -706,7 +713,7 @@ function updatePads() {
       pad.userData.pulse = on ? 0.92 : 0;
       if (on) {
         const slot = LAYOUT.stackSlot(pad.userData.line, pad.userData.side,
-          cur.state.lines[pad.userData.line][pad.userData.side].length, ME);
+          cur.state.lines[pad.userData.line][pad.userData.side].length, ME, cur.state);
         pad.position.set(...slot.pos);
       }
     }
@@ -730,7 +737,7 @@ function updatePads() {
     pad.userData.pulse = choices.some(a => a.faceUp) ? 0.95 : 0.6;
     /* 積み上がった高さに追従させる */
     const idx = st.lines[line][side].length;
-    const slot = LAYOUT.stackSlot(line, side, idx, ME);
+    const slot = LAYOUT.stackSlot(line, side, idx, ME, st);
     /* パッドと飛行アニメーションは同じ stackSlot を共有する。 */
     pad.position.set(...slot.pos);
   }
@@ -1266,6 +1273,7 @@ function syncHandDrawerButton() {
 function setHandDrawer(open, instant = false) {
   VIEW.handOpen = !!open;
   if (open) handPinnedClosed = false;
+  VIEW.handHidden = !open && handPinnedClosed;
   document.body.classList.toggle('hand-tucked', !VIEW.handOpen);
   syncHandDrawerButton();
   const st = shown();
@@ -1279,7 +1287,10 @@ function setHandDrawer(open, instant = false) {
     const slot = uid === selectedUid
       ? LAYOUT.handSlotRaised(i, st.players[ME].hand.length)
       : LAYOUT.handSlot(i, st.players[ME].hand.length);
-    board.moveTo(board.cardOf(st, uid), slot, null, 180, TW.Ease.outCubic, 0);
+    const card = board.cardOf(st, uid);
+    /* 隠すときは引いてから消し、出すときは先に見せてから上げる */
+    if (!slot.hidden) card.visible = true;
+    board.moveTo(card, slot, null, 180, TW.Ease.outCubic, 0).then(() => { if (slot.hidden) card.visible = false; });
   }
 }
 
@@ -2306,7 +2317,7 @@ function setLineTargets(lines) {
     pad.userData.hover = on;
     if (on && st) {
       const idx = st.lines[pad.userData.line][pad.userData.side].length;
-      const slot = LAYOUT.stackSlot(pad.userData.line, pad.userData.side, idx, ME);
+      const slot = LAYOUT.stackSlot(pad.userData.line, pad.userData.side, idx, ME, st);
       pad.position.set(...slot.pos);
     }
   }
