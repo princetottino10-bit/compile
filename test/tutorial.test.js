@@ -74,11 +74,11 @@ test('案内は「次へ」なしで、選んだカード・求められた選�
   assert.equal(coachStep(LESSONS[1], c({ sel: 'SPEED_3' })), 1);
   assert.equal(coachStep(LESSONS[1], c({ waiting: true })), 2);
   /* レッスン4: 捨てる選択 → 削除する選択 */
-  assert.equal(coachStep(LESSONS[3], c({ ask: 'discard' })), 3);
-  assert.equal(coachStep(LESSONS[3], c({ ask: 'delete' })), 4);
+  assert.equal(coachStep(LESSONS[4], c({ ask: 'discard' })), 3);
+  assert.equal(coachStep(LESSONS[4], c({ ask: 'delete' })), 4);
   /* レッスンが想定していない選択 (違うカードの効果) を求められたら汎用の案内 (-1) */
   assert.equal(coachStep(LESSONS[0], c({ ask: 'discard' })), -1);
-  assert.equal(coachStep(LESSONS[3], c({ ask: 'shift' })), -1);
+  assert.equal(coachStep(LESSONS[4], c({ ask: 'shift' })), -1);
   /* どのレッスンも先頭の案内は条件なしで出せる */
   for (const lesson of LESSONS) assert.equal(lesson.steps[0].when, undefined);
 });
@@ -105,21 +105,54 @@ test('レッスン3: リフレッシュすればクリア、カードを置く�
   assert.equal((await playLesson(LESSONS[2], { type: 'play', card: 'p0:LIFE_2', line: 2, faceUp: false })).ok, false);
 });
 
-test('レッスン4: FIRE 1 で LIGHT の一番上を削除すればクリア、自分のカードを消すと失敗', async () => {
+test('レッスン5: FIRE 1 で LIGHT の一番上を削除すればクリア、自分のカードを消すと失敗', async () => {
   const { LESSONS } = await loadTu();
   const target = (uid) => (req) => req.prompt === 'discard' || req.kind === 'pickHand'
     ? req.candidates.slice(0, 1)
     : [req.candidates.find(c => String(c).startsWith(uid))];
-  const ok = await playLesson(LESSONS[3], { type: 'play', card: 'p0:FIRE_2', line: 1, faceUp: true }, target('p1:LIGHT_5'));
+  const ok = await playLesson(LESSONS[4], { type: 'play', card: 'p0:FIRE_2', line: 1, faceUp: true }, target('p1:LIGHT_5'));
   assert.equal(ok.ok, true, ok.text);
-  const ng = await playLesson(LESSONS[3], { type: 'play', card: 'p0:FIRE_2', line: 1, faceUp: true }, target('p0:LIFE_5'));
+  const ng = await playLesson(LESSONS[4], { type: 'play', card: 'p0:FIRE_2', line: 1, faceUp: true }, target('p0:LIFE_5'));
   assert.equal(ng.ok, false);
 });
 
-test('レッスン5: SPEED のラインに裏向きで置けば、次の手番の始めに3つ目がコンパイルされて勝つ', async () => {
+test('レッスン9: SPEED のラインに裏向きで置けば、次の手番の始めに3つ目がコンパイルされて勝つ', async () => {
   const { LESSONS } = await loadTu();
-  const ok = await playLesson(LESSONS[4], { type: 'play', card: 'p0:FIRE_5', line: 0, faceUp: false });
+  const ok = await playLesson(LESSONS[8], { type: 'play', card: 'p0:FIRE_5', line: 0, faceUp: false });
   assert.equal(ok.ok, true, ok.text);
-  const ng = await playLesson(LESSONS[4], { type: 'play', card: 'p0:SPEED_2', line: 0, faceUp: true });
+  const ng = await playLesson(LESSONS[8], { type: 'play', card: 'p0:SPEED_2', line: 0, faceUp: true });
+  assert.equal(ng.ok, false);
+});
+
+test('レッスン4: FIRE 0 の上にカードを重ねれば (裏向きでも) クリア、ほかのラインに置くと失敗', async () => {
+  const { LESSONS } = await loadTu();
+  const ok = await playLesson(LESSONS[3], { type: 'play', card: 'p0:SPEED_3', line: 1, faceUp: false });
+  assert.equal(ok.ok, true, ok.text);
+  const ng = await playLesson(LESSONS[3], { type: 'play', card: 'p0:SPEED_3', line: 0, faceUp: false });
+  assert.equal(ng.ok, false);
+});
+
+test('レッスン6: FIRE 0 を表向きで置き、引きすぎた手札を5枚まで捨てればクリア', async () => {
+  const { LESSONS } = await loadTu();
+  const ok = await playLesson(LESSONS[5], { type: 'play', card: 'p0:FIRE_1', line: 1, faceUp: true });
+  assert.equal(ok.ok, true, ok.text);
+  const ng = await playLesson(LESSONS[5], { type: 'play', card: 'p0:LIFE_3', line: 2, faceUp: false });
+  assert.equal(ng.ok, false);
+});
+
+test('レッスン7: 2つ目のラインでリードすると、次の手番の始めにコントロールを取れる', async () => {
+  const { LESSONS } = await loadTu();
+  const ok = await playLesson(LESSONS[6], { type: 'play', card: 'p0:SPEED_6', line: 2, faceUp: false });
+  assert.equal(ok.ok, true, ok.text);
+  const ng = await playLesson(LESSONS[6], { type: 'play', card: 'p0:SPEED_6', line: 0, faceUp: false });
+  assert.equal(ng.ok, false);
+});
+
+test('レッスン8: コントロールを使って相手の 13 点のラインをコンパイル済みの METAL に並べ替えればクリア', async () => {
+  const { LESSONS } = await loadTu();
+  const pick = (who, order) => (req) => req.prompt === 'control-rearrange' ? [who] : req.kind === 'arrange' ? order : req.candidates.slice(0, req.min || 1);
+  const ok = await playLesson(LESSONS[7], { type: 'refresh' }, pick(1, [1, 0, 2]));
+  assert.equal(ok.ok, true, ok.text);
+  const ng = await playLesson(LESSONS[7], { type: 'refresh' }, pick(2, [1, 0, 2]));
   assert.equal(ng.ok, false);
 });

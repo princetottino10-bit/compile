@@ -153,6 +153,34 @@ export const LESSONS = [
     }
   },
   {
+    title: '重ねて覆う (上段・中段・下段)',
+    task: 'FIRE 0 の上にカードを重ねて、FIRE 0 の下段を発動させよう',
+    spec: {
+      sides: [
+        { protos: ME_PROTOS, lines: [[], [up('FIRE_1')], []], hand: ['SPEED_6', 'LIFE_5', 'SPEED_3'] },
+        { protos: OPP_PROTOS, lines: [[up('METAL_5')], [], []], hand: [] }
+      ]
+    },
+    steps: [
+      { text: 'カードの文は3段。<b>上段</b>は表向きなら覆われていても有効、<b>中段</b>は置いた (表になった) ときに1回、' +
+          '<b>下段</b>は一番上にあるときだけ有効。FIRE 0 の下段は「<b>覆われることになったとき</b>：先に1枚引き、他のカードを1枚反転」。手札をタップしよう。' },
+      { when: (c) => !!c.sel,
+        text: '裏向きでも上に重ねれば「覆う」ことになります。FIRE のラインの<b>「裏」</b>を押して FIRE 0 を覆おう。',
+        focus: { line: 'FIRE', face: 'down' } },
+      { when: (c) => c.ask === 'flip',
+        text: '覆われる直前に FIRE 0 の下段が発動しました。反転するカードを選ぼう。相手の <b>METAL 4</b> (値4) を裏にすると、値は2に下がります。' }
+    ],
+    check(ctx) {
+      if (ctx.phase !== 'mine') return null;
+      const st = ctx.endSt;
+      const fire = st.lines[lineOf(st, ctx.me, 'FIRE')][ctx.me];
+      if (fire.length >= 2 && st.cards[fire[0]].def === 'FIRE_1') {
+        return { ok: true, text: '覆われる直前に FIRE 0 の下段が動いて、1枚引いて1枚反転しました。覆われたあとの下段は無効ですが、上段なら覆われても効き続けます。' };
+      }
+      return { ok: false, text: 'FIRE 0 の上にカードを重ねてみましょう。裏向きならどのカードでも FIRE のラインに置けます。' };
+    }
+  },
+  {
     title: '効果で相手のコンパイルを止める',
     task: '相手が次の手番でコンパイルできないようにしよう',
     spec: {
@@ -184,6 +212,104 @@ export const LESSONS = [
         return { ok: true, text: '相手の LIGHT が 10 を下回りました。合計を上げるだけでなく、相手の合計を下げるのも大事な手です。' };
       }
       return { ok: false, text: '相手の LIGHT がまだ 10 以上です。FIRE 1 を表向きで置いて、LIGHT のラインの一番上のカード (値4) を削除しましょう。' };
+    }
+  },
+  {
+    title: '手札の上限 (キャッシュ)',
+    task: 'FIRE 0 を表向きで置いて、手札を増やしてみよう',
+    spec: {
+      sides: [
+        { protos: ME_PROTOS, lines: [[], [], []], hand: ['FIRE_1', 'SPEED_6', 'LIFE_5', 'FIRE_4', 'LIFE_3'] },
+        { protos: OPP_PROTOS, lines: [[up('METAL_5')], [], []], hand: [] }
+      ]
+    },
+    steps: [
+      { text: '手札は<b>手番の終わりに5枚まで</b>。6枚以上あると、5枚になるまで捨てます (<b>キャッシュのクリア</b>)。' +
+          'FIRE 0 は置くと「他のカードを1枚反転、<b>2枚引く</b>」。光っている <b>FIRE 0</b> をタップしよう。',
+        focus: { card: 'FIRE_1' } },
+      { when: (c) => c.sel === 'FIRE_1',
+        text: 'FIRE のラインの<b>「表」</b>を押そう。',
+        focus: { line: 'FIRE', face: 'up' } },
+      { when: (c) => !!c.sel && c.sel !== 'FIRE_1',
+        text: '使うのは光っている <b>FIRE 0</b>。選び直そう。',
+        focus: { card: 'FIRE_1' } },
+      { when: (c) => c.ask === 'flip',
+        text: '反転するカードを選ぼう。相手の <b>METAL 4</b> を裏にすると値が2に下がります。' },
+      { when: (c) => c.ask === 'clear-cache',
+        text: '2枚引いて手札が<b>6枚</b>。手番の終わりに5枚まで捨てます。いらないカードを1枚選んで<b>「決定」</b>。' }
+    ],
+    check(ctx) {
+      if (ctx.phase !== 'mine') return null;
+      const st = ctx.endSt;
+      if (hasCard(st, ctx.me, lineOf(st, ctx.me, 'FIRE'), 'FIRE_1', true) && st.players[ctx.me].hand.length <= 5) {
+        return { ok: true, text: '引きすぎたぶんは手番の終わりに捨てます。手札が多いときは、たくさん引く効果より置いて得をするカードを選ぶのがコツです。' };
+      }
+      return { ok: false, text: 'FIRE 0 を FIRE のラインに表向きで置いて、2枚引いてみましょう。' };
+    }
+  },
+  {
+    title: 'コントロールを取る',
+    task: '2つのラインで相手より大きくして、コントロールを取ろう',
+    spec: {
+      useControl: true,
+      sides: [
+        { protos: ME_PROTOS, lines: [[up('SPEED_5')], [up('FIRE_3')], []], hand: ['SPEED_6', 'FIRE_6'] },
+        { protos: OPP_PROTOS, lines: [[up('METAL_4')], [up('LIGHT_5')], []], hand: [] }
+      ]
+    },
+    steps: [
+      { text: '合計が相手より大きいラインが<b>2つ以上</b>あると、次の自分の手番の始めに<b>コントロール</b> (真ん中の印) を取れます。' +
+          '今リードしているのは SPEED だけ (4 対 3)。LIFE は 0 対 0。手札をタップしよう。' },
+      { when: (c) => !!c.sel,
+        text: 'LIFE のラインに<b>裏向き (値2)</b> で置けば 2 対 0 でリード。LIFE のラインの<b>「裏」</b>を押そう。',
+        focus: { line: 'LIFE', face: 'down' } },
+      { when: (c) => c.waiting,
+        text: '相手の手番のあと、あなたの手番の始めにコントロールを確かめます…' }
+    ],
+    check(ctx) {
+      const leads = (st) => [0, 1, 2].filter(l => ctx.total(st, l, ctx.me) > ctx.total(st, l, 1 - ctx.me)).length;
+      if (ctx.phase === 'mine') {
+        if (leads(ctx.endSt) >= 2) return null;   // 相手の手番のあとで取れる
+        return { ok: false, text: 'リードしているラインが1つだけです。LIFE のラインに裏向きで置けば、2つのラインでリードできます。' };
+      }
+      if (ctx.st.control === ctx.me) {
+        return { ok: true, text: 'コントロールを取りました。持っている間にコンパイルかリフレッシュをすると、プロトコルを並べ替えられます (次のレッスン)。' };
+      }
+      return { ok: false, text: 'コントロールを取れませんでした。手番の始めに2つのラインでリードしている必要があります。' };
+    }
+  },
+  {
+    title: 'コントロールで並べ替える',
+    task: 'リフレッシュのときにコントロールを使い、相手のコンパイルを空振りさせよう',
+    spec: {
+      useControl: true,
+      control: 0,
+      sides: [
+        { protos: ME_PROTOS, lines: [[up('SPEED_5')], [], []], hand: ['LIFE_2'] },
+        { protos: OPP_PROTOS, compiled: [true, false, false], lines: [[], [up('LIGHT_6'), up('LIGHT_4'), up('LIGHT_3')], []], hand: ['WATER_6'] }
+      ]
+    },
+    steps: [
+      { text: 'あなたは<b>コントロール</b>を持っています。相手の LIGHT は 13 点、次の相手の手番でコンパイルされます。' +
+          'コントロールを持ったまま<b>コンパイルかリフレッシュ</b>をすると、どちらかのプロトコルを<b>並べ替え</b>られます。<b>「リフレッシュ」</b>を押そう。',
+        focus: { button: 'btnRefresh' } },
+      { when: (c) => !!c.sel,
+        text: '今回はカードを置かずに<b>「リフレッシュ」</b>を押そう。',
+        focus: { button: 'btnRefresh' } },
+      { when: (c) => c.ask === 'control-rearrange',
+        text: '<b>「相手のプロトコルを並べ替える」</b>を選ぼう。' },
+      { when: (c) => c.ask === 'rearrange',
+        text: 'カードはラインに残り、プロトコルだけが入れ替わります。相手の <b>13 点のラインの位置</b>に、<b>コンパイル済みの METAL</b> を持ってこよう。' +
+          '済んだプロトコルでもう一度コンパイルしても (<b>リコンパイル</b>)、相手は勝ちに近づけません。' }
+    ],
+    check(ctx) {
+      if (ctx.phase !== 'mine') return null;
+      const st = ctx.endSt, op = 1 - ctx.me;
+      const big = [0, 1, 2].find(l => ctx.total(st, l, op) >= 10);
+      if (big !== undefined && st.players[op].protocols[big].compiled) {
+        return { ok: true, text: '相手の 13 点のラインが、コンパイル済みの METAL の位置になりました。相手のコンパイルはリコンパイル (相手のデッキの上の1枚をもらうだけ) になります。' };
+      }
+      return { ok: false, text: '相手の 13 点のラインの位置に、コンパイル済みの METAL を並べ替えましょう。リフレッシュ → 「相手のプロトコルを並べ替える」です。' };
     }
   },
   {
@@ -223,8 +349,8 @@ export const LESSONS = [
 ];
 
 /* 最後のレッスンのあとに出す、ここから先のルール */
-const OUTRO = 'ここまでで基本はおしまいです。慣れてきたら、カードの上段 (常に有効) と下段 (一番上にあるときだけ有効) の効果、' +
-  'ラインで優位を取ると得られる「コントロール」のルールも試してみてください。';
+const OUTRO = 'ここまでで基本はおしまいです。あとは実戦で、プロトコルごとのカードの組み合わせを試してみてください。' +
+  '選択画面の「?」で、各プロトコルの6枚の効果を読めます。';
 
 /* 結果を読む時間 (文の長さに合わせる) */
 export function readingMs(text) {
