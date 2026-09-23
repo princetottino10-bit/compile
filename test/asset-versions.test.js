@@ -30,3 +30,17 @@ test('入口のスクリプトと CSS にも版が付いている', () => {
   assert.ok(html.includes('<script src="engine.js?v=' + version('engine.js') + '"></script>'), 'engine.js');
   assert.ok(html.includes('href="js3d/playchoices.css?v=' + version('js3d/playchoices.css') + '"'), 'playchoices.css');
 });
+
+test('カードリスト・ピッカー: companion.js と紋章・アイコン、companion.css に中身どおりの版が付いている', () => {
+  for (const page of ['cardlist.html', 'picker.html']) {
+    const src = fs.readFileSync(path.join(ROOT, page), 'utf8');
+    const m = src.match(/<script type="importmap">\s*(\{[\s\S]*?\})\s*<\/script>/);
+    assert.ok(m, page + ': import map がない');
+    const imports = JSON.parse(m[1]).imports;
+    for (const rel of ['companion.js', 'js3d/emblems.js', 'js3d/icons.js']) {
+      assert.equal(imports['./' + rel], './' + rel + '?v=' + version(rel),
+        page + ': ' + rel + ' の版が古い: python scripts/stamp_assets.py を実行する');
+    }
+    assert.ok(src.includes('href="companion.css?v=' + version('companion.css') + '"'), page + ': companion.css');
+  }
+});
