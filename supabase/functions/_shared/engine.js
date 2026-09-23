@@ -2977,15 +2977,9 @@ function aiActionBias(st, action, side) {
     return v;
   }
   if (action.type !== 'play') return 0;
-  // CORRUPTION_1等の相手側プレイ: 相手の表向きuncoveredカードを覆って無効化できるときだけ前向き
-  if (action.side !== undefined && action.side !== side) {
-    const oppStack = st.lines[action.line][op];
-    if (oppStack.length) {
-      const topC = st.cards[oppStack[oppStack.length - 1]];
-      if (topC.faceUp) return DEFS[topC.def].value * 8 - 20;
-    }
-    return -60;  // 相手に値を与えるだけの手は避ける
-  }
+  /* CORRUPTION 0 などの相手側プレイは、それ自体がその札の狙い。決め打ちで足し引きせず、
+     出したあとの盤面 (相手の札を覆えたか、相手に点を渡したか) で判断する (監修 2026-09-24) */
+  if (action.side !== undefined && action.side !== side) return 0;
   const c = st.cards[action.card], d = DEFS[c.def];
   const mine = lineTotal(st, action.line, side), theirs = lineTotal(st, action.line, op);
   const gap = Math.max(0, 10 - mine);
