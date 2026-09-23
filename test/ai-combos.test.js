@@ -538,3 +538,32 @@ test('手筋 Diversity0: 他の2本が済んでいれば、6種類そろえて�
   const res = resolveWithAi(Engine.apply(st, act));
   assert.equal(res.state.winner, 0, 'DIVERSITY 0 で3本目をコンパイルして勝つ (実際: ' + JSON.stringify(act) + ')');
 });
+
+test('手筋 Diversity0 を持っている間は、DIVERSITY のラインを10点でコンパイルしにいかない', () => {
+  const st = game(['DIVERSITY', 'FIRE', 'WATER'], ['METAL', 'LIGHT', 'LIFE']);
+  for (const d of ['FIRE_6', 'WATER_6', 'FIRE_5', 'WATER_5']) place(st, d, 0, 0, false);   // DIVERSITY のライン: 裏向き4枚で8点
+  place(st, 'FIRE_4', 0, 1, true);
+  place(st, 'METAL_2', 1, 0, true);
+  place(st, 'LIGHT_3', 1, 1, true);
+  setHand(st, 0, ['DIVERSITY_1', 'FIRE_2', 'WATER_3']);
+  const act = aiAct(st);
+  const res = resolveWithAi(Engine.apply(st, act));
+  /* WATER 2 の並べ替えで DIVERSITY を別のラインへ移し、8点のスタックを他のプロトコルでコンパイルするのも正解 */
+  const dLine = res.state.players[0].protocols.findIndex(p => p.name === 'DIVERSITY');
+  assert.ok(!res.state.players[0].protocols[dLine].compiled && Engine.lineTotal(res.state, dLine, 0) < 10,
+    'DIVERSITY のラインを10点にしない (実際: ' + JSON.stringify(act) + ' → ' + Engine.lineTotal(res.state, dLine, 0) + '点)');
+  assert.ok(res.state.players[0].hand.includes(uidOf('DIVERSITY_1', 0)), 'DIVERSITY 0 は手札に残す');
+});
+
+test('手筋 Diversity0: DIVERSITY が最後の1本なら、10点で普通にコンパイルしてもよい', () => {
+  const st = game(['DIVERSITY', 'FIRE', 'WATER'], ['METAL', 'LIGHT', 'LIFE']);
+  st.players[0].protocols[1].compiled = true;
+  st.players[0].protocols[2].compiled = true;
+  for (const d of ['FIRE_6', 'WATER_6', 'FIRE_5', 'WATER_5']) place(st, d, 0, 0, false);
+  place(st, 'METAL_2', 1, 0, true);
+  setHand(st, 0, ['DIVERSITY_1', 'FIRE_2', 'WATER_3']);
+  const act = aiAct(st);
+  const res = resolveWithAi(Engine.apply(st, act));
+  assert.ok(Engine.lineTotal(res.state, 0, 0) >= 10 || res.state.winner === 0,
+    '最後の1本は10点にして通しにいく (実際: ' + JSON.stringify(act) + ')');
+});

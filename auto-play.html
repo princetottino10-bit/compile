@@ -3201,6 +3201,8 @@ const AI_W = {
   /* DIVERSITY 0 は10点を積まずに1本通す切り札。3本目 (最後) に使えば、相手が点数のラインを止めていても勝てる。
      diversityLast: 他の2本が済んだあとの構えの価値 / diversityEarly: 1本目・2本目で使ってしまう減点 */
   diversityLast: 380, diversityEarly: 420,
+  /* diversityHoldLine: 切り札を持ったまま DIVERSITY のラインをコンパイル圏 (10点以上でリード) にする減点 */
+  diversityHoldLine: 90,
 };
 /* サイキック①ロックまわりの重み。通常 AI・特化 AI の区別なく共通で使う。
    lockPermanent/lockTemporary: 覆われた (永続) / 一番上 (1ターン) のロックの価値
@@ -3252,7 +3254,7 @@ const AI_DSH_W = {
   refreshUrgency: 120,
   choiceDepth: 1,
   orderSim: 4,
-  diversityReady: 120, diversityLast: 380, diversityEarly: 420,
+  diversityReady: 120, diversityLast: 380, diversityEarly: 420, diversityHoldLine: 90,
   compiledLead: 0,   // 最強同士のミラー 480 戦で 49.8% [45.3, 54.2]。効果が出ていないので切っておく
 };
 function setAiSpecialistWeights(obj) {
@@ -3736,6 +3738,11 @@ function aiDiversityReady(st, side) {
   if (kinds.size < 5) return false;
   return [0, 1, 2].some(line => canPlay(st, side, d0, line, true));
 }
+/* DIVERSITY 0 を切り札として手札に持っている (DIVERSITY 未コンパイルで、まだ最後の1本ではない) */
+function aiHoldsDiversityTrump(st, side) {
+  const prot = st.players[side].protocols.find(p => p.name === 'DIVERSITY');
+  return !!prot && !prot.compiled && aiHasDefInHand(st, side, 'DIVERSITY_1') && !aiDiversityIsLast(st, side);
+}
 /* DIVERSITY 以外が2本とも済んでいる = DIVERSITY 0 の即コンパイルがそのまま勝ちになる */
 function aiDiversityIsLast(st, side) {
   const ps = st.players[side].protocols;
@@ -3849,6 +3856,9 @@ function aiActionBias(st, action, side) {
     }
   }
   const compiledLine = !!st.players[side].protocols[action.line].compiled;
+  /* DIVERSITY 0 を切り札として持っている間は、DIVERSITY のラインを10点に届かせる加点を入れない */
+  const reachLine = !(W.diversityHoldLine && st.players[side].protocols[action.line].name === 'DIVERSITY'
+    && aiHoldsDiversityTrump(st, side));
   if (compiledLine) {
     const add = action.faceUp ? d.value : 2;
     const likelyRecompile = mine + add >= 10 && mine + add > theirs;
@@ -3866,18 +3876,18 @@ function aiActionBias(st, action, side) {
     const reach = aiFlipsSelfAtStart(d) ? Math.max(d.value, 2) : d.value;
     v += mv * W.midUp;
     v += (d.value - 2) * W.valueUp;
-    if (gap <= reach && mine + reach > theirs && !st.players[side].protocols[action.line].compiled) v += 150;
+    if (reachLine && gap <= reach && mine + reach > theirs && !st.players[side].protocols[action.line].compiled) v += 150;
     if (mv < 8 && d.value < 2) v -= W.lowUp;
-    if (gap <= reach && !st.players[side].protocols[action.line].compiled) v += 22;
+    if (reachLine && gap <= reach && !st.players[side].protocols[action.line].compiled) v += 22;
     if (mine + reach > theirs) v += 8;
   } else {
     v -= aiFaceDownCost(st, side, action, d, mine, theirs, gap, W);
     v += (2 - d.value) * W.lowDown;
     if (['HATE_4', 'HATE_5'].includes(d.id)) v -= W.hateDownPenalty || 0;
     if (['SPEED_2', 'SPEED_4'].includes(d.id)) v -= W.speedDownPenalty || 0;
-    if (gap <= 2 && mine + 2 > theirs && !st.players[side].protocols[action.line].compiled) v += 115;
+    if (reachLine && gap <= 2 && mine + 2 > theirs && !st.players[side].protocols[action.line].compiled) v += 115;
     if (aiMiddleValue(d) > 35) v -= 24;
-    if (gap <= 2 && !st.players[side].protocols[action.line].compiled) v += 12;
+    if (reachLine && gap <= 2 && !st.players[side].protocols[action.line].compiled) v += 12;
     if (mine + 2 > theirs) v += 5;
   }
   return v;
@@ -4017,10 +4027,16 @@ function aiScore(st, me) {
   }
 
   const myGaps = [], opGaps = [];
+  /* DIVERSITY 0 を切り札として持っている間は、DIVERSITY のラインを10点で普通にコンパイルすると切り札が無駄になる */
+  const saveDiversity = W.diversityHoldLine && aiHoldsDiversityTrump(st, me);
   for (let l = 0; l < 3; l++) {
     const li = lineInfo[l];
 
-    if (!li.myComp) {
+    if (!li.myComp && saveDiversity && st.players[me].protocols[l].name === 'DIVERSITY') {
+      myGaps.push(Math.max(0, 10 - li.mine));
+      if (li.mine >= 10 && li.mine > li.theirs) sc -= W.diversityHoldLine;
+      if (li.mine > li.theirs) sc += 12;
+    } else if (!li.myComp) {
       const gap = Math.max(0, 10 - li.mine);
       myGaps.push(gap);
       const lead = li.mine - li.theirs;
