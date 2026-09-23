@@ -119,7 +119,8 @@ function fitSteps(steps, span) {
 /* st のそのスタックで、下から idx 枚目の置き方 { offset, dx, scale }。
    詰めても span に収まらないときは2列にする: 下 (古い) 半分を左の列、残りを右の列に、少し縮めて並べる。
    一番上の札は右の列の一番手前に来るので、全体が見える */
-const COL2_SCALE = 0.78, COL2_DX = 0.41;
+/* COL2_MIN: 2列にするのは7枚以上のスタックだけ (6枚以下は1列のまま詰める) */
+const COL2_SCALE = 0.78, COL2_DX = 0.41, COL2_MIN = 7;
 function stackPlace(st, line, side, idx, span) {
   const stack = st.lines[line][side];
   const n = Math.max(idx + 1, stack.length);
@@ -127,7 +128,7 @@ function stackPlace(st, line, side, idx, span) {
   const steps = [];
   for (let i = 0; i < n - 1; i++) steps.push(stepOf(i));
   const tightest = steps.reduce((a, x) => a + (x === STEP_HEAD ? STEP_MIN : x), 0);
-  if (tightest <= span || n < 4) return { offset: fitSteps(steps, span)[idx], dx: 0, scale: 1 };
+  if (tightest <= span || n < COL2_MIN) return { offset: fitSteps(steps, span)[idx], dx: 0, scale: 1 };
   const split = Math.ceil(n / 2);
   const col = idx < split ? 0 : 1;
   const from = col ? split : 0, to = col ? n : split;
