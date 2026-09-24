@@ -78,6 +78,7 @@ export const COLOR = {
 /* --- 演出タイミング (ms) --- */
 export const TIMING = {
   handSort: 260,
+  shuffle: 900,    // 山札のリフルシャッフル (割って持ち上げ → 差し込む)
   drawFly: 380,
   playLift: 190,   // 手札から抜き出して構える
   playArc: 460,    // 弧を描いて盤面へ

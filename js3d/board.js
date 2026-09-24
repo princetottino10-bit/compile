@@ -70,7 +70,7 @@ export function visualFingerprint(st) {
   for (let p = 0; p < 2; p++) {
     parts.push(st.players[p].hand.join(','));
     parts.push(st.players[p].trash.length);
-    parts.push(st.players[p].deck.length);
+    parts.push(st.players[p].deck.join(','));    // 並びも見る (効果のシャッフルを1コマとして見せる)
     /* プロトコルの並びも絵の一部。並べ替えを独立したコマにしないと、
        直後のコンパイル演出と同じコマにまとまり、入れ替わる前に演出が出ていた */
     parts.push(st.players[p].protocols.map(x => x.name + (x.compiled ? '*' : '')).join(','));
@@ -491,8 +491,10 @@ export function createBoard(stage, defIndex, me, hooks) {
       if (locKey(a) === locKey(b) && !faceChanged) continue;
       jobs.push({ uid, a, b });
     }
+    const shuffles = shuffledSides(prev, next);
     if (!jobs.length) {
       syncInstant(next);
+      for (const s of shuffles) await riffle(next, s, ms);
       if (played) await stage.home(TIMING.camEase);
       return;
     }
@@ -570,7 +572,46 @@ export function createBoard(stage, defIndex, me, hooks) {
     await Promise.all(anims);
     /* 演出の誤差が積もらないよう、最後に必ず正しい配置へ収束させる */
     syncInstant(next);
+    for (const s of shuffles) await riffle(next, s, ms);
     if (played) await stage.home(TIMING.camEase);
+  }
+
+  /* 山札をシャッフルした (捨て札が山札に戻った / 同じ札のまま並びが変わった) 側 */
+  function shuffledSides(prev, next) {
+    return [0, 1].filter((s) => {
+      const pd = prev.players[s].deck, nd = next.players[s].deck;
+      if (nd.length < 2) return false;
+      if (nd.some(u => prev.cards[u] && locOf(prev, u).zone === 'trash')) return true;
+      return pd.length === nd.length && pd.some((u, i) => u !== nd[i]) && pd.every(u => nd.includes(u));
+    });
+  }
+
+  /* リフルシャッフル: 山札の見えている札を左右に割って持ち上げ、交互に差し込んで戻す */
+  function riffle(st, side, ms) {
+    const deck = st.players[side].deck;
+    const list = [];
+    deck.forEach((uid, idx) => {
+      const card = cards.get(uid);
+      if (!card || !card.visible) return;
+      const slot = LAYOUT.pilePos('deck', side, me, Math.min(idx, 14));
+      list.push({ card, idx, base: new THREE.Vector3(...slot.pos), rz: card.rotation.z });
+    });
+    if (list.length < 2) return Promise.resolve();
+    sfx('shuffle');
+    const n = list.length;
+    const scale = list[0].card.scale.x || 1;
+    return TW.tween(ms(TIMING.shuffle), (t) => {
+      list.forEach((o, i) => {
+        const dir = i % 2 ? 1 : -1;                          // 交互に左右へ割る
+        const out = Math.min(1, t / 0.35);                     // 割って持ち上げる
+        const back = Math.max(0, Math.min(1, (t - 0.45 - (i / n) * 0.3) / 0.25));   // 下から順に差し込む
+        const k = TW.Ease.outCubic(out) * (1 - TW.Ease.inOutCubic(back));
+        o.card.position.set(o.base.x + dir * 0.62 * scale * k, o.base.y + (0.18 + (i / n) * 0.2) * k, o.base.z);
+        o.card.rotation.z = o.rz + dir * 0.18 * k;
+      });
+    }, TW.Ease.linear, () => {
+      for (const o of list) { o.card.position.copy(o.base); o.card.rotation.z = o.rz; }
+    });
   }
 
   function refreshVisibility(st) {

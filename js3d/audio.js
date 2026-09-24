@@ -253,6 +253,11 @@ const SOUNDS = {
     if (sample(['card-shove-1', 'card-shove-2', 'card-shove-3', 'card-shove-4'], { vol: 0.42 })) return;
     noise({ freq: 900, end: 260, dur: 0.18, vol: 0.1, kind: 'lowpass' });
   },
+  /* 山札のシャッフル: 紙がパラパラと混ざる音を短く重ねる */
+  shuffle() {
+    if (!sample(['card-fan-1'], { vol: 0.35 })) noise({ freq: 1800, end: 3800, dur: 0.3, vol: 0.06, q: 1.2 });
+    for (let k = 0; k < 4; k++) sample(['card-slide-1', 'card-slide-3', 'card-slide-5'], { vol: 0.18, rate: 1.3, delay: 0.32 + k * 0.07 });
+  },
   /* コンパイルでラインのカードが消える: 紙が散る音 + 高いところで消える息 */
   shatter() {
     sample(['card-fan-1'], { vol: 0.4 });
