@@ -25,6 +25,13 @@ const urlCache = new Map();    // defId+':'+version(+':'+zone) -> dataURL (PNG�
 const faceCanvas = new Map();  // defId -> HTMLCanvasElement (プレビュー用)
 const artCache = new Map();    // url -> HTMLImageElement | null (失敗)
 const backTextures = new Map();   // 裏面の柄 (スリーブ) -> テクスチャ
+/* 絵は対局をまたいで使い回すが、何試合も遊ぶと増え続けるので、新しい順に ART_KEEP 枚だけ残す */
+const ART_KEEP = 120;
+function rememberArt(url, img) {
+  artCache.delete(url);
+  artCache.set(url, img);
+  while (artCache.size > ART_KEEP) artCache.delete(artCache.keys().next().value);
+}
 /* 斜めに寝かせた手札の文字をにじませないよう、GPU が許す最大の異方性フィルタを使う */
 let maxAnisotropy = 8;
 export function setMaxAnisotropy(n) {
@@ -49,8 +56,8 @@ function loadArt(url, onReady) {
     return;
   }
   const img = new Image();
-  img.onload = () => { artCache.set(url, img); onReady(img); };
-  img.onerror = () => { artCache.set(url, null); };
+  img.onload = () => { rememberArt(url, img); onReady(img); };
+  img.onerror = () => { rememberArt(url, null); };
   img.src = url;
 }
 

@@ -13,3 +13,8 @@ supabase/.temp/
 # Other HTML (not part of cardlist app)
 index-ja.html
 play-reference-ja.html
+
+# 作業中に出る一時ファイル (コミットしない)
+bash.exe.stackdump
+scratch_*.txt
+_shots/

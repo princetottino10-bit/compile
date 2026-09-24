@@ -208,7 +208,16 @@ function totalOf(st, line, side) {
 /* ---------- 起動 ---------- */
 boot().catch((e) => {
   console.error(e);
-  UI.toast('初期化に失敗: ' + e.message, 6000);
+  UI.toast('初期化に失敗: ' + e.message + ' (ページを読み直してください)', 8000);
+});
+/* 取りこぼした非同期のエラーも、黙って固まらずに知らせる (同じ内容は一度だけ) */
+const shownErrors = new Set();
+window.addEventListener('unhandledrejection', (ev) => {
+  const msg = (ev.reason && (ev.reason.message || String(ev.reason))) || '不明なエラー';
+  console.error(ev.reason);
+  if (shownErrors.has(msg)) return;
+  shownErrors.add(msg);
+  UI.toast('エラー: ' + msg, 5000);
 });
 
 /* ロゴ (Orbitron) と見出し・数字 (Oxanium) の書体を読み込む。届かなくても先へ進む (system-ui で描く) */
@@ -223,10 +232,12 @@ async function boot() {
   const mark = (label) => { window.__bootMarks = window.__bootMarks || []; window.__bootMarks.push(label + ':' + Math.round(performance.now() - T0)); };
   /* OAuth の戻り先では、ゲーム初期化より先にセッション復元と URL の掃除を行う。 */
   await ROOM.roomRestoreOAuthRedirect();
-  const [cards, effects] = await Promise.all([
-    fetch('data/cards.json').then(r => r.json()),
-    fetch('data/effects.json').then(r => r.json())
-  ]);
+  /* 読み込めなかったとき (通信の失敗・404 の HTML) に、何が起きたか分かるようにする */
+  const getJson = (url) => fetch(url).then((r) => {
+    if (!r.ok) throw new Error(url + ' を読み込めませんでした (' + r.status + ')');
+    return r.json();
+  });
+  const [cards, effects] = await Promise.all([getJson('data/cards.json'), getJson('data/effects.json')]);
   setCosmeticProtocols(cards.protocols);
   setTimeout(() => { checkTrophies(null); }, 1500);   // 前から遊んでいる人の分・別の端末で取った分をまとめて
   for (const p of cards.protocols) {
@@ -248,7 +259,7 @@ async function boot() {
   UI.bindLogFormatter(logParts, showCardNoteFor);
   mark('engineInit');
   /* カードやプロトコルの札は canvas に文字を描くので、書体が届いてから作る (最大1.5秒待つ) */
-  await loadFonts(1500);
+  await loadFonts(600);                 // 待ちすぎると最初の画面が遅れる。間に合わなければ後から差し替わる
   mark('fonts');
   /* 盤面のスタックは、覆われた札に上段 (覆われても効く) があるときだけ上段が見える幅でずらし、無ければ詰める */
   LAYOUT.setStackCardInfo((st, uid) => {

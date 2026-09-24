@@ -305,7 +305,11 @@ export function createStage(container) {
 
   /* --- ループ --- */
   const frameCbs = [];
-  function onFrame(cb) { frameCbs.push(cb); }
+  /* 毎フレームの処理を足す。返り値を呼ぶと外せる */
+  function onFrame(cb) {
+    frameCbs.push(cb);
+    return () => { const i = frameCbs.indexOf(cb); if (i >= 0) frameCbs.splice(i, 1); };
+  }
 
   const clock = new THREE.Clock();
   let elapsed = 0;
@@ -332,6 +336,8 @@ export function createStage(container) {
     floorMat.uniforms.uTime.value = elapsed;
 
     TW.update(dt * 1000);
+    /* タブが裏のとき (ウォッチドッグ経由) は、トゥイーンを進めるだけで描かない (電池を減らさない) */
+    if (catchUp && document.hidden) return;
     for (const cb of frameCbs) cb(dt, elapsed);
 
     camera.position.copy(camState.pos);
@@ -345,6 +351,20 @@ export function createStage(container) {
     composer.render();
   }
   loop();
+
+  /* スマホで裏から戻ったときなどに、3D の描画の土台 (WebGL) が失われることがある。
+     既定のままだと戻らず画面が真っ黒になるので、戻れるように止めておき、戻ったら絵をもう一度載せ直す */
+  renderer.domElement.addEventListener('webglcontextlost', (ev) => { ev.preventDefault(); }, false);
+  renderer.domElement.addEventListener('webglcontextrestored', () => {
+    scene.traverse((o) => {
+      const mats = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : [];
+      for (const m of mats) {
+        for (const k of ['map', 'emissiveMap', 'alphaMap']) if (m[k]) m[k].needsUpdate = true;
+        m.needsUpdate = true;
+      }
+    });
+    resize();
+  }, false);
 
   return {
     THREE, renderer, scene, camera, composer, bloom,
