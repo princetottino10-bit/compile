@@ -4,7 +4,7 @@
  * ========================================================================= */
 import { randomDecks } from './solodraft.js';
 import { bonusXp, grantXp, XP_GAIN, hashKey } from './xp.js';
-import { recordDailyGame, DAILY_XP } from './daily.js';
+import { recordDailyGame, DAILY_XP, dailyView } from './daily.js';
 import { maybeLoginHint } from './account.js';
 import { unlockTrophies, TROPHY_XP } from './achievements.js';
 import { addReplay, getReplay, pinReplay, rebuild } from './replays.js';
@@ -160,7 +160,8 @@ let runMode = false;             // 勝ち抜き戦・週替わり3連戦の1戦
 let runKind = 'run';             // 'run' (勝ち抜き戦) / 'weekly' (週替わり3連戦)
 let runEnded = false;            // 勝ち抜き戦の結果を出したか (ライフが尽きたらその場で出す)
 let setupNote = '';
-let lastSetup = null;              // いまの CPU 戦のプロトコル { p0, p1 } (もう1戦で同じ組み合わせにする)
+let lastSetup = null;
+let firstGameHintShown = false;    // はじめの数戦の操作の案内 (1戦に1回)              // いまの CPU 戦のプロトコル { p0, p1 } (もう1戦で同じ組み合わせにする)
 /* おまかせで使う基本セット (最初の12プロトコル。効果が素直で覚えやすい) */
 const QUICK_POOL = ['FIRE', 'WATER', 'SPEED', 'DEATH', 'LIFE', 'LIGHT', 'DARKNESS', 'GRAVITY', 'METAL', 'PSYCHIC', 'SPIRIT', 'PLAGUE'];
 /* リプレイ (replays.js): 対局中の棋譜 { init, actions }、いま見ているリプレイ、直前の試合のリプレイ id */
@@ -494,6 +495,7 @@ async function boot() {
     },
     timing: TIMING,
     testResult: async (win) => { await finaleFx(!!win); await UI.resultCutIn(!!win); },
+    endTest: (win) => showEndActions(!!win),
     /* 合成した publicState を流し込んでルーム描画経路を検証する (ポーリングなし) */
     testRoomView: async (rm, instant) => {
       roomMode = true;
@@ -1984,6 +1986,11 @@ async function announceTurnFor(turn) {
   /* 自分の番が回ってきたときは、相手の番とは別の音で知らせる */
   sfx(turn === ME ? 'yourTurn' : 'turn');
   await UI.turnCutIn(turn === ME);
+  /* はじめの数戦だけ、自分の番に何をすればいいかを添える */
+  if (turn === ME && !roomMode && !tutorial && !puzzle && !demoMode && !replayMode && localRecords().length < 3 && !firstGameHintShown) {
+    firstGameHintShown = true;
+    UI.toast('手札のカードを選んで、光っている列に置きます。表向き = 効果が出る・裏向き = 値2。列の合計が10以上で相手より大きいとコンパイル', 6500);
+  }
 }
 
 async function announceTurn() {
@@ -3097,6 +3104,20 @@ async function afterTurn() {
   }
 }
 
+/* 決着の画面に出す「次の目標」: 次のレベルまでの経験値と、今日のデイリーミッションの残り */
+function nextGoalsHtml() {
+  if (roomMode && !localRecords().length) return '';
+  const pl = playerLevel(localRecords(), bonusXp());
+  let daily = '';
+  try {
+    const list = dailyView(Object.keys(protoIndex));
+    const left = list.filter(m => !m.done);
+    daily = left.length ? 'DAILY ' + (list.length - left.length) + '/' + list.length + ' — 次: ' + left[0].text : 'DAILY 3/3 達成';
+  } catch (e) { daily = ''; }
+  return '<div class="end-goals"><span><b>LV ' + pl.level + '</b> 次まで ' + (pl.next - pl.xp) + ' XP</span>' +
+    '<i style="--p:' + Math.round(pl.progress * 100) + '%"></i>' + (daily ? '<span>' + daily.replace(/[<>&]/g, '') + '</span>' : '') + '</div>';
+}
+
 /* 対局後の導線。盤面は残したまま、次の行動を選べるようにする */
 function showEndActions(win) {
   let el = document.getElementById('endBar');
@@ -3108,6 +3129,7 @@ function showEndActions(win) {
   const underdogWin = win && aiDifficulty === UNDERDOG_LEVEL;
   el.innerHTML =
     '<div class="end-title">' + (underdogWin ? '下剋上 達成！' : win ? 'あなたの勝ち' : '敗北') + '</div>' +
+    nextGoalsHtml() +
     (underdogWin ? '<div class="end-sub">最弱のデッキで最強に勝ちました。TITLE — UNDERDOG を獲得</div>' : '') +
     '<div class="end-btns">' +
       '<button class="arr-btn ok" id="endAgain" type="button">REMATCH</button>' +

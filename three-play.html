@@ -2087,6 +2087,12 @@
   .pf-got li b{color:var(--pink);font-size:10.5px;}
   #title .tt-corner[hidden]{display:none;}   /* 押す前は出さない (どこを押しても始まる) */
   #profileOv{z-index:62;}
+  /* 決着の画面の「次の目標」 */
+  .end-goals{display:flex;flex-direction:column;gap:4px;min-width:min(340px,80vw);margin:4px 0 2px;font:700 12px/1.3 var(--font-ui);color:var(--ink);}
+  .end-goals b{color:var(--pink);}
+  .end-goals i{display:block;height:4px;background:rgba(255,255,255,.1);position:relative;}
+  .end-goals i::after{content:"";position:absolute;left:0;top:0;bottom:0;width:var(--p);background:linear-gradient(90deg,var(--pink),var(--violet));}
+  .end-goals span:last-child{color:var(--dim);font-weight:600;}
   /* タイトル: はじめての方へ */
   #title .tt-first{display:flex;flex-direction:column;gap:6px;width:100%;margin-bottom:6px;padding:12px 14px;
     background:linear-gradient(100deg,rgba(255,79,163,.2),rgba(139,92,246,.14));border-left:3px solid var(--pink);}
@@ -2420,7 +2426,7 @@
       "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c",
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=c8378abf22",
-      "./js3d/main.js": "./js3d/main.js?v=adeac2438f",
+      "./js3d/main.js": "./js3d/main.js?v=fd7c6b6394",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=6398fed15e",
       "./js3d/panel.js": "./js3d/panel.js?v=ecb8a073e3",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=e0273dcae0",
@@ -2460,6 +2466,6 @@
   </script>
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=adeac2438f"></script>
+  <script type="module" src="js3d/main.js?v=fd7c6b6394"></script>
 </body>
 </html>
