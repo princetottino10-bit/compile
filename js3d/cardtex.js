@@ -434,8 +434,9 @@ export function backImageURL() {
 /* ---------- 裏面 ----------
    variant: 自分のカードの裏面の柄 (スリーブ、レベルの報酬)。相手のカードと一覧の画像は standard */
 const SLEEVES = {
-  default: { a: '#1d2a4d', b: '#0e1730', grid: 'rgba(185,164,255,.16)', halo: '255,59,157', ring: 'rgba(160,123,255,.78)',
-    ring2: 'rgba(185,164,255,.5)', strip: '185,164,255' },
+  /* 標準: 暗い紫の地に、桃→紫の斜めの帯とグリッチの線 (公式アート寄り) */
+  default: { a: '#1b1030', b: '#08060f', grid: 'rgba(255,255,255,.035)', halo: '255,79,163', ring: 'rgba(255,79,163,.9)',
+    ring2: 'rgba(139,92,246,.7)', strip: '255,79,163', glitch: true },
   crimson: { a: '#4a0f1c', b: '#1a0509', grid: 'rgba(255,120,120,.14)', halo: '255,176,64', ring: 'rgba(255,212,120,.85)',
     ring2: 'rgba(255,120,120,.5)', strip: '255,120,120' },
   circuit: { a: '#0b2a22', b: '#04120e', grid: 'rgba(160,123,255,.08)', halo: '99,243,255', ring: 'rgba(160,123,255,.85)',
@@ -464,6 +465,31 @@ export function backTex(variant) {
   ctx.lineWidth = 1;
   for (let y = 24; y < DH; y += 26) { ctx.beginPath(); ctx.moveTo(18, y); ctx.lineTo(DW - 18, y); ctx.stroke(); }
   for (let x = 24; x < DW; x += 26) { ctx.beginPath(); ctx.moveTo(x, 18); ctx.lineTo(x, DH - 18); ctx.stroke(); }
+
+  /* 標準: 斜めの帯とグリッチの横線 */
+  if (P.glitch) {
+    ctx.save();
+    roundRect(ctx, 0, 0, DW, DH, 30); ctx.clip();
+    ctx.translate(DW / 2, DH / 2);
+    ctx.rotate(-0.5);
+    const bg2 = ctx.createLinearGradient(-DW, 0, DW, 0);
+    bg2.addColorStop(0, 'rgba(255,79,163,0)');
+    bg2.addColorStop(0.4, 'rgba(255,79,163,.42)');
+    bg2.addColorStop(0.6, 'rgba(139,92,246,.45)');
+    bg2.addColorStop(1, 'rgba(139,92,246,0)');
+    ctx.fillStyle = bg2;
+    ctx.fillRect(-DW, -70, DW * 2, 140);
+    ctx.fillStyle = 'rgba(255,255,255,.12)';
+    ctx.fillRect(-DW, -72, DW * 2, 2);
+    ctx.fillRect(-DW, 70, DW * 2, 1);
+    ctx.restore();
+    let seed = 13;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    for (let k = 0; k < 40; k++) {
+      ctx.fillStyle = rnd() < 0.5 ? 'rgba(255,79,163,' + (0.12 + rnd() * 0.3) + ')' : 'rgba(185,164,255,' + (0.1 + rnd() * 0.25) + ')';
+      ctx.fillRect(20 + rnd() * (DW - 120), 60 + rnd() * (DH - 90), 20 + rnd() * 120, 2 + rnd() * 5);
+    }
+  }
 
   /* HOLO: 斜めに虹色の光を流す */
   if (P.holo) {
@@ -508,8 +534,12 @@ export function backTex(variant) {
   ctx.beginPath(); ctx.arc(cx, cy, 146, 0, Math.PI * 2); ctx.stroke();
 
   ctx.font = '900 88px ' + FONT.logo;
-  ctx.fillStyle = 'rgba(233,240,255,.9)';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  if (P.glitch) {
+    ctx.fillStyle = 'rgba(255,79,163,.9)'; ctx.fillText('//', cx + 5, cy + 4);
+    ctx.fillStyle = 'rgba(139,92,246,.9)'; ctx.fillText('//', cx - 5, cy + 4);
+  }
+  ctx.fillStyle = 'rgba(245,240,255,.95)';
   ctx.fillText('//', cx, cy + 4);
   ctx.font = '800 22px ' + FONT.logo;
   ctx.fillStyle = 'rgba(233,240,255,.62)';
