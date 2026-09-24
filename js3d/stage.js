@@ -348,7 +348,8 @@ export function createStage(container) {
       camState.shake = Math.max(0, camState.shake - camState.shakeDecay * dt * 1000);
     }
     camera.lookAt(camState.look);
-    composer.render();
+    /* 表示領域が 0 (たたまれた枠の中など) のときは描かない (大きさ 0 の描画先で警告が大量に出る) */
+    if (container.clientWidth > 1 && container.clientHeight > 1) composer.render();
   }
   loop();
 

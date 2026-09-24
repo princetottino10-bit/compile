@@ -49,6 +49,40 @@ def build_import_map():
     return json.dumps({'imports': imports}, ensure_ascii=False, indent=2)
 
 
+IMPORT_RE = re.compile(r"""^\s*import\s+(?:[^'";]*?\s+from\s+)?['"]([^'"]+)['"]""", re.M)
+
+
+def static_graph(entry='js3d/main.js'):
+    """main.js から静的 import でたどれるモジュール (動的 import は後で読むので含めない)"""
+    seen, order, todo = set(), [], [entry]
+    while todo:
+        rel = todo.pop(0)
+        if rel in seen:
+            continue
+        seen.add(rel)
+        order.append(rel)
+        src = io.open(os.path.join(ROOT, rel), encoding='utf-8').read()
+        for spec in IMPORT_RE.findall(src):
+            if spec == 'three':
+                dep = 'vendor/three.module.js'
+            elif spec.startswith('.'):
+                dep = os.path.normpath(os.path.join(os.path.dirname(rel), spec)).replace(os.sep, '/')
+            else:
+                continue
+            if os.path.exists(os.path.join(ROOT, dep)):
+                todo.append(dep)
+    return order
+
+
+def preload_block():
+    """読み込みの連鎖 (main.js → そこから import → さらに import …) を待たずに、最初から並べて取りに行く"""
+    # import map に載っていないもの (three.module.js が読む three.core.js など) は版なしの URL で読まれるので、そのまま
+    mapped = lambda rel: rel.startswith('js3d/') or rel == 'vendor/three.module.js'
+    lines = ['<link rel="modulepreload" href="' + (stamped(rel)[2:] if mapped(rel) else rel) + '">'
+             for rel in static_graph()[1:]]
+    return '<!-- modulepreload:start -->\n  ' + '\n  '.join(lines) + '\n  <!-- modulepreload:end -->'
+
+
 def stamp_companion(name):
     path = os.path.join(ROOT, name)
     html = io.open(path, encoding='utf-8').read()
@@ -72,6 +106,11 @@ def main():
     out = re.sub(r'(<script type="importmap">\s*)\{.*?\}(\s*</script>)',
                  lambda m: m.group(1) + build_import_map().replace('\n', '\n  ') + m.group(2),
                  html, count=1, flags=re.S)
+    block = preload_block()
+    if '<!-- modulepreload:start -->' in out:
+        out = re.sub(r'<!-- modulepreload:start -->.*?<!-- modulepreload:end -->', lambda m: block, out, count=1, flags=re.S)
+    else:
+        out = re.sub(r'(<script type="importmap">.*?</script>)', lambda m: m.group(1) + '\n  ' + block, out, count=1, flags=re.S)
     out = re.sub(r'<script src="engine\.js(\?v=[0-9a-f]+)?"></script>',
                  '<script src="engine.js?v=' + version('engine.js') + '"></script>', out, count=1)
     out = re.sub(r'<link rel="stylesheet" href="js3d/playchoices\.css(\?v=[0-9a-f]+)?">',
