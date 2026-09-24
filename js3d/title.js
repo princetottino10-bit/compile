@@ -1,6 +1,7 @@
 /* =========================================================================
  * 3Dビュー: タイトルとモード選択
  * ========================================================================= */
+import { xpLog } from './xp.js';
 import { displayName } from './displayname.js';
 import { dailyView } from './daily.js';
 import { emblemDataURL } from './emblems.js';
@@ -24,6 +25,11 @@ const BOOT_LINES = [
   '> control component .......... NEUTRAL',
   '> awaiting operator input _'
 ];
+
+/* まだ1戦もしておらず、チュートリアルも1つも終えていない人 */
+function isNewcomer() {
+  return !localRecords().length && !xpLog().some(e => /^k:tu:/.test(e.id || ''));
+}
 
 /* レベル・称号・アイコン (設定の「見た目」で選んだもの) */
 function profileChip(protocols) {
@@ -127,6 +133,12 @@ export function runTitle(protocols, opts) {
       center.innerHTML = LOGO +
         /* 遊ぶ入口は大きく2つだけ。練習・記録は小さく下に、アカウントと設定は右上の隅に置く */
         '<nav class="tt-menu" aria-label="ゲームモード">' +
+          /* はじめての人 (まだ1戦もせず、チュートリアルも触っていない) にだけ、最初の一歩を大きく出す */
+          (isNewcomer()
+            ? '<div class="tt-first"><b>はじめての方へ</b><span>遊び方は TUTORIAL で5分ほど。すぐ遊びたいなら「おまかせで1戦」</span>' +
+              '<div><button data-mode="tutorial" type="button" class="go">TUTORIAL</button>' +
+              '<button data-mode="quick" type="button">おまかせで1戦</button></div></div>'
+            : '') +
           '<div class="tt-main">' +
             '<button data-mode="single" type="button">SINGLE GAME <small>VS CPU</small></button>' +
             '<button data-mode="run" type="button">RUN <small>ROGUELIKE · WEEKLY</small></button>' +
@@ -167,6 +179,7 @@ export function runTitle(protocols, opts) {
         else if (button.dataset.mode === 'admin') openAdmin();
         else if (button.dataset.mode === 'cards') openCardList();
         else if (button.dataset.mode === 'profile') openProfile(protocols);
+        else if (button.dataset.mode === 'quick') { location.href = location.pathname + '?quick=1'; }
         else finish(button.dataset.mode);
       };
       center.querySelector('.tt-menu').onclick = onMenu;

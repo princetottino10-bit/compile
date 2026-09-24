@@ -2,6 +2,7 @@
  * 3Dビュー: エントリポイント
  *   engine.js (window.CompileEngine) をルール担当として、描画と入力だけを担う。
  * ========================================================================= */
+import { randomDecks } from './solodraft.js';
 import { bonusXp, grantXp, XP_GAIN, hashKey } from './xp.js';
 import { recordDailyGame, DAILY_XP } from './daily.js';
 import { maybeLoginHint } from './account.js';
@@ -159,6 +160,9 @@ let runMode = false;             // 勝ち抜き戦・週替わり3連戦の1戦
 let runKind = 'run';             // 'run' (勝ち抜き戦) / 'weekly' (週替わり3連戦)
 let runEnded = false;            // 勝ち抜き戦の結果を出したか (ライフが尽きたらその場で出す)
 let setupNote = '';
+let lastSetup = null;              // いまの CPU 戦のプロトコル { p0, p1 } (もう1戦で同じ組み合わせにする)
+/* おまかせで使う基本セット (最初の12プロトコル。効果が素直で覚えやすい) */
+const QUICK_POOL = ['FIRE', 'WATER', 'SPEED', 'DEATH', 'LIFE', 'LIGHT', 'DARKNESS', 'GRAVITY', 'METAL', 'PSYCHIC', 'SPIRIT', 'PLAGUE'];
 /* リプレイ (replays.js): 対局中の棋譜 { init, actions }、いま見ているリプレイ、直前の試合のリプレイ id */
 let replayLog = null;
 let replayMode = null;
@@ -298,6 +302,17 @@ async function boot() {
   };
   let p0 = pick('me', null);
   let p1 = pick('ai', null);
+  /* もう1戦 (REMATCH が ?me=&ai=&lv= を付けて開き直す): 同じ組み合わせ・同じ強さで、タイトルと準備を飛ばす */
+  const lvParam = parseInt(params.get('lv'), 10);
+  if (p0 && p1 && params.get('training') !== '1' && Number.isInteger(lvParam)) applyAiDifficulty(lvParam);
+  /* おまかせ (?quick=1): 基本セットから両者のプロトコルを選び、かんたんの CPU とすぐ始める (はじめての人向け) */
+  if (params.get('quick') === '1' && !p0) {
+    const basic = QUICK_POOL.filter(n => protoIndex[n]);
+    const d = randomDecks(basic.length >= 6 ? basic : cards.protocols.map(x => x.name));
+    p0 = d.me; p1 = d.ai;
+    applyAiDifficulty(0);
+    setupNote = 'おまかせ: あなた ' + p0.join(' / ') + '　相手 (かんたん) ' + p1.join(' / ');
+  }
   /* ?training=1&me=...&ai=... でトレーニング盤面を直接開く (確認用) */
   if (params.get('training') === '1' && p0) { trainingMode = true; p1 = p1 || p0.slice(); }
   /* 共有された問題: 盤面・課題・クリア条件が URL に入っている */
@@ -401,6 +416,7 @@ async function boot() {
       if (nextMode !== 'training') {
         opp = await openOpponentSelect(cards.protocols);
         if (!opp) { nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
+        if (opp.quick) { location.href = location.pathname + '?quick=1'; return; }
         if (opp.underdog) {
           document.body.classList.remove('pregame');
           p0 = UNDERDOG_DECK.slice();
@@ -450,6 +466,7 @@ async function boot() {
         ? Engine.newPuzzle(tutorial.lesson.spec, { seed: 1 })
         : Engine.newGame({ seed, p0, p1, first: firstPlayer, training: trainingMode, winCompiles });
   cur = res;
+  if (!trainingMode && !puzzle && !tutorial && !demoMode && !replayMode) lastSetup = { p0: p0.slice(), p1: p1.slice() };
   /* CPU 戦は棋譜を取る (決着したらリプレイとして残す) */
   replayLog = !replayMode && !trainingMode && !puzzle && !tutorial && !demoMode
     ? { init: { seed, p0: p0.slice(), p1: p1.slice(), first: firstPlayer, winCompiles: winCompiles || null }, actions: [] } : null;
@@ -574,8 +591,9 @@ async function tutorialAfterStep() {
   TU.showCoachResult(i, r, () => {
     if (r.ok && last) {
       TU.showTutorialDone({
-        onPlay: () => { location.href = location.pathname; },
-        onTop: () => { location.href = 'index.html'; },
+        /* チュートリアルのあとは、そのまま「おまかせ」で CPU と1戦 */
+        onPlay: () => { location.href = location.pathname + '?quick=1'; },
+        onTop: () => { location.href = location.pathname; },
         onRestart: () => startLesson(0)
       });
     } else startLesson(r.ok ? i + 1 : i);
@@ -3110,7 +3128,16 @@ function showEndActions(win) {
   const reviewBtn = el.querySelector('#endReview');
   if (reviewBtn) reviewBtn.onclick = () => { el.classList.remove('show'); startReview(win); };
   /* どちらもページを作り直す。シーンを組み直すのが最も確実 */
-  el.querySelector('#endAgain').onclick = () => { location.hash = ''; location.reload(); };
+  /* もう1戦: 同じ組み合わせ・同じ強さで、タイトルと準備を飛ばして始め直す (勝ち抜き戦・オンラインは除く) */
+  el.querySelector('#endAgain').onclick = () => {
+    const st0 = cur && cur.state;
+    if (!roomMode && !runMode && lastSetup && st0) {
+      const q = new URLSearchParams({ me: lastSetup.p0.join(','), ai: lastSetup.p1.join(','), lv: String(aiDifficulty ?? 0) });
+      location.href = location.pathname + '?' + q.toString();
+      return;
+    }
+    location.hash = ''; location.reload();
+  };
   el.querySelector('#endTop').onclick = () => { location.hash = ''; location.reload(); };
   el.querySelector('#endBoard').onclick = () => {
     el.classList.remove('show');

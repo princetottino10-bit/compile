@@ -3,7 +3,8 @@
  *   CPU (かんたん / ふつう / つよい。相手はランダム編成、次の画面で自分の選び方を決める)
  *   強敵 (最強・ロック特化・挑戦者。相手のデッキは決まっている)
  *   下剋上 (最弱のデッキで最強に挑む。勝つと称号)
- *   → { level } / { underdog: true } / null (タイトルへ)
+ *   おまかせ (プロトコルも相手も自動、かんたん)
+ *   → { level } / { underdog: true } / { quick: true } / null (タイトルへ)
  * ========================================================================= */
 import { LEVEL_LABELS, STRONGEST_AI, LOCK_AI, CHALLENGERS, CHALLENGER_BASE, UNDERDOG_DECK, UNDERDOG_LEVEL } from './aidecks.js';
 import { localRecords } from './stats.js';
@@ -38,6 +39,9 @@ export function openOpponentSelect(protocols) {
   const cleared = underdogCleared();
   el.innerHTML = '<div class="op-wrap">' +
     '<div class="op-head"><b>// SINGLE GAME</b><span>SELECT OPPONENT</span></div>' +
+    /* 迷ったらこれ: 選ぶものを全部おまかせにして、すぐ始める */
+    '<button type="button" class="op-quick" data-opp="quick"><b>おまかせで今すぐ始める</b>' +
+      '<small>プロトコルも相手も自動で決めて、かんたんの CPU と対戦します</small></button>' +
     '<section><h3>CPU <small>相手はランダム編成。次の画面で自分のプロトコルと選び方 (自由・ドラフト・ランダム) を決める</small></h3>' +
       '<div class="op-row">' + [0, 1, 2].map(i => card(String(i), LEVEL_LABELS[i], CPU_NOTES[i])).join('') + '</div></section>' +
     '<section><h3>強敵 <small>相手のデッキは決まっている。次の画面で自分の3つを選ぶ</small></h3>' +
@@ -60,6 +64,7 @@ export function openOpponentSelect(protocols) {
       const key = t.dataset.opp;
       el.classList.remove('show');
       if (key === 'back') { resolve(null); return; }
+      if (key === 'quick') { resolve({ quick: true }); return; }
       try { localStorage.setItem(LAST_KEY, key); } catch (e) { /* private mode */ }
       resolve(key === 'underdog' ? { underdog: true, level: UNDERDOG_LEVEL } : { level: +key });
     };

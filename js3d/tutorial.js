@@ -470,7 +470,7 @@ export function showTutorialDone(handlers) {
       '<p>3つのプロトコルをすべてコンパイルして、勝利しました！</p><p>' + esc(OUTRO) + '</p></div>' +
     '<div class="pz-row">' +
       '<button type="button" class="pz-main" id="tuPlay">CPU と対戦する</button>' +
-      '<button type="button" id="tuTop">トップページへ</button>' +
+      '<button type="button" id="tuTop">タイトルへ</button>' +
       '<button type="button" id="tuAgain">最初から</button>' +
     '</div></div>';
   el.classList.add('show');
