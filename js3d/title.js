@@ -139,6 +139,13 @@ export function runTitle(protocols, opts) {
       try { initAudio(); sfx('turn'); } catch (e) { /* 音なしで続ける */ }
     };
     root.querySelector('#ttStart').onclick = start;
+    /* 画面のどこを押しても始まる (右上のレベル・ログイン・設定は除く) */
+    const onTap = (ev) => {
+      if (ev.target.closest('#ttCorner')) return;
+      root.removeEventListener('click', onTap);
+      start();
+    };
+    root.addEventListener('click', onTap);
     window.addEventListener('keydown', onKey);
     if (menuOnly) { clearInterval(logTimer); log.innerHTML = ''; start(); }
     if (opts && opts.after) opts.after();
