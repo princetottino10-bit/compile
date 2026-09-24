@@ -2,6 +2,7 @@
  * 3Dビュー: エントリポイント
  *   engine.js (window.CompileEngine) をルール担当として、描画と入力だけを担う。
  * ========================================================================= */
+import { bonusXp, grantXp, XP_GAIN, hashKey } from './xp.js';
 import * as THREE from '../vendor/three.module.js';
 import { createStage } from './stage.js';
 import { createBoard, visualFingerprint, locOf } from './board.js';
@@ -26,6 +27,7 @@ import { UNDERDOG_DECK, STRONGEST_AI, UNDERDOG_LEVEL } from './aidecks.js';
 import { openRun, runHud, showRunAfterGame } from './run-ui.js';
 import { openWeekly, weeklyHud, showWeeklyAfterGame } from './weekly-ui.js';
 import { compilesBy, loadRun, RUN_WIN_COMPILES } from './run.js';
+import { loadWeekly, weekKey } from './weekly.js';
 import { openReview } from './review.js';
 import { runRoomLobby } from './roomui.js';
 import { selectHead, bindSelectHead } from './selectui.js';
@@ -68,7 +70,7 @@ let chosenFirst = null;
    カードごとの勝ち数は戦績から数える。光り方は board のオーラ (card.js) */
 let cardWins = cardStats(localRecords());
 /* プレイヤーレベル (見た目の解放に使う)。決着ごとに数え直す */
-let myLevel = playerLevel(localRecords()).level;
+let myLevel = playerLevel(localRecords(), bonusXp()).level;
 /* 選んだ見た目を、解放されていれば使う (記録を消して条件を外れたら標準に戻す) */
 function cosmetic(kind, fallback) {
   const key = settings()[kind];
@@ -77,9 +79,16 @@ function cosmetic(kind, fallback) {
 let favSet = new Set(favoriteCards());
 function refreshCardGlow() {
   cardWins = cardStats(localRecords());
-  myLevel = playerLevel(localRecords()).level;
+  myLevel = playerLevel(localRecords(), bonusXp()).level;
   favSet = new Set(favoriteCards());
   if (board && cur) board.syncInstant(shown());
+}
+/* CPU 戦の戦績以外で入る経験値 (xp.js) を足し、レベルが上がったら手に入った報酬を見せる */
+async function gainXp(src, xp, key) {
+  const before = myLevel;
+  if (!grantXp(src, xp, key)) return;
+  refreshCardGlow();                 // myLevel も数え直す
+  if (myLevel > before) await UI.levelUpCutIn(myLevel, rewardsBetween(before, myLevel));
 }
 function auraFor(defId) {
   if (favSet.has(defId)) return { color: '#ffffff', strength: 1, fav: true, frame: true, holo: false };
@@ -453,6 +462,7 @@ async function puzzleAfterTurn() {
   const endSt = PZ.endOfTurnState(cur.trace, ME, shown());
   const result = PZ.judgePuzzle(puzzle.goal, endSt, shown(), ME, totalOf);
   sfx(result.ok === false ? 'lose' : 'win');
+  if (result.ok !== false) await gainXp('puzzle', XP_GAIN.puzzle, 'pz:' + hashKey(JSON.stringify([puzzle.spec, puzzle.goal])));
   PZ.showPuzzleResult(result, retryPuzzle);
 }
 
@@ -481,6 +491,11 @@ async function tutorialAfterStep() {
   /* 「次へ」は押さなくてよい: 読む時間が過ぎたら次のレッスン (失敗ならやり直し) へ */
   const i = tutorial.index;
   const last = i === TU.LESSONS.length - 1;
+  /* レッスンごとに初回だけ。全部終えたらもう少し */
+  if (r.ok) {
+    await gainXp('lesson', XP_GAIN.lesson, 'tu:' + i);
+    if (last) await gainXp('tutorial', XP_GAIN.tutorialAll, 'tu:all');
+  }
   TU.showCoachResult(i, r, () => {
     if (r.ok && last) {
       TU.showTutorialDone({
@@ -1745,6 +1760,9 @@ async function roomMaybeFinish() {
   sfx(win ? (victory === 'aurora' ? 'winAurora' : 'win') : 'lose');
   await finaleFx(win);
   await UI.resultCutIn(win, { victory });
+  /* 同じ部屋の同じ決着を読み直しても2回は入らない */
+  await gainXp('online', XP_GAIN.onlinePlay + (win ? XP_GAIN.onlineWin : 0),
+    'room:' + (roomRm && roomRm.code) + ':' + (st.turns || 0));
   showEndActions(win);
 }
 
@@ -2638,8 +2656,17 @@ async function afterTurn() {
     if (runMode) {
       if (!runEnded) {
         runEnded = true;
-        if (runKind === 'weekly') showWeeklyAfterGame(win, Object.values(protoIndex));
-        else showRunAfterGame(win, compilesBy(cur.state, AI), Object.values(protoIndex));
+        /* クリアした瞬間 (battle → clear) にだけ経験値を足す */
+        if (runKind === 'weekly') {
+          const was = loadWeekly().phase;
+          showWeeklyAfterGame(win, Object.values(protoIndex));
+          if (was === 'battle' && loadWeekly().phase === 'clear') await gainXp('weekly', XP_GAIN.weeklyClear, 'wk:' + weekKey());
+        } else {
+          const was = loadRun();
+          showRunAfterGame(win, compilesBy(cur.state, AI), Object.values(protoIndex));
+          const now = loadRun();
+          if (was && was.phase === 'battle' && now && now.phase === 'clear') await gainXp('run', XP_GAIN.runClear);
+        }
       }
       return;
     }

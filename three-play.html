@@ -2044,6 +2044,12 @@
   .pf-got li{display:grid;grid-template-columns:48px 1fr;gap:8px;padding:6px 10px;background:rgba(255,255,255,.03);font:700 11px/1.3 var(--font-ui);letter-spacing:.06em;color:#fff;}
   .pf-got li b{color:var(--pink);font-size:10.5px;}
   #profileOv{z-index:62;}
+  .pf-earn summary{cursor:pointer;font:700 10px/1 var(--font-ui);letter-spacing:.22em;color:var(--dim);padding:4px 0;}
+  .pf-earn summary:hover,.pf-earn summary:focus-visible{color:var(--pink);outline:0;}
+  .pf-earn ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:3px;}
+  .pf-earn li{display:grid;grid-template-columns:78px 1fr;gap:8px;padding:6px 10px;background:rgba(255,255,255,.03);font:600 11px/1.3 var(--font-ui);}
+  .pf-earn li span{font-weight:800;letter-spacing:.14em;color:var(--lav);}
+  .pf-earn li b{font-weight:600;color:#fff;}
 </style>
 </head>
 <body>
@@ -2143,19 +2149,19 @@
       "./js3d/cardtex.js": "./js3d/cardtex.js?v=24b6c53321",
       "./js3d/cardtext.js": "./js3d/cardtext.js?v=4cf5529855",
       "./js3d/control.js": "./js3d/control.js?v=acf84debbc",
-      "./js3d/cosmetics-ui.js": "./js3d/cosmetics-ui.js?v=884de66cc7",
+      "./js3d/cosmetics-ui.js": "./js3d/cosmetics-ui.js?v=049eef4895",
       "./js3d/emblems.js": "./js3d/emblems.js?v=6d1c077a2e",
       "./js3d/fx-protocols.js": "./js3d/fx-protocols.js?v=509fceb211",
       "./js3d/fx.js": "./js3d/fx.js?v=f2bbe73646",
       "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c",
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=c8378abf22",
-      "./js3d/main.js": "./js3d/main.js?v=46fa1cfc20",
+      "./js3d/main.js": "./js3d/main.js?v=8d605de938",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=6fe48ba6a8",
       "./js3d/panel.js": "./js3d/panel.js?v=ecb8a073e3",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=e0273dcae0",
-      "./js3d/playmat.js": "./js3d/playmat.js?v=37f2b9eb9f",
-      "./js3d/profile.js": "./js3d/profile.js?v=a3655d2e33",
+      "./js3d/playmat.js": "./js3d/playmat.js?v=91ab85f12f",
+      "./js3d/profile.js": "./js3d/profile.js?v=1a47363a33",
       "./js3d/prompts.js": "./js3d/prompts.js?v=348dff836d",
       "./js3d/protocards.js": "./js3d/protocards.js?v=e16028fc34",
       "./js3d/protocol-strength.js": "./js3d/protocol-strength.js?v=c719e5b65c",
@@ -2171,8 +2177,8 @@
       "./js3d/setup.js": "./js3d/setup.js?v=f75a89191c",
       "./js3d/solodraft.js": "./js3d/solodraft.js?v=9863c9528c",
       "./js3d/stage.js": "./js3d/stage.js?v=203ed8ec22",
-      "./js3d/stats-data.js": "./js3d/stats-data.js?v=ea48b3e662",
-      "./js3d/stats.js": "./js3d/stats.js?v=0dbfdb3ebd",
+      "./js3d/stats-data.js": "./js3d/stats-data.js?v=bcf7d5e977",
+      "./js3d/stats.js": "./js3d/stats.js?v=fb6faa0cb0",
       "./js3d/theme.js": "./js3d/theme.js?v=36f15e5586",
       "./js3d/title.js": "./js3d/title.js?v=82349cdba7",
       "./js3d/training.js": "./js3d/training.js?v=3018b4399e",
@@ -2180,12 +2186,13 @@
       "./js3d/tween.js": "./js3d/tween.js?v=99b25c0d63",
       "./js3d/ui.js": "./js3d/ui.js?v=b742a89108",
       "./js3d/weekly-ui.js": "./js3d/weekly-ui.js?v=dc748612f9",
-      "./js3d/weekly.js": "./js3d/weekly.js?v=b4651191ce"
+      "./js3d/weekly.js": "./js3d/weekly.js?v=b4651191ce",
+      "./js3d/xp.js": "./js3d/xp.js?v=4c091d11fc"
     }
   }
   </script>
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=46fa1cfc20"></script>
+  <script type="module" src="js3d/main.js?v=8d605de938"></script>
 </body>
 </html>

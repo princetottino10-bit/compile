@@ -3,6 +3,7 @@
  *   盤面・カードの裏面・コントロールマーカー・コンパイルの光・勝ちの演出・称号・アイコン
  *   まだのものは鍵と、解放されるレベルを出す
  * ========================================================================= */
+import { bonusXp } from './xp.js';
 import { COSMETICS, TITLES, unlockLevel, ownedTitles } from './rewards.js';
 import { playerLevel } from './stats-data.js';
 import { localRecords } from './stats.js';
@@ -21,7 +22,7 @@ export function extraTitles(records) {
 
 /* プロフィール (タイトル画面・戦績に出す): { level, title, icon } */
 export function profileOf(settings, records) {
-  const level = playerLevel(records).level;
+  const level = playerLevel(records, bonusXp()).level;
   const titles = ownedTitles(level, extraTitles(records));
   const title = titles.includes(settings.title) ? TITLES[settings.title] : '';
   const icon = level >= unlockLevel('icon', 'icon') && settings.icon ? settings.icon : '';
@@ -35,7 +36,7 @@ export function setCosmeticProtocols(list) { protoList = list || []; }
 export function cosmeticsHtml(s, protocols) {
   protocols = protocols || protoList;
   const recs = localRecords();
-  const level = playerLevel(recs).level;
+  const level = playerLevel(recs, bonusXp()).level;
   /* 取る前の見た目は出さない (レベルアップで初めて明かす)。まだあることだけ「+N」で示す */
   let locked = 0;
   const row = (kind) => {

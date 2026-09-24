@@ -4,6 +4,7 @@
  *   BIOMECH (マット3: 暗い青緑の有機的な柄と紫の光)
  *   プレイヤーレベルが上がると解放される (MATS)。選ぶのは設定の画面
  * ========================================================================= */
+import { bonusXp } from './xp.js';
 import * as THREE from '../vendor/three.module.js';
 import { BOARD, CARD } from './theme.js';
 import { playerLevel } from './stats-data.js';
@@ -17,7 +18,7 @@ const cx = (x) => (x + MAT_W / 2) * PX;
 const cy = (z) => (z + MAT_D / 2) * PX;
 
 /* プレイヤーレベル (stats-data.js) が上がると解放。解放のレベルは rewards.js */
-const lv = (rs) => playerLevel(rs).level;
+const lv = (rs) => playerLevel(rs, bonusXp()).level;
 export const MATS = COSMETICS.mat.map(([key, name]) => ({
   key, name, need: unlockLevel('mat', key), unlocked: (rs) => lv(rs) >= unlockLevel('mat', key)
 }));

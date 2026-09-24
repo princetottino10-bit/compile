@@ -4,6 +4,7 @@
  *   全体・自分のプロトコル別・相手のプロトコル別・デッキ別の勝率を出す。
  * ========================================================================= */
 
+import { bonusXp } from './xp.js';
 import { levelLabel, UNDERDOG_LEVEL } from './aidecks.js';
 import { protocolSummary, matchups, winTrend, fastestWin, masteryLevel, cardStats, cardTier, playerLevel, xpForLevel } from './stats-data.js';
 import { REWARDS, nextReward } from './rewards.js';
@@ -179,9 +180,9 @@ function summaryTab(list, protos) {
   /* 称号 (取ったものだけ) */
   const titles = [];
   if (list.some(r => r.win && r.level === UNDERDOG_LEVEL)) titles.push(['UNDERDOG', '最弱のデッキで最強に勝った']);
-  const pl = playerLevel(list);
+  const pl = playerLevel(list, bonusXp());
   return '<div class="sr-level"><b>Lv ' + pl.level + '</b><span class="sr-xp"><i style="width:' + Math.round(pl.progress * 100) + '%"></i></span>' +
-      '<small>次のレベルまで ' + (pl.next - pl.xp) + ' (1戦 +1・勝ち +2・つよい以上に勝つと +1)</small></div>' +
+      '<small>次のレベルまで ' + (pl.next - pl.xp) + ' (CPU 戦・オンライン・チュートリアル・問題などで入ります)</small></div>' +
     rewardsHtml(pl) +
     (titles.length ? '<div class="sr-titles">' + titles.map(([t, d]) => '<span title="' + esc(d) + '">' + esc(t) + '</span>').join('') + '</div>' : '') +
     trendSvg(list) +

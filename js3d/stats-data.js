@@ -125,8 +125,9 @@ export function xpForLevel(lv) {
   return lv <= PLAYER_STEPS.length ? PLAYER_STEPS[lv - 1] : PLAYER_STEPS[PLAYER_STEPS.length - 1] + 50 * (lv - PLAYER_STEPS.length);
 }
 
-export function playerLevel(records) {
-  const xp = playerXp(records);
+/* bonus: CPU 戦の戦績以外で入った経験値 (xp.js の帳簿: オンライン対戦・チュートリアルなど) */
+export function playerLevel(records, bonus = 0) {
+  const xp = playerXp(records) + bonus;
   const need = xpForLevel;
   let level = 1;
   while (xp >= need(level + 1)) level++;
