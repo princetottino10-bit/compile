@@ -1,6 +1,6 @@
 /* =========================================================================
  * デイリーミッション: 毎日 (日本時間の0時) 3つ。やさしい・ふつう・むずかしい から1つずつ。
- *   CPU 戦 (RUN・WEEKLY・下剋上も)・オンライン対戦の決着ごとに進む。
+ *   CPU 戦 (RUN・WEEKLY・下剋上も)・オンライン対戦の決着ごとに進む。どれも1試合で届くものだけ。
  *   達成すると経験値 (xp.js)。3つそろうとおまけ。
  *   保存はブラウザ (compileDaily)。アカウントの保存 (cloudsave.js) にも入る
  * ========================================================================= */
@@ -13,25 +13,27 @@ export const DAILY_XP = { easy: 2, mid: 3, hard: 5, all: 3 };
 
 export function dayIndex(now = Date.now()) { return Math.floor((now + JST) / DAY); }
 
-/* ミッションの種類。goal: 目標、add(g): その試合で進む量。p: 今日のプロトコル (proto 付きのものだけ) */
+/* ミッションの種類。どれも「1試合、意識して遊べば届く」くらい (何試合もかかるもの・オンライン限定のものは入れない)。
+   数の目安 (CPU 同士16戦、1人ぶん): 表で出した種類 11〜15、効果 15〜31回、コンパイル 2〜4回 (負けても2回以上)、
+   決着まで 42〜65手番 (両者合わせて)。
+   goal: 目標、add(g, p): その試合で進む量。p: 今日のプロトコル (proto 付きのものだけ) */
 const POOL = {
   easy: [
-    { id: 'play2', goal: 2, text: () => '2戦する', add: () => 1 },
-    { id: 'faceup10', goal: 10, text: () => 'カードを表で10枚出す', add: (g) => g.faceUp },
-    { id: 'effects12', goal: 12, text: () => '自分のカードの効果を12回使う', add: (g) => g.effects },
+    { id: 'play1', goal: 1, text: () => '1戦する', add: () => 1 },
+    { id: 'faceup8', goal: 8, text: () => '違うカードを8種類、表で出す', add: (g) => g.faceUp },
+    { id: 'effects10', goal: 10, text: () => '自分のカードの効果を10回使う', add: (g) => g.effects },
     { id: 'protoPlay', goal: 1, proto: true, text: (p) => p + ' を入れて1戦する', add: (g, p) => (g.protocols.includes(p) ? 1 : 0) }
   ],
   mid: [
     { id: 'win1', goal: 1, text: () => '1勝する', add: (g) => (g.win ? 1 : 0) },
-    { id: 'compile4', goal: 4, text: () => 'コンパイルを4回する', add: (g) => g.compiles },
-    { id: 'online1', goal: 1, text: () => 'オンライン対戦を1戦する', add: (g) => (g.online ? 1 : 0) },
-    { id: 'play4', goal: 4, text: () => '4戦する', add: () => 1 }
+    { id: 'compile3', goal: 3, text: () => 'コンパイルを3回する', add: (g) => g.compiles },
+    { id: 'protoCards3', goal: 3, proto: true, text: (p) => p + ' のカードを3種類、表で出す', add: (g, p) => g.faceUpIds.filter(id => id.startsWith(p + '_')).length }
   ],
   hard: [
-    { id: 'winStrong', goal: 1, text: () => '「つよい」以上の相手 (オンラインも) に勝つ', add: (g) => (g.win && (g.online || g.level >= STRONG) ? 1 : 0) },
+    { id: 'winStrong', goal: 1, text: () => '「つよい」以上の CPU に勝つ', add: (g) => (g.win && (g.online || g.level >= STRONG) ? 1 : 0) },
     { id: 'protoWin', goal: 1, proto: true, text: (p) => p + ' を入れて1勝する', add: (g, p) => (g.win && g.protocols.includes(p) ? 1 : 0) },
-    { id: 'win3', goal: 3, text: () => '3勝する', add: (g) => (g.win ? 1 : 0) },
-    { id: 'fastWin', goal: 1, text: () => '16手番以内 (両者合わせて) で勝つ', add: (g) => (g.win && g.turns > 0 && g.turns <= 16 ? 1 : 0) }
+    { id: 'fastWin', goal: 1, text: () => '45手番以内 (両者合わせて) で勝つ', add: (g) => (g.win && g.turns > 0 && g.turns <= 45 ? 1 : 0) },
+    { id: 'cleanWin', goal: 1, text: () => '相手のコンパイルを2回以下に抑えて勝つ', add: (g) => (g.win && g.oppCompiles <= 2 ? 1 : 0) }
   ]
 };
 const TIERS = ['easy', 'mid', 'hard'];
@@ -68,11 +70,13 @@ export function loadDaily(now = Date.now()) {
 function saveDaily(s) { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { /* private mode */ } }
 
 /* 1試合ぶん進める (純粋な計算)。
-   game: { win, level, online, protocols: [名前], compiles, effects, faceUp, turns }
+   game: { win, level, online, protocols: [名前], compiles, oppCompiles, effects, faceUpIds: [表で出した defId], turns }
    返り値 { state: 新しい状態, cleared: [今回達成したミッション], allNow: 今回で3つそろったか } */
 export function advance(state, missions, game) {
   const g = { win: !!game.win, level: game.level == null ? -1 : game.level, online: !!game.online,
-    protocols: game.protocols || [], compiles: game.compiles | 0, effects: game.effects | 0, faceUp: game.faceUp | 0, turns: game.turns | 0 };
+    protocols: game.protocols || [], compiles: game.compiles | 0, oppCompiles: game.oppCompiles | 0, effects: game.effects | 0,
+    faceUp: Array.isArray(game.faceUpIds) ? game.faceUpIds.length : game.faceUp | 0,
+    faceUpIds: Array.isArray(game.faceUpIds) ? game.faceUpIds.map(String) : [], turns: game.turns | 0 };
   const progress = { ...state.progress };
   const cleared = [];
   for (const m of missions) {

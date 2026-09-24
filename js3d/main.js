@@ -97,7 +97,8 @@ async function dailyAfterGame(st, side, win, level, online) {
   const effects = Object.values((t.effects && t.effects[side]) || {}).reduce((n, v) => n + (v | 0), 0);
   const r = recordDailyGame({
     win, level, online, protocols: st.players[side].protocols.map(p => p.name),
-    compiles: (t.compiles && t.compiles[side]) | 0, effects, faceUp: ((t.faceUp && t.faceUp[side]) || []).length,
+    compiles: (t.compiles && t.compiles[side]) | 0, oppCompiles: (t.compiles && t.compiles[1 - side]) | 0,
+    effects, faceUpIds: ((t.faceUp && t.faceUp[side]) || []).slice(),
     turns: (st.turns || 0) + 1
   }, Object.keys(protoIndex));
   if (!r.cleared.length) return;
