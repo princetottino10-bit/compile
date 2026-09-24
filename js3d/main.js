@@ -1386,6 +1386,16 @@ function bindInput() {
     setLogOpen(open);
     try { localStorage.setItem('compileLogOpen', open ? '1' : '0'); } catch (e) { /* private mode */ }
   };
+  /* 詳細 (左) もログと同じ要領で出したりしまったりできる。最初は出しておき、しまったら次回もしまったまま */
+  const infoBtn = document.getElementById('btnInfo');
+  if (infoBtn) infoBtn.onclick = () => {
+    const open = document.body.classList.contains('info-closed');
+    UI.setInfoOpen(open);
+    try { localStorage.setItem('compileInfoOpen', open ? '1' : '0'); } catch (e) { /* private mode */ }
+  };
+  let infoWasOpen = true;
+  try { infoWasOpen = localStorage.getItem('compileInfoOpen') !== '0'; } catch (e) { /* private mode */ }
+  UI.setInfoOpen(infoWasOpen);
   /* 前回サイドバーを開いていたら開いて始める (最初は閉じておき、盤面を広く見せる) */
   let logWasOpen = false;
   try { logWasOpen = localStorage.getItem('compileLogOpen') === '1'; } catch (e) { /* private mode */ }

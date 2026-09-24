@@ -459,7 +459,27 @@ export function showCardPanel(o, opts) {
           '<span class="cp-zone">' + (PANEL_ZONE[r.key] || '') + '</span><p>' + (r.empty ? 'なし' : condHtml(r.text)) + '</p></div>').join('') + '</div>'
       : '');
   el.classList.add('show');
+  placeInfoTab();
   if (opts && opts.transient) hideTimer = setTimeout(hideCardPanel, 2400);
+}
+
+/* 詳細のつまみ: 詳細が出ていればその右端に、出ていなければ画面の左端に置く
+   (位置は変形 (出てくる動き) を含まない配置で測る) */
+function placeInfoTab() {
+  const btn = $('#btnInfo');
+  const el = $('#preview');
+  if (!btn || !el) return;
+  const shown = el.classList.contains('show') && !document.body.classList.contains('info-closed')
+    && getComputedStyle(el).left !== 'auto' && el.offsetWidth > 0;
+  btn.style.left = shown ? (el.offsetLeft + el.offsetWidth) + 'px' : '';
+}
+
+/* 詳細を出す / しまう (ログのつまみと同じ要領) */
+export function setInfoOpen(open) {
+  document.body.classList.toggle('info-closed', !open);
+  const btn = $('#btnInfo');
+  if (btn) btn.setAttribute('aria-expanded', String(open));
+  placeInfoTab();
 }
 
 export function hideCardPanel() {
@@ -467,6 +487,7 @@ export function hideCardPanel() {
   if (!el) return;
   clearTimeout(hideTimer);
   el.classList.remove('show');
+  placeInfoTab();
 }
 
 /* -------------------------------------------------------------------------
