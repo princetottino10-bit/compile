@@ -16,6 +16,7 @@ import * as TU from './tutorial.js';
 import { settings, onSettings, openSettings } from './settings.js';
 import { recordSoloResult, localRecords, favoriteCards, toggleFavoriteCard, onFavoriteChange } from './stats.js';
 import { cardStats, cardTier } from './stats-data.js';
+import { matUnlocked } from './playmat.js';
 import { initAccount, openAccount, takeAccountResume } from './account.js';
 import { openCardList } from './cardlist-ov.js';
 import { openOpponentSelect } from './opponent-select.js';
@@ -198,7 +199,8 @@ async function boot() {
   buildPads();
   stage.onFrame((dt, t) => { positionPlayChoices(); trackHandTop(); trackHandRight(); trackPileCounts(); if (panels) panels.tick(t); });
   /* 設定 (演出の速さ・音量) を反映し、変わったらすぐ当てる */
-  onSettings((s) => { TW.setSpeed(s.speed); setSfxVolume(s.sfx); });
+  /* 盤面の柄は解放されているものだけ (記録を消したあとなどに、未解放のまま残らないように) */
+  onSettings((s) => { TW.setSpeed(s.speed); setSfxVolume(s.sfx); arena.setMat(matUnlocked(s.mat, localRecords()) ? s.mat : 'neon'); });
   bindInput();
   mark('stage');
 

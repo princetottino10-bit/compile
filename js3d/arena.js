@@ -4,6 +4,7 @@
  * ========================================================================= */
 import * as THREE from '../vendor/three.module.js';
 import { COLOR, BOARD } from './theme.js';
+import { playmatTexture, MAT_W, MAT_D } from './playmat.js';
 
 /* 天球: 下が暗く、上に向かって薄く色が乗る + 微細な星 */
 const skyVert = `
@@ -208,5 +209,20 @@ export function buildArena(stage) {
     }
   });
 
-  return { group, rings, setTurnSide };
+  /* 盤面の柄 (プレイマット)。枠の内側に1枚敷く。neon は柄なし (床の網目のまま) */
+  const matGeo = new THREE.PlaneGeometry(MAT_W, MAT_D);
+  matGeo.rotateX(-Math.PI / 2);
+  /* 不透明の板として奥行きも書く (書かないと、あとから描く床の網目に上書きされる) */
+  const matMesh = new THREE.Mesh(matGeo, new THREE.MeshBasicMaterial({ toneMapped: false }));
+  matMesh.position.y = 0.001;
+  matMesh.visible = false;
+  matMesh.raycast = () => {};
+  group.add(matMesh);
+  function setMat(key) {
+    const tex = playmatTexture(key);
+    matMesh.visible = !!tex;
+    if (tex) { matMesh.material.map = tex; matMesh.material.needsUpdate = true; }
+  }
+
+  return { group, rings, setTurnSide, setMat };
 }
