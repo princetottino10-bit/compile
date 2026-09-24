@@ -45,27 +45,45 @@ const LOGO = '<div class="tt-logo"><b>//</b><span data-text="COMPILE">COMPILE</s
   '<div class="tt-sub">3D ARENA <i>·</i> PROTOCOL CARD BATTLE</div>';
 
 /* 右側: 公式カードの絵を3枚、斜めに切り抜いて並べる。数秒ごとにグリッチをかけて別のプロトコルへ */
-function startHero(el, protocols) {
+/* 絵が入っているプロトコル (ほかは三角の模様だけなので、トップには出さない) */
+const HERO_ART = new Set(['APATHY', 'ASSIMILATION', 'DARKNESS', 'DEATH', 'DIVERSITY', 'FIRE', 'GRAVITY', 'HATE', 'LIFE',
+  'LIGHT', 'LOVE', 'METAL', 'PLAGUE', 'PSYCHIC', 'SPEED', 'SPIRIT', 'UNITY', 'WATER']);
+
+function startHero(el, all) {
+  const withArt = all.filter(p => HERO_ART.has(p.name));
+  const protocols = withArt.length >= 4 ? withArt : all;
   if (!el || !protocols.length) return () => {};
-  const pick = () => {
-    const pool = protocols.slice();
-    const out = [];
-    while (out.length < 3 && pool.length) out.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
-    return out;
+  el.innerHTML = '<div class="tt-hero-in"></div>';
+  const box = el.firstChild;
+  const shown = new Set();
+  const card = (slot) => {
+    const pool = protocols.filter(p => !shown.has(p.name));
+    const p = pool[Math.floor(Math.random() * pool.length)] || protocols[0];
+    shown.add(p.name);
+    const f = document.createElement('figure');
+    f.className = 'th-panel';
+    f.dataset.slot = slot;
+    f.dataset.name = p.name;
+    f.innerHTML = '<img alt="" src="art/' + (1 + Math.floor(Math.random() * 6)) + p.name.toLowerCase() + '.webp" decoding="async">' +
+      '<figcaption><img alt="" src="' + emblemDataURL(p.name, p.color || '#b9a4ff', 44, true) + '">' + p.name + '</figcaption>';
+    box.appendChild(f);
+    return f;
   };
-  const paint = () => {
-    el.innerHTML = pick().map((p, i) => {
-      const n = 1 + Math.floor(Math.random() * 6);
-      return '<figure class="th-panel" style="--i:' + i + ';--pc:' + (p.color || '#b9a4ff') + '">' +
-        '<img alt="" src="art/' + n + p.name.toLowerCase() + '.webp" loading="eager">' +
-        '<figcaption><img alt="" src="' + emblemDataURL(p.name, p.color || '#b9a4ff', 40, true) + '">' + p.name + '</figcaption></figure>';
-    }).join('');
-  };
-  paint();
+  ['l', 'c', 'r'].forEach(card);
+  /* 左の札が抜け、中央が左へ、右が中央へ、新しい札が右から入る */
   const t = setInterval(() => {
-    el.classList.add('swap');
-    setTimeout(() => { paint(); el.classList.remove('swap'); }, 360);
-  }, 5200);
+    const at = (slot) => box.querySelector('.th-panel[data-slot="' + slot + '"]');
+    const l = at('l'), c = at('c'), r = at('r');
+    if (!l || !c || !r) return;
+    l.dataset.slot = 'out';
+    shown.delete(l.dataset.name);
+    setTimeout(() => l.remove(), 1300);
+    c.dataset.slot = 'l';
+    r.dataset.slot = 'c';
+    const n = card('in');
+    void n.offsetWidth;            // 入る前の位置を一度確定させてから動かす
+    n.dataset.slot = 'r';
+  }, 6000);
   return () => clearInterval(t);
 }
 
