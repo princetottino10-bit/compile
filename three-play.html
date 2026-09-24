@@ -1711,6 +1711,8 @@
       width:min(156px,17vw);max-height:none;border-radius:0 10px 10px 0;border-left:0;}
     /* チュートリアルの説明の帯が出ているときは、その下から */
     body.coach-on:not(.picking) #preview{top:calc(var(--coach-bottom, 40px) + 6px);}
+    /* パネルは縦に余裕があるので、チュートリアル中も場所・状態の行を出す */
+    body.coach-on:not(.picking) #preview .cp-top{display:flex;}
     .cp-top{padding:5px 10px 4px;}
     .cp-img,.cp-proto{display:none;}
     .cp-meta{flex-direction:row;flex-wrap:wrap;align-items:center;gap:4px;}
