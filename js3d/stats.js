@@ -5,6 +5,7 @@
  * ========================================================================= */
 
 import { levelLabel } from './aidecks.js';
+import { protocolSummary, matchups, winTrend, fastestWin, masteryLevel } from './stats-data.js';
 
 const KEY = 'compileSoloRecords';
 const MAX = 2000;
@@ -77,9 +78,112 @@ function rows(list) {
   }).join('') + '</div>';
 }
 
-/* 戦績の画面 */
-export function openStats() {
+/* ---------- 戦績の画面 ----------
+   まとめ (勝率の推移・最短勝利・制覇数) / プロトコル (習熟度と制覇) / 相性 / 詳細 (従来の集計) */
+
+/* プロトコルの並びと色 (cards.json の順)。1回読んだら使い回す */
+let protoList = null;
+async function protocols() {
+  if (protoList) return protoList;
+  try {
+    const data = await fetch('data/cards.json').then(r => r.json());
+    protoList = data.protocols.map(p => ({ name: p.name, color: p.color || '#63f3ff' }));
+  } catch (e) {
+    protoList = [];
+  }
+  return protoList;
+}
+
+const pct = (w, n) => (n ? Math.round(100 * w / n) : 0);
+
+/* 勝率の推移 (直近10戦ごとの勝率、最後の60戦ぶん) を折れ線で */
+function trendSvg(list) {
+  const pts = winTrend(list, 10, 60);
+  if (pts.length < 2) return '<p class="pz-note">10戦を超えると、勝率の推移がここに出ます</p>';
+  const W = 460, H = 120, P = 8;
+  const x = (i) => P + (W - 2 * P) * i / (pts.length - 1);
+  const y = (v) => P + (H - 2 * P) * (1 - v);
+  const line = pts.map((v, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join(' ');
+  const area = line + ' L' + x(pts.length - 1).toFixed(1) + ' ' + (H - P) + ' L' + x(0).toFixed(1) + ' ' + (H - P) + ' Z';
+  const last = pts[pts.length - 1];
+  return '<figure class="sr-trend"><svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="直近10戦ごとの勝率の推移">' +
+    [0.25, 0.5, 0.75].map(v => '<line x1="' + P + '" x2="' + (W - P) + '" y1="' + y(v) + '" y2="' + y(v) + '" class="sr-grid"/>').join('') +
+    '<text x="' + (P + 2) + '" y="' + (y(0.5) - 4) + '" class="sr-axis">50%</text>' +
+    '<path d="' + area + '" class="sr-area"/><path d="' + line + '" class="sr-line"/>' +
+    '<circle cx="' + x(pts.length - 1) + '" cy="' + y(last) + '" r="4" class="sr-dot"/></svg>' +
+    '<figcaption>直近10戦の勝率 <b>' + Math.round(last * 100) + '%</b></figcaption></figure>';
+}
+
+function summaryTab(list, protos) {
+  const sum = protocolSummary(list);
+  const wonStrongest = protos.filter(p => (sum.get(p.name) || {}).wonStrongest).length;
+  const wonAny = protos.filter(p => (sum.get(p.name) || {}).won).length;
+  const fast = fastestWin(list);
+  const fastTop = fastestWin(list, r => r.level >= 3);
+  const tile = (label, value, sub) => '<div class="sr-kpi"><small>' + label + '</small><b>' + value + '</b>' + (sub ? '<span>' + sub + '</span>' : '') + '</div>';
+  return trendSvg(list) +
+    '<div class="sr-kpis">' +
+      tile('勝ったことのあるプロトコル', wonAny + '<i>/' + protos.length + '</i>') +
+      tile('最強に勝ったプロトコル', wonStrongest + '<i>/' + protos.length + '</i>') +
+      tile('最短で勝った手番', fast ? fast.turns : '—', fast ? esc(fast.me.join(' / ')) : '記録なし') +
+      tile('最強に最短で勝った手番', fastTop ? fastTop.turns : '—', fastTop ? esc(fastTop.me.join(' / ')) : '記録なし') +
+    '</div>';
+}
+
+/* 30プロトコルの習熟度と制覇 (勝った / つよいに勝った / 最強に勝った) */
+function protocolTab(list, protos) {
+  const sum = protocolSummary(list);
+  return '<p class="pz-note">そのプロトコルを入れて戦うと習熟度が上がります (1戦 +1、勝ち +2、つよい以上に勝つと +1)。' +
+    '印は 勝った・つよいに勝った・最強に勝った。</p>' +
+    '<div class="sr-protos">' + protos.map(p => {
+      const t = sum.get(p.name);
+      const m = t ? t.mastery : masteryLevel(0);
+      const pip = (on, label) => '<i class="' + (on ? 'on' : '') + '" title="' + label + '"></i>';
+      return '<div class="sr-proto' + (t ? '' : ' none') + '" style="--pc:' + esc(p.color) + '">' +
+        '<div class="sr-ph"><b>' + esc(p.name) + '</b><span>Lv' + m.level + '</span></div>' +
+        '<div class="sr-xp"><i style="width:' + Math.round(m.progress * 100) + '%"></i></div>' +
+        '<div class="sr-pf"><span class="sr-pips">' + pip(t && t.won, '勝った') + pip(t && t.wonStrong, 'つよいに勝った') +
+          pip(t && t.wonStrongest, '最強に勝った') + '</span><small>' + (t ? t.wins + '勝' + (t.games - t.wins) + '敗' : '未使用') + '</small></div>' +
+      '</div>';
+    }).join('') + '</div>';
+}
+
+/* 相性: 使ったことのある自分のプロトコル × 当たったことのある相手のプロトコル */
+function matchupTab(list, protos) {
+  const mu = matchups(list);
+  if (!mu.size) return '<p class="pz-note">まだ記録がありません</p>';
+  const order = protos.map(p => p.name);
+  const mine = order.filter(n => list.some(r => r.me.includes(n)));
+  const theirs = order.filter(n => list.some(r => r.opp.includes(n)));
+  const cell = (a, b) => {
+    const t = mu.get(a + '|' + b);
+    if (!t) return '<td class="nil"></td>';
+    const r = t.w / t.n;
+    return '<td style="--r:' + r.toFixed(2) + '" title="' + esc(a) + ' 対 ' + esc(b) + ': ' + t.w + '勝' + (t.n - t.w) + '敗">' +
+      pct(t.w, t.n) + '<small>' + t.n + '</small></td>';
+  };
+  return '<p class="pz-note">行が自分、列が相手のプロトコル。数字は勝率 (%)、小さい数字は戦数。赤いほど苦手です。</p>' +
+    '<div class="sr-mu"><table><thead><tr><th></th>' + theirs.map(n => '<th><span>' + esc(n) + '</span></th>').join('') + '</tr></thead><tbody>' +
+    mine.map(a => '<tr><th>' + esc(a) + '</th>' + theirs.map(b => cell(a, b)).join('') + '</tr>').join('') +
+    '</tbody></table></div>';
+}
+
+/* 詳細: 以前の集計 (自分・相手のプロトコル、デッキ、難易度) */
+function detailTab(list) {
+  const groups = [
+    ['自分のプロトコル', tally(list, r => r.me)],
+    ['相手のプロトコル', tally(list, r => r.opp)],
+    ['自分のデッキ', tally(list, r => [r.me.slice().sort().join(' / ')])],
+    ['難易度', tally(list.filter(r => r.level !== null), r => [levelLabel(r.level)])]
+  ];
+  return groups.map(([t, g]) => '<h3 class="sr-h">' + t + '</h3>' + rows(g)).join('');
+}
+
+const TABS = ['まとめ', 'プロトコル', '相性', '詳細'];
+
+export async function openStats() {
   const list = records();
+  const protos = await protocols();
   let el = document.getElementById('statsOv');
   if (!el) {
     el = document.createElement('div');
@@ -88,26 +192,19 @@ export function openStats() {
     document.body.appendChild(el);
   }
   const wins = list.filter(r => r.win).length;
-  const byLevel = tally(list.filter(r => r.level !== null), r => [levelLabel(r.level)]);
   el.innerHTML = '<div class="pz-card sr-card" role="dialog" aria-modal="true" aria-label="戦績">' +
     '<div class="pz-head"><b>戦績 (CPU 戦)</b><button type="button" class="pz-x" aria-label="閉じる">×</button></div>' +
     (hooks.note ? '<p class="sr-cloud">' + esc(hooks.note()) + '</p>' : '') +
     '<p class="sr-total">' + list.length + '戦 <b>' + wins + '勝</b> ' + (list.length - wins) + '敗' +
-      (list.length ? '　勝率 <b>' + Math.round(100 * wins / list.length) + '%</b>' : '') + '</p>' +
-    '<div class="sr-tabs" role="tablist">' +
-      ['自分のプロトコル', '相手のプロトコル', '自分のデッキ', '難易度'].map((t, i) =>
-        '<button type="button" data-tab="' + i + '" class="' + (i === 0 ? 'on' : '') + '">' + t + '</button>').join('') +
+      (list.length ? '　勝率 <b>' + pct(wins, list.length) + '%</b>' : '') + '</p>' +
+    '<div class="sr-tabs" role="tablist">' + TABS.map((t, i) =>
+      '<button type="button" role="tab" data-tab="' + i + '" class="' + (i === 0 ? 'on' : '') + '">' + t + '</button>').join('') +
     '</div><div id="srBody"></div>' +
     (list.length ? '<div class="pz-row"><button type="button" id="srClear">記録を消す</button></div>' : '') +
     '</div>';
-  const tabs = [
-    () => rows(tally(list, r => r.me)),
-    () => rows(tally(list, r => r.opp)),
-    () => rows(tally(list, r => [r.me.slice().sort().join(' / ')])),
-    () => rows(byLevel)
-  ];
+  const views = [() => summaryTab(list, protos), () => protocolTab(list, protos), () => matchupTab(list, protos), () => detailTab(list)];
   const show = (i) => {
-    el.querySelector('#srBody').innerHTML = tabs[i]();
+    el.querySelector('#srBody').innerHTML = views[i]();
     el.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('on', +b.dataset.tab === i));
   };
   el.querySelectorAll('[data-tab]').forEach(b => { b.onclick = () => show(+b.dataset.tab); });
@@ -117,12 +214,23 @@ export function openStats() {
   el.onclick = (ev) => { if (ev.target === el) close(); };
   el.querySelector('.pz-x').onclick = close;
   const clear = el.querySelector('#srClear');
-  if (clear) clear.onclick = async () => {
-    const cloud = !!hooks.onClear;
-    if (!confirm('CPU 戦の記録をすべて消しますか？' + (cloud ? '\n(アカウントに保存した記録も消えます)' : ''))) return;
+  if (clear) clear.onclick = () => confirmClear(el);
+}
+
+/* 記録を消す前に、画面の中で確かめる (ブラウザの確認ダイアログは使わない) */
+function confirmClear(el) {
+  const row = el.querySelector('#srClear').parentElement;
+  const cloud = !!hooks.onClear;
+  row.innerHTML = '<span class="sr-warn">CPU 戦の記録をすべて消します' + (cloud ? ' (アカウントに保存した記録も)' : '') + '。よいですか？</span>' +
+    '<button type="button" id="srClearYes" class="warn">消す</button><button type="button" id="srClearNo">やめる</button>';
+  row.querySelector('#srClearNo').onclick = () => openStats();
+  row.querySelector('#srClearYes').onclick = async () => {
     try { localStorage.removeItem(KEY); } catch (e) { /* private mode */ }
     if (cloud) {
-      try { await hooks.onClear(); } catch (e) { alert('アカウントの記録を消せませんでした: ' + e.message); }
+      try { await hooks.onClear(); } catch (e) {
+        row.innerHTML = '<span class="sr-warn">アカウントの記録を消せませんでした: ' + esc(e.message) + '</span>';
+        return;
+      }
     }
     openStats();
   };

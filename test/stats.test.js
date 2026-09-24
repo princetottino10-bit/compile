@@ -46,3 +46,38 @@ test('別の端末の記録は足し、同じ id は重ねない (日時順に�
   assert.deepEqual(S.localRecords().map(r => r.id), ['tremote001', 'tlocal0001']);
   assert.equal(S.mergeRecords([{ id: 'tremote001', me: [], opp: [], win: false, level: 1, at: 1000 }]), 0, '2回目は何も足さない');
 });
+
+/* ---------- 集計 (stats-data.js) ---------- */
+const loadData = () => import('../js3d/stats-data.js');
+const rec = (me, opp, win, level, turns) => ({ id: 'x', me, opp, win, level, at: 0, turns });
+
+test('習熟度: 1戦 +1、勝ち +2、つよい以上に勝てば +1。段階で Lv が上がる', async () => {
+  const D = await loadData();
+  const m = D.protocolSummary([
+    rec(deck('FIRE', 'WATER', 'SPEED'), deck('A', 'B', 'C'), true, 3),
+    rec(deck('FIRE', 'LIFE', 'LIGHT'), deck('A', 'B', 'C'), false, 1)
+  ]);
+  const fire = m.get('FIRE');
+  assert.equal(fire.games, 2);
+  assert.equal(fire.xp, 1 + 2 + 1 + 1);
+  assert.equal(fire.mastery.level, 2, 'xp 5 は Lv2 (3 以上 8 未満)');
+  assert.ok(fire.wonStrong && fire.wonStrongest && fire.won);
+  assert.equal(m.get('LIFE').won, false);
+  assert.equal(D.masteryLevel(0).level, 1);
+  assert.equal(D.masteryLevel(150).next, null, '最大 Lv は次が無い');
+});
+
+test('相性・勝率の推移・最短ターン勝利', async () => {
+  const D = await loadData();
+  const list = [
+    rec(deck('FIRE', 'WATER', 'SPEED'), deck('LOVE', 'B', 'C'), true, 1, 30),
+    rec(deck('FIRE', 'WATER', 'SPEED'), deck('LOVE', 'B', 'C'), false, 1, 20),
+    rec(deck('FIRE', 'WATER', 'SPEED'), deck('LOVE', 'B', 'C'), true, 3, 24)
+  ];
+  const mu = D.matchups(list).get('FIRE|LOVE');
+  assert.deepEqual([mu.n, mu.w], [3, 2]);
+  assert.deepEqual(D.winTrend(list, 2, 10), [0.5, 0.5]);
+  assert.equal(D.fastestWin(list).turns, 24, '負けた試合の短さは数えない');
+  assert.equal(D.fastestWin(list, r => r.level >= 3).turns, 24);
+  assert.equal(D.fastestWin([]), null);
+});

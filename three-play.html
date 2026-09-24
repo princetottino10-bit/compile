@@ -1117,7 +1117,50 @@
   .st-seg button.on,.sr-tabs button.on{border-color:var(--cyan);color:var(--ink);background:rgba(99,243,255,.12);}
   /* タイトル画面 (z 58) の上にも出す */
   #settingsOv,#statsOv,#accountOv{z-index:62;}
-  .sr-card{width:min(520px,100%);}
+  .sr-card{width:min(680px,100%);}
+  /* まとめ: 勝率の推移と数字 */
+  .sr-trend{margin:0;display:flex;flex-direction:column;gap:4px;}
+  .sr-trend svg{width:100%;height:auto;display:block;}
+  .sr-trend .sr-grid{stroke:rgba(255,255,255,.08);stroke-width:1;}
+  .sr-trend .sr-axis{fill:var(--dim);font:600 10px system-ui;}
+  .sr-trend .sr-area{fill:rgba(99,243,255,.12);}
+  .sr-trend .sr-line{fill:none;stroke:var(--cyan);stroke-width:2;stroke-linejoin:round;}
+  .sr-trend .sr-dot{fill:var(--cyan);stroke:#05070f;stroke-width:2;}
+  .sr-trend figcaption{font:600 11px/1 system-ui;color:var(--dim);}
+  .sr-trend figcaption b{color:var(--ink);font-variant-numeric:tabular-nums;}
+  .sr-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+  .sr-kpi{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);}
+  .sr-kpi small{font:700 10px/1.3 system-ui;color:var(--dim);letter-spacing:.04em;}
+  .sr-kpi b{font:800 24px/1 var(--font-hud),system-ui;color:#fff;font-variant-numeric:tabular-nums;}
+  .sr-kpi b i{font-style:normal;font-size:13px;color:var(--dim);margin-left:2px;}
+  .sr-kpi span{font:600 10px/1.3 system-ui;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  /* プロトコル: 習熟度と制覇の印 */
+  .sr-protos{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:6px;max-height:52vh;overflow-y:auto;}
+  .sr-proto{display:flex;flex-direction:column;gap:5px;padding:8px 9px;border-radius:9px;background:rgba(255,255,255,.035);
+    border:1px solid rgba(255,255,255,.08);border-left:3px solid var(--pc);}
+  .sr-proto.none{opacity:.45;}
+  .sr-ph{display:flex;justify-content:space-between;align-items:baseline;gap:4px;}
+  .sr-ph b{font:800 11px/1 var(--font-hud),system-ui;letter-spacing:.06em;color:#fff;overflow:hidden;text-overflow:ellipsis;}
+  .sr-ph span{font:800 11px/1 var(--font-hud),system-ui;color:var(--pc);}
+  .sr-xp{height:4px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden;}
+  .sr-xp i{display:block;height:100%;background:var(--pc);}
+  .sr-pf{display:flex;justify-content:space-between;align-items:center;}
+  .sr-pf small{font:600 9.5px/1 system-ui;color:var(--dim);font-variant-numeric:tabular-nums;}
+  .sr-pips{display:flex;gap:3px;}
+  .sr-pips i{width:8px;height:8px;border-radius:50%;border:1px solid rgba(255,255,255,.3);}
+  .sr-pips i.on{background:var(--gold);border-color:var(--gold);box-shadow:0 0 6px rgba(239,208,108,.6);}
+  /* 相性: 勝率で赤 (苦手) ↔ 緑 (得意) */
+  .sr-mu{max-height:52vh;overflow:auto;}
+  .sr-mu table{border-collapse:separate;border-spacing:2px;font:700 10px/1 system-ui;}
+  .sr-mu th{color:var(--dim);font-weight:700;text-align:right;padding:2px 4px;white-space:nowrap;position:sticky;left:0;background:#0a0e1a;}
+  .sr-mu thead th{position:sticky;top:0;z-index:1;height:74px;vertical-align:bottom;}
+  .sr-mu thead th span{display:inline-block;writing-mode:vertical-rl;transform:rotate(180deg);}
+  .sr-mu td{min-width:30px;height:26px;text-align:center;border-radius:4px;color:#05070f;font-variant-numeric:tabular-nums;
+    background:color-mix(in srgb,#6dffc2 calc(var(--r) * 100%),#ff5c8a);background-blend-mode:normal;opacity:.9;}
+  .sr-mu td small{display:block;font-size:8px;opacity:.7;margin-top:1px;}
+  .sr-mu td.nil{background:rgba(255,255,255,.03);}
+  .sr-h{margin:6px 0 0;font:800 11px/1 system-ui;letter-spacing:.1em;color:var(--dim);}
+  .sr-warn{font:700 12px/1.5 system-ui;color:#ffb3d6;}
   /* カード本文のトリガー (「開始：」「〜たとき：」)。カードリストと同じ太字＋下線 */
   b.cond{font-weight:800;color:#fff;text-decoration:underline;text-decoration-color:rgba(255,255,255,.4);text-underline-offset:3px;}
   .sr-cloud{margin:0;font:600 11px/1.5 system-ui;color:#9fdcff;}
@@ -1685,7 +1728,8 @@
       "./js3d/setup.js": "./js3d/setup.js?v=f26cba4024",
       "./js3d/solodraft.js": "./js3d/solodraft.js?v=9863c9528c",
       "./js3d/stage.js": "./js3d/stage.js?v=203ed8ec22",
-      "./js3d/stats.js": "./js3d/stats.js?v=929d8728a8",
+      "./js3d/stats-data.js": "./js3d/stats-data.js?v=268febfa06",
+      "./js3d/stats.js": "./js3d/stats.js?v=1d0b743197",
       "./js3d/theme.js": "./js3d/theme.js?v=6e2207621c",
       "./js3d/title.js": "./js3d/title.js?v=9565ce4ee4",
       "./js3d/training.js": "./js3d/training.js?v=8f9e8ce6d0",
