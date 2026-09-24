@@ -7,24 +7,48 @@
 import { levelLabel } from './aidecks.js';
 
 const KEY = 'compileSoloRecords';
-const MAX = 500;
+const MAX = 2000;
+/* アカウント連携 (account.js) が差し込む口。stats.js 自体は通信しない */
+const hooks = { onRecord: null, onClear: null, note: null };
+export function setStatsHooks(h) { Object.assign(hooks, h); }
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
+/* 同期で同じ1戦を見分けるための id。以前の記録 (id なし) は日時から作る */
+const idOf = (r) => r.id || ('t' + r.at);
 function records() {
   try {
     const list = JSON.parse(localStorage.getItem(KEY) || '[]');
-    return Array.isArray(list) ? list : [];
+    return Array.isArray(list) ? list.map(r => (r.id ? r : { ...r, id: idOf(r) })) : [];
   } catch (e) {
     return [];
   }
+}
+function save(list) {
+  try { localStorage.setItem(KEY, JSON.stringify(list.slice(-MAX))); } catch (e) { /* private mode */ }
+}
+
+export function localRecords() { return records(); }
+
+/* 別の端末で記録した分 (アカウントから読んだ分) を足す。同じ id は足さない */
+export function mergeRecords(remote) {
+  const list = records();
+  const have = new Set(list.map(r => r.id));
+  const add = remote.filter(r => r && r.id && !have.has(r.id));
+  if (!add.length) return 0;
+  save(list.concat(add).sort((a, b) => a.at - b.at));
+  return add.length;
 }
 
 /* 1戦を記録する。me / opp: プロトコル名3つ、win: 勝ったか、level: 難易度 (aidecks.js の番号 / 不明なら null) */
 export function recordSoloResult(me, opp, win, level) {
   const list = records();
-  list.push({ me: me.slice(), opp: opp.slice(), win: !!win, level: level === undefined ? null : level, at: Date.now() });
-  try { localStorage.setItem(KEY, JSON.stringify(list.slice(-MAX))); } catch (e) { /* private mode */ }
+  const at = Date.now();
+  const rec = { id: 't' + at + '_' + Math.random().toString(36).slice(2, 6), me: me.slice(), opp: opp.slice(),
+    win: !!win, level: level === undefined ? null : level, at };
+  list.push(rec);
+  save(list);
+  if (hooks.onRecord) hooks.onRecord(rec);
 }
 
 function tally(list, keysOf) {
@@ -64,6 +88,7 @@ export function openStats() {
   const byLevel = tally(list.filter(r => r.level !== null), r => [levelLabel(r.level)]);
   el.innerHTML = '<div class="pz-card sr-card" role="dialog" aria-modal="true" aria-label="戦績">' +
     '<div class="pz-head"><b>戦績 (CPU 戦)</b><button type="button" class="pz-x" aria-label="閉じる">×</button></div>' +
+    (hooks.note ? '<p class="sr-cloud">' + esc(hooks.note()) + '</p>' : '') +
     '<p class="sr-total">' + list.length + '戦 <b>' + wins + '勝</b> ' + (list.length - wins) + '敗' +
       (list.length ? '　勝率 <b>' + Math.round(100 * wins / list.length) + '%</b>' : '') + '</p>' +
     '<div class="sr-tabs" role="tablist">' +
@@ -89,9 +114,13 @@ export function openStats() {
   el.onclick = (ev) => { if (ev.target === el) close(); };
   el.querySelector('.pz-x').onclick = close;
   const clear = el.querySelector('#srClear');
-  if (clear) clear.onclick = () => {
-    if (!confirm('CPU 戦の記録をすべて消しますか？')) return;
+  if (clear) clear.onclick = async () => {
+    const cloud = !!hooks.onClear;
+    if (!confirm('CPU 戦の記録をすべて消しますか？' + (cloud ? '\n(アカウントに保存した記録も消えます)' : ''))) return;
     try { localStorage.removeItem(KEY); } catch (e) { /* private mode */ }
+    if (cloud) {
+      try { await hooks.onClear(); } catch (e) { alert('アカウントの記録を消せませんでした: ' + e.message); }
+    }
     openStats();
   };
 }

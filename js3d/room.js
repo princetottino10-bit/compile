@@ -141,6 +141,20 @@ export async function roomSignInWithGoogle() {
   if (r.error) { clearOnlineResume(); throw new Error(r.error.message); }
 }
 
+/* アカウント (戦績の保存) から使う。ログイン後はタイトルへ戻り、アカウントの画面を開き直す */
+export function roomClient() { return client(); }
+export async function accountSignInWithGoogle() {
+  try { localStorage.setItem('compileAccountResume', '1'); } catch (e) { /* private mode */ }
+  const r = await client().auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: location.origin + location.pathname }
+  });
+  if (r.error) {
+    try { localStorage.removeItem('compileAccountResume'); } catch (e) { /* private mode */ }
+    throw new Error(r.error.message);
+  }
+}
+
 export async function roomApi(op, extra) {
   const cfg = window.COMPILE_ROOM_CONFIG;
   const s = await roomSession();

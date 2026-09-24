@@ -15,6 +15,7 @@ import * as PZ from './puzzle.js';
 import * as TU from './tutorial.js';
 import { settings, onSettings, openSettings } from './settings.js';
 import { recordSoloResult } from './stats.js';
+import { initAccount, openAccount, takeAccountResume } from './account.js';
 import { openReview } from './review.js';
 import { runRoomLobby } from './roomui.js';
 import { selectHead, bindSelectHead } from './selectui.js';
@@ -211,7 +212,12 @@ async function boot() {
     bootEl0.classList.add('gone');
     setTimeout(() => { bootEl0.style.display = 'none'; }, 800);
     document.body.classList.add('pregame');
-    let nextMode = params.get('title') !== '0' ? await runTitle(cards.protocols) : 'single';
+    /* ログイン状態は裏で読む (待たない)。Google から戻ってきたときはメニューを出してアカウントの画面を開く */
+    const accountReady = initAccount();
+    const accountResume = takeAccountResume();
+    let nextMode = params.get('title') !== '0'
+      ? await runTitle(cards.protocols, accountResume ? { menuOnly: true, after: () => accountReady.then(openAccount) } : undefined)
+      : 'single';
     /* Google 等のログインはページを離れて戻ってくる。
        戻り先はタイトルなので、目印があればオンラインへ直行する。 */
     try {

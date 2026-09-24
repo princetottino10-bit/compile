@@ -6,6 +6,7 @@ import { drawTitleBackdrop } from './backdrops.js';
 import { initAudio, sfx } from './audio.js';
 import { openSettings } from './settings.js';
 import { openStats } from './stats.js';
+import { openAccount, accountState, onAccountChange } from './account.js';
 
 const BOOT_LINES = [
   '> COMPILE OS v3.1 — boot sequence initiated',
@@ -15,6 +16,11 @@ const BOOT_LINES = [
   '> control component .......... NEUTRAL',
   '> awaiting operator input _'
 ];
+
+function accountLabel() {
+  const u = accountState().user;
+  return u ? String(u.name).replace(/[&<>"]/g, '') + ' でログイン中' : 'ログイン・戦績の保存';
+}
 
 export function runTitle(protocols, opts) {
   const menuOnly = !!(opts && opts.menuOnly);    // ロビー等から戻るとき: 起動演出を飛ばしてメニューだけ
@@ -60,7 +66,14 @@ export function runTitle(protocols, opts) {
           '<button data-mode="training" type="button">TRAINING <small>自由配置・検証盤面</small></button>' +
           '<button data-mode="record" type="button">RECORD <small>CPU 戦の戦績</small></button>' +
           '<button data-mode="options" type="button">OPTION <small>演出・音の設定</small></button>' +
+          '<button data-mode="account" type="button">ACCOUNT <small>' + accountLabel() + '</small></button>' +
         '</nav>';
+      /* ログイン状態は裏で読むので、分かったら表示を差し替える */
+      const offAccount = onAccountChange(() => {
+        const small = center.querySelector('button[data-mode="account"] small');
+        if (!small) { offAccount(); return; }
+        small.textContent = accountLabel();
+      });
       center.querySelector('.tt-menu').onclick = (ev) => {
         const button = ev.target.closest('button[data-mode]');
         if (!button) return;
@@ -68,6 +81,7 @@ export function runTitle(protocols, opts) {
         /* 設定 (演出の速さ・効果音の音量・待ち時間)。音の ON/OFF は対戦中の 🔊 で */
         if (button.dataset.mode === 'options') openSettings();
         else if (button.dataset.mode === 'record') openStats();
+        else if (button.dataset.mode === 'account') openAccount();
         else finish(button.dataset.mode);
       };
     };
@@ -85,5 +99,6 @@ export function runTitle(protocols, opts) {
     root.querySelector('#ttStart').onclick = start;
     window.addEventListener('keydown', onKey);
     if (menuOnly) { clearInterval(logTimer); log.innerHTML = ''; start(); }
+    if (opts && opts.after) opts.after();
   });
 }
