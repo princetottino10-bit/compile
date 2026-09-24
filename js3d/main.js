@@ -184,7 +184,10 @@ async function boot() {
       await UI.compileCutIn({
         ...info,
         art: glitchArtUrl(info.name),
-        emblem: emblemDataURL(info.name, info.color, 512, true)
+        emblem: emblemDataURL(info.name, info.color, 512, true),
+        /* お気に入りのカードでコンパイルしたら、その札をカットインに並べる */
+        favorites: (info.favorites || []).map(id => defIndex[id]).filter(Boolean)
+          .map(d => ({ img: faceImageURL(d), name: d.proto + ' ' + d.value }))
       });
     }
   });

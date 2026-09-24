@@ -291,6 +291,8 @@ export function compileCutIn(info) {
   if (!el) return Promise.resolve();
   const accent = info.color || '#63f3ff';
   el.style.setProperty('--accent', accent);
+  const favs = Array.isArray(info.favorites) ? info.favorites.slice(0, 3) : [];
+  el.classList.toggle('fav', favs.length > 0);
   el.innerHTML =
     '<div class="cc-veil"></div>' +
     (info.art ? '<div class="cc-art" style="background-image:url(&quot;' + info.art + '&quot;)"></div>' : '') +
@@ -299,21 +301,23 @@ export function compileCutIn(info) {
     '<div class="cc-ring"></div><div class="cc-ring r2"></div><div class="cc-ring r3"></div>' +
     '<div class="cc-slash"></div><div class="cc-slash thin"></div>' +
     '<div class="cc-body">' +
-      '<div class="cc-kicker">PROTOCOL COMPILED</div>' +
+      '<div class="cc-kicker">' + (favs.length ? 'FAVORITE COMPILE' : 'PROTOCOL COMPILED') + '</div>' +
       '<div class="cc-name" data-text="' + info.name + '">' + info.name + '</div>' +
       ccPips(info.remaining) +
       '<div class="cc-sub">' + (info.remaining > 0 ? 'あと ' + info.remaining + ' プロトコル' : 'ALL PROTOCOLS COMPILED') + '</div>' +
       '<div class="cc-owner">' + (info.mine ? 'YOU' : 'OPPONENT') + '</div>' +
     '</div>' +
+    (favs.length ? '<div class="cc-favs">' + favs.map((f, i) =>
+      '<figure style="--i:' + i + '"><img alt="" src="' + f.img + '"><figcaption>★ ' + f.name + '</figcaption></figure>').join('') + '</div>' : '') +
     '<div class="cc-scan"></div>';
   el.classList.add('show');
 
   return new Promise((resolve) => {
     setTimeout(() => {
-      el.classList.remove('show');
+      el.classList.remove('show', 'fav');
       el.innerHTML = '';
       resolve();
-    }, 2200);
+    }, favs.length ? 2900 : 2200);
   });
 }
 
