@@ -2291,6 +2291,31 @@ async function askUserInner(req) {
 let boardPick = null;
 const PICK_CANCEL = '__pickCancel__';   // 外部要因 (ポーリング等) による中断
 const PICK_BACK = '__pickBack__';       // 効果の一段前の選択へ戻る
+const PICK_SKIP = '__pickSkip__';       // 「〜してもよい」をまとめた選択で「しない」を選んだ
+
+/* 「〜してもよい」(はい/いいえ) のあとに盤面の選択が続く効果は、はい/いいえを聞かずに、いきなり盤面の選択に入る。
+   対象を選べば「はい」、帯の「しない」で「いいえ」。「はい」を手元で試しに進めて、次の問いを見て決める
+   (CPU 戦だけ。エンジンが手元にあるので当て直しても同じ結果になる。オンラインは相手の情報が無いので試せない) */
+let pickSkip = false;                   // いま出している盤面の選択に「しない」を付けるか
+let queuedAnswer = null;                // 「はい」のあとに自動で答える選択 { id, picks }
+function mergedYesTarget(req) {
+  if (roomMode || tutorial || trainingMode || req.kind !== 'yesNo' || req.player !== ME) return null;
+  let spec;
+  try { spec = withoutTrace(() => Engine.apply(cur.state, { type: 'choose', id: req.id, picks: ['yes'] })); } catch (e) { return null; }
+  if (!spec || spec.error || !Array.isArray(spec.requests) || !spec.requests.length) return null;
+  const nx = spec.requests[0];
+  if (nx.player !== ME) return null;
+  const st = shown();
+  if (nx.kind === 'pickLine' && Array.isArray(nx.lines) && nx.lines.length) return nx;
+  /* 手札から捨てる・渡す (してもよい) も、手札の選択にまとめる。手札は「はい」の前後で変わらない */
+  if (nx.kind === 'pickHand' && (nx.min === undefined || nx.min >= 1) && Array.isArray(nx.candidates) && nx.candidates.length
+      && nx.candidates.every(u => st.players[ME].hand.includes(u))) return nx;
+  /* 盤面にあるカードから1枚以上選ぶもの (山札から選ぶもの、選ばなくてもよいものはまとめない) */
+  if (nx.kind === 'pickCard' && nx.prompt !== 'play-free' && (nx.min === undefined || nx.min >= 1)
+      && Array.isArray(nx.candidates) && nx.candidates.length
+      && nx.candidates.every(u => typeof u === 'string' && u.indexOf('|') < 0 && st.cards[u] && (locOf(st, u) || {}).zone === 'field')) return nx;
+  return null;
+}
 let activeArrange = null;               // 表示中の並べ替えオーバーレイ
 
 /* 表示中の待ち受けUI (盤面ピック / 並べ替え / モーダル) をすべて破棄する */
@@ -2344,13 +2369,32 @@ function pickOnBoard(req) {
           '<button class="arr-btn" id="pkNo" type="button">NO</button>' +
         '</div>';
       bindPickBar(el);
-      const done = (picks) => {
+      let done = (picks) => {
         boardPick = null;
-        el.classList.remove('with-ask', 'confirm', 'peek');
+        el.classList.remove('with-ask', 'confirm', 'peek', 'near-card');
         removePickBar();
         resolve(picks);
       };
       bindPeek(el);
+      placeNearSource(el, req);
+      /* PC の近道: Enter = はい、Esc = いいえ、盤面で右クリック = いいえ */
+      const onKey = (ev) => {
+        if (ev.target && /^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName)) return;
+        if (ev.key === 'Enter') { ev.preventDefault(); done(['yes']); }
+        else if (ev.key === 'Escape') { ev.preventDefault(); done([]); }
+      };
+      const onCtx = (ev) => { ev.preventDefault(); done([]); };
+      window.addEventListener('keydown', onKey);
+      window.addEventListener('contextmenu', onCtx);
+      const done0 = done;
+      let finished = false;
+      done = (picks) => {
+        window.removeEventListener('keydown', onKey);
+        window.removeEventListener('contextmenu', onCtx);
+        if (finished || boardPick === null || boardPick.kind !== 'yesno') return;   // もう閉じた / 別の選択に替わった
+        finished = true;
+        done0(picks);
+      };
       el.querySelector('#pkYes').onclick = () => done(['yes']);
       el.querySelector('#pkNo').onclick = () => done([]);
     });
@@ -2395,6 +2439,26 @@ function pickOnBoard(req) {
     boardPick = { req, min, max, chosen: [], resolve };
     renderBoardPick();
   });
+}
+
+/* はい/いいえ の帯を、効果を出したカードのすぐ横に出す (PC の広い画面・盤面にそのカードがあるときだけ)。
+   req.context はカードの種類 (FIRE_1 等) なので、盤面の表向きのその種類の札を探す */
+function placeNearSource(el, req) {
+  el.classList.remove('near-card');
+  if (!req.context || window.innerWidth < 900 || window.innerHeight < 560 || isCompactHandUI()) return;
+  const st = shown();
+  const uid = Object.keys(st.cards).find(u => st.cards[u].def === req.context && st.cards[u].faceUp && (locOf(st, u) || {}).zone === 'field');
+  const card = uid && board.cards.get(uid);
+  if (!card) return;
+  const v = card.getWorldPosition(new THREE.Vector3()).project(stage.camera);
+  const x = (v.x + 1) / 2 * window.innerWidth, y = (1 - v.y) / 2 * window.innerHeight;
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+  const w = Math.min(300, window.innerWidth * 0.3);
+  /* 右に置けなければ左に。上下は画面の中に収める */
+  const left = x + 70 + w < window.innerWidth - 8 ? x + 70 : Math.max(8, x - 70 - w);
+  el.style.setProperty('--nx', Math.round(left) + 'px');
+  el.style.setProperty('--ny', Math.round(Math.max(48, Math.min(window.innerHeight - 200, y - 50))) + 'px');
+  el.classList.add('near-card');
 }
 
 /* 手札の上に出す帯の目ボタン: 押すと帯を隠して盤面を見られる。もう一度で戻る */
@@ -2463,7 +2527,7 @@ function renderBoardPick() {
   el.classList.toggle('hand-pick', nearHand);   // 手札から選ぶ帯も右上に出す (three-play.html)
   const where = nearHand ? '手札の光っているカード' : '光っているカード';
   el.innerHTML =
-    pickBarAsk(bp.req, { optional: bp.min === 0, count: bp.chosen.length, max: bp.max }) +
+    pickBarAsk(bp.req, { optional: bp.min === 0 || pickSkip, count: bp.chosen.length, max: bp.max }) +
     /* 何を選んだかを帯の中でも読めるようにする (盤面の金色だけでは見落とす) */
     (bp.chosen.length
       ? '<div class="sel-chosen">' + bp.chosen.map((u, i) =>
@@ -2474,6 +2538,7 @@ function renderBoardPick() {
     PEEK_BTN +
     (canBack ? '<button class="arr-btn" id="pkBack" type="button">← 戻る</button>' : '') +
     '<button class="arr-btn ghost" id="pkList" type="button">LIST</button>' +
+    (pickSkip ? '<button class="arr-btn" id="pkSkip" type="button">しない</button>' : '') +
     (instant ? '' :
       '<button class="arr-btn ok" id="pkOk" type="button"' +
         (bp.chosen.length < bp.min ? ' disabled' : '') + '>' +
@@ -2488,6 +2553,8 @@ function renderBoardPick() {
   const back = el.querySelector('#pkBack');
   if (back) back.onclick = () => finishBoardPick(PICK_BACK);
   el.querySelector('#pkList').onclick = () => finishBoardPick(null);
+  const skip = el.querySelector('#pkSkip');
+  if (skip) skip.onclick = () => finishBoardPick(PICK_SKIP);
   renderPickGo(bp);
 }
 
@@ -2569,7 +2636,7 @@ function renderLinePick() {
     && Array.isArray(cur.state.pending.choices) && cur.state.pending.choices.length);
   el.classList.add('with-ask');
   el.classList.remove('confirm');
-  el.innerHTML = pickBarAsk(bp.req) +
+  el.innerHTML = pickBarAsk(bp.req, pickSkip ? { optional: true } : undefined) +
     '<div class="sel-hint">' +
     (hasFocus ? '<i class="sel-key gold"></i>移動するカード　<i class="sel-key mint"></i>移動先のライン' : '光っているラインをタップ') +
     '</div>' +
@@ -2577,11 +2644,14 @@ function renderLinePick() {
     PEEK_BTN +
     (canBack ? '<button class="arr-btn" id="pkBack" type="button">← 対象を選び直す</button>' : '') +
     '<button class="arr-btn ghost" id="pkList" type="button">LIST</button>' +
+    (pickSkip ? '<button class="arr-btn" id="pkSkip" type="button">しない</button>' : '') +
     '</div>';
   bindPickBar(el);
   bindPeek(el);
   const back = el.querySelector('#pkBack');
   if (back) back.onclick = () => finishLinePick(PICK_BACK);
+  const skipL = el.querySelector('#pkSkip');
+  if (skipL) skipL.onclick = () => finishLinePick(PICK_SKIP);
   el.querySelector('#pkList').onclick = () => finishLinePick(null);
 }
 
@@ -2659,6 +2729,12 @@ function renderPickGo(bp) {
 }
 window.addEventListener('keydown', (ev) => {
   const bp = boardPick;
+  /* 「〜してもよい」をまとめた選択は Esc で「しない」 */
+  if (ev.key === 'Escape' && bp && pickSkip && (bp.chosen || bp.kind === 'line')) {
+    ev.preventDefault();
+    if (bp.kind === 'line') finishLinePick(PICK_SKIP); else finishBoardPick(PICK_SKIP);
+    return;
+  }
   if (ev.key !== 'Enter' || !bp || !bp.chosen || pickIsInstant(bp)) return;
   if (bp.chosen.length < bp.min) return;
   if (ev.target && /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(ev.target.tagName)) return;
@@ -2764,7 +2840,19 @@ async function drainRequests() {
   while (cur && cur.requests && cur.requests.length && guard++ < 80) {
     const req = cur.requests[0];
     let picks;
-    if ((req.player === ME || trainingMode) && !demoMode) {
+    const merged = !demoMode ? mergedYesTarget(req) : null;
+    if (queuedAnswer && queuedAnswer.id === req.id) {
+      picks = queuedAnswer.picks;                   // 「はい」をまとめて答えた選択の続き
+      queuedAnswer = null;
+    } else if (merged) {
+      UI.setPrompt('');
+      pickSkip = true;
+      let ans;
+      try { ans = await askUser(merged); } finally { pickSkip = false; }
+      if (ans === PICK_CANCEL) continue;
+      if (ans === PICK_SKIP || ans === PICK_BACK || ans === null) picks = [];
+      else { picks = ['yes']; queuedAnswer = { id: merged.id, picks: ans }; }
+    } else if ((req.player === ME || trainingMode) && !demoMode) {
       UI.setPrompt('');
       picks = await askUser(req);
     } else {
