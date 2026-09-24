@@ -474,6 +474,10 @@ function placeInfoTab() {
   btn.style.left = shown ? (el.offsetLeft + el.offsetWidth) + 'px' : '';
 }
 
+/* 画面の大きさが変わると詳細の幅も変わるので、つまみも置き直す (回転・ウインドウの大きさ変更) */
+window.addEventListener('resize', () => placeInfoTab());
+window.addEventListener('compile:viewport', () => placeInfoTab());
+
 /* 詳細を出す / しまう (ログのつまみと同じ要領) */
 export function setInfoOpen(open) {
   document.body.classList.toggle('info-closed', !open);

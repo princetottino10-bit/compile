@@ -547,13 +547,14 @@
   /* ---------- ログ (右のサイドバー) ----------
      閉じているときは右端のつまみだけを出し、押すと盤面の右から引き出す */
   /* 下端はリフレッシュ・選択解除の段より上で止め、開いていても押せるようにする */
-  #logDock{position:fixed;right:env(safe-area-inset-right);top:52px;bottom:74px;z-index:14;width:min(240px,34vw);
+  #logDock{position:fixed;right:env(safe-area-inset-right);top:52px;bottom:74px;z-index:14;width:clamp(190px,17vw,240px);   /* 詳細 (#preview) と同じ幅 */
     transform:translateX(100%);transition:transform .26s cubic-bezier(.16,1,.3,1);}
   #logDock.open{transform:translateX(0);}
   #log{height:100%;overflow-y:auto;padding:12px 14px;border-radius:12px 0 0 12px;
-    background:rgba(5,8,16,.93);border:1px solid rgba(185,164,255,.24);border-right:0;
-    -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:-18px 0 44px rgba(0,0,0,.5);
-    font:500 11px/1.65 system-ui;color:var(--dim);scrollbar-width:thin;
+    /* 詳細と同じく、盤面が透けて見えるように (文字は影で読みやすく) */
+    background:rgba(5,8,16,.58);border:1px solid rgba(185,164,255,.24);border-right:0;
+    -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);box-shadow:-18px 0 44px rgba(0,0,0,.3);
+    font:500 10px/1.6 system-ui;color:#c9c4dc;text-shadow:0 1px 3px rgba(0,0,0,.9);scrollbar-width:thin;
     visibility:hidden;transition:visibility 0s .26s;}
   #logDock.open #log{visibility:visible;transition:none;}
   #log:empty::before{content:"まだ何も起きていません";color:var(--dim);}
@@ -1806,7 +1807,7 @@
     #preview{left:auto;right:8px;top:104px;width:min(260px,70vw);max-height:52vh;transform:translateX(8px);}
     #preview.show{transform:none;}
     #brand{display:none;}
-    #logDock{top:100px;bottom:66px;width:min(300px,80vw);}
+    #logDock{top:100px;bottom:66px;width:min(260px,70vw);}
     #btnLog{top:12px;}
     #btnInfo{display:none;}
     /* 下部の操作は指の届く高さに。手札を隠すは左、リフレッシュは右 */
@@ -1822,13 +1823,14 @@
      下端は自分の捨て札の山 (画面の約71%の高さ) と、その上の枚数表示より上で止める */
   @media (orientation:landscape) and (min-height:501px) and (max-aspect-ratio:3/2){
     #preview{width:clamp(150px,14vw,240px);max-height:calc(71vh - 90px);}
+    #logDock{width:clamp(150px,14vw,240px);}
   }
   @media (orientation:landscape) and (max-height:500px){
     #brand{display:none;}
     #topbar{justify-content:flex-end;padding:8px calc(10px + env(safe-area-inset-right)) 8px calc(10px + env(safe-area-inset-left));}
     #btnRefresh,#dock .btn{min-height:32px;padding:0 13px;font-size:10px;}
-    #logDock{top:40px;bottom:52px;width:min(210px,31vw);}
-    #log{font-size:10px;}
+    #logDock{top:40px;bottom:52px;width:min(156px,17vw);}
+    #log{font-size:9px;padding:8px 9px;}
     /* スマホの横向きは画面が狭いので、つまみをさらに細く */
     #btnLog{top:132px;height:70px;width:18px;font-size:9px;}
     #btnInfo{top:172px;height:70px;width:18px;font-size:9px;}
@@ -2532,7 +2534,7 @@
       "./js3d/turning.js": "./js3d/turning.js?v=9c7f79654e",
       "./js3d/tutorial.js": "./js3d/tutorial.js?v=0e6d6237ad",
       "./js3d/tween.js": "./js3d/tween.js?v=99b25c0d63",
-      "./js3d/ui.js": "./js3d/ui.js?v=7b8751034e",
+      "./js3d/ui.js": "./js3d/ui.js?v=dc8eb672c9",
       "./js3d/weekly-ui.js": "./js3d/weekly-ui.js?v=c35e408f12",
       "./js3d/weekly.js": "./js3d/weekly.js?v=b4651191ce",
       "./js3d/xp.js": "./js3d/xp.js?v=b2c69be784"
@@ -2585,7 +2587,7 @@
   <link rel="modulepreload" href="js3d/layout.js?v=91b1b5570a">
   <link rel="modulepreload" href="js3d/theme.js?v=b02da60dc1">
   <link rel="modulepreload" href="js3d/tween.js?v=99b25c0d63">
-  <link rel="modulepreload" href="js3d/ui.js?v=7b8751034e">
+  <link rel="modulepreload" href="js3d/ui.js?v=dc8eb672c9">
   <link rel="modulepreload" href="js3d/input.js?v=cc29feddd4">
   <link rel="modulepreload" href="js3d/playchoices.js?v=e0273dcae0">
   <link rel="modulepreload" href="js3d/aiclient.js?v=704b588b82">
