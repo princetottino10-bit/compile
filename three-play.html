@@ -1100,6 +1100,23 @@
     display:none;align-items:center;gap:14px;width:min(760px,calc(100vw - 32px));padding:10px 14px;border-radius:14px;
     background:rgba(6,9,18,.94);border:1px solid rgba(255,179,218,.4);box-shadow:0 18px 50px rgba(0,0,0,.6);}
   #reviewBar.show{display:flex;}
+  /* 優勢の推移 (試合後の分かれ目)。帯の上に1段 */
+  #reviewBar{flex-wrap:wrap;}
+  #reviewBar .rv-graph{position:relative;flex:1 0 100%;height:46px;}
+  #reviewBar .rv-graph svg{position:absolute;inset:0;width:100%;height:100%;cursor:pointer;}
+  #reviewBar .rv-g-me{fill:rgba(185,164,255,.08);}
+  #reviewBar .rv-g-op{fill:rgba(255,79,163,.07);}
+  #reviewBar .rv-g-mid{stroke:rgba(255,255,255,.18);stroke-width:1;vector-effect:non-scaling-stroke;}
+  #reviewBar .rv-g-line{fill:none;stroke:var(--lav);stroke-width:2;vector-effect:non-scaling-stroke;stroke-linejoin:round;}
+  #reviewBar .rv-g-now{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:#fff;opacity:.7;pointer-events:none;}
+  #reviewBar .rv-g-tp{position:absolute;top:50%;width:18px;height:18px;margin:-9px 0 0 -9px;padding:0;border:0;background:none;cursor:pointer;
+    font:900 12px/18px system-ui;text-align:center;color:var(--pink);text-shadow:0 0 6px rgba(0,0,0,.9);}
+  #reviewBar .rv-g-tp.up{color:var(--lav);}
+  #reviewBar .rv-g-tp:hover,#reviewBar .rv-g-tp:focus-visible{transform:scale(1.35);outline:0;}
+  #reviewBar .rv-g-lbl{position:absolute;right:4px;top:2px;font:700 9px/1 var(--font-ui);letter-spacing:.08em;color:var(--dim);pointer-events:none;}
+  #reviewBar .rv-tp{font-weight:800!important;}
+  #reviewBar .rv-tp.up{color:var(--lav)!important;}
+  #reviewBar .rv-tp.down{color:var(--pink)!important;}
   #reviewBar .rv-nav{display:flex;align-items:center;gap:8px;flex:none;}
   #reviewBar .rv-nav button{width:40px;height:36px;border-radius:10px;cursor:pointer;border:1px solid rgba(255,255,255,.2);
     background:rgba(8,11,21,.9);color:var(--ink);font:900 14px/1 system-ui;}
@@ -1121,6 +1138,7 @@
     #reviewBar{gap:8px;padding:6px 8px;}
     #reviewBar .rv-info p{font-size:10.5px;}
     #reviewBar .rv-nav button{width:32px;height:30px;}
+    #reviewBar .rv-graph{height:30px;}
   }
   /* ---------- 設定・戦績 ---------- */
   .st-row{display:flex;flex-direction:column;gap:6px;font:700 11px/1.4 system-ui;color:var(--dim);letter-spacing:.04em;}
@@ -2290,7 +2308,7 @@
       "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c",
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=c8378abf22",
-      "./js3d/main.js": "./js3d/main.js?v=d5b0367a22",
+      "./js3d/main.js": "./js3d/main.js?v=1794fdb701",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=6fe48ba6a8",
       "./js3d/panel.js": "./js3d/panel.js?v=ecb8a073e3",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=e0273dcae0",
@@ -2302,7 +2320,7 @@
       "./js3d/puzzle.js": "./js3d/puzzle.js?v=b4a110035e",
       "./js3d/replays-ui.js": "./js3d/replays-ui.js?v=9a6a4ca786",
       "./js3d/replays.js": "./js3d/replays.js?v=92b9d3718f",
-      "./js3d/review.js": "./js3d/review.js?v=a8cbae3293",
+      "./js3d/review.js": "./js3d/review.js?v=34f174153b",
       "./js3d/rewards.js": "./js3d/rewards.js?v=c0bbd8236f",
       "./js3d/room.js": "./js3d/room.js?v=10213a9754",
       "./js3d/roomui.js": "./js3d/roomui.js?v=be86ab2d3d",
@@ -2318,6 +2336,7 @@
       "./js3d/theme.js": "./js3d/theme.js?v=36f15e5586",
       "./js3d/title.js": "./js3d/title.js?v=c9519f30da",
       "./js3d/training.js": "./js3d/training.js?v=3018b4399e",
+      "./js3d/turning.js": "./js3d/turning.js?v=9c7f79654e",
       "./js3d/tutorial.js": "./js3d/tutorial.js?v=34aae6e6cc",
       "./js3d/tween.js": "./js3d/tween.js?v=99b25c0d63",
       "./js3d/ui.js": "./js3d/ui.js?v=b742a89108",
@@ -2329,6 +2348,6 @@
   </script>
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=d5b0367a22"></script>
+  <script type="module" src="js3d/main.js?v=1794fdb701"></script>
 </body>
 </html>

@@ -6,6 +6,7 @@ import { bonusXp, grantXp, XP_GAIN, hashKey } from './xp.js';
 import { recordDailyGame, DAILY_XP } from './daily.js';
 import { unlockTrophies, TROPHY_XP } from './achievements.js';
 import { addReplay, getReplay, pinReplay, rebuild } from './replays.js';
+import { advantageSeries, turningPoints } from './turning.js';
 import { trophyContext, showTrophyBanner } from './achievements-ui.js';
 import * as THREE from '../vendor/three.module.js';
 import { createStage } from './stage.js';
@@ -2856,9 +2857,17 @@ function showEndActions(win) {
 /* 感想戦: 棋譜を1手ずつ戻して見る。自分の手番では AI のおすすめも出す */
 function startReview(win, history, onExit) {
   const final = cur.state;
+  const list = history || gameHistory;
   UI.setPrompt('');
   stage.home(400);
-  openReview(history || gameHistory, final, {
+  /* 試合後の分かれ目: 各手を指す前の盤面の点数 (自分から見て) → 優勢の推移と、流れが大きく動いた手 */
+  let adv = null, turning = [];
+  try {
+    adv = advantageSeries(list.map(h => withoutTrace(() => Engine.ai.score(h.st, ME))).concat(withoutTrace(() => Engine.ai.score(final, ME))));
+    turning = turningPoints(adv);
+  } catch (e) { adv = null; }
+  openReview(list, final, {
+    adv, turning,
     show: (st) => {
       reviewView = st === final ? null : st;
       board.clearCandidates();
