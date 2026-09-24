@@ -2072,6 +2072,22 @@
   .pf-got li b{color:var(--pink);font-size:10.5px;}
   #title .tt-corner[hidden]{display:none;}   /* 押す前は出さない (どこを押しても始まる) */
   #profileOv{z-index:62;}
+  /* レートのシーズン (オンラインの RATED — 戦績) */
+  .ro-season{display:flex;align-items:baseline;gap:12px;padding:12px 14px;background:linear-gradient(90deg,rgba(255,79,163,.14),rgba(139,92,246,.06));border-left:3px solid var(--pink);}
+  .ro-season small{font:700 10px/1 var(--font-ui);letter-spacing:.22em;color:var(--dim);}
+  .ro-season b{font:900 30px/1 var(--font-ui);color:#fff;font-variant-numeric:tabular-nums;}
+  .ro-season span{font:700 12px/1 var(--font-ui);color:var(--lav);}
+  .ro-h{margin:14px 0 6px;font:800 11px/1 var(--font-ui);letter-spacing:.22em;color:var(--lav);}
+  .ro-h small{margin-left:8px;font-weight:600;letter-spacing:.04em;color:var(--dim);}
+  .ro-board,.ro-past{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:3px;}
+  .ro-board li,.ro-past li{display:grid;grid-template-columns:40px 1fr auto 48px;align-items:center;gap:8px;padding:6px 10px;background:rgba(255,255,255,.03);
+    font:700 12px/1.2 var(--font-ui);color:#fff;font-variant-numeric:tabular-nums;}
+  .ro-past li{grid-template-columns:64px 1fr auto 48px;}
+  .ro-board li.me{background:rgba(255,79,163,.14);}
+  .ro-board li b,.ro-past li b{color:var(--pink);}
+  .ro-board li span,.ro-past li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .ro-board li em,.ro-past li em{font-style:normal;font-weight:800;}
+  .ro-board li small,.ro-past li small{color:var(--dim);text-align:right;}
   /* 選んだカードのすぐ横の「決定」(ダイアログの決定まで手を伸ばさなくてよいように) */
   #pickGo{position:fixed;z-index:31;padding:9px 16px;border:1px solid var(--pink);background:rgba(12,9,20,.94);color:#fff;cursor:pointer;
     font:800 12px/1 var(--font-ui);letter-spacing:.14em;clip-path:var(--cut-s);box-shadow:0 8px 24px rgba(0,0,0,.5);
@@ -2338,7 +2354,7 @@
       "./js3d/review.js": "./js3d/review.js?v=34f174153b",
       "./js3d/rewards.js": "./js3d/rewards.js?v=c0bbd8236f",
       "./js3d/room.js": "./js3d/room.js?v=10213a9754",
-      "./js3d/roomui.js": "./js3d/roomui.js?v=be86ab2d3d",
+      "./js3d/roomui.js": "./js3d/roomui.js?v=1fab2ef975",
       "./js3d/run-ui.js": "./js3d/run-ui.js?v=6b744a8dd0",
       "./js3d/run.js": "./js3d/run.js?v=29dcccf04b",
       "./js3d/selectui.js": "./js3d/selectui.js?v=208abdaebc",

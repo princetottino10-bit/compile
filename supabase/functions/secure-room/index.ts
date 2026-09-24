@@ -394,13 +394,26 @@ Deno.serve(async (req) => {
 
     if (op === "history") {
       const [{ data: profile, error: profileError }, { data: matches, error: matchesError }] = await Promise.all([
-        admin.from("rated_players").select("rating,games,wins").eq("user_id", user.id).maybeSingle(),
+        admin.from("rated_players").select("rating,games,wins,season").eq("user_id", user.id).maybeSingle(),
         admin.from("rated_matches")
           .select("id,host_id,guest_id,host_name,guest_name,host_protocols,guest_protocols,winner,host_rating_before,host_rating_after,guest_rating_before,guest_rating_after,ended_at")
           .or(`host_id.eq.${user.id},guest_id.eq.${user.id}`).order("ended_at", { ascending: false }).limit(500),
       ]);
       if (profileError || matchesError) throw profileError || matchesError;
+      /* シーズン (1か月、日本時間): 今シーズンの順位表と、自分の過去のシーズン。
+         前の月のまま遊んでいない人の成績は、次に遊ぶまで前のシーズンの数字として扱う */
+      const season = "S" + new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 7).replace("-", "");
+      const [{ data: board }, { data: seasons }] = await Promise.all([
+        admin.rpc("rated_leaderboard", { p_season: season, p_limit: 20 }),
+        admin.rpc("rated_my_seasons", { p_user: user.id }),
+      ]);
+      const fresh = profile && profile.season === season;
       return json(req, {
+        season,
+        leaderboard: (board || []).map((r: any) => ({ name: r.name || "？", rating: r.rating, games: r.games, wins: r.wins, rank: Number(r.rank), me: r.user_id === user.id })),
+        pastSeasons: (seasons || []).map((r: any) => ({ season: r.season, rating: r.rating, games: r.games, wins: r.wins, rank: Number(r.rank), players: Number(r.players) })),
+        seasonRating: fresh ? profile.rating : profile ? Math.round(1500 + (profile.rating - 1500) / 2) : 1500,
+        seasonGames: fresh ? profile.games : 0, seasonWins: fresh ? profile.wins : 0,
         rating: profile?.rating ?? 1500, games: profile?.games ?? 0, wins: profile?.wins ?? 0,
         matches: (matches || []).map((match: any) => {
           const host = match.host_id === user.id;

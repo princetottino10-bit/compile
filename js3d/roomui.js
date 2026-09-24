@@ -296,9 +296,26 @@ export function runRoomLobby(protocols, opts = {}) {
           '<small>' + esc((m.myProtocols || []).join(' / ')) + ' vs ' + esc((m.opponentProtocols || []).join(' / ')) +
           '　' + m.ratingBefore + ' → ' + m.ratingAfter + '　' + new Date(m.endedAt).toLocaleString('ja-JP') + '</small></div>').join('')
         : '<span class="ro-sub">レート戦の記録はまだありません。</span>';
+      /* シーズン (1か月ごと。月が変わるとレートが 1500 へ半分近づいて始め直す) */
+      const seasonLabel = (k) => k ? k.slice(1, 5) + '-' + k.slice(5, 7) : '';
+      const sGames = data.seasonGames || 0, sWins = data.seasonWins || 0;
+      const myRank = (data.leaderboard || []).find(r => r.me);
+      const board = (data.leaderboard || []).length
+        ? '<ol class="ro-board">' + data.leaderboard.map(r => '<li class="' + (r.me ? 'me' : '') + '"><b>' + r.rank + '</b><span>' + esc(r.name) + '</span>' +
+            '<em>' + r.rating + '</em><small>' + r.wins + '-' + (r.games - r.wins) + '</small></li>').join('') + '</ol>'
+        : '<span class="ro-sub">今シーズンはまだ誰も遊んでいません。</span>';
+      const past = (data.pastSeasons || []).length
+        ? '<ul class="ro-past">' + data.pastSeasons.map(p => '<li><b>' + seasonLabel(p.season) + '</b><span>' + p.rank + '位 / ' + p.players + '人</span>' +
+            '<em>' + p.rating + '</em><small>' + p.wins + '-' + (p.games - p.wins) + '</small></li>').join('') + '</ul>'
+        : '';
       const panel = $('#roomOv .ro-panel');
       panel.querySelector('.ro-status').insertAdjacentHTML('beforebegin',
-        '<p class="ro-sub">レート <b>' + rate + '</b>　' + wins + '勝 ' + (games - wins) + '敗 (' + games + '戦)</p>' +
+        '<div class="ro-season"><small>SEASON ' + seasonLabel(data.season) + '</small><b>' + (data.seasonRating || 1500) + '</b>' +
+          '<span>' + sWins + '勝 ' + (sGames - sWins) + '敗' + (myRank ? '　' + myRank.rank + '位' : '') + '</span></div>' +
+        '<p class="ro-sub">月が変わると、その月の結果を記念に残して、レートを 1500 に半分近づけて始め直します。</p>' +
+        '<h4 class="ro-h">LEADERBOARD</h4>' + board +
+        (past ? '<h4 class="ro-h">PAST SEASONS</h4>' + past : '') +
+        '<h4 class="ro-h">MATCHES <small>通算 レート ' + rate + '　' + wins + '勝 ' + (games - wins) + '敗</small></h4>' +
         '<button class="ro-btn" id="roomCsv" type="button">CSVをエクスポート</button><div class="ro-list">' + list + '</div>');
       $('#roomCsv').onclick = () => {
         const header = ['終了日時', '結果', '相手', '自分のプロトコル', '相手のプロトコル', 'レート前', 'レート後'];
