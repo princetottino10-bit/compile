@@ -99,6 +99,13 @@ function isRatedEligible(user: any) {
   return !!user && user.is_anonymous !== true;
 }
 
+/* 管理者か。ゲスト (匿名) は対象外。admins 表は service role でしか読めない */
+async function isAdmin(user: any) {
+  if (!user || user.is_anonymous === true) return false;
+  const { data, error } = await admin.from("admins").select("user_id").eq("user_id", user.id).maybeSingle();
+  return !error && !!data;
+}
+
 function sideOf(room: any, userId: string) {
   if (room.host_id === userId) return 0;
   if (room.guest_id === userId) return 1;
@@ -308,6 +315,49 @@ Deno.serve(async (req) => {
   const op = String(body.op || "");
 
   try {
+    /* 管理者かどうか (ADMIN 画面の入口を出すため)。管理者の一覧は admins 表 (service role だけが読める) */
+    if (op === "whoami") return json(req, { admin: await isAdmin(user) });
+
+    /* ---- ここから管理者だけ ---- */
+    if (op.startsWith("admin")) {
+      if (!(await isAdmin(user))) return fail(req, "管理者だけが使えます", 403);
+      if (op === "adminStats") {
+        const { data, error } = await admin.rpc("admin_stats");
+        if (error) throw error;
+        return json(req, { stats: data });
+      }
+      if (op === "adminWeekly") {
+        const week = String(body.week || "");
+        if (!/^W[0-9]{3,6}$/.test(week)) return fail(req, "週の指定が不正です");
+        const { data, error } = await admin.from("weekly_clears").select("week,user_id,name,attempts,cleared_at")
+          .eq("week", week).order("cleared_at", { ascending: true }).limit(200);
+        if (error) throw error;
+        return json(req, { clears: data || [] });
+      }
+      if (op === "adminWeeklyDelete") {
+        const week = String(body.week || ""), uid = String(body.userId || "");
+        if (!/^W[0-9]{3,6}$/.test(week) || !/^[0-9a-f-]{36}$/.test(uid)) return fail(req, "指定が不正です");
+        const { error } = await admin.from("weekly_clears").delete().eq("week", week).eq("user_id", uid);
+        if (error) throw error;
+        return json(req, { ok: true });
+      }
+      if (op === "adminRooms") {
+        const { data, error } = await admin.from("secure_rooms")
+          .select("code,title,status,host_name,guest_name,visibility,rated,created_at,updated_at")
+          .order("updated_at", { ascending: false }).limit(100);
+        if (error) throw error;
+        return json(req, { rooms: data || [] });
+      }
+      if (op === "adminCloseRoom") {
+        const roomCode = cleanCode(body.code);
+        if (roomCode.length !== 6) return fail(req, "部屋の番号が不正です");
+        const { error } = await admin.from("secure_rooms").delete().eq("code", roomCode);
+        if (error) throw error;
+        return json(req, { ok: true });
+      }
+      return fail(req, "不明な管理操作です");
+    }
+
     /* アカウントを消す (Google 等でログインした本人だけ)。戦績・経験値・保存・リプレイ・クリア者一覧などの表は
        どれも auth.users に on delete cascade で紐づいているので、ユーザーを消せば一緒に消える */
     if (op === "deleteAccount") {

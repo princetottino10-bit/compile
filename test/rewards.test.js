@@ -24,3 +24,16 @@ test('レベルアップで手に入る報酬・次の報酬・称号', async ()
   assert.deepEqual(R.ownedTitles(10, ['underdog']), ['compiler', 'veteran', 'underdog']);
   assert.deepEqual(R.ownedTitles(1, []), []);
 });
+
+test('全部解放 (管理者のテスト用) では、見た目も称号もレベル1から使える', async () => {
+  const R = await import('../js3d/rewards.js');
+  R.setUnlockAll(true);
+  try {
+    assert.equal(R.unlockLevel('mat', 'prism'), 1);
+    assert.equal(R.isUnlocked('sleeve', 'holo', 1), true);
+    assert.deepEqual(R.ownedTitles(1, []).sort(), Object.keys(R.TITLES).sort());
+  } finally {
+    R.setUnlockAll(false);
+  }
+  assert.ok(R.unlockLevel('mat', 'prism') > 1);
+});

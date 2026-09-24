@@ -8,6 +8,7 @@ import * as ROOM from './room.js';
 import { localRecords, mergeRecords, setStatsHooks } from './stats.js';
 import { xpLog, mergeXp, setXpHooks } from './xp.js';
 import * as SAVE from './cloudsave.js';
+import { openAdmin } from './admin-ui.js';
 import { pinnedReplays, mergeReplays, setReplayHooks } from './replays.js';
 
 const TABLE = 'player_records';
@@ -44,7 +45,7 @@ async function pullSince(table, cols, pulled) {
 const maxCreated = (rows, was) => rows.reduce((m, r) => (!m || r.created_at > m ? r.created_at : m), was);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-const state = { ready: false, available: false, user: null, sync: '', error: '' };
+const state = { ready: false, available: false, user: null, sync: '', error: '', admin: false };
 const listeners = new Set();
 function changed() { for (const fn of listeners) fn(state); }
 export function onAccountChange(fn) { listeners.add(fn); return () => listeners.delete(fn); }
@@ -106,7 +107,8 @@ async function loadAccount() {
         const was = state.user && state.user.id;
         state.user = next;
         changed();
-        if (next && next.id !== was) syncRecords();
+        if (next && next.id !== was) { syncRecords(); checkAdmin(); }
+        if (!next) state.admin = false;
       });
     }
   } catch (e) {
@@ -144,7 +146,18 @@ async function loadAccount() {
   });
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveSoon(); });
   changed();
-  if (state.user) syncRecords();
+  if (state.user) { syncRecords(); checkAdmin(); }
+}
+
+/* 管理者か (サーバーが admins 表で決める)。管理者なら ACCOUNT に ADMIN の入口を出す */
+async function checkAdmin() {
+  try {
+    const r = await ROOM.roomApi('whoami');
+    state.admin = !!(r && r.admin);
+  } catch (e) {
+    state.admin = false;
+  }
+  changed();
 }
 
 async function pushXp(rows) {
@@ -276,6 +289,7 @@ async function signOut() {
   try {
     await ROOM.roomSignOut();
     state.user = null;
+    state.admin = false;
     state.sync = '';
     setStatsHooks({ onClear: null });
   } catch (e) {
@@ -336,7 +350,8 @@ export function openAccount() {
     } else {
       body = '<p class="ac-user"><b>' + esc(s.user.name) + '</b>' + (s.user.email ? '<small>' + esc(s.user.email) + '</small>' : '') + '</p>' +
         '<p class="pz-note">' + esc(s.sync || '戦績をアカウントに保存しています') + '</p>' +
-        '<div class="pz-row"><button type="button" id="acSync">今すぐ同期</button><button type="button" id="acOut">ログアウト</button></div>' +
+        '<div class="pz-row"><button type="button" id="acSync">今すぐ同期</button><button type="button" id="acOut">ログアウト</button>' +
+          (s.admin ? '<button type="button" id="acAdmin" class="ac-admin">ADMIN</button>' : '') + '</div>' +
         (deleting
           ? '<div class="ac-del"><p><b>アカウントを削除します。</b>アカウントに保存した戦績・経験値・実績・設定・リプレイ・WEEKLY のクリア者一覧の名前がすべて消え、元に戻せません。</p>' +
             '<label><input type="checkbox" id="acDelLocal"> このブラウザに残っている記録も消す</label>' +
@@ -350,6 +365,7 @@ export function openAccount() {
     const g = el.querySelector('#acGoogle'); if (g) g.onclick = signIn;
     const y = el.querySelector('#acSync'); if (y) y.onclick = syncRecords;
     const o = el.querySelector('#acOut'); if (o) o.onclick = signOut;
+    const ad = el.querySelector('#acAdmin'); if (ad) ad.onclick = () => { close(); openAdmin(); };
     const d = el.querySelector('#acDel'); if (d) d.onclick = () => { deleting = true; render(); };
     const dn = el.querySelector('#acDelNo'); if (dn) dn.onclick = () => { deleting = false; render(); };
     const dy = el.querySelector('#acDelYes');

@@ -38,8 +38,19 @@ export const TITLES = {
   platinum: 'PLATINUM'     // 実績をすべて取る (achievements.js)
 };
 
+/* 全部解放 (管理者のテスト用。ADMIN 画面で切り替え、このブラウザに残す)。見た目と称号だけで、強さは変わらない */
+const UNLOCK_KEY = 'compileUnlockAll';
+let unlockAll = false;
+try { unlockAll = localStorage.getItem(UNLOCK_KEY) === '1'; } catch (e) { /* node / private mode */ }
+export function isUnlockAll() { return unlockAll; }
+export function setUnlockAll(on) {
+  unlockAll = !!on;
+  try { if (unlockAll) localStorage.setItem(UNLOCK_KEY, '1'); else localStorage.removeItem(UNLOCK_KEY); } catch (e) { /* private mode */ }
+}
+
 /* その見た目を解放するレベル (はじめからなら 1) */
 export function unlockLevel(kind, key) {
+  if (unlockAll) return 1;
   const r = REWARDS.find(x => x.kind === kind && x.key === key);
   return r ? r.lv : 1;
 }
@@ -60,6 +71,7 @@ export function nextReward(level) {
 
 /* 取った称号の key。extra: 条件で取る称号 (下剋上など) */
 export function ownedTitles(level, extra) {
+  if (unlockAll) return Object.keys(TITLES);
   const own = REWARDS.filter(r => r.kind === 'title' && r.lv <= level).map(r => r.key);
   return own.concat((extra || []).filter(k => TITLES[k] && !own.includes(k)));
 }
