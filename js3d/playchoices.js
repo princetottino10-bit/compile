@@ -24,15 +24,13 @@ export function renderPlayChoices(root, options, protocols, title, choose, cance
       const cell = document.createElement('section');
       cell.className = 'placement-lane';
       cell.dataset.side = side; cell.dataset.line = line;
-      const label = document.createElement('span');
-      label.className = 'placement-lane-label';
-      label.textContent = protocols[side][line].name;
-      cell.append(label);
+      /* プロトコル名はすぐ下のプロトコル板にあるので出さない (読み上げ用のラベルにだけ使う) */
+      const name = protocols[side][line].name;
       for (const action of choices) {
         const button = document.createElement('button'); button.type = 'button';
         button.textContent = action.faceUp ? '表' : '裏';
         button.className = action.faceUp ? 'place-faceup' : 'place-facedown';
-        button.setAttribute('aria-label', label.textContent + 'に' + (action.faceUp ? '表で置く' : '裏で置く'));
+        button.setAttribute('aria-label', name + 'に' + (action.faceUp ? '表で置く' : '裏で置く'));
         button.onclick = () => choose(action); cell.append(button);
       }
       root.append(cell);

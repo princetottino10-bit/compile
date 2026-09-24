@@ -2207,7 +2207,7 @@ function renderBoardPick() {
           (cardName(u) || '裏向きのカード') + '<i>×</i></button>').join('') + '</div>'
       : '<div class="sel-hint">' + where + 'をタップ</div>') +
     '<div class="arr-btns">' +
-    (nearHand ? PEEK_BTN : '') +
+    PEEK_BTN +
     (canBack ? '<button class="arr-btn" id="pkBack" type="button">← 戻る</button>' : '') +
     '<button class="arr-btn ghost" id="pkList" type="button">一覧で選ぶ</button>' +
     (instant ? '' :
@@ -2309,10 +2309,12 @@ function renderLinePick() {
     (hasFocus ? '<i class="sel-key gold"></i>移動するカード　<i class="sel-key mint"></i>移動先のライン' : '光っているラインをタップ') +
     '</div>' +
     '<div class="arr-btns">' +
+    PEEK_BTN +
     (canBack ? '<button class="arr-btn" id="pkBack" type="button">← 対象を選び直す</button>' : '') +
     '<button class="arr-btn ghost" id="pkList" type="button">一覧で選ぶ</button>' +
     '</div>';
   bindPickBar(el);
+  bindPeek(el);
   const back = el.querySelector('#pkBack');
   if (back) back.onclick = () => finishLinePick(PICK_BACK);
   el.querySelector('#pkList').onclick = () => finishLinePick(null);

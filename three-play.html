@@ -739,9 +739,9 @@
     transition:border-color .16s,color .16s,background .16s;}
   .sel-peek:hover{border-color:var(--cyan);background:rgba(99,243,255,.12);}
   .sel-peek:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;}
-  .arr-bar.sel-bar.confirm.peek{background:transparent;border-color:transparent;box-shadow:none;pointer-events:none;}
-  .arr-bar.sel-bar.confirm.peek > :not(.arr-btns),.arr-bar.sel-bar.confirm.peek .arr-btn{visibility:hidden;}
-  .arr-bar.sel-bar.confirm.peek .sel-peek{pointer-events:auto;border-color:var(--gold);color:var(--gold);}
+  .arr-bar.sel-bar.peek{background:transparent;border-color:transparent;box-shadow:none;pointer-events:none;}
+  .arr-bar.sel-bar.peek > :not(.arr-btns),.arr-bar.sel-bar.peek .arr-btn{visibility:hidden;}
+  .arr-bar.sel-bar.peek .sel-peek{pointer-events:auto;border-color:var(--gold);color:var(--gold);}
   /* 手札の上の帯 (確認・手札を捨てる・並べ替え) は低く: 発動元と質問を1行に、決定は右端に */
   .arr-bar.sel-bar.confirm{gap:8px;padding:10px 14px;}
   .arr-bar.sel-bar.confirm .sel-head{flex-direction:row;align-items:center;flex-wrap:wrap;gap:6px 10px;}
@@ -1521,10 +1521,29 @@
     transform:none;width:min(360px,40vw);border-radius:10px;
     border:1px solid rgba(99,243,255,.32);border-left:3px solid var(--cyan);
     animation:selSlide .28s cubic-bezier(.16,1,.3,1);}
-  .arr-bar.sel-bar.confirm.hand-pick .sel-peek{display:none;}
   @media (prefers-reduced-motion: reduce){ .arr-bar.sel-bar.confirm.hand-pick{animation:none;} }
+  /* はい/しない の確認・並べ替えなど、残りの帯も右上に。目ボタン (押すと帯を隠して盤面を見る) は残す */
+  @media (orientation:landscape){
+    .arr-bar.sel-bar.confirm{left:auto;right:calc(8px + env(safe-area-inset-right));top:44px;bottom:auto;
+      transform:none;width:min(360px,40vw);border-radius:10px;
+      border:1px solid rgba(99,243,255,.32);border-left:3px solid var(--cyan);
+      animation:selSlide .28s cubic-bezier(.16,1,.3,1);}
+    .arr-bar.sel-bar.confirm .sel-head{justify-content:flex-start;}
+    .arr-bar.sel-bar.confirm .sel-q{text-align:left;}
+    .arr-bar.sel-bar.confirm .arr-btns{justify-content:flex-end;width:100%;}
+    /* 選択肢の一覧 (モーダル) も右上に出す。暗幕は掛けない */
+    #modal{justify-content:flex-start;align-items:flex-end;background:none;pointer-events:none;
+      padding:44px calc(8px + env(safe-area-inset-right)) 0 0;}
+    #modalCard{width:min(400px,44vw);max-height:calc(100vh - 56px - var(--hand-gap, 14vh));pointer-events:auto;
+      border-radius:10px;border-left:3px solid var(--cyan);}
+    #modal.show #modalCard{animation:selSlide .28s cubic-bezier(.16,1,.3,1);}
+    #modalPeek{margin-right:0;}
+  }
+  @media (prefers-reduced-motion: reduce){ .arr-bar.sel-bar.confirm,#modal.show #modalCard{animation:none;} }
   @media (orientation:landscape) and (max-height:500px){
-    .arr-bar.sel-bar:not(.confirm),.arr-bar.sel-bar.confirm.hand-pick{top:38px;width:min(320px,40vw);}
+    .arr-bar.sel-bar:not(.confirm),.arr-bar.sel-bar.confirm{top:38px;width:min(320px,40vw);}
+    #modal{padding-top:38px;}
+    #modalCard{width:min(340px,44vw);max-height:calc(100vh - 46px);}
   }
 </style>
 </head>
@@ -1627,9 +1646,9 @@
       "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c",
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=c8378abf22",
-      "./js3d/main.js": "./js3d/main.js?v=0ec6637710",
+      "./js3d/main.js": "./js3d/main.js?v=a6eb401b5c",
       "./js3d/panel.js": "./js3d/panel.js?v=9156d673b5",
-      "./js3d/playchoices.js": "./js3d/playchoices.js?v=a13c858baf",
+      "./js3d/playchoices.js": "./js3d/playchoices.js?v=c890d5ec52",
       "./js3d/prompts.js": "./js3d/prompts.js?v=348dff836d",
       "./js3d/protocards.js": "./js3d/protocards.js?v=c97f3992ab",
       "./js3d/protocol-strength.js": "./js3d/protocol-strength.js?v=2a7d6fff77",
@@ -1652,8 +1671,8 @@
     }
   }
   </script>
-  <link rel="stylesheet" href="js3d/playchoices.css?v=3e42a70860">
+  <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=0ec6637710"></script>
+  <script type="module" src="js3d/main.js?v=a6eb401b5c"></script>
 </body>
 </html>
