@@ -369,7 +369,7 @@
     #fxBanner{width:min(300px,78vw);top:48px;}
   }
   @media (orientation:landscape) and (max-height:500px){
-    #fxBanner{top:38px;width:min(260px,34vw);padding:5px 9px 6px 10px;}
+    #fxBanner{top:46px;width:min(260px,34vw);padding:5px 9px 6px 10px;}   /* 右上の相手の名札の下に */
     #fxBanner .fx-head b{font-size:11px;}
     #fxBanner p{font-size:10.5px;line-height:1.4;}
   }
@@ -2212,7 +2212,10 @@
   .plate{position:absolute;left:calc(14px + env(safe-area-inset-left));top:38px;display:flex;align-items:center;gap:9px;max-width:min(360px,40vw);
     padding:6px 14px 6px 6px;background:rgba(12,9,20,.74);clip-path:var(--cut-s);font-family:var(--font-ui);white-space:nowrap;pointer-events:none;}
   /* 自分の名札は画面の左下 (上の帯の中ではなく画面に対して置く)。右の SHOW HAND にかからない幅に */
-  .plate.me{position:fixed;top:auto;bottom:calc(14px + env(safe-area-inset-bottom));max-width:min(210px,24vw);}
+  /* 相手の名札は右上のボタンの左隣に並べる (左上だとカードの詳細と重なった) */
+  #vsTag{position:relative;left:auto;top:auto;margin-left:auto;align-self:center;}
+  #vsTag:not([hidden]) ~ #topRight{margin-left:0;}
+  .plate.me{position:fixed;left:calc(14px + env(safe-area-inset-left));top:auto;bottom:calc(14px + env(safe-area-inset-bottom));max-width:min(210px,24vw);}
   .plate[hidden]{display:none;}
   .plate .pl-icon{flex:none;width:30px;height:30px;display:grid;place-items:center;border-radius:6px;
     background:color-mix(in srgb,var(--pc,#b9a4ff) 18%,#0a0e1a);border:1px solid color-mix(in srgb,var(--pc,#b9a4ff) 60%,transparent);
@@ -2226,6 +2229,7 @@
   .plate small{font:800 10px/1 var(--font-ui);letter-spacing:.12em;color:var(--pink);overflow:hidden;text-overflow:ellipsis;}
   @media (orientation:landscape) and (max-height:500px){
     .plate{top:8px;left:calc(10px + env(safe-area-inset-left));max-width:30vw;padding:4px 10px 4px 4px;gap:6px;}
+    #vsTag{top:auto;left:auto;max-width:24vw;}
     .plate.me{top:auto;bottom:calc(8px + env(safe-area-inset-bottom));}
     .plate .pl-icon{width:24px;height:24px;} .plate .pl-icon img{width:19px;height:19px;}
     .plate b{font-size:12px;}
@@ -2367,9 +2371,9 @@
 
   <div id="topbar">
     <div id="brand"><b>COMPILE</b><span>3D ARENA</span></div>
-    <div id="vsTag" class="plate" hidden></div>
     <div id="meTag" class="plate me" hidden></div>
     <div id="turnTimer" hidden></div>
+    <div id="vsTag" class="plate" hidden></div>
     <div id="topRight">
       <button id="btnCards" class="btn" type="button" title="カードリスト" aria-label="カードリスト">CARDS</button>
       <button id="btnSettings" class="btn" type="button" title="設定" aria-label="設定">⚙</button>
