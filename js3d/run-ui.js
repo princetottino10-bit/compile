@@ -4,6 +4,7 @@
  *   runHud: 対戦中のライフ表示
  *   showRunAfterGame: 決着後に結果を入れて、次へ進む画面を出す
  * ========================================================================= */
+import { loadWeekly } from './weekly.js';
 import * as RUN from './run.js';
 import { emblemDataURL } from './emblems.js';
 import { levelLabel } from './aidecks.js';
@@ -65,28 +66,40 @@ export function openRun(protocols, cardsOf, opts) {
     const done = (v) => { el.classList.remove('show'); resolve(v); };
     const info = (name) => { const p = byName[name]; if (p && cardsOf) showProtocolCards(name, p.color, cardsOf); };
 
-    const weeklyCard = '<div class="rn-mode"><div><b>週替わり3連戦</b><small>今週配られた9つのプロトコルを3つずつ使い切って3連勝。クリアすると名前が載る</small></div>' +
-      '<button type="button" data-act="weekly">開く</button></div>';
+    /* 入口: 2つのモードを同じ大きさのカードで並べる (どちらを遊ぶかが一目で分かるように) */
+    const hubHtml = () => {
+      const active = run && run.phase !== 'over' && run.phase !== 'clear';
+      const best = RUN.loadBest();
+      const runStatus = active
+        ? '<em class="now">第' + (run.floor + 1) + '戦の途中 ・ ライフ ' + run.life + '</em>'
+        : best ? '<em>最高記録: ' + (best.reached > RUN.FLOORS.length ? '全勝クリア (ライフ ' + best.life + ' 残し)' : best.reached + '戦目まで') + '</em>'
+          : '<em>まだ挑戦していません</em>';
+      const w = loadWeekly();
+      const weekStatus = w.phase === 'clear' ? '<em class="done">今週はクリア済み</em>'
+        : w.phase === 'battle' || w.phase === 'choose' ? '<em class="now">第' + (w.stage + 1) + '戦の途中 (' + w.attempt + '回目の挑戦)</em>'
+          : w.attempt ? '<em>今週 ' + w.attempt + '回挑戦 ・ 最高 ' + (w.bestStage || 0) + '勝</em>' : '<em>今週はまだ挑戦していません</em>';
+      return '<p class="rn-pick">遊ぶモードを選んでください</p><div class="rn-modes">' +
+        '<section class="rn-mcard"><small>ROGUELIKE</small><h3>勝ち抜き戦</h3><ul>' +
+          '<li>' + RUN.FLOORS.length + '人の CPU を順に倒す (1試合 ' + RUN.RUN_WIN_COMPILES + '本先取)</li>' +
+          '<li>ライフ ' + RUN.RUN_LIFE + '。コンパイルされるたびに 1 減る</li>' +
+          '<li>勝つたびにプロトコルの入れ替えか回復</li></ul>' + runStatus +
+          (active ? '<button type="button" class="rn-go" data-act="resume">続きから</button>'
+            : '<button type="button" class="rn-go" data-act="start">はじめる</button>') + '</section>' +
+        '<section class="rn-mcard"><small>WEEKLY</small><h3>週替わり3連戦</h3><ul>' +
+          '<li>毎週配られる9つのプロトコルで戦う</li>' +
+          '<li>3つずつ使い切って、3人に連勝する</li>' +
+          '<li>クリアすると名前が一覧に載る</li></ul>' + weekStatus +
+          '<button type="button" class="rn-go" data-act="weekly">開く</button></section>' +
+      '</div><div class="rn-btns"><button type="button" data-act="title">タイトルへ</button></div>';
+    };
     const render = () => {
       let body = '';
       const active = run && run.phase !== 'over' && run.phase !== 'clear';
-      if (hub && active) {
-        body = '<div class="rn-mode"><div><b>勝ち抜き戦</b><small>第' + (run.floor + 1) + '戦の途中 ・ ライフ ' + run.life + '</small></div>' +
-          '<button type="button" class="rn-go" data-act="resume">続きから</button></div>' + weeklyCard +
-          '<div class="rn-btns"><button type="button" data-act="title">タイトルへ</button></div>';
-        el.innerHTML = '<div class="rn-card"><div class="rn-head"><b>// RUN</b><span>勝ち抜き戦</span></div>' + body + '</div>';
+      if ((hub && active) || !active) {
+        el.innerHTML = '<div class="rn-card"><div class="rn-head"><b>// RUN</b><span>2つのモード</span></div>' + hubHtml() + '</div>';
         return;
       }
-      if (!run || run.phase === 'over' || run.phase === 'clear') {
-        const best = RUN.loadBest();
-        body = '<p class="rn-lead">3つのプロトコルを選んで、' + RUN.FLOORS.length + '人の CPU と戦い抜きます。1試合は<b>' + RUN.RUN_WIN_COMPILES + '本先取</b>。' +
-          '<b>ライフ ' + RUN.RUN_LIFE + '</b> は最後まで持ち越し、相手に<b>1回コンパイルされるたびに 1 減ります</b>。' +
-          '勝つたびにプロトコルの入れ替えか回復を選べます。負けたら同じ相手とやり直し、ライフが尽きたら終わりです。</p>' +
-          (best ? '<p class="rn-best">最高記録: ' + (best.reached > RUN.FLOORS.length ? '<b>全勝クリア</b> (ライフ ' + best.life + ' 残し)' : '<b>' + best.reached + '戦目</b>まで') +
-            '　' + deckLine(best.deck || [], byName) + '</p>' : '') +
-          '<div class="rn-btns"><button type="button" class="rn-go" data-act="start">はじめる</button>' +
-          '<button type="button" data-act="title">タイトルへ</button></div>' + weeklyCard;
-      } else if (run.phase === 'draft') {
+      if (run.phase === 'draft') {
         body = '<h2>プロトコルを選ぶ <small>' + (run.deck.length + 1) + ' / 3</small></h2>' +
           (run.deck.length ? '<p class="rn-note">選んだもの ' + deckLine(run.deck, byName) + '</p>' : '') +
           '<div class="rn-offers">' + run.offers.map(n => '<div class="rn-offer">' + protoChip(byName[n], 'data-pick="' + esc(n) + '"') +
@@ -127,7 +140,7 @@ export function openRun(protocols, cardsOf, opts) {
       if (t.dataset.add) { swapAdd = t.dataset.add; render(); return; }
       if (t.dataset.remove) { const add = swapAdd; swapAdd = null; set(RUN.applyReward(run, { type: 'swap', add, remove: t.dataset.remove }, names)); return; }
       switch (t.dataset.act) {
-        case 'start': set(RUN.newRun(names)); break;
+        case 'start': hub = false; set(RUN.newRun(names)); break;
         case 'resume': hub = false; render(); break;
         case 'weekly': done({ go: 'weekly' }); break;
         case 'title': done(null); break;

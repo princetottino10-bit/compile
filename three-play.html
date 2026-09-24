@@ -2072,6 +2072,24 @@
   .pf-got li b{color:var(--pink);font-size:10.5px;}
   #title .tt-corner[hidden]{display:none;}   /* 押す前は出さない (どこを押しても始まる) */
   #profileOv{z-index:62;}
+  /* RUN の入口: 2つのモードを同じ大きさのカードで並べる */
+  .rn-pick{margin:2px 0 10px;font:700 13px/1.4 var(--font-ui);color:var(--dim);}
+  .rn-modes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+  .rn-mcard{display:flex;flex-direction:column;gap:8px;padding:14px 16px 16px;background:rgba(255,255,255,.035);clip-path:var(--cut);
+    border-top:3px solid var(--pink);}
+  .rn-mcard + .rn-mcard{border-top-color:var(--violet);}
+  .rn-mcard small{font:800 10px/1 var(--font-ui);letter-spacing:.24em;color:var(--pink);}
+  .rn-mcard + .rn-mcard small{color:var(--lav);}
+  .rn-mcard h3{margin:0;font:900 20px/1.2 var(--font-ui);color:#fff;}
+  .rn-mcard ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:3px;font:600 12px/1.5 system-ui;color:var(--ink);}
+  .rn-mcard em{font:700 11.5px/1.3 var(--font-ui);font-style:normal;color:var(--dim);margin-top:auto;}
+  .rn-mcard em.now{color:var(--pink);}
+  .rn-mcard em.done{color:var(--lav);}
+  .rn-mcard button{min-height:42px;cursor:pointer;font:800 13px/1 var(--font-ui);letter-spacing:.12em;}
+  .rn-mcard button.rn-go{margin-top:4px;border:0;background:var(--pink);color:#fff;clip-path:var(--cut-s);}
+  .rn-mcard + .rn-mcard button.rn-go{background:var(--violet);}
+  .rn-mcard button.rn-go:hover,.rn-mcard button.rn-go:focus-visible{filter:brightness(1.15);outline:0;}
+  @media (max-width:560px){ .rn-modes{grid-template-columns:1fr;} }
   /* レートのシーズン (オンラインの RATED — 戦績) */
   .ro-season{display:flex;align-items:baseline;gap:12px;padding:12px 14px;background:linear-gradient(90deg,rgba(255,79,163,.14),rgba(139,92,246,.06));border-left:3px solid var(--pink);}
   .ro-season small{font:700 10px/1 var(--font-ui);letter-spacing:.22em;color:var(--dim);}
@@ -2355,7 +2373,7 @@
       "./js3d/rewards.js": "./js3d/rewards.js?v=c0bbd8236f",
       "./js3d/room.js": "./js3d/room.js?v=10213a9754",
       "./js3d/roomui.js": "./js3d/roomui.js?v=1fab2ef975",
-      "./js3d/run-ui.js": "./js3d/run-ui.js?v=6b744a8dd0",
+      "./js3d/run-ui.js": "./js3d/run-ui.js?v=58718a71af",
       "./js3d/run.js": "./js3d/run.js?v=29dcccf04b",
       "./js3d/selectui.js": "./js3d/selectui.js?v=208abdaebc",
       "./js3d/settings.js": "./js3d/settings.js?v=df463d1bde",
