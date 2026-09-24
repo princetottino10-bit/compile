@@ -337,7 +337,8 @@ export function runRoomLobby(protocols, opts = {}) {
     async function poll() {
       if (busy || !room) return;
       let next;
-      try { next = await roomApi('get', { code: room.code }); } catch (e) { return; }
+      try { next = await roomApi('get', { code: room.code, stamp: room.stamp }); } catch (e) { return; }
+      if (next.unchanged) return;                                  // 前回から変わっていない (盤面は省かれている)
       if (next.version === room.version && next.status === room.status) { room = next; return; }
       room = next;
       if (room.status === 'playing' || room.status === 'finished') { done({ rm: room }); return; }

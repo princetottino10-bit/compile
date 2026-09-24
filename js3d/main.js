@@ -1813,13 +1813,37 @@ async function roomDrainRequest() {
   }
 }
 
+/* ポーリング: 相手の手を待つ間は速く、自分が指す番 (相手は何もできない) はゆっくり。
+   次の問い合わせは前の応答が返ってから予約する (重なって飛ばない) */
+let roomPollOn = false;
+function roomPollDelay() {
+  const mine = roomRm && (roomRm.legalActions || []).length > 0 && !roomRm.request;
+  return mine ? 4000 : 1300;
+}
+async function roomPollTick() {
+  if (!roomPollOn) return;
+  try { await roomPoll(); } finally {
+    if (roomPollOn) roomPollTimer = setTimeout(roomPollTick, roomPollDelay());
+  }
+}
+function startRoomPoll() {
+  roomPollOn = true;
+  clearTimeout(roomPollTimer);
+  roomPollTimer = setTimeout(roomPollTick, 1300);
+}
+function stopRoomPoll() {
+  roomPollOn = false;
+  clearTimeout(roomPollTimer);
+}
+
 async function roomPoll(force) {
   if (!roomMode || !roomRm) return;
   if (busy && !force) return;
   let next;
-  try { next = await ROOM.roomApi('get', { code: roomRm.code }); } catch (e) { return; }
-  if (next.version === roomRm.version && next.status === roomRm.status) {
-    roomRm = next;
+  /* 前回の印 (stamp) を渡すと、変わっていないときは盤面を省いた「変化なし」が返る */
+  try { next = await ROOM.roomApi('get', { code: roomRm.code, stamp: roomRm.stamp }); } catch (e) { return; }
+  if (next.unchanged || (next.version === roomRm.version && next.status === roomRm.status)) {
+    if (!next.unchanged) roomRm = next;
     await roomDrainRequest();          // 取りこぼしたリクエストの再開
     return;
   }
@@ -1831,7 +1855,7 @@ async function roomMaybeFinish() {
   const st = shown();
   if (!st || st.winner === null || roomResultShown) return;
   roomResultShown = true;
-  clearInterval(roomPollTimer);
+  stopRoomPoll();
   const win = st.winner === ME;
   UI.setPrompt(win ? 'あなたの勝ち' : '敗北', 'end');
   const victory = cosmetic('victory', 'default');
@@ -1860,8 +1884,7 @@ async function roomEnterGame(rm) {
   roomTracker = ROOM.createTraceTracker();
   await roomApplyView(rm, true);
   await stage.home(600);
-  clearInterval(roomPollTimer);
-  roomPollTimer = setInterval(() => { roomPoll(); }, 1300);
+  startRoomPoll();
 }
 
 /* ---------- ターン / 効果の演出 ---------- */

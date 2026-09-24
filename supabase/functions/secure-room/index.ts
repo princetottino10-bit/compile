@@ -218,10 +218,16 @@ function publicGame(st: any, side: number, aliases = cardAliases(st)) {
   };
 }
 
+/* 部屋が前回から変わったかを見分ける印。版 (手を指すたびに上がる)・状態・更新時刻をまとめる
+   (待合室の参加・プロトコル決めは版を上げないので、更新時刻も入れる) */
+function stampOf(room: any) {
+  return `${room.version}|${room.status}|${room.updated_at || ""}`;
+}
+
 function publicState(room: any, side: number) {
   const st = room.game_state;
   const base: any = {
-    code: room.code, title: room.title, status: room.status, version: room.version, side,
+    code: room.code, title: room.title, status: room.status, version: room.version, side, stamp: stampOf(room),
     names: [room.host_name, room.guest_name],
     protocols: [room.host_protocols, room.guest_protocols],
     rated: !!room.rated,
@@ -419,7 +425,13 @@ Deno.serve(async (req) => {
 
     const side = sideOf(room, user.id);
     if (side < 0) return fail(req, "このルームの参加者ではありません", 403);
-    if (op === "get") return json(req, publicState(room, side));
+    if (op === "get") {
+      /* 前回から変わっていなければ、盤面を丸ごと返さずに「変化なし」だけ返す (ポーリングの通信を減らす) */
+      if (typeof body.stamp === "string" && body.stamp === stampOf(room)) {
+        return json(req, { code: room.code, status: room.status, version: room.version, side, stamp: body.stamp, unchanged: true });
+      }
+      return json(req, publicState(room, side));
+    }
 
     if (op === "protocols") {
       const protocols = Array.isArray(body.protocols) ? body.protocols.map(String) : [];
