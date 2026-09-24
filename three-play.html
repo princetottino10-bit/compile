@@ -442,7 +442,13 @@
   @keyframes rhTurn{0%,25%{transform:rotate(0deg);}55%,100%{transform:rotate(-90deg);}}
   #rotateHint b{font:900 18px/1.4 system-ui;letter-spacing:.08em;}
   #rotateHint span{font:600 12px/1.6 system-ui;color:var(--dim);}
-  @media (orientation:portrait) and (max-width:860px) and (pointer:coarse){ #rotateHint{display:flex;} }
+  /* 縦持ちのスマホ: タイトルやメニューを選んでいる間 (pregame) は縦のまま使える。対戦が始まったら横向きを頼む */
+  @media (orientation:portrait) and (max-width:860px) and (pointer:coarse){
+    body:not(.pregame) #rotateHint{display:flex;}
+    body.pregame #rotateNote{display:block;}
+  }
+  #rotateNote{position:fixed;left:0;right:0;bottom:0;z-index:89;display:none;padding:8px 12px calc(8px + env(safe-area-inset-bottom));
+    text-align:center;font:700 11.5px/1.4 system-ui;color:#fff;background:rgba(12,9,20,.92);border-top:2px solid var(--pink);pointer-events:none;}
   @media (prefers-reduced-motion:reduce){ #rotateHint .rh-phone{animation:none;transform:rotate(-90deg);} }
 
   /* ---------- 決着カットイン ---------- */
@@ -2308,6 +2314,7 @@
     <b>スマホを横向きにしてください</b>
     <span>COMPILE は横向きで遊ぶように作っています</span>
   </div>
+  <div id="rotateNote">対戦はスマホを横向きにして遊びます</div>
   <div id="stage"></div>
 
   <div id="topbar">
