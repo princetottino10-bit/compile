@@ -451,16 +451,30 @@ test('手筋 Fire0 + Water4: FIRE 0 (WATER ライン) の上に WATER 4 を表�
   assert.equal(res.state.players[0].hand.length, 5, '1枚出して3枚引き、WATER 4 が戻る (2 → 5)');
 }));
 
-test('手筋 Speed0 → Water4: SPEED 0 の追加プレイで、FIRE 0 の上に WATER 4 を表で出す', () => withDsh(() => {
+test('手筋 Water4 は直接 FIRE 0 の上へ: SPEED 0 を経由しない (経由すると SPEED 0 が戻され、WATER 4 が場に残る)', () => withDsh(() => {
   const st = game(FWS, ['METAL', 'LIGHT', 'HATE']);
   place(st, 'FIRE_1', 0, 1, true);
   place(st, 'METAL_5', 1, 0, true);
   place(st, 'LIGHT_6', 1, 1, true);
   setHand(st, 0, ['SPEED_1', 'WATER_5', 'FIRE_6']);
-  const act = aiAct(st);
-  assert.ok(act.type === 'play' && st.cards[act.card].def === 'SPEED_1', 'SPEED 0 を出す (実際: ' + JSON.stringify(act) + ')');
+  /* 候補を全部2手読みしないと比べられない。テストを並べて走らせても読み切れる時間にする */
+  Engine.setAiLevel(2);
+  Engine.setAiThinkBudget(3000);
+  const act = Engine.ai.action(st);
+  assert.deepEqual(act, { type: 'play', card: uidOf('WATER_5', 0), line: 1, faceUp: true },
+    'WATER 4 を FIRE 0 のライン (1) に表で直接出す (実際: ' + JSON.stringify(act) + ')');
+}));
+
+test('手筋 Speed0 の追加プレイ: SPEED 0 を出したなら、追加プレイで WATER 4 を FIRE 0 の上に表で出す', () => withDsh(() => {
+  const st = game(FWS, ['METAL', 'LIGHT', 'HATE']);
+  place(st, 'FIRE_1', 0, 1, true);
+  place(st, 'METAL_5', 1, 0, true);
+  place(st, 'LIGHT_6', 1, 1, true);
+  setHand(st, 0, ['SPEED_1', 'WATER_5', 'FIRE_6']);
+  Engine.setAiLevel(2);
+  Engine.setAiThinkBudget(300);
   const answers = [];
-  resolveWithAi(Engine.apply(st, act), answers);
+  resolveWithAi(Engine.apply(st, { type: 'play', card: uidOf('SPEED_1', 0), line: 2, faceUp: true }), answers);
   const free = answers.find(x => x.q.prompt === 'play-free');
   assert.ok(free, '追加プレイを聞かれる');
   assert.equal(free.picks[0], uidOf('WATER_5', 0) + '|1|u', '追加プレイは WATER 4 を FIRE 0 のライン (1) に表で');
