@@ -16,6 +16,7 @@ import * as TU from './tutorial.js';
 import { settings, onSettings, openSettings } from './settings.js';
 import { recordSoloResult } from './stats.js';
 import { initAccount, openAccount, takeAccountResume } from './account.js';
+import { openCardList } from './cardlist-ov.js';
 import { openReview } from './review.js';
 import { runRoomLobby } from './roomui.js';
 import { selectHead, bindSelectHead } from './selectui.js';
@@ -1117,6 +1118,8 @@ function bindInput() {
   };
   const menuBtn = document.getElementById('btnMenu');
   if (menuBtn) menuBtn.onclick = goToMenu;
+  const cardsBtn = document.getElementById('btnCards');
+  if (cardsBtn) cardsBtn.onclick = () => openCardList();
   const settingsBtn = document.getElementById('btnSettings');
   if (settingsBtn) settingsBtn.onclick = () => openSettings();
   const muteBtn = document.getElementById('btnMute');

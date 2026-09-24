@@ -7,6 +7,7 @@ import { initAudio, sfx } from './audio.js';
 import { openSettings } from './settings.js';
 import { openStats } from './stats.js';
 import { openAccount, accountState, onAccountChange } from './account.js';
+import { openCardList } from './cardlist-ov.js';
 
 const BOOT_LINES = [
   '> COMPILE OS v3.1 — boot sequence initiated',
@@ -73,6 +74,7 @@ export function runTitle(protocols, opts) {
             '<button data-mode="tutorial" type="button">TUTORIAL <small>ルールを1つずつ</small></button>' +
             '<button data-mode="training" type="button">TRAINING <small>検証盤面</small></button>' +
             '<button data-mode="record" type="button">RECORD <small>戦績</small></button>' +
+            '<button data-mode="cards" type="button">CARDS <small>カードリスト</small></button>' +
           '</div>' +
         '</nav>';
       root.querySelector('#ttCorner').hidden = false;
@@ -90,6 +92,7 @@ export function runTitle(protocols, opts) {
         if (button.dataset.mode === 'options') openSettings();
         else if (button.dataset.mode === 'record') openStats();
         else if (button.dataset.mode === 'account') openAccount();
+        else if (button.dataset.mode === 'cards') openCardList();
         else finish(button.dataset.mode);
       };
       center.querySelector('.tt-menu').onclick = onMenu;
