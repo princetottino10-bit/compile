@@ -2512,7 +2512,8 @@ async function afterTurn() {
     const win = cur.state.winner === ME;
     if (!trainingMode && !puzzle && !demoMode && !roomMode) {
       const st0 = cur.state;
-      recordSoloResult(st0.players[ME].protocols.map(p => p.name), st0.players[AI].protocols.map(p => p.name), win, aiDifficulty);
+      recordSoloResult(st0.players[ME].protocols.map(p => p.name), st0.players[AI].protocols.map(p => p.name), win, aiDifficulty,
+        { turns: (st0.turns || 0) + 1 });   // 決着した手番も1つと数える
     }
     UI.setPrompt(win ? 'あなたの勝ち' : '敗北', 'end');
     sfx(win ? 'win' : 'lose');

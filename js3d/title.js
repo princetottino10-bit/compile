@@ -19,7 +19,7 @@ const BOOT_LINES = [
 
 function accountLabel() {
   const u = accountState().user;
-  return u ? String(u.name).replace(/[&<>"]/g, '') + ' でログイン中' : 'ログイン・戦績の保存';
+  return u ? String(u.name).replace(/[&<>"]/g, '') : 'ログイン';
 }
 
 export function runTitle(protocols, opts) {
@@ -35,7 +35,11 @@ export function runTitle(protocols, opts) {
     '<div class="tt-center" id="ttCenter"><div class="tt-logo"><b>//</b> COMPILE</div>' +
       '<div class="tt-sub">3D ARENA</div><button class="tt-start" id="ttStart" type="button">PRESS START</button></div>' +
     '<div class="tt-marquee"><div class="tt-strip">' + emblems + emblems + '</div></div>' +
-    '<div class="tt-foot">engine.js — 全30プロトコル / 180枚</div>';
+    '<div class="tt-foot">engine.js — 全30プロトコル / 180枚</div>' +
+    '<div class="tt-corner" id="ttCorner" hidden>' +
+      '<button data-mode="account" type="button" class="tt-account"><span>' + accountLabel() + '</span></button>' +
+      '<button data-mode="options" type="button" class="tt-gear" title="設定 (演出・音)" aria-label="設定 (演出・音)">⚙</button>' +
+    '</div>';
   root.classList.add('show');
   const art = root.querySelector('.tt-art');
   const paint = () => { if (art.isConnected) { try { drawTitleBackdrop(art); } catch (e) { /* 描けなくても従来の背景で進む */ } } };
@@ -59,22 +63,26 @@ export function runTitle(protocols, opts) {
     const showMenu = () => {
       const center = root.querySelector('#ttCenter');
       center.innerHTML = '<div class="tt-logo"><b>//</b> COMPILE</div><div class="tt-sub">3D ARENA</div>' +
+        /* 遊ぶ入口は大きく2つだけ。練習・記録は小さく下に、アカウントと設定は右上の隅に置く */
         '<nav class="tt-menu" aria-label="ゲームモード">' +
-          '<button data-mode="single" type="button">SINGLE GAME <small>CPUと対戦</small></button>' +
-          '<button data-mode="online" type="button">ONLINE GAME <small>ルーム・レート戦</small></button>' +
-          '<button data-mode="tutorial" type="button">TUTORIAL <small>はじめての方へ・ルールを1つずつ</small></button>' +
-          '<button data-mode="training" type="button">TRAINING <small>自由配置・検証盤面</small></button>' +
-          '<button data-mode="record" type="button">RECORD <small>CPU 戦の戦績</small></button>' +
-          '<button data-mode="options" type="button">OPTION <small>演出・音の設定</small></button>' +
-          '<button data-mode="account" type="button">ACCOUNT <small>' + accountLabel() + '</small></button>' +
+          '<div class="tt-main">' +
+            '<button data-mode="single" type="button">SINGLE GAME <small>CPUと対戦</small></button>' +
+            '<button data-mode="online" type="button">ONLINE GAME <small>ルーム・レート戦</small></button>' +
+          '</div>' +
+          '<div class="tt-more">' +
+            '<button data-mode="tutorial" type="button">TUTORIAL <small>ルールを1つずつ</small></button>' +
+            '<button data-mode="training" type="button">TRAINING <small>検証盤面</small></button>' +
+            '<button data-mode="record" type="button">RECORD <small>戦績</small></button>' +
+          '</div>' +
         '</nav>';
+      root.querySelector('#ttCorner').hidden = false;
       /* ログイン状態は裏で読むので、分かったら表示を差し替える */
       const offAccount = onAccountChange(() => {
-        const small = center.querySelector('button[data-mode="account"] small');
-        if (!small) { offAccount(); return; }
-        small.textContent = accountLabel();
+        const label = root.querySelector('#ttCorner button[data-mode="account"] span');
+        if (!label || !root.classList.contains('show')) { offAccount(); return; }
+        label.textContent = accountLabel();
       });
-      center.querySelector('.tt-menu').onclick = (ev) => {
+      const onMenu = (ev) => {
         const button = ev.target.closest('button[data-mode]');
         if (!button) return;
         sfx('select');
@@ -84,6 +92,8 @@ export function runTitle(protocols, opts) {
         else if (button.dataset.mode === 'account') openAccount();
         else finish(button.dataset.mode);
       };
+      center.querySelector('.tt-menu').onclick = onMenu;
+      root.querySelector('#ttCorner').onclick = onMenu;
     };
     /* 先にメニューを出し、音はそのあと (失敗しても進める)。以前は音の初期化が先で、
        音を作れないブラウザ (アプリ内ブラウザ等) では例外でメニューが出ず、

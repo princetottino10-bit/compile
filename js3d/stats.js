@@ -40,12 +40,15 @@ export function mergeRecords(remote) {
   return add.length;
 }
 
-/* 1戦を記録する。me / opp: プロトコル名3つ、win: 勝ったか、level: 難易度 (aidecks.js の番号 / 不明なら null) */
-export function recordSoloResult(me, opp, win, level) {
+/* 1戦を記録する。me / opp: プロトコル名3つ、win: 勝ったか、level: 難易度 (aidecks.js の番号 / 不明なら null)
+   extra: { turns: 決着までの手番の数 (両者合計), feats: 取った実績の id } */
+export function recordSoloResult(me, opp, win, level, extra) {
   const list = records();
   const at = Date.now();
+  const x = extra || {};
   const rec = { id: 't' + at + '_' + Math.random().toString(36).slice(2, 6), me: me.slice(), opp: opp.slice(),
-    win: !!win, level: level === undefined ? null : level, at };
+    win: !!win, level: level === undefined ? null : level, at,
+    turns: Number.isInteger(x.turns) ? x.turns : null, feats: Array.isArray(x.feats) ? x.feats.slice() : [] };
   list.push(rec);
   save(list);
   if (hooks.onRecord) hooks.onRecord(rec);

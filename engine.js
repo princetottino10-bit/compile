@@ -1963,6 +1963,7 @@ function runTurnLoop(ctx) {
       case 'end':
         doStartEnd(ctx, 'end');
         st.turn = 1 - st.turn;
+        st.turns = (st.turns || 0) + 1;     // 終えた手番の数 (両者合計)。古い盤面には無いので 0 から数える
         st.phase = 'start';
         break;
       default:
