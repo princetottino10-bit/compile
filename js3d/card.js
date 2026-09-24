@@ -254,3 +254,77 @@ export function retexture(card, def) {
       .set(def.color || '#63f3ff').multiplyScalar(0.55);
   }
 }
+
+/* -------------------------------------------------------------------------
+ * オーラ: 使って勝つほど光る (銅・銀・金・ホロ)、お気に入りはさらに脈打つ。
+ * カードの外周を縁取る光の輪 (中はくり抜き) を面の上に重ねる。
+ * spec: { color, strength, holo, fav } / null で消す。毎フレームの揺らぎは tickAura
+ * ------------------------------------------------------------------------- */
+let auraTex = null;
+let auraGeo = null;
+function auraTexture() {
+  if (auraTex) return auraTex;
+  /* カードの外周だけが光る輪。中はくり抜いて、絵を覆わない (板はカードの 1.36 × 1.3 倍) */
+  const W = 272, H = 338;
+  const cw = W / 1.36, ch = H / 1.3, x = (W - cw) / 2, y = (H - ch) / 2, r = 16;
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d');
+  const rect = () => {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.arcTo(x + cw, y, x + cw, y + ch, r); ctx.arcTo(x + cw, y + ch, x, y + ch, r);
+    ctx.arcTo(x, y + ch, x, y, r); ctx.arcTo(x, y, x + cw, y, r); ctx.closePath();
+  };
+  ctx.shadowColor = '#fff';
+  ctx.strokeStyle = '#fff';
+  for (const [blur, lw] of [[30, 10], [14, 6], [4, 3]]) {
+    ctx.shadowBlur = blur;
+    ctx.lineWidth = lw;
+    rect();
+    ctx.stroke();
+  }
+  ctx.shadowBlur = 0;
+  ctx.globalCompositeOperation = 'destination-out';
+  rect();
+  ctx.fill();
+  auraTex = new THREE.CanvasTexture(cv);
+  return auraTex;
+}
+
+export function setAura(card, spec) {
+  let aura = card.userData.aura;
+  if (!spec) {
+    if (aura) aura.visible = false;
+    card.userData.auraSpec = null;
+    return;
+  }
+  if (!aura) {
+    if (!auraGeo) {
+      auraGeo = new THREE.PlaneGeometry(CARD.w * 1.36, CARD.h * 1.3);
+      auraGeo.rotateX(-Math.PI / 2);
+    }
+    aura = new THREE.Mesh(auraGeo, new THREE.MeshBasicMaterial({
+      map: auraTexture(), transparent: true, opacity: 0, depthWrite: false,
+      blending: THREE.AdditiveBlending, toneMapped: false
+    }));
+    aura.position.y = CARD.thickness / 2 + 0.0024;     // 面の上 (中はくり抜いてある)
+    aura.renderOrder = 4;
+    aura.raycast = () => {};
+    card.add(aura);
+    card.userData.aura = aura;
+  }
+  aura.visible = true;
+  aura.material.color.set(spec.color);
+  aura.material.opacity = spec.strength;      // 揺らぎ (tickAura) が始まる前から見えるように
+  card.userData.auraSpec = spec;
+}
+
+/* 毎フレーム: お気に入りはゆっくり脈打ち、ホロは色が巡る */
+export function tickAura(card, t) {
+  const spec = card.userData.auraSpec;
+  const aura = card.userData.aura;
+  if (!spec || !aura || !aura.visible) return;
+  const pulse = spec.fav ? 0.72 + 0.28 * Math.sin(t * 2.4) : 0.9 + 0.1 * Math.sin(t * 1.3);
+  aura.material.opacity = spec.strength * pulse;
+  if (spec.holo) aura.material.color.setHSL((t * 0.08) % 1, 0.85, 0.62);
+}

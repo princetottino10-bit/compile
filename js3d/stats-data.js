@@ -77,3 +77,32 @@ export function fastestWin(records, filter) {
   }
   return best;
 }
+
+/* ---------- カードの戦績と、使って勝つほど光る枠 ----------
+   記録の cards (その試合で自分が表で出したカード) から、カードごとの 使った試合数・勝った試合数 */
+export function cardStats(records) {
+  const map = new Map();
+  for (const r of records) {
+    for (const id of r.cards || []) {
+      const t = map.get(id) || { id, games: 0, wins: 0 };
+      t.games++;
+      if (r.win) t.wins++;
+      map.set(id, t);
+    }
+  }
+  return map;
+}
+
+/* 勝った試合の数で決まる光り方。見た目だけで強さは変わらない */
+export const CARD_TIERS = [
+  { min: 3, key: 'bronze', name: '銅', color: '#d98b52' },
+  { min: 10, key: 'silver', name: '銀', color: '#cfe0f5' },
+  { min: 25, key: 'gold', name: '金', color: '#ffd45e' },
+  { min: 50, key: 'holo', name: 'ホロ', color: '#b98cff', holo: true }
+];
+
+export function cardTier(wins) {
+  let tier = null;
+  for (const t of CARD_TIERS) if (wins >= t.min) tier = t;
+  return tier;
+}

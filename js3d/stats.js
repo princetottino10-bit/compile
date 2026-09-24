@@ -5,7 +5,7 @@
  * ========================================================================= */
 
 import { levelLabel } from './aidecks.js';
-import { protocolSummary, matchups, winTrend, fastestWin, masteryLevel } from './stats-data.js';
+import { protocolSummary, matchups, winTrend, fastestWin, masteryLevel, cardStats, cardTier } from './stats-data.js';
 
 const KEY = 'compileSoloRecords';
 const MAX = 2000;
@@ -31,6 +31,21 @@ function save(list) {
 
 export function localRecords() { return records(); }
 
+/* ---------- お気に入りのカード (1枚) ---------- */
+const FAV_KEY = 'compileFavCard';
+const favListeners = new Set();
+export function favoriteCard() {
+  try { return localStorage.getItem(FAV_KEY) || null; } catch (e) { return null; }
+}
+export function setFavoriteCard(defId) {
+  try {
+    if (defId) localStorage.setItem(FAV_KEY, defId);
+    else localStorage.removeItem(FAV_KEY);
+  } catch (e) { /* private mode */ }
+  for (const fn of favListeners) fn(defId || null);
+}
+export function onFavoriteChange(fn) { favListeners.add(fn); return () => favListeners.delete(fn); }
+
 /* 別の端末で記録した分 (アカウントから読んだ分) を足す。同じ id は足さない */
 export function mergeRecords(remote) {
   const list = records();
@@ -42,14 +57,15 @@ export function mergeRecords(remote) {
 }
 
 /* 1戦を記録する。me / opp: プロトコル名3つ、win: 勝ったか、level: 難易度 (aidecks.js の番号 / 不明なら null)
-   extra: { turns: 決着までの手番の数 (両者合計), feats: 取った実績の id } */
+   extra: { turns: 決着までの手番の数 (両者合計), feats: 取った実績の id, cards: 自分が表で出したカードの defId } */
 export function recordSoloResult(me, opp, win, level, extra) {
   const list = records();
   const at = Date.now();
   const x = extra || {};
   const rec = { id: 't' + at + '_' + Math.random().toString(36).slice(2, 6), me: me.slice(), opp: opp.slice(),
     win: !!win, level: level === undefined ? null : level, at,
-    turns: Number.isInteger(x.turns) ? x.turns : null, feats: Array.isArray(x.feats) ? x.feats.slice() : [] };
+    turns: Number.isInteger(x.turns) ? x.turns : null, feats: Array.isArray(x.feats) ? x.feats.slice() : [],
+    cards: Array.isArray(x.cards) ? x.cards.slice(0, 64) : [] };
   list.push(rec);
   save(list);
   if (hooks.onRecord) hooks.onRecord(rec);
@@ -83,11 +99,14 @@ function rows(list) {
 
 /* プロトコルの並びと色 (cards.json の順)。1回読んだら使い回す */
 let protoList = null;
+let cardIndex = {};
 async function protocols() {
   if (protoList) return protoList;
   try {
     const data = await fetch('data/cards.json').then(r => r.json());
     protoList = data.protocols.map(p => ({ name: p.name, color: p.color || '#63f3ff' }));
+    cardIndex = {};
+    for (const p of data.protocols) for (const c of p.cards) cardIndex[c.id] = { proto: p.name, value: c.value, color: p.color || '#63f3ff' };
   } catch (e) {
     protoList = [];
   }
@@ -179,7 +198,26 @@ function detailTab(list) {
   return groups.map(([t, g]) => '<h3 class="sr-h">' + t + '</h3>' + rows(g)).join('');
 }
 
-const TABS = ['まとめ', 'プロトコル', '相性', '詳細'];
+/* カード: 表で出して勝つほど光る (銅 3勝 / 銀 10 / 金 25 / ホロ 50)。★ でお気に入りを1枚選ぶ */
+function cardsTab(list) {
+  const cs = Array.from(cardStats(list).values()).sort((a, b) => b.wins - a.wins || b.games - a.games);
+  const fav = favoriteCard();
+  if (!cs.length) return '<p class="pz-note">表で出したカードがここに並びます (この機能を入れたあとの試合から数えます)</p>';
+  return '<p class="pz-note">表で出して勝った試合の数で、盤面のカードが光ります: 銅 3勝・銀 10勝・金 25勝・ホロ 50勝。' +
+    '★ を押すとお気に入りになり、特別に光ります。</p>' +
+    '<div class="sr-cards">' + cs.map(t => {
+      const d = cardIndex[t.id] || { proto: t.id, value: '?', color: '#63f3ff' };
+      const tier = cardTier(t.wins);
+      return '<div class="sr-cardrow' + (tier ? ' t-' + tier.key : '') + (fav === t.id ? ' fav' : '') + '" style="--pc:' + esc(d.color) + '">' +
+        '<b>' + esc(d.proto) + ' ' + d.value + '</b>' +
+        '<span class="sr-tier">' + (tier ? tier.name : '') + '</span>' +
+        '<small>' + t.wins + '勝 / ' + t.games + '戦</small>' +
+        '<button type="button" class="sr-fav" data-fav="' + esc(t.id) + '" aria-pressed="' + (fav === t.id) + '" aria-label="お気に入りにする">' + (fav === t.id ? '★' : '☆') + '</button>' +
+      '</div>';
+    }).join('') + '</div>';
+}
+
+const TABS = ['まとめ', 'プロトコル', 'カード', '相性', '詳細'];
 
 export async function openStats() {
   const list = records();
@@ -202,10 +240,15 @@ export async function openStats() {
     '</div><div id="srBody"></div>' +
     (list.length ? '<div class="pz-row"><button type="button" id="srClear">記録を消す</button></div>' : '') +
     '</div>';
-  const views = [() => summaryTab(list, protos), () => protocolTab(list, protos), () => matchupTab(list, protos), () => detailTab(list)];
+  const views = [() => summaryTab(list, protos), () => protocolTab(list, protos), () => cardsTab(list),
+    () => matchupTab(list, protos), () => detailTab(list)];
   const show = (i) => {
-    el.querySelector('#srBody').innerHTML = views[i]();
+    const body = el.querySelector('#srBody');
+    body.innerHTML = views[i]();
     el.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('on', +b.dataset.tab === i));
+    body.querySelectorAll('[data-fav]').forEach(b => {
+      b.onclick = () => { setFavoriteCard(favoriteCard() === b.dataset.fav ? null : b.dataset.fav); show(i); };
+    });
   };
   el.querySelectorAll('[data-tab]').forEach(b => { b.onclick = () => show(+b.dataset.tab); });
   show(0);

@@ -14,7 +14,8 @@ import * as ROOM from './room.js';
 import * as PZ from './puzzle.js';
 import * as TU from './tutorial.js';
 import { settings, onSettings, openSettings } from './settings.js';
-import { recordSoloResult } from './stats.js';
+import { recordSoloResult, localRecords, favoriteCard, setFavoriteCard, onFavoriteChange } from './stats.js';
+import { cardStats, cardTier } from './stats-data.js';
 import { initAccount, openAccount, takeAccountResume } from './account.js';
 import { openCardList } from './cardlist-ov.js';
 import { openRun, runHud, showRunAfterGame } from './run-ui.js';
@@ -57,6 +58,29 @@ let trainingMode = false;
 let puzzle = null;
 /* 選択画面で決まった先手 (ドラフト) と、始めに知らせること (ランダム編成) */
 let chosenFirst = null;
+/* ---------- 使って勝つほど光るカード・お気に入り ----------
+   カードごとの勝ち数は戦績から数える。光り方は board のオーラ (card.js) */
+let cardWins = cardStats(localRecords());
+let favDef = favoriteCard();
+function refreshCardGlow() {
+  cardWins = cardStats(localRecords());
+  favDef = favoriteCard();
+  if (board && cur) board.syncInstant(shown());
+}
+function auraFor(defId) {
+  if (defId === favDef) return { color: '#ffb8e0', strength: 0.95, fav: true, holo: false };
+  const t = cardWins.get(defId);
+  const tier = t ? cardTier(t.wins) : null;
+  if (!tier) return null;
+  return { color: tier.color, strength: tier.key === 'bronze' ? 0.45 : tier.key === 'silver' ? 0.55 : 0.7, holo: !!tier.holo, fav: false };
+}
+onFavoriteChange(() => refreshCardGlow());
+/* 詳細パネルの ★ でお気に入りを選ぶ (もう一度押すと外す) */
+UI.setFavoriteHandler({
+  get: () => favoriteCard(),
+  toggle: (defId) => setFavoriteCard(favoriteCard() === defId ? null : defId),
+  winsOf: (defId) => { const t = cardWins.get(defId); return t ? { wins: t.wins, games: t.games, tier: cardTier(t.wins) } : null; }
+});
 let runMode = false;             // 勝ち抜き戦の1戦 (?run=1)
 let runEnded = false;            // 勝ち抜き戦の結果を出したか (ライフが尽きたらその場で出す)
 let setupNote = '';
@@ -153,6 +177,7 @@ async function boot() {
   ctrlMarker.group.visible = false;          // 対戦開始 (refreshHud) まで隠す
   stage.onFrame((dt) => ctrlMarker.tick(dt));
   board = createBoard(stage, defIndex, ME, {
+    auraFor,
     onCompile: async (info) => {
       /* まず盤上のプロトコルカードを "Compiled" 面へ裏返し、その後にカットイン */
       await panels.flipAt(info.line, info.side, true);
@@ -1207,7 +1232,7 @@ function protocolCards(name) {
 
 function defDetail(d, rows) {
   return {
-    title: d.proto + ' ' + d.value, proto: d.proto, value: d.value, color: d.color, img: faceImageURL(d),
+    title: d.proto + ' ' + d.value, proto: d.proto, value: d.value, color: d.color, img: faceImageURL(d), defId: d.id,
     rows: rows || ['upper', 'middle', 'lower'].filter(k => d[k]).map(k => ({ key: k, zone: ROW_LABEL[k], text: d[k] }))
   };
 }
@@ -2534,7 +2559,9 @@ async function afterTurn() {
     if (!trainingMode && !puzzle && !demoMode && !roomMode) {
       const st0 = cur.state;
       recordSoloResult(st0.players[ME].protocols.map(p => p.name), st0.players[AI].protocols.map(p => p.name), win, aiDifficulty,
-        { turns: (st0.turns || 0) + 1 });   // 決着した手番も1つと数える
+        { turns: (st0.turns || 0) + 1,       // 決着した手番も1つと数える
+          cards: ((st0.tally && st0.tally.faceUp[ME]) || []).slice() });
+      refreshCardGlow();
     }
     UI.setPrompt(win ? 'あなたの勝ち' : '敗北', 'end');
     sfx(win ? 'win' : 'lose');

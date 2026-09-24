@@ -5,7 +5,7 @@
  *     カードプレイの着地は専用の演出パスを通る (最優先で作り込む箇所)。
  * ========================================================================= */
 import * as THREE from '../vendor/three.module.js';
-import { makeCard, setHighlight, clearHighlight, setDim, setSelected, setCandidate, retexture, glowTexture } from './card.js';
+import { makeCard, setHighlight, clearHighlight, setDim, setSelected, setCandidate, retexture, glowTexture, setAura, tickAura } from './card.js';
 import { spawnImpactRing, spawnFlashPillar } from './stage.js';
 import * as FX from './fx.js';
 import { sfx } from './audio.js';
@@ -98,6 +98,8 @@ function locKey(l) {
 
 export function createBoard(stage, defIndex, me, hooks) {
   const onCompile = (hooks && hooks.onCompile) || (() => Promise.resolve());
+  /* 自分のカードのオーラ (使って勝つほど光る・お気に入り)。defId -> { color, strength, holo, fav } | null */
+  const auraFor = (hooks && hooks.auraFor) || (() => null);
   const scene = stage.scene;
   const cards = new Map();       // uid -> THREE.Group
   const group = new THREE.Group();
@@ -127,7 +129,9 @@ export function createBoard(stage, defIndex, me, hooks) {
   }
 
   stage.onFrame(() => {
+    const t = performance.now() / 1000;
     for (const [uid, card] of cards) {
+      if (card.userData.auraSpec) tickAura(card, t);
       /* 手札のように宙にあるカードは床に光を落とさない (演出中は例外) */
       const grounded = card.userData.glowAlways || card.position.y < 0.42;
       const want = (card.visible && grounded) ? (card.userData.glowStrength || 0) : 0;
@@ -221,6 +225,10 @@ export function createBoard(stage, defIndex, me, hooks) {
       }
       card.visible = !slot.hidden;
       seen.add(uid);
+      /* オーラは自分のカードで、表を向いているか手札にあるときだけ (裏向きは光らせない) */
+      const c = st.cards[uid];
+      const mine = c.owner === me && (c.faceUp || l.zone === 'hand');
+      setAura(card, mine && card.visible ? auraFor(c.def) : null);
     }
     for (const [uid, card] of cards) if (!seen.has(uid)) card.visible = false;
   }
@@ -360,6 +368,15 @@ export function createBoard(stage, defIndex, me, hooks) {
     spawnFlashPillar(scene, target, accent);
     sfx('land');
     stage.shake(0.085, 300);
+    /* お気に入りのカードを表で出したときは、金の輪と光を足す */
+    const pc = next.cards[uid];
+    const aura = pc && pc.owner === me && pc.faceUp ? auraFor(pc.def) : null;
+    if (aura && aura.fav) {
+      FX.shockwave(scene, target.clone(), 0xffd86a, 3.2, 900);
+      spawnImpactRing(scene, target, 0xffd86a, 6);
+      FX.screenFlash(stage, 0xffe7a3, 380, 0.22);
+      sfx('chain', 2);
+    }
     setHighlight(card, accent, 0.42, 0.95);
 
     /* 着地のつぶれ + 沈み込み + 発光の減衰 */

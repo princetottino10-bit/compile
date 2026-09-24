@@ -418,6 +418,18 @@ export function turnCutIn(mine) {
 const PANEL_ZONE = { upper: '▲ 上段', middle: '◆ 中段', lower: '▼ 下段' };
 let hideTimer = null;
 
+/* お気に入りのカード (main.js が渡す): get() / toggle(defId) / winsOf(defId) */
+let favHandler = null;
+export function setFavoriteHandler(h) { favHandler = h; }
+function favButton(o) {
+  if (!favHandler || !o.defId || o.hidden || o.defId === '__unknown__') return '';
+  const on = favHandler.get() === o.defId;
+  const w = favHandler.winsOf(o.defId);
+  return '<button type="button" class="cp-fav" data-fav="' + o.defId + '" aria-pressed="' + on + '" title="' +
+    (on ? 'お気に入りを外す' : 'お気に入りにする') + '">' + (on ? '★' : '☆') + '</button>' +
+    (w && w.tier ? '<span class="cp-tier t-' + w.tier.key + '" title="表で出して ' + w.wins + '勝">' + w.tier.name + '</span>' : '');
+}
+
 export function showCardPanel(o, opts) {
   const el = $('#preview');
   if (!el || !o) return;
@@ -425,7 +437,7 @@ export function showCardPanel(o, opts) {
   el.style.setProperty('--accent', o.color || '#63f3ff');
   const rows = o.rows || [];
   el.innerHTML =
-    '<div class="cp-head"><b>' + (o.proto || o.title) + '</b>' +
+    '<div class="cp-head"><b>' + (o.proto || o.title) + '</b>' + favButton(o) +
       (o.value !== undefined && o.value !== null ? '<span class="cp-val">' + o.value + '</span>' : '') +
     '</div>' +
     '<div class="cp-top">' +
@@ -441,6 +453,8 @@ export function showCardPanel(o, opts) {
       ? '<div class="cp-rows">' + rows.map(r => '<div class="cp-row' + (r.inactive ? ' off' : '') + '">' +
           '<span class="cp-zone">' + (PANEL_ZONE[r.key] || '') + '</span><p>' + condHtml(r.text) + '</p></div>').join('') + '</div>'
       : '');
+  const fav = el.querySelector('.cp-fav');
+  if (fav) fav.onclick = (ev) => { ev.stopPropagation(); favHandler.toggle(o.defId); showCardPanel(o, opts); };
   el.classList.add('show');
   if (opts && opts.transient) hideTimer = setTimeout(hideCardPanel, 2400);
 }

@@ -85,6 +85,18 @@ function removeFrom(arr, x) { const i = arr.indexOf(x); if (i >= 0) arr.splice(i
 let TRACE = false;
 function setTrace(v) { TRACE = !!v; }
 
+/* 試合の集計 (勝ち抜き戦のダメージ・カードの戦績に使う)。actionLog は古い行が捨てられるので別に数える。
+   compiles: 各プレイヤーがコンパイルした回数 (リコンパイル・効果で済ませたものも)
+   faceUp: 各プレイヤーが表で出したカードの種類 (defId)。古い盤面には無いので、ここで作る */
+function tallyOf(st) {
+  if (!st.tally) st.tally = { compiles: [0, 0], faceUp: [[], []] };
+  return st.tally;
+}
+function tallyFaceUp(st, c) {
+  const list = tallyOf(st).faceUp[c.owner];
+  if (list && !list.includes(c.def)) list.push(c.def);
+}
+
 function log(ctx, msg, uid) {
   ctx.log.push(msg);
   ctx.st.actionLog.push(msg);
@@ -588,6 +600,7 @@ function playToField(ctx, uid, line, side, faceUp, belowUid) {
   } else {
     const coveredTriggers = stack.length ? collectWouldBeCovered(ctx, stack[stack.length - 1], uid) : [];
     log(ctx, `P${side + 1}: ${faceUp ? DEFS[c.def].id : 'カード'} をライン${line + 1}に${faceUp ? '表' : '裏'}でプレイ`, uid);
+    if (faceUp) tallyFaceUp(st, c);
     c.commitDest = 'line' + line;
     /* 「覆われることになったとき」は、まだ覆われる前に解決する。
        先にスタックへ積んでから解決すると、HATE 4 が自分を「覆われたカード」として
@@ -606,6 +619,7 @@ function playToField(ctx, uid, line, side, faceUp, belowUid) {
   c.commitDest = null;
   removeFrom(st.commitStack, uid);
   log(ctx, `P${side + 1}: ${faceUp ? DEFS[c.def].id : 'カード'} をライン${line + 1}に${faceUp ? '表' : '裏'}でプレイ`, uid);
+  if (faceUp) tallyFaceUp(st, c);
   const loc = locate(st, uid);
   if (st.cards[uid].faceUp && loc && isTop(st, loc)) resolveMiddle(ctx, uid, 'play');
   fireEvent(ctx, { on: 'play', player: side, line, card: uid });
@@ -800,6 +814,7 @@ function compilableLines(st, side) {
 function doCompile(ctx, side, line) {
   const st = ctx.st;
   log(ctx, `P${side + 1}: ライン${line + 1}をコンパイル`);
+  tallyOf(st).compiles[side]++;
   const darknessPowered = st.lines[line][side].some(uid =>
     st.cards[uid].faceUp && st.cards[uid].def === 'DARKNESS_3'
   );
@@ -1380,6 +1395,7 @@ function execOp(ctx, fr, op) {
       if (idx < 0 || st.players[fr.controller].protocols[idx].compiled) { fr.done = false; return; }
       st.players[fr.controller].protocols[idx].compiled = true;
       log(ctx, `P${fr.controller + 1}: ${proto} をコンパイル完了にした！`);
+      tallyOf(st).compiles[fr.controller]++;
       if (op.deleteLine) {
         const uids = st.lines[idx][0].concat(st.lines[idx][1]);
         massRemove(ctx, uids, 'trash', fr.controller);

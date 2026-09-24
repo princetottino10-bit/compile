@@ -81,3 +81,18 @@ test('相性・勝率の推移・最短ターン勝利', async () => {
   assert.equal(D.fastestWin(list, r => r.level >= 3).turns, 24);
   assert.equal(D.fastestWin([]), null);
 });
+
+test('カードの戦績: 表で出した試合と勝った試合を数え、勝ち数で光り方が決まる', async () => {
+  const D = await loadData();
+  const list = [
+    { ...rec(deck('A', 'B', 'C'), deck('D', 'E', 'F'), true, 1), cards: ['FIRE_1', 'WATER_5'] },
+    { ...rec(deck('A', 'B', 'C'), deck('D', 'E', 'F'), false, 1), cards: ['FIRE_1'] },
+    rec(deck('A', 'B', 'C'), deck('D', 'E', 'F'), true, 1)              // 以前の記録 (cards なし)
+  ];
+  const cs = D.cardStats(list);
+  assert.deepEqual([cs.get('FIRE_1').games, cs.get('FIRE_1').wins], [2, 1]);
+  assert.equal(D.cardTier(2), null);
+  assert.equal(D.cardTier(3).key, 'bronze');
+  assert.equal(D.cardTier(24).key, 'silver');
+  assert.equal(D.cardTier(80).key, 'holo');
+});

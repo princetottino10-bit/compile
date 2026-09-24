@@ -10,6 +10,8 @@ create table if not exists public.player_records (
   -- 決着までの手番の数 (最短ターン勝利の記録) と、その試合で取った実績の id
   turns smallint check (turns between 0 and 999),
   feats text[] not null default '{}' check (cardinality(feats) <= 32),
+  -- その試合で自分が表で出したカード (カードごとの戦績・使って勝つほど光る枠)
+  cards text[] not null default '{}' check (cardinality(cards) <= 64),
   played_at timestamptz not null,
   created_at timestamptz not null default now(),
   primary key (user_id, id)
