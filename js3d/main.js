@@ -49,6 +49,7 @@ import * as TW from './tween.js';
 import * as UI from './ui.js';
 import { pickCard, placementPad } from './input.js';
 import { placementChoices, renderPlayChoices } from './playchoices.js';
+import { createAiClient } from './aiclient.js';
 
 const Engine = window.CompileEngine;
 const ME = 0;      // 視点 = 人間プレイヤー
@@ -253,6 +254,9 @@ async function boot() {
   mark('fetch');
   Engine.init(cards, effects);
   Engine.setAiLevel(1);
+  /* CPU の思考は Worker で (画面が止まらないように)。エンジンは読み込んだのと同じ版を使う */
+  const engineTag = document.querySelector('script[src^="engine.js"]');
+  aiClient = createAiClient(Engine, { cards, effects, engineUrl: engineTag ? engineTag.src : null });
   /* trace を有効にすると、どのカードが効果を発動したかを演出に使える。
      AI 探索中は重くなるので、思考の直前だけ切る (withoutTrace)。 */
   Engine.setTrace(true);
@@ -887,21 +891,30 @@ function glitchArtUrl(protoName) {
 /* 難易度 → エンジン設定。
    auto-play と同じく上位2段は探索AI。最強は思考時間増 + DSH特化戦略 */
 let aiDifficulty = null;   // 戦績に残す難易度 (aidecks.js の番号)。URL で直接始めた対戦は不明
+let aiClient = null;       // CPU の手を考える窓口 (aiclient.js)
 function applyAiDifficulty(level) {
   aiDifficulty = level;
-  if (level <= 0) {
-    Engine.setAiLevel(1);                        // かんたん: ヒューリスティックのみ
-  } else if (level === 1) {
-    Engine.setAiLevel(2);                        // ふつう: 探索 590ms
-  } else {
-    Engine.setAiLevel(2);
-    Engine.setAiThinkBudget(1200);               // つよい/最強/挑戦者: 思考時間2倍
-  }
-  /* 最強・挑戦者 = dsh 特化 + 固定デッキ (aidecks.js)、ロック特化 = サイキック①の永続ロック狙い */
-  if (Engine.setAiSpecialist) {
-    if (level === 4) Engine.setAiSpecialist(true, 1, 'psylock');
-    else Engine.setAiSpecialist(level >= 3, 1, 'dsh');
-  }
+  /* かんたん: ヒューリスティックのみ / ふつう: 探索 / つよい以上: 思考時間を長く。
+     前の対戦で長くした思考時間が残らないように、毎回すべて決め直す */
+  const config = {
+    level: level <= 0 ? 1 : 2,
+    budget: level >= 2 ? 1200 : 900,
+    /* 最強・挑戦者 = dsh 特化 + 固定デッキ (aidecks.js)、ロック特化 = サイキック①の永続ロック狙い */
+    specialist: level >= 3,
+    kind: level === 4 ? 'psylock' : 'dsh'
+  };
+  Engine.setAiLevel(config.level);
+  Engine.setAiThinkBudget(config.budget);
+  if (Engine.setAiSpecialist) Engine.setAiSpecialist(config.specialist, 1, config.kind);
+  if (aiClient) aiClient.setConfig(config);
+}
+
+/* CPU の手 (Worker で考える。使えなければ画面側で) */
+function aiAction(st) {
+  return aiClient ? aiClient.action(st) : Promise.resolve(withoutTrace(() => Engine.ai.action(st)));
+}
+function aiAnswer(st, req) {
+  return aiClient ? aiClient.answer(st, req) : Promise.resolve(withoutTrace(() => Engine.ai.answer(st, req)));
 }
 
 /* ---------- 着地パッド (ラインの当たり判定 + 視覚) ---------- */
@@ -3088,8 +3101,10 @@ async function drainRequests() {
       picks = await askUser(req);
     } else {
       UI.setPrompt('相手が選択しています…', 'wait');
-      await TW.wait(260);
-      picks = withoutTrace(() => Engine.ai.answer(cur.state, req));
+      const at = cur;
+      const [ans] = await Promise.all([aiAnswer(cur.state, req), TW.wait(260)]);
+      if (cur !== at) return;                     // 考えている間に対戦をやめた
+      picks = ans;
     }
     if (picks === PICK_CANCEL) continue;
     const prev = shown();
@@ -3116,8 +3131,9 @@ async function afterTurn() {
   let guardAi = 0;
   while (cur && cur.state.winner === null && (demoMode || cur.state.turn === AI)
          && !cur.requests.length && guardAi++ < 40) {
-    await TW.wait(demoMode ? 420 : 260);
-    const action = withoutTrace(() => Engine.ai.action(cur.state));
+    const at = cur;
+    const [action] = await Promise.all([aiAction(cur.state), TW.wait(demoMode ? 420 : 260)]);
+    if (cur !== at) return;                       // 考えている間に対戦をやめた
     if (!action) break;
     await step(action);
     return;   // step が再帰的に afterTurn を呼ぶ
