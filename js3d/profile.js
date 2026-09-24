@@ -2,6 +2,7 @@
  * プロフィール: タイトル右上のレベルを押すと開く
  *   アイコン・レベル・経験値・称号、次の報酬 (中身は取るまで秘密)、取った報酬、見た目を選ぶ入口
  * ========================================================================= */
+import { openAccount } from './account.js';
 import { trophyView } from './achievements.js';
 import { trophyContext, openTrophies } from './achievements-ui.js';
 import { bonusXp, XP_GAIN } from './xp.js';
@@ -76,12 +77,13 @@ export function openProfile(protocols) {
     (got.length ? '<ul class="pf-got">' + got.slice().reverse().map(r => '<li><b>LV ' + r.lv + '</b>' + esc(r.name) + '</li>').join('') + '</ul>' : '') +
     '<details class="pf-earn"><summary>HOW TO EARN XP</summary><ul>' + EARN.map(([k, v]) => '<li><span>' + k + '</span><b>' + v + '</b></li>').join('') + '</ul></details>' +
     '<p class="pz-note">取った見た目は COSMETICS で選べます。</p>' +
-    '<div class="pz-row"><button type="button" id="pfCos">COSMETICS</button></div>' +
+    '<div class="pz-row"><button type="button" id="pfCos">COSMETICS</button><button type="button" id="pfAcc">ACCOUNT</button></div>' +
     '</div>';
   el.classList.add('show');
   const close = () => el.classList.remove('show');
   el.onclick = (ev) => { if (ev.target === el) close(); };
   el.querySelector('.pz-x').onclick = close;
   el.querySelector('#pfCos').onclick = () => { close(); openSettings(); };
+  el.querySelector('#pfAcc').onclick = () => { close(); openAccount(); };
   el.querySelector('#pfTrophy').onclick = () => openTrophies();
 }

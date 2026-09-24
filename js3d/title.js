@@ -8,6 +8,7 @@ import { initAudio, sfx } from './audio.js';
 import { openSettings } from './settings.js';
 import { openStats } from './stats.js';
 import { openAccount, accountState, onAccountChange } from './account.js';
+import { openAdmin } from './admin-ui.js';
 import { openCardList } from './cardlist-ov.js';
 import { settings } from './settings.js';
 import { profileOf } from './cosmetics-ui.js';
@@ -69,9 +70,13 @@ function startHero(el, protocols) {
   return () => clearInterval(t);
 }
 
+/* ログイン中は「ACCOUNT」(名前は重ねたときの説明に)、していなければ「SIGN IN」 */
 function accountLabel() {
+  return accountState().user ? 'ACCOUNT' : 'SIGN IN';
+}
+function accountTitle() {
   const u = accountState().user;
-  return u ? String(u.name).replace(/[&<>"]/g, '') : 'SIGN IN';
+  return u ? String(u.name).replace(/[&<>"]/g, '') + ' のアカウント' : 'Google でログイン';
 }
 
 export function runTitle(protocols, opts) {
@@ -90,7 +95,8 @@ export function runTitle(protocols, opts) {
     '<div class="tt-marquee"><div class="tt-strip">' + emblems + emblems + '</div></div>' +
     '<div class="tt-foot">30 PROTOCOLS · 180 CARDS</div>' +
     '<div class="tt-corner" id="ttCorner" hidden>' + profileChip(protocols) +
-      '<button data-mode="account" type="button" class="tt-account"><span>' + accountLabel() + '</span></button>' +
+      '<button data-mode="admin" type="button" class="tt-admin"' + (accountState().admin ? '' : ' hidden') + '>ADMIN</button>' +
+      '<button data-mode="account" type="button" class="tt-account" title="' + accountTitle() + '"><span>' + accountLabel() + '</span></button>' +
       '<button data-mode="options" type="button" class="tt-gear" title="設定 (演出・音)" aria-label="設定 (演出・音)">⚙</button>' +
     '</div>';
   root.classList.add('show');
@@ -138,6 +144,8 @@ export function runTitle(protocols, opts) {
         const label = root.querySelector('#ttCorner button[data-mode="account"] span');
         if (!label || !root.classList.contains('show')) { offAccount(); return; }
         label.textContent = accountLabel();
+        label.parentElement.title = accountTitle();
+        root.querySelector('#ttCorner button[data-mode="admin"]').hidden = !accountState().admin;
       });
       const onMenu = (ev) => {
         const button = ev.target.closest('button[data-mode]');
@@ -147,6 +155,7 @@ export function runTitle(protocols, opts) {
         if (button.dataset.mode === 'options') openSettings();
         else if (button.dataset.mode === 'record') openStats();
         else if (button.dataset.mode === 'account') openAccount();
+        else if (button.dataset.mode === 'admin') openAdmin();
         else if (button.dataset.mode === 'cards') openCardList();
         else if (button.dataset.mode === 'profile') openProfile(protocols);
         else finish(button.dataset.mode);
