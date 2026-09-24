@@ -1806,9 +1806,35 @@ async function roomStep(action) {
     await roomApplyView(next);
   } catch (e) {
     busy = false;
+    if (isRoomGone(e)) { roomClosed(); return; }
     UI.toast((e && e.message) || '通信エラー');
     await roomPoll(true);
   }
+}
+
+/* 部屋がもう無い (管理者が閉じた・時間切れで片付けられた)。サーバーは「ルームが見つかりません」を返す */
+function isRoomGone(e) {
+  return !!(e && /ルームが見つかりません/.test(e.message || ''));
+}
+let roomClosedShown = false;
+function roomClosed() {
+  if (roomClosedShown) return;
+  roomClosedShown = true;
+  stopRoomPoll();
+  try { localStorage.removeItem('compileRoomLast'); } catch (e) { /* private mode */ }
+  cancelPendingAsk();
+  UI.setPrompt('この部屋は閉じられました', 'end');
+  let el = document.getElementById('endBar');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'endBar';
+    document.body.appendChild(el);
+  }
+  el.innerHTML = '<div class="end-title">部屋が閉じられました</div>' +
+    '<div class="end-sub">この対戦の部屋はもうありません (管理者が閉じたか、時間が経って片付けられました)。</div>' +
+    '<div class="end-btns"><button class="arr-btn ok" id="endTop" type="button">TITLE</button></div>';
+  el.classList.add('show');
+  el.querySelector('#endTop').onclick = () => { location.hash = ''; location.reload(); };
 }
 
 let roomAsking = false;
@@ -1861,7 +1887,10 @@ async function roomPoll(force) {
   if (busy && !force) return;
   let next;
   /* 前回の印 (stamp) を渡すと、変わっていないときは盤面を省いた「変化なし」が返る */
-  try { next = await ROOM.roomApi('get', { code: roomRm.code, stamp: roomRm.stamp }); } catch (e) { return; }
+  try { next = await ROOM.roomApi('get', { code: roomRm.code, stamp: roomRm.stamp }); } catch (e) {
+    if (isRoomGone(e)) roomClosed();
+    return;                            // 一時的な通信の失敗は次の問い合わせで取り直す
+  }
   if (next.unchanged || (next.version === roomRm.version && next.status === roomRm.status)) {
     if (!next.unchanged) roomRm = next;
     await roomDrainRequest();          // 取りこぼしたリクエストの再開
