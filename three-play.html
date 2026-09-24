@@ -1720,6 +1720,11 @@
     .arr-bar.sel-bar:is(.confirm,:not(.confirm)) .sel-peek{width:32px;height:28px;font-size:15px;}
     .arr-bar.sel-bar:is(.confirm,:not(.confirm)) .arr-order{width:100%;order:3;}
     .arr-bar.sel-bar:not(.confirm){top:6px;}
+    /* 右上の帯は幅が狭い。1行に詰めると「はい」が伸びて質問が消えていたので、質問を1段目・ボタンを2段目に分ける */
+    .arr-bar.sel-bar:is(.confirm,:not(.confirm)){flex-wrap:wrap;row-gap:4px;}
+    .arr-bar.sel-bar:is(.confirm,:not(.confirm)) .sel-head{flex:1 1 100%;}
+    .arr-bar.sel-bar:is(.confirm,:not(.confirm)) .arr-btns{margin-left:auto;}
+    .arr-bar.sel-bar:is(.confirm,:not(.confirm)) .arr-btn.ok{flex:none;min-width:72px;}
     /* 帯の文字の部分は触っても下の盤面に届く (帯の下にある相手のカードもそのまま選べる)。
        反応するのはボタンと発動元の点だけ。下のカードが見えるよう半透明にする */
     .arr-bar.sel-bar:is(.confirm,:not(.confirm)){pointer-events:none;background:rgba(6,9,18,.6);
