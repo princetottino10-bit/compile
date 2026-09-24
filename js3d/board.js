@@ -435,7 +435,7 @@ export function createBoard(stage, defIndex, me, hooks) {
       name: ev.name,
       color: accent instanceof THREE.Color ? '#' + accent.getHexString() : accent,
       mine: ev.side === me,
-      remaining: next.players[ev.side].protocols.filter(p => !p.compiled).length
+      remaining: (next.winCompiles || 3) - next.players[ev.side].protocols.filter(p => p.compiled).length
     });
 
     await stage.home(420);

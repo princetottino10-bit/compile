@@ -900,6 +900,16 @@ function locate(st, uid) {
 }
 function isTop(st, loc) { return loc.idx === st.lines[loc.line][loc.side].length - 1; }
 function defOf(st, uid) { return DEFS[st.cards[uid].def]; }
+/* 勝つのに要るコンパイルの本数 (通常 3。勝ち抜き戦は newGame({ winCompiles: 2 }) で短くする) */
+function winCompilesOf(st) { return st.winCompiles || 3; }
+function hasCompiledToWin(st, side) {
+  return st.players[side].protocols.filter(p => p.compiled).length >= winCompilesOf(st);
+}
+/* AI の評価用: 勝ちまでの残りが通常ルールと同じになるよう、足りない本数を済みとして数える
+   (2本勝負なら 1本済み = 通常の2本済み)。評価の「あと1本」の判断をそのまま使える */
+function aiCompiledTowardWin(st, side) {
+  return st.players[side].protocols.filter(p => p.compiled).length + (3 - winCompilesOf(st));
+}
 function removeFrom(arr, x) { const i = arr.indexOf(x); if (i >= 0) arr.splice(i, 1); return i >= 0; }
 
 /* トレース: log 1行ごとに盤面スナップショットを記録 (UI のステップ再生用)。
@@ -1669,7 +1679,7 @@ function doCompile(ctx, side, line) {
   if (!prot.compiled) {
     prot.compiled = true;
     log(ctx, `P${side + 1}: ${prot.name} をコンパイル！`);
-    if (st.players[side].protocols.every(p => p.compiled)) {
+    if (hasCompiledToWin(st, side)) {
       st.winner = side;
       log(ctx, `P${side + 1} の勝利！`);
     }
@@ -2206,7 +2216,7 @@ function execOp(ctx, fr, op) {
         const uids = st.lines[idx][0].concat(st.lines[idx][1]);
         massRemove(ctx, uids, 'trash', fr.controller);
       }
-      if (st.players[fr.controller].protocols.every(p => p.compiled)) {
+      if (hasCompiledToWin(st, fr.controller)) {
         st.winner = fr.controller;
         log(ctx, `P${fr.controller + 1} の勝利！`);
       }
@@ -3021,6 +3031,7 @@ function newGame(opts) {
     phase: 'start',
     control: -1,
     winner: null,
+    winCompiles: opts.winCompiles === 2 || opts.winCompiles === 1 ? opts.winCompiles : 3,
     players: [],
     lines: [[[], []], [[], []], [[], []]],
     cards: {},
@@ -3364,8 +3375,8 @@ function aiLineLeadCount(st, side) {
 function aiControlLeverage(st, side) {
   if (!st.useControl) return 0;
   const op = 1 - side;
-  const myComp = st.players[side].protocols.filter(p => p.compiled).length;
-  const opComp = st.players[op].protocols.filter(p => p.compiled).length;
+  const myComp = aiCompiledTowardWin(st, side);
+  const opComp = aiCompiledTowardWin(st, op);
   let v = 20 + myComp * 16 + opComp * 22;
   for (let l = 0; l < 3; l++) {
     const mine = lineTotal(st, l, side), theirs = lineTotal(st, l, op);
@@ -3708,7 +3719,8 @@ function aiHoldsDiversityTrump(st, side) {
 /* DIVERSITY 以外が2本とも済んでいる = DIVERSITY 0 の即コンパイルがそのまま勝ちになる */
 function aiDiversityIsLast(st, side) {
   const ps = st.players[side].protocols;
-  return ps.some(p => p.name === 'DIVERSITY' && !p.compiled) && ps.filter(p => p.name !== 'DIVERSITY' && p.compiled).length === 2;
+  return ps.some(p => p.name === 'DIVERSITY' && !p.compiled)
+    && ps.filter(p => p.name !== 'DIVERSITY' && p.compiled).length === winCompilesOf(st) - 1;
 }
 
 /* FIRE 0 + WATER 4 (docs/ai-combos.md): 手札に WATER 4 があり、FIRE 0 が表で一番上に居るラインに
@@ -3981,8 +3993,8 @@ function aiScore(st, me) {
   const op = 1 - me;
   const W = aiWeightsFor(st, me);
   let sc = 0;
-  const myComp = st.players[me].protocols.filter(p => p.compiled).length;
-  const opComp = st.players[op].protocols.filter(p => p.compiled).length;
+  const myComp = aiCompiledTowardWin(st, me);
+  const opComp = aiCompiledTowardWin(st, op);
 
   sc += myComp * 380;
   sc -= opComp * 410;
@@ -4654,7 +4666,7 @@ function aiDecisionActions(state) {
     if (kept.length) acts = kept;
   }
   const opponent = 1 - side;
-  const opponentPending = state.players[opponent].protocols.filter(protocol => !protocol.compiled).length;
+  const opponentPending = 3 - aiCompiledTowardWin(state, opponent);   // 勝ちまであと何本
   if (state.useControl && opponentPending === 1 && state.control !== opponent) {
     const safe = acts.filter(action => {
       const result = applyAndResolve(state, action, smartPicks);
@@ -4805,8 +4817,7 @@ function aiActionHard(state, collect) {
   try {
     /* 終盤: 自分が2本済みなら、読み切りの勝ち筋を評価探索より先に探す。
        専用の時間枠で行い、本体探索の予算はこの後から数え始める */
-    const myCompiled = state.players[me].protocols.filter(pr => pr.compiled).length;
-    if (myCompiled === 2) {
+    if (aiCompiledTowardWin(state, me) === 2) {
       const forced = aiForcedWinAction(state, me, aiNow() + AI_THINK_BUDGET_MS * 0.6);
       if (forced) return forced;
     }
@@ -4873,8 +4884,7 @@ function aiActionHard(state, collect) {
 
     /* 終盤の受け: 相手が2本済みなら、評価順に「指しても即負け筋が
        残らない」手を選び直す。全候補が負け筋なら評価どおりに指す */
-    const opCompiled = state.players[1 - me].protocols.filter(pr => pr.compiled).length;
-    if (opCompiled === 2 && viable.length > 1) {
+    if (aiCompiledTowardWin(state, 1 - me) === 2 && viable.length > 1) {
       const vetoDeadline = aiNow() + AI_THINK_BUDGET_MS * 0.8;
       for (const group of aiVetoOrder(viable)) {
         for (const item of group) {

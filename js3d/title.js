@@ -68,6 +68,7 @@ export function runTitle(protocols, opts) {
         '<nav class="tt-menu" aria-label="ゲームモード">' +
           '<div class="tt-main">' +
             '<button data-mode="single" type="button">SINGLE GAME <small>CPUと対戦</small></button>' +
+            '<button data-mode="run" type="button">RUN <small>勝ち抜き戦</small></button>' +
             '<button data-mode="online" type="button">ONLINE GAME <small>ルーム・レート戦</small></button>' +
           '</div>' +
           '<div class="tt-more">' +

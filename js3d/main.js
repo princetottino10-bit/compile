@@ -17,6 +17,8 @@ import { settings, onSettings, openSettings } from './settings.js';
 import { recordSoloResult } from './stats.js';
 import { initAccount, openAccount, takeAccountResume } from './account.js';
 import { openCardList } from './cardlist-ov.js';
+import { openRun, runHud, showRunAfterGame } from './run-ui.js';
+import { compilesBy, loadRun, RUN_WIN_COMPILES } from './run.js';
 import { openReview } from './review.js';
 import { runRoomLobby } from './roomui.js';
 import { selectHead, bindSelectHead } from './selectui.js';
@@ -55,6 +57,8 @@ let trainingMode = false;
 let puzzle = null;
 /* 選択画面で決まった先手 (ドラフト) と、始めに知らせること (ランダム編成) */
 let chosenFirst = null;
+let runMode = false;             // 勝ち抜き戦の1戦 (?run=1)
+let runEnded = false;            // 勝ち抜き戦の結果を出したか (ライフが尽きたらその場で出す)
 let setupNote = '';
 /* チュートリアルのレッスン (?tutorial=1..)。{ index, lesson } */
 let tutorial = null;
@@ -216,9 +220,11 @@ async function boot() {
     /* ログイン状態は裏で読む (待たない)。Google から戻ってきたときはメニューを出してアカウントの画面を開く */
     const accountReady = initAccount();
     const accountResume = takeAccountResume();
-    let nextMode = params.get('title') !== '0'
-      ? await runTitle(cards.protocols, accountResume ? { menuOnly: true, after: () => accountReady.then(openAccount) } : undefined)
-      : 'single';
+    /* 勝ち抜き戦の次の1戦 (?run=1) はタイトルを飛ばして勝ち抜き戦の画面へ */
+    let nextMode = params.get('run') === '1' ? 'run'
+      : params.get('title') !== '0'
+        ? await runTitle(cards.protocols, accountResume ? { menuOnly: true, after: () => accountReady.then(openAccount) } : undefined)
+        : 'single';
     /* Google 等のログインはページを離れて戻ってくる。
        戻り先はタイトルなので、目印があればオンラインへ直行する。 */
     try {
@@ -243,6 +249,17 @@ async function boot() {
         return;
       }
       if (nextMode === 'tutorial') { location.href = location.pathname + '?tutorial=1'; return; }
+      if (nextMode === 'run') {
+        const pick = await openRun(cards.protocols, protocolCards);
+        if (!pick) { history.replaceState(null, '', location.pathname); nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
+        document.body.classList.remove('pregame');
+        p0 = pick.me;
+        p1 = pick.ai;
+        runMode = true;
+        runHud(0);
+        applyAiDifficulty(pick.level);
+        break;
+      }
       const chosen = await runSetup(cards.protocols, { training: nextMode === 'training', allowOnline: false, cardsOf: protocolCards });
       if (chosen.online) { nextMode = 'online'; continue; }
       if (chosen.back) { nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
@@ -271,7 +288,8 @@ async function boot() {
     ? Engine.newPuzzle(puzzle.spec, { seed: 1 })
     : tutorial
       ? Engine.newPuzzle(tutorial.lesson.spec, { seed: 1 })
-      : Engine.newGame({ seed: (Math.random() * 1e9) | 0, p0, p1, first: firstPlayer, training: trainingMode });
+      : Engine.newGame({ seed: (Math.random() * 1e9) | 0, p0, p1, first: firstPlayer, training: trainingMode,
+        winCompiles: runMode ? RUN_WIN_COMPILES : undefined });
   cur = res;
   if (trainingMode) training.protos = [p0.slice(), p1.slice()];
   window.__3d = {
@@ -2527,6 +2545,10 @@ async function afterTurn() {
       location.reload();
       return;
     }
+    if (runMode) {
+      if (!runEnded) { runEnded = true; showRunAfterGame(win, compilesBy(cur.state, AI), Object.values(protoIndex)); }
+      return;
+    }
     showEndActions(win);
   }
 }
@@ -2736,6 +2758,16 @@ function panelRows(st) {
 
 /* 再生の途中でプロトコル板を合わせる。並べ替えは板を滑らせて見せ、終わるまで待つ */
 function syncPanels(st, animate) {
+  if (runMode && st && !runEnded) {
+    /* 勝ち抜き戦: 相手にコンパイルされた回数だけライフを減らして見せる。尽きたらその場で終わり */
+    const lost = compilesBy(st, AI);
+    runHud(lost);
+    const run = loadRun();
+    if (run && lost >= run.life) {
+      runEnded = true;
+      showRunAfterGame(false, lost, Object.values(protoIndex));
+    }
+  }
   if (!panels || !st) return Promise.resolve();
   return panels.update(panelRows(st), { animate });
 }

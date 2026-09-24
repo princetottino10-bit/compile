@@ -1586,3 +1586,20 @@ test('AI事前評価: 捨てる札が組み合わせの札しか無いときの�
   const spare = bias(['FIRE_6', 'DARKNESS_3', 'WATER_5']);
   assert.ok(spare - combo >= 150, `捨ててよい札があれば減点なし (差 ${Math.round(spare - combo)})`);
 });
+
+/* 勝ち抜き戦: newGame({ winCompiles: 2 }) は2本コンパイルした時点で勝ち。通常は3本目まで続く */
+test('winCompiles: 2本先取なら2本目のコンパイルで勝ち、通常は続く', () => {
+  for (const [opts, expected] of [[{ winCompiles: 2 }, 0], [{}, null]]) {
+    const st = ng(opts).state;
+    st.useControl = false;
+    st.players[0].protocols[0].compiled = true;          // 1本は済み
+    place(st, 'WATER_4', 0, 2, true); place(st, 'WATER_5', 0, 2, true); place(st, 'WATER_6', 0, 2, true);  // 12
+    setHand(st, 0, ['DARKNESS_6']);
+    setHand(st, 1, []);
+    let res = Engine.apply(st, { type: 'play', card: uidOf('DARKNESS_6', 0), line: 0, faceUp: false });
+    res = Engine.apply(res.state, { type: 'refresh' });
+    res = drive(res, () => [2]);
+    assert.equal(res.state.players[0].protocols[2].compiled, true, '2本目をコンパイルした');
+    assert.equal(res.state.winner, expected, JSON.stringify(opts));
+  }
+});
