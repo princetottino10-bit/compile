@@ -1331,6 +1331,9 @@
   .sr-fxtop span{display:inline-flex;gap:6px;align-items:baseline;padding:5px 8px;border-radius:6px;font:700 11px/1 system-ui;color:var(--dim);
     background:color-mix(in srgb,var(--pc) 14%,transparent);border:1px solid color-mix(in srgb,var(--pc) 40%,transparent);font-variant-numeric:tabular-nums;}
   .sr-fxtop span b{color:#fff;font-family:var(--font-hud),system-ui;}
+  /* 段が無いときも位置はそろえ、「なし」を薄く出す */
+  .cp-row.empty,.cn-row.empty{opacity:.35;}
+  .cp-row.empty p,.cn-row.empty .cn-text{font-style:normal;color:var(--dim);}
   .cp-fxn{margin-left:4px;font:800 10px/1 system-ui;padding:3px 6px;border-radius:999px;color:#cfefff;background:rgba(99,243,255,.16);
     font-variant-numeric:tabular-nums;white-space:nowrap;}
   .sr-favcount{margin:0;font:700 12px/1 system-ui;color:var(--dim);display:flex;gap:10px;align-items:center;}
@@ -1938,7 +1941,7 @@
       "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c",
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=c8378abf22",
-      "./js3d/main.js": "./js3d/main.js?v=8b1f1390c7",
+      "./js3d/main.js": "./js3d/main.js?v=5cf1f11fbd",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=083e3a34f9",
       "./js3d/panel.js": "./js3d/panel.js?v=9156d673b5",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=c890d5ec52",
@@ -1963,7 +1966,7 @@
       "./js3d/training.js": "./js3d/training.js?v=8f9e8ce6d0",
       "./js3d/tutorial.js": "./js3d/tutorial.js?v=f8d712b653",
       "./js3d/tween.js": "./js3d/tween.js?v=99b25c0d63",
-      "./js3d/ui.js": "./js3d/ui.js?v=5af8e25c46",
+      "./js3d/ui.js": "./js3d/ui.js?v=3e4920283c",
       "./js3d/weekly-ui.js": "./js3d/weekly-ui.js?v=5bee950559",
       "./js3d/weekly.js": "./js3d/weekly.js?v=b4651191ce"
     }
@@ -1971,6 +1974,6 @@
   </script>
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=8b1f1390c7"></script>
+  <script type="module" src="js3d/main.js?v=5cf1f11fbd"></script>
 </body>
 </html>

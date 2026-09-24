@@ -93,8 +93,8 @@ export function showCardNote(o) {
       '<button type="button" class="cn-close" aria-label="閉じる">×</button></div>' +
     (o.note ? '<div class="cn-note">' + o.note + '</div>' : '') +
     (o.rows.length
-      ? o.rows.map(r => '<div class="cn-row' + (r.inactive ? ' off' : '') + '"><span class="cn-zone">' + r.zone + '</span>' +
-          '<span class="cn-text">' + condHtml(r.text) + '</span></div>').join('')
+      ? o.rows.map(r => '<div class="cn-row' + (r.empty ? ' empty' : r.inactive ? ' off' : '') + '"><span class="cn-zone">' + r.zone + '</span>' +
+          '<span class="cn-text">' + (r.empty ? 'なし' : condHtml(r.text)) + '</span></div>').join('')
       : '<div class="cn-row"><span class="cn-text">テキストなし</span></div>');
   el.classList.add('show');
   el.querySelector('.cn-close').onclick = () => el.classList.remove('show');
@@ -455,8 +455,8 @@ export function showCardPanel(o, opts) {
       '</div>' +
     '</div>' +
     (rows.length
-      ? '<div class="cp-rows">' + rows.map(r => '<div class="cp-row' + (r.inactive ? ' off' : '') + '">' +
-          '<span class="cp-zone">' + (PANEL_ZONE[r.key] || '') + '</span><p>' + condHtml(r.text) + '</p></div>').join('') + '</div>'
+      ? '<div class="cp-rows">' + rows.map(r => '<div class="cp-row' + (r.empty ? ' empty' : r.inactive ? ' off' : '') + '">' +
+          '<span class="cp-zone">' + (PANEL_ZONE[r.key] || '') + '</span><p>' + (r.empty ? 'なし' : condHtml(r.text)) + '</p></div>').join('') + '</div>'
       : '');
   const fav = el.querySelector('.cp-fav');
   if (fav) fav.onclick = (ev) => { ev.stopPropagation(); favHandler.toggle(o.defId); showCardPanel(o, opts); };

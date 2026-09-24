@@ -1267,7 +1267,8 @@ function protocolCards(name) {
 function defDetail(d, rows) {
   return {
     title: d.proto + ' ' + d.value, proto: d.proto, value: d.value, color: d.color, img: faceImageURL(d), defId: d.id,
-    rows: rows || ['upper', 'middle', 'lower'].filter(k => d[k]).map(k => ({ key: k, zone: ROW_LABEL[k], text: d[k] }))
+    /* 段が無いカードも3段の位置をそろえる (無い段は「なし」と薄く出す。上に詰めない) */
+    rows: rows || ['upper', 'middle', 'lower'].map(k => ({ key: k, zone: ROW_LABEL[k], text: d[k] || '', empty: !d[k] }))
   };
 }
 
@@ -1300,8 +1301,8 @@ function cardDetail(uid, st = shown()) {
     badge = '捨て札';
   }
   const off = { upper: upperOff, middle: middleOff, lower: lowerOff };
-  const rows = ['upper', 'middle', 'lower'].filter(k => d[k])
-    .map(k => ({ key: k, zone: ROW_LABEL[k], text: d[k], inactive: off[k] }));
+  const rows = ['upper', 'middle', 'lower']
+    .map(k => ({ key: k, zone: ROW_LABEL[k], text: d[k] || '', empty: !d[k], inactive: off[k] }));
   const facedown = !card.faceUp && !!(loc && loc.line !== undefined);
   return { ...defDetail(d, rows), badge, note, facedown };
 }
