@@ -14,7 +14,7 @@ import * as ROOM from './room.js';
 import * as PZ from './puzzle.js';
 import * as TU from './tutorial.js';
 import { settings, onSettings, openSettings } from './settings.js';
-import { recordSoloResult, localRecords, favoriteCard, setFavoriteCard, onFavoriteChange } from './stats.js';
+import { recordSoloResult, localRecords, favoriteCards, toggleFavoriteCard, onFavoriteChange } from './stats.js';
 import { cardStats, cardTier } from './stats-data.js';
 import { initAccount, openAccount, takeAccountResume } from './account.js';
 import { openCardList } from './cardlist-ov.js';
@@ -61,24 +61,24 @@ let chosenFirst = null;
 /* ---------- 使って勝つほど光るカード・お気に入り ----------
    カードごとの勝ち数は戦績から数える。光り方は board のオーラ (card.js) */
 let cardWins = cardStats(localRecords());
-let favDef = favoriteCard();
+let favSet = new Set(favoriteCards());
 function refreshCardGlow() {
   cardWins = cardStats(localRecords());
-  favDef = favoriteCard();
+  favSet = new Set(favoriteCards());
   if (board && cur) board.syncInstant(shown());
 }
 function auraFor(defId) {
-  if (defId === favDef) return { color: '#ffb8e0', strength: 0.95, fav: true, holo: false };
+  if (favSet.has(defId)) return { color: '#ffb8e0', strength: 0.95, fav: true, holo: false };
   const t = cardWins.get(defId);
   const tier = t ? cardTier(t.wins) : null;
   if (!tier) return null;
   return { color: tier.color, strength: tier.key === 'bronze' ? 0.45 : tier.key === 'silver' ? 0.55 : 0.7, holo: !!tier.holo, fav: false };
 }
 onFavoriteChange(() => refreshCardGlow());
-/* 詳細パネルの ★ でお気に入りを選ぶ (もう一度押すと外す) */
+/* 詳細パネルの ★ でお気に入りを選ぶ (もう一度押すと外す。10枚・1プロトコル1枚まで) */
 UI.setFavoriteHandler({
-  get: () => favoriteCard(),
-  toggle: (defId) => setFavoriteCard(favoriteCard() === defId ? null : defId),
+  isFav: (defId) => favSet.has(defId),
+  toggle: (defId) => { const r = toggleFavoriteCard(defId); if (r.message) UI.toast(r.message); return r; },
   winsOf: (defId) => { const t = cardWins.get(defId); return t ? { wins: t.wins, games: t.games, tier: cardTier(t.wins) } : null; }
 });
 let runMode = false;             // 勝ち抜き戦の1戦 (?run=1)

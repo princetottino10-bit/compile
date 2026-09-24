@@ -96,3 +96,22 @@ test('カードの戦績: 表で出した試合と勝った試合を数え、勝
   assert.equal(D.cardTier(24).key, 'silver');
   assert.equal(D.cardTier(80).key, 'holo');
 });
+
+test('お気に入り: 10枚まで、1プロトコル1枚まで (同じプロトコルは入れ替え)。以前の1枚は引き継ぐ', async () => {
+  const S = await load();
+  store.delete('compileFavCards');
+  store.set('compileFavCard', 'FIRE_1');
+  assert.deepEqual(S.favoriteCards(), ['FIRE_1'], '以前の1枚を読む');
+  const r1 = S.toggleFavoriteCard('FIRE_3');
+  assert.ok(r1.ok && /入れ替え/.test(r1.message));
+  assert.deepEqual(S.favoriteCards(), ['FIRE_3']);
+  assert.equal(store.has('compileFavCard'), false, '以前の保存は消す');
+  const names = ['WATER', 'SPEED', 'DARKNESS', 'HATE', 'SMOKE', 'LIFE', 'LIGHT', 'PLAGUE', 'METAL'];
+  for (const n of names) assert.ok(S.toggleFavoriteCard(n + '_1').ok);
+  assert.equal(S.favoriteCards().length, 10);
+  const over = S.toggleFavoriteCard('LOVE_1');
+  assert.equal(over.ok, false, '11枚目は選べない');
+  assert.ok(S.toggleFavoriteCard('METAL_4').ok, '同じプロトコルなら10枚でも入れ替えられる');
+  assert.ok(S.toggleFavoriteCard('FIRE_3').ok, '外す');
+  assert.equal(S.favoriteCards().length, 9);
+});

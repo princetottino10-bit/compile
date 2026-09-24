@@ -31,18 +31,42 @@ function save(list) {
 
 export function localRecords() { return records(); }
 
-/* ---------- お気に入りのカード (1枚) ---------- */
-const FAV_KEY = 'compileFavCard';
+/* ---------- お気に入りのカード (10枚まで、1プロトコル1枚まで) ---------- */
+const FAV_KEY = 'compileFavCards';
+const FAV_OLD_KEY = 'compileFavCard';        // 以前の1枚だけの保存
+export const FAV_MAX = 10;
 const favListeners = new Set();
-export function favoriteCard() {
-  try { return localStorage.getItem(FAV_KEY) || null; } catch (e) { return null; }
-}
-export function setFavoriteCard(defId) {
+const protoOfId = (defId) => String(defId).split('_')[0];
+export function favoriteCards() {
   try {
-    if (defId) localStorage.setItem(FAV_KEY, defId);
-    else localStorage.removeItem(FAV_KEY);
+    const list = JSON.parse(localStorage.getItem(FAV_KEY) || 'null');
+    if (Array.isArray(list)) return list.filter(x => typeof x === 'string').slice(0, FAV_MAX);
+    const old = localStorage.getItem(FAV_OLD_KEY);
+    return old ? [old] : [];
+  } catch (e) {
+    return [];
+  }
+}
+function saveFavorites(list) {
+  try {
+    localStorage.setItem(FAV_KEY, JSON.stringify(list));
+    localStorage.removeItem(FAV_OLD_KEY);
   } catch (e) { /* private mode */ }
-  for (const fn of favListeners) fn(defId || null);
+  for (const fn of favListeners) fn(list.slice());
+}
+/* 選ぶ / 外す。同じプロトコルの別の札が選ばれていれば入れ替える。
+   { ok, message } を返す (10枚を超えるときは ok: false) */
+export function toggleFavoriteCard(defId) {
+  const list = favoriteCards();
+  if (list.includes(defId)) { saveFavorites(list.filter(x => x !== defId)); return { ok: true }; }
+  const same = list.find(x => protoOfId(x) === protoOfId(defId));
+  if (same) {
+    saveFavorites(list.map(x => (x === same ? defId : x)));
+    return { ok: true, message: protoOfId(defId) + ' のお気に入りを入れ替えました' };
+  }
+  if (list.length >= FAV_MAX) return { ok: false, message: 'お気に入りは ' + FAV_MAX + '枚までです。どれかを外してから選んでください' };
+  saveFavorites(list.concat(defId));
+  return { ok: true };
 }
 export function onFavoriteChange(fn) { favListeners.add(fn); return () => favListeners.delete(fn); }
 
@@ -198,22 +222,28 @@ function detailTab(list) {
   return groups.map(([t, g]) => '<h3 class="sr-h">' + t + '</h3>' + rows(g)).join('');
 }
 
-/* カード: 表で出して勝つほど光る (銅 3勝 / 銀 10 / 金 25 / ホロ 50)。★ でお気に入りを1枚選ぶ */
-function cardsTab(list) {
-  const cs = Array.from(cardStats(list).values()).sort((a, b) => b.wins - a.wins || b.games - a.games);
-  const fav = favoriteCard();
-  if (!cs.length) return '<p class="pz-note">表で出したカードがここに並びます (この機能を入れたあとの試合から数えます)</p>';
+/* カード: 全180枚をプロトコルごとに。光り方 (表で出して勝った数) と、押してお気に入り (10枚・1プロトコル1枚まで) */
+function cardsTab(list, protos) {
+  const cs = cardStats(list);
+  const favs = favoriteCards();
+  const byProto = new Map();
+  for (const [id, d] of Object.entries(cardIndex)) {
+    if (!byProto.has(d.proto)) byProto.set(d.proto, []);
+    byProto.get(d.proto).push({ id, ...d });
+  }
   return '<p class="pz-note">表で出して勝った試合の数で、盤面のカードが光ります: 銅 3勝・銀 10勝・金 25勝・ホロ 50勝。' +
-    '★ を押すとお気に入りになり、特別に光ります。</p>' +
-    '<div class="sr-cards">' + cs.map(t => {
-      const d = cardIndex[t.id] || { proto: t.id, value: '?', color: '#63f3ff' };
-      const tier = cardTier(t.wins);
-      return '<div class="sr-cardrow' + (tier ? ' t-' + tier.key : '') + (fav === t.id ? ' fav' : '') + '" style="--pc:' + esc(d.color) + '">' +
-        '<b>' + esc(d.proto) + ' ' + d.value + '</b>' +
-        '<span class="sr-tier">' + (tier ? tier.name : '') + '</span>' +
-        '<small>' + t.wins + '勝 / ' + t.games + '戦</small>' +
-        '<button type="button" class="sr-fav" data-fav="' + esc(t.id) + '" aria-pressed="' + (fav === t.id) + '" aria-label="お気に入りにする">' + (fav === t.id ? '★' : '☆') + '</button>' +
-      '</div>';
+    'カードを押すとお気に入りになり、特別に光ります (<b>' + FAV_MAX + '枚まで・1プロトコル1枚まで</b>)。</p>' +
+    '<p class="sr-favcount">お気に入り <b>' + favs.length + '</b> / ' + FAV_MAX + '<span id="srFavMsg" role="status"></span></p>' +
+    '<div class="sr-cardgrid">' + protos.map(p => {
+      const cards = (byProto.get(p.name) || []).sort((a, b) => a.value - b.value);
+      return '<div class="sr-cgrow" style="--pc:' + esc(p.color) + '"><b>' + esc(p.name) + '</b>' + cards.map(c => {
+        const t = cs.get(c.id);
+        const tier = t ? cardTier(t.wins) : null;
+        const on = favs.includes(c.id);
+        return '<button type="button" class="sr-cc' + (tier ? ' t-' + tier.key : '') + (on ? ' fav' : '') + '" data-fav="' + esc(c.id) + '"' +
+          ' aria-pressed="' + on + '" title="' + esc(p.name + ' ' + c.value) + (t ? ' - ' + t.wins + '勝 / ' + t.games + '戦' : ' - 未使用') + '">' +
+          c.value + (on ? '<i>★</i>' : '') + '</button>';
+      }).join('') + '</div>';
     }).join('') + '</div>';
 }
 
@@ -240,14 +270,23 @@ export async function openStats() {
     '</div><div id="srBody"></div>' +
     (list.length ? '<div class="pz-row"><button type="button" id="srClear">記録を消す</button></div>' : '') +
     '</div>';
-  const views = [() => summaryTab(list, protos), () => protocolTab(list, protos), () => cardsTab(list),
+  const views = [() => summaryTab(list, protos), () => protocolTab(list, protos), () => cardsTab(list, protos),
     () => matchupTab(list, protos), () => detailTab(list)];
   const show = (i) => {
     const body = el.querySelector('#srBody');
     body.innerHTML = views[i]();
     el.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('on', +b.dataset.tab === i));
     body.querySelectorAll('[data-fav]').forEach(b => {
-      b.onclick = () => { setFavoriteCard(favoriteCard() === b.dataset.fav ? null : b.dataset.fav); show(i); };
+      b.onclick = () => {
+        const grid0 = body.querySelector('.sr-cardgrid');
+        const scroll = grid0 ? grid0.scrollTop : 0;
+        const r = toggleFavoriteCard(b.dataset.fav);
+        show(i);
+        const grid = body.querySelector('.sr-cardgrid');
+        if (grid) grid.scrollTop = scroll;
+        const msg = body.querySelector('#srFavMsg');
+        if (msg && r.message) { msg.textContent = r.message; msg.classList.toggle('warn', !r.ok); }
+      };
     });
   };
   el.querySelectorAll('[data-tab]').forEach(b => { b.onclick = () => show(+b.dataset.tab); });
