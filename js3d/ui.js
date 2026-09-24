@@ -5,6 +5,7 @@
 
 import { selectHead, bindSelectHead, optionBody, choiceLabel } from './selectui.js';
 import { drawVictoryBackdrop, drawDefeatBackdrop } from './backdrops.js';
+import { condHtml } from './cardtext.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -93,7 +94,7 @@ export function showCardNote(o) {
     (o.note ? '<div class="cn-note">' + o.note + '</div>' : '') +
     (o.rows.length
       ? o.rows.map(r => '<div class="cn-row' + (r.inactive ? ' off' : '') + '"><span class="cn-zone">' + r.zone + '</span>' +
-          '<span class="cn-text">' + r.text + '</span></div>').join('')
+          '<span class="cn-text">' + condHtml(r.text) + '</span></div>').join('')
       : '<div class="cn-row"><span class="cn-text">テキストなし</span></div>');
   el.classList.add('show');
   el.querySelector('.cn-close').onclick = () => el.classList.remove('show');
@@ -438,7 +439,7 @@ export function showCardPanel(o, opts) {
     '</div>' +
     (rows.length
       ? '<div class="cp-rows">' + rows.map(r => '<div class="cp-row' + (r.inactive ? ' off' : '') + '">' +
-          '<span class="cp-zone">' + (PANEL_ZONE[r.key] || '') + '</span><p>' + r.text + '</p></div>').join('') + '</div>'
+          '<span class="cp-zone">' + (PANEL_ZONE[r.key] || '') + '</span><p>' + condHtml(r.text) + '</p></div>').join('') + '</div>'
       : '');
   el.classList.add('show');
   if (opts && opts.transient) hideTimer = setTimeout(hideCardPanel, 2400);
@@ -474,7 +475,7 @@ export function showFxBanner(o, ms) {
     '<div class="fx-body">' +
       '<div class="fx-head"><b>' + o.name + '</b><span class="fx-tag">発動</span>' +
         '<span class="fx-who ' + (o.mine ? 'me' : 'opp') + '">' + (o.mine ? 'あなた' : '相手') + '</span></div>' +
-      '<p><span class="fx-zone">' + (FX_ZONE[o.zone] || '') + '</span>' + o.text + '</p>' +
+      '<p><span class="fx-zone">' + (FX_ZONE[o.zone] || '') + '</span>' + condHtml(o.text) + '</p>' +
     '</div>' +
     '<i class="fx-sweep"></i>';
   /* 毎回滑り込ませ直す (続けて発動しても、新しい発動だと分かるように) */

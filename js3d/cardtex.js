@@ -13,6 +13,7 @@
 import * as THREE from '../vendor/three.module.js';
 import { CARD, FONT } from './theme.js';
 import { drawIcon } from './icons.js';
+import { condChars } from './cardtext.js';
 
 /* 座標は 512x716 のデザイン空間で書き、実テクスチャへは拡大して描く */
 const DW = 512, DH = 716;
@@ -75,22 +76,42 @@ function rgba(hex, a) {
   return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
 }
 
-/* 現在のフォントで折り返した行の配列を返す */
-function wrapLines(ctx, text, maxW) {
+/* トリガー (「開始：」「〜たとき：」) は太字で測る・描く (カードリストと同じ強調) */
+const COND_WEIGHT = '800';
+const fontFor = (weight, px, cond) => (cond ? COND_WEIGHT : weight) + ' ' + px + 'px system-ui, sans-serif';
+
+/* condChars の文字列を、太字の幅も込みで折り返す (行 = 文字の配列) */
+function wrapRich(ctx, chars, maxW, weight, px) {
   const lines = [];
-  let line = '';
-  for (const ch of Array.from(text)) {
-    if (ch === '\n') { lines.push(line); line = ''; continue; }
-    const test = line + ch;
-    if (ctx.measureText(test).width > maxW && line) {
-      lines.push(line);
-      line = ch;
-    } else {
-      line = test;
-    }
+  let line = [], w = 0;
+  for (const c of chars) {
+    if (c.ch === '\n') { lines.push(line); line = []; w = 0; continue; }
+    ctx.font = fontFor(weight, px, c.cond);
+    const cw = ctx.measureText(c.ch).width;
+    if (w + cw > maxW && line.length) { lines.push(line); line = []; w = 0; }
+    line.push(c); w += cw;
   }
-  if (line) lines.push(line);
+  if (line.length) lines.push(line);
   return lines;
+}
+
+/* 1行を、太字の切れ目ごとにまとめて描く。トリガーには下線を引く */
+function drawRichLine(ctx, line, x, ty, weight, px, color) {
+  let cx = x;
+  for (let i = 0; i < line.length;) {
+    const cond = line[i].cond;
+    let run = '';
+    while (i < line.length && line[i].cond === cond) run += line[i++].ch;
+    ctx.font = fontFor(weight, px, cond);
+    ctx.fillStyle = cond ? '#ffffff' : color;
+    ctx.fillText(run, cx, ty);
+    const w = ctx.measureText(run).width;
+    if (cond) {
+      ctx.fillStyle = 'rgba(255,255,255,.45)';
+      ctx.fillRect(cx, ty + px * 0.16, w, Math.max(1.5, px * 0.07));
+    }
+    cx += w;
+  }
 }
 
 /* 枠 (maxW × maxH) に収まるフォントサイズを探して描く */
@@ -99,18 +120,18 @@ function fitTextBlock(ctx, text, x, y, maxW, maxH, opts) {
   const min = opts.min || 15;
   const lh = opts.lineH || 1.34;
   const weight = opts.weight || '500';
+  const chars = condChars(text);
   let px = start;
   let lines = [];
   for (; px >= min; px--) {
-    ctx.font = weight + ' ' + px + 'px system-ui, sans-serif';
-    lines = wrapLines(ctx, text, maxW);
+    lines = wrapRich(ctx, chars, maxW, weight, px);
     if (lines.length * px * lh <= maxH) break;
   }
-  ctx.fillStyle = opts.color || '#e8eef8';
+  const color = opts.color || '#e8eef8';
   let ty = y + px;                       // 1行目のベースライン
   for (const line of lines) {
     if (ty > y + maxH + 4) break;        // min でも収まらない場合の保険
-    ctx.fillText(line, x, ty);
+    drawRichLine(ctx, line, x, ty, weight, px, color);
     ty += px * lh;
   }
 }
@@ -119,8 +140,7 @@ function fitTextBlock(ctx, text, x, y, maxW, maxH, opts) {
 function measureTextBlock(ctx, text, maxW, opts) {
   const start = opts.start || 24;
   const lh = opts.lineH || 1.34;
-  ctx.font = (opts.weight || '500') + ' ' + start + 'px system-ui, sans-serif';
-  return Math.ceil(wrapLines(ctx, text, maxW).length * start * lh);
+  return Math.ceil(wrapRich(ctx, condChars(text), maxW, opts.weight || '500', start).length * start * lh);
 }
 
 /* 役割ラベルのチップ (高さ26)。塗り (bg) か枠線 (fg) のどちらか */
