@@ -2045,6 +2045,52 @@
   .pf-got li b{color:var(--pink);font-size:10.5px;}
   #title .tt-corner[hidden]{display:none;}   /* 押す前は出さない (どこを押しても始まる) */
   #profileOv{z-index:62;}
+  /* 実績 (トロフィー) */
+  .tb-medal{--m:#d98b52;display:block;flex:none;width:30px;height:30px;clip-path:polygon(50% 0,100% 38%,82% 100%,18% 100%,0 38%);
+    background:linear-gradient(160deg,#fff 0%,var(--m) 38%,rgba(0,0,0,.55) 120%);}
+  .tb-silver .tb-medal,.tr-silver .tb-medal{--m:#cfe0f5;}
+  .tb-gold .tb-medal,.tr-gold .tb-medal{--m:#ffd45e;}
+  .tb-platinum .tb-medal,.tr-platinum .tb-medal{--m:#b9a4ff;background:linear-gradient(160deg,#fff,#b9a4ff 40%,#ff4fa3 90%);}
+  #trophyBanner{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top));z-index:90;display:flex;align-items:center;gap:12px;
+    min-width:min(420px,92vw);max-width:92vw;padding:12px 18px 12px 14px;background:rgba(14,10,24,.94);clip-path:var(--cut);
+    border-left:3px solid var(--pink);font-family:var(--font-ui);color:#fff;pointer-events:none;
+    transform:translate(-50%,-140%);opacity:0;transition:transform .45s cubic-bezier(.16,1,.3,1),opacity .3s;}
+  #trophyBanner.show{transform:translate(-50%,0);opacity:1;}
+  #trophyBanner > div{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1;}
+  #trophyBanner small{font:700 9.5px/1 var(--font-ui);letter-spacing:.22em;color:var(--pink);}
+  #trophyBanner b{font:800 17px/1.1 var(--font-ui);letter-spacing:.08em;}
+  #trophyBanner span{font:600 11px/1.35 var(--font-ui);color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  #trophyBanner em{font:800 12px/1 var(--font-ui);font-style:normal;color:var(--lav);}
+  .pf-trophy{display:grid;grid-template-columns:auto auto 1fr auto;align-items:center;gap:10px;width:100%;padding:10px 12px;
+    background:rgba(255,255,255,.035);border:0;clip-path:var(--cut-s);color:#fff;cursor:pointer;font-family:var(--font-ui);text-align:left;}
+  .pf-trophy:hover,.pf-trophy:focus-visible{background:rgba(255,79,163,.12);outline:0;}
+  .pf-trophy small{font:700 10px/1 var(--font-ui);letter-spacing:.22em;color:var(--dim);}
+  .pf-trophy b{font:800 20px/1 var(--font-ui);}
+  .pf-trophy b i,.tr-top b i{font-style:normal;font-size:.55em;color:var(--dim);}
+  .pf-trophy em{font:600 10.5px/1 var(--font-ui);font-style:normal;color:var(--dim);}
+  .tr-meter{display:block;height:5px;background:rgba(255,255,255,.08);overflow:hidden;}
+  .tr-meter i{display:block;height:100%;background:linear-gradient(90deg,var(--violet),var(--pink));}
+  #trophyOv{z-index:64;}
+  .tr-card{width:min(560px,100%);max-height:min(88vh,760px);display:flex;flex-direction:column;}
+  .tr-top{display:flex;align-items:center;gap:16px;}
+  .tr-top b{font:900 44px/1 var(--font-ui);color:#fff;text-shadow:3px 0 rgba(255,79,163,.7),-3px 0 rgba(139,92,246,.7);}
+  .tr-top > div{flex:1;display:flex;flex-direction:column;gap:6px;}
+  .tr-top small{font:600 10.5px/1.4 var(--font-ui);letter-spacing:.06em;color:var(--dim);}
+  .tr-list{margin:0;padding:0 4px 0 0;list-style:none;display:flex;flex-direction:column;gap:4px;overflow-y:auto;min-height:0;}
+  .tr-list li{display:grid;grid-template-columns:30px 1fr auto;align-items:center;gap:12px;padding:9px 12px;background:rgba(255,255,255,.03);}
+  .tr-list li > div{display:flex;flex-direction:column;gap:3px;min-width:0;}
+  .tr-list li b{font:800 13px/1.1 var(--font-ui);letter-spacing:.08em;color:#fff;}
+  .tr-list li span{font:600 11px/1.35 var(--font-ui);color:var(--dim);}
+  .tr-list li small{font:700 9.5px/1 var(--font-ui);letter-spacing:.14em;color:var(--dim);white-space:nowrap;}
+  .tr-list li:not(.got){opacity:.62;}
+  .tr-list li:not(.got) .tb-medal{filter:grayscale(1) brightness(.5);}
+  .tr-list li.got{background:linear-gradient(90deg,rgba(255,79,163,.1),rgba(255,255,255,.03) 60%);}
+  .tr-list li.got small{color:var(--lav);}
+  .tr-list li.secret b{letter-spacing:.3em;}
+  .tr-list li .tr-bar{display:block;height:3px;margin-top:3px;background:rgba(255,255,255,.08);}
+  .tr-list li .tr-bar i{display:block;height:100%;background:var(--lav);}
+  .tr-list li em{font:600 10px/1 var(--font-ui);font-style:normal;color:var(--dim);}
+  @media (prefers-reduced-motion: reduce){ #trophyBanner{transition:opacity .3s;} }
   .pf-daily{display:flex;flex-direction:column;gap:5px;}
   .pf-daily-h{display:flex;align-items:baseline;gap:10px;}
   .pf-daily-h small{font:700 10px/1 var(--font-ui);letter-spacing:.22em;color:var(--dim);}
@@ -2156,6 +2202,8 @@
       "three/addons/": "./vendor/jsm/",
       "./vendor/three.module.js": "./vendor/three.module.js?v=985eb92490",
       "./js3d/account.js": "./js3d/account.js?v=34e63fa234",
+      "./js3d/achievements-ui.js": "./js3d/achievements-ui.js?v=b654b31bff",
+      "./js3d/achievements.js": "./js3d/achievements.js?v=2a38ee9fea",
       "./js3d/aidecks.js": "./js3d/aidecks.js?v=8d249240bd",
       "./js3d/arena.js": "./js3d/arena.js?v=4e3e7f73c2",
       "./js3d/audio.js": "./js3d/audio.js?v=8bd0439d00",
@@ -2165,9 +2213,9 @@
       "./js3d/cardlist-ov.js": "./js3d/cardlist-ov.js?v=1d673fd0d2",
       "./js3d/cardtex.js": "./js3d/cardtex.js?v=24b6c53321",
       "./js3d/cardtext.js": "./js3d/cardtext.js?v=4cf5529855",
-      "./js3d/cloudsave.js": "./js3d/cloudsave.js?v=9a43e44b82",
+      "./js3d/cloudsave.js": "./js3d/cloudsave.js?v=6b137d09b8",
       "./js3d/control.js": "./js3d/control.js?v=acf84debbc",
-      "./js3d/cosmetics-ui.js": "./js3d/cosmetics-ui.js?v=049eef4895",
+      "./js3d/cosmetics-ui.js": "./js3d/cosmetics-ui.js?v=2364480ea7",
       "./js3d/daily.js": "./js3d/daily.js?v=f56dabdf65",
       "./js3d/emblems.js": "./js3d/emblems.js?v=6d1c077a2e",
       "./js3d/fx-protocols.js": "./js3d/fx-protocols.js?v=509fceb211",
@@ -2175,18 +2223,18 @@
       "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c",
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=c8378abf22",
-      "./js3d/main.js": "./js3d/main.js?v=2dd13a5b3d",
+      "./js3d/main.js": "./js3d/main.js?v=c89b4f8249",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=6fe48ba6a8",
       "./js3d/panel.js": "./js3d/panel.js?v=ecb8a073e3",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=e0273dcae0",
       "./js3d/playmat.js": "./js3d/playmat.js?v=91ab85f12f",
-      "./js3d/profile.js": "./js3d/profile.js?v=4816030958",
+      "./js3d/profile.js": "./js3d/profile.js?v=92bb32091c",
       "./js3d/prompts.js": "./js3d/prompts.js?v=348dff836d",
       "./js3d/protocards.js": "./js3d/protocards.js?v=e16028fc34",
       "./js3d/protocol-strength.js": "./js3d/protocol-strength.js?v=c719e5b65c",
       "./js3d/puzzle.js": "./js3d/puzzle.js?v=b4a110035e",
       "./js3d/review.js": "./js3d/review.js?v=a8cbae3293",
-      "./js3d/rewards.js": "./js3d/rewards.js?v=ae87e40245",
+      "./js3d/rewards.js": "./js3d/rewards.js?v=60f6b680a6",
       "./js3d/room.js": "./js3d/room.js?v=10213a9754",
       "./js3d/roomui.js": "./js3d/roomui.js?v=95cc927579",
       "./js3d/run-ui.js": "./js3d/run-ui.js?v=6b744a8dd0",
@@ -2212,6 +2260,6 @@
   </script>
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=2dd13a5b3d"></script>
+  <script type="module" src="js3d/main.js?v=c89b4f8249"></script>
 </body>
 </html>

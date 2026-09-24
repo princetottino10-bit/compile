@@ -3,6 +3,7 @@
  *   盤面・カードの裏面・コントロールマーカー・コンパイルの光・勝ちの演出・称号・アイコン
  *   まだのものは鍵と、解放されるレベルを出す
  * ========================================================================= */
+import { hasPlatinum } from './achievements.js';
 import { bonusXp } from './xp.js';
 import { COSMETICS, TITLES, unlockLevel, ownedTitles } from './rewards.js';
 import { playerLevel } from './stats-data.js';
@@ -17,7 +18,8 @@ const DEFAULT_KEY = { mat: 'neon', sleeve: 'default', marker: 'default', ccolor:
 
 /* 条件で取る称号 (レベル以外) */
 export function extraTitles(records) {
-  return records.some(r => r.win && r.level === UNDERDOG_LEVEL) ? ['underdog'] : [];
+  const out = records.some(r => r.win && r.level === UNDERDOG_LEVEL) ? ['underdog'] : [];
+  return hasPlatinum() ? out.concat('platinum') : out;
 }
 
 /* プロフィール (タイトル画面・戦績に出す): { level, title, icon } */

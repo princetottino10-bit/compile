@@ -10,7 +10,7 @@
 
 /* まとめて保存する項目。一時的な印 (ログインから戻った印など) は入れない */
 export const SAVE_KEYS = ['compileSettings', 'compileFavCards', 'compileRun', 'compileRunBest', 'compileRunKind',
-  'compileWeekly', 'compileOppLast', 'compileDaily'];
+  'compileWeekly', 'compileOppLast', 'compileDaily', 'compileTrophies'];
 const META = 'compileCloudMeta';     // { user, hash: 最後に同期した中身, at: そのときのアカウント側の時刻 }
 const MAX_BYTES = 60000;
 
@@ -64,6 +64,25 @@ function betterBest(a, b) {
   }
 }
 
+/* 実績は取ったものを両方残す (どちらかで取れば取ったまま)。時刻は早い方 */
+function unionTrophies(a, b) {
+  try {
+    const x = JSON.parse(a || '{}') || {}, y = JSON.parse(b || '{}') || {};
+    const out = { ...y };
+    for (const [k, v] of Object.entries(x)) out[k] = out[k] ? Math.min(out[k], v) : v;
+    return JSON.stringify(out);
+  } catch (e) {
+    return a || b;
+  }
+}
+/* どちらを正にしても、残すべきもの (RUN の最高記録・実績) は合わせる */
+function keepBest(merged, local, rd) {
+  if (local.compileRunBest && rd.compileRunBest) merged.compileRunBest = betterBest(local.compileRunBest, rd.compileRunBest);
+  else if (rd.compileRunBest && !merged.compileRunBest) merged.compileRunBest = rd.compileRunBest;
+  if (local.compileTrophies || rd.compileTrophies) merged.compileTrophies = unionTrophies(local.compileTrophies, rd.compileTrophies);
+  return merged;
+}
+
 /* 同期の中身を決める。
    local: いまのブラウザ、remote: アカウントの行 ({ data, at } / 無ければ null)、meta: 前回の同期
    返り値 { apply: ブラウザに書く中身 or null, push: アカウントに送る中身 or null } */
@@ -74,14 +93,12 @@ export function decide(local, remote, meta) {
   const remoteNewer = !meta || remote.at > meta.at;
   if (!meta) {
     /* この端末で初めての同期: アカウントの中身を正にし、アカウントに無い項目だけこちらのを足す */
-    const merged = { ...local, ...rd };
-    if (local.compileRunBest && rd.compileRunBest) merged.compileRunBest = betterBest(rd.compileRunBest, local.compileRunBest);
+    const merged = keepBest({ ...local, ...rd }, local, rd);
     const same = hashOf(merged) === hashOf(rd);
     return { apply: hashOf(merged) === hashOf(local) ? null : merged, push: same ? null : merged };
   }
   if (localChanged) {
-    const merged = { ...local };
-    if (rd.compileRunBest) merged.compileRunBest = local.compileRunBest ? betterBest(local.compileRunBest, rd.compileRunBest) : rd.compileRunBest;
+    const merged = keepBest({ ...local }, local, rd);
     return { apply: hashOf(merged) === hashOf(local) ? null : merged, push: merged };
   }
   return { apply: remoteNewer && hashOf(rd) !== hashOf(local) ? rd : null, push: null };

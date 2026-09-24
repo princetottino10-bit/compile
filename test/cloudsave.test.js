@@ -45,3 +45,10 @@ test('アカウントの中身は知っている項目・文字列だけ通す',
   assert.deepEqual(cleanRemote({ compileSettings: 'x', evil: 'y', compileRun: 5 }), { compileSettings: 'x' });
   assert.deepEqual(cleanRemote(null), {});
 });
+
+test('実績は両方の端末で取った分を合わせる', () => {
+  const local = { compileTrophies: JSON.stringify({ a: 5, b: 9 }) };
+  const meta = { hash: 'old', at: 100 };
+  const d = decide(local, { data: { compileTrophies: JSON.stringify({ b: 3, c: 7 }) }, at: 200 }, meta);
+  assert.deepEqual(JSON.parse(d.push.compileTrophies), { a: 5, b: 3, c: 7 });
+});

@@ -4,6 +4,8 @@
  * ========================================================================= */
 import { bonusXp, grantXp, XP_GAIN, hashKey } from './xp.js';
 import { recordDailyGame, DAILY_XP } from './daily.js';
+import { unlockTrophies, TROPHY_XP } from './achievements.js';
+import { trophyContext, showTrophyBanner } from './achievements-ui.js';
 import * as THREE from '../vendor/three.module.js';
 import { createStage } from './stage.js';
 import { createBoard, visualFingerprint, locOf } from './board.js';
@@ -84,28 +86,63 @@ function refreshCardGlow() {
   favSet = new Set(favoriteCards());
   if (board && cur) board.syncInstant(shown());
 }
-/* CPU 戦の戦績以外で入る経験値 (xp.js) を足し、レベルが上がったら手に入った報酬を見せる */
-async function gainXp(src, xp, key) {
+/* CPU 戦の戦績以外で入る経験値 (xp.js) を足し、レベルが上がったら手に入った報酬を見せる。
+   noTrophy: 実績の判定をこのあとまとめてするとき */
+async function gainXp(src, xp, key, noTrophy) {
   const before = myLevel;
   if (!grantXp(src, xp, key)) return;
   refreshCardGlow();                 // myLevel も数え直す
   if (myLevel > before) await UI.levelUpCutIn(myLevel, rewardsBetween(before, myLevel));
+  if (!noTrophy) await checkTrophies(null);
 }
-/* デイリーミッションを1試合ぶん進め、達成した分の経験値を足す (CPU 戦・オンライン共通) */
-async function dailyAfterGame(st, side, win, level, online) {
+
+/* 決着した1試合の中身 (デイリーミッションと実績の判定に使う) */
+function gameSummary(st, side, win, level, online) {
   const t = st.tally || {};
-  const effects = Object.values((t.effects && t.effects[side]) || {}).reduce((n, v) => n + (v | 0), 0);
-  const r = recordDailyGame({
+  const effectsMap = (t.effects && t.effects[side]) || {};
+  return {
     win, level, online, protocols: st.players[side].protocols.map(p => p.name),
     compiles: (t.compiles && t.compiles[side]) | 0, oppCompiles: (t.compiles && t.compiles[1 - side]) | 0,
-    effects, faceUpIds: ((t.faceUp && t.faceUp[side]) || []).slice(),
-    turns: (st.turns || 0) + 1
-  }, Object.keys(protoIndex));
-  if (!r.cleared.length) return;
-  const xp = r.cleared.reduce((n, m) => n + m.xp, 0) + (r.allNow ? DAILY_XP.all : 0);
-  UI.toast('DAILY MISSION CLEAR — ' + r.cleared.map(m => m.text).join(' / ') + (r.allNow ? ' (3つ達成)' : '') + '  +' + xp + ' XP', 3600);
-  for (const m of r.cleared) await gainXp('daily', m.xp, 'dm:' + r.day + ':' + m.key);
-  if (r.allNow) await gainXp('daily', DAILY_XP.all, 'dm:' + r.day + ':all');
+    winCompiles: st.winCompiles || 3, effectsMap,
+    effects: Object.values(effectsMap).reduce((n, v) => n + (v | 0), 0),
+    faceUpIds: ((t.faceUp && t.faceUp[side]) || []).slice(),
+    turns: (st.turns || 0) + 1, at: Date.now()
+  };
+}
+
+/* 決着のあと: デイリーミッションを進め、実績を判定する (CPU 戦・オンライン共通) */
+async function afterGameProgress(st, side, win, level, online) {
+  const game = gameSummary(st, side, win, level, online);
+  const r = recordDailyGame(game, Object.keys(protoIndex));
+  if (r.cleared.length) {
+    const xp = r.cleared.reduce((n, m) => n + m.xp, 0) + (r.allNow ? DAILY_XP.all : 0);
+    UI.toast('DAILY MISSION CLEAR — ' + r.cleared.map(m => m.text).join(' / ') + (r.allNow ? ' (3つ達成)' : '') + '  +' + xp + ' XP', 3600);
+    for (const m of r.cleared) await gainXp('daily', m.xp, 'dm:' + r.day + ':' + m.key, true);
+    if (r.allNow) await gainXp('daily', DAILY_XP.all, 'dm:' + r.day + ':all', true);
+  }
+  await checkTrophies(game);
+}
+
+/* 実績を判定し、取った分の経験値を足して知らせる。レベルが上がって取れる実績もあるので数回まわす */
+let trophyBusy = null;
+async function checkTrophies(game) {
+  while (trophyBusy) await trophyBusy;              // 同時に2回判定しない
+  let done;
+  trophyBusy = new Promise(r => { done = r; });
+  try {
+    for (let pass = 0; pass < 3; pass++) {
+      const got = unlockTrophies(trophyContext(pass ? null : game));
+      if (!got.length) break;
+      const before = myLevel;
+      for (const t of got) grantXp('trophy', TROPHY_XP[t.tier], 'ach:' + t.id);
+      refreshCardGlow();
+      await showTrophyBanner(got);
+      if (myLevel > before) await UI.levelUpCutIn(myLevel, rewardsBetween(before, myLevel));
+    }
+  } finally {
+    trophyBusy = null;
+    done();
+  }
 }
 function auraFor(defId) {
   if (favSet.has(defId)) return { color: '#ffffff', strength: 1, fav: true, frame: true, holo: false };
@@ -114,7 +151,7 @@ function auraFor(defId) {
   if (!tier) return null;
   return { color: tier.color, strength: tier.key === 'bronze' ? 0.45 : tier.key === 'silver' ? 0.55 : 0.7, holo: !!tier.holo, fav: false };
 }
-onFavoriteChange(() => refreshCardGlow());
+onFavoriteChange(() => { refreshCardGlow(); checkTrophies(null); });
 /* 詳細パネルの ★ でお気に入りを選ぶ (もう一度押すと外す。10枚・1プロトコル1枚まで) */
 UI.setFavoriteHandler({
   isFav: (defId) => favSet.has(defId),
@@ -184,6 +221,7 @@ async function boot() {
     fetch('data/effects.json').then(r => r.json())
   ]);
   setCosmeticProtocols(cards.protocols);
+  setTimeout(() => { checkTrophies(null); }, 1500);   // 前から遊んでいる人の分・別の端末で取った分をまとめて
   for (const p of cards.protocols) {
     protoIndex[p.name] = p;
     for (const c of p.cards) {
@@ -1784,7 +1822,7 @@ async function roomMaybeFinish() {
     const before = myLevel;
     refreshCardGlow();
     if (myLevel > before) await UI.levelUpCutIn(myLevel, rewardsBetween(before, myLevel));
-    await dailyAfterGame(st, ME, win, null, true);     // 同じ決着を読み直したときは進めない
+    await afterGameProgress(st, ME, win, null, true);     // 同じ決着を読み直したときは進めない
   }
   showEndActions(win);
 }
@@ -2671,7 +2709,7 @@ async function afterTurn() {
     await UI.resultCutIn(win, { victory });
     /* レベルが上がったら、手に入った報酬を見せる */
     if (myLevel > levelBefore) await UI.levelUpCutIn(myLevel, rewardsBetween(levelBefore, myLevel));
-    if (!trainingMode && !puzzle && !demoMode && !roomMode) await dailyAfterGame(cur.state, ME, win, aiDifficulty, false);
+    if (!trainingMode && !puzzle && !demoMode && !roomMode) await afterGameProgress(cur.state, ME, win, aiDifficulty, false);
     if (demoMode) {
       await TW.wait(900);
       location.reload();

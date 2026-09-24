@@ -2,6 +2,8 @@
  * プロフィール: タイトル右上のレベルを押すと開く
  *   アイコン・レベル・経験値・称号、次の報酬 (中身は取るまで秘密)、取った報酬、見た目を選ぶ入口
  * ========================================================================= */
+import { trophyView } from './achievements.js';
+import { trophyContext, openTrophies } from './achievements-ui.js';
 import { bonusXp, XP_GAIN } from './xp.js';
 import { dailyView, DAILY_XP } from './daily.js';
 import { playerLevel, xpForLevel } from './stats-data.js';
@@ -33,6 +35,13 @@ function dailyHtml(protocols) {
       '<b>' + (m.done ? 'CLEAR' : m.n + '/' + m.goal) + '</b><em>+' + m.xp + '</em></li>').join('') + '</ul></div>';
 }
 
+/* 実績の達成率 (押すと一覧) */
+function trophyHtml() {
+  const v = trophyView(trophyContext(null));
+  return '<button type="button" class="pf-trophy" id="pfTrophy"><small>TROPHIES</small><b>' + v.rate + '<i>%</i></b>' +
+    '<span class="tr-meter"><i style="width:' + v.rate + '%"></i></span><em>' + v.done + ' / ' + v.total + '</em></button>';
+}
+
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 export function openProfile(protocols) {
@@ -62,6 +71,7 @@ export function openProfile(protocols) {
       '<div><b>' + got.length + '<i>/' + REWARDS.length + '</i></b><small>REWARDS</small></div></div>' +
     (nx ? '<div class="pf-next"><small>NEXT REWARD</small><b>LV ' + nx.lv + '</b><span>???</span><em>あと XP ' + (xpForLevel(nx.lv) - pl.xp) + '</em></div>'
       : '<div class="pf-next"><small>ALL REWARDS UNLOCKED</small></div>') +
+    trophyHtml() +
     dailyHtml(protocols) +
     (got.length ? '<ul class="pf-got">' + got.slice().reverse().map(r => '<li><b>LV ' + r.lv + '</b>' + esc(r.name) + '</li>').join('') + '</ul>' : '') +
     '<details class="pf-earn"><summary>HOW TO EARN XP</summary><ul>' + EARN.map(([k, v]) => '<li><span>' + k + '</span><b>' + v + '</b></li>').join('') + '</ul></details>' +
@@ -73,4 +83,5 @@ export function openProfile(protocols) {
   el.onclick = (ev) => { if (ev.target === el) close(); };
   el.querySelector('.pz-x').onclick = close;
   el.querySelector('#pfCos').onclick = () => { close(); openSettings(); };
+  el.querySelector('#pfTrophy').onclick = () => openTrophies();
 }

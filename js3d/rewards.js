@@ -34,7 +34,8 @@ export const COSMETICS = {
 
 /* 称号 (レベルのもの + 条件で取るもの) */
 export const TITLES = {
-  compiler: 'COMPILER', veteran: 'VETERAN', expert: 'EXPERT', master: 'MASTER', underdog: 'UNDERDOG'
+  compiler: 'COMPILER', veteran: 'VETERAN', expert: 'EXPERT', master: 'MASTER', underdog: 'UNDERDOG',
+  platinum: 'PLATINUM'     // 実績をすべて取る (achievements.js)
 };
 
 /* その見た目を解放するレベル (はじめからなら 1) */
