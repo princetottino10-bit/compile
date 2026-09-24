@@ -144,8 +144,9 @@ export function pickFaces(items, opts) {
     activeModalFinish = finish;
     el.innerHTML = '<div class="rv-title">' + (o.title || 'カードを選ぶ') + '</div>' +
       '<div class="rv-cards">' + items.map((it, i) =>
-        '<button type="button" class="rv-pick" data-i="' + i + '">' +
-          '<img alt="" src="' + it.img + '"><span>' + it.label + '</span></button>').join('') +
+        '<div class="rv-pickwrap"><button type="button" class="rv-pick" data-i="' + i + '">' +
+          '<img alt="" src="' + it.img + '"><span>' + it.label + '</span></button>' +
+          '<button type="button" class="rv-zoom" data-z="' + i + '" aria-label="' + it.label + ' を拡大">🔍</button></div>').join('') +
       '</div>' +
       (o.optional
         ? '<div class="rv-hint"><button type="button" class="arr-btn" id="pkSkip">選ばない</button></div>'
@@ -153,6 +154,9 @@ export function pickFaces(items, opts) {
     el.classList.add('show');
     el.querySelectorAll('.rv-pick').forEach((b) => {
       b.onclick = () => finish([items[+b.dataset.i].value]);
+    });
+    el.querySelectorAll('.rv-zoom').forEach((b) => {
+      b.onclick = () => { const it = items[+b.dataset.z]; zoomCard(it.img, it.label); };
     });
     const skip = el.querySelector('#pkSkip');
     if (skip) skip.onclick = () => finish([]);
@@ -553,6 +557,22 @@ function chainBurst(root, link, n) {
   setTimeout(() => b.remove(), 1200);
 }
 
+/* カードの拡大表示: 一覧 (捨て札・スタック・公開・山札から選ぶ) のカードを大きく出す。どこを触っても閉じる */
+export function zoomCard(img, label) {
+  let el = $('#zoomOv');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'zoomOv';
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-modal', 'true');
+    document.body.appendChild(el);
+  }
+  el.setAttribute('aria-label', label || 'カード');
+  el.innerHTML = '<figure><img alt="" src="' + img + '"><figcaption>' + (label || '') + '</figcaption></figure><div class="zm-hint">タップで閉じる</div>';
+  el.classList.add('show');
+  el.onclick = (ev) => { ev.stopPropagation(); el.classList.remove('show'); };
+}
+
 export function hideChain() {
   const el = $('#chainUi');
   chainKey = '';
@@ -574,14 +594,16 @@ export function showRevealedHand(items, titleOverride) {
   }
   el.innerHTML = '<div class="rv-title">' +
       (titleOverride || (items.length === 1 ? '相手が手札を1枚公開した' : '相手の手札が公開された')) + '</div>' +
-    '<div class="rv-cards">' + items.map((it) =>
-      '<figure><img alt="" src="' + it.img + '"><figcaption>' + it.label + '</figcaption></figure>'
-    ).join('') + '</div><div class="rv-hint">タップで閉じる</div>';
+    '<div class="rv-cards">' + items.map((it, i) =>
+      '<figure data-z="' + i + '"><img alt="" src="' + it.img + '"><figcaption>' + it.label + '</figcaption></figure>'
+    ).join('') + '</div><div class="rv-hint">カードをタップで拡大・ほかをタップで閉じる</div>';
   el.classList.add('show');
   /* 一覧そのもの、またはほかの場所に触れたら閉じる。ほかの場所への最初のタッチは閉じるだけにして、
      下の盤面の操作 (手札を選ぶ等) まで一緒に起こさない */
   const outside = (ev) => {
     if (el.contains(ev.target)) return;
+    const zoom = $('#zoomOv');
+    if (zoom && zoom.contains(ev.target)) return;      // 拡大表示を閉じるタッチでは一覧を閉じない
     ev.stopPropagation();
     ev.preventDefault();
     close();
@@ -591,9 +613,20 @@ export function showRevealedHand(items, titleOverride) {
     clearTimeout(el._t);
     document.removeEventListener('pointerdown', outside, true);
   };
-  el.onclick = close;
+  /* カードに触れたら拡大 (一覧は閉じない)、それ以外に触れたら閉じる */
+  el.onclick = (ev) => {
+    const f = ev.target.closest('[data-z]');
+    if (f) {
+      clearTimeout(el._t);
+      const it = items[+f.dataset.z];
+      zoomCard(it.img, it.label);
+      return;
+    }
+    close();
+  };
   clearTimeout(el._t);
-  el._t = setTimeout(close, 6000);
+  /* 相手の手札公開は6秒で閉じる。捨て札・スタックの一覧 (見出しあり) は自分で閉じるまで出しておく */
+  if (!titleOverride) el._t = setTimeout(close, 6000);
   document.removeEventListener('pointerdown', el._outside || outside, true);
   el._outside = outside;
   /* 開いたタッチそのもので閉じないよう、次のタッチから見張る */

@@ -15,7 +15,8 @@ const X_WIDE = -2.85;         // lane0 とトラッシュの間の余白
 /* 縦持ちはレーンの外側の細い余白へ寄せ、小さくする (山札・捨て札と同じ扱い) */
 const X = () => X_WIDE + (-2.52 - X_WIDE) * VIEW.k;
 const SCALE = () => 1 - 0.38 * VIEW.k;
-const Z = { neutral: 0, me: 1.35, opp: -1.35 };
+/* 横持ちのスマホは自分の捨て札を奥へ寄せる (layout.js の pilePos) ので、マーカーも板の側に寄せて捨て札に重ねない */
+const Z = { neutral: 0, get me() { return VIEW.short ? 0.72 : 1.35; }, get opp() { return VIEW.short ? -0.72 : -1.35; } };
 const MINT = 0x6dffc2, PINK = 0xff3b9d, DIM = 0x44536e;
 
 /* トラッカーのマーカー画像 (2048px) の輪郭を、中心をそろえて 120° 対称に整えたもの。

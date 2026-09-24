@@ -613,6 +613,21 @@
   #modalCard{transition:opacity .18s ease-out,transform .2s cubic-bezier(.16,1,.3,1);}
 
   /* ---------- 手札公開の帯 ---------- */
+  /* カードの拡大表示 */
+  #zoomOv{position:fixed;inset:0;z-index:72;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+    background:rgba(3,4,10,.86);backdrop-filter:blur(4px);cursor:zoom-out;}
+  #zoomOv.show{display:flex;}
+  #zoomOv figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:8px;animation:zmIn .18s cubic-bezier(.16,1,.3,1);}
+  #zoomOv img{height:min(82vh,640px);max-width:92vw;object-fit:contain;border-radius:14px;box-shadow:0 20px 70px rgba(0,0,0,.7);}
+  #zoomOv figcaption{font:800 14px/1 var(--font-hud),system-ui;letter-spacing:.1em;color:#e9eef8;}
+  #zoomOv .zm-hint{font:600 11px/1 system-ui;color:var(--dim);}
+  @keyframes zmIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion: reduce){ #zoomOv figure{animation:none;} }
+  #revealOv figure{cursor:zoom-in;}
+  #pickOv .rv-pickwrap{position:relative;flex:none;}
+  #pickOv .rv-zoom{position:absolute;top:8px;right:8px;width:32px;height:32px;border-radius:999px;cursor:zoom-in;
+    border:1px solid rgba(255,255,255,.3);background:rgba(6,9,18,.82);color:#fff;font-size:14px;line-height:1;}
+  #pickOv .rv-zoom:hover,#pickOv .rv-zoom:focus-visible{border-color:var(--cyan);outline:0;}
   #revealOv{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.96);z-index:34;
     padding:16px 20px 12px;border-radius:16px;background:rgba(6,9,18,.96);
     border:1px solid rgba(99,243,255,.3);box-shadow:0 30px 90px rgba(0,0,0,.75);
@@ -1690,6 +1705,19 @@
     .cp-head b{font-size:13px;}
     .cp-val{min-width:22px;height:22px;font-size:14px;}
     .cp-top{padding:7px 10px 6px;gap:8px;}
+    /* 横持ちのスマホ: 詳細パネルは左端にぴったり寄せ、細く、上から下まで使う (盤面を覆う幅を減らす)。
+       カードは盤面に見えているので小さな絵と重複するプロトコル名は省く。効果の文はパネルの中でスクロールする */
+    #preview,body.coach-on:not(.picking) #preview{left:env(safe-area-inset-left);top:calc(4px + env(safe-area-inset-top));bottom:4px;
+      width:min(156px,17vw);max-height:none;border-radius:0 10px 10px 0;border-left:0;}
+    /* チュートリアルの説明の帯が出ているときは、その下から */
+    body.coach-on:not(.picking) #preview{top:calc(var(--coach-bottom, 40px) + 6px);}
+    .cp-top{padding:5px 10px 4px;}
+    .cp-img,.cp-proto{display:none;}
+    .cp-meta{flex-direction:row;flex-wrap:wrap;align-items:center;gap:4px;}
+    .cp-tag{white-space:nowrap;}
+    .cp-note{font-size:9.5px;}
+    .cp-rows{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;}
+    #preview.show .cp-rows{pointer-events:auto;}
     .cp-rows{padding:2px 10px 10px;gap:5px;}
     .cp-row{padding:5px 7px;}
     .cp-row p{font-size:11px;line-height:1.5;}
@@ -1901,14 +1929,14 @@
       "./js3d/cardlist-ov.js": "./js3d/cardlist-ov.js?v=1d673fd0d2",
       "./js3d/cardtex.js": "./js3d/cardtex.js?v=7aa6b53dd8",
       "./js3d/cardtext.js": "./js3d/cardtext.js?v=4cf5529855",
-      "./js3d/control.js": "./js3d/control.js?v=e4875b9ac1",
+      "./js3d/control.js": "./js3d/control.js?v=2ed84f3841",
       "./js3d/emblems.js": "./js3d/emblems.js?v=6d1c077a2e",
       "./js3d/fx-protocols.js": "./js3d/fx-protocols.js?v=e8df5c181f",
       "./js3d/fx.js": "./js3d/fx.js?v=f2bbe73646",
       "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c",
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=c8378abf22",
-      "./js3d/main.js": "./js3d/main.js?v=38f2ee8fce",
+      "./js3d/main.js": "./js3d/main.js?v=8b1f1390c7",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=083e3a34f9",
       "./js3d/panel.js": "./js3d/panel.js?v=9156d673b5",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=c890d5ec52",
@@ -1933,7 +1961,7 @@
       "./js3d/training.js": "./js3d/training.js?v=8f9e8ce6d0",
       "./js3d/tutorial.js": "./js3d/tutorial.js?v=f8d712b653",
       "./js3d/tween.js": "./js3d/tween.js?v=99b25c0d63",
-      "./js3d/ui.js": "./js3d/ui.js?v=41bb1a1f82",
+      "./js3d/ui.js": "./js3d/ui.js?v=5af8e25c46",
       "./js3d/weekly-ui.js": "./js3d/weekly-ui.js?v=5bee950559",
       "./js3d/weekly.js": "./js3d/weekly.js?v=b4651191ce"
     }
@@ -1941,6 +1969,6 @@
   </script>
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=38f2ee8fce"></script>
+  <script type="module" src="js3d/main.js?v=8b1f1390c7"></script>
 </body>
 </html>

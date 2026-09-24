@@ -1278,7 +1278,7 @@ function cardDetail(uid, st = shown()) {
   const visible = card.def && (trainingMode || card.faceUp || ((card.knownTo || 0) & (1 << ME)));
   if (!visible) {
     return { hidden: true, title: '裏向きのカード', proto: '裏向きのカード', value: 2, color: '#8fa8c8',
-      badge: '非公開', note: '盤面では値2として扱う', rows: [] };
+      badge: '非公開', note: '値2', rows: [] };
   }
   const d = defIndex[card.def];
   if (!d) return null;
@@ -1290,9 +1290,10 @@ function cardDetail(uid, st = shown()) {
   if (loc && loc.line !== undefined) {
     const stack = st.lines[loc.line][loc.side];
     const covered = stack.indexOf(uid) < stack.length - 1;
-    badge = (loc.side === ME ? 'あなたの場' : '相手の場') + (covered ? '・覆われている' : '');
-    if (!card.faceUp) { badge += '・裏向き'; note = '裏向きなので効果はない (値2)'; upperOff = middleOff = lowerOff = true; }
-    else if (covered) { note = '覆われているので、有効なのは上段だけ'; middleOff = lowerOff = true; }
+    /* 場所と状態は短く (効かない段はパネルで薄くなるので、説明は一言だけ) */
+    badge = (loc.side === ME ? '自分の場' : '相手の場') + (covered ? '・覆われ' : '');
+    if (!card.faceUp) { badge += '・裏'; note = '効果なし・値2'; upperOff = middleOff = lowerOff = true; }
+    else if (covered) { note = '上段のみ有効'; middleOff = lowerOff = true; }
   } else if (loc && loc.zone === 'hand') {
     badge = '手札';
   } else if (loc && loc.zone === 'trash') {
