@@ -64,7 +64,14 @@ export function openRun(protocols, cardsOf, opts) {
     let hub = !!(opts && opts.hub);
     const set = (next) => { run = next; RUN.saveRun(run); render(); };
     const done = (v) => { el.classList.remove('show'); resolve(v); };
-    const info = (name) => { const p = byName[name]; if (p && cardsOf) showProtocolCards(name, p.color, cardsOf); };
+    /* カード一覧は、いま候補に出ているものと自分のデッキをタブで切り替えられるように */
+    const info = (name) => {
+      const p = byName[name];
+      if (!p || !cardsOf) return;
+      const list = [...new Set([...((run && run.offers) || []), ...((run && run.deck) || [])])]
+        .filter(n => byName[n]).map(n => ({ name: n, color: byName[n].color }));
+      showProtocolCards(name, p.color, cardsOf, list);
+    };
 
     /* 入口: 2つのモードを同じ大きさのカードで並べる (どちらを遊ぶかが一目で分かるように) */
     const hubHtml = () => {
@@ -100,7 +107,14 @@ export function openRun(protocols, cardsOf, opts) {
         return;
       }
       if (run.phase === 'draft') {
-        body = '<h2>プロトコルを選ぶ <small>' + (run.deck.length + 1) + ' / 3</small></h2>' +
+        /* はじめの1つを選ぶときだけ、何をするモードなのかを書いておく (いきなり選ばされても分からないので) */
+        const intro = !run.deck.length && run.floor === 0
+          ? '<p class="rn-lead">まず<b>プロトコルを3つ</b>、1つずつ選んでデッキを作ります。' +
+            'そのデッキで <b>CPU ' + (RUN.FLOORS.length - 1) + '人と BOSS</b> を順に倒します (1試合 ' + RUN.RUN_WIN_COMPILES + '本先取)。<br>' +
+            '上の <b>LIFE</b> は、相手にコンパイルされるたびに 1 減り、0 になったら終わり。' +
+            '負けても同じ相手とやり直せます。勝つたびに、プロトコルの入れ替えかライフ回復を選べます。</p>'
+          : '';
+        body = '<h2>プロトコルを選ぶ <small>' + (run.deck.length + 1) + ' / 3</small></h2>' + intro +
           (run.deck.length ? '<p class="rn-note">選んだもの ' + deckLine(run.deck, byName) + '</p>' : '') +
           '<div class="rn-offers">' + run.offers.map(n => '<div class="rn-offer">' + protoChip(byName[n], 'data-pick="' + esc(n) + '"') +
             (cardsOf ? '<button type="button" class="rn-info" data-info="' + esc(n) + '">カードを見る</button>' : '') + '</div>').join('') + '</div>';

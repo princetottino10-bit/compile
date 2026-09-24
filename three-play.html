@@ -951,6 +951,13 @@
   #protoCardsOv{position:fixed;inset:0;z-index:70;display:none;flex-direction:column;align-items:center;gap:10px;
     background:rgba(2,3,9,.86);padding:16px calc(12px + env(safe-area-inset-right)) 12px calc(12px + env(safe-area-inset-left));cursor:pointer;}
   #protoCardsOv.show{display:flex;}
+  #protoCardsOv .pc-tabs{display:flex;flex-wrap:wrap;gap:6px;width:min(980px,100%);}
+  #protoCardsOv .pc-tabs button{border:1px solid color-mix(in srgb,var(--pc) 55%,transparent);background:rgba(10,14,26,.9);
+    color:#e8e4f4;font:800 11px/1 system-ui;letter-spacing:.08em;padding:7px 10px;border-radius:6px;cursor:pointer;}
+  #protoCardsOv .pc-tabs button.on{background:color-mix(in srgb,var(--pc) 35%,#0a0e1a);border-color:var(--pc);color:#fff;}
+  #protoCardsOv .pc-tabs button:focus-visible{outline:2px solid #fff;outline-offset:2px;}
+  #runOv .rn-deck i[data-info]{cursor:pointer;}
+  #runOv .rn-deck i[data-info]:hover{filter:brightness(1.35);}
   #protoCardsOv .pc-head{display:flex;align-items:baseline;gap:8px;width:min(980px,100%);}
   #protoCardsOv .pc-head b{font:900 16px/1 system-ui;letter-spacing:.14em;color:var(--accent,#b9a4ff);}
   #protoCardsOv .pc-head span{font:700 11px/1 system-ui;color:var(--dim);}
@@ -2452,7 +2459,7 @@
       "./js3d/playmat.js": "./js3d/playmat.js?v=91ab85f12f",
       "./js3d/profile.js": "./js3d/profile.js?v=6ad599d1c4",
       "./js3d/prompts.js": "./js3d/prompts.js?v=348dff836d",
-      "./js3d/protocards.js": "./js3d/protocards.js?v=e16028fc34",
+      "./js3d/protocards.js": "./js3d/protocards.js?v=a0c3bbfc68",
       "./js3d/protocol-strength.js": "./js3d/protocol-strength.js?v=c719e5b65c",
       "./js3d/puzzle.js": "./js3d/puzzle.js?v=b4a110035e",
       "./js3d/replays-ui.js": "./js3d/replays-ui.js?v=9a6a4ca786",
@@ -2461,7 +2468,7 @@
       "./js3d/rewards.js": "./js3d/rewards.js?v=c0bbd8236f",
       "./js3d/room.js": "./js3d/room.js?v=25990f1537",
       "./js3d/roomui.js": "./js3d/roomui.js?v=49ed751a46",
-      "./js3d/run-ui.js": "./js3d/run-ui.js?v=58718a71af",
+      "./js3d/run-ui.js": "./js3d/run-ui.js?v=dda7071b7a",
       "./js3d/run.js": "./js3d/run.js?v=29dcccf04b",
       "./js3d/selectui.js": "./js3d/selectui.js?v=208abdaebc",
       "./js3d/settings.js": "./js3d/settings.js?v=df463d1bde",
@@ -2478,7 +2485,7 @@
       "./js3d/tutorial.js": "./js3d/tutorial.js?v=0e6d6237ad",
       "./js3d/tween.js": "./js3d/tween.js?v=99b25c0d63",
       "./js3d/ui.js": "./js3d/ui.js?v=f39a94c4fb",
-      "./js3d/weekly-ui.js": "./js3d/weekly-ui.js?v=e31d97c69c",
+      "./js3d/weekly-ui.js": "./js3d/weekly-ui.js?v=c35e408f12",
       "./js3d/weekly.js": "./js3d/weekly.js?v=b4651191ce",
       "./js3d/xp.js": "./js3d/xp.js?v=b2c69be784"
     }
@@ -2513,8 +2520,8 @@
   <link rel="modulepreload" href="js3d/cardlist-ov.js?v=1d673fd0d2">
   <link rel="modulepreload" href="js3d/opponent-select.js?v=6398fed15e">
   <link rel="modulepreload" href="js3d/aidecks.js?v=8d249240bd">
-  <link rel="modulepreload" href="js3d/run-ui.js?v=58718a71af">
-  <link rel="modulepreload" href="js3d/weekly-ui.js?v=e31d97c69c">
+  <link rel="modulepreload" href="js3d/run-ui.js?v=dda7071b7a">
+  <link rel="modulepreload" href="js3d/weekly-ui.js?v=c35e408f12">
   <link rel="modulepreload" href="js3d/run.js?v=29dcccf04b">
   <link rel="modulepreload" href="js3d/weekly.js?v=b4651191ce">
   <link rel="modulepreload" href="js3d/review.js?v=34f174153b">
@@ -2544,7 +2551,7 @@
   <link rel="modulepreload" href="vendor/jsm/postprocessing/OutputPass.js">
   <link rel="modulepreload" href="vendor/jsm/environments/RoomEnvironment.js">
   <link rel="modulepreload" href="js3d/card.js?v=a0712f855a">
-  <link rel="modulepreload" href="js3d/protocards.js?v=e16028fc34">
+  <link rel="modulepreload" href="js3d/protocards.js?v=a0c3bbfc68">
   <link rel="modulepreload" href="js3d/protocol-strength.js?v=c719e5b65c">
   <link rel="modulepreload" href="js3d/backdrops.js?v=90faf9612d">
   <link rel="modulepreload" href="js3d/profile.js?v=6ad599d1c4">

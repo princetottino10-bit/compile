@@ -29,7 +29,7 @@ function overlay() {
 }
 
 function deckLine(names, byName, usedSet) {
-  return '<span class="rn-deck">' + names.map(n => '<i class="' + (usedSet && usedSet.has(n) ? 'used' : '') + '" style="--pc:' +
+  return '<span class="rn-deck">' + names.map(n => '<i data-info="' + esc(n) + '" title="' + esc(n) + ' のカードを見る" class="' + (usedSet && usedSet.has(n) ? 'used' : '') + '" style="--pc:' +
     esc((byName[n] || {}).color || '#b9a4ff') + '">' + esc(n) + '</i>').join('') + '</span>';
 }
 
@@ -107,7 +107,13 @@ export function openWeekly(protocols, cardsOf) {
       el.innerHTML = '<div class="rn-card"><div class="rn-head"><b>// WEEKLY</b><span>週替わり3連戦</span></div>' + body + '</div>';
     };
 
+    /* 今週の9つ → 相手の順に、重なりなく並べる (カード一覧のタブ) */
+    const tabList = () => [...new Set([...set.nine, ...set.opponents.flatMap(o => o.deck)])]
+      .filter(n => byName[n]).map(n => ({ name: n, color: byName[n].color }));
+    const openCards = (n) => { if (cardsOf && byName[n]) showProtocolCards(n, byName[n].color, cardsOf, tabList()); };
     el.onclick = (ev) => {
+      const chip = ev.target.closest('[data-info]');
+      if (chip) { openCards(chip.dataset.info); return; }
       const t = ev.target.closest('button');
       if (!t || t.disabled) return;
       if (t.dataset.pick) {
@@ -122,7 +128,7 @@ export function openWeekly(protocols, cardsOf) {
         case 'giveup': picked = []; save({ ...s, phase: 'lost' }); break;
         case 'cards': {
           const n = picked[picked.length - 1] || set.nine.find(x => !W.usedOf(s).includes(x)) || set.nine[0];
-          showProtocolCards(n, byName[n].color, cardsOf);
+          openCards(n);
           break;
         }
         case 'fight': {

@@ -9,7 +9,8 @@
 const ZONE = { upper: '▲ 上段', middle: '◆ 中段', lower: '▼ 下段' };
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-export function showProtocolCards(name, color, getItems) {
+/* list = [{ name, color }] を渡すと、上にタブを出して他のプロトコルにも切り替えられる */
+export function showProtocolCards(name, color, getItems, list) {
   const items = getItems ? getItems(name) : [];
   if (!items.length) return;
   let ov = document.getElementById('protoCardsOv');
@@ -22,7 +23,12 @@ export function showProtocolCards(name, color, getItems) {
   }
   ov.style.setProperty('--accent', color || '#b9a4ff');
   ov.setAttribute('aria-label', name + ' のカード');
-  ov.innerHTML =
+  const tabs = list && list.length > 1
+    ? '<nav class="pc-tabs" aria-label="プロトコル">' + list.map(p =>
+      '<button type="button" data-tab="' + esc(p.name) + '" style="--pc:' + esc(p.color || '#b9a4ff') + '"' +
+        (p.name === name ? ' class="on" aria-current="true"' : '') + '>' + esc(p.name) + '</button>').join('') + '</nav>'
+    : '';
+  ov.innerHTML = tabs +
     '<div class="pc-head"><b>' + esc(name) + '</b><span>のカード (6枚)</span>' +
       '<button type="button" class="pc-x" aria-label="閉じる">×</button></div>' +
     '<div class="pc-list">' + items.map((it) =>
@@ -34,9 +40,17 @@ export function showProtocolCards(name, color, getItems) {
             : '<p class="pc-none">効果なし</p>') +
         '</div>' +
       '</article>').join('') + '</div>' +
-    '<div class="pc-hint">どこかに触れると閉じます</div>';
+    '<div class="pc-hint">' + (tabs ? '上の名前で切り替え ・ ' : '') + 'ほかの所に触れると閉じます</div>';
   ov.classList.add('show');
-  ov.onclick = () => ov.classList.remove('show');
+  ov.onclick = (ev) => {
+    const tab = ev.target.closest('[data-tab]');
+    if (tab) {
+      const p = list.find(x => x.name === tab.dataset.tab);
+      if (p) showProtocolCards(p.name, p.color, getItems, list);
+      return;
+    }
+    ov.classList.remove('show');
+  };
   /* カードの絵は後から描かれるので、少し待ってから絵の入ったものに差し替える */
   clearTimeout(ov._t);
   ov._t = setTimeout(() => {
