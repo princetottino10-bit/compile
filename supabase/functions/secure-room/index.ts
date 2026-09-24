@@ -2,6 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import "../_shared/engine.js";
 import cards from "../_shared/cards.json" with { type: "json" };
 import effects from "../_shared/effects.json" with { type: "json" };
+import { weeklySet } from "../_shared/weekly-set.js";
 
 const Engine = (globalThis as any).CompileEngine;
 Engine.init(cards, effects);
@@ -181,14 +182,27 @@ function publicRequest(request: any, forward: Record<string, string>) {
   return out;
 }
 
+/* レート戦・順位表に出す名前は、部屋ごとに入れた名前ではなく、アカウントに保存した表示名 (player_saves) を使う。
+   保存が無い人 (まだ同期していない) だけ、部屋に入ったときの名前を使う */
+async function accountNames(ids: string[]) {
+  const { data } = await admin.from("player_saves").select("user_id,data").in("user_id", ids);
+  const out: Record<string, string> = {};
+  for (const row of data || []) {
+    const n = cleanName(row && row.data && row.data.compileRoomName).slice(0, 12);
+    if (n) out[row.user_id] = n;
+  }
+  return out;
+}
+
 async function recordRatedMatch(room: any, winner: number) {
   if (!room.rated || !room.host_id || !room.guest_id || !room.host_name || !room.guest_name) return;
+  const names = await accountNames([room.host_id, room.guest_id]).catch(() => ({} as Record<string, string>));
   const { error } = await admin.rpc("record_rated_match", {
     p_room_id: room.id,
     p_host_id: room.host_id,
     p_guest_id: room.guest_id,
-    p_host_name: room.host_name,
-    p_guest_name: room.guest_name,
+    p_host_name: names[room.host_id] || room.host_name,
+    p_guest_name: names[room.guest_id] || room.guest_name,
     p_host_protocols: room.host_protocols || [],
     p_guest_protocols: room.guest_protocols || [],
     p_winner: winner,
@@ -402,6 +416,59 @@ Deno.serve(async (req) => {
         locked: !!room.password_hash, draft: !!room.draft_state, rated: !!room.rated, createdAt: room.created_at,
         draftRules: room.draft_state ? cleanDraftRules(room.draft_state.rules) : null,
       })) });
+    }
+
+    /* 週替わり3連戦のクリアを一覧に載せる。3戦のリプレイ (始めの条件と手の列) をエンジンで当て直して、
+       その週の9つを3つずつ重ねずに使い、その週の3人の相手に勝ったことを確かめてから載せる */
+    if (op === "weeklySubmit") {
+      if (user.is_anonymous === true) return fail(req, "ログインすると名前を載せられます", 403);
+      const week = String(body.week || "");
+      if (!/^W[0-9]{3,6}$/.test(week)) return fail(req, "週の指定が不正です");
+      const nowWeek = Math.floor((Math.floor((Date.now() + 9 * 3600_000) / 86400_000) + 3) / 7);
+      const idx = Number(week.slice(1));
+      if (idx !== nowWeek && idx !== nowWeek - 1) return fail(req, "今週か先週のクリアだけ載せられます", 409);
+      const name = String(body.name || "").replace(/[\u0000-\u001f\u007f<>]/g, "").trim();
+      if (name.length < 1 || name.length > 16) return fail(req, "名前は1〜16文字で入れてください");
+      const attempts = Math.floor(Number(body.attempts));
+      if (!(attempts >= 1 && attempts <= 999)) return fail(req, "挑戦回数が不正です");
+      const reps = Array.isArray(body.replays) ? body.replays : [];
+      if (reps.length !== 3) return fail(req, "3戦ぶんのリプレイが必要です");
+      const set = weeklySet(week, ALL_PROTOCOLS);
+      const used = new Set<string>();
+      const sameSet = (a: string[], b: string[]) => a.length === b.length && a.slice().sort().join() === b.slice().sort().join();
+      const decks: string[][] = [];
+      for (let i = 0; i < 3; i++) {
+        const r = reps[i] || {};
+        const init = r.init || {};
+        const p0 = Array.isArray(init.p0) ? init.p0.map(String) : [];
+        const p1 = Array.isArray(init.p1) ? init.p1.map(String) : [];
+        const actions = Array.isArray(r.actions) ? r.actions : [];
+        if (p0.length !== 3 || p0.some((n: string) => !set.nine.includes(n) || used.has(n))) return fail(req, "第" + (i + 1) + "戦のプロトコルが今週の9つと合いません", 409);
+        if (!sameSet(p1, set.opponents[i].deck)) return fail(req, "第" + (i + 1) + "戦の相手が今週の相手と合いません", 409);
+        if (Number(init.winCompiles) !== 2 || actions.length > 3000) return fail(req, "第" + (i + 1) + "戦の記録が不正です", 409);
+        p0.forEach((n: string) => used.add(n));
+        decks.push(p0);
+        /* 当て直しは途中経過 (trace) を取らずに軽く行う。この間は他の処理が割り込まない (await しない) */
+        Engine.setTrace(false);
+        let res: any;
+        try {
+          res = Engine.newGame({ seed: Number(init.seed) | 0, p0, p1, first: init.first === 1 ? 1 : 0, winCompiles: 2 });
+          for (const a of actions) {
+            if (res.winner !== null) break;
+            res = Engine.apply(res.state, a);
+            if (res.error) break;
+          }
+        } finally {
+          Engine.setTrace(true);
+        }
+        if (!res || res.error || res.winner !== 0) return fail(req, "第" + (i + 1) + "戦の勝ちを確かめられませんでした", 409);
+      }
+      const { error } = await admin.from("weekly_clears").insert({ week, user_id: user.id, name, attempts, decks });
+      if (error) {
+        if (/duplicate|unique/i.test(error.message)) return fail(req, "今週はもう載っています", 409);
+        throw error;
+      }
+      return json(req, { ok: true });
     }
 
     if (op === "history") {

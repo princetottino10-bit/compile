@@ -4,6 +4,7 @@
  *               { go: 'hub' } なら RUN の入口へ戻る
  *   weeklyHud: 対戦中の表示 / showWeeklyAfterGame: 決着後
  * ========================================================================= */
+import { listReplays } from './replays.js';
 import { displayName } from './displayname.js';
 import * as W from './weekly.js';
 import { levelLabel } from './aidecks.js';
@@ -199,7 +200,12 @@ export function showWeeklyAfterGame(win, protocols) {
       if (!name) { msg.textContent = '名前は1〜16文字で入れてください'; return; }
       t.disabled = true;
       try {
-        await submitWeeklyClear(s.week, name, s.attempt, s.decks);
+        /* サーバーが3戦の勝ちをリプレイで確かめる。直近のリプレイ (自動で10戦残る) から、この挑戦の3戦を探す */
+        const same = (x, y) => x.slice().sort().join() === y.slice().sort().join();
+        const wins = listReplays().filter(r => r.kind === 'weekly' && r.win);
+        const reps = s.decks.map(d => wins.find(r => same(r.init.p0, d)));
+        if (reps.some(r => !r)) throw new Error('3戦のリプレイが見つかりません (直近10戦までしか残らないため)');
+        await submitWeeklyClear(s.week, name, s.attempt, reps);
         W.saveWeekly({ ...W.loadWeekly(), submitted: true });
         msg.textContent = '一覧に載せました';
       } catch (e) {

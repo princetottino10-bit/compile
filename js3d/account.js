@@ -446,12 +446,11 @@ export async function fetchWeeklyClears(week) {
   return r.data;
 }
 
-export async function submitWeeklyClear(week, name, attempts, decks) {
+/* 載せるのはサーバー (weeklySubmit)。3戦のリプレイを当て直して勝ちを確かめてから載せる */
+export async function submitWeeklyClear(week, name, attempts, replays) {
   if (state.deferred || !state.ready) await initAccount(true);
   if (!state.user) throw new Error('ログインすると名前を載せられます (右上のログインから)');
-  const r = await ROOM.roomClient().from(WEEKLY_TABLE).insert({ week, name, attempts, decks });
-  if (r.error) {
-    if (/duplicate|unique/i.test(r.error.message)) throw new Error('今週はもう載っています');
-    throw new Error(r.error.message);
-  }
+  await ROOM.roomApi('weeklySubmit', {
+    week, name, attempts, replays: replays.map(r => ({ init: r.init, actions: r.actions }))
+  });
 }
