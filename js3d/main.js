@@ -1913,7 +1913,7 @@ function roomClosed() {
     '<div class="end-sub">この対戦の部屋はもうありません (管理者が閉じたか、時間が経って片付けられました)。</div>' +
     '<div class="end-btns"><button class="arr-btn ok" id="endTop" type="button">TITLE</button></div>';
   el.classList.add('show');
-  el.querySelector('#endTop').onclick = () => { location.hash = ''; location.reload(); };
+  el.querySelector('#endTop').onclick = goTitle;
 }
 
 let roomAsking = false;
@@ -2952,9 +2952,38 @@ function arrangeOnBoard(req, opts) {
     const onHover = (ev) => { canvas.style.cursor = hitPos(ev) ? 'pointer' : ''; };
     canvas.addEventListener('pointerdown', onPlate, true);
     canvas.addEventListener('pointermove', onHover);
+    /* 確定ボタンを、並べ替えている板の右隣にも浮かべる (帯まで押しに行かなくてよいように)。Enter でも確定 */
+    const go = document.createElement('button');
+    go.id = 'arrGo';
+    go.type = 'button';
+    go.textContent = '確定';
+    go.title = 'Enter でも確定できます';
+    go.hidden = true;
+    document.body.appendChild(go);
+    const goAt = new THREE.Vector3();
+    const placeGo = () => {
+      if (go.hidden || targetSide === null) return;
+      const s = slotX(2);
+      goAt.set(s[0] + 1.05, s[1], s[2]).project(stage.camera);
+      const r = canvas.getBoundingClientRect();
+      const x = r.left + (goAt.x + 1) / 2 * r.width, y = r.top + (1 - goAt.y) / 2 * r.height;
+      go.style.left = Math.min(window.innerWidth - go.offsetWidth - 8, Math.max(8, x)) + 'px';
+      go.style.top = Math.min(window.innerHeight - go.offsetHeight - 8, Math.max(8, y - go.offsetHeight / 2)) + 'px';
+    };
+    const offFrame = stage.onFrame(placeGo);
+    const onKey = (ev) => {
+      if (ev.key !== 'Enter' || go.hidden) return;
+      if (ev.target && /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(ev.target.tagName)) return;
+      ev.preventDefault();
+      done();
+    };
+    window.addEventListener('keydown', onKey);
     const finish = (picks) => {
       closed = true;
       activeArrange = null;
+      if (typeof offFrame === 'function') offFrame();
+      window.removeEventListener('keydown', onKey);
+      go.remove();
       window.removeEventListener('resize', onResize);
       canvas.removeEventListener('pointerdown', onPlate, true);
       canvas.removeEventListener('pointermove', onHover);
@@ -3026,6 +3055,9 @@ function arrangeOnBoard(req, opts) {
       });
       const ok = ov.querySelector('#arrOk');
       if (ok) ok.onclick = done;
+      go.hidden = single || targetSide === null || isIdentity;
+      go.onclick = (ev) => { ev.stopPropagation(); done(); };
+      placeGo();
       const reset = ov.querySelector('#arrReset');
       if (reset) reset.onclick = () => { perm[0] = 0; perm[1] = 1; perm[2] = 2; sel = -1; layPlates(320); render(); };
       const skip = ov.querySelector('#arrSkip');
@@ -3175,6 +3207,10 @@ function nextGoalsHtml() {
 }
 
 /* 対局後の導線。盤面は残したまま、次の行動を選べるようにする */
+/* タイトルへ: URL の対戦の指定 (?me=&ai=&lv= や ?quick=1) を外して開き直す。
+   読み直すだけだと、REMATCH やおまかせのあとで同じ対戦がまた始まっていた */
+function goTitle() { location.href = location.pathname; }
+
 function showEndActions(win) {
   let el = document.getElementById('endBar');
   if (!el) {
@@ -3216,7 +3252,7 @@ function showEndActions(win) {
     }
     location.hash = ''; location.reload();
   };
-  el.querySelector('#endTop').onclick = () => { location.hash = ''; location.reload(); };
+  el.querySelector('#endTop').onclick = goTitle;
   el.querySelector('#endBoard').onclick = () => {
     el.classList.remove('show');
     UI.setPrompt('盤面を確認中 — 右下の「タイトルへ」で戻れます', 'end');
@@ -3292,7 +3328,7 @@ function showEndFloat() {
     el.id = 'endFloat';
     document.body.appendChild(el);
     el.innerHTML = '<button class="btn" type="button">タイトルへ</button>';
-    el.querySelector('button').onclick = () => { location.hash = ''; location.reload(); };
+    el.querySelector('button').onclick = goTitle;
   }
   el.classList.add('show');
 }

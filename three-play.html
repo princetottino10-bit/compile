@@ -2219,12 +2219,14 @@
   .ro-board li em,.ro-past li em{font-style:normal;font-weight:800;}
   .ro-board li small,.ro-past li small{color:var(--dim);text-align:right;}
   /* 選んだカードのすぐ横の「決定」(ダイアログの決定まで手を伸ばさなくてよいように) */
-  #pickGo{position:fixed;z-index:31;padding:9px 16px;border:1px solid var(--pink);background:rgba(12,9,20,.94);color:#fff;cursor:pointer;
+  #pickGo,#arrGo{position:fixed;z-index:31;padding:9px 16px;border:1px solid var(--pink);background:rgba(12,9,20,.94);color:#fff;cursor:pointer;
     font:800 12px/1 var(--font-ui);letter-spacing:.14em;clip-path:var(--cut-s);box-shadow:0 8px 24px rgba(0,0,0,.5);
     animation:pickGoIn .18s cubic-bezier(.16,1,.3,1);}
-  #pickGo:hover,#pickGo:focus-visible{background:var(--pink);outline:0;}
+  #pickGo:hover,#pickGo:focus-visible,#arrGo:hover,#arrGo:focus-visible{background:var(--pink);outline:0;}
+  #arrGo{z-index:34;}
+  #arrGo[hidden]{display:none;}
   @keyframes pickGoIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
-  @media (prefers-reduced-motion: reduce){ #pickGo{animation:none;} }
+  @media (prefers-reduced-motion: reduce){ #pickGo,#arrGo{animation:none;} }
   /* 対戦中の名札: 相手は左上、自分は左下。アイコン・名前・レベル・称号 (CPU は難易度) */
   .plate{position:absolute;left:calc(14px + env(safe-area-inset-left));top:38px;display:flex;align-items:center;gap:9px;max-width:min(360px,40vw);
     padding:6px 14px 6px 6px;background:rgba(12,9,20,.74);clip-path:var(--cut-s);font-family:var(--font-ui);white-space:nowrap;pointer-events:none;}
@@ -2495,7 +2497,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=c8378abf22",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=ecc1b3fd30",
+      "./js3d/main.js": "./js3d/main.js?v=48cd814bce",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=6398fed15e",
       "./js3d/panel.js": "./js3d/panel.js?v=ecb8a073e3",
       "./js3d/plates.js": "./js3d/plates.js?v=70ffa14b87",
@@ -2614,6 +2616,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=ecc1b3fd30"></script>
+  <script type="module" src="js3d/main.js?v=48cd814bce"></script>
 </body>
 </html>
