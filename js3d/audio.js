@@ -2,6 +2,8 @@
  * 3Dビュー: 効果音
  *   カードを動かす音・コンパイルの衝撃は録音素材 (sfx/*.mp3、Kenney の CC0 素材)、
  *   メニュー操作・ターン・勝敗の合図は合成音 (オシレータ + ノイズ)。
+ *   合図は「柔らかいガラスの鈴」でそろえ、1回に鳴らす音は少なく (2026-09 に作り直し)。
+ *   何度も鳴る音 (効果の発動・チェーン・手番) ほど短く小さくする。
  *   素材は解錠時に読み込み、読み終わるまでは合成音で代わりに鳴らす。
  *   コンパイルや効果の発動などには、合成した残響を薄く足して奥行きを出す。
  *   ブラウザの自動再生制限があるため、最初のユーザー操作で initAudio() を
@@ -37,7 +39,13 @@ function buildGraph(ctx) {
   comp.connect(ctx.destination);
   const bus = ctx.createGain();
   bus.gain.value = sfxLevel;
-  bus.connect(m);
+  /* 高い音のとげを少し丸める (合成音のキンキンした感じを抑える) */
+  const soft = ctx.createBiquadFilter();
+  soft.type = 'lowpass';
+  soft.frequency.value = 9000;
+  soft.Q.value = 0.5;
+  bus.connect(soft);
+  soft.connect(m);
   /* 残響: 減衰するノイズを畳み込む (素材なしで部屋鳴りを作る) */
   const conv = ctx.createConvolver();
   conv.buffer = impulse(ctx, 1.6, 3.2);
@@ -192,151 +200,124 @@ function j(v) { return v * (0.94 + Math.random() * 0.12); }
 
 const PLACE = ['card-place-1', 'card-place-2', 'card-place-3', 'card-place-4'];
 
+/* 柔らかい鈴: 立ち上がりを少しだけ遅らせたサイン波 + 1オクターブ上をごく薄く */
+const BELL_GAIN = 6;               // 鈴は純音で聞こえにくいので、素材の音と釣り合うまで持ち上げる (measureSfx で合わせた)
+function bell(freq, o = {}) {
+  const v = (o.vol || 0.06) * BELL_GAIN;
+  tone({ freq, dur: o.dur || 0.5, type: 'sine', vol: v, attack: o.attack || 0.008, delay: o.delay, verb: o.verb === undefined ? 0.35 : o.verb });
+  tone({ freq: freq * 2.003, dur: (o.dur || 0.5) * 0.6, type: 'sine', vol: v * 0.22, attack: 0.006, delay: o.delay, verb: o.verb === undefined ? 0.35 : o.verb });
+}
+
 const SOUNDS = {
-  /* 操作 (メニュー) */
-  tick() { tone({ freq: j(1500), dur: 0.05, type: 'triangle', vol: 0.07 }); },
+  /* 操作 (メニュー): 小さく短い一音 */
+  tick() { tone({ freq: j(1760), dur: 0.035, type: 'sine', vol: 0.03 }); },
   select() {
-    tone({ freq: j(880), dur: 0.07, type: 'triangle', vol: 0.1, verb: 0.15 });
-    tone({ freq: j(1320), dur: 0.09, type: 'sine', vol: 0.08, delay: 0.03, verb: 0.15 });
+    bell(j(1046.5), { dur: 0.16, vol: 0.055, verb: 0.12 });
+    noise({ freq: 5200, dur: 0.02, vol: 0.02, kind: 'highpass', attack: 0.001 });
   },
   /* 手札のカードを選ぶ: 紙の軽いこすれ */
   pick() {
-    if (!sample(['card-slide-4', 'card-slide-2'], { vol: 0.16, rate: 1.2 })) SOUNDS.select();
+    if (!sample(['card-slide-4', 'card-slide-2'], { vol: 0.12, rate: 1.2 })) SOUNDS.select();
   },
 
-  /* カードの動き */
+  /* カードの動き (録音素材。少し控えめに) */
   lift() {
-    if (!sample(['card-slide-1', 'card-slide-2', 'card-slide-4'], { vol: 0.5 })) {
-      noise({ freq: 900, end: 2600, dur: 0.16, vol: 0.1, q: 1.4 });
+    if (!sample(['card-slide-1', 'card-slide-2', 'card-slide-4'], { vol: 0.3 })) {
+      noise({ freq: 900, end: 2600, dur: 0.14, vol: 0.06, q: 1.4 });
     }
   },
   land() {
-    if (sample(PLACE, { vol: 0.85 })) {
-      /* 盤に叩きつける重みだけ、低い胴鳴りを薄く足す */
-      tone({ freq: 78, end: 44, dur: 0.2, type: 'sine', vol: 0.2, attack: 0.002 });
+    if (sample(PLACE, { vol: 0.7 })) {
+      /* 盤に置く重みだけ、低い胴鳴りを薄く足す */
+      tone({ freq: 74, end: 46, dur: 0.18, type: 'sine', vol: 0.12, attack: 0.002 });
       return;
     }
-    tone({ freq: 82, end: 44, dur: 0.22, type: 'sine', vol: 0.55, attack: 0.002 });
-    noise({ freq: 420, end: 140, dur: 0.14, vol: 0.32, kind: 'lowpass', attack: 0.002 });
-    noise({ freq: 3200, dur: 0.05, vol: 0.12, attack: 0.001 });
+    tone({ freq: 80, end: 46, dur: 0.2, type: 'sine', vol: 0.35, attack: 0.002 });
+    noise({ freq: 420, end: 140, dur: 0.12, vol: 0.2, kind: 'lowpass', attack: 0.002 });
   },
   draw() {
-    if (!sample(['card-slide-1', 'card-slide-3', 'card-slide-5'], { vol: 0.6 })) {
-      noise({ freq: 1100, end: 3000, dur: 0.12, vol: 0.13, q: 2 });
+    if (!sample(['card-slide-1', 'card-slide-3', 'card-slide-5'], { vol: 0.42 })) {
+      noise({ freq: 1100, end: 3000, dur: 0.1, vol: 0.08, q: 2 });
     }
   },
   flip() {
-    if (sample(['card-place-2', 'card-place-4'], { vol: 0.7, rate: 1.25 })) {
-      tone({ freq: j(1240), dur: 0.06, type: 'triangle', vol: 0.05, delay: 0.03 });
-      return;
-    }
-    tone({ freq: j(760), dur: 0.05, type: 'triangle', vol: 0.14 });
-    tone({ freq: j(1240), dur: 0.07, type: 'triangle', vol: 0.11, delay: 0.045 });
+    if (sample(['card-place-2', 'card-place-4'], { vol: 0.5, rate: 1.25 })) return;
+    tone({ freq: j(900), dur: 0.05, type: 'sine', vol: 0.08 });
   },
   shift() {
-    if (!sample(['card-slide-7', 'card-slide-8'], { vol: 0.6 })) {
-      noise({ freq: 700, end: 1700, dur: 0.15, vol: 0.1, q: 1.6 });
+    if (!sample(['card-slide-7', 'card-slide-8'], { vol: 0.42 })) {
+      noise({ freq: 700, end: 1700, dur: 0.13, vol: 0.07, q: 1.6 });
     }
   },
   trash() {
-    if (sample(['card-shove-1', 'card-shove-2', 'card-shove-3', 'card-shove-4'], { vol: 0.6 })) return;
-    noise({ freq: 900, end: 260, dur: 0.2, vol: 0.16, kind: 'lowpass' });
-    tone({ freq: 300, end: 130, dur: 0.16, type: 'triangle', vol: 0.12, delay: 0.02 });
+    if (sample(['card-shove-1', 'card-shove-2', 'card-shove-3', 'card-shove-4'], { vol: 0.42 })) return;
+    noise({ freq: 900, end: 260, dur: 0.18, vol: 0.1, kind: 'lowpass' });
   },
-  /* コンパイルでラインのカードが消える */
+  /* コンパイルでラインのカードが消える: 紙が散る音 + 高いところで消える息 */
   shatter() {
-    sample(['impactMetal_002', 'impactMetal_004'], { vol: 0.3, verb: 0.35 });
-    sample(['card-fan-1'], { vol: 0.45, delay: 0.05 });
-    noise({ freq: 3400, end: 1300, dur: 0.34, vol: 0.16, kind: 'highpass', attack: 0.002, verb: 0.2 });
-    for (let i = 0; i < 4; i++) {
-      tone({ freq: j(2300 - i * 380), dur: 0.09, type: 'triangle', vol: 0.05, delay: 0.03 + i * 0.05, verb: 0.3 });
-    }
+    sample(['card-fan-1'], { vol: 0.4 });
+    noise({ freq: 5200, end: 1800, dur: 0.45, vol: 0.06, kind: 'highpass', attack: 0.02, verb: 0.4 });
   },
 
-  /* チェーンがつながった: 金属の打音 + つながるたびに高くなる上昇音 (n = チェーンの長さ) */
+  /* チェーンがつながった: つながるたびに半音ずつ上がる鈴を1つ (n = チェーンの長さ) */
   chain(n) {
-    const k = Math.max(2, Math.min(6, n || 2)) - 2;
-    const up = Math.pow(1.12, k);
-    sample(['impactMetal_002', 'impactMetal_004'], { vol: 0.34, rate: 0.9 + k * 0.08, verb: 0.35 });
-    noise({ freq: 600, end: 4200, dur: 0.28, vol: 0.09, q: 2.2, attack: 0.01, verb: 0.3 });
-    [0, 4, 7].forEach((semi, i) => {
-      const f = 587 * up * Math.pow(2, semi / 12);
-      tone({ freq: f, dur: 0.22, type: 'triangle', vol: 0.11, delay: 0.04 + i * 0.055, verb: 0.35 });
-      tone({ freq: f * 2, dur: 0.18, type: 'sine', vol: 0.035, delay: 0.04 + i * 0.055, verb: 0.35 });
-    });
-    tone({ freq: 587 * up * 2, dur: 0.6, type: 'sine', vol: 0.05, delay: 0.2, verb: 0.5 });
+    const k = Math.max(2, Math.min(7, n || 2)) - 2;
+    bell(783.99 * Math.pow(2, (k * 2) / 12), { dur: 0.45, vol: 0.06, verb: 0.4 });
   },
 
-  /* 効果発動: 電気の立ち上がり + 澄んだ2音 */
+  /* 効果発動 (いちばんよく鳴る): 小さな鈴を一つだけ */
   effect() {
-    sample(['forceField_000', 'forceField_002'], { vol: 0.16, rate: 1.2, verb: 0.3 });
-    tone({ freq: j(1050), dur: 0.12, type: 'sine', vol: 0.1, verb: 0.3 });
-    tone({ freq: j(1580), dur: 0.16, type: 'sine', vol: 0.08, delay: 0.05, verb: 0.3 });
+    bell(j(1318.5), { dur: 0.28, vol: 0.04, verb: 0.3 });
   },
 
-  /* コンパイル */
+  /* コンパイル: 低いところからふくらむ息 → 深い一撃と澄んだ和音 */
   charge() {
-    tone({ freq: 90, end: 760, dur: 0.62, type: 'triangle', vol: 0.16, attack: 0.05, verb: 0.3 });
-    tone({ freq: 180, end: 1520, dur: 0.62, type: 'sawtooth', vol: 0.04, attack: 0.08, verb: 0.3 });
-    noise({ freq: 300, end: 3400, dur: 0.62, vol: 0.1, q: 3, attack: 0.05, verb: 0.3 });
+    noise({ kind: 'lowpass', freq: 200, end: 2600, dur: 0.6, vol: 0.07, attack: 0.3, verb: 0.35 });
+    tone({ freq: 110, end: 220, dur: 0.6, type: 'sine', vol: 0.08, attack: 0.3 });
   },
   boom() {
-    const hit = sample(['lowFrequency_explosion_001'], { vol: 0.85 });
-    sample(['explosionCrunch_000'], { vol: 0.4, verb: 0.45 });
-    if (!hit) {
-      tone({ freq: 60, end: 30, dur: 1.0, type: 'sine', vol: 0.7, attack: 0.002 });
-      noise({ freq: 340, end: 60, dur: 0.7, vol: 0.4, kind: 'lowpass', attack: 0.002 });
+    if (!sample(['lowFrequency_explosion_001'], { vol: 0.55 })) {
+      tone({ freq: 58, end: 32, dur: 0.9, type: 'sine', vol: 0.5, attack: 0.002 });
     }
-    [880, 1320, 1980].forEach((f, i) => {
-      tone({ freq: f, dur: 0.8, type: 'sine', vol: 0.045, delay: 0.08 + i * 0.05, verb: 0.5 });
-    });
+    [587.3, 880, 1174.7].forEach((f, i) => bell(f, { dur: 1.3, vol: 0.045, delay: 0.06 + i * 0.04, verb: 0.55 }));
   },
 
-  /* ターン / 決着 */
+  /* ターン: 相手の番は低い一音、自分の番は上がる二音 */
   turn() {
-    tone({ freq: 520, dur: 0.11, type: 'triangle', vol: 0.12, verb: 0.2 });
-    tone({ freq: 780, dur: 0.15, type: 'triangle', vol: 0.1, delay: 0.09, verb: 0.2 });
+    bell(392, { dur: 0.35, vol: 0.05, verb: 0.25 });
   },
-  /* 自分の番が回ってきた合図。相手の番より明るく、上へ抜ける三音 */
   yourTurn() {
-    [660, 880, 1320].forEach((f, i) => {
-      tone({ freq: f, dur: 0.18, type: 'triangle', vol: 0.14, delay: i * 0.07, verb: 0.25 });
-      tone({ freq: f * 2, dur: 0.16, type: 'sine', vol: 0.045, delay: i * 0.07, verb: 0.25 });
-    });
-    tone({ freq: 1760, dur: 0.5, type: 'sine', vol: 0.05, delay: 0.22, verb: 0.35 });
+    bell(659.25, { dur: 0.35, vol: 0.065, verb: 0.3 });
+    bell(987.77, { dur: 0.55, vol: 0.06, delay: 0.1, verb: 0.35 });
   },
-  /* 勝ち: 音階を駆け上がる「ファンファーレ」はやめ、重い一撃 → 和音がふくらむ → 上で細かく瞬く → 鐘で締める */
+  /* 勝ち: 重い一撃 → 和音がふくらむ → 上で細かく瞬く → 鐘で締める */
   win() {
-    tone({ freq: 70, end: 38, dur: 0.7, type: 'sine', vol: 0.42 });                 // 低い一撃
-    noise({ kind: 'lowpass', freq: 500, end: 7000, dur: 0.55, vol: 0.07, attack: 0.2, verb: 0.4 });
+    tone({ freq: 70, end: 38, dur: 0.7, type: 'sine', vol: 0.36 });
+    noise({ kind: 'lowpass', freq: 500, end: 6000, dur: 0.55, vol: 0.05, attack: 0.2, verb: 0.4 });
     /* D の9th の和音 (D A C# E F#)。わずかにずらした2本を重ねて厚みを出す */
     [146.8, 220, 277.2, 329.6, 370].forEach((f, i) => {
       for (const d of [1, 1.004]) {
-        tone({ freq: f * d, dur: 2.2, type: i ? 'triangle' : 'sine', vol: i ? 0.05 : 0.1, attack: 0.35, delay: 0.12, verb: 0.6 });
+        tone({ freq: f * d, dur: 2.2, type: 'sine', vol: i ? 0.045 : 0.09, attack: 0.35, delay: 0.12, verb: 0.6 });
       }
     });
-    [1760, 2217, 2637, 2960, 3520].forEach((f, i) => {                               // 瞬き
-      tone({ freq: f, dur: 0.5, type: 'sine', vol: 0.034, delay: 0.42 + i * 0.09, verb: 0.75 });
+    [1760, 2217, 2637, 2960].forEach((f, i) => {                                     // 瞬き
+      tone({ freq: f, dur: 0.45, type: 'sine', vol: 0.025, delay: 0.42 + i * 0.1, verb: 0.75 });
     });
-    tone({ freq: 1174.7, dur: 2.0, type: 'sine', vol: 0.09, attack: 0.01, delay: 0.95, verb: 0.7 });  // 鐘
-    tone({ freq: 2349.3, dur: 1.4, type: 'sine', vol: 0.018, attack: 0.01, delay: 0.95, verb: 0.7 });
+    bell(1174.7, { dur: 2.0, vol: 0.08, delay: 0.95, verb: 0.7 });                     // 鐘
   },
   /* 勝ち (AURORA): 澄んだ鐘が順に重なり、柔らかい和音が長く残る */
   winAurora() {
-    tone({ freq: 55, end: 40, dur: 0.9, type: 'sine', vol: 0.3 });
-    [587.3, 740, 880, 1108.7, 1318.5].forEach((f, i) => {
-      tone({ freq: f, dur: 1.8, type: 'sine', vol: 0.07, attack: 0.01, delay: 0.1 + i * 0.16, verb: 0.8 });
-      tone({ freq: f * 2.01, dur: 1.2, type: 'sine', vol: 0.02, attack: 0.01, delay: 0.1 + i * 0.16, verb: 0.8 });
-    });
+    tone({ freq: 55, end: 40, dur: 0.9, type: 'sine', vol: 0.26 });
+    [587.3, 740, 880, 1108.7, 1318.5].forEach((f, i) => bell(f, { dur: 1.8, vol: 0.06, delay: 0.1 + i * 0.16, verb: 0.8 }));
     [146.8, 185, 220, 277.2].forEach((f) => {
-      tone({ freq: f, dur: 2.6, type: 'triangle', vol: 0.05, attack: 0.5, delay: 0.3, verb: 0.7 });
+      tone({ freq: f, dur: 2.6, type: 'sine', vol: 0.045, attack: 0.5, delay: 0.3, verb: 0.7 });
     });
   },
+  /* 負け: 下がる二音と、低く沈む響き (責めない音に) */
   lose() {
-    [392, 330, 262, 196].forEach((f, i) => {
-      tone({ freq: f, dur: 0.5, type: 'triangle', vol: 0.14, delay: i * 0.22, verb: 0.35 });
-    });
-    tone({ freq: 49, dur: 1.4, type: 'sine', vol: 0.25, delay: 0.66 });
+    bell(440, { dur: 0.7, vol: 0.06, verb: 0.45 });
+    bell(329.63, { dur: 1.1, vol: 0.06, delay: 0.28, verb: 0.5 });
+    tone({ freq: 82.4, dur: 1.6, type: 'sine', vol: 0.12, attack: 0.25, delay: 0.3, verb: 0.3 });
   }
 };
 
