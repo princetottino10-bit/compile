@@ -4,6 +4,7 @@
  *   status が playing になった publicState を resolve して返す。
  *   戻るを押した場合は null を resolve する (呼び出し側でソロ設定へ)。
  * ========================================================================= */
+import { displayName, setDisplayName, nameFieldHtml, bindNameField } from './displayname.js';
 import { myBadge } from './cosmetics-ui.js';
 import { settings } from './settings.js';
 import { roomApi, roomIsAnonymous, roomLogin, roomSession, roomSignIn, roomSignInWithGitHub, roomSignInWithGoogle, roomSignOut, roomSignUp } from './room.js';
@@ -87,7 +88,7 @@ export function runRoomLobby(protocols, opts = {}) {
         '<div class="ro-row"><button class="ro-big" id="roomGoogle" type="button">Googleでログイン</button>' +
         '<button class="ro-btn" id="roomGitHub" type="button">GitHubでログイン</button></div>' +
         '<div class="ro-lbl" style="margin-top:12px">メールで' + (wantRated ? 'ログイン' : 'ログイン / ゲスト接続') + '</div>' +
-        '<div class="ro-row"><input class="ro-input" id="roomName" maxlength="12" placeholder="表示名" value="' + esc(lsGet('compileRoomName')) + '"></div>' +
+        '<div class="ro-row"><input class="ro-input" id="roomName" maxlength="12" placeholder="表示名" value="' + esc(displayName()) + '"></div>' +
         '<div class="ro-row"><input class="ro-input" id="roomEmail" type="email" autocomplete="email" placeholder="メールアドレス"></div>' +
         '<div class="ro-row"><input class="ro-input" id="roomPass" type="password" autocomplete="current-password" minlength="8" placeholder="パスワード（8文字以上）"></div>' +
         '<div class="ro-row"><button class="ro-btn" id="roomSignIn" type="button">ログイン</button>' +
@@ -102,7 +103,7 @@ export function runRoomLobby(protocols, opts = {}) {
         if (!v.name) throw new Error('表示名を入力してください');
         if (!v.email) throw new Error('メールアドレスを入力してください');
         if (v.password.length < 8) throw new Error('パスワードは8文字以上です');
-        lsSet('compileRoomName', v.name);
+        setDisplayName(v.name);
         return v;
       };
       $('#roomSignIn').onclick = async () => {
@@ -119,13 +120,13 @@ export function runRoomLobby(protocols, opts = {}) {
       };
       $('#roomGitHub').onclick = async () => {
         const name = ($('#roomName').value || '').trim();
-        if (name) lsSet('compileRoomName', name);
+        if (name) setDisplayName(name);
         try { await roomSignInWithGitHub(); }
         catch (e) { status(e.message || 'GitHubでログインできませんでした', 'err'); }
       };
       $('#roomGoogle').onclick = async () => {
         const name = ($('#roomName').value || '').trim();
-        if (name) lsSet('compileRoomName', name);
+        if (name) setDisplayName(name);
         try { await roomSignInWithGoogle(); }
         catch (e) { status(e.message || 'Googleでログインできませんでした', 'err'); }
       };
@@ -133,7 +134,7 @@ export function runRoomLobby(protocols, opts = {}) {
       if (guest) guest.onclick = async () => {
         const n = ($('#roomName').value || '').trim();
         if (!n) { status('表示名を入力してください', 'err'); return; }
-        lsSet('compileRoomName', n);
+        setDisplayName(n);
         status('接続中…');
         try { session = await roomLogin(n); showLobby(); }
         catch (e) { status(e.message, 'err'); }
@@ -145,17 +146,21 @@ export function runRoomLobby(protocols, opts = {}) {
     function accountLabel() {
       const u = session && session.user;
       if (!u) return '未ログイン';
-      if (roomIsAnonymous(session)) return 'ゲスト' + (lsGet('compileRoomName') ? ' (' + lsGet('compileRoomName') + ')' : '');
+      if (roomIsAnonymous(session)) return 'ゲスト' + (displayName() ? ' (' + displayName() + ')' : '');
       const m = u.user_metadata || {};
       const via = (u.app_metadata && u.app_metadata.provider) || 'email';
       const provider = { google: 'Google', github: 'GitHub', email: 'メール' }[via] || via;
-      return (m.full_name || m.name || m.user_name || u.email || 'アカウント') + ' (' + provider + ')';
+      /* Google の名前 (本名のことが多い) は出さず、自分で決めた表示名を出す */
+      void m;
+      return (displayName() || '表示名なし') + ' (' + provider + ')';
     }
 
     async function showLobby() {
       frame('ONLINE — ロビー',
         '<div class="ro-account"><span>ログイン中: <b>' + esc(accountLabel()) + '</b></span>' +
           '<button class="ro-ghost" id="roomLogout" type="button">ログアウト</button></div>' +
+        /* 対戦相手や順位表に出る名前。いつでも変えられる */
+        nameFieldHtml('ro') +
         /* 事故で閉じたときの戻り道。参加者本人ならサーバーが再入室を許す */
         (lsGet('compileRoomLast')
           ? '<div class="ro-row"><button class="ro-big" id="roomResume" type="button">中断した対戦に戻る (' +
@@ -197,8 +202,18 @@ export function runRoomLobby(protocols, opts = {}) {
       $('#roomDraft').onchange = syncRules;
       syncRules();
 
-      const name = () => lsGet('compileRoomName');
+      const name = () => displayName();
+      bindNameField($('#roomOv'), 'ro', () => { const acc = $('#roomOv .ro-account b'); if (acc) acc.textContent = accountLabel(); });
+      /* 表示名が無いまま対戦しようとしたら、先に決めてもらう */
+      const needName = () => {
+        if (displayName()) return false;
+        status('先に表示名を決めてください (対戦相手や順位表に出ます)', 'err');
+        const i = $('#roName');
+        if (i) i.focus();
+        return true;
+      };
       $('#roomQuick').onclick = guard(async () => {
+        if (needName()) return;
         status('空きルームを探しています…');
         const data = await roomApi('list');
         const rated = $('#roomRated').checked;
@@ -211,6 +226,7 @@ export function runRoomLobby(protocols, opts = {}) {
         enterRoom();
       });
       $('#roomCreate').onclick = guard(async () => {
+        if (needName()) return;
         const pw = $('#roomPw').value;
         wantRated = $('#roomRated').checked;
         if (wantRated && roomIsAnonymous(session)) { await showLogin(); return; }
@@ -245,6 +261,7 @@ export function runRoomLobby(protocols, opts = {}) {
       });
       $('#roomStats').onclick = guard(showHistory);
       $('#roomJoin').onclick = guard(async () => {
+        if (needName()) return;
         const code = $('#roomCode').value;
         if (code.length !== 6) { status('6桁のコードを入力してください', 'err'); return; }
         room = await roomApi('join', { name: name(), badge: myBadge(settings()), code, password: $('#roomJoinPw').value });
@@ -264,6 +281,7 @@ export function runRoomLobby(protocols, opts = {}) {
             : '<span class="ro-sub">現在募集中のルームはありません</span>';
           el.querySelectorAll('.ro-room').forEach(b => {
             b.onclick = guard(async () => {
+        if (needName()) return;
               const pw = prompt('パスワード (不要なら空欄)') || '';
               if (b.textContent.includes('★') && roomIsAnonymous(session)) { wantRated = true; await showLogin(); return; }
               room = await roomApi('join', { name: name(), badge: myBadge(settings()), code: b.dataset.code, password: pw });

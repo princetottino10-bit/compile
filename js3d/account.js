@@ -4,6 +4,7 @@
  *   別の端末で記録した分も読み込む。ブラウザの記録はログインしなくても残る。
  *   ゲスト (オンライン対戦用の匿名ログイン) はログインしていない扱い。
  * ========================================================================= */
+import { displayName, nameFieldHtml, bindNameField } from './displayname.js';
 import * as ROOM from './room.js';
 import { localRecords, mergeRecords, setStatsHooks } from './stats.js';
 import { xpLog, mergeXp, setXpHooks } from './xp.js';
@@ -124,7 +125,7 @@ async function loadAccount() {
       pushRows([toRow(rec)]).catch((e) => { state.error = '戦績を保存できませんでした (次の同期で送り直します): ' + e.message; changed(); });
     },
     onClear: state.user ? clearRemote : null,
-    note: () => (state.user ? state.user.name + ' のアカウントにも保存しています' : 'ログインすると、戦績をアカウントに保存して別の端末でも見られます')
+    note: () => (state.user ? (displayName() || 'あなた') + ' のアカウントにも保存しています' : 'ログインすると、戦績をアカウントに保存して別の端末でも見られます')
   });
   setXpHooks({
     onGrant: (entry) => {
@@ -316,6 +317,35 @@ async function deleteAccount(clearLocal) {
   state.sync = '';
 }
 
+/* ログインしていない人に、ログインで何ができるかを必要な場面で一度だけ知らせる。
+   reason ごとに1回 (compileLoginHints)。ログイン中・ログインが使えない環境では出さない */
+const HINTS = {
+  firstWin: 'この記録はこのブラウザにだけ残っています。ログインすると、別の端末でも同じ続きから遊べます。'
+};
+export function maybeLoginHint(reason) {
+  if (!HINTS[reason] || state.user) return;
+  let seen = {};
+  try { seen = JSON.parse(localStorage.getItem('compileLoginHints') || '{}') || {}; } catch (e) { seen = {}; }
+  if (seen[reason]) return;
+  seen[reason] = Date.now();
+  try { localStorage.setItem('compileLoginHints', JSON.stringify(seen)); } catch (e) { return; }
+  let el = document.getElementById('loginHint');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'loginHint';
+    el.setAttribute('role', 'status');
+    document.body.appendChild(el);
+  }
+  el.innerHTML = '<p>' + esc(HINTS[reason]) + '</p><div><button type="button" data-h="login">ログインについて</button><button type="button" data-h="close" aria-label="閉じる">×</button></div>';
+  el.classList.add('show');
+  el.onclick = (ev) => {
+    const b = ev.target.closest('button');
+    if (!b) return;
+    el.classList.remove('show');
+    if (b.dataset.h === 'login') openAccount();
+  };
+}
+
 /* Google から戻ってきたらアカウントの画面を開く (main.js が呼ぶ) */
 export function takeAccountResume() {
   try {
@@ -344,11 +374,17 @@ export function openAccount() {
     if (!s.ready) body = '<p class="pz-note">読み込み中…</p>';
     else if (!s.available) body = '<p class="pz-note">' + esc(s.error || 'この環境ではログインできません (secure-room-config.js が未設定)') + '</p>';
     else if (!s.user) {
-      body = (s.sync ? '<p class="ac-done" role="status">' + esc(s.sync) + '</p>' : '') + '<p class="ac-lead">ログインすると、戦績・経験値・実績・見た目やお気に入り・RUN と WEEKLY の進み具合・保存したリプレイをアカウントに保存します。スマホと PC など、別の端末でも同じ戦績を見られます。</p>' +
+      body = (s.sync ? '<p class="ac-done" role="status">' + esc(s.sync) + '</p>' : '') + '<p class="ac-lead">ログインすると、こんなことができるようになります。</p>' +
+        '<ul class="ac-perks">' +
+          '<li><b>記録がずっと残る</b><span>戦績・レベル・実績・リプレイをアカウントに保存。スマホと PC で同じ続きから遊べる</span></li>' +
+          '<li><b>レート戦</b><span>オンラインでレートを競い、月ごとの順位表に載る</span></li>' +
+          '<li><b>WEEKLY に名前が載る</b><span>週替わり3連戦をクリアしたら、クリア者の一覧に名前を載せられる</span></li>' +
+        '</ul>' +
         '<div class="pz-row"><button type="button" id="acGoogle" class="ac-google">Google でログイン</button></div>' +
         '<p class="pz-note">ログインしなくても、戦績はこのブラウザに残ります。ログインしたときに、それまでの記録もまとめて保存します。</p>';
     } else {
-      body = '<p class="ac-user"><b>' + esc(s.user.name) + '</b>' + (s.user.email ? '<small>' + esc(s.user.email) + '</small>' : '') + '</p>' +
+      body = '<p class="ac-user"><b>' + esc(displayName() || '表示名なし') + '</b>' + (s.user.email ? '<small>' + esc(s.user.email) + '</small>' : '') + '</p>' +
+        nameFieldHtml('ac') +
         '<p class="pz-note">' + esc(s.sync || '戦績をアカウントに保存しています') + '</p>' +
         '<div class="pz-row"><button type="button" id="acSync">今すぐ同期</button><button type="button" id="acOut">ログアウト</button>' +
           (s.admin ? '<button type="button" id="acAdmin" class="ac-admin">ADMIN</button>' : '') + '</div>' +
@@ -365,6 +401,7 @@ export function openAccount() {
     const g = el.querySelector('#acGoogle'); if (g) g.onclick = signIn;
     const y = el.querySelector('#acSync'); if (y) y.onclick = syncRecords;
     const o = el.querySelector('#acOut'); if (o) o.onclick = signOut;
+    bindNameField(el, 'ac', () => render());
     const ad = el.querySelector('#acAdmin'); if (ad) ad.onclick = () => { close(); openAdmin(); };
     const d = el.querySelector('#acDel'); if (d) d.onclick = () => { deleting = true; render(); };
     const dn = el.querySelector('#acDelNo'); if (dn) dn.onclick = () => { deleting = false; render(); };

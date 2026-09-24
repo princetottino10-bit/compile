@@ -2072,6 +2072,33 @@
   .pf-got li b{color:var(--pink);font-size:10.5px;}
   #title .tt-corner[hidden]{display:none;}   /* 押す前は出さない (どこを押しても始まる) */
   #profileOv{z-index:62;}
+  /* ログインで何ができるか (ACCOUNT・タイトル右上・一度だけの案内) */
+  .ac-perks{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px;}
+  .ac-perks li{display:flex;flex-direction:column;gap:3px;padding:9px 12px;border-left:3px solid var(--pink);background:rgba(255,79,163,.07);}
+  .ac-perks li:nth-child(2){border-left-color:var(--violet);background:rgba(139,92,246,.08);}
+  .ac-perks li:nth-child(3){border-left-color:var(--lav);background:rgba(185,164,255,.07);}
+  .ac-perks b{font:800 13px/1.2 var(--font-ui);color:#fff;}
+  .ac-perks span{font:600 11.5px/1.45 system-ui;color:var(--dim);}
+  .tt-corner .tt-account{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px;line-height:1;}
+  .tt-corner .tt-account small{font:700 8.5px/1 var(--font-ui);letter-spacing:.06em;color:var(--pink);}
+  .tt-corner .tt-account small[hidden]{display:none;}
+  #loginHint{position:fixed;left:50%;bottom:calc(var(--hand-gap, 14vh) + 70px);z-index:34;display:none;align-items:center;gap:12px;
+    max-width:min(560px,92vw);padding:10px 12px 10px 16px;background:rgba(12,9,20,.95);border-left:3px solid var(--pink);clip-path:var(--cut-s);
+    transform:translateX(-50%);box-shadow:0 12px 30px rgba(0,0,0,.5);}
+  #loginHint.show{display:flex;animation:pickGoIn .25s cubic-bezier(.16,1,.3,1);}
+  #loginHint p{margin:0;font:600 12.5px/1.5 system-ui;color:#fff;}
+  #loginHint div{display:flex;gap:6px;flex:none;}
+  #loginHint button{padding:8px 12px;cursor:pointer;font:800 11px/1 var(--font-ui);letter-spacing:.08em;}
+  /* 表示名の欄 (プロフィール・ACCOUNT・オンラインのロビー) */
+  .dn-field{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;padding:8px 10px;background:rgba(255,255,255,.035);}
+  .dn-field label{font:700 10px/1 var(--font-ui);letter-spacing:.2em;color:var(--dim);}
+  .dn-field input{min-width:0;padding:8px 10px;border:1px solid rgba(255,255,255,.18);background:rgba(8,6,15,.8);color:#fff;
+    font:700 14px/1 var(--font-ui);border-radius:0;}
+  .dn-field input:focus{outline:0;border-color:var(--pink);}
+  .dn-field button{padding:8px 14px;cursor:pointer;font:800 11px/1 var(--font-ui);letter-spacing:.14em;}
+  .dn-field small{grid-column:1 / -1;min-height:0;font:600 11px/1.3 var(--font-ui);color:var(--lav);}
+  .dn-field small:empty{display:none;}
+  .dn-field small.err{color:var(--pink);}
   /* はい/いいえ を効果を出したカードのすぐ横に (--nx / --ny は main.js が数える) */
   #pickBar.near-card{left:var(--nx)!important;top:var(--ny)!important;right:auto!important;bottom:auto!important;transform:none!important;
     width:min(300px,30vw)!important;animation:nearIn .2s cubic-bezier(.16,1,.3,1)!important;}
@@ -2339,7 +2366,7 @@
       "three": "./vendor/three.module.js?v=985eb92490",
       "three/addons/": "./vendor/jsm/",
       "./vendor/three.module.js": "./vendor/three.module.js?v=985eb92490",
-      "./js3d/account.js": "./js3d/account.js?v=95e88f3882",
+      "./js3d/account.js": "./js3d/account.js?v=4b5ae5c54c",
       "./js3d/achievements-ui.js": "./js3d/achievements-ui.js?v=b654b31bff",
       "./js3d/achievements.js": "./js3d/achievements.js?v=2a38ee9fea",
       "./js3d/admin-ui.js": "./js3d/admin-ui.js?v=0437cdb130",
@@ -2352,22 +2379,23 @@
       "./js3d/cardlist-ov.js": "./js3d/cardlist-ov.js?v=1d673fd0d2",
       "./js3d/cardtex.js": "./js3d/cardtex.js?v=24b6c53321",
       "./js3d/cardtext.js": "./js3d/cardtext.js?v=4cf5529855",
-      "./js3d/cloudsave.js": "./js3d/cloudsave.js?v=6b137d09b8",
+      "./js3d/cloudsave.js": "./js3d/cloudsave.js?v=fc91df5316",
       "./js3d/control.js": "./js3d/control.js?v=acf84debbc",
       "./js3d/cosmetics-ui.js": "./js3d/cosmetics-ui.js?v=6e894549a5",
       "./js3d/daily.js": "./js3d/daily.js?v=f56dabdf65",
+      "./js3d/displayname.js": "./js3d/displayname.js?v=613e18bf95",
       "./js3d/emblems.js": "./js3d/emblems.js?v=6d1c077a2e",
       "./js3d/fx-protocols.js": "./js3d/fx-protocols.js?v=509fceb211",
       "./js3d/fx.js": "./js3d/fx.js?v=f2bbe73646",
       "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c",
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=c8378abf22",
-      "./js3d/main.js": "./js3d/main.js?v=5aed63761a",
+      "./js3d/main.js": "./js3d/main.js?v=af470a89d3",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=6fe48ba6a8",
       "./js3d/panel.js": "./js3d/panel.js?v=ecb8a073e3",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=e0273dcae0",
       "./js3d/playmat.js": "./js3d/playmat.js?v=91ab85f12f",
-      "./js3d/profile.js": "./js3d/profile.js?v=2b4dbec9bb",
+      "./js3d/profile.js": "./js3d/profile.js?v=6ad599d1c4",
       "./js3d/prompts.js": "./js3d/prompts.js?v=348dff836d",
       "./js3d/protocards.js": "./js3d/protocards.js?v=e16028fc34",
       "./js3d/protocol-strength.js": "./js3d/protocol-strength.js?v=c719e5b65c",
@@ -2377,7 +2405,7 @@
       "./js3d/review.js": "./js3d/review.js?v=34f174153b",
       "./js3d/rewards.js": "./js3d/rewards.js?v=c0bbd8236f",
       "./js3d/room.js": "./js3d/room.js?v=10213a9754",
-      "./js3d/roomui.js": "./js3d/roomui.js?v=1fab2ef975",
+      "./js3d/roomui.js": "./js3d/roomui.js?v=50cbabe75b",
       "./js3d/run-ui.js": "./js3d/run-ui.js?v=58718a71af",
       "./js3d/run.js": "./js3d/run.js?v=29dcccf04b",
       "./js3d/selectui.js": "./js3d/selectui.js?v=208abdaebc",
@@ -2388,13 +2416,13 @@
       "./js3d/stats-data.js": "./js3d/stats-data.js?v=bcf7d5e977",
       "./js3d/stats.js": "./js3d/stats.js?v=3b6299945b",
       "./js3d/theme.js": "./js3d/theme.js?v=b02da60dc1",
-      "./js3d/title.js": "./js3d/title.js?v=82d190265a",
+      "./js3d/title.js": "./js3d/title.js?v=bc947ec6e2",
       "./js3d/training.js": "./js3d/training.js?v=3018b4399e",
       "./js3d/turning.js": "./js3d/turning.js?v=9c7f79654e",
       "./js3d/tutorial.js": "./js3d/tutorial.js?v=34aae6e6cc",
       "./js3d/tween.js": "./js3d/tween.js?v=99b25c0d63",
       "./js3d/ui.js": "./js3d/ui.js?v=5e8a5fb9c6",
-      "./js3d/weekly-ui.js": "./js3d/weekly-ui.js?v=dc748612f9",
+      "./js3d/weekly-ui.js": "./js3d/weekly-ui.js?v=f071703507",
       "./js3d/weekly.js": "./js3d/weekly.js?v=b4651191ce",
       "./js3d/xp.js": "./js3d/xp.js?v=b2c69be784"
     }
@@ -2402,6 +2430,6 @@
   </script>
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=5aed63761a"></script>
+  <script type="module" src="js3d/main.js?v=af470a89d3"></script>
 </body>
 </html>

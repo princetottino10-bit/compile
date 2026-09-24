@@ -4,6 +4,7 @@
  *               { go: 'hub' } なら RUN の入口へ戻る
  *   weeklyHud: 対戦中の表示 / showWeeklyAfterGame: 決着後
  * ========================================================================= */
+import { displayName } from './displayname.js';
 import * as W from './weekly.js';
 import { levelLabel } from './aidecks.js';
 import { emblemDataURL } from './emblems.js';
@@ -171,7 +172,7 @@ export function showWeeklyAfterGame(win, protocols) {
       ? '<p class="rn-note">使ったデッキ ' + s.decks.map(d => deckLine(d, byName)).join(' ') + '</p>' +
         (s.submitted ? '<p class="rn-best">クリア者の一覧に載せました</p>'
           : user
-            ? '<div class="wk-name"><label for="wkName">載せる名前 (1〜16文字)</label><input id="wkName" maxlength="16" autocomplete="nickname">' +
+            ? '<div class="wk-name"><label for="wkName">載せる名前 (1〜16文字)</label><input id="wkName" maxlength="16" autocomplete="nickname" value="' + esc(displayName()) + '">' +
               '<button type="button" class="rn-go" data-act="submit">一覧に載せる</button></div><p class="rn-note" id="wkMsg" role="status"></p>'
             : '<p class="rn-note">ログインすると、今週のクリア者の一覧に名前を載せられます (タイトル右上のログインから)。</p>')
       : '') +

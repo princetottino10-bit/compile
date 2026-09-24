@@ -4,6 +4,7 @@
  * ========================================================================= */
 import { bonusXp, grantXp, XP_GAIN, hashKey } from './xp.js';
 import { recordDailyGame, DAILY_XP } from './daily.js';
+import { maybeLoginHint } from './account.js';
 import { unlockTrophies, TROPHY_XP } from './achievements.js';
 import { addReplay, getReplay, pinReplay, rebuild } from './replays.js';
 import { advantageSeries, turningPoints } from './turning.js';
@@ -2917,6 +2918,7 @@ async function afterTurn() {
     /* レベルが上がったら、手に入った報酬を見せる */
     if (myLevel > levelBefore) await UI.levelUpCutIn(myLevel, rewardsBetween(levelBefore, myLevel));
     if (!trainingMode && !puzzle && !demoMode && !roomMode) await afterGameProgress(cur.state, ME, win, aiDifficulty, false);
+    if (win && !trainingMode && !puzzle && !demoMode && !roomMode) maybeLoginHint('firstWin');
     if (demoMode) {
       await TW.wait(900);
       location.reload();

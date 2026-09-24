@@ -2,6 +2,7 @@
  * プロフィール: タイトル右上のレベルを押すと開く
  *   アイコン・レベル・経験値・称号、次の報酬 (中身は取るまで秘密)、取った報酬、見た目を選ぶ入口
  * ========================================================================= */
+import { nameFieldHtml, bindNameField } from './displayname.js';
 import { openAccount } from './account.js';
 import { trophyView } from './achievements.js';
 import { trophyContext, openTrophies } from './achievements-ui.js';
@@ -66,6 +67,7 @@ export function openProfile(protocols) {
       '<div class="pf-icon">' + (proto ? '<img alt="" src="' + emblemDataURL(proto.name, proto.color || '#b9a4ff', 96, true) + '">' : '<span>//</span>') + '</div>' +
       '<div class="pf-id"><small>PLAYER LEVEL</small><b>' + pl.level + '</b>' + (me.title ? '<em>' + esc(me.title) + '</em>' : '') + '</div>' +
     '</div>' +
+    nameFieldHtml('pf') +
     '<div class="pf-xp"><span><i style="width:' + Math.round(pl.progress * 100) + '%"></i></span>' +
       '<small>XP ' + pl.xp + ' ・ NEXT LV まで ' + (pl.next - pl.xp) + '</small></div>' +
     '<div class="pf-stats"><div><b>' + recs.length + '</b><small>GAMES</small></div><div><b>' + wins + '</b><small>WINS</small></div>' +
@@ -85,5 +87,6 @@ export function openProfile(protocols) {
   el.querySelector('.pz-x').onclick = close;
   el.querySelector('#pfCos').onclick = () => { close(); openSettings(); };
   el.querySelector('#pfAcc').onclick = () => { close(); openAccount(); };
+  bindNameField(el, 'pf');
   el.querySelector('#pfTrophy').onclick = () => openTrophies();
 }
