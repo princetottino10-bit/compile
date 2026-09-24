@@ -54,7 +54,7 @@ export function openSettings(extra) {
   }
   const s = current;
   el.innerHTML = '<div class="pz-card st-card" role="dialog" aria-modal="true" aria-label="設定">' +
-    '<div class="pz-head"><b>設定</b><button type="button" class="pz-x" aria-label="閉じる">×</button></div>' +
+    '<div class="pz-head"><b>SETTINGS</b><button type="button" class="pz-x" aria-label="閉じる">×</button></div>' +
     '<div class="st-row"><span>演出の速さ</span><div class="st-seg" role="group" aria-label="演出の速さ">' +
       SPEEDS.map(o => '<button type="button" data-speed="' + o.v + '" class="' + (s.speed === o.v ? 'on' : '') + '">' + o.label + '</button>').join('') +
     '</div></div>' +

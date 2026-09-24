@@ -187,7 +187,7 @@ export function openAccount() {
         '<div class="pz-row"><button type="button" id="acSync">今すぐ同期</button><button type="button" id="acOut">ログアウト</button></div>';
     }
     el.innerHTML = '<div class="pz-card ac-card" role="dialog" aria-modal="true" aria-label="アカウント">' +
-      '<div class="pz-head"><b>アカウント</b><button type="button" class="pz-x" aria-label="閉じる">×</button></div>' +
+      '<div class="pz-head"><b>ACCOUNT</b><button type="button" class="pz-x" aria-label="閉じる">×</button></div>' +
       body + (s.error && s.available ? '<p class="ac-error" role="alert">' + esc(s.error) + '</p>' : '') + '</div>';
     el.querySelector('.pz-x').onclick = close;
     const g = el.querySelector('#acGoogle'); if (g) g.onclick = signIn;

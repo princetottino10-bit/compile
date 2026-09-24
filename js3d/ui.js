@@ -84,7 +84,7 @@ export function showCardNote(o) {
     el.id = 'cardNote';
     document.body.appendChild(el);
   }
-  el.style.setProperty('--accent', o.color || '#63f3ff');
+  el.style.setProperty('--accent', o.color || '#b9a4ff');
   /* place: 'top' | 'bottom'。触ったカード自身を隠さない側に出す */
   el.dataset.place = o.place || 'bottom';
   el.classList.toggle('large', !!o.large);
@@ -294,7 +294,7 @@ function ccPips(remaining) {
 export function compileCutIn(info) {
   const el = $('#compileCut');
   if (!el) return Promise.resolve();
-  const accent = info.color || '#63f3ff';
+  const accent = info.color || '#b9a4ff';
   el.style.setProperty('--accent', accent);
   el.innerHTML =
     '<div class="cc-veil"></div>' +
@@ -344,7 +344,7 @@ export function showPhase(phase, mine) {
     el.id = 'phaseChip';
     document.body.appendChild(el);
   }
-  el.style.setProperty('--accent', mine ? '#6dffc2' : '#ff3b9d');
+  el.style.setProperty('--accent', mine ? '#a07bff' : '#ff4fa3');
   el.dataset.side = mine ? 'me' : 'opp';
   /* アニメーションを毎回頭から流すため、作り直してから show を付ける */
   el.classList.remove('show');
@@ -390,7 +390,7 @@ export function declareCutIn(o) {
 export function turnCutIn(mine) {
   const el = $('#turnCut');
   if (!el) return Promise.resolve();
-  el.style.setProperty('--accent', mine ? '#6dffc2' : '#ff3b9d');
+  el.style.setProperty('--accent', mine ? '#a07bff' : '#ff4fa3');
   el.style.setProperty('--from', mine ? 'left' : 'right');
   el.style.setProperty('--dir', mine ? '1' : '-1');
   el.classList.toggle('opp', !mine);
@@ -440,7 +440,7 @@ export function showCardPanel(o, opts) {
   const el = $('#preview');
   if (!el || !o) return;
   clearTimeout(hideTimer);
-  el.style.setProperty('--accent', o.color || '#63f3ff');
+  el.style.setProperty('--accent', o.color || '#b9a4ff');
   const rows = o.rows || [];
   el.innerHTML =
     '<div class="cp-head"><b>' + (o.proto || o.title) + '</b>' + favButton(o) +
@@ -490,7 +490,7 @@ export function showFxBanner(o, ms) {
     document.body.appendChild(el);
   }
   clearTimeout(fxBannerTimer);
-  el.style.setProperty('--pc', o.color || '#63f3ff');
+  el.style.setProperty('--pc', o.color || '#b9a4ff');
   el.innerHTML =
     '<div class="fx-body">' +
       '<div class="fx-head"><b>' + o.name + '</b><span class="fx-tag">発動</span>' +
@@ -533,7 +533,7 @@ export function showChain(links) {
   chainKey = key;
   el.innerHTML = links.map((k, i) =>
     '<div class="ch-link' + (i === links.length - 1 ? ' now' : '') + (grew && i === links.length - 1 ? ' enter' : '') + '"'
-      + ' style="--pc:' + (k.color || '#63f3ff') + '">'
+      + ' style="--pc:' + (k.color || '#b9a4ff') + '">'
       + '<div class="ch-card">' + (k.img ? '<img alt="" src="' + k.img + '">' : '<i></i>') + '</div>'
       + '<b class="ch-no">' + (i + 1) + '</b>'
       + '<span class="ch-name">' + k.name + '<small>' + (CHAIN_ZONE[k.zone] || '') + '</small></span>'
@@ -663,7 +663,7 @@ export function levelUpCutIn(level, rewards) {
 export function resultCutIn(win, opts) {
   const el = $('#resultCut');
   if (!el) return Promise.resolve();
-  el.style.setProperty('--accent', win ? '#6dffc2' : '#ff3b9d');
+  el.style.setProperty('--accent', win ? '#a07bff' : '#ff4fa3');
   el.innerHTML =
     '<div class="rc-veil"></div>' +
     '<canvas class="rc-art" aria-hidden="true"></canvas>' +

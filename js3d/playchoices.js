@@ -13,7 +13,7 @@ export function renderPlayChoices(root, options, protocols, title, choose, cance
      選べる向きだけを出すため、対応ラインは「表 / 裏」、それ以外は「裏」だけになる。 */
   const cancelButton = document.createElement('button');
   cancelButton.className = 'placement-cancel';
-  cancelButton.type = 'button'; cancelButton.textContent = '選択解除'; cancelButton.onclick = cancel;
+  cancelButton.type = 'button'; cancelButton.textContent = 'CANCEL'; cancelButton.onclick = cancel;
   cancelButton.setAttribute('aria-label', title + 'の配置選択を解除');
   root.append(cancelButton);
   for (const side of [0, 1]) {

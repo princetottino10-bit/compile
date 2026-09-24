@@ -250,7 +250,7 @@ function burstGlitch(scene, laneX, color, ms) {
   const group = new THREE.Group();
   const tiles = [];
   const geo = new THREE.PlaneGeometry(1, 1);
-  const palette = [new THREE.Color(color), new THREE.Color(0x63f3ff), new THREE.Color(0xff3b9d), new THREE.Color(0xffffff)];
+  const palette = [new THREE.Color(color), new THREE.Color(0xb9a4ff), new THREE.Color(0xff4fa3), new THREE.Color(0xffffff)];
   for (let i = 0; i < 40; i++) {
     const mat = new THREE.MeshBasicMaterial({ color: palette[i % palette.length], transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
     const m = new THREE.Mesh(geo, mat);
@@ -383,7 +383,7 @@ function burstPrism(scene, laneX, color, ms) {
 
 /* きらめき (LUCK): 金色の星があちこちでまたたく */
 function burstSparkle(scene, laneX, color, ms) {
-  const gold = new THREE.Color(0xefd06c).lerp(color, 0.2);
+  const gold = new THREE.Color(0xffb3da).lerp(color, 0.2);
   return spriteSwarm(scene, 60, () => ({
     color: gold, size: rnd(0.2, 0.5),
     pos: new THREE.Vector3(laneX + rnd(-1, 1), rnd(0.2, 2.8), laneZ()),

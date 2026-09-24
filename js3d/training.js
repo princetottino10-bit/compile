@@ -50,7 +50,7 @@ export function mountTrainingTools(defs, handlers) {
       hint = '光っている枠をタップして置く';
       acts = btn('hand', '手札へ') + (c.zone === 'trash' ? btn('deck', '山札の上へ') : btn('trash', '捨て札へ'));
     }
-    return '<div class="tr-sel" style="--pc:' + (d.color || '#63f3ff') + '">' +
+    return '<div class="tr-sel" style="--pc:' + (d.color || '#b9a4ff') + '">' +
       '<div class="tr-sel-head"><b>' + esc(d.proto + ' ' + d.value) + '</b><span>' + ZONE_LABEL[c.zone] + '</span>' +
         '<button type="button" class="tr-x" data-act="deselect" aria-label="選択を外して一覧に戻る">×</button></div>' +
       (c.zone === 'field' ? '' :
@@ -67,7 +67,7 @@ export function mountTrainingTools(defs, handlers) {
       const proto = m.protocols[m.side][i];
       const list = m.cards.filter(c => defs[c.def].proto === proto.name)
         .sort((a, b) => defs[a.def].value - defs[b.def].value);
-      return '<div class="tr-group" style="--pc:' + (proto.color || '#63f3ff') + '">' +
+      return '<div class="tr-group" style="--pc:' + (proto.color || '#b9a4ff') + '">' +
         '<div class="tr-gname">' + esc(proto.name) + '</div>' +
         '<div class="tr-tiles">' + list.map(c => cardTile(c, m.sel)).join('') + '</div></div>';
     }).join('');

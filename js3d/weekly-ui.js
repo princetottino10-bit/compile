@@ -28,7 +28,7 @@ function overlay() {
 
 function deckLine(names, byName, usedSet) {
   return '<span class="rn-deck">' + names.map(n => '<i class="' + (usedSet && usedSet.has(n) ? 'used' : '') + '" style="--pc:' +
-    esc((byName[n] || {}).color || '#63f3ff') + '">' + esc(n) + '</i>').join('') + '</span>';
+    esc((byName[n] || {}).color || '#b9a4ff') + '">' + esc(n) + '</i>').join('') + '</span>';
 }
 
 function stageTrack(s) {

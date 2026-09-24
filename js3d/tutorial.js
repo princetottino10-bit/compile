@@ -138,10 +138,10 @@ export const LESSONS = [
     },
     steps: [
       { text: '自分の手番でできるのは「カードを1枚置く」か「<b>リフレッシュ</b>」のどちらか。' +
-          'リフレッシュは手札が<b>5枚になるまで</b>引きます。光っている<b>「リフレッシュ」</b>を押そう。',
+          'リフレッシュは手札が<b>5枚になるまで</b>引きます。光っている<b>「REFRESH」</b>を押そう。',
         focus: { button: 'btnRefresh' } },
       { when: (c) => !!c.sel,
-        text: 'カードを置くと、その手番はそれで終わりです。今回は<b>「リフレッシュ」</b>を押そう。',
+        text: 'カードを置くと、その手番はそれで終わりです。今回は<b>「REFRESH」</b>を押そう。',
         focus: { button: 'btnRefresh' } }
     ],
     check(ctx) {
@@ -149,7 +149,7 @@ export const LESSONS = [
       if (ctx.endSt.players[ctx.me].hand.length >= 5) {
         return { ok: true, text: '手札が5枚になりました。置けるカードが少ないときや、欲しいカードを探したいときに使います。' };
       }
-      return { ok: false, text: 'カードを置くと、その手番はそれで終わりです。手札の横の「リフレッシュ」を押してみましょう。' };
+      return { ok: false, text: 'カードを置くと、その手番はそれで終わりです。手札の横の「REFRESH」を押してみましょう。' };
     }
   },
   {
@@ -291,10 +291,10 @@ export const LESSONS = [
     },
     steps: [
       { text: 'あなたは<b>コントロール</b>を持っています。相手の LIGHT は 13 点、次の相手の手番でコンパイルされます。' +
-          'コントロールを持ったまま<b>コンパイルかリフレッシュ</b>をすると、どちらかのプロトコルを<b>並べ替え</b>られます。<b>「リフレッシュ」</b>を押そう。',
+          'コントロールを持ったまま<b>コンパイルかリフレッシュ</b>をすると、どちらかのプロトコルを<b>並べ替え</b>られます。<b>「REFRESH」</b>を押そう。',
         focus: { button: 'btnRefresh' } },
       { when: (c) => !!c.sel,
-        text: '今回はカードを置かずに<b>「リフレッシュ」</b>を押そう。',
+        text: '今回はカードを置かずに<b>「REFRESH」</b>を押そう。',
         focus: { button: 'btnRefresh' } },
       { when: (c) => c.ask === 'control-rearrange',
         text: '<b>「相手のプロトコルを並べ替える」</b>を選ぼう。' },

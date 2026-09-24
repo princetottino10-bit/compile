@@ -71,7 +71,7 @@ function roundRect(ctx, x, y, w, h, r) {
 
 /* 16進 -> rgba() 文字列 */
 function rgba(hex, a) {
-  const h = String(hex || '#63f3ff').replace('#', '');
+  const h = String(hex || '#b9a4ff').replace('#', '');
   const n = parseInt(h.length === 3 ? h.replace(/./g, c => c + c) : h, 16);
   return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
 }
@@ -174,7 +174,7 @@ const TEXT_X = 26;                 // ゾーン内テキストの左端 (左バ�
 const TEXT_W = DW - TEXT_X - 22;
 
 function paintFace(ctx, def, art) {
-  const accent = def.color || '#63f3ff';
+  const accent = def.color || '#b9a4ff';
   ctx.save();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -414,7 +414,7 @@ export function activationImageURL(def, zone) {
     ctx.drawImage(base, x, y, w, h, x, y, w, h);
     ctx.strokeStyle = '#ffe9a3';
     ctx.lineWidth = 5;
-    ctx.shadowColor = '#efd06c';
+    ctx.shadowColor = '#ffb3da';
     ctx.shadowBlur = 18;
     ctx.strokeRect(x + 2, y + 2, w - 4, h - 4);
     ctx.shadowBlur = 0;
@@ -434,12 +434,12 @@ export function backImageURL() {
 /* ---------- 裏面 ----------
    variant: 自分のカードの裏面の柄 (スリーブ、レベルの報酬)。相手のカードと一覧の画像は standard */
 const SLEEVES = {
-  default: { a: '#1d2a4d', b: '#0e1730', grid: 'rgba(99,243,255,.16)', halo: '255,59,157', ring: 'rgba(109,255,194,.78)',
-    ring2: 'rgba(99,243,255,.5)', strip: '99,243,255' },
+  default: { a: '#1d2a4d', b: '#0e1730', grid: 'rgba(185,164,255,.16)', halo: '255,59,157', ring: 'rgba(160,123,255,.78)',
+    ring2: 'rgba(185,164,255,.5)', strip: '185,164,255' },
   crimson: { a: '#4a0f1c', b: '#1a0509', grid: 'rgba(255,120,120,.14)', halo: '255,176,64', ring: 'rgba(255,212,120,.85)',
     ring2: 'rgba(255,120,120,.5)', strip: '255,120,120' },
-  circuit: { a: '#0b2a22', b: '#04120e', grid: 'rgba(109,255,194,.08)', halo: '99,243,255', ring: 'rgba(109,255,194,.85)',
-    ring2: 'rgba(99,243,255,.55)', strip: '109,255,194', circuit: true },
+  circuit: { a: '#0b2a22', b: '#04120e', grid: 'rgba(160,123,255,.08)', halo: '99,243,255', ring: 'rgba(160,123,255,.85)',
+    ring2: 'rgba(185,164,255,.55)', strip: '160,123,255', circuit: true },
   holo: { a: '#241a3d', b: '#0b0a18', grid: 'rgba(255,255,255,.1)', halo: '185,140,255', ring: 'rgba(255,255,255,.85)',
     ring2: 'rgba(185,140,255,.6)', strip: '185,140,255', holo: true }
 };
@@ -468,15 +468,15 @@ export function backTex(variant) {
   /* HOLO: 斜めに虹色の光を流す */
   if (P.holo) {
     const hg = ctx.createLinearGradient(0, 0, DW, DH);
-    ['rgba(255,122,180,.32)', 'rgba(185,140,255,.3)', 'rgba(99,243,255,.3)', 'rgba(109,255,194,.28)', 'rgba(255,216,106,.3)']
+    ['rgba(255,122,180,.32)', 'rgba(185,140,255,.3)', 'rgba(185,164,255,.3)', 'rgba(160,123,255,.28)', 'rgba(255,216,106,.3)']
       .forEach((c, k, arr) => hg.addColorStop(k / (arr.length - 1), c));
     ctx.fillStyle = hg;
     roundRect(ctx, 0, 0, DW, DH, 30); ctx.fill();
   }
   /* CIRCUIT: 基板の配線 */
   if (P.circuit) {
-    ctx.strokeStyle = 'rgba(109,255,194,.4)';
-    ctx.fillStyle = 'rgba(109,255,194,.6)';
+    ctx.strokeStyle = 'rgba(160,123,255,.4)';
+    ctx.fillStyle = 'rgba(160,123,255,.6)';
     ctx.lineWidth = 3;
     let seed = 7;
     const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;

@@ -63,16 +63,16 @@ export const COLOR = {
   fog: 0x05060f,
   floor: 0x070a16,
   grid: 0x2b4a63,
-  gridHot: 0x63f3ff,
-  pink: 0xff3b9d,
-  cyan: 0x63f3ff,
-  mint: 0x6dffc2,
-  gold: 0xefd06c,
+  gridHot: 0xb9a4ff,
+  pink: 0xff4fa3,
+  cyan: 0xb9a4ff,
+  mint: 0xa07bff,
+  gold: 0xffb3da,
   cardEdge: 0x0a0c16,
   cardBackA: '#0a0f1e',
   cardBackB: '#04060e',
-  self: 0x6dffc2,
-  opp: 0xff3b9d
+  self: 0xa07bff,
+  opp: 0xff4fa3
 };
 
 /* --- 演出タイミング (ms) --- */

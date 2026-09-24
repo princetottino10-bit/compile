@@ -48,7 +48,7 @@ function roundRect(ctx, x, y, w, h, r) {
 }
 
 function rgba(hex, a) {
-  const h = String(hex || '#63f3ff').replace('#', '');
+  const h = String(hex || '#b9a4ff').replace('#', '');
   const n = parseInt(h.length === 3 ? h.replace(/./g, c => c + c) : h, 16);
   return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
 }
@@ -56,7 +56,7 @@ function rgba(hex, a) {
 /* 板1面を描く。compiled=true なら「COMPILED」面 */
 function paint(ctx, info, art) {
   const W = TEX_W, H = TEX_H;
-  const accent = info.color || '#63f3ff';
+  const accent = info.color || '#b9a4ff';
   const compiled = !!info.compiled;
   ctx.setTransform(TEX_SCALE, 0, 0, TEX_SCALE, 0, 0);
   ctx.clearRect(0, 0, W, H);

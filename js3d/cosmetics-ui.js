@@ -11,7 +11,7 @@ import { emblemDataURL } from './emblems.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-const LABELS = { mat: '盤面', sleeve: 'カードの裏面', marker: 'コントロールマーカー', ccolor: '自分のコンパイルの光', victory: '勝ちの演出' };
+const LABELS = { mat: 'PLAYMAT', sleeve: 'SLEEVE', marker: 'CONTROL MARKER', ccolor: 'COMPILE FX', victory: 'VICTORY FX' };
 const DEFAULT_KEY = { mat: 'neon', sleeve: 'default', marker: 'default', ccolor: 'default', victory: 'default' };
 
 /* 条件で取る称号 (レベル以外) */
@@ -36,31 +36,34 @@ export function cosmeticsHtml(s, protocols) {
   protocols = protocols || protoList;
   const recs = localRecords();
   const level = playerLevel(recs).level;
-  const row = (kind) => '<div class="st-cos"><span>' + LABELS[kind] + '</span><div class="st-opts">' + COSMETICS[kind].map(([key, name]) => {
-    const need = unlockLevel(kind, key);
-    const open = level >= need;
-    const cur = (s[kind] || DEFAULT_KEY[kind]) === key;
-    return '<button type="button" data-cos="' + kind + '" data-key="' + key + '" class="st-opt ' + kind + '-' + key + (cur ? ' on' : '') + '"' +
-      (open ? '' : ' disabled title="レベル ' + need + 'で解放"') + '><i></i><b>' + esc(name) + '</b>' + (open ? '' : '<small>🔒 Lv' + need + '</small>') + '</button>';
-  }).join('') + '</div></div>';
+  /* 取る前の見た目は出さない (レベルアップで初めて明かす)。まだあることだけ「+N」で示す */
+  let locked = 0;
+  const row = (kind) => {
+    const open = COSMETICS[kind].filter(([key]) => level >= unlockLevel(kind, key));
+    locked += COSMETICS[kind].length - open.length;
+    return '<div class="st-cos"><span>' + LABELS[kind] + '</span><div class="st-opts">' + open.map(([key, name]) => {
+      const cur = (s[kind] || DEFAULT_KEY[kind]) === key;
+      return '<button type="button" data-cos="' + kind + '" data-key="' + key + '" class="st-opt ' + kind + '-' + key + (cur ? ' on' : '') + '">' +
+        '<i></i><b>' + esc(name) + '</b></button>';
+    }).join('') + (open.length < COSMETICS[kind].length ? '<span class="st-more">+' + (COSMETICS[kind].length - open.length) + '</span>' : '') + '</div></div>';
+  };
   const titles = ownedTitles(level, extraTitles(recs));
   const titleRow = '<div class="st-cos"><span>称号</span><div class="st-opts">' +
     '<button type="button" data-cos="title" data-key="" class="st-opt' + (!s.title ? ' on' : '') + '"><b>つけない</b></button>' +
-    Object.entries(TITLES).map(([key, name]) => {
-      const open = titles.includes(key);
-      const need = key === 'underdog' ? '下剋上で勝つ' : 'Lv' + (unlockLevel('title', key));
-      return '<button type="button" data-cos="title" data-key="' + key + '" class="st-opt' + (s.title === key ? ' on' : '') + '"' +
-        (open ? '' : ' disabled') + '><b>' + esc(name) + '</b>' + (open ? '' : '<small>🔒 ' + need + '</small>') + '</button>';
-    }).join('') + '</div></div>';
+    Object.entries(TITLES).filter(([key]) => titles.includes(key)).map(([key, name]) =>
+      '<button type="button" data-cos="title" data-key="' + key + '" class="st-opt' + (s.title === key ? ' on' : '') + '"><b>' + esc(name) + '</b></button>'
+    ).join('') + (titles.length < Object.keys(TITLES).length ? '<span class="st-more">+' + (Object.keys(TITLES).length - titles.length) + '</span>' : '') +
+    '</div></div>';
   const iconOpen = level >= unlockLevel('icon', 'icon');
-  const iconRow = '<div class="st-cos"><span>アイコン' + (iconOpen ? '' : ' <small>🔒 Lv' + unlockLevel('icon', 'icon') + '</small>') + '</span>' +
+  const iconRow = !iconOpen ? '' : '<div class="st-cos"><span>PROFILE ICON</span>' +
     (iconOpen
       ? '<div class="st-icons">' + '<button type="button" data-cos="icon" data-key="" class="st-ic' + (!s.icon ? ' on' : '') + '" aria-label="アイコンなし">—</button>' +
         (protocols || []).map(p => '<button type="button" data-cos="icon" data-key="' + esc(p.name) + '" class="st-ic' + (s.icon === p.name ? ' on' : '') +
-          '" title="' + esc(p.name) + '" aria-label="' + esc(p.name) + '"><img alt="" src="' + emblemDataURL(p.name, p.color || '#63f3ff', 40, true) + '"></button>').join('') + '</div>'
+          '" title="' + esc(p.name) + '" aria-label="' + esc(p.name) + '"><img alt="" src="' + emblemDataURL(p.name, p.color || '#b9a4ff', 40, true) + '"></button>').join('') + '</div>'
       : '') + '</div>';
-  return '<div class="st-cosmetics"><div class="st-cos-head"><b>見た目</b><small>レベル ' + level + ' ・ レベルを上げると増えます (戦績の「まとめ」で次の報酬を確認できます)</small></div>' +
-    row('mat') + row('sleeve') + row('marker') + row('ccolor') + row('victory') + titleRow + iconRow + '</div>';
+  const rows = row('mat') + row('sleeve') + row('marker') + row('ccolor') + row('victory');
+  return '<div class="st-cosmetics"><div class="st-cos-head"><b>COSMETICS</b><small>LV ' + level + ' ・ 「+」はまだ見ぬ見た目。レベルを上げると明かされます</small></div>' +
+    rows + titleRow.replace('<span>称号</span>', '<span>TITLE</span>').replace('<b>つけない</b>', '<b>NONE</b>') + iconRow + '</div>';
 }
 
 /* 押したら保存して、同じ段の印を付け替える */

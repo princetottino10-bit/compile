@@ -140,9 +140,9 @@ async function protocols() {
   if (protoList) return protoList;
   try {
     const data = await fetch('data/cards.json').then(r => r.json());
-    protoList = data.protocols.map(p => ({ name: p.name, color: p.color || '#63f3ff' }));
+    protoList = data.protocols.map(p => ({ name: p.name, color: p.color || '#b9a4ff' }));
     cardIndex = {};
-    for (const p of data.protocols) for (const c of p.cards) cardIndex[c.id] = { proto: p.name, value: c.value, color: p.color || '#63f3ff' };
+    for (const p of data.protocols) for (const c of p.cards) cardIndex[c.id] = { proto: p.name, value: c.value, color: p.color || '#b9a4ff' };
   } catch (e) {
     protoList = [];
   }
@@ -178,7 +178,7 @@ function summaryTab(list, protos) {
   const tile = (label, value, sub) => '<div class="sr-kpi"><small>' + label + '</small><b>' + value + '</b>' + (sub ? '<span>' + sub + '</span>' : '') + '</div>';
   /* 称号 (取ったものだけ) */
   const titles = [];
-  if (list.some(r => r.win && r.level === UNDERDOG_LEVEL)) titles.push(['下剋上', '最弱のデッキで最強に勝った']);
+  if (list.some(r => r.win && r.level === UNDERDOG_LEVEL)) titles.push(['UNDERDOG', '最弱のデッキで最強に勝った']);
   const pl = playerLevel(list);
   return '<div class="sr-level"><b>Lv ' + pl.level + '</b><span class="sr-xp"><i style="width:' + Math.round(pl.progress * 100) + '%"></i></span>' +
       '<small>次のレベルまで ' + (pl.next - pl.xp) + ' (1戦 +1・勝ち +2・つよい以上に勝つと +1)</small></div>' +
@@ -248,7 +248,7 @@ function effectTop(cs) {
   if (!top.length) return '';
   return '<div class="sr-fxtop"><small>効果をよく使ったカード</small>' + top.map(t => {
     const d = cardIndex[t.id] || { proto: t.id, value: '' };
-    return '<span style="--pc:' + esc(d.color || '#63f3ff') + '"><b>' + esc(d.proto + ' ' + d.value) + '</b>' + t.effects + '回</span>';
+    return '<span style="--pc:' + esc(d.color || '#b9a4ff') + '"><b>' + esc(d.proto + ' ' + d.value) + '</b>' + t.effects + '回</span>';
   }).join('') + '</div>';
 }
 
@@ -279,16 +279,19 @@ function cardsTab(list, protos) {
     }).join('') + '</div>';
 }
 
-/* レベルの報酬: 次にもらえるものと、全部の一覧 (取ったものに印) */
+/* レベルの報酬: 次は「いつ手に入るか」だけ (中身は取るまで秘密)。一覧は取ったものだけ */
 function rewardsHtml(pl) {
   const nx = nextReward(pl.level);
-  return (nx ? '<p class="sr-next">次の報酬 <b>Lv' + nx.lv + '</b> ' + esc(nx.name) + ' <small>あと ' + (xpForLevel(nx.lv) - pl.xp) + '</small></p>' : '') +
-    '<details class="sr-rewards"><summary>レベルの報酬の一覧</summary><ul>' + REWARDS.map(r =>
-      '<li class="' + (r.lv <= pl.level ? 'got' : '') + '"><b>Lv' + r.lv + '</b>' + esc(r.name) + (r.lv <= pl.level ? '<i>✓</i>' : '') + '</li>').join('') +
-    '</ul><p class="pz-note">取った見た目は、設定 (⚙) の「見た目」で選べます</p></details>';
+  const got = REWARDS.filter(r => r.lv <= pl.level);
+  const hidden = REWARDS.length - got.length;
+  return (nx ? '<p class="sr-next">NEXT REWARD <b>Lv' + nx.lv + '</b> ??? <small>あと ' + (xpForLevel(nx.lv) - pl.xp) + '</small></p>' : '') +
+    '<details class="sr-rewards"><summary>REWARDS ' + got.length + ' / ' + REWARDS.length + '</summary><ul>' +
+    got.map(r => '<li class="got"><b>Lv' + r.lv + '</b>' + esc(r.name) + '<i>✓</i></li>').join('') +
+    (hidden ? '<li class="secret"><b>???</b>ほか ' + hidden + ' 個 (レベルを上げると明かされる)</li>' : '') +
+    '</ul><p class="pz-note">取った見た目は、設定 (⚙) の COSMETICS で選べます</p></details>';
 }
 
-const TABS = ['まとめ', 'プロトコル', 'カード', '相性', '詳細'];
+const TABS = ['SUMMARY', 'PROTOCOLS', 'CARDS', 'MATCHUPS', 'DETAIL'];
 
 export async function openStats() {
   const list = records();
@@ -302,7 +305,7 @@ export async function openStats() {
   }
   const wins = list.filter(r => r.win).length;
   el.innerHTML = '<div class="pz-card sr-card" role="dialog" aria-modal="true" aria-label="戦績">' +
-    '<div class="pz-head"><b>戦績 (CPU 戦)</b><button type="button" class="pz-x" aria-label="閉じる">×</button></div>' +
+    '<div class="pz-head"><b>RECORD</b><button type="button" class="pz-x" aria-label="閉じる">×</button></div>' +
     (hooks.note ? '<p class="sr-cloud">' + esc(hooks.note()) + '</p>' : '') +
     '<p class="sr-total">' + list.length + '戦 <b>' + wins + '勝</b> ' + (list.length - wins) + '敗' +
       (list.length ? '　勝率 <b>' + pct(wins, list.length) + '%</b>' : '') + '</p>' +

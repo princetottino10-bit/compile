@@ -20,7 +20,7 @@ export function showProtocolCards(name, color, getItems) {
     ov.setAttribute('aria-modal', 'true');
     document.body.appendChild(ov);
   }
-  ov.style.setProperty('--accent', color || '#63f3ff');
+  ov.style.setProperty('--accent', color || '#b9a4ff');
   ov.setAttribute('aria-label', name + ' のカード');
   ov.innerHTML =
     '<div class="pc-head"><b>' + esc(name) + '</b><span>のカード (6枚)</span>' +

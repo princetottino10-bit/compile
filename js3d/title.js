@@ -11,6 +11,7 @@ import { openCardList } from './cardlist-ov.js';
 import { settings } from './settings.js';
 import { profileOf } from './cosmetics-ui.js';
 import { localRecords } from './stats.js';
+import { openProfile } from './profile.js';
 
 const BOOT_LINES = [
   '> COMPILE OS v3.1 — boot sequence initiated',
@@ -25,14 +26,44 @@ const BOOT_LINES = [
 function profileChip(protocols) {
   const p = profileOf(settings(), localRecords());
   const proto = protocols.find(x => x.name === p.icon);
-  return '<span class="tt-profile" title="プレイヤーレベル">' +
-    (proto ? '<img alt="" src="' + emblemDataURL(proto.name, proto.color || '#63f3ff', 40, true) + '">' : '') +
-    '<b>Lv' + p.level + '</b>' + (p.title ? '<small>' + p.title + '</small>' : '') + '</span>';
+  /* 押すとプロフィール (レベル・経験値・次の報酬) が開く */
+  return '<button type="button" data-mode="profile" class="tt-profile" aria-label="プロフィール">' +
+    (proto ? '<img alt="" src="' + emblemDataURL(proto.name, proto.color || '#b9a4ff', 40, true) + '">' : '') +
+    '<b>LV ' + p.level + '</b>' + (p.title ? '<small>' + p.title + '</small>' : '') + '</button>';
+}
+
+/* ロゴ: 「//」と COMPILE。グリッチ用に同じ文字を data-text に持たせる (CSS の ::before/::after でずらす) */
+const LOGO = '<div class="tt-logo"><b>//</b><span data-text="COMPILE">COMPILE</span></div>' +
+  '<div class="tt-sub">3D ARENA <i>·</i> PROTOCOL CARD BATTLE</div>';
+
+/* 右側: 公式カードの絵を3枚、斜めに切り抜いて並べる。数秒ごとにグリッチをかけて別のプロトコルへ */
+function startHero(el, protocols) {
+  if (!el || !protocols.length) return () => {};
+  const pick = () => {
+    const pool = protocols.slice();
+    const out = [];
+    while (out.length < 3 && pool.length) out.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+    return out;
+  };
+  const paint = () => {
+    el.innerHTML = pick().map((p, i) => {
+      const n = 1 + Math.floor(Math.random() * 6);
+      return '<figure class="th-panel" style="--i:' + i + ';--pc:' + (p.color || '#b9a4ff') + '">' +
+        '<img alt="" src="art/' + n + p.name.toLowerCase() + '.webp" loading="eager">' +
+        '<figcaption><img alt="" src="' + emblemDataURL(p.name, p.color || '#b9a4ff', 40, true) + '">' + p.name + '</figcaption></figure>';
+    }).join('');
+  };
+  paint();
+  const t = setInterval(() => {
+    el.classList.add('swap');
+    setTimeout(() => { paint(); el.classList.remove('swap'); }, 360);
+  }, 5200);
+  return () => clearInterval(t);
 }
 
 function accountLabel() {
   const u = accountState().user;
-  return u ? String(u.name).replace(/[&<>"]/g, '') : 'ログイン';
+  return u ? String(u.name).replace(/[&<>"]/g, '') : 'SIGN IN';
 }
 
 export function runTitle(protocols, opts) {
@@ -40,20 +71,22 @@ export function runTitle(protocols, opts) {
   const root = document.getElementById('title');
   if (!root) return Promise.resolve('single');
   const emblems = protocols
-    .map(p => '<img alt="" src="' + emblemDataURL(p.name, p.color || '#63f3ff', 72, true) + '">')
+    .map(p => '<img alt="" src="' + emblemDataURL(p.name, p.color || '#b9a4ff', 72, true) + '">')
     .join('');
   root.innerHTML =
     '<canvas class="tt-art" aria-hidden="true"></canvas>' +
+    '<div class="tt-hero" id="ttHero" aria-hidden="true"></div>' +
     '<div class="tt-scan"></div><div class="tt-log" id="ttLog"></div>' +
-    '<div class="tt-center" id="ttCenter"><div class="tt-logo"><b>//</b> COMPILE</div>' +
-      '<div class="tt-sub">3D ARENA</div><button class="tt-start" id="ttStart" type="button">PRESS START</button></div>' +
+    '<div class="tt-center" id="ttCenter">' + LOGO +
+      '<button class="tt-start" id="ttStart" type="button">PRESS START</button></div>' +
     '<div class="tt-marquee"><div class="tt-strip">' + emblems + emblems + '</div></div>' +
-    '<div class="tt-foot">engine.js — 全30プロトコル / 180枚</div>' +
+    '<div class="tt-foot">30 PROTOCOLS · 180 CARDS</div>' +
     '<div class="tt-corner" id="ttCorner" hidden>' + profileChip(protocols) +
       '<button data-mode="account" type="button" class="tt-account"><span>' + accountLabel() + '</span></button>' +
       '<button data-mode="options" type="button" class="tt-gear" title="設定 (演出・音)" aria-label="設定 (演出・音)">⚙</button>' +
     '</div>';
   root.classList.add('show');
+  const stopHero = startHero(root.querySelector('#ttHero'), protocols);
   const art = root.querySelector('.tt-art');
   const paint = () => { if (art.isConnected) { try { drawTitleBackdrop(art); } catch (e) { /* 描けなくても従来の背景で進む */ } } };
   paint();
@@ -70,27 +103,28 @@ export function runTitle(protocols, opts) {
       if (!started && (ev.key === 'Enter' || ev.key === ' ')) start();
     };
     const finish = (mode) => {
-      clearInterval(logTimer); window.removeEventListener('keydown', onKey); root.classList.add('gone');
+      clearInterval(logTimer); stopHero(); window.removeEventListener('keydown', onKey); root.classList.add('gone');
       setTimeout(() => { root.classList.remove('show', 'gone'); root.innerHTML = ''; resolve(mode); }, 420);
     };
     const showMenu = () => {
       const center = root.querySelector('#ttCenter');
-      center.innerHTML = '<div class="tt-logo"><b>//</b> COMPILE</div><div class="tt-sub">3D ARENA</div>' +
+      center.innerHTML = LOGO +
         /* 遊ぶ入口は大きく2つだけ。練習・記録は小さく下に、アカウントと設定は右上の隅に置く */
         '<nav class="tt-menu" aria-label="ゲームモード">' +
           '<div class="tt-main">' +
-            '<button data-mode="single" type="button">SINGLE GAME <small>CPUと対戦</small></button>' +
-            '<button data-mode="run" type="button">RUN <small>勝ち抜き戦</small></button>' +
-            '<button data-mode="online" type="button">ONLINE GAME <small>ルーム・レート戦</small></button>' +
+            '<button data-mode="single" type="button">SINGLE GAME <small>VS CPU</small></button>' +
+            '<button data-mode="run" type="button">RUN <small>ROGUELIKE · WEEKLY</small></button>' +
+            '<button data-mode="online" type="button">ONLINE GAME <small>ROOMS · RATED</small></button>' +
           '</div>' +
           '<div class="tt-more">' +
-            '<button data-mode="tutorial" type="button">TUTORIAL <small>ルールを1つずつ</small></button>' +
-            '<button data-mode="training" type="button">TRAINING <small>検証盤面</small></button>' +
-            '<button data-mode="record" type="button">RECORD <small>戦績</small></button>' +
-            '<button data-mode="cards" type="button">CARDS <small>カードリスト</small></button>' +
+            '<button data-mode="tutorial" type="button">TUTORIAL <small>LEARN</small></button>' +
+            '<button data-mode="training" type="button">TRAINING <small>SANDBOX</small></button>' +
+            '<button data-mode="record" type="button">RECORD <small>STATS</small></button>' +
+            '<button data-mode="cards" type="button">CARDS <small>CARD LIST</small></button>' +
           '</div>' +
         '</nav>';
       root.querySelector('#ttCorner').hidden = false;
+      root.classList.add('menu');                    // 起動ログを隠し、左の列にメニューを出す
       /* ログイン状態は裏で読むので、分かったら表示を差し替える */
       const offAccount = onAccountChange(() => {
         const label = root.querySelector('#ttCorner button[data-mode="account"] span');
@@ -106,6 +140,7 @@ export function runTitle(protocols, opts) {
         else if (button.dataset.mode === 'record') openStats();
         else if (button.dataset.mode === 'account') openAccount();
         else if (button.dataset.mode === 'cards') openCardList();
+        else if (button.dataset.mode === 'profile') openProfile(protocols);
         else finish(button.dataset.mode);
       };
       center.querySelector('.tt-menu').onclick = onMenu;

@@ -20,7 +20,7 @@ export function underdogCleared() {
 export function openOpponentSelect(protocols) {
   const byName = Object.fromEntries(protocols.map(p => [p.name, p]));
   const deck = (names) => '<span class="rn-deck">' + names.map(n =>
-    '<i style="--pc:' + esc((byName[n] || {}).color || '#63f3ff') + '">' + esc(n) + '</i>').join('') + '</span>';
+    '<i style="--pc:' + esc((byName[n] || {}).color || '#b9a4ff') + '">' + esc(n) + '</i>').join('') + '</span>';
   let last = null;
   try { last = localStorage.getItem(LAST_KEY); } catch (e) { /* private mode */ }
 
@@ -37,7 +37,7 @@ export function openOpponentSelect(protocols) {
     '" data-opp="' + key + '"><b>' + title + '</b><small>' + note + '</small>' + (body || '') + '</button>';
   const cleared = underdogCleared();
   el.innerHTML = '<div class="op-wrap">' +
-    '<div class="op-head"><b>// SINGLE GAME</b><span>相手を選ぶ</span></div>' +
+    '<div class="op-head"><b>// SINGLE GAME</b><span>SELECT OPPONENT</span></div>' +
     '<section><h3>CPU <small>相手はランダム編成。次の画面で自分のプロトコルと選び方 (自由・ドラフト・ランダム) を決める</small></h3>' +
       '<div class="op-row">' + [0, 1, 2].map(i => card(String(i), LEVEL_LABELS[i], CPU_NOTES[i])).join('') + '</div></section>' +
     '<section><h3>強敵 <small>相手のデッキは決まっている。次の画面で自分の3つを選ぶ</small></h3>' +
@@ -47,8 +47,8 @@ export function openOpponentSelect(protocols) {
         CHALLENGERS.map((c, k) => card(String(CHALLENGER_BASE + k), '挑戦者', esc(c.name || '最強の候補だったデッキ'), deck(c.deck))).join('') +
       '</div></section>' +
     '<section><h3>下剋上 <small>いちばん弱いデッキで、いちばん強い CPU に挑む</small></h3>' +
-      '<div class="op-row">' + card('underdog', '下剋上' + (cleared ? ' <em>✓ 称号獲得済み</em>' : ''),
-        'あなた (最弱) vs 最強。勝つと称号「下剋上」',
+      '<div class="op-row">' + card('underdog', '下剋上' + (cleared ? ' <em>✓ TITLE — UNDERDOG</em>' : ''),
+        'あなた (最弱) vs 最強。勝つと TITLE — UNDERDOG',
         '<span class="op-vs">' + deck(UNDERDOG_DECK) + '<i>VS</i>' + deck(STRONGEST_AI) + '</span>', ' wide') + '</div></section>' +
     '<div class="op-foot"><button type="button" data-opp="back">← タイトルへ</button></div></div>';
   el.classList.add('show');

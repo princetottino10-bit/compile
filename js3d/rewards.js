@@ -6,21 +6,21 @@
  * ========================================================================= */
 
 export const REWARDS = [
-  { lv: 2, kind: 'sleeve', key: 'crimson', name: 'カードの裏面: CRIMSON' },
-  { lv: 3, kind: 'mat', key: 'nebula', name: '盤面: NEBULA' },
-  { lv: 4, kind: 'marker', key: 'gold', name: 'コントロールマーカー: GOLD' },
-  { lv: 5, kind: 'title', key: 'compiler', name: '称号: コンパイラー' },
-  { lv: 5, kind: 'icon', key: 'icon', name: 'アイコン (プロトコルの紋章) を選べる' },
-  { lv: 6, kind: 'mat', key: 'vortex', name: '盤面: VORTEX' },
-  { lv: 7, kind: 'sleeve', key: 'circuit', name: 'カードの裏面: CIRCUIT' },
-  { lv: 8, kind: 'ccolor', key: 'gold', name: 'コンパイルの光: GOLD' },
-  { lv: 10, kind: 'mat', key: 'biomech', name: '盤面: BIOMECH' },
-  { lv: 10, kind: 'title', key: 'veteran', name: '称号: ベテラン' },
-  { lv: 12, kind: 'victory', key: 'aurora', name: '勝ちの演出: AURORA' },
-  { lv: 15, kind: 'sleeve', key: 'holo', name: 'カードの裏面: HOLO' },
-  { lv: 15, kind: 'title', key: 'expert', name: '称号: エキスパート' },
-  { lv: 20, kind: 'mat', key: 'prism', name: '盤面: PRISM' },
-  { lv: 20, kind: 'title', key: 'master', name: '称号: マスター' }
+  { lv: 2, kind: 'sleeve', key: 'crimson', name: 'SLEEVE — CRIMSON' },
+  { lv: 3, kind: 'mat', key: 'nebula', name: 'PLAYMAT — NEBULA' },
+  { lv: 4, kind: 'marker', key: 'gold', name: 'CONTROL MARKER — GOLD' },
+  { lv: 5, kind: 'title', key: 'compiler', name: 'TITLE — COMPILER' },
+  { lv: 5, kind: 'icon', key: 'icon', name: 'PROFILE ICON' },
+  { lv: 6, kind: 'mat', key: 'vortex', name: 'PLAYMAT — VORTEX' },
+  { lv: 7, kind: 'sleeve', key: 'circuit', name: 'SLEEVE — CIRCUIT' },
+  { lv: 8, kind: 'ccolor', key: 'gold', name: 'COMPILE FX — GOLD' },
+  { lv: 10, kind: 'mat', key: 'biomech', name: 'PLAYMAT — BIOMECH' },
+  { lv: 10, kind: 'title', key: 'veteran', name: 'TITLE — VETERAN' },
+  { lv: 12, kind: 'victory', key: 'aurora', name: 'VICTORY FX — AURORA' },
+  { lv: 15, kind: 'sleeve', key: 'holo', name: 'SLEEVE — HOLO' },
+  { lv: 15, kind: 'title', key: 'expert', name: 'TITLE — EXPERT' },
+  { lv: 20, kind: 'mat', key: 'prism', name: 'PLAYMAT — PRISM' },
+  { lv: 20, kind: 'title', key: 'master', name: 'TITLE — MASTER' }
 ];
 
 /* 見た目の選択肢 (default ははじめから)。名前は設定の画面に出す */
@@ -28,13 +28,13 @@ export const COSMETICS = {
   mat: [['neon', 'NEON GRID'], ['nebula', 'NEBULA'], ['vortex', 'VORTEX'], ['biomech', 'BIOMECH'], ['prism', 'PRISM']],
   sleeve: [['default', 'STANDARD'], ['crimson', 'CRIMSON'], ['circuit', 'CIRCUIT'], ['holo', 'HOLO']],
   marker: [['default', 'STANDARD'], ['gold', 'GOLD']],
-  ccolor: [['default', 'プロトコルの色'], ['gold', 'GOLD']],
+  ccolor: [['default', 'PROTOCOL'], ['gold', 'GOLD']],
   victory: [['default', 'STANDARD'], ['aurora', 'AURORA']]
 };
 
 /* 称号 (レベルのもの + 条件で取るもの) */
 export const TITLES = {
-  compiler: 'コンパイラー', veteran: 'ベテラン', expert: 'エキスパート', master: 'マスター', underdog: '下剋上'
+  compiler: 'COMPILER', veteran: 'VETERAN', expert: 'EXPERT', master: 'MASTER', underdog: 'UNDERDOG'
 };
 
 /* その見た目を解放するレベル (はじめからなら 1) */

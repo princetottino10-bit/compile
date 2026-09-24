@@ -144,9 +144,9 @@ export function runSetup(protocols, options = {}) {
   function tile(name, cls, tag) {
     const p = byName[name] || {};
     return '<div class="proto-wrap"><button type="button" class="proto' + (cls ? ' ' + cls : '') + '" data-name="' + esc(name) + '"' +
-      ' style="--accent:' + (p.color || '#63f3ff') + '">' +
+      ' style="--accent:' + (p.color || '#b9a4ff') + '">' +
       '<span class="proto-art" style="background-image:url(&quot;art/' + name.charAt(0) + name.slice(1).toLowerCase() + '.webp&quot;)"></span>' +
-      '<img class="proto-emblem" alt="" src="' + emblemDataURL(name, p.color || '#63f3ff', 96, true) + '">' +
+      '<img class="proto-emblem" alt="" src="' + emblemDataURL(name, p.color || '#b9a4ff', 96, true) + '">' +
       '<span class="proto-name">' + esc(name) + '</span>' +
       '<span class="proto-set">' + esc(tag || p.set || '') + '</span></button>' +
       (options.cardsOf ? '<button type="button" class="proto-info" data-info="' + esc(name) + '" aria-label="' + esc(name) +
@@ -201,7 +201,7 @@ export function runSetup(protocols, options = {}) {
       return;
     }
     if (mode === 'free') {
-      startBtn.textContent = '対戦開始';
+      startBtn.textContent = 'START';
       startBtn.disabled = picked.length !== 3;
       countEl.textContent = picked.length + ' / 3';
     } else if (mode === 'draft') {

@@ -632,11 +632,11 @@ export function createBoard(stage, defIndex, me, hooks) {
       for (const [uid, card] of cards) {
         if (!card.visible) continue;
         if (chset.has(uid)) {
-          setHighlight(card, new THREE.Color(0xefd06c), 0.14, 1.0);
-          setSelected(card, true, 0xffd86a);          // 選んだ札は金色に染める
+          setHighlight(card, new THREE.Color(0xffb3da), 0.14, 1.0);
+          setSelected(card, true, 0xffb3da);          // 選んだ札は金色に染める
           setDim(card, false);
         } else if (cset.has(uid)) {
-          setHighlight(card, new THREE.Color(0x63f3ff), 0.05, 0.85);
+          setHighlight(card, new THREE.Color(0xb9a4ff), 0.05, 0.85);
           setCandidate(card, true);
           setDim(card, false);
         } else {
@@ -659,8 +659,8 @@ export function createBoard(stage, defIndex, me, hooks) {
       for (const [uid, card] of cards) {
         if (!card.visible) continue;
         if (focus.has(uid)) {
-          setHighlight(card, new THREE.Color(0xefd06c), 0.52, 1.0);
-          setSelected(card, true, 0xffd86a);
+          setHighlight(card, new THREE.Color(0xffb3da), 0.52, 1.0);
+          setSelected(card, true, 0xffb3da);
         }
       }
     },

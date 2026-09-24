@@ -1375,7 +1375,7 @@ function syncHandDrawerButton() {
   const button = document.getElementById('btnHand');
   if (!button) return;
   button.hidden = false;
-  button.textContent = VIEW.handOpen ? '手札を隠す' : '手札を出す';
+  button.textContent = VIEW.handOpen ? 'HIDE HAND' : 'SHOW HAND';
   button.setAttribute('aria-expanded', String(VIEW.handOpen));
 }
 
@@ -1453,8 +1453,8 @@ function select(uid) {
     sfx('pick');
     raiseHandCard(uid);
     const card = board.cardOf(shown(), uid);
-    board.setHighlight(card, 0xffd86a, 0.22, 0.85);
-    board.setSelected(card, true, 0xffd86a);      // 選んだ札は金色に染める
+    board.setHighlight(card, 0xffb3da, 0.22, 0.85);
+    board.setSelected(card, true, 0xffb3da);      // 選んだ札は金色に染める
   }
   updatePads();
   if (tutorial) coachUpdate();
@@ -1775,7 +1775,7 @@ async function finaleFx(win) {
     FX.compilePillar(stage.scene, BOARD.laneX[i], accent, 1800);
   }
   FX.shockwave(stage.scene, new THREE.Vector3(0, 0, 0), accent, 9, 1200);
-  FX.screenFlash(stage, win ? 0xffffff : 0xff3b9d, 760, 0.92);
+  FX.screenFlash(stage, win ? 0xffffff : 0xff4fa3, 760, 0.92);
   stage.shake(0.3, 900);
   await TW.wait(320);
 }
@@ -2188,8 +2188,8 @@ function pickOnBoard(req) {
         pickBarAsk(req) +
         '<div class="arr-btns">' +
           PEEK_BTN +
-          '<button class="arr-btn ok" id="pkYes" type="button">はい</button>' +
-          '<button class="arr-btn" id="pkNo" type="button">しない</button>' +
+          '<button class="arr-btn ok" id="pkYes" type="button">YES</button>' +
+          '<button class="arr-btn" id="pkNo" type="button">NO</button>' +
         '</div>';
       bindPickBar(el);
       const done = (picks) => {
@@ -2319,7 +2319,7 @@ function renderBoardPick() {
     '<div class="arr-btns">' +
     PEEK_BTN +
     (canBack ? '<button class="arr-btn" id="pkBack" type="button">← 戻る</button>' : '') +
-    '<button class="arr-btn ghost" id="pkList" type="button">一覧で選ぶ</button>' +
+    '<button class="arr-btn ghost" id="pkList" type="button">LIST</button>' +
     (instant ? '' :
       '<button class="arr-btn ok" id="pkOk" type="button"' +
         (bp.chosen.length < bp.min ? ' disabled' : '') + '>' +
@@ -2421,7 +2421,7 @@ function renderLinePick() {
     '<div class="arr-btns">' +
     PEEK_BTN +
     (canBack ? '<button class="arr-btn" id="pkBack" type="button">← 対象を選び直す</button>' : '') +
-    '<button class="arr-btn ghost" id="pkList" type="button">一覧で選ぶ</button>' +
+    '<button class="arr-btn ghost" id="pkList" type="button">LIST</button>' +
     '</div>';
   bindPickBar(el);
   bindPeek(el);
@@ -2658,12 +2658,12 @@ function showEndActions(win) {
   const underdogWin = win && aiDifficulty === UNDERDOG_LEVEL;
   el.innerHTML =
     '<div class="end-title">' + (underdogWin ? '下剋上 達成！' : win ? 'あなたの勝ち' : '敗北') + '</div>' +
-    (underdogWin ? '<div class="end-sub">最弱のデッキで最強に勝ちました。称号「下剋上」を獲得</div>' : '') +
+    (underdogWin ? '<div class="end-sub">最弱のデッキで最強に勝ちました。TITLE — UNDERDOG を獲得</div>' : '') +
     '<div class="end-btns">' +
-      '<button class="arr-btn ok" id="endAgain" type="button">もう一度</button>' +
-      '<button class="arr-btn" id="endTop" type="button">タイトルへ</button>' +
-      '<button class="arr-btn" id="endBoard" type="button">盤面を見る</button>' +
-      (gameHistory.length && !roomMode && !puzzle ? '<button class="arr-btn" id="endReview" type="button">感想戦</button>' : '') +
+      '<button class="arr-btn ok" id="endAgain" type="button">REMATCH</button>' +
+      '<button class="arr-btn" id="endTop" type="button">TITLE</button>' +
+      '<button class="arr-btn" id="endBoard" type="button">BOARD</button>' +
+      (gameHistory.length && !roomMode && !puzzle ? '<button class="arr-btn" id="endReview" type="button">REVIEW</button>' : '') +
     '</div>';
   el.classList.add('show');
   const reviewBtn = el.querySelector('#endReview');
@@ -2841,7 +2841,7 @@ function panelRows(st) {
       return {
         name: proto.name,
         total: totalOf(st, line, side),
-        color: meta.color || '#63f3ff',
+        color: meta.color || '#b9a4ff',
         set: meta.set,
         compiled: proto.compiled,
         /* 次のその側の手番の開始でコンパイル (済みならリコンパイル) が起きる */

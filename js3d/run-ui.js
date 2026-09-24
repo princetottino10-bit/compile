@@ -47,7 +47,7 @@ function protoChip(p, attrs) {
 }
 
 function deckLine(names, byName) {
-  return '<span class="rn-deck">' + names.map(n => '<i style="--pc:' + esc((byName[n] || {}).color || '#63f3ff') + '">' + esc(n) + '</i>').join('') + '</span>';
+  return '<span class="rn-deck">' + names.map(n => '<i style="--pc:' + esc((byName[n] || {}).color || '#b9a4ff') + '">' + esc(n) + '</i>').join('') + '</span>';
 }
 
 /* 戦う相手が決まるまで画面を進める。null ならタイトルへ戻る、{ go: 'weekly' } なら週替わり3連戦へ。
