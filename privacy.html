@@ -1,25 +1,78 @@
 <!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>COMPILE 3D ARENA プライバシーポリシー</title>
-  <style>body{max-width:760px;margin:0 auto;padding:32px 20px;background:#08111c;color:#e8eff8;font:16px/1.8 system-ui,sans-serif}a{color:#69dcff}h1{line-height:1.25}h2{margin-top:2em;color:#ff83bd}.meta{color:#abc0d4}</style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>プライバシーポリシー — COMPILE 3D ARENA</title>
+<link rel="icon" href="icons/compile-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Oxanium:wght@600;800&display=swap">
+<style>
+  :root{
+    --bg:#08060f; --panel:#120d1f; --ink:#f1edf8; --dim:rgba(241,237,248,.62);
+    --pink:#ff4fa3; --violet:#8b5cf6; --lav:#b9a4ff;
+    --font-logo:'Orbitron',system-ui,sans-serif; --font-ui:'Oxanium',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:400 15px/1.85 system-ui,-apple-system,'Hiragino Sans','Noto Sans JP','Yu Gothic UI',sans-serif;}
+  main{max-width:680px;margin:0 auto;padding:48px 20px 72px;}
+  .logo{font:900 13px/1 var(--font-logo);letter-spacing:.18em;color:var(--lav);text-decoration:none;}
+  .logo b{color:var(--pink);margin-right:.4em;}
+  h1{margin:18px 0 6px;font:800 30px/1.3 var(--font-ui);letter-spacing:.02em;text-wrap:balance;}
+  .rule{height:3px;width:120px;background:linear-gradient(90deg,var(--pink),var(--violet));margin:0 0 28px;}
+  h2{margin:34px 0 8px;font:800 13px/1 var(--font-ui);letter-spacing:.22em;color:var(--pink);}
+  p{margin:0 0 12px;}
+  ul{margin:0 0 12px;padding-left:1.2em;}
+  li{margin:2px 0;}
+  a{color:var(--lav);}
+  a:focus-visible{outline:2px solid var(--pink);outline-offset:2px;}
+  .note{color:var(--dim);font-size:13px;}
+  footer{margin-top:44px;padding-top:16px;border-top:1px solid rgba(255,255,255,.1);font:600 12px/1.6 var(--font-ui);letter-spacing:.06em;color:var(--dim);}
+</style>
 </head>
 <body>
-  <p><a href="three-play.html">← COMPILE 3D ARENA に戻る</a></p>
+<main>
+  <a class="logo" href="three-play.html"><b>//</b>COMPILE 3D ARENA</a>
   <h1>プライバシーポリシー</h1>
-  <p class="meta">最終更新日: 2026年9月6日</p>
-  <p>COMPILE 3D ARENA（以下「本サービス」）は、ブラウザで遊べるカードゲームです。本ポリシーは、オンライン対戦およびレート戦で扱う情報を説明します。</p>
-  <h2>取得する情報</h2>
-  <p>ゲスト対戦では、一時的な接続情報と表示名を使用します。メール、Google、GitHubでログインした場合は、認証提供者から受け取るアカウント識別子、メールアドレス、表示名・プロフィール情報を使用します。レート戦では、対戦結果、レート、対戦日時、対戦相手、選んだプロトコルを記録します。</p>
-  <h2>利用目的</h2>
-  <p>情報は、ログイン状態の維持、オンライン対戦の成立と同期、不正利用の抑止、レートと戦績の計算、CSVでの戦績出力のためにのみ使います。</p>
+  <div class="rule" aria-hidden="true"></div>
+
+  <p>COMPILE 3D ARENA (以下「本サービス」) は、ブラウザで遊べるカードゲームです。このページでは、本サービスが扱う情報について説明します。</p>
+
+  <h2>受け取る情報</h2>
+  <ul>
+    <li><b>ゲスト対戦</b>: 一時的な接続情報と、入力した表示名を使います。</li>
+    <li><b>ログインしたとき</b> (Google・メール・GitHub): 認証の提供元から受け取るアカウントの識別子、メールアドレス、表示名・プロフィール情報を使います。</li>
+    <li><b>レート戦</b>: 対戦結果、レート、対戦日時、対戦相手、選んだプロトコルを記録します。</li>
+    <li><b>ログインして遊んだ記録</b>: CPU 戦の戦績、経験値、実績、見た目の設定、お気に入りのカード、RUN・WEEKLY・デイリーミッションの進み具合、保存したリプレイを保存します。</li>
+  </ul>
+  <p>ログインしなくても遊べます。ログインしていないときの CPU 戦の記録などは、お使いのブラウザの中にだけ保存され、こちらには送られません。</p>
+
+  <h2>使い道</h2>
+  <p>ログイン状態の維持、オンライン対戦の成立と同期、不正利用の抑止、レートと戦績の計算、CSV での戦績出力、記録を別の端末でも使えるようにするためにだけ使います。</p>
+  <p>オンライン対戦では、対戦相手に表示名が見えます。WEEKLY のクリア者一覧に名前を載せたときは、そのとき入力した名前がほかのプレイヤーにも表示されます。メールアドレスは表示しません。</p>
+
   <h2>保存と共有</h2>
-  <p>認証情報と対戦データは Supabase のサービス上に保存します。ゲーム画面の配信には GitHub Pages を使用します。広告目的での販売や第三者への提供は行いません。ただし、法令上必要な場合を除きます。</p>
+  <p>認証情報と記録は Supabase (データベースのサービス) に保存します。ゲーム画面の配信には GitHub Pages を使います。広告のために売ったり、第三者に渡したりはしません (法令で必要な場合を除きます)。</p>
+
   <h2>保持期間と削除</h2>
-  <p>レート戦の整合性のため、アカウントと対戦記録はサービス運用中保持します。削除を希望する場合は、下記の連絡先からアカウントのメールアドレスを添えて依頼してください。</p>
+  <p>アカウントと記録は、本サービスを運用している間保持します。消したいときは次の方法があります。</p>
+  <ul>
+    <li>ゲーム内のメニュー右上のアカウント (ACCOUNT) から「アカウントを削除」を選ぶと、アカウントと、アカウントに保存した記録がすべて消えます。</li>
+    <li>CPU 戦の戦績だけを消したいときは、RECORD の「記録を消す」でアカウントからも消えます。</li>
+    <li>うまく消せないときは、下の連絡先にアカウントのメールアドレスを添えて依頼してください。</li>
+  </ul>
+  <p class="note">アカウントを消すと、そのアカウントが関わったレート戦の記録も消えます。</p>
+
   <h2>お問い合わせ</h2>
   <p><a href="mailto:prince.totti.no10@gmail.com">prince.totti.no10@gmail.com</a></p>
+
+  <h2>変更</h2>
+  <p>この内容を変えるときは、このページで知らせます。</p>
+  <p class="note">最終更新: 2026年9月26日 (初版: 2026年9月6日)</p>
+
+  <footer>COMPILE 3D ARENA — ファンメイドの非公式ゲームです</footer>
+</main>
 </body>
 </html>

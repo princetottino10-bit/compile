@@ -302,6 +302,16 @@ Deno.serve(async (req) => {
   const op = String(body.op || "");
 
   try {
+    /* アカウントを消す (Google 等でログインした本人だけ)。戦績・経験値・保存・リプレイ・クリア者一覧などの表は
+       どれも auth.users に on delete cascade で紐づいているので、ユーザーを消せば一緒に消える */
+    if (op === "deleteAccount") {
+      if (user.is_anonymous === true) return fail(req, "ログインしていません", 403);
+      if (body.confirm !== "DELETE") return fail(req, "確認が必要です");
+      const { error } = await admin.auth.admin.deleteUser(user.id);
+      if (error) throw error;
+      return json(req, { ok: true });
+    }
+
     if (op === "list") {
       await admin.rpc("cleanup_secure_rooms");
       const lobbySince = new Date(Date.now() - 2 * 60 * 60_000).toISOString();

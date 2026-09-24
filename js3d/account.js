@@ -284,6 +284,24 @@ async function signOut() {
   changed();
 }
 
+/* このブラウザに残す記録 (アカウントを消すときに一緒に消すもの) */
+const LOCAL_KEYS = ['compileSoloRecords', 'compileXpLog', 'compileReplays', 'compileSyncMark', 'compileCloudMeta'].concat(SAVE.SAVE_KEYS);
+
+/* アカウントを消す。サーバーでユーザーを消すと、表の行もすべて一緒に消える (on delete cascade)。
+   clearLocal: このブラウザの記録も消す */
+async function deleteAccount(clearLocal) {
+  await ROOM.roomApi('deleteAccount', { confirm: 'DELETE' });
+  try { await ROOM.roomSignOut(); } catch (e) { /* ユーザーはもう無いので失敗してよい */ }
+  try {
+    for (const k of Object.keys(localStorage)) if (/^sb-.+-auth-token$/.test(k)) localStorage.removeItem(k);
+    localStorage.removeItem('compileSyncMark');
+    localStorage.removeItem('compileCloudMeta');
+    if (clearLocal) for (const k of LOCAL_KEYS) localStorage.removeItem(k);
+  } catch (e) { /* private mode */ }
+  state.user = null;
+  state.sync = '';
+}
+
 /* Google から戻ってきたらアカウントの画面を開く (main.js が呼ぶ) */
 export function takeAccountResume() {
   try {
@@ -305,19 +323,25 @@ export function openAccount() {
     el.className = 'pz-ov';
     document.body.appendChild(el);
   }
+  let deleting = false;
   const render = () => {
     const s = state;
     let body;
     if (!s.ready) body = '<p class="pz-note">読み込み中…</p>';
     else if (!s.available) body = '<p class="pz-note">' + esc(s.error || 'この環境ではログインできません (secure-room-config.js が未設定)') + '</p>';
     else if (!s.user) {
-      body = '<p class="ac-lead">ログインすると、戦績・経験値・実績・見た目やお気に入り・RUN と WEEKLY の進み具合・保存したリプレイをアカウントに保存します。スマホと PC など、別の端末でも同じ戦績を見られます。</p>' +
+      body = (s.sync ? '<p class="ac-done" role="status">' + esc(s.sync) + '</p>' : '') + '<p class="ac-lead">ログインすると、戦績・経験値・実績・見た目やお気に入り・RUN と WEEKLY の進み具合・保存したリプレイをアカウントに保存します。スマホと PC など、別の端末でも同じ戦績を見られます。</p>' +
         '<div class="pz-row"><button type="button" id="acGoogle" class="ac-google">Google でログイン</button></div>' +
         '<p class="pz-note">ログインしなくても、戦績はこのブラウザに残ります。ログインしたときに、それまでの記録もまとめて保存します。</p>';
     } else {
       body = '<p class="ac-user"><b>' + esc(s.user.name) + '</b>' + (s.user.email ? '<small>' + esc(s.user.email) + '</small>' : '') + '</p>' +
         '<p class="pz-note">' + esc(s.sync || '戦績をアカウントに保存しています') + '</p>' +
-        '<div class="pz-row"><button type="button" id="acSync">今すぐ同期</button><button type="button" id="acOut">ログアウト</button></div>';
+        '<div class="pz-row"><button type="button" id="acSync">今すぐ同期</button><button type="button" id="acOut">ログアウト</button></div>' +
+        (deleting
+          ? '<div class="ac-del"><p><b>アカウントを削除します。</b>アカウントに保存した戦績・経験値・実績・設定・リプレイ・WEEKLY のクリア者一覧の名前がすべて消え、元に戻せません。</p>' +
+            '<label><input type="checkbox" id="acDelLocal"> このブラウザに残っている記録も消す</label>' +
+            '<div class="pz-row"><button type="button" id="acDelYes" class="warn">削除する</button><button type="button" id="acDelNo">やめる</button></div></div>'
+          : '<button type="button" id="acDel" class="ac-del-link">アカウントを削除</button>');
     }
     el.innerHTML = '<div class="pz-card ac-card" role="dialog" aria-modal="true" aria-label="アカウント">' +
       '<div class="pz-head"><b>ACCOUNT</b><button type="button" class="pz-x" aria-label="閉じる">×</button></div>' +
@@ -326,6 +350,28 @@ export function openAccount() {
     const g = el.querySelector('#acGoogle'); if (g) g.onclick = signIn;
     const y = el.querySelector('#acSync'); if (y) y.onclick = syncRecords;
     const o = el.querySelector('#acOut'); if (o) o.onclick = signOut;
+    const d = el.querySelector('#acDel'); if (d) d.onclick = () => { deleting = true; render(); };
+    const dn = el.querySelector('#acDelNo'); if (dn) dn.onclick = () => { deleting = false; render(); };
+    const dy = el.querySelector('#acDelYes');
+    if (dy) {
+      dy.onclick = async () => {
+        const clearLocal = el.querySelector('#acDelLocal').checked;
+        dy.disabled = true;
+        dy.textContent = '削除中…';
+        try {
+          await deleteAccount(clearLocal);
+          deleting = false;
+          state.error = '';
+          state.sync = 'アカウントを削除しました' + (clearLocal ? ' (このブラウザの記録も消しました)' : '');
+          changed();
+          if (clearLocal) setTimeout(() => location.reload(), 1600);    // 画面の数字を空の記録に合わせる
+        } catch (e) {
+          state.error = '削除できませんでした: ' + e.message;
+          deleting = false;
+          changed();
+        }
+      };
+    }
   };
   const off = onAccountChange(render);
   const close = () => { off(); el.classList.remove('show'); };
