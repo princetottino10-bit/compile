@@ -78,3 +78,8 @@ test('相手のコンパイル回数を記録から数える (リコンパイル
   assert.equal(R.compilesBy(st, 1), 3);
   assert.equal(R.compilesBy(st, 0), 1);
 });
+
+test('コンパイル回数はエンジンの集計 (state.tally) を優先する', async () => {
+  const R = await load();
+  assert.equal(R.compilesBy({ tally: { compiles: [1, 2] }, actionLog: [] }, 1), 2);
+});

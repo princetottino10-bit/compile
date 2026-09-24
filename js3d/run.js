@@ -117,8 +117,10 @@ export function applyReward(run, choice, names, rnd = Math.random) {
   return prepareFloor(next, names, rnd);
 }
 
-/* 試合の記録から、相手 (side) がコンパイルした回数を数える (効果でコンパイル完了にしたものも) */
+/* 相手 (side) がコンパイルした回数 (効果でコンパイル完了にしたものも)。
+   エンジンの集計 (state.tally) を使う。古い行が捨てられる actionLog は、集計の無い盤面だけに使う */
 export function compilesBy(state, side) {
+  if (state && state.tally && Array.isArray(state.tally.compiles)) return state.tally.compiles[side] || 0;
   const tag = 'P' + (side + 1) + ': ';
   return (state && state.actionLog || []).filter(line => {
     const s = String(line);
