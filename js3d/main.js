@@ -195,6 +195,10 @@ function shown() { return reviewView || (cur && (cur.view || cur.state)) || null
 
 /* 感想戦の棋譜: 手を指す前の盤面と、その手 (CPU 戦のみ) */
 const gameHistory = [];
+/* 待った: 自分の最後の手 (出す・リフレッシュ) の直前。1手だけ戻せる (ふつうの CPU 戦のみ) */
+let undoPoint = null;
+/* 相手の番のまとめ: { start: 相手の番の最初の盤面, lines: 相手の手の文 } */
+let oppTurn = null;
 
 /* 合法手: ソロはエンジン、ルームはサーバー提供値 */
 
@@ -646,6 +650,8 @@ async function startLesson(index) {
   showPreview(null);
   cur = Engine.newPuzzle(tutorial.lesson.spec, { seed: 1 });
   gameHistory.length = 0;
+  undoPoint = null;
+  oppTurn = null;
   lastTurn = null;
   resultShown = false;
   board.syncInstant(shown());
@@ -1380,6 +1386,11 @@ function bindInput() {
     muteBtn.textContent = isMuted() ? '🔇' : '🔊';
     muteBtn.classList.toggle('on', isMuted());
   };
+  const undoBtn = document.getElementById('btnUndo');
+  if (undoBtn) undoBtn.onclick = undoLastMove;
+  const hintBtn = document.getElementById('btnHint');
+  if (hintBtn) hintBtn.onclick = showHint;
+  onSettings(() => syncAssist());
   const logBtn = document.getElementById('btnLog');
   if (logBtn) logBtn.onclick = () => {
     const open = !document.getElementById('logDock')?.classList.contains('open');
@@ -2339,14 +2350,24 @@ async function step(action) {
     tutorialPending = false;
     return;
   }
-  if (!trainingMode && !demoMode && (action.type === 'play' || action.type === 'refresh')) {
+  const topLevel = action.type === 'play' || action.type === 'refresh';
+  if (topLevel && assistGame() && before.turn === ME) {
+    undoPoint = { cur, replayLen: replayLog ? replayLog.actions.length : 0, histLen: gameHistory.length };
+  }
+  if (topLevel && !demoMode && !trainingMode && !tutorial && !puzzle && before.turn === AI) {
+    if (!oppTurn) oppTurn = { start: before, lines: [] };
+    oppTurn.lines.push(describeAction(action, before, true));
+  }
+  if (!trainingMode && !demoMode && topLevel) {
     gameHistory.push({ st: before, action });
   }
   logAction(action);
   cur = res;
+  syncAssist();
   await replayResolution(prev, res, action);
   refreshHud();
   busy = false;
+  syncAssist();
   await drainRequests();
   await afterTurn();
 }
@@ -3099,7 +3120,9 @@ async function drainRequests() {
       else { picks = ['yes']; queuedAnswer = { id: merged.id, picks: ans }; }
     } else if ((req.player === ME || trainingMode) && !demoMode) {
       UI.setPrompt('');
-      picks = await askUser(req);
+      const forced = forcedPicks(req);
+      if (forced) { picks = forced; await showForcedPick(req, forced); }
+      else picks = await askUser(req);
     } else {
       UI.setPrompt('相手が選択しています…', 'wait');
       const at = cur;
@@ -3139,7 +3162,13 @@ async function afterTurn() {
     await step(action);
     return;   // step が再帰的に afterTurn を呼ぶ
   }
+  if (oppTurn && cur && (cur.state.turn === ME || cur.state.winner !== null)) {
+    const o = oppTurn;
+    oppTurn = null;
+    if (cur.state.winner === null && settings().oppSummary) showOppSummary(o, cur.state);
+  }
   refreshHud();
+  syncAssist();
   if (cur.state.winner !== null && !resultShown) {
     resultShown = true;
     const win = cur.state.winner === ME;
@@ -3318,6 +3347,135 @@ function describeAction(a, st, noWho) {
   }
   if (a.type === 'refresh') return who + 'リフレッシュ';
   return who + a.type;
+}
+
+/* ---------- 遊びやすさの補助 (待った・おすすめの手・自動で選ぶ・相手の番のまとめ・ログから光らせる) ---------- */
+/* 待ったとおすすめの手を使える対戦: ふつうの CPU 戦だけ (勝ち抜き戦・週替わり・オンライン・問題・練習では使わない) */
+function assistGame() {
+  return !roomMode && !runMode && !puzzle && !tutorial && !trainingMode && !demoMode && !replayMode;
+}
+/* いま自分が操作する番か (自分の手番で選択待ちが無い、または自分への選択待ち) */
+function myMoment() {
+  if (!cur || cur.state.winner !== null || busy) return false;
+  return cur.requests.length ? cur.requests[0].player === ME : cur.state.turn === ME;
+}
+function syncAssist() {
+  const undoBtn = document.getElementById('btnUndo');
+  const hintBtn = document.getElementById('btnHint');
+  const game = assistGame() && !!cur;
+  if (undoBtn) {
+    undoBtn.hidden = !game || !undoPoint;
+    undoBtn.disabled = !myMoment();
+  }
+  if (hintBtn) {
+    hintBtn.hidden = !game || !settings().hint;
+    hintBtn.disabled = !myMoment() || !!(cur && cur.requests.length);
+  }
+}
+/* 待った: 自分の最後の手の直前へ戻す (相手がそのあと指した手も戻る)。1手だけ */
+function undoLastMove() {
+  if (!undoPoint || !myMoment()) { UI.toast('いまは戻せません'); return; }
+  const p = undoPoint;
+  undoPoint = null;
+  queuedAnswer = null;
+  oppTurn = null;
+  cur = p.cur;                         // 先に戻す (選択待ちを閉じると、処理の続きは戻した盤面を見て止まる)
+  if (replayLog) replayLog.actions.length = p.replayLen;
+  gameHistory.length = p.histLen;
+  cancelPendingAsk();
+  deselect();
+  board.syncInstant(shown());
+  syncPanels(shown(), false);
+  UI.pushLog(['— 1手戻しました —']);
+  logShown = [];
+  UI.setPrompt('');
+  refreshHud();
+  syncAssist();
+  UI.toast('1手戻しました', 1600);
+}
+/* おすすめの手: CPU ならどう打つかを考えて、そのカードを光らせ、文で出す */
+async function showHint() {
+  if (!myMoment() || cur.requests.length) { UI.toast('自分の番に使えます'); return; }
+  const at = cur;
+  const btn = document.getElementById('btnHint');
+  if (btn) btn.disabled = true;
+  let a = null;
+  try { a = await aiAction(cur.state); } catch (e) { a = null; }
+  if (cur !== at) return;
+  syncAssist();
+  if (!a) { UI.toast('おすすめの手が見つかりませんでした'); return; }
+  const st = shown();
+  if (a.type === 'play' && a.card) {
+    const d = st.cards[a.card] && defIndex[st.cards[a.card].def];
+    board.pulse(a.card, d ? d.color : null, 900);
+  }
+  UI.toast('おすすめ: ' + describeAction(a, cur.state, true), 4200);
+}
+/* 選べるものが1つしかない選択 (設定で切れる)。その答え (無ければ null) */
+function forcedPicks(req) {
+  if (!settings().autoPick || tutorial || trainingMode || roomMode) return null;
+  if (req.kind === 'pickLine') return Array.isArray(req.lines) && req.lines.length === 1 ? [req.lines[0]] : null;
+  if (req.kind === 'pickCard' || req.kind === 'pickHand') {
+    const min = req.min !== undefined ? req.min : 1;
+    const c = req.candidates;
+    if (min >= 1 && Array.isArray(c) && c.length === min && c.every(x => typeof x === 'string')) return c.slice();
+  }
+  return null;
+}
+/* 自動で選んだことが分かるよう、選んだカードを光らせて一言出す */
+async function showForcedPick(req, picks) {
+  const st = shown();
+  const names = picks.map(u => (typeof u === 'string' ? cardName(u) : null)).filter(Boolean);
+  UI.toast('選べるのが1つだけなので自動で選びました' + (names.length ? ': ' + names.join(' / ') : ''), 1800);
+  const first = picks[0];
+  if (typeof first === 'string' && st.cards[first]) {
+    const d = defIndex[st.cards[first].def];
+    await board.pulse(first, d ? d.color : null, 520);
+  } else {
+    await TW.wait(420);
+  }
+}
+/* 相手の番のまとめ: 相手が出した手と、コンパイルしたプロトコル。触れるか数秒で消える */
+let oppSummaryTimer = null;
+function showOppSummary(o, st) {
+  const lines = o.lines.slice();
+  for (let l = 0; l < 3; l++) {
+    const a = o.start.players[AI].protocols[l], b = st.players[AI].protocols[l];
+    if (a && b && !a.compiled && b.compiled) lines.push(b.name + ' をコンパイル');
+  }
+  if (!lines.length) return;
+  let el = document.getElementById('oppSummary');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'oppSummary';
+    el.setAttribute('role', 'status');
+    document.body.appendChild(el);
+  }
+  el.textContent = '';
+  const head = document.createElement('b');
+  head.textContent = '相手の番';
+  const list = document.createElement('ol');
+  for (const t of lines) {
+    const li = document.createElement('li');
+    li.textContent = t;
+    list.append(li);
+  }
+  el.append(head, list);
+  el.classList.add('show');
+  const hide = () => { el.classList.remove('show'); clearTimeout(oppSummaryTimer); };
+  el.onclick = hide;
+  clearTimeout(oppSummaryTimer);
+  oppSummaryTimer = setTimeout(hide, 3200 + lines.length * 1400);
+}
+/* ログに出たカードが盤面・自分の手札のどこにあるかを光らせる (見えているカードだけ) */
+function pulseVisible(defId, color) {
+  const st = shown();
+  if (!st || !st.cards) return;
+  for (const [uid, c] of Object.entries(st.cards)) {
+    if (c.def !== defId) continue;
+    const seen = c.faceUp || ((c.knownTo || 0) & (1 << ME)) || c.zone === 'hand' + ME;
+    if (seen && (c.zone === 'field' || c.zone === 'hand' + ME)) board.pulse(uid, color, 800);
+  }
 }
 
 /* 「盤面を見る」で隠したあと、戻る手段だけ小さく残す */
@@ -3558,6 +3716,7 @@ function logParts(msg) {
 function showCardNoteFor(defId) {
   const d = defIndex[defId];
   if (!d) return;
+  pulseVisible(defId, d.color);
   const o = defDetail(d);
   if (!isCompactHandUI()) {
     previewUid = null;

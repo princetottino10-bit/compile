@@ -7,7 +7,8 @@
 import { cosmeticsHtml, bindCosmetics } from './cosmetics-ui.js';
 const KEY = 'compileSettings';
 /* mat 以下は見た目 (レベルの報酬、cosmetics-ui.js) */
-const DEFAULTS = { speed: 1, sfx: 80, pauses: true, mat: 'neon', sleeve: 'default', marker: 'default', ccolor: 'default',
+/* autoPick: 選べるものが1つしかない選択は自動で選ぶ / oppSummary: 相手の番のまとめ / hint: おすすめの手のボタン (CPU 戦) */
+const DEFAULTS = { speed: 1, sfx: 80, pauses: true, autoPick: true, oppSummary: true, hint: true, mat: 'neon', sleeve: 'default', marker: 'default', ccolor: 'default',
   victory: 'default', title: '', icon: '' };
 const SPEEDS = [
   { v: 0.65, label: 'ゆっくり' },          // 何が起きたかを1つずつ追いたい人向け
@@ -63,6 +64,12 @@ export function openSettings(extra) {
       '<input type="range" min="0" max="100" step="5" id="stSfx" value="' + s.sfx + '"></label>' +
     '<label class="st-row st-check"><span>効果の発動・チェーンで一時停止する<small>オフにすると、発動した効果を1つずつ止めずに進めます</small></span>' +
       '<input type="checkbox" id="stPauses"' + (s.pauses ? ' checked' : '') + '></label>' +
+    '<label class="st-row st-check"><span>選べるものが1つなら自動で選ぶ<small>対象が1つしかない選択は、確認せずに進めます</small></span>' +
+      '<input type="checkbox" id="stAutoPick"' + (s.autoPick ? ' checked' : '') + '></label>' +
+    '<label class="st-row st-check"><span>相手の番のまとめを出す<small>相手の番が終わったら、何をしたかを短く出します</small></span>' +
+      '<input type="checkbox" id="stOppSummary"' + (s.oppSummary ? ' checked' : '') + '></label>' +
+    '<label class="st-row st-check"><span>おすすめの手のボタン (CPU 戦)<small>押すと、CPU ならどう打つかを盤面で光らせます</small></span>' +
+      '<input type="checkbox" id="stHint"' + (s.hint ? ' checked' : '') + '></label>' +
     cosmeticsHtml(s) +
     (extra && extra.length ? '<div class="pz-row">' + extra.map((x, i) => '<button type="button" data-extra="' + i + '">' + x.label + '</button>').join('') + '</div>' : '') +
     '</div>';
@@ -82,6 +89,9 @@ export function openSettings(extra) {
   };
   range('#stSfx', 'sfx', '#stSfxV');
   el.querySelector('#stPauses').onchange = (ev) => setSetting('pauses', ev.target.checked);
+  el.querySelector('#stAutoPick').onchange = (ev) => setSetting('autoPick', ev.target.checked);
+  el.querySelector('#stOppSummary').onchange = (ev) => setSetting('oppSummary', ev.target.checked);
+  el.querySelector('#stHint').onchange = (ev) => setSetting('hint', ev.target.checked);
   bindCosmetics(el, setSetting);
   el.querySelectorAll('[data-extra]').forEach(b => {
     b.onclick = () => { const x = extra[+b.dataset.extra]; if (x) x.onClick(b); };
