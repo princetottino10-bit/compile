@@ -1927,6 +1927,14 @@
     #modalPeek{margin-right:0;}
   }
   @media (prefers-reduced-motion: reduce){ .arr-bar.sel-bar.confirm,#modal.show #modalCard{animation:none;} }
+  /* PC の広い画面: 右上の隅ではなく盤面の右上の角のすぐ外に (--dlg-x / --dlg-y は main.js が盤から数える)。
+     右端からはみ出す幅なら、右端で止める */
+  @media (min-width:1100px) and (min-height:620px){
+    .arr-bar.sel-bar:not(.confirm),.arr-bar.sel-bar.confirm,.arr-bar.sel-bar.confirm.hand-pick{
+      left:min(var(--dlg-x, 100vw), calc(100vw - min(360px,40vw) - 8px));right:auto;top:var(--dlg-y, 44px);}
+    #fxBanner{left:min(var(--dlg-x, 100vw), calc(100vw - min(300px,34vw) - 8px));right:auto;top:var(--dlg-y, 44px);}
+    #modal{padding-top:var(--dlg-y, 44px);padding-right:max(calc(8px + env(safe-area-inset-right)), calc(100vw - var(--dlg-x, 100vw) - min(400px,44vw)));}
+  }
   @media (orientation:landscape) and (max-height:500px){
     .arr-bar.sel-bar:not(.confirm),.arr-bar.sel-bar.confirm{top:38px;width:min(320px,40vw);}
     #modal{padding-top:38px;}
@@ -2064,6 +2072,13 @@
   .pf-got li b{color:var(--pink);font-size:10.5px;}
   #title .tt-corner[hidden]{display:none;}   /* 押す前は出さない (どこを押しても始まる) */
   #profileOv{z-index:62;}
+  /* 選んだカードのすぐ横の「決定」(ダイアログの決定まで手を伸ばさなくてよいように) */
+  #pickGo{position:fixed;z-index:31;padding:9px 16px;border:1px solid var(--pink);background:rgba(12,9,20,.94);color:#fff;cursor:pointer;
+    font:800 12px/1 var(--font-ui);letter-spacing:.14em;clip-path:var(--cut-s);box-shadow:0 8px 24px rgba(0,0,0,.5);
+    animation:pickGoIn .18s cubic-bezier(.16,1,.3,1);}
+  #pickGo:hover,#pickGo:focus-visible{background:var(--pink);outline:0;}
+  @keyframes pickGoIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion: reduce){ #pickGo{animation:none;} }
   /* オンライン対戦: 対戦相手の名前と称号 (画面上の真ん中) */
   #vsTag{position:absolute;left:calc(14px + env(safe-area-inset-left));top:38px;display:flex;align-items:baseline;gap:8px;max-width:46vw;
     padding:6px 14px;background:rgba(12,9,20,.72);clip-path:var(--cut-s);font-family:var(--font-ui);white-space:nowrap;pointer-events:none;}
@@ -2308,7 +2323,7 @@
       "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c",
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=c8378abf22",
-      "./js3d/main.js": "./js3d/main.js?v=1794fdb701",
+      "./js3d/main.js": "./js3d/main.js?v=bdfbb69e85",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=6fe48ba6a8",
       "./js3d/panel.js": "./js3d/panel.js?v=ecb8a073e3",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=e0273dcae0",
@@ -2348,6 +2363,6 @@
   </script>
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=1794fdb701"></script>
+  <script type="module" src="js3d/main.js?v=bdfbb69e85"></script>
 </body>
 </html>

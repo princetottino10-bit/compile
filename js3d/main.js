@@ -24,7 +24,7 @@ import { recordSoloResult, localRecords, favoriteCards, toggleFavoriteCard, onFa
 import { cardStats, cardTier, playerLevel } from './stats-data.js';
 import { isUnlocked, rewardsBetween, TITLES } from './rewards.js';
 import { setCosmeticProtocols } from './cosmetics-ui.js';
-import { matUnlocked } from './playmat.js';
+import { matUnlocked, MAT_W, MAT_D } from './playmat.js';
 import { initAccount, openAccount, takeAccountResume } from './account.js';
 import { openCardList } from './cardlist-ov.js';
 import { openOpponentSelect } from './opponent-select.js';
@@ -510,6 +510,7 @@ async function boot() {
   setTimeout(() => { bootEl.style.display = 'none'; }, 800);
 
   await stage.home(0);
+  placeDialogsNearBoard();
   refreshHud();
   if (puzzle) PZ.showPuzzleBar(puzzle, retryPuzzle);
   if (tutorial) coachUpdate();
@@ -1908,6 +1909,7 @@ async function roomEnterGame(rm) {
   roomTracker = ROOM.createTraceTracker();
   await roomApplyView(rm, true);
   await stage.home(600);
+  placeDialogsNearBoard();
   startRoomPoll();
 }
 
@@ -2430,6 +2432,8 @@ function bindPickBar(el) {
 function removePickBar() {
   const el = document.getElementById('pickBar');
   if (el) el.remove();
+  const go = document.getElementById('pickGo');
+  if (go) go.remove();
   document.body.classList.remove('picking');
   pickPanelReq = null;
 }
@@ -2484,6 +2488,7 @@ function renderBoardPick() {
   const back = el.querySelector('#pkBack');
   if (back) back.onclick = () => finishBoardPick(PICK_BACK);
   el.querySelector('#pkList').onclick = () => finishBoardPick(null);
+  renderPickGo(bp);
 }
 
 function renderFreePick() {
@@ -2621,8 +2626,45 @@ function toggleBoardPick(uid) {
     finishBoardPick(bp.chosen.slice());
     return;
   }
+  /* 枚数が決まっている盤面の選択 (ちょうど N 枚) は、N 枚目を押した時点で確定する */
+  if (bp.req.kind !== 'pickHand' && bp.min === bp.max && bp.max > 1 && bp.chosen.length === bp.max) {
+    finishBoardPick(bp.chosen.slice());
+    return;
+  }
   renderBoardPick();
 }
+
+/* 最後に押した場所 (選んだカードのすぐ横に「決定」を出すため) */
+let lastTap = null;
+window.addEventListener('pointerdown', (ev) => { lastTap = { x: ev.clientX, y: ev.clientY }; }, true);
+
+/* 選んだカードのすぐ横の「決定」。ダイアログの決定まで手を伸ばさなくてよいように (Enter でも決定) */
+function renderPickGo(bp) {
+  let go = document.getElementById('pickGo');
+  const show = bp && !pickIsInstant(bp) && bp.chosen.length > 0 && bp.chosen.length >= bp.min && lastTap;
+  if (!show) { if (go) go.remove(); return; }
+  if (!go) {
+    go = document.createElement('button');
+    go.id = 'pickGo';
+    go.type = 'button';
+    document.body.appendChild(go);
+  }
+  go.textContent = '決定' + (bp.max > 1 ? ' (' + bp.chosen.length + ')' : '');
+  go.title = 'Enter でも決定できます';
+  const x = Math.min(window.innerWidth - 110, lastTap.x + 26);
+  const y = Math.max(8, Math.min(window.innerHeight - 50, lastTap.y - 18));
+  go.style.left = x + 'px';
+  go.style.top = y + 'px';
+  go.onclick = (ev) => { ev.stopPropagation(); if (boardPick === bp) finishBoardPick(bp.chosen.slice()); };
+}
+window.addEventListener('keydown', (ev) => {
+  const bp = boardPick;
+  if (ev.key !== 'Enter' || !bp || !bp.chosen || pickIsInstant(bp)) return;
+  if (bp.chosen.length < bp.min) return;
+  if (ev.target && /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(ev.target.tagName)) return;
+  ev.preventDefault();
+  finishBoardPick(bp.chosen.slice());
+});
 
 /* 1枚必須の選択をタップで即決するか。手札から選ぶ (捨てる・キャッシュの削除・渡す等) は
    取り消せないので、1枚でも「選んで → 決定」にする。選び直しはもう1枚をタップ */
@@ -2633,6 +2675,7 @@ function pickIsInstant(bp) {
 function finishBoardPick(picks) {
   const bp = boardPick;
   boardPick = null;
+  renderPickGo(null);
   board.clearCandidates();
   removePickBar();
   bp.resolve(picks);
@@ -3021,6 +3064,30 @@ function onViewportChanged() {
   relayoutTimer = setTimeout(() => attempt(0), 220);
 }
 window.addEventListener('resize', onViewportChanged);
+/* カメラが画面の大きさに合わせ直したあとで数える (合わせ直しは少し遅れることがあるので、もう一度あとでも) */
+function placeDialogsSoon() {
+  clearTimeout(dlgTimer);
+  dlgTimer = setTimeout(() => { placeDialogsNearBoard(); dlgTimer = setTimeout(placeDialogsNearBoard, 900); }, 400);
+}
+window.addEventListener('resize', placeDialogsSoon);
+window.addEventListener('compile:viewport', placeDialogsSoon);
+
+/* PC の広い画面では、選ぶ帯・発動の帯・選択肢の一覧を画面の右上の隅ではなく「盤面の右上の角のすぐ外」に出す。
+   盤の奥の右の角が画面のどこに写るかを数え、CSS の --dlg-x / --dlg-y に入れる (はみ出す分は CSS が右端で止める) */
+let dlgTimer = null;
+function placeDialogsNearBoard() {
+  if (!stage || !stage.camera) return;
+  const root = document.documentElement.style;
+  const w = window.innerWidth, h = window.innerHeight;
+  const corners = [-1, 1].map((sz) => {
+    const v = new THREE.Vector3(MAT_W / 2, 0, sz * MAT_D / 2).project(stage.camera);
+    return { x: (v.x + 1) / 2 * w, y: (1 - v.y) / 2 * h };
+  });
+  const far = corners[0].y < corners[1].y ? corners[0] : corners[1];      // 画面の上に写る方が奥の角
+  if (!Number.isFinite(far.x) || far.x <= 0 || far.x >= w) { root.removeProperty('--dlg-x'); root.removeProperty('--dlg-y'); return; }
+  root.setProperty('--dlg-x', Math.round(far.x + 18) + 'px');
+  root.setProperty('--dlg-y', Math.round(Math.max(44, far.y)) + 'px');
+}
 /* stage が実際の大きさの変化を検知したとき (回転直後の遅れて確定する大きさなど) */
 window.addEventListener('compile:viewport', onViewportChanged);
 
