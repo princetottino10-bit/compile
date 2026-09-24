@@ -377,7 +377,6 @@ export function createBoard(stage, defIndex, me, hooks) {
     /* お気に入りのカードを表で出したときは、細い金の輪を1つ足すだけ (光らせすぎない) */
     const pc = next.cards[uid];
     const aura = pc && pc.owner === me && pc.faceUp ? auraFor(pc.def) : null;
-    if (aura && aura.fav) spawnImpactRing(scene, target, 0xffd86a, 5);
     setHighlight(card, accent, 0.42, 0.95);
 
     /* 着地のつぶれ + 沈み込み + 発光の減衰 */

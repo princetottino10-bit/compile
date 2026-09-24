@@ -44,45 +44,6 @@ export function cleanEffects(e) {
   return out;
 }
 
-/* ---------- お気に入りのカード (10枚まで、1プロトコル1枚まで) ---------- */
-const FAV_KEY = 'compileFavCards';
-const FAV_OLD_KEY = 'compileFavCard';        // 以前の1枚だけの保存
-export const FAV_MAX = 10;
-const favListeners = new Set();
-const protoOfId = (defId) => String(defId).split('_')[0];
-export function favoriteCards() {
-  try {
-    const list = JSON.parse(localStorage.getItem(FAV_KEY) || 'null');
-    if (Array.isArray(list)) return list.filter(x => typeof x === 'string').slice(0, FAV_MAX);
-    const old = localStorage.getItem(FAV_OLD_KEY);
-    return old ? [old] : [];
-  } catch (e) {
-    return [];
-  }
-}
-function saveFavorites(list) {
-  try {
-    localStorage.setItem(FAV_KEY, JSON.stringify(list));
-    localStorage.removeItem(FAV_OLD_KEY);
-  } catch (e) { /* private mode */ }
-  for (const fn of favListeners) fn(list.slice());
-}
-/* 選ぶ / 外す。同じプロトコルの別の札が選ばれていれば入れ替える。
-   { ok, message } を返す (10枚を超えるときは ok: false) */
-export function toggleFavoriteCard(defId) {
-  const list = favoriteCards();
-  if (list.includes(defId)) { saveFavorites(list.filter(x => x !== defId)); return { ok: true }; }
-  const same = list.find(x => protoOfId(x) === protoOfId(defId));
-  if (same) {
-    saveFavorites(list.map(x => (x === same ? defId : x)));
-    return { ok: true, message: protoOfId(defId) + ' のお気に入りを入れ替えました' };
-  }
-  if (list.length >= FAV_MAX) return { ok: false, message: 'お気に入りは ' + FAV_MAX + '枚までです。どれかを外してから選んでください' };
-  saveFavorites(list.concat(defId));
-  return { ok: true };
-}
-export function onFavoriteChange(fn) { favListeners.add(fn); return () => favListeners.delete(fn); }
-
 /* 別の端末で記録した分 (アカウントから読んだ分) を足す。同じ id は足さない */
 export function mergeRecords(remote) {
   const list = records();
@@ -254,29 +215,25 @@ function effectTop(cs) {
   }).join('') + '</div>';
 }
 
-/* カード: 全180枚をプロトコルごとに。光り方 (表で出して勝った数) と、押してお気に入り (10枚・1プロトコル1枚まで) */
+/* カード: 全180枚をプロトコルごとに。光り方 (表で出して勝った数) */
 function cardsTab(list, protos) {
   const cs = cardStats(list);
-  const favs = favoriteCards();
   const byProto = new Map();
   for (const [id, d] of Object.entries(cardIndex)) {
     if (!byProto.has(d.proto)) byProto.set(d.proto, []);
     byProto.get(d.proto).push({ id, ...d });
   }
   return '<p class="pz-note">表で出して勝った試合の数で、盤面のカードが光ります: 銅 3勝・銀 10勝・金 25勝・ホロ 50勝。' +
-    'カードを押すとお気に入りになり、金の縁取りが付きます (<b>' + FAV_MAX + '枚まで・1プロトコル1枚まで</b>)。</p>' +
+    'カードにカーソルを乗せると、勝った数と効果の発動回数が出ます。</p>' +
     effectTop(cs) +
-    '<p class="sr-favcount">お気に入り <b>' + favs.length + '</b> / ' + FAV_MAX + '<span id="srFavMsg" role="status"></span></p>' +
     '<div class="sr-cardgrid">' + protos.map(p => {
       const cards = (byProto.get(p.name) || []).sort((a, b) => a.value - b.value);
       return '<div class="sr-cgrow" style="--pc:' + esc(p.color) + '"><b>' + esc(p.name) + '</b>' + cards.map(c => {
         const t = cs.get(c.id);
         const tier = t ? cardTier(t.wins) : null;
-        const on = favs.includes(c.id);
-        return '<button type="button" class="sr-cc' + (tier ? ' t-' + tier.key : '') + (on ? ' fav' : '') + '" data-fav="' + esc(c.id) + '"' +
-          ' aria-pressed="' + on + '" title="' + esc(p.name + ' ' + c.value) +
+        return '<span class="sr-cc' + (tier ? ' t-' + tier.key : '') + '" title="' + esc(p.name + ' ' + c.value) +
           (t ? ' - ' + t.wins + '勝 / ' + t.games + '戦・効果 ' + t.effects + '回' : ' - 未使用') + '">' +
-          c.value + (on ? '<i>★</i>' : '') + '</button>';
+          c.value + '</span>';
       }).join('') + '</div>';
     }).join('') + '</div>';
 }
@@ -323,18 +280,6 @@ export async function openStats() {
     body.innerHTML = views[i]();
     el.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('on', +b.dataset.tab === i));
     bindReplays(body, () => show(i));
-    body.querySelectorAll('[data-fav]').forEach(b => {
-      b.onclick = () => {
-        const grid0 = body.querySelector('.sr-cardgrid');
-        const scroll = grid0 ? grid0.scrollTop : 0;
-        const r = toggleFavoriteCard(b.dataset.fav);
-        show(i);
-        const grid = body.querySelector('.sr-cardgrid');
-        if (grid) grid.scrollTop = scroll;
-        const msg = body.querySelector('#srFavMsg');
-        if (msg && r.message) { msg.textContent = r.message; msg.classList.toggle('warn', !r.ok); }
-      };
-    });
   };
   el.querySelectorAll('[data-tab]').forEach(b => { b.onclick = () => show(+b.dataset.tab); });
   show(0);

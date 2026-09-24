@@ -21,7 +21,7 @@ import * as ROOM from './room.js';
 import * as PZ from './puzzle.js';
 import * as TU from './tutorial.js';
 import { settings, onSettings, openSettings } from './settings.js';
-import { recordSoloResult, localRecords, favoriteCards, toggleFavoriteCard, onFavoriteChange } from './stats.js';
+import { recordSoloResult, localRecords } from './stats.js';
 import { cardStats, cardTier, playerLevel } from './stats-data.js';
 import { isUnlocked, rewardsBetween, TITLES } from './rewards.js';
 import { setCosmeticProtocols } from './cosmetics-ui.js';
@@ -82,11 +82,9 @@ function cosmetic(kind, fallback) {
   const key = settings()[kind];
   return key && isUnlocked(kind, key, myLevel) ? key : fallback;
 }
-let favSet = new Set(favoriteCards());
 function refreshCardGlow() {
   cardWins = cardStats(localRecords());
   myLevel = playerLevel(localRecords(), bonusXp()).level;
-  favSet = new Set(favoriteCards());
   if (board && cur) board.syncInstant(shown());
 }
 /* CPU 戦の戦績以外で入る経験値 (xp.js) を足し、レベルが上がったら手に入った報酬を見せる。
@@ -148,17 +146,13 @@ async function checkTrophies(game) {
   }
 }
 function auraFor(defId) {
-  if (favSet.has(defId)) return { color: '#ffffff', strength: 1, fav: true, frame: true, holo: false };
   const t = cardWins.get(defId);
   const tier = t ? cardTier(t.wins) : null;
   if (!tier) return null;
   return { color: tier.color, strength: tier.key === 'bronze' ? 0.45 : tier.key === 'silver' ? 0.55 : 0.7, holo: !!tier.holo, fav: false };
 }
-onFavoriteChange(() => { refreshCardGlow(); checkTrophies(null); });
-/* 詳細パネルの ★ でお気に入りを選ぶ (もう一度押すと外す。10枚・1プロトコル1枚まで) */
-UI.setFavoriteHandler({
-  isFav: (defId) => favSet.has(defId),
-  toggle: (defId) => { const r = toggleFavoriteCard(defId); if (r.message) UI.toast(r.message); return r; },
+/* 詳細パネルに、そのカードの光り方 (表で出して勝った数) と効果の発動回数を添える */
+UI.setCardInfoHandler({
   winsOf: (defId) => { const t = cardWins.get(defId); return t ? { wins: t.wins, games: t.games, effects: t.effects, tier: cardTier(t.wins) } : null; }
 });
 let runMode = false;             // 勝ち抜き戦・週替わり3連戦の1戦 (?run=1)

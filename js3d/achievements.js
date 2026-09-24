@@ -15,7 +15,7 @@ const onlineWin = (e) => e.src === 'online' && e.xp > XP_GAIN.onlinePlay;   // �
 const KEY = 'compileTrophies';
 export const TROPHY_XP = { bronze: 2, silver: 5, gold: 10, platinum: 20 };
 
-/* ctx: { records: CPU 戦の戦績, xp: 経験値の帳簿, favorites: お気に入り, level, cardWins: Map(defId → {wins}),
+/* ctx: { records: CPU 戦の戦績, xp: 経験値の帳簿, level, cardWins: Map(defId → {wins}),
           game: その1試合 (無ければ null) { win, turns, compiles, oppCompiles, winCompiles, effectsMap, faceUpIds, at } } */
 const wins = (c) => c.records.filter(r => r.win).length + c.xp.filter(onlineWin).length;
 const xpHas = (c, fn) => c.xp.some(fn);
@@ -25,6 +25,7 @@ function streak(records, want) {
   for (const r of records) { n = !!r.win === want ? n + 1 : 0; best = Math.max(best, n); }
   return best;
 }
+const playedKinds = (c) => new Set(c.records.flatMap(r => r.cards || [])).size;
 const protoWins = (c) => new Set(c.records.filter(r => r.win).flatMap(r => r.me)).size;
 const tierCards = (c, min) => Array.from(c.cardWins.values()).filter(t => t.wins >= min).length;
 const g = (c) => c.game || null;
@@ -39,7 +40,7 @@ export const TROPHIES = [
   { id: 'puzzle', tier: 'bronze', name: 'SOLVER', desc: '問題を1つ解く', test: (c) => xpHas(c, e => e.src === 'puzzle') },
   { id: 'online', tier: 'bronze', name: 'HELLO WORLD', desc: 'オンライン対戦を1戦する', test: (c) => xpHas(c, e => e.src === 'online') },
   { id: 'daily', tier: 'bronze', name: 'DAILY ROUTINE', desc: 'デイリーミッションを1日で3つそろえる', test: (c) => xpHas(c, e => /^k:dm:\d+:all$/.test(e.id)) },
-  { id: 'favorites', tier: 'bronze', name: 'COLLECTOR', desc: 'お気に入りのカードを10枚そろえる', test: (c) => c.favorites.length >= 10, progress: (c) => [c.favorites.length, 10] },
+  { id: 'cards60', tier: 'bronze', name: 'COLLECTOR', desc: '違うカードを60種類、表で出す', test: (c) => playedKinds(c) >= 60, progress: (c) => [Math.min(60, playedKinds(c)), 60] },
   { id: 'explorer', tier: 'bronze', name: 'EXPLORER', desc: '10種類のプロトコルで戦う', test: (c) => new Set(c.records.flatMap(r => r.me)).size >= 10, progress: (c) => [new Set(c.records.flatMap(r => r.me)).size, 10] },
   { id: 'bronze_card', tier: 'bronze', name: 'FIRST SHINE', desc: 'カードの縁を銅にする (そのカードで3勝)', test: (c) => tierCards(c, 3) >= 1 },
   { id: 'loss5', tier: 'bronze', hidden: true, name: 'NEVER GIVE UP', desc: '5連敗する', test: (c) => streak(c.records, false) >= 5 },

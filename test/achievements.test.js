@@ -78,3 +78,11 @@ test('進み具合は取っていない積み上げの実績に出る', () => {
   const v = trophyView(ctx({ records: [rec(true), rec(true)] }));
   assert.deepEqual(v.list.find(t => t.id === 'wins10').prog, [2, 10]);
 });
+
+test('COLLECTOR: 違うカードを60種類、表で出す (お気に入りの実績の代わり)', () => {
+  const cards = Array.from({ length: 60 }, (_, i) => 'C' + (i % 30) + '_' + Math.floor(i / 30));
+  const got = ids(newlyEarned({}, ctx({ records: [{ win: false, level: 1, me: ['FIRE'], cards }] })));
+  assert.ok(got.includes('cards60'));
+  const few = trophyView(ctx({ records: [{ win: false, level: 1, me: ['FIRE'], cards: cards.slice(0, 7) }] }));
+  assert.deepEqual(few.list.find(t => t.id === 'cards60').prog, [7, 60]);
+});

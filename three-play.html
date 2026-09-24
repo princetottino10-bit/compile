@@ -1440,34 +1440,23 @@
   .cp-row.empty p,.cn-row.empty .cn-text{font-style:normal;color:var(--dim);}
   .cp-fxn{margin-left:4px;font:800 10px/1 system-ui;padding:3px 6px;border-radius:999px;color:#cfefff;background:rgba(185,164,255,.16);
     font-variant-numeric:tabular-nums;white-space:nowrap;}
-  .sr-favcount{margin:0;font:700 12px/1 system-ui;color:var(--dim);display:flex;gap:10px;align-items:center;}
-  .sr-favcount b{color:#ffb3da;font-size:15px;}
-  .sr-favcount span{font-weight:600;color:#9fdcff;}
-  .sr-favcount span.warn{color:#ffb3d6;}
   .sr-cardgrid{display:flex;flex-direction:column;gap:4px;max-height:50vh;overflow-y:auto;padding-top:6px;}
   .sr-cgrow{display:grid;grid-template-columns:minmax(84px,1fr) repeat(6,34px);gap:4px;align-items:center;
     padding:3px 4px 3px 8px;border-radius:7px;border-left:3px solid var(--pc);background:rgba(255,255,255,.025);}
   .sr-cgrow > b{font:800 10.5px/1 var(--font-hud),system-ui;letter-spacing:.05em;color:#dfe8f5;overflow:hidden;text-overflow:ellipsis;}
-  .sr-cc{position:relative;cursor:pointer;height:30px;border-radius:6px;border:1px solid rgba(255,255,255,.12);
+  .sr-cc{position:relative;display:flex;align-items:center;justify-content:center;cursor:default;height:30px;border-radius:6px;border:1px solid rgba(255,255,255,.12);
     background:rgba(255,255,255,.03);color:var(--dim);font:800 12px/1 var(--font-hud),system-ui;font-variant-numeric:tabular-nums;}
-  .sr-cc:hover,.sr-cc:focus-visible{border-color:var(--cyan);color:#fff;outline:0;}
+  .sr-cc:hover{border-color:var(--cyan);color:#fff;}
   .sr-cc.t-bronze{color:#1a0d04;background:#d98b52;border-color:#d98b52;}
   .sr-cc.t-silver{color:#0c1320;background:#cfe0f5;border-color:#cfe0f5;}
   .sr-cc.t-gold{color:#1d1502;background:#ffd45e;border-color:#ffd45e;}
   .sr-cc.t-holo{color:#0b0616;background:linear-gradient(135deg,#ff7ab4,#b98cff,#b9a4ff,#a07bff);border-color:transparent;}
-  .sr-cc.fav{box-shadow:0 0 0 2px #ffb8e0,0 0 12px rgba(255,184,224,.6);}
-  .sr-cc i{position:absolute;top:-6px;right:-5px;font-style:normal;font-size:11px;color:#ffb3da;text-shadow:0 0 4px #000,0 0 8px rgba(255,216,106,.8);}
   .cp-tier{font:800 10px/1 system-ui;padding:3px 6px;border-radius:999px;text-align:center;}
   .cp-tier.t-bronze{color:#1a0d04;background:#d98b52;}
   .cp-tier.t-silver{color:#0c1320;background:#cfe0f5;}
   .cp-tier.t-gold{color:#1d1502;background:#ffd45e;box-shadow:0 0 10px rgba(255,212,94,.5);}
   .cp-tier.t-holo{color:#0b0616;background:linear-gradient(90deg,#ff7ab4,#b98cff,#b9a4ff,#a07bff);}
-  .cp-fav{cursor:pointer;width:30px;height:28px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:transparent;
-    color:var(--dim);font-size:15px;line-height:1;}
-  .cp-fav[aria-pressed="true"]{color:#ffb3da;border-color:rgba(255,216,106,.55);text-shadow:0 0 8px rgba(255,216,106,.7);}
-  .cp-fav{width:26px;height:24px;font-size:13px;margin-left:6px;}
-  /* 詳細パネルは盤面の操作を邪魔しないよう触れない作り。★ だけ押せるようにする */
-  #preview.show .cp-fav{pointer-events:auto;}
+
   .cp-tier{margin-left:4px;}
   .sr-h{margin:6px 0 0;font:800 11px/1 system-ui;letter-spacing:.1em;color:var(--dim);}
   .sr-warn{font:700 12px/1.5 system-ui;color:#ffb3d6;}
@@ -2376,19 +2365,19 @@
       "three/addons/": "./vendor/jsm/",
       "./vendor/three.module.js": "./vendor/three.module.js?v=985eb92490",
       "./js3d/account.js": "./js3d/account.js?v=4b5ae5c54c",
-      "./js3d/achievements-ui.js": "./js3d/achievements-ui.js?v=b654b31bff",
-      "./js3d/achievements.js": "./js3d/achievements.js?v=2a38ee9fea",
+      "./js3d/achievements-ui.js": "./js3d/achievements-ui.js?v=66713584af",
+      "./js3d/achievements.js": "./js3d/achievements.js?v=9b39b622bd",
       "./js3d/admin-ui.js": "./js3d/admin-ui.js?v=0437cdb130",
       "./js3d/aidecks.js": "./js3d/aidecks.js?v=8d249240bd",
       "./js3d/arena.js": "./js3d/arena.js?v=4e3e7f73c2",
       "./js3d/audio.js": "./js3d/audio.js?v=28a4f522ba",
       "./js3d/backdrops.js": "./js3d/backdrops.js?v=90faf9612d",
-      "./js3d/board.js": "./js3d/board.js?v=e4f284a6ba",
-      "./js3d/card.js": "./js3d/card.js?v=328832a57c",
+      "./js3d/board.js": "./js3d/board.js?v=3f424f5e21",
+      "./js3d/card.js": "./js3d/card.js?v=a0712f855a",
       "./js3d/cardlist-ov.js": "./js3d/cardlist-ov.js?v=1d673fd0d2",
       "./js3d/cardtex.js": "./js3d/cardtex.js?v=24b6c53321",
       "./js3d/cardtext.js": "./js3d/cardtext.js?v=4cf5529855",
-      "./js3d/cloudsave.js": "./js3d/cloudsave.js?v=fc91df5316",
+      "./js3d/cloudsave.js": "./js3d/cloudsave.js?v=8372cec875",
       "./js3d/control.js": "./js3d/control.js?v=acf84debbc",
       "./js3d/cosmetics-ui.js": "./js3d/cosmetics-ui.js?v=6e894549a5",
       "./js3d/daily.js": "./js3d/daily.js?v=f56dabdf65",
@@ -2399,7 +2388,7 @@
       "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c",
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=c8378abf22",
-      "./js3d/main.js": "./js3d/main.js?v=aca7f457d8",
+      "./js3d/main.js": "./js3d/main.js?v=f20ed9aadc",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=6fe48ba6a8",
       "./js3d/panel.js": "./js3d/panel.js?v=ecb8a073e3",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=e0273dcae0",
@@ -2423,14 +2412,14 @@
       "./js3d/solodraft.js": "./js3d/solodraft.js?v=9863c9528c",
       "./js3d/stage.js": "./js3d/stage.js?v=203ed8ec22",
       "./js3d/stats-data.js": "./js3d/stats-data.js?v=bcf7d5e977",
-      "./js3d/stats.js": "./js3d/stats.js?v=3b6299945b",
+      "./js3d/stats.js": "./js3d/stats.js?v=8265afe03d",
       "./js3d/theme.js": "./js3d/theme.js?v=b02da60dc1",
       "./js3d/title.js": "./js3d/title.js?v=bc947ec6e2",
       "./js3d/training.js": "./js3d/training.js?v=3018b4399e",
       "./js3d/turning.js": "./js3d/turning.js?v=9c7f79654e",
       "./js3d/tutorial.js": "./js3d/tutorial.js?v=34aae6e6cc",
       "./js3d/tween.js": "./js3d/tween.js?v=99b25c0d63",
-      "./js3d/ui.js": "./js3d/ui.js?v=5e8a5fb9c6",
+      "./js3d/ui.js": "./js3d/ui.js?v=f39a94c4fb",
       "./js3d/weekly-ui.js": "./js3d/weekly-ui.js?v=f071703507",
       "./js3d/weekly.js": "./js3d/weekly.js?v=b4651191ce",
       "./js3d/xp.js": "./js3d/xp.js?v=b2c69be784"
@@ -2439,6 +2428,6 @@
   </script>
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=aca7f457d8"></script>
+  <script type="module" src="js3d/main.js?v=f20ed9aadc"></script>
 </body>
 </html>

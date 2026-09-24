@@ -3,14 +3,14 @@
  *   隠し実績は取るまで「???」。取っていない普通の実績は条件と進み具合を出す
  * ========================================================================= */
 import { trophyView, TROPHY_XP } from './achievements.js';
-import { localRecords, favoriteCards } from './stats.js';
+import { localRecords } from './stats.js';
 import { playerLevel, cardStats } from './stats-data.js';
 import { xpLog, bonusXp } from './xp.js';
 
 /* 判定に使う材料をそろえる。game: その1試合 (無ければ null) */
 export function trophyContext(game) {
   const records = localRecords();
-  return { records, xp: xpLog(), favorites: favoriteCards(), level: playerLevel(records, bonusXp()).level,
+  return { records, xp: xpLog(), level: playerLevel(records, bonusXp()).level,
     cardWins: cardStats(records), game: game || null };
 }
 

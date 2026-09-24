@@ -425,16 +425,13 @@ export function turnCutIn(mine) {
 const PANEL_ZONE = { upper: '▲ 上段', middle: '◆ 中段', lower: '▼ 下段' };
 let hideTimer = null;
 
-/* お気に入りのカード (main.js が渡す): isFav(defId) / toggle(defId) / winsOf(defId) */
-let favHandler = null;
-export function setFavoriteHandler(h) { favHandler = h; }
+/* カードの戦績 (main.js が渡す): winsOf(defId) -> { wins, games, effects, tier } */
+let cardInfo = null;
+export function setCardInfoHandler(h) { cardInfo = h; }
 function favButton(o) {
-  if (!favHandler || !o.defId || o.hidden || o.defId === '__unknown__') return '';
-  const on = favHandler.isFav(o.defId);
-  const w = favHandler.winsOf(o.defId);
-  return '<button type="button" class="cp-fav" data-fav="' + o.defId + '" aria-pressed="' + on + '" title="' +
-    (on ? 'お気に入りを外す' : 'お気に入りにする') + '">' + (on ? '★' : '☆') + '</button>' +
-    (w && w.tier ? '<span class="cp-tier t-' + w.tier.key + '" title="表で出して ' + w.wins + '勝">' + w.tier.name + '</span>' : '') +
+  if (!cardInfo || !o.defId || o.hidden || o.defId === '__unknown__') return '';
+  const w = cardInfo.winsOf(o.defId);
+  return (w && w.tier ? '<span class="cp-tier t-' + w.tier.key + '" title="表で出して ' + w.wins + '勝">' + w.tier.name + '</span>' : '') +
     (w && w.effects ? '<span class="cp-fxn" title="このカードの効果が発動した回数 (これまでの合計)">効果 ' + w.effects + '</span>' : '');
 }
 
@@ -461,8 +458,6 @@ export function showCardPanel(o, opts) {
       ? '<div class="cp-rows">' + rows.map(r => '<div class="cp-row' + (r.empty ? ' empty' : r.inactive ? ' off' : '') + '">' +
           '<span class="cp-zone">' + (PANEL_ZONE[r.key] || '') + '</span><p>' + (r.empty ? 'なし' : condHtml(r.text)) + '</p></div>').join('') + '</div>'
       : '');
-  const fav = el.querySelector('.cp-fav');
-  if (fav) fav.onclick = (ev) => { ev.stopPropagation(); favHandler.toggle(o.defId); showCardPanel(o, opts); };
   el.classList.add('show');
   if (opts && opts.transient) hideTimer = setTimeout(hideCardPanel, 2400);
 }
