@@ -2046,6 +2046,14 @@
   .pf-got li b{color:var(--pink);font-size:10.5px;}
   #title .tt-corner[hidden]{display:none;}   /* 押す前は出さない (どこを押しても始まる) */
   #profileOv{z-index:62;}
+  /* オンライン対戦: 対戦相手の名前と称号 (画面上の真ん中) */
+  #vsTag{position:absolute;left:calc(14px + env(safe-area-inset-left));top:38px;display:flex;align-items:baseline;gap:8px;max-width:46vw;
+    padding:6px 14px;background:rgba(12,9,20,.72);clip-path:var(--cut-s);font-family:var(--font-ui);white-space:nowrap;pointer-events:none;}
+  #vsTag[hidden]{display:none;}
+  @media (orientation:landscape) and (max-height:500px){ #vsTag{top:8px;left:calc(10px + env(safe-area-inset-left));max-width:34vw;} }
+  #vsTag i{font:800 10px/1 var(--font-ui);font-style:normal;letter-spacing:.2em;color:var(--dim);}
+  #vsTag b{font:800 14px/1 var(--font-ui);color:#fff;overflow:hidden;text-overflow:ellipsis;}
+  #vsTag small{font:800 10px/1 var(--font-ui);letter-spacing:.16em;color:var(--pink);}
   .tt-corner .tt-admin{padding:0 14px;color:var(--pink);border-color:rgba(255,79,163,.55);font-family:var(--font-ui);font-weight:800;letter-spacing:.14em;}
   .tt-corner .tt-admin[hidden]{display:none;}
   /* 管理者の画面 (ACCOUNT → ADMIN) */
@@ -2182,6 +2190,7 @@
 
   <div id="topbar">
     <div id="brand"><b>COMPILE</b><span>3D ARENA</span></div>
+    <div id="vsTag" hidden></div>
     <div id="topRight">
       <button id="btnCards" class="btn" type="button" title="カードリスト" aria-label="カードリスト">CARDS</button>
       <button id="btnSettings" class="btn" type="button" title="設定" aria-label="設定">⚙</button>
@@ -2273,7 +2282,7 @@
       "./js3d/cardtext.js": "./js3d/cardtext.js?v=4cf5529855",
       "./js3d/cloudsave.js": "./js3d/cloudsave.js?v=6b137d09b8",
       "./js3d/control.js": "./js3d/control.js?v=acf84debbc",
-      "./js3d/cosmetics-ui.js": "./js3d/cosmetics-ui.js?v=2364480ea7",
+      "./js3d/cosmetics-ui.js": "./js3d/cosmetics-ui.js?v=6e894549a5",
       "./js3d/daily.js": "./js3d/daily.js?v=f56dabdf65",
       "./js3d/emblems.js": "./js3d/emblems.js?v=6d1c077a2e",
       "./js3d/fx-protocols.js": "./js3d/fx-protocols.js?v=509fceb211",
@@ -2281,7 +2290,7 @@
       "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c",
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=c8378abf22",
-      "./js3d/main.js": "./js3d/main.js?v=81cfc84739",
+      "./js3d/main.js": "./js3d/main.js?v=d5b0367a22",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=6fe48ba6a8",
       "./js3d/panel.js": "./js3d/panel.js?v=ecb8a073e3",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=e0273dcae0",
@@ -2296,7 +2305,7 @@
       "./js3d/review.js": "./js3d/review.js?v=a8cbae3293",
       "./js3d/rewards.js": "./js3d/rewards.js?v=c0bbd8236f",
       "./js3d/room.js": "./js3d/room.js?v=10213a9754",
-      "./js3d/roomui.js": "./js3d/roomui.js?v=35f3ca7728",
+      "./js3d/roomui.js": "./js3d/roomui.js?v=be86ab2d3d",
       "./js3d/run-ui.js": "./js3d/run-ui.js?v=6b744a8dd0",
       "./js3d/run.js": "./js3d/run.js?v=29dcccf04b",
       "./js3d/selectui.js": "./js3d/selectui.js?v=208abdaebc",
@@ -2320,6 +2329,6 @@
   </script>
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=81cfc84739"></script>
+  <script type="module" src="js3d/main.js?v=d5b0367a22"></script>
 </body>
 </html>

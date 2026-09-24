@@ -39,6 +39,13 @@ function cleanName(value: unknown) {
   return String(value || "").trim().replace(/[<>\u0000-\u001f]/g, "").slice(0, 20);
 }
 
+/* 相手に見せる称号 (見た目だけ)。決まった一覧にあるものだけ。無ければ null */
+const BADGES = ["compiler", "veteran", "expert", "master", "underdog", "platinum"];
+function cleanBadge(value: unknown) {
+  const v = String(value || "");
+  return BADGES.includes(v) ? v : null;
+}
+
 function cleanCode(value: unknown) {
   return String(value || "").toUpperCase().replace(/[^A-Z2-9]/g, "").slice(0, 6);
 }
@@ -236,6 +243,7 @@ function publicState(room: any, side: number) {
   const base: any = {
     code: room.code, title: room.title, status: room.status, version: room.version, side, stamp: stampOf(room),
     names: [room.host_name, room.guest_name],
+    badges: [room.host_badge || null, room.guest_badge || null],
     protocols: [room.host_protocols, room.guest_protocols],
     rated: !!room.rated,
   };
@@ -425,7 +433,7 @@ Deno.serve(async (req) => {
       let created: any = null;
       for (let i = 0; i < 8 && !created; i++) {
         const { data, error } = await admin.from("secure_rooms").insert({
-          code: code(), host_id: user.id, host_name: name, title, visibility,
+          code: code(), host_id: user.id, host_name: name, host_badge: cleanBadge(body.badge), title, visibility,
           password_salt: password.salt, password_hash: password.hash,
           draft_state: body.draft ? { on: true, rules: cleanDraftRules(body.draftRules) } : null,
           rated: body.rated === true,
@@ -450,7 +458,7 @@ Deno.serve(async (req) => {
       if (!room.guest_id && room.host_id !== user.id) {
         if (!(await passwordMatches(room, body.password))) return fail(req, "パスワードが違います", 403);
         const isDraft = !!(room.draft_state && room.draft_state.on);
-        const upd: any = { guest_id: user.id, guest_name: name, updated_at: new Date().toISOString() };
+        const upd: any = { guest_id: user.id, guest_name: name, guest_badge: cleanBadge(body.badge), updated_at: new Date().toISOString() };
         if (isDraft) {
           // ドラフト開始: 先手後攻をランダム抽選し、ルールどおりの数だけプロトコルを抽選してプールに並べる
           const first = Math.random() < 0.5 ? 0 : 1;

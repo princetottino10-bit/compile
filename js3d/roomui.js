@@ -4,6 +4,8 @@
  *   status が playing になった publicState を resolve して返す。
  *   戻るを押した場合は null を resolve する (呼び出し側でソロ設定へ)。
  * ========================================================================= */
+import { myBadge } from './cosmetics-ui.js';
+import { settings } from './settings.js';
 import { roomApi, roomIsAnonymous, roomLogin, roomSession, roomSignIn, roomSignInWithGitHub, roomSignInWithGoogle, roomSignOut, roomSignUp } from './room.js';
 import { emblemDataURL } from './emblems.js';
 import { showProtocolCards } from './protocards.js';
@@ -204,8 +206,8 @@ export function runRoomLobby(protocols, opts = {}) {
         if (rated && roomIsAnonymous(session)) { await showLogin(); return; }
         const open = (data.rooms || []).find(r => !r.locked && !!r.rated === rated);
         room = open
-          ? await roomApi('join', { name: name(), code: open.code, password: '' })
-          : await roomApi('create', { name: name(), title: rated ? 'レート戦' : 'クイック対戦', visibility: 'public', password: '', draft: true, rated });
+          ? await roomApi('join', { name: name(), badge: myBadge(settings()), code: open.code, password: '' })
+          : await roomApi('create', { name: name(), badge: myBadge(settings()), title: rated ? 'レート戦' : 'クイック対戦', visibility: 'public', password: '', draft: true, rated });
         enterRoom();
       });
       $('#roomCreate').onclick = guard(async () => {
@@ -221,7 +223,7 @@ export function runRoomLobby(protocols, opts = {}) {
         lsSet('compileDraftPool', String(draftRules.poolSize));
         lsSet('compileDraftBans', String(draftRules.bans));
         room = await roomApi('create', {
-          name: name(), title: name() + ' のルーム',
+          name: name(), badge: myBadge(settings()), title: name() + ' のルーム',
           visibility: pw ? 'private' : 'public',
           password: pw, draft: $('#roomDraft').checked, draftRules, rated: $('#roomRated').checked
         });
@@ -232,7 +234,7 @@ export function runRoomLobby(protocols, opts = {}) {
         const code = lsGet('compileRoomLast');
         status('対戦に復帰しています…');
         try {
-          room = await roomApi('join', { name: name(), code, password: '' });
+          room = await roomApi('join', { name: name(), badge: myBadge(settings()), code, password: '' });
           enterRoom();
         } catch (e) {
           /* 部屋が消えている / 別アカウントになっている場合は目印を消す */
@@ -245,7 +247,7 @@ export function runRoomLobby(protocols, opts = {}) {
       $('#roomJoin').onclick = guard(async () => {
         const code = $('#roomCode').value;
         if (code.length !== 6) { status('6桁のコードを入力してください', 'err'); return; }
-        room = await roomApi('join', { name: name(), code, password: $('#roomJoinPw').value });
+        room = await roomApi('join', { name: name(), badge: myBadge(settings()), code, password: $('#roomJoinPw').value });
         enterRoom();
       });
 
@@ -264,7 +266,7 @@ export function runRoomLobby(protocols, opts = {}) {
             b.onclick = guard(async () => {
               const pw = prompt('パスワード (不要なら空欄)') || '';
               if (b.textContent.includes('★') && roomIsAnonymous(session)) { wantRated = true; await showLogin(); return; }
-              room = await roomApi('join', { name: name(), code: b.dataset.code, password: pw });
+              room = await roomApi('join', { name: name(), badge: myBadge(settings()), code: b.dataset.code, password: pw });
               enterRoom();
             });
           });

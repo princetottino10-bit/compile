@@ -31,6 +31,12 @@ export function profileOf(settings, records) {
   return { level, title, icon };
 }
 
+/* オンライン対戦で相手に見せる称号の key (付けていない・持っていなければ '')。s: 設定 (settings()) */
+export function myBadge(s) {
+  const recs = localRecords();
+  return ownedTitles(playerLevel(recs, bonusXp()).level, extraTitles(recs)).includes(s.title) ? s.title : '';
+}
+
 /* アイコンに並べるプロトコル (main.js が起動時に渡す) */
 let protoList = [];
 export function setCosmeticProtocols(list) { protoList = list || []; }

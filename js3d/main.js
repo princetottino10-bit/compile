@@ -21,7 +21,7 @@ import * as TU from './tutorial.js';
 import { settings, onSettings, openSettings } from './settings.js';
 import { recordSoloResult, localRecords, favoriteCards, toggleFavoriteCard, onFavoriteChange } from './stats.js';
 import { cardStats, cardTier, playerLevel } from './stats-data.js';
-import { isUnlocked, rewardsBetween } from './rewards.js';
+import { isUnlocked, rewardsBetween, TITLES } from './rewards.js';
 import { setCosmeticProtocols } from './cosmetics-ui.js';
 import { matUnlocked } from './playmat.js';
 import { initAccount, openAccount, takeAccountResume } from './account.js';
@@ -1742,7 +1742,30 @@ function roomValOf(defId) {
 }
 
 /* サーバーの publicState を受けて、差分アニメ + HUD 更新まで行う */
+/* オンライン対戦: 画面上に対戦相手の名前と称号を出す */
+function showVsTag(rm) {
+  const el = document.getElementById('vsTag');
+  if (!el || !rm || !Array.isArray(rm.names)) return;
+  const opp = 1 - rm.side;
+  const name = rm.names[opp];
+  if (!name) { el.hidden = true; return; }
+  const badge = rm.badges && TITLES[rm.badges[opp]];
+  el.textContent = '';
+  const vs = document.createElement('i');
+  vs.textContent = 'VS';
+  const b = document.createElement('b');
+  b.textContent = name;
+  el.append(vs, b);
+  if (badge) {
+    const t = document.createElement('small');
+    t.textContent = badge;
+    el.append(t);
+  }
+  el.hidden = false;
+}
+
 async function roomApplyView(rm, instant) {
+  showVsTag(rm);
   /* サーバー側の状態が進んだら、進行中の待ち受けUI (盤面ピック/並べ替え/
      モーダル) は破棄して取り直す (放置すると古い req.id で答えて desync する) */
   cancelPendingAsk();
