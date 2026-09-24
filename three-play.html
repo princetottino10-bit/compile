@@ -1984,32 +1984,9 @@
   #title.menu .tt-log{display:none;}
   #title .tt-marquee{bottom:44px;opacity:.55;}
   #title .tt-foot{left:auto;right:max(3vw,16px);text-align:right;bottom:18px;font:700 9px/1 var(--font-ui);letter-spacing:.3em;}
-  /* 右側の公式アート: カードの形のまま (切り抜かない) 3枚を扇に重ね、ゆっくり入れ替える */
-  .tt-hero{--h:min(60vh,540px,40vw);position:absolute;right:max(5vw,20px);top:50%;height:var(--h);width:calc(var(--h) * 1.3);
-    transform:translateY(-50%);pointer-events:none;}
-  .tt-hero-in{position:absolute;inset:0;animation:thFloat 7s ease-in-out infinite alternate;}
-  @keyframes thFloat{from{transform:translateY(-5px)}to{transform:translateY(5px)}}
-  .th-panel{position:absolute;top:0;left:50%;height:100%;aspect-ratio:360/490;margin:0 0 0 calc(var(--h) * -.3675);
-    border-radius:12px;overflow:hidden;background:#0d0a18;
-    box-shadow:0 28px 60px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.1);
-    transition:transform 1.2s cubic-bezier(.16,1,.3,1),opacity .9s ease,filter .9s ease;will-change:transform,opacity;}
-  .th-panel > img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
-  .th-panel::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;z-index:1;background:linear-gradient(90deg,var(--pink),var(--violet));
-    opacity:0;transition:opacity .9s;}
-  .th-panel::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,5,13,0) 62%,rgba(7,5,13,.82));}
-  .th-panel figcaption{position:absolute;left:16px;right:16px;bottom:14px;z-index:1;display:flex;align-items:center;gap:8px;
-    font:800 12px/1 var(--font-ui);letter-spacing:.24em;color:#fff;opacity:0;transition:opacity .9s;}
-  .th-panel figcaption img{width:22px;height:22px;}
-  .th-panel[data-slot="c"]{transform:none;z-index:3;}
-  .th-panel[data-slot="c"]::before,.th-panel[data-slot="c"] figcaption{opacity:1;}
-  .th-panel[data-slot="l"]{transform:translateX(-32%) rotate(-6deg) scale(.86);z-index:2;filter:brightness(.36) saturate(.6);}
-  .th-panel[data-slot="r"]{transform:translateX(30%) rotate(5deg) scale(.86);z-index:1;filter:brightness(.36) saturate(.6);}
-  .th-panel[data-slot="in"]{transform:translateX(60%) rotate(10deg) scale(.78);z-index:0;opacity:0;filter:brightness(.4);}
-  .th-panel[data-slot="out"]{transform:translateX(-62%) rotate(-12deg) scale(.76);z-index:0;opacity:0;filter:brightness(.4);}
-  @media (prefers-reduced-motion: reduce){ #title .tt-logo span::before,#title .tt-logo span::after,.tt-hero-in{animation:none;} .th-panel{transition:opacity .4s;} }
+  @media (prefers-reduced-motion: reduce){ #title .tt-logo span::before,#title .tt-logo span::after{animation:none;} }
   /* 縦持ち・狭い画面: アートは背景に薄く */
   @media (max-width:760px) and (orientation:portrait){
-    .tt-hero{--h:min(56vh,120vw);right:50%;transform:translate(50%,-50%);opacity:.26;}
     #title .tt-center{left:20px;right:20px;width:auto;}
   }
   /* 横持ちのスマホ: 全体を詰める */
@@ -2018,7 +1995,6 @@
     #title .tt-menu{margin-top:12px;gap:8px;}
     #title .tt-main button{padding:10px 14px;font-size:15px;}
     #title .tt-menu .tt-more button{padding:8px 11px;font-size:10px;}
-    .tt-hero{--h:min(66vh,300px);right:max(5vw,20px);}
     #title .tt-marquee{display:none;}
   }
   /* プロフィール (タイトルのレベルを押す) */
@@ -2206,7 +2182,7 @@
       "./js3d/stats-data.js": "./js3d/stats-data.js?v=bcf7d5e977",
       "./js3d/stats.js": "./js3d/stats.js?v=fb6faa0cb0",
       "./js3d/theme.js": "./js3d/theme.js?v=36f15e5586",
-      "./js3d/title.js": "./js3d/title.js?v=3ba389e1b1",
+      "./js3d/title.js": "./js3d/title.js?v=d6866fe7d5",
       "./js3d/training.js": "./js3d/training.js?v=3018b4399e",
       "./js3d/tutorial.js": "./js3d/tutorial.js?v=34aae6e6cc",
       "./js3d/tween.js": "./js3d/tween.js?v=99b25c0d63",
