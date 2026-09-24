@@ -46,7 +46,8 @@
   /* ---------- 上部: ターン + ライン ---------- */
   #topbar{position:fixed;left:0;right:0;top:0;z-index:10;display:flex;
     align-items:flex-start;justify-content:space-between;gap:14px;pointer-events:none;
-    padding:12px calc(14px + env(safe-area-inset-right)) 12px calc(14px + env(safe-area-inset-left));}
+    /* 上端はスマホの時計・電波の表示の分だけ下げる (ホーム画面から開くと重なって押せなかった) */
+    padding:calc(12px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) 12px calc(14px + env(safe-area-inset-left));}
   #brand{display:flex;align-items:center;gap:9px;font:800 13px/1 system-ui;letter-spacing:.22em;}
   #topRight{display:flex;align-items:center;gap:6px;margin-left:auto;}
   #topRight .btn{width:auto;min-width:0;min-height:26px;padding:0 12px;font-size:10px;pointer-events:auto;}
@@ -349,7 +350,7 @@
     #phaseChip .ph-band,#phaseChip .ph-body{animation:none!important;opacity:1;transform:translateY(-50%) scaleX(1);}
     #phaseChip .ph-body{transform:none;}
   }
-  @media (max-width:860px) and (orientation:portrait){ #phaseChip{top:66px;height:44px;} #phaseChip .ph-band{height:28px;} }
+  @media (max-width:860px) and (orientation:portrait){ #phaseChip{top:calc(66px + env(safe-area-inset-top));height:44px;} #phaseChip .ph-band{height:28px;} }
 
 
   /* ---------- チェーン表示 (効果の途中で別の効果が割り込んだとき) ----------
@@ -380,7 +381,7 @@
   #fxBanner.show .fx-sweep{animation:fxSweep .8s .2s ease-out both;}
   @keyframes fxSweep{from{transform:translateX(-100%);}to{transform:translateX(100%);}}
   @media (max-width:860px) and (orientation:portrait){
-    #fxBanner{width:min(300px,78vw);top:108px;}   /* 左上の名札 (相手・自分) の下に */
+    #fxBanner{width:min(300px,78vw);top:calc(108px + env(safe-area-inset-top));}   /* 左上の名札 (相手・自分) の下に */
   }
   @media (orientation:landscape) and (max-height:500px){
     #fxBanner{top:46px;width:min(260px,34vw);padding:5px 9px 6px 10px;}   /* 右上の相手の名札の下に */
@@ -434,7 +435,7 @@
   /* 背の低い画面 (スマホの横向き) は、5つつながっても収まるように詰める */
   @media (max-height:500px){#chainUi{gap:6px;--chw:clamp(30px,8vh,60px);} #chainUi .ch-head b{font-size:22px;}}
   @media (max-width:860px) and (orientation:portrait){
-    #chainUi{right:auto;left:8px;top:104px;transform:none;flex-direction:row;gap:14px;--chw:44px;}
+    #chainUi{right:auto;left:8px;top:calc(104px + env(safe-area-inset-top));transform:none;flex-direction:row;gap:14px;--chw:44px;}
     #chainUi .ch-head{display:none;}
     #chainUi .ch-link{flex-direction:column;gap:4px;}
     #chainUi .ch-link.now{transform:translateY(4px);}
@@ -635,7 +636,7 @@
     #cardNote{left:10px;right:10px;width:auto;bottom:66px;}
     #cardNote[data-place="top"]{top:58px;bottom:auto;}
     /* カードを触ったときの情報は右上の空きに置き、盤面と手札を隠さない */
-    #cardNote[data-place="corner"]{left:auto;right:8px;top:104px;bottom:auto;width:min(63vw,250px);
+    #cardNote[data-place="corner"]{left:auto;right:8px;top:calc(104px + env(safe-area-inset-top));bottom:auto;width:min(63vw,250px);
       max-height:52vh;overflow-y:auto;}
     #cardNote.large[data-place="corner"] .cn-head{font-size:14px;}
     #cardNote.large[data-place="corner"] .cn-text{font-size:12.5px;line-height:1.55;}
@@ -1818,10 +1819,10 @@
     #toast{bottom:19vh;}   /* 選択バー (.arr-bar, 12vh) と重ねない */
     /* タップ用: プレビューは中央に大きく (タップで表示、他をタップで消える) */
     /* 縦持ちは触ったカードを右上の小窓 (#cardNote) で読む。詳細パネルは発動のときだけ少し出す */
-    #preview{left:auto;right:8px;top:104px;width:min(260px,70vw);max-height:52vh;transform:translateX(8px);}
+    #preview{left:auto;right:8px;top:calc(104px + env(safe-area-inset-top));width:min(260px,70vw);max-height:52vh;transform:translateX(8px);}
     #preview.show{transform:none;}
     #brand{display:none;}
-    #logDock{top:100px;bottom:66px;width:min(260px,70vw);}
+    #logDock{top:calc(100px + env(safe-area-inset-top));bottom:66px;width:min(260px,70vw);}
     #btnLog{top:12px;}
     #btnInfo{display:none;}
     /* 下部の操作は指の届く高さに。手札を隠すは左、リフレッシュは右 */
@@ -1829,7 +1830,7 @@
     #dock .btn{min-height:38px;padding:0 14px;font-size:9px;letter-spacing:.04em;}
     #btnRefresh{left:auto;right:10px;bottom:12px;min-height:38px;font-size:9px;}
     #assist{left:10px;bottom:58px;}
-    #oppSummary{top:150px;}
+    #oppSummary{top:calc(150px + env(safe-area-inset-top));}
   }
   /* ---------- 横持ちのスマホ (高さの低い画面) ----------
      PC と同じ配置のまま、縦が足りないぶんを詰める。
@@ -1843,7 +1844,7 @@
   }
   @media (orientation:landscape) and (max-height:500px){
     #brand{display:none;}
-    #topbar{justify-content:flex-end;padding:8px calc(10px + env(safe-area-inset-right)) 8px calc(10px + env(safe-area-inset-left));}
+    #topbar{justify-content:flex-end;padding:calc(8px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) 8px calc(10px + env(safe-area-inset-left));}
     #btnRefresh,#dock .btn{min-height:32px;padding:0 13px;font-size:10px;}
     #logDock{top:40px;bottom:52px;width:min(156px,17vw);}
     #log{font-size:9px;padding:8px 9px;}
@@ -2504,10 +2505,10 @@
       "./js3d/arena.js": "./js3d/arena.js?v=ed08c77720",
       "./js3d/audio.js": "./js3d/audio.js?v=28a4f522ba",
       "./js3d/backdrops.js": "./js3d/backdrops.js?v=90faf9612d",
-      "./js3d/board.js": "./js3d/board.js?v=3f424f5e21",
-      "./js3d/card.js": "./js3d/card.js?v=a0712f855a",
+      "./js3d/board.js": "./js3d/board.js?v=77bdece4ae",
+      "./js3d/card.js": "./js3d/card.js?v=6d8083e5b7",
       "./js3d/cardlist-ov.js": "./js3d/cardlist-ov.js?v=1d673fd0d2",
-      "./js3d/cardtex.js": "./js3d/cardtex.js?v=340ddc4e87",
+      "./js3d/cardtex.js": "./js3d/cardtex.js?v=69cd588913",
       "./js3d/cardtext.js": "./js3d/cardtext.js?v=4cf5529855",
       "./js3d/cloudsave.js": "./js3d/cloudsave.js?v=8372cec875",
       "./js3d/control.js": "./js3d/control.js?v=acf84debbc",
@@ -2521,7 +2522,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=afc0da8aa8",
+      "./js3d/main.js": "./js3d/main.js?v=05a80a1524",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=6398fed15e",
       "./js3d/panel.js": "./js3d/panel.js?v=ecb8a073e3",
       "./js3d/plates.js": "./js3d/plates.js?v=70ffa14b87",
@@ -2541,7 +2542,7 @@
       "./js3d/run-ui.js": "./js3d/run-ui.js?v=dda7071b7a",
       "./js3d/run.js": "./js3d/run.js?v=29dcccf04b",
       "./js3d/selectui.js": "./js3d/selectui.js?v=208abdaebc",
-      "./js3d/settings.js": "./js3d/settings.js?v=13888ee0d2",
+      "./js3d/settings.js": "./js3d/settings.js?v=c8fc5e7272",
       "./js3d/setup.js": "./js3d/setup.js?v=f75a89191c",
       "./js3d/solodraft.js": "./js3d/solodraft.js?v=9863c9528c",
       "./js3d/stage.js": "./js3d/stage.js?v=e3cda4525b",
@@ -2572,7 +2573,7 @@
   <link rel="modulepreload" href="js3d/achievements-ui.js?v=66713584af">
   <link rel="modulepreload" href="vendor/three.module.js?v=985eb92490">
   <link rel="modulepreload" href="js3d/stage.js?v=e3cda4525b">
-  <link rel="modulepreload" href="js3d/board.js?v=3f424f5e21">
+  <link rel="modulepreload" href="js3d/board.js?v=77bdece4ae">
   <link rel="modulepreload" href="js3d/control.js?v=acf84debbc">
   <link rel="modulepreload" href="js3d/panel.js?v=ecb8a073e3">
   <link rel="modulepreload" href="js3d/setup.js?v=f75a89191c">
@@ -2581,7 +2582,7 @@
   <link rel="modulepreload" href="js3d/room.js?v=25990f1537">
   <link rel="modulepreload" href="js3d/puzzle.js?v=b4a110035e">
   <link rel="modulepreload" href="js3d/tutorial.js?v=0e6d6237ad">
-  <link rel="modulepreload" href="js3d/settings.js?v=13888ee0d2">
+  <link rel="modulepreload" href="js3d/settings.js?v=c8fc5e7272">
   <link rel="modulepreload" href="js3d/stats.js?v=8265afe03d">
   <link rel="modulepreload" href="js3d/stats-data.js?v=bcf7d5e977">
   <link rel="modulepreload" href="js3d/rewards.js?v=c0bbd8236f">
@@ -2599,7 +2600,7 @@
   <link rel="modulepreload" href="js3d/review.js?v=34f174153b">
   <link rel="modulepreload" href="js3d/roomui.js?v=49ed751a46">
   <link rel="modulepreload" href="js3d/selectui.js?v=208abdaebc">
-  <link rel="modulepreload" href="js3d/cardtex.js?v=340ddc4e87">
+  <link rel="modulepreload" href="js3d/cardtex.js?v=69cd588913">
   <link rel="modulepreload" href="js3d/fx.js?v=f2bbe73646">
   <link rel="modulepreload" href="js3d/arena.js?v=ed08c77720">
   <link rel="modulepreload" href="js3d/audio.js?v=28a4f522ba">
@@ -2621,7 +2622,7 @@
   <link rel="modulepreload" href="vendor/jsm/postprocessing/UnrealBloomPass.js">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/OutputPass.js">
   <link rel="modulepreload" href="vendor/jsm/environments/RoomEnvironment.js">
-  <link rel="modulepreload" href="js3d/card.js?v=a0712f855a">
+  <link rel="modulepreload" href="js3d/card.js?v=6d8083e5b7">
   <link rel="modulepreload" href="js3d/protocards.js?v=a0c3bbfc68">
   <link rel="modulepreload" href="js3d/protocol-strength.js?v=c719e5b65c">
   <link rel="modulepreload" href="js3d/backdrops.js?v=90faf9612d">
@@ -2640,6 +2641,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=afc0da8aa8"></script>
+  <script type="module" src="js3d/main.js?v=05a80a1524"></script>
 </body>
 </html>

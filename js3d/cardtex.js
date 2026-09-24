@@ -369,6 +369,30 @@ export function faceTexture(def) {
   return tex;
 }
 
+/* キラ加工 (card.js の setFoil) の型紙: 白 = 光らせてよい所 (絵と縁)、黒 = 文字のある所。
+   名前と値の帯 (ヘッダ) と、上・中・下段の文の枠には光を乗せない (読みやすさを落とさないため) */
+const maskCache = new Map();   // defId -> THREE.CanvasTexture
+export function foilMaskTexture(def) {
+  if (maskCache.has(def.id)) return maskCache.get(def.id);
+  faceTexture(def);                                  // 枠の位置 (faceZones) を用意する
+  const rects = faceZones.get(def.id) || {};
+  const S = 0.25;
+  const cv = document.createElement('canvas');
+  cv.width = Math.round(DW * S); cv.height = Math.round(DH * S);
+  const ctx = cv.getContext('2d');
+  ctx.scale(S, S);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, DW, DH);
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, DW, HEAD_H + 8);
+  for (const r of Object.values(rects)) {
+    if (Array.isArray(r)) ctx.fillRect(r[0] - 8, r[1] - 8, r[2] + 16, r[3] + 16);
+  }
+  const tex = new THREE.CanvasTexture(cv);
+  maskCache.set(def.id, tex);
+  return tex;
+}
+
 /* 対局の切り替わりで、次の対局に不要な分のテクスチャを解放する。
    keep: 残す defId の集合 (使用プロトコルのカード群) */
 export function pruneFaceCache(keepIds) {
@@ -380,6 +404,8 @@ export function pruneFaceCache(keepIds) {
     faceCanvas.delete(key);
     faceZones.delete(key);
     faceVersion.delete(key);
+    const mask = maskCache.get(key);
+    if (mask) { mask.dispose(); maskCache.delete(key); }
   }
   for (const key of urlCache.keys()) {
     if (!keep.has(key.split(':')[0])) urlCache.delete(key);

@@ -5,7 +5,8 @@
  *     カードプレイの着地は専用の演出パスを通る (最優先で作り込む箇所)。
  * ========================================================================= */
 import * as THREE from '../vendor/three.module.js';
-import { makeCard, setHighlight, clearHighlight, setDim, setSelected, setCandidate, retexture, glowTexture, setAura, tickAura } from './card.js';
+import { makeCard, setHighlight, clearHighlight, setDim, setSelected, setCandidate, retexture, glowTexture, setAura, tickAura, setFoil, setFoilTime } from './card.js';
+import { foilMaskTexture } from './cardtex.js';
 import { spawnImpactRing, spawnFlashPillar } from './stage.js';
 import * as FX from './fx.js';
 import { backTex } from './cardtex.js';
@@ -101,6 +102,8 @@ export function createBoard(stage, defIndex, me, hooks) {
   const onCompile = (hooks && hooks.onCompile) || (() => Promise.resolve());
   /* 自分のカードのオーラ (使って勝つほど光る・お気に入り)。defId -> { color, strength, holo, fav } | null */
   const auraFor = (hooks && hooks.auraFor) || (() => null);
+  /* 表面のキラ加工 (プロトコルの習熟度)。defId -> { color, strength, rainbow } | null */
+  const foilFor = (hooks && hooks.foilFor) || (() => null);
   /* 見た目 (レベルの報酬): 自分のカードの裏面の柄 / 自分のコンパイルの光の色 (null ならプロトコルの色) */
   const sleeveOf = (hooks && hooks.sleeve) || (() => 'default');
   const compileColorOf = (hooks && hooks.compileColor) || (() => null);
@@ -134,6 +137,7 @@ export function createBoard(stage, defIndex, me, hooks) {
 
   stage.onFrame(() => {
     const t = performance.now() / 1000;
+    setFoilTime(t);
     for (const [uid, card] of cards) {
       if (card.userData.auraSpec) tickAura(card, t);
       /* 手札のように宙にあるカードは床に光を落とさない (演出中は例外) */
@@ -233,6 +237,8 @@ export function createBoard(stage, defIndex, me, hooks) {
       const c = st.cards[uid];
       const mine = c.owner === me && (c.faceUp || l.zone === 'hand');
       setAura(card, mine && card.visible ? auraFor(c.def) : null);
+      const foil = mine && card.visible ? foilFor(c.def) : null;
+      setFoil(card, foil, foil && defIndex[c.def] ? foilMaskTexture(defIndex[c.def]) : null);
       const back = backTex(c.owner === me ? sleeveOf() : 'default');
       if (card.userData.back.material.map !== back) { card.userData.back.material.map = back; card.userData.back.material.needsUpdate = true; }
     }

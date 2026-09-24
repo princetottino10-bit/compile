@@ -319,6 +319,72 @@ export function setAura(card, spec) {
   card.userData.auraSpec = spec;
 }
 
+/* -------------------------------------------------------------------------
+ * キラ加工: プロトコルの習熟度で、カードの表面に箔のような光を乗せる (銀 → 金 → 虹)。
+ * 斜めの光の帯がゆっくり横切り、細かい箔の筋がかすかに揺れる。
+ * 文字のある所 (ヘッダと上・中・下段の枠) は型紙 (foilMaskTexture) で抜いて、読みやすさを落とさない。
+ * spec: { color, strength, rainbow } / null で消す。時間は全カードで1つ (setFoilTime)
+ * ------------------------------------------------------------------------- */
+const foilTime = { value: 0 };
+export function setFoilTime(t) { foilTime.value = t; }
+const FOIL_VERT = `
+varying vec2 vUv;
+void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
+const FOIL_FRAG = `
+uniform sampler2D uMask;
+uniform float uTime;
+uniform vec3 uColor;
+uniform float uStrength;
+uniform float uRainbow;
+uniform float uPhase;
+varying vec2 vUv;
+vec3 hue(float h) {
+  return clamp(abs(mod(h * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.0) - 1.0, 0.0, 1.0);
+}
+void main() {
+  float m = texture2D(uMask, vUv).r;
+  if (m < 0.02) discard;
+  float d = vUv.x * 0.8 + vUv.y * 0.55;
+  /* 光の帯: 数秒に1度、斜めに横切る (通っていない間は箔の筋だけ) */
+  float pos = fract(uTime * 0.11 + uPhase) * 2.4 - 0.55;
+  float band = exp(-pow((d - pos) / 0.075, 2.0));
+  float fine = 0.5 + 0.5 * sin(vUv.x * 46.0 - vUv.y * 30.0 + uTime * 1.3);
+  vec3 col = mix(uColor, hue(fract(d * 1.3 + uTime * 0.04)) * 0.9 + 0.1, uRainbow);
+  float a = (band * 0.85 + fine * 0.12 + 0.05) * uStrength * m;
+  gl_FragColor = vec4(col * a, a);
+}`;
+
+export function setFoil(card, spec, mask) {
+  let foil = card.userData.foil;
+  if (!spec || !mask) {
+    if (foil) foil.visible = false;
+    card.userData.foilSpec = null;
+    return;
+  }
+  if (!foil) {
+    foil = new THREE.Mesh(planeGeometry(), new THREE.ShaderMaterial({
+      uniforms: {
+        uMask: { value: mask }, uTime: foilTime, uColor: { value: new THREE.Color() },
+        uStrength: { value: 0 }, uRainbow: { value: 0 }, uPhase: { value: Math.random() }
+      },
+      vertexShader: FOIL_VERT, fragmentShader: FOIL_FRAG,
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false
+    }));
+    foil.position.y = CARD.thickness / 2 + 0.0006;     // 絵の上、発光 (shine) の下
+    foil.renderOrder = 1;
+    foil.raycast = () => {};
+    card.add(foil);
+    card.userData.foil = foil;
+  }
+  const u = foil.material.uniforms;
+  if (u.uMask.value !== mask) u.uMask.value = mask;
+  u.uColor.value.set(spec.color);
+  u.uStrength.value = spec.strength;
+  u.uRainbow.value = spec.rainbow ? 1 : 0;
+  foil.visible = true;
+  card.userData.foilSpec = spec;
+}
+
 /* 毎フレーム: 光の輪はゆっくり脈打ち、ホロは色が巡る */
 export function tickAura(card, t) {
   const spec = card.userData.auraSpec;

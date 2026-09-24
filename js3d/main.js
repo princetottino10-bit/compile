@@ -23,7 +23,7 @@ import * as PZ from './puzzle.js';
 import * as TU from './tutorial.js';
 import { settings, onSettings, openSettings } from './settings.js';
 import { recordSoloResult, localRecords } from './stats.js';
-import { cardStats, cardTier, playerLevel } from './stats-data.js';
+import { cardStats, cardTier, playerLevel, protocolSummary } from './stats-data.js';
 import { isUnlocked, rewardsBetween, TITLES } from './rewards.js';
 import { setCosmeticProtocols, profileOf } from './cosmetics-ui.js';
 import { displayName } from './displayname.js';
@@ -88,8 +88,24 @@ function cosmetic(kind, fallback) {
   const key = settings()[kind];
   return key && isUnlocked(kind, key, myLevel) ? key : fallback;
 }
+/* プロトコルの習熟度 (戦績から数える)。カード表面のキラ加工に使う */
+let protoMastery = protocolSummary(localRecords());
+/* 習熟度 3 で銀、6 で金、9 で虹のキラ。見た目だけで強さは変わらない (設定で切れる) */
+const FOIL_TIERS = [
+  { min: 9, color: '#ffffff', strength: 0.34, rainbow: true },
+  { min: 6, color: '#ffd98a', strength: 0.3 },
+  { min: 3, color: '#dfe8ff', strength: 0.26 }
+];
+function foilFor(defId) {
+  if (!settings().foil) return null;
+  const d = defIndex[defId];
+  const t = d && protoMastery.get(d.proto);
+  const lv = t ? t.mastery.level : 0;
+  return FOIL_TIERS.find(x => lv >= x.min) || null;
+}
 function refreshCardGlow() {
   cardWins = cardStats(localRecords());
+  protoMastery = protocolSummary(localRecords());
   myLevel = playerLevel(localRecords(), bonusXp()).level;
   if (board && cur) board.syncInstant(shown());
 }
@@ -289,6 +305,7 @@ async function boot() {
   stage.onFrame((dt) => ctrlMarker.tick(dt));
   board = createBoard(stage, defIndex, ME, {
     auraFor,
+    foilFor,
     sleeve: () => cosmetic('sleeve', 'default'),
     compileColor: () => (cosmetic('ccolor', 'default') === 'gold' ? '#ffd86a' : null),
     onCompile: async (info) => {
@@ -1407,6 +1424,14 @@ function bindInput() {
   let infoWasOpen = true;
   try { infoWasOpen = localStorage.getItem('compileInfoOpen') !== '0'; } catch (e) { /* private mode */ }
   UI.setInfoOpen(infoWasOpen);
+  /* 縦持ちはログが盤面の大半を覆うので、ログの外に触れたら閉じる (触れた操作はそのまま通す) */
+  document.addEventListener('pointerdown', (ev) => {
+    if (!isCompactHandUI()) return;
+    const dock = document.getElementById('logDock');
+    if (!dock || !dock.classList.contains('open') || (ev.target && ev.target.closest && ev.target.closest('#logDock'))) return;
+    setLogOpen(false);
+    try { localStorage.setItem('compileLogOpen', '0'); } catch (e) { /* private mode */ }
+  }, true);
   /* 前回サイドバーを開いていたら開いて始める (最初は閉じておき、盤面を広く見せる) */
   let logWasOpen = false;
   try { logWasOpen = localStorage.getItem('compileLogOpen') === '1'; } catch (e) { /* private mode */ }
