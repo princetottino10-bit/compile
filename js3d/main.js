@@ -1930,6 +1930,9 @@ async function announceTurnFor(turn) {
   if (trainingMode) return;                         // 検証盤面に手番はない
   if (turn === undefined || turn === null || turn === lastTurn) return;
   lastTurn = turn;
+  /* 前の手番の効果の帯が残っていると、効果がまだ終わっていないように見えるのでしまう */
+  UI.hideFxBanner();
+  UI.hideChain();
   if (arena && arena.setTurnSide) arena.setTurnSide(turn);
   /* 自分の番が回ってきたときは、相手の番とは別の音で知らせる */
   sfx(turn === ME ? 'yourTurn' : 'turn');
@@ -2163,6 +2166,14 @@ async function replayResolution(prev, res, action) {
        この形なら「開始フェイズ → 開始効果」の順に見える。 */
     logStep(step);
     if (step.phaseOnly) {
+      /* 間引きで飛ばしたコマ (効果の結果) がまだ盤面に出ていなければ、手番やフェイズを告げる前に盤面を追いつかせる。
+         追いつかせないと、効果の結果が出る前に「相手のターン」の演出が出ていた */
+      if (visualFingerprint(from) !== step.fp) {
+        await board.applyTransition(from, step.st, first ? action : null, { speed: STEP_MOTION });
+        await syncPanels(step.st, true);
+        from = step.st;
+        first = false;
+      }
       await markPhase(step.st);
       await checkAnnounce(step.st);
       if (step.acts && step.acts.length) await showActs(step);
