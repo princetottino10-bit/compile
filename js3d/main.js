@@ -18,6 +18,8 @@ import { recordSoloResult, localRecords, favoriteCards, toggleFavoriteCard, onFa
 import { cardStats, cardTier } from './stats-data.js';
 import { initAccount, openAccount, takeAccountResume } from './account.js';
 import { openCardList } from './cardlist-ov.js';
+import { openOpponentSelect } from './opponent-select.js';
+import { UNDERDOG_DECK, STRONGEST_AI, UNDERDOG_LEVEL } from './aidecks.js';
 import { openRun, runHud, showRunAfterGame } from './run-ui.js';
 import { openWeekly, weeklyHud, showWeeklyAfterGame } from './weekly-ui.js';
 import { compilesBy, loadRun, RUN_WIN_COMPILES } from './run.js';
@@ -298,9 +300,28 @@ async function boot() {
         applyAiDifficulty(pick.level);
         break;
       }
-      const chosen = await runSetup(cards.protocols, { training: nextMode === 'training', allowOnline: false, cardsOf: protocolCards });
+      /* SINGLE GAME は先に相手を選ぶ (CPU / 強敵 / 下剋上)。トレーニングは相手も自分で置くので飛ばす */
+      let opp = null;
+      if (nextMode !== 'training') {
+        opp = await openOpponentSelect(cards.protocols);
+        if (!opp) { nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
+        if (opp.underdog) {
+          document.body.classList.remove('pregame');
+          p0 = UNDERDOG_DECK.slice();
+          p1 = STRONGEST_AI.slice();
+          applyAiDifficulty(UNDERDOG_LEVEL);
+          setupNote = '下剋上: 最弱 ' + p0.join(' / ') + ' で最強に挑む';
+          break;
+        }
+      }
+      const chosen = await runSetup(cards.protocols, { training: nextMode === 'training', allowOnline: false, cardsOf: protocolCards,
+        level: opp ? opp.level : undefined });
       if (chosen.online) { nextMode = 'online'; continue; }
-      if (chosen.back) { nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
+      if (chosen.back) {
+        if (opp) continue;                                  // 相手を選び直す
+        nextMode = await runTitle(cards.protocols, { menuOnly: true });
+        continue;
+      }
       document.body.classList.remove('pregame');
       p0 = chosen.me;
       p1 = p1 || chosen.ai;
@@ -2606,8 +2627,10 @@ function showEndActions(win) {
     el.id = 'endBar';
     document.body.appendChild(el);
   }
+  const underdogWin = win && aiDifficulty === UNDERDOG_LEVEL;
   el.innerHTML =
-    '<div class="end-title">' + (win ? 'あなたの勝ち' : '敗北') + '</div>' +
+    '<div class="end-title">' + (underdogWin ? '下剋上 達成！' : win ? 'あなたの勝ち' : '敗北') + '</div>' +
+    (underdogWin ? '<div class="end-sub">最弱のデッキで最強に勝ちました。称号「下剋上」を獲得</div>' : '') +
     '<div class="end-btns">' +
       '<button class="arr-btn ok" id="endAgain" type="button">もう一度</button>' +
       '<button class="arr-btn" id="endTop" type="button">タイトルへ</button>' +

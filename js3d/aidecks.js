@@ -26,11 +26,16 @@ export const CHALLENGERS = [
 
 export const LEVEL_LABELS = ['かんたん', 'ふつう', 'つよい', '最強', 'ロック特化'];
 
+/* 下剋上: 最弱のデッキ (あなた) で最強 (STRONGEST_AI) に挑む。相手の戦い方は最強と同じ。
+   最弱は scripts/deck_search.js --bottom で探したもの */
+export const UNDERDOG_LEVEL = 20;
+export const UNDERDOG_DECK = ['CHAOS', 'METAL', 'LIGHT'];
+
 export const isChallenger = (level) => level >= CHALLENGER_BASE && level < CHALLENGER_BASE + CHALLENGERS.length;
 
 /* 難易度の固定デッキ (無ければ null = ランダム編成) */
 export function fixedDeck(level) {
-  if (level === 3) return STRONGEST_AI;
+  if (level === 3 || level === UNDERDOG_LEVEL) return STRONGEST_AI;
   if (level === 4) return LOCK_AI;
   return isChallenger(level) ? CHALLENGERS[level - CHALLENGER_BASE].deck : null;
 }
@@ -42,5 +47,6 @@ export function challengerName(c) {
 /* 戦績などに出す難易度の名前 */
 export function levelLabel(level) {
   if (isChallenger(level)) return '挑戦者 ' + challengerName(CHALLENGERS[level - CHALLENGER_BASE]);
+  if (level === UNDERDOG_LEVEL) return '下剋上 (最弱 vs 最強)';
   return LEVEL_LABELS[level] || '不明';
 }

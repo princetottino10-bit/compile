@@ -4,7 +4,7 @@
  *   全体・自分のプロトコル別・相手のプロトコル別・デッキ別の勝率を出す。
  * ========================================================================= */
 
-import { levelLabel } from './aidecks.js';
+import { levelLabel, UNDERDOG_LEVEL } from './aidecks.js';
 import { protocolSummary, matchups, winTrend, fastestWin, masteryLevel, cardStats, cardTier } from './stats-data.js';
 
 const KEY = 'compileSoloRecords';
@@ -175,7 +175,11 @@ function summaryTab(list, protos) {
   const fast = fastestWin(list);
   const fastTop = fastestWin(list, r => r.level >= 3);
   const tile = (label, value, sub) => '<div class="sr-kpi"><small>' + label + '</small><b>' + value + '</b>' + (sub ? '<span>' + sub + '</span>' : '') + '</div>';
-  return trendSvg(list) +
+  /* 称号 (取ったものだけ) */
+  const titles = [];
+  if (list.some(r => r.win && r.level === UNDERDOG_LEVEL)) titles.push(['下剋上', '最弱のデッキで最強に勝った']);
+  return (titles.length ? '<div class="sr-titles">' + titles.map(([t, d]) => '<span title="' + esc(d) + '">' + esc(t) + '</span>').join('') + '</div>' : '') +
+    trendSvg(list) +
     '<div class="sr-kpis">' +
       tile('勝ったことのあるプロトコル', wonAny + '<i>/' + protos.length + '</i>') +
       tile('最強に勝ったプロトコル', wonStrongest + '<i>/' + protos.length + '</i>') +

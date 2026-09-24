@@ -13,7 +13,7 @@ import { showProtocolCards } from './protocards.js';
 import { POOLS, poolNames, clampCandidates, draftSteps, shuffled, randomDecks, cpuDraftPick } from './solodraft.js';
 import { PROTOCOL_STRENGTH } from './protocol-strength.js';
 /* 難易度と固定デッキ (最強・ロック特化・挑戦者)。固定デッキは「自由に選ぶ」でだけ使える */
-import { LEVEL_LABELS as AI_LABELS, CHALLENGERS, CHALLENGER_BASE, isChallenger, fixedDeck, challengerName } from './aidecks.js';
+import { LEVEL_LABELS as AI_LABELS, CHALLENGERS, CHALLENGER_BASE, isChallenger, fixedDeck, challengerName, levelLabel } from './aidecks.js';
 export { STRONGEST_AI, LOCK_AI } from './aidecks.js';
 
 const MODES = [
@@ -28,7 +28,8 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 function lsGet(k, d) { try { return localStorage.getItem(k) || d; } catch (e) { return d; } }
 function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* private mode */ } }
 
-/* options: { training, allowOnline, cardsOf(name) -> 6枚 (protocards.js の形) } */
+/* options: { training, allowOnline, cardsOf(name) -> 6枚 (protocards.js の形),
+              level: 相手を選ぶ画面 (opponent-select.js) で決めた難易度。あれば難易度の段は出さない } */
 export function runSetup(protocols, options = {}) {
   const training = !!options.training;
   const root = document.getElementById('setup');
@@ -50,9 +51,11 @@ export function runSetup(protocols, options = {}) {
   }
 
   const picked = [];
-  let level = 1;
+  const presetLevel = Number.isInteger(options.level) ? options.level : null;
+  let level = presetLevel === null ? 1 : presetLevel;
   let poolKey = lsGet('compileSoloPool', 'all');
-  let mode = training ? 'free' : lsGet('compileSoloMode', 'free');
+  /* 強敵 (デッキの決まった相手) には、自分の3つを選ぶだけ */
+  let mode = training || (presetLevel !== null && fixedDeck(presetLevel)) ? 'free' : lsGet('compileSoloMode', 'free');
   let draftSize = +lsGet('compileSoloDraftPool', '0');
   let draftBans = +lsGet('compileSoloDraftBans', '0');
   let challenger = Math.min(CHALLENGERS.length - 1, Math.max(0, +lsGet('compileSoloChallenger', '0') || 0));
@@ -76,6 +79,8 @@ export function runSetup(protocols, options = {}) {
     note.textContent = training
       ? (trainingMine ? '自分: ' + trainingMine.join(' / ') + '　相手の3つを選ぶ (同じプロトコルも選べる)'
         : 'まず自分のプロトコルを3つ選ぶ。次に相手の3つを選ぶ。置けるのはこの6つのカードだけ。')
+      : presetLevel !== null && fixedDeck(presetLevel)
+        ? '自分のプロトコルを3つ選ぶ。相手 (' + levelLabel(presetLevel) + ') のデッキは ' + fixedDeck(presetLevel).join(' / ') + '。'
       : mode === 'free' ? '使用するプロトコルを3つ選ぶ。相手は範囲の残りから自動で編成される。'
         : mode === 'draft' ? 'CPU とドラフトで取り合う (CPU の指し方は同じ。難易度は CPU のドラフトの上手さ)。'
           : '両者とも、範囲からランダムに3つ。';
@@ -90,7 +95,8 @@ export function runSetup(protocols, options = {}) {
     if (draft) { renderDraftSummary(); return; }
     rules.innerHTML =
       '<div class="sr-group"><span>使うプロトコル</span>' + seg(POOLS.map(p => [p.key, p.label]), poolKey, 'pool') + '</div>' +
-      (training ? '' : '<div class="sr-group"><span>決め方</span>' + seg(MODES.map(m => [m.key, m.label]), mode, 'mode') + '</div>') +
+      (training || (presetLevel !== null && fixedDeck(presetLevel)) ? ''
+        : '<div class="sr-group"><span>決め方</span>' + seg(MODES.map(m => [m.key, m.label]), mode, 'mode') + '</div>') +
       (mode === 'draft'
         ? '<div class="sr-group"><span>候補</span>' + seg(CANDIDATES, draftSize, 'cand') +
           '<span>BAN</span>' + seg(BANS, draftBans, 'bans') + '</div>'
@@ -105,7 +111,8 @@ export function runSetup(protocols, options = {}) {
      ドラフトでは CPU の指し方は変えず (つよい に固定)、難易度は CPU のドラフトの上手さにだけ効く。
      強さはドラフトで取り合う */
   function renderLevels() {
-    levelWrap.hidden = training || !!draft;
+    levelWrap.hidden = training || !!draft || presetLevel !== null;
+    if (presetLevel !== null) { levelWrap.innerHTML = ''; return; }
     /* 固定デッキ (最強・ロック特化・挑戦者) は自分で選ぶときだけ */
     if (mode !== 'free' && fixedDeck(level)) level = 2;
     /* 挑戦者は1つのボタンにまとめ、選んだらデッキを横の選択肢から選ぶ */
@@ -327,15 +334,16 @@ export function runSetup(protocols, options = {}) {
       close(result);
     };
     /* 戻る: ドラフト中はルールへ、トレーニングの2段目なら1段目へ、それ以外はモード選択へ */
-    backBtn.textContent = '← モード選択';
+    const backLabel = presetLevel !== null ? '← 相手を選び直す' : '← モード選択';
+    backBtn.textContent = backLabel;
     backBtn.onclick = () => {
-      if (draft) { draft = null; backBtn.textContent = '← モード選択'; refresh(); return; }
+      if (draft) { draft = null; backBtn.textContent = backLabel; refresh(); return; }
       if (training && trainingMine) {
         picked.length = 0;
         picked.push(...trainingMine);
         trainingMine = null;
         if (sameBtn) { sameBtn.remove(); sameBtn = null; }
-        backBtn.textContent = '← モード選択';
+        backBtn.textContent = backLabel;
         refresh();
         return;
       }

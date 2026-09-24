@@ -808,6 +808,7 @@
     box-shadow:0 24px 70px rgba(0,0,0,.7);opacity:0;transition:opacity .2s,transform .2s;}
   #endBar.show{display:flex;opacity:1;transform:translateX(-50%) translateY(0);}
   #endBar .end-title{font:900 16px/1 system-ui;letter-spacing:.16em;color:var(--ink);}
+  #endBar .end-sub{font:700 12px/1.5 system-ui;color:var(--gold);}
   #endBar .end-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
   #endFloat{position:fixed;right:14px;bottom:64px;z-index:45;display:none;}
   #endFloat.show{display:block;}
@@ -1191,6 +1192,36 @@
   #runHud.danger{border-color:var(--pink);box-shadow:0 0 18px rgba(255,59,157,.4);}
   #runBack{position:fixed;right:calc(14px + env(safe-area-inset-right));bottom:24px;z-index:40;min-height:40px;padding:0 16px;
     border-radius:10px;border:1px solid var(--pink);background:rgba(8,12,22,.9);color:#fff;font:800 12px/1 system-ui;cursor:pointer;}
+  /* SINGLE GAME: 相手を選ぶ */
+  #oppOv{position:fixed;inset:0;z-index:57;display:none;overflow-y:auto;padding:calc(20px + env(safe-area-inset-top)) 16px 24px;
+    background:radial-gradient(ellipse at 50% 0%,rgba(99,243,255,.1),transparent 55%),#05070f;}
+  #oppOv.show{display:block;}
+  .op-wrap{width:min(980px,100%);margin:0 auto;display:flex;flex-direction:column;gap:18px;}
+  .op-head{display:flex;align-items:baseline;gap:12px;}
+  .op-head b{font:900 20px/1 var(--font-logo),system-ui;letter-spacing:.14em;color:var(--cyan);}
+  .op-head span{font:700 13px/1 system-ui;color:var(--dim);letter-spacing:.1em;}
+  #oppOv section{display:flex;flex-direction:column;gap:8px;}
+  #oppOv h3{margin:0;font:800 13px/1.4 var(--font-hud),system-ui;letter-spacing:.14em;color:#fff;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;}
+  #oppOv h3 small{font:600 11px/1.4 system-ui;letter-spacing:0;color:var(--dim);}
+  .op-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+  .op-row.boss{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));}
+  .op-card{cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:7px;padding:14px 16px;border-radius:12px;
+    border:1px solid rgba(99,243,255,.24);background:rgba(8,12,24,.86);color:#e9eef8;transition:transform .16s,border-color .16s,background .16s;}
+  .op-card b{font:900 16px/1.1 system-ui;letter-spacing:.06em;color:#fff;}
+  .op-card b em{font:700 11px/1 system-ui;font-style:normal;color:var(--gold);margin-left:8px;}
+  .op-card small{font:600 11px/1.5 system-ui;color:var(--dim);}
+  .op-card:hover,.op-card:focus-visible{transform:translateY(-2px);border-color:var(--cyan);background:rgba(99,243,255,.08);outline:0;}
+  .op-card.last{box-shadow:inset 0 0 0 1px rgba(99,243,255,.55);}
+  .op-row.boss .op-card{border-color:rgba(255,59,157,.3);}
+  .op-row.boss .op-card:hover{border-color:var(--pink);background:rgba(255,59,157,.08);}
+  .op-card.wide{grid-column:1 / -1;border-color:rgba(239,208,108,.4);background:linear-gradient(90deg,rgba(239,208,108,.08),rgba(8,12,24,.86));}
+  .op-card.wide:hover{border-color:var(--gold);}
+  .op-vs{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
+  .op-vs > i{font:900 13px/1 var(--font-logo),system-ui;font-style:normal;color:var(--gold);}
+  .op-foot{display:flex;}
+  .op-foot button{cursor:pointer;min-height:40px;padding:0 16px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);
+    color:#e9eef8;font:700 12px/1 system-ui;}
+  @media (max-width:700px){ .op-row{grid-template-columns:1fr;} }
   /* RUN の入口と週替わり3連戦 */
   .rn-mode{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:12px;
     background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.1);}
@@ -1245,6 +1276,9 @@
   .sr-trend .sr-dot{fill:var(--cyan);stroke:#05070f;stroke-width:2;}
   .sr-trend figcaption{font:600 11px/1 system-ui;color:var(--dim);}
   .sr-trend figcaption b{color:var(--ink);font-variant-numeric:tabular-nums;}
+  .sr-titles{display:flex;flex-wrap:wrap;gap:6px;}
+  .sr-titles span{padding:6px 12px;border-radius:999px;font:900 12px/1 system-ui;letter-spacing:.1em;color:#1d1502;
+    background:linear-gradient(90deg,#ffe7a3,#e8b64a);box-shadow:0 0 12px rgba(239,208,108,.45);}
   .sr-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
   .sr-kpi{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);}
   .sr-kpi small{font:700 10px/1.3 system-ui;color:var(--dim);letter-spacing:.04em;}
@@ -1853,7 +1887,7 @@
       "three/addons/": "./vendor/jsm/",
       "./vendor/three.module.js": "./vendor/three.module.js?v=985eb92490",
       "./js3d/account.js": "./js3d/account.js?v=cb8e75ce7b",
-      "./js3d/aidecks.js": "./js3d/aidecks.js?v=76d3104067",
+      "./js3d/aidecks.js": "./js3d/aidecks.js?v=43e3b040ae",
       "./js3d/arena.js": "./js3d/arena.js?v=698f865c22",
       "./js3d/audio.js": "./js3d/audio.js?v=ca4d44ebc1",
       "./js3d/backdrops.js": "./js3d/backdrops.js?v=dd19f3c84a",
@@ -1869,7 +1903,8 @@
       "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c",
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=c8378abf22",
-      "./js3d/main.js": "./js3d/main.js?v=028d6b039b",
+      "./js3d/main.js": "./js3d/main.js?v=38f2ee8fce",
+      "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=083e3a34f9",
       "./js3d/panel.js": "./js3d/panel.js?v=9156d673b5",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=c890d5ec52",
       "./js3d/prompts.js": "./js3d/prompts.js?v=348dff836d",
@@ -1883,11 +1918,11 @@
       "./js3d/run.js": "./js3d/run.js?v=29dcccf04b",
       "./js3d/selectui.js": "./js3d/selectui.js?v=208abdaebc",
       "./js3d/settings.js": "./js3d/settings.js?v=3308854d20",
-      "./js3d/setup.js": "./js3d/setup.js?v=f26cba4024",
+      "./js3d/setup.js": "./js3d/setup.js?v=f9b2b9aa2a",
       "./js3d/solodraft.js": "./js3d/solodraft.js?v=9863c9528c",
       "./js3d/stage.js": "./js3d/stage.js?v=203ed8ec22",
       "./js3d/stats-data.js": "./js3d/stats-data.js?v=3ed158cc49",
-      "./js3d/stats.js": "./js3d/stats.js?v=fe766fcff5",
+      "./js3d/stats.js": "./js3d/stats.js?v=30c2aea19c",
       "./js3d/theme.js": "./js3d/theme.js?v=6e2207621c",
       "./js3d/title.js": "./js3d/title.js?v=7324d2936f",
       "./js3d/training.js": "./js3d/training.js?v=8f9e8ce6d0",
@@ -1901,6 +1936,6 @@
   </script>
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=028d6b039b"></script>
+  <script type="module" src="js3d/main.js?v=38f2ee8fce"></script>
 </body>
 </html>

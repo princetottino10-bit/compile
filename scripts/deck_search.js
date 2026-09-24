@@ -6,6 +6,9 @@
  *   思考時間は短め (--budget) なので、上位は ai_arena.js で本番の設定のまま最強と直接比べて確かめる。
  *
  *   node scripts/deck_search.js --top 10 --extra SPEED --budget 60
+ *
+ * 最弱探し: --bottom N で下位 N 個から作れる組合せを戦わせ、弱い順に並べる
+ *   node scripts/deck_search.js --bottom 10 --budget 60
  */
 const fs = require('node:fs');
 const path = require('node:path');
@@ -55,12 +58,14 @@ if (!isMainThread) {
 } else {
   const src = fs.readFileSync(path.join(__dirname, '..', 'js3d', 'protocol-strength.js'), 'utf8');
   const strength = JSON.parse(src.slice(src.indexOf('{'), src.lastIndexOf('}') + 1));
-  const top = Object.keys(strength).slice(0, +argv('--top', 10));
+  const bottom = +argv('--bottom', 0);
+  const names = Object.keys(strength);
+  const top = bottom ? names.slice(-bottom) : names.slice(0, +argv('--top', 10));
   const extra = String(argv('--extra', '')).split(',').filter(Boolean);
   const pool = [...new Set(top.concat(extra))];
   const decks = [];
   for (let a = 0; a < pool.length; a++) for (let b = a + 1; b < pool.length; b++) for (let c = b + 1; c < pool.length; c++) decks.push([pool[a], pool[b], pool[c]]);
-  if (!decks.some(d => d.slice().sort().join() === CURRENT.slice().sort().join())) decks.push(CURRENT);
+  if (!bottom && !decks.some(d => d.slice().sort().join() === CURRENT.slice().sort().join())) decks.push(CURRENT);
   const budget = +argv('--budget', 60);
   const seed = +argv('--seed', 20260923);
   const jobs = [];
@@ -85,7 +90,7 @@ if (!isMainThread) {
       const own = rows.filter(r => r.key === key);
       const w = own.filter(r => r.won === true).length, l = own.filter(r => r.won === false).length;
       return { key, w, l, rate: w + l ? w / (w + l) : 0 };
-    }).sort((a, b) => b.rate - a.rate);
+    }).sort((a, b) => (bottom ? a.rate - b.rate : b.rate - a.rate));
     ranked.forEach((r, i) => {
       if (i < 25 || r.key === CURRENT.join('/')) console.log(String(i + 1).padStart(3), r.key.padEnd(30), (r.rate * 100).toFixed(1) + '%', r.w + '-' + r.l);
     });
