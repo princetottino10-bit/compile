@@ -527,7 +527,11 @@
   .cp-tag{padding:2px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.2);
     font:700 10px/1.5 system-ui;color:var(--ink);}
   .cp-note{font:600 11px/1.5 system-ui;color:var(--dim);}
-  .cp-rows{display:flex;flex-direction:column;gap:6px;padding:2px 12px 12px;overflow-y:auto;scrollbar-width:thin;}
+  .cp-rows{display:flex;flex-direction:column;gap:6px;padding:2px 12px 12px;overflow-y:auto;scrollbar-width:thin;
+    flex:1;min-height:0;overscroll-behavior:contain;}
+  /* 詳細は盤面の操作を邪魔しないよう全体は触れないが、表示中の本文だけはスクロールできるようにする
+     (スクロールバーが出るのに動かせなかった) */
+  #preview.show .cp-rows{pointer-events:auto;}
   .cp-row{padding:7px 9px;border-radius:7px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);}
   .cp-zone{display:block;margin-bottom:3px;font:800 10px/1.2 system-ui;letter-spacing:.1em;color:var(--accent,#b9a4ff);}
   .cp-row p{margin:0;font:500 12px/1.55 system-ui;color:var(--ink);}
@@ -2204,14 +2208,28 @@
   #pickGo:hover,#pickGo:focus-visible{background:var(--pink);outline:0;}
   @keyframes pickGoIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
   @media (prefers-reduced-motion: reduce){ #pickGo{animation:none;} }
-  /* オンライン対戦: 対戦相手の名前と称号 (画面上の真ん中) */
-  #vsTag{position:absolute;left:calc(14px + env(safe-area-inset-left));top:38px;display:flex;align-items:baseline;gap:8px;max-width:46vw;
-    padding:6px 14px;background:rgba(12,9,20,.72);clip-path:var(--cut-s);font-family:var(--font-ui);white-space:nowrap;pointer-events:none;}
-  #vsTag[hidden]{display:none;}
-  @media (orientation:landscape) and (max-height:500px){ #vsTag{top:8px;left:calc(10px + env(safe-area-inset-left));max-width:34vw;} }
-  #vsTag i{font:800 10px/1 var(--font-ui);font-style:normal;letter-spacing:.2em;color:var(--dim);}
-  #vsTag b{font:800 14px/1 var(--font-ui);color:#fff;overflow:hidden;text-overflow:ellipsis;}
-  #vsTag small{font:800 10px/1 var(--font-ui);letter-spacing:.16em;color:var(--pink);}
+  /* 対戦中の名札: 相手は左上、自分は左下。アイコン・名前・レベル・称号 (CPU は難易度) */
+  .plate{position:absolute;left:calc(14px + env(safe-area-inset-left));top:38px;display:flex;align-items:center;gap:9px;max-width:min(360px,40vw);
+    padding:6px 14px 6px 6px;background:rgba(12,9,20,.74);clip-path:var(--cut-s);font-family:var(--font-ui);white-space:nowrap;pointer-events:none;}
+  /* 自分の名札は画面の左下 (上の帯の中ではなく画面に対して置く)。右の SHOW HAND にかからない幅に */
+  .plate.me{position:fixed;top:auto;bottom:calc(14px + env(safe-area-inset-bottom));max-width:min(210px,24vw);}
+  .plate[hidden]{display:none;}
+  .plate .pl-icon{flex:none;width:30px;height:30px;display:grid;place-items:center;border-radius:6px;
+    background:color-mix(in srgb,var(--pc,#b9a4ff) 18%,#0a0e1a);border:1px solid color-mix(in srgb,var(--pc,#b9a4ff) 60%,transparent);
+    font:900 15px/1 var(--font-ui);color:#fff;}
+  .plate .pl-icon img{width:24px;height:24px;display:block;}
+  .plate .pl-text{display:flex;flex-direction:column;gap:4px;min-width:0;}
+  .plate .pl-top{display:flex;align-items:baseline;gap:8px;min-width:0;}
+  .plate i{font:800 10px/1 var(--font-ui);font-style:normal;letter-spacing:.2em;color:var(--dim);}
+  .plate b{font:800 14px/1 var(--font-ui);color:#fff;overflow:hidden;text-overflow:ellipsis;}
+  .plate em{font:800 10px/1 var(--font-ui);font-style:normal;letter-spacing:.1em;color:var(--cyan);}
+  .plate small{font:800 10px/1 var(--font-ui);letter-spacing:.12em;color:var(--pink);overflow:hidden;text-overflow:ellipsis;}
+  @media (orientation:landscape) and (max-height:500px){
+    .plate{top:8px;left:calc(10px + env(safe-area-inset-left));max-width:30vw;padding:4px 10px 4px 4px;gap:6px;}
+    .plate.me{top:auto;bottom:calc(8px + env(safe-area-inset-bottom));}
+    .plate .pl-icon{width:24px;height:24px;} .plate .pl-icon img{width:19px;height:19px;}
+    .plate b{font-size:12px;}
+  }
   .tt-corner .tt-admin{padding:0 14px;color:var(--pink);border-color:rgba(255,79,163,.55);font-family:var(--font-ui);font-weight:800;letter-spacing:.14em;}
   .tt-corner .tt-admin[hidden]{display:none;}
   /* 管理者の画面 (ACCOUNT → ADMIN) */
@@ -2349,7 +2367,8 @@
 
   <div id="topbar">
     <div id="brand"><b>COMPILE</b><span>3D ARENA</span></div>
-    <div id="vsTag" hidden></div>
+    <div id="vsTag" class="plate" hidden></div>
+    <div id="meTag" class="plate me" hidden></div>
     <div id="turnTimer" hidden></div>
     <div id="topRight">
       <button id="btnCards" class="btn" type="button" title="カードリスト" aria-label="カードリスト">CARDS</button>
@@ -2454,9 +2473,10 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=c8378abf22",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=4b0c77b541",
+      "./js3d/main.js": "./js3d/main.js?v=b097a22684",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=6398fed15e",
       "./js3d/panel.js": "./js3d/panel.js?v=ecb8a073e3",
+      "./js3d/plates.js": "./js3d/plates.js?v=70ffa14b87",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=e0273dcae0",
       "./js3d/playmat.js": "./js3d/playmat.js?v=91ab85f12f",
       "./js3d/profile.js": "./js3d/profile.js?v=6ad599d1c4",
@@ -2518,6 +2538,8 @@
   <link rel="modulepreload" href="js3d/stats-data.js?v=bcf7d5e977">
   <link rel="modulepreload" href="js3d/rewards.js?v=c0bbd8236f">
   <link rel="modulepreload" href="js3d/cosmetics-ui.js?v=6e894549a5">
+  <link rel="modulepreload" href="js3d/displayname.js?v=613e18bf95">
+  <link rel="modulepreload" href="js3d/plates.js?v=70ffa14b87">
   <link rel="modulepreload" href="js3d/playmat.js?v=91ab85f12f">
   <link rel="modulepreload" href="js3d/cardlist-ov.js?v=1d673fd0d2">
   <link rel="modulepreload" href="js3d/opponent-select.js?v=6398fed15e">
@@ -2543,7 +2565,6 @@
   <link rel="modulepreload" href="js3d/aiclient.js?v=704b588b82">
   <link rel="modulepreload" href="js3d/logformat.js?v=6bbf54aba6">
   <link rel="modulepreload" href="js3d/steps.js?v=13e73b20fe">
-  <link rel="modulepreload" href="js3d/displayname.js?v=613e18bf95">
   <link rel="modulepreload" href="js3d/cloudsave.js?v=8372cec875">
   <link rel="modulepreload" href="js3d/admin-ui.js?v=0437cdb130">
   <link rel="modulepreload" href="vendor/three.core.js">
@@ -2571,6 +2592,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=4b0c77b541"></script>
+  <script type="module" src="js3d/main.js?v=b097a22684"></script>
 </body>
 </html>

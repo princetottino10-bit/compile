@@ -25,12 +25,14 @@ import { settings, onSettings, openSettings } from './settings.js';
 import { recordSoloResult, localRecords } from './stats.js';
 import { cardStats, cardTier, playerLevel } from './stats-data.js';
 import { isUnlocked, rewardsBetween, TITLES } from './rewards.js';
-import { setCosmeticProtocols } from './cosmetics-ui.js';
+import { setCosmeticProtocols, profileOf } from './cosmetics-ui.js';
+import { displayName } from './displayname.js';
+import { showPlates } from './plates.js';
 import { matUnlocked, MAT_W, MAT_D } from './playmat.js';
 import { initAccount, openAccount, takeAccountResume } from './account.js';
 import { openCardList } from './cardlist-ov.js';
 import { openOpponentSelect } from './opponent-select.js';
-import { UNDERDOG_DECK, STRONGEST_AI, UNDERDOG_LEVEL } from './aidecks.js';
+import { UNDERDOG_DECK, STRONGEST_AI, UNDERDOG_LEVEL, levelLabel } from './aidecks.js';
 import { openRun, runHud, showRunAfterGame } from './run-ui.js';
 import { openWeekly, weeklyHud, showWeeklyAfterGame } from './weekly-ui.js';
 import { compilesBy, loadRun, RUN_WIN_COMPILES } from './run.js';
@@ -558,6 +560,7 @@ async function boot() {
   if (puzzle) PZ.showPuzzleBar(puzzle, retryPuzzle);
   if (tutorial) coachUpdate();
   if (replayMode) { startReplayView(replayBuilt); return; }
+  if (!puzzle && !tutorial && !demoMode && !trainingMode && !roomMode) showCpuPlates(p1);
   if (trainingMode) {
     UI.setPrompt('');
     UI.toast('カードを選んで、光っている枠をタップすると置けます', 3200);
@@ -1801,6 +1804,21 @@ function roomValOf(defId) {
 /* サーバーの publicState を受けて、差分アニメ + HUD 更新まで行う */
 /* オンライン対戦: 画面上に対戦相手の名前と称号を出す */
 let roomServerOffset = 0;          // サーバーの時計 - この端末の時計 (持ち時間の計算に使う)
+/* 自分の名札: 表示名 (未設定なら YOU)・レベル・称号・アイコン (設定の「見た目」で選んだもの) */
+function myPlate() {
+  const p = profileOf(settings(), localRecords());
+  const proto = p.icon && protoIndex[p.icon];
+  return { name: displayName() || 'YOU', level: p.level, sub: p.title || '',
+    icon: proto ? { name: proto.name, color: proto.color } : null };
+}
+/* CPU 戦の名札: 相手は CPU と難易度。アイコンは相手のデッキの1つ目のプロトコル */
+function showCpuPlates(p1) {
+  const first = p1 && protoIndex[p1[0]];
+  const sub = aiDifficulty === null ? '' : levelLabel(aiDifficulty);
+  showPlates({ me: myPlate(), opp: { name: 'CPU', sub: sub === '不明' ? '' : sub,
+    icon: first ? { name: first.name, color: first.color } : null } });
+}
+
 function showVsTag(rm) {
   if (rm && rm.now) roomServerOffset = Date.parse(rm.now) - Date.now();
   if (rm && rm.ratedError) UI.toast('レート戦の結果を記録できませんでした。時間をおいて戦績を確かめてください', 5000);
@@ -1808,20 +1826,8 @@ function showVsTag(rm) {
   if (!el || !rm || !Array.isArray(rm.names)) return;
   const opp = 1 - rm.side;
   const name = rm.names[opp];
-  if (!name) { el.hidden = true; return; }
   const badge = rm.badges && TITLES[rm.badges[opp]];
-  el.textContent = '';
-  const vs = document.createElement('i');
-  vs.textContent = 'VS';
-  const b = document.createElement('b');
-  b.textContent = name;
-  el.append(vs, b);
-  if (badge) {
-    const t = document.createElement('small');
-    t.textContent = badge;
-    el.append(t);
-  }
-  el.hidden = false;
+  showPlates({ me: myPlate(), opp: name ? { name, sub: badge || '' } : null });
 }
 
 async function roomApplyView(rm, instant) {
