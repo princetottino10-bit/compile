@@ -44,6 +44,31 @@ function dailyBadge(protocols) {
 const LOGO = '<div class="tt-logo"><b>//</b><span data-text="COMPILE">COMPILE</span></div>' +
   '<div class="tt-sub">3D ARENA <i>·</i> PROTOCOL CARD BATTLE</div>';
 
+/* 右側: 公式カードの絵を3枚、斜めに切り抜いて並べる。数秒ごとにグリッチをかけて別のプロトコルへ */
+function startHero(el, protocols) {
+  if (!el || !protocols.length) return () => {};
+  const pick = () => {
+    const pool = protocols.slice();
+    const out = [];
+    while (out.length < 3 && pool.length) out.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+    return out;
+  };
+  const paint = () => {
+    el.innerHTML = pick().map((p, i) => {
+      const n = 1 + Math.floor(Math.random() * 6);
+      return '<figure class="th-panel" style="--i:' + i + ';--pc:' + (p.color || '#b9a4ff') + '">' +
+        '<img alt="" src="art/' + n + p.name.toLowerCase() + '.webp" loading="eager">' +
+        '<figcaption><img alt="" src="' + emblemDataURL(p.name, p.color || '#b9a4ff', 40, true) + '">' + p.name + '</figcaption></figure>';
+    }).join('');
+  };
+  paint();
+  const t = setInterval(() => {
+    el.classList.add('swap');
+    setTimeout(() => { paint(); el.classList.remove('swap'); }, 360);
+  }, 5200);
+  return () => clearInterval(t);
+}
+
 function accountLabel() {
   const u = accountState().user;
   return u ? String(u.name).replace(/[&<>"]/g, '') : 'SIGN IN';
@@ -58,6 +83,7 @@ export function runTitle(protocols, opts) {
     .join('');
   root.innerHTML =
     '<canvas class="tt-art" aria-hidden="true"></canvas>' +
+    '<div class="tt-hero" id="ttHero" aria-hidden="true"></div>' +
     '<div class="tt-scan"></div><div class="tt-log" id="ttLog"></div>' +
     '<div class="tt-center" id="ttCenter">' + LOGO +
       '<button class="tt-start" id="ttStart" type="button">PRESS START</button></div>' +
@@ -72,6 +98,7 @@ export function runTitle(protocols, opts) {
   const paint = () => { if (art.isConnected) { try { drawTitleBackdrop(art); } catch (e) { /* 描けなくても従来の背景で進む */ } } };
   paint();
   window.addEventListener('resize', paint);
+  const stopHero = startHero(root.querySelector('#ttHero'), protocols);
   const log = root.querySelector('#ttLog');
   let li = 0;
   const logTimer = setInterval(() => {
@@ -84,7 +111,7 @@ export function runTitle(protocols, opts) {
       if (!started && (ev.key === 'Enter' || ev.key === ' ')) start();
     };
     const finish = (mode) => {
-      clearInterval(logTimer); window.removeEventListener('keydown', onKey); root.classList.add('gone');
+      clearInterval(logTimer); stopHero(); window.removeEventListener('keydown', onKey); root.classList.add('gone');
       setTimeout(() => { root.classList.remove('show', 'gone'); root.innerHTML = ''; resolve(mode); }, 420);
     };
     const showMenu = () => {
