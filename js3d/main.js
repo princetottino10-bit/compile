@@ -3420,6 +3420,9 @@ function checkRevealed(st) {
 let relayoutTimer = null;
 function onViewportChanged() {
   syncHandDrawerForViewport();
+  /* 横 → 縦に回したとき: 横で出ていた詳細ウインドウ (左上) は縦では使わない (縦は触ったカードの小さな説明を出す)。
+     残すと画面の真ん中で選択の帯に重なるので片付ける */
+  if (isCompactHandUI()) { previewUid = null; pickPanelReq = null; UI.hideCardPanel(); }
   clearTimeout(relayoutTimer);
   const attempt = (n) => {
     const st = shown();
