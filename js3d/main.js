@@ -79,7 +79,7 @@ onFavoriteChange(() => refreshCardGlow());
 UI.setFavoriteHandler({
   isFav: (defId) => favSet.has(defId),
   toggle: (defId) => { const r = toggleFavoriteCard(defId); if (r.message) UI.toast(r.message); return r; },
-  winsOf: (defId) => { const t = cardWins.get(defId); return t ? { wins: t.wins, games: t.games, tier: cardTier(t.wins) } : null; }
+  winsOf: (defId) => { const t = cardWins.get(defId); return t ? { wins: t.wins, games: t.games, effects: t.effects, tier: cardTier(t.wins) } : null; }
 });
 let runMode = false;             // 勝ち抜き戦の1戦 (?run=1)
 let runEnded = false;            // 勝ち抜き戦の結果を出したか (ライフが尽きたらその場で出す)
@@ -184,10 +184,7 @@ async function boot() {
       await UI.compileCutIn({
         ...info,
         art: glitchArtUrl(info.name),
-        emblem: emblemDataURL(info.name, info.color, 512, true),
-        /* お気に入りのカードでコンパイルしたら、その札をカットインに並べる */
-        favorites: (info.favorites || []).map(id => defIndex[id]).filter(Boolean)
-          .map(d => ({ img: faceImageURL(d), name: d.proto + ' ' + d.value }))
+        emblem: emblemDataURL(info.name, info.color, 512, true)
       });
     }
   });
@@ -2563,7 +2560,8 @@ async function afterTurn() {
       const st0 = cur.state;
       recordSoloResult(st0.players[ME].protocols.map(p => p.name), st0.players[AI].protocols.map(p => p.name), win, aiDifficulty,
         { turns: (st0.turns || 0) + 1,       // 決着した手番も1つと数える
-          cards: ((st0.tally && st0.tally.faceUp[ME]) || []).slice() });
+          cards: ((st0.tally && st0.tally.faceUp[ME]) || []).slice(),
+          effects: (st0.tally && st0.tally.effects && st0.tally.effects[ME]) || {} });
       refreshCardGlow();
     }
     UI.setPrompt(win ? 'あなたの勝ち' : '敗北', 'end');

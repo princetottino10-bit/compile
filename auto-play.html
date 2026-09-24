@@ -921,8 +921,16 @@ function setTrace(v) { TRACE = !!v; }
    compiles: 各プレイヤーがコンパイルした回数 (リコンパイル・効果で済ませたものも)
    faceUp: 各プレイヤーが表で出したカードの種類 (defId)。古い盤面には無いので、ここで作る */
 function tallyOf(st) {
-  if (!st.tally) st.tally = { compiles: [0, 0], faceUp: [[], []] };
+  if (!st.tally) st.tally = { compiles: [0, 0], faceUp: [[], []], effects: [{}, {}] };
+  if (!st.tally.effects) st.tally.effects = [{}, {}];
   return st.tally;
+}
+/* 効果 (上段・中段・下段) が発動した回数を、カードの持ち主ごと・カードの種類ごとに数える */
+function tallyEffect(st, uid) {
+  const c = st.cards[uid];
+  if (!c) return;
+  const m = tallyOf(st).effects[c.owner];
+  if (m) m[c.def] = (m[c.def] || 0) + 1;
 }
 function tallyFaceUp(st, c) {
   const list = tallyOf(st).faceUp[c.owner];
@@ -1213,6 +1221,7 @@ function execTrigger(ctx, uid, slot, locked) {
   if (ctx.chain) ctx.chain.push(uid + '|' + slot);
   try {
     log(ctx, `[${defOf(ctx.st, uid).id}] ${slot === 'upper' ? '上段' : '下段'}効果が発動`, uid);
+    tallyEffect(ctx.st, uid);
     execOps(ctx, fr, tr.ops);
   } finally {
     if (ctx.chain) ctx.chain.pop();
@@ -1470,6 +1479,7 @@ function resolveMiddle(ctx, uid, why) {
   if (ctx.chain) ctx.chain.push(uid + '|middle');
   try {
     log(ctx, `[${defOf(st, uid).id}] 中段コマンド解決 (${why})`, uid);
+    tallyEffect(st, uid);
     const fr = { source: uid, slot: 'middle', controller: loc.side, line: loc.line, bind: {}, done: false };
     execOps(ctx, fr, eff.middle.ops);
   } finally {

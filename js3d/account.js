@@ -21,11 +21,12 @@ const toRow = (r) => ({
   id: r.id, me: r.me, opp: r.opp, win: !!r.win,
   level: Number.isInteger(r.level) ? r.level : null, played_at: new Date(r.at).toISOString(),
   turns: Number.isInteger(r.turns) ? r.turns : null, feats: Array.isArray(r.feats) ? r.feats.slice(0, 32) : [],
-  cards: Array.isArray(r.cards) ? r.cards.slice(0, 64) : []
+  cards: Array.isArray(r.cards) ? r.cards.slice(0, 64) : [],
+  effects: r.effects && typeof r.effects === 'object' ? r.effects : {}
 });
 const fromRow = (row) => ({
   id: row.id, me: row.me, opp: row.opp, win: row.win, level: row.level, at: Date.parse(row.played_at),
-  turns: row.turns, feats: row.feats || [], cards: row.cards || []
+  turns: row.turns, feats: row.feats || [], cards: row.cards || [], effects: row.effects || {}
 });
 
 function userFrom(session) {
@@ -103,7 +104,7 @@ export async function syncRecords() {
   try {
     const remote = [];
     for (let from = 0; ; from += 1000) {
-      const r = await ROOM.roomClient().from(TABLE).select('id,me,opp,win,level,played_at,turns,feats,cards')
+      const r = await ROOM.roomClient().from(TABLE).select('id,me,opp,win,level,played_at,turns,feats,cards,effects')
         .order('played_at', { ascending: true }).range(from, from + 999);
       if (r.error) throw new Error(r.error.message);
       remote.push(...r.data);

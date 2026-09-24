@@ -1603,3 +1603,12 @@ test('winCompiles: 2本先取なら2本目のコンパイルで勝ち、通常�
     assert.equal(res.state.winner, expected, JSON.stringify(opts));
   }
 });
+
+test('試合の集計: 表で出した札の中段が発動すると、持ち主の効果の回数が増える', () => {
+  const st = ng().state;
+  setHand(st, 0, ['DARKNESS_1']);
+  const res = Engine.apply(st, { type: 'play', card: uidOf('DARKNESS_1', 0), line: 0, faceUp: true });
+  const done = drive(res, (req) => (req.candidates && req.candidates.length ? [req.candidates[0]] : []));
+  assert.equal(done.state.tally.effects[0].DARKNESS_1, 1);
+  assert.deepEqual(done.state.tally.faceUp[0], ['DARKNESS_1']);
+});

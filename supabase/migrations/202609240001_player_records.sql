@@ -12,6 +12,8 @@ create table if not exists public.player_records (
   feats text[] not null default '{}' check (cardinality(feats) <= 32),
   -- その試合で自分が表で出したカード (カードごとの戦績・使って勝つほど光る枠)
   cards text[] not null default '{}' check (cardinality(cards) <= 64),
+  -- 自分のカードの効果が発動した回数 { "FIRE_1": 3, ... }
+  effects jsonb not null default '{}'::jsonb check (jsonb_typeof(effects) = 'object' and pg_column_size(effects) < 4096),
   played_at timestamptz not null,
   created_at timestamptz not null default now(),
   primary key (user_id, id)

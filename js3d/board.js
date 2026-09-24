@@ -426,26 +426,6 @@ export function createBoard(stage, defIndex, me, hooks) {
     sfx('boom');
     stage.shake(0.24, 700);
 
-    /* 2.5) お気に入りのカードが入っていれば、砕く前に金色に光らせて浮かせ、金の衝撃波を重ねる */
-    const favs = ev.side === me ? prev.lines[ev.line][me].filter(uid => {
-      const c = prev.cards[uid];
-      const a = c && c.faceUp ? auraFor(c.def) : null;
-      return !!(a && a.fav);
-    }) : [];
-    if (favs.length) {
-      FX.compilePillar(scene, laneX, 0xffd86a, 1300);
-      FX.shockwave(scene, center, 0xffd86a, 8.5, 1100);
-      sfx('chain', 3);
-      await TW.tween(420, (t) => {
-        for (const uid of favs) {
-          const card = cards.get(uid);
-          if (!card) continue;
-          setHighlight(card, 0xffd86a, 0.5 * t, 0.95);
-          card.position.y += 0.012;
-        }
-      }, TW.Ease.outCubic);
-    }
-
     /* 3) そのラインにあったカードを砕く */
     const doomed = [];
     for (let side = 0; side < 2; side++) {
@@ -467,8 +447,7 @@ export function createBoard(stage, defIndex, me, hooks) {
       name: ev.name,
       color: accent instanceof THREE.Color ? '#' + accent.getHexString() : accent,
       mine: ev.side === me,
-      remaining: (next.winCompiles || 3) - next.players[ev.side].protocols.filter(p => p.compiled).length,
-      favorites: favs.map(uid => prev.cards[uid].def)
+      remaining: (next.winCompiles || 3) - next.players[ev.side].protocols.filter(p => p.compiled).length
     });
 
     await stage.home(420);

@@ -31,6 +31,16 @@ function save(list) {
 
 export function localRecords() { return records(); }
 
+/* 効果の発動回数 { defId: 回数 } の形だけ通す (カードの種類は64まで) */
+export function cleanEffects(e) {
+  const out = {};
+  if (!e || typeof e !== 'object') return out;
+  for (const [k, v] of Object.entries(e).slice(0, 64)) {
+    if (/^[A-Z]{2,16}_\d$/.test(k) && Number.isInteger(v) && v > 0) out[k] = Math.min(v, 999);
+  }
+  return out;
+}
+
 /* ---------- お気に入りのカード (10枚まで、1プロトコル1枚まで) ---------- */
 const FAV_KEY = 'compileFavCards';
 const FAV_OLD_KEY = 'compileFavCard';        // 以前の1枚だけの保存
@@ -81,7 +91,8 @@ export function mergeRecords(remote) {
 }
 
 /* 1戦を記録する。me / opp: プロトコル名3つ、win: 勝ったか、level: 難易度 (aidecks.js の番号 / 不明なら null)
-   extra: { turns: 決着までの手番の数 (両者合計), feats: 取った実績の id, cards: 自分が表で出したカードの defId } */
+   extra: { turns: 決着までの手番の数 (両者合計), feats: 取った実績の id, cards: 自分が表で出したカードの defId,
+            effects: { defId: 自分のそのカードの効果が発動した回数 } } */
 export function recordSoloResult(me, opp, win, level, extra) {
   const list = records();
   const at = Date.now();
@@ -89,7 +100,7 @@ export function recordSoloResult(me, opp, win, level, extra) {
   const rec = { id: 't' + at + '_' + Math.random().toString(36).slice(2, 6), me: me.slice(), opp: opp.slice(),
     win: !!win, level: level === undefined ? null : level, at,
     turns: Number.isInteger(x.turns) ? x.turns : null, feats: Array.isArray(x.feats) ? x.feats.slice() : [],
-    cards: Array.isArray(x.cards) ? x.cards.slice(0, 64) : [] };
+    cards: Array.isArray(x.cards) ? x.cards.slice(0, 64) : [], effects: cleanEffects(x.effects) };
   list.push(rec);
   save(list);
   if (hooks.onRecord) hooks.onRecord(rec);
@@ -222,6 +233,16 @@ function detailTab(list) {
   return groups.map(([t, g]) => '<h3 class="sr-h">' + t + '</h3>' + rows(g)).join('');
 }
 
+/* 効果をよく使ったカード (上位5枚) */
+function effectTop(cs) {
+  const top = Array.from(cs.values()).filter(t => t.effects > 0).sort((a, b) => b.effects - a.effects).slice(0, 5);
+  if (!top.length) return '';
+  return '<div class="sr-fxtop"><small>効果をよく使ったカード</small>' + top.map(t => {
+    const d = cardIndex[t.id] || { proto: t.id, value: '' };
+    return '<span style="--pc:' + esc(d.color || '#63f3ff') + '"><b>' + esc(d.proto + ' ' + d.value) + '</b>' + t.effects + '回</span>';
+  }).join('') + '</div>';
+}
+
 /* カード: 全180枚をプロトコルごとに。光り方 (表で出して勝った数) と、押してお気に入り (10枚・1プロトコル1枚まで) */
 function cardsTab(list, protos) {
   const cs = cardStats(list);
@@ -232,7 +253,8 @@ function cardsTab(list, protos) {
     byProto.get(d.proto).push({ id, ...d });
   }
   return '<p class="pz-note">表で出して勝った試合の数で、盤面のカードが光ります: 銅 3勝・銀 10勝・金 25勝・ホロ 50勝。' +
-    'カードを押すとお気に入りになり、特別に光ります (<b>' + FAV_MAX + '枚まで・1プロトコル1枚まで</b>)。</p>' +
+    'カードを押すとお気に入りになり、金の縁取りが付きます (<b>' + FAV_MAX + '枚まで・1プロトコル1枚まで</b>)。</p>' +
+    effectTop(cs) +
     '<p class="sr-favcount">お気に入り <b>' + favs.length + '</b> / ' + FAV_MAX + '<span id="srFavMsg" role="status"></span></p>' +
     '<div class="sr-cardgrid">' + protos.map(p => {
       const cards = (byProto.get(p.name) || []).sort((a, b) => a.value - b.value);
@@ -241,7 +263,8 @@ function cardsTab(list, protos) {
         const tier = t ? cardTier(t.wins) : null;
         const on = favs.includes(c.id);
         return '<button type="button" class="sr-cc' + (tier ? ' t-' + tier.key : '') + (on ? ' fav' : '') + '" data-fav="' + esc(c.id) + '"' +
-          ' aria-pressed="' + on + '" title="' + esc(p.name + ' ' + c.value) + (t ? ' - ' + t.wins + '勝 / ' + t.games + '戦' : ' - 未使用') + '">' +
+          ' aria-pressed="' + on + '" title="' + esc(p.name + ' ' + c.value) +
+          (t ? ' - ' + t.wins + '勝 / ' + t.games + '戦・効果 ' + t.effects + '回' : ' - 未使用') + '">' +
           c.value + (on ? '<i>★</i>' : '') + '</button>';
       }).join('') + '</div>';
     }).join('') + '</div>';

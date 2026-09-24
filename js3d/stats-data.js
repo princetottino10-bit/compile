@@ -82,13 +82,15 @@ export function fastestWin(records, filter) {
    記録の cards (その試合で自分が表で出したカード) から、カードごとの 使った試合数・勝った試合数 */
 export function cardStats(records) {
   const map = new Map();
+  const get = (id) => { let t = map.get(id); if (!t) { t = { id, games: 0, wins: 0, effects: 0 }; map.set(id, t); } return t; };
   for (const r of records) {
     for (const id of r.cards || []) {
-      const t = map.get(id) || { id, games: 0, wins: 0 };
+      const t = get(id);
       t.games++;
       if (r.win) t.wins++;
-      map.set(id, t);
     }
+    /* 効果の発動回数 (裏から表に返った札・上段の常在効果の誘発なども含む) */
+    for (const [id, n] of Object.entries(r.effects || {})) get(id).effects += n;
   }
   return map;
 }

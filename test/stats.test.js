@@ -115,3 +115,16 @@ test('お気に入り: 10枚まで、1プロトコル1枚まで (同じプロト
   assert.ok(S.toggleFavoriteCard('FIRE_3').ok, '外す');
   assert.equal(S.favoriteCards().length, 9);
 });
+
+test('効果の発動回数: 記録には { defId: 回数 } だけを残し、カードごとに合計する', async () => {
+  const S = await load();
+  assert.deepEqual(S.cleanEffects({ FIRE_1: 2, bad: 3, WATER_5: 0, SPEED_2: 1.5, LIFE_3: 5000 }), { FIRE_1: 2, LIFE_3: 999 });
+  const D = await loadData();
+  const cs = D.cardStats([
+    { ...rec(deck('A', 'B', 'C'), deck('D', 'E', 'F'), true, 1), cards: ['FIRE_1'], effects: { FIRE_1: 3, WATER_2: 1 } },
+    { ...rec(deck('A', 'B', 'C'), deck('D', 'E', 'F'), false, 1), cards: ['FIRE_1'], effects: { FIRE_1: 2 } }
+  ]);
+  assert.equal(cs.get('FIRE_1').effects, 5);
+  assert.equal(cs.get('WATER_2').effects, 1, '表で出していない (裏から返った) 札の発動も数える');
+  assert.equal(cs.get('WATER_2').games, 0);
+});

@@ -305,12 +305,21 @@ const SOUNDS = {
     });
     tone({ freq: 1760, dur: 0.5, type: 'sine', vol: 0.05, delay: 0.22, verb: 0.35 });
   },
+  /* 勝ち: 音階を駆け上がる「ファンファーレ」はやめ、重い一撃 → 和音がふくらむ → 上で細かく瞬く → 鐘で締める */
   win() {
-    [523, 659, 784, 1046, 1318].forEach((f, i) => {
-      tone({ freq: f, dur: 0.34, type: 'triangle', vol: 0.16, delay: i * 0.12, verb: 0.35 });
-      tone({ freq: f * 2, dur: 0.3, type: 'sine', vol: 0.05, delay: i * 0.12, verb: 0.35 });
+    tone({ freq: 70, end: 38, dur: 0.7, type: 'sine', vol: 0.42 });                 // 低い一撃
+    noise({ kind: 'lowpass', freq: 500, end: 7000, dur: 0.55, vol: 0.07, attack: 0.2, verb: 0.4 });
+    /* D の9th の和音 (D A C# E F#)。わずかにずらした2本を重ねて厚みを出す */
+    [146.8, 220, 277.2, 329.6, 370].forEach((f, i) => {
+      for (const d of [1, 1.004]) {
+        tone({ freq: f * d, dur: 2.2, type: i ? 'triangle' : 'sine', vol: i ? 0.05 : 0.1, attack: 0.35, delay: 0.12, verb: 0.6 });
+      }
     });
-    tone({ freq: 1046, dur: 1.1, type: 'sine', vol: 0.1, delay: 0.62, verb: 0.5 });
+    [1760, 2217, 2637, 2960, 3520].forEach((f, i) => {                               // 瞬き
+      tone({ freq: f, dur: 0.5, type: 'sine', vol: 0.034, delay: 0.42 + i * 0.09, verb: 0.75 });
+    });
+    tone({ freq: 1174.7, dur: 2.0, type: 'sine', vol: 0.09, attack: 0.01, delay: 0.95, verb: 0.7 });  // 鐘
+    tone({ freq: 2349.3, dur: 1.4, type: 'sine', vol: 0.018, attack: 0.01, delay: 0.95, verb: 0.7 });
   },
   lose() {
     [392, 330, 262, 196].forEach((f, i) => {
