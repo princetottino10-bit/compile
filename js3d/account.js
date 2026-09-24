@@ -200,3 +200,26 @@ export function openAccount() {
   render();
   el.classList.add('show');
 }
+
+/* ---------- 週替わり3連戦のクリア者一覧 ----------
+   読むのはログインしなくてもよい。載せるのはログインした本人だけ (1週1回) */
+const WEEKLY_TABLE = 'weekly_clears';
+
+export async function fetchWeeklyClears(week) {
+  await ROOM.roomLoadDeps();
+  if (!ROOM.roomConfigured()) throw new Error('サーバーが未設定です');
+  const r = await ROOM.roomClient().from(WEEKLY_TABLE).select('name,attempts,cleared_at')
+    .eq('week', week).order('cleared_at', { ascending: true }).limit(100);
+  if (r.error) throw new Error(r.error.message);
+  return r.data;
+}
+
+export async function submitWeeklyClear(week, name, attempts, decks) {
+  if (state.deferred || !state.ready) await initAccount(true);
+  if (!state.user) throw new Error('ログインすると名前を載せられます (右上のログインから)');
+  const r = await ROOM.roomClient().from(WEEKLY_TABLE).insert({ week, name, attempts, decks });
+  if (r.error) {
+    if (/duplicate|unique/i.test(r.error.message)) throw new Error('今週はもう載っています');
+    throw new Error(r.error.message);
+  }
+}

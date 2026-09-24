@@ -50,8 +50,9 @@ function deckLine(names, byName) {
   return '<span class="rn-deck">' + names.map(n => '<i style="--pc:' + esc((byName[n] || {}).color || '#63f3ff') + '">' + esc(n) + '</i>').join('') + '</span>';
 }
 
-/* 戦う相手が決まるまで画面を進める。null ならタイトルへ戻る */
-export function openRun(protocols, cardsOf) {
+/* 戦う相手が決まるまで画面を進める。null ならタイトルへ戻る、{ go: 'weekly' } なら週替わり3連戦へ。
+   opts.hub: タイトルから来たとき。勝ち抜き戦の途中でも、まず入口 (続きから / 週替わり) を出す */
+export function openRun(protocols, cardsOf, opts) {
   const names = protocols.map(p => p.name);
   const byName = Object.fromEntries(protocols.map(p => [p.name, p]));
   const el = overlay();
@@ -59,12 +60,23 @@ export function openRun(protocols, cardsOf) {
     let run = RUN.loadRun();
     let swapAdd = null;          // 報酬で入れ替えるプロトコル (選んだあと、外すほうを選ぶ)
     let confirmQuit = false;
+    let hub = !!(opts && opts.hub);
     const set = (next) => { run = next; RUN.saveRun(run); render(); };
     const done = (v) => { el.classList.remove('show'); resolve(v); };
     const info = (name) => { const p = byName[name]; if (p && cardsOf) showProtocolCards(name, p.color, cardsOf); };
 
+    const weeklyCard = '<div class="rn-mode"><div><b>週替わり3連戦</b><small>今週配られた9つのプロトコルを3つずつ使い切って3連勝。クリアすると名前が載る</small></div>' +
+      '<button type="button" data-act="weekly">開く</button></div>';
     const render = () => {
       let body = '';
+      const active = run && run.phase !== 'over' && run.phase !== 'clear';
+      if (hub && active) {
+        body = '<div class="rn-mode"><div><b>勝ち抜き戦</b><small>第' + (run.floor + 1) + '戦の途中 ・ ライフ ' + run.life + '</small></div>' +
+          '<button type="button" class="rn-go" data-act="resume">続きから</button></div>' + weeklyCard +
+          '<div class="rn-btns"><button type="button" data-act="title">タイトルへ</button></div>';
+        el.innerHTML = '<div class="rn-card"><div class="rn-head"><b>// RUN</b><span>勝ち抜き戦</span></div>' + body + '</div>';
+        return;
+      }
       if (!run || run.phase === 'over' || run.phase === 'clear') {
         const best = RUN.loadBest();
         body = '<p class="rn-lead">3つのプロトコルを選んで、' + RUN.FLOORS.length + '人の CPU と戦い抜きます。1試合は<b>' + RUN.RUN_WIN_COMPILES + '本先取</b>。' +
@@ -73,7 +85,7 @@ export function openRun(protocols, cardsOf) {
           (best ? '<p class="rn-best">最高記録: ' + (best.reached > RUN.FLOORS.length ? '<b>全勝クリア</b> (ライフ ' + best.life + ' 残し)' : '<b>' + best.reached + '戦目</b>まで') +
             '　' + deckLine(best.deck || [], byName) + '</p>' : '') +
           '<div class="rn-btns"><button type="button" class="rn-go" data-act="start">はじめる</button>' +
-          '<button type="button" data-act="title">タイトルへ</button></div>';
+          '<button type="button" data-act="title">タイトルへ</button></div>' + weeklyCard;
       } else if (run.phase === 'draft') {
         body = '<h2>プロトコルを選ぶ <small>' + (run.deck.length + 1) + ' / 3</small></h2>' +
           (run.deck.length ? '<p class="rn-note">選んだもの ' + deckLine(run.deck, byName) + '</p>' : '') +
@@ -116,11 +128,13 @@ export function openRun(protocols, cardsOf) {
       if (t.dataset.remove) { const add = swapAdd; swapAdd = null; set(RUN.applyReward(run, { type: 'swap', add, remove: t.dataset.remove }, names)); return; }
       switch (t.dataset.act) {
         case 'start': set(RUN.newRun(names)); break;
+        case 'resume': hub = false; render(); break;
+        case 'weekly': done({ go: 'weekly' }); break;
         case 'title': done(null); break;
         case 'unswap': swapAdd = null; render(); break;
         case 'heal': set(RUN.applyReward(run, { type: 'heal' }, names)); break;
         case 'skip': set(RUN.applyReward(run, { type: 'skip' }, names)); break;
-        case 'fight': done({ me: run.deck.slice(), ai: run.opp.deck.slice(), level: run.opp.level }); break;
+        case 'fight': done({ me: run.deck.slice(), ai: run.opp.deck.slice(), level: run.opp.level, kind: 'run' }); break;
         case 'quit': confirmQuit = true; render(); break;
         case 'quitNo': confirmQuit = false; render(); break;
         case 'quitYes': confirmQuit = false; set({ ...run, phase: 'over' }); break;

@@ -19,6 +19,7 @@ import { cardStats, cardTier } from './stats-data.js';
 import { initAccount, openAccount, takeAccountResume } from './account.js';
 import { openCardList } from './cardlist-ov.js';
 import { openRun, runHud, showRunAfterGame } from './run-ui.js';
+import { openWeekly, weeklyHud, showWeeklyAfterGame } from './weekly-ui.js';
 import { compilesBy, loadRun, RUN_WIN_COMPILES } from './run.js';
 import { openReview } from './review.js';
 import { runRoomLobby } from './roomui.js';
@@ -81,7 +82,8 @@ UI.setFavoriteHandler({
   toggle: (defId) => { const r = toggleFavoriteCard(defId); if (r.message) UI.toast(r.message); return r; },
   winsOf: (defId) => { const t = cardWins.get(defId); return t ? { wins: t.wins, games: t.games, effects: t.effects, tier: cardTier(t.wins) } : null; }
 });
-let runMode = false;             // 勝ち抜き戦の1戦 (?run=1)
+let runMode = false;             // 勝ち抜き戦・週替わり3連戦の1戦 (?run=1)
+let runKind = 'run';             // 'run' (勝ち抜き戦) / 'weekly' (週替わり3連戦)
 let runEnded = false;            // 勝ち抜き戦の結果を出したか (ライフが尽きたらその場で出す)
 let setupNote = '';
 /* チュートリアルのレッスン (?tutorial=1..)。{ index, lesson } */
@@ -275,13 +277,24 @@ async function boot() {
       }
       if (nextMode === 'tutorial') { location.href = location.pathname + '?tutorial=1'; return; }
       if (nextMode === 'run') {
-        const pick = await openRun(cards.protocols, protocolCards);
-        if (!pick) { history.replaceState(null, '', location.pathname); nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
+        /* 1戦終えて戻ってきた (?run=1) ときは、前に遊んでいた方の画面へ。タイトルからは入口を出す */
+        const resume = params.get('run') === '1';
+        let lastKind = 'run';
+        try { lastKind = localStorage.getItem('compileRunKind') || 'run'; } catch (e) { /* private mode */ }
+        let pick = resume && lastKind === 'weekly' ? await openWeekly(cards.protocols, protocolCards)
+          : await openRun(cards.protocols, protocolCards, { hub: !resume });
+        for (let hop = 0; pick && pick.go && hop < 8; hop++) {
+          pick = pick.go === 'weekly' ? await openWeekly(cards.protocols, protocolCards)
+            : await openRun(cards.protocols, protocolCards, { hub: true });
+        }
+        if (!pick || pick.go) { history.replaceState(null, '', location.pathname); nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
         document.body.classList.remove('pregame');
         p0 = pick.me;
         p1 = pick.ai;
         runMode = true;
-        runHud(0);
+        runKind = pick.kind === 'weekly' ? 'weekly' : 'run';
+        try { localStorage.setItem('compileRunKind', runKind); } catch (e) { /* private mode */ }
+        if (runKind === 'weekly') weeklyHud(); else runHud(0);
         applyAiDifficulty(pick.level);
         break;
       }
@@ -2574,7 +2587,11 @@ async function afterTurn() {
       return;
     }
     if (runMode) {
-      if (!runEnded) { runEnded = true; showRunAfterGame(win, compilesBy(cur.state, AI), Object.values(protoIndex)); }
+      if (!runEnded) {
+        runEnded = true;
+        if (runKind === 'weekly') showWeeklyAfterGame(win, Object.values(protoIndex));
+        else showRunAfterGame(win, compilesBy(cur.state, AI), Object.values(protoIndex));
+      }
       return;
     }
     showEndActions(win);
@@ -2786,7 +2803,7 @@ function panelRows(st) {
 
 /* 再生の途中でプロトコル板を合わせる。並べ替えは板を滑らせて見せ、終わるまで待つ */
 function syncPanels(st, animate) {
-  if (runMode && st && !runEnded) {
+  if (runMode && runKind === 'run' && st && !runEnded) {
     /* 勝ち抜き戦: 相手にコンパイルされた回数だけライフを減らして見せる。尽きたらその場で終わり */
     const lost = compilesBy(st, AI);
     runHud(lost);
