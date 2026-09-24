@@ -368,15 +368,10 @@ export function createBoard(stage, defIndex, me, hooks) {
     spawnFlashPillar(scene, target, accent);
     sfx('land');
     stage.shake(0.085, 300);
-    /* お気に入りのカードを表で出したときは、金の輪と光を足す */
+    /* お気に入りのカードを表で出したときは、細い金の輪を1つ足すだけ (光らせすぎない) */
     const pc = next.cards[uid];
     const aura = pc && pc.owner === me && pc.faceUp ? auraFor(pc.def) : null;
-    if (aura && aura.fav) {
-      FX.shockwave(scene, target.clone(), 0xffd86a, 3.2, 900);
-      spawnImpactRing(scene, target, 0xffd86a, 6);
-      FX.screenFlash(stage, 0xffe7a3, 380, 0.22);
-      sfx('chain', 2);
-    }
+    if (aura && aura.fav) spawnImpactRing(scene, target, 0xffd86a, 5);
     setHighlight(card, accent, 0.42, 0.95);
 
     /* 着地のつぶれ + 沈み込み + 発光の減衰 */

@@ -68,7 +68,7 @@ function refreshCardGlow() {
   if (board && cur) board.syncInstant(shown());
 }
 function auraFor(defId) {
-  if (favSet.has(defId)) return { color: '#ffb8e0', strength: 0.95, fav: true, holo: false };
+  if (favSet.has(defId)) return { color: '#ffffff', strength: 1, fav: true, frame: true, holo: false };
   const t = cardWins.get(defId);
   const tier = t ? cardTier(t.wins) : null;
   if (!tier) return null;

@@ -291,6 +291,48 @@ function auraTexture() {
   return auraTex;
 }
 
+/* お気に入りの縁取り: ぼかさない細い金の二重線と、四隅の鉤 (光らせすぎない)。色は絵に焼き込む */
+let favTex = null;
+function favFrameTexture() {
+  if (favTex) return favTex;
+  const W = 544, H = 676;
+  const cw = W / 1.36, ch = H / 1.3, x = (W - cw) / 2, y = (H - ch) / 2;
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d');
+  const gold = ctx.createLinearGradient(0, 0, W, H);
+  gold.addColorStop(0, '#fff3c4');
+  gold.addColorStop(0.35, '#e8b64a');
+  gold.addColorStop(0.55, '#fff0b8');
+  gold.addColorStop(1, '#b8862c');
+  const rr = (px, py, pw, ph, r) => {
+    ctx.beginPath();
+    ctx.moveTo(px + r, py); ctx.arcTo(px + pw, py, px + pw, py + ph, r); ctx.arcTo(px + pw, py + ph, px, py + ph, r);
+    ctx.arcTo(px, py + ph, px, py, r); ctx.arcTo(px, py, px + pw, py, r); ctx.closePath();
+  };
+  ctx.strokeStyle = gold;
+  ctx.shadowColor = 'rgba(255,214,120,.55)';
+  ctx.shadowBlur = 6;
+  ctx.lineWidth = 4;
+  rr(x - 7, y - 7, cw + 14, ch + 14, 30);
+  ctx.stroke();
+  ctx.lineWidth = 1.6;
+  rr(x - 16, y - 16, cw + 32, ch + 32, 38);
+  ctx.stroke();
+  /* 四隅の鉤 */
+  ctx.lineWidth = 7;
+  ctx.lineCap = 'square';
+  const L = 46, o = 22;
+  for (const [cx, cy, sx, sy] of [[x - o, y - o, 1, 1], [x + cw + o, y - o, -1, 1], [x - o, y + ch + o, 1, -1], [x + cw + o, y + ch + o, -1, -1]]) {
+    ctx.beginPath();
+    ctx.moveTo(cx, cy + sy * L); ctx.lineTo(cx, cy); ctx.lineTo(cx + sx * L, cy);
+    ctx.stroke();
+  }
+  favTex = new THREE.CanvasTexture(cv);
+  favTex.colorSpace = THREE.SRGBColorSpace;
+  return favTex;
+}
+
 export function setAura(card, spec) {
   let aura = card.userData.aura;
   if (!spec) {
@@ -314,7 +356,14 @@ export function setAura(card, spec) {
     card.userData.aura = aura;
   }
   aura.visible = true;
-  aura.material.color.set(spec.color);
+  /* お気に入りは焼き込んだ金の縁 (加算にしない)、それ以外は色つきの光の輪 */
+  const wantTex = spec.frame ? favFrameTexture() : auraTexture();
+  if (aura.material.map !== wantTex) {
+    aura.material.map = wantTex;
+    aura.material.blending = spec.frame ? THREE.NormalBlending : THREE.AdditiveBlending;
+    aura.material.needsUpdate = true;
+  }
+  aura.material.color.set(spec.frame ? '#ffffff' : spec.color);
   aura.material.opacity = spec.strength;      // 揺らぎ (tickAura) が始まる前から見えるように
   card.userData.auraSpec = spec;
 }
@@ -324,7 +373,8 @@ export function tickAura(card, t) {
   const spec = card.userData.auraSpec;
   const aura = card.userData.aura;
   if (!spec || !aura || !aura.visible) return;
-  const pulse = spec.fav ? 0.72 + 0.28 * Math.sin(t * 2.4) : 0.9 + 0.1 * Math.sin(t * 1.3);
+  if (spec.frame) { aura.material.opacity = spec.strength; return; }   // 縁取りは揺らさない
+  const pulse = 0.9 + 0.1 * Math.sin(t * 1.3);
   aura.material.opacity = spec.strength * pulse;
   if (spec.holo) aura.material.color.setHSL((t * 0.08) % 1, 0.85, 0.62);
 }
