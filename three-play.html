@@ -366,7 +366,7 @@
   #fxBanner.show .fx-sweep{animation:fxSweep .8s .2s ease-out both;}
   @keyframes fxSweep{from{transform:translateX(-100%);}to{transform:translateX(100%);}}
   @media (max-width:860px) and (orientation:portrait){
-    #fxBanner{width:min(300px,78vw);top:48px;}
+    #fxBanner{width:min(300px,78vw);top:108px;}   /* 左上の名札 (相手・自分) の下に */
   }
   @media (orientation:landscape) and (max-height:500px){
     #fxBanner{top:46px;width:min(260px,34vw);padding:5px 9px 6px 10px;}   /* 右上の相手の名札の下に */
@@ -448,9 +448,8 @@
   @keyframes rhTurn{0%,25%{transform:rotate(0deg);}55%,100%{transform:rotate(-90deg);}}
   #rotateHint b{font:900 18px/1.4 system-ui;letter-spacing:.08em;}
   #rotateHint span{font:600 12px/1.6 system-ui;color:var(--dim);}
-  /* 縦持ちのスマホ: タイトルやメニューを選んでいる間 (pregame) は縦のまま使える。対戦が始まったら横向きを頼む */
+  /* 縦持ちでも対戦できる。横向きを頼む案内は出さず、対戦前 (タイトル・メニュー) に「横持ちに最適化」とだけ知らせる */
   @media (orientation:portrait) and (max-width:860px) and (pointer:coarse){
-    body:not(.pregame) #rotateHint{display:flex;}
     body.pregame #rotateNote{display:block;}
   }
   #rotateNote{position:fixed;left:0;right:0;bottom:0;z-index:89;display:none;padding:8px 12px calc(8px + env(safe-area-inset-bottom));
@@ -2234,6 +2233,9 @@
   /* 相手の名札は右上のボタンの左隣に並べる (左上だとカードの詳細と重なった) */
   #vsTag{position:relative;left:auto;top:auto;margin-left:auto;align-self:center;}
   #vsTag:not([hidden]) ~ #topRight{margin-left:0;}
+  @media (orientation:portrait) and (max-width:860px){
+    .plate.me{top:calc(58px + env(safe-area-inset-top))!important;bottom:auto!important;max-width:60vw!important;}
+  }
   .plate.me{position:fixed;left:calc(14px + env(safe-area-inset-left));top:auto;bottom:calc(14px + env(safe-area-inset-bottom));max-width:min(210px,24vw);}
   .plate[hidden]{display:none;}
   .plate .pl-icon{flex:none;width:30px;height:30px;display:grid;place-items:center;border-radius:6px;
@@ -2385,7 +2387,7 @@
     <b>スマホを横向きにしてください</b>
     <span>COMPILE は横向きで遊ぶように作っています</span>
   </div>
-  <div id="rotateNote">対戦はスマホを横向きにして遊びます</div>
+  <div id="rotateNote">対戦画面は横持ちに最適化されています (縦持ちでも遊べます)</div>
   <div id="stage"></div>
 
   <div id="topbar">
@@ -2495,7 +2497,7 @@
       "./js3d/fx.js": "./js3d/fx.js?v=f2bbe73646",
       "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c",
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
-      "./js3d/layout.js": "./js3d/layout.js?v=c8378abf22",
+      "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
       "./js3d/main.js": "./js3d/main.js?v=48cd814bce",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=6398fed15e",
@@ -2580,7 +2582,7 @@
   <link rel="modulepreload" href="js3d/arena.js?v=ed08c77720">
   <link rel="modulepreload" href="js3d/audio.js?v=28a4f522ba">
   <link rel="modulepreload" href="js3d/emblems.js?v=6d1c077a2e">
-  <link rel="modulepreload" href="js3d/layout.js?v=c8378abf22">
+  <link rel="modulepreload" href="js3d/layout.js?v=91b1b5570a">
   <link rel="modulepreload" href="js3d/theme.js?v=b02da60dc1">
   <link rel="modulepreload" href="js3d/tween.js?v=99b25c0d63">
   <link rel="modulepreload" href="js3d/ui.js?v=7b8751034e">
