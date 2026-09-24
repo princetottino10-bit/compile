@@ -461,7 +461,7 @@ async function boot() {
     play: (uid, line, faceUp) => step({ type: 'play', card: uid, line, faceUp: faceUp !== false }),
     legal: () => Engine.legalActions(cur.state),
     diag: () => ({ busy, selectedUid, tweens: TW.activeCount(), marks: window.__bootMarks }),
-    arrange: (req) => arrangeOnBoard(req),
+    arrange: (req, opts) => arrangeOnBoard(req, opts),
     pickTest: (req) => pickOnBoard(req),
     askTest: (req) => askUser(req),
     reviewTest: () => startReview(false),
@@ -2766,10 +2766,21 @@ function finishBoardPick(picks) {
 /* 並べ替え: 対象側のプロトコルパネルにチップを重ね、2枚タップで入れ替える。
    exact === 'transposition' (1回だけ入れ替え) は2枚目のタップで即確定。
    戻り値は picks (新しい位置ごとの旧インデックス) か、null (モーダルへ)。 */
-function arrangeOnBoard(req) {
-  const targetSide = req.target !== undefined ? req.target : ME;
-  const list = (panels && panels.panels || []).filter(p => p.side === targetSide);
-  if (list.length !== 3 || !stage) return Promise.resolve(null);
+/* プロトコルの並べ替えを盤面の板で行う。
+   通常: req (arrange) の対象の側だけ。返り値は並び (位置 -> 旧インデックス) / null (一覧で選ぶ) / PICK_CANCEL。
+   opts.control: コントロールの「並べ替えますか」(option) をまとめて、自分・相手どちらの板もタップできる。
+     最初にタップした側を並べ替える。返り値は { target, perm } / { skip: true } / null / PICK_CANCEL */
+function arrangeOnBoard(req, opts) {
+  const control = !!(opts && opts.control);
+  const platesOf = (side) => (panels && panels.panels || []).filter(p => p.side === side);
+  let targetSide = control ? null : (req.target !== undefined ? req.target : ME);
+  let list = targetSide === null ? [] : platesOf(targetSide);
+  if ((!control && list.length !== 3) || !stage) return Promise.resolve(null);
+  const namesOf = (side) => {
+    if (!control) return { current: req.current, compiled: req.compiled };
+    const pr = shown().players[side].protocols;
+    return { current: pr.map(x => x.name), compiled: pr.map(x => !!x.compiled) };
+  };
 
   const ov = document.createElement('div');
   ov.id = 'arrOv';
@@ -2782,9 +2793,10 @@ function arrangeOnBoard(req) {
   /* 盤面の板を直接タップして入れ替える。板は並びどおりの位置へ滑らせて見せ、選んだ板は少し持ち上げる */
   const canvas = stage.renderer.domElement;
   const plateOf = (oldIdx) => list.find(p => p.line === oldIdx);
-  const slotX = (line) => LAYOUT.protoSlot(line, targetSide, ME).pos;
+  const slotX = (line, side) => LAYOUT.protoSlot(line, side === undefined ? targetSide : side, ME).pos;
   let closed = false;                // 終わったあとに残りの動きが板を動かさないように
   const layPlates = (ms) => {
+    if (targetSide === null) return;
     for (let pos = 0; pos < 3; pos++) {
       const p = plateOf(perm[pos]);
       if (!p) continue;
@@ -2799,18 +2811,24 @@ function arrangeOnBoard(req) {
       }, TW.Ease.outCubic);
     }
   };
+  const resetPlates = (plates) => {
+    for (const p of plates) { const s0 = LAYOUT.protoSlot(p.line, p.side, ME).pos; p.group.position.x = s0[0]; p.group.position.y = s0[1]; }
+  };
   const ray0 = new THREE.Raycaster();
   const plane0 = new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.02);
+  /* タップした板 { side, pos } (無ければ null)。コントロールのときは両方の側を見る */
   const hitPos = (ev) => {
     const r = canvas.getBoundingClientRect();
     ray0.setFromCamera(new THREE.Vector2(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1), stage.camera);
     const pt = ray0.ray.intersectPlane(plane0, new THREE.Vector3());
-    if (!pt) return -1;
-    for (let pos = 0; pos < 3; pos++) {
-      const s = slotX(pos);
-      if (Math.abs(pt.x - s[0]) < 1.0 && Math.abs(pt.z - s[2]) < 0.62) return pos;
+    if (!pt) return null;
+    for (const side of control ? [ME, AI] : [targetSide]) {
+      for (let pos = 0; pos < 3; pos++) {
+        const s = slotX(pos, side);
+        if (Math.abs(pt.x - s[0]) < 1.0 && Math.abs(pt.z - s[2]) < 0.62) return { side, pos };
+      }
     }
-    return -1;
+    return null;
   };
 
   return new Promise((resolve) => {
@@ -2818,13 +2836,13 @@ function arrangeOnBoard(req) {
     window.addEventListener('resize', onResize);
     let tapLine = null;                          // 盤面の板をタップしたとき (帯の名前を押したのと同じ扱い)
     const onPlate = (ev) => {
-      const pos = hitPos(ev);
-      if (pos < 0) return;
+      const h = hitPos(ev);
+      if (!h) return;
       ev.stopImmediatePropagation();
       ev.preventDefault();
-      if (tapLine) tapLine(pos);
+      if (tapLine) tapLine(h.pos, h.side);
     };
-    const onHover = (ev) => { canvas.style.cursor = hitPos(ev) >= 0 ? 'pointer' : ''; };
+    const onHover = (ev) => { canvas.style.cursor = hitPos(ev) ? 'pointer' : ''; };
     canvas.addEventListener('pointerdown', onPlate, true);
     canvas.addEventListener('pointermove', onHover);
     const finish = (picks) => {
@@ -2835,58 +2853,76 @@ function arrangeOnBoard(req) {
       canvas.removeEventListener('pointermove', onHover);
       canvas.style.cursor = '';
       /* 板は元の位置へ戻す (決まった並びはこのあとの盤面の更新で滑って入れ替わる) */
-      for (const p of list) { const s0 = slotX(p.line); p.group.position.x = s0[0]; p.group.position.y = s0[1]; }
+      resetPlates(list);
       ov.remove();
       resolve(picks);
     };
     activeArrange = { cancel: () => finish(PICK_CANCEL) };
+    const done = () => finish(control ? { target: targetSide, perm: perm.slice() } : perm.slice());
 
     const render = () => {
       const isIdentity = perm[0] === 0 && perm[1] === 1 && perm[2] === 2;
-      /* 操作は手札のすぐ上の帯 (効果の確認・手札を捨てるときと同じ場所・大きさ)。
-         盤面を大きく映すと帯がプロトコル板に重なるので、並び (左・中・右) も帯の中に出す */
+      const nm = targetSide === null ? null : namesOf(targetSide);
+      /* 並び (左・中・右) も帯の中に出す */
       ov.innerHTML =
         '<div class="arr-bar with-ask sel-bar confirm">' +
           pickBarAsk(req) +
-          '<div class="arr-order">' + list.slice().sort((a, b) => a.line - b.line).map((p) => {
-            const line = p.line;
-            const name = req.current[perm[line]];
-            const done = req.compiled && req.compiled[perm[line]];
-            return '<button type="button" class="arr-chip' + (sel === line ? ' on' : '') +
-              (done ? ' done' : '') + '" data-line="' + line + '">' + (done ? '✓ ' : '') + name + '</button>';
-          }).join('') + '</div>' +
+          (nm
+            ? '<div class="arr-order">' + [0, 1, 2].map((line) => {
+                const name = nm.current[perm[line]];
+                const doneMark = nm.compiled && nm.compiled[perm[line]];
+                return '<button type="button" class="arr-chip' + (sel === line ? ' on' : '') +
+                  (doneMark ? ' done' : '') + '" data-line="' + line + '">' + (doneMark ? '✓ ' : '') + name + '</button>';
+              }).join('') + '</div>'
+            : '') +
           '<div class="sel-hint">' +
-            (single ? '盤面のプロトコルを2つタップして入れ替え' : '盤面のプロトコルを2つタップで入れ替え。よければ確定') +
+            (control
+              ? (targetSide === null ? '並べ替えるなら、自分か相手のプロトコルを2つタップ'
+                : (targetSide === ME ? '自分' : '相手') + 'のプロトコルを入れ替え中。よければ確定 (反対側をタップすると切り替え)')
+              : single ? '盤面のプロトコルを2つタップして入れ替え' : '盤面のプロトコルを2つタップで入れ替え。よければ確定') +
           '</div>' +
           '<div class="arr-btns">' +
             /* 帯が自分の山に重なるので、目ボタンで隠して盤面を見られるようにする (他の帯と同じ) */
             PEEK_BTN +
             '<button type="button" class="arr-btn ghost" id="arrList">一覧で選ぶ</button>' +
-            '<button type="button" class="arr-btn" id="arrReset">やり直し</button>' +
-            (single ? '' : '<button type="button" class="arr-btn ok" id="arrOk"' + (isIdentity ? ' disabled' : '') + '>確定</button>') +
+            (control ? '<button type="button" class="arr-btn" id="arrSkip">並べ替えない</button>' : '') +
+            (targetSide === null ? '' : '<button type="button" class="arr-btn" id="arrReset">やり直し</button>') +
+            (single ? '' : '<button type="button" class="arr-btn ok" id="arrOk"' + (isIdentity || targetSide === null ? ' disabled' : '') + '>確定</button>') +
           '</div>' +
         '</div>';
       bindSelectHead(ov, showCardNoteFor);
       bindPeek(ov.querySelector('.arr-bar'));
 
-      tapLine = (line) => {
+      tapLine = (line, side) => {
         sfx('pick');
+        /* コントロール: 反対側の板をタップしたら、そちらを並べ替える (前の側は元に戻す) */
+        if (control && side !== undefined && side !== targetSide) {
+          resetPlates(list);
+          targetSide = side;
+          list = platesOf(side);
+          perm[0] = 0; perm[1] = 1; perm[2] = 2;
+          sel = line;
+          layPlates(160);
+          render();
+          return;
+        }
         if (sel === -1) { sel = line; layPlates(160); render(); return; }
         if (sel === line) { sel = -1; layPlates(160); render(); return; }
         const t = perm[sel]; perm[sel] = perm[line]; perm[line] = t;
         sel = -1;
         layPlates(320);
-        if (single) { setTimeout(() => finish(perm.slice()), 360); return; }
+        if (single) { setTimeout(done, 360); return; }
         render();
       };
       ov.querySelectorAll('.arr-chip').forEach((b) => {
         b.onclick = () => tapLine(+b.dataset.line);
       });
       const ok = ov.querySelector('#arrOk');
-      if (ok) ok.onclick = () => finish(perm.slice());
-      ov.querySelector('#arrReset').onclick = () => {
-        perm[0] = 0; perm[1] = 1; perm[2] = 2; sel = -1; layPlates(320); render();
-      };
+      if (ok) ok.onclick = done;
+      const reset = ov.querySelector('#arrReset');
+      if (reset) reset.onclick = () => { perm[0] = 0; perm[1] = 1; perm[2] = 2; sel = -1; layPlates(320); render(); };
+      const skip = ov.querySelector('#arrSkip');
+      if (skip) skip.onclick = () => finish({ skip: true });
       ov.querySelector('#arrList').onclick = () => finish(null);
     };
     render();
@@ -2900,9 +2936,20 @@ async function drainRequests() {
     const req = cur.requests[0];
     let picks;
     const merged = !demoMode ? mergedYesTarget(req) : null;
-    if (queuedAnswer && queuedAnswer.id === req.id) {
-      picks = queuedAnswer.picks;                   // 「はい」をまとめて答えた選択の続き
+    const controlAsk = !demoMode && !tutorial && !trainingMode && req.player === ME
+      && req.kind === 'option' && req.prompt === 'control-rearrange';
+    if (queuedAnswer && (queuedAnswer.id === req.id
+        || (queuedAnswer.kind && queuedAnswer.kind === req.kind && queuedAnswer.target === req.target))) {
+      picks = queuedAnswer.picks;                   // まとめて答えた選択の続き
       queuedAnswer = null;
+    } else if (controlAsk) {
+      /* コントロールの「並べ替えますか」は聞かずに、盤面の板で並べ替えるかどうかまで決めてもらう */
+      UI.setPrompt('');
+      const r = await arrangeOnBoard(req, { control: true });
+      if (r === PICK_CANCEL) continue;
+      if (r === null) picks = await askUser(req);                       // 一覧で選ぶ
+      else if (r.skip) picks = [2];
+      else { picks = [r.target === ME ? 0 : 1]; queuedAnswer = { kind: 'arrange', target: r.target, picks: r.perm }; }
     } else if (merged) {
       UI.setPrompt('');
       pickSkip = true;
