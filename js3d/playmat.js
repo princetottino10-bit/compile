@@ -6,7 +6,8 @@
  * ========================================================================= */
 import { bonusXp } from './xp.js';
 import * as THREE from '../vendor/three.module.js';
-import { BOARD, CARD } from './theme.js';
+import { BOARD, CARD, VIEW } from './theme.js';
+import { pilePos } from './layout.js';
 import { playerLevel } from './stats-data.js';
 import { COSMETICS, unlockLevel } from './rewards.js';
 
@@ -66,9 +67,13 @@ function slots() {
       out.push({ kind: 'lane', x: cx(x) - cw / 2 * PX, y: cy(Math.min(z0, z1)), w: cw * PX, h: Math.abs(z1 - z0) * PX });
     }
   }
-  for (const s of [-1, 1]) {
-    for (const k of [-1, 1]) {
-      out.push({ kind: 'pile', x: cx(k * 3.45) - cw / 2 * PX, y: cy(s * 2.3) - ch / 2 * PX, w: cw * PX, h: ch * PX });
+  /* 山札と捨て札は、実際に置く場所 (layout.js) に合わせる。
+     横持ちのスマホでは自分の山を奥へ寄せるので、枠も一緒に動かす (ずれて見えていた) */
+  for (const side of [0, 1]) {
+    for (const kind of ['deck', 'trash']) {
+      const p = pilePos(kind, side, 0, 0);
+      const w = cw * p.scale, h = ch * p.scale;
+      out.push({ kind: 'pile', x: cx(p.pos[0]) - w / 2 * PX, y: cy(p.pos[2]) - h / 2 * PX, w: w * PX, h: h * PX });
     }
   }
   return out;
@@ -242,15 +247,19 @@ const DRAW = { nebula: drawNebula, vortex: drawVortex, biomech: drawBiomech, pri
 const cache = new Map();
 
 /* 柄のテクスチャ (neon は柄なし = null) */
+/* 画面の形で山の置き場が動くので、その形ごとに描き分ける */
+function layoutKey() { return (VIEW.short ? 's' : 'n') + Math.round(VIEW.k * 20); }
+
 export function playmatTexture(key) {
   if (!DRAW[key]) return null;
-  if (cache.has(key)) return cache.get(key);
+  const ck = key + ':' + layoutKey();
+  if (cache.has(ck)) return cache.get(ck);
   const cv = document.createElement('canvas');
   cv.width = W; cv.height = H;
   DRAW[key](cv.getContext('2d'));
   const tex = new THREE.CanvasTexture(cv);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.anisotropy = 8;
-  cache.set(key, tex);
+  cache.set(ck, tex);
   return tex;
 }

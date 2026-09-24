@@ -558,7 +558,7 @@
     visibility:hidden;transition:visibility 0s .26s;}
   #logDock.open #log{visibility:visible;transition:none;}
   #log:empty::before{content:"まだ何も起きていません";color:var(--dim);}
-  #btnLog{position:absolute;right:100%;top:168px;width:28px;height:78px;padding:0;cursor:pointer;
+  #btnLog{position:absolute;right:100%;top:168px;width:22px;height:78px;padding:0;cursor:pointer;
     border-radius:10px 0 0 10px;border:1px solid rgba(185,164,255,.3);border-right:0;
     background:rgba(8,12,22,.9);color:#cfefff;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
     writing-mode:vertical-rl;font:800 10px/1 system-ui;letter-spacing:.2em;
@@ -568,7 +568,7 @@
   #logDock.open #btnLog{border-color:var(--gold);color:var(--gold);}
   @media (prefers-reduced-motion:reduce){ #logDock{transition:none;} }
   /* 詳細 (左) のつまみ: ログ (右) と同じ形を左右反対に。詳細が出ている間はその右端にくっつく (left は ui.js が決める) */
-  #btnInfo{position:fixed;left:env(safe-area-inset-left);top:220px;z-index:32;width:28px;height:78px;padding:0;cursor:pointer;
+  #btnInfo{position:fixed;left:env(safe-area-inset-left);top:220px;z-index:32;width:22px;height:78px;padding:0;cursor:pointer;
     border-radius:0 10px 10px 0;border:1px solid rgba(185,164,255,.3);border-left:0;
     background:rgba(8,12,22,.9);color:#cfefff;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
     writing-mode:vertical-rl;font:800 10px/1 system-ui;letter-spacing:.2em;
@@ -1830,8 +1830,9 @@
     #btnRefresh,#dock .btn{min-height:32px;padding:0 13px;font-size:10px;}
     #logDock{top:40px;bottom:52px;width:min(210px,31vw);}
     #log{font-size:10px;}
-    #btnLog{top:132px;height:70px;}
-    #btnInfo{top:172px;height:70px;}
+    /* スマホの横向きは画面が狭いので、つまみをさらに細く */
+    #btnLog{top:132px;height:70px;width:18px;font-size:9px;}
+    #btnInfo{top:172px;height:70px;width:18px;font-size:9px;}
     #preview{left:calc(8px + env(safe-area-inset-left));top:40px;width:min(200px,24vw);max-height:calc(100vh - 48px);max-height:calc(100dvh - 48px);}
     body.training #preview{left:auto;right:calc(44px + env(safe-area-inset-right));top:172px;max-height:calc(100vh - 180px);max-height:calc(100dvh - 180px);}
     /* 詳細パネルは小さく (盤面の左のラインを覆わない)。下端は自分の捨て札の山より上で止める */
@@ -2474,7 +2475,7 @@
       "./js3d/ai-worker.js": "./js3d/ai-worker.js?v=de82d239bd",
       "./js3d/aiclient.js": "./js3d/aiclient.js?v=704b588b82",
       "./js3d/aidecks.js": "./js3d/aidecks.js?v=8d249240bd",
-      "./js3d/arena.js": "./js3d/arena.js?v=4e3e7f73c2",
+      "./js3d/arena.js": "./js3d/arena.js?v=ed08c77720",
       "./js3d/audio.js": "./js3d/audio.js?v=28a4f522ba",
       "./js3d/backdrops.js": "./js3d/backdrops.js?v=90faf9612d",
       "./js3d/board.js": "./js3d/board.js?v=3f424f5e21",
@@ -2499,7 +2500,7 @@
       "./js3d/panel.js": "./js3d/panel.js?v=ecb8a073e3",
       "./js3d/plates.js": "./js3d/plates.js?v=70ffa14b87",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=e0273dcae0",
-      "./js3d/playmat.js": "./js3d/playmat.js?v=91ab85f12f",
+      "./js3d/playmat.js": "./js3d/playmat.js?v=61de5835b5",
       "./js3d/profile.js": "./js3d/profile.js?v=6ad599d1c4",
       "./js3d/prompts.js": "./js3d/prompts.js?v=348dff836d",
       "./js3d/protocards.js": "./js3d/protocards.js?v=a0c3bbfc68",
@@ -2561,7 +2562,7 @@
   <link rel="modulepreload" href="js3d/cosmetics-ui.js?v=6e894549a5">
   <link rel="modulepreload" href="js3d/displayname.js?v=613e18bf95">
   <link rel="modulepreload" href="js3d/plates.js?v=70ffa14b87">
-  <link rel="modulepreload" href="js3d/playmat.js?v=91ab85f12f">
+  <link rel="modulepreload" href="js3d/playmat.js?v=61de5835b5">
   <link rel="modulepreload" href="js3d/cardlist-ov.js?v=1d673fd0d2">
   <link rel="modulepreload" href="js3d/opponent-select.js?v=6398fed15e">
   <link rel="modulepreload" href="js3d/aidecks.js?v=8d249240bd">
@@ -2574,7 +2575,7 @@
   <link rel="modulepreload" href="js3d/selectui.js?v=208abdaebc">
   <link rel="modulepreload" href="js3d/cardtex.js?v=340ddc4e87">
   <link rel="modulepreload" href="js3d/fx.js?v=f2bbe73646">
-  <link rel="modulepreload" href="js3d/arena.js?v=4e3e7f73c2">
+  <link rel="modulepreload" href="js3d/arena.js?v=ed08c77720">
   <link rel="modulepreload" href="js3d/audio.js?v=28a4f522ba">
   <link rel="modulepreload" href="js3d/emblems.js?v=6d1c077a2e">
   <link rel="modulepreload" href="js3d/layout.js?v=c8378abf22">

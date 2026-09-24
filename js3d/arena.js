@@ -218,11 +218,15 @@ export function buildArena(stage) {
   matMesh.visible = false;
   matMesh.raycast = () => {};
   group.add(matMesh);
+  let matKey = null;
   function setMat(key) {
+    matKey = key;
     const tex = playmatTexture(key);
     matMesh.visible = !!tex;
-    if (tex) { matMesh.material.map = tex; matMesh.material.needsUpdate = true; }
+    if (tex && matMesh.material.map !== tex) { matMesh.material.map = tex; matMesh.material.needsUpdate = true; }
   }
+  /* 画面の形が変わって山の置き場が動いたら、置き場の枠も描き直す */
+  window.addEventListener('compile:viewport', () => { if (matKey) setMat(matKey); });
 
   return { group, rings, setTurnSide, setMat };
 }
