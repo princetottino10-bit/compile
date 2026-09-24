@@ -5,7 +5,8 @@
  * ========================================================================= */
 
 import { levelLabel, UNDERDOG_LEVEL } from './aidecks.js';
-import { protocolSummary, matchups, winTrend, fastestWin, masteryLevel, cardStats, cardTier, playerLevel } from './stats-data.js';
+import { protocolSummary, matchups, winTrend, fastestWin, masteryLevel, cardStats, cardTier, playerLevel, xpForLevel } from './stats-data.js';
+import { REWARDS, nextReward } from './rewards.js';
 
 const KEY = 'compileSoloRecords';
 const MAX = 2000;
@@ -181,6 +182,7 @@ function summaryTab(list, protos) {
   const pl = playerLevel(list);
   return '<div class="sr-level"><b>Lv ' + pl.level + '</b><span class="sr-xp"><i style="width:' + Math.round(pl.progress * 100) + '%"></i></span>' +
       '<small>次のレベルまで ' + (pl.next - pl.xp) + ' (1戦 +1・勝ち +2・つよい以上に勝つと +1)</small></div>' +
+    rewardsHtml(pl) +
     (titles.length ? '<div class="sr-titles">' + titles.map(([t, d]) => '<span title="' + esc(d) + '">' + esc(t) + '</span>').join('') + '</div>' : '') +
     trendSvg(list) +
     '<div class="sr-kpis">' +
@@ -275,6 +277,15 @@ function cardsTab(list, protos) {
           c.value + (on ? '<i>★</i>' : '') + '</button>';
       }).join('') + '</div>';
     }).join('') + '</div>';
+}
+
+/* レベルの報酬: 次にもらえるものと、全部の一覧 (取ったものに印) */
+function rewardsHtml(pl) {
+  const nx = nextReward(pl.level);
+  return (nx ? '<p class="sr-next">次の報酬 <b>Lv' + nx.lv + '</b> ' + esc(nx.name) + ' <small>あと ' + (xpForLevel(nx.lv) - pl.xp) + '</small></p>' : '') +
+    '<details class="sr-rewards"><summary>レベルの報酬の一覧</summary><ul>' + REWARDS.map(r =>
+      '<li class="' + (r.lv <= pl.level ? 'got' : '') + '"><b>Lv' + r.lv + '</b>' + esc(r.name) + (r.lv <= pl.level ? '<i>✓</i>' : '') + '</li>').join('') +
+    '</ul><p class="pz-note">取った見た目は、設定 (⚙) の「見た目」で選べます</p></details>';
 }
 
 const TABS = ['まとめ', 'プロトコル', 'カード', '相性', '詳細'];

@@ -228,3 +228,33 @@ function vignette(ctx, w, h, strength) {
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, h);
 }
+
+/* 勝ち (AURORA、レベルの報酬): 夜空にオーロラの幕が揺れ、星が瞬く */
+export function drawAuroraBackdrop(canvas) {
+  const { ctx, w, h } = prepare(canvas);
+  const r = rng(29);
+  ctx.fillStyle = '#03040c';
+  ctx.fillRect(0, 0, w, h);
+  for (let i = 0; i < 180; i++) {
+    ctx.fillStyle = 'rgba(255,255,255,' + (0.2 + r() * 0.6) + ')';
+    ctx.fillRect(r() * w, r() * h * 0.8, 1 + r() * 1.5, 1 + r() * 1.5);
+  }
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  const bands = [['109,255,194', 0.42], ['99,243,255', 0.36], ['185,140,255', 0.3], ['255,122,180', 0.22]];
+  bands.forEach(([rgb, a], k) => {
+    for (let x = 0; x < w; x += 3) {
+      const t = x / w;
+      const y = h * (0.28 + k * 0.08) + Math.sin(t * 7 + k * 1.7) * h * 0.06 + Math.sin(t * 17 + k) * h * 0.02;
+      const len = h * (0.22 + 0.12 * Math.sin(t * 5 + k * 2));
+      const g = ctx.createLinearGradient(x, y, x, y + len);
+      g.addColorStop(0, 'rgba(' + rgb + ',0)');
+      g.addColorStop(0.35, 'rgba(' + rgb + ',' + a * (0.6 + 0.4 * Math.sin(t * 23 + k)) + ')');
+      g.addColorStop(1, 'rgba(' + rgb + ',0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(x, y, 3, len);
+    }
+  });
+  ctx.restore();
+  vignette(ctx, w, h, 0.6);
+}

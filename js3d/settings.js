@@ -4,11 +4,11 @@
  *   タイトルの OPTION と、対戦中の上のバーの ⚙ から同じ画面を開く。
  * ========================================================================= */
 
-import { MATS } from './playmat.js';
-import { localRecords } from './stats.js';
-import { playerLevel } from './stats-data.js';
+import { cosmeticsHtml, bindCosmetics } from './cosmetics-ui.js';
 const KEY = 'compileSettings';
-const DEFAULTS = { speed: 1, sfx: 80, pauses: true, mat: 'neon' };
+/* mat 以下は見た目 (レベルの報酬、cosmetics-ui.js) */
+const DEFAULTS = { speed: 1, sfx: 80, pauses: true, mat: 'neon', sleeve: 'default', marker: 'default', ccolor: 'default',
+  victory: 'default', title: '', icon: '' };
 const SPEEDS = [
   { v: 1, label: 'ふつう' },
   { v: 1.6, label: 'はやい' },
@@ -43,17 +43,6 @@ export function onSettings(cb) {
   cb(current);
 }
 
-/* 盤面の柄。戦績で解放されたものだけ選べる (まだのものは解放の条件を出す) */
-function matRow(current) {
-  const recs = localRecords();
-  const me = playerLevel(recs).level;
-  return '<div class="st-row st-mats"><span>盤面 <i>いまの レベル ' + me + '</i></span><div class="st-matlist">' + MATS.map(m => {
-    const open = m.unlocked(recs);
-    return '<button type="button" data-mat="' + m.key + '" class="st-mat mat-' + m.key + (current === m.key ? ' on' : '') + '"' +
-      (open ? '' : ' disabled') + '><i></i><b>' + m.name + '</b><small>' + (open ? (current === m.key ? '使用中' : '選ぶ') : '🔒 レベル ' + m.need + 'で解放') + '</small></button>';
-  }).join('') + '</div></div>';
-}
-
 /* 設定画面。extra: 画面に足すボタン [{ label, onClick }] (サウンド ON/OFF など) */
 export function openSettings(extra) {
   let el = document.getElementById('settingsOv');
@@ -73,7 +62,7 @@ export function openSettings(extra) {
       '<input type="range" min="0" max="100" step="5" id="stSfx" value="' + s.sfx + '"></label>' +
     '<label class="st-row st-check"><span>効果の発動・チェーンで一時停止する<small>オフにすると、発動した効果を1つずつ止めずに進めます</small></span>' +
       '<input type="checkbox" id="stPauses"' + (s.pauses ? ' checked' : '') + '></label>' +
-    matRow(s.mat) +
+    cosmeticsHtml(s) +
     (extra && extra.length ? '<div class="pz-row">' + extra.map((x, i) => '<button type="button" data-extra="' + i + '">' + x.label + '</button>').join('') + '</div>' : '') +
     '</div>';
   el.classList.add('show');
@@ -92,13 +81,7 @@ export function openSettings(extra) {
   };
   range('#stSfx', 'sfx', '#stSfxV');
   el.querySelector('#stPauses').onchange = (ev) => setSetting('pauses', ev.target.checked);
-  el.querySelectorAll('[data-mat]').forEach(b => {
-    b.onclick = () => {
-      if (b.disabled) return;
-      setSetting('mat', b.dataset.mat);
-      el.querySelectorAll('[data-mat]').forEach(x => x.classList.toggle('on', x === b));
-    };
-  });
+  bindCosmetics(el, setSetting);
   el.querySelectorAll('[data-extra]').forEach(b => {
     b.onclick = () => { const x = extra[+b.dataset.extra]; if (x) x.onClick(b); };
   });

@@ -18,6 +18,8 @@ const SCALE = () => 1 - 0.38 * VIEW.k;
 /* 横持ちのスマホは自分の捨て札を奥へ寄せる (layout.js の pilePos) ので、マーカーも板の側に寄せて捨て札に重ねない */
 const Z = { neutral: 0, get me() { return VIEW.short ? 0.72 : 1.35; }, get opp() { return VIEW.short ? -0.72 : -1.35; } };
 const MINT = 0x6dffc2, PINK = 0xff3b9d, DIM = 0x44536e;
+/* 見た目 (レベルの報酬): 自分が持ったときの色と、中立のときの色 */
+const MARKER_STYLES = { default: { me: MINT, dim: DIM }, gold: { me: 0xffd86a, dim: 0x6e5d34 } };
 
 /* トラッカーのマーカー画像 (2048px) の輪郭を、中心をそろえて 120° 対称に整えたもの。
    単位はワールド座標 (外形の半径 ≈ 0.42)、y は上向き */
@@ -73,6 +75,16 @@ export function createControlMarker(scene) {
 
   let holder = -1;
   let spin = 0;
+  let style = MARKER_STYLES.default;
+  let seat = 0;
+  const paint = () => {
+    const col = holder === -1 ? style.dim : (holder === seat ? style.me : PINK);
+    face.emissive.setHex(col);
+    face.emissiveIntensity = holder === -1 ? 0.5 : 1.5;
+    side.emissive.setHex(col);
+    ring.material.color.setHex(col);
+    return col;
+  };
   const state = {
     group: grp,
     /* 毎フレーム: 保持中はゆっくり回して「生きている」感を出す */
@@ -83,17 +95,16 @@ export function createControlMarker(scene) {
       const sc = SCALE();
       grp.scale.setScalar(grp.scale.x + (sc - grp.scale.x) * Math.min(1, dt * 6));
     },
+    /* 見た目の切り替え (設定から) */
+    setStyle(key) { style = MARKER_STYLES[key] || MARKER_STYLES.default; paint(); },
     /* me: 自分の座席番号。ctrl: st.control (-1/0/1) */
     update(ctrl, me, animate) {
       if (ctrl === holder) return;
       const from = grp.position.z;
       const to = ctrl === -1 ? Z.neutral : (ctrl === me ? Z.me : Z.opp);
-      const col = ctrl === -1 ? DIM : (ctrl === me ? MINT : PINK);
       holder = ctrl;
-      face.emissive.setHex(col);
-      face.emissiveIntensity = ctrl === -1 ? 0.5 : 1.5;
-      side.emissive.setHex(col);
-      ring.material.color.setHex(col);
+      seat = me;
+      const col = paint();
       if (!animate) { grp.position.z = to; return; }
       /* 獲得/使用の瞬間を衝撃波と音で知らせる */
       sfx(ctrl === -1 ? 'flip' : 'effect');

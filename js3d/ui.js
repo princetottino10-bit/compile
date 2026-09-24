@@ -4,8 +4,9 @@
  * ========================================================================= */
 
 import { selectHead, bindSelectHead, optionBody, choiceLabel } from './selectui.js';
-import { drawVictoryBackdrop, drawDefeatBackdrop } from './backdrops.js';
+import { drawVictoryBackdrop, drawDefeatBackdrop, drawAuroraBackdrop } from './backdrops.js';
 import { condHtml } from './cardtext.js';
+import { sfx } from './audio.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -633,8 +634,33 @@ export function showRevealedHand(items, titleOverride) {
   setTimeout(() => { if (el.classList.contains('show')) document.addEventListener('pointerdown', outside, true); }, 0);
 }
 
+/* レベルアップ: LEVEL UP と手に入った報酬を順に見せる。タップか数秒で閉じる */
+export function levelUpCutIn(level, rewards) {
+  let el = $('#levelUp');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'levelUp';
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-label', 'レベルアップ');
+    document.body.appendChild(el);
+  }
+  el.innerHTML = '<div class="lu-card"><div class="lu-kicker">LEVEL UP</div><div class="lu-lv">' + level + '</div>' +
+    (rewards && rewards.length
+      ? '<ul class="lu-rewards">' + rewards.map((r, i) => '<li style="--i:' + i + '"><b>Lv' + r.lv + '</b>' + r.name + '</li>').join('') + '</ul>' +
+        '<p class="lu-note">設定 (⚙) の「見た目」で選べます</p>'
+      : '<p class="lu-note">次の報酬まであと少し</p>') +
+    '<p class="lu-hint">タップで閉じる</p></div>';
+  el.classList.add('show');
+  sfx('yourTurn');
+  return new Promise((resolve) => {
+    const close = () => { clearTimeout(t); el.classList.remove('show'); el.onclick = null; resolve(); };
+    const t = setTimeout(close, 3200 + (rewards ? rewards.length : 0) * 900);
+    el.onclick = close;
+  });
+}
+
 /* 決着のカットイン */
-export function resultCutIn(win) {
+export function resultCutIn(win, opts) {
   const el = $('#resultCut');
   if (!el) return Promise.resolve();
   el.style.setProperty('--accent', win ? '#6dffc2' : '#ff3b9d');
@@ -649,7 +675,8 @@ export function resultCutIn(win) {
     '</div>';
   el.classList.add('show');
   const art = el.querySelector('.rc-art');
-  try { (win ? drawVictoryBackdrop : drawDefeatBackdrop)(art); } catch (e) { art.remove(); }
+  const drawWin = opts && opts.victory === 'aurora' ? drawAuroraBackdrop : drawVictoryBackdrop;
+  try { (win ? drawWin : drawDefeatBackdrop)(art); } catch (e) { art.remove(); }
   return new Promise((resolve) => setTimeout(() => {
     el.classList.remove('show');
     el.innerHTML = '';

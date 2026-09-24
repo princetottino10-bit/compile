@@ -1136,20 +1136,6 @@
   /* タイトル画面 (z 58) の上にも出す */
   #settingsOv,#statsOv,#accountOv{z-index:62;}
   .sr-card{width:min(680px,100%);}
-  /* 設定: 盤面の柄 */
-  .st-mats{flex-direction:column;align-items:stretch!important;gap:8px;}
-  .st-matlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;}
-  .st-mat{cursor:pointer;display:grid;grid-template-columns:44px 1fr;grid-template-rows:auto auto;column-gap:10px;align-items:center;text-align:left;
-    padding:7px 9px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.03);color:#e9eef8;}
-  .st-mat i{grid-row:1 / 3;width:44px;height:30px;border-radius:6px;border:1px solid rgba(255,255,255,.2);}
-  .st-mat b{font:800 11px/1.2 var(--font-hud),system-ui;letter-spacing:.08em;}
-  .st-mat small{font:600 10px/1.3 system-ui;color:var(--dim);}
-  .st-mat.on{border-color:var(--cyan);background:rgba(99,243,255,.1);}
-  .st-mat:disabled{cursor:not-allowed;opacity:.5;}
-  .mat-neon i{background:#070a16 repeating-linear-gradient(0deg,rgba(99,243,255,.3) 0 1px,transparent 1px 6px);}
-  .mat-nebula i{background:radial-gradient(circle at 25% 35%,#ff5fb0,transparent 60%),radial-gradient(circle at 80% 65%,#4d7cff,transparent 60%),#3a1f6a;}
-  .mat-vortex i{background:conic-gradient(from 30deg,#f28a3c,#e2513a,#2a5b9a,#6fb3d9,#ece5d8,#f28a3c);}
-  .mat-biomech i{background:radial-gradient(circle at 50% 50%,#9646be,transparent 55%),radial-gradient(circle at 20% 30%,#2aa39a,transparent 45%),#071a1d;}
   /* 勝ち抜き戦 */
   #runOv{position:fixed;inset:0;z-index:63;display:none;align-items:center;justify-content:center;padding:16px;
     background:radial-gradient(ellipse at 50% 30%,rgba(255,59,157,.14),transparent 60%),rgba(3,4,10,.94);}
@@ -1310,7 +1296,75 @@
   .sr-level .sr-xp{height:6px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden;}
   .sr-level .sr-xp i{display:block;height:100%;background:linear-gradient(90deg,var(--cyan),var(--mint));}
   .sr-level small{font:600 10px/1.3 system-ui;color:var(--dim);}
-  .st-mats > span i{font-style:normal;font:600 11px/1 system-ui;color:var(--dim);margin-left:8px;}
+  .sr-next{margin:0;font:700 12px/1.4 system-ui;color:var(--dim);}
+  .sr-next b{color:var(--gold);margin-right:4px;}
+  .sr-next small{margin-left:6px;color:var(--dim);font-variant-numeric:tabular-nums;}
+  .sr-rewards summary{cursor:pointer;font:700 12px/1 system-ui;color:#cfefff;padding:4px 0;}
+  .sr-rewards ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:3px;}
+  .sr-rewards li{display:grid;grid-template-columns:44px 1fr auto;gap:8px;align-items:center;padding:5px 8px;border-radius:7px;
+    background:rgba(255,255,255,.03);font:600 11.5px/1.3 system-ui;color:var(--dim);}
+  .sr-rewards li b{font:800 11px/1 var(--font-hud),system-ui;color:var(--dim);}
+  .sr-rewards li.got{color:#fff;}
+  .sr-rewards li.got b{color:var(--gold);}
+  .sr-rewards li i{font-style:normal;color:var(--mint);}
+  /* 設定: 見た目 */
+  .st-cosmetics{display:flex;flex-direction:column;gap:10px;padding-top:4px;border-top:1px solid rgba(255,255,255,.08);}
+  .st-cos-head{display:flex;flex-direction:column;gap:3px;}
+  .st-cos-head b{font:800 13px/1 system-ui;color:#fff;}
+  .st-cos-head small{font:600 10.5px/1.4 system-ui;color:var(--dim);}
+  .st-cos{display:flex;flex-direction:column;gap:5px;}
+  .st-cos > span{font:700 11px/1 system-ui;color:var(--dim);}
+  .st-opts{display:flex;flex-wrap:wrap;gap:5px;}
+  .st-opt{cursor:pointer;display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:4px 10px 4px 5px;border-radius:9px;
+    border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.03);color:#e9eef8;font:700 11px/1 system-ui;}
+  .st-opt i{width:28px;height:22px;border-radius:5px;border:1px solid rgba(255,255,255,.2);flex:none;}
+  .st-opt b{font:800 10.5px/1 var(--font-hud),system-ui;letter-spacing:.06em;}
+  .st-opt small{font:600 9.5px/1 system-ui;color:var(--dim);}
+  .st-opt.on{border-color:var(--cyan);background:rgba(99,243,255,.1);}
+  .st-opt:disabled{cursor:not-allowed;opacity:.45;}
+  .st-opt:not(:has(i)){padding-left:10px;}
+  .mat-neon i{background:#070a16 repeating-linear-gradient(0deg,rgba(99,243,255,.3) 0 1px,transparent 1px 6px);}
+  .mat-nebula i{background:radial-gradient(circle at 25% 35%,#ff5fb0,transparent 60%),radial-gradient(circle at 80% 65%,#4d7cff,transparent 60%),#3a1f6a;}
+  .mat-vortex i{background:conic-gradient(from 30deg,#f28a3c,#e2513a,#2a5b9a,#6fb3d9,#ece5d8,#f28a3c);}
+  .mat-biomech i{background:radial-gradient(circle at 50% 50%,#9646be,transparent 55%),radial-gradient(circle at 20% 30%,#2aa39a,transparent 45%),#071a1d;}
+  .mat-prism i{background:conic-gradient(from 0deg,#ff7ab4,#ffd86a,#6dffc2,#63f3ff,#b98cff,#ff7ab4);box-shadow:inset 0 0 0 4px #07060a;}
+  .sleeve-default i{background:linear-gradient(135deg,#1d2a4d,#0e1730);box-shadow:inset 0 0 0 2px rgba(109,255,194,.5);}
+  .sleeve-crimson i{background:linear-gradient(135deg,#4a0f1c,#1a0509);box-shadow:inset 0 0 0 2px rgba(255,212,120,.6);}
+  .sleeve-circuit i{background:linear-gradient(135deg,#0b2a22,#04120e);box-shadow:inset 0 0 0 2px rgba(109,255,194,.7);}
+  .sleeve-holo i{background:linear-gradient(135deg,#ff7ab4,#b98cff,#63f3ff,#6dffc2,#ffd86a);}
+  .marker-default i{background:radial-gradient(circle,#6dffc2 30%,#0a0f1c 32%);}
+  .marker-gold i{background:radial-gradient(circle,#ffd86a 30%,#0a0f1c 32%);}
+  .ccolor-default i{background:linear-gradient(90deg,#ff5c5c,#63f3ff,#6dffc2);}
+  .ccolor-gold i{background:linear-gradient(90deg,#fff0b8,#e8b64a);}
+  .victory-default i{background:linear-gradient(180deg,#05070f,#e8c86a 50%,#05070f);}
+  .victory-aurora i{background:linear-gradient(180deg,#03040c,#6dffc2 40%,#b98cff 60%,#03040c);}
+  .st-icons{display:grid;grid-template-columns:repeat(auto-fill,minmax(34px,1fr));gap:4px;max-height:130px;overflow-y:auto;}
+  .st-ic{cursor:pointer;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);color:var(--dim);
+    display:flex;align-items:center;justify-content:center;padding:0;}
+  .st-ic img{width:26px;height:26px;}
+  .st-ic.on{border-color:var(--cyan);background:rgba(99,243,255,.12);}
+  /* タイトル画面のプロフィール */
+  .tt-profile{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 12px 0 8px;border-radius:999px;
+    border:1px solid rgba(239,208,108,.35);background:rgba(7,11,23,.82);color:#fff;}
+  .tt-profile img{width:24px;height:24px;}
+  .tt-profile b{font:800 12px/1 var(--font-hud),system-ui;color:var(--gold);}
+  .tt-profile small{font:700 11px/1 system-ui;color:#e9eef8;}
+  /* レベルアップ */
+  #levelUp{position:fixed;inset:0;z-index:66;display:none;align-items:center;justify-content:center;background:rgba(3,4,10,.7);cursor:pointer;}
+  #levelUp.show{display:flex;}
+  .lu-card{display:flex;flex-direction:column;align-items:center;gap:8px;padding:22px 30px;border-radius:16px;min-width:min(360px,90vw);
+    background:linear-gradient(180deg,rgba(20,18,8,.96),rgba(8,8,6,.96));border:1px solid rgba(239,208,108,.55);
+    box-shadow:0 0 60px rgba(239,208,108,.25);animation:luIn .5s cubic-bezier(.16,1,.3,1);}
+  .lu-kicker{font:900 14px/1 var(--font-logo),system-ui;letter-spacing:.4em;color:var(--gold);}
+  .lu-lv{font:900 64px/1 var(--font-hud),system-ui;color:#fff;text-shadow:0 0 24px rgba(239,208,108,.7);}
+  .lu-rewards{margin:4px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px;width:100%;}
+  .lu-rewards li{display:flex;gap:10px;align-items:center;padding:7px 12px;border-radius:9px;background:rgba(239,208,108,.1);
+    font:700 13px/1.3 system-ui;color:#fff;animation:luIn .5s cubic-bezier(.16,1,.3,1) calc(.35s + var(--i) * .25s) both;}
+  .lu-rewards li b{font:800 11px/1 var(--font-hud),system-ui;color:var(--gold);}
+  .lu-note{margin:2px 0 0;font:600 11px/1.4 system-ui;color:var(--dim);}
+  .lu-hint{margin:0;font:600 10px/1 system-ui;color:var(--dim);}
+  @keyframes luIn{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion: reduce){ .lu-card,.lu-rewards li{animation:none;} }
   .sr-titles{display:flex;flex-wrap:wrap;gap:6px;}
   .sr-titles span{padding:6px 12px;border-radius:999px;font:900 12px/1 system-ui;letter-spacing:.1em;color:#1d1502;
     background:linear-gradient(90deg,#ffe7a3,#e8b64a);box-shadow:0 0 12px rgba(239,208,108,.45);}
@@ -1947,47 +2001,49 @@
       "./js3d/account.js": "./js3d/account.js?v=cb8e75ce7b",
       "./js3d/aidecks.js": "./js3d/aidecks.js?v=8d249240bd",
       "./js3d/arena.js": "./js3d/arena.js?v=4e3e7f73c2",
-      "./js3d/audio.js": "./js3d/audio.js?v=ca4d44ebc1",
-      "./js3d/backdrops.js": "./js3d/backdrops.js?v=dd19f3c84a",
-      "./js3d/board.js": "./js3d/board.js?v=bfbaeac6df",
+      "./js3d/audio.js": "./js3d/audio.js?v=8bd0439d00",
+      "./js3d/backdrops.js": "./js3d/backdrops.js?v=c7d2a683c7",
+      "./js3d/board.js": "./js3d/board.js?v=42c3ff36fc",
       "./js3d/card.js": "./js3d/card.js?v=d24135d1cc",
       "./js3d/cardlist-ov.js": "./js3d/cardlist-ov.js?v=1d673fd0d2",
-      "./js3d/cardtex.js": "./js3d/cardtex.js?v=7aa6b53dd8",
+      "./js3d/cardtex.js": "./js3d/cardtex.js?v=5abe7bc84a",
       "./js3d/cardtext.js": "./js3d/cardtext.js?v=4cf5529855",
-      "./js3d/control.js": "./js3d/control.js?v=2ed84f3841",
+      "./js3d/control.js": "./js3d/control.js?v=e5cc2b5b84",
+      "./js3d/cosmetics-ui.js": "./js3d/cosmetics-ui.js?v=ed5cc2991c",
       "./js3d/emblems.js": "./js3d/emblems.js?v=6d1c077a2e",
       "./js3d/fx-protocols.js": "./js3d/fx-protocols.js?v=e8df5c181f",
       "./js3d/fx.js": "./js3d/fx.js?v=f2bbe73646",
       "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c",
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=c8378abf22",
-      "./js3d/main.js": "./js3d/main.js?v=1815ac3c71",
+      "./js3d/main.js": "./js3d/main.js?v=c9c9d112f9",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=083e3a34f9",
       "./js3d/panel.js": "./js3d/panel.js?v=9156d673b5",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=c890d5ec52",
-      "./js3d/playmat.js": "./js3d/playmat.js?v=d61bcfa09e",
+      "./js3d/playmat.js": "./js3d/playmat.js?v=37f2b9eb9f",
       "./js3d/prompts.js": "./js3d/prompts.js?v=348dff836d",
       "./js3d/protocards.js": "./js3d/protocards.js?v=c97f3992ab",
       "./js3d/protocol-strength.js": "./js3d/protocol-strength.js?v=c719e5b65c",
       "./js3d/puzzle.js": "./js3d/puzzle.js?v=b4a110035e",
       "./js3d/review.js": "./js3d/review.js?v=a8cbae3293",
+      "./js3d/rewards.js": "./js3d/rewards.js?v=67ff5d9817",
       "./js3d/room.js": "./js3d/room.js?v=10213a9754",
       "./js3d/roomui.js": "./js3d/roomui.js?v=d9490737ea",
       "./js3d/run-ui.js": "./js3d/run-ui.js?v=c4d4a7d2d6",
       "./js3d/run.js": "./js3d/run.js?v=29dcccf04b",
       "./js3d/selectui.js": "./js3d/selectui.js?v=208abdaebc",
-      "./js3d/settings.js": "./js3d/settings.js?v=6770f917e7",
+      "./js3d/settings.js": "./js3d/settings.js?v=2b99b1214a",
       "./js3d/setup.js": "./js3d/setup.js?v=f9b2b9aa2a",
       "./js3d/solodraft.js": "./js3d/solodraft.js?v=9863c9528c",
       "./js3d/stage.js": "./js3d/stage.js?v=203ed8ec22",
-      "./js3d/stats-data.js": "./js3d/stats-data.js?v=df15716e26",
-      "./js3d/stats.js": "./js3d/stats.js?v=39c84f2128",
+      "./js3d/stats-data.js": "./js3d/stats-data.js?v=ea48b3e662",
+      "./js3d/stats.js": "./js3d/stats.js?v=d5c04e5801",
       "./js3d/theme.js": "./js3d/theme.js?v=6e2207621c",
-      "./js3d/title.js": "./js3d/title.js?v=7324d2936f",
+      "./js3d/title.js": "./js3d/title.js?v=c4435718f8",
       "./js3d/training.js": "./js3d/training.js?v=8f9e8ce6d0",
       "./js3d/tutorial.js": "./js3d/tutorial.js?v=f8d712b653",
       "./js3d/tween.js": "./js3d/tween.js?v=99b25c0d63",
-      "./js3d/ui.js": "./js3d/ui.js?v=3e4920283c",
+      "./js3d/ui.js": "./js3d/ui.js?v=6ff48b3851",
       "./js3d/weekly-ui.js": "./js3d/weekly-ui.js?v=5bee950559",
       "./js3d/weekly.js": "./js3d/weekly.js?v=b4651191ce"
     }
@@ -1995,6 +2051,6 @@
   </script>
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=1815ac3c71"></script>
+  <script type="module" src="js3d/main.js?v=c9c9d112f9"></script>
 </body>
 </html>

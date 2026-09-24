@@ -120,9 +120,14 @@ export function playerXp(records) {
   return xp;
 }
 
+/* そのレベルになるのに要る経験値の合計 */
+export function xpForLevel(lv) {
+  return lv <= PLAYER_STEPS.length ? PLAYER_STEPS[lv - 1] : PLAYER_STEPS[PLAYER_STEPS.length - 1] + 50 * (lv - PLAYER_STEPS.length);
+}
+
 export function playerLevel(records) {
   const xp = playerXp(records);
-  const need = (lv) => (lv <= PLAYER_STEPS.length ? PLAYER_STEPS[lv - 1] : PLAYER_STEPS[PLAYER_STEPS.length - 1] + 50 * (lv - PLAYER_STEPS.length));
+  const need = xpForLevel;
   let level = 1;
   while (xp >= need(level + 1)) level++;
   const cur = need(level), next = need(level + 1);

@@ -24,14 +24,14 @@ const faceVersion = new Map(); // defId -> 描き直し回数 (アート読込�
 const urlCache = new Map();    // defId+':'+version(+':'+zone) -> dataURL (PNGエンコードは重い)
 const faceCanvas = new Map();  // defId -> HTMLCanvasElement (プレビュー用)
 const artCache = new Map();    // url -> HTMLImageElement | null (失敗)
-let backTexture = null;
+const backTextures = new Map();   // 裏面の柄 (スリーブ) -> テクスチャ
 /* 斜めに寝かせた手札の文字をにじませないよう、GPU が許す最大の異方性フィルタを使う */
 let maxAnisotropy = 8;
 export function setMaxAnisotropy(n) {
   if (!(n > 0)) return;
   maxAnisotropy = n;
   for (const tex of faceCache.values()) { tex.anisotropy = n; tex.needsUpdate = true; }
-  if (backTexture) { backTexture.anisotropy = n; backTexture.needsUpdate = true; }
+  for (const tex of backTextures.values()) { tex.anisotropy = n; tex.needsUpdate = true; }
 }
 
 /* カードアートが存在するセット (Main 2 / Aux 2 は scripts/build_card_art_2.py で生成) */
@@ -431,38 +431,79 @@ export function backImageURL() {
   return backURL;
 }
 
-/* ---------- 裏面 (全カード共通) ---------- */
-export function backTex() {
-  if (backTexture) return backTexture;
+/* ---------- 裏面 ----------
+   variant: 自分のカードの裏面の柄 (スリーブ、レベルの報酬)。相手のカードと一覧の画像は standard */
+const SLEEVES = {
+  default: { a: '#1d2a4d', b: '#0e1730', grid: 'rgba(99,243,255,.16)', halo: '255,59,157', ring: 'rgba(109,255,194,.78)',
+    ring2: 'rgba(99,243,255,.5)', strip: '99,243,255' },
+  crimson: { a: '#4a0f1c', b: '#1a0509', grid: 'rgba(255,120,120,.14)', halo: '255,176,64', ring: 'rgba(255,212,120,.85)',
+    ring2: 'rgba(255,120,120,.5)', strip: '255,120,120' },
+  circuit: { a: '#0b2a22', b: '#04120e', grid: 'rgba(109,255,194,.08)', halo: '99,243,255', ring: 'rgba(109,255,194,.85)',
+    ring2: 'rgba(99,243,255,.55)', strip: '109,255,194', circuit: true },
+  holo: { a: '#241a3d', b: '#0b0a18', grid: 'rgba(255,255,255,.1)', halo: '185,140,255', ring: 'rgba(255,255,255,.85)',
+    ring2: 'rgba(185,140,255,.6)', strip: '185,140,255', holo: true }
+};
+export function backTex(variant) {
+  const key = SLEEVES[variant] ? variant : 'default';
+  if (backTextures.has(key)) return backTextures.get(key);
+  const P = SLEEVES[key];
   const cv = document.createElement('canvas');
   cv.width = CARD.texW; cv.height = CARD.texH;
   const ctx = cv.getContext('2d');
   ctx.scale(cv.width / DW, cv.height / DH);
 
   const g = ctx.createLinearGradient(0, 0, DW, DH);
-  g.addColorStop(0, '#1d2a4d');
-  g.addColorStop(0.5, '#0e1730');
-  g.addColorStop(1, '#1d2a4d');
+  g.addColorStop(0, P.a);
+  g.addColorStop(0.5, P.b);
+  g.addColorStop(1, P.a);
   ctx.fillStyle = g;
   roundRect(ctx, 0, 0, DW, DH, 30); ctx.fill();
 
   /* 走査線グリッド */
-  ctx.strokeStyle = 'rgba(99,243,255,.16)';
+  ctx.strokeStyle = P.grid;
   ctx.lineWidth = 1;
   for (let y = 24; y < DH; y += 26) { ctx.beginPath(); ctx.moveTo(18, y); ctx.lineTo(DW - 18, y); ctx.stroke(); }
   for (let x = 24; x < DW; x += 26) { ctx.beginPath(); ctx.moveTo(x, 18); ctx.lineTo(x, DH - 18); ctx.stroke(); }
 
+  /* HOLO: 斜めに虹色の光を流す */
+  if (P.holo) {
+    const hg = ctx.createLinearGradient(0, 0, DW, DH);
+    ['rgba(255,122,180,.32)', 'rgba(185,140,255,.3)', 'rgba(99,243,255,.3)', 'rgba(109,255,194,.28)', 'rgba(255,216,106,.3)']
+      .forEach((c, k, arr) => hg.addColorStop(k / (arr.length - 1), c));
+    ctx.fillStyle = hg;
+    roundRect(ctx, 0, 0, DW, DH, 30); ctx.fill();
+  }
+  /* CIRCUIT: 基板の配線 */
+  if (P.circuit) {
+    ctx.strokeStyle = 'rgba(109,255,194,.4)';
+    ctx.fillStyle = 'rgba(109,255,194,.6)';
+    ctx.lineWidth = 3;
+    let seed = 7;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    for (let k = 0; k < 26; k++) {
+      let x = 30 + rnd() * (DW - 60), y = 30 + rnd() * (DH - 60);
+      ctx.beginPath(); ctx.moveTo(x, y);
+      for (let t = 0; t < 3; t++) {
+        if (rnd() < 0.5) x = Math.max(24, Math.min(DW - 24, x + (rnd() - 0.5) * 220));
+        else y = Math.max(24, Math.min(DH - 24, y + (rnd() - 0.5) * 220));
+        ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
   /* 中央の紋章 */
   const cx = DW / 2, cy = DH / 2;
   const halo = ctx.createRadialGradient(cx, cy, 8, cx, cy, 210);
-  halo.addColorStop(0, 'rgba(255,59,157,.5)');
-  halo.addColorStop(1, 'rgba(255,59,157,0)');
+  halo.addColorStop(0, 'rgba(' + P.halo + ',.5)');
+  halo.addColorStop(1, 'rgba(' + P.halo + ',0)');
   ctx.fillStyle = halo; ctx.fillRect(0, 0, DW, DH);
 
-  ctx.strokeStyle = 'rgba(109,255,194,.78)';
+  ctx.strokeStyle = P.ring;
   ctx.lineWidth = 5;
   ctx.beginPath(); ctx.arc(cx, cy, 118, 0, Math.PI * 2); ctx.stroke();
-  ctx.strokeStyle = 'rgba(99,243,255,.5)';
+  ctx.strokeStyle = P.ring2;
   ctx.lineWidth = 2;
   ctx.beginPath(); ctx.arc(cx, cy, 146, 0, Math.PI * 2); ctx.stroke();
 
@@ -478,7 +519,7 @@ export function backTex() {
   /* 裏向きカードの値は 2。表と同じ位置に出して、覆われても読めるようにする */
   const bh = HEAD_H;
   const bg = ctx.createLinearGradient(0, 0, DW, 0);
-  bg.addColorStop(0, 'rgba(99,243,255,.34)');
+  bg.addColorStop(0, 'rgba(' + P.strip + ',.34)');
   bg.addColorStop(0.62, 'rgba(8,11,21,.95)');
   bg.addColorStop(1, 'rgba(8,11,21,.97)');
   ctx.fillStyle = bg;
@@ -496,15 +537,16 @@ export function backTex() {
   ctx.fillStyle = 'rgba(233,240,255,.86)';
   ctx.fillText('FACE DOWN', 18, bh / 2 + 1);
   ctx.textBaseline = 'alphabetic';
-  ctx.fillStyle = 'rgba(99,243,255,.75)';
+  ctx.fillStyle = 'rgba(' + P.strip + ',.75)';
   ctx.fillRect(0, bh - 4, DW, 4);
 
-  ctx.strokeStyle = 'rgba(99,243,255,.55)';
+  ctx.strokeStyle = 'rgba(' + P.strip + ',.55)';
   ctx.lineWidth = 6;
   roundRect(ctx, 3, 3, DW - 6, DH - 6, 28); ctx.stroke();
 
-  backTexture = new THREE.CanvasTexture(cv);
-  backTexture.colorSpace = THREE.SRGBColorSpace;
-  backTexture.anisotropy = maxAnisotropy;
-  return backTexture;
+  const tex = new THREE.CanvasTexture(cv);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = maxAnisotropy;
+  backTextures.set(key, tex);
+  return tex;
 }

@@ -321,6 +321,17 @@ const SOUNDS = {
     tone({ freq: 1174.7, dur: 2.0, type: 'sine', vol: 0.09, attack: 0.01, delay: 0.95, verb: 0.7 });  // 鐘
     tone({ freq: 2349.3, dur: 1.4, type: 'sine', vol: 0.018, attack: 0.01, delay: 0.95, verb: 0.7 });
   },
+  /* 勝ち (AURORA): 澄んだ鐘が順に重なり、柔らかい和音が長く残る */
+  winAurora() {
+    tone({ freq: 55, end: 40, dur: 0.9, type: 'sine', vol: 0.3 });
+    [587.3, 740, 880, 1108.7, 1318.5].forEach((f, i) => {
+      tone({ freq: f, dur: 1.8, type: 'sine', vol: 0.07, attack: 0.01, delay: 0.1 + i * 0.16, verb: 0.8 });
+      tone({ freq: f * 2.01, dur: 1.2, type: 'sine', vol: 0.02, attack: 0.01, delay: 0.1 + i * 0.16, verb: 0.8 });
+    });
+    [146.8, 185, 220, 277.2].forEach((f) => {
+      tone({ freq: f, dur: 2.6, type: 'triangle', vol: 0.05, attack: 0.5, delay: 0.3, verb: 0.7 });
+    });
+  },
   lose() {
     [392, 330, 262, 196].forEach((f, i) => {
       tone({ freq: f, dur: 0.5, type: 'triangle', vol: 0.14, delay: i * 0.22, verb: 0.35 });

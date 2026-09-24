@@ -8,6 +8,7 @@ import * as THREE from '../vendor/three.module.js';
 import { makeCard, setHighlight, clearHighlight, setDim, setSelected, setCandidate, retexture, glowTexture, setAura, tickAura } from './card.js';
 import { spawnImpactRing, spawnFlashPillar } from './stage.js';
 import * as FX from './fx.js';
+import { backTex } from './cardtex.js';
 import { sfx } from './audio.js';
 import * as LAYOUT from './layout.js';
 import { CARD, COLOR, TIMING, BOARD } from './theme.js';
@@ -100,6 +101,9 @@ export function createBoard(stage, defIndex, me, hooks) {
   const onCompile = (hooks && hooks.onCompile) || (() => Promise.resolve());
   /* 自分のカードのオーラ (使って勝つほど光る・お気に入り)。defId -> { color, strength, holo, fav } | null */
   const auraFor = (hooks && hooks.auraFor) || (() => null);
+  /* 見た目 (レベルの報酬): 自分のカードの裏面の柄 / 自分のコンパイルの光の色 (null ならプロトコルの色) */
+  const sleeveOf = (hooks && hooks.sleeve) || (() => 'default');
+  const compileColorOf = (hooks && hooks.compileColor) || (() => null);
   const scene = stage.scene;
   const cards = new Map();       // uid -> THREE.Group
   const group = new THREE.Group();
@@ -229,6 +233,8 @@ export function createBoard(stage, defIndex, me, hooks) {
       const c = st.cards[uid];
       const mine = c.owner === me && (c.faceUp || l.zone === 'hand');
       setAura(card, mine && card.visible ? auraFor(c.def) : null);
+      const back = backTex(c.owner === me ? sleeveOf() : 'default');
+      if (card.userData.back.material.map !== back) { card.userData.back.material.map = back; card.userData.back.material.needsUpdate = true; }
     }
     for (const [uid, card] of cards) if (!seen.has(uid)) card.visible = false;
   }
@@ -410,7 +416,8 @@ export function createBoard(stage, defIndex, me, hooks) {
   async function compileSequence(prev, next, ev) {
     const laneX = BOARD.laneX[ev.line];
     const proto = defIndex[ev.name + '_1'];
-    const accent = (proto && proto.color) || (ev.side === me ? COLOR.self : COLOR.opp);
+    const own = ev.side === me ? compileColorOf() : null;
+    const accent = own || (proto && proto.color) || (ev.side === me ? COLOR.self : COLOR.opp);
     const center = new THREE.Vector3(laneX, 0, 0);
 
     /* 1) チャージ: ラインが白熱し、カメラがレーンへ低く回り込む */

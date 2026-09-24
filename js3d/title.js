@@ -8,6 +8,9 @@ import { openSettings } from './settings.js';
 import { openStats } from './stats.js';
 import { openAccount, accountState, onAccountChange } from './account.js';
 import { openCardList } from './cardlist-ov.js';
+import { settings } from './settings.js';
+import { profileOf } from './cosmetics-ui.js';
+import { localRecords } from './stats.js';
 
 const BOOT_LINES = [
   '> COMPILE OS v3.1 — boot sequence initiated',
@@ -17,6 +20,15 @@ const BOOT_LINES = [
   '> control component .......... NEUTRAL',
   '> awaiting operator input _'
 ];
+
+/* レベル・称号・アイコン (設定の「見た目」で選んだもの) */
+function profileChip(protocols) {
+  const p = profileOf(settings(), localRecords());
+  const proto = protocols.find(x => x.name === p.icon);
+  return '<span class="tt-profile" title="プレイヤーレベル">' +
+    (proto ? '<img alt="" src="' + emblemDataURL(proto.name, proto.color || '#63f3ff', 40, true) + '">' : '') +
+    '<b>Lv' + p.level + '</b>' + (p.title ? '<small>' + p.title + '</small>' : '') + '</span>';
+}
 
 function accountLabel() {
   const u = accountState().user;
@@ -37,7 +49,7 @@ export function runTitle(protocols, opts) {
       '<div class="tt-sub">3D ARENA</div><button class="tt-start" id="ttStart" type="button">PRESS START</button></div>' +
     '<div class="tt-marquee"><div class="tt-strip">' + emblems + emblems + '</div></div>' +
     '<div class="tt-foot">engine.js — 全30プロトコル / 180枚</div>' +
-    '<div class="tt-corner" id="ttCorner" hidden>' +
+    '<div class="tt-corner" id="ttCorner" hidden>' + profileChip(protocols) +
       '<button data-mode="account" type="button" class="tt-account"><span>' + accountLabel() + '</span></button>' +
       '<button data-mode="options" type="button" class="tt-gear" title="設定 (演出・音)" aria-label="設定 (演出・音)">⚙</button>' +
     '</div>';

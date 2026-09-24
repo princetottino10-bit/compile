@@ -7,6 +7,7 @@
 import * as THREE from '../vendor/three.module.js';
 import { BOARD, CARD } from './theme.js';
 import { playerLevel } from './stats-data.js';
+import { COSMETICS, unlockLevel } from './rewards.js';
 
 /* 盤面の範囲 (arena.js の枠と同じ): x ±5 / z ±5.4。1単位 = 100px */
 export const MAT_W = 10, MAT_D = 10.8;
@@ -15,14 +16,11 @@ const W = MAT_W * PX, H = MAT_D * PX;
 const cx = (x) => (x + MAT_W / 2) * PX;
 const cy = (z) => (z + MAT_D / 2) * PX;
 
-/* プレイヤーレベル (stats-data.js) が上がると解放 */
+/* プレイヤーレベル (stats-data.js) が上がると解放。解放のレベルは rewards.js */
 const lv = (rs) => playerLevel(rs).level;
-export const MATS = [
-  { key: 'neon', name: 'NEON GRID', need: 1, unlocked: () => true },
-  { key: 'nebula', name: 'NEBULA', need: 3, unlocked: (rs) => lv(rs) >= 3 },
-  { key: 'vortex', name: 'VORTEX', need: 6, unlocked: (rs) => lv(rs) >= 6 },
-  { key: 'biomech', name: 'BIOMECH', need: 10, unlocked: (rs) => lv(rs) >= 10 }
-];
+export const MATS = COSMETICS.mat.map(([key, name]) => ({
+  key, name, need: unlockLevel('mat', key), unlocked: (rs) => lv(rs) >= unlockLevel('mat', key)
+}));
 
 export function matUnlocked(key, records) {
   const m = MATS.find(x => x.key === key);
@@ -206,7 +204,40 @@ function drawBiomech(ctx) {
   edgeTitle(ctx, 'rgba(230,255,250,.7)');
 }
 
-const DRAW = { nebula: drawNebula, vortex: drawVortex, biomech: drawBiomech };
+/* レベル20: 黒地に金の細い線と、中央から射す虹色の光 */
+function drawPrism(ctx) {
+  const r = rng(44);
+  ctx.fillStyle = '#07060a';
+  ctx.fillRect(0, 0, W, H);
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < 26; i++) {                                     // 虹色の光の筋
+    const a = (i / 26) * Math.PI * 2 + r() * 0.1;
+    const g = ctx.createLinearGradient(W / 2, H / 2, W / 2 + Math.cos(a) * W, H / 2 + Math.sin(a) * W);
+    g.addColorStop(0, 'hsla(' + Math.round((i / 26) * 360) + ',90%,65%,.22)');
+    g.addColorStop(1, 'hsla(' + Math.round((i / 26) * 360) + ',90%,65%,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(W / 2, H / 2);
+    ctx.lineTo(W / 2 + Math.cos(a - 0.05) * W, H / 2 + Math.sin(a - 0.05) * W);
+    ctx.lineTo(W / 2 + Math.cos(a + 0.05) * W, H / 2 + Math.sin(a + 0.05) * W);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+  ctx.strokeStyle = 'rgba(232,190,110,.28)';                         // 金の幾何学の細線
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 40; i++) {
+    const y = r() * H;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y + (r() - 0.5) * 200); ctx.stroke();
+  }
+  blob(ctx, W / 2, H / 2, 200, 'rgba(255,236,190,A)', 0.4);
+  centerBand(ctx, 'rgba(255,226,150,A)', 0.28, 90);
+  drawSlots(ctx, 'rgba(10,8,6,.7)', 'rgba(240,200,120,.85)', 2);
+  edgeTitle(ctx, 'rgba(240,200,120,.85)');
+}
+
+const DRAW = { nebula: drawNebula, vortex: drawVortex, biomech: drawBiomech, prism: drawPrism };
 const cache = new Map();
 
 /* 柄のテクスチャ (neon は柄なし = null) */

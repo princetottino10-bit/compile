@@ -15,7 +15,9 @@ import * as PZ from './puzzle.js';
 import * as TU from './tutorial.js';
 import { settings, onSettings, openSettings } from './settings.js';
 import { recordSoloResult, localRecords, favoriteCards, toggleFavoriteCard, onFavoriteChange } from './stats.js';
-import { cardStats, cardTier } from './stats-data.js';
+import { cardStats, cardTier, playerLevel } from './stats-data.js';
+import { isUnlocked, rewardsBetween } from './rewards.js';
+import { setCosmeticProtocols } from './cosmetics-ui.js';
 import { matUnlocked } from './playmat.js';
 import { initAccount, openAccount, takeAccountResume } from './account.js';
 import { openCardList } from './cardlist-ov.js';
@@ -65,9 +67,17 @@ let chosenFirst = null;
 /* ---------- 使って勝つほど光るカード・お気に入り ----------
    カードごとの勝ち数は戦績から数える。光り方は board のオーラ (card.js) */
 let cardWins = cardStats(localRecords());
+/* プレイヤーレベル (見た目の解放に使う)。決着ごとに数え直す */
+let myLevel = playerLevel(localRecords()).level;
+/* 選んだ見た目を、解放されていれば使う (記録を消して条件を外れたら標準に戻す) */
+function cosmetic(kind, fallback) {
+  const key = settings()[kind];
+  return key && isUnlocked(kind, key, myLevel) ? key : fallback;
+}
 let favSet = new Set(favoriteCards());
 function refreshCardGlow() {
   cardWins = cardStats(localRecords());
+  myLevel = playerLevel(localRecords()).level;
   favSet = new Set(favoriteCards());
   if (board && cur) board.syncInstant(shown());
 }
@@ -147,6 +157,7 @@ async function boot() {
     fetch('data/cards.json').then(r => r.json()),
     fetch('data/effects.json').then(r => r.json())
   ]);
+  setCosmeticProtocols(cards.protocols);
   for (const p of cards.protocols) {
     protoIndex[p.name] = p;
     for (const c of p.cards) {
@@ -183,6 +194,8 @@ async function boot() {
   stage.onFrame((dt) => ctrlMarker.tick(dt));
   board = createBoard(stage, defIndex, ME, {
     auraFor,
+    sleeve: () => cosmetic('sleeve', 'default'),
+    compileColor: () => (cosmetic('ccolor', 'default') === 'gold' ? '#ffd86a' : null),
     onCompile: async (info) => {
       /* まず盤上のプロトコルカードを "Compiled" 面へ裏返し、その後にカットイン */
       await panels.flipAt(info.line, info.side, true);
@@ -200,7 +213,13 @@ async function boot() {
   stage.onFrame((dt, t) => { positionPlayChoices(); trackHandTop(); trackHandRight(); trackPileCounts(); if (panels) panels.tick(t); });
   /* 設定 (演出の速さ・音量) を反映し、変わったらすぐ当てる */
   /* 盤面の柄は解放されているものだけ (記録を消したあとなどに、未解放のまま残らないように) */
-  onSettings((s) => { TW.setSpeed(s.speed); setSfxVolume(s.sfx); arena.setMat(matUnlocked(s.mat, localRecords()) ? s.mat : 'neon'); });
+  onSettings((s) => {
+    TW.setSpeed(s.speed);
+    setSfxVolume(s.sfx);
+    arena.setMat(matUnlocked(s.mat, localRecords()) ? s.mat : 'neon');
+    ctrlMarker.setStyle(cosmetic('marker', 'default'));
+    if (cur) board.syncInstant(shown());                      // カードの裏面を付け替える
+  });
   bindInput();
   mark('stage');
 
@@ -1722,9 +1741,10 @@ async function roomMaybeFinish() {
   clearInterval(roomPollTimer);
   const win = st.winner === ME;
   UI.setPrompt(win ? 'あなたの勝ち' : '敗北', 'end');
-  sfx(win ? 'win' : 'lose');
+  const victory = cosmetic('victory', 'default');
+  sfx(win ? (victory === 'aurora' ? 'winAurora' : 'win') : 'lose');
   await finaleFx(win);
-  await UI.resultCutIn(win);
+  await UI.resultCutIn(win, { victory });
   showEndActions(win);
 }
 
@@ -2594,6 +2614,7 @@ async function afterTurn() {
   if (cur.state.winner !== null && !resultShown) {
     resultShown = true;
     const win = cur.state.winner === ME;
+    const levelBefore = myLevel;
     if (!trainingMode && !puzzle && !demoMode && !roomMode) {
       const st0 = cur.state;
       recordSoloResult(st0.players[ME].protocols.map(p => p.name), st0.players[AI].protocols.map(p => p.name), win, aiDifficulty,
@@ -2603,9 +2624,12 @@ async function afterTurn() {
       refreshCardGlow();
     }
     UI.setPrompt(win ? 'あなたの勝ち' : '敗北', 'end');
-    sfx(win ? 'win' : 'lose');
+    const victory = cosmetic('victory', 'default');
+    sfx(win ? (victory === 'aurora' ? 'winAurora' : 'win') : 'lose');
     await finaleFx(win);
-    await UI.resultCutIn(win);
+    await UI.resultCutIn(win, { victory });
+    /* レベルが上がったら、手に入った報酬を見せる */
+    if (myLevel > levelBefore) await UI.levelUpCutIn(myLevel, rewardsBetween(levelBefore, myLevel));
     if (demoMode) {
       await TW.wait(900);
       location.reload();
