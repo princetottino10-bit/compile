@@ -6,6 +6,14 @@
 
 const KEY = 'compileXpLog';
 const MAX = 3000;
+/* アカウント連携 (account.js) が差し込む口。xp.js 自体は通信しない */
+const hooks = { onGrant: null };
+export function setXpHooks(h) { Object.assign(hooks, h); }
+
+/* 同期で同じ1件を見分けるための id。key があれば key から (どの端末でも同じ id になり、2回入らない) */
+const ID_RE = /^[A-Za-z0-9_:.-]{1,64}$/;
+const idFromKey = (key) => 'k:' + String(key).replace(/[^A-Za-z0-9_:.-]/g, '').slice(0, 60);
+const idOf = (e) => (e.id && ID_RE.test(e.id) ? e.id : e.key ? idFromKey(e.key) : 'x' + e.at + '_' + e.src);
 
 /* 入る量。CPU 戦は 1戦 +1・勝ち +2・つよい以上に勝つと +1 (stats-data.js) */
 export const XP_GAIN = {
@@ -21,7 +29,7 @@ export const XP_GAIN = {
 export function xpLog() {
   try {
     const list = JSON.parse(localStorage.getItem(KEY) || '[]');
-    return Array.isArray(list) ? list.filter(e => e && Number.isInteger(e.xp) && e.xp > 0) : [];
+    return Array.isArray(list) ? list.filter(e => e && Number.isInteger(e.xp) && e.xp > 0).map(e => ({ ...e, id: idOf(e) })) : [];
   } catch (e) {
     return [];
   }
@@ -36,11 +44,27 @@ export function bonusXp(log = xpLog()) {
 export function grantXp(src, xp, key) {
   if (!Number.isInteger(xp) || xp <= 0) return 0;
   const log = xpLog();
-  if (key && log.some(e => e.key === key)) return 0;
-  const entry = { src: String(src), xp, at: Date.now() };
-  const next = log.concat(key ? { ...entry, key: String(key) } : entry);
-  try { localStorage.setItem(KEY, JSON.stringify(next.slice(-MAX))); } catch (e) { return 0; }
+  const at = Date.now();
+  const id = key ? idFromKey(key) : 'x' + at + '_' + Math.random().toString(36).slice(2, 6);
+  if (log.some(e => e.id === id)) return 0;
+  const entry = { id, src: String(src).slice(0, 16), xp, at, ...(key ? { key: String(key) } : {}) };
+  if (!save(log.concat(entry))) return 0;
+  if (hooks.onGrant) hooks.onGrant(entry);
   return xp;
+}
+
+function save(list) {
+  try { localStorage.setItem(KEY, JSON.stringify(list.slice(-MAX))); return true; } catch (e) { return false; }
+}
+
+/* 別の端末で入った分 (アカウントから読んだ分) を足す。同じ id は足さない。足した件数を返す */
+export function mergeXp(remote) {
+  const log = xpLog();
+  const have = new Set(log.map(e => e.id));
+  const add = (remote || []).filter(e => e && ID_RE.test(e.id) && Number.isInteger(e.xp) && e.xp > 0 && !have.has(e.id));
+  if (!add.length) return 0;
+  save(log.concat(add).sort((a, b) => a.at - b.at));
+  return add.length;
 }
 
 /* 帳簿を消す (戦績を消すときに一緒に) */

@@ -2044,6 +2044,22 @@
   .pf-got li{display:grid;grid-template-columns:48px 1fr;gap:8px;padding:6px 10px;background:rgba(255,255,255,.03);font:700 11px/1.3 var(--font-ui);letter-spacing:.06em;color:#fff;}
   .pf-got li b{color:var(--pink);font-size:10.5px;}
   #profileOv{z-index:62;}
+  .pf-daily{display:flex;flex-direction:column;gap:5px;}
+  .pf-daily-h{display:flex;align-items:baseline;gap:10px;}
+  .pf-daily-h small{font:700 10px/1 var(--font-ui);letter-spacing:.22em;color:var(--dim);}
+  .pf-daily-h b{font:800 14px/1 var(--font-ui);color:var(--pink);}
+  .pf-daily-h em{margin-left:auto;font:600 10.5px/1 var(--font-ui);font-style:normal;color:var(--dim);}
+  .pf-daily ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:3px;}
+  .pf-daily li{position:relative;display:grid;grid-template-columns:1fr auto 30px;align-items:center;gap:8px;padding:8px 10px;
+    background:rgba(255,255,255,.035);border-left:3px solid var(--lav);font:600 11.5px/1.3 var(--font-ui);color:#fff;overflow:hidden;}
+  .pf-daily li.mid{border-left-color:var(--violet);}
+  .pf-daily li.hard{border-left-color:var(--pink);}
+  .pf-daily li i{position:absolute;left:0;bottom:0;height:2px;width:var(--p);background:linear-gradient(90deg,var(--violet),var(--pink));}
+  .pf-daily li b{font:800 11px/1 var(--font-ui);letter-spacing:.08em;color:var(--lav);}
+  .pf-daily li em{font:700 10.5px/1 var(--font-ui);font-style:normal;color:var(--dim);text-align:right;}
+  .pf-daily li.done{opacity:.55;}
+  .pf-daily li.done b{color:var(--pink);}
+  .tt-daily{font:800 9px/1 var(--font-ui);font-style:normal;letter-spacing:.16em;color:var(--pink);padding:3px 6px;border:1px solid rgba(255,79,163,.5);}
   .pf-earn summary{cursor:pointer;font:700 10px/1 var(--font-ui);letter-spacing:.22em;color:var(--dim);padding:4px 0;}
   .pf-earn summary:hover,.pf-earn summary:focus-visible{color:var(--pink);outline:0;}
   .pf-earn ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:3px;}
@@ -2138,7 +2154,7 @@
       "three": "./vendor/three.module.js?v=985eb92490",
       "three/addons/": "./vendor/jsm/",
       "./vendor/three.module.js": "./vendor/three.module.js?v=985eb92490",
-      "./js3d/account.js": "./js3d/account.js?v=ee59042313",
+      "./js3d/account.js": "./js3d/account.js?v=34e63fa234",
       "./js3d/aidecks.js": "./js3d/aidecks.js?v=8d249240bd",
       "./js3d/arena.js": "./js3d/arena.js?v=4e3e7f73c2",
       "./js3d/audio.js": "./js3d/audio.js?v=8bd0439d00",
@@ -2148,20 +2164,22 @@
       "./js3d/cardlist-ov.js": "./js3d/cardlist-ov.js?v=1d673fd0d2",
       "./js3d/cardtex.js": "./js3d/cardtex.js?v=24b6c53321",
       "./js3d/cardtext.js": "./js3d/cardtext.js?v=4cf5529855",
+      "./js3d/cloudsave.js": "./js3d/cloudsave.js?v=9a43e44b82",
       "./js3d/control.js": "./js3d/control.js?v=acf84debbc",
       "./js3d/cosmetics-ui.js": "./js3d/cosmetics-ui.js?v=049eef4895",
+      "./js3d/daily.js": "./js3d/daily.js?v=04e924c8e3",
       "./js3d/emblems.js": "./js3d/emblems.js?v=6d1c077a2e",
       "./js3d/fx-protocols.js": "./js3d/fx-protocols.js?v=509fceb211",
       "./js3d/fx.js": "./js3d/fx.js?v=f2bbe73646",
       "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c",
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=c8378abf22",
-      "./js3d/main.js": "./js3d/main.js?v=8d605de938",
+      "./js3d/main.js": "./js3d/main.js?v=af1f6c00d8",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=6fe48ba6a8",
       "./js3d/panel.js": "./js3d/panel.js?v=ecb8a073e3",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=e0273dcae0",
       "./js3d/playmat.js": "./js3d/playmat.js?v=91ab85f12f",
-      "./js3d/profile.js": "./js3d/profile.js?v=1a47363a33",
+      "./js3d/profile.js": "./js3d/profile.js?v=4816030958",
       "./js3d/prompts.js": "./js3d/prompts.js?v=348dff836d",
       "./js3d/protocards.js": "./js3d/protocards.js?v=e16028fc34",
       "./js3d/protocol-strength.js": "./js3d/protocol-strength.js?v=c719e5b65c",
@@ -2180,19 +2198,19 @@
       "./js3d/stats-data.js": "./js3d/stats-data.js?v=bcf7d5e977",
       "./js3d/stats.js": "./js3d/stats.js?v=fb6faa0cb0",
       "./js3d/theme.js": "./js3d/theme.js?v=36f15e5586",
-      "./js3d/title.js": "./js3d/title.js?v=82349cdba7",
+      "./js3d/title.js": "./js3d/title.js?v=abc5911dfb",
       "./js3d/training.js": "./js3d/training.js?v=3018b4399e",
       "./js3d/tutorial.js": "./js3d/tutorial.js?v=34aae6e6cc",
       "./js3d/tween.js": "./js3d/tween.js?v=99b25c0d63",
       "./js3d/ui.js": "./js3d/ui.js?v=b742a89108",
       "./js3d/weekly-ui.js": "./js3d/weekly-ui.js?v=dc748612f9",
       "./js3d/weekly.js": "./js3d/weekly.js?v=b4651191ce",
-      "./js3d/xp.js": "./js3d/xp.js?v=4c091d11fc"
+      "./js3d/xp.js": "./js3d/xp.js?v=b2c69be784"
     }
   }
   </script>
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=8d605de938"></script>
+  <script type="module" src="js3d/main.js?v=af1f6c00d8"></script>
 </body>
 </html>

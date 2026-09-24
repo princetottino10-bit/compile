@@ -3,6 +3,7 @@
  *   engine.js (window.CompileEngine) をルール担当として、描画と入力だけを担う。
  * ========================================================================= */
 import { bonusXp, grantXp, XP_GAIN, hashKey } from './xp.js';
+import { recordDailyGame, DAILY_XP } from './daily.js';
 import * as THREE from '../vendor/three.module.js';
 import { createStage } from './stage.js';
 import { createBoard, visualFingerprint, locOf } from './board.js';
@@ -89,6 +90,21 @@ async function gainXp(src, xp, key) {
   if (!grantXp(src, xp, key)) return;
   refreshCardGlow();                 // myLevel も数え直す
   if (myLevel > before) await UI.levelUpCutIn(myLevel, rewardsBetween(before, myLevel));
+}
+/* デイリーミッションを1試合ぶん進め、達成した分の経験値を足す (CPU 戦・オンライン共通) */
+async function dailyAfterGame(st, side, win, level, online) {
+  const t = st.tally || {};
+  const effects = Object.values((t.effects && t.effects[side]) || {}).reduce((n, v) => n + (v | 0), 0);
+  const r = recordDailyGame({
+    win, level, online, protocols: st.players[side].protocols.map(p => p.name),
+    compiles: (t.compiles && t.compiles[side]) | 0, effects, faceUp: ((t.faceUp && t.faceUp[side]) || []).length,
+    turns: (st.turns || 0) + 1
+  }, Object.keys(protoIndex));
+  if (!r.cleared.length) return;
+  const xp = r.cleared.reduce((n, m) => n + m.xp, 0) + (r.allNow ? DAILY_XP.all : 0);
+  UI.toast('DAILY MISSION CLEAR — ' + r.cleared.map(m => m.text).join(' / ') + (r.allNow ? ' (3つ達成)' : '') + '  +' + xp + ' XP', 3600);
+  for (const m of r.cleared) await gainXp('daily', m.xp, 'dm:' + r.day + ':' + m.key);
+  if (r.allNow) await gainXp('daily', DAILY_XP.all, 'dm:' + r.day + ':all');
 }
 function auraFor(defId) {
   if (favSet.has(defId)) return { color: '#ffffff', strength: 1, fav: true, frame: true, holo: false };
@@ -1761,8 +1777,14 @@ async function roomMaybeFinish() {
   await finaleFx(win);
   await UI.resultCutIn(win, { victory });
   /* 同じ部屋の同じ決着を読み直しても2回は入らない */
-  await gainXp('online', XP_GAIN.onlinePlay + (win ? XP_GAIN.onlineWin : 0),
+  const firstTime = grantXp('online', XP_GAIN.onlinePlay + (win ? XP_GAIN.onlineWin : 0),
     'room:' + (roomRm && roomRm.code) + ':' + (st.turns || 0));
+  if (firstTime) {
+    const before = myLevel;
+    refreshCardGlow();
+    if (myLevel > before) await UI.levelUpCutIn(myLevel, rewardsBetween(before, myLevel));
+    await dailyAfterGame(st, ME, win, null, true);     // 同じ決着を読み直したときは進めない
+  }
   showEndActions(win);
 }
 
@@ -2648,6 +2670,7 @@ async function afterTurn() {
     await UI.resultCutIn(win, { victory });
     /* レベルが上がったら、手に入った報酬を見せる */
     if (myLevel > levelBefore) await UI.levelUpCutIn(myLevel, rewardsBetween(levelBefore, myLevel));
+    if (!trainingMode && !puzzle && !demoMode && !roomMode) await dailyAfterGame(cur.state, ME, win, aiDifficulty, false);
     if (demoMode) {
       await TW.wait(900);
       location.reload();

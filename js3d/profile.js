@@ -3,6 +3,7 @@
  *   アイコン・レベル・経験値・称号、次の報酬 (中身は取るまで秘密)、取った報酬、見た目を選ぶ入口
  * ========================================================================= */
 import { bonusXp, XP_GAIN } from './xp.js';
+import { dailyView, DAILY_XP } from './daily.js';
 import { playerLevel, xpForLevel } from './stats-data.js';
 import { localRecords } from './stats.js';
 import { settings, openSettings } from './settings.js';
@@ -17,8 +18,20 @@ const EARN = [
   ['TUTORIAL', 'レッスン +' + XP_GAIN.lesson + ' / 全部 +' + XP_GAIN.tutorialAll],
   ['PUZZLE', '解くと +' + XP_GAIN.puzzle],
   ['RUN', '全勝クリア +' + XP_GAIN.runClear],
-  ['WEEKLY', 'クリア +' + XP_GAIN.weeklyClear]
+  ['WEEKLY', 'クリア +' + XP_GAIN.weeklyClear],
+  ['DAILY', 'ミッション +' + DAILY_XP.easy + '〜+' + DAILY_XP.hard + ' / 3つ達成 +' + DAILY_XP.all]
 ];
+
+/* デイリーミッション (日本時間の0時に入れ替わる) */
+function dailyHtml(protocols) {
+  const list = dailyView((protocols || []).map(p => p.name));
+  const done = list.filter(m => m.done).length;
+  return '<div class="pf-daily"><div class="pf-daily-h"><small>DAILY MISSIONS</small><b>' + done + '/' + list.length + '</b>' +
+    '<em>3つ達成で +' + DAILY_XP.all + ' XP</em></div><ul>' + list.map(m =>
+      '<li class="' + m.tier + (m.done ? ' done' : '') + '"><span>' + esc(m.text) + '</span>' +
+      '<i style="--p:' + Math.round(100 * m.n / m.goal) + '%"></i>' +
+      '<b>' + (m.done ? 'CLEAR' : m.n + '/' + m.goal) + '</b><em>+' + m.xp + '</em></li>').join('') + '</ul></div>';
+}
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -49,6 +62,7 @@ export function openProfile(protocols) {
       '<div><b>' + got.length + '<i>/' + REWARDS.length + '</i></b><small>REWARDS</small></div></div>' +
     (nx ? '<div class="pf-next"><small>NEXT REWARD</small><b>LV ' + nx.lv + '</b><span>???</span><em>あと XP ' + (xpForLevel(nx.lv) - pl.xp) + '</em></div>'
       : '<div class="pf-next"><small>ALL REWARDS UNLOCKED</small></div>') +
+    dailyHtml(protocols) +
     (got.length ? '<ul class="pf-got">' + got.slice().reverse().map(r => '<li><b>LV ' + r.lv + '</b>' + esc(r.name) + '</li>').join('') + '</ul>' : '') +
     '<details class="pf-earn"><summary>HOW TO EARN XP</summary><ul>' + EARN.map(([k, v]) => '<li><span>' + k + '</span><b>' + v + '</b></li>').join('') + '</ul></details>' +
     '<p class="pz-note">取った見た目は COSMETICS で選べます。</p>' +

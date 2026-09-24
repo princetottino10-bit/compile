@@ -1,6 +1,7 @@
 /* =========================================================================
  * 3Dビュー: タイトルとモード選択
  * ========================================================================= */
+import { dailyView } from './daily.js';
 import { emblemDataURL } from './emblems.js';
 import { drawTitleBackdrop } from './backdrops.js';
 import { initAudio, sfx } from './audio.js';
@@ -29,7 +30,14 @@ function profileChip(protocols) {
   /* 押すとプロフィール (レベル・経験値・次の報酬) が開く */
   return '<button type="button" data-mode="profile" class="tt-profile" aria-label="プロフィール">' +
     (proto ? '<img alt="" src="' + emblemDataURL(proto.name, proto.color || '#b9a4ff', 40, true) + '">' : '') +
-    '<b>LV ' + p.level + '</b>' + (p.title ? '<small>' + p.title + '</small>' : '') + '</button>';
+    '<b>LV ' + p.level + '</b>' + (p.title ? '<small>' + p.title + '</small>' : '') + dailyBadge(protocols) + '</button>';
+}
+
+/* 今日のデイリーミッションの残り (全部済んでいれば出さない) */
+function dailyBadge(protocols) {
+  const list = dailyView(protocols.map(x => x.name));
+  const left = list.filter(m => !m.done).length;
+  return left ? '<i class="tt-daily" title="デイリーミッション">DAILY ' + (list.length - left) + '/' + list.length + '</i>' : '';
 }
 
 /* ロゴ: 「//」と COMPILE。グリッチ用に同じ文字を data-text に持たせる (CSS の ::before/::after でずらす) */
