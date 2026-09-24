@@ -140,13 +140,18 @@ export function runTitle(protocols, opts) {
       root.querySelector('#ttCorner').hidden = false;
       root.classList.add('menu');                    // 起動ログを隠し、左の列にメニューを出す
       /* ログイン状態は裏で読むので、分かったら表示を差し替える */
-      const offAccount = onAccountChange(() => {
+      const refreshAccount = () => {
         const label = root.querySelector('#ttCorner button[data-mode="account"] span');
-        if (!label || !root.classList.contains('show')) { offAccount(); return; }
+        if (!label || !root.classList.contains('show')) return false;
         label.textContent = accountLabel();
         label.parentElement.title = accountTitle();
         root.querySelector('#ttCorner button[data-mode="admin"]').hidden = !accountState().admin;
-      });
+        return true;
+      };
+      /* メニューを出す前にログイン状態が読み終わっていることがある (そのときの知らせは聞き逃している)。
+         出した時点でも一度描き直す */
+      refreshAccount();
+      const offAccount = onAccountChange(() => { if (!refreshAccount()) offAccount(); });
       const onMenu = (ev) => {
         const button = ev.target.closest('button[data-mode]');
         if (!button) return;
