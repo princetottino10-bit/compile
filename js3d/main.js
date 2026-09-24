@@ -3317,6 +3317,8 @@ function choiceCtx() {
     protoName: (i) => shown().players[ME].protocols[i].name,
     onHoverCandidate: (cand, on) => {
       const uid = String(cand).split('|')[0];
+      /* 一覧のカードに触れたら、盤面のカードと同じように詳細を出す (捨て札など盤に無いカードも) */
+      if (on) showPreview(uid);
       const card = board.cards.get(uid);
       if (!card) return;
       if (on) board.setHighlight(card, COLOR.gold, 0.28, 0.9);

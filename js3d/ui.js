@@ -263,6 +263,8 @@ export function askChoice(req, ctx) {
           if (ctx.onHoverCandidate) {
             b.onmouseenter = () => ctx.onHoverCandidate(uid, true);
             b.onmouseleave = () => ctx.onHoverCandidate(uid, false);
+            b.onfocus = () => ctx.onHoverCandidate(uid, true);          // キーボードで選んでいるときも詳細を出す
+            b.onblur = () => ctx.onHoverCandidate(uid, false);
           }
         }
         if (max > 1 || min === 0 || confirmHand) {
