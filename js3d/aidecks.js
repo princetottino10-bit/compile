@@ -27,9 +27,11 @@ export const CHALLENGERS = [
 export const LEVEL_LABELS = ['かんたん', 'ふつう', 'つよい', '最強', 'ロック特化'];
 
 /* 下剋上: 最弱のデッキ (あなた) で最強 (STRONGEST_AI) に挑む。相手の戦い方は最強と同じ。
-   最弱は scripts/deck_search.js --bottom で探したもの */
+   最弱は 2026-09-24 に探したもの: プロトコル単体の強さの下位10個から作れる120デッキを
+   scripts/deck_search.js --bottom 10 でふるい分け (SPEED を含むものは最強と重なるので除く)、
+   下位8つを最強と60戦ずつ (両者とも最強の戦い方) → SMOKE/UNITY/APATHY が 4勝55敗1分 (6.8%) で最も低い */
 export const UNDERDOG_LEVEL = 20;
-export const UNDERDOG_DECK = ['CHAOS', 'METAL', 'LIGHT'];
+export const UNDERDOG_DECK = ['SMOKE', 'UNITY', 'APATHY'];
 
 export const isChallenger = (level) => level >= CHALLENGER_BASE && level < CHALLENGER_BASE + CHALLENGERS.length;
 
