@@ -6,6 +6,7 @@
 
 import { MATS } from './playmat.js';
 import { localRecords } from './stats.js';
+import { playerLevel } from './stats-data.js';
 const KEY = 'compileSettings';
 const DEFAULTS = { speed: 1, sfx: 80, pauses: true, mat: 'neon' };
 const SPEEDS = [
@@ -45,10 +46,11 @@ export function onSettings(cb) {
 /* 盤面の柄。戦績で解放されたものだけ選べる (まだのものは解放の条件を出す) */
 function matRow(current) {
   const recs = localRecords();
-  return '<div class="st-row st-mats"><span>盤面</span><div class="st-matlist">' + MATS.map(m => {
+  const me = playerLevel(recs).level;
+  return '<div class="st-row st-mats"><span>盤面 <i>いまの レベル ' + me + '</i></span><div class="st-matlist">' + MATS.map(m => {
     const open = m.unlocked(recs);
     return '<button type="button" data-mat="' + m.key + '" class="st-mat mat-' + m.key + (current === m.key ? ' on' : '') + '"' +
-      (open ? '' : ' disabled') + '><i></i><b>' + m.name + '</b><small>' + (open ? (current === m.key ? '使用中' : '選ぶ') : '🔒 ' + m.note) + '</small></button>';
+      (open ? '' : ' disabled') + '><i></i><b>' + m.name + '</b><small>' + (open ? (current === m.key ? '使用中' : '選ぶ') : '🔒 レベル ' + m.need + 'で解放') + '</small></button>';
   }).join('') + '</div></div>';
 }
 

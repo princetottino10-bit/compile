@@ -128,3 +128,14 @@ test('効果の発動回数: 記録には { defId: 回数 } だけを残し、�
   assert.equal(cs.get('WATER_2').effects, 1, '表で出していない (裏から返った) 札の発動も数える');
   assert.equal(cs.get('WATER_2').games, 0);
 });
+
+test('プレイヤーレベル: 1戦 +1・勝ち +2・つよい以上に勝つと +1。段階で上がる', async () => {
+  const D = await loadData();
+  assert.equal(D.playerLevel([]).level, 1);
+  const wins = (n, level) => Array.from({ length: n }, () => rec(deck('A', 'B', 'C'), deck('D', 'E', 'F'), true, level));
+  assert.equal(D.playerXp(wins(2, 1)), 6);
+  assert.equal(D.playerLevel(wins(2, 1)).level, 2, 'xp 6 は Lv2 (4 以上 10 未満)');
+  assert.equal(D.playerXp(wins(1, 3)), 4);
+  assert.equal(D.playerLevel(wins(29, 3)).level, 10, 'xp 116 は Lv10 (115 以上 140 未満)');
+  assert.equal(D.playerLevel(wins(40, 3)).level, 11, 'xp 160 は Lv11 (140 以上 170 未満)');
+});

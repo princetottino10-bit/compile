@@ -5,7 +5,7 @@
  * ========================================================================= */
 
 import { levelLabel, UNDERDOG_LEVEL } from './aidecks.js';
-import { protocolSummary, matchups, winTrend, fastestWin, masteryLevel, cardStats, cardTier } from './stats-data.js';
+import { protocolSummary, matchups, winTrend, fastestWin, masteryLevel, cardStats, cardTier, playerLevel } from './stats-data.js';
 
 const KEY = 'compileSoloRecords';
 const MAX = 2000;
@@ -178,7 +178,10 @@ function summaryTab(list, protos) {
   /* 称号 (取ったものだけ) */
   const titles = [];
   if (list.some(r => r.win && r.level === UNDERDOG_LEVEL)) titles.push(['下剋上', '最弱のデッキで最強に勝った']);
-  return (titles.length ? '<div class="sr-titles">' + titles.map(([t, d]) => '<span title="' + esc(d) + '">' + esc(t) + '</span>').join('') + '</div>' : '') +
+  const pl = playerLevel(list);
+  return '<div class="sr-level"><b>Lv ' + pl.level + '</b><span class="sr-xp"><i style="width:' + Math.round(pl.progress * 100) + '%"></i></span>' +
+      '<small>次のレベルまで ' + (pl.next - pl.xp) + ' (1戦 +1・勝ち +2・つよい以上に勝つと +1)</small></div>' +
+    (titles.length ? '<div class="sr-titles">' + titles.map(([t, d]) => '<span title="' + esc(d) + '">' + esc(t) + '</span>').join('') + '</div>' : '') +
     trendSvg(list) +
     '<div class="sr-kpis">' +
       tile('勝ったことのあるプロトコル', wonAny + '<i>/' + protos.length + '</i>') +

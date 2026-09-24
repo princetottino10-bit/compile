@@ -2,10 +2,11 @@
  * 盤面の柄 (プレイマット)。公式プレイマットの配色を意識したオリジナルの柄を、canvas に描いて盤面に敷く。
  *   NEON GRID (はじめから) / NEBULA (マット1: 桃・紫・青の星雲) / VORTEX (マット2: 白地に橙・赤・青の渦)
  *   BIOMECH (マット3: 暗い青緑の有機的な柄と紫の光)
- *   遊んでいると解放される (MATS の unlock)。選ぶのは設定の画面
+ *   プレイヤーレベルが上がると解放される (MATS)。選ぶのは設定の画面
  * ========================================================================= */
 import * as THREE from '../vendor/three.module.js';
 import { BOARD, CARD } from './theme.js';
+import { playerLevel } from './stats-data.js';
 
 /* 盤面の範囲 (arena.js の枠と同じ): x ±5 / z ±5.4。1単位 = 100px */
 export const MAT_W = 10, MAT_D = 10.8;
@@ -14,12 +15,13 @@ const W = MAT_W * PX, H = MAT_D * PX;
 const cx = (x) => (x + MAT_W / 2) * PX;
 const cy = (z) => (z + MAT_D / 2) * PX;
 
-const winsOf = (records) => records.filter(r => r.win).length;
+/* プレイヤーレベル (stats-data.js) が上がると解放 */
+const lv = (rs) => playerLevel(rs).level;
 export const MATS = [
-  { key: 'neon', name: 'NEON GRID', note: 'はじめから', unlocked: () => true },
-  { key: 'nebula', name: 'NEBULA', note: '1勝で解放', unlocked: (rs) => winsOf(rs) >= 1 },
-  { key: 'vortex', name: 'VORTEX', note: '10勝で解放', unlocked: (rs) => winsOf(rs) >= 10 },
-  { key: 'biomech', name: 'BIOMECH', note: '最強に勝つと解放', unlocked: (rs) => rs.some(r => r.win && r.level >= 3) }
+  { key: 'neon', name: 'NEON GRID', need: 1, unlocked: () => true },
+  { key: 'nebula', name: 'NEBULA', need: 3, unlocked: (rs) => lv(rs) >= 3 },
+  { key: 'vortex', name: 'VORTEX', need: 6, unlocked: (rs) => lv(rs) >= 6 },
+  { key: 'biomech', name: 'BIOMECH', need: 10, unlocked: (rs) => lv(rs) >= 10 }
 ];
 
 export function matUnlocked(key, records) {

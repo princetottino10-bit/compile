@@ -108,3 +108,23 @@ export function cardTier(wins) {
   for (const t of CARD_TIERS) if (wins >= t.min) tier = t;
   return tier;
 }
+
+/* ---------- プレイヤーレベル ----------
+   経験値は 1戦 +1、勝ち +2、つよい以上に勝つと さらに +1 (プロトコル習熟度と同じ数え方を1試合1回)。
+   次のレベルまでに要る量は少しずつ増える。盤面の柄の解放などに使う */
+export const PLAYER_STEPS = [0, 4, 10, 18, 28, 40, 55, 72, 92, 115, 140, 170, 205, 245, 290];
+
+export function playerXp(records) {
+  let xp = 0;
+  for (const r of records) xp += 1 + (r.win ? 2 + (r.level >= STRONG ? 1 : 0) : 0);
+  return xp;
+}
+
+export function playerLevel(records) {
+  const xp = playerXp(records);
+  const need = (lv) => (lv <= PLAYER_STEPS.length ? PLAYER_STEPS[lv - 1] : PLAYER_STEPS[PLAYER_STEPS.length - 1] + 50 * (lv - PLAYER_STEPS.length));
+  let level = 1;
+  while (xp >= need(level + 1)) level++;
+  const cur = need(level), next = need(level + 1);
+  return { level, xp, cur, next, progress: (xp - cur) / (next - cur) };
+}
