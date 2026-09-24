@@ -2774,12 +2774,63 @@ function arrangeOnBoard(req) {
   const single = req.exact === 'transposition';
   let sel = -1;
 
+  /* 盤面の板を直接タップして入れ替える。板は並びどおりの位置へ滑らせて見せ、選んだ板は少し持ち上げる */
+  const canvas = stage.renderer.domElement;
+  const plateOf = (oldIdx) => list.find(p => p.line === oldIdx);
+  const slotX = (line) => LAYOUT.protoSlot(line, targetSide, ME).pos;
+  let closed = false;                // 終わったあとに残りの動きが板を動かさないように
+  const layPlates = (ms) => {
+    for (let pos = 0; pos < 3; pos++) {
+      const p = plateOf(perm[pos]);
+      if (!p) continue;
+      const to = slotX(pos);
+      const x0 = p.group.position.x, y0 = p.group.position.y;
+      const y1 = to[1] + (sel === pos ? 0.28 : 0);
+      if (!ms) { p.group.position.x = to[0]; p.group.position.y = y1; continue; }
+      TW.tween(ms, (t) => {
+        if (closed) return;
+        p.group.position.x = x0 + (to[0] - x0) * t;
+        p.group.position.y = y0 + (y1 - y0) * t;
+      }, TW.Ease.outCubic);
+    }
+  };
+  const ray0 = new THREE.Raycaster();
+  const plane0 = new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.02);
+  const hitPos = (ev) => {
+    const r = canvas.getBoundingClientRect();
+    ray0.setFromCamera(new THREE.Vector2(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1), stage.camera);
+    const pt = ray0.ray.intersectPlane(plane0, new THREE.Vector3());
+    if (!pt) return -1;
+    for (let pos = 0; pos < 3; pos++) {
+      const s = slotX(pos);
+      if (Math.abs(pt.x - s[0]) < 1.0 && Math.abs(pt.z - s[2]) < 0.62) return pos;
+    }
+    return -1;
+  };
+
   return new Promise((resolve) => {
     const onResize = () => render();
     window.addEventListener('resize', onResize);
+    let tapLine = null;                          // 盤面の板をタップしたとき (帯の名前を押したのと同じ扱い)
+    const onPlate = (ev) => {
+      const pos = hitPos(ev);
+      if (pos < 0) return;
+      ev.stopImmediatePropagation();
+      ev.preventDefault();
+      if (tapLine) tapLine(pos);
+    };
+    const onHover = (ev) => { canvas.style.cursor = hitPos(ev) >= 0 ? 'pointer' : ''; };
+    canvas.addEventListener('pointerdown', onPlate, true);
+    canvas.addEventListener('pointermove', onHover);
     const finish = (picks) => {
+      closed = true;
       activeArrange = null;
       window.removeEventListener('resize', onResize);
+      canvas.removeEventListener('pointerdown', onPlate, true);
+      canvas.removeEventListener('pointermove', onHover);
+      canvas.style.cursor = '';
+      /* 板は元の位置へ戻す (決まった並びはこのあとの盤面の更新で滑って入れ替わる) */
+      for (const p of list) { const s0 = slotX(p.line); p.group.position.x = s0[0]; p.group.position.y = s0[1]; }
       ov.remove();
       resolve(picks);
     };
@@ -2800,7 +2851,7 @@ function arrangeOnBoard(req) {
               (done ? ' done' : '') + '" data-line="' + line + '">' + (done ? '✓ ' : '') + name + '</button>';
           }).join('') + '</div>' +
           '<div class="sel-hint">' +
-            (single ? '入れ替える2つをタップ' : '2つタップで入れ替え。よければ確定') +
+            (single ? '盤面のプロトコルを2つタップして入れ替え' : '盤面のプロトコルを2つタップで入れ替え。よければ確定') +
           '</div>' +
           '<div class="arr-btns">' +
             /* 帯が自分の山に重なるので、目ボタンで隠して盤面を見られるようにする (他の帯と同じ) */
@@ -2813,21 +2864,23 @@ function arrangeOnBoard(req) {
       bindSelectHead(ov, showCardNoteFor);
       bindPeek(ov.querySelector('.arr-bar'));
 
+      tapLine = (line) => {
+        sfx('pick');
+        if (sel === -1) { sel = line; layPlates(160); render(); return; }
+        if (sel === line) { sel = -1; layPlates(160); render(); return; }
+        const t = perm[sel]; perm[sel] = perm[line]; perm[line] = t;
+        sel = -1;
+        layPlates(320);
+        if (single) { setTimeout(() => finish(perm.slice()), 360); return; }
+        render();
+      };
       ov.querySelectorAll('.arr-chip').forEach((b) => {
-        b.onclick = () => {
-          const line = +b.dataset.line;
-          if (sel === -1) { sel = line; render(); return; }
-          if (sel === line) { sel = -1; render(); return; }
-          const t = perm[sel]; perm[sel] = perm[line]; perm[line] = t;
-              sel = -1;
-          if (single) { finish(perm.slice()); return; }
-          render();
-        };
+        b.onclick = () => tapLine(+b.dataset.line);
       });
       const ok = ov.querySelector('#arrOk');
       if (ok) ok.onclick = () => finish(perm.slice());
       ov.querySelector('#arrReset').onclick = () => {
-        perm[0] = 0; perm[1] = 1; perm[2] = 2; sel = -1; render();
+        perm[0] = 0; perm[1] = 1; perm[2] = 2; sel = -1; layPlates(320); render();
       };
       ov.querySelector('#arrList').onclick = () => finish(null);
     };
