@@ -10,6 +10,7 @@ const KEY = 'compileSettings';
 const DEFAULTS = { speed: 1, sfx: 80, pauses: true, mat: 'neon', sleeve: 'default', marker: 'default', ccolor: 'default',
   victory: 'default', title: '', icon: '' };
 const SPEEDS = [
+  { v: 0.65, label: 'ゆっくり' },          // 何が起きたかを1つずつ追いたい人向け
   { v: 1, label: 'ふつう' },
   { v: 1.6, label: 'はやい' },
   { v: 2.5, label: 'とてもはやい' }

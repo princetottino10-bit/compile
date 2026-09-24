@@ -534,7 +534,8 @@ export function showChain(links) {
       + '<div class="ch-card">' + (k.img ? '<img alt="" src="' + k.img + '">' : '<i></i>') + '</div>'
       + '<b class="ch-no">' + (i + 1) + '</b>'
       + '<span class="ch-name">' + k.name + '<small>' + (CHAIN_ZONE[k.zone] || '') + '</small></span>'
-      + '</div>').join('');
+      + '</div>').join('')
+    + '<div class="ch-head">CHAIN<b>' + links.length + '</b></div>';
   el.classList.add('show');
   if (grew) chainBurst(el, el.querySelector('.ch-link.enter'), links.length);
 }

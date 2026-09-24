@@ -16,7 +16,7 @@ const KEY = 'compileTrophies';
 export const TROPHY_XP = { bronze: 2, silver: 5, gold: 10, platinum: 20 };
 
 /* ctx: { records: CPU 戦の戦績, xp: 経験値の帳簿, level, cardWins: Map(defId → {wins}),
-          game: その1試合 (無ければ null) { win, turns, compiles, oppCompiles, winCompiles, effectsMap, faceUpIds, at } } */
+          game: その1試合 (無ければ null) { win, turns, compiles, oppCompiles, winCompiles, effectsMap, faceUpIds, chainMax, at } } */
 const wins = (c) => c.records.filter(r => r.win).length + c.xp.filter(onlineWin).length;
 const xpHas = (c, fn) => c.xp.some(fn);
 const beat = (c, lv) => c.records.some(r => r.win && r.level === lv);
@@ -43,6 +43,7 @@ export const TROPHIES = [
   { id: 'cards60', tier: 'bronze', name: 'COLLECTOR', desc: '違うカードを60種類、表で出す', test: (c) => playedKinds(c) >= 60, progress: (c) => [Math.min(60, playedKinds(c)), 60] },
   { id: 'explorer', tier: 'bronze', name: 'EXPLORER', desc: '10種類のプロトコルで戦う', test: (c) => new Set(c.records.flatMap(r => r.me)).size >= 10, progress: (c) => [new Set(c.records.flatMap(r => r.me)).size, 10] },
   { id: 'bronze_card', tier: 'bronze', name: 'FIRST SHINE', desc: 'カードの縁を銅にする (そのカードで3勝)', test: (c) => tierCards(c, 3) >= 1 },
+  { id: 'chain3', tier: 'bronze', name: 'CHAIN LINK', desc: '自分の効果で割り込んで、チェーンを3つつなげる', test: (c) => !!g(c) && (g(c).chainMax | 0) >= 3 },
   { id: 'loss5', tier: 'bronze', hidden: true, name: 'NEVER GIVE UP', desc: '5連敗する', test: (c) => streak(c.records, false) >= 5 },
   { id: 'marathon', tier: 'bronze', hidden: true, name: 'MARATHON', desc: '90手番以上かかった試合に勝つ', test: (c) => !!g(c) && g(c).win && g(c).turns >= 90 },
   { id: 'fulldeck', tier: 'bronze', hidden: true, name: 'FULL DECK', desc: '1試合で違うカードを14種類、表で出す', test: (c) => !!g(c) && g(c).faceUpIds.length >= 14 },
@@ -57,6 +58,7 @@ export const TROPHIES = [
   { id: 'weekly', tier: 'silver', name: 'WEEKLY CHAMP', desc: 'WEEKLY をクリアする', test: (c) => xpHas(c, e => e.src === 'weekly') },
   { id: 'level10', tier: 'silver', name: 'VETERAN', desc: 'プレイヤーレベル10になる', test: (c) => c.level >= 10, progress: (c) => [Math.min(c.level, 10), 10] },
   { id: 'gold_card', tier: 'silver', name: 'GOLDEN TOUCH', desc: 'カードの縁を金にする (そのカードで25勝)', test: (c) => tierCards(c, 25) >= 1 },
+  { id: 'chain4', tier: 'silver', name: 'CHAIN REACTION', desc: '自分の効果で割り込んで、チェーンを4つつなげる', test: (c) => !!g(c) && (g(c).chainMax | 0) >= 4 },
   { id: 'edge', tier: 'silver', hidden: true, name: 'ON THE EDGE', desc: '相手があと1回でコンパイルしきるところから勝つ', test: (c) => !!g(c) && g(c).win && g(c).oppCompiles >= g(c).winCompiles - 1 },
   { id: 'speed', tier: 'silver', hidden: true, name: 'SPEEDRUN', desc: '35手番以内 (両者合わせて) で勝つ', test: (c) => !!g(c) && g(c).win && g(c).turns > 0 && g(c).turns <= 35 },
   { id: 'onecard', tier: 'silver', hidden: true, name: 'ONE CARD SHOW', desc: '1試合で同じカードの効果を6回使う', test: (c) => !!g(c) && Object.values(g(c).effectsMap).some(n => n >= 6) },

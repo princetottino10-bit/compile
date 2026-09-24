@@ -86,3 +86,10 @@ test('COLLECTOR: 違うカードを60種類、表で出す (お気に入りの�
   const few = trophyView(ctx({ records: [{ win: false, level: 1, me: ['FIRE'], cards: cards.slice(0, 7) }] }));
   assert.deepEqual(few.list.find(t => t.id === 'cards60').prog, [7, 60]);
 });
+
+test('チェーン: 自分の効果で割り込んで3つなら銅、4つなら銀 (負けた試合でもよい)', () => {
+  const game = (chainMax) => ({ win: false, turns: 40, compiles: 0, oppCompiles: 3, winCompiles: 3, effectsMap: {}, faceUpIds: [], chainMax, at: Date.now() });
+  assert.ok(!ids(newlyEarned({}, ctx({ game: game(2) }))).some(id => id.startsWith('chain')));
+  assert.deepEqual(ids(newlyEarned({}, ctx({ game: game(3) }))).filter(id => id.startsWith('chain')), ['chain3']);
+  assert.deepEqual(ids(newlyEarned({}, ctx({ game: game(4) }))).filter(id => id.startsWith('chain')), ['chain3', 'chain4']);
+});

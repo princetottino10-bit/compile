@@ -91,7 +91,25 @@ function setTrace(v) { TRACE = !!v; }
 function tallyOf(st) {
   if (!st.tally) st.tally = { compiles: [0, 0], faceUp: [[], []], effects: [{}, {}] };
   if (!st.tally.effects) st.tally.effects = [{}, {}];
+  if (!st.tally.chains) st.tally.chains = [0, 0];
   return st.tally;
+}
+/* チェーン (効果の途中で別の効果が割り込んだ並び) に効果を積む。
+   積んだカードの持ち主の「1試合で一番長くつないだチェーン」を覚える (実績に使う)。
+   同じカードが続けて並ぶのは数えない (画面のチェーン表示と同じ数え方) */
+function chainPush(ctx, uid, slot) {
+  ctx.chain.push(uid + '|' + slot);
+  let n = 0, prev = null;
+  for (const x of ctx.chain) {
+    const u = x.slice(0, x.lastIndexOf('|'));
+    if (u !== prev) n++;
+    prev = u;
+  }
+  const c = ctx.st.cards[uid];
+  if (n >= 2 && c) {
+    const t = tallyOf(ctx.st);
+    if (n > (t.chains[c.owner] | 0)) t.chains[c.owner] = n;
+  }
 }
 /* 効果 (上段・中段・下段) が発動した回数を、カードの持ち主ごと・カードの種類ごとに数える */
 function tallyEffect(st, uid) {
@@ -386,13 +404,13 @@ function execTrigger(ctx, uid, slot, locked) {
   if (!loc) return;
   const tr = defOf(ctx.st, uid).eff[slot].trigger;
   const fr = { source: uid, slot, controller: loc.side, line: loc.line, bind: {}, done: false, locked: !!locked };
-  if (ctx.chain) ctx.chain.push(uid + '|' + slot);
+  chainPush(ctx, uid, slot);
   try {
     log(ctx, `[${defOf(ctx.st, uid).id}] ${slot === 'upper' ? '上段' : '下段'}効果が発動`, uid);
     tallyEffect(ctx.st, uid);
     execOps(ctx, fr, tr.ops);
   } finally {
-    if (ctx.chain) ctx.chain.pop();
+    ctx.chain.pop();
   }
 }
 function st_of(ctx) { return ctx.st; }
@@ -644,7 +662,7 @@ function resolveMiddle(ctx, uid, why) {
   if (!eff.middle || !eff.middle.ops) return;  // 中段が常在効果のみ(SMOKE_3)の場合はコマンドなし
   if (ctx.depth > 80) throw { __err: '解決の深さ上限を超過 (無限ループの疑い)' };
   ctx.depth++;
-  if (ctx.chain) ctx.chain.push(uid + '|middle');
+  chainPush(ctx, uid, 'middle');
   try {
     log(ctx, `[${defOf(st, uid).id}] 中段コマンド解決 (${why})`, uid);
     tallyEffect(st, uid);
@@ -652,7 +670,7 @@ function resolveMiddle(ctx, uid, why) {
     execOps(ctx, fr, eff.middle.ops);
   } finally {
     ctx.depth--;
-    if (ctx.chain) ctx.chain.pop();
+    ctx.chain.pop();
   }
 }
 
@@ -2167,7 +2185,7 @@ function runReplay(base, action, choices) {
   st.announce = null;
   if (!Array.isArray(st.commitStack)) st.commitStack = [];  // 外部由来のstate(詰めCompile共有盤面など)に対する防御
   if (typeof st.commitSeq !== 'number') st.commitSeq = 0;
-  const ctx = { st, choices, ci: 0, qn: 0, depth: 0, log: [], trace: TRACE ? [] : null, chain: TRACE ? [] : null };
+  const ctx = { st, choices, ci: 0, qn: 0, depth: 0, log: [], trace: TRACE ? [] : null, chain: [] };
   try {
     performAction(ctx, action);
     runTurnLoop(ctx);

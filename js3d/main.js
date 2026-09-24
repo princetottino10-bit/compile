@@ -111,6 +111,7 @@ function gameSummary(st, side, win, level, online) {
     winCompiles: st.winCompiles || 3, effectsMap,
     effects: Object.values(effectsMap).reduce((n, v) => n + (v | 0), 0),
     faceUpIds: ((t.faceUp && t.faceUp[side]) || []).slice(),
+    chainMax: (t.chains && t.chains[side]) | 0,      // 自分の効果で割り込んでつないだ、一番長いチェーン
     turns: (st.turns || 0) + 1, at: Date.now()
   };
 }

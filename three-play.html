@@ -377,16 +377,20 @@
     #fxBanner.show,#fxBanner.out{animation:none;}
     #fxBanner.show .fx-sweep{animation:none;opacity:0;}
   }
-  #chainUi{position:fixed;right:calc(2vw + 34px + env(safe-area-inset-right));top:50%;transform:translateY(-50%);z-index:24;
-    display:none;flex-direction:column-reverse;gap:10px;pointer-events:none;}
+  /* 盤面の左の空いている所に出す (右端は効果の説明とログのつまみがあり、目に入らなかった) */
+  #chainUi{position:fixed;left:calc(2vw + env(safe-area-inset-left));top:50%;transform:translateY(-50%);z-index:24;
+    display:none;flex-direction:column-reverse;gap:12px;pointer-events:none;--chw:clamp(38px,min(5.4vw,11vh),84px);}
+  #chainUi .ch-head{display:flex;align-items:baseline;gap:6px;margin-bottom:2px;font:900 italic 13px/1 system-ui;letter-spacing:.3em;
+    color:#fff;text-shadow:0 0 14px rgba(255,179,218,.8),0 2px 6px rgba(0,0,0,.9);}
+  #chainUi .ch-head b{font-size:30px;letter-spacing:0;color:var(--gold);-webkit-text-stroke:1px rgba(0,0,0,.35);}
   #chainUi.show{display:flex;}
   #chainUi .ch-link{position:relative;display:flex;align-items:center;gap:10px;opacity:.62;
     transition:opacity .2s,transform .2s;}
-  #chainUi .ch-link.now{opacity:1;transform:translateX(-6px);}
+  #chainUi .ch-link.now{opacity:1;transform:translateX(8px);}
   /* つながった瞬間は、弾むように入れて強く光らせる */
   #chainUi .ch-link.enter{animation:chIn .5s cubic-bezier(.22,1.45,.36,1);}
-  @keyframes chIn{0%{opacity:0;transform:translateX(70px) scale(1.3);filter:brightness(2.4);}
-    55%{opacity:1;filter:brightness(1.5);}100%{opacity:1;transform:translateX(-6px);filter:none;}}
+  @keyframes chIn{0%{opacity:0;transform:translateX(-70px) scale(1.3);filter:brightness(2.4);}
+    55%{opacity:1;filter:brightness(1.5);}100%{opacity:1;transform:translateX(8px);filter:none;}}
   #chainUi .ch-link.enter .ch-card{animation:chGlow .95s ease-out;}
   @keyframes chGlow{0%{box-shadow:0 0 0 0 var(--pc),0 0 70px var(--pc);}
     100%{box-shadow:0 0 0 16px transparent,0 0 22px color-mix(in srgb,var(--pc) 60%,transparent),0 8px 22px rgba(0,0,0,.6);}}
@@ -400,9 +404,9 @@
     70%{opacity:1;transform:translate(-50%,-50%) scale(1.04);}
     100%{opacity:0;transform:translate(-50%,-60%) scale(1.08);}}
   /* 鎖: 上下のカードを細い線でつなぐ */
-  #chainUi .ch-link + .ch-link::after{content:"";position:absolute;left:30px;bottom:100%;width:3px;height:10px;
+  #chainUi .ch-link + .ch-link::after{content:"";position:absolute;left:calc(var(--chw) / 2 - 1px);bottom:100%;width:3px;height:12px;
     background:linear-gradient(180deg,var(--pc),rgba(255,255,255,.25));border-radius:2px;}
-  #chainUi .ch-card{width:62px;aspect-ratio:512/716;border-radius:6px;overflow:hidden;flex:none;
+  #chainUi .ch-card{width:var(--chw);aspect-ratio:512/716;border-radius:6px;overflow:hidden;flex:none;
     border:2px solid color-mix(in srgb,var(--pc) 70%,transparent);background:#0a0f1c;
     box-shadow:0 8px 22px rgba(0,0,0,.6);}
   #chainUi .ch-link.now .ch-card{border-color:var(--pc);box-shadow:0 0 22px color-mix(in srgb,var(--pc) 60%,transparent),0 8px 22px rgba(0,0,0,.6);}
@@ -410,18 +414,20 @@
   #chainUi .ch-card i{display:block;width:100%;height:100%;background:repeating-linear-gradient(45deg,#1a2238 0 6px,#121829 6px 12px);}
   #chainUi .ch-no{position:absolute;left:-10px;bottom:-8px;font:900 italic 30px/1 system-ui;color:#fff;
     -webkit-text-stroke:2px color-mix(in srgb,var(--pc) 80%,#000);text-shadow:0 0 14px var(--pc);}
-  #chainUi .ch-name{display:flex;flex-direction:column;gap:3px;font:800 12px/1.2 system-ui;letter-spacing:.06em;
+  #chainUi .ch-name{display:flex;flex-direction:column;gap:4px;font:800 14px/1.2 system-ui;letter-spacing:.06em;
     color:var(--ink);text-shadow:0 2px 8px rgba(0,0,0,.9);white-space:nowrap;}
-  #chainUi .ch-name small{font:700 10px/1 system-ui;color:var(--pc);letter-spacing:.1em;}
+  #chainUi .ch-name small{font:700 11px/1 system-ui;color:var(--pc);letter-spacing:.1em;}
+  /* 背の低い画面 (スマホの横向き) は、5つつながっても収まるように詰める */
+  @media (max-height:500px){#chainUi{gap:6px;--chw:clamp(30px,8vh,60px);} #chainUi .ch-head b{font-size:22px;}}
   @media (max-width:860px) and (orientation:portrait){
-    #chainUi{right:auto;left:8px;top:104px;transform:none;flex-direction:row;gap:14px;}
+    #chainUi{right:auto;left:8px;top:104px;transform:none;flex-direction:row;gap:14px;--chw:44px;}
+    #chainUi .ch-head{display:none;}
     #chainUi .ch-link{flex-direction:column;gap:4px;}
     #chainUi .ch-link.now{transform:translateY(4px);}
     @keyframes chIn{0%{opacity:0;transform:translateY(-34px) scale(1.3);filter:brightness(2.4);}
       55%{opacity:1;filter:brightness(1.5);}100%{opacity:1;transform:translateY(4px);filter:none;}}
     #chainUi .ch-burst b{font-size:34px;}
     #chainUi .ch-link + .ch-link::after{left:auto;right:100%;bottom:auto;top:26px;width:14px;height:3px;}
-    #chainUi .ch-card{width:44px;}
     #chainUi .ch-no{font-size:22px;left:-6px;bottom:18px;}
     #chainUi .ch-name{font-size:9px;align-items:center;}
     #chainUi .ch-name small{font-size:8px;}
@@ -1810,9 +1816,6 @@
     body.training #preview{left:auto;right:calc(44px + env(safe-area-inset-right));top:172px;max-height:calc(100vh - 180px);max-height:calc(100dvh - 180px);}
     /* 詳細パネルは小さく (盤面の左のラインを覆わない)。下端は自分の捨て札の山より上で止める */
     #preview{width:min(170px,21vw);max-height:calc(50vh - 4px);}
-    /* チェーンは右上の発動の帯の下に潜らないよう下げ、カードの絵を小さく */
-    #chainUi{top:calc(50% + 30px);gap:6px;}
-    #chainUi .ch-card{width:40px;}
     #chainUi .ch-no{font-size:22px;}
     #chainUi .ch-name{font-size:10px;}
     .cp-head b{font-size:12px;}
@@ -1844,7 +1847,6 @@
     .cp-rows{padding:2px 10px 10px;gap:5px;}
     .cp-row{padding:5px 7px;}
     .cp-row p{font-size:11px;line-height:1.5;}
-    #chainUi .ch-card{width:40px;}
     #chainUi .ch-no{font-size:22px;}
     #chainUi .ch-name{font-size:10px;}
     .arr-bar.sel-bar{max-height:calc(100vh - 20px);max-height:calc(100dvh - 20px);overflow-y:auto;padding:9px 11px;}
@@ -2418,7 +2420,7 @@
     <div id="bootBar"><i></i></div>
   </div>
 
-  <script src="engine.js?v=a977d505b6"></script>
+  <script src="engine.js?v=b2ce03a5d6"></script>
   <script type="importmap">
   {
     "imports": {
@@ -2427,7 +2429,7 @@
       "./vendor/three.module.js": "./vendor/three.module.js?v=985eb92490",
       "./js3d/account.js": "./js3d/account.js?v=6a7699a30b",
       "./js3d/achievements-ui.js": "./js3d/achievements-ui.js?v=66713584af",
-      "./js3d/achievements.js": "./js3d/achievements.js?v=9b39b622bd",
+      "./js3d/achievements.js": "./js3d/achievements.js?v=dbca1fee0e",
       "./js3d/admin-ui.js": "./js3d/admin-ui.js?v=0437cdb130",
       "./js3d/ai-worker.js": "./js3d/ai-worker.js?v=de82d239bd",
       "./js3d/aiclient.js": "./js3d/aiclient.js?v=704b588b82",
@@ -2452,7 +2454,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=c8378abf22",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=278af495ab",
+      "./js3d/main.js": "./js3d/main.js?v=4b0c77b541",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=6398fed15e",
       "./js3d/panel.js": "./js3d/panel.js?v=ecb8a073e3",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=e0273dcae0",
@@ -2471,7 +2473,7 @@
       "./js3d/run-ui.js": "./js3d/run-ui.js?v=dda7071b7a",
       "./js3d/run.js": "./js3d/run.js?v=29dcccf04b",
       "./js3d/selectui.js": "./js3d/selectui.js?v=208abdaebc",
-      "./js3d/settings.js": "./js3d/settings.js?v=df463d1bde",
+      "./js3d/settings.js": "./js3d/settings.js?v=3663317850",
       "./js3d/setup.js": "./js3d/setup.js?v=f75a89191c",
       "./js3d/solodraft.js": "./js3d/solodraft.js?v=9863c9528c",
       "./js3d/stage.js": "./js3d/stage.js?v=e3cda4525b",
@@ -2484,7 +2486,7 @@
       "./js3d/turning.js": "./js3d/turning.js?v=9c7f79654e",
       "./js3d/tutorial.js": "./js3d/tutorial.js?v=0e6d6237ad",
       "./js3d/tween.js": "./js3d/tween.js?v=99b25c0d63",
-      "./js3d/ui.js": "./js3d/ui.js?v=f39a94c4fb",
+      "./js3d/ui.js": "./js3d/ui.js?v=8a8d1d4296",
       "./js3d/weekly-ui.js": "./js3d/weekly-ui.js?v=c35e408f12",
       "./js3d/weekly.js": "./js3d/weekly.js?v=b4651191ce",
       "./js3d/xp.js": "./js3d/xp.js?v=b2c69be784"
@@ -2496,7 +2498,7 @@
   <link rel="modulepreload" href="js3d/xp.js?v=b2c69be784">
   <link rel="modulepreload" href="js3d/daily.js?v=f56dabdf65">
   <link rel="modulepreload" href="js3d/account.js?v=6a7699a30b">
-  <link rel="modulepreload" href="js3d/achievements.js?v=9b39b622bd">
+  <link rel="modulepreload" href="js3d/achievements.js?v=dbca1fee0e">
   <link rel="modulepreload" href="js3d/replays.js?v=92b9d3718f">
   <link rel="modulepreload" href="js3d/turning.js?v=9c7f79654e">
   <link rel="modulepreload" href="js3d/achievements-ui.js?v=66713584af">
@@ -2511,7 +2513,7 @@
   <link rel="modulepreload" href="js3d/room.js?v=25990f1537">
   <link rel="modulepreload" href="js3d/puzzle.js?v=b4a110035e">
   <link rel="modulepreload" href="js3d/tutorial.js?v=0e6d6237ad">
-  <link rel="modulepreload" href="js3d/settings.js?v=df463d1bde">
+  <link rel="modulepreload" href="js3d/settings.js?v=3663317850">
   <link rel="modulepreload" href="js3d/stats.js?v=8265afe03d">
   <link rel="modulepreload" href="js3d/stats-data.js?v=bcf7d5e977">
   <link rel="modulepreload" href="js3d/rewards.js?v=c0bbd8236f">
@@ -2535,7 +2537,7 @@
   <link rel="modulepreload" href="js3d/layout.js?v=c8378abf22">
   <link rel="modulepreload" href="js3d/theme.js?v=b02da60dc1">
   <link rel="modulepreload" href="js3d/tween.js?v=99b25c0d63">
-  <link rel="modulepreload" href="js3d/ui.js?v=f39a94c4fb">
+  <link rel="modulepreload" href="js3d/ui.js?v=8a8d1d4296">
   <link rel="modulepreload" href="js3d/input.js?v=cc29feddd4">
   <link rel="modulepreload" href="js3d/playchoices.js?v=e0273dcae0">
   <link rel="modulepreload" href="js3d/aiclient.js?v=704b588b82">
@@ -2569,6 +2571,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=278af495ab"></script>
+  <script type="module" src="js3d/main.js?v=4b0c77b541"></script>
 </body>
 </html>
