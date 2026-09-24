@@ -5,6 +5,7 @@
 import { bonusXp, grantXp, XP_GAIN, hashKey } from './xp.js';
 import { recordDailyGame, DAILY_XP } from './daily.js';
 import { unlockTrophies, TROPHY_XP } from './achievements.js';
+import { addReplay, getReplay, pinReplay, rebuild } from './replays.js';
 import { trophyContext, showTrophyBanner } from './achievements-ui.js';
 import * as THREE from '../vendor/three.module.js';
 import { createStage } from './stage.js';
@@ -162,6 +163,11 @@ let runMode = false;             // 勝ち抜き戦・週替わり3連戦の1戦
 let runKind = 'run';             // 'run' (勝ち抜き戦) / 'weekly' (週替わり3連戦)
 let runEnded = false;            // 勝ち抜き戦の結果を出したか (ライフが尽きたらその場で出す)
 let setupNote = '';
+/* リプレイ (replays.js): 対局中の棋譜 { init, actions }、いま見ているリプレイ、直前の試合のリプレイ id */
+let replayLog = null;
+let replayMode = null;
+let lastReplayId = null;
+const logAction = (a) => { if (replayLog) replayLog.actions.push(JSON.parse(JSON.stringify(a))); };
 /* チュートリアルのレッスン (?tutorial=1..)。{ index, lesson } */
 let tutorial = null;
 let tutorialOver = false;
@@ -308,6 +314,15 @@ async function boot() {
     else UI.toast('問題のリンクが壊れています');
   }
 
+  /* 保存したリプレイを見る (?replay=id) */
+  if (params.get('replay')) {
+    replayMode = getReplay(params.get('replay'));
+    if (replayMode) {
+      p0 = replayMode.init.p0.slice(); p1 = replayMode.init.p1.slice();
+      document.body.classList.add('replay');
+    } else UI.toast('リプレイが見つかりません (消したか、別の端末で保存したもの)');
+  }
+
   /* チュートリアル: レッスンの盤面から始める */
   const tuNo = parseInt(params.get('tutorial'), 10);
   if (tuNo >= 1 && tuNo <= TU.LESSONS.length && !puzzle) {
@@ -428,13 +443,20 @@ async function boot() {
   /* 先攻・後攻はコイントスで決める (トレーニングと問題は自分から。ドラフトはドラフトの先手) */
   const firstPlayer = trainingMode || puzzle || tutorial || demoMode ? ME
     : chosenFirst !== null ? chosenFirst : (Math.random() < 0.5 ? ME : AI);
-  const res = puzzle
-    ? Engine.newPuzzle(puzzle.spec, { seed: 1 })
-    : tutorial
-      ? Engine.newPuzzle(tutorial.lesson.spec, { seed: 1 })
-      : Engine.newGame({ seed: (Math.random() * 1e9) | 0, p0, p1, first: firstPlayer, training: trainingMode,
-        winCompiles: runMode ? RUN_WIN_COMPILES : undefined });
+  const seed = (Math.random() * 1e9) | 0;
+  const winCompiles = runMode ? RUN_WIN_COMPILES : undefined;
+  const replayBuilt = replayMode ? rebuild(Engine, replayMode) : null;
+  const res = replayBuilt
+    ? replayBuilt.res
+    : puzzle
+      ? Engine.newPuzzle(puzzle.spec, { seed: 1 })
+      : tutorial
+        ? Engine.newPuzzle(tutorial.lesson.spec, { seed: 1 })
+        : Engine.newGame({ seed, p0, p1, first: firstPlayer, training: trainingMode, winCompiles });
   cur = res;
+  /* CPU 戦は棋譜を取る (決着したらリプレイとして残す) */
+  replayLog = !replayMode && !trainingMode && !puzzle && !tutorial && !demoMode
+    ? { init: { seed, p0: p0.slice(), p1: p1.slice(), first: firstPlayer, winCompiles: winCompiles || null }, actions: [] } : null;
   if (trainingMode) training.protos = [p0.slice(), p1.slice()];
   window.__3d = {
     stage, board, THREE, LAYOUT,
@@ -490,6 +512,7 @@ async function boot() {
   refreshHud();
   if (puzzle) PZ.showPuzzleBar(puzzle, retryPuzzle);
   if (tutorial) coachUpdate();
+  if (replayMode) { startReplayView(replayBuilt); return; }
   if (trainingMode) {
     UI.setPrompt('');
     UI.toast('カードを選んで、光っている枠をタップすると置けます', 3200);
@@ -2157,6 +2180,7 @@ async function step(action) {
   if (!trainingMode && !demoMode && (action.type === 'play' || action.type === 'refresh')) {
     gameHistory.push({ st: before, action });
   }
+  logAction(action);
   cur = res;
   await replayResolution(prev, res, action);
   refreshHud();
@@ -2661,10 +2685,10 @@ async function drainRequests() {
     if (picks === PICK_CANCEL) continue;
     const prev = shown();
     busy = true;
-    const res = Engine.apply(cur.state, picks === PICK_BACK
-      ? { type: 'back', id: req.id }
-      : { type: 'choose', id: req.id, picks });
+    const answer = picks === PICK_BACK ? { type: 'back', id: req.id } : { type: 'choose', id: req.id, picks };
+    const res = Engine.apply(cur.state, answer);
     if (res.error) { UI.toast(res.error); busy = false; continue; }   // 再質問へ
+    logAction(answer);
     cur = res;
     await replayResolution(prev, res, null);
     busy = false;
@@ -2701,6 +2725,11 @@ async function afterTurn() {
           cards: ((st0.tally && st0.tally.faceUp[ME]) || []).slice(),
           effects: (st0.tally && st0.tally.effects && st0.tally.effects[ME]) || {} });
       refreshCardGlow();
+      if (replayLog) {
+        lastReplayId = addReplay({ me: replayLog.init.p0, opp: replayLog.init.p1, win, level: aiDifficulty,
+          turns: (st0.turns || 0) + 1, kind: runMode ? runKind : null, init: replayLog.init, actions: replayLog.actions });
+        replayLog = null;
+      }
     }
     UI.setPrompt(win ? 'あなたの勝ち' : '敗北', 'end');
     const victory = cosmetic('victory', 'default');
@@ -2753,8 +2782,17 @@ function showEndActions(win) {
       '<button class="arr-btn" id="endTop" type="button">TITLE</button>' +
       '<button class="arr-btn" id="endBoard" type="button">BOARD</button>' +
       (gameHistory.length && !roomMode && !puzzle ? '<button class="arr-btn" id="endReview" type="button">REVIEW</button>' : '') +
+      (lastReplayId ? '<button class="arr-btn" id="endSave" type="button">SAVE REPLAY</button>' : '') +
     '</div>';
   el.classList.add('show');
+  const saveBtn = el.querySelector('#endSave');
+  if (saveBtn) {
+    saveBtn.onclick = () => {
+      const r = pinReplay(lastReplayId, true);
+      UI.toast(r.ok ? 'リプレイを保存しました (RECORD → REPLAYS で見られます)' : r.message, 2600);
+      if (r.ok) { saveBtn.disabled = true; saveBtn.textContent = 'SAVED'; }
+    };
+  }
   const reviewBtn = el.querySelector('#endReview');
   if (reviewBtn) reviewBtn.onclick = () => { el.classList.remove('show'); startReview(win); };
   /* どちらもページを作り直す。シーンを組み直すのが最も確実 */
@@ -2770,11 +2808,11 @@ function showEndActions(win) {
 }
 
 /* 感想戦: 棋譜を1手ずつ戻して見る。自分の手番では AI のおすすめも出す */
-function startReview(win) {
+function startReview(win, history, onExit) {
   const final = cur.state;
   UI.setPrompt('');
   stage.home(400);
-  openReview(gameHistory, final, {
+  openReview(history || gameHistory, final, {
     show: (st) => {
       reviewView = st === final ? null : st;
       board.clearCandidates();
@@ -2787,8 +2825,19 @@ function startReview(win) {
     same: (a, b) => !!a && !!b && a.type === b.type && a.card === b.card && a.line === b.line
       && !!a.faceUp === !!b.faceUp && (a.side ?? null) === (b.side ?? null),
     isMine: (st) => st.turn === ME,
-    onExit: () => { reviewView = null; showEndActions(win); }
+    onExit: () => { reviewView = null; if (onExit) onExit(); else showEndActions(win); }
   });
+}
+
+/* 保存したリプレイを見る: 決着の盤面を出してから、1手目から見返す (感想戦と同じ帯) */
+function startReplayView(built) {
+  const rep = replayMode;
+  const when = new Date(rep.at).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  UI.toast('REPLAY — ' + when + '　' + rep.me.join(' / ') + ' vs ' + rep.opp.join(' / ') + (rep.win ? '　勝ち' : '　負け'), 3600);
+  if (!built.ok) UI.toast('途中から再現できませんでした (そこまでを見られます)', 3600);
+  if (!built.history.length) { UI.toast('見られる手がありません'); return; }
+  busy = true;                        // 見ている間は盤面から手を指せないように
+  startReview(!!rep.win, built.history, () => { location.href = location.pathname; });
 }
 
 /* 棋譜の1手を文にする。相手の裏向きは中身を出さない */

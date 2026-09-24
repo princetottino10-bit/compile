@@ -4,6 +4,7 @@
  *   全体・自分のプロトコル別・相手のプロトコル別・デッキ別の勝率を出す。
  * ========================================================================= */
 
+import { replaysTab, bindReplays } from './replays-ui.js';
 import { bonusXp } from './xp.js';
 import { levelLabel, UNDERDOG_LEVEL } from './aidecks.js';
 import { protocolSummary, matchups, winTrend, fastestWin, masteryLevel, cardStats, cardTier, playerLevel, xpForLevel } from './stats-data.js';
@@ -292,7 +293,7 @@ function rewardsHtml(pl) {
     '</ul><p class="pz-note">取った見た目は、設定 (⚙) の COSMETICS で選べます</p></details>';
 }
 
-const TABS = ['SUMMARY', 'PROTOCOLS', 'CARDS', 'MATCHUPS', 'DETAIL'];
+const TABS = ['SUMMARY', 'PROTOCOLS', 'CARDS', 'MATCHUPS', 'DETAIL', 'REPLAYS'];
 
 export async function openStats() {
   const list = records();
@@ -316,11 +317,12 @@ export async function openStats() {
     (list.length ? '<div class="pz-row"><button type="button" id="srClear">記録を消す</button></div>' : '') +
     '</div>';
   const views = [() => summaryTab(list, protos), () => protocolTab(list, protos), () => cardsTab(list, protos),
-    () => matchupTab(list, protos), () => detailTab(list)];
+    () => matchupTab(list, protos), () => detailTab(list), () => replaysTab()];
   const show = (i) => {
     const body = el.querySelector('#srBody');
     body.innerHTML = views[i]();
     el.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('on', +b.dataset.tab === i));
+    bindReplays(body, () => show(i));
     body.querySelectorAll('[data-fav]').forEach(b => {
       b.onclick = () => {
         const grid0 = body.querySelector('.sr-cardgrid');

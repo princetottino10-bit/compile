@@ -8,10 +8,13 @@ import * as ROOM from './room.js';
 import { localRecords, mergeRecords, setStatsHooks } from './stats.js';
 import { xpLog, mergeXp, setXpHooks } from './xp.js';
 import * as SAVE from './cloudsave.js';
+import { pinnedReplays, mergeReplays, setReplayHooks } from './replays.js';
 
 const TABLE = 'player_records';
 const XP_TABLE = 'player_xp';       // CPU 戦の戦績以外で入った経験値 (オンライン・チュートリアルなど)
 const SAVE_TABLE = 'player_saves';  // 設定・見た目・お気に入り・RUN・WEEKLY など (1人1行)
+const REPLAY_TABLE = 'player_replays';   // 保存 (★) したリプレイ (1人30まで)
+const replayRow = (r) => ({ id: r.id, data: { ...r, pinned: undefined } });
 
 /* 通信を減らすため、前回の同期からの差分だけを行き来させる。
    pulled: 読み込んだ行の created_at (サーバーの時刻) の最大、pushed: 送り終えたブラウザの記録の時刻の最大 */
@@ -128,6 +131,17 @@ async function loadAccount() {
       pushXp([xpToRow(entry)]).catch((e) => { state.error = '経験値を保存できませんでした (次の同期で送り直します): ' + e.message; changed(); });
     }
   });
+  setReplayHooks({
+    onPin: (r) => {
+      if (!state.user) return;
+      ROOM.roomClient().from(REPLAY_TABLE).upsert(replayRow(r), { onConflict: 'user_id,id' })
+        .then((w) => { if (w.error) { state.error = 'リプレイを保存できませんでした (次の同期で送り直します): ' + w.error.message; changed(); } });
+    },
+    onUnpin: (id) => {
+      if (!state.user) return;
+      ROOM.roomClient().from(REPLAY_TABLE).delete().eq('id', id).then(() => {});
+    }
+  });
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveSoon(); });
   changed();
   if (state.user) syncRecords();
@@ -148,6 +162,25 @@ async function syncXp(mark) {
   const added = mergeXp(remote.map(xpFromRow));
   mark.xp = { pulled: maxCreated(remote, mark.xp.pulled), pushed: local.reduce((m, x) => Math.max(m, x.at), mark.xp.pushed) };
   return added;
+}
+
+/* 保存したリプレイ: 向こうに無いものを送り、こちらに無いものだけ中身を読む。読み込んだ数を返す */
+async function syncReplays() {
+  const ids = await ROOM.roomClient().from(REPLAY_TABLE).select('id').limit(100);
+  if (ids.error) throw new Error(ids.error.message);
+  const remote = new Set(ids.data.map(x => x.id));
+  const local = pinnedReplays();
+  const send = local.filter(r => !remote.has(r.id)).map(replayRow);
+  if (send.length) {
+    const w = await ROOM.roomClient().from(REPLAY_TABLE).upsert(send, { onConflict: 'user_id,id', ignoreDuplicates: true });
+    if (w.error) throw new Error(w.error.message);
+  }
+  const have = new Set(local.map(r => r.id));
+  const need = Array.from(remote).filter(id => !have.has(id));
+  if (!need.length) return 0;
+  const r = await ROOM.roomClient().from(REPLAY_TABLE).select('id,data').in('id', need);
+  if (r.error) throw new Error(r.error.message);
+  return mergeReplays(r.data.map(x => ({ ...x.data, id: x.id })));
 }
 
 /* 設定・見た目・お気に入り・RUN・WEEKLY (1人1行)。アカウントから読んで書き換えたら true */
@@ -209,7 +242,9 @@ export async function syncRecords() {
     const xpAdded = await syncXp(mark);
     saveMark(mark);
     const applied = await syncSaves();
-    state.sync = '同期しました' + (added ? ' (' + added + '戦を読み込み)' : '') + (xpAdded ? ' (経験値 ' + xpAdded + '件を読み込み)' : '');
+    const rpAdded = await syncReplays();
+    state.sync = '同期しました' + (added ? ' (' + added + '戦を読み込み)' : '') + (xpAdded ? ' (経験値 ' + xpAdded + '件を読み込み)' : '') +
+      (rpAdded ? ' (リプレイ ' + rpAdded + '件を読み込み)' : '');
     state.error = '';
     if (applied) { changed(); reloadIfIdle(); }
   } catch (e) {
@@ -276,7 +311,7 @@ export function openAccount() {
     if (!s.ready) body = '<p class="pz-note">読み込み中…</p>';
     else if (!s.available) body = '<p class="pz-note">' + esc(s.error || 'この環境ではログインできません (secure-room-config.js が未設定)') + '</p>';
     else if (!s.user) {
-      body = '<p class="ac-lead">ログインすると、戦績・経験値・見た目やお気に入り・RUN と WEEKLY の進み具合をアカウントに保存します。スマホと PC など、別の端末でも同じ戦績を見られます。</p>' +
+      body = '<p class="ac-lead">ログインすると、戦績・経験値・実績・見た目やお気に入り・RUN と WEEKLY の進み具合・保存したリプレイをアカウントに保存します。スマホと PC など、別の端末でも同じ戦績を見られます。</p>' +
         '<div class="pz-row"><button type="button" id="acGoogle" class="ac-google">Google でログイン</button></div>' +
         '<p class="pz-note">ログインしなくても、戦績はこのブラウザに残ります。ログインしたときに、それまでの記録もまとめて保存します。</p>';
     } else {
