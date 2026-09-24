@@ -15,117 +15,128 @@
 </script>
 
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>COMPILE <!></title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>COMPILE 3D ARENA — ブラウザで遊べるカードバトル</title>
+  <meta name="description" content="プロトコル・カードゲーム COMPILE を、ブラウザですぐ遊べるファンメイドの3D版。CPU 対戦・オンライン対戦・週替わり3連戦。登録なしで遊べます。">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="COMPILE 3D ARENA">
+  <meta property="og:title" content="COMPILE 3D ARENA — ブラウザですぐ遊べるカードバトル">
+  <meta property="og:description" content="CPU 対戦・オンライン対戦・週替わり3連戦。登録なしで、ブラウザからすぐ遊べます。">
+  <meta property="og:url" content="https://princetottino10-bit.github.io/compile/">
+  <meta property="og:image" content="https://princetottino10-bit.github.io/compile/og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://princetottino10-bit.github.io/compile/og.jpg">
   <link rel="apple-touch-icon" href="icons/compile-180.png">
   <link rel="icon" href="icons/compile-180.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+  <meta name="theme-color" content="#08060f">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Oxanium:wght@600;800&display=swap" rel="stylesheet">
   <style>
-    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-    :root{--pk:#e91e8c;--bg:#0a0a0f;--cbg:#12121a;--bd:rgba(255,255,255,.08);--tx:#e0e0e8;--txd:#888}
-    html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'Noto Sans JP',sans-serif;
-      -webkit-user-select:none;user-select:none;overflow-y:auto;overflow-x:hidden}
-    .wrap{max-width:480px;margin:0 auto;padding:24px 16px 40px}
-    .logo{font-family:Orbitron,monospace;font-size:1.6rem;font-weight:900;letter-spacing:2px;
-      text-align:center;padding:32px 0 8px;color:var(--tx)}
-    .logo em{font-style:normal;color:var(--pk)}
-    .sub{text-align:center;font-size:.7rem;color:var(--txd);letter-spacing:1px;
-      font-family:Orbitron,monospace;margin-bottom:32px}
-    .cards{display:flex;flex-direction:column;gap:12px}
-    .card{display:block;text-decoration:none;color:var(--tx);
-      border:1.5px solid var(--bd);border-radius:12px;padding:18px 20px;
-      background:var(--cbg);position:relative;overflow:hidden;
-      transition:border-color .2s,background .2s,transform .15s}
-    .card:active{transform:scale(.97)}
-    .card .stripe{position:absolute;top:0;left:0;width:4px;height:100%}
-    .card .icon{font-size:1.3rem;margin-bottom:6px}
-    .card .name{font-family:Orbitron,monospace;font-size:.85rem;font-weight:700;letter-spacing:.5px}
-    .card .desc{font-size:.7rem;color:var(--txd);margin-top:4px;line-height:1.5}
-    .card:hover,.card:focus{border-color:rgba(255,255,255,.2);background:#16161f}
-    .card.c1:hover{border-color:rgba(233,30,140,.4)}
-    .card.c2:hover{border-color:rgba(59,130,246,.4)}
-    .card.c3:hover{border-color:rgba(200,168,78,.4)}
-    .card.c4:hover{border-color:rgba(34,197,94,.4)}
-    .card.c5:hover{border-color:rgba(168,85,247,.4)}
-    .card.c6:hover{border-color:rgba(55,214,122,.4)}
-    /* はじめての方へ: チュートリアルの入口 */
-    .tutorial{display:block;text-decoration:none;color:var(--tx);margin-bottom:10px;padding:20px 20px 18px;border-radius:14px;
-      border:1.5px solid rgba(99,243,255,.35);position:relative;overflow:hidden;
-      background:radial-gradient(120% 90% at 100% 0%,rgba(99,243,255,.14),transparent 60%),var(--cbg);
-      transition:border-color .2s,transform .15s}
-    .tutorial:hover,.tutorial:focus-visible{border-color:#63f3ff}
-    .tutorial:active{transform:scale(.98)}
-    .tutorial .kicker{font-size:.68rem;font-weight:700;color:#63f3ff;letter-spacing:1px}
-    .tutorial .title{display:block;font-family:Orbitron,monospace;font-size:1.15rem;font-weight:900;letter-spacing:1.5px;margin-top:6px}
-    .tutorial .desc{display:block;font-size:.74rem;color:var(--tx);margin-top:6px;line-height:1.6}
-    .tutorial ol{list-style:none;counter-reset:l;display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
-    .tutorial li{counter-increment:l;font-size:.64rem;color:var(--txd);padding:4px 9px;border-radius:999px;
-      border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03)}
-    .tutorial li::before{content:counter(l) ". ";color:#63f3ff;font-weight:700}
-    .tutorial .go{display:inline-block;margin-top:14px;font-family:Orbitron,monospace;font-size:.72rem;font-weight:700;
-      letter-spacing:1px;color:#021318;background:linear-gradient(100deg,#63f3ff,#6dffc2);padding:8px 16px;border-radius:999px}
-    .ref{display:block;text-align:right;font-size:.68rem;color:var(--txd);margin:0 4px 22px;text-decoration:none}
-    .ref:hover{color:var(--tx)}
-    .footer{text-align:center;margin-top:36px;font-size:.55rem;color:var(--txd);
-      font-family:Orbitron,monospace;letter-spacing:.5px;line-height:1.8}
+    :root{--bg:#08060f;--panel:#120d1f;--ink:#f1edf8;--dim:rgba(241,237,248,.62);--pink:#ff4fa3;--violet:#8b5cf6;--lav:#b9a4ff;
+      --logo:'Orbitron',system-ui,sans-serif;--ui:'Oxanium',system-ui,sans-serif;
+      --cut:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px));}
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{min-height:100%;background:var(--bg);color:var(--ink);
+      font:400 15px/1.7 system-ui,-apple-system,'Hiragino Sans','Noto Sans JP','Yu Gothic UI',sans-serif}
+    a{color:inherit}
+    a:focus-visible,button:focus-visible{outline:2px solid var(--pink);outline-offset:3px}
+    .hero{position:relative;overflow:hidden;min-height:min(640px,92vh);display:flex;align-items:center;
+      background:linear-gradient(160deg,rgba(255,79,163,.16),transparent 45%),linear-gradient(20deg,rgba(139,92,246,.18),transparent 55%),var(--bg)}
+    .hero::before{content:"";position:absolute;inset:-40% -10%;background:linear-gradient(100deg,rgba(255,79,163,.18),rgba(139,92,246,.2));
+      transform:rotate(-14deg) translateY(38%);height:34%;pointer-events:none}
+    .hero-in{position:relative;width:min(1080px,100%);margin:0 auto;padding:56px 20px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:28px;align-items:center}
+    .kick{font:800 12px/1 var(--ui);letter-spacing:.3em;color:var(--lav)}
+    .kick b{color:var(--pink);font-family:var(--logo);letter-spacing:.1em;margin-right:.4em}
+    h1{margin:14px 0 8px;font:900 clamp(52px,9vw,104px)/.95 var(--logo);letter-spacing:.03em;color:#fff;
+      text-shadow:5px 0 rgba(255,79,163,.75),-5px 0 rgba(139,92,246,.75)}
+    .lead{font:700 clamp(17px,2.2vw,22px)/1.5 system-ui,'Hiragino Sans','Yu Gothic UI',sans-serif;color:#fff;margin-bottom:6px;text-wrap:balance}
+    .sub{color:var(--dim);font-size:14px;margin-bottom:26px}
+    .cta{display:flex;flex-wrap:wrap;gap:10px}
+    .btn{display:inline-flex;flex-direction:column;justify-content:center;min-height:58px;padding:10px 24px;text-decoration:none;clip-path:var(--cut);
+      font:800 17px/1.1 var(--ui);letter-spacing:.1em;border:0;cursor:pointer;transition:filter .15s,transform .15s}
+    .btn small{font:600 11px/1.3 system-ui,sans-serif;letter-spacing:.02em;opacity:.85;margin-top:3px}
+    .btn.main{background:var(--pink);color:#fff}
+    .btn.alt{background:rgba(255,255,255,.08);color:#fff}
+    .btn:hover{filter:brightness(1.12)}
+    .btn:active{transform:translateY(1px)}
+    .note{margin-top:14px;font-size:12px;color:var(--dim)}
+    .shots{position:relative;height:420px}
+    .shots img{position:absolute;width:44%;height:auto;aspect-ratio:360/490;object-fit:cover;border-radius:10px;
+      box-shadow:0 24px 50px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.1)}
+    .shots img:nth-child(1){left:2%;top:40px;transform:rotate(-8deg);filter:brightness(.7)}
+    .shots img:nth-child(2){left:28%;top:0;z-index:2}
+    .shots img:nth-child(3){right:2%;top:50px;transform:rotate(7deg);filter:brightness(.7)}
+    section{width:min(1080px,100%);margin:0 auto;padding:40px 20px}
+    h2{font:800 12px/1 var(--ui);letter-spacing:.3em;color:var(--pink);margin-bottom:16px}
+    .modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+    .mode{padding:18px 18px 16px;background:var(--panel);clip-path:var(--cut);border-top:3px solid var(--pink)}
+    .mode:nth-child(2){border-top-color:var(--violet)}
+    .mode:nth-child(3){border-top-color:var(--lav)}
+    .mode b{display:block;font:800 18px/1.3 var(--ui);color:#fff;margin-bottom:6px}
+    .mode p{font-size:13px;color:var(--dim)}
+    .tools{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+    .tool{display:block;padding:12px 14px;text-decoration:none;background:rgba(255,255,255,.035);border-left:3px solid rgba(255,255,255,.18)}
+    .tool:hover{border-left-color:var(--pink);background:rgba(255,79,163,.08)}
+    .tool b{display:block;font:800 13px/1.3 var(--ui);letter-spacing:.08em;color:#fff}
+    .tool span{font-size:12px;color:var(--dim)}
+    footer{text-align:center;padding:28px 20px 40px;font:600 11px/1.8 var(--ui);letter-spacing:.08em;color:var(--dim)}
+    footer a{color:var(--dim)}
+    @media (max-width:760px){
+      .hero-in{grid-template-columns:1fr;padding-top:40px}
+      .shots{height:260px;order:-1}
+      .modes{grid-template-columns:1fr}
+    }
+    @media (prefers-reduced-motion:reduce){.btn{transition:none}}
   </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="logo">COMPILE <em>&lt;!&gt;</em></div>
-  <div class="sub">COMPANION TOOLS</div>
-  <a class="tutorial" href="three-play.html?tutorial=1">
-    <span class="kicker">はじめての方へ</span>
-    <span class="title">TUTORIAL</span>
-    <span class="desc">実際の盤面で、ルールを1つずつ試しながら覚えます。5レッスン・5分ほど。</span>
-    <ol>
-      <li>表向きで置く</li>
-      <li>裏向き・コンパイル</li>
-      <li>リフレッシュ</li>
-      <li>効果で止める</li>
-      <li>3つ目で勝つ</li>
-    </ol>
-    <span class="go">はじめる →</span>
-  </a>
-  <a class="ref" href="rules.html">ルールの早見表 →</a>
-  <div class="cards">
-    <a class="card c5" href="three-play.html">
-      <div class="stripe" style="background:#a855f7"></div>
-      <div class="icon">&#x1F3AE;</div>
-      <div class="name">3D ARENA</div>
-      <div class="desc">CPU 対戦 / オンライン対戦 / トレーニング</div>
-    </a>
-    <a class="card c1" href="cardlist.html">
-      <div class="stripe" style="background:#e91e8c"></div>
-      <div class="icon">&#x1F0CF;</div>
-      <div class="name">CARD LIST</div>
-      <div class="desc">カード一覧 / 逆引き検索 / デッキ分析</div>
-    </a>
-    <a class="card c2" href="picker.html">
-      <div class="stripe" style="background:#3b82f6"></div>
-      <div class="icon">&#x1F3B2;</div>
-      <div class="name">PROTOCOL PICKER</div>
-      <div class="desc">対面用のプロトコル抽選 / レシオ対応</div>
-    </a>
-    <a class="card c4" href="control-tracker.html">
-      <div class="stripe" style="background:#22c55e"></div>
-      <div class="icon">&#x1F3AF;</div>
-      <div class="name">CONTROL TRACKER</div>
-      <div class="desc">コントロールマーカー管理</div>
-    </a>
-    <a class="card c5" href="https://compile-battle-stats.vercel.app/" target="_blank">
-      <div class="stripe" style="background:#a855f7"></div>
-      <div class="icon">&#x1F4CA;</div>
-      <div class="name">BATTLE STATS</div>
-      <div class="desc">戦績集計ツール</div>
-    </a>
+<main>
+  <div class="hero">
+    <div class="hero-in">
+      <div>
+        <div class="kick"><b>//</b>3D ARENA · PROTOCOL CARD BATTLE</div>
+        <h1>COMPILE</h1>
+        <p class="lead">ブラウザですぐ遊べる、3つのプロトコルで競うカードバトル</p>
+        <p class="sub">登録なし・インストールなし。PC でもスマホ (横向き) でも遊べます。</p>
+        <div class="cta">
+          <a class="btn main" href="three-play.html?quick=1">いますぐ遊ぶ<small>おまかせで CPU と1戦</small></a>
+          <a class="btn alt" href="three-play.html?tutorial=1">はじめての方へ<small>TUTORIAL (5分)</small></a>
+        </div>
+        <p class="note"><a href="three-play.html">タイトル画面から始める</a> ・ <a href="rules.html">ルールの早見表</a></p>
+      </div>
+      <div class="shots" aria-hidden="true">
+        <img src="art/4psychic.webp" alt="" width="360" height="490" loading="eager">
+        <img src="art/2fire.webp" alt="" width="360" height="490" loading="eager">
+        <img src="art/2water.webp" alt="" width="360" height="490" loading="eager">
+      </div>
+    </div>
   </div>
-  <div class="footer">
-    FAN-MADE COMPANION APP<br>
-    NOT AFFILIATED WITH THE OFFICIAL GAME
-  </div>
-</div>
+
+  <section aria-labelledby="modes-h">
+    <h2 id="modes-h">MODES</h2>
+    <div class="modes">
+      <div class="mode"><b>CPU 対戦</b><p>強さは5段階。強敵や「最弱デッキで最強に挑む」下剋上も。</p></div>
+      <div class="mode"><b>オンライン対戦</b><p>友達と部屋を作って対戦。ログインすればレート戦と月ごとの順位表。</p></div>
+      <div class="mode"><b>RUN / WEEKLY</b><p>8人抜きのローグライクと、週替わりの9プロトコルで挑む3連戦。</p></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="tools-h">
+    <h2 id="tools-h">TOOLS <span style="color:var(--dim);letter-spacing:.06em;font-weight:600">実物のカードで遊ぶときの道具</span></h2>
+    <div class="tools">
+      <a class="tool" href="cardlist.html"><b>CARD LIST</b><span>カード一覧・逆引き検索・デッキ分析</span></a>
+      <a class="tool" href="picker.html"><b>PROTOCOL PICKER</b><span>対面用のプロトコル抽選</span></a>
+      <a class="tool" href="control-tracker.html"><b>CONTROL TRACKER</b><span>コントロールマーカー管理</span></a>
+      <a class="tool" href="https://compile-battle-stats.vercel.app/" target="_blank" rel="noopener"><b>BATTLE STATS</b><span>戦績集計ツール</span></a>
+    </div>
+  </section>
+</main>
+<footer>
+  FAN-MADE · NOT AFFILIATED WITH THE OFFICIAL GAME<br>
+  <a href="privacy.html">プライバシーポリシー</a> · <a href="terms.html">利用規約</a>
+</footer>
 </body>
 </html>
