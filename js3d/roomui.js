@@ -7,7 +7,7 @@
 import { displayName, setDisplayName, nameFieldHtml, bindNameField } from './displayname.js';
 import { myBadge } from './cosmetics-ui.js';
 import { settings } from './settings.js';
-import { roomApi, roomIsAnonymous, roomLogin, roomSession, roomSignIn, roomSignInWithGitHub, roomSignInWithGoogle, roomSignOut, roomSignUp } from './room.js';
+import { roomApi, roomLeaveKeepalive, roomIsAnonymous, roomLogin, roomSession, roomSignIn, roomSignInWithGitHub, roomSignInWithGoogle, roomSignOut, roomSignUp } from './room.js';
 import { emblemDataURL } from './emblems.js';
 import { showProtocolCards } from './protocards.js';
 
@@ -43,6 +43,9 @@ export function runRoomLobby(protocols, opts = {}) {
   let finished = false;
   let session = null;
   let wantRated = false;
+  let pendingJoin = opts.joinCode ? String(opts.joinCode).toUpperCase().replace(/[^A-Z2-9]/g, '').slice(0, 6) : '';
+  let waitStart = 0;       // 待機を始めた時刻 (経過時間と「CPU と遊ぶ」の案内に使う)
+  let pollFails = 0;       // 問い合わせが続けて失敗した回数
 
   root.classList.add('show');
 
@@ -52,6 +55,8 @@ export function runRoomLobby(protocols, opts = {}) {
       finished = true;
       clearInterval(pollTimer);
       clearInterval(lobbyTimer);
+      window.removeEventListener('pagehide', onPageHide);
+      document.removeEventListener('visibilitychange', onVisible);
       root.classList.remove('show');
       root.innerHTML = '';
       resolve(result);
@@ -72,9 +77,26 @@ export function runRoomLobby(protocols, opts = {}) {
         '</div>';
       $('#roomBack').onclick = () => {
         clearInterval(pollTimer); clearInterval(lobbyTimer);
+        leaveRoom();
         done(null);
       };
     }
+
+    /* 待機・ドラフト・プロトコル選択の途中で抜ける: 部屋を片付ける (ロビーに無人の部屋を残さない) */
+    function inPregameRoom() {
+      return room && room.code && room.status !== 'playing' && room.status !== 'finished';
+    }
+    function leaveRoom() {
+      if (!inPregameRoom()) return;
+      const code = room.code;
+      room = null;
+      lsSet('compileRoomLast', '');
+      roomApi('leave', { code }).catch(() => {});
+    }
+    function onPageHide() { if (inPregameRoom()) roomLeaveKeepalive(room.code); }
+    function onVisible() { if (document.visibilityState === 'visible' && room) poll(); }
+    window.addEventListener('pagehide', onPageHide);
+    document.addEventListener('visibilitychange', onVisible);
 
     /* ---------- ログイン ---------- */
     async function showLogin() {
@@ -83,17 +105,18 @@ export function runRoomLobby(protocols, opts = {}) {
         ? '<p class="ro-sub">レート戦はゲスト以外のアカウントでログインしてください。</p>' :
           '<p class="ro-sub">通常戦はゲスト接続でも遊べます。レート戦にはメール・Google・GitHubのアカウントを使います。</p>';
       frame(wantRated ? 'RATED — ログイン' : 'ONLINE — 接続',
+        (pendingJoin ? '<p class="ro-sub">招待された部屋 <b>' + esc(pendingJoin) + '</b> に入ります。</p>' : '') +
+        /* いちばん手軽な「表示名を決めてゲストで始める」を先頭に */
+        '<div class="ro-row"><input class="ro-input" id="roomName" maxlength="12" placeholder="表示名 (対戦相手に見える名前)" value="' + esc(displayName()) + '"></div>' +
+        (wantRated ? '' : '<div class="ro-row"><button class="ro-big" id="roomGo" type="button">ゲストで始める (登録なし)</button></div>') +
         rateNote +
-        /* 一番使う Google/GitHub を先頭に。以前は戻るボタンの下に離れていて見落とされた */
-        '<div class="ro-row"><button class="ro-big" id="roomGoogle" type="button">Googleでログイン</button>' +
+        '<div class="ro-row"><button class="' + (wantRated ? 'ro-big' : 'ro-btn') + '" id="roomGoogle" type="button">Googleでログイン</button>' +
         '<button class="ro-btn" id="roomGitHub" type="button">GitHubでログイン</button></div>' +
-        '<div class="ro-lbl" style="margin-top:12px">メールで' + (wantRated ? 'ログイン' : 'ログイン / ゲスト接続') + '</div>' +
-        '<div class="ro-row"><input class="ro-input" id="roomName" maxlength="12" placeholder="表示名" value="' + esc(displayName()) + '"></div>' +
+        '<details class="ro-mail"><summary>メールアドレスでログイン</summary>' +
         '<div class="ro-row"><input class="ro-input" id="roomEmail" type="email" autocomplete="email" placeholder="メールアドレス"></div>' +
         '<div class="ro-row"><input class="ro-input" id="roomPass" type="password" autocomplete="current-password" minlength="8" placeholder="パスワード（8文字以上）"></div>' +
         '<div class="ro-row"><button class="ro-btn" id="roomSignIn" type="button">ログイン</button>' +
-        '<button class="ro-btn" id="roomSignUp" type="button">新規登録</button>' +
-        (wantRated ? '' : '<button class="ro-ghost" id="roomGo" type="button">ゲストで続ける</button>') + '</div>',
+        '<button class="ro-btn" id="roomSignUp" type="button">新規登録</button></div></details>',
         '← モード選択に戻る');
       const values = () => ({
         name: ($('#roomName').value || '').trim(), email: ($('#roomEmail').value || '').trim(), password: $('#roomPass').value || ''
@@ -168,7 +191,10 @@ export function runRoomLobby(protocols, opts = {}) {
           : '') +
         '<div class="ro-row"><button class="ro-big" id="roomQuick" type="button">クイックマッチ</button>' +
         '<button class="ro-ghost" id="roomStats" type="button">戦績・CSV</button></div>' +
-        '<label class="ro-check"><input type="checkbox" id="roomRated"' + (wantRated ? ' checked' : '') + '> レート戦（結果を記録してレートを更新）</label>' +
+        '<p class="ro-online" id="roomOnline">オンラインの人数を確認中…</p>' +
+        (roomIsAnonymous(session)
+          ? '<label class="ro-check off"><input type="checkbox" id="roomRated" disabled> レート戦 (ログインすると遊べます)</label>'
+          : '<label class="ro-check"><input type="checkbox" id="roomRated"' + (wantRated ? ' checked' : '') + '> レート戦（結果を記録してレートを更新）</label>') +
         '<div class="ro-grid2">' +
           '<div><div class="ro-lbl">ルームを作る</div>' +
             '<input class="ro-input" id="roomPw" maxlength="40" type="password" placeholder="パスワード (任意)">' +
@@ -220,6 +246,9 @@ export function runRoomLobby(protocols, opts = {}) {
         wantRated = rated;
         if (rated && roomIsAnonymous(session)) { await showLogin(); return; }
         const open = (data.rooms || []).find(r => !r.locked && !!r.rated === rated);
+        if (!open && (data.rooms || []).some(r => !r.locked && !!r.rated !== rated)) {
+          status(rated ? 'レート戦なしで待っている人がいます (チェックを外すと対戦できます)' : 'レート戦で待っている人がいます (ログインしてレート戦にすると対戦できます)', 'ok');
+        }
         room = open
           ? await roomApi('join', { name: name(), badge: myBadge(settings()), code: open.code, password: '' })
           : await roomApi('create', { name: name(), badge: myBadge(settings()), title: rated ? 'レート戦' : 'クイック対戦', visibility: 'public', password: '', draft: true, rated });
@@ -275,24 +304,44 @@ export function runRoomLobby(protocols, opts = {}) {
           if (!el) return;
           const rooms = data.rooms || [];
           el.innerHTML = rooms.length
-            ? rooms.map(r => '<button class="ro-room" data-code="' + esc(r.code) + '" type="button">' +
+            ? rooms.map(r => '<button class="ro-room" data-code="' + esc(r.code) + '" data-locked="' + (r.locked ? '1' : '0') + '" type="button">' +
                 esc(r.title || r.code) + (r.rated ? ' ★' : '') + (r.locked ? ' 🔒' : '') +
                 '<small>' + esc(r.code) + (r.draft ? '　' + esc(ruleText(r.draftRules)) : '　ドラフトなし') + '</small></button>').join('')
             : '<span class="ro-sub">現在募集中のルームはありません</span>';
+          const on = $('#roomOnline');
+          if (on) {
+            const w = data.waiting || 0, pl = data.playing || 0;
+            on.innerHTML = w || pl
+              ? '<b>' + w + '</b> 人が対戦相手を待っています ・ <b>' + pl + '</b> 部屋で対戦中'
+              : 'いまは誰もいないようです。部屋を作って<b>招待リンク</b>を友達に送るか、クイックマッチで待ってみてください';
+          }
           el.querySelectorAll('.ro-room').forEach(b => {
             b.onclick = guard(async () => {
         if (needName()) return;
-              const pw = prompt('パスワード (不要なら空欄)') || '';
+              const pw = b.dataset.locked === '1' ? (prompt('パスワード') || '') : '';
               if (b.textContent.includes('★') && roomIsAnonymous(session)) { wantRated = true; await showLogin(); return; }
               room = await roomApi('join', { name: name(), badge: myBadge(settings()), code: b.dataset.code, password: pw });
               enterRoom();
             });
           });
-        } catch (e) { /* ロビー一覧の失敗は無視 */ }
+        } catch (e) {
+          const on = $('#roomOnline');
+          if (on) on.textContent = '一覧を読み込めませんでした (通信を確認してください)';
+        }
       };
       loadList();
       clearInterval(lobbyTimer);
       lobbyTimer = setInterval(loadList, 5000);
+      if (pendingJoin) {
+        const code = pendingJoin;
+        if (needName()) return;
+        pendingJoin = '';
+        guard(async () => {
+          status('招待された部屋 ' + code + ' に入っています…');
+          room = await roomApi('join', { name: name(), badge: myBadge(settings()), code, password: '' });
+          enterRoom();
+        })();
+      }
     }
 
     function csvCell(value) {
@@ -366,6 +415,8 @@ export function runRoomLobby(protocols, opts = {}) {
       /* 再入室では既に対戦中のことがある (join が playing を返す) */
       if (room.status === 'playing' || room.status === 'finished') { done({ rm: room }); return; }
       sel = [];
+      waitStart = Date.now();
+      pollFails = 0;
       renderRoom();
       clearInterval(pollTimer);
       pollTimer = setInterval(poll, 1300);
@@ -374,12 +425,37 @@ export function runRoomLobby(protocols, opts = {}) {
     async function poll() {
       if (busy || !room) return;
       let next;
-      try { next = await roomApi('get', { code: room.code, stamp: room.stamp }); } catch (e) { return; }
+      tickWait();
+      try { next = await roomApi('get', { code: room.code, stamp: room.stamp }); } catch (e) {
+        /* 部屋が消えた (相手が抜けた・片付けられた) ならロビーへ。一時的な失敗は何回か続いたら知らせる */
+        if (/ルームが見つかりません/.test(e.message || '')) {
+          clearInterval(pollTimer);
+          room = null;
+          lsSet('compileRoomLast', '');
+          status('相手が抜けたため、部屋が閉じられました', 'err');
+          setTimeout(showLobby, 1400);
+          return;
+        }
+        if (++pollFails >= 3) status('接続が不安定です。再接続を試みています…', 'err');
+        return;
+      }
+      if (pollFails >= 3) status('');
+      pollFails = 0;
       if (next.unchanged) return;                                  // 前回から変わっていない (盤面は省かれている)
       if (next.version === room.version && next.status === room.status) { room = next; return; }
       room = next;
       if (room.status === 'playing' || room.status === 'finished') { done({ rm: room }); return; }
       renderRoom();
+    }
+
+    /* 待機中の経過時間。45秒たったら「CPU と遊ぶ」を出す */
+    function tickWait() {
+      const el = $('#roomWait');
+      if (!el || !waitStart) return;
+      const sec = Math.floor((Date.now() - waitStart) / 1000);
+      el.textContent = '待機 ' + Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
+      const cpu = $('#roomCpu');
+      if (cpu && sec >= 45) cpu.hidden = false;
     }
 
     function mode() {
@@ -428,12 +504,27 @@ export function runRoomLobby(protocols, opts = {}) {
           '<p class="ro-sub">' + (room.names[1]
             ? '対戦相手が参加しました。'
             : 'このコードを相手に共有して、参加を待ってください。') + '</p>' +
-          '<div class="ro-row"><button class="ro-btn" id="roomCopy" type="button">コードをコピー</button></div>',
+          '<p class="ro-wait" id="roomWait"></p>' +
+          '<div class="ro-row"><button class="ro-btn" id="roomInvite" type="button">招待リンクを送る</button>' +
+          '<button class="ro-btn" id="roomCopy" type="button">コードをコピー</button></div>' +
+          '<div class="ro-row"><button class="ro-btn" id="roomCpu" type="button" hidden>待つのをやめて CPU と遊ぶ</button></div>',
           '← 退出してソロ設定に戻る');
-        $('#roomCopy').onclick = () => {
-          if (navigator.clipboard) navigator.clipboard.writeText(room.code);
-          status('コピーしました', 'ok');
+        tickWait();
+        const link = location.origin + location.pathname + '?room=' + room.code;
+        const copy = async (text, label) => {
+          try { await navigator.clipboard.writeText(text); status(label + 'をコピーしました', 'ok'); }
+          catch (e) { status('コピーできませんでした。' + text, 'err'); }
         };
+        $('#roomCopy').onclick = () => copy(room.code, 'コード');
+        $('#roomInvite').onclick = async () => {
+          /* スマホは共有メニュー (LINE など) を出す。使えなければリンクをコピー */
+          if (navigator.share) {
+            try { await navigator.share({ title: 'COMPILE で対戦しよう', text: 'COMPILE 3D ARENA の部屋 ' + room.code + ' で待っています', url: link }); return; }
+            catch (e) { if (e && e.name === 'AbortError') return; }
+          }
+          copy(link, '招待リンク');
+        };
+        $('#roomCpu').onclick = () => { clearInterval(pollTimer); leaveRoom(); done({ quick: true }); };
         return;
       }
       if (m === 'draft') {

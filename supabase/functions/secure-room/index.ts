@@ -39,6 +39,11 @@ function cleanName(value: unknown) {
   return String(value || "").trim().replace(/[<>\u0000-\u001f]/g, "").slice(0, 20);
 }
 
+/* 手番の持ち時間 (ミリ秒)。相手がこれより長く止まっていたら、時間切れ勝ちを主張できる */
+const TURN_LIMIT_MS = 120_000;
+/* 待機中の部屋を「まだ人がいる」とみなす長さ。作った人の画面が問い合わせるたびに更新時刻を新しくする */
+const WAITING_FRESH_MS = 90_000;
+
 /* 相手に見せる称号 (見た目だけ)。決まった一覧にあるものだけ。無ければ null */
 const BADGES = ["compiler", "veteran", "expert", "master", "underdog", "platinum"];
 function cleanBadge(value: unknown) {
@@ -244,6 +249,7 @@ function publicState(room: any, side: number) {
     code: room.code, title: room.title, status: room.status, version: room.version, side, stamp: stampOf(room),
     names: [room.host_name, room.guest_name],
     badges: [room.host_badge || null, room.guest_badge || null],
+    lastActionAt: room.last_action_at || room.updated_at, turnLimitMs: TURN_LIMIT_MS, now: new Date().toISOString(),
     protocols: [room.host_protocols, room.guest_protocols],
     rated: !!room.rated,
   };
@@ -378,14 +384,20 @@ Deno.serve(async (req) => {
 
     if (op === "list") {
       await admin.rpc("cleanup_secure_rooms");
-      const lobbySince = new Date(Date.now() - 2 * 60 * 60_000).toISOString();
+      /* 作った人が画面を閉じた部屋 (更新が止まった部屋) は出さない。クイックマッチが無人の部屋に入らないように */
+      const lobbySince = new Date(Date.now() - WAITING_FRESH_MS).toISOString();
       const { data, error } = await admin.from("secure_rooms")
         .select("code,title,host_name,password_hash,draft_state,rated,created_at")
         .eq("visibility", "public").eq("status", "waiting").is("guest_id", null)
         .gte("updated_at", lobbySince)
         .order("created_at", { ascending: false }).limit(30);
       if (error) throw error;
-      return json(req, { rooms: (data || []).map((room: any) => ({
+      /* いま何人いるか (ロビーに出す): 待っている部屋と、10分以内に動いた対戦中の部屋 */
+      const [{ count: playing }] = await Promise.all([
+        admin.from("secure_rooms").select("id", { count: "exact", head: true }).eq("status", "playing")
+          .gte("updated_at", new Date(Date.now() - 10 * 60_000).toISOString()),
+      ]);
+      return json(req, { waiting: (data || []).length, playing: playing || 0, rooms: (data || []).map((room: any) => ({
         code: room.code, title: room.title, hostName: room.host_name,
         locked: !!room.password_hash, draft: !!room.draft_state, rated: !!room.rated, createdAt: room.created_at,
         draftRules: room.draft_state ? cleanDraftRules(room.draft_state.rules) : null,
@@ -497,6 +509,11 @@ Deno.serve(async (req) => {
     const side = sideOf(room, user.id);
     if (side < 0) return fail(req, "このルームの参加者ではありません", 403);
     if (op === "get") {
+      if (room.status === "waiting" && side === 0 && Date.now() - Date.parse(room.updated_at) > 25_000) {
+        const now = new Date().toISOString();
+        await admin.from("secure_rooms").update({ updated_at: now }).eq("id", room.id);
+        room.updated_at = now;
+      }
       /* 前回から変わっていなければ、盤面を丸ごと返さずに「変化なし」だけ返す (ポーリングの通信を減らす) */
       if (typeof body.stamp === "string" && body.stamp === stampOf(room)) {
         return json(req, { code: room.code, status: room.status, version: room.version, side, stamp: body.stamp, unchanged: true });
@@ -579,17 +596,52 @@ Deno.serve(async (req) => {
       return json(req, publicState(data, side));
     }
 
+    /* 待機・ドラフト・プロトコル選択の途中で抜ける: 部屋を片付ける (対戦中は投了を使う) */
+    if (op === "leave") {
+      if (room.status === "playing") return fail(req, "対戦中は投了してください", 409);
+      const { error } = await admin.from("secure_rooms").delete().eq("id", room.id);
+      if (error) throw error;
+      return json(req, { ok: true });
+    }
+
+    /* 時間切れ勝ち: 相手の番 (相手の選択待ち) のまま持ち時間を過ぎていたら、相手の投了として決着させる */
+    if (op === "claimTimeout") {
+      if (room.status !== "playing" || !room.game_state) return fail(req, "対戦中ではありません", 409);
+      const st = engineState(room.game_state);
+      const pending = room.pending_request;
+      const waiting = pending ? pending.player : st.turn;
+      if (waiting === side) return fail(req, "あなたの番です", 409);
+      const since = Date.parse(room.last_action_at || room.updated_at);
+      if (Date.now() - since < TURN_LIMIT_MS) return fail(req, "相手の持ち時間はまだ残っています", 409);
+      const result = Engine.apply(st, { type: "surrender", player: waiting });
+      if (result.error) return fail(req, result.error);
+      return await commitResult(req, room, side, result);
+    }
+
     if (op === "action") {
       if (room.status !== "playing" || !room.game_state) return fail(req, "対戦中ではありません", 409);
-      if (Number(body.version) !== Number(room.version)) return fail(req, "状態が更新されています", 409);
       const st = engineState(room.game_state);
       const pending = room.pending_request;
       const action = privateAction(body.action, st);
       if (!action || typeof action.type !== "string") return fail(req, "操作が不正です");
+      /* 投了は相手の手と入れ違っても通す (版の確認をしない)。それ以外は同じ版の盤面に対してだけ受け付ける */
+      if (action.type !== "surrender" && Number(body.version) !== Number(room.version)) return fail(req, "状態が更新されています", 409);
       if (action.type !== "surrender" && (pending ? pending.player !== side : st.turn !== side)) return fail(req, "あなたの操作待ちではありません", 403);
       if (action.type === "surrender") action.player = side;
       const result = Engine.apply(st, action);
       if (result.error) return fail(req, result.error);
+      return await commitResult(req, room, side, result);
+    }
+    return fail(req, "未知の操作です", 404);
+  } catch (error) {
+    console.error(error);
+    return fail(req, "サーバー処理に失敗しました", 500);
+  }
+});
+
+/* エンジンの結果を部屋に書き込み、決着していればレート戦を記録する (手を指す・時間切れ勝ちで共通)。
+   レート戦の記録に失敗したら ratedError を付けて返す (画面で知らせる) */
+async function commitResult(req: Request, room: any, side: number, result: any) {
       const nextVersion = room.version + 1;
       const nextGame = result.view
         ? { ...result.view, pending: result.state?.pending || null }
@@ -602,15 +654,10 @@ Deno.serve(async (req) => {
         last_action_at: new Date().toISOString(), updated_at: new Date().toISOString(),
       }).eq("id", room.id).eq("version", room.version).select("*").single();
       if (error) return fail(req, "相手の操作と競合しました。再読み込みします", 409);
+      let ratedError = false;
       if (result.winner !== null && room.rated) {
         try { await recordRatedMatch(room, result.winner); }
-        catch (ratingError) { console.error("rated match record failed", ratingError); }
+        catch (ratingError) { console.error("rated match record failed", ratingError); ratedError = true; }
       }
-      return json(req, publicState(data, side));
-    }
-    return fail(req, "未知の操作です", 404);
-  } catch (error) {
-    console.error(error);
-    return fail(req, "サーバー処理に失敗しました", 500);
-  }
-});
+      return json(req, ratedError ? { ...publicState(data, side), ratedError: true } : publicState(data, side));
+}

@@ -155,10 +155,12 @@ export async function accountSignInWithGoogle() {
   }
 }
 
+let lastToken = null;              // 直近の問い合わせに使った鍵 (ページを閉じる瞬間の「退出」に使う)
 export async function roomApi(op, extra) {
   const cfg = window.COMPILE_ROOM_CONFIG;
   const s = await roomSession();
   if (!s) throw new Error('セッションが切れました。再接続してください');
+  lastToken = s.access_token;
   const r = await fetch(cfg.url + '/functions/v1/secure-room', {
     method: 'POST',
     headers: {
@@ -168,9 +170,24 @@ export async function roomApi(op, extra) {
     },
     body: JSON.stringify(Object.assign({ op }, extra || {}))
   });
-  const d = await r.json();
+  let d;
+  try { d = await r.json(); } catch (e) { throw new Error('サーバーに接続できませんでした (' + r.status + ')'); }
   if (!r.ok) throw new Error(d.error || '通信エラー');
   return d;
+}
+
+/* ページを閉じる・離れる瞬間に「部屋から抜けた」を送る (返事は待たない)。
+   待機中の部屋がロビーに残って、次の人が無人の部屋に入らないように */
+export function roomLeaveKeepalive(code) {
+  const cfg = window.COMPILE_ROOM_CONFIG;
+  if (!cfg || !lastToken || !code) return;
+  try {
+    fetch(cfg.url + '/functions/v1/secure-room', {
+      method: 'POST', keepalive: true,
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + lastToken, 'apikey': cfg.anonKey },
+      body: JSON.stringify({ op: 'leave', code })
+    }).catch(() => {});
+  } catch (e) { /* 送れなくても片付けは時間で行われる */ }
 }
 
 /* ---------- publicState → 擬似エンジン状態 ---------- */

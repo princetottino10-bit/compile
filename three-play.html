@@ -2087,6 +2087,21 @@
   .pf-got li b{color:var(--pink);font-size:10.5px;}
   #title .tt-corner[hidden]{display:none;}   /* 押す前は出さない (どこを押しても始まる) */
   #profileOv{z-index:62;}
+  /* オンライン: 手番の持ち時間 (VS の下) */
+  #turnTimer{position:absolute;left:calc(14px + env(safe-area-inset-left));top:72px;display:flex;align-items:center;gap:8px;padding:5px 12px;
+    background:rgba(12,9,20,.72);clip-path:var(--cut-s);font:700 12px/1 var(--font-ui);color:var(--dim);font-variant-numeric:tabular-nums;pointer-events:auto;}
+  #turnTimer[hidden]{display:none;}
+  #turnTimer.mine{color:#fff;}
+  #turnTimer.warn{color:var(--pink);}
+  #turnTimer button{padding:6px 10px;cursor:pointer;font:800 11px/1 var(--font-ui);letter-spacing:.06em;background:var(--pink);border:0;color:#fff;}
+  @media (orientation:landscape) and (max-height:500px){ #turnTimer{top:40px;left:calc(10px + env(safe-area-inset-left));} }
+  /* ロビー: 人数・待機の経過時間・メールのログインは畳む・押せないレート戦 */
+  .ro-online{margin:6px 0;font:600 12px/1.5 system-ui;color:var(--dim);}
+  .ro-online b{color:var(--pink);}
+  .ro-wait{margin:4px 0;font:700 13px/1 var(--font-ui);color:var(--lav);font-variant-numeric:tabular-nums;}
+  .ro-mail{margin-top:10px;}
+  .ro-mail summary{cursor:pointer;font:600 12px/1.6 system-ui;color:var(--dim);}
+  .ro-check.off{opacity:.55;}
   /* 決着の画面の「次の目標」 */
   .end-goals{display:flex;flex-direction:column;gap:4px;min-width:min(340px,80vw);margin:4px 0 2px;font:700 12px/1.3 var(--font-ui);color:var(--ink);}
   .end-goals b{color:var(--pink);}
@@ -2326,6 +2341,7 @@
   <div id="topbar">
     <div id="brand"><b>COMPILE</b><span>3D ARENA</span></div>
     <div id="vsTag" hidden></div>
+    <div id="turnTimer" hidden></div>
     <div id="topRight">
       <button id="btnCards" class="btn" type="button" title="カードリスト" aria-label="カードリスト">CARDS</button>
       <button id="btnSettings" class="btn" type="button" title="設定" aria-label="設定">⚙</button>
@@ -2426,7 +2442,7 @@
       "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c",
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=c8378abf22",
-      "./js3d/main.js": "./js3d/main.js?v=fd7c6b6394",
+      "./js3d/main.js": "./js3d/main.js?v=0cb1933b2a",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=6398fed15e",
       "./js3d/panel.js": "./js3d/panel.js?v=ecb8a073e3",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=e0273dcae0",
@@ -2440,8 +2456,8 @@
       "./js3d/replays.js": "./js3d/replays.js?v=92b9d3718f",
       "./js3d/review.js": "./js3d/review.js?v=34f174153b",
       "./js3d/rewards.js": "./js3d/rewards.js?v=c0bbd8236f",
-      "./js3d/room.js": "./js3d/room.js?v=10213a9754",
-      "./js3d/roomui.js": "./js3d/roomui.js?v=50cbabe75b",
+      "./js3d/room.js": "./js3d/room.js?v=25990f1537",
+      "./js3d/roomui.js": "./js3d/roomui.js?v=49ed751a46",
       "./js3d/run-ui.js": "./js3d/run-ui.js?v=58718a71af",
       "./js3d/run.js": "./js3d/run.js?v=29dcccf04b",
       "./js3d/selectui.js": "./js3d/selectui.js?v=208abdaebc",
@@ -2466,6 +2482,6 @@
   </script>
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=fd7c6b6394"></script>
+  <script type="module" src="js3d/main.js?v=0cb1933b2a"></script>
 </body>
 </html>

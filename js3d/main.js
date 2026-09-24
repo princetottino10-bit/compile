@@ -362,7 +362,15 @@ async function boot() {
     const accountReady = initAccount();
     const accountResume = takeAccountResume();
     /* 勝ち抜き戦の次の1戦 (?run=1) はタイトルを飛ばして勝ち抜き戦の画面へ */
-    let nextMode = params.get('run') === '1' ? 'run'
+    /* 招待リンク (?room=CODE): オンラインのロビーへ直行して、その部屋に入る。
+       Google 等のログインでページを離れても続けられるよう、コードをこのタブに覚えておく */
+    let joinCode = params.get('room') || '';
+    try {
+      if (joinCode) sessionStorage.setItem('compileJoinCode', joinCode);
+      else joinCode = sessionStorage.getItem('compileJoinCode') || '';
+    } catch (e) { /* private mode */ }
+    let nextMode = joinCode ? 'online'
+      : params.get('run') === '1' ? 'run'
       : params.get('title') !== '0'
         ? await runTitle(cards.protocols, accountResume ? { menuOnly: true, after: () => accountReady.then(openAccount) } : undefined)
         : 'single';
@@ -381,7 +389,10 @@ async function boot() {
         } catch (e) { UI.toast('オンライン機能を読み込めませんでした'); nextMode = 'single'; continue; }
         if (!ROOM.roomConfigured()) { UI.toast('オンライン対戦は未設定です (secure-room-config.js)'); nextMode = 'single'; continue; }
         /* ドラフト中にプロトコルの6枚を見る */
-        const result = await runRoomLobby(cards.protocols, { cardsOf: protocolCards });
+        const result = await runRoomLobby(cards.protocols, { cardsOf: protocolCards, joinCode });
+        joinCode = '';
+        try { sessionStorage.removeItem('compileJoinCode'); } catch (e) { /* private mode */ }
+        if (result && result.quick) { location.href = location.pathname + '?quick=1'; return; }
         /* 「戻る」はモード選択へ (ソロのプロトコル選択ではなく) */
         if (!result) { nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
         document.getElementById('boot').style.display = 'none';
@@ -1320,7 +1331,9 @@ function bindInput() {
     if (st && st.winner === null) {
       if (!confirm('投了してメニューに戻りますか？')) return;
       try { await ROOM.roomApi('action', { code: roomRm.code, version: roomRm.version, action: { type: 'surrender' } }); }
-      catch (e) { /* 決着はサーバー側で確定する */ }
+      catch (e) {
+        if (!isRoomGone(e) && !confirm('投了を送れませんでした (' + e.message + ')。それでもメニューに戻りますか？')) return;
+      }
     }
     location.href = location.pathname;
   };
@@ -1760,7 +1773,10 @@ function roomValOf(defId) {
 
 /* サーバーの publicState を受けて、差分アニメ + HUD 更新まで行う */
 /* オンライン対戦: 画面上に対戦相手の名前と称号を出す */
+let roomServerOffset = 0;          // サーバーの時計 - この端末の時計 (持ち時間の計算に使う)
 function showVsTag(rm) {
+  if (rm && rm.now) roomServerOffset = Date.parse(rm.now) - Date.now();
+  if (rm && rm.ratedError) UI.toast('レート戦の結果を記録できませんでした。時間をおいて戦績を確かめてください', 5000);
   const el = document.getElementById('vsTag');
   if (!el || !rm || !Array.isArray(rm.names)) return;
   const opp = 1 - rm.side;
@@ -1882,6 +1898,42 @@ async function roomDrainRequest() {
 /* ポーリング: 相手の手を待つ間は速く、自分が指す番 (相手は何もできない) はゆっくり。
    次の問い合わせは前の応答が返ってから予約する (重なって飛ばない) */
 let roomPollOn = false;
+let roomPollFails = 0;
+/* タブが表に戻ったら、すぐに問い合わせる (裏ではブラウザがタイマーを間引く) */
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && roomMode && roomPollOn) roomPoll(true);
+});
+
+/* 手番の持ち時間 (サーバーの TURN_LIMIT_MS)。相手の番が長引いたら、時間切れ勝ちを主張できる */
+let turnTimerId = null;
+function startTurnTimer() {
+  clearInterval(turnTimerId);
+  turnTimerId = setInterval(updateTurnTimer, 1000);
+}
+function updateTurnTimer() {
+  const el = document.getElementById('turnTimer');
+  const rm = roomRm;
+  const st = rm && shown();
+  if (!el) return;
+  if (!roomMode || !rm || rm.status !== 'playing' || !rm.lastActionAt || !rm.turnLimitMs || !st || st.winner !== null) { el.hidden = true; return; }
+  const mine = (rm.legalActions || []).length > 0 || !!rm.request;
+  const left = Math.ceil((rm.turnLimitMs - (Date.now() + roomServerOffset - Date.parse(rm.lastActionAt))) / 1000);
+  const fmt = (n) => Math.floor(Math.max(0, n) / 60) + ':' + String(Math.max(0, n) % 60).padStart(2, '0');
+  el.hidden = false;
+  el.classList.toggle('mine', mine);
+  el.classList.toggle('warn', left <= 30);
+  if (!mine && left <= 0) {
+    if (!el.querySelector('button')) {
+      el.innerHTML = '<span>相手の持ち時間が切れました</span><button type="button">時間切れで勝ちにする</button>';
+      el.querySelector('button').onclick = async () => {
+        try { const next = await ROOM.roomApi('claimTimeout', { code: rm.code }); await roomApplyView(next); }
+        catch (e) { UI.toast(e.message || '通信エラー'); }
+      };
+    }
+    return;
+  }
+  el.textContent = (mine ? 'あなたの持ち時間 ' : '相手の持ち時間 ') + fmt(left);
+}
 function roomPollDelay() {
   const mine = roomRm && (roomRm.legalActions || []).length > 0 && !roomRm.request;
   return mine ? 4000 : 1300;
@@ -1894,11 +1946,15 @@ async function roomPollTick() {
 }
 function startRoomPoll() {
   roomPollOn = true;
+  startTurnTimer();
   clearTimeout(roomPollTimer);
   roomPollTimer = setTimeout(roomPollTick, 1300);
 }
 function stopRoomPoll() {
   roomPollOn = false;
+  clearInterval(turnTimerId);
+  const tt = document.getElementById('turnTimer');
+  if (tt) tt.hidden = true;
   clearTimeout(roomPollTimer);
 }
 
@@ -1908,9 +1964,13 @@ async function roomPoll(force) {
   let next;
   /* 前回の印 (stamp) を渡すと、変わっていないときは盤面を省いた「変化なし」が返る */
   try { next = await ROOM.roomApi('get', { code: roomRm.code, stamp: roomRm.stamp }); } catch (e) {
-    if (isRoomGone(e)) roomClosed();
-    return;                            // 一時的な通信の失敗は次の問い合わせで取り直す
+    if (isRoomGone(e)) { roomClosed(); return; }
+    /* 一時的な通信の失敗は次の問い合わせで取り直す。続くときは知らせる */
+    if (++roomPollFails === 4) UI.toast('通信が不安定です。つながり直すまで待っています…', 4000);
+    return;
   }
+  if (roomPollFails >= 4) UI.toast('つながりました', 1600);
+  roomPollFails = 0;
   if (next.unchanged || (next.version === roomRm.version && next.status === roomRm.status)) {
     if (!next.unchanged) roomRm = next;
     await roomDrainRequest();          // 取りこぼしたリクエストの再開
