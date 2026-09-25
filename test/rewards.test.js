@@ -12,8 +12,8 @@ test('見た目の解放: はじめからのものは Lv1、報酬のものは�
   assert.equal(R.isUnlocked('mat', 'nebula', 3), true);
   for (const [kind, list] of Object.entries(R.COSMETICS)) {
     for (const [key] of list.slice(1)) {
-      assert.ok(R.REWARDS.some(r => r.kind === kind && r.key === key) || R.GACHA_ITEMS.some(g => g.kind === kind && g.key === key),
-        kind + '/' + key + ' は報酬の一覧かガチャにある');
+      assert.ok(R.REWARDS.some(r => r.kind === kind && r.key === key) || R.GACHA_ITEMS.some(g => g.kind === kind && g.key === key) ||
+        R.UNDERDOG_ITEMS.some(g => g.kind === kind && g.key === key), kind + '/' + key + ' は報酬の一覧・ガチャ・下剋上のどれかにある');
     }
   }
 });

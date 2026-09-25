@@ -1424,6 +1424,21 @@
   .marker-sapphire i{background:radial-gradient(circle,#4f8cff 30%,#0a0f1c 32%);}
   .marker-obsidian i{background:radial-gradient(circle,#2b2238 30%,#8a78a8 32%,#0a0f1c 40%);}
   .marker-nova i{background:radial-gradient(circle,#fff4c8 22%,#ffc85a 32%,#0a0f1c 38%);}
+  .sleeve-slayer i{background:linear-gradient(135deg,#5a0a14,#000);box-shadow:inset 0 0 0 2px #ffd65a,0 0 10px rgba(255,200,60,.5);}
+  .marker-slayer i{background:radial-gradient(circle,#ffc83a 26%,#8c1022 34%,#0a0f1c 40%);}
+  /* 下剋上の達成 */
+  #underdogWin{position:fixed;inset:0;z-index:70;display:grid;place-items:center;background:radial-gradient(circle,rgba(90,10,20,.85),rgba(0,0,0,.92));
+    opacity:0;pointer-events:none;transition:opacity .3s;}
+  #underdogWin.show{opacity:1;pointer-events:auto;}
+  #underdogWin .ud-card{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:24px;max-width:min(520px,92vw);}
+  #underdogWin small{font:900 12px/1 var(--font-hud,var(--font-ui));letter-spacing:.4em;color:#ff5a78;}
+  #underdogWin h2{margin:0;font:900 clamp(38px,9vw,72px)/1 var(--font-hud,var(--font-ui));letter-spacing:.08em;
+    background:linear-gradient(100deg,#fff4c8,#ffc83a 40%,#ff4f6e);-webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 0 24px rgba(255,200,60,.5));animation:rnBossIn .7s cubic-bezier(.2,1.4,.4,1);}
+  #underdogWin p{margin:0;font:700 14px/1.6 system-ui;color:#ffe9ee;}
+  #underdogWin ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;}
+  #underdogWin li{padding:8px 16px;font:800 13px/1.3 var(--font-ui);color:#1a0508;background:linear-gradient(100deg,#ffd65a,#ff8a5a);clip-path:var(--cut-s);}
+  #underdogWin button{margin-top:6px;padding:12px 28px;cursor:pointer;border:0;clip-path:var(--cut-s);background:#fff;color:#1a0508;font:900 14px/1 var(--font-ui);letter-spacing:.12em;}
   .ccolor-lime i{background:linear-gradient(90deg,#e8ffb8,#7cd61a);}
   .ccolor-violet i{background:linear-gradient(90deg,#e4d6ff,#8a4dff);}
   .ccolor-ember i{background:linear-gradient(90deg,#ffd0a0,#ff4a0a);}
@@ -2772,10 +2787,10 @@
       "./js3d/board.js": "./js3d/board.js?v=77bdece4ae",
       "./js3d/card.js": "./js3d/card.js?v=6d8083e5b7",
       "./js3d/cardlist-ov.js": "./js3d/cardlist-ov.js?v=1d673fd0d2",
-      "./js3d/cardtex.js": "./js3d/cardtex.js?v=754a3952db",
+      "./js3d/cardtex.js": "./js3d/cardtex.js?v=a631f3583d",
       "./js3d/cardtext.js": "./js3d/cardtext.js?v=4cf5529855",
       "./js3d/cloudsave.js": "./js3d/cloudsave.js?v=b187c8c5a5",
-      "./js3d/control.js": "./js3d/control.js?v=096e6018c4",
+      "./js3d/control.js": "./js3d/control.js?v=24ef5685b0",
       "./js3d/cosmetics-ui.js": "./js3d/cosmetics-ui.js?v=9786dc4815",
       "./js3d/daily.js": "./js3d/daily.js?v=f56dabdf65",
       "./js3d/displayname.js": "./js3d/displayname.js?v=613e18bf95",
@@ -2789,8 +2804,8 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=a376ead8e7",
-      "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=aa7ecc4142",
+      "./js3d/main.js": "./js3d/main.js?v=314fe5d54e",
+      "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=bf694d8aea",
       "./js3d/panel.js": "./js3d/panel.js?v=ecb8a073e3",
       "./js3d/plates.js": "./js3d/plates.js?v=70ffa14b87",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=e0273dcae0",
@@ -2803,7 +2818,7 @@
       "./js3d/replays-ui.js": "./js3d/replays-ui.js?v=9a6a4ca786",
       "./js3d/replays.js": "./js3d/replays.js?v=2a8c9e69b5",
       "./js3d/review.js": "./js3d/review.js?v=34f174153b",
-      "./js3d/rewards.js": "./js3d/rewards.js?v=3a15516206",
+      "./js3d/rewards.js": "./js3d/rewards.js?v=5c8c5c052a",
       "./js3d/room.js": "./js3d/room.js?v=c34129de95",
       "./js3d/roomui.js": "./js3d/roomui.js?v=402be98743",
       "./js3d/run-ui.js": "./js3d/run-ui.js?v=02ebcc235f",
@@ -2842,7 +2857,7 @@
   <link rel="modulepreload" href="vendor/three.module.js?v=985eb92490">
   <link rel="modulepreload" href="js3d/stage.js?v=e3cda4525b">
   <link rel="modulepreload" href="js3d/board.js?v=77bdece4ae">
-  <link rel="modulepreload" href="js3d/control.js?v=096e6018c4">
+  <link rel="modulepreload" href="js3d/control.js?v=24ef5685b0">
   <link rel="modulepreload" href="js3d/panel.js?v=ecb8a073e3">
   <link rel="modulepreload" href="js3d/setup.js?v=1073765172">
   <link rel="modulepreload" href="js3d/title.js?v=bb69966c1f">
@@ -2854,13 +2869,14 @@
   <link rel="modulepreload" href="js3d/settings.js?v=142e9b5e99">
   <link rel="modulepreload" href="js3d/stats.js?v=e43dea84b9">
   <link rel="modulepreload" href="js3d/stats-data.js?v=bcf7d5e977">
-  <link rel="modulepreload" href="js3d/rewards.js?v=3a15516206">
+  <link rel="modulepreload" href="js3d/rewards.js?v=5c8c5c052a">
+  <link rel="modulepreload" href="js3d/gachafx.js?v=397b935844">
   <link rel="modulepreload" href="js3d/cosmetics-ui.js?v=9786dc4815">
   <link rel="modulepreload" href="js3d/displayname.js?v=613e18bf95">
   <link rel="modulepreload" href="js3d/plates.js?v=70ffa14b87">
   <link rel="modulepreload" href="js3d/playmat.js?v=cc85bb262e">
   <link rel="modulepreload" href="js3d/cardlist-ov.js?v=1d673fd0d2">
-  <link rel="modulepreload" href="js3d/opponent-select.js?v=aa7ecc4142">
+  <link rel="modulepreload" href="js3d/opponent-select.js?v=bf694d8aea">
   <link rel="modulepreload" href="js3d/aidecks.js?v=8d249240bd">
   <link rel="modulepreload" href="js3d/run-ui.js?v=02ebcc235f">
   <link rel="modulepreload" href="js3d/weekly-ui.js?v=c35e408f12">
@@ -2869,7 +2885,7 @@
   <link rel="modulepreload" href="js3d/review.js?v=34f174153b">
   <link rel="modulepreload" href="js3d/roomui.js?v=402be98743">
   <link rel="modulepreload" href="js3d/selectui.js?v=208abdaebc">
-  <link rel="modulepreload" href="js3d/cardtex.js?v=754a3952db">
+  <link rel="modulepreload" href="js3d/cardtex.js?v=a631f3583d">
   <link rel="modulepreload" href="js3d/fx.js?v=f2bbe73646">
   <link rel="modulepreload" href="js3d/arena.js?v=ed08c77720">
   <link rel="modulepreload" href="js3d/audio.js?v=28a4f522ba">
@@ -2899,7 +2915,6 @@
   <link rel="modulepreload" href="js3d/profile.js?v=ceb4a2eb88">
   <link rel="modulepreload" href="js3d/gacha-ui.js?v=75d62d278f">
   <link rel="modulepreload" href="js3d/replays-ui.js?v=9a6a4ca786">
-  <link rel="modulepreload" href="js3d/gachafx.js?v=397b935844">
   <link rel="modulepreload" href="js3d/prompts.js?v=348dff836d">
   <link rel="modulepreload" href="js3d/icons.js?v=15bacde80c">
   <link rel="modulepreload" href="js3d/cardtext.js?v=4cf5529855">
@@ -2913,6 +2928,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=a376ead8e7"></script>
+  <script type="module" src="js3d/main.js?v=314fe5d54e"></script>
 </body>
 </html>

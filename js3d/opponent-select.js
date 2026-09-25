@@ -52,7 +52,7 @@ export function openOpponentSelect(protocols) {
       '</div></section>' +
     '<section><h3>下剋上 <small>いちばん弱いデッキで、いちばん強い CPU に挑む</small></h3>' +
       '<div class="op-row">' + card('underdog', '下剋上' + (cleared ? ' <em>✓ TITLE — UNDERDOG</em>' : ''),
-        'あなた (最弱) vs 最強。勝つと TITLE — UNDERDOG',
+        'あなた (最弱) vs 最強。勝つと 称号 UNDERDOG・専用スリーブとマーカー・+100 XP',
         '<span class="op-vs">' + deck(UNDERDOG_DECK) + '<i>VS</i>' + deck(STRONGEST_AI) + '</span>', ' wide') + '</div></section>' +
     '<div class="op-foot"><button type="button" data-opp="back">← タイトルへ</button></div></div>';
   el.classList.add('show');

@@ -25,7 +25,8 @@ import * as TU from './tutorial.js';
 import { settings, onSettings, openSettings } from './settings.js';
 import { recordSoloResult, localRecords } from './stats.js';
 import { cardStats, cardTier, playerLevel, protocolSummary } from './stats-data.js';
-import { isUnlocked, rewardsBetween, TITLES } from './rewards.js';
+import { isUnlocked, rewardsBetween, TITLES, UNDERDOG_XP, underdogCleared } from './rewards.js';
+import { confetti } from './gachafx.js';
 import { setCosmeticProtocols, profileOf } from './cosmetics-ui.js';
 import { displayName } from './displayname.js';
 import { showPlates } from './plates.js';
@@ -268,6 +269,8 @@ async function boot() {
   });
   const [cards, effects] = await Promise.all([getJson('data/cards.json'), getJson('data/effects.json')]);
   setCosmeticProtocols(cards.protocols);
+  /* 前に下剋上を達成していた人 (褒美を足す前・別の端末・あとから記録を足した人) にも経験値の褒美を。key が同じなので1回だけ */
+  if (underdogCleared()) for (let i = 1; i <= UNDERDOG_XP / 20; i++) grantXp('underdog', 20, 'ud:' + i);
   setTimeout(() => { checkTrophies(null); }, 1500);   // 前から遊んでいる人の分・別の端末で取った分をまとめて
   for (const p of cards.protocols) {
     protoIndex[p.name] = p;
@@ -3439,10 +3442,11 @@ function showEndActions(win) {
     document.body.appendChild(el);
   }
   const underdogWin = win && aiDifficulty === UNDERDOG_LEVEL;
+  if (underdogWin) celebrateUnderdog();
   el.innerHTML =
     '<div class="end-title">' + (underdogWin ? '下剋上 達成！' : win ? 'あなたの勝ち' : '敗北') + '</div>' +
     nextGoalsHtml() +
-    (underdogWin ? '<div class="end-sub">最弱のデッキで最強に勝ちました。TITLE — UNDERDOG を獲得</div>' : '') +
+    (underdogWin ? '<div class="end-sub">最弱のデッキで最強に勝ちました。称号 UNDERDOG・専用スリーブとマーカー (GIANT SLAYER)・+' + UNDERDOG_XP + ' XP</div>' : '') +
     '<div class="end-btns">' +
       '<button class="arr-btn ok" id="endAgain" type="button">REMATCH</button>' +
       '<button class="arr-btn" id="endTop" type="button">TITLE</button>' +
@@ -4001,4 +4005,31 @@ function choiceCtx() {
       else board.clearHighlight(card);
     }
   };
+}
+
+/* 下剋上 (最弱のデッキで最強に勝つ) を達成: 大きく祝い、褒美 (経験値 +100・専用の見た目・称号) を渡す。
+   経験値は 20 ずつ 5 回に分けて入れる (帳簿の1件は 20 まで)。key が同じなので何度勝っても1回だけ */
+let underdogShown = false;
+async function celebrateUnderdog() {
+  if (underdogShown) return;
+  underdogShown = true;
+  let el = document.getElementById('underdogWin');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'underdogWin';
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-modal', 'true');
+    document.body.appendChild(el);
+  }
+  el.innerHTML = '<div class="ud-card"><small>UNDERDOG</small><h2>GIANT SLAYER</h2>' +
+    '<p>最弱のデッキで、最強の CPU を倒しました。</p>' +
+    '<ul><li>称号 UNDERDOG</li><li>専用スリーブ GIANT SLAYER</li><li>専用コントロールマーカー GIANT SLAYER</li><li>+' + UNDERDOG_XP + ' XP</li></ul>' +
+    '<p style="font-size:12px;opacity:.8">見た目は 設定 → COSMETICS で着けられます</p>' +
+    '<button type="button">受け取る</button></div>';
+  el.classList.add('show');
+  confetti(['#ffd65a', '#ff4f6e', '#fff4c8', '#ff8a5a'], 320);
+  setTimeout(() => confetti(['#ffd65a', '#ffffff', '#ff4f6e'], 220), 900);
+  await new Promise(resolve => { el.querySelector('button').onclick = resolve; });
+  el.classList.remove('show');
+  for (let i = 1; i <= UNDERDOG_XP / 20; i++) await gainXp('underdog', 20, 'ud:' + i, i < UNDERDOG_XP / 20);
 }

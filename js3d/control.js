@@ -24,7 +24,8 @@ const MARKER_STYLES = {
   crystal: { me: 0x7ff3ff, dim: 0x2c5c66 }, crimson: { me: 0xff5a6e, dim: 0x5e2430 }, prism: { me: 0xf4f0ff, dim: 0x5d5670 },
   /* ガチャの見た目 */
   emerald: { me: 0x3ff0a0, dim: 0x245c44 }, amber: { me: 0xffa640, dim: 0x5e4220 }, sapphire: { me: 0x4f8cff, dim: 0x22345e },
-  obsidian: { me: 0x2b2238, dim: 0x15101c }, nova: { me: 0xfff4c8, dim: 0x6b5e3a }
+  obsidian: { me: 0x2b2238, dim: 0x15101c }, nova: { me: 0xfff4c8, dim: 0x6b5e3a },
+  slayer: { me: 0xffc83a, dim: 0x5c1020 }        // 下剋上の褒美
 };
 
 /* トラッカーのマーカー画像 (2048px) の輪郭を、中心をそろえて 120° 対称に整えたもの。

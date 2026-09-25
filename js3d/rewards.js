@@ -40,9 +40,11 @@ export const REWARDS = [
 export const COSMETICS = {
   mat: [['neon', 'NEON GRID'], ['nebula', 'NEBULA'], ['vortex', 'VORTEX'], ['biomech', 'BIOMECH'], ['prism', 'PRISM'], ['eclipse', 'ECLIPSE']],
   sleeve: [['default', 'STANDARD'], ['crimson', 'CRIMSON'], ['circuit', 'CIRCUIT'], ['void', 'VOID'], ['holo', 'HOLO'], ['sakura', 'SAKURA'], ['aurum', 'AURUM'],
-    ['mint', 'MINT'], ['ocean', 'OCEAN'], ['ember', 'EMBER'], ['glacier', 'GLACIER'], ['toxic', 'TOXIC'], ['galaxy', 'GALAXY']],
+    ['mint', 'MINT'], ['ocean', 'OCEAN'], ['ember', 'EMBER'], ['glacier', 'GLACIER'], ['toxic', 'TOXIC'], ['galaxy', 'GALAXY'],
+    ['slayer', 'GIANT SLAYER']],
   marker: [['default', 'STANDARD'], ['gold', 'GOLD'], ['crystal', 'CRYSTAL'], ['crimson', 'CRIMSON'], ['prism', 'PRISM'],
-    ['emerald', 'EMERALD'], ['amber', 'AMBER'], ['sapphire', 'SAPPHIRE'], ['obsidian', 'OBSIDIAN'], ['nova', 'NOVA']],
+    ['emerald', 'EMERALD'], ['amber', 'AMBER'], ['sapphire', 'SAPPHIRE'], ['obsidian', 'OBSIDIAN'], ['nova', 'NOVA'],
+    ['slayer', 'GIANT SLAYER']],
   ccolor: [['default', 'PROTOCOL'], ['gold', 'GOLD'], ['cyan', 'CYAN'], ['rainbow', 'RAINBOW'], ['lime', 'LIME'], ['violet', 'VIOLET'], ['ember', 'EMBER']],
   victory: [['default', 'STANDARD'], ['aurora', 'AURORA']]
 };
@@ -58,6 +60,19 @@ export const GACHA_ITEMS = [
   { kind: 'title', key: 'highroller', rar: 'E' },
   { kind: 'sleeve', key: 'galaxy', rar: 'L' }, { kind: 'marker', key: 'nova', rar: 'L' }, { kind: 'title', key: 'fortune', rar: 'L' }
 ];
+/* 下剋上 (最弱のデッキで最強に勝つ) の褒美。勝った記録 (compileSoloRecords に level 20 の勝ち) があれば使える */
+export const UNDERDOG_ITEMS = [{ kind: 'sleeve', key: 'slayer' }, { kind: 'marker', key: 'slayer' }];
+export const UNDERDOG_XP = 100;
+const isUnderdogItem = (kind, key) => UNDERDOG_ITEMS.some(g => g.kind === kind && g.key === key);
+export function underdogCleared() {
+  try {
+    const list = JSON.parse(localStorage.getItem('compileSoloRecords') || '[]');
+    return Array.isArray(list) && list.some(r => r && r.win && r.level === 20);
+  } catch (e) {
+    return false;
+  }
+}
+
 const GACHA_KEY = 'compileGacha';
 export const gachaId = (kind, key) => kind + ':' + key;
 const isGachaItem = (kind, key) => GACHA_ITEMS.some(g => g.kind === kind && g.key === key);
@@ -105,6 +120,7 @@ export function unlockLevel(kind, key) {
   if (unlockAll) return 1;
   /* ガチャの見た目はレベルでは開かない (取っていれば 1、取っていなければ届かない数) */
   if (isGachaItem(kind, key)) return gachaOwned()[gachaId(kind, key)] ? 1 : 9999;
+  if (isUnderdogItem(kind, key)) return underdogCleared() ? 1 : 9999;
   const r = REWARDS.find(x => x.kind === kind && x.key === key);
   return r ? r.lv : 1;
 }

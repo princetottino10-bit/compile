@@ -496,6 +496,9 @@ const SLEEVES = {
     ring2: 'rgba(255,255,255,.8)', strip: '160,210,255' },
   toxic: { a: '#1d3a05', b: '#081302', grid: 'rgba(190,255,60,.1)', halo: '170,255,40', ring: 'rgba(210,255,90,.92)',
     ring2: 'rgba(120,220,20,.6)', strip: '170,255,40', circuit: true },
+  /* 下剋上の褒美: 黒地に金と深紅 */
+  slayer: { a: '#2a0808', b: '#000000', grid: 'rgba(255,210,90,.1)', halo: '255,196,60', ring: 'rgba(255,214,90,.95)',
+    ring2: 'rgba(220,30,60,.8)', strip: '255,40,70', glitch: true },
   galaxy: { a: '#1a0b3d', b: '#040112', grid: 'rgba(255,255,255,.12)', halo: '255,120,220', ring: 'rgba(255,240,255,.95)',
     ring2: 'rgba(124,240,208,.7)', strip: '255,120,220', holo: true, glitch: true }
 };
