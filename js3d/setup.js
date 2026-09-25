@@ -226,11 +226,12 @@ export function runSetup(protocols, options = {}) {
     syncStart();
   }
 
-  /* ---------- ドラフト (CPU と取り合う) ---------- */
+  /* ---------- ドラフト (CPU と取り合う) ----------
+     公式ルール: 先に先攻・後攻を決め、先攻が先にドラフトする。なので最初にコイントスを見せる */
   function startDraft() {
     const names = pool();
     const size = clampCandidates(draftSize, draftBans, names.length);
-    const first = Math.random() < 0.5 ? 0 : 1;           // 0 = あなた
+    const first = Math.random() < 0.5 ? 0 : 1;           // 0 = あなた (先攻)
     draft = {
       candidates: shuffled(names).slice(0, size), first,
       steps: draftSteps(first, draftBans), at: 0,
@@ -238,7 +239,29 @@ export function runSetup(protocols, options = {}) {
     };
     backBtn.textContent = '← ルールに戻る';
     levelWrap.hidden = true;
-    runDraft();
+    coinToss(draft);
+  }
+
+  /* コイントス: 回るコインのあとに「あなたが先攻 / 後攻」。見せ終わったらドラフトへ */
+  function coinToss(token) {
+    const calm = (() => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } })();
+    head.innerHTML = '<b>//</b> COIN TOSS';
+    note.textContent = '先攻・後攻を決めます。先攻が先にドラフトします。';
+    renderDraftSummary();
+    grid.innerHTML = '';
+    startBtn.disabled = true;
+    startBtn.textContent = '抽選中…';
+    const meFirst = token.first === 0;
+    const toss = document.createElement('div');
+    toss.className = 'sd-toss' + (calm ? ' calm' : '');
+    toss.innerHTML = '<div class="sd-coin ' + (meFirst ? 'me' : 'cpu') + '"><i>YOU</i><i>CPU</i></div>' +
+      '<p><b>' + (meFirst ? 'あなたが先攻' : 'あなたは後攻') + '</b><span>' + (meFirst ? 'あなたが先にドラフトします' : 'CPU が先にドラフトします') + '</span></p>';
+    grid.appendChild(toss);
+    setTimeout(() => toss.classList.add('done'), calm ? 0 : 1300);
+    setTimeout(() => {
+      if (draft !== token) return;                        // ルールに戻った
+      runDraft();
+    }, calm ? 1200 : 2600);
   }
 
   const taken = () => draft.mine.concat(draft.theirs, draft.banned[0], draft.banned[1]);

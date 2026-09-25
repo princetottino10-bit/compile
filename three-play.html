@@ -2273,6 +2273,21 @@
     background:linear-gradient(100deg,var(--gold),var(--pink));clip-path:var(--cut-s);animation:rnCap .5s cubic-bezier(.2,1.4,.4,1);}
   .rn-phoenix{color:var(--gold)!important;font-weight:900!important;text-shadow:0 0 16px rgba(255,120,60,.6);}
   .rn-confetti{position:fixed;inset:0;z-index:80;pointer-events:none;}
+  /* ドラフトの前のコイントス (先攻・後攻) */
+  .sd-toss{grid-column:1 / -1;display:flex;flex-direction:column;align-items:center;gap:18px;padding:40px 0;}
+  .sd-coin{position:relative;width:110px;height:110px;transform-style:preserve-3d;animation:sdFlip 1.3s cubic-bezier(.3,.1,.3,1) forwards;}
+  .sd-coin i{position:absolute;inset:0;display:grid;place-items:center;border-radius:50%;backface-visibility:hidden;
+    font:900 20px/1 var(--font-hud,var(--font-ui));font-style:normal;letter-spacing:.12em;}
+  .sd-coin i:first-child{background:radial-gradient(circle at 35% 30%,#ffd6ea,var(--pink) 60%,#7a1f4d);color:#fff;box-shadow:0 0 30px rgba(255,79,163,.5);}
+  .sd-coin i:last-child{transform:rotateY(180deg);background:radial-gradient(circle at 35% 30%,#e4dbff,var(--violet) 60%,#2e1a66);color:#fff;box-shadow:0 0 30px rgba(139,92,246,.5);}
+  .sd-coin.me{--end:1800deg;} .sd-coin.cpu{--end:1980deg;}
+  @keyframes sdFlip{from{transform:rotateY(0) scale(.6);}60%{transform:rotateY(calc(var(--end) * .8)) scale(1.15);}to{transform:rotateY(var(--end)) scale(1);}}
+  .sd-toss p{margin:0;display:flex;flex-direction:column;align-items:center;gap:6px;opacity:0;transform:translateY(8px);transition:opacity .3s,transform .3s;}
+  .sd-toss.done p{opacity:1;transform:none;}
+  .sd-toss p b{font:900 clamp(22px,4vw,32px)/1.1 var(--font-ui);color:#fff;letter-spacing:.08em;}
+  .sd-toss p span{font:700 13px/1.4 system-ui;color:var(--dim);}
+  .sd-toss.calm .sd-coin{animation:none;}
+  .sd-toss.calm .sd-coin.cpu{transform:rotateY(180deg);}
   /* ---- COSMETICS の GACHA ---- */
   .ga-card{width:min(600px,100%);}
   .ga-top{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
@@ -2760,7 +2775,7 @@
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
       "./js3d/main.js": "./js3d/main.js?v=0f7aa99580",
-      "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=6398fed15e",
+      "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=aa7ecc4142",
       "./js3d/panel.js": "./js3d/panel.js?v=ecb8a073e3",
       "./js3d/plates.js": "./js3d/plates.js?v=70ffa14b87",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=e0273dcae0",
@@ -2780,7 +2795,7 @@
       "./js3d/run.js": "./js3d/run.js?v=309b86d946",
       "./js3d/selectui.js": "./js3d/selectui.js?v=208abdaebc",
       "./js3d/settings.js": "./js3d/settings.js?v=142e9b5e99",
-      "./js3d/setup.js": "./js3d/setup.js?v=f75a89191c",
+      "./js3d/setup.js": "./js3d/setup.js?v=1073765172",
       "./js3d/solodraft.js": "./js3d/solodraft.js?v=9863c9528c",
       "./js3d/stage.js": "./js3d/stage.js?v=e3cda4525b",
       "./js3d/stats-data.js": "./js3d/stats-data.js?v=bcf7d5e977",
@@ -2814,7 +2829,7 @@
   <link rel="modulepreload" href="js3d/board.js?v=77bdece4ae">
   <link rel="modulepreload" href="js3d/control.js?v=096e6018c4">
   <link rel="modulepreload" href="js3d/panel.js?v=ecb8a073e3">
-  <link rel="modulepreload" href="js3d/setup.js?v=f75a89191c">
+  <link rel="modulepreload" href="js3d/setup.js?v=1073765172">
   <link rel="modulepreload" href="js3d/title.js?v=bb69966c1f">
   <link rel="modulepreload" href="js3d/training.js?v=3018b4399e">
   <link rel="modulepreload" href="js3d/room.js?v=c34129de95">
@@ -2830,7 +2845,7 @@
   <link rel="modulepreload" href="js3d/plates.js?v=70ffa14b87">
   <link rel="modulepreload" href="js3d/playmat.js?v=cc85bb262e">
   <link rel="modulepreload" href="js3d/cardlist-ov.js?v=1d673fd0d2">
-  <link rel="modulepreload" href="js3d/opponent-select.js?v=6398fed15e">
+  <link rel="modulepreload" href="js3d/opponent-select.js?v=aa7ecc4142">
   <link rel="modulepreload" href="js3d/aidecks.js?v=8d249240bd">
   <link rel="modulepreload" href="js3d/run-ui.js?v=83b3978935">
   <link rel="modulepreload" href="js3d/weekly-ui.js?v=c35e408f12">
