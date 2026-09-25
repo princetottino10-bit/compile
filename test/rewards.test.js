@@ -19,8 +19,12 @@ test('レベルアップで手に入る報酬・次の報酬・称号', async ()
   const R = await load();
   assert.deepEqual(R.rewardsBetween(4, 5).map(r => r.key), ['compiler', 'icon']);
   assert.equal(R.rewardsBetween(10, 10).length, 0);
-  assert.equal(R.nextReward(8).lv, 10);
-  assert.equal(R.nextReward(20), null);
+  assert.equal(R.nextReward(8).lv, 9);
+  assert.equal(R.nextReward(20).lv, 22);
+  assert.equal(R.nextReward(30), null);
+  /* 称号はどれもオンラインで相手に見せられる (サーバーの BADGES と同じ key) */
+  const server = require('node:fs').readFileSync(require('node:path').join(__dirname, '../supabase/functions/secure-room/index.ts'), 'utf8');
+  for (const key of Object.keys(R.TITLES)) assert.ok(server.includes('"' + key + '"'), key + ' はサーバーの BADGES にある');
   assert.deepEqual(R.ownedTitles(10, ['underdog']), ['compiler', 'veteran', 'underdog']);
   assert.deepEqual(R.ownedTitles(1, []), []);
 });

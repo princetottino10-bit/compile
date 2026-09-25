@@ -46,7 +46,8 @@ const TURN_LIMIT_MS = 120_000;
 const WAITING_FRESH_MS = 90_000;
 
 /* 相手に見せる称号 (見た目だけ)。決まった一覧にあるものだけ。無ければ null */
-const BADGES = ["compiler", "veteran", "expert", "master", "underdog", "platinum"];
+const BADGES = ["compiler", "veteran", "tactician", "expert", "architect", "master", "legend", "ascended", "underdog",
+  "chainer", "flawless", "grandmaster", "platinum"];
 function cleanBadge(value: unknown) {
   const v = String(value || "");
   return BADGES.includes(v) ? v : null;

@@ -3,7 +3,7 @@
  *   盤面・カードの裏面・コントロールマーカー・コンパイルの光・勝ちの演出・称号・アイコン
  *   まだのものは鍵と、解放されるレベルを出す
  * ========================================================================= */
-import { hasPlatinum } from './achievements.js';
+import { hasPlatinum, loadTrophies } from './achievements.js';
 import { bonusXp } from './xp.js';
 import { COSMETICS, TITLES, unlockLevel, ownedTitles } from './rewards.js';
 import { playerLevel } from './stats-data.js';
@@ -17,8 +17,12 @@ const LABELS = { mat: 'PLAYMAT', sleeve: 'SLEEVE', marker: 'CONTROL MARKER', cco
 const DEFAULT_KEY = { mat: 'neon', sleeve: 'default', marker: 'default', ccolor: 'default', victory: 'default' };
 
 /* 条件で取る称号 (レベル以外) */
+/* 実績を取ると付けられる称号 (実績の id → 称号の key) */
+const TROPHY_TITLES = { chain4: 'chainer', flawless: 'flawless', mastery10: 'grandmaster' };
 export function extraTitles(records) {
   const out = records.some(r => r.win && r.level === UNDERDOG_LEVEL) ? ['underdog'] : [];
+  const got = loadTrophies();
+  for (const [id, key] of Object.entries(TROPHY_TITLES)) if (got[id]) out.push(key);
   return hasPlatinum() ? out.concat('platinum') : out;
 }
 

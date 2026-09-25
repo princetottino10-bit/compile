@@ -9,6 +9,7 @@
  * ========================================================================= */
 import { CHALLENGER_BASE, CHALLENGERS, UNDERDOG_LEVEL } from './aidecks.js';
 import { XP_GAIN } from './xp.js';
+import { protocolSummary } from './stats-data.js';
 
 const onlineWin = (e) => e.src === 'online' && e.xp > XP_GAIN.onlinePlay;   // 勝ったときだけ多く入る
 
@@ -29,6 +30,12 @@ const playedKinds = (c) => new Set(c.records.flatMap(r => r.cards || [])).size;
 const protoWins = (c) => new Set(c.records.filter(r => r.win).flatMap(r => r.me)).size;
 const tierCards = (c, min) => Array.from(c.cardWins.values()).filter(t => t.wins >= min).length;
 const g = (c) => c.game || null;
+/* プロトコルの習熟度のレベル (戦績から) の一覧 */
+const masteries = (c) => Array.from(protocolSummary(c.records).values()).map(t => t.mastery.level);
+const bestMastery = (c) => Math.max(0, ...masteries(c));
+const onlineGames = (c) => c.xp.filter(e => e.src === 'online').length;
+const dailyAllDays = (c) => c.xp.filter(e => /^k:dm:\d+:all$/.test(e.id || '')).length;
+const playedProtos = (c) => new Set(c.records.flatMap(r => r.me || [])).size;
 const hour = (c) => new Date(g(c).at).getHours();
 
 /* progress(c): 積み上げの進み具合 [今, 目標] (出せるものだけ) */
@@ -44,6 +51,8 @@ export const TROPHIES = [
   { id: 'explorer', tier: 'bronze', name: 'EXPLORER', desc: '10種類のプロトコルで戦う', test: (c) => new Set(c.records.flatMap(r => r.me)).size >= 10, progress: (c) => [new Set(c.records.flatMap(r => r.me)).size, 10] },
   { id: 'bronze_card', tier: 'bronze', name: 'FIRST SHINE', desc: 'カードの縁を銅にする (そのカードで3勝)', test: (c) => tierCards(c, 3) >= 1 },
   { id: 'chain3', tier: 'bronze', name: 'CHAIN LINK', desc: '自分の効果で割り込んで、チェーンを3つつなげる', test: (c) => !!g(c) && (g(c).chainMax | 0) >= 3 },
+  { id: 'mastery3', tier: 'bronze', name: 'APPRENTICE', desc: 'どれかのプロトコルの習熟度を3にする', test: (c) => bestMastery(c) >= 3, progress: (c) => [Math.min(3, bestMastery(c)), 3] },
+  { id: 'overclock', tier: 'bronze', hidden: true, name: 'OVERCLOCK', desc: '1試合で自分の効果を15回発動させる', test: (c) => !!g(c) && (g(c).effects | 0) >= 15 },
   { id: 'loss5', tier: 'bronze', hidden: true, name: 'NEVER GIVE UP', desc: '5連敗する', test: (c) => streak(c.records, false) >= 5 },
   { id: 'marathon', tier: 'bronze', hidden: true, name: 'MARATHON', desc: '90手番以上かかった試合に勝つ', test: (c) => !!g(c) && g(c).win && g(c).turns >= 90 },
   { id: 'fulldeck', tier: 'bronze', hidden: true, name: 'FULL DECK', desc: '1試合で違うカードを14種類、表で出す', test: (c) => !!g(c) && g(c).faceUpIds.length >= 14 },
@@ -58,7 +67,12 @@ export const TROPHIES = [
   { id: 'weekly', tier: 'silver', name: 'WEEKLY CHAMP', desc: 'WEEKLY をクリアする', test: (c) => xpHas(c, e => e.src === 'weekly') },
   { id: 'level10', tier: 'silver', name: 'VETERAN', desc: 'プレイヤーレベル10になる', test: (c) => c.level >= 10, progress: (c) => [Math.min(c.level, 10), 10] },
   { id: 'gold_card', tier: 'silver', name: 'GOLDEN TOUCH', desc: 'カードの縁を金にする (そのカードで25勝)', test: (c) => tierCards(c, 25) >= 1 },
-  { id: 'chain4', tier: 'silver', name: 'CHAIN REACTION', desc: '自分の効果で割り込んで、チェーンを4つつなげる', test: (c) => !!g(c) && (g(c).chainMax | 0) >= 4 },
+  { id: 'chain4', tier: 'silver', name: 'CHAIN REACTION', desc: '自分の効果で割り込んで、チェーンを4つつなげる (称号 CHAIN MASTER)', test: (c) => !!g(c) && (g(c).chainMax | 0) >= 4 },
+  { id: 'online10', tier: 'silver', name: 'REGULAR', desc: 'オンライン対戦を10戦する', test: (c) => onlineGames(c) >= 10, progress: (c) => [Math.min(10, onlineGames(c)), 10] },
+  { id: 'daily7', tier: 'silver', name: 'HABIT', desc: 'デイリーミッションを3つそろえた日を7日つくる', test: (c) => dailyAllDays(c) >= 7, progress: (c) => [Math.min(7, dailyAllDays(c)), 7] },
+  { id: 'versatile', tier: 'silver', name: 'VERSATILE', desc: '5つのプロトコルの習熟度を3以上にする',
+    test: (c) => masteries(c).filter(l => l >= 3).length >= 5, progress: (c) => [Math.min(5, masteries(c).filter(l => l >= 3).length), 5] },
+  { id: 'all30play', tier: 'silver', name: 'CARTOGRAPHER', desc: '30のプロトコルすべてで戦う', test: (c) => playedProtos(c) >= 30, progress: (c) => [playedProtos(c), 30] },
   { id: 'edge', tier: 'silver', hidden: true, name: 'ON THE EDGE', desc: '相手があと1回でコンパイルしきるところから勝つ', test: (c) => !!g(c) && g(c).win && g(c).oppCompiles >= g(c).winCompiles - 1 },
   { id: 'speed', tier: 'silver', hidden: true, name: 'SPEEDRUN', desc: '35手番以内 (両者合わせて) で勝つ', test: (c) => !!g(c) && g(c).win && g(c).turns > 0 && g(c).turns <= 35 },
   { id: 'onecard', tier: 'silver', hidden: true, name: 'ONE CARD SHOW', desc: '1試合で同じカードの効果を6回使う', test: (c) => !!g(c) && Object.values(g(c).effectsMap).some(n => n >= 6) },
@@ -72,7 +86,11 @@ export const TROPHIES = [
   { id: 'all30', tier: 'gold', name: 'OMNISCIENT', desc: '30のプロトコルすべてで1勝する', test: (c) => protoWins(c) >= 30, progress: (c) => [protoWins(c), 30] },
   { id: 'holo_card', tier: 'gold', name: 'HOLOGRAM', desc: 'カードをホロにする (そのカードで50勝)', test: (c) => tierCards(c, 50) >= 1 },
   { id: 'level20', tier: 'gold', name: 'MASTER', desc: 'プレイヤーレベル20になる', test: (c) => c.level >= 20, progress: (c) => [Math.min(c.level, 20), 20] },
-  { id: 'flawless', tier: 'gold', hidden: true, name: 'FLAWLESS', desc: '相手に1回もコンパイルさせずに勝つ', test: (c) => !!g(c) && g(c).win && g(c).oppCompiles === 0 },
+  { id: 'mastery10', tier: 'gold', name: 'GRANDMASTER', desc: 'どれかのプロトコルの習熟度を最大 (10) にする (称号 GRANDMASTER)',
+    test: (c) => bestMastery(c) >= 10, progress: (c) => [bestMastery(c), 10] },
+  { id: 'level30', tier: 'gold', name: 'LEGEND', desc: 'プレイヤーレベル30になる', test: (c) => c.level >= 30, progress: (c) => [Math.min(c.level, 30), 30] },
+  { id: 'cards180', tier: 'gold', name: 'ARCHIVIST', desc: '180種類すべてのカードを表で出す', test: (c) => playedKinds(c) >= 180, progress: (c) => [Math.min(180, playedKinds(c)), 180] },
+  { id: 'flawless', tier: 'gold', hidden: true, name: 'FLAWLESS', desc: '相手に1回もコンパイルさせずに勝つ (称号 FLAWLESS)', test: (c) => !!g(c) && g(c).win && g(c).oppCompiles === 0 },
   /* ---- 全部 ---- */
   { id: 'platinum', tier: 'platinum', name: 'PLATINUM', desc: 'ほかの実績をすべて取る (称号 PLATINUM)', test: () => false }
 ];

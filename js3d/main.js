@@ -307,7 +307,14 @@ async function boot() {
     auraFor,
     foilFor,
     sleeve: () => cosmetic('sleeve', 'default'),
-    compileColor: () => (cosmetic('ccolor', 'default') === 'gold' ? '#ffd86a' : null),
+    /* 自分のコンパイルの光の色 (レベルの報酬)。虹は毎回ちがう色 */
+    compileColor: () => {
+      const c = cosmetic('ccolor', 'default');
+      if (c === 'gold') return '#ffd86a';
+      if (c === 'cyan') return '#7ff3ff';
+      if (c === 'rainbow') return '#' + new THREE.Color().setHSL(Math.random(), 0.9, 0.62).getHexString();
+      return null;
+    },
     onCompile: async (info) => {
       /* まず盤上のプロトコルカードを "Compiled" 面へ裏返し、その後にカットイン */
       await panels.flipAt(info.line, info.side, true);

@@ -243,7 +243,39 @@ function drawPrism(ctx) {
   edgeTitle(ctx, 'rgba(240,200,120,.85)');
 }
 
-const DRAW = { nebula: drawNebula, vortex: drawVortex, biomech: drawBiomech, prism: drawPrism };
+/* 日食: 黒地の真ん中に金の光の輪 (コロナ)。細い放射の線 */
+function drawEclipse(ctx) {
+  const r = rng(77);
+  ctx.fillStyle = '#050407';
+  ctx.fillRect(0, 0, W, H);
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < 90; i++) {                                     // コロナの放射
+    const a = r() * Math.PI * 2, len = 260 + r() * 420;
+    const g = ctx.createLinearGradient(W / 2, H / 2, W / 2 + Math.cos(a) * len, H / 2 + Math.sin(a) * len);
+    g.addColorStop(0, 'rgba(255,196,110,.16)');
+    g.addColorStop(1, 'rgba(255,196,110,0)');
+    ctx.strokeStyle = g;
+    ctx.lineWidth = 1 + r() * 3;
+    ctx.beginPath(); ctx.moveTo(W / 2, H / 2); ctx.lineTo(W / 2 + Math.cos(a) * len, H / 2 + Math.sin(a) * len); ctx.stroke();
+  }
+  ctx.restore();
+  blob(ctx, W / 2, H / 2, 330, 'rgba(255,170,80,A)', 0.42);
+  blob(ctx, W / 2, H / 2, 210, 'rgba(255,236,200,A)', 0.5);
+  ctx.fillStyle = '#050407';                                          // 月の影
+  ctx.beginPath(); ctx.arc(W / 2, H / 2, 150, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,226,170,.8)';
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(W / 2, H / 2, 152, 0, Math.PI * 2); ctx.stroke();
+  for (let i = 0; i < 160; i++) {                                    // 星
+    ctx.fillStyle = 'rgba(255,255,255,' + (0.1 + r() * 0.4) + ')';
+    ctx.fillRect(r() * W, r() * H, 1.5, 1.5);
+  }
+  drawSlots(ctx, 'rgba(8,6,4,.72)', 'rgba(255,214,150,.75)', 2);
+  edgeTitle(ctx, 'rgba(255,214,150,.8)');
+}
+
+const DRAW = { nebula: drawNebula, vortex: drawVortex, biomech: drawBiomech, prism: drawPrism, eclipse: drawEclipse };
 const cache = new Map();
 
 /* 柄のテクスチャ (neon は柄なし = null) */

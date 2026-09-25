@@ -475,7 +475,16 @@ const SLEEVES = {
   circuit: { a: '#0b2a22', b: '#04120e', grid: 'rgba(160,123,255,.08)', halo: '99,243,255', ring: 'rgba(160,123,255,.85)',
     ring2: 'rgba(185,164,255,.55)', strip: '160,123,255', circuit: true },
   holo: { a: '#241a3d', b: '#0b0a18', grid: 'rgba(255,255,255,.1)', halo: '185,140,255', ring: 'rgba(255,255,255,.85)',
-    ring2: 'rgba(185,140,255,.6)', strip: '185,140,255', holo: true }
+    ring2: 'rgba(185,140,255,.6)', strip: '185,140,255', holo: true },
+  /* 黒地に金の輪 */
+  void: { a: '#0d0c12', b: '#020203', grid: 'rgba(255,215,130,.05)', halo: '255,196,90', ring: 'rgba(255,214,130,.9)',
+    ring2: 'rgba(255,196,90,.4)', strip: '255,196,90' },
+  /* 桜色の地に白の輪 */
+  sakura: { a: '#3d1830', b: '#12070f', grid: 'rgba(255,200,225,.08)', halo: '255,170,210', ring: 'rgba(255,232,242,.92)',
+    ring2: 'rgba(255,150,200,.6)', strip: '255,170,210' },
+  /* 金の地に黒の輪 */
+  aurum: { a: '#6b4f14', b: '#231704', grid: 'rgba(255,240,190,.12)', halo: '255,226,150', ring: 'rgba(20,14,4,.85)',
+    ring2: 'rgba(255,236,170,.7)', strip: '255,226,150' }
 };
 export function backTex(variant) {
   const key = SLEEVES[variant] ? variant : 'default';

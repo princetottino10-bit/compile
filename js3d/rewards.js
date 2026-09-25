@@ -14,27 +14,43 @@ export const REWARDS = [
   { lv: 6, kind: 'mat', key: 'vortex', name: 'PLAYMAT — VORTEX' },
   { lv: 7, kind: 'sleeve', key: 'circuit', name: 'SLEEVE — CIRCUIT' },
   { lv: 8, kind: 'ccolor', key: 'gold', name: 'COMPILE FX — GOLD' },
+  { lv: 9, kind: 'marker', key: 'crystal', name: 'CONTROL MARKER — CRYSTAL' },
   { lv: 10, kind: 'mat', key: 'biomech', name: 'PLAYMAT — BIOMECH' },
   { lv: 10, kind: 'title', key: 'veteran', name: 'TITLE — VETERAN' },
+  { lv: 11, kind: 'ccolor', key: 'cyan', name: 'COMPILE FX — CYAN' },
   { lv: 12, kind: 'victory', key: 'aurora', name: 'VICTORY FX — AURORA' },
+  { lv: 13, kind: 'sleeve', key: 'void', name: 'SLEEVE — VOID' },
+  { lv: 14, kind: 'title', key: 'tactician', name: 'TITLE — TACTICIAN' },
   { lv: 15, kind: 'sleeve', key: 'holo', name: 'SLEEVE — HOLO' },
   { lv: 15, kind: 'title', key: 'expert', name: 'TITLE — EXPERT' },
+  { lv: 16, kind: 'marker', key: 'crimson', name: 'CONTROL MARKER — CRIMSON' },
+  { lv: 17, kind: 'ccolor', key: 'rainbow', name: 'COMPILE FX — RAINBOW' },
+  { lv: 18, kind: 'sleeve', key: 'sakura', name: 'SLEEVE — SAKURA' },
+  { lv: 19, kind: 'title', key: 'architect', name: 'TITLE — ARCHITECT' },
   { lv: 20, kind: 'mat', key: 'prism', name: 'PLAYMAT — PRISM' },
-  { lv: 20, kind: 'title', key: 'master', name: 'TITLE — MASTER' }
+  { lv: 20, kind: 'title', key: 'master', name: 'TITLE — MASTER' },
+  { lv: 22, kind: 'mat', key: 'eclipse', name: 'PLAYMAT — ECLIPSE' },
+  { lv: 24, kind: 'marker', key: 'prism', name: 'CONTROL MARKER — PRISM' },
+  { lv: 25, kind: 'title', key: 'legend', name: 'TITLE — LEGEND' },
+  { lv: 27, kind: 'sleeve', key: 'aurum', name: 'SLEEVE — AURUM' },
+  { lv: 30, kind: 'title', key: 'ascended', name: 'TITLE — ASCENDED' }
 ];
 
 /* 見た目の選択肢 (default ははじめから)。名前は設定の画面に出す */
 export const COSMETICS = {
-  mat: [['neon', 'NEON GRID'], ['nebula', 'NEBULA'], ['vortex', 'VORTEX'], ['biomech', 'BIOMECH'], ['prism', 'PRISM']],
-  sleeve: [['default', 'STANDARD'], ['crimson', 'CRIMSON'], ['circuit', 'CIRCUIT'], ['holo', 'HOLO']],
-  marker: [['default', 'STANDARD'], ['gold', 'GOLD']],
-  ccolor: [['default', 'PROTOCOL'], ['gold', 'GOLD']],
+  mat: [['neon', 'NEON GRID'], ['nebula', 'NEBULA'], ['vortex', 'VORTEX'], ['biomech', 'BIOMECH'], ['prism', 'PRISM'], ['eclipse', 'ECLIPSE']],
+  sleeve: [['default', 'STANDARD'], ['crimson', 'CRIMSON'], ['circuit', 'CIRCUIT'], ['void', 'VOID'], ['holo', 'HOLO'], ['sakura', 'SAKURA'], ['aurum', 'AURUM']],
+  marker: [['default', 'STANDARD'], ['gold', 'GOLD'], ['crystal', 'CRYSTAL'], ['crimson', 'CRIMSON'], ['prism', 'PRISM']],
+  ccolor: [['default', 'PROTOCOL'], ['gold', 'GOLD'], ['cyan', 'CYAN'], ['rainbow', 'RAINBOW']],
   victory: [['default', 'STANDARD'], ['aurora', 'AURORA']]
 };
 
-/* 称号 (レベルのもの + 条件で取るもの) */
+/* 称号 (レベルのもの + 条件で取るもの)。オンラインで相手に見せるので、サーバー (secure-room の BADGES) にも同じ key を並べる */
 export const TITLES = {
-  compiler: 'COMPILER', veteran: 'VETERAN', expert: 'EXPERT', master: 'MASTER', underdog: 'UNDERDOG',
+  compiler: 'COMPILER', veteran: 'VETERAN', tactician: 'TACTICIAN', expert: 'EXPERT', architect: 'ARCHITECT',
+  master: 'MASTER', legend: 'LEGEND', ascended: 'ASCENDED', underdog: 'UNDERDOG',
+  /* 実績で取る (cosmetics-ui.js の TROPHY_TITLES) */
+  chainer: 'CHAIN MASTER', flawless: 'FLAWLESS', grandmaster: 'GRANDMASTER',
   platinum: 'PLATINUM'     // 実績をすべて取る (achievements.js)
 };
 
