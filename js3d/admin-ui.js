@@ -16,14 +16,14 @@ const when = (t) => new Date(t).toLocaleString('ja-JP', { month: 'numeric', day:
 /* 管理者の画面 (PLAYERS): モードの呼び名と、人ごとの回数の札 */
 const MODE_LABEL = {
   cpu: '対 CPU 戦', quick: 'おまかせで1戦', run: '勝ち抜き戦', weekly: '週替わり3連戦', tutorial: 'チュートリアル',
-  'cpu?': '対戦 (モード不明)', online: 'オンライン対戦', lesson: 'チュートリアル', tsume: '詰めコンパイル',
+  'cpu?': '対戦', online: 'オンライン対戦', lesson: 'チュートリアル', tsume: '詰めコンパイル',
   puzzle: '共有された問題', daily: 'デイリーミッション'
 };
 function modeChips(p) {
   const m = p.modes || {}, x = p.xp || {};
   const items = [
     ['対 CPU 戦', m.cpu], ['おまかせ', m.quick], ['勝ち抜き戦', m.run], ['週替わり', m.weekly], ['チュートリアル (対戦)', m.tutorial],
-    ['対戦 (不明)', m.unknown], ['オンライン', x.online], ['レッスン', x.lesson], ['詰めコンパイル', x.tsume], ['今日の問題', x.dailyPuzzle],
+['オンライン', x.online], ['レッスン', x.lesson], ['詰めコンパイル', x.tsume], ['今日の問題', x.dailyPuzzle],
     ['共有された問題', x.puzzle], ['勝ち抜き戦クリア', x.runClear], ['週替わりクリア', x.weeklyClear], ['デイリー', x.daily], ['ガチャ', +p.gacha || 0]
   ].filter(([, n]) => n > 0);
   const run = p.run && p.run !== 'over' && p.run !== 'clear' ? '<i class="now">勝ち抜き戦の途中</i>' : '';
@@ -82,7 +82,7 @@ export function openAdmin() {
       const day = (t) => (t ? new Date(t).toLocaleDateString('ja-JP', { year: 'numeric', month: 'numeric', day: 'numeric' }) : '—');
       const via = { google: 'Google', email: 'メール', github: 'GitHub' };
       body.innerHTML = '<p class="pz-note">ログインしている ' + list.length + ' 人 (ゲストは含みません)。表示名は本人が決めた名前です。' +
-        '対戦のモードは 9/25 から記録しています (それより前の対戦は「対戦 (不明)」)。</p>' +
+        '</p>' +
         (list.length ? '<ol class="ad-players">' + list.map(p =>
           '<li><b>' + (p.name ? esc(p.name) : '<i>名前なし</i> <small>#' + esc(p.id) + '</small>') +
             ' <span class="ad-lv">LV ' + (p.level | 0 || 1) + ' <small>(' + (p.xp_total | 0) + ' XP)</small></span></b>' +
