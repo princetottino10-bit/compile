@@ -325,10 +325,20 @@ async function deleteAccount(clearLocal) {
 /* ログインしていない人に、ログインで何ができるかを必要な場面で一度だけ知らせる。
    reason ごとに1回 (compileLoginHints)。ログイン中・ログインが使えない環境では出さない */
 const HINTS = {
-  firstWin: 'この記録はこのブラウザにだけ残っています。ログインすると、別の端末でも同じ続きから遊べます。'
+  firstWin: 'この記録はこのブラウザにだけ残っています。ログインすると、別の端末でも同じ続きから遊べます。',
+  rarePull: 'レアな見た目を引きました！ いまはこのブラウザにだけ残っています。ブラウザのデータが消えると一緒に消えます。ログインでアカウントに保存しましょう。',
+  gacha: 'ガチャで引いた見た目・CHIP は、ログインするとアカウントに保存され、別の端末でも使えます。',
+  runWin: '勝ち抜き戦の途中経過・パッチ・HEAT は、ログインすると別の端末でも続きから遊べます。',
+  level: 'レベルが上がりました。レベル・報酬・実績は、ログインするとアカウントに守られます。',
+  tsume: 'COMPUZZLE の進み具合は、ログインするとアカウントに保存されます。',
+  trophy: '実績を取りました。ログインすると、実績と記録がアカウントに残ります。'
 };
+/** ログインを勧める場面か (ログインしていない・ログインが使える・ログイン状態を読み終えた) */
+export function loginNudgeNeeded() {
+  return !state.user && state.ready && (state.available || state.deferred);
+}
 export function maybeLoginHint(reason) {
-  if (!HINTS[reason] || state.user) return;
+  if (!HINTS[reason] || !loginNudgeNeeded()) return;
   let seen = {};
   try { seen = JSON.parse(localStorage.getItem('compileLoginHints') || '{}') || {}; } catch (e) { seen = {}; }
   if (seen[reason]) return;
@@ -341,7 +351,7 @@ export function maybeLoginHint(reason) {
     el.setAttribute('role', 'status');
     document.body.appendChild(el);
   }
-  el.innerHTML = '<p>' + esc(HINTS[reason]) + '</p><div><button type="button" data-h="login">ログインについて</button><button type="button" data-h="close" aria-label="閉じる">×</button></div>';
+  el.innerHTML = '<p>' + esc(HINTS[reason]) + '</p><div><button type="button" data-h="login" class="go">ログインして守る</button><button type="button" data-h="close" aria-label="閉じる">×</button></div>';
   el.classList.add('show');
   el.onclick = (ev) => {
     const b = ev.target.closest('button');

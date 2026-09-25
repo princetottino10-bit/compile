@@ -116,7 +116,7 @@ async function gainXp(src, xp, key, noTrophy) {
   const before = myLevel;
   if (!grantXp(src, xp, key)) return;
   refreshCardGlow();                 // myLevel も数え直す
-  if (myLevel > before) await UI.levelUpCutIn(myLevel, rewardsBetween(before, myLevel));
+  if (myLevel > before) { await UI.levelUpCutIn(myLevel, rewardsBetween(before, myLevel)); maybeLoginHint('level'); }
   if (!noTrophy) await checkTrophies(null);
 }
 
@@ -162,6 +162,7 @@ async function checkTrophies(game) {
       for (const t of got) grantXp('trophy', TROPHY_XP[t.tier], 'ach:' + t.id);
       refreshCardGlow();
       await showTrophyBanner(got);
+      maybeLoginHint('trophy');
       if (myLevel > before) await UI.levelUpCutIn(myLevel, rewardsBetween(before, myLevel));
     }
   } finally {
@@ -658,6 +659,7 @@ async function puzzleAfterTurn() {
   /* COMPUZZLE: 段ごとの経験値 (問題ごとに初回。今日の問題は日ごと)。実績の判定もここで */
   if (result.ok) {
     await gainXp('tsume', TS.tsumeXp(ts), TS.tsumeXpKey(ts));
+    maybeLoginHint('tsume');
   }
   const next = ts.daily == null ? TS.nextOf(await TS.loadTsume(), ts.id) : null;
   PZ.showPuzzleResult(result, retryPuzzle, {
@@ -3395,6 +3397,7 @@ async function afterTurn() {
         } else {
           const was = loadRun();
           showRunAfterGame(win, compilesBy(cur.state, AI), Object.values(protoIndex));
+          if (win) maybeLoginHint('runWin');
           const now = loadRun();
           if (was && was.phase === 'battle' && now && now.phase === 'clear') await gainXp('run', XP_GAIN.runClear);
         }

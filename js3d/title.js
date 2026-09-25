@@ -10,7 +10,7 @@ import { drawTitleBackdrop } from './backdrops.js';
 import { initAudio, sfx } from './audio.js';
 import { openSettings } from './settings.js';
 import { openStats } from './stats.js';
-import { openAccount, accountState, onAccountChange } from './account.js';
+import { openAccount, accountState, onAccountChange, loginNudgeNeeded } from './account.js';
 import { openAdmin } from './admin-ui.js';
 import { openCardList } from './cardlist-ov.js';
 import { settings } from './settings.js';
@@ -177,6 +177,10 @@ export function runTitle(protocols, opts) {
         label.parentElement.title = accountTitle();
         const cap = label.parentElement.querySelector('small');
         if (cap) cap.hidden = !!accountState().user;
+        /* 遊んだ記録があるのにログインしていなければ、ボタンを目立たせる (記録はこのブラウザだけ) */
+        const nudge = loginNudgeNeeded() && (localRecords().length > 0 || xpLog().length > 0);
+        label.parentElement.classList.toggle('nudge', nudge);
+        if (cap && nudge) cap.textContent = '記録はこのブラウザだけ！';
         root.querySelector('#ttCorner button[data-mode="admin"]').hidden = !accountState().admin;
         return true;
       };

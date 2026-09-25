@@ -10,6 +10,7 @@ import { bonusXp, grantXp } from './xp.js';
 import { openSettings } from './settings.js';
 import { unlockTrophies, TROPHY_XP } from './achievements.js';
 import { trophyContext, showTrophyBanner } from './achievements-ui.js';
+import { loginNudgeNeeded, maybeLoginHint, openAccount } from './account.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const ORDER = ['L', 'E', 'R', 'C'];
@@ -40,6 +41,8 @@ export function openGacha() {
     const toPity = G.PITY - s.pity;
     el.innerHTML = '<div class="pz-card ga-card" role="dialog" aria-modal="true" aria-labelledby="gaTitle">' +
       '<div class="pz-head"><b id="gaTitle">// GACHA</b><button type="button" class="pz-x" aria-label="閉じる">×</button></div>' +
+      (loginNudgeNeeded() ? '<div class="ga-login"><p><b>ログインしていません</b>引いた見た目と CHIP はこのブラウザにだけ残ります。消えると戻せません。</p>' +
+        '<button type="button" id="gaLogin">ログインして守る</button></div>' : '') +
       '<div class="ga-top"><div class="ga-chip"><small>CHIP</small><b>' + chips + '</b><span>経験値が貯まるたびに増える (1 XP = 1 CHIP)</span></div>' +
         '<div class="ga-btns"><button type="button" class="ga-pull" data-n="1"' + (chips >= G.PULL_COST ? '' : ' disabled') + '>1回 <small>' + G.PULL_COST + ' CHIP</small></button>' +
         '<button type="button" class="ga-pull ten" data-n="10"' + (chips >= G.TEN_COST ? '' : ' disabled') + '>10連 <small>' + G.TEN_COST + ' CHIP ・ RARE 以上1つ確定</small></button></div></div>' +
@@ -62,6 +65,7 @@ export function openGacha() {
       return;
     }
     if (ev.target.closest('#gaUse')) { el.classList.remove('show'); openSettings(); return; }
+    if (ev.target.closest('#gaLogin')) { el.classList.remove('show'); openAccount(); return; }
     const b = ev.target.closest('.ga-pull');
     if (!b || b.disabled || busy) return;
     const r = G.pullAndSave(earnedChips(), +b.dataset.n);
@@ -72,6 +76,8 @@ export function openGacha() {
     last = r.results;
     busy = false;
     render();
+    /* ログインしていなければ守るよう勧める (レアを引いたら強めに) */
+    maybeLoginHint(best.rar === 'E' || best.rar === 'L' ? 'rarePull' : 'gacha');
     /* ガチャの実績 (回した・そろえた) */
     const got = unlockTrophies(trophyContext(null));
     for (const t of got) grantXp('trophy', TROPHY_XP[t.tier], 'ach:' + t.id);

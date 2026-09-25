@@ -3,7 +3,7 @@
  *   アイコン・レベル・経験値・称号、次の報酬 (中身は取るまで秘密)、取った報酬、見た目を選ぶ入口
  * ========================================================================= */
 import { nameFieldHtml, bindNameField } from './displayname.js';
-import { openAccount } from './account.js';
+import { openAccount, loginNudgeNeeded } from './account.js';
 import { trophyView } from './achievements.js';
 import { trophyContext, openTrophies } from './achievements-ui.js';
 import { bonusXp, XP_GAIN } from './xp.js';
@@ -76,6 +76,8 @@ export function openProfile(protocols) {
       '<div class="pf-id"><small>PLAYER LEVEL</small><b>' + pl.level + '</b>' + (me.title ? '<em>' + esc(me.title) + '</em>' : '') + '</div>' +
     '</div>' +
     nameFieldHtml('pf') +
+    (loginNudgeNeeded() ? '<div class="ga-login"><p><b>ログインしていません</b>レベル・見た目・実績はこのブラウザにだけ残っています。</p>' +
+      '<button type="button" id="pfLogin">ログインして守る</button></div>' : '') +
     '<div class="pf-xp"><span><i style="width:' + Math.round(pl.progress * 100) + '%"></i></span>' +
       '<small>XP ' + pl.xp + ' ・ NEXT LV まで ' + (pl.next - pl.xp) + '</small></div>' +
     '<div class="pf-stats"><div><b>' + recs.length + '</b><small>GAMES</small></div><div><b>' + wins + '</b><small>WINS</small></div>' +
@@ -95,6 +97,8 @@ export function openProfile(protocols) {
   el.querySelector('.pz-x').onclick = close;
   el.querySelector('#pfCos').onclick = () => { close(); openSettings(); };
   el.querySelector('#pfAcc').onclick = () => { close(); openAccount(); };
+  const login = el.querySelector('#pfLogin');
+  if (login) login.onclick = () => { close(); openAccount(); };
   bindNameField(el, 'pf');
   /* 今日の問題へそのまま飛ぶ */
   const go = el.querySelector('#pfDailyPuzzle');
