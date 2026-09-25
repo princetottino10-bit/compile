@@ -464,8 +464,9 @@
   #rotateHint b{font:900 18px/1.4 system-ui;letter-spacing:.08em;}
   #rotateHint span{font:600 12px/1.6 system-ui;color:var(--dim);}
   /* 縦持ちでも対戦できる。横向きを頼む案内は出さず、対戦前 (タイトル・メニュー) に「横持ちに最適化」とだけ知らせる */
+  /* タイトル画面のときだけ出す (準備画面では下の「対戦開始」などのボタンに重なっていた) */
   @media (orientation:portrait) and (max-width:860px) and (pointer:coarse){
-    body.pregame #rotateNote{display:block;}
+    body.pregame:has(#title.show) #rotateNote{display:block;}
   }
   #rotateNote{position:fixed;left:0;right:0;bottom:0;z-index:89;display:none;padding:8px 12px calc(8px + env(safe-area-inset-bottom));
     text-align:center;font:700 11.5px/1.4 system-ui;color:#fff;background:rgba(12,9,20,.92);border-top:2px solid var(--pink);pointer-events:none;}
@@ -1694,7 +1695,9 @@
   /* ---------- プロトコル選択 ---------- */
   #setup{position:fixed;inset:0;z-index:55;display:none;flex-direction:column;
     background:radial-gradient(ellipse at 50% 0%,rgba(28,10,42,.55),transparent 55%),#03040a;
-    opacity:0;transition:opacity .45s;}
+    opacity:0;transition:opacity .45s;
+    /* スマホの時計・電波の表示とホームバーに重ならないように */
+    padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);}
   #setup.show{display:flex;opacity:1;}
   #setupHead{padding:22px 26px 12px;display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;}
   #setupHead h1{margin:0;font:900 22px/1 system-ui;letter-spacing:.26em;}
