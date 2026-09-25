@@ -104,6 +104,11 @@ export function decide(local, remote, meta) {
   return { apply: remoteNewer && hashOf(rd) !== hashOf(local) ? rd : null, push: null };
 }
 
+/* 上書きする前のこの端末の中身を控えておく (1つだけ。上書きのたびに新しくする) */
+export function backupLocal(local) {
+  try { localStorage.setItem('compileSaveBackup', JSON.stringify({ at: Date.now(), data: local })); } catch (e) { /* 容量不足・private mode */ }
+}
+
 /* ブラウザに書く。apply に無い項目は消す (アカウント側で消えたものに合わせる) */
 export function applySnapshot(data) {
   for (const k of SAVE_KEYS) write(k, k in data ? data[k] : null);

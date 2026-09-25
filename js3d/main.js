@@ -2111,9 +2111,15 @@ function updateTurnTimer() {
   }
   el.textContent = (mine ? 'あなたの持ち時間 ' : '相手の持ち時間 ') + fmt(left);
 }
+/* 問い合わせの間隔 (サーバーの呼び出し回数 = 無料枠を節約する)。
+   自分が操作する番 (手番・自分への選択待ち) は相手が盤面を変えないので 4 秒。
+   相手の番は 1.3 秒から、変化のない返事が続くほど少しずつ延ばし (最大 3 秒)、変わったら戻す */
+let roomPollIdle = 0;
 function roomPollDelay() {
-  const mine = roomRm && (roomRm.legalActions || []).length > 0 && !roomRm.request;
-  return mine ? 4000 : 1300;
+  const req = roomRm && roomRm.request;
+  const mine = roomRm && (req ? req.player === roomRm.side : (roomRm.legalActions || []).length > 0);
+  if (mine) return 4000;
+  return roomPollIdle < 3 ? 1300 : roomPollIdle < 10 ? 2200 : 3000;
 }
 async function roomPollTick() {
   if (!roomPollOn) return;
@@ -2149,10 +2155,12 @@ async function roomPoll(force) {
   if (roomPollFails >= 4) UI.toast('つながりました', 1600);
   roomPollFails = 0;
   if (next.unchanged || (next.version === roomRm.version && next.status === roomRm.status)) {
+    roomPollIdle++;
     if (!next.unchanged) roomRm = next;
     await roomDrainRequest();          // 取りこぼしたリクエストの再開
     return;
   }
+  roomPollIdle = 0;
   await roomApplyView(next);
 }
 

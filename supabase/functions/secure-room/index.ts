@@ -195,6 +195,21 @@ async function accountNames(ids: string[]) {
   return out;
 }
 
+/* いたずら対策の回数 (attempt_log)。直近 ms のうちに kind を何回したか。room を渡すと部屋ごとに数える */
+async function recentAttempts(kind: string, ms: number, userId: string | null, roomId: string | null = null) {
+  const since = new Date(Date.now() - ms).toISOString();
+  let q = admin.from("attempt_log").select("id", { count: "exact", head: true }).eq("kind", kind).gte("created_at", since);
+  q = roomId ? q.eq("room_id", roomId) : q.eq("user_id", userId);
+  const { count, error } = await q;
+  if (error) throw error;
+  return count || 0;
+}
+async function noteAttempt(kind: string, userId: string, roomId: string | null = null) {
+  await admin.from("attempt_log").insert({ kind, user_id: userId, room_id: roomId });
+  /* 1日たった記録は捨てる (表を大きくしない) */
+  await admin.from("attempt_log").delete().lt("created_at", new Date(Date.now() - 86400_000).toISOString());
+}
+
 async function recordRatedMatch(room: any, winner: number) {
   if (!room.rated || !room.host_id || !room.guest_id || !room.host_name || !room.guest_name) return;
   const names = await accountNames([room.host_id, room.guest_id]).catch(() => ({} as Record<string, string>));
@@ -431,6 +446,9 @@ Deno.serve(async (req) => {
       if (user.is_anonymous === true) return fail(req, "ログインすると名前を載せられます", 403);
       const week = String(body.week || "");
       if (!/^W[0-9]{3,6}$/.test(week)) return fail(req, "週の指定が不正です");
+      /* 送信のたびに3試合ぶん再生して確かめるので、連打は止める (10分に5回まで) */
+      if (await recentAttempts("weekly", 10 * 60_000, user.id) >= 5) return fail(req, "送信が多すぎます。10分ほど待ってください", 429);
+      await noteAttempt("weekly", user.id);
       const nowWeek = Math.floor((Math.floor((Date.now() + 9 * 3600_000) / 86400_000) + 3) / 7);
       const idx = Number(week.slice(1));
       if (idx !== nowWeek && idx !== nowWeek - 1) return fail(req, "今週か先週のクリアだけ載せられます", 409);
@@ -555,7 +573,17 @@ Deno.serve(async (req) => {
       if (room.rated && !isRatedEligible(user)) return fail(req, "レート戦にはログインが必要です", 403);
       if (room.host_id !== user.id && room.guest_id && room.guest_id !== user.id) return fail(req, "満室です", 409);
       if (!room.guest_id && room.host_id !== user.id) {
-        if (!(await passwordMatches(room, body.password))) return fail(req, "パスワードが違います", 403);
+        /* 鍵付きの部屋の総当たりを止める: 同じ人は10分に5回、同じ部屋は10分に20回まで間違えられる */
+        if (room.password_hash) {
+          if (await recentAttempts("join-pass", 10 * 60_000, user.id) >= 5
+            || await recentAttempts("join-pass", 10 * 60_000, null, room.id) >= 20) {
+            return fail(req, "パスワードの入力が多すぎます。10分ほど待ってください", 429);
+          }
+        }
+        if (!(await passwordMatches(room, body.password))) {
+          if (room.password_hash) await noteAttempt("join-pass", user.id, room.id);
+          return fail(req, "パスワードが違います", 403);
+        }
         const isDraft = !!(room.draft_state && room.draft_state.on);
         const upd: any = { guest_id: user.id, guest_name: name, guest_badge: cleanBadge(body.badge), updated_at: new Date().toISOString() };
         if (isDraft) {

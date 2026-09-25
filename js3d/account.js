@@ -203,7 +203,12 @@ async function syncSaves() {
   const r = await ROOM.roomClient().from(SAVE_TABLE).select('data,updated_at').maybeSingle();
   if (r.error) throw new Error(r.error.message);
   const remote = r.data ? { data: r.data.data, at: Date.parse(r.data.updated_at) } : null;
-  const d = SAVE.decide(SAVE.snapshot(), remote, SAVE.loadMeta(uid));
+  const meta = SAVE.loadMeta(uid);
+  const local = SAVE.snapshot();
+  const d = SAVE.decide(local, remote, meta);
+  /* この端末で初めての同期は、アカウントの中身で上書きする。その端末にしかなかった中身が黙って消えないよう、
+     上書きの前に控えを残す (compileSaveBackup。困ったときに戻せるように) */
+  if (d.apply && !meta) SAVE.backupLocal(local);
   if (d.apply) SAVE.applySnapshot(d.apply);
   let at = remote ? remote.at : 0;
   if (d.push) {

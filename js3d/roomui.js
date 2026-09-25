@@ -331,7 +331,7 @@ export function runRoomLobby(protocols, opts = {}) {
       };
       loadList();
       clearInterval(lobbyTimer);
-      lobbyTimer = setInterval(loadList, 5000);
+      lobbyTimer = setInterval(loadList, 8000);   // 無料枠の節約 (以前は 5 秒)
       if (pendingJoin) {
         const code = pendingJoin;
         if (needName()) return;
@@ -419,7 +419,7 @@ export function runRoomLobby(protocols, opts = {}) {
       pollFails = 0;
       renderRoom();
       clearInterval(pollTimer);
-      pollTimer = setInterval(poll, 1300);
+      pollTimer = setInterval(poll, 2500);   // 相手を待つ間の問い合わせ (無料枠の節約。以前は 1.3 秒)
     }
 
     async function poll() {
