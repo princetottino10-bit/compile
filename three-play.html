@@ -1350,6 +1350,12 @@
     display:flex;align-items:center;gap:10px;padding:6px 12px;border-radius:999px;background:rgba(6,8,16,.82);
     border:1px solid rgba(255,79,163,.35);pointer-events:none;}
   #runHud small{font:800 10px/1 system-ui;color:var(--dim);}
+  /* 縦持ち: 上の段は名札とボタンで埋まっているので、ライフは左上の自分の名札の下、案内の文字はその下の中央に */
+  @media (max-width:860px) and (orientation:portrait){
+    #runHud{left:calc(14px + env(safe-area-inset-left));top:calc(106px + env(safe-area-inset-top));transform:none;}
+    #prompt{top:calc(112px + env(safe-area-inset-top));max-width:calc(100vw - 24px);}
+    body:has(#runHud) #prompt,body:has(#turnTimer:not([hidden])) #prompt{top:calc(146px + env(safe-area-inset-top));}
+  }
   #runHud .rn-life span{min-width:150px;}
   #runHud .rn-life i{height:8px;}
   #runHud .rn-life em{font-size:14px;}
@@ -1730,6 +1736,11 @@
     background:transparent;color:var(--ink);font:800 11px/1 system-ui;letter-spacing:.06em;}
   .tu-foot .pz-main{border:0;padding:11px 22px;color:#021318;background:linear-gradient(100deg,var(--cyan),var(--mint));}
   body.tutorial #puzzleBar{border-color:rgba(185,164,255,.4);}
+  /* 縦持ち: 幅の計算 (左右の詳細パネルの分を引く) がマイナスになって潰れていたので、左右 8px の幅で名札の下に出す */
+  @media (max-width:860px) and (orientation:portrait){
+    #tutorialCoach,#puzzleBar,body.picking #tutorialCoach{left:8px;right:8px;transform:none;width:auto;max-width:none;
+      top:calc(150px + env(safe-area-inset-top));}
+  }
   body.tutorial #puzzleBar .pz-tag{background:var(--cyan);color:#021318;}
   body.tutorial #puzzleBar .pz-text small{color:#bfefff;}
   .tt-menu button[data-mode="tutorial"]{border-color:rgba(185,164,255,.36);}
@@ -2065,6 +2076,8 @@
   }
   @media (orientation:landscape) and (max-height:500px){
     .arr-bar.sel-bar:not(.confirm),.arr-bar.sel-bar.confirm{top:38px;width:min(320px,40vw);}
+    /* 一覧の画面が出ている間は左の詳細をしまう (画面が狭く、一覧の左端を覆っていた。一覧にも元のカードが出ている) */
+    body:has(#modal.show) #preview,body:has(#modal.show) #btnInfo{display:none;}
     #modalCard{padding:10px 12px;max-height:calc(100vh - var(--hand-gap, 14vh) - 60px);max-height:calc(100dvh - var(--hand-gap, 14vh) - 60px);}
   }
 
@@ -2200,13 +2213,19 @@
   #title .tt-corner[hidden]{display:none;}   /* 押す前は出さない (どこを押しても始まる) */
   #profileOv{z-index:62;}
   /* オンライン: 手番の持ち時間 (VS の下) */
-  #turnTimer{position:absolute;left:calc(14px + env(safe-area-inset-left));top:72px;display:flex;align-items:center;gap:8px;padding:5px 12px;
+  /* 持ち時間: 上の段で相手の名札の左に並べる (左上に置くと詳細ウインドウの下に隠れていた) */
+  #turnTimer{position:relative;margin-left:auto;align-self:center;display:flex;align-items:center;gap:8px;padding:5px 12px;
     background:rgba(12,9,20,.72);clip-path:var(--cut-s);font:700 12px/1 var(--font-ui);color:var(--dim);font-variant-numeric:tabular-nums;pointer-events:auto;}
   #turnTimer[hidden]{display:none;}
   #turnTimer.mine{color:#fff;}
   #turnTimer.warn{color:var(--pink);}
   #turnTimer button{padding:6px 10px;cursor:pointer;font:800 11px/1 var(--font-ui);letter-spacing:.06em;background:var(--pink);border:0;color:#fff;}
-  @media (orientation:landscape) and (max-height:500px){ #turnTimer{top:40px;left:calc(10px + env(safe-area-inset-left));} }
+  #turnTimer:not([hidden]) ~ #vsTag{margin-left:10px;}
+  #turnTimer:not([hidden]) ~ #topRight{margin-left:10px;}
+  /* 縦持ち: 上の段は狭いので、左上の自分の名札の下に */
+  @media (max-width:860px) and (orientation:portrait){
+    #turnTimer{position:fixed;left:calc(14px + env(safe-area-inset-left));top:calc(106px + env(safe-area-inset-top));margin:0;z-index:28;}
+  }
   /* ロビー: 人数・待機の経過時間・メールのログインは畳む・押せないレート戦 */
   .ro-online{margin:6px 0;font:600 12px/1.5 system-ui;color:var(--dim);}
   .ro-online b{color:var(--pink);}
@@ -2594,7 +2613,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=47deb85091",
+      "./js3d/main.js": "./js3d/main.js?v=cc55f1bb37",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=6398fed15e",
       "./js3d/panel.js": "./js3d/panel.js?v=ecb8a073e3",
       "./js3d/plates.js": "./js3d/plates.js?v=70ffa14b87",
@@ -2713,6 +2732,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=47deb85091"></script>
+  <script type="module" src="js3d/main.js?v=cc55f1bb37"></script>
 </body>
 </html>

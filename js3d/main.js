@@ -3534,6 +3534,8 @@ function forcedPicks(req) {
 /* 自動で選んだことが分かるよう、選んだカードを光らせて一言出す */
 async function showForcedPick(req, picks) {
   const st = shown();
+  showSourcePanel(req);                 // 何の効果で自動で選んだのかを左の詳細にも (ほかの選択と同じ)
+  pickPanelReq = null;
   const names = picks.map(u => (typeof u === 'string' ? cardName(u) : null)).filter(Boolean);
   UI.toast('選べるのが1つだけなので自動で選びました' + (names.length ? ': ' + names.join(' / ') : ''), 1800);
   const first = picks[0];
