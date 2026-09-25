@@ -2526,6 +2526,8 @@
   .ad-players b small{font-size:10px;color:var(--dim);}
   .ad-players span{grid-column:1;font:600 10.5px/1.4 system-ui;color:var(--dim);}
   .ad-players em{grid-column:2;grid-row:1 / span 2;align-self:center;font:700 11px/1 var(--font-ui);font-style:normal;color:var(--cyan);white-space:nowrap;}
+  .ad-players b .ad-lv{grid-column:auto;display:inline;margin-left:6px;font:900 11px/1 var(--font-hud,var(--font-ui));color:var(--gold);letter-spacing:.06em;}
+  .ad-players b .ad-lv small{font:700 10px/1 system-ui;color:var(--dim);letter-spacing:0;}
   .ad-modes{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;}
   .ad-modes i{padding:3px 7px;font:700 10.5px/1.3 system-ui;font-style:normal;color:var(--ink);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);}
   .ad-modes i b{color:var(--cyan);margin-left:2px;}
@@ -2752,7 +2754,7 @@
       "./js3d/account.js": "./js3d/account.js?v=40a3fa6fb1",
       "./js3d/achievements-ui.js": "./js3d/achievements-ui.js?v=924939d2f6",
       "./js3d/achievements.js": "./js3d/achievements.js?v=7949e74ef6",
-      "./js3d/admin-ui.js": "./js3d/admin-ui.js?v=1a04b5e50e",
+      "./js3d/admin-ui.js": "./js3d/admin-ui.js?v=95d1211d39",
       "./js3d/ai-worker.js": "./js3d/ai-worker.js?v=de82d239bd",
       "./js3d/aiclient.js": "./js3d/aiclient.js?v=704b588b82",
       "./js3d/aidecks.js": "./js3d/aidecks.js?v=8d249240bd",
@@ -2779,7 +2781,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=811511a1ed",
+      "./js3d/main.js": "./js3d/main.js?v=605ccb35e0",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=aa7ecc4142",
       "./js3d/panel.js": "./js3d/panel.js?v=ecb8a073e3",
       "./js3d/plates.js": "./js3d/plates.js?v=70ffa14b87",
@@ -2796,8 +2798,8 @@
       "./js3d/rewards.js": "./js3d/rewards.js?v=3a15516206",
       "./js3d/room.js": "./js3d/room.js?v=c34129de95",
       "./js3d/roomui.js": "./js3d/roomui.js?v=402be98743",
-      "./js3d/run-ui.js": "./js3d/run-ui.js?v=83b3978935",
-      "./js3d/run.js": "./js3d/run.js?v=309b86d946",
+      "./js3d/run-ui.js": "./js3d/run-ui.js?v=02ebcc235f",
+      "./js3d/run.js": "./js3d/run.js?v=206f226f7c",
       "./js3d/selectui.js": "./js3d/selectui.js?v=208abdaebc",
       "./js3d/settings.js": "./js3d/settings.js?v=142e9b5e99",
       "./js3d/setup.js": "./js3d/setup.js?v=1073765172",
@@ -2852,9 +2854,9 @@
   <link rel="modulepreload" href="js3d/cardlist-ov.js?v=1d673fd0d2">
   <link rel="modulepreload" href="js3d/opponent-select.js?v=aa7ecc4142">
   <link rel="modulepreload" href="js3d/aidecks.js?v=8d249240bd">
-  <link rel="modulepreload" href="js3d/run-ui.js?v=83b3978935">
+  <link rel="modulepreload" href="js3d/run-ui.js?v=02ebcc235f">
   <link rel="modulepreload" href="js3d/weekly-ui.js?v=c35e408f12">
-  <link rel="modulepreload" href="js3d/run.js?v=309b86d946">
+  <link rel="modulepreload" href="js3d/run.js?v=206f226f7c">
   <link rel="modulepreload" href="js3d/weekly.js?v=b4651191ce">
   <link rel="modulepreload" href="js3d/review.js?v=34f174153b">
   <link rel="modulepreload" href="js3d/roomui.js?v=402be98743">
@@ -2874,7 +2876,7 @@
   <link rel="modulepreload" href="js3d/logformat.js?v=6bbf54aba6">
   <link rel="modulepreload" href="js3d/steps.js?v=13e73b20fe">
   <link rel="modulepreload" href="js3d/cloudsave.js?v=b187c8c5a5">
-  <link rel="modulepreload" href="js3d/admin-ui.js?v=1a04b5e50e">
+  <link rel="modulepreload" href="js3d/admin-ui.js?v=95d1211d39">
   <link rel="modulepreload" href="js3d/gacha.js?v=5231b55322">
   <link rel="modulepreload" href="vendor/three.core.js">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/EffectComposer.js">
@@ -2903,6 +2905,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=811511a1ed"></script>
+  <script type="module" src="js3d/main.js?v=605ccb35e0"></script>
 </body>
 </html>

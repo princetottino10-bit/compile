@@ -84,7 +84,8 @@ export function openAdmin() {
       body.innerHTML = '<p class="pz-note">ログインしている ' + list.length + ' 人 (ゲストは含みません)。表示名は本人が決めた名前です。' +
         '対戦のモードは 9/25 から記録しています (それより前の対戦は「対戦 (不明)」)。</p>' +
         (list.length ? '<ol class="ad-players">' + list.map(p =>
-          '<li><b>' + (p.name ? esc(p.name) : '<i>名前なし</i> <small>#' + esc(p.id) + '</small>') + '</b>' +
+          '<li><b>' + (p.name ? esc(p.name) : '<i>名前なし</i> <small>#' + esc(p.id) + '</small>') +
+            ' <span class="ad-lv">LV ' + (p.level | 0 || 1) + ' <small>(' + (p.xp_total | 0) + ' XP)</small></span></b>' +
             '<span>' + esc(via[p.provider] || p.provider || '') + ' ・ 登録 ' + day(p.created_at) + ' ・ 最後 ' + day(p.last_active) + '</span>' +
             '<em>' + (p.last_mode ? '最後に遊んだ: ' + esc(MODE_LABEL[p.last_mode] || p.last_mode) : 'まだ遊んでいない') + '</em>' +
             modeChips(p) + '</li>').join('') + '</ol>'
