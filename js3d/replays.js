@@ -83,7 +83,7 @@ export function mergeReplays(remote) {
 export function rebuild(Engine, rep) {
   const i = rep.init;
   let res = Engine.newGame({ seed: i.seed, p0: i.p0, p1: i.p1, first: i.first, winCompiles: i.winCompiles || undefined,
-    handSize: i.handSize, startControl: i.startControl });       // 勝ち抜き戦のパッチで変わったはじめ方
+    handSize: i.handSize, startControl: i.startControl, exclude: i.exclude });   // 勝ち抜き戦のパッチ・カード除去で変わったはじめ方
   const history = [];
   let ok = !res.error;
   for (const action of rep.actions) {

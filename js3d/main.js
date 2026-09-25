@@ -548,13 +548,13 @@ async function boot() {
       : tutorial
         ? Engine.newPuzzle(tutorial.lesson.spec, { seed: 1 })
         : Engine.newGame({ seed, p0, p1, first: firstPlayer, training: trainingMode, winCompiles,
-          ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl } : {}) });
+          ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude } : {}) });
   cur = res;
   if (!trainingMode && !puzzle && !tutorial && !demoMode && !replayMode) lastSetup = { p0: p0.slice(), p1: p1.slice() };
   /* CPU 戦は棋譜を取る (決着したらリプレイとして残す) */
   replayLog = !replayMode && !trainingMode && !puzzle && !tutorial && !demoMode
     ? { init: { seed, p0: p0.slice(), p1: p1.slice(), first: firstPlayer, winCompiles: winCompiles || null,
-      ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl } : {}) }, actions: [] } : null;
+      ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude } : {}) }, actions: [] } : null;
   if (trainingMode) training.protos = [p0.slice(), p1.slice()];
   window.__3d = {
     stage, board, THREE, LAYOUT,

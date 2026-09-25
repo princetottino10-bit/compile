@@ -36,10 +36,90 @@ function lifeBar(run, lost) {
     '<b>LIFE</b><span>' + pips.join('') + '</span><em>' + Math.max(0, run.life - (lost || 0)) + '<small>/' + run.maxLife + '</small></em></div>';
 }
 
-function floorTrack(run) {
-  return '<ol class="rn-track" aria-label="全' + RUN.FLOORS.length + '戦">' + RUN.FLOORS.map((f, i) =>
-    '<li class="' + (i < run.floor ? 'done' : i === run.floor ? 'now' : '') + (f.boss ? ' boss' : '') + '">' +
-      (f.boss ? 'BOSS' : i + 1) + '</li>').join('') + '</ol>';
+/* いま何段目か (地図に出る前は -1) */
+function rowNow(run) {
+  const n = RUN.nodeById(run, run.pos);
+  return n ? n.row : -1;
+}
+const ROW_H = 58;
+/* 地図 (下から上へ登る)。進めるマスだけ押せる。通った道は太く、進める道は光らせる */
+function mapHtml(run, canMove) {
+  const rows = run.map.rows;
+  const H = RUN.MAP_ROWS * ROW_H;
+  const y = (r) => (RUN.MAP_ROWS - 1 - r) * ROW_H + ROW_H / 2;
+  const reach = canMove ? RUN.reachable(run) : [];
+  const vis = run.visited || [];
+  const lines = [];
+  for (const row of rows) for (const n of row) for (const id of n.next) {
+    const t = RUN.nodeById(run, id);
+    const taken = vis.indexOf(id) > 0 && vis[vis.indexOf(id) - 1] === n.id;
+    const open = canMove && n.id === run.pos && reach.includes(id);
+    lines.push('<line x1="' + (n.x * 100) + '" y1="' + y(n.row) + '" x2="' + (t.x * 100) + '" y2="' + y(t.row) + '" class="' +
+      (taken ? 'taken' : open ? 'open' : '') + '"/>');
+  }
+  const nodes = rows.flat().map(n => {
+    const N = RUN.NODES[n.type];
+    const cls = ['rn-node', n.type, vis.includes(n.id) ? 'visited' : '', n.id === run.pos ? 'here' : '', reach.includes(n.id) ? 'reach' : ''].join(' ');
+    return '<button type="button" class="' + cls + '" style="left:' + (n.x * 100) + '%;top:' + y(n.row) + 'px" ' +
+      (reach.includes(n.id) ? 'data-node="' + n.id + '"' : 'tabindex="-1"') + ' title="' + esc(N.name + ' — ' + N.text) + '" aria-label="' + esc(N.name) + '">' +
+      '<span>' + N.icon + '</span></button>';
+  }).join('');
+  return '<div class="rn-map-wrap"><div class="rn-map" style="height:' + H + 'px">' +
+    '<svg viewBox="0 0 100 ' + H + '" preserveAspectRatio="none" aria-hidden="true">' + lines.join('') + '</svg>' + nodes + '</div></div>' +
+    '<div class="rn-legend">' + Object.keys(RUN.NODES).map(k => '<span class="' + k + '"><i>' + RUN.NODES[k].icon + '</i>' + RUN.NODES[k].name + '</span>').join('') + '</div>';
+}
+
+/* ---------- 演出 (お祭りなので派手に。動きを減らす設定では出さない) ---------- */
+const calm = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
+const RAR_COLORS = { C: ['#cfd6e6', '#8a93a8'], R: ['#7cc4ff', '#b9e2ff', '#3f8cff'], E: ['#ffc85a', '#ff4fa3', '#fff1c2'], L: ['#ff4fa3', '#ffc85a', '#7cf0d0', '#9d7bff', '#ffffff'] };
+
+/* 紙吹雪 (画面いっぱいの canvas に一瞬だけ) */
+export function confetti(colors, count) {
+  if (calm()) return;
+  const cv = document.createElement('canvas');
+  cv.className = 'rn-confetti';
+  cv.width = innerWidth; cv.height = innerHeight;
+  document.body.appendChild(cv);
+  const ctx = cv.getContext('2d');
+  const parts = Array.from({ length: count || 140 }, () => ({
+    x: innerWidth / 2 + (Math.random() - 0.5) * innerWidth * 0.3, y: innerHeight * 0.45,
+    vx: (Math.random() - 0.5) * 16, vy: -6 - Math.random() * 12, r: 3 + Math.random() * 5,
+    a: Math.random() * Math.PI, va: (Math.random() - 0.5) * 0.4, c: colors[Math.floor(Math.random() * colors.length)]
+  }));
+  const t0 = performance.now();
+  const tick = (t) => {
+    const k = (t - t0) / 1800;
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    for (const p of parts) {
+      p.vy += 0.35; p.vx *= 0.99; p.x += p.vx; p.y += p.vy; p.a += p.va;
+      ctx.save(); ctx.globalAlpha = Math.max(0, 1 - k); ctx.translate(p.x, p.y); ctx.rotate(p.a);
+      ctx.fillStyle = p.c; ctx.fillRect(-p.r, -p.r / 2, p.r * 2, p.r); ctx.restore();
+    }
+    if (k < 1) requestAnimationFrame(tick); else cv.remove();
+  };
+  requestAnimationFrame(tick);
+}
+
+/* ガチャの演出: カプセルが揺れて、レア度の色で弾ける。EPIC / LEGENDARY は画面が光って紙吹雪 */
+function playGacha(host, result) {
+  if (calm() || !result) return Promise.resolve();
+  const info = RUN.patchInfo(result.id);
+  const stage = document.createElement('div');
+  stage.className = 'rn-stage r' + result.rar;
+  stage.innerHTML = '<div class="rn-cap"><i></i><i></i></div><div class="rn-reveal"><small>' + RUN.RARITY[result.rar].name + '</small><b>' +
+    esc(info ? info.name : '') + '</b></div>';
+  host.appendChild(stage);
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      stage.classList.add('open');
+      if (result.rar === 'E' || result.rar === 'L') {
+        document.body.classList.add('rn-flash-' + result.rar);
+        setTimeout(() => document.body.classList.remove('rn-flash-' + result.rar), 700);
+        confetti(RAR_COLORS[result.rar], result.rar === 'L' ? 260 : 140);
+      }
+    }, result.rar === 'L' ? 1500 : 950);
+    setTimeout(() => { stage.remove(); resolve(); }, result.rar === 'L' ? 3000 : result.rar === 'E' ? 2300 : 1700);
+  });
 }
 
 /* 持っているパッチと HEAT (いつも上に出す) */
@@ -47,27 +127,46 @@ function patchStrip(run) {
   const list = (run.patches || []).map(id => RUN.patchInfo(id)).filter(Boolean);
   return '<div class="rn-patches"><span class="rn-credit" title="勝つと増える。GACHA に使う">CREDIT ' + (run.credits | 0) + '</span>' +
     (run.heat ? '<span class="rn-heatb">HEAT ' + run.heat + '</span>' : '') +
-    list.map(p => '<span class="rn-pchip ' + p.kind + (p.id === 'failsafe' && run.failsafeUsed ? ' used' : '') + '" title="' + esc(p.text) + '">' +
+    buildHtml(run) +
+    list.map(p => '<span class="rn-pchip ' + p.kind + ' r' + p.rar + ((p.id === 'failsafe' && run.failsafeUsed) || (p.id === 'phoenix' && run.phoenixUsed) ? ' used' : '') + '" title="' + esc(p.text) + '">' +
       esc(p.name) + '</span>').join('') + '</div>';
 }
 
 /* GACHA (戦いの合間に出す)。直前に引いた結果もここに */
 function gachaBox(run) {
-  if (!['route', 'battle', 'reward'].includes(run.phase)) return '';
+  if (!['map', 'shop', 'reward'].includes(run.phase)) return '';
   const cost = RUN.gachaCost(run);
   const r = run.lastPull;
   const p = r && RUN.patchInfo(r.id);
+  const greed = RUN.setLevel(run, 'GREED') >= 2 ? 2 : 1;
   return '<div class="rn-gacha">' +
-    '<div class="rn-gacha-h"><b>GACHA</b><span>' + cost + ' クレジットで1回。EPIC ' + RUN.RARITY.E.weight + '% ・ RARE ' + RUN.RARITY.R.weight +
-      '% ・ COMMON ' + RUN.RARITY.C.weight + '%。持っているパッチが出たらライフ +1</span>' +
+    '<div class="rn-gacha-h"><b>GACHA</b><span>' + cost + ' クレジットで1回。LEGENDARY ' + RUN.RARITY.L.weight * greed + '% ・ EPIC ' + RUN.RARITY.E.weight * greed +
+      '% ・ RARE ' + RUN.RARITY.R.weight + '%。持っているパッチが出たらライフ +1</span>' +
       '<button type="button" class="rn-pull" data-act="gacha"' + (RUN.canPull(run) ? '' : ' disabled') + '>引く <small>' + (run.credits | 0) + ' / ' + cost + '</small></button></div>' +
     (p ? '<div class="rn-capsule r' + r.rar + '" role="status"><small>' + RUN.RARITY[r.rar].name + (r.dupe ? ' ・ かぶり → ライフ +1' : ' ・ NEW') + '</small>' +
       '<b>' + esc(p.name) + '</b><span>' + esc(p.text) + '</span></div>' : '') +
     '</div>';
 }
 
+/* ビルド: 系統ごとの数と、付いているボーナス */
+function buildHtml(run) {
+  const tags = Object.keys(RUN.TAGS).filter(t => RUN.tagCount(run, t) > 0);
+  if (!tags.length) return '';
+  return '<span class="rn-build">' + tags.map(t => {
+    const T = RUN.TAGS[t], n = RUN.tagCount(run, t), lv = RUN.setLevel(run, t);
+    const tip = T.label + ' の系統: 2つで「' + T.bonus[0] + '」、3つで「' + T.bonus[1] + '」';
+    return '<i class="lv' + lv + '" style="--tc:' + T.color + '" title="' + esc(tip) + '">' + T.name + ' ' + n + (lv ? ' ★'.repeat(lv) : '') + '</i>';
+  }).join('') + '</span>';
+}
+/* 付いているボーナスの一覧 (戦う前の画面に) */
+function bonusList(run) {
+  const on = Object.keys(RUN.TAGS).flatMap(t => RUN.TAGS[t].bonus.slice(0, RUN.setLevel(run, t)).map(b => '<li style="--tc:' + RUN.TAGS[t].color + '"><b>' + t + '</b>' + esc(b) + '</li>'));
+  return on.length ? '<ul class="rn-bonus">' + on.join('') + '</ul>' : '';
+}
+
 function patchCard(p, attrs) {
   return '<button type="button" class="rn-patch ' + p.kind + ' r' + p.rar + '" ' + (attrs || '') + '>' +
+    '<em class="rn-tag" style="--tc:' + RUN.TAGS[p.tag].color + '">' + p.tag + '</em>' +
     '<small>' + (p.kind === 'game' ? 'BATTLE PATCH' : 'SYSTEM PATCH') + ' ・ ' + RUN.RARITY[p.rar].name + '</small><b>' + esc(p.name) + '</b><span>' + esc(p.text) + '</span></button>';
 }
 
@@ -80,6 +179,23 @@ function deckLine(names, byName) {
   return '<span class="rn-deck">' + names.map(n => '<i style="--pc:' + esc((byName[n] || {}).color || '#b9a4ff') + '">' + esc(n) + '</i>').join('') + '</span>';
 }
 
+/* デッキのカード (外したものは打ち消し線)。pick: カード除去で押せるようにする */
+function deckCards(run, byName, pick) {
+  const removed = new Set(run.removed || []);
+  return '<div class="rn-cards">' + run.deck.map(n => {
+    const p = byName[n];
+    if (!p) return '';
+    return '<div class="rn-cardcol" style="--pc:' + esc(p.color) + '"><h4>' + esc(n) + '</h4>' + p.cards.map(c => {
+      const gone = removed.has(c.id);
+      const text = c.middle || c.upper || c.lower || '';
+      const inner = '<b>' + esc(n + ' ' + c.value) + '</b><span>' + esc(text.length > 38 ? text.slice(0, 37) + '…' : text) + '</span>';
+      return pick && !gone
+        ? '<button type="button" class="rn-c" data-rm="' + esc(c.id) + '" title="' + esc(text) + '">' + inner + '</button>'
+        : '<div class="rn-c' + (gone ? ' gone' : '') + '" title="' + esc(text) + '">' + inner + '</div>';
+    }).join('') + '</div>';
+  }).join('') + '</div>';
+}
+
 /* 戦う相手が決まるまで画面を進める。null ならタイトルへ戻る、{ go: 'weekly' } なら週替わり3連戦へ。
    opts.hub: タイトルから来たとき。勝ち抜き戦の途中でも、まず入口 (続きから / 週替わり) を出す */
 export function openRun(protocols, cardsOf, opts) {
@@ -90,9 +206,17 @@ export function openRun(protocols, cardsOf, opts) {
     let run = RUN.loadRun();
     let swapAdd = null;          // 報酬で入れ替えるプロトコル (選んだあと、外すほうを選ぶ)
     let confirmQuit = false;
+    let showDeck = false;        // 地図の画面でデッキを広げる
     let hub = !!(opts && opts.hub);
     let heatSel = RUN.unlockedHeat();      // はじめるときの HEAT (解放した一番上から)
+    let pulling = false;                   // ガチャの演出中 (二度押しを受けない)
     const set = (next) => { run = next; RUN.saveRun(run); render(); };
+    /* defId → 「FIRE 2」 (カードに印刷された値で) */
+    const cardLabel = (id) => {
+      const proto = String(id).replace(/_\d+$/, '');
+      const c = byName[proto] && byName[proto].cards.find(x => x.id === id);
+      return c ? proto + ' ' + c.value : id;
+    };
     const done = (v) => { el.classList.remove('show'); resolve(v); };
     /* カード一覧は、いま候補に出ているものと自分のデッキをタブで切り替えられるように */
     const info = (name) => {
@@ -108,10 +232,11 @@ export function openRun(protocols, cardsOf, opts) {
       const active = run && run.phase !== 'over' && run.phase !== 'clear';
       const best = RUN.loadBest();
       const top = RUN.unlockedHeat();
+      const bestText = (b) => (b.heat ? 'HEAT ' + b.heat + ' で ' : '') +
+        (b.reached > (b.rows || RUN.MAP_ROWS) ? 'BOSS 撃破 (ライフ ' + b.life + ' 残し)' : b.rows ? b.reached + ' / ' + b.rows + ' 段まで' : b.reached + '戦目まで');
       const runStatus = active
-        ? '<em class="now">第' + (run.floor + 1) + '戦の途中 ・ ライフ ' + run.life + (run.heat ? ' ・ HEAT ' + run.heat : '') + '</em>'
-        : best ? '<em>最高記録: ' + (best.heat ? 'HEAT ' + best.heat + ' で ' : '') + (best.reached > RUN.FLOORS.length ? '全勝クリア (ライフ ' + best.life + ' 残し)' : best.reached + '戦目まで') + '</em>'
-          : '<em>まだ挑戦していません</em>';
+        ? '<em class="now">' + (rowNow(run) + 1) + ' / ' + RUN.MAP_ROWS + ' 段 ・ ライフ ' + run.life + (run.heat ? ' ・ HEAT ' + run.heat : '') + '</em>'
+        : best ? '<em>最高記録: ' + bestText(best) + '</em>' : '<em>まだ挑戦していません</em>';
       /* HEAT: クリアするたびに1段ずつ解放。上の段は下の段の条件を全部含む */
       const heatPick = !active && top > 0
         ? '<div class="rn-heat" role="group" aria-label="HEAT (難しさ)"><small>HEAT</small>' +
@@ -124,11 +249,11 @@ export function openRun(protocols, cardsOf, opts) {
           : w.attempt ? '<em>今週 ' + w.attempt + '回挑戦 ・ 最高 ' + (w.bestStage || 0) + '勝</em>' : '<em>今週はまだ挑戦していません</em>';
       return '<p class="rn-pick">遊ぶモードを選んでください</p><div class="rn-modes">' +
         '<section class="rn-mcard"><small>ROGUELIKE</small><h3>勝ち抜き戦</h3><ul>' +
-          '<li>' + RUN.FLOORS.length + '人の CPU を順に倒す (1試合 ' + RUN.RUN_WIN_COMPILES + '本先取)</li>' +
+          '<li>地図を下から登り、頂上の BOSS を倒す (1試合 ' + RUN.RUN_WIN_COMPILES + '本先取)</li>' +
+          '<li>道は自分で選ぶ: 戦闘・精鋭・イベント・休憩所・ショップ・宝箱</li>' +
           '<li>ライフ ' + RUN.RUN_LIFE + '。コンパイルされるたびに 1 減る</li>' +
-          '<li>勝つたびにプロトコルの入れ替えか回復</li>' +
-          '<li>パッチ (改造) を集め、精鋭戦・イベントの道を選ぶ</li>' +
-          '<li>勝つとクレジット。GACHA でレアなパッチを引く</li>' +
+          '<li>パッチ (改造) を集めてビルドを組む。カードを外してデッキを研ぐ</li>' +
+          '<li>クレジットでショップと GACHA</li>' +
           '<li>クリアすると次の HEAT (難しさ) が開く</li></ul>' + runStatus + heatPick +
           (active ? '<button type="button" class="rn-go" data-act="resume">続きから</button>'
             : '<button type="button" class="rn-go" data-act="start">はじめる</button>') + '</section>' +
@@ -139,80 +264,132 @@ export function openRun(protocols, cardsOf, opts) {
           '<button type="button" class="rn-go" data-act="weekly">開く</button></section>' +
       '</div><div class="rn-btns"><button type="button" data-act="title">タイトルへ</button></div>';
     };
+
+    const phaseBody = () => {
+      const node = RUN.nodeById(run, run.pos);
+      switch (run.phase) {
+        case 'draft': {
+          /* はじめの1つを選ぶときだけ、何をするモードなのかを書いておく */
+          const intro = !run.deck.length
+            ? '<p class="rn-lead">まず<b>プロトコルを3つ</b>、1つずつ選んでデッキを作ります。そのあと<b>地図を下から登り</b>、頂上の <b>BOSS</b> を倒せばクリア。<br>' +
+              '<b>LIFE</b> は相手にコンパイルされるたびに 1 減り、0 で終わり。負けても同じ相手とやり直せます。<br>' +
+              '道の途中で<b>パッチ</b> (改造) を集め、<b>カードを外して</b>デッキを研ぎ、自分だけのビルドを作ってください。</p>'
+            : '';
+          return '<h2>プロトコルを選ぶ <small>' + (run.deck.length + 1) + ' / 3</small></h2>' + intro +
+            (run.deck.length ? '<p class="rn-note">選んだもの ' + deckLine(run.deck, byName) + '</p>' : '') +
+            '<div class="rn-offers">' + run.offers.map(n => '<div class="rn-offer">' + protoChip(byName[n], 'data-pick="' + esc(n) + '"') +
+              (cardsOf ? '<button type="button" class="rn-info" data-info="' + esc(n) + '">カードを見る</button>' : '') + '</div>').join('') + '</div>';
+        }
+        case 'patch': {
+          const first = !run.pos;
+          const why = first ? 'この勝ち抜き戦のあいだ、ずっと効きます。同じ系統 (HAND / GUARD / GREED / TEMPO) を集めるとボーナス。'
+            : run.after === 'battle' ? '選んだら、警報で強くなった相手と戦います。'
+              : node && node.type === 'treasure' ? '宝箱を開けた。' : '精鋭の戦利品です。';
+          return '<h2>' + (first ? 'はじめのパッチを選ぶ' : 'パッチを1つ選ぶ') + '</h2><p class="rn-note">' + why + '</p>' +
+            '<div class="rn-patchlist">' + (run.patchOffers || []).map(id => patchCard(RUN.patchInfo(id), 'data-patch="' + esc(id) + '"')).join('') + '</div>' +
+            '<div class="rn-btns"><button type="button" data-act="nopatch">取らない</button></div>';
+        }
+        case 'map':
+          return '<h2>進むマスを選ぶ <small>' + (rowNow(run) + 2) + ' / ' + RUN.MAP_ROWS + ' 段</small></h2>' +
+            (run.removedNow ? '<p class="rn-note">' + esc(cardLabel(run.removedNow)) + ' をデッキから外した</p>' : '') +
+            mapHtml(run, true) +
+            '<div class="rn-deckbar"><span>デッキ ' + deckLine(run.deck, byName) + ' <em>除去 ' + (run.removed || []).length + ' / ' + RUN.MAX_REMOVED + '</em></span>' +
+              '<button type="button" data-act="deck">' + (showDeck ? 'デッキを閉じる' : 'デッキを見る') + '</button></div>' +
+            (showDeck ? deckCards(run, byName, false) : '') +
+            '<div class="rn-btns"><button type="button" data-act="title">タイトルへ (続きはあとで)</button><button type="button" data-act="quit">あきらめる</button></div>';
+        case 'event': {
+          const ev = RUN.EVENTS[run.event];
+          return '<h2>? EVENT — ' + esc(ev.title) + '</h2><p class="rn-lead">' + esc(ev.text) + '</p>' +
+            '<div class="rn-routes">' + ev.options.map((o, i) => '<button type="button" class="rn-route event" data-event="' + i + '"' +
+              (o.need && !o.need(run) ? ' disabled' : '') + '><b>' + esc(o.label) + '</b></button>').join('') + '</div>';
+        }
+        case 'rest':
+          return '<h2>✚ 休憩所</h2><p class="rn-lead">焚き火のそばで一息つく。どちらか1つ。</p><div class="rn-routes">' +
+            '<button type="button" class="rn-route rest" data-act="rest"' + (run.life >= run.maxLife ? ' disabled' : '') + '><small>REST</small><b>休む</b><span>ライフ +' + RUN.healAmount(run) + '</span></button>' +
+            '<button type="button" class="rn-route smith" data-act="restRemove"' + (RUN.canRemove(run) ? '' : ' disabled') + '><small>PURGE</small><b>研ぐ</b><span>デッキからカードを1枚外す</span></button>' +
+            '</div>';
+        case 'remove':
+          return '<h2>外すカードを選ぶ <small>除去 ' + (run.removed || []).length + ' / ' + RUN.MAX_REMOVED + '</small></h2>' +
+            '<p class="rn-note">外したカードは、この勝ち抜き戦のあいだ山札に入りません (プロトコルを入れ替えると戻ります)。</p>' +
+            deckCards(run, byName, true) +
+            '<div class="rn-btns"><button type="button" data-act="unremove">やめる' + (run.after === 'shop' ? ' (代金は戻ります)' : '') + '</button></div>';
+        case 'shop': {
+          const credits = run.credits | 0;
+          const items = run.shop.patches.map(id => {
+            const p = RUN.patchInfo(id), price = RUN.patchPrice(run, id), sold = run.shop.sold.includes(id);
+            return '<div class="rn-ware">' + patchCard(p, sold || credits < price ? 'disabled data-buy="' + esc(id) + '"' : 'data-buy="' + esc(id) + '"') +
+              '<em class="' + (sold ? 'sold' : credits < price ? 'short' : '') + '">' + (sold ? 'SOLD' : price + ' CR') + '</em></div>';
+          }).join('');
+          const rp = RUN.removePrice(run), hp = RUN.healPrice(run);
+          return '<h2>$ ショップ <small>CREDIT ' + credits + '</small></h2>' +
+            '<div class="rn-patchlist">' + items + '</div>' +
+            '<div class="rn-routes">' +
+              '<button type="button" class="rn-route smith" data-act="buyRemove"' + (RUN.canRemove(run) && credits >= rp ? '' : ' disabled') + '><small>' + rp + ' CR</small><b>カード除去</b><span>デッキから1枚外す (買うたびに +2)</span></button>' +
+              '<button type="button" class="rn-route rest" data-act="buyHeal"' + (!run.shop.healed && run.life < run.maxLife && credits >= hp ? '' : ' disabled') + '><small>' + hp + ' CR</small><b>修理</b><span>ライフ +2 (1回だけ)</span></button>' +
+            '</div><div class="rn-btns"><button type="button" class="rn-go" data-act="leave">店を出る</button></div>';
+        }
+        case 'reward':
+          return '<h2>勝利！ <small>+' + (run.lastGain | 0) + ' CREDIT</small></h2>' +
+            (run.cursedWin ? '<p class="rn-cursebreak">CURSE BROKEN — 呪いを破った！ RARE 以上確定の GACHA を引いた</p>' : '') + (swapAdd
+            ? '<p class="rn-note"><b>' + esc(swapAdd) + '</b> を入れる代わりに、外すプロトコルを選ぶ</p>' +
+              '<div class="rn-offers">' + run.deck.map(n => protoChip(byName[n], 'data-remove="' + esc(n) + '"')).join('') + '</div>' +
+              '<div class="rn-btns"><button type="button" data-act="unswap">戻る</button></div>'
+            : '<p class="rn-note">今のデッキ ' + deckLine(run.deck, byName) + '</p>' +
+              '<h3>プロトコルを入れ替える (取らなくてもよい)</h3><div class="rn-offers">' + run.offers.map(n => '<div class="rn-offer">' +
+                protoChip(byName[n], 'data-add="' + esc(n) + '"') +
+                (cardsOf ? '<button type="button" class="rn-info" data-info="' + esc(n) + '">カードを見る</button>' : '') + '</div>').join('') + '</div>' +
+              '<div class="rn-btns"><button type="button" class="rn-go" data-act="skip">取らずに進む</button></div>') +
+            (run.pendingPatch && !swapAdd ? '<p class="rn-note rn-elite">精鋭の戦利品: このあとパッチを1つ選べます</p>' : '');
+        case 'battle': {
+          const last = run.history[run.history.length - 1];
+          const retry = last && last.row === (node ? node.row : -1) && !last.win;
+          const kind = run.opp.boss ? 'BOSS' : run.opp.elite ? '精鋭' : '戦闘';
+          return (run.opp.boss ? '<div class="rn-bossban" data-text="FINAL BOSS" aria-hidden="true">FINAL BOSS</div>' : '') +
+            '<h2>' + (run.opp.boss ? '♛' : run.opp.elite ? '☠' : '⚔') + ' ' + kind + ' <small>' + (rowNow(run) + 1) + ' / ' + RUN.MAP_ROWS + ' 段</small></h2>' +
+            bonusList(run) +
+            (run.route === 'cursed' ? '<p class="rn-cursed">CURSED — この試合は 自分の手札 4 枚・相手 7 枚。勝てば RARE 以上確定の GACHA</p>' : '') +
+            (retry ? '<p class="rn-warn">負けたので同じ相手とやり直しです (ライフ −' + last.damage + ')' + (last.saved === 'phoenix' ? ' — PHOENIX でよみがえった！' : last.saved ? ' — FAILSAFE が作動してライフ 1 で耐えました' : '') + '</p>' : '') +
+            (run.swapped ? '<p class="rn-note">転送装置: <b>' + esc(run.swapped.out) + '</b> が <b>' + esc(run.swapped.add) + '</b> に入れ替わった</p>' : '') +
+            (run.opp.elite ? '<p class="rn-note rn-elite">ELITE — 勝つとクレジット多めとパッチを1つ</p>' : run.route === 'alarm' ? '<p class="rn-warn">警報が鳴っている — 相手が1段強い</p>' : '') +
+            '<div class="rn-vs"><div><small>あなた' + ((run.removed || []).length ? ' (除去 ' + run.removed.length + ' 枚)' : '') + '</small>' + deckLine(run.deck, byName) + '</div><b>VS</b>' +
+            '<div><small>' + esc(levelLabel(run.opp.level)) + '</small>' + deckLine(run.opp.deck, byName) + '</div></div>' +
+            (confirmQuit ? '' : '<div class="rn-btns"><button type="button" class="rn-go" data-act="fight">戦う</button>' +
+              '<button type="button" data-act="title">タイトルへ (続きはあとで)</button><button type="button" data-act="quit">あきらめる</button></div>');
+        }
+        default: return '';
+      }
+    };
+
     const render = () => {
-      let body = '';
       const active = run && run.phase !== 'over' && run.phase !== 'clear';
       if ((hub && active) || !active) {
         el.innerHTML = '<div class="rn-card"><div class="rn-head"><b>// RUN</b><span>2つのモード</span></div>' + hubHtml() + '</div>';
         return;
       }
-      if (run.phase === 'draft') {
-        /* はじめの1つを選ぶときだけ、何をするモードなのかを書いておく (いきなり選ばされても分からないので) */
-        const intro = !run.deck.length && run.floor === 0
-          ? '<p class="rn-lead">まず<b>プロトコルを3つ</b>、1つずつ選んでデッキを作ります。' +
-            'そのデッキで <b>CPU ' + (RUN.FLOORS.length - 1) + '人と BOSS</b> を順に倒します (1試合 ' + RUN.RUN_WIN_COMPILES + '本先取)。<br>' +
-            '上の <b>LIFE</b> は、相手にコンパイルされるたびに 1 減り、0 になったら終わり。' +
-            '負けても同じ相手とやり直せます。勝つたびに、プロトコルの入れ替えかライフ回復を選べます。<br>' +
-            'デッキができたら<b>パッチ</b> (勝ち抜き戦のあいだ効き続ける改造) を1つ選びます。2〜5戦目は、次に進む<b>道</b> (通常戦・精鋭戦・イベント) を選べます。</p>'
-          : '';
-        body = '<h2>プロトコルを選ぶ <small>' + (run.deck.length + 1) + ' / 3</small></h2>' + intro +
-          (run.deck.length ? '<p class="rn-note">選んだもの ' + deckLine(run.deck, byName) + '</p>' : '') +
-          '<div class="rn-offers">' + run.offers.map(n => '<div class="rn-offer">' + protoChip(byName[n], 'data-pick="' + esc(n) + '"') +
-            (cardsOf ? '<button type="button" class="rn-info" data-info="' + esc(n) + '">カードを見る</button>' : '') + '</div>').join('') + '</div>';
-      } else if (run.phase === 'patch') {
-        const first = run.floor === 0 && !run.history.length;
-        body = '<h2>' + (first ? 'はじめのパッチを選ぶ' : 'パッチを1つ選ぶ') + '</h2>' +
-          '<p class="rn-note">' + (first ? 'この勝ち抜き戦のあいだ、ずっと効きます。' : run.after === 'battle' ? '選んだら、警報で強くなった相手と戦います。' : '精鋭戦の戦利品です。') + '</p>' +
-          '<div class="rn-patchlist">' + (run.patchOffers || []).map(id => patchCard(RUN.patchInfo(id), 'data-patch="' + esc(id) + '"')).join('') + '</div>' +
-          '<div class="rn-btns"><button type="button" data-act="nopatch">取らない</button></div>';
-      } else if (run.phase === 'route') {
-        body = '<h2>次の道を選ぶ <small>第' + (run.floor + 1) + '戦</small></h2>' +
-          '<div class="rn-routes">' + (run.routeOffers || []).map(r => '<button type="button" class="rn-route ' + r + '" data-route="' + r + '">' +
-            '<small>' + r.toUpperCase() + '</small><b>' + esc(RUN.ROUTES[r].name) + '</b><span>' + esc(RUN.ROUTES[r].text) + '</span></button>').join('') + '</div>';
-      } else if (run.phase === 'event') {
-        const ev = RUN.EVENTS[run.event];
-        body = '<h2>EVENT — ' + esc(ev.title) + '</h2><p class="rn-lead">' + esc(ev.text) + '</p>' +
-          '<div class="rn-routes">' + ev.options.map((o, i) => '<button type="button" class="rn-route event" data-event="' + i + '"' +
-            (o.need && !o.need(run) ? ' disabled' : '') + '><b>' + esc(o.label) + '</b></button>').join('') + '</div>';
-      } else if (run.phase === 'reward') {
-        body = '<h2>勝利！ 報酬を1つ選ぶ</h2>' + (swapAdd
-          ? '<p class="rn-note"><b>' + esc(swapAdd) + '</b> を入れる代わりに、外すプロトコルを選ぶ</p>' +
-            '<div class="rn-offers">' + run.deck.map(n => protoChip(byName[n], 'data-remove="' + esc(n) + '"')).join('') + '</div>' +
-            '<div class="rn-btns"><button type="button" data-act="unswap">戻る</button></div>'
-          : '<p class="rn-note">今のデッキ ' + deckLine(run.deck, byName) + '</p>' +
-            '<h3>プロトコルを入れ替える</h3><div class="rn-offers">' + run.offers.map(n => '<div class="rn-offer">' +
-              protoChip(byName[n], 'data-add="' + esc(n) + '"') +
-              (cardsOf ? '<button type="button" class="rn-info" data-info="' + esc(n) + '">カードを見る</button>' : '') + '</div>').join('') + '</div>' +
-            '<div class="rn-btns"><button type="button" class="rn-heal" data-act="heal"' + (run.life >= run.maxLife ? ' disabled' : '') + '>' +
-              'ライフを ' + RUN.healAmount(run) + ' 回復</button><button type="button" data-act="skip">そのまま進む</button></div>') +
-          (run.pendingPatch && !swapAdd ? '<p class="rn-note">精鋭戦の勝利: このあとパッチを1つ選べます</p>' : '');
-      } else if (run.phase === 'battle') {
-        const last = run.history[run.history.length - 1];
-        const retry = last && last.floor === run.floor && !last.win;
-        body = '<h2>' + (run.opp.boss ? 'BOSS — ' : '') + '第' + (run.floor + 1) + '戦 <small>/ ' + RUN.FLOORS.length + '</small></h2>' +
-          (retry ? '<p class="rn-warn">負けたので同じ相手とやり直しです (ライフ −' + last.damage + ')' + (last.saved ? ' — FAILSAFE が作動してライフ 1 で耐えました' : '') + '</p>' : '') +
-          (run.swapped ? '<p class="rn-note">転送装置: <b>' + esc(run.swapped.out) + '</b> が <b>' + esc(run.swapped.add) + '</b> に入れ替わった</p>' : '') +
-          (run.opp.elite ? '<p class="rn-note rn-elite">ELITE — 勝つとパッチを1つ</p>' : run.route === 'alarm' ? '<p class="rn-warn">警報が鳴っている — 相手が1段強い</p>' : '') +
-          '<div class="rn-vs"><div><small>あなた</small>' + deckLine(run.deck, byName) + '</div><b>VS</b>' +
-          '<div><small>' + esc(levelLabel(run.opp.level)) + '</small>' + deckLine(run.opp.deck, byName) + '</div></div>' +
-          (confirmQuit
-            ? '<p class="rn-warn">この勝ち抜き戦をあきらめて終わりにしますか？ (記録は残ります)</p>' +
-              '<div class="rn-btns"><button type="button" class="rn-danger" data-act="quitYes">あきらめる</button><button type="button" data-act="quitNo">続ける</button></div>'
-            : '<div class="rn-btns"><button type="button" class="rn-go" data-act="fight">戦う</button>' +
-              '<button type="button" data-act="title">タイトルへ (続きはあとで)</button><button type="button" data-act="quit">あきらめる</button></div>');
+      const quit = confirmQuit
+        ? '<p class="rn-warn">この勝ち抜き戦をあきらめて終わりにしますか？ (記録は残ります)</p>' +
+          '<div class="rn-btns"><button type="button" class="rn-danger" data-act="quitYes">あきらめる</button><button type="button" data-act="quitNo">続ける</button></div>'
+        : '';
+      el.innerHTML = '<div class="rn-card rn-ph-' + run.phase + '"><div class="rn-head"><b>// RUN</b><span>勝ち抜き戦</span></div>' +
+        (run.phase !== 'draft' ? lifeBar(run) + patchStrip(run) : '') + phaseBody() + quit +
+        (!swapAdd && !confirmQuit ? gachaBox(run) : '') + '</div>';
+      /* 地図は、いまの段が見えるところまで送る */
+      const wrap = el.querySelector('.rn-map-wrap');
+      if (wrap) {
+        const here = wrap.querySelector('.rn-node.reach') || wrap.querySelector('.rn-node.here');
+        if (here) wrap.scrollTop = Math.max(0, here.offsetTop - wrap.clientHeight * 0.6);
       }
-      el.innerHTML = '<div class="rn-card"><div class="rn-head"><b>// RUN</b><span>勝ち抜き戦</span></div>' +
-        (run && run.phase !== 'over' && run.phase !== 'clear' ? lifeBar(run) + floorTrack(run) + patchStrip(run) : '') + body +
-        (run && !swapAdd && !confirmQuit ? gachaBox(run) : '') + '</div>';
     };
 
     el.onclick = (ev) => {
       const t = ev.target.closest('button');
-      if (!t) return;
+      if (!t || t.disabled) return;
       if (t.dataset.info) { info(t.dataset.info); return; }
       if (t.dataset.heat) { heatSel = +t.dataset.heat; render(); return; }
+      if (t.dataset.node) { set(RUN.chooseNode(run, t.dataset.node, names)); return; }
       if (t.dataset.patch) { set(RUN.choosePatch(run, t.dataset.patch, names)); return; }
-      if (t.dataset.route) { set(RUN.chooseRoute(run, t.dataset.route, names)); return; }
+      if (t.dataset.buy) { set(RUN.buyPatch(run, t.dataset.buy)); return; }
+      if (t.dataset.rm) { set(RUN.removeCard(run, t.dataset.rm)); return; }
       if (t.dataset.event) { set(RUN.resolveEvent(run, +t.dataset.event, names)); return; }
       if (t.dataset.pick) { set(RUN.draftPick(run, t.dataset.pick, names)); return; }
       if (t.dataset.add) { swapAdd = t.dataset.add; render(); return; }
@@ -220,12 +397,25 @@ export function openRun(protocols, cardsOf, opts) {
       switch (t.dataset.act) {
         case 'start': hub = false; set(RUN.newRun(names, Math.random, heatSel)); break;
         case 'nopatch': set(RUN.choosePatch(run, null, names)); break;
-        case 'gacha': set(RUN.gachaPull(run)); break;
+        case 'gacha': {
+          if (pulling) break;
+          const next = RUN.gachaPull(run);
+          if (next === run) break;
+          pulling = true;
+          playGacha(el, next.lastPull).then(() => { pulling = false; set(next); });
+          break;
+        }
+        case 'deck': showDeck = !showDeck; render(); break;
+        case 'rest': set(RUN.restHeal(run)); break;
+        case 'restRemove': set(RUN.restRemove(run)); break;
+        case 'unremove': set(RUN.cancelRemove(run)); break;
+        case 'buyRemove': set(RUN.buyRemove(run)); break;
+        case 'buyHeal': set(RUN.buyHeal(run)); break;
+        case 'leave': set(RUN.leaveShop(run)); break;
         case 'resume': hub = false; render(); break;
         case 'weekly': done({ go: 'weekly' }); break;
         case 'title': done(null); break;
         case 'unswap': swapAdd = null; render(); break;
-        case 'heal': set(RUN.applyReward(run, { type: 'heal' }, names)); break;
         case 'skip': set(RUN.applyReward(run, { type: 'skip' }, names)); break;
         case 'fight': done({ me: run.deck.slice(), ai: run.opp.deck.slice(), level: run.opp.level, kind: 'run' }); break;
         case 'quit': confirmQuit = true; render(); break;
@@ -249,7 +439,8 @@ export function runHud(lost) {
     document.body.appendChild(el);
   }
   const dmg = RUN.damageOf(run, lost);          // FIREWALL は最初の1回を防ぐ
-  el.innerHTML = '<small>第' + (run.floor + 1) + '戦' + (run.opp && run.opp.elite ? ' ELITE' : '') + '</small>' + lifeBar(run, Math.min(run.life, dmg));
+  const label = run.opp && run.opp.boss ? 'BOSS' : (rowNow(run) + 1) + '段目' + (run.opp && run.opp.elite ? ' 精鋭' : '');
+  el.innerHTML = '<small>' + label + '</small>' + lifeBar(run, Math.min(run.life, dmg));
   el.classList.toggle('danger', run.life - dmg <= 2);
 }
 
@@ -263,22 +454,24 @@ export function showRunAfterGame(win, damage, protocols) {
   RUN.saveRun(run);
   const el = overlay();
   el.classList.add('after');
-  const title = run.phase === 'clear' ? '全勝クリア！' : run.phase === 'over' ? 'ライフが尽きた' : win ? '勝利' : '敗北';
+  const title = run.phase === 'clear' ? 'BOSS 撃破！' : run.phase === 'over' ? 'ライフが尽きた' : win ? '勝利' : '敗北';
   const last = run.history[run.history.length - 1] || { damage };
   const heatNote = run.phase === 'clear' && (run.heat | 0) < RUN.MAX_HEAT ? '<p class="rn-note">HEAT ' + ((run.heat | 0) + 1) + ' が解放されました</p>' : '';
   const line = run.phase === 'clear'
-    ? RUN.FLOORS.length + '人を勝ち抜きました。ライフ ' + run.life + ' 残し。'
-    : run.phase === 'over' ? '第' + (run.floor + 1) + '戦で終わりました。'
-      : win ? '次は第' + (run.floor + 1) + '戦。報酬を選んでから進みます。' : '同じ相手ともう一度戦います。';
+    ? '頂上まで登りきりました。ライフ ' + run.life + ' 残し。'
+    : run.phase === 'over' ? (rowNow(run) + 1) + ' 段目で終わりました。'
+      : win ? '+' + (run.lastGain | 0) + ' クレジット。報酬を選んでから地図へ戻ります。' : '同じ相手ともう一度戦います。';
   el.innerHTML = '<div class="rn-card"><div class="rn-head"><b>// RUN</b><span>勝ち抜き戦</span></div>' +
     '<h2>' + title + '</h2><p class="rn-note">この試合でコンパイルされた回数 <b>' + damage + '</b> → ライフ −' + last.damage +
       (last.damage < damage ? ' (FIREWALL で1回防いだ)' : '') + '</p>' +
-    (last.saved ? '<p class="rn-warn">FAILSAFE が作動 — ライフ 1 で耐えた</p>' : '') +
+    (last.saved === 'phoenix' ? '<p class="rn-warn rn-phoenix">PHOENIX — ライフ全回復でよみがえった！</p>'
+      : last.saved ? '<p class="rn-warn">FAILSAFE が作動 — ライフ 1 で耐えた</p>' : '') +
     lifeBar({ ...run, life: Math.max(0, run.life) }) + '<p class="rn-lead">' + line + '</p>' + heatNote +
-    (run.phase === 'over' || run.phase === 'clear' ? '<p class="rn-note">デッキ ' + deckLine(run.deck, byName) + '</p>' : '') +
+    (run.phase === 'over' || run.phase === 'clear' ? '<p class="rn-note">デッキ ' + deckLine(run.deck, byName) + '</p>' + patchStrip(run) : '') +
     '<div class="rn-btns">' +
       (run.phase === 'over' || run.phase === 'clear' ? '' : '<button type="button" class="rn-go" data-act="next">次へ</button>') +
       '<button type="button" data-act="board">盤面を見る</button><button type="button" data-act="title">タイトルへ</button></div></div>';
+  if (run.phase === 'clear') { el.classList.add('rn-clear'); confetti(RAR_COLORS.L, 320); setTimeout(() => confetti(RAR_COLORS.E, 200), 900); }
   el.onclick = (ev) => {
     const t = ev.target.closest('button');
     if (!t) return;

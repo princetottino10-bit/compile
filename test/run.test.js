@@ -1,4 +1,5 @@
-/* 勝ち抜き戦 (run.js): ドラフト → 8戦 → 報酬、ライフはコンパイルされた回数だけ減る */
+/* 勝ち抜き戦 (run.js): ドラフト → はじめのパッチ → 地図を登る (戦闘・精鋭・イベント・休憩所・ショップ・宝箱) → BOSS。
+   ライフはコンパイルされた回数だけ減る。パッチ・ビルド・カード除去・ガチャ・HEAT */
 const test = require('node:test');
 const assert = require('node:assert');
 
@@ -13,73 +14,246 @@ const NAMES = ['FIRE', 'WATER', 'SPEED', 'DARKNESS', 'HATE', 'SMOKE', 'LIFE', 'L
 /* 決まった並びを返す乱数 (抽選を再現できるように) */
 const seq = () => { let i = 0; return () => ((i++ * 0.37) % 1); };
 
-async function drafted(patch) {
+/* ドラフト → はじめのパッチ (指定が無ければ取らない) → 地図 */
+async function started(patch) {
   const R = await load();
   let run = R.newRun(NAMES, seq());
   for (let k = 0; k < 3; k++) run = R.draftPick(run, run.offers[0], NAMES, seq());
-  /* はじめのパッチ (指定が無ければ取らない) */
-  run = R.choosePatch(run, patch && run.patchOffers.includes(patch) ? patch : null, NAMES, seq());
-  if (patch && !run.patches.includes(patch)) run = { ...run, patches: run.patches.concat(patch) };
+  run = R.choosePatch(run, null, NAMES, seq());
+  if (patch) run = { ...run, patches: [].concat(patch) };
   return { R, run };
 }
-/* 勝ったあと、報酬 → (パッチ) → 道 を通常戦で進める */
-function advance(R, r, reward) {
-  let x = R.applyReward(r, reward || { type: 'skip' }, NAMES, seq());
-  if (x.phase === 'patch') x = R.choosePatch(x, null, NAMES, seq());
-  if (x.phase === 'route') x = R.chooseRoute({ ...x, routeOffers: ['normal', 'elite'] }, 'normal', NAMES, seq());
-  return x;
+/* いまの段から、指定した種類のマスへ (無ければ地図を作り直した体で置き換える) */
+function goTo(R, run, type) {
+  const id = R.reachable(run)[0];
+  const node = R.nodeById(run, id);
+  const map = { rows: run.map.rows.map(row => row.map(n => (n.id === id ? { ...n, type } : n))) };
+  return R.chooseNode({ ...run, map }, node.id, NAMES, seq());
 }
 
-test('3回選ぶとデッキができ、1戦目の相手が決まる (自分のプロトコルとは重ならない)', async () => {
-  const { R, run } = await drafted();
+test('3回選ぶとデッキができ、はじめのパッチを3つから選んで地図へ', async () => {
+  const R = await load();
+  let run = R.newRun(NAMES, seq());
+  for (let k = 0; k < 3; k++) run = R.draftPick(run, run.offers[0], NAMES, seq());
   assert.equal(run.deck.length, 3);
-  assert.equal(new Set(run.deck).size, 3, '同じプロトコルは2回出ない');
-  assert.equal(run.phase, 'battle');
-  assert.equal(run.opp.level, R.FLOORS[0].level);
-  assert.ok(run.opp.deck.every(n => !run.deck.includes(n)));
-  assert.equal(run.life, R.RUN_LIFE);
+  assert.equal(new Set(run.deck).size, 3);
+  assert.equal(run.phase, 'patch');
+  assert.equal(run.patchOffers.length, 3);
+  assert.ok(run.patchOffers.every(id => R.patchInfo(id).rar !== 'L'), 'LEGENDARY ははじめに出ない');
+  const got = R.choosePatch(run, run.patchOffers[1], NAMES, seq());
+  assert.deepEqual(got.patches, [run.patchOffers[1]]);
+  assert.equal(got.phase, 'map');
+  assert.equal(got.life, R.RUN_LIFE);
+  assert.equal(got.credits, R.START_CREDITS);
+  let hot = R.newRun(NAMES, seq(), 5);
+  for (let k = 0; k < 3; k++) hot = R.draftPick(hot, hot.offers[0], NAMES, seq());
+  assert.equal(hot.phase, 'map', 'HEAT 5 ははじめのパッチ無し');
+  assert.equal(hot.maxLife, R.RUN_LIFE - 1, 'HEAT 1 以上はライフ −1');
 });
 
-test('コンパイルされた回数だけライフが減る。勝てば次の階の報酬、負ければ同じ階をやり直す', async () => {
-  const { R, run } = await drafted();
-  const lost = R.finishBattle(run, false, 3, NAMES, seq());
-  assert.equal(lost.life, R.RUN_LIFE - 3);
+test('地図: 12段、0段目は戦闘・5段目は宝箱・10段目は休憩所・最上段は BOSS。どのマスにも下から道があり、BOSS まで登れる', async () => {
+  const R = await load();
+  for (let s = 0; s < 30; s++) {
+    let x = s + 1;
+    const rnd = () => { x = (x * 16807) % 2147483647; return x / 2147483647; };
+    const map = R.makeMap(rnd);
+    assert.equal(map.rows.length, R.MAP_ROWS);
+    assert.ok(map.rows[0].every(n => n.type === 'battle'));
+    assert.ok(map.rows[5].every(n => n.type === 'treasure'));
+    assert.ok(map.rows[R.MAP_ROWS - 2].every(n => n.type === 'rest'));
+    assert.deepEqual(map.rows[R.MAP_ROWS - 1].map(n => n.type), ['boss']);
+    assert.ok(map.rows[1].concat(map.rows[2]).every(n => n.type !== 'elite' && n.type !== 'rest'), '序盤に精鋭・休憩所は出ない');
+    for (let r = 1; r < R.MAP_ROWS; r++) {
+      for (const n of map.rows[r]) assert.ok(map.rows[r - 1].some(p => p.next.includes(n.id)), n.id + ' に下から道がある');
+    }
+    for (let r = 0; r < R.MAP_ROWS - 1; r++) for (const n of map.rows[r]) assert.ok(n.next.length >= 1, n.id + ' から上へ道がある');
+  }
+});
+
+test('進めるのはつながっているマスだけ。戦闘で勝つとクレジットと報酬、負けたら同じ相手とやり直し', async () => {
+  const { R, run } = await started();
+  const far = run.map.rows[3][0].id;
+  assert.equal(R.chooseNode(run, far, NAMES, seq()), run, '飛ばして進めない');
+  const b = R.chooseNode(run, R.reachable(run)[0], NAMES, seq());
+  assert.equal(b.phase, 'battle');
+  assert.equal(b.opp.level, 1);
+  assert.ok(b.opp.deck.every(n => !b.deck.includes(n)));
+  const lost = R.finishBattle(b, false, 2, NAMES, seq());
+  assert.equal(lost.life, R.RUN_LIFE - 2);
   assert.equal(lost.phase, 'battle');
-  assert.equal(lost.floor, 0);
-  assert.deepEqual(lost.opp, run.opp, 'やり直しは同じ相手');
+  assert.deepEqual(lost.opp, b.opp, 'やり直しは同じ相手');
   const won = R.finishBattle(lost, true, 1, NAMES, seq());
-  assert.equal(won.life, R.RUN_LIFE - 4);
   assert.equal(won.phase, 'reward');
-  assert.equal(won.floor, 1);
-  assert.ok(won.offers.every(n => !won.deck.includes(n)));
-});
-
-test('報酬: 入れ替え・回復 (上限あり)。そのあと次の相手が決まる', async () => {
-  const { R, run } = await drafted();
-  const won = R.finishBattle(run, true, 2, NAMES, seq());
+  assert.equal(won.credits, R.START_CREDITS + 3);
+  assert.equal(won.offers.length, 3);
   const swapped = R.applyReward(won, { type: 'swap', add: won.offers[0], remove: won.deck[1] }, NAMES, seq());
   assert.ok(swapped.deck.includes(won.offers[0]));
-  assert.ok(!swapped.deck.includes(won.deck[1]));
-  assert.equal(swapped.phase, 'route', '2戦目は道を選ぶ');
-  assert.equal(swapped.routeOffers.length, 2);
-  const healed = R.applyReward(won, { type: 'heal' }, NAMES, seq());
-  assert.equal(healed.life, Math.min(R.RUN_LIFE, won.life + R.RUN_HEAL));
+  assert.equal(swapped.phase, 'map');
+  assert.deepEqual(R.reachable(swapped), R.nodeById(swapped, swapped.pos).next);
 });
 
-test('ライフが 0 になったら終わり。8戦勝てばクリアで、どちらも最高記録に残る', async () => {
-  const { R, run } = await drafted();
-  const over = R.finishBattle(run, false, 99, NAMES, seq());
+test('精鋭: 相手が強く、勝つとクレジット多めとパッチ。上の段の精鋭は挑戦者', async () => {
+  const { R, run } = await started();
+  const e = goTo(R, run, 'elite');
+  assert.ok(e.opp.elite);
+  assert.equal(e.opp.level, 2);
+  const won = R.finishBattle(e, true, 0, NAMES, seq());
+  assert.equal(won.credits, R.START_CREDITS + 6, '精鋭 +5・無傷 +1');
+  const after = R.applyReward(won, { type: 'skip' }, NAMES, seq());
+  assert.equal(after.phase, 'patch');
+  assert.equal(R.choosePatch(after, after.patchOffers[0], NAMES, seq()).phase, 'map');
+  const high = R.prepareBattle({ ...run, pos: run.map.rows[7][0].id }, NAMES, seq(), 'elite');
+  assert.ok(high.opp.level >= 5, '上の段の精鋭は挑戦者');
+});
+
+test('BOSS を倒すとクリアで、次の HEAT が解放される。ライフが尽きたら終わり', async () => {
+  const { R, run } = await started();
+  store.delete('compileRunHeat');
+  const boss = R.prepareBattle({ ...run, pos: run.map.rows[R.MAP_ROWS - 1][0].id }, NAMES, seq());
+  assert.ok(boss.opp.boss);
+  const clear = R.finishBattle(boss, true, 1, NAMES, seq());
+  assert.equal(clear.phase, 'clear');
+  assert.equal(R.loadBest().reached, R.MAP_ROWS + 1);
+  assert.equal(R.unlockedHeat(), 1);
+  const over = R.finishBattle(boss, false, 99, NAMES, seq());
   assert.equal(over.phase, 'over');
   assert.equal(over.life, 0);
-  let r = run;
-  for (let f = 0; f < R.FLOORS.length; f++) {
-    r = R.finishBattle(r, true, 0, NAMES, seq());
-    if (r.phase === 'reward') r = advance(R, r);
-  }
-  assert.equal(r.phase, 'clear');
-  assert.equal(R.loadBest().reached, R.FLOORS.length + 1);
-  const bossFloor = R.prepareFloor({ ...run, floor: R.FLOORS.length - 1 }, NAMES, seq());
-  assert.ok(bossFloor.opp.boss, '最後はボス (最強)');
+});
+
+test('休憩所: 休む (回復) か 研ぐ (カード除去)。除去したカードは試合の山札から抜ける', async () => {
+  const { R, run } = await started();
+  const rest = goTo(R, { ...run, life: 2 }, 'rest');
+  assert.equal(rest.phase, 'rest');
+  assert.equal(R.restHeal(rest).life, 4);
+  const rm = R.restRemove(rest);
+  assert.equal(rm.phase, 'remove');
+  const card = rm.deck[0] + '_2';
+  const done = R.removeCard(rm, card);
+  assert.deepEqual(done.removed, [card]);
+  assert.equal(done.phase, 'map');
+  assert.equal(R.removeCard(rm, 'NOPE_1'), rm, 'デッキに無いカードは外せない');
+  assert.deepEqual(R.battleOpts(done, 0).exclude, [[card], []]);
+  /* プロトコルを入れ替えたら、そのプロトコルの除去は取り消し */
+  const reward = { ...done, phase: 'reward', offers: ['DEATH'], pendingPatch: false };
+  const swapped = R.applyReward(reward, { type: 'swap', add: 'DEATH', remove: done.deck[0] }, NAMES, seq());
+  assert.deepEqual(swapped.removed, []);
+});
+
+test('ショップ: パッチを買う・カード除去 (買うたびに値上がり、やめたら返金)・修理 (1回)', async () => {
+  const { R, run } = await started();
+  const shop = goTo(R, { ...run, credits: 30, life: 3 }, 'shop');
+  assert.equal(shop.phase, 'shop');
+  assert.equal(shop.shop.patches.length, 3);
+  const id = shop.shop.patches[0];
+  const bought = R.buyPatch(shop, id);
+  assert.ok(bought.patches.includes(id));
+  assert.equal(bought.credits, 30 - R.patchPrice(shop, id));
+  assert.equal(R.buyPatch(bought, id), bought, '売り切れ');
+  const rm = R.buyRemove(bought);
+  assert.equal(rm.phase, 'remove');
+  const back = R.cancelRemove(rm);
+  assert.equal(back.credits, bought.credits, 'やめたら返金');
+  assert.equal(back.removeCost, bought.removeCost);
+  const rm2 = R.removeCard(R.buyRemove(back), back.deck[1] + '_1');
+  assert.equal(rm2.phase, 'shop');
+  assert.equal(rm2.removeCost, 7);
+  const healed = R.buyHeal(rm2);
+  assert.equal(healed.life, 5);
+  const hurt = { ...healed, life: 3 };
+  assert.equal(R.buyHeal(hurt), hurt, '修理は1回だけ');
+  assert.equal(R.leaveShop(healed).phase, 'map');
+});
+
+test('宝箱・イベント: 宝箱はパッチ、祭壇は呪いの試合、保管庫は警報の試合、デバッガーはカード除去', async () => {
+  const { R, run } = await started();
+  const t = goTo(R, run, 'treasure');
+  assert.equal(t.phase, 'patch');
+  assert.equal(R.choosePatch(t, t.patchOffers[0], NAMES, seq()).phase, 'map');
+  const ev = goTo(R, run, 'event');
+  assert.equal(ev.phase, 'event');
+  const altar = R.resolveEvent({ ...ev, event: 'altar' }, 0, NAMES, seq());
+  assert.equal(altar.phase, 'battle');
+  assert.equal(altar.route, 'cursed');
+  assert.deepEqual(R.battleOpts(altar, 0).handSize, [4, 7]);
+  const cursedWin = R.finishBattle(altar, true, 1, NAMES, () => 0.9);
+  assert.equal(cursedWin.cursedWin, true);
+  assert.ok(['R', 'E', 'L'].includes(cursedWin.lastPull.rar), '呪いに勝つと RARE 以上確定');
+  const vault = R.resolveEvent({ ...ev, event: 'vault' }, 0, NAMES, seq());
+  assert.equal(vault.phase, 'patch');
+  const fight = R.choosePatch(vault, vault.patchOffers[0], NAMES, seq());
+  assert.equal(fight.phase, 'battle');
+  assert.equal(fight.opp.level, 2);
+  assert.ok(!fight.opp.elite);
+  const purge = R.resolveEvent({ ...ev, event: 'purge' }, 0, NAMES, seq());
+  assert.equal(purge.phase, 'remove');
+  assert.equal(purge.life, R.RUN_LIFE - 1);
+  const repair = R.resolveEvent({ ...ev, event: 'repair', life: 2 }, 0, NAMES, seq());
+  assert.equal(repair.life, 4);
+  assert.equal(repair.phase, 'map');
+  assert.equal(R.resolveEvent({ ...ev, event: 'shady', life: 1 }, 0, NAMES, seq()).phase, 'event', 'ライフ 1 では拾えない');
+});
+
+test('パッチ: FIREWALL・FAILSAFE・PHOENIX・SELF REPAIR・CLEAN SWEEP・MIDAS', async () => {
+  const { R, run } = await started();
+  const b = goTo(R, run, 'battle');
+  const fw = { ...b, patches: ['firewall'] };
+  assert.equal(R.damageOf(fw, 3), 2);
+  assert.equal(R.damageOf(fw, 0), 0);
+  const fs = { ...b, patches: ['failsafe'] };
+  assert.equal(R.lethal(fs, 99), false);
+  const saved = R.finishBattle(fs, false, 99, NAMES, seq());
+  assert.equal(saved.life, 1);
+  assert.equal(saved.failsafeUsed, true);
+  assert.equal(R.lethal(saved, 1), true, '2回目は耐えない');
+  const ph = R.finishBattle({ ...b, patches: ['phoenix'], life: 2 }, false, 9, NAMES, seq());
+  assert.equal(ph.life, ph.maxLife, 'PHOENIX は全回復');
+  assert.equal(R.finishBattle({ ...b, patches: ['repair'], life: 3 }, true, 1, NAMES, seq()).life, 3);
+  assert.equal(R.finishBattle({ ...b, patches: ['sweep'], life: 2 }, true, 0, NAMES, seq()).life, 4);
+  assert.equal(R.finishBattle({ ...b, patches: ['midas'] }, true, 0, NAMES, seq()).credits, R.START_CREDITS + 8, '(3 + 無傷 1) × 2');
+});
+
+test('パッチとビルド: 試合のはじめ方 (手札・先攻・コントロール)', async () => {
+  const R = await load();
+  const base = { patches: [], route: 'normal' };
+  assert.deepEqual(R.battleOpts(base, 0), { winCompiles: R.RUN_WIN_COMPILES, handSize: [5, 5] });
+  assert.deepEqual(R.battleOpts({ ...base, patches: ['cache'] }, 0).handSize, [6, 5]);
+  assert.deepEqual(R.battleOpts({ ...base, patches: ['cache', 'jammer'] }, 0).handSize, [6, 3], 'HAND 2つ: 相手 さらに −1');
+  assert.deepEqual(R.battleOpts({ ...base, patches: ['cache', 'buffer', 'jammer'] }, 0).handSize, [7, 3], 'HAND 3つ: 自分 +1 (上限 7)');
+  const tempo = R.battleOpts({ ...base, patches: ['repair', 'sweep', 'initiative'] }, 0);
+  assert.equal(tempo.first, 0);
+  assert.equal(tempo.startControl, 0);
+  assert.deepEqual(R.battleOpts({ ...base, patches: ['overflow', 'singularity'], route: 'cursed' }, 0).handSize, [4, 7], '呪いはパッチより強い');
+  for (const t of Object.keys(R.TAGS)) assert.ok(R.PATCHES.filter(p => p.tag === t && !p.gachaOnly).length >= 3, t + ' は ガチャ無しでも3つそろう');
+  assert.ok(R.PATCHES.every(p => R.TAGS[p.tag] && R.RARITY[p.rar]));
+});
+
+test('GUARD を2つそろえると最大ライフ +1。GREED 2つで勝つとクレジット +2', async () => {
+  const { R, run } = await started();
+  let x = { ...run, phase: 'patch', after: 'map', patchOffers: ['firewall'], life: 3 };
+  x = R.choosePatch(x, 'firewall', NAMES, seq());
+  x = R.choosePatch({ ...x, phase: 'patch', after: 'map', patchOffers: ['failsafe'] }, 'failsafe', NAMES, seq());
+  assert.equal(x.maxLife, R.RUN_LIFE + 1);
+  assert.equal(x.life, 4);
+  const b = goTo(R, { ...run, patches: ['lucky', 'search'] }, 'battle');
+  assert.equal(R.finishBattle(b, true, 1, NAMES, seq()).credits, R.START_CREDITS + 5);
+});
+
+test('GACHA: 戦いの合間に引ける。レア度と「かぶり」', async () => {
+  const { R, run } = await started();
+  assert.equal(R.canPull(run), true, 'はじめのクレジットで1回引ける');
+  const rich = { ...run, credits: 20 };
+  const leg = R.gachaPull(rich, () => 0.01);
+  assert.equal(leg.lastPull.rar, 'L');
+  assert.equal(leg.credits, 20 - R.GACHA_COST);
+  const epic = R.gachaPull(rich, () => 0.05);
+  assert.equal(epic.lastPull.rar, 'E');
+  const again = R.gachaPull({ ...epic, life: 2 }, () => 0.05);
+  assert.equal(again.lastPull.dupe, true);
+  assert.equal(again.life, 3);
+  assert.equal(R.gachaCost({ ...rich, patches: ['lucky'] }), R.GACHA_COST - 1);
+  const fighting = { ...rich, phase: 'battle' };
+  assert.equal(R.gachaPull(fighting), fighting, '戦う前の画面では引けない');
+  assert.equal(Object.values(R.RARITY).reduce((n, r) => n + r.weight, 0), 100);
 });
 
 test('相手のコンパイル回数を記録から数える (リコンパイル・効果で済ませたものも)', async () => {
@@ -90,124 +264,8 @@ test('相手のコンパイル回数を記録から数える (リコンパイル
   assert.equal(R.compilesBy(st, 0), 1);
 });
 
-test('コンパイル回数はエンジンの集計 (state.tally) を優先する', async () => {
+test('地図になる前の保存 (v1) は読まない', async () => {
   const R = await load();
-  assert.equal(R.compilesBy({ tally: { compiles: [1, 2] }, actionLog: [] }, 1), 2);
-});
-
-test('はじめのパッチを3つから選ぶ (HEAT 5 では無し)', async () => {
-  const R = await load();
-  let run = R.newRun(NAMES, seq());
-  for (let k = 0; k < 3; k++) run = R.draftPick(run, run.offers[0], NAMES, seq());
-  assert.equal(run.phase, 'patch');
-  assert.equal(run.patchOffers.length, 3);
-  const got = R.choosePatch(run, run.patchOffers[1], NAMES, seq());
-  assert.deepEqual(got.patches, [run.patchOffers[1]]);
-  assert.equal(got.phase, 'battle', '1戦目は道を選ばない');
-  let hot = R.newRun(NAMES, seq(), 5);
-  for (let k = 0; k < 3; k++) hot = R.draftPick(hot, hot.offers[0], NAMES, seq());
-  assert.equal(hot.phase, 'battle');
-  assert.equal(hot.maxLife, R.RUN_LIFE - 1, 'HEAT 1 以上はライフ −1');
-});
-
-test('パッチ: FIREWALL は最初の1回を防ぐ。FAILSAFE は1度だけライフ 1 で耐える。SELF REPAIR は勝つと +1', async () => {
-  const { R, run } = await drafted('firewall');
-  assert.equal(R.damageOf(run, 3), 2);
-  assert.equal(R.damageOf(run, 0), 0);
-  const fs = { ...run, patches: ['failsafe'] };
-  assert.equal(R.lethal(fs, 99), false);
-  const saved = R.finishBattle(fs, false, 99, NAMES, seq());
-  assert.equal(saved.life, 1);
-  assert.equal(saved.phase, 'battle');
-  assert.equal(saved.failsafeUsed, true);
-  assert.equal(R.lethal(saved, 1), true, '2回目は耐えない');
-  const rep = R.finishBattle({ ...run, patches: ['repair'], life: 3 }, true, 1, NAMES, seq());
-  assert.equal(rep.life, 3);
-  const sweep = R.finishBattle({ ...run, patches: ['sweep'], life: 2 }, true, 0, NAMES, seq());
-  assert.equal(sweep.life, 4);
-});
-
-test('パッチ: 試合のはじめ方 (先攻・手札・コントロール) と報酬の候補', async () => {
-  const R = await load();
-  const run = { patches: ['initiative', 'cache', 'root', 'jammer'] };
-  assert.deepEqual(R.battleOpts(run, 0), { winCompiles: R.RUN_WIN_COMPILES, handSize: [6, 4], first: 0, startControl: 0 });
-  assert.deepEqual(R.battleOpts({ patches: [] }, 0), { winCompiles: R.RUN_WIN_COMPILES, handSize: [5, 5] });
-  const { run: r0 } = await drafted('search');
-  assert.equal(R.finishBattle(r0, true, 0, NAMES, seq()).offers.length, 4);
-});
-
-test('精鋭戦は相手が1段強く、勝つと報酬のあとにパッチを選ぶ', async () => {
-  const { R, run } = await drafted();
-  const won = R.finishBattle(run, true, 0, NAMES, seq());
-  const route = R.applyReward(won, { type: 'skip' }, NAMES, seq());
-  const elite = R.chooseRoute({ ...route, routeOffers: ['elite', 'event'] }, 'elite', NAMES, seq());
-  assert.equal(elite.phase, 'battle');
-  assert.equal(elite.opp.level, R.FLOORS[1].level + 1);
-  assert.ok(elite.opp.elite);
-  const after = R.applyReward(R.finishBattle(elite, true, 0, NAMES, seq()), { type: 'skip' }, NAMES, seq());
-  assert.equal(after.phase, 'patch');
-  const next = R.choosePatch(after, after.patchOffers[0], NAMES, seq());
-  assert.equal(next.patches.length, 1);
-  assert.equal(next.phase, 'route');
-});
-
-test('イベント: 選んだあとで通常戦 (保管庫はパッチを選んだあと1段強い相手)', async () => {
-  const { R, run } = await drafted();
-  const won = R.finishBattle(run, true, 0, NAMES, seq());
-  const route = R.applyReward(won, { type: 'skip' }, NAMES, seq());
-  const ev = R.chooseRoute({ ...route, routeOffers: ['event', 'normal'] }, 'event', NAMES, seq());
-  assert.equal(ev.phase, 'event');
-  const repaired = R.resolveEvent({ ...ev, event: 'repair', life: 2 }, 0, NAMES, seq());
-  assert.equal(repaired.life, 4);
-  assert.equal(repaired.phase, 'battle');
-  const vault = R.resolveEvent({ ...ev, event: 'vault' }, 0, NAMES, seq());
-  assert.equal(vault.phase, 'patch');
-  const fight = R.choosePatch(vault, vault.patchOffers[0], NAMES, seq());
-  assert.equal(fight.phase, 'battle');
-  assert.equal(fight.opp.level, R.FLOORS[1].level + 1);
-  assert.ok(!fight.opp.elite, '保管庫の警報は精鋭戦ではない (パッチは増えない)');
-  const shady = R.resolveEvent({ ...ev, event: 'shady', life: 1 }, 0, NAMES, seq());
-  assert.equal(shady.phase, 'event', 'ライフ 1 では拾えない');
-});
-
-test('クリアすると次の HEAT が解放される', async () => {
-  const R = await load();
-  store.delete('compileRunHeat');
-  assert.equal(R.unlockedHeat(), 0);
-  const last = { ...R.newRun(NAMES, seq()), deck: NAMES.slice(0, 3), phase: 'battle', floor: R.FLOORS.length - 1, opp: { deck: ['X'], level: 3, boss: true } };
-  R.finishBattle(last, true, 0, NAMES, seq());
-  assert.equal(R.unlockedHeat(), 1);
-  R.finishBattle({ ...last, heat: 1 }, true, 0, NAMES, seq());
-  assert.equal(R.unlockedHeat(), 2);
-});
-
-test('GACHA: 勝つとクレジット (精鋭戦・無傷で多め)。3 クレジットで1回引き、かぶったらライフ +1', async () => {
-  const { R, run } = await drafted();
-  const won = R.finishBattle(run, true, 0, NAMES, seq());
-  assert.equal(won.credits, 2, '勝ち +1・無傷 +1');
-  const hurt = R.finishBattle(run, true, 1, NAMES, seq());
-  assert.equal(hurt.credits, 1);
-  assert.equal(R.canPull(won), false, 'まだ足りない');
-  const rich = { ...won, credits: 7 };
-  const once = R.gachaPull(rich, () => 0.05);                 // 5 → EPIC
-  assert.equal(once.credits, 7 - R.GACHA_COST);
-  assert.equal(once.lastPull.rar, 'E');
-  assert.equal(R.patchInfo(once.lastPull.id).rar, 'E');
-  assert.ok(once.patches.includes(once.lastPull.id));
-  const again = R.gachaPull({ ...once, life: 2 }, () => 0.05);  // 同じものが出る → かぶり
-  assert.equal(again.lastPull.dupe, true);
-  assert.equal(again.life, 3);
-  assert.equal(again.patches.length, once.patches.length);
-  const lucky = { ...rich, patches: ['lucky'] };
-  assert.equal(R.gachaCost(lucky), R.GACHA_COST - 1);
-  assert.equal(R.gachaPull({ ...rich, phase: 'draft' }).credits, 7, '戦いの合間以外では引けない');
-  const jack = R.finishBattle({ ...run, patches: ['jackpot'] }, true, 1, NAMES, seq());
-  assert.equal(jack.credits, 2);
-});
-
-test('GACHA のレア度はどれにもパッチがあり、重みの合計は 100', async () => {
-  const R = await load();
-  for (const k of Object.keys(R.RARITY)) assert.ok(R.PATCHES.some(p => p.rar === k), k);
-  assert.equal(Object.values(R.RARITY).reduce((n, r) => n + r.weight, 0), 100);
-  assert.ok(R.PATCHES.every(p => R.RARITY[p.rar]));
+  store.set('compileRun', JSON.stringify({ v: 1, phase: 'battle', floor: 3 }));
+  assert.equal(R.loadRun(), null);
 });

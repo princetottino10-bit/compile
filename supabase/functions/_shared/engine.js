@@ -2269,13 +2269,17 @@ function newGame(opts) {
     pending: null
   };
   const chosen = [opts.p0, opts.p1];
+  /* exclude: [[P1 が外すカード (defId)], [P2 が外すカード]] (勝ち抜き戦のカード除去)。山札は最低 12 枚残す */
+  const ex = Array.isArray(opts.exclude) ? opts.exclude : [];
   for (let p = 0; p < 2; p++) {
     const protos = chosen[p];
     if (!protos || protos.length !== 3) throw new Error('各プレイヤーは3プロトコルを指定すること');
     const deck = [];
+    const drop = new Set((Array.isArray(ex[p]) ? ex[p] : []).slice(0, 6));
     for (const name of protos) {
       if (!PROTOS[name]) throw new Error('未知のプロトコル: ' + name);
       for (const defId of PROTOS[name]) {
+        if (drop.has(defId)) continue;
         const uid = 'p' + p + ':' + defId;
         st.cards[uid] = { uid, def: defId, owner: p, faceUp: false, zone: 'deck' + p, knownTo: 0 };
         deck.push(uid);

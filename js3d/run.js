@@ -1,14 +1,16 @@
 /* =========================================================================
- * 勝ち抜き戦 (ローグライク) の進行と保存。画面は run-ui.js
+ * 勝ち抜き戦 (ローグライク。Slay the Spire のような地図を登る形) の進行と保存。画面は run-ui.js
  *   ・3回のドラフト (3つの候補から1つ) でデッキを作り、はじめのパッチを1つ選ぶ
- *   ・全8戦。1試合は2本先取。相手は ふつう → つよい → 挑戦者 → 最強 (ボス) と強くなる
- *   ・2〜5戦目は、次に進む道を選ぶ: 通常戦 / 精鋭戦 (相手が1段強い。勝つとパッチ) / イベント (選択のあと通常戦)
- *   ・パッチ: 勝ち抜き戦のあいだ効き続ける改造。ライフや報酬に効くものと、試合のはじめ方を変えるものがある
- *   ・ライフは勝ち抜き戦を通して持ち越す。相手に1回コンパイルされるたびに 1 減る (リコンパイルも)
- *   ・勝ったら報酬を1つ (プロトコルを入れ替える / ライフを回復 / そのまま)
- *   ・負けたら同じ階をやり直す。ライフが 0 になったら終わり
- *   ・クリアすると、次の HEAT (難しさ) が解放される (最大 5。上の段は下の段の条件を全部含む)
- *   ・勝つとクレジット。戦いの合間に GACHA でパッチを引ける (COMMON / RARE / EPIC。かぶったらライフ回復)
+ *   ・地図は下から上へ 12 段。最初から全部見えていて、つながっている道を1段ずつ選んで登る
+ *       ⚔ 戦闘 / ☠ 精鋭 (強い。勝つとパッチ) / ? イベント / ✚ 休憩所 (回復かカード除去) /
+ *       $ ショップ (パッチ・カード除去・回復・GACHA) / ◆ 宝箱 (パッチ) / ♛ BOSS (最上段)
+ *   ・1試合は2本先取。ライフは勝ち抜き戦を通して持ち越し、相手に1回コンパイルされるたびに 1 減る
+ *   ・負けたら同じ相手とやり直し。ライフが 0 になったら終わり
+ *   ・勝つとクレジットと、プロトコルの入れ替え (取らなくてもよい)
+ *   ・カード除去: デッキから1枚ずつ外して、欲しいカードが来やすくする (最大 6 枚)
+ *   ・パッチ (勝ち抜き戦のあいだ効き続ける改造) には系統 (HAND / GUARD / GREED / TEMPO) があり、
+ *     同じ系統を 2つ・3つ集めるとボーナス (ビルド)
+ *   ・クリアすると次の HEAT (難しさ) が解放される (最大 5。上の段は下の段の条件を全部含む)
  *   1戦ごとにページを作り直すので、状態は localStorage に置く
  * ========================================================================= */
 import { STRONGEST_AI, CHALLENGERS, CHALLENGER_BASE } from './aidecks.js';
@@ -16,44 +18,66 @@ import { STRONGEST_AI, CHALLENGERS, CHALLENGER_BASE } from './aidecks.js';
 const KEY = 'compileRun';
 const BEST_KEY = 'compileRunBest';
 const HEAT_KEY = 'compileRunHeat';
+const VERSION = 2;
 
 export const RUN_LIFE = 5;
 export const RUN_HEAL = 2;
 /* 勝ち抜き戦の1試合は 2本先取 (通常の3本では1周が長すぎる) */
 export const RUN_WIN_COMPILES = 2;
-/* 各階の相手。level は aidecks.js の難易度 (1 ふつう / 2 つよい / 3 最強 / 5.. 挑戦者)。route: 進む道を選べる階 */
-export const FLOORS = [
-  { level: 1 }, { level: 1, route: true }, { level: 2, route: true }, { level: 2, route: true }, { level: 2, route: true },
-  { challenger: true }, { challenger: true }, { level: 3, boss: true }
-];
+export const MAP_ROWS = 12;                 // 最上段が BOSS
+export const MAX_REMOVED = 6;               // 山札を 12 枚より減らさない
+export const START_CREDITS = 4;
 
-/* パッチ。kind: life (ライフ・報酬に効く) / game (試合のはじめ方を変える)。rar: ガチャのレア度 (C / R / E) */
-export const PATCHES = [
-  { id: 'battery', kind: 'life', rar: 'R', name: 'BACKUP BATTERY', text: '最大ライフ +2 (いまのライフも +2)' },
-  { id: 'repair', kind: 'life', rar: 'C', name: 'SELF REPAIR', text: '勝つたびにライフ +1' },
-  { id: 'firewall', kind: 'life', rar: 'R', name: 'FIREWALL', text: '各試合、最初にコンパイルされた1回はライフが減らない' },
-  { id: 'failsafe', kind: 'life', rar: 'E', name: 'FAILSAFE', text: 'ライフが尽きる試合を1度だけ、ライフ 1 で耐える' },
-  { id: 'sweep', kind: 'life', rar: 'C', name: 'CLEAN SWEEP', text: '1回もコンパイルされずに勝つとライフ +2' },
-  { id: 'search', kind: 'life', rar: 'C', name: 'DEEP SEARCH', text: '報酬のプロトコルの候補が 4 つになる' },
-  { id: 'lucky', kind: 'life', rar: 'C', name: 'LUCKY COIN', text: 'GACHA が 1 クレジット安くなる' },
-  { id: 'jackpot', kind: 'life', rar: 'E', name: 'JACKPOT', text: '勝つたびにクレジット +1' },
-  { id: 'initiative', kind: 'game', rar: 'R', name: 'INITIATIVE', text: 'いつも先攻' },
-  { id: 'cache', kind: 'game', rar: 'R', name: 'EXTRA CACHE', text: 'はじめの手札が 6 枚' },
-  { id: 'root', kind: 'game', rar: 'E', name: 'ROOT ACCESS', text: '試合のはじめからコントロールを持つ' },
-  { id: 'jammer', kind: 'game', rar: 'C', name: 'JAMMER', text: '相手のはじめの手札が 4 枚' }
-];
-export const RARITY = { C: { name: 'COMMON', weight: 60 }, R: { name: 'RARE', weight: 30 }, E: { name: 'EPIC', weight: 10 } };
-export const GACHA_COST = 3;
-const PATCH = Object.fromEntries(PATCHES.map(p => [p.id, p]));
-
-/* 進む道 */
-export const ROUTES = {
-  normal: { name: '通常戦', text: 'いつもの相手。勝てば報酬' },
-  elite: { name: '精鋭戦', text: '相手が1段強い。勝てば報酬に加えてパッチを1つ' },
-  event: { name: 'イベント', text: '何かが起きる。選んだあとで通常戦' }
+/* 地図のマス */
+export const NODES = {
+  battle: { icon: '⚔', name: '戦闘', text: 'いつもの相手。勝てばクレジットと報酬' },
+  elite: { icon: '☠', name: '精鋭', text: '強い相手。勝てばクレジット多めと、パッチを1つ' },
+  event: { icon: '?', name: 'イベント', text: '何かが起きる' },
+  rest: { icon: '✚', name: '休憩所', text: 'ライフを回復するか、カードを1枚外す' },
+  shop: { icon: '$', name: 'ショップ', text: 'クレジットでパッチ・カード除去・回復・GACHA' },
+  treasure: { icon: '◆', name: '宝箱', text: 'パッチを3つから1つ' },
+  boss: { icon: '♛', name: 'BOSS', text: '最強の CPU。倒せばクリア' }
 };
 
-/* イベント。options[i].apply(run, ctx) が新しい状態を返す (ctx: { names, rnd }) */
+/* パッチ。tag: ビルドの系統 / kind: life (ライフ・報酬に効く) / game (試合のはじめ方を変える) / rar: レア度 (C / R / E / L) */
+export const PATCHES = [
+  { id: 'battery', tag: 'GUARD', kind: 'life', rar: 'R', name: 'BACKUP BATTERY', text: '最大ライフ +2 (いまのライフも +2)' },
+  { id: 'repair', tag: 'TEMPO', kind: 'life', rar: 'C', name: 'SELF REPAIR', text: '勝つたびにライフ +1' },
+  { id: 'firewall', tag: 'GUARD', kind: 'life', rar: 'R', name: 'FIREWALL', text: '各試合、最初にコンパイルされた1回はライフが減らない' },
+  { id: 'failsafe', tag: 'GUARD', kind: 'life', rar: 'E', name: 'FAILSAFE', text: 'ライフが尽きる試合を1度だけ、ライフ 1 で耐える' },
+  { id: 'sweep', tag: 'TEMPO', kind: 'life', rar: 'C', name: 'CLEAN SWEEP', text: '1回もコンパイルされずに勝つとライフ +2' },
+  { id: 'search', tag: 'GREED', kind: 'life', rar: 'C', name: 'DEEP SEARCH', text: '報酬のプロトコルの候補が 4 つになる' },
+  { id: 'lucky', tag: 'GREED', kind: 'life', rar: 'C', name: 'LUCKY COIN', text: 'GACHA とショップが 1 クレジット安くなる' },
+  { id: 'jackpot', tag: 'GREED', kind: 'life', rar: 'E', name: 'JACKPOT', text: '勝つたびにクレジット +2' },
+  { id: 'initiative', tag: 'TEMPO', kind: 'game', rar: 'R', name: 'INITIATIVE', text: 'いつも先攻' },
+  { id: 'cache', tag: 'HAND', kind: 'game', rar: 'R', name: 'EXTRA CACHE', text: 'はじめの手札 +1' },
+  { id: 'buffer', tag: 'HAND', kind: 'game', rar: 'C', name: 'PREFETCH', text: 'はじめの手札 +1 (EXTRA CACHE と重なる)' },
+  { id: 'root', tag: 'TEMPO', kind: 'game', rar: 'E', name: 'ROOT ACCESS', text: '試合のはじめからコントロールを持つ' },
+  { id: 'jammer', tag: 'HAND', kind: 'game', rar: 'C', name: 'JAMMER', text: '相手のはじめの手札が 4 枚' },
+  /* LEGENDARY: ガチャとショップだけ (はじめのパッチ・精鋭・宝箱には出ない) */
+  { id: 'overflow', tag: 'HAND', kind: 'game', rar: 'L', gachaOnly: true, name: 'OVERFLOW', text: 'はじめの手札が 7 枚' },
+  { id: 'singularity', tag: 'HAND', kind: 'game', rar: 'L', gachaOnly: true, name: 'SINGULARITY', text: '相手のはじめの手札が 3 枚' },
+  { id: 'phoenix', tag: 'GUARD', kind: 'life', rar: 'L', gachaOnly: true, name: 'PHOENIX', text: 'ライフが尽きたら1度だけ、ライフ全回復でよみがえる' },
+  { id: 'midas', tag: 'GREED', kind: 'life', rar: 'L', gachaOnly: true, name: 'MIDAS TOUCH', text: 'もらえるクレジットが 2 倍' }
+];
+const PATCH = Object.fromEntries(PATCHES.map(p => [p.id, p]));
+export const RARITY = {
+  C: { name: 'COMMON', weight: 56, price: 5 }, R: { name: 'RARE', weight: 30, price: 7 },
+  E: { name: 'EPIC', weight: 10, price: 10 }, L: { name: 'LEGENDARY', weight: 4, price: 15 }
+};
+export const GACHA_COST = 4;
+export const HEAL_PRICE = 4;
+
+/* ビルド: 同じ系統のパッチを集めたときのボーナス (2つで1段目、3つ以上で2段目も) */
+export const TAGS = {
+  HAND: { name: 'HAND', label: '手札', color: '#ff8fc8', bonus: ['相手のはじめの手札 さらに −1', '自分のはじめの手札 さらに +1'] },
+  GUARD: { name: 'GUARD', label: '守り', color: '#7cc4ff', bonus: ['最大ライフ +1', '勝つたびにライフ +1'] },
+  GREED: { name: 'GREED', label: '強欲', color: '#ffc85a', bonus: ['勝つたびにクレジット +2', 'GACHA の EPIC 以上が出やすい (2 倍)'] },
+  TEMPO: { name: 'TEMPO', label: '先手', color: '#7cf0d0', bonus: ['精鋭・呪いの試合に勝つとクレジット +3', 'いつも先攻で、はじめからコントロールを持つ'] }
+};
+
+/* イベント。options[i].apply(run, ctx) が新しい状態を返す (ctx: { names, rnd })。
+   fight: その選択のあとで戦う (cursed = 呪い) */
 export const EVENTS = {
   shady: {
     title: '怪しいパッチ', text: '出どころの分からないパッチが落ちている。',
@@ -80,14 +104,28 @@ export const EVENTS = {
     title: '壊れたガチャ筐体', text: 'コインを入れなくても、レバーが回りそうだ。',
     options: [
       { label: 'タダで1回引く', apply: (r, c) => pull(r, c.rnd).run },
-      { label: '中のクレジットを持っていく (+2)', apply: (r) => ({ ...r, credits: (r.credits | 0) + 2 }) }
+      { label: '中のクレジットを持っていく (+5)', apply: (r) => ({ ...r, credits: (r.credits | 0) + 5 }) }
     ]
   },
   vault: {
     title: '封印された保管庫', text: 'パッチが眠っている。開ければ警報が鳴る。',
     options: [
-      { label: 'パッチを3つから選ぶ (次の相手が1段強くなる)', apply: (r, c) => ({ ...r, route: 'alarm', phase: 'patch', patchOffers: patchOffers(r, c.rnd), after: 'battle' }) },
+      { label: 'パッチを3つから選ぶ (そのあと、1段強い相手と戦う)', apply: (r, c) => ({ ...r, route: 'alarm', phase: 'patch', patchOffers: patchOffers(r, c.rnd), after: 'battle' }) },
       { label: '立ち去る', apply: (r) => r }
+    ]
+  },
+  altar: {
+    title: '呪いの祭壇', text: '祭壇に触れると、次の試合が呪われる。そのかわり…',
+    options: [
+      { label: '呪われた試合に挑む (自分の手札 4 枚・相手 7 枚。勝てば RARE 以上確定の GACHA とクレジット)', apply: (r) => ({ ...r, fight: 'cursed' }) },
+      { label: '立ち去る', apply: (r) => r }
+    ]
+  },
+  purge: {
+    title: 'デバッガー', text: '「そのデッキ、無駄が多いね。1枚消してあげよう。代わりにライフを少しもらうよ」',
+    options: [
+      { label: 'ライフ −1 でカードを1枚外す', need: (r) => r.life > 1 && canRemove(r), apply: (r) => ({ ...r, life: r.life - 1, phase: 'remove', after: 'map' }) },
+      { label: '断る', apply: (r) => r }
     ]
   }
 };
@@ -97,8 +135,8 @@ export const HEATS = [
   { lv: 0, text: '標準' },
   { lv: 1, text: 'はじめのライフと最大ライフ −1' },
   { lv: 2, text: '「ふつう」の相手が「つよい」になる' },
-  { lv: 3, text: '回復の報酬が +1 になる' },
-  { lv: 4, text: '精鋭戦の相手が挑戦者になる' },
+  { lv: 3, text: '休憩所の回復が +1 になる' },
+  { lv: 4, text: '精鋭がいつも挑戦者になる' },
   { lv: 5, text: 'はじめのパッチが無い' }
 ];
 export const MAX_HEAT = HEATS.length - 1;
@@ -107,14 +145,11 @@ export const MAX_HEAT = HEATS.length - 1;
 export function loadRun() {
   try {
     const r = JSON.parse(localStorage.getItem(KEY) || 'null');
-    return r && r.v === 1 ? normalize(r) : null;
+    /* 地図になる前の保存 (v1) は続きから遊べない (はじめからやり直し) */
+    return r && r.v === VERSION ? r : null;
   } catch (e) {
     return null;
   }
-}
-/* パッチ等が入る前の保存にも、足りない項目を足す */
-function normalize(r) {
-  return { patches: [], heat: 0, failsafeUsed: false, route: 'normal', credits: 0, pulls: 0, ...r };
 }
 export function saveRun(run) {
   try { localStorage.setItem(KEY, JSON.stringify(run)); } catch (e) { /* private mode */ }
@@ -125,15 +160,16 @@ export function clearRun() {
 export function loadBest() {
   try { return JSON.parse(localStorage.getItem(BEST_KEY) || 'null'); } catch (e) { return null; }
 }
+/* 最高記録。reached = 登った段 (クリアなら MAP_ROWS + 1) */
 function saveBest(run) {
   const best = loadBest();
-  const reached = run.phase === 'clear' ? FLOORS.length + 1 : run.floor + 1;
+  const reached = run.phase === 'clear' ? MAP_ROWS + 1 : rowOf(run) + 1;
   const heat = run.heat | 0;
   const better = !best || heat > (best.heat | 0) ||
     (heat === (best.heat | 0) && (best.reached < reached || (best.reached === reached && best.life < run.life)));
   if (!better) return;
   try {
-    localStorage.setItem(BEST_KEY, JSON.stringify({ reached, life: Math.max(0, run.life), deck: run.deck, heat, patches: run.patches || [], at: Date.now() }));
+    localStorage.setItem(BEST_KEY, JSON.stringify({ reached, rows: MAP_ROWS, life: Math.max(0, run.life), deck: run.deck, heat, patches: run.patches || [], at: Date.now() }));
   } catch (e) { /* private mode */ }
 }
 /** 選べる HEAT の上限 (クリアした HEAT + 1) */
@@ -160,21 +196,99 @@ function sample(list, n, rnd) {
   }
   return a.slice(0, n);
 }
+function weighted(pairs, rnd) {
+  const total = pairs.reduce((n, [, w]) => n + w, 0);
+  let x = rnd() * total;
+  for (const [k, w] of pairs) { if (x < w) return k; x -= w; }
+  return pairs[pairs.length - 1][0];
+}
 
+/* ---------- 地図 ---------- */
+/* 下から上へ MAP_ROWS 段。0段目は全部戦闘、5段目は全部宝箱、10段目は全部休憩所、最上段は BOSS 1つ。
+   ほかの段は 戦闘・イベント・精鋭 (3段目から)・ショップ (2段目から)・休憩所 (4段目から) を混ぜる。
+   道は上の段の近いマスへ1〜2本。どのマスにも下から来る道がある */
+export function makeMap(rnd = Math.random) {
+  const rows = [];
+  for (let r = 0; r < MAP_ROWS; r++) {
+    const last = r === MAP_ROWS - 1;
+    const n = last ? 1 : r === 0 ? 3 : 3 + Math.floor(rnd() * 2);
+    const row = [];
+    for (let i = 0; i < n; i++) {
+      let type;
+      if (last) type = 'boss';
+      else if (r === 0) type = 'battle';
+      else if (r === 5) type = 'treasure';
+      else if (r === MAP_ROWS - 2) type = 'rest';
+      else {
+        type = weighted([['battle', 45], ['event', 22], ['elite', r >= 3 ? 14 : 0], ['shop', r >= 2 ? 10 : 0], ['rest', r >= 4 ? 9 : 0]], rnd);
+      }
+      /* 横の位置 (0〜1)。少し揺らして手描きの地図らしく */
+      const x = n === 1 ? 0.5 : 0.12 + (0.76 * i) / (n - 1) + (rnd() - 0.5) * 0.08;
+      row.push({ id: r + '-' + i, row: r, x: Math.round(x * 1000) / 1000, type, next: [] });
+    }
+    rows.push(row);
+  }
+  for (let r = 0; r < MAP_ROWS - 1; r++) {
+    const a = rows[r], b = rows[r + 1];
+    a.forEach((node, i) => {
+      const j = b.length === 1 ? 0 : Math.round((i * (b.length - 1)) / Math.max(1, a.length - 1));
+      node.next.push(b[j].id);
+      const k = j + (rnd() < 0.5 ? 1 : -1);
+      if (b[k] && rnd() < 0.55 && !node.next.includes(b[k].id)) node.next.push(b[k].id);
+    });
+    for (const target of b) {
+      if (a.some(n => n.next.includes(target.id))) continue;
+      const near = a.slice().sort((p, q) => Math.abs(p.x - target.x) - Math.abs(q.x - target.x))[0];
+      near.next.push(target.id);
+    }
+  }
+  return { rows };
+}
+export function nodeById(run, id) {
+  if (!run.map || !id) return null;
+  const r = parseInt(String(id).split('-')[0], 10);
+  return (run.map.rows[r] || []).find(n => n.id === id) || null;
+}
+function rowOf(run) {
+  const n = nodeById(run, run.pos);
+  return n ? n.row : -1;
+}
+/** いま進めるマス */
+export function reachable(run) {
+  if (!run.map) return [];
+  if (!run.pos) return run.map.rows[0].map(n => n.id);
+  const n = nodeById(run, run.pos);
+  return n ? n.next.slice() : [];
+}
+
+/* ---------- パッチ ---------- */
 export const hasPatch = (run, id) => (run.patches || []).includes(id);
 export const patchInfo = (id) => PATCH[id] || null;
 
+/** その系統のパッチの数 */
+export function tagCount(run, tag) {
+  return (run.patches || []).filter(id => PATCH[id] && PATCH[id].tag === tag).length;
+}
+/** その系統のボーナスの段 (0: なし / 1: 2つ / 2: 3つ以上) */
+export function setLevel(run, tag) {
+  const n = tagCount(run, tag);
+  return n >= 3 ? 2 : n >= 2 ? 1 : 0;
+}
+
 function patchOffers(run, rnd) {
-  return sample(PATCHES.filter(p => !hasPatch(run, p.id)).map(p => p.id), 3, rnd);
+  return sample(PATCHES.filter(p => !p.gachaOnly && !hasPatch(run, p.id)).map(p => p.id), 3, rnd);
 }
 /* パッチを足す (取ったときに効くものはここで) */
 function addPatch(run, id) {
   if (!PATCH[id] || hasPatch(run, id)) return run;
-  const next = { ...run, patches: run.patches.concat(id) };
-  return id === 'battery' ? { ...next, maxLife: next.maxLife + 2, life: next.life + 2 } : next;
+  let next = { ...run, patches: run.patches.concat(id) };
+  if (id === 'battery') next = { ...next, maxLife: next.maxLife + 2, life: next.life + 2 };
+  /* GUARD を2つそろえた瞬間に最大ライフ +1 */
+  if (PATCH[id].tag === 'GUARD' && tagCount(next, 'GUARD') === 2) next = { ...next, maxLife: next.maxLife + 1, life: next.life + 1 };
+  return next;
 }
 function gainRandomPatch(run, rnd) {
-  const pool = PATCHES.filter(p => !hasPatch(run, p.id));
+  const pool = PATCHES.filter(p => !p.gachaOnly && !hasPatch(run, p.id));
   return pool.length ? addPatch(run, pool[Math.floor(rnd() * pool.length)].id) : run;
 }
 function randomSwap(run, c) {
@@ -182,23 +296,34 @@ function randomSwap(run, c) {
   if (!pool.length) return run;
   const out = run.deck[Math.floor(c.rnd() * run.deck.length)];
   const add = pool[Math.floor(c.rnd() * pool.length)];
-  return { ...run, deck: run.deck.map(n => (n === out ? add : n)), swapped: { out, add } };
+  return withDeck({ ...run, swapped: { out, add } }, run.deck.map(n => (n === out ? add : n)));
+}
+/* デッキを変えたら、外したプロトコルのカードの除去は取り消す */
+function withDeck(run, deck) {
+  return { ...run, deck, removed: (run.removed || []).filter(id => deck.includes(id.replace(/_\d+$/, ''))) };
 }
 
 /* ---------- GACHA ---------- */
+const discount = (run) => (hasPatch(run, 'lucky') ? 1 : 0);
 /** 1回の値段 (LUCKY COIN で 1 安い) */
 export function gachaCost(run) {
-  return GACHA_COST - (hasPatch(run, 'lucky') ? 1 : 0);
+  return GACHA_COST - discount(run);
 }
+const PULL_PHASES = ['map', 'shop', 'reward'];
 /** 引けるか (戦いの合間だけ) */
 export function canPull(run) {
-  return ['route', 'battle', 'reward'].includes(run.phase) && (run.credits | 0) >= gachaCost(run);
+  return PULL_PHASES.includes(run.phase) && (run.credits | 0) >= gachaCost(run);
 }
-/* レア度を引き、そのレア度のパッチから1つ。持っているものが出たら「かぶり」でライフ +1 */
-function pull(run, rnd) {
+/* レア度を引き、そのレア度のパッチから1つ。持っているものが出たら「かぶり」でライフ +1。
+   minRare: RARE 以上確定 (呪いの試合の報酬) */
+function pull(run, rnd, minRare) {
+  /* GREED 2段目: EPIC 以上の重みが 2 倍 (そのぶん COMMON が減る) */
+  const w = Object.fromEntries(Object.entries(RARITY).map(([k, v]) => [k, v.weight]));
+  if (setLevel(run, 'GREED') >= 2) { w.C -= w.E + w.L; w.E *= 2; w.L *= 2; }
   let roll = rnd() * 100;
   let rar = 'C';
-  for (const k of ['E', 'R', 'C']) { if (roll < RARITY[k].weight) { rar = k; break; } roll -= RARITY[k].weight; }
+  for (const k of ['L', 'E', 'R', 'C']) { if (roll < w[k]) { rar = k; break; } roll -= w[k]; }
+  if (minRare && rar === 'C') rar = 'R';
   const pool = PATCHES.filter(p => p.rar === rar);
   const p = pool[Math.floor(rnd() * pool.length)];
   const dupe = hasPatch(run, p.id);
@@ -212,11 +337,33 @@ export function gachaPull(run, rnd = Math.random) {
   return pull({ ...run, credits: (run.credits | 0) - gachaCost(run) }, rnd).run;
 }
 
+/* ---------- カード除去 ---------- */
+export function canRemove(run) {
+  return (run.removed || []).length < MAX_REMOVED;
+}
+/** 外す (defId)。デッキのプロトコルのカードで、まだ外していないものだけ */
+export function removeCard(run, defId) {
+  if (run.phase !== 'remove' || !canRemove(run)) return run;
+  const proto = String(defId).replace(/_\d+$/, '');
+  if (!run.deck.includes(proto) || (run.removed || []).includes(defId)) return run;
+  const next = { ...run, removed: (run.removed || []).concat(defId), removedNow: defId, paidRemove: 0 };
+  return { ...next, phase: run.after === 'shop' ? 'shop' : 'map' };
+}
+/** 外すのをやめる (ショップで払った分は返す) */
+export function cancelRemove(run) {
+  if (run.phase !== 'remove') return run;
+  if (run.after === 'shop') {
+    return { ...run, phase: 'shop', credits: (run.credits | 0) + (run.paidRemove | 0), removeCost: (run.removeCost | 0) - (run.paidRemove ? 2 : 0), paidRemove: 0 };
+  }
+  return { ...run, phase: 'map' };
+}
+
 /* ---------- 進行 (すべて新しい状態を返す) ---------- */
 export function newRun(names, rnd = Math.random, heat = 0) {
   const h = Math.max(0, Math.min(MAX_HEAT, heat | 0));
   const life = RUN_LIFE - (h >= 1 ? 1 : 0);
-  return { v: 1, phase: 'draft', deck: [], life, maxLife: life, floor: 0, heat: h, patches: [], failsafeUsed: false, credits: 0, pulls: 0,
+  return { v: VERSION, phase: 'draft', deck: [], removed: [], life, maxLife: life, heat: h, patches: [], failsafeUsed: false, phoenixUsed: false,
+    credits: START_CREDITS, pulls: 0, map: makeMap(rnd), pos: null, visited: [], removeCost: 5,
     offers: sample(names, 3, rnd), opp: null, route: 'normal', history: [], startedAt: Date.now() };
 }
 
@@ -228,33 +375,35 @@ export function draftPick(run, name, names, rnd = Math.random) {
   }
   const drafted = { ...run, deck, offers: [] };
   /* はじめのパッチ (HEAT 5 では無し) */
-  if (drafted.heat >= 5) return startFloor(drafted, names, rnd);
-  return { ...drafted, phase: 'patch', patchOffers: patchOffers(drafted, rnd), after: 'floor' };
+  if (drafted.heat >= 5) return { ...drafted, phase: 'map' };
+  return { ...drafted, phase: 'patch', patchOffers: patchOffers(drafted, rnd), after: 'map' };
 }
 
-/* パッチを選ぶ (id が null なら取らない)。そのあと、階の始まりか戦う前へ */
+/* パッチを選ぶ (id が null なら取らない)。そのあと地図か戦う前へ */
 export function choosePatch(run, id, names, rnd = Math.random) {
   if (run.phase !== 'patch') return run;
   const got = id && (run.patchOffers || []).includes(id) ? addPatch(run, id) : run;
   const next = { ...got, patchOffers: [], pendingPatch: false };
-  return run.after === 'battle' ? prepareFloor(next, names, rnd, next.route) : startFloor(next, names, rnd);
+  return run.after === 'battle' ? prepareBattle(next, names, rnd, next.route) : { ...next, phase: 'map' };
 }
 
-/* 階の始まり: 道を選べる階なら道の候補 (3つから2つ)、そうでなければそのまま戦う前へ */
-export function startFloor(run, names, rnd = Math.random) {
-  const f = FLOORS[run.floor];
-  const fresh = { ...run, swapped: null, eventDone: null, lastSaved: false, lastPull: null };
-  if (f && f.route) return { ...fresh, phase: 'route', routeOffers: sample(Object.keys(ROUTES), 2, rnd) };
-  return prepareFloor(fresh, names, rnd, 'normal');
-}
-
-export function chooseRoute(run, route, names, rnd = Math.random) {
-  if (run.phase !== 'route' || !(run.routeOffers || []).includes(route)) return run;
-  if (route === 'event') {
-    const id = Object.keys(EVENTS)[Math.floor(rnd() * Object.keys(EVENTS).length)];
-    return { ...run, phase: 'event', event: id, route: 'normal', routeOffers: [] };
+/* 地図でマスを選ぶ */
+export function chooseNode(run, id, names, rnd = Math.random) {
+  if (run.phase !== 'map' || !reachable(run).includes(id)) return run;
+  const node = nodeById(run, id);
+  const moved = { ...run, pos: id, visited: (run.visited || []).concat(id), swapped: null, lastPull: null, lastSaved: false,
+    cursedWin: false, removedNow: null, lastGain: 0 };
+  switch (node.type) {
+    case 'battle': case 'elite': case 'boss': return prepareBattle(moved, names, rnd, node.type === 'elite' ? 'elite' : 'normal');
+    case 'event': {
+      const keys = Object.keys(EVENTS);
+      return { ...moved, phase: 'event', event: keys[Math.floor(rnd() * keys.length)] };
+    }
+    case 'rest': return { ...moved, phase: 'rest' };
+    case 'shop': return { ...moved, phase: 'shop', shop: makeShop(moved, rnd) };
+    case 'treasure': return { ...moved, phase: 'patch', patchOffers: patchOffers(moved, rnd), after: 'map' };
+    default: return run;
   }
-  return prepareFloor({ ...run, routeOffers: [] }, names, rnd, route);
 }
 
 /* イベントの選択 */
@@ -264,25 +413,86 @@ export function resolveEvent(run, index, names, rnd = Math.random) {
   const opt = ev && ev.options[index];
   if (!opt || (opt.need && !opt.need(run))) return run;
   const next = opt.apply({ ...run, eventDone: { id: run.event, choice: index } }, { names, rnd });
-  if (next.phase === 'patch') return next;
-  return prepareFloor({ ...next, event: null }, names, rnd, next.route || 'normal');
+  if (next.phase === 'patch' || next.phase === 'remove') return { ...next, event: null };
+  if (next.fight) return prepareBattle({ ...next, fight: null, event: null }, names, rnd, next.fight);
+  return { ...next, event: null, phase: 'map' };
 }
 
-/* その階の相手を決めて、戦う前の状態にする。
-   route: normal / elite (1段強い。勝つとパッチ) / alarm (保管庫の警報。1段強いだけ) */
-export function prepareFloor(run, names, rnd = Math.random, route = 'normal') {
-  const f = FLOORS[run.floor];
+/* ---------- 休憩所 ---------- */
+/** 回復の量 (HEAT 3 から +1) */
+export function healAmount(run) {
+  return (run.heat | 0) >= 3 ? 1 : RUN_HEAL;
+}
+export function restHeal(run) {
+  if (run.phase !== 'rest') return run;
+  return { ...run, life: Math.min(run.maxLife, run.life + healAmount(run)), phase: 'map' };
+}
+export function restRemove(run) {
+  if (run.phase !== 'rest' || !canRemove(run)) return run;
+  return { ...run, phase: 'remove', after: 'map' };
+}
+
+/* ---------- ショップ ---------- */
+function makeShop(run, rnd) {
+  /* パッチ3つ (LEGENDARY も並ぶことがある)。値段はレア度で決まる */
+  const pool = PATCHES.filter(p => !hasPatch(run, p.id));
+  const picks = [];
+  for (let i = 0; i < 3; i++) {
+    const left = pool.filter(p => !picks.includes(p.id));
+    if (!left.length) break;
+    const rar = weighted([['C', 50], ['R', 32], ['E', 13], ['L', 5]].filter(([k]) => left.some(p => p.rar === k)), rnd);
+    const cands = left.filter(p => p.rar === rar);
+    picks.push(cands[Math.floor(rnd() * cands.length)].id);
+  }
+  return { patches: picks, sold: [], healed: false };
+}
+export function patchPrice(run, id) {
+  return RARITY[PATCH[id].rar].price - discount(run);
+}
+export function removePrice(run) {
+  return (run.removeCost | 0) - discount(run);
+}
+export function healPrice(run) {
+  return HEAL_PRICE - discount(run);
+}
+export function buyPatch(run, id) {
+  if (run.phase !== 'shop' || !run.shop.patches.includes(id) || run.shop.sold.includes(id)) return run;
+  const price = patchPrice(run, id);
+  if ((run.credits | 0) < price || hasPatch(run, id)) return run;
+  const got = addPatch({ ...run, credits: run.credits - price }, id);
+  return { ...got, shop: { ...run.shop, sold: run.shop.sold.concat(id) } };
+}
+export function buyRemove(run) {
+  if (run.phase !== 'shop' || !canRemove(run)) return run;
+  const price = removePrice(run);
+  if ((run.credits | 0) < price) return run;
+  return { ...run, credits: run.credits - price, paidRemove: price, removeCost: (run.removeCost | 0) + 2, phase: 'remove', after: 'shop' };
+}
+export function buyHeal(run) {
+  if (run.phase !== 'shop' || run.shop.healed || run.life >= run.maxLife) return run;
+  const price = healPrice(run);
+  if ((run.credits | 0) < price) return run;
+  return { ...run, credits: run.credits - price, life: Math.min(run.maxLife, run.life + 2), shop: { ...run.shop, healed: true } };
+}
+export function leaveShop(run) {
+  return run.phase === 'shop' ? { ...run, phase: 'map' } : run;
+}
+
+/* ---------- 戦闘 ---------- */
+/* いまのマスの相手を決めて、戦う前の状態にする。
+   route: normal / elite (強い。勝つとパッチ) / alarm (保管庫の警報。1段強いだけ) / cursed (呪い) */
+export function prepareBattle(run, names, rnd = Math.random, route = 'normal') {
+  const node = nodeById(run, run.pos) || { row: 0, type: 'battle' };
   const heat = run.heat | 0;
-  const strong = route === 'elite' || route === 'alarm';
   let opp;
-  if (f.boss) opp = { deck: STRONGEST_AI.slice(), level: 3, boss: true };
-  else if (f.challenger || (route === 'elite' && heat >= 4)) {
+  if (node.type === 'boss') opp = { deck: STRONGEST_AI.slice(), level: 3, boss: true };
+  else if (route === 'elite' && (node.row >= 6 || heat >= 4)) {
     const i = Math.floor(rnd() * CHALLENGERS.length);
     opp = { deck: CHALLENGERS[i].deck.slice(), level: CHALLENGER_BASE + i };
   } else {
-    let level = f.level;
+    let level = node.row < 4 ? 1 : 2;
     if (heat >= 2 && level === 1) level = 2;
-    if (strong) level = Math.min(3, level + 1);
+    if (route === 'elite' || route === 'alarm') level = Math.min(3, level + 1);
     opp = { deck: sample(names.filter(n => !run.deck.includes(n)), 3, rnd), level };
   }
   if (route === 'elite') opp.elite = true;
@@ -294,9 +504,21 @@ export function damageOf(run, compiles) {
   const n = Math.max(0, compiles | 0);
   return hasPatch(run, 'firewall') && n > 0 ? n - 1 : n;
 }
-/* この回数でライフが尽きるか (FAILSAFE が残っていれば尽きない) */
+/* この回数でライフが尽きるか (FAILSAFE・PHOENIX が残っていれば尽きない) */
 export function lethal(run, compiles) {
-  return damageOf(run, compiles) >= run.life && !(hasPatch(run, 'failsafe') && !run.failsafeUsed);
+  return damageOf(run, compiles) >= run.life && !(hasPatch(run, 'failsafe') && !run.failsafeUsed) && !(hasPatch(run, 'phoenix') && !run.phoenixUsed);
+}
+
+/** 勝ったときのクレジット */
+export function creditGain(run, compiles) {
+  const hard = run.route === 'elite' || run.route === 'alarm' || run.route === 'cursed';
+  let gain = hard ? 5 : 3;
+  if ((compiles | 0) === 0) gain += 1;
+  if (hasPatch(run, 'jackpot')) gain += 2;
+  if (setLevel(run, 'GREED') >= 1) gain += 2;
+  if (setLevel(run, 'TEMPO') >= 1 && (run.route === 'elite' || run.route === 'cursed')) gain += 3;
+  if (hasPatch(run, 'midas')) gain *= 2;
+  return gain;
 }
 
 /* 1戦の結果。compiles = その試合で相手にコンパイルされた回数 */
@@ -304,29 +526,29 @@ export function finishBattle(run, win, compiles, names, rnd = Math.random) {
   if (run.phase !== 'battle') return run;
   const damage = damageOf(run, compiles);
   let life = run.life - damage;
-  let failsafeUsed = run.failsafeUsed;
+  let failsafeUsed = !!run.failsafeUsed;
+  let phoenixUsed = !!run.phoenixUsed;
   let saved = false;
-  if (life <= 0 && hasPatch(run, 'failsafe') && !failsafeUsed) { life = 1; failsafeUsed = true; saved = true; }
-  /* クレジット: 勝つと +1、精鋭戦・警報の相手は +2、1回もコンパイルされずに勝つと +1、JACKPOT で +1 */
-  let credits = run.credits | 0;
-  if (win) {
-    credits += run.route === 'elite' || run.route === 'alarm' ? 2 : 1;
-    if ((compiles | 0) === 0) credits += 1;
-    if (hasPatch(run, 'jackpot')) credits += 1;
-  }
+  if (life <= 0 && hasPatch(run, 'failsafe') && !failsafeUsed) { life = 1; failsafeUsed = true; saved = 'failsafe'; }
+  else if (life <= 0 && hasPatch(run, 'phoenix') && !phoenixUsed) { life = run.maxLife; phoenixUsed = true; saved = 'phoenix'; }
+  const gain = win ? creditGain(run, compiles) : 0;
   if (win && life > 0) {
     if (hasPatch(run, 'repair')) life += 1;
+    if (setLevel(run, 'GUARD') >= 2) life += 1;
     if (hasPatch(run, 'sweep') && (compiles | 0) === 0) life += 2;
     life = Math.min(run.maxLife, life);
   }
-  const history = run.history.concat({ floor: run.floor, win: !!win, damage, opp: run.opp.deck, route: run.route || 'normal', saved });
-  const base = { ...run, life, history, failsafeUsed, lastSaved: saved, credits, lastPull: null };
+  const node = nodeById(run, run.pos) || { row: 0 };
+  const history = run.history.concat({ row: node.row, win: !!win, damage, opp: run.opp.deck, route: run.route || 'normal', saved });
+  let base = { ...run, life, history, failsafeUsed, phoenixUsed, lastSaved: saved, credits: (run.credits | 0) + gain, lastGain: gain, lastPull: null };
+  /* 呪いの試合に勝った: RARE 以上確定の GACHA をタダで1回 */
+  if (win && life > 0 && run.route === 'cursed') base = { ...pull(base, rnd, true).run, cursedWin: true };
   let next;
   if (life <= 0) next = { ...base, life: 0, phase: 'over' };
-  else if (!win) next = base;                                          // 同じ階をやり直す (相手もそのまま)
-  else if (run.floor + 1 >= FLOORS.length) next = { ...base, floor: run.floor + 1, phase: 'clear' };
+  else if (!win) next = base;                                          // 同じ相手とやり直す
+  else if (run.opp.boss) next = { ...base, phase: 'clear' };
   else {
-    next = { ...base, floor: run.floor + 1, phase: 'reward', pendingPatch: !!run.opp.elite,
+    next = { ...base, phase: 'reward', pendingPatch: !!run.opp.elite,
       offers: sample(names.filter(n => !run.deck.includes(n)), hasPatch(run, 'search') ? 4 : 3, rnd) };
   }
   if (next.phase === 'over' || next.phase === 'clear') saveBest(next);
@@ -334,38 +556,44 @@ export function finishBattle(run, win, compiles, names, rnd = Math.random) {
   return next;
 }
 
-/** 回復の報酬の量 (HEAT 3 から +1) */
-export function healAmount(run) {
-  return (run.heat | 0) >= 3 ? 1 : RUN_HEAL;
-}
-
-/* 報酬: { type: 'swap', add, remove } / { type: 'heal' } / { type: 'skip' }。精鋭戦に勝ったあとはパッチを選ぶ */
+/* 報酬: { type: 'swap', add, remove } / { type: 'skip' }。精鋭に勝ったあとはパッチを選ぶ */
 export function applyReward(run, choice, names, rnd = Math.random) {
   if (run.phase !== 'reward') return run;
   let next = run;
   if (choice.type === 'swap' && run.offers.includes(choice.add) && run.deck.includes(choice.remove)) {
-    next = { ...run, deck: run.deck.map(n => (n === choice.remove ? choice.add : n)) };
-  } else if (choice.type === 'heal') {
-    next = { ...run, life: Math.min(run.maxLife, run.life + healAmount(run)) };
+    next = withDeck(run, run.deck.map(n => (n === choice.remove ? choice.add : n)));
   }
   if (run.pendingPatch) {
     const offers = patchOffers(next, rnd);
-    if (offers.length) return { ...next, offers: [], phase: 'patch', patchOffers: offers, after: 'floor' };
+    if (offers.length) return { ...next, offers: [], phase: 'patch', patchOffers: offers, after: 'map' };
   }
-  return startFloor({ ...next, offers: [] }, names, rnd);
+  return { ...next, offers: [], phase: 'map', pendingPatch: false };
 }
 
-/* 試合のはじめ方 (パッチの効果)。me = 自分の席 */
+/* 試合のはじめ方 (パッチ・ビルド・呪い・カード除去)。me = 自分の席 */
 export function battleOpts(run, me) {
   const other = 1 - me;
   const hand = [5, 5];
-  if (hasPatch(run, 'cache')) hand[me] = 6;
+  if (hasPatch(run, 'cache')) hand[me] += 1;
+  if (hasPatch(run, 'buffer')) hand[me] += 1;
+  if (hasPatch(run, 'overflow')) hand[me] = 7;
   if (hasPatch(run, 'jammer')) hand[other] = 4;
+  if (hasPatch(run, 'singularity')) hand[other] = 3;
+  /* HAND のビルド */
+  if (setLevel(run, 'HAND') >= 1) hand[other] = Math.max(3, hand[other] - 1);
+  if (setLevel(run, 'HAND') >= 2) hand[me] += 1;
+  hand[me] = Math.min(7, hand[me]);
+  /* 呪い: パッチより強い */
+  if (run.route === 'cursed') { hand[me] = 4; hand[other] = 7; }
+  const tempo = setLevel(run, 'TEMPO') >= 2;
+  const exclude = [[], []];
+  exclude[me] = (run.removed || []).slice(0, MAX_REMOVED);
   return {
     winCompiles: RUN_WIN_COMPILES,
     handSize: hand,
-    ...(hasPatch(run, 'initiative') ? { first: me } : {}),
-    ...(hasPatch(run, 'root') ? { startControl: me } : {})
+    ...(exclude[me].length ? { exclude } : {}),
+    ...(hasPatch(run, 'initiative') || tempo ? { first: me } : {}),
+    ...(hasPatch(run, 'root') || tempo ? { startControl: me } : {})
   };
 }
 
