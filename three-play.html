@@ -2006,6 +2006,17 @@
   @keyframes ttGlitchB{0%,84%,100%{transform:translate(-4px,0);clip-path:inset(62% 0 8% 0)}87%{transform:translate(8px,2px);clip-path:inset(48% 0 30% 0)}92%{transform:translate(-10px,0);clip-path:inset(75% 0 2% 0)}}
   #title .tt-sub{font:700 11px/1 var(--font-ui);letter-spacing:.34em;text-indent:0;color:var(--lav);margin-top:4px;}
   #title .tt-sub i{font-style:normal;color:var(--pink);margin:0 .4em;}
+  /* ロゴの下の名前 */
+  #title .tt-hello{appearance:none;display:inline-flex;align-items:baseline;gap:12px;margin-top:18px;padding:6px 14px 6px 0;
+    border:0;border-bottom:1px solid rgba(255,79,163,.35);background:none;cursor:pointer;text-align:left;max-width:100%;
+    transition:border-color .15s;}
+  #title .tt-hello small{flex:none;font:700 10px/1 var(--font-hud,system-ui);letter-spacing:.26em;color:var(--pink);}
+  #title .tt-hello b{min-width:0;font:800 clamp(18px,2.2vw,24px)/1.1 var(--font-ui,system-ui);letter-spacing:.06em;color:#fff;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  #title .tt-hello.unset b{font-size:14px;color:var(--lav);}
+  #title .tt-hello:hover,#title .tt-hello:focus-visible{border-color:var(--pink);outline:0;}
+  #title .tt-hello:hover b,#title .tt-hello:focus-visible b{color:#ffd6ea;}
+  @media (max-height:500px){#title .tt-hello{margin-top:8px;padding:3px 10px 3px 0;}#title .tt-hello b{font-size:16px;}}
   #title .tt-start{margin-top:28px;}
   #title .tt-menu{width:100%;margin-top:26px;gap:12px;}
   #title .tt-main{display:flex;flex-direction:column;gap:7px;}
@@ -2504,7 +2515,7 @@
       "./js3d/stats.js": "./js3d/stats.js?v=8265afe03d",
       "./js3d/steps.js": "./js3d/steps.js?v=13e73b20fe",
       "./js3d/theme.js": "./js3d/theme.js?v=b02da60dc1",
-      "./js3d/title.js": "./js3d/title.js?v=020b10c698",
+      "./js3d/title.js": "./js3d/title.js?v=584458b21c",
       "./js3d/training.js": "./js3d/training.js?v=3018b4399e",
       "./js3d/tsume.js": "./js3d/tsume.js?v=dcd3f588db",
       "./js3d/turning.js": "./js3d/turning.js?v=9c7f79654e",
@@ -2532,7 +2543,7 @@
   <link rel="modulepreload" href="js3d/control.js?v=64aa20995c">
   <link rel="modulepreload" href="js3d/panel.js?v=ecb8a073e3">
   <link rel="modulepreload" href="js3d/setup.js?v=f75a89191c">
-  <link rel="modulepreload" href="js3d/title.js?v=020b10c698">
+  <link rel="modulepreload" href="js3d/title.js?v=584458b21c">
   <link rel="modulepreload" href="js3d/training.js?v=3018b4399e">
   <link rel="modulepreload" href="js3d/room.js?v=c34129de95">
   <link rel="modulepreload" href="js3d/puzzle.js?v=a6a0904519">

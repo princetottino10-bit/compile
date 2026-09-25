@@ -2,7 +2,7 @@
  * 3Dビュー: タイトルとモード選択
  * ========================================================================= */
 import { xpLog } from './xp.js';
-import { displayName } from './displayname.js';
+import { displayName, onDisplayNameChange } from './displayname.js';
 import { dailyView } from './daily.js';
 import { emblemDataURL } from './emblems.js';
 import { drawTitleBackdrop } from './backdrops.js';
@@ -46,6 +46,15 @@ function dailyBadge(protocols) {
   const list = dailyView(protocols.map(x => x.name));
   const left = list.filter(m => !m.done).length;
   return left ? '<i class="tt-daily" title="デイリーミッション">DAILY ' + (list.length - left) + '/' + list.length + '</i>' : '';
+}
+
+/* ロゴの下の名前。押すとプロフィール (表示名を変えられる)。まだ決めていなければ決めるよう促す */
+function helloHtml() {
+  const name = displayName();
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  return '<button type="button" data-mode="profile" class="tt-hello' + (name ? '' : ' unset') + '" title="プロフィール・表示名">' +
+    '<small>' + (name ? 'WELCOME BACK' : 'OPERATOR') + '</small>' +
+    '<b>' + (name ? esc(name) : '名前を決める') + '</b></button>';
 }
 
 /* ロゴ: 「//」と COMPILE。グリッチ用に同じ文字を data-text に持たせる (CSS の ::before/::after でずらす) */
@@ -132,7 +141,7 @@ export function runTitle(protocols, opts) {
     };
     const showMenu = () => {
       const center = root.querySelector('#ttCenter');
-      center.innerHTML = LOGO +
+      center.innerHTML = LOGO + helloHtml() +
         /* 遊ぶ入口は大きく2つだけ。練習・記録は小さく下に、アカウントと設定は右上の隅に置く */
         '<nav class="tt-menu" aria-label="ゲームモード">' +
           /* はじめての人 (まだ1戦もせず、チュートリアルも触っていない) にだけ、最初の一歩を大きく出す */
@@ -171,6 +180,12 @@ export function runTitle(protocols, opts) {
          出した時点でも一度描き直す */
       refreshAccount();
       const offAccount = onAccountChange(() => { if (!refreshAccount()) offAccount(); });
+      /* プロフィールやアカウントの画面で表示名を変えたら、ロゴの下も差し替える */
+      const offName = onDisplayNameChange(() => {
+        const old = root.querySelector('.tt-hello');
+        if (!old || !root.classList.contains('show')) { offName(); return; }
+        old.outerHTML = helloHtml();
+      });
       const onMenu = (ev) => {
         const button = ev.target.closest('button[data-mode]');
         if (!button) return;
@@ -185,7 +200,7 @@ export function runTitle(protocols, opts) {
         else if (button.dataset.mode === 'quick') { location.href = location.pathname + '?quick=1'; }
         else finish(button.dataset.mode);
       };
-      center.querySelector('.tt-menu').onclick = onMenu;
+      center.onclick = onMenu;                        // メニューとロゴの下の名前 (どちらも data-mode のボタン)
       root.querySelector('#ttCorner').onclick = onMenu;
     };
     /* 先にメニューを出し、音はそのあと (失敗しても進める)。以前は音の初期化が先で、
