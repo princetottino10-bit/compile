@@ -39,7 +39,7 @@ import { compilesBy, loadRun, RUN_WIN_COMPILES } from './run.js';
 import { loadWeekly, weekKey } from './weekly.js';
 import { openReview } from './review.js';
 import { runRoomLobby } from './roomui.js';
-import { selectHead, bindSelectHead, questionText } from './selectui.js';
+import { bindSelectHead, questionText } from './selectui.js';
 import { faceImageURL, backImageURL, pruneFaceCache, ART_SETS, setMaxAnisotropy } from './cardtex.js';
 import * as FX from './fx.js';
 import { buildArena } from './arena.js';
@@ -2539,7 +2539,8 @@ async function askUserInner(req) {
     if (picks === PICK_CANCEL) return PICK_CANCEL;
     if (picks) return picks;
   }
-  return UI.askChoice(req, choiceCtx());
+  showSourcePanel(req);
+  try { return await UI.askChoice(req, choiceCtx()); } finally { pickPanelReq = null; }
 }
 
 /* 対象選択を盤面の直接タップで行う。
@@ -2626,7 +2627,6 @@ function pickOnBoard(req) {
         removePickBar();
         resolve(picks);
       };
-      placeNearSource(el, req);
       /* PC の近道: Enter = はい、Esc = いいえ、盤面で右クリック = いいえ */
       const onKey = (ev) => {
         if (ev.target && /^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName)) return;
@@ -2691,41 +2691,6 @@ function pickOnBoard(req) {
   });
 }
 
-/* はい/いいえ の帯を、効果を出したカードのすぐ横に出す (PC の広い画面・盤面にそのカードがあるときだけ)。
-   req.context はカードの種類 (FIRE_1 等) なので、盤面の表向きのその種類の札を探す */
-function placeNearSource(el, req) {
-  el.classList.remove('near-card');
-  if (!req.context || window.innerWidth < 900 || window.innerHeight < 560 || isCompactHandUI()) return;
-  const st = shown();
-  const uid = Object.keys(st.cards).find(u => st.cards[u].def === req.context && st.cards[u].faceUp && (locOf(st, u) || {}).zone === 'field');
-  const card = uid && board.cards.get(uid);
-  if (!card) return;
-  const v = card.getWorldPosition(new THREE.Vector3()).project(stage.camera);
-  const x = (v.x + 1) / 2 * window.innerWidth, y = (1 - v.y) / 2 * window.innerHeight;
-  if (!Number.isFinite(x) || !Number.isFinite(y)) return;
-  const w = Math.min(300, window.innerWidth * 0.3);
-  /* 右に置けなければ左に。上下は画面の中に収める */
-  const left = x + 70 + w < window.innerWidth - 8 ? x + 70 : Math.max(8, x - 70 - w);
-  el.style.setProperty('--nx', Math.round(left) + 'px');
-  el.style.setProperty('--ny', Math.round(Math.max(48, Math.min(window.innerHeight - 200, y - 50))) + 'px');
-  el.classList.add('near-card');
-}
-
-/* 手札の上に出す帯の目ボタン: 押すと帯を隠して盤面を見られる。もう一度で戻る */
-const PEEK_BTN = '<button class="sel-peek" id="pkPeek" type="button" title="盤面を見る" aria-label="盤面を見る" aria-pressed="false">&#128065;</button>';
-function bindPeek(el) {
-  const btn = el.querySelector('#pkPeek');
-  if (!btn) return;
-  btn.setAttribute('aria-pressed', String(el.classList.contains('peek')));
-  btn.onclick = () => btn.setAttribute('aria-pressed', String(el.classList.toggle('peek')));
-}
-
-/* 選択バーの見出し。何に答えているのかをボタンのすぐ横に置く。
-   上部の帯にだけ質問を出すと、下のボタンとの距離で意味が分からなくなる。 */
-function pickBarAsk(req, meta) {
-  return selectHead(req, sourceInfo(req && req.context), meta);
-}
-
 /* 帯の組み立て後に呼ぶ: 発動元チップのタップで効果文を出す。
    選択バーには発動元と質問が入っているので、出している間は上の「効果処理中」の帯を隠す */
 let pickPanelReq = null;
@@ -2735,7 +2700,11 @@ function bindPickBar(el) {
   bindSelectHead(el, showCardNoteFor);
   /* 選んでいる間は、何の効果で選んでいるのかを左の詳細パネルに出しておく (マスターデュエルと同じ)。
      同じ選択の描き直し (候補を1枚選んだ等) では出し直さない */
-  const req = boardPick && boardPick.req;
+  showSourcePanel(boardPick && boardPick.req);
+}
+/* 選んでいる間は、何の効果で選んでいるのかを左の詳細パネルに出す (帯で選ぶときも、一覧で選ぶときも同じ)。
+   同じ選択の描き直しでは出し直さない */
+function showSourcePanel(req) {
   if (!req || req === pickPanelReq || isCompactHandUI()) return;
   pickPanelReq = req;
   const d = req.context && defIndex[req.context];

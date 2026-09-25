@@ -664,9 +664,10 @@
     background:linear-gradient(180deg,rgba(2,3,9,0) 42%,rgba(2,3,9,.6) 88%);
     padding-bottom:calc(var(--hand-gap, 14vh) + 12px);}
   #modal.show{display:flex;}
-  #modalCard{width:min(560px,92vw);max-height:52vh;overflow-y:auto;padding:16px 20px;
-    border-radius:16px;background:linear-gradient(180deg,rgba(11,15,28,.97),rgba(5,7,15,.98));
-    border:1px solid rgba(185,164,255,.24);box-shadow:0 30px 90px rgba(0,0,0,.7),0 0 50px rgba(185,164,255,.07);}
+  /* 見た目は選択の1行の帯 (.pick-ribbon) とそろえる: 半透明・桃色の縁 */
+  #modalCard{width:min(560px,92vw);max-height:52vh;overflow-y:auto;padding:14px 18px;
+    border-radius:16px;background:rgba(10,8,18,.8);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+    border:1px solid rgba(255,79,163,.45);box-shadow:0 20px 60px rgba(0,0,0,.5);}
   #modalTitle{margin:0 0 14px;font:800 13px/1.4 system-ui;letter-spacing:.1em;color:#cfefff;}
   #modalBody{display:flex;flex-direction:column;gap:7px;}
   .mchoice{padding:11px 14px;text-align:left;cursor:pointer;border-radius:9px;
@@ -919,7 +920,7 @@
   /* 左右 8px の間で中央に置く (left:50% と半分ずらしでは、使える幅が画面の右半分になり文が折り返していた) */
   .pick-ribbon{position:fixed;left:8px;right:8px;margin-inline:auto;bottom:calc(var(--hand-gap, 14vh) + 10px);z-index:32;
     /* 狭い画面ではボタンを次の行へ回す (文の幅が0まで縮んで縦書きのようになっていた) */
-    display:flex;flex-wrap:wrap;justify-content:flex-start;align-items:center;gap:6px 8px;width:fit-content;max-width:min(620px,calc(100vw - 16px));padding:6px 8px 6px 6px;
+    display:flex;flex-wrap:nowrap;justify-content:flex-start;align-items:center;gap:6px 8px;width:fit-content;max-width:min(620px,calc(100vw - 16px));padding:6px 8px 6px 6px;
     background:rgba(10,8,18,.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
     border:1px solid rgba(255,79,163,.45);clip-path:var(--cut-s);font-family:var(--font-ui);
     animation:ribbonIn .2s cubic-bezier(.16,1,.3,1);}
@@ -935,7 +936,7 @@
     background:color-mix(in srgb,var(--accent) 22%,rgba(8,10,20,.9));border:1px solid color-mix(in srgb,var(--accent) 70%,transparent);
     border-radius:6px;color:#fff;font:800 11px/1 var(--font-ui);letter-spacing:.06em;white-space:nowrap;}
   .pick-ribbon .rb-src img{width:22px;height:31px;object-fit:cover;border-radius:3px;display:block;}
-  .pick-ribbon .rb-q{flex:1 1 10em;min-width:9em;font:700 12.5px/1.35 system-ui;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8);}
+  .pick-ribbon .rb-q{flex:1 1 auto;min-width:9em;font:700 12.5px/1.35 system-ui;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8);}
   .pick-ribbon .rb-q em{font-style:normal;font-weight:900;color:var(--cyan);margin-left:4px;}
   .pick-ribbon .rb-btn{flex:none;min-height:32px;padding:0 12px;cursor:pointer;border:1px solid rgba(255,255,255,.28);
     background:rgba(8,12,22,.8);color:#fff;font:800 11px/1 var(--font-ui);letter-spacing:.08em;clip-path:var(--cut-s);white-space:nowrap;}
@@ -950,6 +951,8 @@
     .pick-ribbon .rb-q{font-size:11px;}
     .pick-ribbon .rb-btn{min-height:28px;padding:0 10px;font-size:10px;}
   }
+  /* 狭い画面 (縦持ち) だけ、ボタンを次の行へ回してよい */
+  @media (max-width:560px){ .pick-ribbon{flex-wrap:wrap;} .pick-ribbon .rb-q{flex:1 1 10em;} }
   @media (prefers-reduced-motion:reduce){ .pick-ribbon{animation:none;} }
   /* 選んでいる間は、通知を帯の上に逃がす */
   body:has(.pick-ribbon) #toast{bottom:calc(var(--hand-gap, 62px) + 64px);}
@@ -1992,8 +1995,8 @@
       border-color:rgba(185,164,255,.28);box-shadow:none;}
     .arr-bar.sel-bar:is(.confirm,:not(.confirm)) :is(button,.sel-src){pointer-events:auto;}
     .arr-bar.sel-bar:is(.confirm,:not(.confirm)) .sel-q{text-shadow:0 1px 4px rgba(0,0,0,.95);}
-    /* 選んでいる間は、左の詳細パネルを見出しだけにする (左のラインのカードを隠さない) */
-    body.picking #preview .cp-top,body.picking #preview .cp-rows{display:none;}
+    /* 選んでいる間も、左の詳細パネルには効果の文を出す (見出しだけにすると枠が空のまま縦に伸びていた。
+       左のラインを見たいときは INFO のつまみでしまえる) */
     /* 一覧で選ぶ: 文字とボタンを小さく、カードは2列に並べる */
     #modalCard{width:min(460px,92vw);padding:10px 12px;}
     #modalTitle{margin-bottom:8px;}
@@ -2050,13 +2053,7 @@
     .arr-bar.sel-bar.confirm .sel-head{justify-content:flex-start;}
     .arr-bar.sel-bar.confirm .sel-q{text-align:left;}
     .arr-bar.sel-bar.confirm .arr-btns{justify-content:flex-end;width:100%;}
-    /* 選択肢の一覧 (モーダル) も右上に出す。暗幕は掛けない */
-    #modal{justify-content:flex-start;align-items:flex-end;background:none;pointer-events:none;
-      padding:44px calc(8px + env(safe-area-inset-right)) 0 0;}
-    #modalCard{width:min(400px,44vw);max-height:calc(100vh - 56px - var(--hand-gap, 14vh));max-height:calc(100dvh - 56px - var(--hand-gap, 14vh));pointer-events:auto;
-      border-radius:10px;border-left:3px solid var(--cyan);}
-    #modal.show #modalCard{animation:selSlide .28s cubic-bezier(.16,1,.3,1);}
-    #modalPeek{margin-right:0;}
+    /* 選択肢の一覧 (モーダル) は、ほかの選択の帯と同じく手札のすぐ上に出す (右上に出していたのをやめた) */
   }
   @media (prefers-reduced-motion: reduce){ .arr-bar.sel-bar.confirm,#modal.show #modalCard{animation:none;} }
   /* PC の広い画面: 右上の隅ではなく盤面の右上の角のすぐ外に (--dlg-x / --dlg-y は main.js が盤から数える)。
@@ -2065,12 +2062,10 @@
     .arr-bar.sel-bar:not(.confirm),.arr-bar.sel-bar.confirm,.arr-bar.sel-bar.confirm.hand-pick{
       left:min(var(--dlg-x, 100vw), calc(100vw - min(360px,40vw) - 8px));right:auto;top:var(--dlg-y, 44px);}
     #fxBanner{left:min(var(--dlg-x, 100vw), calc(100vw - min(300px,34vw) - 8px));right:auto;top:var(--dlg-y, 44px);}
-    #modal{padding-top:var(--dlg-y, 44px);padding-right:max(calc(8px + env(safe-area-inset-right)), calc(100vw - var(--dlg-x, 100vw) - min(400px,44vw)));}
   }
   @media (orientation:landscape) and (max-height:500px){
     .arr-bar.sel-bar:not(.confirm),.arr-bar.sel-bar.confirm{top:38px;width:min(320px,40vw);}
-    #modal{padding-top:38px;}
-    #modalCard{width:min(340px,44vw);max-height:calc(100vh - 46px);max-height:calc(100dvh - 46px);}
+    #modalCard{padding:10px 12px;max-height:calc(100vh - var(--hand-gap, 14vh) - 60px);max-height:calc(100dvh - var(--hand-gap, 14vh) - 60px);}
   }
 
   /* =====================================================================
@@ -2599,7 +2594,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=24ca4a4dbd",
+      "./js3d/main.js": "./js3d/main.js?v=f97de24134",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=6398fed15e",
       "./js3d/panel.js": "./js3d/panel.js?v=ecb8a073e3",
       "./js3d/plates.js": "./js3d/plates.js?v=70ffa14b87",
@@ -2718,6 +2713,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=24ca4a4dbd"></script>
+  <script type="module" src="js3d/main.js?v=f97de24134"></script>
 </body>
 </html>
