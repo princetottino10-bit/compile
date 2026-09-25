@@ -39,7 +39,7 @@ import { compilesBy, loadRun, RUN_WIN_COMPILES } from './run.js';
 import { loadWeekly, weekKey } from './weekly.js';
 import { openReview } from './review.js';
 import { runRoomLobby } from './roomui.js';
-import { selectHead, bindSelectHead } from './selectui.js';
+import { selectHead, bindSelectHead, questionText } from './selectui.js';
 import { faceImageURL, backImageURL, pruneFaceCache, ART_SETS, setMaxAnisotropy } from './cardtex.js';
 import * as FX from './fx.js';
 import { buildArena } from './arena.js';
@@ -2555,6 +2555,7 @@ function pickOnBoard(req) {
       /* 質問と はい/いいえ を離すと、何に答えているのか分からなくなる。
          同じ帯にまとめて出す。 */
       /* 手札のすぐ上に出す。盤面に重なるので、目ボタンで隠して盤面を見られる */
+      el.className = 'arr-bar';
       el.classList.add('with-ask', 'confirm');
       el.innerHTML =
         pickBarAsk(req) +
@@ -2675,7 +2676,7 @@ function pickBarAsk(req, meta) {
    選択バーには発動元と質問が入っているので、出している間は上の「効果処理中」の帯を隠す */
 let pickPanelReq = null;
 function bindPickBar(el) {
-  el.classList.add('sel-bar');
+  if (el.classList.contains('arr-bar')) el.classList.add('sel-bar');
   document.body.classList.add('picking');
   bindSelectHead(el, showCardNoteFor);
   /* 選んでいる間は、何の効果で選んでいるのかを左の詳細パネルに出しておく (マスターデュエルと同じ)。
@@ -2715,42 +2716,43 @@ function renderBoardPick() {
   /* 2段階以上の効果は、一つ前の選択へ戻れる (エンジンが回答を1つ減らして再生する) */
   const canBack = !!(cur && cur.state && cur.state.pending && cur.state.pending.requestId === bp.req.id
     && Array.isArray(cur.state.pending.choices) && cur.state.pending.choices.length);
-  el.classList.add('with-ask');
-  /* 手札から選ぶ (捨てる・キャッシュの削除など) は、手札のすぐ上に出す (確認と同じ場所・大きさ) */
-  const nearHand = bp.req.kind === 'pickHand';
-  el.classList.toggle('confirm', nearHand);
-  el.classList.toggle('hand-pick', nearHand);   // 手札から選ぶ帯も右上に出す (three-play.html)
-  const where = nearHand ? '手札の光っているカード' : '光っているカード';
-  el.innerHTML =
-    pickBarAsk(bp.req, { optional: bp.min === 0 || pickSkip, count: bp.chosen.length, max: bp.max }) +
-    /* 何を選んだかを帯の中でも読めるようにする (盤面の金色だけでは見落とす) */
-    (bp.chosen.length
-      ? '<div class="sel-chosen">' + bp.chosen.map((u, i) =>
-          '<button type="button" class="sel-chip" data-uid="' + u + '"><b>' + (i + 1) + '</b>' +
-          (cardName(u) || '裏向きのカード') + '<i>×</i></button>').join('') + '</div>'
-      : '<div class="sel-hint">' + where + 'をタップ</div>') +
-    '<div class="arr-btns">' +
-    PEEK_BTN +
-    (canBack ? '<button class="arr-btn" id="pkBack" type="button">← 戻る</button>' : '') +
-    '<button class="arr-btn ghost" id="pkList" type="button">LIST</button>' +
-    (pickSkip ? '<button class="arr-btn" id="pkSkip" type="button">しない</button>' : '') +
-    (instant ? '' :
-      '<button class="arr-btn ok" id="pkOk" type="button"' +
-        (bp.chosen.length < bp.min ? ' disabled' : '') + '>' +
-        (bp.chosen.length === 0 && bp.min === 0 ? '選ばない' : '決定') +
-        '</button>') +
-    '</div>';
+  /* 1行の帯 (pickRibbon): 何の効果で・何を選ぶか・「しない」。決定は押したカードのそばに浮かぶ (renderPickGo) */
+  el.className = 'pick-ribbon';
+  el.innerHTML = pickRibbon(bp.req, {
+    count: bp.chosen.length, max: bp.max, back: canBack, skip: pickSkip,
+    none: !pickSkip && bp.min === 0 && !bp.chosen.length
+  });
   bindPickBar(el);
-  bindPeek(el);
-  el.querySelectorAll('.sel-chip').forEach(c => { c.onclick = () => toggleBoardPick(c.dataset.uid); });
-  const ok = el.querySelector('#pkOk');
-  if (ok) ok.onclick = () => finishBoardPick(bp.chosen.slice());
-  const back = el.querySelector('#pkBack');
-  if (back) back.onclick = () => finishBoardPick(PICK_BACK);
-  el.querySelector('#pkList').onclick = () => finishBoardPick(null);
-  const skip = el.querySelector('#pkSkip');
-  if (skip) skip.onclick = () => finishBoardPick(PICK_SKIP);
+  bindRibbon(el, {
+    back: () => finishBoardPick(PICK_BACK),
+    skip: () => finishBoardPick(PICK_SKIP),
+    none: () => finishBoardPick([])
+  });
   renderPickGo(bp);
+}
+
+/* 選択の1行の帯: [効果の元のカード] 何を選ぶか (数) [戻る] [しない]。
+   手札のすぐ上に出す (three-play.html の .pick-ribbon)。元のカードを押すと効果の全文 */
+function pickRibbon(req, m) {
+  const s = sourceInfo(req && req.context);
+  const d = s && defIndex[s.def];
+  const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  return (s
+      ? '<button type="button" class="rb-src" data-def="' + esc(s.def) + '" style="--accent:' + esc(s.color || '#b9a4ff') + '" title="効果を読む">' +
+          (d ? '<img alt="" src="' + faceImageURL(d) + '">' : '') + '<b>' + esc(s.name) + '</b></button>'
+      : '') +
+    '<span class="rb-q">' + esc(questionText(req)) + (m.max > 1 ? ' <em>' + (m.count || 0) + '/' + m.max + '</em>' : '') + '</span>' +
+    (m.back ? '<button type="button" class="rb-btn" id="pkBack">← 戻る</button>' : '') +
+    (m.skip ? '<button type="button" class="rb-btn skip" id="pkSkip">しない</button>' : '') +
+    (m.none ? '<button type="button" class="rb-btn skip" id="pkNone">選ばない</button>' : '');
+}
+function bindRibbon(el, on) {
+  const src = el.querySelector('.rb-src');
+  if (src) src.onclick = (ev) => { ev.stopPropagation(); showCardNoteFor(src.dataset.def); };
+  for (const [id, fn] of [['#pkBack', on.back], ['#pkSkip', on.skip], ['#pkNone', on.none]]) {
+    const b = el.querySelector(id);
+    if (b && fn) b.onclick = (ev) => { ev.stopPropagation(); fn(); };
+  }
 }
 
 function renderFreePick() {
@@ -2826,28 +2828,13 @@ function renderLinePick() {
     el.className = 'arr-bar';
     document.body.appendChild(el);
   }
-  const hasFocus = Array.isArray(bp.req.focus) ? bp.req.focus.length > 0 : !!bp.req.focus;
   const canBack = !!(cur && cur.state && cur.state.pending && cur.state.pending.requestId === bp.req.id
     && Array.isArray(cur.state.pending.choices) && cur.state.pending.choices.length);
-  el.classList.add('with-ask');
-  el.classList.remove('confirm');
-  el.innerHTML = pickBarAsk(bp.req, pickSkip ? { optional: true } : undefined) +
-    '<div class="sel-hint">' +
-    (hasFocus ? '<i class="sel-key gold"></i>移動するカード　<i class="sel-key mint"></i>移動先のライン' : '光っているラインをタップ') +
-    '</div>' +
-    '<div class="arr-btns">' +
-    PEEK_BTN +
-    (canBack ? '<button class="arr-btn" id="pkBack" type="button">← 対象を選び直す</button>' : '') +
-    '<button class="arr-btn ghost" id="pkList" type="button">LIST</button>' +
-    (pickSkip ? '<button class="arr-btn" id="pkSkip" type="button">しない</button>' : '') +
-    '</div>';
+  /* 移動するカード (金) と移動先 (緑) は盤面の光で示す */
+  el.className = 'pick-ribbon';
+  el.innerHTML = pickRibbon(bp.req, { back: canBack, skip: pickSkip });
   bindPickBar(el);
-  bindPeek(el);
-  const back = el.querySelector('#pkBack');
-  if (back) back.onclick = () => finishLinePick(PICK_BACK);
-  const skipL = el.querySelector('#pkSkip');
-  if (skipL) skipL.onclick = () => finishLinePick(PICK_SKIP);
-  el.querySelector('#pkList').onclick = () => finishLinePick(null);
+  bindRibbon(el, { back: () => finishLinePick(PICK_BACK), skip: () => finishLinePick(PICK_SKIP) });
 }
 
 function finishLinePick(picks) {
@@ -3080,36 +3067,24 @@ function arrangeOnBoard(req, opts) {
 
     const render = () => {
       const isIdentity = perm[0] === 0 && perm[1] === 1 && perm[2] === 2;
-      const nm = targetSide === null ? null : namesOf(targetSide);
-      /* 並び (左・中・右) も帯の中に出す */
+      /* 選択と同じ1行の帯 (手札の上)。確定は盤面の板の横に浮かぶボタン (#arrGo) で、どの入れ替えも確定を押してから決まる */
+      const s = sourceInfo(req && req.context);
+      const d = s && defIndex[s.def];
+      const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+      const text = control
+        ? (targetSide === null ? '並べ替えるなら、自分か相手のプロトコルをタップ'
+          : (targetSide === ME ? '自分' : '相手') + 'のプロトコルを2つタップして入れ替え (反対側をタップで切り替え)')
+        : single ? 'プロトコルを2つタップして入れ替え (1回だけ)' : 'プロトコルを2つタップして入れ替え';
       ov.innerHTML =
-        '<div class="arr-bar with-ask sel-bar confirm">' +
-          pickBarAsk(req) +
-          (nm
-            ? '<div class="arr-order">' + [0, 1, 2].map((line) => {
-                const name = nm.current[perm[line]];
-                const doneMark = nm.compiled && nm.compiled[perm[line]];
-                return '<button type="button" class="arr-chip' + (sel === line ? ' on' : '') +
-                  (doneMark ? ' done' : '') + '" data-line="' + line + '">' + (doneMark ? '✓ ' : '') + name + '</button>';
-              }).join('') + '</div>'
-            : '') +
-          '<div class="sel-hint">' +
-            (control
-              ? (targetSide === null ? '並べ替えるなら、自分か相手のプロトコルを2つタップ'
-                : (targetSide === ME ? '自分' : '相手') + 'のプロトコルを入れ替え中。よければ確定 (反対側をタップすると切り替え)')
-              : single ? '盤面のプロトコルを2つタップして入れ替え' : '盤面のプロトコルを2つタップで入れ替え。よければ確定') +
-          '</div>' +
-          '<div class="arr-btns">' +
-            /* 帯が自分の山に重なるので、目ボタンで隠して盤面を見られるようにする (他の帯と同じ) */
-            PEEK_BTN +
-            '<button type="button" class="arr-btn ghost" id="arrList">一覧で選ぶ</button>' +
-            (control ? '<button type="button" class="arr-btn" id="arrSkip">並べ替えない</button>' : '') +
-            (targetSide === null ? '' : '<button type="button" class="arr-btn" id="arrReset">やり直し</button>') +
-            (single ? '' : '<button type="button" class="arr-btn ok" id="arrOk"' + (isIdentity || targetSide === null ? ' disabled' : '') + '>確定</button>') +
-          '</div>' +
+        '<div class="pick-ribbon">' +
+          (s ? '<button type="button" class="rb-src" data-def="' + esc(s.def) + '" style="--accent:' + esc(s.color || '#b9a4ff') + '" title="効果を読む">' +
+            (d ? '<img alt="" src="' + faceImageURL(d) + '">' : '') + '<b>' + esc(s.name) + '</b></button>' : '') +
+          '<span class="rb-q">' + esc(text) + '</span>' +
+          (targetSide === null || isIdentity ? '' : '<button type="button" class="rb-btn" id="arrReset">やり直し</button>') +
+          (control ? '<button type="button" class="rb-btn skip" id="arrSkip">並べ替えない</button>' : '') +
         '</div>';
-      bindSelectHead(ov, showCardNoteFor);
-      bindPeek(ov.querySelector('.arr-bar'));
+      const srcBtn = ov.querySelector('.rb-src');
+      if (srcBtn) srcBtn.onclick = (ev) => { ev.stopPropagation(); showCardNoteFor(srcBtn.dataset.def); };
 
       tapLine = (line, side) => {
         sfx('pick');
@@ -3126,25 +3101,20 @@ function arrangeOnBoard(req, opts) {
         }
         if (sel === -1) { sel = line; layPlates(160); render(); return; }
         if (sel === line) { sel = -1; layPlates(160); render(); return; }
+        /* 1回だけの入れ替えは、もう入れ替えたあとなら元の並びから入れ替え直す */
+        if (single && !(perm[0] === 0 && perm[1] === 1 && perm[2] === 2)) { perm[0] = 0; perm[1] = 1; perm[2] = 2; }
         const t = perm[sel]; perm[sel] = perm[line]; perm[line] = t;
         sel = -1;
         layPlates(320);
-        if (single) { setTimeout(done, 360); return; }
         render();
       };
-      ov.querySelectorAll('.arr-chip').forEach((b) => {
-        b.onclick = () => tapLine(+b.dataset.line);
-      });
-      const ok = ov.querySelector('#arrOk');
-      if (ok) ok.onclick = done;
-      go.hidden = single || targetSide === null || isIdentity;
+      go.hidden = targetSide === null || isIdentity;
       go.onclick = (ev) => { ev.stopPropagation(); done(); };
       placeGo();
       const reset = ov.querySelector('#arrReset');
       if (reset) reset.onclick = () => { perm[0] = 0; perm[1] = 1; perm[2] = 2; sel = -1; layPlates(320); render(); };
       const skip = ov.querySelector('#arrSkip');
       if (skip) skip.onclick = () => finish({ skip: true });
-      ov.querySelector('#arrList').onclick = () => finish(null);
     };
     render();
   });

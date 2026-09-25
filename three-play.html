@@ -911,6 +911,34 @@
   }
 
   /* ---------- トースト ---------- */
+  /* ---------- 選択の1行の帯 (main.js の pickRibbon) ----------
+     右上の箱の代わりに、手札のすぐ上に1行だけ出す。盤面が透けるよう半透明。
+     [効果の元のカード] 何を選ぶか [戻る] [しない]。決定は押したカードのそばに浮かぶ (#pickGo) */
+  .pick-ribbon{position:fixed;left:50%;bottom:calc(var(--hand-gap, 14vh) + 10px);transform:translateX(-50%);z-index:32;
+    display:flex;align-items:center;gap:8px;max-width:min(620px,calc(100vw - 16px));padding:6px 8px 6px 6px;
+    background:rgba(10,8,18,.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+    border:1px solid rgba(255,79,163,.45);clip-path:var(--cut-s);font-family:var(--font-ui);
+    animation:ribbonIn .2s cubic-bezier(.16,1,.3,1);}
+  #arrOv .pick-ribbon{pointer-events:auto;}   /* 並べ替えの重ね (#arrOv) は触れないので、帯だけ触れるように */
+  @keyframes ribbonIn{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+  .pick-ribbon .rb-src{flex:none;display:flex;align-items:center;gap:6px;padding:3px 8px 3px 3px;cursor:pointer;
+    background:color-mix(in srgb,var(--accent) 22%,rgba(8,10,20,.9));border:1px solid color-mix(in srgb,var(--accent) 70%,transparent);
+    border-radius:6px;color:#fff;font:800 11px/1 var(--font-ui);letter-spacing:.06em;white-space:nowrap;}
+  .pick-ribbon .rb-src img{width:22px;height:31px;object-fit:cover;border-radius:3px;display:block;}
+  .pick-ribbon .rb-q{flex:1;min-width:0;font:700 12.5px/1.35 system-ui;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8);}
+  .pick-ribbon .rb-q em{font-style:normal;font-weight:900;color:var(--cyan);margin-left:4px;}
+  .pick-ribbon .rb-btn{flex:none;min-height:32px;padding:0 12px;cursor:pointer;border:1px solid rgba(255,255,255,.28);
+    background:rgba(8,12,22,.8);color:#fff;font:800 11px/1 var(--font-ui);letter-spacing:.08em;clip-path:var(--cut-s);white-space:nowrap;}
+  .pick-ribbon .rb-btn.skip{border-color:var(--pink);}
+  .pick-ribbon .rb-btn:hover,.pick-ribbon .rb-btn:focus-visible,.pick-ribbon .rb-src:focus-visible{filter:brightness(1.25);outline:0;}
+  @media (orientation:landscape) and (max-height:500px){
+    .pick-ribbon{padding:4px 6px 4px 4px;gap:6px;max-width:min(560px,calc(100vw - 120px));}
+    .pick-ribbon .rb-q{font-size:11px;}
+    .pick-ribbon .rb-btn{min-height:28px;padding:0 10px;font-size:10px;}
+  }
+  @media (prefers-reduced-motion:reduce){ .pick-ribbon{animation:none;} }
+  /* 選んでいる間は、通知を帯の上に逃がす */
+  body:has(.pick-ribbon) #toast{bottom:calc(var(--hand-gap, 62px) + 64px);}
   /* 通知は手札の上端より上に出す (手札を隠さない。--hand-gap は main.js が手札の位置から計算) */
   #toast{position:fixed;left:50%;bottom:calc(var(--hand-gap, 62px) + 12px);transform:translateX(-50%) translateY(12px);z-index:40;
     padding:10px 20px;border-radius:999px;opacity:0;pointer-events:none;transition:all .28s cubic-bezier(.16,1,.3,1);
@@ -2557,7 +2585,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=84c7c03eaf",
+      "./js3d/main.js": "./js3d/main.js?v=d7210a3a90",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=6398fed15e",
       "./js3d/panel.js": "./js3d/panel.js?v=ecb8a073e3",
       "./js3d/plates.js": "./js3d/plates.js?v=70ffa14b87",
@@ -2676,6 +2704,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=84c7c03eaf"></script>
+  <script type="module" src="js3d/main.js?v=d7210a3a90"></script>
 </body>
 </html>
