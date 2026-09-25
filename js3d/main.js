@@ -182,6 +182,7 @@ UI.setCardInfoHandler({
 });
 let runMode = false;             // 勝ち抜き戦・週替わり3連戦の1戦 (?run=1)
 let runKind = 'run';             // 'run' (勝ち抜き戦) / 'weekly' (週替わり3連戦)
+let quickGame = false;           // おまかせで1戦 (?quick=1)
 let runEnded = false;            // 勝ち抜き戦の結果を出したか (ライフが尽きたらその場で出す)
 let setupNote = '';
 let lastSetup = null;
@@ -348,6 +349,7 @@ async function boot() {
   mark('stage');
 
   const params = new URLSearchParams(location.search);
+  quickGame = params.get('quick') === '1';           // 記録に「おまかせで1戦」と残すため (決着のときは params が見えない)
   demoMode = params.get('demo') === '1';
   const pick = (key, fallback) => {
     const v = params.get(key);
@@ -3365,7 +3367,7 @@ async function afterTurn() {
         { turns: (st0.turns || 0) + 1,       // 決着した手番も1つと数える
           cards: ((st0.tally && st0.tally.faceUp[ME]) || []).slice(),
           effects: (st0.tally && st0.tally.effects && st0.tally.effects[ME]) || {},
-          mode: runMode ? runKind : tutorial ? 'tutorial' : params.get('quick') === '1' ? 'quick' : 'cpu' });
+          mode: runMode ? runKind : tutorial ? 'tutorial' : quickGame ? 'quick' : 'cpu' });
       refreshCardGlow();
       if (replayLog) {
         lastReplayId = addReplay({ me: replayLog.init.p0, opp: replayLog.init.p1, win, level: aiDifficulty,
