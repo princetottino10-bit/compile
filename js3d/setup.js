@@ -1,8 +1,9 @@
 /* =========================================================================
  * 3Dビュー: 対戦開始前のプロトコル選択
- *   ルール (使うプロトコルの範囲・決め方) を選び、自分の3つを決める。
+ *   ルール (使うプロトコルの範囲・決め方) を選び、自分の3つを決める。ふだんは公式ルールのドラフト。
+ *     ドラフト  : 公式ルールどおり CPU と 1 → 2 → 2 → 1 つ取り合う。先に取った側が先攻、取った順にラインへ並ぶ
+ *                 (候補の数・BAN は好みで足せる)
  *     自由に選ぶ: 3つ選ぶ。相手は範囲の残りから自動で組む
- *     ドラフト  : オンラインと同じ順番で CPU と取り合う (候補の抽選・BAN つき)
  *     ランダム  : 両者とも範囲からランダムに3つ
  *   各プロトコルの「?」で、そのプロトコルの6枚 (効果の文つき) を見られる。
  *   決まりごと (範囲・順番・CPU の選び方) は solodraft.js。
@@ -17,8 +18,8 @@ import { LEVEL_LABELS as AI_LABELS, CHALLENGERS, CHALLENGER_BASE, isChallenger, 
 export { STRONGEST_AI, LOCK_AI } from './aidecks.js';
 
 const MODES = [
+  { key: 'draft', label: 'ドラフト (公式)' },
   { key: 'free', label: '自由に選ぶ' },
-  { key: 'draft', label: 'ドラフト' },
   { key: 'random', label: 'ランダム' }
 ];
 const CANDIDATES = [[0, '全部'], [12, '12個'], [10, '10個'], [8, '8個']];
@@ -55,7 +56,8 @@ export function runSetup(protocols, options = {}) {
   let level = presetLevel === null ? 1 : presetLevel;
   let poolKey = lsGet('compileSoloPool', 'all');
   /* 強敵 (デッキの決まった相手) には、自分の3つを選ぶだけ */
-  let mode = training || (presetLevel !== null && fixedDeck(presetLevel)) ? 'free' : lsGet('compileSoloMode', 'free');
+  /* ふだんの CPU 戦は公式のドラフトから (以前の「自由に選ぶ」の保存は使わず、選び直したものだけ覚える) */
+  let mode = training || (presetLevel !== null && fixedDeck(presetLevel)) ? 'free' : lsGet('compileSoloModeV2', 'draft');
   let draftSize = +lsGet('compileSoloDraftPool', '0');
   let draftBans = +lsGet('compileSoloDraftBans', '0');
   let challenger = Math.min(CHALLENGERS.length - 1, Math.max(0, +lsGet('compileSoloChallenger', '0') || 0));
@@ -82,7 +84,7 @@ export function runSetup(protocols, options = {}) {
       : presetLevel !== null && fixedDeck(presetLevel)
         ? '自分のプロトコルを3つ選ぶ。相手 (' + levelLabel(presetLevel) + ') のデッキは ' + fixedDeck(presetLevel).join(' / ') + '。'
       : mode === 'free' ? '使用するプロトコルを3つ選ぶ。相手は範囲の残りから自動で編成される。'
-        : mode === 'draft' ? 'CPU とドラフトで取り合う (CPU の指し方は同じ。難易度は CPU のドラフトの上手さ)。'
+        : mode === 'draft' ? '公式ルールのドラフト: CPU と交互に 1 → 2 → 2 → 1 つ取り合う。先に取った側が先攻、取った順にラインへ並ぶ。'
           : '両者とも、範囲からランダムに3つ。';
   }
 
@@ -102,7 +104,7 @@ export function runSetup(protocols, options = {}) {
           '<span>BAN</span>' + seg(BANS, draftBans, 'bans') + '</div>'
         : '');
     rules.querySelectorAll('[data-pool]').forEach(b => { b.onclick = () => { poolKey = b.dataset.pool; lsSet('compileSoloPool', poolKey); refresh(); }; });
-    rules.querySelectorAll('[data-mode]').forEach(b => { b.onclick = () => { mode = b.dataset.mode; lsSet('compileSoloMode', mode); refresh(); }; });
+    rules.querySelectorAll('[data-mode]').forEach(b => { b.onclick = () => { mode = b.dataset.mode; lsSet('compileSoloModeV2', mode); refresh(); }; });
     rules.querySelectorAll('[data-cand]').forEach(b => { b.onclick = () => { draftSize = +b.dataset.cand; lsSet('compileSoloDraftPool', String(draftSize)); refresh(); }; });
     rules.querySelectorAll('[data-bans]').forEach(b => { b.onclick = () => { draftBans = +b.dataset.bans; lsSet('compileSoloDraftBans', String(draftBans)); refresh(); }; });
   }
@@ -327,8 +329,9 @@ export function runSetup(protocols, options = {}) {
       resolve(result);
     };
     onDraftDone = () => {
-      /* 指し方は つよい に固定。選んだ難易度はドラフトの上手さ (draftLevel) として残す */
-      const result = { me: draft.mine.slice(), ai: draft.theirs.slice(), level: 2, draftLevel: level, training: false,
+      /* 相手を選ぶ画面で強さを決めていれば、その強さで指す (ふつうの CPU 戦)。
+         この画面で選ぶときは、指し方は つよい に固定し、選んだ難易度はドラフトの上手さ (draftLevel) にだけ効かせる */
+      const result = { me: draft.mine.slice(), ai: draft.theirs.slice(), level: presetLevel !== null ? presetLevel : 2, draftLevel: level, training: false,
         first: draft.first === 0 ? 'me' : 'ai' };
       draft = null;
       close(result);
