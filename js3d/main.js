@@ -1808,6 +1808,35 @@ function trackPileCounts() {
     el.style.transform = 'translate(' + Math.round(x) + 'px,' + Math.round(y) + 'px) translate(-50%,' +
       (side === ME ? 'calc(-100% - 4px)' : '4px') + ')';
   }
+  placePileButtons(rect);
+}
+
+/* 縦持ち: 操作ボタンを手札に重ねず、自分の山のすぐ下に置く (半透明)。
+   捨て札 (左) の下に UNDO・HINT、山札 (右) の下に REFRESH・手札をしまう。横持ちと PC は CSS の既定の位置 */
+const pileBtnAt = new THREE.Vector3();
+function placePileButtons(rect) {
+  const groups = [
+    { kind: 'trash', els: [document.getElementById('assist')] },
+    { kind: 'deck', els: [document.getElementById('btnRefresh'), document.getElementById('dock')] }
+  ];
+  const on = isCompactHandUI();
+  document.body.classList.toggle('pile-buttons', on);
+  for (const g of groups) {
+    if (!on) { for (const el of g.els) if (el) { el.style.left = ''; el.style.top = ''; } continue; }
+    const p = LAYOUT.pilePos(g.kind, ME, ME, 0);
+    pileBtnAt.set(p.pos[0], 0, p.pos[2] + CARD.h * p.scale / 2).project(stage.camera);
+    const x = rect.left + (pileBtnAt.x + 1) * rect.width / 2;
+    let y = rect.top + (1 - pileBtnAt.y) * rect.height / 2 + 6;
+    if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+    for (const el of g.els) {
+      if (!el || el.hidden) continue;
+      /* 山は画面の端に近いので、ボタンが画面からはみ出さないよう内側に寄せる (中心で置いている) */
+      const half = el.offsetWidth / 2;
+      el.style.left = Math.round(Math.min(window.innerWidth - half - 6, Math.max(half + 6, x))) + 'px';
+      el.style.top = Math.round(y) + 'px';
+      y += el.offsetHeight + 6;
+    }
+  }
 }
 
 const choiceWorld = new THREE.Vector3();

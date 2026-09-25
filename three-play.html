@@ -95,6 +95,13 @@
   #assist .btn{width:auto;min-height:32px;padding:0 12px;font-size:10px;}
   #assist .btn:disabled{opacity:.4;cursor:default;}
   body.pregame #assist,body.demo #assist{display:none!important;}
+  /* 縦持ち: 自分の山の下に置く (位置は main.js の placePileButtons)。盤面が透けるよう半透明に */
+  body.pile-buttons #assist,body.pile-buttons #btnRefresh,body.pile-buttons #dock{
+    right:auto!important;bottom:auto!important;transform:translateX(-50%);transition:none;}
+  body.pile-buttons #assist{flex-direction:column;align-items:center;gap:6px;}
+  body.pile-buttons #assist .btn,body.pile-buttons #btnRefresh,body.pile-buttons #dock .btn{
+    min-height:30px!important;padding:0 11px!important;font-size:9px!important;
+    background:rgba(8,12,22,.5);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);}
   /* 相手の番のまとめ: 画面の上の真ん中に短く出す (触れると消える) */
   #oppSummary{position:fixed;left:50%;top:64px;z-index:28;transform:translate(-50%,-6px);opacity:0;pointer-events:none;
     max-width:min(440px,86vw);padding:9px 14px 10px;background:rgba(12,9,20,.86);border:1px solid rgba(255,79,163,.45);
@@ -2541,7 +2548,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=f98b3d905f",
+      "./js3d/main.js": "./js3d/main.js?v=4633c627ac",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=6398fed15e",
       "./js3d/panel.js": "./js3d/panel.js?v=ecb8a073e3",
       "./js3d/plates.js": "./js3d/plates.js?v=70ffa14b87",
@@ -2660,6 +2667,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=f98b3d905f"></script>
+  <script type="module" src="js3d/main.js?v=4633c627ac"></script>
 </body>
 </html>
