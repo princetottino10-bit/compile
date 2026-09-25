@@ -1352,12 +1352,16 @@ function execOp(ctx, fr, op) {
         stack.forEach((uid, idx) => {
           const c = st.cards[uid];
           /* 覆い指定のない効果は既定で「覆われていないカード」が対象 */
-          if (idx === stack.length - 1 && c.faceUp && DEFS[c.def].eff.middle && DEFS[c.def].eff.middle.ops) cands.push(uid);
+          /* 中段が「ない」ことになっているカード (FEAR 0 の上段: 自分の手番中、相手のカードに中段は無い) は写せない (codex の Mirror 1 の裁定) */
+          if (idx === stack.length - 1 && c.faceUp && DEFS[c.def].eff.middle && DEFS[c.def].eff.middle.ops && !middleSuppressed(st, uid)) cands.push(uid);
         });
       }
       if (!cands.length) { fr.done = false; return; }
-      const pick = cands.length === 1 ? cands[0]
-        : choose(ctx, { kind: 'pickCard', player: fr.controller, candidates: cands, prompt: 'mirror-middle', context: defOf(st, fr.source).id })[0];
+      /* 「解決できる」なので断れる (候補が1枚でも聞く)。必須の書き方なら1枚のときは聞かずに解決 */
+      const pick = cands.length === 1 && !op.optional ? cands[0]
+        : choose(ctx, { kind: 'pickCard', player: fr.controller, candidates: cands, min: op.optional ? 0 : 1, max: 1,
+          prompt: 'mirror-middle', context: defOf(st, fr.source).id })[0];
+      if (!pick) { fr.done = false; return; }
       log(ctx, `[${defOf(st, fr.source).id}] ${DEFS[st.cards[pick].def].id} の中段コマンドをコピー解決`, fr.source);
       const loc = locate(st, fr.source);
       const sub = { source: fr.source, slot: 'middle', controller: fr.controller, line: loc ? loc.line : fr.line, bind: {}, done: false };
@@ -1766,10 +1770,14 @@ function performVerb(ctx, fr, op, uid) {
       }
       if (dest === loc.line) return false;
       const shifted = doShift(ctx, uid, dest);
-      /* DIVERSITY 1 のように、後続の効果文が「このライン」と指す場合は
-         移動後のラインを明示的に引き継ぐ。通常の移動効果まで意味が変わら
-         ないよう、DSL 側で setCurrentLine を指定した場合だけ更新する。 */
-      if (shifted && op.setCurrentLine) fr.currentLine = dest;
+      /* DIVERSITY 1 のように、後続の効果文が「このライン」と指す場合は、移動のあとで
+         このカード自身がいるラインを引き継ぐ (自分を動かしたなら動いた先、ほかのカードを
+         動かしたなら元のまま)。以前は動かした先を必ず使い、ほかのカードを動かしたときに
+         そのカードの行き先を数えていた。DSL 側で setCurrentLine を指定した場合だけ更新する */
+      if (shifted && op.setCurrentLine) {
+        const self = locate(st, fr.source);
+        if (self) fr.currentLine = self.line;
+      }
       return shifted;
 
       function pickDest(lines) {
