@@ -24,7 +24,7 @@ const EARN = [
   ['PUZZLE', '解くと +' + XP_GAIN.puzzle],
   ['COMPUZZLE', '初級 +' + XP_GAIN.tsume1 + ' / 中級 +' + XP_GAIN.tsume2 + ' / 上級 +' + XP_GAIN.tsume3 + ' / 今日の問題 +' + XP_GAIN.tsumeDaily + ' / 今日の上級 +' + XP_GAIN.tsumeDailyHard],
   ['RUN', '全勝クリア +' + XP_GAIN.runClear],
-  ['WEEKLY', 'クリア +' + XP_GAIN.weeklyClear],
+  ['WEEKLY', 'クリア +' + (XP_GAIN.weeklyClear + XP_GAIN.weeklyBonus) + ' (初クリアで専用スリーブ、3週・10週で称号)'],
   ['DAILY', 'ミッション +' + DAILY_XP.easy + '〜+' + DAILY_XP.hard + ' / 3つ達成 +' + DAILY_XP.all]
 ];
 

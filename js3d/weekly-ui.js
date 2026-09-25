@@ -176,7 +176,8 @@ export function showWeeklyAfterGame(win, protocols) {
   el.innerHTML = '<div class="rn-card"><div class="rn-head"><b>// WEEKLY</b><span>週替わり3連戦</span></div>' +
     '<h2>' + title + '</h2>' + stageTrack(s) + '<p class="rn-lead">' + line + '</p>' +
     (s.phase === 'clear'
-      ? '<p class="rn-note">使ったデッキ ' + s.decks.map(d => deckLine(d, byName)).join(' ') + '</p>' +
+      ? '<p class="rn-best">報酬: +30 XP ・ 初クリアで専用スリーブ LAUREL ・ 3週で称号 WEEKLY REGULAR と専用マーカー ・ 10週で称号 WEEKLY LEGEND</p>' +
+        '<p class="rn-note">使ったデッキ ' + s.decks.map(d => deckLine(d, byName)).join(' ') + '</p>' +
         (s.submitted ? '<p class="rn-best">クリア者の一覧に載せました</p>'
           : user
             ? '<div class="wk-name"><label for="wkName">載せる名前 (1〜16文字)</label><input id="wkName" maxlength="16" autocomplete="nickname" value="' + esc(displayName()) + '">' +

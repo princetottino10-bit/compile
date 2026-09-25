@@ -34,6 +34,8 @@ const g = (c) => c.game || null;
 /* プロトコルの習熟度のレベル (戦績から) の一覧 */
 const masteries = (c) => Array.from(protocolSummary(c.records).values()).map(t => t.mastery.level);
 const bestMastery = (c) => Math.max(0, ...masteries(c));
+/* 週替わり3連戦をクリアした週の数 */
+const weeklyWeeks = (c) => new Set(c.xp.map(e => e.id).filter(id => /^k:wk:W\d+$/.test(id || ''))).size;
 const onlineGames = (c) => c.xp.filter(e => e.src === 'online').length;
 const dailyAllDays = (c) => c.xp.filter(e => /^k:dm:\d+:all$/.test(e.id || '')).length;
 const playedProtos = (c) => new Set(c.records.flatMap(r => r.me || [])).size;
@@ -80,7 +82,9 @@ export const TROPHIES = [
   { id: 'streak5', tier: 'silver', name: 'ON A ROLL', desc: 'CPU 戦で5連勝する', test: (c) => streak(c.records, true) >= 5, progress: (c) => [Math.min(5, streak(c.records, true)), 5] },
   { id: 'online_win', tier: 'silver', name: 'NETWORKED', desc: 'オンライン対戦で勝つ', test: (c) => xpHas(c, onlineWin) },
   { id: 'run', tier: 'silver', name: 'RUNNER', desc: 'RUN を全勝クリアする', test: (c) => xpHas(c, e => e.src === 'run') },
-  { id: 'weekly', tier: 'silver', name: 'WEEKLY CHAMP', desc: 'WEEKLY をクリアする', test: (c) => xpHas(c, e => e.src === 'weekly') },
+  { id: 'weekly', tier: 'silver', name: 'WEEKLY CHAMP', desc: 'WEEKLY をクリアする (専用スリーブ LAUREL)', test: (c) => xpHas(c, e => e.src === 'weekly') },
+  { id: 'weekly3', tier: 'silver', name: 'WEEKLY REGULAR', desc: 'WEEKLY を3つの週でクリアする (称号 WEEKLY REGULAR・専用マーカー)',
+    test: (c) => weeklyWeeks(c) >= 3, progress: (c) => [Math.min(3, weeklyWeeks(c)), 3] },
   { id: 'level10', tier: 'silver', name: 'VETERAN', desc: 'プレイヤーレベル10になる', test: (c) => c.level >= 10, progress: (c) => [Math.min(c.level, 10), 10] },
   { id: 'gold_card', tier: 'silver', name: 'GOLDEN TOUCH', desc: 'カードの縁を金にする (そのカードで25勝)', test: (c) => tierCards(c, 25) >= 1 },
   { id: 'chain4', tier: 'silver', name: 'CHAIN REACTION', desc: '自分の効果で割り込んで、チェーンを4つつなげる (称号 CHAIN MASTER)', test: (c) => !!g(c) && (g(c).chainMax | 0) >= 4 },
@@ -117,6 +121,8 @@ export const TROPHIES = [
     test: (c) => gachaGot(c) >= GACHA_ITEMS.length, progress: (c) => [gachaGot(c), GACHA_ITEMS.length] },
   { id: 'daily_puzzle30', tier: 'gold', name: 'DEEP THOUGHT', desc: 'COMPUZZLE の今日の問題を30日解く',
     test: (c) => dailyPuzzles(c) >= 30, progress: (c) => [Math.min(30, dailyPuzzles(c)), 30] },
+  { id: 'weekly10', tier: 'gold', name: 'WEEKLY LEGEND', desc: 'WEEKLY を10の週でクリアする (称号 WEEKLY LEGEND)',
+    test: (c) => weeklyWeeks(c) >= 10, progress: (c) => [Math.min(10, weeklyWeeks(c)), 10] },
   { id: 'flawless', tier: 'gold', hidden: true, name: 'FLAWLESS', desc: '相手に1回もコンパイルさせずに勝つ (称号 FLAWLESS)', test: (c) => !!g(c) && g(c).win && g(c).oppCompiles === 0 },
   /* ---- 全部 ---- */
   { id: 'platinum', tier: 'platinum', name: 'PLATINUM', desc: 'ほかの実績をすべて取る (称号 PLATINUM)', test: () => false }

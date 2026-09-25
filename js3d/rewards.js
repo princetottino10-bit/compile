@@ -41,10 +41,10 @@ export const COSMETICS = {
   mat: [['neon', 'NEON GRID'], ['nebula', 'NEBULA'], ['vortex', 'VORTEX'], ['biomech', 'BIOMECH'], ['prism', 'PRISM'], ['eclipse', 'ECLIPSE']],
   sleeve: [['default', 'STANDARD'], ['crimson', 'CRIMSON'], ['circuit', 'CIRCUIT'], ['void', 'VOID'], ['holo', 'HOLO'], ['sakura', 'SAKURA'], ['aurum', 'AURUM'],
     ['mint', 'MINT'], ['ocean', 'OCEAN'], ['ember', 'EMBER'], ['glacier', 'GLACIER'], ['toxic', 'TOXIC'], ['galaxy', 'GALAXY'],
-    ['slayer', 'GIANT SLAYER']],
+    ['slayer', 'GIANT SLAYER'], ['laurel', 'LAUREL']],
   marker: [['default', 'STANDARD'], ['gold', 'GOLD'], ['crystal', 'CRYSTAL'], ['crimson', 'CRIMSON'], ['prism', 'PRISM'],
     ['emerald', 'EMERALD'], ['amber', 'AMBER'], ['sapphire', 'SAPPHIRE'], ['obsidian', 'OBSIDIAN'], ['nova', 'NOVA'],
-    ['slayer', 'GIANT SLAYER']],
+    ['slayer', 'GIANT SLAYER'], ['laurel', 'LAUREL']],
   ccolor: [['default', 'PROTOCOL'], ['gold', 'GOLD'], ['cyan', 'CYAN'], ['rainbow', 'RAINBOW'], ['lime', 'LIME'], ['violet', 'VIOLET'], ['ember', 'EMBER']],
   victory: [['default', 'STANDARD'], ['aurora', 'AURORA']]
 };
@@ -72,6 +72,24 @@ export function underdogCleared() {
     return false;
   }
 }
+
+/* 週替わり3連戦の褒美。クリアした週の数 (経験値の帳簿の k:wk:W…) で開く */
+export const WEEKLY_ITEMS = [
+  { kind: 'sleeve', key: 'laurel', weeks: 1 },
+  { kind: 'marker', key: 'laurel', weeks: 3 },
+  { kind: 'title', key: 'regular', weeks: 3 },
+  { kind: 'title', key: 'weeklylegend', weeks: 10 }
+];
+export function weeklyClears() {
+  try {
+    const list = JSON.parse(localStorage.getItem('compileXpLog') || '[]');
+    const ids = (Array.isArray(list) ? list : []).map(e => e && (e.id || (e.key ? 'k:' + e.key : ''))).filter(id => /^k:wk:W\d+$/.test(id || ''));
+    return new Set(ids).size;
+  } catch (e) {
+    return 0;
+  }
+}
+const weeklyItem = (kind, key) => WEEKLY_ITEMS.find(g => g.kind === kind && g.key === key);
 
 const GACHA_KEY = 'compileGacha';
 export const gachaId = (kind, key) => kind + ':' + key;
@@ -102,7 +120,9 @@ export const TITLES = {
   puzzler: 'PUZZLER', compuzzler: 'COMPUZZLER',       // COMPUZZLE の中級を全部 / 全部
   platinum: 'PLATINUM',    // 実績をすべて取る (achievements.js)
   /* ガチャで取る (GACHA_ITEMS) */
-  gambler: 'GAMBLER', highroller: 'HIGH ROLLER', fortune: 'FORTUNE'
+  gambler: 'GAMBLER', highroller: 'HIGH ROLLER', fortune: 'FORTUNE',
+  /* 週替わり3連戦 (WEEKLY_ITEMS) */
+  regular: 'WEEKLY REGULAR', weeklylegend: 'WEEKLY LEGEND'
 };
 
 /* 全部解放 (管理者のテスト用。ADMIN 画面で切り替え、このブラウザに残す)。見た目と称号だけで、強さは変わらない */
@@ -121,6 +141,7 @@ export function unlockLevel(kind, key) {
   /* ガチャの見た目はレベルでは開かない (取っていれば 1、取っていなければ届かない数) */
   if (isGachaItem(kind, key)) return gachaOwned()[gachaId(kind, key)] ? 1 : 9999;
   if (isUnderdogItem(kind, key)) return underdogCleared() ? 1 : 9999;
+  if (weeklyItem(kind, key)) return weeklyClears() >= weeklyItem(kind, key).weeks ? 1 : 9999;
   const r = REWARDS.find(x => x.kind === kind && x.key === key);
   return r ? r.lv : 1;
 }
@@ -144,6 +165,7 @@ export function ownedTitles(level, extra) {
   if (unlockAll) return Object.keys(TITLES);
   const own = REWARDS.filter(r => r.kind === 'title' && r.lv <= level).map(r => r.key);
   const owned = gachaOwned();
-  const gacha = GACHA_ITEMS.filter(g => g.kind === 'title' && owned[gachaId('title', g.key)]).map(g => g.key);
+  const gacha = GACHA_ITEMS.filter(g => g.kind === 'title' && owned[gachaId('title', g.key)]).map(g => g.key)
+    .concat(WEEKLY_ITEMS.filter(g => g.kind === 'title' && weeklyClears() >= g.weeks).map(g => g.key));
   return own.concat([...(extra || []), ...gacha].filter((k, i, a) => TITLES[k] && !own.includes(k) && a.indexOf(k) === i));
 }

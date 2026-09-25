@@ -47,7 +47,8 @@ const WAITING_FRESH_MS = 90_000;
 
 /* 相手に見せる称号 (見た目だけ)。決まった一覧にあるものだけ。無ければ null */
 const BADGES = ["compiler", "veteran", "tactician", "expert", "architect", "master", "legend", "ascended", "underdog",
-  "chainer", "flawless", "grandmaster", "platinum", "puzzler", "compuzzler", "gambler", "highroller", "fortune"];
+  "chainer", "flawless", "grandmaster", "platinum", "puzzler", "compuzzler", "gambler", "highroller", "fortune",
+  "regular", "weeklylegend"];
 function cleanBadge(value: unknown) {
   const v = String(value || "");
   return BADGES.includes(v) ? v : null;

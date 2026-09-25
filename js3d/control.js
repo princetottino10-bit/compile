@@ -25,7 +25,8 @@ const MARKER_STYLES = {
   /* ガチャの見た目 */
   emerald: { me: 0x3ff0a0, dim: 0x245c44 }, amber: { me: 0xffa640, dim: 0x5e4220 }, sapphire: { me: 0x4f8cff, dim: 0x22345e },
   obsidian: { me: 0x2b2238, dim: 0x15101c }, nova: { me: 0xfff4c8, dim: 0x6b5e3a },
-  slayer: { me: 0xffc83a, dim: 0x5c1020 }        // 下剋上の褒美
+  slayer: { me: 0xffc83a, dim: 0x5c1020 },       // 下剋上の褒美
+  laurel: { me: 0x9be07a, dim: 0x3d5a24 }        // 週替わりの褒美 (3週クリア)
 };
 
 /* トラッカーのマーカー画像 (2048px) の輪郭を、中心をそろえて 120° 対称に整えたもの。

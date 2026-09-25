@@ -216,7 +216,8 @@ export function openRun(protocols, cardsOf, opts) {
         '<section class="rn-mcard"><small>WEEKLY</small><h3>週替わり3連戦</h3><ul>' +
           '<li>毎週配られる9つのプロトコルで戦う</li>' +
           '<li>3つずつ使い切って、3人に連勝する</li>' +
-          '<li>クリアすると名前が一覧に載る</li></ul>' + weekStatus +
+          '<li>クリアすると名前が一覧に載る</li>' +
+          '<li>クリアで +30 XP。初クリアで専用スリーブ LAUREL、3週で称号 WEEKLY REGULAR、10週で WEEKLY LEGEND</li></ul>' + weekStatus +
           '<button type="button" class="rn-go" data-act="weekly">開く</button></section>' +
       '</div><div class="rn-btns"><button type="button" data-act="title">タイトルへ</button></div>';
     };

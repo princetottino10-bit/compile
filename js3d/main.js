@@ -3406,7 +3406,10 @@ async function afterTurn() {
         if (runKind === 'weekly') {
           const was = loadWeekly().phase;
           showWeeklyAfterGame(win, Object.values(protoIndex));
-          if (was === 'battle' && loadWeekly().phase === 'clear') await gainXp('weekly', XP_GAIN.weeklyClear, 'wk:' + weekKey());
+          if (was === 'battle' && loadWeekly().phase === 'clear') {
+            await gainXp('weekly', XP_GAIN.weeklyClear, 'wk:' + weekKey(), true);
+            await gainXp('weekly', XP_GAIN.weeklyBonus, 'wkb:' + weekKey());
+          }
         } else {
           const was = loadRun();
           showRunAfterGame(win, compilesBy(cur.state, AI), Object.values(protoIndex));
