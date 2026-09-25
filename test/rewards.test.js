@@ -25,6 +25,12 @@ test('レベルアップで手に入る報酬・次の報酬・称号', async ()
   /* 称号はどれもオンラインで相手に見せられる (サーバーの BADGES と同じ key) */
   const server = require('node:fs').readFileSync(require('node:path').join(__dirname, '../supabase/functions/secure-room/index.ts'), 'utf8');
   for (const key of Object.keys(R.TITLES)) assert.ok(server.includes('"' + key + '"'), key + ' はサーバーの BADGES にある');
+  /* データベースの部屋の称号の列も同じ一覧を受け付ける (一番新しいマイグレーションの check) */
+  const fs = require('node:fs'), path = require('node:path');
+  const dir = path.join(__dirname, '../supabase/migrations');
+  const last = fs.readdirSync(dir).filter(f => /room_badges/.test(f)).sort().pop();
+  const sql = fs.readFileSync(path.join(dir, last), 'utf8');
+  for (const key of Object.keys(R.TITLES)) assert.ok(sql.includes("'" + key + "'"), key + ' は部屋の称号の列で受け付ける (' + last + ')');
   assert.deepEqual(R.ownedTitles(10, ['underdog']), ['compiler', 'veteran', 'underdog']);
   assert.deepEqual(R.ownedTitles(1, []), []);
 });

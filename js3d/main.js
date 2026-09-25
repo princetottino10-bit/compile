@@ -2591,6 +2591,7 @@ function cancelBoardPick() {
   clearLineTargets();
   for (const pad of pads) pad.userData.hover = false;
   removePickBar();
+  if (bp.cleanup) bp.cleanup();
   bp.resolve(PICK_CANCEL);
 }
 
@@ -2607,7 +2608,8 @@ function pickOnBoard(req) {
   /* はい/いいえ は盤面を隠さず下部バーで答える */
   if (req.kind === 'yesNo') {
     return new Promise((resolve) => {
-      boardPick = { kind: 'yesno', req, resolve };
+      const bp = { kind: 'yesno', req, resolve };
+      boardPick = bp;
       let el = document.getElementById('pickBar');
       if (!el) {
         el = document.createElement('div');
@@ -2630,6 +2632,7 @@ function pickOnBoard(req) {
       /* PC の近道: Enter = はい、Esc = いいえ、盤面で右クリック = いいえ */
       const onKey = (ev) => {
         if (ev.target && /^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName)) return;
+        if (ribbonPeeking()) return;                       // 目で盤面を見ている間はキーで答えない
         if (ev.key === 'Enter') { ev.preventDefault(); done(['yes']); }
         else if (ev.key === 'Escape') { ev.preventDefault(); done([]); }
       };
@@ -2638,10 +2641,16 @@ function pickOnBoard(req) {
       window.addEventListener('contextmenu', onCtx);
       const done0 = done;
       let finished = false;
-      done = (picks) => {
+      const unlisten = () => {
         window.removeEventListener('keydown', onKey);
         window.removeEventListener('contextmenu', onCtx);
-        if (finished || boardPick === null || boardPick.kind !== 'yesno') return;   // もう閉じた / 別の選択に替わった
+      };
+      /* 取り消し (UNDO・オンラインの再同期) でも、キーと右クリックの受け口を外す。
+         残すと、次のはい/いいえで古い受け口が先に答えて、新しい選択が止まっていた */
+      bp.cleanup = unlisten;
+      done = (picks) => {
+        unlisten();
+        if (finished || boardPick !== bp) return;   // もう閉じた / 別の選択に替わった
         finished = true;
         done0(picks);
       };
@@ -2970,6 +2979,7 @@ function renderPickGo(bp) {
 window.addEventListener('keydown', (ev) => {
   const bp = boardPick;
   /* 「〜してもよい」をまとめた選択は Esc で「しない」 */
+  if (ribbonPeeking()) return;                       // 目で盤面を見ている間はキーで決めない
   if (ev.key === 'Escape' && bp && pickSkip && (bp.chosen || bp.kind === 'line')) {
     ev.preventDefault();
     if (bp.kind === 'line') finishLinePick(PICK_SKIP); else finishBoardPick(PICK_SKIP);
