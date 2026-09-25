@@ -26,7 +26,8 @@ const TRIES = Number(process.argv[2]) || 3000;
 const SEED0 = Number(process.argv[3]) || 1;
 const OUT = process.argv[4] || path.join(root, 'data/tsume.json');
 const SEEDS = [1, 2, 3];                  // 山札の並び (newPuzzle の種)
-const NODE_LIMIT = 6000;                  // 1つの盤面・1つの種で調べる局面の上限 (超えたら使わない)
+const NODE_LIMIT = 6000;
+const MAX_SOLVE_RATE = 0.06;              // 手順の枝のうち解ける枝の割合の上限 (当てずっぽうで解けない)                  // 1つの盤面・1つの種で調べる局面の上限 (超えたら使わない)
 const NAMES = cards.protocols.map(p => p.name);
 const ME = 0;
 
@@ -92,11 +93,27 @@ function oppMark(st) {
     Object.values(eff).reduce((n, v) => n + (v | 0), 0);
 }
 
+/* 手番の記録から、連鎖の中身を数える。
+   src = 効果が解決したカードの種類 (プレイしたカード自身は除く)
+   ind = 誘発された効果 (カバーが外れた・反転した・「〜したとき」で発動した) の数 */
+function chainOf(log, playedDef) {
+  const src = new Set();
+  let ind = 0;
+  for (const line of log || []) {
+    if (/^--- P\d/.test(line)) break;              // 相手の手番に入ったら終わり
+    const m = String(line).match(/^\[([A-Z]+_\d)\]/);
+    if (!m) continue;
+    if (m[1] !== playedDef) src.add(m[1]);
+    if (/\((uncover|flip)\)|効果が発動/.test(line)) ind++;
+  }
+  return { src: src.size, ind };
+}
+
 function explore(res0) {
   let nodes = 0;
   const oppStart = oppMark(res0.state);
   const firstMap = new Map();
-  const visit = (res, first, pathActs) => {
+  const visit = (res, first, pathActs, dec) => {
     if (++nodes > NODE_LIMIT) throw new Reject('局面が多すぎる');
     if (res.error) return;
     const st = res.state;
@@ -110,7 +127,9 @@ function explore(res0) {
         chain: ((st.tally && st.tally.chains) || [0, 0])[ME] | 0,
         won: st.winner === ME,
         /* 相手の盤面を使ったか: 相手の場が変わった、または相手のカードの効果が発動した (手番の終わりの時点で比べる) */
-        opp: oppMark(es) !== oppStart
+        opp: oppMark(es) !== oppStart,
+        dec,
+        ...chainOf(res.log, first.def)
       };
       const e = firstMap.get(first.key);
       e.outs.push({ ...out, path: pathActs });
@@ -121,9 +140,11 @@ function explore(res0) {
       if (req.player !== ME) throw new Reject('手番中に相手が選ぶ');
       const list = answers(req);
       if (!list) throw new Reject('調べられない選択: ' + req.kind);
+      /* 2通り以上ある選択だけを「考える選択」として数える */
+      const d = dec + (list.length >= 2 ? 1 : 0);
       for (const picks of list) {
         const a = { type: 'choose', id: req.id, picks };
-        visit(E.apply(st, a), first, pathActs.concat([a]));
+        visit(E.apply(st, a), first, pathActs.concat([a]), d);
       }
       return;
     }
@@ -133,7 +154,8 @@ function explore(res0) {
   for (const a of legal) {
     const key = JSON.stringify(a);
     firstMap.set(key, { action: a, outs: [] });
-    visit(E.apply(res0.state, a), { key }, [a]);
+    const def = a.card && res0.state.cards[a.card] ? res0.state.cards[a.card].def : null;
+    visit(E.apply(res0.state, a), { key, def }, [a], 0);
   }
   return { firstMap, legalCount: legal.length };
 }
@@ -155,9 +177,9 @@ function randomSpec(r) {
   return { sides: [{ protos: mine, lines: myLines, hand }, { protos: theirs, lines: opLines, hand: [] }] };
 }
 
-function levelOf(chain, sols) {
-  if (chain >= 4 || (chain >= 3 && sols === 1)) return 3;
-  if (chain >= 3 || (chain >= 2 && sols === 1)) return 2;
+function levelOf(depth) {
+  if (depth >= 9) return 3;
+  if (depth >= 7) return 2;
   return 1;
 }
 
@@ -192,8 +214,16 @@ function tryBoard(spec) {
     const [l, v] = k.split(':').map(Number);
     goals.push({ kind: 'lineExact', line: l, value: v, ok: (o) => o.totals[l] === v });
   }
+  const leaves = [...base.firstMap.values()].reduce((n, e) => n + e.outs.length, 0);
   let best = null;
   for (const g of goals) {
+    /* どの解き方でも連鎖を通る (素直な1手で片づく抜け道がない) こと、当てずっぽうでは解けないこと */
+    const solving = [...base.firstMap.values()].flatMap(e => e.outs.filter(g.ok));
+    if (!solving.length || solving.length / leaves > MAX_SOLVE_RATE) continue;
+    const minSrc = Math.min(...solving.map(o => o.src));
+    const minInd = Math.min(...solving.map(o => o.ind));
+    const minDec = Math.min(...solving.map(o => o.dec));
+    if (minSrc < 2 || minInd < 1 || minDec < 2) continue;
     const good = [];
     for (const [key, e] of base.firstMap) {
       if (!runs.every(run => (run.firstMap.get(key) || { outs: [] }).outs.some(g.ok))) continue;
@@ -204,18 +234,18 @@ function tryBoard(spec) {
       good.push({ key, action: e.action, path: win.path, chain: win.chain, opp: !!win.opp });
     }
     if (good.length < 1 || good.length > 2) continue;
-    const chain = Math.min(...good.map(x => x.chain));
-    if (chain < 2) continue;
+    const chain = minSrc + minInd;
     /* どの解き方も相手の盤面を使うなら「相手の盤面を使う問題」 */
     const opp = good.every(x => x.opp);
-    const cand = { goal: g, sols: good.length, chain, opp, solution: good[0].path, level: levelOf(chain, good.length) };
-    const score = (c) => c.level * 10 + c.chain + (c.opp ? 5 : 0);
+    const depth = chain + minDec;               // 読む量: 連鎖の長さ + 考える選択の数
+    const cand = { goal: g, sols: good.length, chain, dec: minDec, depth, rate: solving.length / leaves, opp, solution: good[0].path, level: levelOf(depth) };
+    const score = (c) => c.depth * 10 + (c.opp ? 5 : 0) - c.rate * 10;
     if (!best || score(cand) > score(best)) best = cand;
   }
   if (!best) return null;
   const g = best.goal;
   const goal = g.kind === 'lineExact' ? { kind: 'lineExact', line: g.line, value: g.value } : { kind: g.kind };
-  return { spec, goal, level: best.level, chain: best.chain, opp: best.opp, solutions: best.sols, legal: base.legalCount, solution: best.solution };
+  return { spec, goal, level: best.level, chain: best.chain, dec: best.dec, depth: best.depth, rate: Math.round(best.rate * 1000) / 1000, opp: best.opp, solutions: best.sols, legal: base.legalCount, solution: best.solution };
 }
 
 const found = [];
@@ -227,7 +257,7 @@ for (let i = 0; i < TRIES; i++) {
   if (p) {
     found.push(p);
     console.log('#' + found.length + ' level ' + p.level + ' ' + p.goal.kind + (p.goal.kind === 'lineExact' ? ' L' + p.goal.line + '=' + p.goal.value : '') +
-      ' chain ' + p.chain + (p.opp ? ' opp' : '') + ' sols ' + p.solutions + ' legal ' + p.legal);
+      ' depth ' + p.depth + ' chain ' + p.chain + ' dec ' + p.dec + ' rate ' + p.rate + (p.opp ? ' opp' : '') + ' sols ' + p.solutions + ' legal ' + p.legal);
   }
   if ((i + 1) % 200 === 0) console.log((i + 1) + '/' + TRIES + ' 盤面, 見つけた ' + found.length + ', ' + Math.round((Date.now() - t0) / 1000) + 's');
 }

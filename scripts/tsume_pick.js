@@ -1,7 +1,7 @@
 'use strict';
 /* 詰めコンパイルの候補 (tsume_gen.js の出力) から、遊ぶ問題を選んで data/tsume.json に書く。
  *   node scripts/tsume_pick.js 候補1.json 候補2.json ...
- * 初級・中級・上級を10問ずつ。どの段にも相手の盤面を使う問題を混ぜ、お題とプロトコルが偏らないように選ぶ。
+ * 初級5問・中級10問・上級10問。どの段にも相手の盤面を使う問題を混ぜ、お題とプロトコルが偏らないように選ぶ。
  * 手順 (模範解答) を読める文にして一緒に書き、種 1 の盤面で解けることを確かめる */
 const fs = require('fs');
 const path = require('path');
@@ -12,16 +12,18 @@ const cards = JSON.parse(fs.readFileSync(path.join(root, 'data/cards.json'), 'ut
 E.init(cards, JSON.parse(fs.readFileSync(path.join(root, 'data/effects.json'), 'utf8')));
 E.setTrace(true);
 
-const PER_TIER = 10;
-const OPP_MIN = 4, OPP_MAX = 6;           // 1つの段で相手の盤面を使う問題の数 (全部ではなく、混ぜる)
+const PER_TIER_OF = { 1: 5, 2: 10, 3: 10 };   // 初級は慣らしの数問だけ。中級・上級を厚く
 const ME = 0;
 const defs = {};
 for (const p of cards.protocols) for (const c of p.cards) defs[c.id] = { proto: p.name, value: c.value };
 const cardName = (def) => defs[def] ? defs[def].proto + ' ' + defs[def].value : def;
 
+/* 段は読む量 (連鎖の長さ + 考える選択の数) で決める。6 以下は短すぎるので使わない */
 function tierOf(p) {
-  if (p.level === 3) return 3;
-  return p.solution.length >= 2 && p.solution.length <= 3 && p.legal <= 16 ? 1 : 2;
+  if (p.depth >= 12) return 3;
+  if (p.depth >= 9) return 2;
+  if (p.depth >= 7) return 1;
+  return 0;
 }
 
 /* 手順を文にする。盤面を1手ずつ進めながら、選んだカードやラインの名前を引く */
@@ -111,11 +113,13 @@ function solved(p, res) {
 
   const out = [];
   for (const tier of [1, 2, 3]) {
-    /* 決まった順 (再実行で同じ結果)。手順の短い順。
-       初級は手順が短いものから、中級・上級は手順が長い (込み入った) ものを優先 */
-    const dir = tier === 1 ? 1 : -1;
-    const pool = all.filter(p => tierOf(p) === tier && p.solution.length <= 9)
-      .sort((a, b) => dir * (a.solution.length - b.solution.length) || (b.chain - a.chain));
+    const PER_TIER = PER_TIER_OF[tier];
+    /* 相手の盤面を使う問題は 4〜6 割 (全部ではなく、混ぜる) */
+    const OPP_MIN = Math.round(PER_TIER * 0.4), OPP_MAX = Math.round(PER_TIER * 0.6);
+    /* 決まった順 (再実行で同じ結果)。当てずっぽうで解けにくい (解ける枝の割合が小さい) ものを優先。
+       上級は読む量の多いものから、手順が長すぎる (12手を超える) ものは外す */
+    const pool = all.filter(p => tierOf(p) === tier && p.solution.length <= 12)
+      .sort((a, b) => (tier === 3 ? b.depth - a.depth : 0) || (a.rate - b.rate) || (b.chain - a.chain));
     const picked = [];
     const kinds = { ready: 0, emptyHand: 0, lineExact: 0 };
     const protoUse = {};
@@ -133,13 +137,15 @@ function solved(p, res) {
     for (const p of pool) if (p.opp && picked.filter(x => x.opp).length < OPP_MIN) take(p);
     for (const kind of ['ready', 'emptyHand']) for (const p of pool) if (p.goal.kind === kind && kinds[kind] < 2) take(p);
     for (const p of pool) take(p);
-    picked.sort((a, b) => a.solution.length - b.solution.length);
+    /* 足りなければ、お題の偏りの上限を外して埋める */
+    if (picked.length < PER_TIER) { cap.lineExact = cap.ready = cap.emptyHand = PER_TIER; for (const p of pool) take(p); }
+    picked.sort((a, b) => (a.depth - b.depth) || (a.solution.length - b.solution.length));
     for (const p of picked) {
       const { steps, res } = await describe(p, PROMPT_TEXT, optionLabel);
       if (!solved(p, res)) throw new Error('種 1 で解けない問題: ' + JSON.stringify(p.goal));
       out.push({
         id: 't' + tier + '-' + String(picked.indexOf(p) + 1).padStart(2, '0'),
-        tier, goal: p.goal, opp: !!p.opp, chain: p.chain, solutions: p.solutions,
+        tier, goal: p.goal, opp: !!p.opp, chain: p.chain, depth: p.depth, solutions: p.solutions,
         spec: p.spec, solution: p.solution, steps
       });
     }

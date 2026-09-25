@@ -30,7 +30,7 @@ import { setCosmeticProtocols, profileOf } from './cosmetics-ui.js';
 import { displayName } from './displayname.js';
 import { showPlates } from './plates.js';
 import { matUnlocked, MAT_W, MAT_D } from './playmat.js';
-import { initAccount, openAccount, takeAccountResume } from './account.js';
+import { initAccount, openAccount, takeAccountResume, accountState, onAccountChange } from './account.js';
 import { openCardList } from './cardlist-ov.js';
 import { openOpponentSelect } from './opponent-select.js';
 import { UNDERDOG_DECK, STRONGEST_AI, UNDERDOG_LEVEL, levelLabel } from './aidecks.js';
@@ -604,6 +604,11 @@ async function boot() {
   placeDialogsNearBoard();
   refreshHud();
   if (puzzle) PZ.showPuzzleBar(puzzle, retryPuzzle, puzzle.tsume ? tsumeBarOpts(puzzle.tsume) : null);
+  /* 詰めコンパイル: 管理者か (答えのボタンを出すか) はログイン状態を読んでから分かるので、分かったら帯を描き直す */
+  if (puzzle && puzzle.tsume) {
+    onAccountChange(() => PZ.showPuzzleBar(puzzle, retryPuzzle, tsumeBarOpts(puzzle.tsume)));
+    initAccount();
+  }
   if (tutorial) coachUpdate();
   if (replayMode) { startReplayView(replayBuilt); return; }
   if (!puzzle && !tutorial && !demoMode && !trainingMode && !roomMode) showCpuPlates(p1);
@@ -642,7 +647,7 @@ async function puzzleAfterTurn() {
   PZ.showPuzzleResult(result, retryPuzzle, {
     buttons: [
       ...(result.ok && next ? [{ label: '次の問題', main: true, on: () => openTsume(next.id) }] : []),
-      ...(result.ok ? [] : [{ label: '答えを見る', on: () => TS.showAnswer(ts) }]),
+      ...(result.ok || !accountState().admin ? [] : [{ label: '答えを見る', on: () => TS.showAnswer(ts) }]),
       { label: '一覧へ', on: () => openTsume('list') }
     ]
   });
@@ -656,7 +661,8 @@ function tsumeBarOpts(ts) {
     sub: '1手番で達成する' + (ts.solutions > 1 ? ' (解き方は2通り)' : ''),
     buttons: [
       { label: 'ヒント', on: () => UI.toast('最初の一手: ' + ts.steps[0], 5200) },
-      { label: '答え', on: () => TS.showAnswer(ts) },
+      /* 模範解答は管理者のアカウントだけ (問題の確認用) */
+      ...(accountState().admin ? [{ label: '答え', on: () => TS.showAnswer(ts) }] : []),
       { label: '一覧', on: () => openTsume('list') }
     ]
   };

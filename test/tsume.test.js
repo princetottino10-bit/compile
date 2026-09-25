@@ -16,8 +16,8 @@ function endState(res) {
   return res.state;
 }
 
-test('詰めコンパイルは初級・中級・上級が10問ずつで、id が重ならない', () => {
-  for (const tier of [1, 2, 3]) assert.equal(list.filter(p => p.tier === tier).length, 10);
+test('詰めコンパイルは初級5問・中級10問・上級10問で、id が重ならない', () => {
+  for (const [tier, n] of [[1, 5], [2, 10], [3, 10]]) assert.equal(list.filter(p => p.tier === tier).length, n);
   assert.equal(new Set(list.map(p => p.id)).size, list.length);
   assert.ok(list.some(p => p.opp) && list.some(p => !p.opp), '相手の盤面を使う問題とそうでない問題が混ざる');
 });
