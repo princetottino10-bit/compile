@@ -2,7 +2,8 @@
 /* 詰めコンパイルの候補 (tsume_gen.js の出力) から、遊ぶ問題を選んで data/tsume.json に書く。
  *   node scripts/tsume_pick.js 候補1.json 候補2.json ...
  * 初級5問・中級10問・上級10問。どの段にも相手の盤面を使う問題を混ぜ、お題とプロトコルが偏らないように選ぶ。
- * 手順 (模範解答) を読める文にして一緒に書き、種 1 の盤面で解けることを確かめる */
+ * 手順 (模範解答) を読める文にして一緒に書き、種 1 の盤面で解けることを確かめる。
+ * 選ばなかった候補 (読む量 7 以上) は、日替わりの「今日の問題」用に data/tsume-daily.json へ */
 const fs = require('fs');
 const path = require('path');
 const E = require('../engine.js');
@@ -112,6 +113,7 @@ function solved(p, res) {
   all = all.filter(p => { const k = JSON.stringify(p.spec); if (seen.has(k)) return false; seen.add(k); return true; });
 
   const out = [];
+  const used = new Set();
   for (const tier of [1, 2, 3]) {
     const PER_TIER = PER_TIER_OF[tier];
     /* 相手の盤面を使う問題は 4〜6 割 (全部ではなく、混ぜる) */
@@ -141,6 +143,7 @@ function solved(p, res) {
     if (picked.length < PER_TIER) { cap.lineExact = cap.ready = cap.emptyHand = PER_TIER; for (const p of pool) take(p); }
     picked.sort((a, b) => (a.depth - b.depth) || (a.solution.length - b.solution.length));
     for (const p of picked) {
+      used.add(p);
       const { steps, res } = await describe(p, PROMPT_TEXT, optionLabel);
       if (!solved(p, res)) throw new Error('種 1 で解けない問題: ' + JSON.stringify(p.goal));
       out.push({
@@ -153,4 +156,17 @@ function solved(p, res) {
   }
   fs.writeFileSync(path.join(root, 'data/tsume.json'), JSON.stringify(out));
   console.log('data/tsume.json に ' + out.length + ' 問');
+
+  /* 今日の問題: 残りの候補。並びは盤面から決まる (再実行で同じ)。どの日に出るかは tsume.js が日付から決める */
+  const rest = all.filter(p => !used.has(p) && tierOf(p) >= 1 && p.solution.length <= 12)
+    .sort((a, b) => (JSON.stringify(a.spec) < JSON.stringify(b.spec) ? -1 : 1));
+  const daily = [];
+  for (const p of rest) {
+    const { steps, res } = await describe(p, PROMPT_TEXT, optionLabel);
+    if (!solved(p, res)) continue;
+    daily.push({ id: 'd' + String(daily.length + 1).padStart(3, '0'), tier: tierOf(p), goal: p.goal, opp: !!p.opp,
+      chain: p.chain, depth: p.depth, solutions: p.solutions, spec: p.spec, solution: p.solution, steps });
+  }
+  fs.writeFileSync(path.join(root, 'data/tsume-daily.json'), JSON.stringify(daily));
+  console.log('data/tsume-daily.json に ' + daily.length + ' 問 (今日の問題)');
 })().catch((e) => { console.error(e); process.exit(1); });

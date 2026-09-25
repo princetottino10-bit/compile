@@ -38,3 +38,46 @@ for (const p of list) {
     assert.equal(p.steps.length, p.solution.length);
   });
 }
+
+test('実績の数え上げに使う問題の数 (TSUME_TOTAL) が data/tsume.json と揃う', async () => {
+  const { TSUME_TOTAL } = await import('../js3d/achievements.js');
+  for (const tier of [1, 2, 3]) assert.equal(list.filter(p => p.tier === tier).length, TSUME_TOTAL[tier], '段 ' + tier);
+});
+
+test('今日の問題: 一覧の問題とは別の盤面で、日ごとに決まり、問題数の日数で全部を一巡する', async () => {
+  const { dailyPick } = await import('../js3d/tsume.js');
+  const daily = JSON.parse(fs.readFileSync(path.join(root, 'data/tsume-daily.json'), 'utf8'));
+  assert.ok(daily.length >= 100);
+  const fixed = new Set(list.map(p => JSON.stringify(p.spec)));
+  assert.ok(daily.every(p => !fixed.has(JSON.stringify(p.spec))), '一覧に置いた問題は出さない');
+  assert.equal(dailyPick(daily, 20000).id, dailyPick(daily, 20000).id);
+  assert.equal(dailyPick(daily, 20000).daily, 20000);
+  const seen = new Set();
+  for (let d = 0; d < daily.length; d++) seen.add(dailyPick(daily, 20000 + d).id);
+  assert.equal(seen.size, daily.length);
+});
+
+test('今日の問題はどれも模範解答で解ける', async () => {
+  const { judgeTsume } = await import('../js3d/tsume.js');
+  const daily = JSON.parse(fs.readFileSync(path.join(root, 'data/tsume-daily.json'), 'utf8'));
+  for (const p of daily) {
+    let res = E.newPuzzle(p.spec, { seed: 1 });
+    for (const a of p.solution) res = E.apply(res.state, a);
+    assert.equal(judgeTsume(p.goal, endState(res), res.state, 0, E).ok, true, p.id);
+  }
+});
+
+test('COMPUZZLE の実績: 中級を全部で PUZZLER、全部で COMPUZZLER、今日の問題の日数', async () => {
+  const { TROPHIES, TSUME_TOTAL } = await import('../js3d/achievements.js');
+  const t = (id) => TROPHIES.find(x => x.id === id);
+  const ctx = (ids) => ({ records: [], level: 1, cardWins: new Map(), game: null, xp: ids.map(id => ({ id, src: 'tsume', xp: 3, at: 0 })) });
+  const mids = Array.from({ length: TSUME_TOTAL[2] }, (_, i) => 'k:ts:t2-' + String(i + 1).padStart(2, '0'));
+  assert.equal(t('tsume_mid').test(ctx(mids.slice(1))), false);
+  assert.equal(t('tsume_mid').test(ctx(mids)), true);
+  assert.equal(t('tsume_all').test(ctx(mids)), false);
+  const all = list.map(p => 'k:ts:' + p.id);
+  assert.equal(t('tsume_all').test(ctx(all)), true);
+  assert.equal(t('daily_puzzle7').test(ctx(['k:dp:1', 'k:dp:2', 'k:dp:3', 'k:dp:4', 'k:dp:5', 'k:dp:6'])), false);
+  assert.equal(t('daily_puzzle7').test(ctx(['k:dp:1', 'k:dp:2', 'k:dp:3', 'k:dp:4', 'k:dp:5', 'k:dp:6', 'k:dp:7'])), true);
+  assert.equal(t('puzzle').test(ctx(['k:ts:t1-01'])), true);
+});

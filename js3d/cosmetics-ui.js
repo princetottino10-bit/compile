@@ -18,7 +18,7 @@ const DEFAULT_KEY = { mat: 'neon', sleeve: 'default', marker: 'default', ccolor:
 
 /* 条件で取る称号 (レベル以外) */
 /* 実績を取ると付けられる称号 (実績の id → 称号の key) */
-const TROPHY_TITLES = { chain4: 'chainer', flawless: 'flawless', mastery10: 'grandmaster' };
+const TROPHY_TITLES = { chain4: 'chainer', flawless: 'flawless', mastery10: 'grandmaster', tsume_mid: 'puzzler', tsume_all: 'compuzzler' };
 export function extraTitles(records) {
   const out = records.some(r => r.win && r.level === UNDERDOG_LEVEL) ? ['underdog'] : [];
   const got = loadTrophies();

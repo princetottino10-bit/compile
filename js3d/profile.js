@@ -8,6 +8,7 @@ import { trophyView } from './achievements.js';
 import { trophyContext, openTrophies } from './achievements-ui.js';
 import { bonusXp, XP_GAIN } from './xp.js';
 import { dailyView, DAILY_XP } from './daily.js';
+import { dailyPuzzleDone } from './tsume.js';
 import { playerLevel, xpForLevel } from './stats-data.js';
 import { localRecords } from './stats.js';
 import { settings, openSettings } from './settings.js';
@@ -21,6 +22,7 @@ const EARN = [
   ['ONLINE', '+' + XP_GAIN.onlinePlay + ' / 勝ち +' + XP_GAIN.onlineWin],
   ['TUTORIAL', 'レッスン +' + XP_GAIN.lesson + ' / 全部 +' + XP_GAIN.tutorialAll],
   ['PUZZLE', '解くと +' + XP_GAIN.puzzle],
+  ['COMPUZZLE', '初級 +' + XP_GAIN.tsume1 + ' / 中級 +' + XP_GAIN.tsume2 + ' / 上級 +' + XP_GAIN.tsume3 + ' / 今日の問題 +' + XP_GAIN.tsumeDaily],
   ['RUN', '全勝クリア +' + XP_GAIN.runClear],
   ['WEEKLY', 'クリア +' + XP_GAIN.weeklyClear],
   ['DAILY', 'ミッション +' + DAILY_XP.easy + '〜+' + DAILY_XP.hard + ' / 3つ達成 +' + DAILY_XP.all]
@@ -30,11 +32,17 @@ const EARN = [
 function dailyHtml(protocols) {
   const list = dailyView((protocols || []).map(p => p.name));
   const done = list.filter(m => m.done).length;
+  const puz = dailyPuzzleDone();
   return '<div class="pf-daily"><div class="pf-daily-h"><small>DAILY MISSIONS</small><b>' + done + '/' + list.length + '</b>' +
     '<em>3つ達成で +' + DAILY_XP.all + ' XP</em></div><ul>' + list.map(m =>
       '<li class="' + m.tier + (m.done ? ' done' : '') + '"><span>' + esc(m.text) + '</span>' +
       '<i style="--p:' + Math.round(100 * m.n / m.goal) + '%"></i>' +
-      '<b>' + (m.done ? 'CLEAR' : m.n + '/' + m.goal) + '</b><em>+' + m.xp + '</em></li>').join('') + '</ul></div>';
+      '<b>' + (m.done ? 'CLEAR' : m.n + '/' + m.goal) + '</b><em>+' + m.xp + '</em></li>').join('') +
+    /* 今日の問題 (COMPUZZLE)。ミッションの3つとは別に数える */
+    '<li class="puzzle' + (puz ? ' done' : '') + '"><span>今日の問題を解く (COMPUZZLE)' +
+      (puz ? '' : ' <button type="button" id="pfDailyPuzzle" class="pf-go">解く ▶</button>') + '</span>' +
+      '<i style="--p:' + (puz ? 100 : 0) + '%"></i><b>' + (puz ? 'CLEAR' : '0/1') + '</b><em>+' + XP_GAIN.tsumeDaily + '</em></li>' +
+    '</ul></div>';
 }
 
 /* 実績の達成率 (押すと一覧) */
@@ -88,5 +96,8 @@ export function openProfile(protocols) {
   el.querySelector('#pfCos').onclick = () => { close(); openSettings(); };
   el.querySelector('#pfAcc').onclick = () => { close(); openAccount(); };
   bindNameField(el, 'pf');
+  /* 今日の問題へそのまま飛ぶ */
+  const go = el.querySelector('#pfDailyPuzzle');
+  if (go) go.onclick = () => { location.href = location.pathname + '?tsume=daily'; };
   el.querySelector('#pfTrophy').onclick = () => openTrophies();
 }

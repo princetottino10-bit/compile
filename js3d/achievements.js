@@ -37,6 +37,12 @@ const onlineGames = (c) => c.xp.filter(e => e.src === 'online').length;
 const dailyAllDays = (c) => c.xp.filter(e => /^k:dm:\d+:all$/.test(e.id || '')).length;
 const playedProtos = (c) => new Set(c.records.flatMap(r => r.me || [])).size;
 const hour = (c) => new Date(g(c).at).getHours();
+/* COMPUZZLE (詰めコンパイル): 経験値の帳簿の k:ts:t2-03 (問題ごと) と k:dp:日 (今日の問題) で数える。
+   問題の数は data/tsume.json と揃える (test/tsume.test.js で確かめる) */
+export const TSUME_TOTAL = { 1: 5, 2: 10, 3: 10 };
+const tsumeSolved = (c, tiers) => new Set(c.xp.map(e => /^k:ts:t(\d)-\d+$/.exec(e.id || '')).filter(m => m && tiers.includes(+m[1])).map(m => m[0])).size;
+const tsumeTotal = (tiers) => tiers.reduce((n, t) => n + TSUME_TOTAL[t], 0);
+const dailyPuzzles = (c) => c.xp.filter(e => /^k:dp:\d+$/.test(e.id || '')).length;
 
 /* progress(c): 積み上げの進み具合 [今, 目標] (出せるものだけ) */
 export const TROPHIES = [
@@ -44,7 +50,10 @@ export const TROPHIES = [
   { id: 'first_win', tier: 'bronze', name: 'FIRST BLOOD', desc: '初めて勝つ', test: (c) => wins(c) >= 1 },
   { id: 'wins10', tier: 'bronze', name: 'TEN DOWN', desc: '10勝する', test: (c) => wins(c) >= 10, progress: (c) => [wins(c), 10] },
   { id: 'tutorial', tier: 'bronze', name: 'BOOT SEQUENCE', desc: 'チュートリアルを全部終える', test: (c) => xpHas(c, e => e.id === 'k:tu:all') },
-  { id: 'puzzle', tier: 'bronze', name: 'SOLVER', desc: '問題を1つ解く', test: (c) => xpHas(c, e => e.src === 'puzzle') },
+  { id: 'puzzle', tier: 'bronze', name: 'SOLVER', desc: '問題を1つ解く (COMPUZZLE も)', test: (c) => xpHas(c, e => e.src === 'puzzle' || e.src === 'tsume') },
+  { id: 'daily_puzzle', tier: 'bronze', name: 'PUZZLE OF THE DAY', desc: 'COMPUZZLE の今日の問題を解く', test: (c) => dailyPuzzles(c) >= 1 },
+  { id: 'tsume_easy', tier: 'bronze', name: 'WARMED UP', desc: 'COMPUZZLE の初級を全部解く',
+    test: (c) => tsumeSolved(c, [1]) >= tsumeTotal([1]), progress: (c) => [tsumeSolved(c, [1]), tsumeTotal([1])] },
   { id: 'online', tier: 'bronze', name: 'HELLO WORLD', desc: 'オンライン対戦を1戦する', test: (c) => xpHas(c, e => e.src === 'online') },
   { id: 'daily', tier: 'bronze', name: 'DAILY ROUTINE', desc: 'デイリーミッションを1日で3つそろえる', test: (c) => xpHas(c, e => /^k:dm:\d+:all$/.test(e.id)) },
   { id: 'cards60', tier: 'bronze', name: 'COLLECTOR', desc: '違うカードを60種類、表で出す', test: (c) => playedKinds(c) >= 60, progress: (c) => [Math.min(60, playedKinds(c)), 60] },
@@ -69,6 +78,10 @@ export const TROPHIES = [
   { id: 'gold_card', tier: 'silver', name: 'GOLDEN TOUCH', desc: 'カードの縁を金にする (そのカードで25勝)', test: (c) => tierCards(c, 25) >= 1 },
   { id: 'chain4', tier: 'silver', name: 'CHAIN REACTION', desc: '自分の効果で割り込んで、チェーンを4つつなげる (称号 CHAIN MASTER)', test: (c) => !!g(c) && (g(c).chainMax | 0) >= 4 },
   { id: 'online10', tier: 'silver', name: 'REGULAR', desc: 'オンライン対戦を10戦する', test: (c) => onlineGames(c) >= 10, progress: (c) => [Math.min(10, onlineGames(c)), 10] },
+  { id: 'tsume_mid', tier: 'silver', name: 'PUZZLER', desc: 'COMPUZZLE の中級を全部解く (称号 PUZZLER)',
+    test: (c) => tsumeSolved(c, [2]) >= tsumeTotal([2]), progress: (c) => [tsumeSolved(c, [2]), tsumeTotal([2])] },
+  { id: 'daily_puzzle7', tier: 'silver', name: 'DAILY THINKER', desc: 'COMPUZZLE の今日の問題を7日解く',
+    test: (c) => dailyPuzzles(c) >= 7, progress: (c) => [Math.min(7, dailyPuzzles(c)), 7] },
   { id: 'daily7', tier: 'silver', name: 'HABIT', desc: 'デイリーミッションを3つそろえた日を7日つくる', test: (c) => dailyAllDays(c) >= 7, progress: (c) => [Math.min(7, dailyAllDays(c)), 7] },
   { id: 'versatile', tier: 'silver', name: 'VERSATILE', desc: '5つのプロトコルの習熟度を3以上にする',
     test: (c) => masteries(c).filter(l => l >= 3).length >= 5, progress: (c) => [Math.min(5, masteries(c).filter(l => l >= 3).length), 5] },
@@ -90,6 +103,10 @@ export const TROPHIES = [
     test: (c) => bestMastery(c) >= 10, progress: (c) => [bestMastery(c), 10] },
   { id: 'level30', tier: 'gold', name: 'LEGEND', desc: 'プレイヤーレベル30になる', test: (c) => c.level >= 30, progress: (c) => [Math.min(c.level, 30), 30] },
   { id: 'cards180', tier: 'gold', name: 'ARCHIVIST', desc: '180種類すべてのカードを表で出す', test: (c) => playedKinds(c) >= 180, progress: (c) => [Math.min(180, playedKinds(c)), 180] },
+  { id: 'tsume_all', tier: 'gold', name: 'COMPUZZLER', desc: 'COMPUZZLE を全部解く (称号 COMPUZZLER)',
+    test: (c) => tsumeSolved(c, [1, 2, 3]) >= tsumeTotal([1, 2, 3]), progress: (c) => [tsumeSolved(c, [1, 2, 3]), tsumeTotal([1, 2, 3])] },
+  { id: 'daily_puzzle30', tier: 'gold', name: 'DEEP THOUGHT', desc: 'COMPUZZLE の今日の問題を30日解く',
+    test: (c) => dailyPuzzles(c) >= 30, progress: (c) => [Math.min(30, dailyPuzzles(c)), 30] },
   { id: 'flawless', tier: 'gold', hidden: true, name: 'FLAWLESS', desc: '相手に1回もコンパイルさせずに勝つ (称号 FLAWLESS)', test: (c) => !!g(c) && g(c).win && g(c).oppCompiles === 0 },
   /* ---- 全部 ---- */
   { id: 'platinum', tier: 'platinum', name: 'PLATINUM', desc: 'ほかの実績をすべて取る (称号 PLATINUM)', test: () => false }

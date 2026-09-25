@@ -4,6 +4,7 @@
 import { xpLog } from './xp.js';
 import { displayName, onDisplayNameChange } from './displayname.js';
 import { dailyView } from './daily.js';
+import { dailyPuzzleDone } from './tsume.js';
 import { emblemDataURL } from './emblems.js';
 import { drawTitleBackdrop } from './backdrops.js';
 import { initAudio, sfx } from './audio.js';
@@ -41,11 +42,12 @@ function profileChip(protocols) {
     '<b>LV ' + p.level + '</b>' + (p.title ? '<small>' + p.title + '</small>' : '') + dailyBadge(protocols) + '</button>';
 }
 
-/* 今日のデイリーミッションの残り (全部済んでいれば出さない) */
+/* 今日のデイリーミッションと今日の問題 (COMPUZZLE) の残り (全部済んでいれば出さない) */
 function dailyBadge(protocols) {
   const list = dailyView(protocols.map(x => x.name));
-  const left = list.filter(m => !m.done).length;
-  return left ? '<i class="tt-daily" title="デイリーミッション">DAILY ' + (list.length - left) + '/' + list.length + '</i>' : '';
+  const total = list.length + 1;
+  const done = list.filter(m => m.done).length + (dailyPuzzleDone() ? 1 : 0);
+  return done < total ? '<i class="tt-daily" title="デイリーミッションと今日の問題">DAILY ' + done + '/' + total + '</i>' : '';
 }
 
 /* ロゴの下の名前。押すとプロフィール (表示名を変えられる)。まだ決めていなければ決めるよう促す */

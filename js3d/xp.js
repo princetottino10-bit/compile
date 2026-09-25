@@ -22,6 +22,10 @@ export const XP_GAIN = {
   lesson: 2,           // チュートリアルのレッスン (初回)
   tutorialAll: 5,      // チュートリアルを全部 (初回)
   puzzle: 3,           // 問題を解く (問題ごとに初回)
+  tsume1: 3,           // COMPUZZLE (詰めコンパイル) 初級を解く (問題ごとに初回)
+  tsume2: 5,           // 中級
+  tsume3: 8,           // 上級
+  tsumeDaily: 5,       // 今日の問題 (日ごとに)
   runClear: 10,        // 勝ち抜き戦 (8人) を全勝クリア
   weeklyClear: 10      // 週替わり3連戦をクリア (週ごとに初回)
 };

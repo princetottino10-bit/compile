@@ -376,7 +376,9 @@ async function boot() {
   }
   /* 詰めコンパイル (?tsume=t1-01)。問題モードと同じ仕組みで、お題と判定だけ違う */
   if (params.get('tsume') && params.get('tsume') !== 'list' && !puzzle) {
-    const t = (await TS.loadTsume()).find(x => x.id === params.get('tsume'));
+    const t = params.get('tsume') === 'daily'
+      ? TS.dailyPick(await TS.loadDailyList())
+      : (await TS.loadTsume()).find(x => x.id === params.get('tsume'));
     if (t) {
       puzzle = { spec: t.spec, goal: t.goal.kind, task: TS.goalText(t.goal, t.spec.sides[0].protos), tsume: t };
       p0 = t.spec.sides[0].protos.slice(); p1 = t.spec.sides[1].protos.slice();
@@ -640,10 +642,16 @@ async function puzzleAfterTurn() {
   const ts = puzzle.tsume;
   const result = ts ? TS.judgeTsume(ts.goal, endSt, shown(), ME, Engine) : PZ.judgePuzzle(puzzle.goal, endSt, shown(), ME, totalOf);
   sfx(result.ok === false ? 'lose' : 'win');
-  if (result.ok !== false) await gainXp('puzzle', XP_GAIN.puzzle, 'pz:' + hashKey(JSON.stringify([puzzle.spec, ts ? ts.goal : puzzle.goal])));
-  if (!ts) { PZ.showPuzzleResult(result, retryPuzzle); return; }
-  if (result.ok) TS.markCleared(ts.id);
-  const next = TS.nextOf(await TS.loadTsume(), ts.id);
+  if (!ts) {
+    if (result.ok !== false) await gainXp('puzzle', XP_GAIN.puzzle, 'pz:' + hashKey(JSON.stringify([puzzle.spec, puzzle.goal])));
+    PZ.showPuzzleResult(result, retryPuzzle);
+    return;
+  }
+  /* COMPUZZLE: 段ごとの経験値 (問題ごとに初回。今日の問題は日ごと)。実績の判定もここで */
+  if (result.ok) {
+    await gainXp('tsume', TS.tsumeXp(ts), TS.tsumeXpKey(ts));
+  }
+  const next = ts.daily == null ? TS.nextOf(await TS.loadTsume(), ts.id) : null;
   PZ.showPuzzleResult(result, retryPuzzle, {
     buttons: [
       ...(result.ok && next ? [{ label: '次の問題', main: true, on: () => openTsume(next.id) }] : []),
@@ -657,7 +665,7 @@ async function puzzleAfterTurn() {
 function tsumeBarOpts(ts) {
   const tier = TS.TIERS.find(t => t.tier === ts.tier);
   return {
-    tag: '詰め ' + (tier ? tier.name : ''),
+    tag: ts.daily != null ? '今日の問題' : '詰め ' + (tier ? tier.name : ''),
     sub: '1手番で達成する' + (ts.solutions > 1 ? ' (解き方は2通り)' : ''),
     buttons: [
       { label: 'ヒント', on: () => UI.toast('最初の一手: ' + ts.steps[0], 5200) },

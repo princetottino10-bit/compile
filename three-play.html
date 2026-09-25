@@ -1577,6 +1577,17 @@
   .ts-lead{margin:0;font:500 12px/1.7 system-ui;color:var(--dim);}
   .ts-count{display:block;margin-top:4px;font:800 11px/1.4 system-ui;color:#ffeab4;letter-spacing:.06em;font-variant-numeric:tabular-nums;}
   .ts-tier{display:flex;flex-direction:column;gap:8px;}
+  /* 今日の問題 (一覧のいちばん上) */
+  .ts-daily{display:grid;grid-template-columns:auto 1fr auto;grid-template-rows:auto auto;column-gap:12px;row-gap:3px;align-items:center;
+    padding:11px 14px;cursor:pointer;text-align:left;border:1px solid rgba(255,179,218,.45);clip-path:var(--cut-s);
+    background:linear-gradient(100deg,rgba(255,79,163,.2),rgba(139,92,246,.12));color:var(--ink);transition:border-color .15s,background .15s;}
+  .ts-daily small{grid-row:1 / span 2;font:900 10px/1 var(--font-hud,system-ui);letter-spacing:.2em;color:var(--pink);writing-mode:vertical-rl;}
+  .ts-daily b{font:900 15px/1.2 system-ui;letter-spacing:.06em;}
+  .ts-daily span{grid-column:2;font:600 10.5px/1.4 system-ui;color:var(--dim);}
+  .ts-daily i{grid-column:3;grid-row:1 / span 2;font:900 11px/1 var(--font-hud,system-ui);font-style:normal;letter-spacing:.14em;color:#ffeab4;}
+  .ts-daily.done{border-color:rgba(160,123,255,.4);background:rgba(160,123,255,.08);}
+  .ts-daily.done i{color:var(--mint);}
+  .ts-daily:hover,.ts-daily:focus-visible{border-color:var(--pink);background:linear-gradient(100deg,rgba(255,79,163,.3),rgba(139,92,246,.18));outline:none;}
   .ts-tier h3{margin:0;display:flex;align-items:baseline;gap:10px;font:900 13px/1.3 system-ui;color:var(--ink);letter-spacing:.1em;}
   .ts-tier h3 small{flex:1;min-width:0;font:600 10.5px/1.4 system-ui;color:var(--dim);letter-spacing:0;}
   .ts-tier h3 em{font:800 11px/1 system-ui;font-style:normal;color:var(--dim);font-variant-numeric:tabular-nums;}
@@ -2352,6 +2363,10 @@
     background:rgba(255,255,255,.035);border-left:3px solid var(--lav);font:600 11.5px/1.3 var(--font-ui);color:#fff;overflow:hidden;}
   .pf-daily li.mid{border-left-color:var(--violet);}
   .pf-daily li.hard{border-left-color:var(--pink);}
+  .pf-daily li.puzzle{border-left-color:var(--gold);border-left-style:dashed;}
+  .pf-daily .pf-go{margin-left:8px;padding:4px 10px;cursor:pointer;border:1px solid rgba(255,179,218,.5);clip-path:var(--cut-s);
+    background:rgba(255,79,163,.16);color:#ffeab4;font:800 10.5px/1 var(--font-ui,system-ui);letter-spacing:.08em;}
+  .pf-daily .pf-go:hover,.pf-daily .pf-go:focus-visible{background:rgba(255,79,163,.3);border-color:var(--pink);outline:none;}
   .pf-daily li i{position:absolute;left:0;bottom:0;height:2px;width:var(--p);background:linear-gradient(90deg,var(--violet),var(--pink));}
   .pf-daily li b{font:800 11px/1 var(--font-ui);letter-spacing:.08em;color:var(--lav);}
   .pf-daily li em{font:700 10.5px/1 var(--font-ui);font-style:normal;color:var(--dim);text-align:right;}
@@ -2462,7 +2477,7 @@
       "./vendor/three.module.js": "./vendor/three.module.js?v=985eb92490",
       "./js3d/account.js": "./js3d/account.js?v=8a0ab0c4a4",
       "./js3d/achievements-ui.js": "./js3d/achievements-ui.js?v=66713584af",
-      "./js3d/achievements.js": "./js3d/achievements.js?v=e8deac2fa8",
+      "./js3d/achievements.js": "./js3d/achievements.js?v=ed8a126a50",
       "./js3d/admin-ui.js": "./js3d/admin-ui.js?v=1afb632c5a",
       "./js3d/ai-worker.js": "./js3d/ai-worker.js?v=de82d239bd",
       "./js3d/aiclient.js": "./js3d/aiclient.js?v=704b588b82",
@@ -2475,9 +2490,9 @@
       "./js3d/cardlist-ov.js": "./js3d/cardlist-ov.js?v=1d673fd0d2",
       "./js3d/cardtex.js": "./js3d/cardtex.js?v=f6ffa28f88",
       "./js3d/cardtext.js": "./js3d/cardtext.js?v=4cf5529855",
-      "./js3d/cloudsave.js": "./js3d/cloudsave.js?v=cc1d8cc576",
+      "./js3d/cloudsave.js": "./js3d/cloudsave.js?v=358de2dbc7",
       "./js3d/control.js": "./js3d/control.js?v=64aa20995c",
-      "./js3d/cosmetics-ui.js": "./js3d/cosmetics-ui.js?v=db8ee58162",
+      "./js3d/cosmetics-ui.js": "./js3d/cosmetics-ui.js?v=500f390c04",
       "./js3d/daily.js": "./js3d/daily.js?v=f56dabdf65",
       "./js3d/displayname.js": "./js3d/displayname.js?v=613e18bf95",
       "./js3d/emblems.js": "./js3d/emblems.js?v=6d1c077a2e",
@@ -2487,13 +2502,13 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=5feae4c6d9",
+      "./js3d/main.js": "./js3d/main.js?v=6cf8dcdd2f",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=6398fed15e",
       "./js3d/panel.js": "./js3d/panel.js?v=ecb8a073e3",
       "./js3d/plates.js": "./js3d/plates.js?v=70ffa14b87",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=e0273dcae0",
       "./js3d/playmat.js": "./js3d/playmat.js?v=cc85bb262e",
-      "./js3d/profile.js": "./js3d/profile.js?v=6ad599d1c4",
+      "./js3d/profile.js": "./js3d/profile.js?v=5c3bd1e5c3",
       "./js3d/prompts.js": "./js3d/prompts.js?v=348dff836d",
       "./js3d/protocards.js": "./js3d/protocards.js?v=a0c3bbfc68",
       "./js3d/protocol-strength.js": "./js3d/protocol-strength.js?v=c719e5b65c",
@@ -2501,7 +2516,7 @@
       "./js3d/replays-ui.js": "./js3d/replays-ui.js?v=9a6a4ca786",
       "./js3d/replays.js": "./js3d/replays.js?v=92b9d3718f",
       "./js3d/review.js": "./js3d/review.js?v=34f174153b",
-      "./js3d/rewards.js": "./js3d/rewards.js?v=75966f93ac",
+      "./js3d/rewards.js": "./js3d/rewards.js?v=e3e861a962",
       "./js3d/room.js": "./js3d/room.js?v=c34129de95",
       "./js3d/roomui.js": "./js3d/roomui.js?v=402be98743",
       "./js3d/run-ui.js": "./js3d/run-ui.js?v=dda7071b7a",
@@ -2515,25 +2530,25 @@
       "./js3d/stats.js": "./js3d/stats.js?v=8265afe03d",
       "./js3d/steps.js": "./js3d/steps.js?v=13e73b20fe",
       "./js3d/theme.js": "./js3d/theme.js?v=b02da60dc1",
-      "./js3d/title.js": "./js3d/title.js?v=584458b21c",
+      "./js3d/title.js": "./js3d/title.js?v=3fbca7231e",
       "./js3d/training.js": "./js3d/training.js?v=3018b4399e",
-      "./js3d/tsume.js": "./js3d/tsume.js?v=dcd3f588db",
+      "./js3d/tsume.js": "./js3d/tsume.js?v=5c6f8646bf",
       "./js3d/turning.js": "./js3d/turning.js?v=9c7f79654e",
       "./js3d/tutorial.js": "./js3d/tutorial.js?v=0e6d6237ad",
       "./js3d/tween.js": "./js3d/tween.js?v=99b25c0d63",
       "./js3d/ui.js": "./js3d/ui.js?v=dc8eb672c9",
       "./js3d/weekly-ui.js": "./js3d/weekly-ui.js?v=c35e408f12",
       "./js3d/weekly.js": "./js3d/weekly.js?v=b4651191ce",
-      "./js3d/xp.js": "./js3d/xp.js?v=b2c69be784"
+      "./js3d/xp.js": "./js3d/xp.js?v=3dc099be6b"
     }
   }
   </script>
   <!-- modulepreload:start -->
   <link rel="modulepreload" href="js3d/solodraft.js?v=9863c9528c">
-  <link rel="modulepreload" href="js3d/xp.js?v=b2c69be784">
+  <link rel="modulepreload" href="js3d/xp.js?v=3dc099be6b">
   <link rel="modulepreload" href="js3d/daily.js?v=f56dabdf65">
   <link rel="modulepreload" href="js3d/account.js?v=8a0ab0c4a4">
-  <link rel="modulepreload" href="js3d/achievements.js?v=e8deac2fa8">
+  <link rel="modulepreload" href="js3d/achievements.js?v=ed8a126a50">
   <link rel="modulepreload" href="js3d/replays.js?v=92b9d3718f">
   <link rel="modulepreload" href="js3d/turning.js?v=9c7f79654e">
   <link rel="modulepreload" href="js3d/achievements-ui.js?v=66713584af">
@@ -2543,17 +2558,17 @@
   <link rel="modulepreload" href="js3d/control.js?v=64aa20995c">
   <link rel="modulepreload" href="js3d/panel.js?v=ecb8a073e3">
   <link rel="modulepreload" href="js3d/setup.js?v=f75a89191c">
-  <link rel="modulepreload" href="js3d/title.js?v=584458b21c">
+  <link rel="modulepreload" href="js3d/title.js?v=3fbca7231e">
   <link rel="modulepreload" href="js3d/training.js?v=3018b4399e">
   <link rel="modulepreload" href="js3d/room.js?v=c34129de95">
   <link rel="modulepreload" href="js3d/puzzle.js?v=a6a0904519">
-  <link rel="modulepreload" href="js3d/tsume.js?v=dcd3f588db">
+  <link rel="modulepreload" href="js3d/tsume.js?v=5c6f8646bf">
   <link rel="modulepreload" href="js3d/tutorial.js?v=0e6d6237ad">
   <link rel="modulepreload" href="js3d/settings.js?v=142e9b5e99">
   <link rel="modulepreload" href="js3d/stats.js?v=8265afe03d">
   <link rel="modulepreload" href="js3d/stats-data.js?v=bcf7d5e977">
-  <link rel="modulepreload" href="js3d/rewards.js?v=75966f93ac">
-  <link rel="modulepreload" href="js3d/cosmetics-ui.js?v=db8ee58162">
+  <link rel="modulepreload" href="js3d/rewards.js?v=e3e861a962">
+  <link rel="modulepreload" href="js3d/cosmetics-ui.js?v=500f390c04">
   <link rel="modulepreload" href="js3d/displayname.js?v=613e18bf95">
   <link rel="modulepreload" href="js3d/plates.js?v=70ffa14b87">
   <link rel="modulepreload" href="js3d/playmat.js?v=cc85bb262e">
@@ -2581,7 +2596,7 @@
   <link rel="modulepreload" href="js3d/aiclient.js?v=704b588b82">
   <link rel="modulepreload" href="js3d/logformat.js?v=6bbf54aba6">
   <link rel="modulepreload" href="js3d/steps.js?v=13e73b20fe">
-  <link rel="modulepreload" href="js3d/cloudsave.js?v=cc1d8cc576">
+  <link rel="modulepreload" href="js3d/cloudsave.js?v=358de2dbc7">
   <link rel="modulepreload" href="js3d/admin-ui.js?v=1afb632c5a">
   <link rel="modulepreload" href="vendor/three.core.js">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/EffectComposer.js">
@@ -2593,7 +2608,7 @@
   <link rel="modulepreload" href="js3d/protocards.js?v=a0c3bbfc68">
   <link rel="modulepreload" href="js3d/protocol-strength.js?v=c719e5b65c">
   <link rel="modulepreload" href="js3d/backdrops.js?v=90faf9612d">
-  <link rel="modulepreload" href="js3d/profile.js?v=6ad599d1c4">
+  <link rel="modulepreload" href="js3d/profile.js?v=5c3bd1e5c3">
   <link rel="modulepreload" href="js3d/replays-ui.js?v=9a6a4ca786">
   <link rel="modulepreload" href="js3d/prompts.js?v=348dff836d">
   <link rel="modulepreload" href="js3d/icons.js?v=15bacde80c">
@@ -2608,6 +2623,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=5feae4c6d9"></script>
+  <script type="module" src="js3d/main.js?v=6cf8dcdd2f"></script>
 </body>
 </html>

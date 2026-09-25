@@ -3,10 +3,12 @@
  *   1手番で完結する問題。割り込みや連鎖を読み切って、お題を達成する。
  *   問題は data/tsume.json (scripts/tsume_gen.js で作り、tsume_pick.js で選んだもの)。
  *   盤面は問題モード (puzzle.js) と同じ仕組みで遊び、手番を終えた時点で判定する。
- *   解いた問題は localStorage の compileTsume に残す (アカウントの保存にも載る)
+ *   解いた問題は経験値の帳簿 (k:ts:問題の id / 今日の問題は k:dp:日) で数える (アカウントの保存にも載る)
  * ========================================================================= */
 
-const KEY = 'compileTsume';
+import { xpLog, XP_GAIN } from './xp.js';
+import { dayIndex } from './daily.js';
+
 export const TIERS = [
   { tier: 1, name: '初級', note: '最初の一手と、その効果の選び方' },
   { tier: 2, name: '中級', note: '効果がつながる。途中の選択まで読む' },
@@ -14,6 +16,15 @@ export const TIERS = [
 ];
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/** 解いたときの経験値 (問題ごとに初回。今日の問題は日ごとに) */
+export function tsumeXp(p) {
+  return p.daily != null ? XP_GAIN.tsumeDaily : XP_GAIN['tsume' + p.tier] || XP_GAIN.tsume1;
+}
+/** 経験値の帳簿の key (実績の数え上げにも使う: k:ts:t2-03 / k:dp:日) */
+export function tsumeXpKey(p) {
+  return p.daily != null ? 'dp:' + p.daily : 'ts:' + p.id;
+}
 
 let cache = null;
 /** @returns {Promise<Array<object>>} 問題の一覧 (読めなければ空) */
@@ -28,20 +39,36 @@ export async function loadTsume() {
   return cache;
 }
 
-/** 解いた問題 { id: true } */
-export function clearedMap() {
+let dailyCache = null;
+/** 今日の問題の出題元 (一覧に置いていない問題) */
+export async function loadDailyList() {
+  if (dailyCache) return dailyCache;
   try {
-    const o = JSON.parse(localStorage.getItem(KEY) || '{}');
-    return o && typeof o.cleared === 'object' && o.cleared ? o.cleared : {};
+    const res = await fetch('data/tsume-daily.json', { cache: 'no-cache' });
+    dailyCache = res.ok ? await res.json() : [];
   } catch (e) {
-    return {};
+    dailyCache = [];
   }
+  return dailyCache;
 }
 
-export function markCleared(id) {
-  const cleared = { ...clearedMap(), [id]: true };
-  try { localStorage.setItem(KEY, JSON.stringify({ cleared })); } catch (e) { /* private mode */ }
-  return cleared;
+/** その日の問題。日本時間の0時に替わり、どの端末でも同じ。97 と問題数が互いに素なら、全部を一巡してから繰り返す */
+export function dailyPick(list, day = dayIndex()) {
+  if (!list.length) return null;
+  const p = list[((day * 97 + 13) % list.length + list.length) % list.length];
+  return { ...p, daily: day };
+}
+
+/** 今日の問題を解いたか (経験値の帳簿で見る。アカウントの保存で別の端末とも揃う) */
+export function dailyPuzzleDone(day = dayIndex(), log = xpLog()) {
+  return log.some(e => e.id === 'k:dp:' + day);
+}
+
+/** 解いた問題 { id: true } (経験値の帳簿 k:ts:id から。問題を作り直しても id ごとに数え直せる) */
+export function clearedMap(log = xpLog()) {
+  const out = {};
+  for (const e of log) { const m = /^k:ts:(t\d-\d+)$/.exec(e.id || ''); if (m) out[m[1]] = true; }
+  return out;
 }
 
 /** お題の文。protos は自分のプロトコル名 (ラインの呼び名に使う) */
@@ -103,11 +130,15 @@ export async function openTsumeList() {
   const list = await loadTsume();
   const cleared = clearedMap();
   const done = list.filter(p => cleared[p.id]).length;
+  const today = dailyPuzzleDone();
   const el = overlay(
     '<div class="pz-card ts-card" role="dialog" aria-modal="true" aria-labelledby="tsTitle">' +
       '<div class="pz-head"><b id="tsTitle">詰めコンパイル</b><button type="button" class="pz-x" aria-label="戻る">×</button></div>' +
       '<p class="ts-lead">1手番で完結する問題です。効果の連鎖や割り込みを読み切って、お題を達成してください。' +
         '<span class="ts-count">' + done + ' / ' + list.length + ' 問クリア</span></p>' +
+      '<button type="button" class="ts-daily' + (today ? ' done' : '') + '" data-id="daily">' +
+        '<small>DAILY</small><b>今日の問題</b><span>日本時間の0時に替わる1問 (+' + XP_GAIN.tsumeDaily + ' XP)</span>' +
+        '<i>' + (today ? '✓ CLEAR' : 'PLAY') + '</i></button>' +
       (list.length ? TIERS.map(t => {
         const items = list.filter(p => p.tier === t.tier);
         const got = items.filter(p => cleared[p.id]).length;
@@ -128,7 +159,7 @@ export async function openTsumeList() {
       const b = ev.target.closest('button[data-id]');
       if (b) close(b.dataset.id);
     };
-    const first = el.querySelector('.ts-grid button:not(.done)') || el.querySelector('.ts-grid button');
+    const first = el.querySelector('.ts-daily:not(.done)') || el.querySelector('.ts-grid button:not(.done)') || el.querySelector('.ts-grid button');
     if (first) first.focus();
   });
 }

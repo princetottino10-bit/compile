@@ -51,6 +51,7 @@ export const TITLES = {
   master: 'MASTER', legend: 'LEGEND', ascended: 'ASCENDED', underdog: 'UNDERDOG',
   /* 実績で取る (cosmetics-ui.js の TROPHY_TITLES) */
   chainer: 'CHAIN MASTER', flawless: 'FLAWLESS', grandmaster: 'GRANDMASTER',
+  puzzler: 'PUZZLER', compuzzler: 'COMPUZZLER',       // COMPUZZLE の中級を全部 / 全部
   platinum: 'PLATINUM'     // 実績をすべて取る (achievements.js)
 };
 
