@@ -158,28 +158,35 @@ export function openShareDialog(makeCode) {
 }
 
 /* 問題を解いている間、上に課題とクリア条件を出す */
-export function showPuzzleBar(puzzle, onRetry) {
+export function showPuzzleBar(puzzle, onRetry, opts) {
   let el = document.getElementById('puzzleBar');
   if (!el) {
     el = document.createElement('div');
     el.id = 'puzzleBar';
     document.body.appendChild(el);
   }
-  el.innerHTML = '<span class="pz-tag">問題</span>' +
+  /* opts: { tag, sub, buttons: [{ label, on }] } (詰めコンパイルのように、見出しとボタンを足すとき) */
+  const o = opts || {};
+  el.innerHTML = '<span class="pz-tag">' + esc(o.tag || '問題') + '</span>' +
     '<div class="pz-text"><b>' + esc(puzzle.task || 'この盤面をどう動かす？') + '</b>' +
-      '<small>クリア条件: ' + esc(PUZZLE_GOALS[puzzle.goal]) + '</small></div>' +
+      '<small>' + esc(o.sub || 'クリア条件: ' + PUZZLE_GOALS[puzzle.goal]) + '</small></div>' +
+    (o.buttons || []).map((b, i) => '<button type="button" data-i="' + i + '">' + esc(b.label) + '</button>').join('') +
     '<button type="button" id="pzRetry">やり直す</button>';
   el.querySelector('#pzRetry').onclick = onRetry;
+  el.querySelectorAll('button[data-i]').forEach(b => { b.onclick = () => o.buttons[+b.dataset.i].on(); });
 }
 
 /* 判定の結果 */
-export function showPuzzleResult(result, onRetry) {
+export function showPuzzleResult(result, onRetry, opts) {
   const tone = result.ok === true ? 'ok' : result.ok === false ? 'ng' : 'free';
   const title = result.ok === true ? '正解！' : result.ok === false ? '不正解' : '手番を終えました';
   const { el, close } = overlay('puzzleResult',
     '<div class="pz-result ' + tone + '"><b>' + title + '</b><p>' + esc(result.text) + '</p></div>' +
-    '<div class="pz-row"><button type="button" class="pz-main" id="pzAgain">もう一度</button>' +
+    '<div class="pz-row">' +
+      ((opts && opts.buttons) || []).map((b, i) => '<button type="button" data-i="' + i + '"' + (b.main ? ' class="pz-main"' : '') + '>' + esc(b.label) + '</button>').join('') +
+      '<button type="button"' + ((opts && opts.buttons || []).some(b => b.main) ? '' : ' class="pz-main"') + ' id="pzAgain">もう一度</button>' +
     '<button type="button" id="pzLook">盤面を見る</button></div>');
   el.querySelector('#pzAgain').onclick = onRetry;
   el.querySelector('#pzLook').onclick = close;
+  el.querySelectorAll('button[data-i]').forEach(b => { b.onclick = () => opts.buttons[+b.dataset.i].on(); });
 }

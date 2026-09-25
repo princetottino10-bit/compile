@@ -1568,6 +1568,32 @@
   #puzzleBar button{flex:none;padding:7px 12px;border-radius:999px;cursor:pointer;border:1px solid rgba(255,255,255,.2);
     background:transparent;color:var(--ink);font:800 10px/1 system-ui;}
   body.picking #puzzleBar{display:none;}
+  /* 詰めコンパイル: 帯のボタンが増えるので、ボタンは右にまとめて折り返せるように */
+  body.tsume #puzzleBar{flex-wrap:wrap;row-gap:6px;}
+  body.tsume #puzzleBar .pz-text{flex:1 1 180px;}
+  body.tsume #puzzleBar button{padding:7px 10px;}
+  /* 問題の一覧 */
+  .ts-card{width:min(560px,100%);}
+  .ts-lead{margin:0;font:500 12px/1.7 system-ui;color:var(--dim);}
+  .ts-count{display:block;margin-top:4px;font:800 11px/1.4 system-ui;color:#ffeab4;letter-spacing:.06em;font-variant-numeric:tabular-nums;}
+  .ts-tier{display:flex;flex-direction:column;gap:8px;}
+  .ts-tier h3{margin:0;display:flex;align-items:baseline;gap:10px;font:900 13px/1.3 system-ui;color:var(--ink);letter-spacing:.1em;}
+  .ts-tier h3 small{flex:1;min-width:0;font:600 10.5px/1.4 system-ui;color:var(--dim);letter-spacing:0;}
+  .ts-tier h3 em{font:800 11px/1 system-ui;font-style:normal;color:var(--dim);font-variant-numeric:tabular-nums;}
+  .ts-tier[data-tier="1"] h3 span{color:var(--mint);}
+  .ts-tier[data-tier="2"] h3 span{color:var(--gold);}
+  .ts-tier[data-tier="3"] h3 span{color:var(--pink);}
+  .ts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px;}
+  .ts-grid button{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:8px 9px;cursor:pointer;text-align:left;
+    border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:var(--ink);clip-path:var(--cut-s);
+    transition:border-color .15s,background .15s;}
+  .ts-grid button b{font:900 15px/1 var(--font-hud,system-ui);font-variant-numeric:tabular-nums;}
+  .ts-grid button span{font:600 10px/1.35 system-ui;color:var(--dim);}
+  .ts-grid button i{position:absolute;right:7px;top:6px;font:900 12px/1 system-ui;font-style:normal;color:var(--mint);}
+  .ts-grid button.done{border-color:rgba(160,123,255,.4);background:rgba(160,123,255,.1);}
+  .ts-grid button:hover,.ts-grid button:focus-visible{border-color:var(--pink);background:rgba(255,79,163,.14);outline:none;}
+  .ts-steps{margin:0;padding-left:1.4em;display:flex;flex-direction:column;gap:6px;font:600 12.5px/1.55 system-ui;color:var(--ink);}
+  .ts-steps li::marker{color:#ffeab4;font-weight:900;}
   /* ---------- チュートリアル: 上の案内パネル (次へは押さない。操作に合わせて切り替わる) ---------- */
   #tutorialCoach{position:fixed;left:50%;top:8px;transform:translateX(-50%);z-index:14;display:none;flex-direction:column;gap:6px;
     width:min(560px,calc(100vw - 2 * (clamp(190px,17vw,240px) + 30px)));padding:10px 14px 11px;border-radius:14px;overflow:hidden;
@@ -2438,7 +2464,7 @@
       "./js3d/cardlist-ov.js": "./js3d/cardlist-ov.js?v=1d673fd0d2",
       "./js3d/cardtex.js": "./js3d/cardtex.js?v=f6ffa28f88",
       "./js3d/cardtext.js": "./js3d/cardtext.js?v=4cf5529855",
-      "./js3d/cloudsave.js": "./js3d/cloudsave.js?v=358de2dbc7",
+      "./js3d/cloudsave.js": "./js3d/cloudsave.js?v=cc1d8cc576",
       "./js3d/control.js": "./js3d/control.js?v=64aa20995c",
       "./js3d/cosmetics-ui.js": "./js3d/cosmetics-ui.js?v=db8ee58162",
       "./js3d/daily.js": "./js3d/daily.js?v=f56dabdf65",
@@ -2450,7 +2476,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=d9e7a0f157",
+      "./js3d/main.js": "./js3d/main.js?v=5feae4c6d9",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=6398fed15e",
       "./js3d/panel.js": "./js3d/panel.js?v=ecb8a073e3",
       "./js3d/plates.js": "./js3d/plates.js?v=70ffa14b87",
@@ -2460,7 +2486,7 @@
       "./js3d/prompts.js": "./js3d/prompts.js?v=348dff836d",
       "./js3d/protocards.js": "./js3d/protocards.js?v=a0c3bbfc68",
       "./js3d/protocol-strength.js": "./js3d/protocol-strength.js?v=c719e5b65c",
-      "./js3d/puzzle.js": "./js3d/puzzle.js?v=b4a110035e",
+      "./js3d/puzzle.js": "./js3d/puzzle.js?v=a6a0904519",
       "./js3d/replays-ui.js": "./js3d/replays-ui.js?v=9a6a4ca786",
       "./js3d/replays.js": "./js3d/replays.js?v=92b9d3718f",
       "./js3d/review.js": "./js3d/review.js?v=34f174153b",
@@ -2478,8 +2504,9 @@
       "./js3d/stats.js": "./js3d/stats.js?v=8265afe03d",
       "./js3d/steps.js": "./js3d/steps.js?v=13e73b20fe",
       "./js3d/theme.js": "./js3d/theme.js?v=b02da60dc1",
-      "./js3d/title.js": "./js3d/title.js?v=ca07556741",
+      "./js3d/title.js": "./js3d/title.js?v=020b10c698",
       "./js3d/training.js": "./js3d/training.js?v=3018b4399e",
+      "./js3d/tsume.js": "./js3d/tsume.js?v=dcd3f588db",
       "./js3d/turning.js": "./js3d/turning.js?v=9c7f79654e",
       "./js3d/tutorial.js": "./js3d/tutorial.js?v=0e6d6237ad",
       "./js3d/tween.js": "./js3d/tween.js?v=99b25c0d63",
@@ -2505,10 +2532,11 @@
   <link rel="modulepreload" href="js3d/control.js?v=64aa20995c">
   <link rel="modulepreload" href="js3d/panel.js?v=ecb8a073e3">
   <link rel="modulepreload" href="js3d/setup.js?v=f75a89191c">
-  <link rel="modulepreload" href="js3d/title.js?v=ca07556741">
+  <link rel="modulepreload" href="js3d/title.js?v=020b10c698">
   <link rel="modulepreload" href="js3d/training.js?v=3018b4399e">
   <link rel="modulepreload" href="js3d/room.js?v=c34129de95">
-  <link rel="modulepreload" href="js3d/puzzle.js?v=b4a110035e">
+  <link rel="modulepreload" href="js3d/puzzle.js?v=a6a0904519">
+  <link rel="modulepreload" href="js3d/tsume.js?v=dcd3f588db">
   <link rel="modulepreload" href="js3d/tutorial.js?v=0e6d6237ad">
   <link rel="modulepreload" href="js3d/settings.js?v=142e9b5e99">
   <link rel="modulepreload" href="js3d/stats.js?v=8265afe03d">
@@ -2542,7 +2570,7 @@
   <link rel="modulepreload" href="js3d/aiclient.js?v=704b588b82">
   <link rel="modulepreload" href="js3d/logformat.js?v=6bbf54aba6">
   <link rel="modulepreload" href="js3d/steps.js?v=13e73b20fe">
-  <link rel="modulepreload" href="js3d/cloudsave.js?v=358de2dbc7">
+  <link rel="modulepreload" href="js3d/cloudsave.js?v=cc1d8cc576">
   <link rel="modulepreload" href="js3d/admin-ui.js?v=1afb632c5a">
   <link rel="modulepreload" href="vendor/three.core.js">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/EffectComposer.js">
@@ -2569,6 +2597,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=d9e7a0f157"></script>
+  <script type="module" src="js3d/main.js?v=5feae4c6d9"></script>
 </body>
 </html>

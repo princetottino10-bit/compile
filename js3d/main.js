@@ -20,6 +20,7 @@ import { runTitle } from './title.js';
 import { mountTrainingTools } from './training.js';
 import * as ROOM from './room.js';
 import * as PZ from './puzzle.js';
+import * as TS from './tsume.js';
 import * as TU from './tutorial.js';
 import { settings, onSettings, openSettings } from './settings.js';
 import { recordSoloResult, localRecords } from './stats.js';
@@ -373,6 +374,15 @@ async function boot() {
     }
     else UI.toast('問題のリンクが壊れています');
   }
+  /* 詰めコンパイル (?tsume=t1-01)。問題モードと同じ仕組みで、お題と判定だけ違う */
+  if (params.get('tsume') && params.get('tsume') !== 'list' && !puzzle) {
+    const t = (await TS.loadTsume()).find(x => x.id === params.get('tsume'));
+    if (t) {
+      puzzle = { spec: t.spec, goal: t.goal.kind, task: TS.goalText(t.goal, t.spec.sides[0].protos), tsume: t };
+      p0 = t.spec.sides[0].protos.slice(); p1 = t.spec.sides[1].protos.slice();
+      document.body.classList.add('puzzle', 'tsume');
+    } else UI.toast('詰めコンパイルの問題が見つかりません');
+  }
 
   /* 保存したリプレイを見る (?replay=id) */
   if (params.get('replay')) {
@@ -419,6 +429,7 @@ async function boot() {
     } catch (e) { /* private mode */ }
     let nextMode = joinCode ? 'online'
       : params.get('run') === '1' ? 'run'
+      : params.get('tsume') ? 'tsume'
       : params.get('title') !== '0'
         ? await runTitle(cards.protocols, accountResume ? { menuOnly: true, after: () => accountReady.then(openAccount) } : undefined)
         : 'single';
@@ -449,6 +460,13 @@ async function boot() {
         return;
       }
       if (nextMode === 'tutorial') { location.href = location.pathname + '?tutorial=1'; return; }
+      if (nextMode === 'tsume') {
+        const id = await TS.openTsumeList();
+        if (id) { location.href = location.pathname + '?tsume=' + encodeURIComponent(id); return; }
+        history.replaceState(null, '', location.pathname);
+        nextMode = await runTitle(cards.protocols, { menuOnly: true });
+        continue;
+      }
       if (nextMode === 'run') {
         /* 1戦終えて戻ってきた (?run=1) ときは、前に遊んでいた方の画面へ。タイトルからは入口を出す */
         const resume = params.get('run') === '1';
@@ -585,7 +603,7 @@ async function boot() {
   await stage.home(0);
   placeDialogsNearBoard();
   refreshHud();
-  if (puzzle) PZ.showPuzzleBar(puzzle, retryPuzzle);
+  if (puzzle) PZ.showPuzzleBar(puzzle, retryPuzzle, puzzle.tsume ? tsumeBarOpts(puzzle.tsume) : null);
   if (tutorial) coachUpdate();
   if (replayMode) { startReplayView(replayBuilt); return; }
   if (!puzzle && !tutorial && !demoMode && !trainingMode && !roomMode) showCpuPlates(p1);
@@ -614,10 +632,38 @@ async function puzzleAfterTurn() {
   if (st.winner === null && st.turn === ME) return;       // まだ自分の手番
   puzzleJudged = true;
   const endSt = PZ.endOfTurnState(cur.trace, ME, shown());
-  const result = PZ.judgePuzzle(puzzle.goal, endSt, shown(), ME, totalOf);
+  const ts = puzzle.tsume;
+  const result = ts ? TS.judgeTsume(ts.goal, endSt, shown(), ME, Engine) : PZ.judgePuzzle(puzzle.goal, endSt, shown(), ME, totalOf);
   sfx(result.ok === false ? 'lose' : 'win');
-  if (result.ok !== false) await gainXp('puzzle', XP_GAIN.puzzle, 'pz:' + hashKey(JSON.stringify([puzzle.spec, puzzle.goal])));
-  PZ.showPuzzleResult(result, retryPuzzle);
+  if (result.ok !== false) await gainXp('puzzle', XP_GAIN.puzzle, 'pz:' + hashKey(JSON.stringify([puzzle.spec, ts ? ts.goal : puzzle.goal])));
+  if (!ts) { PZ.showPuzzleResult(result, retryPuzzle); return; }
+  if (result.ok) TS.markCleared(ts.id);
+  const next = TS.nextOf(await TS.loadTsume(), ts.id);
+  PZ.showPuzzleResult(result, retryPuzzle, {
+    buttons: [
+      ...(result.ok && next ? [{ label: '次の問題', main: true, on: () => openTsume(next.id) }] : []),
+      ...(result.ok ? [] : [{ label: '答えを見る', on: () => TS.showAnswer(ts) }]),
+      { label: '一覧へ', on: () => openTsume('list') }
+    ]
+  });
+}
+
+/* 詰めコンパイル: 上の帯のボタン (ヒント・答え・一覧) */
+function tsumeBarOpts(ts) {
+  const tier = TS.TIERS.find(t => t.tier === ts.tier);
+  return {
+    tag: '詰め ' + (tier ? tier.name : ''),
+    sub: '1手番で達成する' + (ts.solutions > 1 ? ' (解き方は2通り)' : ''),
+    buttons: [
+      { label: 'ヒント', on: () => UI.toast('最初の一手: ' + ts.steps[0], 5200) },
+      { label: '答え', on: () => TS.showAnswer(ts) },
+      { label: '一覧', on: () => openTsume('list') }
+    ]
+  };
+}
+
+function openTsume(id) {
+  location.href = location.pathname + '?tsume=' + encodeURIComponent(id);
 }
 
 /* ---------- チュートリアル ----------
