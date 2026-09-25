@@ -148,7 +148,7 @@ export function runTitle(protocols, opts) {
           '</div>' +
           '<div class="tt-more">' +
             '<button data-mode="tutorial" type="button">TUTORIAL <small>LEARN</small></button>' +
-            '<button data-mode="tsume" type="button">TSUME <small>詰めコンパイル</small></button>' +
+            '<button data-mode="tsume" type="button">COMPUZZLE <small>詰めコンパイル</small></button>' +
             '<button data-mode="training" type="button">TRAINING <small>SANDBOX</small></button>' +
             '<button data-mode="record" type="button">RECORD <small>STATS</small></button>' +
             '<button data-mode="cards" type="button">CARDS <small>CARD LIST</small></button>' +
