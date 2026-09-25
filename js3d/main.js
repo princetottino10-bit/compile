@@ -3393,7 +3393,7 @@ function syncAssist() {
     undoBtn.disabled = !myMoment();
   }
   if (hintBtn) {
-    hintBtn.hidden = !game || !settings().hint;
+    hintBtn.hidden = !game || !settings().beginner;          // 初心者モードのときだけ
     hintBtn.disabled = !myMoment() || !!(cur && cur.requests.length);
   }
 }
