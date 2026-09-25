@@ -301,6 +301,7 @@ export function normRequest(rm) {
   const nq = JSON.parse(JSON.stringify(rm.request));
   nq.player = 0;
   if (typeof nq.target === 'number') nq.target = (nq.target === rm.side ? 0 : 1);
+  if (typeof nq.side === 'number') nq.side = (nq.side === rm.side ? 0 : 1);    // ラインを選ぶときの、光らせる側
   return nq;
 }
 

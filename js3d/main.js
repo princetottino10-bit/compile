@@ -2820,7 +2820,7 @@ function renderLinePick() {
   if (!bp) return;
   board.clearCandidates();
   board.markEffectFocus(bp.req.focus);
-  setLineTargets(bp.lines);
+  setLineTargets(bp.lines, lineSideFor(bp.req));
   let el = document.getElementById('pickBar');
   if (!el) {
     el = document.createElement('div');
@@ -2846,11 +2846,23 @@ function finishLinePick(picks) {
   bp.resolve(picks);
 }
 
-function setLineTargets(lines) {
+/* ラインを選ぶとき、どちらの側の置き場を光らせるか (null なら両側 = ライン全体に効く効果)。
+   両側がいつも光ると、自分の場に置くのか相手の場なのか分からず違和感があった */
+function lineSideFor(req) {
+  if (!req) return null;
+  if (typeof req.side === 'number') return req.side;                      // エンジンが側を決めているもの (相手のスタックにプレイ)
+  const focus = Array.isArray(req.focus) ? req.focus[0] : req.focus;      // 動かすカードは持ち主の側のまま
+  const st = shown();
+  if (focus && st && st.cards[focus]) return st.cards[focus].owner;
+  if (/^(play-dest|swap-stack-[12]|compile-line)$/.test(req.prompt || '')) return req.player;
+  return null;
+}
+
+function setLineTargets(lines, side) {
   const set = new Set(lines || []);
   const st = shown();
   for (const pad of pads) {
-    const on = set.has(pad.userData.line);
+    const on = set.has(pad.userData.line) && (side === null || side === undefined || pad.userData.side === side);
     pad.userData.pulse = on ? 0.95 : 0;
     pad.userData.hover = on;
     if (on && st) {

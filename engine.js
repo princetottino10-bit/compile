@@ -1895,7 +1895,7 @@ function execPlayOp(ctx, fr, op) {
         const nonEmpty = [0, 1, 2].filter(l3 => st.lines[l3][stSide].length > 0);
         const lines2 = nonEmpty.length ? nonEmpty : [0, 1, 2];
         l2 = lines2.length === 1 ? lines2[0]
-          : choose(ctx, { kind: 'pickLine', player: fr.controller, lines: lines2, prompt: 'play-dest', context: defOf(st, fr.source).id })[0];
+          : choose(ctx, { kind: 'pickLine', player: fr.controller, lines: lines2, prompt: 'play-dest', side: stSide, context: defOf(st, fr.source).id })[0];
       }
       deck.shift();
       playToField(ctx, uid, l2, stSide, false);
