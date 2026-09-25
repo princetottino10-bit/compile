@@ -391,6 +391,19 @@ Deno.serve(async (req) => {
         if (error) throw error;
         return json(req, { ok: true });
       }
+      /* 画面で起きたエラー (client_errors): 新しい順に 300 件 */
+      if (op === "adminErrors") {
+        const { data, error } = await admin.from("client_errors")
+          .select("id,message,source,mode,version,device,created_at")
+          .order("id", { ascending: false }).limit(300);
+        if (error) throw error;
+        return json(req, { errors: data || [] });
+      }
+      if (op === "adminErrorsClear") {
+        const { error } = await admin.from("client_errors").delete().gte("id", 0);
+        if (error) throw error;
+        return json(req, { ok: true });
+      }
       if (op === "adminRooms") {
         const { data, error } = await admin.from("secure_rooms")
           .select("code,title,status,host_name,guest_name,visibility,rated,created_at,updated_at")

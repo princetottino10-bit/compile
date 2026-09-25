@@ -22,7 +22,7 @@ const EARN = [
   ['ONLINE', '+' + XP_GAIN.onlinePlay + ' / 勝ち +' + XP_GAIN.onlineWin],
   ['TUTORIAL', 'レッスン +' + XP_GAIN.lesson + ' / 全部 +' + XP_GAIN.tutorialAll],
   ['PUZZLE', '解くと +' + XP_GAIN.puzzle],
-  ['COMPUZZLE', '初級 +' + XP_GAIN.tsume1 + ' / 中級 +' + XP_GAIN.tsume2 + ' / 上級 +' + XP_GAIN.tsume3 + ' / 今日の問題 +' + XP_GAIN.tsumeDaily],
+  ['COMPUZZLE', '初級 +' + XP_GAIN.tsume1 + ' / 中級 +' + XP_GAIN.tsume2 + ' / 上級 +' + XP_GAIN.tsume3 + ' / 今日の問題 +' + XP_GAIN.tsumeDaily + ' / 今日の上級 +' + XP_GAIN.tsumeDailyHard],
   ['RUN', '全勝クリア +' + XP_GAIN.runClear],
   ['WEEKLY', 'クリア +' + XP_GAIN.weeklyClear],
   ['DAILY', 'ミッション +' + DAILY_XP.easy + '〜+' + DAILY_XP.hard + ' / 3つ達成 +' + DAILY_XP.all]
@@ -33,6 +33,7 @@ function dailyHtml(protocols) {
   const list = dailyView((protocols || []).map(p => p.name));
   const done = list.filter(m => m.done).length;
   const puz = dailyPuzzleDone();
+  const hard = dailyPuzzleDone(undefined, undefined, true);
   return '<div class="pf-daily"><div class="pf-daily-h"><small>DAILY MISSIONS</small><b>' + done + '/' + list.length + '</b>' +
     '<em>3つ達成で +' + DAILY_XP.all + ' XP</em></div><ul>' + list.map(m =>
       '<li class="' + m.tier + (m.done ? ' done' : '') + '"><span>' + esc(m.text) + '</span>' +
@@ -42,6 +43,9 @@ function dailyHtml(protocols) {
     '<li class="puzzle' + (puz ? ' done' : '') + '"><span>今日の問題を解く (COMPUZZLE)' +
       (puz ? '' : ' <button type="button" id="pfDailyPuzzle" class="pf-go">解く ▶</button>') + '</span>' +
       '<i style="--p:' + (puz ? 100 : 0) + '%"></i><b>' + (puz ? 'CLEAR' : '0/1') + '</b><em>+' + XP_GAIN.tsumeDaily + '</em></li>' +
+    '<li class="puzzle hard' + (hard ? ' done' : '') + '"><span>今日の上級を解く (COMPUZZLE)' +
+      (hard ? '' : ' <button type="button" id="pfDailyHard" class="pf-go">解く ▶</button>') + '</span>' +
+      '<i style="--p:' + (hard ? 100 : 0) + '%"></i><b>' + (hard ? 'CLEAR' : '0/1') + '</b><em>+' + XP_GAIN.tsumeDailyHard + '</em></li>' +
     '</ul></div>';
 }
 
@@ -103,5 +107,7 @@ export function openProfile(protocols) {
   /* 今日の問題へそのまま飛ぶ */
   const go = el.querySelector('#pfDailyPuzzle');
   if (go) go.onclick = () => { location.href = location.pathname + '?tsume=daily'; };
+  const goHard = el.querySelector('#pfDailyHard');
+  if (goHard) goHard.onclick = () => { location.href = location.pathname + '?tsume=daily-hard'; };
   el.querySelector('#pfTrophy').onclick = () => openTrophies();
 }

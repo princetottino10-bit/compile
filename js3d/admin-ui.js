@@ -8,7 +8,7 @@ import { weekKey, weekIndex } from './weekly.js';
 import { isUnlockAll, setUnlockAll } from './rewards.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const TABS = ['STATS', 'PLAYERS', 'WEEKLY', 'ROOMS', 'UNLOCK'];
+const TABS = ['STATS', 'PLAYERS', 'WEEKLY', 'ROOMS', 'UNLOCK', 'ERRORS'];
 const FREE_DB = 500 * 1024 * 1024;           // Supabase 無料プランのデータベースの目安 (500MB)
 const mb = (n) => (n / 1024 / 1024).toFixed(n < 10 * 1024 * 1024 ? 2 : 1) + ' MB';
 const when = (t) => new Date(t).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -118,6 +118,31 @@ export function openAdmin() {
       body.innerHTML = '<label class="ad-toggle"><input type="checkbox" id="adUnlock"' + (isUnlockAll() ? ' checked' : '') + '> 見た目・盤面の柄・称号を全部解放する</label>' +
         '<p class="pz-note">テスト用です。このブラウザだけに効き、レベルや経験値、強さは変わりません。切り替えたあとはページを読み直すと反映されます。</p>' +
         '<div class="pz-row"><button type="button" id="adReload">読み直す</button></div>';
+    },
+    /* ERRORS: 遊んでいる人の画面で起きたエラー (errorreport.js)。同じエラーはまとめて、回数・最後の時刻・版・端末を出す */
+    async () => {
+      body.innerHTML = '<p class="pz-note">読み込み中…</p>';
+      const r = await call('adminErrors');
+      const list = r.errors || [];
+      const groups = new Map();
+      for (const e of list) {
+        const k = e.message + '|' + (e.source || '');
+        const g = groups.get(k) || { message: e.message, source: e.source, n: 0, last: e.created_at, versions: new Set(), devices: new Set(), modes: new Set() };
+        g.n++;
+        if (e.created_at > g.last) g.last = e.created_at;
+        if (e.version) g.versions.add(e.version);
+        if (e.device) g.devices.add(e.device);
+        if (e.mode) g.modes.add(e.mode);
+        groups.set(k, g);
+      }
+      const rows = [...groups.values()].sort((a, b) => (a.last < b.last ? 1 : -1));
+      body.innerHTML = rows.length
+        ? '<p class="pz-note">直近 ' + list.length + ' 件 (同じエラーはまとめています)。新しい順。</p><ul class="ad-errs">' + rows.map(g =>
+          '<li><b>' + esc(g.message) + '</b><em>' + g.n + '回</em>' +
+          '<small>' + esc(g.source || '') + ' ・ 最後 ' + when(g.last) + ' ・ 版 ' + esc([...g.versions].slice(0, 3).join(', ')) +
+            ' ・ ' + esc([...g.devices].slice(0, 3).join(' / ')) + ' ・ ' + esc([...g.modes].slice(0, 3).join(' / ')) + '</small></li>').join('') + '</ul>' +
+          '<div class="pz-row"><button type="button" id="adErrClear">' + (armed === 'errs' ? '本当に消す?' : '一覧を消す') + '</button></div>'
+        : '<p class="pz-note">エラーは届いていません</p>';
     }
   ];
 
@@ -134,13 +159,13 @@ export function openAdmin() {
     if (!b) return;
     if (b.classList.contains('pz-x')) { el.classList.remove('show'); return; }
     if (b.dataset.adTab) { armed = null; show(+b.dataset.adTab); return; }
-    if (b.dataset.adWeek) { week += +b.dataset.adWeek; armed = null; show(1); return; }
+    if (b.dataset.adWeek) { week += +b.dataset.adWeek; armed = null; show(2); return; }
     if (b.dataset.adDelWeekly) {
       const id = b.dataset.adDelWeekly;
       if (armed !== 'w' + id) { armed = 'w' + id; b.textContent = '消す?'; b.classList.add('warn'); return; }
       armed = null;
       try { await call('adminWeeklyDelete', { week: 'W' + week, userId: id }); msg('一覧から消しました'); } catch (e) { return; }
-      show(1);
+      show(2);
       return;
     }
     if (b.dataset.adClose) {
@@ -148,11 +173,17 @@ export function openAdmin() {
       if (armed !== 'r' + code) { armed = 'r' + code; b.textContent = '閉じる?'; b.classList.add('warn'); return; }
       armed = null;
       try { await call('adminCloseRoom', { code }); msg('部屋 ' + code + ' を閉じました'); } catch (e) { return; }
-      show(2);
+      show(3);
       return;
     }
     if (b.id === 'adUnlock') { setUnlockAll(b.checked); msg(b.checked ? '全部解放にしました (読み直すと反映されます)' : '全部解放を切りました'); return; }
     if (b.id === 'adReload') location.reload();
+    if (b.id === 'adErrClear') {
+      if (armed !== 'errs') { armed = 'errs'; b.textContent = '本当に消す?'; b.classList.add('warn'); return; }
+      armed = null;
+      try { await call('adminErrorsClear'); msg('エラーの一覧を消しました'); } catch (e) { return; }
+      show(5);
+    }
   };
   el.classList.add('show');
   show(tab);

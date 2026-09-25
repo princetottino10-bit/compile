@@ -52,9 +52,17 @@ test('今日の問題: 一覧の問題とは別の盤面で、日ごとに決ま
   assert.ok(daily.every(p => !fixed.has(JSON.stringify(p.spec))), '一覧に置いた問題は出さない');
   assert.equal(dailyPick(daily, 20000).id, dailyPick(daily, 20000).id);
   assert.equal(dailyPick(daily, 20000).daily, 20000);
-  const seen = new Set();
-  for (let d = 0; d < daily.length; d++) seen.add(dailyPick(daily, 20000 + d).id);
-  assert.equal(seen.size, daily.length);
+  for (const hard of [false, true]) {
+    const pool = daily.filter(p => (hard ? p.tier === 3 : p.tier !== 3));
+    assert.ok(pool.length >= 20, hard ? '今日の上級の候補' : '今日の問題の候補');
+    const seen = new Set();
+    for (let d = 0; d < pool.length; d++) {
+      const p = dailyPick(daily, 20000 + d, hard);
+      assert.equal(p.tier === 3, hard);
+      seen.add(p.id);
+    }
+    assert.equal(seen.size, pool.length, '候補の数の日数で全部を一巡する');
+  }
 });
 
 test('今日の問題はどれも模範解答で解ける', async () => {

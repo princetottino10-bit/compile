@@ -46,8 +46,8 @@ function profileChip(protocols) {
 /* 今日のデイリーミッションと今日の問題 (COMPUZZLE) の残り (全部済んでいれば出さない) */
 function dailyBadge(protocols) {
   const list = dailyView(protocols.map(x => x.name));
-  const total = list.length + 1;
-  const done = list.filter(m => m.done).length + (dailyPuzzleDone() ? 1 : 0);
+  const total = list.length + 2;
+  const done = list.filter(m => m.done).length + (dailyPuzzleDone() ? 1 : 0) + (dailyPuzzleDone(undefined, undefined, true) ? 1 : 0);
   return done < total ? '<i class="tt-daily" title="デイリーミッションと今日の問題">DAILY ' + done + '/' + total + '</i>' : '';
 }
 

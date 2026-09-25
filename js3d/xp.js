@@ -26,6 +26,7 @@ export const XP_GAIN = {
   tsume2: 5,           // 中級
   tsume3: 8,           // 上級
   tsumeDaily: 5,       // 今日の問題 (日ごとに)
+  tsumeDailyHard: 8,   // 今日の上級 (日ごとに)
   runClear: 10,        // 勝ち抜き戦 (8人) を全勝クリア
   weeklyClear: 10      // 週替わり3連戦をクリア (週ごとに初回)
 };

@@ -19,11 +19,12 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 
 /** 解いたときの経験値 (問題ごとに初回。今日の問題は日ごとに) */
 export function tsumeXp(p) {
-  return p.daily != null ? XP_GAIN.tsumeDaily : XP_GAIN['tsume' + p.tier] || XP_GAIN.tsume1;
+  if (p.daily != null) return p.hard ? XP_GAIN.tsumeDailyHard : XP_GAIN.tsumeDaily;
+  return XP_GAIN['tsume' + p.tier] || XP_GAIN.tsume1;
 }
 /** 経験値の帳簿の key (実績の数え上げにも使う: k:ts:t2-03 / k:dp:日) */
 export function tsumeXpKey(p) {
-  return p.daily != null ? 'dp:' + p.daily : 'ts:' + p.id;
+  return p.daily != null ? (p.hard ? 'dph:' : 'dp:') + p.daily : 'ts:' + p.id;
 }
 
 let cache = null;
@@ -55,17 +56,19 @@ export async function loadDailyList() {
 /** その日の問題。日本時間の0時に替わり、どの端末でも同じ。
     進み幅は問題数と割り切れない数にして、全部を一巡してから繰り返す */
 const gcd = (a, b) => (b ? gcd(b, a % b) : a);
-export function dailyPick(list, day = dayIndex()) {
+export function dailyPick(all, day = dayIndex(), hard = false) {
+  /* 今日の問題は初級・中級から、今日の上級は上級から */
+  const list = (all || []).filter(p => (hard ? p.tier === 3 : p.tier !== 3));
   if (!list.length) return null;
   let step = 97;
   while (gcd(step, list.length) !== 1) step++;
   const p = list[((day * step + 13) % list.length + list.length) % list.length];
-  return { ...p, daily: day };
+  return { ...p, daily: day, hard };
 }
 
 /** 今日の問題を解いたか (経験値の帳簿で見る。アカウントの保存で別の端末とも揃う) */
-export function dailyPuzzleDone(day = dayIndex(), log = xpLog()) {
-  return log.some(e => e.id === 'k:dp:' + day);
+export function dailyPuzzleDone(day = dayIndex(), log = xpLog(), hard = false) {
+  return log.some(e => e.id === (hard ? 'k:dph:' : 'k:dp:') + day);
 }
 
 /** 解いた問題 { id: true } (経験値の帳簿 k:ts:id から。問題を作り直しても id ごとに数え直せる) */
@@ -135,6 +138,7 @@ export async function openTsumeList() {
   const cleared = clearedMap();
   const done = list.filter(p => cleared[p.id]).length;
   const today = dailyPuzzleDone();
+  const todayHard = dailyPuzzleDone(undefined, undefined, true);
   const el = overlay(
     '<div class="pz-card ts-card" role="dialog" aria-modal="true" aria-labelledby="tsTitle">' +
       '<div class="pz-head"><b id="tsTitle">詰めコンパイル</b><button type="button" class="pz-x" aria-label="戻る">×</button></div>' +
@@ -143,6 +147,9 @@ export async function openTsumeList() {
       '<button type="button" class="ts-daily' + (today ? ' done' : '') + '" data-id="daily">' +
         '<small>DAILY</small><b>今日の問題</b><span>日本時間の0時に替わる1問 (+' + XP_GAIN.tsumeDaily + ' XP)</span>' +
         '<i>' + (today ? '✓ CLEAR' : 'PLAY') + '</i></button>' +
+      '<button type="button" class="ts-daily hard' + (todayHard ? ' done' : '') + '" data-id="daily-hard">' +
+        '<small>DAILY</small><b>今日の上級</b><span>上級から1問。読み切れたら +' + XP_GAIN.tsumeDailyHard + ' XP</span>' +
+        '<i>' + (todayHard ? '✓ CLEAR' : 'PLAY') + '</i></button>' +
       (list.length ? TIERS.map(t => {
         const items = list.filter(p => p.tier === t.tier);
         const got = items.filter(p => cleared[p.id]).length;

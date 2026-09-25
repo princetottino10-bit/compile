@@ -43,7 +43,8 @@ const hour = (c) => new Date(g(c).at).getHours();
 export const TSUME_TOTAL = { 1: 5, 2: 10, 3: 10 };
 const tsumeSolved = (c, tiers) => new Set(c.xp.map(e => /^k:ts:t(\d)-\d+$/.exec(e.id || '')).filter(m => m && tiers.includes(+m[1])).map(m => m[0])).size;
 const tsumeTotal = (tiers) => tiers.reduce((n, t) => n + TSUME_TOTAL[t], 0);
-const dailyPuzzles = (c) => c.xp.filter(e => /^k:dp:\d+$/.test(e.id || '')).length;
+/* 今日の問題と今日の上級 (解いた日の数。同じ日に両方解いても1日) */
+const dailyPuzzles = (c) => new Set(c.xp.map(e => /^k:dph?:(\d+)$/.exec(e.id || '')).filter(Boolean).map(m => m[1])).size;
 /* COSMETICS のガチャ (ctx.gacha = gacha.js の loadGacha()) */
 const gachaPulls = (c) => (c.gacha && c.gacha.pulls) | 0;
 const gachaGot = (c) => Object.keys((c.gacha && c.gacha.owned) || {}).filter(id => GACHA_ITEMS.some(g => g.kind + ':' + g.key === id)).length;

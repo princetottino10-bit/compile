@@ -21,6 +21,7 @@ import { mountTrainingTools } from './training.js';
 import * as ROOM from './room.js';
 import * as PZ from './puzzle.js';
 import * as TS from './tsume.js';
+import { watchErrors, reportError } from './errorreport.js';
 import * as TU from './tutorial.js';
 import { settings, onSettings, openSettings } from './settings.js';
 import { recordSoloResult, localRecords } from './stats.js';
@@ -236,8 +237,11 @@ function totalOf(st, line, side) {
 }
 
 /* ---------- 起動 ---------- */
+/* 画面で起きたエラーはサーバーに知らせる (報告がなくても気づけるように。errorreport.js) */
+watchErrors();
 boot().catch((e) => {
   console.error(e);
+  reportError(e, 'boot');
   UI.toast('初期化に失敗: ' + e.message + ' (ページを読み直してください)', 8000);
 });
 /* 取りこぼした非同期のエラーも、黙って固まらずに知らせる (同じ内容は一度だけ) */
@@ -385,8 +389,8 @@ async function boot() {
   }
   /* 詰めコンパイル (?tsume=t1-01)。問題モードと同じ仕組みで、お題と判定だけ違う */
   if (params.get('tsume') && params.get('tsume') !== 'list' && !puzzle) {
-    const t = params.get('tsume') === 'daily'
-      ? TS.dailyPick(await TS.loadDailyList())
+    const t = params.get('tsume') === 'daily' || params.get('tsume') === 'daily-hard'
+      ? TS.dailyPick(await TS.loadDailyList(), undefined, params.get('tsume') === 'daily-hard')
       : (await TS.loadTsume()).find(x => x.id === params.get('tsume'));
     if (t) {
       puzzle = { spec: t.spec, goal: t.goal.kind, task: TS.goalText(t.goal, t.spec.sides[0].protos), tsume: t };
@@ -680,7 +684,7 @@ async function puzzleAfterTurn() {
 function tsumeBarOpts(ts) {
   const tier = TS.TIERS.find(t => t.tier === ts.tier);
   return {
-    tag: ts.daily != null ? '今日の問題' : '詰め ' + (tier ? tier.name : ''),
+    tag: ts.daily != null ? (ts.hard ? '今日の上級' : '今日の問題') : '詰め ' + (tier ? tier.name : ''),
     sub: '1手番で達成する' + (ts.solutions > 1 ? ' (解き方は2通り)' : ''),
     buttons: [
       { label: '山札', on: () => TS.showDeck(shown(), defIndex, ME) },
@@ -2553,6 +2557,8 @@ async function step(action) {
   const res = Engine.apply(cur.state, action);
   if (res.error) {
     UI.toast(res.error);
+    /* 画面は打てる手しか出さないので、ここに来るのはエンジンか画面の食い違い */
+    reportError('エンジンが手を受け付けない: ' + res.error + ' (' + action.type + ')', 'step');
     busy = false;
     tutorialPending = false;
     return;
