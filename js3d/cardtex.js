@@ -497,11 +497,132 @@ const SLEEVES = {
   toxic: { a: '#1d3a05', b: '#081302', grid: 'rgba(190,255,60,.1)', halo: '170,255,40', ring: 'rgba(210,255,90,.92)',
     ring2: 'rgba(120,220,20,.6)', strip: '170,255,40', circuit: true },
   /* 下剋上の褒美: 黒地に金と深紅 */
-  slayer: { a: '#2a0808', b: '#000000', grid: 'rgba(255,210,90,.1)', halo: '255,196,60', ring: 'rgba(255,214,90,.95)',
-    ring2: 'rgba(220,30,60,.8)', strip: '255,40,70', glitch: true },
+  slayer: { a: '#2a0808', b: '#000000', grid: 'rgba(255,210,90,.05)', halo: '255,196,60', ring: 'rgba(255,214,90,.95)',
+    ring2: 'rgba(220,30,60,.8)', strip: '255,40,70', slayer: true },
   galaxy: { a: '#1a0b3d', b: '#040112', grid: 'rgba(255,255,255,.12)', halo: '255,120,220', ring: 'rgba(255,240,255,.95)',
     ring2: 'rgba(124,240,208,.7)', strip: '255,120,220', holo: true, glitch: true }
 };
+/* GIANT SLAYER の裏面 (下剋上の褒美)。
+   背景に王冠をかぶった巨人の影。その王冠ごと、金の一太刀が斜めに断ち切っている。
+   中央には挑んだ側の小さな剣、周りに金の二重の縁と飾り、下に GIANT SLAYER の文字 */
+function drawSlayer(ctx) {
+  const cx = DW / 2;
+  ctx.save();
+  roundRect(ctx, 0, 0, DW, DH, 30); ctx.clip();
+  /* 地: 中心が深紅、外が黒 */
+  const bg = ctx.createRadialGradient(cx, DH * 0.46, 20, cx, DH * 0.46, DH * 0.7);
+  bg.addColorStop(0, '#5c0d18');
+  bg.addColorStop(0.55, '#1c0306');
+  bg.addColorStop(1, '#000');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, DW, DH);
+
+  /* 巨人の影: 肩・頭・王冠 (上 2/3 を占める) */
+  ctx.fillStyle = 'rgba(8,0,2,.85)';
+  ctx.beginPath();
+  ctx.moveTo(-20, DH * 0.84);
+  ctx.bezierCurveTo(20, DH * 0.56, 120, DH * 0.5, cx - 70, DH * 0.48);
+  ctx.lineTo(cx + 70, DH * 0.48);
+  ctx.bezierCurveTo(DW - 120, DH * 0.5, DW - 20, DH * 0.56, DW + 20, DH * 0.84);
+  ctx.lineTo(DW + 20, DH + 20); ctx.lineTo(-20, DH + 20); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx, DH * 0.37, 92, 105, 0, 0, Math.PI * 2); ctx.fill();
+  /* 目: 赤く光る */
+  ctx.fillStyle = 'rgba(255,40,60,.85)';
+  ctx.shadowColor = 'rgba(255,40,60,.9)'; ctx.shadowBlur = 14;
+  ctx.beginPath(); ctx.ellipse(cx - 34, DH * 0.37, 14, 5, -0.15, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx + 34, DH * 0.37, 14, 5, 0.15, 0, Math.PI * 2); ctx.fill();
+  ctx.shadowBlur = 0;
+  /* 王冠: 真ん中で割れて、左右にずれている */
+  const crown = (dx, dy, rot, from, to) => {
+    ctx.save();
+    ctx.translate(cx + dx, DH * 0.245 + dy); ctx.rotate(rot);
+    ctx.beginPath();
+    const pts = [[-96, 40], [-96, -10], [-64, 20], [-32, -34], [0, 14], [32, -34], [64, 20], [96, -10], [96, 40]];
+    const part = pts.filter(([x]) => x >= from && x <= to);
+    ctx.moveTo(part[0][0], 40);
+    for (const [x, y] of part) ctx.lineTo(x, y);
+    ctx.lineTo(part[part.length - 1][0], 40); ctx.closePath();
+    const cg = ctx.createLinearGradient(0, -34, 0, 40);
+    cg.addColorStop(0, '#fff1b8'); cg.addColorStop(0.5, '#d9a02a'); cg.addColorStop(1, '#6b4308');
+    ctx.fillStyle = cg; ctx.fill();
+    ctx.strokeStyle = 'rgba(40,20,0,.8)'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.restore();
+  };
+  crown(-18, 6, -0.16, -96, 0);
+  crown(22, -8, 0.2, 0, 96);
+
+  /* 一太刀: 右上から左下へ、金の光る斬撃 */
+  ctx.save();
+  ctx.translate(cx, DH * 0.48); ctx.rotate(-0.95);
+  const sg = ctx.createLinearGradient(0, -14, 0, 14);
+  sg.addColorStop(0, 'rgba(255,214,90,0)'); sg.addColorStop(0.45, 'rgba(255,240,190,.95)');
+  sg.addColorStop(0.55, 'rgba(255,255,255,1)'); sg.addColorStop(1, 'rgba(255,214,90,0)');
+  ctx.shadowColor = 'rgba(255,200,60,1)'; ctx.shadowBlur = 30;
+  ctx.fillStyle = sg;
+  ctx.beginPath(); ctx.moveTo(-DH * 0.62, 0); ctx.quadraticCurveTo(0, -16, DH * 0.62, 0); ctx.quadraticCurveTo(0, 7, -DH * 0.62, 0); ctx.fill();
+  ctx.shadowBlur = 0;
+  /* ひび: 斬撃から枝分かれ */
+  let seed = 29;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  ctx.strokeStyle = 'rgba(255,200,80,.55)'; ctx.lineWidth = 1.5;
+  for (let k = 0; k < 18; k++) {
+    let x = (rnd() - 0.5) * DH * 1.1, y = 0;
+    ctx.beginPath(); ctx.moveTo(x, y);
+    const dir = rnd() < 0.5 ? -1 : 1;
+    for (let t = 0; t < 3; t++) { x += (rnd() - 0.5) * 40; y += dir * (10 + rnd() * 26); ctx.lineTo(x, y); }
+    ctx.stroke();
+  }
+  /* 火花 */
+  for (let k = 0; k < 40; k++) {
+    ctx.fillStyle = 'rgba(255,' + (190 + Math.floor(rnd() * 60)) + ',120,' + (0.4 + rnd() * 0.6) + ')';
+    ctx.beginPath(); ctx.arc((rnd() - 0.5) * DH * 1.1, (rnd() - 0.5) * 40, 1 + rnd() * 2.2, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+
+  /* 中央: 挑んだ側の小さな剣 (上向き) */
+  const sy = DH * 0.64;
+  ctx.save();
+  ctx.translate(cx, sy);
+  ctx.shadowColor = 'rgba(255,200,60,.9)'; ctx.shadowBlur = 22;
+  const bl = ctx.createLinearGradient(-9, 0, 9, 0);
+  bl.addColorStop(0, '#b9b2a0'); bl.addColorStop(0.5, '#ffffff'); bl.addColorStop(1, '#8f8778');
+  ctx.fillStyle = bl;
+  ctx.beginPath(); ctx.moveTo(0, -120); ctx.lineTo(9, -100); ctx.lineTo(9, 20); ctx.lineTo(-9, 20); ctx.lineTo(-9, -100); ctx.closePath(); ctx.fill();
+  ctx.shadowBlur = 0;
+  const gd = ctx.createLinearGradient(0, 16, 0, 34);
+  gd.addColorStop(0, '#fff1b8'); gd.addColorStop(1, '#a8700f');
+  ctx.fillStyle = gd;
+  ctx.beginPath(); ctx.moveTo(-48, 20); ctx.lineTo(48, 20); ctx.lineTo(40, 32); ctx.lineTo(-40, 32); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#5a1018'; ctx.fillRect(-6, 32, 12, 44);
+  ctx.fillStyle = gd; ctx.beginPath(); ctx.arc(0, 84, 10, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+
+  /* 金の二重の縁と、四隅の飾り */
+  ctx.strokeStyle = 'rgba(255,210,90,.95)'; ctx.lineWidth = 4;
+  roundRect(ctx, 14, 14, DW - 28, DH - 28, 22); ctx.stroke();
+  ctx.strokeStyle = 'rgba(200,30,55,.85)'; ctx.lineWidth = 2;
+  roundRect(ctx, 26, 26, DW - 52, DH - 52, 16); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,214,90,.95)';
+  for (const [x, y] of [[40, 40], [DW - 40, 40], [40, DH - 40], [DW - 40, DH - 40]]) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(Math.PI / 4);
+    ctx.fillRect(-9, -9, 18, 18);
+    ctx.restore();
+  }
+  /* 下の文字 */
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = '900 38px ' + FONT.logo;
+  const tg = ctx.createLinearGradient(0, DH - 110, 0, DH - 70);
+  tg.addColorStop(0, '#fff4c8'); tg.addColorStop(1, '#d99a1a');
+  ctx.shadowColor = 'rgba(255,60,80,.8)'; ctx.shadowBlur = 12;
+  ctx.fillStyle = tg;
+  ctx.fillText('GIANT SLAYER', cx, DH - 88);
+  ctx.shadowBlur = 0;
+  ctx.font = '800 14px ' + FONT.logo;
+  ctx.fillStyle = 'rgba(255,210,150,.7)';
+  ctx.fillText('— UNDERDOG —', cx, DH - 58);
+  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  ctx.restore();
+}
+
 export function backTex(variant) {
   const key = SLEEVES[variant] ? variant : 'default';
   if (backTextures.has(key)) return backTextures.get(key);
@@ -577,8 +698,12 @@ export function backTex(variant) {
     }
   }
 
+  /* 下剋上の褒美: 巨人と、それを断ち切った一太刀 (中央の紋章も専用) */
+  if (P.slayer) drawSlayer(ctx);
+
   /* 中央の紋章 */
   const cx = DW / 2, cy = DH / 2;
+  if (!P.slayer) {
   const halo = ctx.createRadialGradient(cx, cy, 8, cx, cy, 210);
   halo.addColorStop(0, 'rgba(' + P.halo + ',.5)');
   halo.addColorStop(1, 'rgba(' + P.halo + ',0)');
@@ -602,6 +727,7 @@ export function backTex(variant) {
   ctx.font = '800 22px ' + FONT.logo;
   ctx.fillStyle = 'rgba(233,240,255,.62)';
   ctx.fillText('C O M P I L E', cx, cy + 190);
+  }
   ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
 
   /* 裏向きカードの値は 2。表と同じ位置に出して、覆われても読めるようにする */
