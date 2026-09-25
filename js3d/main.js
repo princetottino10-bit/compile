@@ -2737,7 +2737,8 @@ function pickRibbon(req, m) {
   const s = sourceInfo(req && req.context);
   const d = s && defIndex[s.def];
   const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  return (s
+  return '<button type="button" class="rb-peek" aria-pressed="false" title="帯を透かして盤面を見る" aria-label="盤面を見る">&#128065;</button>' +
+    (s
       ? '<button type="button" class="rb-src" data-def="' + esc(s.def) + '" style="--accent:' + esc(s.color || '#b9a4ff') + '" title="効果を読む">' +
           (d ? '<img alt="" src="' + faceImageURL(d) + '">' : '') + '<b>' + esc(s.name) + '</b></button>'
       : '') +
@@ -2746,7 +2747,14 @@ function pickRibbon(req, m) {
     (m.skip ? '<button type="button" class="rb-btn skip" id="pkSkip">しない</button>' : '') +
     (m.none ? '<button type="button" class="rb-btn skip" id="pkNone">選ばない</button>' : '');
 }
+/* 帯の目ボタン: 押すと帯を透かして下の盤面を見られる。同じ選択の描き直しでも透かしたまま (もう一度で戻る) */
+let ribbonPeekReq = null;
 function bindRibbon(el, on) {
+  const req = boardPick && boardPick.req;
+  const peek = el.querySelector('.rb-peek');
+  const setPeek = (v) => { el.classList.toggle('peek', v); if (peek) peek.setAttribute('aria-pressed', String(v)); };
+  setPeek(!!req && ribbonPeekReq === req);
+  if (peek) peek.onclick = (ev) => { ev.stopPropagation(); const v = !el.classList.contains('peek'); ribbonPeekReq = v ? req : null; setPeek(v); };
   const src = el.querySelector('.rb-src');
   if (src) src.onclick = (ev) => { ev.stopPropagation(); showCardNoteFor(src.dataset.def); };
   for (const [id, fn] of [['#pkBack', on.back], ['#pkSkip', on.skip], ['#pkNone', on.none]]) {
@@ -2975,6 +2983,7 @@ function arrangeOnBoard(req, opts) {
   document.body.appendChild(ov);
 
   const perm = [0, 1, 2];            // 位置 -> 旧インデックス
+  let arrPeek = false;               // 帯を透かして盤面を見ているか (目のボタン)
   const single = req.exact === 'transposition';
   let sel = -1;
 
@@ -3088,13 +3097,16 @@ function arrangeOnBoard(req, opts) {
           : (targetSide === ME ? '自分' : '相手') + 'のプロトコルを2つタップして入れ替え (反対側をタップで切り替え)')
         : single ? 'プロトコルを2つタップして入れ替え (1回だけ)' : 'プロトコルを2つタップして入れ替え';
       ov.innerHTML =
-        '<div class="pick-ribbon">' +
+        '<div class="pick-ribbon' + (arrPeek ? ' peek' : '') + '">' +
+          '<button type="button" class="rb-peek" aria-pressed="' + arrPeek + '" title="帯を透かして盤面を見る" aria-label="盤面を見る">&#128065;</button>' +
           (s ? '<button type="button" class="rb-src" data-def="' + esc(s.def) + '" style="--accent:' + esc(s.color || '#b9a4ff') + '" title="効果を読む">' +
             (d ? '<img alt="" src="' + faceImageURL(d) + '">' : '') + '<b>' + esc(s.name) + '</b></button>' : '') +
           '<span class="rb-q">' + esc(text) + '</span>' +
           (targetSide === null || isIdentity ? '' : '<button type="button" class="rb-btn" id="arrReset">やり直し</button>') +
           (control ? '<button type="button" class="rb-btn skip" id="arrSkip">並べ替えない</button>' : '') +
         '</div>';
+      const peekBtn = ov.querySelector('.rb-peek');
+      if (peekBtn) peekBtn.onclick = (ev) => { ev.stopPropagation(); arrPeek = !arrPeek; render(); };
       const srcBtn = ov.querySelector('.rb-src');
       if (srcBtn) srcBtn.onclick = (ev) => { ev.stopPropagation(); showCardNoteFor(srcBtn.dataset.def); };
 
