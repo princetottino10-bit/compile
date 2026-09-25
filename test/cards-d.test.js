@@ -298,11 +298,13 @@ test('ICE_3: 覆われていなければ終了時に何もしない', () => {
   assert.equal(lineOf(res.state, 'ICE_3'), 2);
 });
 
-test('ICE_4: このカードは反転させることができない (選んでも表のまま)', () => {
+test('ICE_4: このカードは反転させることができないので、反転の候補に出ない', () => {
   let res = start(side(['COURAGE', 'FEAR', 'ICE'], { lines: [[], [], [['ICE_4', true]]], hand: ['FEAR_1'] }),
     side(OPP, { lines: [[['DARKNESS_4', true]], [], []] }));
   res = play(res, 'FEAR_1', 1);
-  res = drive(res, { choice: () => [1], pickCard: (req) => (req.candidates.includes(u('ICE_4')) ? [u('ICE_4')] : [u('DARKNESS_4', 1)]) });
+  let offered = false;
+  res = drive(res, { choice: () => [1], pickCard: (req) => { if (req.candidates.includes(u('ICE_4'))) offered = true; return [req.candidates[0]]; } });
+  assert.equal(offered, false, '反転の候補に ICE_4 は入らない');
   assert.equal(faceUp(res.state, 'ICE_4'), true);
 });
 

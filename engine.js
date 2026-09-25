@@ -1720,6 +1720,9 @@ function collectCandidates(ctx, fr, op, sel, chooser) {
     cands = cands.filter(u => locate(st, u).line !== fr.line);
   }
 
+  /* ICE 3 のように反転できないカードは、反転の候補に入れない (選んで空振りにして、必須の反転を逃れられないように) */
+  if (op.op === 'flip') cands = cands.filter(u => !cannotFlip(st, u));
+
   // highest / lowest
   if (sel.value === 'highest' || sel.value === 'lowest') {
     if (cands.length) {
