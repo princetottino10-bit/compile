@@ -89,6 +89,24 @@ async function describe(p, PROMPT_TEXT, optionLabel) {
   return { steps, res };
 }
 
+/* CPU (ヒューリスティック) がそのまま解けてしまう問題は、簡単すぎるので使わない */
+E.setAiLevel(1);
+function aiSolves(p) {
+  for (let t = 0; t < 2; t++) {
+    let res = E.newPuzzle(p.spec, { seed: 1 });
+    for (let i = 0; i < 200 && res.state.turn === ME && res.state.winner === null; i++) {
+      const q = res.requests[0];
+      if (q && q.player !== ME) break;
+      const a = q ? { type: 'choose', id: q.id, picks: E.ai.answer(res.state, q) } : (E.ai.action(res.state) || E.legalActions(res.state)[0]);
+      const nx = E.apply(res.state, a);
+      if (nx.error) break;
+      res = nx;
+    }
+    if (solved(p, res)) return true;
+  }
+  return false;
+}
+
 function endState(res) {
   for (const t of (res.trace || [])) if (t.st && t.st.turn !== ME) return t.st;
   return res.state;
@@ -111,6 +129,9 @@ function solved(p, res) {
   /* 同じ盤面は1つに */
   const seen = new Set();
   all = all.filter(p => { const k = JSON.stringify(p.spec); if (seen.has(k)) return false; seen.add(k); return true; });
+  const before = all.length;
+  all = all.filter(p => !aiSolves(p));
+  console.log('CPU がそのまま解ける問題を除いた: ' + (before - all.length) + ' / ' + before);
 
   const out = [];
   const used = new Set();

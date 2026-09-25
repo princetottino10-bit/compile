@@ -1618,6 +1618,14 @@
   .ts-grid button i{position:absolute;right:7px;top:6px;font:900 12px/1 system-ui;font-style:normal;color:var(--mint);}
   .ts-grid button.done{border-color:rgba(160,123,255,.4);background:rgba(160,123,255,.1);}
   .ts-grid button:hover,.ts-grid button:focus-visible{border-color:var(--pink);background:rgba(255,79,163,.14);outline:none;}
+  .ts-deck{width:min(560px,100%);}
+  .ts-deck h3{margin:4px 0 0;font:900 12px/1 var(--font-ui);letter-spacing:.1em;color:var(--ink);}
+  .ts-deck ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px;}
+  .ts-deck li{display:grid;grid-template-columns:auto auto 1fr;gap:4px 10px;align-items:baseline;padding:7px 10px;border-left:3px solid var(--pc);background:rgba(255,255,255,.04);}
+  .ts-deck li em{font:900 11px/1 var(--font-hud,var(--font-ui));font-style:normal;color:var(--gold);min-width:1.4em;}
+  .ts-deck ol.trash li{grid-template-columns:auto 1fr;opacity:.75;}
+  .ts-deck li b{font:800 12.5px/1.3 var(--font-ui);color:#fff;white-space:nowrap;}
+  .ts-deck li span{font:500 11px/1.5 system-ui;color:var(--dim);}
   .ts-steps{margin:0;padding-left:1.4em;display:flex;flex-direction:column;gap:6px;font:600 12.5px/1.55 system-ui;color:var(--ink);}
   .ts-steps li::marker{color:#ffeab4;font-weight:900;}
   /* ---------- チュートリアル: 上の案内パネル (次へは押さない。操作に合わせて切り替わる) ---------- */
@@ -2781,7 +2789,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=605ccb35e0",
+      "./js3d/main.js": "./js3d/main.js?v=a376ead8e7",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=aa7ecc4142",
       "./js3d/panel.js": "./js3d/panel.js?v=ecb8a073e3",
       "./js3d/plates.js": "./js3d/plates.js?v=70ffa14b87",
@@ -2811,7 +2819,7 @@
       "./js3d/theme.js": "./js3d/theme.js?v=b02da60dc1",
       "./js3d/title.js": "./js3d/title.js?v=bb69966c1f",
       "./js3d/training.js": "./js3d/training.js?v=3018b4399e",
-      "./js3d/tsume.js": "./js3d/tsume.js?v=5c6f8646bf",
+      "./js3d/tsume.js": "./js3d/tsume.js?v=29bf26a152",
       "./js3d/turning.js": "./js3d/turning.js?v=9c7f79654e",
       "./js3d/tutorial.js": "./js3d/tutorial.js?v=0e6d6237ad",
       "./js3d/tween.js": "./js3d/tween.js?v=99b25c0d63",
@@ -2841,7 +2849,7 @@
   <link rel="modulepreload" href="js3d/training.js?v=3018b4399e">
   <link rel="modulepreload" href="js3d/room.js?v=c34129de95">
   <link rel="modulepreload" href="js3d/puzzle.js?v=a6a0904519">
-  <link rel="modulepreload" href="js3d/tsume.js?v=5c6f8646bf">
+  <link rel="modulepreload" href="js3d/tsume.js?v=29bf26a152">
   <link rel="modulepreload" href="js3d/tutorial.js?v=0e6d6237ad">
   <link rel="modulepreload" href="js3d/settings.js?v=142e9b5e99">
   <link rel="modulepreload" href="js3d/stats.js?v=e43dea84b9">
@@ -2905,6 +2913,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=605ccb35e0"></script>
+  <script type="module" src="js3d/main.js?v=a376ead8e7"></script>
 </body>
 </html>

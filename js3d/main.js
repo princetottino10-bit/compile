@@ -680,6 +680,7 @@ function tsumeBarOpts(ts) {
     tag: ts.daily != null ? '今日の問題' : '詰め ' + (tier ? tier.name : ''),
     sub: '1手番で達成する' + (ts.solutions > 1 ? ' (解き方は2通り)' : ''),
     buttons: [
+      { label: '山札', on: () => TS.showDeck(shown(), defIndex, ME) },
       { label: 'ヒント', on: () => UI.toast('最初の一手: ' + ts.steps[0], 5200) },
       /* 模範解答は管理者のアカウントだけ (問題の確認用) */
       ...(accountState().admin ? [{ label: '答え', on: () => TS.showAnswer(ts) }] : []),

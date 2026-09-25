@@ -52,10 +52,14 @@ export async function loadDailyList() {
   return dailyCache;
 }
 
-/** その日の問題。日本時間の0時に替わり、どの端末でも同じ。97 と問題数が互いに素なら、全部を一巡してから繰り返す */
+/** その日の問題。日本時間の0時に替わり、どの端末でも同じ。
+    進み幅は問題数と割り切れない数にして、全部を一巡してから繰り返す */
+const gcd = (a, b) => (b ? gcd(b, a % b) : a);
 export function dailyPick(list, day = dayIndex()) {
   if (!list.length) return null;
-  const p = list[((day * 97 + 13) % list.length + list.length) % list.length];
+  let step = 97;
+  while (gcd(step, list.length) !== 1) step++;
+  const p = list[((day * step + 13) % list.length + list.length) % list.length];
   return { ...p, daily: day };
 }
 
@@ -162,6 +166,25 @@ export async function openTsumeList() {
     const first = el.querySelector('.ts-daily:not(.done)') || el.querySelector('.ts-grid button:not(.done)') || el.querySelector('.ts-grid button');
     if (first) first.focus();
   });
+}
+
+/** 山札と捨て札を見る (詰めコンパイルは全部見えてよい。山札は上から順に)。defs: defId → { proto, value, color, upper, middle, lower } */
+export function showDeck(st, defs, me = 0) {
+  const pl = st.players[me];
+  const card = (uid, i) => {
+    const d = defs[st.cards[uid].def] || {};
+    const text = [d.upper, d.middle, d.lower].filter(Boolean).join(' / ');
+    return '<li style="--pc:' + esc(d.color || '#b9a4ff') + '">' + (i !== undefined ? '<em>' + (i + 1) + '</em>' : '') +
+      '<b>' + esc((d.proto || '') + ' ' + (d.value !== undefined ? d.value : '')) + '</b><span>' + esc(text) + '</span></li>';
+  };
+  const el = overlay(
+    '<div class="pz-card ts-deck" role="dialog" aria-modal="true" aria-labelledby="tsDeckT">' +
+      '<div class="pz-head"><b id="tsDeckT">山札 (上から順に)</b><button type="button" class="pz-x" aria-label="閉じる">×</button></div>' +
+      '<p class="pz-note">詰めコンパイルでは山札の中身と順番も見られます。カードを引く効果では、上から順に引きます。</p>' +
+      (pl.deck.length ? '<ol>' + pl.deck.map((u, i) => card(u, i)).join('') + '</ol>' : '<p class="pz-note">山札はありません</p>') +
+      '<h3>捨て札</h3>' + (pl.trash.length ? '<ol class="trash">' + pl.trash.map(u => card(u)).join('') + '</ol>' : '<p class="pz-note">捨て札はありません</p>') +
+    '</div>');
+  el.onclick = (ev) => { if (ev.target === el || ev.target.closest('.pz-x')) el.classList.remove('show'); };
 }
 
 /** 模範解答 (手順を1行ずつ) */
