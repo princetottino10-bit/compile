@@ -367,9 +367,11 @@
   /* ---------- 効果の発動 (マスターデュエル風): 右上に滑り込む帯 ---------- */
   #fxBanner{position:fixed;right:calc(8px + env(safe-area-inset-right));top:44px;z-index:27;display:none;
     width:min(300px,34vw);padding:7px 11px 8px 12px;border-radius:10px;overflow:hidden;pointer-events:none;
-    background:linear-gradient(100deg,color-mix(in srgb,var(--pc) 26%,rgba(8,12,24,.97)) 0%,rgba(8,12,24,.95) 45%);
+    /* 盤面が透けて見えるように (文字は影で読みやすく保つ。詳細ウインドウと同じくらいの濃さ) */
+    background:linear-gradient(100deg,color-mix(in srgb,var(--pc) 22%,rgba(8,12,24,.62)) 0%,rgba(8,12,24,.56) 45%);
+    -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);text-shadow:0 1px 3px rgba(0,0,0,.85);
     border:1px solid color-mix(in srgb,var(--pc) 55%,transparent);border-left:3px solid var(--pc);
-    box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 22px color-mix(in srgb,var(--pc) 28%,transparent);}
+    box-shadow:0 10px 30px rgba(0,0,0,.3),0 0 22px color-mix(in srgb,var(--pc) 22%,transparent);}
   #fxBanner.show{display:block;animation:fxIn .4s cubic-bezier(.16,1,.3,1) both;}
   #fxBanner.out{animation:fxOut .28s ease-in both;}
   @keyframes fxIn{from{transform:translateX(calc(100% + 30px));opacity:.3;}to{transform:none;opacity:1;}}
@@ -914,13 +916,15 @@
   /* ---------- 選択の1行の帯 (main.js の pickRibbon) ----------
      右上の箱の代わりに、手札のすぐ上に1行だけ出す。盤面が透けるよう半透明。
      [効果の元のカード] 何を選ぶか [戻る] [しない]。決定は押したカードのそばに浮かぶ (#pickGo) */
-  .pick-ribbon{position:fixed;left:50%;bottom:calc(var(--hand-gap, 14vh) + 10px);transform:translateX(-50%);z-index:32;
-    display:flex;align-items:center;gap:8px;max-width:min(620px,calc(100vw - 16px));padding:6px 8px 6px 6px;
+  /* 左右 8px の間で中央に置く (left:50% と半分ずらしでは、使える幅が画面の右半分になり文が折り返していた) */
+  .pick-ribbon{position:fixed;left:8px;right:8px;margin-inline:auto;bottom:calc(var(--hand-gap, 14vh) + 10px);z-index:32;
+    /* 狭い画面ではボタンを次の行へ回す (文の幅が0まで縮んで縦書きのようになっていた) */
+    display:flex;flex-wrap:wrap;justify-content:flex-start;align-items:center;gap:6px 8px;width:fit-content;max-width:min(620px,calc(100vw - 16px));padding:6px 8px 6px 6px;
     background:rgba(10,8,18,.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
     border:1px solid rgba(255,79,163,.45);clip-path:var(--cut-s);font-family:var(--font-ui);
     animation:ribbonIn .2s cubic-bezier(.16,1,.3,1);}
   #arrOv .pick-ribbon{pointer-events:auto;}   /* 並べ替えの重ね (#arrOv) は触れないので、帯だけ触れるように */
-  @keyframes ribbonIn{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+  @keyframes ribbonIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
   .pick-ribbon .rb-peek{flex:none;width:32px;height:32px;display:grid;place-items:center;cursor:pointer;padding:0;
     background:rgba(8,12,22,.8);border:1px solid rgba(255,255,255,.22);border-radius:6px;font-size:15px;line-height:1;}
   .pick-ribbon .rb-peek[aria-pressed="true"]{border-color:var(--cyan);background:rgba(185,164,255,.22);}
@@ -931,11 +935,15 @@
     background:color-mix(in srgb,var(--accent) 22%,rgba(8,10,20,.9));border:1px solid color-mix(in srgb,var(--accent) 70%,transparent);
     border-radius:6px;color:#fff;font:800 11px/1 var(--font-ui);letter-spacing:.06em;white-space:nowrap;}
   .pick-ribbon .rb-src img{width:22px;height:31px;object-fit:cover;border-radius:3px;display:block;}
-  .pick-ribbon .rb-q{flex:1;min-width:0;font:700 12.5px/1.35 system-ui;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8);}
+  .pick-ribbon .rb-q{flex:1 1 10em;min-width:9em;font:700 12.5px/1.35 system-ui;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8);}
   .pick-ribbon .rb-q em{font-style:normal;font-weight:900;color:var(--cyan);margin-left:4px;}
   .pick-ribbon .rb-btn{flex:none;min-height:32px;padding:0 12px;cursor:pointer;border:1px solid rgba(255,255,255,.28);
     background:rgba(8,12,22,.8);color:#fff;font:800 11px/1 var(--font-ui);letter-spacing:.08em;clip-path:var(--cut-s);white-space:nowrap;}
   .pick-ribbon .rb-btn.skip{border-color:var(--pink);}
+  .pick-ribbon .rb-btn.ok{background:var(--pink);border-color:var(--pink);min-width:64px;}
+  .pick-ribbon .rb-act{display:flex;gap:6px;margin-left:auto;}   /* ボタンはまとめて右に (折り返しても一緒) */
+  /* 帯が出ている間 (選択の最中) は、使えない UNDO・HINT・REFRESH を隠す (縦持ちでは帯と重なる) */
+  body:has(.pick-ribbon) #assist,body:has(.pick-ribbon) #btnRefresh{visibility:hidden;}
   .pick-ribbon .rb-btn:hover,.pick-ribbon .rb-btn:focus-visible,.pick-ribbon .rb-src:focus-visible{filter:brightness(1.25);outline:0;}
   @media (orientation:landscape) and (max-height:500px){
     .pick-ribbon{padding:4px 6px 4px 4px;gap:6px;max-width:min(560px,calc(100vw - 120px));}
@@ -2591,7 +2599,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=726f1cfcb9",
+      "./js3d/main.js": "./js3d/main.js?v=24ca4a4dbd",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=6398fed15e",
       "./js3d/panel.js": "./js3d/panel.js?v=ecb8a073e3",
       "./js3d/plates.js": "./js3d/plates.js?v=70ffa14b87",
@@ -2710,6 +2718,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=726f1cfcb9"></script>
+  <script type="module" src="js3d/main.js?v=24ca4a4dbd"></script>
 </body>
 </html>

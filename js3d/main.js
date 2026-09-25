@@ -878,6 +878,34 @@ function mountTraining() {
 }
 
 /* 着地パッドの意匠: 角丸の枠 + 内側のごく薄い塗り */
+const laneGlows = [];
+/* ライン1本の光の帯: 縁が明るく、中はうっすら */
+function laneTexture() {
+  const W = 128, H = 880;
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d');
+  const g = ctx.createLinearGradient(0, 0, W, 0);
+  g.addColorStop(0, 'rgba(255,255,255,1)');
+  g.addColorStop(0.06, 'rgba(255,255,255,.3)');
+  g.addColorStop(0.2, 'rgba(255,255,255,.05)');
+  g.addColorStop(0.8, 'rgba(255,255,255,.05)');
+  g.addColorStop(0.94, 'rgba(255,255,255,.3)');
+  g.addColorStop(1, 'rgba(255,255,255,1)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+  /* 両端 (盤の奥と手前) はぼかして消す */
+  ctx.globalCompositeOperation = 'destination-in';
+  const v = ctx.createLinearGradient(0, 0, 0, H);
+  v.addColorStop(0, 'rgba(0,0,0,0)');
+  v.addColorStop(0.1, 'rgba(0,0,0,1)');
+  v.addColorStop(0.9, 'rgba(0,0,0,1)');
+  v.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = v;
+  ctx.fillRect(0, 0, W, H);
+  return new THREE.CanvasTexture(cv);
+}
+
 function padTexture() {
   const S = 256;
   const cv = document.createElement('canvas');
@@ -976,6 +1004,29 @@ function buildPads() {
       pads.push(pad);
     }
   }
+  /* ライン全体に効く選択 (「ラインを1つ選び、そこのカードを全部〜」など) は、両側の置き場ではなく
+     ライン1本を縦に貫く光の帯で示す (自分の場と相手の場が別々に光ると、どちらに効くのか分かりにくかった) */
+  const laneGeo = new THREE.PlaneGeometry(CARD.w * 1.36, 9.4);
+  laneGeo.rotateX(-Math.PI / 2);
+  const laneTex = laneTexture();
+  for (let line = 0; line < 3; line++) {
+    const glow = new THREE.Mesh(laneGeo, new THREE.MeshBasicMaterial({
+      map: laneTex, color: COLOR.gold, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending
+    }));
+    glow.position.set(BOARD.laneX[line], 0.005, 0);
+    glow.renderOrder = 2;
+    glow.raycast = () => {};
+    glow.userData = { line, on: false };
+    stage.scene.add(glow);
+    laneGlows.push(glow);
+  }
+  stage.onFrame((dt, t) => {
+    for (const g of laneGlows) {
+      const want = g.userData.on ? 0.3 + 0.16 * Math.sin(t * 4.4 + g.userData.line) : 0;   // 板の文字を飛ばさない強さ
+      g.material.opacity += (want - g.material.opacity) * 0.25;
+      g.visible = g.material.opacity > 0.01;
+    }
+  });
   stage.onFrame((dt, t) => {
     for (const pad of pads) {
       if (pad.userData.pulse <= 0) { pad.material.opacity += (0 - pad.material.opacity) * 0.2; continue; }
@@ -1201,6 +1252,8 @@ function bindInput() {
        操作できない場面 (相手ターン・選択待ち) でもテキストは読めるようにする */
     const hit = pickWithHand(ev);
     showPreview((hit && hit.obj.userData.uid) || null);
+    /* 選択の帯を透かしている間は、触ったカードの効果を見るだけ (選ばない) */
+    if (ribbonPeeking()) return;
     /* 盤面対象選択モード中はタップを選択として扱う。
        ラインの判定はメッシュに頼らず、盤面平面の座標から最寄りレーンを取る
        (パネルやパッドの当たり判定に依存しない) */
@@ -1546,9 +1599,18 @@ function clearPreview() {
   previewUid = null;
 }
 
+/* 選択の帯を目のボタンで透かしている間か (このあいだはカードを触っても選ばず、効果を見るだけ) */
+function ribbonPeeking() { return !!document.querySelector('.pick-ribbon.peek'); }
+
 function showPreview(uid) {
   const box = document.getElementById('preview');
   if (!box) return;
+  /* 目の状態: どこのカードでも (選ぶ候補でも) 効果を出す。INFO をしまっていても見えるよう小さな表示で */
+  if (uid && ribbonPeeking()) {
+    previewUid = uid;
+    showCardInspector(uid);
+    return;
+  }
   if (isCompactHandUI()) {
     /* 対象選択中に候補を触ったのは「選ぶ」操作。効果パネルで選択帯を隠さない */
     if (uid && boardPick && Array.isArray(boardPick.req.candidates) && boardPick.req.candidates.includes(uid)) {
@@ -2552,26 +2614,18 @@ function pickOnBoard(req) {
         el.className = 'arr-bar';
         document.body.appendChild(el);
       }
-      /* 質問と はい/いいえ を離すと、何に答えているのか分からなくなる。
-         同じ帯にまとめて出す。 */
-      /* 手札のすぐ上に出す。盤面に重なるので、目ボタンで隠して盤面を見られる */
-      el.className = 'arr-bar';
-      el.classList.add('with-ask', 'confirm');
-      el.innerHTML =
-        pickBarAsk(req) +
-        '<div class="arr-btns">' +
-          PEEK_BTN +
-          '<button class="arr-btn ok" id="pkYes" type="button">YES</button>' +
-          '<button class="arr-btn" id="pkNo" type="button">NO</button>' +
-        '</div>';
+      /* 質問と はい/いいえ を同じ1行の帯に (選択の帯と同じ形)。手札のすぐ上、PC の広い画面では効果を出したカードのそば */
+      el.className = 'pick-ribbon';
+      el.innerHTML = pickRibbon(req, {
+        extra: '<button type="button" class="rb-btn ok" id="pkYes">YES</button><button type="button" class="rb-btn" id="pkNo">NO</button>'
+      });
       bindPickBar(el);
+      bindRibbon(el, {});
       let done = (picks) => {
         boardPick = null;
-        el.classList.remove('with-ask', 'confirm', 'peek', 'near-card');
         removePickBar();
         resolve(picks);
       };
-      bindPeek(el);
       placeNearSource(el, req);
       /* PC の近道: Enter = はい、Esc = いいえ、盤面で右クリック = いいえ */
       const onKey = (ev) => {
@@ -2743,10 +2797,12 @@ function pickRibbon(req, m) {
           (d ? '<img alt="" src="' + faceImageURL(d) + '">' : '') + '<b>' + esc(s.name) + '</b></button>'
       : '') +
     '<span class="rb-q">' + esc(questionText(req)) + (m.max > 1 ? ' <em>' + (m.count || 0) + '/' + m.max + '</em>' : '') + '</span>' +
-    (m.back ? '<button type="button" class="rb-btn" id="pkBack">← 戻る</button>' : '') +
-    (m.skip ? '<button type="button" class="rb-btn skip" id="pkSkip">しない</button>' : '') +
-    (m.none ? '<button type="button" class="rb-btn skip" id="pkNone">選ばない</button>' : '');
+    ribbonActs((m.back ? '<button type="button" class="rb-btn" id="pkBack">← 戻る</button>' : '') +
+      (m.skip ? '<button type="button" class="rb-btn skip" id="pkSkip">しない</button>' : '') +
+      (m.none ? '<button type="button" class="rb-btn skip" id="pkNone">選ばない</button>' : '') + (m.extra || ''));
 }
+/* 帯のボタンはひとまとめにする (折り返すときも一緒に右へ) */
+function ribbonActs(html) { return html ? '<span class="rb-act">' + html + '</span>' : ''; }
 /* 帯の目ボタン: 押すと帯を透かして下の盤面を見られる。同じ選択の描き直しでも透かしたまま (もう一度で戻る) */
 let ribbonPeekReq = null;
 function bindRibbon(el, on) {
@@ -2754,7 +2810,13 @@ function bindRibbon(el, on) {
   const peek = el.querySelector('.rb-peek');
   const setPeek = (v) => { el.classList.toggle('peek', v); if (peek) peek.setAttribute('aria-pressed', String(v)); };
   setPeek(!!req && ribbonPeekReq === req);
-  if (peek) peek.onclick = (ev) => { ev.stopPropagation(); const v = !el.classList.contains('peek'); ribbonPeekReq = v ? req : null; setPeek(v); };
+  if (peek) peek.onclick = (ev) => {
+    ev.stopPropagation();
+    const v = !el.classList.contains('peek');
+    ribbonPeekReq = v ? req : null;
+    setPeek(v);
+    if (v) UI.toast('触ったカードの効果を見られます (目をもう一度押すと選択に戻ります)', 2200);
+  };
   const src = el.querySelector('.rb-src');
   if (src) src.onclick = (ev) => { ev.stopPropagation(); showCardNoteFor(src.dataset.def); };
   for (const [id, fn] of [['#pkBack', on.back], ['#pkSkip', on.skip], ['#pkNone', on.none]]) {
@@ -2779,15 +2841,19 @@ function renderFreePick() {
   if (!el) {
     el = document.createElement('div');
     el.id = 'pickBar';
-    el.className = 'arr-bar';
     document.body.appendChild(el);
   }
-  el.innerHTML =
-    (bp.sel ? '<button class="arr-btn" id="pkBack" type="button">カードを選び直す</button>' : '') +
-    '<button class="arr-btn" id="pkList" type="button">リストで選ぶ</button>';
+  /* ほかの選択と同じ1行の帯: 何の効果で、何をするか (カードを選ぶ → 置くラインを選ぶ) */
+  el.className = 'pick-ribbon';
+  el.innerHTML = pickRibbon({ ...bp.req, prompt: bp.sel ? 'play-free-line' : bp.req.prompt }, {
+    extra: bp.sel ? '<button type="button" class="rb-btn" id="pkBack">カードを選び直す</button>' : ''
+  });
+  const q = el.querySelector('.rb-q');
+  if (q) q.textContent = bp.sel ? '置くラインをタップ' : 'プレイするカードを選ぶ';
+  bindPickBar(el);
+  bindRibbon(el, {});
   const back = el.querySelector('#pkBack');
-  if (back) back.onclick = () => { bp.sel = null; renderFreePick(); };
-  el.querySelector('#pkList').onclick = () => finishFreePick(null);
+  if (back) back.onclick = (ev) => { ev.stopPropagation(); bp.sel = null; renderFreePick(); };
 }
 
 function tapFreePick(hitUd) {
@@ -2869,8 +2935,10 @@ function lineSideFor(req) {
 function setLineTargets(lines, side) {
   const set = new Set(lines || []);
   const st = shown();
+  const whole = side === null || side === undefined;       // ライン全体: 置き場ではなく帯で示す
+  for (const g of laneGlows) g.userData.on = whole && set.has(g.userData.line);
   for (const pad of pads) {
-    const on = set.has(pad.userData.line) && (side === null || side === undefined || pad.userData.side === side);
+    const on = !whole && set.has(pad.userData.line) && pad.userData.side === side;
     pad.userData.pulse = on ? 0.95 : 0;
     pad.userData.hover = on;
     if (on && st) {
@@ -2883,6 +2951,7 @@ function setLineTargets(lines, side) {
 
 function clearLineTargets() {
   for (const pad of pads) { pad.userData.pulse = 0; pad.userData.hover = false; }
+  for (const g of laneGlows) g.userData.on = false;
 }
 
 function toggleBoardPick(uid) {
@@ -3033,6 +3102,7 @@ function arrangeOnBoard(req, opts) {
     window.addEventListener('resize', onResize);
     let tapLine = null;                          // 盤面の板をタップしたとき (帯の名前を押したのと同じ扱い)
     const onPlate = (ev) => {
+      if (arrPeek) return;                       // 目の状態: 板は入れ替えず、触ったカードの効果を見るだけ
       const h = hitPos(ev);
       if (!h) return;
       ev.stopImmediatePropagation();
@@ -3102,11 +3172,16 @@ function arrangeOnBoard(req, opts) {
           (s ? '<button type="button" class="rb-src" data-def="' + esc(s.def) + '" style="--accent:' + esc(s.color || '#b9a4ff') + '" title="効果を読む">' +
             (d ? '<img alt="" src="' + faceImageURL(d) + '">' : '') + '<b>' + esc(s.name) + '</b></button>' : '') +
           '<span class="rb-q">' + esc(text) + '</span>' +
-          (targetSide === null || isIdentity ? '' : '<button type="button" class="rb-btn" id="arrReset">やり直し</button>') +
-          (control ? '<button type="button" class="rb-btn skip" id="arrSkip">並べ替えない</button>' : '') +
+          ribbonActs((targetSide === null || isIdentity ? '' : '<button type="button" class="rb-btn" id="arrReset">やり直し</button>') +
+            (control ? '<button type="button" class="rb-btn skip" id="arrSkip">並べ替えない</button>' : '')) +
         '</div>';
       const peekBtn = ov.querySelector('.rb-peek');
-      if (peekBtn) peekBtn.onclick = (ev) => { ev.stopPropagation(); arrPeek = !arrPeek; render(); };
+      if (peekBtn) peekBtn.onclick = (ev) => {
+        ev.stopPropagation();
+        arrPeek = !arrPeek;
+        render();
+        if (arrPeek) UI.toast('触ったカードの効果を見られます (目をもう一度押すと入れ替えに戻ります)', 2200);
+      };
       const srcBtn = ov.querySelector('.rb-src');
       if (srcBtn) srcBtn.onclick = (ev) => { ev.stopPropagation(); showCardNoteFor(srcBtn.dataset.def); };
 
