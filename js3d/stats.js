@@ -57,6 +57,7 @@ export function mergeRecords(remote) {
 /* 1戦を記録する。me / opp: プロトコル名3つ、win: 勝ったか、level: 難易度 (aidecks.js の番号 / 不明なら null)
    extra: { turns: 決着までの手番の数 (両者合計), feats: 取った実績の id, cards: 自分が表で出したカードの defId,
             effects: { defId: 自分のそのカードの効果が発動した回数 } } */
+const MODES = ['cpu', 'quick', 'run', 'weekly', 'tutorial'];
 export function recordSoloResult(me, opp, win, level, extra) {
   const list = records();
   const at = Date.now();
@@ -64,7 +65,9 @@ export function recordSoloResult(me, opp, win, level, extra) {
   const rec = { id: 't' + at + '_' + Math.random().toString(36).slice(2, 6), me: me.slice(), opp: opp.slice(),
     win: !!win, level: level === undefined ? null : level, at,
     turns: Number.isInteger(x.turns) ? x.turns : null, feats: Array.isArray(x.feats) ? x.feats.slice() : [],
-    cards: Array.isArray(x.cards) ? x.cards.slice(0, 64) : [], effects: cleanEffects(x.effects) };
+    cards: Array.isArray(x.cards) ? x.cards.slice(0, 64) : [], effects: cleanEffects(x.effects),
+    /* どのモードの対戦か (管理者の画面で数える) */
+    ...(MODES.includes(x.mode) ? { mode: x.mode } : {}) };
   list.push(rec);
   save(list);
   if (hooks.onRecord) hooks.onRecord(rec);

@@ -3364,7 +3364,8 @@ async function afterTurn() {
       recordSoloResult(st0.players[ME].protocols.map(p => p.name), st0.players[AI].protocols.map(p => p.name), win, aiDifficulty,
         { turns: (st0.turns || 0) + 1,       // 決着した手番も1つと数える
           cards: ((st0.tally && st0.tally.faceUp[ME]) || []).slice(),
-          effects: (st0.tally && st0.tally.effects && st0.tally.effects[ME]) || {} });
+          effects: (st0.tally && st0.tally.effects && st0.tally.effects[ME]) || {},
+          mode: runMode ? runKind : tutorial ? 'tutorial' : params.get('quick') === '1' ? 'quick' : 'cpu' });
       refreshCardGlow();
       if (replayLog) {
         lastReplayId = addReplay({ me: replayLog.init.p0, opp: replayLog.init.p1, win, level: aiDifficulty,

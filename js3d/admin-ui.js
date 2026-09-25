@@ -13,6 +13,23 @@ const FREE_DB = 500 * 1024 * 1024;           // Supabase 無料プランのデ�
 const mb = (n) => (n / 1024 / 1024).toFixed(n < 10 * 1024 * 1024 ? 2 : 1) + ' MB';
 const when = (t) => new Date(t).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
+/* 管理者の画面 (PLAYERS): モードの呼び名と、人ごとの回数の札 */
+const MODE_LABEL = {
+  cpu: '対 CPU 戦', quick: 'おまかせで1戦', run: '勝ち抜き戦', weekly: '週替わり3連戦', tutorial: 'チュートリアル',
+  'cpu?': '対戦 (モード不明)', online: 'オンライン対戦', lesson: 'チュートリアル', tsume: '詰めコンパイル',
+  puzzle: '共有された問題', daily: 'デイリーミッション'
+};
+function modeChips(p) {
+  const m = p.modes || {}, x = p.xp || {};
+  const items = [
+    ['対 CPU 戦', m.cpu], ['おまかせ', m.quick], ['勝ち抜き戦', m.run], ['週替わり', m.weekly], ['チュートリアル (対戦)', m.tutorial],
+    ['対戦 (不明)', m.unknown], ['オンライン', x.online], ['レッスン', x.lesson], ['詰めコンパイル', x.tsume], ['今日の問題', x.dailyPuzzle],
+    ['共有された問題', x.puzzle], ['勝ち抜き戦クリア', x.runClear], ['週替わりクリア', x.weeklyClear], ['デイリー', x.daily], ['ガチャ', +p.gacha || 0]
+  ].filter(([, n]) => n > 0);
+  const run = p.run && p.run !== 'over' && p.run !== 'clear' ? '<i class="now">勝ち抜き戦の途中</i>' : '';
+  return '<div class="ad-modes">' + (items.length ? items.map(([k, n]) => '<i>' + k + ' <b>' + n + '</b></i>').join('') : '<i class="none">記録なし</i>') + run + '</div>';
+}
+
 function statsHtml(s) {
   const pct = Math.min(100, Math.round(100 * s.db_bytes / FREE_DB));
   const rooms = s.rooms || {};
@@ -64,11 +81,13 @@ export function openAdmin() {
       const list = r.players || [];
       const day = (t) => (t ? new Date(t).toLocaleDateString('ja-JP', { year: 'numeric', month: 'numeric', day: 'numeric' }) : '—');
       const via = { google: 'Google', email: 'メール', github: 'GitHub' };
-      body.innerHTML = '<p class="pz-note">ログインしている ' + list.length + ' 人 (ゲストは含みません)。表示名は本人が決めた名前です。</p>' +
+      body.innerHTML = '<p class="pz-note">ログインしている ' + list.length + ' 人 (ゲストは含みません)。表示名は本人が決めた名前です。' +
+        '対戦のモードは 9/25 から記録しています (それより前の対戦は「対戦 (不明)」)。</p>' +
         (list.length ? '<ol class="ad-players">' + list.map(p =>
           '<li><b>' + (p.name ? esc(p.name) : '<i>名前なし</i> <small>#' + esc(p.id) + '</small>') + '</b>' +
             '<span>' + esc(via[p.provider] || p.provider || '') + ' ・ 登録 ' + day(p.created_at) + ' ・ 最後 ' + day(p.last_active) + '</span>' +
-            '<em>CPU 戦 ' + (p.games | 0) + '戦 ' + (p.wins | 0) + '勝</em></li>').join('') + '</ol>'
+            '<em>' + (p.last_mode ? '最後に遊んだ: ' + esc(MODE_LABEL[p.last_mode] || p.last_mode) : 'まだ遊んでいない') + '</em>' +
+            modeChips(p) + '</li>').join('') + '</ol>'
           : '<p class="pz-note">まだいません</p>');
     },
     async () => {

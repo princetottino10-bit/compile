@@ -58,11 +58,13 @@ const toRow = (r) => ({
   level: Number.isInteger(r.level) ? r.level : null, played_at: new Date(r.at).toISOString(),
   turns: Number.isInteger(r.turns) ? r.turns : null, feats: Array.isArray(r.feats) ? r.feats.slice(0, 32) : [],
   cards: Array.isArray(r.cards) ? r.cards.slice(0, 64) : [],
-  effects: r.effects && typeof r.effects === 'object' ? r.effects : {}
+  effects: r.effects && typeof r.effects === 'object' ? r.effects : {},
+  mode: ['cpu', 'quick', 'run', 'weekly', 'tutorial'].includes(r.mode) ? r.mode : null
 });
 const fromRow = (row) => ({
   id: row.id, me: row.me, opp: row.opp, win: row.win, level: row.level, at: Date.parse(row.played_at),
-  turns: row.turns, feats: row.feats || [], cards: row.cards || [], effects: row.effects || {}
+  turns: row.turns, feats: row.feats || [], cards: row.cards || [], effects: row.effects || {},
+  ...(row.mode ? { mode: row.mode } : {})
 });
 
 const xpToRow = (e) => ({ id: e.id, src: e.src, xp: e.xp, earned_at: new Date(e.at).toISOString() });
