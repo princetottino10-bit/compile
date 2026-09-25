@@ -48,7 +48,7 @@ test('3回選ぶとデッキができ、はじめのパッチを3つから選ん
   let hot = R.newRun(NAMES, seq(), 5);
   for (let k = 0; k < 3; k++) hot = R.draftPick(hot, hot.offers[0], NAMES, seq());
   assert.equal(hot.phase, 'map', 'HEAT 5 ははじめのパッチ無し');
-  assert.equal(hot.maxLife, R.RUN_LIFE - 1, 'HEAT 1 以上はライフ −1');
+  assert.equal(hot.maxLife, R.RUN_LIFE - R.HEAT_LIFE, 'HEAT 1 以上はライフが減る');
 });
 
 test('地図: 12段、0段目は戦闘・5段目は宝箱・10段目は休憩所・最上段は BOSS。どのマスにも下から道があり、BOSS まで登れる', async () => {
@@ -124,7 +124,7 @@ test('休憩所: 休む (回復) か 研ぐ (カード除去)。除去したカ�
   const { R, run } = await started();
   const rest = goTo(R, { ...run, life: 2 }, 'rest');
   assert.equal(rest.phase, 'rest');
-  assert.equal(R.restHeal(rest).life, 4);
+  assert.equal(R.restHeal(rest).life, 2 + R.RUN_HEAL);
   const rm = R.restRemove(rest);
   assert.equal(rm.phase, 'remove');
   const card = rm.deck[0] + '_2';
@@ -158,7 +158,7 @@ test('ショップ: パッチを買う・カード除去 (買うたびに値上�
   assert.equal(rm2.phase, 'shop');
   assert.equal(rm2.removeCost, 7);
   const healed = R.buyHeal(rm2);
-  assert.equal(healed.life, 5);
+  assert.equal(healed.life, 3 + R.RUN_HEAL);
   const hurt = { ...healed, life: 3 };
   assert.equal(R.buyHeal(hurt), hurt, '修理は1回だけ');
   assert.equal(R.leaveShop(healed).phase, 'map');
@@ -188,7 +188,7 @@ test('宝箱・イベント: 宝箱はパッチ、祭壇は呪いの試合、保
   assert.equal(purge.phase, 'remove');
   assert.equal(purge.life, R.RUN_LIFE - 1);
   const repair = R.resolveEvent({ ...ev, event: 'repair', life: 2 }, 0, NAMES, seq());
-  assert.equal(repair.life, 4);
+  assert.equal(repair.life, 5);
   assert.equal(repair.phase, 'map');
   assert.equal(R.resolveEvent({ ...ev, event: 'shady', life: 1 }, 0, NAMES, seq()).phase, 'event', 'ライフ 1 では拾えない');
 });

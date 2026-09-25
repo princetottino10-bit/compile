@@ -281,7 +281,7 @@ export function openRun(protocols, cardsOf, opts) {
             '<div class="rn-patchlist">' + items + '</div>' +
             '<div class="rn-routes">' +
               '<button type="button" class="rn-route smith" data-act="buyRemove"' + (RUN.canRemove(run) && credits >= rp ? '' : ' disabled') + '><small>' + rp + ' CR</small><b>カード除去</b><span>デッキから1枚外す (買うたびに +2)</span></button>' +
-              '<button type="button" class="rn-route rest" data-act="buyHeal"' + (!run.shop.healed && run.life < run.maxLife && credits >= hp ? '' : ' disabled') + '><small>' + hp + ' CR</small><b>修理</b><span>ライフ +2 (1回だけ)</span></button>' +
+              '<button type="button" class="rn-route rest" data-act="buyHeal"' + (!run.shop.healed && run.life < run.maxLife && credits >= hp ? '' : ' disabled') + '><small>' + hp + ' CR</small><b>修理</b><span>ライフ +' + RUN.RUN_HEAL + ' (1回だけ)</span></button>' +
             '</div><div class="rn-btns"><button type="button" class="rn-go" data-act="leave">店を出る</button></div>';
         }
         case 'reward':

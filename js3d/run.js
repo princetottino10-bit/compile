@@ -20,8 +20,11 @@ const BEST_KEY = 'compileRunBest';
 const HEAT_KEY = 'compileRunHeat';
 const VERSION = 2;
 
-export const RUN_LIFE = 5;
-export const RUN_HEAL = 2;
+/* 2026-09-25 の見直し: 勝っても1回はコンパイルされがち (勝ちで平均 −1、負けで −2) で、BOSS まで約 8 戦。
+   ライフ 5 だと ふつうの CPU と互角の人のクリアが 1 割ほどだったので 10 に (同じ見積もりで 3〜5 割) */
+export const RUN_LIFE = 10;
+export const RUN_HEAL = 3;
+export const HEAT_LIFE = 3;                 // HEAT 1 からのライフの減り
 /* 勝ち抜き戦の1試合は 2本先取 (通常の3本では1周が長すぎる) */
 export const RUN_WIN_COMPILES = 2;
 export const MAP_ROWS = 12;                 // 最上段が BOSS
@@ -33,7 +36,7 @@ export const NODES = {
   battle: { icon: '⚔', name: '戦闘', text: 'いつもの相手。勝てばクレジットと報酬' },
   elite: { icon: '☠', name: '精鋭', text: '強い相手。勝てばクレジット多めと、パッチを1つ' },
   event: { icon: '?', name: 'イベント', text: '何かが起きる' },
-  rest: { icon: '✚', name: '休憩所', text: 'ライフを回復するか、カードを1枚外す' },
+  rest: { icon: '✚', name: '休憩所', text: 'ライフを 3 回復するか、カードを1枚外す' },
   shop: { icon: '$', name: 'ショップ', text: 'クレジットでパッチ・カード除去・回復・GACHA' },
   treasure: { icon: '◆', name: '宝箱', text: 'パッチを3つから1つ' },
   boss: { icon: '♛', name: 'BOSS', text: '最強の CPU。倒せばクリア' }
@@ -89,7 +92,7 @@ export const EVENTS = {
   repair: {
     title: '修理ステーション', text: '古い修理機が、まだ動いている。',
     options: [
-      { label: 'ライフを 2 回復', apply: (r) => ({ ...r, life: Math.min(r.maxLife, r.life + 2) }) },
+      { label: 'ライフを 3 回復', apply: (r) => ({ ...r, life: Math.min(r.maxLife, r.life + 3) }) },
       { label: '最大ライフ +1', apply: (r) => ({ ...r, maxLife: r.maxLife + 1, life: r.life + 1 }) }
     ]
   },
@@ -133,9 +136,9 @@ export const EVENTS = {
 /* HEAT (難しさ)。上の段は下の段の条件を全部含む */
 export const HEATS = [
   { lv: 0, text: '標準' },
-  { lv: 1, text: 'はじめのライフと最大ライフ −1' },
+  { lv: 1, text: 'はじめのライフと最大ライフ −3' },
   { lv: 2, text: '「ふつう」の相手が「つよい」になる' },
-  { lv: 3, text: '休憩所の回復が +1 になる' },
+  { lv: 3, text: '休憩所の回復が 1 少なくなる (+2)' },
   { lv: 4, text: '精鋭がいつも挑戦者になる' },
   { lv: 5, text: 'はじめのパッチが無い' }
 ];
@@ -361,7 +364,7 @@ export function cancelRemove(run) {
 /* ---------- 進行 (すべて新しい状態を返す) ---------- */
 export function newRun(names, rnd = Math.random, heat = 0) {
   const h = Math.max(0, Math.min(MAX_HEAT, heat | 0));
-  const life = RUN_LIFE - (h >= 1 ? 1 : 0);
+  const life = RUN_LIFE - (h >= 1 ? HEAT_LIFE : 0);
   return { v: VERSION, phase: 'draft', deck: [], removed: [], life, maxLife: life, heat: h, patches: [], failsafeUsed: false, phoenixUsed: false,
     credits: START_CREDITS, pulls: 0, map: makeMap(rnd), pos: null, visited: [], removeCost: 5,
     offers: sample(names, 3, rnd), opp: null, route: 'normal', history: [], startedAt: Date.now() };
@@ -421,7 +424,7 @@ export function resolveEvent(run, index, names, rnd = Math.random) {
 /* ---------- 休憩所 ---------- */
 /** 回復の量 (HEAT 3 から +1) */
 export function healAmount(run) {
-  return (run.heat | 0) >= 3 ? 1 : RUN_HEAL;
+  return (run.heat | 0) >= 3 ? RUN_HEAL - 1 : RUN_HEAL;
 }
 export function restHeal(run) {
   if (run.phase !== 'rest') return run;
@@ -472,7 +475,7 @@ export function buyHeal(run) {
   if (run.phase !== 'shop' || run.shop.healed || run.life >= run.maxLife) return run;
   const price = healPrice(run);
   if ((run.credits | 0) < price) return run;
-  return { ...run, credits: run.credits - price, life: Math.min(run.maxLife, run.life + 2), shop: { ...run.shop, healed: true } };
+  return { ...run, credits: run.credits - price, life: Math.min(run.maxLife, run.life + RUN_HEAL), shop: { ...run.shop, healed: true } };
 }
 export function leaveShop(run) {
   return run.phase === 'shop' ? { ...run, phase: 'map' } : run;
