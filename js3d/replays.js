@@ -82,7 +82,8 @@ export function mergeReplays(remote) {
    途中で当てはまらない手があれば ok: false (そこまでの盤面で止める) */
 export function rebuild(Engine, rep) {
   const i = rep.init;
-  let res = Engine.newGame({ seed: i.seed, p0: i.p0, p1: i.p1, first: i.first, winCompiles: i.winCompiles || undefined });
+  let res = Engine.newGame({ seed: i.seed, p0: i.p0, p1: i.p1, first: i.first, winCompiles: i.winCompiles || undefined,
+    handSize: i.handSize, startControl: i.startControl });       // 勝ち抜き戦のパッチで変わったはじめ方
   const history = [];
   let ok = !res.error;
   for (const action of rep.actions) {

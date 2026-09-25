@@ -36,7 +36,7 @@ import { openOpponentSelect } from './opponent-select.js';
 import { UNDERDOG_DECK, STRONGEST_AI, UNDERDOG_LEVEL, levelLabel } from './aidecks.js';
 import { openRun, runHud, showRunAfterGame } from './run-ui.js';
 import { openWeekly, weeklyHud, showWeeklyAfterGame } from './weekly-ui.js';
-import { compilesBy, loadRun, RUN_WIN_COMPILES } from './run.js';
+import { compilesBy, loadRun, RUN_WIN_COMPILES, battleOpts, lethal } from './run.js';
 import { loadWeekly, weekKey } from './weekly.js';
 import { openReview } from './review.js';
 import { runRoomLobby } from './roomui.js';
@@ -533,8 +533,11 @@ async function boot() {
   }
   pruneFaceCache(keepIds);
   /* 先攻・後攻はコイントスで決める (トレーニングと問題は自分から。ドラフトはドラフトの先手) */
+  /* 勝ち抜き戦のパッチ (先攻・はじめの手札・コントロール) */
+  const runOpts = runMode && runKind === 'run' ? battleOpts(loadRun() || { patches: [] }, ME) : null;
   const firstPlayer = trainingMode || puzzle || tutorial || demoMode ? ME
-    : chosenFirst !== null ? chosenFirst : (Math.random() < 0.5 ? ME : AI);
+    : runOpts && runOpts.first !== undefined ? runOpts.first
+      : chosenFirst !== null ? chosenFirst : (Math.random() < 0.5 ? ME : AI);
   const seed = (Math.random() * 1e9) | 0;
   const winCompiles = runMode ? RUN_WIN_COMPILES : undefined;
   const replayBuilt = replayMode ? rebuild(Engine, replayMode) : null;
@@ -544,12 +547,14 @@ async function boot() {
       ? Engine.newPuzzle(puzzle.spec, { seed: 1 })
       : tutorial
         ? Engine.newPuzzle(tutorial.lesson.spec, { seed: 1 })
-        : Engine.newGame({ seed, p0, p1, first: firstPlayer, training: trainingMode, winCompiles });
+        : Engine.newGame({ seed, p0, p1, first: firstPlayer, training: trainingMode, winCompiles,
+          ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl } : {}) });
   cur = res;
   if (!trainingMode && !puzzle && !tutorial && !demoMode && !replayMode) lastSetup = { p0: p0.slice(), p1: p1.slice() };
   /* CPU 戦は棋譜を取る (決着したらリプレイとして残す) */
   replayLog = !replayMode && !trainingMode && !puzzle && !tutorial && !demoMode
-    ? { init: { seed, p0: p0.slice(), p1: p1.slice(), first: firstPlayer, winCompiles: winCompiles || null }, actions: [] } : null;
+    ? { init: { seed, p0: p0.slice(), p1: p1.slice(), first: firstPlayer, winCompiles: winCompiles || null,
+      ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl } : {}) }, actions: [] } : null;
   if (trainingMode) training.protos = [p0.slice(), p1.slice()];
   window.__3d = {
     stage, board, THREE, LAYOUT,
@@ -3823,7 +3828,7 @@ function syncPanels(st, animate) {
     const lost = compilesBy(st, AI);
     runHud(lost);
     const run = loadRun();
-    if (run && lost >= run.life) {
+    if (run && lethal(run, lost)) {
       runEnded = true;
       showRunAfterGame(false, lost, Object.values(protoIndex));
     }

@@ -9,7 +9,7 @@
  * ========================================================================= */
 
 /* まとめて保存する項目。一時的な印 (ログインから戻った印など) は入れない */
-export const SAVE_KEYS = ['compileSettings', 'compileRun', 'compileRunBest', 'compileRunKind',
+export const SAVE_KEYS = ['compileSettings', 'compileRun', 'compileRunBest', 'compileRunHeat', 'compileRunKind',
   'compileWeekly', 'compileOppLast', 'compileDaily', 'compileTrophies', 'compileRoomName'];
 const META = 'compileCloudMeta';     // { user, hash: 最後に同期した中身, at: そのときのアカウント側の時刻 }
 const MAX_BYTES = 60000;
@@ -57,6 +57,8 @@ export function cleanRemote(data) {
 function betterBest(a, b) {
   try {
     const x = JSON.parse(a) || {}, y = JSON.parse(b) || {};
+    const hx = Number(x.heat) || 0, hy = Number(y.heat) || 0;           // HEAT (難しさ) が高い方を先に比べる
+    if (hx !== hy) return hy > hx ? b : a;
     const rx = Number(x.reached) || 0, ry = Number(y.reached) || 0;
     return ry > rx || (ry === rx && (Number(y.life) || 0) > (Number(x.life) || 0)) ? b : a;
   } catch (e) {
@@ -77,6 +79,8 @@ function unionTrophies(a, b) {
 }
 /* どちらを正にしても、残すべきもの (RUN の最高記録・実績) は合わせる */
 function keepBest(merged, local, rd) {
+  /* 解放した HEAT は大きい方 */
+  if (local.compileRunHeat || rd.compileRunHeat) merged.compileRunHeat = String(Math.max(parseInt(local.compileRunHeat, 10) || 0, parseInt(rd.compileRunHeat, 10) || 0));
   if (local.compileRunBest && rd.compileRunBest) merged.compileRunBest = betterBest(local.compileRunBest, rd.compileRunBest);
   else if (rd.compileRunBest && !merged.compileRunBest) merged.compileRunBest = rd.compileRunBest;
   if (local.compileTrophies || rd.compileTrophies) merged.compileTrophies = unionTrophies(local.compileTrophies, rd.compileTrophies);

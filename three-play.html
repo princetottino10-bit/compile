@@ -2189,6 +2189,62 @@
   .rn-mcard + .rn-mcard button.rn-go{background:var(--violet);}
   .rn-mcard button.rn-go:hover,.rn-mcard button.rn-go:focus-visible{filter:brightness(1.15);outline:0;}
   @media (max-width:560px){ .rn-modes{grid-template-columns:1fr;} }
+  /* 勝ち抜き戦のローグライク要素: HEAT・パッチ・道・イベント */
+  .rn-heat{display:flex;flex-wrap:wrap;align-items:center;gap:5px;}
+  .rn-heat small{font:800 10px/1 var(--font-hud,var(--font-ui));letter-spacing:.2em;color:var(--gold);margin-right:4px;}
+  .rn-heat button{min-height:0!important;width:30px;height:28px;padding:0;cursor:pointer;border:1px solid rgba(255,255,255,.18);
+    background:rgba(255,255,255,.04);color:var(--ink);font:800 12px/1 var(--font-hud,var(--font-ui))!important;letter-spacing:0!important;clip-path:var(--cut-s);}
+  .rn-heat button.on{background:var(--gold);border-color:var(--gold);color:#1a1405;}
+  .rn-heat span{flex-basis:100%;font:600 10.5px/1.45 system-ui;color:var(--dim);}
+  .rn-patches{display:flex;flex-wrap:wrap;gap:5px;}
+  .rn-pchip,.rn-heatb{padding:4px 8px;font:800 10px/1 var(--font-hud,var(--font-ui));letter-spacing:.1em;clip-path:var(--cut-s);
+    border:1px solid rgba(185,164,255,.45);background:rgba(139,92,246,.14);color:#e4dbff;cursor:help;}
+  .rn-pchip.game{border-color:rgba(255,179,218,.5);background:rgba(255,79,163,.14);color:#ffd6ea;}
+  .rn-pchip.used{opacity:.4;text-decoration:line-through;}
+  .rn-heatb{border-color:var(--gold);background:rgba(255,200,90,.14);color:var(--gold);cursor:default;}
+  .rn-patchlist,.rn-routes{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;}
+  .rn-patch,.rn-route{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:14px 14px 16px;cursor:pointer;text-align:left;
+    border:1px solid rgba(185,164,255,.35);background:rgba(139,92,246,.1);color:var(--ink);clip-path:var(--cut);
+    transition:transform .15s,border-color .15s,background .15s;}
+  .rn-patch small,.rn-route small{font:800 9.5px/1 var(--font-hud,var(--font-ui));letter-spacing:.22em;color:var(--lav);}
+  .rn-patch b,.rn-route b{font:900 16px/1.2 var(--font-ui);color:#fff;letter-spacing:.04em;}
+  .rn-patch span,.rn-route span{font:600 12px/1.55 system-ui;color:var(--ink);}
+  .rn-patch.game{border-color:rgba(255,179,218,.45);background:rgba(255,79,163,.1);}
+  .rn-patch.game small{color:var(--pink);}
+  .rn-route.elite{border-color:rgba(255,200,90,.55);background:rgba(255,200,90,.08);}
+  .rn-route.elite small{color:var(--gold);}
+  .rn-route.event{border-color:rgba(160,123,255,.5);}
+  .rn-route.event b{font-size:14px;line-height:1.45;}
+  .rn-patch:hover,.rn-patch:focus-visible,.rn-route:not(:disabled):hover,.rn-route:not(:disabled):focus-visible{transform:translateY(-2px);border-color:var(--pink);outline:0;}
+  .rn-route:disabled{opacity:.4;cursor:not-allowed;}
+  .rn-elite{color:var(--gold)!important;font-weight:800;letter-spacing:.06em;}
+  .rn-credit{padding:4px 8px;font:800 10px/1 var(--font-hud,var(--font-ui));letter-spacing:.1em;clip-path:var(--cut-s);
+    border:1px solid rgba(120,230,200,.5);background:rgba(120,230,200,.1);color:#bff5e6;cursor:help;}
+  .rn-patch.rE{border-color:rgba(255,200,90,.7);box-shadow:inset 0 0 22px rgba(255,200,90,.14);}
+  .rn-patch.rR{border-color:rgba(120,190,255,.55);}
+  /* GACHA */
+  .rn-gacha{display:flex;flex-direction:column;gap:10px;padding:12px 14px;border:1px dashed rgba(120,230,200,.35);background:rgba(120,230,200,.04);}
+  .rn-gacha-h{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;}
+  .rn-gacha-h b{font:900 15px/1 var(--font-hud,var(--font-ui));letter-spacing:.2em;color:#bff5e6;}
+  .rn-gacha-h span{font:600 10.5px/1.45 system-ui;color:var(--dim);}
+  .rn-pull{padding:9px 16px;cursor:pointer;border:0;clip-path:var(--cut-s);background:linear-gradient(100deg,#5fe0c0,#9d7bff);color:#07101a;
+    font:900 13px/1 var(--font-ui);letter-spacing:.12em;}
+  .rn-pull small{margin-left:6px;font:800 10px/1 var(--font-hud,var(--font-ui));opacity:.75;}
+  .rn-pull:disabled{background:rgba(255,255,255,.08);color:var(--dim);cursor:not-allowed;}
+  .rn-pull:not(:disabled):hover,.rn-pull:not(:disabled):focus-visible{filter:brightness(1.15);outline:0;}
+  .rn-capsule{display:flex;flex-direction:column;gap:4px;padding:12px 14px;clip-path:var(--cut);border:1px solid rgba(255,255,255,.25);
+    background:rgba(255,255,255,.05);animation:rnCap .5s cubic-bezier(.2,1.4,.4,1);}
+  .rn-capsule small{font:900 10px/1 var(--font-hud,var(--font-ui));letter-spacing:.22em;color:var(--dim);}
+  .rn-capsule b{font:900 18px/1.2 var(--font-ui);color:#fff;letter-spacing:.04em;}
+  .rn-capsule span{font:600 12px/1.5 system-ui;color:var(--ink);}
+  .rn-capsule.rR{border-color:rgba(120,190,255,.7);background:rgba(120,190,255,.1);}
+  .rn-capsule.rR small{color:#9fd0ff;}
+  .rn-capsule.rE{border-color:var(--gold);background:linear-gradient(110deg,rgba(255,200,90,.18),rgba(255,79,163,.14));box-shadow:0 0 30px rgba(255,200,90,.25);}
+  .rn-capsule.rE small{color:var(--gold);}
+  @keyframes rnCap{0%{transform:scale(.6) rotate(-4deg);opacity:0;}100%{transform:none;opacity:1;}}
+  @media (prefers-reduced-motion:reduce){ .rn-capsule{animation:none;} }
+  @media (max-width:560px){ .rn-gacha-h{grid-template-columns:1fr auto;} .rn-gacha-h span{grid-column:1 / -1;grid-row:2;} }
+  @media (prefers-reduced-motion:reduce){ .rn-patch,.rn-route{transition:none;} .rn-patch:hover,.rn-route:hover{transform:none;} }
   /* レートのシーズン (オンラインの RATED — 戦績) */
   .ro-season{display:flex;align-items:baseline;gap:12px;padding:12px 14px;background:linear-gradient(90deg,rgba(255,79,163,.14),rgba(139,92,246,.06));border-left:3px solid var(--pink);}
   .ro-season small{font:700 10px/1 var(--font-ui);letter-spacing:.22em;color:var(--dim);}
@@ -2468,7 +2524,7 @@
     <div id="bootBar"><i></i></div>
   </div>
 
-  <script src="engine.js?v=69b15bea3b"></script>
+  <script src="engine.js?v=9f2f0aa77b"></script>
   <script type="importmap">
   {
     "imports": {
@@ -2490,7 +2546,7 @@
       "./js3d/cardlist-ov.js": "./js3d/cardlist-ov.js?v=1d673fd0d2",
       "./js3d/cardtex.js": "./js3d/cardtex.js?v=f6ffa28f88",
       "./js3d/cardtext.js": "./js3d/cardtext.js?v=4cf5529855",
-      "./js3d/cloudsave.js": "./js3d/cloudsave.js?v=358de2dbc7",
+      "./js3d/cloudsave.js": "./js3d/cloudsave.js?v=7386d2bc53",
       "./js3d/control.js": "./js3d/control.js?v=64aa20995c",
       "./js3d/cosmetics-ui.js": "./js3d/cosmetics-ui.js?v=500f390c04",
       "./js3d/daily.js": "./js3d/daily.js?v=f56dabdf65",
@@ -2502,7 +2558,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=6cf8dcdd2f",
+      "./js3d/main.js": "./js3d/main.js?v=b516ff07a2",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=6398fed15e",
       "./js3d/panel.js": "./js3d/panel.js?v=ecb8a073e3",
       "./js3d/plates.js": "./js3d/plates.js?v=70ffa14b87",
@@ -2514,13 +2570,13 @@
       "./js3d/protocol-strength.js": "./js3d/protocol-strength.js?v=c719e5b65c",
       "./js3d/puzzle.js": "./js3d/puzzle.js?v=a6a0904519",
       "./js3d/replays-ui.js": "./js3d/replays-ui.js?v=9a6a4ca786",
-      "./js3d/replays.js": "./js3d/replays.js?v=92b9d3718f",
+      "./js3d/replays.js": "./js3d/replays.js?v=73f003ada0",
       "./js3d/review.js": "./js3d/review.js?v=34f174153b",
       "./js3d/rewards.js": "./js3d/rewards.js?v=e3e861a962",
       "./js3d/room.js": "./js3d/room.js?v=c34129de95",
       "./js3d/roomui.js": "./js3d/roomui.js?v=402be98743",
-      "./js3d/run-ui.js": "./js3d/run-ui.js?v=dda7071b7a",
-      "./js3d/run.js": "./js3d/run.js?v=29dcccf04b",
+      "./js3d/run-ui.js": "./js3d/run-ui.js?v=bc278be22b",
+      "./js3d/run.js": "./js3d/run.js?v=850bb677b3",
       "./js3d/selectui.js": "./js3d/selectui.js?v=208abdaebc",
       "./js3d/settings.js": "./js3d/settings.js?v=142e9b5e99",
       "./js3d/setup.js": "./js3d/setup.js?v=f75a89191c",
@@ -2549,7 +2605,7 @@
   <link rel="modulepreload" href="js3d/daily.js?v=f56dabdf65">
   <link rel="modulepreload" href="js3d/account.js?v=8a0ab0c4a4">
   <link rel="modulepreload" href="js3d/achievements.js?v=ed8a126a50">
-  <link rel="modulepreload" href="js3d/replays.js?v=92b9d3718f">
+  <link rel="modulepreload" href="js3d/replays.js?v=73f003ada0">
   <link rel="modulepreload" href="js3d/turning.js?v=9c7f79654e">
   <link rel="modulepreload" href="js3d/achievements-ui.js?v=66713584af">
   <link rel="modulepreload" href="vendor/three.module.js?v=985eb92490">
@@ -2575,9 +2631,9 @@
   <link rel="modulepreload" href="js3d/cardlist-ov.js?v=1d673fd0d2">
   <link rel="modulepreload" href="js3d/opponent-select.js?v=6398fed15e">
   <link rel="modulepreload" href="js3d/aidecks.js?v=8d249240bd">
-  <link rel="modulepreload" href="js3d/run-ui.js?v=dda7071b7a">
+  <link rel="modulepreload" href="js3d/run-ui.js?v=bc278be22b">
   <link rel="modulepreload" href="js3d/weekly-ui.js?v=c35e408f12">
-  <link rel="modulepreload" href="js3d/run.js?v=29dcccf04b">
+  <link rel="modulepreload" href="js3d/run.js?v=850bb677b3">
   <link rel="modulepreload" href="js3d/weekly.js?v=b4651191ce">
   <link rel="modulepreload" href="js3d/review.js?v=34f174153b">
   <link rel="modulepreload" href="js3d/roomui.js?v=402be98743">
@@ -2596,7 +2652,7 @@
   <link rel="modulepreload" href="js3d/aiclient.js?v=704b588b82">
   <link rel="modulepreload" href="js3d/logformat.js?v=6bbf54aba6">
   <link rel="modulepreload" href="js3d/steps.js?v=13e73b20fe">
-  <link rel="modulepreload" href="js3d/cloudsave.js?v=358de2dbc7">
+  <link rel="modulepreload" href="js3d/cloudsave.js?v=7386d2bc53">
   <link rel="modulepreload" href="js3d/admin-ui.js?v=1afb632c5a">
   <link rel="modulepreload" href="vendor/three.core.js">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/EffectComposer.js">
@@ -2623,6 +2679,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=6cf8dcdd2f"></script>
+  <script type="module" src="js3d/main.js?v=b516ff07a2"></script>
 </body>
 </html>

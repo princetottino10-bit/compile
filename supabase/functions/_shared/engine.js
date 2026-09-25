@@ -2255,7 +2255,8 @@ function newGame(opts) {
     useControl: opts.useControl !== false,
     turn: opts.first || 0,
     phase: 'start',
-    control: -1,
+    /* startControl: はじめからコントロールを持つ側 (勝ち抜き戦のパッチ)。使わない試合では無視 */
+    control: opts.useControl !== false && (opts.startControl === 0 || opts.startControl === 1) ? opts.startControl : -1,
     winner: null,
     winCompiles: opts.winCompiles === 2 || opts.winCompiles === 1 ? opts.winCompiles : 3,
     players: [],
@@ -2294,8 +2295,11 @@ function newGame(opts) {
     st.phase = 'training';
     return runReplay(st, { type: '_begin' }, []);
   }
+  /* handSize: [P1, P2] のはじめの手札の枚数 (勝ち抜き戦のパッチ。3〜7、指定が無ければ 5) */
+  const hs = Array.isArray(opts.handSize) ? opts.handSize : [];
   for (let p = 0; p < 2; p++) {
-    for (let i = 0; i < 5; i++) {
+    const n = Number.isInteger(hs[p]) ? Math.max(3, Math.min(7, hs[p])) : 5;
+    for (let i = 0; i < n; i++) {
       const u = st.players[p].deck.shift();
       st.cards[u].zone = 'hand' + p;
       st.players[p].hand.push(u);
