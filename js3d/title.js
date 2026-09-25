@@ -101,6 +101,8 @@ export function runTitle(protocols, opts) {
       '<button class="tt-start" id="ttStart" type="button">PRESS START</button></div>' +
     '<div class="tt-marquee"><div class="tt-strip">' + emblems + emblems + '</div></div>' +
     '<div class="tt-foot">30 PROTOCOLS · 180 CARDS</div>' +
+    /* 縦持ちのスマホだけに出す (CSS)。タイトル画面の部品なので、ほかの画面を開けば一緒に隠れて重ならない */
+    '<div class="tt-rotate">対戦画面は横持ちに最適化されています (縦持ちでも遊べます)</div>' +
     '<div class="tt-corner" id="ttCorner" hidden>' + profileChip(protocols) +
       '<button data-mode="admin" type="button" class="tt-admin"' + (accountState().admin ? '' : ' hidden') + '>ADMIN</button>' +
       '<button data-mode="account" type="button" class="tt-account" title="' + accountTitle() + '"><span>' + accountLabel() + '</span>' +

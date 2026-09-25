@@ -464,10 +464,13 @@
   #rotateHint b{font:900 18px/1.4 system-ui;letter-spacing:.08em;}
   #rotateHint span{font:600 12px/1.6 system-ui;color:var(--dim);}
   /* 縦持ちでも対戦できる。横向きを頼む案内は出さず、対戦前 (タイトル・メニュー) に「横持ちに最適化」とだけ知らせる */
-  /* タイトル画面のときだけ出す (準備画面では下の「対戦開始」などのボタンに重なっていた) */
+  /* 「横持ちに最適化」の案内はタイトル画面の中の部品 (.tt-rotate)。画面の一番下に固定した #rotateNote は
+     ほかの画面のボタンに重なっていたので使わない */
+  #title .tt-rotate{display:none;position:absolute;left:0;right:0;bottom:0;z-index:3;pointer-events:none;
+    padding:8px 12px calc(8px + env(safe-area-inset-bottom));text-align:center;font:700 11.5px/1.4 system-ui;color:#fff;
+    background:rgba(12,9,20,.92);border-top:2px solid var(--pink);}
   @media (orientation:portrait) and (max-width:860px) and (pointer:coarse){
-    /* 設定などの小窓を開いている間は出さない (小窓の下に重なる) */
-    body.pregame:has(#title.show):not(:has(.pz-ov.show, #runOv.show, #roomOv.show, #setup.show)) #rotateNote{display:block;}
+    #title .tt-rotate{display:block;}
   }
   #rotateNote{position:fixed;left:0;right:0;bottom:0;z-index:89;display:none;padding:8px 12px calc(8px + env(safe-area-inset-bottom));
     text-align:center;font:700 11.5px/1.4 system-ui;color:#fff;background:rgba(12,9,20,.92);border-top:2px solid var(--pink);pointer-events:none;}
@@ -2566,7 +2569,7 @@
       "./js3d/stats.js": "./js3d/stats.js?v=8265afe03d",
       "./js3d/steps.js": "./js3d/steps.js?v=13e73b20fe",
       "./js3d/theme.js": "./js3d/theme.js?v=b02da60dc1",
-      "./js3d/title.js": "./js3d/title.js?v=17e8453ea1",
+      "./js3d/title.js": "./js3d/title.js?v=ca07556741",
       "./js3d/training.js": "./js3d/training.js?v=3018b4399e",
       "./js3d/turning.js": "./js3d/turning.js?v=9c7f79654e",
       "./js3d/tutorial.js": "./js3d/tutorial.js?v=0e6d6237ad",
@@ -2593,7 +2596,7 @@
   <link rel="modulepreload" href="js3d/control.js?v=acf84debbc">
   <link rel="modulepreload" href="js3d/panel.js?v=ecb8a073e3">
   <link rel="modulepreload" href="js3d/setup.js?v=f75a89191c">
-  <link rel="modulepreload" href="js3d/title.js?v=17e8453ea1">
+  <link rel="modulepreload" href="js3d/title.js?v=ca07556741">
   <link rel="modulepreload" href="js3d/training.js?v=3018b4399e">
   <link rel="modulepreload" href="js3d/room.js?v=25990f1537">
   <link rel="modulepreload" href="js3d/puzzle.js?v=b4a110035e">
