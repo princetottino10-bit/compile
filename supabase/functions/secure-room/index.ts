@@ -354,6 +354,12 @@ Deno.serve(async (req) => {
         if (error) throw error;
         return json(req, { stats: data });
       }
+      /* ログインして遊んでいる人の一覧 (表示名・登録日・最後に遊んだ日・CPU 戦の数だけ。メールは出さない) */
+      if (op === "adminPlayers") {
+        const { data, error } = await admin.rpc("admin_players", { max_rows: 300 });
+        if (error) throw error;
+        return json(req, { players: data || [] });
+      }
       if (op === "adminWeekly") {
         const week = String(body.week || "");
         if (!/^W[0-9]{3,6}$/.test(week)) return fail(req, "週の指定が不正です");

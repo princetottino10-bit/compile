@@ -1,6 +1,6 @@
 /* =========================================================================
  * 管理者の画面 (ACCOUNT → ADMIN)。管理者かどうかはサーバーが決める (admins 表)
- *   STATS: 利用状況と無料枠の減り具合 / WEEKLY: クリア者一覧から名前を消す /
+ *   STATS: 利用状況と無料枠の減り具合 / PLAYERS: ログインして遊んでいる人 (表示名だけ) / WEEKLY: クリア者一覧から名前を消す /
  *   ROOMS: 残っている部屋を閉じる / UNLOCK: 見た目と称号を全部解放 (このブラウザだけ)
  * ========================================================================= */
 import * as ROOM from './room.js';
@@ -8,7 +8,7 @@ import { weekKey, weekIndex } from './weekly.js';
 import { isUnlockAll, setUnlockAll } from './rewards.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const TABS = ['STATS', 'WEEKLY', 'ROOMS', 'UNLOCK'];
+const TABS = ['STATS', 'PLAYERS', 'WEEKLY', 'ROOMS', 'UNLOCK'];
 const FREE_DB = 500 * 1024 * 1024;           // Supabase 無料プランのデータベースの目安 (500MB)
 const mb = (n) => (n / 1024 / 1024).toFixed(n < 10 * 1024 * 1024 ? 2 : 1) + ' MB';
 const when = (t) => new Date(t).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -56,6 +56,20 @@ export function openAdmin() {
       body.innerHTML = '<p class="pz-note">読み込み中…</p>';
       const r = await call('adminStats');
       body.innerHTML = statsHtml(r.stats || {});
+    },
+    /* PLAYERS: 最後に遊んだ順。表示名を決めていない人は id の頭だけ出して見分ける */
+    async () => {
+      body.innerHTML = '<p class="pz-note">読み込み中…</p>';
+      const r = await call('adminPlayers');
+      const list = r.players || [];
+      const day = (t) => (t ? new Date(t).toLocaleDateString('ja-JP', { year: 'numeric', month: 'numeric', day: 'numeric' }) : '—');
+      const via = { google: 'Google', email: 'メール', github: 'GitHub' };
+      body.innerHTML = '<p class="pz-note">ログインしている ' + list.length + ' 人 (ゲストは含みません)。表示名は本人が決めた名前です。</p>' +
+        (list.length ? '<ol class="ad-players">' + list.map(p =>
+          '<li><b>' + (p.name ? esc(p.name) : '<i>名前なし</i> <small>#' + esc(p.id) + '</small>') + '</b>' +
+            '<span>' + esc(via[p.provider] || p.provider || '') + ' ・ 登録 ' + day(p.created_at) + ' ・ 最後 ' + day(p.last_active) + '</span>' +
+            '<em>CPU 戦 ' + (p.games | 0) + '戦 ' + (p.wins | 0) + '勝</em></li>').join('') + '</ol>'
+          : '<p class="pz-note">まだいません</p>');
     },
     async () => {
       const key = 'W' + week;
