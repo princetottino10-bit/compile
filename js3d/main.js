@@ -314,6 +314,9 @@ async function boot() {
       if (c === 'gold') return '#ffd86a';
       if (c === 'cyan') return '#7ff3ff';
       if (c === 'rainbow') return '#' + new THREE.Color().setHSL(Math.random(), 0.9, 0.62).getHexString();
+      if (c === 'lime') return '#b6ff4a';
+      if (c === 'violet') return '#b07bff';
+      if (c === 'ember') return '#ff7a2e';
       return null;
     },
     onCompile: async (info) => {

@@ -10,6 +10,7 @@
 import { CHALLENGER_BASE, CHALLENGERS, UNDERDOG_LEVEL } from './aidecks.js';
 import { XP_GAIN } from './xp.js';
 import { protocolSummary } from './stats-data.js';
+import { GACHA_ITEMS } from './rewards.js';
 
 const onlineWin = (e) => e.src === 'online' && e.xp > XP_GAIN.onlinePlay;   // 勝ったときだけ多く入る
 
@@ -43,6 +44,10 @@ export const TSUME_TOTAL = { 1: 5, 2: 10, 3: 10 };
 const tsumeSolved = (c, tiers) => new Set(c.xp.map(e => /^k:ts:t(\d)-\d+$/.exec(e.id || '')).filter(m => m && tiers.includes(+m[1])).map(m => m[0])).size;
 const tsumeTotal = (tiers) => tiers.reduce((n, t) => n + TSUME_TOTAL[t], 0);
 const dailyPuzzles = (c) => c.xp.filter(e => /^k:dp:\d+$/.test(e.id || '')).length;
+/* COSMETICS のガチャ (ctx.gacha = gacha.js の loadGacha()) */
+const gachaPulls = (c) => (c.gacha && c.gacha.pulls) | 0;
+const gachaGot = (c) => Object.keys((c.gacha && c.gacha.owned) || {}).filter(id => GACHA_ITEMS.some(g => g.kind + ':' + g.key === id)).length;
+const gachaHasRar = (c, rar) => GACHA_ITEMS.some(g => g.rar === rar && ((c.gacha && c.gacha.owned) || {})[g.kind + ':' + g.key]);
 
 /* progress(c): 積み上げの進み具合 [今, 目標] (出せるものだけ) */
 export const TROPHIES = [
@@ -51,6 +56,7 @@ export const TROPHIES = [
   { id: 'wins10', tier: 'bronze', name: 'TEN DOWN', desc: '10勝する', test: (c) => wins(c) >= 10, progress: (c) => [wins(c), 10] },
   { id: 'tutorial', tier: 'bronze', name: 'BOOT SEQUENCE', desc: 'チュートリアルを全部終える', test: (c) => xpHas(c, e => e.id === 'k:tu:all') },
   { id: 'puzzle', tier: 'bronze', name: 'SOLVER', desc: '問題を1つ解く (COMPUZZLE も)', test: (c) => xpHas(c, e => e.src === 'puzzle' || e.src === 'tsume') },
+  { id: 'gacha1', tier: 'bronze', name: 'FIRST PULL', desc: 'COSMETICS の GACHA を回す', test: (c) => gachaPulls(c) >= 1 },
   { id: 'daily_puzzle', tier: 'bronze', name: 'PUZZLE OF THE DAY', desc: 'COMPUZZLE の今日の問題を解く', test: (c) => dailyPuzzles(c) >= 1 },
   { id: 'tsume_easy', tier: 'bronze', name: 'WARMED UP', desc: 'COMPUZZLE の初級を全部解く',
     test: (c) => tsumeSolved(c, [1]) >= tsumeTotal([1]), progress: (c) => [tsumeSolved(c, [1]), tsumeTotal([1])] },
@@ -80,6 +86,7 @@ export const TROPHIES = [
   { id: 'online10', tier: 'silver', name: 'REGULAR', desc: 'オンライン対戦を10戦する', test: (c) => onlineGames(c) >= 10, progress: (c) => [Math.min(10, onlineGames(c)), 10] },
   { id: 'tsume_mid', tier: 'silver', name: 'PUZZLER', desc: 'COMPUZZLE の中級を全部解く (称号 PUZZLER)',
     test: (c) => tsumeSolved(c, [2]) >= tsumeTotal([2]), progress: (c) => [tsumeSolved(c, [2]), tsumeTotal([2])] },
+  { id: 'gacha_legend', tier: 'silver', name: 'LUCKY STAR', desc: 'GACHA で LEGENDARY を引く', test: (c) => gachaHasRar(c, 'L') },
   { id: 'daily_puzzle7', tier: 'silver', name: 'DAILY THINKER', desc: 'COMPUZZLE の今日の問題を7日解く',
     test: (c) => dailyPuzzles(c) >= 7, progress: (c) => [Math.min(7, dailyPuzzles(c)), 7] },
   { id: 'daily7', tier: 'silver', name: 'HABIT', desc: 'デイリーミッションを3つそろえた日を7日つくる', test: (c) => dailyAllDays(c) >= 7, progress: (c) => [Math.min(7, dailyAllDays(c)), 7] },
@@ -105,6 +112,8 @@ export const TROPHIES = [
   { id: 'cards180', tier: 'gold', name: 'ARCHIVIST', desc: '180種類すべてのカードを表で出す', test: (c) => playedKinds(c) >= 180, progress: (c) => [Math.min(180, playedKinds(c)), 180] },
   { id: 'tsume_all', tier: 'gold', name: 'COMPUZZLER', desc: 'COMPUZZLE を全部解く (称号 COMPUZZLER)',
     test: (c) => tsumeSolved(c, [1, 2, 3]) >= tsumeTotal([1, 2, 3]), progress: (c) => [tsumeSolved(c, [1, 2, 3]), tsumeTotal([1, 2, 3])] },
+  { id: 'gacha_all', tier: 'gold', name: 'COLLECTOR SUPREME', desc: 'GACHA の見た目と称号を全部そろえる',
+    test: (c) => gachaGot(c) >= GACHA_ITEMS.length, progress: (c) => [gachaGot(c), GACHA_ITEMS.length] },
   { id: 'daily_puzzle30', tier: 'gold', name: 'DEEP THOUGHT', desc: 'COMPUZZLE の今日の問題を30日解く',
     test: (c) => dailyPuzzles(c) >= 30, progress: (c) => [Math.min(30, dailyPuzzles(c)), 30] },
   { id: 'flawless', tier: 'gold', hidden: true, name: 'FLAWLESS', desc: '相手に1回もコンパイルさせずに勝つ (称号 FLAWLESS)', test: (c) => !!g(c) && g(c).win && g(c).oppCompiles === 0 },

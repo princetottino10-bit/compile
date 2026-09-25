@@ -49,7 +49,7 @@ export function cosmeticsHtml(s, protocols) {
   protocols = protocols || protoList;
   const recs = localRecords();
   const level = playerLevel(recs, bonusXp()).level;
-  /* 取る前の見た目は出さない (レベルアップで初めて明かす)。まだあることだけ「+N」で示す */
+  /* 取る前の見た目は出さない (レベルアップ・ガチャで初めて明かす)。まだあることだけ「+N」で示す */
   let locked = 0;
   const row = (kind) => {
     const open = COSMETICS[kind].filter(([key]) => level >= unlockLevel(kind, key));

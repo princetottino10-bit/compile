@@ -8,9 +8,11 @@
  *   ここは通信しない (account.js が読み書きを受け持つ)
  * ========================================================================= */
 
+import { mergeGacha } from './gacha.js';
+
 /* まとめて保存する項目。一時的な印 (ログインから戻った印など) は入れない */
 export const SAVE_KEYS = ['compileSettings', 'compileRun', 'compileRunBest', 'compileRunHeat', 'compileRunKind',
-  'compileWeekly', 'compileOppLast', 'compileDaily', 'compileTrophies', 'compileRoomName'];
+  'compileWeekly', 'compileOppLast', 'compileDaily', 'compileTrophies', 'compileRoomName', 'compileGacha'];
 const META = 'compileCloudMeta';     // { user, hash: 最後に同期した中身, at: そのときのアカウント側の時刻 }
 const MAX_BYTES = 60000;
 
@@ -84,6 +86,8 @@ function keepBest(merged, local, rd) {
   if (local.compileRunBest && rd.compileRunBest) merged.compileRunBest = betterBest(local.compileRunBest, rd.compileRunBest);
   else if (rd.compileRunBest && !merged.compileRunBest) merged.compileRunBest = rd.compileRunBest;
   if (local.compileTrophies || rd.compileTrophies) merged.compileTrophies = unionTrophies(local.compileTrophies, rd.compileTrophies);
+  /* ガチャで取った見た目は両方残す。使った CHIP は多い方 (増やしすぎない) */
+  if (local.compileGacha || rd.compileGacha) merged.compileGacha = mergeGacha(local.compileGacha, rd.compileGacha);
   return merged;
 }
 

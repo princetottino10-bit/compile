@@ -39,11 +39,44 @@ export const REWARDS = [
 /* 見た目の選択肢 (default ははじめから)。名前は設定の画面に出す */
 export const COSMETICS = {
   mat: [['neon', 'NEON GRID'], ['nebula', 'NEBULA'], ['vortex', 'VORTEX'], ['biomech', 'BIOMECH'], ['prism', 'PRISM'], ['eclipse', 'ECLIPSE']],
-  sleeve: [['default', 'STANDARD'], ['crimson', 'CRIMSON'], ['circuit', 'CIRCUIT'], ['void', 'VOID'], ['holo', 'HOLO'], ['sakura', 'SAKURA'], ['aurum', 'AURUM']],
-  marker: [['default', 'STANDARD'], ['gold', 'GOLD'], ['crystal', 'CRYSTAL'], ['crimson', 'CRIMSON'], ['prism', 'PRISM']],
-  ccolor: [['default', 'PROTOCOL'], ['gold', 'GOLD'], ['cyan', 'CYAN'], ['rainbow', 'RAINBOW']],
+  sleeve: [['default', 'STANDARD'], ['crimson', 'CRIMSON'], ['circuit', 'CIRCUIT'], ['void', 'VOID'], ['holo', 'HOLO'], ['sakura', 'SAKURA'], ['aurum', 'AURUM'],
+    ['mint', 'MINT'], ['ocean', 'OCEAN'], ['ember', 'EMBER'], ['glacier', 'GLACIER'], ['toxic', 'TOXIC'], ['galaxy', 'GALAXY']],
+  marker: [['default', 'STANDARD'], ['gold', 'GOLD'], ['crystal', 'CRYSTAL'], ['crimson', 'CRIMSON'], ['prism', 'PRISM'],
+    ['emerald', 'EMERALD'], ['amber', 'AMBER'], ['sapphire', 'SAPPHIRE'], ['obsidian', 'OBSIDIAN'], ['nova', 'NOVA']],
+  ccolor: [['default', 'PROTOCOL'], ['gold', 'GOLD'], ['cyan', 'CYAN'], ['rainbow', 'RAINBOW'], ['lime', 'LIME'], ['violet', 'VIOLET'], ['ember', 'EMBER']],
   victory: [['default', 'STANDARD'], ['aurora', 'AURORA']]
 };
+
+/* ガチャ (COSMETICS の GACHA) でしか出ない見た目と称号。rar: C / R / E / L。
+   持っているかは compileGacha (gacha.js が書く) の owned { 'kind:key': 取った時刻 } で見る */
+export const GACHA_ITEMS = [
+  { kind: 'sleeve', key: 'mint', rar: 'C' }, { kind: 'sleeve', key: 'ocean', rar: 'C' },
+  { kind: 'marker', key: 'emerald', rar: 'C' }, { kind: 'marker', key: 'amber', rar: 'C' }, { kind: 'ccolor', key: 'lime', rar: 'C' },
+  { kind: 'sleeve', key: 'ember', rar: 'R' }, { kind: 'sleeve', key: 'glacier', rar: 'R' }, { kind: 'marker', key: 'sapphire', rar: 'R' },
+  { kind: 'ccolor', key: 'violet', rar: 'R' }, { kind: 'title', key: 'gambler', rar: 'R' },
+  { kind: 'sleeve', key: 'toxic', rar: 'E' }, { kind: 'marker', key: 'obsidian', rar: 'E' }, { kind: 'ccolor', key: 'ember', rar: 'E' },
+  { kind: 'title', key: 'highroller', rar: 'E' },
+  { kind: 'sleeve', key: 'galaxy', rar: 'L' }, { kind: 'marker', key: 'nova', rar: 'L' }, { kind: 'title', key: 'fortune', rar: 'L' }
+];
+const GACHA_KEY = 'compileGacha';
+export const gachaId = (kind, key) => kind + ':' + key;
+const isGachaItem = (kind, key) => GACHA_ITEMS.some(g => g.kind === kind && g.key === key);
+/** ガチャで取った見た目 { 'kind:key': 時刻 } */
+export function gachaOwned() {
+  try {
+    const s = JSON.parse(localStorage.getItem(GACHA_KEY) || 'null');
+    return s && s.owned && typeof s.owned === 'object' ? s.owned : {};
+  } catch (e) {
+    return {};
+  }
+}
+/** 見た目の名前 (ガチャの結果・図鑑に出す) */
+export function itemName(kind, key) {
+  if (kind === 'title') return 'TITLE — ' + (TITLES[key] || key);
+  const row = (COSMETICS[kind] || []).find(([k]) => k === key);
+  const label = { sleeve: 'SLEEVE', marker: 'CONTROL MARKER', ccolor: 'COMPILE FX', mat: 'PLAYMAT', victory: 'VICTORY FX' }[kind] || kind.toUpperCase();
+  return label + ' — ' + (row ? row[1] : key);
+}
 
 /* 称号 (レベルのもの + 条件で取るもの)。オンラインで相手に見せるので、サーバー (secure-room の BADGES) にも同じ key を並べる */
 export const TITLES = {
@@ -52,7 +85,9 @@ export const TITLES = {
   /* 実績で取る (cosmetics-ui.js の TROPHY_TITLES) */
   chainer: 'CHAIN MASTER', flawless: 'FLAWLESS', grandmaster: 'GRANDMASTER',
   puzzler: 'PUZZLER', compuzzler: 'COMPUZZLER',       // COMPUZZLE の中級を全部 / 全部
-  platinum: 'PLATINUM'     // 実績をすべて取る (achievements.js)
+  platinum: 'PLATINUM',    // 実績をすべて取る (achievements.js)
+  /* ガチャで取る (GACHA_ITEMS) */
+  gambler: 'GAMBLER', highroller: 'HIGH ROLLER', fortune: 'FORTUNE'
 };
 
 /* 全部解放 (管理者のテスト用。ADMIN 画面で切り替え、このブラウザに残す)。見た目と称号だけで、強さは変わらない */
@@ -68,6 +103,8 @@ export function setUnlockAll(on) {
 /* その見た目を解放するレベル (はじめからなら 1) */
 export function unlockLevel(kind, key) {
   if (unlockAll) return 1;
+  /* ガチャの見た目はレベルでは開かない (取っていれば 1、取っていなければ届かない数) */
+  if (isGachaItem(kind, key)) return gachaOwned()[gachaId(kind, key)] ? 1 : 9999;
   const r = REWARDS.find(x => x.kind === kind && x.key === key);
   return r ? r.lv : 1;
 }
@@ -90,5 +127,7 @@ export function nextReward(level) {
 export function ownedTitles(level, extra) {
   if (unlockAll) return Object.keys(TITLES);
   const own = REWARDS.filter(r => r.kind === 'title' && r.lv <= level).map(r => r.key);
-  return own.concat((extra || []).filter(k => TITLES[k] && !own.includes(k)));
+  const owned = gachaOwned();
+  const gacha = GACHA_ITEMS.filter(g => g.kind === 'title' && owned[gachaId('title', g.key)]).map(g => g.key);
+  return own.concat([...(extra || []), ...gacha].filter((k, i, a) => TITLES[k] && !own.includes(k) && a.indexOf(k) === i));
 }

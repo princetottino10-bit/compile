@@ -17,6 +17,7 @@ import { settings } from './settings.js';
 import { profileOf } from './cosmetics-ui.js';
 import { localRecords } from './stats.js';
 import { openProfile } from './profile.js';
+import { openGacha, chipsNow } from './gacha-ui.js';
 
 const BOOT_LINES = [
   '> COMPILE OS v3.1 — boot sequence initiated',
@@ -160,6 +161,7 @@ export function runTitle(protocols, opts) {
           '<div class="tt-more">' +
             '<button data-mode="tutorial" type="button">TUTORIAL <small>LEARN</small></button>' +
             '<button data-mode="tsume" type="button">COMPUZZLE <small>詰めコンパイル</small></button>' +
+            '<button data-mode="gacha" type="button" class="tt-gacha">GACHA <small>CHIP ' + chipsNow() + '</small></button>' +
             '<button data-mode="training" type="button">TRAINING <small>SANDBOX</small></button>' +
             '<button data-mode="record" type="button">RECORD <small>STATS</small></button>' +
             '<button data-mode="cards" type="button">CARDS <small>CARD LIST</small></button>' +
@@ -198,6 +200,7 @@ export function runTitle(protocols, opts) {
         else if (button.dataset.mode === 'account') openAccount();
         else if (button.dataset.mode === 'admin') openAdmin();
         else if (button.dataset.mode === 'cards') openCardList();
+        else if (button.dataset.mode === 'gacha') openGacha();
         else if (button.dataset.mode === 'profile') openProfile(protocols);
         else if (button.dataset.mode === 'quick') { location.href = location.pathname + '?quick=1'; }
         else finish(button.dataset.mode);

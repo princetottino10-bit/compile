@@ -484,7 +484,20 @@ const SLEEVES = {
     ring2: 'rgba(255,150,200,.6)', strip: '255,170,210' },
   /* 金の地に黒の輪 */
   aurum: { a: '#6b4f14', b: '#231704', grid: 'rgba(255,240,190,.12)', halo: '255,226,150', ring: 'rgba(20,14,4,.85)',
-    ring2: 'rgba(255,236,170,.7)', strip: '255,226,150' }
+    ring2: 'rgba(255,236,170,.7)', strip: '255,226,150' },
+  /* ---- ガチャの見た目 ---- */
+  mint: { a: '#0f3a33', b: '#05140f', grid: 'rgba(160,255,220,.08)', halo: '120,240,200', ring: 'rgba(190,255,230,.9)',
+    ring2: 'rgba(120,240,200,.5)', strip: '120,240,200' },
+  ocean: { a: '#0b2446', b: '#030a18', grid: 'rgba(120,190,255,.08)', halo: '90,170,255', ring: 'rgba(170,215,255,.9)',
+    ring2: 'rgba(90,170,255,.5)', strip: '90,170,255' },
+  ember: { a: '#4a1a06', b: '#160602', grid: 'rgba(255,150,80,.1)', halo: '255,120,50', ring: 'rgba(255,190,110,.92)',
+    ring2: 'rgba(255,90,40,.6)', strip: '255,120,50', glitch: true },
+  glacier: { a: '#d8ecff', b: '#6f93b8', grid: 'rgba(255,255,255,.25)', halo: '220,240,255', ring: 'rgba(20,50,90,.85)',
+    ring2: 'rgba(255,255,255,.8)', strip: '160,210,255' },
+  toxic: { a: '#1d3a05', b: '#081302', grid: 'rgba(190,255,60,.1)', halo: '170,255,40', ring: 'rgba(210,255,90,.92)',
+    ring2: 'rgba(120,220,20,.6)', strip: '170,255,40', circuit: true },
+  galaxy: { a: '#1a0b3d', b: '#040112', grid: 'rgba(255,255,255,.12)', halo: '255,120,220', ring: 'rgba(255,240,255,.95)',
+    ring2: 'rgba(124,240,208,.7)', strip: '255,120,220', holo: true, glitch: true }
 };
 export function backTex(variant) {
   const key = SLEEVES[variant] ? variant : 'default';

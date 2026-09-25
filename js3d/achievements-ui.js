@@ -2,6 +2,7 @@
  * 実績の見せ方: 取ったときの知らせ (上から滑り込む帯) と、一覧 (プロフィールから開く)
  *   隠し実績は取るまで「???」。取っていない普通の実績は条件と進み具合を出す
  * ========================================================================= */
+import { loadGacha } from './gacha.js';
 import { trophyView, TROPHY_XP } from './achievements.js';
 import { localRecords } from './stats.js';
 import { playerLevel, cardStats } from './stats-data.js';
@@ -11,7 +12,7 @@ import { xpLog, bonusXp } from './xp.js';
 export function trophyContext(game) {
   const records = localRecords();
   return { records, xp: xpLog(), level: playerLevel(records, bonusXp()).level,
-    cardWins: cardStats(records), game: game || null };
+    cardWins: cardStats(records), game: game || null, gacha: loadGacha() };
 }
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));

@@ -21,7 +21,10 @@ const MINT = 0xa07bff, PINK = 0xff4fa3, DIM = 0x44536e;
 /* 見た目 (レベルの報酬): 自分が持ったときの色と、中立のときの色 */
 const MARKER_STYLES = {
   default: { me: MINT, dim: DIM }, gold: { me: 0xffd86a, dim: 0x6e5d34 },
-  crystal: { me: 0x7ff3ff, dim: 0x2c5c66 }, crimson: { me: 0xff5a6e, dim: 0x5e2430 }, prism: { me: 0xf4f0ff, dim: 0x5d5670 }
+  crystal: { me: 0x7ff3ff, dim: 0x2c5c66 }, crimson: { me: 0xff5a6e, dim: 0x5e2430 }, prism: { me: 0xf4f0ff, dim: 0x5d5670 },
+  /* ガチャの見た目 */
+  emerald: { me: 0x3ff0a0, dim: 0x245c44 }, amber: { me: 0xffa640, dim: 0x5e4220 }, sapphire: { me: 0x4f8cff, dim: 0x22345e },
+  obsidian: { me: 0x2b2238, dim: 0x15101c }, nova: { me: 0xfff4c8, dim: 0x6b5e3a }
 };
 
 /* トラッカーのマーカー画像 (2048px) の輪郭を、中心をそろえて 120° 対称に整えたもの。

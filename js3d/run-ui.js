@@ -9,6 +9,7 @@ import * as RUN from './run.js';
 import { emblemDataURL } from './emblems.js';
 import { levelLabel } from './aidecks.js';
 import { showProtocolCards } from './protocards.js';
+import { confetti, playCapsule, RAR_COLORS } from './gachafx.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -69,57 +70,12 @@ function mapHtml(run, canMove) {
     '<div class="rn-legend">' + Object.keys(RUN.NODES).map(k => '<span class="' + k + '"><i>' + RUN.NODES[k].icon + '</i>' + RUN.NODES[k].name + '</span>').join('') + '</div>';
 }
 
-/* ---------- 演出 (お祭りなので派手に。動きを減らす設定では出さない) ---------- */
-const calm = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
-const RAR_COLORS = { C: ['#cfd6e6', '#8a93a8'], R: ['#7cc4ff', '#b9e2ff', '#3f8cff'], E: ['#ffc85a', '#ff4fa3', '#fff1c2'], L: ['#ff4fa3', '#ffc85a', '#7cf0d0', '#9d7bff', '#ffffff'] };
-
-/* 紙吹雪 (画面いっぱいの canvas に一瞬だけ) */
-export function confetti(colors, count) {
-  if (calm()) return;
-  const cv = document.createElement('canvas');
-  cv.className = 'rn-confetti';
-  cv.width = innerWidth; cv.height = innerHeight;
-  document.body.appendChild(cv);
-  const ctx = cv.getContext('2d');
-  const parts = Array.from({ length: count || 140 }, () => ({
-    x: innerWidth / 2 + (Math.random() - 0.5) * innerWidth * 0.3, y: innerHeight * 0.45,
-    vx: (Math.random() - 0.5) * 16, vy: -6 - Math.random() * 12, r: 3 + Math.random() * 5,
-    a: Math.random() * Math.PI, va: (Math.random() - 0.5) * 0.4, c: colors[Math.floor(Math.random() * colors.length)]
-  }));
-  const t0 = performance.now();
-  const tick = (t) => {
-    const k = (t - t0) / 1800;
-    ctx.clearRect(0, 0, cv.width, cv.height);
-    for (const p of parts) {
-      p.vy += 0.35; p.vx *= 0.99; p.x += p.vx; p.y += p.vy; p.a += p.va;
-      ctx.save(); ctx.globalAlpha = Math.max(0, 1 - k); ctx.translate(p.x, p.y); ctx.rotate(p.a);
-      ctx.fillStyle = p.c; ctx.fillRect(-p.r, -p.r / 2, p.r * 2, p.r); ctx.restore();
-    }
-    if (k < 1) requestAnimationFrame(tick); else cv.remove();
-  };
-  requestAnimationFrame(tick);
-}
-
-/* ガチャの演出: カプセルが揺れて、レア度の色で弾ける。EPIC / LEGENDARY は画面が光って紙吹雪 */
+/* ---------- 演出 (お祭りなので派手に。gachafx.js) ---------- */
+/* ガチャの演出: 出てきたパッチの名前で */
 function playGacha(host, result) {
-  if (calm() || !result) return Promise.resolve();
+  if (!result) return Promise.resolve();
   const info = RUN.patchInfo(result.id);
-  const stage = document.createElement('div');
-  stage.className = 'rn-stage r' + result.rar;
-  stage.innerHTML = '<div class="rn-cap"><i></i><i></i></div><div class="rn-reveal"><small>' + RUN.RARITY[result.rar].name + '</small><b>' +
-    esc(info ? info.name : '') + '</b></div>';
-  host.appendChild(stage);
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      stage.classList.add('open');
-      if (result.rar === 'E' || result.rar === 'L') {
-        document.body.classList.add('rn-flash-' + result.rar);
-        setTimeout(() => document.body.classList.remove('rn-flash-' + result.rar), 700);
-        confetti(RAR_COLORS[result.rar], result.rar === 'L' ? 260 : 140);
-      }
-    }, result.rar === 'L' ? 1500 : 950);
-    setTimeout(() => { stage.remove(); resolve(); }, result.rar === 'L' ? 3000 : result.rar === 'E' ? 2300 : 1700);
-  });
+  return playCapsule(host, result.rar, info ? info.name : '');
 }
 
 /* 持っているパッチと HEAT (いつも上に出す) */
