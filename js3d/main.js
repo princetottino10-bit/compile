@@ -29,6 +29,7 @@ import { cardStats, cardTier, playerLevel, protocolSummary } from './stats-data.
 import { isUnlocked, rewardsBetween, TITLES, UNDERDOG_XP, underdogCleared } from './rewards.js';
 import { confetti } from './gachafx.js';
 import { setCosmeticProtocols, profileOf } from './cosmetics-ui.js';
+import { setCosmeticsProtocols } from './cosmetics-mode.js';
 import { displayName } from './displayname.js';
 import { showPlates } from './plates.js';
 import { matUnlocked, MAT_W, MAT_D } from './playmat.js';
@@ -273,6 +274,7 @@ async function boot() {
   });
   const [cards, effects] = await Promise.all([getJson('data/cards.json'), getJson('data/effects.json')]);
   setCosmeticProtocols(cards.protocols);
+  setCosmeticsProtocols(cards.protocols);
   /* 前に下剋上を達成していた人 (褒美を足す前・別の端末・あとから記録を足した人) にも経験値の褒美を。key が同じなので1回だけ */
   if (underdogCleared()) for (let i = 1; i <= UNDERDOG_XP / 20; i++) grantXp('underdog', 20, 'ud:' + i);
   setTimeout(() => { checkTrophies(null); }, 1500);   // 前から遊んでいる人の分・別の端末で取った分をまとめて

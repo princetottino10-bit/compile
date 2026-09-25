@@ -4,7 +4,6 @@
  *   タイトルの OPTION と、対戦中の上のバーの ⚙ から同じ画面を開く。
  * ========================================================================= */
 
-import { cosmeticsHtml, bindCosmetics } from './cosmetics-ui.js';
 const KEY = 'compileSettings';
 /* mat 以下は見た目 (レベルの報酬、cosmetics-ui.js) */
 /* autoPick: 選べるものが1つしかない選択は自動で選ぶ / oppSummary: 相手の番のまとめ / beginner: 初心者モード (おすすめの手の HINT を出す。最初はオフ) */
@@ -72,7 +71,9 @@ export function openSettings(extra) {
       '<input type="checkbox" id="stFoil"' + (s.foil ? ' checked' : '') + '></label>' +
     '<label class="st-row st-check"><span>初心者モード<small>CPU 戦で HINT ボタンを出します。押すと、CPU ならどう打つかを盤面で光らせます</small></span>' +
       '<input type="checkbox" id="stBeginner"' + (s.beginner ? ' checked' : '') + '></label>' +
-    cosmeticsHtml(s) +
+    /* 見た目は専用の画面 (cosmetics-mode.js) で。実物どおりのプレビューと図鑑つき */
+    '<div class="st-cosmetics"><div class="st-cos-head"><b>COSMETICS</b><small>盤面・スリーブ・マーカー・称号などは専用の画面で選べます</small></div>' +
+      '<div class="pz-row"><button type="button" id="stCosOpen" class="pz-main">COSMETICS を開く</button></div></div>' +
     (extra && extra.length ? '<div class="pz-row">' + extra.map((x, i) => '<button type="button" data-extra="' + i + '">' + x.label + '</button>').join('') + '</div>' : '') +
     '</div>';
   el.classList.add('show');
@@ -95,7 +96,7 @@ export function openSettings(extra) {
   el.querySelector('#stOppSummary').onchange = (ev) => setSetting('oppSummary', ev.target.checked);
   el.querySelector('#stBeginner').onchange = (ev) => setSetting('beginner', ev.target.checked);
   el.querySelector('#stFoil').onchange = (ev) => setSetting('foil', ev.target.checked);
-  bindCosmetics(el, setSetting);
+  el.querySelector('#stCosOpen').onclick = () => { close(); import('./cosmetics-mode.js').then(m => m.openCosmetics()); };
   el.querySelectorAll('[data-extra]').forEach(b => {
     b.onclick = () => { const x = extra[+b.dataset.extra]; if (x) x.onClick(b); };
   });

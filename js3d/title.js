@@ -18,6 +18,7 @@ import { profileOf } from './cosmetics-ui.js';
 import { localRecords } from './stats.js';
 import { openProfile } from './profile.js';
 import { openGacha, chipsNow } from './gacha-ui.js';
+import { openCosmetics, hasNewCosmetics } from './cosmetics-mode.js';
 
 const BOOT_LINES = [
   '> COMPILE OS v3.1 — boot sequence initiated',
@@ -162,6 +163,7 @@ export function runTitle(protocols, opts) {
             '<button data-mode="tutorial" type="button">TUTORIAL <small>LEARN</small></button>' +
             '<button data-mode="tsume" type="button">COMPUZZLE <small>詰めコンパイル</small></button>' +
             '<button data-mode="gacha" type="button" class="tt-gacha">GACHA <small>CHIP ' + chipsNow() + '</small></button>' +
+            '<button data-mode="cosmetics" type="button" class="tt-cos">COSMETICS' + (hasNewCosmetics() ? '<i class="tt-newdot" aria-label="新しい見た目"></i>' : '') + '</button>' +
             '<button data-mode="training" type="button">TRAINING <small>SANDBOX</small></button>' +
             '<button data-mode="record" type="button">RECORD <small>STATS</small></button>' +
             '<button data-mode="cards" type="button">CARDS <small>CARD LIST</small></button>' +
@@ -205,6 +207,7 @@ export function runTitle(protocols, opts) {
         else if (button.dataset.mode === 'admin') openAdmin();
         else if (button.dataset.mode === 'cards') openCardList();
         else if (button.dataset.mode === 'gacha') openGacha();
+        else if (button.dataset.mode === 'cosmetics') openCosmetics({ onClose: () => { const d = root.querySelector('.tt-cos .tt-newdot'); if (d && !hasNewCosmetics()) d.remove(); } });
         else if (button.dataset.mode === 'profile') openProfile(protocols);
         else if (button.dataset.mode === 'quick') { location.href = location.pathname + '?quick=1'; }
         else finish(button.dataset.mode);

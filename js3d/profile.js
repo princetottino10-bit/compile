@@ -4,6 +4,7 @@
  * ========================================================================= */
 import { nameFieldHtml, bindNameField } from './displayname.js';
 import { openAccount, loginNudgeNeeded } from './account.js';
+import { openCosmetics } from './cosmetics-mode.js';
 import { trophyView } from './achievements.js';
 import { trophyContext, openTrophies } from './achievements-ui.js';
 import { bonusXp, XP_GAIN } from './xp.js';
@@ -99,7 +100,7 @@ export function openProfile(protocols) {
   const close = () => el.classList.remove('show');
   el.onclick = (ev) => { if (ev.target === el) close(); };
   el.querySelector('.pz-x').onclick = close;
-  el.querySelector('#pfCos').onclick = () => { close(); openSettings(); };
+  el.querySelector('#pfCos').onclick = () => { close(); openCosmetics(); };
   el.querySelector('#pfAcc').onclick = () => { close(); openAccount(); };
   const login = el.querySelector('#pfLogin');
   if (login) login.onclick = () => { close(); openAccount(); };
