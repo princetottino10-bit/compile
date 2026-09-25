@@ -611,6 +611,9 @@ function doShift(ctx, uid, destLine) {
 function playToField(ctx, uid, line, side, faceUp, belowUid) {
   const st = ctx.st;
   const c = st.cards[uid];
+  /* 裁定: 相手の側に置いたカードは、置いた時点で相手のカードになる (CORRUPTION 0・ASSIMILATION 3/6 など)。
+     持ち主が変わったら以後はそのまま (ルール: 持ち主の変更はゲームの終わりまで、または次に変わるまで続く) */
+  if (c.owner !== side) c.owner = side;
   removeFrom(st.players[0].hand, uid); removeFrom(st.players[1].hand, uid);
   removeFrom(st.players[0].deck, uid); removeFrom(st.players[1].deck, uid);
   markCommitted(st, uid);
