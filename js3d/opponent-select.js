@@ -51,8 +51,8 @@ export function openOpponentSelect(protocols) {
         CHALLENGERS.map((c, k) => card(String(CHALLENGER_BASE + k), '挑戦者', esc(c.name || '最強の候補だったデッキ'), deck(c.deck))).join('') +
       '</div></section>' +
     '<section><h3>下剋上 <small>いちばん弱いデッキで、いちばん強い CPU に挑む</small></h3>' +
-      '<div class="op-row">' + card('underdog', '下剋上' + (cleared ? ' <em>✓ TITLE — UNDERDOG</em>' : ''),
-        'あなた (最弱) vs 最強。勝つと 称号 UNDERDOG・専用スリーブとマーカー・+100 XP',
+      '<div class="op-row">' + card('underdog', '下剋上' + (cleared ? ' <em>✓ TITLE — GIANT SLAYER</em>' : ''),
+        'あなた (最弱) vs 最強。勝つと 称号 GIANT SLAYER・専用スリーブとマーカー・+100 XP',
         '<span class="op-vs">' + deck(UNDERDOG_DECK) + '<i>VS</i>' + deck(STRONGEST_AI) + '</span>', ' wide') + '</div></section>' +
     '<div class="op-foot"><button type="button" data-opp="back">← タイトルへ</button></div></div>';
   el.classList.add('show');

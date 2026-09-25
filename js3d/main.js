@@ -3446,7 +3446,7 @@ function showEndActions(win) {
   el.innerHTML =
     '<div class="end-title">' + (underdogWin ? '下剋上 達成！' : win ? 'あなたの勝ち' : '敗北') + '</div>' +
     nextGoalsHtml() +
-    (underdogWin ? '<div class="end-sub">最弱のデッキで最強に勝ちました。称号 UNDERDOG・専用スリーブとマーカー (GIANT SLAYER)・+' + UNDERDOG_XP + ' XP</div>' : '') +
+    (underdogWin ? '<div class="end-sub">最弱のデッキで最強に勝ちました。称号 GIANT SLAYER・専用スリーブとマーカー・+' + UNDERDOG_XP + ' XP</div>' : '') +
     '<div class="end-btns">' +
       '<button class="arr-btn ok" id="endAgain" type="button">REMATCH</button>' +
       '<button class="arr-btn" id="endTop" type="button">TITLE</button>' +
@@ -4023,7 +4023,7 @@ async function celebrateUnderdog() {
   }
   el.innerHTML = '<div class="ud-card"><small>UNDERDOG</small><h2>GIANT SLAYER</h2>' +
     '<p>最弱のデッキで、最強の CPU を倒しました。</p>' +
-    '<ul><li>称号 UNDERDOG</li><li>専用スリーブ GIANT SLAYER</li><li>専用コントロールマーカー GIANT SLAYER</li><li>+' + UNDERDOG_XP + ' XP</li></ul>' +
+    '<ul><li>称号 GIANT SLAYER</li><li>専用スリーブ GIANT SLAYER</li><li>専用コントロールマーカー GIANT SLAYER</li><li>+' + UNDERDOG_XP + ' XP</li></ul>' +
     '<p style="font-size:12px;opacity:.8">見た目は 設定 → COSMETICS で着けられます</p>' +
     '<button type="button">受け取る</button></div>';
   el.classList.add('show');

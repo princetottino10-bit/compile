@@ -96,7 +96,7 @@ export function itemName(kind, key) {
 /* 称号 (レベルのもの + 条件で取るもの)。オンラインで相手に見せるので、サーバー (secure-room の BADGES) にも同じ key を並べる */
 export const TITLES = {
   compiler: 'COMPILER', veteran: 'VETERAN', tactician: 'TACTICIAN', expert: 'EXPERT', architect: 'ARCHITECT',
-  master: 'MASTER', legend: 'LEGEND', ascended: 'ASCENDED', underdog: 'UNDERDOG',
+  master: 'MASTER', legend: 'LEGEND', ascended: 'ASCENDED', underdog: 'GIANT SLAYER',     // 下剋上 (key はサーバー・保存と揃えて underdog のまま)
   /* 実績で取る (cosmetics-ui.js の TROPHY_TITLES) */
   chainer: 'CHAIN MASTER', flawless: 'FLAWLESS', grandmaster: 'GRANDMASTER',
   puzzler: 'PUZZLER', compuzzler: 'COMPUZZLER',       // COMPUZZLE の中級を全部 / 全部

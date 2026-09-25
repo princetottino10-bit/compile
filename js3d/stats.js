@@ -144,7 +144,7 @@ function summaryTab(list, protos) {
   const tile = (label, value, sub) => '<div class="sr-kpi"><small>' + label + '</small><b>' + value + '</b>' + (sub ? '<span>' + sub + '</span>' : '') + '</div>';
   /* 称号 (取ったものだけ) */
   const titles = [];
-  if (list.some(r => r.win && r.level === UNDERDOG_LEVEL)) titles.push(['UNDERDOG', '最弱のデッキで最強に勝った']);
+  if (list.some(r => r.win && r.level === UNDERDOG_LEVEL)) titles.push(['GIANT SLAYER', '最弱のデッキで最強に勝った']);
   const pl = playerLevel(list, bonusXp());
   return '<div class="sr-level"><b>Lv ' + pl.level + '</b><span class="sr-xp"><i style="width:' + Math.round(pl.progress * 100) + '%"></i></span>' +
       '<small>次のレベルまで ' + (pl.next - pl.xp) + ' (CPU 戦・オンライン・チュートリアル・問題などで入ります)</small></div>' +
