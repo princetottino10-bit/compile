@@ -2622,7 +2622,7 @@ function pickOnBoard(req) {
       if (!el) {
         el = document.createElement('div');
         el.id = 'pickBar';
-        el.className = 'arr-bar';
+        el.className = 'pick-ribbon';
         document.body.appendChild(el);
       }
       /* 質問と はい/いいえ を同じ1行の帯に (選択の帯と同じ形)。手札のすぐ上、PC の広い画面では効果を出したカードのそば */
@@ -2712,7 +2712,6 @@ function pickOnBoard(req) {
    選択バーには発動元と質問が入っているので、出している間は上の「効果処理中」の帯を隠す */
 let pickPanelReq = null;
 function bindPickBar(el) {
-  if (el.classList.contains('arr-bar')) el.classList.add('sel-bar');
   document.body.classList.add('picking');
   bindSelectHead(el, showCardNoteFor);
   /* 選んでいる間は、何の効果で選んでいるのかを左の詳細パネルに出しておく (マスターデュエルと同じ)。
@@ -2749,7 +2748,7 @@ function renderBoardPick() {
   if (!el) {
     el = document.createElement('div');
     el.id = 'pickBar';
-    el.className = 'arr-bar';
+    el.className = 'pick-ribbon';
     document.body.appendChild(el);
   }
   const instant = pickIsInstant(bp);   // 盤面の1枚必須はタップで即決
@@ -2885,7 +2884,7 @@ function renderLinePick() {
   if (!el) {
     el = document.createElement('div');
     el.id = 'pickBar';
-    el.className = 'arr-bar';
+    el.className = 'pick-ribbon';
     document.body.appendChild(el);
   }
   const canBack = !!(cur && cur.state && cur.state.pending && cur.state.pending.requestId === bp.req.id

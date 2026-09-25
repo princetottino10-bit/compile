@@ -55,7 +55,6 @@
   #brand b{color:var(--pink);}
   #brand span{color:var(--cyan);}
 
-
   /* 山札・捨て札の枚数 (盤面の山のそば) */
   #pileCounts{position:fixed;inset:0;z-index:9;pointer-events:none;}
   .pile-count{position:absolute;left:0;top:0;display:inline-flex;align-items:baseline;gap:5px;white-space:nowrap;
@@ -128,7 +127,6 @@
   #prompt.hidden{opacity:0;}
   #prompt[data-tone="ask"]{border-color:var(--gold);color:#ffeab4;box-shadow:0 0 26px rgba(255,179,218,.16);}
   #prompt[data-tone="end"]{border-color:var(--pink);color:#ffc7e4;}
-
 
   /* ---------- 画面フラッシュ ---------- */
   #flash{position:fixed;inset:0;z-index:44;opacity:0;pointer-events:none;mix-blend-mode:screen;}
@@ -228,7 +226,6 @@
     .cc-name::before,.cc-name::after,.cc-ring,.cc-ghost span{animation:none;opacity:0;}
     .cc-name{background-position:50% 0;}
   }
-
 
   /* ---------- ターン開始バナー ---------- */
   #turnCut{position:fixed;inset:0;z-index:43;display:none;overflow:hidden;pointer-events:none;}
@@ -359,7 +356,6 @@
   }
   @media (max-width:860px) and (orientation:portrait){ #phaseChip{top:calc(66px + env(safe-area-inset-top));height:44px;} #phaseChip .ph-band{height:28px;} }
 
-
   /* ---------- チェーン表示 (効果の途中で別の効果が割り込んだとき) ----------
      マスターデュエルのチェーンのように、処理中の効果を番号付きで積む。
      1番が一番下、いま解決中が一番上。PC は右端、スマホは上部に横並び */
@@ -481,8 +477,6 @@
   @media (orientation:portrait) and (max-width:860px) and (pointer:coarse){
     #title .tt-rotate{display:block;}
   }
-  #rotateNote{position:fixed;left:0;right:0;bottom:0;z-index:89;display:none;padding:8px 12px calc(8px + env(safe-area-inset-bottom));
-    text-align:center;font:700 11.5px/1.4 system-ui;color:#fff;background:rgba(12,9,20,.92);border-top:2px solid var(--pink);pointer-events:none;}
   @media (prefers-reduced-motion:reduce){ #rotateHint .rh-phone{animation:none;transform:rotate(-90deg);} }
 
   /* ---------- 決着カットイン ---------- */
@@ -666,7 +660,7 @@
   #modal.show{display:flex;}
   /* 見た目は選択の1行の帯 (.pick-ribbon) とそろえる: 半透明・桃色の縁 */
   #modalCard{width:min(560px,92vw);max-height:52vh;overflow-y:auto;padding:14px 18px;
-    border-radius:16px;background:rgba(10,8,18,.8);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+    border-radius:0;clip-path:var(--cut-s);background:rgba(10,8,18,.8);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
     border:1px solid rgba(255,79,163,.45);box-shadow:0 20px 60px rgba(0,0,0,.5);}
   #modalTitle{margin:0 0 14px;font:800 13px/1.4 system-ui;letter-spacing:.1em;color:#cfefff;}
   #modalBody{display:flex;flex-direction:column;gap:7px;}
@@ -681,7 +675,7 @@
   /* 目ボタン: 押すとダイアログを隠して盤面を見る。もう一度で戻る */
   /* ダイアログ右上に添える (ピーク中もこの位置に残る) */
   #modalPeek{align-self:flex-end;margin-right:calc((100% - min(560px,92vw)) / 2);z-index:32;
-    width:46px;height:46px;border-radius:12px;cursor:pointer;font-size:22px;line-height:1;
+    width:32px;height:32px;border-radius:6px;cursor:pointer;font-size:15px;line-height:1;   /* 帯の目 (.rb-peek) と同じ大きさ */
     background:rgba(8,11,21,.85);border:1px solid rgba(185,164,255,.3);color:#cfefff;
     box-shadow:0 8px 26px rgba(0,0,0,.55);transition:border-color .16s,color .16s;}
   #modalPeek:hover{border-color:var(--cyan);background:rgba(185,164,255,.12);}
@@ -740,30 +734,12 @@
 
   /* ---------- 盤面の並べ替えチップ ---------- */
   #arrOv{position:fixed;inset:0;z-index:33;pointer-events:none;}
-  /* 並べ替えは小さく: 盤面のプロトコル板の上に名前だけの札を浮かべ、操作は手札のすぐ上に */
-  .arr-hint{position:fixed;left:50%;top:56px;transform:translateX(-50%);
-    padding:6px 14px;border-radius:999px;background:rgba(8,11,21,.86);
-    border:1px solid rgba(185,164,255,.3);color:#cfefff;font:700 11px/1 system-ui;letter-spacing:.06em;}
-  .arr-chip{position:fixed;transform:translate(-50%,-50%);pointer-events:auto;cursor:pointer;
-    padding:6px 12px;border-radius:8px;font:800 11px/1 system-ui;letter-spacing:.08em;
-    background:rgba(8,11,21,.8);border:2px solid rgba(185,164,255,.45);color:#eaf4ff;
-    box-shadow:0 6px 18px rgba(0,0,0,.5);transition:all .14s;}
-  .arr-chip:hover{border-color:var(--cyan);background:rgba(185,164,255,.14);}
-  .arr-chip.on{border-color:var(--gold);color:var(--gold);transform:translate(-50%,-50%) scale(1.1);}
-  .arr-chip.done{opacity:.75;border-style:dashed;}
-  .arr-bar{position:fixed;left:50%;bottom:12vh;transform:translateX(-50%);display:flex;gap:10px;pointer-events:auto;}
+  
   .arr-btn{padding:10px 22px;border-radius:999px;cursor:pointer;font:800 12px/1 system-ui;letter-spacing:.1em;
     background:rgba(8,11,21,.9);border:1px solid rgba(255,255,255,.2);color:var(--ink);transition:all .16s;}
   .arr-btn.ok{border-color:rgba(160,123,255,.5);color:var(--mint);}
   .arr-btn.ok:disabled{opacity:.35;cursor:not-allowed;}
-  /* 質問つきの選択バー: 何に答えているのかをボタンのすぐ上に置く */
-  .arr-bar.with-ask{flex-direction:column;align-items:center;gap:8px;max-width:min(520px,92vw);
-    padding:10px 14px;border-radius:14px;background:rgba(6,9,18,.95);
-    border:1px solid rgba(185,164,255,.34);box-shadow:0 18px 50px rgba(0,0,0,.6);}
-  .arr-bar .arr-ask{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;justify-content:center;
-    font:600 12px/1.6 system-ui;color:var(--ink);text-align:center;}
-  .arr-bar .arr-ask b{font:800 11px/1.4 system-ui;letter-spacing:.06em;color:var(--cyan);}
-  .arr-bar .arr-btns{display:flex;gap:10px;}
+  
   .arr-btn:hover:not(:disabled){border-color:var(--cyan);}
 
   /* ---------- 効果の選択UI (盤面の帯・一覧ダイアログ共通) ----------
@@ -783,80 +759,14 @@
     color:var(--dim);border:1px solid rgba(255,255,255,.2);}
   .sel-count{font:600 11px/1 system-ui;color:var(--dim);font-variant-numeric:tabular-nums;}
   .sel-count b{font-size:15px;color:var(--gold);}
-  .sel-hint{font:600 11px/1.5 system-ui;color:var(--dim);display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
-  .sel-key{display:inline-block;width:10px;height:10px;border-radius:3px;}
-  .sel-key.gold{background:var(--gold);box-shadow:0 0 8px var(--gold);}
-  .sel-key.mint{background:var(--mint);box-shadow:0 0 8px var(--mint);margin-left:6px;}
   .sel-arrow{font-style:normal;color:var(--dim);margin:0 8px;}
 
-  /* 盤面の帯 */
-  /* PC: 盤面の左の空きに縦長パネルとして置く (手札・レーンに重ねない) */
-  .arr-bar.sel-bar{left:24px;top:50%;bottom:auto;transform:translateY(-50%);width:300px;max-width:none;
-    align-items:stretch;gap:10px;padding:12px 14px;border-radius:16px;
-    background:linear-gradient(180deg,rgba(12,16,30,.97),rgba(6,8,17,.97));
-    border:1px solid rgba(185,164,255,.22);box-shadow:0 20px 60px rgba(0,0,0,.65);}
-  .arr-bar.sel-bar .arr-btns{justify-content:flex-end;flex-wrap:wrap;gap:8px;}
-  .arr-bar.sel-bar .arr-btn.ok{flex:1;}
-  .arr-bar.sel-bar .arr-btn{padding:10px 18px;white-space:nowrap;}
-  /* 盤面で選ぶときの指示: マスターデュエルのように上部中央の横長の帯に、何を選ぶかを1行で大きく出す。
-     「何を」の語は金色。発動元・ヒント・ボタンは帯の下段に小さくまとめる。
-     左の詳細パネルとは重ねない幅にする */
-  .arr-bar.sel-bar:not(.confirm){left:50%;top:60px;transform:translateX(-50%);z-index:20;
-    width:min(720px,calc(100vw - 2 * (clamp(190px,17vw,240px) + 30px + env(safe-area-inset-left))));
-    flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 12px;
-    padding:12px 22px 10px;border-radius:3px;border:0;
-    border-top:1px solid rgba(160,190,230,.42);border-bottom:1px solid rgba(160,190,230,.42);
-    background:linear-gradient(180deg,rgba(15,20,36,.93),rgba(7,10,20,.93));
-    box-shadow:0 14px 40px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.05);}
-  .arr-bar.sel-bar:not(.confirm) .sel-head{flex-direction:row;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px 12px;}
-  .arr-bar.sel-bar:not(.confirm) .sel-q{font-size:17px;letter-spacing:.04em;text-align:center;}
-  .arr-bar.sel-bar:not(.confirm) .arr-btns{justify-content:center;}
-  .arr-bar.sel-bar:not(.confirm) .arr-btn{padding:7px 16px;font-size:11px;}
-  .arr-bar.sel-bar:not(.confirm) .arr-btn.ok{flex:none;}
-  /* 盤面で選ぶ帯は盤面の上に重なるので、帯の地はタップを素通りさせる (下のカードを選べる)。
-     押せるのはボタンと選んだカードのチップだけ。帯は低く詰める: 「光っているカードをタップ」の行と、
-     質問文の「(任意)」と重なる札は出さない (selectui.js) */
-  .arr-bar.sel-bar:not(.confirm){pointer-events:none;padding:8px 18px 8px;gap:6px 12px;
-    background:linear-gradient(180deg,rgba(15,20,36,.86),rgba(7,10,20,.86));}
-  .arr-bar.sel-bar:not(.confirm) :is(button,.sel-chip,a){pointer-events:auto;}
-  /* 「〜をタップ」だけの行は省き、移動の色分けの説明 (金=移動するカード / ミント=移動先) は残す */
-  .arr-bar.sel-bar:not(.confirm) .sel-hint:not(:has(.sel-key)){display:none;}
-  .arr-bar.sel-bar:not(.confirm) .sel-q{font-size:15px;}
   .sel-q em{font-style:normal;color:var(--gold);}
   body.picking #prompt{opacity:0;}
-  /* 効果を使うかの確認は、手札のすぐ上の中央に出す (--hand-gap は main.js が手札の上端から計算)。
-     盤面に重なるので、目ボタンで一時的に隠して盤面を見られる */
-  .arr-bar.sel-bar.confirm{left:50%;top:auto;bottom:calc(var(--hand-gap, 14vh) + 12px);
-    transform:translateX(-50%);width:min(440px,calc(100vw - 32px));}
-  .arr-bar.sel-bar.confirm .arr-btns{flex-wrap:nowrap;}
-  .sel-peek{flex:none;width:42px;height:34px;border-radius:11px;cursor:pointer;font-size:19px;line-height:1;
-    background:rgba(8,11,21,.85);border:1px solid rgba(185,164,255,.3);color:#cfefff;
-    transition:border-color .16s,color .16s,background .16s;}
-  .sel-peek:hover{border-color:var(--cyan);background:rgba(185,164,255,.12);}
-  .sel-peek:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;}
-  .arr-bar.sel-bar.peek{background:transparent;border-color:transparent;box-shadow:none;pointer-events:none;}
-  .arr-bar.sel-bar.peek > :not(.arr-btns),.arr-bar.sel-bar.peek .arr-btn{visibility:hidden;}
-  .arr-bar.sel-bar.peek .sel-peek{pointer-events:auto;border-color:var(--gold);color:var(--gold);}
-  /* 手札の上の帯 (確認・手札を捨てる・並べ替え) は低く: 発動元と質問を1行に、決定は右端に */
-  .arr-bar.sel-bar.confirm{gap:8px;padding:10px 14px;}
-  .arr-bar.sel-bar.confirm .sel-head{flex-direction:row;align-items:center;flex-wrap:wrap;gap:6px 10px;}
-  .arr-bar.sel-bar.confirm .sel-q{font-size:14px;}
-  .arr-bar.sel-bar.confirm .arr-btns{justify-content:flex-end;}
-  .arr-bar.sel-bar.confirm .arr-btn{padding:8px 16px;}
-  /* 並べ替え: 左・中・右の並びを帯の中に出す。タップで2つを入れ替える */
-  .arr-order{display:flex;gap:6px;}
-  .arr-order .arr-chip{position:static;transform:none;flex:1;padding:8px 6px;font-size:11px;text-align:center;
-    box-shadow:none;background:rgba(255,255,255,.04);}
-  .arr-order .arr-chip.on{transform:none;background:rgba(255,179,218,.14);}
-  .arr-bar.sel-bar.confirm .sel-chosen{justify-content:center;}
+
   .arr-btn.ok{background:linear-gradient(100deg,rgba(160,123,255,.2),rgba(185,164,255,.14));min-width:92px;}
   .arr-btn.ghost{background:transparent;border-color:transparent;color:var(--dim);letter-spacing:.06em;}
   .arr-btn.ghost:hover{color:var(--ink);border-color:rgba(255,255,255,.2);}
-  .sel-chosen{display:flex;flex-wrap:wrap;gap:6px;}
-  .sel-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 8px 5px 5px;border-radius:8px;cursor:pointer;
-    background:rgba(255,179,218,.12);border:1px solid rgba(255,179,218,.5);color:var(--ink);font:700 11px/1 system-ui;}
-  .sel-chip b{display:grid;place-items:center;width:17px;height:17px;border-radius:5px;background:var(--gold);color:#1a1405;font-size:10px;}
-  .sel-chip i{font-style:normal;color:var(--dim);margin-left:2px;}
 
   /* 一覧ダイアログ */
   #modalTitle .sel-head{margin-bottom:2px;}
@@ -943,8 +853,8 @@
   .pick-ribbon .rb-btn.skip{border-color:var(--pink);}
   .pick-ribbon .rb-btn.ok{background:var(--pink);border-color:var(--pink);min-width:64px;}
   .pick-ribbon .rb-act{display:flex;gap:6px;margin-left:auto;}   /* ボタンはまとめて右に (折り返しても一緒) */
-  /* 帯が出ている間 (選択の最中) は、使えない UNDO・HINT・REFRESH を隠す (縦持ちでは帯と重なる) */
-  body:has(.pick-ribbon) #assist,body:has(.pick-ribbon) #btnRefresh{visibility:hidden;}
+  /* 帯が出ている間 (選択の最中) は、横のボタン (UNDO・HINT・REFRESH・手札をしまう) を隠す (縦持ちでは帯と重なる。盤面は目のボタンで見られる) */
+  body:has(.pick-ribbon) #assist,body:has(.pick-ribbon) #btnRefresh,body:has(.pick-ribbon) #dock{visibility:hidden;}
   .pick-ribbon .rb-btn:hover,.pick-ribbon .rb-btn:focus-visible,.pick-ribbon .rb-src:focus-visible{filter:brightness(1.25);outline:0;}
   @media (orientation:landscape) and (max-height:500px){
     .pick-ribbon{padding:4px 6px 4px 4px;gap:6px;max-width:min(560px,calc(100vw - 120px));}
@@ -956,6 +866,8 @@
   @media (prefers-reduced-motion:reduce){ .pick-ribbon{animation:none;} }
   /* 選んでいる間は、通知を帯の上に逃がす */
   body:has(.pick-ribbon) #toast{bottom:calc(var(--hand-gap, 62px) + 64px);}
+  /* 一覧の画面が出ている間は、通知をその上 (画面の上のほう) へ */
+  body:has(#modal.show) #toast{top:calc(96px + env(safe-area-inset-top));bottom:auto;}
   /* 通知は手札の上端より上に出す (手札を隠さない。--hand-gap は main.js が手札の位置から計算) */
   #toast{position:fixed;left:50%;bottom:calc(var(--hand-gap, 62px) + 12px);transform:translateX(-50%) translateY(12px);z-index:40;
     padding:10px 20px;border-radius:999px;opacity:0;pointer-events:none;transition:all .28s cubic-bezier(.16,1,.3,1);
@@ -982,9 +894,6 @@
   #bootBar i{display:block;height:100%;width:38%;border-radius:2px;background:var(--cyan);
     box-shadow:0 0 12px var(--cyan);animation:slide 1.15s infinite ease-in-out;}
   @keyframes slide{0%{transform:translateX(-100%)}100%{transform:translateX(360%)}}
-
-
-
 
   /* ---------- ルーム対戦ロビー ---------- */
   #roomOv{position:fixed;inset:0;z-index:57;display:none;align-items:center;justify-content:center;
@@ -1885,21 +1794,13 @@
   }
 
   @media (max-width:860px) and (orientation:portrait){
-    /* 選択バーは手札に重ねず、プロンプト直下の空き領域に置く (.arr-bar より後ろで上書き) */
-    .arr-bar{top:13vh;bottom:auto;}
-    /* 狭い画面では帯を画面幅いっぱいに (中央寄せの max-content だとボタンが潰れる) */
-    .arr-bar.sel-bar{left:10px;right:10px;width:auto;max-width:none;transform:none;top:52px;}
-    .arr-bar.sel-bar .arr-btn{flex:1;padding:12px 10px;}
-    .arr-bar.sel-bar .arr-btn.ghost{flex:0 0 auto;}
-    .arr-bar.sel-bar.confirm{left:10px;right:10px;width:auto;transform:none;top:52px;bottom:auto;}
-    .arr-bar.sel-bar:not(.confirm){left:10px;right:10px;width:auto;transform:none;top:52px;}
+
     #modal{padding-bottom:10vh;}
     .sel-q{font-size:14px;}
     .sel-protos{grid-template-columns:repeat(2,1fr);}
     .sel-values{grid-template-columns:repeat(4,1fr);}
     .sel-value{aspect-ratio:auto;padding:14px 0;}
     #modalCard{width:calc(100vw - 20px);max-height:62vh;}
-    #toast{bottom:19vh;}   /* 選択バー (.arr-bar, 12vh) と重ねない */
     /* タップ用: プレビューは中央に大きく (タップで表示、他をタップで消える) */
     /* 縦持ちは触ったカードを右上の小窓 (#cardNote) で読む。詳細パネルは発動のときだけ少し出す */
     #preview{left:auto;right:8px;top:calc(104px + env(safe-area-inset-top));width:min(260px,70vw);max-height:52vh;transform:translateX(8px);}
@@ -1971,41 +1872,10 @@
     .cp-row p{font-size:11px;line-height:1.5;}
     #chainUi .ch-no{font-size:22px;}
     #chainUi .ch-name{font-size:10px;}
-    .arr-bar.sel-bar{max-height:calc(100vh - 20px);max-height:calc(100dvh - 20px);overflow-y:auto;padding:9px 11px;}
-    .arr-bar.sel-bar:not(.confirm){top:40px;width:max(300px,calc(100vw - 2 * (min(200px,24vw) + 18px + env(safe-area-inset-left))));padding:7px 12px 6px;gap:5px 10px;}
-    .arr-bar.sel-bar:not(.confirm) .sel-q{font-size:13px;}
-    .arr-bar.sel-bar:not(.confirm) .arr-btn{padding:6px 12px;font-size:10px;}
-    .arr-bar.sel-bar.confirm{width:min(380px,calc(100vw - 2 * (min(200px,24vw) + 18px + env(safe-area-inset-left))));}
     .sel-q{font-size:13px;}
     #modalCard{max-height:calc(100vh - var(--hand-gap, 14vh) - 84px);max-height:calc(100dvh - var(--hand-gap, 14vh) - 84px);}
     #trainingTools{top:40px;max-height:calc(100vh - 50px);max-height:calc(100dvh - 50px);width:280px;}
-    /* 効果の指示の帯は1行に詰める (高さが足りず、選ぶ対象のカードに被っていた)。
-       発動元は色の点だけ、ヒントと選んだ札の一覧は省く (盤面の光と数で分かる)。
-       ほかの帯の指定より後ろ・同じ強さで書くため :is(.confirm,:not(.confirm)) を付ける */
-    .arr-bar.sel-bar:is(.confirm,:not(.confirm)){flex-direction:row;flex-wrap:nowrap;align-items:center;gap:6px;padding:5px 8px;border-radius:10px;}
-    .arr-bar.sel-bar:is(.confirm,:not(.confirm)):has(.arr-order){flex-wrap:wrap;}
-    .arr-bar.sel-bar:is(.confirm,:not(.confirm)) .sel-head{flex:1;min-width:0;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:6px;width:auto;}
-    .arr-bar.sel-bar:is(.confirm,:not(.confirm)) .sel-src{padding:3px;}
-    .arr-bar.sel-bar:is(.confirm,:not(.confirm)) .sel-src b,.arr-bar.sel-bar:is(.confirm,:not(.confirm)) .sel-src span{display:none;}
-    .arr-bar.sel-bar:is(.confirm,:not(.confirm)) .sel-q{font-size:11.5px;line-height:1.3;min-width:0;overflow:hidden;
-      display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
-    .arr-bar.sel-bar:is(.confirm,:not(.confirm)) .sel-hint,.arr-bar.sel-bar:is(.confirm,:not(.confirm)) .sel-chosen,.arr-bar.sel-bar:is(.confirm,:not(.confirm)) .sel-tag{display:none;}
-    .arr-bar.sel-bar:is(.confirm,:not(.confirm)) .arr-btns{flex:none;flex-wrap:nowrap;gap:5px;}
-    .arr-bar.sel-bar:is(.confirm,:not(.confirm)) .arr-btn{padding:6px 10px;font-size:10px;min-width:0;}
-    .arr-bar.sel-bar:is(.confirm,:not(.confirm)) .sel-peek{width:32px;height:28px;font-size:15px;}
-    .arr-bar.sel-bar:is(.confirm,:not(.confirm)) .arr-order{width:100%;order:3;}
-    .arr-bar.sel-bar:not(.confirm){top:6px;}
-    /* 右上の帯は幅が狭い。1行に詰めると「はい」が伸びて質問が消えていたので、質問を1段目・ボタンを2段目に分ける */
-    .arr-bar.sel-bar:is(.confirm,:not(.confirm)){flex-wrap:wrap;row-gap:4px;}
-    .arr-bar.sel-bar:is(.confirm,:not(.confirm)) .sel-head{flex:1 1 100%;}
-    .arr-bar.sel-bar:is(.confirm,:not(.confirm)) .arr-btns{margin-left:auto;}
-    .arr-bar.sel-bar:is(.confirm,:not(.confirm)) .arr-btn.ok{flex:none;min-width:72px;}
-    /* 帯の文字の部分は触っても下の盤面に届く (帯の下にある相手のカードもそのまま選べる)。
-       反応するのはボタンと発動元の点だけ。下のカードが見えるよう半透明にする */
-    .arr-bar.sel-bar:is(.confirm,:not(.confirm)){pointer-events:none;background:rgba(6,9,18,.6);
-      border-color:rgba(185,164,255,.28);box-shadow:none;}
-    .arr-bar.sel-bar:is(.confirm,:not(.confirm)) :is(button,.sel-src){pointer-events:auto;}
-    .arr-bar.sel-bar:is(.confirm,:not(.confirm)) .sel-q{text-shadow:0 1px 4px rgba(0,0,0,.95);}
+
     /* 選んでいる間も、左の詳細パネルには効果の文を出す (見出しだけにすると枠が空のまま縦に伸びていた。
        左のラインを見たいときは INFO のつまみでしまえる) */
     /* 一覧で選ぶ: 文字とボタンを小さく、カードは2列に並べる */
@@ -2024,7 +1894,7 @@
     .sel-proto{padding:9px 9px 8px;}
     .sel-proto b{font-size:11px;}
     .sel-value{font-size:18px;}
-    #modalPeek{width:38px;height:38px;font-size:18px;}
+
   }
 
   /* ---------- 書体 ----------
@@ -2037,45 +1907,17 @@
   #chainUi .ch-burst b,#chainUi .ch-no,#chainUi .ch-name,.cp-head b,.cp-val,.cp-proto,
   .sel-value,.sel-no,.sel-proto b,#setupHead h1,#setupCount,.proto-name,.lvl,.lv-pick,#setupStart,
   #tutorialCoach .tc-tag,#puzzleBar .pz-tag,.tu-head .pz-tag,.sd-tag,.ro-code,#topbar button{font-family:var(--font-hud)!important;}
-  /* ---------- 盤面で選ぶ帯は右上にスライドで出す (発動の帯と同じ場所) ----------
-     盤面の中央を空ける。選んでいる間は発動の帯を隠す (帯の発動元チップに同じ情報がある) */
-  .arr-bar.sel-bar:not(.confirm){left:auto;right:calc(8px + env(safe-area-inset-right));top:44px;transform:none;
-    width:min(360px,40vw);justify-content:flex-start;border-radius:10px;
-    border:1px solid rgba(185,164,255,.32);border-left:3px solid var(--cyan);
-    animation:selSlide .28s cubic-bezier(.16,1,.3,1);}
-  .arr-bar.sel-bar:not(.confirm) .sel-head{justify-content:flex-start;}
-  .arr-bar.sel-bar:not(.confirm) .sel-q{text-align:left;}
-  .arr-bar.sel-bar:not(.confirm) .arr-btns{justify-content:flex-end;width:100%;}
+  
   @keyframes selSlide{from{opacity:0;transform:translateX(48px)}to{opacity:1;transform:none}}
-  @media (prefers-reduced-motion: reduce){ .arr-bar.sel-bar:not(.confirm){animation:none;} }
   body.picking #fxBanner{display:none!important;}
-  /* 手札から選ぶ (捨てる・キャッシュの削除など) 帯も右上に。手札の上の中央は盤面を覆っていた */
-  .arr-bar.sel-bar.confirm.hand-pick{left:auto;right:calc(8px + env(safe-area-inset-right));top:44px;bottom:auto;
-    transform:none;width:min(360px,40vw);border-radius:10px;
-    border:1px solid rgba(185,164,255,.32);border-left:3px solid var(--cyan);
-    animation:selSlide .28s cubic-bezier(.16,1,.3,1);}
-  @media (prefers-reduced-motion: reduce){ .arr-bar.sel-bar.confirm.hand-pick{animation:none;} }
-  /* はい/しない の確認・並べ替えなど、残りの帯も右上に。目ボタン (押すと帯を隠して盤面を見る) は残す */
-  @media (orientation:landscape){
-    .arr-bar.sel-bar.confirm{left:auto;right:calc(8px + env(safe-area-inset-right));top:44px;bottom:auto;
-      transform:none;width:min(360px,40vw);border-radius:10px;
-      border:1px solid rgba(185,164,255,.32);border-left:3px solid var(--cyan);
-      animation:selSlide .28s cubic-bezier(.16,1,.3,1);}
-    .arr-bar.sel-bar.confirm .sel-head{justify-content:flex-start;}
-    .arr-bar.sel-bar.confirm .sel-q{text-align:left;}
-    .arr-bar.sel-bar.confirm .arr-btns{justify-content:flex-end;width:100%;}
-    /* 選択肢の一覧 (モーダル) は、ほかの選択の帯と同じく手札のすぐ上に出す (右上に出していたのをやめた) */
-  }
-  @media (prefers-reduced-motion: reduce){ .arr-bar.sel-bar.confirm,#modal.show #modalCard{animation:none;} }
+
+  @media (prefers-reduced-motion: reduce){ #modal.show #modalCard{animation:none;} }
   /* PC の広い画面: 右上の隅ではなく盤面の右上の角のすぐ外に (--dlg-x / --dlg-y は main.js が盤から数える)。
      右端からはみ出す幅なら、右端で止める */
   @media (min-width:1100px) and (min-height:620px){
-    .arr-bar.sel-bar:not(.confirm),.arr-bar.sel-bar.confirm,.arr-bar.sel-bar.confirm.hand-pick{
-      left:min(var(--dlg-x, 100vw), calc(100vw - min(360px,40vw) - 8px));right:auto;top:var(--dlg-y, 44px);}
     #fxBanner{left:min(var(--dlg-x, 100vw), calc(100vw - min(300px,34vw) - 8px));right:auto;top:var(--dlg-y, 44px);}
   }
   @media (orientation:landscape) and (max-height:500px){
-    .arr-bar.sel-bar:not(.confirm),.arr-bar.sel-bar.confirm{top:38px;width:min(320px,40vw);}
     /* 一覧の画面が出ている間は左の詳細をしまう (画面が狭く、一覧の左端を覆っていた。一覧にも元のカードが出ている) */
     body:has(#modal.show) #preview,body:has(#modal.show) #btnInfo{display:none;}
     #modalCard{padding:10px 12px;max-height:calc(100vh - var(--hand-gap, 14vh) - 60px);max-height:calc(100dvh - var(--hand-gap, 14vh) - 60px);}
@@ -2094,7 +1936,8 @@
   /* ボタン: 角を斜めに切り欠く (左上・右下)。丸いピルはやめる */
   .btn,.arr-btn,.lvl,.tt-menu button,.tt-corner button,.rn-btns button,.rn-mode button,.op-card,.op-foot button,
   .pz-row button,.st-opt,.st-seg button,.sr-tabs button,#setupStart,#setupBack,.rn-info,.wk-name button,.ac-google,
-  .end-btns button,.sel-peek,.placement-cancel,.rn-proto,.sr-cc{border-radius:0!important;clip-path:var(--cut-s);}
+  .end-btns button,.placement-cancel,.rn-proto,.sr-cc,
+  #puzzleBar button,.tu-foot button,#tutorialCoach .tc-retry,#runBack,#toast,#prompt{border-radius:0!important;clip-path:var(--cut-s);}
   .tt-menu button,.op-card,.rn-proto,#setupStart,.rn-btns .rn-go{clip-path:var(--cut);}
   .tt-menu button,.op-card,.rn-mode button,.rn-btns button,.arr-btn,.btn,.lvl,.st-seg button,.sr-tabs button{
     font-family:var(--font-ui);text-transform:uppercase;letter-spacing:.12em;}
@@ -2108,12 +1951,11 @@
   /* 主ボタンは桃のベタ塗り */
   .arr-btn.ok,.rn-btns .rn-go,#setupStart:not(:disabled),.rn-mode button.rn-go{background:var(--pink)!important;border-color:var(--pink)!important;color:#fff!important;}
   /* 板・帯: 角をほぼ立て、上辺に桃→紫の細い線 */
-  .pz-card,.rn-card,#modalCard,.lu-card,.ac-card,.sr-card,.st-card{border-radius:3px!important;
+  .pz-card,.rn-card,.lu-card,.ac-card,.sr-card,.st-card{border-radius:3px!important;
     background:linear-gradient(180deg,rgba(18,12,30,.98),rgba(9,7,16,.98))!important;border:1px solid rgba(255,255,255,.1)!important;
     box-shadow:0 24px 70px rgba(0,0,0,.6)!important;position:relative;}
-  .pz-card::before,.rn-card::before,#modalCard::before,.lu-card::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;
+  .pz-card::before,.rn-card::before,.lu-card::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;
     background:linear-gradient(90deg,var(--pink),var(--violet));}
-  .arr-bar.sel-bar{border-radius:2px!important;}
   /* 見出し: Oxanium の大文字、グリッチ (桃と紫を左右にずらす) */
   .tt-logo{text-shadow:4px 0 rgba(255,79,163,.85),-4px 0 rgba(139,92,246,.85)!important;filter:none!important;}
   .tt-logo b{color:var(--pink);}
@@ -2280,11 +2122,7 @@
   .dn-field small{grid-column:1 / -1;min-height:0;font:600 11px/1.3 var(--font-ui);color:var(--lav);}
   .dn-field small:empty{display:none;}
   .dn-field small.err{color:var(--pink);}
-  /* はい/いいえ を効果を出したカードのすぐ横に (--nx / --ny は main.js が数える) */
-  #pickBar.near-card{left:var(--nx)!important;top:var(--ny)!important;right:auto!important;bottom:auto!important;transform:none!important;
-    width:min(300px,30vw)!important;animation:nearIn .2s cubic-bezier(.16,1,.3,1)!important;}
-  @keyframes nearIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
-  @media (prefers-reduced-motion: reduce){ #pickBar.near-card{animation:none!important;} }
+  
   /* RUN の入口: 2つのモードを同じ大きさのカードで並べる */
   .rn-pick{margin:2px 0 10px;font:700 13px/1.4 var(--font-ui);color:var(--dim);}
   .rn-modes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
@@ -2497,7 +2335,6 @@
     <b>スマホを横向きにしてください</b>
     <span>COMPILE は横向きで遊ぶように作っています</span>
   </div>
-  <div id="rotateNote">対戦画面は横持ちに最適化されています (縦持ちでも遊べます)</div>
   <div id="stage"></div>
 
   <div id="topbar">
@@ -2613,7 +2450,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=bca59964d1",
+      "./js3d/main.js": "./js3d/main.js?v=d9e7a0f157",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=6398fed15e",
       "./js3d/panel.js": "./js3d/panel.js?v=ecb8a073e3",
       "./js3d/plates.js": "./js3d/plates.js?v=70ffa14b87",
@@ -2732,6 +2569,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=bca59964d1"></script>
+  <script type="module" src="js3d/main.js?v=d9e7a0f157"></script>
 </body>
 </html>
