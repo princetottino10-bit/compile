@@ -21,6 +21,7 @@ E.setTrace(false);
 E.setAiLevel(1);
 
 const GAMES = Number(process.argv[2]) || 500;
+const ONLY = process.env.FUZZ_SEED ? Number(process.env.FUZZ_SEED) : null;   // 1試合だけ作り直すとき
 const SEED0 = Number(process.argv[3]) || 1;
 const OUT = process.argv[4] || path.join(root, 'fuzz-report.json');
 const MAX_STEPS = 3000;          // 1試合の手の上限 (これを超えたら「終わらない」)
@@ -146,14 +147,20 @@ function playOne(seed) {
       return fail('throw', '例外: ' + (e && (e.message || e.__err) || String(e)), { action: a, stack: e && e.stack && String(e.stack).split('\n').slice(0, 4).join(' | ') });
     }
   }
-  return fail('endless', MAX_STEPS + '手を超えても決着しない');
+  /* 決着しなかった盤面の要約 (でたらめな手のせいで長引いただけか、抜け出せない盤面かを見分ける) */
+  const st = res.state;
+  const board = st.players.map((pl, p) => ({
+    hand: pl.hand.length, deck: pl.deck.length, trash: pl.trash.length,
+    compiled: pl.protocols.map(x => x.compiled), totals: [0, 1, 2].map(l => st.lines[l][p].length)
+  }));
+  return fail('endless', MAX_STEPS + '手を超えても決着しない', { aiRate: Math.round(aiRate * 100) / 100, board, legalKinds: [...new Set(E.legalActions(st).map(x => x.type))] });
 }
 
 const failures = [];
 const t0 = Date.now();
 let steps = 0, done = 0;
-for (let g = 0; g < GAMES; g++) {
-  const out = playOne(SEED0 + g);
+for (let g = 0; g < (ONLY ? 1 : GAMES); g++) {
+  const out = playOne(ONLY || SEED0 + g);
   done++;
   if (out.ok) steps += out.steps; else failures.push(out);
   if ((g + 1) % 100 === 0) console.log((g + 1) + '/' + GAMES + ' 試合, 失敗 ' + failures.length + ', ' + Math.round((Date.now() - t0) / 1000) + 's');
