@@ -1191,7 +1191,9 @@ function execOp(ctx, fr, op) {
       st.revealed = { seq: (st.actionLog || []).length, kind: 'deck', player: fr.controller, cards: p.deck.map(u => DEFS[st.cards[u].def].id) };
       for (const u of matches) knowCard(st, u, fr.controller);   // 選ぶ本人だけが中身を見る (シャッフルで再び非公開)
       let take;
-      if (op.all || matches.length <= 1) take = matches.slice(0, op.all ? undefined : 1);
+      /* 文面は「引く」。引けない効果が掛かっていれば引けない (公開とシャッフルはする) */
+      if (cannotDraw(st, fr.controller)) { log(ctx, `P${fr.controller + 1}: ドローできない`); take = []; }
+      else if (op.all || matches.length <= 1) take = matches.slice(0, op.all ? undefined : 1);
       /* 候補はデッキの中にあり、盤面にも手札にも出ていない。
          何のカードかは公開済みなので、要求そのものに添えて選べるようにする
          (オンラインでは相手のデッキ内容を渡さないため、これが唯一の手掛かり)。 */
@@ -1206,6 +1208,8 @@ function execOp(ctx, fr, op) {
       }
       if (take.length) log(ctx, `P${fr.controller + 1}: ${take.map(u => DEFS[st.cards[u].def].id).join(', ')} を手札に加えた`);
       shuffleDeck(ctx, fr.controller);
+      /* 引いたので「カードを引いたあと」(SPIRIT 3 など) を起こす。シャッフルのあと = 文面の順どおり */
+      if (take.length) fireEvent(ctx, { on: 'draw', player: fr.controller, count: take.length });
       fr.done = take.length > 0;
       return;
     }

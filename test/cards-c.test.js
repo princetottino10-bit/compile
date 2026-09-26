@@ -604,3 +604,15 @@ test('CORRUPTION_6 上段: 終了時、このカードを削除すると覆っ�
   assert.deepEqual(st.players[0].hand, [u0('CHAOS_5')], '手札は捨てていない');
   assert.ok(res.log.some(l => l.includes('手札を公開') && l.includes('FIRE_6')), '覆われていた CLARITY_2 の中段が発動');
 });
+
+/* CLARITY 3 (CLARITY_4) の「値が5のカードを1枚引く」は引いたことになる: SPIRIT 3 (SPIRIT_4) の「カードを引いたあと」が起きる
+   (前はデッキから手札に移すだけで、「引いたあと」が起きていなかった) */
+test('CLARITY 3 で引くと、覆われた SPIRIT 3 の「引いたあと」の移動が起きる', () => {
+  const protos = ['SPIRIT', 'CLARITY', 'CHAOS'];
+  const five = cards.protocols.filter(p => protos.includes(p.name)).flatMap(p => p.cards).find(c => c.value === 5 && c.id !== 'CLARITY_4');
+  let res = pz({ protos, lines: [[['SPIRIT_4', true], ['SPIRIT_1', false]], [], []], hand: ['CLARITY_4'], deck: [five.id, 'CHAOS_1'] }, null, protos);
+  res = play(res, 'CLARITY_4', 1, true);
+  res = drive(res, (req) => (req.kind === 'pickCard' && req.prompt === 'search-pick' ? [req.candidates[0]] : []));
+  assert.ok(res.state.players[0].hand.includes(u0(five.id)), '値5のカードを引いた');
+  assert.ok(res.seen.some(q => q.context === 'SPIRIT_4' || /SPIRIT_4/.test(JSON.stringify(q))), 'SPIRIT 3 の移動を聞かれる: ' + JSON.stringify(res.seen));
+});
