@@ -87,3 +87,18 @@ test('以前の帳簿 (id なし) にも id を振って読む', () => {
   const ids = xpLog().map(e => e.id);
   assert.deepEqual(ids, ['k:tu:3', 'x11_online']);
 });
+
+test('帳簿が長くなっても、古い分は短い形で残す (一度きりの印・合計・出どころは消えない)', () => {
+  const X = { grantXp, xpLog, bonusXp };
+  setXpHooks({ onGrant: null });
+  localStorage.removeItem('compileXpLog');
+  for (let i = 0; i < 800; i++) X.grantXp('tsume', 3, 'ts:q' + i);
+  const log = X.xpLog();
+  assert.equal(log.length, 800);
+  assert.equal(X.bonusXp(log), 2400);
+  assert.equal(log[0].id, 'k:ts:q0');
+  assert.equal(log[0].src, 'tsume');
+  assert.equal(X.grantXp('tsume', 3, 'ts:q0'), 0, 'いちばん古い印でも2回は入らない');
+  const raw = JSON.parse(localStorage.getItem('compileXpLog'));
+  assert.ok(Array.isArray(raw[0]) && !Array.isArray(raw[raw.length - 1]), '古い分は短い形・直近はそのまま');
+});

@@ -5,7 +5,10 @@
  * ========================================================================= */
 
 const KEY = 'compileXpLog';
-const MAX = 3000;
+/* 帳簿は長く残す (一度きりの経験値の印・実績の数え方に使うので、捨てると同じ経験値が2回入ったり称号が減ったりする)。
+   古い分は [id, src, xp, at] の短い形で持って大きさを抑える。直近 RECENT 件はそのまま */
+const MAX = 12000;
+const RECENT = 300;
 /* アカウント連携 (account.js) が差し込む口。xp.js 自体は通信しない */
 const hooks = { onGrant: null };
 export function setXpHooks(h) { Object.assign(hooks, h); }
@@ -35,7 +38,9 @@ export const XP_GAIN = {
 export function xpLog() {
   try {
     const list = JSON.parse(localStorage.getItem(KEY) || '[]');
-    return Array.isArray(list) ? list.filter(e => e && Number.isInteger(e.xp) && e.xp > 0).map(e => ({ ...e, id: idOf(e) })) : [];
+    if (!Array.isArray(list)) return [];
+    return list.map(e => (Array.isArray(e) ? { id: e[0], src: e[1], xp: e[2], at: e[3] } : e))
+      .filter(e => e && Number.isInteger(e.xp) && e.xp > 0).map(e => ({ ...e, id: idOf(e) }));
   } catch (e) {
     return [];
   }
@@ -60,7 +65,10 @@ export function grantXp(src, xp, key) {
 }
 
 function save(list) {
-  try { localStorage.setItem(KEY, JSON.stringify(list.slice(-MAX))); return true; } catch (e) { return false; }
+  const keep = list.slice(-MAX);
+  const cut = Math.max(0, keep.length - RECENT);
+  const packed = keep.map((e, i) => (i < cut ? [idOf(e), e.src, e.xp, e.at] : e));
+  try { localStorage.setItem(KEY, JSON.stringify(packed)); return true; } catch (e) { return false; }
 }
 
 /* 別の端末で入った分 (アカウントから読んだ分) を足す。同じ id は足さない。足した件数を返す */

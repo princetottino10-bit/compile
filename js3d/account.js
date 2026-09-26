@@ -248,12 +248,41 @@ async function pushRows(rows) {
   if (r.error) throw new Error(r.error.message);
 }
 
+/* このブラウザの記録が誰のものか。前にほかのアカウントで同期していれば、その人の記録 (compileSyncMark の user でもわかる)。
+   別のアカウントで入り直したとき、前の人の戦績・経験値・実績・ガチャの見た目を新しいアカウントに混ぜないため */
+const OWNER = 'compileLocalOwner';
+function localOwner() {
+  try {
+    const o = localStorage.getItem(OWNER);
+    if (o) return o;
+    const m = JSON.parse(localStorage.getItem(MARK) || 'null');
+    return m && m.user ? m.user : null;
+  } catch (e) {
+    return null;
+  }
+}
+/* 前の人の記録を控えに移してから、このブラウザの記録を空にする (新しいアカウントの中身を読み込み直す) */
+function switchOwner(prev) {
+  try {
+    const keep = {};
+    for (const k of LOCAL_KEYS) { const v = localStorage.getItem(k); if (v !== null) keep[k] = v; }
+    localStorage.setItem('compileOwnerBackup', JSON.stringify({ at: Date.now(), user: prev, data: keep }));
+  } catch (e) { /* 容量が足りなければ控えは諦める (記録は前のアカウントに残っている) */ }
+  try { for (const k of LOCAL_KEYS) localStorage.removeItem(k); } catch (e) { /* private mode */ }
+}
+
 /* ブラウザにしかない記録を送り、アカウントにしかない記録を取り込む */
 export async function syncRecords() {
   if (!state.user) return;
   state.sync = '同期中…';
   changed();
   try {
+    /* ログインしたことのないブラウザの記録 (持ち主なし) は、はじめてログインしたアカウントに引き継ぐ。
+       ほかのアカウントの記録なら、混ぜずに入れ替える */
+    const owner = localOwner();
+    const switched = !!(owner && owner !== state.user.id);
+    if (switched) switchOwner(owner);
+    try { localStorage.setItem(OWNER, state.user.id); } catch (e) { /* private mode */ }
     const mark = loadMark(state.user.id);
     const remote = await pullSince(TABLE, 'id,me,opp,win,level,played_at,turns,feats,cards,effects', mark.rec.pulled);
     const local = localRecords();
@@ -268,7 +297,7 @@ export async function syncRecords() {
     state.sync = '同期しました' + (added ? ' (' + added + '戦を読み込み)' : '') + (xpAdded ? ' (経験値 ' + xpAdded + '件を読み込み)' : '') +
       (rpAdded ? ' (リプレイ ' + rpAdded + '件を読み込み)' : '');
     state.error = '';
-    if (applied) { changed(); reloadIfIdle(); }
+    if (applied || switched) { changed(); reloadIfIdle(); }
   } catch (e) {
     state.sync = '';
     state.error = '同期できませんでした: ' + e.message;
