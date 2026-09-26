@@ -93,3 +93,12 @@ test('チェーン: 自分の効果で割り込んで3つなら銅、4つなら�
   assert.deepEqual(ids(newlyEarned({}, ctx({ game: game(3) }))).filter(id => id.startsWith('chain')), ['chain3']);
   assert.deepEqual(ids(newlyEarned({}, ctx({ game: game(4) }))).filter(id => id.startsWith('chain')), ['chain3', 'chain4']);
 });
+
+test('GAUNTLET: 強敵の欄の全員 (最強・ロック特化・挑戦者4人) に勝つ。挑戦者だけでは取れない', () => {
+  mem.clear();
+  const challengers = [5, 6, 7, 8].map(lv => rec(true, lv));
+  assert.ok(!ids(newlyEarned({}, ctx({ records: challengers }))).includes('challengers'));
+  assert.deepEqual(trophyView(ctx({ records: challengers })).list.find(t => t.id === 'challengers').prog, [4, 6]);
+  const all = challengers.concat([rec(true, 3), rec(true, 4)]);
+  assert.ok(ids(newlyEarned({}, ctx({ records: all }))).includes('challengers'));
+});

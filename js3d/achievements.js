@@ -8,6 +8,7 @@
  *   ここは表示も通信もしない (achievements-ui.js / main.js が受け持つ)
  * ========================================================================= */
 import { CHALLENGER_BASE, CHALLENGERS, UNDERDOG_LEVEL } from './aidecks.js';
+const BOSS_LEVELS = [3, 4, ...CHALLENGERS.map((_, i) => CHALLENGER_BASE + i)];
 import { XP_GAIN } from './xp.js';
 import { protocolSummary } from './stats-data.js';
 import { GACHA_ITEMS } from './rewards.js';
@@ -104,9 +105,10 @@ export const TROPHIES = [
   /* ---- 金 ---- */
   { id: 'wins100', tier: 'gold', name: 'CENTURY', desc: '100勝する', test: (c) => wins(c) >= 100, progress: (c) => [wins(c), 100] },
   { id: 'apex', tier: 'gold', name: 'APEX', desc: '「最強」の CPU に勝つ', test: (c) => beat(c, 3) },
+  /* 強敵 = 相手を選ぶ画面の「強敵」の欄の全員 (最強・ロック特化・挑戦者) */
   { id: 'challengers', tier: 'gold', name: 'GAUNTLET', desc: '強敵を全員倒す',
-    test: (c) => CHALLENGERS.every((_, i) => beat(c, CHALLENGER_BASE + i)),
-    progress: (c) => [CHALLENGERS.filter((_, i) => beat(c, CHALLENGER_BASE + i)).length, CHALLENGERS.length] },
+    test: (c) => BOSS_LEVELS.every(lv => beat(c, lv)),
+    progress: (c) => [BOSS_LEVELS.filter(lv => beat(c, lv)).length, BOSS_LEVELS.length] },
   { id: 'underdog', tier: 'gold', name: 'GIANT SLAYER', desc: '下剋上 (最弱 vs 最強) で勝つ', test: (c) => beat(c, UNDERDOG_LEVEL) },
   { id: 'all30', tier: 'gold', name: 'OMNISCIENT', desc: '30のプロトコルすべてで1勝する', test: (c) => protoWins(c) >= 30, progress: (c) => [protoWins(c), 30] },
   { id: 'holo_card', tier: 'gold', name: 'HOLOGRAM', desc: 'カードをホロにする (そのカードで50勝)', test: (c) => tierCards(c, 50) >= 1 },
