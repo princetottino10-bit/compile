@@ -12,7 +12,7 @@ import { localRecords } from './stats.js';
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const LAST_KEY = 'compileOppLast';
 
-const CPU_NOTES = ['はじめての人に。読みは浅め', '標準。先を読んで指す', '読みが深く、時間をかけて考える'];
+const CPU_NOTES = ['はじめての人に。読みは浅く、ときどき迷う', '標準。1手先を読んで指す', '読みが深く、時間をかけて考える'];
 
 export function underdogCleared() {
   return localRecords().some(r => r.win && r.level === UNDERDOG_LEVEL);

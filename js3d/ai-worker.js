@@ -9,6 +9,7 @@ Engine.setTrace(false);
 function configure(cfg) {
   if (!cfg) return;
   Engine.setAiLevel(cfg.level);
+  if (Engine.setAiBlunder) Engine.setAiBlunder(cfg.blunder || 0);
   Engine.setAiThinkBudget(cfg.budget);
   if (Engine.setAiSpecialist) Engine.setAiSpecialist(!!cfg.specialist, 1, cfg.kind || 'dsh');
 }

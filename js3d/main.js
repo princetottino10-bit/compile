@@ -438,7 +438,7 @@ async function boot() {
     tutorial = { index: tuNo - 1, lesson: TU.LESSONS[tuNo - 1] };
     p0 = tutorial.lesson.spec.sides[0].protos.slice(); p1 = tutorial.lesson.spec.sides[1].protos.slice();
     document.body.classList.add('tutorial');
-    applyAiDifficulty(0);
+    applyAiDifficulty(0, { engine: 1 });
   }
 
   if (demoMode && !p0) {
@@ -1061,18 +1061,22 @@ function glitchArtUrl(protoName) {
    auto-play と同じく上位2段は探索AI。最強は思考時間増 + DSH特化戦略 */
 let aiDifficulty = null;   // 戦績に残す難易度 (aidecks.js の番号)。URL で直接始めた対戦は不明
 let aiClient = null;       // CPU の手を考える窓口 (aiclient.js)
-function applyAiDifficulty(level) {
+/* opts.engine: エンジンの読みの段を直接決める (チュートリアルは筋書きどおり動くよう、でたらめを混ぜない) */
+function applyAiDifficulty(level, opts) {
   aiDifficulty = level;
-  /* かんたん: ヒューリスティックのみ / ふつう: 探索 / つよい以上: 思考時間を長く。
+  /* かんたん: いちばん軽い読み + 3割はでたらめ (ふつうに 1 割ほどしか勝てない) /
+     ふつう: 1 手読み (探索なし) / つよい以上: 探索。
      前の対戦で長くした思考時間が残らないように、毎回すべて決め直す */
   const config = {
-    level: level <= 0 ? 1 : 2,
+    level: opts && opts.engine !== undefined ? opts.engine : level <= 0 ? 0 : level === 1 ? 1 : 2,
+    blunder: opts && opts.engine !== undefined ? 0 : level <= 0 ? 0.3 : 0,
     budget: level >= 2 ? 1200 : 900,
     /* 最強・挑戦者 = dsh 特化 + 固定デッキ (aidecks.js)、ロック特化 = サイキック①の永続ロック狙い */
     specialist: level >= 3,
     kind: level === 4 ? 'psylock' : 'dsh'
   };
   Engine.setAiLevel(config.level);
+  if (Engine.setAiBlunder) Engine.setAiBlunder(config.blunder);
   Engine.setAiThinkBudget(config.budget);
   if (Engine.setAiSpecialist) Engine.setAiSpecialist(config.specialist, 1, config.kind);
   if (aiClient) aiClient.setConfig(config);

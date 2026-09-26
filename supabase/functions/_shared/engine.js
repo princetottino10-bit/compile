@@ -2383,6 +2383,9 @@ let AI_LEVEL = 1; // 0=easy, 1=normal, 2=hard
 let AI_THINK_BUDGET_MS = 900;   /* 590ms では読み切れずに打ち切られる局面があった (実測の所要は約690ms) */
 const AI_BREADTH = { rootEval: 999, rootSearch: 24, reply: 14, shallow: 6 };
 function setAiLevel(v) { AI_LEVEL = Math.max(0, Math.min(2, v | 0)); }
+/* 手を抜く確率 (0〜1)。「かんたん」の CPU 用: この確率で、考えずに打てる手・選べる答えからでたらめに選ぶ */
+let AI_BLUNDER = 0;
+function setAiBlunder(p) { AI_BLUNDER = Math.max(0, Math.min(1, +p || 0)); }
 /* 1手あたりの思考時間(ms)。ベンチや自己対戦で探索量を振るために外から変更できる */
 function setAiThinkBudget(ms) { AI_THINK_BUDGET_MS = Math.max(1, ms | 0); }
 function setAiBreadth(rootEval, rootSearch, reply, shallow) {
@@ -4386,6 +4389,10 @@ function aiActionPimc(state) {
 }
 
 function aiAction(state) {
+  if (AI_BLUNDER > 0 && Math.random() < AI_BLUNDER) {
+    const acts = aiDecisionActions(aiInformationState(state, state.turn));
+    if (acts.length) return acts[Math.floor(Math.random() * acts.length)];
+  }
   if (AI_LEVEL >= 2) {
     return aiActionPimc(state);
   }
@@ -4438,6 +4445,7 @@ function aiAnswer(state, req) {
   const view = aiInformationState(state, req.player);
   const forcedControlWin = aiForcedControlWinPicks(req);
   if (forcedControlWin) return forcedControlWin;
+  if (AI_BLUNDER > 0 && Math.random() < AI_BLUNDER) return randomPicks(req);
   if (AI_LEVEL >= 1) {
     return smartPicks(view, req);
   }
@@ -4455,7 +4463,7 @@ function aiAnswer(state, req) {
 /* ---------- 公開 API ---------- */
 
 const Engine = {
-  init, newGame, newPuzzle, apply, legalActions, setTrace, setAiLevel, setAiThinkBudget, setAiBreadth, setAiPimc, setAiWeights, setAiSpecialist, setAiSpecialistWeights,
+  init, newGame, newPuzzle, apply, legalActions, setTrace, setAiLevel, setAiBlunder, setAiThinkBudget, setAiBreadth, setAiPimc, setAiWeights, setAiSpecialist, setAiSpecialistWeights,
   lineTotal, cardValue, compilableLines, canPlay, locate,
   ai: { action: aiAction, answer: aiAnswer, score: aiScore, middleFizzles: aiMiddleFizzles, transitionScore: aiTransitionScore, compilePassChance: aiCompilePassChance, informationState: aiInformationState, rootValues: aiRootValues, vetoOrder: aiVetoOrder, actionBias: aiActionBias, opsValue: aiOpsValue, boardEffect: aiBoardEffectScore, randomPicks, smartPicks },
   get defs() { return DEFS; },
