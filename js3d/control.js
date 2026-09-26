@@ -32,7 +32,7 @@ export const MARKER_STYLES = {
   sapphire: { me: 0x4f8cff, dim: 0x22345e, pattern: 'waves', glass: true },
   obsidian: { me: 0xff6a2a, dim: 0x2a1410, metal: 0.9, rough: 0.05, pattern: 'cracks' },
   nova: { me: 0xfff4c8, dim: 0x6b5e3a, pattern: 'stars', extra: 'orbit' },
-  slayer: { me: 0xffc83a, dim: 0x5c1020, pattern: 'slash', extra: 'crown', metal: 0.8, rough: 0.25 },   // 下剋上の褒美
+  slayer: { me: 0xf3e6c4, dim: 0x3a3548, pattern: 'skull', metal: 0.05, rough: 0.7 },                // 下剋上の褒美 (がしゃどくろ)
   laurel: { me: 0x9be07a, dim: 0x3d5a24, pattern: 'leaves', extra: 'wreath' }                         // 週替わりの褒美 (3週クリア)
 };
 
@@ -98,6 +98,22 @@ const PATTERN_DRAW = {
     const r = seeded(3);
     c.fillStyle = '#fff';
     for (let k = 0; k < 30; k++) { c.beginPath(); c.arc(r() * S, r() * S, 1 + r() * 2.5, 0, Math.PI * 2); c.fill(); }
+  },
+  /* 骨の白のどくろ (浮世絵のがしゃどくろ)。目と鼻の穴は暗く、下に歯 */
+  skull(c, S) {
+    const x = S / 2, y = S * 0.46;
+    c.fillStyle = '#fff';
+    c.beginPath(); c.ellipse(x, y, S * 0.27, S * 0.25, 0, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.roundRect ? c.roundRect(x - S * 0.15, y + S * 0.12, S * 0.3, S * 0.16, 10) : c.rect(x - S * 0.15, y + S * 0.12, S * 0.3, S * 0.16); c.fill();
+    c.fillStyle = '#000';
+    c.beginPath(); c.ellipse(x - S * 0.1, y + S * 0.01, S * 0.075, S * 0.085, 0.2, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.ellipse(x + S * 0.1, y + S * 0.01, S * 0.075, S * 0.085, -0.2, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.moveTo(x, y + S * 0.08); c.lineTo(x - S * 0.028, y + S * 0.13); c.lineTo(x + S * 0.028, y + S * 0.13); c.fill();
+    c.lineWidth = 3; c.strokeStyle = '#000';
+    for (let i = -2; i <= 2; i++) { c.beginPath(); c.moveTo(x + i * S * 0.05, y + S * 0.18); c.lineTo(x + i * S * 0.05, y + S * 0.27); c.stroke(); }
+    /* ひびの線 */
+    c.lineWidth = 2;
+    c.beginPath(); c.moveTo(x + S * 0.05, y - S * 0.24); c.lineTo(x + S * 0.08, y - S * 0.15); c.lineTo(x + S * 0.04, y - S * 0.1); c.stroke();
   },
   leaves(c, S) {
     c.fillStyle = '#fff';

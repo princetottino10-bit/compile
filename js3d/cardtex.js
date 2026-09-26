@@ -519,7 +519,7 @@ const SLEEVES = {
     ring2: 'rgba(0,0,0,0)', strip: '200,30,60' },
   butterfly: { art: 'art/sleeves/butterfly.webp', pattern: 'butterfly', noLogo: true, a: '#14122e', b: '#030208', grid: 'rgba(255,210,110,.04)', halo: '255,200,90', ring: 'rgba(0,0,0,0)',
     ring2: 'rgba(0,0,0,0)', strip: '220,170,60' },
-  konpairu: { pattern: 'konpairu', noLogo: true, a: '#fff6d8', b: '#eaf6ff', grid: 'rgba(0,0,0,0)', halo: '255,255,255', ring: 'rgba(0,0,0,0)',
+  konpairu: { art: 'art/sleeves/konpairu.webp', noVignette: true, pattern: 'konpairu', noLogo: true, a: '#fff6d8', b: '#eaf6ff', grid: 'rgba(0,0,0,0)', halo: '255,255,255', ring: 'rgba(0,0,0,0)',
     ring2: 'rgba(0,0,0,0)', strip: '255,150,180' },
   sprout: { art: 'art/sleeves/sprout.webp', artLogo: '#5f9a3e', noVignette: true, pattern: 'sakura', a: '#fbf6e2', b: '#e8f1d8', grid: 'rgba(0,0,0,0)', halo: '160,220,120', ring: 'rgba(0,0,0,0)',
     ring2: 'rgba(0,0,0,0)', strip: '110,190,90' },
@@ -1212,21 +1212,13 @@ export function backTex(variant) {
         v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.45)');
         ctx.fillStyle = v; ctx.fillRect(0, 0, DW, DH);
       }
-      /* 絵の上に真ん中のロゴを置くスリーブ (artLogo: ロゴの色) */
+      /* 絵の上の真ん中に COMPILE の文字だけ置くスリーブ (artLogo: 文字の色) */
       if (P.artLogo) {
-        const cx = DW / 2, cy = DH / 2 - 20;
-        ctx.strokeStyle = P.artLogo; ctx.globalAlpha = 0.85;
-        ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(cx, cy, 118, 0, Math.PI * 2); ctx.stroke();
-        ctx.globalAlpha = 0.45;
-        ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, 146, 0, Math.PI * 2); ctx.stroke();
-        ctx.globalAlpha = 1;
         ctx.fillStyle = P.artLogo;
-        ctx.font = '900 88px ' + FONT.logo;
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('//', cx, cy + 4);
         ctx.font = '800 22px ' + FONT.logo;
-        ctx.globalAlpha = 0.7;
-        ctx.fillText('C O M P I L E', cx, cy + 190);
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.globalAlpha = 0.8;
+        ctx.fillText('C O M P I L E', DW / 2, (HEAD_H + DH) / 2);
         ctx.globalAlpha = 1;
         ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
       }
