@@ -2056,10 +2056,17 @@ function roomValOf(defId) {
 /* オンライン対戦: 画面上に対戦相手の名前と称号を出す */
 let roomServerOffset = 0;          // サーバーの時計 - この端末の時計 (持ち時間の計算に使う)
 /* 自分の名札: 表示名 (未設定なら YOU)・レベル・称号・アイコン (設定の「見た目」で選んだもの) */
+/* 名札の枠の色 (プロトコルの習熟度の名札 p_fire → FIRE の色) */
+function frameColor(frame) {
+  const m = /^p_([a-z]+)$/.exec(frame || '');
+  const p = m && protoIndex[m[1].toUpperCase()];
+  return p ? p.color : null;
+}
 function myPlate() {
   const p = profileOf(settings(), localRecords());
   const proto = p.icon && protoIndex[p.icon];
-  return { name: displayName() || 'YOU', level: p.level, sub: p.title || '', frame: myLook(settings()).plate,
+  const frame = myLook(settings()).plate;
+  return { name: displayName() || 'YOU', level: p.level, sub: p.title || '', frame, frameColor: frameColor(frame),
     icon: proto ? { name: proto.name, color: proto.color } : null };
 }
 /* CPU 戦の名札: 相手は CPU と難易度。アイコンは相手のデッキの1つ目のプロトコル */
@@ -2079,7 +2086,7 @@ function showVsTag(rm) {
   const name = rm.names[opp];
   const badge = rm.badges && TITLES[rm.badges[opp]];
   setOppLook(rm.looks && rm.looks[opp]);
-  showPlates({ me: myPlate(), opp: name ? { name, sub: badge || '', frame: oppLook.plate } : null });
+  showPlates({ me: myPlate(), opp: name ? { name, sub: badge || '', frame: oppLook.plate, frameColor: frameColor(oppLook.plate) } : null });
 }
 
 async function roomApplyView(rm, instant) {

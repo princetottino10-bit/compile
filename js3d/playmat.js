@@ -286,20 +286,35 @@ const ART_MATS = {
   sakura: { slot: ['rgba(10,10,30,.5)', 'rgba(255,200,220,.6)'] },
   library: { slot: ['rgba(40,24,10,.4)', 'rgba(250,235,200,.7)'] },
 };
+/* プロトコルの習熟度のマット (p_fire など): そのプロトコルの絵 (art/Fire.webp) を敷く */
+const PROTO_SLOT = ['rgba(6,6,14,.5)', 'rgba(255,255,255,.6)'];
+function artMatOf(key) {
+  if (ART_MATS[key]) return { src: 'art/mats/' + key + '.webp', slot: ART_MATS[key].slot, dim: 0.22 };
+  const m = /^p_([a-z]+)$/.exec(key || '');
+  /* プロトコルの絵は描き込みが多いので、カードが読めるよう深めに沈める */
+  return m ? { src: 'art/' + m[1][0].toUpperCase() + m[1].slice(1) + '.webp', slot: PROTO_SLOT, dim: 0.5 } : null;
+}
+/* 半面 (W x H/2) に、絵の比を保って中央で切って敷く */
+function drawHalf(ctx, img, y) {
+  const hw = W, hh = H / 2;
+  const s = Math.max(hw / img.naturalWidth, hh / img.naturalHeight);
+  const sw = hw / s, sh = hh / s;
+  ctx.drawImage(img, (img.naturalWidth - sw) / 2, (img.naturalHeight - sh) / 2, sw, sh, 0, y, hw, hh);
+}
 function drawArtMat(key, img) {
   return (ctx) => {
     ctx.fillStyle = '#0b0a12';
     ctx.fillRect(0, 0, W, H);
     if (img) {
       const half = H / 2;
-      ctx.drawImage(img, 0, half, W, half);                              // 手前 (自分の向き)
+      drawHalf(ctx, img, half);                                          // 手前 (自分の向き)
       ctx.save(); ctx.translate(W, half); ctx.rotate(Math.PI);           // 奥 (相手の向き)
-      ctx.drawImage(img, 0, 0, W, half);
+      drawHalf(ctx, img, 0);
       ctx.restore();
-      ctx.fillStyle = 'rgba(6,8,16,.22)';                               // 暗い画面になじむよう少しだけ沈める
+      ctx.fillStyle = 'rgba(6,8,16,' + artMatOf(key).dim + ')';         // 暗い画面になじむよう沈める
       ctx.fillRect(0, 0, W, H);
     }
-    const [fill, stroke] = ART_MATS[key].slot;
+    const [fill, stroke] = artMatOf(key).slot;
     drawSlots(ctx, fill, stroke, 2);
   };
 }
@@ -314,7 +329,7 @@ const cache = new Map();
 function layoutKey() { return (VIEW.short ? 's' : 'n') + Math.round(VIEW.k * 20); }
 
 export function playmatTexture(key) {
-  if (!DRAW[key] && !ART_MATS[key]) return null;
+  if (!DRAW[key] && !artMatOf(key)) return null;
   const ck = key + ':' + layoutKey();
   if (cache.has(ck)) return cache.get(ck);
   const cv = document.createElement('canvas');
@@ -322,10 +337,10 @@ export function playmatTexture(key) {
   const tex = new THREE.CanvasTexture(cv);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.anisotropy = 8;
-  if (ART_MATS[key]) {
+  if (artMatOf(key)) {
     /* 絵は読み込めてから描き直す (それまでは暗い地に枠だけ) */
     let img = artImages.get(key);
-    if (!img) { img = new Image(); img.src = 'art/mats/' + key + '.webp'; artImages.set(key, img); }
+    if (!img) { img = new Image(); img.src = artMatOf(key).src; artImages.set(key, img); }
     const paint = () => { drawArtMat(key, img.complete && img.naturalWidth ? img : null)(cv.getContext('2d')); tex.needsUpdate = true; };
     paint();
     if (!img.complete) img.addEventListener('load', paint, { once: true });
@@ -338,5 +353,6 @@ export function playmatTexture(key) {
 
 /** 見本の絵 (図鑑・ガチャ用)。自分の半面ぶんの横長の絵の URL。絵のマットでなければ null */
 export function matArtURL(key) {
-  return ART_MATS[key] ? 'art/mats/' + key + '.webp' : null;
+  const a = artMatOf(key);
+  return a ? a.src : null;
 }

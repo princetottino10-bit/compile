@@ -39,6 +39,12 @@ const CC_DESC = { default: 'プロトコルの色の光の柱', gold: '金色の
   ember: '橙の光の柱 + 火の粉が舞い上がる' };
 
 let protoList = [];
+/* プロトコルの習熟度の名札 (p_fire) は、そのプロトコルの色を --pfc に渡す */
+function pfcStyle(key) {
+  const m = /^p_([a-z]+)$/.exec(key || '');
+  const p = m && protoList.find(x => x.name === m[1].toUpperCase());
+  return p ? ' style="--pfc:' + esc(p.color) + '"' : '';
+}
 export function setCosmeticsProtocols(list) { protoList = list || []; }
 
 /* ---------- 持っているか・手に入れ方 ---------- */
@@ -136,7 +142,7 @@ function thumb(kind, key) {
       const p = protoList.find(x => x.name === key);
       return p ? '<img alt="" src="' + emblemDataURL(p.name, p.color || '#b9a4ff', 64, true) + '">' : '<span class="cm-none">—</span>';
     }
-    case 'plate': return '<span class="cm-pf pf-' + esc(key) + '"><b>' + esc((displayName() || 'YOU').slice(0, 8)) + '</b></span>';
+    case 'plate': return '<span class="cm-pf pf-' + esc(key) + '"' + pfcStyle(key) + '><b>' + esc((displayName() || 'YOU').slice(0, 8)) + '</b></span>';
     default: return '<span class="cm-none">' + (key ? '★' : '—') + '</span>';
   }
 }
@@ -158,7 +164,7 @@ function preview(kind, key, name, isOwned, src) {
     case 'victory': art = '<div class="cm-vicview ' + esc(key) + '"><b>YOU WIN</b></div>'; break;
     case 'plate': {
       const p = protoList.find(x => x.name === s.icon);
-      art = '<div class="cm-plate pf-' + esc(key) + '">' + (p ? '<img alt="" src="' + emblemDataURL(p.name, p.color || '#b9a4ff', 96, true) + '">' : '<span>//</span>') +
+      art = '<div class="cm-plate pf-' + esc(key) + '"' + pfcStyle(key) + '>' + (p ? '<img alt="" src="' + emblemDataURL(p.name, p.color || '#b9a4ff', 96, true) + '">' : '<span>//</span>') +
         '<div><b>' + esc(displayName() || 'YOU') + '</b>' + (TITLES[s.title] ? '<small>' + esc(TITLES[s.title]) + '</small>' : '') + '</div></div>';
       break;
     }

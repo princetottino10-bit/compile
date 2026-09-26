@@ -53,3 +53,25 @@ test('全部解放 (管理者のテスト用) では、見た目も称号もレ�
   assert.ok(R.unlockLevel('mat', 'prism') > 1);
 });
 
+
+test('プロトコルの習熟度: 3 で名札・6 で称号・9 でプレイマット (30 プロトコルそれぞれ)', async () => {
+  const R = await load();
+  const wins = (n) => Array.from({ length: n }, () => ({ win: true, level: 1, me: ['FIRE', 'WATER', 'SPEED'] }));
+  const mem = new Map();
+  globalThis.localStorage = { getItem: (k) => (mem.has(k) ? mem.get(k) : null), setItem: (k, v) => mem.set(k, String(v)), removeItem: (k) => mem.delete(k) };
+  const setRecs = (list) => globalThis.localStorage.setItem('compileSoloRecords', JSON.stringify(list));
+  setRecs(wins(3));                                   // 3 戦 3 勝 = 9 xp → 習熟度 3
+  assert.equal(R.protoMastery('FIRE'), 3);
+  assert.equal(R.isUnlocked('plate', 'p_fire', 1), true);
+  assert.equal(R.isUnlocked('title', 'm_fire', 1), false);
+  assert.ok(!R.ownedTitles(1, []).includes('m_fire'));
+  setRecs(wins(14));                                  // 42 xp → 6
+  assert.ok(R.ownedTitles(1, []).includes('m_fire'));
+  assert.equal(R.isUnlocked('mat', 'p_fire', 1), false);
+  setRecs(wins(39));                                  // 117 xp → 9
+  assert.equal(R.isUnlocked('mat', 'p_fire', 1), true);
+  assert.equal(R.isUnlocked('mat', 'p_death', 99), false, '遊んでいないプロトコルは開かない');
+  assert.equal(R.TITLES.m_fire, 'PYROMANCER');
+  assert.equal(R.MASTERY_ITEMS.filter(m => m.kind === 'title').length, 30);
+  delete globalThis.localStorage;
+});

@@ -48,7 +48,9 @@ const WAITING_FRESH_MS = 90_000;
 /* 相手に見せる称号 (見た目だけ)。決まった一覧にあるものだけ。無ければ null */
 const BADGES = ["compiler", "veteran", "tactician", "expert", "architect", "master", "legend", "ascended", "underdog",
   "chainer", "flawless", "grandmaster", "platinum", "puzzler", "compuzzler", "gambler", "highroller", "fortune",
-  "regular", "weeklylegend"];
+  "regular", "weeklylegend",
+  /* プロトコルの習熟度 6 の称号 (m_ + 小文字のプロトコル名) */
+  "m_darkness", "m_death", "m_fire", "m_gravity", "m_life", "m_light", "m_metal", "m_plague", "m_psychic", "m_speed", "m_spirit", "m_water", "m_apathy", "m_hate", "m_love", "m_chaos", "m_clarity", "m_corruption", "m_courage", "m_fear", "m_ice", "m_luck", "m_mirror", "m_peace", "m_smoke", "m_time", "m_war", "m_assimilation", "m_diversity", "m_unity"];
 function cleanBadge(value: unknown) {
   const v = String(value || "");
   return BADGES.includes(v) ? v : null;

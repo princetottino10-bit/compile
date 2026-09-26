@@ -7,6 +7,8 @@ function fill(el, plate, lead) {
   el.textContent = '';
   if (!plate || !plate.name) { el.hidden = true; return; }
   el.dataset.frame = plate.frame && /^[a-z0-9_]{1,24}$/.test(plate.frame) ? plate.frame : 'default';
+  /* プロトコルの習熟度の名札 (p_fire など) は、そのプロトコルの色 */
+  if (plate.frameColor) el.style.setProperty('--pfc', plate.frameColor); else el.style.removeProperty('--pfc');
   const ic = document.createElement('span');
   ic.className = 'pl-icon';
   if (plate.icon) {

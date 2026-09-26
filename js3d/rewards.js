@@ -38,9 +38,26 @@ export const REWARDS = [
 ];
 
 /* 見た目の選択肢 (default ははじめから)。名前は設定の画面に出す */
+/* プロトコルの習熟度で開く見た目 (30 プロトコルそれぞれ): 3 で名札・6 で称号・9 でプレイマット。
+   key は小文字のプロトコル名に p_ (名札・マット) / m_ (称号) を付けたもの */
+export const MASTERY_PROTOS = ['DARKNESS', 'DEATH', 'FIRE', 'GRAVITY', 'LIFE', 'LIGHT', 'METAL', 'PLAGUE', 'PSYCHIC', 'SPEED', 'SPIRIT', 'WATER',
+  'APATHY', 'HATE', 'LOVE', 'CHAOS', 'CLARITY', 'CORRUPTION', 'COURAGE', 'FEAR', 'ICE', 'LUCK', 'MIRROR', 'PEACE', 'SMOKE', 'TIME', 'WAR',
+  'ASSIMILATION', 'DIVERSITY', 'UNITY'];
+export const MASTERY_STEP = { plate: 3, title: 6, mat: 9 };
+const PROTO_TITLES = {
+  DARKNESS: 'SHADOWBORN', DEATH: 'REAPER', FIRE: 'PYROMANCER', GRAVITY: 'GRAVITON', LIFE: 'LIFEWEAVER', LIGHT: 'LUMINARY',
+  METAL: 'IRONCLAD', PLAGUE: 'PLAGUEBEARER', PSYCHIC: 'MINDBENDER', SPEED: 'SPEEDSTER', SPIRIT: 'SPIRITWALKER', WATER: 'TIDECALLER',
+  APATHY: 'STOIC', HATE: 'HATEMONGER', LOVE: 'HEARTBINDER', CHAOS: 'CHAOS AGENT', CLARITY: 'CLAIRVOYANT', CORRUPTION: 'CORRUPTOR',
+  COURAGE: 'LIONHEART', FEAR: 'DREADLORD', ICE: 'FROSTWARDEN', LUCK: 'WILDCARD', MIRROR: 'REFLECTOR', PEACE: 'PEACEKEEPER',
+  SMOKE: 'SMOKESCREEN', TIME: 'CHRONOMANCER', WAR: 'WARLORD', ASSIMILATION: 'ASSIMILATOR', DIVERSITY: 'POLYMATH', UNITY: 'UNIFIER'
+};
+const pkey = (p) => 'p_' + p.toLowerCase();
+const mkey = (p) => 'm_' + p.toLowerCase();
+
 export const COSMETICS = {
   mat: [['neon', 'NEON GRID'], ['nebula', 'NEBULA'], ['vortex', 'VORTEX'], ['biomech', 'BIOMECH'], ['prism', 'PRISM'], ['eclipse', 'ECLIPSE'],
-    ['celestial', 'CELESTIAL'], ['hokusai', 'FUJI'], ['seigaiha', 'GREAT WAVE'], ['sakura', 'YOZAKURA'], ['garden', 'ROSE GARDEN'], ['library', 'LIBRARY']],
+    ['celestial', 'CELESTIAL'], ['hokusai', 'FUJI'], ['seigaiha', 'GREAT WAVE'], ['sakura', 'YOZAKURA'], ['garden', 'ROSE GARDEN'], ['library', 'LIBRARY'],
+    ...MASTERY_PROTOS.map(p => [pkey(p), p])],
   sleeve: [['default', 'STANDARD'], ['crimson', 'CRIMSON'], ['circuit', 'CIRCUIT'], ['void', 'VOID'], ['holo', 'HOLO'], ['sakura', 'SAKURA'], ['aurum', 'AURUM'],
     ['mint', 'MINT'], ['ocean', 'OCEAN'], ['ember', 'EMBER'], ['glacier', 'GLACIER'], ['toxic', 'TOXIC'], ['galaxy', 'GALAXY'],
     ['tiger', 'TIGER'], ['pixel', 'PIXEL'], ['koi', 'KOI'], ['aurora', 'AURORA'], ['nyanko', 'NYANKO'], ['sweets', 'SWEETS'], ['bunny', 'BUNNY'], ['rose', 'ROSE'], ['butterfly', 'GOLDEN BUTTERFLY'], ['momiji', 'MOMIJI'], ['sprout', 'SPROUT'], ['konpairu', 'KONPAIRU'], ['teaparty', 'TEA PARTY'],
@@ -52,7 +69,7 @@ export const COSMETICS = {
   victory: [['default', 'STANDARD'], ['aurora', 'AURORA']],
   /* 対戦中の名札の枠 (相手にも見える) */
   plate: [['default', 'STANDARD'], ['gold', 'GOLD'], ['sakura', 'SAKURA'], ['washi', 'WASHI'], ['neon', 'NEON'], ['urushi', 'URUSHI'],
-    ['crystal', 'CRYSTAL'], ['royal', 'ROYAL']]
+    ['crystal', 'CRYSTAL'], ['royal', 'ROYAL'], ...MASTERY_PROTOS.map(p => [pkey(p), p])]
 };
 
 /* ガチャ (COSMETICS の GACHA) でしか出ない見た目と称号。rar: C / R / E / L。
@@ -93,18 +110,32 @@ export function underdogCleared() {
 /* プロトコルの習熟度で開く見た目 (そのプロトコルを遊び込んだ証)。mastery: 習熟度 (1〜10) */
 export const MASTERY_ITEMS = [
   { kind: 'sleeve', key: 'sprout', proto: 'LIFE', mastery: 5 },
+  ...MASTERY_PROTOS.flatMap(p => [
+    { kind: 'plate', key: pkey(p), proto: p, mastery: MASTERY_STEP.plate },
+    { kind: 'title', key: mkey(p), proto: p, mastery: MASTERY_STEP.title },
+    { kind: 'mat', key: pkey(p), proto: p, mastery: MASTERY_STEP.mat }
+  ])
 ];
 export function masteryItem(kind, key) {
   return MASTERY_ITEMS.find(g => g.kind === kind && g.key === key) || null;
 }
 /* そのプロトコルの今の習熟度 (記録から数える) */
 export function protoMastery(name) {
+  const t = masterySummary().get(name);
+  return t ? t.mastery.level : 0;
+}
+/* 記録から数えた習熟度の一覧。同じ記録なら数え直さない (称号の一覧などで何度も呼ぶため) */
+let summaryCache = { raw: null, map: new Map() };
+function masterySummary() {
   try {
-    const list = JSON.parse(localStorage.getItem('compileSoloRecords') || '[]');
-    const t = protocolSummary(Array.isArray(list) ? list : []).get(name);
-    return t ? t.mastery.level : 0;
+    const raw = localStorage.getItem('compileSoloRecords') || '[]';
+    if (raw !== summaryCache.raw) {
+      const list = JSON.parse(raw);
+      summaryCache = { raw, map: protocolSummary(Array.isArray(list) ? list : []) };
+    }
+    return summaryCache.map;
   } catch (e) {
-    return 0;
+    return new Map();
   }
 }
 
@@ -150,6 +181,8 @@ export function itemName(kind, key) {
 export const TITLES = {
   compiler: 'COMPILER', veteran: 'VETERAN', tactician: 'TACTICIAN', expert: 'EXPERT', architect: 'ARCHITECT',
   master: 'MASTER', legend: 'LEGEND', ascended: 'ASCENDED', underdog: 'GIANT SLAYER',     // 下剋上 (key はサーバー・保存と揃えて underdog のまま)
+  /* プロトコルの習熟度 6 で取る */
+  ...Object.fromEntries(MASTERY_PROTOS.map(p => [mkey(p), PROTO_TITLES[p]])),
   /* 実績で取る (cosmetics-ui.js の TROPHY_TITLES) */
   chainer: 'CHAIN MASTER', flawless: 'FLAWLESS', grandmaster: 'GRANDMASTER',
   puzzler: 'PUZZLER', compuzzler: 'COMPUZZLER',       // COMPUZZLE の中級を全部 / 全部
@@ -203,6 +236,7 @@ export function ownedTitles(level, extra) {
   const own = REWARDS.filter(r => r.kind === 'title' && r.lv <= level).map(r => r.key);
   const owned = gachaOwned();
   const gacha = GACHA_ITEMS.filter(g => g.kind === 'title' && owned[gachaId('title', g.key)]).map(g => g.key)
-    .concat(WEEKLY_ITEMS.filter(g => g.kind === 'title' && weeklyClears() >= g.weeks).map(g => g.key));
+    .concat(WEEKLY_ITEMS.filter(g => g.kind === 'title' && weeklyClears() >= g.weeks).map(g => g.key))
+    .concat(MASTERY_ITEMS.filter(g => g.kind === 'title' && protoMastery(g.proto) >= g.mastery).map(g => g.key));
   return own.concat([...(extra || []), ...gacha].filter((k, i, a) => TITLES[k] && !own.includes(k) && a.indexOf(k) === i));
 }
