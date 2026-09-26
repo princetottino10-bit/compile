@@ -480,21 +480,21 @@ const SLEEVES = {
   void: { art: 'art/sleeves/void.webp', pattern: 'stars', a: '#0d0c12', b: '#020203', grid: 'rgba(255,215,130,.05)', halo: '255,196,90', ring: 'rgba(255,214,130,.9)',
     ring2: 'rgba(255,196,90,.4)', strip: '255,196,90' },
   /* 桜色の地に白の輪 */
-  sakura: { pattern: 'sakura', a: '#3d1830', b: '#12070f', grid: 'rgba(255,200,225,.08)', halo: '255,170,210', ring: 'rgba(255,232,242,.92)',
+  sakura: { art: 'art/sleeves/sakura.webp', pattern: 'sakura', a: '#3d1830', b: '#12070f', grid: 'rgba(255,200,225,.08)', halo: '255,170,210', ring: 'rgba(255,232,242,.92)',
     ring2: 'rgba(255,150,200,.6)', strip: '255,170,210' },
   /* 金の地に黒の輪 */
-  aurum: { pattern: 'deco', a: '#6b4f14', b: '#231704', grid: 'rgba(255,240,190,.12)', halo: '255,226,150', ring: 'rgba(20,14,4,.85)',
+  aurum: { art: 'art/sleeves/aurum.webp', pattern: 'deco', a: '#6b4f14', b: '#231704', grid: 'rgba(255,240,190,.12)', halo: '255,226,150', ring: 'rgba(20,14,4,.85)',
     ring2: 'rgba(255,236,170,.7)', strip: '255,226,150' },
   /* ---- ガチャの見た目 ---- */
   mint: { pattern: 'hex', a: '#0f3a33', b: '#05140f', grid: 'rgba(160,255,220,.08)', halo: '120,240,200', ring: 'rgba(190,255,230,.9)',
     ring2: 'rgba(120,240,200,.5)', strip: '120,240,200' },
-  ocean: { pattern: 'waves', a: '#0b2446', b: '#030a18', grid: 'rgba(120,190,255,.08)', halo: '90,170,255', ring: 'rgba(170,215,255,.9)',
+  ocean: { art: 'art/sleeves/ocean.webp', pattern: 'waves', a: '#0b2446', b: '#030a18', grid: 'rgba(120,190,255,.08)', halo: '90,170,255', ring: 'rgba(170,215,255,.9)',
     ring2: 'rgba(90,170,255,.5)', strip: '90,170,255' },
-  ember: { pattern: 'flames', a: '#4a1a06', b: '#160602', grid: 'rgba(255,150,80,.1)', halo: '255,120,50', ring: 'rgba(255,190,110,.92)',
+  ember: { art: 'art/sleeves/ember.webp', pattern: 'flames', a: '#4a1a06', b: '#160602', grid: 'rgba(255,150,80,.1)', halo: '255,120,50', ring: 'rgba(255,190,110,.92)',
     ring2: 'rgba(255,90,40,.6)', strip: '255,120,50', glitch: true },
-  glacier: { pattern: 'ice', a: '#d8ecff', b: '#6f93b8', grid: 'rgba(255,255,255,.25)', halo: '220,240,255', ring: 'rgba(20,50,90,.85)',
+  glacier: { art: 'art/sleeves/glacier.webp', pattern: 'ice', a: '#d8ecff', b: '#6f93b8', grid: 'rgba(255,255,255,.25)', halo: '220,240,255', ring: 'rgba(20,50,90,.85)',
     ring2: 'rgba(255,255,255,.8)', strip: '160,210,255' },
-  toxic: { pattern: 'hazard', a: '#1d3a05', b: '#081302', grid: 'rgba(190,255,60,.1)', halo: '170,255,40', ring: 'rgba(210,255,90,.92)',
+  toxic: { art: 'art/sleeves/toxic.webp', pattern: 'hazard', a: '#1d3a05', b: '#081302', grid: 'rgba(190,255,60,.1)', halo: '170,255,40', ring: 'rgba(210,255,90,.92)',
     ring2: 'rgba(120,220,20,.6)', strip: '170,255,40', circuit: true },
   /* 下剋上の褒美: 黒地に金と深紅 */
   slayer: { a: '#2a0808', b: '#000000', grid: 'rgba(255,210,90,.05)', halo: '255,196,60', ring: 'rgba(255,214,90,.95)',
@@ -502,11 +502,11 @@ const SLEEVES = {
   /* ---- ガチャの見た目 (2) ---- */
   tiger: { art: 'art/sleeves/tiger.webp', pattern: 'tiger', a: '#c96a14', b: '#6b2f04', grid: 'rgba(0,0,0,.06)', halo: '255,200,120', ring: 'rgba(20,10,0,.9)',
     ring2: 'rgba(255,220,160,.7)', strip: '255,160,60' },
-  pixel: { pattern: 'pixel', a: '#12103a', b: '#05041a', grid: 'rgba(120,120,255,.12)', halo: '124,240,208', ring: 'rgba(124,240,208,.9)',
+  pixel: { art: 'art/sleeves/pixel.webp', pattern: 'pixel', a: '#12103a', b: '#05041a', grid: 'rgba(120,120,255,.12)', halo: '124,240,208', ring: 'rgba(124,240,208,.9)',
     ring2: 'rgba(255,121,198,.7)', strip: '124,240,208' },
-  koi: { pattern: 'koi', a: '#0f3d4a', b: '#04161c', grid: 'rgba(180,230,255,.05)', halo: '255,140,90', ring: 'rgba(255,244,236,.9)',
+  koi: { art: 'art/sleeves/koi.webp', pattern: 'koi', a: '#0f3d4a', b: '#04161c', grid: 'rgba(180,230,255,.05)', halo: '255,140,90', ring: 'rgba(255,244,236,.9)',
     ring2: 'rgba(255,90,54,.6)', strip: '255,120,80' },
-  aurora: { pattern: 'aurora', a: '#0a1230', b: '#02040c', grid: 'rgba(124,240,208,.04)', halo: '124,240,208', ring: 'rgba(200,255,240,.9)',
+  aurora: { art: 'art/sleeves/aurora.webp', pattern: 'aurora', a: '#0a1230', b: '#02040c', grid: 'rgba(124,240,208,.04)', halo: '124,240,208', ring: 'rgba(200,255,240,.9)',
     ring2: 'rgba(157,123,255,.7)', strip: '124,240,208' },
   /* ---- かわいい見た目 (ロゴなしの全面の柄) ---- */
   nyanko: { pattern: 'nyanko', noLogo: true, a: '#ffd6e6', b: '#f4c6ff', grid: 'rgba(255,255,255,0)', halo: '255,200,220', ring: 'rgba(0,0,0,0)',
@@ -515,14 +515,14 @@ const SLEEVES = {
     ring2: 'rgba(0,0,0,0)', strip: '255,150,190' },
   bunny: { pattern: 'bunny', noLogo: true, a: '#bfe3ff', b: '#e8d8ff', grid: 'rgba(255,255,255,0)', halo: '255,255,255', ring: 'rgba(0,0,0,0)',
     ring2: 'rgba(0,0,0,0)', strip: '170,150,255' },
-  rose: { pattern: 'rose', noLogo: true, a: '#2a0610', b: '#060103', grid: 'rgba(255,80,110,.04)', halo: '220,40,70', ring: 'rgba(0,0,0,0)',
+  rose: { art: 'art/sleeves/rose.webp', pattern: 'rose', noLogo: true, a: '#2a0610', b: '#060103', grid: 'rgba(255,80,110,.04)', halo: '220,40,70', ring: 'rgba(0,0,0,0)',
     ring2: 'rgba(0,0,0,0)', strip: '200,30,60' },
-  butterfly: { pattern: 'butterfly', noLogo: true, a: '#14122e', b: '#030208', grid: 'rgba(255,210,110,.04)', halo: '255,200,90', ring: 'rgba(0,0,0,0)',
+  butterfly: { art: 'art/sleeves/butterfly.webp', pattern: 'butterfly', noLogo: true, a: '#14122e', b: '#030208', grid: 'rgba(255,210,110,.04)', halo: '255,200,90', ring: 'rgba(0,0,0,0)',
     ring2: 'rgba(0,0,0,0)', strip: '220,170,60' },
   /* 週替わりの褒美: 深い緑に金の月桂冠 */
-  laurel: { pattern: 'laurel', a: '#1d3512', b: '#050b03', grid: 'rgba(230,210,120,.05)', halo: '230,210,120', ring: 'rgba(240,215,120,.85)',
+  laurel: { art: 'art/sleeves/laurel.webp', pattern: 'laurel', a: '#1d3512', b: '#050b03', grid: 'rgba(230,210,120,.05)', halo: '230,210,120', ring: 'rgba(240,215,120,.85)',
     ring2: 'rgba(150,210,110,.6)', strip: '200,180,90' },
-  galaxy: { pattern: 'nebula', a: '#1a0b3d', b: '#040112', grid: 'rgba(255,255,255,.12)', halo: '255,120,220', ring: 'rgba(255,240,255,.95)',
+  galaxy: { art: 'art/sleeves/galaxy.webp', pattern: 'nebula', a: '#1a0b3d', b: '#040112', grid: 'rgba(255,255,255,.12)', halo: '255,120,220', ring: 'rgba(255,240,255,.95)',
     ring2: 'rgba(124,240,208,.7)', strip: '255,120,220', holo: true, glitch: true }
 };
 /* スリーブの柄 (報酬ごとに専用の模様)。backTex が地の色と格子のあと、中央の紋章の前に描く */
