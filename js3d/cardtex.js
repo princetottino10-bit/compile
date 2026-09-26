@@ -523,6 +523,8 @@ const SLEEVES = {
     ring2: 'rgba(0,0,0,0)', strip: '255,150,180' },
   sprout: { art: 'art/sleeves/sprout.webp', artLogo: '#5f9a3e', noVignette: true, pattern: 'sakura', a: '#fbf6e2', b: '#e8f1d8', grid: 'rgba(0,0,0,0)', halo: '160,220,120', ring: 'rgba(0,0,0,0)',
     ring2: 'rgba(0,0,0,0)', strip: '110,190,90' },
+  teaparty: { art: 'art/sleeves/teaparty.webp', noVignette: true, pattern: 'sakura', a: '#f4efe2', b: '#d9e3cf', grid: 'rgba(0,0,0,0)', halo: '255,255,255', ring: 'rgba(0,0,0,0)',
+    ring2: 'rgba(0,0,0,0)', strip: '150,175,130' },
   momiji: { art: 'art/sleeves/momiji.webp', pattern: 'sakura', a: '#7a1a10', b: '#240603', grid: 'rgba(0,0,0,0)', halo: '255,120,80', ring: 'rgba(0,0,0,0)',
     ring2: 'rgba(0,0,0,0)', strip: '220,60,40' },
   /* 週替わりの褒美: 深い緑に金の月桂冠 */

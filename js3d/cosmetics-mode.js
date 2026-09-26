@@ -12,7 +12,7 @@ import { playerLevel } from './stats-data.js';
 import { localRecords } from './stats.js';
 import { bonusXp } from './xp.js';
 import { backTex, onSleeveArt } from './cardtex.js';
-import { playmatTexture } from './playmat.js';
+import { playmatTexture, matArtURL } from './playmat.js';
 import { markerPreviewURL } from './control.js';
 import { emblemDataURL } from './emblems.js';
 import { displayName } from './displayname.js';
@@ -97,6 +97,8 @@ function sleeveURL(key) {
   return imgCache.get(k);
 }
 function matURL(key) {
+  const art = matArtURL(key);                    // 絵のマットは絵をそのまま (自分の半面ぶん)
+  if (art) return art;
   const k = 'mat:' + key;
   if (!imgCache.has(k)) {
     const tex = playmatTexture(key);

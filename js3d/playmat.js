@@ -275,7 +275,38 @@ function drawEclipse(ctx) {
   edgeTitle(ctx, 'rgba(255,214,150,.8)');
 }
 
+/* 絵のマット: 自分の半面ぶんの横長の絵 (art/mats/<名前>.webp)。手前の半面にそのまま、奥の半面に 180 度回して敷く
+   (実物のマットを向かい合わせに置いたのと同じ。相手の半面には相手のマットが相手の向きで出る)。
+   slot: 置き場の枠の色 [塗り, 線] */
+const ART_MATS = {
+  seigaiha: { slot: ['rgba(6,12,28,.55)', 'rgba(200,220,255,.55)'] },
+  hokusai: { slot: ['rgba(8,16,30,.5)', 'rgba(240,230,210,.6)'] },
+  celestial: { slot: ['rgba(4,8,22,.55)', 'rgba(240,210,140,.65)'] },
+  garden: { slot: ['rgba(30,50,30,.35)', 'rgba(255,255,245,.7)'] },
+  sakura: { slot: ['rgba(10,10,30,.5)', 'rgba(255,200,220,.6)'] },
+  library: { slot: ['rgba(40,24,10,.4)', 'rgba(250,235,200,.7)'] },
+};
+function drawArtMat(key, img) {
+  return (ctx) => {
+    ctx.fillStyle = '#0b0a12';
+    ctx.fillRect(0, 0, W, H);
+    if (img) {
+      const half = H / 2;
+      ctx.drawImage(img, 0, half, W, half);                              // 手前 (自分の向き)
+      ctx.save(); ctx.translate(W, half); ctx.rotate(Math.PI);           // 奥 (相手の向き)
+      ctx.drawImage(img, 0, 0, W, half);
+      ctx.restore();
+      ctx.fillStyle = 'rgba(6,8,16,.22)';                               // 暗い画面になじむよう少しだけ沈める
+      ctx.fillRect(0, 0, W, H);
+    }
+    const [fill, stroke] = ART_MATS[key].slot;
+    drawSlots(ctx, fill, stroke, 2);
+  };
+}
+const artImages = new Map();       // key -> Image (読み込み済みなら complete)
+
 const DRAW = { nebula: drawNebula, vortex: drawVortex, biomech: drawBiomech, prism: drawPrism, eclipse: drawEclipse };
+for (const key of Object.keys(ART_MATS)) DRAW[key] = null;          // 絵のマットは playmatTexture で描く
 const cache = new Map();
 
 /* 柄のテクスチャ (neon は柄なし = null) */
@@ -283,15 +314,29 @@ const cache = new Map();
 function layoutKey() { return (VIEW.short ? 's' : 'n') + Math.round(VIEW.k * 20); }
 
 export function playmatTexture(key) {
-  if (!DRAW[key]) return null;
+  if (!DRAW[key] && !ART_MATS[key]) return null;
   const ck = key + ':' + layoutKey();
   if (cache.has(ck)) return cache.get(ck);
   const cv = document.createElement('canvas');
   cv.width = W; cv.height = H;
-  DRAW[key](cv.getContext('2d'));
   const tex = new THREE.CanvasTexture(cv);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.anisotropy = 8;
+  if (ART_MATS[key]) {
+    /* 絵は読み込めてから描き直す (それまでは暗い地に枠だけ) */
+    let img = artImages.get(key);
+    if (!img) { img = new Image(); img.src = 'art/mats/' + key + '.webp'; artImages.set(key, img); }
+    const paint = () => { drawArtMat(key, img.complete && img.naturalWidth ? img : null)(cv.getContext('2d')); tex.needsUpdate = true; };
+    paint();
+    if (!img.complete) img.addEventListener('load', paint, { once: true });
+  } else {
+    DRAW[key](cv.getContext('2d'));
+  }
   cache.set(ck, tex);
   return tex;
+}
+
+/** 見本の絵 (図鑑・ガチャ用)。自分の半面ぶんの横長の絵の URL。絵のマットでなければ null */
+export function matArtURL(key) {
+  return ART_MATS[key] ? 'art/mats/' + key + '.webp' : null;
 }
