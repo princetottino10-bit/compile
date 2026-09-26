@@ -3416,7 +3416,8 @@ async function afterTurn() {
     resultShown = true;
     const win = cur.state.winner === ME;
     const levelBefore = myLevel;
-    if (!trainingMode && !puzzle && !demoMode && !roomMode) {
+    /* チュートリアルは戦績・リプレイ・実績に数えない */
+    if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial) {
       const st0 = cur.state;
       recordSoloResult(st0.players[ME].protocols.map(p => p.name), st0.players[AI].protocols.map(p => p.name), win, aiDifficulty,
         { turns: (st0.turns || 0) + 1,       // 決着した手番も1つと数える
@@ -3437,7 +3438,7 @@ async function afterTurn() {
     await UI.resultCutIn(win, { victory });
     /* レベルが上がったら、手に入った報酬を見せる */
     if (myLevel > levelBefore) await UI.levelUpCutIn(myLevel, rewardsBetween(levelBefore, myLevel));
-    if (!trainingMode && !puzzle && !demoMode && !roomMode) await afterGameProgress(cur.state, ME, win, aiDifficulty, false);
+    if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial) await afterGameProgress(cur.state, ME, win, aiDifficulty, false);
     if (win && !trainingMode && !puzzle && !demoMode && !roomMode) maybeLoginHint('firstWin');
     if (demoMode) {
       await TW.wait(900);

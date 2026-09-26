@@ -131,7 +131,7 @@ function masterySummary() {
     const raw = localStorage.getItem('compileSoloRecords') || '[]';
     if (raw !== summaryCache.raw) {
       const list = JSON.parse(raw);
-      summaryCache = { raw, map: protocolSummary(Array.isArray(list) ? list : []) };
+      summaryCache = { raw, map: protocolSummary(Array.isArray(list) ? list.filter(r => r && r.mode !== 'tutorial') : []) };
     }
     return summaryCache.map;
   } catch (e) {

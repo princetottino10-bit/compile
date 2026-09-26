@@ -23,7 +23,8 @@ const idOf = (r) => r.id || ('t' + r.at);
 function records() {
   try {
     const list = JSON.parse(localStorage.getItem(KEY) || '[]');
-    return Array.isArray(list) ? list.map(r => (r.id ? r : { ...r, id: idOf(r) })) : [];
+    /* チュートリアルの対戦は戦績に数えない (前に残ったものも読み飛ばす) */
+    return Array.isArray(list) ? list.filter(r => r && r.mode !== 'tutorial').map(r => (r.id ? r : { ...r, id: idOf(r) })) : [];
   } catch (e) {
     return [];
   }

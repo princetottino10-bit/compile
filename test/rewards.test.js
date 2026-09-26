@@ -73,5 +73,7 @@ test('プロトコルの習熟度: 3 で名札・6 で称号・9 でプレイマ
   assert.equal(R.isUnlocked('mat', 'p_death', 99), false, '遊んでいないプロトコルは開かない');
   assert.equal(R.TITLES.m_fire, 'PYROMANCER');
   assert.equal(R.MASTERY_ITEMS.filter(m => m.kind === 'title').length, 30);
+  setRecs(wins(39).map(r => ({ ...r, mode: 'tutorial' })));   // チュートリアルの対戦は数えない
+  assert.equal(R.protoMastery('FIRE'), 0);
   delete globalThis.localStorage;
 });
