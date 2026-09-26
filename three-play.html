@@ -2355,6 +2355,7 @@
   .cm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px;}
   .cm-grid.title,.cm-grid.victory{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
   .cm-grid.icon{grid-template-columns:repeat(auto-fill,minmax(76px,1fr));}
+  .cm-desc{margin:10px 0 0;font:700 12px/1.5 system-ui;color:var(--ink);text-align:center;}
   .cm-grid.nameplate{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));}
   .cm-grid.nameplate .cm-th{height:52px;}
   .cm-item{position:relative;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 6px 9px;cursor:pointer;text-align:center;
@@ -2981,19 +2982,20 @@
       "./js3d/arena.js": "./js3d/arena.js?v=50f2ba0d13",
       "./js3d/audio.js": "./js3d/audio.js?v=28a4f522ba",
       "./js3d/backdrops.js": "./js3d/backdrops.js?v=90faf9612d",
-      "./js3d/board.js": "./js3d/board.js?v=68e68199ac",
+      "./js3d/board.js": "./js3d/board.js?v=82eb3eadb5",
       "./js3d/card.js": "./js3d/card.js?v=6d8083e5b7",
       "./js3d/cardlist-ov.js": "./js3d/cardlist-ov.js?v=1d673fd0d2",
       "./js3d/cardtex.js": "./js3d/cardtex.js?v=985ea460e2",
       "./js3d/cardtext.js": "./js3d/cardtext.js?v=4cf5529855",
       "./js3d/cloudsave.js": "./js3d/cloudsave.js?v=b187c8c5a5",
       "./js3d/control.js": "./js3d/control.js?v=c1b87ebc63",
-      "./js3d/cosmetics-mode.js": "./js3d/cosmetics-mode.js?v=13233c2d38",
+      "./js3d/cosmetics-mode.js": "./js3d/cosmetics-mode.js?v=1a13813eaf",
       "./js3d/cosmetics-ui.js": "./js3d/cosmetics-ui.js?v=61977c6f7c",
       "./js3d/daily.js": "./js3d/daily.js?v=f56dabdf65",
       "./js3d/displayname.js": "./js3d/displayname.js?v=613e18bf95",
       "./js3d/emblems.js": "./js3d/emblems.js?v=6d1c077a2e",
       "./js3d/errorreport.js": "./js3d/errorreport.js?v=7939cf04e8",
+      "./js3d/fx-compile.js": "./js3d/fx-compile.js?v=2fbcc8e763",
       "./js3d/fx-protocols.js": "./js3d/fx-protocols.js?v=509fceb211",
       "./js3d/fx.js": "./js3d/fx.js?v=f2bbe73646",
       "./js3d/gacha-ui.js": "./js3d/gacha-ui.js?v=73a5a71bea",
@@ -3003,7 +3005,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=cb111bb8aa",
+      "./js3d/main.js": "./js3d/main.js?v=df7170b913",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=97f3b40bfa",
       "./js3d/panel.js": "./js3d/panel.js?v=ecb8a073e3",
       "./js3d/plates.js": "./js3d/plates.js?v=e419f4ab89",
@@ -3055,7 +3057,7 @@
   <link rel="modulepreload" href="js3d/achievements-ui.js?v=924939d2f6">
   <link rel="modulepreload" href="vendor/three.module.js?v=985eb92490">
   <link rel="modulepreload" href="js3d/stage.js?v=e3cda4525b">
-  <link rel="modulepreload" href="js3d/board.js?v=68e68199ac">
+  <link rel="modulepreload" href="js3d/board.js?v=82eb3eadb5">
   <link rel="modulepreload" href="js3d/control.js?v=c1b87ebc63">
   <link rel="modulepreload" href="js3d/panel.js?v=ecb8a073e3">
   <link rel="modulepreload" href="js3d/setup.js?v=1073765172">
@@ -3072,7 +3074,7 @@
   <link rel="modulepreload" href="js3d/rewards.js?v=ad38b69a54">
   <link rel="modulepreload" href="js3d/gachafx.js?v=3d15a2226f">
   <link rel="modulepreload" href="js3d/cosmetics-ui.js?v=61977c6f7c">
-  <link rel="modulepreload" href="js3d/cosmetics-mode.js?v=13233c2d38">
+  <link rel="modulepreload" href="js3d/cosmetics-mode.js?v=1a13813eaf">
   <link rel="modulepreload" href="js3d/displayname.js?v=613e18bf95">
   <link rel="modulepreload" href="js3d/plates.js?v=e419f4ab89">
   <link rel="modulepreload" href="js3d/playmat.js?v=bc628dfb85">
@@ -3110,6 +3112,7 @@
   <link rel="modulepreload" href="vendor/jsm/postprocessing/OutputPass.js">
   <link rel="modulepreload" href="vendor/jsm/environments/RoomEnvironment.js">
   <link rel="modulepreload" href="js3d/card.js?v=6d8083e5b7">
+  <link rel="modulepreload" href="js3d/fx-compile.js?v=2fbcc8e763">
   <link rel="modulepreload" href="js3d/protocards.js?v=a0c3bbfc68">
   <link rel="modulepreload" href="js3d/protocol-strength.js?v=c719e5b65c">
   <link rel="modulepreload" href="js3d/backdrops.js?v=90faf9612d">
@@ -3129,6 +3132,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=cb111bb8aa"></script>
+  <script type="module" src="js3d/main.js?v=df7170b913"></script>
 </body>
 </html>

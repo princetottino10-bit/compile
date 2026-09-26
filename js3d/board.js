@@ -9,6 +9,7 @@ import { makeCard, setHighlight, clearHighlight, setDim, setSelected, setCandida
 import { foilMaskTexture } from './cardtex.js';
 import { spawnImpactRing, spawnFlashPillar } from './stage.js';
 import * as FX from './fx.js';
+import { compileSignature } from './fx-compile.js';
 import { backTex } from './cardtex.js';
 import { sfx } from './audio.js';
 import * as LAYOUT from './layout.js';
@@ -109,6 +110,8 @@ export function createBoard(stage, defIndex, me, hooks) {
   /* 相手のカードの裏面 (オンラインは相手の設定。CPU は標準) */
   const oppSleeveOf = (hooks && hooks.oppSleeve) || (() => 'default');
   const compileColorOf = (hooks && hooks.compileColor) || (() => null);
+  /* 自分のコンパイルの光の種類 (色ごとの「しるし」の演出。fx-compile.js) */
+  const compileStyleOf = (hooks && hooks.compileStyle) || (() => 'default');
   const scene = stage.scene;
   const cards = new Map();       // uid -> THREE.Group
   const group = new THREE.Group();
@@ -435,6 +438,7 @@ export function createBoard(stage, defIndex, me, hooks) {
     /* 2) 解放: 光柱 + 衝撃波 + 画面フラッシュ */
     FX.compilePillar(scene, laneX, accent, 1500);
     FX.compileBurst(scene, laneX, accent, ev.name, 1500);
+    if (ev.side === me) compileSignature(scene, laneX, compileStyleOf());
     FX.shockwave(scene, center, accent, 6.5, 900);
     FX.screenFlash(stage, 0xffffff, 620, 0.9);
     sfx('boom');

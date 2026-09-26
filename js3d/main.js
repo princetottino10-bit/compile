@@ -342,6 +342,7 @@ async function boot() {
     sleeve: () => cosmetic('sleeve', 'default'),
     oppSleeve: () => oppLook.sleeve,
     /* 自分のコンパイルの光の色 (レベルの報酬)。虹は毎回ちがう色 */
+    compileStyle: () => cosmetic('ccolor', 'default'),
     compileColor: () => {
       const c = cosmetic('ccolor', 'default');
       if (c === 'gold') return '#ffd86a';

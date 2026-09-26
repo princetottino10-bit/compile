@@ -33,6 +33,11 @@ const TROPHY_NAME = { chain4: 'CHAIN REACTION', flawless: 'FLAWLESS', mastery10:
 const CCOLOR = { default: 'linear-gradient(90deg,#ff5c5c,#b9a4ff,#a07bff)', gold: '#ffd86a', cyan: '#7ff3ff', rainbow: 'conic-gradient(#ff5f7a,#ffc05a,#7df28c,#5ab8ff,#b98cff,#ff5f7a)',
   lime: '#b6ff4a', violet: '#b07bff', ember: '#ff7a2e' };
 
+/* コンパイルの光ごとの演出 (fx-compile.js)。色だけでなく動きも違う */
+const CC_DESC = { default: 'プロトコルの色の光の柱', gold: '金色の光の柱 + 金貨が降る', cyan: '水色の光の柱 + 稲妻が落ちる',
+  rainbow: '毎回ちがう色の光の柱 + 虹の輪が広がる', lime: '黄緑の光の柱 + 泡が昇って弾ける', violet: '紫の光の柱 + 光の粒が渦を巻いて昇る',
+  ember: '橙の光の柱 + 火の粉が舞い上がる' };
+
 let protoList = [];
 export function setCosmeticsProtocols(list) { protoList = list || []; }
 
@@ -148,7 +153,8 @@ function preview(kind, key, name, isOwned, src) {
       break;
     }
     case 'marker': art = '<div class="cm-markerview"><img alt="" src="' + markerURL(key) + '"></div>'; break;
-    case 'ccolor': art = '<div class="cm-burst" style="--gc:' + (CCOLOR[key] || CCOLOR.default) + '"><b>COMPILE</b></div>'; break;
+    case 'ccolor': art = '<div class="cm-burst" style="--gc:' + (CCOLOR[key] || CCOLOR.default) + '"><b>COMPILE</b></div>' +
+      '<p class="cm-desc">' + esc(CC_DESC[key] || '') + '</p>'; break;
     case 'victory': art = '<div class="cm-vicview ' + esc(key) + '"><b>YOU WIN</b></div>'; break;
     case 'plate': {
       const p = protoList.find(x => x.name === s.icon);
