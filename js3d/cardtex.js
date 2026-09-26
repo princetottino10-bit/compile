@@ -515,6 +515,10 @@ const SLEEVES = {
     ring2: 'rgba(0,0,0,0)', strip: '255,150,190' },
   bunny: { pattern: 'bunny', noLogo: true, a: '#bfe3ff', b: '#e8d8ff', grid: 'rgba(255,255,255,0)', halo: '255,255,255', ring: 'rgba(0,0,0,0)',
     ring2: 'rgba(0,0,0,0)', strip: '170,150,255' },
+  rose: { pattern: 'rose', noLogo: true, a: '#2a0610', b: '#060103', grid: 'rgba(255,80,110,.04)', halo: '220,40,70', ring: 'rgba(0,0,0,0)',
+    ring2: 'rgba(0,0,0,0)', strip: '200,30,60' },
+  butterfly: { pattern: 'butterfly', noLogo: true, a: '#14122e', b: '#030208', grid: 'rgba(255,210,110,.04)', halo: '255,200,90', ring: 'rgba(0,0,0,0)',
+    ring2: 'rgba(0,0,0,0)', strip: '220,170,60' },
   /* 週替わりの褒美: 深い緑に金の月桂冠 */
   laurel: { pattern: 'laurel', a: '#1d3512', b: '#050b03', grid: 'rgba(230,210,120,.05)', halo: '230,210,120', ring: 'rgba(240,215,120,.85)',
     ring2: 'rgba(150,210,110,.6)', strip: '200,180,90' },
@@ -839,6 +843,100 @@ const PATTERNS = {
       const x = r() * DW, y = 110 + r() * 220, s = 5 + r() * 7;
       ctx.beginPath(); for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? s * 0.45 : s; ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } ctx.fill();
     }
+  },
+  /* 薔薇: 黒地に深紅の薔薇と、棘のあるつる */
+  rose(ctx) {
+    const r = seeded(61);
+    /* つる */
+    ctx.strokeStyle = 'rgba(40,90,50,.85)'; ctx.lineWidth = 4;
+    for (let k = 0; k < 4; k++) {
+      ctx.beginPath(); let x = r() * DW, y = DH;
+      ctx.moveTo(x, y);
+      for (let s = 0; s < 6; s++) { const nx = x + (r() - 0.5) * 200, ny = y - 120; ctx.quadraticCurveTo(x + (r() - 0.5) * 160, y - 60, nx, ny); x = nx; y = ny; }
+      ctx.stroke();
+    }
+    const leaf = (x, y, a, s) => {
+      ctx.save(); ctx.translate(x, y); ctx.rotate(a);
+      const g = ctx.createLinearGradient(0, -s * 0.4, 0, s * 0.4); g.addColorStop(0, '#2f7a45'); g.addColorStop(1, '#123a1f');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(s * 0.5, -s * 0.45, s, 0); ctx.quadraticCurveTo(s * 0.5, s * 0.45, 0, 0); ctx.fill();
+      ctx.strokeStyle = 'rgba(160,220,150,.35)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(s * 0.9, 0); ctx.stroke();
+      ctx.restore();
+    };
+    /* 花びらを外から内へ重ねて、巻いた薔薇にする */
+    const rose = (x, y, s) => {
+      leaf(x - s * 0.7, y + s * 0.5, 2.6, s * 1.1); leaf(x + s * 0.6, y + s * 0.6, 0.5, s * 1.0);
+      const layers = 5;
+      for (let L = 0; L < layers; L++) {
+        const rad = s * (1 - L * 0.17), n = 5 + (L % 2), off = L * 0.6;
+        for (let i = 0; i < n; i++) {
+          const a = off + i * Math.PI * 2 / n;
+          const px = x + Math.cos(a) * rad * 0.35, py = y + Math.sin(a) * rad * 0.3;
+          const g = ctx.createRadialGradient(px, py, 0, px, py, rad * 0.75);
+          const light = 30 + L * 9;
+          g.addColorStop(0, 'hsl(350,80%,' + light + '%)'); g.addColorStop(1, 'hsl(345,85%,' + (light - 18) + '%)');
+          ctx.fillStyle = g;
+          ctx.beginPath(); ctx.ellipse(px, py, rad * 0.62, rad * 0.5, a, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = 'rgba(20,0,6,.45)'; ctx.lineWidth = 1.5; ctx.stroke();
+        }
+      }
+      ctx.strokeStyle = 'rgba(255,170,190,.55)'; ctx.lineWidth = 2;
+      ctx.beginPath(); for (let t = 0; t < 12; t += 0.2) { const rr = s * 0.02 * t; ctx.lineTo(x + Math.cos(t) * rr, y + Math.sin(t) * rr * 0.85); } ctx.stroke();
+    };
+    for (const [x, y, s] of [[DW * 0.5, DH * 0.52, 95], [DW * 0.18, DH * 0.24, 55], [DW * 0.82, DH * 0.3, 48], [DW * 0.2, DH * 0.82, 50], [DW * 0.84, DH * 0.86, 58]]) rose(x, y, s);
+    /* 散った花びら */
+    for (let i = 0; i < 22; i++) {
+      const x = r() * DW, y = 110 + r() * (DH - 120);
+      ctx.fillStyle = 'hsla(350,80%,' + (30 + r() * 25) + '%,.8)';
+      ctx.beginPath(); ctx.ellipse(x, y, 5 + r() * 5, 3 + r() * 3, r() * 3, 0, Math.PI * 2); ctx.fill();
+    }
+  },
+  /* 黄金の蝶: 夜の地に、金の蝶が舞い、金の粉が散る */
+  butterfly(ctx) {
+    const r = seeded(83);
+    const gold = (x0, y0, x1, y1) => {
+      const g = ctx.createLinearGradient(x0, y0, x1, y1);
+      g.addColorStop(0, '#fff3b0'); g.addColorStop(0.35, '#e8b53a'); g.addColorStop(0.6, '#9a6512'); g.addColorStop(0.8, '#f5cf5a'); g.addColorStop(1, '#7a4c0a');
+      return g;
+    };
+    const fly = (x, y, s, a) => {
+      ctx.save(); ctx.translate(x, y); ctx.rotate(a);
+      ctx.shadowColor = 'rgba(255,200,80,.6)'; ctx.shadowBlur = s * 0.4;
+      for (const side of [-1, 1]) {
+        ctx.save(); ctx.scale(side, 1);
+        ctx.fillStyle = gold(0, -s, s, s);
+        /* 上の羽 */
+        ctx.beginPath(); ctx.moveTo(0, 0);
+        ctx.bezierCurveTo(s * 0.3, -s * 1.1, s * 1.25, -s * 1.05, s * 1.05, -s * 0.2);
+        ctx.bezierCurveTo(s * 0.95, s * 0.05, s * 0.4, s * 0.05, 0, 0); ctx.fill();
+        /* 下の羽 */
+        ctx.beginPath(); ctx.moveTo(0, s * 0.05);
+        ctx.bezierCurveTo(s * 0.7, s * 0.1, s * 0.9, s * 0.75, s * 0.45, s * 0.85);
+        ctx.bezierCurveTo(s * 0.2, s * 0.9, s * 0.08, s * 0.4, 0, s * 0.05); ctx.fill();
+        ctx.shadowBlur = 0;
+        /* 羽の模様 (すかし) */
+        ctx.strokeStyle = 'rgba(60,30,0,.55)'; ctx.lineWidth = Math.max(1, s * 0.03);
+        for (const [cx, cy, e] of [[0.2, -0.1, 0], [0.55, -0.55, 0], [0.85, -0.4, 0], [0.35, 0.45, 0]]) {
+          ctx.beginPath(); ctx.moveTo(s * 0.05, 0); ctx.quadraticCurveTo(s * cx, s * cy, s * (cx + 0.2), s * (cy - 0.15 + e)); ctx.stroke();
+        }
+        ctx.fillStyle = 'rgba(255,250,220,.85)';
+        ctx.beginPath(); ctx.arc(s * 0.78, -s * 0.55, s * 0.07, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(s * 0.42, s * 0.6, s * 0.05, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
+      ctx.fillStyle = '#3a2204'; ctx.beginPath(); ctx.ellipse(0, s * 0.15, s * 0.07, s * 0.45, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#e8b53a'; ctx.lineWidth = Math.max(1, s * 0.03);
+      ctx.beginPath(); ctx.moveTo(0, -s * 0.25); ctx.quadraticCurveTo(-s * 0.1, -s * 0.6, -s * 0.28, -s * 0.72); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, -s * 0.25); ctx.quadraticCurveTo(s * 0.1, -s * 0.6, s * 0.28, -s * 0.72); ctx.stroke();
+      ctx.restore();
+    };
+    /* 金の粉の帯 */
+    for (let i = 0; i < 260; i++) {
+      const t = r(), x = DW * 0.1 + t * DW * 0.85 + (r() - 0.5) * 90, y = DH * 0.92 - t * DH * 0.7 + (r() - 0.5) * 90;
+      ctx.fillStyle = 'rgba(255,' + (190 + r() * 60 | 0) + ',90,' + (0.2 + r() * 0.6) + ')';
+      ctx.beginPath(); ctx.arc(x, y, r() * 2.2, 0, Math.PI * 2); ctx.fill();
+    }
+    for (const [x, y, s, a] of [[DW * 0.5, DH * 0.5, 120, -0.12], [DW * 0.2, DH * 0.25, 42, -0.5], [DW * 0.82, DH * 0.2, 34, 0.4], [DW * 0.8, DH * 0.78, 48, 0.3], [DW * 0.18, DH * 0.84, 30, -0.3], [DW * 0.6, DH * 0.9, 22, 0.6]]) fly(x, y, s, a);
   },
   /* 月桂冠 (週替わりの褒美): 金の葉の冠と、上に3つの星 */
   laurel(ctx) {
