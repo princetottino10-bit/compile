@@ -499,6 +499,15 @@ const SLEEVES = {
   /* 下剋上の褒美: 黒地に金と深紅 */
   slayer: { a: '#2a0808', b: '#000000', grid: 'rgba(255,210,90,.05)', halo: '255,196,60', ring: 'rgba(255,214,90,.95)',
     ring2: 'rgba(220,30,60,.8)', strip: '255,40,70', slayer: true },
+  /* ---- ガチャの見た目 (2) ---- */
+  tiger: { pattern: 'tiger', a: '#c96a14', b: '#6b2f04', grid: 'rgba(0,0,0,.06)', halo: '255,200,120', ring: 'rgba(20,10,0,.9)',
+    ring2: 'rgba(255,220,160,.7)', strip: '255,160,60' },
+  pixel: { pattern: 'pixel', a: '#12103a', b: '#05041a', grid: 'rgba(120,120,255,.12)', halo: '124,240,208', ring: 'rgba(124,240,208,.9)',
+    ring2: 'rgba(255,121,198,.7)', strip: '124,240,208' },
+  koi: { pattern: 'koi', a: '#0f3d4a', b: '#04161c', grid: 'rgba(180,230,255,.05)', halo: '255,140,90', ring: 'rgba(255,244,236,.9)',
+    ring2: 'rgba(255,90,54,.6)', strip: '255,120,80' },
+  aurora: { pattern: 'aurora', a: '#0a1230', b: '#02040c', grid: 'rgba(124,240,208,.04)', halo: '124,240,208', ring: 'rgba(200,255,240,.9)',
+    ring2: 'rgba(157,123,255,.7)', strip: '124,240,208' },
   /* 週替わりの褒美: 深い緑に金の月桂冠 */
   laurel: { pattern: 'laurel', a: '#1d3512', b: '#050b03', grid: 'rgba(230,210,120,.05)', halo: '230,210,120', ring: 'rgba(240,215,120,.85)',
     ring2: 'rgba(150,210,110,.6)', strip: '200,180,90' },
@@ -671,6 +680,70 @@ const PATTERNS = {
       ctx.fillStyle = 'rgba(255,255,255,' + (0.3 + r() * 0.6) + ')';
       ctx.beginPath(); ctx.arc(cx + Math.cos(a) * rad, cy + Math.sin(a) * rad * 1.1, 0.7 + r() * 1.4, 0, Math.PI * 2); ctx.fill();
     }
+  },
+  /* 虎: 橙の地に黒い縞 */
+  tiger(ctx) {
+    const r = seeded(61);
+    ctx.fillStyle = 'rgba(10,6,2,.85)';
+    for (let k = 0; k < 16; k++) {
+      const y = 40 + k * 44 + (r() - 0.5) * 20, side = k % 2 ? 1 : -1, len = 120 + r() * 160;
+      const x0 = side < 0 ? -10 : DW + 10;
+      ctx.beginPath(); ctx.moveTo(x0, y - 14);
+      ctx.bezierCurveTo(x0 - side * len * 0.4, y - 20, x0 - side * len * 0.8, y + 4, x0 - side * len, y + 10);
+      ctx.bezierCurveTo(x0 - side * len * 0.7, y + 16, x0 - side * len * 0.3, y + 12, x0, y + 14);
+      ctx.closePath(); ctx.fill();
+    }
+  },
+  /* ピクセル: 8 ビットのインベーダーと星 */
+  pixel(ctx) {
+    const inv = ['00100000100', '00010001000', '00111111100', '01101110110', '11111111111', '10111111101', '10100000101', '00011011000'];
+    const px = (x, y, s, col) => {
+      ctx.fillStyle = col;
+      inv.forEach((row, j) => [...row].forEach((b, i) => { if (b === '1') ctx.fillRect(x + i * s, y + j * s, s, s); }));
+    };
+    const cols = ['#7cf0d0', '#ff79c6', '#ffe066', '#8be9fd'];
+    let k = 0;
+    for (let y = 150; y < DH - 60; y += 110) for (let x = 30; x < DW - 60; x += 120) { px(x + (y / 110 % 2) * 30, y, 7, cols[k++ % cols.length] + 'aa'); }
+    const r = seeded(71);
+    ctx.fillStyle = 'rgba(255,255,255,.7)';
+    for (let i = 0; i < 60; i++) ctx.fillRect(Math.floor(r() * DW / 6) * 6, Math.floor(r() * DH / 6) * 6, 4, 4);
+  },
+  /* 鯉: 池の波紋と、泳ぐ二匹 */
+  koi(ctx) {
+    ctx.strokeStyle = 'rgba(180,230,255,.25)'; ctx.lineWidth = 1.5;
+    for (const [x, y] of [[120, 520], [390, 250], [300, 600]]) for (let rr = 14; rr < 120; rr += 18) { ctx.beginPath(); ctx.ellipse(x, y, rr, rr * 0.6, 0, 0, Math.PI * 2); ctx.stroke(); }
+    const fish = (x, y, rot, body, spot) => {
+      ctx.save(); ctx.translate(x, y); ctx.rotate(rot);
+      ctx.fillStyle = body;
+      ctx.beginPath(); ctx.ellipse(0, 0, 58, 20, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(52, 0); ctx.lineTo(92, -22); ctx.quadraticCurveTo(80, 0, 92, 22); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(-8, 18, 16, 6, 0.6, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(-8, -18, 16, 6, -0.6, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = spot;
+      ctx.beginPath(); ctx.ellipse(-20, -4, 16, 10, 0.3, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(16, 5, 12, 8, -0.2, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(-44, -6, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    };
+    fish(150, 250, 0.5, '#fff4ec', '#ff5a36');
+    fish(360, 520, -2.4, '#ffb347', '#1a1a1a');
+  },
+  /* オーロラ: 夜空の光の帯と、雪の山 */
+  aurora(ctx) {
+    const r = seeded(83);
+    for (let i = 0; i < 120; i++) { ctx.fillStyle = 'rgba(255,255,255,' + (0.3 + r() * 0.6) + ')'; ctx.beginPath(); ctx.arc(r() * DW, r() * DH * 0.6, 0.6 + r() * 1.2, 0, Math.PI * 2); ctx.fill(); }
+    for (const [base, col, amp] of [[200, '124,240,208', 40], [260, '157,123,255', 50], [230, '255,120,220', 30]]) {
+      for (let x = 0; x < DW; x += 3) {
+        const y = base + Math.sin(x / 60 + amp) * amp + Math.sin(x / 23) * 10;
+        const g = ctx.createLinearGradient(0, y - 140, 0, y);
+        g.addColorStop(0, 'rgba(' + col + ',0)'); g.addColorStop(1, 'rgba(' + col + ',.35)');
+        ctx.fillStyle = g; ctx.fillRect(x, y - 140, 3, 140);
+      }
+    }
+    ctx.fillStyle = '#0c1424';
+    ctx.beginPath(); ctx.moveTo(0, DH); ctx.lineTo(0, 560); ctx.lineTo(90, 470); ctx.lineTo(170, 540); ctx.lineTo(270, 430); ctx.lineTo(380, 540); ctx.lineTo(450, 490); ctx.lineTo(DW, 540); ctx.lineTo(DW, DH); ctx.fill();
+    ctx.fillStyle = 'rgba(235,245,255,.9)';
+    for (const [x, y] of [[90, 470], [270, 430], [450, 490]]) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 26, y + 26); ctx.lineTo(x - 8, y + 20); ctx.lineTo(x + 6, y + 30); ctx.lineTo(x + 26, y + 24); ctx.closePath(); ctx.fill(); }
   },
   /* 月桂冠 (週替わりの褒美): 金の葉の冠と、上に3つの星 */
   laurel(ctx) {

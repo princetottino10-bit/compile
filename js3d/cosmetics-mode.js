@@ -13,7 +13,7 @@ import { localRecords } from './stats.js';
 import { bonusXp } from './xp.js';
 import { backTex } from './cardtex.js';
 import { playmatTexture } from './playmat.js';
-import { MARKER_STYLES } from './control.js';
+import { markerPreviewURL } from './control.js';
 import { emblemDataURL } from './emblems.js';
 import { displayName } from './displayname.js';
 
@@ -98,19 +98,17 @@ function matURL(key) {
   }
   return imgCache.get(k);
 }
-const hex = (n) => '#' + (n >>> 0).toString(16).padStart(6, '0');
-function markerSVG(key, size) {
-  const m = MARKER_STYLES[key] || MARKER_STYLES.default;
-  return '<svg viewBox="-60 -60 120 120" width="' + size + '" height="' + size + '" aria-hidden="true">' +
-    '<polygon points="-8,50 -49,-19 -41,-33 41,-33 49,-19 8,50" fill="' + hex(m.me) + '" stroke="' + hex(m.dim) + '" stroke-width="4"/>' +
-    '<circle cx="0" cy="-4" r="14" fill="' + hex(m.dim) + '" opacity=".8"/></svg>';
+function markerURL(key) {
+  const k = 'marker:' + key;
+  if (!imgCache.has(k)) imgCache.set(k, markerPreviewURL(key, 240));
+  return imgCache.get(k);
 }
 /* 小さい見本 (図鑑のマス) */
 function thumb(kind, key) {
   switch (kind) {
     case 'sleeve': return '<img alt="" src="' + sleeveURL(key) + '">';
     case 'mat': return matURL(key) ? '<img alt="" src="' + matURL(key) + '">' : '<span class="cm-neon"></span>';
-    case 'marker': return markerSVG(key, 44);
+    case 'marker': return '<img alt="" src="' + markerURL(key) + '">';
     case 'ccolor': return '<span class="cm-glow" style="--gc:' + (CCOLOR[key] || CCOLOR.default) + '"></span>';
     case 'victory': return '<span class="cm-vic ' + esc(key) + '">WIN</span>';
     case 'icon': {
@@ -132,7 +130,7 @@ function preview(kind, key, name, isOwned, src) {
         '<img class="cm-matcard" alt="" src="' + sleeveURL(s.sleeve || 'default') + '"></div>';
       break;
     }
-    case 'marker': art = '<div class="cm-markerview">' + markerSVG(key, 180) + '</div>'; break;
+    case 'marker': art = '<div class="cm-markerview"><img alt="" src="' + markerURL(key) + '"></div>'; break;
     case 'ccolor': art = '<div class="cm-burst" style="--gc:' + (CCOLOR[key] || CCOLOR.default) + '"><b>COMPILE</b></div>'; break;
     case 'victory': art = '<div class="cm-vicview ' + esc(key) + '"><b>YOU WIN</b></div>'; break;
     case 'title': case 'icon': {
