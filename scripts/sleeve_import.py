@@ -1,7 +1,7 @@
 """スリーブの絵を取り込む。
    python scripts/sleeve_import.py <名前> <書き出しの URL か、手元の画像のパス> [残す位置 0〜1]
-   まわりの白い余白 (版画の紙の縁など) を切り落とし、カードの裏面の「上の帯 (FACE DOWN と値) より下」
-   (512x594) の比に切って、art/sleeves/<名前>.webp に保存する。
+   まわりの白い余白 (版画の紙の縁など) を切り落とし、カードの裏面 (512x716) の比に切って、
+   art/sleeves/<名前>.webp に保存する。上の帯 (FACE DOWN と値) はすりガラスで絵を透かすので、上の方も見える。
    残す位置: 縦にはみ出す分をどこで切るか。0 = 上を残す、0.5 = 中央 (既定)、1 = 下を残す"""
 import io
 import sys
@@ -11,7 +11,7 @@ from PIL import Image, ImageStat
 
 name, src = sys.argv[1], sys.argv[2]
 anchor = float(sys.argv[3]) if len(sys.argv) > 3 else 0.5
-OUT_W, OUT_H = 512, 594          # cardtex.js の DW x (DH - HEAD_H)
+OUT_W, OUT_H = 512, 716          # cardtex.js の DW x DH
 if Path(src).is_file():
     im = Image.open(src).convert('RGB')
 else:

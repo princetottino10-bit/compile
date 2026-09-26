@@ -1124,11 +1124,10 @@ export function backTex(variant) {
     if (art) {
       ctx.save(); roundRect(ctx, 0, 0, DW, DH, 30); ctx.clip();
       ctx.fillStyle = P.b || '#000'; ctx.fillRect(0, 0, DW, DH);
-      /* 絵は上の帯 (FACE DOWN と値) の下から敷く。帯に絵を隠させない。はみ出す分は上下を中央で切る */
-      const top = HEAD_H, ah = DH - top;
-      const s = Math.max(DW / art.width, ah / art.height);
-      const sw = DW / s, sh = ah / s;
-      ctx.drawImage(art, (art.width - sw) / 2, (art.height - sh) / 2, sw, sh, 0, top, DW, ah);
+      /* 絵は全面に敷く (比が違えば中央で切る)。上の帯はすりガラスにして絵を透かす */
+      const s = Math.max(DW / art.width, DH / art.height);
+      const sw = DW / s, sh = DH / s;
+      ctx.drawImage(art, (art.width - sw) / 2, (art.height - sh) / 2, sw, sh, 0, 0, DW, DH);
       /* 縁を少し暗くして、カードの形を読みやすく */
       const v = ctx.createRadialGradient(DW / 2, DH / 2, DH * 0.35, DW / 2, DH / 2, DH * 0.72);
       v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.45)');
@@ -1240,17 +1239,28 @@ export function backTex(variant) {
     }
     /* 裏向きカードの値は 2。表と同じ位置に出して、覆われても読めるようにする */
     const bh = HEAD_H;
-    if (art) {                                     // 絵のスリーブでは帯を透かさず、額の上辺のような無地の帯にする
+    if (art) {
+      /* 絵のスリーブ: 帯の部分だけ絵をぼかして描き直し (すりガラス)、薄く暗くして文字を読めるようにする */
       ctx.save(); roundRect(ctx, 0, 0, DW, DH, 30); ctx.clip();
-      ctx.fillStyle = '#080b15'; ctx.fillRect(0, 0, DW, bh);
+      ctx.beginPath(); ctx.rect(0, 0, DW, bh); ctx.clip();
+      const s = Math.max(DW / art.width, DH / art.height);
+      const sw = DW / s, sh = DH / s;
+      ctx.filter = 'blur(7px) saturate(1.2)';
+      ctx.drawImage(art, (art.width - sw) / 2, (art.height - sh) / 2, sw, sh, -8, -8, DW + 16, DH + 16);
+      ctx.filter = 'none';
+      const fg = ctx.createLinearGradient(0, 0, DW, 0);
+      fg.addColorStop(0, 'rgba(8,11,21,.42)'); fg.addColorStop(0.6, 'rgba(8,11,21,.48)'); fg.addColorStop(1, 'rgba(8,11,21,.6)');
+      ctx.fillStyle = fg; ctx.fillRect(0, 0, DW, bh);
       ctx.restore();
     }
-    const bg = ctx.createLinearGradient(0, 0, DW, 0);
-    bg.addColorStop(0, 'rgba(' + P.strip + ',.34)');
-    bg.addColorStop(0.62, 'rgba(8,11,21,.95)');
-    bg.addColorStop(1, 'rgba(8,11,21,.97)');
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, DW, bh);
+    if (!art) {
+      const bg = ctx.createLinearGradient(0, 0, DW, 0);
+      bg.addColorStop(0, 'rgba(' + P.strip + ',.34)');
+      bg.addColorStop(0.62, 'rgba(8,11,21,.95)');
+      bg.addColorStop(1, 'rgba(8,11,21,.97)');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, DW, bh);
+    }
     const bsize = BADGE;
     const bbx = DW - bsize - 12, bby = (bh - bsize) / 2;
     ctx.fillStyle = 'rgba(160,190,215,.92)';
