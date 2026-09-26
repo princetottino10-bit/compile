@@ -2574,26 +2574,55 @@
     border-left:3px solid var(--tc);background:rgba(255,255,255,.04);}
   .rn-bonus li b{font:900 10px/1 var(--font-hud,var(--font-ui));letter-spacing:.12em;color:var(--tc);}
   /* ガチャの舞台: 暗転して、カプセルが揺れてから弾ける */
-  .rn-stage{position:fixed;inset:0;z-index:70;display:grid;place-items:center;background:rgba(3,4,10,.78);backdrop-filter:blur(3px);}
-  .rn-cap{position:relative;width:120px;height:120px;animation:rnShake .18s ease-in-out infinite alternate;}
-  .rn-cap i{position:absolute;left:0;right:0;height:60px;border:3px solid rgba(255,255,255,.7);}
-  .rn-cap i:first-child{top:0;border-radius:60px 60px 0 0;border-bottom-width:1px;background:var(--capc,#cfd6e6);}
-  .rn-cap i:last-child{bottom:0;border-radius:0 0 60px 60px;border-top-width:1px;background:#f3f5fb;}
-  .rn-stage.rC{--capc:#cfd6e6;} .rn-stage.rR{--capc:#7cc4ff;} .rn-stage.rE{--capc:#ffc85a;}
-  .rn-stage.rL{--capc:conic-gradient(#ff4fa3,#ffc85a,#7cf0d0,#9d7bff,#ff4fa3);}
-  .rn-stage.rL .rn-cap{animation:rnShake .12s ease-in-out infinite alternate,rnGrow 1.5s ease-in forwards;}
+  .rn-stage{position:fixed;inset:0;z-index:70;display:grid;place-items:center;overflow:hidden;cursor:pointer;
+    background:radial-gradient(circle at 50% 50%,rgba(20,14,40,.86),rgba(2,2,8,.95));backdrop-filter:blur(3px);animation:gaIn .2s ease-out;}
+  .rn-stage.out{opacity:0;transition:opacity .2s;}
+  .rn-stage.rC{--capc:#dfe6f4;} .rn-stage.rR{--capc:#7cc4ff;} .rn-stage.rE{--capc:#ffc85a;} .rn-stage.rL{--capc:#ffd2f0;}
+  /* 白いカプセル (色は継ぎ目の光だけで見せる) */
+  .rn-cap{position:relative;width:132px;height:132px;animation:rnDrop .45s cubic-bezier(.3,1.5,.5,1) both;}
+  .rn-cap i{position:absolute;left:0;right:0;height:66px;border:3px solid rgba(255,255,255,.85);}
+  .rn-cap i:first-of-type{top:0;border-radius:66px 66px 0 0;border-bottom-width:1px;background:linear-gradient(160deg,#ffffff,#c9cfdc);}
+  .rn-cap i:last-of-type{bottom:0;border-radius:0 0 66px 66px;border-top-width:1px;background:linear-gradient(200deg,#eef1f7,#a9b0c0);}
+  .rn-seam{position:absolute;left:-6px;right:-6px;top:calc(50% - 3px);height:6px;border-radius:6px;background:var(--capc);opacity:0;
+    box-shadow:0 0 12px var(--capc),0 0 30px var(--capc);}
+  .rn-stage.rL .rn-seam{background:linear-gradient(90deg,#ff4fa3,#ffc85a,#7cf0d0,#9d7bff);box-shadow:0 0 16px #ffc85a,0 0 40px #ff4fa3;}
+  /* 揺れ 3 回。2 回目から継ぎ目が光る */
+  .rn-stage.s1 .rn-cap{animation:rnWob .45s ease-in-out;}
+  .rn-stage.s2 .rn-cap{animation:rnWob2 .45s ease-in-out;}
+  .rn-stage.s3 .rn-cap{animation:rnWob3 .55s ease-in-out;}
+  .rn-stage.s2 .rn-seam{opacity:.45;transition:opacity .3s;}
+  .rn-stage.s3 .rn-seam{opacity:1;transition:opacity .3s;}
+  .rn-stage.rL.s3 .rn-cap{animation:rnWob3 .55s ease-in-out,rnGrow .7s ease-in forwards;}
   .rn-stage.open .rn-cap{animation:none;}
-  .rn-stage.open .rn-cap i:first-child{transform:translateY(-70px) rotate(-25deg);opacity:0;transition:transform .4s cubic-bezier(.2,1.6,.4,1),opacity .4s .2s;}
-  .rn-stage.open .rn-cap i:last-child{transform:translateY(60px);opacity:0;transition:transform .4s,opacity .4s .2s;}
-  .rn-reveal{position:absolute;display:flex;flex-direction:column;align-items:center;gap:8px;opacity:0;transform:scale(.5);}
+  .rn-stage.open .rn-seam{opacity:0;transition:opacity .2s;}
+  .rn-stage.open .rn-cap i:first-of-type{transform:translateY(-90px) rotate(-30deg);opacity:0;transition:transform .45s cubic-bezier(.2,1.6,.4,1),opacity .4s .2s;}
+  .rn-stage.open .rn-cap i:last-of-type{transform:translateY(80px) rotate(10deg);opacity:0;transition:transform .45s,opacity .4s .2s;}
+  /* 開いたら後ろで回る光の筋 */
+  .rn-rays{position:absolute;width:160vmax;height:160vmax;opacity:0;border-radius:50%;
+    background:repeating-conic-gradient(from 0deg,transparent 0 9deg,color-mix(in srgb,var(--capc) 26%,transparent) 9deg 13deg);
+    -webkit-mask:radial-gradient(circle closest-side,#000 0,rgba(0,0,0,.8) 6%,transparent 34%);mask:radial-gradient(circle closest-side,#000 0,rgba(0,0,0,.8) 6%,transparent 34%);}
+  .rn-stage.rL .rn-rays{background:repeating-conic-gradient(from 0deg,transparent 0 8deg,rgba(255,79,163,.35) 8deg 11deg,transparent 11deg 19deg,rgba(255,200,90,.35) 19deg 22deg,transparent 22deg 30deg,rgba(124,240,208,.35) 30deg 33deg);}
+  .rn-stage.open .rn-rays{opacity:1;transition:opacity .35s;animation:rnSpin 9s linear infinite;}
+  .rn-stage.rC.open .rn-rays{opacity:.45;}
+  .rn-reveal{position:absolute;display:flex;flex-direction:column;align-items:center;gap:10px;opacity:0;transform:scale(.5);padding:0 16px;}
   .rn-stage.open .rn-reveal{opacity:1;transform:none;transition:transform .5s cubic-bezier(.2,1.6,.4,1),opacity .3s;}
-  .rn-reveal small{font:900 14px/1 var(--font-hud,var(--font-ui));letter-spacing:.4em;color:var(--capc,#fff);}
+  .rn-reveal small{font:900 clamp(16px,3vw,22px)/1 var(--font-hud,var(--font-ui));letter-spacing:.45em;color:var(--capc,#fff);text-shadow:0 0 16px var(--capc);}
   .rn-stage.rL .rn-reveal small{color:#fff;text-shadow:0 0 18px #ffc85a,0 0 32px #ff4fa3;}
-  .rn-reveal b{font:900 clamp(26px,6vw,46px)/1.1 var(--font-ui);color:#fff;letter-spacing:.06em;text-align:center;text-shadow:0 0 30px rgba(255,255,255,.4);}
+  .rn-reveal b{font:900 clamp(26px,6vw,48px)/1.1 var(--font-ui);color:#fff;letter-spacing:.06em;text-align:center;text-shadow:0 0 30px rgba(255,255,255,.4);}
+  .rn-skip{position:absolute;bottom:18px;margin:0;font:700 11px/1 system-ui;color:rgba(255,255,255,.45);}
   .rn-stage.open::before{content:"";position:absolute;width:10px;height:10px;border-radius:50%;box-shadow:0 0 0 0 var(--capc,#fff);
     background:transparent;animation:rnRing .7s ease-out forwards;}
   .rn-stage.rL.open::before{box-shadow:0 0 0 0 #ffc85a;}
-  @keyframes rnShake{from{transform:rotate(-8deg);}to{transform:rotate(8deg);}}
+  /* 動きを減らす設定: 揺らさず、継ぎ目が光ってから切り替わる */
+  .rn-stage.still .rn-cap{animation:none;}
+  .rn-stage.still .rn-seam{opacity:1;}
+  .rn-stage.still.open .rn-cap i{transition:opacity .3s;transform:none;}
+  .rn-stage.still .rn-rays{animation:none !important;}
+  @keyframes rnDrop{from{transform:translateY(-60vh) rotate(-40deg);}to{transform:none;}}
+  @keyframes rnWob{0%,100%{transform:rotate(0);}25%{transform:rotate(-10deg);}75%{transform:rotate(10deg);}}
+  @keyframes rnWob2{0%,100%{transform:rotate(0);}20%{transform:rotate(-16deg) translateY(-6px);}60%{transform:rotate(16deg) translateY(-6px);}}
+  @keyframes rnWob3{0%,100%{transform:rotate(0);}15%{transform:rotate(-22deg) translateY(-14px);}45%{transform:rotate(22deg) translateY(-14px);}75%{transform:rotate(-12deg);}}
+  @keyframes rnSpin{to{transform:rotate(360deg);}}
   @keyframes rnGrow{to{transform:scale(1.35);}}
   @keyframes rnRing{from{box-shadow:0 0 0 0 rgba(255,255,255,.8);}to{box-shadow:0 0 0 70vmax rgba(255,255,255,0);}}
   body.rn-flash-E::after,body.rn-flash-L::after{content:"";position:fixed;inset:0;z-index:75;pointer-events:none;animation:rnFlash .7s ease-out forwards;}
@@ -2942,7 +2971,7 @@
       "./js3d/fx.js": "./js3d/fx.js?v=f2bbe73646",
       "./js3d/gacha-ui.js": "./js3d/gacha-ui.js?v=73a5a71bea",
       "./js3d/gacha.js": "./js3d/gacha.js?v=5231b55322",
-      "./js3d/gachafx.js": "./js3d/gachafx.js?v=397b935844",
+      "./js3d/gachafx.js": "./js3d/gachafx.js?v=3d15a2226f",
       "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c",
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
@@ -3014,7 +3043,7 @@
   <link rel="modulepreload" href="js3d/stats.js?v=e222c359ca">
   <link rel="modulepreload" href="js3d/stats-data.js?v=bcf7d5e977">
   <link rel="modulepreload" href="js3d/rewards.js?v=b551a093fa">
-  <link rel="modulepreload" href="js3d/gachafx.js?v=397b935844">
+  <link rel="modulepreload" href="js3d/gachafx.js?v=3d15a2226f">
   <link rel="modulepreload" href="js3d/cosmetics-ui.js?v=71372b157a">
   <link rel="modulepreload" href="js3d/cosmetics-mode.js?v=1845fb015b">
   <link rel="modulepreload" href="js3d/displayname.js?v=613e18bf95">

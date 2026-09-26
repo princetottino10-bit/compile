@@ -1,7 +1,7 @@
 /* =========================================================================
  * ガチャの演出 (勝ち抜き戦のパッチ・COSMETICS のガチャで共通)
  *   カプセルが揺れて、レア度の色で弾ける。EPIC / LEGENDARY は画面が光って紙吹雪。
- *   動きを減らす設定では出さない
+ *   動きを減らす設定では、揺れや紙吹雪を出さずに光って切り替わるだけ
  * ========================================================================= */
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -40,22 +40,47 @@ export function confetti(colors, count) {
   requestAnimationFrame(tick);
 }
 
-/** カプセルを開ける演出。rar: C / R / E / L、name: 出てきたものの名前。終わったら解決 */
+/** カプセルを開ける演出。rar: C / R / E / L、name: 出てきたものの名前。終わったら解決。
+ *  白いカプセルが落ちてきて 3 回揺れる (だんだん強く)。2 回目から継ぎ目がレア度の色で光り、
+ *  開くと後ろで光の筋が回って名前が出る。画面を押すと飛ばせる。
+ *  動きを減らす設定では揺らさず、光ってから切り替わるだけ (演出そのものは消さない) */
 export function playCapsule(host, rar, name) {
-  if (calm() || !RAR_NAMES[rar]) return Promise.resolve();
+  if (!RAR_NAMES[rar]) return Promise.resolve();
+  const still = calm();
   const stage = document.createElement('div');
-  stage.className = 'rn-stage r' + rar;
-  stage.innerHTML = '<div class="rn-cap"><i></i><i></i></div><div class="rn-reveal"><small>' + RAR_NAMES[rar] + '</small><b>' + esc(name) + '</b></div>';
+  stage.className = 'rn-stage r' + rar + (still ? ' still' : '');
+  stage.innerHTML = '<div class="rn-rays"></div><div class="rn-cap"><i></i><i></i><b class="rn-seam"></b></div>' +
+    '<div class="rn-reveal"><small>' + RAR_NAMES[rar] + '</small><b>' + esc(name) + '</b></div><p class="rn-skip">画面を押すと飛ばせます</p>';
   (host || document.body).appendChild(stage);
+  /* 揺れ 3 回と開く時刻 (ms)。LEGENDARY は長めにためる */
+  const T = still ? { s: [], open: 700, end: 1700 }
+    : rar === 'L' ? { s: [450, 950, 1450], open: 2200, end: 4200 }
+      : rar === 'E' ? { s: [450, 900, 1350], open: 1850, end: 3400 }
+        : { s: [450, 850, 1250], open: 1600, end: 2700 };
   return new Promise((resolve) => {
-    setTimeout(() => {
+    const timers = [];
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      timers.forEach(clearTimeout);
+      stage.classList.add('out');
+      setTimeout(() => { stage.remove(); resolve(); }, 200);
+    };
+    const open = () => {
       stage.classList.add('open');
       if (rar === 'E' || rar === 'L') {
         document.body.classList.add('rn-flash-' + rar);
         setTimeout(() => document.body.classList.remove('rn-flash-' + rar), 700);
         confetti(RAR_COLORS[rar], rar === 'L' ? 260 : 140);
       }
-    }, rar === 'L' ? 1500 : 950);
-    setTimeout(() => { stage.remove(); resolve(); }, rar === 'L' ? 3000 : rar === 'E' ? 2300 : 1700);
+    };
+    T.s.forEach((t, k) => timers.push(setTimeout(() => { stage.classList.remove('s1', 's2', 's3'); stage.classList.add('s' + (k + 1)); }, t)));
+    timers.push(setTimeout(open, T.open));
+    timers.push(setTimeout(finish, T.end));
+    /* 押したら: 開く前なら開いたところへ、開いたあとなら終わる */
+    stage.addEventListener('click', () => {
+      if (!stage.classList.contains('open')) { timers.forEach(clearTimeout); open(); timers.push(setTimeout(finish, 900)); } else finish();
+    });
   });
 }
