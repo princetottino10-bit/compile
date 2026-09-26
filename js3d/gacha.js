@@ -19,14 +19,50 @@ export const PITY = 10;
 export const RATES = { C: 55, R: 30, E: 12, L: 3 };
 export const REFUND = { C: 6, R: 9, E: 18, L: 36 };
 
+/* 使った CHIP は端末ごとに数える (paid: 払った分・back: かぶりで返った分。どちらも増えるだけ)。
+   2台で別々に引いてから同期すると、前は「多い方」に合わせていたので片方の分がただになっていた。
+   端末ごとなら、合わせるときは端末ごとに大きい方を取って足せばよい。前の形 (spent だけ) は legacy として持つ */
+const DEVICE_KEY = 'compileDeviceId';
+function deviceId() {
+  try {
+    let id = localStorage.getItem(DEVICE_KEY);
+    if (!id) { id = 'd' + Math.random().toString(36).slice(2, 10); localStorage.setItem(DEVICE_KEY, id); }
+    return id;
+  } catch (e) {
+    return 'local';
+  }
+}
+const numMap = (m) => {
+  const out = {};
+  if (m && typeof m === 'object') for (const [k, v] of Object.entries(m)) if (Number.isFinite(+v) && +v >= 0) out[k] = +v;
+  return out;
+};
+const sum = (m) => Object.values(m).reduce((n, v) => n + v, 0);
+/* 形をそろえ、spent (いま使っている分) を数え直す */
+function normalize(s) {
+  const paid = numMap(s.paid), back = numMap(s.back);
+  if (!Object.keys(paid).length && !Object.keys(back).length && (s.spent | 0) > 0) paid.legacy = Math.max(0, s.spent | 0);
+  return { paid, back, spent: Math.max(0, sum(paid) - sum(back)), owned: s.owned && typeof s.owned === 'object' ? s.owned : {},
+    pulls: s.pulls | 0, pity: s.pity | 0 };
+}
+/* この端末の払った分・返った分を足す */
+function addPaid(state, n) {
+  const d = deviceId();
+  const st = normalize(state);
+  return normalize({ ...st, paid: { ...st.paid, [d]: (st.paid[d] || 0) + n } });
+}
+function addBack(state, n) {
+  const d = deviceId();
+  const st = normalize(state);
+  return normalize({ ...st, back: { ...st.back, [d]: (st.back[d] || 0) + n } });
+}
+
 export function loadGacha() {
   try {
     const s = JSON.parse(localStorage.getItem(KEY) || 'null');
-    if (s && typeof s === 'object') {
-      return { spent: Math.max(0, s.spent | 0), owned: s.owned && typeof s.owned === 'object' ? s.owned : {}, pulls: s.pulls | 0, pity: s.pity | 0 };
-    }
+    if (s && typeof s === 'object') return normalize(s);
   } catch (e) { /* 壊れていれば空から */ }
-  return { spent: 0, owned: {}, pulls: 0, pity: 0 };
+  return normalize({});
 }
 function saveGacha(s) {
   try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { /* private mode */ }
@@ -66,9 +102,8 @@ function drawOne(state, rnd, floor) {
   const dupe = !!state.owned[id];
   const refund = dupe ? REFUND[rar] : 0;
   const next = {
-    ...state,
+    ...(refund ? addBack(state, refund) : state),
     owned: dupe ? state.owned : { ...state.owned, [id]: Date.now() },
-    spent: state.spent - refund,
     pulls: state.pulls + 1,
     pity: rar === 'E' || rar === 'L' ? 0 : state.pity + 1
   };
@@ -82,7 +117,7 @@ function drawOne(state, rnd, floor) {
 export function pull(state, earned, count, rnd = Math.random) {
   const cost = count === 10 ? TEN_COST : PULL_COST;
   if (chipsOf(state, earned) < cost) return null;
-  let s = { ...state, spent: state.spent + cost };
+  let s = addPaid(state, cost);
   const results = [];
   for (let i = 0; i < (count === 10 ? 10 : 1); i++) {
     /* 10連の最後は、それまで RARE 以上が無ければ RARE 以上 */
@@ -110,10 +145,13 @@ export function collection(state = loadGacha()) {
 /* アカウントの保存を合わせるとき: 取ったものは両方残し、使った CHIP と回数は多い方 (かぶりで返した分は少ない方に寄るが、増えすぎない側に倒す) */
 export function mergeGacha(a, b) {
   try {
-    const x = JSON.parse(a || 'null') || {}, y = JSON.parse(b || 'null') || {};
+    const x = normalize(JSON.parse(a || 'null') || {}), y = normalize(JSON.parse(b || 'null') || {});
     const owned = { ...(y.owned || {}) };
     for (const [k, v] of Object.entries(x.owned || {})) owned[k] = owned[k] ? Math.min(owned[k], v) : v;
-    return JSON.stringify({ spent: Math.max(x.spent | 0, y.spent | 0), owned, pulls: Math.max(x.pulls | 0, y.pulls | 0), pity: Math.max(x.pity | 0, y.pity | 0) });
+    /* 端末ごとに大きい方 (同じ端末の数は増えるだけ) */
+    const maxBy = (p, q) => { const o = { ...p }; for (const [k, v] of Object.entries(q)) o[k] = Math.max(o[k] || 0, v); return o; };
+    const m = normalize({ paid: maxBy(x.paid, y.paid), back: maxBy(x.back, y.back), owned, pulls: Math.max(x.pulls, y.pulls), pity: Math.max(x.pity, y.pity) });
+    return JSON.stringify(m);
   } catch (e) {
     return a || b;
   }

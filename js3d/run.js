@@ -155,7 +155,12 @@ export function loadRun() {
   }
 }
 export function saveRun(run) {
-  try { localStorage.setItem(KEY, JSON.stringify(run)); } catch (e) { /* private mode */ }
+  try {
+    /* 保存のたびに1増える番号。2台の同期で、どちらが先に進んでいるかを比べる (cloudsave.js) */
+    let rev = run.rev | 0;
+    try { const old = JSON.parse(localStorage.getItem(KEY) || 'null'); if (old && old.startedAt === run.startedAt) rev = Math.max(rev, old.rev | 0); } catch (e) { /* 読めなければ手元の番号 */ }
+    localStorage.setItem(KEY, JSON.stringify({ ...run, rev: rev + 1 }));
+  } catch (e) { /* private mode */ }
 }
 export function clearRun() {
   try { localStorage.removeItem(KEY); } catch (e) { /* private mode */ }

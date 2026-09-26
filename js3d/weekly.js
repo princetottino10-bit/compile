@@ -77,6 +77,15 @@ export function loadWeekly(key = weekKey()) {
     return blank(key);
   }
 }
+/* 保存してある挑戦を、週にかかわらず読む (週をまたいで決着したとき、挑戦した週の中身で勝ちを数えるため) */
+export function loadStoredWeekly() {
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY) || 'null');
+    return s && s.v === 1 && typeof s.week === 'string' ? s : blank(weekKey());
+  } catch (e) {
+    return blank(weekKey());
+  }
+}
 export function saveWeekly(s) {
   try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { /* private mode */ }
 }

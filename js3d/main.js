@@ -40,7 +40,7 @@ import { UNDERDOG_DECK, STRONGEST_AI, UNDERDOG_LEVEL, levelLabel } from './aidec
 import { openRun, runHud, showRunAfterGame } from './run-ui.js';
 import { openWeekly, weeklyHud, showWeeklyAfterGame } from './weekly-ui.js';
 import { compilesBy, loadRun, RUN_WIN_COMPILES, battleOpts, lethal } from './run.js';
-import { loadWeekly, weekKey } from './weekly.js';
+import { loadWeekly, loadStoredWeekly, weekKey } from './weekly.js';
 import { openReview } from './review.js';
 import { runRoomLobby } from './roomui.js';
 import { bindSelectHead, questionText } from './selectui.js';
@@ -3450,11 +3450,13 @@ async function afterTurn() {
         runEnded = true;
         /* クリアした瞬間 (battle → clear) にだけ経験値を足す */
         if (runKind === 'weekly') {
-          const was = loadWeekly().phase;
+          /* 対戦中に週が変わっても、挑戦した週 (保存してある week) で数える */
+          const was = loadStoredWeekly();
           showWeeklyAfterGame(win, Object.values(protoIndex));
-          if (was === 'battle' && loadWeekly().phase === 'clear') {
-            await gainXp('weekly', XP_GAIN.weeklyClear, 'wk:' + weekKey(), true);
-            await gainXp('weekly', XP_GAIN.weeklyBonus, 'wkb:' + weekKey());
+          const after = loadStoredWeekly();
+          if (was.phase === 'battle' && after.phase === 'clear' && after.week === was.week) {
+            await gainXp('weekly', XP_GAIN.weeklyClear, 'wk:' + was.week, true);
+            await gainXp('weekly', XP_GAIN.weeklyBonus, 'wkb:' + was.week);
           }
         } else {
           const was = loadRun();

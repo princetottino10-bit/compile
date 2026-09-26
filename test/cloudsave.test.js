@@ -81,3 +81,19 @@ test('RUN: 同じ挑戦なら、対戦の記録が多い方を残す。新しく
   const d2 = decide(local, { data: { compileRun: run({ startedAt: 2000 }) }, at: 200 }, meta);
   assert.equal(JSON.parse(d2.apply.compileRun).startedAt, 2000);
 });
+test('RUN: ショップで買うなど、戦った数が同じでも保存の番号 (rev) が進んでいる方を残す', () => {
+  const run = (o) => JSON.stringify({ v: 2, phase: 'shop', startedAt: 1000, history: [{ win: true }], visited: ['0-0'], ...o });
+  const local = { compileRun: run({ rev: 5, credits: 9 }) };
+  const meta = { hash: hashOf(local), at: 100 };
+  const d = decide(local, { data: { compileRun: run({ rev: 7, credits: 2 }) }, at: 200 }, meta);
+  assert.equal(JSON.parse(d.apply.compileRun).credits, 2, 'アカウントの方が先に進んでいる (買ったあと)');
+});
+test('デイリー: 新しい日の方。同じ日なら達成と進みを合わせる', () => {
+  const day = (o) => JSON.stringify({ day: 100, progress: {}, done: [], ...o });
+  const d = decide({ compileDaily: day({ progress: { a: 2 }, done: ['a'] }) }, { data: { compileDaily: day({ progress: { a: 1, b: 3 }, done: ['b'] }) }, at: 200 }, { hash: 'x', at: 100 });
+  const m = JSON.parse(d.push.compileDaily);
+  assert.deepEqual(m.progress, { a: 2, b: 3 });
+  assert.deepEqual(m.done.sort(), ['a', 'b']);
+  const d2 = decide({ compileDaily: day({ day: 99, done: ['x'] }) }, { data: { compileDaily: day({ day: 100 }) }, at: 200 }, { hash: 'x', at: 100 });
+  assert.equal(JSON.parse(d2.push.compileDaily).day, 100);
+});

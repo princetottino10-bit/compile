@@ -162,7 +162,8 @@ export function weeklyHud() {
 /* 決着後: 次の戦い / 敗退 / クリア (名前を載せる) */
 export function showWeeklyAfterGame(win, protocols) {
   const byName = Object.fromEntries(protocols.map(p => [p.name, p]));
-  const before = W.loadWeekly();
+  /* 対戦中に週が変わっても (日本時間の月曜0時。イギリスでは日曜の夕方)、挑戦した週の中身で決着させる */
+  const before = W.loadStoredWeekly();
   if (before.phase !== 'battle') return;
   const s = W.finishMatch(before, win);
   W.saveWeekly(s);
@@ -213,7 +214,9 @@ export function showWeeklyAfterGame(win, protocols) {
         const reps = s.decks.map(d => wins.find(r => same(r.init.p0, d)));
         if (reps.some(r => !r)) throw new Error('3戦のリプレイが見つかりません (直近10戦までしか残らないため)');
         await submitWeeklyClear(s.week, name, s.attempt, reps);
-        W.saveWeekly({ ...W.loadWeekly(), submitted: true });
+        /* 載せたのはこの挑戦の週。そのあいだに週が変わっていたら、新しい週には印を付けない */
+        const now = W.loadStoredWeekly();
+        if (now.week === s.week) W.saveWeekly({ ...now, submitted: true });
         msg.textContent = '一覧に載せました';
       } catch (e) {
         msg.textContent = '載せられませんでした: ' + e.message;

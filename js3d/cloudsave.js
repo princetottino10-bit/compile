@@ -87,7 +87,7 @@ function weeklyRank(w) {
   return w ? [String(w.week || ''), w.attempt | 0, w.stage | 0, WEEK_PHASE[w.phase] | 0] : null;
 }
 function runRank(r) {
-  return r ? [Number(r.startedAt) || 0, (r.history || []).length, (r.visited || []).length] : null;
+  return r ? [Number(r.startedAt) || 0, r.rev | 0, (r.history || []).length, (r.visited || []).length] : null;
 }
 function cmp(x, y) {
   for (let i = 0; i < Math.max(x.length, y.length); i++) {
@@ -103,6 +103,15 @@ function further(a, b, rank) {
   if (!ra) return b;
   return cmp(rb, ra) > 0 ? b : a;
 }
+function mergeDaily(a, b) {
+  const x = parse(a), y = parse(b);
+  if (!x || !y) return x ? a : b;
+  if ((x.day | 0) !== (y.day | 0)) return (y.day | 0) > (x.day | 0) ? b : a;
+  const progress = { ...(y.progress || {}) };
+  for (const [k, v] of Object.entries(x.progress || {})) progress[k] = Math.max(progress[k] || 0, v || 0);
+  const done = [...new Set([...(x.done || []), ...(y.done || [])])];
+  return JSON.stringify({ ...x, ...y, progress, done });
+}
 function mergeWeekly(a, b) {
   const pick = further(a, b, weeklyRank);
   const x = parse(a), y = parse(b), p = parse(pick);
@@ -116,6 +125,7 @@ function mergeWeekly(a, b) {
 function keepBest(merged, local, rd) {
   if (local.compileWeekly || rd.compileWeekly) merged.compileWeekly = local.compileWeekly && rd.compileWeekly ? mergeWeekly(local.compileWeekly, rd.compileWeekly) : (merged.compileWeekly || local.compileWeekly || rd.compileWeekly);
   if (local.compileRun && rd.compileRun) merged.compileRun = further(local.compileRun, rd.compileRun, runRank);
+  if (local.compileDaily && rd.compileDaily) merged.compileDaily = mergeDaily(local.compileDaily, rd.compileDaily);
   /* 解放した HEAT は大きい方 */
   if (local.compileRunHeat || rd.compileRunHeat) merged.compileRunHeat = String(Math.max(parseInt(local.compileRunHeat, 10) || 0, parseInt(rd.compileRunHeat, 10) || 0));
   if (local.compileRunBest && rd.compileRunBest) merged.compileRunBest = betterBest(local.compileRunBest, rd.compileRunBest);

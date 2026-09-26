@@ -81,3 +81,17 @@ test('アカウントの保存を合わせる: 取ったものは両方、使っ
   assert.equal(m.spent, 50);
   assert.equal(m.pulls, 5);
 });
+
+test('2台で別々に引いてから合わせると、使った CHIP は両方の合計 (ただで引けない)', async () => {
+  const G = await load();
+  store.delete('compileGacha');
+  store.set('compileDeviceId', 'pc');
+  const a = G.pull({ spent: 0, owned: {}, pulls: 0, pity: 0 }, 1000, 1, () => 0.9).state;
+  store.set('compileDeviceId', 'phone');
+  const b = G.pull({ spent: 0, owned: {}, pulls: 0, pity: 0 }, 1000, 1, () => 0.5).state;
+  const m = JSON.parse(G.mergeGacha(JSON.stringify(a), JSON.stringify(b)));
+  assert.equal(m.spent, G.PULL_COST * 2);
+  /* 同じ中身を何度合わせても増えない。前の形 (spent だけ) も読める */
+  assert.equal(JSON.parse(G.mergeGacha(JSON.stringify(m), JSON.stringify(m))).spent, G.PULL_COST * 2);
+  assert.equal(JSON.parse(G.mergeGacha(JSON.stringify({ spent: 60, owned: {} }), JSON.stringify(m))).spent, 60 + G.PULL_COST * 2);
+});

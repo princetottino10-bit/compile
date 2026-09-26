@@ -218,7 +218,8 @@ async function syncSaves() {
     if (w.error) throw new Error(w.error.message);
     at = Date.parse(w.data.updated_at);
   }
-  SAVE.saveMeta(uid, SAVE.hashOf(SAVE.snapshot()), at);
+  /* 印は、送った (または書いた) 中身で作る。送っている間に変わった分は、次の saveSoon で送られる */
+  SAVE.saveMeta(uid, SAVE.hashOf(d.push || d.apply || local), at);
   return !!d.apply;
 }
 
