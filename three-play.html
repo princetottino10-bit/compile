@@ -2355,6 +2355,8 @@
   .cm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px;}
   .cm-grid.title,.cm-grid.victory{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
   .cm-grid.icon{grid-template-columns:repeat(auto-fill,minmax(76px,1fr));}
+  .cm-grid.nameplate{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));}
+  .cm-grid.nameplate .cm-th{height:52px;}
   .cm-item{position:relative;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 6px 9px;cursor:pointer;text-align:center;
     border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);color:var(--ink);clip-path:var(--cut-s);transition:transform .12s,border-color .12s,background .12s;}
   .cm-item:hover,.cm-item:focus-visible{transform:translateY(-2px);border-color:rgba(255,255,255,.35);outline:0;}
@@ -2688,6 +2690,26 @@
   }
   .plate.me{position:fixed;left:calc(14px + env(safe-area-inset-left));top:auto;bottom:calc(14px + env(safe-area-inset-bottom));max-width:min(210px,24vw);}
   .plate[hidden]{display:none;}
+  /* 名札の枠 (見た目の「名札」。相手にも見える)。.plate[data-frame] / 図鑑の .cm-pf / プレビューの .cm-plate で共通 */
+  .plate[data-frame],.cm-pf,.cm-plate[class*="pf-"]{background:var(--pf-bg,rgba(12,9,20,.74));box-shadow:var(--pf-edge,none);}
+  .plate[data-frame] b,.cm-pf b,.cm-plate[class*="pf-"] b{color:var(--pf-name,#fff);}
+  .plate[data-frame] small,.cm-plate[class*="pf-"] small{color:var(--pf-sub,var(--pink));}
+  [data-frame="gold"],.pf-gold{--pf-bg:linear-gradient(120deg,#3b2b0a,#150f04 60%,#3b2b0a);--pf-edge:inset 0 0 0 2px #e6bf5c,inset 0 0 18px rgba(255,210,110,.25);
+    --pf-name:#ffe8a8;--pf-sub:#f2c860;}
+  [data-frame="sakura"],.pf-sakura{--pf-bg:radial-gradient(circle at 12% 30%,rgba(255,200,220,.5) 0 3px,transparent 4px),radial-gradient(circle at 70% 70%,rgba(255,200,220,.45) 0 3px,transparent 4px),
+    radial-gradient(circle at 88% 20%,rgba(255,220,235,.5) 0 2px,transparent 3px),linear-gradient(120deg,#5a2440,#2a0f22);--pf-edge:inset 0 0 0 2px #ffb3cf;--pf-name:#fff0f6;--pf-sub:#ffc2d9;}
+  [data-frame="washi"],.pf-washi{--pf-bg:repeating-linear-gradient(97deg,rgba(120,100,70,.06) 0 2px,transparent 2px 7px),linear-gradient(#f3ead6,#e6dbc2);
+    --pf-edge:inset 0 0 0 1px #8a7a5a;--pf-name:#2a2320;--pf-sub:#a0302a;}
+  [data-frame="neon"],.pf-neon{--pf-bg:#07060f;--pf-edge:inset 0 0 0 2px #7cf0d0,inset 0 0 12px rgba(124,240,208,.45),inset 0 0 0 4px rgba(255,79,163,.6);--pf-name:#e8fffa;--pf-sub:#ff7ab8;}
+  [data-frame="urushi"],.pf-urushi{--pf-bg:radial-gradient(ellipse at 100% 0,rgba(210,170,80,.35),transparent 45%),linear-gradient(#120806,#050202);
+    --pf-edge:inset 0 0 0 1px #c9a24a;--pf-name:#f6e7c4;--pf-sub:#d7b35c;}
+  [data-frame="crystal"],.pf-crystal{--pf-bg:linear-gradient(135deg,rgba(200,240,255,.35),rgba(120,170,230,.15) 45%,rgba(255,255,255,.3) 60%,rgba(120,170,230,.12));
+    --pf-edge:inset 0 0 0 1px rgba(255,255,255,.8),inset 0 0 16px rgba(190,235,255,.5);--pf-name:#ffffff;--pf-sub:#bfe9ff;}
+  [data-frame="royal"],.pf-royal{--pf-bg:linear-gradient(120deg,#0e3020,#06160e);--pf-edge:inset 0 0 0 2px #e6c86a,inset 0 0 0 5px #0e3020,inset 0 0 0 6px #e6c86a;
+    --pf-name:#fff4d0;--pf-sub:#e6c86a;}
+  .plate[data-frame]:not([data-frame="default"]){padding-left:8px;}
+  .cm-pf{display:flex;align-items:center;justify-content:center;width:100%;height:100%;min-height:44px;clip-path:var(--cut-s);}
+  .cm-pf b{font:800 13px/1 var(--font-ui);}
   .plate .pl-icon{flex:none;width:30px;height:30px;display:grid;place-items:center;border-radius:6px;
     background:color-mix(in srgb,var(--pc,#b9a4ff) 18%,#0a0e1a);border:1px solid color-mix(in srgb,var(--pc,#b9a4ff) 60%,transparent);
     font:900 15px/1 var(--font-ui);color:#fff;}
@@ -2966,8 +2988,8 @@
       "./js3d/cardtext.js": "./js3d/cardtext.js?v=4cf5529855",
       "./js3d/cloudsave.js": "./js3d/cloudsave.js?v=b187c8c5a5",
       "./js3d/control.js": "./js3d/control.js?v=c1b87ebc63",
-      "./js3d/cosmetics-mode.js": "./js3d/cosmetics-mode.js?v=6f24ef12af",
-      "./js3d/cosmetics-ui.js": "./js3d/cosmetics-ui.js?v=71372b157a",
+      "./js3d/cosmetics-mode.js": "./js3d/cosmetics-mode.js?v=13233c2d38",
+      "./js3d/cosmetics-ui.js": "./js3d/cosmetics-ui.js?v=61977c6f7c",
       "./js3d/daily.js": "./js3d/daily.js?v=f56dabdf65",
       "./js3d/displayname.js": "./js3d/displayname.js?v=613e18bf95",
       "./js3d/emblems.js": "./js3d/emblems.js?v=6d1c077a2e",
@@ -2981,10 +3003,10 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=5fa911e47f",
+      "./js3d/main.js": "./js3d/main.js?v=cb111bb8aa",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=97f3b40bfa",
       "./js3d/panel.js": "./js3d/panel.js?v=ecb8a073e3",
-      "./js3d/plates.js": "./js3d/plates.js?v=70ffa14b87",
+      "./js3d/plates.js": "./js3d/plates.js?v=e419f4ab89",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=e0273dcae0",
       "./js3d/playmat.js": "./js3d/playmat.js?v=bc628dfb85",
       "./js3d/profile.js": "./js3d/profile.js?v=0a9d78c352",
@@ -2995,7 +3017,7 @@
       "./js3d/replays-ui.js": "./js3d/replays-ui.js?v=9a6a4ca786",
       "./js3d/replays.js": "./js3d/replays.js?v=2a8c9e69b5",
       "./js3d/review.js": "./js3d/review.js?v=34f174153b",
-      "./js3d/rewards.js": "./js3d/rewards.js?v=76d3d2ec1c",
+      "./js3d/rewards.js": "./js3d/rewards.js?v=ad38b69a54",
       "./js3d/room.js": "./js3d/room.js?v=c34129de95",
       "./js3d/roomui.js": "./js3d/roomui.js?v=78225c5a6e",
       "./js3d/run-ui.js": "./js3d/run-ui.js?v=bc9741dc10",
@@ -3047,12 +3069,12 @@
   <link rel="modulepreload" href="js3d/settings.js?v=5b7f978851">
   <link rel="modulepreload" href="js3d/stats.js?v=e222c359ca">
   <link rel="modulepreload" href="js3d/stats-data.js?v=bcf7d5e977">
-  <link rel="modulepreload" href="js3d/rewards.js?v=76d3d2ec1c">
+  <link rel="modulepreload" href="js3d/rewards.js?v=ad38b69a54">
   <link rel="modulepreload" href="js3d/gachafx.js?v=3d15a2226f">
-  <link rel="modulepreload" href="js3d/cosmetics-ui.js?v=71372b157a">
-  <link rel="modulepreload" href="js3d/cosmetics-mode.js?v=6f24ef12af">
+  <link rel="modulepreload" href="js3d/cosmetics-ui.js?v=61977c6f7c">
+  <link rel="modulepreload" href="js3d/cosmetics-mode.js?v=13233c2d38">
   <link rel="modulepreload" href="js3d/displayname.js?v=613e18bf95">
-  <link rel="modulepreload" href="js3d/plates.js?v=70ffa14b87">
+  <link rel="modulepreload" href="js3d/plates.js?v=e419f4ab89">
   <link rel="modulepreload" href="js3d/playmat.js?v=bc628dfb85">
   <link rel="modulepreload" href="js3d/cardlist-ov.js?v=1d673fd0d2">
   <link rel="modulepreload" href="js3d/opponent-select.js?v=97f3b40bfa">
@@ -3107,6 +3129,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=5fa911e47f"></script>
+  <script type="module" src="js3d/main.js?v=cb111bb8aa"></script>
 </body>
 </html>

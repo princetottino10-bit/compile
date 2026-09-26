@@ -1,11 +1,12 @@
 /* 対戦中の名札: 相手 (左上) と自分 (左下) に、アイコン・名前・称号 (CPU は難易度) を出す。
    CPU 戦・勝ち抜き戦・週替わり・オンラインで共通。観戦・問題・チュートリアル・トレーニングでは出さない。
-   plate: { name, sub, level, icon: { name, color } | null } (sub は称号や難易度。無ければ出さない) */
+   plate: { name, sub, level, icon: { name, color } | null, frame } (sub は称号や難易度。無ければ出さない。frame は名札の枠の見た目) */
 import { emblemDataURL } from './emblems.js';
 
 function fill(el, plate, lead) {
   el.textContent = '';
   if (!plate || !plate.name) { el.hidden = true; return; }
+  el.dataset.frame = plate.frame && /^[a-z0-9_]{1,24}$/.test(plate.frame) ? plate.frame : 'default';
   const ic = document.createElement('span');
   ic.className = 'pl-icon';
   if (plate.icon) {

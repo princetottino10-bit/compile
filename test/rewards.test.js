@@ -52,3 +52,4 @@ test('全部解放 (管理者のテスト用) では、見た目も称号もレ�
   }
   assert.ok(R.unlockLevel('mat', 'prism') > 1);
 });
+

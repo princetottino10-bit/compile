@@ -42,7 +42,7 @@ export function myLook(s) {
   const recs = localRecords();
   const level = playerLevel(recs, bonusXp()).level;
   const pick = (kind) => (s[kind] && isUnlocked(kind, s[kind], level)) ? s[kind] : 'default';
-  return { mat: matUnlocked(s.mat, recs) ? s.mat : 'neon', marker: pick('marker'), sleeve: pick('sleeve') };
+  return { mat: matUnlocked(s.mat, recs) ? s.mat : 'neon', marker: pick('marker'), sleeve: pick('sleeve'), plate: pick('plate') };
 }
 
 export function myBadge(s) {

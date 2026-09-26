@@ -12,11 +12,12 @@
 import { GACHA_ITEMS, gachaId, itemName } from './rewards.js';
 
 const KEY = 'compileGacha';
-export const PULL_COST = 10;
-export const TEN_COST = 90;
+/* 1回 30 (数試合に1回の楽しみ)。10連は 1回ぶん安い */
+export const PULL_COST = 30;
+export const TEN_COST = 270;
 export const PITY = 10;
 export const RATES = { C: 55, R: 30, E: 12, L: 3 };
-export const REFUND = { C: 2, R: 3, E: 6, L: 12 };
+export const REFUND = { C: 6, R: 9, E: 18, L: 36 };
 
 export function loadGacha() {
   try {
@@ -56,8 +57,11 @@ function rollRarity(rnd, floor) {
 function drawOne(state, rnd, floor) {
   const pityHit = state.pity + 1 >= PITY;
   const rar = rollRarity(rnd, pityHit ? 'E' : floor);
+  /* 同じレア度の中で、まだ持っていない物から出す。全部持っていれば、かぶり (CHIP を返す) */
   const pool = GACHA_ITEMS.filter(g => g.rar === rar);
-  const item = pool[Math.floor(rnd() * pool.length)];
+  const fresh = pool.filter(g => !state.owned[gachaId(g.kind, g.key)]);
+  const from = fresh.length ? fresh : pool;
+  const item = from[Math.floor(rnd() * from.length)];
   const id = gachaId(item.kind, item.key);
   const dupe = !!state.owned[id];
   const refund = dupe ? REFUND[rar] : 0;

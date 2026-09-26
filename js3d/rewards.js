@@ -49,7 +49,10 @@ export const COSMETICS = {
     ['emerald', 'EMERALD'], ['amber', 'AMBER'], ['sapphire', 'SAPPHIRE'], ['obsidian', 'OBSIDIAN'], ['nova', 'NOVA'],
     ['slayer', 'GIANT SLAYER'], ['laurel', 'LAUREL']],
   ccolor: [['default', 'PROTOCOL'], ['gold', 'GOLD'], ['cyan', 'CYAN'], ['rainbow', 'RAINBOW'], ['lime', 'LIME'], ['violet', 'VIOLET'], ['ember', 'EMBER']],
-  victory: [['default', 'STANDARD'], ['aurora', 'AURORA']]
+  victory: [['default', 'STANDARD'], ['aurora', 'AURORA']],
+  /* 対戦中の名札の枠 (相手にも見える) */
+  plate: [['default', 'STANDARD'], ['gold', 'GOLD'], ['sakura', 'SAKURA'], ['washi', 'WASHI'], ['neon', 'NEON'], ['urushi', 'URUSHI'],
+    ['crystal', 'CRYSTAL'], ['royal', 'ROYAL']]
 };
 
 /* ガチャ (COSMETICS の GACHA) でしか出ない見た目と称号。rar: C / R / E / L。
@@ -64,6 +67,10 @@ export const GACHA_ITEMS = [
   { kind: 'sleeve', key: 'galaxy', rar: 'L' }, { kind: 'marker', key: 'nova', rar: 'L' }, { kind: 'title', key: 'fortune', rar: 'L' },
   { kind: 'sleeve', key: 'nyanko', rar: 'R' }, { kind: 'sleeve', key: 'sweets', rar: 'C' }, { kind: 'sleeve', key: 'bunny', rar: 'E' },
   { kind: 'sleeve', key: 'rose', rar: 'E' }, { kind: 'sleeve', key: 'butterfly', rar: 'L' }, { kind: 'sleeve', key: 'momiji', rar: 'R' }, { kind: 'sleeve', key: 'konpairu', rar: 'E' }, { kind: 'sleeve', key: 'teaparty', rar: 'R' },
+  /* 名札の枠 */
+  { kind: 'plate', key: 'gold', rar: 'R' }, { kind: 'plate', key: 'sakura', rar: 'R' }, { kind: 'plate', key: 'washi', rar: 'R' },
+  { kind: 'plate', key: 'neon', rar: 'R' }, { kind: 'plate', key: 'urushi', rar: 'E' }, { kind: 'plate', key: 'crystal', rar: 'E' },
+  { kind: 'plate', key: 'royal', rar: 'L' },
   /* 絵のプレイマット */
   { kind: 'mat', key: 'hokusai', rar: 'R' }, { kind: 'mat', key: 'sakura', rar: 'R' }, { kind: 'mat', key: 'garden', rar: 'R' },
   { kind: 'mat', key: 'library', rar: 'E' }, { kind: 'mat', key: 'celestial', rar: 'E' }, { kind: 'mat', key: 'seigaiha', rar: 'L' },
@@ -134,7 +141,8 @@ export function gachaOwned() {
 export function itemName(kind, key) {
   if (kind === 'title') return 'TITLE — ' + (TITLES[key] || key);
   const row = (COSMETICS[kind] || []).find(([k]) => k === key);
-  const label = { sleeve: 'SLEEVE', marker: 'CONTROL MARKER', ccolor: 'COMPILE FX', mat: 'PLAYMAT', victory: 'VICTORY FX' }[kind] || kind.toUpperCase();
+  const label = { sleeve: 'SLEEVE', marker: 'CONTROL MARKER', ccolor: 'COMPILE FX', mat: 'PLAYMAT', victory: 'VICTORY FX',
+    plate: 'NAMEPLATE' }[kind] || kind.toUpperCase();
   return label + ' — ' + (row ? row[1] : key);
 }
 

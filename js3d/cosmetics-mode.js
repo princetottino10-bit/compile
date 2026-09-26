@@ -23,9 +23,11 @@ const SEEN_KEY = 'compileCosSeen';
 
 const TABS = [
   { kind: 'mat', label: '盤面' }, { kind: 'sleeve', label: 'スリーブ' }, { kind: 'marker', label: 'マーカー' },
-  { kind: 'ccolor', label: 'コンパイルの光' }, { kind: 'victory', label: '勝ちの演出' }, { kind: 'title', label: '称号' }, { kind: 'icon', label: 'アイコン' }
+  { kind: 'ccolor', label: 'コンパイルの光' }, { kind: 'victory', label: '勝ちの演出' }, { kind: 'title', label: '称号' }, { kind: 'icon', label: 'アイコン' },
+  { kind: 'plate', label: '名札' }
 ];
-const DEFAULT_KEY = { mat: 'neon', sleeve: 'default', marker: 'default', ccolor: 'default', victory: 'default', title: '', icon: '' };
+const DEFAULT_KEY = { mat: 'neon', sleeve: 'default', marker: 'default', ccolor: 'default', victory: 'default', title: '', icon: '',
+  plate: 'default' };
 const RAR_NAME = { C: 'COMMON', R: 'RARE', E: 'EPIC', L: 'LEGENDARY' };
 const TROPHY_NAME = { chain4: 'CHAIN REACTION', flawless: 'FLAWLESS', mastery10: 'GRANDMASTER', tsume_mid: '詰めコンパイル 中級を全部', tsume_all: '詰めコンパイル 全部' };
 const CCOLOR = { default: 'linear-gradient(90deg,#ff5c5c,#b9a4ff,#a07bff)', gold: '#ffd86a', cyan: '#7ff3ff', rainbow: 'conic-gradient(#ff5f7a,#ffc05a,#7df28c,#5ab8ff,#b98cff,#ff5f7a)',
@@ -129,6 +131,7 @@ function thumb(kind, key) {
       const p = protoList.find(x => x.name === key);
       return p ? '<img alt="" src="' + emblemDataURL(p.name, p.color || '#b9a4ff', 64, true) + '">' : '<span class="cm-none">—</span>';
     }
+    case 'plate': return '<span class="cm-pf pf-' + esc(key) + '"><b>' + esc((displayName() || 'YOU').slice(0, 8)) + '</b></span>';
     default: return '<span class="cm-none">' + (key ? '★' : '—') + '</span>';
   }
 }
@@ -147,6 +150,13 @@ function preview(kind, key, name, isOwned, src) {
     case 'marker': art = '<div class="cm-markerview"><img alt="" src="' + markerURL(key) + '"></div>'; break;
     case 'ccolor': art = '<div class="cm-burst" style="--gc:' + (CCOLOR[key] || CCOLOR.default) + '"><b>COMPILE</b></div>'; break;
     case 'victory': art = '<div class="cm-vicview ' + esc(key) + '"><b>YOU WIN</b></div>'; break;
+    case 'plate': {
+      const p = protoList.find(x => x.name === s.icon);
+      art = '<div class="cm-plate pf-' + esc(key) + '">' + (p ? '<img alt="" src="' + emblemDataURL(p.name, p.color || '#b9a4ff', 96, true) + '">' : '<span>//</span>') +
+        '<div><b>' + esc(displayName() || 'YOU') + '</b>' + (TITLES[s.title] ? '<small>' + esc(TITLES[s.title]) + '</small>' : '') + '</div></div>';
+      break;
+    }
+
     case 'title': case 'icon': {
       const icon = kind === 'icon' ? key : s.icon;
       const p = protoList.find(x => x.name === icon);
@@ -199,7 +209,7 @@ export function openCosmetics(opts) {
           (owned(tab, fItem[0], c) && fItem[0] !== cur ? '<button type="button" class="cm-equip" data-equip="' + esc(fItem[0]) + '">着ける</button>'
             : fItem[0] === cur ? '<p class="cm-on">着けています</p>' : '') + '</section>' +
         '<section class="cm-list"><p class="cm-count">' + TABS.find(t => t.kind === tab).label + ' ' + got + ' / ' + list.length + '</p>' +
-          '<div class="cm-grid ' + tab + '">' + list.map(([key, name]) => {
+          '<div class="cm-grid ' + (tab === 'plate' ? 'nameplate' : tab) + '">' + list.map(([key, name]) => {
             const has = owned(tab, key, c);
             const isNew = !firstOpen && has && key !== '' && key !== DEFAULT_KEY[tab] && !sn.has(tab + ':' + key);
             return '<button type="button" data-key="' + esc(key) + '" class="cm-item' + (has ? '' : ' locked') + (key === cur ? ' cur' : '') + (key === fk ? ' focus' : '') + '">' +
