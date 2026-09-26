@@ -767,7 +767,18 @@ function massRemove(ctx, uids, destKind, actor) {
     markCommitted(st, u);
     st.cards[u].commitDest = destKind === 'trash' ? 'trash' : 'hand';
   }
-  for (const u of present) (destKind === 'trash' ? landTrash : landHand)(ctx, u);
+  for (const u of present) {
+    if (destKind === 'trash') { landTrash(ctx, u); continue; }
+    /* CORRUPTION_2 lower: 相手の手札に戻るカードは、代わりに相手のデッキの一番上へ裏向きで (1枚ずつ戻すとき doReturn と同じ) */
+    const owner = st.cards[u].owner;
+    if (activeStatics(st).some(s => s.kind === 'returnToDeckTop' && s.sideIdx !== owner)) {
+      const c = st.cards[u];
+      c.zone = 'deck' + owner; c.faceUp = false; c.commitDest = null; c.knownTo = 0;
+      st.players[owner].deck.unshift(u);
+      removeFrom(st.commitStack, u);
+      log(ctx, `${cardLabel(st, u)} は手札の代わりにデッキの一番上へ戻された`, u);
+    } else landHand(ctx, u);
+  }
   if (present.length) log(ctx, `${present.length}枚を同時に${destKind === 'trash' ? '削除' : '手札に戻'}した`);
   // 一括処理後、新たに uncovered になった表向きカードの中段が場に入る
   let news = [];
@@ -1049,6 +1060,8 @@ function execOp(ctx, fr, op) {
       const who = fr.controller;
       const oh = st.players[1 - who].hand;
       if (!oh.length) { fr.done = false; return; }
+      /* 文面は「引く」。引けない効果 (ICE 6 など) が掛かっていれば引けない */
+      if (cannotDraw(st, who)) { log(ctx, `P${who + 1}: ドローできない`); fr.done = false; return; }
       const i = Math.floor(rand(st) * oh.length);
       const u = oh.splice(i, 1)[0];
       st.cards[u].owner = who;
@@ -1424,6 +1437,8 @@ function execOp(ctx, fr, op) {
       c.owner = 1 - fr.controller;   // 相手のトラッシュに入る=相手の山に戻る
       landTrash(ctx, pick);
       log(ctx, `P${fr.controller + 1}: 手札1枚を相手の捨て札置き場に置いた`, pick);
+      /* 文面は「捨て札にし」。手札を捨てたので「捨て札にしたあと」(CORRUPTION 3・PLAGUE 2 など) を起こす */
+      fireEvent(ctx, { on: 'discard', from: 'hand', player: fr.controller, count: 1 });
       fr.done = true;
       return;
     }
@@ -1908,10 +1923,15 @@ function execPlayOp(ctx, fr, op) {
     if (d === 'thisStack' || d === 'oppStack') {
       const stSide = d === 'thisStack' ? (locate(st, fr.source) || { side: fr.controller }).side : 1 - fr.controller;
       let l2;
-      if (d === 'thisStack') l2 = (locate(st, fr.source) || { line: fr.line }).line;
-      else {
-        const nonEmpty = [0, 1, 2].filter(l3 => st.lines[l3][stSide].length > 0);
-        const lines2 = nonEmpty.length ? nonEmpty : [0, 1, 2];
+      /* プレイなので、「このラインにプレイできない」「裏向きでプレイできない」(PLAGUE 1・METAL 3 など) を守る */
+      if (d === 'thisStack') {
+        l2 = (locate(st, fr.source) || { line: fr.line }).line;
+        if (!canPlay(st, who, uid, l2, false)) { fr.done = false; return; }
+      } else {
+        const allowed = [0, 1, 2].filter(l3 => canPlay(st, who, uid, l3, false));
+        if (!allowed.length) { fr.done = false; return; }
+        const nonEmpty = allowed.filter(l3 => st.lines[l3][stSide].length > 0);
+        const lines2 = nonEmpty.length ? nonEmpty : allowed;
         l2 = lines2.length === 1 ? lines2[0]
           : choose(ctx, { kind: 'pickLine', player: fr.controller, lines: lines2, prompt: 'play-dest', side: stSide, context: defOf(st, fr.source).id })[0];
       }
@@ -2058,9 +2078,9 @@ function legalActions(st) {
     for (let l = 0; l < 3; l++) {
       if (canPlay(st, p, uid, l, true)) out.push({ type: 'play', card: uid, line: l, faceUp: true });
       if (canPlay(st, p, uid, l, false)) out.push({ type: 'play', card: uid, line: l, faceUp: false });
-      if (canPlayEitherSide(st, uid)) { // 相手側スタックへのプレイ
-        out.push({ type: 'play', card: uid, line: l, faceUp: true, side: 1 - p });
-        out.push({ type: 'play', card: uid, line: l, faceUp: false, side: 1 - p });
+      if (canPlayEitherSide(st, uid)) { // 相手側スタックへのプレイ (制限は自分側と同じ)
+        if (canPlay(st, p, uid, l, true)) out.push({ type: 'play', card: uid, line: l, faceUp: true, side: 1 - p });
+        if (canPlay(st, p, uid, l, false)) out.push({ type: 'play', card: uid, line: l, faceUp: false, side: 1 - p });
       }
     }
   }
@@ -2185,7 +2205,8 @@ function performAction(ctx, action) {
     if (st.players[p].hand.indexOf(action.card) < 0) throw { __err: '手札にないカード' };
     const destSide = (action.side === 0 || action.side === 1) ? action.side : p;
     if (destSide !== p && !canPlayEitherSide(st, action.card)) throw { __err: '相手側にはプレイできないカード' };
-    if (destSide === p && !canPlay(st, p, action.card, action.line, action.faceUp)) throw { __err: 'そのプレイは許可されていない' };
+    /* 相手側に置くときも、プレイの制限 (PLAGUE 1 など) は守る */
+    if (!canPlay(st, p, action.card, action.line, action.faceUp)) throw { __err: 'そのプレイは許可されていない' };
     playToField(ctx, action.card, action.line, destSide, !!action.faceUp);
     st.phase = 'checkCache';
   } else if (action.type === 'refresh') {
