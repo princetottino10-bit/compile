@@ -5,7 +5,7 @@
  *   まだ持っていないものも並べ、手に入れ方を書く (押すとプレビューだけ見られる)。
  *   新しく手に入れたものには NEW (見た印は compileCosSeen、このブラウザだけ)
  * ========================================================================= */
-import { COSMETICS, TITLES, REWARDS, GACHA_ITEMS, UNDERDOG_ITEMS, WEEKLY_ITEMS, unlockLevel, ownedTitles } from './rewards.js';
+import { COSMETICS, TITLES, REWARDS, GACHA_ITEMS, UNDERDOG_ITEMS, WEEKLY_ITEMS, masteryItem, protoMastery, unlockLevel, ownedTitles } from './rewards.js';
 import { extraTitles, TROPHY_TITLES } from './cosmetics-ui.js';
 import { settings, setSetting } from './settings.js';
 import { playerLevel } from './stats-data.js';
@@ -57,6 +57,8 @@ function sourceOf(kind, key) {
   const g = GACHA_ITEMS.find(x => x.kind === kind && x.key === key);
   if (g) return 'GACHA (' + RAR_NAME[g.rar] + ')';
   if (UNDERDOG_ITEMS.some(x => x.kind === kind && x.key === key) || (kind === 'title' && key === 'underdog')) return '下剋上に勝つ';
+  const m = masteryItem(kind, key);
+  if (m) return m.proto + ' の習熟度 ' + m.mastery + ' (いま ' + protoMastery(m.proto) + ')';
   const w = WEEKLY_ITEMS.find(x => x.kind === kind && x.key === key);
   if (w) return '週替わり3連戦を ' + w.weeks + ' 週クリア';
   if (kind === 'title') {

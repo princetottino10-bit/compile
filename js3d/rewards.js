@@ -4,6 +4,7 @@
  *         victory (勝ちの演出) / title (称号) / icon (アイコンを選べる)
  *   選ぶのは設定の「見た目」(cosmetics-ui.js)。レベルは stats-data.js の playerLevel
  * ========================================================================= */
+import { protocolSummary } from './stats-data.js';
 
 export const REWARDS = [
   { lv: 2, kind: 'sleeve', key: 'crimson', name: 'SLEEVE — CRIMSON' },
@@ -41,7 +42,7 @@ export const COSMETICS = {
   mat: [['neon', 'NEON GRID'], ['nebula', 'NEBULA'], ['vortex', 'VORTEX'], ['biomech', 'BIOMECH'], ['prism', 'PRISM'], ['eclipse', 'ECLIPSE']],
   sleeve: [['default', 'STANDARD'], ['crimson', 'CRIMSON'], ['circuit', 'CIRCUIT'], ['void', 'VOID'], ['holo', 'HOLO'], ['sakura', 'SAKURA'], ['aurum', 'AURUM'],
     ['mint', 'MINT'], ['ocean', 'OCEAN'], ['ember', 'EMBER'], ['glacier', 'GLACIER'], ['toxic', 'TOXIC'], ['galaxy', 'GALAXY'],
-    ['tiger', 'TIGER'], ['pixel', 'PIXEL'], ['koi', 'KOI'], ['aurora', 'AURORA'], ['nyanko', 'NYANKO'], ['sweets', 'SWEETS'], ['bunny', 'BUNNY'], ['rose', 'ROSE'], ['butterfly', 'GOLDEN BUTTERFLY'], ['momiji', 'MOMIJI'],
+    ['tiger', 'TIGER'], ['pixel', 'PIXEL'], ['koi', 'KOI'], ['aurora', 'AURORA'], ['nyanko', 'NYANKO'], ['sweets', 'SWEETS'], ['bunny', 'BUNNY'], ['rose', 'ROSE'], ['butterfly', 'GOLDEN BUTTERFLY'], ['momiji', 'MOMIJI'], ['sprout', 'SPROUT'], ['konpairu', 'KONPAIRU'],
     ['slayer', 'GIANT SLAYER'], ['laurel', 'LAUREL']],
   marker: [['default', 'STANDARD'], ['gold', 'GOLD'], ['crystal', 'CRYSTAL'], ['crimson', 'CRIMSON'], ['prism', 'PRISM'],
     ['emerald', 'EMERALD'], ['amber', 'AMBER'], ['sapphire', 'SAPPHIRE'], ['obsidian', 'OBSIDIAN'], ['nova', 'NOVA'],
@@ -61,7 +62,7 @@ export const GACHA_ITEMS = [
   { kind: 'title', key: 'highroller', rar: 'E' },
   { kind: 'sleeve', key: 'galaxy', rar: 'L' }, { kind: 'marker', key: 'nova', rar: 'L' }, { kind: 'title', key: 'fortune', rar: 'L' },
   { kind: 'sleeve', key: 'nyanko', rar: 'R' }, { kind: 'sleeve', key: 'sweets', rar: 'C' }, { kind: 'sleeve', key: 'bunny', rar: 'E' },
-  { kind: 'sleeve', key: 'rose', rar: 'E' }, { kind: 'sleeve', key: 'butterfly', rar: 'L' }, { kind: 'sleeve', key: 'momiji', rar: 'R' },
+  { kind: 'sleeve', key: 'rose', rar: 'E' }, { kind: 'sleeve', key: 'butterfly', rar: 'L' }, { kind: 'sleeve', key: 'momiji', rar: 'R' }, { kind: 'sleeve', key: 'konpairu', rar: 'E' },
   { kind: 'sleeve', key: 'tiger', rar: 'R' }, { kind: 'sleeve', key: 'pixel', rar: 'R' }, { kind: 'sleeve', key: 'koi', rar: 'E' }, { kind: 'sleeve', key: 'aurora', rar: 'L' }
 ];
 /* 下剋上 (最弱のデッキで最強に勝つ) の褒美。勝った記録 (compileSoloRecords に level 20 の勝ち) があれば使える */
@@ -78,6 +79,24 @@ export function underdogCleared() {
 }
 
 /* 週替わり3連戦の褒美。クリアした週の数 (経験値の帳簿の k:wk:W…) で開く */
+/* プロトコルの習熟度で開く見た目 (そのプロトコルを遊び込んだ証)。mastery: 習熟度 (1〜10) */
+export const MASTERY_ITEMS = [
+  { kind: 'sleeve', key: 'sprout', proto: 'LIFE', mastery: 5 },
+];
+export function masteryItem(kind, key) {
+  return MASTERY_ITEMS.find(g => g.kind === kind && g.key === key) || null;
+}
+/* そのプロトコルの今の習熟度 (記録から数える) */
+export function protoMastery(name) {
+  try {
+    const list = JSON.parse(localStorage.getItem('compileSoloRecords') || '[]');
+    const t = protocolSummary(Array.isArray(list) ? list : []).get(name);
+    return t ? t.mastery.level : 0;
+  } catch (e) {
+    return 0;
+  }
+}
+
 export const WEEKLY_ITEMS = [
   { kind: 'sleeve', key: 'laurel', weeks: 1 },
   { kind: 'marker', key: 'laurel', weeks: 3 },
@@ -145,6 +164,8 @@ export function unlockLevel(kind, key) {
   /* ガチャの見た目はレベルでは開かない (取っていれば 1、取っていなければ届かない数) */
   if (isGachaItem(kind, key)) return gachaOwned()[gachaId(kind, key)] ? 1 : 9999;
   if (isUnderdogItem(kind, key)) return underdogCleared() ? 1 : 9999;
+  const m = masteryItem(kind, key);
+  if (m) return protoMastery(m.proto) >= m.mastery ? 1 : 9999;
   if (weeklyItem(kind, key)) return weeklyClears() >= weeklyItem(kind, key).weeks ? 1 : 9999;
   const r = REWARDS.find(x => x.kind === kind && x.key === key);
   return r ? r.lv : 1;

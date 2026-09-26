@@ -497,7 +497,7 @@ const SLEEVES = {
   toxic: { art: 'art/sleeves/toxic.webp', pattern: 'hazard', a: '#1d3a05', b: '#081302', grid: 'rgba(190,255,60,.1)', halo: '170,255,40', ring: 'rgba(210,255,90,.92)',
     ring2: 'rgba(120,220,20,.6)', strip: '170,255,40', circuit: true },
   /* 下剋上の褒美: 黒地に金と深紅 */
-  slayer: { a: '#2a0808', b: '#000000', grid: 'rgba(255,210,90,.05)', halo: '255,196,60', ring: 'rgba(255,214,90,.95)',
+  slayer: { art: 'art/sleeves/slayer.webp', a: '#2a0808', b: '#000000', grid: 'rgba(255,210,90,.05)', halo: '255,196,60', ring: 'rgba(255,214,90,.95)',
     ring2: 'rgba(220,30,60,.8)', strip: '255,40,70', slayer: true },
   /* ---- ガチャの見た目 (2) ---- */
   tiger: { art: 'art/sleeves/tiger.webp', pattern: 'tiger', a: '#c96a14', b: '#6b2f04', grid: 'rgba(0,0,0,.06)', halo: '255,200,120', ring: 'rgba(20,10,0,.9)',
@@ -519,6 +519,10 @@ const SLEEVES = {
     ring2: 'rgba(0,0,0,0)', strip: '200,30,60' },
   butterfly: { art: 'art/sleeves/butterfly.webp', pattern: 'butterfly', noLogo: true, a: '#14122e', b: '#030208', grid: 'rgba(255,210,110,.04)', halo: '255,200,90', ring: 'rgba(0,0,0,0)',
     ring2: 'rgba(0,0,0,0)', strip: '220,170,60' },
+  konpairu: { pattern: 'konpairu', noLogo: true, a: '#fff6d8', b: '#eaf6ff', grid: 'rgba(0,0,0,0)', halo: '255,255,255', ring: 'rgba(0,0,0,0)',
+    ring2: 'rgba(0,0,0,0)', strip: '255,150,180' },
+  sprout: { art: 'art/sleeves/sprout.webp', artLogo: '#5f9a3e', noVignette: true, pattern: 'sakura', a: '#fbf6e2', b: '#e8f1d8', grid: 'rgba(0,0,0,0)', halo: '160,220,120', ring: 'rgba(0,0,0,0)',
+    ring2: 'rgba(0,0,0,0)', strip: '110,190,90' },
   momiji: { art: 'art/sleeves/momiji.webp', pattern: 'sakura', a: '#7a1a10', b: '#240603', grid: 'rgba(0,0,0,0)', halo: '255,120,80', ring: 'rgba(0,0,0,0)',
     ring2: 'rgba(0,0,0,0)', strip: '220,60,40' },
   /* 週替わりの褒美: 深い緑に金の月桂冠 */
@@ -846,6 +850,80 @@ const PATTERNS = {
       ctx.beginPath(); for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? s * 0.45 : s; ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } ctx.fill();
     }
   },
+  /* こんぱいるねこ: 手描きの絵をもとに。方眼ノートの点の上に、吹き出しで「こんぱいる」と言うねこ */
+  konpairu(ctx) {
+    ctx.fillStyle = 'rgba(90,110,140,.28)';
+    for (let y = 136; y < DH; y += 28) for (let x = 14; x < DW; x += 28) { ctx.beginPath(); ctx.arc(x, y, 1.8, 0, Math.PI * 2); ctx.fill(); }
+    const ink = '#2b2530';
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    /* 吹き出し */
+    ctx.fillStyle = '#ffffff'; ctx.strokeStyle = ink; ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(120, 170);
+    ctx.bezierCurveTo(200, 140, 330, 138, 420, 162);
+    ctx.bezierCurveTo(475, 180, 470, 262, 440, 300);
+    ctx.bezierCurveTo(410, 345, 330, 352, 282, 356);
+    ctx.lineTo(262, 392);                                   // しっぽ
+    ctx.lineTo(244, 358);
+    ctx.bezierCurveTo(170, 352, 70, 330, 58, 262);
+    ctx.bezierCurveTo(50, 210, 80, 186, 120, 170);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = ink;
+    ctx.font = "900 70px 'Hiragino Maru Gothic ProN', 'Kosugi Maru', 'M PLUS Rounded 1c', 'Yu Gothic UI', 'Meiryo', sans-serif";
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const word = 'こんぱいる';
+    [...word].forEach((ch, i) => {
+      ctx.save(); ctx.translate(96 + i * 80, 258 + (i % 2 ? -6 : 5)); ctx.rotate((i % 2 ? 0.07 : -0.06));
+      ctx.fillText(ch, 0, 0); ctx.restore();
+    });
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    /* ねこ (体 → 頭の順。手描きの形: 横に広い頭、とがった耳、手を横に広げた体) */
+    ctx.fillStyle = '#fffaf2'; ctx.strokeStyle = ink; ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(128, 596); ctx.lineTo(200, 612);             // 左の手
+    ctx.bezierCurveTo(204, 640, 202, 668, 206, 694);        // 左の足
+    ctx.lineTo(236, 694);
+    ctx.quadraticCurveTo(258, 664, 280, 694);               // 足のあいだ
+    ctx.lineTo(312, 694);
+    ctx.bezierCurveTo(310, 668, 308, 640, 314, 612);        // 右の足
+    ctx.lineTo(392, 596);                                   // 右の手
+    ctx.bezierCurveTo(404, 588, 396, 578, 382, 578);
+    ctx.lineTo(140, 578);
+    ctx.bezierCurveTo(124, 580, 118, 590, 128, 596);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(150, 470);
+    ctx.lineTo(196, 402);                                    // 左の耳
+    ctx.lineTo(222, 446);
+    ctx.bezierCurveTo(250, 442, 290, 442, 318, 446);
+    ctx.lineTo(368, 404);                                    // 右の耳
+    ctx.lineTo(372, 468);
+    ctx.bezierCurveTo(420, 500, 432, 540, 420, 566);
+    ctx.bezierCurveTo(400, 590, 130, 590, 108, 566);
+    ctx.bezierCurveTo(96, 530, 112, 492, 150, 470);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    /* 耳の中 */
+    ctx.fillStyle = 'rgba(255,150,180,.55)';
+    ctx.beginPath(); ctx.moveTo(176, 452); ctx.lineTo(196, 418); ctx.lineTo(210, 446); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(332, 448); ctx.lineTo(362, 420); ctx.lineTo(360, 456); ctx.fill();
+    /* 目 */
+    ctx.fillStyle = ink;
+    ctx.beginPath(); ctx.arc(208, 506, 13, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(330, 504, 13, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(212, 501, 4.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(334, 499, 4.5, 0, Math.PI * 2); ctx.fill();
+    /* ほっぺ */
+    ctx.fillStyle = 'rgba(255,140,170,.45)';
+    ctx.beginPath(); ctx.ellipse(170, 540, 20, 11, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(372, 538, 20, 11, 0, 0, Math.PI * 2); ctx.fill();
+    /* 口 (ω と、ぺろっと舌) */
+    ctx.strokeStyle = ink; ctx.lineWidth = 4.5;
+    ctx.beginPath(); ctx.moveTo(240, 526); ctx.quadraticCurveTo(254, 546, 270, 530); ctx.quadraticCurveTo(286, 546, 304, 528); ctx.stroke();
+    ctx.fillStyle = '#ff8fa8';
+    ctx.beginPath(); ctx.moveTo(262, 536); ctx.quadraticCurveTo(264, 558, 276, 558); ctx.quadraticCurveTo(288, 556, 286, 536); ctx.fill();
+    ctx.lineCap = 'butt'; ctx.lineJoin = 'miter';
+  },
   /* 薔薇: 黒地に深紅の薔薇と、棘のあるつる */
   rose(ctx) {
     const r = seeded(61);
@@ -1128,10 +1206,30 @@ export function backTex(variant) {
       const s = Math.max(DW / art.width, DH / art.height);
       const sw = DW / s, sh = DH / s;
       ctx.drawImage(art, (art.width - sw) / 2, (art.height - sh) / 2, sw, sh, 0, 0, DW, DH);
-      /* 縁を少し暗くして、カードの形を読みやすく */
-      const v = ctx.createRadialGradient(DW / 2, DH / 2, DH * 0.35, DW / 2, DH / 2, DH * 0.72);
-      v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.45)');
-      ctx.fillStyle = v; ctx.fillRect(0, 0, DW, DH);
+      /* 縁を少し暗くして、カードの形を読みやすく (明るい無地の絵ではしない) */
+      if (!P.noVignette) {
+        const v = ctx.createRadialGradient(DW / 2, DH / 2, DH * 0.35, DW / 2, DH / 2, DH * 0.72);
+        v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.45)');
+        ctx.fillStyle = v; ctx.fillRect(0, 0, DW, DH);
+      }
+      /* 絵の上に真ん中のロゴを置くスリーブ (artLogo: ロゴの色) */
+      if (P.artLogo) {
+        const cx = DW / 2, cy = DH / 2 - 20;
+        ctx.strokeStyle = P.artLogo; ctx.globalAlpha = 0.85;
+        ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(cx, cy, 118, 0, Math.PI * 2); ctx.stroke();
+        ctx.globalAlpha = 0.45;
+        ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, 146, 0, Math.PI * 2); ctx.stroke();
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = P.artLogo;
+        ctx.font = '900 88px ' + FONT.logo;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('//', cx, cy + 4);
+        ctx.font = '800 22px ' + FONT.logo;
+        ctx.globalAlpha = 0.7;
+        ctx.fillText('C O M P I L E', cx, cy + 190);
+        ctx.globalAlpha = 1;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+      }
       ctx.restore();
       ctx.strokeStyle = 'rgba(' + P.strip + ',.85)'; ctx.lineWidth = 6;
       roundRect(ctx, 3, 3, DW - 6, DH - 6, 28); ctx.stroke();
