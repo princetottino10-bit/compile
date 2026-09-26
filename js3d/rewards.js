@@ -41,7 +41,7 @@ export const COSMETICS = {
   mat: [['neon', 'NEON GRID'], ['nebula', 'NEBULA'], ['vortex', 'VORTEX'], ['biomech', 'BIOMECH'], ['prism', 'PRISM'], ['eclipse', 'ECLIPSE']],
   sleeve: [['default', 'STANDARD'], ['crimson', 'CRIMSON'], ['circuit', 'CIRCUIT'], ['void', 'VOID'], ['holo', 'HOLO'], ['sakura', 'SAKURA'], ['aurum', 'AURUM'],
     ['mint', 'MINT'], ['ocean', 'OCEAN'], ['ember', 'EMBER'], ['glacier', 'GLACIER'], ['toxic', 'TOXIC'], ['galaxy', 'GALAXY'],
-    ['tiger', 'TIGER'], ['pixel', 'PIXEL'], ['koi', 'KOI'], ['aurora', 'AURORA'],
+    ['tiger', 'TIGER'], ['pixel', 'PIXEL'], ['koi', 'KOI'], ['aurora', 'AURORA'], ['nyanko', 'NYANKO'], ['sweets', 'SWEETS'], ['bunny', 'BUNNY'],
     ['slayer', 'GIANT SLAYER'], ['laurel', 'LAUREL']],
   marker: [['default', 'STANDARD'], ['gold', 'GOLD'], ['crystal', 'CRYSTAL'], ['crimson', 'CRIMSON'], ['prism', 'PRISM'],
     ['emerald', 'EMERALD'], ['amber', 'AMBER'], ['sapphire', 'SAPPHIRE'], ['obsidian', 'OBSIDIAN'], ['nova', 'NOVA'],
@@ -60,6 +60,7 @@ export const GACHA_ITEMS = [
   { kind: 'sleeve', key: 'toxic', rar: 'E' }, { kind: 'marker', key: 'obsidian', rar: 'E' }, { kind: 'ccolor', key: 'ember', rar: 'E' },
   { kind: 'title', key: 'highroller', rar: 'E' },
   { kind: 'sleeve', key: 'galaxy', rar: 'L' }, { kind: 'marker', key: 'nova', rar: 'L' }, { kind: 'title', key: 'fortune', rar: 'L' },
+  { kind: 'sleeve', key: 'nyanko', rar: 'R' }, { kind: 'sleeve', key: 'sweets', rar: 'C' }, { kind: 'sleeve', key: 'bunny', rar: 'E' },
   { kind: 'sleeve', key: 'tiger', rar: 'R' }, { kind: 'sleeve', key: 'pixel', rar: 'R' }, { kind: 'sleeve', key: 'koi', rar: 'E' }, { kind: 'sleeve', key: 'aurora', rar: 'L' }
 ];
 /* 下剋上 (最弱のデッキで最強に勝つ) の褒美。勝った記録 (compileSoloRecords に level 20 の勝ち) があれば使える */
