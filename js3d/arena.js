@@ -209,24 +209,35 @@ export function buildArena(stage) {
     }
   });
 
-  /* 盤面の柄 (プレイマット)。枠の内側に1枚敷く。neon は柄なし (床の網目のまま) */
-  const matGeo = new THREE.PlaneGeometry(MAT_W, MAT_D);
-  matGeo.rotateX(-Math.PI / 2);
-  /* 不透明の板として奥行きも書く (書かないと、あとから描く床の網目に上書きされる) */
-  const matMesh = new THREE.Mesh(matGeo, new THREE.MeshBasicMaterial({ toneMapped: false }));
-  matMesh.position.y = 0.001;
-  matMesh.visible = false;
-  matMesh.raycast = () => {};
-  group.add(matMesh);
-  let matKey = null;
-  function setMat(key) {
-    matKey = key;
-    const tex = playmatTexture(key);
-    matMesh.visible = !!tex;
-    if (tex && matMesh.material.map !== tex) { matMesh.material.map = tex; matMesh.material.needsUpdate = true; }
+  /* 盤面の柄 (プレイマット)。枠の内側に敷く。手前の半分は自分の柄、奥の半分は相手の柄。
+     それぞれの柄の絵の同じ半分を使うので、山の置き場の枠などは両側でそろう。neon は柄なし (床の網目のまま) */
+  const halves = [0, 1].map((far) => {
+    const geo = new THREE.PlaneGeometry(MAT_W, MAT_D / 2);
+    geo.rotateX(-Math.PI / 2);
+    /* 絵の下半分 (v 0〜0.5) が手前、上半分が奥 */
+    const uv = geo.attributes.uv;
+    for (let i = 0; i < uv.count; i++) uv.setY(i, uv.getY(i) * 0.5 + (far ? 0.5 : 0));
+    /* 不透明の板として奥行きも書く (書かないと、あとから描く床の網目に上書きされる) */
+    const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ toneMapped: false }));
+    mesh.position.set(0, 0.001, far ? -MAT_D / 4 : MAT_D / 4);
+    mesh.visible = false;
+    mesh.raycast = () => {};
+    group.add(mesh);
+    return mesh;
+  });
+  let matKeys = [null, null];
+  /* mine: 自分の柄、opp: 相手の柄 (省くと自分と同じ) */
+  function setMat(mine, opp) {
+    matKeys = [mine, opp === undefined ? mine : opp];
+    matKeys.forEach((key, i) => {
+      const tex = key ? playmatTexture(key) : null;
+      const mesh = halves[i];
+      mesh.visible = !!tex;
+      if (tex && mesh.material.map !== tex) { mesh.material.map = tex; mesh.material.needsUpdate = true; }
+    });
   }
   /* 画面の形が変わって山の置き場が動いたら、置き場の枠も描き直す */
-  window.addEventListener('compile:viewport', () => { if (matKey) setMat(matKey); });
+  window.addEventListener('compile:viewport', () => { if (matKeys[0] || matKeys[1]) setMat(matKeys[0], matKeys[1]); });
 
   return { group, rings, setTurnSide, setMat };
 }

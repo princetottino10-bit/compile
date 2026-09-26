@@ -28,7 +28,7 @@ import { recordSoloResult, localRecords } from './stats.js';
 import { cardStats, cardTier, playerLevel, protocolSummary } from './stats-data.js';
 import { isUnlocked, rewardsBetween, TITLES, UNDERDOG_XP, underdogCleared } from './rewards.js';
 import { confetti } from './gachafx.js';
-import { setCosmeticProtocols, profileOf } from './cosmetics-ui.js';
+import { setCosmeticProtocols, profileOf, myLook } from './cosmetics-ui.js';
 import { setCosmeticsProtocols } from './cosmetics-mode.js';
 import { displayName } from './displayname.js';
 import { showPlates } from './plates.js';
@@ -88,6 +88,27 @@ let cardWins = cardStats(localRecords());
 /* プレイヤーレベル (見た目の解放に使う)。決着ごとに数え直す */
 let myLevel = playerLevel(localRecords(), bonusXp()).level;
 /* 選んだ見た目を、解放されていれば使う (記録を消して条件を外れたら標準に戻す) */
+/* 相手の見た目 (盤面の奥半分・相手が持ったときのマーカー・相手のカードの裏面)。
+   オンラインは部屋から届く。CPU 戦などは標準 */
+const NO_LOOK = { mat: 'neon', marker: 'default', sleeve: 'default' };
+let oppLook = NO_LOOK;
+function cleanLook(look) {
+  const pick = (v, d) => (typeof v === 'string' && /^[a-z0-9_]{1,24}$/.test(v)) ? v : d;
+  return look ? { mat: pick(look.mat, 'neon'), marker: pick(look.marker, 'default'), sleeve: pick(look.sleeve, 'default') } : NO_LOOK;
+}
+function applyLooks() {
+  if (!arena || !ctrlMarker) return;
+  arena.setMat(myLook(settings()).mat, oppLook.mat);
+  ctrlMarker.setStyle(cosmetic('marker', 'default'), oppLook.marker);
+}
+function setOppLook(look) {
+  const next = cleanLook(look);
+  if (JSON.stringify(next) === JSON.stringify(oppLook)) return;
+  oppLook = next;
+  applyLooks();
+  if (cur && board) board.syncInstant(shown());
+}
+
 function cosmetic(kind, fallback) {
   const key = settings()[kind];
   return key && isUnlocked(kind, key, myLevel) ? key : fallback;
@@ -319,6 +340,7 @@ async function boot() {
     auraFor,
     foilFor,
     sleeve: () => cosmetic('sleeve', 'default'),
+    oppSleeve: () => oppLook.sleeve,
     /* 自分のコンパイルの光の色 (レベルの報酬)。虹は毎回ちがう色 */
     compileColor: () => {
       const c = cosmetic('ccolor', 'default');
@@ -350,8 +372,7 @@ async function boot() {
   onSettings((s) => {
     TW.setSpeed(s.speed);
     setSfxVolume(s.sfx);
-    arena.setMat(matUnlocked(s.mat, localRecords()) ? s.mat : 'neon');
-    ctrlMarker.setStyle(cosmetic('marker', 'default'));
+    applyLooks();
     if (cur) board.syncInstant(shown());                      // カードの裏面を付け替える
   });
   bindInput();
@@ -633,6 +654,7 @@ async function boot() {
   }
   if (tutorial) coachUpdate();
   if (replayMode) { startReplayView(replayBuilt); return; }
+  if (!roomMode) setOppLook(null);                 // CPU 戦などの相手は標準の見た目
   if (!puzzle && !tutorial && !demoMode && !trainingMode && !roomMode) showCpuPlates(p1);
   if (trainingMode) {
     UI.setPrompt('');
@@ -2053,6 +2075,7 @@ function showVsTag(rm) {
   const opp = 1 - rm.side;
   const name = rm.names[opp];
   const badge = rm.badges && TITLES[rm.badges[opp]];
+  setOppLook(rm.looks && rm.looks[opp]);
   showPlates({ me: myPlate(), opp: name ? { name, sub: badge || '' } : null });
 }
 

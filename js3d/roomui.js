@@ -5,7 +5,7 @@
  *   戻るを押した場合は null を resolve する (呼び出し側でソロ設定へ)。
  * ========================================================================= */
 import { displayName, setDisplayName, nameFieldHtml, bindNameField } from './displayname.js';
-import { myBadge } from './cosmetics-ui.js';
+import { myBadge, myLook } from './cosmetics-ui.js';
 import { settings } from './settings.js';
 import { roomApi, roomLeaveKeepalive, roomIsAnonymous, roomLogin, roomSession, roomSignIn, roomSignInWithGitHub, roomSignInWithGoogle, roomSignOut, roomSignUp } from './room.js';
 import { emblemDataURL } from './emblems.js';
@@ -250,8 +250,8 @@ export function runRoomLobby(protocols, opts = {}) {
           status(rated ? 'レート戦なしで待っている人がいます (チェックを外すと対戦できます)' : 'レート戦で待っている人がいます (ログインしてレート戦にすると対戦できます)', 'ok');
         }
         room = open
-          ? await roomApi('join', { name: name(), badge: myBadge(settings()), code: open.code, password: '' })
-          : await roomApi('create', { name: name(), badge: myBadge(settings()), title: rated ? 'レート戦' : 'クイック対戦', visibility: 'public', password: '', draft: true, rated });
+          ? await roomApi('join', { name: name(), badge: myBadge(settings()), look: myLook(settings()), code: open.code, password: '' })
+          : await roomApi('create', { name: name(), badge: myBadge(settings()), look: myLook(settings()), title: rated ? 'レート戦' : 'クイック対戦', visibility: 'public', password: '', draft: true, rated });
         enterRoom();
       });
       $('#roomCreate').onclick = guard(async () => {
@@ -268,7 +268,7 @@ export function runRoomLobby(protocols, opts = {}) {
         lsSet('compileDraftPool', String(draftRules.poolSize));
         lsSet('compileDraftBans', String(draftRules.bans));
         room = await roomApi('create', {
-          name: name(), badge: myBadge(settings()), title: name() + ' のルーム',
+          name: name(), badge: myBadge(settings()), look: myLook(settings()), title: name() + ' のルーム',
           visibility: pw ? 'private' : 'public',
           password: pw, draft: $('#roomDraft').checked, draftRules, rated: $('#roomRated').checked
         });
@@ -279,7 +279,7 @@ export function runRoomLobby(protocols, opts = {}) {
         const code = lsGet('compileRoomLast');
         status('対戦に復帰しています…');
         try {
-          room = await roomApi('join', { name: name(), badge: myBadge(settings()), code, password: '' });
+          room = await roomApi('join', { name: name(), badge: myBadge(settings()), look: myLook(settings()), code, password: '' });
           enterRoom();
         } catch (e) {
           /* 部屋が消えている / 別アカウントになっている場合は目印を消す */
@@ -293,7 +293,7 @@ export function runRoomLobby(protocols, opts = {}) {
         if (needName()) return;
         const code = $('#roomCode').value;
         if (code.length !== 6) { status('6桁のコードを入力してください', 'err'); return; }
-        room = await roomApi('join', { name: name(), badge: myBadge(settings()), code, password: $('#roomJoinPw').value });
+        room = await roomApi('join', { name: name(), badge: myBadge(settings()), look: myLook(settings()), code, password: $('#roomJoinPw').value });
         enterRoom();
       });
 
@@ -320,7 +320,7 @@ export function runRoomLobby(protocols, opts = {}) {
         if (needName()) return;
               const pw = b.dataset.locked === '1' ? (prompt('パスワード') || '') : '';
               if (b.textContent.includes('★') && roomIsAnonymous(session)) { wantRated = true; await showLogin(); return; }
-              room = await roomApi('join', { name: name(), badge: myBadge(settings()), code: b.dataset.code, password: pw });
+              room = await roomApi('join', { name: name(), badge: myBadge(settings()), look: myLook(settings()), code: b.dataset.code, password: pw });
               enterRoom();
             });
           });
@@ -338,7 +338,7 @@ export function runRoomLobby(protocols, opts = {}) {
         pendingJoin = '';
         guard(async () => {
           status('招待された部屋 ' + code + ' に入っています…');
-          room = await roomApi('join', { name: name(), badge: myBadge(settings()), code, password: '' });
+          room = await roomApi('join', { name: name(), badge: myBadge(settings()), look: myLook(settings()), code, password: '' });
           enterRoom();
         })();
       }

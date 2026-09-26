@@ -519,6 +519,8 @@ const SLEEVES = {
     ring2: 'rgba(0,0,0,0)', strip: '200,30,60' },
   butterfly: { art: 'art/sleeves/butterfly.webp', pattern: 'butterfly', noLogo: true, a: '#14122e', b: '#030208', grid: 'rgba(255,210,110,.04)', halo: '255,200,90', ring: 'rgba(0,0,0,0)',
     ring2: 'rgba(0,0,0,0)', strip: '220,170,60' },
+  momiji: { art: 'art/sleeves/momiji.webp', pattern: 'sakura', a: '#7a1a10', b: '#240603', grid: 'rgba(0,0,0,0)', halo: '255,120,80', ring: 'rgba(0,0,0,0)',
+    ring2: 'rgba(0,0,0,0)', strip: '220,60,40' },
   /* 週替わりの褒美: 深い緑に金の月桂冠 */
   laurel: { art: 'art/sleeves/laurel.webp', pattern: 'laurel', a: '#1d3512', b: '#050b03', grid: 'rgba(230,210,120,.05)', halo: '230,210,120', ring: 'rgba(240,215,120,.85)',
     ring2: 'rgba(150,210,110,.6)', strip: '200,180,90' },
@@ -1122,7 +1124,11 @@ export function backTex(variant) {
     if (art) {
       ctx.save(); roundRect(ctx, 0, 0, DW, DH, 30); ctx.clip();
       ctx.fillStyle = P.b || '#000'; ctx.fillRect(0, 0, DW, DH);
-      ctx.drawImage(art, 0, 0, DW, DH);
+      /* 絵は上の帯 (FACE DOWN と値) の下から敷く。帯に絵を隠させない。はみ出す分は上下を中央で切る */
+      const top = HEAD_H, ah = DH - top;
+      const s = Math.max(DW / art.width, ah / art.height);
+      const sw = DW / s, sh = ah / s;
+      ctx.drawImage(art, (art.width - sw) / 2, (art.height - sh) / 2, sw, sh, 0, top, DW, ah);
       /* 縁を少し暗くして、カードの形を読みやすく */
       const v = ctx.createRadialGradient(DW / 2, DH / 2, DH * 0.35, DW / 2, DH / 2, DH * 0.72);
       v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.45)');
@@ -1234,6 +1240,11 @@ export function backTex(variant) {
     }
     /* 裏向きカードの値は 2。表と同じ位置に出して、覆われても読めるようにする */
     const bh = HEAD_H;
+    if (art) {                                     // 絵のスリーブでは帯を透かさず、額の上辺のような無地の帯にする
+      ctx.save(); roundRect(ctx, 0, 0, DW, DH, 30); ctx.clip();
+      ctx.fillStyle = '#080b15'; ctx.fillRect(0, 0, DW, bh);
+      ctx.restore();
+    }
     const bg = ctx.createLinearGradient(0, 0, DW, 0);
     bg.addColorStop(0, 'rgba(' + P.strip + ',.34)');
     bg.addColorStop(0.62, 'rgba(8,11,21,.95)');

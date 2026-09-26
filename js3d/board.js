@@ -106,6 +106,8 @@ export function createBoard(stage, defIndex, me, hooks) {
   const foilFor = (hooks && hooks.foilFor) || (() => null);
   /* 見た目 (レベルの報酬): 自分のカードの裏面の柄 / 自分のコンパイルの光の色 (null ならプロトコルの色) */
   const sleeveOf = (hooks && hooks.sleeve) || (() => 'default');
+  /* 相手のカードの裏面 (オンラインは相手の設定。CPU は標準) */
+  const oppSleeveOf = (hooks && hooks.oppSleeve) || (() => 'default');
   const compileColorOf = (hooks && hooks.compileColor) || (() => null);
   const scene = stage.scene;
   const cards = new Map();       // uid -> THREE.Group
@@ -239,7 +241,7 @@ export function createBoard(stage, defIndex, me, hooks) {
       setAura(card, mine && card.visible ? auraFor(c.def) : null);
       const foil = mine && card.visible ? foilFor(c.def) : null;
       setFoil(card, foil, foil && defIndex[c.def] ? foilMaskTexture(defIndex[c.def]) : null);
-      const back = backTex(c.owner === me ? sleeveOf() : 'default');
+      const back = backTex(c.owner === me ? sleeveOf() : oppSleeveOf());
       if (card.userData.back.material.map !== back) { card.userData.back.material.map = back; card.userData.back.material.needsUpdate = true; }
     }
     for (const [uid, card] of cards) if (!seen.has(uid)) card.visible = false;

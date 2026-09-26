@@ -293,8 +293,14 @@ export function createControlMarker(scene) {
   let spin = 0;
   let style = MARKER_STYLES.default;
   let seat = 0;
+  /* 見た目は持っている側のもの。自分が持てば自分の設定、相手が持てば相手の設定、中立は標準 */
+  const keys = { me: 'default', opp: 'default' };
+  let applied = null;
+  const holderKey = () => holder === -1 ? 'default' : (holder === seat ? keys.me : keys.opp);
   const paint = () => {
-    const col = holder === -1 ? style.dim : (holder === seat ? style.me : PINK);
+    /* 相手が標準のままなら、相手の色 (ピンク) で見分ける */
+    const oppDefault = holder !== -1 && holder !== seat && holderKey() === 'default';
+    const col = holder === -1 ? style.dim : (oppDefault ? PINK : style.me);
     face.emissive.setHex(col);
     face.emissiveIntensity = holder === -1 ? 0.5 : 1.5;
     side.emissive.setHex(col);
@@ -312,28 +318,21 @@ export function createControlMarker(scene) {
       const sc = SCALE();
       grp.scale.setScalar(grp.scale.x + (sc - grp.scale.x) * Math.min(1, dt * 6));
     },
-    /* 見た目の切り替え (設定から) */
-    setStyle(key) {
-      style = MARKER_STYLES[key] || MARKER_STYLES.default;
-      /* 質感と模様 */
-      face.metalness = style.metal !== undefined ? style.metal : 0.4;
-      face.roughness = style.rough !== undefined ? style.rough : 0.35;
-      side.metalness = style.metal !== undefined ? Math.max(0.6, style.metal) : 0.8;
-      face.transparent = side.transparent = !!style.glass;
-      face.opacity = style.glass ? 0.72 : 1;
-      side.opacity = style.glass ? 0.55 : 1;
-      face.emissiveMap = style.pattern ? patternTexture(style.pattern) : null;
-      face.needsUpdate = true; side.needsUpdate = true;
-      buildExtras(style);
-      paint();
+    /* 見た目の設定。me: 自分、opp: 相手 (省くと今のまま) */
+    setStyle(me, opp) {
+      if (me !== undefined) keys.me = MARKER_STYLES[me] ? me : 'default';
+      if (opp !== undefined) keys.opp = MARKER_STYLES[opp] ? opp : 'default';
+      applied = null;
+      applyHolder();
     },
     /* me: 自分の座席番号。ctrl: st.control (-1/0/1) */
     update(ctrl, me, animate) {
-      if (ctrl === holder) return;
+      if (ctrl === holder && me === seat) return;
       const from = grp.position.z;
       const to = ctrl === -1 ? Z.neutral : (ctrl === me ? Z.me : Z.opp);
       holder = ctrl;
       seat = me;
+      applyHolder();
       const col = paint();
       if (!animate) { grp.position.z = to; return; }
       /* 獲得/使用の瞬間を衝撃波と音で知らせる */
@@ -350,5 +349,23 @@ export function createControlMarker(scene) {
     },
     has(ctrl) { return holder === ctrl; }
   };
+  /* 持っている側の見た目を当てる (変わったときだけ作り直す) */
+  function applyHolder() {
+    const key = holderKey();
+    if (key === applied) { paint(); return; }
+    applied = key;
+    style = MARKER_STYLES[key] || MARKER_STYLES.default;
+    /* 質感と模様 */
+    face.metalness = style.metal !== undefined ? style.metal : 0.4;
+    face.roughness = style.rough !== undefined ? style.rough : 0.35;
+    side.metalness = style.metal !== undefined ? Math.max(0.6, style.metal) : 0.8;
+    face.transparent = side.transparent = !!style.glass;
+    face.opacity = style.glass ? 0.72 : 1;
+    side.opacity = style.glass ? 0.55 : 1;
+    face.emissiveMap = style.pattern ? patternTexture(style.pattern) : null;
+    face.needsUpdate = true; side.needsUpdate = true;
+    buildExtras(style);
+    paint();
+  }
   return state;
 }

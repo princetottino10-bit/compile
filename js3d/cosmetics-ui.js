@@ -5,7 +5,8 @@
  * ========================================================================= */
 import { hasPlatinum, loadTrophies } from './achievements.js';
 import { bonusXp } from './xp.js';
-import { COSMETICS, TITLES, unlockLevel, ownedTitles } from './rewards.js';
+import { COSMETICS, TITLES, unlockLevel, ownedTitles, isUnlocked } from './rewards.js';
+import { matUnlocked } from './playmat.js';
 import { playerLevel } from './stats-data.js';
 import { localRecords } from './stats.js';
 import { UNDERDOG_LEVEL } from './aidecks.js';
@@ -36,6 +37,14 @@ export function profileOf(settings, records) {
 }
 
 /* オンライン対戦で相手に見せる称号の key (付けていない・持っていなければ '')。s: 設定 (settings()) */
+/** 自分の見た目 (盤面の柄・マーカー・スリーブ)。オンラインでは相手の画面にも出る。解放済みのものだけ */
+export function myLook(s) {
+  const recs = localRecords();
+  const level = playerLevel(recs, bonusXp()).level;
+  const pick = (kind) => (s[kind] && isUnlocked(kind, s[kind], level)) ? s[kind] : 'default';
+  return { mat: matUnlocked(s.mat, recs) ? s.mat : 'neon', marker: pick('marker'), sleeve: pick('sleeve') };
+}
+
 export function myBadge(s) {
   const recs = localRecords();
   return ownedTitles(playerLevel(recs, bonusXp()).level, extraTitles(recs)).includes(s.title) ? s.title : '';

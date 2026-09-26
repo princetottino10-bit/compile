@@ -54,6 +54,14 @@ function cleanBadge(value: unknown) {
   return BADGES.includes(v) ? v : null;
 }
 
+/* 見た目は短い英小文字の鍵だけ。知らない鍵は画面側で標準に戻る */
+function cleanLook(value: unknown) {
+  const v: any = value && typeof value === "object" ? value : null;
+  if (!v) return null;
+  const key = (x: unknown) => (typeof x === "string" && /^[a-z0-9_]{1,24}$/.test(x)) ? x : null;
+  return { mat: key(v.mat), marker: key(v.marker), sleeve: key(v.sleeve) };
+}
+
 function cleanCode(value: unknown) {
   return String(value || "").toUpperCase().replace(/[^A-Z2-9]/g, "").slice(0, 6);
 }
@@ -280,6 +288,7 @@ function publicState(room: any, side: number) {
     code: room.code, title: room.title, status: room.status, version: room.version, side, stamp: stampOf(room),
     names: [room.host_name, room.guest_name],
     badges: [room.host_badge || null, room.guest_badge || null],
+    looks: [room.host_look || null, room.guest_look || null],
     lastActionAt: room.last_action_at || room.updated_at, turnLimitMs: TURN_LIMIT_MS, now: new Date().toISOString(),
     protocols: [room.host_protocols, room.guest_protocols],
     rated: !!room.rated,
@@ -564,7 +573,7 @@ Deno.serve(async (req) => {
       let created: any = null;
       for (let i = 0; i < 8 && !created; i++) {
         const { data, error } = await admin.from("secure_rooms").insert({
-          code: code(), host_id: user.id, host_name: name, host_badge: cleanBadge(body.badge), title, visibility,
+          code: code(), host_id: user.id, host_name: name, host_badge: cleanBadge(body.badge), host_look: cleanLook(body.look), title, visibility,
           password_salt: password.salt, password_hash: password.hash,
           draft_state: body.draft ? { on: true, rules: cleanDraftRules(body.draftRules) } : null,
           rated: body.rated === true,
@@ -599,7 +608,7 @@ Deno.serve(async (req) => {
           return fail(req, "パスワードが違います", 403);
         }
         const isDraft = !!(room.draft_state && room.draft_state.on);
-        const upd: any = { guest_id: user.id, guest_name: name, guest_badge: cleanBadge(body.badge), updated_at: new Date().toISOString() };
+        const upd: any = { guest_id: user.id, guest_name: name, guest_badge: cleanBadge(body.badge), guest_look: cleanLook(body.look), updated_at: new Date().toISOString() };
         if (isDraft) {
           // ドラフト開始: 先手後攻をランダム抽選し、ルールどおりの数だけプロトコルを抽選してプールに並べる
           const first = Math.random() < 0.5 ? 0 : 1;
