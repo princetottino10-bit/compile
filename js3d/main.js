@@ -1718,6 +1718,8 @@ function showPreview(uid) {
   if (isCompactHandUI()) {
     /* 対象選択中に候補を触ったのは「選ぶ」操作。効果パネルで選択帯を隠さない */
     if (uid && boardPick && Array.isArray(boardPick.req.candidates) && boardPick.req.candidates.includes(uid)) {
+      /* ただし選んだカードの効果は出したまま (toggleBoardPick が出す) */
+      if (Array.isArray(boardPick.chosen) && boardPick.chosen.includes(uid)) return;
       previewUid = null;
       UI.hideCardNote();
       return;
@@ -3059,6 +3061,10 @@ function toggleBoardPick(uid) {
     finishBoardPick(bp.chosen.slice());
     return;
   }
+  /* 選んで → 決定 の選択 (捨てる等) は、選んだカードの効果を右上に出す。
+     スマホではカードを触ると選ぶことになり、効果を読めないまま決めていたため */
+  if (bp.chosen.indexOf(uid) >= 0) { previewUid = uid; showCardInspector(uid); }
+  else if (previewUid === uid) { previewUid = null; UI.hideCardNote(); }
   /* 枚数が決まっている盤面の選択 (ちょうど N 枚) は、N 枚目を押した時点で確定する */
   if (bp.req.kind !== 'pickHand' && bp.min === bp.max && bp.max > 1 && bp.chosen.length === bp.max) {
     finishBoardPick(bp.chosen.slice());
@@ -3115,6 +3121,8 @@ function pickIsInstant(bp) {
 function finishBoardPick(picks) {
   const bp = boardPick;
   boardPick = null;
+  previewUid = null;
+  UI.hideCardNote();
   renderPickGo(null);
   board.clearCandidates();
   removePickBar();
