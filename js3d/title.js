@@ -159,14 +159,17 @@ export function runTitle(protocols, opts) {
             '<button data-mode="run" type="button">RUN <small>ROGUELIKE · WEEKLY</small></button>' +
             '<button data-mode="online" type="button">ONLINE GAME <small>ROOMS · RATED</small></button>' +
           '</div>' +
+          /* 下の段は4つだけ (ごちゃつかせない)。GACHA は COLLECTION の中、TUTORIAL・TRAINING・CARDS は MORE の中 */
           '<div class="tt-more">' +
-            '<button data-mode="tutorial" type="button">TUTORIAL <small>LEARN</small></button>' +
-            '<button data-mode="tsume" type="button">COMPUZZLE <small>詰めコンパイル</small></button>' +
-            '<button data-mode="gacha" type="button" class="tt-gacha">GACHA <small>CHIP ' + chipsNow() + '</small></button>' +
-            '<button data-mode="cosmetics" type="button" class="tt-cos">COSMETICS' + (hasNewCosmetics() ? '<i class="tt-newdot" aria-label="新しい見た目"></i>' : '') + '</button>' +
-            '<button data-mode="training" type="button">TRAINING <small>SANDBOX</small></button>' +
-            '<button data-mode="record" type="button">RECORD <small>STATS</small></button>' +
-            '<button data-mode="cards" type="button">CARDS <small>CARD LIST</small></button>' +
+            '<button data-mode="tsume" type="button">COMPUZZLE</button>' +
+            '<button data-mode="cosmetics" type="button" class="tt-cos">COLLECTION' + (hasNewCosmetics() ? '<i class="tt-newdot" aria-label="新しい見た目"></i>' : '') + '</button>' +
+            '<button data-mode="record" type="button">RECORD</button>' +
+            '<button data-mode="more" type="button" class="tt-morebtn" aria-expanded="false">MORE</button>' +
+            '<div class="tt-morepop" hidden>' +
+              '<button data-mode="tutorial" type="button">TUTORIAL <small>遊び方</small></button>' +
+              '<button data-mode="training" type="button">TRAINING <small>盤面を自由に</small></button>' +
+              '<button data-mode="cards" type="button">CARDS <small>カード一覧</small></button>' +
+            '</div>' +
           '</div>' +
         '</nav>';
       root.querySelector('#ttCorner').hidden = false;
@@ -207,6 +210,11 @@ export function runTitle(protocols, opts) {
         else if (button.dataset.mode === 'admin') openAdmin();
         else if (button.dataset.mode === 'cards') openCardList();
         else if (button.dataset.mode === 'gacha') openGacha();
+        else if (button.dataset.mode === 'more') {
+          const pop = root.querySelector('.tt-morepop');
+          pop.hidden = !pop.hidden;
+          button.setAttribute('aria-expanded', String(!pop.hidden));
+        }
         else if (button.dataset.mode === 'cosmetics') openCosmetics({ onClose: () => { const d = root.querySelector('.tt-cos .tt-newdot'); if (d && !hasNewCosmetics()) d.remove(); } });
         else if (button.dataset.mode === 'profile') openProfile(protocols);
         else if (button.dataset.mode === 'quick') { location.href = location.pathname + '?quick=1'; }

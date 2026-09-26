@@ -11,11 +11,12 @@ import { settings, setSetting } from './settings.js';
 import { playerLevel } from './stats-data.js';
 import { localRecords } from './stats.js';
 import { bonusXp } from './xp.js';
-import { backTex } from './cardtex.js';
+import { backTex, onSleeveArt } from './cardtex.js';
 import { playmatTexture } from './playmat.js';
 import { markerPreviewURL } from './control.js';
 import { emblemDataURL } from './emblems.js';
 import { displayName } from './displayname.js';
+import { openGacha, chipsNow } from './gacha-ui.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const SEEN_KEY = 'compileCosSeen';
@@ -85,6 +86,9 @@ export function hasNewCosmetics() {
 
 /* ---------- 見た目の絵 ---------- */
 const imgCache = new Map();
+/* 絵のスリーブは画像を読み込んでから描き直される。読めたら見本を作り直し、開いていれば画面も描き直す */
+let rerender = null;
+onSleeveArt((key) => { imgCache.delete('sleeve:' + key); if (rerender) rerender(); });
 function sleeveURL(key) {
   const k = 'sleeve:' + key;
   if (!imgCache.has(k)) imgCache.set(k, backTex(key).image.toDataURL('image/png'));
@@ -103,6 +107,12 @@ function markerURL(key) {
   if (!imgCache.has(k)) imgCache.set(k, markerPreviewURL(key, 240));
   return imgCache.get(k);
 }
+/** ガチャの結果などに出す見本 (スリーブは裏面の絵、マーカーは形と模様、称号は名前) */
+export function itemArtHtml(kind, key) {
+  if (kind === 'title') return '<span class="cm-titleart">' + esc(TITLES[key] || key) + '</span>';
+  return thumb(kind, key);
+}
+
 /* 小さい見本 (図鑑のマス) */
 function thumb(kind, key) {
   switch (kind) {
@@ -173,7 +183,9 @@ export function openCosmetics(opts) {
     const all = TABS.reduce((n, t) => n + itemsOf(t.kind).length, 0);
     const allGot = TABS.reduce((n, t) => n + itemsOf(t.kind).filter(([k]) => owned(t.kind, k, c)).length, 0);
     el.innerHTML = '<div class="cm-shell">' +
-      '<div class="cm-head"><b>// COSMETICS</b><span>集めた ' + allGot + ' / ' + all + '</span><button type="button" class="cm-x" aria-label="閉じる">×</button></div>' +
+      '<div class="cm-head"><b>// COLLECTION</b><span>集めた ' + allGot + ' / ' + all + '</span>' +
+        '<button type="button" class="cm-gacha">GACHA <small>CHIP ' + chipsNow() + '</small></button>' +
+        '<button type="button" class="cm-x" aria-label="閉じる">×</button></div>' +
       '<div class="cm-tabs" role="tablist">' + TABS.map(t => {
         const hasNew = !firstOpen && t.kind !== 'icon' && itemsOf(t.kind).some(([k]) => k !== '' && k !== DEFAULT_KEY[t.kind] && owned(t.kind, k, c) && !sn.has(t.kind + ':' + k));
         return '<button type="button" role="tab" data-tab="' + t.kind + '" class="' + (t.kind === tab ? 'on' : '') + '">' + t.label + (hasNew ? '<i class="cm-dot"></i>' : '') + '</button>';
@@ -199,6 +211,8 @@ export function openCosmetics(opts) {
     const b = ev.target.closest('button');
     if (!b) return;
     if (b.classList.contains('cm-x')) { close(); return; }
+    /* ガチャはこの画面から。閉じたら図鑑を描き直す (引いたものが並ぶ) */
+    if (b.classList.contains('cm-gacha')) { openGacha({ onClose: () => render() }); return; }
     if (b.dataset.tab) { tab = b.dataset.tab; focus = null; render(); return; }
     if (b.dataset.equip !== undefined) { setSetting(tab, b.dataset.equip); render(); return; }
     if (b.dataset.key !== undefined) {
@@ -216,6 +230,7 @@ export function openCosmetics(opts) {
     if (opts && opts.onClose) opts.onClose();
   };
   window.addEventListener('keydown', onKey);
+  rerender = () => { if (el.classList.contains('show')) render(); };
   render();
   el.classList.add('show');
 }

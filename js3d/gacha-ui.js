@@ -3,7 +3,8 @@
  *   タイトルの GACHA から開く。CHIP で1回 / 10連。出たものは図鑑にたまり、COSMETICS で選べる
  * ========================================================================= */
 import * as G from './gacha.js';
-import { playCapsule, RAR_NAMES } from './gachafx.js';
+import { playCapsule, RAR_NAMES, confetti, RAR_COLORS } from './gachafx.js';
+import { itemArtHtml } from './cosmetics-mode.js';
 import { playerLevel } from './stats-data.js';
 import { localRecords } from './stats.js';
 import { bonusXp, grantXp } from './xp.js';
@@ -24,7 +25,44 @@ export function chipsNow() {
   return G.chipsOf(G.loadGacha(), earnedChips());
 }
 
-export function openGacha() {
+/* 出たものを1枚ずつめくって、実物の見た目で見せる。押すと飛ばせる。EPIC 以上はめくった瞬間に光る */
+function revealResults(results) {
+  const calm = (() => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } })();
+  const el = document.createElement('div');
+  el.className = 'ga-reveal' + (results.length > 1 ? ' ten' : ' one');
+  el.innerHTML = '<div class="ga-cards">' + results.map((r, i) =>
+    '<div class="ga-rc r' + r.rar + '" style="--i:' + i + '"><div class="ga-flip">' +
+      '<div class="ga-back"><b>?</b></div>' +
+      '<div class="ga-front"><div class="ga-art">' + itemArtHtml(r.kind, r.key) + '</div>' +
+        '<small>' + RAR_NAMES[r.rar] + (r.dupe ? ' ・ かぶり +' + r.refund : ' ・ NEW') + '</small><b>' + esc(r.name) + '</b></div>' +
+    '</div></div>').join('') + '</div><p class="ga-tap">画面を押すと進みます</p>';
+  document.body.appendChild(el);
+  return new Promise((resolve) => {
+    const cards = [...el.querySelectorAll('.ga-rc')];
+    let i = 0, timer = null, done = false;
+    const flipNext = () => {
+      if (i >= cards.length) { done = true; el.classList.add('done'); return; }
+      const c = cards[i++];
+      c.classList.add('open');
+      const rar = results[i - 1].rar;
+      if (!calm && (rar === 'E' || rar === 'L')) confetti(RAR_COLORS[rar], rar === 'L' ? 160 : 70);
+      timer = setTimeout(flipNext, calm ? 0 : rar === 'L' ? 900 : rar === 'E' ? 600 : 260);
+    };
+    setTimeout(flipNext, calm ? 0 : 300);
+    el.onclick = () => {
+      if (!done) {                                   // めくり途中なら全部めくる
+        clearTimeout(timer);
+        cards.forEach(c => c.classList.add('open'));
+        done = true; el.classList.add('done');
+        return;
+      }
+      el.classList.add('out');
+      setTimeout(() => { el.remove(); resolve(); }, calm ? 0 : 250);
+    };
+  });
+}
+
+export function openGacha(opts) {
   let el = document.getElementById('gachaOv');
   if (!el) {
     el = document.createElement('div');
@@ -60,8 +98,7 @@ export function openGacha() {
   el.onclick = async (ev) => {
     if (ev.target === el || ev.target.closest('.pz-x')) {
       el.classList.remove('show');
-      const chip = document.querySelector('.tt-gacha small');      // タイトルのボタンの CHIP も合わせる
-      if (chip) chip.textContent = 'CHIP ' + chipsNow();
+      if (opts && opts.onClose) opts.onClose();
       return;
     }
     if (ev.target.closest('#gaUse')) { el.classList.remove('show'); openSettings(); return; }
@@ -72,7 +109,8 @@ export function openGacha() {
     if (!r) return;
     busy = true;
     const best = r.results.slice().sort((a, c) => ORDER.indexOf(a.rar) - ORDER.indexOf(c.rar))[0];
-    await playCapsule(document.body, best.rar, r.results.length > 1 ? best.name + ' ほか' : best.name);
+    await playCapsule(document.body, best.rar, r.results.length > 1 ? '10連 — 最高 ' + RAR_NAMES[best.rar] : best.name);
+    await revealResults(r.results);
     last = r.results;
     busy = false;
     render();

@@ -470,14 +470,14 @@ const SLEEVES = {
   /* 標準: 暗い紫の地に、桃→紫の斜めの帯とグリッチの線 (公式アート寄り) */
   default: { a: '#1b1030', b: '#08060f', grid: 'rgba(255,255,255,.035)', halo: '255,79,163', ring: 'rgba(255,79,163,.9)',
     ring2: 'rgba(139,92,246,.7)', strip: '255,79,163', glitch: true },
-  crimson: { pattern: 'scales', a: '#4a0f1c', b: '#1a0509', grid: 'rgba(255,120,120,.14)', halo: '255,176,64', ring: 'rgba(255,212,120,.85)',
+  crimson: { art: 'art/sleeves/crimson.webp', pattern: 'scales', a: '#4a0f1c', b: '#1a0509', grid: 'rgba(255,120,120,.14)', halo: '255,176,64', ring: 'rgba(255,212,120,.85)',
     ring2: 'rgba(255,120,120,.5)', strip: '255,120,120' },
   circuit: { a: '#0b2a22', b: '#04120e', grid: 'rgba(160,123,255,.08)', halo: '99,243,255', ring: 'rgba(160,123,255,.85)',
     ring2: 'rgba(185,164,255,.55)', strip: '160,123,255', circuit: true },
   holo: { a: '#241a3d', b: '#0b0a18', grid: 'rgba(255,255,255,.1)', halo: '185,140,255', ring: 'rgba(255,255,255,.85)',
     ring2: 'rgba(185,140,255,.6)', strip: '185,140,255', holo: true },
   /* 黒地に金の輪 */
-  void: { pattern: 'stars', a: '#0d0c12', b: '#020203', grid: 'rgba(255,215,130,.05)', halo: '255,196,90', ring: 'rgba(255,214,130,.9)',
+  void: { art: 'art/sleeves/void.webp', pattern: 'stars', a: '#0d0c12', b: '#020203', grid: 'rgba(255,215,130,.05)', halo: '255,196,90', ring: 'rgba(255,214,130,.9)',
     ring2: 'rgba(255,196,90,.4)', strip: '255,196,90' },
   /* 桜色の地に白の輪 */
   sakura: { pattern: 'sakura', a: '#3d1830', b: '#12070f', grid: 'rgba(255,200,225,.08)', halo: '255,170,210', ring: 'rgba(255,232,242,.92)',
@@ -500,7 +500,7 @@ const SLEEVES = {
   slayer: { a: '#2a0808', b: '#000000', grid: 'rgba(255,210,90,.05)', halo: '255,196,60', ring: 'rgba(255,214,90,.95)',
     ring2: 'rgba(220,30,60,.8)', strip: '255,40,70', slayer: true },
   /* ---- ガチャの見た目 (2) ---- */
-  tiger: { pattern: 'tiger', a: '#c96a14', b: '#6b2f04', grid: 'rgba(0,0,0,.06)', halo: '255,200,120', ring: 'rgba(20,10,0,.9)',
+  tiger: { art: 'art/sleeves/tiger.webp', pattern: 'tiger', a: '#c96a14', b: '#6b2f04', grid: 'rgba(0,0,0,.06)', halo: '255,200,120', ring: 'rgba(20,10,0,.9)',
     ring2: 'rgba(255,220,160,.7)', strip: '255,160,60' },
   pixel: { pattern: 'pixel', a: '#12103a', b: '#05041a', grid: 'rgba(120,120,255,.12)', halo: '124,240,208', ring: 'rgba(124,240,208,.9)',
     ring2: 'rgba(255,121,198,.7)', strip: '124,240,208' },
@@ -909,6 +909,10 @@ function drawSlayer(ctx) {
   ctx.restore();
 }
 
+/* 絵のスリーブの画像が読み込めたら知らせる (見た目の画面のプレビューを描き直すため) */
+const artListeners = new Set();
+export function onSleeveArt(fn) { artListeners.add(fn); return () => artListeners.delete(fn); }
+
 export function backTex(variant) {
   const key = SLEEVES[variant] ? variant : 'default';
   if (backTextures.has(key)) return backTextures.get(key);
@@ -917,138 +921,161 @@ export function backTex(variant) {
   cv.width = CARD.texW; cv.height = CARD.texH;
   const ctx = cv.getContext('2d');
   ctx.scale(cv.width / DW, cv.height / DH);
+  /* 絵のスリーブ (art): 画像を全面に敷き、上に値の帯だけ描く。画像は読み込めたら描き直す */
+  const paint = (art) => {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.scale(cv.width / DW, cv.height / DH);
+    if (art) {
+      ctx.save(); roundRect(ctx, 0, 0, DW, DH, 30); ctx.clip();
+      ctx.fillStyle = P.b || '#000'; ctx.fillRect(0, 0, DW, DH);
+      ctx.drawImage(art, 0, 0, DW, DH);
+      /* 縁を少し暗くして、カードの形を読みやすく */
+      const v = ctx.createRadialGradient(DW / 2, DH / 2, DH * 0.35, DW / 2, DH / 2, DH * 0.72);
+      v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.45)');
+      ctx.fillStyle = v; ctx.fillRect(0, 0, DW, DH);
+      ctx.restore();
+      ctx.strokeStyle = 'rgba(' + P.strip + ',.85)'; ctx.lineWidth = 6;
+      roundRect(ctx, 3, 3, DW - 6, DH - 6, 28); ctx.stroke();
+    } else {
 
-  const g = ctx.createLinearGradient(0, 0, DW, DH);
-  g.addColorStop(0, P.a);
-  g.addColorStop(0.5, P.b);
-  g.addColorStop(1, P.a);
-  ctx.fillStyle = g;
-  roundRect(ctx, 0, 0, DW, DH, 30); ctx.fill();
-
-  /* 走査線グリッド */
-  ctx.strokeStyle = P.grid;
-  ctx.lineWidth = 1;
-  for (let y = 24; y < DH; y += 26) { ctx.beginPath(); ctx.moveTo(18, y); ctx.lineTo(DW - 18, y); ctx.stroke(); }
-  for (let x = 24; x < DW; x += 26) { ctx.beginPath(); ctx.moveTo(x, 18); ctx.lineTo(x, DH - 18); ctx.stroke(); }
-
-  /* 標準: 斜めの帯とグリッチの横線 */
-  if (P.glitch) {
-    ctx.save();
-    roundRect(ctx, 0, 0, DW, DH, 30); ctx.clip();
-    ctx.translate(DW / 2, DH / 2);
-    ctx.rotate(-0.5);
-    const bg2 = ctx.createLinearGradient(-DW, 0, DW, 0);
-    bg2.addColorStop(0, 'rgba(255,79,163,0)');
-    bg2.addColorStop(0.4, 'rgba(255,79,163,.42)');
-    bg2.addColorStop(0.6, 'rgba(139,92,246,.45)');
-    bg2.addColorStop(1, 'rgba(139,92,246,0)');
-    ctx.fillStyle = bg2;
-    ctx.fillRect(-DW, -70, DW * 2, 140);
-    ctx.fillStyle = 'rgba(255,255,255,.12)';
-    ctx.fillRect(-DW, -72, DW * 2, 2);
-    ctx.fillRect(-DW, 70, DW * 2, 1);
-    ctx.restore();
-    let seed = 13;
-    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-    for (let k = 0; k < 40; k++) {
-      ctx.fillStyle = rnd() < 0.5 ? 'rgba(255,79,163,' + (0.12 + rnd() * 0.3) + ')' : 'rgba(185,164,255,' + (0.1 + rnd() * 0.25) + ')';
-      ctx.fillRect(20 + rnd() * (DW - 120), 60 + rnd() * (DH - 90), 20 + rnd() * 120, 2 + rnd() * 5);
-    }
-  }
-
-  /* HOLO: 斜めに虹色の光を流す */
-  if (P.holo) {
-    const hg = ctx.createLinearGradient(0, 0, DW, DH);
-    ['rgba(255,122,180,.32)', 'rgba(185,140,255,.3)', 'rgba(185,164,255,.3)', 'rgba(160,123,255,.28)', 'rgba(255,216,106,.3)']
-      .forEach((c, k, arr) => hg.addColorStop(k / (arr.length - 1), c));
-    ctx.fillStyle = hg;
+    const g = ctx.createLinearGradient(0, 0, DW, DH);
+    g.addColorStop(0, P.a);
+    g.addColorStop(0.5, P.b);
+    g.addColorStop(1, P.a);
+    ctx.fillStyle = g;
     roundRect(ctx, 0, 0, DW, DH, 30); ctx.fill();
-  }
-  /* CIRCUIT: 基板の配線 */
-  if (P.circuit) {
-    ctx.strokeStyle = 'rgba(160,123,255,.4)';
-    ctx.fillStyle = 'rgba(160,123,255,.6)';
-    ctx.lineWidth = 3;
-    let seed = 7;
-    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-    for (let k = 0; k < 26; k++) {
-      let x = 30 + rnd() * (DW - 60), y = 30 + rnd() * (DH - 60);
-      ctx.beginPath(); ctx.moveTo(x, y);
-      for (let t = 0; t < 3; t++) {
-        if (rnd() < 0.5) x = Math.max(24, Math.min(DW - 24, x + (rnd() - 0.5) * 220));
-        else y = Math.max(24, Math.min(DH - 24, y + (rnd() - 0.5) * 220));
-        ctx.lineTo(x, y);
+
+    /* 走査線グリッド */
+    ctx.strokeStyle = P.grid;
+    ctx.lineWidth = 1;
+    for (let y = 24; y < DH; y += 26) { ctx.beginPath(); ctx.moveTo(18, y); ctx.lineTo(DW - 18, y); ctx.stroke(); }
+    for (let x = 24; x < DW; x += 26) { ctx.beginPath(); ctx.moveTo(x, 18); ctx.lineTo(x, DH - 18); ctx.stroke(); }
+
+    /* 標準: 斜めの帯とグリッチの横線 */
+    if (P.glitch) {
+      ctx.save();
+      roundRect(ctx, 0, 0, DW, DH, 30); ctx.clip();
+      ctx.translate(DW / 2, DH / 2);
+      ctx.rotate(-0.5);
+      const bg2 = ctx.createLinearGradient(-DW, 0, DW, 0);
+      bg2.addColorStop(0, 'rgba(255,79,163,0)');
+      bg2.addColorStop(0.4, 'rgba(255,79,163,.42)');
+      bg2.addColorStop(0.6, 'rgba(139,92,246,.45)');
+      bg2.addColorStop(1, 'rgba(139,92,246,0)');
+      ctx.fillStyle = bg2;
+      ctx.fillRect(-DW, -70, DW * 2, 140);
+      ctx.fillStyle = 'rgba(255,255,255,.12)';
+      ctx.fillRect(-DW, -72, DW * 2, 2);
+      ctx.fillRect(-DW, 70, DW * 2, 1);
+      ctx.restore();
+      let seed = 13;
+      const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+      for (let k = 0; k < 40; k++) {
+        ctx.fillStyle = rnd() < 0.5 ? 'rgba(255,79,163,' + (0.12 + rnd() * 0.3) + ')' : 'rgba(185,164,255,' + (0.1 + rnd() * 0.25) + ')';
+        ctx.fillRect(20 + rnd() * (DW - 120), 60 + rnd() * (DH - 90), 20 + rnd() * 120, 2 + rnd() * 5);
       }
-      ctx.stroke();
-      ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2); ctx.fill();
     }
-  }
 
-  /* 報酬のスリーブの柄 */
-  if (P.pattern && PATTERNS[P.pattern]) { ctx.save(); roundRect(ctx, 0, 0, DW, DH, 30); ctx.clip(); PATTERNS[P.pattern](ctx); ctx.restore(); }
-  /* 下剋上の褒美: 巨人と、それを断ち切った一太刀 (中央の紋章も専用) */
-  if (P.slayer) drawSlayer(ctx);
+    /* HOLO: 斜めに虹色の光を流す */
+    if (P.holo) {
+      const hg = ctx.createLinearGradient(0, 0, DW, DH);
+      ['rgba(255,122,180,.32)', 'rgba(185,140,255,.3)', 'rgba(185,164,255,.3)', 'rgba(160,123,255,.28)', 'rgba(255,216,106,.3)']
+        .forEach((c, k, arr) => hg.addColorStop(k / (arr.length - 1), c));
+      ctx.fillStyle = hg;
+      roundRect(ctx, 0, 0, DW, DH, 30); ctx.fill();
+    }
+    /* CIRCUIT: 基板の配線 */
+    if (P.circuit) {
+      ctx.strokeStyle = 'rgba(160,123,255,.4)';
+      ctx.fillStyle = 'rgba(160,123,255,.6)';
+      ctx.lineWidth = 3;
+      let seed = 7;
+      const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+      for (let k = 0; k < 26; k++) {
+        let x = 30 + rnd() * (DW - 60), y = 30 + rnd() * (DH - 60);
+        ctx.beginPath(); ctx.moveTo(x, y);
+        for (let t = 0; t < 3; t++) {
+          if (rnd() < 0.5) x = Math.max(24, Math.min(DW - 24, x + (rnd() - 0.5) * 220));
+          else y = Math.max(24, Math.min(DH - 24, y + (rnd() - 0.5) * 220));
+          ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2); ctx.fill();
+      }
+    }
 
-  /* 中央の紋章 */
-  const cx = DW / 2, cy = DH / 2;
-  if (!P.slayer) {
-  const halo = ctx.createRadialGradient(cx, cy, 8, cx, cy, 210);
-  halo.addColorStop(0, 'rgba(' + P.halo + ',.5)');
-  halo.addColorStop(1, 'rgba(' + P.halo + ',0)');
-  ctx.fillStyle = halo; ctx.fillRect(0, 0, DW, DH);
+    /* 報酬のスリーブの柄 */
+    if (P.pattern && PATTERNS[P.pattern]) { ctx.save(); roundRect(ctx, 0, 0, DW, DH, 30); ctx.clip(); PATTERNS[P.pattern](ctx); ctx.restore(); }
+    /* 下剋上の褒美: 巨人と、それを断ち切った一太刀 (中央の紋章も専用) */
+    if (P.slayer) drawSlayer(ctx);
 
-  ctx.strokeStyle = P.ring;
-  ctx.lineWidth = 5;
-  ctx.beginPath(); ctx.arc(cx, cy, 118, 0, Math.PI * 2); ctx.stroke();
-  ctx.strokeStyle = P.ring2;
-  ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.arc(cx, cy, 146, 0, Math.PI * 2); ctx.stroke();
+    /* 中央の紋章 */
+    const cx = DW / 2, cy = DH / 2;
+    if (!P.slayer) {
+    const halo = ctx.createRadialGradient(cx, cy, 8, cx, cy, 210);
+    halo.addColorStop(0, 'rgba(' + P.halo + ',.5)');
+    halo.addColorStop(1, 'rgba(' + P.halo + ',0)');
+    ctx.fillStyle = halo; ctx.fillRect(0, 0, DW, DH);
 
-  ctx.font = '900 88px ' + FONT.logo;
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  if (P.glitch) {
-    ctx.fillStyle = 'rgba(255,79,163,.9)'; ctx.fillText('//', cx + 5, cy + 4);
-    ctx.fillStyle = 'rgba(139,92,246,.9)'; ctx.fillText('//', cx - 5, cy + 4);
-  }
-  ctx.fillStyle = 'rgba(245,240,255,.95)';
-  ctx.fillText('//', cx, cy + 4);
-  ctx.font = '800 22px ' + FONT.logo;
-  ctx.fillStyle = 'rgba(233,240,255,.62)';
-  if (P.pattern !== 'laurel') ctx.fillText('C O M P I L E', cx, cy + 190);   // 月桂冠は冠と重なるので出さない
-  }
-  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    ctx.strokeStyle = P.ring;
+    ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.arc(cx, cy, 118, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = P.ring2;
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cx, cy, 146, 0, Math.PI * 2); ctx.stroke();
 
-  /* 裏向きカードの値は 2。表と同じ位置に出して、覆われても読めるようにする */
-  const bh = HEAD_H;
-  const bg = ctx.createLinearGradient(0, 0, DW, 0);
-  bg.addColorStop(0, 'rgba(' + P.strip + ',.34)');
-  bg.addColorStop(0.62, 'rgba(8,11,21,.95)');
-  bg.addColorStop(1, 'rgba(8,11,21,.97)');
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, DW, bh);
-  const bsize = BADGE;
-  const bbx = DW - bsize - 12, bby = (bh - bsize) / 2;
-  ctx.fillStyle = 'rgba(160,190,215,.92)';
-  roundRect(ctx, bbx, bby, bsize, bsize, 14); ctx.fill();
-  ctx.fillStyle = '#04060e';
-  ctx.font = '800 ' + BADGE_FONT + 'px ' + FONT.hud;
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText('2', bbx + bsize / 2, bby + bsize / 2 + 3);
-  ctx.textAlign = 'left';
-  ctx.font = '700 30px ' + FONT.hud;
-  ctx.fillStyle = 'rgba(233,240,255,.86)';
-  ctx.fillText('FACE DOWN', 18, bh / 2 + 1);
-  ctx.textBaseline = 'alphabetic';
-  ctx.fillStyle = 'rgba(' + P.strip + ',.75)';
-  ctx.fillRect(0, bh - 4, DW, 4);
+    ctx.font = '900 88px ' + FONT.logo;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    if (P.glitch) {
+      ctx.fillStyle = 'rgba(255,79,163,.9)'; ctx.fillText('//', cx + 5, cy + 4);
+      ctx.fillStyle = 'rgba(139,92,246,.9)'; ctx.fillText('//', cx - 5, cy + 4);
+    }
+    ctx.fillStyle = 'rgba(245,240,255,.95)';
+    ctx.fillText('//', cx, cy + 4);
+    ctx.font = '800 22px ' + FONT.logo;
+    ctx.fillStyle = 'rgba(233,240,255,.62)';
+    if (P.pattern !== 'laurel') ctx.fillText('C O M P I L E', cx, cy + 190);   // 月桂冠は冠と重なるので出さない
+    }
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    }
+    /* 裏向きカードの値は 2。表と同じ位置に出して、覆われても読めるようにする */
+    const bh = HEAD_H;
+    const bg = ctx.createLinearGradient(0, 0, DW, 0);
+    bg.addColorStop(0, 'rgba(' + P.strip + ',.34)');
+    bg.addColorStop(0.62, 'rgba(8,11,21,.95)');
+    bg.addColorStop(1, 'rgba(8,11,21,.97)');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, DW, bh);
+    const bsize = BADGE;
+    const bbx = DW - bsize - 12, bby = (bh - bsize) / 2;
+    ctx.fillStyle = 'rgba(160,190,215,.92)';
+    roundRect(ctx, bbx, bby, bsize, bsize, 14); ctx.fill();
+    ctx.fillStyle = '#04060e';
+    ctx.font = '800 ' + BADGE_FONT + 'px ' + FONT.hud;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('2', bbx + bsize / 2, bby + bsize / 2 + 3);
+    ctx.textAlign = 'left';
+    ctx.font = '700 30px ' + FONT.hud;
+    ctx.fillStyle = 'rgba(233,240,255,.86)';
+    ctx.fillText('FACE DOWN', 18, bh / 2 + 1);
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = 'rgba(' + P.strip + ',.75)';
+    ctx.fillRect(0, bh - 4, DW, 4);
 
-  ctx.strokeStyle = 'rgba(' + P.strip + ',.55)';
-  ctx.lineWidth = 6;
-  roundRect(ctx, 3, 3, DW - 6, DH - 6, 28); ctx.stroke();
-
+    ctx.strokeStyle = 'rgba(' + P.strip + ',.55)';
+    ctx.lineWidth = 6;
+    roundRect(ctx, 3, 3, DW - 6, DH - 6, 28); ctx.stroke();
+  };
+  paint(null);
   const tex = new THREE.CanvasTexture(cv);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.anisotropy = maxAnisotropy;
+  if (P.art) {
+    const img = new Image();
+    img.onload = () => { paint(img); tex.needsUpdate = true; for (const fn of artListeners) fn(key); };
+    img.src = P.art;
+  }
   backTextures.set(key, tex);
   return tex;
 }
