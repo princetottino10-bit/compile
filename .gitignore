@@ -18,3 +18,4 @@ play-reference-ja.html
 bash.exe.stackdump
 scratch_*.txt
 _shots/
+scripts/fuzz_out/
