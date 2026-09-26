@@ -3,7 +3,8 @@
  *   node scripts/tsume_pick.js 候補1.json 候補2.json ...
  * 初級5問・中級10問・上級10問。どの段にも相手の盤面を使う問題を混ぜ、お題とプロトコルが偏らないように選ぶ。
  * 手順 (模範解答) を読める文にして一緒に書き、種 1 の盤面で解けることを確かめる。
- * 選ばなかった候補 (読む量 7 以上) は、日替わりの「今日の問題」用に data/tsume-daily.json へ */
+ * 選ばなかった候補 (読む量 7 以上) は、日替わりの「今日の問題」用に data/tsume-daily.json へ。
+ * CPU がそのまま解ける問題と、相手の裏向きのカード (見えない) 次第で解けなくなる問題は使わない */
 const fs = require('fs');
 const path = require('path');
 const E = require('../engine.js');
@@ -107,6 +108,54 @@ function aiSolves(p) {
   return false;
 }
 
+/* 公平か: 相手の裏向きのカード (解く人には見えない) を別のカードに入れ替えても、どれか1つの手順で解けるか。
+   入れ替えを3通り試し、1つでも解けなければ「見えない情報に頼る問題」として使わない */
+const protoCards = Object.fromEntries(cards.protocols.map(p => [p.name, p.cards.map(c => c.id)]));
+function combosAll(c, k) { const out = []; const rec = (i, cur) => { if (out.length > 60) return; if (cur.length === k) { out.push(cur.slice()); return; } for (let j = i; j < c.length; j++) { cur.push(c[j]); rec(j + 1, cur); cur.pop(); } }; rec(0, []); return out; }
+function allAnswers(req) {
+  const min = req.min !== undefined ? req.min : 1, max = req.max !== undefined ? req.max : 1;
+  switch (req.kind) {
+    case 'pickCard': case 'pickHand': { let o = []; const c = req.candidates || []; for (let k = min; k <= Math.min(max, c.length); k++) o = o.concat(combosAll(c, k)); return o; }
+    case 'pickLine': return req.lines.map(l => [l]);
+    case 'yesNo': return [['yes'], []];
+    case 'option': { const o = (req.options || []).map((_, i) => [i]); if (req.optional) o.push([]); return o; }
+    case 'arrange': return [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]];
+    default: return [];
+  }
+}
+function anySolution(spec, p) {
+  let nodes = 0;
+  const visit = (res) => {
+    if (++nodes > 20000 || res.error) return false;
+    const st = res.state;
+    if (st.winner !== null || st.turn !== ME) return solved(p, res);
+    const q = res.requests[0];
+    if (q) {
+      if (q.player !== ME) return visit(E.apply(st, { type: 'choose', id: q.id, picks: E.ai.answer(st, q) }));
+      for (const picks of allAnswers(q)) if (visit(E.apply(st, { type: 'choose', id: q.id, picks }))) return true;
+      return false;
+    }
+    for (const a of E.legalActions(st)) if (visit(E.apply(st, a))) return true;
+    return false;
+  };
+  return visit(E.newPuzzle(spec, { seed: 1 }));
+}
+function fair(p) {
+  const opp = p.spec.sides[1];
+  const hidden = [];
+  opp.lines.forEach((ln, l) => ln.forEach(([, up], i) => { if (!up) hidden.push([l, i]); }));
+  if (!hidden.length) return true;
+  const used = new Set(opp.lines.flat().map(([d]) => d));
+  const pool = opp.protos.flatMap(n => protoCards[n]).filter(d => !used.has(d));
+  for (let t = 0; t < 3; t++) {
+    const spec = JSON.parse(JSON.stringify(p.spec));
+    const avail = pool.slice(t * 3).concat(pool.slice(0, t * 3));      // 決まった順で入れ替える (再実行で同じ結果)
+    hidden.forEach(([l, i], k) => { if (avail[k]) spec.sides[1].lines[l][i][0] = avail[k]; });
+    if (!anySolution(spec, p)) return false;
+  }
+  return true;
+}
+
 function endState(res) {
   for (const t of (res.trace || [])) if (t.st && t.st.turn !== ME) return t.st;
   return res.state;
@@ -132,6 +181,9 @@ function solved(p, res) {
   const before = all.length;
   all = all.filter(p => !aiSolves(p));
   console.log('CPU がそのまま解ける問題を除いた: ' + (before - all.length) + ' / ' + before);
+  const before2 = all.length;
+  all = all.filter(fair);
+  console.log('相手の裏向きのカード次第で解けなくなる問題を除いた: ' + (before2 - all.length) + ' / ' + before2);
 
   const out = [];
   const used = new Set();
