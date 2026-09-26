@@ -52,3 +52,32 @@ test('実績は両方の端末で取った分を合わせる', () => {
   const d = decide(local, { data: { compileTrophies: JSON.stringify({ b: 3, c: 7 }) }, at: 200 }, meta);
   assert.deepEqual(JSON.parse(d.push.compileTrophies), { a: 5, b: 3, c: 7 });
 });
+
+/* 週替わり3連戦・RUN の途中の進み具合は、アカウントの古い中身で巻き戻さない (対戦中に同期が走って、勝ちが消えていた) */
+const wk = (o) => JSON.stringify({ v: 1, week: 'W2960', attempt: 11, stage: 0, decks: [], phase: 'choose', clears: 0, bestStage: 2, submitted: false, ...o });
+test('週替わり: 対戦中にアカウントの古い「負け」が来ても、進んでいる方を残す', () => {
+  const local = { compileWeekly: wk({ stage: 0, decks: [['A', 'B', 'C']], phase: 'battle' }) };
+  const meta = { hash: hashOf(local), at: 100 };
+  const d = decide(local, { data: { compileWeekly: wk({ attempt: 10, phase: 'lost' }) }, at: 200 }, meta);
+  assert.ok(d.apply === null || JSON.parse(d.apply.compileWeekly).phase === 'battle', '進んでいる方 (対戦中) を残す');
+  const d2 = decide({ compileWeekly: wk({ stage: 1, phase: 'choose' }) }, { data: { compileWeekly: wk({ stage: 0, phase: 'battle' }) }, at: 300 },
+    { hash: 'x', at: 100 });
+  assert.equal(JSON.parse(d2.push.compileWeekly).stage, 1);
+});
+test('週替わり: 別の端末で先に進んでいれば、そちらを読む。週が変われば新しい週', () => {
+  const local = { compileWeekly: wk({ stage: 0, phase: 'choose' }) };
+  const meta = { hash: hashOf(local), at: 100 };
+  const d = decide(local, { data: { compileWeekly: wk({ stage: 2, phase: 'battle', decks: [['A'], ['B'], ['C']] }) }, at: 200 }, meta);
+  assert.equal(JSON.parse(d.apply.compileWeekly).stage, 2);
+  const d2 = decide({ compileWeekly: wk({ stage: 2, phase: 'battle' }) }, { data: { compileWeekly: wk({ week: 'W2961', stage: 0, phase: 'idle', attempt: 0 }) }, at: 300 }, { hash: 'x', at: 100 });
+  assert.equal(JSON.parse(d2.push.compileWeekly).week, 'W2961');
+});
+test('RUN: 同じ挑戦なら、対戦の記録が多い方を残す。新しく始めた挑戦はそちら', () => {
+  const run = (o) => JSON.stringify({ v: 2, phase: 'map', startedAt: 1000, history: [], visited: [], ...o });
+  const local = { compileRun: run({ history: [{ win: true }], visited: ['0-0', '1-0'], phase: 'map' }) };
+  const meta = { hash: hashOf(local), at: 100 };
+  const d = decide(local, { data: { compileRun: run({ phase: 'battle', visited: ['0-0'] }) }, at: 200 }, meta);
+  assert.ok(d.apply === null || JSON.parse(d.apply.compileRun).history.length === 1);
+  const d2 = decide(local, { data: { compileRun: run({ startedAt: 2000 }) }, at: 200 }, meta);
+  assert.equal(JSON.parse(d2.apply.compileRun).startedAt, 2000);
+});

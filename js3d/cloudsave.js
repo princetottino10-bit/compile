@@ -79,8 +79,43 @@ function unionTrophies(a, b) {
     return a || b;
   }
 }
+/* 週替わり3連戦・RUN の途中経過は、進んでいる方を残す。
+   対戦中に同期が走ってアカウントの古い中身 (前の挑戦の「負け」など) を書くと、決着のときに「対戦中」でなくなって勝ちが消えていた */
+const parse = (v) => { try { return JSON.parse(v); } catch (e) { return null; } };
+const WEEK_PHASE = { idle: 0, choose: 1, battle: 2, lost: 3, clear: 4 };
+function weeklyRank(w) {
+  return w ? [String(w.week || ''), w.attempt | 0, w.stage | 0, WEEK_PHASE[w.phase] | 0] : null;
+}
+function runRank(r) {
+  return r ? [Number(r.startedAt) || 0, (r.history || []).length, (r.visited || []).length] : null;
+}
+function cmp(x, y) {
+  for (let i = 0; i < Math.max(x.length, y.length); i++) {
+    if (x[i] === y[i]) continue;
+    return x[i] > y[i] ? 1 : -1;
+  }
+  return 0;
+}
+/* 進んでいる方の文字列を返す (同じなら a)。読めない方は選ばない */
+function further(a, b, rank) {
+  const ra = a ? rank(parse(a)) : null, rb = b ? rank(parse(b)) : null;
+  if (!rb) return a;
+  if (!ra) return b;
+  return cmp(rb, ra) > 0 ? b : a;
+}
+function mergeWeekly(a, b) {
+  const pick = further(a, b, weeklyRank);
+  const x = parse(a), y = parse(b), p = parse(pick);
+  if (!p || !x || !y || x.week !== y.week) return pick;
+  /* 同じ週なら、クリア回数・最高到達・名前を載せたかは多い方 */
+  return JSON.stringify({ ...p, clears: Math.max(x.clears | 0, y.clears | 0), bestStage: Math.max(x.bestStage | 0, y.bestStage | 0),
+    submitted: !!(x.submitted || y.submitted) });
+}
+
 /* どちらを正にしても、残すべきもの (RUN の最高記録・実績) は合わせる */
 function keepBest(merged, local, rd) {
+  if (local.compileWeekly || rd.compileWeekly) merged.compileWeekly = local.compileWeekly && rd.compileWeekly ? mergeWeekly(local.compileWeekly, rd.compileWeekly) : (merged.compileWeekly || local.compileWeekly || rd.compileWeekly);
+  if (local.compileRun && rd.compileRun) merged.compileRun = further(local.compileRun, rd.compileRun, runRank);
   /* 解放した HEAT は大きい方 */
   if (local.compileRunHeat || rd.compileRunHeat) merged.compileRunHeat = String(Math.max(parseInt(local.compileRunHeat, 10) || 0, parseInt(rd.compileRunHeat, 10) || 0));
   if (local.compileRunBest && rd.compileRunBest) merged.compileRunBest = betterBest(local.compileRunBest, rd.compileRunBest);
@@ -109,7 +144,10 @@ export function decide(local, remote, meta) {
     const merged = keepBest({ ...local }, local, rd);
     return { apply: hashOf(merged) === hashOf(local) ? null : merged, push: merged };
   }
-  return { apply: remoteNewer && hashOf(rd) !== hashOf(local) ? rd : null, push: null };
+  if (!remoteNewer || hashOf(rd) === hashOf(local)) return { apply: null, push: null };
+  /* アカウントの方が新しい: 読む。ただし途中経過は進んでいる方 (こちらの方が進んでいれば送り返す) */
+  const merged = keepBest({ ...rd }, local, rd);
+  return { apply: hashOf(merged) === hashOf(local) ? null : merged, push: hashOf(merged) === hashOf(rd) ? null : merged };
 }
 
 /* 上書きする前のこの端末の中身を控えておく (1つだけ。上書きのたびに新しくする) */
