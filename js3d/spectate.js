@@ -12,6 +12,7 @@ import { shuffled } from './solodraft.js';
 import { emblemDataURL } from './emblems.js';
 import * as G from './gacha.js';
 import { earnedChips } from './chips.js';
+import { showTitleBack, hideTitleBack } from './titleback.js';
 
 export const BET_AMOUNTS = [5, 15, 30, 50];
 export const BET_LEVEL = 1;                        // ベットの試合の CPU の強さ (ふつう)
@@ -103,12 +104,13 @@ export function openSpectate(protocols, opts = {}) {
           '" data-level="' + i + '">' + LEVEL_LABELS[i] + '</button>').join('') +
           '<button type="button" class="wt-go" data-free="1"' + (free.a.length === 3 && free.b.length === 3 ? '' : ' disabled') + '>観戦する</button></div>' +
       '</section>' +
-      '<div class="op-foot"><button type="button" data-back="1">← タイトルへ</button></div></div>';
+      '</div>';
   };
   render();
   el.classList.add('show');
 
   return new Promise((resolve) => {
+    showTitleBack(() => { el.classList.remove('show'); resolve(null); });
     el.onchange = (ev) => {
       const sel = ev.target.closest('[data-av]');
       if (sel) av[sel.dataset.av] = sel.value;
@@ -116,7 +118,6 @@ export function openSpectate(protocols, opts = {}) {
     el.onclick = (ev) => {
       const t = ev.target.closest('button');
       if (!t || t.disabled) return;
-      if (t.dataset.back) { el.classList.remove('show'); resolve(null); return; }
       if (t.dataset.side !== undefined) side = +t.dataset.side;
       else if (t.dataset.amount) amount = +t.dataset.amount;
       else if (t.dataset.reroll) { match = draw(); side = null; }
@@ -131,11 +132,13 @@ export function openSpectate(protocols, opts = {}) {
         /* 賭けた分はここで払う (観戦の途中で閉じても戻らない) */
         if (!G.spendChips(amount, earnedChips())) { render(); return; }
         el.classList.remove('show');
+        hideTitleBack();
         resolve({ a: match.a, b: match.b, mates: tag ? { p0: match.am, p1: match.bm } : null, level: BET_LEVEL, av: pickAv(),
           bet: { side, amount, odds, payout: payoutOf(amount, odds) } });
         return;
       } else if (t.dataset.free) {
         el.classList.remove('show');
+        hideTitleBack();
         resolve({ a: free.a.slice(), b: free.b.slice(), mates: tag ? { p0: mateFor(free.a), p1: mateFor(free.b) } : null, level: free.level, bet: null, av: pickAv() });
         return;
       }

@@ -6,6 +6,7 @@
  *   解いた問題は経験値の帳簿 (k:ts:問題の id / 今日の問題は k:dp:日) で数える (アカウントの保存にも載る)
  * ========================================================================= */
 
+import { showTitleBack, hideTitleBack } from './titleback.js';
 import { xpLog, XP_GAIN } from './xp.js';
 import { dayIndex } from './daily.js';
 
@@ -141,7 +142,7 @@ export async function openTsumeList() {
   const todayHard = dailyPuzzleDone(undefined, undefined, true);
   const el = overlay(
     '<div class="pz-card ts-card" role="dialog" aria-modal="true" aria-labelledby="tsTitle">' +
-      '<div class="pz-head"><b id="tsTitle">詰めコンパイル</b><button type="button" class="pz-x" aria-label="戻る">×</button></div>' +
+      '<div class="pz-head"><b id="tsTitle">詰めコンパイル</b></div>' +
       '<p class="ts-lead">1手番で完結する問題です。効果の連鎖や割り込みを読み切って、お題を達成してください。' +
         '<span class="ts-count">' + done + ' / ' + list.length + ' 問クリア</span></p>' +
       '<button type="button" class="ts-daily' + (today ? ' done' : '') + '" data-id="daily">' +
@@ -164,9 +165,10 @@ export async function openTsumeList() {
       }).join('') : '<p class="pz-note">問題を読み込めませんでした。通信を確かめて、もう一度開いてください。</p>') +
     '</div>');
   return new Promise((resolve) => {
-    const close = (id) => { el.classList.remove('show'); resolve(id); };
+    const close = (id) => { hideTitleBack(); el.classList.remove('show'); resolve(id); };
+    showTitleBack(() => close(null));
     el.onclick = (ev) => {
-      if (ev.target === el || ev.target.closest('.pz-x')) { close(null); return; }
+      if (ev.target === el) { close(null); return; }
       const b = ev.target.closest('button[data-id]');
       if (b) close(b.dataset.id);
     };

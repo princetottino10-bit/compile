@@ -4,6 +4,7 @@
  *               { go: 'hub' } なら RUN の入口へ戻る
  *   weeklyHud: 対戦中の表示 / showWeeklyAfterGame: 決着後
  * ========================================================================= */
+import { showTitleBack, hideTitleBack } from './titleback.js';
 import { listReplays } from './replays.js';
 import { displayName } from './displayname.js';
 import * as W from './weekly.js';
@@ -64,7 +65,8 @@ export function openWeekly(protocols, cardsOf) {
     let picked = [];
     let clears = '<p class="rn-note">クリア者を読み込み中…</p>';
     const save = (next) => { s = next; W.saveWeekly(s); render(); };
-    const done = (v) => { el.classList.remove('show'); resolve(v); };
+    const done = (v) => { hideTitleBack(); el.classList.remove('show'); resolve(v); };
+    showTitleBack(() => done(null));
 
     const oppRow = (o, i) => '<li class="' + (s.phase !== 'idle' && s.phase !== 'lost' && s.phase !== 'clear' && i === s.stage ? 'now' : '') + '">' +
       '<small>' + (o.boss ? 'BOSS' : '第' + (i + 1) + '戦') + ' ・ ' + esc(levelLabel(o.level)) + '</small>' + deckLine(o.deck, byName) + '</li>';

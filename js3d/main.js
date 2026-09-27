@@ -789,7 +789,7 @@ async function boot() {
         level: opp ? opp.level : undefined });
       if (chosen.online) { nextMode = 'online'; continue; }
       if (chosen.back) {
-        if (opp) continue;                                  // 相手を選び直す
+        if (opp && !chosen.title) continue;                // 相手を選び直す (右上の「タイトル」ならタイトルまで)
         nextMode = await runTitle(cards.protocols, { menuOnly: true });
         continue;
       }

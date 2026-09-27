@@ -17,6 +17,7 @@ import { PROTOCOL_STRENGTH } from './protocol-strength.js';
 /* 難易度と固定デッキ (最強・ロック特化・挑戦者)。固定デッキは「自由に選ぶ」でだけ使える */
 import { LEVEL_LABELS as AI_LABELS, CHALLENGERS, CHALLENGER_BASE, isChallenger, fixedDeck, challengerName, levelLabel } from './aidecks.js';
 export { STRONGEST_AI, LOCK_AI } from './aidecks.js';
+import { showTitleBack, hideTitleBack } from './titleback.js';
 
 const MODES = [
   { key: 'draft', label: 'ドラフト (公式)' },
@@ -379,6 +380,7 @@ export function runSetup(protocols, options = {}) {
 
   return new Promise((resolve) => {
     const close = (result) => {
+      hideTitleBack();
       if (sameBtn) sameBtn.remove();
       restBtn.hidden = true;
       root.classList.remove('show');
@@ -410,6 +412,8 @@ export function runSetup(protocols, options = {}) {
       close({ back: true });
     };
     onlineBtn.onclick = () => close({ online: true });
+    /* 右上の「タイトル」は、相手を選ぶ画面を飛ばしてタイトルまで戻る */
+    showTitleBack(() => close({ back: true, title: true }));
     restBtn.onclick = () => {
       if (mode !== 'free' || training || !picked.length || picked.length > 2) return;
       /* 自分の残りは、選んだものと固定デッキの相手のものを除いた範囲から。相手は固定デッキか、さらに残りから */

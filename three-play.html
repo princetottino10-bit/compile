@@ -2395,6 +2395,19 @@
     background:linear-gradient(100deg,var(--gold),var(--pink));clip-path:var(--cut-s);animation:rnCap .5s cubic-bezier(.2,1.4,.4,1);}
   .rn-phoenix{color:var(--gold)!important;font-weight:900!important;text-shadow:0 0 16px rgba(255,120,60,.6);}
   .rn-confetti{position:fixed;inset:0;z-index:80;pointer-events:none;}
+  /* ---- 「タイトルへ」(titleback.js): タイトルから入る画面では、いつも右上に同じ形で ---- */
+  .title-back{position:fixed;z-index:95;top:max(12px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));
+    display:inline-flex;align-items:center;gap:8px;padding:9px 16px 9px 13px;cursor:pointer;
+    border:1px solid rgba(255,255,255,.22);background:rgba(10,8,22,.82);backdrop-filter:blur(6px);color:var(--ink);
+    font:800 12px/1 var(--font-ui);letter-spacing:.12em;clip-path:var(--cut-s);transition:background .15s,border-color .15s,color .15s;}
+  .title-back span{font-size:14px;color:var(--pink);transition:transform .15s;}
+  .title-back:hover{background:rgba(255,79,163,.16);border-color:var(--pink);color:#fff;}
+  .title-back:hover span{transform:translateX(-3px);}
+  .title-back:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+  .title-back[hidden]{display:none;}
+  /* 画面の見出しの右端は、ボタンのぶん空けておく (観戦の CHIP など) */
+  #oppOv .op-head,#watchOv .op-head{padding-right:118px;}
+  @media (prefers-reduced-motion:reduce){ .title-back,.title-back span{transition:none;} }
   /* ---- COSMETICS のモード (cosmetics-mode.js) ---- */
   #cosOv{position:fixed;inset:0;z-index:63;display:none;background:radial-gradient(circle at 25% 30%,rgba(139,92,246,.18),transparent 55%),rgba(5,4,12,.94);
     backdrop-filter:blur(6px);padding:max(14px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));}
@@ -3340,9 +3353,9 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=812141a2a4",
+      "./js3d/main.js": "./js3d/main.js?v=aefb0512c4",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
-      "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=2142e0957c",
+      "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=4946ca0e9f",
       "./js3d/panel.js": "./js3d/panel.js?v=d4a1f0a181",
       "./js3d/plates.js": "./js3d/plates.js?v=51eb123246",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=e0273dcae0",
@@ -3358,27 +3371,28 @@
       "./js3d/review.js": "./js3d/review.js?v=34f174153b",
       "./js3d/rewards.js": "./js3d/rewards.js?v=a8b97d1190",
       "./js3d/room.js": "./js3d/room.js?v=c34129de95",
-      "./js3d/roomui.js": "./js3d/roomui.js?v=20a6a255a0",
-      "./js3d/run-ui.js": "./js3d/run-ui.js?v=bc9741dc10",
+      "./js3d/roomui.js": "./js3d/roomui.js?v=2557b7dc57",
+      "./js3d/run-ui.js": "./js3d/run-ui.js?v=96b8b476de",
       "./js3d/run.js": "./js3d/run.js?v=0fd14ce273",
       "./js3d/selectui.js": "./js3d/selectui.js?v=208abdaebc",
       "./js3d/settings.js": "./js3d/settings.js?v=0607ea01ed",
-      "./js3d/setup.js": "./js3d/setup.js?v=e68e661d50",
+      "./js3d/setup.js": "./js3d/setup.js?v=82e1ec30cf",
       "./js3d/solodraft.js": "./js3d/solodraft.js?v=b036b97879",
-      "./js3d/spectate.js": "./js3d/spectate.js?v=64e3111a2f",
+      "./js3d/spectate.js": "./js3d/spectate.js?v=00c1ff37f6",
       "./js3d/stage.js": "./js3d/stage.js?v=e3cda4525b",
       "./js3d/stats-data.js": "./js3d/stats-data.js?v=bcf7d5e977",
       "./js3d/stats.js": "./js3d/stats.js?v=e2b9647dba",
       "./js3d/steps.js": "./js3d/steps.js?v=13e73b20fe",
       "./js3d/theme.js": "./js3d/theme.js?v=b02da60dc1",
       "./js3d/title.js": "./js3d/title.js?v=dfb9e6739c",
+      "./js3d/titleback.js": "./js3d/titleback.js?v=bafbbc3a84",
       "./js3d/training.js": "./js3d/training.js?v=3018b4399e",
-      "./js3d/tsume.js": "./js3d/tsume.js?v=95789a9ad4",
+      "./js3d/tsume.js": "./js3d/tsume.js?v=4700b22c0d",
       "./js3d/turning.js": "./js3d/turning.js?v=9c7f79654e",
       "./js3d/tutorial.js": "./js3d/tutorial.js?v=0e6d6237ad",
       "./js3d/tween.js": "./js3d/tween.js?v=99b25c0d63",
       "./js3d/ui.js": "./js3d/ui.js?v=c615b35dbe",
-      "./js3d/weekly-ui.js": "./js3d/weekly-ui.js?v=e2511b1efe",
+      "./js3d/weekly-ui.js": "./js3d/weekly-ui.js?v=18513b5fd2",
       "./js3d/weekly.js": "./js3d/weekly.js?v=5605476b1c",
       "./js3d/xp.js": "./js3d/xp.js?v=39e78466ed"
     }
@@ -3391,7 +3405,7 @@
   <link rel="modulepreload" href="js3d/account.js?v=652f7dff55">
   <link rel="modulepreload" href="js3d/playlog.js?v=90aaffedee">
   <link rel="modulepreload" href="js3d/feel.js?v=83bdf7f262">
-  <link rel="modulepreload" href="js3d/spectate.js?v=64e3111a2f">
+  <link rel="modulepreload" href="js3d/spectate.js?v=00c1ff37f6">
   <link rel="modulepreload" href="js3d/avatar.js?v=528a318280">
   <link rel="modulepreload" href="js3d/aitalk.js?v=3b756521cb">
   <link rel="modulepreload" href="js3d/motion.js?v=36861b0081">
@@ -3407,12 +3421,12 @@
   <link rel="modulepreload" href="js3d/board.js?v=9fe57e2090">
   <link rel="modulepreload" href="js3d/control.js?v=c1b87ebc63">
   <link rel="modulepreload" href="js3d/panel.js?v=d4a1f0a181">
-  <link rel="modulepreload" href="js3d/setup.js?v=e68e661d50">
+  <link rel="modulepreload" href="js3d/setup.js?v=82e1ec30cf">
   <link rel="modulepreload" href="js3d/title.js?v=dfb9e6739c">
   <link rel="modulepreload" href="js3d/training.js?v=3018b4399e">
   <link rel="modulepreload" href="js3d/room.js?v=c34129de95">
   <link rel="modulepreload" href="js3d/puzzle.js?v=a6a0904519">
-  <link rel="modulepreload" href="js3d/tsume.js?v=95789a9ad4">
+  <link rel="modulepreload" href="js3d/tsume.js?v=4700b22c0d">
   <link rel="modulepreload" href="js3d/errorreport.js?v=61f59a3cb3">
   <link rel="modulepreload" href="js3d/tutorial.js?v=0e6d6237ad">
   <link rel="modulepreload" href="js3d/settings.js?v=0607ea01ed">
@@ -3426,14 +3440,14 @@
   <link rel="modulepreload" href="js3d/plates.js?v=51eb123246">
   <link rel="modulepreload" href="js3d/playmat.js?v=1c8f36818a">
   <link rel="modulepreload" href="js3d/cardlist-ov.js?v=1d673fd0d2">
-  <link rel="modulepreload" href="js3d/opponent-select.js?v=2142e0957c">
+  <link rel="modulepreload" href="js3d/opponent-select.js?v=4946ca0e9f">
   <link rel="modulepreload" href="js3d/aidecks.js?v=8d249240bd">
-  <link rel="modulepreload" href="js3d/run-ui.js?v=bc9741dc10">
-  <link rel="modulepreload" href="js3d/weekly-ui.js?v=e2511b1efe">
+  <link rel="modulepreload" href="js3d/run-ui.js?v=96b8b476de">
+  <link rel="modulepreload" href="js3d/weekly-ui.js?v=18513b5fd2">
   <link rel="modulepreload" href="js3d/run.js?v=0fd14ce273">
   <link rel="modulepreload" href="js3d/weekly.js?v=5605476b1c">
   <link rel="modulepreload" href="js3d/review.js?v=34f174153b">
-  <link rel="modulepreload" href="js3d/roomui.js?v=20a6a255a0">
+  <link rel="modulepreload" href="js3d/roomui.js?v=2557b7dc57">
   <link rel="modulepreload" href="js3d/selectui.js?v=208abdaebc">
   <link rel="modulepreload" href="js3d/cardtex.js?v=985ea460e2">
   <link rel="modulepreload" href="js3d/fx.js?v=65e09c9137">
@@ -3453,6 +3467,7 @@
   <link rel="modulepreload" href="js3d/admin-ui.js?v=1e453b8f99">
   <link rel="modulepreload" href="js3d/device.js?v=b519fe2cae">
   <link rel="modulepreload" href="js3d/protocol-strength.js?v=c719e5b65c">
+  <link rel="modulepreload" href="js3d/titleback.js?v=bafbbc3a84">
   <link rel="modulepreload" href="vendor/three.core.js">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/EffectComposer.js">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/RenderPass.js">
@@ -3480,6 +3495,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=812141a2a4"></script>
+  <script type="module" src="js3d/main.js?v=aefb0512c4"></script>
 </body>
 </html>

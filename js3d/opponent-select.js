@@ -6,6 +6,7 @@
  *   おまかせ (プロトコルも相手も自動、かんたん)
  *   → { level } / { underdog: true } / { quick: true } / null (タイトルへ)
  * ========================================================================= */
+import { showTitleBack, hideTitleBack } from './titleback.js';
 import { LEVEL_LABELS, STRONGEST_AI, LOCK_AI, CHALLENGERS, CHALLENGER_BASE, UNDERDOG_DECK, UNDERDOG_LEVEL } from './aidecks.js';
 import { localRecords } from './stats.js';
 import { settings } from './settings.js';
@@ -57,15 +58,17 @@ export function openOpponentSelect(protocols) {
       '<div class="op-row">' + card('underdog', '下剋上' + (cleared ? ' <em>✓ TITLE — GIANT SLAYER</em>' : ''),
         'あなた (最弱) vs 最強。勝つと 称号 GIANT SLAYER・専用スリーブとマーカー・+100 XP',
         '<span class="op-vs">' + deck(UNDERDOG_DECK) + '<i>VS</i>' + deck(STRONGEST_AI) + '</span>', ' wide') + '</div></section>' +
-    '<div class="op-foot"><button type="button" data-opp="back">← タイトルへ</button></div></div>';
+    '</div>';
   el.classList.add('show');
 
   return new Promise((resolve) => {
+    showTitleBack(() => { el.classList.remove('show'); resolve(null); });
     el.onclick = (ev) => {
       const t = ev.target.closest('[data-opp]');
       if (!t) return;
       const key = t.dataset.opp;
       el.classList.remove('show');
+      hideTitleBack();
       if (key === 'back') { resolve(null); return; }
       if (key === 'quick') { resolve({ quick: true }); return; }
       try { localStorage.setItem(LAST_KEY, key); } catch (e) { /* private mode */ }

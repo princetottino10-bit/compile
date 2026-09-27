@@ -4,6 +4,7 @@
  *   status が playing になった publicState を resolve して返す。
  *   戻るを押した場合は null を resolve する (呼び出し側でソロ設定へ)。
  * ========================================================================= */
+import { showTitleBack, hideTitleBack } from './titleback.js';
 import { displayName, setDisplayName, nameFieldHtml, bindNameField } from './displayname.js';
 import { myBadge, myLook } from './cosmetics-ui.js';
 import { settings } from './settings.js';
@@ -57,6 +58,7 @@ export function runRoomLobby(protocols, opts = {}) {
       clearInterval(lobbyTimer);
       window.removeEventListener('pagehide', onPageHide);
       document.removeEventListener('visibilitychange', onVisible);
+      hideTitleBack();
       root.classList.remove('show');
       root.innerHTML = '';
       resolve(result);
@@ -73,13 +75,14 @@ export function runRoomLobby(protocols, opts = {}) {
           '<div class="ro-head"><b>//</b> ' + title + '</div>' +
           bodyHtml +
           '<div class="ro-status" id="roomStatus"></div>' +
-          '<button class="ro-ghost" id="roomBack" type="button">' + (backLabel || '← モード選択に戻る') + '</button>' +
+          /* 一段前 (戦績 → ロビー) に戻るときだけ。タイトルへは右上の「タイトル」(待機・ドラフト中なら部屋を出てから) */
+          (backLabel ? '<button class="ro-ghost" id="roomBack" type="button">' + backLabel + '</button>' : '') +
         '</div>';
-      $('#roomBack').onclick = () => {
+      showTitleBack(() => {
         clearInterval(pollTimer); clearInterval(lobbyTimer);
         leaveRoom();
         done(null);
-      };
+      });
     }
 
     /* 待機・ドラフト・プロトコル選択の途中で抜ける: 部屋を片付ける (ロビーに無人の部屋を残さない) */
@@ -117,7 +120,7 @@ export function runRoomLobby(protocols, opts = {}) {
         '<div class="ro-row"><input class="ro-input" id="roomPass" type="password" autocomplete="current-password" minlength="8" placeholder="パスワード（8文字以上）"></div>' +
         '<div class="ro-row"><button class="ro-btn" id="roomSignIn" type="button">ログイン</button>' +
         '<button class="ro-btn" id="roomSignUp" type="button">新規登録</button></div></details>',
-        '← モード選択に戻る');
+        '');
       const values = () => ({
         name: ($('#roomName').value || '').trim(), email: ($('#roomEmail').value || '').trim(), password: $('#roomPass').value || ''
       });
@@ -508,8 +511,7 @@ export function runRoomLobby(protocols, opts = {}) {
           '<p class="ro-wait" id="roomWait"></p>' +
           '<div class="ro-row"><button class="ro-btn" id="roomInvite" type="button">招待リンクを送る</button>' +
           '<button class="ro-btn" id="roomCopy" type="button">コードをコピー</button></div>' +
-          '<div class="ro-row"><button class="ro-btn" id="roomCpu" type="button" hidden>待つのをやめて CPU と遊ぶ</button></div>',
-          '← 退出してソロ設定に戻る');
+          '<div class="ro-row"><button class="ro-btn" id="roomCpu" type="button" hidden>待つのをやめて CPU と遊ぶ</button></div>');
         tickWait();
         const link = location.origin + location.pathname + '?room=' + room.code;
         const copy = async (text, label) => {
@@ -553,8 +555,7 @@ export function runRoomLobby(protocols, opts = {}) {
               chipGrid(d.pool || [], [], d.toPick) +
               '<button class="ro-big' + (isBan ? ' ban' : '') + '" id="roomPick" type="button"' + (sel.length === d.toPick ? '' : ' disabled') + '>' +
                 (isBan ? 'BAN する' : '確定') + ' (' + sel.length + '/' + d.toPick + ')</button>'
-            : '<p class="ro-sub">相手が' + (isBan ? 'BAN を選んでいます…' : 'ドラフト中です…') + '</p>'),
-          '← 退出してソロ設定に戻る');
+            : '<p class="ro-sub">相手が' + (isBan ? 'BAN を選んでいます…' : 'ドラフト中です…') + '</p>'));
         if (mine) {
           bindChips(d.toPick, renderRoom);
           $('#roomPick').onclick = guard(async () => {
@@ -573,8 +574,7 @@ export function runRoomLobby(protocols, opts = {}) {
       frame('ONLINE — プロトコル選択',
         '<p class="ro-sub">使用するプロトコルを3つ。相手が選んだものは使えません。</p>' +
         chipGrid(protocols.map(p => p.name), other, 3) +
-        '<button class="ro-big" id="roomReady" type="button"' + (sel.length === 3 ? '' : ' disabled') + '>準備完了 (' + sel.length + '/3)</button>',
-        '← 退出してソロ設定に戻る');
+        '<button class="ro-big" id="roomReady" type="button"' + (sel.length === 3 ? '' : ' disabled') + '>準備完了 (' + sel.length + '/3)</button>');
       bindChips(3, renderRoom);
       $('#roomReady').onclick = guard(async () => {
         const next = await roomApi('protocols', { code: room.code, protocols: sel.slice() });

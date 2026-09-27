@@ -4,6 +4,7 @@
  *   runHud: 対戦中のライフ表示
  *   showRunAfterGame: 決着後に結果を入れて、次へ進む画面を出す
  * ========================================================================= */
+import { showTitleBack, hideTitleBack } from './titleback.js';
 import { loadWeekly } from './weekly.js';
 import * as RUN from './run.js';
 import { emblemDataURL } from './emblems.js';
@@ -173,7 +174,9 @@ export function openRun(protocols, cardsOf, opts) {
       const c = byName[proto] && byName[proto].cards.find(x => x.id === id);
       return c ? proto + ' ' + c.value : id;
     };
-    const done = (v) => { el.classList.remove('show'); resolve(v); };
+    const done = (v) => { hideTitleBack(); el.classList.remove('show'); resolve(v); };
+    /* 右上の「タイトル」(勝ち抜き戦の途中でも、続きはあとでできる) */
+    showTitleBack(() => done(null));
     /* カード一覧は、いま候補に出ているものと自分のデッキをタブで切り替えられるように */
     const info = (name) => {
       const p = byName[name];
@@ -219,7 +222,7 @@ export function openRun(protocols, cardsOf, opts) {
           '<li>クリアすると名前が一覧に載る</li>' +
           '<li>クリアで +30 XP。初クリアで専用スリーブ LAUREL、3週で称号 WEEKLY REGULAR、10週で WEEKLY LEGEND</li></ul>' + weekStatus +
           '<button type="button" class="rn-go" data-act="weekly">開く</button></section>' +
-      '</div><div class="rn-btns"><button type="button" data-act="title">タイトルへ</button></div>';
+      '</div>';
     };
 
     const phaseBody = () => {
@@ -253,7 +256,7 @@ export function openRun(protocols, cardsOf, opts) {
             '<div class="rn-deckbar"><span>デッキ ' + deckLine(run.deck, byName) + ' <em>除去 ' + (run.removed || []).length + ' / ' + RUN.MAX_REMOVED + '</em></span>' +
               '<button type="button" data-act="deck">' + (showDeck ? 'デッキを閉じる' : 'デッキを見る') + '</button></div>' +
             (showDeck ? deckCards(run, byName, false) : '') +
-            '<div class="rn-btns"><button type="button" data-act="title">タイトルへ (続きはあとで)</button><button type="button" data-act="quit">あきらめる</button></div>';
+            '<div class="rn-btns"><button type="button" data-act="quit">あきらめる</button></div>';
         case 'event': {
           const ev = RUN.EVENTS[run.event];
           return '<h2>? EVENT — ' + esc(ev.title) + '</h2><p class="rn-lead">' + esc(ev.text) + '</p>' +
@@ -311,7 +314,7 @@ export function openRun(protocols, cardsOf, opts) {
             '<div class="rn-vs"><div><small>あなた' + ((run.removed || []).length ? ' (除去 ' + run.removed.length + ' 枚)' : '') + '</small>' + deckLine(run.deck, byName) + '</div><b>VS</b>' +
             '<div><small>' + esc(levelLabel(run.opp.level)) + '</small>' + deckLine(run.opp.deck, byName) + '</div></div>' +
             (confirmQuit ? '' : '<div class="rn-btns"><button type="button" class="rn-go" data-act="fight">戦う</button>' +
-              '<button type="button" data-act="title">タイトルへ (続きはあとで)</button><button type="button" data-act="quit">あきらめる</button></div>');
+              '<button type="button" data-act="quit">あきらめる</button></div>');
         }
         default: return '';
       }
