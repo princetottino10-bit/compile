@@ -10,10 +10,13 @@
  *   ・カード除去: デッキから1枚ずつ外して、欲しいカードが来やすくする (最大 6 枚)
  *   ・パッチ (勝ち抜き戦のあいだ効き続ける改造) には系統 (HAND / GUARD / GREED / TEMPO) があり、
  *     同じ系統を 2つ・3つ集めるとボーナス (ビルド)
+ *   ・強化 (＋): デッキのカードを1枚ずつ値 +1 に (休憩所・ショップ・イベント)。run.upgrades に元の id
+ *   ・★ カード: 勝ち抜き戦だけのオリジナルカード (runcards.js) を山札に足す (ショップ・イベント)。run.added
  *   ・クリアすると次の HEAT (難しさ) が解放される (最大 5。上の段は下の段の条件を全部含む)
  *   1戦ごとにページを作り直すので、状態は localStorage に置く
  * ========================================================================= */
 import { STRONGEST_AI, CHALLENGERS, CHALLENGER_BASE } from './aidecks.js';
+import { UP, isStar, baseOf, starOf, STAR_CARDS } from './runcards.js';
 
 const KEY = 'compileRun';
 const BEST_KEY = 'compileRunBest';
@@ -122,6 +125,23 @@ export const EVENTS = {
     options: [
       { label: '呪われた試合に挑む (自分の手札 4 枚・相手 7 枚。勝てば RARE 以上確定の GACHA とクレジット)', apply: (r) => ({ ...r, fight: 'cursed' }) },
       { label: '立ち去る', apply: (r) => r }
+    ]
+  },
+  lab: {
+    title: '研究所', text: '白衣の研究員が手招きしている。「実験に付き合ってくれたら、お礼をするよ」',
+    options: [
+      { label: 'カードを1枚強化してもらう (値 +1)', need: (r) => canUpgradeAny(r), apply: (r) => ({ ...r, phase: 'upgrade', after: 'map' }) },
+      { label: 'ライフ −1 で ★ カードをもらう (デッキのプロトコルのどれか)', need: (r) => r.life > 1 && starChoices(r).length > 0,
+        apply: (r, c) => addStar({ ...r, life: r.life - 1 }, pickOne(starChoices(r), c.rnd)) },
+      { label: '断る', apply: (r) => r }
+    ]
+  },
+  meteor: {
+    title: '流れ星', text: '光るカードが空から落ちてきた。拾うと、何かに見つかる気がする…',
+    options: [
+      { label: '★ カードを拾う (そのあと、1段強い相手と戦う)', need: (r) => starChoices(r).length > 0,
+        apply: (r, c) => ({ ...addStar(r, pickOne(starChoices(r), c.rnd)), fight: 'alarm' }) },
+      { label: '見送る', apply: (r) => r }
     ]
   },
   purge: {
@@ -306,9 +326,48 @@ function randomSwap(run, c) {
   const add = pool[Math.floor(c.rnd() * pool.length)];
   return withDeck({ ...run, swapped: { out, add } }, run.deck.map(n => (n === out ? add : n)));
 }
-/* デッキを変えたら、外したプロトコルのカードの除去は取り消す */
+/* カードの id → プロトコル名 (★ は X_FIRE → FIRE) */
+export function protoOfCard(id) {
+  const b = baseOf(id);
+  const star = STAR_CARDS.find(x => x.id === b);
+  return star ? star.proto : b.replace(/_\d+$/, '');
+}
+/* デッキを変えたら、外したプロトコルのカードの除去・強化・★ は取り消す */
 function withDeck(run, deck) {
-  return { ...run, deck, removed: (run.removed || []).filter(id => deck.includes(id.replace(/_\d+$/, ''))) };
+  const keep = (id) => deck.includes(protoOfCard(id));
+  return { ...run, deck, removed: (run.removed || []).filter(keep), upgrades: (run.upgrades || []).filter(keep), added: (run.added || []).filter(keep) };
+}
+const pickOne = (list, rnd) => list[Math.floor(rnd() * list.length)];
+
+/* ---------- 強化 (＋) と ★ カード ---------- */
+export const MAX_ADDED = 3;                   // 足せる ★ の数 (1プロトコル1枚まで)
+/** まだ足していない、デッキのプロトコルの ★ */
+export function starChoices(run) {
+  return run.deck.map(n => starOf(n)).filter(s => s && !(run.added || []).includes(s.id)).map(s => s.id);
+}
+function addStar(run, id) {
+  if (!id || (run.added || []).includes(id) || (run.added || []).length >= MAX_ADDED) return run;
+  return { ...run, added: (run.added || []).concat(id), gotStar: id };
+}
+/** 強化できるカードが残っているか (値の上限は画面が確かめる。ここでは数だけ) */
+export function canUpgradeAny(run) {
+  return (run.upgrades || []).length < run.deck.length * 6 + (run.added || []).length;
+}
+/** 強化する (id は元の id)。デッキのカードか足した ★ で、まだ強化していないもの */
+export function upgradeCard(run, id) {
+  if (run.phase !== 'upgrade') return run;
+  const ok = (run.added || []).includes(id) || (run.deck.includes(protoOfCard(id)) && !isStar(id) && !(run.removed || []).includes(id));
+  if (!ok || (run.upgrades || []).includes(id)) return run;
+  const next = { ...run, upgrades: (run.upgrades || []).concat(id), upgradedNow: id, paidUpgrade: 0 };
+  return { ...next, phase: run.after === 'shop' ? 'shop' : 'map' };
+}
+/** 強化をやめる (ショップで払った分は返す) */
+export function cancelUpgrade(run) {
+  if (run.phase !== 'upgrade') return run;
+  if (run.after === 'shop') {
+    return { ...run, phase: 'shop', credits: (run.credits | 0) + (run.paidUpgrade | 0), upgradeCost: (run.upgradeCost | 0) - (run.paidUpgrade ? 2 : 0), paidUpgrade: 0 };
+  }
+  return { ...run, phase: 'map' };
 }
 
 /* ---------- GACHA ---------- */
@@ -371,7 +430,7 @@ export function newRun(names, rnd = Math.random, heat = 0) {
   const h = Math.max(0, Math.min(MAX_HEAT, heat | 0));
   const life = RUN_LIFE - (h >= 1 ? HEAT_LIFE : 0);
   return { v: VERSION, phase: 'draft', deck: [], removed: [], life, maxLife: life, heat: h, patches: [], failsafeUsed: false, phoenixUsed: false,
-    credits: START_CREDITS, pulls: 0, map: makeMap(rnd), pos: null, visited: [], removeCost: 5,
+    credits: START_CREDITS, pulls: 0, map: makeMap(rnd), pos: null, visited: [], removeCost: 5, upgradeCost: 4, upgrades: [], added: [],
     offers: sample(names, 3, rnd), opp: null, route: 'normal', history: [], startedAt: Date.now() };
 }
 
@@ -400,7 +459,7 @@ export function chooseNode(run, id, names, rnd = Math.random) {
   if (run.phase !== 'map' || !reachable(run).includes(id)) return run;
   const node = nodeById(run, id);
   const moved = { ...run, pos: id, visited: (run.visited || []).concat(id), swapped: null, lastPull: null, lastSaved: false,
-    cursedWin: false, removedNow: null, lastGain: 0 };
+    cursedWin: false, removedNow: null, upgradedNow: null, gotStar: null, lastGain: 0 };
   switch (node.type) {
     case 'battle': case 'elite': case 'boss': return prepareBattle(moved, names, rnd, node.type === 'elite' ? 'elite' : 'normal');
     case 'event': {
@@ -421,7 +480,7 @@ export function resolveEvent(run, index, names, rnd = Math.random) {
   const opt = ev && ev.options[index];
   if (!opt || (opt.need && !opt.need(run))) return run;
   const next = opt.apply({ ...run, eventDone: { id: run.event, choice: index } }, { names, rnd });
-  if (next.phase === 'patch' || next.phase === 'remove') return { ...next, event: null };
+  if (next.phase === 'patch' || next.phase === 'remove' || next.phase === 'upgrade') return { ...next, event: null };
   if (next.fight) return prepareBattle({ ...next, fight: null, event: null }, names, rnd, next.fight);
   return { ...next, event: null, phase: 'map' };
 }
@@ -434,6 +493,10 @@ export function healAmount(run) {
 export function restHeal(run) {
   if (run.phase !== 'rest') return run;
   return { ...run, life: Math.min(run.maxLife, run.life + healAmount(run)), phase: 'map' };
+}
+export function restUpgrade(run) {
+  if (run.phase !== 'rest' || !canUpgradeAny(run)) return run;
+  return { ...run, phase: 'upgrade', after: 'map' };
 }
 export function restRemove(run) {
   if (run.phase !== 'rest' || !canRemove(run)) return run;
@@ -452,7 +515,24 @@ function makeShop(run, rnd) {
     const cands = left.filter(p => p.rar === rar);
     picks.push(cands[Math.floor(rnd() * cands.length)].id);
   }
-  return { patches: picks, sold: [], healed: false };
+  /* ★ カード1枚 (デッキのプロトコルのどれか。まだ足していないもの) */
+  const stars = starChoices(run);
+  return { patches: picks, sold: [], healed: false, star: stars.length ? stars[Math.floor(rnd() * stars.length)] : null, starSold: false };
+}
+export const STAR_PRICE = 8;
+export function starPrice(run) { return STAR_PRICE - discount(run); }
+export function upgradePrice(run) { return (run.upgradeCost || 4) - discount(run); }
+export function buyStar(run) {
+  if (run.phase !== 'shop' || !run.shop.star || run.shop.starSold || (run.added || []).length >= MAX_ADDED) return run;
+  const price = starPrice(run);
+  if ((run.credits | 0) < price) return run;
+  return { ...addStar({ ...run, credits: run.credits - price }, run.shop.star), shop: { ...run.shop, starSold: true } };
+}
+export function buyUpgrade(run) {
+  if (run.phase !== 'shop' || !canUpgradeAny(run)) return run;
+  const price = upgradePrice(run);
+  if ((run.credits | 0) < price) return run;
+  return { ...run, credits: run.credits - price, paidUpgrade: price, upgradeCost: (run.upgradeCost || 4) + 2, phase: 'upgrade', after: 'shop' };
 }
 export function patchPrice(run, id) {
   return RARITY[PATCH[id].rar].price - discount(run);
@@ -596,10 +676,16 @@ export function battleOpts(run, me) {
   const tempo = setLevel(run, 'TEMPO') >= 2;
   const exclude = [[], []];
   exclude[me] = (run.removed || []).slice(0, MAX_REMOVED);
+  /* 強化 (＋) と ★ カード: 強化したカードは ＋ 版に替え、★ は山札に足す (★ を強化していれば ★＋) */
+  const ups = run.upgrades || [];
+  const added = run.added || [];
+  const deckMods = [{}, {}];
+  deckMods[me] = { swap: Object.fromEntries(ups.filter(id => !isStar(id)).map(id => [id, id + UP])), add: added.map(id => (ups.includes(id) ? id + UP : id)) };
   return {
     winCompiles: RUN_WIN_COMPILES,
     handSize: hand,
     ...(exclude[me].length ? { exclude } : {}),
+    ...(ups.length || added.length ? { deckMods } : {}),
     ...(hasPatch(run, 'initiative') || tempo ? { first: me } : {}),
     ...(hasPatch(run, 'root') || tempo ? { startControl: me } : {})
   };

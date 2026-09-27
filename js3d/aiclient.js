@@ -2,7 +2,7 @@
    Worker が使えない・落ちた・返事が遅すぎるときは、今まで通り画面側で考える (対戦は止めない) */
 const WAIT_MS = 8000;
 
-export function createAiClient(Engine, { cards, effects, engineUrl }) {
+export function createAiClient(Engine, { cards, effects, extra, engineUrl }) {
   let worker = null;
   let seq = 0;
   const waiting = new Map();
@@ -30,7 +30,7 @@ export function createAiClient(Engine, { cards, effects, engineUrl }) {
         if (e.data.ok) w.resolve(e.data.result); else w.reject(new Error(e.data.error));
       };
       worker.onerror = (e) => { console.warn('AI worker error', e && e.message); dropWorker(); };
-      post({ type: 'init', cards, effects }).catch(() => dropWorker());
+      post({ type: 'init', cards, effects, extra }).catch(() => dropWorker());
     }
   } catch (err) {
     console.warn('AI worker unavailable', err);

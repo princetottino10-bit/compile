@@ -54,7 +54,9 @@ function shuffle(st, arr) {
 let DEFS = null;     // defId -> {id, proto, value, eff}
 let PROTOS = null;   // protoName -> [defId x6]
 
-function init(cardsJson, effectsJson) {
+/* extra: 勝ち抜き戦だけのカード [{ id, proto, value, eff }] (js3d/runcards.js)。
+   プロトコルの 6 枚 (PROTOS) には入れず、newGame の deckMods で山札に入れたときだけ使う */
+function init(cardsJson, effectsJson, extra) {
   DEFS = {}; PROTOS = {};
   for (const p of cardsJson.protocols) {
     PROTOS[p.name] = [];
@@ -62,6 +64,9 @@ function init(cardsJson, effectsJson) {
       DEFS[c.id] = { id: c.id, proto: p.name, value: c.value, eff: (effectsJson && effectsJson[c.id]) || {} };
       PROTOS[p.name].push(c.id);
     }
+  }
+  for (const d of (Array.isArray(extra) ? extra : [])) {
+    if (d && d.id && !DEFS[d.id] && PROTOS[d.proto]) DEFS[d.id] = { id: d.id, proto: d.proto, value: d.value | 0, eff: d.eff || {} };
   }
 }
 
@@ -2311,14 +2316,25 @@ function newGame(opts) {
     if (!protos || protos.length !== 3) throw new Error('各プレイヤーは3プロトコルを指定すること');
     const deck = [];
     const drop = new Set((Array.isArray(ex[p]) ? ex[p] : []).slice(0, 6));
+    /* deckMods: [{ swap: { 元の defId: 替える defId }, add: [足す defId] }] x2 (勝ち抜き戦の強化・★カード)。
+       替える・足すのは登録済み (init の extra) のカードだけ。同じカードを2枚足したら uid に ~2 を付ける */
+    const mod = (Array.isArray(opts.deckMods) && opts.deckMods[p]) || {};
+    const swap = mod.swap && typeof mod.swap === 'object' ? mod.swap : {};
+    const put = (defId) => {
+      let uid = 'p' + p + ':' + defId;
+      for (let n = 2; st.cards[uid]; n++) uid = 'p' + p + ':' + defId + '~' + n;
+      st.cards[uid] = { uid, def: defId, owner: p, faceUp: false, zone: 'deck' + p, knownTo: 0 };
+      deck.push(uid);
+    };
     for (const name of protos) {
       if (!PROTOS[name]) throw new Error('未知のプロトコル: ' + name);
       for (const defId of PROTOS[name]) {
         if (drop.has(defId)) continue;
-        const uid = 'p' + p + ':' + defId;
-        st.cards[uid] = { uid, def: defId, owner: p, faceUp: false, zone: 'deck' + p, knownTo: 0 };
-        deck.push(uid);
+        put(DEFS[swap[defId]] && DEFS[swap[defId]].proto === name ? swap[defId] : defId);
       }
+    }
+    for (const defId of (Array.isArray(mod.add) ? mod.add : []).slice(0, 12)) {
+      if (DEFS[defId] && protos.includes(DEFS[defId].proto)) put(defId);
     }
     st.players.push({
       protocols: protos.map(n => ({ name: n, compiled: false })),

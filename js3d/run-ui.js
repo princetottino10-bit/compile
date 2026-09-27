@@ -4,6 +4,7 @@
  *   runHud: 対戦中のライフ表示
  *   showRunAfterGame: 決着後に結果を入れて、次へ進む画面を出す
  * ========================================================================= */
+import { STAR_CARDS, MAX_VALUE } from './runcards.js';
 import { showTitleBack, hideTitleBack } from './titleback.js';
 import { loadWeekly } from './weekly.js';
 import * as RUN from './run.js';
@@ -136,20 +137,31 @@ function deckLine(names, byName) {
   return '<span class="rn-deck">' + names.map(n => '<i style="--pc:' + esc((byName[n] || {}).color || '#b9a4ff') + '">' + esc(n) + '</i>').join('') + '</span>';
 }
 
-/* デッキのカード (外したものは打ち消し線)。pick: カード除去で押せるようにする */
+/* デッキのカード (外したものは打ち消し線、強化したものは ＋、★ カードは各列の下)。
+   pick: 'remove' (カード除去で押せる) / 'upgrade' (強化で押せる。値 6 と強化済みは押せない) / なし */
 function deckCards(run, byName, pick) {
   const removed = new Set(run.removed || []);
+  const ups = new Set(run.upgrades || []);
+  const added = run.added || [];
+  const cell = (id, name, value, text, gone, star) => {
+    const up = ups.has(id);
+    const v = up ? value + 1 : value;
+    const inner = '<b>' + esc(name) + (star ? ' ★' : '') + ' ' + v + (up ? '<em class="rn-up">＋</em>' : '') + '</b>' +
+      '<span>' + esc(text.length > 38 ? text.slice(0, 37) + '…' : text) + '</span>';
+    const can = pick === 'remove' ? !gone && !star : pick === 'upgrade' ? !gone && !up && value < MAX_VALUE : false;
+    const attr = pick === 'remove' ? 'data-rm' : 'data-up';
+    const cls = 'rn-c' + (gone ? ' gone' : '') + (up ? ' up' : '') + (star ? ' star' : '');
+    return can
+      ? '<button type="button" class="' + cls + '" ' + attr + '="' + esc(id) + '" title="' + esc(text) + '">' + inner + (pick === 'upgrade' ? '<i class="rn-upto">→ ' + (value + 1) + '</i>' : '') + '</button>'
+      : '<div class="' + cls + '" title="' + esc(text) + '">' + inner + '</div>';
+  };
   return '<div class="rn-cards">' + run.deck.map(n => {
     const p = byName[n];
     if (!p) return '';
-    return '<div class="rn-cardcol" style="--pc:' + esc(p.color) + '"><h4>' + esc(n) + '</h4>' + p.cards.map(c => {
-      const gone = removed.has(c.id);
-      const text = c.middle || c.upper || c.lower || '';
-      const inner = '<b>' + esc(n + ' ' + c.value) + '</b><span>' + esc(text.length > 38 ? text.slice(0, 37) + '…' : text) + '</span>';
-      return pick && !gone
-        ? '<button type="button" class="rn-c" data-rm="' + esc(c.id) + '" title="' + esc(text) + '">' + inner + '</button>'
-        : '<div class="rn-c' + (gone ? ' gone' : '') + '" title="' + esc(text) + '">' + inner + '</div>';
-    }).join('') + '</div>';
+    const stars = STAR_CARDS.filter(x => x.proto === n && added.includes(x.id));
+    return '<div class="rn-cardcol" style="--pc:' + esc(p.color) + '"><h4>' + esc(n) + '</h4>' +
+      p.cards.map(c => cell(c.id, n, c.value, c.middle || c.upper || c.lower || '', removed.has(c.id), false)).join('') +
+      stars.map(x => cell(x.id, n, x.value, x.middle, false, true)).join('') + '</div>';
   }).join('') + '</div>';
 }
 
@@ -177,6 +189,8 @@ export function openRun(protocols, cardsOf, opts) {
     const done = (v) => { hideTitleBack(); el.classList.remove('show'); resolve(v); };
     /* 右上の「タイトル」(勝ち抜き戦の途中でも、続きはあとでできる) */
     showTitleBack(() => done(null));
+    /* ★ カードは「FIRE ★」、ふつうのカードは「FIRE 2」 */
+    const starLabel = (id) => { const x = STAR_CARDS.find(c => c.id === id); return x ? x.proto + ' ★' : cardLabel(id); };
     /* カード一覧は、いま候補に出ているものと自分のデッキをタブで切り替えられるように */
     const info = (name) => {
       const p = byName[name];
@@ -252,6 +266,8 @@ export function openRun(protocols, cardsOf, opts) {
         case 'map':
           return '<h2>進むマスを選ぶ <small>' + (rowNow(run) + 2) + ' / ' + RUN.MAP_ROWS + ' 段</small></h2>' +
             (run.removedNow ? '<p class="rn-note">' + esc(cardLabel(run.removedNow)) + ' をデッキから外した</p>' : '') +
+            (run.upgradedNow ? '<p class="rn-note rn-gain">' + esc(starLabel(run.upgradedNow)) + ' を強化した (値 +1)</p>' : '') +
+            (run.gotStar ? '<p class="rn-note rn-gain">★ カード ' + esc(starLabel(run.gotStar)) + ' をデッキに入れた</p>' : '') +
             mapHtml(run, true) +
             '<div class="rn-deckbar"><span>デッキ ' + deckLine(run.deck, byName) + ' <em>除去 ' + (run.removed || []).length + ' / ' + RUN.MAX_REMOVED + '</em></span>' +
               '<button type="button" data-act="deck">' + (showDeck ? 'デッキを閉じる' : 'デッキを見る') + '</button></div>' +
@@ -264,14 +280,20 @@ export function openRun(protocols, cardsOf, opts) {
               (o.need && !o.need(run) ? ' disabled' : '') + '><b>' + esc(o.label) + '</b></button>').join('') + '</div>';
         }
         case 'rest':
-          return '<h2>✚ 休憩所</h2><p class="rn-lead">焚き火のそばで一息つく。どちらか1つ。</p><div class="rn-routes">' +
+          return '<h2>✚ 休憩所</h2><p class="rn-lead">焚き火のそばで一息つく。どれか1つ。</p><div class="rn-routes">' +
             '<button type="button" class="rn-route rest" data-act="rest"' + (run.life >= run.maxLife ? ' disabled' : '') + '><small>REST</small><b>休む</b><span>ライフ +' + RUN.healAmount(run) + '</span></button>' +
             '<button type="button" class="rn-route smith" data-act="restRemove"' + (RUN.canRemove(run) ? '' : ' disabled') + '><small>PURGE</small><b>研ぐ</b><span>デッキからカードを1枚外す</span></button>' +
+            '<button type="button" class="rn-route forge" data-act="restUpgrade"' + (RUN.canUpgradeAny(run) ? '' : ' disabled') + '><small>FORGE</small><b>鍛える</b><span>カードを1枚強化 (値 +1)</span></button>' +
             '</div>';
+        case 'upgrade':
+          return '<h2>強化するカードを選ぶ <small>強化 ' + (run.upgrades || []).length + ' 枚</small></h2>' +
+            '<p class="rn-note">選んだカードは、この勝ち抜き戦のあいだ値が 1 大きくなります (効果は同じ)。値 ' + MAX_VALUE + ' のカードは強化できません。</p>' +
+            deckCards(run, byName, 'upgrade') +
+            '<div class="rn-btns"><button type="button" data-act="unupgrade">やめる' + (run.after === 'shop' ? ' (代金は戻ります)' : '') + '</button></div>';
         case 'remove':
           return '<h2>外すカードを選ぶ <small>除去 ' + (run.removed || []).length + ' / ' + RUN.MAX_REMOVED + '</small></h2>' +
             '<p class="rn-note">外したカードは、この勝ち抜き戦のあいだ山札に入りません (プロトコルを入れ替えると戻ります)。</p>' +
-            deckCards(run, byName, true) +
+            deckCards(run, byName, 'remove') +
             '<div class="rn-btns"><button type="button" data-act="unremove">やめる' + (run.after === 'shop' ? ' (代金は戻ります)' : '') + '</button></div>';
         case 'shop': {
           const credits = run.credits | 0;
@@ -280,10 +302,17 @@ export function openRun(protocols, cardsOf, opts) {
             return '<div class="rn-ware">' + patchCard(p, sold || credits < price ? 'disabled data-buy="' + esc(id) + '"' : 'data-buy="' + esc(id) + '"') +
               '<em class="' + (sold ? 'sold' : credits < price ? 'short' : '') + '">' + (sold ? 'SOLD' : price + ' CR') + '</em></div>';
           }).join('');
-          const rp = RUN.removePrice(run), hp = RUN.healPrice(run);
+          const rp = RUN.removePrice(run), hp = RUN.healPrice(run), up = RUN.upgradePrice(run), sp = RUN.starPrice(run);
+          const star = run.shop.star && STAR_CARDS.find(x => x.id === run.shop.star);
+          const starWare = star
+            ? '<div class="rn-ware"><button type="button" class="rn-starcard" style="--pc:' + esc((byName[star.proto] || {}).color || '#ffd86a') + '"' +
+                (run.shop.starSold || credits < sp ? ' disabled' : '') + ' data-act="buyStar"><small>★ CARD ・ 値 ' + star.value + '</small><b>' + esc(star.proto) + ' ★</b><span>' + esc(star.middle) + '</span></button>' +
+                '<em class="' + (run.shop.starSold ? 'sold' : credits < sp ? 'short' : '') + '">' + (run.shop.starSold ? 'SOLD' : sp + ' CR') + '</em></div>'
+            : '';
           return '<h2>$ ショップ <small>CREDIT ' + credits + '</small></h2>' +
-            '<div class="rn-patchlist">' + items + '</div>' +
+            '<div class="rn-patchlist">' + items + starWare + '</div>' +
             '<div class="rn-routes">' +
+              '<button type="button" class="rn-route forge" data-act="buyUpgrade"' + (RUN.canUpgradeAny(run) && credits >= up ? '' : ' disabled') + '><small>' + up + ' CR</small><b>強化</b><span>カードを1枚、値 +1 に (買うたびに +2)</span></button>' +
               '<button type="button" class="rn-route smith" data-act="buyRemove"' + (RUN.canRemove(run) && credits >= rp ? '' : ' disabled') + '><small>' + rp + ' CR</small><b>カード除去</b><span>デッキから1枚外す (買うたびに +2)</span></button>' +
               '<button type="button" class="rn-route rest" data-act="buyHeal"' + (!run.shop.healed && run.life < run.maxLife && credits >= hp ? '' : ' disabled') + '><small>' + hp + ' CR</small><b>修理</b><span>ライフ +' + RUN.RUN_HEAL + ' (1回だけ)</span></button>' +
             '</div><div class="rn-btns"><button type="button" class="rn-go" data-act="leave">店を出る</button></div>';
@@ -350,6 +379,7 @@ export function openRun(protocols, cardsOf, opts) {
       if (t.dataset.patch) { set(RUN.choosePatch(run, t.dataset.patch, names)); return; }
       if (t.dataset.buy) { set(RUN.buyPatch(run, t.dataset.buy)); return; }
       if (t.dataset.rm) { set(RUN.removeCard(run, t.dataset.rm)); return; }
+      if (t.dataset.up) { set(RUN.upgradeCard(run, t.dataset.up)); return; }
       if (t.dataset.event) { set(RUN.resolveEvent(run, +t.dataset.event, names)); return; }
       if (t.dataset.pick) { set(RUN.draftPick(run, t.dataset.pick, names)); return; }
       if (t.dataset.add) { swapAdd = t.dataset.add; render(); return; }
@@ -368,6 +398,10 @@ export function openRun(protocols, cardsOf, opts) {
         case 'deck': showDeck = !showDeck; render(); break;
         case 'rest': set(RUN.restHeal(run)); break;
         case 'restRemove': set(RUN.restRemove(run)); break;
+        case 'restUpgrade': set(RUN.restUpgrade(run)); break;
+        case 'unupgrade': set(RUN.cancelUpgrade(run)); break;
+        case 'buyUpgrade': set(RUN.buyUpgrade(run)); break;
+        case 'buyStar': set(RUN.buyStar(run)); break;
         case 'unremove': set(RUN.cancelRemove(run)); break;
         case 'buyRemove': set(RUN.buyRemove(run)); break;
         case 'buyHeal': set(RUN.buyHeal(run)); break;

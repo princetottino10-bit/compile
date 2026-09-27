@@ -1398,6 +1398,19 @@
   @media (max-width:700px){ .wt-freeteams{grid-template-columns:1fr;} .wt-freeteams .wt-vs{justify-self:center;} .wt-tiles{grid-template-columns:repeat(4,minmax(0,1fr));} }
   @media (prefers-reduced-motion:reduce){ .wt-slot{animation:none;} .wt-tile,.wt-tile img{transition:none;} }
   @media (max-width:700px){ .wt-match{grid-template-columns:1fr;} .wt-vs{justify-self:center;} .wt-go{margin-left:0;width:100%;} }
+  /* 勝ち抜き戦の強化 (＋) と ★ カード (runcards.js) */
+  .rn-c.up b{color:#ffd86a;}
+  .rn-c .rn-up{font-style:normal;margin-left:2px;color:#ffd86a;}
+  .rn-c.star{border-color:rgba(255,216,106,.55);background:linear-gradient(160deg,rgba(255,216,106,.14),rgba(255,255,255,.03));}
+  .rn-c .rn-upto{display:block;margin-top:3px;font:900 11px/1 var(--font-hud),system-ui;font-style:normal;color:#ffd86a;}
+  .rn-route.forge{border-color:rgba(255,179,71,.55);} .rn-route.forge small{color:#ffb347;}
+  .rn-starcard{display:flex;flex-direction:column;gap:6px;width:100%;padding:12px 14px;text-align:left;cursor:pointer;border-radius:10px;
+    border:1px solid rgba(255,216,106,.6);background:linear-gradient(160deg,color-mix(in srgb,var(--pc) 30%,transparent),rgba(8,10,20,.92));color:#fff;}
+  .rn-starcard small{font:800 10px/1 var(--font-hud),system-ui;letter-spacing:.12em;color:#ffd86a;}
+  .rn-starcard b{font:900 18px/1.1 var(--font-hud),system-ui;}
+  .rn-starcard span{font:600 12px/1.45 system-ui;color:#dfe4f0;}
+  .rn-starcard:disabled{opacity:.5;cursor:default;}
+  .rn-gain{color:#ffd86a;}
   /* RUN の入口と週替わり3連戦 */
   .rn-mode{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:12px;
     background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.1);}
@@ -3344,7 +3357,7 @@
     <div id="bootBar"><i></i></div>
   </div>
 
-  <script src="engine.js?v=8e6e59dbda"></script>
+  <script src="engine.js?v=7dc20954ec"></script>
   <script type="importmap">
   {
     "imports": {
@@ -3355,8 +3368,8 @@
       "./js3d/achievements-ui.js": "./js3d/achievements-ui.js?v=924939d2f6",
       "./js3d/achievements.js": "./js3d/achievements.js?v=898d57909c",
       "./js3d/admin-ui.js": "./js3d/admin-ui.js?v=1e453b8f99",
-      "./js3d/ai-worker.js": "./js3d/ai-worker.js?v=5efde8ba0e",
-      "./js3d/aiclient.js": "./js3d/aiclient.js?v=704b588b82",
+      "./js3d/ai-worker.js": "./js3d/ai-worker.js?v=0b60de0c06",
+      "./js3d/aiclient.js": "./js3d/aiclient.js?v=8d242d3455",
       "./js3d/aidecks.js": "./js3d/aidecks.js?v=8d249240bd",
       "./js3d/aitalk.js": "./js3d/aitalk.js?v=3b756521cb",
       "./js3d/arena.js": "./js3d/arena.js?v=ef66a1e5bb",
@@ -3367,7 +3380,7 @@
       "./js3d/board.js": "./js3d/board.js?v=9fe57e2090",
       "./js3d/card.js": "./js3d/card.js?v=6d8083e5b7",
       "./js3d/cardlist-ov.js": "./js3d/cardlist-ov.js?v=1d673fd0d2",
-      "./js3d/cardtex.js": "./js3d/cardtex.js?v=985ea460e2",
+      "./js3d/cardtex.js": "./js3d/cardtex.js?v=7ce5dc0e38",
       "./js3d/cardtext.js": "./js3d/cardtext.js?v=4cf5529855",
       "./js3d/chips.js": "./js3d/chips.js?v=e67e280b76",
       "./js3d/cloudsave.js": "./js3d/cloudsave.js?v=d1643b2cad",
@@ -3392,7 +3405,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=4440918f16",
+      "./js3d/main.js": "./js3d/main.js?v=1a7f000192",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=550d8c0890",
       "./js3d/panel.js": "./js3d/panel.js?v=3dad9de3da",
@@ -3406,13 +3419,14 @@
       "./js3d/protocol-strength.js": "./js3d/protocol-strength.js?v=c719e5b65c",
       "./js3d/puzzle.js": "./js3d/puzzle.js?v=a6a0904519",
       "./js3d/replays-ui.js": "./js3d/replays-ui.js?v=9a6a4ca786",
-      "./js3d/replays.js": "./js3d/replays.js?v=2a8c9e69b5",
+      "./js3d/replays.js": "./js3d/replays.js?v=c10a28540e",
       "./js3d/review.js": "./js3d/review.js?v=34f174153b",
       "./js3d/rewards.js": "./js3d/rewards.js?v=da45fcbbfc",
       "./js3d/room.js": "./js3d/room.js?v=c34129de95",
       "./js3d/roomui.js": "./js3d/roomui.js?v=2557b7dc57",
-      "./js3d/run-ui.js": "./js3d/run-ui.js?v=96b8b476de",
-      "./js3d/run.js": "./js3d/run.js?v=0fd14ce273",
+      "./js3d/run-ui.js": "./js3d/run-ui.js?v=136c523494",
+      "./js3d/run.js": "./js3d/run.js?v=fa7fb1a24d",
+      "./js3d/runcards.js": "./js3d/runcards.js?v=f8516ff671",
       "./js3d/selectui.js": "./js3d/selectui.js?v=208abdaebc",
       "./js3d/settings.js": "./js3d/settings.js?v=3e2e594fc4",
       "./js3d/setup.js": "./js3d/setup.js?v=82e1ec30cf",
@@ -3452,7 +3466,7 @@
   <link rel="modulepreload" href="js3d/chips.js?v=e67e280b76">
   <link rel="modulepreload" href="js3d/crashwatch.js?v=57c6c91bd8">
   <link rel="modulepreload" href="js3d/achievements.js?v=898d57909c">
-  <link rel="modulepreload" href="js3d/replays.js?v=2a8c9e69b5">
+  <link rel="modulepreload" href="js3d/replays.js?v=c10a28540e">
   <link rel="modulepreload" href="js3d/turning.js?v=9c7f79654e">
   <link rel="modulepreload" href="js3d/achievements-ui.js?v=924939d2f6">
   <link rel="modulepreload" href="vendor/three.module.js?v=985eb92490">
@@ -3481,14 +3495,14 @@
   <link rel="modulepreload" href="js3d/cardlist-ov.js?v=1d673fd0d2">
   <link rel="modulepreload" href="js3d/opponent-select.js?v=550d8c0890">
   <link rel="modulepreload" href="js3d/aidecks.js?v=8d249240bd">
-  <link rel="modulepreload" href="js3d/run-ui.js?v=96b8b476de">
+  <link rel="modulepreload" href="js3d/run-ui.js?v=136c523494">
   <link rel="modulepreload" href="js3d/weekly-ui.js?v=eac88767b3">
-  <link rel="modulepreload" href="js3d/run.js?v=0fd14ce273">
+  <link rel="modulepreload" href="js3d/run.js?v=fa7fb1a24d">
   <link rel="modulepreload" href="js3d/weekly.js?v=5605476b1c">
   <link rel="modulepreload" href="js3d/review.js?v=34f174153b">
   <link rel="modulepreload" href="js3d/roomui.js?v=2557b7dc57">
   <link rel="modulepreload" href="js3d/selectui.js?v=208abdaebc">
-  <link rel="modulepreload" href="js3d/cardtex.js?v=985ea460e2">
+  <link rel="modulepreload" href="js3d/cardtex.js?v=7ce5dc0e38">
   <link rel="modulepreload" href="js3d/fx.js?v=65e09c9137">
   <link rel="modulepreload" href="js3d/arena.js?v=ef66a1e5bb">
   <link rel="modulepreload" href="js3d/audio.js?v=61fa68c5c9">
@@ -3500,7 +3514,8 @@
   <link rel="modulepreload" href="js3d/ui.js?v=fb225eb1bd">
   <link rel="modulepreload" href="js3d/input.js?v=cc29feddd4">
   <link rel="modulepreload" href="js3d/playchoices.js?v=e0273dcae0">
-  <link rel="modulepreload" href="js3d/aiclient.js?v=704b588b82">
+  <link rel="modulepreload" href="js3d/aiclient.js?v=8d242d3455">
+  <link rel="modulepreload" href="js3d/runcards.js?v=f8516ff671">
   <link rel="modulepreload" href="js3d/logformat.js?v=6bbf54aba6">
   <link rel="modulepreload" href="js3d/steps.js?v=13e73b20fe">
   <link rel="modulepreload" href="js3d/cloudsave.js?v=d1643b2cad">
@@ -3535,6 +3550,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=4440918f16"></script>
+  <script type="module" src="js3d/main.js?v=1a7f000192"></script>
 </body>
 </html>

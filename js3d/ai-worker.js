@@ -17,7 +17,7 @@ function configure(cfg) {
 self.onmessage = (e) => {
   const m = e.data || {};
   try {
-    if (m.type === 'init') { Engine.init(m.cards, m.effects); self.postMessage({ id: m.id, ok: true }); return; }
+    if (m.type === 'init') { Engine.init(m.cards, m.effects, m.extra); self.postMessage({ id: m.id, ok: true }); return; }
     configure(m.config);
     const result = m.type === 'answer' ? Engine.ai.answer(m.state, m.req) : Engine.ai.action(m.state);
     self.postMessage({ id: m.id, ok: true, result });

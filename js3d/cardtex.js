@@ -259,15 +259,21 @@ function paintFace(ctx, def, art) {
 
   /* プロトコル名 (バッジとアイコンを避けて縮める) */
   const nameMax = (types.length ? iconLeft : bx) - 30;
+  /* 勝ち抜き戦のカード (runcards.js) は、名前のあとに ＋ (強化) / ★ (オリジナル) を金色で */
+  const markText = def.mark ? ' ' + def.mark : '';
   let namePx = NAME_FONT;
   do {
     ctx.font = '800 ' + namePx + 'px ' + FONT.hud;
-    if (ctx.measureText(def.proto).width <= nameMax) break;
+    if (ctx.measureText(def.proto + markText).width <= nameMax) break;
     namePx -= 2;
   } while (namePx > 22);
   ctx.fillStyle = '#ffffff';
   ctx.textBaseline = 'middle';
   ctx.fillText(def.proto, 18, HEAD_H / 2 + 1);
+  if (markText) {
+    ctx.fillStyle = '#ffd86a';
+    ctx.fillText(markText, 18 + ctx.measureText(def.proto).width, HEAD_H / 2 + 1);
+  }
   ctx.textBaseline = 'alphabetic';
 
   ctx.fillStyle = accent;

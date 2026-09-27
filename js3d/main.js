@@ -67,6 +67,7 @@ import * as UI from './ui.js';
 import { pickCard, placementPad } from './input.js';
 import { placementChoices, renderPlayChoices } from './playchoices.js';
 import { createAiClient } from './aiclient.js';
+import { buildRunDefs } from './runcards.js';
 import { createLogFormat } from './logformat.js';
 import { meaningfulSteps as cutSteps } from './steps.js';
 
@@ -517,12 +518,15 @@ async function boot() {
       };
     }
   }
+  /* 勝ち抜き戦だけのカード (★ と ＋)。画面の defIndex とエンジン・CPU の Worker に登録する */
+  const runDefs = buildRunDefs(cards, effects);
+  for (const d of runDefs.ui) defIndex[d.id] = d;
   mark('fetch');
-  Engine.init(cards, effects);
+  Engine.init(cards, effects, runDefs.engine);
   Engine.setAiLevel(1);
   /* CPU の思考は Worker で (画面が止まらないように)。エンジンは読み込んだのと同じ版を使う */
   const engineTag = document.querySelector('script[src^="engine.js"]');
-  aiClient = createAiClient(Engine, { cards, effects, engineUrl: engineTag ? engineTag.src : null });
+  aiClient = createAiClient(Engine, { cards, effects, extra: runDefs.engine, engineUrl: engineTag ? engineTag.src : null });
   /* trace を有効にすると、どのカードが効果を発動したかを演出に使える。
      AI 探索中は重くなるので、思考の直前だけ切る (withoutTrace)。 */
   Engine.setTrace(true);
@@ -865,7 +869,7 @@ async function boot() {
       : tutorial
         ? Engine.newPuzzle(tutorial.lesson.spec, { seed: 1 })
         : Engine.newGame({ seed, p0, p1, first: firstPlayer, training: trainingMode, winCompiles,
-          ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude } : {}),
+          ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods } : {}),
           ...(tagMates ? { tag: tagMates } : {}) });
   cur = res;
   playBgm(battleBgm());                          // 対戦の BGM (ボス戦は専用の曲)
@@ -876,7 +880,7 @@ async function boot() {
   /* タッグはリプレイに残さない (棋譜の形が 1 対 1 のため) */
   replayLog = !replayMode && !trainingMode && !puzzle && !tutorial && !demoMode && !tagMates
     ? { init: { seed, p0: p0.slice(), p1: p1.slice(), first: firstPlayer, winCompiles: winCompiles || null,
-      ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude } : {}) }, actions: [] } : null;
+      ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods } : {}) }, actions: [] } : null;
   if (trainingMode) training.protos = [p0.slice(), p1.slice()];
   window.__3d = {
     stage, board, THREE, LAYOUT,
