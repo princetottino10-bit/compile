@@ -2828,7 +2828,13 @@ async function replayResolution(prev, res, action) {
     const n = links.length >= 2 ? links.length : 0;
     const delta = n - chainShown;
     chainShown = n;
-    if (delta > 0) { sfx('chain', n); avatarSay(st ? st.turn : ME, 'chain', null, st, 7000); }     // チェーンがつながった
+    if (delta > 0) {                                     // チェーンがつながった
+      sfx('chain', n);
+      /* 喜ぶのは、新しくつながった効果のカードの持ち主 (自分の除去で相手の下のカードが起きたなら、相手の方) */
+      const last = Array.isArray(chain) && chain.length ? String(chain[chain.length - 1]) : '';
+      const lc = st && st.cards && st.cards[last.slice(0, last.lastIndexOf('|'))];
+      avatarSay(lc ? lc.owner : (st ? st.turn : ME), 'chain', null, st, 7000);
+    }
     return delta;
   };
 
