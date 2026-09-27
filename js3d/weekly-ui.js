@@ -54,6 +54,30 @@ async function clearsHtml(week) {
   }
 }
 
+/* クリアしたのに一覧に載せていない挑戦を載せる (結果の画面と、週替わりの画面を開いたときに自動で)。
+   以前は結果の画面のボタンを押したときだけだったので、閉じてしまうと載せる方法がなかった。
+   サーバーは今週と先週の分を受け付けるので、週が変わった直後でも載る。
+   返り値: 'ok' (載せた) / 'skip' (載せるものがない・ログインしていない) / 失敗の理由の文 */
+async function submitPending(name) {
+  const st = W.loadStoredWeekly();
+  if (!st || st.phase !== 'clear' || st.submitted || !Array.isArray(st.decks) || st.decks.length !== 3) return 'skip';
+  /* サーバーが3戦の勝ちをリプレイで確かめる。直近のリプレイ (自動で10戦残る) から、この挑戦の3戦を探す */
+  const same = (x, y) => x.slice().sort().join() === y.slice().sort().join();
+  const wins = listReplays().filter(r => r.kind === 'weekly' && r.win);
+  const reps = st.decks.map(d => wins.find(r => same(r.init.p0, d)));
+  if (reps.some(r => !r)) return accountState().user ? '3戦のリプレイが見つかりません (直近10戦までしか残らないため)' : 'skip';
+  try {
+    await submitWeeklyClear(st.week, W.cleanName(name || displayName()) || 'PLAYER', st.attempt, reps);
+  } catch (e) {
+    if (/ログイン/.test(e.message)) return 'skip';
+    /* もう載っている (別の端末から載せた など) なら、載せた扱いにする */
+    if (!/もう載って/.test(e.message)) return e.message;
+  }
+  const now = W.loadStoredWeekly();
+  if (now.week === st.week) W.saveWeekly({ ...now, submitted: true });
+  return 'ok';
+}
+
 export function openWeekly(protocols, cardsOf) {
   const names = protocols.map(p => p.name);
   const byName = Object.fromEntries(protocols.map(p => [p.name, p]));
@@ -64,6 +88,7 @@ export function openWeekly(protocols, cardsOf) {
     let s = W.loadWeekly(key);
     let picked = [];
     let clears = '<p class="rn-note">クリア者を読み込み中…</p>';
+    let submitNote = accountState().user ? 'クリア者の一覧に載せています…' : 'ログインすると、クリア者の一覧に名前が載ります (タイトル右上のログインから)';
     const save = (next) => { s = next; W.saveWeekly(s); render(); };
     const done = (v) => { hideTitleBack(); el.classList.remove('show'); resolve(v); };
     showTitleBack(() => done(null));
@@ -112,7 +137,8 @@ export function openWeekly(protocols, cardsOf) {
           '相手は全員に同じ。何度でも挑戦できます。</p>' +
           '<h3>今週の9つ</h3>' + deckLine(set.nine, byName) +
           '<h3>今週の相手</h3><ol class="wk-opps">' + set.opponents.map(oppRow).join('') + '</ol>' +
-          (s.phase === 'clear' ? '<p class="rn-best">今週は<b>クリア済み</b> (' + s.attempt + '回目)</p>' : '') +
+          (s.phase === 'clear' ? '<p class="rn-best">今週は<b>クリア済み</b> (' + s.attempt + '回目)</p>' +
+            (s.submitted ? '' : '<p class="rn-note" id="wkSubmit" role="status">' + esc(submitNote) + '</p>') : '') +
           (s.phase === 'lost' ? '<p class="rn-warn">前回は第' + (s.stage + 1) + '戦で敗退しました</p>' : '') +
           '<h3>今週のクリア者</h3><div id="wkClears">' + clears + '</div>' +
           '<div class="rn-btns"><button type="button" data-act="hub">戻る</button>' +
@@ -166,7 +192,14 @@ export function openWeekly(protocols, cardsOf) {
       }
     };
     render();
-    clearsHtml(key).then((h) => { clears = h; const box = el.querySelector('#wkClears'); if (box) box.innerHTML = h; });
+    const loadClears = () => clearsHtml(key).then((h) => { clears = h; const box = el.querySelector('#wkClears'); if (box) box.innerHTML = h; });
+    /* 載せ損ねたクリアがあれば、先に載せてから一覧を読む */
+    submitPending().then((r) => {
+      if (r === 'ok') { s = W.loadWeekly(key); render(); }
+      else if (r !== 'skip') { submitNote = '一覧に載せられませんでした: ' + r; const n = el.querySelector('#wkSubmit'); if (n) n.textContent = submitNote; }
+      else if (!accountState().user) { /* ログインしていない: 案内のまま */ }
+      loadClears();
+    }, () => loadClears());
   });
 }
 
@@ -204,14 +237,24 @@ export function showWeeklyAfterGame(win, protocols) {
         '<p class="rn-note">使ったデッキ ' + s.decks.map(d => deckLine(d, byName)).join(' ') + '</p>' +
         (s.submitted ? '<p class="rn-best">クリア者の一覧に載せました</p>'
           : user
-            ? '<div class="wk-name"><label for="wkName">載せる名前 (1〜16文字)</label><input id="wkName" maxlength="16" autocomplete="nickname" value="' + esc(displayName()) + '">' +
-              '<button type="button" class="rn-go" data-act="submit">一覧に載せる</button></div><p class="rn-note" id="wkMsg" role="status"></p>'
+            ? '<p class="rn-note" id="wkMsg" role="status">クリア者の一覧に載せています…</p>'
             : '<p class="rn-note">ログインすると、今週のクリア者の一覧に名前を載せられます (タイトル右上のログインから)。</p>')
       : '') +
     '<div class="rn-btns">' +
       (s.phase === 'choose' ? '<button type="button" class="rn-go" data-act="next">次へ</button>' : '') +
       (s.phase === 'lost' ? '<button type="button" class="rn-go" data-act="next">もう一度挑戦する</button>' : '') +
       '<button type="button" data-act="board">盤面を見る</button><button type="button" data-act="title">タイトルへ</button></div></div>';
+  /* クリアしたら、ボタンを押さなくても一覧に載せる (名前は表示名)。失敗したときだけ、もう一度のボタンを出す */
+  const sendClear = async () => {
+    const msg = el.querySelector('#wkMsg');
+    if (!msg) return;
+    msg.textContent = 'クリア者の一覧に載せています…';
+    const r = await submitPending().catch((e) => e.message);
+    if (r === 'ok') msg.textContent = '一覧に載せました (' + (W.cleanName(displayName()) || 'PLAYER') + ')';
+    else if (r === 'skip') msg.textContent = W.loadStoredWeekly().submitted ? '一覧に載せました' : 'ログインすると、クリア者の一覧に名前が載ります';
+    else msg.innerHTML = '一覧に載せられませんでした: ' + esc(r) + ' <button type="button" class="rn-go" data-act="submit">もう一度載せる</button>';
+  };
+  if (s.phase === 'clear' && !s.submitted && user) sendClear();
   el.onclick = async (ev) => {
     const t = ev.target.closest('button');
     if (!t) return;
@@ -226,25 +269,8 @@ export function showWeeklyAfterGame(win, protocols) {
       back.onclick = () => { back.remove(); el.classList.add('show'); };
       document.body.appendChild(back);
     } else if (t.dataset.act === 'submit') {
-      const msg = el.querySelector('#wkMsg');
-      const name = W.cleanName(el.querySelector('#wkName').value);
-      if (!name) { msg.textContent = '名前は1〜16文字で入れてください'; return; }
       t.disabled = true;
-      try {
-        /* サーバーが3戦の勝ちをリプレイで確かめる。直近のリプレイ (自動で10戦残る) から、この挑戦の3戦を探す */
-        const same = (x, y) => x.slice().sort().join() === y.slice().sort().join();
-        const wins = listReplays().filter(r => r.kind === 'weekly' && r.win);
-        const reps = s.decks.map(d => wins.find(r => same(r.init.p0, d)));
-        if (reps.some(r => !r)) throw new Error('3戦のリプレイが見つかりません (直近10戦までしか残らないため)');
-        await submitWeeklyClear(s.week, name, s.attempt, reps);
-        /* 載せたのはこの挑戦の週。そのあいだに週が変わっていたら、新しい週には印を付けない */
-        const now = W.loadStoredWeekly();
-        if (now.week === s.week) W.saveWeekly({ ...now, submitted: true });
-        msg.textContent = '一覧に載せました';
-      } catch (e) {
-        msg.textContent = '載せられませんでした: ' + e.message;
-        t.disabled = false;
-      }
+      sendClear();
     }
   };
 }
