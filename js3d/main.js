@@ -1350,6 +1350,12 @@ function bindInput() {
   });
 
   el.addEventListener('pointerdown', async (ev) => {
+    /* プロトコルの並べ替え中は、並べ替える板のタップだけを受ける (並べ替えの側が先に拾う)。
+       それ以外の板を押してもスタックの一覧を開かない (開くと画面を覆って、入れ替えが続けられなかった) */
+    if (activeArrange && !activeArrange.peek) {
+      if (panelAt(ev)) UI.toast(activeArrange.hint || '光っている側のプロトコルをタップしてください', 1800);
+      return;
+    }
     if (drag) {
       const stale = board.cards.get(drag.uid);
       if (stale) {
@@ -3272,7 +3278,7 @@ function arrangeOnBoard(req, opts) {
       ov.remove();
       resolve(picks);
     };
-    activeArrange = { cancel: () => finish(PICK_CANCEL) };
+    activeArrange = { cancel: () => finish(PICK_CANCEL), hint: null };
     const done = () => finish(control ? { target: targetSide, perm: perm.slice() } : perm.slice());
 
     const render = () => {
@@ -3284,7 +3290,8 @@ function arrangeOnBoard(req, opts) {
       const text = control
         ? (targetSide === null ? '並べ替えるなら、自分か相手のプロトコルをタップ'
           : (targetSide === ME ? '自分' : '相手') + 'のプロトコルを2つタップして入れ替え (反対側をタップで切り替え)')
-        : single ? 'プロトコルを2つタップして入れ替え (1回だけ)' : 'プロトコルを2つタップして入れ替え';
+        : (targetSide === ME ? '自分' : '相手') + 'のプロトコルを2つタップして入れ替え' + (single ? ' (1回だけ)' : '');
+      activeArrange.hint = targetSide === null ? '並べ替えるなら、自分か相手のプロトコルをタップ' : (targetSide === ME ? '自分' : '相手') + 'のプロトコルをタップしてください';
       ov.innerHTML =
         '<div class="pick-ribbon' + (arrPeek ? ' peek' : '') + '">' +
           '<button type="button" class="rb-peek" aria-pressed="' + arrPeek + '" title="帯を透かして盤面を見る" aria-label="盤面を見る">&#128065;</button>' +
@@ -3298,6 +3305,7 @@ function arrangeOnBoard(req, opts) {
       if (peekBtn) peekBtn.onclick = (ev) => {
         ev.stopPropagation();
         arrPeek = !arrPeek;
+        activeArrange.peek = arrPeek;
         render();
         if (arrPeek) UI.toast('触ったカードの効果を見られます (目をもう一度押すと入れ替えに戻ります)', 2200);
       };
