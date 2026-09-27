@@ -8,6 +8,7 @@ import { recordDailyGame, DAILY_XP, dailyView } from './daily.js';
 import { maybeLoginHint } from './account.js';
 import { logPlay } from './playlog.js';
 import * as FEEL from './feel.js';
+import * as CW from './crashwatch.js';
 import { unlockTrophies, TROPHY_XP } from './achievements.js';
 import { addReplay, getReplay, pinReplay, rebuild } from './replays.js';
 import { advantageSeries, turningPoints } from './turning.js';
@@ -263,6 +264,7 @@ function totalOf(st, line, side) {
 /* ---------- 起動 ---------- */
 /* 画面で起きたエラーはサーバーに知らせる (報告がなくても気づけるように。errorreport.js) */
 watchErrors();
+CW.checkLastBattle();                 // 前の対戦が途中で落ちていたら知らせる (crashwatch.js)
 boot().catch((e) => {
   console.error(e);
   reportError(e, 'boot');
@@ -601,6 +603,7 @@ async function boot() {
           ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude } : {}) });
   cur = res;
   gameStartedAt = Date.now();          // はじめの表示で合計値の演出が出ないように (feel.js)
+  if (!trainingMode && !puzzle && !tutorial && !demoMode && !replayMode) CW.battleStarted(runMode ? runKind : quickGame ? 'quick' : 'cpu', p0, p1);
   if (!trainingMode && !puzzle && !tutorial && !demoMode && !replayMode) lastSetup = { p0: p0.slice(), p1: p1.slice() };
   /* CPU 戦は棋譜を取る (決着したらリプレイとして残す) */
   replayLog = !replayMode && !trainingMode && !puzzle && !tutorial && !demoMode
@@ -1573,6 +1576,7 @@ function bindInput() {
   const goToMenu = async () => {
     if (!roomMode) {
       if (!confirm('メニューに戻りますか？')) return;
+      CW.battleEnded();
       location.href = location.pathname;
       return;
     }
@@ -1584,6 +1588,7 @@ function bindInput() {
         if (!isRoomGone(e) && !confirm('投了を送れませんでした (' + e.message + ')。それでもメニューに戻りますか？')) return;
       }
     }
+    CW.battleEnded();
     location.href = location.pathname;
   };
   const menuBtn = document.getElementById('btnMenu');
@@ -2121,7 +2126,7 @@ function showVsTag(rm) {
 }
 
 async function roomApplyView(rm, instant) {
-  if (!gameStartedAt) gameStartedAt = Date.now();
+  if (!gameStartedAt) { gameStartedAt = Date.now(); CW.battleStarted('online'); }
   showVsTag(rm);
   /* サーバー側の状態が進んだら、進行中の待ち受けUI (盤面ピック/並べ替え/
      モーダル) は破棄して取り直す (放置すると古い req.id で答えて desync する) */
@@ -2316,6 +2321,7 @@ async function roomMaybeFinish() {
   const st = shown();
   if (!st || st.winner === null || roomResultShown) return;
   roomResultShown = true;
+  CW.battleEnded();
   stopRoomPoll();
   const win = st.winner === ME;
   UI.setPrompt(win ? 'あなたの勝ち' : '敗北', 'end');
@@ -2637,6 +2643,7 @@ async function step(action) {
   }
   const topLevel = action.type === 'play' || action.type === 'refresh';
   if (action.type === 'play' && before.turn === ME) FEEL.buzz(10);     // 置いた手応え
+  CW.battleProgress(res.state.turns | 0);
   if (topLevel && assistGame() && before.turn === ME) {
     undoPoint = { cur, replayLen: replayLog ? replayLog.actions.length : 0, histLen: gameHistory.length };
   }
@@ -3450,6 +3457,7 @@ async function afterTurn() {
   syncAssist();
   if (cur.state.winner !== null && !resultShown) {
     resultShown = true;
+    CW.battleEnded();
     const win = cur.state.winner === ME;
     /* 遊ばれ方の匿名の記録 (ログインしていない人も。チュートリアルも数える) */
     if (!trainingMode && !puzzle && !demoMode && !roomMode) {
