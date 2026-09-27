@@ -156,6 +156,7 @@ export function runTitle(protocols, opts) {
             : '') +
           '<div class="tt-main">' +
             '<button data-mode="single" type="button">SINGLE GAME <small>VS CPU</small></button>' +
+            '<button data-mode="challenge" type="button">CHALLENGE <small>BOSS · UNDERDOG</small></button>' +
             '<button data-mode="run" type="button">RUN <small>ROGUELIKE · WEEKLY</small></button>' +
             '<button data-mode="online" type="button">ONLINE GAME <small>ROOMS · RATED</small></button>' +
           '</div>' +

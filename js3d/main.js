@@ -773,7 +773,7 @@ async function boot() {
       /* SINGLE GAME は先に相手を選ぶ (CPU / 強敵 / 下剋上)。トレーニングは相手も自分で置くので飛ばす */
       let opp = null;
       if (nextMode !== 'training') {
-        opp = await openOpponentSelect(cards.protocols);
+        opp = await openOpponentSelect(cards.protocols, { challenge: nextMode === 'challenge' });
         if (!opp) { nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
         if (opp.quick) { location.href = location.pathname + '?quick=1'; return; }
         if (opp.underdog) {
