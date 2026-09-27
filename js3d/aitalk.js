@@ -28,6 +28,11 @@ const EVENT = {
 /* チュートリアルの案内は、決まった言い方のほうがわかりやすいので AI にしない */
 const SKIP = new Set(['lesson', 'good', 'retry']);
 
+/* いまは管理者だけ (みんなに出すのは待ち)。main.js が管理者かどうかを教える */
+let talkOpen = () => false;
+export function setTalkGate(fn) { talkOpen = fn; }
+export const talkShown = () => { try { return !!talkOpen(); } catch (e) { return false; } };
+
 const today = () => new Date().toLocaleDateString('sv-SE');
 export function talkConfig() {
   try { return { ...DEF, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch (e) { return { ...DEF }; }
@@ -39,7 +44,7 @@ function saveTalk(patch) {
 }
 /** 今日使った回数 (日が変わると 0) */
 export function talkUsed(c = talkConfig()) { return c.day === today() ? (c.used | 0) : 0; }
-export const talkReady = (c = talkConfig()) => !!(c.on && c.key && modelOf(c) && (c.provider !== 'custom' || c.base));
+export const talkReady = (c = talkConfig()) => !!(talkShown() && c.on && c.key && modelOf(c) && (c.provider !== 'custom' || c.base));
 const modelOf = (c) => c.model || (PROVIDERS[c.provider] || {}).model || '';
 const baseOf = (c) => (c.provider === 'custom' ? c.base : (PROVIDERS[c.provider] || {}).base || '').replace(/\/+$/, '');
 
@@ -121,6 +126,7 @@ export async function aiLine(def, kind, vars, ctx) {
 /* ---- 設定画面の欄 (settings.js から) ---- */
 const esc = (s) => String(s).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
 export function talkSettingsHtml() {
+  if (!talkShown()) return '';
   const c = talkConfig();
   const keyNote = c.key ? '保存済み (末尾 ' + esc(c.key.slice(-4)) + ')' : 'まだありません';
   return '<div class="st-aitalk">' +

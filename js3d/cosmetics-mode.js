@@ -236,6 +236,10 @@ export function openCosmetics(opts) {
     const TABS = tabsNow();
     const all = TABS.reduce((n, t) => n + itemsOf(t.kind).length, 0);
     const allGot = TABS.reduce((n, t) => n + itemsOf(t.kind).filter(([k]) => owned(t.kind, k, c)).length, 0);
+    /* 描き直しても、一覧とタブの横の位置はそのまま (縦持ちで下のほうを押しても、上に戻らない)。タブを変えたら一覧は上から */
+    const oldList = el.querySelector('.cm-list'), oldTabs = el.querySelector('.cm-tabs');
+    const keepY = oldList && oldList.dataset.tab === tab ? oldList.scrollTop : 0;
+    const keepX = oldTabs ? oldTabs.scrollLeft : 0;
     el.innerHTML = '<div class="cm-shell">' +
       '<div class="cm-head"><b>// COLLECTION</b><span>集めた ' + allGot + ' / ' + all + '</span>' +
         '<button type="button" class="cm-gacha">GACHA <small>CHIP ' + chipsNow() + '</small></button>' +
@@ -248,7 +252,7 @@ export function openCosmetics(opts) {
         '<section class="cm-preview">' + preview(tab, fItem[0], fItem[1], owned(tab, fItem[0], c), sourceOf(tab, fItem[0])) +
           (owned(tab, fItem[0], c) && fItem[0] !== cur ? '<button type="button" class="cm-equip" data-equip="' + esc(fItem[0]) + '">着ける</button>'
             : fItem[0] === cur ? '<p class="cm-on">着けています</p>' : '') + '</section>' +
-        '<section class="cm-list"><div class="cm-filter"><p class="cm-count">' + TABS.find(t => t.kind === tab).label + ' ' + got + ' / ' + list.length + '</p>' +
+        '<section class="cm-list" data-tab="' + tab + '"><div class="cm-filter"><p class="cm-count">' + TABS.find(t => t.kind === tab).label + ' ' + got + ' / ' + list.length + '</p>' +
           [['all', '全部'], ['own', '持っている'], ['not', 'まだ']].map(([k, label]) =>
             '<button type="button" class="cm-fbtn' + (filter === k ? ' on' : '') + '" data-filter="' + k + '">' + label + '</button>').join('') +
           (masteryHidden > 0 || showMastery ? '<button type="button" class="cm-fbtn' + (showMastery ? ' on' : '') + '" data-mastery="1">習熟度の分も見る' +
@@ -262,6 +266,17 @@ export function openCosmetics(opts) {
               (isNew ? '<i class="cm-new">NEW</i>' : '') + '</button>';
           }).join('') + '</div></section>' +
       '</div></div>';
+    const newList = el.querySelector('.cm-list'), newTabs = el.querySelector('.cm-tabs'), onTab = el.querySelector('.cm-tabs .on');
+    if (newList) newList.scrollTop = keepY;
+    if (newTabs) {
+      newTabs.scrollLeft = keepX;
+      /* 選んでいるタブが横にはみ出していたら、見える位置まで寄せる */
+      if (onTab) {
+        const box = newTabs.getBoundingClientRect(), r = onTab.getBoundingClientRect();
+        if (r.left < box.left || r.right > box.right - box.width * 0.12)          // 右の端はぼかしてあるので、少し手前から
+          newTabs.scrollLeft += (r.left + r.width / 2) - (box.left + box.width / 2);
+      }
+    }
     /* 見た印: いま開いているタブの、持っているもの */
     markSeen(list.filter(([k]) => owned(tab, k, c)).map(([k]) => tab + ':' + k));
   };

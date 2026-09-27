@@ -2490,6 +2490,40 @@
     .cm-grid{grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px;}
     .cm-th{height:68px;}
   }
+  /* 縦持ちのスマホ: 見本は上の細い帯 (左に絵・右に名前と着けるボタン) にして、一覧を広く */
+  @media (orientation:portrait) and (max-width:700px){
+    .cm-shell{gap:8px;}
+    .cm-head{gap:10px;align-items:center;}
+    .cm-head b{font-size:16px;letter-spacing:.12em;white-space:nowrap;}
+    .cm-head span{white-space:nowrap;font-size:11px;}
+    .cm-gacha{padding:8px 10px;}
+    .cm-tabs{padding-right:44px;-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent);}
+    .cm-tabs button{padding:8px 12px;font-size:13px;}
+    .cm-body{gap:8px;}
+    .cm-preview{display:grid;grid-template-columns:48% 1fr;grid-template-rows:1fr auto;align-items:center;justify-items:center;
+      gap:6px 10px;height:clamp(150px,24vh,210px);padding:8px 10px;}
+    .cm-preview > .cm-art{grid-row:1 / span 2;height:100%;}
+    .cm-preview > .cm-cap{align-self:end;}
+    .cm-preview > .cm-equip,.cm-preview > .cm-on{align-self:start;}
+    .cm-cap b{font-size:15px;}
+    .cm-cap span{font-size:11px;}
+    .cm-equip{padding:9px 20px;}
+    .cm-card{height:100%;max-height:190px;}
+    .cm-matview{max-width:100%;max-height:100%;width:auto;height:88%;aspect-ratio:10/10.8;}
+    .cm-markerview img{width:auto;height:min(150px,90%);}
+    .cm-burst{width:110px;height:110px;}
+    .cm-burst b{font-size:20px;}
+    .cm-vicview b{font-size:26px;}
+    .cm-plate{padding:8px 10px;gap:8px;}
+    .cm-plate img{width:40px;height:40px;}
+    .cm-plate b{font-size:15px;}
+    .cm-desc{font-size:10.5px;margin-top:4px;}
+    .cm-filter .cm-count{flex-basis:100%;margin:0 0 2px;}
+    .cm-fbtn{padding:6px 10px;}
+    .cm-grid{grid-template-columns:repeat(3,minmax(0,1fr));}
+    .cm-grid.icon{grid-template-columns:repeat(4,minmax(0,1fr));}
+    .cm-grid.title,.cm-grid.victory,.cm-grid.nameplate{grid-template-columns:repeat(2,minmax(0,1fr));}
+  }
   @media (prefers-reduced-motion:reduce){ .cm-card,.cm-markerview img,.cm-burst::before,.cm-vicview.aurora b{animation:none;} }
   /* ドラフトの前のコイントス (先攻・後攻) */
   .sd-toss{grid-column:1 / -1;display:flex;flex-direction:column;align-items:center;gap:18px;padding:40px 0;}
@@ -2988,6 +3022,11 @@
   .cm-avview img{flex:1 1 auto;min-height:0;max-height:100%;max-width:100%;object-fit:contain;filter:drop-shadow(0 10px 18px rgba(0,0,0,.5));}
   .cm-avview p{position:absolute;left:4%;bottom:10%;max-width:70%;margin:0;padding:10px 14px;background:#fbf7ee;color:#1a1424;border-radius:12px;font:800 14px/1.4 var(--font-ui);box-shadow:0 0 0 2px var(--av-c),0 8px 18px rgba(0,0,0,.4);}
   .cm-avview p b{display:block;font:800 10px/1 var(--font-ui);letter-spacing:.14em;color:#7a5cc4;margin-bottom:4px;}
+  /* 縦持ちの細い帯では、吹き出しは顔にかぶるので出さない。クレジットは小さく */
+  @media (orientation:portrait) and (max-width:700px){
+    .cm-avview p{display:none;}
+    .cm-avview .cm-credit{font-size:8.5px;line-height:1.3;text-align:center;}
+  }
   .cm-credit{font:600 10.5px/1.4 var(--font-ui);color:var(--dim);letter-spacing:.04em;}
   .st-credit{margin:6px 0 0;font:600 10.5px/1.5 var(--font-ui);color:var(--dim);}
   /* AI でしゃべらせる (aitalk.js) */
@@ -3268,7 +3307,7 @@
       "./js3d/ai-worker.js": "./js3d/ai-worker.js?v=5efde8ba0e",
       "./js3d/aiclient.js": "./js3d/aiclient.js?v=704b588b82",
       "./js3d/aidecks.js": "./js3d/aidecks.js?v=8d249240bd",
-      "./js3d/aitalk.js": "./js3d/aitalk.js?v=259c03bf95",
+      "./js3d/aitalk.js": "./js3d/aitalk.js?v=3b756521cb",
       "./js3d/arena.js": "./js3d/arena.js?v=ef66a1e5bb",
       "./js3d/audio.js": "./js3d/audio.js?v=28a4f522ba",
       "./js3d/avatar.js": "./js3d/avatar.js?v=528a318280",
@@ -3281,7 +3320,7 @@
       "./js3d/chips.js": "./js3d/chips.js?v=e67e280b76",
       "./js3d/cloudsave.js": "./js3d/cloudsave.js?v=d1643b2cad",
       "./js3d/control.js": "./js3d/control.js?v=c1b87ebc63",
-      "./js3d/cosmetics-mode.js": "./js3d/cosmetics-mode.js?v=5fbb8dbf28",
+      "./js3d/cosmetics-mode.js": "./js3d/cosmetics-mode.js?v=756300f080",
       "./js3d/cosmetics-ui.js": "./js3d/cosmetics-ui.js?v=61977c6f7c",
       "./js3d/crashwatch.js": "./js3d/crashwatch.js?v=57c6c91bd8",
       "./js3d/daily.js": "./js3d/daily.js?v=f56dabdf65",
@@ -3301,7 +3340,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=e14428007a",
+      "./js3d/main.js": "./js3d/main.js?v=812141a2a4",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=2142e0957c",
       "./js3d/panel.js": "./js3d/panel.js?v=d4a1f0a181",
@@ -3354,7 +3393,7 @@
   <link rel="modulepreload" href="js3d/feel.js?v=83bdf7f262">
   <link rel="modulepreload" href="js3d/spectate.js?v=64e3111a2f">
   <link rel="modulepreload" href="js3d/avatar.js?v=528a318280">
-  <link rel="modulepreload" href="js3d/aitalk.js?v=259c03bf95">
+  <link rel="modulepreload" href="js3d/aitalk.js?v=3b756521cb">
   <link rel="modulepreload" href="js3d/motion.js?v=36861b0081">
   <link rel="modulepreload" href="js3d/gacha.js?v=ce3d4f3faa">
   <link rel="modulepreload" href="js3d/chips.js?v=e67e280b76">
@@ -3382,7 +3421,7 @@
   <link rel="modulepreload" href="js3d/rewards.js?v=a8b97d1190">
   <link rel="modulepreload" href="js3d/gachafx.js?v=3d15a2226f">
   <link rel="modulepreload" href="js3d/cosmetics-ui.js?v=61977c6f7c">
-  <link rel="modulepreload" href="js3d/cosmetics-mode.js?v=5fbb8dbf28">
+  <link rel="modulepreload" href="js3d/cosmetics-mode.js?v=756300f080">
   <link rel="modulepreload" href="js3d/displayname.js?v=613e18bf95">
   <link rel="modulepreload" href="js3d/plates.js?v=51eb123246">
   <link rel="modulepreload" href="js3d/playmat.js?v=1c8f36818a">
@@ -3441,6 +3480,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=e14428007a"></script>
+  <script type="module" src="js3d/main.js?v=812141a2a4"></script>
 </body>
 </html>

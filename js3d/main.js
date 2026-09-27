@@ -10,7 +10,7 @@ import { logPlay } from './playlog.js';
 import * as FEEL from './feel.js';
 import { openSpectate } from './spectate.js';
 import { mountAvatar, AVATARS, avatarIds } from './avatar.js';
-import { aiLine, talkReady } from './aitalk.js';
+import { aiLine, talkReady, setTalkGate } from './aitalk.js';
 import { countUp, dealIn } from './motion.js';
 import { loadGacha, chipsOf, giveChips } from './gacha.js';
 import { earnedChips } from './chips.js';
@@ -363,6 +363,8 @@ function avatarTagTurn(st) {
 }
 
 /* 設定の画面に、対戦のキャラの項目 (相手の声・クレジット) を出すのは、キャラが見える人だけ */
+/* AI でしゃべらせるは、いまは管理者だけ */
+setTalkGate(() => !!accountState().admin);
 setAvatarOptionsGate(() => AVATAR_RELEASED || !!accountState().admin, () => (COSMETICS.avatar || []).filter(([k]) => AVATARS[k]));
 
 /* 観戦 (spectate.js の結果)。{ a, b, level, bet } / null */
