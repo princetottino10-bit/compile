@@ -3,12 +3,11 @@
  *   タイトルの GACHA から開く。CHIP で1回 / 10連。出たものは図鑑にたまり、COSMETICS で選べる
  * ========================================================================= */
 import { countUp, dealIn } from './motion.js';
+import { earnedChips, CHIP_PER_XP } from './chips.js';
 import * as G from './gacha.js';
 import { playCapsule, RAR_NAMES, confetti, RAR_COLORS } from './gachafx.js';
 import { itemArtHtml } from './cosmetics-mode.js';
-import { playerLevel } from './stats-data.js';
-import { localRecords } from './stats.js';
-import { bonusXp, grantXp } from './xp.js';
+import { grantXp } from './xp.js';
 import { openSettings } from './settings.js';
 import { unlockTrophies, TROPHY_XP } from './achievements.js';
 import { trophyContext, showTrophyBanner } from './achievements-ui.js';
@@ -18,10 +17,8 @@ import { holo } from './holo.js';
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const ORDER = ['L', 'E', 'R', 'C'];
 
-/** これまでに貯めた経験値の合計 (= もらった CHIP の合計) */
-export function earnedChips() {
-  return playerLevel(localRecords(), bonusXp()).xp;
-}
+/** もらった CHIP の合計 (chips.js) */
+export { earnedChips };
 /** いま使える CHIP (タイトルのボタンに出す) */
 export function chipsNow() {
   return G.chipsOf(G.loadGacha(), earnedChips());
@@ -85,7 +82,7 @@ export function openGacha(opts) {
       '<div class="pz-head"><b id="gaTitle">// GACHA</b><button type="button" class="pz-x" aria-label="閉じる">×</button></div>' +
       (loginNudgeNeeded() ? '<div class="ga-login"><p><b>ログインしていません</b>引いた見た目と CHIP はこのブラウザにだけ残ります。消えると戻せません。</p>' +
         '<button type="button" id="gaLogin">ログインして守る</button></div>' : '') +
-      '<div class="ga-top"><div class="ga-chip"><small>CHIP</small><b>' + chips + '</b><span>経験値が貯まるたびに増える (1 XP = 1 CHIP)</span></div>' +
+      '<div class="ga-top"><div class="ga-chip"><small>CHIP</small><b>' + chips + '</b><span>経験値が入るたびに増える (経験値 1 につき CHIP ' + CHIP_PER_XP + ')</span></div>' +
         '<div class="ga-btns"><button type="button" class="ga-pull" data-n="1"' + (chips >= G.PULL_COST ? '' : ' disabled') + '>1回 <small>' + G.PULL_COST + ' CHIP</small></button>' +
         '<button type="button" class="ga-pull ten" data-n="10"' + (chips >= G.TEN_COST ? '' : ' disabled') + '>10連 <small>' + G.TEN_COST + ' CHIP ・ RARE 以上1つ確定</small></button></div></div>' +
       '<p class="ga-rates">' + ORDER.map(k => '<span class="r' + k + '">' + RAR_NAMES[k] + ' ' + G.RATES[k] + '%</span>').join('') +

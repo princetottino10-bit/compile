@@ -10,6 +10,7 @@ import { logPlay } from './playlog.js';
 import * as FEEL from './feel.js';
 import { countUp, dealIn } from './motion.js';
 import { loadGacha, chipsOf } from './gacha.js';
+import { earnedChips } from './chips.js';
 import * as CW from './crashwatch.js';
 import { unlockTrophies, TROPHY_XP } from './achievements.js';
 import { addReplay, getReplay, pinReplay, rebuild } from './replays.js';
@@ -3499,7 +3500,7 @@ async function afterTurn() {
     }
     const levelBefore = myLevel;
     if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial) {
-      matchGains = { xp0: playerLevel(localRecords(), bonusXp()).xp, lv0: myLevel, daily: [], trophies: [] };
+      matchGains = { xp0: playerLevel(localRecords(), bonusXp()).xp, chip0: earnedChips(), lv0: myLevel, daily: [], trophies: [] };
     }
     /* チュートリアルは戦績・リプレイ・実績に数えない */
     if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial) {
@@ -3577,12 +3578,13 @@ function gainsHtml() {
   if (!matchGains) return '';
   const xp = playerLevel(localRecords(), bonusXp()).xp - matchGains.xp0;
   if (xp <= 0 && !matchGains.daily.length && !matchGains.trophies.length) return '';
-  const chips = chipsOf(loadGacha(), playerLevel(localRecords(), bonusXp()).xp);
+  const chips = chipsOf(loadGacha(), earnedChips());
+  const gotChips = earnedChips() - matchGains.chip0;
   const esc = (t) => String(t).replace(/[<>&"]/g, '');
   const rows = [];
   if (xp > 0) {
     rows.push('<li class="eg-num"><small>経験値</small><b data-from="0" data-to="' + xp + '" data-plus="1">+' + xp + '</b></li>');
-    rows.push('<li class="eg-num"><small>CHIP</small><b data-from="' + Math.max(0, chips - xp) + '" data-to="' + chips + '">' + chips + '</b><em>+' + xp + '</em></li>');
+    rows.push('<li class="eg-num"><small>CHIP</small><b data-from="' + Math.max(0, chips - gotChips) + '" data-to="' + chips + '">' + chips + '</b><em>+' + gotChips + '</em></li>');
   }
   if (myLevel > matchGains.lv0) rows.push('<li class="eg-lv"><small>レベル</small><b>LV ' + matchGains.lv0 + ' → ' + myLevel + '</b></li>');
   for (const t of matchGains.daily) rows.push('<li class="eg-daily"><small>デイリー達成</small><span>' + esc(t) + '</span></li>');

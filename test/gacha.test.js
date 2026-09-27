@@ -111,3 +111,13 @@ test('値下げ (30 → 15) の補償: それまでに使った CHIP の半分�
   const fresh = G.compensateOldPrice(JSON.parse(G.mergeGacha('{}', '{}')));
   assert.equal(fresh.back[G.COMP_KEY], 0);
 });
+
+test('CHIP: 2026-09-27 からの経験値は 1 につき 3、それより前は 1 (前の分までは増やさない)', async () => {
+  const C = await import('../js3d/chips.js');
+  const before = C.CHIP_BOOST_FROM - 1000, after = C.CHIP_BOOST_FROM + 1000;
+  /* 戦績: 負け 1・勝ち 3 (かんたん)。帳簿: 書いてある分 */
+  const records = [{ win: false, level: 0, at: before }, { win: true, level: 0, at: after }];
+  const log = [{ xp: 5, at: before }, { xp: 2, at: after }];
+  assert.equal(C.CHIP_PER_XP, 3);
+  assert.equal(C.earnedChips(records, log), 1 + 3 * 3 + 5 + 2 * 3);
+});
