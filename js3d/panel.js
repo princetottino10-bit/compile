@@ -153,7 +153,9 @@ function paint(ctx, info, art) {
   ctx.fillText(info.name, 112, H * 0.62);
   ctx.textBaseline = 'alphabetic';
 
-  paintBadge(ctx, BADGE.x, BADGE.y, info.total, compiled, accent);
+  /* 合計値。並べ替えで板が動いている間は板には描かない (合計はラインのカードのもので、板についていかない。
+     その間はラインの位置に止めた札 (badgeAt) が、板の上に重ねて出す) */
+  if (!info.hideTotal) paintBadge(ctx, BADGE.x, BADGE.y, info.total, compiled, accent);
 
   /* 枠 */
   ctx.strokeStyle = compiled ? '#ffffff' : rgba(accent, 0.5);
@@ -281,10 +283,6 @@ export function createPanels(stage, me, hooks) {
       }
     }
     const moving = new Set(moves.map(m => m.p));
-    /* 動く板は、元のラインで出していた数字のまま運ぶ (動き出した瞬間に数字が入れ替わって見えないように)。着いたら新しいラインの合計にする */
-    const shownTotal = {};
-    for (const p of panels) if (p.info) shownTotal[p.side + ':' + p.line] = p.info.total;
-    for (const m of moves) m.carry = shownTotal[m.p.side + ':' + m.from];
     /* 合計値の変化 (同じプロトコルのまま変わったときだけ。並べ替え・はじめての表示では知らせない) */
     const events = [];
     for (const p of panels) {
@@ -315,13 +313,43 @@ export function createPanels(stage, me, hooks) {
       }
       p.shown = info.compiled;
     }
-    return Promise.all(moves.map((m, i) => slideFrom(m.p, m.info, m.from, i, m.carry)));
+    /* 動く板のラインには、合計値の札だけをその場に残す (板と一緒に数字が入れ替わって見えないように) */
+    const stays = moves.map(m => badgeAt(m.p, m.info));
+    return Promise.all(moves.map((m, i) => slideFrom(m.p, m.info, m.from, i))).then(() => { for (const off of stays) off(); });
+  }
+
+  /* 板が並べ替えで動いている間、そのラインの位置に合計値の札だけを出しておく。返り値を呼ぶと消える */
+  const badgeGeo = new THREE.PlaneGeometry(BADGE.w / TEX_W * PANEL_W, BADGE.h / TEX_H * PANEL_D);
+  badgeGeo.rotateX(-Math.PI / 2);
+  function badgeAt(p, info) {
+    const cv = document.createElement('canvas');
+    cv.width = BADGE.w * TEX_SCALE; cv.height = BADGE.h * TEX_SCALE;
+    const ctx = cv.getContext('2d');
+    ctx.setTransform(TEX_SCALE, 0, 0, TEX_SCALE, 0, 0);
+    ctx.fillStyle = '#070a14';
+    roundRect(ctx, 0, 0, BADGE.w, BADGE.h, 16); ctx.fill();
+    paintBadge(ctx, 0, 0, info.total, !!info.compiled, info.color || '#b9a4ff');
+    const tex = new THREE.CanvasTexture(cv);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    /* 板が下をくぐっても隠れないよう、いつも一番上に描く */
+    const mesh = new THREE.Mesh(badgeGeo, new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, depthTest: false }));
+    mesh.renderOrder = 20;
+    /* 板の中での札の位置 (板の中心からのずれ) を、板と同じ向きで床に置く */
+    const slot = LAYOUT.protoSlot(p.line, p.side, me);
+    const holder = new THREE.Group();
+    holder.position.set(slot.pos[0], slot.pos[1] + 0.004, slot.pos[2]);
+    holder.rotation.set(slot.rot[0], slot.rot[1], slot.rot[2]);
+    mesh.position.set((BADGE.x + BADGE.w / 2 - TEX_W / 2) / TEX_W * PANEL_W, 0,
+      (BADGE.y + BADGE.h / 2 - TEX_H / 2) / TEX_H * PANEL_D);
+    holder.add(mesh);
+    stage.scene.add(holder);
+    return () => { stage.scene.remove(holder); tex.dispose(); mesh.material.dispose(); };
   }
 
   /* 板を元のライン (fromLine) の位置から自分のラインへ弧を描いて滑らせる。
      すれ違う板どうしが重ならないよう、弧の高さを交互に変える */
-  function slideFrom(p, info, fromLine, order, carry) {
-    repaint(p, carry === undefined ? info : { ...info, total: carry });
+  function slideFrom(p, info, fromLine, order) {
+    repaint(p, { ...info, hideTotal: true });
     p.group.rotation.x = info.compiled ? Math.PI : 0;
     p.shown = info.compiled;
     const slot = LAYOUT.protoSlot(p.line, p.side, me);
