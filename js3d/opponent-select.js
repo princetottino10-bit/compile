@@ -2,7 +2,7 @@
  * 相手を選ぶ画面
  *   SINGLE GAME: おまかせ (プロトコルも相手も自動) / CPU (かんたん / ふつう / つよい。次の画面で公式のドラフトで取り合う) / タッグ
  *   CHALLENGE (opts.challenge): 強敵 (最強・ロック特化・挑戦者。相手のデッキは決まっている) / 下剋上 (最弱のデッキで最強に挑む。勝つと称号)
- *   → { level } / { underdog: true } / { quick: true } / null (タイトルへ)
+ *   → { level } / { underdog: true } / { quick: true } / { watch: true } / null (タイトルへ)
  * ========================================================================= */
 import { showTitleBack, hideTitleBack } from './titleback.js';
 import { LEVEL_LABELS, STRONGEST_AI, LOCK_AI, CHALLENGERS, CHALLENGER_BASE, UNDERDOG_DECK, UNDERDOG_LEVEL } from './aidecks.js';
@@ -58,7 +58,9 @@ export function openOpponentSelect(protocols, opts = {}) {
       '<section><h3>CPU <small>次の画面で、公式ルールのドラフトで CPU とプロトコルを取り合う (自由に選ぶ・ランダムにも変えられる)</small></h3>' +
       '<div class="op-row">' + [0, 1, 2].map(i => card(String(i), LEVEL_LABELS[i], CPU_NOTES[i])).join('') + '</div></section>' +
       '<section><h3>タッグデュエル <small>あなたと CPU の味方 vs CPU 2人。盤面は共有、手札と山札は1人ずつ。ラインは2人のプロトコルを合わせた複合プロトコル (次の画面で自分の3つを選び、味方は残りから)</small></h3>' +
-      '<div class="op-row">' + [0, 1, 2].map(i => card('tag' + i, 'TAG · ' + LEVEL_LABELS[i], '手番は あなた → 相手1 → 味方 → 相手2')).join('') + '</div></section>') +
+      '<div class="op-row">' + [0, 1, 2].map(i => card('tag' + i, 'TAG · ' + LEVEL_LABELS[i], '手番は あなた → 相手1 → 味方 → 相手2')).join('') + '</div></section>' +
+      '<section><h3>観戦 <small>CPU どうしの対戦を見る。どちらが勝つかに CHIP を賭けることも、組み合わせを自由に選ぶこともできる</small></h3>' +
+      '<div class="op-row">' + card('watch', '観戦する', 'ベットして観戦 / 自由に選ぶ・タッグも', '', ' wide') + '</div></section>') +
     '</div>';
   el.classList.add('show');
 
@@ -72,6 +74,7 @@ export function openOpponentSelect(protocols, opts = {}) {
       hideTitleBack();
       if (key === 'back') { resolve(null); return; }
       if (key === 'quick') { resolve({ quick: true }); return; }
+      if (key === 'watch') { resolve({ watch: true }); return; }
       try { localStorage.setItem(LAST_KEY, key); } catch (e) { /* private mode */ }
       if (/^tag\d$/.test(key)) { resolve({ tag: true, level: +key.slice(3) }); return; }
       resolve(key === 'underdog' ? { underdog: true, level: UNDERDOG_LEVEL } : { level: +key });

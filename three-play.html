@@ -1360,13 +1360,37 @@
   .wt-go{margin-left:auto;cursor:pointer;min-height:40px;padding:0 18px;border:0;clip-path:var(--cut-s);background:var(--pink);color:#fff;
     font:800 13px/1 var(--font-hud),system-ui;letter-spacing:.06em;}
   .wt-go:disabled{background:rgba(255,255,255,.08);color:var(--dim);cursor:default;}
-  .wt-free{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:start;}
-  .wt-free > b{font:900 13px/28px var(--font-hud),system-ui;color:#fff;}
-  .wt-grid{display:flex;flex-wrap:wrap;gap:5px;}
-  .wt-proto{cursor:pointer;padding:6px 9px;border:1px solid rgba(255,255,255,.12);border-left:3px solid var(--pc);background:rgba(255,255,255,.03);
-    color:#e9eef8;font:700 11px/1 var(--font-hud),system-ui;letter-spacing:.04em;}
-  .wt-proto.on{background:color-mix(in srgb,var(--pc) 30%,transparent);border-color:var(--pc);color:#fff;}
-  .wt-proto.dim{opacity:.35;}
+  /* 自由に選ぶ: A・B の枠と紋章のタイル */
+  .wt-freeteams{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:stretch;}
+  .wt-side{display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:12px;border:1px solid rgba(185,164,255,.18);background:rgba(8,12,24,.7);transition:border-color .16s,box-shadow .16s;}
+  .wt-side.on{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset,0 0 22px rgba(255,200,90,.12);}
+  .wt-sidetab{align-self:flex-start;display:flex;align-items:baseline;gap:8px;cursor:pointer;border:0;background:none;padding:0;color:#fff;
+    font:900 22px/1 var(--font-logo),system-ui;}
+  .wt-sidetab small{font:700 10.5px/1 system-ui;letter-spacing:.06em;color:var(--dim);}
+  .wt-side.on .wt-sidetab small{color:var(--gold);}
+  .wt-sidetab:focus-visible{outline:2px solid var(--gold);outline-offset:3px;}
+  .wt-slots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;}
+  .wt-slot{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:74px;padding:6px 4px;border-radius:9px;
+    border:1px solid color-mix(in srgb,var(--pc) 60%,transparent);background:linear-gradient(180deg,color-mix(in srgb,var(--pc) 22%,transparent),rgba(8,12,24,.9));
+    color:#fff;cursor:pointer;font:800 10.5px/1.1 var(--font-hud),system-ui;letter-spacing:.04em;animation:wtPop .22s cubic-bezier(.2,1.4,.4,1);}
+  .wt-slot img{width:34px;height:34px;}
+  .wt-slot i{position:absolute;top:3px;right:6px;font-style:normal;font-size:12px;color:var(--dim);}
+  .wt-slot:hover i,.wt-slot:focus-visible i{color:#fff;}
+  .wt-slot.empty{cursor:default;border:1px dashed rgba(255,255,255,.16);background:rgba(255,255,255,.02);color:rgba(255,255,255,.22);font-size:16px;animation:none;}
+  @keyframes wtPop{from{transform:scale(.85);opacity:0;}to{transform:none;opacity:1;}}
+  .wt-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px;}
+  .wt-tile{position:relative;display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 4px 8px;cursor:pointer;border-radius:9px;
+    border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:#dfe4f0;font:800 10.5px/1.1 var(--font-hud),system-ui;letter-spacing:.04em;
+    transition:transform .14s,border-color .14s,background .14s;}
+  .wt-tile img{width:36px;height:36px;transition:transform .14s;}
+  .wt-tile:hover,.wt-tile:focus-visible{transform:translateY(-2px);border-color:var(--pc);background:color-mix(in srgb,var(--pc) 14%,transparent);outline:0;}
+  .wt-tile:hover img{transform:scale(1.08);}
+  .wt-tile.in{border-color:color-mix(in srgb,var(--pc) 70%,transparent);background:color-mix(in srgb,var(--pc) 20%,transparent);color:#fff;}
+  .wt-marks{position:absolute;top:4px;right:4px;display:flex;gap:2px;}
+  .wt-marks i{font:900 9px/1 var(--font-hud),system-ui;font-style:normal;padding:2px 4px;border-radius:3px;background:var(--pink);color:#fff;}
+  .wt-marks i.b{background:var(--cyan);color:#06121a;}
+  @media (max-width:700px){ .wt-freeteams{grid-template-columns:1fr;} .wt-freeteams .wt-vs{justify-self:center;} .wt-tiles{grid-template-columns:repeat(4,minmax(0,1fr));} }
+  @media (prefers-reduced-motion:reduce){ .wt-slot{animation:none;} .wt-tile,.wt-tile img{transition:none;} }
   @media (max-width:700px){ .wt-match{grid-template-columns:1fr;} .wt-vs{justify-self:center;} .wt-go{margin-left:0;width:100%;} }
   /* RUN の入口と週替わり3連戦 */
   .rn-mode{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:12px;
@@ -3353,9 +3377,9 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=d7d63f54ea",
+      "./js3d/main.js": "./js3d/main.js?v=845d410881",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
-      "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=54f9d501d5",
+      "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=550d8c0890",
       "./js3d/panel.js": "./js3d/panel.js?v=d4a1f0a181",
       "./js3d/plates.js": "./js3d/plates.js?v=51eb123246",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=e0273dcae0",
@@ -3378,13 +3402,13 @@
       "./js3d/settings.js": "./js3d/settings.js?v=0607ea01ed",
       "./js3d/setup.js": "./js3d/setup.js?v=82e1ec30cf",
       "./js3d/solodraft.js": "./js3d/solodraft.js?v=b036b97879",
-      "./js3d/spectate.js": "./js3d/spectate.js?v=00c1ff37f6",
+      "./js3d/spectate.js": "./js3d/spectate.js?v=e7aaf6e4e9",
       "./js3d/stage.js": "./js3d/stage.js?v=e3cda4525b",
       "./js3d/stats-data.js": "./js3d/stats-data.js?v=bcf7d5e977",
       "./js3d/stats.js": "./js3d/stats.js?v=e2b9647dba",
       "./js3d/steps.js": "./js3d/steps.js?v=13e73b20fe",
       "./js3d/theme.js": "./js3d/theme.js?v=b02da60dc1",
-      "./js3d/title.js": "./js3d/title.js?v=27ea70f177",
+      "./js3d/title.js": "./js3d/title.js?v=a9f8b07701",
       "./js3d/titleback.js": "./js3d/titleback.js?v=bafbbc3a84",
       "./js3d/training.js": "./js3d/training.js?v=3018b4399e",
       "./js3d/tsume.js": "./js3d/tsume.js?v=4700b22c0d",
@@ -3405,7 +3429,7 @@
   <link rel="modulepreload" href="js3d/account.js?v=652f7dff55">
   <link rel="modulepreload" href="js3d/playlog.js?v=90aaffedee">
   <link rel="modulepreload" href="js3d/feel.js?v=83bdf7f262">
-  <link rel="modulepreload" href="js3d/spectate.js?v=00c1ff37f6">
+  <link rel="modulepreload" href="js3d/spectate.js?v=e7aaf6e4e9">
   <link rel="modulepreload" href="js3d/avatar.js?v=528a318280">
   <link rel="modulepreload" href="js3d/aitalk.js?v=3b756521cb">
   <link rel="modulepreload" href="js3d/motion.js?v=36861b0081">
@@ -3422,7 +3446,7 @@
   <link rel="modulepreload" href="js3d/control.js?v=c1b87ebc63">
   <link rel="modulepreload" href="js3d/panel.js?v=d4a1f0a181">
   <link rel="modulepreload" href="js3d/setup.js?v=82e1ec30cf">
-  <link rel="modulepreload" href="js3d/title.js?v=27ea70f177">
+  <link rel="modulepreload" href="js3d/title.js?v=a9f8b07701">
   <link rel="modulepreload" href="js3d/training.js?v=3018b4399e">
   <link rel="modulepreload" href="js3d/room.js?v=c34129de95">
   <link rel="modulepreload" href="js3d/puzzle.js?v=a6a0904519">
@@ -3440,7 +3464,7 @@
   <link rel="modulepreload" href="js3d/plates.js?v=51eb123246">
   <link rel="modulepreload" href="js3d/playmat.js?v=1c8f36818a">
   <link rel="modulepreload" href="js3d/cardlist-ov.js?v=1d673fd0d2">
-  <link rel="modulepreload" href="js3d/opponent-select.js?v=54f9d501d5">
+  <link rel="modulepreload" href="js3d/opponent-select.js?v=550d8c0890">
   <link rel="modulepreload" href="js3d/aidecks.js?v=8d249240bd">
   <link rel="modulepreload" href="js3d/run-ui.js?v=96b8b476de">
   <link rel="modulepreload" href="js3d/weekly-ui.js?v=18513b5fd2">
@@ -3495,6 +3519,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=d7d63f54ea"></script>
+  <script type="module" src="js3d/main.js?v=845d410881"></script>
 </body>
 </html>

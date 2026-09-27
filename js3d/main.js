@@ -730,7 +730,7 @@ async function boot() {
       if (nextMode === 'tutorial') { location.href = location.pathname + '?tutorial=1'; return; }
       /* 観戦: CPU どうし (A = 手前、B = 奥)。ベットしていれば、決着で払い戻す */
       if (nextMode === 'watch') {
-        const w = await openSpectate(cards.protocols, { avatars: avatarsOpen() ? ownedAvatars() : [] });
+        const w = await openSpectate(cards.protocols, avatarsOpen() ? { avatars: ownedAvatars(), pool: avatarIds() } : { avatars: [] });
         if (!w) { history.replaceState(null, '', location.pathname); nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
         document.body.classList.remove('pregame');
         document.body.classList.add('demo', 'watch');
@@ -776,6 +776,7 @@ async function boot() {
         opp = await openOpponentSelect(cards.protocols, { challenge: nextMode === 'challenge' });
         if (!opp) { nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
         if (opp.quick) { location.href = location.pathname + '?quick=1'; return; }
+        if (opp.watch) { nextMode = 'watch'; continue; }
         if (opp.underdog) {
           document.body.classList.remove('pregame');
           p0 = UNDERDOG_DECK.slice();
