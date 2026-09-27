@@ -83,6 +83,8 @@ export function setThinking(on) {
 export function buzz(pattern) {
   try {
     if (calm() || !navigator.vibrate) return;
+    /* まだ画面に触れていないと、ブラウザが振動を断ってエラーを出す (CPU どうしの観戦など) */
+    if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
     navigator.vibrate(pattern);
   } catch (e) { /* 震えなくても遊べる */ }
 }

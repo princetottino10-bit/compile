@@ -223,12 +223,11 @@ let setupNote = '';
 let lastSetup = null;
 let firstGameHintShown = false;    // はじめの数戦の操作の案内 (1戦に1回)              // いまの CPU 戦のプロトコル { p0, p1 } (もう1戦で同じ組み合わせにする)
 /* 対戦のそばのキャラ (avatar.js)。問題・チュートリアル・観戦・トレーニングでは出さない。
-   2026-09-27: いったん止めている (ユーザーの指示)。URL に ?avatar=1 を付けたときだけ出す (確認用) */
+   2026-09-27: いったん管理者にだけ見せている (ユーザーの指示)。ログインの確認が済んだら出し入れし直す */
 let avatar = null;
 let avatarHurtAt = 0;
-const AVATAR_ON = (() => { try { return new URLSearchParams(location.search).get('avatar') === '1'; } catch (e) { return false; } })();
 function syncAvatar() {
-  const want = AVATAR_ON && settings().avatar !== false && !puzzle && !tutorial && !demoMode && !trainingMode && !replayMode && !!cur;
+  const want = !!accountState().admin && settings().avatar !== false && !puzzle && !tutorial && !demoMode && !trainingMode && !replayMode && !!cur;
   if (want && !avatar) avatar = mountAvatar('shion');
   else if (!want && avatar) { avatar.destroy(); avatar = null; }
 }
@@ -768,6 +767,8 @@ async function boot() {
   if (!puzzle && !tutorial && !demoMode && !trainingMode && !roomMode) showCpuPlates(p1);
   if (spectate) spectateStart();
   syncAvatar();
+  onAccountChange(syncAvatar);                      // 管理者かどうかは、ログインの確認のあとで分かる
+  if (!accountState().ready) initAccount();         // REMATCH など URL から直に始めた対戦でも確かめる
   if (trainingMode) {
     UI.setPrompt('');
     UI.toast('カードを選んで、光っている枠をタップすると置けます', 3200);
