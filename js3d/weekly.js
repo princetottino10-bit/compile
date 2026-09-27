@@ -93,7 +93,7 @@ export function saveWeekly(s) {
 export const usedOf = (s) => s.decks.flat();
 
 export function startAttempt(s) {
-  return { ...s, attempt: s.attempt + 1, stage: 0, decks: [], phase: 'choose' };
+  return { ...s, attempt: s.attempt + 1, stage: 0, decks: [], phase: 'choose', resumed: [] };
 }
 
 /* 3つ選んで戦う。まだ使っていない9つの中から、ちょうど3つ */

@@ -70,4 +70,7 @@ test('対戦の途中で落ちたら、同じ3つでその戦いを1回だけや
   /* やり直した戦いに勝てばクリア */
   assert.equal(W.finishMatch(r, true).phase, 'clear');
   assert.equal(W.canResume({ ...s, phase: 'choose' }), false);
+  /* 新しい挑戦では、前の挑戦で使ったやり直しは持ち越さない */
+  const n = W.startAttempt({ ...r, phase: 'lost' });
+  assert.deepEqual(n.resumed, []);
 });
