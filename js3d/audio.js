@@ -74,11 +74,14 @@ function makeNoise(ctx) {
   return buf;
 }
 
+/* iPhone の Safari は、画面ロック・通知・ほかの音 (キャラの声) で 'interrupted' (中断) にすることがある。
+   'suspended' だけでなく、running 以外なら起こし直す (以前は中断のまま、その対戦の間ずっと鳴らなかった) */
+function wake() {
+  if (actx && actx.state !== 'running' && actx.state !== 'closed') actx.resume().catch(() => {});
+}
+
 export function initAudio() {
-  if (actx) {
-    if (actx.state === 'suspended') actx.resume().catch(() => {});
-    return;
-  }
+  if (actx) { wake(); return; }
   const AC = window.AudioContext || window.webkitAudioContext;
   if (!AC) return;
   /* 音を作れないブラウザ (アプリ内ブラウザ等) では、例外を出さずに音なしで進める */
@@ -88,6 +91,9 @@ export function initAudio() {
     master = g.master; sfxBus = g.bus; reverbIn = g.reverb;
     noiseBuf = makeNoise(actx);
     loadSamples();
+    /* 画面に戻ってきたとき・中断が終わったときにも起こす */
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') wake(); });
+    actx.onstatechange = () => { if (document.visibilityState === 'visible') wake(); };
   } catch (e) {
     actx = null; master = null; sfxBus = null; reverbIn = null;
   }
@@ -328,7 +334,8 @@ const SOUNDS = {
 
 /* 名前で再生。未解錠・ミュート・未知名は無視。arg は音ごとの引数 (chain の長さ等) */
 export function sfx(name, arg) {
-  if (!actx || muted || actx.state !== 'running') return;
+  if (!actx || muted) return;
+  if (actx.state !== 'running') { wake(); return; }
   const fn = SOUNDS[name];
   if (fn) {
     try { fn(arg); } catch (e) { /* 音は落としてもゲームは止めない */ }

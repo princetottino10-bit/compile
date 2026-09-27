@@ -1472,6 +1472,9 @@ function bindInput() {
   window.addEventListener('pointerdown', () => {
     initAudio();
   }, { once: false });
+  /* iPhone は pointerdown だけでは音を解錠・再開できないことがあるので、指を離したときにも */
+  window.addEventListener('touchend', () => initAudio(), { passive: true });
+  window.addEventListener('click', () => initAudio());
   const ray = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
 
