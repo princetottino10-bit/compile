@@ -13,7 +13,7 @@ let avatarList = () => [];
 export function setAvatarOptionsGate(shown, list) { avatarOptionsShown = shown; if (list) avatarList = list; }
 /* mat 以下は見た目 (レベルの報酬、cosmetics-ui.js) */
 /* autoPick: 選べるものが1つしかない選択は自動で選ぶ / oppSummary: 相手の番のまとめ / beginner: 初心者モード (おすすめの手の HINT を出す。最初はオフ) */
-const DEFAULTS = { speed: 1, sfx: 80, pauses: true, autoPick: true, oppSummary: true, beginner: false, foil: true, mat: 'neon', sleeve: 'default', marker: 'default', ccolor: 'default',
+const DEFAULTS = { speed: 1, sfx: 80, bgmVol: 50, voiceVol: 80, bgm: 'burst', pauses: true, autoPick: true, oppSummary: true, beginner: false, foil: true, mat: 'neon', sleeve: 'default', marker: 'default', ccolor: 'default',
   victory: 'default', title: '', icon: '',
   /* おまかせで今すぐ始める: 相手の強さ (0 かんたん / 1 ふつう / 2 つよい) と、今日のデイリーのプロトコルを自分に入れるか */
   quickLevel: 0, quickDaily: false,
@@ -49,6 +49,8 @@ export function setSetting(key, value) {
   for (const cb of listeners) cb(current);
 }
 
+const volText = (v) => (+v ? String(v) : 'オフ');
+
 /* 設定が変わったら (と、登録した直後に一度) cb(settings) を呼ぶ */
 export function onSettings(cb) {
   listeners.push(cb);
@@ -70,7 +72,12 @@ export function openSettings(extra) {
     '<div class="st-row"><span>演出の速さ</span><div class="st-seg" role="group" aria-label="演出の速さ">' +
       SPEEDS.map(o => '<button type="button" data-speed="' + o.v + '" class="' + (s.speed === o.v ? 'on' : '') + '">' + o.label + '</button>').join('') +
     '</div></div>' +
-    '<label class="st-row"><span>効果音の音量 <i id="stSfxV">' + s.sfx + '</i></span>' +
+    /* 音量: BGM・キャラの声・効果音 (0 でオフ) */
+    '<label class="st-row"><span>BGM の音量 <i id="stBgmV">' + volText(s.bgmVol ?? 50) + '</i></span>' +
+      '<input type="range" min="0" max="100" step="5" id="stBgm" value="' + (s.bgmVol ?? 50) + '"></label>' +
+    '<label class="st-row"><span>キャラの声の音量 <i id="stVoiceV">' + volText(s.voiceVol ?? 80) + '</i></span>' +
+      '<input type="range" min="0" max="100" step="5" id="stVoice" value="' + (s.voiceVol ?? 80) + '"></label>' +
+    '<label class="st-row"><span>効果音の音量 <i id="stSfxV">' + volText(s.sfx) + '</i></span>' +
       '<input type="range" min="0" max="100" step="5" id="stSfx" value="' + s.sfx + '"></label>' +
     '<label class="st-row st-check"><span>効果の発動・チェーンで一時停止する<small>オフにすると、発動した効果を1つずつ止めずに進めます</small></span>' +
       '<input type="checkbox" id="stPauses"' + (s.pauses ? ' checked' : '') + '></label>' +
@@ -102,6 +109,7 @@ export function openSettings(extra) {
         talkSettingsHtml() +
         '<p class="st-credit">キャラの声 VOICEVOX:ずんだもん / VOICEVOX:四国めたん / VOICEVOX:春日部つむぎ / VOICEVOX:WhiteCUL　立ち絵 坂本アヒル</p>'
       : '') +
+    '<p class="st-credit">BGM 煉獄庭園 (オレンジトンネルを抜ける・Burst・A・Crazy Cat ほか)</p>' +
     (extra && extra.length ? '<div class="pz-row">' + extra.map((x, i) => '<button type="button" data-extra="' + i + '">' + x.label + '</button>').join('') + '</div>' : '') +
     '</div>';
   el.classList.add('show');
@@ -116,9 +124,11 @@ export function openSettings(extra) {
   });
   const range = (id, key, out) => {
     const input = el.querySelector(id);
-    input.oninput = () => { el.querySelector(out).textContent = input.value; setSetting(key, +input.value); };
+    input.oninput = () => { el.querySelector(out).textContent = volText(+input.value); setSetting(key, +input.value); };
   };
   range('#stSfx', 'sfx', '#stSfxV');
+  range('#stBgm', 'bgmVol', '#stBgmV');
+  range('#stVoice', 'voiceVol', '#stVoiceV');
   el.querySelector('#stPauses').onchange = (ev) => setSetting('pauses', ev.target.checked);
   el.querySelector('#stAutoPick').onchange = (ev) => setSetting('autoPick', ev.target.checked);
   el.querySelector('#stOppSummary').onchange = (ev) => setSetting('oppSummary', ev.target.checked);

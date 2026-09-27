@@ -1,6 +1,7 @@
 /* =========================================================================
  * 3Dビュー: タイトルとモード選択
  * ========================================================================= */
+import { playBgm, TITLE_BGM } from './bgm.js';
 import { xpLog } from './xp.js';
 import { displayName, onDisplayNameChange } from './displayname.js';
 import { dailyView } from './daily.js';
@@ -234,6 +235,7 @@ export function runTitle(protocols, opts) {
       if (btn) btn.remove();
       showMenu();
       try { initAudio(); sfx('turn'); } catch (e) { /* 音なしで続ける */ }
+      playBgm(TITLE_BGM);
     };
     root.querySelector('#ttStart').onclick = start;
     /* 画面のどこを押しても始まる (右上のレベル・ログイン・設定は除く) */

@@ -3055,6 +3055,14 @@
   /* 図鑑のキャラ (avatar.js): 一覧は正方形の枠で顔のあたり、プレビューは枠の中に収めて、吹き出しは絵の上に重ねる */
   .cm-grid.charas .cm-th{height:auto;aspect-ratio:1/1;}
   .cm-av{width:100%;height:100%;max-height:none!important;object-fit:cover;object-position:50% 16%;}
+  /* BGM (bgm.js): 図鑑のマスは音符、プレビューは試し聴きのボタン */
+  .cm-note{display:grid;place-items:center;width:54px;height:54px;border-radius:50%;font:900 26px/1 system-ui;color:#fff;
+    background:radial-gradient(circle at 35% 30%,rgba(255,79,163,.55),rgba(139,92,246,.35) 60%,rgba(8,8,20,.6));box-shadow:0 0 18px rgba(255,79,163,.25);}
+  .cm-note.big{width:130px;height:130px;font-size:64px;}
+  .cm-bgmview{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
+  .cm-listen{cursor:pointer;padding:10px 22px;border:1px solid var(--pink);background:rgba(255,79,163,.14);color:#fff;
+    font:800 13px/1 var(--font-ui);letter-spacing:.1em;clip-path:var(--cut-s);}
+  .cm-listen:hover,.cm-listen:focus-visible{background:rgba(255,79,163,.3);outline:0;}
   .cm-avview{position:relative;width:100%;height:100%;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;}
   .cm-avview img{flex:1 1 auto;min-height:0;max-height:100%;max-width:100%;object-fit:contain;filter:drop-shadow(0 10px 18px rgba(0,0,0,.5));}
   .cm-avview p{position:absolute;left:4%;bottom:10%;max-width:70%;margin:0;padding:10px 14px;background:#fbf7ee;color:#1a1424;border-radius:12px;font:800 14px/1.4 var(--font-ui);box-shadow:0 0 0 2px var(--av-c),0 8px 18px rgba(0,0,0,.4);}
@@ -3346,9 +3354,10 @@
       "./js3d/aidecks.js": "./js3d/aidecks.js?v=8d249240bd",
       "./js3d/aitalk.js": "./js3d/aitalk.js?v=3b756521cb",
       "./js3d/arena.js": "./js3d/arena.js?v=ef66a1e5bb",
-      "./js3d/audio.js": "./js3d/audio.js?v=105845635d",
-      "./js3d/avatar.js": "./js3d/avatar.js?v=528a318280",
+      "./js3d/audio.js": "./js3d/audio.js?v=15744db73e",
+      "./js3d/avatar.js": "./js3d/avatar.js?v=712a638097",
       "./js3d/backdrops.js": "./js3d/backdrops.js?v=90faf9612d",
+      "./js3d/bgm.js": "./js3d/bgm.js?v=1b917f54a0",
       "./js3d/board.js": "./js3d/board.js?v=9fe57e2090",
       "./js3d/card.js": "./js3d/card.js?v=6d8083e5b7",
       "./js3d/cardlist-ov.js": "./js3d/cardlist-ov.js?v=1d673fd0d2",
@@ -3357,7 +3366,7 @@
       "./js3d/chips.js": "./js3d/chips.js?v=e67e280b76",
       "./js3d/cloudsave.js": "./js3d/cloudsave.js?v=d1643b2cad",
       "./js3d/control.js": "./js3d/control.js?v=c1b87ebc63",
-      "./js3d/cosmetics-mode.js": "./js3d/cosmetics-mode.js?v=756300f080",
+      "./js3d/cosmetics-mode.js": "./js3d/cosmetics-mode.js?v=9cf55e1e69",
       "./js3d/cosmetics-ui.js": "./js3d/cosmetics-ui.js?v=61977c6f7c",
       "./js3d/crashwatch.js": "./js3d/crashwatch.js?v=57c6c91bd8",
       "./js3d/daily.js": "./js3d/daily.js?v=f56dabdf65",
@@ -3377,7 +3386,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=08087cc907",
+      "./js3d/main.js": "./js3d/main.js?v=04c6505972",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=550d8c0890",
       "./js3d/panel.js": "./js3d/panel.js?v=d4a1f0a181",
@@ -3393,13 +3402,13 @@
       "./js3d/replays-ui.js": "./js3d/replays-ui.js?v=9a6a4ca786",
       "./js3d/replays.js": "./js3d/replays.js?v=2a8c9e69b5",
       "./js3d/review.js": "./js3d/review.js?v=34f174153b",
-      "./js3d/rewards.js": "./js3d/rewards.js?v=a8b97d1190",
+      "./js3d/rewards.js": "./js3d/rewards.js?v=ebe3710c18",
       "./js3d/room.js": "./js3d/room.js?v=c34129de95",
       "./js3d/roomui.js": "./js3d/roomui.js?v=2557b7dc57",
       "./js3d/run-ui.js": "./js3d/run-ui.js?v=96b8b476de",
       "./js3d/run.js": "./js3d/run.js?v=0fd14ce273",
       "./js3d/selectui.js": "./js3d/selectui.js?v=208abdaebc",
-      "./js3d/settings.js": "./js3d/settings.js?v=0607ea01ed",
+      "./js3d/settings.js": "./js3d/settings.js?v=8ca37625bd",
       "./js3d/setup.js": "./js3d/setup.js?v=82e1ec30cf",
       "./js3d/solodraft.js": "./js3d/solodraft.js?v=b036b97879",
       "./js3d/spectate.js": "./js3d/spectate.js?v=e7aaf6e4e9",
@@ -3408,7 +3417,7 @@
       "./js3d/stats.js": "./js3d/stats.js?v=e2b9647dba",
       "./js3d/steps.js": "./js3d/steps.js?v=13e73b20fe",
       "./js3d/theme.js": "./js3d/theme.js?v=b02da60dc1",
-      "./js3d/title.js": "./js3d/title.js?v=a9f8b07701",
+      "./js3d/title.js": "./js3d/title.js?v=ffa1bfbf91",
       "./js3d/titleback.js": "./js3d/titleback.js?v=bafbbc3a84",
       "./js3d/training.js": "./js3d/training.js?v=3018b4399e",
       "./js3d/tsume.js": "./js3d/tsume.js?v=4700b22c0d",
@@ -3430,7 +3439,7 @@
   <link rel="modulepreload" href="js3d/playlog.js?v=90aaffedee">
   <link rel="modulepreload" href="js3d/feel.js?v=83bdf7f262">
   <link rel="modulepreload" href="js3d/spectate.js?v=e7aaf6e4e9">
-  <link rel="modulepreload" href="js3d/avatar.js?v=528a318280">
+  <link rel="modulepreload" href="js3d/avatar.js?v=712a638097">
   <link rel="modulepreload" href="js3d/aitalk.js?v=3b756521cb">
   <link rel="modulepreload" href="js3d/motion.js?v=36861b0081">
   <link rel="modulepreload" href="js3d/gacha.js?v=ce3d4f3faa">
@@ -3446,20 +3455,20 @@
   <link rel="modulepreload" href="js3d/control.js?v=c1b87ebc63">
   <link rel="modulepreload" href="js3d/panel.js?v=d4a1f0a181">
   <link rel="modulepreload" href="js3d/setup.js?v=82e1ec30cf">
-  <link rel="modulepreload" href="js3d/title.js?v=a9f8b07701">
+  <link rel="modulepreload" href="js3d/title.js?v=ffa1bfbf91">
   <link rel="modulepreload" href="js3d/training.js?v=3018b4399e">
   <link rel="modulepreload" href="js3d/room.js?v=c34129de95">
   <link rel="modulepreload" href="js3d/puzzle.js?v=a6a0904519">
   <link rel="modulepreload" href="js3d/tsume.js?v=4700b22c0d">
   <link rel="modulepreload" href="js3d/errorreport.js?v=61f59a3cb3">
   <link rel="modulepreload" href="js3d/tutorial.js?v=0e6d6237ad">
-  <link rel="modulepreload" href="js3d/settings.js?v=0607ea01ed">
+  <link rel="modulepreload" href="js3d/settings.js?v=8ca37625bd">
   <link rel="modulepreload" href="js3d/stats.js?v=e2b9647dba">
   <link rel="modulepreload" href="js3d/stats-data.js?v=bcf7d5e977">
-  <link rel="modulepreload" href="js3d/rewards.js?v=a8b97d1190">
+  <link rel="modulepreload" href="js3d/rewards.js?v=ebe3710c18">
   <link rel="modulepreload" href="js3d/gachafx.js?v=3d15a2226f">
   <link rel="modulepreload" href="js3d/cosmetics-ui.js?v=61977c6f7c">
-  <link rel="modulepreload" href="js3d/cosmetics-mode.js?v=756300f080">
+  <link rel="modulepreload" href="js3d/cosmetics-mode.js?v=9cf55e1e69">
   <link rel="modulepreload" href="js3d/displayname.js?v=613e18bf95">
   <link rel="modulepreload" href="js3d/plates.js?v=51eb123246">
   <link rel="modulepreload" href="js3d/playmat.js?v=1c8f36818a">
@@ -3476,7 +3485,8 @@
   <link rel="modulepreload" href="js3d/cardtex.js?v=985ea460e2">
   <link rel="modulepreload" href="js3d/fx.js?v=65e09c9137">
   <link rel="modulepreload" href="js3d/arena.js?v=ef66a1e5bb">
-  <link rel="modulepreload" href="js3d/audio.js?v=105845635d">
+  <link rel="modulepreload" href="js3d/audio.js?v=15744db73e">
+  <link rel="modulepreload" href="js3d/bgm.js?v=1b917f54a0">
   <link rel="modulepreload" href="js3d/emblems.js?v=6d1c077a2e">
   <link rel="modulepreload" href="js3d/layout.js?v=91b1b5570a">
   <link rel="modulepreload" href="js3d/theme.js?v=b02da60dc1">
@@ -3519,6 +3529,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=08087cc907"></script>
+  <script type="module" src="js3d/main.js?v=04c6505972"></script>
 </body>
 </html>

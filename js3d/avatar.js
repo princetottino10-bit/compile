@@ -7,7 +7,7 @@
  *   動きを減らす設定では、息とまばたきと吹き出しの動きを止める (表情とセリフは出す)
  * ========================================================================= */
 import { settings } from './settings.js';
-import { isMuted } from './audio.js';
+import { isMuted, routeMedia } from './audio.js';
 
 export const FACES = ['normal', 'blink', 'happy', 'fired', 'frustrated', 'surprised'];
 
@@ -338,7 +338,7 @@ export function mountAvatar(id, opts = {}) {
       () => { if (my === talkSeq && el.isConnected) canned(); });
   }
   let talkSeq = 0;
-  /* 声: 効果音の音量で鳴らす。消音中は鳴らさない。前の声は止める */
+  /* 声: 設定の「キャラの声の音量」で鳴らす。消音中は鳴らさない。前の声は止める */
   let voiceEl = null;
   /* 声を出すか (相手のキャラは設定の「相手のキャラの声」で消せる) */
   let voiceOn = opts.voice !== false;
@@ -346,11 +346,12 @@ export function mountAvatar(id, opts = {}) {
   function playVoice(url) {
     try {
       if (isMuted()) return;
-      const vol = Math.max(0, Math.min(1, ((settings().sfx ?? 80) | 0) / 100));
+      /* 設定の「キャラの声の音量」(0 でオフ)。iPhone でも効くよう Web Audio を通す */
+      const vol = Math.max(0, Math.min(1, ((settings().voiceVol ?? 80) | 0) / 100));
       if (!vol) return;
       if (voiceEl) voiceEl.pause();
       voiceEl = new Audio(url);
-      voiceEl.volume = vol;
+      routeMedia(voiceEl, vol);
       voiceEl.play().catch(() => { /* まだ画面に触れていないなど */ });
     } catch (e) { /* 声が無くても遊べる */ }
   }

@@ -19,6 +19,7 @@ import { markerPreviewURL } from './control.js';
 import { emblemDataURL } from './emblems.js';
 import { displayName } from './displayname.js';
 import { openGacha, chipsNow } from './gacha-ui.js';
+import { playBgm, TITLE_BGM, BGM_CREDIT } from './bgm.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const SEEN_KEY = 'compileCosSeen';
@@ -26,12 +27,12 @@ const SEEN_KEY = 'compileCosSeen';
 const ALL_TABS = [
   { kind: 'mat', label: '盤面' }, { kind: 'sleeve', label: 'スリーブ' }, { kind: 'marker', label: 'マーカー' },
   { kind: 'ccolor', label: 'コンパイルの光' }, { kind: 'victory', label: '勝ちの演出' }, { kind: 'title', label: '称号' }, { kind: 'icon', label: 'アイコン' },
-  { kind: 'plate', label: '名札' }, { kind: 'avatar', label: 'キャラ' }
+  { kind: 'plate', label: '名札' }, { kind: 'avatar', label: 'キャラ' }, { kind: 'bgm', label: 'BGM' }
 ];
 /* キャラのタブは、出すまでは管理者にだけ */
 const tabsNow = () => ALL_TABS.filter(t => t.kind !== 'avatar' || AVATAR_RELEASED || accountState().admin);
 const DEFAULT_KEY = { mat: 'neon', sleeve: 'default', marker: 'default', ccolor: 'default', victory: 'default', title: '', icon: '',
-  plate: 'default', avatar: 'shion' };
+  plate: 'default', avatar: 'shion', bgm: 'burst' };
 const RAR_NAME = { C: 'COMMON', R: 'RARE', E: 'EPIC', L: 'LEGENDARY' };
 const TROPHY_NAME = { chain4: 'CHAIN REACTION', flawless: 'FLAWLESS', mastery10: 'GRANDMASTER', tsume_mid: '詰めコンパイル 中級を全部', tsume_all: '詰めコンパイル 全部' };
 const CCOLOR = { default: 'linear-gradient(90deg,#ff5c5c,#b9a4ff,#a07bff)', gold: '#ffd86a', cyan: '#7ff3ff', rainbow: 'conic-gradient(#ff5f7a,#ffc05a,#7df28c,#5ab8ff,#b98cff,#ff5f7a)',
@@ -148,6 +149,7 @@ function thumb(kind, key) {
     }
     case 'plate': return '<span class="cm-pf pf-' + esc(key) + '"' + pfcStyle(key) + '><b>' + esc((displayName() || 'YOU').slice(0, 8)) + '</b></span>';
     case 'avatar': return '<img class="cm-av" alt="" src="' + faceURL(key, 'normal') + '">';
+    case 'bgm': return '<span class="cm-note" aria-hidden="true">♪</span>';
     default: return '<span class="cm-none">' + (key ? '★' : '—') + '</span>';
   }
 }
@@ -184,6 +186,10 @@ function preview(kind, key, name, isOwned, src) {
         (d.guest ? '<small class="cm-credit">' + esc(d.credit || '') + '　立ち絵：坂本アヒル</small>' : '') + '</div>';
       break;
     }
+    /* BGM: 押すと試し聴き (持っていなくても聴ける)。閉じるとタイトルの曲に戻る */
+    case 'bgm': art = '<div class="cm-bgmview"><span class="cm-note big" aria-hidden="true">♪</span>' +
+      '<button type="button" class="cm-listen" data-listen="' + esc(key) + '">▶ 試し聴き</button>' +
+      '<small class="cm-credit">曲 ' + esc(BGM_CREDIT) + '　・　' + (key === 'orange_tunnel' ? 'タイトルでも流れる曲' : '選ぶと対戦で流れる') + '</small></div>'; break;
     case 'title': case 'icon': {
       const icon = kind === 'icon' ? key : s.icon;
       const p = protoList.find(x => x.name === icon);
@@ -214,6 +220,7 @@ export function openCosmetics(opts) {
   /* 一覧のしぼり込み: 'all' / 'own' (持っている) / 'not' (まだ)。プロトコルの習熟度の分 (30 ずつ) は、
      持っているものだけ出し、まだのものは showMastery のときだけ (数が多すぎて、ほかが埋もれていた) */
   let filter = 'all', showMastery = false;
+  let listened = false;                              // BGM を試し聴きした (閉じたらタイトルの曲に戻す)
   const firstOpen = (() => { try { return !localStorage.getItem(SEEN_KEY); } catch (e) { return false; } })();
   const render = () => {
     const s = settings();
@@ -284,6 +291,7 @@ export function openCosmetics(opts) {
     const b = ev.target.closest('button');
     if (!b) return;
     if (b.classList.contains('cm-x')) { close(); return; }
+    if (b.dataset.listen) { listened = true; playBgm(b.dataset.listen); return; }
     /* ガチャはこの画面から。閉じたら図鑑を描き直す (引いたものが並ぶ) */
     if (b.classList.contains('cm-gacha')) { openGacha({ onClose: () => render() }); return; }
     if (b.dataset.tab) { tab = b.dataset.tab; focus = null; render(); return; }
@@ -293,6 +301,8 @@ export function openCosmetics(opts) {
     if (b.dataset.key !== undefined) {
       const key = b.dataset.key;
       focus = key;
+      /* BGM のタブは、押したら試し聴き */
+      if (tab === 'bgm') { listened = true; playBgm(key); }
       /* 持っているものは、押したらそのまま着ける (プレビューにも出す) */
       if (owned(tab, key, ctx())) setSetting(tab, key);
       render();
@@ -300,6 +310,8 @@ export function openCosmetics(opts) {
   };
   const onKey = (ev) => { if (ev.key === 'Escape') close(); };
   const close = () => {
+    /* 試し聴きしていたら、タイトルの曲に戻す */
+    if (listened) playBgm(TITLE_BGM);
     el.classList.remove('show');
     window.removeEventListener('keydown', onKey);
     if (opts && opts.onClose) opts.onClose();

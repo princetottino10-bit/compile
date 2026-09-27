@@ -26,6 +26,24 @@ export function setSfxVolume(pct) {
 }
 
 export function setMuted(v) { muted = !!v; }
+
+/** <audio> を音量つきで鳴らす道 (BGM・キャラの声)。iPhone は audio.volume が効かないので、Web Audio のゲインを通す。
+    返り値: { set(音量 0..1) }。音を作れないブラウザでは audio.volume で代わりにする */
+export function routeMedia(media, vol) {
+  const plain = { set(v) { try { media.volume = Math.max(0, Math.min(1, v)); } catch (e) { /* 読み取り専用の端末 */ } } };
+  if (!actx) { plain.set(vol); return plain; }
+  try {
+    const src = actx.createMediaElementSource(media);
+    const g = actx.createGain();
+    g.gain.value = vol;
+    src.connect(g);
+    g.connect(actx.destination);
+    return { set(v) { g.gain.setTargetAtTime(Math.max(0, v), actx.currentTime, 0.05); } };
+  } catch (e) {
+    plain.set(vol);
+    return plain;
+  }
+}
 export function isMuted() { return muted; }
 
 /* 出力の土台 (マスター → コンプレッサー、効果音バス、残響) を ctx に作る */

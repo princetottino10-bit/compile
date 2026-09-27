@@ -57,6 +57,7 @@ import { faceImageURL, backImageURL, pruneFaceCache, ART_SETS, setMaxAnisotropy 
 import * as FX from './fx.js';
 import { buildArena } from './arena.js';
 import { initAudio, sfx, setMuted, isMuted, setSfxVolume } from './audio.js';
+import { playBgm, refreshBgm } from './bgm.js';
 import { emblemDataURL } from './emblems.js';
 import * as LAYOUT from './layout.js';
 import { BOARD, CARD, COLOR, TIMING, VIEW } from './theme.js';
@@ -838,6 +839,7 @@ async function boot() {
           ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude } : {}),
           ...(tagMates ? { tag: tagMates } : {}) });
   cur = res;
+  playBgm(settings().bgm || 'burst');          // 対戦の BGM (COLLECTION の「BGM」で選んだ曲)
   gameStartedAt = Date.now();          // はじめの表示で合計値の演出が出ないように (feel.js)
   if (!trainingMode && !puzzle && !tutorial && !demoMode && !replayMode) CW.battleStarted(runMode ? runKind : tagMates ? 'tag' : quickGame ? 'quick' : 'cpu', p0, p1);
   if (!trainingMode && !puzzle && !tutorial && !demoMode && !replayMode) lastSetup = { p0: p0.slice(), p1: p1.slice(), mates: tagMates };
@@ -1860,6 +1862,7 @@ function bindInput() {
   if (muteBtn) muteBtn.onclick = () => {
     initAudio();
     setMuted(!isMuted());
+    refreshBgm();
     muteBtn.textContent = isMuted() ? '🔇' : '🔊';
     muteBtn.classList.toggle('on', isMuted());
   };
@@ -2660,6 +2663,7 @@ async function roomMaybeFinish() {
 /* ロビーから playing の publicState を受けて対戦開始 */
 async function roomEnterGame(rm) {
   document.body.classList.add('room');
+  playBgm(settings().bgm || 'burst');
   roomMode = true;
   roomResultShown = false;
   lastTurn = null;

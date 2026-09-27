@@ -8,18 +8,23 @@ import { protocolSummary } from './stats-data.js';
 
 export const REWARDS = [
   { lv: 2, kind: 'sleeve', key: 'crimson', name: 'SLEEVE — CRIMSON' },
+  { lv: 1, kind: 'bgm', key: 'orange_tunnel', name: 'BGM — オレンジトンネルを抜ける' },
   { lv: 3, kind: 'mat', key: 'nebula', name: 'PLAYMAT — NEBULA' },
+  { lv: 3, kind: 'bgm', key: 'crazy_cat', name: 'BGM — Crazy Cat' },
   { lv: 4, kind: 'marker', key: 'gold', name: 'CONTROL MARKER — GOLD' },
   { lv: 5, kind: 'title', key: 'compiler', name: 'TITLE — COMPILER' },
   { lv: 5, kind: 'icon', key: 'icon', name: 'PROFILE ICON' },
   { lv: 6, kind: 'mat', key: 'vortex', name: 'PLAYMAT — VORTEX' },
+  { lv: 6, kind: 'bgm', key: 'a', name: 'BGM — A' },
   { lv: 7, kind: 'sleeve', key: 'circuit', name: 'SLEEVE — CIRCUIT' },
   { lv: 8, kind: 'ccolor', key: 'gold', name: 'COMPILE FX — GOLD' },
   { lv: 9, kind: 'marker', key: 'crystal', name: 'CONTROL MARKER — CRYSTAL' },
+  { lv: 9, kind: 'bgm', key: 'junk_smash', name: 'BGM — Junk Smash' },
   { lv: 10, kind: 'mat', key: 'biomech', name: 'PLAYMAT — BIOMECH' },
   { lv: 10, kind: 'title', key: 'veteran', name: 'TITLE — VETERAN' },
   { lv: 11, kind: 'ccolor', key: 'cyan', name: 'COMPILE FX — CYAN' },
   { lv: 12, kind: 'victory', key: 'aurora', name: 'VICTORY FX — AURORA' },
+  { lv: 12, kind: 'bgm', key: 'kessen_asa', name: 'BGM — 決戦の朝' },
   { lv: 13, kind: 'sleeve', key: 'void', name: 'SLEEVE — VOID' },
   { lv: 14, kind: 'title', key: 'tactician', name: 'TITLE — TACTICIAN' },
   { lv: 15, kind: 'sleeve', key: 'holo', name: 'SLEEVE — HOLO' },
@@ -71,6 +76,9 @@ export const COSMETICS = {
   avatar: [['shion', '紫苑'], ['asagi', '浅葱'], ['yamabuki', '杏'], ['nadeshiko', '撫子'],
     /* ゲスト (VOICEVOX のキャラ・声つき) */
     ['zundamon', 'ずんだもん'], ['metan', '四国めたん'], ['tsumugi', '春日部つむぎ'], ['whitecul', 'WhiteCUL']],
+  /* 対戦の BGM (bgm.js、煉獄庭園の曲)。Burst ははじめから、オレンジトンネルはタイトルの曲 (LV 1) */
+  bgm: [['burst', 'Burst'], ['orange_tunnel', 'オレンジトンネルを抜ける'], ['crazy_cat', 'Crazy Cat'], ['a', 'A'], ['junk_smash', 'Junk Smash'],
+    ['kessen_asa', '決戦の朝'], ['destroy_god', '神を破壊せよ'], ['reaper_phoenix', 'The Reaper, named Phoenix'], ['final_2sec', '最終決戦２秒前']],
   /* 対戦中の名札の枠 (相手にも見える) */
   plate: [['default', 'STANDARD'], ['gold', 'GOLD'], ['sakura', 'SAKURA'], ['washi', 'WASHI'], ['neon', 'NEON'], ['urushi', 'URUSHI'],
     ['crystal', 'CRYSTAL'], ['royal', 'ROYAL'], ...MASTERY_PROTOS.map(p => [pkey(p), p])]
@@ -94,6 +102,8 @@ export const GACHA_ITEMS = [
   { kind: 'sleeve', key: 'galaxy', rar: 'L' }, { kind: 'marker', key: 'nova', rar: 'L' }, { kind: 'title', key: 'fortune', rar: 'L' },
   { kind: 'sleeve', key: 'nyanko', rar: 'R' }, { kind: 'sleeve', key: 'sweets', rar: 'C' }, { kind: 'sleeve', key: 'bunny', rar: 'E' },
   { kind: 'sleeve', key: 'rose', rar: 'E' }, { kind: 'sleeve', key: 'butterfly', rar: 'L' }, { kind: 'sleeve', key: 'momiji', rar: 'R' }, { kind: 'sleeve', key: 'konpairu', rar: 'E' }, { kind: 'sleeve', key: 'teaparty', rar: 'R' },
+  /* BGM (煉獄庭園) */
+  { kind: 'bgm', key: 'destroy_god', rar: 'R' }, { kind: 'bgm', key: 'reaper_phoenix', rar: 'E' }, { kind: 'bgm', key: 'final_2sec', rar: 'E' },
   /* 名札の枠 */
   { kind: 'plate', key: 'gold', rar: 'R' }, { kind: 'plate', key: 'sakura', rar: 'R' }, { kind: 'plate', key: 'washi', rar: 'R' },
   { kind: 'plate', key: 'neon', rar: 'R' }, { kind: 'plate', key: 'urushi', rar: 'E' }, { kind: 'plate', key: 'crystal', rar: 'E' },
@@ -183,7 +193,7 @@ export function itemName(kind, key) {
   if (kind === 'title') return 'TITLE — ' + (TITLES[key] || key);
   const row = (COSMETICS[kind] || []).find(([k]) => k === key);
   const label = { sleeve: 'SLEEVE', marker: 'CONTROL MARKER', ccolor: 'COMPILE FX', mat: 'PLAYMAT', victory: 'VICTORY FX',
-    plate: 'NAMEPLATE' }[kind] || kind.toUpperCase();
+    plate: 'NAMEPLATE', bgm: 'BGM' }[kind] || kind.toUpperCase();
   return label + ' — ' + (row ? row[1] : key);
 }
 
