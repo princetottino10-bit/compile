@@ -2810,6 +2810,65 @@
     --pf-edge:inset 0 0 0 2px color-mix(in srgb,var(--pfc,#b9a4ff) 75%,#fff 25%),inset 0 0 20px color-mix(in srgb,var(--pfc,#b9a4ff) 40%,transparent);
     --pf-name:#fff;--pf-sub:color-mix(in srgb,var(--pfc,#b9a4ff) 45%,#fff);}
   .plate[data-frame]:not([data-frame="default"]){padding-left:8px;}
+  /* 名札の飾り: 枠ごとに柄を1つ足す (つやは足さず、平たい柄で見分けがつくように)。
+     ::before が柄、::after が光 (レアの高いものだけ、ゆっくり)。中身は柄の上に出す */
+  .cm-pf,.cm-plate[class*="pf-"]{position:relative;}
+  .plate[data-frame] > *,.cm-pf > *,.cm-plate[class*="pf-"] > *{position:relative;z-index:1;}
+  .plate[data-frame]::before,.cm-pf::before,.cm-plate[class*="pf-"]::before,
+  .plate[data-frame]::after,.cm-pf::after,.cm-plate[class*="pf-"]::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;}
+  .plate[data-frame]::before,.cm-pf::before,.cm-plate[class*="pf-"]::before{background:var(--pf-deco,none);}
+  /* GOLD: 四隅の金の鉤 + 名前も金 */
+  /* 左はアイコンに隠れ、左上と右下は角を切ってあるので、金の鉤は右上・右下と、左下に置く */
+  [data-frame="gold"],.pf-gold{--pf-deco:
+    linear-gradient(#fff0b8,#fff0b8) right 5px top 5px/12px 2px no-repeat,linear-gradient(#fff0b8,#fff0b8) right 5px top 5px/2px 12px no-repeat,
+    linear-gradient(#fff0b8,#fff0b8) right 9px bottom 5px/12px 2px no-repeat,linear-gradient(#fff0b8,#fff0b8) right 5px bottom 9px/2px 12px no-repeat,
+    linear-gradient(90deg,transparent,#fff0b8 30%,#fff0b8 70%,transparent) 50% calc(100% - 3px)/60% 1px no-repeat;}
+  :is([data-frame="gold"],.pf-gold,[data-frame="royal"],.pf-royal) b{background:linear-gradient(180deg,#fff3c4,#e6bf5c 55%,#b8872a);-webkit-background-clip:text;background-clip:text;color:transparent!important;}
+  /* SAKURA: 左に花札の赤短、花びらを散らす */
+  [data-frame="sakura"],.pf-sakura{--pf-deco:
+    linear-gradient(#d23a4a,#d23a4a) 4px 50%/7px 70% no-repeat,
+    radial-gradient(ellipse 4px 2.5px at calc(100% - 26px) 24%,#ffd0e0 90%,transparent) no-repeat,
+    radial-gradient(ellipse 3px 2px at calc(100% - 14px) 78%,#ffc2d6 90%,transparent) no-repeat,
+    radial-gradient(ellipse 3.5px 2px at calc(100% - 8px) 30%,#ffe0ec 90%,transparent) no-repeat,
+    radial-gradient(ellipse 2.5px 1.8px at calc(100% - 34px) 82%,#ffb3cf 90%,transparent) no-repeat;}
+  .plate[data-frame="sakura"]{padding-left:16px;}
+  /* WASHI: 右下に朱の落款 */
+  [data-frame="washi"],.pf-washi{--pf-deco:
+    linear-gradient(#f3ead6,#f3ead6) right 10px bottom 9px/8px 2px no-repeat,
+    linear-gradient(#f3ead6,#f3ead6) right 12px bottom 13px/4px 2px no-repeat,
+    linear-gradient(#b8302a,#b8302a) right 6px bottom 6px/16px 16px no-repeat;}
+  /* NEON: 走査線と、ときどき瞬く縁 */
+  [data-frame="neon"],.pf-neon{--pf-deco:repeating-linear-gradient(0deg,rgba(124,240,208,.07) 0 1px,transparent 1px 3px);}
+  :is([data-frame="neon"],.pf-neon)::after{box-shadow:inset 0 0 0 2px #7cf0d0;animation:pf-flicker 5s steps(1) infinite;}
+  @keyframes pf-flicker{0%,100%{opacity:0}62%{opacity:.9}63%{opacity:0}66%{opacity:.7}67%{opacity:0}}
+  /* URUSHI: 下に金の蒔絵の波、金箔の粒 */
+  [data-frame="urushi"],.pf-urushi{--pf-deco:
+    radial-gradient(circle at 50% 100%,transparent 5px,#c9a24a 5.5px 6.5px,transparent 7px) 0 100%/14px 8px repeat-x,
+    radial-gradient(circle at calc(100% - 9px) 22%,#e9c76e 1.2px,transparent 1.8px) no-repeat,
+    radial-gradient(circle at calc(100% - 18px) 40%,#e9c76e .9px,transparent 1.5px) no-repeat,
+    radial-gradient(circle at calc(100% - 6px) 52%,#e9c76e 1px,transparent 1.6px) no-repeat;}
+  /* CRYSTAL: 切り子の面 + ゆっくり通る光 */
+  [data-frame="crystal"],.pf-crystal{--pf-deco:
+    linear-gradient(115deg,transparent 30%,rgba(255,255,255,.18) 30% 42%,transparent 42%),
+    linear-gradient(65deg,transparent 58%,rgba(255,255,255,.12) 58% 70%,transparent 70%),
+    linear-gradient(160deg,transparent 75%,rgba(200,240,255,.2) 75%);}
+  /* ROYAL: 四隅と上の真ん中に菱の飾り */
+  [data-frame="royal"],.pf-royal{--pf-deco:
+    conic-gradient(from 45deg at 50% 50%,#e6c86a 25%,transparent 0) 50% 0/8px 8px no-repeat,
+    conic-gradient(from 45deg at 50% 50%,#e6c86a 25%,transparent 0) 0 0/8px 8px no-repeat,
+    conic-gradient(from 45deg at 50% 50%,#e6c86a 25%,transparent 0) 100% 0/8px 8px no-repeat,
+    conic-gradient(from 45deg at 50% 50%,#e6c86a 25%,transparent 0) 0 100%/8px 8px no-repeat,
+    conic-gradient(from 45deg at 50% 50%,#e6c86a 25%,transparent 0) 100% 100%/8px 8px no-repeat;}
+  /* プロトコルの習熟度: 右にそのプロトコルの色の斜線、左に光の帯 */
+  [data-frame^="p_"],[class*="pf-p_"]{--pf-deco:
+    repeating-linear-gradient(-55deg,color-mix(in srgb,var(--pfc,#b9a4ff) 45%,transparent) 0 2px,transparent 2px 7px) right 0 top 0/34% 100% no-repeat,
+    linear-gradient(90deg,color-mix(in srgb,var(--pfc,#b9a4ff) 70%,#fff),transparent) 0 0/4px 100% no-repeat;}
+  /* レアの高いもの (GOLD・CRYSTAL・ROYAL) は、ゆっくり光が通る */
+  :is([data-frame="gold"],.pf-gold,[data-frame="crystal"],.pf-crystal,[data-frame="royal"],.pf-royal)::after{
+    background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.22) 50%,transparent 65%) -150% 0/60% 100% no-repeat;
+    animation:pf-sheen 6s ease-in-out infinite;}
+  @keyframes pf-sheen{0%,55%{background-position:-150% 0}85%,100%{background-position:250% 0}}
+  @media (prefers-reduced-motion:reduce){ .plate[data-frame]::after,.cm-pf::after,.cm-plate[class*="pf-"]::after{animation:none;} }
   .cm-pf{display:flex;align-items:center;justify-content:center;width:100%;height:100%;min-height:44px;clip-path:var(--cut-s);}
   .cm-pf b{font:800 13px/1 var(--font-ui);}
   .plate .pl-icon{flex:none;width:30px;height:30px;display:grid;place-items:center;border-radius:6px;
