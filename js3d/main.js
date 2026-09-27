@@ -7,6 +7,7 @@ import { bonusXp, grantXp, XP_GAIN, hashKey } from './xp.js';
 import { recordDailyGame, DAILY_XP, dailyView } from './daily.js';
 import { maybeLoginHint } from './account.js';
 import { logPlay } from './playlog.js';
+import * as FEEL from './feel.js';
 import { unlockTrophies, TROPHY_XP } from './achievements.js';
 import { addReplay, getReplay, pinReplay, rebuild } from './replays.js';
 import { advantageSeries, turningPoints } from './turning.js';
@@ -355,6 +356,7 @@ async function boot() {
       return null;
     },
     onCompile: async (info) => {
+      FEEL.buzz(info.side === ME ? [30, 60, 50] : 40);
       /* まず盤上のプロトコルカードを "Compiled" 面へ裏返し、その後にカットイン */
       await panels.flipAt(info.line, info.side, true);
       await UI.compileCutIn({
@@ -366,7 +368,17 @@ async function boot() {
   });
   arena = buildArena(stage);
   FX.createDust(stage, 900);
-  panels = createPanels(stage, ME);
+  /* 合計値の変化とコンパイル圏入りを、盤の上に小さく見せる (feel.js)。
+     感想戦・リプレイの早送り・トレーニングでは出さない (手を戻すたびに数字が飛ぶため) */
+  panels = createPanels(stage, ME, {
+    onChange: (events) => {
+      if (!cur || reviewView || replayMode || trainingMode || demoMode || !gameStartedAt || Date.now() - gameStartedAt < 1200) return;
+      for (const e of events) {
+        if (e.delta && Math.abs(e.delta) <= 20) FEEL.floatDelta(stage, e.pos, e.delta, e.color);
+        if (e.ready) { FEEL.readyBurst(stage, e.pos, e.color); if (e.side === ME) FEEL.buzz(18); }
+      }
+    }
+  });
   buildPads();
   stage.onFrame((dt, t) => { positionPlayChoices(); trackHandTop(); trackHandRight(); trackPileCounts(); if (panels) panels.tick(t); });
   /* 設定 (演出の速さ・音量) を反映し、変わったらすぐ当てる */
@@ -588,6 +600,7 @@ async function boot() {
         : Engine.newGame({ seed, p0, p1, first: firstPlayer, training: trainingMode, winCompiles,
           ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude } : {}) });
   cur = res;
+  gameStartedAt = Date.now();          // はじめの表示で合計値の演出が出ないように (feel.js)
   if (!trainingMode && !puzzle && !tutorial && !demoMode && !replayMode) lastSetup = { p0: p0.slice(), p1: p1.slice() };
   /* CPU 戦は棋譜を取る (決着したらリプレイとして残す) */
   replayLog = !replayMode && !trainingMode && !puzzle && !tutorial && !demoMode
@@ -1086,11 +1099,16 @@ function applyAiDifficulty(level, opts) {
 }
 
 /* CPU の手 (Worker で考える。使えなければ画面側で) */
+/* 考えている間は、相手の名札の横に印を出す (feel.js) */
+function thinking(p) {
+  FEEL.setThinking(true);
+  return p.finally(() => FEEL.setThinking(false));
+}
 function aiAction(st) {
-  return aiClient ? aiClient.action(st) : Promise.resolve(withoutTrace(() => Engine.ai.action(st)));
+  return thinking(aiClient ? aiClient.action(st) : Promise.resolve(withoutTrace(() => Engine.ai.action(st))));
 }
 function aiAnswer(st, req) {
-  return aiClient ? aiClient.answer(st, req) : Promise.resolve(withoutTrace(() => Engine.ai.answer(st, req)));
+  return thinking(aiClient ? aiClient.answer(st, req) : Promise.resolve(withoutTrace(() => Engine.ai.answer(st, req))));
 }
 
 /* ---------- 着地パッド (ラインの当たり判定 + 視覚) ---------- */
@@ -2103,6 +2121,7 @@ function showVsTag(rm) {
 }
 
 async function roomApplyView(rm, instant) {
+  if (!gameStartedAt) gameStartedAt = Date.now();
   showVsTag(rm);
   /* サーバー側の状態が進んだら、進行中の待ち受けUI (盤面ピック/並べ替え/
      モーダル) は破棄して取り直す (放置すると古い req.id で答えて desync する) */
@@ -2303,6 +2322,7 @@ async function roomMaybeFinish() {
   const victory = cosmetic('victory', 'default');
   sfx(win ? (victory === 'aurora' ? 'winAurora' : 'win') : 'lose');
   await finaleFx(win);
+  FEEL.buzz(win ? [40, 70, 40, 70, 120] : [160]);
   await UI.resultCutIn(win, { victory });
   /* 同じ部屋の同じ決着を読み直しても2回は入らない */
   const firstTime = grantXp('online', XP_GAIN.onlinePlay + (win ? XP_GAIN.onlineWin : 0),
@@ -2336,6 +2356,8 @@ async function roomEnterGame(rm) {
 /* ---------- ターン / 効果の演出 ---------- */
 let lastTurn = null;
 let resultShown = false;
+let gameStartedAt = 0;
+window.__dbg = { step: (a) => step(a), get cur() { return cur; }, E: Engine }; // TEMP             // 対戦を始めた時刻 (手触りの演出を、はじめの盤面合わせで出さないため)
 
 /* 決着の合図: 3ライン同時に光柱を立てて盤面を白く飛ばす */
 async function finaleFx(win) {
@@ -2615,6 +2637,7 @@ async function step(action) {
     return;
   }
   const topLevel = action.type === 'play' || action.type === 'refresh';
+  if (action.type === 'play' && before.turn === ME) FEEL.buzz(10);     // 置いた手応え
   if (topLevel && assistGame() && before.turn === ME) {
     undoPoint = { cur, replayLen: replayLog ? replayLog.actions.length : 0, histLen: gameHistory.length };
   }
@@ -3455,7 +3478,8 @@ async function afterTurn() {
     const victory = cosmetic('victory', 'default');
     sfx(win ? (victory === 'aurora' ? 'winAurora' : 'win') : 'lose');
     await finaleFx(win);
-    await UI.resultCutIn(win, { victory });
+    FEEL.buzz(win ? [40, 70, 40, 70, 120] : [160]);
+  await UI.resultCutIn(win, { victory });
     /* レベルが上がったら、手に入った報酬を見せる */
     if (myLevel > levelBefore) await UI.levelUpCutIn(myLevel, rewardsBetween(levelBefore, myLevel));
     if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial) await afterGameProgress(cur.state, ME, win, aiDifficulty, false);

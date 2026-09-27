@@ -154,7 +154,9 @@ function paint(ctx, info, art) {
   roundRect(ctx, 3, 3, W - 6, H - 6, 20); ctx.stroke();
 }
 
-export function createPanels(stage, me) {
+/* hooks.onChange(events): 合計値が変わった板と、コンパイル圏に入った板を知らせる (手触りの演出 feel.js 用)。
+   events: [{ line, side, delta, total, ready, pos: 板の 3D 位置, color }] */
+export function createPanels(stage, me, hooks) {
   /* 表裏で別テクスチャを貼るため、板は2枚のメッシュで作る */
   const geo = new THREE.PlaneGeometry(PANEL_W, PANEL_D);
   geo.rotateX(-Math.PI / 2);
@@ -271,7 +273,21 @@ export function createPanels(stage, me) {
       }
     }
     const moving = new Set(moves.map(m => m.p));
+    /* 合計値の変化 (同じプロトコルのまま変わったときだけ。並べ替え・はじめての表示では知らせない) */
+    const events = [];
+    for (const p of panels) {
+      const info = rows[p.line][p.side];
+      const same = p.artName !== undefined && p.artName === info.name && !moving.has(p);
+      if (same && p.lastTotal !== undefined && (info.total !== p.lastTotal || (!!info.threat && !p.threat))) {
+        const pos = new THREE.Vector3();
+        p.group.getWorldPosition(pos);
+        events.push({ line: p.line, side: p.side, delta: info.total - p.lastTotal, total: info.total,
+          ready: !!info.threat && !p.threat && !info.compiled, pos, color: info.color });
+      }
+      p.lastTotal = info.total;
+    }
     for (const p of panels) p.threat = !!rows[p.line][p.side].threat;
+    if (events.length && hooks && hooks.onChange) { try { hooks.onChange(events); } catch (e) { /* 演出だけなので遊ぶのには関係ない */ } }
     for (const p of panels) {
       if (moving.has(p)) continue;
       const info = rows[p.line][p.side];
