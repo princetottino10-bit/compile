@@ -21,6 +21,19 @@ test('範囲: Main 1 だけ / Main 1+2 / 全部', async () => {
   assert.equal(D.poolNames(cards.protocols, 'all').length, cards.protocols.length);
 });
 
+test('範囲: Main 1 + Aux 1 / Main 2 + Aux 2 を出し入れ。両方なら全部', async () => {
+  const D = await load();
+  const set1 = D.poolNames(cards.protocols, 'set1'), set2 = D.poolNames(cards.protocols, 'set2');
+  const setOf = (n) => cards.protocols.find(p => p.name === n).set;
+  assert.ok(set1.every(n => ['Main 1', 'Aux 1'].includes(setOf(n))) && set1.includes('HATE'));
+  assert.ok(set2.every(n => ['Main 2', 'Aux 2'].includes(setOf(n))));
+  assert.equal(set1.length + set2.length, cards.protocols.length);
+  assert.equal(D.poolKeyOf({ set1: true, set2: true }), 'all');
+  assert.equal(D.poolKeyOf({ set1: false, set2: true }), 'set2');
+  assert.deepEqual(D.groupsOf('main12'), { set1: true, set2: true });
+  assert.deepEqual(D.groupsOf('main1'), { set1: true, set2: false });
+});
+
 test('候補の数: 各自3つ + BAN ぶん以上、範囲の数以下', async () => {
   const D = await load();
   assert.equal(D.clampCandidates(0, 0, 12), 12, '0 は全部');

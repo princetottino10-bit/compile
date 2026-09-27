@@ -12,7 +12,7 @@
 
 import { emblemDataURL } from './emblems.js';
 import { showProtocolCards } from './protocards.js';
-import { POOLS, poolNames, clampCandidates, draftSteps, shuffled, randomDecks, cpuDraftPick } from './solodraft.js';
+import { SET_GROUPS, poolKeyOf, groupsOf, poolNames, clampCandidates, draftSteps, shuffled, randomDecks, cpuDraftPick } from './solodraft.js';
 import { PROTOCOL_STRENGTH } from './protocol-strength.js';
 /* 難易度と固定デッキ (最強・ロック特化・挑戦者)。固定デッキは「自由に選ぶ」でだけ使える */
 import { LEVEL_LABELS as AI_LABELS, CHALLENGERS, CHALLENGER_BASE, isChallenger, fixedDeck, challengerName, levelLabel } from './aidecks.js';
@@ -55,7 +55,7 @@ export function runSetup(protocols, options = {}) {
   const picked = [];
   const presetLevel = Number.isInteger(options.level) ? options.level : null;
   let level = presetLevel === null ? 1 : presetLevel;
-  let poolKey = lsGet('compileSoloPool', 'all');
+  let poolKey = poolKeyOf(groupsOf(lsGet('compileSoloPool', 'all')));
   /* 強敵 (デッキの決まった相手) には、自分の3つを選ぶだけ */
   /* ふだんの CPU 戦は公式のドラフトから (以前の「自由に選ぶ」の保存は使わず、選び直したものだけ覚える) */
   let mode = training || (presetLevel !== null && fixedDeck(presetLevel)) ? 'free' : lsGet('compileSoloModeV2', 'draft');
@@ -100,14 +100,25 @@ export function runSetup(protocols, options = {}) {
   function renderRules() {
     if (draft) { renderDraftSummary(); return; }
     rules.innerHTML =
-      '<div class="sr-group"><span>使うプロトコル</span>' + seg(POOLS.map(p => [p.key, p.label]), poolKey, 'pool') + '</div>' +
+      '<div class="sr-group"><span>使うプロトコル</span>' + SET_GROUPS.map(g => '<button type="button" class="lvl' +
+        (groupsOf(poolKey)[g.key] ? ' on' : '') + '" data-pool="' + g.key + '" aria-pressed="' + !!groupsOf(poolKey)[g.key] + '">' + g.label + '</button>').join('') + '</div>' +
       (training || (presetLevel !== null && fixedDeck(presetLevel)) ? ''
         : '<div class="sr-group"><span>決め方</span>' + seg(MODES.map(m => [m.key, m.label]), mode, 'mode') + '</div>') +
       (mode === 'draft'
         ? '<div class="sr-group"><span>候補</span>' + seg(CANDIDATES, draftSize, 'cand') +
           '<span>BAN</span>' + seg(BANS, draftBans, 'bans') + '</div>'
         : '');
-    rules.querySelectorAll('[data-pool]').forEach(b => { b.onclick = () => { poolKey = b.dataset.pool; lsSet('compileSoloPool', poolKey); refresh(); }; });
+    /* 押すたびに出し入れする。2つとも消すことはできない */
+    rules.querySelectorAll('[data-pool]').forEach(b => {
+      b.onclick = () => {
+        const on = groupsOf(poolKey);
+        on[b.dataset.pool] = !on[b.dataset.pool];
+        if (!on.set1 && !on.set2) return;
+        poolKey = poolKeyOf(on);
+        lsSet('compileSoloPool', poolKey);
+        refresh();
+      };
+    });
     rules.querySelectorAll('[data-mode]').forEach(b => { b.onclick = () => { mode = b.dataset.mode; lsSet('compileSoloModeV2', mode); refresh(); }; });
     rules.querySelectorAll('[data-cand]').forEach(b => { b.onclick = () => { draftSize = +b.dataset.cand; lsSet('compileSoloDraftPool', String(draftSize)); refresh(); }; });
     rules.querySelectorAll('[data-bans]').forEach(b => { b.onclick = () => { draftBans = +b.dataset.bans; lsSet('compileSoloDraftBans', String(draftBans)); refresh(); }; });

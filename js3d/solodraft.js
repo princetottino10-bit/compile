@@ -6,15 +6,32 @@
  * ========================================================================= */
 
 /* 使うプロトコルの範囲 */
-export const POOLS = [
-  { key: 'main1', label: 'Main 1', sets: ['Main 1'] },
-  { key: 'main12', label: 'Main 1+2', sets: ['Main 1', 'Main 2'] },
-  { key: 'all', label: '全部', sets: null }
+/* 使うプロトコルの範囲。画面では「Main 1 + Aux 1」「Main 2 + Aux 2」の2つを出し入れし、両方なら全部 */
+export const SET_GROUPS = [
+  { key: 'set1', label: 'Main 1 + Aux 1', sets: ['Main 1', 'Aux 1'] },
+  { key: 'set2', label: 'Main 2 + Aux 2', sets: ['Main 2', 'Aux 2'] }
 ];
+export const POOLS = SET_GROUPS.concat([
+  { key: 'all', label: '全部', sets: null },
+  /* 前の範囲 (保存が残っている人向け) */
+  { key: 'main1', label: 'Main 1', sets: ['Main 1'] },
+  { key: 'main12', label: 'Main 1+2', sets: ['Main 1', 'Main 2'] }
+]);
 
 export function poolNames(protocols, key) {
-  const pool = POOLS.find(p => p.key === key) || POOLS[POOLS.length - 1];
+  const pool = POOLS.find(p => p.key === key) || POOLS.find(p => p.key === 'all');
   return protocols.filter(p => !pool.sets || pool.sets.includes(p.set)).map(p => p.name);
+}
+
+/** 2つの出し入れ ({ set1, set2 }) から範囲の key を作る。両方なら全部 */
+export function poolKeyOf(on) {
+  return on.set1 && on.set2 ? 'all' : on.set2 ? 'set2' : 'set1';
+}
+/** 範囲の key から、2つのどちらが出ているか (前の範囲は近いものに寄せる) */
+export function groupsOf(key) {
+  if (key === 'set1' || key === 'main1') return { set1: true, set2: false };
+  if (key === 'set2') return { set1: false, set2: true };
+  return { set1: true, set2: true };
 }
 
 /* 候補の数は「各自3つ + BAN ぶん」以上、範囲の数以下 (0 = 範囲の全部) */
