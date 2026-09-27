@@ -68,7 +68,7 @@ export const COSMETICS = {
   ccolor: [['default', 'PROTOCOL'], ['gold', 'GOLD'], ['cyan', 'CYAN'], ['rainbow', 'RAINBOW'], ['lime', 'LIME'], ['violet', 'VIOLET'], ['ember', 'EMBER']],
   victory: [['default', 'STANDARD'], ['aurora', 'AURORA']],
   /* 対戦のそばのキャラ (avatar.js)。紫苑ははじめから、ほかはガチャ */
-  avatar: [['shion', '紫苑'], ['asagi', '浅葱'], ['yamabuki', '山吹'], ['nadeshiko', '撫子'],
+  avatar: [['shion', '紫苑'], ['asagi', '浅葱'], ['yamabuki', '菜花'], ['nadeshiko', '撫子'],
     /* ゲスト (VOICEVOX のキャラ・声つき) */
     ['zundamon', 'ずんだもん'], ['metan', '四国めたん'], ['tsumugi', '春日部つむぎ'], ['whitecul', 'WhiteCUL']],
   /* 対戦中の名札の枠 (相手にも見える) */
