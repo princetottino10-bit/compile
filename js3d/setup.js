@@ -4,6 +4,7 @@
  *     ドラフト  : 公式ルールどおり CPU と 1 → 2 → 2 → 1 つ取り合う。先に取った側が先攻、取った順にラインへ並ぶ
  *                 (候補の数・BAN は好みで足せる)
  *     自由に選ぶ: 3つ選ぶ。相手は範囲の残りから自動で組む
+ *     一部を選ぶ: 1つか2つだけ選び、自分の残りと相手の3つは範囲の残りからランダム
  *     ランダム  : 両者とも範囲からランダムに3つ
  *   各プロトコルの「?」で、そのプロトコルの6枚 (効果の文つき) を見られる。
  *   決まりごと (範囲・順番・CPU の選び方) は solodraft.js。
@@ -20,6 +21,7 @@ export { STRONGEST_AI, LOCK_AI } from './aidecks.js';
 const MODES = [
   { key: 'draft', label: 'ドラフト (公式)' },
   { key: 'free', label: '自由に選ぶ' },
+  { key: 'partial', label: '一部を選ぶ' },
   { key: 'random', label: 'ランダム' }
 ];
 const CANDIDATES = [[0, '全部'], [12, '12個'], [10, '10個'], [8, '8個']];
@@ -70,7 +72,9 @@ export function runSetup(protocols, options = {}) {
   onlineBtn.hidden = training || options.allowOnline === false;
 
   const pool = () => poolNames(protocols, poolKey);
-  const fixedLocked = () => (mode === 'free' ? fixedDeck(level) || [] : []);
+  /* 自分で選ぶ決め方 (自由・一部)。固定デッキの相手と戦えるのはこのときだけ */
+  const choosingMode = () => mode === 'free' || mode === 'partial';
+  const fixedLocked = () => (choosingMode() ? fixedDeck(level) || [] : []);
 
   /* ---------- 見出し・ルールの段 ---------- */
   function renderHead() {
@@ -84,6 +88,7 @@ export function runSetup(protocols, options = {}) {
       : presetLevel !== null && fixedDeck(presetLevel)
         ? '自分のプロトコルを3つ選ぶ。相手 (' + levelLabel(presetLevel) + ') のデッキは ' + fixedDeck(presetLevel).join(' / ') + '。'
       : mode === 'free' ? '使用するプロトコルを3つ選ぶ。相手は範囲の残りから自動で編成される。'
+        : mode === 'partial' ? '使いたいプロトコルを1つか2つ選ぶ。自分の残りと相手の3つは、範囲の残りからランダムで決まる。'
         : mode === 'draft' ? '公式ルールのドラフト: CPU と交互に 1 → 2 → 2 → 1 つ取り合う。先に取った側が先攻、取った順にラインへ並ぶ。'
           : '両者とも、範囲からランダムに3つ。';
   }
@@ -116,12 +121,12 @@ export function runSetup(protocols, options = {}) {
     levelWrap.hidden = training || !!draft || presetLevel !== null;
     if (presetLevel !== null) { levelWrap.innerHTML = ''; return; }
     /* 固定デッキ (最強・ロック特化・挑戦者) は自分で選ぶときだけ */
-    if (mode !== 'free' && fixedDeck(level)) level = 2;
+    if (!choosingMode() && fixedDeck(level)) level = 2;
     /* 挑戦者は1つのボタンにまとめ、選んだらデッキを横の選択肢から選ぶ */
     const items = AI_LABELS.map((label, i) => [i, label]);
     if (mode !== 'draft') items.push([CHALLENGER_BASE + challenger, '挑戦者']);
     const shown = mode === 'draft' ? items.slice(0, 3) : items;
-    const lockedLevel = (i) => mode !== 'free' && !!fixedDeck(i);
+    const lockedLevel = (i) => !choosingMode() && !!fixedDeck(i);
     levelWrap.innerHTML = (mode === 'draft' ? '<span class="lv-lbl">CPU のドラフト</span>' : '') +
       shown.map(([i, label]) => '<button type="button" class="lvl' + (i === level ? ' on' : '') +
       (lockedLevel(i) ? ' locked' : '') + '" data-level="' + i + '"' +
@@ -171,11 +176,13 @@ export function runSetup(protocols, options = {}) {
     for (let i = picked.length - 1; i >= 0; i--) if (!names.includes(picked[i])) picked.splice(i, 1);
     const locked = fixedLocked();
     for (const n of locked) { const i = picked.indexOf(n); if (i >= 0) picked.splice(i, 1); }
-    const choosing = mode === 'free' || training;
+    const choosing = choosingMode() || training;
+    const max = mode === 'partial' && !training ? 2 : 3;
+    while (picked.length > max) picked.pop();
     grid.innerHTML = names.map(n => tile(n, [
       picked.includes(n) ? 'on' : '',
       locked.includes(n) ? 'locked' : '',
-      choosing && picked.length >= 3 && !picked.includes(n) ? 'dim' : '',
+      choosing && picked.length >= max && !picked.includes(n) ? 'dim' : '',
       choosing ? '' : 'view'
     ].filter(Boolean).join(' '))).join('');
     bindInfo();
@@ -186,7 +193,7 @@ export function runSetup(protocols, options = {}) {
         if (b.classList.contains('locked')) return;
         const i = picked.indexOf(n);
         if (i >= 0) picked.splice(i, 1);
-        else if (picked.length < 3) picked.push(n);
+        else if (picked.length < max) picked.push(n);
         else return;
         renderGrid();
         syncStart();
@@ -206,6 +213,10 @@ export function runSetup(protocols, options = {}) {
       startBtn.textContent = 'START';
       startBtn.disabled = picked.length !== 3;
       countEl.textContent = picked.length + ' / 3';
+    } else if (mode === 'partial') {
+      startBtn.textContent = picked.length ? 'START (残りはランダム)' : '1つか2つ選ぶ';
+      startBtn.disabled = !picked.length || pool().length - fixedLocked().length < 3;
+      countEl.textContent = picked.length + ' / 2';
     } else if (mode === 'draft') {
       const size = clampCandidates(draftSize, draftBans, pool().length);
       startBtn.textContent = 'ドラフト開始';
@@ -408,6 +419,15 @@ export function runSetup(protocols, options = {}) {
       if (mode === 'random') {
         const { me, ai } = randomDecks(pool());
         close({ me, ai, level, training: false, random: true });
+        return;
+      }
+      if (mode === 'partial') {
+        if (!picked.length || picked.length > 2) return;
+        /* 自分の残りは、選んだものと固定デッキの相手のものを除いた範囲から。相手は固定デッキか、さらに残りから */
+        const locked = fixedLocked();
+        const me = picked.concat(shuffled(pool().filter(n => !picked.includes(n) && !locked.includes(n))).slice(0, 3 - picked.length));
+        const ai = fixedDeck(level) ? fixedDeck(level).slice() : shuffled(pool().filter(n => !me.includes(n))).slice(0, 3);
+        close({ me, ai, level, training: false, partial: picked.slice() });
         return;
       }
       if (picked.length !== 3) return;

@@ -584,6 +584,7 @@ async function boot() {
       /* ドラフトは先手後攻もドラフトの先手に合わせる。ランダム編成は中身を知らせる */
       if (chosen.first) chosenFirst = chosen.first === 'me' ? ME : AI;
       if (chosen.random) setupNote = 'ランダム: あなた ' + p0.join(' / ') + '　相手 ' + p1.join(' / ');
+      if (chosen.partial) setupNote = 'あなた ' + p0.map(n => chosen.partial.includes(n) ? n : n + ' (ランダム)').join(' / ') + '　相手 ' + p1.join(' / ');
       break;
     }
   }
