@@ -411,6 +411,12 @@ Deno.serve(async (req) => {
         if (error) throw error;
         return json(req, { errors: data || [] });
       }
+      /* 遊ばれ方の匿名の記録 (play_events) の集計: 直近 14 日 */
+      if (op === "adminPlays") {
+        const { data, error } = await admin.rpc("admin_play_stats", { days: 14 });
+        if (error) throw error;
+        return json(req, { plays: data || {} });
+      }
       if (op === "adminErrorsClear") {
         const { error } = await admin.from("client_errors").delete().gte("id", 0);
         if (error) throw error;

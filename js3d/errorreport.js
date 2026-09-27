@@ -11,7 +11,7 @@ const MAX = 8;
 let configLoad = null;
 
 /* 接続先 (secure-room-config.js) を読む。オンライン対戦と同じ設定 */
-function loadConfig() {
+export function loadConfig() {
   if (window.COMPILE_ROOM_CONFIG) return Promise.resolve(window.COMPILE_ROOM_CONFIG);
   if (!configLoad) {
     configLoad = new Promise((resolve) => {
@@ -41,7 +41,7 @@ function deviceOf() {
   return os + ' ' + br + (matchMedia && matchMedia('(pointer: coarse)').matches ? ' touch' : '');
 }
 /* 版の印: 読み込んだ main.js の ?v= */
-function versionOf() {
+export function versionOf() {
   try {
     const m = (document.querySelector('script[type="importmap"]') || {}).textContent || '';
     const v = m.match(/main\.js\?v=([a-z0-9]+)/);

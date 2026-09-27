@@ -10,6 +10,7 @@
  *   保存は compileGacha { spent, owned: { 'kind:key': 時刻 }, pulls, pity }。アカウントの保存 (cloudsave.js) にも入る
  * ========================================================================= */
 import { GACHA_ITEMS, gachaId, itemName } from './rewards.js';
+import { deviceId } from './device.js';
 
 const KEY = 'compileGacha';
 /* 1回 30 (数試合に1回の楽しみ)。10連は 1回ぶん安い */
@@ -22,16 +23,6 @@ export const REFUND = { C: 6, R: 9, E: 18, L: 36 };
 /* 使った CHIP は端末ごとに数える (paid: 払った分・back: かぶりで返った分。どちらも増えるだけ)。
    2台で別々に引いてから同期すると、前は「多い方」に合わせていたので片方の分がただになっていた。
    端末ごとなら、合わせるときは端末ごとに大きい方を取って足せばよい。前の形 (spent だけ) は legacy として持つ */
-const DEVICE_KEY = 'compileDeviceId';
-function deviceId() {
-  try {
-    let id = localStorage.getItem(DEVICE_KEY);
-    if (!id) { id = 'd' + Math.random().toString(36).slice(2, 10); localStorage.setItem(DEVICE_KEY, id); }
-    return id;
-  } catch (e) {
-    return 'local';
-  }
-}
 const numMap = (m) => {
   const out = {};
   if (m && typeof m === 'object') for (const [k, v] of Object.entries(m)) if (Number.isFinite(+v) && +v >= 0) out[k] = +v;

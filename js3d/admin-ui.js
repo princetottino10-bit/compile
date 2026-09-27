@@ -8,7 +8,7 @@ import { weekKey, weekIndex } from './weekly.js';
 import { isUnlockAll, setUnlockAll } from './rewards.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const TABS = ['STATS', 'PLAYERS', 'WEEKLY', 'ROOMS', 'UNLOCK', 'ERRORS'];
+const TABS = ['STATS', 'PLAYERS', 'WEEKLY', 'ROOMS', 'UNLOCK', 'ERRORS', 'PLAYS'];
 const FREE_DB = 500 * 1024 * 1024;           // Supabase 無料プランのデータベースの目安 (500MB)
 const mb = (n) => (n / 1024 / 1024).toFixed(n < 10 * 1024 * 1024 ? 2 : 1) + ' MB';
 const when = (t) => new Date(t).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -143,6 +143,24 @@ export function openAdmin() {
             ' ・ ' + esc([...g.devices].slice(0, 3).join(' / ')) + ' ・ ' + esc([...g.modes].slice(0, 3).join(' / ')) + '</small></li>').join('') + '</ul>' +
           '<div class="pz-row"><button type="button" id="adErrClear">' + (armed === 'errs' ? '本当に消す?' : '一覧を消す') + '</button></div>'
         : '<p class="pz-note">エラーは届いていません</p>';
+    },
+    /* PLAYS: 遊ばれ方の匿名の記録 (playlog.js)。ゲストも含めた、日ごとの人数・試合数・モード */
+    async () => {
+      body.innerHTML = '<p class="pz-note">読み込み中…</p>';
+      const r = await call('adminPlays');
+      const s = r.plays || {};
+      const days = s.days || [];
+      const chips = (m) => Object.entries(m || {}).sort((a, b) => b[1] - a[1])
+        .map(([k, n]) => '<i class="ad-chip">' + esc(MODE_LABEL[k] || k) + ' ' + n + '</i>').join('');
+      body.innerHTML = '<p class="pz-note">ゲストも含めた匿名の記録 (端末ごとのランダムな番号で数えます。同じ人でも端末が違えば別の人)。' +
+        '記録を始めたのは 2026-09-27 から。</p>' +
+        '<div class="ad-plays-sum"><b>' + (s.players | 0) + '<small>人</small></b><span>うちゲストだけ ' + (s.guests | 0) + ' 人 ・ ' + (s.games | 0) + ' 試合</span></div>' +
+        '<div class="ad-modes">' + chips(s.modes) + '</div>' +
+        (days.length ? '<ul class="ad-list ad-days">' + days.map(d =>
+          '<li><span><b>' + esc(d.day) + ' ・ ' + (d.players | 0) + '人 <small>(ゲスト ' + (d.guests | 0) + ' ・ はじめて ' + (d.new | 0) + ')</small> ・ ' + (d.games | 0) + '試合</b>' +
+          '<small class="ad-modes">' + chips(d.modes) + '</small></span></li>').join('') + '</ul>'
+          : '<p class="pz-note">まだ記録がありません</p>') +
+        ((s.protos || []).length ? '<p class="pz-note">よく使われたプロトコル (14日): ' + s.protos.map(p => esc(p.name) + ' ' + p.games).join(' ・ ') + '</p>' : '');
     }
   ];
 

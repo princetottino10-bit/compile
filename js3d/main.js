@@ -6,6 +6,7 @@ import { randomDecks } from './solodraft.js';
 import { bonusXp, grantXp, XP_GAIN, hashKey } from './xp.js';
 import { recordDailyGame, DAILY_XP, dailyView } from './daily.js';
 import { maybeLoginHint } from './account.js';
+import { logPlay } from './playlog.js';
 import { unlockTrophies, TROPHY_XP } from './achievements.js';
 import { addReplay, getReplay, pinReplay, rebuild } from './replays.js';
 import { advantageSeries, turningPoints } from './turning.js';
@@ -690,6 +691,8 @@ async function puzzleAfterTurn() {
     PZ.showPuzzleResult(result, retryPuzzle);
     return;
   }
+  /* 遊ばれ方の匿名の記録: 解けたか (level は段。今日の問題は 11・今日の上級は 13) */
+  logPlay({ mode: 'tsume', win: result.ok !== false, level: ts.daily != null ? (ts.hard ? 13 : 11) : (ts.tier | 0), logged: !!accountState().user });
   /* COMPUZZLE: 段ごとの経験値 (問題ごとに初回。今日の問題は日ごと)。実績の判定もここで */
   if (result.ok) {
     await gainXp('tsume', TS.tsumeXp(ts), TS.tsumeXpKey(ts));
@@ -2298,6 +2301,9 @@ async function roomMaybeFinish() {
   /* 同じ部屋の同じ決着を読み直しても2回は入らない */
   const firstTime = grantXp('online', XP_GAIN.onlinePlay + (win ? XP_GAIN.onlineWin : 0),
     'room:' + (roomRm && roomRm.code) + ':' + (st.turns || 0));
+  /* 遊ばれ方の匿名の記録 (同じ決着を読み直したときは送らない) */
+  if (firstTime) logPlay({ mode: 'online', win, me: st.players[ME].protocols.map(p => p.name), opp: st.players[1 - ME].protocols.map(p => p.name),
+    turns: (st.turns || 0) + 1, logged: !!accountState().user });
   if (firstTime) {
     const before = myLevel;
     refreshCardGlow();
@@ -3415,6 +3421,12 @@ async function afterTurn() {
   if (cur.state.winner !== null && !resultShown) {
     resultShown = true;
     const win = cur.state.winner === ME;
+    /* 遊ばれ方の匿名の記録 (ログインしていない人も。チュートリアルも数える) */
+    if (!trainingMode && !puzzle && !demoMode && !roomMode) {
+      logPlay({ mode: runMode ? runKind : tutorial ? 'tutorial' : quickGame ? 'quick' : 'cpu', win, level: aiDifficulty,
+        me: cur.state.players[ME].protocols.map(p => p.name), opp: cur.state.players[AI].protocols.map(p => p.name),
+        turns: (cur.state.turns || 0) + 1, logged: !!accountState().user });
+    }
     const levelBefore = myLevel;
     /* チュートリアルは戦績・リプレイ・実績に数えない */
     if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial) {

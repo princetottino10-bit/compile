@@ -2355,6 +2355,12 @@
   .cm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px;}
   .cm-grid.title,.cm-grid.victory{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
   .cm-grid.icon{grid-template-columns:repeat(auto-fill,minmax(76px,1fr));}
+  .ad-plays-sum{display:flex;align-items:baseline;gap:12px;margin:6px 0;}
+  .ad-plays-sum b{font:900 30px/1 var(--font-hud,var(--font-ui));color:#fff;} .ad-plays-sum b small{font-size:13px;margin-left:2px;}
+  .ad-plays-sum span{font:700 12px/1.4 system-ui;color:var(--dim);}
+  .ad-modes{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0;}
+  .ad-chip{font:700 10.5px/1 system-ui;font-style:normal;padding:4px 7px;border-radius:999px;background:rgba(185,164,255,.14);color:var(--ink);}
+  .ad-days li span{display:flex;flex-direction:column;gap:4px;}
   .cm-desc{margin:10px 0 0;font:700 12px/1.5 system-ui;color:var(--ink);text-align:center;}
   .cm-grid.nameplate{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));}
   .cm-grid.nameplate .cm-th{height:52px;}
@@ -2979,7 +2985,7 @@
       "./js3d/account.js": "./js3d/account.js?v=652f7dff55",
       "./js3d/achievements-ui.js": "./js3d/achievements-ui.js?v=924939d2f6",
       "./js3d/achievements.js": "./js3d/achievements.js?v=898d57909c",
-      "./js3d/admin-ui.js": "./js3d/admin-ui.js?v=4e8f5b922e",
+      "./js3d/admin-ui.js": "./js3d/admin-ui.js?v=45ab84a7a1",
       "./js3d/ai-worker.js": "./js3d/ai-worker.js?v=5efde8ba0e",
       "./js3d/aiclient.js": "./js3d/aiclient.js?v=704b588b82",
       "./js3d/aidecks.js": "./js3d/aidecks.js?v=8d249240bd",
@@ -2996,24 +3002,26 @@
       "./js3d/cosmetics-mode.js": "./js3d/cosmetics-mode.js?v=5d8c6e04d1",
       "./js3d/cosmetics-ui.js": "./js3d/cosmetics-ui.js?v=61977c6f7c",
       "./js3d/daily.js": "./js3d/daily.js?v=f56dabdf65",
+      "./js3d/device.js": "./js3d/device.js?v=b519fe2cae",
       "./js3d/displayname.js": "./js3d/displayname.js?v=613e18bf95",
       "./js3d/emblems.js": "./js3d/emblems.js?v=6d1c077a2e",
-      "./js3d/errorreport.js": "./js3d/errorreport.js?v=7939cf04e8",
+      "./js3d/errorreport.js": "./js3d/errorreport.js?v=61f59a3cb3",
       "./js3d/fx-compile.js": "./js3d/fx-compile.js?v=2fbcc8e763",
       "./js3d/fx-protocols.js": "./js3d/fx-protocols.js?v=509fceb211",
       "./js3d/fx.js": "./js3d/fx.js?v=f2bbe73646",
       "./js3d/gacha-ui.js": "./js3d/gacha-ui.js?v=73a5a71bea",
-      "./js3d/gacha.js": "./js3d/gacha.js?v=af5529489e",
+      "./js3d/gacha.js": "./js3d/gacha.js?v=839f0fdcf6",
       "./js3d/gachafx.js": "./js3d/gachafx.js?v=3d15a2226f",
       "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c",
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=d37b36e6ee",
+      "./js3d/main.js": "./js3d/main.js?v=e92ffcb715",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=0f771bd1bf",
       "./js3d/panel.js": "./js3d/panel.js?v=ecb8a073e3",
       "./js3d/plates.js": "./js3d/plates.js?v=51eb123246",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=e0273dcae0",
+      "./js3d/playlog.js": "./js3d/playlog.js?v=90aaffedee",
       "./js3d/playmat.js": "./js3d/playmat.js?v=348121475c",
       "./js3d/profile.js": "./js3d/profile.js?v=0a9d78c352",
       "./js3d/prompts.js": "./js3d/prompts.js?v=348dff836d",
@@ -3055,6 +3063,7 @@
   <link rel="modulepreload" href="js3d/xp.js?v=39e78466ed">
   <link rel="modulepreload" href="js3d/daily.js?v=f56dabdf65">
   <link rel="modulepreload" href="js3d/account.js?v=652f7dff55">
+  <link rel="modulepreload" href="js3d/playlog.js?v=90aaffedee">
   <link rel="modulepreload" href="js3d/achievements.js?v=898d57909c">
   <link rel="modulepreload" href="js3d/replays.js?v=2a8c9e69b5">
   <link rel="modulepreload" href="js3d/turning.js?v=9c7f79654e">
@@ -3070,7 +3079,7 @@
   <link rel="modulepreload" href="js3d/room.js?v=c34129de95">
   <link rel="modulepreload" href="js3d/puzzle.js?v=a6a0904519">
   <link rel="modulepreload" href="js3d/tsume.js?v=95789a9ad4">
-  <link rel="modulepreload" href="js3d/errorreport.js?v=7939cf04e8">
+  <link rel="modulepreload" href="js3d/errorreport.js?v=61f59a3cb3">
   <link rel="modulepreload" href="js3d/tutorial.js?v=0e6d6237ad">
   <link rel="modulepreload" href="js3d/settings.js?v=5b7f978851">
   <link rel="modulepreload" href="js3d/stats.js?v=e2b9647dba">
@@ -3107,8 +3116,9 @@
   <link rel="modulepreload" href="js3d/logformat.js?v=6bbf54aba6">
   <link rel="modulepreload" href="js3d/steps.js?v=13e73b20fe">
   <link rel="modulepreload" href="js3d/cloudsave.js?v=d1643b2cad">
-  <link rel="modulepreload" href="js3d/admin-ui.js?v=4e8f5b922e">
-  <link rel="modulepreload" href="js3d/gacha.js?v=af5529489e">
+  <link rel="modulepreload" href="js3d/admin-ui.js?v=45ab84a7a1">
+  <link rel="modulepreload" href="js3d/device.js?v=b519fe2cae">
+  <link rel="modulepreload" href="js3d/gacha.js?v=839f0fdcf6">
   <link rel="modulepreload" href="vendor/three.core.js">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/EffectComposer.js">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/RenderPass.js">
@@ -3136,6 +3146,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=d37b36e6ee"></script>
+  <script type="module" src="js3d/main.js?v=e92ffcb715"></script>
 </body>
 </html>
