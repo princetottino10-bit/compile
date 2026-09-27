@@ -15,7 +15,7 @@ const SPEAKER = {
   metan: { base: 2, happy: 0, angry: 6 },
   tsumugi: { base: 8, happy: 8, angry: 8 }
 };
-const TONE = { compile: 'happy', win: 'happy', good: 'happy', hello: 'happy', compiled: 'angry', hurt: 'angry' };
+const TONE = { compile: 'happy', win: 'happy', good: 'happy', hello: 'happy', chain: 'happy', control: 'happy', compiled: 'angry', hurt: 'angry' };
 
 async function synth(text, speaker) {
   const q = await fetch(ENGINE + '/audio_query?speaker=' + speaker + '&text=' + encodeURIComponent(text), { method: 'POST' });

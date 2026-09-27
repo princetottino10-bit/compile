@@ -2821,8 +2821,8 @@
   }
   .plate.me{position:fixed;left:calc(14px + env(safe-area-inset-left));top:auto;bottom:calc(14px + env(safe-area-inset-bottom));max-width:min(210px,24vw);}
   /* 対戦のそばのキャラ (avatar.js): 自分は左下、相手は右上 (左右反転)。触れない (下の盤面・ボタンを押せる) */
-  .avatar{position:fixed;left:calc(-10px + env(safe-area-inset-left));bottom:calc(0px + env(safe-area-inset-bottom));z-index:11;
-    height:min(33vh,300px);aspect-ratio:752/1096;pointer-events:none;}
+  .avatar{position:fixed;left:calc(-10px + env(safe-area-inset-left));bottom:calc(62px + env(safe-area-inset-bottom));z-index:11;
+    height:min(30vh,270px);aspect-ratio:752/1096;pointer-events:none;}
   .avatar .av-body{position:absolute;inset:0;transform-origin:50% 100%;animation:av-breath 4.2s ease-in-out infinite;
     -webkit-mask-image:linear-gradient(180deg,#000 72%,transparent);mask-image:linear-gradient(180deg,#000 72%,transparent);}
   .avatar.calm .av-body{animation:none;}
@@ -3252,7 +3252,7 @@
       "./js3d/aidecks.js": "./js3d/aidecks.js?v=8d249240bd",
       "./js3d/arena.js": "./js3d/arena.js?v=ef66a1e5bb",
       "./js3d/audio.js": "./js3d/audio.js?v=28a4f522ba",
-      "./js3d/avatar.js": "./js3d/avatar.js?v=afeb218477",
+      "./js3d/avatar.js": "./js3d/avatar.js?v=d161d05bfd",
       "./js3d/backdrops.js": "./js3d/backdrops.js?v=90faf9612d",
       "./js3d/board.js": "./js3d/board.js?v=9fe57e2090",
       "./js3d/card.js": "./js3d/card.js?v=6d8083e5b7",
@@ -3282,7 +3282,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=cca28803c7",
+      "./js3d/main.js": "./js3d/main.js?v=a735db4166",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=2142e0957c",
       "./js3d/panel.js": "./js3d/panel.js?v=d4a1f0a181",
@@ -3334,7 +3334,7 @@
   <link rel="modulepreload" href="js3d/playlog.js?v=90aaffedee">
   <link rel="modulepreload" href="js3d/feel.js?v=83bdf7f262">
   <link rel="modulepreload" href="js3d/spectate.js?v=3add6e9577">
-  <link rel="modulepreload" href="js3d/avatar.js?v=afeb218477">
+  <link rel="modulepreload" href="js3d/avatar.js?v=d161d05bfd">
   <link rel="modulepreload" href="js3d/motion.js?v=36861b0081">
   <link rel="modulepreload" href="js3d/gacha.js?v=ce3d4f3faa">
   <link rel="modulepreload" href="js3d/chips.js?v=e67e280b76">
@@ -3421,6 +3421,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=cca28803c7"></script>
+  <script type="module" src="js3d/main.js?v=a735db4166"></script>
 </body>
 </html>

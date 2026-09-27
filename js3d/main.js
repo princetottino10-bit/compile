@@ -264,13 +264,37 @@ function avatarOf(side, st) {
   const s = st || (cur && cur.state);
   return avatars.mate && s && s.tag && s.tag.pilot[ME] === 1 ? avatars.mate : avatars.me;
 }
-function avatarSay(side, kind, vars, st, gapMs) {
+/* 大事な場面 (コンパイル・勝敗など) は、ほかのひとことに割り込んででも言う */
+const AVATAR_MUST = new Set(['compile', 'compiled', 'win', 'lose', 'almost', 'hurt', 'hello', 'lesson', 'good', 'retry']);
+/* chance: 言う確率 (毎回だとうるさいもの)。gapMs: 同じ種類を続けて言わない間 */
+function avatarSay(side, kind, vars, st, gapMs, chance) {
   const a = avatarOf(side, st);
   if (!a) return;
+  if (chance !== undefined && Math.random() > chance) return;
   const k = side + ':' + kind;
-  if (gapMs && Date.now() - (avatarSaidAt[k] || 0) < gapMs) return;
-  avatarSaidAt[k] = Date.now();
+  const now = Date.now();
+  if (gapMs && now - (avatarSaidAt[k] || 0) < gapMs) return;
+  /* その子がしゃべったばかりなら、大事な場面以外は黙る */
+  const who = 'who:' + a.id;
+  if (!AVATAR_MUST.has(kind) && now - (avatarSaidAt[who] || 0) < 2600) return;
+  avatarSaidAt[k] = now;
+  avatarSaidAt[who] = now;
   a.react(kind, vars);
+}
+/* 考えこんでいる: 自分の番で 25 秒さわっていなければ、1手番に1回だけ声をかける */
+let avatarIdleTurn = -1, avatarLastInput = Date.now();
+window.addEventListener('pointerdown', () => { avatarLastInput = Date.now(); }, true);
+setInterval(() => {
+  if (!avatars || !cur || busy || cur.requests.length || !humanTurn(cur.state) || cur.state.winner !== null) return;
+  const t = cur.state.turns | 0;
+  if (t !== avatarIdleTurn && Date.now() - avatarLastInput > 25000) { avatarIdleTurn = t; avatarSay(ME, 'idle'); }
+}, 3000);
+/* コントロールを取った側がひとこと (変わったときだけ) */
+let avatarControl = null;
+function avatarControlCheck(st) {
+  const c = st && typeof st.control === 'number' ? st.control : -1;
+  if (avatarControl !== null && c !== avatarControl && c >= 0) avatarSay(c, 'control', null, st, 6000);
+  avatarControl = c;
 }
 /* タッグ: 指す番の人が前に出る。相手は、その番の人のキャラに替える */
 function avatarTagTurn(st) {
@@ -481,6 +505,7 @@ async function boot() {
         /* 相手の手でラインが大きく減った側は驚く。コンパイル目前になった側は「あと少し」(続けては言わない) */
         if (e.delta <= -4 && cur.state.turn !== e.side) avatarSay(e.side, 'hurt', null, null, 8000);
         else if (e.ready) avatarSay(e.side, 'almost', null, null, 12000);
+        else if (e.delta >= 4 && cur.state.turn === e.side) avatarSay(e.side, 'boost', null, null, 10000, 0.6);
       }
     }
   });
@@ -2600,6 +2625,8 @@ async function announceTurnFor(turn, atState) {
     const pilot = tagSt.tag.pilot[turn];
     await UI.turnCutIn(turn === ME, turn === ME ? (pilot ? 'PARTNER TURN' : 'YOUR TURN') : 'RIVAL ' + (pilot + 1) + ' TURN');
   } else await UI.turnCutIn(turn === ME);
+  /* 番が来た側が、ときどきひとこと */
+  avatarSay(turn, 'turn', null, tagSt, 0, turn === ME ? 0.4 : 0.3);
   /* はじめの数戦だけ、自分の番に何をすればいいかを添える */
   if (turn === ME && !roomMode && !tutorial && !puzzle && !demoMode && !replayMode && localRecords().length < 3 && !firstGameHintShown) {
     firstGameHintShown = true;
@@ -2780,7 +2807,7 @@ async function replayResolution(prev, res, action) {
     const n = links.length >= 2 ? links.length : 0;
     const delta = n - chainShown;
     chainShown = n;
-    if (delta > 0) sfx('chain', n);     // チェーンがつながった
+    if (delta > 0) { sfx('chain', n); avatarSay(st ? st.turn : ME, 'chain', null, st, 7000); }     // チェーンがつながった
     return delta;
   };
 
@@ -2864,7 +2891,12 @@ async function step(action) {
   const topLevel = action.type === 'play' || action.type === 'refresh';
   CW.battleProgress(res.state.turns | 0);
   /* 自分で表向きに出したカード: キャラがひとこと */
-  if (action.type === 'play' && action.faceUp) avatarSay(before.turn, 'play', { card: cardName(action.card) }, before);
+  if (action.type === 'play' && action.faceUp) {
+    avatarSay(before.turn, 'play', { card: cardName(action.card) }, before);
+    /* 相手が表で出したら、こちらがときどき反応する (少し遅れて) */
+    setTimeout(() => avatarSay(1 - before.turn, 'watch', null, null, 9000, 0.35), 1400);
+  } else if (action.type === 'play') avatarSay(before.turn, 'down', null, before, 6000, 0.6);
+  else if (action.type === 'refresh') avatarSay(before.turn, 'refresh', null, before, 6000);
   if (topLevel && assistGame() && before.turn === ME) {
     undoPoint = { cur, replayLen: replayLog ? replayLog.actions.length : 0, histLen: gameHistory.length };
   }
@@ -4271,6 +4303,7 @@ function refreshHud() {
     /* コントロール変種を使わない対戦ではマーカーを隠す */
     ctrlMarker.group.visible = st.useControl !== false;
     ctrlMarker.update(typeof st.control === 'number' ? st.control : -1, ME, true);
+    avatarControlCheck(st);
   }
   panels.update(panelRows(st));
   UI.setCounts(

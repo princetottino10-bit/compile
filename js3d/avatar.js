@@ -16,6 +16,14 @@ export const AVATARS = {
   shion: {
     name: '紫苑', color: '#a07bff',
     lines: {
+      turn: ['私の番。', 'さて、どうしようか。'],
+      down: ['伏せておくね。', 'まだ内緒。'],
+      watch: ['そう来たか。', 'なるほどね。'],
+      chain: ['つながった。', 'いい流れ。'],
+      refresh: ['少し補充するね。', '手札を整えよう。'],
+      idle: ['ゆっくり考えて。', '迷ってる？'],
+      control: ['主導権、もらったよ。', '流れはこっちだね。'],
+      boost: ['いい調子。', '積み上がってきた。'],
       play: ['行って、{card}！', '{card}、お願い。', 'ここは {card} で。'],
       compile: ['コンパイル、完了。', 'ひとつ、もらったよ。'],
       compiled: ['くっ……', 'まだ、これから。'],
@@ -33,6 +41,14 @@ export const AVATARS = {
   nadeshiko: {
     name: '撫子', color: '#ff4fa3',
     lines: {
+      turn: ['私の番ね！', 'さあ、行くわよ。'],
+      down: ['何を伏せたか、当ててみなさい。', 'ふふ、内緒よ。'],
+      watch: ['ふーん、そう来るの。', '甘いわね。'],
+      chain: ['まだまだ続くわよ！', '止まらないわよ！'],
+      refresh: ['補充よ、補充！', '手札が寂しいわね。'],
+      idle: ['早くしなさいよ。', 'いつまで考えてるの？'],
+      control: ['主導権は私のものよ。', '流れはいただいたわ。'],
+      boost: ['どんどん行くわよ！', '見なさい、この数字！'],
       play: ['{card}、やっちゃって！', 'ほら、{card}よ！', 'これでどう？ {card}！'],
       compile: ['もらったわ！', 'ふふん、当然でしょ。'],
       compiled: ['ちょっと、何よそれ！', 'ま、まだまだよ！'],
@@ -46,6 +62,14 @@ export const AVATARS = {
   asagi: {
     name: '浅葱', color: '#5fd6d0',
     lines: {
+      turn: ['よーし、いくよ！', '私の番だね！'],
+      down: ['こっそり置いとこ。', 'ひみつ〜。'],
+      watch: ['おおっ、やるね！', 'そうきたかー！'],
+      chain: ['つながったー！', '連鎖だ、連鎖！'],
+      refresh: ['手札、補充しよっと。', 'ドローだ〜！'],
+      idle: ['のんびりでいいよ〜。', '考え中？'],
+      control: ['コントロール、ゲット！', '流れ来てる！'],
+      boost: ['いい感じ！', 'ぐんぐん伸びてる！'],
       play: ['{card}、いっけー！', 'えいっ、{card}！', '任せて、{card}！'],
       compile: ['やったぁ、コンパイル！', 'ナイス、決まったね！'],
       compiled: ['あちゃー……', 'ドンマイ、取り返そ！'],
@@ -59,6 +83,14 @@ export const AVATARS = {
   yamabuki: {
     name: '山吹', color: '#ffc94a',
     lines: {
+      turn: ['よっしゃ、いくぞ！', 'こっちの番だ！'],
+      down: ['伏せとくぜ！', '何かはお楽しみ！'],
+      watch: ['おっ、やるな！', 'そうきたか！'],
+      chain: ['つながれー！', 'いけいけー！'],
+      refresh: ['補充補充！', 'ドロー！'],
+      idle: ['まだかー？', '早く早く！'],
+      control: ['コントロール、もらった！', '流れはこっちだ！'],
+      boost: ['どんどん積むぞ！', 'いいぞいいぞ！'],
       play: ['{card}、どーん！', '見てて、{card}！', 'よっしゃ、{card}！'],
       compile: ['よっしゃー！', 'いただきっ！'],
       compiled: ['ぐぬぬ……', 'まだ終わってないぞ！'],
@@ -75,6 +107,14 @@ export const AVATARS = {
   zundamon: {
     name: 'ずんだもん', color: '#7ccf4a', guest: true, voice: true, credit: 'VOICEVOX:ずんだもん', facing: 'left',
     lines: {
+      turn: ['ぼくの番なのだ！', 'どうしようかな、なのだ。'],
+      down: ['こっそり置くのだ。', 'ひみつなのだ！'],
+      watch: ['そう来たのだ！？', 'なかなかやるのだ。'],
+      chain: ['つながったのだ！', '止まらないのだ！'],
+      refresh: ['補充するのだ！', '手札を引くのだ。'],
+      idle: ['ゆっくり考えるのだ。', 'まだなのだ？'],
+      control: ['主導権はぼくのものなのだ！', '流れが来てるのだ！'],
+      boost: ['いい感じなのだ！', 'ぐんぐん伸びるのだ！'],
       play: [['{card}、いくのだ！', 'いくのだ！'], ['{card}の出番なのだ！', 'でばんなのだ！'], ['くらえ、{card}なのだ！', 'くらえなのだ！']],
       compile: ['コンパイルなのだ！', '勝ちに一歩近づいたのだ！'],
       compiled: ['ぐぬぬ……ずるいのだ！', 'まだ負けてないのだ！'],
@@ -91,6 +131,14 @@ export const AVATARS = {
   metan: {
     name: '四国めたん', color: '#ff6fb5', guest: true, voice: true, credit: 'VOICEVOX:四国めたん', facing: 'left',
     lines: {
+      turn: ['わたくしの番ですわ。', 'さあ、参りますわよ。'],
+      down: ['伏せておきますわ。', '何かは秘密ですわ。'],
+      watch: ['あら、そう来ますの。', 'なかなかやりますわね。'],
+      chain: ['まだ続きますわよ！', '見事な連なりですわ。'],
+      refresh: ['補充いたしますわ。', '手札を整えますわ。'],
+      idle: ['ごゆっくりお考えになって。', 'まだですの？'],
+      control: ['主導権はいただきましたわ。', '流れはわたくしのものですわ。'],
+      boost: ['順調ですわね。', '積み上がってきましたわ。'],
       play: [['{card}、お行きなさい！', 'おいきなさい！'], ['{card}の出番ですわ！', 'でばんですわ！'], ['この{card}で決めますわ。', 'これで決めますわ。']],
       compile: ['コンパイル、いただきましたわ！', '当然の結果ですわね。'],
       compiled: ['くっ……やりますわね。', 'まだ終わっていませんわ！'],
@@ -107,6 +155,14 @@ export const AVATARS = {
   tsumugi: {
     name: '春日部つむぎ', color: '#f5c34a', guest: true, voice: true, credit: 'VOICEVOX:春日部つむぎ', facing: 'left',
     lines: {
+      turn: ['あーしの番！', 'よーし、いくよー！'],
+      down: ['こっそり置いとくね。', 'ナイショ〜。'],
+      watch: ['え、やるじゃん！', 'そうくるかー！'],
+      chain: ['つながったじゃん！', '止まんないし！'],
+      refresh: ['手札補充〜！', 'ドローするね！'],
+      idle: ['ゆっくりでいいよー。', '考え中？'],
+      control: ['コントロール、いただき！', '流れキテるじゃん！'],
+      boost: ['いい感じじゃん！', 'ぐんぐんいくよ！'],
       play: [['{card}、いっちゃえ！', 'いっちゃえ！'], ['{card}でキメるし！', 'キメるし！'], ['ほい、{card}！', 'ほいっ！']],
       compile: ['コンパイル、キタコレ！', 'やったじゃん、あーしら最強！'],
       compiled: ['えー、マジ？', 'ちょ、待って待って！'],
@@ -203,7 +259,8 @@ export function mountAvatar(id, opts = {}) {
   }
   /* 手に合わせて: play (表で出した) / compile / compiled (された) / hurt (大きく減らされた) / almost (コンパイル目前) / win / lose / hello */
   const FACE_OF = { play: 'fired', compile: 'happy', compiled: 'frustrated', hurt: 'surprised', almost: 'fired', win: 'happy', lose: 'frustrated', hello: 'happy',
-    lesson: 'normal', good: 'happy', retry: 'normal' };
+    lesson: 'normal', good: 'happy', retry: 'normal',
+    turn: 'normal', down: 'fired', watch: 'surprised', chain: 'happy', refresh: 'normal', idle: 'normal', control: 'happy', boost: 'fired' };
   function react(kind, vars) {
     /* そのキャラに無い種類 (チュートリアルの案内など) は紫苑のセリフを借りる (声は無し) */
     const own = def.lines[kind];
