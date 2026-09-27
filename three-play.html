@@ -2990,6 +2990,14 @@
   .cm-avview p b{display:block;font:800 10px/1 var(--font-ui);letter-spacing:.14em;color:#7a5cc4;margin-bottom:4px;}
   .cm-credit{font:600 10.5px/1.4 var(--font-ui);color:var(--dim);letter-spacing:.04em;}
   .st-credit{margin:6px 0 0;font:600 10.5px/1.5 var(--font-ui);color:var(--dim);}
+  /* AI でしゃべらせる (aitalk.js) */
+  .st-aitalk{display:grid;gap:0;}
+  .st-talk-body{display:grid;gap:0;padding-left:10px;border-left:2px solid rgba(160,123,255,.35);}
+  .st-talk-body[hidden],.st-talk-body [hidden]{display:none;}
+  .st-text{width:min(240px,48vw);padding:6px 8px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.16);color:#fff;font:600 12px/1.2 var(--font-mono,monospace);}
+  .st-text:focus-visible{outline:2px solid var(--gold);outline-offset:1px;}
+  .st-num{width:90px;}
+  .st-talk-out{margin:4px 0 8px;min-height:1.4em;font:600 12px/1.5 var(--font-ui);color:var(--mint);}
   .cm-pf{display:flex;align-items:center;justify-content:center;width:100%;height:100%;min-height:44px;clip-path:var(--cut-s);}
   .cm-pf b{font:800 13px/1 var(--font-ui);}
   .plate .pl-icon{flex:none;width:30px;height:30px;display:grid;place-items:center;border-radius:6px;
@@ -3260,9 +3268,10 @@
       "./js3d/ai-worker.js": "./js3d/ai-worker.js?v=5efde8ba0e",
       "./js3d/aiclient.js": "./js3d/aiclient.js?v=704b588b82",
       "./js3d/aidecks.js": "./js3d/aidecks.js?v=8d249240bd",
+      "./js3d/aitalk.js": "./js3d/aitalk.js?v=259c03bf95",
       "./js3d/arena.js": "./js3d/arena.js?v=ef66a1e5bb",
       "./js3d/audio.js": "./js3d/audio.js?v=28a4f522ba",
-      "./js3d/avatar.js": "./js3d/avatar.js?v=e2df1d18e7",
+      "./js3d/avatar.js": "./js3d/avatar.js?v=129dacb19c",
       "./js3d/backdrops.js": "./js3d/backdrops.js?v=90faf9612d",
       "./js3d/board.js": "./js3d/board.js?v=9fe57e2090",
       "./js3d/card.js": "./js3d/card.js?v=6d8083e5b7",
@@ -3292,7 +3301,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=4f7291a201",
+      "./js3d/main.js": "./js3d/main.js?v=e14428007a",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=2142e0957c",
       "./js3d/panel.js": "./js3d/panel.js?v=d4a1f0a181",
@@ -3314,7 +3323,7 @@
       "./js3d/run-ui.js": "./js3d/run-ui.js?v=bc9741dc10",
       "./js3d/run.js": "./js3d/run.js?v=0fd14ce273",
       "./js3d/selectui.js": "./js3d/selectui.js?v=208abdaebc",
-      "./js3d/settings.js": "./js3d/settings.js?v=3458521614",
+      "./js3d/settings.js": "./js3d/settings.js?v=0607ea01ed",
       "./js3d/setup.js": "./js3d/setup.js?v=e68e661d50",
       "./js3d/solodraft.js": "./js3d/solodraft.js?v=b036b97879",
       "./js3d/spectate.js": "./js3d/spectate.js?v=64e3111a2f",
@@ -3344,7 +3353,8 @@
   <link rel="modulepreload" href="js3d/playlog.js?v=90aaffedee">
   <link rel="modulepreload" href="js3d/feel.js?v=83bdf7f262">
   <link rel="modulepreload" href="js3d/spectate.js?v=64e3111a2f">
-  <link rel="modulepreload" href="js3d/avatar.js?v=e2df1d18e7">
+  <link rel="modulepreload" href="js3d/avatar.js?v=129dacb19c">
+  <link rel="modulepreload" href="js3d/aitalk.js?v=259c03bf95">
   <link rel="modulepreload" href="js3d/motion.js?v=36861b0081">
   <link rel="modulepreload" href="js3d/gacha.js?v=ce3d4f3faa">
   <link rel="modulepreload" href="js3d/chips.js?v=e67e280b76">
@@ -3366,7 +3376,7 @@
   <link rel="modulepreload" href="js3d/tsume.js?v=95789a9ad4">
   <link rel="modulepreload" href="js3d/errorreport.js?v=61f59a3cb3">
   <link rel="modulepreload" href="js3d/tutorial.js?v=0e6d6237ad">
-  <link rel="modulepreload" href="js3d/settings.js?v=3458521614">
+  <link rel="modulepreload" href="js3d/settings.js?v=0607ea01ed">
   <link rel="modulepreload" href="js3d/stats.js?v=e2b9647dba">
   <link rel="modulepreload" href="js3d/stats-data.js?v=bcf7d5e977">
   <link rel="modulepreload" href="js3d/rewards.js?v=516d979ddd">
@@ -3431,6 +3441,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=4f7291a201"></script>
+  <script type="module" src="js3d/main.js?v=e14428007a"></script>
 </body>
 </html>

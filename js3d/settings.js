@@ -3,6 +3,7 @@
  *   ブラウザに保存し、次に開いたときも同じにする。
  *   タイトルの OPTION と、対戦中の上のバーの ⚙ から同じ画面を開く。
  * ========================================================================= */
+import { talkSettingsHtml, bindTalkSettings } from './aitalk.js';
 
 const KEY = 'compileSettings';
 /* 対戦のキャラの項目 (相手の声・クレジット) を見せるか。キャラを出すまでは管理者だけ (main.js が決める) */
@@ -98,6 +99,7 @@ export function openSettings(extra) {
             '<option value="' + id + '"' + ((s.oppAvatar || 'random') === id ? ' selected' : '') + '>' + name + '</option>').join('') + '</select></label>' +
         '<label class="st-row st-check"><span>相手のキャラの声<small>相手のキャラ (ずんだもんたち) がしゃべるときの声。オフにすると吹き出しだけ出ます</small></span>' +
           '<input type="checkbox" id="stOppVoice"' + (s.oppVoice !== false ? ' checked' : '') + '></label>' +
+        talkSettingsHtml() +
         '<p class="st-credit">キャラの声 VOICEVOX:ずんだもん / VOICEVOX:四国めたん / VOICEVOX:春日部つむぎ / VOICEVOX:WhiteCUL　立ち絵 坂本アヒル</p>'
       : '') +
     (extra && extra.length ? '<div class="pz-row">' + extra.map((x, i) => '<button type="button" data-extra="' + i + '">' + x.label + '</button>').join('') + '</div>' : '') +
@@ -129,6 +131,10 @@ export function openSettings(extra) {
   if (oppAv) oppAv.onchange = (ev) => setSetting('oppAvatar', ev.target.value);
   const oppVoice = el.querySelector('#stOppVoice');
   if (oppVoice) oppVoice.onchange = (ev) => setSetting('oppVoice', ev.target.checked);
+  /* AI でしゃべらせる: 描き直すときは、いまの画面の位置を保つ */
+  bindTalkSettings(el, () => { const card = el.querySelector('.st-card'); const y = card ? card.scrollTop : 0; openSettings(extra);
+    const again = el.querySelector('.st-card'); if (again) again.scrollTop = y; },
+    async () => { const m = await import('./avatar.js'); return m.AVATARS[current.avatar] || m.AVATARS.shion; });
   el.querySelectorAll('[data-qlevel]').forEach(b => {
     b.onclick = () => {
       setSetting('quickLevel', +b.dataset.qlevel);

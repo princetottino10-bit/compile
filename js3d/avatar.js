@@ -322,10 +322,22 @@ export function mountAvatar(id, opts = {}) {
     /* 声つきのキャラは、プロトコルごとのセリフを使わず、声のあるセリフだけ */
     let text = !def.voice && kind === 'play' && proto && PROTO_LINES[proto] && Math.random() < 0.45 ? PROTO_LINES[proto]
       : Array.isArray(entry) ? entry[0] : entry;
-    if (def.voice && own && voiceOn) playVoice('art/voice/' + id + '/' + kind + '_' + i + '.mp3');
     for (const [k, v] of Object.entries(vars || {})) text = text.split('{' + k + '}').join(v);
-    say(text, FACE_OF[kind], kind === 'win' || kind === 'lose' ? 5000 : 2400);
+    const ms = kind === 'win' || kind === 'lose' ? 5000 : 2400;
+    const canned = () => {
+      if (def.voice && own && voiceOn) playVoice('art/voice/' + id + '/' + kind + '_' + i + '.mp3');
+      say(text, FACE_OF[kind], ms);
+    };
+    /* AI でしゃべらせる (opts.talk): 表情だけ先に変え、答えが来たら言う (声は無し)。来なければいつものセリフ。
+       待っている間に次のひとことが来たら、古い答えは捨てる */
+    const ask = opts.talk && opts.talk(def, kind, vars);
+    if (!ask) { talkSeq++; canned(); return; }
+    const my = ++talkSeq;
+    setFace(FACE_OF[kind], 4000);
+    ask.then((line) => { if (my === talkSeq && el.isConnected) (line ? say(line, FACE_OF[kind], Math.max(ms, 1200 + line.length * 90)) : canned()); },
+      () => { if (my === talkSeq && el.isConnected) canned(); });
   }
+  let talkSeq = 0;
   /* 声: 効果音の音量で鳴らす。消音中は鳴らさない。前の声は止める */
   let voiceEl = null;
   /* 声を出すか (相手のキャラは設定の「相手のキャラの声」で消せる) */

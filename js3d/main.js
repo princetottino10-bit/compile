@@ -10,6 +10,7 @@ import { logPlay } from './playlog.js';
 import * as FEEL from './feel.js';
 import { openSpectate } from './spectate.js';
 import { mountAvatar, AVATARS, avatarIds } from './avatar.js';
+import { aiLine, talkReady } from './aitalk.js';
 import { countUp, dealIn } from './motion.js';
 import { loadGacha, chipsOf, giveChips } from './gacha.js';
 import { earnedChips } from './chips.js';
@@ -238,6 +239,17 @@ function oppAvatarIds(taken) {
   const a = pool[0] || 'nadeshiko';
   return [a, pool[1] || a];
 }
+/* AI でしゃべらせる (設定で自分の API キーを入れた人だけ)。渡すのはだれでも見えることだけ */
+function avatarTalk(side) {
+  return (def, kind, vars) => {
+    if (!talkReady()) return null;
+    const st = cur && cur.state;
+    const done = (s) => (st && st.players[s] ? st.players[s].protocols.filter(p => p.compiled).length : 0);
+    const other = avatars && (side === ME ? avatars.opp : avatars.me);
+    return aiLine(def, kind, vars, { turns: st ? (st.turns | 0) + 1 : 0, mine: done(side), theirs: done(1 - side),
+      foe: other && AVATARS[other.id] ? AVATARS[other.id].name : '' });
+  };
+}
 function syncAvatar() {
   /* 観戦 (demoMode) は、観戦の画面でキャラを選んだときだけ */
   const want = avatarsOpen() && settings().avatarShow !== false && !puzzle && (!demoMode || !!spectate) && !trainingMode && !replayMode && !!cur;
@@ -261,9 +273,9 @@ function syncAvatar() {
     if (fixed && fixed !== 'random' && AVATARS[fixed] && fixed !== me && fixed !== mate) oppIds[0] = fixed;
   }
   avatars = {
-    me: me ? mountAvatar(me, { side: 'me' }) : null,
-    mate: mate ? mountAvatar(mate, { side: 'me', back: true }) : null,
-    opp: tutorial || !oppIds[0] ? null : mountAvatar(oppIds[0], { side: 'opp', voice: settings().oppVoice !== false }),
+    me: me ? mountAvatar(me, { side: 'me', talk: avatarTalk(ME) }) : null,
+    mate: mate ? mountAvatar(mate, { side: 'me', back: true, talk: avatarTalk(ME) }) : null,
+    opp: tutorial || !oppIds[0] ? null : mountAvatar(oppIds[0], { side: 'opp', voice: settings().oppVoice !== false, talk: avatarTalk(AI) }),
     oppIds
   };
   if (avatars.opp) setTimeout(() => { if (avatars && avatars.opp) avatars.opp.react('hello'); }, 900);
@@ -347,7 +359,7 @@ function avatarTagTurn(st) {
     avatars.mate.setBack(!partner);
   }
   const want = avatars.oppIds[st.tag.pilot[AI]];
-  if (want && avatars.opp && avatars.opp.id !== want) { avatars.opp.destroy(); avatars.opp = mountAvatar(want, { side: 'opp', voice: settings().oppVoice !== false }); }
+  if (want && avatars.opp && avatars.opp.id !== want) { avatars.opp.destroy(); avatars.opp = mountAvatar(want, { side: 'opp', voice: settings().oppVoice !== false, talk: avatarTalk(AI) }); }
 }
 
 /* 設定の画面に、対戦のキャラの項目 (相手の声・クレジット) を出すのは、キャラが見える人だけ */
