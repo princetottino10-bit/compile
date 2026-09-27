@@ -9,6 +9,7 @@ import { maybeLoginHint } from './account.js';
 import { logPlay } from './playlog.js';
 import * as FEEL from './feel.js';
 import { openSpectate } from './spectate.js';
+import { mountAvatar } from './avatar.js';
 import { countUp, dealIn } from './motion.js';
 import { loadGacha, chipsOf, giveChips } from './gacha.js';
 import { earnedChips } from './chips.js';
@@ -221,6 +222,15 @@ let runEnded = false;            // 勝ち抜き戦の結果を出したか (ラ
 let setupNote = '';
 let lastSetup = null;
 let firstGameHintShown = false;    // はじめの数戦の操作の案内 (1戦に1回)              // いまの CPU 戦のプロトコル { p0, p1 } (もう1戦で同じ組み合わせにする)
+/* 対戦のそばのキャラ (avatar.js)。設定で消せる。問題・チュートリアル・観戦・トレーニングでは出さない */
+let avatar = null;
+let avatarHurtAt = 0;
+function syncAvatar() {
+  const want = settings().avatar !== false && !puzzle && !tutorial && !demoMode && !trainingMode && !replayMode && !!cur;
+  if (want && !avatar) avatar = mountAvatar('shion');
+  else if (!want && avatar) { avatar.destroy(); avatar = null; }
+}
+
 /* 観戦 (spectate.js の結果)。{ a, b, level, bet } / null */
 let spectate = null;
 
@@ -393,6 +403,7 @@ async function boot() {
     onLand: (o) => { if (o.byMe) FEEL.buzz(o.faceUp ? 14 + o.value * 4 : 12); },
     onCompile: async (info) => {
       FEEL.buzz(info.side === ME ? [30, 60, 50] : 40);
+      if (avatar) avatar.react(info.side === ME ? 'compile' : 'compiled');
       /* まず盤上のプロトコルカードを "Compiled" 面へ裏返し、その後にカットイン */
       await panels.flipAt(info.line, info.side, true);
       await UI.compileCutIn({
@@ -412,6 +423,11 @@ async function boot() {
       for (const e of events) {
         if (e.delta && Math.abs(e.delta) <= 20) FEEL.floatDelta(stage, e.pos, e.delta, e.color);
         if (e.ready) { FEEL.readyBurst(stage, e.pos, e.color); if (e.side === ME) FEEL.buzz(18); }
+        /* 相手の手で自分のラインが大きく減った: キャラが驚く (続けては言わない) */
+        if (avatar && e.side === ME && e.delta <= -4 && cur.state.turn !== ME && Date.now() - avatarHurtAt > 8000) {
+          avatarHurtAt = Date.now();
+          avatar.react('hurt');
+        }
       }
     }
   });
@@ -424,6 +440,7 @@ async function boot() {
     setSfxVolume(s.sfx);
     applyLooks();
     if (cur) board.syncInstant(shown());                      // カードの裏面を付け替える
+    syncAvatar();                                             // キャラの出し入れ
   });
   bindInput();
   mark('stage');
@@ -706,6 +723,7 @@ async function boot() {
     testResult: async (win) => { await finaleFx(!!win); await UI.resultCutIn(!!win); },
     endTest: (win) => showEndActions(!!win),
     spectateEndTest: (aWon) => (spectate ? spectateEnd(!!aWon) : null),
+    avatarTest: (kind) => (avatar ? avatar.react(kind, { card: 'FIRE 3' }) : null),
     /* 合成した publicState を流し込んでルーム描画経路を検証する (ポーリングなし) */
     testRoomView: async (rm, instant) => {
       roomMode = true;
@@ -747,6 +765,7 @@ async function boot() {
   if (!roomMode) setOppLook(null);                 // CPU 戦などの相手は標準の見た目
   if (!puzzle && !tutorial && !demoMode && !trainingMode && !roomMode) showCpuPlates(p1);
   if (spectate) spectateStart();
+  syncAvatar();
   if (trainingMode) {
     UI.setPrompt('');
     UI.toast('カードを選んで、光っている枠をタップすると置けます', 3200);
@@ -2785,6 +2804,8 @@ async function step(action) {
   }
   const topLevel = action.type === 'play' || action.type === 'refresh';
   CW.battleProgress(res.state.turns | 0);
+  /* 自分で表向きに出したカード: キャラがひとこと */
+  if (avatar && action.type === 'play' && action.faceUp && before.turn === ME && !partnerMove(before)) avatar.react('play', { card: cardName(action.card) });
   if (topLevel && assistGame() && before.turn === ME) {
     undoPoint = { cur, replayLen: replayLog ? replayLog.actions.length : 0, histLen: gameHistory.length };
   }
@@ -3635,6 +3656,7 @@ async function afterTurn() {
     }
     /* 観戦は A / B の勝ちで見せ、ベットを払い戻す */
     if (spectate) { await spectateEnd(win); return; }
+    if (avatar) avatar.react(win ? 'win' : 'lose');
     UI.setPrompt(win ? 'あなたの勝ち' : '敗北', 'end');
     const victory = cosmetic('victory', 'default');
     sfx(win ? (victory === 'aurora' ? 'winAurora' : 'win') : 'lose');

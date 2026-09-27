@@ -10,7 +10,9 @@ const KEY = 'compileSettings';
 const DEFAULTS = { speed: 1, sfx: 80, pauses: true, autoPick: true, oppSummary: true, beginner: false, foil: true, mat: 'neon', sleeve: 'default', marker: 'default', ccolor: 'default',
   victory: 'default', title: '', icon: '',
   /* おまかせで今すぐ始める: 相手の強さ (0 かんたん / 1 ふつう / 2 つよい) と、今日のデイリーのプロトコルを自分に入れるか */
-  quickLevel: 0, quickDaily: false };
+  quickLevel: 0, quickDaily: false,
+  /* 対戦のそばにキャラ (アバター) を出す */
+  avatar: true };
 const QUICK_LEVELS = ['かんたん', 'ふつう', 'つよい'];
 const SPEEDS = [
   { v: 0.65, label: 'ゆっくり' },          // 何が起きたかを1つずつ追いたい人向け
@@ -72,6 +74,8 @@ export function openSettings(extra) {
       '<input type="checkbox" id="stOppSummary"' + (s.oppSummary ? ' checked' : '') + '></label>' +
     '<label class="st-row st-check"><span>カードのキラ加工<small>プロトコルの習熟度 3 で銀、6 で金、9 で虹。文字の上には光を乗せません</small></span>' +
       '<input type="checkbox" id="stFoil"' + (s.foil ? ' checked' : '') + '></label>' +
+    '<label class="st-row st-check"><span>対戦でキャラを出す<small>画面の左下にキャラが出て、出したカードやコンパイルに合わせて表情を変え、ひとこと言います</small></span>' +
+      '<input type="checkbox" id="stAvatar"' + (s.avatar !== false ? ' checked' : '') + '></label>' +
     '<label class="st-row st-check"><span>初心者モード<small>CPU 戦で HINT ボタンを出します。押すと、CPU ならどう打つかを盤面で光らせます</small></span>' +
       '<input type="checkbox" id="stBeginner"' + (s.beginner ? ' checked' : '') + '></label>' +
     '<div class="st-row"><span>おまかせで対戦する強さ<small>「おまかせで今すぐ始める」の相手</small></span><div class="st-seg" role="group" aria-label="おまかせで対戦する強さ">' +
@@ -105,6 +109,7 @@ export function openSettings(extra) {
   el.querySelector('#stBeginner').onchange = (ev) => setSetting('beginner', ev.target.checked);
   el.querySelector('#stFoil').onchange = (ev) => setSetting('foil', ev.target.checked);
   el.querySelector('#stQuickDaily').onchange = (ev) => setSetting('quickDaily', ev.target.checked);
+  el.querySelector('#stAvatar').onchange = (ev) => setSetting('avatar', ev.target.checked);
   el.querySelectorAll('[data-qlevel]').forEach(b => {
     b.onclick = () => {
       setSetting('quickLevel', +b.dataset.qlevel);
