@@ -2044,7 +2044,7 @@ function showPreview(uid) {
   }
   /* 横持ちで INFO (左の詳細) をしまっているときも、押したカードの説明は出す (縦持ちと同じ小さな表示で) */
   if (!isCompactHandUI() && uid && document.body.classList.contains('info-closed')) {
-    if (uid === previewUid) return;
+    if (uid === previewUid && UI.cardNoteShown()) return;
     previewUid = uid;
     showCardInspector(uid);
     return;
@@ -2058,7 +2058,8 @@ function showPreview(uid) {
       UI.hideCardNote();
       return;
     }
-    if (uid === previewUid) return;
+    /* 外を触って閉じたあとに同じカードを押したら、開き直す */
+    if (uid === previewUid && UI.cardNoteShown()) return;
     previewUid = uid;
     box.classList.remove('show');
     showCardInspector(uid);

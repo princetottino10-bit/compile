@@ -102,6 +102,17 @@ export function showCardNote(o) {
   clearTimeout(el._t);
   /* 盤面から開いたときは、別の場所を触るまで出したままにする */
   if (!o.persist) el._t = setTimeout(() => el.classList.remove('show'), 9000);
+  /* 説明の外を触ったら閉じる (× を押さなくてよい)。触った操作そのものは止めない (別のカードなら、そのカードの説明に替わる) */
+  if (!el._outside) {
+    el._outside = (ev) => { if (el.classList.contains('show') && !el.contains(ev.target)) el.classList.remove('show'); };
+    document.addEventListener('pointerdown', el._outside, true);
+  }
+}
+
+/** 触ったカードの説明が出ているか */
+export function cardNoteShown() {
+  const el = $('#cardNote');
+  return !!(el && el.classList.contains('show'));
 }
 
 export function hideCardNote() {
