@@ -51,9 +51,24 @@ function addBack(state, n) {
 export function loadGacha() {
   try {
     const s = JSON.parse(localStorage.getItem(KEY) || 'null');
-    if (s && typeof s === 'object') return normalize(s);
+    if (s && typeof s === 'object') {
+      const st = normalize(s);
+      const fixed = compensateOldPrice(st);
+      if (fixed !== st) saveGacha(fixed);
+      return fixed;
+    }
   } catch (e) { /* 壊れていれば空から */ }
   return normalize({});
+}
+
+/* 1回 30 → 15 に下げた (2026-09-27)。それまでに使った CHIP の半分を返す (新しい値段で引いたのと同じになる)。
+   返した分は back の COMP_KEY に1つだけ置く。同期で合わせるときは端末ごとと同じく大きい方を取るので、二重には返らない。
+   ログインしている人はデータベースにも同じ分を書いてある。一度書いたら (0 でも) もう数え直さない */
+export const COMP_KEY = 'price15';
+export function compensateOldPrice(st) {
+  if (Object.prototype.hasOwnProperty.call(st.back, COMP_KEY)) return st;
+  const paid = sum(st.paid);
+  return normalize({ ...st, back: { ...st.back, [COMP_KEY]: Math.floor(paid / 2) } });
 }
 function saveGacha(s) {
   try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { /* private mode */ }

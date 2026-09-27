@@ -95,3 +95,19 @@ test('2台で別々に引いてから合わせると、使った CHIP は両方�
   assert.equal(JSON.parse(G.mergeGacha(JSON.stringify(m), JSON.stringify(m))).spent, G.PULL_COST * 2);
   assert.equal(JSON.parse(G.mergeGacha(JSON.stringify({ spent: 60, owned: {} }), JSON.stringify(m))).spent, 60 + G.PULL_COST * 2);
 });
+
+test('値下げ (30 → 15) の補償: それまでに使った CHIP の半分を1回だけ返す。同期で合わせても二重にならない', async () => {
+  const G = await load();
+  const st = { paid: { dev1: 90, dev2: 30 }, back: { dev1: 6 }, spent: 0, owned: {}, pulls: 4, pity: 0 };
+  const merged = JSON.parse(G.mergeGacha(JSON.stringify(st), '{}'));
+  const c = G.compensateOldPrice(merged);
+  assert.equal(c.back[G.COMP_KEY], 60);
+  assert.equal(c.spent, 120 - 6 - 60);
+  assert.equal(G.compensateOldPrice(c), c, '2回目は返さない');
+  /* 別の端末 (まだ補償していない) と合わせても、補償は1つ分 */
+  const again = JSON.parse(G.mergeGacha(JSON.stringify(c), JSON.stringify(G.compensateOldPrice(JSON.parse(G.mergeGacha(JSON.stringify(st), '{}'))))));
+  assert.equal(again.spent, 54);
+  /* 引いたことのない人は 0 を置き、あとで引いた分 (新しい値段) は数えない */
+  const fresh = G.compensateOldPrice(JSON.parse(G.mergeGacha('{}', '{}')));
+  assert.equal(fresh.back[G.COMP_KEY], 0);
+});
