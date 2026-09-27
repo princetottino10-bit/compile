@@ -3,8 +3,8 @@
  *   ルール (使うプロトコルの範囲・決め方) を選び、自分の3つを決める。ふだんは公式ルールのドラフト。
  *     ドラフト  : 公式ルールどおり CPU と 1 → 2 → 2 → 1 つ取り合う。先に取った側が先攻、取った順にラインへ並ぶ
  *                 (候補の数・BAN は好みで足せる)
- *     自由に選ぶ: 3つ選ぶ。相手は範囲の残りから自動で組む
- *     一部を選ぶ: 1つか2つだけ選び、自分の残りと相手の3つは範囲の残りからランダム
+ *     自由に選ぶ: 3つ選ぶ。相手は範囲の残りから自動で組む。
+ *                 1つか2つ選んだところで「残りはランダム」を押すと、自分の残りを範囲の残りからランダムで埋める
  *     ランダム  : 両者とも範囲からランダムに3つ
  *   各プロトコルの「?」で、そのプロトコルの6枚 (効果の文つき) を見られる。
  *   決まりごと (範囲・順番・CPU の選び方) は solodraft.js。
@@ -21,7 +21,6 @@ export { STRONGEST_AI, LOCK_AI } from './aidecks.js';
 const MODES = [
   { key: 'draft', label: 'ドラフト (公式)' },
   { key: 'free', label: '自由に選ぶ' },
-  { key: 'partial', label: '一部を選ぶ' },
   { key: 'random', label: 'ランダム' }
 ];
 const CANDIDATES = [[0, '全部'], [12, '12個'], [10, '10個'], [8, '8個']];
@@ -60,6 +59,7 @@ export function runSetup(protocols, options = {}) {
   /* 強敵 (デッキの決まった相手) には、自分の3つを選ぶだけ */
   /* ふだんの CPU 戦は公式のドラフトから (以前の「自由に選ぶ」の保存は使わず、選び直したものだけ覚える) */
   let mode = training || (presetLevel !== null && fixedDeck(presetLevel)) ? 'free' : lsGet('compileSoloModeV2', 'draft');
+  if (!MODES.some(m => m.key === mode)) mode = 'free';     // なくした決め方 (一部を選ぶ) を覚えていたとき
   let draftSize = +lsGet('compileSoloDraftPool', '0');
   let draftBans = +lsGet('compileSoloDraftBans', '0');
   let challenger = Math.min(CHALLENGERS.length - 1, Math.max(0, +lsGet('compileSoloChallenger', '0') || 0));
@@ -73,7 +73,7 @@ export function runSetup(protocols, options = {}) {
 
   const pool = () => poolNames(protocols, poolKey);
   /* 自分で選ぶ決め方 (自由・一部)。固定デッキの相手と戦えるのはこのときだけ */
-  const choosingMode = () => mode === 'free' || mode === 'partial';
+  const choosingMode = () => mode === 'free';
   const fixedLocked = () => (choosingMode() ? fixedDeck(level) || [] : []);
 
   /* ---------- 見出し・ルールの段 ---------- */
@@ -87,8 +87,7 @@ export function runSetup(protocols, options = {}) {
         : 'まず自分のプロトコルを3つ選ぶ。次に相手の3つを選ぶ。置けるのはこの6つのカードだけ。')
       : presetLevel !== null && fixedDeck(presetLevel)
         ? '自分のプロトコルを3つ選ぶ。相手 (' + levelLabel(presetLevel) + ') のデッキは ' + fixedDeck(presetLevel).join(' / ') + '。'
-      : mode === 'free' ? '使用するプロトコルを3つ選ぶ。相手は範囲の残りから自動で編成される。'
-        : mode === 'partial' ? '使いたいプロトコルを1つか2つ選ぶ。自分の残りと相手の3つは、範囲の残りからランダムで決まる。'
+      : mode === 'free' ? '使用するプロトコルを3つ選ぶ (1つか2つ選んで「残りはランダム」でもよい)。相手は範囲の残りから自動で編成される。'
         : mode === 'draft' ? '公式ルールのドラフト: CPU と交互に 1 → 2 → 2 → 1 つ取り合う。先に取った側が先攻、取った順にラインへ並ぶ。'
           : '両者とも、範囲からランダムに3つ。';
   }
@@ -177,8 +176,7 @@ export function runSetup(protocols, options = {}) {
     const locked = fixedLocked();
     for (const n of locked) { const i = picked.indexOf(n); if (i >= 0) picked.splice(i, 1); }
     const choosing = choosingMode() || training;
-    const max = mode === 'partial' && !training ? 2 : 3;
-    while (picked.length > max) picked.pop();
+    const max = 3;
     grid.innerHTML = names.map(n => tile(n, [
       picked.includes(n) ? 'on' : '',
       locked.includes(n) ? 'locked' : '',
@@ -201,7 +199,24 @@ export function runSetup(protocols, options = {}) {
     });
   }
 
+  /* 「残りはランダム」: 自由に選ぶで1つか2つ選んだときだけ、START の横に出す */
+  let restBtn = document.getElementById('setupRest');
+  if (!restBtn) {
+    restBtn = document.createElement('button');
+    restBtn.id = 'setupRest';
+    restBtn.type = 'button';
+    restBtn.className = 'lvl';
+    startBtn.before(restBtn);
+  }
+  restBtn.hidden = true;
+  function syncRest() {
+    const n = picked.length;
+    restBtn.hidden = !!draft || training || mode !== 'free' || n < 1 || n > 2;
+    restBtn.textContent = '残り ' + (3 - n) + ' つはランダム';
+  }
+
   function syncStart() {
+    syncRest();
     if (draft) return;
     if (training) {
       startBtn.textContent = trainingMine ? 'トレーニング開始' : '次へ: 相手のプロトコル';
@@ -213,10 +228,6 @@ export function runSetup(protocols, options = {}) {
       startBtn.textContent = 'START';
       startBtn.disabled = picked.length !== 3;
       countEl.textContent = picked.length + ' / 3';
-    } else if (mode === 'partial') {
-      startBtn.textContent = picked.length ? 'START (残りはランダム)' : '1つか2つ選ぶ';
-      startBtn.disabled = !picked.length || pool().length - fixedLocked().length < 3;
-      countEl.textContent = picked.length + ' / 2';
     } else if (mode === 'draft') {
       const size = clampCandidates(draftSize, draftBans, pool().length);
       startBtn.textContent = 'ドラフト開始';
@@ -358,6 +369,7 @@ export function runSetup(protocols, options = {}) {
   return new Promise((resolve) => {
     const close = (result) => {
       if (sameBtn) sameBtn.remove();
+      restBtn.hidden = true;
       root.classList.remove('show');
       if (!result.back && !result.online) setTimeout(() => { root.style.display = 'none'; }, 500);
       resolve(result);
@@ -387,6 +399,14 @@ export function runSetup(protocols, options = {}) {
       close({ back: true });
     };
     onlineBtn.onclick = () => close({ online: true });
+    restBtn.onclick = () => {
+      if (mode !== 'free' || training || !picked.length || picked.length > 2) return;
+      /* 自分の残りは、選んだものと固定デッキの相手のものを除いた範囲から。相手は固定デッキか、さらに残りから */
+      const locked = fixedLocked();
+      const me = picked.concat(shuffled(pool().filter(n => !picked.includes(n) && !locked.includes(n))).slice(0, 3 - picked.length));
+      const ai = fixedDeck(level) ? fixedDeck(level).slice() : shuffled(pool().filter(n => !me.includes(n))).slice(0, 3);
+      close({ me, ai, level, training: false, partial: picked.slice() });
+    };
     startBtn.onclick = () => {
       if (draft) {
         const step = draft.steps[draft.at];
@@ -419,15 +439,6 @@ export function runSetup(protocols, options = {}) {
       if (mode === 'random') {
         const { me, ai } = randomDecks(pool());
         close({ me, ai, level, training: false, random: true });
-        return;
-      }
-      if (mode === 'partial') {
-        if (!picked.length || picked.length > 2) return;
-        /* 自分の残りは、選んだものと固定デッキの相手のものを除いた範囲から。相手は固定デッキか、さらに残りから */
-        const locked = fixedLocked();
-        const me = picked.concat(shuffled(pool().filter(n => !picked.includes(n) && !locked.includes(n))).slice(0, 3 - picked.length));
-        const ai = fixedDeck(level) ? fixedDeck(level).slice() : shuffled(pool().filter(n => !me.includes(n))).slice(0, 3);
-        close({ me, ai, level, training: false, partial: picked.slice() });
         return;
       }
       if (picked.length !== 3) return;
