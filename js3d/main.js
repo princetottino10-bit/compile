@@ -1465,6 +1465,7 @@ function bindInput() {
         /* 候補外でも捨て札の山だけは中身を見せる (公開情報) */
         const lt = hit && hit.obj.userData.uid && locOf(shown(), hit.obj.userData.uid);
         if (lt && lt.zone === 'trash') showTrash(lt.side);
+        else if (lt && lt.zone === 'deck' && lt.side === ME && puzzle && puzzle.tsume) TS.showDeck(shown(), defIndex, ME);
         return;
       }
     }
@@ -1472,6 +1473,8 @@ function bindInput() {
     if (hit && hit.obj.userData.uid) {
       const lt = locOf(shown(), hit.obj.userData.uid);
       if (lt && lt.zone === 'trash') { showTrash(lt.side); return; }
+      /* 詰めコンパイルでは自分の山札も見てよい: 山を触ると中身を上から順に出す */
+      if (lt && lt.zone === 'deck' && lt.side === ME && puzzle && puzzle.tsume) { TS.showDeck(shown(), defIndex, ME); return; }
     }
     /* プロトコル板をタップ: そのラインのスタックを一覧で見せる (配置先を選んでいる間は除く) */
     if (!(hit && hit.obj.userData.uid) && !selectedUid) {
@@ -3435,7 +3438,12 @@ async function drainRequests() {
 /* AI のターンを回す */
 async function afterTurn() {
   if (roomMode) { await announceTurn(); await roomMaybeFinish(); return; }
-  if (puzzle) { await puzzleAfterTurn(); return; }
+  if (puzzle) {
+    /* 詰めコンパイル・問題も、はじめに自分の番であることを見せる (2回目からは announceTurnFor が出さない) */
+    if (!puzzleJudged && cur && cur.state.winner === null && cur.state.turn === ME) await announceTurn();
+    await puzzleAfterTurn();
+    return;
+  }
   if (tutorial && await tutorialAfterStep()) return;
   await announceTurn();
   let guardAi = 0;

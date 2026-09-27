@@ -4,7 +4,7 @@
  * 初級5問・中級10問・上級10問。どの段にも相手の盤面を使う問題を混ぜ、お題とプロトコルが偏らないように選ぶ。
  * 手順 (模範解答) を読める文にして一緒に書き、種 1 の盤面で解けることを確かめる。
  * 選ばなかった候補 (読む量 7 以上) は、日替わりの「今日の問題」用に data/tsume-daily.json へ。
- * CPU がそのまま解ける問題と、相手の裏向きのカード (見えない) 次第で解けなくなる問題は使わない */
+ * CPU がそのまま解ける問題と、相手の裏向きのカード・相手の山札の並び (見えない) 次第で解けなくなる問題は使わない */
 const fs = require('fs');
 const path = require('path');
 const E = require('../engine.js');
@@ -156,6 +156,26 @@ function fair(p) {
   return true;
 }
 
+/* 公平か (その2): 相手の山札 (解く人には見えない) の並びを変えても、模範解答がそのまま通るか。
+   LUCK 4 の「相手の山札の一番上を当てる」のように、見えない札を当てないと解けない問題を外す。
+   (tsume_gen の「山札の並びを変えても解ける」は並びごとに別の手順を許すので、当てる問題がすり抜けていた) */
+function deckFair(p) {
+  let seed = 7;
+  const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;   // 決まった並び (再実行で同じ結果)
+  for (let t = 0; t < 12; t++) {
+    const base = E.newPuzzle(p.spec, { seed: 1 });
+    const st = JSON.parse(JSON.stringify(base.state));
+    const d = st.players[1].deck;
+    for (let i = d.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [d[i], d[j]] = [d[j], d[i]]; }
+    let res = { ...base, state: st };
+    try {
+      for (const a of p.solution) { res = E.apply(res.state, a); if (res.error) return false; }
+    } catch (e) { return false; }
+    if (!solved(p, res)) return false;
+  }
+  return true;
+}
+
 function endState(res) {
   for (const t of (res.trace || [])) if (t.st && t.st.turn !== ME) return t.st;
   return res.state;
@@ -169,7 +189,9 @@ function solved(p, res) {
   return E.lineTotal(es, p.goal.line, ME) === p.goal.value;
 }
 
-(async () => {
+module.exports = { aiSolves, fair, deckFair, solved, describe, tierOf };
+
+if (require.main === module) (async () => {
   const { PROMPT_TEXT, optionLabel } = await import('../js3d/prompts.js');
   const files = process.argv.slice(2);
   if (!files.length) { console.error('候補のファイルを指定してください'); process.exit(1); }
@@ -184,6 +206,9 @@ function solved(p, res) {
   const before2 = all.length;
   all = all.filter(fair);
   console.log('相手の裏向きのカード次第で解けなくなる問題を除いた: ' + (before2 - all.length) + ' / ' + before2);
+  const before3 = all.length;
+  all = all.filter(deckFair);
+  console.log('相手の山札の並び次第で解けなくなる問題を除いた: ' + (before3 - all.length) + ' / ' + before3);
 
   const out = [];
   const used = new Set();

@@ -89,3 +89,10 @@ test('COMPUZZLE の実績: 中級を全部で PUZZLER、全部で COMPUZZLER、�
   assert.equal(t('daily_puzzle7').test(ctx(['k:dp:1', 'k:dp:2', 'k:dp:3', 'k:dp:4', 'k:dp:5', 'k:dp:6', 'k:dp:7'])), true);
   assert.equal(t('puzzle').test(ctx(['k:ts:t1-01'])), true);
 });
+
+test('詰めコンパイル・今日の問題は、相手の山札 (見えない) の並びを変えても模範解答で解ける (見えない札を当てる問題は出さない)', () => {
+  const { deckFair } = require('../scripts/tsume_pick.js');
+  const daily = JSON.parse(fs.readFileSync(path.join(root, 'data/tsume-daily.json'), 'utf8'));
+  const bad = list.concat(daily).filter(p => !deckFair(p)).map(p => p.id);
+  assert.deepEqual(bad, []);
+});
