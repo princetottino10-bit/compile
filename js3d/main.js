@@ -34,7 +34,7 @@ import * as TU from './tutorial.js';
 import { settings, onSettings, openSettings, setAvatarOptionsGate } from './settings.js';
 import { recordSoloResult, localRecords } from './stats.js';
 import { cardStats, cardTier, playerLevel, protocolSummary } from './stats-data.js';
-import { isUnlocked, rewardsBetween, TITLES, UNDERDOG_XP, underdogCleared, AVATAR_RELEASED } from './rewards.js';
+import { isUnlocked, rewardsBetween, TITLES, UNDERDOG_XP, underdogCleared, AVATAR_RELEASED, COSMETICS } from './rewards.js';
 import { confetti } from './gachafx.js';
 import { setCosmeticProtocols, profileOf, myLook } from './cosmetics-ui.js';
 import { setCosmeticsProtocols } from './cosmetics-mode.js';
@@ -227,7 +227,11 @@ let firstGameHintShown = false;    // はじめの数戦の操作の案内 (1戦
    2026-09-27: いったん管理者にだけ見せている (ユーザーの指示)。ログインの確認が済んだら出し入れし直す */
 let avatars = null;              // { me, mate, opp, oppIds: [1人目, 2人目] }
 const avatarSaidAt = {};         // 同じ種類のひとことを続けて言わない
-function myAvatarId() { const k = settings().avatar; return AVATARS[k] ? k : 'shion'; }
+function myAvatarId() { const k = settings().avatar; return AVATARS[k] && isUnlocked('avatar', k, myLevel) ? k : 'shion'; }
+/* キャラが見られるか (出したあとはだれでも。出す前は管理者だけ) */
+const avatarsOpen = () => AVATAR_RELEASED || !!accountState().admin;
+/* 持っているキャラ [[id, 名前], ...] (観戦で選ぶ) */
+function ownedAvatars() { return (COSMETICS.avatar || []).filter(([k]) => AVATARS[k] && isUnlocked('avatar', k, myLevel)); }
 /* 相手のキャラ: 自分・味方と重ならない中から、1戦ごとにランダム (タッグの2人も重ならない) */
 function oppAvatarIds(taken) {
   const pool = shuffled(avatarIds().filter(i => !taken.includes(i)));
@@ -235,20 +239,31 @@ function oppAvatarIds(taken) {
   return [a, pool[1] || a];
 }
 function syncAvatar() {
-  const want = !!accountState().admin && settings().avatar !== false && !puzzle && !demoMode && !trainingMode && !replayMode && !!cur;
+  /* 観戦 (demoMode) は、観戦の画面でキャラを選んだときだけ */
+  const want = avatarsOpen() && settings().avatarShow !== false && !puzzle && (!demoMode || !!spectate) && !trainingMode && !replayMode && !!cur;
   if (!want) {
     if (avatars) for (const k of ['me', 'mate', 'opp']) if (avatars[k]) avatars[k].destroy();
     avatars = null;
     return;
   }
   if (avatars) return;
-  const me = myAvatarId();
-  const mate = tagMates ? (avatarIds().find(i => i !== me && i === 'asagi') || avatarIds().find(i => i !== me)) : null;
-  const oppIds = oppAvatarIds([me, mate].filter(Boolean));
+  /* 観戦: A (左下) と B (右上) は観戦の画面で選んだキャラ (なしも)。タッグの相棒はほかからランダム */
+  const sp = spectate && spectate.av;
+  const me = sp ? sp.a : myAvatarId();
+  const pool = (ids) => shuffled(avatarIds().filter(i => !ids.includes(i)));
+  const mate = tagMates && (!sp || sp.a) ? (sp ? pool([sp.a, sp.b])[0] : (avatarIds().find(i => i !== me && i === 'asagi') || avatarIds().find(i => i !== me))) : null;
+  let oppIds;
+  if (sp) oppIds = sp.b ? [sp.b, pool([sp.a, sp.b, mate])[0] || sp.b] : [null, null];
+  else {
+    /* 相手のキャラ: 設定の「相手のキャラ」(ふだんはランダム)。自分・味方と同じ子は選ばない */
+    const fixed = settings().oppAvatar;
+    oppIds = oppAvatarIds([me, mate].filter(Boolean));
+    if (fixed && fixed !== 'random' && AVATARS[fixed] && fixed !== me && fixed !== mate) oppIds[0] = fixed;
+  }
   avatars = {
-    me: mountAvatar(me, { side: 'me' }),
+    me: me ? mountAvatar(me, { side: 'me' }) : null,
     mate: mate ? mountAvatar(mate, { side: 'me', back: true }) : null,
-    opp: tutorial ? null : mountAvatar(oppIds[0], { side: 'opp', voice: settings().oppVoice !== false }),
+    opp: tutorial || !oppIds[0] ? null : mountAvatar(oppIds[0], { side: 'opp', voice: settings().oppVoice !== false }),
     oppIds
   };
   if (avatars.opp) setTimeout(() => { if (avatars && avatars.opp) avatars.opp.react('hello'); }, 900);
@@ -261,7 +276,7 @@ function avatarOf(side, st) {
   return avatars.mate && s && s.tag && s.tag.pilot[ME] === 1 ? avatars.mate : avatars.me;
 }
 /* 大事な場面 (コンパイル・勝敗など) は、ほかのひとことに割り込んででも言う */
-const AVATAR_MUST = new Set(['compile', 'compiled', 'win', 'lose', 'almost', 'hurt', 'hello', 'lesson', 'good', 'retry']);
+const AVATAR_MUST = new Set(['compile', 'compiled', 'win', 'lose', 'almost', 'hurt', 'hello', 'lesson', 'good', 'retry', 'turn']);
 /* chance: 言う確率 (毎回だとうるさいもの)。gapMs: 同じ種類を続けて言わない間 */
 function avatarSay(side, kind, vars, st, gapMs, chance) {
   const a = avatarOf(side, st);
@@ -288,16 +303,27 @@ setInterval(() => {
 /* その場面を動かした側: いま解決している効果のカードの持ち主 (相手の番に自分のカードの効果が出ることもある)。
    効果の途中でなければ、その場面の手番 */
 function actorOf(step, from) {
-  const src = effectSource(step);
-  const c = src && from && from.cards && from.cards[src];
+  const c = effectCardOf(step, from);
   return c ? c.owner : from.turn;
+}
+/* いま解決している効果のカード (無ければ null) */
+function effectCardOf(step, from) {
+  const src = effectSource(step);
+  return (src && from && from.cards && from.cards[src]) || null;
 }
 /* ハンデス: 相手 (の効果) に手札を失わされた側 (捨て札・相手の手札・山札へ。場に出したものは数えない) が嫌がる。
    actor: その場面を動かした側 (actorOf) */
-function avatarHandesCheck(a, b, actor) {
+function avatarHandesCheck(a, b, actor, effectCard) {
   if (!avatars || !a || !b || !a.players || !b.players) return;
+  /* 自分のプロトコルを自分で並べ替えた (コントロール・効果): ひとこと */
   for (const s of [0, 1]) {
-    if ((actor === undefined ? a.turn : actor) === s) continue;   // 自分の効果・自分の番に自分で捨てたもの (手札の上限など) は数えない
+    const was = a.players[s].protocols.map(p => p.name).join(), now = b.players[s].protocols.map(p => p.name).join();
+    if (was !== now && (actor === undefined ? a.turn : actor) === s) avatarSay(s, 'rearrange', null, b, 5000);
+  }
+  /* 相手の効果でなければハンデスではない (コストで捨てた・手札の上限・どの効果か分からない場面は数えない) */
+  if (!effectCard) return;
+  for (const s of [0, 1]) {
+    if (effectCard.owner === s) continue;
     const now = new Set(b.players[s].hand);
     const lost = a.players[s].hand.filter(u => !now.has(u) && b.cards[u] && !/^(field|committed|transit)/.test(b.cards[u].zone || ''));
     if (lost.length) avatarSay(s, 'handes', null, b, 5000);
@@ -317,15 +343,15 @@ function avatarTagTurn(st) {
   if (!avatars || !st || !st.tag) return;
   if (avatars.mate) {
     const partner = st.tag.pilot[ME] === 1;
-    avatars.me.setBack(partner);
+    if (avatars.me) avatars.me.setBack(partner);
     avatars.mate.setBack(!partner);
   }
   const want = avatars.oppIds[st.tag.pilot[AI]];
-  if (avatars.opp && avatars.opp.id !== want) { avatars.opp.destroy(); avatars.opp = mountAvatar(want, { side: 'opp', voice: settings().oppVoice !== false }); }
+  if (want && avatars.opp && avatars.opp.id !== want) { avatars.opp.destroy(); avatars.opp = mountAvatar(want, { side: 'opp', voice: settings().oppVoice !== false }); }
 }
 
 /* 設定の画面に、対戦のキャラの項目 (相手の声・クレジット) を出すのは、キャラが見える人だけ */
-setAvatarOptionsGate(() => AVATAR_RELEASED || !!accountState().admin);
+setAvatarOptionsGate(() => AVATAR_RELEASED || !!accountState().admin, () => (COSMETICS.avatar || []).filter(([k]) => AVATARS[k]));
 
 /* 観戦 (spectate.js の結果)。{ a, b, level, bet } / null */
 let spectate = null;
@@ -690,13 +716,14 @@ async function boot() {
       if (nextMode === 'tutorial') { location.href = location.pathname + '?tutorial=1'; return; }
       /* 観戦: CPU どうし (A = 手前、B = 奥)。ベットしていれば、決着で払い戻す */
       if (nextMode === 'watch') {
-        const w = await openSpectate(cards.protocols);
+        const w = await openSpectate(cards.protocols, { avatars: avatarsOpen() ? ownedAvatars() : [] });
         if (!w) { history.replaceState(null, '', location.pathname); nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
         document.body.classList.remove('pregame');
         document.body.classList.add('demo', 'watch');
         demoMode = true;
         spectate = w;
         p0 = w.a; p1 = w.b;
+        if (w.mates) tagMates = w.mates;                // タッグ戦の観戦
         applyAiDifficulty(w.level);
         break;
       }
@@ -2337,6 +2364,13 @@ function tagPlates(st) {
   };
   const lv = aiDifficulty === null ? '' : levelLabel(aiDifficulty);
   const mine = st.tag.pilot[ME], theirs = st.tag.pilot[AI];
+  /* 観戦のタッグ: A1 / A2 と B1 / B2 (ベットした側に印) */
+  if (spectate) {
+    const bet = spectate.bet;
+    const mark = (k) => (bet && bet.side === k ? 'ベット ' + bet.amount + ' CHIP' : 'CPU ' + lv);
+    showPlates({ me: { name: 'A' + (mine + 1), sub: mark(0), icon: iconOf(ME, mine) }, opp: { name: 'B' + (theirs + 1), sub: mark(1), icon: iconOf(AI, theirs) } });
+    return;
+  }
   showPlates({
     me: mine ? { name: '味方', sub: 'PARTNER · CPU ' + lv, icon: iconOf(ME, 1) } : myPlate(),
     opp: { name: '相手' + (theirs + 1), sub: 'CPU ' + lv, icon: iconOf(AI, theirs) }
@@ -2349,7 +2383,10 @@ function spectateStart() {
   const bet = spectate.bet;
   const mark = (k) => (bet && bet.side === k ? 'ベット ' + bet.amount + ' CHIP' : 'CPU ' + levelLabel(spectate.level));
   showPlates({ me: { name: 'A', sub: mark(0), icon: icon(spectate.a) }, opp: { name: 'B', sub: mark(1), icon: icon(spectate.b) } });
-  UI.toast(bet ? 'ベット: ' + (bet.side ? 'B' : 'A') + ' に ' + bet.amount + ' CHIP (当たれば ' + bet.payout + ')' : '観戦: A ' + spectate.a.join(' / ') + '　B ' + spectate.b.join(' / '), 4200);
+  const team = (d, m) => d.join(' / ') + (m ? ' ＋ ' + m.join(' / ') : '');
+  const mates = spectate.mates || {};
+  UI.toast(bet ? 'ベット: ' + (bet.side ? 'B' : 'A') + ' に ' + bet.amount + ' CHIP (当たれば ' + bet.payout + ')'
+    : '観戦: A ' + team(spectate.a, mates.p0) + '　B ' + team(spectate.b, mates.p1), 4200);
 }
 /* 観戦の決着: A / B の勝ちを見せ、ベットが当たっていれば払い戻す。次は観戦のメニューかタイトルへ */
 async function spectateEnd(aWon) {
@@ -2654,8 +2691,8 @@ async function announceTurnFor(turn, atState) {
     const pilot = tagSt.tag.pilot[turn];
     await UI.turnCutIn(turn === ME, turn === ME ? (pilot ? 'PARTNER TURN' : 'YOUR TURN') : 'RIVAL ' + (pilot + 1) + ' TURN');
   } else await UI.turnCutIn(turn === ME);
-  /* 番が来た側が、ときどきひとこと */
-  avatarSay(turn, 'turn', null, tagSt, 0, turn === ME ? 0.4 : 0.3);
+  /* 番が来た側が、毎回ひとこと */
+  avatarSay(turn, 'turn', null, tagSt);
   /* はじめの数戦だけ、自分の番に何をすればいいかを添える */
   if (turn === ME && !roomMode && !tutorial && !puzzle && !demoMode && !replayMode && localRecords().length < 3 && !firstGameHintShown) {
     firstGameHintShown = true;
@@ -2859,7 +2896,7 @@ async function replayResolution(prev, res, action) {
       if (visualFingerprint(from) !== step.fp) {
         avatarActor = actorOf(step, from);
         await board.applyTransition(from, step.st, first ? action : null, { speed: STEP_MOTION, source: effectSource(step) });
-        avatarHandesCheck(from, step.st, avatarActor);
+        avatarHandesCheck(from, step.st, avatarActor, effectCardOf(step, from));
         await syncPanels(step.st, true);
         from = step.st;
         first = false;
@@ -2878,7 +2915,7 @@ async function replayResolution(prev, res, action) {
     avatarActor = actorOf(step, from);
     await board.applyTransition(from, step.st, first ? action : null,
       { speed: chainShown ? STEP_MOTION * 1.3 : STEP_MOTION, source: effectSource(step) });
-    avatarHandesCheck(from, step.st, avatarActor);
+    avatarHandesCheck(from, step.st, avatarActor, effectCardOf(step, from));
     /* プロトコル板 (並び・合計値) もこのコマに合わせる。並べ替えは板が動き終わるまで待つ */
     await syncPanels(step.st, true);
     /* この絵の時点のチェーン。1つ解決して短くなったら、解決したことが分かるよう少し待つ */
@@ -3739,7 +3776,8 @@ async function drainRequests() {
       if (forced) { picks = forced; await showForcedPick(req, forced); }
       else picks = await askUser(req);
     } else {
-      UI.setPrompt(req.player === ME ? '味方が選択しています…' : '相手が選択しています…', 'wait');
+      UI.setPrompt(spectate ? (req.player === ME ? 'A' : 'B') + ' が選択しています…'
+        : req.player === ME ? '味方が選択しています…' : '相手が選択しています…', 'wait');
       const at = cur;
       const [ans] = await Promise.all([aiAnswer(cur.state, req), TW.wait(260)]);
       if (cur !== at) return;                     // 考えている間に対戦をやめた

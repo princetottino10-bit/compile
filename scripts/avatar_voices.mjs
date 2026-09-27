@@ -13,7 +13,8 @@ const ENGINE = 'http://127.0.0.1:50021';
 const SPEAKER = {
   zundamon: { base: 3, happy: 1, angry: 7 },       // ノーマル / あまあま / ツンツン
   metan: { base: 2, happy: 0, angry: 6 },
-  tsumugi: { base: 8, happy: 8, angry: 8 }
+  tsumugi: { base: 8, happy: 8, angry: 8 },
+  whitecul: { base: 23, happy: 24, angry: 25 }      // ノーマル / たのしい / かなしい
 };
 const TONE = { compile: 'happy', win: 'happy', good: 'happy', hello: 'happy', chain: 'happy', control: 'happy', compiled: 'angry', hurt: 'angry', handes: 'angry' };
 

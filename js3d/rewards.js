@@ -70,7 +70,7 @@ export const COSMETICS = {
   /* 対戦のそばのキャラ (avatar.js)。紫苑ははじめから、ほかはガチャ */
   avatar: [['shion', '紫苑'], ['asagi', '浅葱'], ['yamabuki', '山吹'], ['nadeshiko', '撫子'],
     /* ゲスト (VOICEVOX のキャラ・声つき) */
-    ['zundamon', 'ずんだもん'], ['metan', '四国めたん'], ['tsumugi', '春日部つむぎ']],
+    ['zundamon', 'ずんだもん'], ['metan', '四国めたん'], ['tsumugi', '春日部つむぎ'], ['whitecul', 'WhiteCUL']],
   /* 対戦中の名札の枠 (相手にも見える) */
   plate: [['default', 'STANDARD'], ['gold', 'GOLD'], ['sakura', 'SAKURA'], ['washi', 'WASHI'], ['neon', 'NEON'], ['urushi', 'URUSHI'],
     ['crystal', 'CRYSTAL'], ['royal', 'ROYAL'], ...MASTERY_PROTOS.map(p => [pkey(p), p])]
@@ -78,10 +78,11 @@ export const COSMETICS = {
 
 /* ガチャ (COSMETICS の GACHA) でしか出ない見た目と称号。rar: C / R / E / L。
    持っているかは compileGacha (gacha.js が書く) の owned { 'kind:key': 取った時刻 } で見る */
-/* 対戦のキャラを出すまで (いまは管理者だけが見られる) は false。true にするとガチャに入り、だれでも選べる */
-export const AVATAR_RELEASED = false;
+/* 対戦のキャラ: true でガチャに入り、だれでも選べる (2026-09-27 に出した。出す前は管理者だけが見られた) */
+export const AVATAR_RELEASED = true;
 export const AVATAR_GACHA = [{ kind: 'avatar', key: 'asagi', rar: 'R' }, { kind: 'avatar', key: 'yamabuki', rar: 'R' }, { kind: 'avatar', key: 'nadeshiko', rar: 'E' },
-  { kind: 'avatar', key: 'zundamon', rar: 'E' }, { kind: 'avatar', key: 'metan', rar: 'E' }, { kind: 'avatar', key: 'tsumugi', rar: 'E' }];
+  { kind: 'avatar', key: 'zundamon', rar: 'E' }, { kind: 'avatar', key: 'metan', rar: 'E' }, { kind: 'avatar', key: 'tsumugi', rar: 'E' },
+  { kind: 'avatar', key: 'whitecul', rar: 'E' }];
 export const GACHA_ITEMS = [
   ...(AVATAR_RELEASED ? AVATAR_GACHA : []),
   { kind: 'sleeve', key: 'mint', rar: 'C' }, { kind: 'sleeve', key: 'ocean', rar: 'C' },

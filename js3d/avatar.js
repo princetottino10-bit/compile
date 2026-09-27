@@ -16,9 +16,10 @@ export const AVATARS = {
   shion: {
     name: '紫苑', color: '#a07bff',
     lines: {
+      rearrange: ['並びを、変えておくね。', 'この順番のほうがいい。'],
       wipe: ['まとめて、片付けた。', '盤面を、整理しよう。'],
       handes: ['手札が……！', 'それは困るな。'],
-      turn: ['私の番。', 'さて、どうしようか。'],
+      turn: ['私の番。', 'さて、どうしようか。', '集中していこう。', 'ここが勝負どころ。'],
       down: ['伏せておくね。', 'まだ内緒。'],
       watch: ['そう来たか。', 'なるほどね。'],
       chain: ['つながった。', 'いい流れ。'],
@@ -43,9 +44,10 @@ export const AVATARS = {
   nadeshiko: {
     name: '撫子', color: '#ff4fa3',
     lines: {
+      rearrange: ['並べ替えてあげるわ。', 'この並びで勝負よ！'],
       wipe: ['まとめて消えなさい！', 'きれいさっぱりね。'],
       handes: ['ちょっと、私の手札に何するのよ！', '返しなさいよ！'],
-      turn: ['私の番ね！', 'さあ、行くわよ。'],
+      turn: ['私の番ね！', 'さあ、行くわよ。', '見てなさい。', 'ここからが本番よ！'],
       down: ['何を伏せたか、当ててみなさい。', 'ふふ、内緒よ。'],
       watch: ['ふーん、そう来るの。', '甘いわね。'],
       chain: ['まだまだ続くわよ！', '止まらないわよ！'],
@@ -66,9 +68,10 @@ export const AVATARS = {
   asagi: {
     name: '浅葱', color: '#5fd6d0',
     lines: {
+      rearrange: ['入れ替えちゃお！', 'よし、並び替え完了！'],
       wipe: ['どかーん！すっきり！', '一気にいったー！'],
       handes: ['あーっ、手札がー！', 'ひどいよー！'],
-      turn: ['よーし、いくよ！', '私の番だね！'],
+      turn: ['よーし、いくよ！', '私の番だね！', 'がんばるぞー！', '次は何しよっかな〜。'],
       down: ['こっそり置いとこ。', 'ひみつ〜。'],
       watch: ['おおっ、やるね！', 'そうきたかー！'],
       chain: ['つながったー！', '連鎖だ、連鎖！'],
@@ -89,9 +92,10 @@ export const AVATARS = {
   yamabuki: {
     name: '山吹', color: '#ffc94a',
     lines: {
+      rearrange: ['ぐるっと入れ替え！', 'シャッフルだー！'],
       wipe: ['ぜーんぶ吹っ飛べ！', '大掃除だー！'],
       handes: ['おい、手札返せー！', 'ずるいぞ！'],
-      turn: ['よっしゃ、いくぞ！', 'こっちの番だ！'],
+      turn: ['よっしゃ、いくぞ！', 'こっちの番だ！', '全力でいくぞー！', 'まだまだこれから！'],
       down: ['伏せとくぜ！', '何かはお楽しみ！'],
       watch: ['おっ、やるな！', 'そうきたか！'],
       chain: ['つながれー！', 'いけいけー！'],
@@ -115,9 +119,10 @@ export const AVATARS = {
   zundamon: {
     name: 'ずんだもん', color: '#7ccf4a', guest: true, voice: true, credit: 'VOICEVOX:ずんだもん', facing: 'left',
     lines: {
+      rearrange: ['並び替えるのだ！', 'この順番が最強なのだ！'],
       wipe: ['まとめて片付けたのだ！', 'すっきりしたのだ！'],
       handes: ['ぼくの手札が減ったのだ！', 'ひどいのだ、返すのだ！'],
-      turn: ['ぼくの番なのだ！', 'どうしようかな、なのだ。'],
+      turn: ['ぼくの番なのだ！', 'どうしようかな、なのだ。', 'ずんだパワー全開なのだ！', '見てるのだ！'],
       down: ['こっそり置くのだ。', 'ひみつなのだ！'],
       watch: ['そう来たのだ！？', 'なかなかやるのだ。'],
       chain: ['つながったのだ！', '止まらないのだ！'],
@@ -141,9 +146,10 @@ export const AVATARS = {
   metan: {
     name: '四国めたん', color: '#ff6fb5', guest: true, voice: true, credit: 'VOICEVOX:四国めたん', facing: 'left',
     lines: {
+      rearrange: ['並びを整えますわ。', 'この順番がよろしくてよ。'],
       wipe: ['一掃いたしましたわ。', 'すっきりしましたわね。'],
       handes: ['わたくしの手札に、なんてことを！', 'お行儀が悪いですわ！'],
-      turn: ['わたくしの番ですわ。', 'さあ、参りますわよ。'],
+      turn: ['わたくしの番ですわ。', 'さあ、参りますわよ。', 'わたくしの腕の見せどころですわ。', '優雅に参りますわよ。'],
       down: ['伏せておきますわ。', '何かは秘密ですわ。'],
       watch: ['あら、そう来ますの。', 'なかなかやりますわね。'],
       chain: ['まだ続きますわよ！', '見事な連なりですわ。'],
@@ -167,9 +173,10 @@ export const AVATARS = {
   tsumugi: {
     name: '春日部つむぎ', color: '#f5c34a', guest: true, voice: true, credit: 'VOICEVOX:春日部つむぎ', facing: 'left',
     lines: {
+      rearrange: ['並び替えちゃお！', 'こっちのほうが映えるし！'],
       wipe: ['まとめてバイバーイ！', '全部どかしちゃった！'],
       handes: ['ちょ、あーしの手札！', 'それはナシっしょ〜！'],
-      turn: ['あーしの番！', 'よーし、いくよー！'],
+      turn: ['あーしの番！', 'よーし、いくよー！', 'あーしに任せて！', 'テンション上げてくよー！'],
       down: ['こっそり置いとくね。', 'ナイショ〜。'],
       watch: ['え、やるじゃん！', 'そうくるかー！'],
       chain: ['つながったじゃん！', '止まんないし！'],
@@ -188,6 +195,34 @@ export const AVATARS = {
       lesson: ['あーしが教えたげる！', 'ゆっくりでいいよー。'],
       good: ['やるじゃん！', 'いいね、その調子！'],
       retry: ['ドンマイ、もう一回！', 'だいじょぶ、次いける！']
+    }
+  }
+,
+  whitecul: {
+    name: 'WhiteCUL', color: '#8fc8ff', guest: true, voice: true, credit: 'VOICEVOX:WhiteCUL',
+    lines: {
+      play: [['{card}、出します。', '出します。'], ['……{card}で。', 'これで。'], ['{card}、お願い……！', 'おねがい……！']],
+      compile: ['コンパイル、完了です。', '……やった。'],
+      compiled: ['……っ、やられました。', 'まだ、冷静に……'],
+      hurt: ['ひゃっ……！', 'そ、そんな……'],
+      almost: ['あと少し、です。', '次で、決めます。'],
+      win: ['勝ちました。……ほっ。', 'よかった……勝てました。'],
+      lose: ['……負け、ですね。', '次は、負けません。'],
+      hello: [['WhiteCULです。よろしく。', 'ホワイトカルです。よろしく。'], '……よろしくお願いします。'],
+      lesson: ['私が案内します。', '落ち着いて、やりましょう。'],
+      good: ['お見事です。', '上手ですね。'],
+      retry: ['もう一度、どうぞ。', '大丈夫、落ち着いて。'],
+      turn: ['私の番、ですね。', '……考えます。', '……落ち着いて、いきます。', 'ここは、冷静に。'],
+      down: ['伏せておきます。', '見せません。'],
+      watch: ['……なるほど。', 'そう来ましたか。'],
+      chain: ['つながりました。', 'いい流れです。'],
+      refresh: ['補充します。', '手札を整えます。'],
+      idle: ['ごゆっくり。', '……迷っていますか？'],
+      control: ['主導権、いただきます。', '流れが来ました。'],
+      boost: ['順調です。', '積み上がってきました。'],
+      handes: ['手札が……！', 'や、やめてください……'],
+      wipe: ['まとめて、片付けます。', 'すっきりしました。'],
+      rearrange: ['並びを、変えます。', 'この順番で。']
     }
   }
 };
@@ -275,7 +310,7 @@ export function mountAvatar(id, opts = {}) {
   const FACE_OF = { play: 'fired', compile: 'happy', compiled: 'frustrated', hurt: 'surprised', almost: 'fired', win: 'happy', lose: 'frustrated', hello: 'happy',
     lesson: 'normal', good: 'happy', retry: 'normal',
     turn: 'normal', down: 'fired', watch: 'surprised', chain: 'happy', refresh: 'normal', idle: 'normal', control: 'happy', boost: 'fired',
-    handes: 'frustrated', wipe: 'fired' };
+    handes: 'frustrated', wipe: 'fired', rearrange: 'fired' };
   function react(kind, vars) {
     /* そのキャラに無い種類 (チュートリアルの案内など) は紫苑のセリフを借りる (声は無し) */
     const own = def.lines[kind];
