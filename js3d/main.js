@@ -3787,11 +3787,14 @@ function arrangeOnBoard(req, opts) {
       canvas.removeEventListener('pointermove', onHover);
       canvas.style.cursor = '';
       /* 板は元の位置へ戻す (決まった並びはこのあとの盤面の更新で滑って入れ替わる) */
+      for (const r of releaseTotals) r();
       resetPlates(list);
       ov.remove();
       resolve(picks);
     };
     activeArrange = { cancel: () => finish(PICK_CANCEL), hint: null };
+    /* 並べ替えている間、数字 (ラインの合計値) はラインの位置に止めておく (板と一緒に動かさない) */
+    const releaseTotals = [ME, AI].filter(s => control || s === targetSide).map(s => panels.holdTotals(s));
     const done = () => finish(control ? { target: targetSide, perm: perm.slice() } : perm.slice());
 
     const render = () => {

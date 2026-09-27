@@ -406,6 +406,18 @@ export function createPanels(stage, me, hooks) {
     });
   }
 
+  /* 手で板を並べ替えている間 (main.js の arrangeOnBoard)、その側の合計値を板から消し、ラインの位置に止めた札で出す。
+     数字はラインのもの (板についてくるものではない) なので、板を動かしても数字は動かない。返り値を呼ぶと元に戻る */
+  function holdTotals(side) {
+    const ps = panels.filter(p => p.side === side && p.info);
+    const offs = ps.map(p => badgeAt(p, p.info));
+    for (const p of ps) repaint(p, { ...p.info, hideTotal: true });
+    return () => {
+      for (const off of offs) off();
+      for (const p of ps) repaint(p, { ...p.info, hideTotal: false });
+    };
+  }
+
   /* コンパイル演出から明示的に呼ぶ (板を裏返す瞬間を演出に合わせたいとき) */
   function flipAt(line, side, toCompiled) {
     const p = panels.find(x => x.line === line && x.side === side);
@@ -422,5 +434,5 @@ export function createPanels(stage, me, hooks) {
     }
   }
 
-  return { update, flipAt, tick, panels };
+  return { update, flipAt, tick, holdTotals, panels };
 }
