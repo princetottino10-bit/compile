@@ -2830,10 +2830,10 @@ async function replayResolution(prev, res, action) {
     chainShown = n;
     if (delta > 0) {                                     // チェーンがつながった
       sfx('chain', n);
-      /* 喜ぶのは、新しくつながった効果のカードの持ち主 (自分の除去で相手の下のカードが起きたなら、相手の方) */
+      /* 喜ぶのは、自分のカードの効果がつながったときだけ (相手のカードの効果がつながっても、だれも喜ばない) */
       const last = Array.isArray(chain) && chain.length ? String(chain[chain.length - 1]) : '';
       const lc = st && st.cards && st.cards[last.slice(0, last.lastIndexOf('|'))];
-      avatarSay(lc ? lc.owner : (st ? st.turn : ME), 'chain', null, st, 7000);
+      if (lc && lc.owner === ME) avatarSay(ME, 'chain', null, st, 7000);
     }
     return delta;
   };
