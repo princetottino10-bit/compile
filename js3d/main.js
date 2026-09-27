@@ -2356,8 +2356,7 @@ async function roomEnterGame(rm) {
 /* ---------- ターン / 効果の演出 ---------- */
 let lastTurn = null;
 let resultShown = false;
-let gameStartedAt = 0;
-window.__dbg = { step: (a) => step(a), get cur() { return cur; }, E: Engine }; // TEMP             // 対戦を始めた時刻 (手触りの演出を、はじめの盤面合わせで出さないため)
+let gameStartedAt = 0;             // 対戦を始めた時刻 (手触りの演出を、はじめの盤面合わせで出さないため)
 
 /* 決着の合図: 3ライン同時に光柱を立てて盤面を白く飛ばす */
 async function finaleFx(win) {
