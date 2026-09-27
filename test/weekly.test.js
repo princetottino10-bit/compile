@@ -56,3 +56,18 @@ test('載せる名前は 1〜16 文字', async () => {
   assert.equal(W.cleanName(''), null);
   assert.equal(W.cleanName('x'.repeat(17)), null);
 });
+
+test('対戦の途中で落ちたら、同じ3つでその戦いを1回だけやり直せる', async () => {
+  const W = await import('../js3d/weekly.js');
+  const s = { v: 1, week: 'W1', attempt: 3, stage: 2, decks: [['A', 'B', 'C'], ['D', 'E', 'F'], ['G', 'H', 'I']], phase: 'battle', clears: 0, bestStage: 2, submitted: false };
+  assert.equal(W.canResume(s), true);
+  const r = W.resumeBattle(s);
+  assert.equal(r.phase, 'battle');
+  assert.equal(r.stage, 2);
+  assert.deepEqual(r.resumed, [2]);
+  assert.equal(W.canResume(r), false, '同じ戦いで2回目はない');
+  assert.equal(W.resumeBattle(r), r);
+  /* やり直した戦いに勝てばクリア */
+  assert.equal(W.finishMatch(r, true).phase, 'clear');
+  assert.equal(W.canResume({ ...s, phase: 'choose' }), false);
+});

@@ -72,7 +72,20 @@ export function openWeekly(protocols, cardsOf) {
     const render = () => {
       const used = new Set(W.usedOf(s));
       let body;
-      if (s.phase === 'choose') {
+      if (s.phase === 'battle') {
+        /* 週替わりの画面が開いた = 対戦の途中で終わっている (アプリが落ちた・閉じたなど) */
+        const opp = set.opponents[s.stage];
+        body = stageTrack(s) +
+          '<h2>' + (opp.boss ? 'BOSS — ' : '') + '第' + (s.stage + 1) + '戦の途中で終わっています <small>/ 挑戦 ' + s.attempt + '回目</small></h2>' +
+          '<div class="rn-vs"><div><small>あなた</small>' + deckLine(s.decks[s.stage] || [], byName) + '</div><b>VS</b>' +
+          '<div><small>' + esc(levelLabel(opp.level)) + '</small>' + deckLine(opp.deck, byName) + '</div></div>' +
+          (W.canResume(s)
+            ? '<p class="rn-note">アプリが落ちたときなどのために、同じ3つでこの戦いを<b>1回だけ</b>やり直せます (はじめから)。</p>'
+            : '<p class="rn-warn">この戦いのやり直しはもう使いました。この挑戦はここまでです。</p>') +
+          '<div class="rn-btns"><button type="button" data-act="hub">戻る</button>' +
+          '<button type="button" data-act="giveup">この挑戦をやめる</button>' +
+          (W.canResume(s) ? '<button type="button" class="rn-go" data-act="resume">第' + (s.stage + 1) + '戦をやり直す</button>' : '') + '</div>';
+      } else if (s.phase === 'choose') {
         const opp = set.opponents[s.stage];
         const left = set.nine.filter(n => !used.has(n));
         body = stageTrack(s) +
@@ -126,6 +139,14 @@ export function openWeekly(protocols, cardsOf) {
         case 'hub': done({ go: 'hub' }); break;
         case 'start': picked = []; save(W.startAttempt(s)); break;
         case 'giveup': picked = []; save({ ...s, phase: 'lost' }); break;
+        case 'resume': {
+          const next = W.resumeBattle(s);
+          if (next === s) return;
+          W.saveWeekly(next);
+          const opp = set.opponents[s.stage];
+          done({ me: s.decks[s.stage].slice(), ai: opp.deck.slice(), level: opp.level, kind: 'weekly' });
+          break;
+        }
         case 'cards': {
           const n = picked[picked.length - 1] || set.nine.find(x => !W.usedOf(s).includes(x)) || set.nine[0];
           openCards(n);

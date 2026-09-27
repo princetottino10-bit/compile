@@ -104,6 +104,16 @@ export function chooseDeck(s, deck, set) {
   return { ...s, decks: s.decks.concat([deck.slice()]), phase: 'battle' };
 }
 
+/* 対戦の途中でアプリが落ちた (週替わりの画面を開いたら「対戦中」のまま): 同じ3つで、その戦いをもう一度。
+   わざと落として負けをやり直せないよう、1つの戦いにつき1回まで (resumed に戦いの番号を残す) */
+export function canResume(s) {
+  return s.phase === 'battle' && Array.isArray(s.decks) && !!s.decks[s.stage] && !(s.resumed || []).includes(s.stage);
+}
+export function resumeBattle(s) {
+  if (!canResume(s)) return s;
+  return { ...s, resumed: (s.resumed || []).concat(s.stage) };
+}
+
 export function finishMatch(s, win) {
   if (s.phase !== 'battle') return s;
   if (!win) return { ...s, phase: 'lost', bestStage: Math.max(s.bestStage, s.stage) };
