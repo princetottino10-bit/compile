@@ -2389,7 +2389,7 @@ function tagPlates(st) {
   if (spectate) {
     const bet = spectate.bet;
     const mark = (k) => (bet && bet.side === k ? 'ベット ' + bet.amount + ' CHIP' : 'CPU ' + lv);
-    showPlates({ me: { name: 'A' + (mine + 1), sub: mark(0), icon: iconOf(ME, mine) }, opp: { name: 'B' + (theirs + 1), sub: mark(1), icon: iconOf(AI, theirs) } });
+    showPlates({ me: { name: specName(ME, mine), sub: mark(0), icon: iconOf(ME, mine) }, opp: { name: specName(AI, theirs), sub: mark(1), icon: iconOf(AI, theirs) } });
     return;
   }
   showPlates({
@@ -2398,16 +2398,26 @@ function tagPlates(st) {
   });
 }
 
-/* 観戦の始まり: 名札を A (手前) / B (奥) にし、ベットの中身を知らせる */
+/* 観戦の呼び名: その側に出ているキャラの名前 (キャラなしなら A / B)。who: タッグの 0 (本人) / 1 (相棒) */
+function specName(side, who = 0) {
+  const nm = (id) => (id && AVATARS[id] ? AVATARS[id].name : null);
+  const id = !avatars ? null : side === ME ? (who ? avatars.mate && avatars.mate.id : avatars.me && avatars.me.id) : (avatars.oppIds || [])[who];
+  return nm(id) || (side === ME ? 'A' : 'B') + (who ? '2' : '');
+}
+/* その側のチームの呼び名 (タッグは2人を「・」でつなぐ) */
+const specTeam = (side) => (spectate && spectate.mates ? specName(side, 0) + '・' + specName(side, 1) : specName(side));
+
+/* 観戦の始まり: 名札を A (手前) / B (奥) のキャラの名前にし、ベットの中身を知らせる */
 function spectateStart() {
+  syncAvatar();                                          // 名前はキャラから取るので、先に出しておく
   const icon = (d) => (protoIndex[d[0]] ? { name: d[0], color: protoIndex[d[0]].color } : null);
   const bet = spectate.bet;
   const mark = (k) => (bet && bet.side === k ? 'ベット ' + bet.amount + ' CHIP' : 'CPU ' + levelLabel(spectate.level));
-  showPlates({ me: { name: 'A', sub: mark(0), icon: icon(spectate.a) }, opp: { name: 'B', sub: mark(1), icon: icon(spectate.b) } });
+  showPlates({ me: { name: specName(ME), sub: mark(0), icon: icon(spectate.a) }, opp: { name: specName(AI), sub: mark(1), icon: icon(spectate.b) } });
   const team = (d, m) => d.join(' / ') + (m ? ' ＋ ' + m.join(' / ') : '');
   const mates = spectate.mates || {};
-  UI.toast(bet ? 'ベット: ' + (bet.side ? 'B' : 'A') + ' に ' + bet.amount + ' CHIP (当たれば ' + bet.payout + ')'
-    : '観戦: A ' + team(spectate.a, mates.p0) + '　B ' + team(spectate.b, mates.p1), 4200);
+  UI.toast(bet ? 'ベット: ' + specTeam(bet.side ? AI : ME) + ' に ' + bet.amount + ' CHIP (当たれば ' + bet.payout + ')'
+    : '観戦: ' + specTeam(ME) + ' ' + team(spectate.a, mates.p0) + '　' + specTeam(AI) + ' ' + team(spectate.b, mates.p1), 4200);
 }
 /* 観戦の決着: A / B の勝ちを見せ、ベットが当たっていれば払い戻す。次は観戦のメニューかタイトルへ */
 async function spectateEnd(aWon) {
@@ -2416,10 +2426,11 @@ async function spectateEnd(aWon) {
   if (hit) giveChips(bet.payout);
   sfx(hit || !bet ? 'win' : 'lose');
   await finaleFx(true);
-  await UI.resultCutIn(true, { title: (aWon ? 'A' : 'B') + ' WINS', sub: bet ? (hit ? 'BET HIT' : 'BET MISSED') : 'SPECTATE' });
+  const winner = specTeam(aWon ? ME : AI);
+  await UI.resultCutIn(true, { title: winner + ' WINS', sub: bet ? (hit ? 'BET HIT' : 'BET MISSED') : 'SPECTATE' });
   let el = document.getElementById('endBar');
   if (!el) { el = document.createElement('div'); el.id = 'endBar'; document.body.appendChild(el); }
-  el.innerHTML = '<div class="end-title">' + (aWon ? 'A' : 'B') + ' の勝ち</div>' +
+  el.innerHTML = '<div class="end-title">' + winner + ' の勝ち</div>' +
     (bet ? '<div class="end-sub">' + (hit ? '当たり！ ' + bet.payout + ' CHIP が戻りました' : 'はずれ (' + bet.amount + ' CHIP)') + '</div>' : '') +
     '<div class="end-btns"><button class="arr-btn ok" id="endWatch" type="button">もう一度観戦</button>' +
     '<button class="arr-btn" id="endTop" type="button">TITLE</button></div>';
@@ -3798,7 +3809,7 @@ async function drainRequests() {
       if (forced) { picks = forced; await showForcedPick(req, forced); }
       else picks = await askUser(req);
     } else {
-      UI.setPrompt(spectate ? (req.player === ME ? 'A' : 'B') + ' が選択しています…'
+      UI.setPrompt(spectate ? specName(req.player, cur.state.tag ? cur.state.tag.pilot[req.player] : 0) + ' が選択しています…'
         : req.player === ME ? '味方が選択しています…' : '相手が選択しています…', 'wait');
       const at = cur;
       const [ans] = await Promise.all([aiAnswer(cur.state, req), TW.wait(260)]);
