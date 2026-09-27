@@ -16,6 +16,8 @@ export const AVATARS = {
   shion: {
     name: '紫苑', color: '#a07bff',
     lines: {
+      wipe: ['まとめて、片付けた。', '盤面を、整理しよう。'],
+      handes: ['手札が……！', 'それは困るな。'],
       turn: ['私の番。', 'さて、どうしようか。'],
       down: ['伏せておくね。', 'まだ内緒。'],
       watch: ['そう来たか。', 'なるほどね。'],
@@ -41,6 +43,8 @@ export const AVATARS = {
   nadeshiko: {
     name: '撫子', color: '#ff4fa3',
     lines: {
+      wipe: ['まとめて消えなさい！', 'きれいさっぱりね。'],
+      handes: ['ちょっと、私の手札に何するのよ！', '返しなさいよ！'],
       turn: ['私の番ね！', 'さあ、行くわよ。'],
       down: ['何を伏せたか、当ててみなさい。', 'ふふ、内緒よ。'],
       watch: ['ふーん、そう来るの。', '甘いわね。'],
@@ -62,6 +66,8 @@ export const AVATARS = {
   asagi: {
     name: '浅葱', color: '#5fd6d0',
     lines: {
+      wipe: ['どかーん！すっきり！', '一気にいったー！'],
+      handes: ['あーっ、手札がー！', 'ひどいよー！'],
       turn: ['よーし、いくよ！', '私の番だね！'],
       down: ['こっそり置いとこ。', 'ひみつ〜。'],
       watch: ['おおっ、やるね！', 'そうきたかー！'],
@@ -83,6 +89,8 @@ export const AVATARS = {
   yamabuki: {
     name: '山吹', color: '#ffc94a',
     lines: {
+      wipe: ['ぜーんぶ吹っ飛べ！', '大掃除だー！'],
+      handes: ['おい、手札返せー！', 'ずるいぞ！'],
       turn: ['よっしゃ、いくぞ！', 'こっちの番だ！'],
       down: ['伏せとくぜ！', '何かはお楽しみ！'],
       watch: ['おっ、やるな！', 'そうきたか！'],
@@ -107,6 +115,8 @@ export const AVATARS = {
   zundamon: {
     name: 'ずんだもん', color: '#7ccf4a', guest: true, voice: true, credit: 'VOICEVOX:ずんだもん', facing: 'left',
     lines: {
+      wipe: ['まとめて片付けたのだ！', 'すっきりしたのだ！'],
+      handes: ['ぼくの手札が減ったのだ！', 'ひどいのだ、返すのだ！'],
       turn: ['ぼくの番なのだ！', 'どうしようかな、なのだ。'],
       down: ['こっそり置くのだ。', 'ひみつなのだ！'],
       watch: ['そう来たのだ！？', 'なかなかやるのだ。'],
@@ -131,6 +141,8 @@ export const AVATARS = {
   metan: {
     name: '四国めたん', color: '#ff6fb5', guest: true, voice: true, credit: 'VOICEVOX:四国めたん', facing: 'left',
     lines: {
+      wipe: ['一掃いたしましたわ。', 'すっきりしましたわね。'],
+      handes: ['わたくしの手札に、なんてことを！', 'お行儀が悪いですわ！'],
       turn: ['わたくしの番ですわ。', 'さあ、参りますわよ。'],
       down: ['伏せておきますわ。', '何かは秘密ですわ。'],
       watch: ['あら、そう来ますの。', 'なかなかやりますわね。'],
@@ -155,6 +167,8 @@ export const AVATARS = {
   tsumugi: {
     name: '春日部つむぎ', color: '#f5c34a', guest: true, voice: true, credit: 'VOICEVOX:春日部つむぎ', facing: 'left',
     lines: {
+      wipe: ['まとめてバイバーイ！', '全部どかしちゃった！'],
+      handes: ['ちょ、あーしの手札！', 'それはナシっしょ〜！'],
       turn: ['あーしの番！', 'よーし、いくよー！'],
       down: ['こっそり置いとくね。', 'ナイショ〜。'],
       watch: ['え、やるじゃん！', 'そうくるかー！'],
@@ -260,7 +274,8 @@ export function mountAvatar(id, opts = {}) {
   /* 手に合わせて: play (表で出した) / compile / compiled (された) / hurt (大きく減らされた) / almost (コンパイル目前) / win / lose / hello */
   const FACE_OF = { play: 'fired', compile: 'happy', compiled: 'frustrated', hurt: 'surprised', almost: 'fired', win: 'happy', lose: 'frustrated', hello: 'happy',
     lesson: 'normal', good: 'happy', retry: 'normal',
-    turn: 'normal', down: 'fired', watch: 'surprised', chain: 'happy', refresh: 'normal', idle: 'normal', control: 'happy', boost: 'fired' };
+    turn: 'normal', down: 'fired', watch: 'surprised', chain: 'happy', refresh: 'normal', idle: 'normal', control: 'happy', boost: 'fired',
+    handes: 'frustrated', wipe: 'fired' };
   function react(kind, vars) {
     /* そのキャラに無い種類 (チュートリアルの案内など) は紫苑のセリフを借りる (声は無し) */
     const own = def.lines[kind];
@@ -272,12 +287,15 @@ export function mountAvatar(id, opts = {}) {
     /* 声つきのキャラは、プロトコルごとのセリフを使わず、声のあるセリフだけ */
     let text = !def.voice && kind === 'play' && proto && PROTO_LINES[proto] && Math.random() < 0.45 ? PROTO_LINES[proto]
       : Array.isArray(entry) ? entry[0] : entry;
-    if (def.voice && own) playVoice('art/voice/' + id + '/' + kind + '_' + i + '.mp3');
+    if (def.voice && own && voiceOn) playVoice('art/voice/' + id + '/' + kind + '_' + i + '.mp3');
     for (const [k, v] of Object.entries(vars || {})) text = text.split('{' + k + '}').join(v);
     say(text, FACE_OF[kind], kind === 'win' || kind === 'lose' ? 5000 : 2400);
   }
   /* 声: 効果音の音量で鳴らす。消音中は鳴らさない。前の声は止める */
   let voiceEl = null;
+  /* 声を出すか (相手のキャラは設定の「相手のキャラの声」で消せる) */
+  let voiceOn = opts.voice !== false;
+  function setVoice(on) { voiceOn = !!on; if (!on && voiceEl) voiceEl.pause(); }
   function playVoice(url) {
     try {
       if (isMuted()) return;
@@ -292,5 +310,5 @@ export function mountAvatar(id, opts = {}) {
   /* タッグ: 後ろに下がる / 前に出る */
   function setBack(on) { el.classList.toggle('av-back', !!on); }
   function destroy() { clearTimeout(faceTimer); clearTimeout(sayTimer); clearTimeout(blinkTimer); clearTimeout(speakTimer); if (voiceEl) voiceEl.pause(); el.remove(); }
-  return { react, say, setFace, setBack, destroy, id, el };
+  return { react, say, setFace, setBack, setVoice, destroy, id, el };
 }

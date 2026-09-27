@@ -31,10 +31,10 @@ import * as PZ from './puzzle.js';
 import * as TS from './tsume.js';
 import { watchErrors, reportError } from './errorreport.js';
 import * as TU from './tutorial.js';
-import { settings, onSettings, openSettings } from './settings.js';
+import { settings, onSettings, openSettings, setAvatarOptionsGate } from './settings.js';
 import { recordSoloResult, localRecords } from './stats.js';
 import { cardStats, cardTier, playerLevel, protocolSummary } from './stats-data.js';
-import { isUnlocked, rewardsBetween, TITLES, UNDERDOG_XP, underdogCleared } from './rewards.js';
+import { isUnlocked, rewardsBetween, TITLES, UNDERDOG_XP, underdogCleared, AVATAR_RELEASED } from './rewards.js';
 import { confetti } from './gachafx.js';
 import { setCosmeticProtocols, profileOf, myLook } from './cosmetics-ui.js';
 import { setCosmeticsProtocols } from './cosmetics-mode.js';
@@ -228,15 +228,11 @@ let firstGameHintShown = false;    // はじめの数戦の操作の案内 (1戦
 let avatars = null;              // { me, mate, opp, oppIds: [1人目, 2人目] }
 const avatarSaidAt = {};         // 同じ種類のひとことを続けて言わない
 function myAvatarId() { const k = settings().avatar; return AVATARS[k] ? k : 'shion'; }
-/* 相手のキャラ: 自分・味方と重ならない中から、相手のプロトコルで決める (勝ち抜き戦は1戦ごとに替わる) */
+/* 相手のキャラ: 自分・味方と重ならない中から、1戦ごとにランダム (タッグの2人も重ならない) */
 function oppAvatarIds(taken) {
-  const pool = avatarIds().filter(i => !taken.includes(i));
-  let h = 0;
-  for (const ch of (cur && cur.state ? ownProtos(cur.state, AI).join() : '')) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-  /* ふつうの CPU 戦・タッグの1人目は、紫苑と対になる撫子 (空いていれば)。勝ち抜き戦・週替わりは1戦ごとに替える */
-  const a = !runMode && pool.includes('nadeshiko') ? 'nadeshiko' : pool.length ? pool[h % pool.length] : 'nadeshiko';
-  const rest = pool.filter(i => i !== a);
-  return [a, rest.length ? rest[(h >>> 3) % rest.length] : a];
+  const pool = shuffled(avatarIds().filter(i => !taken.includes(i)));
+  const a = pool[0] || 'nadeshiko';
+  return [a, pool[1] || a];
 }
 function syncAvatar() {
   const want = !!accountState().admin && settings().avatar !== false && !puzzle && !demoMode && !trainingMode && !replayMode && !!cur;
@@ -252,7 +248,7 @@ function syncAvatar() {
   avatars = {
     me: mountAvatar(me, { side: 'me' }),
     mate: mate ? mountAvatar(mate, { side: 'me', back: true }) : null,
-    opp: tutorial ? null : mountAvatar(oppIds[0], { side: 'opp' }),
+    opp: tutorial ? null : mountAvatar(oppIds[0], { side: 'opp', voice: settings().oppVoice !== false }),
     oppIds
   };
   if (avatars.opp) setTimeout(() => { if (avatars && avatars.opp) avatars.opp.react('hello'); }, 900);
@@ -289,8 +285,20 @@ setInterval(() => {
   const t = cur.state.turns | 0;
   if (t !== avatarIdleTurn && Date.now() - avatarLastInput > 25000) { avatarIdleTurn = t; avatarSay(ME, 'idle'); }
 }, 3000);
+/* ハンデス: 相手の番に、効果で手札を失った側 (捨て札・相手の手札・山札へ。場に出したものは数えない) が嫌がる */
+function avatarHandesCheck(a, b) {
+  if (!avatars || !a || !b || !a.players || !b.players) return;
+  for (const s of [0, 1]) {
+    if (a.turn === s) continue;                          // 自分の番に自分で捨てたもの (手札の上限など) は数えない
+    const now = new Set(b.players[s].hand);
+    const lost = a.players[s].hand.filter(u => !now.has(u) && b.cards[u] && !/^(field|committed|transit)/.test(b.cards[u].zone || ''));
+    if (lost.length) avatarSay(s, 'handes', null, b, 5000);
+  }
+}
 /* コントロールを取った側がひとこと (変わったときだけ) */
 let avatarControl = null;
+let avatarCompileAt = 0;          // 最後にコンパイルが起きた時刻 (その直後の合計の減りでは驚かない)
+let avatarActor = null;           // いま再生している場面を動かした側 (その場面の手番)。再生の外では null
 function avatarControlCheck(st) {
   const c = st && typeof st.control === 'number' ? st.control : -1;
   if (avatarControl !== null && c !== avatarControl && c >= 0) avatarSay(c, 'control', null, st, 6000);
@@ -305,8 +313,11 @@ function avatarTagTurn(st) {
     avatars.mate.setBack(!partner);
   }
   const want = avatars.oppIds[st.tag.pilot[AI]];
-  if (avatars.opp && avatars.opp.id !== want) { avatars.opp.destroy(); avatars.opp = mountAvatar(want, { side: 'opp' }); }
+  if (avatars.opp && avatars.opp.id !== want) { avatars.opp.destroy(); avatars.opp = mountAvatar(want, { side: 'opp', voice: settings().oppVoice !== false }); }
 }
+
+/* 設定の画面に、対戦のキャラの項目 (相手の声・クレジット) を出すのは、キャラが見える人だけ */
+setAvatarOptionsGate(() => AVATAR_RELEASED || !!accountState().admin);
 
 /* 観戦 (spectate.js の結果)。{ a, b, level, bet } / null */
 let spectate = null;
@@ -481,6 +492,7 @@ async function boot() {
     onCompile: async (info) => {
       FEEL.buzz(info.side === ME ? [30, 60, 50] : 40);
       /* コンパイルした側は喜び、された側は少し遅れて悔しがる */
+      avatarCompileAt = Date.now();
       avatarSay(info.side, 'compile');
       setTimeout(() => avatarSay(1 - info.side, 'compiled'), 1300);
       /* まず盤上のプロトコルカードを "Compiled" 面へ裏返し、その後にカットイン */
@@ -503,9 +515,17 @@ async function boot() {
         if (e.delta && Math.abs(e.delta) <= 20) FEEL.floatDelta(stage, e.pos, e.delta, e.color);
         if (e.ready) { FEEL.readyBurst(stage, e.pos, e.color); if (e.side === ME) FEEL.buzz(18); }
         /* 相手の手でラインが大きく減った側は驚く。コンパイル目前になった側は「あと少し」(続けては言わない) */
-        if (e.delta <= -4 && cur.state.turn !== e.side) avatarSay(e.side, 'hurt', null, null, 8000);
+        /* ラインが大きく減った: 動かした側 (いま再生している場面の手番) で見分ける。cur はもう先まで進んでいることがある。
+           相手の手で減った側は驚く。自分の手で (METAL 3 などで) まとめて消したときは、動かした側が得意げに。
+           コンパイルでカードが消えたときは、どちらも言わない */
+        const byCompile = Date.now() - avatarCompileAt < 6000;
+        const actor = avatarActor === null ? cur.state.turn : avatarActor;
+        if (e.delta <= -4 && !byCompile) {
+          if (actor !== e.side) avatarSay(e.side, 'hurt', null, null, 8000);
+          avatarSay(actor, 'wipe', null, null, 8000);
+        }
         else if (e.ready) avatarSay(e.side, 'almost', null, null, 12000);
-        else if (e.delta >= 4 && cur.state.turn === e.side) avatarSay(e.side, 'boost', null, null, 10000, 0.6);
+        else if (e.delta >= 4 && (avatarActor === null ? cur.state.turn : avatarActor) === e.side) avatarSay(e.side, 'boost', null, null, 10000, 0.6);
       }
     }
   });
@@ -519,6 +539,7 @@ async function boot() {
     applyLooks();
     if (cur) board.syncInstant(shown());                      // カードの裏面を付け替える
     syncAvatar();                                             // キャラの出し入れ
+    if (avatars && avatars.opp) avatars.opp.setVoice(s.oppVoice !== false);   // 相手の声のオンオフ
   });
   bindInput();
   mark('stage');
@@ -2822,7 +2843,9 @@ async function replayResolution(prev, res, action) {
       /* 間引きで飛ばしたコマ (効果の結果) がまだ盤面に出ていなければ、手番やフェイズを告げる前に盤面を追いつかせる。
          追いつかせないと、効果の結果が出る前に「相手のターン」の演出が出ていた */
       if (visualFingerprint(from) !== step.fp) {
+        avatarActor = from.turn;
         await board.applyTransition(from, step.st, first ? action : null, { speed: STEP_MOTION, source: effectSource(step) });
+        avatarHandesCheck(from, step.st);
         await syncPanels(step.st, true);
         from = step.st;
         first = false;
@@ -2838,8 +2861,10 @@ async function replayResolution(prev, res, action) {
     const t0 = performance.now();
     const uid = step.uid || (step.cue && step.cue.uid) || null;
     /* チェーンの途中は動きもさらにゆっくり見せる */
+    avatarActor = from.turn;
     await board.applyTransition(from, step.st, first ? action : null,
       { speed: chainShown ? STEP_MOTION * 1.3 : STEP_MOTION, source: effectSource(step) });
+    avatarHandesCheck(from, step.st);
     /* プロトコル板 (並び・合計値) もこのコマに合わせる。並べ替えは板が動き終わるまで待つ */
     await syncPanels(step.st, true);
     /* この絵の時点のチェーン。1つ解決して短くなったら、解決したことが分かるよう少し待つ */
@@ -2854,6 +2879,7 @@ async function replayResolution(prev, res, action) {
     from = step.st;
     first = false;
   }
+  avatarActor = null;                // 再生が終わったら、動かした側の覚えを捨てる
   /* 残りの行 (間引いたコマの分) を書き足す。手を解決し終えたら、次の手のために覚えを捨てる */
   if (liveLog) {
     logUpTo(res, Infinity);
@@ -2892,7 +2918,10 @@ async function step(action) {
   CW.battleProgress(res.state.turns | 0);
   /* 自分で表向きに出したカード: キャラがひとこと */
   if (action.type === 'play' && action.faceUp) {
-    avatarSay(before.turn, 'play', { card: cardName(action.card) }, before);
+    /* 表で出したカードは出した時点で公開。出す前の盤面では相手の手札 (見えない) なので、出したあとの盤面から名前を取る */
+    const pc = res.state.cards[action.card];
+    const pd = pc && defIndex[pc.def];
+    avatarSay(before.turn, 'play', { card: pd ? pd.proto + ' ' + pd.value : 'カード' }, before);
     /* 相手が表で出したら、こちらがときどき反応する (少し遅れて) */
     setTimeout(() => avatarSay(1 - before.turn, 'watch', null, null, 9000, 0.35), 1400);
   } else if (action.type === 'play') avatarSay(before.turn, 'down', null, before, 6000, 0.6);

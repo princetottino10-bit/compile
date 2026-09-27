@@ -5,14 +5,17 @@
  * ========================================================================= */
 
 const KEY = 'compileSettings';
+/* 対戦のキャラの項目 (相手の声・クレジット) を見せるか。キャラを出すまでは管理者だけ (main.js が決める) */
+let avatarOptionsShown = () => false;
+export function setAvatarOptionsGate(fn) { avatarOptionsShown = fn; }
 /* mat 以下は見た目 (レベルの報酬、cosmetics-ui.js) */
 /* autoPick: 選べるものが1つしかない選択は自動で選ぶ / oppSummary: 相手の番のまとめ / beginner: 初心者モード (おすすめの手の HINT を出す。最初はオフ) */
 const DEFAULTS = { speed: 1, sfx: 80, pauses: true, autoPick: true, oppSummary: true, beginner: false, foil: true, mat: 'neon', sleeve: 'default', marker: 'default', ccolor: 'default',
   victory: 'default', title: '', icon: '',
   /* おまかせで今すぐ始める: 相手の強さ (0 かんたん / 1 ふつう / 2 つよい) と、今日のデイリーのプロトコルを自分に入れるか */
   quickLevel: 0, quickDaily: false,
-  /* 対戦のそばのキャラ (アバター) の key (avatar.js の AVATARS)。false なら出さない */
-  avatar: 'shion' };
+  /* 対戦のそばのキャラ (アバター) の key (avatar.js の AVATARS)。false なら出さない。oppVoice: 相手のキャラの声 */
+  avatar: 'shion', oppVoice: true };
 const QUICK_LEVELS = ['かんたん', 'ふつう', 'つよい'];
 const SPEEDS = [
   { v: 0.65, label: 'ゆっくり' },          // 何が起きたかを1つずつ追いたい人向け
@@ -84,8 +87,12 @@ export function openSettings(extra) {
     /* 見た目は専用の画面 (cosmetics-mode.js) で。実物どおりのプレビューと図鑑つき */
     '<div class="st-cosmetics"><div class="st-cos-head"><b>COSMETICS</b><small>盤面・スリーブ・マーカー・称号などは専用の画面で選べます</small></div>' +
       '<div class="pz-row"><button type="button" id="stCosOpen" class="pz-main">COSMETICS を開く</button></div></div>' +
-    /* 対戦のキャラの声と絵 (出すまでは管理者だけが使うが、クレジットは載せておく) */
-    '<p class="st-credit">キャラの声 VOICEVOX:ずんだもん / VOICEVOX:四国めたん / VOICEVOX:春日部つむぎ　立ち絵 坂本アヒル</p>' +
+    /* 対戦のキャラ: 相手の声のオンオフと、声と絵のクレジット (キャラが見える人にだけ) */
+    (avatarOptionsShown()
+      ? '<label class="st-row st-check"><span>相手のキャラの声<small>相手のキャラ (ずんだもんたち) がしゃべるときの声。オフにすると吹き出しだけ出ます</small></span>' +
+          '<input type="checkbox" id="stOppVoice"' + (s.oppVoice !== false ? ' checked' : '') + '></label>' +
+        '<p class="st-credit">キャラの声 VOICEVOX:ずんだもん / VOICEVOX:四国めたん / VOICEVOX:春日部つむぎ　立ち絵 坂本アヒル</p>'
+      : '') +
     (extra && extra.length ? '<div class="pz-row">' + extra.map((x, i) => '<button type="button" data-extra="' + i + '">' + x.label + '</button>').join('') + '</div>' : '') +
     '</div>';
   el.classList.add('show');
@@ -109,6 +116,8 @@ export function openSettings(extra) {
   el.querySelector('#stBeginner').onchange = (ev) => setSetting('beginner', ev.target.checked);
   el.querySelector('#stFoil').onchange = (ev) => setSetting('foil', ev.target.checked);
   el.querySelector('#stQuickDaily').onchange = (ev) => setSetting('quickDaily', ev.target.checked);
+  const oppVoice = el.querySelector('#stOppVoice');
+  if (oppVoice) oppVoice.onchange = (ev) => setSetting('oppVoice', ev.target.checked);
   el.querySelectorAll('[data-qlevel]').forEach(b => {
     b.onclick = () => {
       setSetting('quickLevel', +b.dataset.qlevel);
