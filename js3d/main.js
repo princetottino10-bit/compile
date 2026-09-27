@@ -57,7 +57,7 @@ import { faceImageURL, backImageURL, pruneFaceCache, ART_SETS, setMaxAnisotropy 
 import * as FX from './fx.js';
 import { buildArena } from './arena.js';
 import { initAudio, sfx, setMuted, isMuted, setSfxVolume } from './audio.js';
-import { playBgm, refreshBgm, BATTLE_BGM, BOSS_BGM } from './bgm.js';
+import { playBgm, refreshBgm, NORMAL_BGM, STRONG_BGM, BOSS_BGM } from './bgm.js';
 import { BGM_RELEASED } from './rewards.js';
 import { emblemDataURL } from './emblems.js';
 import * as LAYOUT from './layout.js';
@@ -3038,17 +3038,24 @@ async function announceControl(req, choice) {
   await UI.declareCutIn({ label: who + 'のコントロール', value, tone: 'call', hold: 1800, note: req.controlReason === 'refresh' ? 'リフレッシュ' : 'コンパイル' });
 }
 
-/* ボス戦か: 勝ち抜き戦の BOSS・週替わりの3戦目・CHALLENGE (強敵・下剋上。強さ 3 以上) */
-function bossBattle() {
-  if (demoMode || roomMode || tutorial || puzzle || trainingMode) return false;
-  if (runMode && runKind === 'run') { const run = loadRun(); const node = run && nodeById(run, run.pos); return !!(node && node.type === 'boss'); }
-  if (runMode && runKind === 'weekly') return (loadStoredWeekly().stage | 0) === 2;
-  return aiDifficulty >= 3;
+/* 対戦の格: 'boss' (勝ち抜き戦の BOSS・週替わりの BOSS・CHALLENGE の最強・下剋上) / 'strong' (勝ち抜き戦の精鋭・CHALLENGE のロック特化と挑戦者) / null */
+function battleTier() {
+  if (demoMode || roomMode || tutorial || puzzle || trainingMode) return null;
+  if (runMode && runKind === 'run') {
+    const run = loadRun();
+    const node = run && nodeById(run, run.pos);
+    return node && node.type === 'boss' ? 'boss' : node && node.type === 'elite' ? 'strong' : null;
+  }
+  if (runMode && runKind === 'weekly') return (loadStoredWeekly().stage | 0) === 2 ? 'boss' : null;
+  if (aiDifficulty === 3 || aiDifficulty === UNDERDOG_LEVEL) return 'boss';
+  return aiDifficulty >= 3 ? 'strong' : null;
 }
-/* 対戦の BGM: ボス戦は専用の曲。COLLECTION の BGM を出していれば、ふつうの対戦は選んだ曲 */
+/* 対戦の BGM: ボスと強敵は専用の曲。ふつうの対戦は、曲を選び直すまで無音 (COLLECTION の BGM を出したら選んだ曲) */
 function battleBgm() {
-  if (bossBattle()) return BOSS_BGM;
-  return BGM_RELEASED ? (settings().bgm || BATTLE_BGM) : BATTLE_BGM;
+  const tier = battleTier();
+  if (tier === 'boss') return BOSS_BGM;
+  if (tier === 'strong') return STRONG_BGM;
+  return BGM_RELEASED ? (settings().bgm || null) : NORMAL_BGM;
 }
 
 /* ---------- 進行 ---------- */
