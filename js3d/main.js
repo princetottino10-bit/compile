@@ -566,8 +566,12 @@ async function boot() {
       FEEL.buzz(info.side === ME ? [30, 60, 50] : 40);
       /* コンパイルした側は喜び、された側は少し遅れて悔しがる */
       avatarCompileAt = Date.now();
-      avatarSay(info.side, 'compile');
-      setTimeout(() => avatarSay(1 - info.side, 'compiled'), 1300);
+      /* 勝負が決まるコンパイル (最後の1本) では「まだ負けてない」などとは言わせない。このあと勝ち・負けのセリフが出る */
+      const decisive = cur && cur.state && cur.state.winner === info.side;
+      if (!decisive) {
+        avatarSay(info.side, 'compile');
+        setTimeout(() => avatarSay(1 - info.side, 'compiled'), 1300);
+      }
       /* まず盤上のプロトコルカードを "Compiled" 面へ裏返し、その後にカットイン */
       await panels.flipAt(info.line, info.side, true);
       await UI.compileCutIn({
