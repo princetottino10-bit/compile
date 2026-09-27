@@ -688,14 +688,17 @@ export function resultCutIn(win, opts) {
   const el = $('#resultCut');
   if (!el) return Promise.resolve();
   el.style.setProperty('--accent', win ? '#a07bff' : '#ff4fa3');
+  /* opts.title / opts.sub: 観戦の「A WINS」など、文字を変えるとき */
+  const title = (opts && opts.title) || (win ? 'VICTORY' : 'DEFEAT');
+  const sub = (opts && opts.sub) || (win ? 'ALL PROTOCOLS COMPILED' : 'SYSTEM OVERWRITTEN');
   el.innerHTML =
     '<div class="rc-veil"></div>' +
     '<canvas class="rc-art" aria-hidden="true"></canvas>' +
     '<div class="rc-rays"></div>' +
     '<div class="rc-body">' +
-      '<div class="rc-title" data-text="' + (win ? 'VICTORY' : 'DEFEAT') + '">' + (win ? 'VICTORY' : 'DEFEAT') + '</div>' +
+      '<div class="rc-title" data-text="' + title + '">' + title + '</div>' +
       '<div class="rc-rule"></div>' +
-      '<div class="rc-sub">' + (win ? 'ALL PROTOCOLS COMPILED' : 'SYSTEM OVERWRITTEN') + '</div>' +
+      '<div class="rc-sub">' + sub + '</div>' +
     '</div>';
   el.classList.toggle('lose', !win);
   el.classList.add('show');

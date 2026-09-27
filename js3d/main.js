@@ -8,8 +8,9 @@ import { recordDailyGame, DAILY_XP, dailyView } from './daily.js';
 import { maybeLoginHint } from './account.js';
 import { logPlay } from './playlog.js';
 import * as FEEL from './feel.js';
+import { openSpectate } from './spectate.js';
 import { countUp, dealIn } from './motion.js';
-import { loadGacha, chipsOf } from './gacha.js';
+import { loadGacha, chipsOf, giveChips } from './gacha.js';
 import { earnedChips } from './chips.js';
 import * as CW from './crashwatch.js';
 import { unlockTrophies, TROPHY_XP } from './achievements.js';
@@ -220,6 +221,9 @@ let runEnded = false;            // 勝ち抜き戦の結果を出したか (ラ
 let setupNote = '';
 let lastSetup = null;
 let firstGameHintShown = false;    // はじめの数戦の操作の案内 (1戦に1回)              // いまの CPU 戦のプロトコル { p0, p1 } (もう1戦で同じ組み合わせにする)
+/* 観戦 (spectate.js の結果)。{ a, b, level, bet } / null */
+let spectate = null;
+
 /* タッグデュエル (2 対 2): 味方と相手の味方のプロトコル { p0: [3], p1: [3] }。null ならふつうの対戦 */
 let tagMates = null;
 /* タッグで、自分の側を味方 (CPU) が指している (次に指すのが味方) */
@@ -529,6 +533,7 @@ async function boot() {
     let nextMode = joinCode ? 'online'
       : params.get('run') === '1' ? 'run'
       : params.get('tsume') ? 'tsume'
+      : params.get('watch') === '1' ? 'watch'
       : params.get('title') !== '0'
         ? await runTitle(cards.protocols, accountResume ? { menuOnly: true, after: () => accountReady.then(openAccount) } : undefined)
         : 'single';
@@ -559,6 +564,18 @@ async function boot() {
         return;
       }
       if (nextMode === 'tutorial') { location.href = location.pathname + '?tutorial=1'; return; }
+      /* 観戦: CPU どうし (A = 手前、B = 奥)。ベットしていれば、決着で払い戻す */
+      if (nextMode === 'watch') {
+        const w = await openSpectate(cards.protocols);
+        if (!w) { history.replaceState(null, '', location.pathname); nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
+        document.body.classList.remove('pregame');
+        document.body.classList.add('demo', 'watch');
+        demoMode = true;
+        spectate = w;
+        p0 = w.a; p1 = w.b;
+        applyAiDifficulty(w.level);
+        break;
+      }
       if (nextMode === 'tsume') {
         const id = await TS.openTsumeList();
         if (id) { location.href = location.pathname + '?tsume=' + encodeURIComponent(id); return; }
@@ -688,6 +705,7 @@ async function boot() {
     timing: TIMING,
     testResult: async (win) => { await finaleFx(!!win); await UI.resultCutIn(!!win); },
     endTest: (win) => showEndActions(!!win),
+    spectateEndTest: (aWon) => (spectate ? spectateEnd(!!aWon) : null),
     /* 合成した publicState を流し込んでルーム描画経路を検証する (ポーリングなし) */
     testRoomView: async (rm, instant) => {
       roomMode = true;
@@ -728,6 +746,7 @@ async function boot() {
   if (replayMode) { startReplayView(replayBuilt); return; }
   if (!roomMode) setOppLook(null);                 // CPU 戦などの相手は標準の見た目
   if (!puzzle && !tutorial && !demoMode && !trainingMode && !roomMode) showCpuPlates(p1);
+  if (spectate) spectateStart();
   if (trainingMode) {
     UI.setPrompt('');
     UI.toast('カードを選んで、光っている枠をタップすると置けます', 3200);
@@ -2193,6 +2212,33 @@ function tagPlates(st) {
   });
 }
 
+/* 観戦の始まり: 名札を A (手前) / B (奥) にし、ベットの中身を知らせる */
+function spectateStart() {
+  const icon = (d) => (protoIndex[d[0]] ? { name: d[0], color: protoIndex[d[0]].color } : null);
+  const bet = spectate.bet;
+  const mark = (k) => (bet && bet.side === k ? 'ベット ' + bet.amount + ' CHIP' : 'CPU ' + levelLabel(spectate.level));
+  showPlates({ me: { name: 'A', sub: mark(0), icon: icon(spectate.a) }, opp: { name: 'B', sub: mark(1), icon: icon(spectate.b) } });
+  UI.toast(bet ? 'ベット: ' + (bet.side ? 'B' : 'A') + ' に ' + bet.amount + ' CHIP (当たれば ' + bet.payout + ')' : '観戦: A ' + spectate.a.join(' / ') + '　B ' + spectate.b.join(' / '), 4200);
+}
+/* 観戦の決着: A / B の勝ちを見せ、ベットが当たっていれば払い戻す。次は観戦のメニューかタイトルへ */
+async function spectateEnd(aWon) {
+  const bet = spectate.bet;
+  const hit = bet && (bet.side === 0) === aWon;
+  if (hit) giveChips(bet.payout);
+  sfx(hit || !bet ? 'win' : 'lose');
+  await finaleFx(true);
+  await UI.resultCutIn(true, { title: (aWon ? 'A' : 'B') + ' WINS', sub: bet ? (hit ? 'BET HIT' : 'BET MISSED') : 'SPECTATE' });
+  let el = document.getElementById('endBar');
+  if (!el) { el = document.createElement('div'); el.id = 'endBar'; document.body.appendChild(el); }
+  el.innerHTML = '<div class="end-title">' + (aWon ? 'A' : 'B') + ' の勝ち</div>' +
+    (bet ? '<div class="end-sub">' + (hit ? '当たり！ ' + bet.payout + ' CHIP が戻りました' : 'はずれ (' + bet.amount + ' CHIP)') + '</div>' : '') +
+    '<div class="end-btns"><button class="arr-btn ok" id="endWatch" type="button">もう一度観戦</button>' +
+    '<button class="arr-btn" id="endTop" type="button">TITLE</button></div>';
+  el.classList.add('show');
+  el.querySelector('#endWatch').onclick = () => { location.href = location.pathname + '?watch=1'; };
+  el.querySelector('#endTop').onclick = goTitle;
+}
+
 function showVsTag(rm) {
   if (rm && rm.now) roomServerOffset = Date.parse(rm.now) - Date.now();
   if (rm && rm.ratedError) UI.toast('レート戦の結果を記録できませんでした。時間をおいて戦績を確かめてください', 5000);
@@ -3587,6 +3633,8 @@ async function afterTurn() {
         replayLog = null;
       }
     }
+    /* 観戦は A / B の勝ちで見せ、ベットを払い戻す */
+    if (spectate) { await spectateEnd(win); return; }
     UI.setPrompt(win ? 'あなたの勝ち' : '敗北', 'end');
     const victory = cosmetic('victory', 'default');
     sfx(win ? (victory === 'aurora' ? 'winAurora' : 'win') : 'lose');

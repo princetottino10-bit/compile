@@ -33,7 +33,8 @@ const sum = (m) => Object.values(m).reduce((n, v) => n + v, 0);
 function normalize(s) {
   const paid = numMap(s.paid), back = numMap(s.back);
   if (!Object.keys(paid).length && !Object.keys(back).length && (s.spent | 0) > 0) paid.legacy = Math.max(0, s.spent | 0);
-  return { paid, back, spent: Math.max(0, sum(paid) - sum(back)), owned: s.owned && typeof s.owned === 'object' ? s.owned : {},
+  /* spent はマイナスにもなる (観戦のベットで勝ち越した分)。使える CHIP は chipsOf で 0 未満にしない */
+  return { paid, back, spent: sum(paid) - sum(back), owned: s.owned && typeof s.owned === 'object' ? s.owned : {},
     pulls: s.pulls | 0, pity: s.pity | 0 };
 }
 /* この端末の払った分・返った分を足す */
@@ -161,4 +162,19 @@ export function mergeGacha(a, b) {
   } catch (e) {
     return a || b;
   }
+}
+
+/* ---------- 観戦のベット ----------
+   賭けた CHIP は賭けた時点で払う (途中で閉じても戻らない)。当たったら払い戻しを返す。帳簿はガチャと同じ (端末ごと) */
+/** n CHIP を払う。足りなければ false */
+export function spendChips(n, earned) {
+  const st = loadGacha();
+  if (!(n > 0) || chipsOf(st, earned) < n) return false;
+  saveGacha(addPaid(st, n));
+  return true;
+}
+/** n CHIP を返す (ベットの当たり) */
+export function giveChips(n) {
+  if (!(n > 0)) return;
+  saveGacha(addBack(loadGacha(), n));
 }

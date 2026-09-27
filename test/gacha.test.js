@@ -121,3 +121,21 @@ test('CHIP: 2026-09-27 からの経験値は 1 につき 3、それより前は 
   assert.equal(C.CHIP_PER_XP, 3);
   assert.equal(C.earnedChips(records, log), 1 + 3 * 3 + 5 + 2 * 3);
 });
+
+test('観戦のベット: 強い方ほど倍率が低く、払い戻しは 5 の倍数', async () => {
+  const S = await import('../js3d/spectate.js');
+  const strong = ['FIRE', 'WATER', 'DEATH'], weak = ['METAL', 'APATHY', 'SMOKE'];
+  const p = S.winChance(strong, weak);
+  assert.ok(p > 0.5 && p <= 0.85);
+  assert.ok(S.oddsOf(p) < S.oddsOf(1 - p));
+  assert.ok(S.oddsOf(0.85) >= 1.1);
+  assert.equal(S.payoutOf(15, 1.9) % 5, 0);
+  assert.ok(S.payoutOf(15, 1.9) >= 15 * 1.9);
+});
+
+test('観戦のベット: 当たりの払い戻しは、ガチャに使っていなくても増えた分がそのまま残る', async () => {
+  const G = await load();
+  const s = JSON.parse(G.mergeGacha(JSON.stringify({ paid: { d1: 15 }, back: { d1: 30 } }), '{}'));
+  assert.equal(s.spent, -15);
+  assert.equal(G.chipsOf(s, 10), 25);
+});

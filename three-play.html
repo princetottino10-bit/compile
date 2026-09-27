@@ -899,6 +899,7 @@
   body.pregame #logDock, body.pregame #btnRefresh{display:none!important;}
   body.demo #brand::after{content:"DEMO";margin-left:10px;padding:3px 9px;border-radius:999px;
     font-size:9px;letter-spacing:.2em;color:#04120c;background:var(--mint);}
+  body.demo.watch #brand::after{content:"WATCH";}
 
   /* ---------- 起動オーバーレイ ---------- */
   #boot{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;
@@ -1304,16 +1305,16 @@
   #runBack{position:fixed;right:calc(14px + env(safe-area-inset-right));bottom:24px;z-index:40;min-height:40px;padding:0 16px;
     border-radius:10px;border:1px solid var(--pink);background:rgba(8,12,22,.9);color:#fff;font:800 12px/1 system-ui;cursor:pointer;}
   /* SINGLE GAME: 相手を選ぶ */
-  #oppOv{position:fixed;inset:0;z-index:57;display:none;overflow-y:auto;padding:calc(20px + env(safe-area-inset-top)) 16px 24px;
+  #oppOv,#watchOv{position:fixed;inset:0;z-index:57;display:none;overflow-y:auto;padding:calc(20px + env(safe-area-inset-top)) 16px 24px;
     background:radial-gradient(ellipse at 50% 0%,rgba(185,164,255,.1),transparent 55%),#05070f;}
-  #oppOv.show{display:block;}
+  #oppOv.show,#watchOv.show{display:block;}
   .op-wrap{width:min(980px,100%);margin:0 auto;display:flex;flex-direction:column;gap:18px;}
   .op-head{display:flex;align-items:baseline;gap:12px;}
   .op-head b{font:900 20px/1 var(--font-logo),system-ui;letter-spacing:.14em;color:var(--cyan);}
   .op-head span{font:700 13px/1 system-ui;color:var(--dim);letter-spacing:.1em;}
-  #oppOv section{display:flex;flex-direction:column;gap:8px;}
-  #oppOv h3{margin:0;font:800 13px/1.4 var(--font-hud),system-ui;letter-spacing:.14em;color:#fff;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;}
-  #oppOv h3 small{font:600 11px/1.4 system-ui;letter-spacing:0;color:var(--dim);}
+  #oppOv section,#watchOv section{display:flex;flex-direction:column;gap:8px;}
+  #oppOv h3,#watchOv h3{margin:0;font:800 13px/1.4 var(--font-hud),system-ui;letter-spacing:.14em;color:#fff;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;}
+  #oppOv h3 small,#watchOv h3 small{font:600 11px/1.4 system-ui;letter-spacing:0;color:var(--dim);}
   .op-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
   .op-row.boss{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));}
   .op-card{cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:7px;padding:14px 16px;border-radius:12px;
@@ -1333,6 +1334,34 @@
   .op-foot button{cursor:pointer;min-height:40px;padding:0 16px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);
     color:#e9eef8;font:700 12px/1 system-ui;}
   @media (max-width:700px){ .op-row{grid-template-columns:1fr;} }
+  /* 観戦 (spectate.js) */
+  .wt-chips{margin-left:auto;font:800 12px/1 var(--font-hud),system-ui;letter-spacing:.12em;color:var(--dim);}
+  .wt-chips b{font-size:16px;color:var(--gold);letter-spacing:0;}
+  .wt-match{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:stretch;}
+  .wt-vs{align-self:center;font:900 18px/1 var(--font-logo),system-ui;font-style:normal;color:var(--gold);}
+  .wt-team{cursor:pointer;display:flex;flex-direction:column;gap:10px;padding:14px 16px;border-radius:12px;text-align:left;
+    border:1px solid rgba(185,164,255,.24);background:rgba(8,12,24,.86);color:#e9eef8;transition:transform .16s,border-color .16s,background .16s;}
+  .wt-team > b{font:900 22px/1 var(--font-logo),system-ui;color:#fff;}
+  .wt-team > em{font:800 15px/1 var(--font-hud),system-ui;font-style:normal;color:var(--gold);}
+  .wt-team:hover,.wt-team:focus-visible{transform:translateY(-2px);border-color:var(--cyan);outline:0;}
+  .wt-team.on{border-color:var(--gold);background:linear-gradient(160deg,rgba(255,179,218,.14),rgba(8,12,24,.9));box-shadow:0 0 0 1px var(--gold) inset;}
+  .wt-deck{display:flex;flex-wrap:wrap;gap:6px;}
+  .wt-deck i{display:inline-flex;align-items:center;gap:6px;padding:4px 9px 4px 4px;font:800 12px/1 var(--font-hud),system-ui;font-style:normal;
+    color:#fff;border-left:3px solid var(--pc);background:rgba(255,255,255,.05);}
+  .wt-deck img{width:22px;height:22px;}
+  .wt-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;}
+  .wt-bar > span{font:700 11px/1 system-ui;color:var(--dim);letter-spacing:.08em;}
+  .wt-go{margin-left:auto;cursor:pointer;min-height:40px;padding:0 18px;border:0;clip-path:var(--cut-s);background:var(--pink);color:#fff;
+    font:800 13px/1 var(--font-hud),system-ui;letter-spacing:.06em;}
+  .wt-go:disabled{background:rgba(255,255,255,.08);color:var(--dim);cursor:default;}
+  .wt-free{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:start;}
+  .wt-free > b{font:900 13px/28px var(--font-hud),system-ui;color:#fff;}
+  .wt-grid{display:flex;flex-wrap:wrap;gap:5px;}
+  .wt-proto{cursor:pointer;padding:6px 9px;border:1px solid rgba(255,255,255,.12);border-left:3px solid var(--pc);background:rgba(255,255,255,.03);
+    color:#e9eef8;font:700 11px/1 var(--font-hud),system-ui;letter-spacing:.04em;}
+  .wt-proto.on{background:color-mix(in srgb,var(--pc) 30%,transparent);border-color:var(--pc);color:#fff;}
+  .wt-proto.dim{opacity:.35;}
+  @media (max-width:700px){ .wt-match{grid-template-columns:1fr;} .wt-vs{justify-self:center;} .wt-go{margin-left:0;width:100%;} }
   /* RUN の入口と週替わり3連戦 */
   .rn-mode{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:12px;
     background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.1);}
@@ -3163,14 +3192,14 @@
       "./js3d/fx-protocols.js": "./js3d/fx-protocols.js?v=509fceb211",
       "./js3d/fx.js": "./js3d/fx.js?v=65e09c9137",
       "./js3d/gacha-ui.js": "./js3d/gacha-ui.js?v=d660949787",
-      "./js3d/gacha.js": "./js3d/gacha.js?v=61494f8ffa",
+      "./js3d/gacha.js": "./js3d/gacha.js?v=ce3d4f3faa",
       "./js3d/gachafx.js": "./js3d/gachafx.js?v=3d15a2226f",
       "./js3d/holo.js": "./js3d/holo.js?v=9c52bc0510",
       "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c",
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=e84104c036",
+      "./js3d/main.js": "./js3d/main.js?v=d9aace3927",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=2142e0957c",
       "./js3d/panel.js": "./js3d/panel.js?v=d4a1f0a181",
@@ -3195,18 +3224,19 @@
       "./js3d/settings.js": "./js3d/settings.js?v=d3bec63276",
       "./js3d/setup.js": "./js3d/setup.js?v=e68e661d50",
       "./js3d/solodraft.js": "./js3d/solodraft.js?v=b036b97879",
+      "./js3d/spectate.js": "./js3d/spectate.js?v=3add6e9577",
       "./js3d/stage.js": "./js3d/stage.js?v=e3cda4525b",
       "./js3d/stats-data.js": "./js3d/stats-data.js?v=bcf7d5e977",
       "./js3d/stats.js": "./js3d/stats.js?v=e2b9647dba",
       "./js3d/steps.js": "./js3d/steps.js?v=13e73b20fe",
       "./js3d/theme.js": "./js3d/theme.js?v=b02da60dc1",
-      "./js3d/title.js": "./js3d/title.js?v=cf06541b96",
+      "./js3d/title.js": "./js3d/title.js?v=dfb9e6739c",
       "./js3d/training.js": "./js3d/training.js?v=3018b4399e",
       "./js3d/tsume.js": "./js3d/tsume.js?v=95789a9ad4",
       "./js3d/turning.js": "./js3d/turning.js?v=9c7f79654e",
       "./js3d/tutorial.js": "./js3d/tutorial.js?v=0e6d6237ad",
       "./js3d/tween.js": "./js3d/tween.js?v=99b25c0d63",
-      "./js3d/ui.js": "./js3d/ui.js?v=a698745af7",
+      "./js3d/ui.js": "./js3d/ui.js?v=c615b35dbe",
       "./js3d/weekly-ui.js": "./js3d/weekly-ui.js?v=e2511b1efe",
       "./js3d/weekly.js": "./js3d/weekly.js?v=5605476b1c",
       "./js3d/xp.js": "./js3d/xp.js?v=39e78466ed"
@@ -3220,8 +3250,9 @@
   <link rel="modulepreload" href="js3d/account.js?v=652f7dff55">
   <link rel="modulepreload" href="js3d/playlog.js?v=90aaffedee">
   <link rel="modulepreload" href="js3d/feel.js?v=bde2ed4ddc">
+  <link rel="modulepreload" href="js3d/spectate.js?v=3add6e9577">
   <link rel="modulepreload" href="js3d/motion.js?v=36861b0081">
-  <link rel="modulepreload" href="js3d/gacha.js?v=61494f8ffa">
+  <link rel="modulepreload" href="js3d/gacha.js?v=ce3d4f3faa">
   <link rel="modulepreload" href="js3d/chips.js?v=e67e280b76">
   <link rel="modulepreload" href="js3d/crashwatch.js?v=57c6c91bd8">
   <link rel="modulepreload" href="js3d/achievements.js?v=898d57909c">
@@ -3234,7 +3265,7 @@
   <link rel="modulepreload" href="js3d/control.js?v=c1b87ebc63">
   <link rel="modulepreload" href="js3d/panel.js?v=d4a1f0a181">
   <link rel="modulepreload" href="js3d/setup.js?v=e68e661d50">
-  <link rel="modulepreload" href="js3d/title.js?v=cf06541b96">
+  <link rel="modulepreload" href="js3d/title.js?v=dfb9e6739c">
   <link rel="modulepreload" href="js3d/training.js?v=3018b4399e">
   <link rel="modulepreload" href="js3d/room.js?v=c34129de95">
   <link rel="modulepreload" href="js3d/puzzle.js?v=a6a0904519">
@@ -3269,7 +3300,7 @@
   <link rel="modulepreload" href="js3d/layout.js?v=91b1b5570a">
   <link rel="modulepreload" href="js3d/theme.js?v=b02da60dc1">
   <link rel="modulepreload" href="js3d/tween.js?v=99b25c0d63">
-  <link rel="modulepreload" href="js3d/ui.js?v=a698745af7">
+  <link rel="modulepreload" href="js3d/ui.js?v=c615b35dbe">
   <link rel="modulepreload" href="js3d/input.js?v=cc29feddd4">
   <link rel="modulepreload" href="js3d/playchoices.js?v=e0273dcae0">
   <link rel="modulepreload" href="js3d/aiclient.js?v=704b588b82">
@@ -3278,6 +3309,7 @@
   <link rel="modulepreload" href="js3d/cloudsave.js?v=d1643b2cad">
   <link rel="modulepreload" href="js3d/admin-ui.js?v=1e453b8f99">
   <link rel="modulepreload" href="js3d/device.js?v=b519fe2cae">
+  <link rel="modulepreload" href="js3d/protocol-strength.js?v=c719e5b65c">
   <link rel="modulepreload" href="vendor/three.core.js">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/EffectComposer.js">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/RenderPass.js">
@@ -3287,7 +3319,6 @@
   <link rel="modulepreload" href="js3d/card.js?v=6d8083e5b7">
   <link rel="modulepreload" href="js3d/fx-compile.js?v=2fbcc8e763">
   <link rel="modulepreload" href="js3d/protocards.js?v=a0c3bbfc68">
-  <link rel="modulepreload" href="js3d/protocol-strength.js?v=c719e5b65c">
   <link rel="modulepreload" href="js3d/backdrops.js?v=90faf9612d">
   <link rel="modulepreload" href="js3d/profile.js?v=0a9d78c352">
   <link rel="modulepreload" href="js3d/gacha-ui.js?v=d660949787">
@@ -3306,6 +3337,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=e84104c036"></script>
+  <script type="module" src="js3d/main.js?v=d9aace3927"></script>
 </body>
 </html>
