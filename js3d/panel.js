@@ -53,6 +53,28 @@ function rgba(hex, a) {
   return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
 }
 
+/* 合計値の札の、板のテクスチャ上の位置と大きさ */
+const BADGE = { w: 128, h: 112, x: TEX_W - 128 - 18, y: (TEX_H - 112) / 2 + 8 };
+
+/* 合計値の札。10 以上はコンパイル圏内なので塗りを反転させる。
+   済パネルでも合計はライン比較 (コントロール等) に効くため表示する */
+function paintBadge(ctx, bx, by, total, compiled, accent) {
+  const bw = BADGE.w, bh = BADGE.h;
+  const hot = !compiled && total >= 10;
+  ctx.fillStyle = hot ? accent : (compiled ? 'rgba(4,6,12,.72)' : 'rgba(255,255,255,.09)');
+  roundRect(ctx, bx, by, bw, bh, 16); ctx.fill();
+  if (!hot) {
+    ctx.strokeStyle = rgba(accent, 0.55);
+    ctx.lineWidth = 2;
+    roundRect(ctx, bx, by, bw, bh, 16); ctx.stroke();
+  }
+  ctx.font = '800 80px ' + FONT.hud;
+  ctx.fillStyle = hot ? '#05070f' : '#ffffff';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(String(total), bx + bw / 2, by + bh / 2 + 2);
+  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+}
+
 /* 板1面を描く。compiled=true なら「COMPILED」面 */
 function paint(ctx, info, art) {
   const W = TEX_W, H = TEX_H;
@@ -131,22 +153,9 @@ function paint(ctx, info, art) {
   ctx.fillText(info.name, 112, H * 0.62);
   ctx.textBaseline = 'alphabetic';
 
-  /* 合計値。10 以上はコンパイル圏内なので塗りを反転させる。
-     済パネルでも合計はライン比較 (コントロール等) に効くため表示する */
-  const hot = !compiled && info.total >= 10;
-  const bw = 128, bh = 112, bx = W - bw - 18, by = (H - bh) / 2 + 8;
-  ctx.fillStyle = hot ? accent : (compiled ? 'rgba(4,6,12,.72)' : 'rgba(255,255,255,.09)');
-  roundRect(ctx, bx, by, bw, bh, 16); ctx.fill();
-  if (!hot) {
-    ctx.strokeStyle = rgba(accent, 0.55);
-    ctx.lineWidth = 2;
-    roundRect(ctx, bx, by, bw, bh, 16); ctx.stroke();
-  }
-  ctx.font = '800 80px ' + FONT.hud;
-  ctx.fillStyle = hot ? '#05070f' : '#ffffff';
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText(String(info.total), bx + bw / 2, by + bh / 2 + 2);
-  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  /* 合計値。並べ替えで板が動いている間は描かない (合計はラインのカードのもので、板についていかない。
+     その間はラインの位置に置いた札 (badgeAt) が出す) */
+  if (!info.hideTotal) paintBadge(ctx, BADGE.x, BADGE.y, info.total, compiled, accent);
 
   /* 枠 */
   ctx.strokeStyle = compiled ? '#ffffff' : rgba(accent, 0.5);
@@ -214,6 +223,7 @@ export function createPanels(stage, me, hooks) {
       p.art.loading = null;
       p.art.compiled = null;
     }
+    p.info = info;                        // 絵の読み込みが後から終わったときは、そのときの内容で描く
     const url = ART_SETS.has(info.set) ? protoArtUrl(info.name, false) : null;
     const glitchUrl = ART_SETS.has(info.set) ? protoArtUrl(info.name, true) : null;
 
@@ -226,7 +236,7 @@ export function createPanels(stage, me, hooks) {
       loadArt(url, (img) => {
         if (p.artName !== info.name) return;   // 読込中にまた入れ替わった
         p.art.loading = img;
-        paint(p.loading.ctx, { ...info, compiled: false }, img);
+        paint(p.loading.ctx, { ...p.info, compiled: false }, img);
         p.loading.tex.needsUpdate = true;
       });
     }
@@ -234,7 +244,7 @@ export function createPanels(stage, me, hooks) {
       loadArt(glitchUrl, (img) => {
         if (p.artName !== info.name) return;
         p.art.compiled = img;
-        paint(p.compiled.ctx, { ...info, compiled: true }, img);
+        paint(p.compiled.ctx, { ...p.info, compiled: true }, img);
         p.compiled.tex.needsUpdate = true;
       });
     }
@@ -303,13 +313,42 @@ export function createPanels(stage, me, hooks) {
       }
       p.shown = info.compiled;
     }
-    return Promise.all(moves.map((m, i) => slideFrom(m.p, m.info, m.from, i)));
+    /* 動く板のラインには、合計値の札だけをその場に残す (板と一緒に数字が入れ替わって見えないように) */
+    const stays = moves.map(m => badgeAt(m.p, m.info));
+    return Promise.all(moves.map((m, i) => slideFrom(m.p, m.info, m.from, i))).then(() => { for (const off of stays) off(); });
+  }
+
+  /* 板が並べ替えで動いている間、そのラインの位置に合計値の札だけを出しておく。返り値を呼ぶと消える */
+  const badgeGeo = new THREE.PlaneGeometry(BADGE.w / TEX_W * PANEL_W, BADGE.h / TEX_H * PANEL_D);
+  badgeGeo.rotateX(-Math.PI / 2);
+  function badgeAt(p, info) {
+    const cv = document.createElement('canvas');
+    cv.width = BADGE.w * TEX_SCALE; cv.height = BADGE.h * TEX_SCALE;
+    const ctx = cv.getContext('2d');
+    ctx.setTransform(TEX_SCALE, 0, 0, TEX_SCALE, 0, 0);
+    ctx.fillStyle = '#070a14';
+    roundRect(ctx, 0, 0, BADGE.w, BADGE.h, 16); ctx.fill();
+    paintBadge(ctx, 0, 0, info.total, !!info.compiled, info.color || '#b9a4ff');
+    const tex = new THREE.CanvasTexture(cv);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    const mesh = new THREE.Mesh(badgeGeo, new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }));
+    mesh.renderOrder = 2;
+    /* 板の中での札の位置 (板の中心からのずれ) を、板と同じ向きで床に置く */
+    const slot = LAYOUT.protoSlot(p.line, p.side, me);
+    const holder = new THREE.Group();
+    holder.position.set(slot.pos[0], slot.pos[1] + 0.004, slot.pos[2]);
+    holder.rotation.set(slot.rot[0], slot.rot[1], slot.rot[2]);
+    mesh.position.set((BADGE.x + BADGE.w / 2 - TEX_W / 2) / TEX_W * PANEL_W, 0,
+      (BADGE.y + BADGE.h / 2 - TEX_H / 2) / TEX_H * PANEL_D);
+    holder.add(mesh);
+    stage.scene.add(holder);
+    return () => { stage.scene.remove(holder); tex.dispose(); mesh.material.dispose(); };
   }
 
   /* 板を元のライン (fromLine) の位置から自分のラインへ弧を描いて滑らせる。
      すれ違う板どうしが重ならないよう、弧の高さを交互に変える */
   function slideFrom(p, info, fromLine, order) {
-    repaint(p, info);
+    repaint(p, { ...info, hideTotal: true });
     p.group.rotation.x = info.compiled ? Math.PI : 0;
     p.shown = info.compiled;
     const slot = LAYOUT.protoSlot(p.line, p.side, me);
@@ -322,6 +361,7 @@ export function createPanels(stage, me, hooks) {
       p.group.position.y = slot.pos[1] + Math.sin(Math.PI * t) * lift;
     }, TW.Ease.inOutCubic, () => {
       p.group.position.set(slot.pos[0], slot.pos[1], slot.pos[2]);
+      repaint(p, info);                 // 着いたら、そのラインの合計を板に戻す
     });
   }
 
