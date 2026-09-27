@@ -211,12 +211,24 @@ export function openCosmetics(opts) {
   }
   let tab = (opts && opts.tab) || 'sleeve';
   let focus = null;                  // プレビューに出しているもの (押したもの。はじめは着けているもの)
+  /* 一覧のしぼり込み: 'all' / 'own' (持っている) / 'not' (まだ)。プロトコルの習熟度の分 (30 ずつ) は、
+     持っているものだけ出し、まだのものは showMastery のときだけ (数が多すぎて、ほかが埋もれていた) */
+  let filter = 'all', showMastery = false;
   const firstOpen = (() => { try { return !localStorage.getItem(SEEN_KEY); } catch (e) { return false; } })();
   const render = () => {
     const s = settings();
     const c = ctx();
     const sn = seen();
     const list = itemsOf(tab);
+    /* しぼり込み。着けているものと、プレビューに出しているものは必ず残す */
+    const isMastery = (k) => !!masteryItem(tab, k);
+    const masteryHidden = showMastery ? 0 : list.filter(([k]) => isMastery(k) && !owned(tab, k, c)).length;
+    const shownList = list.filter(([k]) => {
+      const has = owned(tab, k, c);
+      if (k === (tab === 'title' ? (s.title || '') : tab === 'icon' ? (s.icon || '') : (s[tab] || DEFAULT_KEY[tab]))) return true;
+      if (!showMastery && isMastery(k) && !has) return false;
+      return filter === 'all' || (filter === 'own' ? has : !has);
+    });
     const cur = tab === 'title' ? (s.title || '') : tab === 'icon' ? (s.icon || '') : (s[tab] || DEFAULT_KEY[tab]);
     const fk = focus !== null && list.some(([k]) => k === focus) ? focus : cur;
     const fItem = list.find(([k]) => k === fk) || list[0];
@@ -236,8 +248,12 @@ export function openCosmetics(opts) {
         '<section class="cm-preview">' + preview(tab, fItem[0], fItem[1], owned(tab, fItem[0], c), sourceOf(tab, fItem[0])) +
           (owned(tab, fItem[0], c) && fItem[0] !== cur ? '<button type="button" class="cm-equip" data-equip="' + esc(fItem[0]) + '">着ける</button>'
             : fItem[0] === cur ? '<p class="cm-on">着けています</p>' : '') + '</section>' +
-        '<section class="cm-list"><p class="cm-count">' + TABS.find(t => t.kind === tab).label + ' ' + got + ' / ' + list.length + '</p>' +
-          '<div class="cm-grid ' + (tab === 'plate' ? 'nameplate' : tab === 'avatar' ? 'charas' : tab) + '">' + list.map(([key, name]) => {
+        '<section class="cm-list"><div class="cm-filter"><p class="cm-count">' + TABS.find(t => t.kind === tab).label + ' ' + got + ' / ' + list.length + '</p>' +
+          [['all', '全部'], ['own', '持っている'], ['not', 'まだ']].map(([k, label]) =>
+            '<button type="button" class="cm-fbtn' + (filter === k ? ' on' : '') + '" data-filter="' + k + '">' + label + '</button>').join('') +
+          (masteryHidden > 0 || showMastery ? '<button type="button" class="cm-fbtn' + (showMastery ? ' on' : '') + '" data-mastery="1">習熟度の分も見る' +
+            (showMastery ? '' : ' (' + masteryHidden + ')') + '</button>' : '') + '</div>' +
+          '<div class="cm-grid ' + (tab === 'plate' ? 'nameplate' : tab === 'avatar' ? 'charas' : tab) + '">' + shownList.map(([key, name]) => {
             const has = owned(tab, key, c);
             const isNew = !firstOpen && has && key !== '' && key !== DEFAULT_KEY[tab] && !sn.has(tab + ':' + key);
             return '<button type="button" data-key="' + esc(key) + '" class="cm-item' + (has ? '' : ' locked') + (key === cur ? ' cur' : '') + (key === fk ? ' focus' : '') + '">' +
@@ -256,6 +272,8 @@ export function openCosmetics(opts) {
     /* ガチャはこの画面から。閉じたら図鑑を描き直す (引いたものが並ぶ) */
     if (b.classList.contains('cm-gacha')) { openGacha({ onClose: () => render() }); return; }
     if (b.dataset.tab) { tab = b.dataset.tab; focus = null; render(); return; }
+    if (b.dataset.filter) { filter = b.dataset.filter; render(); return; }
+    if (b.dataset.mastery) { showMastery = !showMastery; render(); return; }
     if (b.dataset.equip !== undefined) { setSetting(tab, b.dataset.equip); render(); return; }
     if (b.dataset.key !== undefined) {
       const key = b.dataset.key;
