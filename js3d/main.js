@@ -285,11 +285,19 @@ setInterval(() => {
   const t = cur.state.turns | 0;
   if (t !== avatarIdleTurn && Date.now() - avatarLastInput > 25000) { avatarIdleTurn = t; avatarSay(ME, 'idle'); }
 }, 3000);
-/* ハンデス: 相手の番に、効果で手札を失った側 (捨て札・相手の手札・山札へ。場に出したものは数えない) が嫌がる */
-function avatarHandesCheck(a, b) {
+/* その場面を動かした側: いま解決している効果のカードの持ち主 (相手の番に自分のカードの効果が出ることもある)。
+   効果の途中でなければ、その場面の手番 */
+function actorOf(step, from) {
+  const src = effectSource(step);
+  const c = src && from && from.cards && from.cards[src];
+  return c ? c.owner : from.turn;
+}
+/* ハンデス: 相手 (の効果) に手札を失わされた側 (捨て札・相手の手札・山札へ。場に出したものは数えない) が嫌がる。
+   actor: その場面を動かした側 (actorOf) */
+function avatarHandesCheck(a, b, actor) {
   if (!avatars || !a || !b || !a.players || !b.players) return;
   for (const s of [0, 1]) {
-    if (a.turn === s) continue;                          // 自分の番に自分で捨てたもの (手札の上限など) は数えない
+    if ((actor === undefined ? a.turn : actor) === s) continue;   // 自分の効果・自分の番に自分で捨てたもの (手札の上限など) は数えない
     const now = new Set(b.players[s].hand);
     const lost = a.players[s].hand.filter(u => !now.has(u) && b.cards[u] && !/^(field|committed|transit)/.test(b.cards[u].zone || ''));
     if (lost.length) avatarSay(s, 'handes', null, b, 5000);
@@ -2849,9 +2857,9 @@ async function replayResolution(prev, res, action) {
       /* 間引きで飛ばしたコマ (効果の結果) がまだ盤面に出ていなければ、手番やフェイズを告げる前に盤面を追いつかせる。
          追いつかせないと、効果の結果が出る前に「相手のターン」の演出が出ていた */
       if (visualFingerprint(from) !== step.fp) {
-        avatarActor = from.turn;
+        avatarActor = actorOf(step, from);
         await board.applyTransition(from, step.st, first ? action : null, { speed: STEP_MOTION, source: effectSource(step) });
-        avatarHandesCheck(from, step.st);
+        avatarHandesCheck(from, step.st, avatarActor);
         await syncPanels(step.st, true);
         from = step.st;
         first = false;
@@ -2867,10 +2875,10 @@ async function replayResolution(prev, res, action) {
     const t0 = performance.now();
     const uid = step.uid || (step.cue && step.cue.uid) || null;
     /* チェーンの途中は動きもさらにゆっくり見せる */
-    avatarActor = from.turn;
+    avatarActor = actorOf(step, from);
     await board.applyTransition(from, step.st, first ? action : null,
       { speed: chainShown ? STEP_MOTION * 1.3 : STEP_MOTION, source: effectSource(step) });
-    avatarHandesCheck(from, step.st);
+    avatarHandesCheck(from, step.st, avatarActor);
     /* プロトコル板 (並び・合計値) もこのコマに合わせる。並べ替えは板が動き終わるまで待つ */
     await syncPanels(step.st, true);
     /* この絵の時点のチェーン。1つ解決して短くなったら、解決したことが分かるよう少し待つ */
