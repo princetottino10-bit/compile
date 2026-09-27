@@ -8,6 +8,8 @@ import { recordDailyGame, DAILY_XP, dailyView } from './daily.js';
 import { maybeLoginHint } from './account.js';
 import { logPlay } from './playlog.js';
 import * as FEEL from './feel.js';
+import { countUp, dealIn } from './motion.js';
+import { loadGacha, chipsOf } from './gacha.js';
 import * as CW from './crashwatch.js';
 import { unlockTrophies, TROPHY_XP } from './achievements.js';
 import { addReplay, getReplay, pinReplay, rebuild } from './replays.js';
@@ -166,6 +168,7 @@ function gameSummary(st, side, win, level, online) {
 async function afterGameProgress(st, side, win, level, online) {
   const game = gameSummary(st, side, win, level, online);
   const r = recordDailyGame(game, Object.keys(protoIndex));
+  if (matchGains) matchGains.daily.push(...r.cleared.map(m => m.text));
   if (r.cleared.length) {
     const xp = r.cleared.reduce((n, m) => n + m.xp, 0) + (r.allNow ? DAILY_XP.all : 0);
     UI.toast('DAILY MISSION CLEAR — ' + r.cleared.map(m => m.text).join(' / ') + (r.allNow ? ' (3つ達成)' : '') + '  +' + xp + ' XP', 3600);
@@ -186,6 +189,7 @@ async function checkTrophies(game) {
       const got = unlockTrophies(trophyContext(pass ? null : game));
       if (!got.length) break;
       const before = myLevel;
+      if (matchGains) matchGains.trophies.push(...got.map(t => t.name));
       for (const t of got) grantXp('trophy', TROPHY_XP[t.tier], 'ach:' + t.id);
       refreshCardGlow();
       await showTrophyBanner(got);
@@ -214,6 +218,8 @@ let runEnded = false;            // 勝ち抜き戦の結果を出したか (ラ
 let setupNote = '';
 let lastSetup = null;
 let firstGameHintShown = false;    // はじめの数戦の操作の案内 (1戦に1回)              // いまの CPU 戦のプロトコル { p0, p1 } (もう1戦で同じ組み合わせにする)
+/* この試合で手に入ったもの (対戦のあとの画面に1つずつ出す)。{ xp0, lv0, daily: [文], trophies: [名前] } */
+let matchGains = null;
 /* おまかせで使う基本セット (最初の12プロトコル。効果が素直で覚えやすい) */
 const QUICK_POOL = ['FIRE', 'WATER', 'SPEED', 'DEATH', 'LIFE', 'LIGHT', 'DARKNESS', 'GRAVITY', 'METAL', 'PSYCHIC', 'SPIRIT', 'PLAGUE'];
 /* リプレイ (replays.js): 対局中の棋譜 { init, actions }、いま見ているリプレイ、直前の試合のリプレイ id */
@@ -3474,6 +3480,9 @@ async function afterTurn() {
         turns: (cur.state.turns || 0) + 1, logged: !!accountState().user });
     }
     const levelBefore = myLevel;
+    if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial) {
+      matchGains = { xp0: playerLevel(localRecords(), bonusXp()).xp, lv0: myLevel, daily: [], trophies: [] };
+    }
     /* チュートリアルは戦績・リプレイ・実績に数えない */
     if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial) {
       const st0 = cur.state;
@@ -3545,6 +3554,34 @@ function nextGoalsHtml() {
     '<i style="--p:' + Math.round(pl.progress * 100) + '%"></i>' + (daily ? '<span>' + daily.replace(/[<>&]/g, '') + '</span>' : '') + '</div>';
 }
 
+/* この試合で手に入ったもの: 経験値・CHIP・デイリー・実績・レベル。数字は数え上げ、1行ずつ配るように出す */
+function gainsHtml() {
+  if (!matchGains) return '';
+  const xp = playerLevel(localRecords(), bonusXp()).xp - matchGains.xp0;
+  if (xp <= 0 && !matchGains.daily.length && !matchGains.trophies.length) return '';
+  const chips = chipsOf(loadGacha(), playerLevel(localRecords(), bonusXp()).xp);
+  const esc = (t) => String(t).replace(/[<>&"]/g, '');
+  const rows = [];
+  if (xp > 0) {
+    rows.push('<li class="eg-num"><small>経験値</small><b data-from="0" data-to="' + xp + '" data-plus="1">+' + xp + '</b></li>');
+    rows.push('<li class="eg-num"><small>CHIP</small><b data-from="' + Math.max(0, chips - xp) + '" data-to="' + chips + '">' + chips + '</b><em>+' + xp + '</em></li>');
+  }
+  if (myLevel > matchGains.lv0) rows.push('<li class="eg-lv"><small>レベル</small><b>LV ' + matchGains.lv0 + ' → ' + myLevel + '</b></li>');
+  for (const t of matchGains.daily) rows.push('<li class="eg-daily"><small>デイリー達成</small><span>' + esc(t) + '</span></li>');
+  for (const t of matchGains.trophies) rows.push('<li class="eg-trophy"><small>実績</small><span>' + esc(t) + '</span></li>');
+  return '<ul class="end-gains" aria-label="この試合で手に入ったもの">' + rows.join('') + '</ul>';
+}
+function playGains(el) {
+  const rows = el.querySelectorAll('.end-gains li');
+  dealIn(rows, { stagger: 150, delay: 120 });
+  rows.forEach((li, i) => {
+    const b = li.querySelector('b[data-to]');
+    if (!b) return;
+    const plus = b.dataset.plus === '1';
+    countUp(b, +b.dataset.from, +b.dataset.to, { delay: 120 + i * 150 + 200, ms: 900, fmt: (n) => (plus ? '+' : '') + n });
+  });
+}
+
 /* 対局後の導線。盤面は残したまま、次の行動を選べるようにする */
 /* タイトルへ: URL の対戦の指定 (?me=&ai=&lv= や ?quick=1) を外して開き直す。
    読み直すだけだと、REMATCH やおまかせのあとで同じ対戦がまた始まっていた */
@@ -3561,6 +3598,7 @@ function showEndActions(win) {
   if (underdogWin) celebrateUnderdog();
   el.innerHTML =
     '<div class="end-title">' + (underdogWin ? '下剋上 達成！' : win ? 'あなたの勝ち' : '敗北') + '</div>' +
+    gainsHtml() +
     nextGoalsHtml() +
     (underdogWin ? '<div class="end-sub">最弱のデッキで最強に勝ちました。称号 GIANT SLAYER・専用スリーブとマーカー・+' + UNDERDOG_XP + ' XP</div>' : '') +
     '<div class="end-btns">' +
@@ -3571,6 +3609,7 @@ function showEndActions(win) {
       (lastReplayId ? '<button class="arr-btn" id="endSave" type="button">SAVE REPLAY</button>' : '') +
     '</div>';
   el.classList.add('show');
+  playGains(el);
   const saveBtn = el.querySelector('#endSave');
   if (saveBtn) {
     saveBtn.onclick = () => {

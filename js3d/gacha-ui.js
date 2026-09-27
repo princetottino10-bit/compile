@@ -2,6 +2,7 @@
  * COSMETICS のガチャの画面 (進行と保存は gacha.js)
  *   タイトルの GACHA から開く。CHIP で1回 / 10連。出たものは図鑑にたまり、COSMETICS で選べる
  * ========================================================================= */
+import { countUp, dealIn } from './motion.js';
 import * as G from './gacha.js';
 import { playCapsule, RAR_NAMES, confetti, RAR_COLORS } from './gachafx.js';
 import { itemArtHtml } from './cosmetics-mode.js';
@@ -108,6 +109,7 @@ export function openGacha(opts) {
     if (ev.target.closest('#gaLogin')) { el.classList.remove('show'); openAccount(); return; }
     const b = ev.target.closest('.ga-pull');
     if (!b || b.disabled || busy) return;
+    const chipsBefore = G.chipsOf(G.loadGacha(), earnedChips());
     const r = G.pullAndSave(earnedChips(), +b.dataset.n);
     if (!r) return;
     busy = true;
@@ -117,6 +119,9 @@ export function openGacha(opts) {
     last = r.results;
     busy = false;
     render();
+    /* 使った CHIP を数え下げて見せる (かぶりで戻った分も込みの、いまの残り) */
+    countUp(el.querySelector('.ga-chip b'), chipsBefore, G.chipsOf(G.loadGacha(), earnedChips()), { ms: 700 });
+    dealIn(el.querySelectorAll('.ga-res'), { stagger: 60, ms: 360 });
     /* ログインしていなければ守るよう勧める (レアを引いたら強めに) */
     maybeLoginHint(best.rar === 'E' || best.rar === 'L' ? 'rarePull' : 'gacha');
     /* ガチャの実績 (回した・そろえた) */
