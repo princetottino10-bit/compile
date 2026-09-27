@@ -90,7 +90,7 @@ export const AVATARS = {
     }
   },
   yamabuki: {
-    name: '菜花', color: '#ffc94a',   /* id は yamabuki のまま (持っている記録が id で残っているため) */
+    name: '杏', color: '#ffc94a',   /* id は yamabuki のまま (持っている記録が id で残っているため)。名前は色の名前 (杏色) */
     lines: {
       rearrange: ['ぐるっと入れ替え！', 'シャッフルだー！'],
       wipe: ['ぜーんぶ吹っ飛べ！', '大掃除だー！'],
