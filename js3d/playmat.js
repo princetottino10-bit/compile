@@ -301,16 +301,26 @@ function drawHalf(ctx, img, y) {
   const sw = hw / s, sh = hh / s;
   ctx.drawImage(img, (img.naturalWidth - sw) / 2, (img.naturalHeight - sh) / 2, sw, sh, 0, y, hw, hh);
 }
-function drawArtMat(key, img) {
+/* 全面 (W x H) に1枚、自分の向きで敷く */
+function drawFull(ctx, img) {
+  const s = Math.max(W / img.naturalWidth, H / img.naturalHeight);
+  const sw = W / s, sh = H / s;
+  ctx.drawImage(img, (img.naturalWidth - sw) / 2, (img.naturalHeight - sh) / 2, sw, sh, 0, 0, W, H);
+}
+/* full: 相手がマットを選んでいないとき。自分と相手で向かい合わせの2枚ではなく、盤面全体に1枚 */
+function drawArtMat(key, img, full) {
   return (ctx) => {
     ctx.fillStyle = '#0b0a12';
     ctx.fillRect(0, 0, W, H);
-    if (img) {
+    if (img && full) drawFull(ctx, img);
+    else if (img) {
       const half = H / 2;
       drawHalf(ctx, img, half);                                          // 手前 (自分の向き)
       ctx.save(); ctx.translate(W, half); ctx.rotate(Math.PI);           // 奥 (相手の向き)
       drawHalf(ctx, img, 0);
       ctx.restore();
+    }
+    if (img) {
       ctx.fillStyle = 'rgba(6,8,16,' + artMatOf(key).dim + ')';         // 暗い画面になじむよう沈める
       ctx.fillRect(0, 0, W, H);
     }
@@ -328,9 +338,10 @@ const cache = new Map();
 /* 画面の形で山の置き場が動くので、その形ごとに描き分ける */
 function layoutKey() { return (VIEW.short ? 's' : 'n') + Math.round(VIEW.k * 20); }
 
-export function playmatTexture(key) {
+export function playmatTexture(key, full) {
   if (!DRAW[key] && !artMatOf(key)) return null;
-  const ck = key + ':' + layoutKey();
+  full = !!full && !!artMatOf(key);                // 柄のマットは元から全面が同じ柄
+  const ck = key + ':' + layoutKey() + (full ? ':full' : '');
   if (cache.has(ck)) return cache.get(ck);
   const cv = document.createElement('canvas');
   cv.width = W; cv.height = H;
@@ -341,7 +352,7 @@ export function playmatTexture(key) {
     /* 絵は読み込めてから描き直す (それまでは暗い地に枠だけ) */
     let img = artImages.get(key);
     if (!img) { img = new Image(); img.src = artMatOf(key).src; artImages.set(key, img); }
-    const paint = () => { drawArtMat(key, img.complete && img.naturalWidth ? img : null)(cv.getContext('2d')); tex.needsUpdate = true; };
+    const paint = () => { drawArtMat(key, img.complete && img.naturalWidth ? img : null, full)(cv.getContext('2d')); tex.needsUpdate = true; };
     paint();
     if (!img.complete) img.addEventListener('load', paint, { once: true });
   } else {

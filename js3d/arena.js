@@ -227,10 +227,12 @@ export function buildArena(stage) {
   });
   let matKeys = [null, null];
   /* mine: 自分の柄、opp: 相手の柄 (省くと自分と同じ) */
+  /* opp が null / undefined (相手がマットを選んでいない) なら、自分のマットを盤面全体に1枚で敷く */
   function setMat(mine, opp) {
-    matKeys = [mine, opp === undefined ? mine : opp];
-    matKeys.forEach((key, i) => {
-      const tex = key ? playmatTexture(key) : null;
+    const full = opp === null || opp === undefined;
+    matKeys = [mine, full ? null : opp];
+    [mine, full ? mine : opp].forEach((key, i) => {
+      const tex = key ? playmatTexture(key, full) : null;
       const mesh = halves[i];
       mesh.visible = !!tex;
       if (tex && mesh.material.map !== tex) { mesh.material.map = tex; mesh.material.needsUpdate = true; }

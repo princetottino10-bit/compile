@@ -103,7 +103,8 @@ function cleanLook(look) {
 }
 function applyLooks() {
   if (!arena || !ctrlMarker) return;
-  arena.setMat(myLook(settings()).mat, oppLook.mat);
+  /* 相手がマットを選んでいない (標準の NEON GRID・CPU 戦) ときは、自分のマットを盤面全体に敷く */
+  arena.setMat(myLook(settings()).mat, oppLook.mat === 'neon' ? null : oppLook.mat);
   ctrlMarker.setStyle(cosmetic('marker', 'default'), oppLook.marker);
 }
 function setOppLook(look) {
