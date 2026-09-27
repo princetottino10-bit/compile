@@ -11,8 +11,8 @@ const DEFAULTS = { speed: 1, sfx: 80, pauses: true, autoPick: true, oppSummary: 
   victory: 'default', title: '', icon: '',
   /* おまかせで今すぐ始める: 相手の強さ (0 かんたん / 1 ふつう / 2 つよい) と、今日のデイリーのプロトコルを自分に入れるか */
   quickLevel: 0, quickDaily: false,
-  /* 対戦のそばにキャラ (アバター) を出す */
-  avatar: true };
+  /* 対戦のそばのキャラ (アバター) の key (avatar.js の AVATARS)。false なら出さない */
+  avatar: 'shion' };
 const QUICK_LEVELS = ['かんたん', 'ふつう', 'つよい'];
 const SPEEDS = [
   { v: 0.65, label: 'ゆっくり' },          // 何が起きたかを1つずつ追いたい人向け

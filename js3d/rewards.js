@@ -67,6 +67,8 @@ export const COSMETICS = {
     ['slayer', 'GIANT SLAYER'], ['laurel', 'LAUREL']],
   ccolor: [['default', 'PROTOCOL'], ['gold', 'GOLD'], ['cyan', 'CYAN'], ['rainbow', 'RAINBOW'], ['lime', 'LIME'], ['violet', 'VIOLET'], ['ember', 'EMBER']],
   victory: [['default', 'STANDARD'], ['aurora', 'AURORA']],
+  /* 対戦のそばのキャラ (avatar.js)。紫苑ははじめから、ほかはガチャ */
+  avatar: [['shion', '紫苑'], ['asagi', '浅葱'], ['yamabuki', '山吹'], ['nadeshiko', '撫子']],
   /* 対戦中の名札の枠 (相手にも見える) */
   plate: [['default', 'STANDARD'], ['gold', 'GOLD'], ['sakura', 'SAKURA'], ['washi', 'WASHI'], ['neon', 'NEON'], ['urushi', 'URUSHI'],
     ['crystal', 'CRYSTAL'], ['royal', 'ROYAL'], ...MASTERY_PROTOS.map(p => [pkey(p), p])]
@@ -74,7 +76,11 @@ export const COSMETICS = {
 
 /* ガチャ (COSMETICS の GACHA) でしか出ない見た目と称号。rar: C / R / E / L。
    持っているかは compileGacha (gacha.js が書く) の owned { 'kind:key': 取った時刻 } で見る */
+/* 対戦のキャラを出すまで (いまは管理者だけが見られる) は false。true にするとガチャに入り、だれでも選べる */
+export const AVATAR_RELEASED = false;
+export const AVATAR_GACHA = [{ kind: 'avatar', key: 'asagi', rar: 'R' }, { kind: 'avatar', key: 'yamabuki', rar: 'R' }, { kind: 'avatar', key: 'nadeshiko', rar: 'E' }];
 export const GACHA_ITEMS = [
+  ...(AVATAR_RELEASED ? AVATAR_GACHA : []),
   { kind: 'sleeve', key: 'mint', rar: 'C' }, { kind: 'sleeve', key: 'ocean', rar: 'C' },
   { kind: 'marker', key: 'emerald', rar: 'C' }, { kind: 'marker', key: 'amber', rar: 'C' }, { kind: 'ccolor', key: 'lime', rar: 'C' },
   { kind: 'sleeve', key: 'ember', rar: 'R' }, { kind: 'sleeve', key: 'glacier', rar: 'R' }, { kind: 'marker', key: 'sapphire', rar: 'R' },
@@ -206,6 +212,8 @@ export function setUnlockAll(on) {
 /* その見た目を解放するレベル (はじめからなら 1) */
 export function unlockLevel(kind, key) {
   if (unlockAll) return 1;
+  /* 出す前のキャラは (見られる管理者が試せるよう) 全部使える */
+  if (kind === 'avatar' && !AVATAR_RELEASED) return 1;
   /* ガチャの見た目はレベルでは開かない (取っていれば 1、取っていなければ届かない数) */
   if (isGachaItem(kind, key)) return gachaOwned()[gachaId(kind, key)] ? 1 : 9999;
   if (isUnderdogItem(kind, key)) return underdogCleared() ? 1 : 9999;

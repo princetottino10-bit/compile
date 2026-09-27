@@ -9,7 +9,7 @@ import { maybeLoginHint } from './account.js';
 import { logPlay } from './playlog.js';
 import * as FEEL from './feel.js';
 import { openSpectate } from './spectate.js';
-import { mountAvatar } from './avatar.js';
+import { mountAvatar, AVATARS, avatarIds } from './avatar.js';
 import { countUp, dealIn } from './motion.js';
 import { loadGacha, chipsOf, giveChips } from './gacha.js';
 import { earnedChips } from './chips.js';
@@ -222,14 +222,66 @@ let runEnded = false;            // 勝ち抜き戦の結果を出したか (ラ
 let setupNote = '';
 let lastSetup = null;
 let firstGameHintShown = false;    // はじめの数戦の操作の案内 (1戦に1回)              // いまの CPU 戦のプロトコル { p0, p1 } (もう1戦で同じ組み合わせにする)
-/* 対戦のそばのキャラ (avatar.js)。問題・チュートリアル・観戦・トレーニングでは出さない。
+/* 対戦のそばのキャラ (avatar.js)。自分 (左下)・タッグの味方 (その後ろ)・相手 (右上)。
+   問題・観戦・トレーニング・リプレイでは出さない (チュートリアルと勝ち抜き戦・週替わりでは出す)。
    2026-09-27: いったん管理者にだけ見せている (ユーザーの指示)。ログインの確認が済んだら出し入れし直す */
-let avatar = null;
-let avatarHurtAt = 0;
+let avatars = null;              // { me, mate, opp, oppIds: [1人目, 2人目] }
+const avatarSaidAt = {};         // 同じ種類のひとことを続けて言わない
+function myAvatarId() { const k = settings().avatar; return AVATARS[k] ? k : 'shion'; }
+/* 相手のキャラ: 自分・味方と重ならない中から、相手のプロトコルで決める (勝ち抜き戦は1戦ごとに替わる) */
+function oppAvatarIds(taken) {
+  const pool = avatarIds().filter(i => !taken.includes(i));
+  let h = 0;
+  for (const ch of (cur && cur.state ? ownProtos(cur.state, AI).join() : '')) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  /* ふつうの CPU 戦・タッグの1人目は、紫苑と対になる撫子 (空いていれば)。勝ち抜き戦・週替わりは1戦ごとに替える */
+  const a = !runMode && pool.includes('nadeshiko') ? 'nadeshiko' : pool.length ? pool[h % pool.length] : 'nadeshiko';
+  const rest = pool.filter(i => i !== a);
+  return [a, rest.length ? rest[(h >>> 3) % rest.length] : a];
+}
 function syncAvatar() {
-  const want = !!accountState().admin && settings().avatar !== false && !puzzle && !tutorial && !demoMode && !trainingMode && !replayMode && !!cur;
-  if (want && !avatar) avatar = mountAvatar('shion');
-  else if (!want && avatar) { avatar.destroy(); avatar = null; }
+  const want = !!accountState().admin && settings().avatar !== false && !puzzle && !demoMode && !trainingMode && !replayMode && !!cur;
+  if (!want) {
+    if (avatars) for (const k of ['me', 'mate', 'opp']) if (avatars[k]) avatars[k].destroy();
+    avatars = null;
+    return;
+  }
+  if (avatars) return;
+  const me = myAvatarId();
+  const mate = tagMates ? (avatarIds().find(i => i !== me && i === 'asagi') || avatarIds().find(i => i !== me)) : null;
+  const oppIds = oppAvatarIds([me, mate].filter(Boolean));
+  avatars = {
+    me: mountAvatar(me, { side: 'me' }),
+    mate: mate ? mountAvatar(mate, { side: 'me', back: true }) : null,
+    opp: tutorial ? null : mountAvatar(oppIds[0], { side: 'opp' }),
+    oppIds
+  };
+  if (avatars.opp) setTimeout(() => { if (avatars && avatars.opp) avatars.opp.react('hello'); }, 900);
+}
+/* いま、その側で話す人 (タッグは指している人) */
+function avatarOf(side, st) {
+  if (!avatars) return null;
+  if (side !== ME) return avatars.opp;
+  const s = st || (cur && cur.state);
+  return avatars.mate && s && s.tag && s.tag.pilot[ME] === 1 ? avatars.mate : avatars.me;
+}
+function avatarSay(side, kind, vars, st, gapMs) {
+  const a = avatarOf(side, st);
+  if (!a) return;
+  const k = side + ':' + kind;
+  if (gapMs && Date.now() - (avatarSaidAt[k] || 0) < gapMs) return;
+  avatarSaidAt[k] = Date.now();
+  a.react(kind, vars);
+}
+/* タッグ: 指す番の人が前に出る。相手は、その番の人のキャラに替える */
+function avatarTagTurn(st) {
+  if (!avatars || !st || !st.tag) return;
+  if (avatars.mate) {
+    const partner = st.tag.pilot[ME] === 1;
+    avatars.me.setBack(partner);
+    avatars.mate.setBack(!partner);
+  }
+  const want = avatars.oppIds[st.tag.pilot[AI]];
+  if (avatars.opp && avatars.opp.id !== want) { avatars.opp.destroy(); avatars.opp = mountAvatar(want, { side: 'opp' }); }
 }
 
 /* 観戦 (spectate.js の結果)。{ a, b, level, bet } / null */
@@ -404,7 +456,9 @@ async function boot() {
     onLand: (o) => { if (o.byMe) FEEL.buzz(o.faceUp ? 14 + o.value * 4 : 12); },
     onCompile: async (info) => {
       FEEL.buzz(info.side === ME ? [30, 60, 50] : 40);
-      if (avatar) avatar.react(info.side === ME ? 'compile' : 'compiled');
+      /* コンパイルした側は喜び、された側は少し遅れて悔しがる */
+      avatarSay(info.side, 'compile');
+      setTimeout(() => avatarSay(1 - info.side, 'compiled'), 1300);
       /* まず盤上のプロトコルカードを "Compiled" 面へ裏返し、その後にカットイン */
       await panels.flipAt(info.line, info.side, true);
       await UI.compileCutIn({
@@ -424,11 +478,9 @@ async function boot() {
       for (const e of events) {
         if (e.delta && Math.abs(e.delta) <= 20) FEEL.floatDelta(stage, e.pos, e.delta, e.color);
         if (e.ready) { FEEL.readyBurst(stage, e.pos, e.color); if (e.side === ME) FEEL.buzz(18); }
-        /* 相手の手で自分のラインが大きく減った: キャラが驚く (続けては言わない) */
-        if (avatar && e.side === ME && e.delta <= -4 && cur.state.turn !== ME && Date.now() - avatarHurtAt > 8000) {
-          avatarHurtAt = Date.now();
-          avatar.react('hurt');
-        }
+        /* 相手の手でラインが大きく減った側は驚く。コンパイル目前になった側は「あと少し」(続けては言わない) */
+        if (e.delta <= -4 && cur.state.turn !== e.side) avatarSay(e.side, 'hurt', null, null, 8000);
+        else if (e.ready) avatarSay(e.side, 'almost', null, null, 12000);
       }
     }
   });
@@ -724,7 +776,7 @@ async function boot() {
     testResult: async (win) => { await finaleFx(!!win); await UI.resultCutIn(!!win); },
     endTest: (win) => showEndActions(!!win),
     spectateEndTest: (aWon) => (spectate ? spectateEnd(!!aWon) : null),
-    avatarTest: (kind) => (avatar ? avatar.react(kind, { card: 'FIRE 3' }) : null),
+    avatarTest: (kind, side) => avatarSay(side === 1 ? AI : ME, kind, { card: 'FIRE 3' }),
     /* 合成した publicState を流し込んでルーム描画経路を検証する (ポーリングなし) */
     testRoomView: async (rm, instant) => {
       roomMode = true;
@@ -767,7 +819,8 @@ async function boot() {
   if (!puzzle && !tutorial && !demoMode && !trainingMode && !roomMode) showCpuPlates(p1);
   if (spectate) spectateStart();
   syncAvatar();
-  onAccountChange(syncAvatar);                      // 管理者かどうかは、ログインの確認のあとで分かる
+  onAccountChange(() => { const had = !!avatars; syncAvatar(); if (!had && avatars && tutorial) avatarSay(ME, 'lesson'); });   // 管理者かどうかは、ログインの確認のあとで分かる
+  if (tutorial) setTimeout(() => avatarSay(ME, 'lesson'), 700);
   if (!accountState().ready) initAccount();         // REMATCH など URL から直に始めた対戦でも確かめる
   if (trainingMode) {
     UI.setPrompt('');
@@ -869,6 +922,7 @@ async function tutorialAfterStep() {
     await gainXp('lesson', XP_GAIN.lesson, 'tu:' + i);
     if (last) await gainXp('tutorial', XP_GAIN.tutorialAll, 'tu:all');
   }
+  avatarSay(ME, r.ok ? 'good' : 'retry');
   TU.showCoachResult(i, r, () => {
     if (r.ok && last) {
       TU.showTutorialDone({
@@ -902,6 +956,7 @@ async function startLesson(index) {
   refreshHud();
   try { history.replaceState(null, '', location.pathname + '?tutorial=' + (index + 1)); } catch (e) { /* file:// など */ }
   stage.home(400);
+  avatarSay(ME, 'lesson');
   await drainRequests();
   await afterTurn();
 }
@@ -2541,6 +2596,7 @@ async function announceTurnFor(turn, atState) {
   const tagSt = atState || (cur && cur.state);
   if (tagMates && tagSt && tagSt.tag) {
     tagPlates(tagSt);
+    avatarTagTurn(tagSt);
     const pilot = tagSt.tag.pilot[turn];
     await UI.turnCutIn(turn === ME, turn === ME ? (pilot ? 'PARTNER TURN' : 'YOUR TURN') : 'RIVAL ' + (pilot + 1) + ' TURN');
   } else await UI.turnCutIn(turn === ME);
@@ -2808,7 +2864,7 @@ async function step(action) {
   const topLevel = action.type === 'play' || action.type === 'refresh';
   CW.battleProgress(res.state.turns | 0);
   /* 自分で表向きに出したカード: キャラがひとこと */
-  if (avatar && action.type === 'play' && action.faceUp && before.turn === ME && !partnerMove(before)) avatar.react('play', { card: cardName(action.card) });
+  if (action.type === 'play' && action.faceUp) avatarSay(before.turn, 'play', { card: cardName(action.card) }, before);
   if (topLevel && assistGame() && before.turn === ME) {
     undoPoint = { cur, replayLen: replayLog ? replayLog.actions.length : 0, histLen: gameHistory.length };
   }
@@ -3659,7 +3715,8 @@ async function afterTurn() {
     }
     /* 観戦は A / B の勝ちで見せ、ベットを払い戻す */
     if (spectate) { await spectateEnd(win); return; }
-    if (avatar) avatar.react(win ? 'win' : 'lose');
+    avatarSay(ME, win ? 'win' : 'lose');
+    setTimeout(() => avatarSay(AI, win ? 'lose' : 'win'), 900);
     UI.setPrompt(win ? 'あなたの勝ち' : '敗北', 'end');
     const victory = cosmetic('victory', 'default');
     sfx(win ? (victory === 'aurora' ? 'winAurora' : 'win') : 'lose');

@@ -1,38 +1,103 @@
 /* =========================================================================
- * 対戦のそばに出すキャラ (アバター)。タッグフォースのように、画面の左下に胸から上を出し、
+ * 対戦のそばに出すキャラ (アバター)。タッグフォースのように、胸から上を画面の隅に出し、
  * 手に合わせて表情を変え、吹き出しでひとこと言う。
+ *   自分 (と味方) は左下、相手は右上 (向かい合うよう左右を反転)。タッグの味方は自分のキャラの後ろに立ち、
+ *   指す番の人が前に出る。
  *   表情は差し替えの絵 (art/avatar/<id>_<表情>.webp、背景は透明)。数秒ごとにまばたき、ゆっくり息をする。
- *   動きを減らす設定では、息とまばたきを止める (表情と吹き出しは出す)
+ *   動きを減らす設定では、息とまばたきと吹き出しの動きを止める (表情とセリフは出す)
  * ========================================================================= */
+export const FACES = ['normal', 'blink', 'happy', 'fired', 'frustrated', 'surprised'];
+
+/* キャラ。lines は性格ごとのセリフ ({card} は出したカードの名前) */
 export const AVATARS = {
   shion: {
-    name: '紫苑',
-    faces: ['normal', 'blink', 'happy', 'fired', 'frustrated', 'surprised'],
+    name: '紫苑', color: '#a07bff',
     lines: {
       play: ['行って、{card}！', '{card}、お願い。', 'ここは {card} で。'],
       compile: ['コンパイル、完了。', 'ひとつ、もらったよ。'],
       compiled: ['くっ……', 'まだ、これから。'],
       hurt: ['えっ……', 'そう来るの？'],
+      almost: ['あと少し……', '次で、決める。'],
       win: ['勝った。ありがとう。', 'いい対戦だった。'],
-      lose: ['……次は負けない。', '悔しいな。']
+      lose: ['……次は負けない。', '悔しいな。'],
+      hello: ['よろしくね。', '始めようか。'],
+      /* チュートリアル: 案内役 */
+      lesson: ['まずは、ここから。', 'ゆっくりでいいよ。', '一緒にやってみよう。'],
+      good: ['よくできました。', 'その調子。'],
+      retry: ['もう一回やってみよう。', '大丈夫、もう一度。']
+    }
+  },
+  nadeshiko: {
+    name: '撫子', color: '#ff4fa3',
+    lines: {
+      play: ['{card}、やっちゃって！', 'ほら、{card}よ！', 'これでどう？ {card}！'],
+      compile: ['もらったわ！', 'ふふん、当然でしょ。'],
+      compiled: ['ちょっと、何よそれ！', 'ま、まだまだよ！'],
+      hurt: ['なっ……！', 'やるじゃない。'],
+      almost: ['あと一押しね。', '覚悟しなさい。'],
+      win: ['私の勝ちね！', 'また遊んであげる。'],
+      lose: ['……今日は譲ってあげる。', '次は絶対勝つんだから！'],
+      hello: ['手加減しないわよ。', '勝負よ！']
+    }
+  },
+  asagi: {
+    name: '浅葱', color: '#5fd6d0',
+    lines: {
+      play: ['{card}、いっけー！', 'えいっ、{card}！', '任せて、{card}！'],
+      compile: ['やったぁ、コンパイル！', 'ナイス、決まったね！'],
+      compiled: ['あちゃー……', 'ドンマイ、取り返そ！'],
+      hurt: ['わわっ！', 'うそー！'],
+      almost: ['もうちょっと！', 'あとひと押しだよ！'],
+      win: ['やったね、勝ったよ！', '最高のコンビだね！'],
+      lose: ['うう、負けちゃった……', '次はもっと頑張る！'],
+      hello: ['一緒に頑張ろ！', 'よろしくね、相棒！']
+    }
+  },
+  yamabuki: {
+    name: '山吹', color: '#ffc94a',
+    lines: {
+      play: ['{card}、どーん！', '見てて、{card}！', 'よっしゃ、{card}！'],
+      compile: ['よっしゃー！', 'いただきっ！'],
+      compiled: ['ぐぬぬ……', 'まだ終わってないぞ！'],
+      hurt: ['おわっ！？', 'そりゃないって！'],
+      almost: ['あとちょい！', 'いける、いける！'],
+      win: ['勝ったー！', 'へへっ、楽しかった！'],
+      lose: ['くやしー！', 'もう一回！'],
+      hello: ['いっくぞー！', '全力でいくよ！']
     }
   }
 };
 
+/* プロトコルごとのセリフ (カードを表で出したときに、ときどきこちらを言う) */
+export const PROTO_LINES = {
+  FIRE: '燃やして、{card}！', WATER: '流れを変える、{card}。', SPEED: '先に動く、{card}！', DEATH: '終わらせて、{card}。',
+  LIFE: '育って、{card}。', LIGHT: '照らして、{card}！', DARKNESS: '闇に紛れて、{card}。', GRAVITY: '引き寄せて、{card}！',
+  METAL: '固めるよ、{card}。', PSYCHIC: '心を読んで、{card}。', SPIRIT: '魂を込めて、{card}！', PLAGUE: '広がって、{card}。',
+  APATHY: '……{card}。', HATE: '消し去って、{card}！', LOVE: '届いて、{card}！', CHAOS: 'かき回して、{card}！',
+  CLARITY: '見通すよ、{card}。', CORRUPTION: '染めてあげる、{card}。', COURAGE: '勇気を、{card}！', FEAR: '怯えなさい、{card}。',
+  ICE: '凍らせて、{card}。', LUCK: '運を試すよ、{card}！', MIRROR: '映して返す、{card}。', PEACE: '静かに、{card}。',
+  SMOKE: '煙に巻いて、{card}。', TIME: '時を刻んで、{card}。', WAR: '攻めるよ、{card}！', ASSIMILATION: '取り込んで、{card}。',
+  DIVERSITY: 'いろいろ試そう、{card}！', UNITY: 'ひとつになって、{card}！'
+};
+
 const calm = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
+export const avatarIds = () => Object.keys(AVATARS);
+export const faceURL = (id, face) => 'art/avatar/' + id + '_' + (face || 'normal') + '.webp';
 
-/** キャラを出す。返り値: { react(kind, vars), setFace(face, ms), say(text, face, ms), destroy() } */
-export function mountAvatar(id, root = document.body) {
+/** キャラを出す。opts.side: 'me' (左下) / 'opp' (右上)。opts.back: 自分の後ろに立つ (タッグの味方)。
+ *  返り値: { react(kind, vars), say(text, face, ms), setFace(face, ms), setBack(on), destroy(), id } */
+export function mountAvatar(id, opts = {}) {
   const def = AVATARS[id];
   if (!def) return null;
   const el = document.createElement('div');
-  el.id = 'avatar';
+  el.className = 'avatar ' + (opts.side === 'opp' ? 'av-opp' : 'av-me') + (opts.back ? ' av-back' : '');
+  el.style.setProperty('--av-c', def.color);
   el.setAttribute('aria-hidden', 'true');
-  el.innerHTML = '<div class="av-body">' + def.faces.map(f =>
-    '<img alt="" draggable="false" data-face="' + f + '" src="art/avatar/' + id + '_' + f + '.webp"' + (f === 'normal' ? ' class="on"' : '') + '>').join('') +
-    '</div><div class="av-bubble" role="status"><b>' + def.name + '</b><span></span></div>';
-  root.appendChild(el);
+  el.innerHTML = '<div class="av-body">' + FACES.map(f =>
+    '<img alt="" draggable="false" data-face="' + f + '" src="' + faceURL(id, f) + '"' + (f === 'normal' ? ' class="on"' : '') + '>').join('') +
+    '</div><div class="av-bubble" role="status"><b class="av-name">' + def.name + '</b><p class="av-text"></p></div>';
+  (opts.root || document.body).appendChild(el);
   if (calm()) el.classList.add('calm');
 
   let face = 'normal', faceTimer = null, sayTimer = null, blinkTimer = null;
@@ -49,30 +114,47 @@ export function mountAvatar(id, root = document.body) {
   scheduleBlink();
 
   function setFace(f, ms) {
-    if (!def.faces.includes(f)) return;
+    if (!FACES.includes(f)) return;
     clearTimeout(faceTimer);
     face = f;
     show(f);
     el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
     if (ms) faceTimer = setTimeout(() => { face = 'normal'; show('normal'); }, ms);
   }
+  /* セリフ: 1字ずつ流れ込む (リソース集の Kinetics の文字送り)。吹き出しは表情ごとに出方を変える (data-mood) */
   function say(text, f, ms) {
     const bubble = el.querySelector('.av-bubble');
-    bubble.querySelector('span').textContent = text;
+    const p = bubble.querySelector('.av-text');
+    p.textContent = '';
+    p.setAttribute('aria-label', text);
+    Array.from(text).forEach((ch, i) => {
+      const s = document.createElement('span');
+      s.textContent = ch;
+      s.style.setProperty('--i', i);
+      s.setAttribute('aria-hidden', 'true');
+      p.appendChild(s);
+    });
+    bubble.dataset.mood = f || 'normal';
     bubble.classList.remove('show'); void bubble.offsetWidth; bubble.classList.add('show');
     clearTimeout(sayTimer);
     sayTimer = setTimeout(() => bubble.classList.remove('show'), ms || 2600);
     if (f) setFace(f, (ms || 2600) + 400);
+    if (opts.onSay) { try { opts.onSay(id, text); } catch (e) { /* 声は無くても遊べる */ } }
   }
-  /* 手に合わせて: play (表で出した) / compile / compiled (された) / hurt (大きく減らされた) / win / lose */
-  const FACE_OF = { play: 'fired', compile: 'happy', compiled: 'frustrated', hurt: 'surprised', win: 'happy', lose: 'frustrated' };
+  /* 手に合わせて: play (表で出した) / compile / compiled (された) / hurt (大きく減らされた) / almost (コンパイル目前) / win / lose / hello */
+  const FACE_OF = { play: 'fired', compile: 'happy', compiled: 'frustrated', hurt: 'surprised', almost: 'fired', win: 'happy', lose: 'frustrated', hello: 'happy',
+    lesson: 'normal', good: 'happy', retry: 'normal' };
   function react(kind, vars) {
-    const lines = def.lines[kind];
+    /* そのキャラに無い種類 (チュートリアルの案内など) は紫苑のセリフを借りる */
+    const lines = def.lines[kind] || AVATARS.shion.lines[kind];
     if (!lines) return;
-    let text = pick(lines);
+    const proto = vars && vars.card ? String(vars.card).split(' ')[0] : null;
+    let text = kind === 'play' && proto && PROTO_LINES[proto] && Math.random() < 0.45 ? PROTO_LINES[proto] : pick(lines);
     for (const [k, v] of Object.entries(vars || {})) text = text.split('{' + k + '}').join(v);
     say(text, FACE_OF[kind], kind === 'win' || kind === 'lose' ? 5000 : 2400);
   }
+  /* タッグ: 後ろに下がる / 前に出る */
+  function setBack(on) { el.classList.toggle('av-back', !!on); }
   function destroy() { clearTimeout(faceTimer); clearTimeout(sayTimer); clearTimeout(blinkTimer); el.remove(); }
-  return { react, setFace, say, destroy, el };
+  return { react, say, setFace, setBack, destroy, id, el };
 }

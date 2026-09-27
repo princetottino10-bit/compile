@@ -2816,27 +2816,67 @@
     .plate.me{top:calc(58px + env(safe-area-inset-top))!important;bottom:auto!important;max-width:60vw!important;}
   }
   .plate.me{position:fixed;left:calc(14px + env(safe-area-inset-left));top:auto;bottom:calc(14px + env(safe-area-inset-bottom));max-width:min(210px,24vw);}
-  /* 対戦のそばのキャラ (avatar.js): 左下、自分の名札と山札の操作の上。触れない (下の盤面・ボタンを押せる) */
-  #avatar{position:fixed;left:calc(-10px + env(safe-area-inset-left));bottom:calc(0px + env(safe-area-inset-bottom));z-index:11;
+  /* 対戦のそばのキャラ (avatar.js): 自分は左下、相手は右上 (左右反転)。触れない (下の盤面・ボタンを押せる) */
+  .avatar{position:fixed;left:calc(-10px + env(safe-area-inset-left));bottom:calc(0px + env(safe-area-inset-bottom));z-index:11;
     height:min(33vh,300px);aspect-ratio:752/1096;pointer-events:none;}
-  #avatar .av-body{position:absolute;inset:0;transform-origin:50% 100%;animation:av-breath 4.2s ease-in-out infinite;
+  .avatar .av-body{position:absolute;inset:0;transform-origin:50% 100%;animation:av-breath 4.2s ease-in-out infinite;
     -webkit-mask-image:linear-gradient(180deg,#000 72%,transparent);mask-image:linear-gradient(180deg,#000 72%,transparent);}
-  #avatar.calm .av-body{animation:none;}
-  #avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:left bottom;opacity:0;filter:drop-shadow(0 6px 14px rgba(0,0,0,.55));}
-  #avatar img.on{opacity:1;}
-  #avatar.bump .av-body{animation:av-bump .32s cubic-bezier(.2,.9,.3,1.3), av-breath 4.2s ease-in-out .32s infinite;}
-  #avatar.calm.bump .av-body{animation:none;}
+  .avatar.calm .av-body{animation:none;}
+  .avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:left bottom;opacity:0;filter:drop-shadow(0 6px 14px rgba(0,0,0,.55));}
+  .avatar img.on{opacity:1;}
+  .avatar.bump .av-body{animation:av-bump .32s cubic-bezier(.2,.9,.3,1.3), av-breath 4.2s ease-in-out .32s infinite;}
+  .avatar.calm.bump .av-body{animation:none;}
   @keyframes av-breath{50%{transform:scaleY(1.012) translateY(-1px);}}
   @keyframes av-bump{0%{transform:translateY(0)}40%{transform:translateY(-8px)}100%{transform:translateY(0)}}
-  #avatar .av-bubble{position:absolute;left:78%;top:8%;width:max-content;min-width:120px;max-width:min(260px,44vw);padding:8px 12px 9px;background:#fbf7ee;color:#1a1424;
-    clip-path:var(--cut-s);opacity:0;transform:translateY(6px) scale(.96);transform-origin:0 100%;transition:opacity .16s,transform .2s cubic-bezier(.2,.9,.3,1.2);}
-  #avatar .av-bubble.show{opacity:1;transform:none;}
-  #avatar .av-bubble b{display:block;font:800 10px/1 var(--font-hud,var(--font-ui));letter-spacing:.14em;color:#7a5cc4;margin-bottom:4px;}
-  #avatar .av-bubble span{display:block;font:800 14px/1.35 var(--font-ui);}
+  /* 吹き出し: 白地に、紫苑の方を指すしっぽ。名前は左上の黒い名札 (タッグフォース風)。
+     文字は1字ずつ下から流れ込み、表情ごとに出方が変わる (data-mood) */
+  .avatar .av-bubble{position:absolute;left:74%;top:6%;width:max-content;min-width:110px;max-width:min(260px,44vw);padding:14px 14px 10px;
+    background:#fbf7ee;color:#1a1424;border-radius:14px;box-shadow:0 8px 22px rgba(0,0,0,.45);
+    opacity:0;transform:translateY(6px) scale(.9);transform-origin:0 70%;transition:opacity .14s;}
+  .avatar .av-bubble::after{content:"";position:absolute;left:-10px;top:58%;border:8px solid transparent;border-right:12px solid #fbf7ee;border-left:0;}
+  .avatar .av-bubble.show{opacity:1;transform:none;animation:av-pop .34s cubic-bezier(.2,.9,.3,1.3);}
+  .avatar .av-name{position:absolute;left:10px;top:-11px;padding:4px 9px;background:#140c22;color:#d9ccff;
+    font:800 10.5px/1 var(--font-ui);letter-spacing:.14em;clip-path:var(--cut-s);}
+  .avatar .av-text{margin:0;font:800 14.5px/1.4 var(--font-ui);}
+  .avatar .av-text span{display:inline-block;white-space:pre;opacity:0;animation:av-char .22s ease-out forwards;animation-delay:calc(var(--i) * 32ms + 120ms);}
+  @keyframes av-char{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+  @keyframes av-pop{0%{transform:translateY(8px) scale(.86)}70%{transform:translateY(-2px) scale(1.03)}100%{transform:none}}
+  /* 強気: 桃色の縁で少し傾く */
+  .avatar .av-bubble[data-mood="fired"]{box-shadow:0 0 0 2px var(--pink),0 8px 22px rgba(0,0,0,.45);}
+  .avatar .av-bubble[data-mood="fired"].show{transform:rotate(-2deg);animation:av-pop-tilt .34s cubic-bezier(.2,.9,.3,1.3);}
+  @keyframes av-pop-tilt{0%{transform:translateY(8px) scale(.86) rotate(-6deg)}100%{transform:rotate(-2deg)}}
+  /* 悔しい: 小刻みに震える */
+  .avatar .av-bubble[data-mood="frustrated"].show{animation:av-pop .3s cubic-bezier(.2,.9,.3,1.3),av-shake .42s .3s linear;}
+  @keyframes av-shake{0%,100%{transform:none}20%{transform:translateX(-3px)}40%{transform:translateX(3px)}60%{transform:translateX(-2px)}80%{transform:translateX(2px)}}
+  /* 驚き: ぽんと大きく弾む */
+  .avatar .av-bubble[data-mood="surprised"].show{animation:av-burst .38s cubic-bezier(.2,.9,.3,1.5);}
+  @keyframes av-burst{0%{transform:scale(.5)}60%{transform:scale(1.14)}100%{transform:none}}
+  /* 喜ぶ: 軽く跳ねる */
+  .avatar .av-bubble[data-mood="happy"].show{animation:av-pop .34s cubic-bezier(.2,.9,.3,1.3),av-hop .5s .34s ease-out;}
+  @keyframes av-hop{40%{transform:translateY(-5px)}100%{transform:none}}
+  @media (prefers-reduced-motion:reduce){
+    .avatar .av-bubble.show,.avatar .av-bubble[data-mood].show{animation:none;}
+    .avatar .av-text span{animation:none;opacity:1;}
+  }
   /* 縦持ちのスマホは盤面が狭いので小さく、名札の下へ */
   @media (orientation:portrait) and (max-width:860px){
-    #avatar{height:22vh;bottom:calc(30vh + env(safe-area-inset-bottom));left:-6px;}
-    #avatar .av-bubble{left:70%;top:0;}
+    .avatar{height:22vh;bottom:calc(30vh + env(safe-area-inset-bottom));left:-6px;}
+    .avatar .av-bubble{left:70%;top:0;}
+  }
+  /* 相手のキャラ: 右上、上の帯の下。向かい合うよう左右を反転し、吹き出しは左に */
+  .avatar.av-opp{left:auto;right:calc(-10px + env(safe-area-inset-right));top:calc(46px + env(safe-area-inset-top));bottom:auto;height:min(26vh,210px);}
+  .avatar.av-opp img{transform:scaleX(-1);object-position:right bottom;}
+  .avatar.av-opp .av-body{-webkit-mask-image:linear-gradient(180deg,#000 78%,transparent);mask-image:linear-gradient(180deg,#000 78%,transparent);}
+  .avatar.av-opp .av-bubble{left:auto;right:74%;top:34%;transform-origin:100% 70%;}
+  .avatar.av-opp .av-bubble::after{left:auto;right:-10px;border-right:0;border-left:12px solid #fbf7ee;}
+  .avatar.av-opp .av-bubble[data-mood="fired"].show{transform:rotate(2deg);}
+  .avatar.av-opp .av-name{background:#2a0c1c;color:#ffc2dd;}
+  /* タッグの味方: 自分のキャラの後ろ (少し右・上・小さく・暗く)。指す番の人が前に出る */
+  .avatar.av-me{transition:transform .35s cubic-bezier(.2,.9,.3,1),filter .35s,z-index 0s;}
+  .avatar.av-me.av-back{z-index:10;transform:translate(46%,-10%) scale(.82);filter:brightness(.55) saturate(.8);}
+  .avatar.av-me.av-back .av-bubble{display:none;}
+  @media (orientation:portrait) and (max-width:860px){
+    .avatar.av-opp{height:15vh;top:calc(96px + env(safe-area-inset-top));bottom:auto;}
   }
   .plate[hidden]{display:none;}
   /* 名札の枠 (見た目の「名札」。相手にも見える)。.plate[data-frame] / 図鑑の .cm-pf / プレビューの .cm-plate で共通 */
@@ -2920,6 +2960,12 @@
     animation:pf-sheen 6s ease-in-out infinite;}
   @keyframes pf-sheen{0%,55%{background-position:-150% 0}85%,100%{background-position:250% 0}}
   @media (prefers-reduced-motion:reduce){ .plate[data-frame]::after,.cm-pf::after,.cm-plate[class*="pf-"]::after{animation:none;} }
+  /* 図鑑のキャラ (avatar.js) */
+  .cm-av{width:100%;height:100%;object-fit:cover;object-position:50% 12%;}
+  .cm-avview{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;}
+  .cm-avview img{height:min(46vh,360px);object-fit:contain;filter:drop-shadow(0 10px 18px rgba(0,0,0,.5));}
+  .cm-avview p{margin:0;padding:10px 14px;background:#fbf7ee;color:#1a1424;border-radius:12px;font:800 14px/1.4 var(--font-ui);box-shadow:0 0 0 2px var(--av-c);}
+  .cm-avview p b{display:block;font:800 10px/1 var(--font-ui);letter-spacing:.14em;color:#7a5cc4;margin-bottom:4px;}
   .cm-pf{display:flex;align-items:center;justify-content:center;width:100%;height:100%;min-height:44px;clip-path:var(--cut-s);}
   .cm-pf b{font:800 13px/1 var(--font-ui);}
   .plate .pl-icon{flex:none;width:30px;height:30px;display:grid;place-items:center;border-radius:6px;
@@ -3192,7 +3238,7 @@
       "./js3d/aidecks.js": "./js3d/aidecks.js?v=8d249240bd",
       "./js3d/arena.js": "./js3d/arena.js?v=ef66a1e5bb",
       "./js3d/audio.js": "./js3d/audio.js?v=28a4f522ba",
-      "./js3d/avatar.js": "./js3d/avatar.js?v=2d8f6aa536",
+      "./js3d/avatar.js": "./js3d/avatar.js?v=87ef91c0df",
       "./js3d/backdrops.js": "./js3d/backdrops.js?v=90faf9612d",
       "./js3d/board.js": "./js3d/board.js?v=9fe57e2090",
       "./js3d/card.js": "./js3d/card.js?v=6d8083e5b7",
@@ -3202,7 +3248,7 @@
       "./js3d/chips.js": "./js3d/chips.js?v=e67e280b76",
       "./js3d/cloudsave.js": "./js3d/cloudsave.js?v=d1643b2cad",
       "./js3d/control.js": "./js3d/control.js?v=c1b87ebc63",
-      "./js3d/cosmetics-mode.js": "./js3d/cosmetics-mode.js?v=5d8c6e04d1",
+      "./js3d/cosmetics-mode.js": "./js3d/cosmetics-mode.js?v=05e4ec64d2",
       "./js3d/cosmetics-ui.js": "./js3d/cosmetics-ui.js?v=61977c6f7c",
       "./js3d/crashwatch.js": "./js3d/crashwatch.js?v=57c6c91bd8",
       "./js3d/daily.js": "./js3d/daily.js?v=f56dabdf65",
@@ -3222,7 +3268,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=3150f312ed",
+      "./js3d/main.js": "./js3d/main.js?v=a76b970f2b",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=2142e0957c",
       "./js3d/panel.js": "./js3d/panel.js?v=d4a1f0a181",
@@ -3238,13 +3284,13 @@
       "./js3d/replays-ui.js": "./js3d/replays-ui.js?v=9a6a4ca786",
       "./js3d/replays.js": "./js3d/replays.js?v=2a8c9e69b5",
       "./js3d/review.js": "./js3d/review.js?v=34f174153b",
-      "./js3d/rewards.js": "./js3d/rewards.js?v=50ea1524eb",
+      "./js3d/rewards.js": "./js3d/rewards.js?v=fd6cda47a1",
       "./js3d/room.js": "./js3d/room.js?v=c34129de95",
       "./js3d/roomui.js": "./js3d/roomui.js?v=20a6a255a0",
       "./js3d/run-ui.js": "./js3d/run-ui.js?v=bc9741dc10",
       "./js3d/run.js": "./js3d/run.js?v=0fd14ce273",
       "./js3d/selectui.js": "./js3d/selectui.js?v=208abdaebc",
-      "./js3d/settings.js": "./js3d/settings.js?v=45d9eae637",
+      "./js3d/settings.js": "./js3d/settings.js?v=5e8192cc13",
       "./js3d/setup.js": "./js3d/setup.js?v=e68e661d50",
       "./js3d/solodraft.js": "./js3d/solodraft.js?v=b036b97879",
       "./js3d/spectate.js": "./js3d/spectate.js?v=3add6e9577",
@@ -3274,7 +3320,7 @@
   <link rel="modulepreload" href="js3d/playlog.js?v=90aaffedee">
   <link rel="modulepreload" href="js3d/feel.js?v=83bdf7f262">
   <link rel="modulepreload" href="js3d/spectate.js?v=3add6e9577">
-  <link rel="modulepreload" href="js3d/avatar.js?v=2d8f6aa536">
+  <link rel="modulepreload" href="js3d/avatar.js?v=87ef91c0df">
   <link rel="modulepreload" href="js3d/motion.js?v=36861b0081">
   <link rel="modulepreload" href="js3d/gacha.js?v=ce3d4f3faa">
   <link rel="modulepreload" href="js3d/chips.js?v=e67e280b76">
@@ -3296,13 +3342,13 @@
   <link rel="modulepreload" href="js3d/tsume.js?v=95789a9ad4">
   <link rel="modulepreload" href="js3d/errorreport.js?v=61f59a3cb3">
   <link rel="modulepreload" href="js3d/tutorial.js?v=0e6d6237ad">
-  <link rel="modulepreload" href="js3d/settings.js?v=45d9eae637">
+  <link rel="modulepreload" href="js3d/settings.js?v=5e8192cc13">
   <link rel="modulepreload" href="js3d/stats.js?v=e2b9647dba">
   <link rel="modulepreload" href="js3d/stats-data.js?v=bcf7d5e977">
-  <link rel="modulepreload" href="js3d/rewards.js?v=50ea1524eb">
+  <link rel="modulepreload" href="js3d/rewards.js?v=fd6cda47a1">
   <link rel="modulepreload" href="js3d/gachafx.js?v=3d15a2226f">
   <link rel="modulepreload" href="js3d/cosmetics-ui.js?v=61977c6f7c">
-  <link rel="modulepreload" href="js3d/cosmetics-mode.js?v=5d8c6e04d1">
+  <link rel="modulepreload" href="js3d/cosmetics-mode.js?v=05e4ec64d2">
   <link rel="modulepreload" href="js3d/displayname.js?v=613e18bf95">
   <link rel="modulepreload" href="js3d/plates.js?v=51eb123246">
   <link rel="modulepreload" href="js3d/playmat.js?v=1c8f36818a">
@@ -3361,6 +3407,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=3150f312ed"></script>
+  <script type="module" src="js3d/main.js?v=a76b970f2b"></script>
 </body>
 </html>

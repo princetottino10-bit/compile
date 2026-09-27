@@ -5,7 +5,9 @@
  *   まだ持っていないものも並べ、手に入れ方を書く (押すとプレビューだけ見られる)。
  *   新しく手に入れたものには NEW (見た印は compileCosSeen、このブラウザだけ)
  * ========================================================================= */
-import { COSMETICS, TITLES, REWARDS, GACHA_ITEMS, UNDERDOG_ITEMS, WEEKLY_ITEMS, masteryItem, protoMastery, unlockLevel, ownedTitles } from './rewards.js';
+import { COSMETICS, TITLES, REWARDS, GACHA_ITEMS, UNDERDOG_ITEMS, WEEKLY_ITEMS, masteryItem, protoMastery, unlockLevel, ownedTitles, AVATAR_RELEASED } from './rewards.js';
+import { AVATARS, faceURL } from './avatar.js';
+import { accountState } from './account.js';
 import { extraTitles, TROPHY_TITLES } from './cosmetics-ui.js';
 import { settings, setSetting } from './settings.js';
 import { playerLevel } from './stats-data.js';
@@ -21,13 +23,15 @@ import { openGacha, chipsNow } from './gacha-ui.js';
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const SEEN_KEY = 'compileCosSeen';
 
-const TABS = [
+const ALL_TABS = [
   { kind: 'mat', label: '盤面' }, { kind: 'sleeve', label: 'スリーブ' }, { kind: 'marker', label: 'マーカー' },
   { kind: 'ccolor', label: 'コンパイルの光' }, { kind: 'victory', label: '勝ちの演出' }, { kind: 'title', label: '称号' }, { kind: 'icon', label: 'アイコン' },
-  { kind: 'plate', label: '名札' }
+  { kind: 'plate', label: '名札' }, { kind: 'avatar', label: 'キャラ' }
 ];
+/* キャラのタブは、出すまでは管理者にだけ */
+const tabsNow = () => ALL_TABS.filter(t => t.kind !== 'avatar' || AVATAR_RELEASED || accountState().admin);
 const DEFAULT_KEY = { mat: 'neon', sleeve: 'default', marker: 'default', ccolor: 'default', victory: 'default', title: '', icon: '',
-  plate: 'default' };
+  plate: 'default', avatar: 'shion' };
 const RAR_NAME = { C: 'COMMON', R: 'RARE', E: 'EPIC', L: 'LEGENDARY' };
 const TROPHY_NAME = { chain4: 'CHAIN REACTION', flawless: 'FLAWLESS', mastery10: 'GRANDMASTER', tsume_mid: '詰めコンパイル 中級を全部', tsume_all: '詰めコンパイル 全部' };
 const CCOLOR = { default: 'linear-gradient(90deg,#ff5c5c,#b9a4ff,#a07bff)', gold: '#ffd86a', cyan: '#7ff3ff', rainbow: 'conic-gradient(#ff5f7a,#ffc05a,#7df28c,#5ab8ff,#b98cff,#ff5f7a)',
@@ -96,7 +100,7 @@ function markSeen(ids) {
 export function hasNewCosmetics() {
   try { if (!localStorage.getItem(SEEN_KEY)) return false; } catch (e) { return false; }   // はじめて開くまでは出さない (全部 NEW になるので)
   const c = ctx(), s = seen();
-  return TABS.some(t => t.kind !== 'icon' && itemsOf(t.kind).some(([key]) => owned(t.kind, key, c) && key !== '' && key !== DEFAULT_KEY[t.kind] && !s.has(t.kind + ':' + key)));
+  return tabsNow().some(t => t.kind !== 'icon' && itemsOf(t.kind).some(([key]) => owned(t.kind, key, c) && key !== '' && key !== DEFAULT_KEY[t.kind] && !s.has(t.kind + ':' + key)));
 }
 
 /* ---------- 見た目の絵 ---------- */
@@ -143,6 +147,7 @@ function thumb(kind, key) {
       return p ? '<img alt="" src="' + emblemDataURL(p.name, p.color || '#b9a4ff', 64, true) + '">' : '<span class="cm-none">—</span>';
     }
     case 'plate': return '<span class="cm-pf pf-' + esc(key) + '"' + pfcStyle(key) + '><b>' + esc((displayName() || 'YOU').slice(0, 8)) + '</b></span>';
+    case 'avatar': return '<img class="cm-av" alt="" src="' + faceURL(key, 'normal') + '">';
     default: return '<span class="cm-none">' + (key ? '★' : '—') + '</span>';
   }
 }
@@ -169,6 +174,13 @@ function preview(kind, key, name, isOwned, src) {
       break;
     }
 
+    case 'avatar': {
+      const d = AVATARS[key] || {};
+      const line = d.lines && d.lines.hello ? d.lines.hello[0] : '';
+      art = '<div class="cm-avview" style="--av-c:' + esc(d.color || '#b9a4ff') + '"><img alt="" src="' + faceURL(key, 'happy') + '">' +
+        (line ? '<p><b>' + esc(d.name || '') + '</b>' + esc(line) + '</p>' : '') + '</div>';
+      break;
+    }
     case 'title': case 'icon': {
       const icon = kind === 'icon' ? key : s.icon;
       const p = protoList.find(x => x.name === icon);
@@ -206,6 +218,7 @@ export function openCosmetics(opts) {
     const fk = focus !== null && list.some(([k]) => k === focus) ? focus : cur;
     const fItem = list.find(([k]) => k === fk) || list[0];
     const got = list.filter(([k]) => owned(tab, k, c)).length;
+    const TABS = tabsNow();
     const all = TABS.reduce((n, t) => n + itemsOf(t.kind).length, 0);
     const allGot = TABS.reduce((n, t) => n + itemsOf(t.kind).filter(([k]) => owned(t.kind, k, c)).length, 0);
     el.innerHTML = '<div class="cm-shell">' +
@@ -221,7 +234,7 @@ export function openCosmetics(opts) {
           (owned(tab, fItem[0], c) && fItem[0] !== cur ? '<button type="button" class="cm-equip" data-equip="' + esc(fItem[0]) + '">着ける</button>'
             : fItem[0] === cur ? '<p class="cm-on">着けています</p>' : '') + '</section>' +
         '<section class="cm-list"><p class="cm-count">' + TABS.find(t => t.kind === tab).label + ' ' + got + ' / ' + list.length + '</p>' +
-          '<div class="cm-grid ' + (tab === 'plate' ? 'nameplate' : tab) + '">' + list.map(([key, name]) => {
+          '<div class="cm-grid ' + (tab === 'plate' ? 'nameplate' : tab === 'avatar' ? 'charas' : tab) + '">' + list.map(([key, name]) => {
             const has = owned(tab, key, c);
             const isNew = !firstOpen && has && key !== '' && key !== DEFAULT_KEY[tab] && !sn.has(tab + ':' + key);
             return '<button type="button" data-key="' + esc(key) + '" class="cm-item' + (has ? '' : ' locked') + (key === cur ? ' cur' : '') + (key === fk ? ' focus' : '') + '">' +
