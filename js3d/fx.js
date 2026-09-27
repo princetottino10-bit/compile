@@ -691,3 +691,118 @@ function trailTexture() {
   trailTex = new THREE.CanvasTexture(cv);
   return trailTex;
 }
+
+/* ---------- 効果の元 → 対象をつなぐ光 ----------
+   効果が解決されるとき、効果を出したカードから、動く・裏返る・削除される札へ弧を描いて光を走らせる。
+   「どのカードの効果で何が起きたか」を目で追えるようにする。返り値: 光が対象に届くまでの Promise */
+export function fxLinkBeam(scene, from, to, colorHex, ms) {
+  const dur = ms || 460;
+  const mid = new THREE.Vector3().addVectors(from, to).multiplyScalar(0.5);
+  mid.y += 0.9 + from.distanceTo(to) * 0.18;
+  const curve = new THREE.QuadraticBezierCurve3(from.clone().setY(from.y + 0.08), mid, to.clone().setY(to.y + 0.08));
+  const SEG = 28, RAD = 6;
+  const geo = new THREE.TubeGeometry(curve, SEG, 0.024, RAD, false);
+  const mat = new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 0.95,
+    blending: THREE.AdditiveBlending, depthWrite: false });
+  const tube = new THREE.Mesh(geo, mat);
+  tube.frustumCulled = false;
+  tube.renderOrder = 8;
+  const total = geo.index ? geo.index.count : SEG * RAD * 6;
+  geo.setDrawRange(0, 0);
+  /* 光の先頭の玉 */
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8),
+    new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1, blending: THREE.AdditiveBlending, depthWrite: false }));
+  head.renderOrder = 9;
+  scene.add(tube, head);
+  const REACH = 0.5;                      // 全体のうち、光が伸びきるまでの割合
+  let arrived = null;
+  const reached = new Promise((r) => { arrived = r; });
+  TW.tween(dur, (t) => {
+    const g = Math.min(1, t / REACH);
+    const e = 1 - Math.pow(1 - g, 2);
+    const n = Math.floor(total * e / (RAD * 6)) * (RAD * 6);
+    geo.setDrawRange(0, n);
+    head.position.copy(curve.getPoint(e));
+    head.material.opacity = t < REACH ? 1 : Math.max(0, 1 - (t - REACH) / 0.2);
+    mat.opacity = t < REACH ? 0.95 : 0.95 * (1 - (t - REACH) / (1 - REACH));
+    if (g >= 1 && arrived) { arrived(); arrived = null; }
+  }, TW.Ease.linear, () => {
+    if (arrived) arrived();
+    scene.remove(tube, head);
+    geo.dispose(); mat.dispose(); head.geometry.dispose(); head.material.dispose();
+  });
+  return reached;
+}
+
+/* ---------- 着地の粒 ----------
+   値の大きいカードを表で置いたときだけ、足元から小さな粒を低く散らす (重みの差を出す) */
+export function fxLandSparks(scene, pos, colorHex, count) {
+  const N = Math.max(4, count | 0);
+  const g = new THREE.BufferGeometry();
+  const p = new Float32Array(N * 3);
+  g.setAttribute('position', new THREE.BufferAttribute(p, 3));
+  const vel = [];
+  for (let i = 0; i < N; i++) {
+    const a = (i / N) * Math.PI * 2 + Math.random() * 0.4;
+    const sp = 1.1 + Math.random() * 1.2;
+    vel.push([Math.cos(a) * sp, 0.9 + Math.random() * 1.3, Math.sin(a) * sp]);
+  }
+  const mat = new THREE.PointsMaterial({ color: colorHex, size: 0.09, transparent: true, opacity: 1,
+    blending: THREE.AdditiveBlending, depthWrite: false });
+  const pts = new THREE.Points(g, mat);
+  pts.frustumCulled = false;
+  scene.add(pts);
+  return TW.tween(420, (t) => {
+    const s = t * 0.42;
+    for (let i = 0; i < N; i++) {
+      p[i * 3] = pos.x + vel[i][0] * s;
+      p[i * 3 + 1] = pos.y + 0.04 + vel[i][1] * s - 3.8 * s * s;
+      p[i * 3 + 2] = pos.z + vel[i][2] * s;
+    }
+    g.attributes.position.needsUpdate = true;
+    mat.opacity = 1 - t * t;
+  }, TW.Ease.linear, () => { scene.remove(pts); g.dispose(); mat.dispose(); });
+}
+
+/* ---------- 浮いたカードの影 ----------
+   カードは影を落とさない作りなので、運んでいる1枚の真下にぼかした影を置く。
+   高いほど大きく薄くなり、どれだけ浮いているかが分かる。follow(card) で追わせ、返り値を呼ぶと消える */
+let shadowTex = null;
+function blobShadowTexture() {
+  if (shadowTex) return shadowTex;
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = 64;
+  const ctx = cv.getContext('2d');
+  const g = ctx.createRadialGradient(32, 32, 4, 32, 32, 32);
+  g.addColorStop(0, 'rgba(0,0,0,0.9)');
+  g.addColorStop(0.55, 'rgba(0,0,0,0.45)');
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 64, 64);
+  shadowTex = new THREE.CanvasTexture(cv);
+  return shadowTex;
+}
+export function createCarryShadow(stage) {
+  const geo = new THREE.PlaneGeometry(CARD.w * 1.35, CARD.h * 1.25);
+  geo.rotateX(-Math.PI / 2);
+  const mat = new THREE.MeshBasicMaterial({ map: blobShadowTexture(), transparent: true, opacity: 0, depthWrite: false });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.visible = false;
+  mesh.renderOrder = 1;
+  stage.scene.add(mesh);
+  const v = new THREE.Vector3();
+  let off = null;
+  return function follow(card, floorY) {
+    if (off) off();
+    const y0 = floorY === undefined ? 0.01 : floorY;
+    mesh.visible = true;
+    off = stage.onFrame(() => {
+      card.getWorldPosition(v);
+      const h = Math.max(0, v.y - y0);
+      mesh.position.set(v.x + h * 0.05, y0, v.z + h * 0.12);   // 光は奥の上から: 影は少し手前へ
+      mesh.scale.setScalar(0.85 + h * 0.3);
+      mat.opacity = h < 0.03 ? 0 : Math.max(0, 0.5 * (1 - h / 3.2));
+    });
+    return () => { if (off) { off(); off = null; } mesh.visible = false; mat.opacity = 0; };
+  };
+}

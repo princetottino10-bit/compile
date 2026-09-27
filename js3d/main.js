@@ -363,6 +363,8 @@ async function boot() {
       if (c === 'ember') return '#ff7a2e';
       return null;
     },
+    /* 自分のカードが着地した瞬間に震わせる (飛び立つ前ではなく、音と光に合わせる)。表で値が大きいほど強く */
+    onLand: (o) => { if (o.byMe) FEEL.buzz(o.faceUp ? 14 + o.value * 4 : 12); },
     onCompile: async (info) => {
       FEEL.buzz(info.side === ME ? [30, 60, 50] : 40);
       /* まず盤上のプロトコルカードを "Compiled" 面へ裏返し、その後にカットイン */
@@ -1332,7 +1334,11 @@ function bindInput() {
     /* 掴んでいる間: カードを指に追従させ、パッドをホバー強調 */
     if (drag) {
       const dx = ev.clientX - drag.sx, dy = ev.clientY - drag.sy;
-      if (!drag.moved && dx * dx + dy * dy > 64) drag.moved = true;
+      if (!drag.moved && dx * dx + dy * dy > 64) {
+        drag.moved = true;
+        const c0 = board.cards.get(drag.uid);
+        if (c0) drag.stopShadow = board.followShadow(c0);        // 盤面の上を運ぶ間、影を落とす
+      }
       if (drag.moved) {
         const pt = planePoint(ev);
         const card = board.cards.get(drag.uid);
@@ -1536,6 +1542,7 @@ function bindInput() {
     if (!drag) return;
     const d = drag;
     drag = null;
+    if (d.stopShadow) d.stopShadow();
     for (const pad of pads) pad.userData.hover = false;
     el.style.cursor = 'default';
     if (!d.moved) return;             // ただのクリック → 選択のまま
@@ -1545,14 +1552,15 @@ function bindInput() {
     if (over && selectedUid === d.uid) {
       await dropOnPad(over.userData);
     } else {
-      /* 掴んだが置けない場所 → 手札へ戻す (選択は維持) */
+      /* 掴んだが置けない場所 → 手札へ戻す (選択は維持)。戻ったことが分かるよう短く鳴らす */
       const card = board.cards.get(d.uid);
-      if (card) { card.renderOrder = 0; raiseHandCard(d.uid); }
+      if (card) { card.renderOrder = 0; raiseHandCard(d.uid); sfx('tick'); }
     }
   });
 
   el.addEventListener('pointercancel', () => {
     if (!drag) return;
+    if (drag.stopShadow) drag.stopShadow();
     const card = board.cards.get(drag.uid);
     if (card) { card.renderOrder = 0; restHandCard(drag.uid); }
     drag = null;
@@ -1561,7 +1569,7 @@ function bindInput() {
 
   async function dropOnPad(ud) {
     if (!canPlaceOnLine(cur.state, selectedUid, ud.line, ud.side)) {
-      UI.toast('そのラインにはプレイできません'); return;
+      sfx('tick'); UI.toast('そのラインにはプレイできません'); return;
     }
     const card = board.cards.get(selectedUid);
     if (card) { card.renderOrder = 0; raiseHandCard(selectedUid); }
@@ -1905,6 +1913,7 @@ function updatePlayChoices() {
       const valid = currentPlacementChoices().find(a => a.card === action.card && a.line === action.line
         && a.side === action.side && a.faceUp === action.faceUp && a.raw === action.raw);
       if (!valid) { updatePlayChoices(); return; }
+      sfx('select');                  // 表・裏を決めた手応え
       showPreview(null);
       if (boardPick?.kind === 'free') { finishFreePick([valid.raw]); return; }
       const { side, ...wire } = valid;
@@ -2458,6 +2467,14 @@ function chainPause(kind) {
 /* 再生するコマの切り出しは steps.js (盤面の見た目の指紋は board.js のものを使う) */
 function meaningfulSteps(prev, res) { return cutSteps(prev, res, visualFingerprint); }
 
+/* このコマで解決している効果のカード (チェーンの一番内側)。効果の元から対象へ光をつなぐのに使う */
+function effectSource(step) {
+  const ch = step && Array.isArray(step.chain) ? step.chain : null;
+  if (!ch || !ch.length) return null;
+  const x = ch[ch.length - 1];
+  return x.slice(0, x.lastIndexOf('|'));
+}
+
 /* そのステップの主役カードを光らせ、効果テキストを出す */
 async function cueFor(step, st) {
   const cue = step.cue || step;
@@ -2585,7 +2602,7 @@ async function replayResolution(prev, res, action) {
       /* 間引きで飛ばしたコマ (効果の結果) がまだ盤面に出ていなければ、手番やフェイズを告げる前に盤面を追いつかせる。
          追いつかせないと、効果の結果が出る前に「相手のターン」の演出が出ていた */
       if (visualFingerprint(from) !== step.fp) {
-        await board.applyTransition(from, step.st, first ? action : null, { speed: STEP_MOTION });
+        await board.applyTransition(from, step.st, first ? action : null, { speed: STEP_MOTION, source: effectSource(step) });
         await syncPanels(step.st, true);
         from = step.st;
         first = false;
@@ -2601,7 +2618,8 @@ async function replayResolution(prev, res, action) {
     const t0 = performance.now();
     const uid = step.uid || (step.cue && step.cue.uid) || null;
     /* チェーンの途中は動きもさらにゆっくり見せる */
-    await board.applyTransition(from, step.st, first ? action : null, { speed: chainShown ? STEP_MOTION * 1.3 : STEP_MOTION });
+    await board.applyTransition(from, step.st, first ? action : null,
+      { speed: chainShown ? STEP_MOTION * 1.3 : STEP_MOTION, source: effectSource(step) });
     /* プロトコル板 (並び・合計値) もこのコマに合わせる。並べ替えは板が動き終わるまで待つ */
     await syncPanels(step.st, true);
     /* この絵の時点のチェーン。1つ解決して短くなったら、解決したことが分かるよう少し待つ */
@@ -2651,7 +2669,6 @@ async function step(action) {
     return;
   }
   const topLevel = action.type === 'play' || action.type === 'refresh';
-  if (action.type === 'play' && before.turn === ME) FEEL.buzz(10);     // 置いた手応え
   CW.battleProgress(res.state.turns | 0);
   if (topLevel && assistGame() && before.turn === ME) {
     undoPoint = { cur, replayLen: replayLog ? replayLog.actions.length : 0, histLen: gameHistory.length };

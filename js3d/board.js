@@ -112,7 +112,11 @@ export function createBoard(stage, defIndex, me, hooks) {
   const compileColorOf = (hooks && hooks.compileColor) || (() => null);
   /* 自分のコンパイルの光の種類 (色ごとの「しるし」の演出。fx-compile.js) */
   const compileStyleOf = (hooks && hooks.compileStyle) || (() => 'default');
+  /* 手札から出したカードが着地した瞬間 (振動など、盤面の外の手応えに使う)。{ byMe, faceUp, value } */
+  const onLand = (hooks && hooks.onLand) || (() => {});
   const scene = stage.scene;
+  /* 運んでいる1枚の真下に落とす影 (カードは影を落とさない作りのため) */
+  const carryShadow = FX.createCarryShadow(stage);
   const cards = new Map();       // uid -> THREE.Group
   const group = new THREE.Group();
   scene.add(group);
@@ -310,6 +314,7 @@ export function createBoard(stage, defIndex, me, hooks) {
     const target = new THREE.Vector3(...slot.pos);
     const endRotX = faceUp ? 0 : Math.PI;
     setHighlight(card, accent, 0.14, 0.5);
+    const stopShadow = carryShadow(card);
 
     /* ドラッグでパッド上まで運ばれたカードは、その場から真下へ叩きつける。
        画面中央の「構え」へ引き戻すと不自然なため、経路を分ける */
@@ -344,6 +349,12 @@ export function createBoard(stage, defIndex, me, hooks) {
       const from = card.position.clone();
       const r0 = { x: card.rotation.x, y: card.rotation.y, z: card.rotation.z };
       const holdRotX = byMe ? -0.34 : -0.34 + Math.PI;
+      /* 相手は、出す札を手札の中で少し浮かせてから構える (どれを選んだかの間) */
+      if (!byMe) {
+        const y0 = card.position.y;
+        await TW.tween(200, (t) => { card.position.y = y0 + 0.32 * TW.Ease.outCubic(t); }, TW.Ease.linear);
+        from.copy(card.position);
+      }
       sfx('lift');
 
       await TW.tween(TIMING.playLift, (t) => {
@@ -377,14 +388,20 @@ export function createBoard(stage, defIndex, me, hooks) {
       }, TW.Ease.linear);
     }
 
-    /* 着地の瞬間 */
+    /* 着地の瞬間。重み (0〜1) は表で置いた札の値で決め、揺れ・粒・振動の強さを変える */
+    stopShadow();
     card.position.set(...slot.pos);
     card.rotation.set(endRotX, slot.rot[1], slot.rot[2]);
     card.scale.setScalar(1);
-    spawnImpactRing(scene, target, accent, 4.2);
+    const value = faceUp ? ((defIndex[next.cards[uid].def] || UNKNOWN_DEF).value | 0) : 2;
+    const weight = faceUp ? Math.min(1, value / 6) : 0.2;
+    spawnImpactRing(scene, target, accent, 3.8 + weight * 1.2);
     spawnFlashPillar(scene, target, accent);
     sfx('land');
-    stage.shake(0.085, 300);
+    stage.shake(0.06 + weight * 0.09, 260 + weight * 120);
+    if (faceUp && value >= 3) FX.fxLandSparks(scene, target, accent, 6 + value * 3);
+    pressBelow(next, uid);
+    onLand({ byMe, faceUp, value });
     /* お気に入りのカードを表で出したときは、細い金の輪を1つ足すだけ (光らせすぎない) */
     const pc = next.cards[uid];
     const aura = pc && pc.owner === me && pc.faceUp ? auraFor(pc.def) : null;
@@ -403,6 +420,17 @@ export function createBoard(stage, defIndex, me, hooks) {
     card.userData.glowAlways = false;
     card.position.y = baseY;
     card.renderOrder = 0;
+  }
+
+  /* 置いた札に押されて、すぐ下の札が一瞬沈む */
+  function pressBelow(st, uid) {
+    const l = locOf(st, uid);
+    if (!l || l.zone !== 'field' || !(l.idx > 0)) return;
+    const under = cards.get(st.lines[l.line][l.side][l.idx - 1]);
+    if (!under) return;
+    const y0 = under.position.y;
+    TW.tween(240, (t) => { under.position.y = y0 - Math.sin(Math.PI * t) * 0.018; }, TW.Ease.linear,
+      () => { under.position.y = y0; });
   }
 
   /* ---------- コンパイル演出 ----------
@@ -502,6 +530,8 @@ export function createBoard(stage, defIndex, me, hooks) {
       if (locKey(a) === locKey(b) && !faceChanged) continue;
       jobs.push({ uid, a, b });
     }
+    /* 効果の元から対象へ光を走らせ、届いてから動かす */
+    if (jobs.length && opts && opts.source) await linkBeams(prev, next, opts.source, jobs);
     const shuffles = shuffledSides(prev, next);
     if (!jobs.length) {
       syncInstant(next);
@@ -585,6 +615,35 @@ export function createBoard(stage, defIndex, me, hooks) {
     syncInstant(next);
     for (const s of shuffles) await riffle(next, s, ms);
     if (played) await stage.home(TIMING.camEase);
+  }
+
+  /* 効果の元 (いま解決している効果のカード) から、動く札へ光をつなぐ。
+     盤面・手札から動く札と、裏返る札が対象。山札から引く札は山札の位置へ。多すぎるときは6本まで。
+     見る権利のないカードは色を伏せる (defFor が伏せた色を返す) */
+  async function linkBeams(prev, next, source, jobs) {
+    const srcCard = cards.get(source);
+    if (!srcCard || !prev.cards[source]) return;
+    const sl = locOf(prev, source);
+    if (!sl || sl.zone !== 'field') return;               // 盤面に見えている効果だけ
+    const from = srcCard.getWorldPosition(new THREE.Vector3());
+    const color = new THREE.Color(defFor(prev, source).color);
+    const targets = [];
+    for (const { uid, a } of jobs) {
+      if (uid === source || targets.length >= 6) continue;
+      const c = cards.get(uid);
+      if (!c) continue;
+      if (a && a.zone === 'deck') {
+        const pp = LAYOUT.pilePos('deck', a.side, me, 0);
+        if (!targets.some(t => t.deck === a.side)) targets.push({ deck: a.side, pos: new THREE.Vector3(...pp.pos) });
+      } else if (a && (a.zone === 'field' || a.zone === 'hand' || a.zone === 'transit')) {
+        targets.push({ pos: c.getWorldPosition(new THREE.Vector3()) });
+      }
+    }
+    if (!targets.length) return;
+    pulse(source, '#' + color.getHexString(), 260);
+    const reached = targets.map((t, i) => new Promise((r) => setTimeout(r, i * 50))
+      .then(() => FX.fxLinkBeam(scene, from, t.pos, color, 460)));
+    await Promise.race([Promise.all(reached), TW.wait(700)]);
   }
 
   /* 山札をシャッフルした (捨て札が山札に戻った / 同じ札のまま並びが変わった) 側 */
@@ -677,6 +736,8 @@ export function createBoard(stage, defIndex, me, hooks) {
   }
 
   return {
+    /* 手で運んでいるカード (ドラッグ中) の影。返り値を呼ぶと消える */
+    followShadow(card) { return carryShadow(card); },
     setSelected(card, on, colorHex) { if (card) setSelected(card, on, colorHex); },
     /* 対象選択モード: 候補を光らせ、他を沈める */
     markCandidates(uids, chosen) {
