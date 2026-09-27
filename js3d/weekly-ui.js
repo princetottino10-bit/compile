@@ -45,8 +45,8 @@ async function clearsHtml(week) {
   try {
     const rows = await fetchWeeklyClears(week);
     if (!rows.length) return '<p class="rn-note">まだ誰もクリアしていません。一番乗りを目指しましょう</p>';
-    return '<ol class="wk-clears">' + rows.map((r, i) => '<li><b>' + (i + 1) + '</b><span>' + esc(r.name) + '</span><small>' +
-      r.attempts + '回目でクリア</small></li>').join('') + '</ol>';
+    /* 挑戦回数はみんなには見せない (何回かかったかは本人の画面だけ)。並びはクリアした順 */
+    return '<ol class="wk-clears">' + rows.map((r, i) => '<li><b>' + (i + 1) + '</b><span>' + esc(r.name) + '</span></li>').join('') + '</ol>';
   } catch (e) {
     /* サーバーに表がまだ無い (マイグレーション未適用) ときは、準備中とだけ出す */
     if (/Could not find the table|未設定/.test(e.message)) return '<p class="rn-note">クリア者の一覧は準備中です</p>';

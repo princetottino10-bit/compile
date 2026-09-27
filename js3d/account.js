@@ -487,7 +487,7 @@ const WEEKLY_TABLE = 'weekly_clears';
 export async function fetchWeeklyClears(week) {
   await ROOM.roomLoadDeps();
   if (!ROOM.roomConfigured()) throw new Error('サーバーが未設定です');
-  const r = await ROOM.roomClient().from(WEEKLY_TABLE).select('name,attempts,cleared_at')
+  const r = await ROOM.roomClient().from(WEEKLY_TABLE).select('name,cleared_at')          // 挑戦回数はみんなの一覧には出さない
     .eq('week', week).order('cleared_at', { ascending: true }).limit(100);
   if (r.error) throw new Error(r.error.message);
   return r.data;
