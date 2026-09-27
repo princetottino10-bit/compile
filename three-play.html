@@ -2880,6 +2880,11 @@
   .avatar.av-me.av-back .av-bubble{display:none;}
   @media (orientation:portrait) and (max-width:860px){
     .avatar.av-opp{height:15vh;top:calc(96px + env(safe-area-inset-top));bottom:auto;}
+    /* 縦持ちは盤面が狭いので、話すときだけ横から出てくる (言い終わったら引っ込む)。後ろに立つ味方は出さない */
+    .avatar{transition:opacity .22s,transform .3s cubic-bezier(.2,.9,.3,1);}
+    .avatar:not(.speaking){opacity:0;visibility:hidden;transform:translateX(-45%);transition:opacity .22s,transform .3s,visibility 0s .3s;}
+    .avatar.av-opp:not(.speaking){transform:translateX(45%);}
+    .avatar.av-me.av-back{display:none;}
   }
   .plate[hidden]{display:none;}
   /* 名札の枠 (見た目の「名札」。相手にも見える)。.plate[data-frame] / 図鑑の .cm-pf / プレビューの .cm-plate で共通 */
@@ -3243,7 +3248,7 @@
       "./js3d/aidecks.js": "./js3d/aidecks.js?v=8d249240bd",
       "./js3d/arena.js": "./js3d/arena.js?v=ef66a1e5bb",
       "./js3d/audio.js": "./js3d/audio.js?v=28a4f522ba",
-      "./js3d/avatar.js": "./js3d/avatar.js?v=7d22c82d50",
+      "./js3d/avatar.js": "./js3d/avatar.js?v=afeb218477",
       "./js3d/backdrops.js": "./js3d/backdrops.js?v=90faf9612d",
       "./js3d/board.js": "./js3d/board.js?v=9fe57e2090",
       "./js3d/card.js": "./js3d/card.js?v=6d8083e5b7",
@@ -3325,7 +3330,7 @@
   <link rel="modulepreload" href="js3d/playlog.js?v=90aaffedee">
   <link rel="modulepreload" href="js3d/feel.js?v=83bdf7f262">
   <link rel="modulepreload" href="js3d/spectate.js?v=3add6e9577">
-  <link rel="modulepreload" href="js3d/avatar.js?v=7d22c82d50">
+  <link rel="modulepreload" href="js3d/avatar.js?v=afeb218477">
   <link rel="modulepreload" href="js3d/motion.js?v=36861b0081">
   <link rel="modulepreload" href="js3d/gacha.js?v=ce3d4f3faa">
   <link rel="modulepreload" href="js3d/chips.js?v=e67e280b76">

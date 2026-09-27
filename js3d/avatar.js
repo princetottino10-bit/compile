@@ -156,7 +156,7 @@ export function mountAvatar(id, opts = {}) {
   (opts.root || document.body).appendChild(el);
   if (calm()) el.classList.add('calm');
 
-  let face = 'normal', faceTimer = null, sayTimer = null, blinkTimer = null;
+  let face = 'normal', faceTimer = null, sayTimer = null, blinkTimer = null, speakTimer = null;
   const show = (f) => el.querySelectorAll('img').forEach(img => img.classList.toggle('on', img.dataset.face === f));
   /* まばたき: ふつうの顔のときだけ、3〜6秒ごとに 0.14 秒 */
   const scheduleBlink = () => {
@@ -194,6 +194,10 @@ export function mountAvatar(id, opts = {}) {
     bubble.classList.remove('show'); void bubble.offsetWidth; bubble.classList.add('show');
     clearTimeout(sayTimer);
     sayTimer = setTimeout(() => bubble.classList.remove('show'), ms || 2600);
+    /* 話している間の印 (縦持ちの狭い画面では、話すときだけ出てくる。CSS) */
+    el.classList.add('speaking');
+    clearTimeout(speakTimer);
+    speakTimer = setTimeout(() => el.classList.remove('speaking'), (ms || 2600) + 500);
     if (f) setFace(f, (ms || 2600) + 400);
     if (opts.onSay) { try { opts.onSay(id, text); } catch (e) { /* 声は無くても遊べる */ } }
   }
@@ -230,6 +234,6 @@ export function mountAvatar(id, opts = {}) {
   }
   /* タッグ: 後ろに下がる / 前に出る */
   function setBack(on) { el.classList.toggle('av-back', !!on); }
-  function destroy() { clearTimeout(faceTimer); clearTimeout(sayTimer); clearTimeout(blinkTimer); if (voiceEl) voiceEl.pause(); el.remove(); }
+  function destroy() { clearTimeout(faceTimer); clearTimeout(sayTimer); clearTimeout(blinkTimer); clearTimeout(speakTimer); if (voiceEl) voiceEl.pause(); el.remove(); }
   return { react, say, setFace, setBack, destroy, id, el };
 }
