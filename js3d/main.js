@@ -3173,7 +3173,38 @@ function pickRibbon(req, m) {
 function ribbonActs(html) { return html ? '<span class="rb-act">' + html + '</span>' : ''; }
 /* 帯の目ボタン: 押すと帯を透かして下の盤面を見られる。同じ選択の描き直しでも透かしたまま (もう一度で戻る) */
 let ribbonPeekReq = null;
+/* 選択の帯は、ボタン以外を掴んでドラッグすると動かせる (下のカードが隠れて見えないとき)。
+   動かした位置はこの対戦の間は覚えておき、次の選択の帯も同じ場所に出す。画面の外へは出さない */
+const ribbonOffset = { x: 0, y: 0 };
+function makeRibbonDraggable(el) {
+  el.style.translate = ribbonOffset.x + 'px ' + ribbonOffset.y + 'px';
+  if (el._drag) return;
+  el._drag = true;
+  let start = null;
+  el.addEventListener('pointerdown', (ev) => {
+    if (ev.target.closest('button') || ev.button > 0) return;
+    start = { px: ev.clientX, py: ev.clientY, x: ribbonOffset.x, y: ribbonOffset.y, r: el.getBoundingClientRect() };
+    try { el.setPointerCapture(ev.pointerId); } catch (e) { /* 古いブラウザ */ }
+    el.classList.add('dragging');
+  });
+  el.addEventListener('pointermove', (ev) => {
+    if (!start) return;
+    const r = start.r;
+    let dx = ev.clientX - start.px, dy = ev.clientY - start.py;
+    /* 画面の中に収める (帯の四隅が画面から出ないように) */
+    dx = Math.max(-r.left + 4, Math.min(window.innerWidth - r.right - 4, dx));
+    dy = Math.max(-r.top + 4, Math.min(window.innerHeight - r.bottom - 4, dy));
+    ribbonOffset.x = start.x + dx;
+    ribbonOffset.y = start.y + dy;
+    el.style.translate = ribbonOffset.x + 'px ' + ribbonOffset.y + 'px';
+  });
+  const end = () => { start = null; el.classList.remove('dragging'); };
+  el.addEventListener('pointerup', end);
+  el.addEventListener('pointercancel', end);
+}
+
 function bindRibbon(el, on) {
+  makeRibbonDraggable(el);
   const req = boardPick && boardPick.req;
   const peek = el.querySelector('.rb-peek');
   const setPeek = (v) => { el.classList.toggle('peek', v); if (peek) peek.setAttribute('aria-pressed', String(v)); };
