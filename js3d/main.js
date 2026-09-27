@@ -222,11 +222,13 @@ let runEnded = false;            // 勝ち抜き戦の結果を出したか (ラ
 let setupNote = '';
 let lastSetup = null;
 let firstGameHintShown = false;    // はじめの数戦の操作の案内 (1戦に1回)              // いまの CPU 戦のプロトコル { p0, p1 } (もう1戦で同じ組み合わせにする)
-/* 対戦のそばのキャラ (avatar.js)。設定で消せる。問題・チュートリアル・観戦・トレーニングでは出さない */
+/* 対戦のそばのキャラ (avatar.js)。問題・チュートリアル・観戦・トレーニングでは出さない。
+   2026-09-27: いったん止めている (ユーザーの指示)。URL に ?avatar=1 を付けたときだけ出す (確認用) */
 let avatar = null;
 let avatarHurtAt = 0;
+const AVATAR_ON = (() => { try { return new URLSearchParams(location.search).get('avatar') === '1'; } catch (e) { return false; } })();
 function syncAvatar() {
-  const want = settings().avatar !== false && !puzzle && !tutorial && !demoMode && !trainingMode && !replayMode && !!cur;
+  const want = AVATAR_ON && settings().avatar !== false && !puzzle && !tutorial && !demoMode && !trainingMode && !replayMode && !!cur;
   if (want && !avatar) avatar = mountAvatar('shion');
   else if (!want && avatar) { avatar.destroy(); avatar = null; }
 }
