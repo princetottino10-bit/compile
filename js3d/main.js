@@ -2,7 +2,7 @@
  * 3Dビュー: エントリポイント
  *   engine.js (window.CompileEngine) をルール担当として、描画と入力だけを担う。
  * ========================================================================= */
-import { randomDecks } from './solodraft.js';
+import { randomDecks, shuffled } from './solodraft.js';
 import { bonusXp, grantXp, XP_GAIN, hashKey } from './xp.js';
 import { recordDailyGame, DAILY_XP, dailyView } from './daily.js';
 import { maybeLoginHint } from './account.js';
@@ -222,6 +222,14 @@ let lastSetup = null;
 let firstGameHintShown = false;    // はじめの数戦の操作の案内 (1戦に1回)              // いまの CPU 戦のプロトコル { p0, p1 } (もう1戦で同じ組み合わせにする)
 /* この試合で手に入ったもの (対戦のあとの画面に1つずつ出す)。{ xp0, lv0, daily: [文], trophies: [名前] } */
 let matchGains = null;
+/* 今日のデイリーミッションで指定されたプロトコル (まだ達成していないものを優先)。無ければ null */
+function todayDailyProto() {
+  try {
+    const list = dailyView(Object.keys(protoIndex)).filter(m => m.proto && protoIndex[m.proto]);
+    const open = list.find(m => !m.done) || list[0];
+    return open ? open.proto : null;
+  } catch (e) { return null; }
+}
 /* おまかせで使う基本セット (最初の12プロトコル。効果が素直で覚えやすい) */
 const QUICK_POOL = ['FIRE', 'WATER', 'SPEED', 'DEATH', 'LIFE', 'LIGHT', 'DARKNESS', 'GRAVITY', 'METAL', 'PSYCHIC', 'SPIRIT', 'PLAGUE'];
 /* リプレイ (replays.js): 対局中の棋譜 { init, actions }、いま見ているリプレイ、直前の試合のリプレイ id */
@@ -417,13 +425,23 @@ async function boot() {
   /* もう1戦 (REMATCH が ?me=&ai=&lv= を付けて開き直す): 同じ組み合わせ・同じ強さで、タイトルと準備を飛ばす */
   const lvParam = parseInt(params.get('lv'), 10);
   if (p0 && p1 && params.get('training') !== '1' && Number.isInteger(lvParam)) applyAiDifficulty(lvParam);
-  /* おまかせ (?quick=1): 基本セットから両者のプロトコルを選び、かんたんの CPU とすぐ始める (はじめての人向け) */
+  /* おまかせ (?quick=1): 基本セットから両者のプロトコルを選び、すぐ始める (はじめての人向け)。
+     相手の強さは設定の「おまかせで対戦する強さ」、デイリーのプロトコルを入れる設定なら自分の1つ目にそれを入れる */
   if (params.get('quick') === '1' && !p0) {
     const basic = QUICK_POOL.filter(n => protoIndex[n]);
-    const d = randomDecks(basic.length >= 6 ? basic : cards.protocols.map(x => x.name));
-    p0 = d.me; p1 = d.ai;
-    applyAiDifficulty(0);
-    setupNote = 'おまかせ: あなた ' + p0.join(' / ') + '　相手 (かんたん) ' + p1.join(' / ');
+    const from = basic.length >= 6 ? basic : cards.protocols.map(x => x.name);
+    const lv = Math.min(2, Math.max(0, settings().quickLevel | 0));
+    const dailyProto = settings().quickDaily ? todayDailyProto() : null;
+    if (dailyProto) {
+      const mine = [dailyProto].concat(shuffled(from.filter(n => n !== dailyProto)).slice(0, 2));
+      p0 = mine; p1 = shuffled(from.filter(n => !mine.includes(n))).slice(0, 3);
+    } else {
+      const d = randomDecks(from);
+      p0 = d.me; p1 = d.ai;
+    }
+    applyAiDifficulty(lv);
+    setupNote = 'おまかせ: あなた ' + p0.join(' / ') + (dailyProto ? ' (' + dailyProto + ' はデイリー)' : '') +
+      '　相手 (' + levelLabel(lv) + ') ' + p1.join(' / ');
   }
   /* ?training=1&me=...&ai=... でトレーニング盤面を直接開く (確認用) */
   if (params.get('training') === '1' && p0) { trainingMode = true; p1 = p1 || p0.slice(); }

@@ -8,7 +8,10 @@ const KEY = 'compileSettings';
 /* mat 以下は見た目 (レベルの報酬、cosmetics-ui.js) */
 /* autoPick: 選べるものが1つしかない選択は自動で選ぶ / oppSummary: 相手の番のまとめ / beginner: 初心者モード (おすすめの手の HINT を出す。最初はオフ) */
 const DEFAULTS = { speed: 1, sfx: 80, pauses: true, autoPick: true, oppSummary: true, beginner: false, foil: true, mat: 'neon', sleeve: 'default', marker: 'default', ccolor: 'default',
-  victory: 'default', title: '', icon: '' };
+  victory: 'default', title: '', icon: '',
+  /* おまかせで今すぐ始める: 相手の強さ (0 かんたん / 1 ふつう / 2 つよい) と、今日のデイリーのプロトコルを自分に入れるか */
+  quickLevel: 0, quickDaily: false };
+const QUICK_LEVELS = ['かんたん', 'ふつう', 'つよい'];
 const SPEEDS = [
   { v: 0.65, label: 'ゆっくり' },          // 何が起きたかを1つずつ追いたい人向け
   { v: 1, label: 'ふつう' },
@@ -71,6 +74,11 @@ export function openSettings(extra) {
       '<input type="checkbox" id="stFoil"' + (s.foil ? ' checked' : '') + '></label>' +
     '<label class="st-row st-check"><span>初心者モード<small>CPU 戦で HINT ボタンを出します。押すと、CPU ならどう打つかを盤面で光らせます</small></span>' +
       '<input type="checkbox" id="stBeginner"' + (s.beginner ? ' checked' : '') + '></label>' +
+    '<div class="st-row"><span>おまかせで対戦する強さ<small>「おまかせで今すぐ始める」の相手</small></span><div class="st-seg" role="group" aria-label="おまかせで対戦する強さ">' +
+      QUICK_LEVELS.map((label, i) => '<button type="button" data-qlevel="' + i + '" class="' + ((s.quickLevel | 0) === i ? 'on' : '') + '">' + label + '</button>').join('') +
+    '</div></div>' +
+    '<label class="st-row st-check"><span>おまかせの編成にデイリーのプロトコルを入れる<small>今日のデイリーミッションで指定されたプロトコルを、自分の3つのうち1つに必ず入れます</small></span>' +
+      '<input type="checkbox" id="stQuickDaily"' + (s.quickDaily ? ' checked' : '') + '></label>' +
     /* 見た目は専用の画面 (cosmetics-mode.js) で。実物どおりのプレビューと図鑑つき */
     '<div class="st-cosmetics"><div class="st-cos-head"><b>COSMETICS</b><small>盤面・スリーブ・マーカー・称号などは専用の画面で選べます</small></div>' +
       '<div class="pz-row"><button type="button" id="stCosOpen" class="pz-main">COSMETICS を開く</button></div></div>' +
@@ -96,6 +104,13 @@ export function openSettings(extra) {
   el.querySelector('#stOppSummary').onchange = (ev) => setSetting('oppSummary', ev.target.checked);
   el.querySelector('#stBeginner').onchange = (ev) => setSetting('beginner', ev.target.checked);
   el.querySelector('#stFoil').onchange = (ev) => setSetting('foil', ev.target.checked);
+  el.querySelector('#stQuickDaily').onchange = (ev) => setSetting('quickDaily', ev.target.checked);
+  el.querySelectorAll('[data-qlevel]').forEach(b => {
+    b.onclick = () => {
+      setSetting('quickLevel', +b.dataset.qlevel);
+      el.querySelectorAll('[data-qlevel]').forEach(x => x.classList.toggle('on', x === b));
+    };
+  });
   el.querySelector('#stCosOpen').onclick = () => { close(); import('./cosmetics-mode.js').then(m => m.openCosmetics()); };
   el.querySelectorAll('[data-extra]').forEach(b => {
     b.onclick = () => { const x = extra[+b.dataset.extra]; if (x) x.onClick(b); };

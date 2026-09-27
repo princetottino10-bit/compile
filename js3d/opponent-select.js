@@ -8,6 +8,7 @@
  * ========================================================================= */
 import { LEVEL_LABELS, STRONGEST_AI, LOCK_AI, CHALLENGERS, CHALLENGER_BASE, UNDERDOG_DECK, UNDERDOG_LEVEL } from './aidecks.js';
 import { localRecords } from './stats.js';
+import { settings } from './settings.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const LAST_KEY = 'compileOppLast';
@@ -41,7 +42,7 @@ export function openOpponentSelect(protocols) {
     '<div class="op-head"><b>// SINGLE GAME</b><span>SELECT OPPONENT</span></div>' +
     /* 迷ったらこれ: 選ぶものを全部おまかせにして、すぐ始める */
     '<button type="button" class="op-quick" data-opp="quick"><b>おまかせで今すぐ始める</b>' +
-      '<small>プロトコルも相手も自動で決めて、かんたんの CPU と対戦します</small></button>' +
+      '<small>プロトコルも相手も自動で決めて、' + LEVEL_LABELS[Math.min(2, Math.max(0, settings().quickLevel | 0))] + 'の CPU と対戦します (強さは ⚙ の設定で変えられる)</small></button>' +
     '<section><h3>CPU <small>次の画面で、公式ルールのドラフトで CPU とプロトコルを取り合う (自由に選ぶ・ランダムにも変えられる)</small></h3>' +
       '<div class="op-row">' + [0, 1, 2].map(i => card(String(i), LEVEL_LABELS[i], CPU_NOTES[i])).join('') + '</div></section>' +
     '<section><h3>強敵 <small>相手のデッキは決まっている。次の画面で自分の3つを選ぶ</small></h3>' +
