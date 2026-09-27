@@ -273,6 +273,12 @@
     .dt-art img.art { width: 100%; height: 100%; object-fit: cover; }
     .dt-art .c-val { font-size: 46px; left: 12px; top: 10px; }
     .dt-art .c-emb { width: 40px; height: 40px; right: 10px; bottom: 10px; }
+    /* 触ると傾いて光沢が指を追う (design-lab 04 ホロカード) */
+    .dt-art { --rx: 0deg; --ry: 0deg; --mx: 50%; --my: 50%; --op: 0; transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry)); transition: transform .5s cubic-bezier(.2, .8, .2, 1); touch-action: pan-y; }
+    .dt-art.holo-active { transition: transform .06s linear; }
+    .dt-art::before { content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: var(--op); transition: opacity .3s; mix-blend-mode: color-dodge;
+      background: radial-gradient(circle at var(--mx) var(--my), rgba(255, 255, 255, .4), transparent 45%),
+        linear-gradient(115deg, transparent 20%, rgba(255, 79, 163, .45) 36%, rgba(99, 243, 255, .4) 50%, rgba(139, 92, 246, .45) 64%, transparent 80%) var(--mx) 0 / 250% 250%; }
     .dt-art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(3, 4, 10, .5), transparent 35%, transparent 75%, rgba(3, 4, 10, .6)); }
     .dt-title { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 4px 40px 4px 0; }
     .dt-title b { font: 900 24px/1 system-ui, sans-serif; letter-spacing: .14em; color: color-mix(in srgb, var(--accent) 40%, #fff); }
@@ -436,6 +442,27 @@
     }
 
     /* ---------- カードの詳しい表示 ---------- */
+    /* ホロカード: 詳しい表示の大きな絵を、触った位置へ傾ける (js3d/holo.js と同じ動き) */
+    function holo(el) {
+      if (!el || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const set = (rx, ry, mx, my, op) => {
+        el.style.setProperty('--rx', rx.toFixed(2) + 'deg'); el.style.setProperty('--ry', ry.toFixed(2) + 'deg');
+        el.style.setProperty('--mx', mx.toFixed(1) + '%'); el.style.setProperty('--my', my.toFixed(1) + '%'); el.style.setProperty('--op', op);
+      };
+      const move = (e) => {
+        const r = el.getBoundingClientRect();
+        const x = Math.min(Math.max((e.clientX - r.left) / r.width, 0), 1), y = Math.min(Math.max((e.clientY - r.top) / r.height, 0), 1);
+        set((.5 - y) * 24, (x - .5) * 24, x * 100, y * 100, 1);
+      };
+      const leave = () => { el.classList.remove('holo-active'); set(0, 0, 50, 50, 0); };
+      el.addEventListener('pointerdown', (e) => { try { el.setPointerCapture(e.pointerId); } catch (_) { /* 古いブラウザ */ } el.classList.add('holo-active'); move(e); });
+      el.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') { el.classList.add('holo-active'); move(e); } });
+      el.addEventListener('pointermove', (e) => { if (el.classList.contains('holo-active')) move(e); });
+      el.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') leave(); });
+      el.addEventListener('pointerup', (e) => { if (e.pointerType !== 'mouse') leave(); });
+      el.addEventListener('pointercancel', leave);
+    }
+
     function openCard(id) {
       const hit = ALL.find(x => x.c.id === id);
       if (!hit) return;
@@ -454,6 +481,7 @@
         p.cards.map(x => '<button type="button" data-sib="' + esc(x.id) + '" aria-current="' + (x.id === c.id) + '" aria-label="' + esc(p.name) + ' ' + x.value + '">' +
           '<img alt="" loading="lazy" src="' + cardArt(p.name, x) + '"><b>' + x.value + '</b></button>').join('') + '</div></div></div>';
       const body = sh.open(html, p.color);
+      holo(body.querySelector('.dt-art'));
       body.querySelectorAll('[data-sib]').forEach(b => b.addEventListener('click', () => openCard(b.dataset.sib)));
     }
 

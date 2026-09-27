@@ -667,7 +667,7 @@ export function levelUpCutIn(level, rewards) {
     el.setAttribute('aria-label', 'レベルアップ');
     document.body.appendChild(el);
   }
-  el.innerHTML = '<div class="lu-card"><div class="lu-kicker">LEVEL UP</div><div class="lu-lv">' + level + '</div>' +
+  el.innerHTML = '<div class="lu-card"><div class="lu-kicker">LEVEL UP</div><div class="lu-lv" data-text="' + level + '">' + level + '</div>' +
     (rewards && rewards.length
       ? '<ul class="lu-rewards">' + rewards.map((r, i) => '<li style="--i:' + i + '"><b>Lv' + r.lv + '</b>' + r.name + '</li>').join('') + '</ul>' +
         '<p class="lu-note">設定 (⚙) の「見た目」で選べます</p>'
@@ -692,10 +692,11 @@ export function resultCutIn(win, opts) {
     '<canvas class="rc-art" aria-hidden="true"></canvas>' +
     '<div class="rc-rays"></div>' +
     '<div class="rc-body">' +
-      '<div class="rc-title">' + (win ? 'VICTORY' : 'DEFEAT') + '</div>' +
+      '<div class="rc-title" data-text="' + (win ? 'VICTORY' : 'DEFEAT') + '">' + (win ? 'VICTORY' : 'DEFEAT') + '</div>' +
       '<div class="rc-rule"></div>' +
       '<div class="rc-sub">' + (win ? 'ALL PROTOCOLS COMPILED' : 'SYSTEM OVERWRITTEN') + '</div>' +
     '</div>';
+  el.classList.toggle('lose', !win);
   el.classList.add('show');
   const art = el.querySelector('.rc-art');
   const drawWin = opts && opts.victory === 'aurora' ? drawAuroraBackdrop : drawVictoryBackdrop;

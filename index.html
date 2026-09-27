@@ -58,7 +58,12 @@
     .btn{display:inline-flex;flex-direction:column;justify-content:center;min-height:58px;padding:10px 24px;text-decoration:none;clip-path:var(--cut);
       font:800 17px/1.1 var(--ui);letter-spacing:.1em;border:0;cursor:pointer;transition:filter .15s,transform .15s}
     .btn small{font:600 11px/1.3 system-ui,sans-serif;letter-spacing:.02em;opacity:.85;margin-top:3px}
-    .btn.main{background:var(--pink);color:#fff}
+    /* いますぐ遊ぶ: 縁を光が回る (design-lab 02)。中はピンクのまま、2px の縁だけ色が巡る */
+    @property --ang{syntax:'<angle>';inherits:false;initial-value:0deg}
+    .btn.main{position:relative;isolation:isolate;color:#fff;background:conic-gradient(from var(--ang),#fff,var(--violet),#63f3ff,var(--pink),#fff);animation:btnSpin 3.2s linear infinite}
+    .btn.main::before{content:"";position:absolute;inset:2px;z-index:-1;background:var(--pink);clip-path:var(--cut)}
+    @keyframes btnSpin{to{--ang:360deg}}
+    @media (prefers-reduced-motion:reduce){.btn.main{animation:none}}
     .btn.alt{background:rgba(255,255,255,.08);color:#fff}
     /* タイトル画面へ: 2つのボタンの下に横いっぱい。薄い色にして「いますぐ遊ぶ」より控えめに */
     .btn.wide{flex:1 1 100%;min-height:52px;background:rgba(185,164,255,.13);color:#fff;font-size:15px}
