@@ -13,12 +13,12 @@ import { GACHA_ITEMS, gachaId, itemName } from './rewards.js';
 import { deviceId } from './device.js';
 
 const KEY = 'compileGacha';
-/* 1回 30 (数試合に1回の楽しみ)。10連は 1回ぶん安い */
-export const PULL_COST = 30;
-export const TEN_COST = 270;
+/* 1回 15 (30 では全然回せなかった)。10連は 1回ぶん安い */
+export const PULL_COST = 15;
+export const TEN_COST = 135;
 export const PITY = 10;
 export const RATES = { C: 55, R: 30, E: 12, L: 3 };
-export const REFUND = { C: 6, R: 9, E: 18, L: 36 };
+export const REFUND = { C: 3, R: 5, E: 9, L: 18 };   // かぶりの払い戻し (1回の値段に合わせて半分に)
 
 /* 使った CHIP は端末ごとに数える (paid: 払った分・back: かぶりで返った分。どちらも増えるだけ)。
    2台で別々に引いてから同期すると、前は「多い方」に合わせていたので片方の分がただになっていた。

@@ -12,10 +12,10 @@ globalThis.localStorage = {
 const load = () => import('../js3d/gacha.js');
 const empty = { spent: 0, owned: {}, pulls: 0, pity: 0 };
 
-test('CHIP が足りなければ引けない。1回 30・10連 270', async () => {
+test('CHIP が足りなければ引けない。1回 15・10連 135', async () => {
   const G = await load();
   const P = G.PULL_COST, T = G.TEN_COST;
-  assert.equal(P, 30); assert.equal(T, 270);
+  assert.equal(P, 15); assert.equal(T, 135);
   assert.equal(G.pull(empty, P - 1, 1), null);
   const one = G.pull(empty, P, 1, () => 0.9);
   assert.equal(one.results.length, 1);
