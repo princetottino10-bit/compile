@@ -80,7 +80,22 @@ export function refreshBgm() {
 
 /* 自動再生の制限: 画面に触れたときに鳴らし直す。iPhone の Safari は指を置いた瞬間 (pointerdown) では再生を許さず、
    指を離したとき (touchend)・タップ (click) だけ許すので、どれでも試す (ページを開き直して始まる対戦で鳴らなかった) */
-const retry = () => { initAudio(); if (want && el && el.paused && level() > 0) el.play().catch(() => {}); };
+const retry = () => { initAudio(); prime(); if (want && el && el.paused && level() > 0) el.play().catch(() => {}); };
+/* iPhone: 画面に触れた瞬間に一度も鳴らしていない <audio> は、あとからプログラムで鳴らせない。
+   対戦は「戦う」を押してから読み込みを待って始まるので、そのときにはもう触れた瞬間ではなく、1戦目の BGM が鳴らなかった。
+   最初に触れたときに、無音で一瞬だけ鳴らして止めておく (以後は対戦の始まりにすぐ鳴らせる) */
+let primed = false;
+function prime() {
+  if (primed || want || !BATTLE_BGM_ON) return;
+  primed = true;
+  try {
+    ensure();
+    route.set(0);
+    el.src = bgmFile(NORMAL_BGMS[0]);
+    const p = el.play();
+    if (p && p.then) p.then(() => { if (!want) el.pause(); }, () => { primed = false; });
+  } catch (e) { primed = false; }
+}
 for (const ev of ['pointerdown', 'touchend', 'click', 'keydown']) window.addEventListener(ev, retry, { capture: true, passive: true });
 /* 画面を離れたら止め、戻ったら続きから */
 document.addEventListener('visibilitychange', () => {

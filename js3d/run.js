@@ -4,7 +4,7 @@
  *   ・地図は下から上へ 12 段。最初から全部見えていて、つながっている道を1段ずつ選んで登る
  *       ⚔ 戦闘 / ☠ 精鋭 (強い。勝つとパッチ) / ? イベント / ✚ 休憩所 (回復かカード除去) /
  *       $ ショップ (パッチ・カード除去・回復・GACHA) / ◆ 宝箱 (パッチ) / ♛ BOSS (最上段)
- *   ・1試合は2本先取。ライフは勝ち抜き戦を通して持ち越し、相手に1回コンパイルされるたびに 1 減る
+ *   ・1試合は2本先取 (序盤の1〜2段目のふつうの戦闘は1本先取)。ライフは勝ち抜き戦を通して持ち越し、相手に1回コンパイルされるたびに 1 減る
  *   ・負けたら同じ相手とやり直し。ライフが 0 になったら終わり
  *   ・勝つとクレジットと、プロトコルの入れ替え (取らなくてもよい)
  *   ・カード除去: デッキから1枚ずつ外して、欲しいカードが来やすくする (最大 6 枚)
@@ -31,6 +31,15 @@ export const HEAT_LIFE = 3;                 // HEAT 1 からのライフの減�
 /* 勝ち抜き戦の1試合は 2本先取 (通常の3本では1周が長すぎる) */
 export const RUN_WIN_COMPILES = 2;
 export const MAP_ROWS = 12;                 // 最上段が BOSS
+/* 序盤はさっさと勝てるように (2026-09-28): 1〜2段目のふつうの戦闘は1本先取、1〜3段目の相手は「かんたん」 */
+export const QUICK_ROWS = 2;
+export const EASY_ROWS = 3;
+/** その試合の本数 (序盤のふつうの戦闘だけ1本先取) */
+export function runWinCompiles(run) {
+  const node = nodeById(run, run.pos);
+  const plain = !run.opp || (!run.opp.boss && !run.opp.elite && run.route !== 'alarm' && run.route !== 'cursed');
+  return node && node.row < QUICK_ROWS && plain ? 1 : RUN_WIN_COMPILES;
+}
 export const MAX_REMOVED = 6;               // 山札を 12 枚より減らさない
 export const START_CREDITS = 4;
 
@@ -578,8 +587,8 @@ export function prepareBattle(run, names, rnd = Math.random, route = 'normal') {
     const i = Math.floor(rnd() * CHALLENGERS.length);
     opp = { deck: CHALLENGERS[i].deck.slice(), level: CHALLENGER_BASE + i };
   } else {
-    let level = node.row < 4 ? 1 : 2;
-    if (heat >= 2 && level === 1) level = 2;
+    let level = node.row < EASY_ROWS ? 0 : node.row < 4 ? 1 : 2;
+    if (heat >= 2 && level < 2) level += 1;
     if (route === 'elite' || route === 'alarm') level = Math.min(3, level + 1);
     opp = { deck: sample(names.filter(n => !run.deck.includes(n)), 3, rnd), level };
   }
@@ -682,7 +691,7 @@ export function battleOpts(run, me) {
   const deckMods = [{}, {}];
   deckMods[me] = { swap: Object.fromEntries(ups.filter(id => !isStar(id)).map(id => [id, id + UP])), add: added.map(id => (ups.includes(id) ? id + UP : id)) };
   return {
-    winCompiles: RUN_WIN_COMPILES,
+    winCompiles: runWinCompiles(run),
     handSize: hand,
     ...(exclude[me].length ? { exclude } : {}),
     ...(ups.length || added.length ? { deckMods } : {}),

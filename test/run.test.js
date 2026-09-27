@@ -70,13 +70,18 @@ test('地図: 12段、0段目は戦闘・5段目は宝箱・10段目は休憩所
   }
 });
 
+/* その段のふつうの相手の強さ (序盤 1〜3段目は かんたん、4段目は ふつう、そこから つよい) */
+const baseLevel = (row) => (row < 3 ? 0 : row < 4 ? 1 : 2);
+
 test('進めるのはつながっているマスだけ。戦闘で勝つとクレジットと報酬、負けたら同じ相手とやり直し', async () => {
   const { R, run } = await started();
   const far = run.map.rows[3][0].id;
   assert.equal(R.chooseNode(run, far, NAMES, seq()), run, '飛ばして進めない');
   const b = R.chooseNode(run, R.reachable(run)[0], NAMES, seq());
   assert.equal(b.phase, 'battle');
-  assert.equal(b.opp.level, 1);
+  assert.equal(b.opp.level, 0, '序盤の相手は「かんたん」');
+  assert.equal(R.runWinCompiles(b), 1, '序盤のふつうの戦闘は1本先取');
+  assert.equal(R.battleOpts(b, 0).winCompiles, 1);
   assert.ok(b.opp.deck.every(n => !b.deck.includes(n)));
   const lost = R.finishBattle(b, false, 2, NAMES, seq());
   assert.equal(lost.life, R.RUN_LIFE - 2);
@@ -96,7 +101,8 @@ test('精鋭: 相手が強く、勝つとクレジット多めとパッチ。上
   const { R, run } = await started();
   const e = goTo(R, run, 'elite');
   assert.ok(e.opp.elite);
-  assert.equal(e.opp.level, 2);
+  assert.equal(e.opp.level, baseLevel(R.nodeById(e, e.pos).row) + 1, '精鋭はその段の相手より1段強い');
+  assert.equal(R.runWinCompiles(e), 2, '精鋭は2本先取');
   const won = R.finishBattle(e, true, 0, NAMES, seq());
   assert.equal(won.credits, R.START_CREDITS + 6, '精鋭 +5・無傷 +1');
   const after = R.applyReward(won, { type: 'skip' }, NAMES, seq());
@@ -182,7 +188,7 @@ test('宝箱・イベント: 宝箱はパッチ、祭壇は呪いの試合、保
   assert.equal(vault.phase, 'patch');
   const fight = R.choosePatch(vault, vault.patchOffers[0], NAMES, seq());
   assert.equal(fight.phase, 'battle');
-  assert.equal(fight.opp.level, 2);
+  assert.equal(fight.opp.level, baseLevel(R.nodeById(fight, fight.pos).row) + 1, '警報の試合は1段強い');
   assert.ok(!fight.opp.elite);
   const purge = R.resolveEvent({ ...ev, event: 'purge' }, 0, NAMES, seq());
   assert.equal(purge.phase, 'remove');

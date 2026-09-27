@@ -860,7 +860,8 @@ async function boot() {
     : runOpts && runOpts.first !== undefined ? runOpts.first
       : chosenFirst !== null ? chosenFirst : (Math.random() < 0.5 ? ME : AI);
   const seed = (Math.random() * 1e9) | 0;
-  const winCompiles = runMode ? RUN_WIN_COMPILES : undefined;
+  /* 勝ち抜き戦は2本先取 (序盤のふつうの戦闘は1本先取。run.js の runWinCompiles)。週替わりは2本先取 */
+  const winCompiles = runMode ? (runOpts ? runOpts.winCompiles : RUN_WIN_COMPILES) : undefined;
   const replayBuilt = replayMode ? rebuild(Engine, replayMode) : null;
   const res = replayBuilt
     ? replayBuilt.res
