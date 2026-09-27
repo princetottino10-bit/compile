@@ -386,6 +386,7 @@ export function declareCutIn(o) {
   }
   const tone = o.tone || 'call';
   el.dataset.tone = tone;
+  el.classList.toggle('small', !!o.small);                    // o.small: 盤面を隠さない小さい告知
   el.innerHTML =
     '<div class="dc-body">' +
       '<div class="dc-label">' + (o.label || '宣言') + '</div>' +

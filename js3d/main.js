@@ -3035,7 +3035,7 @@ async function announceControl(req, choice) {
   const side = req.player;
   const who = spectate ? specName(side) : side === ME ? '味方' : '相手';
   const value = choice === 0 ? '自分のプロトコルを並べ替え' : choice === 1 ? (spectate ? specName(1 - side) : side === ME ? '相手' : 'あなた') + 'のプロトコルを並べ替え' : '並べ替えなし';
-  await UI.declareCutIn({ label: who + 'のコントロール', value, tone: 'call', hold: 1800, note: req.controlReason === 'refresh' ? 'リフレッシュ' : 'コンパイル' });
+  await UI.declareCutIn({ label: who + 'のコントロール', value, tone: 'call', small: true, hold: 1800, note: req.controlReason === 'refresh' ? 'リフレッシュ' : 'コンパイル' });
 }
 
 /* 対戦の格: 'boss' (勝ち抜き戦の BOSS・週替わりの BOSS・CHALLENGE の最強・下剋上) / 'strong' (勝ち抜き戦の精鋭・CHALLENGE のロック特化と挑戦者) / null */
