@@ -68,7 +68,9 @@ export const COSMETICS = {
   ccolor: [['default', 'PROTOCOL'], ['gold', 'GOLD'], ['cyan', 'CYAN'], ['rainbow', 'RAINBOW'], ['lime', 'LIME'], ['violet', 'VIOLET'], ['ember', 'EMBER']],
   victory: [['default', 'STANDARD'], ['aurora', 'AURORA']],
   /* 対戦のそばのキャラ (avatar.js)。紫苑ははじめから、ほかはガチャ */
-  avatar: [['shion', '紫苑'], ['asagi', '浅葱'], ['yamabuki', '山吹'], ['nadeshiko', '撫子']],
+  avatar: [['shion', '紫苑'], ['asagi', '浅葱'], ['yamabuki', '山吹'], ['nadeshiko', '撫子'],
+    /* ゲスト (VOICEVOX のキャラ・声つき) */
+    ['zundamon', 'ずんだもん'], ['metan', '四国めたん'], ['tsumugi', '春日部つむぎ']],
   /* 対戦中の名札の枠 (相手にも見える) */
   plate: [['default', 'STANDARD'], ['gold', 'GOLD'], ['sakura', 'SAKURA'], ['washi', 'WASHI'], ['neon', 'NEON'], ['urushi', 'URUSHI'],
     ['crystal', 'CRYSTAL'], ['royal', 'ROYAL'], ...MASTERY_PROTOS.map(p => [pkey(p), p])]
@@ -78,7 +80,8 @@ export const COSMETICS = {
    持っているかは compileGacha (gacha.js が書く) の owned { 'kind:key': 取った時刻 } で見る */
 /* 対戦のキャラを出すまで (いまは管理者だけが見られる) は false。true にするとガチャに入り、だれでも選べる */
 export const AVATAR_RELEASED = false;
-export const AVATAR_GACHA = [{ kind: 'avatar', key: 'asagi', rar: 'R' }, { kind: 'avatar', key: 'yamabuki', rar: 'R' }, { kind: 'avatar', key: 'nadeshiko', rar: 'E' }];
+export const AVATAR_GACHA = [{ kind: 'avatar', key: 'asagi', rar: 'R' }, { kind: 'avatar', key: 'yamabuki', rar: 'R' }, { kind: 'avatar', key: 'nadeshiko', rar: 'E' },
+  { kind: 'avatar', key: 'zundamon', rar: 'E' }, { kind: 'avatar', key: 'metan', rar: 'E' }, { kind: 'avatar', key: 'tsumugi', rar: 'E' }];
 export const GACHA_ITEMS = [
   ...(AVATAR_RELEASED ? AVATAR_GACHA : []),
   { kind: 'sleeve', key: 'mint', rar: 'C' }, { kind: 'sleeve', key: 'ocean', rar: 'C' },

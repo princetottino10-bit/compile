@@ -177,8 +177,11 @@ function preview(kind, key, name, isOwned, src) {
     case 'avatar': {
       const d = AVATARS[key] || {};
       const line = d.lines && d.lines.hello ? d.lines.hello[0] : '';
+      const text = Array.isArray(line) ? line[0] : line;
       art = '<div class="cm-avview" style="--av-c:' + esc(d.color || '#b9a4ff') + '"><img alt="" src="' + faceURL(key, 'happy') + '">' +
-        (line ? '<p><b>' + esc(d.name || '') + '</b>' + esc(line) + '</p>' : '') + '</div>';
+        (text ? '<p><b>' + esc(d.name || '') + '</b>' + esc(text) + '</p>' : '') +
+        /* ゲストは声と立ち絵のクレジットを添える */
+        (d.guest ? '<small class="cm-credit">' + esc(d.credit || '') + '　立ち絵：坂本アヒル</small>' : '') + '</div>';
       break;
     }
     case 'title': case 'icon': {

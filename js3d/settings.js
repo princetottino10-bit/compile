@@ -84,6 +84,8 @@ export function openSettings(extra) {
     /* 見た目は専用の画面 (cosmetics-mode.js) で。実物どおりのプレビューと図鑑つき */
     '<div class="st-cosmetics"><div class="st-cos-head"><b>COSMETICS</b><small>盤面・スリーブ・マーカー・称号などは専用の画面で選べます</small></div>' +
       '<div class="pz-row"><button type="button" id="stCosOpen" class="pz-main">COSMETICS を開く</button></div></div>' +
+    /* 対戦のキャラの声と絵 (出すまでは管理者だけが使うが、クレジットは載せておく) */
+    '<p class="st-credit">キャラの声 VOICEVOX:ずんだもん / VOICEVOX:四国めたん / VOICEVOX:春日部つむぎ　立ち絵 坂本アヒル</p>' +
     (extra && extra.length ? '<div class="pz-row">' + extra.map((x, i) => '<button type="button" data-extra="' + i + '">' + x.label + '</button>').join('') + '</div>' : '') +
     '</div>';
   el.classList.add('show');
