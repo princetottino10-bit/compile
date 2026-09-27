@@ -199,7 +199,7 @@ export const AVATARS = {
   }
 ,
   whitecul: {
-    name: 'WhiteCUL', color: '#8fc8ff', guest: true, voice: true, credit: 'VOICEVOX:WhiteCUL',
+    name: 'WhiteCUL', color: '#8fc8ff', guest: true, voice: true, credit: 'VOICEVOX:WhiteCUL', facing: 'left',
     lines: {
       play: [['{card}、出します。', '出します。'], ['……{card}で。', 'これで。'], ['{card}、お願い……！', 'おねがい……！']],
       compile: ['コンパイル、完了です。', '……やった。'],

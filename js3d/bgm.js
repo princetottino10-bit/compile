@@ -48,6 +48,15 @@ export function playBgm(key) {
   } catch (e) { /* BGM が無くても遊べる */ }
 }
 
+/** 決着したときなど: 少しずつ小さくして止める (ms かけて) */
+export function fadeOutBgm(ms = 1400) {
+  if (!el || !want) return;
+  want = null;
+  route.set(0, ms / 1000 / 3);                    // 3 時定数でほぼ無音
+  const e = el;
+  setTimeout(() => { if (!want) e.pause(); }, ms);
+}
+
 export function stopBgm() {
   want = null;
   if (el) el.pause();

@@ -57,7 +57,7 @@ import { faceImageURL, backImageURL, pruneFaceCache, ART_SETS, setMaxAnisotropy 
 import * as FX from './fx.js';
 import { buildArena } from './arena.js';
 import { initAudio, sfx, setMuted, isMuted, setSfxVolume } from './audio.js';
-import { playBgm, refreshBgm, NORMAL_BGM, STRONG_BGM, BOSS_BGM } from './bgm.js';
+import { playBgm, refreshBgm, fadeOutBgm, NORMAL_BGM, STRONG_BGM, BOSS_BGM } from './bgm.js';
 import { BGM_RELEASED } from './rewards.js';
 import { emblemDataURL } from './emblems.js';
 import * as LAYOUT from './layout.js';
@@ -2684,6 +2684,7 @@ async function roomMaybeFinish() {
   const st = shown();
   if (!st || st.winner === null || roomResultShown) return;
   roomResultShown = true;
+  fadeOutBgm();
   CW.battleEnded();
   stopRoomPoll();
   const win = st.winner === ME;
@@ -3957,6 +3958,7 @@ async function afterTurn() {
   syncAssist();
   if (cur.state.winner !== null && !resultShown) {
     resultShown = true;
+    fadeOutBgm();                                   // 決着したら BGM は引いて、勝ち・負けの音だけにする
     CW.battleEnded();
     const win = cur.state.winner === ME;
     /* 遊ばれ方の匿名の記録 (ログインしていない人も。チュートリアルも数える) */
@@ -4499,6 +4501,7 @@ function syncPanels(st, animate) {
     const run = loadRun();
     if (run && lethal(run, lost)) {
       runEnded = true;
+      fadeOutBgm();
       showRunAfterGame(false, lost, Object.values(protoIndex));
     }
   }

@@ -30,7 +30,7 @@ export function setMuted(v) { muted = !!v; }
 /** <audio> を音量つきで鳴らす道 (BGM・キャラの声)。iPhone は audio.volume が効かないので、Web Audio のゲインを通す。
     返り値: { set(音量 0..1) }。音を作れないブラウザでは audio.volume で代わりにする */
 export function routeMedia(media, vol) {
-  const plain = { set(v) { try { media.volume = Math.max(0, Math.min(1, v)); } catch (e) { /* 読み取り専用の端末 */ } } };
+  const plain = { set(v) { try { media.volume = Math.max(0, Math.min(1, v)); } catch (e) { /* 読み取り専用の端末 */ } } };   // フェードは効かない (すぐ切り替わる)
   if (!actx) { plain.set(vol); return plain; }
   try {
     const src = actx.createMediaElementSource(media);
@@ -38,7 +38,7 @@ export function routeMedia(media, vol) {
     g.gain.value = vol;
     src.connect(g);
     g.connect(actx.destination);
-    return { set(v) { g.gain.setTargetAtTime(Math.max(0, v), actx.currentTime, 0.05); } };
+    return { set(v, tc) { g.gain.setTargetAtTime(Math.max(0, v), actx.currentTime, tc || 0.05); } };
   } catch (e) {
     plain.set(vol);
     return plain;
