@@ -504,6 +504,7 @@ export function runRoomLobby(protocols, opts = {}) {
           '<p class="ro-sub">' + (room.names[1]
             ? '対戦相手が参加しました。'
             : 'このコードを相手に共有して、参加を待ってください。') + '</p>' +
+          (room.names[1] ? '' : '<div class="ro-loader" role="status" aria-label="対戦相手を待っています"><i></i><i></i><i></i><b></b></div>') +
           '<p class="ro-wait" id="roomWait"></p>' +
           '<div class="ro-row"><button class="ro-btn" id="roomInvite" type="button">招待リンクを送る</button>' +
           '<button class="ro-btn" id="roomCopy" type="button">コードをコピー</button></div>' +

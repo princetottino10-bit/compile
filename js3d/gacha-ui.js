@@ -12,6 +12,7 @@ import { openSettings } from './settings.js';
 import { unlockTrophies, TROPHY_XP } from './achievements.js';
 import { trophyContext, showTrophyBanner } from './achievements-ui.js';
 import { loginNudgeNeeded, maybeLoginHint, openAccount } from './account.js';
+import { holo } from './holo.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const ORDER = ['L', 'E', 'R', 'C'];
@@ -40,8 +41,10 @@ function revealResults(results) {
   return new Promise((resolve) => {
     const cards = [...el.querySelectorAll('.ga-rc')];
     let i = 0, timer = null, done = false;
+    /* 全部めくれたら、1枚ずつ触って傾けられるようにする */
+    const finish = () => { done = true; el.classList.add('done'); cards.forEach(c => holo(c)); };
     const flipNext = () => {
-      if (i >= cards.length) { done = true; el.classList.add('done'); return; }
+      if (i >= cards.length) { finish(); return; }
       const c = cards[i++];
       c.classList.add('open');
       const rar = results[i - 1].rar;
@@ -53,7 +56,7 @@ function revealResults(results) {
       if (!done) {                                   // めくり途中なら全部めくる
         clearTimeout(timer);
         cards.forEach(c => c.classList.add('open'));
-        done = true; el.classList.add('done');
+        finish();
         return;
       }
       el.classList.add('out');
