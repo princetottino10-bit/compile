@@ -288,8 +288,29 @@ function avatarOf(side, st) {
   const s = st || (cur && cur.state);
   return avatars.mate && s && s.tag && s.tag.pilot[ME] === 1 ? avatars.mate : avatars.me;
 }
-/* 大事な場面 (コンパイル・勝敗など) は、ほかのひとことに割り込んででも言う */
+/* 大事な場面 (コンパイル・勝敗など)。話している途中でも捨てずに、言い終わったらすぐ言う */
 const AVATAR_MUST = new Set(['compile', 'compiled', 'win', 'lose', 'almost', 'hurt', 'hello', 'lesson', 'good', 'retry', 'turn']);
+/* 話している途中に来たひとことは、1つだけ待たせて、言い終わったら言う (前は捨てていたので「喋ったり喋らなかったり」になっていた)。
+   待たせるのは大事な場面を優先。ふつうのひとことは 5 秒たったら古いので捨てる */
+const avatarQueue = new Map();       // avatar -> { kind, vars, at }
+function avatarFlush(a) {
+  clearTimeout(a._qTimer);
+  a._qTimer = setTimeout(() => {
+    const p = avatarQueue.get(a);
+    if (!p) return;
+    if (!avatars || ![avatars.me, avatars.mate, avatars.opp].includes(a)) { avatarQueue.delete(a); return; }
+    if (a.idleIn() > 0) { avatarFlush(a); return; }
+    avatarQueue.delete(a);
+    if (!AVATAR_MUST.has(p.kind) && Date.now() - p.at > 5000) return;
+    a.react(p.kind, p.vars);
+  }, a.idleIn() + 180);
+}
+/** キャラが言い終わるのを待つ (最大 maxMs)。相手が次の手を打つ前などに */
+async function avatarsQuiet(maxMs = 2500) {
+  const until = Date.now() + maxMs;
+  const busy = () => avatars && [avatars.me, avatars.mate, avatars.opp].some(a => a && (a.idleIn() > 0 || avatarQueue.has(a)));
+  while (busy() && Date.now() < until) await TW.wait(120);
+}
 /* chance: 言う確率 (毎回だとうるさいもの)。gapMs: 同じ種類を続けて言わない間 */
 function avatarSay(side, kind, vars, st, gapMs, chance) {
   const a = avatarOf(side, st);
@@ -298,11 +319,14 @@ function avatarSay(side, kind, vars, st, gapMs, chance) {
   const k = side + ':' + kind;
   const now = Date.now();
   if (gapMs && now - (avatarSaidAt[k] || 0) < gapMs) return;
-  /* その子がしゃべったばかりなら、大事な場面以外は黙る */
-  const who = 'who:' + a.id;
-  if (!AVATAR_MUST.has(kind) && now - (avatarSaidAt[who] || 0) < 2600) return;
   avatarSaidAt[k] = now;
-  avatarSaidAt[who] = now;
+  /* 話している途中なら待たせる (大事な場面を優先して1つだけ) */
+  if (a.idleIn() > 0 || avatarQueue.has(a)) {
+    const pend = avatarQueue.get(a);
+    if (!pend || AVATAR_MUST.has(kind) || !AVATAR_MUST.has(pend.kind)) avatarQueue.set(a, { kind, vars, at: now });
+    avatarFlush(a);
+    return;
+  }
   a.react(kind, vars);
 }
 /* 考えこんでいる: 自分の番で 25 秒さわっていなければ、1手番に1回だけ声をかける */
@@ -2774,6 +2798,13 @@ const STEP_PACE = { same: 500, moved: 1000 };
 const STEP_MOTION = 1.25;
 /* 効果の帯 (発動した段の文章) を出しておく長さ。20字前後を読み切れる長さ */
 const FX_BANNER_MS = 3200;
+/* 観戦 (CPU どうし) で文章を読む間。動き (カードが飛ぶ・着地する) の速さは変えず、読むところだけ待つ。
+   文字数に応じて 1.5〜4.5 秒 (設定の「演出の速さ」で縮む)。動画に撮っても読めるように */
+const READ = { base: 900, perChar: 55, min: 1500, max: 4500 };
+function readMs(text) {
+  const n = Array.from(String(text || '')).length;
+  return Math.max(READ.min, Math.min(READ.max, READ.base + n * READ.perChar)) / settings().speed;
+}
 async function holdStep(t0, target) {
   const spent = (performance.now() - t0) * settings().speed;
   if (spent < target) await TW.wait(target - spent);
@@ -2819,7 +2850,11 @@ async function cueFor(step, st) {
     UI.showFxBanner({
       name: def.proto + ' ' + def.value, color: def.color,
       zone, text: def[zone], mine: card.owner === ME
-    }, FX_BANNER_MS / settings().speed);
+    }, Math.max(FX_BANNER_MS / settings().speed, demoMode ? readMs(def[zone]) + 400 : 0));
+    /* 観戦: 発動した効果の文を読み切れるまで待つ */
+    if (demoMode) await Promise.all([board.pulse(uid, def.color, 380), TW.wait(readMs(def[zone]))]);
+    else await board.pulse(uid, def.color, 380);
+    return;
   }
   await board.pulse(uid, def.color, 380);
 }
@@ -2991,6 +3026,15 @@ async function step(action) {
   updatePads();
   const prev = shown();
   const before = cur.state;
+  /* 観戦: 表で出すカードは、出す前に左の詳細に出して読む間を取る (文章の長さに合わせて) */
+  if (demoMode && action.type === 'play' && action.faceUp) {
+    const pc = before.cards[action.card];
+    const pd = pc && defIndex[pc.def];
+    if (pd) {
+      UI.showCardPanel(defDetail(pd));
+      await TW.wait(readMs([pd.upper, pd.middle, pd.lower].filter(Boolean).join('')));
+    }
+  }
   const res = Engine.apply(cur.state, action);
   if (res.error) {
     UI.toast(res.error);
@@ -3850,6 +3894,7 @@ async function afterTurn() {
   while (cur && cur.state.winner === null && (demoMode || cur.state.turn === AI || partnerMove())
          && !cur.requests.length && guardAi++ < 40) {
     await uiHold;                                   // 前の表示を閉じてから相手が動く
+    await avatarsQuiet();                           // キャラが言い終わってから
     const at = cur;
     const [action] = await Promise.all([aiAction(cur.state), TW.wait(demoMode ? 420 : 260)]);
     if (cur !== at) return;                       // 考えている間に対戦をやめた

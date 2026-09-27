@@ -45,6 +45,8 @@ export function routeMedia(media, vol) {
   }
 }
 export function isMuted() { return muted; }
+/** 音の土台の状態 (確かめる用): 'none' / 'suspended' / 'running' / 'interrupted' など */
+export const audioState = () => (actx ? actx.state : 'none');
 
 /* 出力の土台 (マスター → コンプレッサー、効果音バス、残響) を ctx に作る */
 function buildGraph(ctx) {

@@ -53,11 +53,16 @@ export function refreshBgm() {
   if (el.paused) el.play().catch(() => { /* まだ画面に触れていない。触れたときに鳴らす */ });
 }
 
-/* 自動再生の制限: 画面に触れたときに鳴らし直す */
-window.addEventListener('pointerdown', () => { if (want && el && el.paused && level() > 0) el.play().catch(() => {}); }, true);
+/* 自動再生の制限: 画面に触れたときに鳴らし直す。iPhone の Safari は指を置いた瞬間 (pointerdown) では再生を許さず、
+   指を離したとき (touchend)・タップ (click) だけ許すので、どれでも試す (ページを開き直して始まる対戦で鳴らなかった) */
+const retry = () => { initAudio(); if (want && el && el.paused && level() > 0) el.play().catch(() => {}); };
+for (const ev of ['pointerdown', 'touchend', 'click', 'keydown']) window.addEventListener(ev, retry, { capture: true, passive: true });
 /* 画面を離れたら止め、戻ったら続きから */
 document.addEventListener('visibilitychange', () => {
   if (!el) return;
   if (document.visibilityState === 'hidden') el.pause(); else refreshBgm();
 });
 onSettings(() => refreshBgm());
+
+/** いまの様子 (確かめる用) */
+export const bgmState = () => ({ want, src: el ? el.src.split('/').pop() : null, paused: el ? el.paused : null, time: el ? el.currentTime : 0, level: level() });

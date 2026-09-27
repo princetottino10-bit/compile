@@ -262,6 +262,7 @@ export function mountAvatar(id, opts = {}) {
   if (calm()) el.classList.add('calm');
 
   let face = 'normal', faceTimer = null, sayTimer = null, blinkTimer = null, speakTimer = null;
+  let speakEnd = 0;                  // 言い終わる時刻 (これより前に次のセリフを言わせない。main.js が待つ)
   const show = (f) => el.querySelectorAll('img').forEach(img => img.classList.toggle('on', img.dataset.face === f));
   /* まばたき: ふつうの顔のときだけ、3〜6秒ごとに 0.14 秒 */
   const scheduleBlink = () => {
@@ -297,6 +298,8 @@ export function mountAvatar(id, opts = {}) {
     });
     bubble.dataset.mood = f || 'normal';
     bubble.classList.remove('show'); void bubble.offsetWidth; bubble.classList.add('show');
+    /* 言い終わる時刻 (吹き出しを読み終わるまで。声がそれより長ければ声の終わり) */
+    speakEnd = Date.now() + (ms || 2600);
     clearTimeout(sayTimer);
     sayTimer = setTimeout(() => bubble.classList.remove('show'), ms || 2600);
     /* 話している間の印 (縦持ちの狭い画面では、話すときだけ出てくる。CSS) */
@@ -352,11 +355,16 @@ export function mountAvatar(id, opts = {}) {
       if (voiceEl) voiceEl.pause();
       voiceEl = new Audio(url);
       routeMedia(voiceEl, vol);
+      /* 声の長さが分かったら、言い終わる時刻を声の終わりまで延ばす */
+      const v = voiceEl;
+      v.addEventListener('loadedmetadata', () => { if (v === voiceEl && isFinite(v.duration)) speakEnd = Math.max(speakEnd, Date.now() + v.duration * 1000 + 200); });
       voiceEl.play().catch(() => { /* まだ画面に触れていないなど */ });
     } catch (e) { /* 声が無くても遊べる */ }
   }
   /* タッグ: 後ろに下がる / 前に出る */
   function setBack(on) { el.classList.toggle('av-back', !!on); }
   function destroy() { clearTimeout(faceTimer); clearTimeout(sayTimer); clearTimeout(blinkTimer); clearTimeout(speakTimer); if (voiceEl) voiceEl.pause(); el.remove(); }
-  return { react, say, setFace, setBack, setVoice, destroy, id, el };
+  /** 言い終わるまでの残り (ミリ秒)。0 なら話していない */
+  const idleIn = () => Math.max(0, speakEnd - Date.now());
+  return { react, say, setFace, setBack, setVoice, destroy, idleIn, id, el };
 }
