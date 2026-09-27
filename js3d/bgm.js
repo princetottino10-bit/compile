@@ -8,6 +8,7 @@
  * ========================================================================= */
 import { routeMedia, isMuted, initAudio } from './audio.js';
 import { settings, onSettings } from './settings.js';
+import { BGM_RELEASED } from './rewards.js';
 
 export const TITLE_BGM = 'orange_tunnel';
 export const BGM_CREDIT = '煉獄庭園';
@@ -29,6 +30,7 @@ function ensure() {
 
 /** 曲を鳴らす (同じ曲なら続きから)。key が無い・'off' なら止める */
 export function playBgm(key) {
+  if (!BGM_RELEASED) { stopBgm(); return; }        // 一旦しまっている (rewards.js の BGM_RELEASED)
   want = key && key !== 'off' ? key : null;
   if (!want) { stopBgm(); return; }
   try {

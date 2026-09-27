@@ -5,7 +5,7 @@
  *   まだ持っていないものも並べ、手に入れ方を書く (押すとプレビューだけ見られる)。
  *   新しく手に入れたものには NEW (見た印は compileCosSeen、このブラウザだけ)
  * ========================================================================= */
-import { COSMETICS, TITLES, REWARDS, GACHA_ITEMS, UNDERDOG_ITEMS, WEEKLY_ITEMS, masteryItem, protoMastery, unlockLevel, ownedTitles, AVATAR_RELEASED } from './rewards.js';
+import { COSMETICS, TITLES, REWARDS, GACHA_ITEMS, UNDERDOG_ITEMS, WEEKLY_ITEMS, masteryItem, protoMastery, unlockLevel, ownedTitles, AVATAR_RELEASED, BGM_RELEASED } from './rewards.js';
 import { AVATARS, faceURL } from './avatar.js';
 import { accountState } from './account.js';
 import { extraTitles, TROPHY_TITLES } from './cosmetics-ui.js';
@@ -30,7 +30,7 @@ const ALL_TABS = [
   { kind: 'plate', label: '名札' }, { kind: 'avatar', label: 'キャラ' }, { kind: 'bgm', label: 'BGM' }
 ];
 /* キャラのタブは、出すまでは管理者にだけ */
-const tabsNow = () => ALL_TABS.filter(t => t.kind !== 'avatar' || AVATAR_RELEASED || accountState().admin);
+const tabsNow = () => ALL_TABS.filter(t => (t.kind !== 'avatar' || AVATAR_RELEASED || accountState().admin) && (t.kind !== 'bgm' || BGM_RELEASED));
 const DEFAULT_KEY = { mat: 'neon', sleeve: 'default', marker: 'default', ccolor: 'default', victory: 'default', title: '', icon: '',
   plate: 'default', avatar: 'shion', bgm: 'burst' };
 const RAR_NAME = { C: 'COMMON', R: 'RARE', E: 'EPIC', L: 'LEGENDARY' };

@@ -11,6 +11,7 @@ test('見た目の解放: はじめからのものは Lv1、報酬のものは�
   assert.equal(R.isUnlocked('mat', 'nebula', 2), false);
   assert.equal(R.isUnlocked('mat', 'nebula', 3), true);
   for (const [kind, list] of Object.entries(R.COSMETICS)) {
+    if (kind === 'bgm' && !R.BGM_RELEASED) continue;          // BGM はしまっている間は手に入らない
     for (const [key] of list.slice(1)) {
       assert.ok(R.REWARDS.some(r => r.kind === kind && r.key === key) || R.GACHA_ITEMS.some(g => g.kind === kind && g.key === key) ||
         R.UNDERDOG_ITEMS.some(g => g.kind === kind && g.key === key) || R.WEEKLY_ITEMS.some(g => g.kind === kind && g.key === key) ||

@@ -6,7 +6,10 @@
  * ========================================================================= */
 import { protocolSummary } from './stats-data.js';
 
-export const REWARDS = [
+/* BGM を出すか (2026-09-28 に一旦しまった。曲を選び直したら true に戻す) */
+export const BGM_RELEASED = false;
+
+const ALL_REWARDS = [
   { lv: 2, kind: 'sleeve', key: 'crimson', name: 'SLEEVE — CRIMSON' },
   { lv: 1, kind: 'bgm', key: 'orange_tunnel', name: 'BGM — オレンジトンネルを抜ける' },
   { lv: 3, kind: 'mat', key: 'nebula', name: 'PLAYMAT — NEBULA' },
@@ -41,6 +44,8 @@ export const REWARDS = [
   { lv: 27, kind: 'sleeve', key: 'aurum', name: 'SLEEVE — AURUM' },
   { lv: 30, kind: 'title', key: 'ascended', name: 'TITLE — ASCENDED' }
 ];
+/* BGM をしまっている間は、レベルの報酬にも出さない */
+export const REWARDS = ALL_REWARDS.filter(r => r.kind !== 'bgm' || BGM_RELEASED);
 
 /* 見た目の選択肢 (default ははじめから)。名前は設定の画面に出す */
 /* プロトコルの習熟度で開く見た目 (30 プロトコルそれぞれ): 3 で名札・6 で称号・9 でプレイマット。
@@ -102,8 +107,8 @@ export const GACHA_ITEMS = [
   { kind: 'sleeve', key: 'galaxy', rar: 'L' }, { kind: 'marker', key: 'nova', rar: 'L' }, { kind: 'title', key: 'fortune', rar: 'L' },
   { kind: 'sleeve', key: 'nyanko', rar: 'R' }, { kind: 'sleeve', key: 'sweets', rar: 'C' }, { kind: 'sleeve', key: 'bunny', rar: 'E' },
   { kind: 'sleeve', key: 'rose', rar: 'E' }, { kind: 'sleeve', key: 'butterfly', rar: 'L' }, { kind: 'sleeve', key: 'momiji', rar: 'R' }, { kind: 'sleeve', key: 'konpairu', rar: 'E' }, { kind: 'sleeve', key: 'teaparty', rar: 'R' },
-  /* BGM (煉獄庭園) */
-  { kind: 'bgm', key: 'destroy_god', rar: 'R' }, { kind: 'bgm', key: 'reaper_phoenix', rar: 'E' }, { kind: 'bgm', key: 'final_2sec', rar: 'E' },
+  /* BGM (煉獄庭園)。しまっている間はガチャに入れない */
+  ...(BGM_RELEASED ? [{ kind: 'bgm', key: 'destroy_god', rar: 'R' }, { kind: 'bgm', key: 'reaper_phoenix', rar: 'E' }, { kind: 'bgm', key: 'final_2sec', rar: 'E' }] : []),
   /* 名札の枠 */
   { kind: 'plate', key: 'gold', rar: 'R' }, { kind: 'plate', key: 'sakura', rar: 'R' }, { kind: 'plate', key: 'washi', rar: 'R' },
   { kind: 'plate', key: 'neon', rar: 'R' }, { kind: 'plate', key: 'urushi', rar: 'E' }, { kind: 'plate', key: 'crystal', rar: 'E' },
