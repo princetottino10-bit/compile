@@ -156,7 +156,7 @@ function gameSummary(st, side, win, level, online) {
   const t = st.tally || {};
   const effectsMap = (t.effects && t.effects[side]) || {};
   return {
-    win, level, online, protocols: st.players[side].protocols.map(p => p.name),
+    win, level, online, protocols: ownProtos(st, side),
     compiles: (t.compiles && t.compiles[side]) | 0, oppCompiles: (t.compiles && t.compiles[1 - side]) | 0,
     winCompiles: st.winCompiles || 3, effectsMap,
     effects: Object.values(effectsMap).reduce((n, v) => n + (v | 0), 0),
@@ -220,6 +220,18 @@ let runEnded = false;            // 勝ち抜き戦の結果を出したか (ラ
 let setupNote = '';
 let lastSetup = null;
 let firstGameHintShown = false;    // はじめの数戦の操作の案内 (1戦に1回)              // いまの CPU 戦のプロトコル { p0, p1 } (もう1戦で同じ組み合わせにする)
+/* タッグデュエル (2 対 2): 味方と相手の味方のプロトコル { p0: [3], p1: [3] }。null ならふつうの対戦 */
+let tagMates = null;
+/* タッグで、自分の側を味方 (CPU) が指している (次に指すのが味方) */
+function partnerMove(st) {
+  const s = st || (cur && cur.state);
+  return !!(tagMates && s && s.tag && s.tag.pilot[ME] === 1);
+}
+/* 人が操作できる手番か (自分の側の手番で、タッグなら自分が指す番) */
+function humanTurn(st) { return !!st && st.turn === ME && !partnerMove(st); }
+/* 自分が持ってきたプロトコル (タッグの複合プロトコルは、その側の1人目の分) */
+function ownProtos(st, side) { return st.players[side].protocols.map(p => (p.names ? p.names[0] : p.name)); }
+
 /* この試合で手に入ったもの (対戦のあとの画面に1つずつ出す)。{ xp0, lv0, daily: [文], trophies: [名前] } */
 let matchGains = null;
 /* 今日のデイリーミッションで指定されたプロトコル (まだ達成していないものを優先)。無ければ null */
@@ -268,7 +280,7 @@ function legalNow() {
   if (roomMode) {
     return ROOM.normLegalActions(roomRm);
   }
-  if (!cur || cur.state.turn !== ME || cur.requests.length || cur.state.winner !== null) return [];
+  if (!cur || !humanTurn(cur.state) || cur.requests.length || cur.state.winner !== null) return [];
   return Engine.legalActions(cur.state);
 }
 
@@ -422,6 +434,11 @@ async function boot() {
   };
   let p0 = pick('me', null);
   let p1 = pick('ai', null);
+  /* タッグのもう1戦 (?tag=1&mate=&omate=) */
+  if (params.get('tag') === '1' && p0 && p1) {
+    const mate = pick('mate', null), omate = pick('omate', null);
+    if (mate && omate) tagMates = { p0: mate, p1: omate };
+  }
   /* もう1戦 (REMATCH が ?me=&ai=&lv= を付けて開き直す): 同じ組み合わせ・同じ強さで、タイトルと準備を飛ばす */
   const lvParam = parseInt(params.get('lv'), 10);
   if (p0 && p1 && params.get('training') !== '1' && Number.isInteger(lvParam)) applyAiDifficulty(lvParam);
@@ -598,11 +615,17 @@ async function boot() {
       p0 = chosen.me;
       p1 = p1 || chosen.ai;
       trainingMode = !!chosen.training;
+      /* タッグ: 味方と相手の味方の3つは、それぞれのチームで重ならないように残りからランダム */
+      if (opp && opp.tag) {
+        const all = cards.protocols.map(x => x.name);
+        tagMates = { p0: shuffled(all.filter(n => !p0.includes(n))).slice(0, 3), p1: shuffled(all.filter(n => !p1.includes(n))).slice(0, 3) };
+      }
       applyAiDifficulty(chosen.level);
       /* ドラフトは先手後攻もドラフトの先手に合わせる。ランダム編成は中身を知らせる */
       if (chosen.first) chosenFirst = chosen.first === 'me' ? ME : AI;
       if (chosen.random) setupNote = 'ランダム: あなた ' + p0.join(' / ') + '　相手 ' + p1.join(' / ');
       if (chosen.partial) setupNote = 'あなた ' + p0.map(n => chosen.partial.includes(n) ? n : n + ' (ランダム)').join(' / ') + '　相手 ' + p1.join(' / ');
+      if (tagMates) setupNote = 'タッグ: あなた ' + p0.join(' / ') + ' ＋ 味方 ' + tagMates.p0.join(' / ') + '　相手 ' + p1.join(' / ') + ' ＋ ' + tagMates.p1.join(' / ');
       break;
     }
   }
@@ -629,13 +652,15 @@ async function boot() {
       : tutorial
         ? Engine.newPuzzle(tutorial.lesson.spec, { seed: 1 })
         : Engine.newGame({ seed, p0, p1, first: firstPlayer, training: trainingMode, winCompiles,
-          ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude } : {}) });
+          ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude } : {}),
+          ...(tagMates ? { tag: tagMates } : {}) });
   cur = res;
   gameStartedAt = Date.now();          // はじめの表示で合計値の演出が出ないように (feel.js)
-  if (!trainingMode && !puzzle && !tutorial && !demoMode && !replayMode) CW.battleStarted(runMode ? runKind : quickGame ? 'quick' : 'cpu', p0, p1);
-  if (!trainingMode && !puzzle && !tutorial && !demoMode && !replayMode) lastSetup = { p0: p0.slice(), p1: p1.slice() };
+  if (!trainingMode && !puzzle && !tutorial && !demoMode && !replayMode) CW.battleStarted(runMode ? runKind : tagMates ? 'tag' : quickGame ? 'quick' : 'cpu', p0, p1);
+  if (!trainingMode && !puzzle && !tutorial && !demoMode && !replayMode) lastSetup = { p0: p0.slice(), p1: p1.slice(), mates: tagMates };
   /* CPU 戦は棋譜を取る (決着したらリプレイとして残す) */
-  replayLog = !replayMode && !trainingMode && !puzzle && !tutorial && !demoMode
+  /* タッグはリプレイに残さない (棋譜の形が 1 対 1 のため) */
+  replayLog = !replayMode && !trainingMode && !puzzle && !tutorial && !demoMode && !tagMates
     ? { init: { seed, p0: p0.slice(), p1: p1.slice(), first: firstPlayer, winCompiles: winCompiles || null,
       ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude } : {}) }, actions: [] } : null;
   if (trainingMode) training.protos = [p0.slice(), p1.slice()];
@@ -1099,6 +1124,7 @@ function padTexture() {
 
 /* コンパイル面のアート (art/Fire_Glitched.webp 等)。未生成のプロトコルは null */
 function glitchArtUrl(protoName) {
+  protoName = String(protoName || '').split('+')[0];      // タッグの複合プロトコルは1人目の絵
   const cap = protoName.charAt(0) + protoName.slice(1).toLowerCase();
   return protoIndex[protoName] && ART_SETS.has(protoIndex[protoName].set)
     ? 'art/' + cap + '_Glitched.webp'
@@ -1224,7 +1250,7 @@ function updatePads() {
   const st = cur && cur.state;   // 合法手の判定は基準状態で行う
   for (const pad of pads) pad.userData.pulse = 0;
   if (!st || busy || selectedUid === null || cur.requests.length) return;
-  if ((roomMode ? shown() : st).turn !== ME) return;
+  if (!humanTurn(roomMode ? shown() : st)) return;
 
   for (const pad of pads) {
     const { line, side } = pad.userData;
@@ -1515,7 +1541,7 @@ function bindInput() {
       if (pl) { showStack(pl.line, pl.side); return; }
     }
     if (demoMode || busy || !cur || shown().winner !== null) return;
-    if (cur.requests.length || shown().turn !== ME) return;
+    if (cur.requests.length || !humanTurn(shown())) return;
     /* 縦持ちは、画面下の手札が見た目では盤面と離れていても透視投影上は
        盤面レイに重なることがある。選択済みなら配置枠のワールド座標を
        優先し、手札に当たり判定を奪われず盤面へ置けるようにする。 */
@@ -1605,7 +1631,7 @@ function bindInput() {
 
   const refreshBtn = document.getElementById('btnRefresh');
   if (refreshBtn) refreshBtn.onclick = async () => {
-    if (busy || !cur || shown().turn !== ME || cur.requests.length) return;
+    if (busy || !cur || !humanTurn(shown()) || cur.requests.length) return;
     const ok = legalNow().some(a => a.type === 'refresh');
     if (!ok) { UI.toast('いまは補充できません'); return; }
     deselect();
@@ -1919,7 +1945,7 @@ function currentPlacementChoices() {
       faceUp: o.face === 'u', raw: o.raw
     }));
   }
-  if (cur.requests.length || shown().turn !== ME) return [];
+  if (cur.requests.length || !humanTurn(shown())) return [];
   return placementChoices(legalNow(), selectedUid, shown().turn);
 }
 
@@ -2150,6 +2176,21 @@ function showCpuPlates(p1) {
   const sub = aiDifficulty === null ? '' : levelLabel(aiDifficulty);
   showPlates({ me: myPlate(), opp: { name: 'CPU', sub: sub === '不明' ? '' : sub,
     icon: first ? { name: first.name, color: first.color } : null } });
+}
+
+/* タッグの名札: 自分の側は、いま (次に) 指す人 (あなた / 味方)。相手の側は 相手1 / 相手2。アイコンはその人の1つ目のプロトコル */
+function tagPlates(st) {
+  const iconOf = (side, pilot) => {
+    const p = st.players[side].protocols[0];
+    const meta = protoIndex[p.names ? p.names[pilot] : p.name];
+    return meta ? { name: meta.name, color: meta.color } : null;
+  };
+  const lv = aiDifficulty === null ? '' : levelLabel(aiDifficulty);
+  const mine = st.tag.pilot[ME], theirs = st.tag.pilot[AI];
+  showPlates({
+    me: mine ? { name: '味方', sub: 'PARTNER · CPU ' + lv, icon: iconOf(ME, 1) } : myPlate(),
+    opp: { name: '相手' + (theirs + 1), sub: 'CPU ' + lv, icon: iconOf(AI, theirs) }
+  });
 }
 
 function showVsTag(rm) {
@@ -2417,7 +2458,7 @@ async function finaleFx(win) {
   await TW.wait(320);
 }
 
-async function announceTurnFor(turn) {
+async function announceTurnFor(turn, atState) {
   if (trainingMode) return;                         // 検証盤面に手番はない
   if (turn === undefined || turn === null || turn === lastTurn) return;
   lastTurn = turn;
@@ -2426,8 +2467,15 @@ async function announceTurnFor(turn) {
   UI.hideChain();
   if (arena && arena.setTurnSide) arena.setTurnSide(turn);
   /* 自分の番が回ってきたときは、相手の番とは別の音で知らせる */
-  sfx(turn === ME ? 'yourTurn' : 'turn');
-  await UI.turnCutIn(turn === ME);
+  sfx(turn === ME && !partnerMove() ? 'yourTurn' : 'turn');
+  /* タッグ: だれの番かを名札とカットインで。自分の側でも味方が指す番は PARTNER TURN */
+  /* 名札とカットインは、手番が替わった時点の盤面で (再生の途中は cur がもう先へ進んでいる) */
+  const tagSt = atState || (cur && cur.state);
+  if (tagMates && tagSt && tagSt.tag) {
+    tagPlates(tagSt);
+    const pilot = tagSt.tag.pilot[turn];
+    await UI.turnCutIn(turn === ME, turn === ME ? (pilot ? 'PARTNER TURN' : 'YOUR TURN') : 'RIVAL ' + (pilot + 1) + ' TURN');
+  } else await UI.turnCutIn(turn === ME);
   /* はじめの数戦だけ、自分の番に何をすればいいかを添える */
   if (turn === ME && !roomMode && !tutorial && !puzzle && !demoMode && !replayMode && localRecords().length < 3 && !firstGameHintShown) {
     firstGameHintShown = true;
@@ -2438,7 +2486,7 @@ async function announceTurnFor(turn) {
 async function announceTurn() {
   const st = shown();
   if (!st || st.winner !== null) return;
-  await announceTurnFor(st.turn);
+  await announceTurnFor(st.turn, st);
 }
 
 /* フェイズの開始を、そのフェイズの演出より先に見せる。
@@ -2448,7 +2496,7 @@ async function announceTurn() {
 let lastPhaseTag = '';
 async function markPhase(st) {
   if (!st || st.winner !== null || trainingMode) return;
-  await announceTurnFor(st.turn);
+  await announceTurnFor(st.turn, st);
   const phase = st.phase;
   /* アクションは盤面の操作そのもので分かるので帯を出さない */
   if (!phase || phase === 'action' || phase === 'finished') return;
@@ -3428,8 +3476,10 @@ async function drainRequests() {
   while (cur && cur.requests && cur.requests.length && guard++ < 80) {
     const req = cur.requests[0];
     let picks;
-    const merged = !demoMode ? mergedYesTarget(req) : null;
-    const controlAsk = !demoMode && !tutorial && !trainingMode && req.player === ME
+    const merged = !demoMode && !(req.player === ME && partnerMove()) ? mergedYesTarget(req) : null;
+    /* タッグで味方が指しているときは、自分の側の選択も CPU (味方) が答える */
+    const mine = req.player === ME && !partnerMove();
+    const controlAsk = !demoMode && !tutorial && !trainingMode && mine
       && req.kind === 'option' && req.prompt === 'control-rearrange';
     if (queuedAnswer && (queuedAnswer.id === req.id
         || (queuedAnswer.kind && queuedAnswer.kind === req.kind && queuedAnswer.target === req.target))) {
@@ -3451,13 +3501,13 @@ async function drainRequests() {
       if (ans === PICK_CANCEL) continue;
       if (ans === PICK_SKIP || ans === PICK_BACK || ans === null) picks = [];
       else { picks = ['yes']; queuedAnswer = { id: merged.id, picks: ans }; }
-    } else if ((req.player === ME || trainingMode) && !demoMode) {
+    } else if ((mine || trainingMode) && !demoMode) {
       UI.setPrompt('');
       const forced = forcedPicks(req);
       if (forced) { picks = forced; await showForcedPick(req, forced); }
       else picks = await askUser(req);
     } else {
-      UI.setPrompt('相手が選択しています…', 'wait');
+      UI.setPrompt(req.player === ME ? '味方が選択しています…' : '相手が選択しています…', 'wait');
       const at = cur;
       const [ans] = await Promise.all([aiAnswer(cur.state, req), TW.wait(260)]);
       if (cur !== at) return;                     // 考えている間に対戦をやめた
@@ -3491,7 +3541,7 @@ async function afterTurn() {
   if (tutorial && await tutorialAfterStep()) return;
   await announceTurn();
   let guardAi = 0;
-  while (cur && cur.state.winner === null && (demoMode || cur.state.turn === AI)
+  while (cur && cur.state.winner === null && (demoMode || cur.state.turn === AI || partnerMove())
          && !cur.requests.length && guardAi++ < 40) {
     const at = cur;
     const [action] = await Promise.all([aiAction(cur.state), TW.wait(demoMode ? 420 : 260)]);
@@ -3513,8 +3563,8 @@ async function afterTurn() {
     const win = cur.state.winner === ME;
     /* 遊ばれ方の匿名の記録 (ログインしていない人も。チュートリアルも数える) */
     if (!trainingMode && !puzzle && !demoMode && !roomMode) {
-      logPlay({ mode: runMode ? runKind : tutorial ? 'tutorial' : quickGame ? 'quick' : 'cpu', win, level: aiDifficulty,
-        me: cur.state.players[ME].protocols.map(p => p.name), opp: cur.state.players[AI].protocols.map(p => p.name),
+      logPlay({ mode: runMode ? runKind : tutorial ? 'tutorial' : tagMates ? 'tag' : quickGame ? 'quick' : 'cpu', win, level: aiDifficulty,
+        me: ownProtos(cur.state, ME), opp: ownProtos(cur.state, AI),
         turns: (cur.state.turns || 0) + 1, logged: !!accountState().user });
     }
     const levelBefore = myLevel;
@@ -3524,11 +3574,12 @@ async function afterTurn() {
     /* チュートリアルは戦績・リプレイ・実績に数えない */
     if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial) {
       const st0 = cur.state;
-      recordSoloResult(st0.players[ME].protocols.map(p => p.name), st0.players[AI].protocols.map(p => p.name), win, aiDifficulty,
+      /* タッグは、自分が持ってきた3つで記録する (習熟度・デイリーも自分のプロトコルで数える) */
+      recordSoloResult(ownProtos(st0, ME), ownProtos(st0, AI), win, aiDifficulty,
         { turns: (st0.turns || 0) + 1,       // 決着した手番も1つと数える
           cards: ((st0.tally && st0.tally.faceUp[ME]) || []).slice(),
           effects: (st0.tally && st0.tally.effects && st0.tally.effects[ME]) || {},
-          mode: runMode ? runKind : tutorial ? 'tutorial' : quickGame ? 'quick' : 'cpu' });
+          mode: runMode ? runKind : tutorial ? 'tutorial' : tagMates ? 'tag' : quickGame ? 'quick' : 'cpu' });
       refreshCardGlow();
       if (replayLog) {
         lastReplayId = addReplay({ me: replayLog.init.p0, opp: replayLog.init.p1, win, level: aiDifficulty,
@@ -3665,6 +3716,8 @@ function showEndActions(win) {
     const st0 = cur && cur.state;
     if (!roomMode && !runMode && lastSetup && st0) {
       const q = new URLSearchParams({ me: lastSetup.p0.join(','), ai: lastSetup.p1.join(','), lv: String(aiDifficulty ?? 0) });
+      /* タッグは味方どうしの3つも同じで */
+      if (lastSetup.mates) { q.set('tag', '1'); q.set('mate', lastSetup.mates.p0.join(',')); q.set('omate', lastSetup.mates.p1.join(',')); }
       location.href = location.pathname + '?' + q.toString();
       return;
     }
@@ -3746,7 +3799,7 @@ function assistGame() {
 /* いま自分が操作する番か (自分の手番で選択待ちが無い、または自分への選択待ち) */
 function myMoment() {
   if (!cur || cur.state.winner !== null || busy) return false;
-  return cur.requests.length ? cur.requests[0].player === ME : cur.state.turn === ME;
+  return cur.requests.length ? cur.requests[0].player === ME && !partnerMove() : humanTurn(cur.state);
 }
 function syncAssist() {
   const undoBtn = document.getElementById('btnUndo');
@@ -4014,9 +4067,12 @@ function panelRows(st) {
   return [0, 1, 2].map((line) => {
     const cell = (side) => {
       const proto = st.players[side].protocols[line];
-      const meta = protoIndex[proto.name] || {};
+      /* タッグの複合プロトコル (FIRE+WATER) は、2つの名前と色を渡す */
+      const parts = proto.names || [proto.name];
+      const meta = protoIndex[parts[0]] || {};
       return {
         name: proto.name,
+        parts: parts.length > 1 ? parts.map(n => ({ name: n, color: (protoIndex[n] || {}).color || '#b9a4ff' })) : null,
         total: totalOf(st, line, side),
         color: meta.color || '#b9a4ff',
         set: meta.set,

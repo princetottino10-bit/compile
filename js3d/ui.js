@@ -389,7 +389,8 @@ export function declareCutIn(o) {
   }, hold));
 }
 
-export function turnCutIn(mine) {
+/* label: 真ん中の文字を変えるとき (タッグの PARTNER TURN など) */
+export function turnCutIn(mine, label) {
   const el = $('#turnCut');
   if (!el) return Promise.resolve();
   el.style.setProperty('--accent', mine ? '#a07bff' : '#ff4fa3');
@@ -403,7 +404,7 @@ export function turnCutIn(mine) {
     '<div class="tc-band"></div>' +
     '<div class="tc-line a"></div><div class="tc-line b"></div>' +
     '<div class="tc-chev l">' + chevs + '</div><div class="tc-chev r">' + chevs + '</div>' +
-    '<div class="tc-text">' + (mine ? 'YOUR TURN' : 'OPPONENT TURN') + '</div>' +
+    '<div class="tc-text">' + (label || (mine ? 'YOUR TURN' : 'OPPONENT TURN')) + '</div>' +
     '<div class="tc-sub">' + (mine ? 'COMMAND READY' : 'STAND BY') + '</div>';
   el.classList.add('show');
   return new Promise((resolve) => setTimeout(() => {

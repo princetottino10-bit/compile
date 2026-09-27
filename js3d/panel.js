@@ -76,7 +76,20 @@ function paintBadge(ctx, bx, by, total, compiled, accent) {
 }
 
 /* 板1面を描く。compiled=true なら「COMPILED」面 */
-function paint(ctx, info, art) {
+/* 絵を (x0..x1) の幅の中央に合わせて敷く */
+function drawArt(ctx, art, x0, x1, H, alpha) {
+  const w = x1 - x0;
+  const s = Math.max(w / art.width, H / art.height);
+  const dw = art.width * s, dh = art.height * s;
+  ctx.globalAlpha = alpha;
+  ctx.drawImage(art, x0 + (w - dw) / 2, (H - dh) / 2 - H * 0.12, dw, dh);
+  ctx.globalAlpha = 1;
+}
+
+/* arts: 絵 (複合プロトコルは2つの配列。読み込み前は null) */
+function paint(ctx, info, arts) {
+  const list = Array.isArray(arts) ? arts : [arts];
+  const art = list[0];
   const W = TEX_W, H = TEX_H;
   const accent = info.color || '#b9a4ff';
   const compiled = !!info.compiled;
@@ -90,14 +103,26 @@ function paint(ctx, info, art) {
   ctx.save();
   roundRect(ctx, 0, 0, W, H, 22); ctx.clip();
 
-  /* アート */
-  if (art) {
-    const s = Math.max(W / art.width, H / art.height);
-    const dw = art.width * s, dh = art.height * s;
-    ctx.globalAlpha = compiled ? 0.8 : 0.66;
-    ctx.drawImage(art, (W - dw) / 2, (H - dh) / 2 - H * 0.12, dw, dh);
-    ctx.globalAlpha = 1;
-  }
+  /* アート。複合プロトコルは2つの絵を斜めに半分ずつ (どちらも同じ扱い) */
+  const alpha = compiled ? 0.8 : 0.66;
+  if (info.parts) {
+    const cut = [W * 0.56, W * 0.44];          // 上の端・下の端での境目
+    for (let k = 0; k < 2; k++) {
+      ctx.save();
+      ctx.beginPath();
+      if (k === 0) { ctx.moveTo(0, 0); ctx.lineTo(cut[0], 0); ctx.lineTo(cut[1], H); ctx.lineTo(0, H); }
+      else { ctx.moveTo(cut[0], 0); ctx.lineTo(W, 0); ctx.lineTo(W, H); ctx.lineTo(cut[1], H); }
+      ctx.closePath();
+      ctx.clip();
+      if (list[k]) drawArt(ctx, list[k], k === 0 ? 0 : cut[1], k === 0 ? cut[0] : W, H, alpha);
+      else { ctx.fillStyle = rgba(info.parts[k].color, 0.18); ctx.fillRect(0, 0, W, H); }
+      ctx.restore();
+    }
+    /* 境目の細い光 */
+    ctx.strokeStyle = 'rgba(255,255,255,.55)';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(cut[0], 0); ctx.lineTo(cut[1], H); ctx.stroke();
+  } else if (art) drawArt(ctx, art, 0, W, H, alpha);
 
   /* 左からアクセント、右へ暗転。文字を必ず読ませる */
   const g = ctx.createLinearGradient(0, 0, W, 0);
@@ -132,25 +157,43 @@ function paint(ctx, info, art) {
   }
   ctx.restore();
 
-  /* 紋章 */
-  drawEmblem(ctx, info.name, 16, (H - 84) / 2, 84,
-    compiled ? 'rgba(255,255,255,.95)' : rgba(accent, 0.95), 7);
+  /* 紋章。タッグの複合プロトコルは2つを同じ大きさで、それぞれの名前の横に */
+  const ROW = [H * 0.43, H * 0.74];
+  if (info.parts) {
+    for (let k = 0; k < 2; k++) {
+      drawEmblem(ctx, info.parts[k].name, 30, ROW[k] - 29, 58, compiled ? 'rgba(255,255,255,.95)' : rgba(info.parts[k].color, 0.95), 6);
+    }
+  } else {
+    drawEmblem(ctx, info.name, 16, (H - 84) / 2, 84,
+      compiled ? 'rgba(255,255,255,.95)' : rgba(accent, 0.95), 7);
+  }
 
   /* 状態ラベル */
   ctx.font = '700 22px ' + FONT.hud;
   ctx.fillStyle = compiled ? '#ffffff' : rgba(accent, 0.9);
   ctx.fillText(compiled ? 'COMPILED' : 'LOADING...', 112, 48);
 
-  /* プロトコル名 */
-  let px = 60;
-  do {
-    ctx.font = '800 ' + px + 'px ' + FONT.hud;
-    if (ctx.measureText(info.name).width <= W - 270) break;
-    px -= 2;
-  } while (px > 22);
-  ctx.fillStyle = '#ffffff';
+  /* プロトコル名。複合プロトコルは2段 (上に1人目、下に + 2人目) */
+  const fit = (text, max, from) => {
+    let px = from;
+    do {
+      ctx.font = '800 ' + px + 'px ' + FONT.hud;
+      if (ctx.measureText(text).width <= max) break;
+      px -= 2;
+    } while (px > 18);
+  };
   ctx.textBaseline = 'middle';
-  ctx.fillText(info.name, 112, H * 0.62);
+  if (info.parts) {
+    /* 2つの名前は同じ大きさ (長い方に合わせる)・同じ白で */
+    const longer = info.parts[0].name.length >= info.parts[1].name.length ? info.parts[0].name : info.parts[1].name;
+    fit(longer, W - 270, 44);
+    ctx.fillStyle = '#ffffff';
+    for (let k = 0; k < 2; k++) ctx.fillText(info.parts[k].name, 112, ROW[k]);
+  } else {
+    fit(info.name, W - 270, 60);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(info.name, 112, H * 0.62);
+  }
   ctx.textBaseline = 'alphabetic';
 
   /* 合計値。並べ替えで板が動いている間は板には描かない (合計はラインのカードのもので、板についていかない。
@@ -218,36 +261,33 @@ export function createPanels(stage, me, hooks) {
   function repaint(p, info) {
     /* プロトコルの並べ替えでこのパネルの担当が変わったら、
        前のプロトコルのアートを捨てて読み直す */
+    /* 複合プロトコル (タッグ) は2つの絵。1つずつ読み、揃ったところから描き直す */
+    const names = info.parts ? info.parts.map(x => x.name) : [info.name];
     if (p.artName !== info.name) {
       p.artName = info.name;
-      p.art.loading = null;
-      p.art.compiled = null;
+      p.art.loading = names.map(() => null);
+      p.art.compiled = names.map(() => null);
     }
     p.info = info;                        // 絵の読み込みが後から終わったときは、そのときの内容で描く
-    const url = ART_SETS.has(info.set) ? protoArtUrl(info.name, false) : null;
-    const glitchUrl = ART_SETS.has(info.set) ? protoArtUrl(info.name, true) : null;
-
-    paint(p.loading.ctx, { ...info, compiled: false }, p.art.loading);
-    p.loading.tex.needsUpdate = true;
-    paint(p.compiled.ctx, { ...info, compiled: true }, p.art.compiled);
-    p.compiled.tex.needsUpdate = true;
-
-    if (url && !p.art.loading) {
-      loadArt(url, (img) => {
-        if (p.artName !== info.name) return;   // 読込中にまた入れ替わった
-        p.art.loading = img;
-        paint(p.loading.ctx, { ...p.info, compiled: false }, img);
-        p.loading.tex.needsUpdate = true;
-      });
-    }
-    if (glitchUrl && !p.art.compiled) {
-      loadArt(glitchUrl, (img) => {
-        if (p.artName !== info.name) return;
-        p.art.compiled = img;
-        paint(p.compiled.ctx, { ...p.info, compiled: true }, img);
-        p.compiled.tex.needsUpdate = true;
-      });
-    }
+    const draw = () => {
+      paint(p.loading.ctx, { ...p.info, compiled: false }, p.art.loading);
+      p.loading.tex.needsUpdate = true;
+      paint(p.compiled.ctx, { ...p.info, compiled: true }, p.art.compiled);
+      p.compiled.tex.needsUpdate = true;
+    };
+    draw();
+    if (!ART_SETS.has(info.set)) return;
+    const want = info.name;
+    names.forEach((n, k) => {
+      for (const face of ['loading', 'compiled']) {
+        if (p.art[face][k]) continue;
+        loadArt(protoArtUrl(n, face === 'compiled'), (img) => {
+          if (p.artName !== want) return;      // 読込中にまた入れ替わった
+          p.art[face][k] = img;
+          draw();
+        });
+      }
+    });
   }
 
   /* 板を裏返す (コンパイル時) */

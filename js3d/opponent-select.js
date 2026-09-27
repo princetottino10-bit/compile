@@ -45,6 +45,8 @@ export function openOpponentSelect(protocols) {
       '<small>プロトコルも相手も自動で決めて、' + LEVEL_LABELS[Math.min(2, Math.max(0, settings().quickLevel | 0))] + 'の CPU と対戦します (強さは ⚙ の設定で変えられる)</small></button>' +
     '<section><h3>CPU <small>次の画面で、公式ルールのドラフトで CPU とプロトコルを取り合う (自由に選ぶ・ランダムにも変えられる)</small></h3>' +
       '<div class="op-row">' + [0, 1, 2].map(i => card(String(i), LEVEL_LABELS[i], CPU_NOTES[i])).join('') + '</div></section>' +
+    '<section><h3>タッグデュエル <small>あなたと CPU の味方 vs CPU 2人。盤面は共有、手札と山札は1人ずつ。ラインは2人のプロトコルを合わせた複合プロトコル (次の画面で自分の3つを選び、味方は残りから)</small></h3>' +
+      '<div class="op-row">' + [0, 1, 2].map(i => card('tag' + i, 'TAG · ' + LEVEL_LABELS[i], '手番は あなた → 相手1 → 味方 → 相手2')).join('') + '</div></section>' +
     '<section><h3>強敵 <small>相手のデッキは決まっている。次の画面で自分の3つを選ぶ</small></h3>' +
       '<div class="op-row boss">' +
         card('3', '最強', 'いちばん強い CPU', deck(STRONGEST_AI)) +
@@ -67,6 +69,7 @@ export function openOpponentSelect(protocols) {
       if (key === 'back') { resolve(null); return; }
       if (key === 'quick') { resolve({ quick: true }); return; }
       try { localStorage.setItem(LAST_KEY, key); } catch (e) { /* private mode */ }
+      if (/^tag\d$/.test(key)) { resolve({ tag: true, level: +key.slice(3) }); return; }
       resolve(key === 'underdog' ? { underdog: true, level: UNDERDOG_LEVEL } : { level: +key });
     };
   });

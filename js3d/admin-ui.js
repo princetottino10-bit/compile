@@ -15,7 +15,7 @@ const when = (t) => new Date(t).toLocaleString('ja-JP', { month: 'numeric', day:
 
 /* 管理者の画面 (PLAYERS): モードの呼び名と、人ごとの回数の札 */
 const MODE_LABEL = {
-  cpu: '対 CPU 戦', quick: 'おまかせで1戦', run: '勝ち抜き戦', weekly: '週替わり3連戦', tutorial: 'チュートリアル',
+  cpu: '対 CPU 戦', quick: 'おまかせで1戦', tag: 'タッグデュエル', run: '勝ち抜き戦', weekly: '週替わり3連戦', tutorial: 'チュートリアル',
   'cpu?': '対戦', online: 'オンライン対戦', lesson: 'チュートリアル', tsume: '詰めコンパイル',
   puzzle: '共有された問題', daily: 'デイリーミッション'
 };

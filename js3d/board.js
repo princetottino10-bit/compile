@@ -453,7 +453,8 @@ export function createBoard(stage, defIndex, me, hooks) {
 
   async function compileSequence(prev, next, ev) {
     const laneX = BOARD.laneX[ev.line];
-    const proto = defIndex[ev.name + '_1'];
+    const baseName = String(ev.name).split('+')[0];          // タッグの複合プロトコルは1人目の色と演出
+    const proto = defIndex[baseName + '_1'];
     const own = ev.side === me ? compileColorOf() : null;
     const accent = own || (proto && proto.color) || (ev.side === me ? COLOR.self : COLOR.opp);
     const center = new THREE.Vector3(laneX, 0, 0);
@@ -465,7 +466,7 @@ export function createBoard(stage, defIndex, me, hooks) {
 
     /* 2) 解放: 光柱 + 衝撃波 + 画面フラッシュ */
     FX.compilePillar(scene, laneX, accent, 1500);
-    FX.compileBurst(scene, laneX, accent, ev.name, 1500);
+    FX.compileBurst(scene, laneX, accent, baseName, 1500);
     if (ev.side === me) compileSignature(scene, laneX, compileStyleOf());
     FX.shockwave(scene, center, accent, 6.5, 900);
     FX.screenFlash(stage, 0xffffff, 620, 0.9);
