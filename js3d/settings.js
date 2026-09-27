@@ -5,6 +5,7 @@
  * ========================================================================= */
 import { talkSettingsHtml, bindTalkSettings } from './aitalk.js';
 import { BGM_RELEASED } from './rewards.js';
+const BGM_SHOWN = true;                 // 対戦の BGM (bgm.js の BATTLE_BGM_ON) があるので音量は出す
 
 const KEY = 'compileSettings';
 /* 対戦のキャラの項目 (相手の声・クレジット) を見せるか。キャラを出すまでは管理者だけ (main.js が決める) */
@@ -74,7 +75,7 @@ export function openSettings(extra) {
       SPEEDS.map(o => '<button type="button" data-speed="' + o.v + '" class="' + (s.speed === o.v ? 'on' : '') + '">' + o.label + '</button>').join('') +
     '</div></div>' +
     /* 音量: BGM・キャラの声・効果音 (0 でオフ) */
-    (BGM_RELEASED ? '<label class="st-row"><span>BGM の音量 <i id="stBgmV">' + volText(s.bgmVol ?? 50) + '</i></span>' +
+    (BGM_SHOWN ? '<label class="st-row"><span>BGM の音量 <i id="stBgmV">' + volText(s.bgmVol ?? 50) + '</i></span>' +
       '<input type="range" min="0" max="100" step="5" id="stBgm" value="' + (s.bgmVol ?? 50) + '"></label>' : '') +
     '<label class="st-row"><span>キャラの声の音量 <i id="stVoiceV">' + volText(s.voiceVol ?? 80) + '</i></span>' +
       '<input type="range" min="0" max="100" step="5" id="stVoice" value="' + (s.voiceVol ?? 80) + '"></label>' +
@@ -110,7 +111,7 @@ export function openSettings(extra) {
         talkSettingsHtml() +
         '<p class="st-credit">キャラの声 VOICEVOX:ずんだもん / VOICEVOX:四国めたん / VOICEVOX:春日部つむぎ / VOICEVOX:WhiteCUL　立ち絵 坂本アヒル</p>'
       : '') +
-    (BGM_RELEASED ? '<p class="st-credit">BGM 煉獄庭園 (オレンジトンネルを抜ける・Burst・A・Crazy Cat ほか)</p>' : '') +
+    '<p class="st-credit">BGM 煉獄庭園 (Z･E･R･O・彷徨いの言葉は天に導かれ' + (BGM_RELEASED ? '・オレンジトンネルを抜ける・Burst ほか' : '') + ')</p>' +
     (extra && extra.length ? '<div class="pz-row">' + extra.map((x, i) => '<button type="button" data-extra="' + i + '">' + x.label + '</button>').join('') + '</div>' : '') +
     '</div>';
   el.classList.add('show');
@@ -128,7 +129,7 @@ export function openSettings(extra) {
     input.oninput = () => { el.querySelector(out).textContent = volText(+input.value); setSetting(key, +input.value); };
   };
   range('#stSfx', 'sfx', '#stSfxV');
-  if (BGM_RELEASED) range('#stBgm', 'bgmVol', '#stBgmV');
+  if (BGM_SHOWN) range('#stBgm', 'bgmVol', '#stBgmV');
   range('#stVoice', 'voiceVol', '#stVoiceV');
   el.querySelector('#stPauses').onchange = (ev) => setSetting('pauses', ev.target.checked);
   el.querySelector('#stAutoPick').onchange = (ev) => setSetting('autoPick', ev.target.checked);

@@ -48,7 +48,7 @@ import { openOpponentSelect } from './opponent-select.js';
 import { UNDERDOG_DECK, STRONGEST_AI, UNDERDOG_LEVEL, levelLabel } from './aidecks.js';
 import { openRun, runHud, showRunAfterGame } from './run-ui.js';
 import { openWeekly, weeklyHud, showWeeklyAfterGame } from './weekly-ui.js';
-import { compilesBy, loadRun, RUN_WIN_COMPILES, battleOpts, lethal } from './run.js';
+import { compilesBy, loadRun, RUN_WIN_COMPILES, battleOpts, lethal, nodeById } from './run.js';
 import { loadWeekly, loadStoredWeekly, weekKey } from './weekly.js';
 import { openReview } from './review.js';
 import { runRoomLobby } from './roomui.js';
@@ -57,7 +57,8 @@ import { faceImageURL, backImageURL, pruneFaceCache, ART_SETS, setMaxAnisotropy 
 import * as FX from './fx.js';
 import { buildArena } from './arena.js';
 import { initAudio, sfx, setMuted, isMuted, setSfxVolume } from './audio.js';
-import { playBgm, refreshBgm } from './bgm.js';
+import { playBgm, refreshBgm, BATTLE_BGM, BOSS_BGM } from './bgm.js';
+import { BGM_RELEASED } from './rewards.js';
 import { emblemDataURL } from './emblems.js';
 import * as LAYOUT from './layout.js';
 import { BOARD, CARD, COLOR, TIMING, VIEW } from './theme.js';
@@ -867,7 +868,7 @@ async function boot() {
           ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude } : {}),
           ...(tagMates ? { tag: tagMates } : {}) });
   cur = res;
-  playBgm(settings().bgm || 'burst');          // 対戦の BGM (COLLECTION の「BGM」で選んだ曲)
+  playBgm(battleBgm());                          // 対戦の BGM (ボス戦は専用の曲)
   gameStartedAt = Date.now();          // はじめの表示で合計値の演出が出ないように (feel.js)
   if (!trainingMode && !puzzle && !tutorial && !demoMode && !replayMode) CW.battleStarted(runMode ? runKind : tagMates ? 'tag' : quickGame ? 'quick' : 'cpu', p0, p1);
   if (!trainingMode && !puzzle && !tutorial && !demoMode && !replayMode) lastSetup = { p0: p0.slice(), p1: p1.slice(), mates: tagMates };
@@ -2710,7 +2711,7 @@ async function roomMaybeFinish() {
 /* ロビーから playing の publicState を受けて対戦開始 */
 async function roomEnterGame(rm) {
   document.body.classList.add('room');
-  playBgm(settings().bgm || 'burst');
+  playBgm(battleBgm());
   roomMode = true;
   roomResultShown = false;
   lastTurn = null;
@@ -3035,6 +3036,19 @@ async function announceControl(req, choice) {
   const who = spectate ? specName(side) : side === ME ? '味方' : '相手';
   const value = choice === 0 ? '自分のプロトコルを並べ替え' : choice === 1 ? (spectate ? specName(1 - side) : side === ME ? '相手' : 'あなた') + 'のプロトコルを並べ替え' : '並べ替えなし';
   await UI.declareCutIn({ label: who + 'のコントロール', value, tone: 'call', hold: 1800, note: req.controlReason === 'refresh' ? 'リフレッシュ' : 'コンパイル' });
+}
+
+/* ボス戦か: 勝ち抜き戦の BOSS・週替わりの3戦目・CHALLENGE (強敵・下剋上。強さ 3 以上) */
+function bossBattle() {
+  if (demoMode || roomMode || tutorial || puzzle || trainingMode) return false;
+  if (runMode && runKind === 'run') { const run = loadRun(); const node = run && nodeById(run, run.pos); return !!(node && node.type === 'boss'); }
+  if (runMode && runKind === 'weekly') return (loadStoredWeekly().stage | 0) === 2;
+  return aiDifficulty >= 3;
+}
+/* 対戦の BGM: ボス戦は専用の曲。COLLECTION の BGM を出していれば、ふつうの対戦は選んだ曲 */
+function battleBgm() {
+  if (bossBattle()) return BOSS_BGM;
+  return BGM_RELEASED ? (settings().bgm || BATTLE_BGM) : BATTLE_BGM;
 }
 
 /* ---------- 進行 ---------- */

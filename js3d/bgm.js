@@ -12,6 +12,11 @@ import { BGM_RELEASED } from './rewards.js';
 
 export const TITLE_BGM = 'orange_tunnel';
 export const BGM_CREDIT = '煉獄庭園';
+/* 対戦で流すか (COLLECTION で選ぶ仕組み BGM_RELEASED とは別)。2026-09-28: 選び直すまでは、
+   ふつうの対戦は Z･E･R･O、ボス戦は「彷徨いの言葉は天に導かれ」の2曲だけ。タイトルは無音 */
+export const BATTLE_BGM_ON = true;
+export const BATTLE_BGM = 'zero';
+export const BOSS_BGM = 'samayoi';
 
 let el = null;
 let route = null;
@@ -30,7 +35,8 @@ function ensure() {
 
 /** 曲を鳴らす (同じ曲なら続きから)。key が無い・'off' なら止める */
 export function playBgm(key) {
-  if (!BGM_RELEASED) { stopBgm(); return; }        // 一旦しまっている (rewards.js の BGM_RELEASED)
+  /* COLLECTION の BGM をしまっている間は、対戦の2曲だけ鳴らす (タイトルの曲・選んだ曲は鳴らさない) */
+  if (!BGM_RELEASED && !(BATTLE_BGM_ON && (key === BATTLE_BGM || key === BOSS_BGM))) { stopBgm(); return; }
   want = key && key !== 'off' ? key : null;
   if (!want) { stopBgm(); return; }
   try {

@@ -83,7 +83,8 @@ export const COSMETICS = {
     ['zundamon', 'ずんだもん'], ['metan', '四国めたん'], ['tsumugi', '春日部つむぎ'], ['whitecul', 'WhiteCUL']],
   /* 対戦の BGM (bgm.js、煉獄庭園の曲)。Burst ははじめから、オレンジトンネルはタイトルの曲 (LV 1) */
   bgm: [['burst', 'Burst'], ['orange_tunnel', 'オレンジトンネルを抜ける'], ['crazy_cat', 'Crazy Cat'], ['a', 'A'], ['junk_smash', 'Junk Smash'],
-    ['kessen_asa', '決戦の朝'], ['destroy_god', '神を破壊せよ'], ['reaper_phoenix', 'The Reaper, named Phoenix'], ['final_2sec', '最終決戦２秒前']],
+    ['kessen_asa', '決戦の朝'], ['destroy_god', '神を破壊せよ'], ['reaper_phoenix', 'The Reaper, named Phoenix'], ['final_2sec', '最終決戦２秒前'],
+    ['zero', 'Z･E･R･O'], ['samayoi', '彷徨いの言葉は天に導かれ']],
   /* 対戦中の名札の枠 (相手にも見える) */
   plate: [['default', 'STANDARD'], ['gold', 'GOLD'], ['sakura', 'SAKURA'], ['washi', 'WASHI'], ['neon', 'NEON'], ['urushi', 'URUSHI'],
     ['crystal', 'CRYSTAL'], ['royal', 'ROYAL'], ...MASTERY_PROTOS.map(p => [pkey(p), p])]
