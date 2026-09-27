@@ -18,7 +18,7 @@ export const PULL_COST = 15;
 export const TEN_COST = 135;
 export const PITY = 10;
 export const RATES = { C: 55, R: 30, E: 12, L: 3 };
-export const REFUND = { C: 3, R: 5, E: 9, L: 18 };   // かぶりの払い戻し (1回の値段に合わせて半分に)
+export const REFUND = { C: 5, R: 10, E: 15, L: 20 };   // かぶりの払い戻し (5 の倍数)
 
 /* 使った CHIP は端末ごとに数える (paid: 払った分・back: かぶりで返った分。どちらも増えるだけ)。
    2台で別々に引いてから同期すると、前は「多い方」に合わせていたので片方の分がただになっていた。
@@ -61,14 +61,14 @@ export function loadGacha() {
   return normalize({});
 }
 
-/* 1回 30 → 15 に下げた (2026-09-27)。それまでに使った CHIP の半分を返す (新しい値段で引いたのと同じになる)。
+/* 1回 30 → 15 に下げた (2026-09-27)。それまでに使った CHIP の半分 (5 の倍数に切り上げ) を返す (新しい値段で引いたのと同じになる)。
    返した分は back の COMP_KEY に1つだけ置く。同期で合わせるときは端末ごとと同じく大きい方を取るので、二重には返らない。
    ログインしている人はデータベースにも同じ分を書いてある。一度書いたら (0 でも) もう数え直さない */
 export const COMP_KEY = 'price15';
 export function compensateOldPrice(st) {
   if (Object.prototype.hasOwnProperty.call(st.back, COMP_KEY)) return st;
   const paid = sum(st.paid);
-  return normalize({ ...st, back: { ...st.back, [COMP_KEY]: Math.floor(paid / 2) } });
+  return normalize({ ...st, back: { ...st.back, [COMP_KEY]: Math.ceil(paid / 2 / 5) * 5 } });   // 5 の倍数に切り上げ
 }
 function saveGacha(s) {
   try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { /* private mode */ }
