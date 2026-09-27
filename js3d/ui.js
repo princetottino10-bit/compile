@@ -382,7 +382,7 @@ export function declareCutIn(o) {
       (o.note ? '<div class="dc-note">' + o.note + '</div>' : '') +
     '</div>';
   el.classList.add('show');
-  const hold = tone === 'call' ? 900 : 1150;
+  const hold = o.hold || (tone === 'call' ? 900 : 1150);           // o.hold: 読ませたい長さ (コントロールの告知など)
   return new Promise((resolve) => setTimeout(() => {
     el.classList.remove('show');
     setTimeout(resolve, 180);

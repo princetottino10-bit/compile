@@ -329,13 +329,13 @@ function avatarSay(side, kind, vars, st, gapMs, chance) {
   }
   a.react(kind, vars);
 }
-/* 考えこんでいる: 自分の番で 25 秒さわっていなければ、1手番に1回だけ声をかける */
+/* 考えこんでいる: 自分の番で 25 秒さわっていなければ、1手番に1回だけ相手のキャラが声をかける (自分のキャラはプレイしている本人なので) */
 let avatarIdleTurn = -1, avatarLastInput = Date.now();
 window.addEventListener('pointerdown', () => { avatarLastInput = Date.now(); }, true);
 setInterval(() => {
   if (!avatars || !cur || busy || cur.requests.length || !humanTurn(cur.state) || cur.state.winner !== null) return;
   const t = cur.state.turns | 0;
-  if (t !== avatarIdleTurn && Date.now() - avatarLastInput > 25000) { avatarIdleTurn = t; avatarSay(ME, 'idle'); }
+  if (t !== avatarIdleTurn && Date.now() - avatarLastInput > 25000) { avatarIdleTurn = t; avatarSay(AI, 'idle'); }
 }, 3000);
 /* その場面を動かした側: いま解決している効果のカードの持ち主 (相手の番に自分のカードの効果が出ることもある)。
    効果の途中でなければ、その場面の手番 */
@@ -2038,6 +2038,13 @@ function showPreview(uid) {
     showCardInspector(uid);
     return;
   }
+  /* 横持ちで INFO (左の詳細) をしまっているときも、押したカードの説明は出す (縦持ちと同じ小さな表示で) */
+  if (!isCompactHandUI() && uid && document.body.classList.contains('info-closed')) {
+    if (uid === previewUid) return;
+    previewUid = uid;
+    showCardInspector(uid);
+    return;
+  }
   if (isCompactHandUI()) {
     /* 対象選択中に候補を触ったのは「選ぶ」操作。効果パネルで選択帯を隠さない */
     if (uid && boardPick && Array.isArray(boardPick.req.candidates) && boardPick.req.candidates.includes(uid)) {
@@ -3017,6 +3024,14 @@ async function replayResolution(prev, res, action) {
   await checkRevealed(final);
 }
 
+/* CPU (相手・タッグの味方・観戦の両側) がコントロールを使ったときの告知。choice: 0 自分の並べ替え / 1 相手の並べ替え / 2 並べ替えない */
+async function announceControl(req, choice) {
+  const side = req.player;
+  const who = spectate ? specName(side) : side === ME ? '味方' : '相手';
+  const value = choice === 0 ? '自分のプロトコルを並べ替え' : choice === 1 ? (spectate ? specName(1 - side) : side === ME ? '相手' : 'あなた') + 'のプロトコルを並べ替え' : '並べ替えなし';
+  await UI.declareCutIn({ label: who + 'のコントロール', value, tone: 'call', hold: 1800, note: req.controlReason === 'refresh' ? 'リフレッシュ' : 'コンパイル' });
+}
+
 /* ---------- 進行 ---------- */
 async function step(action) {
   if (roomMode) { await roomStep(action); return; }
@@ -3862,6 +3877,8 @@ async function drainRequests() {
       const [ans] = await Promise.all([aiAnswer(cur.state, req), TW.wait(260)]);
       if (cur !== at) return;                     // 考えている間に対戦をやめた
       picks = ans;
+      /* CPU がコントロールをどう使ったかを、コンパイル (やリフレッシュ) の前にはっきり見せる。並べ替えなかったときも */
+      if (req.kind === 'option' && req.prompt === 'control-rearrange' && Array.isArray(picks)) await announceControl(req, picks[0]);
     }
     if (picks === PICK_CANCEL) continue;
     const prev = shown();
