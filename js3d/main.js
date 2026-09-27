@@ -2960,6 +2960,7 @@ async function replayResolution(prev, res, action) {
     lastUid = uid;
     await markPhase(step.st);
     await checkAnnounce(step.st);
+    await checkRevealed(step.st);                 // 公開されたカードは、見終わる (閉じる) まで次のコマへ進まない
     from = step.st;
     first = false;
   }
@@ -2978,6 +2979,7 @@ async function replayResolution(prev, res, action) {
   await syncPanels(final, true);
   /* 盤面が最終形になってから、そこまでに進んだ手番/フェイズを告げる */
   await markPhase(final);
+  await checkRevealed(final);
 }
 
 /* ---------- 進行 ---------- */
@@ -3776,6 +3778,7 @@ async function drainRequests() {
   if (roomMode) { await roomDrainRequest(); return; }
   let guard = 0;
   while (cur && cur.requests && cur.requests.length && guard++ < 80) {
+    await uiHold;                                   // 前の表示 (公開されたカードなど) を閉じてから
     const req = cur.requests[0];
     let picks;
     const merged = !demoMode && !(req.player === ME && partnerMove()) ? mergedYesTarget(req) : null;
@@ -3846,6 +3849,7 @@ async function afterTurn() {
   let guardAi = 0;
   while (cur && cur.state.winner === null && (demoMode || cur.state.turn === AI || partnerMove())
          && !cur.requests.length && guardAi++ < 40) {
+    await uiHold;                                   // 前の表示を閉じてから相手が動く
     const at = cur;
     const [action] = await Promise.all([aiAction(cur.state), TW.wait(demoMode ? 420 : 260)]);
     if (cur !== at) return;                       // 考えている間に対戦をやめた
@@ -4301,27 +4305,30 @@ async function checkAnnounce(st) {
   }
 }
 
-/* 手札公開 (PSYCHIC 0 等): st.revealed の変化を検知して公開ハンドを見せる */
+/* 手札公開 (PSYCHIC 0 等): st.revealed の変化を検知して公開ハンドを見せる。
+   閉じるまで対戦を先へ進めない (uiHold。再生の各コマ・相手の手・選択の前に待つ) */
 let lastRevealTag = '';
+let uiHold = Promise.resolve();
 function checkRevealed(st) {
   const r = st && st.revealed;
-  if (!r || !Array.isArray(r.cards)) return;
+  if (!r || !Array.isArray(r.cards)) return uiHold;
   /* CLARITY 1 のデッキトップ公開は自分の効果でも公開情報。従来は自分が
      公開したものを一律で抑止していたため、カードが一切見えなかった。 */
   const showOwn = r.kind === 'deck' || r.kind === 'card';
-  if (r.player === ME && !showOwn) return;
+  if (r.player === ME && !showOwn) return uiHold;
   /* seq (発生順) を含めないと、同じ内容の公開が2回目以降に出なくなる */
   const tag = (r.seq === undefined ? '' : r.seq + '#') + r.player + ':' + r.cards.join(',');
-  if (tag === lastRevealTag) return;
+  if (tag === lastRevealTag) return uiHold;
   lastRevealTag = tag;
   const who = r.player === ME ? 'あなた' : '相手';
   const title = r.kind === 'deck' ? who + 'のデッキが公開された (' + r.cards.length + '枚)'
     : r.kind === 'hand' ? who + 'の手札が公開された'
     : who + 'がカードを公開した';
-  UI.showRevealedHand(r.cards.map((id) => {
+  uiHold = UI.showRevealedHand(r.cards.map((id) => {
     const d = defIndex[id];
     return d ? { img: faceImageURL(d), label: d.proto + ' ' + d.value } : null;
-  }).filter(Boolean), title);
+  }).filter(Boolean), title, demoMode ? { autoClose: 4 } : undefined);
+  return uiHold;
 }
 
 /* 画面リサイズ/回転: カメラは stage が追従するが、手札や山札の実配置は

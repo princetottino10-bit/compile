@@ -609,8 +609,12 @@ export function showPile(title, items) {
   showRevealedHand(items, title);
 }
 
-export function showRevealedHand(items, titleOverride) {
-  if (!items || !items.length) return;
+/** 公開されたカードを見せる。閉じたら解決する Promise を返す (閉じるまで対戦を先へ進めないため)。
+    opts.autoClose: その秒数で閉じる (観戦など、押す人がいないとき)。ふだんは押すまで閉じない */
+export function showRevealedHand(items, titleOverride, opts) {
+  if (!items || !items.length) return Promise.resolve();
+  let doneFn = null;
+  const closed = new Promise((r) => { doneFn = r; });
   let el = $('#revealOv');
   if (!el) {
     el = document.createElement('div');
@@ -621,7 +625,7 @@ export function showRevealedHand(items, titleOverride) {
       (titleOverride || (items.length === 1 ? '相手が手札を1枚公開した' : '相手の手札が公開された')) + '</div>' +
     '<div class="rv-cards">' + items.map((it, i) =>
       '<figure data-z="' + i + '"><img alt="" src="' + it.img + '"><figcaption>' + it.label + '</figcaption></figure>'
-    ).join('') + '</div><div class="rv-hint">カードをタップで拡大・ほかをタップで閉じる</div>';
+    ).join('') + '</div><div class="rv-hint">カードをタップで拡大・ほかをタップで閉じる (閉じると先へ進みます)</div>';
   el.classList.add('show');
   /* 一覧そのもの、またはほかの場所に触れたら閉じる。ほかの場所への最初のタッチは閉じるだけにして、
      下の盤面の操作 (手札を選ぶ等) まで一緒に起こさない */
@@ -637,7 +641,11 @@ export function showRevealedHand(items, titleOverride) {
     el.classList.remove('show');
     clearTimeout(el._t);
     document.removeEventListener('pointerdown', outside, true);
+    if (doneFn) { const f = doneFn; doneFn = null; f(); }
   };
+  /* 前の一覧がまだ開いていたら、その待ちも解いておく (新しい一覧で置き換える) */
+  if (el._done) el._done();
+  el._done = () => { if (doneFn) { const f = doneFn; doneFn = null; f(); } };
   /* カードに触れたら拡大 (一覧は閉じない)、それ以外に触れたら閉じる */
   el.onclick = (ev) => {
     const f = ev.target.closest('[data-z]');
@@ -650,12 +658,13 @@ export function showRevealedHand(items, titleOverride) {
     close();
   };
   clearTimeout(el._t);
-  /* 相手の手札公開は6秒で閉じる。捨て札・スタックの一覧 (見出しあり) は自分で閉じるまで出しておく */
-  if (!titleOverride) el._t = setTimeout(close, 6000);
+  /* 勝手には閉じない (見終わってから先へ進む)。観戦など押す人がいないときだけ、決めた秒数で閉じる */
+  if (opts && opts.autoClose) el._t = setTimeout(close, opts.autoClose * 1000);
   document.removeEventListener('pointerdown', el._outside || outside, true);
   el._outside = outside;
   /* 開いたタッチそのもので閉じないよう、次のタッチから見張る */
   setTimeout(() => { if (el.classList.contains('show')) document.addEventListener('pointerdown', outside, true); }, 0);
+  return closed;
 }
 
 /* レベルアップ: LEVEL UP と手に入った報酬を順に見せる。タップか数秒で閉じる */
