@@ -73,7 +73,7 @@ export const AVATARS = {
   /* ---- ゲスト: VOICEVOX のキャラ (声つき)。立ち絵は坂本アヒルさんの素材、声は VOICEVOX で作って art/voice/<id>/ に入れる。
      セリフは [画面に出す文, 声で言う文] (声はカード名を言わない短い形)。声のファイルは <種類>_<番号>.mp3 */
   zundamon: {
-    name: 'ずんだもん', color: '#7ccf4a', guest: true, voice: true, credit: 'VOICEVOX:ずんだもん',
+    name: 'ずんだもん', color: '#7ccf4a', guest: true, voice: true, credit: 'VOICEVOX:ずんだもん', facing: 'left',
     lines: {
       play: [['{card}、いくのだ！', 'いくのだ！'], ['{card}の出番なのだ！', 'でばんなのだ！'], ['くらえ、{card}なのだ！', 'くらえなのだ！']],
       compile: ['コンパイルなのだ！', '勝ちに一歩近づいたのだ！'],
@@ -89,7 +89,7 @@ export const AVATARS = {
     }
   },
   metan: {
-    name: '四国めたん', color: '#ff6fb5', guest: true, voice: true, credit: 'VOICEVOX:四国めたん',
+    name: '四国めたん', color: '#ff6fb5', guest: true, voice: true, credit: 'VOICEVOX:四国めたん', facing: 'left',
     lines: {
       play: [['{card}、お行きなさい！', 'おいきなさい！'], ['{card}の出番ですわ！', 'でばんですわ！'], ['この{card}で決めますわ。', 'これで決めますわ。']],
       compile: ['コンパイル、いただきましたわ！', '当然の結果ですわね。'],
@@ -105,7 +105,7 @@ export const AVATARS = {
     }
   },
   tsumugi: {
-    name: '春日部つむぎ', color: '#f5c34a', guest: true, voice: true, credit: 'VOICEVOX:春日部つむぎ',
+    name: '春日部つむぎ', color: '#f5c34a', guest: true, voice: true, credit: 'VOICEVOX:春日部つむぎ', facing: 'left',
     lines: {
       play: [['{card}、いっちゃえ！', 'いっちゃえ！'], ['{card}でキメるし！', 'キメるし！'], ['ほい、{card}！', 'ほいっ！']],
       compile: ['コンパイル、キタコレ！', 'やったじゃん、あーしら最強！'],
@@ -147,6 +147,8 @@ export function mountAvatar(id, opts = {}) {
   const el = document.createElement('div');
   el.className = 'avatar ' + (opts.side === 'opp' ? 'av-opp' : 'av-me') + (opts.back ? ' av-back' : '');
   el.style.setProperty('--av-c', def.color);
+  /* 絵の向き (facing: 'left' は左を向いている絵)。盤面の方を向くよう、CSS で左右を反転する */
+  el.dataset.facing = def.facing || 'front';
   el.setAttribute('aria-hidden', 'true');
   el.innerHTML = '<div class="av-body">' + FACES.map(f =>
     '<img alt="" draggable="false" data-face="' + f + '" src="' + faceURL(id, f) + '"' + (f === 'normal' ? ' class="on"' : '') + '>').join('') +

@@ -2866,6 +2866,9 @@
   /* 相手のキャラ: 右上、上の帯の下。向かい合うよう左右を反転し、吹き出しは左に */
   .avatar.av-opp{left:auto;right:calc(-10px + env(safe-area-inset-right));top:calc(46px + env(safe-area-inset-top));bottom:auto;height:min(26vh,210px);}
   .avatar.av-opp img{transform:scaleX(-1);object-position:right bottom;}
+  /* 左を向いている絵 (ゲストの立ち絵): 自分の側 (左下) では反転して盤面の方へ、相手の側 (右上) ではそのまま */
+  .avatar.av-me[data-facing="left"] img{transform:scaleX(-1);}
+  .avatar.av-opp[data-facing="left"] img{transform:none;}
   .avatar.av-opp .av-body{-webkit-mask-image:linear-gradient(180deg,#000 78%,transparent);mask-image:linear-gradient(180deg,#000 78%,transparent);}
   .avatar.av-opp .av-bubble{left:auto;right:74%;top:34%;transform-origin:100% 70%;}
   .avatar.av-opp .av-bubble::after{left:auto;right:-10px;border-right:0;border-left:12px solid #fbf7ee;}
@@ -3240,7 +3243,7 @@
       "./js3d/aidecks.js": "./js3d/aidecks.js?v=8d249240bd",
       "./js3d/arena.js": "./js3d/arena.js?v=ef66a1e5bb",
       "./js3d/audio.js": "./js3d/audio.js?v=28a4f522ba",
-      "./js3d/avatar.js": "./js3d/avatar.js?v=2886cbe35a",
+      "./js3d/avatar.js": "./js3d/avatar.js?v=7d22c82d50",
       "./js3d/backdrops.js": "./js3d/backdrops.js?v=90faf9612d",
       "./js3d/board.js": "./js3d/board.js?v=9fe57e2090",
       "./js3d/card.js": "./js3d/card.js?v=6d8083e5b7",
@@ -3322,7 +3325,7 @@
   <link rel="modulepreload" href="js3d/playlog.js?v=90aaffedee">
   <link rel="modulepreload" href="js3d/feel.js?v=83bdf7f262">
   <link rel="modulepreload" href="js3d/spectate.js?v=3add6e9577">
-  <link rel="modulepreload" href="js3d/avatar.js?v=2886cbe35a">
+  <link rel="modulepreload" href="js3d/avatar.js?v=7d22c82d50">
   <link rel="modulepreload" href="js3d/motion.js?v=36861b0081">
   <link rel="modulepreload" href="js3d/gacha.js?v=ce3d4f3faa">
   <link rel="modulepreload" href="js3d/chips.js?v=e67e280b76">
