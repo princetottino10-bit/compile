@@ -57,7 +57,7 @@ import { faceImageURL, backImageURL, pruneFaceCache, ART_SETS, setMaxAnisotropy 
 import * as FX from './fx.js';
 import { buildArena } from './arena.js';
 import { initAudio, sfx, setMuted, isMuted, setSfxVolume } from './audio.js';
-import { playBgm, refreshBgm, fadeOutBgm, NORMAL_BGM, STRONG_BGM, BOSS_BGM } from './bgm.js';
+import { playBgm, refreshBgm, fadeOutBgm, pickNormalBgm, STRONG_BGM, BOSS_BGM } from './bgm.js';
 import { BGM_RELEASED } from './rewards.js';
 import { emblemDataURL } from './emblems.js';
 import * as LAYOUT from './layout.js';
@@ -3055,12 +3055,12 @@ function battleTier() {
   if (aiDifficulty === 3 || aiDifficulty === UNDERDOG_LEVEL) return 'boss';
   return aiDifficulty >= 3 ? 'strong' : null;
 }
-/* 対戦の BGM: ボスと強敵は専用の曲。ふつうの対戦は、曲を選び直すまで無音 (COLLECTION の BGM を出したら選んだ曲) */
+/* 対戦の BGM: ボスと強敵は専用の曲。ふつうの対戦は4曲からランダム (COLLECTION の BGM を出したら選んだ曲) */
 function battleBgm() {
   const tier = battleTier();
   if (tier === 'boss') return BOSS_BGM;
   if (tier === 'strong') return STRONG_BGM;
-  return BGM_RELEASED ? (settings().bgm || null) : NORMAL_BGM;
+  return BGM_RELEASED ? (settings().bgm || pickNormalBgm()) : pickNormalBgm();
 }
 
 /* ---------- 進行 ---------- */

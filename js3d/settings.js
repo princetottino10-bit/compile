@@ -111,7 +111,7 @@ export function openSettings(extra) {
         talkSettingsHtml() +
         '<p class="st-credit">キャラの声 VOICEVOX:ずんだもん / VOICEVOX:四国めたん / VOICEVOX:春日部つむぎ / VOICEVOX:WhiteCUL　立ち絵 坂本アヒル</p>'
       : '') +
-    '<p class="st-credit">BGM 煉獄庭園 (Z･E･R･O・彷徨いの言葉は天に導かれ' + (BGM_RELEASED ? '・オレンジトンネルを抜ける・Burst ほか' : '') + ')</p>' +
+    '<p class="st-credit">BGM 煉獄庭園 (Z･E･R･O・彷徨いの言葉は天に導かれ' + (BGM_RELEASED ? '・オレンジトンネルを抜ける・Burst ほか' : '') + ') / OpenTracks: Yuyake Monster「超頭脳バトル」・まんぼう二等兵「Reflect」「Crescendo Jitter」・田中芳典「解読」</p>' +
     (extra && extra.length ? '<div class="pz-row">' + extra.map((x, i) => '<button type="button" data-extra="' + i + '">' + x.label + '</button>').join('') + '</div>' : '') +
     '</div>';
   el.classList.add('show');

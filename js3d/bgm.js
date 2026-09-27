@@ -13,11 +13,18 @@ import { BGM_RELEASED } from './rewards.js';
 export const TITLE_BGM = 'orange_tunnel';
 export const BGM_CREDIT = '煉獄庭園';
 /* 対戦で流す曲 (COLLECTION で選ぶ仕組み BGM_RELEASED とは別)。2026-09-28: ボスは「彷徨いの言葉は天に導かれ」、
-   強敵は Z･E･R･O。ふつうの対戦 (NORMAL_BGM) とタイトルは、曲を選び直すまで無音 (null) */
+   強敵は Z･E･R･O。タイトルは無音 */
 export const BATTLE_BGM_ON = true;
-export const NORMAL_BGM = null;
+/* ふつうの対戦: OpenTracks (旧 DOVA-SYNDROME) の4曲から毎試合ランダム。
+   OpenTracks の規約 (ファイルのまま取り出せる形で置かない) に合わせて m4a に変換して置いている */
+export const NORMAL_BGMS = ['cho_zunou', 'reflect', 'kaidoku', 'crescendo_jitter'];
 export const STRONG_BGM = 'zero';
 export const BOSS_BGM = 'samayoi';
+/* 曲のファイル (無ければ <key>.mp3) */
+const FILES = { cho_zunou: 'cho_zunou.m4a', reflect: 'reflect.m4a', kaidoku: 'kaidoku.m4a', crescendo_jitter: 'crescendo_jitter.m4a' };
+export const bgmFile = (key) => 'art/bgm/' + (FILES[key] || key + '.mp3');
+/** ふつうの対戦の曲を1つ選ぶ */
+export const pickNormalBgm = () => NORMAL_BGMS[Math.floor(Math.random() * NORMAL_BGMS.length)];
 
 let el = null;
 let route = null;
@@ -37,12 +44,12 @@ function ensure() {
 /** 曲を鳴らす (同じ曲なら続きから)。key が無い・'off' なら止める */
 export function playBgm(key) {
   /* COLLECTION の BGM をしまっている間は、対戦の2曲だけ鳴らす (タイトルの曲・選んだ曲は鳴らさない) */
-  if (!BGM_RELEASED && !(BATTLE_BGM_ON && key && [NORMAL_BGM, STRONG_BGM, BOSS_BGM].includes(key))) { stopBgm(); return; }
+  if (!BGM_RELEASED && !(BATTLE_BGM_ON && key && (NORMAL_BGMS.includes(key) || key === STRONG_BGM || key === BOSS_BGM))) { stopBgm(); return; }
   want = key && key !== 'off' ? key : null;
   if (!want) { stopBgm(); return; }
   try {
     ensure();
-    const url = 'art/bgm/' + want + '.mp3';
+    const url = bgmFile(want);
     if (!el.src.endsWith(url)) el.src = url;
     refreshBgm();
   } catch (e) { /* BGM が無くても遊べる */ }
