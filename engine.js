@@ -14,6 +14,14 @@
 function clone(o) {
   return (typeof structuredClone === 'function') ? structuredClone(o) : JSON.parse(JSON.stringify(o));
 }
+/* プロトコル板の名前。タッグの複合プロトコル (FIRE+WATER) は names に2つ持ち、どちらのカードも「そのプロトコル」として扱う */
+function protoNamesOf(p) { return p && Array.isArray(p.names) ? p.names : [p && p.name]; }
+function protoHas(p, name) { return protoNamesOf(p).indexOf(name) >= 0; }
+/* そのラインにある (両者の) プロトコルの名前をすべて */
+function lineProtoNames(st, line) {
+  return protoNamesOf(st.players[0].protocols[line]).concat(protoNamesOf(st.players[1].protocols[line]));
+}
+
 function knowCard(st, uid, side) {
   const c = st.cards[uid];
   if (c) c.knownTo = (c.knownTo || 0) | (1 << side);
@@ -251,7 +259,7 @@ function canPlay(st, player, uid, line, faceUp, anyProto) {
     const selfEff = DEFS[st.cards[uid].def].eff;
     if (selfEff.lower && (selfEff.lower.handStatic === 'thisAnyLine' || selfEff.lower.handStatic === 'thisAnyLineEitherSide')) needMatch = false;
     if (needMatch) {
-      const names = [st.players[0].protocols[line].name, st.players[1].protocols[line].name];
+      const names = lineProtoNames(st, line);
       if (names.indexOf(defOf(st, uid).proto) < 0) return false;
     }
   }
@@ -813,7 +821,7 @@ function useControlBenefit(ctx, side, reason, line, darknessPowered) {
     kind: 'option', player: side, optional: false, prompt: 'control-rearrange',
     options: ['自分のプロトコルを並べ替える', '相手のプロトコルを並べ替える', '並べ替えない'],
     controlReason: reason, controlLine: line, darknessPowered: !!darknessPowered,
-    protocols: st.players[side].protocols.map(protocol => ({ name: protocol.name, compiled: protocol.compiled }))
+    protocols: st.players[side].protocols.map(protocol => ({ name: protocol.name, names: protocol.names, compiled: protocol.compiled }))
   });
   const controlContext = { controlReason: reason, controlLine: line, darknessPowered: !!darknessPowered };
   if (ans[0] === 0) doRearrange(ctx, side, side, undefined, controlContext);
@@ -1280,7 +1288,7 @@ function execOp(ctx, fr, op) {
         // 相手のデッキにはこの6種しか入らないため、全30種から選ぶ意味はない
         const names = [];
         for (let s = 0; s < 2; s++) for (const p of st.players[s].protocols)
-          if (names.indexOf(p.name) < 0) names.push(p.name);
+          for (const n of protoNamesOf(p)) if (names.indexOf(n) < 0) names.push(n);
         const ans = choose(ctx, { kind: 'option', player: fr.controller, options: names, prompt: 'declare-protocol', context: defOf(st, fr.source).id });
         fr.bind[op.bind || 'declared'] = names[ans[0]];
         st.announce = { seq: (st.actionLog || []).length, kind: 'declare', player: fr.controller, what: 'protocol',
@@ -1445,7 +1453,7 @@ function execOp(ctx, fr, op) {
 
     case 'setProtocolCompiled': { // DIVERSITY_1 / UNITY_2: 自分の該当プロトコルをコンパイル完了にする
       const proto = op.proto || defOf(st, fr.source).proto;
-      const idx = st.players[fr.controller].protocols.findIndex(p => p.name === proto);
+      const idx = st.players[fr.controller].protocols.findIndex(p => protoHas(p, proto));
       if (idx < 0 || st.players[fr.controller].protocols[idx].compiled) { fr.done = false; return; }
       st.players[fr.controller].protocols[idx].compiled = true;
       log(ctx, `P${fr.controller + 1}: ${proto} をコンパイル完了にした！`);
@@ -2054,6 +2062,8 @@ function runTurnLoop(ctx) {
         break;
       case 'end':
         doStartEnd(ctx, 'end');
+        /* タッグ: 手番を終えたチームは、次に指す味方に替わる */
+        if (st.tag && st.winner === null) tagSwap(st, st.turn);
         st.turn = 1 - st.turn;
         st.turns = (st.turns || 0) + 1;     // 終えた手番の数 (両者合計)。古い盤面には無いので 0 から数える
         st.phase = 'start';
@@ -2315,8 +2325,11 @@ function newGame(opts) {
       deck, hand: [], trash: [], cannotCompile: false
     });
   }
+  /* タッグ: 味方の3つ (opts.tag.p0 / p1) の 18 枚を控えの山札に作り、ラインのプロトコルを「自分の i 番目 + 味方の i 番目」の複合にする */
+  if (opts.tag) setupTag(st, opts.tag);
   shuffle(st, st.players[0].deck);
   shuffle(st, st.players[1].deck);
+  if (st.tag) for (const b of st.tag.bench) shuffle(st, b.deck);
   /* トレーニング: 手札を配らず、ターン進行なしの検証盤面として始める */
   if (opts.training) {
     st.training = true;
@@ -2334,8 +2347,58 @@ function newGame(opts) {
       st.players[p].hand.push(u);
       knowCard(st, u, p);
     }
+    /* 控えの人にも同じ枚数を配る */
+    if (st.tag) {
+      const b = st.tag.bench[p];
+      for (let i = 0; i < n && b.deck.length; i++) {
+        const u = b.deck.shift();
+        b.hand.push(u);
+        knowCard(st, u, p);
+      }
+    }
   }
   return runReplay(st, { type: '_begin' }, []);
+}
+
+/* ---------- タッグデュエル (2 対 2、タッグフォースのルール) ----------
+   盤面 (ライン・プロトコル・コンパイル) はチームで共有し、手札・山札・捨て札は1人ずつ持つ。
+   山札は、それぞれが自分の3つのプロトコルの 18 枚。ラインのプロトコルは「1人目の i 番目 + 2人目の i 番目」の
+   複合プロトコル (FIRE+WATER) で、プロトコルカードとしては1枚 (コンパイルも1回)。どちらのカードも表で出せる。
+   手番は チームA の1人目 → チームB の1人目 → チームA の2人目 → チームB の2人目 の順。
+   エンジンの players[p] には「いま指している人 (相手の手番中は、次に指す人)」の手札・山札・捨て札を入れ、
+   もう1人の分は st.tag.bench[p] に置く (カードの zone は 'bench' + p)。自分の手番を終えたときに入れ替える。
+   st.tag.pilot[p]: players[p] に入っているのが 0 (1人目) か 1 (2人目) か。チームの中で同じプロトコルは使えない */
+function setupTag(st, tag) {
+  st.tag = { pilot: [0, 0], bench: [] };
+  for (let p = 0; p < 2; p++) {
+    const pl = st.players[p];
+    const mate = tag['p' + p];
+    const own = pl.protocols.map(x => x.name);
+    if (!Array.isArray(mate) || mate.length !== 3) throw new Error('タッグ: 味方も3プロトコルを指定すること');
+    if (new Set(own.concat(mate)).size !== 6) throw new Error('タッグ: チームの中で同じプロトコルは使えない');
+    const deck = [];
+    for (const name of mate) {
+      if (!PROTOS[name]) throw new Error('未知のプロトコル: ' + name);
+      for (const defId of PROTOS[name]) {
+        const uid = 'p' + p + ':' + defId;
+        st.cards[uid] = { uid, def: defId, owner: p, faceUp: false, zone: 'bench' + p, knownTo: 0 };
+        deck.push(uid);
+      }
+    }
+    st.tag.bench.push({ hand: [], deck, trash: [] });
+    pl.protocols = own.map((n, i) => ({ name: n + '+' + mate[i], names: [n, mate[i]], compiled: false }));
+  }
+}
+function tagSwap(st, p) {
+  const pl = st.players[p], b = st.tag.bench[p];
+  const out = { hand: pl.hand, deck: pl.deck, trash: pl.trash };
+  pl.hand = b.hand; pl.deck = b.deck; pl.trash = b.trash;
+  for (const u of pl.hand) { st.cards[u].zone = 'hand' + p; st.cards[u].faceUp = false; }
+  for (const u of pl.deck) { st.cards[u].zone = 'deck' + p; st.cards[u].faceUp = false; }
+  for (const u of pl.trash) { st.cards[u].zone = 'trash' + p; st.cards[u].faceUp = true; }
+  for (const u of out.hand.concat(out.deck, out.trash)) st.cards[u].zone = 'bench' + p;
+  st.tag.bench[p] = out;
+  st.tag.pilot[p] = 1 - st.tag.pilot[p];
 }
 
 /* 共有された「問題」の盤面から対戦を始める。
@@ -2656,7 +2719,7 @@ function aiHandPotential(st, side, anyLine) {
     let best = -10;
     for (let l = 0; l < 3; l++) {
       if (st.players[side].protocols[l].compiled) continue;
-      const names = [st.players[0].protocols[l].name, st.players[1].protocols[l].name];
+      const names = lineProtoNames(st, l);
       if (!anyLine && names.indexOf(d.proto) < 0) continue;
       const mine = lineTotal(st, l, side), theirs = lineTotal(st, l, op);
       const face = d.value + Math.max(0, aiMiddleValue(d)) * 0.18;
@@ -2730,7 +2793,7 @@ function aiLockEnablers() {
 function aiLockThreat(st, side) {
   const op = 1 - side;
   const E = aiLockEnablers();
-  const opProtos = st.players[op].protocols.map(p => p.name);
+  const opProtos = st.players[op].protocols.flatMap(protoNamesOf);
   const own = (id) => opProtos.indexOf(DEFS[id].proto) >= 0;
 
   /* 見えたかどうかは相手のデッキ由来のカード (uid が "p<op>:") だけで判断する。
@@ -2759,7 +2822,7 @@ function aiLockThreat(st, side) {
   let risk = 0;
   for (let l = 0; l < 3; l++) {
     const stack = st.lines[l][op];
-    const lineProtos = [st.players[0].protocols[l].name, st.players[1].protocols[l].name];
+    const lineProtos = lineProtoNames(st, l);
     /* このラインに表向きで出せるライン限定の反転手段があるか */
     const lineReady = lineEnablers.some(id => lineProtos.indexOf(DEFS[id].proto) >= 0);
     for (let i = 0; i < stack.length; i++) {
@@ -2832,7 +2895,7 @@ function aiLockSpecialistBias(st, side, action, d, fizzles) {
   const lockLive = activeStatics(st).some(s => s.rule === 'oppFaceDownOnly' && s.sideIdx === side
     && st.lines[s.line][s.sideIdx].indexOf(s.uid) < st.lines[s.line][s.sideIdx].length - 1);
   if (lockLive) return 0;
-  const lineHasKeyProto = (l) => [st.players[0].protocols[l].name, st.players[1].protocols[l].name]
+  const lineHasKeyProto = (l) => lineProtoNames(st, l)
     .indexOf(DEFS[AI_LOCK_KEY].proto) >= 0;
   const myDownLockLine = (() => {
     for (let l = 0; l < 3; l++) {
@@ -2963,7 +3026,7 @@ function aiHasDefInHand(st, side, defId) {
 function aiDiversityReady(st, side) {
   const d0 = st.players[side].hand.find(uid => st.cards[uid].def === 'DIVERSITY_1');
   if (!d0) return false;
-  const prot = st.players[side].protocols.find(p => p.name === 'DIVERSITY');
+  const prot = st.players[side].protocols.find(p => protoHas(p, 'DIVERSITY'));
   if (!prot || prot.compiled) return false;
   const kinds = new Set();
   for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++) for (const uid of st.lines[l][s]) {
@@ -2975,14 +3038,14 @@ function aiDiversityReady(st, side) {
 }
 /* DIVERSITY 0 を切り札として手札に持っている (DIVERSITY 未コンパイルで、まだ最後の1本ではない) */
 function aiHoldsDiversityTrump(st, side) {
-  const prot = st.players[side].protocols.find(p => p.name === 'DIVERSITY');
+  const prot = st.players[side].protocols.find(p => protoHas(p, 'DIVERSITY'));
   return !!prot && !prot.compiled && aiHasDefInHand(st, side, 'DIVERSITY_1') && !aiDiversityIsLast(st, side);
 }
 /* DIVERSITY 以外が2本とも済んでいる = DIVERSITY 0 の即コンパイルがそのまま勝ちになる */
 function aiDiversityIsLast(st, side) {
   const ps = st.players[side].protocols;
-  return ps.some(p => p.name === 'DIVERSITY' && !p.compiled)
-    && ps.filter(p => p.name !== 'DIVERSITY' && p.compiled).length === winCompilesOf(st) - 1;
+  return ps.some(p => protoHas(p, 'DIVERSITY') && !p.compiled)
+    && ps.filter(p => !protoHas(p, 'DIVERSITY') && p.compiled).length === winCompilesOf(st) - 1;
 }
 
 /* FIRE 0 + WATER 4 (docs/ai-combos.md): 手札に WATER 4 があり、FIRE 0 が表で一番上に居るラインに
@@ -3116,7 +3179,7 @@ function aiActionBias(st, action, side) {
   }
   const compiledLine = !!st.players[side].protocols[action.line].compiled;
   /* DIVERSITY 0 を切り札として持っている間は、DIVERSITY のラインを10点に届かせる加点を入れない */
-  const reachLine = !(W.diversityHoldLine && st.players[side].protocols[action.line].name === 'DIVERSITY'
+  const reachLine = !(W.diversityHoldLine && protoHas(st.players[side].protocols[action.line], 'DIVERSITY')
     && aiHoldsDiversityTrump(st, side));
   if (compiledLine) {
     const add = action.faceUp ? d.value : 2;
@@ -3178,7 +3241,7 @@ function aiDisruptionValue(ops, depth) {
 function aiDefResponseValue(st, defId, line) {
   const d = DEFS[defId];
   let value = 2;
-  const names = [st.players[0].protocols[line].name, st.players[1].protocols[line].name];
+  const names = lineProtoNames(st, line);
   if (names.indexOf(d.proto) >= 0) {
     value = Math.max(value, d.value + aiDisruptionValue(d.eff.middle && d.eff.middle.ops, 0));
   }
@@ -3279,7 +3342,7 @@ function aiScore(st, me) {
   for (let l = 0; l < 3; l++) {
     const li = lineInfo[l];
 
-    if (!li.myComp && saveDiversity && st.players[me].protocols[l].name === 'DIVERSITY') {
+    if (!li.myComp && saveDiversity && protoHas(st.players[me].protocols[l], 'DIVERSITY')) {
       myGaps.push(Math.max(0, 10 - li.mine));
       if (li.mine >= 10 && li.mine > li.theirs) sc -= W.diversityHoldLine;
       if (li.mine > li.theirs) sc += 12;
@@ -3357,7 +3420,7 @@ function aiScore(st, me) {
     for (const uid of st.players[me].hand) {
       const d = DEFS[st.cards[uid].def];
       for (let l = 0; l < 3; l++) {
-        const names = [st.players[0].protocols[l].name, st.players[1].protocols[l].name];
+        const names = lineProtoNames(st, l);
         if (names.indexOf(d.proto) >= 0 && !lineInfo[l].myComp) { playable++; break; }
       }
     }
@@ -3705,7 +3768,7 @@ function smartPicks(st, req) {
         let s = d.value;
         let bestLineFit = -Infinity;
         for (let l = 0; l < 3; l++) {
-          const names = [st.players[0].protocols[l].name, st.players[1].protocols[l].name];
+          const names = lineProtoNames(st, l);
           if (names.indexOf(d.proto) < 0) continue;
           const lt = lineTotal(st, l, me);
           const gap = Math.max(0, 10 - lt);
@@ -3766,8 +3829,8 @@ function smartPicks(st, req) {
     case 'option': {
       if (aiIsDshSpecialist(st, me) && req.prompt === 'control-rearrange'
           && req.controlReason === 'compile' && req.darknessPowered && Array.isArray(req.protocols)) {
-        const darkness = req.protocols.find(protocol => protocol.name === 'DARKNESS');
-        const otherPending = req.protocols.some(protocol => protocol.name !== 'DARKNESS' && !protocol.compiled);
+        const darkness = req.protocols.find(protocol => protoHas(protocol, 'DARKNESS'));
+        const otherPending = req.protocols.some(protocol => !protoHas(protocol, 'DARKNESS') && !protocol.compiled);
         if (darkness && !darkness.compiled && otherPending) return [0];
       }
       if (req.options.length <= 1 && !req.optional) return [0];
@@ -4299,6 +4362,14 @@ function aiUnknownSlotKey(st, uid) {
     if (i >= 0) return '0:deck:' + p + ':' + String(i).padStart(3, '0');
     i = st.players[p].hand.indexOf(uid);
     if (i >= 0) return '1:hand:' + p + ':' + String(i).padStart(3, '0');
+    /* タッグの控え (次に指す味方) の手札・山札 */
+    const b = st.tag && st.tag.bench[p];
+    if (b) {
+      i = b.hand.indexOf(uid);
+      if (i >= 0) return '1:bench-hand:' + p + ':' + String(i).padStart(3, '0');
+      i = b.deck.indexOf(uid);
+      if (i >= 0) return '0:bench-deck:' + p + ':' + String(i).padStart(3, '0');
+    }
   }
   for (let line = 0; line < 3; line++) for (let p = 0; p < 2; p++) {
     const i = st.lines[line][p].indexOf(uid);
@@ -4334,7 +4405,7 @@ function aiInformationState(state, side, salt) {
   for (const uid of Object.keys(state.cards)) {
     const c = state.cards[uid];
     const hidden = c.zone && (
-      c.zone.indexOf('deck') === 0 || c.zone.indexOf('hand') === 0 ||
+      c.zone.indexOf('deck') === 0 || c.zone.indexOf('hand') === 0 || c.zone.indexOf('bench') === 0 ||
       (!c.faceUp && (c.zone === 'field' || c.zone === 'committed'))
     );
     if (!hidden || aiCardKnownTo(state, uid, side) || uid === revealedByAction) continue;
