@@ -3736,13 +3736,37 @@ function pickIsInstant(bp) {
 }
 
 /* 選んだら何が起きるか (候補に乗せた / 選んだときの札)。
-   何をされるか (反転・削除…) に加え、CPU 戦では手元のエンジンで試しに進めて、変わるラインの合計値も出す */
+   何をされるか (反転・削除…) と、その札だけを動かしたときに変わるラインの合計値を出す。
+   ゲームを試しに進めて比べると、あとに続く効果 (「そうした場合、〜」) の変化まで混ざり、
+   捨てただけで合計値が変わるように見えていた。なので、その札に直接起きることだけを盤面の写しに当てて計算する */
 const PICK_OUTCOME = {
   'delete': '→ 捨て札', 'optional-delete': '→ 捨て札', 'discard': '→ 捨て札', 'clear-cache': '→ 捨て札',
   'return': '→ 手札', 'optional-return': '→ 手札', 'steal-to-hand': '→ 自分の手札', 'give-card': '→ 相手の手札',
   'shift': '移動する', 'optional-shift': '移動する', 'reveal': '公開する', 'optional-reveal': '公開する',
   'reveal-hand-card': '公開する', 'play-card': 'プレイする', 'play-from-trash': 'プレイする'
 };
+/* その札だけを動かした盤面の写し (動かし方が分からなければ null)。
+   移動は行き先がまだ決まっていないので、元のラインから抜けたところまで */
+function directPickState(st, uid, prompt) {
+  const p = String(prompt || '').replace(/^optional-/, '');
+  const moves = { 'delete': 'trash', 'discard': 'trash', 'clear-cache': 'trash', 'return': 'hand', 'steal-to-hand': 'mine',
+    'give-card': 'theirs', 'shift': 'lift', 'flip': 'flip' };
+  const how = moves[p];
+  if (!how || !st.cards[uid]) return null;
+  const x = JSON.parse(JSON.stringify(st));
+  delete x._totals;
+  const c = x.cards[uid];
+  if (how === 'flip') { c.faceUp = !c.faceUp; return x; }
+  for (const line of x.lines) for (const side of [0, 1]) line[side] = line[side].filter(u => u !== uid);
+  for (const pl of x.players) pl.hand = pl.hand.filter(u => u !== uid);
+  const owner = c.owner;
+  if (how === 'trash') { x.players[owner].trash.push(uid); c.zone = 'trash' + owner; }
+  else if (how === 'hand') { x.players[owner].hand.push(uid); c.zone = 'hand' + owner; }
+  else if (how === 'mine') { x.players[ME].hand.push(uid); c.zone = 'hand' + ME; }
+  else if (how === 'theirs') { x.players[1 - ME].hand.push(uid); c.zone = 'hand' + (1 - ME); }
+  else c.zone = 'committed';                       // 移動: 行き先が決まる前 (どのラインにもいない)
+  return x;
+}
 function pickPreview(bp, uid) {
   const req = bp.req;
   if (bp._tips && uid in bp._tips) return bp._tips[uid];
@@ -3751,22 +3775,19 @@ function pickPreview(bp, uid) {
   let what = PICK_OUTCOME[req.prompt] || null;
   if (/flip$/.test(req.prompt || '') && c) what = c.faceUp ? '裏になる' : '表になる';
   const parts = what ? ['<b>' + what + '</b>'] : [];
-  /* 1枚で決まる選択だけ試す (オンラインは相手の情報が無いので試さない) */
-  if (!roomMode && bp.max === 1 && cur && cur.state && req.player === ME) {
-    try {
-      const sim = withoutTrace(() => Engine.apply(cur.state, { type: 'choose', id: req.id, picks: [uid] }));
-      if (sim && !sim.error && sim.state) {
-        for (let side = 0; side < 2; side++) {
-          for (let l = 0; l < 3; l++) {
-            const a = Engine.lineTotal(cur.state, l, side), b = Engine.lineTotal(sim.state, l, side);
-            if (a === b) continue;
-            const name = (sim.state.players[side].protocols[l] || {}).name || '';
-            parts.push('<span class="' + (b > a ? 'up' : 'down') + '">' + (side === ME ? '' : '相手 ') + name + ' ' + a + '→' + b + '</span>');
-          }
+  try {
+    const after = st && directPickState(st, uid, req.prompt);
+    if (after) {
+      for (let side = 0; side < 2; side++) {
+        for (let l = 0; l < 3; l++) {
+          const a = Engine.lineTotal(st, l, side), b = Engine.lineTotal(after, l, side);
+          if (a === b) continue;
+          const name = (st.players[side].protocols[l] || {}).name || '';
+          parts.push('<span class="' + (b > a ? 'up' : 'down') + '">' + (side === ME ? '' : '相手 ') + name + ' ' + a + '→' + b + '</span>');
         }
       }
-    } catch (e) { /* 試せないときは、何をされるかだけ */ }
-  }
+    }
+  } catch (e) { /* 計算できないときは、何をされるかだけ */ }
   (bp._tips = bp._tips || {})[uid] = parts.length ? parts.join('') : null;
   return bp._tips[uid];
 }
