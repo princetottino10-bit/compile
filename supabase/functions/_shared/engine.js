@@ -2585,8 +2585,9 @@ const AI_W = {
   /* diversityHoldLine: 切り札を持ったまま DIVERSITY のラインをコンパイル圏 (10点以上でリード) にする減点 */
   diversityHoldLine: 90,
   /* HATE 1 (手札を3枚捨てて2枚削除) は代償が見えやすく、読みだけだと出し渋る。
-     相手の削除できるカード (一番上) があれば、表で出す手に加点する (2枚で満額)。監修 2026-09-28 */
-  hate1Up: 160,
+     相手の場に2枚以上あれば (一番上を消すと下が出てくるので、同じラインの2枚でもよい) 表で出す手に加点、
+     1枚以下なら自分のカードまで消すことになるので出さない (hate1Few の減点)。監修 2026-09-28 */
+  hate1Up: 160, hate1Few: 400,
   /* HATE 0 を表向きの HATE 1 の上に出し、HATE 0 自身を削除すると、めくれた HATE 1 がもう一度起動する。
      hate0Combo: その重ね方への加点 / hate0Self: HATE 0 の削除で自分を選ぶ加点 */
   hate0Combo: 120, hate0Self: 180,
@@ -3215,12 +3216,10 @@ function aiActionBias(st, action, side) {
   const fizzles = !!action.faceUp && aiMiddleFizzles(st, side, action, d);
   if (fizzles) v -= AI_W.fizzle + aiMiddleValue(d) * AI_W.fizzleMid;
   if (aiIsLockSpecialist(st, side)) v += aiLockSpecialistBias(st, side, action, d, fizzles);
-  if (d.id === 'HATE_2' && action.faceUp && !fizzles && W.hate1Up) {
-    let targets = 0;
-    for (let l = 0; l < 3; l++) if (st.lines[l][op].length) targets++;
-    v += W.hate1Up * Math.min(2, targets) / 2;
+  if (d.id === 'HATE_2' && action.faceUp && W.hate1Up) {
+    v += aiOppFieldCount(st, side) >= 2 ? W.hate1Up : -W.hate1Few;
   }
-  if (d.id === 'HATE_1' && action.faceUp && W.hate0Combo) {
+  if (d.id === 'HATE_1' && action.faceUp && W.hate0Combo && aiOppFieldCount(st, side) >= 2) {
     const stack = st.lines[action.line][side];
     const top = stack.length ? st.cards[stack[stack.length - 1]] : null;
     if (top && top.faceUp && top.def === 'HATE_2') v += W.hate0Combo;
@@ -3752,8 +3751,17 @@ function aiStrategicCardPicks(st, req, me, ranked, fallback) {
   return bestScore > -1e8 ? best : fallback;
 }
 
-/* HATE 0 が自分自身を削除すると、すぐ下の表向きの HATE 1 がめくれてもう一度起動する */
+/* 相手の場のカードの枚数 (HATE 1 の2回の削除を両方とも相手に向けられるか) */
+function aiOppFieldCount(st, side) {
+  let n = 0;
+  for (let l = 0; l < 3; l++) n += st.lines[l][1 - side].length;
+  return n;
+}
+
+/* HATE 0 が自分自身を削除すると、すぐ下の表向きの HATE 1 がめくれてもう一度起動する。
+   相手の場に2枚以上あるときだけ (1枚以下だと HATE 1 の削除が自分のカードに向く) */
 function aiHate0SelfPick(st, uid, me) {
+  if (aiOppFieldCount(st, me) < 2) return false;
   const c = st.cards[uid];
   if (!c || c.def !== 'HATE_1' || c.owner !== me) return false;
   const loc = locate(st, uid);
