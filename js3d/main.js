@@ -19,6 +19,7 @@ import { earnedChips } from './chips.js';
 import * as CW from './crashwatch.js';
 import { unlockTrophies, TROPHY_XP } from './achievements.js';
 import { addReplay, getReplay, pinReplay, rebuild } from './replays.js';
+import { decodeReplay, sharedCodeFromHash, shareReplayLink } from './replayshare.js';
 import { advantageSeries, turningPoints } from './turning.js';
 import { trophyContext, showTrophyBanner } from './achievements-ui.js';
 import * as THREE from '../vendor/three.module.js';
@@ -769,6 +770,15 @@ async function boot() {
       document.body.classList.add('replay');
     } else UI.toast('リプレイが見つかりません (消したか、別の端末で保存したもの)');
   }
+  /* 共有されたリプレイ (#rp=符号)。棋譜はリンクの中にある (replayshare.js) */
+  const sharedCode = !replayMode && sharedCodeFromHash();
+  if (sharedCode) {
+    replayMode = await decodeReplay(sharedCode, cards.protocols.map(p => p.name));
+    if (replayMode) {
+      p0 = replayMode.init.p0.slice(); p1 = replayMode.init.p1.slice();
+      document.body.classList.add('replay');
+    } else UI.toast('共有されたリプレイを開けませんでした (リンクが途中で切れているかもしれません)', 4200);
+  }
 
   /* チュートリアル: レッスンの盤面から始める */
   const tuNo = parseInt(params.get('tutorial'), 10);
@@ -940,7 +950,16 @@ async function boot() {
   const seed = (Math.random() * 1e9) | 0;
   /* 勝ち抜き戦は2本先取 (序盤のふつうの戦闘は1本先取。run.js の runWinCompiles)。週替わりは2本先取 */
   const winCompiles = runMode ? (runOpts ? runOpts.winCompiles : RUN_WIN_COMPILES) : undefined;
-  const replayBuilt = replayMode ? rebuild(Engine, replayMode) : null;
+  /* 共有された棋譜は外から来たものなので、作り直しで落ちても止まらないように */
+  let replayBuilt = null;
+  if (replayMode) {
+    try { replayBuilt = rebuild(Engine, replayMode); } catch (e) { replayBuilt = null; }
+    if (!replayBuilt || !replayBuilt.res || replayBuilt.res.error) {
+      UI.toast('このリプレイは再現できませんでした', 4200);
+      replayMode = null; replayBuilt = null;
+      document.body.classList.remove('replay');
+    }
+  }
   const res = replayBuilt
     ? replayBuilt.res
     : puzzle
@@ -4383,6 +4402,7 @@ function showEndActions(win) {
       '<button class="arr-btn" id="endBoard" type="button">BOARD</button>' +
       (gameHistory.length && !roomMode && !puzzle ? '<button class="arr-btn" id="endReview" type="button">REVIEW</button>' : '') +
       (lastReplayId ? '<button class="arr-btn" id="endSave" type="button">SAVE REPLAY</button>' : '') +
+      (lastReplayId ? '<button class="arr-btn" id="endShare" type="button">SHARE</button>' : '') +
     '</div>';
   el.classList.add('show');
   playGains(el);
@@ -4394,6 +4414,8 @@ function showEndActions(win) {
       if (r.ok) { saveBtn.disabled = true; saveBtn.textContent = 'SAVED'; }
     };
   }
+  const shareBtn = el.querySelector('#endShare');
+  if (shareBtn) shareBtn.onclick = () => shareReplayById(lastReplayId);
   const reviewBtn = el.querySelector('#endReview');
   if (reviewBtn) reviewBtn.onclick = () => { el.classList.remove('show'); startReview(win); };
   /* どちらもページを作り直す。シーンを組み直すのが最も確実 */
@@ -4450,11 +4472,21 @@ function startReview(win, history, onExit) {
 }
 
 /* 保存したリプレイを見る: 決着の盤面を出してから、1手目から見返す (感想戦と同じ帯) */
+/* リプレイを共有する (リンクを端末の共有メニューへ。無ければコピー) */
+async function shareReplayById(id) {
+  const rep = getReplay(id);
+  if (!rep) { UI.toast('リプレイが見つかりません'); return; }
+  const r = await shareReplayLink(rep, 'COMPILE のリプレイ — ' + rep.me.join(' / ') + ' vs ' + rep.opp.join(' / '));
+  if (r === 'copied') UI.toast('リプレイのリンクをコピーしました。貼り付けて送れます', 2800);
+  else if (r === 'failed') UI.toast('リンクを作れませんでした', 2600);
+}
+
 function startReplayView(built) {
   const rep = replayMode;
   const when = new Date(rep.at).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-  UI.toast('REPLAY — ' + when + '　' + rep.me.join(' / ') + ' vs ' + rep.opp.join(' / ') + (rep.win ? '　勝ち' : '　負け'), 3600);
-  if (!built.ok) UI.toast('途中から再現できませんでした (そこまでを見られます)', 3600);
+  UI.toast((rep.shared ? '共有されたリプレイ — ' : 'REPLAY — ') + when + '　' + rep.me.join(' / ') + ' vs ' + rep.opp.join(' / ') + (rep.win ? '　勝ち' : '　負け'), 3600);
+  /* カードやルールを直したあとだと、古い棋譜は途中から合わなくなる */
+  if (!built.ok) UI.toast(rep.shared ? 'ルールが変わったため、途中までしか再現できません (そこまでを見られます)' : '途中から再現できませんでした (そこまでを見られます)', 4200);
   if (!built.history.length) { UI.toast('見られる手がありません'); return; }
   busy = true;                        // 見ている間は盤面から手を指せないように
   startReview(!!rep.win, built.history, () => { location.href = location.pathname; });

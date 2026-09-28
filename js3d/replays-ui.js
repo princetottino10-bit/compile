@@ -1,7 +1,8 @@
 /* =========================================================================
  * 戦績画面の REPLAYS タブ: 保存したリプレイと直近の試合。WATCH で ?replay=id を開く
  * ========================================================================= */
-import { listReplays, pinReplay, deleteReplay, RECENT, PINNED } from './replays.js';
+import { listReplays, pinReplay, deleteReplay, getReplay, RECENT, PINNED } from './replays.js';
+import { shareReplayLink } from './replayshare.js';
 import { levelLabel } from './aidecks.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -14,6 +15,7 @@ function row(r) {
       '<small>' + when(r.at) + ' ・ ' + esc(r.kind === 'weekly' ? 'WEEKLY' : r.kind === 'run' ? 'RUN' : levelLabel(r.level)) +
       (r.turns ? ' ・ ' + r.turns + '手番' : '') + '</small></div>' +
     '<div class="rp-btns"><button type="button" data-rp-watch="' + r.id + '">WATCH</button>' +
+      '<button type="button" data-rp-share="' + r.id + '" title="リンクで送る">SHARE</button>' +
       '<button type="button" data-rp-pin="' + r.id + '" aria-pressed="' + !!r.pinned + '" title="' + (r.pinned ? '保存をやめる' : '保存する') + '">' + (r.pinned ? '★' : '☆') + '</button>' +
       (r.pinned ? '<button type="button" data-rp-del="' + r.id + '" title="消す">×</button>' : '') + '</div></li>';
 }
@@ -24,13 +26,23 @@ export function replaysTab() {
   if (!list.length) return '<p class="pz-note">CPU 戦を遊ぶと、直近 ' + RECENT + ' 戦のリプレイがここに残ります</p>';
   return (pinned.length ? '<h4 class="rp-h">SAVED <small>' + pinned.length + ' / ' + PINNED + '</small></h4><ul class="rp-list">' + pinned.map(row).join('') + '</ul>' : '') +
     (recent.length ? '<h4 class="rp-h">RECENT <small>直近 ' + RECENT + ' 戦 (☆ で保存)</small></h4><ul class="rp-list">' + recent.map(row).join('') + '</ul>' : '') +
-    '<p class="pz-note" id="rpMsg" role="status">リプレイはこのブラウザに残ります。WATCH で1手ずつ見返せます (自分の手番では AI のおすすめも)。</p>';
+    '<p class="pz-note" id="rpMsg" role="status">リプレイはこのブラウザに残ります。WATCH で1手ずつ見返せます (自分の手番では AI のおすすめも)。SHARE でリンクにして送れます (受け取った人は開くだけで見られます)。</p>';
 }
 
 /* タブの中身を描いたあとに呼ぶ。rerender: 変更後に描き直す */
 export function bindReplays(body, rerender) {
   body.querySelectorAll('[data-rp-watch]').forEach(b => {
     b.onclick = () => { location.href = location.pathname + '?replay=' + encodeURIComponent(b.dataset.rpWatch); };
+  });
+  body.querySelectorAll('[data-rp-share]').forEach(b => {
+    b.onclick = async () => {
+      const rep = getReplay(b.dataset.rpShare);
+      const m = body.querySelector('#rpMsg');
+      if (!rep) return;
+      const r = await shareReplayLink(rep, 'COMPILE のリプレイ — ' + rep.me.join(' / ') + ' vs ' + rep.opp.join(' / '));
+      if (m && r === 'copied') m.textContent = 'リンクをコピーしました。貼り付けて送れます。';
+      else if (m && r === 'failed') m.textContent = 'リンクを作れませんでした。';
+    };
   });
   body.querySelectorAll('[data-rp-pin]').forEach(b => {
     b.onclick = () => {
