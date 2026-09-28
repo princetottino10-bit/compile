@@ -1504,7 +1504,6 @@ function thinking(p) {
 }
 /* 管理者の自動プレイ (AUTO): 自分の側も CPU が指す。自分の側は強い読み (探索・でたらめなし)、相手はいつもの強さのまま */
 let autoPlay = false;
-let autoUsed = false;              // この対戦で AUTO を使った (戦績・経験値には数えない)
 const AUTO_AI = { level: 2, blunder: 0, budget: 1500, specialist: false };
 const autoFor = (side) => autoPlay && side === ME && !roomMode;
 function aiAction(st) {
@@ -1529,9 +1528,8 @@ function syncAutoButton() {
     b.onclick = () => {
       const waitingMe = !!cur && !busy && !cur.requests.length && cur.state.winner === null && humanTurn(cur.state);
       autoPlay = !autoPlay;
-      if (autoPlay) autoUsed = true;
       syncAutoButton();
-      UI.toast(autoPlay ? 'AUTO: 自分の手を強い CPU が指します (戦績には数えません)' : 'AUTO を止めました。次の判断から自分で指せます', 2600);
+      UI.toast(autoPlay ? 'AUTO: 自分の手を強い CPU が指します' : 'AUTO を止めました。次の判断から自分で指せます', 2600);
       /* 自分の番で待っているところなら、すぐ動かす (選択の画面を開いているときは、次の判断から) */
       if (autoPlay && waitingMe) { deselect(); showPreview(null); afterTurn(); }
       refreshHud();
@@ -4299,28 +4297,26 @@ async function afterTurn() {
     CW.battleEnded();
     const win = cur.state.winner === ME;
     /* 遊ばれ方の匿名の記録 (ログインしていない人も。チュートリアルも数える) */
-    /* AUTO (管理者の自動プレイ) を使った対戦は、遊ばれ方・戦績・経験値に数えない (リプレイは残す) */
-    if (!trainingMode && !puzzle && !demoMode && !roomMode && !autoUsed) {
+    /* AUTO (管理者の自動プレイ) で指した対戦も数える (戦績・経験値の動きを確かめるためのもの) */
+    if (!trainingMode && !puzzle && !demoMode && !roomMode) {
       logPlay({ mode: runMode ? runKind : tutorial ? 'tutorial' : tagMates ? 'tag' : quickGame ? 'quick' : 'cpu', win, level: aiDifficulty,
         me: ownProtos(cur.state, ME), opp: ownProtos(cur.state, AI),
         turns: (cur.state.turns || 0) + 1, logged: !!accountState().user });
     }
     const levelBefore = myLevel;
-    if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial && !autoUsed) {
+    if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial) {
       matchGains = { xp0: playerLevel(localRecords(), bonusXp()).xp, chip0: earnedChips(), lv0: myLevel, daily: [], trophies: [] };
     }
     /* チュートリアルは戦績・リプレイ・実績に数えない */
     if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial) {
       const st0 = cur.state;
       /* タッグは、自分が持ってきた3つで記録する (習熟度・デイリーも自分のプロトコルで数える) */
-      if (!autoUsed) {
-        recordSoloResult(ownProtos(st0, ME), ownProtos(st0, AI), win, aiDifficulty,
-          { turns: (st0.turns || 0) + 1,       // 決着した手番も1つと数える
-            cards: ((st0.tally && st0.tally.faceUp[ME]) || []).slice(),
-            effects: (st0.tally && st0.tally.effects && st0.tally.effects[ME]) || {},
-            mode: runMode ? runKind : tutorial ? 'tutorial' : tagMates ? 'tag' : quickGame ? 'quick' : 'cpu' });
-        refreshCardGlow();
-      }
+      recordSoloResult(ownProtos(st0, ME), ownProtos(st0, AI), win, aiDifficulty,
+        { turns: (st0.turns || 0) + 1,       // 決着した手番も1つと数える
+          cards: ((st0.tally && st0.tally.faceUp[ME]) || []).slice(),
+          effects: (st0.tally && st0.tally.effects && st0.tally.effects[ME]) || {},
+          mode: runMode ? runKind : tutorial ? 'tutorial' : tagMates ? 'tag' : quickGame ? 'quick' : 'cpu' });
+      refreshCardGlow();
       if (replayLog) {
         lastReplayId = addReplay({ me: replayLog.init.p0, opp: replayLog.init.p1, win, level: aiDifficulty,
           turns: (st0.turns || 0) + 1, kind: runMode ? runKind : null, init: replayLog.init, actions: replayLog.actions });
@@ -4339,7 +4335,7 @@ async function afterTurn() {
   await UI.resultCutIn(win, { victory });
     /* レベルが上がったら、手に入った報酬を見せる */
     if (myLevel > levelBefore) await UI.levelUpCutIn(myLevel, rewardsBetween(levelBefore, myLevel));
-    if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial && !autoUsed) await afterGameProgress(cur.state, ME, win, aiDifficulty, false);
+    if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial) await afterGameProgress(cur.state, ME, win, aiDifficulty, false);
     if (win && !trainingMode && !puzzle && !demoMode && !roomMode) maybeLoginHint('firstWin');
     if (demoMode) {
       await TW.wait(900);
