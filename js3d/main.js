@@ -650,7 +650,8 @@ async function boot() {
     onChange: (events) => {
       if (!cur || reviewView || replayMode || trainingMode || demoMode || !gameStartedAt || Date.now() - gameStartedAt < 1200) return;
       for (const e of events) {
-        if (e.delta && Math.abs(e.delta) <= 20) FEEL.floatDelta(stage, e.pos, e.delta, e.color);
+        /* 手の解決中は1コマずつ出さず、チェーンを解き終えたあとにラインごとの増減をまとめて出す (netDeltaShow) */
+        if (e.delta && Math.abs(e.delta) <= 20 && !netDelta) FEEL.floatDelta(stage, e.pos, e.delta, e.color);
         if (e.ready) { FEEL.readyBurst(stage, e.pos, e.color); if (e.side === ME) FEEL.buzz(18); }
         /* 相手の手でラインが大きく減った側は驚く。コンパイル目前になった側は「あと少し」(続けては言わない) */
         /* ラインが大きく減った: 動かした側 (いま再生している場面の手番) で見分ける。cur はもう先まで進んでいることがある。
@@ -3029,8 +3030,40 @@ function logUpTo(res, traceIdx) {
   logShown = lines.slice(0, Math.max(target, same));
 }
 
+/* 1手の解決 (チェーンを含む) で、各ラインの合計がどれだけ動いたか。解き終えたら赤/明るい数字でまとめて出す。
+   選択を挟んで再生が分かれても、最初の再生の前の盤面から数える */
+let netDelta = null;
+function netDeltaBegin(st) {
+  /* 途中で止まったまま (エラー等) 古い記録が残っていたら捨てる */
+  if (netDelta && Date.now() - netDelta.at > 90000) netDelta = null;
+  if (netDelta || !st || !st.lines) return;
+  netDelta = { base: [0, 1, 2].map(l => [0, 1].map(s => totalOf(st, l, s))), at: Date.now() };
+}
+function netDeltaShow(st) {
+  const d = netDelta;
+  netDelta = null;
+  if (!d || !st || !st.lines || !panels) return;
+  /* コンパイルで空になったラインの減りは出さない (コンパイルの演出がある) */
+  const compiled = avatarCompileAt >= d.at;
+  let k = 0;
+  for (let l = 0; l < 3; l++) {
+    for (let s = 0; s < 2; s++) {
+      const delta = totalOf(st, l, s) - d.base[l][s];
+      if (!delta || Math.abs(delta) > 30) continue;
+      if (compiled && delta < 0 && !st.lines[l][0].length && !st.lines[l][1].length) continue;
+      const p = panels.panels.find(q => q.line === l && q.side === s);
+      if (!p) continue;
+      const pos = new THREE.Vector3();
+      p.group.getWorldPosition(pos);
+      const color = p.info && p.info.color;
+      setTimeout(() => FEEL.floatDelta(stage, pos, delta, color), k++ * 90);
+    }
+  }
+}
+
 async function replayResolution(prev, res, action) {
   const steps = meaningfulSteps(prev, res);
+  netDeltaBegin(prev);
   /* オンラインは版ごとに届いたログをまとめて出す (roomApplyView) */
   const liveLog = !roomMode && Array.isArray(res.log);
   const logStep = (step) => { if (liveLog && step.tr) logUpTo(res, res.trace.indexOf(step.tr)); };
@@ -3144,6 +3177,7 @@ async function replayResolution(prev, res, action) {
   await board.applyTransition(from, final, first ? action : null, first ? null : { speed: STEP_MOTION });
   board.endTrail();
   await syncPanels(final, true);
+  if (!res.requests || !res.requests.length) netDeltaShow(final);
   /* 盤面が最終形になってから、そこまでに進んだ手番/フェイズを告げる */
   await markPhase(final);
   await checkRevealed(final);
