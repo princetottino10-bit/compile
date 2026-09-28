@@ -70,9 +70,10 @@ export function createAiClient(Engine, { cards, effects, extra, engineUrl }) {
     try { return fn(); } finally { Engine.setTrace(true); }
   }
 
-  async function ask(type, st, req) {
+  /* over: この1回だけの設定 (管理者の自動プレイで、自分の側だけ強い読みにする) */
+  async function ask(type, st, req, over) {
     if (worker) {
-      try { return await post({ type, state: lean(st), req, config }); }
+      try { return await post({ type, state: lean(st), req, config: over ? { ...config, ...over } : config }); }
       catch (err) { console.warn('AI worker fallback', err && err.message); dropWorker(); }
     }
     return local(() => (type === 'answer' ? Engine.ai.answer(st, req) : Engine.ai.action(st)));
@@ -80,8 +81,8 @@ export function createAiClient(Engine, { cards, effects, extra, engineUrl }) {
 
   return {
     setConfig(c) { config = { ...config, ...c }; },
-    action: (st) => ask('action', st),
-    answer: (st, req) => ask('answer', st, req),
+    action: (st, over) => ask('action', st, null, over),
+    answer: (st, req, over) => ask('answer', st, req, over),
     get usesWorker() { return !!worker; }
   };
 }

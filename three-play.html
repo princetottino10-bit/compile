@@ -52,6 +52,8 @@
   #topRight{display:flex;align-items:center;gap:6px;margin-left:auto;}
   #topRight .btn{width:auto;min-width:0;min-height:26px;padding:0 12px;font-size:10px;pointer-events:auto;}
   #topRight #btnMute{padding:0 9px;font-size:12px;}
+  /* 管理者の自動プレイ (AUTO)。動いている間は色を変えて、止め忘れないように */
+  #topRight #btnAuto.on{color:#1a1405;background:var(--gold);border-color:var(--gold);box-shadow:0 0 14px rgba(255,216,106,.5);}
   #brand b{color:var(--pink);}
   #brand span{color:var(--cyan);}
 
@@ -3468,7 +3470,7 @@
       "./js3d/achievements.js": "./js3d/achievements.js?v=898d57909c",
       "./js3d/admin-ui.js": "./js3d/admin-ui.js?v=1e453b8f99",
       "./js3d/ai-worker.js": "./js3d/ai-worker.js?v=0b60de0c06",
-      "./js3d/aiclient.js": "./js3d/aiclient.js?v=8d242d3455",
+      "./js3d/aiclient.js": "./js3d/aiclient.js?v=0f85a7d42b",
       "./js3d/aidecks.js": "./js3d/aidecks.js?v=8d249240bd",
       "./js3d/aitalk.js": "./js3d/aitalk.js?v=3b756521cb",
       "./js3d/arena.js": "./js3d/arena.js?v=ef66a1e5bb",
@@ -3506,7 +3508,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=a80b89bae9",
+      "./js3d/main.js": "./js3d/main.js?v=f6477019e3",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=550d8c0890",
       "./js3d/panel.js": "./js3d/panel.js?v=aec204f5a0",
@@ -3620,7 +3622,7 @@
   <link rel="modulepreload" href="js3d/ui.js?v=fb225eb1bd">
   <link rel="modulepreload" href="js3d/input.js?v=cc29feddd4">
   <link rel="modulepreload" href="js3d/playchoices.js?v=e0273dcae0">
-  <link rel="modulepreload" href="js3d/aiclient.js?v=8d242d3455">
+  <link rel="modulepreload" href="js3d/aiclient.js?v=0f85a7d42b">
   <link rel="modulepreload" href="js3d/runcards.js?v=f8516ff671">
   <link rel="modulepreload" href="js3d/logformat.js?v=6bbf54aba6">
   <link rel="modulepreload" href="js3d/steps.js?v=13e73b20fe">
@@ -3657,6 +3659,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=a80b89bae9"></script>
+  <script type="module" src="js3d/main.js?v=f6477019e3"></script>
 </body>
 </html>

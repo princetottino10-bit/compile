@@ -469,7 +469,7 @@ function partnerMove(st) {
   return !!(tagMates && s && s.tag && s.tag.pilot[ME] === 1);
 }
 /* 人が操作できる手番か (自分の側の手番で、タッグなら自分が指す番) */
-function humanTurn(st) { return !!st && st.turn === ME && !partnerMove(st); }
+function humanTurn(st) { return !!st && st.turn === ME && !partnerMove(st) && !(autoPlay && !roomMode); }
 /* 自分が持ってきたプロトコル (タッグの複合プロトコルは、その側の1人目の分) */
 function ownProtos(st, side) { return st.players[side].protocols.map(p => (p.names ? p.names[0] : p.name)); }
 
@@ -1049,7 +1049,8 @@ async function boot() {
   if (!puzzle && !tutorial && !demoMode && !trainingMode && !roomMode) showCpuPlates(p1);
   if (spectate) spectateStart();
   syncAvatar();
-  onAccountChange(() => { const had = !!avatars; syncAvatar(); if (!had && avatars && tutorial) avatarSay(ME, tutorKind('')); });   // 管理者かどうかは、ログインの確認のあとで分かる
+  onAccountChange(() => { const had = !!avatars; syncAvatar(); syncAutoButton(); if (!had && avatars && tutorial) avatarSay(ME, tutorKind('')); });
+  syncAutoButton();   // 管理者かどうかは、ログインの確認のあとで分かる
   if (tutorial) setTimeout(() => avatarSay(ME, tutorKind('')), 700);
   if (!accountState().ready) initAccount();         // REMATCH など URL から直に始めた対戦でも確かめる
   if (trainingMode) {
@@ -1501,11 +1502,45 @@ function thinking(p) {
   FEEL.setThinking(true);
   return p.finally(() => FEEL.setThinking(false));
 }
+/* 管理者の自動プレイ (AUTO): 自分の側も CPU が指す。自分の側は強い読み (探索・でたらめなし)、相手はいつもの強さのまま */
+let autoPlay = false;
+let autoUsed = false;              // この対戦で AUTO を使った (戦績・経験値には数えない)
+const AUTO_AI = { level: 2, blunder: 0, budget: 1500, specialist: false };
+const autoFor = (side) => autoPlay && side === ME && !roomMode;
 function aiAction(st) {
-  return thinking(aiClient ? aiClient.action(st) : Promise.resolve(withoutTrace(() => Engine.ai.action(st))));
+  const over = autoFor(st && st.turn) ? AUTO_AI : null;
+  return thinking(aiClient ? aiClient.action(st, over) : Promise.resolve(withoutTrace(() => Engine.ai.action(st))));
 }
 function aiAnswer(st, req) {
-  return thinking(aiClient ? aiClient.answer(st, req) : Promise.resolve(withoutTrace(() => Engine.ai.answer(st, req))));
+  const over = req && autoFor(req.player) ? AUTO_AI : null;
+  return thinking(aiClient ? aiClient.answer(st, req, over) : Promise.resolve(withoutTrace(() => Engine.ai.answer(st, req))));
+}
+/* 上のバーの AUTO (管理者だけ。オンライン・チュートリアル・問題・検証盤面・リプレイ・観戦では出さない) */
+function syncAutoButton() {
+  const bar = document.getElementById('topRight');
+  if (!bar) return;
+  let b = document.getElementById('btnAuto');
+  const want = !!accountState().admin && !roomMode && !tutorial && !puzzle && !trainingMode && !replayMode && !demoMode;
+  if (!want) { if (b) b.remove(); if (autoPlay) autoPlay = false; return; }
+  if (!b) {
+    b = document.createElement('button');
+    b.id = 'btnAuto'; b.className = 'btn'; b.type = 'button';
+    b.title = '強い CPU に自分の手を指させる (管理者)';
+    b.onclick = () => {
+      const waitingMe = !!cur && !busy && !cur.requests.length && cur.state.winner === null && humanTurn(cur.state);
+      autoPlay = !autoPlay;
+      if (autoPlay) autoUsed = true;
+      syncAutoButton();
+      UI.toast(autoPlay ? 'AUTO: 自分の手を強い CPU が指します (戦績には数えません)' : 'AUTO を止めました。次の判断から自分で指せます', 2600);
+      /* 自分の番で待っているところなら、すぐ動かす (選択の画面を開いているときは、次の判断から) */
+      if (autoPlay && waitingMe) { deselect(); showPreview(null); afterTurn(); }
+      refreshHud();
+    };
+    bar.insertBefore(b, bar.firstChild);
+  }
+  b.textContent = autoPlay ? 'AUTO ●' : 'AUTO';
+  b.classList.toggle('on', autoPlay);
+  b.setAttribute('aria-pressed', String(autoPlay));
 }
 
 /* ---------- 着地パッド (ラインの当たり判定 + 視覚) ---------- */
@@ -4171,9 +4206,10 @@ async function drainRequests() {
     await uiHold;                                   // 前の表示 (公開されたカードなど) を閉じてから
     const req = cur.requests[0];
     let picks;
-    const merged = !demoMode && !(req.player === ME && partnerMove()) ? mergedYesTarget(req) : null;
-    /* タッグで味方が指しているときは、自分の側の選択も CPU (味方) が答える */
-    const mine = req.player === ME && !partnerMove();
+    /* タッグで味方が指しているとき・AUTO のときは、自分の側の選択も CPU が答える */
+    const cpuMine = req.player === ME && (partnerMove() || autoFor(ME));
+    const merged = !demoMode && !cpuMine ? mergedYesTarget(req) : null;
+    const mine = req.player === ME && !cpuMine;
     const controlAsk = !demoMode && !tutorial && !trainingMode && mine
       && req.kind === 'option' && req.prompt === 'control-rearrange';
     if (queuedAnswer && (queuedAnswer.id === req.id
@@ -4203,7 +4239,7 @@ async function drainRequests() {
       else picks = await askUser(req);
     } else {
       UI.setPrompt(spectate ? specName(req.player, cur.state.tag ? cur.state.tag.pilot[req.player] : 0) + ' が選択しています…'
-        : req.player === ME ? '味方が選択しています…' : '相手が選択しています…', 'wait');
+        : req.player === ME ? (autoFor(ME) ? 'AUTO が選択しています…' : '味方が選択しています…') : '相手が選択しています…', 'wait');
       const at = cur;
       const [ans] = await Promise.all([aiAnswer(cur.state, req), TW.wait(260)]);
       if (cur !== at) return;                     // 考えている間に対戦をやめた
@@ -4239,7 +4275,7 @@ async function afterTurn() {
   if (tutorial && await tutorialAfterStep()) return;
   await announceTurn();
   let guardAi = 0;
-  while (cur && cur.state.winner === null && (demoMode || cur.state.turn === AI || partnerMove())
+  while (cur && cur.state.winner === null && (demoMode || cur.state.turn === AI || partnerMove() || autoFor(cur.state.turn))
          && !cur.requests.length && guardAi++ < 40) {
     await uiHold;                                   // 前の表示を閉じてから相手が動く
     await avatarsQuiet();                           // キャラが言い終わってから
@@ -4263,25 +4299,28 @@ async function afterTurn() {
     CW.battleEnded();
     const win = cur.state.winner === ME;
     /* 遊ばれ方の匿名の記録 (ログインしていない人も。チュートリアルも数える) */
-    if (!trainingMode && !puzzle && !demoMode && !roomMode) {
+    /* AUTO (管理者の自動プレイ) を使った対戦は、遊ばれ方・戦績・経験値に数えない (リプレイは残す) */
+    if (!trainingMode && !puzzle && !demoMode && !roomMode && !autoUsed) {
       logPlay({ mode: runMode ? runKind : tutorial ? 'tutorial' : tagMates ? 'tag' : quickGame ? 'quick' : 'cpu', win, level: aiDifficulty,
         me: ownProtos(cur.state, ME), opp: ownProtos(cur.state, AI),
         turns: (cur.state.turns || 0) + 1, logged: !!accountState().user });
     }
     const levelBefore = myLevel;
-    if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial) {
+    if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial && !autoUsed) {
       matchGains = { xp0: playerLevel(localRecords(), bonusXp()).xp, chip0: earnedChips(), lv0: myLevel, daily: [], trophies: [] };
     }
     /* チュートリアルは戦績・リプレイ・実績に数えない */
     if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial) {
       const st0 = cur.state;
       /* タッグは、自分が持ってきた3つで記録する (習熟度・デイリーも自分のプロトコルで数える) */
-      recordSoloResult(ownProtos(st0, ME), ownProtos(st0, AI), win, aiDifficulty,
-        { turns: (st0.turns || 0) + 1,       // 決着した手番も1つと数える
-          cards: ((st0.tally && st0.tally.faceUp[ME]) || []).slice(),
-          effects: (st0.tally && st0.tally.effects && st0.tally.effects[ME]) || {},
-          mode: runMode ? runKind : tutorial ? 'tutorial' : tagMates ? 'tag' : quickGame ? 'quick' : 'cpu' });
-      refreshCardGlow();
+      if (!autoUsed) {
+        recordSoloResult(ownProtos(st0, ME), ownProtos(st0, AI), win, aiDifficulty,
+          { turns: (st0.turns || 0) + 1,       // 決着した手番も1つと数える
+            cards: ((st0.tally && st0.tally.faceUp[ME]) || []).slice(),
+            effects: (st0.tally && st0.tally.effects && st0.tally.effects[ME]) || {},
+            mode: runMode ? runKind : tutorial ? 'tutorial' : tagMates ? 'tag' : quickGame ? 'quick' : 'cpu' });
+        refreshCardGlow();
+      }
       if (replayLog) {
         lastReplayId = addReplay({ me: replayLog.init.p0, opp: replayLog.init.p1, win, level: aiDifficulty,
           turns: (st0.turns || 0) + 1, kind: runMode ? runKind : null, init: replayLog.init, actions: replayLog.actions });
@@ -4300,7 +4339,7 @@ async function afterTurn() {
   await UI.resultCutIn(win, { victory });
     /* レベルが上がったら、手に入った報酬を見せる */
     if (myLevel > levelBefore) await UI.levelUpCutIn(myLevel, rewardsBetween(levelBefore, myLevel));
-    if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial) await afterGameProgress(cur.state, ME, win, aiDifficulty, false);
+    if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial && !autoUsed) await afterGameProgress(cur.state, ME, win, aiDifficulty, false);
     if (win && !trainingMode && !puzzle && !demoMode && !roomMode) maybeLoginHint('firstWin');
     if (demoMode) {
       await TW.wait(900);
