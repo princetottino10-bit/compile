@@ -2783,7 +2783,8 @@
   @media (prefers-reduced-motion:reduce){ .ga-res,.ga-res.rL{animation:none;} }
   /* ---- 地図 (下から上へ登る) ---- */
   .rn-card.rn-ph-map,.rn-card.rn-ph-shop,.rn-card.rn-ph-remove{width:min(720px,100%);}
-  .rn-map-wrap{position:relative;max-height:min(52vh,460px);overflow-y:auto;overflow-x:hidden;padding:0 4px;
+  /* カードは縦に並べて全体をスクロールするので、地図だけ縮まないように (縮むと縦持ちで数十 px の帯になっていた) */
+  .rn-map-wrap{position:relative;flex:none;min-height:min(46vh,300px);max-height:min(52vh,460px);overflow-y:auto;overflow-x:hidden;padding:0 4px;
     border:1px solid rgba(185,164,255,.22);background:
       radial-gradient(circle at 20% 10%,rgba(157,123,255,.12),transparent 40%),radial-gradient(circle at 80% 90%,rgba(255,79,163,.1),transparent 45%),
       repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 29px),rgba(6,5,14,.7);scroll-behavior:smooth;}
