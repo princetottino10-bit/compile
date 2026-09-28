@@ -224,7 +224,7 @@ export function setCandidate(card, on) {
 
 /* いま操作できないカードを沈める (MD の「発動できない札」に相当) */
 export function setDim(card, dim) {
-  const v = dim ? 0.55 : 1;
+  const v = dim ? (typeof dim === 'number' ? dim : 0.55) : 1;     // 数を渡すとその明るさまで沈める
   card.userData.front.material.color.setScalar(v);
   card.userData.back.material.color.setScalar(v);
   if (card.userData.ghost) card.userData.ghost.material.color.setScalar(v);

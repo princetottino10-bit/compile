@@ -863,6 +863,35 @@
   .pick-ribbon.dragging{cursor:grabbing;box-shadow:0 12px 30px rgba(0,0,0,.55);}
   .pick-ribbon button{cursor:pointer;}   /* 並べ替えの重ね (#arrOv) は触れないので、帯だけ触れるように */
   @keyframes ribbonIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  /* 帯が候補のカードに重なるときは画面の上へよける (js3d/pickaid.js) */
+  .pick-ribbon.pa-top{bottom:auto;top:calc(52px + env(safe-area-inset-top));}
+  /* ---------- カードを選ぶときの手助け (js3d/pickaid.js) ---------- */
+  #pickAid{position:fixed;inset:0;z-index:33;pointer-events:none;}   /* 予告の札が選択の帯 (z-index:32) に潜らないように */
+  /* 選べるカードの上の矢印: ふわっと上下して「ここを押す」 */
+  #pickAid .pa-mark{position:fixed;width:0;height:0;transform:translate(-50%,-100%);}
+  #pickAid .pa-mark::before{content:"";position:absolute;left:-9px;bottom:4px;width:18px;height:12px;
+    background:#b9a4ff;clip-path:polygon(0 0,100% 0,50% 100%);filter:drop-shadow(0 0 6px rgba(185,164,255,.9));
+    animation:paBob 1.1s ease-in-out infinite;}
+  @keyframes paBob{0%,100%{transform:translateY(-6px);opacity:.75}50%{transform:translateY(0);opacity:1}}
+  /* 選んだカード: 右上の角に選んだ順番 (効果の光の順番の札と同じ形) */
+  #pickAid .pa-mark.chosen{width:26px;height:26px;transform:translate(-50%,-50%);display:grid;place-items:center;border-radius:50%;
+    background:rgba(8,6,15,.9);border:2px solid #ffb3da;font:900 14px/1 var(--font-hud,system-ui);color:#fff;
+    box-shadow:0 0 12px rgba(255,179,218,.6);animation:paPop .22s cubic-bezier(.2,1.5,.4,1);}
+  #pickAid .pa-mark.chosen::before{display:none;}
+  @keyframes paPop{from{transform:translate(-50%,-50%) scale(.4)}to{transform:translate(-50%,-50%) scale(1)}}
+  /* 選んだら何が起きるか */
+  #pickAid .pa-tip{position:fixed;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;gap:2px;
+    padding:6px 10px;white-space:nowrap;background:rgba(8,6,15,.9);border:1px solid rgba(185,164,255,.6);border-radius:6px;
+    font:700 12px/1.3 var(--font-ui,system-ui);color:#fff;box-shadow:0 8px 20px rgba(0,0,0,.5);animation:paTip .16s ease-out;}
+  #pickAid .pa-tip b{font:900 13px/1.2 var(--font-ui,system-ui);color:#ffb3da;}
+  #pickAid .pa-tip .up{color:#6dffc2;} #pickAid .pa-tip .down{color:#ff8a9a;}
+  @keyframes paTip{from{opacity:0;transform:translate(-50%,-90%)}to{opacity:1;transform:translate(-50%,-100%)}}
+  /* 選べない理由 */
+  #pickAid .pa-reason{position:fixed;transform:translate(-50%,-100%);padding:5px 10px;white-space:nowrap;border-radius:6px;
+    background:rgba(40,8,20,.92);border:1px solid rgba(255,77,94,.7);font:700 12px/1.2 var(--font-ui,system-ui);color:#fff;
+    animation:paReason 1.6s ease-out forwards;}
+  @keyframes paReason{0%{opacity:0;transform:translate(-50%,-80%)}12%{opacity:1;transform:translate(-50%,-100%)}80%{opacity:1}100%{opacity:0}}
+  @media (prefers-reduced-motion:reduce){#pickAid .pa-mark::before,#pickAid .pa-mark.chosen,#pickAid .pa-tip{animation:none;}}
   .pick-ribbon .rb-peek{flex:none;width:32px;height:32px;display:grid;place-items:center;cursor:pointer;padding:0;
     background:rgba(8,12,22,.8);border:1px solid rgba(255,255,255,.22);border-radius:6px;font-size:15px;line-height:1;}
   .pick-ribbon .rb-peek[aria-pressed="true"]{border-color:var(--cyan);background:rgba(185,164,255,.22);}
@@ -3401,8 +3430,8 @@
       "./js3d/avatar.js": "./js3d/avatar.js?v=b86be59dcb",
       "./js3d/backdrops.js": "./js3d/backdrops.js?v=90faf9612d",
       "./js3d/bgm.js": "./js3d/bgm.js?v=e50e7ed2df",
-      "./js3d/board.js": "./js3d/board.js?v=67a4fced60",
-      "./js3d/card.js": "./js3d/card.js?v=6d8083e5b7",
+      "./js3d/board.js": "./js3d/board.js?v=eeabfc6ac9",
+      "./js3d/card.js": "./js3d/card.js?v=2919662bbc",
       "./js3d/cardlist-ov.js": "./js3d/cardlist-ov.js?v=1d673fd0d2",
       "./js3d/cardtex.js": "./js3d/cardtex.js?v=7ce5dc0e38",
       "./js3d/cardtext.js": "./js3d/cardtext.js?v=4cf5529855",
@@ -3429,10 +3458,11 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=0dd534ced6",
+      "./js3d/main.js": "./js3d/main.js?v=8b9dad0020",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=550d8c0890",
       "./js3d/panel.js": "./js3d/panel.js?v=3dad9de3da",
+      "./js3d/pickaid.js": "./js3d/pickaid.js?v=fa605a9687",
       "./js3d/plates.js": "./js3d/plates.js?v=51eb123246",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=e0273dcae0",
       "./js3d/playlog.js": "./js3d/playlog.js?v=90aaffedee",
@@ -3482,6 +3512,7 @@
   <link rel="modulepreload" href="js3d/account.js?v=39b7f97249">
   <link rel="modulepreload" href="js3d/playlog.js?v=90aaffedee">
   <link rel="modulepreload" href="js3d/feel.js?v=83bdf7f262">
+  <link rel="modulepreload" href="js3d/pickaid.js?v=fa605a9687">
   <link rel="modulepreload" href="js3d/spectate.js?v=e7aaf6e4e9">
   <link rel="modulepreload" href="js3d/avatar.js?v=b86be59dcb">
   <link rel="modulepreload" href="js3d/avatar-lines.js?v=834f2a670b">
@@ -3496,7 +3527,7 @@
   <link rel="modulepreload" href="js3d/achievements-ui.js?v=924939d2f6">
   <link rel="modulepreload" href="vendor/three.module.js?v=985eb92490">
   <link rel="modulepreload" href="js3d/stage.js?v=e3cda4525b">
-  <link rel="modulepreload" href="js3d/board.js?v=67a4fced60">
+  <link rel="modulepreload" href="js3d/board.js?v=eeabfc6ac9">
   <link rel="modulepreload" href="js3d/control.js?v=c1b87ebc63">
   <link rel="modulepreload" href="js3d/panel.js?v=3dad9de3da">
   <link rel="modulepreload" href="js3d/setup.js?v=cf7a2ca1a3">
@@ -3554,7 +3585,7 @@
   <link rel="modulepreload" href="vendor/jsm/postprocessing/UnrealBloomPass.js">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/OutputPass.js">
   <link rel="modulepreload" href="vendor/jsm/environments/RoomEnvironment.js">
-  <link rel="modulepreload" href="js3d/card.js?v=6d8083e5b7">
+  <link rel="modulepreload" href="js3d/card.js?v=2919662bbc">
   <link rel="modulepreload" href="js3d/fx-compile.js?v=2fbcc8e763">
   <link rel="modulepreload" href="js3d/protocards.js?v=a0c3bbfc68">
   <link rel="modulepreload" href="js3d/backdrops.js?v=90faf9612d">
@@ -3575,6 +3606,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=0dd534ced6"></script>
+  <script type="module" src="js3d/main.js?v=8b9dad0020"></script>
 </body>
 </html>

@@ -806,13 +806,13 @@ export function createBoard(stage, defIndex, me, hooks) {
           setSelected(card, true, 0xffb3da);          // 選んだ札は金色に染める
           setDim(card, false);
         } else if (cset.has(uid)) {
-          setHighlight(card, new THREE.Color(0xb9a4ff), 0.05, 0.85);
+          setHighlight(card, new THREE.Color(0xb9a4ff), 0.12, 1.0);
           setCandidate(card, true);
           setDim(card, false);
         } else {
           if (!card.userData.locked) clearHighlight(card);
           setSelected(card, false);
-          setDim(card, true);
+          setDim(card, 0.32);                           // 選べないカードは深く沈める (候補との差をはっきり)
         }
       }
     },

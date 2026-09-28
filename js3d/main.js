@@ -8,6 +8,7 @@ import { recordDailyGame, DAILY_XP, dailyView } from './daily.js';
 import { maybeLoginHint } from './account.js';
 import { logPlay } from './playlog.js';
 import * as FEEL from './feel.js';
+import { createPickAid } from './pickaid.js';
 import { openSpectate } from './spectate.js';
 import { mountAvatar, AVATARS, avatarIds } from './avatar.js';
 import { FAVORITE } from './avatar-lines.js';
@@ -77,6 +78,7 @@ const ME = 0;      // 視点 = 人間プレイヤー
 const AI = 1;
 
 let stage, board, panels, arena, defIndex = {}, protoIndex = {};
+let pickAid = null;           // カードを選ぶときの手助け (矢印・選んだ順・予告・理由)
 let cur = null;                 // { state, requests, log, winner }
 let busy = false;               // 演出中はクリックを無視
 let selectedUid = null;
@@ -1667,6 +1669,14 @@ function bindInput() {
       return;
     }
 
+    /* 対象を選んでいる間: 候補にカーソルを乗せたら、選んだら何が起きるかを札の上に出す */
+    if (pickAid && boardPick && Array.isArray(boardPick.chosen) && Array.isArray(boardPick.req.candidates)) {
+      const cands = boardPick.req.candidates;
+      const over = pickWithHand(ev, (ud) => ud.uid && cands.indexOf(ud.uid) >= 0);
+      const ou = over && over.obj.userData.uid;
+      if (ou) { if (pickAid.tipUid() !== ou) pickAid.tip(ou, pickPreview(boardPick, ou)); }
+      else pickAid.untip();
+    }
     const hit = pickWithHand(ev);
     const uid = hit && hit.obj.userData.uid;
     const st = shown();
@@ -1786,6 +1796,7 @@ function bindInput() {
       if (cands) {
         /* 候補外でも捨て札の山だけは中身を見せる (公開情報) */
         const lt = hit && hit.obj.userData.uid && locOf(shown(), hit.obj.userData.uid);
+        if (lt && (lt.zone === 'field' || lt.zone === 'hand') && pickAid) pickAid.reason(hit.obj.userData.uid, pickReason(lt));
         if (lt && lt.zone === 'trash') showTrash(lt.side);
         else if (lt && lt.zone === 'deck' && lt.side === ME && puzzle && puzzle.tsume) TS.showDeck(shown(), defIndex, ME);
         return;
@@ -3385,6 +3396,7 @@ function showSourcePanel(req) {
 
 /* 選択バーを畳む (どの経路で終わっても body の印を戻す) */
 function removePickBar() {
+  if (pickAid) pickAid.hide();
   const el = document.getElementById('pickBar');
   if (el) el.remove();
   const go = document.getElementById('pickGo');
@@ -3424,6 +3436,9 @@ function renderBoardPick() {
     none: () => finishBoardPick([])
   });
   renderPickGo(bp);
+  if (!pickAid) pickAid = createPickAid(stage, board);
+  pickAid.show({ cands: bp.req.candidates, chosen: bp.chosen, multi: bp.max > 1, ribbon: el,
+    userMoved: () => !!(ribbonOffset.x || ribbonOffset.y) });
 }
 
 /* 選択の1行の帯: [効果の元のカード] 何を選ぶか (数) [戻る] [しない]。
@@ -3643,6 +3658,8 @@ function toggleBoardPick(uid) {
      スマホではカードを触ると選ぶことになり、効果を読めないまま決めていたため */
   if (bp.chosen.indexOf(uid) >= 0) { previewUid = uid; showCardInspector(uid); }
   else if (previewUid === uid) { previewUid = null; UI.hideCardNote(); }
+  /* スマホは乗せる (ホバー) が無いので、選んだカードの上に「選んだら何が起きるか」を出す */
+  if (pickAid && isCompactHandUI()) pickAid.tip(uid, bp.chosen.indexOf(uid) >= 0 ? pickPreview(bp, uid) : null);
   /* 枚数が決まっている盤面の選択 (ちょうど N 枚) は、N 枚目を押した時点で確定する */
   if (bp.req.kind !== 'pickHand' && bp.min === bp.max && bp.max > 1 && bp.chosen.length === bp.max) {
     finishBoardPick(bp.chosen.slice());
@@ -3694,6 +3711,48 @@ window.addEventListener('keydown', (ev) => {
    取り消せないので、1枚でも「選んで → 決定」にする。選び直しはもう1枚をタップ */
 function pickIsInstant(bp) {
   return bp.max === 1 && bp.min >= 1 && bp.req.kind !== 'pickHand';
+}
+
+/* 選んだら何が起きるか (候補に乗せた / 選んだときの札)。
+   何をされるか (反転・削除…) に加え、CPU 戦では手元のエンジンで試しに進めて、変わるラインの合計値も出す */
+const PICK_OUTCOME = {
+  'delete': '→ 捨て札', 'optional-delete': '→ 捨て札', 'discard': '→ 捨て札', 'clear-cache': '→ 捨て札',
+  'return': '→ 手札', 'optional-return': '→ 手札', 'steal-to-hand': '→ 自分の手札', 'give-card': '→ 相手の手札',
+  'shift': '移動する', 'optional-shift': '移動する', 'reveal': '公開する', 'optional-reveal': '公開する',
+  'reveal-hand-card': '公開する', 'play-card': 'プレイする', 'play-from-trash': 'プレイする'
+};
+function pickPreview(bp, uid) {
+  const req = bp.req;
+  if (bp._tips && uid in bp._tips) return bp._tips[uid];
+  const st = shown();
+  const c = st && st.cards[uid];
+  let what = PICK_OUTCOME[req.prompt] || null;
+  if (/flip$/.test(req.prompt || '') && c) what = c.faceUp ? '裏になる' : '表になる';
+  const parts = what ? ['<b>' + what + '</b>'] : [];
+  /* 1枚で決まる選択だけ試す (オンラインは相手の情報が無いので試さない) */
+  if (!roomMode && bp.max === 1 && cur && cur.state && req.player === ME) {
+    try {
+      const sim = withoutTrace(() => Engine.apply(cur.state, { type: 'choose', id: req.id, picks: [uid] }));
+      if (sim && !sim.error && sim.state) {
+        for (let side = 0; side < 2; side++) {
+          for (let l = 0; l < 3; l++) {
+            const a = Engine.lineTotal(cur.state, l, side), b = Engine.lineTotal(sim.state, l, side);
+            if (a === b) continue;
+            const name = (sim.state.players[side].protocols[l] || {}).name || '';
+            parts.push('<span class="' + (b > a ? 'up' : 'down') + '">' + (side === ME ? '' : '相手 ') + name + ' ' + a + '→' + b + '</span>');
+          }
+        }
+      }
+    } catch (e) { /* 試せないときは、何をされるかだけ */ }
+  }
+  (bp._tips = bp._tips || {})[uid] = parts.length ? parts.join('') : null;
+  return bp._tips[uid];
+}
+/* 選べないカードを押したときの理由 */
+function pickReason(l) {
+  if (l.zone === 'hand' && l.side !== ME) return '相手の手札は選べない';
+  if (l.zone === 'field' && l.len && l.idx < l.len - 1) return '覆われているので選べない';
+  return 'この効果では選べない';
 }
 
 function finishBoardPick(picks) {
