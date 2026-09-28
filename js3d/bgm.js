@@ -40,12 +40,42 @@ let want = null;                 // 鳴らしたい曲 (null なら止める)
 /* 音量: 設定の「BGM」(はじめは 30。キャラの声が聞き取りやすいよう控えめに) */
 const level = () => (isMuted() ? 0 : Math.max(0, Math.min(1, (settings().bgmVol ?? 30) / 100)) * 0.7);
 
+/* ふつうの対戦の曲 (ランダムの4曲) は、ROTATE_LOOPS 周したら別の曲へつなぐ (同じ曲がずっと続かないように)。
+   ボス・強敵の曲、COLLECTION で選んだ曲は替えない */
+const ROTATE_LOOPS = 2;
+let loops = 0, lastTime = 0, swapping = false;
+const rotating = () => !!want && NORMAL_BGMS.includes(want) && !(BGM_RELEASED && settings().bgm);
+function onTime() {
+  if (!el || swapping) return;
+  const t = el.currentTime;
+  if (t + 1 < lastTime) loops++;          // 頭に戻った = 1周した
+  lastTime = t;
+  if (loops >= ROTATE_LOOPS && rotating()) swapTrack();
+}
+function swapTrack() {
+  const others = NORMAL_BGMS.filter(k => k !== want);
+  const next = others[Math.floor(Math.random() * others.length)];
+  if (!next) return;
+  swapping = true;
+  const was = want;
+  route.set(0, 0.4);                      // 1.2 秒ほどで小さくしてから替える
+  setTimeout(() => {
+    swapping = false;
+    loops = 0; lastTime = 0;
+    if (want !== was) return;             // その間に止めた・別の曲にした
+    want = next;
+    el.src = bgmFile(next);
+    refreshBgm();
+  }, 1300);
+}
+
 function ensure() {
   if (el) return;
   initAudio();                   // まだ触れていなくても作っておく (触れたときに再開する)
   el = new Audio();
   el.loop = true;
   el.preload = 'auto';
+  el.addEventListener('timeupdate', onTime);
   route = routeMedia(el, level());
 }
 
@@ -58,7 +88,7 @@ export function playBgm(key) {
   try {
     ensure();
     const url = bgmFile(want);
-    if (!el.src.endsWith(url)) el.src = url;
+    if (!el.src.endsWith(url)) { el.src = url; loops = 0; lastTime = 0; }
     refreshBgm();
   } catch (e) { /* BGM が無くても遊べる */ }
 }

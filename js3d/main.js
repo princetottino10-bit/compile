@@ -3064,7 +3064,16 @@ function netDeltaShow(st) {
       const pos = new THREE.Vector3();
       p.group.getWorldPosition(pos);
       const color = p.info && p.info.color;
-      setTimeout(() => FEEL.floatDelta(stage, pos, delta, color), k++ * 90);
+      /* 1手で 6 以上動いたら、特別な演出 (光の輪・大きな数字・音。減ったときは揺れも) */
+      const swing = Math.abs(delta) >= 6;
+      setTimeout(() => {
+        if (!swing) { FEEL.floatDelta(stage, pos, delta, color); return; }
+        FEEL.bigSwing(stage, pos, delta, color);
+        const calmMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!calmMotion) FX.shockwave(stage.scene, pos, delta > 0 ? 0xffd86a : 0xff3b6b, 2.8, 900);
+        sfx(delta > 0 ? 'charge' : 'boom');
+        if (delta < 0 && !calmMotion) stage.shake(0.12, 380);
+      }, k++ * 140);
     }
   }
 }

@@ -2961,6 +2961,20 @@
     70%{opacity:1;transform:translate(-50%,-30%);}100%{opacity:0;transform:translate(-50%,40%);}}
   @keyframes flUp{0%{opacity:0;transform:translate(-50%,-10%) scale(.6);}15%{opacity:1;transform:translate(-50%,-60%) scale(1.15);}
     100%{opacity:0;transform:translate(-50%,-190%) scale(1);}}
+  /* 1手で 6 以上動いた (feel.js bigSwing): 増えたら金色の SURGE、減ったら赤い BREAK */
+  .fl-swing{position:absolute;transform:translate(-50%,-50%);display:grid;place-items:center;--sw:#ffd86a;}
+  .fl-swing.down{--sw:#ff3b6b;}
+  .fl-swing i{position:absolute;width:56px;height:56px;border-radius:50%;border:4px solid var(--sw);box-shadow:0 0 24px var(--sw),inset 0 0 18px var(--sw);
+    animation:flRing 1s cubic-bezier(.16,1,.3,1) forwards;}
+  .fl-swing b{position:relative;font:900 58px/1 var(--font-hud,var(--font-ui));letter-spacing:.02em;color:#fff3cf;
+    text-shadow:0 0 14px var(--sw),0 0 34px var(--sw),0 4px 0 rgba(0,0,0,.7);animation:flSwingNum 1.8s cubic-bezier(.16,1,.3,1) forwards;}
+  .fl-swing.down b{color:#ffd3dc;}
+  .fl-swing em{position:relative;margin-top:4px;padding:4px 6px 4px 12px;border-radius:6px;background:rgba(6,8,16,.62);
+    font:900 19px/1 var(--font-hud,var(--font-ui));font-style:normal;letter-spacing:.38em;color:var(--sw);
+    text-shadow:0 0 10px var(--sw);animation:flReady 1.8s ease-out forwards;}
+  .fl-swing.down b{animation:flSwingNum 1.8s cubic-bezier(.16,1,.3,1) forwards,flSwingShake .45s steps(6) .1s;}
+  @keyframes flSwingNum{0%{opacity:0;transform:scale(2.2);}12%{opacity:1;transform:scale(1);}75%{opacity:1;transform:translateY(-6px);}100%{opacity:0;transform:translateY(-26px) scale(.96);}}
+  @keyframes flSwingShake{0%,100%{translate:0 0;}20%{translate:-6px 0;}40%{translate:5px 0;}60%{translate:-4px 0;}80%{translate:3px 0;}}
   .fl-ready{position:absolute;transform:translate(-50%,-50%);display:grid;place-items:center;}
   .fl-ready i{position:absolute;width:40px;height:40px;border-radius:50%;border:3px solid var(--fc,#ffd86a);box-shadow:0 0 18px var(--fc,#ffd86a);
     animation:flRing .9s cubic-bezier(.16,1,.3,1) forwards;}
@@ -3453,7 +3467,7 @@
       "./js3d/avatar-lines.js": "./js3d/avatar-lines.js?v=fda2f41737",
       "./js3d/avatar.js": "./js3d/avatar.js?v=2f0df8e1bd",
       "./js3d/backdrops.js": "./js3d/backdrops.js?v=90faf9612d",
-      "./js3d/bgm.js": "./js3d/bgm.js?v=e50e7ed2df",
+      "./js3d/bgm.js": "./js3d/bgm.js?v=d421cce3f3",
       "./js3d/board.js": "./js3d/board.js?v=eeabfc6ac9",
       "./js3d/card.js": "./js3d/card.js?v=2919662bbc",
       "./js3d/cardlist-ov.js": "./js3d/cardlist-ov.js?v=1d673fd0d2",
@@ -3470,7 +3484,7 @@
       "./js3d/displayname.js": "./js3d/displayname.js?v=613e18bf95",
       "./js3d/emblems.js": "./js3d/emblems.js?v=6d1c077a2e",
       "./js3d/errorreport.js": "./js3d/errorreport.js?v=61f59a3cb3",
-      "./js3d/feel.js": "./js3d/feel.js?v=f1af1b9884",
+      "./js3d/feel.js": "./js3d/feel.js?v=fa59a5b9fb",
       "./js3d/fx-compile.js": "./js3d/fx-compile.js?v=2fbcc8e763",
       "./js3d/fx-protocols.js": "./js3d/fx-protocols.js?v=509fceb211",
       "./js3d/fx.js": "./js3d/fx.js?v=f76521724c",
@@ -3482,7 +3496,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=c1d9a996bc",
+      "./js3d/main.js": "./js3d/main.js?v=1de08a55e4",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=550d8c0890",
       "./js3d/panel.js": "./js3d/panel.js?v=88d0c7b38a",
@@ -3535,7 +3549,7 @@
   <link rel="modulepreload" href="js3d/daily.js?v=f56dabdf65">
   <link rel="modulepreload" href="js3d/account.js?v=39b7f97249">
   <link rel="modulepreload" href="js3d/playlog.js?v=90aaffedee">
-  <link rel="modulepreload" href="js3d/feel.js?v=f1af1b9884">
+  <link rel="modulepreload" href="js3d/feel.js?v=fa59a5b9fb">
   <link rel="modulepreload" href="js3d/pickaid.js?v=7fecd8f779">
   <link rel="modulepreload" href="js3d/spectate.js?v=e7aaf6e4e9">
   <link rel="modulepreload" href="js3d/avatar.js?v=2f0df8e1bd">
@@ -3586,7 +3600,7 @@
   <link rel="modulepreload" href="js3d/fx.js?v=f76521724c">
   <link rel="modulepreload" href="js3d/arena.js?v=ef66a1e5bb">
   <link rel="modulepreload" href="js3d/audio.js?v=7b95342234">
-  <link rel="modulepreload" href="js3d/bgm.js?v=e50e7ed2df">
+  <link rel="modulepreload" href="js3d/bgm.js?v=d421cce3f3">
   <link rel="modulepreload" href="js3d/emblems.js?v=6d1c077a2e">
   <link rel="modulepreload" href="js3d/layout.js?v=91b1b5570a">
   <link rel="modulepreload" href="js3d/theme.js?v=b02da60dc1">
@@ -3631,6 +3645,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=c1d9a996bc"></script>
+  <script type="module" src="js3d/main.js?v=1de08a55e4"></script>
 </body>
 </html>

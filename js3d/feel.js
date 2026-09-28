@@ -45,6 +45,23 @@ export function floatDelta(stage, pos, delta, color) {
   setTimeout(() => el.remove(), 1200);
 }
 
+/** 1手でラインが 6 以上動いた: 大きな数字と「SURGE」(増) /「BREAK」(減) を、光の輪とともに */
+export function bigSwing(stage, pos, delta, color) {
+  if (calm() || !delta) return;
+  const p = toScreen(stage, pos);
+  if (!p) return;
+  const el = document.createElement('div');
+  el.className = 'fl-swing ' + (delta > 0 ? 'up' : 'down');
+  const word = delta > 0 ? 'SURGE' : 'BREAK';
+  el.innerHTML = '<i></i><b></b><em data-text="' + word + '">' + word + '</em>';
+  el.querySelector('b').textContent = (delta > 0 ? '+' : '−') + Math.abs(delta);
+  if (color) el.style.setProperty('--fc', color);
+  el.style.left = p.x + 'px';
+  el.style.top = p.y + 'px';
+  layer().appendChild(el);
+  setTimeout(() => el.remove(), 1900);
+}
+
 /** コンパイル圏に入った: その位置に「READY」 */
 export function readyBurst(stage, pos, color) {
   if (calm()) return;
