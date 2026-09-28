@@ -387,12 +387,20 @@ function standingOf(st, side) {
   return d >= 8 ? 1 : d <= -8 ? -1 : 0;
 }
 /* 考えこんでいる: 自分の番で 25 秒さわっていなければ、1手番に1回だけ相手のキャラが声をかける (自分のキャラはプレイしている本人なので) */
-let avatarIdleTurn = -1, avatarLastInput = Date.now();
-window.addEventListener('pointerdown', () => { avatarLastInput = Date.now(); }, true);
+/* 数え始めは「自分の番で手が空いた時点」と「最後に触った時点」の遅いほう。
+   前は最後に触った時点だけで数えていて、相手の番の間に触らないと、自分の番になってすぐ急かされていた */
+const AVATAR_IDLE_MS = 45000;
+let avatarIdleTurn = -1, avatarLastInput = Date.now(), avatarWaitTurn = -1, avatarWaitSince = 0;
+for (const ev of ['pointerdown', 'keydown', 'wheel']) window.addEventListener(ev, () => { avatarLastInput = Date.now(); }, true);
 setInterval(() => {
-  if (!avatars || !cur || busy || demoMode || cur.requests.length || !humanTurn(cur.state) || cur.state.winner !== null) return;   // 観戦は人が考えていないので出さない
+  if (!avatars || !cur || busy || demoMode || cur.requests.length || !humanTurn(cur.state) || cur.state.winner !== null) {
+    avatarWaitTurn = -1;                  // 手が空いていない間は数えない (空いたところから数え直す)
+    return;
+  }
   const t = cur.state.turns | 0;
-  if (t !== avatarIdleTurn && Date.now() - avatarLastInput > 25000) { avatarIdleTurn = t; avatarSay(AI, 'idle'); }
+  if (t !== avatarWaitTurn) { avatarWaitTurn = t; avatarWaitSince = Date.now(); }
+  const since = Math.max(avatarWaitSince, avatarLastInput);
+  if (t !== avatarIdleTurn && Date.now() - since > AVATAR_IDLE_MS) { avatarIdleTurn = t; avatarSay(AI, 'idle'); }
 }, 3000);
 /* その場面を動かした側: いま解決している効果のカードの持ち主 (相手の番に自分のカードの効果が出ることもある)。
    効果の途中でなければ、その場面の手番 */
