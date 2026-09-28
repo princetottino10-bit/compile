@@ -77,12 +77,15 @@ function paintBadge(ctx, bx, by, total, compiled, accent) {
 
 /* 板1面を描く。compiled=true なら「COMPILED」面 */
 /* 絵を (x0..x1) の幅の中央に合わせて敷く */
-function drawArt(ctx, art, x0, x1, H, alpha) {
+function drawArt(ctx, art, x0, x1, H, alpha, muted) {
   const w = x1 - x0;
   const s = Math.max(w / art.width, H / art.height);
   const dw = art.width * s, dh = art.height * s;
   ctx.globalAlpha = alpha;
+  /* コンパイル済みの板は絵の色を抜いて「済んだ」側に見せる (filter が使えない古い端末では色のまま) */
+  if (muted && 'filter' in ctx) ctx.filter = 'grayscale(0.85) brightness(0.85)';
   ctx.drawImage(art, x0 + (w - dw) / 2, (H - dh) / 2 - H * 0.12, dw, dh);
+  if (muted && 'filter' in ctx) ctx.filter = 'none';
   ctx.globalAlpha = 1;
 }
 
@@ -104,7 +107,7 @@ function paint(ctx, info, arts) {
   roundRect(ctx, 0, 0, W, H, 22); ctx.clip();
 
   /* アート。複合プロトコルは2つの絵を斜めに半分ずつ (どちらも同じ扱い) */
-  const alpha = compiled ? 0.8 : 0.66;
+  const alpha = compiled ? 0.5 : 0.66;          // コンパイル済みは絵を少し沈めて「済んだ」側に見せる
   if (info.parts) {
     const cut = [W * 0.56, W * 0.44];          // 上の端・下の端での境目
     for (let k = 0; k < 2; k++) {
@@ -114,7 +117,7 @@ function paint(ctx, info, arts) {
       else { ctx.moveTo(cut[0], 0); ctx.lineTo(W, 0); ctx.lineTo(W, H); ctx.lineTo(cut[1], H); }
       ctx.closePath();
       ctx.clip();
-      if (list[k]) drawArt(ctx, list[k], k === 0 ? 0 : cut[1], k === 0 ? cut[0] : W, H, alpha);
+      if (list[k]) drawArt(ctx, list[k], k === 0 ? 0 : cut[1], k === 0 ? cut[0] : W, H, alpha, compiled);
       else { ctx.fillStyle = rgba(info.parts[k].color, 0.18); ctx.fillRect(0, 0, W, H); }
       ctx.restore();
     }
@@ -122,14 +125,15 @@ function paint(ctx, info, arts) {
     ctx.strokeStyle = 'rgba(255,255,255,.55)';
     ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(cut[0], 0); ctx.lineTo(cut[1], H); ctx.stroke();
-  } else if (art) drawArt(ctx, art, 0, W, H, alpha);
+  } else if (art) drawArt(ctx, art, 0, W, H, alpha, compiled);
 
   /* 左からアクセント、右へ暗転。文字を必ず読ませる */
   const g = ctx.createLinearGradient(0, 0, W, 0);
   if (compiled) {
-    g.addColorStop(0, rgba(accent, 0.86));
-    g.addColorStop(0.5, 'rgba(10,6,20,.82)');
-    g.addColorStop(1, 'rgba(10,6,20,.92)');
+    /* 色を全面に塗ると「いまアツい板」に見えて、済んだことが伝わらなかった。色は左端に少しだけ */
+    g.addColorStop(0, rgba(accent, 0.38));
+    g.addColorStop(0.4, 'rgba(10,6,20,.8)');
+    g.addColorStop(1, 'rgba(10,6,20,.9)');
   } else {
     g.addColorStop(0, 'rgba(6,9,18,.82)');
     g.addColorStop(0.46, 'rgba(6,9,18,.34)');
@@ -138,22 +142,10 @@ function paint(ctx, info, arts) {
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, H);
 
-  /* コンパイル済みは走査線 + 巨大チェックで一目で分かる状態にする */
+  /* コンパイル済みは走査線を薄く敷く (済んだ板の地模様) */
   if (compiled) {
-    ctx.fillStyle = rgba(accent, 0.3);
-    ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = rgba(accent, 0.16);
+    ctx.fillStyle = rgba(accent, 0.08);
     for (let y = 0; y < H; y += 8) ctx.fillRect(0, y, W, 3);
-    /* 大チェックマークは合計バッジの後ろに透かしで敷く (数字を隠さない) */
-    ctx.strokeStyle = 'rgba(255,255,255,.4)';
-    ctx.lineWidth = 16;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(W - 168, H * 0.52);
-    ctx.lineTo(W - 130, H * 0.74);
-    ctx.lineTo(W - 62, H * 0.24);
-    ctx.stroke();
-    ctx.lineCap = 'butt';
   }
   ctx.restore();
 
@@ -168,10 +160,18 @@ function paint(ctx, info, arts) {
       compiled ? 'rgba(255,255,255,.95)' : rgba(accent, 0.95), 7);
   }
 
-  /* 状態ラベル */
-  ctx.font = '700 22px ' + FONT.hud;
-  ctx.fillStyle = compiled ? '#ffffff' : rgba(accent, 0.9);
-  ctx.fillText(compiled ? 'COMPILED' : 'LOADING...', 112, 48);
+  /* 状態ラベル。コンパイル済みは白地の札「✓ COMPILED」(小さな文字だけでは、特にスマホで読めなかった) */
+  if (compiled) {
+    ctx.fillStyle = '#ffffff';
+    roundRect(ctx, 108, 20, 196, 38, 8); ctx.fill();
+    ctx.font = '800 25px ' + FONT.hud;
+    ctx.fillStyle = '#0a0614';
+    ctx.fillText('✓ COMPILED', 120, 48);
+  } else {
+    ctx.font = '700 22px ' + FONT.hud;
+    ctx.fillStyle = rgba(accent, 0.9);
+    ctx.fillText('LOADING...', 112, 48);
+  }
 
   /* プロトコル名。複合プロトコルは2段 (上に1人目、下に + 2人目) */
   const fit = (text, max, from) => {
@@ -199,6 +199,24 @@ function paint(ctx, info, arts) {
   /* 合計値。並べ替えで板が動いている間は板には描かない (合計はラインのカードのもので、板についていかない。
      その間はラインの位置に止めた札 (badgeAt) が、板の上に重ねて出す) */
   if (!info.hideTotal) paintBadge(ctx, BADGE.x, BADGE.y, info.total, compiled, accent);
+  /* コンパイル済みの印: 合計値の左上に白い丸の ✓ シール。遠目・スマホでも形で分かる大きさ */
+  if (compiled) {
+    const cx = BADGE.x - 4, cy = BADGE.y + 6, r = 40;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = rgba(accent, 0.9);
+    ctx.lineWidth = 6;
+    ctx.beginPath(); ctx.arc(cx, cy, r - 3, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = '#0a0614';
+    ctx.lineWidth = 11;
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(cx - 18, cy + 1);
+    ctx.lineTo(cx - 5, cy + 15);
+    ctx.lineTo(cx + 19, cy - 14);
+    ctx.stroke();
+    ctx.lineCap = 'butt'; ctx.lineJoin = 'miter';
+  }
 
   /* 枠 */
   ctx.strokeStyle = compiled ? '#ffffff' : rgba(accent, 0.5);
