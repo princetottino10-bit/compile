@@ -110,10 +110,39 @@
     .deal .c img{width:100%;height:100%;object-fit:cover;display:block}
     .deal .c.back{background:repeating-linear-gradient(45deg,#1b1030 0 8px,#241440 8px 16px);border:2px solid rgba(255,79,163,.5)}
 
+
+    /* ---------- 06. 実物に寄せた版 ---------- */
+    .cmp{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;width:100%}
+    .cmp > div{display:flex;flex-direction:column;align-items:center;gap:12px;padding:18px 8px;border-radius:8px;background:rgba(255,255,255,.03)}
+    .cmp small{font:800 11px/1 var(--ui);letter-spacing:.2em;color:var(--dim)}
+    /* Magic UI「Shine Border」(MIT) の移植: 中心だけ色のある放射グラデーションを縁の幅だけ残して切り抜き、背景位置をゆっくり往復させる */
+    .shine{position:relative;isolation:isolate}
+    .shine::after{content:"";position:absolute;inset:0;padding:var(--shine-w,2px);pointer-events:none;border-radius:inherit;
+      background:radial-gradient(transparent,transparent,var(--shine-c,#fff,#63f3ff,#b9a4ff),transparent,transparent) 0 0/300% 300%;
+      -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;
+      mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask-composite:exclude;
+      animation:shine var(--shine-t,7s) linear infinite;will-change:background-position}
+    @keyframes shine{0%{background-position:0% 0%}50%{background-position:100% 100%}to{background-position:0% 0%}}
+    .pink-btn{padding:16px 34px;border:0;cursor:pointer;clip-path:var(--cut);font:800 17px/1 var(--ui);letter-spacing:.12em;color:#fff;background:var(--pink)}
+    .rnd-btn{padding:16px 34px;border:0;cursor:pointer;border-radius:12px;font:800 17px/1 var(--ui);letter-spacing:.12em;color:#fff;background:#1a1030;--shine-c:#ff4fa3,#8b5cf6,#63f3ff}
+    /* Aceternity「3D Card Effect」の仕組み: 触っている間だけ中の部品が translateZ で手前に浮く */
+    .depth{position:relative;width:150px;aspect-ratio:360/490;border-radius:12px;transform-style:preserve-3d;
+      transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .5s cubic-bezier(.2,.8,.2,1);
+      box-shadow:0 18px 40px rgba(0,0,0,.6);touch-action:none;cursor:grab}
+    .depth.holo-active{transition:transform .06s linear}
+    .depth img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:12px;pointer-events:none}
+    .depth .val,.depth .emb{position:absolute;transition:transform .2s linear;pointer-events:none}
+    .depth .val{left:10px;top:6px;font:900 40px/1 var(--logo);color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.8)}
+    .depth .emb{right:10px;bottom:10px;padding:5px 10px;border-radius:6px;background:rgba(8,6,15,.8);font:800 11px/1 var(--ui);letter-spacing:.14em;color:#fff}
+    .depth:not(.flat).holo-active .val{transform:translateZ(60px)}
+    .depth:not(.flat).holo-active .emb{transform:translateZ(40px)}
+    .depth .gloss{position:absolute;inset:0;border-radius:12px;pointer-events:none;opacity:var(--op,0);transition:opacity .3s;
+      background:radial-gradient(circle at var(--mx,50%) var(--my,50%),rgba(255,255,255,.35),transparent 45%)}
+
     footer{width:min(1080px,100%);margin:0 auto;padding:0 16px 40px;color:var(--dim);font-size:12px}
 
     @media (max-width:720px){main{grid-template-columns:minmax(0,1fr)}.holo-row{gap:10px}.holo{width:min(96px,26vw)}.deal .c{width:70px;margin-left:-35px}}
-    @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+    @media (prefers-reduced-motion:reduce){.depth.holo-active .val,.depth.holo-active .emb{transform:none}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
   </style>
 </head>
 <body>
@@ -167,6 +196,19 @@
       <div class="src">参考: Anime.js のずらし再生 (stagger) → Web Animations API で同じ動き</div>
       <div class="stage"><div class="deal" id="deal"></div></div>
       <div class="ctl"><button type="button" id="redeal">配り直す</button><button type="button" id="shuffle">別のプロトコル</button></div>
+    </section>
+
+    <section class="lab wide">
+      <h2>06 · 実物に寄せた版 (左: いまの本編 / 右: 寄せた版)</h2>
+      <div class="src">光る縁 → Magic UI「Shine Border」(MIT) を移植 ／ カード → Aceternity「3D Card Effect」の、部品が浮き上がる仕組み</div>
+      <div class="stage">
+        <div class="cmp">
+          <div><small>いま: 虹色が回る縁</small><button type="button" class="gbtn"><span>いますぐ遊ぶ</span></button></div>
+          <div><small>寄せた版: 光の筋が縁を走る</small><button type="button" class="pink-btn shine">いますぐ遊ぶ</button><button type="button" class="rnd-btn shine">ONLINE</button></div>
+          <div><small>いま: 板ごと傾く</small><div class="holo-row" id="holoNow"></div></div>
+          <div><small>寄せた版: 数字と名前が手前に浮く</small><div class="holo-row" id="holoDepth"></div></div>
+        </div>
+      </div>
     </section>
   </main>
 
@@ -271,6 +313,19 @@
     window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(dealHand, 200); });
     dealHand();
   })();
+  </script>
+  <script type="module">
+    /* 06: 左右とも本編と同じ js3d/holo.js で傾ける。違いは部品が浮くかどうかだけ */
+    import { holo } from './js3d/holo.js';
+    const card = (proto, n, flat) => {
+      const el = document.createElement('div');
+      el.className = 'depth' + (flat ? ' flat' : '');
+      el.innerHTML = '<img src="art/' + n + proto + '.webp" alt=""><span class="gloss"></span><span class="val">' + n + '</span><span class="emb">' + proto.toUpperCase() + '</span>';
+      holo(el);
+      return el;
+    };
+    document.getElementById('holoNow').appendChild(card('light', 4, true));
+    document.getElementById('holoDepth').appendChild(card('light', 4, false));
   </script>
 </body>
 </html>

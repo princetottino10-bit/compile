@@ -58,12 +58,15 @@
     .btn{display:inline-flex;flex-direction:column;justify-content:center;min-height:58px;padding:10px 24px;text-decoration:none;clip-path:var(--cut);
       font:800 17px/1.1 var(--ui);letter-spacing:.1em;border:0;cursor:pointer;transition:filter .15s,transform .15s}
     .btn small{font:600 11px/1.3 system-ui,sans-serif;letter-spacing:.02em;opacity:.85;margin-top:3px}
-    /* いますぐ遊ぶ: 縁を光が回る (design-lab 02)。中はピンクのまま、2px の縁だけ色が巡る */
-    @property --ang{syntax:'<angle>';inherits:false;initial-value:0deg}
-    .btn.main{position:relative;isolation:isolate;color:#fff;background:conic-gradient(from var(--ang),#fff,var(--violet),#63f3ff,var(--pink),#fff);animation:btnSpin 3.2s linear infinite}
-    .btn.main::before{content:"";position:absolute;inset:2px;z-index:-1;background:var(--pink);clip-path:var(--cut)}
-    @keyframes btnSpin{to{--ang:360deg}}
-    @media (prefers-reduced-motion:reduce){.btn.main{animation:none}}
+    /* いますぐ遊ぶ: 光の筋が縁を走る (Magic UI「Shine Border」の移植, MIT License, Copyright (c) Magic UI)。
+       中心だけ色のある放射グラデーションを縁の 2px だけ残して切り抜き、背景の位置をゆっくり往復させる */
+    .btn.main{position:relative;background:var(--pink);color:#fff}
+    .btn.main::after{content:"";position:absolute;inset:0;padding:2px;pointer-events:none;
+      background:radial-gradient(transparent,transparent,#fff,#63f3ff,var(--lav),transparent,transparent) 0 0/300% 300%;
+      -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;
+      mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask-composite:exclude;animation:shine 7s linear infinite}
+    @keyframes shine{0%{background-position:0% 0%}50%{background-position:100% 100%}to{background-position:0% 0%}}
+    @media (prefers-reduced-motion:reduce){.btn.main::after{animation:none}}
     .btn.alt{background:rgba(255,255,255,.08);color:#fff}
     /* タイトル画面へ: 2つのボタンの下に横いっぱい。薄い色にして「いますぐ遊ぶ」より控えめに */
     .btn.wide{flex:1 1 100%;min-height:52px;background:rgba(185,164,255,.13);color:#fff;font-size:15px}
