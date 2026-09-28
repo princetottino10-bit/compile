@@ -235,7 +235,7 @@ export function openRun(protocols, cardsOf, opts) {
           : w.attempt ? '<em>今週 ' + w.attempt + '回挑戦 ・ 最高 ' + (w.bestStage || 0) + '勝</em>' : '<em>今週はまだ挑戦していません</em>';
       return '<p class="rn-pick">遊ぶモードを選んでください</p><div class="rn-modes">' +
         '<section class="rn-mcard"><small>ROGUELIKE</small><h3>勝ち抜き戦</h3><ul>' +
-          '<li>地図を下から登り、頂上の BOSS を倒す (1試合 ' + RUN.RUN_WIN_COMPILES + '本先取。序盤は1本先取でさっさと)</li>' +
+          '<li>地図を下から登り、頂上の BOSS を倒す (自分は ' + (3 - RUN.RUN_WIN_COMPILES) + ' つコンパイル済みから始まり、あと ' + RUN.RUN_WIN_COMPILES + ' 本で勝ち。序盤は2つ済みから)</li>' +
           '<li>道は自分で選ぶ: 戦闘・精鋭・イベント・休憩所・ショップ・宝箱</li>' +
           '<li>ライフ ' + RUN.RUN_LIFE + '。コンパイルされるたびに 1 減る</li>' +
           '<li>パッチ (改造) を集めてビルドを組む。カードを外してデッキを研ぐ</li>' +
@@ -353,7 +353,7 @@ export function openRun(protocols, cardsOf, opts) {
             (run.route === 'cursed' ? '<p class="rn-cursed">CURSED — この試合は 自分の手札 4 枚・相手 7 枚。勝てば RARE 以上確定の GACHA</p>' : '') +
             (retry ? '<p class="rn-warn">負けたので同じ相手とやり直しです (ライフ −' + last.damage + ')' + (last.saved === 'phoenix' ? ' — PHOENIX でよみがえった！' : last.saved ? ' — FAILSAFE が作動してライフ 1 で耐えました' : '') + '</p>' : '') +
             (run.swapped ? '<p class="rn-note">転送装置: <b>' + esc(run.swapped.out) + '</b> が <b>' + esc(run.swapped.add) + '</b> に入れ替わった</p>' : '') +
-            (RUN.runWinCompiles(run) === 1 ? '<p class="rn-note">序盤なので1本先取 — 1回コンパイルしたら勝ち</p>' : '') +
+            (RUN.runWinCompiles(run) === 1 ? '<p class="rn-note">序盤なので、はじめから2つコンパイル済み — あと1回コンパイルしたら勝ち</p>' : '') +
             (run.opp.elite ? '<p class="rn-note rn-elite">ELITE — 勝つとクレジット多めとパッチを1つ</p>' : run.route === 'alarm' ? '<p class="rn-warn">警報が鳴っている — 相手が1段強い</p>' : '') +
             '<div class="rn-vs"><div><small>あなた' + ((run.removed || []).length ? ' (除去 ' + run.removed.length + ' 枚)' : '') + '</small>' + deckLine(run.deck, byName) + '</div><b>VS</b>' +
             '<div><small>' + esc(levelLabel(run.opp.level)) + '</small>' + deckLine(run.opp.deck, byName) + '</div></div>' +

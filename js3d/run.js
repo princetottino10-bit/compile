@@ -750,14 +750,20 @@ export function battleOpts(run, me) {
   const perks = [null, null];
   if (Object.keys(pk).length) perks[me] = pk;
   /* ONE SHOT: 自分は1本で勝ち (ボスの「聖域」でも1本) */
-  let win = boss && boss.win ? (me === 0 ? boss.win.slice() : boss.win.slice().reverse()) : null;
-  if (hasPatch(run, 'oneshot')) { const base = runWinCompiles(run); win = win || [base, base]; win[me] = 1; }
+  const base = runWinCompiles(run);
+  let win = boss && boss.win ? (me === 0 ? boss.win.slice() : boss.win.slice().reverse()) : [base, base];
+  if (hasPatch(run, 'oneshot')) win[me] = 1;
+  /* 自分の本数はルールどおり 3 本にして、足りない分をはじめからコンパイル済みにする (どれかはランダム)。
+     「1本で勝ち」なら 2 つ済みの状態から始まる。相手の本数はそのまま (2026-09-29) */
+  const startCompiled = [0, 0];
+  if (win[me] < 3) { startCompiled[me] = 3 - win[me]; win[me] = 3; }
   return {
-    winCompiles: runWinCompiles(run),
+    winCompiles: base,
+    startCompiled,
     handSize: hand,
     ...(exclude[me].length ? { exclude } : {}),
     ...(ups.length || added.length || deckMods[other].swap || deckMods[other].add ? { deckMods } : {}),
-    ...(win ? { winCompilesBySide: win } : {}),
+    winCompilesBySide: win,
     ...(perks[me] ? { perks } : {}),
     ...(bossFirst ? { first: other } : hasPatch(run, 'initiative') || tempo ? { first: me } : {}),
     ...(bossControl ? { startControl: other } : hasPatch(run, 'root') || tempo ? { startControl: me } : {})

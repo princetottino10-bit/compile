@@ -221,7 +221,8 @@ test('パッチ: FIREWALL・FAILSAFE・PHOENIX・SELF REPAIR・CLEAN SWEEP・MID
 test('パッチとビルド: 試合のはじめ方 (手札・先攻・コントロール)', async () => {
   const R = await load();
   const base = { patches: [], route: 'normal' };
-  assert.deepEqual(R.battleOpts(base, 0), { winCompiles: R.RUN_WIN_COMPILES, handSize: [5, 5] });
+  /* 自分は3本 (足りない分ははじめから済み)、相手は勝ち抜き戦の本数のまま */
+  assert.deepEqual(R.battleOpts(base, 0), { winCompiles: R.RUN_WIN_COMPILES, startCompiled: [3 - R.RUN_WIN_COMPILES, 0], handSize: [5, 5], winCompilesBySide: [3, R.RUN_WIN_COMPILES] });
   assert.deepEqual(R.battleOpts({ ...base, patches: ['cache'] }, 0).handSize, [6, 5]);
   assert.deepEqual(R.battleOpts({ ...base, patches: ['cache', 'jammer'] }, 0).handSize, [6, 3], 'HAND 2つ: 相手 さらに −1');
   assert.deepEqual(R.battleOpts({ ...base, patches: ['cache', 'buffer', 'jammer'] }, 0).handSize, [7, 3], 'HAND 3つ: 自分 +1 (上限 7)');

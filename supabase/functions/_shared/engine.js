@@ -2378,6 +2378,18 @@ function newGame(opts) {
   shuffle(st, st.players[0].deck);
   shuffle(st, st.players[1].deck);
   if (st.tag) for (const b of st.tag.bench) shuffle(st, b.deck);
+  /* startCompiled: [P1, P2] はじめからコンパイル済みにするプロトコルの数 (0〜2。どれにするかは盤面の乱数で)。
+     勝ち抜き戦の「1本で勝ち」を、ルールはそのまま (3本) で、済みのプロトコルを先に持たせて作る */
+  if (Array.isArray(opts.startCompiled)) {
+    for (let p = 0; p < 2; p++) {
+      const k = Math.max(0, Math.min(2, opts.startCompiled[p] | 0));
+      const idx = [0, 1, 2];
+      for (let n = 0; n < k; n++) {
+        const at = Math.floor(rand(st) * idx.length);
+        st.players[p].protocols[idx.splice(at, 1)[0]].compiled = true;
+      }
+    }
+  }
   /* トレーニング: 手札を配らず、ターン進行なしの検証盤面として始める */
   if (opts.training) {
     st.training = true;

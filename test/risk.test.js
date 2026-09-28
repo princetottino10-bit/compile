@@ -42,7 +42,13 @@ test('RISK: 試合の設定 (手札・値・捨てる・1本勝ち)', () => {
   const g = battleOpts(run0(['gluttony']), 0);
   assert.deepEqual(g.handSize, [7, 7]);
   assert.equal(battleOpts(run0(['double']), 0).perks[0].doubleProto, 'FIRE');
-  assert.equal(battleOpts(run0(['oneshot']), 0).winCompilesBySide[0], 1);
+  /* ONE SHOT: ルールは3本のまま、2つ済みから始まる (自分だけ) */
+  const one = battleOpts(run0(['oneshot']), 0);
+  assert.equal(one.winCompilesBySide[0], 3);
+  assert.deepEqual(one.startCompiled, [2, 0]);
+  const st = Engine.newGame({ seed: 5, p0: ['FIRE', 'WATER', 'SPEED'], p1: ['DEATH', 'METAL', 'LIFE'], winCompilesBySide: one.winCompilesBySide, startCompiled: one.startCompiled }).state;
+  assert.equal(st.players[0].protocols.filter(p => p.compiled).length, 2);
+  assert.equal(st.players[1].protocols.filter(p => p.compiled).length, 0);
 });
 
 test('RISK: エンジンで値が変わる (DOUBLE DOWN・SHADOW RULE)', () => {
@@ -72,7 +78,7 @@ test('RISK: ALL IN は負けるとライフがさらに減り、ONE SHOT は最�
 test('RISK: パッチを全部付けた試合も CPU どうしで最後まで遊べる', () => {
   const o = battleOpts(run0(['nocost', 'double', 'shadow', 'oneshot']), 0);
   let res = Engine.newGame({ seed: 11, p0: ['FIRE', 'WATER', 'SPEED'], p1: ['DEATH', 'METAL', 'LIFE'], winCompiles: o.winCompiles,
-    handSize: o.handSize, perks: o.perks, winCompilesBySide: o.winCompilesBySide });
+    handSize: o.handSize, perks: o.perks, winCompilesBySide: o.winCompilesBySide, startCompiled: o.startCompiled });
   for (let i = 0; i < 3000 && res.state.winner === null; i++) {
     const q = res.requests[0];
     const a = q ? { type: 'choose', id: q.id, picks: Engine.ai.answer(res.state, q) } : Engine.ai.action(res.state);
