@@ -885,15 +885,20 @@
     font:700 12px/1.3 var(--font-ui,system-ui);color:#fff;box-shadow:0 8px 20px rgba(0,0,0,.5);animation:paTip .16s ease-out;}
   #pickAid .pa-tip b{font:900 13px/1.2 var(--font-ui,system-ui);color:#ffb3da;}
   #pickAid .pa-tip .up{color:#6dffc2;} #pickAid .pa-tip .down{color:#ff8a9a;}
-  /* 効果のあとの見通し: その札に直接起きることとは区切って、小さな見出しを付ける */
-  #pickAid .pa-tip .pa-later{align-self:stretch;margin-top:3px;padding-top:4px;border-top:1px dashed rgba(185,164,255,.45);font:700 10px/1.2 var(--font-ui,system-ui);font-style:normal;letter-spacing:.08em;color:#b9a4ff;text-align:center;}
+  /* 効果のあとの見通し: その札の吹き出しとは別のウインドウ (横に並べる)。見出しを付けて、枠の色も分ける */
+  #pickAid .pa-forecast{position:fixed;display:flex;flex-direction:column;gap:2px;padding:6px 10px 7px;white-space:nowrap;
+    background:rgba(12,10,26,.92);border:1px dashed rgba(185,164,255,.7);border-radius:6px;
+    font:700 12px/1.3 var(--font-ui,system-ui);color:#fff;box-shadow:0 8px 20px rgba(0,0,0,.5);animation:paFc .2s ease-out;}
+  @keyframes paFc{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+  #pickAid .pa-forecast i{margin-bottom:2px;font:700 10px/1.2 var(--font-ui,system-ui);font-style:normal;letter-spacing:.08em;color:#b9a4ff;}
+  #pickAid .pa-forecast .up{color:#6dffc2;} #pickAid .pa-forecast .down{color:#ff8a9a;}
   @keyframes paTip{from{opacity:0;transform:translate(-50%,-90%)}to{opacity:1;transform:translate(-50%,-100%)}}
   /* 選べない理由 */
   #pickAid .pa-reason{position:fixed;transform:translate(-50%,-100%);padding:5px 10px;white-space:nowrap;border-radius:6px;
     background:rgba(40,8,20,.92);border:1px solid rgba(255,77,94,.7);font:700 12px/1.2 var(--font-ui,system-ui);color:#fff;
     animation:paReason 1.6s ease-out forwards;}
   @keyframes paReason{0%{opacity:0;transform:translate(-50%,-80%)}12%{opacity:1;transform:translate(-50%,-100%)}80%{opacity:1}100%{opacity:0}}
-  @media (prefers-reduced-motion:reduce){#pickAid .pa-mark::before,#pickAid .pa-mark.chosen,#pickAid .pa-tip{animation:none;}}
+  @media (prefers-reduced-motion:reduce){#pickAid .pa-mark::before,#pickAid .pa-mark.chosen,#pickAid .pa-tip,#pickAid .pa-forecast{animation:none;}}
   .pick-ribbon .rb-peek{flex:none;width:32px;height:32px;display:grid;place-items:center;cursor:pointer;padding:0;
     background:rgba(8,12,22,.8);border:1px solid rgba(255,255,255,.22);border-radius:6px;font-size:15px;line-height:1;}
   .pick-ribbon .rb-peek[aria-pressed="true"]{border-color:var(--cyan);background:rgba(185,164,255,.22);}
@@ -3477,11 +3482,11 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=1cfe742325",
+      "./js3d/main.js": "./js3d/main.js?v=fffc6c21b8",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=550d8c0890",
       "./js3d/panel.js": "./js3d/panel.js?v=88d0c7b38a",
-      "./js3d/pickaid.js": "./js3d/pickaid.js?v=fa605a9687",
+      "./js3d/pickaid.js": "./js3d/pickaid.js?v=7fecd8f779",
       "./js3d/plates.js": "./js3d/plates.js?v=51eb123246",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=e0273dcae0",
       "./js3d/playlog.js": "./js3d/playlog.js?v=90aaffedee",
@@ -3531,7 +3536,7 @@
   <link rel="modulepreload" href="js3d/account.js?v=39b7f97249">
   <link rel="modulepreload" href="js3d/playlog.js?v=90aaffedee">
   <link rel="modulepreload" href="js3d/feel.js?v=f1af1b9884">
-  <link rel="modulepreload" href="js3d/pickaid.js?v=fa605a9687">
+  <link rel="modulepreload" href="js3d/pickaid.js?v=7fecd8f779">
   <link rel="modulepreload" href="js3d/spectate.js?v=e7aaf6e4e9">
   <link rel="modulepreload" href="js3d/avatar.js?v=2f0df8e1bd">
   <link rel="modulepreload" href="js3d/avatar-lines.js?v=fda2f41737">
@@ -3626,6 +3631,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=1cfe742325"></script>
+  <script type="module" src="js3d/main.js?v=fffc6c21b8"></script>
 </body>
 </html>

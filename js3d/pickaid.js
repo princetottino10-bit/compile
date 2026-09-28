@@ -3,6 +3,7 @@
  *   - 選べるカードの上に、脈打つ矢印 (どれを押せばいいか一目で分かるように)
  *   - 何枚か選ぶときは、選んだカードに ① ② … (選んだ順。効果の光の順番の札と同じ形)
  *   - 候補にカーソルを乗せる / 長押しすると、選んだら何が起きるかを札の上に出す
+ *     (効果全体の見通しは、その札の吹き出しとは別のウインドウとして横に出す)
  *   - 選択の帯が候補に重なるときは、画面の上へよける
  *   - 選べないカードを押したら、選べない理由を短く出す
  *   位置は毎フレーム、カードの3Dの外形を画面に写して合わせる (手札が持ち上がっても追いかける)
@@ -44,6 +45,21 @@ export function createPickAid(stage, board) {
     return { left: x0, top: y0, right: x1, bottom: y1, cx: (x0 + x1) / 2 };
   }
 
+  /* 見通しのウインドウは、吹き出しの右 (入らなければ左) に、少し間をあけて置く */
+  function placeLater() {
+    if (!tip || !tip.later) return;
+    const lw = tip.later;
+    const anchor = tip.el.hidden ? null : tip.el.getBoundingClientRect();
+    const r = anchor || rectOf(tip.uid);
+    if (!r) return;
+    const w = lw.offsetWidth, h = lw.offsetHeight;
+    let x = r.right + 10;
+    if (x + w > window.innerWidth - 8) x = r.left - 10 - w;
+    const y = Math.max(8, Math.min(window.innerHeight - h - 8, anchor ? r.top : r.top - h - 8));
+    lw.style.left = Math.max(8, x) + 'px';
+    lw.style.top = y + 'px';
+  }
+
   function frame() {
     if (!run) return;
     for (const [uid, el] of run.marks) {
@@ -60,6 +76,7 @@ export function createPickAid(stage, board) {
     if (tip) {
       const r = rectOf(tip.uid);
       if (r) { tip.el.style.left = r.cx + 'px'; tip.el.style.top = (r.top - 26) + 'px'; }
+      placeLater();
     }
     /* 帯のよけ: 候補のどれかに重なっていたら上へ (自分で動かした帯はそのまま) */
     if (run.ribbon && run.ribbon.isConnected && !run.ribbon.classList.contains('dragging') && !run.userMoved()) {
@@ -98,19 +115,28 @@ export function createPickAid(stage, board) {
       if (run) { cancelAnimationFrame(run.raf); for (const el of run.marks.values()) el.remove(); run = null; }
       this.untip();
     },
-    /* 選んだら何が起きるか (html) を、そのカードの上に出す */
-    tip(uid, html) {
-      if (!html) { this.untip(); return; }
+    /* 選んだら何が起きるか (html) を、そのカードの上に出す。
+       later (効果全体の見通し) は、吹き出しとは別のウインドウとして横に並べる */
+    tip(uid, html, later) {
+      if (!html && !later) { this.untip(); return; }
       if (tip && tip.uid === uid) return;
       this.untip();
       const el = document.createElement('div');
       el.className = 'pa-tip';
-      el.innerHTML = html;
+      el.innerHTML = html || '';
+      el.hidden = !html;
       ensureLayer().appendChild(el);
-      tip = { el, uid };
-      if (!run) { const r = rectOf(uid); if (r) { el.style.left = r.cx + 'px'; el.style.top = (r.top - 26) + 'px'; } }
+      let lw = null;
+      if (later) {
+        lw = document.createElement('div');
+        lw.className = 'pa-forecast';
+        lw.innerHTML = later;
+        ensureLayer().appendChild(lw);
+      }
+      tip = { el, uid, later: lw };
+      if (!run) { const r = rectOf(uid); if (r) { el.style.left = r.cx + 'px'; el.style.top = (r.top - 26) + 'px'; } placeLater(); }
     },
-    untip() { if (tip) { tip.el.remove(); tip = null; } },
+    untip() { if (tip) { tip.el.remove(); if (tip.later) tip.later.remove(); tip = null; } },
     tipUid() { return tip ? tip.uid : null; },
     /* 選べないカードを押した: その上に理由を短く */
     reason(uid, text) {

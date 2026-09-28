@@ -1724,7 +1724,7 @@ function bindInput() {
       const cands = boardPick.req.candidates;
       const over = pickWithHand(ev, (ud) => ud.uid && cands.indexOf(ud.uid) >= 0);
       const ou = over && over.obj.userData.uid;
-      if (ou) { if (pickAid.tipUid() !== ou) pickAid.tip(ou, pickPreview(boardPick, ou)); }
+      if (ou) { if (pickAid.tipUid() !== ou) { const pv = pickPreview(boardPick, ou); pickAid.tip(ou, pv.now, pv.later); } }
       else pickAid.untip();
     }
     const hit = pickWithHand(ev);
@@ -3774,7 +3774,10 @@ function toggleBoardPick(uid) {
   if (bp.chosen.indexOf(uid) >= 0) { previewUid = uid; showCardInspector(uid); }
   else if (previewUid === uid) { previewUid = null; UI.hideCardNote(); }
   /* スマホは乗せる (ホバー) が無いので、選んだカードの上に「選んだら何が起きるか」を出す */
-  if (pickAid && isCompactHandUI()) pickAid.tip(uid, bp.chosen.indexOf(uid) >= 0 ? pickPreview(bp, uid) : null);
+  if (pickAid && isCompactHandUI()) {
+    const pv = bp.chosen.indexOf(uid) >= 0 ? pickPreview(bp, uid) : null;
+    pickAid.tip(uid, pv && pv.now, pv && pv.later);
+  }
   /* 何枚か選ぶ選択は、盤面でも手札でも「選ぶ → 帯の決定」にそろえる
      (盤面だけ N 枚目で勝手に決まると、押し間違えを取り消せず、手札の選択と操作も食い違っていた) */
   renderBoardPick();
@@ -3891,9 +3894,10 @@ function pickPreview(bp, uid) {
     if (after) direct = totalsDiff(st, after);
   } catch (e) { /* 計算できないときは、何をされるかだけ */ }
   parts.push(...direct);
-  /* 効果のあとの見通し: CPU 戦で1枚で決まる選択は、手元のエンジンで試しに最後まで進めて、合計値がどうなるかを別の段に出す。
-     その札に直接起きたこと (上の段) と混ざって「捨てたから減った」ように見えないよう、区切りと見出しを付ける。
+  /* 効果のあとの見通し: CPU 戦で1枚で決まる選択は、手元のエンジンで試しに最後まで進めて、合計値がどうなるかを出す。
+     その札に直接起きたこと (吹き出し) と混ざって「捨てたから減った」ように見えないよう、別のウインドウにして見出しを付ける。
      まだ選択が残るところで止まったら「途中まで」 */
+  let laterHtml = null;
   if (!roomMode && bp.max === 1 && cur && cur.state && req.player === ME) {
     try {
       const sim = withoutTrace(() => Engine.apply(cur.state, { type: 'choose', id: req.id, picks: [uid] }));
@@ -3901,12 +3905,13 @@ function pickPreview(bp, uid) {
         const later = totalsDiff(cur.state, sim.state);
         if (later.length && later.join('') !== direct.join('')) {
           const partial = Array.isArray(sim.requests) && sim.requests.length > 0;
-          parts.push('<i class="pa-later">効果のあと' + (partial ? '（途中まで）' : '（見込み）') + '</i>', ...later);
+          laterHtml = '<i>効果のあと' + (partial ? '（途中まで）' : '（見込み）') + '</i>' + later.join('');
         }
       }
     } catch (e) { /* 試せないときは出さない */ }
   }
-  (bp._tips = bp._tips || {})[uid] = parts.length ? parts.join('') : null;
+  /* 返り値: { now: その札に直接起きること, later: 効果全体の見通し (別のウインドウに出す) } */
+  (bp._tips = bp._tips || {})[uid] = { now: parts.length ? parts.join('') : null, later: laterHtml };
   return bp._tips[uid];
 }
 /* 選べないカードを押したときの理由 */
