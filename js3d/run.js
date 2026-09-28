@@ -43,6 +43,32 @@ export function runWinCompiles(run) {
 export const MAX_REMOVED = 6;               // 山札を 12 枚より減らさない
 export const START_CREDITS = 4;
 
+/* ---------- BOSS ----------
+   プロトコル3つの組み合わせがモチーフのボス。勝ち抜き戦ごとに1体 (run.boss)。地図の最初から見える。
+   rule はボスだけの試合のルール: bossHand / meHand (はじめの手札)・bossFirst (いつも先攻)・bossControl (はじめからコントロール)・
+   upgradeAll (ボスのカードは全部 ＋)・stars (ボスの山札に足す ★)・win: [あなた, ボス] (勝ちに要るコンパイル)
+   HEAT 5 は「最強」 (いちばん強い CPU のデッキ) */
+export const BOSSES = [
+  { id: 'inferno', name: '業火の王', title: '焼き尽くす者', deck: ['FIRE', 'HATE', 'WAR'], color: '#ff5a3c',
+    text: 'ボスのカードは全部 強化済み (値 +1)', rule: { upgradeAll: true } },
+  { id: 'abyss', name: '深淵の主', title: '底なしの闇', deck: ['DARKNESS', 'DEATH', 'PLAGUE'], color: '#8a4dff',
+    text: 'ボスのはじめの手札は 7 枚', rule: { bossHand: 7 } },
+  { id: 'clock', name: '時計塔の番人', title: '刻を統べる者', deck: ['TIME', 'SPEED', 'CLARITY'], color: '#ffc85a',
+    text: 'ボスがいつも先攻で、はじめからコントロールを持つ', rule: { bossFirst: true, bossControl: true } },
+  { id: 'mirror', name: '鏡の迷宮', title: '惑わす者', deck: ['MIRROR', 'CHAOS', 'LUCK'], color: '#7cf0ff',
+    text: 'あなたのはじめの手札は 4 枚', rule: { meHand: 4 } },
+  { id: 'sanctuary', name: '聖域の守り手', title: '揺るがぬ者', deck: ['LIGHT', 'LIFE', 'PEACE'], color: '#fff2a8',
+    text: 'あなたは 3 本、ボスは 2 本コンパイルで勝ち', rule: { win: [3, 2] } },
+  { id: 'glacier', name: '氷結の女帝', title: '凍てつく者', deck: ['ICE', 'WATER', 'METAL'], color: '#9fd8ff',
+    text: 'ボスの山札に WATER ★ と、強化した WATER ★ が入る', rule: { stars: ['X_WATER', 'X_WATER' + UP] } }
+];
+export const FINAL_BOSS = { id: 'strongest', name: '最強', title: '頂に立つ者', deck: STRONGEST_AI.slice(), color: '#ff4fa3',
+  text: 'いちばん強い CPU。ボスのカードは全部 強化済み、はじめの手札は 6 枚', rule: { upgradeAll: true, bossHand: 6 } };
+export const bossOf = (run) => (run && run.boss === FINAL_BOSS.id ? FINAL_BOSS : BOSSES.find(b => b.id === (run && run.boss)) || FINAL_BOSS);
+function chooseBoss(heat, rnd) {
+  return heat >= 5 ? FINAL_BOSS.id : BOSSES[Math.floor(rnd() * BOSSES.length)].id;
+}
+
 /* 地図のマス */
 export const NODES = {
   battle: { icon: '⚔', name: '戦闘', text: 'いつもの相手。勝てばクレジットと報酬' },
@@ -440,6 +466,7 @@ export function newRun(names, rnd = Math.random, heat = 0) {
   const life = RUN_LIFE - (h >= 1 ? HEAT_LIFE : 0);
   return { v: VERSION, phase: 'draft', deck: [], removed: [], life, maxLife: life, heat: h, patches: [], failsafeUsed: false, phoenixUsed: false,
     credits: START_CREDITS, pulls: 0, map: makeMap(rnd), pos: null, visited: [], removeCost: 5, upgradeCost: 4, upgrades: [], added: [],
+    boss: chooseBoss(h, rnd),
     offers: sample(names, 3, rnd), opp: null, route: 'normal', history: [], startedAt: Date.now() };
 }
 
@@ -582,7 +609,7 @@ export function prepareBattle(run, names, rnd = Math.random, route = 'normal') {
   const node = nodeById(run, run.pos) || { row: 0, type: 'battle' };
   const heat = run.heat | 0;
   let opp;
-  if (node.type === 'boss') opp = { deck: STRONGEST_AI.slice(), level: 3, boss: true };
+  if (node.type === 'boss') { const B = bossOf(run); opp = { deck: B.deck.slice(), level: 3, boss: true, bossId: B.id }; }
   else if (route === 'elite' && (node.row >= 6 || heat >= 4)) {
     const i = Math.floor(rnd() * CHALLENGERS.length);
     opp = { deck: CHALLENGERS[i].deck.slice(), level: CHALLENGER_BASE + i };
@@ -682,6 +709,10 @@ export function battleOpts(run, me) {
   hand[me] = Math.min(7, hand[me]);
   /* 呪い: パッチより強い */
   if (run.route === 'cursed') { hand[me] = 4; hand[other] = 7; }
+  /* BOSS のルール (パッチより強い) */
+  const boss = run.opp && run.opp.boss ? bossOf({ boss: run.opp.bossId || run.boss }).rule : null;
+  if (boss && boss.bossHand) hand[other] = boss.bossHand;
+  if (boss && boss.meHand) hand[me] = boss.meHand;
   const tempo = setLevel(run, 'TEMPO') >= 2;
   const exclude = [[], []];
   exclude[me] = (run.removed || []).slice(0, MAX_REMOVED);
@@ -690,13 +721,20 @@ export function battleOpts(run, me) {
   const added = run.added || [];
   const deckMods = [{}, {}];
   deckMods[me] = { swap: Object.fromEntries(ups.filter(id => !isStar(id)).map(id => [id, id + UP])), add: added.map(id => (ups.includes(id) ? id + UP : id)) };
+  if (boss && (boss.upgradeAll || boss.stars)) {
+    const swap = {};
+    if (boss.upgradeAll) for (const n of run.opp.deck) for (let k = 1; k <= 6; k++) swap[n + '_' + k] = n + '_' + k + UP;   // 値 6 は ＋ が無いのでそのまま (engine)
+    deckMods[other] = { swap, add: (boss.stars || []).slice() };
+  }
+  const bossFirst = boss && boss.bossFirst, bossControl = boss && boss.bossControl;
   return {
     winCompiles: runWinCompiles(run),
     handSize: hand,
     ...(exclude[me].length ? { exclude } : {}),
-    ...(ups.length || added.length ? { deckMods } : {}),
-    ...(hasPatch(run, 'initiative') || tempo ? { first: me } : {}),
-    ...(hasPatch(run, 'root') || tempo ? { startControl: me } : {})
+    ...(ups.length || added.length || deckMods[other].swap || deckMods[other].add ? { deckMods } : {}),
+    ...(boss && boss.win ? { winCompilesBySide: me === 0 ? boss.win.slice() : boss.win.slice().reverse() } : {}),
+    ...(bossFirst ? { first: other } : hasPatch(run, 'initiative') || tempo ? { first: me } : {}),
+    ...(bossControl ? { startControl: other } : hasPatch(run, 'root') || tempo ? { startControl: me } : {})
   };
 }
 

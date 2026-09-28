@@ -81,6 +81,16 @@ function playGacha(host, result) {
   return playCapsule(host, result.rar, info ? info.name : '');
 }
 
+/* 今回のボス: 3つの紋章を重ねたロゴ・名前・二つ名・ルール。big なら BOSS の前の大きな紹介 */
+function bossCard(run, byName, big) {
+  const B = RUN.bossOf(run);
+  const emb = B.deck.map((n, i) => '<img alt="" style="--i:' + i + '" src="' + emblemDataURL(n, (byName[n] || {}).color || B.color, 96, true) + '">').join('');
+  return '<div class="rn-boss' + (big ? ' big' : '') + '" style="--bc:' + esc(B.color) + '">' +
+    '<div class="rn-bossemb" aria-hidden="true">' + emb + '</div>' +
+    '<div class="rn-bossinfo"><small>' + (big ? 'BOSS' : '今回のボス') + ' ・ ' + esc(B.title) + '</small><b>' + esc(B.name) + '</b>' +
+      '<span class="rn-bossdeck">' + B.deck.map(n => esc(n)).join(' / ') + '</span><em>' + esc(B.text) + '</em></div></div>';
+}
+
 /* 持っているパッチと HEAT (いつも上に出す) */
 function patchStrip(run) {
   const list = (run.patches || []).map(id => RUN.patchInfo(id)).filter(Boolean);
@@ -270,6 +280,7 @@ export function openRun(protocols, cardsOf, opts) {
             (run.removedNow ? '<p class="rn-note">' + esc(cardLabel(run.removedNow)) + ' をデッキから外した</p>' : '') +
             (run.upgradedNow ? '<p class="rn-note rn-gain">' + esc(starLabel(run.upgradedNow)) + ' を強化した (値 +1)</p>' : '') +
             (run.gotStar ? '<p class="rn-note rn-gain">★ カード ' + esc(starLabel(run.gotStar)) + ' をデッキに入れた</p>' : '') +
+            bossCard(run, byName, false) +
             mapHtml(run, true) +
             '<div class="rn-deckbar"><span>デッキ ' + deckLine(run.deck, byName) + ' <em>除去 ' + (run.removed || []).length + ' / ' + RUN.MAX_REMOVED + '</em></span>' +
               '<button type="button" data-act="deck">' + (showDeck ? 'デッキを閉じる' : 'デッキを見る') + '</button></div>' +
@@ -335,7 +346,7 @@ export function openRun(protocols, cardsOf, opts) {
           const last = run.history[run.history.length - 1];
           const retry = last && last.row === (node ? node.row : -1) && !last.win;
           const kind = run.opp.boss ? 'BOSS' : run.opp.elite ? '精鋭' : '戦闘';
-          return (run.opp.boss ? '<div class="rn-bossban" data-text="FINAL BOSS" aria-hidden="true">FINAL BOSS</div>' : '') +
+          return (run.opp.boss ? '<div class="rn-bossban" data-text="FINAL BOSS" aria-hidden="true">FINAL BOSS</div>' + bossCard({ boss: run.opp.bossId || run.boss }, byName, true) : '') +
             '<h2>' + (run.opp.boss ? '♛' : run.opp.elite ? '☠' : '⚔') + ' ' + kind + ' <small>' + (rowNow(run) + 1) + ' / ' + RUN.MAP_ROWS + ' 段</small></h2>' +
             bonusList(run) +
             (run.route === 'cursed' ? '<p class="rn-cursed">CURSED — この試合は 自分の手札 4 枚・相手 7 枚。勝てば RARE 以上確定の GACHA</p>' : '') +

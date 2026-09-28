@@ -81,15 +81,19 @@ function locate(st, uid) {
 }
 function isTop(st, loc) { return loc.idx === st.lines[loc.line][loc.side].length - 1; }
 function defOf(st, uid) { return DEFS[st.cards[uid].def]; }
-/* 勝つのに要るコンパイルの本数 (通常 3。勝ち抜き戦は newGame({ winCompiles: 2 }) で短くする) */
-function winCompilesOf(st) { return st.winCompiles || 3; }
+/* 勝つのに要るコンパイルの本数 (通常 3。勝ち抜き戦は newGame({ winCompiles: 2 }) で短くする)。
+   side を渡すと、その側の本数 (勝ち抜き戦のボス「聖域」のように側ごとに違うとき: newGame({ winCompilesBySide: [a, b] })) */
+function winCompilesOf(st, side) {
+  if (Array.isArray(st.winBySide) && (side === 0 || side === 1)) return st.winBySide[side];
+  return st.winCompiles || 3;
+}
 function hasCompiledToWin(st, side) {
-  return st.players[side].protocols.filter(p => p.compiled).length >= winCompilesOf(st);
+  return st.players[side].protocols.filter(p => p.compiled).length >= winCompilesOf(st, side);
 }
 /* AI の評価用: 勝ちまでの残りが通常ルールと同じになるよう、足りない本数を済みとして数える
    (2本勝負なら 1本済み = 通常の2本済み)。評価の「あと1本」の判断をそのまま使える */
 function aiCompiledTowardWin(st, side) {
-  return st.players[side].protocols.filter(p => p.compiled).length + (3 - winCompilesOf(st));
+  return st.players[side].protocols.filter(p => p.compiled).length + (3 - winCompilesOf(st, side));
 }
 function removeFrom(arr, x) { const i = arr.indexOf(x); if (i >= 0) arr.splice(i, 1); return i >= 0; }
 
@@ -2299,6 +2303,8 @@ function newGame(opts) {
     control: opts.useControl !== false && (opts.startControl === 0 || opts.startControl === 1) ? opts.startControl : -1,
     winner: null,
     winCompiles: opts.winCompiles === 2 || opts.winCompiles === 1 ? opts.winCompiles : 3,
+    ...(Array.isArray(opts.winCompilesBySide) && opts.winCompilesBySide.length === 2 && opts.winCompilesBySide.every(n => n >= 1 && n <= 3)
+      ? { winBySide: opts.winCompilesBySide.map(n => n | 0) } : {}),
     players: [],
     lines: [[[], []], [[], []], [[], []]],
     cards: {},
@@ -3061,7 +3067,7 @@ function aiHoldsDiversityTrump(st, side) {
 function aiDiversityIsLast(st, side) {
   const ps = st.players[side].protocols;
   return ps.some(p => protoHas(p, 'DIVERSITY') && !p.compiled)
-    && ps.filter(p => !protoHas(p, 'DIVERSITY') && p.compiled).length === winCompilesOf(st) - 1;
+    && ps.filter(p => !protoHas(p, 'DIVERSITY') && p.compiled).length === winCompilesOf(st, side) - 1;
 }
 
 /* FIRE 0 + WATER 4 (docs/ai-combos.md): 手札に WATER 4 があり、FIRE 0 が表で一番上に居るラインに

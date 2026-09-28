@@ -902,7 +902,7 @@ async function boot() {
       : tutorial
         ? Engine.newPuzzle(tutorial.lesson.spec, { seed: 1 })
         : Engine.newGame({ seed, p0, p1, first: firstPlayer, training: trainingMode, winCompiles,
-          ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods } : {}),
+          ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods, winCompilesBySide: runOpts.winCompilesBySide } : {}),
           ...(tagMates ? { tag: tagMates } : {}) });
   cur = res;
   playBgm(battleBgm());                          // 対戦の BGM (ボス戦は専用の曲)
@@ -913,7 +913,7 @@ async function boot() {
   /* タッグはリプレイに残さない (棋譜の形が 1 対 1 のため) */
   replayLog = !replayMode && !trainingMode && !puzzle && !tutorial && !demoMode && !tagMates
     ? { init: { seed, p0: p0.slice(), p1: p1.slice(), first: firstPlayer, winCompiles: winCompiles || null,
-      ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods } : {}) }, actions: [] } : null;
+      ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods, winCompilesBySide: runOpts.winCompilesBySide } : {}) }, actions: [] } : null;
   if (trainingMode) training.protos = [p0.slice(), p1.slice()];
   window.__3d = {
     stage, board, THREE, LAYOUT,
