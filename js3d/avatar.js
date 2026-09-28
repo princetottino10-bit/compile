@@ -10,6 +10,7 @@ import { settings } from './settings.js';
 import { isMuted, playClip } from './audio.js';
 import { duckBgm } from './bgm.js';
 import { LINES, FAVORITE } from './avatar-lines.js';
+import { BOSS_LINES } from './avatar-boss-lines.js';
 
 export const FACES = ['normal', 'blink', 'happy', 'fired', 'frustrated', 'surprised'];
 
@@ -53,8 +54,14 @@ export const AVATARS = {
   }
 };
 
-/* セリフは avatar-lines.js。得意プロトコル (fav) も */
-for (const [id, def] of Object.entries(AVATARS)) { def.lines = LINES[id] || {}; def.fav = FAVORITE[id] || null; }
+/* 勝ち抜き戦のボス (run.js の BOSSES)。ボス戦で相手のキャラの代わりに出る。絵は1枚 (表情は変わらない: single)、声は無し。
+   ガチャ・COLLECTION・ランダムの相手には出ない (boss) */
+const BOSS_LOOK = { inferno: ['業火の王', '#ff5a3c'], abyss: ['深淵の主', '#8a4dff'], clock: ['時計塔の番人', '#ffc85a'],
+  mirror: ['鏡の迷宮', '#7cf0ff'], sanctuary: ['聖域の守り手', '#bfe8a0'], glacier: ['氷結の女帝', '#9fd8ff'], strongest: ['最強', '#ff4fa3'] };
+for (const [id, [name, color]] of Object.entries(BOSS_LOOK)) AVATARS['boss_' + id] = { name, color, boss: true, single: true, lines: null };
+
+/* セリフは avatar-lines.js (ボスは avatar-boss-lines.js)。得意プロトコル (fav) も */
+for (const [id, def] of Object.entries(AVATARS)) { def.lines = LINES[id] || BOSS_LINES[id] || {}; def.fav = FAVORITE[id] || null; }
 
 /* プロトコルごとのセリフ (カードを表で出したときに、ときどきこちらを言う) */
 export const PROTO_LINES = {
@@ -70,8 +77,9 @@ export const PROTO_LINES = {
 
 const calm = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
-export const avatarIds = () => Object.keys(AVATARS);
-export const faceURL = (id, face) => 'art/avatar/' + id + '_' + (face || 'normal') + '.webp';
+/* 選べる・ランダムに出るキャラ (ボスは除く) */
+export const avatarIds = () => Object.keys(AVATARS).filter(id => !AVATARS[id].boss);
+export const faceURL = (id, face) => 'art/avatar/' + id + '_' + (AVATARS[id] && AVATARS[id].single ? 'normal' : (face || 'normal')) + '.webp';
 
 /** キャラを出す。opts.side: 'me' (左下) / 'opp' (右上)。opts.back: 自分の後ろに立つ (タッグの味方)。
  *  返り値: { react(kind, vars), say(text, face, ms), setFace(face, ms), setBack(on), destroy(), id } */

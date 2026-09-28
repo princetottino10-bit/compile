@@ -244,6 +244,11 @@ function ownedAvatars() { return (COSMETICS.avatar || []).filter(([k]) => AVATAR
 let plannedOpp;
 function oppAvatarPlan() {
   if (plannedOpp !== undefined) return plannedOpp;
+  /* 勝ち抜き戦のボス戦は、ボス本人 (avatar.js の boss_<id>) */
+  if (runMode && runKind === 'run') {
+    const run = loadRun();
+    if (run && run.opp && run.opp.boss) return (plannedOpp = 'boss_' + (run.opp.bossId || 'strongest'));
+  }
   const me = myAvatarId();
   const fixed = settings().oppAvatar;
   plannedOpp = fixed && fixed !== 'random' && AVATARS[fixed] && fixed !== me ? fixed : oppAvatarIds([me])[0];
