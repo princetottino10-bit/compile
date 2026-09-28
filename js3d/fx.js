@@ -771,9 +771,10 @@ export function fxOrderBadge(scene, pos, n, colorHex) {
   const spr = new THREE.Sprite(mat);
   spr.renderOrder = 10;
   spr.position.copy(pos);
-  spr.scale.setScalar(0.34);
+  const SIZE = 0.42;                       // 盤面を引きで見ても読める大きさ
+  spr.scale.setScalar(SIZE);
   scene.add(spr);
-  TW.tween(220, (t) => { mat.opacity = t; spr.scale.setScalar(0.34 * (0.6 + 0.4 * t)); }, TW.Ease.outCubic);
+  TW.tween(220, (t) => { mat.opacity = t; spr.scale.setScalar(SIZE * (0.6 + 0.4 * t)); }, TW.Ease.outCubic);
   let gone = false;
   return {
     fade(ms) {

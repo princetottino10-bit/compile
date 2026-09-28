@@ -624,6 +624,7 @@ export function createBoard(stage, defIndex, me, hooks) {
     draw: 0x63f3ff, shift: 0xffc857, flip: 0xb388ff, delete: 0xff4d5e, bounce: 0x6dffc2, play: 0xff4fa3
   };
   function beamKind(prev, next, uid, a, b) {
+    if (a && a.zone === 'deck' && b && (b.zone === 'field' || b.zone === 'transit')) return 'play';   // 山札から場へ直接
     if (a && a.zone === 'deck') return 'draw';
     if (b && b.zone === 'trash') return 'delete';
     if (a && (a.zone === 'field' || a.zone === 'transit') && b && b.zone === 'hand') return 'bounce';
@@ -635,11 +636,20 @@ export function createBoard(stage, defIndex, me, hooks) {
 
   /* 連鎖の軌跡: 1回の解決 (beginTrail 〜 endTrail) の間は光を薄い筋として残し、
      2つ目の効果からは弧の頂点に順番 (1, 2, …) を出す。解決が終わったら消す */
-  const trail = { on: false, n: 0, marks: [], firstApex: null, timer: null };
+  const trail = { on: false, n: 0, marks: [], firstApex: null, timer: null, badgePos: [] };
   function clearTrail(ms) {
     clearTimeout(trail.timer);
     for (const m of trail.marks) m.fade(ms);
-    trail.marks = []; trail.n = 0; trail.firstApex = null;
+    trail.marks = []; trail.n = 0; trail.firstApex = null; trail.badgePos = [];
+  }
+
+  /* 順番の札を置く。同じ元から同じ先への効果が続くと弧が重なるので、先に置いた札と重なるときは横へずらす */
+  function badgeAt(pos, n, color) {
+    const p = pos.clone();
+    const near = (q) => trail.badgePos.some(o => o.distanceTo(q) < 0.3);
+    for (let k = 1; near(p) && k < 8; k++) p.x = pos.x + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 0.36;
+    trail.badgePos.push(p);
+    return FX.fxOrderBadge(scene, p, n, color);
   }
 
   /* 効果の元 (いま解決している効果のカード) から、動く札へ光をつなぐ。
@@ -659,6 +669,11 @@ export function createBoard(stage, defIndex, me, hooks) {
       if (!c) continue;
       const kind = beamKind(prev, next, uid, a, b);
       const beamColor = kind ? new THREE.Color(BEAM_KIND_COLOR[kind]) : color;
+      if (kind === 'play' && a && a.zone === 'deck') {
+        /* 山札から場へ直接出る札は、置かれる先へ光を向ける */
+        const slot = slotFor(next, uid);
+        if (slot && slot.pos) { targets.push({ pos: new THREE.Vector3(...slot.pos), color: beamColor }); continue; }
+      }
       if (a && a.zone === 'deck') {
         const pp = LAYOUT.pilePos('deck', a.side, me, 0);
         if (!targets.some(t => t.deck === a.side)) targets.push({ deck: a.side, pos: new THREE.Vector3(...pp.pos), color: beamColor });
@@ -675,8 +690,8 @@ export function createBoard(stage, defIndex, me, hooks) {
       trail.marks.push(m);
       if (i !== 0) return;                                 // 順番の札は、その効果の最初の光にだけ
       if (order === 1) { trail.firstApex = { pos: m.apex, color: targets[0].color }; return; }
-      if (order === 2 && trail.firstApex) trail.marks.push(FX.fxOrderBadge(scene, trail.firstApex.pos, 1, trail.firstApex.color));
-      trail.marks.push(FX.fxOrderBadge(scene, m.apex, order, targets[0].color));
+      if (order === 2 && trail.firstApex) trail.marks.push(badgeAt(trail.firstApex.pos, 1, trail.firstApex.color));
+      trail.marks.push(badgeAt(m.apex, order, targets[0].color));
     } : null;
     /* 解決が止まったまま (選択待ちなど) でも、しばらくしたら片づける */
     if (trail.on) { clearTimeout(trail.timer); trail.timer = setTimeout(() => clearTrail(600), 9000); }
