@@ -3832,7 +3832,8 @@ function pickIsInstant(bp) {
 }
 
 /* 選んだら何が起きるか (候補に乗せた / 選んだときの札)。
-   何をされるか (反転・削除…) と、その札だけを動かしたときに変わるラインの合計値を出す。
+   上の段: 何をされるか (反転・削除…) と、その札だけを動かしたときに変わるラインの合計値。
+   下の段 (CPU 戦): 効果が最後まで進んだときの合計値の見通し (pickPreview の中)。
    ゲームを試しに進めて比べると、あとに続く効果 (「そうした場合、〜」) の変化まで混ざり、
    捨てただけで合計値が変わるように見えていた。なので、その札に直接起きることだけを盤面の写しに当てて計算する */
 const PICK_OUTCOME = {
@@ -3871,19 +3872,40 @@ function pickPreview(bp, uid) {
   let what = PICK_OUTCOME[req.prompt] || null;
   if (/flip$/.test(req.prompt || '') && c) what = c.faceUp ? '裏になる' : '表になる';
   const parts = what ? ['<b>' + what + '</b>'] : [];
-  try {
-    const after = st && directPickState(st, uid, req.prompt);
-    if (after) {
-      for (let side = 0; side < 2; side++) {
-        for (let l = 0; l < 3; l++) {
-          const a = Engine.lineTotal(st, l, side), b = Engine.lineTotal(after, l, side);
-          if (a === b) continue;
-          const name = (st.players[side].protocols[l] || {}).name || '';
-          parts.push('<span class="' + (b > a ? 'up' : 'down') + '">' + (side === ME ? '' : '相手 ') + name + ' ' + a + '→' + b + '</span>');
-        }
+  /* 合計値が変わるラインを「SPEED 6→5」の形で並べる (before と after の盤面を比べる) */
+  const totalsDiff = (before, after) => {
+    const out = [];
+    for (let side = 0; side < 2; side++) {
+      for (let l = 0; l < 3; l++) {
+        const a = Engine.lineTotal(before, l, side), b = Engine.lineTotal(after, l, side);
+        if (a === b) continue;
+        const name = (before.players[side].protocols[l] || {}).name || '';
+        out.push('<span class="' + (b > a ? 'up' : 'down') + '">' + (side === ME ? '' : '相手 ') + name + ' ' + a + '→' + b + '</span>');
       }
     }
+    return out;
+  };
+  let direct = [];
+  try {
+    const after = st && directPickState(st, uid, req.prompt);
+    if (after) direct = totalsDiff(st, after);
   } catch (e) { /* 計算できないときは、何をされるかだけ */ }
+  parts.push(...direct);
+  /* 効果のあとの見通し: CPU 戦で1枚で決まる選択は、手元のエンジンで試しに最後まで進めて、合計値がどうなるかを別の段に出す。
+     その札に直接起きたこと (上の段) と混ざって「捨てたから減った」ように見えないよう、区切りと見出しを付ける。
+     まだ選択が残るところで止まったら「途中まで」 */
+  if (!roomMode && bp.max === 1 && cur && cur.state && req.player === ME) {
+    try {
+      const sim = withoutTrace(() => Engine.apply(cur.state, { type: 'choose', id: req.id, picks: [uid] }));
+      if (sim && !sim.error && sim.state) {
+        const later = totalsDiff(cur.state, sim.state);
+        if (later.length && later.join('') !== direct.join('')) {
+          const partial = Array.isArray(sim.requests) && sim.requests.length > 0;
+          parts.push('<i class="pa-later">効果のあと' + (partial ? '（途中まで）' : '（見込み）') + '</i>', ...later);
+        }
+      }
+    } catch (e) { /* 試せないときは出さない */ }
+  }
   (bp._tips = bp._tips || {})[uid] = parts.length ? parts.join('') : null;
   return bp._tips[uid];
 }

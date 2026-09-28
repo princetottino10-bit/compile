@@ -885,6 +885,8 @@
     font:700 12px/1.3 var(--font-ui,system-ui);color:#fff;box-shadow:0 8px 20px rgba(0,0,0,.5);animation:paTip .16s ease-out;}
   #pickAid .pa-tip b{font:900 13px/1.2 var(--font-ui,system-ui);color:#ffb3da;}
   #pickAid .pa-tip .up{color:#6dffc2;} #pickAid .pa-tip .down{color:#ff8a9a;}
+  /* 効果のあとの見通し: その札に直接起きることとは区切って、小さな見出しを付ける */
+  #pickAid .pa-tip .pa-later{align-self:stretch;margin-top:3px;padding-top:4px;border-top:1px dashed rgba(185,164,255,.45);font:700 10px/1.2 var(--font-ui,system-ui);font-style:normal;letter-spacing:.08em;color:#b9a4ff;text-align:center;}
   @keyframes paTip{from{opacity:0;transform:translate(-50%,-90%)}to{opacity:1;transform:translate(-50%,-100%)}}
   /* 選べない理由 */
   #pickAid .pa-reason{position:fixed;transform:translate(-50%,-100%);padding:5px 10px;white-space:nowrap;border-radius:6px;
@@ -3475,7 +3477,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=b112e2afc4",
+      "./js3d/main.js": "./js3d/main.js?v=1cfe742325",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=550d8c0890",
       "./js3d/panel.js": "./js3d/panel.js?v=88d0c7b38a",
@@ -3624,6 +3626,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=b112e2afc4"></script>
+  <script type="module" src="js3d/main.js?v=1cfe742325"></script>
 </body>
 </html>
