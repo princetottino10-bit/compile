@@ -3425,9 +3425,12 @@ function renderBoardPick() {
     && Array.isArray(cur.state.pending.choices) && cur.state.pending.choices.length);
   /* 1行の帯 (pickRibbon): 何の効果で・何を選ぶか・「しない」。決定は押したカードのそばに浮かぶ (renderPickGo) */
   el.className = 'pick-ribbon';
+  /* 何枚か選ぶときの「決定」は帯の中に置く。選んだカードの横に出すと、次に押すカードのそばに出て、うっかり確定していた */
+  const goInRibbon = pickGoInRibbon(bp);
   el.innerHTML = pickRibbon(bp.req, {
     count: bp.chosen.length, max: bp.max, back: canBack, skip: pickSkip,
-    none: !pickSkip && bp.min === 0 && !bp.chosen.length
+    none: !pickSkip && bp.min === 0 && !bp.chosen.length,
+    extra: goInRibbon ? '<button type="button" class="rb-btn ok" id="pkGo">決定 (' + bp.chosen.length + ')</button>' : ''
   });
   bindPickBar(el);
   bindRibbon(el, {
@@ -3435,6 +3438,16 @@ function renderBoardPick() {
     skip: () => finishBoardPick(PICK_SKIP),
     none: () => finishBoardPick([])
   });
+  const pkGo = el.querySelector('#pkGo');
+  if (pkGo) {
+    /* 出た直後 (選んだ勢いの連打) は押しても決めない */
+    const armedAt = performance.now() + GO_ARM_MS;
+    pkGo.onclick = (ev) => {
+      ev.stopPropagation();
+      if (performance.now() < armedAt || boardPick !== bp) return;
+      finishBoardPick(bp.chosen.slice());
+    };
+  }
   renderPickGo(bp);
   if (!pickAid) pickAid = createPickAid(stage, board);
   pickAid.show({ cands: bp.req.candidates, chosen: bp.chosen, multi: bp.max > 1, ribbon: el,
@@ -3673,9 +3686,14 @@ let lastTap = null;
 window.addEventListener('pointerdown', (ev) => { lastTap = { x: ev.clientX, y: ev.clientY }; }, true);
 
 /* 選んだカードのすぐ横の「決定」。ダイアログの決定まで手を伸ばさなくてよいように (Enter でも決定) */
+const GO_ARM_MS = 400;
+/* 何枚か選ぶ選択は、決定を帯の中に置く (カードの横には出さない) */
+function pickGoInRibbon(bp) {
+  return !!bp && !pickIsInstant(bp) && bp.max > 1 && bp.chosen.length > 0 && bp.chosen.length >= bp.min;
+}
 function renderPickGo(bp) {
   let go = document.getElementById('pickGo');
-  const show = bp && !pickIsInstant(bp) && bp.chosen.length > 0 && bp.chosen.length >= bp.min && lastTap;
+  const show = bp && !pickIsInstant(bp) && bp.max === 1 && bp.chosen.length > 0 && bp.chosen.length >= bp.min && lastTap;
   if (!show) { if (go) go.remove(); return; }
   if (!go) {
     go = document.createElement('button');
@@ -3689,7 +3707,8 @@ function renderPickGo(bp) {
   const y = Math.max(8, Math.min(window.innerHeight - 50, lastTap.y - 18));
   go.style.left = x + 'px';
   go.style.top = y + 'px';
-  go.onclick = (ev) => { ev.stopPropagation(); if (boardPick === bp) finishBoardPick(bp.chosen.slice()); };
+  const armedAt = performance.now() + GO_ARM_MS;       // 出た直後は押しても決めない (選んだ勢いの連打で確定しないように)
+  go.onclick = (ev) => { ev.stopPropagation(); if (performance.now() >= armedAt && boardPick === bp) finishBoardPick(bp.chosen.slice()); };
 }
 window.addEventListener('keydown', (ev) => {
   const bp = boardPick;
