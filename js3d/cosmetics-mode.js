@@ -182,6 +182,8 @@ function preview(kind, key, name, isOwned, src) {
       const text = Array.isArray(line) ? line[0] : line;
       art = '<div class="cm-avview" style="--av-c:' + esc(d.color || '#b9a4ff') + '"><img alt="" src="' + faceURL(key, 'happy') + '">' +
         (text ? '<p><b>' + esc(d.name || '') + '</b>' + esc(text) + '</p>' : '') +
+        /* 得意プロトコル (そのカードを表で出すと専用のセリフ) */
+        (d.fav ? '<em class="cm-fav" style="--pc:' + esc((protoList.find(x => x.name === d.fav) || {}).color || '#b9a4ff') + '">得意 ' + esc(d.fav) + '</em>' : '') +
         /* ゲストは声と立ち絵のクレジットを添える */
         (d.guest ? '<small class="cm-credit">' + esc(d.credit || '') + '　立ち絵：坂本アヒル</small>' : '') + '</div>';
       break;
