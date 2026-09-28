@@ -81,14 +81,14 @@ function playGacha(host, result) {
   return playCapsule(host, result.rar, info ? info.name : '');
 }
 
-/* 今回のボス: 3つの紋章を重ねたロゴ・名前・二つ名・ルール。big なら BOSS の前の大きな紹介 */
+/* 今回のボス: 絵 (art/boss/<id>.webp)・名前・二つ名・プロトコル (小さな紋章)・ルール。big なら BOSS の前の大きな紹介 */
 function bossCard(run, byName, big) {
   const B = RUN.bossOf(run);
-  const emb = B.deck.map((n, i) => '<img alt="" style="--i:' + i + '" src="' + emblemDataURL(n, (byName[n] || {}).color || B.color, 96, true) + '">').join('');
+  const emb = B.deck.map(n => '<img alt="" src="' + emblemDataURL(n, (byName[n] || {}).color || B.color, 48, true) + '">').join('');
   return '<div class="rn-boss' + (big ? ' big' : '') + '" style="--bc:' + esc(B.color) + '">' +
-    '<div class="rn-bossemb" aria-hidden="true">' + emb + '</div>' +
+    '<img class="rn-bossart" alt="' + esc(B.name) + '" src="art/boss/' + esc(B.id) + '.webp">' +
     '<div class="rn-bossinfo"><small>' + (big ? 'BOSS' : '今回のボス') + ' ・ ' + esc(B.title) + '</small><b>' + esc(B.name) + '</b>' +
-      '<span class="rn-bossdeck">' + B.deck.map(n => esc(n)).join(' / ') + '</span><em>' + esc(B.text) + '</em></div></div>';
+      '<span class="rn-bossdeck"><span class="rn-bossemb" aria-hidden="true">' + emb + '</span>' + B.deck.map(n => esc(n)).join(' / ') + '</span><em>' + esc(B.text) + '</em></div></div>';
 }
 
 /* 持っているパッチと HEAT (いつも上に出す) */

@@ -1436,16 +1436,20 @@
   /* 勝ち抜き戦のボス (run.js の BOSSES): 3つの紋章を重ねたロゴと名前・ルール */
   .rn-boss{display:flex;align-items:center;gap:14px;margin:6px 0 10px;padding:10px 14px;border-radius:12px;
     border:1px solid color-mix(in srgb,var(--bc) 60%,transparent);background:linear-gradient(100deg,color-mix(in srgb,var(--bc) 18%,transparent),rgba(8,8,20,.85) 70%);}
-  .rn-bossemb{position:relative;flex:none;width:64px;height:48px;}
-  .rn-bossemb img{position:absolute;top:0;width:44px;height:44px;left:calc(var(--i) * 10px);filter:drop-shadow(0 0 6px rgba(0,0,0,.6));}
+  .rn-bossart{flex:none;width:64px;height:64px;object-fit:cover;object-position:50% 12%;border-radius:50%;border:2px solid var(--bc);background:rgba(0,0,0,.3);}
+  .rn-bossemb{display:inline-flex;gap:2px;margin-right:6px;vertical-align:middle;}
+  .rn-bossemb img{width:16px;height:16px;}
   .rn-bossinfo{display:flex;flex-direction:column;gap:3px;min-width:0;}
   .rn-bossinfo small{font:800 10px/1 var(--font-hud),system-ui;letter-spacing:.14em;color:var(--bc);}
   .rn-bossinfo b{font:900 18px/1.1 var(--font-ui),system-ui;color:#fff;}
   .rn-bossdeck{font:800 11px/1 var(--font-hud),system-ui;color:var(--dim);letter-spacing:.06em;}
   .rn-bossinfo em{font:700 12px/1.4 system-ui;font-style:normal;color:#ffd9b0;}
   .rn-boss.big{padding:16px 18px;gap:20px;box-shadow:0 0 30px color-mix(in srgb,var(--bc) 35%,transparent);}
-  .rn-boss.big .rn-bossemb{width:110px;height:80px;}
-  .rn-boss.big .rn-bossemb img{width:76px;height:76px;left:calc(var(--i) * 17px);}
+  .rn-boss.big{align-items:stretch;}
+  .rn-boss.big .rn-bossart{width:min(190px,34vw);height:auto;aspect-ratio:480/702;border-radius:10px;object-position:50% 0;
+    box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 24px color-mix(in srgb,var(--bc) 40%,transparent);}
+  .rn-boss.big .rn-bossinfo{justify-content:center;gap:8px;}
+  .rn-boss.big .rn-bossemb img{width:22px;height:22px;}
   .rn-boss.big .rn-bossinfo b{font-size:28px;text-shadow:0 0 18px color-mix(in srgb,var(--bc) 60%,transparent);}
   .rn-boss.big .rn-bossinfo em{font-size:13px;}
   /* 勝ち抜き戦の強化 (＋) と ★ カード (runcards.js) */
@@ -3484,7 +3488,7 @@
       "./js3d/rewards.js": "./js3d/rewards.js?v=da45fcbbfc",
       "./js3d/room.js": "./js3d/room.js?v=c34129de95",
       "./js3d/roomui.js": "./js3d/roomui.js?v=2557b7dc57",
-      "./js3d/run-ui.js": "./js3d/run-ui.js?v=229b50baa9",
+      "./js3d/run-ui.js": "./js3d/run-ui.js?v=003000551a",
       "./js3d/run.js": "./js3d/run.js?v=7ef16abaef",
       "./js3d/runcards.js": "./js3d/runcards.js?v=f8516ff671",
       "./js3d/selectui.js": "./js3d/selectui.js?v=208abdaebc",
@@ -3557,7 +3561,7 @@
   <link rel="modulepreload" href="js3d/cardlist-ov.js?v=1d673fd0d2">
   <link rel="modulepreload" href="js3d/opponent-select.js?v=550d8c0890">
   <link rel="modulepreload" href="js3d/aidecks.js?v=8d249240bd">
-  <link rel="modulepreload" href="js3d/run-ui.js?v=229b50baa9">
+  <link rel="modulepreload" href="js3d/run-ui.js?v=003000551a">
   <link rel="modulepreload" href="js3d/weekly-ui.js?v=eac88767b3">
   <link rel="modulepreload" href="js3d/run.js?v=7ef16abaef">
   <link rel="modulepreload" href="js3d/weekly.js?v=5605476b1c">
