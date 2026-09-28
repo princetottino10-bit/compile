@@ -694,9 +694,12 @@ function trailTexture() {
 
 /* ---------- 効果の元 → 対象をつなぐ光 ----------
    効果が解決されるとき、効果を出したカードから、動く・裏返る・削除される札へ弧を描いて光を走らせる。
-   「どのカードの効果で何が起きたか」を目で追えるようにする。返り値: 光が対象に届くまでの Promise */
-export function fxLinkBeam(scene, from, to, colorHex, ms) {
+   「どのカードの効果で何が起きたか」を目で追えるようにする。返り値: 光が対象に届くまでの Promise
+   opts.onLinger(mark): 渡すと、光は消えずに薄い筋として残る (連鎖の軌跡)。mark.fade(ms) で消す。
+     mark.apex は弧の頂点 (順番の札を置く場所) */
+export function fxLinkBeam(scene, from, to, colorHex, ms, opts) {
   const dur = ms || 460;
+  const linger = opts && opts.onLinger;
   const mid = new THREE.Vector3().addVectors(from, to).multiplyScalar(0.5);
   mid.y += 0.9 + from.distanceTo(to) * 0.18;
   const curve = new THREE.QuadraticBezierCurve3(from.clone().setY(from.y + 0.08), mid, to.clone().setY(to.y + 0.08));
@@ -724,14 +727,62 @@ export function fxLinkBeam(scene, from, to, colorHex, ms) {
     geo.setDrawRange(0, n);
     head.position.copy(curve.getPoint(e));
     head.material.opacity = t < REACH ? 1 : Math.max(0, 1 - (t - REACH) / 0.2);
-    mat.opacity = t < REACH ? 0.95 : 0.95 * (1 - (t - REACH) / (1 - REACH));
+    const rest = linger ? LINGER_OPACITY : 0;
+    mat.opacity = t < REACH ? 0.95 : 0.95 - (0.95 - rest) * (t - REACH) / (1 - REACH);
     if (g >= 1 && arrived) { arrived(); arrived = null; }
   }, TW.Ease.linear, () => {
     if (arrived) arrived();
-    scene.remove(tube, head);
-    geo.dispose(); mat.dispose(); head.geometry.dispose(); head.material.dispose();
+    scene.remove(head);
+    head.geometry.dispose(); head.material.dispose();
+    if (!linger) { scene.remove(tube); geo.dispose(); mat.dispose(); return; }
+    /* 連鎖の軌跡: 薄い筋のまま残し、呼び出し側が片づける */
+    let gone = false;
+    linger({
+      apex: curve.getPoint(0.5),
+      fade(ms2) {
+        if (gone) return; gone = true;
+        const o0 = mat.opacity;
+        TW.tween(ms2 || 400, (t) => { mat.opacity = o0 * (1 - t); }, TW.Ease.linear, () => {
+          scene.remove(tube); geo.dispose(); mat.dispose();
+        });
+      }
+    });
   });
   return reached;
+}
+const LINGER_OPACITY = 0.3;
+
+/* ---------- 連鎖の順番の札 ----------
+   残った軌跡の頂点に ①② … を浮かべる (カメラの方を向く丸い札)。返り値: { fade(ms) } */
+export function fxOrderBadge(scene, pos, n, colorHex) {
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = 64;
+  const g = cv.getContext('2d');
+  const col = '#' + new THREE.Color(colorHex).getHexString();
+  g.fillStyle = 'rgba(8,6,15,.88)';
+  g.beginPath(); g.arc(32, 32, 27, 0, Math.PI * 2); g.fill();
+  g.lineWidth = 4; g.strokeStyle = col; g.stroke();
+  g.fillStyle = '#fff';
+  g.font = '900 34px system-ui, sans-serif';
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(String(n), 32, 34);
+  const tex = new THREE.CanvasTexture(cv);
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0, depthTest: false, depthWrite: false });
+  const spr = new THREE.Sprite(mat);
+  spr.renderOrder = 10;
+  spr.position.copy(pos);
+  spr.scale.setScalar(0.34);
+  scene.add(spr);
+  TW.tween(220, (t) => { mat.opacity = t; spr.scale.setScalar(0.34 * (0.6 + 0.4 * t)); }, TW.Ease.outCubic);
+  let gone = false;
+  return {
+    fade(ms) {
+      if (gone) return; gone = true;
+      TW.tween(ms || 400, (t) => { mat.opacity = 1 - t; }, TW.Ease.linear, () => {
+        scene.remove(spr); tex.dispose(); mat.dispose();
+      });
+    }
+  };
 }
 
 /* ---------- 着地の粒 ----------
