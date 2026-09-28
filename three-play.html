@@ -1427,6 +1427,7 @@
   @media (max-width:700px){ .wt-freeteams{grid-template-columns:1fr;} .wt-freeteams .wt-vs{justify-self:center;} .wt-tiles{grid-template-columns:repeat(4,minmax(0,1fr));} }
   @media (prefers-reduced-motion:reduce){ .wt-slot{animation:none;} .wt-tile,.wt-tile img{transition:none;} }
   @media (max-width:700px){ .wt-match{grid-template-columns:1fr;} .wt-vs{justify-self:center;} .wt-go{margin-left:0;width:100%;} }
+  .rn-cost{display:block;margin-top:2px;font:800 11.5px/1.4 system-ui;color:#ff7b8f;}
   /* 勝ち抜き戦のボス (run.js の BOSSES): 3つの紋章を重ねたロゴと名前・ルール */
   .rn-boss{display:flex;align-items:center;gap:14px;margin:6px 0 10px;padding:10px 14px;border-radius:12px;
     border:1px solid color-mix(in srgb,var(--bc) 60%,transparent);background:linear-gradient(100deg,color-mix(in srgb,var(--bc) 18%,transparent),rgba(8,8,20,.85) 70%);}
@@ -3409,7 +3410,7 @@
     <div id="bootBar"><i></i></div>
   </div>
 
-  <script src="engine.js?v=66748a268f"></script>
+  <script src="engine.js?v=032003dbcb"></script>
   <script type="importmap">
   {
     "imports": {
@@ -3458,7 +3459,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=0204fad055",
+      "./js3d/main.js": "./js3d/main.js?v=f89417b89c",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=550d8c0890",
       "./js3d/panel.js": "./js3d/panel.js?v=3dad9de3da",
@@ -3473,13 +3474,13 @@
       "./js3d/protocol-strength.js": "./js3d/protocol-strength.js?v=c719e5b65c",
       "./js3d/puzzle.js": "./js3d/puzzle.js?v=a6a0904519",
       "./js3d/replays-ui.js": "./js3d/replays-ui.js?v=9a6a4ca786",
-      "./js3d/replays.js": "./js3d/replays.js?v=e37dbc128f",
+      "./js3d/replays.js": "./js3d/replays.js?v=e707113afd",
       "./js3d/review.js": "./js3d/review.js?v=34f174153b",
       "./js3d/rewards.js": "./js3d/rewards.js?v=da45fcbbfc",
       "./js3d/room.js": "./js3d/room.js?v=c34129de95",
       "./js3d/roomui.js": "./js3d/roomui.js?v=2557b7dc57",
-      "./js3d/run-ui.js": "./js3d/run-ui.js?v=b19c7322b4",
-      "./js3d/run.js": "./js3d/run.js?v=c1e49245ce",
+      "./js3d/run-ui.js": "./js3d/run-ui.js?v=229b50baa9",
+      "./js3d/run.js": "./js3d/run.js?v=7ef16abaef",
       "./js3d/runcards.js": "./js3d/runcards.js?v=f8516ff671",
       "./js3d/selectui.js": "./js3d/selectui.js?v=208abdaebc",
       "./js3d/settings.js": "./js3d/settings.js?v=6936a7d1ff",
@@ -3522,7 +3523,7 @@
   <link rel="modulepreload" href="js3d/chips.js?v=e67e280b76">
   <link rel="modulepreload" href="js3d/crashwatch.js?v=57c6c91bd8">
   <link rel="modulepreload" href="js3d/achievements.js?v=898d57909c">
-  <link rel="modulepreload" href="js3d/replays.js?v=e37dbc128f">
+  <link rel="modulepreload" href="js3d/replays.js?v=e707113afd">
   <link rel="modulepreload" href="js3d/turning.js?v=9c7f79654e">
   <link rel="modulepreload" href="js3d/achievements-ui.js?v=924939d2f6">
   <link rel="modulepreload" href="vendor/three.module.js?v=985eb92490">
@@ -3551,9 +3552,9 @@
   <link rel="modulepreload" href="js3d/cardlist-ov.js?v=1d673fd0d2">
   <link rel="modulepreload" href="js3d/opponent-select.js?v=550d8c0890">
   <link rel="modulepreload" href="js3d/aidecks.js?v=8d249240bd">
-  <link rel="modulepreload" href="js3d/run-ui.js?v=b19c7322b4">
+  <link rel="modulepreload" href="js3d/run-ui.js?v=229b50baa9">
   <link rel="modulepreload" href="js3d/weekly-ui.js?v=eac88767b3">
-  <link rel="modulepreload" href="js3d/run.js?v=c1e49245ce">
+  <link rel="modulepreload" href="js3d/run.js?v=7ef16abaef">
   <link rel="modulepreload" href="js3d/weekly.js?v=5605476b1c">
   <link rel="modulepreload" href="js3d/review.js?v=34f174153b">
   <link rel="modulepreload" href="js3d/roomui.js?v=2557b7dc57">
@@ -3606,6 +3607,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=0204fad055"></script>
+  <script type="module" src="js3d/main.js?v=f89417b89c"></script>
 </body>
 </html>

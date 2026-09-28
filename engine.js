@@ -180,6 +180,18 @@ function cardValue(st, uid) {
     return (c.zone.indexOf('trash') === 0) ? DEFS[c.def].value : 2;
   }
   let v = c.faceUp ? DEFS[c.def].value : 2;
+  /* 勝ち抜き戦の極端なパッチ (newGame の perks)。その側の場のカードの値を変える:
+     doubleProto (そのプロトコルの表向きの値は2倍) / otherMinus (ほかのプロトコルの表向きの値を引く) /
+     faceUpMinus (表向きの値を全部引く) / faceDownValue (裏向きの値) */
+  const pk = st.perks && st.perks[c.owner];
+  if (pk) {
+    if (c.faceUp) {
+      if (pk.doubleProto && DEFS[c.def].proto === pk.doubleProto) v *= 2;
+      else if (pk.doubleProto && pk.otherMinus) v -= pk.otherMinus;
+      if (pk.faceUpMinus) v -= pk.faceUpMinus;
+      v = Math.max(0, v);
+    } else if (pk.faceDownValue) v = pk.faceDownValue;
+  }
   for (const s of activeStatics(st)) {
     if (s.kind === 'setValue' && s.filter.zone === 'thisStack'
         && s.line === loc.line && s.sideIdx === loc.side
@@ -1021,6 +1033,15 @@ function execOp(ctx, fr, op) {
     case 'discard': {
       const who = actorOf(fr, op);
       let min, max;
+      /* 勝ち抜き戦のパッチ NO COST (perks.freeDiscard): 自分のカードの効果で自分が決まった枚数を捨てるときは、捨てずに済む (捨てたことになる) */
+      const free = st.perks && st.perks[who] && st.perks[who].freeDiscard && who === fr.controller && !op.countFrom
+        && typeof op.count === 'number' && op.count > 0;
+      if (free) {
+        if (op.bind) fr.bind[op.bind] = op.count;
+        log(ctx, `P${who + 1}: NO COST — 手札を捨てずに済ませた (${op.count}枚)`);
+        fr.done = true;
+        return;
+      }
       if (op.countFrom) { const n = (fr.bind[op.countFrom.ref] || 0) + (op.countFrom.plus || 0); min = max = n; }
       else if (op.count === 'all') { min = max = st.players[who].hand.length; }  // CHAOS_5/FEAR_2: 手札すべて
       else if (typeof op.count === 'object') { min = op.count.min; max = op.count.max === 'any' ? 99 : op.count.max; }
@@ -1650,7 +1671,11 @@ function branchViable(st, fr, ops) {
 
 function opViable(st, fr, op) {
   switch (op.op) {
-    case 'discard': return st.players[actorOf(fr, op)].hand.length > 0;
+    case 'discard': {
+      const who = actorOf(fr, op);
+      if (st.perks && st.perks[who] && st.perks[who].freeDiscard && who === fr.controller && typeof op.count === 'number') return true;
+      return st.players[who].hand.length > 0;
+    }
     case 'draw': {
       const p = st.players[actorOf(fr, op)];
       return p.deck.length > 0 || p.trash.length > 0;
@@ -2303,6 +2328,7 @@ function newGame(opts) {
     control: opts.useControl !== false && (opts.startControl === 0 || opts.startControl === 1) ? opts.startControl : -1,
     winner: null,
     winCompiles: opts.winCompiles === 2 || opts.winCompiles === 1 ? opts.winCompiles : 3,
+    ...(Array.isArray(opts.perks) && opts.perks.some(Boolean) ? { perks: [opts.perks[0] || null, opts.perks[1] || null] } : {}),
     ...(Array.isArray(opts.winCompilesBySide) && opts.winCompilesBySide.length === 2 && opts.winCompilesBySide.every(n => n >= 1 && n <= 3)
       ? { winBySide: opts.winCompilesBySide.map(n => n | 0) } : {}),
     players: [],

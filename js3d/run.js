@@ -99,7 +99,14 @@ export const PATCHES = [
   { id: 'overflow', tag: 'HAND', kind: 'game', rar: 'L', gachaOnly: true, name: 'OVERFLOW', text: 'はじめの手札が 7 枚' },
   { id: 'singularity', tag: 'HAND', kind: 'game', rar: 'L', gachaOnly: true, name: 'SINGULARITY', text: '相手のはじめの手札が 3 枚' },
   { id: 'phoenix', tag: 'GUARD', kind: 'life', rar: 'L', gachaOnly: true, name: 'PHOENIX', text: 'ライフが尽きたら1度だけ、ライフ全回復でよみがえる' },
-  { id: 'midas', tag: 'GREED', kind: 'life', rar: 'L', gachaOnly: true, name: 'MIDAS TOUCH', text: 'もらえるクレジットが 2 倍' }
+  { id: 'midas', tag: 'GREED', kind: 'life', rar: 'L', gachaOnly: true, name: 'MIDAS TOUCH', text: 'もらえるクレジットが 2 倍' },
+  /* RISK: 強い効果と、はっきりした代償がセット (cost に代償) */
+  { id: 'nocost', tag: 'RISK', kind: 'game', rar: 'E', name: 'NO COST', text: '自分のカードの効果で手札を捨てるとき、捨てなくてよい (捨てたことになる)', cost: 'はじめの手札 −2' },
+  { id: 'double', tag: 'RISK', kind: 'game', rar: 'E', name: 'DOUBLE DOWN', text: 'デッキの1つ目のプロトコルの、表向きの値が 2 倍', cost: 'ほかの2つのプロトコルの、表向きの値 −1' },
+  { id: 'shadow', tag: 'RISK', kind: 'game', rar: 'R', name: 'SHADOW RULE', text: '裏向きのカードの値が 4', cost: '表向きのカードの値が全部 −1' },
+  { id: 'oneshot', tag: 'RISK', kind: 'game', rar: 'L', name: 'ONE SHOT', text: '1本コンパイルしたら勝ち', cost: '最大ライフが半分' },
+  { id: 'gluttony', tag: 'RISK', kind: 'game', rar: 'R', name: 'GLUTTONY', text: 'はじめの手札が 7 枚', cost: '相手のはじめの手札も 7 枚' },
+  { id: 'allin', tag: 'RISK', kind: 'life', rar: 'R', name: 'ALL IN', text: '勝つたびのクレジットが 3 倍', cost: '負けるとライフがさらに −2' }
 ];
 const PATCH = Object.fromEntries(PATCHES.map(p => [p.id, p]));
 export const RARITY = {
@@ -114,7 +121,8 @@ export const TAGS = {
   HAND: { name: 'HAND', label: '手札', color: '#ff8fc8', bonus: ['相手のはじめの手札 さらに −1', '自分のはじめの手札 さらに +1'] },
   GUARD: { name: 'GUARD', label: '守り', color: '#7cc4ff', bonus: ['最大ライフ +1', '勝つたびにライフ +1'] },
   GREED: { name: 'GREED', label: '強欲', color: '#ffc85a', bonus: ['勝つたびにクレジット +2', 'GACHA の EPIC 以上が出やすい (2 倍)'] },
-  TEMPO: { name: 'TEMPO', label: '先手', color: '#7cf0d0', bonus: ['精鋭・呪いの試合に勝つとクレジット +3', 'いつも先攻で、はじめからコントロールを持つ'] }
+  TEMPO: { name: 'TEMPO', label: '先手', color: '#7cf0d0', bonus: ['精鋭・呪いの試合に勝つとクレジット +3', 'いつも先攻で、はじめからコントロールを持つ'] },
+  RISK: { name: 'RISK', label: '賭け', color: '#ff4f6d', bonus: ['勝つたびにライフ +1', '最大ライフ +3'] }
 };
 
 /* イベント。options[i].apply(run, ctx) が新しい状態を返す (ctx: { names, rnd })。
@@ -346,6 +354,9 @@ function addPatch(run, id) {
   if (!PATCH[id] || hasPatch(run, id)) return run;
   let next = { ...run, patches: run.patches.concat(id) };
   if (id === 'battery') next = { ...next, maxLife: next.maxLife + 2, life: next.life + 2 };
+  if (id === 'oneshot') { const m = Math.max(1, Math.ceil(next.maxLife / 2)); next = { ...next, maxLife: m, life: Math.min(next.life, m) }; }
+  /* RISK を3つそろえた瞬間に最大ライフ +3 */
+  if (PATCH[id].tag === 'RISK' && tagCount(next, 'RISK') === 3) next = { ...next, maxLife: next.maxLife + 3, life: next.life + 3 };
   /* GUARD を2つそろえた瞬間に最大ライフ +1 */
   if (PATCH[id].tag === 'GUARD' && tagCount(next, 'GUARD') === 2) next = { ...next, maxLife: next.maxLife + 1, life: next.life + 1 };
   return next;
@@ -642,13 +653,14 @@ export function creditGain(run, compiles) {
   if (setLevel(run, 'GREED') >= 1) gain += 2;
   if (setLevel(run, 'TEMPO') >= 1 && (run.route === 'elite' || run.route === 'cursed')) gain += 3;
   if (hasPatch(run, 'midas')) gain *= 2;
+  if (hasPatch(run, 'allin')) gain *= 3;
   return gain;
 }
 
 /* 1戦の結果。compiles = その試合で相手にコンパイルされた回数 */
 export function finishBattle(run, win, compiles, names, rnd = Math.random) {
   if (run.phase !== 'battle') return run;
-  const damage = damageOf(run, compiles);
+  const damage = damageOf(run, compiles) + (!win && hasPatch(run, 'allin') ? 2 : 0);
   let life = run.life - damage;
   let failsafeUsed = !!run.failsafeUsed;
   let phoenixUsed = !!run.phoenixUsed;
@@ -659,6 +671,7 @@ export function finishBattle(run, win, compiles, names, rnd = Math.random) {
   if (win && life > 0) {
     if (hasPatch(run, 'repair')) life += 1;
     if (setLevel(run, 'GUARD') >= 2) life += 1;
+    if (setLevel(run, 'RISK') >= 1) life += 1;
     if (hasPatch(run, 'sweep') && (compiles | 0) === 0) life += 2;
     life = Math.min(run.maxLife, life);
   }
@@ -703,10 +716,12 @@ export function battleOpts(run, me) {
   if (hasPatch(run, 'overflow')) hand[me] = 7;
   if (hasPatch(run, 'jammer')) hand[other] = 4;
   if (hasPatch(run, 'singularity')) hand[other] = 3;
+  if (hasPatch(run, 'gluttony')) { hand[me] = Math.max(hand[me], 7); hand[other] = 7; }
+  if (hasPatch(run, 'nocost')) hand[me] -= 2;
   /* HAND のビルド */
   if (setLevel(run, 'HAND') >= 1) hand[other] = Math.max(3, hand[other] - 1);
   if (setLevel(run, 'HAND') >= 2) hand[me] += 1;
-  hand[me] = Math.min(7, hand[me]);
+  hand[me] = Math.max(1, Math.min(7, hand[me]));
   /* 呪い: パッチより強い */
   if (run.route === 'cursed') { hand[me] = 4; hand[other] = 7; }
   /* BOSS のルール (パッチより強い) */
@@ -727,12 +742,23 @@ export function battleOpts(run, me) {
     deckMods[other] = { swap, add: (boss.stars || []).slice() };
   }
   const bossFirst = boss && boss.bossFirst, bossControl = boss && boss.bossControl;
+  /* RISK のパッチ: 値と「捨てる」を変える (engine の perks) */
+  const pk = {};
+  if (hasPatch(run, 'nocost')) pk.freeDiscard = true;
+  if (hasPatch(run, 'double') && run.deck[0]) { pk.doubleProto = run.deck[0]; pk.otherMinus = 1; }
+  if (hasPatch(run, 'shadow')) { pk.faceDownValue = 4; pk.faceUpMinus = 1; }
+  const perks = [null, null];
+  if (Object.keys(pk).length) perks[me] = pk;
+  /* ONE SHOT: 自分は1本で勝ち (ボスの「聖域」でも1本) */
+  let win = boss && boss.win ? (me === 0 ? boss.win.slice() : boss.win.slice().reverse()) : null;
+  if (hasPatch(run, 'oneshot')) { const base = runWinCompiles(run); win = win || [base, base]; win[me] = 1; }
   return {
     winCompiles: runWinCompiles(run),
     handSize: hand,
     ...(exclude[me].length ? { exclude } : {}),
     ...(ups.length || added.length || deckMods[other].swap || deckMods[other].add ? { deckMods } : {}),
-    ...(boss && boss.win ? { winCompilesBySide: me === 0 ? boss.win.slice() : boss.win.slice().reverse() } : {}),
+    ...(win ? { winCompilesBySide: win } : {}),
+    ...(perks[me] ? { perks } : {}),
     ...(bossFirst ? { first: other } : hasPatch(run, 'initiative') || tempo ? { first: me } : {}),
     ...(bossControl ? { startControl: other } : hasPatch(run, 'root') || tempo ? { startControl: me } : {})
   };

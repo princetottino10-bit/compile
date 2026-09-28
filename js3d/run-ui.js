@@ -136,7 +136,8 @@ function bonusList(run) {
 function patchCard(p, attrs) {
   return '<button type="button" class="rn-patch ' + p.kind + ' r' + p.rar + '" ' + (attrs || '') + '>' +
     '<em class="rn-tag" style="--tc:' + RUN.TAGS[p.tag].color + '">' + p.tag + '</em>' +
-    '<small>' + (p.kind === 'game' ? 'BATTLE PATCH' : 'SYSTEM PATCH') + ' ・ ' + RUN.RARITY[p.rar].name + '</small><b>' + esc(p.name) + '</b><span>' + esc(p.text) + '</span></button>';
+    '<small>' + (p.kind === 'game' ? 'BATTLE PATCH' : 'SYSTEM PATCH') + ' ・ ' + RUN.RARITY[p.rar].name + '</small><b>' + esc(p.name) + '</b><span>' + esc(p.text) + '</span>' +
+    (p.cost ? '<span class="rn-cost">代償: ' + esc(p.cost) + '</span>' : '') + '</button>';
 }
 
 function protoChip(p, attrs) {
