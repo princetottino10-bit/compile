@@ -150,7 +150,9 @@ export function mountAvatar(id, opts = {}) {
   const FACE_OF = { play: 'fired', compile: 'happy', compiled: 'frustrated', hurt: 'surprised', almost: 'fired', win: 'happy', lose: 'frustrated', hello: 'happy',
     lesson: 'normal', good: 'happy', retry: 'normal',
     turn: 'normal', down: 'fired', watch: 'surprised', chain: 'happy', refresh: 'normal', idle: 'normal', control: 'happy', boost: 'fired',
-    handes: 'frustrated', wipe: 'fired', rearrange: 'fired', fav: 'happy' };
+    handes: 'frustrated', wipe: 'fired', rearrange: 'fired', fav: 'happy', reach: 'fired', lead: 'happy', behind: 'frustrated' };
+  /* チュートリアルの案内 (tu...): できたら笑顔、ほかはふつう */
+  const faceOf = (kind) => FACE_OF[kind] || (/^tu\d+ok$/.test(kind) ? 'happy' : /^tu(\d|ask)/.test(kind) ? 'normal' : undefined);
   const lastPick = {};               // 種類ごとに、直前に言ったセリフの番号
   function react(kind, vars) {
     /* そのキャラに無い種類 (チュートリアルの案内など) は紫苑のセリフを借りる (声は無し) */
@@ -169,18 +171,19 @@ export function mountAvatar(id, opts = {}) {
     let text = !def.voice && kind === 'play' && proto && PROTO_LINES[proto] && Math.random() < 0.45 ? PROTO_LINES[proto]
       : Array.isArray(entry) ? entry[0] : entry;
     for (const [k, v] of Object.entries(vars || {})) text = text.split('{' + k + '}').join(v);
-    const ms = kind === 'win' || kind === 'lose' ? 5000 : 2400;
+    /* 長いセリフ (チュートリアルの案内など) は、読み終わるまで出しておく */
+    const ms = Math.max(kind === 'win' || kind === 'lose' ? 5000 : 2400, 700 + text.length * 110);
     const canned = () => {
       if (def.voice && own && voiceOn) playVoice('art/voice/' + id + '/' + kind + '_' + i + '.mp3');
-      say(text, FACE_OF[kind], ms);
+      say(text, faceOf(kind), ms);
     };
     /* AI でしゃべらせる (opts.talk): 表情だけ先に変え、答えが来たら言う (声は無し)。来なければいつものセリフ。
        待っている間に次のひとことが来たら、古い答えは捨てる */
     const ask = opts.talk && opts.talk(def, kind, vars);
     if (!ask) { talkSeq++; canned(); return; }
     const my = ++talkSeq;
-    setFace(FACE_OF[kind], 4000);
-    ask.then((line) => { if (my === talkSeq && el.isConnected) (line ? say(line, FACE_OF[kind], Math.max(ms, 1200 + line.length * 90)) : canned()); },
+    setFace(faceOf(kind), 4000);
+    ask.then((line) => { if (my === talkSeq && el.isConnected) (line ? say(line, faceOf(kind), Math.max(ms, 1200 + line.length * 90)) : canned()); },
       () => { if (my === talkSeq && el.isConnected) canned(); });
   }
   let talkSeq = 0;

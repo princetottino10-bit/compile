@@ -286,7 +286,8 @@ function avatarTalk(side) {
 }
 function syncAvatar() {
   /* 観戦 (demoMode) は、観戦の画面でキャラを選んだときだけ */
-  const want = avatarsOpen() && settings().avatarShow !== false && !puzzle && (!demoMode || !!spectate) && !trainingMode && !replayMode && !!cur;
+  /* チュートリアルは、キャラの公開前でもずんだもんが案内する */
+  const want = (avatarsOpen() || !!tutorial) && settings().avatarShow !== false && !puzzle && (!demoMode || !!spectate) && !trainingMode && !replayMode && !!cur;
   if (!want) {
     if (avatars) for (const k of ['me', 'mate', 'opp']) if (avatars[k]) avatars[k].destroy();
     avatars = null;
@@ -295,7 +296,7 @@ function syncAvatar() {
   if (avatars) return;
   /* 観戦: A (左下) と B (右上) は観戦の画面で選んだキャラ (なしも)。タッグの相棒はほかからランダム */
   const sp = spectate && spectate.av;
-  const me = sp ? sp.a : myAvatarId();
+  const me = sp ? sp.a : tutorial ? 'zundamon' : myAvatarId();
   const pool = (ids) => shuffled(avatarIds().filter(i => !ids.includes(i)));
   const mate = tagMates && (!sp || sp.a) ? (sp ? pool([sp.a, sp.b])[0] : (avatarIds().find(i => i !== me && i === 'asagi') || avatarIds().find(i => i !== me))) : null;
   let oppIds;
@@ -323,7 +324,9 @@ function avatarOf(side, st) {
   return avatars.mate && s && s.tag && s.tag.pilot[ME] === 1 ? avatars.mate : avatars.me;
 }
 /* 大事な場面 (コンパイル・勝敗など)。話している途中でも捨てずに、言い終わったらすぐ言う */
-const AVATAR_MUST = new Set(['compile', 'compiled', 'win', 'lose', 'almost', 'hurt', 'hello', 'lesson', 'good', 'retry', 'turn']);
+const AVATAR_MUST_KINDS = new Set(['compile', 'compiled', 'win', 'lose', 'almost', 'reach', 'hurt', 'hello', 'lesson', 'good', 'retry', 'turn', 'lead']);
+/* チュートリアルの案内 (tu...) も捨てない */
+const AVATAR_MUST = { has: (kind) => AVATAR_MUST_KINDS.has(kind) || /^tu(\d|ask)/.test(kind) };
 /* 話している途中に来たひとことは、1つだけ待たせて、言い終わったら言う (前は捨てていたので「喋ったり喋らなかったり」になっていた)。
    待たせるのは大事な場面を優先。ふつうのひとことは 5 秒たったら古いので捨てる */
 const avatarQueue = new Map();       // avatar -> { kind, vars, at }
@@ -353,6 +356,8 @@ function avatarSay(side, kind, vars, st, gapMs, chance, retried) {
     if (!retried && AVATAR_MUST.has(kind) && cur) setTimeout(() => avatarSay(side, kind, vars, st, gapMs, chance, true), 1500);
     return;
   }
+  /* チュートリアルのずんだもんは案内役。対戦のひとこと (ぼくの番なのだ 等) は言わない */
+  if (tutorial && side === ME && !/^(tu\d|tuask|lesson$|good$|retry$)/.test(kind)) return;
   if (chance !== undefined && Math.random() > chance) return;
   const k = side + ':' + kind;
   const now = Date.now();
@@ -366,6 +371,20 @@ function avatarSay(side, kind, vars, st, gapMs, chance, retried) {
     return;
   }
   a.react(kind, vars);
+}
+/* そのラインをコンパイルすれば勝ち (まだ済んでいないプロトコルで、済みがあと1本足りない) */
+function reachLine(st, side, line) {
+  const ps = st && st.players && st.players[side] && st.players[side].protocols;
+  if (!ps || !ps[line] || ps[line].compiled) return false;
+  const need = Array.isArray(st.winBySide) ? st.winBySide[side] : (st.winCompiles || 3);
+  return ps.filter(p => p.compiled).length === need - 1;
+}
+/* 形勢: 済みのプロトコル1本を 10 点として、ラインの合計の差と足す。+8 以上で優勢、-8 以下で劣勢 */
+function standingOf(st, side) {
+  if (!st || !st.players || typeof Engine.lineTotal !== 'function') return 0;
+  const score = (s) => st.players[s].protocols.reduce((a, p, i) => a + (p.compiled ? 10 : Engine.lineTotal(st, i, s)), 0);
+  const d = score(side) - score(1 - side);
+  return d >= 8 ? 1 : d <= -8 ? -1 : 0;
 }
 /* 考えこんでいる: 自分の番で 25 秒さわっていなければ、1手番に1回だけ相手のキャラが声をかける (自分のキャラはプレイしている本人なので) */
 let avatarIdleTurn = -1, avatarLastInput = Date.now();
@@ -646,7 +665,11 @@ async function boot() {
             avatarSay(actor, 'wipe', null, null, 8000);
           }
         }
-        else if (e.ready) avatarSay(e.side, 'almost', null, null, 12000);
+        else if (e.ready) {
+          /* コンパイルすれば勝ちのライン (あと1本) なら、特別なひとこと */
+          const reach = reachLine(cur.state, e.side, e.line);
+          avatarSay(e.side, reach ? 'reach' : 'almost', null, null, reach ? 4000 : 12000);
+        }
         else if (e.delta >= 4 && (avatarActor === null ? cur.state.turn : avatarActor) === e.side) avatarSay(e.side, 'boost', null, null, 10000, 0.6);
       }
     }
@@ -994,8 +1017,8 @@ async function boot() {
   if (!puzzle && !tutorial && !demoMode && !trainingMode && !roomMode) showCpuPlates(p1);
   if (spectate) spectateStart();
   syncAvatar();
-  onAccountChange(() => { const had = !!avatars; syncAvatar(); if (!had && avatars && tutorial) avatarSay(ME, 'lesson'); });   // 管理者かどうかは、ログインの確認のあとで分かる
-  if (tutorial) setTimeout(() => avatarSay(ME, 'lesson'), 700);
+  onAccountChange(() => { const had = !!avatars; syncAvatar(); if (!had && avatars && tutorial) avatarSay(ME, tutorKind('')); });   // 管理者かどうかは、ログインの確認のあとで分かる
+  if (tutorial) setTimeout(() => avatarSay(ME, tutorKind('')), 700);
   if (!accountState().ready) initAccount();         // REMATCH など URL から直に始めた対戦でも確かめる
   if (trainingMode) {
     UI.setPrompt('');
@@ -1097,7 +1120,7 @@ async function tutorialAfterStep() {
     await gainXp('lesson', XP_GAIN.lesson, 'tu:' + i);
     if (last) await gainXp('tutorial', XP_GAIN.tutorialAll, 'tu:all');
   }
-  avatarSay(ME, r.ok ? 'good' : 'retry');
+  avatarSay(ME, r.ok ? tutorKind('ok', 'good') : 'retry');
   TU.showCoachResult(i, r, () => {
     if (r.ok && last) {
       TU.showTutorialDone({
@@ -1131,7 +1154,8 @@ async function startLesson(index) {
   refreshHud();
   try { history.replaceState(null, '', location.pathname + '?tutorial=' + (index + 1)); } catch (e) { /* file:// など */ }
   stage.home(400);
-  avatarSay(ME, 'lesson');
+  tutorialSaidStep = 0;
+  avatarSay(ME, tutorKind(''));
   await drainRequests();
   await afterTurn();
 }
@@ -1158,6 +1182,12 @@ function tutorialCtx() {
    まとめて次の一瞬に行い、手を解決している間 (busy) は変えない
    (置く直前に選択が外れるので、そのままだと最初の案内に一瞬戻ってしまう) */
 let coachTick = null;
+let tutorialSaidStep = 0;      // ずんだもんが最後に言った案内の手順
+/* チュートリアルのずんだもんのセリフの種類 (tu<レッスン><後ろ>)。無ければ fallback */
+function tutorKind(suffix, fallback = 'lesson') {
+  const k = 'tu' + (tutorial ? tutorial.index : 0) + suffix;
+  return AVATARS.zundamon && AVATARS.zundamon.lines[k] ? k : fallback;
+}
 function coachUpdate(force) {
   if (!tutorial || tutorialOver) return;
   clearTimeout(coachTick);
@@ -1168,6 +1198,12 @@ function coachUpdate(force) {
     const prevCard = (tutorialFocus && tutorialFocus.card) || null;
     tutorialFocus = n >= 0 ? tutorial.lesson.steps[n].focus || null : null;
     TU.showCoach(tutorial.index, n, restartLesson);
+    /* 案内が変わったら、ずんだもんが声でも言う (はじめの手順はレッスンの始めに言っている) */
+    if (n !== tutorialSaidStep) {
+      tutorialSaidStep = n;
+      const k = n < 0 ? 'tuask' : n > 0 ? tutorKind('s' + n, null) : null;
+      if (k) avatarSay(ME, k);
+    }
     applyTutorialFocus();
     /* 明るくする手札が変わったら、手札の明るさを付け直す */
     if (((tutorialFocus && tutorialFocus.card) || null) !== prevCard) refreshHud();
@@ -2819,8 +2855,10 @@ async function announceTurnFor(turn, atState) {
     const pilot = tagSt.tag.pilot[turn];
     await UI.turnCutIn(turn === ME, turn === ME ? (pilot ? 'PARTNER TURN' : 'YOUR TURN') : 'RIVAL ' + (pilot + 1) + ' TURN');
   } else await UI.turnCutIn(turn === ME);
-  /* 番が来た側が、毎回ひとこと */
-  avatarSay(turn, 'turn', null, tagSt);
+  /* 番を終えた側が劣勢なら、ひとこと (タッグフォースの「ターンエンド……」)。番が来た側は、優勢なら強気に、ふだんはいつものひとこと */
+  const standSt = tagSt || (cur && cur.state);
+  if (standingOf(standSt, 1 - turn) < 0) avatarSay(1 - turn, 'behind', null, standSt, 20000, 0.7);
+  avatarSay(turn, standingOf(standSt, turn) > 0 && Math.random() < 0.7 ? 'lead' : 'turn', null, tagSt);
   /* はじめの数戦だけ、自分の番に何をすればいいかを添える */
   if (turn === ME && !roomMode && !tutorial && !puzzle && !demoMode && !replayMode && localRecords().length < 3 && !firstGameHintShown) {
     firstGameHintShown = true;
