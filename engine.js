@@ -2584,6 +2584,12 @@ const AI_W = {
   diversityLast: 380, diversityEarly: 420,
   /* diversityHoldLine: 切り札を持ったまま DIVERSITY のラインをコンパイル圏 (10点以上でリード) にする減点 */
   diversityHoldLine: 90,
+  /* HATE 1 (手札を3枚捨てて2枚削除) は代償が見えやすく、読みだけだと出し渋る。
+     相手の削除できるカード (一番上) があれば、表で出す手に加点する (2枚で満額)。監修 2026-09-28 */
+  hate1Up: 160,
+  /* HATE 0 を表向きの HATE 1 の上に出し、HATE 0 自身を削除すると、めくれた HATE 1 がもう一度起動する。
+     hate0Combo: その重ね方への加点 / hate0Self: HATE 0 の削除で自分を選ぶ加点 */
+  hate0Combo: 120, hate0Self: 180,
 };
 /* サイキック①ロックまわりの重み。通常 AI・特化 AI の区別なく共通で使う。
    lockPermanent/lockTemporary: 覆われた (永続) / 一番上 (1ターン) のロックの価値
@@ -3209,6 +3215,16 @@ function aiActionBias(st, action, side) {
   const fizzles = !!action.faceUp && aiMiddleFizzles(st, side, action, d);
   if (fizzles) v -= AI_W.fizzle + aiMiddleValue(d) * AI_W.fizzleMid;
   if (aiIsLockSpecialist(st, side)) v += aiLockSpecialistBias(st, side, action, d, fizzles);
+  if (d.id === 'HATE_2' && action.faceUp && !fizzles && W.hate1Up) {
+    let targets = 0;
+    for (let l = 0; l < 3; l++) if (st.lines[l][op].length) targets++;
+    v += W.hate1Up * Math.min(2, targets) / 2;
+  }
+  if (d.id === 'HATE_1' && action.faceUp && W.hate0Combo) {
+    const stack = st.lines[action.line][side];
+    const top = stack.length ? st.cards[stack[stack.length - 1]] : null;
+    if (top && top.faceUp && top.def === 'HATE_2') v += W.hate0Combo;
+  }
   /* DIVERSITY 0 の即コンパイルは3本目まで取っておく (出すだけで通る切り札を1本目・2本目に使わない) */
   if (d.id === 'DIVERSITY_1' && action.faceUp && W.diversityEarly && aiDiversityReady(st, side) && !aiDiversityIsLast(st, side)) {
     v -= W.diversityEarly;
@@ -3584,7 +3600,8 @@ const AI_COMBO_PAIRS = [
   ['FIRE_1', 'WATER_5'],      // FIRE 0 の上に WATER 4、自分を戻して FIRE 0 の中段を撃ち直す
   ['LIFE_4', 'LIFE_1'],       // LIFE 3 の覆われ時 → LIFE 0
   ['FIRE_4', 'PLAGUE_5'],     // FIRE 3 で裏返し、PLAGUE 4 で削除させる
-  ['SPIRIT_2', 'DEATH_1']     // SPIRIT 1 の表向きプレイ中に DEATH 0
+  ['SPIRIT_2', 'DEATH_1'],    // SPIRIT 1 の表向きプレイ中に DEATH 0
+  ['HATE_2', 'HATE_1']        // HATE 1 の上に HATE 0、自分を消して HATE 1 をもう一度起動
 ];
 const AI_COMBO_KEEP = { hand: 60, field: 40, deck: 15 };
 
@@ -3728,10 +3745,24 @@ function aiStrategicCardPicks(st, req, me, ranked, fallback) {
   let best = fallback, bestScore = -Infinity;
   for (const picks of options) {
     if (aiSearchExpired()) break;
-    const score = aiChoiceScore(st, req, picks, me);
+    let score = aiChoiceScore(st, req, picks, me);
+    if (picks.length === 1 && W.hate0Self && aiHate0SelfPick(st, picks[0], me)) score += W.hate0Self;
     if (score > bestScore) { bestScore = score; best = picks; }
   }
   return bestScore > -1e8 ? best : fallback;
+}
+
+/* HATE 0 が自分自身を削除すると、すぐ下の表向きの HATE 1 がめくれてもう一度起動する */
+function aiHate0SelfPick(st, uid, me) {
+  const c = st.cards[uid];
+  if (!c || c.def !== 'HATE_1' || c.owner !== me) return false;
+  const loc = locate(st, uid);
+  if (!loc || loc.side !== me) return false;
+  const stack = st.lines[loc.line][loc.side];
+  const i = stack.indexOf(uid);
+  if (i <= 0 || i !== stack.length - 1) return false;
+  const below = st.cards[stack[i - 1]];
+  return !!below && below.faceUp && below.def === 'HATE_2';
 }
 
 function aiForcedControlWinPicks(req) {
@@ -3794,6 +3825,8 @@ function smartPicks(st, req) {
                 const W = aiWeightsFor(st, me);
                 const gain = W.uncoverBase + Math.max(0, aiMiddleValue(DEFS[below.def])) * W.uncoverMid;
                 s += loc.side === me ? gain : -gain;
+                /* HATE 0 で自分を消して、下の HATE 1 をもう一度起動する */
+                if (W.hate0Self && aiHate0SelfPick(st, uid, me)) s += W.hate0Self;
               }
             }
           }
