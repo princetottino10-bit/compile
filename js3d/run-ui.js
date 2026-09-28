@@ -133,11 +133,17 @@ function bonusList(run) {
   return on.length ? '<ul class="rn-bonus">' + on.join('') + '</ul>' : '';
 }
 
-function patchCard(p, attrs) {
+/* run を渡すと、取ったときに系統ボーナスが付く/上がることを書き添える (ビルドの狙いが見えるように) */
+function patchCard(p, attrs, run) {
+  const step = run ? RUN.patchBonusStep(run, p.id) : 0;
+  const have = run ? RUN.tagCount(run, p.tag) : 0;
+  const tag = RUN.TAGS[p.tag];
+  const combo = step ? '<span class="rn-combo" style="--tc:' + tag.color + '">' + p.tag + ' ' + (have + 1) + 'つ目 — ボーナス「' + esc(tag.bonus[step - 1]) + '」</span>'
+    : have ? '<span class="rn-combo dim" style="--tc:' + tag.color + '">' + p.tag + ' を ' + have + 'つ持っている</span>' : '';
   return '<button type="button" class="rn-patch ' + p.kind + ' r' + p.rar + '" ' + (attrs || '') + '>' +
-    '<em class="rn-tag" style="--tc:' + RUN.TAGS[p.tag].color + '">' + p.tag + '</em>' +
+    '<em class="rn-tag" style="--tc:' + tag.color + '">' + p.tag + '</em>' +
     '<small>' + (p.kind === 'game' ? 'BATTLE PATCH' : 'SYSTEM PATCH') + ' ・ ' + RUN.RARITY[p.rar].name + '</small><b>' + esc(p.name) + '</b><span>' + esc(p.text) + '</span>' +
-    (p.cost ? '<span class="rn-cost">代償: ' + esc(p.cost) + '</span>' : '') + '</button>';
+    (p.cost ? '<span class="rn-cost">代償: ' + esc(p.cost) + '</span>' : '') + combo + '</button>';
 }
 
 function protoChip(p, attrs) {
@@ -273,7 +279,7 @@ export function openRun(protocols, cardsOf, opts) {
             : run.after === 'battle' ? '選んだら、警報で強くなった相手と戦います。'
               : node && node.type === 'treasure' ? '宝箱を開けた。' : '精鋭の戦利品です。';
           return '<h2>' + (first ? 'はじめのパッチを選ぶ' : 'パッチを1つ選ぶ') + '</h2><p class="rn-note">' + why + '</p>' +
-            '<div class="rn-patchlist">' + (run.patchOffers || []).map(id => patchCard(RUN.patchInfo(id), 'data-patch="' + esc(id) + '"')).join('') + '</div>' +
+            '<div class="rn-patchlist">' + (run.patchOffers || []).map(id => patchCard(RUN.patchInfo(id), 'data-patch="' + esc(id) + '"', run)).join('') + '</div>' +
             '<div class="rn-btns"><button type="button" data-act="nopatch">取らない</button></div>';
         }
         case 'map':
@@ -303,17 +309,17 @@ export function openRun(protocols, cardsOf, opts) {
           return '<h2>強化するカードを選ぶ <small>強化 ' + (run.upgrades || []).length + ' 枚</small></h2>' +
             '<p class="rn-note">選んだカードは、この勝ち抜き戦のあいだ値が 1 大きくなります (効果は同じ)。値 ' + MAX_VALUE + ' のカードは強化できません。</p>' +
             deckCards(run, byName, 'upgrade') +
-            '<div class="rn-btns"><button type="button" data-act="unupgrade">やめる' + (run.after === 'shop' ? ' (代金は戻ります)' : '') + '</button></div>';
+            '<div class="rn-btns"><button type="button" data-act="unupgrade">やめる' + (run.after === 'shop' ? ' (代金は戻ります)' : run.after === 'reward' ? ' (報酬を選び直す)' : '') + '</button></div>';
         case 'remove':
           return '<h2>外すカードを選ぶ <small>除去 ' + (run.removed || []).length + ' / ' + RUN.MAX_REMOVED + '</small></h2>' +
             '<p class="rn-note">外したカードは、この勝ち抜き戦のあいだ山札に入りません (プロトコルを入れ替えると戻ります)。</p>' +
             deckCards(run, byName, 'remove') +
-            '<div class="rn-btns"><button type="button" data-act="unremove">やめる' + (run.after === 'shop' ? ' (代金は戻ります)' : '') + '</button></div>';
+            '<div class="rn-btns"><button type="button" data-act="unremove">やめる' + (run.after === 'shop' ? ' (代金は戻ります)' : run.after === 'reward' ? ' (報酬を選び直す)' : '') + '</button></div>';
         case 'shop': {
           const credits = run.credits | 0;
           const items = run.shop.patches.map(id => {
             const p = RUN.patchInfo(id), price = RUN.patchPrice(run, id), sold = run.shop.sold.includes(id);
-            return '<div class="rn-ware">' + patchCard(p, sold || credits < price ? 'disabled data-buy="' + esc(id) + '"' : 'data-buy="' + esc(id) + '"') +
+            return '<div class="rn-ware">' + patchCard(p, sold || credits < price ? 'disabled data-buy="' + esc(id) + '"' : 'data-buy="' + esc(id) + '"', run) +
               '<em class="' + (sold ? 'sold' : credits < price ? 'short' : '') + '">' + (sold ? 'SOLD' : price + ' CR') + '</em></div>';
           }).join('');
           const rp = RUN.removePrice(run), hp = RUN.healPrice(run), up = RUN.upgradePrice(run), sp = RUN.starPrice(run);
@@ -331,8 +337,30 @@ export function openRun(protocols, cardsOf, opts) {
               '<button type="button" class="rn-route rest" data-act="buyHeal"' + (!run.shop.healed && run.life < run.maxLife && credits >= hp ? '' : ' disabled') + '><small>' + hp + ' CR</small><b>修理</b><span>ライフ +' + RUN.RUN_HEAL + ' (1回だけ)</span></button>' +
             '</div><div class="rn-btns"><button type="button" class="rn-go" data-act="leave">店を出る</button></div>';
         }
+        case 'cards': {
+          /* 勝つたびのカードの報酬: 1つ選ぶ (デッキを少しずつ育てる) */
+          const offer = (o, i) => {
+            if (o.type === 'upgrade') return '<button type="button" class="rn-route forge" data-card="' + i + '"><small>FORGE</small><b>強化</b><span>好きなカードを1枚、値 +1 (効果は同じ)</span></button>';
+            if (o.type === 'remove') return '<button type="button" class="rn-route smith" data-card="' + i + '"><small>PURGE</small><b>除去</b><span>好きなカードを1枚、デッキから外す (除去 ' + (run.removed || []).length + ' / ' + RUN.MAX_REMOVED + ')</span></button>';
+            if (o.type === 'star') {
+              const x = STAR_CARDS.find(c => c.id === o.id);
+              return '<button type="button" class="rn-route star" data-card="' + i + '"><small>★ CARD</small><b>' + esc(starLabel(o.id)) + (x ? ' (値 ' + x.value + ')' : '') + '</b><span>' + esc(x ? x.middle : '') + '</span></button>';
+            }
+            return '<button type="button" class="rn-route" data-card="' + i + '"><small>CREDIT</small><b>+' + RUN.CARD_REWARD_CREDITS + ' クレジット</b><span>GACHA やショップに使う</span></button>';
+          };
+          return '<h2>勝利！ <small>+' + (run.lastGain | 0) + ' CREDIT</small></h2>' +
+            (run.cursedWin ? '<p class="rn-cursebreak">CURSE BROKEN — 呪いを破った！ RARE 以上確定の GACHA を引いた</p>' : '') +
+            '<h3>カードの報酬を1つ選ぶ</h3><p class="rn-note">今のデッキ ' + deckLine(run.deck, byName) + '</p>' +
+            '<div class="rn-routes">' + (run.cardOffers || []).map(offer).join('') + '</div>' +
+            '<div class="rn-btns"><button type="button" data-act="deck">' + (showDeck ? 'デッキを閉じる' : 'デッキを見る') + '</button>' +
+              '<button type="button" data-act="nocard">取らない</button></div>' +
+            (showDeck ? deckCards(run, byName, false) : '');
+        }
         case 'reward':
           return '<h2>勝利！ <small>+' + (run.lastGain | 0) + ' CREDIT</small></h2>' +
+            (run.upgradedNow ? '<p class="rn-note rn-gain">' + esc(starLabel(run.upgradedNow)) + ' を強化した (値 +1)</p>' : '') +
+            (run.removedNow ? '<p class="rn-note">' + esc(cardLabel(run.removedNow)) + ' をデッキから外した</p>' : '') +
+            (run.gotStar ? '<p class="rn-note rn-gain">★ カード ' + esc(starLabel(run.gotStar)) + ' をデッキに入れた</p>' : '') +
             (run.cursedWin ? '<p class="rn-cursebreak">CURSE BROKEN — 呪いを破った！ RARE 以上確定の GACHA を引いた</p>' : '') + (swapAdd
             ? '<p class="rn-note"><b>' + esc(swapAdd) + '</b> を入れる代わりに、外すプロトコルを選ぶ</p>' +
               '<div class="rn-offers">' + run.deck.map(n => protoChip(byName[n], 'data-remove="' + esc(n) + '"')).join('') + '</div>' +
@@ -392,6 +420,7 @@ export function openRun(protocols, cardsOf, opts) {
       if (t.dataset.heat) { heatSel = +t.dataset.heat; render(); return; }
       if (t.dataset.node) { set(RUN.chooseNode(run, t.dataset.node, names)); return; }
       if (t.dataset.patch) { set(RUN.choosePatch(run, t.dataset.patch, names)); return; }
+      if (t.dataset.card !== undefined) { showDeck = false; set(RUN.chooseCardReward(run, +t.dataset.card)); return; }
       if (t.dataset.buy) { set(RUN.buyPatch(run, t.dataset.buy)); return; }
       if (t.dataset.rm) { set(RUN.removeCard(run, t.dataset.rm)); return; }
       if (t.dataset.up) { set(RUN.upgradeCard(run, t.dataset.up)); return; }
@@ -402,6 +431,7 @@ export function openRun(protocols, cardsOf, opts) {
       switch (t.dataset.act) {
         case 'start': hub = false; set(RUN.newRun(names, Math.random, heatSel)); break;
         case 'nopatch': set(RUN.choosePatch(run, null, names)); break;
+        case 'nocard': showDeck = false; set(RUN.chooseCardReward(run, null)); break;
         case 'gacha': {
           if (pulling) break;
           const next = RUN.gachaPull(run);

@@ -2840,6 +2840,12 @@
   .rn-ware > em.sold{background:var(--pink);color:#fff;}
   .rn-route.rest{border-color:rgba(124,240,208,.5);} .rn-route.rest small{color:#7cf0d0;}
   .rn-route.smith{border-color:rgba(255,120,120,.5);} .rn-route.smith small{color:#ff9a9a;}
+  .rn-route.star{border-color:rgba(255,216,106,.6);} .rn-route.star small{color:var(--gold);}
+  .rn-route.star span{font-size:12px;line-height:1.5;}
+  /* パッチを取ると系統ボーナスが付く/上がる: 系統の色で目立たせる (dim は持っている数だけ) */
+  .rn-combo{margin-top:2px;padding:4px 8px;border-radius:6px;border:1px solid var(--tc);color:var(--tc);background:color-mix(in srgb,var(--tc) 14%,transparent);
+    font:800 11px/1.45 system-ui;}
+  .rn-combo.dim{border-color:transparent;background:none;padding:0;font-weight:700;opacity:.8;}
   @media (prefers-reduced-motion:reduce){ .rn-node.reach,.rn-map line.open{animation:none;} }
   /* ビルド (系統) */
   .rn-build{display:inline-flex;flex-wrap:wrap;gap:4px;}
@@ -3530,8 +3536,8 @@
       "./js3d/rewards.js": "./js3d/rewards.js?v=da45fcbbfc",
       "./js3d/room.js": "./js3d/room.js?v=c34129de95",
       "./js3d/roomui.js": "./js3d/roomui.js?v=2557b7dc57",
-      "./js3d/run-ui.js": "./js3d/run-ui.js?v=22f209460e",
-      "./js3d/run.js": "./js3d/run.js?v=b907d54f9c",
+      "./js3d/run-ui.js": "./js3d/run-ui.js?v=e7c415ffb7",
+      "./js3d/run.js": "./js3d/run.js?v=78f61292fc",
       "./js3d/runcards.js": "./js3d/runcards.js?v=f8516ff671",
       "./js3d/selectui.js": "./js3d/selectui.js?v=208abdaebc",
       "./js3d/settings.js": "./js3d/settings.js?v=6936a7d1ff",
@@ -3604,9 +3610,9 @@
   <link rel="modulepreload" href="js3d/cardlist-ov.js?v=1d673fd0d2">
   <link rel="modulepreload" href="js3d/opponent-select.js?v=550d8c0890">
   <link rel="modulepreload" href="js3d/aidecks.js?v=8d249240bd">
-  <link rel="modulepreload" href="js3d/run-ui.js?v=22f209460e">
+  <link rel="modulepreload" href="js3d/run-ui.js?v=e7c415ffb7">
   <link rel="modulepreload" href="js3d/weekly-ui.js?v=eac88767b3">
-  <link rel="modulepreload" href="js3d/run.js?v=b907d54f9c">
+  <link rel="modulepreload" href="js3d/run.js?v=78f61292fc">
   <link rel="modulepreload" href="js3d/weekly.js?v=5605476b1c">
   <link rel="modulepreload" href="js3d/review.js?v=34f174153b">
   <link rel="modulepreload" href="js3d/roomui.js?v=2557b7dc57">

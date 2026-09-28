@@ -346,8 +346,30 @@ export function setLevel(run, tag) {
   return n >= 3 ? 2 : n >= 2 ? 1 : 0;
 }
 
+/* パッチの候補 3 つ。持っている系統のものが出やすい (系統を狙ってそろえられるように)。
+   持っている系統があれば、そのうち1つは必ず入れる (2026-09-29) */
 function patchOffers(run, rnd) {
-  return sample(PATCHES.filter(p => !p.gachaOnly && !hasPatch(run, p.id)).map(p => p.id), 3, rnd);
+  const pool = PATCHES.filter(p => !p.gachaOnly && !hasPatch(run, p.id));
+  const weightOf = (p) => 1 + 2 * Math.min(2, tagCount(run, p.tag));
+  const picks = [];
+  const owned = pool.filter(p => tagCount(run, p.tag) > 0);
+  if (owned.length) picks.push(weighted(owned.map(p => [p.id, weightOf(p)]), rnd));
+  while (picks.length < 3) {
+    const left = pool.filter(p => !picks.includes(p.id));
+    if (!left.length) break;
+    picks.push(weighted(left.map(p => [p.id, weightOf(p)]), rnd));
+  }
+  /* 並びは混ぜる (必ず入れた1つがいつも左にならないように) */
+  return sample(picks, picks.length, rnd);
+}
+/** テスト用: パッチの候補を作る */
+export const patchOffersFor = (run, rnd = Math.random) => patchOffers(run, rnd);
+/** そのパッチを取ると、系統ボーナスが何段目になるか (0: 変わらない)。画面の「あと1つで」に使う */
+export function patchBonusStep(run, id) {
+  const p = PATCH[id];
+  if (!p) return 0;
+  const n = tagCount(run, p.tag) + 1;
+  return n === 2 ? 1 : n === 3 ? 2 : 0;
 }
 /* パッチを足す (取ったときに効くものはここで) */
 function addPatch(run, id) {
@@ -405,7 +427,7 @@ export function upgradeCard(run, id) {
   const ok = (run.added || []).includes(id) || (run.deck.includes(protoOfCard(id)) && !isStar(id) && !(run.removed || []).includes(id));
   if (!ok || (run.upgrades || []).includes(id)) return run;
   const next = { ...run, upgrades: (run.upgrades || []).concat(id), upgradedNow: id, paidUpgrade: 0 };
-  return { ...next, phase: run.after === 'shop' ? 'shop' : 'map' };
+  return { ...next, phase: backTo(run, run.after), ...(run.after === 'reward' ? { cardOffers: [] } : {}) };
 }
 /** 強化をやめる (ショップで払った分は返す) */
 export function cancelUpgrade(run) {
@@ -413,7 +435,39 @@ export function cancelUpgrade(run) {
   if (run.after === 'shop') {
     return { ...run, phase: 'shop', credits: (run.credits | 0) + (run.paidUpgrade | 0), upgradeCost: (run.upgradeCost | 0) - (run.paidUpgrade ? 2 : 0), paidUpgrade: 0 };
   }
+  if (run.after === 'reward') return { ...run, phase: 'cards' };        // カードの報酬を選び直す
   return { ...run, phase: 'map' };
+}
+
+/* ---------- カードの報酬 (勝つたびに1つ選ぶ) ----------
+   強化 (好きなカードを1枚 値 +1) / ★ カード (デッキのプロトコルの ★ を1枚) / 除去 (好きなカードを1枚外す)。
+   選べないもの (★ を足し切った・除去の上限) は、クレジット +3 に替える */
+export const CARD_REWARD_CREDITS = 3;
+export function cardRewardOffers(run, rnd = Math.random) {
+  const out = [];
+  out.push(canUpgradeAny(run) ? { type: 'upgrade' } : { type: 'credits' });
+  const stars = (run.added || []).length < MAX_ADDED ? starChoices(run) : [];
+  out.push(stars.length ? { type: 'star', id: pickOne(stars, rnd) } : { type: 'credits' });
+  out.push(canRemove(run) ? { type: 'remove' } : { type: 'credits' });
+  return out;
+}
+/** カードの報酬を選ぶ (index: 候補の番号 / null: 取らない)。強化・除去は、選ぶ画面へ (やめたらこの画面に戻る) */
+export function chooseCardReward(run, index) {
+  if (run.phase !== 'cards') return run;
+  const o = index === null || index === undefined ? null : (run.cardOffers || [])[index];
+  const done = { ...run, cardOffers: [], phase: 'reward' };
+  if (!o) return done;
+  if (o.type === 'upgrade') return { ...run, phase: 'upgrade', after: 'reward' };
+  if (o.type === 'remove') return { ...run, phase: 'remove', after: 'reward' };
+  if (o.type === 'star') return addStar(done, o.id);
+  if (o.type === 'credits') return { ...done, credits: (run.credits | 0) + CARD_REWARD_CREDITS };
+  return done;
+}
+/* 強化・除去を終えた (やめた) あとに戻る画面 */
+function backTo(run, after) {
+  if (after === 'shop') return 'shop';
+  if (after === 'reward') return 'reward';
+  return 'map';
 }
 
 /* ---------- GACHA ---------- */
@@ -460,7 +514,7 @@ export function removeCard(run, defId) {
   const proto = String(defId).replace(/_\d+$/, '');
   if (!run.deck.includes(proto) || (run.removed || []).includes(defId)) return run;
   const next = { ...run, removed: (run.removed || []).concat(defId), removedNow: defId, paidRemove: 0 };
-  return { ...next, phase: run.after === 'shop' ? 'shop' : 'map' };
+  return { ...next, phase: backTo(run, run.after), ...(run.after === 'reward' ? { cardOffers: [] } : {}) };
 }
 /** 外すのをやめる (ショップで払った分は返す) */
 export function cancelRemove(run) {
@@ -468,6 +522,7 @@ export function cancelRemove(run) {
   if (run.after === 'shop') {
     return { ...run, phase: 'shop', credits: (run.credits | 0) + (run.paidRemove | 0), removeCost: (run.removeCost | 0) - (run.paidRemove ? 2 : 0), paidRemove: 0 };
   }
+  if (run.after === 'reward') return { ...run, phase: 'cards' };
   return { ...run, phase: 'map' };
 }
 
@@ -685,7 +740,9 @@ export function finishBattle(run, win, compiles, names, rnd = Math.random) {
   else if (!win) next = base;                                          // 同じ相手とやり直す
   else if (run.opp.boss) next = { ...base, phase: 'clear' };
   else {
-    next = { ...base, phase: 'reward', pendingPatch: !!run.opp.elite,
+    /* まずカードの報酬 (cards) を選び、そのあとプロトコルの入れ替え (reward) */
+    next = { ...base, phase: 'cards', cardOffers: cardRewardOffers(base, rnd), pendingPatch: !!run.opp.elite,
+      upgradedNow: null, removedNow: null, gotStar: null,
       offers: sample(names.filter(n => !run.deck.includes(n)), hasPatch(run, 'search') ? 4 : 3, rnd) };
   }
   if (next.phase === 'over' || next.phase === 'clear') saveBest(next);

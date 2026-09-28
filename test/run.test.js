@@ -87,9 +87,11 @@ test('進めるのはつながっているマスだけ。戦闘で勝つとク�
   assert.equal(lost.life, R.RUN_LIFE - 2);
   assert.equal(lost.phase, 'battle');
   assert.deepEqual(lost.opp, b.opp, 'やり直しは同じ相手');
-  const won = R.finishBattle(lost, true, 1, NAMES, seq());
+  const won0 = R.finishBattle(lost, true, 1, NAMES, seq());
+  assert.equal(won0.phase, 'cards', '勝ったら、まずカードの報酬');
+  assert.equal(won0.credits, R.START_CREDITS + 3);
+  const won = R.chooseCardReward(won0, null);
   assert.equal(won.phase, 'reward');
-  assert.equal(won.credits, R.START_CREDITS + 3);
   assert.equal(won.offers.length, 3);
   const swapped = R.applyReward(won, { type: 'swap', add: won.offers[0], remove: won.deck[1] }, NAMES, seq());
   assert.ok(swapped.deck.includes(won.offers[0]));
@@ -105,7 +107,7 @@ test('精鋭: 相手が強く、勝つとクレジット多めとパッチ。上
   assert.equal(R.runWinCompiles(e), 2, '精鋭は2本先取');
   const won = R.finishBattle(e, true, 0, NAMES, seq());
   assert.equal(won.credits, R.START_CREDITS + 6, '精鋭 +5・無傷 +1');
-  const after = R.applyReward(won, { type: 'skip' }, NAMES, seq());
+  const after = R.applyReward(R.chooseCardReward(won, null), { type: 'skip' }, NAMES, seq());
   assert.equal(after.phase, 'patch');
   assert.equal(R.choosePatch(after, after.patchOffers[0], NAMES, seq()).phase, 'map');
   const high = R.prepareBattle({ ...run, pos: run.map.rows[7][0].id }, NAMES, seq(), 'elite');
@@ -275,4 +277,49 @@ test('地図になる前の保存 (v1) は読まない', async () => {
   const R = await load();
   store.set('compileRun', JSON.stringify({ v: 1, phase: 'battle', floor: 3 }));
   assert.equal(R.loadRun(), null);
+});
+
+test('カードの報酬: 強化・★・除去から1つ。強化と除去は選ぶ画面へ、やめたら選び直し、終えたら入れ替えへ', async () => {
+  const { R, run } = await started();
+  const b = goTo(R, run, 'battle');
+  const won = R.finishBattle(b, true, 0, NAMES, seq());
+  assert.deepEqual(won.cardOffers.map(o => o.type), ['upgrade', 'star', 'remove']);
+  const star = won.cardOffers[1].id;
+  const gotStar = R.chooseCardReward(won, 1);
+  assert.ok(gotStar.added.includes(star));
+  assert.equal(gotStar.phase, 'reward');
+  const up = R.chooseCardReward(won, 0);
+  assert.equal(up.phase, 'upgrade');
+  assert.equal(R.cancelUpgrade(up).phase, 'cards', 'やめたら報酬を選び直す');
+  const id = won.deck[0] + '_2';
+  const upDone = R.upgradeCard(up, id);
+  assert.ok(upDone.upgrades.includes(id));
+  assert.equal(upDone.phase, 'reward');
+  const rm = R.chooseCardReward(won, 2);
+  assert.equal(rm.phase, 'remove');
+  const rmDone = R.removeCard(rm, id);
+  assert.ok(rmDone.removed.includes(id));
+  assert.equal(rmDone.phase, 'reward');
+  /* 選べないものはクレジットに替わる */
+  const full = { ...won, removed: ['A_1', 'A_2', 'A_3', 'A_4', 'A_5', 'A_6'].map((x, i) => won.deck[0] + '_' + (i + 1)) };
+  assert.equal(R.cardRewardOffers(full, seq())[2].type, 'credits');
+  const cr = R.chooseCardReward({ ...won, cardOffers: [{ type: 'credits' }] }, 0);
+  assert.equal(cr.credits, won.credits + R.CARD_REWARD_CREDITS);
+});
+
+test('パッチの候補は持っている系統に寄る (1つは必ず)。取るとボーナスが付くかが分かる', async () => {
+  const { R, run } = await started();
+  const withHand = { ...run, patches: ['cache'] };
+  const rnd = (() => { let x = 7; return () => { x = (x * 16807) % 2147483647; return x / 2147483647; }; })();
+  let owned = 0;
+  for (let i = 0; i < 50; i++) {
+    const o = R.patchOffersFor(withHand, rnd);
+    assert.equal(new Set(o).size, 3, '候補は3つで重ならない');
+    assert.ok(!o.includes('cache'), '持っているものは出ない');
+    if (o.some(id => R.patchInfo(id).tag === 'HAND')) owned++;
+  }
+  assert.equal(owned, 50, '毎回 HAND が1つは入る');
+  assert.equal(R.patchBonusStep(withHand, 'buffer'), 1, 'HAND 2つ目でボーナス1段目');
+  assert.equal(R.patchBonusStep({ ...run, patches: ['cache', 'buffer'] }, 'jammer'), 2);
+  assert.equal(R.patchBonusStep(withHand, 'battery'), 0);
 });
