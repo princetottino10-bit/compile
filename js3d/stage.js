@@ -195,7 +195,7 @@ export function createStage(container) {
   composer.addPass(new OutputPass());
 
   /* --- 画質の自動調整 ---
-     2 秒ごとに実際の FPS を測り、50 を切っていたら1段ずつ軽くする
+     2 秒ごとに実際の FPS を測り、2回続けて 50 を切っていたら1段ずつ軽くする
      (1: 解像度を少し下げる / 2: さらに下げて発光を切る / 3: 解像度 1 倍・影を切る)。
      20 秒続けて 58 以上出ていたら1段戻す。段は端末に覚えておき、次に開いたときもそこから始める。
      iPhone の低電力モードなどで 30 FPS に揃えられているときは、重さのせいではないので下げない */
@@ -214,24 +214,33 @@ export function createStage(container) {
     try { localStorage.setItem(GFX_KEY, String(gfxLevel)); } catch (e) { /* 覚えられなくても今回は効く */ }
     applyGfx();
   }
-  const fpsProbe = { t0: 0, n: 0, capped: 0, good: 0, last: 0, fps: 0 };
+  /* 平均ではなく「ふつうのコマ」(真ん中の値) の長さで見る。読み込み直後などの一瞬の引っかかりでは下げない。
+     下げるのは、2回続けて (4 秒) 重かったときだけ */
+  const fpsProbe = { t0: 0, n: 0, capped: 0, good: 0, bad: 0, last: 0, fps: 0, gaps: [] };
   function probeFps(now) {
     const f = fpsProbe;
     const gap = f.last ? now - f.last : 0;
     f.last = now;
     /* 裏から戻った・読み込みで止まったなどの大きな間は数えない (測り直し) */
-    if (!f.t0 || gap > 250 || document.hidden) { f.t0 = now; f.n = 0; f.capped = 0; return; }
+    if (!f.t0 || gap > 250 || document.hidden) { f.t0 = now; f.n = 0; f.capped = 0; f.gaps.length = 0; return; }
     f.n++;
+    f.gaps.push(gap);
     if (gap > 31 && gap < 36) f.capped++;
     const span = now - f.t0;
     if (span < 2000) return;
-    const fps = (f.n * 1000) / span;
-    f.fps = fps;
+    const sorted = f.gaps.slice().sort((a, b) => a - b);
+    const fps = 1000 / Math.max(1, sorted[sorted.length >> 1]);
+    f.fps = (f.n * 1000) / span;
     const cappedAt30 = f.capped > f.n * 0.85;
-    if (fps < 50 && !cappedAt30 && elapsed > 4) { setGfx(gfxLevel + 1); f.good = 0; }
-    else if (fps >= 58 && gfxLevel > 0) { f.good += span; if (f.good >= 20000) { setGfx(gfxLevel - 1); f.good = 0; } }
-    else f.good = 0;
-    f.t0 = now; f.n = 0; f.capped = 0;
+    if (fps < 50 && !cappedAt30 && elapsed > 8) {
+      f.good = 0;
+      if (++f.bad >= 2) { setGfx(gfxLevel + 1); f.bad = 0; }
+    } else {
+      f.bad = 0;
+      if (fps >= 58 && gfxLevel > 0) { f.good += span; if (f.good >= 20000) { setGfx(gfxLevel - 1); f.good = 0; } }
+      else f.good = 0;
+    }
+    f.t0 = now; f.n = 0; f.capped = 0; f.gaps.length = 0;
   }
 
   /* --- カメラ制御 --- */
