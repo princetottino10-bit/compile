@@ -557,6 +557,7 @@ async function boot() {
   /* 勝ち抜き戦だけのカード (★ と ＋)。画面の defIndex とエンジン・CPU の Worker に登録する */
   const runDefs = buildRunDefs(cards, effects);
   for (const d of runDefs.ui) defIndex[d.id] = d;
+  markDemerits(effects, runDefs.engine);
   mark('fetch');
   Engine.init(cards, effects, runDefs.engine);
   Engine.setAiLevel(1);
@@ -2926,6 +2927,19 @@ async function cueFor(step, st) {
   await board.pulse(uid, def.color, 380);
 }
 
+/* 損しかない効果 (自分の手札を捨てるだけ) のカード。これにつながってもキャラは喜ばない */
+const demeritDefs = new Set();
+function markDemerits(effects, runEngine) {
+  const selfDiscardOnly = (eff) => {
+    const secs = Object.values(eff || {}).filter(s => s && Array.isArray(s.ops) && s.ops.length);
+    return secs.length > 0 && secs.every(s => s.ops.every(o => o.op === 'discard' && o.player !== 'opp'));
+  };
+  for (const [id, eff] of Object.entries(effects || {})) if (selfDiscardOnly(eff)) demeritDefs.add(id);
+  for (const d of runEngine || []) {
+    if (selfDiscardOnly(d.eff)) demeritDefs.add(d.id); else demeritDefs.delete(d.id);
+  }
+}
+
 /* チェーン表示: 記録に残った「処理中の効果の並び」を、カード名と絵にする。
    カードを出す手では、出したカードの処理中 (まだアクションフェイズ) なら1番に置く。
    相手の裏向きなど、見る権利のないカードは名前を伏せる */
@@ -2946,8 +2960,8 @@ function chainLinksAt(t, action) {
     const d = c && defIndex[c.def];
     const visible = d && (c.faceUp || ((c.knownTo || 0) & (1 << ME)) || k.zone !== 'play');
     return visible
-      ? { img: faceImageURL(d), name: d.proto + ' ' + d.value, zone: k.zone, color: d.color }
-      : { img: null, name: '裏向きのカード', zone: k.zone, color: '#8fa8c8' };
+      ? { uid: k.uid, img: faceImageURL(d), name: d.proto + ' ' + d.value, zone: k.zone, color: d.color }
+      : { uid: k.uid, img: null, name: '裏向きのカード', zone: k.zone, color: '#8fa8c8' };
   });
 }
 
@@ -3012,10 +3026,13 @@ async function replayResolution(prev, res, action) {
     chainShown = n;
     if (delta > 0) {                                     // チェーンがつながった
       sfx('chain', n);
-      /* 喜ぶのは、自分のカードの効果がつながったときだけ (相手のカードの効果がつながっても、だれも喜ばない) */
-      const last = Array.isArray(chain) && chain.length ? String(chain[chain.length - 1]) : '';
-      const lc = st && st.cards && st.cards[last.slice(0, last.lastIndexOf('|'))];
-      if (lc && lc.owner === ME) avatarSay(ME, 'chain', null, st, 7000);
+      /* 喜ぶのは、自分のカードから始まって自分のカードの効果がつながったときだけ。
+         相手の効果で自分のカードが動かされたとき・相手のカードの効果・損しかない効果 (手札を捨てるだけ) では喜ばない */
+      const cardOf = (k) => (k && st && st.cards && st.cards[k.uid]) || null;
+      const root = cardOf(links[0]), last = cardOf(links[links.length - 1]);
+      if (root && last && root.owner === ME && last.owner === ME && !demeritDefs.has(last.def)) {
+        avatarSay(ME, 'chain', null, st, 7000);
+      }
     }
     return delta;
   };
