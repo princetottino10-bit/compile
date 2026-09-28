@@ -4,7 +4,7 @@
  *   runHud: 対戦中のライフ表示
  *   showRunAfterGame: 決着後に結果を入れて、次へ進む画面を出す
  * ========================================================================= */
-import { STAR_CARDS, MAX_VALUE } from './runcards.js';
+import { STAR_CARDS, MAX_VALUE, betaName, starText } from './runcards.js';
 import { playBgm, RUN_BGM } from './bgm.js';
 import { showTitleBack, hideTitleBack } from './titleback.js';
 import { loadWeekly } from './weekly.js';
@@ -131,7 +131,7 @@ function deckLine(names, byName) {
   return '<span class="rn-deck">' + names.map(n => '<i style="--pc:' + esc((byName[n] || {}).color || '#b9a4ff') + '">' + esc(n) + '</i>').join('') + '</span>';
 }
 
-/* デッキのカード (外したものは打ち消し線、強化したものは ＋、★ カードは各列の下)。
+/* デッキのカード (外したものは打ち消し線、強化したものは ＋、β カードは各列の下)。
    pick: 'remove' (カード除去で押せる) / 'upgrade' (強化で押せる。値 6 と強化済みは押せない) / なし */
 function deckCards(run, byName, pick) {
   const removed = new Set(run.removed || []);
@@ -140,7 +140,7 @@ function deckCards(run, byName, pick) {
   const cell = (id, name, value, text, gone, star) => {
     const up = ups.has(id);
     const v = up ? value + 1 : value;
-    const inner = '<b>' + esc(name) + (star ? ' ★' : '') + ' ' + v + (up ? '<em class="rn-up">＋</em>' : '') + '</b>' +
+    const inner = '<b>' + (star ? 'β-' : '') + esc(name) + ' ' + v + (up ? '<em class="rn-up">＋</em>' : '') + '</b>' +
       '<span>' + esc(text.length > 38 ? text.slice(0, 37) + '…' : text) + '</span>';
     const can = pick === 'remove' ? !gone && !star : pick === 'upgrade' ? !gone && !up && value < MAX_VALUE : false;
     const attr = pick === 'remove' ? 'data-rm' : 'data-up';
@@ -155,7 +155,7 @@ function deckCards(run, byName, pick) {
     const stars = STAR_CARDS.filter(x => x.proto === n && added.includes(x.id));
     return '<div class="rn-cardcol" style="--pc:' + esc(p.color) + '"><h4>' + esc(n) + '</h4>' +
       p.cards.map(c => cell(c.id, n, c.value, c.middle || c.upper || c.lower || '', removed.has(c.id), false)).join('') +
-      stars.map(x => cell(x.id, n, x.value, x.middle, false, true)).join('') + '</div>';
+      stars.map(x => cell(x.id, n, x.value, starText(x, p), false, true)).join('') + '</div>';
   }).join('') + '</div>';
 }
 
@@ -183,8 +183,9 @@ export function openRun(protocols, cardsOf, opts) {
     const done = (v) => { hideTitleBack(); el.classList.remove('show'); resolve(v); };
     /* 右上の「タイトル」(勝ち抜き戦の途中でも、続きはあとでできる) */
     showTitleBack(() => done(null));
-    /* ★ カードは「FIRE ★」、ふつうのカードは「FIRE 2」 */
-    const starLabel = (id) => { const x = STAR_CARDS.find(c => c.id === id); return x ? x.proto + ' ★' : cardLabel(id); };
+    /* β カードは「β-FIRE 2」、ふつうのカードは「FIRE 2」 */
+    const starLabel = (id) => { const x = STAR_CARDS.find(c => c.id === id); return x ? betaName(x.proto, x.value) : cardLabel(id); };
+    const starDesc = (id) => { const x = STAR_CARDS.find(c => c.id === id); return x ? starText(x, byName[x.proto]) : ''; };
     /* カード一覧は、いま候補に出ているものと自分のデッキをタブで切り替えられるように */
     const info = (name) => {
       const p = byName[name];
@@ -219,7 +220,7 @@ export function openRun(protocols, cardsOf, opts) {
           '<li>地図を下から登り、頂上の BOSS を倒す (自分は ' + (3 - RUN.RUN_WIN_COMPILES) + ' つコンパイル済みから始まり、あと ' + RUN.RUN_WIN_COMPILES + ' 本で勝ち。序盤は2つ済みから)</li>' +
           '<li>道は自分で選ぶ: 戦闘・精鋭・イベント・休憩所・ショップ・宝箱</li>' +
           '<li>ライフ ' + RUN.RUN_LIFE + '。コンパイルされるたびに 1 減る</li>' +
-          '<li>勝つたびにカードの報酬 (強化・★ カード・除去) を選ぶ。パッチ (改造) は系統をそろえるとボーナス</li>' +
+          '<li>勝つたびにカードの報酬 (強化・β カード・除去) を選ぶ。パッチ (改造) は系統をそろえるとボーナス</li>' +
           '<li>クレジットはショップで使う (報酬は選ぶか買う)</li>' +
           '<li>クリアすると次の HEAT (難しさ) が開く</li></ul>' + runStatus + heatPick +
           (active ? '<button type="button" class="rn-go" data-act="resume">続きから</button>'
@@ -261,7 +262,7 @@ export function openRun(protocols, cardsOf, opts) {
           return '<h2>進むマスを選ぶ <small>' + (rowNow(run) + 2) + ' / ' + RUN.MAP_ROWS + ' 段</small></h2>' +
             (run.removedNow ? '<p class="rn-note">' + esc(cardLabel(run.removedNow)) + ' をデッキから外した</p>' : '') +
             (run.upgradedNow ? '<p class="rn-note rn-gain">' + esc(starLabel(run.upgradedNow)) + ' を強化した (値 +1)</p>' : '') +
-            (run.gotStar ? '<p class="rn-note rn-gain">★ カード ' + esc(starLabel(run.gotStar)) + ' をデッキに入れた</p>' : '') +
+            (run.gotStar ? '<p class="rn-note rn-gain">β カード ' + esc(starLabel(run.gotStar)) + ' をデッキに入れた</p>' : '') +
             bossCard(run, byName, false) +
             mapHtml(run, true) +
             '<div class="rn-deckbar"><span>デッキ ' + deckLine(run.deck, byName) + ' <em>除去 ' + (run.removed || []).length + ' / ' + RUN.MAX_REMOVED + '</em></span>' +
@@ -301,7 +302,7 @@ export function openRun(protocols, cardsOf, opts) {
           const star = run.shop.star && STAR_CARDS.find(x => x.id === run.shop.star);
           const starWare = star
             ? '<div class="rn-ware"><button type="button" class="rn-starcard" style="--pc:' + esc((byName[star.proto] || {}).color || '#ffd86a') + '"' +
-                (run.shop.starSold || credits < sp ? ' disabled' : '') + ' data-act="buyStar"><small>★ CARD ・ 値 ' + star.value + '</small><b>' + esc(star.proto) + ' ★</b><span>' + esc(star.middle) + '</span></button>' +
+                (run.shop.starSold || credits < sp ? ' disabled' : '') + ' data-act="buyStar"><small>β CARD ・ 値 ' + star.value + '</small><b>' + esc(betaName(star.proto, star.value)) + '</b><span>' + esc(starDesc(star.id)) + '</span></button>' +
                 '<em class="' + (run.shop.starSold ? 'sold' : credits < sp ? 'short' : '') + '">' + (run.shop.starSold ? 'SOLD' : sp + ' CR') + '</em></div>'
             : '';
           return '<h2>$ ショップ <small>CREDIT ' + credits + '</small></h2>' +
@@ -318,8 +319,7 @@ export function openRun(protocols, cardsOf, opts) {
             if (o.type === 'upgrade') return '<button type="button" class="rn-route forge" data-card="' + i + '"><small>FORGE</small><b>強化</b><span>好きなカードを1枚、値 +1 (効果は同じ)</span></button>';
             if (o.type === 'remove') return '<button type="button" class="rn-route smith" data-card="' + i + '"><small>PURGE</small><b>除去</b><span>好きなカードを1枚、デッキから外す (除去 ' + (run.removed || []).length + ' / ' + RUN.MAX_REMOVED + ')</span></button>';
             if (o.type === 'star') {
-              const x = STAR_CARDS.find(c => c.id === o.id);
-              return '<button type="button" class="rn-route star" data-card="' + i + '"><small>★ CARD</small><b>' + esc(starLabel(o.id)) + (x ? ' (値 ' + x.value + ')' : '') + '</b><span>' + esc(x ? x.middle : '') + '</span></button>';
+              return '<button type="button" class="rn-route star" data-card="' + i + '"><small>β CARD</small><b>β カード</b><span>デッキのプロトコルのオリジナルカードを、' + RUN.starChoices(run).length + '枚から1枚選んで足す</span></button>';
             }
             return '<button type="button" class="rn-route" data-card="' + i + '"><small>CREDIT</small><b>+' + RUN.CARD_REWARD_CREDITS + ' クレジット</b><span>ショップで使う</span></button>';
           };
@@ -331,11 +331,19 @@ export function openRun(protocols, cardsOf, opts) {
               '<button type="button" data-act="nocard">取らない</button></div>' +
             (showDeck ? deckCards(run, byName, false) : '');
         }
+        case 'stars':
+          /* β カードを選ぶ (デッキのプロトコルのうち、まだ足していないもの) */
+          return '<h2>β カードを1枚選ぶ</h2><p class="rn-note">デッキのプロトコルのオリジナルカード。元のカードの効果を組み合わせたもの</p>' +
+            '<div class="rn-routes">' + RUN.starChoices(run).map(id => {
+              const x = STAR_CARDS.find(c => c.id === id);
+              return '<button type="button" class="rn-route star" data-star="' + esc(id) + '"><small>β CARD ・ 値 ' + x.value + '</small><b>' + esc(betaName(x.proto, x.value)) + '</b><span>' + esc(starDesc(id)) + '</span></button>';
+            }).join('') + '</div>' +
+            '<div class="rn-btns"><button type="button" data-act="unstar">やめる (報酬を選び直す)</button></div>';
         case 'reward':
           return '<h2>勝利！ <small>+' + (run.lastGain | 0) + ' CREDIT</small></h2>' +
             (run.upgradedNow ? '<p class="rn-note rn-gain">' + esc(starLabel(run.upgradedNow)) + ' を強化した (値 +1)</p>' : '') +
             (run.removedNow ? '<p class="rn-note">' + esc(cardLabel(run.removedNow)) + ' をデッキから外した</p>' : '') +
-            (run.gotStar ? '<p class="rn-note rn-gain">★ カード ' + esc(starLabel(run.gotStar)) + ' をデッキに入れた</p>' : '') +
+            (run.gotStar ? '<p class="rn-note rn-gain">β カード ' + esc(starLabel(run.gotStar)) + ' をデッキに入れた</p>' : '') +
 (swapAdd
             ? '<p class="rn-note"><b>' + esc(swapAdd) + '</b> を入れる代わりに、外すプロトコルを選ぶ</p>' +
               '<div class="rn-offers">' + run.deck.map(n => protoChip(byName[n], 'data-remove="' + esc(n) + '"')).join('') + '</div>' +
@@ -395,6 +403,7 @@ export function openRun(protocols, cardsOf, opts) {
       if (t.dataset.heat) { heatSel = +t.dataset.heat; render(); return; }
       if (t.dataset.node) { set(RUN.chooseNode(run, t.dataset.node, names)); return; }
       if (t.dataset.patch) { set(RUN.choosePatch(run, t.dataset.patch, names)); return; }
+      if (t.dataset.star) { set(RUN.chooseStar(run, t.dataset.star)); return; }
       if (t.dataset.card !== undefined) { showDeck = false; set(RUN.chooseCardReward(run, +t.dataset.card)); return; }
       if (t.dataset.buy) { set(RUN.buyPatch(run, t.dataset.buy)); return; }
       if (t.dataset.rm) { set(RUN.removeCard(run, t.dataset.rm)); return; }
@@ -407,6 +416,7 @@ export function openRun(protocols, cardsOf, opts) {
         case 'start': hub = false; set(RUN.newRun(names, Math.random, heatSel)); break;
         case 'nopatch': set(RUN.choosePatch(run, null, names)); break;
         case 'nocard': showDeck = false; set(RUN.chooseCardReward(run, null)); break;
+        case 'unstar': set({ ...run, phase: 'cards' }); break;
         case 'deck': showDeck = !showDeck; render(); break;
         case 'rest': set(RUN.restHeal(run)); break;
         case 'restRemove': set(RUN.restRemove(run)); break;

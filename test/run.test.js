@@ -279,10 +279,14 @@ test('カードの報酬: 強化・★・除去から1つ。強化と除去は�
   const b = goTo(R, run, 'battle');
   const won = R.finishBattle(b, true, 0, NAMES, seq());
   assert.deepEqual(won.cardOffers.map(o => o.type), ['upgrade', 'star', 'remove']);
-  const star = won.cardOffers[1].id;
-  const gotStar = R.chooseCardReward(won, 1);
-  assert.ok(gotStar.added.includes(star));
+  const pickStar = R.chooseCardReward(won, 1);
+  assert.equal(pickStar.phase, 'stars', 'β はデッキのプロトコルから選ぶ');
+  const choices = R.starChoices(pickStar);
+  assert.equal(choices.length, 3, 'デッキの3プロトコルの β');
+  const gotStar = R.chooseStar(pickStar, choices[2]);
+  assert.ok(gotStar.added.includes(choices[2]));
   assert.equal(gotStar.phase, 'reward');
+  assert.equal(R.chooseStar(pickStar, 'X_NOPE'), pickStar);
   const up = R.chooseCardReward(won, 0);
   assert.equal(up.phase, 'upgrade');
   assert.equal(R.cancelUpgrade(up).phase, 'cards', 'やめたら報酬を選び直す');

@@ -61,7 +61,7 @@ export const BOSSES = [
   { id: 'sanctuary', name: '聖域の守り手', title: '揺るがぬ者', deck: ['LIGHT', 'LIFE', 'PEACE'], color: '#fff2a8',
     text: 'あなたは 3 本、ボスは 2 本コンパイルで勝ち', rule: { win: [3, 2] } },
   { id: 'glacier', name: '氷結の女帝', title: '凍てつく者', deck: ['ICE', 'WATER', 'METAL'], color: '#9fd8ff',
-    text: 'ボスの山札に WATER ★ と、強化した WATER ★ が入る', rule: { stars: ['X_WATER', 'X_WATER' + UP] } }
+    text: 'ボスの山札に β-WATER と、強化した β-WATER が入る', rule: { stars: ['X_WATER', 'X_WATER' + UP] } }
 ];
 export const FINAL_BOSS = { id: 'strongest', name: '最強', title: '頂に立つ者', deck: STRONGEST_AI.slice(), color: '#ff4fa3',
   text: 'いちばん強い CPU。ボスのカードは全部 強化済み、はじめの手札は 6 枚', rule: { upgradeAll: true, bossHand: 6 } };
@@ -76,7 +76,7 @@ export const NODES = {
   elite: { icon: '☠', name: '精鋭', text: '強い相手。勝てばクレジット多めと、パッチを1つ' },
   event: { icon: '?', name: 'イベント', text: '何かが起きる' },
   rest: { icon: '✚', name: '休憩所', text: 'ライフを 3 回復するか、カードを1枚外す' },
-  shop: { icon: '$', name: 'ショップ', text: 'クレジットでパッチ・★ カード・強化・カード除去・回復' },
+  shop: { icon: '$', name: 'ショップ', text: 'クレジットでパッチ・β カード・強化・カード除去・回復' },
   treasure: { icon: '◆', name: '宝箱', text: 'パッチを3つから1つ' },
   boss: { icon: '♛', name: 'BOSS', text: '最強の CPU。倒せばクリア' }
 };
@@ -174,7 +174,7 @@ export const EVENTS = {
     title: '研究所', text: '白衣の研究員が手招きしている。「実験に付き合ってくれたら、お礼をするよ」',
     options: [
       { label: 'カードを1枚強化してもらう (値 +1)', need: (r) => canUpgradeAny(r), apply: (r) => ({ ...r, phase: 'upgrade', after: 'map' }) },
-      { label: 'ライフ −1 で ★ カードをもらう (デッキのプロトコルのどれか)', need: (r) => r.life > 1 && starChoices(r).length > 0,
+      { label: 'ライフ −1 で β カードをもらう (デッキのプロトコルのどれか)', need: (r) => r.life > 1 && starChoices(r).length > 0,
         apply: (r, c) => addStar({ ...r, life: r.life - 1 }, pickOne(starChoices(r), c.rnd)) },
       { label: '断る', apply: (r) => r }
     ]
@@ -182,7 +182,7 @@ export const EVENTS = {
   meteor: {
     title: '流れ星', text: '光るカードが空から落ちてきた。拾うと、何かに見つかる気がする…',
     options: [
-      { label: '★ カードを拾う (そのあと、1段強い相手と戦う)', need: (r) => starChoices(r).length > 0,
+      { label: 'β カードを拾う (そのあと、1段強い相手と戦う)', need: (r) => starChoices(r).length > 0,
         apply: (r, c) => ({ ...addStar(r, pickOne(starChoices(r), c.rnd)), fight: 'alarm' }) },
       { label: '見送る', apply: (r) => r }
     ]
@@ -451,7 +451,7 @@ export function cardRewardOffers(run, rnd = Math.random) {
   const out = [];
   out.push(canUpgradeAny(run) ? { type: 'upgrade' } : { type: 'credits' });
   const stars = (run.added || []).length < MAX_ADDED ? starChoices(run) : [];
-  out.push(stars.length ? { type: 'star', id: pickOne(stars, rnd) } : { type: 'credits' });
+  out.push(stars.length ? { type: 'star' } : { type: 'credits' });
   out.push(canRemove(run) ? { type: 'remove' } : { type: 'credits' });
   return out;
 }
@@ -463,9 +463,14 @@ export function chooseCardReward(run, index) {
   if (!o) return done;
   if (o.type === 'upgrade') return { ...run, phase: 'upgrade', after: 'reward' };
   if (o.type === 'remove') return { ...run, phase: 'remove', after: 'reward' };
-  if (o.type === 'star') return addStar(done, o.id);
+  if (o.type === 'star') return { ...run, phase: 'stars' };            // デッキのプロトコルの β から選ぶ
   if (o.type === 'credits') return { ...done, credits: (run.credits | 0) + CARD_REWARD_CREDITS };
   return done;
+}
+/** 報酬の β カードを選ぶ (デッキのプロトコルのうち、まだ足していないもの) */
+export function chooseStar(run, id) {
+  if (run.phase !== 'stars' || !starChoices(run).includes(id)) return run;
+  return { ...addStar(run, id), cardOffers: [], phase: 'reward' };
 }
 /* 強化・除去を終えた (やめた) あとに戻る画面 */
 function backTo(run, after) {

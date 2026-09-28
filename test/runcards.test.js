@@ -16,7 +16,7 @@ const defs = buildRunDefs(cards, effects);
 Engine.init(cards, effects, defs.engine);
 Engine.setAiLevel(1);
 
-test('勝ち抜き戦のカード: ★ は各プロトコルに1枚、＋ は値 +1 (値 6 は強化できない)', () => {
+test('勝ち抜き戦のカード: β (オリジナル) は全プロトコルに1枚、＋ は値 +1 (値 6 は強化できない)', () => {
   const ids = new Set(defs.engine.map(d => d.id));
   for (const s of STAR_CARDS) assert.ok(ids.has(s.id) && ids.has(s.id + UP), s.id);
   const fire1 = defs.engine.find(d => d.id === 'FIRE_1' + UP);
@@ -30,7 +30,7 @@ test('勝ち抜き戦のカード: ★ は各プロトコルに1枚、＋ は値
   /* 画面の定義には印 (＋ / ★) と、元の絵の番号がある */
   const ui = Object.fromEntries(defs.ui.map(d => [d.id, d]));
   assert.equal(ui['FIRE_1' + UP].mark, '＋');
-  assert.equal(ui.X_FIRE.mark, '★');
+  assert.equal(ui.X_FIRE.mark, 'β');
   assert.ok(ui.X_FIRE.number >= 1 && ui.X_FIRE.middle);
 });
 
@@ -69,5 +69,29 @@ test('勝ち抜き戦のカード: ★ と ＋ を入れたデッキで、CPU �
       }
       assert.notEqual(res.state.winner, null, p0.join('/') + ' seed ' + seed + ' で決着しない');
     }
+  }
+});
+
+test('β カード: 全プロトコルにあり、元のカードの段を写したものは文と効果が元と同じ。入れたデッキで CPU どうし最後まで遊べる', () => {
+  assert.equal(new Set(STAR_CARDS.map(s => s.proto)).size, cards.protocols.length);
+  const ui = Object.fromEntries(defs.ui.map(d => [d.id, d]));
+  const eng = Object.fromEntries(defs.engine.map(d => [d.id, d]));
+  /* 例: β-METAL 3 は METAL 0 の上段 */
+  const metal0 = cards.protocols.find(p => p.name === 'METAL').cards.find(c => c.value === 0);
+  assert.equal(ui.X_METAL.upper, metal0.upper);
+  assert.deepEqual(eng.X_METAL.eff.upper, effects[metal0.id].upper);
+  assert.equal(eng.X_METAL.value, 3);
+  const others = ['DEATH', 'METAL', 'LIFE', 'FIRE', 'WATER', 'SPEED'];
+  for (const s of STAR_CARDS.filter(x => x.from || x.id === 'X_LUCK')) {
+    const p0 = [s.proto].concat(others.filter(n => n !== s.proto).slice(0, 2));
+    const p1 = others.filter(n => !p0.includes(n)).slice(0, 3);
+    let res = Engine.newGame({ seed: 11, p0, p1, deckMods: [{ add: [s.id, s.id] }, {}] });
+    for (let i = 0; i < 3000 && res.state.winner === null; i++) {
+      const q = res.requests[0];
+      const a = q ? { type: 'choose', id: q.id, picks: Engine.ai.answer(res.state, q) } : Engine.ai.action(res.state);
+      res = Engine.apply(res.state, a);
+      assert.equal(res.error, null, s.id + ' step ' + i);
+    }
+    assert.notEqual(res.state.winner, null, s.id + ' で決着しない');
   }
 });
