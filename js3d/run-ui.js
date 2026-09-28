@@ -5,6 +5,7 @@
  *   showRunAfterGame: 決着後に結果を入れて、次へ進む画面を出す
  * ========================================================================= */
 import { STAR_CARDS, MAX_VALUE } from './runcards.js';
+import { playBgm, RUN_BGM } from './bgm.js';
 import { showTitleBack, hideTitleBack } from './titleback.js';
 import { loadWeekly } from './weekly.js';
 import * as RUN from './run.js';
@@ -171,6 +172,7 @@ export function openRun(protocols, cardsOf, opts) {
   const names = protocols.map(p => p.name);
   const byName = Object.fromEntries(protocols.map(p => [p.name, p]));
   const el = overlay();
+  playBgm(RUN_BGM);                                    // 勝ち抜き戦の画面の曲 (対戦に入ると対戦の曲に替わる)
   return new Promise((resolve) => {
     let run = RUN.loadRun();
     let swapAdd = null;          // 報酬で入れ替えるプロトコル (選んだあと、外すほうを選ぶ)

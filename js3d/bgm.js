@@ -21,12 +21,14 @@ export const NORMAL_BGMS = ['cho_zunou', 'reflect', 'kaidoku', 'crescendo_jitter
 export const STRONG_BGM = 'zero';
 /* タイトル・メニュー (対戦以外): 落ち着いた3曲から、ページを開くたびに1曲 (メニューの間は同じ曲が続く) */
 export const MENU_BGMS = ['planetarium', 'madoromu_neon', 'nine_jack'];
+/* 勝ち抜き戦 (RUN) の対戦以外の画面 (入口・地図・ショップ・休憩所など): 沈殿するイルカ */
+export const RUN_BGM = 'iruka';
 let menuPick = null;
 export const menuBgm = () => (menuPick = menuPick || MENU_BGMS[Math.floor(Math.random() * MENU_BGMS.length)]);
 export const BOSS_BGM = 'samayoi';
 /* 曲のファイル (無ければ <key>.mp3) */
 const FILES = { cho_zunou: 'cho_zunou.m4a', reflect: 'reflect.m4a', kaidoku: 'kaidoku.m4a', crescendo_jitter: 'crescendo_jitter.m4a',
-  planetarium: 'planetarium.m4a', madoromu_neon: 'madoromu_neon.m4a', nine_jack: 'nine_jack.m4a' };
+  planetarium: 'planetarium.m4a', madoromu_neon: 'madoromu_neon.m4a', nine_jack: 'nine_jack.m4a', iruka: 'iruka.m4a' };
 export const bgmFile = (key) => 'art/bgm/' + (FILES[key] || key + '.mp3');
 /** ふつうの対戦の曲を1つ選ぶ */
 export const pickNormalBgm = () => NORMAL_BGMS[Math.floor(Math.random() * NORMAL_BGMS.length)];
@@ -50,7 +52,7 @@ function ensure() {
 /** 曲を鳴らす (同じ曲なら続きから)。key が無い・'off' なら止める */
 export function playBgm(key) {
   /* COLLECTION の BGM をしまっている間は、対戦の2曲だけ鳴らす (タイトルの曲・選んだ曲は鳴らさない) */
-  if (!BGM_RELEASED && !(BATTLE_BGM_ON && key && (NORMAL_BGMS.includes(key) || MENU_BGMS.includes(key) || key === STRONG_BGM || key === BOSS_BGM))) { stopBgm(); return; }
+  if (!BGM_RELEASED && !(BATTLE_BGM_ON && key && (NORMAL_BGMS.includes(key) || MENU_BGMS.includes(key) || key === RUN_BGM || key === STRONG_BGM || key === BOSS_BGM))) { stopBgm(); return; }
   want = key && key !== 'off' ? key : null;
   if (!want) { stopBgm(); return; }
   try {
