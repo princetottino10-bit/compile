@@ -275,7 +275,10 @@ export function createPanels(stage, me, hooks) {
       paint(p.compiled.ctx, { ...p.info, compiled: true }, p.art.compiled);
       p.compiled.tex.needsUpdate = true;
     };
-    draw();
+    /* 描く中身が前と同じなら描き直さない。板の絵 (1024×524) を毎回 GPU に送り直していて、
+       盤面が動くたびに 0.2 秒ほど画面が止まっていた (絵が届いたときは下の読み込みから描く) */
+    const key = JSON.stringify(info);
+    if (p.paintedKey !== key) { p.paintedKey = key; draw(); }
     if (!ART_SETS.has(info.set)) return;
     const want = info.name;
     names.forEach((n, k) => {
