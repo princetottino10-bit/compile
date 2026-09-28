@@ -1779,7 +1779,10 @@
   #puzzleBar .pz-text small{font:600 10px/1.3 system-ui;color:#ffeab4;}
   #puzzleBar button{flex:none;padding:7px 12px;border-radius:999px;cursor:pointer;border:1px solid rgba(255,255,255,.2);
     background:transparent;color:var(--ink);font:800 10px/1 system-ui;}
-  body.picking #puzzleBar{display:none;}
+  /* 効果で選んでいる間も問題文は出しておく (上は選択の帯が使うので、左の中ほどへ寄せ、ボタンはしまう) */
+  body.picking #puzzleBar{left:calc(10px + env(safe-area-inset-left));top:max(36%,200px);transform:none;
+    width:min(290px,32vw);max-width:none;flex-wrap:wrap;row-gap:4px;}
+  body.picking #puzzleBar button{display:none;}
   /* 詰めコンパイル: 帯のボタンが増えるので、ボタンは右にまとめて折り返せるように */
   body.tsume #puzzleBar{flex-wrap:wrap;row-gap:6px;}
   body.tsume #puzzleBar .pz-text{flex:1 1 180px;}
@@ -1907,7 +1910,7 @@
   body.tutorial #puzzleBar{border-color:rgba(185,164,255,.4);}
   /* 縦持ち: 幅の計算 (左右の詳細パネルの分を引く) がマイナスになって潰れていたので、左右 8px の幅で名札の下に出す */
   @media (max-width:860px) and (orientation:portrait){
-    #tutorialCoach,#puzzleBar,body.picking #tutorialCoach{left:8px;right:8px;transform:none;width:auto;max-width:none;
+    #tutorialCoach,#puzzleBar,body.picking #tutorialCoach,body.picking #puzzleBar{left:8px;right:8px;transform:none;width:auto;max-width:none;
       top:calc(150px + env(safe-area-inset-top));}
   }
   body.tutorial #puzzleBar .pz-tag{background:var(--cyan);color:#021318;}
@@ -1924,7 +1927,8 @@
     /* 右上のターン表示・ボタンと重ならないよう、左に寄せる */
     #puzzleBar{top:4px;left:calc(8px + env(safe-area-inset-left));transform:none;max-width:calc(100vw - 310px);
       padding:5px 6px 5px 10px;gap:8px;}
-    #puzzleBar .pz-text small{display:none;}
+    #puzzleBar .pz-text small{font-size:9px;}
+    body.picking #puzzleBar{top:28%;width:min(250px,34vw);}
   }
   .tr-foot button.warn{color:#ffb3d6!important;border-color:rgba(255,79,163,.35);}
   @media (prefers-reduced-motion: reduce){
