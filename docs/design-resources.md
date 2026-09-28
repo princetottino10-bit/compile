@@ -55,3 +55,17 @@ UI・モーション・デザインの参考やエージェント向けプロン
 |---|------|-----|------|
 | 27 | Kitbitz | https://kitbitz.art | 2,000 以上の手描きイラスト |
 | 28 | 3Dicons | https://3dicons.co | 3D アイコン |
+
+## ゲーム素材・MCP (あとから追加)
+
+MCP でつなぐと、Claude が素材の生成・取得から組み込みまで一気にできる。つながなくても、サイトで作ったファイルを渡せば組み込める。
+
+| 名前 | URL | 取れるもの | 無料 | MCP | 注意 |
+|------|-----|-----------|------|-----|------|
+| Hugging Face | https://huggingface.co/mcp | 画像生成・音声など | 無料枠 (GPU の割り当て) | あり (公式) | モデルごとにライセンスが違う |
+| Freesound | https://freesound.org | 効果音 | 無料 (API キー) | 有志のもの | 音ごとに CC0 / CC-BY (表記) / NC (商用不可) |
+| ElevenLabs | https://elevenlabs.io | ボイス・効果音・音楽 | 月 10,000 クレジット | あり (公式) | 無料プランは商用不可・表記が必要 |
+| Gemini 3.8 Flash TTS | https://aistudio.google.com | ボイス (役柄・感情の指示、2人の掛け合い) | 有料 API | API | 音声に透かし (SynthID) |
+| AutoSprite | https://www.autosprite.io | スプライトシート・エフェクト・アイコン | 毎日少し | Pro ($29/月) | 商用可 |
+| Ludo.ai | https://ludo.ai | スプライト・3D・効果音・音楽・ボイス | お試し 30 クレジット | Pro ($50/月〜) | |
+| Kenney | https://kenney.nl | 効果音・素材パック | 無料 (CC0) | 不要 | いまの効果音の出どころ |
