@@ -667,6 +667,10 @@ export function createBoard(stage, defIndex, me, hooks) {
       if (uid === source || targets.length >= 6) continue;
       const c = cards.get(uid);
       if (!c) continue;
+      /* 同じ置き場所 (同じ持ち主の手札・山札、同じラインの同じ側) の中で並びの番号がずれただけの札は、効果の対象ではない。
+         手札に1枚加わるとほかの手札も番号がずれるので、これを数えると手札のすべてに光が飛んでいた */
+      if (a && b && a.zone === b.zone && a.side === b.side && (a.zone !== 'field' || a.line === b.line)
+        && !faceChangedFor(prev, next, uid)) continue;
       const kind = beamKind(prev, next, uid, a, b);
       const beamColor = kind ? new THREE.Color(BEAM_KIND_COLOR[kind]) : color;
       if (kind === 'play' && a && a.zone === 'deck') {
