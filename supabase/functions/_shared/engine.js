@@ -3764,13 +3764,25 @@ function aiHate0SelfPick(st, uid, me) {
   if (aiOppFieldCount(st, me) < 2) return false;
   const c = st.cards[uid];
   if (!c || c.def !== 'HATE_1' || c.owner !== me) return false;
+  const topHate1 = (stack) => {
+    const t = stack.length ? st.cards[stack[stack.length - 1]] : null;
+    return !!t && t.faceUp && t.def === 'HATE_2';
+  };
   const loc = locate(st, uid);
-  if (!loc || loc.side !== me) return false;
+  /* 選択は手を頭からやり直して解くので、答える時点の盤面は HATE 0 を出す前 (まだ手札) のことがある。
+     そのときは HATE のラインの一番上が表向きの HATE 1 なら、その上に着地する */
+  if (!loc) {
+    if (st.players[me].hand.indexOf(uid) < 0) return false;
+    for (let l = 0; l < 3; l++) {
+      if (lineProtoNames(st, l).indexOf('HATE') >= 0 && topHate1(st.lines[l][me])) return true;
+    }
+    return false;
+  }
+  if (loc.side !== me) return false;
   const stack = st.lines[loc.line][loc.side];
   const i = stack.indexOf(uid);
   if (i <= 0 || i !== stack.length - 1) return false;
-  const below = st.cards[stack[i - 1]];
-  return !!below && below.faceUp && below.def === 'HATE_2';
+  return topHate1(stack.slice(0, i));
 }
 
 function aiForcedControlWinPicks(req) {
@@ -3799,6 +3811,12 @@ function smartPicks(st, req) {
   switch (req.kind) {
     case 'pickCard': {
       if (req.prompt === 'play-free') return aiPlayFreePicks(st, req, me);
+      /* HATE 0 の削除: 相手の場に2枚以上あれば、必ず自分を消して下の HATE 1 をもう一度起動する
+         (相手の2手番ぶんを消せる。手札3枚より重い。監修 2026-09-29) */
+      if (/^(optional-)?delete$/.test(req.prompt || '') && aiWeightsFor(st, me).hate0Self) {
+        const self = req.candidates.find(uid => aiHate0SelfPick(st, uid, me));
+        if (self) return [self];
+      }
       if (aiIsDshSpecialist(st, me) && aiWeightsFor(st, me).speedPairStrategy
           && req.prompt === 'optional-shift' && req.context === 'SPEED_4') {
         const self = req.candidates.find(uid => st.cards[uid] && st.cards[uid].def === 'SPEED_4');
