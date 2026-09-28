@@ -185,7 +185,11 @@ test('宝箱・イベント: 宝箱はパッチ、祭壇は呪いの試合、保
   assert.deepEqual(R.battleOpts(altar, 0).handSize, [4, 7]);
   const cursedWin = R.finishBattle(altar, true, 1, NAMES, () => 0.9);
   assert.equal(cursedWin.cursedWin, true);
-  assert.ok(['R', 'E', 'L'].includes(cursedWin.lastPull.rar), '呪いに勝つと RARE 以上確定');
+  /* 呪いに勝つと、報酬のあとで RARE 以上のパッチを3つから選べる */
+  const rare = R.applyReward(R.chooseCardReward(cursedWin, null), { type: 'skip' }, NAMES, seq());
+  assert.equal(rare.phase, 'patch');
+  assert.equal(rare.patchOffers.length, 3);
+  assert.ok(rare.patchOffers.every(id => R.patchInfo(id).rar !== 'C'), 'RARE 以上');
   const vault = R.resolveEvent({ ...ev, event: 'vault' }, 0, NAMES, seq());
   assert.equal(vault.phase, 'patch');
   const fight = R.choosePatch(vault, vault.patchOffers[0], NAMES, seq());
@@ -247,21 +251,12 @@ test('GUARD を2つそろえると最大ライフ +1。GREED 2つで勝つとク
   assert.equal(R.finishBattle(b, true, 1, NAMES, seq()).credits, R.START_CREDITS + 5);
 });
 
-test('GACHA: 戦いの合間に引ける。レア度と「かぶり」', async () => {
+test('GACHA は無い (報酬は選ぶか買う)。壊れた自販機はパッチを3つから選ぶ', async () => {
   const { R, run } = await started();
-  assert.equal(R.canPull(run), true, 'はじめのクレジットで1回引ける');
-  const rich = { ...run, credits: 20 };
-  const leg = R.gachaPull(rich, () => 0.01);
-  assert.equal(leg.lastPull.rar, 'L');
-  assert.equal(leg.credits, 20 - R.GACHA_COST);
-  const epic = R.gachaPull(rich, () => 0.05);
-  assert.equal(epic.lastPull.rar, 'E');
-  const again = R.gachaPull({ ...epic, life: 2 }, () => 0.05);
-  assert.equal(again.lastPull.dupe, true);
-  assert.equal(again.life, 3);
-  assert.equal(R.gachaCost({ ...rich, patches: ['lucky'] }), R.GACHA_COST - 1);
-  const fighting = { ...rich, phase: 'battle' };
-  assert.equal(R.gachaPull(fighting), fighting, '戦う前の画面では引けない');
+  assert.equal(R.gachaPull, undefined);
+  const ev = R.resolveEvent({ ...run, phase: 'event', event: 'arcade' }, 0, NAMES, seq());
+  assert.equal(ev.phase, 'patch');
+  assert.equal(ev.patchOffers.length, 3);
   assert.equal(Object.values(R.RARITY).reduce((n, r) => n + r.weight, 0), 100);
 });
 

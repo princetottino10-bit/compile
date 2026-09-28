@@ -12,7 +12,7 @@ import * as RUN from './run.js';
 import { emblemDataURL } from './emblems.js';
 import { levelLabel } from './aidecks.js';
 import { showProtocolCards } from './protocards.js';
-import { confetti, playCapsule, RAR_COLORS } from './gachafx.js';
+import { confetti, RAR_COLORS } from './gachafx.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -73,14 +73,6 @@ function mapHtml(run, canMove) {
     '<div class="rn-legend">' + Object.keys(RUN.NODES).map(k => '<span class="' + k + '"><i>' + RUN.NODES[k].icon + '</i>' + RUN.NODES[k].name + '</span>').join('') + '</div>';
 }
 
-/* ---------- 演出 (お祭りなので派手に。gachafx.js) ---------- */
-/* ガチャの演出: 出てきたパッチの名前で */
-function playGacha(host, result) {
-  if (!result) return Promise.resolve();
-  const info = RUN.patchInfo(result.id);
-  return playCapsule(host, result.rar, info ? info.name : '');
-}
-
 /* 今回のボス: 絵 (art/boss/<id>.webp)・名前・二つ名・プロトコル (小さな紋章)・ルール。big なら BOSS の前の大きな紹介 */
 function bossCard(run, byName, big) {
   const B = RUN.bossOf(run);
@@ -94,27 +86,11 @@ function bossCard(run, byName, big) {
 /* 持っているパッチと HEAT (いつも上に出す) */
 function patchStrip(run) {
   const list = (run.patches || []).map(id => RUN.patchInfo(id)).filter(Boolean);
-  return '<div class="rn-patches"><span class="rn-credit" title="勝つと増える。GACHA に使う">CREDIT ' + (run.credits | 0) + '</span>' +
+  return '<div class="rn-patches"><span class="rn-credit" title="勝つと増える。ショップで使う">CREDIT ' + (run.credits | 0) + '</span>' +
     (run.heat ? '<span class="rn-heatb">HEAT ' + run.heat + '</span>' : '') +
     buildHtml(run) +
     list.map(p => '<span class="rn-pchip ' + p.kind + ' r' + p.rar + ((p.id === 'failsafe' && run.failsafeUsed) || (p.id === 'phoenix' && run.phoenixUsed) ? ' used' : '') + '" title="' + esc(p.text) + '">' +
       esc(p.name) + '</span>').join('') + '</div>';
-}
-
-/* GACHA (戦いの合間に出す)。直前に引いた結果もここに */
-function gachaBox(run) {
-  if (!['map', 'shop', 'reward'].includes(run.phase)) return '';
-  const cost = RUN.gachaCost(run);
-  const r = run.lastPull;
-  const p = r && RUN.patchInfo(r.id);
-  const greed = RUN.setLevel(run, 'GREED') >= 2 ? 2 : 1;
-  return '<div class="rn-gacha">' +
-    '<div class="rn-gacha-h"><b>GACHA</b><span>' + cost + ' クレジットで1回。LEGENDARY ' + RUN.RARITY.L.weight * greed + '% ・ EPIC ' + RUN.RARITY.E.weight * greed +
-      '% ・ RARE ' + RUN.RARITY.R.weight + '%。持っているパッチが出たらライフ +1</span>' +
-      '<button type="button" class="rn-pull" data-act="gacha"' + (RUN.canPull(run) ? '' : ' disabled') + '>引く <small>' + (run.credits | 0) + ' / ' + cost + '</small></button></div>' +
-    (p ? '<div class="rn-capsule r' + r.rar + '" role="status"><small>' + RUN.RARITY[r.rar].name + (r.dupe ? ' ・ かぶり → ライフ +1' : ' ・ NEW') + '</small>' +
-      '<b>' + esc(p.name) + '</b><span>' + esc(p.text) + '</span></div>' : '') +
-    '</div>';
 }
 
 /* ビルド: 系統ごとの数と、付いているボーナス */
@@ -197,7 +173,6 @@ export function openRun(protocols, cardsOf, opts) {
     let showDeck = false;        // 地図の画面でデッキを広げる
     let hub = !!(opts && opts.hub);
     let heatSel = RUN.unlockedHeat();      // はじめるときの HEAT (解放した一番上から)
-    let pulling = false;                   // ガチャの演出中 (二度押しを受けない)
     const set = (next) => { run = next; RUN.saveRun(run); render(); };
     /* defId → 「FIRE 2」 (カードに印刷された値で) */
     const cardLabel = (id) => {
@@ -244,8 +219,8 @@ export function openRun(protocols, cardsOf, opts) {
           '<li>地図を下から登り、頂上の BOSS を倒す (自分は ' + (3 - RUN.RUN_WIN_COMPILES) + ' つコンパイル済みから始まり、あと ' + RUN.RUN_WIN_COMPILES + ' 本で勝ち。序盤は2つ済みから)</li>' +
           '<li>道は自分で選ぶ: 戦闘・精鋭・イベント・休憩所・ショップ・宝箱</li>' +
           '<li>ライフ ' + RUN.RUN_LIFE + '。コンパイルされるたびに 1 減る</li>' +
-          '<li>パッチ (改造) を集めてビルドを組む。カードを外してデッキを研ぐ</li>' +
-          '<li>クレジットでショップと GACHA</li>' +
+          '<li>勝つたびにカードの報酬 (強化・★ カード・除去) を選ぶ。パッチ (改造) は系統をそろえるとボーナス</li>' +
+          '<li>クレジットはショップで使う (報酬は選ぶか買う)</li>' +
           '<li>クリアすると次の HEAT (難しさ) が開く</li></ul>' + runStatus + heatPick +
           (active ? '<button type="button" class="rn-go" data-act="resume">続きから</button>'
             : '<button type="button" class="rn-go" data-act="start">はじめる</button>') + '</section>' +
@@ -346,10 +321,10 @@ export function openRun(protocols, cardsOf, opts) {
               const x = STAR_CARDS.find(c => c.id === o.id);
               return '<button type="button" class="rn-route star" data-card="' + i + '"><small>★ CARD</small><b>' + esc(starLabel(o.id)) + (x ? ' (値 ' + x.value + ')' : '') + '</b><span>' + esc(x ? x.middle : '') + '</span></button>';
             }
-            return '<button type="button" class="rn-route" data-card="' + i + '"><small>CREDIT</small><b>+' + RUN.CARD_REWARD_CREDITS + ' クレジット</b><span>GACHA やショップに使う</span></button>';
+            return '<button type="button" class="rn-route" data-card="' + i + '"><small>CREDIT</small><b>+' + RUN.CARD_REWARD_CREDITS + ' クレジット</b><span>ショップで使う</span></button>';
           };
           return '<h2>勝利！ <small>+' + (run.lastGain | 0) + ' CREDIT</small></h2>' +
-            (run.cursedWin ? '<p class="rn-cursebreak">CURSE BROKEN — 呪いを破った！ RARE 以上確定の GACHA を引いた</p>' : '') +
+            (run.cursedWin ? '<p class="rn-cursebreak">CURSE BROKEN — 呪いを破った！ このあと RARE 以上のパッチを3つから選べる</p>' : '') +
             '<h3>カードの報酬を1つ選ぶ</h3><p class="rn-note">今のデッキ ' + deckLine(run.deck, byName) + '</p>' +
             '<div class="rn-routes">' + (run.cardOffers || []).map(offer).join('') + '</div>' +
             '<div class="rn-btns"><button type="button" data-act="deck">' + (showDeck ? 'デッキを閉じる' : 'デッキを見る') + '</button>' +
@@ -361,7 +336,7 @@ export function openRun(protocols, cardsOf, opts) {
             (run.upgradedNow ? '<p class="rn-note rn-gain">' + esc(starLabel(run.upgradedNow)) + ' を強化した (値 +1)</p>' : '') +
             (run.removedNow ? '<p class="rn-note">' + esc(cardLabel(run.removedNow)) + ' をデッキから外した</p>' : '') +
             (run.gotStar ? '<p class="rn-note rn-gain">★ カード ' + esc(starLabel(run.gotStar)) + ' をデッキに入れた</p>' : '') +
-            (run.cursedWin ? '<p class="rn-cursebreak">CURSE BROKEN — 呪いを破った！ RARE 以上確定の GACHA を引いた</p>' : '') + (swapAdd
+(swapAdd
             ? '<p class="rn-note"><b>' + esc(swapAdd) + '</b> を入れる代わりに、外すプロトコルを選ぶ</p>' +
               '<div class="rn-offers">' + run.deck.map(n => protoChip(byName[n], 'data-remove="' + esc(n) + '"')).join('') + '</div>' +
               '<div class="rn-btns"><button type="button" data-act="unswap">戻る</button></div>'
@@ -378,7 +353,7 @@ export function openRun(protocols, cardsOf, opts) {
           return (run.opp.boss ? '<div class="rn-bossban" data-text="FINAL BOSS" aria-hidden="true">FINAL BOSS</div>' + bossCard({ boss: run.opp.bossId || run.boss }, byName, true) : '') +
             '<h2>' + (run.opp.boss ? '♛' : run.opp.elite ? '☠' : '⚔') + ' ' + kind + ' <small>' + (rowNow(run) + 1) + ' / ' + RUN.MAP_ROWS + ' 段</small></h2>' +
             bonusList(run) +
-            (run.route === 'cursed' ? '<p class="rn-cursed">CURSED — この試合は 自分の手札 4 枚・相手 7 枚。勝てば RARE 以上確定の GACHA</p>' : '') +
+            (run.route === 'cursed' ? '<p class="rn-cursed">CURSED — この試合は 自分の手札 4 枚・相手 7 枚。勝てば RARE 以上のパッチを3つから選べる</p>' : '') +
             (retry ? '<p class="rn-warn">負けたので同じ相手とやり直しです (ライフ −' + last.damage + ')' + (last.saved === 'phoenix' ? ' — PHOENIX でよみがえった！' : last.saved ? ' — FAILSAFE が作動してライフ 1 で耐えました' : '') + '</p>' : '') +
             (run.swapped ? '<p class="rn-note">転送装置: <b>' + esc(run.swapped.out) + '</b> が <b>' + esc(run.swapped.add) + '</b> に入れ替わった</p>' : '') +
             (RUN.runWinCompiles(run) === 1 ? '<p class="rn-note">序盤なので、はじめから2つコンパイル済み — あと1回コンパイルしたら勝ち</p>' : '') +
@@ -404,7 +379,7 @@ export function openRun(protocols, cardsOf, opts) {
         : '';
       el.innerHTML = '<div class="rn-card rn-ph-' + run.phase + '"><div class="rn-head"><b>// RUN</b><span>勝ち抜き戦</span></div>' +
         (run.phase !== 'draft' ? lifeBar(run) + patchStrip(run) : '') + phaseBody() + quit +
-        (!swapAdd && !confirmQuit ? gachaBox(run) : '') + '</div>';
+        '</div>';
       /* 地図は、いまの段が見えるところまで送る */
       const wrap = el.querySelector('.rn-map-wrap');
       if (wrap) {
@@ -432,14 +407,6 @@ export function openRun(protocols, cardsOf, opts) {
         case 'start': hub = false; set(RUN.newRun(names, Math.random, heatSel)); break;
         case 'nopatch': set(RUN.choosePatch(run, null, names)); break;
         case 'nocard': showDeck = false; set(RUN.chooseCardReward(run, null)); break;
-        case 'gacha': {
-          if (pulling) break;
-          const next = RUN.gachaPull(run);
-          if (next === run) break;
-          pulling = true;
-          playGacha(el, next.lastPull).then(() => { pulling = false; set(next); });
-          break;
-        }
         case 'deck': showDeck = !showDeck; render(); break;
         case 'rest': set(RUN.restHeal(run)); break;
         case 'restRemove': set(RUN.restRemove(run)); break;

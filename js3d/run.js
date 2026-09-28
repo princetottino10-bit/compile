@@ -3,7 +3,8 @@
  *   ・3回のドラフト (3つの候補から1つ) でデッキを作り、はじめのパッチを1つ選ぶ
  *   ・地図は下から上へ 12 段。最初から全部見えていて、つながっている道を1段ずつ選んで登る
  *       ⚔ 戦闘 / ☠ 精鋭 (強い。勝つとパッチ) / ? イベント / ✚ 休憩所 (回復かカード除去) /
- *       $ ショップ (パッチ・カード除去・回復・GACHA) / ◆ 宝箱 (パッチ) / ♛ BOSS (最上段)
+ *       $ ショップ (パッチ・★ カード・強化・カード除去・回復) / ◆ 宝箱 (パッチ) / ♛ BOSS (最上段)
+ *   報酬は「選ぶ」か「買う」(GACHA はやめた。2026-09-29)
  *   ・1試合は2本先取 (序盤の1〜2段目のふつうの戦闘は1本先取)。ライフは勝ち抜き戦を通して持ち越し、相手に1回コンパイルされるたびに 1 減る
  *   ・負けたら同じ相手とやり直し。ライフが 0 になったら終わり
  *   ・勝つとクレジットと、プロトコルの入れ替え (取らなくてもよい)
@@ -75,7 +76,7 @@ export const NODES = {
   elite: { icon: '☠', name: '精鋭', text: '強い相手。勝てばクレジット多めと、パッチを1つ' },
   event: { icon: '?', name: 'イベント', text: '何かが起きる' },
   rest: { icon: '✚', name: '休憩所', text: 'ライフを 3 回復するか、カードを1枚外す' },
-  shop: { icon: '$', name: 'ショップ', text: 'クレジットでパッチ・カード除去・回復・GACHA' },
+  shop: { icon: '$', name: 'ショップ', text: 'クレジットでパッチ・★ カード・強化・カード除去・回復' },
   treasure: { icon: '◆', name: '宝箱', text: 'パッチを3つから1つ' },
   boss: { icon: '♛', name: 'BOSS', text: '最強の CPU。倒せばクリア' }
 };
@@ -88,14 +89,14 @@ export const PATCHES = [
   { id: 'failsafe', tag: 'GUARD', kind: 'life', rar: 'E', name: 'FAILSAFE', text: 'ライフが尽きる試合を1度だけ、ライフ 1 で耐える' },
   { id: 'sweep', tag: 'TEMPO', kind: 'life', rar: 'C', name: 'CLEAN SWEEP', text: '1回もコンパイルされずに勝つとライフ +2' },
   { id: 'search', tag: 'GREED', kind: 'life', rar: 'C', name: 'DEEP SEARCH', text: '報酬のプロトコルの候補が 4 つになる' },
-  { id: 'lucky', tag: 'GREED', kind: 'life', rar: 'C', name: 'LUCKY COIN', text: 'GACHA とショップが 1 クレジット安くなる' },
+  { id: 'lucky', tag: 'GREED', kind: 'life', rar: 'C', name: 'LUCKY COIN', text: 'ショップが 1 クレジット安くなる' },
   { id: 'jackpot', tag: 'GREED', kind: 'life', rar: 'E', name: 'JACKPOT', text: '勝つたびにクレジット +2' },
   { id: 'initiative', tag: 'TEMPO', kind: 'game', rar: 'R', name: 'INITIATIVE', text: 'いつも先攻' },
   { id: 'cache', tag: 'HAND', kind: 'game', rar: 'R', name: 'EXTRA CACHE', text: 'はじめの手札 +1' },
   { id: 'buffer', tag: 'HAND', kind: 'game', rar: 'C', name: 'PREFETCH', text: 'はじめの手札 +1 (EXTRA CACHE と重なる)' },
   { id: 'root', tag: 'TEMPO', kind: 'game', rar: 'E', name: 'ROOT ACCESS', text: '試合のはじめからコントロールを持つ' },
   { id: 'jammer', tag: 'HAND', kind: 'game', rar: 'C', name: 'JAMMER', text: '相手のはじめの手札が 4 枚' },
-  /* LEGENDARY: ガチャとショップだけ (はじめのパッチ・精鋭・宝箱には出ない) */
+  /* LEGENDARY: ショップと、呪いの試合の報酬だけ (はじめのパッチ・精鋭・宝箱には出ない。gachaOnly は昔の名前のまま) */
   { id: 'overflow', tag: 'HAND', kind: 'game', rar: 'L', gachaOnly: true, name: 'OVERFLOW', text: 'はじめの手札が 7 枚' },
   { id: 'singularity', tag: 'HAND', kind: 'game', rar: 'L', gachaOnly: true, name: 'SINGULARITY', text: '相手のはじめの手札が 3 枚' },
   { id: 'phoenix', tag: 'GUARD', kind: 'life', rar: 'L', gachaOnly: true, name: 'PHOENIX', text: 'ライフが尽きたら1度だけ、ライフ全回復でよみがえる' },
@@ -113,14 +114,13 @@ export const RARITY = {
   C: { name: 'COMMON', weight: 56, price: 5 }, R: { name: 'RARE', weight: 30, price: 7 },
   E: { name: 'EPIC', weight: 10, price: 10 }, L: { name: 'LEGENDARY', weight: 4, price: 15 }
 };
-export const GACHA_COST = 4;
 export const HEAL_PRICE = 4;
 
 /* ビルド: 同じ系統のパッチを集めたときのボーナス (2つで1段目、3つ以上で2段目も) */
 export const TAGS = {
   HAND: { name: 'HAND', label: '手札', color: '#ff8fc8', bonus: ['相手のはじめの手札 さらに −1', '自分のはじめの手札 さらに +1'] },
   GUARD: { name: 'GUARD', label: '守り', color: '#7cc4ff', bonus: ['最大ライフ +1', '勝つたびにライフ +1'] },
-  GREED: { name: 'GREED', label: '強欲', color: '#ffc85a', bonus: ['勝つたびにクレジット +2', 'GACHA の EPIC 以上が出やすい (2 倍)'] },
+  GREED: { name: 'GREED', label: '強欲', color: '#ffc85a', bonus: ['勝つたびにクレジット +2', 'ショップに EPIC 以上が並びやすい (2 倍)'] },
   TEMPO: { name: 'TEMPO', label: '先手', color: '#7cf0d0', bonus: ['精鋭・呪いの試合に勝つとクレジット +3', 'いつも先攻で、はじめからコントロールを持つ'] },
   RISK: { name: 'RISK', label: '賭け', color: '#ff4f6d', bonus: ['勝つたびにライフ +1', '最大ライフ +3'] }
 };
@@ -150,9 +150,9 @@ export const EVENTS = {
     ]
   },
   arcade: {
-    title: '壊れたガチャ筐体', text: 'コインを入れなくても、レバーが回りそうだ。',
+    title: '壊れた自販機', text: '商品が詰まったまま止まっている。叩けば1つ落ちてきそうだ。',
     options: [
-      { label: 'タダで1回引く', apply: (r, c) => pull(r, c.rnd).run },
+      { label: 'パッチを3つから1つ選ぶ (タダ)', apply: (r, c) => ({ ...r, phase: 'patch', patchOffers: patchOffers(r, c.rnd), after: 'map' }) },
       { label: '中のクレジットを持っていく (+5)', apply: (r) => ({ ...r, credits: (r.credits | 0) + 5 }) }
     ]
   },
@@ -166,7 +166,7 @@ export const EVENTS = {
   altar: {
     title: '呪いの祭壇', text: '祭壇に触れると、次の試合が呪われる。そのかわり…',
     options: [
-      { label: '呪われた試合に挑む (自分の手札 4 枚・相手 7 枚。勝てば RARE 以上確定の GACHA とクレジット)', apply: (r) => ({ ...r, fight: 'cursed' }) },
+      { label: '呪われた試合に挑む (自分の手札 4 枚・相手 7 枚。勝てば RARE 以上のパッチを3つから選べる)', apply: (r) => ({ ...r, fight: 'cursed' }) },
       { label: '立ち去る', apply: (r) => r }
     ]
   },
@@ -362,6 +362,10 @@ function patchOffers(run, rnd) {
   /* 並びは混ぜる (必ず入れた1つがいつも左にならないように) */
   return sample(picks, picks.length, rnd);
 }
+/* RARE 以上 (LEGENDARY も) のパッチの候補 3 つ (呪いの試合の報酬) */
+function rarePatchOffers(run, rnd) {
+  return sample(PATCHES.filter(p => p.rar !== 'C' && !hasPatch(run, p.id)).map(p => p.id), 3, rnd);
+}
 /** テスト用: パッチの候補を作る */
 export const patchOffersFor = (run, rnd = Math.random) => patchOffers(run, rnd);
 /** そのパッチを取ると、系統ボーナスが何段目になるか (0: 変わらない)。画面の「あと1つで」に使う */
@@ -470,39 +474,8 @@ function backTo(run, after) {
   return 'map';
 }
 
-/* ---------- GACHA ---------- */
+/* ---------- 値引き ---------- */
 const discount = (run) => (hasPatch(run, 'lucky') ? 1 : 0);
-/** 1回の値段 (LUCKY COIN で 1 安い) */
-export function gachaCost(run) {
-  return GACHA_COST - discount(run);
-}
-const PULL_PHASES = ['map', 'shop', 'reward'];
-/** 引けるか (戦いの合間だけ) */
-export function canPull(run) {
-  return PULL_PHASES.includes(run.phase) && (run.credits | 0) >= gachaCost(run);
-}
-/* レア度を引き、そのレア度のパッチから1つ。持っているものが出たら「かぶり」でライフ +1。
-   minRare: RARE 以上確定 (呪いの試合の報酬) */
-function pull(run, rnd, minRare) {
-  /* GREED 2段目: EPIC 以上の重みが 2 倍 (そのぶん COMMON が減る) */
-  const w = Object.fromEntries(Object.entries(RARITY).map(([k, v]) => [k, v.weight]));
-  if (setLevel(run, 'GREED') >= 2) { w.C -= w.E + w.L; w.E *= 2; w.L *= 2; }
-  let roll = rnd() * 100;
-  let rar = 'C';
-  for (const k of ['L', 'E', 'R', 'C']) { if (roll < w[k]) { rar = k; break; } roll -= w[k]; }
-  if (minRare && rar === 'C') rar = 'R';
-  const pool = PATCHES.filter(p => p.rar === rar);
-  const p = pool[Math.floor(rnd() * pool.length)];
-  const dupe = hasPatch(run, p.id);
-  const got = dupe ? { ...run, life: Math.min(run.maxLife, run.life + 1) } : addPatch(run, p.id);
-  const result = { id: p.id, rar, dupe };
-  return { run: { ...got, pulls: (run.pulls | 0) + 1, lastPull: result }, result };
-}
-/** GACHA を1回。クレジットが足りなければそのまま */
-export function gachaPull(run, rnd = Math.random) {
-  if (!canPull(run)) return run;
-  return pull({ ...run, credits: (run.credits | 0) - gachaCost(run) }, rnd).run;
-}
 
 /* ---------- カード除去 ---------- */
 export function canRemove(run) {
@@ -613,7 +586,8 @@ function makeShop(run, rnd) {
   for (let i = 0; i < 3; i++) {
     const left = pool.filter(p => !picks.includes(p.id));
     if (!left.length) break;
-    const rar = weighted([['C', 50], ['R', 32], ['E', 13], ['L', 5]].filter(([k]) => left.some(p => p.rar === k)), rnd);
+    const greed = setLevel(run, 'GREED') >= 2 ? 2 : 1;           // GREED 2段目: EPIC 以上が並びやすい
+    const rar = weighted([['C', 50], ['R', 32], ['E', 13 * greed], ['L', 5 * greed]].filter(([k]) => left.some(p => p.rar === k)), rnd);
     const cands = left.filter(p => p.rar === rar);
     picks.push(cands[Math.floor(rnd() * cands.length)].id);
   }
@@ -733,8 +707,8 @@ export function finishBattle(run, win, compiles, names, rnd = Math.random) {
   const node = nodeById(run, run.pos) || { row: 0 };
   const history = run.history.concat({ row: node.row, win: !!win, damage, opp: run.opp.deck, route: run.route || 'normal', saved });
   let base = { ...run, life, history, failsafeUsed, phoenixUsed, lastSaved: saved, credits: (run.credits | 0) + gain, lastGain: gain, lastPull: null };
-  /* 呪いの試合に勝った: RARE 以上確定の GACHA をタダで1回 */
-  if (win && life > 0 && run.route === 'cursed') base = { ...pull(base, rnd, true).run, cursedWin: true };
+  /* 呪いの試合に勝った: 報酬のあとで RARE 以上のパッチ (LEGENDARY も) を3つから選べる */
+  if (win && life > 0 && run.route === 'cursed') base = { ...base, cursedWin: true, pendingRare: true };
   let next;
   if (life <= 0) next = { ...base, life: 0, phase: 'over' };
   else if (!win) next = base;                                          // 同じ相手とやり直す
@@ -757,11 +731,15 @@ export function applyReward(run, choice, names, rnd = Math.random) {
   if (choice.type === 'swap' && run.offers.includes(choice.add) && run.deck.includes(choice.remove)) {
     next = withDeck(run, run.deck.map(n => (n === choice.remove ? choice.add : n)));
   }
+  if (run.pendingRare) {
+    const offers = rarePatchOffers(next, rnd);
+    if (offers.length) return { ...next, offers: [], phase: 'patch', patchOffers: offers, after: 'map', pendingRare: false, pendingPatch: false };
+  }
   if (run.pendingPatch) {
     const offers = patchOffers(next, rnd);
     if (offers.length) return { ...next, offers: [], phase: 'patch', patchOffers: offers, after: 'map' };
   }
-  return { ...next, offers: [], phase: 'map', pendingPatch: false };
+  return { ...next, offers: [], phase: 'map', pendingPatch: false, pendingRare: false };
 }
 
 /* 試合のはじめ方 (パッチ・ビルド・呪い・カード除去)。me = 自分の席 */
