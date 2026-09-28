@@ -54,6 +54,27 @@ export function showPlates({ me, opp }) {
   if (meEl) fill(meEl, me, '');
 }
 
+/* 勝ちまでの進み具合: 名札の横に、コンパイル済みの数だけ埋まった丸 (●●○)。
+   need: 勝ちに要るコンパイルの数 (ボス戦などで側ごとに違う)。名札が出ていないときは何もしない */
+export function setCompileProgress(me, opp) {
+  for (const [id, v] of [['meTag', me], ['vsTag', opp]]) {
+    const el = document.getElementById(id);
+    if (!el || el.hidden || !v) continue;
+    let box = el.querySelector('.pl-comp');
+    if (!box) {
+      box = document.createElement('span');
+      box.className = 'pl-comp';
+      /* 名前の下の段に置く (横に伸ばすと、自分の名札は「SHOW HAND」に隠れていた) */
+      (el.querySelector('.pl-text') || el).append(box);
+    }
+    const need = Math.max(1, Math.min(6, v.need | 0));
+    const done = Math.max(0, Math.min(need, v.done | 0));
+    box.title = 'コンパイル ' + done + ' / ' + need + ' (そろえば勝ち)';
+    box.setAttribute('aria-label', box.title);
+    box.innerHTML = '<i>COMPILE</i>' + Array.from({ length: need }, (_, i) => '<b class="' + (i < done ? 'on' : '') + '"></b>').join('');
+  }
+}
+
 export function hidePlates() {
   for (const id of ['vsTag', 'meTag']) {
     const el = document.getElementById(id);

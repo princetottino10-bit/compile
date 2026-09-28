@@ -42,7 +42,7 @@ import { confetti } from './gachafx.js';
 import { setCosmeticProtocols, profileOf, myLook } from './cosmetics-ui.js';
 import { setCosmeticsProtocols } from './cosmetics-mode.js';
 import { displayName } from './displayname.js';
-import { showPlates } from './plates.js';
+import { showPlates, setCompileProgress } from './plates.js';
 import { matUnlocked, MAT_W, MAT_D } from './playmat.js';
 import { initAccount, openAccount, takeAccountResume, accountState, onAccountChange } from './account.js';
 import { openCardList } from './cardlist-ov.js';
@@ -4774,8 +4774,18 @@ function panelRows(st) {
   });
 }
 
+/* 名札の横の「勝ちまでの進み具合」(●●○) を盤面に合わせる */
+function syncCompileProgress(st) {
+  if (!st || !st.players) return;
+  /* 勝つのに要る本数は側ごとに違うことがある (ボス「聖域」など。エンジンの winCompilesOf と同じ決め方) */
+  const need = (side) => (Array.isArray(st.winBySide) ? st.winBySide[side] : 0) || st.winCompiles || 3;
+  const done = (side) => st.players[side].protocols.filter(p => p.compiled).length;
+  setCompileProgress({ done: done(ME), need: need(ME) }, { done: done(1 - ME), need: need(1 - ME) });
+}
+
 /* 再生の途中でプロトコル板を合わせる。並べ替えは板を滑らせて見せ、終わるまで待つ */
 function syncPanels(st, animate) {
+  syncCompileProgress(st);
   if (runMode && runKind === 'run' && st && !runEnded) {
     /* 勝ち抜き戦: 相手にコンパイルされた回数だけライフを減らして見せる。尽きたらその場で終わり */
     const lost = compilesBy(st, AI);
@@ -4792,6 +4802,7 @@ function syncPanels(st, animate) {
 }
 
 function refreshHud() {
+  syncCompileProgress(shown());      // 名札は作り直されると空になるので、表示の更新のたびに進み具合も合わせる
   const st = shown();
   checkRevealed(st);
   /* 盤面そのものの色で手番を示す (決着後はどちらも消す) */

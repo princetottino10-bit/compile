@@ -3005,6 +3005,12 @@
   /* 自分の名札は画面の左下 (上の帯の中ではなく画面に対して置く)。右の SHOW HAND にかからない幅に */
   /* 相手の名札は右上のボタンの左隣に並べる (左上だとカードの詳細と重なった) */
   #vsTag{position:relative;left:auto;top:auto;margin-left:auto;align-self:center;}
+  /* 名札の横の「勝ちまでの進み具合」(js3d/plates.js の setCompileProgress): コンパイル済みの数だけ埋まった丸 */
+  .plate .pl-comp{display:inline-flex;align-self:flex-start;align-items:center;gap:4px;padding:2px 7px;border-radius:999px;
+    background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);flex:none;}
+  .plate .pl-comp i{font:800 9px/1 var(--font-hud,system-ui);font-style:normal;letter-spacing:.14em;color:var(--dim);margin-right:2px;}
+  .plate .pl-comp b{width:10px;height:10px;border-radius:50%;border:2px solid rgba(255,255,255,.55);box-sizing:border-box;}
+  .plate .pl-comp b.on{background:#fff;border-color:#fff;box-shadow:0 0 8px rgba(255,255,255,.7);}
   #vsTag:not([hidden]) ~ #topRight{margin-left:0;}
   @media (orientation:portrait) and (max-width:860px){
     .plate.me{top:calc(58px + env(safe-area-inset-top))!important;bottom:auto!important;max-width:60vw!important;}
@@ -3500,12 +3506,12 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=1de08a55e4",
+      "./js3d/main.js": "./js3d/main.js?v=420c4d7bf6",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=550d8c0890",
-      "./js3d/panel.js": "./js3d/panel.js?v=88d0c7b38a",
+      "./js3d/panel.js": "./js3d/panel.js?v=aec204f5a0",
       "./js3d/pickaid.js": "./js3d/pickaid.js?v=7fecd8f779",
-      "./js3d/plates.js": "./js3d/plates.js?v=51eb123246",
+      "./js3d/plates.js": "./js3d/plates.js?v=c47e4160a6",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=e0273dcae0",
       "./js3d/playlog.js": "./js3d/playlog.js?v=90aaffedee",
       "./js3d/playmat.js": "./js3d/playmat.js?v=1c8f36818a",
@@ -3571,7 +3577,7 @@
   <link rel="modulepreload" href="js3d/stage.js?v=c918049ff8">
   <link rel="modulepreload" href="js3d/board.js?v=7cf6eeaea7">
   <link rel="modulepreload" href="js3d/control.js?v=c1b87ebc63">
-  <link rel="modulepreload" href="js3d/panel.js?v=88d0c7b38a">
+  <link rel="modulepreload" href="js3d/panel.js?v=aec204f5a0">
   <link rel="modulepreload" href="js3d/setup.js?v=cf7a2ca1a3">
   <link rel="modulepreload" href="js3d/title.js?v=2b0e5bb335">
   <link rel="modulepreload" href="js3d/training.js?v=3018b4399e">
@@ -3588,7 +3594,7 @@
   <link rel="modulepreload" href="js3d/cosmetics-ui.js?v=61977c6f7c">
   <link rel="modulepreload" href="js3d/cosmetics-mode.js?v=c98c4973c0">
   <link rel="modulepreload" href="js3d/displayname.js?v=613e18bf95">
-  <link rel="modulepreload" href="js3d/plates.js?v=51eb123246">
+  <link rel="modulepreload" href="js3d/plates.js?v=c47e4160a6">
   <link rel="modulepreload" href="js3d/playmat.js?v=1c8f36818a">
   <link rel="modulepreload" href="js3d/cardlist-ov.js?v=1d673fd0d2">
   <link rel="modulepreload" href="js3d/opponent-select.js?v=550d8c0890">
@@ -3649,6 +3655,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=1de08a55e4"></script>
+  <script type="module" src="js3d/main.js?v=420c4d7bf6"></script>
 </body>
 </html>
