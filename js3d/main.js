@@ -10,6 +10,7 @@ import { logPlay } from './playlog.js';
 import * as FEEL from './feel.js';
 import { openSpectate } from './spectate.js';
 import { mountAvatar, AVATARS, avatarIds } from './avatar.js';
+import { FAVORITE } from './avatar-lines.js';
 import { aiLine, talkReady, setTalkGate } from './aitalk.js';
 import { countUp, dealIn } from './motion.js';
 import { loadGacha, chipsOf, giveChips } from './gacha.js';
@@ -236,6 +237,29 @@ function myAvatarId() { const k = settings().avatar; return AVATARS[k] && isUnlo
 const avatarsOpen = () => AVATAR_RELEASED || !!accountState().admin;
 /* 持っているキャラ [[id, 名前], ...] (観戦で選ぶ) */
 function ownedAvatars() { return (COSMETICS.avatar || []).filter(([k]) => AVATARS[k] && isUnlocked('avatar', k, myLevel)); }
+/* 相手のキャラは、デッキを決める前に決めておく (その子の得意プロトコルを CPU のデッキに入りやすくするため)。
+   設定の「相手のキャラ」(ふだんはランダム)。自分と同じ子は選ばない */
+let plannedOpp;
+function oppAvatarPlan() {
+  if (plannedOpp !== undefined) return plannedOpp;
+  const me = myAvatarId();
+  const fixed = settings().oppAvatar;
+  plannedOpp = fixed && fixed !== 'random' && AVATARS[fixed] && fixed !== me ? fixed : oppAvatarIds([me])[0];
+  return plannedOpp;
+}
+/* 相手のキャラが出るとき、その子の得意プロトコル (FAVORITE) を CPU のデッキに 7 割で入れる。
+   avoid: 自分のデッキ (同じプロトコルは入れない)。pool: 使えるプロトコル (無ければどれでも) */
+const FAV_RATE = 0.7;
+function oppFavorite() {
+  return avatarsOpen() && settings().avatarShow !== false && !tutorial && !demoMode ? FAVORITE[oppAvatarPlan()] || null : null;
+}
+function favorDeck(deck, avoid, pool) {
+  const fav = oppFavorite();
+  if (!fav || !Array.isArray(deck) || deck.includes(fav) || (avoid || []).includes(fav) || (pool && !pool.includes(fav)) || Math.random() >= FAV_RATE) return deck;
+  const out = deck.slice();
+  out[Math.floor(Math.random() * out.length)] = fav;
+  return out;
+}
 /* 相手のキャラ: 自分・味方と重ならない中から、1戦ごとにランダム (タッグの2人も重ならない) */
 function oppAvatarIds(taken) {
   const pool = shuffled(avatarIds().filter(i => !taken.includes(i)));
@@ -271,9 +295,10 @@ function syncAvatar() {
   if (sp) oppIds = sp.b ? [sp.b, pool([sp.a, sp.b, mate])[0] || sp.b] : [null, null];
   else {
     /* 相手のキャラ: 設定の「相手のキャラ」(ふだんはランダム)。自分・味方と同じ子は選ばない */
-    const fixed = settings().oppAvatar;
-    oppIds = oppAvatarIds([me, mate].filter(Boolean));
-    if (fixed && fixed !== 'random' && AVATARS[fixed] && fixed !== me && fixed !== mate) oppIds[0] = fixed;
+    /* デッキを決める前に決めておいた子 (oppAvatarPlan。得意プロトコルを CPU のデッキに入れるため) */
+    const plan = oppAvatarPlan();
+    oppIds = oppAvatarIds([me, mate, plan].filter(Boolean));
+    if (plan && plan !== me && plan !== mate) oppIds = [plan, oppIds[0]];
   }
   avatars = {
     me: me ? mountAvatar(me, { side: 'me', talk: avatarTalk(ME) }) : null,
@@ -662,6 +687,7 @@ async function boot() {
       const d = randomDecks(from);
       p0 = d.me; p1 = d.ai;
     }
+    p1 = favorDeck(p1, p0, from);                       // 相手のキャラの得意プロトコルが入りやすい
     applyAiDifficulty(lv);
     setupNote = 'おまかせ: あなた ' + p0.join(' / ') + (dailyProto ? ' (' + dailyProto + ' はデイリー)' : '') +
       '　相手 (' + levelLabel(lv) + ') ' + p1.join(' / ');
@@ -825,7 +851,7 @@ async function boot() {
         }
       }
       const chosen = await runSetup(cards.protocols, { training: nextMode === 'training', allowOnline: false, cardsOf: protocolCards,
-        level: opp ? opp.level : undefined });
+        level: opp ? opp.level : undefined, favorite: opp && opp.level < 3 ? oppFavorite() : null });
       if (chosen.online) { nextMode = 'online'; continue; }
       if (chosen.back) {
         if (opp && !chosen.title) continue;                // 相手を選び直す (右上の「タイトル」ならタイトルまで)
@@ -834,6 +860,8 @@ async function boot() {
       }
       document.body.classList.remove('pregame');
       p0 = chosen.me;
+      /* ランダム・自由に選ぶ・一部ランダムの CPU のデッキには、相手のキャラの得意プロトコルが入りやすい (ドラフトは setup.js で) */
+      if (!p1 && !chosen.training && !chosen.first) p1 = favorDeck(chosen.ai, p0);
       p1 = p1 || chosen.ai;
       trainingMode = !!chosen.training;
       /* タッグ: 味方と相手の味方の3つは、それぞれのチームで重ならないように残りからランダム */

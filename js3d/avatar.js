@@ -8,6 +8,7 @@
  * ========================================================================= */
 import { settings } from './settings.js';
 import { isMuted, playClip } from './audio.js';
+import { duckBgm } from './bgm.js';
 import { LINES, FAVORITE } from './avatar-lines.js';
 
 export const FACES = ['normal', 'blink', 'happy', 'fired', 'frustrated', 'surprised'];
@@ -192,6 +193,7 @@ export function mountAvatar(id, opts = {}) {
       if (!h) return;
       if (my !== voiceSeq || !el.isConnected) { h.stop(); return; }
       voiceStop = h.stop;
+      duckBgm(h.duration * 1000 + 200);                // 喋っている間は BGM を小さく
       /* 言い終わる時刻を、声の終わりまで延ばす */
       speakEnd = Math.max(speakEnd, Date.now() + h.duration * 1000 + 200);
     }, () => { /* 声が無くても遊べる */ });

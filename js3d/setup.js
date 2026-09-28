@@ -367,7 +367,12 @@ export function runSetup(protocols, options = {}) {
     const token = draft;
     setTimeout(() => {
       if (draft !== token) return;                         // ルールに戻った
-      const picks = cpuDraftPick(left(), step.n, level, PROTOCOL_STRENGTH);
+      /* 相手のキャラの得意プロトコル (options.favorite) が残っていれば、7 割で先に取る (BAN では使わない) */
+      const fav = options.favorite;
+      const favFirst = fav && step.kind !== 'ban' && left().includes(fav) && !draft.theirs.includes(fav) && Math.random() < 0.7;
+      const picks = favFirst
+        ? [fav].concat(cpuDraftPick(left().filter(n => n !== fav), step.n - 1, level, PROTOCOL_STRENGTH))
+        : cpuDraftPick(left(), step.n, level, PROTOCOL_STRENGTH);
       draft.cpuFlash = picks;
       applyDraft(1, picks, step.kind);
       runDraft();

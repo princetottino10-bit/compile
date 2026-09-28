@@ -19,7 +19,7 @@ import { markerPreviewURL } from './control.js';
 import { emblemDataURL } from './emblems.js';
 import { displayName } from './displayname.js';
 import { openGacha, chipsNow } from './gacha-ui.js';
-import { playBgm, TITLE_BGM, BGM_CREDIT } from './bgm.js';
+import { playBgm, menuBgm, BGM_CREDIT } from './bgm.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const SEEN_KEY = 'compileCosSeen';
@@ -313,7 +313,7 @@ export function openCosmetics(opts) {
   const onKey = (ev) => { if (ev.key === 'Escape') close(); };
   const close = () => {
     /* 試し聴きしていたら、タイトルの曲に戻す */
-    if (listened) playBgm(TITLE_BGM);
+    if (listened) playBgm(menuBgm());
     el.classList.remove('show');
     window.removeEventListener('keydown', onKey);
     if (opts && opts.onClose) opts.onClose();
