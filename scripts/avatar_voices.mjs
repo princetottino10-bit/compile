@@ -20,10 +20,7 @@ const TONE = { compile: 'happy', win: 'happy', good: 'happy', hello: 'happy', ch
 /* キャラごとの声色の差し替え (ずんだもんは、やられたときに怒るより泣く) */
 const TONE_OF = { zundamon: { compiled: 'sad', hurt: 'sad', handes: 'sad', lose: 'sad', behind: 'sad', crushed: 'sad' } };
 
-/* VOICEVOX が読み間違える言葉は、声にするときだけかなに直す (画面の文はそのまま)。
-   見つけ方: audio_query の kana を並べて見る (勝った → マサッタ、手札 → シュサツ などがあった) */
-export const READING = [['勝った', 'かった'], ['勝ち', 'かち'], ['手札', 'てふだ'], ['積み上がって', 'つみあがって']];
-export const fixReading = (t) => READING.reduce((s, [a, b]) => s.split(a).join(b), t);
+import { fixReading } from './voice_fix.mjs';
 
 async function synth(text, speaker) {
   text = fixReading(text);
