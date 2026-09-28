@@ -83,7 +83,12 @@ export function createStage(container) {
      スマホやタッチ対応ノート PC で手札の文字が半分の解像度で描かれてにじんでいた。 */
   const lowPower = Math.min(window.innerWidth, window.innerHeight) < 700
     || (navigator.maxTouchPoints || 0) > 1;
-  const pixelRatio = () => Math.min(window.devicePixelRatio || 1, 2);
+  /* 画質の段 (重い端末で自動に下げる。下の「画質の自動調整」)。0 がいちばんきれい */
+  const GFX_KEY = 'compileGfx';
+  const GFX_CAP = [2, 1.5, 1.25, 1];            // 段ごとの描画解像度 (ピクセル比) の上限
+  let gfxLevel = 0;
+  try { gfxLevel = Math.max(0, Math.min(GFX_CAP.length - 1, parseInt(localStorage.getItem(GFX_KEY), 10) || 0)); } catch (e) { /* 保存できない環境でも遊べる */ }
+  const pixelRatio = () => Math.min(window.devicePixelRatio || 1, GFX_CAP[gfxLevel]);
   renderer.setPixelRatio(pixelRatio());
   renderer.setSize(container.clientWidth, container.clientHeight);
   renderer.shadowMap.enabled = true;
@@ -169,6 +174,8 @@ export function createStage(container) {
   shadowCatcher.receiveShadow = true;
   scene.add(shadowCatcher);
 
+  let appliedW = -1, appliedH = -1;
+
   /* --- ポストプロセス (発光) ---
      レンダラの antialias はポストプロセスの描画先には効かない。そのままだと
      カードの縁や盤面の線がすべてギザギザになったので、描画先をマルチサンプルにする */
@@ -186,6 +193,46 @@ export function createStage(container) {
   );
   composer.addPass(bloom);
   composer.addPass(new OutputPass());
+
+  /* --- 画質の自動調整 ---
+     2 秒ごとに実際の FPS を測り、50 を切っていたら1段ずつ軽くする
+     (1: 解像度を少し下げる / 2: さらに下げて発光を切る / 3: 解像度 1 倍・影を切る)。
+     20 秒続けて 58 以上出ていたら1段戻す。段は端末に覚えておき、次に開いたときもそこから始める。
+     iPhone の低電力モードなどで 30 FPS に揃えられているときは、重さのせいではないので下げない */
+  function applyGfx() {
+    bloom.enabled = gfxLevel < 2;
+    key.castShadow = gfxLevel < 3;
+    shadowCatcher.visible = gfxLevel < 3;
+    renderer.setPixelRatio(pixelRatio());
+    composer.setPixelRatio(pixelRatio());
+    appliedW = -1;
+  }
+  function setGfx(level) {
+    const next = Math.max(0, Math.min(GFX_CAP.length - 1, level));
+    if (next === gfxLevel) return;
+    gfxLevel = next;
+    try { localStorage.setItem(GFX_KEY, String(gfxLevel)); } catch (e) { /* 覚えられなくても今回は効く */ }
+    applyGfx();
+  }
+  const fpsProbe = { t0: 0, n: 0, capped: 0, good: 0, last: 0, fps: 0 };
+  function probeFps(now) {
+    const f = fpsProbe;
+    const gap = f.last ? now - f.last : 0;
+    f.last = now;
+    /* 裏から戻った・読み込みで止まったなどの大きな間は数えない (測り直し) */
+    if (!f.t0 || gap > 250 || document.hidden) { f.t0 = now; f.n = 0; f.capped = 0; return; }
+    f.n++;
+    if (gap > 31 && gap < 36) f.capped++;
+    const span = now - f.t0;
+    if (span < 2000) return;
+    const fps = (f.n * 1000) / span;
+    f.fps = fps;
+    const cappedAt30 = f.capped > f.n * 0.85;
+    if (fps < 50 && !cappedAt30 && elapsed > 4) { setGfx(gfxLevel + 1); f.good = 0; }
+    else if (fps >= 58 && gfxLevel > 0) { f.good += span; if (f.good >= 20000) { setGfx(gfxLevel - 1); f.good = 0; } }
+    else f.good = 0;
+    f.t0 = now; f.n = 0; f.capped = 0;
+  }
 
   /* --- カメラ制御 --- */
   const camState = {
@@ -261,7 +308,6 @@ export function createStage(container) {
   }
 
   /* --- リサイズ --- */
-  let appliedW = -1, appliedH = -1;
   function resize() {
     const w = container.clientWidth, h = container.clientHeight;
     /* 表示倍率が変わった (別モニタへ移動・ブラウザの拡大縮小) ときも取り直す */
@@ -350,7 +396,9 @@ export function createStage(container) {
     camera.lookAt(camState.look);
     /* 表示領域が 0 (たたまれた枠の中など) のときは描かない (大きさ 0 の描画先で警告が大量に出る) */
     if (container.clientWidth > 1 && container.clientHeight > 1) composer.render();
+    if (!catchUp) probeFps(lastTick);
   }
+  applyGfx();
   loop();
 
   /* スマホで裏から戻ったときなどに、3D の描画の土台 (WebGL) が失われることがある。
@@ -370,6 +418,8 @@ export function createStage(container) {
   return {
     THREE, renderer, scene, camera, composer, bloom,
     setCamera, home, focusOn, cinematicHold, shake, onFrame, resize,
+    /* 画質の段と、直近に測った FPS (確かめ用) */
+    gfx: () => ({ level: gfxLevel, fps: Math.round(fpsProbe.fps) }), setGfx,
     lights: { key, rimSelf, rimOpp, fill }
   };
 }

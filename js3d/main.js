@@ -975,6 +975,7 @@ async function boot() {
     endTest: (win) => showEndActions(!!win),
     spectateEndTest: (aWon) => (spectate ? spectateEnd(!!aWon) : null),
     avatarTest: (kind, side) => avatarSay(side === 1 ? AI : ME, kind, { card: 'FIRE 3' }),
+    gfx: () => stage.gfx(), setGfx: (n) => stage.setGfx(n),
     /* 合成した publicState を流し込んでルーム描画経路を検証する (ポーリングなし) */
     testRoomView: async (rm, instant) => {
       roomMode = true;
