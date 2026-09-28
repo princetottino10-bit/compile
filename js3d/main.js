@@ -639,9 +639,12 @@ async function boot() {
            コンパイルでカードが消えたときは、どちらも言わない */
         const byCompile = Date.now() - avatarCompileAt < 6000;
         const actor = avatarActor === null ? cur.state.turn : avatarActor;
+        /* 自分のラインが自分の手で減った (ずらした・裏にした・戻した) ときは、どちらも言わない */
         if (e.delta <= -4 && !byCompile) {
-          if (actor !== e.side) avatarSay(e.side, 'hurt', null, null, 8000);
-          avatarSay(actor, 'wipe', null, null, 8000);
+          if (actor !== e.side) {
+            avatarSay(e.side, 'hurt', null, null, 8000);
+            avatarSay(actor, 'wipe', null, null, 8000);
+          }
         }
         else if (e.ready) avatarSay(e.side, 'almost', null, null, 12000);
         else if (e.delta >= 4 && (avatarActor === null ? cur.state.turn : avatarActor) === e.side) avatarSay(e.side, 'boost', null, null, 10000, 0.6);
