@@ -3430,7 +3430,8 @@ function renderBoardPick() {
   el.innerHTML = pickRibbon(bp.req, {
     count: bp.chosen.length, max: bp.max, back: canBack, skip: pickSkip,
     none: !pickSkip && bp.min === 0 && !bp.chosen.length,
-    extra: goInRibbon ? '<button type="button" class="rb-btn ok" id="pkGo">決定 (' + bp.chosen.length + ')</button>' : ''
+    /* 選べる枚数をすべて選んだら、決定を光らせて「あとは押すだけ」と知らせる */
+    extra: goInRibbon ? '<button type="button" class="rb-btn ok' + (bp.chosen.length >= bp.max ? ' ready' : '') + '" id="pkGo">決定 (' + bp.chosen.length + ')</button>' : ''
   });
   bindPickBar(el);
   bindRibbon(el, {
@@ -3673,11 +3674,8 @@ function toggleBoardPick(uid) {
   else if (previewUid === uid) { previewUid = null; UI.hideCardNote(); }
   /* スマホは乗せる (ホバー) が無いので、選んだカードの上に「選んだら何が起きるか」を出す */
   if (pickAid && isCompactHandUI()) pickAid.tip(uid, bp.chosen.indexOf(uid) >= 0 ? pickPreview(bp, uid) : null);
-  /* 枚数が決まっている盤面の選択 (ちょうど N 枚) は、N 枚目を押した時点で確定する */
-  if (bp.req.kind !== 'pickHand' && bp.min === bp.max && bp.max > 1 && bp.chosen.length === bp.max) {
-    finishBoardPick(bp.chosen.slice());
-    return;
-  }
+  /* 何枚か選ぶ選択は、盤面でも手札でも「選ぶ → 帯の決定」にそろえる
+     (盤面だけ N 枚目で勝手に決まると、押し間違えを取り消せず、手札の選択と操作も食い違っていた) */
   renderBoardPick();
 }
 
