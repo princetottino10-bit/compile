@@ -273,12 +273,21 @@
     .dt-art img.art { width: 100%; height: 100%; object-fit: cover; }
     .dt-art .c-val { font-size: 46px; left: 12px; top: 10px; }
     .dt-art .c-emb { width: 40px; height: 40px; right: 10px; bottom: 10px; }
-    /* 触ると傾いて光沢が指を追う (design-lab 04 ホロカード) */
+    /* 触ると傾いて光沢が指を追う (design-lab 04 ホロカード)。
+       傾けている間は数字と紋章が手前に浮く (Aceternity「3D Card Effect」の仕組み: 部品ごとに translateZ)。
+       overflow:hidden だと奥行きが潰れるので、角の丸みは絵と重ねの層それぞれに持たせる */
+    .dt-art { overflow: visible; transform-style: preserve-3d; }
+    .dt-art img.art, .dt-art::before, .dt-art::after { border-radius: 13px; }
+    .dt-art .c-val, .dt-art .c-emb { transition: transform .2s linear; }
+    .dt-art.holo-active .c-val { transform: translateZ(80px); }
+    .dt-art.holo-active .c-emb { transform: translateZ(50px); }
     .dt-art { --rx: 0deg; --ry: 0deg; --mx: 50%; --my: 50%; --op: 0; transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry)); transition: transform .5s cubic-bezier(.2, .8, .2, 1); touch-action: pan-y; }
     .dt-art.holo-active { transition: transform .06s linear; }
     .dt-art::before { content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: var(--op); transition: opacity .3s; mix-blend-mode: color-dodge;
       background: radial-gradient(circle at var(--mx) var(--my), rgba(255, 255, 255, .4), transparent 45%),
         linear-gradient(115deg, transparent 20%, rgba(255, 79, 163, .45) 36%, rgba(99, 243, 255, .4) 50%, rgba(139, 92, 246, .45) 64%, transparent 80%) var(--mx) 0 / 250% 250%; }
+    /* 奥行きのある重ね (preserve-3d) の中では color-dodge が強く効きすぎるので、指の位置だけ白く光らせる */
+    .dt-art::before { mix-blend-mode: normal; background: radial-gradient(circle at var(--mx) var(--my), rgba(255, 255, 255, .3), transparent 45%); }
     .dt-art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(3, 4, 10, .5), transparent 35%, transparent 75%, rgba(3, 4, 10, .6)); }
     .dt-title { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 4px 40px 4px 0; }
     .dt-title b { font: 900 24px/1 system-ui, sans-serif; letter-spacing: .14em; color: color-mix(in srgb, var(--accent) 40%, #fff); }

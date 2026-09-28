@@ -2308,11 +2308,17 @@
   #title .tt-first div{display:flex;gap:8px;margin-top:2px;}
   #title .tt-first button{padding:10px 16px;cursor:pointer;font:800 12px/1 var(--font-ui);letter-spacing:.12em;}
   #title .tt-first button.go{background:var(--pink)!important;border-color:var(--pink)!important;color:#fff!important;}
-  /* 最初の一歩 (TUTORIAL) は縁を光が回る (design-lab 02)。中はピンクのまま、2px の縁だけ色が巡る */
+  /* 最初の一歩 (TUTORIAL) は光の筋が縁を走る (Magic UI「Shine Border」の移植, MIT License, Copyright (c) Magic UI)。
+     中心だけ色のある放射グラデーションを縁の 2px だけ残して切り抜き、背景の位置をゆっくり往復させる */
+  #title .tt-first button.go{position:relative;}
+  #title .tt-first button.go::after{content:"";position:absolute;inset:0;padding:2px;pointer-events:none;
+    background:radial-gradient(transparent,transparent,#fff,#63f3ff,var(--lav),transparent,transparent) 0 0/300% 300%;
+    -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;
+    mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask-composite:exclude;animation:shine 7s linear infinite;}
+  @keyframes shine{0%{background-position:0% 0%}50%{background-position:100% 100%}to{background-position:0% 0%}}
+  @media (prefers-reduced-motion:reduce){#title .tt-first button.go::after{animation:none;}}
+  /* 決定・確定ボタン (#pickGo / #arrGo) の、縁を光が回る演出で使う */
   @property --ang{syntax:'<angle>';inherits:false;initial-value:0deg}
-  #title .tt-first button.go{border:2px solid transparent!important;
-    background:linear-gradient(var(--pink),var(--pink)) padding-box,conic-gradient(from var(--ang),#fff,var(--violet),var(--cyan),var(--pink),#fff) border-box!important;
-    animation:goSpin 3.2s linear infinite;}
   @keyframes goSpin{to{--ang:360deg}}
   /* SINGLE GAME の「おまかせで今すぐ始める」 */
   .op-quick{display:flex;flex-direction:column;align-items:flex-start;gap:5px;width:100%;margin:0 0 14px;padding:16px 18px;cursor:pointer;
