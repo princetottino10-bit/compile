@@ -7,7 +7,7 @@
  *   動きを減らす設定では、息とまばたきと吹き出しの動きを止める (表情とセリフは出す)
  * ========================================================================= */
 import { settings } from './settings.js';
-import { isMuted, routeMedia } from './audio.js';
+import { isMuted, playClip } from './audio.js';
 
 export const FACES = ['normal', 'blink', 'happy', 'fired', 'frustrated', 'surprised'];
 
@@ -342,28 +342,29 @@ export function mountAvatar(id, opts = {}) {
   }
   let talkSeq = 0;
   /* 声: 設定の「キャラの声の音量」で鳴らす。消音中は鳴らさない。前の声は止める */
-  let voiceEl = null;
+  let voiceStop = null, voiceSeq = 0;
   /* 声を出すか (相手のキャラは設定の「相手のキャラの声」で消せる) */
   let voiceOn = opts.voice !== false;
-  function setVoice(on) { voiceOn = !!on; if (!on && voiceEl) voiceEl.pause(); }
+  const stopVoice = () => { voiceSeq++; if (voiceStop) { voiceStop(); voiceStop = null; } };
+  function setVoice(on) { voiceOn = !!on; if (!on) stopVoice(); }
   function playVoice(url) {
-    try {
-      if (isMuted()) return;
-      /* 設定の「キャラの声の音量」(0 でオフ)。iPhone でも効くよう Web Audio を通す */
-      const vol = Math.max(0, Math.min(1, ((settings().voiceVol ?? 80) | 0) / 100));
-      if (!vol) return;
-      if (voiceEl) voiceEl.pause();
-      voiceEl = new Audio(url);
-      routeMedia(voiceEl, vol);
-      /* 声の長さが分かったら、言い終わる時刻を声の終わりまで延ばす */
-      const v = voiceEl;
-      v.addEventListener('loadedmetadata', () => { if (v === voiceEl && isFinite(v.duration)) speakEnd = Math.max(speakEnd, Date.now() + v.duration * 1000 + 200); });
-      voiceEl.play().catch(() => { /* まだ画面に触れていないなど */ });
-    } catch (e) { /* 声が無くても遊べる */ }
+    if (isMuted()) return;
+    /* 設定の「キャラの声の音量」(0 でオフ)。効果音と同じ Web Audio で鳴らす (iPhone で止められないように。audio.js の playClip) */
+    const vol = Math.max(0, Math.min(1, ((settings().voiceVol ?? 80) | 0) / 100));
+    if (!vol) return;
+    stopVoice();
+    const my = voiceSeq;
+    playClip(url, vol).then((h) => {
+      if (!h) return;
+      if (my !== voiceSeq || !el.isConnected) { h.stop(); return; }
+      voiceStop = h.stop;
+      /* 言い終わる時刻を、声の終わりまで延ばす */
+      speakEnd = Math.max(speakEnd, Date.now() + h.duration * 1000 + 200);
+    }, () => { /* 声が無くても遊べる */ });
   }
   /* タッグ: 後ろに下がる / 前に出る */
   function setBack(on) { el.classList.toggle('av-back', !!on); }
-  function destroy() { clearTimeout(faceTimer); clearTimeout(sayTimer); clearTimeout(blinkTimer); clearTimeout(speakTimer); if (voiceEl) voiceEl.pause(); el.remove(); }
+  function destroy() { clearTimeout(faceTimer); clearTimeout(sayTimer); clearTimeout(blinkTimer); clearTimeout(speakTimer); stopVoice(); el.remove(); }
   /** 言い終わるまでの残り (ミリ秒)。0 なら話していない */
   const idleIn = () => Math.max(0, speakEnd - Date.now());
   return { react, say, setFace, setBack, setVoice, destroy, idleIn, id, el };

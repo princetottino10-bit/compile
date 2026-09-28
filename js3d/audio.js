@@ -27,7 +27,37 @@ export function setSfxVolume(pct) {
 
 export function setMuted(v) { muted = !!v; }
 
-/** <audio> を音量つきで鳴らす道 (BGM・キャラの声)。iPhone は audio.volume が効かないので、Web Audio のゲインを通す。
+/* ---- 短い音声 (キャラの声) ----
+   <audio> を毎回作って鳴らすと、iPhone の Safari は画面に触れた瞬間以外は止めてしまい、声がほとんど出なかった。
+   効果音と同じ Web Audio で鳴らす (音の土台が一度動けば、触れていなくても鳴る)。
+   読んで解いた音は最近の 24 本だけ覚えておく (全部覚えると iPhone のメモリを食うため) */
+const clipCache = new Map();          // url -> Promise<AudioBuffer | null>
+function loadClip(url) {
+  if (clipCache.has(url)) { const p = clipCache.get(url); clipCache.delete(url); clipCache.set(url, p); return p; }
+  const p = fetch(url).then(r => (r.ok ? r.arrayBuffer() : null))
+    .then(b => (b ? new Promise((res) => { try { actx.decodeAudioData(b, res, () => res(null)); } catch (e) { res(null); } }) : null))
+    .catch(() => null);
+  clipCache.set(url, p);
+  while (clipCache.size > 24) clipCache.delete(clipCache.keys().next().value);
+  return p;
+}
+/** 短い音声を鳴らす。返り値: Promise<{ stop(), duration (秒) } | null> (鳴らせなかったら null) */
+export async function playClip(url, vol) {
+  if (!actx || muted || !(vol > 0)) return null;
+  wake();
+  const buf = await loadClip(url);
+  if (!buf || !actx || actx.state !== 'running' || muted) return null;
+  const src = actx.createBufferSource();
+  src.buffer = buf;
+  const g = actx.createGain();
+  g.gain.value = Math.min(1.25, vol);
+  src.connect(g);
+  g.connect(actx.destination);
+  src.start();
+  return { stop() { try { src.stop(); } catch (e) { /* もう終わっている */ } }, duration: buf.duration };
+}
+
+/** <audio> を音量つきで鳴らす道 (BGM)。iPhone は audio.volume が効かないので、Web Audio のゲインを通す。
     返り値: { set(音量 0..1) }。音を作れないブラウザでは audio.volume で代わりにする */
 export function routeMedia(media, vol) {
   const plain = { set(v) { try { media.volume = Math.max(0, Math.min(1, v)); } catch (e) { /* 読み取り専用の端末 */ } } };   // フェードは効かない (すぐ切り替わる)

@@ -314,9 +314,13 @@ async function avatarsQuiet(maxMs = 2500) {
   while (busy() && Date.now() < until) await TW.wait(120);
 }
 /* chance: 言う確率 (毎回だとうるさいもの)。gapMs: 同じ種類を続けて言わない間 */
-function avatarSay(side, kind, vars, st, gapMs, chance) {
+function avatarSay(side, kind, vars, st, gapMs, chance, retried) {
   const a = avatarOf(side, st);
-  if (!a) return;
+  /* キャラがまだ出ていない (対戦の始まりの最初の番の合図など) ときは、大事なセリフだけ少し待って言い直す */
+  if (!a) {
+    if (!retried && AVATAR_MUST.has(kind) && cur) setTimeout(() => avatarSay(side, kind, vars, st, gapMs, chance, true), 1500);
+    return;
+  }
   if (chance !== undefined && Math.random() > chance) return;
   const k = side + ':' + kind;
   const now = Date.now();
@@ -335,7 +339,7 @@ function avatarSay(side, kind, vars, st, gapMs, chance) {
 let avatarIdleTurn = -1, avatarLastInput = Date.now();
 window.addEventListener('pointerdown', () => { avatarLastInput = Date.now(); }, true);
 setInterval(() => {
-  if (!avatars || !cur || busy || cur.requests.length || !humanTurn(cur.state) || cur.state.winner !== null) return;
+  if (!avatars || !cur || busy || demoMode || cur.requests.length || !humanTurn(cur.state) || cur.state.winner !== null) return;   // 観戦は人が考えていないので出さない
   const t = cur.state.turns | 0;
   if (t !== avatarIdleTurn && Date.now() - avatarLastInput > 25000) { avatarIdleTurn = t; avatarSay(AI, 'idle'); }
 }, 3000);
