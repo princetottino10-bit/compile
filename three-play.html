@@ -2946,6 +2946,12 @@
   .fl-delta{position:absolute;transform:translate(-50%,-50%);font:900 26px/1 var(--font-hud,var(--font-ui));letter-spacing:.02em;
     color:#fff;text-shadow:0 0 10px var(--fc,#b9a4ff),0 2px 0 rgba(0,0,0,.6);animation:flUp 1.1s cubic-bezier(.16,1,.3,1) forwards;}
   .fl-delta.down{color:#ffb0c4;text-shadow:0 0 10px #ff4f7a,0 2px 0 rgba(0,0,0,.6);}
+  /* 5 点以上減らされた: 大きく、震えながら落ちる */
+  .fl-delta.down.big{font-size:44px;color:#ff6f8e;text-shadow:0 0 16px #ff2d5f,0 0 30px rgba(255,45,95,.6),0 3px 0 rgba(0,0,0,.7);
+    animation:flBig 1.5s cubic-bezier(.16,1,.3,1) forwards;}
+  @keyframes flBig{0%{opacity:0;transform:translate(-50%,-50%) scale(1.8);}10%{opacity:1;transform:translate(-50%,-50%) scale(1);}
+    14%{transform:translate(-56%,-50%);}18%{transform:translate(-44%,-50%);}22%{transform:translate(-53%,-50%);}26%{transform:translate(-50%,-50%);}
+    70%{opacity:1;transform:translate(-50%,-30%);}100%{opacity:0;transform:translate(-50%,40%);}}
   @keyframes flUp{0%{opacity:0;transform:translate(-50%,-10%) scale(.6);}15%{opacity:1;transform:translate(-50%,-60%) scale(1.15);}
     100%{opacity:0;transform:translate(-50%,-190%) scale(1);}}
   .fl-ready{position:absolute;transform:translate(-50%,-50%);display:grid;place-items:center;}
@@ -3436,9 +3442,9 @@
       "./js3d/aitalk.js": "./js3d/aitalk.js?v=3b756521cb",
       "./js3d/arena.js": "./js3d/arena.js?v=ef66a1e5bb",
       "./js3d/audio.js": "./js3d/audio.js?v=7b95342234",
-      "./js3d/avatar-boss-lines.js": "./js3d/avatar-boss-lines.js?v=9b9afa4a4c",
-      "./js3d/avatar-lines.js": "./js3d/avatar-lines.js?v=f78c559049",
-      "./js3d/avatar.js": "./js3d/avatar.js?v=0f5242b4e4",
+      "./js3d/avatar-boss-lines.js": "./js3d/avatar-boss-lines.js?v=840cd141ea",
+      "./js3d/avatar-lines.js": "./js3d/avatar-lines.js?v=fda2f41737",
+      "./js3d/avatar.js": "./js3d/avatar.js?v=2f0df8e1bd",
       "./js3d/backdrops.js": "./js3d/backdrops.js?v=90faf9612d",
       "./js3d/bgm.js": "./js3d/bgm.js?v=e50e7ed2df",
       "./js3d/board.js": "./js3d/board.js?v=eeabfc6ac9",
@@ -3457,7 +3463,7 @@
       "./js3d/displayname.js": "./js3d/displayname.js?v=613e18bf95",
       "./js3d/emblems.js": "./js3d/emblems.js?v=6d1c077a2e",
       "./js3d/errorreport.js": "./js3d/errorreport.js?v=61f59a3cb3",
-      "./js3d/feel.js": "./js3d/feel.js?v=83bdf7f262",
+      "./js3d/feel.js": "./js3d/feel.js?v=f1af1b9884",
       "./js3d/fx-compile.js": "./js3d/fx-compile.js?v=2fbcc8e763",
       "./js3d/fx-protocols.js": "./js3d/fx-protocols.js?v=509fceb211",
       "./js3d/fx.js": "./js3d/fx.js?v=f76521724c",
@@ -3469,7 +3475,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=bd18a83d53",
+      "./js3d/main.js": "./js3d/main.js?v=6a4ac601ac",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=550d8c0890",
       "./js3d/panel.js": "./js3d/panel.js?v=88d0c7b38a",
@@ -3522,11 +3528,11 @@
   <link rel="modulepreload" href="js3d/daily.js?v=f56dabdf65">
   <link rel="modulepreload" href="js3d/account.js?v=39b7f97249">
   <link rel="modulepreload" href="js3d/playlog.js?v=90aaffedee">
-  <link rel="modulepreload" href="js3d/feel.js?v=83bdf7f262">
+  <link rel="modulepreload" href="js3d/feel.js?v=f1af1b9884">
   <link rel="modulepreload" href="js3d/pickaid.js?v=fa605a9687">
   <link rel="modulepreload" href="js3d/spectate.js?v=e7aaf6e4e9">
-  <link rel="modulepreload" href="js3d/avatar.js?v=0f5242b4e4">
-  <link rel="modulepreload" href="js3d/avatar-lines.js?v=f78c559049">
+  <link rel="modulepreload" href="js3d/avatar.js?v=2f0df8e1bd">
+  <link rel="modulepreload" href="js3d/avatar-lines.js?v=fda2f41737">
   <link rel="modulepreload" href="js3d/aitalk.js?v=3b756521cb">
   <link rel="modulepreload" href="js3d/motion.js?v=36861b0081">
   <link rel="modulepreload" href="js3d/gacha.js?v=ce3d4f3faa">
@@ -3590,7 +3596,7 @@
   <link rel="modulepreload" href="js3d/device.js?v=b519fe2cae">
   <link rel="modulepreload" href="js3d/protocol-strength.js?v=c719e5b65c">
   <link rel="modulepreload" href="js3d/titleback.js?v=bafbbc3a84">
-  <link rel="modulepreload" href="js3d/avatar-boss-lines.js?v=9b9afa4a4c">
+  <link rel="modulepreload" href="js3d/avatar-boss-lines.js?v=840cd141ea">
   <link rel="modulepreload" href="vendor/three.core.js">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/EffectComposer.js">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/RenderPass.js">
@@ -3618,6 +3624,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=14eb51c272">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=bd18a83d53"></script>
+  <script type="module" src="js3d/main.js?v=6a4ac601ac"></script>
 </body>
 </html>

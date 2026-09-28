@@ -16,9 +16,9 @@ const SPEAKER = {
   tsumugi: { base: 8, happy: 8, angry: 8 },
   whitecul: { base: 23, happy: 24, angry: 25 }      // ノーマル / たのしい / かなしい
 };
-const TONE = { compile: 'happy', win: 'happy', good: 'happy', hello: 'happy', chain: 'happy', control: 'happy', fav: 'happy', reach: 'happy', lead: 'happy', compiled: 'angry', hurt: 'angry', handes: 'angry', behind: 'angry' };
+const TONE = { compile: 'happy', win: 'happy', good: 'happy', hello: 'happy', chain: 'happy', control: 'happy', fav: 'happy', reach: 'happy', lead: 'happy', compiled: 'angry', hurt: 'angry', handes: 'angry', behind: 'angry', crushed: 'angry' };
 /* キャラごとの声色の差し替え (ずんだもんは、やられたときに怒るより泣く) */
-const TONE_OF = { zundamon: { compiled: 'sad', hurt: 'sad', handes: 'sad', lose: 'sad', behind: 'sad' } };
+const TONE_OF = { zundamon: { compiled: 'sad', hurt: 'sad', handes: 'sad', lose: 'sad', behind: 'sad', crushed: 'sad' } };
 
 /* VOICEVOX が読み間違える言葉は、声にするときだけかなに直す (画面の文はそのまま)。
    見つけ方: audio_query の kana を並べて見る (勝った → マサッタ、手札 → シュサツ などがあった) */

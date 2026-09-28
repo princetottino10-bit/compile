@@ -36,7 +36,7 @@ export function floatDelta(stage, pos, delta, color) {
   const p = toScreen(stage, pos);
   if (!p) return;
   const el = document.createElement('b');
-  el.className = 'fl-delta ' + (delta > 0 ? 'up' : 'down');
+  el.className = 'fl-delta ' + (delta > 0 ? 'up' : 'down') + (delta <= -5 ? ' big' : '');
   el.textContent = (delta > 0 ? '+' : '−') + Math.abs(delta);
   if (color) el.style.setProperty('--fc', color);
   el.style.left = p.x + 'px';

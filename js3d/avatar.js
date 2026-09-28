@@ -150,7 +150,7 @@ export function mountAvatar(id, opts = {}) {
   const FACE_OF = { play: 'fired', compile: 'happy', compiled: 'frustrated', hurt: 'surprised', almost: 'fired', win: 'happy', lose: 'frustrated', hello: 'happy',
     lesson: 'normal', good: 'happy', retry: 'normal',
     turn: 'normal', down: 'fired', watch: 'surprised', chain: 'happy', refresh: 'normal', idle: 'normal', control: 'happy', boost: 'fired',
-    handes: 'frustrated', wipe: 'fired', rearrange: 'fired', fav: 'happy', reach: 'fired', lead: 'happy', behind: 'frustrated' };
+    handes: 'frustrated', wipe: 'fired', rearrange: 'fired', fav: 'happy', reach: 'fired', lead: 'happy', behind: 'frustrated', crushed: 'surprised' };
   /* チュートリアルの案内 (tu...): できたら笑顔、ほかはふつう */
   const faceOf = (kind) => FACE_OF[kind] || (/^tu\d+ok$/.test(kind) ? 'happy' : /^tu(\d|ask)/.test(kind) ? 'normal' : undefined);
   const lastPick = {};               // 種類ごとに、直前に言ったセリフの番号

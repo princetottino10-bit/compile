@@ -324,7 +324,7 @@ function avatarOf(side, st) {
   return avatars.mate && s && s.tag && s.tag.pilot[ME] === 1 ? avatars.mate : avatars.me;
 }
 /* 大事な場面 (コンパイル・勝敗など)。話している途中でも捨てずに、言い終わったらすぐ言う */
-const AVATAR_MUST_KINDS = new Set(['compile', 'compiled', 'win', 'lose', 'almost', 'reach', 'hurt', 'hello', 'lesson', 'good', 'retry', 'turn', 'lead']);
+const AVATAR_MUST_KINDS = new Set(['compile', 'compiled', 'win', 'lose', 'almost', 'reach', 'hurt', 'crushed', 'hello', 'lesson', 'good', 'retry', 'turn', 'lead']);
 /* チュートリアルの案内 (tu...) も捨てない */
 const AVATAR_MUST = { has: (kind) => AVATAR_MUST_KINDS.has(kind) || /^tu(\d|ask)/.test(kind) };
 /* 話している途中に来たひとことは、1つだけ待たせて、言い終わったら言う (前は捨てていたので「喋ったり喋らなかったり」になっていた)。
@@ -659,10 +659,13 @@ async function boot() {
         const byCompile = Date.now() - avatarCompileAt < 6000;
         const actor = avatarActor === null ? cur.state.turn : avatarActor;
         /* 自分のラインが自分の手で減った (ずらした・裏にした・戻した) ときは、どちらも言わない */
-        if (e.delta <= -4 && !byCompile) {
+        /* 相手の手で 5 点以上減らされたら、一段上の悲鳴 (必ず言う) と、画面を少し揺らす。3〜4 点はいつもの「崩された」 */
+        if (e.delta <= -3 && !byCompile) {
           if (actor !== e.side) {
-            avatarSay(e.side, 'hurt', null, null, 8000);
+            const big = e.delta <= -5;
+            avatarSay(e.side, big ? 'crushed' : 'hurt', null, null, big ? 3000 : 8000);
             avatarSay(actor, 'wipe', null, null, 8000);
+            if (big && !matchMedia('(prefers-reduced-motion: reduce)').matches) stage.shake(0.1, 340);
           }
         }
         else if (e.ready) {
