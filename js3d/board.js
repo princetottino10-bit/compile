@@ -618,6 +618,30 @@ export function createBoard(stage, defIndex, me, hooks) {
     if (played) await stage.home(TIMING.camEase);
   }
 
+  /* 光の色は「対象に何が起きたか」で分ける (元のカードは自分のプロトコル色で脈打つ)。
+     引く=シアン / 動かす=金 / 裏返す=紫 / 削除=赤 / 手札に戻す=緑 / 場に出す=ピンク */
+  const BEAM_KIND_COLOR = {
+    draw: 0x63f3ff, shift: 0xffc857, flip: 0xb388ff, delete: 0xff4d5e, bounce: 0x6dffc2, play: 0xff4fa3
+  };
+  function beamKind(prev, next, uid, a, b) {
+    if (a && a.zone === 'deck') return 'draw';
+    if (b && b.zone === 'trash') return 'delete';
+    if (a && (a.zone === 'field' || a.zone === 'transit') && b && b.zone === 'hand') return 'bounce';
+    if (a && a.zone === 'hand' && b && b.zone === 'field') return 'play';
+    if (locKey(a) !== locKey(b)) return 'shift';
+    if (faceChangedFor(prev, next, uid)) return 'flip';
+    return null;
+  }
+
+  /* 連鎖の軌跡: 1回の解決 (beginTrail 〜 endTrail) の間は光を薄い筋として残し、
+     2つ目の効果からは弧の頂点に順番 (1, 2, …) を出す。解決が終わったら消す */
+  const trail = { on: false, n: 0, marks: [], firstApex: null, timer: null };
+  function clearTrail(ms) {
+    clearTimeout(trail.timer);
+    for (const m of trail.marks) m.fade(ms);
+    trail.marks = []; trail.n = 0; trail.firstApex = null;
+  }
+
   /* 効果の元 (いま解決している効果のカード) から、動く札へ光をつなぐ。
      盤面・手札から動く札と、裏返る札が対象。山札から引く札は山札の位置へ。多すぎるときは6本まで。
      見る権利のないカードは色を伏せる (defFor が伏せた色を返す) */
@@ -629,21 +653,35 @@ export function createBoard(stage, defIndex, me, hooks) {
     const from = srcCard.getWorldPosition(new THREE.Vector3());
     const color = new THREE.Color(defFor(prev, source).color);
     const targets = [];
-    for (const { uid, a } of jobs) {
+    for (const { uid, a, b } of jobs) {
       if (uid === source || targets.length >= 6) continue;
       const c = cards.get(uid);
       if (!c) continue;
+      const kind = beamKind(prev, next, uid, a, b);
+      const beamColor = kind ? new THREE.Color(BEAM_KIND_COLOR[kind]) : color;
       if (a && a.zone === 'deck') {
         const pp = LAYOUT.pilePos('deck', a.side, me, 0);
-        if (!targets.some(t => t.deck === a.side)) targets.push({ deck: a.side, pos: new THREE.Vector3(...pp.pos) });
+        if (!targets.some(t => t.deck === a.side)) targets.push({ deck: a.side, pos: new THREE.Vector3(...pp.pos), color: beamColor });
       } else if (a && (a.zone === 'field' || a.zone === 'hand' || a.zone === 'transit')) {
-        targets.push({ pos: c.getWorldPosition(new THREE.Vector3()) });
+        targets.push({ pos: c.getWorldPosition(new THREE.Vector3()), color: beamColor });
       }
     }
     if (!targets.length) return;
     pulse(source, '#' + color.getHexString(), 260);
+    /* 連鎖の順番: この効果が何番目か。2番目が来たら、1番目にもさかのぼって札を付ける */
+    const order = trail.on ? ++trail.n : 0;
+    const onLinger = trail.on ? (i) => (m) => {
+      if (!trail.on) { m.fade(300); return; }
+      trail.marks.push(m);
+      if (i !== 0) return;                                 // 順番の札は、その効果の最初の光にだけ
+      if (order === 1) { trail.firstApex = { pos: m.apex, color: targets[0].color }; return; }
+      if (order === 2 && trail.firstApex) trail.marks.push(FX.fxOrderBadge(scene, trail.firstApex.pos, 1, trail.firstApex.color));
+      trail.marks.push(FX.fxOrderBadge(scene, m.apex, order, targets[0].color));
+    } : null;
+    /* 解決が止まったまま (選択待ちなど) でも、しばらくしたら片づける */
+    if (trail.on) { clearTimeout(trail.timer); trail.timer = setTimeout(() => clearTrail(600), 9000); }
     const reached = targets.map((t, i) => new Promise((r) => setTimeout(r, i * 50))
-      .then(() => FX.fxLinkBeam(scene, from, t.pos, color, 460)));
+      .then(() => FX.fxLinkBeam(scene, from, t.pos, t.color, 460, onLinger ? { onLinger: onLinger(i) } : null)));
     await Promise.race([Promise.all(reached), TW.wait(700)]);
   }
 
@@ -737,6 +775,9 @@ export function createBoard(stage, defIndex, me, hooks) {
   }
 
   return {
+    /* 連鎖の軌跡: 1回の解決の再生の前後で呼ぶ。間に走った光は薄く残り、2つ目から順番が付く */
+    beginTrail() { clearTrail(200); trail.on = true; },
+    endTrail() { trail.on = false; clearTrail(700); },
     /* 手で運んでいるカード (ドラッグ中) の影。返り値を呼ぶと消える */
     followShadow(card) { return carryShadow(card); },
     setSelected(card, on, colorHex) { if (card) setSelected(card, on, colorHex); },

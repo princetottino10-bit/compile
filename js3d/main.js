@@ -2961,6 +2961,8 @@ async function replayResolution(prev, res, action) {
   const logStep = (step) => { if (liveLog && step.tr) logUpTo(res, res.trace.indexOf(step.tr)); };
   const final = shown();
   UI.hideChain();
+  /* この解決の間に走った「効果の元 → 対象」の光は、薄い筋として残して順番を付ける */
+  board.beginTrail();
 
   /* ステップが多すぎるときは間引いて、テンポを保つ */
   window.__lastSteps = steps.length;
@@ -3062,6 +3064,7 @@ async function replayResolution(prev, res, action) {
   else UI.hideChain();
   /* 最後は必ず本物の状態へ合わせる */
   await board.applyTransition(from, final, first ? action : null, first ? null : { speed: STEP_MOTION });
+  board.endTrail();
   await syncPanels(final, true);
   /* 盤面が最終形になってから、そこまでに進んだ手番/フェイズを告げる */
   await markPhase(final);
