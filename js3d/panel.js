@@ -53,6 +53,9 @@ function rgba(hex, a) {
   return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
 }
 
+/* スマホ (背の低い横持ち・幅の狭い縦持ち) では板が小さく写るので、「✓ COMPILED」の札と ✓ のシールを大きく描く */
+const smallScreen = () => typeof matchMedia === 'function' && matchMedia('(max-height: 500px), (max-width: 700px)').matches;
+
 /* 合計値の札の、板のテクスチャ上の位置と大きさ */
 const BADGE = { w: 128, h: 112, x: TEX_W - 128 - 18, y: (TEX_H - 112) / 2 + 8 };
 
@@ -149,19 +152,27 @@ function paint(ctx, info, arts) {
   }
   ctx.restore();
 
+  /* スマホのコンパイル済み (タッグ以外) は、紋章の場所に大きな ✓ のシールを置く (紋章より「済んだ」が先に目に入るように) */
+  const sealLeft = compiled && !!info.big && !info.parts;
   /* 紋章。タッグの複合プロトコルは2つを同じ大きさで、それぞれの名前の横に */
   const ROW = [H * 0.43, H * 0.74];
   if (info.parts) {
     for (let k = 0; k < 2; k++) {
       drawEmblem(ctx, info.parts[k].name, 30, ROW[k] - 29, 58, compiled ? 'rgba(255,255,255,.95)' : rgba(info.parts[k].color, 0.95), 6);
     }
-  } else {
+  } else if (!sealLeft) {
     drawEmblem(ctx, info.name, 16, (H - 84) / 2, 84,
       compiled ? 'rgba(255,255,255,.95)' : rgba(accent, 0.95), 7);
   }
 
   /* 状態ラベル。コンパイル済みは白地の札「✓ COMPILED」(小さな文字だけでは、特にスマホで読めなかった) */
-  if (compiled) {
+  if (compiled && info.big) {
+    ctx.fillStyle = '#ffffff';
+    roundRect(ctx, 104, 10, 290, 62, 10); ctx.fill();
+    ctx.font = '900 40px ' + FONT.hud;
+    ctx.fillStyle = '#0a0614';
+    ctx.fillText('✓ COMPILED', 118, 56);
+  } else if (compiled) {
     ctx.fillStyle = '#ffffff';
     roundRect(ctx, 108, 20, 196, 38, 8); ctx.fill();
     ctx.font = '800 25px ' + FONT.hud;
@@ -201,19 +212,20 @@ function paint(ctx, info, arts) {
   if (!info.hideTotal) paintBadge(ctx, BADGE.x, BADGE.y, info.total, compiled, accent);
   /* コンパイル済みの印: 合計値の左上に白い丸の ✓ シール。遠目・スマホでも形で分かる大きさ */
   if (compiled) {
-    const cx = BADGE.x - 4, cy = BADGE.y + 6, r = 40;
+    /* スマホ (タッグ以外) は紋章の場所に一回り大きく。タッグは紋章が2つあるので、合計値の左上のまま */
+    const cx = sealLeft ? 58 : BADGE.x - 4, cy = sealLeft ? H / 2 : BADGE.y + 6, r = sealLeft ? 44 : 40, k = r / 40;
     ctx.fillStyle = '#ffffff';
     ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = rgba(accent, 0.9);
     ctx.lineWidth = 6;
     ctx.beginPath(); ctx.arc(cx, cy, r - 3, 0, Math.PI * 2); ctx.stroke();
     ctx.strokeStyle = '#0a0614';
-    ctx.lineWidth = 11;
+    ctx.lineWidth = 11 * k;
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     ctx.beginPath();
-    ctx.moveTo(cx - 18, cy + 1);
-    ctx.lineTo(cx - 5, cy + 15);
-    ctx.lineTo(cx + 19, cy - 14);
+    ctx.moveTo(cx - 18 * k, cy + 1 * k);
+    ctx.lineTo(cx - 5 * k, cy + 15 * k);
+    ctx.lineTo(cx + 19 * k, cy - 14 * k);
     ctx.stroke();
     ctx.lineCap = 'butt'; ctx.lineJoin = 'miter';
   }
@@ -276,6 +288,16 @@ export function createPanels(stage, me, hooks) {
     }
   }
 
+  /* 向きを変えるなどで「スマホの大きさ」かどうかが変わったら、板を描き直す (盤面が動かなくても) */
+  if (typeof window !== 'undefined') {
+    let wasSmall = smallScreen();
+    window.addEventListener('resize', () => {
+      const now = smallScreen();
+      if (now === wasSmall) return;
+      wasSmall = now;
+      for (const p of panels) if (p.info) repaint(p, p.info);
+    });
+  }
   function repaint(p, info) {
     /* プロトコルの並べ替えでこのパネルの担当が変わったら、
        前のプロトコルのアートを捨てて読み直す */
@@ -286,6 +308,7 @@ export function createPanels(stage, me, hooks) {
       p.art.loading = names.map(() => null);
       p.art.compiled = names.map(() => null);
     }
+    info = { ...info, big: smallScreen() };   // 画面の向きや大きさが変わったら、次の更新で描き直す (key に入る)
     p.info = info;                        // 絵の読み込みが後から終わったときは、そのときの内容で描く
     const draw = () => {
       paint(p.loading.ctx, { ...p.info, compiled: false }, p.art.loading);

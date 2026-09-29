@@ -7,6 +7,9 @@ import * as ROOM from './room.js';
 import { weekKey, weekIndex } from './weekly.js';
 import { isUnlockAll, setUnlockAll } from './rewards.js';
 
+/* 読み込み中は三重のリング (アカウントの画面と同じ) */
+const LOADING = '<div class="ac-loading" role="status"><div class="ro-loader" aria-hidden="true"><i></i><i></i><i></i><b></b></div><p class="pz-note">読み込み中…</p></div>';
+
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const TABS = ['STATS', 'PLAYERS', 'WEEKLY', 'ROOMS', 'UNLOCK', 'ERRORS', 'PLAYS'];
 const FREE_DB = 500 * 1024 * 1024;           // Supabase 無料プランのデータベースの目安 (500MB)
@@ -70,13 +73,13 @@ export function openAdmin() {
 
   const views = [
     async () => {
-      body.innerHTML = '<p class="pz-note">読み込み中…</p>';
+      body.innerHTML = LOADING;
       const r = await call('adminStats');
       body.innerHTML = statsHtml(r.stats || {});
     },
     /* PLAYERS: 最後に遊んだ順。表示名を決めていない人は id の頭だけ出して見分ける */
     async () => {
-      body.innerHTML = '<p class="pz-note">読み込み中…</p>';
+      body.innerHTML = LOADING;
       const r = await call('adminPlayers');
       const list = r.players || [];
       const day = (t) => (t ? new Date(t).toLocaleDateString('ja-JP', { year: 'numeric', month: 'numeric', day: 'numeric' }) : '—');
@@ -95,7 +98,7 @@ export function openAdmin() {
       const key = 'W' + week;
       body.innerHTML = '<div class="ad-week"><button type="button" data-ad-week="-1" aria-label="前の週">◀</button><b>' + key +
         (key === weekKey() ? ' <i>(今週)</i>' : '') + '</b><button type="button" data-ad-week="1" aria-label="次の週"' + (week >= weekIndex() ? ' disabled' : '') + '>▶</button></div>' +
-        '<p class="pz-note">読み込み中…</p>';
+        LOADING;
       const r = await call('adminWeekly', { week: key });
       const list = r.clears || [];
       body.querySelector('.pz-note').outerHTML = list.length
@@ -104,7 +107,7 @@ export function openAdmin() {
         : '<p class="pz-note">この週のクリア者はいません</p>';
     },
     async () => {
-      body.innerHTML = '<p class="pz-note">読み込み中…</p>';
+      body.innerHTML = LOADING;
       const r = await call('adminRooms');
       const list = r.rooms || [];
       body.innerHTML = list.length
@@ -121,7 +124,7 @@ export function openAdmin() {
     },
     /* ERRORS: 遊んでいる人の画面で起きたエラー (errorreport.js)。同じエラーはまとめて、回数・最後の時刻・版・端末を出す */
     async () => {
-      body.innerHTML = '<p class="pz-note">読み込み中…</p>';
+      body.innerHTML = LOADING;
       const r = await call('adminErrors');
       const list = r.errors || [];
       const groups = new Map();
@@ -146,7 +149,7 @@ export function openAdmin() {
     },
     /* PLAYS: 遊ばれ方の匿名の記録 (playlog.js)。ゲストも含めた、日ごとの人数・試合数・モード */
     async () => {
-      body.innerHTML = '<p class="pz-note">読み込み中…</p>';
+      body.innerHTML = LOADING;
       const r = await call('adminPlays');
       const s = r.plays || {};
       const days = s.days || [];
