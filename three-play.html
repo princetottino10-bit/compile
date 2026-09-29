@@ -3228,6 +3228,19 @@
     .plate .pl-icon{width:24px;height:24px;} .plate .pl-icon img{width:19px;height:19px;}
     .plate b{font-size:12px;}
   }
+  @media (orientation:portrait) and (max-width:860px){
+    /* 縦のスマホでは ●●○ を名前の横に並べて、名札を縦に伸ばさない (伸びると相手と自分の名札が重なった) */
+    .plate .pl-text{display:grid;grid-template-columns:minmax(3.2em,auto) auto;column-gap:6px;row-gap:4px;align-items:center;}
+    .plate .pl-top{grid-column:1;grid-row:1;}
+    .plate .pl-comp{grid-column:2;grid-row:1;align-self:center;padding:2px 5px;gap:3px;}
+    .plate .pl-comp i{display:none;}
+    .plate .pl-comp b{width:8px;height:8px;border-width:1.5px;}
+    .plate .pl-text > small{grid-column:1 / -1;}
+    #vsTag .pl-top > i{display:none;}  /* 上の帯は狭いので「VS」は省いて、名前を残す */
+    #vsTag{max-width:36vw;padding:4px 8px 4px 4px;gap:6px;}  /* 右のボタン (MENU) を押し出さない幅に */
+    #vsTag .pl-icon{width:24px;height:24px;} #vsTag .pl-icon img{width:19px;height:19px;}
+    #vsTag .pl-comp{padding:2px 4px;gap:2px;margin-left:-1px;}
+  }
   .tt-corner .tt-admin{padding:0 14px;color:var(--pink);border-color:rgba(255,79,163,.55);font-family:var(--font-ui);font-weight:800;letter-spacing:.14em;}
   .tt-corner .tt-admin[hidden]{display:none;}
   /* 管理者の画面 (ACCOUNT → ADMIN) */
