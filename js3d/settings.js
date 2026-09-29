@@ -59,7 +59,8 @@ export function onSettings(cb) {
   cb(current);
 }
 
-/* 設定画面。項目は「音」「対戦の進み方」「おまかせで対戦」「見た目」「キャラ」に分けて見出しを付ける。extra: 画面に足すボタン [{ label, onClick }] (サウンド ON/OFF など) */
+/* 設定画面。項目は「音」「対戦の進み方」「おまかせで対戦」「見た目」「キャラ」に分けて見出しを付け、1項目ずつ枠で囲む。
+   extra: 一番上の「この対戦」に並べるボタン [{ label, onClick, note?, warn? }] (対戦中の歯車から開いたときの「メニューに戻る」など) */
 export function openSettings(extra) {
   let el = document.getElementById('settingsOv');
   if (!el) {
@@ -71,6 +72,10 @@ export function openSettings(extra) {
   const s = current;
   el.innerHTML = '<div class="pz-card st-card" role="dialog" aria-modal="true" aria-label="設定">' +
     '<div class="pz-head"><b>SETTINGS<small>設定</small></b><button type="button" class="pz-x"><span>閉じる</span></button></div>' +
+    (extra && extra.length
+      ? '<h4 class="st-group">この対戦</h4>' + extra.map((x, i) => '<div class="st-row st-act"><span>' + x.label + (x.note ? '<small>' + x.note + '</small>' : '') + '</span>' +
+          '<button type="button" data-extra="' + i + '" class="' + (x.warn ? 'warn' : '') + '">' + (x.button || x.label) + '</button></div>').join('')
+      : '') +
     '<h4 class="st-group">音</h4>' +
     /* 音量: BGM・キャラの声・効果音 (0 でオフ) */
     (BGM_SHOWN ? '<label class="st-row"><span>BGM の音量 <i id="stBgmV">' + volText(s.bgmVol ?? 30) + '</i></span>' +
@@ -117,7 +122,6 @@ export function openSettings(extra) {
         '<p class="st-credit">キャラの声 VOICEVOX:ずんだもん / VOICEVOX:四国めたん / VOICEVOX:春日部つむぎ / VOICEVOX:WhiteCUL　立ち絵 坂本アヒル</p>'
       : '') +
     '<p class="st-credit">BGM 煉獄庭園 (Z･E･R･O・彷徨いの言葉は天に導かれ' + (BGM_RELEASED ? '・オレンジトンネルを抜ける・Burst ほか' : '') + ') / OpenTracks: Yuyake Monster「超頭脳バトル」・まんぼう二等兵「Reflect」「Crescendo Jitter」「プラネタリウムガーデン」「Nine Jack」「沈殿するイルカ」・田中芳典「解読」・NEKOZOU「まどろむネオンの部屋」</p>' +
-    (extra && extra.length ? '<div class="pz-row">' + extra.map((x, i) => '<button type="button" data-extra="' + i + '">' + x.label + '</button>').join('') + '</div>' : '') +
     '</div>';
   el.classList.add('show');
   const close = () => el.classList.remove('show');
