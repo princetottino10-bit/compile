@@ -78,7 +78,7 @@ export const NODES = {
   rest: { icon: '✚', name: '休憩所', text: 'ライフを 3 回復するか、カードを1枚外す' },
   shop: { icon: '$', name: 'ショップ', text: 'クレジットでパッチ・β カード・強化・カード除去・回復' },
   treasure: { icon: '◆', name: '宝箱', text: 'パッチを3つから1つ' },
-  boss: { icon: '♛', name: 'BOSS', text: '最強の CPU。倒せばクリア' }
+  boss: { icon: '♛', name: 'BOSS', text: '今回のボス。倒せばクリア' }
 };
 
 /* パッチ。tag: ビルドの系統 / kind: life (ライフ・報酬に効く) / game (試合のはじめ方を変える) / rar: レア度 (C / R / E / L) */
