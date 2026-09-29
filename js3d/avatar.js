@@ -152,7 +152,7 @@ export function mountAvatar(id, opts = {}) {
     turn: 'normal', down: 'fired', watch: 'surprised', chain: 'happy', refresh: 'normal', idle: 'normal', control: 'happy', boost: 'fired',
     handes: 'frustrated', wipe: 'fired', rearrange: 'fired', fav: 'happy', reach: 'fired', lead: 'happy', behind: 'frustrated', crushed: 'surprised', recompile: 'happy' };
   /* チュートリアルの案内 (tu...): できたら笑顔、ほかはふつう */
-  const faceOf = (kind) => FACE_OF[kind] || (/^tu\d+ok$/.test(kind) ? 'happy' : /^tu(\d|ask)/.test(kind) ? 'normal' : undefined);
+  const faceOf = (kind) => FACE_OF[kind] || (/^play_/.test(kind) ? 'fired' : null) || (/^tu\d+ok$/.test(kind) ? 'happy' : /^tu(\d|ask)/.test(kind) ? 'normal' : undefined);
   const lastPick = {};               // 種類ごとに、直前に言ったセリフの番号
   function react(kind, vars) {
     /* そのキャラに無い種類 (チュートリアルの案内など) は紫苑のセリフを借りる (声は無し) */
@@ -162,6 +162,8 @@ export function mountAvatar(id, opts = {}) {
     const proto = vars && vars.card ? String(vars.card).split(' ')[0] : null;
     /* 得意プロトコルのカードを表で出したら、専用のセリフ (fav) で */
     if (kind === 'play' && proto && def.fav === proto && def.lines.fav) return react('fav', vars);
+    /* プロトコルごとの専用セリフ (play_FIRE など。使うプロトコルが決まっているボス) があれば、7割はそちらで */
+    if (kind === 'play' && proto && def.lines['play_' + proto] && Math.random() < 0.7) return react('play_' + proto, vars);
     /* 同じ種類で、直前と同じセリフは続けて言わない */
     let i = Math.floor(Math.random() * lines.length);
     if (lines.length > 1 && lastPick[kind] === i) i = (i + 1 + Math.floor(Math.random() * (lines.length - 1))) % lines.length;
