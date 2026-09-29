@@ -3481,6 +3481,29 @@
     font:800 11px/1 var(--font-ui,system-ui);letter-spacing:.1em;clip-path:var(--cut-s);}
   .st-card .st-act button:hover{border-color:var(--pink);background:rgba(255,79,163,.16);}
   .st-card .st-act button.warn{border-color:rgba(255,90,120,.6);color:#ffb3c2;}
+  /* COLLECTION: 左に種類の一覧 (盤面・スリーブ…)、右に見本と一覧。設定の画面と同じ形 */
+  .cm-main{flex:1;min-height:0;display:grid;grid-template-columns:150px minmax(0,1fr);gap:14px;}
+  .cm-main > .cm-tabs{flex-direction:column;gap:2px;overflow-x:hidden;overflow-y:auto;padding:4px 0 4px;margin:0;border-right:1px solid rgba(255,255,255,.08);
+    -webkit-mask-image:none;mask-image:none;padding-right:8px;}
+  .cm-main > .cm-tabs button{flex:none;text-align:left;padding:11px 12px;clip-path:none;border:0;border-left:3px solid transparent;background:none;
+    color:var(--dim);font-size:13px;}
+  .cm-main > .cm-tabs button:hover{color:var(--ink);background:rgba(255,255,255,.04);}
+  .cm-main > .cm-tabs button.on{color:#fff;border-left-color:var(--pink);background:linear-gradient(90deg,rgba(255,79,163,.2),rgba(255,79,163,0));}
+  .cm-main > .cm-tabs .cm-dot{top:50%;right:8px;margin-top:-4px;}
+  .cm-main > .cm-body{min-height:0;}
+  @media (max-height:500px){
+    .cm-main{grid-template-columns:112px minmax(0,1fr);gap:10px;}
+    .cm-main > .cm-tabs button{padding:8px 10px;font-size:12px;}
+  }
+  @media (orientation:portrait) and (max-width:700px){
+    .cm-main{grid-template-columns:84px minmax(0,1fr);gap:8px;}
+    .cm-main > .cm-tabs{padding-right:4px;}
+    .cm-main > .cm-tabs button{padding:10px 6px;font-size:12px;line-height:1.3;}
+    .cm-main .cm-grid{grid-template-columns:repeat(auto-fill,minmax(84px,1fr));}
+    /* 見出しの段: 「← 戻る」が文字になった分、全体の数は省いて GACHA を画面内に (種類ごとの数は一覧の上に出ている) */
+    .cm-head > span{display:none;}
+    .cm-head b{font-size:15px;letter-spacing:.1em;}
+  }
 </style>
 </head>
 <body>
@@ -3599,7 +3622,7 @@
       "./js3d/chips.js": "./js3d/chips.js?v=e67e280b76",
       "./js3d/cloudsave.js": "./js3d/cloudsave.js?v=d1643b2cad",
       "./js3d/control.js": "./js3d/control.js?v=c1b87ebc63",
-      "./js3d/cosmetics-mode.js": "./js3d/cosmetics-mode.js?v=2c229b65f0",
+      "./js3d/cosmetics-mode.js": "./js3d/cosmetics-mode.js?v=e4efe434ee",
       "./js3d/cosmetics-ui.js": "./js3d/cosmetics-ui.js?v=61977c6f7c",
       "./js3d/crashwatch.js": "./js3d/crashwatch.js?v=57c6c91bd8",
       "./js3d/daily.js": "./js3d/daily.js?v=f56dabdf65",
@@ -3708,7 +3731,7 @@
   <link rel="modulepreload" href="js3d/rewards.js?v=da45fcbbfc">
   <link rel="modulepreload" href="js3d/gachafx.js?v=3d15a2226f">
   <link rel="modulepreload" href="js3d/cosmetics-ui.js?v=61977c6f7c">
-  <link rel="modulepreload" href="js3d/cosmetics-mode.js?v=2c229b65f0">
+  <link rel="modulepreload" href="js3d/cosmetics-mode.js?v=e4efe434ee">
   <link rel="modulepreload" href="js3d/displayname.js?v=613e18bf95">
   <link rel="modulepreload" href="js3d/plates.js?v=c47e4160a6">
   <link rel="modulepreload" href="js3d/playmat.js?v=1c8f36818a">
