@@ -44,6 +44,35 @@ export function trackGain(key) {
   const l = LOUDNESS[key];
   return l === undefined ? 1 : Math.min(1.6, Math.pow(10, (LOUD_TARGET - l) / 20));
 }
+/* コントロールセンター (ロック画面) の「再生中」に出す曲名と作者 */
+const TITLES = {
+  cho_zunou: ['超頭脳バトル', 'Yuyake Monster'], reflect: ['Reflect', 'まんぼう二等兵'], kaidoku: ['解読', '田中芳典'],
+  crescendo_jitter: ['Crescendo Jitter', 'まんぼう二等兵'], planetarium: ['プラネタリウムガーデン', 'まんぼう二等兵'],
+  madoromu_neon: ['まどろむネオンの部屋', 'NEKOZOU'], nine_jack: ['Nine Jack', 'まんぼう二等兵'], iruka: ['沈殿するイルカ', 'まんぼう二等兵'],
+  zero: ['Z･E･R･O', '煉獄庭園'], samayoi: ['彷徨いの言葉は天に導かれ', '煉獄庭園'], orange_tunnel: ['オレンジトンネルを抜ける', '煉獄庭園']
+};
+/* 「再生中」の表示を整える: 曲名・作者・ゲームのアイコン。▶/⏸ で BGM を鳴らす・止める。10 秒送り・戻しは出さない */
+function syncMediaSession() {
+  const ms = typeof navigator !== 'undefined' && navigator.mediaSession;
+  if (!ms || typeof MediaMetadata === 'undefined') return;
+  try {
+    if (!want) { ms.playbackState = 'paused'; return; }
+    const [title, artist] = TITLES[want] || ['BGM', BGM_CREDIT];
+    ms.metadata = new MediaMetadata({ title, artist, album: 'COMPILE',
+      artwork: [{ src: new URL('icons/arena-180.png', location.href).href, sizes: '180x180', type: 'image/png' }] });
+    ms.playbackState = el && !el.paused ? 'playing' : 'paused';
+  } catch (e) { /* 対応していないブラウザでは何もしない */ }
+}
+let mediaHandlers = false;
+function bindMediaSession() {
+  const ms = typeof navigator !== 'undefined' && navigator.mediaSession;
+  if (!ms || mediaHandlers) return;
+  mediaHandlers = true;
+  const set = (action, fn) => { try { ms.setActionHandler(action, fn); } catch (e) { /* その操作は無い */ } };
+  set('play', () => { if (el && want) el.play().catch(() => {}); syncMediaSession(); });
+  set('pause', () => { if (el) el.pause(); syncMediaSession(); });
+  for (const a of ['seekbackward', 'seekforward', 'seekto', 'previoustrack', 'nexttrack']) set(a, null);
+}
 /** ふつうの対戦の曲を1つ選ぶ */
 export const pickNormalBgm = () => NORMAL_BGMS[Math.floor(Math.random() * NORMAL_BGMS.length)];
 
@@ -79,6 +108,7 @@ function swapTrack() {
     if (want !== was) return;             // その間に止めた・別の曲にした
     want = next;
     el.src = bgmFile(next);
+    syncMediaSession();
     refreshBgm();
   }, 1300);
 }
@@ -90,6 +120,9 @@ function ensure() {
   el.loop = true;
   el.preload = 'auto';
   el.addEventListener('timeupdate', onTime);
+  el.addEventListener('play', syncMediaSession);
+  el.addEventListener('pause', syncMediaSession);
+  bindMediaSession();
   route = routeMedia(el, level());
 }
 
@@ -103,6 +136,7 @@ export function playBgm(key) {
     ensure();
     const url = bgmFile(want);
     if (!el.src.endsWith(url)) { el.src = url; loops = 0; lastTime = 0; }
+    syncMediaSession();
     refreshBgm();
   } catch (e) { /* BGM が無くても遊べる */ }
 }
