@@ -30,6 +30,20 @@ export const BOSS_BGM = 'samayoi';
 const FILES = { cho_zunou: 'cho_zunou.m4a', reflect: 'reflect.m4a', kaidoku: 'kaidoku.m4a', crescendo_jitter: 'crescendo_jitter.m4a',
   planetarium: 'planetarium.m4a', madoromu_neon: 'madoromu_neon.m4a', nine_jack: 'nine_jack.m4a', iruka: 'iruka.m4a' };
 export const bgmFile = (key) => 'art/bgm/' + (FILES[key] || key + '.mp3');
+/* 曲ごとの大きさ (ラウドネス、LUFS。ffmpeg の ebur128 で測った値)。曲によって 10 dB 近く違ったので、
+   鳴らすときに LOUD_TARGET へそろえる (大きい曲は下げ、小さい曲は少しだけ上げる)。曲を足したら測って書き足す:
+   ffmpeg -i art/bgm/<曲> -af ebur128=framelog=quiet -f null -   (最後の I: の値) */
+const LOUDNESS = {
+  a: -15.1, burst: -12.1, cho_zunou: -11.8, crazy_cat: -12.3, crescendo_jitter: -5.6, destroy_god: -6.6, final_2sec: -9.4,
+  iruka: -6.6, junk_smash: -13.5, kaidoku: -14.5, kessen_asa: -8.8, madoromu_neon: -14.3, nine_jack: -7.6, orange_tunnel: -11.0,
+  planetarium: -8.5, reaper_phoenix: -9.1, reflect: -7.9, samayoi: -8.9, zero: -13.4
+};
+const LOUD_TARGET = -11;              // 曲の真ん中あたり (全体の大きさは今までと同じくらいに)
+/** その曲を LOUD_TARGET にそろえる倍率 (上げるのは 1.6 倍まで。測っていない曲は 1) */
+export function trackGain(key) {
+  const l = LOUDNESS[key];
+  return l === undefined ? 1 : Math.min(1.6, Math.pow(10, (LOUD_TARGET - l) / 20));
+}
 /** ふつうの対戦の曲を1つ選ぶ */
 export const pickNormalBgm = () => NORMAL_BGMS[Math.floor(Math.random() * NORMAL_BGMS.length)];
 
@@ -38,7 +52,7 @@ let route = null;
 let want = null;                 // 鳴らしたい曲 (null なら止める)
 
 /* 音量: 設定の「BGM」(はじめは 30。キャラの声が聞き取りやすいよう控えめに) */
-const level = () => (isMuted() ? 0 : Math.max(0, Math.min(1, (settings().bgmVol ?? 30) / 100)) * 0.7);
+const level = () => (isMuted() ? 0 : Math.max(0, Math.min(1, (settings().bgmVol ?? 30) / 100)) * 0.7 * (want ? trackGain(want) : 1));
 
 /* ふつうの対戦の曲 (ランダムの4曲) は、ROTATE_LOOPS 周したら別の曲へつなぐ (同じ曲がずっと続かないように)。
    ボス・強敵の曲、COLLECTION で選んだ曲は替えない */

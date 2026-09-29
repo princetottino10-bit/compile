@@ -88,7 +88,7 @@ function patchStrip(run) {
   return '<div class="rn-patches"><span class="rn-credit" title="勝つと増える。ショップで使う">CREDIT ' + (run.credits | 0) + '</span>' +
     (run.heat ? '<span class="rn-heatb">HEAT ' + run.heat + '</span>' : '') +
     buildHtml(run) +
-    list.map(p => '<span class="rn-pchip ' + p.kind + ' r' + p.rar + ((p.id === 'failsafe' && run.failsafeUsed) || (p.id === 'phoenix' && run.phoenixUsed) ? ' used' : '') + '" title="' + esc(p.text) + '">' +
+    list.map(p => '<span class="rn-pchip ' + p.kind + ' r' + p.rar + ((p.id === 'failsafe' && run.failsafeUsed) || (p.id === 'phoenix' && run.phoenixUsed) ? ' used' : '') + '" title="' + esc(RUN.patchText(run, p)) + '">' +
       esc(p.name) + '</span>').join('') + '</div>';
 }
 
@@ -117,7 +117,7 @@ function patchCard(p, attrs, run) {
     : have ? '<span class="rn-combo dim" style="--tc:' + tag.color + '">' + p.tag + ' を ' + have + 'つ持っている</span>' : '';
   return '<button type="button" class="rn-patch ' + p.kind + ' r' + p.rar + '" ' + (attrs || '') + '>' +
     '<em class="rn-tag" style="--tc:' + tag.color + '">' + p.tag + '</em>' +
-    '<small>' + (p.kind === 'game' ? 'BATTLE PATCH' : 'SYSTEM PATCH') + ' ・ ' + RUN.RARITY[p.rar].name + '</small><b>' + esc(p.name) + '</b><span>' + esc(p.text) + '</span>' +
+    '<small>' + (p.kind === 'game' ? 'BATTLE PATCH' : 'SYSTEM PATCH') + ' ・ ' + RUN.RARITY[p.rar].name + '</small><b>' + esc(p.name) + '</b><span>' + esc(RUN.patchText(run, p)) + '</span>' +
     (p.cost ? '<span class="rn-cost">代償: ' + esc(p.cost) + '</span>' : '') + combo + '</button>';
 }
 

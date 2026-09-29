@@ -4772,7 +4772,8 @@ function checkRevealed(st) {
   uiHold = UI.showRevealedHand(r.cards.map((id) => {
     const d = defIndex[id];
     return d ? { img: faceImageURL(d), label: d.proto + ' ' + d.value } : null;
-  }).filter(Boolean), title, demoMode ? { autoClose: 4 } : undefined);
+  /* 観戦・AUTO (押す人がいない) では、決めた秒数で閉じて先へ進む */
+  }).filter(Boolean), title, demoMode ? { autoClose: 4 } : autoPlay && !roomMode ? { autoClose: 3 } : undefined);
   return uiHold;
 }
 

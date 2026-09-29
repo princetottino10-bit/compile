@@ -103,7 +103,7 @@ export const PATCHES = [
   { id: 'midas', tag: 'GREED', kind: 'life', rar: 'L', gachaOnly: true, name: 'MIDAS TOUCH', text: 'もらえるクレジットが 2 倍' },
   /* RISK: 強い効果と、はっきりした代償がセット (cost に代償) */
   { id: 'nocost', tag: 'RISK', kind: 'game', rar: 'E', name: 'NO COST', text: '自分のカードの効果で手札を捨てるとき、捨てなくてよい (捨てたことになる)', cost: 'はじめの手札 −2' },
-  { id: 'double', tag: 'RISK', kind: 'game', rar: 'E', name: 'DOUBLE DOWN', text: 'デッキの1つ目のプロトコルの、表向きの値が 2 倍', cost: 'ほかの2つのプロトコルの、表向きの値 −1' },
+  { id: 'double', tag: 'RISK', kind: 'game', rar: 'E', name: 'DOUBLE DOWN', text: '{first} の表向きの値が 2 倍 (デッキのいちばん左のプロトコル)', cost: 'ほかの2つのプロトコルの、表向きの値 −1' },
   { id: 'shadow', tag: 'RISK', kind: 'game', rar: 'R', name: 'SHADOW RULE', text: '裏向きのカードの値が 4', cost: '表向きのカードの値が全部 −1' },
   { id: 'oneshot', tag: 'RISK', kind: 'game', rar: 'L', name: 'ONE SHOT', text: '1本コンパイルしたら勝ち', cost: '最大ライフが半分' },
   { id: 'gluttony', tag: 'RISK', kind: 'game', rar: 'R', name: 'GLUTTONY', text: 'はじめの手札が 7 枚', cost: '相手のはじめの手札も 7 枚' },
@@ -335,6 +335,11 @@ export function reachable(run) {
 /* ---------- パッチ ---------- */
 export const hasPatch = (run, id) => (run.patches || []).includes(id);
 export const patchInfo = (id) => PATCH[id] || null;
+/** パッチの説明文 ({first} はデッキのいちばん左のプロトコルの名前。まだ無ければ「いちばん左のプロトコル」) */
+export function patchText(run, p) {
+  const first = run && run.deck && run.deck[0];
+  return String(p.text).split('{first}').join(first || 'いちばん左のプロトコル');
+}
 
 /** その系統のパッチの数 */
 export function tagCount(run, tag) {
