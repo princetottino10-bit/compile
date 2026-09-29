@@ -15,6 +15,14 @@
 #playChoices .place-faceup { background: rgba(23,65,55,.55); border-color: #73cdb2; color: #e4fff5; }
 #playChoices .place-facedown { background: rgba(37,36,58,.55); border-color: #9997d7; }
 #playChoices button:hover { background-color: rgba(40,80,90,.95); }
+/* 置いたあとのラインの合計 (効果を解く前)。表/裏の横に小さく */
+#playChoices button { display: inline-flex; align-items: baseline; justify-content: center; gap: 4px; }
+#playChoices button { gap: 7px; }
+#playChoices .place-total { display: inline-flex; align-items: baseline; gap: 2px; padding-left: 7px; border-left: 1px solid rgba(255,255,255,.22);
+  font-family: var(--font-hud, system-ui), sans-serif; font-size: .9em; font-weight: 800; color: #fff; font-variant-numeric: tabular-nums; }
+#playChoices .place-total i { font-style: normal; font-size: .72em; opacity: .75; }
+#playChoices .place-faceup .place-total i { color: #73cdb2; opacity: 1; }
+#playChoices .place-facedown .place-total i { color: #b9b7ff; opacity: 1; }
 #playChoices button { text-shadow: 0 1px 4px rgba(0,0,0,.9); }
 #playChoices button:hover, #playChoices button:focus-visible { outline: 2px solid #ffdb8a; outline-offset: 2px; }
 .placement-lane.focused { transform: translate(-50%, -50%) scale(1.12); box-shadow: 0 0 32px #ffdb8a; }
@@ -37,3 +45,16 @@
   #playChoices button { min-width: 44px; min-height: 32px; padding: 4px 7px; font-size: 13px; }
   .placement-cancel { right: calc(10px + env(safe-area-inset-right)); bottom: 12px; }
 }
+
+/* 移動先の置き場の上に出す、移動したあとのラインの合計 (効果を解く前)。見るだけでタップは通す */
+#shiftTotals { position: fixed; inset: 0; z-index: 28; pointer-events: none; }
+/* 置き場の光と同じ色の縁 (自分 = 緑、相手 = 桃)。数字は盤面の合計と同じ字 */
+#shiftTotals .shift-total { position: absolute; transform: translate(-50%, -50%); display: inline-flex; align-items: baseline; gap: 3px;
+  padding: 4px 11px 5px; border-radius: 10px; background: rgba(5,14,23,.8); border: 1px solid rgba(109,255,194,.75);
+  box-shadow: 0 0 14px rgba(109,255,194,.28); color: #fff; font-family: var(--font-hud, system-ui), sans-serif;
+  font-variant-numeric: tabular-nums; text-shadow: 0 1px 4px rgba(0,0,0,.9); }
+#shiftTotals .shift-total[data-side="1"] { border-color: rgba(255,59,157,.82); box-shadow: 0 0 16px rgba(255,59,157,.3); }
+#shiftTotals .shift-total i { font-style: normal; font-size: 13px; font-weight: 700; color: #73cdb2; }
+#shiftTotals .shift-total[data-side="1"] i { color: #ff8cc4; }
+#shiftTotals .shift-total b { font-size: 22px; font-weight: 800; line-height: 1; }
+#shiftTotals .shift-total[hidden] { display: none; }

@@ -4,7 +4,8 @@ export function placementChoices(actions, uid, turn) {
     .map(a => ({ ...a, side: a.side ?? turn }));
 }
 
-export function renderPlayChoices(root, options, protocols, title, choose, cancel) {
+/* totalAfter(action): 置いたあとのそのラインの合計 (効果を解く前)。無ければ出さない */
+export function renderPlayChoices(root, options, protocols, title, choose, cancel, totalAfter) {
   root.replaceChildren();
   root.hidden = !title;
   document.body.classList.toggle('choosing-placement', !!title);
@@ -28,9 +29,21 @@ export function renderPlayChoices(root, options, protocols, title, choose, cance
       const name = protocols[side][line].name;
       for (const action of choices) {
         const button = document.createElement('button'); button.type = 'button';
-        button.textContent = action.faceUp ? '表' : '裏';
+        const face = document.createElement('span');
+        face.textContent = action.faceUp ? '表' : '裏';
+        button.append(face);
+        const total = totalAfter ? totalAfter(action) : null;
+        if (Number.isFinite(total)) {
+          const t = document.createElement('small');
+          t.className = 'place-total';
+          const arrow = document.createElement('i');
+          arrow.textContent = '→';
+          t.append(arrow, String(total));
+          button.append(t);
+        }
         button.className = action.faceUp ? 'place-faceup' : 'place-facedown';
-        button.setAttribute('aria-label', name + 'に' + (action.faceUp ? '表で置く' : '裏で置く'));
+        button.setAttribute('aria-label', name + 'に' + (action.faceUp ? '表で置く' : '裏で置く')
+          + (Number.isFinite(total) ? '。置くと合計 ' + total : ''));
         button.onclick = () => choose(action); cell.append(button);
       }
       root.append(cell);

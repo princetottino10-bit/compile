@@ -692,7 +692,7 @@ async function boot() {
     }
   });
   buildPads();
-  stage.onFrame((dt, t) => { positionPlayChoices(); trackHandTop(); trackHandRight(); trackPileCounts(); if (panels) panels.tick(t); });
+  stage.onFrame((dt, t) => { positionPlayChoices(); positionShiftTotals(); trackHandTop(); trackHandRight(); trackPileCounts(); if (panels) panels.tick(t); });
   /* 設定 (演出の速さ・音量) を反映し、変わったらすぐ当てる */
   /* 盤面の柄は解放されているものだけ (記録を消したあとなどに、未解放のまま残らないように) */
   onSettings((s) => {
@@ -2350,6 +2350,22 @@ function currentPlacementChoices() {
   return placementChoices(legalNow(), selectedUid, shown().turn);
 }
 
+/* 置いたあとのそのラインの合計 (効果を解く前)。写しの盤面に積んで、エンジンと同じ数え方で数える */
+function placedTotal(st, action) {
+  try {
+    const s = JSON.parse(JSON.stringify(st));
+    delete s._totals;
+    const c = s.cards[action.card];
+    if (!c) return null;
+    const side = action.side ?? s.turn;
+    for (const p of s.players) p.hand = p.hand.filter(u => u !== action.card);
+    c.faceUp = !!action.faceUp;
+    c.zone = 'field';
+    c.owner = side;
+    s.lines[action.line][side].push(action.card);
+    return Engine.lineTotal(s, action.line, side);
+  } catch (e) { return null; }
+}
 function updatePlayChoices() {
   const root = document.getElementById('playChoices');
   if (!root || !cur) return;
@@ -2371,7 +2387,7 @@ function updatePlayChoices() {
     }, () => {
       if (boardPick?.kind === 'free') { boardPick.sel = null; renderFreePick(); }
       else { deselect(); showPreview(null); }
-    });
+    }, (action) => placedTotal(shown(), action));
   positionPlayChoices();
   if (tutorial) applyTutorialFocus();
 }
@@ -3789,6 +3805,78 @@ function renderLinePick() {
   el.innerHTML = pickRibbon(bp.req, { back: canBack, skip: pickSkip });
   bindPickBar(el);
   bindRibbon(el, { back: () => finishLinePick(PICK_BACK), skip: () => finishLinePick(PICK_SKIP) });
+  renderShiftTotals(bp);
+}
+
+/* 移動先ごとの、移動したあとのそのラインの合計 (効果を解く前)。写しの盤面で動かして、エンジンと同じ数え方で数える */
+function shiftedTotals(st, req) {
+  const uids = (Array.isArray(req.focus) ? req.focus : [req.focus]).filter(u => u != null);
+  if (!st || !uids.length || !Array.isArray(req.lines)) return [];
+  const out = [];
+  for (const dest of req.lines) {
+    try {
+      const s = JSON.parse(JSON.stringify(st));
+      delete s._totals;
+      const sides = new Set();
+      for (const u of uids) {
+        for (let l = 0; l < 3; l++) for (let sd = 0; sd < 2; sd++) {
+          const stk = s.lines[l][sd];
+          const i = stk.indexOf(u);
+          if (i >= 0 && l !== dest) { stk.splice(i, 1); s.lines[dest][sd].push(u); sides.add(sd); }
+        }
+      }
+      for (const sd of sides) out.push({ line: dest, side: sd, total: Engine.lineTotal(s, dest, sd) });
+    } catch (e) { /* 数えられないときは出さない */ }
+  }
+  return out;
+}
+
+/* 移動先の置き場の上に「→合計」を出す (プレイの表/裏ボタンと同じ見通し) */
+function renderShiftTotals(bp) {
+  let root = document.getElementById('shiftTotals');
+  const items = bp && bp.kind === 'line' && /^(shift-dest|mass-shift-dest)$/.test(bp.req.prompt || '')
+    ? shiftedTotals(shown(), bp.req).filter(it => Number.isFinite(it.total)) : [];
+  if (!items.length) { if (root) root.remove(); return; }
+  if (!root) {
+    root = document.createElement('div');
+    root.id = 'shiftTotals';
+    root.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(root);
+  }
+  root.replaceChildren(...items.map(it => {
+    const el = document.createElement('div');
+    el.className = 'shift-total';
+    el.dataset.line = it.line;
+    el.dataset.side = it.side;
+    const arrow = document.createElement('i');
+    arrow.textContent = '→';
+    const num = document.createElement('b');
+    num.textContent = String(it.total);
+    el.append(arrow, num);
+    return el;
+  }));
+  positionShiftTotals();
+}
+
+function positionShiftTotals() {
+  const root = document.getElementById('shiftTotals');
+  if (!root) return;
+  /* 選び終わった・取り消した (UNDO・再同期) ときは消す */
+  if (!boardPick || boardPick.kind !== 'line' || !stage) { root.remove(); return; }
+  const rect = stage.renderer.domElement.getBoundingClientRect();
+  for (const el of root.children) {
+    const line = Number(el.dataset.line), side = Number(el.dataset.side);
+    const pad = pads.find(p => p.userData.line === line && p.userData.side === side);
+    if (!pad) { el.hidden = true; continue; }
+    pad.getWorldPosition(choiceWorld);          // 置き場は着地する位置に動かしてある (setLineTargets)
+    choiceWorld.y += 0.12;
+    choiceWorld.project(stage.camera);
+    const visible = choiceWorld.z >= -1 && choiceWorld.z <= 1 && Math.abs(choiceWorld.x) <= 1.25 && Math.abs(choiceWorld.y) <= 1.25;
+    el.hidden = !visible;
+    if (!visible) continue;
+    el.style.left = (rect.left + (choiceWorld.x + 1) * rect.width / 2) + 'px';
+    el.style.top = (rect.top + (1 - choiceWorld.y) * rect.height / 2) + 'px';
+  }
 }
 
 function finishLinePick(picks) {
