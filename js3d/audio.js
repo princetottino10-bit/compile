@@ -130,7 +130,18 @@ function wake() {
   if (actx && actx.state !== 'running' && actx.state !== 'closed') actx.resume().catch(() => {});
 }
 
+/* iPhone の Safari: ゲームの音を「環境音」として鳴らす (Audio Session API)。コントロールセンターの「再生中」に出ない
+   (出ると、押したときに iPhone が別のアプリを開いていた)。ほかのアプリの音楽とも重ねて鳴る。
+   そのかわり、消音 (マナー) モードではゲームの音も鳴らない (ふつうのゲームアプリと同じ) */
+let sessionSet = false;
+function setAmbientSession() {
+  if (sessionSet) return;
+  sessionSet = true;
+  try { if (typeof navigator !== 'undefined' && navigator.audioSession) navigator.audioSession.type = 'ambient'; } catch (e) { /* 対応していないブラウザ */ }
+}
+
 export function initAudio() {
+  setAmbientSession();
   if (actx) { wake(); return; }
   const AC = window.AudioContext || window.webkitAudioContext;
   if (!AC) return;
