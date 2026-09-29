@@ -78,7 +78,7 @@ export const COSMETICS = {
   ccolor: [['default', 'PROTOCOL'], ['gold', 'GOLD'], ['cyan', 'CYAN'], ['rainbow', 'RAINBOW'], ['lime', 'LIME'], ['violet', 'VIOLET'], ['ember', 'EMBER']],
   victory: [['default', 'STANDARD'], ['aurora', 'AURORA']],
   /* 対戦のそばのキャラ (avatar.js)。オリジナルの4人ははじめから、VOICEVOX の4人はガチャ */
-  avatar: [['shion', '紫苑'], ['asagi', '浅葱'], ['yamabuki', '杏'], ['nadeshiko', '撫子'],
+  avatar: [['shion', '紫苑'], ['asagi', '瑠璃'], ['yamabuki', '杏'], ['nadeshiko', '茜'],
     /* ゲスト (VOICEVOX のキャラ・声つき) */
     ['zundamon', 'ずんだもん'], ['metan', '四国めたん'], ['tsumugi', '春日部つむぎ'], ['whitecul', 'WhiteCUL']],
   /* 対戦の BGM (bgm.js、煉獄庭園の曲)。Burst ははじめから、オレンジトンネルはタイトルの曲 (LV 1) */
@@ -94,7 +94,7 @@ export const COSMETICS = {
    持っているかは compileGacha (gacha.js が書く) の owned { 'kind:key': 取った時刻 } で見る */
 /* 対戦のキャラ: true でガチャに入り、だれでも選べる (2026-09-27 に出した。出す前は管理者だけが見られた) */
 export const AVATAR_RELEASED = true;
-/* オリジナルの4人 (紫苑・浅葱・杏・撫子) ははじめから使える (2026-09-28)。ガチャは VOICEVOX の4人だけ */
+/* オリジナルの4人 (紫苑・瑠璃・杏・茜) ははじめから使える (2026-09-28)。ガチャは VOICEVOX の4人だけ */
 export const AVATAR_FREE = ['shion', 'asagi', 'yamabuki', 'nadeshiko'];
 export const AVATAR_GACHA = [
   { kind: 'avatar', key: 'zundamon', rar: 'E' }, { kind: 'avatar', key: 'metan', rar: 'E' }, { kind: 'avatar', key: 'tsumugi', rar: 'E' },

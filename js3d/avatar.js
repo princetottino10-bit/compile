@@ -17,19 +17,19 @@ export const FACES = ['normal', 'blink', 'happy', 'fired', 'frustrated', 'surpri
 /* キャラ。lines は性格ごとのセリフ ({card} は出したカードの名前) */
 export const AVATARS = {
   shion: {
-    name: '紫苑', color: '#a07bff',
+    name: '紫苑', color: '#a07bff',   /* もと研究所の解析 AI */
     lines: null
   },
   nadeshiko: {
-    name: '撫子', color: '#ff4fa3',
+    name: '茜', color: '#e0283c',     /* id は nadeshiko のまま (記録が id で残っている)。もとお屋敷の家事 AI。2026-09-30 に撫子から作り直し */
     lines: null
   },
   asagi: {
-    name: '浅葱', color: '#5fd6d0',
+    name: '瑠璃', color: '#3d7dff',   /* id は asagi のまま。もと水族館の案内 AI */
     lines: null
   },
   yamabuki: {
-    name: '杏', color: '#ffc94a',   /* id は yamabuki のまま (持っている記録が id で残っているため)。名前は色の名前 (杏色) */
+    name: '杏', color: '#ff8a2a',   /* id は yamabuki のまま (持っている記録が id で残っているため)。名前は色の名前 (杏色)。もと警備・レスキューの AI */
     lines: null
   }
 ,
