@@ -59,7 +59,7 @@ export function onSettings(cb) {
   cb(current);
 }
 
-/* 設定画面。extra: 画面に足すボタン [{ label, onClick }] (サウンド ON/OFF など) */
+/* 設定画面。項目は「音」「対戦の進み方」「おまかせで対戦」「見た目」「キャラ」に分けて見出しを付ける。extra: 画面に足すボタン [{ label, onClick }] (サウンド ON/OFF など) */
 export function openSettings(extra) {
   let el = document.getElementById('settingsOv');
   if (!el) {
@@ -70,10 +70,8 @@ export function openSettings(extra) {
   }
   const s = current;
   el.innerHTML = '<div class="pz-card st-card" role="dialog" aria-modal="true" aria-label="設定">' +
-    '<div class="pz-head"><b>SETTINGS</b><button type="button" class="pz-x" aria-label="閉じる">×</button></div>' +
-    '<div class="st-row"><span>演出の速さ</span><div class="st-seg" role="group" aria-label="演出の速さ">' +
-      SPEEDS.map(o => '<button type="button" data-speed="' + o.v + '" class="' + (s.speed === o.v ? 'on' : '') + '">' + o.label + '</button>').join('') +
-    '</div></div>' +
+    '<div class="pz-head"><b>SETTINGS<small>設定</small></b><button type="button" class="pz-x"><span>閉じる</span></button></div>' +
+    '<h4 class="st-group">音</h4>' +
     /* 音量: BGM・キャラの声・効果音 (0 でオフ) */
     (BGM_SHOWN ? '<label class="st-row"><span>BGM の音量 <i id="stBgmV">' + volText(s.bgmVol ?? 30) + '</i></span>' +
       '<input type="range" min="0" max="100" step="5" id="stBgm" value="' + (s.bgmVol ?? 30) + '"></label>' : '') +
@@ -81,27 +79,34 @@ export function openSettings(extra) {
       '<input type="range" min="0" max="100" step="5" id="stVoice" value="' + (s.voiceVol ?? 80) + '"></label>' +
     '<label class="st-row"><span>効果音の音量 <i id="stSfxV">' + volText(s.sfx) + '</i></span>' +
       '<input type="range" min="0" max="100" step="5" id="stSfx" value="' + s.sfx + '"></label>' +
+    '<h4 class="st-group">対戦の進み方</h4>' +
+    '<div class="st-row"><span>演出の速さ</span><div class="st-seg" role="group" aria-label="演出の速さ">' +
+      SPEEDS.map(o => '<button type="button" data-speed="' + o.v + '" class="' + (s.speed === o.v ? 'on' : '') + '">' + o.label + '</button>').join('') +
+    '</div></div>' +
     '<label class="st-row st-check"><span>効果の発動・チェーンで一時停止する<small>オフにすると、発動した効果を1つずつ止めずに進めます</small></span>' +
       '<input type="checkbox" id="stPauses"' + (s.pauses ? ' checked' : '') + '></label>' +
     '<label class="st-row st-check"><span>選べるものが1つなら自動で選ぶ<small>対象が1つしかない選択は、確認せずに進めます</small></span>' +
       '<input type="checkbox" id="stAutoPick"' + (s.autoPick ? ' checked' : '') + '></label>' +
     '<label class="st-row st-check"><span>相手の番のまとめを出す<small>相手の番が終わったら、何をしたかを短く出します</small></span>' +
       '<input type="checkbox" id="stOppSummary"' + (s.oppSummary ? ' checked' : '') + '></label>' +
-    '<label class="st-row st-check"><span>カードのキラ加工<small>プロトコルの習熟度 3 で銀、6 で金、9 で虹。文字の上には光を乗せません</small></span>' +
-      '<input type="checkbox" id="stFoil"' + (s.foil ? ' checked' : '') + '></label>' +
     '<label class="st-row st-check"><span>初心者モード<small>CPU 戦で HINT ボタンを出します。押すと、CPU ならどう打つかを盤面で光らせます</small></span>' +
       '<input type="checkbox" id="stBeginner"' + (s.beginner ? ' checked' : '') + '></label>' +
+    '<h4 class="st-group">おまかせで対戦</h4>' +
     '<div class="st-row"><span>おまかせで対戦する強さ<small>「おまかせで今すぐ始める」の相手</small></span><div class="st-seg" role="group" aria-label="おまかせで対戦する強さ">' +
       QUICK_LEVELS.map((label, i) => '<button type="button" data-qlevel="' + i + '" class="' + ((s.quickLevel | 0) === i ? 'on' : '') + '">' + label + '</button>').join('') +
     '</div></div>' +
     '<label class="st-row st-check"><span>おまかせの編成にデイリーのプロトコルを入れる<small>今日のデイリーミッションで指定されたプロトコルを、自分の3つのうち1つに必ず入れます</small></span>' +
       '<input type="checkbox" id="stQuickDaily"' + (s.quickDaily ? ' checked' : '') + '></label>' +
+    '<h4 class="st-group">見た目</h4>' +
+    '<label class="st-row st-check"><span>カードのキラ加工<small>プロトコルの習熟度 3 で銀、6 で金、9 で虹。文字の上には光を乗せません</small></span>' +
+      '<input type="checkbox" id="stFoil"' + (s.foil ? ' checked' : '') + '></label>' +
     /* 見た目は専用の画面 (cosmetics-mode.js) で。実物どおりのプレビューと図鑑つき */
     '<div class="st-cosmetics"><div class="st-cos-head"><b>COSMETICS</b><small>盤面・スリーブ・マーカー・称号などは専用の画面で選べます</small></div>' +
       '<div class="pz-row"><button type="button" id="stCosOpen" class="pz-main">COSMETICS を開く</button></div></div>' +
     /* 対戦のキャラ: 相手の声のオンオフと、声と絵のクレジット (キャラが見える人にだけ) */
     (avatarOptionsShown()
-      ? '<label class="st-row st-check"><span>対戦でキャラを出す<small>画面の隅にキャラが出て、カードやコンパイルに合わせて表情を変え、ひとこと言います。自分のキャラは COLLECTION の「キャラ」で選べます</small></span>' +
+      ? '<h4 class="st-group">キャラ</h4>' +
+        '<label class="st-row st-check"><span>対戦でキャラを出す<small>画面の隅にキャラが出て、カードやコンパイルに合わせて表情を変え、ひとこと言います。自分のキャラは COLLECTION の「キャラ」で選べます</small></span>' +
           '<input type="checkbox" id="stAvatarShow"' + (s.avatarShow !== false ? ' checked' : '') + '></label>' +
         '<label class="st-row"><span>相手のキャラ<small>ふだんはランダム。自分と同じ子は選ばれません</small></span>' +
           '<select class="lv-pick" id="stOppAvatar">' + [['random', 'ランダム']].concat(avatarList()).map(([id, name]) =>

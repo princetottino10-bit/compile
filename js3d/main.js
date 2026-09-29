@@ -73,8 +73,10 @@ import { createAiClient } from './aiclient.js';
 import { buildRunDefs } from './runcards.js';
 import { createLogFormat } from './logformat.js';
 import { meaningfulSteps as cutSteps } from './steps.js';
+import { initDialogs } from './dialogs.js';
 
 const Engine = window.CompileEngine;
+initDialogs();
 const ME = 0;      // 視点 = 人間プレイヤー
 const AI = 1;
 

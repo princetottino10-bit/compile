@@ -142,7 +142,7 @@ export async function openTsumeList() {
   const todayHard = dailyPuzzleDone(undefined, undefined, true);
   const el = overlay(
     '<div class="pz-card ts-card" role="dialog" aria-modal="true" aria-labelledby="tsTitle">' +
-      '<div class="pz-head"><b id="tsTitle">詰めコンパイル</b></div>' +
+      '<div class="pz-head"><b id="tsTitle">COMPUZZLE<small>詰めコンパイル</small></b></div>' +
       '<p class="ts-lead">1手番で完結する問題です。効果の連鎖や割り込みを読み切って、お題を達成してください。' +
         '<span class="ts-count">' + done + ' / ' + list.length + ' 問クリア</span></p>' +
       '<button type="button" class="ts-daily' + (today ? ' done' : '') + '" data-id="daily">' +
@@ -188,7 +188,7 @@ export function showDeck(st, defs, me = 0) {
   };
   const el = overlay(
     '<div class="pz-card ts-deck" role="dialog" aria-modal="true" aria-labelledby="tsDeckT">' +
-      '<div class="pz-head"><b id="tsDeckT">山札 (上から順に)</b><button type="button" class="pz-x" aria-label="閉じる">×</button></div>' +
+      '<div class="pz-head"><b id="tsDeckT">DECK<small>山札 (上から順に)</small></b><button type="button" class="pz-x"><span>閉じる</span></button></div>' +
       '<p class="pz-note">詰めコンパイルでは山札の中身と順番も見られます。カードを引く効果では、上から順に引きます。</p>' +
       (pl.deck.length ? '<ol>' + pl.deck.map((u, i) => card(u, i)).join('') + '</ol>' : '<p class="pz-note">山札はありません</p>') +
       '<h3>捨て札</h3>' + (pl.trash.length ? '<ol class="trash">' + pl.trash.map(u => card(u)).join('') + '</ol>' : '<p class="pz-note">捨て札はありません</p>') +
@@ -200,7 +200,7 @@ export function showDeck(st, defs, me = 0) {
 export function showAnswer(p) {
   const el = overlay(
     '<div class="pz-card" role="dialog" aria-modal="true">' +
-      '<div class="pz-head"><b>模範解答</b><button type="button" class="pz-x" aria-label="閉じる">×</button></div>' +
+      '<div class="pz-head"><b>ANSWER<small>模範解答</small></b><button type="button" class="pz-x"><span>閉じる</span></button></div>' +
       '<ol class="ts-steps">' + p.steps.map(s => '<li>' + esc(s) + '</li>').join('') + '</ol>' +
       (p.solutions > 1 ? '<p class="pz-note">ほかにもう1通りの解き方があります。</p>' : '') +
       '<p class="pz-note">最後の選択のあとに自動で解決される効果は省いています。</p>' +

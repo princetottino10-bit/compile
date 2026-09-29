@@ -103,7 +103,7 @@ export function judgePuzzle(goal, endSt, finalSt, me, total) {
   return { ok: null, text: '手番を終えました' };
 }
 
-/* 小さなダイアログの土台。外側に触れる・× で閉じる */
+/* 小さなダイアログの土台。外側に触れる・下の「閉じる」で閉じる */
 function overlay(id, html) {
   let el = document.getElementById(id);
   if (!el) {
@@ -124,7 +124,7 @@ function overlay(id, html) {
 /* 「問題として共有」: 課題とクリア条件を入れて、リンクを作る */
 export function openShareDialog(makeCode) {
   const { el } = overlay('puzzleShare',
-    '<div class="pz-head"><b>問題として共有</b><button type="button" class="pz-x" aria-label="閉じる">×</button></div>' +
+    '<div class="pz-head"><b>SHARE<small>問題として共有</small></b><button type="button" class="pz-x"><span>閉じる</span></button></div>' +
     '<label class="pz-field"><span>課題</span>' +
       '<textarea id="pzTask" maxlength="200" rows="3" placeholder="例: このターンで FIRE をコンパイルできる状態にしよう"></textarea></label>' +
     '<label class="pz-field"><span>クリア条件</span><select id="pzGoal">' +

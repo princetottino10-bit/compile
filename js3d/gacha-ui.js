@@ -79,7 +79,7 @@ export function openGacha(opts) {
     const col = G.collection(s);
     const toPity = G.PITY - s.pity;
     el.innerHTML = '<div class="pz-card ga-card" role="dialog" aria-modal="true" aria-labelledby="gaTitle">' +
-      '<div class="pz-head"><b id="gaTitle">// GACHA</b><button type="button" class="pz-x" aria-label="閉じる">×</button></div>' +
+      '<div class="pz-head"><b id="gaTitle">GACHA<small>ガチャ</small></b><button type="button" class="pz-x"><span>閉じる</span></button></div>' +
       (loginNudgeNeeded() ? '<div class="ga-login"><p><b>ログインしていません</b>引いた見た目と CHIP はこのブラウザにだけ残ります。消えると戻せません。</p>' +
         '<button type="button" id="gaLogin">ログインして守る</button></div>' : '') +
       '<div class="ga-top"><div class="ga-chip"><small>CHIP</small><b>' + chips + '</b><span>経験値が入るたびに増える (経験値 1 につき CHIP ' + CHIP_PER_XP + ')</span></div>' +

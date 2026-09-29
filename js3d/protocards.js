@@ -30,7 +30,7 @@ export function showProtocolCards(name, color, getItems, list) {
     : '';
   ov.innerHTML = tabs +
     '<div class="pc-head"><b>' + esc(name) + '</b><span>のカード (6枚)</span>' +
-      '<button type="button" class="pc-x" aria-label="閉じる">×</button></div>' +
+      '<button type="button" class="pc-x"><span aria-hidden="true">←</span>戻る</button></div>' +
     '<div class="pc-list">' + items.map((it) =>
       '<article class="pc-card">' +
         '<div class="pc-img">' + (it.img ? '<img alt="" src="' + it.img + '">' : '<i></i>') + '</div>' +

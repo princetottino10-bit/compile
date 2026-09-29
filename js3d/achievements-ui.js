@@ -71,7 +71,7 @@ export function openTrophies() {
   };
   const count = (tier) => v.list.filter(t => t.tier === tier && t.at).length + '/' + v.list.filter(t => t.tier === tier).length;
   el.innerHTML = '<div class="pz-card tr-card" role="dialog" aria-modal="true" aria-label="実績">' +
-    '<div class="pz-head"><b>TROPHIES</b><button type="button" class="pz-x" aria-label="閉じる">×</button></div>' +
+    '<div class="pz-head"><b>TROPHIES<small>実績</small></b><button type="button" class="pz-x"><span>閉じる</span></button></div>' +
     '<div class="tr-top"><b>' + v.rate + '<i>%</i></b><div><span class="tr-meter"><i style="width:' + v.rate + '%"></i></span>' +
       '<small>' + v.done + ' / ' + v.total + ' ・ BRONZE ' + count('bronze') + ' ・ SILVER ' + count('silver') + ' ・ GOLD ' + count('gold') + '</small></div></div>' +
     '<ul class="tr-list">' + v.list.map(row).join('') + '</ul>' +
