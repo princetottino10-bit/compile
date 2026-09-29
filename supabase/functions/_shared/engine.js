@@ -2564,6 +2564,8 @@ const AI_W = {
      comboDiscard: 「手札を1枚捨てる」札を出すと組み合わせの札を捨てるしかないときの減点 (aiComboKeepCost の倍率)。
      捨てるくらいならリフレッシュする */
   refreshRecompile: 260, comboDiscard: 3,
+  /* 教えた手筋 (aiUsesCombos のとき): SPEED 0 と 3 を揃えて使う・FIRE 0 + WATER 4 の構え。値は最強の特化と同じ */
+  speedPairStrategy: 1, speedPairKeep: 40, fire0Water4Ready: 60,
   /* 「〜できる」の任意コストを、払わない選択も込みで見る (0 で従来どおり必ず払う扱い)。
      anyLineBase/anyLineGain: 「プロトコルを対応させずに表向きでプレイできる」(SPIRIT 1) の価値。
      ライン制限を外したときの手札評価の増分を上乗せする。0 で従来どおり常時効果の一律10点 */
@@ -2942,6 +2944,12 @@ function aiIsDshSpecialist(st, side) {
     && (AI_SPECIALIST_SIDE < 0 || AI_SPECIALIST_SIDE === side);
 }
 
+/* 教えた手筋 (SPEED 0 と 3 を揃えて使う、FIRE 0 + WATER 4 の構え) を使うか:
+   最強の特化か、「つよい」以上 (探索する読み)。自分の側を CPU に指させる AUTO でも同じ (2026-09-29) */
+function aiUsesCombos(st, side) {
+  return aiIsDshSpecialist(st, side) || AI_LEVEL >= 2;
+}
+
 function aiIsLockSpecialist(st, side) {
   return AI_SPECIALIST_ENABLED && AI_SPECIALIST_KIND === 'psylock' && !!st.players[side]
     && (AI_SPECIALIST_SIDE < 0 || AI_SPECIALIST_SIDE === side);
@@ -3240,7 +3248,7 @@ function aiActionBias(st, action, side) {
   if (d.id === 'DIVERSITY_1' && action.faceUp && W.diversityEarly && aiDiversityReady(st, side) && !aiDiversityIsLast(st, side)) {
     v -= W.diversityEarly;
   }
-  if (aiIsDshSpecialist(st, side) && W.speedPairStrategy
+  if (aiUsesCombos(st, side) && W.speedPairStrategy
       && (d.id === 'SPEED_1' || d.id === 'SPEED_4')) {
     const pairOnField = aiHasDefOnField(st, side, 'SPEED_1') || aiHasDefOnField(st, side, 'SPEED_4');
     /* SPEED 0 の追加プレイで FIRE 0 + WATER 4 を撃てるときは、SPEED 3 と揃えなくてよい */
@@ -3506,14 +3514,14 @@ function aiScore(st, me) {
   /* 特化 (DSH): SPEED 0 と SPEED 3 は揃えて使う (0 を表で出し、追加プレイで 3)。
      どちらも場に出ていない間は、手札に残しておく価値を持たせる。
      値の低い SPEED 0 は、捨てる効果で真っ先に選ばれてセットが崩れていた */
-  if (aiIsDshSpecialist(st, me) && W.speedPairStrategy && W.speedPairKeep
+  if (aiUsesCombos(st, me) && W.speedPairStrategy && W.speedPairKeep
       && !aiHasDefOnField(st, me, 'SPEED_1') && !aiHasDefOnField(st, me, 'SPEED_4')) {
     const s0 = aiHasDefInHand(st, me, 'SPEED_1'), s3 = aiHasDefInHand(st, me, 'SPEED_4');
     sc += W.speedPairKeep * ((s0 ? 1 : 0) + (s3 ? 1 : 0) + (s0 && s3 ? 1 : 0));
   }
   if (W.diversityReady && aiDiversityReady(st, me)) sc += aiDiversityIsLast(st, me) ? W.diversityLast : W.diversityReady;
   /* 特化 (DSH): FIRE 0 + WATER 4 の構え。WATER 4 は自分を戻すので、撃ったあとも構えは残る */
-  if (aiIsDshSpecialist(st, me) && W.fire0Water4Ready && aiFire0Water4Ready(st, me)) sc += W.fire0Water4Ready;
+  if (aiUsesCombos(st, me) && W.fire0Water4Ready && aiFire0Water4Ready(st, me)) sc += W.fire0Water4Ready;
   sc += aiBoardEffectScore(st, me);
   sc += aiLockScore(st, me);
   sc -= aiLockThreat(st, me);
@@ -3681,7 +3689,7 @@ function aiBestCombo(st, req, ordered, min, max, fallback) {
 }
 
 function aiPlayFreePicks(st, req, me) {
-  if (aiIsDshSpecialist(st, me) && aiWeightsFor(st, me).speedPairStrategy && req.context === 'SPEED_1'
+  if (aiUsesCombos(st, me) && aiWeightsFor(st, me).speedPairStrategy && req.context === 'SPEED_1'
       && !aiHasDefOnField(st, me, 'SPEED_1') && !aiHasDefOnField(st, me, 'SPEED_4')
       && !(aiWeightsFor(st, me).fire0Water4Ready && aiFire0Water4Ready(st, me))) {
     const speed3 = req.candidates.find(raw => {
@@ -3829,7 +3837,7 @@ function smartPicks(st, req) {
         const self = req.candidates.find(uid => aiHate0SelfPick(st, uid, me));
         if (self) return [self];
       }
-      if (aiIsDshSpecialist(st, me) && aiWeightsFor(st, me).speedPairStrategy
+      if (aiUsesCombos(st, me) && aiWeightsFor(st, me).speedPairStrategy
           && req.prompt === 'optional-shift' && req.context === 'SPEED_4') {
         const self = req.candidates.find(uid => st.cards[uid] && st.cards[uid].def === 'SPEED_4');
         if (self) return [self];
@@ -4095,7 +4103,7 @@ function aiFaceDownAllowed(st, side, action, acts) {
 function aiDecisionActions(state) {
   let acts = legalActions(state);
   const side = state.turn;
-  if (aiIsDshSpecialist(state, side) && aiWeightsFor(state, side).speedPairStrategy
+  if (aiUsesCombos(state, side) && aiWeightsFor(state, side).speedPairStrategy
       && !aiHasDefOnField(state, side, 'SPEED_1') && !aiHasDefOnField(state, side, 'SPEED_4')
       && aiHasDefInHand(state, side, 'SPEED_1') && aiHasDefInHand(state, side, 'SPEED_4')) {
     const speed0 = acts.filter(action => action.type === 'play' && action.faceUp

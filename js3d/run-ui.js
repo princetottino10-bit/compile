@@ -10,7 +10,6 @@ import { showTitleBack, hideTitleBack } from './titleback.js';
 import { loadWeekly } from './weekly.js';
 import * as RUN from './run.js';
 import { emblemDataURL } from './emblems.js';
-import { levelLabel } from './aidecks.js';
 import { showProtocolCards } from './protocards.js';
 import { confetti, RAR_COLORS } from './gachafx.js';
 
@@ -367,7 +366,8 @@ export function openRun(protocols, cardsOf, opts) {
             (RUN.runWinCompiles(run) === 1 ? '<p class="rn-note">序盤なので、はじめから2つコンパイル済み — あと1回コンパイルしたら勝ち</p>' : '') +
             (run.opp.elite ? '<p class="rn-note rn-elite">ELITE — 勝つとクレジット多めとパッチを1つ</p>' : run.route === 'alarm' ? '<p class="rn-warn">警報が鳴っている — 相手が1段強い</p>' : '') +
             '<div class="rn-vs"><div><small>あなた' + ((run.removed || []).length ? ' (除去 ' + run.removed.length + ' 枚)' : '') + '</small>' + deckLine(run.deck, byName) + '</div><b>VS</b>' +
-            '<div><small>' + esc(levelLabel(run.opp.level)) + '</small>' + deckLine(run.opp.deck, byName) + '</div></div>' +
+            /* 勝ち抜き戦では CPU の難易度名 (かんたん・ふつう…) は出さない */
+            '<div><small>' + (run.opp.boss ? 'BOSS' : run.opp.elite ? '精鋭' : '相手') + '</small>' + deckLine(run.opp.deck, byName) + '</div></div>' +
             (confirmQuit ? '' : '<div class="rn-btns"><button type="button" class="rn-go" data-act="fight">戦う</button>' +
               '<button type="button" data-act="quit">あきらめる</button></div>');
         }

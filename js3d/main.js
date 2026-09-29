@@ -1502,9 +1502,9 @@ function thinking(p) {
   FEEL.setThinking(true);
   return p.finally(() => FEEL.setThinking(false));
 }
-/* 管理者の自動プレイ (AUTO): 自分の側も CPU が指す。自分の側は強い読み (探索・でたらめなし)、相手はいつもの強さのまま */
+/* 管理者の自動プレイ (AUTO): 自分の側も CPU が指す。自分の側は最強と同じ読み (探索・特化の手筋・長めの思考)、相手はいつもの強さのまま */
 let autoPlay = false;
-const AUTO_AI = { level: 2, blunder: 0, budget: 1500, specialist: false };
+const AUTO_AI = { level: 2, blunder: 0, budget: 2400, specialist: true, kind: 'dsh', specSide: 0 };
 const autoFor = (side) => autoPlay && side === ME && !roomMode;
 function aiAction(st) {
   const over = autoFor(st && st.turn) ? AUTO_AI : null;
@@ -2566,7 +2566,8 @@ function myPlate() {
 /* CPU 戦の名札: 相手は CPU と難易度。アイコンは相手のデッキの1つ目のプロトコル */
 function showCpuPlates(p1) {
   const first = p1 && protoIndex[p1[0]];
-  const sub = aiDifficulty === null ? '' : levelLabel(aiDifficulty);
+  /* 勝ち抜き戦・週替わりでは難易度名 (かんたん・ふつう…) を出さない */
+  const sub = aiDifficulty === null || runMode ? '' : levelLabel(aiDifficulty);
   showPlates({ me: myPlate(), opp: { name: 'CPU', sub: sub === '不明' ? '' : sub,
     icon: first ? { name: first.name, color: first.color } : null } });
 }

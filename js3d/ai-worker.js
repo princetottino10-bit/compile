@@ -11,7 +11,8 @@ function configure(cfg) {
   Engine.setAiLevel(cfg.level);
   if (Engine.setAiBlunder) Engine.setAiBlunder(cfg.blunder || 0);
   Engine.setAiThinkBudget(cfg.budget);
-  if (Engine.setAiSpecialist) Engine.setAiSpecialist(!!cfg.specialist, 1, cfg.kind || 'dsh');
+  /* specSide: 特化をどちらの側に使うか (ふだんは CPU = 1。管理者の AUTO は自分の側 = 0) */
+  if (Engine.setAiSpecialist) Engine.setAiSpecialist(!!cfg.specialist, cfg.specSide === 0 ? 0 : 1, cfg.kind || 'dsh');
 }
 
 self.onmessage = (e) => {
