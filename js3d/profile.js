@@ -75,7 +75,9 @@ export function openProfile(protocols) {
     document.body.appendChild(el);
   }
   el.innerHTML = '<div class="pz-card pf-card" role="dialog" aria-modal="true" aria-label="プロフィール">' +
-    '<div class="pz-head"><b>PROFILE</b><button type="button" class="pz-x" aria-label="閉じる">×</button></div>' +
+    '<div class="pz-head"><b>PROFILE<small>プロフィール</small></b><button type="button" class="pz-x"><span>閉じる</span></button></div>' +
+    /* 横に広い画面では2列 (左: レベル・名前・経験値、右: 実績・ミッション・報酬) */
+    '<div class="pf-cols"><div class="pf-col">' +
     '<div class="pf-top">' +
       '<div class="pf-icon">' + (proto ? '<img alt="" src="' + emblemDataURL(proto.name, proto.color || '#b9a4ff', 96, true) + '">' : '<span>//</span>') + '</div>' +
       '<div class="pf-id"><small>PLAYER LEVEL</small><b>' + pl.level + '</b>' + (me.title ? '<em>' + esc(me.title) + '</em>' : '') + '</div>' +
@@ -89,12 +91,14 @@ export function openProfile(protocols) {
       '<div><b>' + got.length + '<i>/' + REWARDS.length + '</i></b><small>REWARDS</small></div></div>' +
     (nx ? '<div class="pf-next"><small>NEXT REWARD</small><b>LV ' + nx.lv + '</b><span>???</span><em>あと XP ' + (xpForLevel(nx.lv) - pl.xp) + '</em></div>'
       : '<div class="pf-next"><small>ALL REWARDS UNLOCKED</small></div>') +
+    '</div><div class="pf-col">' +
     trophyHtml() +
     dailyHtml(protocols) +
     (got.length ? '<ul class="pf-got">' + got.slice().reverse().map(r => '<li><b>LV ' + r.lv + '</b>' + esc(r.name) + '</li>').join('') + '</ul>' : '') +
     '<details class="pf-earn"><summary>HOW TO EARN XP</summary><ul>' + EARN.map(([k, v]) => '<li><span>' + k + '</span><b>' + v + '</b></li>').join('') + '</ul></details>' +
     '<p class="pz-note">取った見た目は COSMETICS で選べます。</p>' +
     '<div class="pz-row"><button type="button" id="pfCos">COSMETICS</button><button type="button" id="pfAcc">ACCOUNT</button></div>' +
+    '</div></div>' +
     '</div>';
   el.classList.add('show');
   const close = () => el.classList.remove('show');

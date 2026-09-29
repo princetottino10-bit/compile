@@ -418,7 +418,7 @@ export function openAccount() {
   const render = () => {
     const s = state;
     let body;
-    if (!s.ready) body = '<p class="pz-note">読み込み中…</p>';
+    if (!s.ready) body = '<div class="ac-loading" role="status"><div class="ro-loader" aria-hidden="true"><i></i><i></i><i></i><b></b></div><p class="pz-note">アカウントを読み込んでいます…</p></div>';
     else if (!s.available) body = '<p class="pz-note">' + esc(s.error || 'この環境ではログインできません (secure-room-config.js が未設定)') + '</p>';
     else if (!s.user) {
       body = (s.sync ? '<p class="ac-done" role="status">' + esc(s.sync) + '</p>' : '') + '<p class="ac-lead">ログインすると、こんなことができるようになります。</p>' +
@@ -442,7 +442,7 @@ export function openAccount() {
           : '<button type="button" id="acDel" class="ac-del-link">アカウントを削除</button>');
     }
     el.innerHTML = '<div class="pz-card ac-card" role="dialog" aria-modal="true" aria-label="アカウント">' +
-      '<div class="pz-head"><b>ACCOUNT</b><button type="button" class="pz-x" aria-label="閉じる">×</button></div>' +
+      '<div class="pz-head"><b>ACCOUNT<small>アカウント</small></b><button type="button" class="pz-x"><span>閉じる</span></button></div>' +
       body + (s.error && s.available ? '<p class="ac-error" role="alert">' + esc(s.error) + '</p>' : '') + '</div>';
     el.querySelector('.pz-x').onclick = close;
     const g = el.querySelector('#acGoogle'); if (g) g.onclick = signIn;

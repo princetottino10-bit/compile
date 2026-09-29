@@ -252,7 +252,7 @@ export function openCosmetics(opts) {
     el.innerHTML = '<div class="cm-shell">' +
       '<div class="cm-head"><b>// COLLECTION</b><span>集めた ' + allGot + ' / ' + all + '</span>' +
         '<button type="button" class="cm-gacha">GACHA <small>CHIP ' + chipsNow() + '</small></button>' +
-        '<button type="button" class="cm-x" aria-label="閉じる">×</button></div>' +
+        '<button type="button" class="cm-x"><span aria-hidden="true">←</span>戻る</button></div>' +
       '<div class="cm-tabs" role="tablist">' + TABS.map(t => {
         const hasNew = !firstOpen && t.kind !== 'icon' && itemsOf(t.kind).some(([k]) => k !== '' && k !== DEFAULT_KEY[t.kind] && owned(t.kind, k, c) && !sn.has(t.kind + ':' + k));
         return '<button type="button" role="tab" data-tab="' + t.kind + '" class="' + (t.kind === tab ? 'on' : '') + '">' + t.label + (hasNew ? '<i class="cm-dot"></i>' : '') + '</button>';

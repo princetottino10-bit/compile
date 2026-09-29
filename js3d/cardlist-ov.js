@@ -24,7 +24,7 @@ export function openCardList() {
     ov.setAttribute('role', 'dialog');
     ov.setAttribute('aria-modal', 'true');
     ov.setAttribute('aria-label', 'カードリスト');
-    ov.innerHTML = '<div class="cl-bar"><b>CARD LIST</b><button type="button" class="cl-x" aria-label="閉じる">×</button></div>' +
+    ov.innerHTML = '<div class="cl-bar"><b>CARD LIST</b><button type="button" class="cl-x"><span aria-hidden="true">←</span>戻る</button></div>' +
       '<iframe class="cl-frame" title="カードリスト" src="cardlist.html?embed=1"></iframe>';
     ov.querySelector('.cl-x').onclick = close;
     document.body.appendChild(ov);

@@ -59,7 +59,7 @@ export function openAdmin() {
   let week = weekIndex();
   let armed = null;                     // 2回押しで消す: 1回目に押したものの印
   el.innerHTML = '<div class="pz-card ad-card" role="dialog" aria-modal="true" aria-label="管理者">' +
-    '<div class="pz-head"><b>ADMIN</b><button type="button" class="pz-x" aria-label="閉じる">×</button></div>' +
+    '<div class="pz-head"><b>ADMIN<small>管理</small></b><button type="button" class="pz-x"><span>閉じる</span></button></div>' +
     '<div class="sr-tabs ad-tabs" role="tablist">' + TABS.map((t, i) => '<button type="button" role="tab" data-ad-tab="' + i + '">' + t + '</button>').join('') + '</div>' +
     '<div id="adBody" class="ad-body"></div><p class="ad-msg" id="adMsg" role="status"></p></div>';
   const body = el.querySelector('#adBody');

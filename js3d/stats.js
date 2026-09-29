@@ -254,7 +254,8 @@ function rewardsHtml(pl) {
     '</ul><p class="pz-note">取った見た目は、設定 (⚙) の COSMETICS で選べます</p></details>';
 }
 
-const TABS = ['SUMMARY', 'PROTOCOLS', 'CARDS', 'MATCHUPS', 'DETAIL', 'REPLAYS'];
+/* タブは日本語 (COLLECTION のタブとそろえる) */
+const TABS = ['まとめ', 'プロトコル', 'カード', '相性', 'くわしく', 'リプレイ'];
 
 export async function openStats() {
   const list = records();
@@ -268,7 +269,7 @@ export async function openStats() {
   }
   const wins = list.filter(r => r.win).length;
   el.innerHTML = '<div class="pz-card sr-card" role="dialog" aria-modal="true" aria-label="戦績">' +
-    '<div class="pz-head"><b>RECORD</b><button type="button" class="pz-x" aria-label="閉じる">×</button></div>' +
+    '<div class="pz-head"><b>RECORD<small>戦績</small></b><button type="button" class="pz-x"><span>閉じる</span></button></div>' +
     (hooks.note ? '<p class="sr-cloud">' + esc(hooks.note()) + '</p>' : '') +
     '<p class="sr-total">' + list.length + '戦 <b>' + wins + '勝</b> ' + (list.length - wins) + '敗' +
       (list.length ? '　勝率 <b>' + pct(wins, list.length) + '%</b>' : '') + '</p>' +
