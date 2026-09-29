@@ -2043,12 +2043,16 @@ function bindInput() {
     CW.battleEnded();
     location.href = location.pathname;
   };
-  const menuBtn = document.getElementById('btnMenu');
-  if (menuBtn) menuBtn.onclick = goToMenu;
   const cardsBtn = document.getElementById('btnCards');
   if (cardsBtn) cardsBtn.onclick = () => openCardList();
   const settingsBtn = document.getElementById('btnSettings');
-  if (settingsBtn) settingsBtn.onclick = () => openSettings();
+  /* メニューへ戻るのは歯車の中 (上のバーの MENU は、縦持ちだと画面の外へ押し出されて押せなかった) */
+  if (settingsBtn) settingsBtn.onclick = () => {
+    const st = shown();
+    const live = roomMode && st && st.winner === null;
+    openSettings([{ label: live ? '投了してメニューに戻る' : 'メニューに戻る', button: 'メニューへ', warn: live,
+      note: live ? 'この対戦は負けになります' : 'この対戦をやめてタイトルに戻ります', onClick: goToMenu }]);
+  };
   const muteBtn = document.getElementById('btnMute');
   if (muteBtn) muteBtn.onclick = () => {
     initAudio();
