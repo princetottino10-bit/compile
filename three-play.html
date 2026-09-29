@@ -3442,14 +3442,38 @@
   /* アカウント: 読み込み中は三重のリング */
   .ac-loading{display:flex;flex-direction:column;align-items:center;gap:12px;padding:18px 0 6px;}
   .ac-loading .pz-note{text-align:center;}
-  /* 設定: 1項目ずつ枠で囲む (どこからどこまでが1つの設定か分かるように) */
-  .st-card .st-row,.st-card .st-cosmetics{padding:10px 12px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.09);clip-path:var(--cut-s);}
-  .st-card .st-row:has(input:focus-visible),.st-card .st-row:hover{border-color:rgba(255,79,163,.35);}
-  .st-card .st-row + .st-row{margin-top:-4px;}
-  .st-card .st-cosmetics{border-top:1px solid rgba(255,255,255,.09);padding-top:10px;}
-  .st-card .st-check span{color:var(--ink);}
+  /* 設定: 左に項目の一覧、右にその中身 (js3d/settings.js の framePanes)。一覧は動かさず、右だけがすべる */
+  .pz-card.st-card{width:min(760px,100%);height:min(620px,calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)));overflow:hidden;}
+  .st-frame{flex:1;min-height:0;display:grid;grid-template-columns:170px minmax(0,1fr);gap:0;margin:0 -18px;border-top:1px solid rgba(255,255,255,.08);}
+  .st-nav{display:flex;flex-direction:column;gap:2px;padding:10px 8px;overflow-y:auto;border-right:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.18);}
+  .st-nav button{appearance:none;text-align:left;padding:11px 12px;cursor:pointer;border:0;border-left:3px solid transparent;background:none;
+    color:var(--dim);font:800 12px/1.2 var(--font-ui,system-ui);letter-spacing:.06em;}
+  .st-nav button:hover{color:var(--ink);background:rgba(255,255,255,.04);}
+  .st-nav button.on{color:#fff;border-left-color:var(--pink);background:linear-gradient(90deg,rgba(255,79,163,.18),rgba(255,79,163,0));}
+  .st-nav button:focus-visible{outline:2px solid var(--gold);outline-offset:-2px;}
+  .st-body{min-height:0;overflow-y:auto;padding:14px 18px 8px;}
+  .st-pane{display:flex;flex-direction:column;gap:14px;}
+  .st-pane[hidden]{display:none;}
+  .st-pane > .st-row + .st-row{padding-top:14px;border-top:1px solid rgba(255,255,255,.06);}
   .st-card .st-row > span{color:var(--ink);}
   .st-card .st-row > span small{color:var(--dim);}
+  .st-card .st-cosmetics{border-top:0;padding-top:0;}
+  /* 閉じるボタンは、一覧と中身の下にふつうに置く (右だけがすべるので、上に重ねなくてよい) */
+  .st-card .pz-x{position:relative;bottom:auto;margin:0 -18px -16px;padding:12px 18px 14px;background:none;border-top:1px solid rgba(255,255,255,.08);}
+  .st-card .pz-x::before{top:-18px;}
+  /* 幅が狭い (縦のスマホ) ときも左の一覧のまま。細くして、長い名前は2行に折る */
+  @media (max-width:560px){
+    .st-frame{grid-template-columns:96px minmax(0,1fr);}
+    .st-nav{padding:8px 4px;}
+    .st-nav button{padding:10px 8px;font-size:11px;letter-spacing:.02em;line-height:1.3;}
+    .st-body{padding:12px 12px 8px;}
+    .st-seg button{letter-spacing:0;}
+  }
+  /* 横のスマホ (背が低い): 一覧を細く */
+  @media (max-height:500px){
+    .st-frame{grid-template-columns:130px minmax(0,1fr);}
+    .st-nav button{padding:9px 10px;}
+  }
   /* この対戦 (対戦中の歯車から開いたとき): メニューに戻る */
   .st-card .st-act{flex-direction:row;align-items:center;justify-content:space-between;gap:10px;}
   .st-card .st-act small{display:block;font-weight:500;font-size:10px;color:var(--dim);margin-top:2px;}
@@ -3580,7 +3604,7 @@
       "./js3d/crashwatch.js": "./js3d/crashwatch.js?v=57c6c91bd8",
       "./js3d/daily.js": "./js3d/daily.js?v=f56dabdf65",
       "./js3d/device.js": "./js3d/device.js?v=b519fe2cae",
-      "./js3d/dialogs.js": "./js3d/dialogs.js?v=45fc16e277",
+      "./js3d/dialogs.js": "./js3d/dialogs.js?v=f93ba7f0c5",
       "./js3d/displayname.js": "./js3d/displayname.js?v=613e18bf95",
       "./js3d/emblems.js": "./js3d/emblems.js?v=6d1c077a2e",
       "./js3d/errorreport.js": "./js3d/errorreport.js?v=61f59a3cb3",
@@ -3621,7 +3645,7 @@
       "./js3d/run.js": "./js3d/run.js?v=be660a1c23",
       "./js3d/runcards.js": "./js3d/runcards.js?v=c2bf20e9b7",
       "./js3d/selectui.js": "./js3d/selectui.js?v=208abdaebc",
-      "./js3d/settings.js": "./js3d/settings.js?v=1305dca433",
+      "./js3d/settings.js": "./js3d/settings.js?v=9e7aa692f0",
       "./js3d/setup.js": "./js3d/setup.js?v=cf7a2ca1a3",
       "./js3d/solodraft.js": "./js3d/solodraft.js?v=b036b97879",
       "./js3d/spectate.js": "./js3d/spectate.js?v=e7aaf6e4e9",
@@ -3678,7 +3702,7 @@
   <link rel="modulepreload" href="js3d/tsume.js?v=bd786cf3c9">
   <link rel="modulepreload" href="js3d/errorreport.js?v=61f59a3cb3">
   <link rel="modulepreload" href="js3d/tutorial.js?v=0e6d6237ad">
-  <link rel="modulepreload" href="js3d/settings.js?v=1305dca433">
+  <link rel="modulepreload" href="js3d/settings.js?v=9e7aa692f0">
   <link rel="modulepreload" href="js3d/stats.js?v=dfbf26d243">
   <link rel="modulepreload" href="js3d/stats-data.js?v=bcf7d5e977">
   <link rel="modulepreload" href="js3d/rewards.js?v=da45fcbbfc">
@@ -3714,7 +3738,7 @@
   <link rel="modulepreload" href="js3d/runcards.js?v=c2bf20e9b7">
   <link rel="modulepreload" href="js3d/logformat.js?v=6bbf54aba6">
   <link rel="modulepreload" href="js3d/steps.js?v=13e73b20fe">
-  <link rel="modulepreload" href="js3d/dialogs.js?v=45fc16e277">
+  <link rel="modulepreload" href="js3d/dialogs.js?v=f93ba7f0c5">
   <link rel="modulepreload" href="js3d/cloudsave.js?v=d1643b2cad">
   <link rel="modulepreload" href="js3d/admin-ui.js?v=d87eec0f57">
   <link rel="modulepreload" href="js3d/device.js?v=b519fe2cae">

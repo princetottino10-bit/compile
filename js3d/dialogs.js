@@ -25,9 +25,11 @@ function topmostCloser() {
   return null;
 }
 
-/* 中身が下に続いていて、まだ下まで見ていない小窓に .more */
+/* 中身が下に続いていて、まだ下まで見ていない小窓に .more。
+   小窓の中の一部だけがすべる作り (設定の右の中身など) は、その部分 (.pz-scroll) で見る */
 function markMore(card) {
-  const more = card.scrollHeight - card.clientHeight - card.scrollTop > 8;
+  const sc = card.querySelector('.pz-scroll') || card;
+  const more = sc.scrollHeight - sc.clientHeight - sc.scrollTop > 8;
   card.classList.toggle('more', more);
 }
 function markAll() {
@@ -54,7 +56,8 @@ export function initDialogs() {
   }, true);
   document.addEventListener('scroll', (ev) => {
     const t = ev.target;
-    if (t && t.classList && t.classList.contains('pz-card')) markMore(t);
+    const card = t && t.closest && t.closest('.pz-card');
+    if (card) markMore(card);
   }, true);
   /* 開いた・中身を描き直した (タブの切り替えなど) ときにも付け直す */
   new MutationObserver(queueMark).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
