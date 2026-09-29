@@ -248,12 +248,13 @@ export function openCosmetics(opts) {
     /* 描き直しても、一覧とタブの横の位置はそのまま (縦持ちで下のほうを押しても、上に戻らない)。タブを変えたら一覧は上から */
     const oldList = el.querySelector('.cm-list'), oldTabs = el.querySelector('.cm-tabs');
     const keepY = oldList && oldList.dataset.tab === tab ? oldList.scrollTop : 0;
-    const keepX = oldTabs ? oldTabs.scrollLeft : 0;
+    const keepX = oldTabs ? oldTabs.scrollLeft : 0, keepTop = oldTabs ? oldTabs.scrollTop : 0;
     el.innerHTML = '<div class="cm-shell">' +
       '<div class="cm-head"><b>// COLLECTION</b><span>集めた ' + allGot + ' / ' + all + '</span>' +
         '<button type="button" class="cm-gacha">GACHA <small>CHIP ' + chipsNow() + '</small></button>' +
         '<button type="button" class="cm-x"><span aria-hidden="true">←</span>戻る</button></div>' +
-      '<div class="cm-tabs" role="tablist">' + TABS.map(t => {
+      /* 左に種類の一覧、右に見本と一覧 (設定と同じ形) */
+      '<div class="cm-main"><div class="cm-tabs" role="tablist" aria-orientation="vertical">' + TABS.map(t => {
         const hasNew = !firstOpen && t.kind !== 'icon' && itemsOf(t.kind).some(([k]) => k !== '' && k !== DEFAULT_KEY[t.kind] && owned(t.kind, k, c) && !sn.has(t.kind + ':' + k));
         return '<button type="button" role="tab" data-tab="' + t.kind + '" class="' + (t.kind === tab ? 'on' : '') + '">' + t.label + (hasNew ? '<i class="cm-dot"></i>' : '') + '</button>';
       }).join('') + '</div>' +
@@ -274,16 +275,16 @@ export function openCosmetics(opts) {
               (has ? (key === cur ? '<em>装備中</em>' : '') : '<small>' + esc(sourceOf(tab, key)) + '</small>') +
               (isNew ? '<i class="cm-new">NEW</i>' : '') + '</button>';
           }).join('') + '</div></section>' +
-      '</div></div>';
+      '</div></div></div>';
     const newList = el.querySelector('.cm-list'), newTabs = el.querySelector('.cm-tabs'), onTab = el.querySelector('.cm-tabs .on');
     if (newList) newList.scrollTop = keepY;
     if (newTabs) {
       newTabs.scrollLeft = keepX;
-      /* 選んでいるタブが横にはみ出していたら、見える位置まで寄せる */
+      newTabs.scrollTop = keepTop;
+      /* 選んでいるタブが一覧からはみ出していたら、見える位置まで寄せる */
       if (onTab) {
         const box = newTabs.getBoundingClientRect(), r = onTab.getBoundingClientRect();
-        if (r.left < box.left || r.right > box.right - box.width * 0.12)          // 右の端はぼかしてあるので、少し手前から
-          newTabs.scrollLeft += (r.left + r.width / 2) - (box.left + box.width / 2);
+        if (r.top < box.top || r.bottom > box.bottom) newTabs.scrollTop += (r.top + r.height / 2) - (box.top + box.height / 2);
       }
     }
     /* 見た印: いま開いているタブの、持っているもの */
