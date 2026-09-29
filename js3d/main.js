@@ -638,7 +638,9 @@ async function boot() {
       avatarCompileAt = Date.now();
       /* 勝負が決まるコンパイル (最後の1本) では「まだ負けてない」などとは言わせない。このあと勝ち・負けのセリフが出る */
       const decisive = cur && cur.state && cur.state.winner === info.side;
-      if (!decisive) {
+      /* リコンパイル (済みのプロトコルでもう一度) は、1枚もらうだけなので軽いひとことだけ。された側は何も言わない */
+      if (info.recompile) avatarSay(info.side, 'recompile', null, null, 6000);
+      else if (!decisive) {
         avatarSay(info.side, 'compile');
         setTimeout(() => avatarSay(1 - info.side, 'compiled'), 1300);
       }

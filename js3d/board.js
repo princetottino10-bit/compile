@@ -494,6 +494,8 @@ export function createBoard(stage, defIndex, me, hooks) {
       name: ev.name,
       color: accent instanceof THREE.Color ? '#' + accent.getHexString() : accent,
       mine: ev.side === me,
+      /* 済みのプロトコルをもう一度コンパイルした (相手のデッキの一番上をもらうだけ) */
+      recompile: !!(prev.players[ev.side] && prev.players[ev.side].protocols[ev.line] && prev.players[ev.side].protocols[ev.line].compiled),
       remaining: (next.winCompiles || 3) - next.players[ev.side].protocols.filter(p => p.compiled).length
     });
 
