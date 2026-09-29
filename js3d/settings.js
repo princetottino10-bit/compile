@@ -59,7 +59,54 @@ export function onSettings(cb) {
   cb(current);
 }
 
-/* 設定画面。項目は「音」「対戦の進み方」「おまかせで対戦」「見た目」「キャラ」に分けて見出しを付け、1項目ずつ枠で囲む。
+/* 設定の画面を「左に項目の一覧、右にその中身」に組み替える (幅が狭いときは一覧が上の1段になる)。
+   見出し (.st-group) ごとに、次の見出しまでをひとつの中身にまとめる。最後に開いていた項目を覚えておく */
+let lastPane = '';
+function framePanes(card) {
+  const heads = [...card.querySelectorAll(':scope > .st-group')];
+  if (!heads.length) return;
+  const frame = document.createElement('div');
+  frame.className = 'st-frame';
+  const nav = document.createElement('div');
+  nav.className = 'st-nav';
+  nav.setAttribute('role', 'tablist');
+  nav.setAttribute('aria-orientation', 'vertical');
+  const body = document.createElement('div');
+  body.className = 'st-body pz-scroll';
+  heads[0].before(frame);
+  frame.append(nav, body);
+  const names = heads.map(h => h.textContent);
+  heads.forEach((h, i) => {
+    const pane = document.createElement('section');
+    pane.className = 'st-pane';
+    pane.id = 'stPane' + i;
+    pane.setAttribute('role', 'tabpanel');
+    pane.setAttribute('aria-label', names[i]);
+    for (let n = h.nextElementSibling; n && !n.classList.contains('st-group') && n !== frame; ) {
+      const next = n.nextElementSibling;
+      pane.append(n);
+      n = next;
+    }
+    h.remove();
+    body.append(pane);
+    const tab = document.createElement('button');
+    tab.type = 'button';
+    tab.setAttribute('role', 'tab');
+    tab.setAttribute('aria-controls', pane.id);
+    tab.textContent = names[i];
+    tab.onclick = () => select(i);
+    nav.append(tab);
+  });
+  function select(i) {
+    lastPane = names[i];
+    [...nav.children].forEach((t, k) => { t.classList.toggle('on', k === i); t.setAttribute('aria-selected', String(k === i)); });
+    [...body.children].forEach((p, k) => { p.hidden = k !== i; });
+    body.scrollTop = 0;
+  }
+  select(Math.max(0, names.indexOf(lastPane)));
+}
+
+/* 設定画面。項目は「音」「対戦の進み方」「おまかせで対戦」「見た目」「キャラ」に分け、左の一覧で選んで右に中身を出す (framePanes)。
    extra: 一番上の「この対戦」に並べるボタン [{ label, onClick, note?, warn? }] (対戦中の歯車から開いたときの「メニューに戻る」など) */
 export function openSettings(extra) {
   let el = document.getElementById('settingsOv');
@@ -118,11 +165,13 @@ export function openSettings(extra) {
             '<option value="' + id + '"' + ((s.oppAvatar || 'random') === id ? ' selected' : '') + '>' + name + '</option>').join('') + '</select></label>' +
         '<label class="st-row st-check"><span>相手のキャラの声<small>相手のキャラ (ずんだもんたち) がしゃべるときの声。オフにすると吹き出しだけ出ます</small></span>' +
           '<input type="checkbox" id="stOppVoice"' + (s.oppVoice !== false ? ' checked' : '') + '></label>' +
-        talkSettingsHtml() +
-        '<p class="st-credit">キャラの声 VOICEVOX:ずんだもん / VOICEVOX:四国めたん / VOICEVOX:春日部つむぎ / VOICEVOX:WhiteCUL　立ち絵 坂本アヒル</p>'
+        talkSettingsHtml()
       : '') +
+    '<h4 class="st-group">クレジット</h4>' +
+    (avatarOptionsShown() ? '<p class="st-credit">キャラの声 VOICEVOX:ずんだもん / VOICEVOX:四国めたん / VOICEVOX:春日部つむぎ / VOICEVOX:WhiteCUL　立ち絵 坂本アヒル</p>' : '') +
     '<p class="st-credit">BGM 煉獄庭園 (Z･E･R･O・彷徨いの言葉は天に導かれ' + (BGM_RELEASED ? '・オレンジトンネルを抜ける・Burst ほか' : '') + ') / OpenTracks: Yuyake Monster「超頭脳バトル」・まんぼう二等兵「Reflect」「Crescendo Jitter」「プラネタリウムガーデン」「Nine Jack」「沈殿するイルカ」・田中芳典「解読」・NEKOZOU「まどろむネオンの部屋」</p>' +
     '</div>';
+  framePanes(el.querySelector('.st-card'));
   el.classList.add('show');
   const close = () => el.classList.remove('show');
   el.onclick = (ev) => { if (ev.target === el) close(); };
@@ -153,8 +202,8 @@ export function openSettings(extra) {
   const oppVoice = el.querySelector('#stOppVoice');
   if (oppVoice) oppVoice.onchange = (ev) => setSetting('oppVoice', ev.target.checked);
   /* AI でしゃべらせる: 描き直すときは、いまの画面の位置を保つ */
-  bindTalkSettings(el, () => { const card = el.querySelector('.st-card'); const y = card ? card.scrollTop : 0; openSettings(extra);
-    const again = el.querySelector('.st-card'); if (again) again.scrollTop = y; },
+  bindTalkSettings(el, () => { const body = el.querySelector('.st-body'); const y = body ? body.scrollTop : 0; openSettings(extra);
+    const again = el.querySelector('.st-body'); if (again) again.scrollTop = y; },
     async () => { const m = await import('./avatar.js'); return m.AVATARS[current.avatar] || m.AVATARS.shion; });
   el.querySelectorAll('[data-qlevel]').forEach(b => {
     b.onclick = () => {
