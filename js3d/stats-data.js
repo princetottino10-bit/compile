@@ -3,6 +3,8 @@
  *   記録: { id, me[3], opp[3], win, level, at, turns?, feats? }
  * ========================================================================= */
 
+import { STRONGEST_AI } from './aidecks.js';
+
 /* 難易度の番号 (aidecks.js): 2 = つよい、3 以上 = 最強・ロック特化・挑戦者 */
 const STRONG = 2, STRONGEST = 3;
 
@@ -31,13 +33,34 @@ export function protocolSummary(records) {
         t.xp += 2;
         t.won = true;
         if (r.level >= STRONG) { t.xp += 1; t.wonStrong = true; }
-        if (r.level >= STRONGEST) t.wonStrongest = true;
+        if (beatStrongest(r)) t.wonStrongest = true;     // 制覇は「最強」だけ (ロック特化・挑戦者・下剋上・勝ち抜き戦のボスは数えない)
       }
       map.set(name, t);
     }
   }
   for (const t of map.values()) Object.assign(t, { mastery: masteryLevel(t.xp) });
   return map;
+}
+
+/* 最強に勝った1戦か: 難易度 3 で、相手のデッキが最強のデッキそのもの (勝ち抜き戦のボスも難易度 3 だがデッキが違う) */
+const STRONGEST_KEY = STRONGEST_AI.slice().sort().join('|');
+function beatStrongest(r) {
+  return !!r && !!r.win && r.level === STRONGEST && Array.isArray(r.opp) && r.opp.slice().sort().join('|') === STRONGEST_KEY;
+}
+/* 制覇できるプロトコル: 最強のデッキと同じプロトコルは自分では選べないので、それ以外 (30 - 3 = 27) */
+export const conquerable = (names) => names.filter(n => !STRONGEST_AI.includes(n));
+export const CONQUER_TOTAL = 30 - STRONGEST_AI.length;
+/* 制覇: 「最強」に勝ったことのあるプロトコル。CONQUER_TOTAL すべてで称号 CONQUEROR (achievements.js) */
+export function conquered(records) {
+  const out = new Set();
+  for (const r of records) if (beatStrongest(r)) for (const n of r.me || []) out.add(n);
+  return out;
+}
+/* その1戦で新しく制覇したプロトコル (勝利画面に出す)。before = その試合より前の戦績 */
+export function newlyConquered(before, r) {
+  if (!beatStrongest(r)) return [];
+  const had = conquered(before);
+  return (r.me || []).filter(n => !had.has(n));
 }
 
 /* 自分のプロトコル × 相手のプロトコル の勝敗 */

@@ -215,6 +215,7 @@ export const TITLES = {
   chainer: 'CHAIN MASTER', flawless: 'FLAWLESS', grandmaster: 'GRANDMASTER',
   puzzler: 'PUZZLER', compuzzler: 'COMPUZZLER',       // COMPUZZLE の中級を全部 / 全部
   platinum: 'PLATINUM',    // 実績をすべて取る (achievements.js)
+  conqueror: 'CONQUEROR',  // 「最強」に30のプロトコルすべてで勝つ (achievements.js)
   /* ガチャで取る (GACHA_ITEMS) */
   gambler: 'GAMBLER', highroller: 'HIGH ROLLER', fortune: 'FORTUNE',
   /* 週替わり3連戦 (WEEKLY_ITEMS) */

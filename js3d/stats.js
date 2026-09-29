@@ -7,7 +7,7 @@
 import { replaysTab, bindReplays } from './replays-ui.js';
 import { bonusXp } from './xp.js';
 import { levelLabel, UNDERDOG_LEVEL } from './aidecks.js';
-import { protocolSummary, matchups, winTrend, fastestWin, masteryLevel, cardStats, cardTier, playerLevel, xpForLevel } from './stats-data.js';
+import { conquerable, protocolSummary, matchups, winTrend, fastestWin, masteryLevel, cardStats, cardTier, playerLevel, xpForLevel } from './stats-data.js';
 import { REWARDS, nextReward } from './rewards.js';
 
 const KEY = 'compileSoloRecords';
@@ -154,7 +154,7 @@ function summaryTab(list, protos) {
     trendSvg(list) +
     '<div class="sr-kpis">' +
       tile('勝ったことのあるプロトコル', wonAny + '<i>/' + protos.length + '</i>') +
-      tile('最強に勝ったプロトコル', wonStrongest + '<i>/' + protos.length + '</i>') +
+      tile('最強に勝ったプロトコル (制覇)', wonStrongest + '<i>/' + conquerable(protos.map(p => p.name)).length + '</i>') +
       tile('最短で勝った手番', fast ? fast.turns : '—', fast ? esc(fast.me.join(' / ')) : '記録なし') +
       tile('最強に最短で勝った手番', fastTop ? fastTop.turns : '—', fastTop ? esc(fastTop.me.join(' / ')) : '記録なし') +
     '</div>';

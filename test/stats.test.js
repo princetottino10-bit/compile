@@ -61,10 +61,35 @@ test('習熟度: 1戦 +1、勝ち +2、つよい以上に勝てば +1。段階�
   assert.equal(fire.games, 2);
   assert.equal(fire.xp, 1 + 2 + 1 + 1);
   assert.equal(fire.mastery.level, 2, 'xp 5 は Lv2 (3 以上 8 未満)');
-  assert.ok(fire.wonStrong && fire.wonStrongest && fire.won);
+  assert.ok(fire.wonStrong && fire.won);
   assert.equal(m.get('LIFE').won, false);
   assert.equal(D.masteryLevel(0).level, 1);
   assert.equal(D.masteryLevel(150).next, null, '最大 Lv は次が無い');
+});
+
+test('制覇: 「最強」(難易度 3・最強のデッキ) に勝ったときだけ数える。ロック特化・挑戦者・下剋上・ボスは数えない', async () => {
+  const D = await loadData();
+  const { STRONGEST_AI } = await import('../js3d/aidecks.js');
+  const S = STRONGEST_AI.slice();
+  const list = [
+    rec(deck('FIRE', 'WATER', 'SPEED'), S, true, 3),
+    rec(deck('LIFE', 'WATER', 'LIGHT'), S, false, 3),
+    rec(deck('DEATH', 'HATE', 'SMOKE'), S, true, 4),
+    rec(deck('PEACE', 'UNITY', 'LOVE'), S, true, 5),
+    rec(deck('SMOKE', 'UNITY', 'APATHY'), S, true, 20),
+    rec(deck('ICE', 'LUCK', 'TIME'), deck('A', 'B', 'C'), true, 3)
+  ];
+  const m = D.protocolSummary(list);
+  assert.ok(m.get('FIRE').wonStrongest);
+  assert.ok(!m.get('LIFE').wonStrongest, '負けは数えない');
+  assert.ok(!m.get('ICE').wonStrongest, '勝ち抜き戦のボス (難易度 3 でもデッキが違う) は数えない');
+  assert.ok(!m.get('DEATH').wonStrongest && !m.get('PEACE').wonStrongest && !m.get('APATHY').wonStrongest);
+  assert.deepEqual([...D.conquered(list)].sort(), ['FIRE', 'SPEED', 'WATER']);
+  assert.deepEqual(D.newlyConquered(list.slice(0, 0), list[0]).sort(), ['FIRE', 'SPEED', 'WATER']);
+  assert.deepEqual(D.newlyConquered(list.slice(0, 1), rec(deck('FIRE', 'LIFE', 'MIRROR'), S, true, 3)).sort(), ['LIFE', 'MIRROR']);
+  assert.deepEqual(D.newlyConquered(list, rec(deck('FIRE', 'LIFE', 'MIRROR'), S, false, 3)), [], '負けたら無し');
+  const cards = JSON.parse(require('node:fs').readFileSync(require('node:path').join(__dirname, '../data/cards.json'), 'utf8'));
+  assert.equal(D.conquerable(cards.protocols.map(p => p.name)).length, D.CONQUER_TOTAL, '制覇できる数 = 全プロトコル - 最強のデッキ');
 });
 
 test('相性・勝率の推移・最短ターン勝利', async () => {

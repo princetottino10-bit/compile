@@ -10,7 +10,7 @@
 import { CHALLENGER_BASE, CHALLENGERS, UNDERDOG_LEVEL } from './aidecks.js';
 const BOSS_LEVELS = [3, 4, ...CHALLENGERS.map((_, i) => CHALLENGER_BASE + i)];
 import { XP_GAIN } from './xp.js';
-import { protocolSummary } from './stats-data.js';
+import { protocolSummary, conquered, CONQUER_TOTAL } from './stats-data.js';
 import { GACHA_ITEMS } from './rewards.js';
 
 const onlineWin = (e) => e.src === 'online' && e.xp > XP_GAIN.onlinePlay;   // 勝ったときだけ多く入る
@@ -110,6 +110,8 @@ export const TROPHIES = [
     test: (c) => BOSS_LEVELS.every(lv => beat(c, lv)),
     progress: (c) => [BOSS_LEVELS.filter(lv => beat(c, lv)).length, BOSS_LEVELS.length] },
   { id: 'underdog', tier: 'gold', name: 'GIANT SLAYER', desc: '下剋上 (最弱 vs 最強) で勝つ', test: (c) => beat(c, UNDERDOG_LEVEL) },
+  { id: 'conqueror', tier: 'gold', name: 'CONQUEROR', desc: '「最強」の CPU に、最強のデッキ以外の' + CONQUER_TOTAL + 'のプロトコルすべてで勝つ (称号 CONQUEROR)',
+    test: (c) => conquered(c.records).size >= CONQUER_TOTAL, progress: (c) => [Math.min(CONQUER_TOTAL, conquered(c.records).size), CONQUER_TOTAL] },
   { id: 'all30', tier: 'gold', name: 'OMNISCIENT', desc: '30のプロトコルすべてで1勝する', test: (c) => protoWins(c) >= 30, progress: (c) => [protoWins(c), 30] },
   { id: 'holo_card', tier: 'gold', name: 'HOLOGRAM', desc: 'カードをホロにする (そのカードで50勝)', test: (c) => tierCards(c, 50) >= 1 },
   { id: 'level20', tier: 'gold', name: 'MASTER', desc: 'プレイヤーレベル20になる', test: (c) => c.level >= 20, progress: (c) => [Math.min(c.level, 20), 20] },

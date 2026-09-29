@@ -7,6 +7,7 @@
 import { showTitleBack, hideTitleBack } from './titleback.js';
 import { LEVEL_LABELS, STRONGEST_AI, LOCK_AI, CHALLENGERS, CHALLENGER_BASE, UNDERDOG_DECK, UNDERDOG_LEVEL } from './aidecks.js';
 import { localRecords } from './stats.js';
+import { conquered, conquerable } from './stats-data.js';
 import { settings } from './settings.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -38,12 +39,16 @@ export function openOpponentSelect(protocols, opts = {}) {
   const card = (key, title, note, body, extra) => '<button type="button" class="op-card' + (String(last) === key ? ' last' : '') + (extra || '') +
     '" data-opp="' + key + '"><b>' + title + '</b><small>' + note + '</small>' + (body || '') + '</button>';
   const cleared = underdogCleared();
+  /* 制覇: 最強に勝ったプロトコルの数。30 すべてで称号 CONQUEROR */
+  const conq = conquered(localRecords()).size, total = conquerable(protocols.map(p => p.name)).length;
+  const conqBar = '<span class="op-conq"><span>制覇 <b>' + conq + '</b>/' + total + '</span><i><s style="width:' + Math.round(conq / total * 100) + '%"></s></i></span>';
   el.innerHTML = '<div class="op-wrap">' +
     (challenge
       ? '<div class="op-head"><b>// CHALLENGE</b><span>BOSS · UNDERDOG</span></div>' +
       '<section><h3>強敵 <small>相手のデッキは決まっている。次の画面で自分の3つを選ぶ</small></h3>' +
       '<div class="op-row boss">' +
-        card('3', '最強', 'いちばん強い CPU', deck(STRONGEST_AI)) +
+        card('3', '最強' + (conq >= total ? ' <em>✓ TITLE — CONQUEROR</em>' : ''),
+          'いちばん強い CPU。残りの' + total + 'のプロトコルすべてで勝つと 称号 CONQUEROR', deck(STRONGEST_AI) + conqBar) +
         card('4', 'ロック特化', 'サイキック①で「裏向きでしか出せない」を狙う', deck(LOCK_AI)) +
         CHALLENGERS.map((c, k) => card(String(CHALLENGER_BASE + k), '挑戦者', esc(c.name || '最強の候補だったデッキ'), deck(c.deck))).join('') +
       '</div></section>' +

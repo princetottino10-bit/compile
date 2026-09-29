@@ -21,6 +21,22 @@ test('id は重ならず、どれも名前・条件・段がある', () => {
   assert.ok(TROPHIES.filter(t => t.hidden).length >= 5);
 });
 
+test('CONQUEROR: 「最強」に、最強のデッキ以外の27のプロトコルすべてで勝つ。進み具合は制覇の数', async () => {
+  const t = TROPHIES.find(x => x.id === 'conqueror');
+  assert.ok(t, 'conqueror がある');
+  const names = Array.from({ length: 27 }, (_, i) => 'P' + i);
+  const decks = [];
+  for (let i = 0; i < 27; i += 3) decks.push(names.slice(i, i + 3));
+  const { STRONGEST_AI } = await import('../js3d/aidecks.js');
+  const vs = (d, lv = 3, opp = STRONGEST_AI) => ({ win: true, level: lv, me: d, opp });
+  const all = decks.map(d => vs(d));
+  assert.deepEqual(t.progress(ctx({ records: all.slice(0, 4) })), [12, 27]);
+  assert.equal(t.test(ctx({ records: all.slice(0, 8) })), false);
+  assert.equal(t.test(ctx({ records: all })), true);
+  assert.equal(t.test(ctx({ records: decks.map(d => vs(d, 5)) })), false, '挑戦者では取れない');
+  assert.equal(t.test(ctx({ records: decks.map(d => vs(d, 3, ['A', 'B', 'C'])) })), false, 'ボス (デッキが違う) では取れない');
+});
+
 test('何もしていなければ何も取れない', () => {
   assert.deepEqual(newlyEarned({}, ctx()), []);
 });

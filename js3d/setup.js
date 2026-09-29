@@ -18,6 +18,8 @@ import { PROTOCOL_STRENGTH } from './protocol-strength.js';
 import { LEVEL_LABELS as AI_LABELS, CHALLENGERS, CHALLENGER_BASE, isChallenger, fixedDeck, challengerName, levelLabel } from './aidecks.js';
 export { STRONGEST_AI, LOCK_AI } from './aidecks.js';
 import { showTitleBack, hideTitleBack } from './titleback.js';
+import { localRecords } from './stats.js';
+import { conquered } from './stats-data.js';
 
 const MODES = [
   { key: 'draft', label: 'ドラフト (公式)' },
@@ -56,6 +58,8 @@ export function runSetup(protocols, options = {}) {
   const picked = [];
   const presetLevel = Number.isInteger(options.level) ? options.level : null;
   let level = presetLevel === null ? 1 : presetLevel;
+  /* 最強に勝ったプロトコル (制覇)。最強を相手に選ぶときだけ、まだのものに印を付ける */
+  const conq = conquered(localRecords());
   let poolKey = poolKeyOf(groupsOf(lsGet('compileSoloPool', 'all')));
   /* 強敵 (デッキの決まった相手) には、自分の3つを選ぶだけ */
   /* ふだんの CPU 戦は公式のドラフトから (以前の「自由に選ぶ」の保存は使わず、選び直したものだけ覚える) */
@@ -165,6 +169,7 @@ export function runSetup(protocols, options = {}) {
       ' style="--accent:' + (p.color || '#b9a4ff') + '">' +
       '<span class="proto-art" style="background-image:url(&quot;art/' + name.charAt(0) + name.slice(1).toLowerCase() + '.webp&quot;)"></span>' +
       '<img class="proto-emblem" alt="" src="' + emblemDataURL(name, p.color || '#b9a4ff', 96, true) + '">' +
+      (level === 3 && !conq.has(name) ? '<span class="proto-conq" title="まだ最強に勝っていない">未制覇</span>' : '') +
       '<span class="proto-name">' + esc(name) + '</span>' +
       '<span class="proto-set">' + esc(tag || p.set || '') + '</span></button>' +
       (options.cardsOf ? '<button type="button" class="proto-info" data-info="' + esc(name) + '" aria-label="' + esc(name) +

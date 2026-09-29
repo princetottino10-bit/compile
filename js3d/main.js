@@ -37,6 +37,7 @@ import { watchErrors, reportError } from './errorreport.js';
 import * as TU from './tutorial.js';
 import { settings, onSettings, openSettings, setAvatarOptionsGate } from './settings.js';
 import { recordSoloResult, localRecords } from './stats.js';
+import { conquered, newlyConquered, conquerable } from './stats-data.js';
 import { cardStats, cardTier, playerLevel, protocolSummary } from './stats-data.js';
 import { isUnlocked, rewardsBetween, TITLES, UNDERDOG_XP, underdogCleared, AVATAR_RELEASED, COSMETICS } from './rewards.js';
 import { confetti } from './gachafx.js';
@@ -4402,12 +4403,14 @@ async function afterTurn() {
         turns: (cur.state.turns || 0) + 1, logged: !!accountState().user });
     }
     const levelBefore = myLevel;
+    let newConq = [];     // この1戦で新しく制覇した (最強に初めて勝った) プロトコル
     if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial) {
       matchGains = { xp0: playerLevel(localRecords(), bonusXp()).xp, chip0: earnedChips(), lv0: myLevel, daily: [], trophies: [] };
     }
     /* チュートリアルは戦績・リプレイ・実績に数えない */
     if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial) {
       const st0 = cur.state;
+      newConq = newlyConquered(localRecords(), { win, level: aiDifficulty, me: ownProtos(st0, ME), opp: ownProtos(st0, AI) });
       /* タッグは、自分が持ってきた3つで記録する (習熟度・デイリーも自分のプロトコルで数える) */
       recordSoloResult(ownProtos(st0, ME), ownProtos(st0, AI), win, aiDifficulty,
         { turns: (st0.turns || 0) + 1,       // 決着した手番も1つと数える
@@ -4431,6 +4434,11 @@ async function afterTurn() {
     await finaleFx(win);
     FEEL.buzz(win ? [40, 70, 40, 70, 120] : [160]);
   await UI.resultCutIn(win, { victory });
+    /* 最強に新しいプロトコルで勝った: 制覇の数を刻む */
+    if (newConq.length) {
+      await UI.conquerCutIn(newConq.map(n => ({ name: n, color: (protoIndex[n] || {}).color })), conquered(localRecords()).size,
+        conquerable(Object.keys(protoIndex)).length, { auto: autoPlay });
+    }
     /* レベルが上がったら、手に入った報酬を見せる */
     if (myLevel > levelBefore) await UI.levelUpCutIn(myLevel, rewardsBetween(levelBefore, myLevel));
     if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial) await afterGameProgress(cur.state, ME, win, aiDifficulty, false);

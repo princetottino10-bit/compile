@@ -704,6 +704,33 @@ export function levelUpCutIn(level, rewards) {
   });
 }
 
+/* 最強に新しいプロトコルで勝ったとき: 「CONQUERED 17/30」と、新しく制覇したプロトコル。
+   レベルアップと同じ枠を使う。タップで閉じる (opts.auto: 自動プレイの間だけ、少し待って閉じる) */
+export function conquerCutIn(protos, count, total, opts) {
+  let el = $('#levelUp');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'levelUp';
+    el.setAttribute('role', 'dialog');
+    document.body.appendChild(el);
+  }
+  el.setAttribute('aria-label', '最強を制覇');
+  const done = count >= total;
+  el.innerHTML = '<div class="lu-card conq"><div class="lu-kicker">CONQUERED — 最強を制覇</div>' +
+    '<div class="lu-lv" data-text="' + count + '">' + count + '<small>/' + total + '</small></div>' +
+    '<ul class="lu-rewards">' + protos.map((p, i) => '<li style="--i:' + i + ';--pc:' + (p.color || '#b9a4ff') + '"><b class="conq-p">' +
+      String(p.name).replace(/[&<>"]/g, '') + '</b>で最強に勝った</li>').join('') + '</ul>' +
+    '<p class="lu-note">' + (done ? total + 'のプロトコルすべてで最強に勝った。称号 CONQUEROR を手に入れた' : '最強のデッキ以外の' + total + 'のプロトコルすべてで勝つと 称号 CONQUEROR') + '</p>' +
+    '<p class="lu-hint">タップで閉じる</p></div>';
+  el.classList.add('show');
+  sfx('yourTurn');
+  return new Promise((resolve) => {
+    const close = () => { clearTimeout(t); el.classList.remove('show'); el.onclick = null; resolve(); };
+    const t = opts && opts.auto ? setTimeout(close, 2500) : 0;
+    el.onclick = close;
+  });
+}
+
 /* 決着のカットイン */
 export function resultCutIn(win, opts) {
   const el = $('#resultCut');
