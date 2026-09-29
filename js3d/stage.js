@@ -217,19 +217,22 @@ export function createStage(container) {
   /* 平均ではなく「ふつうのコマ」(真ん中の値) の長さで見る。読み込み直後などの一瞬の引っかかりでは下げない。
      下げるのは、2回続けて (4 秒) 重かったときだけ */
   const fpsProbe = { t0: 0, n: 0, capped: 0, good: 0, bad: 0, last: 0, fps: 0, gaps: [] };
-  function probeFps(now) {
+  function probeFps(now, idle) {
     const f = fpsProbe;
     const gap = f.last ? now - f.last : 0;
     f.last = now;
-    /* 裏から戻った・読み込みで止まったなどの大きな間は数えない (測り直し) */
-    if (!f.t0 || gap > 250 || document.hidden) { f.t0 = now; f.n = 0; f.capped = 0; f.gaps.length = 0; return; }
+    /* 裏から戻った・読み込みで止まったなどの大きな間は数えない (測り直し)。
+       何も動いていない間は描く回数をわざと減らしている (下の loop) ので、測らない */
+    if (!f.t0 || gap > 250 || document.hidden || idle) { f.t0 = now; f.n = 0; f.capped = 0; f.gaps.length = 0; return; }
     f.n++;
     f.gaps.push(gap);
     if (gap > 31 && gap < 36) f.capped++;
     const span = now - f.t0;
     if (span < 2000) return;
-    const sorted = f.gaps.slice().sort((a, b) => a - b);
-    const fps = 1000 / Math.max(1, sorted[sorted.length >> 1]);
+    /* 描いた回数 ÷ 時間。一瞬の引っかかり (0.1 秒以上) の時間は除く (読み込み直後などで下げないように)。
+       60 回に抑えているので、画面の書き換えが 144Hz などでもコマの間隔はそろわない。平均で見る */
+    const hitch = f.gaps.filter(g => g > 100).reduce((a, g) => a + g, 0);
+    const fps = (f.gaps.filter(g => g <= 100).length * 1000) / Math.max(1, span - hitch);
     f.fps = (f.n * 1000) / span;
     const cappedAt30 = f.capped > f.n * 0.85;
     if (fps < 50 && !cappedAt30 && elapsed > 8) {
@@ -237,7 +240,7 @@ export function createStage(container) {
       if (++f.bad >= 2) { setGfx(gfxLevel + 1); f.bad = 0; }
     } else {
       f.bad = 0;
-      if (fps >= 58 && gfxLevel > 0) { f.good += span; if (f.good >= 20000) { setGfx(gfxLevel - 1); f.good = 0; } }
+      if (fps >= 55 && gfxLevel > 0) { f.good += span; if (f.good >= 20000) { setGfx(gfxLevel - 1); f.good = 0; } }
       else f.good = 0;
     }
     f.t0 = now; f.n = 0; f.capped = 0; f.gaps.length = 0;
@@ -370,8 +373,22 @@ export function createStage(container) {
   let elapsed = 0;
   let lastTick = 0;
 
-  function loop() {
+  /* 電池のために、描く回数を抑える: 動いているときは 60 回/秒まで、
+     何も動かず (動き・揺れ無し) 触ってもいない状態が 2.5 秒続いたら 30 回/秒 (床の光などのゆっくりした動きは続く)。
+     画面の書き換えが 120〜180Hz の端末で、止まっている画面もいっぱいに描き続けていた */
+  const FRAME_MS = 1000 / 60, IDLE_FRAME_MS = 1000 / 30, IDLE_AFTER = 2500;
+  let lastActive = 0, nextDue = 0, idleNow = false, frames = 0;
+  const wake = () => { lastActive = performance.now(); };
+  for (const ev of ['pointerdown', 'pointermove', 'wheel', 'keydown', 'touchstart']) window.addEventListener(ev, wake, { passive: true, capture: true });
+  function loop(now) {
     requestAnimationFrame(loop);
+    now = now || performance.now();
+    if (TW.activeCount() > 0 || camState.shake > 0.0001) lastActive = now;
+    idleNow = now - lastActive > IDLE_AFTER;
+    const step = idleNow ? IDLE_FRAME_MS : FRAME_MS;
+    /* 少し早めでも描く (2ms)。遅れたら次の予定を今に合わせる (まとめて描かない) */
+    if (now < nextDue - 2) return;
+    nextDue = Math.max(nextDue + step, now - step);
     tick();
   }
 
@@ -405,7 +422,7 @@ export function createStage(container) {
     camera.lookAt(camState.look);
     /* 表示領域が 0 (たたまれた枠の中など) のときは描かない (大きさ 0 の描画先で警告が大量に出る) */
     if (container.clientWidth > 1 && container.clientHeight > 1) composer.render();
-    if (!catchUp) probeFps(lastTick);
+    if (!catchUp) { frames++; probeFps(lastTick, idleNow); }
   }
   applyGfx();
   loop();
@@ -428,7 +445,7 @@ export function createStage(container) {
     THREE, renderer, scene, camera, composer, bloom,
     setCamera, home, focusOn, cinematicHold, shake, onFrame, resize,
     /* 画質の段と、直近に測った FPS (確かめ用) */
-    gfx: () => ({ level: gfxLevel, fps: Math.round(fpsProbe.fps) }), setGfx,
+    gfx: () => ({ level: gfxLevel, fps: Math.round(fpsProbe.fps), frames, idle: idleNow }), setGfx,
     lights: { key, rimSelf, rimOpp, fill }
   };
 }
