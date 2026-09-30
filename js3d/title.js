@@ -168,6 +168,7 @@ export function runTitle(protocols, opts) {
             '<button data-mode="record" type="button">RECORD</button>' +
             '<button data-mode="more" type="button" class="tt-morebtn" aria-expanded="false">MORE</button>' +
             '<div class="tt-morepop" hidden>' +
+              '<button data-mode="story" type="button">STORY <small>序章「起動」</small></button>' +
               '<button data-mode="tutorial" type="button">TUTORIAL <small>遊び方</small></button>' +
               '<button data-mode="training" type="button">TRAINING <small>盤面を自由に</small></button>' +
               '<button data-mode="cards" type="button">CARDS <small>カード一覧</small></button>' +

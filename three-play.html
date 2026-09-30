@@ -1360,6 +1360,100 @@
   #oppOv,#watchOv{position:fixed;inset:0;z-index:57;display:none;overflow-y:auto;padding:calc(20px + env(safe-area-inset-top)) 16px 24px;
     background:radial-gradient(ellipse at 50% 0%,rgba(185,164,255,.1),transparent 55%),#05070f;}
   #oppOv.show,#watchOv.show{display:block;}
+  /* ---------- ストーリーの歩ける世界 (story-world.js) ---------- */
+  #storyWorld{position:fixed;inset:0;z-index:56;background:#05070f;touch-action:none;}
+  .sw-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
+  .sw-hud{position:absolute;top:calc(14px + env(safe-area-inset-top));left:16px;display:flex;flex-direction:column;gap:4px;pointer-events:none;
+    padding:10px 14px;border-radius:10px;background:rgba(5,7,15,.62);border:1px solid rgba(127,243,255,.25);max-width:min(420px,calc(100% - 150px));}
+  .sw-hud b{font:900 15px/1.2 var(--font-hud),system-ui;letter-spacing:.1em;color:#fff;}
+  .sw-zone{font:700 10px/1 var(--font-hud),system-ui;letter-spacing:.2em;color:#7ff3ff;}
+  .sw-goal{margin:4px 0 0;font:700 13px/1.4 system-ui;color:#ffd6ec;}
+  .sw-labels{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+  .sw-labels span{position:absolute;left:0;top:0;padding:3px 8px;border-radius:5px;background:rgba(5,7,15,.7);border:1px solid rgba(255,255,255,.2);
+    color:#fff;font:800 11px/1 system-ui;letter-spacing:.06em;white-space:nowrap;}
+  .sw-act{position:absolute;left:50%;bottom:calc(64px + env(safe-area-inset-bottom));transform:translateX(-50%);min-height:52px;padding:0 28px;border-radius:26px;
+    border:0;background:linear-gradient(90deg,var(--pink),#8b5cf6);color:#fff;font:900 16px/1 system-ui;letter-spacing:.08em;cursor:pointer;
+    box-shadow:0 0 24px rgba(255,79,163,.55);animation:swAct 1.6s ease-in-out infinite;}
+  .sw-act:focus-visible{outline:2px solid #7ff3ff;outline-offset:3px;}
+  @keyframes swAct{50%{box-shadow:0 0 36px rgba(255,79,163,.85);}}
+  .sw-help{position:absolute;left:0;right:0;bottom:calc(16px + env(safe-area-inset-bottom));margin:0;text-align:center;pointer-events:none;
+    font:600 11px/1.4 system-ui;color:rgba(255,255,255,.55);letter-spacing:.06em;}
+  @media (prefers-reduced-motion: reduce){ .sw-act{animation:none;} }
+  /* ---------- ストーリー (story-ui.js) ---------- */
+  #storyMap{position:fixed;inset:0;z-index:57;display:none;overflow-y:auto;padding:calc(56px + env(safe-area-inset-top)) 16px 32px;
+    background:radial-gradient(ellipse at 50% 0%,rgba(127,243,255,.08),transparent 55%),#05070f;}
+  #storyMap.show{display:block;}
+  .sm-wrap{width:min(560px,100%);margin:0 auto;display:flex;flex-direction:column;gap:18px;}
+  .sm-ch header{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+  .sm-ch header b{font:900 20px/1.2 var(--font-hud),system-ui;letter-spacing:.12em;color:#fff;}
+  .sm-ch header span{font:700 11px/1 var(--font-hud),system-ui;letter-spacing:.2em;color:#7ff3ff;}
+  .sm-path{list-style:none;margin:0;padding:0 0 0 18px;display:flex;flex-direction:column;gap:10px;position:relative;}
+  .sm-path::before{content:"";position:absolute;left:6px;top:8px;bottom:8px;width:2px;background:linear-gradient(#7ff3ff,rgba(255,79,163,.5));opacity:.35;}
+  .sm-node{position:relative;}
+  .sm-node::before{content:"";position:absolute;left:-17px;top:50%;width:12px;height:12px;margin-top:-6px;border-radius:50%;
+    background:#05070f;border:2px solid rgba(255,255,255,.25);}
+  .sm-node.clear::before{background:#7ff3ff;border-color:#7ff3ff;}
+  .sm-node.next::before{background:var(--pink);border-color:var(--pink);box-shadow:0 0 12px var(--pink);animation:smPulse 1.4s ease-in-out infinite;}
+  @keyframes smPulse{50%{transform:scale(1.35);}}
+  .sm-node button{width:100%;display:grid;grid-template-columns:62px 1fr auto;grid-template-rows:auto auto;column-gap:12px;row-gap:3px;align-items:center;
+    text-align:left;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:#fff;cursor:pointer;
+    transition:transform .15s,border-color .15s,background .15s;}
+  .sm-node button:hover:not(:disabled),.sm-node button:focus-visible{transform:translateX(3px);border-color:#7ff3ff;outline:0;}
+  .sm-node.next button{border-color:var(--pink);background:rgba(255,79,163,.08);}
+  .sm-node button:disabled{opacity:.38;cursor:default;}
+  .sm-kind{grid-row:span 2;font:800 9px/1 var(--font-hud),system-ui;letter-spacing:.14em;text-align:center;padding:6px 0;border-radius:5px;
+    background:rgba(127,243,255,.12);color:#7ff3ff;}
+  .sm-node.battle .sm-kind{background:rgba(255,79,163,.15);color:var(--pink);}
+  .sm-node b{font:800 15px/1.2 system-ui;}
+  .sm-node small{grid-column:2;font:600 11px/1.3 system-ui;color:var(--dim);}
+  .sm-state{grid-row:1/span 2;grid-column:3;font:800 10px/1 var(--font-hud),system-ui;letter-spacing:.12em;color:var(--dim);}
+  .sm-node.clear .sm-state{color:#7ff3ff;} .sm-node.next .sm-state{color:var(--pink);}
+  .sm-more{text-align:center;font:600 12px/1.5 system-ui;color:var(--dim);letter-spacing:.06em;}
+  #storyConfirm{display:none;} #storyConfirm.show{display:flex;}
+  .sm-confirm{position:fixed;inset:0;z-index:74;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(3,4,10,.72);}
+  .sm-card,.sty-res{width:min(460px,100%);display:flex;flex-direction:column;gap:12px;padding:22px;border-radius:14px;
+    background:#0b0f1d;border:1px solid rgba(255,79,163,.45);box-shadow:0 20px 60px rgba(0,0,0,.6);}
+  .sm-card>small,.sty-res>small{font:800 10px/1 var(--font-hud),system-ui;letter-spacing:.2em;color:var(--pink);}
+  .sm-card h3{margin:0;font:900 22px/1.2 system-ui;color:#fff;}
+  .sm-note{margin:0;font:600 13px/1.5 system-ui;color:var(--dim);}
+  .sm-vs{display:flex;flex-direction:column;gap:8px;}
+  .sm-vs>div{display:flex;flex-direction:column;gap:5px;} .sm-vs em{font:700 11px/1 system-ui;font-style:normal;color:var(--dim);}
+  .sm-vs>i{font:900 13px/1 var(--font-hud),system-ui;color:var(--pink);font-style:normal;letter-spacing:.1em;}
+  .sm-deck{display:flex;flex-wrap:wrap;gap:5px;}
+  .sm-deck i{font:800 11px/1 var(--font-hud),system-ui;font-style:normal;letter-spacing:.06em;padding:5px 8px;border-radius:5px;
+    color:#fff;background:color-mix(in srgb,var(--pc) 30%,#0b0f1d);border:1px solid color-mix(in srgb,var(--pc) 70%,transparent);}
+  .sm-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;}
+  .sm-btns button{flex:1;min-height:46px;padding:0 16px;border-radius:9px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05);
+    color:#fff;font:800 14px/1 system-ui;cursor:pointer;}
+  .sm-btns .sm-go{background:linear-gradient(90deg,var(--pink),#8b5cf6);border-color:transparent;}
+  .sm-btns button:hover,.sm-btns button:focus-visible{outline:2px solid #7ff3ff;outline-offset:2px;}
+  #storyResult{position:fixed;inset:0;z-index:66;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(3,4,10,.7);}
+  #storyResult.show{display:flex;}
+  .sty-res{align-items:center;text-align:center;}
+  .sty-res>b{font:900 44px/1 var(--font-logo),system-ui;letter-spacing:.1em;color:#7ff3ff;text-shadow:0 0 22px rgba(127,243,255,.6);}
+  .sty-res.lose>b{color:var(--pink);text-shadow:0 0 22px rgba(255,79,163,.6);}
+  .sty-res .sm-btns{width:100%;}
+  /* 会話 (ノベル風)。下の枠に文字、右下に立ち絵。ターミナルの人は立ち絵なしで等幅の文字 */
+  #storyScene{position:fixed;inset:0;z-index:70;display:none;cursor:pointer;user-select:none;}
+  #storyScene.show{display:block;}
+  .ss-veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(3,4,10,.35),rgba(3,4,10,.85));}
+  .ss-portrait{position:absolute;right:max(4vw,8px);bottom:0;height:min(78vh,720px);max-width:70vw;object-fit:contain;object-position:bottom;
+    opacity:0;transform:translateY(12px);transition:opacity .25s,transform .25s;filter:drop-shadow(0 0 18px rgba(160,123,255,.35));pointer-events:none;}
+  .ss-portrait.on{opacity:1;transform:none;}
+  .ss-box{position:absolute;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(820px,calc(100% - 24px));
+    min-height:118px;padding:26px 24px 20px;border-radius:12px;background:rgba(8,11,22,.92);border:1px solid color-mix(in srgb,var(--sc,#a07bff) 60%,transparent);
+    box-shadow:0 0 0 1px rgba(0,0,0,.4),0 18px 50px rgba(0,0,0,.6);}
+  .ss-name{position:absolute;top:-13px;left:18px;padding:5px 12px;border-radius:6px;background:var(--sc,#a07bff);color:#05070f;
+    font:900 12px/1 var(--font-hud),system-ui;letter-spacing:.12em;}
+  .ss-text{margin:0;font:600 17px/1.75 system-ui;color:#fff;white-space:pre-wrap;min-height:1.75em;}
+  .ss-box.terminal{background:rgba(2,8,12,.94);}
+  .ss-box.terminal .ss-text{font:600 15px/1.7 ui-monospace,Consolas,monospace;color:var(--sc,#7ff3ff);letter-spacing:.02em;}
+  .ss-next{position:absolute;right:16px;bottom:10px;font-size:11px;color:var(--sc,#a07bff);animation:ssBlink 1s steps(2) infinite;}
+  @keyframes ssBlink{50%{opacity:0;}}
+  .ss-skip{position:absolute;top:calc(14px + env(safe-area-inset-top));left:14px;padding:8px 12px;border-radius:7px;border:1px solid rgba(255,255,255,.2);
+    background:rgba(8,11,22,.7);color:#fff;font:800 11px/1 var(--font-hud),system-ui;letter-spacing:.12em;cursor:pointer;}
+  @media (max-width:600px){ .ss-text{font-size:15px;} .ss-portrait{height:min(58vh,520px);right:-6vw;} }
+  @media (prefers-reduced-motion: reduce){ .sm-node.next::before,.ss-next{animation:none;} .ss-portrait{transition:none;} }
   .op-wrap{width:min(980px,100%);margin:0 auto;display:flex;flex-direction:column;gap:18px;}
   .op-head{display:flex;align-items:baseline;gap:12px;}
   .op-head b{font:900 20px/1 var(--font-logo),system-ui;letter-spacing:.14em;color:var(--cyan);}
@@ -3662,7 +3756,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=628ba738b9",
+      "./js3d/main.js": "./js3d/main.js?v=a29882c29c",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=5ed0fd6fd9",
       "./js3d/panel.js": "./js3d/panel.js?v=db3f19496c",
@@ -3695,8 +3789,13 @@
       "./js3d/stats-data.js": "./js3d/stats-data.js?v=eb2be6d930",
       "./js3d/stats.js": "./js3d/stats.js?v=64bc2a272e",
       "./js3d/steps.js": "./js3d/steps.js?v=13e73b20fe",
+      "./js3d/story-map.js": "./js3d/story-map.js?v=560e151c41",
+      "./js3d/story-scenery.js": "./js3d/story-scenery.js?v=709b17e7de",
+      "./js3d/story-ui.js": "./js3d/story-ui.js?v=a02660de54",
+      "./js3d/story-world.js": "./js3d/story-world.js?v=accaee3736",
+      "./js3d/story.js": "./js3d/story.js?v=f9b4c8fd2a",
       "./js3d/theme.js": "./js3d/theme.js?v=b02da60dc1",
-      "./js3d/title.js": "./js3d/title.js?v=2b0e5bb335",
+      "./js3d/title.js": "./js3d/title.js?v=150d32cc57",
       "./js3d/titleback.js": "./js3d/titleback.js?v=5663d0b7a4",
       "./js3d/training.js": "./js3d/training.js?v=3018b4399e",
       "./js3d/tsume.js": "./js3d/tsume.js?v=bd786cf3c9",
@@ -3706,13 +3805,13 @@
       "./js3d/ui.js": "./js3d/ui.js?v=b088e1750f",
       "./js3d/weekly-ui.js": "./js3d/weekly-ui.js?v=eac88767b3",
       "./js3d/weekly.js": "./js3d/weekly.js?v=5605476b1c",
-      "./js3d/xp.js": "./js3d/xp.js?v=39e78466ed"
+      "./js3d/xp.js": "./js3d/xp.js?v=2146fbc219"
     }
   }
   </script>
   <!-- modulepreload:start -->
   <link rel="modulepreload" href="js3d/solodraft.js?v=b036b97879">
-  <link rel="modulepreload" href="js3d/xp.js?v=39e78466ed">
+  <link rel="modulepreload" href="js3d/xp.js?v=2146fbc219">
   <link rel="modulepreload" href="js3d/daily.js?v=f56dabdf65">
   <link rel="modulepreload" href="js3d/account.js?v=ddfb83cf38">
   <link rel="modulepreload" href="js3d/playlog.js?v=90aaffedee">
@@ -3737,7 +3836,7 @@
   <link rel="modulepreload" href="js3d/control.js?v=c1b87ebc63">
   <link rel="modulepreload" href="js3d/panel.js?v=db3f19496c">
   <link rel="modulepreload" href="js3d/setup.js?v=7d9ca37b7a">
-  <link rel="modulepreload" href="js3d/title.js?v=2b0e5bb335">
+  <link rel="modulepreload" href="js3d/title.js?v=150d32cc57">
   <link rel="modulepreload" href="js3d/training.js?v=3018b4399e">
   <link rel="modulepreload" href="js3d/room.js?v=c34129de95">
   <link rel="modulepreload" href="js3d/puzzle.js?v=6707164a75">
@@ -3747,6 +3846,9 @@
   <link rel="modulepreload" href="js3d/settings.js?v=9e7aa692f0">
   <link rel="modulepreload" href="js3d/stats.js?v=64bc2a272e">
   <link rel="modulepreload" href="js3d/stats-data.js?v=eb2be6d930">
+  <link rel="modulepreload" href="js3d/story.js?v=f9b4c8fd2a">
+  <link rel="modulepreload" href="js3d/story-ui.js?v=a02660de54">
+  <link rel="modulepreload" href="js3d/story-world.js?v=accaee3736">
   <link rel="modulepreload" href="js3d/rewards.js?v=4d916ab88a">
   <link rel="modulepreload" href="js3d/gachafx.js?v=3d15a2226f">
   <link rel="modulepreload" href="js3d/cosmetics-ui.js?v=eb1f3f8659">
@@ -3800,6 +3902,8 @@
   <link rel="modulepreload" href="js3d/profile.js?v=3e36259c86">
   <link rel="modulepreload" href="js3d/gacha-ui.js?v=43cdcf604a">
   <link rel="modulepreload" href="js3d/replays-ui.js?v=fd590e492f">
+  <link rel="modulepreload" href="js3d/story-map.js?v=560e151c41">
+  <link rel="modulepreload" href="js3d/story-scenery.js?v=709b17e7de">
   <link rel="modulepreload" href="js3d/prompts.js?v=348dff836d">
   <link rel="modulepreload" href="js3d/icons.js?v=15bacde80c">
   <link rel="modulepreload" href="js3d/cardtext.js?v=4cf5529855">
@@ -3814,6 +3918,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=dcc4783d36">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=628ba738b9"></script>
+  <script type="module" src="js3d/main.js?v=a29882c29c"></script>
 </body>
 </html>

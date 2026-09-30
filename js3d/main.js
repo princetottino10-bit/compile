@@ -38,6 +38,9 @@ import * as TU from './tutorial.js';
 import { settings, onSettings, openSettings, setAvatarOptionsGate } from './settings.js';
 import { recordSoloResult, localRecords } from './stats.js';
 import { conquered, newlyConquered, conquerable } from './stats-data.js';
+import * as STORY from './story.js';
+import { showStoryResult } from './story-ui.js';
+import { openWorld } from './story-world.js';
 import { cardStats, cardTier, playerLevel, protocolSummary } from './stats-data.js';
 import { isUnlocked, rewardsBetween, TITLES, UNDERDOG_XP, underdogCleared, AVATAR_RELEASED, COSMETICS } from './rewards.js';
 import { confetti } from './gachafx.js';
@@ -227,6 +230,7 @@ UI.setCardInfoHandler({
   winsOf: (defId) => { const t = cardWins.get(defId); return t ? { wins: t.wins, games: t.games, effects: t.effects, tier: cardTier(t.wins) } : null; }
 });
 let runMode = false;             // 勝ち抜き戦・週替わり3連戦の1戦 (?run=1)
+let storyNode = null;            // ストーリーの対戦の場面 (story.js)。決着したら ?story=1 で地図に戻る
 let runKind = 'run';             // 'run' (勝ち抜き戦) / 'weekly' (週替わり3連戦)
 let quickGame = false;           // おまかせで1戦 (?quick=1)
 let runEnded = false;            // 勝ち抜き戦の結果を出したか (ライフが尽きたらその場で出す)
@@ -248,6 +252,7 @@ function ownedAvatars() { return (COSMETICS.avatar || []).filter(([k]) => AVATAR
 let plannedOpp;
 function oppAvatarPlan() {
   if (plannedOpp !== undefined) return plannedOpp;
+  if (storyNode) return (plannedOpp = storyNode.oppAvatar || null);
   /* 勝ち抜き戦のボス戦は、ボス本人 (avatar.js の boss_<id>) */
   if (runMode && runKind === 'run') {
     const run = loadRun();
@@ -291,7 +296,7 @@ function avatarTalk(side) {
 function syncAvatar() {
   /* 観戦 (demoMode) は、観戦の画面でキャラを選んだときだけ */
   /* チュートリアルは、キャラの公開前でもずんだもんが案内する */
-  const want = (avatarsOpen() || !!tutorial) && settings().avatarShow !== false && !puzzle && (!demoMode || !!spectate) && !trainingMode && !replayMode && !!cur;
+  const want = (avatarsOpen() || !!tutorial || !!storyNode) && settings().avatarShow !== false && !puzzle && (!demoMode || !!spectate) && !trainingMode && !replayMode && !!cur;
   if (!want) {
     if (avatars) for (const k of ['me', 'mate', 'opp']) if (avatars[k]) avatars[k].destroy();
     avatars = null;
@@ -300,11 +305,12 @@ function syncAvatar() {
   if (avatars) return;
   /* 観戦: A (左下) と B (右上) は観戦の画面で選んだキャラ (なしも)。タッグの相棒はほかからランダム */
   const sp = spectate && spectate.av;
-  const me = sp ? sp.a : tutorial ? 'zundamon' : myAvatarId();
+  const me = sp ? sp.a : tutorial ? 'zundamon' : storyNode ? storyNode.mate || null : myAvatarId();
   const pool = (ids) => shuffled(avatarIds().filter(i => !ids.includes(i)));
   const mate = tagMates && (!sp || sp.a) ? (sp ? pool([sp.a, sp.b])[0] : (avatarIds().find(i => i !== me && i === 'asagi') || avatarIds().find(i => i !== me))) : null;
   let oppIds;
   if (sp) oppIds = sp.b ? [sp.b, pool([sp.a, sp.b, mate])[0] || sp.b] : [null, null];
+  else if (storyNode) oppIds = [storyNode.oppAvatar || null, null];
   else {
     /* 相手のキャラ: 設定の「相手のキャラ」(ふだんはランダム)。自分・味方と同じ子は選ばない */
     /* デッキを決める前に決めておいた子 (oppAvatarPlan。得意プロトコルを CPU のデッキに入れるため) */
@@ -821,6 +827,7 @@ async function boot() {
     } catch (e) { /* private mode */ }
     let nextMode = joinCode ? 'online'
       : params.get('run') === '1' ? 'run'
+      : params.get('story') === '1' ? 'story'
       : params.get('tsume') ? 'tsume'
       : params.get('watch') === '1' ? 'watch'
       : params.get('title') !== '0'
@@ -872,6 +879,25 @@ async function boot() {
         history.replaceState(null, '', location.pathname);
         nextMode = await runTitle(cards.protocols, { menuOnly: true });
         continue;
+      }
+      /* ストーリー: 歩ける3Dの地図 (story-world.js)。会話はその場で、対戦に入ったら始める。
+         ?story=1&play=1 は「もう一度」(始めた対戦をそのまま) */
+      if (nextMode === 'story') {
+        let node = params.get('play') === '1' ? STORY.pendingBattle(STORY.loadStory()) : null;
+        if (!node) {
+          const pick = await openWorld(cards.protocols, {
+            onChapterClear: (id) => gainXp('story', XP_GAIN.storyChapter, 'stc:' + id)
+          });
+          node = pick && pick.battle;
+        }
+        if (!node) { history.replaceState(null, '', location.pathname); nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
+        document.body.classList.remove('pregame');
+        storyNode = node;
+        p0 = node.me.slice();
+        p1 = node.opp.slice();
+        applyAiDifficulty(node.level);
+        history.replaceState(null, '', location.pathname + '?story=1');
+        break;
       }
       if (nextMode === 'run') {
         /* 1戦終えて戻ってきた (?run=1) ときは、前に遊んでいた方の画面へ。タイトルからは入口を出す */
@@ -950,12 +976,12 @@ async function boot() {
   /* 先攻・後攻はコイントスで決める (トレーニングと問題は自分から。ドラフトはドラフトの先手) */
   /* 勝ち抜き戦のパッチ (先攻・はじめの手札・コントロール) */
   const runOpts = runMode && runKind === 'run' ? battleOpts(loadRun() || { patches: [] }, ME) : null;
-  const firstPlayer = trainingMode || puzzle || tutorial || demoMode ? ME
+  const firstPlayer = trainingMode || puzzle || tutorial || demoMode || storyNode ? ME
     : runOpts && runOpts.first !== undefined ? runOpts.first
       : chosenFirst !== null ? chosenFirst : (Math.random() < 0.5 ? ME : AI);
   const seed = (Math.random() * 1e9) | 0;
   /* 勝ち抜き戦は2本先取 (序盤のふつうの戦闘は1本先取。run.js の runWinCompiles)。週替わりは2本先取 */
-  const winCompiles = runMode ? (runOpts ? runOpts.winCompiles : RUN_WIN_COMPILES) : undefined;
+  const winCompiles = storyNode ? storyNode.win : runMode ? (runOpts ? runOpts.winCompiles : RUN_WIN_COMPILES) : undefined;
   /* 共有された棋譜は外から来たものなので、作り直しで落ちても止まらないように */
   let replayBuilt = null;
   if (replayMode) {
@@ -978,11 +1004,11 @@ async function boot() {
   cur = res;
   playBgm(battleBgm());                          // 対戦の BGM (ボス戦は専用の曲)
   gameStartedAt = Date.now();          // はじめの表示で合計値の演出が出ないように (feel.js)
-  if (!trainingMode && !puzzle && !tutorial && !demoMode && !replayMode) CW.battleStarted(runMode ? runKind : tagMates ? 'tag' : quickGame ? 'quick' : 'cpu', p0, p1);
+  if (!trainingMode && !puzzle && !tutorial && !demoMode && !replayMode) CW.battleStarted(storyNode ? 'story' : runMode ? runKind : tagMates ? 'tag' : quickGame ? 'quick' : 'cpu', p0, p1);
   if (!trainingMode && !puzzle && !tutorial && !demoMode && !replayMode) lastSetup = { p0: p0.slice(), p1: p1.slice(), mates: tagMates };
   /* CPU 戦は棋譜を取る (決着したらリプレイとして残す) */
   /* タッグはリプレイに残さない (棋譜の形が 1 対 1 のため) */
-  replayLog = !replayMode && !trainingMode && !puzzle && !tutorial && !demoMode && !tagMates
+  replayLog = !replayMode && !trainingMode && !puzzle && !tutorial && !demoMode && !tagMates && !storyNode
     ? { init: { seed, p0: p0.slice(), p1: p1.slice(), first: firstPlayer, winCompiles: winCompiles || null,
       ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods, winCompilesBySide: runOpts.winCompilesBySide, perks: runOpts.perks, startCompiled: runOpts.startCompiled } : {}) }, actions: [] } : null;
   if (trainingMode) training.protos = [p0.slice(), p1.slice()];
@@ -2593,8 +2619,8 @@ function myPlate() {
 function showCpuPlates(p1) {
   const first = p1 && protoIndex[p1[0]];
   /* 勝ち抜き戦・週替わりでは難易度名 (かんたん・ふつう…) を出さない */
-  const sub = aiDifficulty === null || runMode ? '' : levelLabel(aiDifficulty);
-  showPlates({ me: myPlate(), opp: { name: 'CPU', sub: sub === '不明' ? '' : sub,
+  const sub = storyNode ? 'STORY' : aiDifficulty === null || runMode ? '' : levelLabel(aiDifficulty);
+  showPlates({ me: myPlate(), opp: { name: storyNode ? storyNode.oppName : 'CPU', sub: sub === '不明' ? '' : sub,
     icon: first ? { name: first.name, color: first.color } : null } });
 }
 
@@ -3290,6 +3316,7 @@ async function announceControl(req, choice) {
 /* 対戦の格: 'boss' (勝ち抜き戦の BOSS・週替わりの BOSS・CHALLENGE の最強・下剋上) / 'strong' (勝ち抜き戦の精鋭・CHALLENGE のロック特化と挑戦者) / null */
 function battleTier() {
   if (demoMode || roomMode || tutorial || puzzle || trainingMode) return null;
+  if (storyNode) return storyNode.boss ? 'boss' : null;
   if (runMode && runKind === 'run') {
     const run = loadRun();
     const node = run && nodeById(run, run.pos);
@@ -4398,17 +4425,17 @@ async function afterTurn() {
     /* 遊ばれ方の匿名の記録 (ログインしていない人も。チュートリアルも数える) */
     /* AUTO (管理者の自動プレイ) で指した対戦も数える (戦績・経験値の動きを確かめるためのもの) */
     if (!trainingMode && !puzzle && !demoMode && !roomMode) {
-      logPlay({ mode: runMode ? runKind : tutorial ? 'tutorial' : tagMates ? 'tag' : quickGame ? 'quick' : 'cpu', win, level: aiDifficulty,
+      logPlay({ mode: storyNode ? 'story' : runMode ? runKind : tutorial ? 'tutorial' : tagMates ? 'tag' : quickGame ? 'quick' : 'cpu', win, level: aiDifficulty,
         me: ownProtos(cur.state, ME), opp: ownProtos(cur.state, AI),
         turns: (cur.state.turns || 0) + 1, logged: !!accountState().user });
     }
     const levelBefore = myLevel;
     let newConq = [];     // この1戦で新しく制覇した (最強に初めて勝った) プロトコル
-    if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial) {
+    if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial && !storyNode) {
       matchGains = { xp0: playerLevel(localRecords(), bonusXp()).xp, chip0: earnedChips(), lv0: myLevel, daily: [], trophies: [] };
     }
-    /* チュートリアルは戦績・リプレイ・実績に数えない */
-    if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial) {
+    /* チュートリアルとストーリーは戦績・リプレイ・実績に数えない */
+    if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial && !storyNode) {
       const st0 = cur.state;
       newConq = newlyConquered(localRecords(), { win, level: aiDifficulty, me: ownProtos(st0, ME), opp: ownProtos(st0, AI) });
       /* タッグは、自分が持ってきた3つで記録する (習熟度・デイリーも自分のプロトコルで数える) */
@@ -4441,13 +4468,14 @@ async function afterTurn() {
     }
     /* レベルが上がったら、手に入った報酬を見せる */
     if (myLevel > levelBefore) await UI.levelUpCutIn(myLevel, rewardsBetween(levelBefore, myLevel));
-    if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial) await afterGameProgress(cur.state, ME, win, aiDifficulty, false);
+    if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial && !storyNode) await afterGameProgress(cur.state, ME, win, aiDifficulty, false);
     if (win && !trainingMode && !puzzle && !demoMode && !roomMode) maybeLoginHint('firstWin');
     if (demoMode) {
       await TW.wait(900);
       location.reload();
       return;
     }
+    if (storyNode) { await storyAfterGame(win); return; }
     if (runMode) {
       if (!runEnded) {
         runEnded = true;
@@ -4473,6 +4501,26 @@ async function afterTurn() {
     }
     showEndActions(win);
   }
+}
+
+/* ストーリーの決着: 勝てばクリア (初めてなら経験値。章を終えたらさらに)、決着の会話 → 次へ / もう一度 */
+async function storyAfterGame(win) {
+  const node = storyNode;
+  const before = STORY.loadStory();
+  const had = STORY.isCleared(before, node.id);
+  const after = STORY.finishBattle({ ...before, pending: node.id }, win);
+  STORY.saveStory(after);
+  if (win && !had) {
+    await gainXp('story', XP_GAIN.storyBattle, 'st:' + node.id);
+    if (STORY.chapterCleared(after, node.chapter)) await gainXp('story', XP_GAIN.storyChapter, 'stc:' + node.chapter);
+  }
+  const go = (q) => { location.href = location.pathname + q; };
+  await showStoryResult(win, node, {
+    next: () => go('?story=1'),
+    map: () => go('?story=1'),
+    retry: () => { STORY.saveStory(STORY.startBattle(STORY.loadStory(), node.id)); go('?story=1&play=1'); },
+    title: () => go('')
+  });
 }
 
 /* 決着の画面に出す「次の目標」: 次のレベルまでの経験値と、今日のデイリーミッションの残り */

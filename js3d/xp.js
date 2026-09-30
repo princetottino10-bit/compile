@@ -31,6 +31,8 @@ export const XP_GAIN = {
   tsumeDaily: 5,       // 今日の問題 (日ごとに)
   tsumeDailyHard: 8,   // 今日の上級 (日ごとに)
   runClear: 10,        // 勝ち抜き戦 (8人) を全勝クリア
+  storyBattle: 5,      // ストーリーの対戦に初めて勝つ (場面ごと)
+  storyChapter: 10,    // ストーリーの章を最後までクリア (章ごとに初回)
   weeklyClear: 20,     // 週替わり3連戦をクリア (週ごとに初回)
   weeklyBonus: 10      // そのうえ週替わりのボーナス (帳簿の1件は 20 までなので分けて入れる。合わせて +30)
 };
