@@ -1486,7 +1486,7 @@
   .ss-still.on{opacity:1;}
   #storyScene.with-still .ss-veil{background:linear-gradient(180deg,transparent 45%,rgba(3,4,10,.8) 88%);}
   @media (prefers-reduced-motion: reduce){ .ss-still{transition:none;} }
-  .ss-portrait{position:absolute;right:max(4vw,8px);bottom:0;height:min(78vh,720px);max-width:70vw;object-fit:contain;object-position:bottom;
+  .ss-portrait{position:absolute;right:max(4vw,8px);top:0;height:100vh;max-width:70vw;object-fit:contain;object-position:top;
     opacity:0;transform:translateY(12px);transition:opacity .25s,transform .25s;filter:drop-shadow(0 0 18px rgba(160,123,255,.35));pointer-events:none;}
   .ss-portrait.on{opacity:1;transform:none;}
   .ss-box{position:absolute;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(820px,calc(100% - 24px));
@@ -1501,7 +1501,7 @@
   @keyframes ssBlink{50%{opacity:0;}}
   .ss-skip{position:absolute;top:calc(14px + env(safe-area-inset-top));left:14px;padding:8px 12px;border-radius:7px;border:1px solid rgba(255,255,255,.2);
     background:rgba(8,11,22,.7);color:#fff;font:800 11px/1 var(--font-hud),system-ui;letter-spacing:.12em;cursor:pointer;}
-  @media (max-width:600px){ .ss-text{font-size:15px;} .ss-portrait{height:min(58vh,520px);right:-6vw;} }
+  @media (max-width:600px){ .ss-text{font-size:15px;} .ss-portrait{height:100vh;right:-22vw;max-width:none;} }
   @media (prefers-reduced-motion: reduce){ .sm-node.next::before,.ss-next{animation:none;} .ss-portrait{transition:none;} }
   .op-wrap{width:min(980px,100%);margin:0 auto;display:flex;flex-direction:column;gap:18px;}
   .op-head{display:flex;align-items:baseline;gap:12px;}
