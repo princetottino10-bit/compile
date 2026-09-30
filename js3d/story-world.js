@@ -99,6 +99,19 @@ export function openWorld(protocols, opts = {}) {
   let markerT = 0;
   scene.add(marker);
 
+  /* 行き先の案内: 目的地の上の矢印と、足元からの光の点の道 */
+  const arrow = new THREE.Mesh(keep(new THREE.ConeGeometry(0.42, 0.9, 4)), keep(new THREE.MeshBasicMaterial({ color: COLORS.pink })));
+  arrow.rotation.x = Math.PI;
+  arrow.visible = false;
+  scene.add(arrow);
+  const DOTS = 90;
+  const dotGeo = keep(new THREE.BufferGeometry());
+  dotGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(DOTS * 3), 3));
+  dotGeo.setDrawRange(0, 0);
+  const dots = new THREE.Points(dotGeo, keep(new THREE.PointsMaterial({ color: COLORS.pink, size: 0.3, transparent: true, opacity: 0.85, depthWrite: false, blending: THREE.AdditiveBlending })));
+  scene.add(dots);
+  let guideT = 0;
+
   /* あなた: 光るプロセスの玉 */
   const me = new THREE.Group();
   const core = new THREE.Mesh(keep(new THREE.SphereGeometry(0.32, 24, 16)), keep(new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: COLORS.cyan, emissiveIntensity: 2.2 })));
@@ -255,6 +268,50 @@ export function openWorld(protocols, opts = {}) {
   }
   actBtn.onclick = act;
 
+  /* 次の出来事の場所 (人・物・巡回はその位置、区画に入る出来事は地図の guides) */
+  const guideTarget = () => {
+    const c = currentNode(state);
+    const ev = c && eventFor(c.id);
+    if (!ev) return null;
+    if (ev.kind === 'guard') return { x: patrol.position.x / T, y: patrol.position.z / T };
+    const p = posOf(ev);
+    if (p) return p;
+    const g = map.guides && map.guides[c.id];
+    return g ? { x: g[0] + 0.5, y: g[1] + 0.5 } : null;
+  };
+  const syncGuide = (t, dt) => {
+    guideT -= dt;
+    const goal = busy ? null : guideTarget();
+    const far = goal && dist(goal, pos) > REACH;
+    arrow.visible = !!far;
+    if (far) {
+      arrow.position.copy(world(goal, 3.1 + Math.sin(t * 3) * 0.15));
+      arrow.rotation.y = t * 1.5;
+    }
+    if (guideT > 0) return;
+    guideT = 0.35;
+    const route = far ? M.findPath(map, state, pos, goal) : null;
+    const arr = dotGeo.attributes.position.array;
+    let n = 0;
+    if (route) {
+      let prev = pos, carry = 0.6;              // 足元から少し離して置き始める
+      for (const q of route) {
+        const d = dist(prev, q);
+        while (carry <= d && n < DOTS) {
+          const k = carry / d;
+          const w = world({ x: prev.x + (q.x - prev.x) * k, y: prev.y + (q.y - prev.y) * k }, 0.06);
+          arr[n * 3] = w.x; arr[n * 3 + 1] = w.y; arr[n * 3 + 2] = w.z;
+          n++;
+          carry += 0.55;
+        }
+        carry -= d;
+        prev = q;
+      }
+    }
+    dotGeo.setDrawRange(0, n);
+    dotGeo.attributes.position.needsUpdate = true;
+  };
+
   const checkEvents = () => {
     if (busy) return;
     /* 近くの話しかけられる相手 */
@@ -354,6 +411,8 @@ export function openWorld(protocols, opts = {}) {
     }
     chief.position.y = 1.6 + Math.sin(t * 1.5) * 0.15;
     scenery.update(t, dt);
+    syncGuide(t, dt);
+    dots.material.opacity = 0.55 + 0.35 * Math.sin(t * 4);
     if (marker.visible) { markerT += dt; marker.scale.setScalar(1 + Math.sin(markerT * 8) * 0.12); }
 
 

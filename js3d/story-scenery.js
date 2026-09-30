@@ -173,8 +173,8 @@ export function buildScenery(scene, map, keep) {
     const n = floorOf(w.x, w.y - 1), s = floorOf(w.x, w.y + 1), e = floorOf(w.x + 1, w.y), wv = floorOf(w.x - 1, w.y);
     if (!n && !s && !e && !wv) continue;                          // 周りに床がない壁は見えないので置かない
     const z = zoneOf(w.x);
-    /* 手前 (床が北にだけある) は低く切り落とす */
-    if (n && !s && !e && !wv) {
+    /* 手前 (床が北にだけある壁と、扉の行より手前の仕切り) は低く切り落とす */
+    if ((n && !s && !e && !wv) || (map.cutRow !== undefined && w.y > map.cutRow)) {
       const low = new THREE.Mesh(lowGeo, topMat);
       low.position.copy(cell(w.x, w.y, LOW_H / 2));
       const edge = new THREE.Mesh(trimGeoX, trimMat(z));

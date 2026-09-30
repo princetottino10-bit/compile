@@ -19,6 +19,7 @@ import { earnedChips } from './chips.js';
 import * as CW from './crashwatch.js';
 import { unlockTrophies, TROPHY_XP } from './achievements.js';
 import { addReplay, getReplay, pinReplay, rebuild } from './replays.js';
+import * as RS from './resume.js';
 import { decodeReplay, sharedCodeFromHash, shareReplayLink } from './replayshare.js';
 import { advantageSeries, turningPoints } from './turning.js';
 import { trophyContext, showTrophyBanner } from './achievements-ui.js';
@@ -231,6 +232,7 @@ UI.setCardInfoHandler({
 });
 let runMode = false;             // 勝ち抜き戦・週替わり3連戦の1戦 (?run=1)
 let storyNode = null;            // ストーリーの対戦の場面 (story.js)。決着したら ?story=1 で地図に戻る
+let resumed = null;              // 中断した対戦を続きから遊ぶ (resume.js): { rec, built }
 let runKind = 'run';             // 'run' (勝ち抜き戦) / 'weekly' (週替わり3連戦)
 let quickGame = false;           // おまかせで1戦 (?quick=1)
 let runEnded = false;            // 勝ち抜き戦の結果を出したか (ライフが尽きたらその場で出す)
@@ -498,7 +500,7 @@ const QUICK_POOL = ['FIRE', 'WATER', 'SPEED', 'DEATH', 'LIFE', 'LIGHT', 'DARKNES
 let replayLog = null;
 let replayMode = null;
 let lastReplayId = null;
-const logAction = (a) => { if (replayLog) replayLog.actions.push(JSON.parse(JSON.stringify(a))); };
+const logAction = (a) => { if (replayLog) replayLog.actions.push(JSON.parse(JSON.stringify(a))); RS.logResume(a); };
 /* チュートリアルのレッスン (?tutorial=1..)。{ index, lesson } */
 let tutorial = null;
 let tutorialOver = false;
@@ -825,7 +827,14 @@ async function boot() {
       if (joinCode) sessionStorage.setItem('compileJoinCode', joinCode);
       else joinCode = sessionStorage.getItem('compileJoinCode') || '';
     } catch (e) { /* private mode */ }
-    let nextMode = joinCode ? 'online'
+    /* 中断した対戦 (画面が落ちた・閉じた) があれば、タイトルの前に続きから遊ぶか聞く */
+    let resumeRec = null;
+    if (!joinCode && !accountResume && ![...params.keys()].length) {
+      const r = RS.loadResume();
+      if (r) { if (await RS.askResume(r)) resumeRec = r; else RS.endResume(); }
+    }
+    let nextMode = resumeRec ? 'resume'
+      : joinCode ? 'online'
       : params.get('run') === '1' ? 'run'
       : params.get('story') === '1' ? 'story'
       : params.get('tsume') ? 'tsume'
@@ -842,6 +851,29 @@ async function boot() {
       }
     } catch (e) { /* private mode */ }
     for (;;) {
+      /* 中断した対戦の続き: はじめの状態から手を並べ直す。並べ直せなければ、ふつうにタイトルへ */
+      if (nextMode === 'resume') {
+        let built = null;
+        try { built = rebuild(Engine, resumeRec); } catch (e) { built = null; }
+        if (!built || !built.ok || !built.res || built.res.error || built.res.state.winner !== null) {
+          RS.endResume();
+          UI.toast('中断した対戦は続きから遊べませんでした', 3600);
+          nextMode = await runTitle(cards.protocols, { menuOnly: true });
+          continue;
+        }
+        const m = resumeRec.meta;
+        resumed = { rec: resumeRec, built };
+        document.body.classList.remove('pregame');
+        p0 = resumeRec.init.p0.slice();
+        p1 = resumeRec.init.p1.slice();
+        if (m.story) storyNode = STORY.nodeById(m.story);
+        if (m.run) { runMode = true; runKind = m.run; if (runKind === 'weekly') weeklyHud(); else runHud(0); }
+        quickGame = !!m.quick;
+        if (m.oppAvatar !== undefined) plannedOpp = m.oppAvatar;
+        applyAiDifficulty(m.level);
+        if (storyNode) history.replaceState(null, '', location.pathname + '?story=1');
+        break;
+      }
       if (nextMode === 'online') {
         try {
           await ROOM.roomLoadDeps();
@@ -994,6 +1026,8 @@ async function boot() {
   }
   const res = replayBuilt
     ? replayBuilt.res
+    : resumed
+      ? resumed.built.res
     : puzzle
       ? Engine.newPuzzle(puzzle.spec, { seed: 1 })
       : tutorial
@@ -1008,9 +1042,16 @@ async function boot() {
   if (!trainingMode && !puzzle && !tutorial && !demoMode && !replayMode) lastSetup = { p0: p0.slice(), p1: p1.slice(), mates: tagMates };
   /* CPU 戦は棋譜を取る (決着したらリプレイとして残す) */
   /* タッグはリプレイに残さない (棋譜の形が 1 対 1 のため) */
+  const gameInit = resumed ? resumed.rec.init : { seed, p0: p0.slice(), p1: p1.slice(), first: firstPlayer, winCompiles: winCompiles || null,
+    ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods, winCompilesBySide: runOpts.winCompilesBySide, perks: runOpts.perks, startCompiled: runOpts.startCompiled } : {}) };
+  const priorActions = resumed ? resumed.rec.actions : [];
   replayLog = !replayMode && !trainingMode && !puzzle && !tutorial && !demoMode && !tagMates && !storyNode
-    ? { init: { seed, p0: p0.slice(), p1: p1.slice(), first: firstPlayer, winCompiles: winCompiles || null,
-      ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods, winCompilesBySide: runOpts.winCompilesBySide, perks: runOpts.perks, startCompiled: runOpts.startCompiled } : {}) }, actions: [] } : null;
+    ? { init: gameInit, actions: priorActions.slice() } : null;
+  /* 落ちても続きから遊べるように、はじめの状態と手を端末に書き残す (タッグ・トレーニング・問題・観戦・オンラインは除く) */
+  if (!replayMode && !trainingMode && !puzzle && !tutorial && !demoMode && !tagMates && !roomMode && !spectate) {
+    RS.startResume({ mode: storyNode ? 'story' : runMode ? runKind : quickGame ? 'quick' : 'cpu', level: aiDifficulty, me: p0.slice(), opp: p1.slice(),
+      story: storyNode ? storyNode.id : null, run: runMode ? runKind : null, quick: quickGame, oppAvatar: oppAvatarPlan() }, gameInit, Date.now(), priorActions);
+  }
   if (trainingMode) training.protos = [p0.slice(), p1.slice()];
   window.__3d = {
     stage, board, THREE, LAYOUT,
@@ -1093,7 +1134,7 @@ async function boot() {
       const turnNote = chosenFirst !== null
         ? (firstPlayer === ME ? 'ドラフトの先手: あなたが先攻です' : 'ドラフトの後手: あなたは後攻です')
         : (firstPlayer === ME ? 'コイントス: あなたが先攻です' : 'コイントス: あなたは後攻です');
-      UI.toast(setupNote ? setupNote + '　' + turnNote : turnNote, setupNote ? 4200 : 2600);
+      UI.toast(resumed ? '中断した対戦の続きから' : setupNote ? setupNote + '　' + turnNote : turnNote, setupNote ? 4200 : 2600);
     }
     await drainRequests();
     await afterTurn();
@@ -2056,7 +2097,7 @@ function bindInput() {
   const goToMenu = async () => {
     if (!roomMode) {
       if (!confirm('メニューに戻りますか？')) return;
-      CW.battleEnded();
+      CW.battleEnded(); RS.endResume();
       location.href = location.pathname;
       return;
     }
@@ -2068,7 +2109,7 @@ function bindInput() {
         if (!isRoomGone(e) && !confirm('投了を送れませんでした (' + e.message + ')。それでもメニューに戻りますか？')) return;
       }
     }
-    CW.battleEnded();
+    CW.battleEnded(); RS.endResume();
     location.href = location.pathname;
   };
   const cardsBtn = document.getElementById('btnCards');
@@ -2896,7 +2937,7 @@ async function roomMaybeFinish() {
   if (!st || st.winner === null || roomResultShown) return;
   roomResultShown = true;
   fadeOutBgm();
-  CW.battleEnded();
+  CW.battleEnded(); RS.endResume();
   stopRoomPoll();
   const win = st.winner === ME;
   UI.setPrompt(win ? 'あなたの勝ち' : '敗北', 'end');
@@ -3374,7 +3415,7 @@ async function step(action) {
   } else if (action.type === 'play') avatarSay(before.turn, 'down', null, before, 6000, 0.6);
   else if (action.type === 'refresh') avatarSay(before.turn, 'refresh', null, before, 6000);
   if (topLevel && assistGame() && before.turn === ME) {
-    undoPoint = { cur, replayLen: replayLog ? replayLog.actions.length : 0, histLen: gameHistory.length };
+    undoPoint = { cur, replayLen: replayLog ? replayLog.actions.length : 0, resumeLen: RS.resumeLength(), histLen: gameHistory.length };
   }
   if (topLevel && !demoMode && !trainingMode && !tutorial && !puzzle && before.turn === AI) {
     if (!oppTurn) oppTurn = { start: before, lines: [] };
@@ -4420,7 +4461,7 @@ async function afterTurn() {
   if (cur.state.winner !== null && !resultShown) {
     resultShown = true;
     fadeOutBgm();                                   // 決着したら BGM は引いて、勝ち・負けの音だけにする
-    CW.battleEnded();
+    CW.battleEnded(); RS.endResume();
     const win = cur.state.winner === ME;
     /* 遊ばれ方の匿名の記録 (ログインしていない人も。チュートリアルも数える) */
     /* AUTO (管理者の自動プレイ) で指した対戦も数える (戦績・経験値の動きを確かめるためのもの) */
@@ -4730,6 +4771,7 @@ function undoLastMove() {
   oppTurn = null;
   cur = p.cur;                         // 先に戻す (選択待ちを閉じると、処理の続きは戻した盤面を見て止まる)
   if (replayLog) replayLog.actions.length = p.replayLen;
+  RS.truncateResume(p.resumeLen);
   gameHistory.length = p.histLen;
   cancelPendingAsk();
   deselect();
