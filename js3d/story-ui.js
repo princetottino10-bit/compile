@@ -110,11 +110,11 @@ export function askBattle(n, protocols) {
   const tsume = n.kind === 'tsume';
   /* 管理者は対戦を飛ばせる (話の確認用)。返り値 'skip' */
   const admin = accountState().admin;
-  box.innerHTML = '<div class="sm-card"><small>' + (tsume ? 'TSUME' : 'BATTLE') + '</small><h3>' + esc(n.title) + '</h3>' +
+  box.innerHTML = '<div class="sm-card"><small>' + (tsume ? 'OVERWRITE' : 'COMPILE') + '</small><h3>' + esc(n.title) + '</h3>' +
     '<p class="sm-note">' + esc(n.note || '') + '</p>' +
     (tsume ? '<div class="sm-vs"><div><em>あなた</em></div><i>VS</i><div><em>' + esc(n.oppName) + '</em></div></div>'
-      : '<div class="sm-vs"><div><em>あなた</em>' + chips(n.me) + '</div><i>VS</i><div><em>' + esc(n.oppName) + ' (' + LEVELS[n.level] + ')</em>' + chips(n.opp) + '</div></div>') +
-    '<div class="sm-btns"><button type="button" class="sm-go">' + (tsume ? '解く' : '対戦する') + '</button>' +
+      : '<div class="sm-vs"><div><em>あなた</em>' + chips(n.me) + '</div><i>VS</i><div><em>' + esc(n.oppName) + '</em>' + chips(n.opp) + '</div></div>') +
+    '<div class="sm-btns"><button type="button" class="sm-go">' + (tsume ? '書き換える' : 'コンパイルを始める') + '</button>' +
     (admin ? '<button type="button" class="sm-skip">飛ばす (ADMIN)</button>' : '') +
     '<button type="button" class="sm-back">戻る</button></div></div>';
   box.classList.add('show');
