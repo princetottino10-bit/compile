@@ -6,7 +6,7 @@
  *   ブラウザの自動再生の制限で鳴らせなかったときは、次に画面に触れたときに鳴らし直す
  *   クレジット (必須): 煉獄庭園 (設定の画面と COLLECTION の BGM に出す)
  * ========================================================================= */
-import { routeMedia, isMuted, initAudio } from './audio.js';
+import { routeMedia, isMuted, initAudio, onMuteChange } from './audio.js';
 import { settings, onSettings } from './settings.js';
 import { BGM_RELEASED } from './rewards.js';
 
@@ -131,6 +131,9 @@ export function stopBgm() {
 }
 
 /** 音量・消音の変更を反映する (設定・🔇 のあと) */
+/* すべての音を消す・戻すを切り替えたら、BGM の音量もすぐ合わせる */
+onMuteChange(() => refreshBgm());
+
 export function refreshBgm() {
   if (!el) return;
   const v = level();

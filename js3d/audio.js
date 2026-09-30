@@ -14,7 +14,10 @@ let actx = null;
 let master = null;
 let noiseBuf = null;
 let reverbIn = null;
-let muted = false;
+/* すべての音を消す (効果音・声・BGM)。端末に覚えておき、開き直しても消えたまま */
+const MUTE_KEY = 'compileMuteAll';
+let muted = (() => { try { return localStorage.getItem(MUTE_KEY) === '1'; } catch (e) { return false; } })();
+const muteListeners = [];
 
 /* 効果音の音量 (0..100)。80 がこれまでの音量。
    BGM は無し (以前の合成 BGM は低音がずっと「ブーー」と鳴って耳障りだったので削除) */
@@ -25,7 +28,13 @@ export function setSfxVolume(pct) {
   if (sfxBus) sfxBus.gain.setTargetAtTime(sfxLevel, actx.currentTime, 0.05);
 }
 
-export function setMuted(v) { muted = !!v; }
+export function setMuted(v) {
+  muted = !!v;
+  try { localStorage.setItem(MUTE_KEY, muted ? '1' : '0'); } catch (e) { /* private mode */ }
+  for (const f of muteListeners) { try { f(muted); } catch (e) { /* 表示の更新に失敗しても音の切り替えは止めない */ } }
+}
+/** ミュートが切り替わったら呼ぶ (BGM・ボタンの表示) */
+export function onMuteChange(f) { muteListeners.push(f); }
 
 /* ---- 短い音声 (キャラの声) ----
    <audio> を毎回作って鳴らすと、iPhone の Safari は画面に触れた瞬間以外は止めてしまい、声がほとんど出なかった。

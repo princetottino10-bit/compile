@@ -51,7 +51,15 @@
   #brand{display:flex;align-items:center;gap:9px;font:800 13px/1 system-ui;letter-spacing:.22em;}
   #topRight{display:flex;align-items:center;gap:6px;margin-left:auto;}
   #topRight .btn{width:auto;min-width:0;min-height:26px;padding:0 12px;font-size:10px;pointer-events:auto;}
-  #topRight #btnMute{padding:0 9px;font-size:12px;}
+  #topRight #btnMute{padding:0 9px;font-size:12px;display:inline-flex;align-items:center;justify-content:center;}
+  #topRight #btnMute.on{color:var(--pink);}
+  /* すべての音を消す (タイトル・待合室・ストーリー)。対戦中は右上の #btnMute */
+  #muteAll{display:none;position:fixed;left:max(14px,env(safe-area-inset-left));bottom:calc(14px + env(safe-area-inset-bottom));z-index:72;
+    width:42px;height:42px;border-radius:50%;align-items:center;justify-content:center;cursor:pointer;
+    border:1px solid rgba(255,255,255,.22);background:rgba(8,11,22,.72);color:#e9eef8;backdrop-filter:blur(6px);}
+  body.pregame #muteAll{display:flex;}
+  #muteAll.off{color:#ff4fa3;border-color:rgba(255,79,163,.6);}
+  #muteAll:hover,#muteAll:focus-visible{border-color:#63f3ff;outline:0;}
   /* 管理者の自動プレイ (AUTO)。動いている間は色を変えて、止め忘れないように */
   #topRight #btnAuto.on{color:#1a1405;background:var(--gold);border-color:var(--gold);box-shadow:0 0 14px rgba(255,216,106,.5);}
   #brand b{color:var(--pink);}
@@ -3757,12 +3765,12 @@
       "./js3d/aidecks.js": "./js3d/aidecks.js?v=8d249240bd",
       "./js3d/aitalk.js": "./js3d/aitalk.js?v=3b756521cb",
       "./js3d/arena.js": "./js3d/arena.js?v=ef66a1e5bb",
-      "./js3d/audio.js": "./js3d/audio.js?v=83ccb2142e",
+      "./js3d/audio.js": "./js3d/audio.js?v=7117cf6ecb",
       "./js3d/avatar-boss-lines.js": "./js3d/avatar-boss-lines.js?v=507ebedfac",
       "./js3d/avatar-lines.js": "./js3d/avatar-lines.js?v=66742df57f",
       "./js3d/avatar.js": "./js3d/avatar.js?v=0561e2c494",
       "./js3d/backdrops.js": "./js3d/backdrops.js?v=90faf9612d",
-      "./js3d/bgm.js": "./js3d/bgm.js?v=d6ae8bab02",
+      "./js3d/bgm.js": "./js3d/bgm.js?v=30c6aea3f2",
       "./js3d/board.js": "./js3d/board.js?v=77a546cfcc",
       "./js3d/card.js": "./js3d/card.js?v=2919662bbc",
       "./js3d/cardlist-ov.js": "./js3d/cardlist-ov.js?v=d2cdfb8fb3",
@@ -3792,8 +3800,9 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=d2dd15024e",
+      "./js3d/main.js": "./js3d/main.js?v=fafc152a32",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
+      "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=5ed0fd6fd9",
       "./js3d/panel.js": "./js3d/panel.js?v=db3f19496c",
       "./js3d/pickaid.js": "./js3d/pickaid.js?v=7fecd8f779",
@@ -3907,8 +3916,9 @@
   <link rel="modulepreload" href="js3d/cardtex.js?v=7ce5dc0e38">
   <link rel="modulepreload" href="js3d/fx.js?v=f76521724c">
   <link rel="modulepreload" href="js3d/arena.js?v=ef66a1e5bb">
-  <link rel="modulepreload" href="js3d/audio.js?v=83ccb2142e">
-  <link rel="modulepreload" href="js3d/bgm.js?v=d6ae8bab02">
+  <link rel="modulepreload" href="js3d/audio.js?v=7117cf6ecb">
+  <link rel="modulepreload" href="js3d/mutebutton.js?v=1362dbc4d6">
+  <link rel="modulepreload" href="js3d/bgm.js?v=30c6aea3f2">
   <link rel="modulepreload" href="js3d/emblems.js?v=6d1c077a2e">
   <link rel="modulepreload" href="js3d/layout.js?v=91b1b5570a">
   <link rel="modulepreload" href="js3d/theme.js?v=b02da60dc1">
@@ -3956,6 +3966,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=dcc4783d36">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=d2dd15024e"></script>
+  <script type="module" src="js3d/main.js?v=fafc152a32"></script>
 </body>
 </html>

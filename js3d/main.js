@@ -64,7 +64,8 @@ import { bindSelectHead, questionText } from './selectui.js';
 import { faceImageURL, backImageURL, pruneFaceCache, ART_SETS, setMaxAnisotropy } from './cardtex.js';
 import * as FX from './fx.js';
 import { buildArena } from './arena.js';
-import { initAudio, sfx, setMuted, isMuted, setSfxVolume } from './audio.js';
+import { initAudio, sfx, setMuted, isMuted, setSfxVolume, onMuteChange } from './audio.js';
+import { mountMuteButton, muteIcon } from './mutebutton.js';
 import { playBgm, refreshBgm, fadeOutBgm, pickNormalBgm, STRONG_BGM, BOSS_BGM } from './bgm.js';
 import { BGM_RELEASED } from './rewards.js';
 import { emblemDataURL } from './emblems.js';
@@ -819,6 +820,7 @@ async function boot() {
     bootEl0.classList.add('gone');
     setTimeout(() => { bootEl0.style.display = 'none'; }, 800);
     document.body.classList.add('pregame');
+    mountMuteButton();                  /* すべての音を消すボタン (タイトル・待合室・ストーリーの左下) */
     /* ログイン状態は裏で読む (待たない)。Google から戻ってきたときはメニューを出してアカウントの画面を開く */
     const accountReady = initAccount();
     const accountResume = takeAccountResume();
@@ -2136,14 +2138,19 @@ function bindInput() {
     openSettings([{ label: live ? '投了してメニューに戻る' : 'メニューに戻る', button: 'メニューへ', warn: live,
       note: live ? 'この対戦は負けになります' : RS.resumeActive() && st && st.winner === null ? '中断して、あとで続きから遊ぶこともできます' : 'この対戦をやめてタイトルに戻ります', onClick: goToMenu }]);
   };
+  /* 右上のボタン = すべての音を消す (タイトルなどの右下のボタンと同じ状態) */
   const muteBtn = document.getElementById('btnMute');
-  if (muteBtn) muteBtn.onclick = () => {
-    initAudio();
-    setMuted(!isMuted());
-    refreshBgm();
-    muteBtn.textContent = isMuted() ? '🔇' : '🔊';
-    muteBtn.classList.toggle('on', isMuted());
-  };
+  if (muteBtn) {
+    const sync = () => {
+      muteBtn.innerHTML = muteIcon(isMuted());
+      muteBtn.classList.toggle('on', isMuted());
+      muteBtn.setAttribute('aria-pressed', isMuted() ? 'true' : 'false');
+      muteBtn.title = isMuted() ? '音を鳴らす' : 'すべての音を消す';
+    };
+    muteBtn.onclick = () => { initAudio(); setMuted(!isMuted()); };
+    onMuteChange(sync);
+    sync();
+  }
   const undoBtn = document.getElementById('btnUndo');
   if (undoBtn) undoBtn.onclick = undoLastMove;
   const hintBtn = document.getElementById('btnHint');
