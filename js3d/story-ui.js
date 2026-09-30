@@ -5,7 +5,7 @@
  *   showStoryResult(win, node, actions)  決着のあと: 勝ち負けの会話 → ボタン (次へ・もう一度・地図・タイトル)
  * ========================================================================= */
 import { showTitleBack, hideTitleBack } from './titleback.js';
-import { faceFor } from './avatar.js';
+import { faceFor, faceURL } from './avatar.js';
 import { accountState } from './account.js';
 import { CHAPTERS, SPEAKERS, loadStory, saveStory, canEnter, isCleared, currentNode, clearNode, startBattle, nodeById } from './story.js';
 
@@ -64,7 +64,7 @@ export function playScene(lines, opts = {}) {
         el.classList.toggle('with-still', stillOn);
       }
       if (sp.portrait && !stillOn) {
-        portrait.src = 'art/avatar/' + sp.portrait + '_' + faceFor(sp.portrait, line.face || 'normal') + '.webp';
+        portrait.src = faceURL(sp.portrait, faceFor(sp.portrait, line.face || 'normal'));
         portrait.classList.add('on');
       } else portrait.classList.remove('on');
       full = line.text;

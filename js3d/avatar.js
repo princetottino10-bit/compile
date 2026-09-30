@@ -86,7 +86,9 @@ const calm = () => { try { return matchMedia('(prefers-reduced-motion: reduce)')
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
 /* 選べる・ランダムに出るキャラ (ボスは除く) */
 export const avatarIds = () => Object.keys(AVATARS).filter(id => !AVATARS[id].boss);
-export const faceURL = (id, face) => 'art/avatar/' + id + '_' + (AVATARS[id] && AVATARS[id].single ? 'normal' : (face || 'normal')) + '.webp';
+/* 立ち絵の版。画像には版の印が付かないので、同じ名前で差し替えたらここを上げる (古い絵がしばらく出るのを防ぐ)。2 = 2026-10-01 の切り抜き直し */
+export const ART_VER = 2;
+export const faceURL = (id, face) => 'art/avatar/' + id + '_' + (AVATARS[id] && AVATARS[id].single ? 'normal' : (face || 'normal')) + '.webp?v=' + ART_VER;
 
 /** キャラを出す。opts.side: 'me' (左下) / 'opp' (右上)。opts.back: 自分の後ろに立つ (タッグの味方)。
  *  返り値: { react(kind, vars), say(text, face, ms), setFace(face, ms), setBack(on), destroy(), id } */
