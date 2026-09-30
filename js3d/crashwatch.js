@@ -20,6 +20,11 @@ export function battleProgress(turns) {
   const v = read();
   if (v && v.turns !== turns) write({ ...v, turns, last: Date.now() });
 }
+/** いま何をしているか (落ちたときに、最後に何をしていたかを知るため)。what: 'compile' など、info: 数字など少し */
+export function battleNote(what, info) {
+  const v = read();
+  if (v) write({ ...v, what: String(what).slice(0, 24), info: info == null ? null : String(info).slice(0, 40), whatAt: Date.now() });
+}
 /** 決着した・自分でメニューへ戻った: 印を消す */
 export function battleEnded() { write(null); }
 
@@ -31,7 +36,8 @@ export function checkLastBattle() {
   const secs = Math.round(((v.last || v.at) - v.at) / 1000);
   const how = v.closed ? 'ページを閉じた・読み直した' : v.hidden ? '裏に回ったあと' : '画面ごと落ちた (閉じた記録なし)';
   reportError('対戦が途中で終わった: ' + v.mode + ' ・ ' + (v.turns | 0) + '手番 ・ 始めて' + secs + '秒 ・ ' + how +
-    ' ・ ' + (v.me || []).join('/') + ' vs ' + (v.opp || []).join('/'), 'crashwatch');
+    ' ・ ' + (v.me || []).join('/') + ' vs ' + (v.opp || []).join('/') +
+    (v.what ? ' ・ 最後: ' + v.what + (v.info ? ' (' + v.info + ')' : '') : ''), 'crashwatch');
   return v;
 }
 

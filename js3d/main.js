@@ -61,7 +61,7 @@ import { loadWeekly, loadStoredWeekly, weekKey } from './weekly.js';
 import { openReview } from './review.js';
 import { runRoomLobby } from './roomui.js';
 import { bindSelectHead, questionText } from './selectui.js';
-import { faceImageURL, backImageURL, pruneFaceCache, ART_SETS, setMaxAnisotropy } from './cardtex.js';
+import { faceImageURL, backImageURL, pruneFaceCache, ART_SETS, setMaxAnisotropy, faceCacheSize } from './cardtex.js';
 import * as FX from './fx.js';
 import { buildArena } from './arena.js';
 import { initAudio, sfx, setMuted, isMuted, setSfxVolume, onMuteChange } from './audio.js';
@@ -647,7 +647,11 @@ async function boot() {
     },
     /* 自分のカードが着地した瞬間に震わせる (飛び立つ前ではなく、音と光に合わせる)。表で値が大きいほど強く */
     onLand: (o) => { if (o.byMe) FEEL.buzz(o.faceUp ? 14 + o.value * 4 : 12); },
+    /* 落ちたときの手がかり: コンパイルの演出を始めた・覚えているカードの絵の数 */
+    onCompileStart: () => CW.battleNote('compile', 'faces ' + faceCacheSize()),
+    onCompileEnd: () => CW.battleNote('after-compile', 'faces ' + faceCacheSize()),
     onCompile: async (info) => {
+      CW.battleNote('compile-cutin', 'faces ' + faceCacheSize());
       FEEL.buzz(info.side === ME ? [30, 60, 50] : 40);
       /* コンパイルした側は喜び、された側は少し遅れて悔しがる */
       avatarCompileAt = Date.now();

@@ -3,15 +3,20 @@
  *   ワールド単位は「カード幅 = 1.0」を基準にする。
  * ========================================================================= */
 
+/* iPhone・iPad (Safari) か。キャンバスに使えるメモリの上限が小さく、超えると絵が黒くなったりページごと落ちたりする */
+export const IOS = typeof navigator !== 'undefined' &&
+  (/iPhone|iPad|iPod/.test(navigator.userAgent || '') || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+
 /* --- カード実寸 (幅:奥行 = 1 : 1.4) --- */
 export const CARD = {
   w: 1.0,
   h: 1.4,
   thickness: 0.022,
   /* テクスチャ解像度 (幅:高さはカード比と一致させる)。
-     cardtex.js は 512x716 のデザイン空間で描き、ここへ拡大される */
-  texW: 640,
-  texH: 896
+     cardtex.js は 512x716 のデザイン空間で描き、ここへ拡大される。
+     iPhone・iPad は 7割 (メモリは約半分)。1試合で 36〜72 種類のカードの絵を持つため */
+  texW: IOS ? 448 : 640,
+  texH: IOS ? 627 : 896
 };
 
 /* --- 書体 ---

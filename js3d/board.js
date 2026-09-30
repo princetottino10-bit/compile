@@ -101,6 +101,9 @@ function locKey(l) {
 
 export function createBoard(stage, defIndex, me, hooks) {
   const onCompile = (hooks && hooks.onCompile) || (() => Promise.resolve());
+  /* コンパイルの演出が始まる (落ちたときの手がかりに、main.js が印を残す) */
+  const onCompileStart = (hooks && hooks.onCompileStart) || (() => {});
+  const onCompileEnd = (hooks && hooks.onCompileEnd) || (() => {});
   /* 自分のカードのオーラ (使って勝つほど光る・お気に入り)。defId -> { color, strength, holo, fav } | null */
   const auraFor = (hooks && hooks.auraFor) || (() => null);
   /* 表面のキラ加工 (プロトコルの習熟度)。defId -> { color, strength, rainbow } | null */
@@ -459,6 +462,7 @@ export function createBoard(stage, defIndex, me, hooks) {
     const accent = own || (proto && proto.color) || (ev.side === me ? COLOR.self : COLOR.opp);
     const center = new THREE.Vector3(laneX, 0, 0);
 
+    onCompileStart(ev);
     /* 1) チャージ: ラインが白熱し、カメラがレーンへ低く回り込む */
     sfx('charge');
     stage.cinematicHold(center, 2100, { radius: 3.9, height: 2.0, sweep: 0.85 });
@@ -500,6 +504,7 @@ export function createBoard(stage, defIndex, me, hooks) {
     });
 
     await stage.home(420);
+    onCompileEnd(ev);
   }
 
   /* ---------- 状態遷移の適用 ---------- */

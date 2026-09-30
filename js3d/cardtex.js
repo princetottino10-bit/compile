@@ -22,6 +22,18 @@ const faceCache = new Map();   // defId -> THREE.CanvasTexture
 const faceZones = new Map();   // defId -> {upper/middle/lower: [x,y,w,h]} (デザイン座標)
 const faceVersion = new Map(); // defId -> 描き直し回数 (アート読込で+1、dataURLキャッシュの無効化キー)
 const urlCache = new Map();    // defId+':'+version(+':'+zone) -> dataURL (PNGエンコードは重い)
+/* 覚えておく画像の文字列は最近の分だけ (1枚 数百KB。全部覚えると iPhone のメモリを食う) */
+const URL_KEEP = 24;
+function rememberURL(key, url) {
+  urlCache.delete(key);
+  urlCache.set(key, url);
+  while (urlCache.size > URL_KEEP) urlCache.delete(urlCache.keys().next().value);
+  return url;
+}
+/* 使い終わったキャンバスのメモリをすぐ返す (iPhone の Safari は、捨てたキャンバスのメモリをなかなか返さない) */
+function releaseCanvas(cv) { cv.width = 0; cv.height = 0; }
+/** 覚えているカードの絵の数 (落ちたときの手がかり) */
+export const faceCacheSize = () => faceCache.size;
 const faceCanvas = new Map();  // defId -> HTMLCanvasElement (プレビュー用)
 const artCache = new Map();    // url -> HTMLImageElement | null (失敗)
 const backTextures = new Map();   // 裏面の柄 (スリーブ) -> テクスチャ
@@ -425,9 +437,7 @@ export function faceImageURL(def) {
   if (urlCache.has(key)) return urlCache.get(key);
   const cv = faceCanvas.get(def.id);
   if (!cv) return null;
-  const url = cv.toDataURL('image/png');
-  urlCache.set(key, url);
-  return url;
+  return rememberURL(key, cv.toDataURL('image/png'));
 }
 
 /* 発動カットイン用: 発動したゾーン以外をグレーアウトし、
@@ -459,8 +469,8 @@ export function activationImageURL(def, zone) {
     ctx.shadowBlur = 0;
   }
   const url = cv.toDataURL('image/png');
-  urlCache.set(key, url);
-  return url;
+  releaseCanvas(cv);
+  return rememberURL(key, url);
 }
 
 /* 裏面を画像として取り出す (スタック一覧で、見る権利のない裏向きに使う) */
