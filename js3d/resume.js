@@ -31,6 +31,7 @@ export function truncateResume(n) {
   save();
 }
 export const resumeLength = () => (live ? live.actions.length : 0);
+export const resumeActive = () => !!live;
 export function endResume() {
   live = null;
   try { localStorage.removeItem(RESUME_KEY); } catch (e) { /* private mode */ }
@@ -66,6 +67,24 @@ export function askResume(r) {
     const end = (v) => { box.remove(); resolve(v); };
     box.querySelector('.sm-go').onclick = () => end(true);
     box.querySelector('.sm-back').onclick = () => end(false);
+    box.querySelector('.sm-go').focus();
+  });
+}
+
+/* 対戦の途中でメニューへ戻るとき: 'suspend' (中断してあとで続きから) / 'quit' (やめる) / null (戻る) */
+export function askLeave() {
+  const box = document.createElement('div');
+  box.className = 'sm-confirm';
+  box.setAttribute('role', 'dialog');
+  box.setAttribute('aria-modal', 'true');
+  box.setAttribute('aria-label', 'メニューに戻る');
+  box.innerHTML = '<div class="sm-card"><small>MENU</small><h3>メニューに戻りますか？</h3>' +
+    '<p class="sm-note">中断すると、次にゲームを開いたときに続きから遊べます。</p>' +
+    '<div class="sm-btns"><button type="button" class="sm-go" data-v="suspend">中断する</button>' +
+    '<button type="button" data-v="quit">対戦をやめる</button><button type="button" data-v="">戻る</button></div></div>';
+  document.body.appendChild(box);
+  return new Promise((resolve) => {
+    box.querySelectorAll('[data-v]').forEach(b => { b.onclick = () => { box.remove(); resolve(b.dataset.v || null); }; });
     box.querySelector('.sm-go').focus();
   });
 }

@@ -55,3 +55,12 @@ test('説明の文: 相手のデッキと手の数', () => {
   assert.match(label, /DARKNESS \/ SPEED \/ HATE/);
   assert.match(label, /1手/);
 });
+
+test('記録中かどうか: 始めたら true、終えたら false', () => {
+  R.endResume();
+  assert.equal(R.resumeActive(), false);
+  R.startResume(meta, init, 1000);
+  assert.equal(R.resumeActive(), true);
+  R.endResume();
+  assert.equal(R.resumeActive(), false);
+});

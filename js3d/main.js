@@ -2096,6 +2096,17 @@ function bindInput() {
   };
   const goToMenu = async () => {
     if (!roomMode) {
+      /* 続きから遊べる対戦 (resume.js で記録中) は、中断するか・やめるかを選ぶ */
+      const st0 = shown();
+      if (RS.resumeActive() && st0 && st0.winner === null) {
+        const v = await RS.askLeave();
+        if (!v) return;
+        CW.battleEnded();                 // 落ちたのではない (エラーの一覧に送らない)
+        if (v === 'quit') RS.endResume();
+        /* 中断してすぐのメニューでは「続きから遊ぶか」を聞かない (次に開いたときに聞く) */
+        location.href = location.pathname + (v === 'suspend' ? '?suspended=1' : '');
+        return;
+      }
       if (!confirm('メニューに戻りますか？')) return;
       CW.battleEnded(); RS.endResume();
       location.href = location.pathname;
@@ -2120,7 +2131,7 @@ function bindInput() {
     const st = shown();
     const live = roomMode && st && st.winner === null;
     openSettings([{ label: live ? '投了してメニューに戻る' : 'メニューに戻る', button: 'メニューへ', warn: live,
-      note: live ? 'この対戦は負けになります' : 'この対戦をやめてタイトルに戻ります', onClick: goToMenu }]);
+      note: live ? 'この対戦は負けになります' : RS.resumeActive() && st && st.winner === null ? '中断して、あとで続きから遊ぶこともできます' : 'この対戦をやめてタイトルに戻ります', onClick: goToMenu }]);
   };
   const muteBtn = document.getElementById('btnMute');
   if (muteBtn) muteBtn.onclick = () => {
