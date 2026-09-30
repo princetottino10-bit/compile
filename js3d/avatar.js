@@ -13,6 +13,13 @@ import { LINES, FAVORITE } from './avatar-lines.js';
 import { BOSS_LINES } from './avatar-boss-lines.js';
 
 export const FACES = ['normal', 'blink', 'happy', 'fired', 'frustrated', 'surprised'];
+/* 照れ (shy)・しょんぼり (sad)。絵があるのはオリジナルの4人だけ。ほかの子は近い表情で代わりに出す */
+export const EXTRA_FACES = ['shy', 'sad'];
+const EXTRA_OWNERS = new Set(['shion', 'nadeshiko', 'asagi', 'yamabuki']);
+const EXTRA_FALLBACK = { shy: 'happy', sad: 'frustrated' };
+export const facesOf = (id) => (EXTRA_OWNERS.has(id) ? FACES.concat(EXTRA_FACES) : FACES);
+/** その子に絵がある表情に直す (無い表情は近いものへ) */
+export const faceFor = (id, face) => (facesOf(id).includes(face) ? face : EXTRA_FALLBACK[face] || 'normal');
 
 /* キャラ。lines は性格ごとのセリフ ({card} は出したカードの名前) */
 export const AVATARS = {
@@ -92,7 +99,7 @@ export function mountAvatar(id, opts = {}) {
   /* 絵の向き (facing: 'left' は左を向いている絵)。盤面の方を向くよう、CSS で左右を反転する */
   el.dataset.facing = def.facing || 'front';
   el.setAttribute('aria-hidden', 'true');
-  el.innerHTML = '<div class="av-body">' + FACES.map(f =>
+  el.innerHTML = '<div class="av-body">' + facesOf(id).map(f =>
     '<img alt="" draggable="false" data-face="' + f + '" src="' + faceURL(id, f) + '"' + (f === 'normal' ? ' class="on"' : '') + '>').join('') +
     '</div><div class="av-bubble" role="status"><b class="av-name">' + def.name + '</b><p class="av-text"></p></div>';
   (opts.root || document.body).appendChild(el);
@@ -113,7 +120,8 @@ export function mountAvatar(id, opts = {}) {
   scheduleBlink();
 
   function setFace(f, ms) {
-    if (!FACES.includes(f)) return;
+    f = faceFor(id, f);
+    if (!facesOf(id).includes(f)) return;
     clearTimeout(faceTimer);
     face = f;
     show(f);
@@ -147,7 +155,7 @@ export function mountAvatar(id, opts = {}) {
     if (opts.onSay) { try { opts.onSay(id, text); } catch (e) { /* 声は無くても遊べる */ } }
   }
   /* 手に合わせて: play (表で出した) / compile / compiled (された) / hurt (大きく減らされた) / almost (コンパイル目前) / win / lose / hello */
-  const FACE_OF = { play: 'fired', compile: 'happy', compiled: 'frustrated', hurt: 'surprised', almost: 'fired', win: 'happy', lose: 'frustrated', hello: 'happy',
+  const FACE_OF = { play: 'fired', compile: 'happy', compiled: 'frustrated', hurt: 'surprised', almost: 'fired', win: 'happy', lose: 'sad', hello: 'happy',
     lesson: 'normal', good: 'happy', retry: 'normal',
     turn: 'normal', down: 'fired', watch: 'surprised', chain: 'happy', refresh: 'normal', idle: 'normal', control: 'happy', boost: 'fired',
     handes: 'frustrated', wipe: 'fired', rearrange: 'fired', fav: 'happy', reach: 'fired', lead: 'happy', behind: 'frustrated', crushed: 'surprised', recompile: 'happy' };

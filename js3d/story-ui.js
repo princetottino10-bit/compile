@@ -5,6 +5,7 @@
  *   showStoryResult(win, node, actions)  決着のあと: 勝ち負けの会話 → ボタン (次へ・もう一度・地図・タイトル)
  * ========================================================================= */
 import { showTitleBack, hideTitleBack } from './titleback.js';
+import { faceFor } from './avatar.js';
 import { CHAPTERS, SPEAKERS, loadStory, saveStory, canEnter, isCleared, currentNode, clearNode, startBattle, nodeById } from './story.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -27,11 +28,13 @@ function overlay(id, label) {
 /* ---------- 会話 ---------- */
 export function playScene(lines, opts = {}) {
   const el = overlay('storyScene', '会話');
-  el.innerHTML = '<div class="ss-veil"></div><img class="ss-portrait" alt="">' +
+  el.innerHTML = '<img class="ss-still" alt="">' + '<div class="ss-veil"></div><img class="ss-portrait" alt="">' +
     '<div class="ss-box"><div class="ss-name"></div><p class="ss-text"></p><span class="ss-next" aria-hidden="true">▼</span></div>' +
     '<button type="button" class="ss-skip">SKIP ▸▸</button>';
   el.classList.add('show');
   const portrait = el.querySelector('.ss-portrait');
+  const still = el.querySelector('.ss-still');
+  let stillOn = false;
   const nameEl = el.querySelector('.ss-name');
   const textEl = el.querySelector('.ss-text');
   const box = el.querySelector('.ss-box');
@@ -52,8 +55,15 @@ export function playScene(lines, opts = {}) {
       box.classList.toggle('terminal', terminal);
       box.style.setProperty('--sc', sp.color);
       nameEl.textContent = sp.name;
-      if (sp.portrait) {
-        portrait.src = 'art/avatar/' + sp.portrait + '_' + (line.face || 'normal') + '.webp';
+      /* スチル (一枚絵): 出ているあいだは立ち絵を出さない (絵の中にその子がいる) */
+      if (line.still !== undefined) {
+        stillOn = !!line.still;
+        if (stillOn) still.src = 'art/still/' + line.still + '.webp';
+        still.classList.toggle('on', stillOn);
+        el.classList.toggle('with-still', stillOn);
+      }
+      if (sp.portrait && !stillOn) {
+        portrait.src = 'art/avatar/' + sp.portrait + '_' + faceFor(sp.portrait, line.face || 'normal') + '.webp';
         portrait.classList.add('on');
       } else portrait.classList.remove('on');
       full = line.text;

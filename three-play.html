@@ -1481,6 +1481,11 @@
   #storyScene{position:fixed;inset:0;z-index:70;display:none;cursor:pointer;user-select:none;}
   #storyScene.show{display:block;}
   .ss-veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(3,4,10,.35),rgba(3,4,10,.85));}
+  /* スチル (一枚絵): 画面いっぱい。下の会話の枠が読めるよう、下だけ暗くする */
+  .ss-still{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%;opacity:0;transition:opacity .45s;}
+  .ss-still.on{opacity:1;}
+  #storyScene.with-still .ss-veil{background:linear-gradient(180deg,transparent 45%,rgba(3,4,10,.8) 88%);}
+  @media (prefers-reduced-motion: reduce){ .ss-still{transition:none;} }
   .ss-portrait{position:absolute;right:max(4vw,8px);bottom:0;height:min(78vh,720px);max-width:70vw;object-fit:contain;object-position:bottom;
     opacity:0;transform:translateY(12px);transition:opacity .25s,transform .25s;filter:drop-shadow(0 0 18px rgba(160,123,255,.35));pointer-events:none;}
   .ss-portrait.on{opacity:1;transform:none;}
@@ -2971,6 +2976,15 @@
     border:2px solid rgba(185,164,255,.35);background:#120d22;color:#cbbff5;cursor:default;font:900 17px/1 system-ui;
     transition:transform .15s,box-shadow .15s;}
   .rn-node span{pointer-events:none;}
+  /* 道のりの印は絵 (art/run/node_*.webp)。丸の中いっぱいに */
+  .rn-node img{width:118%;height:118%;object-fit:contain;pointer-events:none;user-select:none;}
+  .rn-node.visited img{filter:saturate(.5) brightness(.8);}
+  .rn-legend img{width:18px;height:18px;vertical-align:-4px;margin-right:3px;}
+  /* パッチのアイコン (枠の色がレア度) とイベントの一枚絵 */
+  .rn-patchart{width:56px;height:56px;margin:-4px 0 -2px -4px;flex:none;}
+  .rn-pchip img{width:16px;height:16px;vertical-align:-4px;margin:-2px 4px -2px -3px;}
+  .rn-eventart{display:block;width:100%;max-width:640px;aspect-ratio:16/9;object-fit:cover;margin:0 auto 12px;border-radius:10px;
+    border:1px solid rgba(185,164,255,.3);box-shadow:0 10px 30px rgba(0,0,0,.45);}
   .rn-node.elite{border-color:rgba(255,200,90,.6);color:var(--gold);}
   .rn-node.boss{width:58px;height:58px;margin:-29px 0 0 -29px;font-size:28px;border-color:#ff3c5a;color:#ffb3c2;background:radial-gradient(circle,#3a0a18,#120d22);
     box-shadow:0 0 24px rgba(255,60,90,.4);}
@@ -3768,7 +3782,7 @@
       "./js3d/audio.js": "./js3d/audio.js?v=7117cf6ecb",
       "./js3d/avatar-boss-lines.js": "./js3d/avatar-boss-lines.js?v=507ebedfac",
       "./js3d/avatar-lines.js": "./js3d/avatar-lines.js?v=66742df57f",
-      "./js3d/avatar.js": "./js3d/avatar.js?v=0561e2c494",
+      "./js3d/avatar.js": "./js3d/avatar.js?v=689e96236e",
       "./js3d/backdrops.js": "./js3d/backdrops.js?v=90faf9612d",
       "./js3d/bgm.js": "./js3d/bgm.js?v=30c6aea3f2",
       "./js3d/board.js": "./js3d/board.js?v=e3abfcc177",
@@ -3823,7 +3837,7 @@
       "./js3d/rewards.js": "./js3d/rewards.js?v=4d916ab88a",
       "./js3d/room.js": "./js3d/room.js?v=aa2b801fa6",
       "./js3d/roomui.js": "./js3d/roomui.js?v=93676f5bcf",
-      "./js3d/run-ui.js": "./js3d/run-ui.js?v=0bdb738ada",
+      "./js3d/run-ui.js": "./js3d/run-ui.js?v=8b1bf24b98",
       "./js3d/run.js": "./js3d/run.js?v=13b3d72425",
       "./js3d/runcards.js": "./js3d/runcards.js?v=c2bf20e9b7",
       "./js3d/selectui.js": "./js3d/selectui.js?v=208abdaebc",
@@ -3837,9 +3851,9 @@
       "./js3d/steps.js": "./js3d/steps.js?v=13e73b20fe",
       "./js3d/story-map.js": "./js3d/story-map.js?v=bc46619712",
       "./js3d/story-scenery.js": "./js3d/story-scenery.js?v=8925ee19eb",
-      "./js3d/story-ui.js": "./js3d/story-ui.js?v=a02660de54",
-      "./js3d/story-world.js": "./js3d/story-world.js?v=d6834ef8d5",
-      "./js3d/story.js": "./js3d/story.js?v=f9b4c8fd2a",
+      "./js3d/story-ui.js": "./js3d/story-ui.js?v=f1db83f1ff",
+      "./js3d/story-world.js": "./js3d/story-world.js?v=2aad5d6180",
+      "./js3d/story.js": "./js3d/story.js?v=62134607d8",
       "./js3d/theme.js": "./js3d/theme.js?v=0c7b42a1d2",
       "./js3d/title.js": "./js3d/title.js?v=150d32cc57",
       "./js3d/titleback.js": "./js3d/titleback.js?v=5663d0b7a4",
@@ -3864,7 +3878,7 @@
   <link rel="modulepreload" href="js3d/feel.js?v=fa59a5b9fb">
   <link rel="modulepreload" href="js3d/pickaid.js?v=7fecd8f779">
   <link rel="modulepreload" href="js3d/spectate.js?v=e7aaf6e4e9">
-  <link rel="modulepreload" href="js3d/avatar.js?v=0561e2c494">
+  <link rel="modulepreload" href="js3d/avatar.js?v=689e96236e">
   <link rel="modulepreload" href="js3d/avatar-lines.js?v=66742df57f">
   <link rel="modulepreload" href="js3d/aitalk.js?v=3b756521cb">
   <link rel="modulepreload" href="js3d/motion.js?v=36861b0081">
@@ -3893,9 +3907,9 @@
   <link rel="modulepreload" href="js3d/settings.js?v=9e7aa692f0">
   <link rel="modulepreload" href="js3d/stats.js?v=64bc2a272e">
   <link rel="modulepreload" href="js3d/stats-data.js?v=eb2be6d930">
-  <link rel="modulepreload" href="js3d/story.js?v=f9b4c8fd2a">
-  <link rel="modulepreload" href="js3d/story-ui.js?v=a02660de54">
-  <link rel="modulepreload" href="js3d/story-world.js?v=d6834ef8d5">
+  <link rel="modulepreload" href="js3d/story.js?v=62134607d8">
+  <link rel="modulepreload" href="js3d/story-ui.js?v=f1db83f1ff">
+  <link rel="modulepreload" href="js3d/story-world.js?v=2aad5d6180">
   <link rel="modulepreload" href="js3d/rewards.js?v=4d916ab88a">
   <link rel="modulepreload" href="js3d/gachafx.js?v=3d15a2226f">
   <link rel="modulepreload" href="js3d/cosmetics-ui.js?v=eb1f3f8659">
@@ -3906,7 +3920,7 @@
   <link rel="modulepreload" href="js3d/cardlist-ov.js?v=d2cdfb8fb3">
   <link rel="modulepreload" href="js3d/opponent-select.js?v=5ed0fd6fd9">
   <link rel="modulepreload" href="js3d/aidecks.js?v=8d249240bd">
-  <link rel="modulepreload" href="js3d/run-ui.js?v=0bdb738ada">
+  <link rel="modulepreload" href="js3d/run-ui.js?v=8b1bf24b98">
   <link rel="modulepreload" href="js3d/weekly-ui.js?v=eac88767b3">
   <link rel="modulepreload" href="js3d/run.js?v=13b3d72425">
   <link rel="modulepreload" href="js3d/weekly.js?v=5605476b1c">

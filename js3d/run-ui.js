@@ -65,11 +65,11 @@ function mapHtml(run, canMove) {
     const cls = ['rn-node', n.type, vis.includes(n.id) ? 'visited' : '', n.id === run.pos ? 'here' : '', reach.includes(n.id) ? 'reach' : ''].join(' ');
     return '<button type="button" class="' + cls + '" style="left:' + (n.x * 100) + '%;top:' + y(n.row) + 'px" ' +
       (reach.includes(n.id) ? 'data-node="' + n.id + '"' : 'tabindex="-1"') + ' title="' + esc(N.name + ' — ' + N.text) + '" aria-label="' + esc(N.name) + '">' +
-      '<span>' + N.icon + '</span></button>';
+      '<img alt="" src="' + nodeArt(n.type) + '" draggable="false"></button>';
   }).join('');
   return '<div class="rn-map-wrap"><div class="rn-map" style="height:' + H + 'px">' +
     '<svg viewBox="0 0 100 ' + H + '" preserveAspectRatio="none" aria-hidden="true">' + lines.join('') + '</svg>' + nodes + '</div></div>' +
-    '<div class="rn-legend">' + Object.keys(RUN.NODES).map(k => '<span class="' + k + '"><i>' + RUN.NODES[k].icon + '</i>' + RUN.NODES[k].name + '</span>').join('') + '</div>';
+    '<div class="rn-legend">' + Object.keys(RUN.NODES).map(k => '<span class="' + k + '"><img alt="" src="' + nodeArt(k) + '">' + RUN.NODES[k].name + '</span>').join('') + '</div>';
 }
 
 /* 今回のボス: 絵 (art/boss/<id>.webp)・名前・二つ名・プロトコル (小さな紋章)・ルール。big なら BOSS の前の大きな紹介 */
@@ -82,6 +82,10 @@ function bossCard(run, byName, big) {
       '<span class="rn-bossdeck"><span class="rn-bossemb" aria-hidden="true">' + emb + '</span>' + B.deck.map(n => esc(n)).join(' / ') + '</span><em>' + esc(B.text) + '</em></div></div>';
 }
 
+/* 勝ち抜き戦の絵 (art/run/)。道のりの印・イベントの一枚絵・パッチのアイコン */
+const nodeArt = (type) => 'art/run/node_' + type + '.webp';
+const patchArt = (id) => 'art/run/patch_' + id + '.webp';
+
 /* 持っているパッチと HEAT (いつも上に出す) */
 function patchStrip(run) {
   const list = (run.patches || []).map(id => RUN.patchInfo(id)).filter(Boolean);
@@ -89,7 +93,7 @@ function patchStrip(run) {
     (run.heat ? '<span class="rn-heatb">HEAT ' + run.heat + '</span>' : '') +
     buildHtml(run) +
     list.map(p => '<span class="rn-pchip ' + p.kind + ' r' + p.rar + ((p.id === 'failsafe' && run.failsafeUsed) || (p.id === 'phoenix' && run.phoenixUsed) ? ' used' : '') + '" title="' + esc(RUN.patchText(run, p)) + '">' +
-      esc(p.name) + '</span>').join('') + '</div>';
+      '<img alt="" src="' + patchArt(p.id) + '">' + esc(p.name) + '</span>').join('') + '</div>';
 }
 
 /* ビルド: 系統ごとの数と、付いているボーナス */
@@ -116,6 +120,7 @@ function patchCard(p, attrs, run) {
   const combo = step ? '<span class="rn-combo" style="--tc:' + tag.color + '">' + p.tag + ' ' + (have + 1) + 'つ目 — ボーナス「' + esc(tag.bonus[step - 1]) + '」</span>'
     : have ? '<span class="rn-combo dim" style="--tc:' + tag.color + '">' + p.tag + ' を ' + have + 'つ持っている</span>' : '';
   return '<button type="button" class="rn-patch ' + p.kind + ' r' + p.rar + '" ' + (attrs || '') + '>' +
+    '<img class="rn-patchart" alt="" src="' + patchArt(p.id) + '">' +
     '<em class="rn-tag" style="--tc:' + tag.color + '">' + p.tag + '</em>' +
     '<small>' + (p.kind === 'game' ? 'BATTLE PATCH' : 'SYSTEM PATCH') + ' ・ ' + RUN.RARITY[p.rar].name + '</small><b>' + esc(p.name) + '</b><span>' + esc(RUN.patchText(run, p)) + '</span>' +
     (p.cost ? '<span class="rn-cost">代償: ' + esc(p.cost) + '</span>' : '') + combo + '</button>';
@@ -270,7 +275,8 @@ export function openRun(protocols, cardsOf, opts) {
             '<div class="rn-btns"><button type="button" data-act="quit">あきらめる</button></div>';
         case 'event': {
           const ev = RUN.EVENTS[run.event];
-          return '<h2>? EVENT — ' + esc(ev.title) + '</h2><p class="rn-lead">' + esc(ev.text) + '</p>' +
+          return '<img class="rn-eventart" alt="" src="art/run/event_' + esc(run.event) + '.webp">' +
+            '<h2>EVENT — ' + esc(ev.title) + '</h2><p class="rn-lead">' + esc(ev.text) + '</p>' +
             '<div class="rn-routes">' + ev.options.map((o, i) => '<button type="button" class="rn-route event" data-event="' + i + '"' +
               (o.need && !o.need(run) ? ' disabled' : '') + '><b>' + esc(o.label) + '</b></button>').join('') + '</div>';
         }

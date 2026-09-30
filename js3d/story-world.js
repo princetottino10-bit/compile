@@ -124,16 +124,25 @@ export function openWorld(protocols, opts = {}) {
   scene.add(me);
   let pos = M.spawnFor(map, state);
 
-  /* 紫苑: 立ち絵の立て看板。練習のあとは、あなたについてくる */
+  /* 紫苑: ちびキャラ。向き (前・横・後ろ) と足の動き (立ち・歩き2枚) の 9 枚。練習のあとは、あなたについてくる */
   const shionAt = M.find(map, 'K')[0];
-  const shionTex = keep(new THREE.TextureLoader().load('art/avatar/shion_normal.webp'));
-  shionTex.colorSpace = THREE.SRGBColorSpace;
-  /* 立ち絵は白い所が多く、そのままだと発光 (ブルーム) で白く飛ぶ。トーンマップを外し、明るさを抑えてにじみの閾値の下に置く */
-  const shionMat = keep(new THREE.SpriteMaterial({ map: shionTex, transparent: true, toneMapped: false }));
-  shionMat.color.setScalar(0.52);
+  const loader = new THREE.TextureLoader();
+  const chibi = {};
+  for (const dir of ['front', 'side', 'back']) {
+    for (const fr of ['stand', 'walk1', 'walk2']) {
+      const tex = keep(loader.load('art/chibi/shion_' + dir + '_' + fr + '.webp'));
+      tex.colorSpace = THREE.SRGBColorSpace;
+      chibi[dir + '_' + fr] = tex;
+    }
+  }
+  /* 発光 (ブルーム) で白く飛ばないよう、トーンマップを外して明るさを少し抑える */
+  const shionMat = keep(new THREE.SpriteMaterial({ map: chibi.front_stand, transparent: true, toneMapped: false }));
+  shionMat.color.setScalar(0.7);
   const shion = new THREE.Sprite(shionMat);
-  shion.center.set(0.5, 0);
-  shion.scale.set(2.4 * 494 / 720, 2.4, 1);
+  const CHIBI = 1.8;                          // 絵の一辺 (足もとが下の真ん中)
+  shion.center.set(0.5, 0.02);
+  shion.scale.set(CHIBI, CHIBI, 1);
+  let shionDir = 'front', shionLeft = false, shionStep = 0;
   const shionShadow = new THREE.Mesh(keep(new THREE.CircleGeometry(0.55, 24)), keep(new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.45 })));
   shionShadow.rotation.x = -Math.PI / 2;
   scene.add(shion, shionShadow);
@@ -169,7 +178,7 @@ export function openWorld(protocols, opts = {}) {
 
   /* 名前の札 (画面の上に重ねる) */
   const labels = [
-    { el: document.createElement('span'), text: '紫苑', obj: shion, y: 3.2, show: () => true },
+    { el: document.createElement('span'), text: '紫苑', obj: shion, y: 2.05, show: () => true },
     { el: document.createElement('span'), text: '巡回の警備 AI', obj: patrol, y: 1.2, show: () => patrol.visible },
     { el: document.createElement('span'), text: '警備主任 AI', obj: chief, y: 1.9, show: () => chief.visible },
     { el: document.createElement('span'), text: 'LOG 端末', obj: term, y: 2.4, show: () => true }
@@ -386,15 +395,31 @@ export function openWorld(protocols, opts = {}) {
 
     /* 紫苑 (練習のあとは、あなたの歩いた跡をたどって後ろをついてくる) */
     if (dist(trail[trail.length - 1], pos) > 0.15) { trail.push({ ...pos }); if (trail.length > 80) trail.shift(); }
+    let moved = null;
     if (joined()) {
       const goal = trail[Math.max(0, trail.length - 9)];      // 1.3 マスくらい後ろ
       const d = dist(shionPos, goal);
       if (d > 0.05) {
         const k = Math.min(1, dt * 5);
-        shionPos = { x: shionPos.x + (goal.x - shionPos.x) * k, y: shionPos.y + (goal.y - shionPos.y) * k };
+        moved = { x: (goal.x - shionPos.x) * k, y: (goal.y - shionPos.y) * k };
+        shionPos = { x: shionPos.x + moved.x, y: shionPos.y + moved.y };
       }
     }
-    shion.position.copy(world(shionPos, Math.sin(t * 2) * 0.03));
+    /* 向き: 画面の手前 (地図の下) へ = 前、奥へ = 後ろ、左右 = 横 (絵は右向き。左は裏返す) */
+    const walking = moved && Math.hypot(moved.x, moved.y) > dt * 0.4;
+    if (walking) {
+      if (Math.abs(moved.x) > Math.abs(moved.y) * 1.2) { shionDir = 'side'; shionLeft = moved.x < 0; }
+      else { shionDir = moved.y > 0 ? 'front' : 'back'; shionLeft = false; }
+      shionStep += dt * 7;
+    } else shionStep = 0;
+    const phase = Math.floor(shionStep) % 4;               // 歩き1 → 立ち → 歩き2 → 立ち
+    const shionFrame = !walking ? 'stand' : phase === 0 ? 'walk1' : phase === 2 ? 'walk2' : 'stand';
+    const tex = chibi[shionDir + '_' + shionFrame];
+    if (shionMat.map !== tex) { shionMat.map = tex; shionMat.needsUpdate = true; }
+    shion.scale.x = shionLeft ? -CHIBI : CHIBI;
+    /* 上下のゆれはコードで (歩くときは一歩ごとに弾む、止まっているときは息づかい) */
+    const bob = walking ? Math.abs(Math.sin(shionStep * Math.PI / 2)) * 0.07 : Math.sin(t * 2) * 0.015;
+    shion.position.copy(world(shionPos, bob));
     shionShadow.position.copy(world(shionPos, 0.02));
 
     /* 巡回: 2点のあいだを行き来する */
