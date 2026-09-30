@@ -86,8 +86,8 @@ const calm = () => { try { return matchMedia('(prefers-reduced-motion: reduce)')
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
 /* 選べる・ランダムに出るキャラ (ボスは除く) */
 export const avatarIds = () => Object.keys(AVATARS).filter(id => !AVATARS[id].boss);
-/* 立ち絵の版。画像には版の印が付かないので、同じ名前で差し替えたらここを上げる (古い絵がしばらく出るのを防ぐ)。2 = 2026-10-01 の切り抜き直し */
-export const ART_VER = 2;
+/* 立ち絵の版。画像には版の印が付かないので、同じ名前で差し替えたらここを上げる (古い絵がしばらく出るのを防ぐ)。3 = 2026-10-01 頭の先まで入る枠で切り直し (E:SDSwarmUIOutputvatar_v2export_v4headroom.py) */
+export const ART_VER = 3;
 export const faceURL = (id, face) => 'art/avatar/' + id + '_' + (AVATARS[id] && AVATARS[id].single ? 'normal' : (face || 'normal')) + '.webp?v=' + ART_VER;
 
 /** キャラを出す。opts.side: 'me' (左下) / 'opp' (右上)。opts.back: 自分の後ろに立つ (タッグの味方)。
