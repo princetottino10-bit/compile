@@ -474,11 +474,14 @@ let spectate = null;
 
 /* タッグデュエル (2 対 2): 味方と相手の味方のプロトコル { p0: [3], p1: [3] }。null ならふつうの対戦 */
 let tagMates = null;
-/* タッグで、自分の側を味方 (CPU) が指している (次に指すのが味方) */
+/* タッグで、自分の側を味方が指している (次に指すのが味方)。CPU 戦の味方は CPU、オンラインは味方の人 */
 function partnerMove(st) {
   const s = st || (cur && cur.state);
+  if (s && s.tag && s.tag.online) return s.tag.pilot[ME] !== s.tag.mine;
   return !!(tagMates && s && s.tag && s.tag.pilot[ME] === 1);
 }
+/* オンラインのタッグの席 (roomApplyView が覚える): 4つの席と、自分の側 (サーバーの 0 / 1) */
+let roomTag = null;
 /* 人が操作できる手番か (自分の側の手番で、タッグなら自分が指す番) */
 function humanTurn(st) { return !!st && st.turn === ME && !partnerMove(st) && !(autoPlay && !roomMode); }
 /* 自分が持ってきたプロトコル (タッグの複合プロトコルは、その側の1人目の分) */
@@ -2685,6 +2688,19 @@ function tagPlates(st) {
   };
   const lv = aiDifficulty === null ? '' : levelLabel(aiDifficulty);
   const mine = st.tag.pilot[ME], theirs = st.tag.pilot[AI];
+  /* オンラインのタッグ: いま指す人の名前 (席の名前)。自分の番なら自分の名札 */
+  if (roomTag && st.tag.online) {
+    const seatOf = (local, pilot) => roomTag.seats[(local === ME ? roomTag.side : 1 - roomTag.side) + 2 * pilot];
+    const plate = (local, pilot, sub) => {
+      const x = seatOf(local, pilot);
+      return { name: x ? x.name : '?', sub: (x && x.cpu ? 'CPU · ' : '') + sub, icon: iconOf(local, pilot) };
+    };
+    showPlates({
+      me: mine === st.tag.mine ? myPlate() : plate(ME, mine, 'PARTNER'),
+      opp: plate(AI, theirs, 'RIVAL ' + (theirs + 1))
+    });
+    return;
+  }
   /* 観戦のタッグ: A1 / A2 と B1 / B2 (ベットした側に印) */
   if (spectate) {
     const bet = spectate.bet;
@@ -2741,6 +2757,9 @@ async function spectateEnd(aWon) {
 
 function showVsTag(rm) {
   if (rm && rm.now) roomServerOffset = Date.parse(rm.now) - Date.now();
+  roomTag = rm && rm.mode === 'tag' && Array.isArray(rm.seats) ? { seats: rm.seats, side: rm.side, seat: rm.seat } : null;
+  /* タッグの名札は、手番が替わるたびに tagPlates が出す (ここでふつうの名札に戻さない) */
+  if (roomTag && cur && cur.state && cur.state.tag) { tagPlates(cur.state); return; }
   if (rm && rm.ratedError) UI.toast('レート戦の結果を記録できませんでした。時間をおいて戦績を確かめてください', 5000);
   const el = document.getElementById('vsTag');
   if (!el || !rm || !Array.isArray(rm.names)) return;
@@ -3019,11 +3038,12 @@ async function announceTurnFor(turn, atState) {
   /* タッグ: だれの番かを名札とカットインで。自分の側でも味方が指す番は PARTNER TURN */
   /* 名札とカットインは、手番が替わった時点の盤面で (再生の途中は cur がもう先へ進んでいる) */
   const tagSt = atState || (cur && cur.state);
-  if (tagMates && tagSt && tagSt.tag) {
+  if ((tagMates || roomTag) && tagSt && tagSt.tag) {
     tagPlates(tagSt);
-    avatarTagTurn(tagSt);
+    if (tagMates) avatarTagTurn(tagSt);
     const pilot = tagSt.tag.pilot[turn];
-    await UI.turnCutIn(turn === ME, turn === ME ? (pilot ? 'PARTNER TURN' : 'YOUR TURN') : 'RIVAL ' + (pilot + 1) + ' TURN');
+    const mine = tagSt.tag.online ? tagSt.tag.mine : 0;
+    await UI.turnCutIn(turn === ME, turn === ME ? (pilot === mine ? 'YOUR TURN' : 'PARTNER TURN') : 'RIVAL ' + (pilot + 1) + ' TURN');
   } else await UI.turnCutIn(turn === ME);
   /* 番を終えた側が劣勢なら、ひとこと (タッグフォースの「ターンエンド……」)。番が来た側は、優勢なら強気に、ふだんはいつものひとこと */
   const standSt = tagSt || (cur && cur.state);

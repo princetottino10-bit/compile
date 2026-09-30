@@ -200,6 +200,10 @@ export function runRoomLobby(protocols, opts = {}) {
           : '<label class="ro-check"><input type="checkbox" id="roomRated"' + (wantRated ? ' checked' : '') + '> レート戦（結果を記録してレートを更新）</label>') +
         '<div class="ro-grid2">' +
           '<div><div class="ro-lbl">ルームを作る</div>' +
+            /* 1対1 か タッグ (2対2)。タッグはドラフト・レート戦なし */
+            '<div class="ro-seg" role="radiogroup" aria-label="対戦の形">' +
+              '<button type="button" class="ro-segbtn" data-mode="duel" role="radio">1対1</button>' +
+              '<button type="button" class="ro-segbtn" data-mode="tag" role="radio">タッグ (2対2)</button></div>' +
             '<input class="ro-input" id="roomPw" maxlength="40" type="password" placeholder="パスワード (任意)">' +
             '<label class="ro-check"><input type="checkbox" id="roomDraft" checked> 公式ドラフトで開始</label>' +
             /* ドラフトのルール: 候補の抽選数と BAN 数 */
@@ -225,7 +229,21 @@ export function runRoomLobby(protocols, opts = {}) {
         await showLogin();
       });
       /* ルールはドラフトのときだけ選べる。記憶しておき、次に作るときも同じにする */
-      const syncRules = () => { $('#roomRules').classList.toggle('off', !$('#roomDraft').checked); };
+      let createMode = lsGet('compileRoomMode') === 'tag' ? 'tag' : 'duel';
+      const syncRules = () => {
+        const tag = createMode === 'tag';
+        $('#roomRules').classList.toggle('off', tag || !$('#roomDraft').checked);
+        $('#roomDraft').disabled = tag;
+        $('#roomDraft').closest('label').classList.toggle('off', tag);
+        root.querySelectorAll('.ro-segbtn').forEach(b => {
+          const on = b.dataset.mode === createMode;
+          b.classList.toggle('on', on);
+          b.setAttribute('aria-checked', on ? 'true' : 'false');
+        });
+      };
+      root.querySelectorAll('.ro-segbtn').forEach(b => {
+        b.onclick = () => { createMode = b.dataset.mode; lsSet('compileRoomMode', createMode); syncRules(); };
+      });
       $('#roomPool').value = lsGet('compileDraftPool') || '0';
       $('#roomBans').value = lsGet('compileDraftBans') || '0';
       $('#roomDraft').onchange = syncRules;
@@ -248,7 +266,7 @@ export function runRoomLobby(protocols, opts = {}) {
         const rated = $('#roomRated').checked;
         wantRated = rated;
         if (rated && roomIsAnonymous(session)) { await showLogin(); return; }
-        const open = (data.rooms || []).find(r => !r.locked && !!r.rated === rated);
+        const open = (data.rooms || []).find(r => !r.locked && !!r.rated === rated && r.mode !== 'tag');
         if (!open && (data.rooms || []).some(r => !r.locked && !!r.rated !== rated)) {
           status(rated ? 'レート戦なしで待っている人がいます (チェックを外すと対戦できます)' : 'レート戦で待っている人がいます (ログインしてレート戦にすると対戦できます)', 'ok');
         }
@@ -270,6 +288,15 @@ export function runRoomLobby(protocols, opts = {}) {
         }
         lsSet('compileDraftPool', String(draftRules.poolSize));
         lsSet('compileDraftBans', String(draftRules.bans));
+        if (createMode === 'tag') {
+          if (wantRated) { status('タッグ戦はレート戦にできません (チェックを外してください)', 'err'); return; }
+          room = await roomApi('create', {
+            name: name(), badge: myBadge(settings()), look: myLook(settings()), title: name() + ' のタッグ',
+            visibility: pw ? 'private' : 'public', password: pw, mode: 'tag'
+          });
+          enterRoom();
+          return;
+        }
         room = await roomApi('create', {
           name: name(), badge: myBadge(settings()), look: myLook(settings()), title: name() + ' のルーム',
           visibility: pw ? 'private' : 'public',
@@ -308,8 +335,9 @@ export function runRoomLobby(protocols, opts = {}) {
           const rooms = data.rooms || [];
           el.innerHTML = rooms.length
             ? rooms.map(r => '<button class="ro-room" data-code="' + esc(r.code) + '" data-locked="' + (r.locked ? '1' : '0') + '" type="button">' +
+                (r.mode === 'tag' ? '<em class="ro-tagmark">TAG ' + (r.seatsTaken | 0) + '/4</em> ' : '') +
                 esc(r.title || r.code) + (r.rated ? ' ★' : '') + (r.locked ? ' 🔒' : '') +
-                '<small>' + esc(r.code) + (r.draft ? '　' + esc(ruleText(r.draftRules)) : '　ドラフトなし') + '</small></button>').join('')
+                '<small>' + esc(r.code) + (r.mode === 'tag' ? '　タッグ (2対2)' : r.draft ? '　' + esc(ruleText(r.draftRules)) : '　ドラフトなし') + '</small></button>').join('')
             : '<span class="ro-sub">現在募集中のルームはありません</span>';
           const on = $('#roomOnline');
           if (on) {
@@ -462,6 +490,7 @@ export function runRoomLobby(protocols, opts = {}) {
     }
 
     function mode() {
+      if (room.mode === 'tag') return room.status === 'setup' ? 'tagpick' : 'tagwait';
       if (room.status === 'draft') return 'draft';
       return room.names[1] ? 'protocols' : 'waiting';
     }
@@ -499,8 +528,102 @@ export function runRoomLobby(protocols, opts = {}) {
       });
     }
 
+    /* 招待リンク・コードのコピー (1対1 とタッグで共通) */
+    function bindInvite() {
+      const link = location.origin + location.pathname + '?room=' + room.code;
+      const copy = async (text, label) => {
+        try { await navigator.clipboard.writeText(text); status(label + 'をコピーしました', 'ok'); }
+        catch (e) { status('コピーできませんでした。' + text, 'err'); }
+      };
+      $('#roomCopy').onclick = () => copy(room.code, 'コード');
+      $('#roomInvite').onclick = async () => {
+        if (navigator.share) {
+          try { await navigator.share({ title: 'COMPILE で対戦しよう', text: 'COMPILE 3D ARENA の部屋 ' + room.code + ' で待っています', url: link }); return; }
+          catch (e) { if (e && e.name === 'AbortError') return; }
+        }
+        copy(link, '招待リンク');
+      };
+    }
+
+    /* ---- タッグ (2対2) ----
+       席は [A1, B1, A2, B2]。手番もこの順。空いた席は押すと移れる。ホストは空き ⇔ CPU を切り替え、よく使う形を1回で選べる */
+    const SEAT_LABEL = ['A1', 'B1', 'A2', 'B2'];
+    function seatCard(i) {
+      const x = room.seats[i];
+      const me = i === room.seat;
+      const kind = !x ? 'open' : x.cpu ? 'cpu' : 'human';
+      const who = !x ? '空き' : x.cpu ? 'CPU' : esc(x.name) + (me ? ' <em>あなた</em>' : '');
+      const hint = me ? '' : kind === 'human' ? '' : 'ここに移る';
+      return '<div class="tg-seat ' + kind + (me ? ' me' : '') + '">' +
+        '<button type="button" class="tg-sit" data-to="' + i + '"' + (kind === 'human' ? ' disabled' : '') + ' aria-label="' + SEAT_LABEL[i] + ' ' + (x ? (x.cpu ? 'CPU' : esc(x.name)) : '空き') + '">' +
+          '<small>' + SEAT_LABEL[i] + '</small><b>' + who + '</b>' + (hint ? '<i>' + hint + '</i>' : '') + '</button>' +
+        (room.host && kind !== 'human'
+          ? '<button type="button" class="tg-cpu" data-i="' + i + '" data-cpu="' + (kind === 'cpu' ? '0' : '1') + '">' + (kind === 'cpu' ? '空けて待つ' : 'CPU にする') + '</button>'
+          : '') +
+        '</div>';
+    }
+    function renderTagWait() {
+      const people = room.seats.filter(x => x && !x.cpu).length;
+      frame('ONLINE — タッグ (2対2)',
+        '<div class="ro-code">' + esc(room.code) + '</div>' +
+        '<p class="ro-sub">席を押すと移れます。同じチームの2人が味方です。手番は A1 → B1 → A2 → B2 の順。</p>' +
+        '<div class="tg-board">' +
+          '<section class="tg-team a"><h4>チーム A</h4>' + seatCard(0) + seatCard(2) + '</section>' +
+          '<div class="tg-vs" aria-hidden="true">VS</div>' +
+          '<section class="tg-team b"><h4>チーム B</h4>' + seatCard(1) + seatCard(3) + '</section>' +
+        '</div>' +
+        (room.host
+          ? '<div class="ro-lbl">よく使う形</div><div class="ro-row tg-presets">' +
+              '<button class="ro-btn" data-preset="coop" type="button">2人で協力<small>相手は CPU 2人</small></button>' +
+              '<button class="ro-btn" data-preset="duel" type="button">2人で対決<small>それぞれに CPU の味方</small></button>' +
+              '<button class="ro-btn" data-preset="shuffle" type="button">ランダムに分ける</button></div>'
+          : '') +
+        '<div class="ro-row"><button class="ro-btn" id="roomInvite" type="button">招待リンクを送る</button>' +
+        '<button class="ro-btn" id="roomCopy" type="button">コードをコピー</button></div>' +
+        (room.host
+          ? '<button class="ro-big" id="tagStart" type="button"' + (room.canStart ? '' : ' disabled') + '>' +
+              (room.canStart ? 'この席で始める' : people < 2 ? 'もう1人を待っています (招待リンクを送ってください)' : '空いた席を埋めてください (CPU にもできます)') + '</button>'
+          : '<p class="ro-sub">部屋を作った人が始めるのを待っています…</p>'));
+      bindInvite();
+      const send = (op, extra) => guard(async () => { room = await roomApi(op, { code: room.code, ...extra }); if (room.status !== 'waiting') { renderRoom(); return; } renderTagWait(); })();
+      root.querySelectorAll('.tg-sit').forEach(b => { b.onclick = () => { if (!b.disabled && +b.dataset.to !== room.seat) send('tagSeat', { to: +b.dataset.to }); }; });
+      root.querySelectorAll('.tg-cpu').forEach(b => { b.onclick = () => send('tagCpu', { index: +b.dataset.i, cpu: b.dataset.cpu === '1' }); });
+      root.querySelectorAll('[data-preset]').forEach(b => { b.onclick = () => send('tagPreset', { kind: b.dataset.preset }); });
+      const start = $('#tagStart');
+      if (start) start.onclick = () => { if (room.canStart) send('tagStart', {}); };
+    }
+    function renderTagPick() {
+      const mine = room.seats[room.seat] || {};
+      const mate = room.seats[(room.seat + 2) % 4] || {};
+      const mateTaken = mate.protocols || [];
+      const status2 = room.seats.map((x, i) => '<span class="tg-ready' + (x && x.protocols ? ' on' : '') + (i === room.seat ? ' me' : '') + '">' +
+        SEAT_LABEL[i] + ' ' + (x ? (x.cpu ? 'CPU' : esc(x.name)) : '') + (x && x.protocols ? ' ✓' : ' …') + '</span>').join('');
+      if (mine.protocols) {
+        frame('ONLINE — タッグ (2対2)',
+          '<div class="ro-lbl">あなたのプロトコル</div><div>' + mine.protocols.map(n => '<span class="ro-tag mine">' + esc(n) + '</span>').join('') + '</div>' +
+          '<div class="ro-lbl">みんなの準備</div><div class="tg-readys">' + status2 + '</div>' +
+          '<p class="ro-sub">ほかの人が選び終わるのを待っています…</p>');
+        return;
+      }
+      sel = sel.filter(n => !mateTaken.includes(n));
+      frame('ONLINE — タッグ (2対2)',
+        '<p class="ro-sub">使うプロトコルを3つ。味方 (' + SEAT_LABEL[(room.seat + 2) % 4] + ') が選んだものは使えません。相手と同じものは選べます。</p>' +
+        '<div class="tg-readys">' + status2 + '</div>' +
+        chipGrid(protocols.map(p => p.name), mateTaken, 3) +
+        '<button class="ro-big" id="roomReady" type="button"' + (sel.length === 3 ? '' : ' disabled') + '>準備完了 (' + sel.length + '/3)</button>');
+      bindChips(3, renderTagPick);
+      $('#roomReady').onclick = guard(async () => {
+        const next = await roomApi('protocols', { code: room.code, protocols: sel.slice() });
+        room = next;
+        if (room.status === 'playing') { done({ rm: room }); return; }
+        renderRoom();
+      });
+    }
+
     function renderRoom() {
       const m = mode();
+      if (m === 'tagwait') { renderTagWait(); return; }
+      if (m === 'tagpick') { renderTagPick(); return; }
       if (m === 'waiting') {
         frame('ONLINE — 待機中' + (room.rated ? ' ★ RATED' : ''),
           '<div class="ro-code">' + esc(room.code) + '</div>' +

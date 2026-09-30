@@ -3,6 +3,7 @@ import "../_shared/engine.js";
 import cards from "../_shared/cards.json" with { type: "json" };
 import effects from "../_shared/effects.json" with { type: "json" };
 import { weeklySet } from "../_shared/weekly-set.js";
+import * as TAG from "../_shared/tag.js";
 
 const Engine = (globalThis as any).CompileEngine;
 Engine.init(cards, effects);
@@ -132,9 +133,30 @@ async function isAdmin(user: any) {
 }
 
 function sideOf(room: any, userId: string) {
+  if (room.mode === "tag") { const seat = TAG.seatOf(room.seats || [], userId); return seat < 0 ? -1 : TAG.seatSide(seat); }
   if (room.host_id === userId) return 0;
   if (room.guest_id === userId) return 1;
   return -1;
+}
+/* タッグ (2対2) の部屋での席 (A1・B1・A2・B2 = 0..3)。1対1 の部屋は -1 */
+function seatOfUser(room: any, userId: string) {
+  return room.mode === "tag" ? TAG.seatOf(room.seats || [], userId) : -1;
+}
+/* 相手に見せる席 (名前・称号・見た目・CPU か・プロトコル) */
+function publicSeat(x: any) {
+  if (!x) return null;
+  return { name: x.cpu ? "CPU" : x.name, badge: x.cpu ? null : x.badge || null, look: x.cpu ? null : x.look || null, cpu: !!x.cpu, protocols: x.protocols || null };
+}
+/* CPU の席の番を、サーバーが続けて指す (人の番・決着で止まる)。途中経過 (trace) と記録 (log) はつなげる */
+function withCpu(result: any, seats: any[]) {
+  if (!result || result.error || result.state.winner !== null) return result;
+  Engine.setAiLevel(1);
+  if (Engine.setAiBlunder) Engine.setAiBlunder(0);
+  const out = TAG.runCpu(Engine, result, seats, 80);
+  if (!out.steps) return result;
+  return { ...out.res,
+    trace: (Array.isArray(result.trace) ? result.trace : []).concat(out.trace),
+    log: (Array.isArray(result.log) ? result.log : []).concat(out.log) };
 }
 
 const ALL_PROTOCOLS: string[] = (cards as any).protocols.map((p: any) => p.name);
@@ -244,8 +266,11 @@ function engineState(roomState: any) {
   return st;
 }
 
-function publicGame(st: any, side: number, aliases = cardAliases(st)) {
+function publicGame(st: any, side: number, aliases = cardAliases(st), seat = -1) {
+  const tagView = st.tag && seat >= 0;
   return {
+    /* タッグ: 両チームのいまの人 (pilot) と、控えの人の枚数。手札は自分の席の分 */
+    tag: st.tag ? { pilot: st.tag.pilot.slice(), bench: st.tag.bench.map((b: any) => ({ hand: b.hand.length, deck: b.deck.length, trash: b.trash.length })) } : null,
     turn: st.turn, phase: st.phase, control: st.control, winner: st.winner,
     protocols: st.players.map((p: any) => p.protocols),
     totals: st.lines.map((_: any, line: number) => [Engine.lineTotal(st, line, 0), Engine.lineTotal(st, line, 1)]),
@@ -256,7 +281,7 @@ function publicGame(st: any, side: number, aliases = cardAliases(st)) {
         const hidden = !c.faceUp && !((c.knownTo || 0) & (1 << side));
         return { uid: aliases.forward[uid], owner, faceUp: c.faceUp, def: hidden ? null : c.def, value: Engine.cardValue(st, uid) };
       }))),
-    hand: st.players[side].hand.map((uid: string) => ({ uid: aliases.forward[uid], def: st.cards[uid].def })),
+    hand: (tagView ? TAG.viewerHand(st, seat) : st.players[side].hand).map((uid: string) => ({ uid: aliases.forward[uid], def: st.cards[uid].def })),
     trash: st.players.map((p: any) => p.trash.map((uid: string) => ({ uid: aliases.forward[uid], def: st.cards[uid].def }))),
     /* 手札公開 (PSYCHIC 0 等): 公開されたカードは両者に見える */
     revealed: st.revealed && Array.isArray(st.revealed.cards)
@@ -284,7 +309,7 @@ function stampOf(room: any) {
   return `${room.version}|${room.status}|${room.updated_at || ""}`;
 }
 
-function publicState(room: any, side: number) {
+function publicState(room: any, side: number, seat = -1, isHost = false) {
   const st = room.game_state;
   const base: any = {
     code: room.code, title: room.title, status: room.status, version: room.version, side, stamp: stampOf(room),
@@ -295,6 +320,15 @@ function publicState(room: any, side: number) {
     protocols: [room.host_protocols, room.guest_protocols],
     rated: !!room.rated,
   };
+  if (room.mode === "tag") {
+    const seats = room.seats || [];
+    base.mode = "tag";
+    base.seat = seat;
+    base.host = isHost;
+    base.seats = [0, 1, 2, 3].map((i) => publicSeat(seats[i]));
+    base.names = [0, 1].map((i) => (seats[i] ? publicSeat(seats[i]).name : null));
+    base.canStart = TAG.canStart(seats);
+  }
   if (room.status === "draft" && room.draft_state && room.draft_state.on) {
     const ds = room.draft_state;
     const rules = cleanDraftRules(ds.rules);
@@ -311,7 +345,7 @@ function publicState(room: any, side: number) {
   /* 再生用の途中経過 (trace) と同じ関数で作る。以前は手書きで別々に列挙していて、
      公開 (revealed)・宣言 (announce)・移動中 (committed) が現在の盤面に載らず、
      部屋に戻ったときや途中経過の無い更新で演出が出ない・移動中の札が消えることがあった。 */
-  base.game = publicGame(st, side, aliases);
+  base.game = publicGame(st, side, aliases, seat);
   base.trace = Array.isArray(st.__trace)
     ? st.__trace.map((entry: any) => ({
       msg: entry.msg,
@@ -324,14 +358,16 @@ function publicState(room: any, side: number) {
           return alias ? alias + link.slice(i) : null;
         }).filter(Boolean)
         : [],
-      game: publicGame(entry.st, side, aliases),
+      game: publicGame(entry.st, side, aliases, seat),
     }))
     : [];
   // 直近アクションの公開ログ(隠し情報は含まれない)。クライアントの発動演出に使う。
   base.log = Array.isArray(room.last_log) ? room.last_log : [];
   const pending = room.pending_request;
-  base.request = pending && pending.player === side ? publicRequest(pending, aliases.forward) : null;
-  if (!pending && st.turn === side && st.phase === "action" && st.winner === null) {
+  const tag = room.mode === "tag" && st.tag;
+  const mine = pending && (tag ? TAG.seatOfRequest(st, pending) === seat : pending.player === side);
+  base.request = mine ? publicRequest(pending, aliases.forward) : null;
+  if (!pending && (tag ? TAG.turnSeat(st) === seat : st.turn === side) && st.phase === "action" && st.winner === null) {
     base.legalActions = Engine.legalActions(st).map((action: any) => {
       const out = structuredClone(action);
       if (out.card) out.card = aliases.forward[out.card];
@@ -454,7 +490,7 @@ Deno.serve(async (req) => {
       /* 作った人が画面を閉じた部屋 (更新が止まった部屋) は出さない。クイックマッチが無人の部屋に入らないように */
       const lobbySince = new Date(Date.now() - WAITING_FRESH_MS).toISOString();
       const { data, error } = await admin.from("secure_rooms")
-        .select("code,title,host_name,password_hash,draft_state,rated,created_at")
+        .select("code,title,host_name,password_hash,draft_state,rated,created_at,mode,seats")
         .eq("visibility", "public").eq("status", "waiting").is("guest_id", null)
         .gte("updated_at", lobbySince)
         .order("created_at", { ascending: false }).limit(30);
@@ -468,6 +504,8 @@ Deno.serve(async (req) => {
         code: room.code, title: room.title, hostName: room.host_name,
         locked: !!room.password_hash, draft: !!room.draft_state, rated: !!room.rated, createdAt: room.created_at,
         draftRules: room.draft_state ? cleanDraftRules(room.draft_state.rules) : null,
+        mode: room.mode || "duel",
+        seatsTaken: room.mode === "tag" ? (room.seats || []).filter(Boolean).length : undefined,
       })) });
     }
 
@@ -578,25 +616,55 @@ Deno.serve(async (req) => {
         .select("id", { count: "exact", head: true }).eq("host_id", user.id).gte("created_at", since);
       if (countError) throw countError;
       if ((count || 0) >= 5) return fail(req, "ルーム作成が多すぎます。1分待ってください", 429);
+      const tagMode = body.mode === "tag";
+      if (tagMode && body.rated === true) return fail(req, "タッグ戦はレート戦にできません");
       let created: any = null;
       for (let i = 0; i < 8 && !created; i++) {
         const { data, error } = await admin.from("secure_rooms").insert({
           code: code(), host_id: user.id, host_name: name, host_badge: cleanBadge(body.badge), host_look: cleanLook(body.look), title, visibility,
           password_salt: password.salt, password_hash: password.hash,
-          draft_state: body.draft ? { on: true, rules: cleanDraftRules(body.draftRules) } : null,
-          rated: body.rated === true,
+          draft_state: !tagMode && body.draft ? { on: true, rules: cleanDraftRules(body.draftRules) } : null,
+          rated: !tagMode && body.rated === true,
+          mode: tagMode ? "tag" : "duel",
+          seats: tagMode ? TAG.blankSeats({ uid: user.id, name, badge: cleanBadge(body.badge), look: cleanLook(body.look) }) : null,
         }).select("*").single();
         if (!error) created = data;
         else if (error.code !== "23505") throw error;
       }
       if (!created) return fail(req, "ルームコードを作成できませんでした", 503);
-      return json(req, publicState(created, 0));
+      return json(req, publicState(created, 0, tagMode ? 0 : -1, true));
     }
 
     const roomCode = cleanCode(body.code);
     if (roomCode.length !== 6) return fail(req, "6桁のルームコードを入力してください");
     let room = await getRoom(roomCode);
     if (!room) return fail(req, "ルームが見つかりません", 404);
+
+    if (op === "join" && room.mode === "tag") {
+      const name = cleanName(body.name);
+      if (!name) return fail(req, "表示名を入力してください");
+      if (TAG.seatOf(room.seats || [], user.id) < 0) {
+        if (room.status !== "waiting") return fail(req, "もう始まっています", 409);
+        if (room.password_hash) {
+          if (await recentAttempts("join-pass", 10 * 60_000, user.id) >= 5
+            || await recentAttempts("join-pass", 10 * 60_000, null, room.id) >= 20) {
+            return fail(req, "パスワードの入力が多すぎます。10分ほど待ってください", 429);
+          }
+        }
+        if (!(await passwordMatches(room, body.password))) {
+          if (room.password_hash) await noteAttempt("join-pass", user.id, room.id);
+          return fail(req, "パスワードが違います", 403);
+        }
+        const seats = TAG.joinSeat(room.seats || [], { uid: user.id, name, badge: cleanBadge(body.badge), look: cleanLook(body.look) });
+        if (TAG.seatOf(seats, user.id) < 0) return fail(req, "満室です", 409);
+        const { data } = await admin.from("secure_rooms").update({ seats, updated_at: new Date().toISOString() })
+          .eq("id", room.id).eq("updated_at", room.updated_at).select("*").maybeSingle();
+        if (!data) return fail(req, "同時参加が発生しました。もう一度お試しください", 409);
+        room = data;
+      }
+      const seat = TAG.seatOf(room.seats || [], user.id);
+      return json(req, publicState(room, TAG.seatSide(seat), seat, room.host_id === user.id));
+    }
 
     if (op === "join") {
       const name = cleanName(body.name);
@@ -641,8 +709,20 @@ Deno.serve(async (req) => {
 
     const side = sideOf(room, user.id);
     if (side < 0) return fail(req, "このルームの参加者ではありません", 403);
+    const seat = seatOfUser(room, user.id);
+    const isHost = room.host_id === user.id;
+    const stateOf = (r: any) => publicState(r, sideOf(r, user.id), seatOfUser(r, user.id), isHost);
     if (op === "get") {
-      if (room.status === "waiting" && side === 0 && Date.now() - Date.parse(room.updated_at) > 25_000) {
+      /* タッグ: CPU の番のまま止まっていたら (前の手で指しきれなかった)、続きを指す */
+      if (room.mode === "tag" && room.status === "playing" && room.game_state) {
+        const st = engineState(room.game_state);
+        const pend = room.pending_request;
+        if (st.tag && st.winner === null && (room.seats || [])[TAG.activeSeat(st, pend)]?.cpu) {
+          const cont = withCpu({ state: st, requests: pend ? [pend] : [], trace: [], log: [] }, room.seats);
+          if (cont.state !== st) return await commitResult(req, room, side, cont, seat, isHost);
+        }
+      }
+      if (room.status === "waiting" && isHost && Date.now() - Date.parse(room.updated_at) > 25_000) {
         const now = new Date().toISOString();
         await admin.from("secure_rooms").update({ updated_at: now }).eq("id", room.id);
         room.updated_at = now;
@@ -651,7 +731,50 @@ Deno.serve(async (req) => {
       if (typeof body.stamp === "string" && body.stamp === stampOf(room)) {
         return json(req, { code: room.code, status: room.status, version: room.version, side, stamp: body.stamp, unchanged: true });
       }
-      return json(req, publicState(room, side));
+      return json(req, stateOf(room));
+    }
+
+    /* ---- タッグの待合室: 席を移る・CPU にする・よく使う形・始める ---- */
+    if (op === "tagSeat" || op === "tagCpu" || op === "tagPreset" || op === "tagStart") {
+      if (room.mode !== "tag") return fail(req, "タッグの部屋ではありません", 409);
+      if (room.status !== "waiting") return fail(req, "もう始まっています", 409);
+      if (op !== "tagSeat" && !isHost) return fail(req, "部屋を作った人だけが変えられます", 403);
+      let seats = room.seats || [];
+      const upd: any = { updated_at: new Date().toISOString() };
+      if (op === "tagSeat") seats = TAG.moveSeat(seats, user.id, Number(body.to));
+      if (op === "tagCpu") seats = TAG.setCpu(seats, Number(body.index), body.cpu === true);
+      if (op === "tagPreset") seats = TAG.preset(seats, ["coop", "duel", "shuffle"].includes(body.kind) ? body.kind : "shuffle");
+      if (op === "tagStart") {
+        if (!TAG.canStart(seats)) return fail(req, "4つの席を埋めてください (人は2人以上)", 409);
+        upd.status = "setup";
+      }
+      upd.seats = seats;
+      const { data } = await admin.from("secure_rooms").update(upd)
+        .eq("id", room.id).eq("updated_at", room.updated_at).select("*").maybeSingle();
+      if (!data) return fail(req, "ほかの人の操作と重なりました。もう一度どうぞ", 409);
+      return json(req, stateOf(data));
+    }
+
+    if (op === "protocols" && room.mode === "tag") {
+      if (room.status !== "setup") return fail(req, "プロトコルを選ぶときではありません", 409);
+      let seats;
+      try { seats = TAG.pickProtocols(room.seats || [], user.id, Array.isArray(body.protocols) ? body.protocols.map(String) : [], ALL_PROTOCOLS); }
+      catch (error) { return fail(req, String((error as Error).message), 409); }
+      if (TAG.humans(seats).every((x: any) => x.protocols)) seats = TAG.fillCpuProtocols(seats, ALL_PROTOCOLS);
+      const upd: any = { seats, updated_at: new Date().toISOString() };
+      if (TAG.allPicked(seats) && !room.game_state) {
+        const first = Math.random() < 0.5 ? 0 : 1;
+        const result = withCpu(Engine.newGame({ ...TAG.gameOpts(seats), seed: crypto.getRandomValues(new Uint32Array(1))[0], useControl: true, first }), seats);
+        if (result.error) return fail(req, result.error);
+        const nextGame = result.view ? { ...result.view, pending: result.state?.pending || null } : result.state;
+        nextGame.__trace = [];
+        Object.assign(upd, { game_state: nextGame, pending_request: (result.requests || [])[0] || null,
+          last_log: Array.isArray(result.log) ? result.log : [], status: "playing", version: room.version + 1, last_action_at: new Date().toISOString() });
+      }
+      const { data, error } = await admin.from("secure_rooms").update(upd)
+        .eq("id", room.id).eq("version", room.version).eq("updated_at", room.updated_at).select("*").maybeSingle();
+      if (error || !data) return fail(req, "ほかの人の操作と重なりました。もう一度どうぞ", 409);
+      return json(req, stateOf(data));
     }
 
     if (op === "protocols") {
@@ -732,6 +855,11 @@ Deno.serve(async (req) => {
     /* 待機・ドラフト・プロトコル選択の途中で抜ける: 部屋を片付ける (対戦中は投了を使う) */
     if (op === "leave") {
       if (room.status === "playing") return fail(req, "対戦中は投了してください", 409);
+      if (room.mode === "tag" && !isHost) {
+        const { error } = await admin.from("secure_rooms").update({ seats: TAG.leaveSeat(room.seats || [], user.id), status: "waiting", updated_at: new Date().toISOString() }).eq("id", room.id);
+        if (error) throw error;
+        return json(req, { ok: true });
+      }
       const { error } = await admin.from("secure_rooms").delete().eq("id", room.id);
       if (error) throw error;
       return json(req, { ok: true });
@@ -742,13 +870,16 @@ Deno.serve(async (req) => {
       if (room.status !== "playing" || !room.game_state) return fail(req, "対戦中ではありません", 409);
       const st = engineState(room.game_state);
       const pending = room.pending_request;
+      const tagRoom = room.mode === "tag" && st.tag;
+      const waitingSeat = tagRoom ? TAG.activeSeat(st, pending) : -1;
       const waiting = pending ? pending.player : st.turn;
-      if (waiting === side) return fail(req, "あなたの番です", 409);
+      if (tagRoom ? waitingSeat === seat : waiting === side) return fail(req, "あなたの番です", 409);
+      if (tagRoom && (room.seats || [])[waitingSeat]?.cpu) return fail(req, "CPU の番です。少し待ってください", 409);
       const since = Date.parse(room.last_action_at || room.updated_at);
       if (Date.now() - since < TURN_LIMIT_MS) return fail(req, "相手の持ち時間はまだ残っています", 409);
       const result = Engine.apply(st, { type: "surrender", player: waiting });
       if (result.error) return fail(req, result.error);
-      return await commitResult(req, room, side, result);
+      return await commitResult(req, room, side, result, seat, isHost);
     }
 
     if (op === "action") {
@@ -759,11 +890,13 @@ Deno.serve(async (req) => {
       if (!action || typeof action.type !== "string") return fail(req, "操作が不正です");
       /* 投了は相手の手と入れ違っても通す (版の確認をしない)。それ以外は同じ版の盤面に対してだけ受け付ける */
       if (action.type !== "surrender" && Number(body.version) !== Number(room.version)) return fail(req, "状態が更新されています", 409);
-      if (action.type !== "surrender" && (pending ? pending.player !== side : st.turn !== side)) return fail(req, "あなたの操作待ちではありません", 403);
+      const myTurn = room.mode === "tag" && st.tag ? TAG.mayAct(st, seat, pending) : (pending ? pending.player === side : st.turn === side);
+      if (action.type !== "surrender" && !myTurn) return fail(req, "あなたの操作待ちではありません", 403);
       if (action.type === "surrender") action.player = side;
-      const result = Engine.apply(st, action);
+      let result = Engine.apply(st, action);
       if (result.error) return fail(req, result.error);
-      return await commitResult(req, room, side, result);
+      if (room.mode === "tag") result = withCpu(result, room.seats || []);
+      return await commitResult(req, room, side, result, seat, isHost);
     }
     return fail(req, "未知の操作です", 404);
   } catch (error) {
@@ -774,7 +907,7 @@ Deno.serve(async (req) => {
 
 /* エンジンの結果を部屋に書き込み、決着していればレート戦を記録する (手を指す・時間切れ勝ちで共通)。
    レート戦の記録に失敗したら ratedError を付けて返す (画面で知らせる) */
-async function commitResult(req: Request, room: any, side: number, result: any) {
+async function commitResult(req: Request, room: any, side: number, result: any, seat = -1, isHost = false) {
       const nextVersion = room.version + 1;
       const nextGame = result.view
         ? { ...result.view, pending: result.state?.pending || null }
@@ -792,5 +925,6 @@ async function commitResult(req: Request, room: any, side: number, result: any) 
         try { await recordRatedMatch(room, result.winner); }
         catch (ratingError) { console.error("rated match record failed", ratingError); ratedError = true; }
       }
-      return json(req, ratedError ? { ...publicState(data, side), ratedError: true } : publicState(data, side));
+      const view = publicState(data, side, seat, isHost);
+      return json(req, ratedError ? { ...view, ratedError: true } : view);
 }

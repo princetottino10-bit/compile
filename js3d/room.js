@@ -291,7 +291,9 @@ export function buildRoomState(rm, valOf) {
     revealed: g.revealed
       ? { kind: g.revealed.kind, player: li(g.revealed.player), cards: g.revealed.cards, seq: g.revealed.seq }
       : null,
-    _totals: totals, _room: true
+    _totals: totals, _room: true,
+    /* オンラインのタッグ: 両チームのいまの人 (ローカルの側の順)。mine = 自分が何人目か (0 / 1) */
+    ...(g.tag ? { tag: { pilot: [g.tag.pilot[me], g.tag.pilot[op]], mine: rm.seat >= 0 ? Math.floor(rm.seat / 2) : 0, online: true } } : {})
   };
 }
 
