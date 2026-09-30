@@ -10,6 +10,7 @@ globalThis.localStorage = {
 const S = await import('../js3d/story.js');
 const cards = JSON.parse(await (await import('node:fs/promises')).readFile(new URL('../data/cards.json', import.meta.url), 'utf8'));
 const PROTOS = new Set(cards.protocols.map(p => p.name));
+const tsume = JSON.parse(await (await import('node:fs/promises')).readFile(new URL('../data/tsume.json', import.meta.url), 'utf8'));
 
 test('章と場面: id は重ならず、会話には行が、対戦にはデッキがある', () => {
   const ids = S.CHAPTERS.flatMap(c => c.nodes.map(n => n.id));
@@ -17,11 +18,14 @@ test('章と場面: id は重ならず、会話には行が、対戦にはデッ
   for (const c of S.CHAPTERS) {
     assert.ok(c.title && c.name && c.nodes.length);
     for (const n of c.nodes) {
-      assert.ok(['scene', 'battle'].includes(n.kind), n.id);
+      assert.ok(['scene', 'battle', 'tsume'].includes(n.kind), n.id);
       assert.ok(n.title, n.id);
       if (n.kind === 'scene') {
         assert.ok(n.lines.length > 0, n.id);
         for (const l of n.lines) assert.ok(S.SPEAKERS[l.who] && l.text, n.id + ' ' + l.who);
+      } else if (n.kind === 'tsume') {
+        assert.ok(tsume.some(t => t.id === n.tsume), n.id + ' の問題 ' + n.tsume + ' が data/tsume.json にある');
+        assert.ok(n.oppName && n.winLines.length && n.loseLines.length, n.id);
       } else {
         assert.equal(n.me.length, 3, n.id);
         assert.equal(n.opp.length, 3, n.id);

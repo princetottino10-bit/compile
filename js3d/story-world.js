@@ -124,11 +124,12 @@ export function openWorld(protocols, opts = {}) {
   scene.add(me);
   let pos = M.spawnFor(map, state);
 
-  /* 紫苑: ちびキャラ。向き (前・横・後ろ) と足の動き (立ち・歩き2枚) の 9 枚。練習のあとは、あなたについてくる */
+  /* 紫苑: ちびキャラ。向き (前・後ろ) と足の動き (立ち・歩き2枚)。横向きの絵は顔が読めず別人に見えたので使わない (2026-09-30)。
+     練習のあとは、あなたについてくる */
   const shionAt = M.find(map, 'K')[0];
   const loader = new THREE.TextureLoader();
   const chibi = {};
-  for (const dir of ['front', 'side', 'back']) {
+  for (const dir of ['front', 'back']) {
     for (const fr of ['stand', 'walk1', 'walk2']) {
       const tex = keep(loader.load('art/chibi/shion_' + dir + '_' + fr + '.webp'));
       tex.colorSpace = THREE.SRGBColorSpace;
@@ -142,7 +143,7 @@ export function openWorld(protocols, opts = {}) {
   const CHIBI = 1.8;                          // 絵の一辺 (足もとが下の真ん中)
   shion.center.set(0.5, 0.02);
   shion.scale.set(CHIBI, CHIBI, 1);
-  let shionDir = 'front', shionLeft = false, shionStep = 0;
+  let shionDir = 'front', shionStep = 0;
   const shionShadow = new THREE.Mesh(keep(new THREE.CircleGeometry(0.55, 24)), keep(new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.45 })));
   shionShadow.rotation.x = -Math.PI / 2;
   scene.add(shion, shionShadow);
@@ -254,9 +255,9 @@ export function openWorld(protocols, opts = {}) {
     }
     /* 会話のすぐあとが、その場の人との対戦なら、そのまま確認を出す */
     const next = currentNode(state);
-    if (next && next.kind === 'battle') {
+    if (next && next.kind !== 'scene') {
       const ev = eventFor(next.id);
-      if (ev && ev.kind === 'talk' && dist(posOf(ev), pos) < REACH + 1.5) await runBattle(next.id);
+      if (ev && (ev.kind === 'talk' || ev.kind === 'inspect') && dist(posOf(ev), pos) < REACH + 1.5) await runBattle(next.id);
     }
   }
   async function runBattle(id) {
@@ -265,6 +266,8 @@ export function openWorld(protocols, opts = {}) {
     const ok = await askBattle(nodeById(id), protocols);
     busy = false;
     if (!ok) { guardCool = 2; return; }
+    /* 管理者の「飛ばす」: 勝った扱いにして地図に残る (決着の会話は出ない) */
+    if (ok === 'skip') { state = clearNode(state, id); saveStory(state); syncActors(); return; }
     state = startBattle(state, id);
     saveStory(state);
     close({ battle: nodeById(id) });
@@ -405,18 +408,16 @@ export function openWorld(protocols, opts = {}) {
         shionPos = { x: shionPos.x + moved.x, y: shionPos.y + moved.y };
       }
     }
-    /* 向き: 画面の手前 (地図の下) へ = 前、奥へ = 後ろ、左右 = 横 (絵は右向き。左は裏返す) */
+    /* 向き: 画面の奥 (地図の上) へはっきり進むときだけ後ろ姿。それ以外 (手前・左右) は前向き */
     const walking = moved && Math.hypot(moved.x, moved.y) > dt * 0.4;
     if (walking) {
-      if (Math.abs(moved.x) > Math.abs(moved.y) * 1.2) { shionDir = 'side'; shionLeft = moved.x < 0; }
-      else { shionDir = moved.y > 0 ? 'front' : 'back'; shionLeft = false; }
+      shionDir = -moved.y > Math.abs(moved.x) * 0.8 ? 'back' : 'front';
       shionStep += dt * 7;
     } else shionStep = 0;
     const phase = Math.floor(shionStep) % 4;               // 歩き1 → 立ち → 歩き2 → 立ち
     const shionFrame = !walking ? 'stand' : phase === 0 ? 'walk1' : phase === 2 ? 'walk2' : 'stand';
     const tex = chibi[shionDir + '_' + shionFrame];
     if (shionMat.map !== tex) { shionMat.map = tex; shionMat.needsUpdate = true; }
-    shion.scale.x = shionLeft ? -CHIBI : CHIBI;
     /* 上下のゆれはコードで (歩くときは一歩ごとに弾む、止まっているときは息づかい) */
     const bob = walking ? Math.abs(Math.sin(shionStep * Math.PI / 2)) * 0.07 : Math.sin(t * 2) * 0.015;
     shion.position.copy(world(shionPos, bob));

@@ -12,7 +12,7 @@ import { mergeGacha } from './gacha.js';
 
 /* まとめて保存する項目。一時的な印 (ログインから戻った印など) は入れない */
 export const SAVE_KEYS = ['compileSettings', 'compileRun', 'compileRunBest', 'compileRunHeat', 'compileRunKind',
-  'compileWeekly', 'compileOppLast', 'compileDaily', 'compileTrophies', 'compileRoomName', 'compileGacha'];
+  'compileWeekly', 'compileOppLast', 'compileDaily', 'compileTrophies', 'compileRoomName', 'compileGacha', 'compileStory'];
 const META = 'compileCloudMeta';     // { user, hash: 最後に同期した中身, at: そのときのアカウント側の時刻 }
 const MAX_BYTES = 60000;
 

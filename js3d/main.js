@@ -934,9 +934,18 @@ async function boot() {
         if (!node) { history.replaceState(null, '', location.pathname); nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
         document.body.classList.remove('pregame');
         storyNode = node;
-        p0 = node.me.slice();
-        p1 = node.opp.slice();
-        applyAiDifficulty(node.level);
+        if (node.kind === 'tsume') {
+          /* 詰めコンパイルの敵: 問題モードと同じ仕組みで、決着をストーリーへ返す (puzzle.story) */
+          const t = (await TS.loadTsume()).find(x => x.id === node.tsume);
+          if (!t) { UI.toast('詰めコンパイルの問題が見つかりません'); storyNode = null; history.replaceState(null, '', location.pathname); nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
+          puzzle = { spec: t.spec, goal: t.goal.kind, task: TS.goalText(t.goal, t.spec.sides[0].protos), tsume: t, story: true };
+          p0 = t.spec.sides[0].protos.slice(); p1 = t.spec.sides[1].protos.slice();
+          document.body.classList.add('puzzle', 'tsume');
+        } else {
+          p0 = node.me.slice();
+          p1 = node.opp.slice();
+          applyAiDifficulty(node.level);
+        }
         history.replaceState(null, '', location.pathname + '?story=1');
         break;
       }
@@ -1023,6 +1032,9 @@ async function boot() {
   const seed = (Math.random() * 1e9) | 0;
   /* 勝ち抜き戦は2本先取 (序盤のふつうの戦闘は1本先取。run.js の runWinCompiles)。週替わりは2本先取 */
   const winCompiles = storyNode ? storyNode.win : runMode ? (runOpts ? runOpts.winCompiles : RUN_WIN_COMPILES) : undefined;
+  /* ストーリーの「2本先取」は、勝ち抜き戦と同じく自分は 3 本のうち 1 本がコンパイル済みから始まる (相手はそのまま 2 本) */
+  const storyOpts = storyNode && storyNode.kind === 'battle' && storyNode.win < 3
+    ? { winCompilesBySide: [3, storyNode.win], startCompiled: [3 - storyNode.win, 0] } : null;
   /* 共有された棋譜は外から来たものなので、作り直しで落ちても止まらないように */
   let replayBuilt = null;
   if (replayMode) {
@@ -1043,6 +1055,7 @@ async function boot() {
         ? Engine.newPuzzle(tutorial.lesson.spec, { seed: 1 })
         : Engine.newGame({ seed, p0, p1, first: firstPlayer, training: trainingMode, winCompiles,
           ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods, winCompilesBySide: runOpts.winCompilesBySide, perks: runOpts.perks, startCompiled: runOpts.startCompiled } : {}),
+          ...(storyOpts || {}),
           ...(tagMates ? { tag: tagMates } : {}) });
   cur = res;
   playBgm(battleBgm());                          // 対戦の BGM (ボス戦は専用の曲)
@@ -1052,7 +1065,8 @@ async function boot() {
   /* CPU 戦は棋譜を取る (決着したらリプレイとして残す) */
   /* タッグはリプレイに残さない (棋譜の形が 1 対 1 のため) */
   const gameInit = resumed ? resumed.rec.init : { seed, p0: p0.slice(), p1: p1.slice(), first: firstPlayer, winCompiles: winCompiles || null,
-    ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods, winCompilesBySide: runOpts.winCompilesBySide, perks: runOpts.perks, startCompiled: runOpts.startCompiled } : {}) };
+    ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods, winCompilesBySide: runOpts.winCompilesBySide, perks: runOpts.perks, startCompiled: runOpts.startCompiled } : {}),
+    ...(storyOpts || {}) };
   const priorActions = resumed ? resumed.rec.actions : [];
   replayLog = !replayMode && !trainingMode && !puzzle && !tutorial && !demoMode && !tagMates && !storyNode
     ? { init: gameInit, actions: priorActions.slice() } : null;
@@ -1163,6 +1177,13 @@ async function puzzleAfterTurn() {
   const ts = puzzle.tsume;
   const result = ts ? TS.judgeTsume(ts.goal, endSt, shown(), ME, Engine) : PZ.judgePuzzle(puzzle.goal, endSt, shown(), ME, totalOf);
   sfx(result.ok === false ? 'lose' : 'win');
+  /* ストーリーの詰め: 決着の会話と次へ (ふつうの対戦と同じ流れ) */
+  if (puzzle.story && storyNode) {
+    logPlay({ mode: 'story', win: result.ok === true, level: 0, logged: !!accountState().user });
+    UI.toast(result.text, 3600);
+    await storyAfterGame(result.ok === true);
+    return;
+  }
   if (!ts) {
     if (result.ok !== false) await gainXp('puzzle', XP_GAIN.puzzle, 'pz:' + hashKey(JSON.stringify([puzzle.spec, puzzle.goal])));
     PZ.showPuzzleResult(result, retryPuzzle);
@@ -1189,14 +1210,14 @@ async function puzzleAfterTurn() {
 function tsumeBarOpts(ts) {
   const tier = TS.TIERS.find(t => t.tier === ts.tier);
   return {
-    tag: ts.daily != null ? (ts.hard ? '今日の上級' : '今日の問題') : '詰め ' + (tier ? tier.name : ''),
+    tag: puzzle.story ? 'STORY' : ts.daily != null ? (ts.hard ? '今日の上級' : '今日の問題') : '詰め ' + (tier ? tier.name : ''),
     sub: '1手番で達成する' + (ts.solutions > 1 ? ' (解き方は2通り)' : ''),
     buttons: [
       { label: '山札', on: () => TS.showDeck(shown(), defIndex, ME) },
       { label: 'ヒント', on: () => UI.toast('最初の一手: ' + ts.steps[0], 5200) },
       /* 模範解答は管理者のアカウントだけ (問題の確認用) */
       ...(accountState().admin ? [{ label: '答え', on: () => TS.showAnswer(ts) }] : []),
-      { label: '一覧', on: () => openTsume('list') }
+      puzzle.story ? { label: '地図へ', on: () => { location.href = location.pathname + '?story=1'; } } : { label: '一覧', on: () => openTsume('list') }
     ]
   };
 }

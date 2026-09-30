@@ -6,6 +6,7 @@
  * ========================================================================= */
 import { showTitleBack, hideTitleBack } from './titleback.js';
 import { faceFor } from './avatar.js';
+import { accountState } from './account.js';
 import { CHAPTERS, SPEAKERS, loadStory, saveStory, canEnter, isCleared, currentNode, clearNode, startBattle, nodeById } from './story.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -106,15 +107,22 @@ export function askBattle(n, protocols) {
     '<i style="--pc:' + esc((byName[x] || {}).color || '#b9a4ff') + '">' + esc(x) + '</i>').join('') + '</span>';
   const box = overlay('storyConfirm', '対戦の確認');
   box.className = 'sm-confirm';
-  box.innerHTML = '<div class="sm-card"><small>BATTLE</small><h3>' + esc(n.title) + '</h3>' +
+  const tsume = n.kind === 'tsume';
+  /* 管理者は対戦を飛ばせる (話の確認用)。返り値 'skip' */
+  const admin = accountState().admin;
+  box.innerHTML = '<div class="sm-card"><small>' + (tsume ? 'TSUME' : 'BATTLE') + '</small><h3>' + esc(n.title) + '</h3>' +
     '<p class="sm-note">' + esc(n.note || '') + '</p>' +
-    '<div class="sm-vs"><div><em>あなた</em>' + chips(n.me) + '</div><i>VS</i><div><em>' + esc(n.oppName) + ' (' + LEVELS[n.level] + ')</em>' + chips(n.opp) + '</div></div>' +
-    '<div class="sm-btns"><button type="button" class="sm-go">対戦する</button><button type="button" class="sm-back">戻る</button></div></div>';
+    (tsume ? '<div class="sm-vs"><div><em>あなた</em></div><i>VS</i><div><em>' + esc(n.oppName) + '</em></div></div>'
+      : '<div class="sm-vs"><div><em>あなた</em>' + chips(n.me) + '</div><i>VS</i><div><em>' + esc(n.oppName) + ' (' + LEVELS[n.level] + ')</em>' + chips(n.opp) + '</div></div>') +
+    '<div class="sm-btns"><button type="button" class="sm-go">' + (tsume ? '解く' : '対戦する') + '</button>' +
+    (admin ? '<button type="button" class="sm-skip">飛ばす (ADMIN)</button>' : '') +
+    '<button type="button" class="sm-back">戻る</button></div></div>';
   box.classList.add('show');
   return new Promise((resolve) => {
     const end = (v) => { box.classList.remove('show'); box.innerHTML = ''; resolve(v); };
     box.querySelector('.sm-back').onclick = () => end(false);
     box.querySelector('.sm-go').onclick = () => end(true);
+    if (admin) box.querySelector('.sm-skip').onclick = () => end('skip');
     box.querySelector('.sm-go').focus();
   });
 }
