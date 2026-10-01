@@ -19,6 +19,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODEL = 'eleven_v4'
 VOICES = {                                  # 本人が聞き比べて選んだ声 (2026-10-01)
     'shion': '0Q1COOYQZTkpxoapcYv0',
+    'nadeshiko': 'lHjPE0jHselU3M6Jxlz1',   # 茜 (akane_cand2)
 }
 # 表情 → 声の感情の指示。normal / blink は無し
 TAGS = {'sad': '[sad]', 'shy': '[shy]', 'fired': '[determined]', 'surprised': '[surprised]', 'happy': '[gently]', 'frustrated': '[frustrated]'}

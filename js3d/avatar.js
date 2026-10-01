@@ -30,7 +30,8 @@ export const AVATARS = {
   },
   nadeshiko: {
     name: '茜', color: '#e0283c',     /* id は nadeshiko のまま (記録が id で残っている)。もとお屋敷の家事 AI。2026-09-30 に撫子から作り直し */
-    lines: null
+    lines: null,
+    voice: true, credit: '声: ElevenLabs'
   },
   asagi: {
     name: '瑠璃', color: '#3d7dff',   /* id は asagi のまま。もと水族館の案内 AI */

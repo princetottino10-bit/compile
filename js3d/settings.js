@@ -174,7 +174,7 @@ export function openSettings(extra) {
     '<div class="st-row st-act"><span>報告用の情報<small>版・端末・開いている画面・途中で終わった対戦の記録 (名前や記録の中身は入りません)</small></span>' +
       '<button type="button" id="stReportCopy">コピー</button></div>' +
     '<h4 class="st-group">クレジット</h4>' +
-    (avatarOptionsShown() ? '<p class="st-credit">キャラの声 VOICEVOX:ずんだもん / VOICEVOX:四国めたん / VOICEVOX:春日部つむぎ / VOICEVOX:WhiteCUL　立ち絵 坂本アヒル</p>' : '') +
+    (avatarOptionsShown() ? '<p class="st-credit">キャラの声 VOICEVOX:ずんだもん / VOICEVOX:四国めたん / VOICEVOX:春日部つむぎ / VOICEVOX:WhiteCUL　立ち絵 坂本アヒル</p><p class="st-credit">紫苑・茜の声 ElevenLabs</p>' : '') +
     '<p class="st-credit">BGM 煉獄庭園 (Z･E･R･O・彷徨いの言葉は天に導かれ' + (BGM_RELEASED ? '・オレンジトンネルを抜ける・Burst ほか' : '') + ') / OpenTracks: Yuyake Monster「超頭脳バトル」・まんぼう二等兵「Reflect」「Crescendo Jitter」「プラネタリウムガーデン」「Nine Jack」「沈殿するイルカ」・田中芳典「解読」・NEKOZOU「まどろむネオンの部屋」</p>' +
     '</div>';
   framePanes(el.querySelector('.st-card'));
