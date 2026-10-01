@@ -124,16 +124,25 @@ export function openWorld(protocols, opts = {}) {
   scene.add(me);
   let pos = M.spawnFor(map, state);
 
-  /* 紫苑: ちびキャラ。向き (前・後ろ) と足の動き (立ち・歩き2枚)。横向きの絵は顔が読めず別人に見えたので使わない (2026-09-30)。
-     練習のあとは、あなたについてくる */
+  /* 紫苑: ちびキャラ。向き (前・横・後ろ) と足の動き (立ち・歩き2枚)。練習のあとは、あなたについてくる。
+     横の絵は右向き。左へ歩くときは、絵そのものを左右反転した別のテクスチャを使う
+     (Sprite は scale.x を負にしても裏返らない。前に「左へ歩くと後ろ向きに走る」と言われたのはこのため) */
   const shionAt = M.find(map, 'K')[0];
   const loader = new THREE.TextureLoader();
   const chibi = {};
-  for (const dir of ['front', 'back']) {
+  for (const dir of ['front', 'side', 'back']) {
     for (const fr of ['stand', 'walk1', 'walk2']) {
       const tex = keep(loader.load('art/chibi/shion_' + dir + '_' + fr + '.webp'));
       tex.colorSpace = THREE.SRGBColorSpace;
       chibi[dir + '_' + fr] = tex;
+      if (dir === 'side') {
+        /* 左向き: 同じ絵を、UV を左右反転して貼る */
+        const left = keep(tex.clone());
+        left.wrapS = THREE.RepeatWrapping;
+        left.repeat.set(-1, 1);
+        left.offset.set(1, 0);
+        chibi['left_' + fr] = left;
+      }
     }
   }
   /* 発光 (ブルーム) で白く飛ばないよう、トーンマップを外して明るさを少し抑える */
@@ -408,10 +417,10 @@ export function openWorld(protocols, opts = {}) {
         shionPos = { x: shionPos.x + moved.x, y: shionPos.y + moved.y };
       }
     }
-    /* 向き: 画面の奥 (地図の上) へはっきり進むときだけ後ろ姿。それ以外 (手前・左右) は前向き */
+    /* 向き: 左右に進むときは横 (左は反転した絵)、奥 (地図の上) へは後ろ姿、手前へは前。止まったら最後の向きのまま */
     const walking = moved && Math.hypot(moved.x, moved.y) > dt * 0.4;
     if (walking) {
-      shionDir = -moved.y > Math.abs(moved.x) * 0.8 ? 'back' : 'front';
+      shionDir = Math.abs(moved.x) >= Math.abs(moved.y) ? (moved.x < 0 ? 'left' : 'side') : moved.y < 0 ? 'back' : 'front';
       shionStep += dt * 7;
     } else shionStep = 0;
     const phase = Math.floor(shionStep) % 4;               // 歩き1 → 立ち → 歩き2 → 立ち
