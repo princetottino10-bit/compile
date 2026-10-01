@@ -25,7 +25,8 @@ export const faceFor = (id, face) => (facesOf(id).includes(face) ? face : EXTRA_
 export const AVATARS = {
   shion: {
     name: '紫苑', color: '#a07bff',   /* もと研究所の解析 AI */
-    lines: null
+    lines: null,
+    voice: true, credit: '声: ElevenLabs'     /* 声は scripts/voice_lines.py で作る (art/voice/shion/) */
   },
   nadeshiko: {
     name: '茜', color: '#e0283c',     /* id は nadeshiko のまま (記録が id で残っている)。もとお屋敷の家事 AI。2026-09-30 に撫子から作り直し */
@@ -186,7 +187,8 @@ export function mountAvatar(id, opts = {}) {
     /* 長いセリフ (チュートリアルの案内など) は、読み終わるまで出しておく */
     const ms = Math.max(kind === 'win' || kind === 'lose' ? 5000 : 2400, 700 + text.length * 110);
     const canned = () => {
-      if (def.voice && own && voiceOn) playVoice('art/voice/' + id + '/' + kind + '_' + i + '.mp3');
+      /* 札の名前が入る一言は声がない (表示だけ)。[表示, 声] の組ならある */
+      if (def.voice && own && voiceOn && (Array.isArray(entry) || !String(entry).includes('{'))) playVoice('art/voice/' + id + '/' + kind + '_' + i + '.mp3');
       say(text, faceOf(kind), ms);
     };
     /* AI でしゃべらせる (opts.talk): 表情だけ先に変え、答えが来たら言う (声は無し)。来なければいつものセリフ。

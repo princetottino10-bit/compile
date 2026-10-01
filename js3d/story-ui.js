@@ -7,11 +7,42 @@
 import { showTitleBack, hideTitleBack } from './titleback.js';
 import { faceFor, faceURL } from './avatar.js';
 import { accountState } from './account.js';
+import { playClip, isMuted } from './audio.js';
+import { duckBgm } from './bgm.js';
+import { settings } from './settings.js';
 import { CHAPTERS, SPEAKERS, loadStory, saveStory, canEnter, isCleared, currentNode, clearNode, startBattle, nodeById } from './story.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const LEVELS = ['かんたん', 'ふつう', 'つよい'];
 const TYPE_MS = 26;       // 1文字の間
+
+/* セリフの印 (声のファイル名)。scripts/voice_lines.py の fnv1a と同じ: UTF-8 の FNV-1a 32bit を 8桁の16進で */
+export function lineKey(text) {
+  const bytes = new TextEncoder().encode(text);
+  let h = 0x811c9dc5;
+  for (const b of bytes) { h ^= b; h = Math.imul(h, 0x01000193) >>> 0; }
+  return h.toString(16).padStart(8, '0');
+}
+
+/* 会話の声: 設定の「キャラの声の音量」で鳴らし、次の行へ進んだら止める。無い行は黙って飛ばす */
+function makeVoice() {
+  let stop = null, seq = 0;
+  const halt = () => { seq++; if (stop) { stop(); stop = null; } };
+  const play = (id, text) => {
+    halt();
+    if (!id || isMuted()) return;
+    const vol = Math.max(0, Math.min(1, ((settings().voiceVol ?? 80) | 0) / 100));
+    if (!vol) return;
+    const my = seq;
+    playClip('art/voice/' + id + '/story/' + lineKey(text) + '.mp3', vol).then((h) => {
+      if (!h) return;
+      if (my !== seq) { h.stop(); return; }
+      stop = h.stop;
+      duckBgm(h.duration * 1000 + 200);
+    }, () => { /* 声が無くても読める */ });
+  };
+  return { play, halt };
+}
 
 function overlay(id, label) {
   let el = document.getElementById(id);
@@ -40,10 +71,12 @@ export function playScene(lines, opts = {}) {
   const textEl = el.querySelector('.ss-text');
   const box = el.querySelector('.ss-box');
   let i = -1, typing = null, full = '';
+  const voice = makeVoice();
 
   return new Promise((resolve) => {
     const finish = () => {
       clearInterval(typing);
+      voice.halt();
       window.removeEventListener('keydown', onKey);
       el.classList.remove('show');
       el.innerHTML = '';
@@ -68,6 +101,7 @@ export function playScene(lines, opts = {}) {
         portrait.classList.add('on');
       } else portrait.classList.remove('on');
       full = line.text;
+      voice.play(sp.voice, line.text);
       textEl.textContent = '';
       let n = 0;
       clearInterval(typing);

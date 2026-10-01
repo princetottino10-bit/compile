@@ -18,7 +18,7 @@ export const STORY_KEY = 'compileStory';
 
 /* 話す人。portrait: 立ち絵 (art/avatar/<id>_<face>.webp) / 無ければターミナル風の文字だけ */
 export const SPEAKERS = {
-  shion: { name: '紫苑', portrait: 'shion', color: '#a07bff' },
+  shion: { name: '紫苑', portrait: 'shion', color: '#a07bff', voice: 'shion' },   /* voice: art/voice/<id>/story/<セリフの印>.mp3 (scripts/voice_lines.py) */
   sys: { name: 'SYSTEM', color: '#7ff3ff' },
   guard: { name: '巡回の警備 AI', color: '#ff8a5c' },
   chief: { name: '警備主任 AI', color: '#ff4f6a' }
