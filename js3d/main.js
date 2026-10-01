@@ -70,7 +70,7 @@ import { playBgm, refreshBgm, fadeOutBgm, pickNormalBgm, STRONG_BGM, BOSS_BGM } 
 import { BGM_RELEASED } from './rewards.js';
 import { emblemDataURL } from './emblems.js';
 import * as LAYOUT from './layout.js';
-import { BOARD, CARD, COLOR, TIMING, VIEW } from './theme.js';
+import { BOARD, CARD, COLOR, TIMING, VIEW, IOS } from './theme.js';
 import * as TW from './tween.js';
 import * as UI from './ui.js';
 import { pickCard, placementPad } from './input.js';
@@ -546,6 +546,8 @@ function totalOf(st, line, side) {
 }
 
 /* ---------- 起動 ---------- */
+/* iPhone・iPad: 重い画面の演出を軽くする (three-play.html の body.ios)。合成レイヤーが増えるとページごと落ちる */
+if (IOS) document.body.classList.add('ios');
 /* 画面で起きたエラーはサーバーに知らせる (報告がなくても気づけるように。errorreport.js) */
 watchErrors();
 CW.checkLastBattle();                 // 前の対戦が途中で落ちていたら知らせる (crashwatch.js)
@@ -862,9 +864,14 @@ async function boot() {
     for (;;) {
       /* 中断した対戦の続き: はじめの状態から手を並べ直す。並べ直せなければ、ふつうにタイトルへ */
       if (nextMode === 'resume') {
-        let built = null;
-        try { built = rebuild(Engine, resumeRec); } catch (e) { built = null; }
+        let built = null, why = '';
+        try { built = rebuild(Engine, resumeRec); } catch (e) { built = null; why = 'exception: ' + (e && e.message); }
         if (!built || !built.ok || !built.res || built.res.error || built.res.state.winner !== null) {
+          /* なぜ続けられなかったかを知らせる (どの手で崩れたか。記録は手の数と最後の手だけ) */
+          const acts = (resumeRec && resumeRec.actions) || [];
+          const last = acts.length ? JSON.stringify(acts[acts.length - 1]).slice(0, 120) : '-';
+          reportError('中断した対戦を続けられなかった: ' + (why || (!built ? '組み立て失敗' : !built.ok ? '手が通らない' : built.res.error ? 'エラー ' + built.res.error : '決着済み')) +
+            ' ・ ' + acts.length + '手 ・ 最後: ' + last + ' ・ ' + ((resumeRec.meta || {}).mode || '?'), 'resume');
           RS.endResume();
           UI.toast('中断した対戦は続きから遊べませんでした', 3600);
           nextMode = await runTitle(cards.protocols, { menuOnly: true });
