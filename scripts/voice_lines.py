@@ -91,6 +91,13 @@ def main():
         if force or not os.path.exists(path):
             jobs.append((path, spoken(l['text'], l['face']), l['text']))
 
+    # 台本から消えたセリフの声は消す (直したセリフの古い声が残らないように)
+    for f in os.listdir(os.path.join(base, 'story')):
+        if f.endswith('.mp3') and f[:-4] not in seen:
+            print('  消す', f)
+            if not dry:
+                os.remove(os.path.join(base, 'story', f))
+
     mpath = os.path.join(base, 'manifest.json')
     manifest = json.load(open(mpath, encoding='utf-8')) if os.path.exists(mpath) else {}
     for kind, arr in battle_lines(who).items():
