@@ -19,7 +19,7 @@ import { LEVEL_LABELS as AI_LABELS, CHALLENGERS, CHALLENGER_BASE, isChallenger, 
 export { STRONGEST_AI, LOCK_AI } from './aidecks.js';
 import { showTitleBack, hideTitleBack } from './titleback.js';
 import { localRecords } from './stats.js';
-import { conquered } from './stats-data.js';
+import { conquered, conquerable } from './stats-data.js';
 
 const MODES = [
   { key: 'draft', label: 'ドラフト (公式)' },
@@ -169,7 +169,8 @@ export function runSetup(protocols, options = {}) {
       ' style="--accent:' + (p.color || '#b9a4ff') + '">' +
       '<span class="proto-art" style="background-image:url(&quot;art/' + name.charAt(0) + name.slice(1).toLowerCase() + '.webp&quot;)"></span>' +
       '<img class="proto-emblem" alt="" src="' + emblemDataURL(name, p.color || '#b9a4ff', 96, true) + '">' +
-      (level === 3 && !conq.has(name) ? '<span class="proto-conq" title="まだ最強に勝っていない">未制覇</span>' : '') +
+      /* 最強のデッキ (FIRE / WATER / SPEED) は選べないので、制覇の数にも入らない。印も付けない */
+      (level === 3 && !conq.has(name) && conquerable([name]).length ? '<span class="proto-conq" title="まだ最強に勝っていない">未制覇</span>' : '') +
       '<span class="proto-name">' + esc(name) + '</span>' +
       '<span class="proto-set">' + esc(tag || p.set || '') + '</span></button>' +
       (options.cardsOf ? '<button type="button" class="proto-info" data-info="' + esc(name) + '" aria-label="' + esc(name) +
