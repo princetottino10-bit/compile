@@ -1069,6 +1069,13 @@ async function boot() {
   gameStartedAt = Date.now();          // はじめの表示で合計値の演出が出ないように (feel.js)
   if (!trainingMode && !puzzle && !tutorial && !demoMode && !replayMode) CW.battleStarted(storyNode ? 'story' : runMode ? runKind : tagMates ? 'tag' : quickGame ? 'quick' : 'cpu', p0, p1);
   if (!trainingMode && !puzzle && !tutorial && !demoMode && !replayMode) lastSetup = { p0: p0.slice(), p1: p1.slice(), mates: tagMates };
+  /* 対戦を始めたら、アドレスの「この対戦を始める」指定 (REMATCH の ?me=&ai=&lv=、おまかせの ?quick=1、タッグ) を消す。
+     残っていると、iPhone が裏で落としたページを読み直したとき・負けた直後に読み直されたときに、新しい対戦が勝手に始まる。
+     読み直したら、タイトルの「途中から遊ぶ」で続きに戻れる */
+  if (!trainingMode && !puzzle && !tutorial && !demoMode && !replayMode && !roomMode && !runMode && !storyNode) {
+    const q = new URLSearchParams(location.search);
+    if (q.has('me') || q.has('ai') || q.has('quick') || q.has('tag')) history.replaceState(null, '', location.pathname);
+  }
   /* CPU 戦は棋譜を取る (決着したらリプレイとして残す) */
   /* タッグはリプレイに残さない (棋譜の形が 1 対 1 のため) */
   const gameInit = resumed ? resumed.rec.init : { seed, p0: p0.slice(), p1: p1.slice(), first: firstPlayer, winCompiles: winCompiles || null,
@@ -4706,6 +4713,10 @@ function showEndActions(win) {
     '</div>';
   el.classList.add('show');
   playGains(el);
+  /* 出た直後のタップは受けない: 決着の演出を送ろうと連打していた指が、出てきた REMATCH に当たって次の対戦が始まっていた */
+  const btns = el.querySelectorAll('.end-btns button');
+  btns.forEach(x => { x.disabled = true; });
+  setTimeout(() => btns.forEach(x => { x.disabled = false; }), 900);
   const saveBtn = el.querySelector('#endSave');
   if (saveBtn) {
     saveBtn.onclick = () => {
