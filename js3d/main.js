@@ -3417,7 +3417,10 @@ async function replayResolution(prev, res, action) {
   await board.applyTransition(from, final, first ? action : null, first ? null : { speed: STEP_MOTION });
   board.endTrail();
   await syncPanels(final, true);
-  if (!res.requests || !res.requests.length) netDeltaShow(final);
+  /* 増減のまとめは、効果を解き終えたところで出す。手札の上限で捨てる選択 (キャッシュのクリア) は効果ではないので、
+     その前に出す (捨てたあとに出すと、捨てたせいでラインが減ったように見えた) */
+  const pendingReq = res.requests && res.requests[0];
+  if (!pendingReq || pendingReq.prompt === 'clear-cache') netDeltaShow(final);
   /* 盤面が最終形になってから、そこまでに進んだ手番/フェイズを告げる */
   await markPhase(final);
   await checkRevealed(final);
@@ -4213,12 +4216,19 @@ function pickPreview(bp, uid) {
   let laterHtml = null;
   if (!roomMode && bp.max === 1 && cur && cur.state && req.player === ME) {
     try {
-      const sim = withoutTrace(() => Engine.apply(cur.state, { type: 'choose', id: req.id, picks: [uid] }));
-      if (sim && !sim.error && sim.state) {
-        const later = totalsDiff(cur.state, sim.state);
+      /* 比べる元は「いま画面に出ている盤面」(st)。選択の途中の cur.state は手を始める前の盤面なので、
+         それと比べると、もう済んだ変化 (FIRE 0 で裏返した METAL 5→2 など) が、いま選ぶ札のせいで起きるように出ていた。
+         進めるのは自分の手番の終わりまで (相手の手番の始めのコンパイルなどは、この選択の結果ではない) */
+      const sim = Engine.apply(cur.state, { type: 'choose', id: req.id, picks: [uid] });
+      if (sim && !sim.error && sim.state && st) {
+        const turn = cur.state.turn;
+        const end = sim.state.turn === turn ? sim.state : PZ.endOfTurnState(sim.trace, turn, null);
+        const later = end ? totalsDiff(st, end) : [];
         if (later.length && later.join('') !== direct.join('')) {
           const partial = Array.isArray(sim.requests) && sim.requests.length > 0;
-          laterHtml = '<i>効果のあと' + (partial ? '（途中まで）' : '（見込み）') + '</i>' + later.join('');
+          /* 手札の上限で捨てる (キャッシュのクリア) のあとに起きるのは、効果ではなく手番の終わりの処理 */
+          const head = req.prompt === 'clear-cache' ? '手番の終わりまでに' : '効果のあと';
+          laterHtml = '<i>' + head + (partial ? '（途中まで）' : '（見込み）') + '</i>' + later.join('');
         }
       }
     } catch (e) { /* 試せないときは出さない */ }

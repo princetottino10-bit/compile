@@ -168,7 +168,7 @@ export const LESSONS = [
         text: '裏向きでも上に重ねれば「覆う」ことになります。FIRE のラインの<b>「裏」</b>を押して FIRE 0 を覆おう。',
         focus: { line: 'FIRE', face: 'down' } },
       { when: (c) => c.ask === 'flip',
-        text: '覆われる直前に FIRE 0 の下段が発動しました。反転するカードを選ぼう。相手の <b>METAL 4</b> (値4) を裏にすると、値は2に下がります。' }
+        text: '覆われる直前に FIRE 0 の下段が発動しました。反転するカードを選ぼう。相手の <b>METAL 5</b> (値5) を裏にすると、値は2に下がります。' }
     ],
     check(ctx) {
       if (ctx.phase !== 'mine') return null;
@@ -234,7 +234,7 @@ export const LESSONS = [
         text: '使うのは光っている <b>FIRE 0</b>。選び直そう。',
         focus: { card: 'FIRE_1' } },
       { when: (c) => c.ask === 'flip',
-        text: '反転するカードを選ぼう。相手の <b>METAL 4</b> を裏にすると値が2に下がります。' },
+        text: '反転するカードを選ぼう。相手の <b>METAL 5</b> を裏にすると値が2に下がります。' },
       { when: (c) => c.ask === 'clear-cache',
         text: '2枚引いて手札が<b>6枚</b>。手番の終わりに5枚まで捨てます。いらないカードを1枚選んで<b>「決定」</b>。' }
     ],
@@ -290,7 +290,7 @@ export const LESSONS = [
       ]
     },
     steps: [
-      { text: 'あなたは<b>コントロール</b>を持っています。相手の LIGHT は 13 点、次の相手の手番でコンパイルされます。' +
+      { text: 'あなたは<b>コントロール</b>を持っています。相手の LIGHT は 10 点、次の相手の手番でコンパイルされます。' +
           'コントロールを持ったまま<b>コンパイルかリフレッシュ</b>をすると、どちらかのプロトコルを<b>並べ替え</b>られます。<b>「REFRESH」</b>を押そう。',
         focus: { button: 'btnRefresh' } },
       { when: (c) => !!c.sel,
@@ -299,7 +299,7 @@ export const LESSONS = [
       { when: (c) => c.ask === 'control-rearrange',
         text: '<b>「相手のプロトコルを並べ替える」</b>を選ぼう。' },
       { when: (c) => c.ask === 'rearrange',
-        text: 'カードはラインに残り、プロトコルだけが入れ替わります。相手の <b>13 点のラインの位置</b>に、<b>コンパイル済みの METAL</b> を持ってこよう。' +
+        text: 'カードはラインに残り、プロトコルだけが入れ替わります。相手の <b>10 点のラインの位置</b>に、<b>コンパイル済みの METAL</b> を持ってこよう。' +
           '済んだプロトコルでもう一度コンパイルしても (<b>リコンパイル</b>)、相手は勝ちに近づけません。' }
     ],
     check(ctx) {
@@ -307,9 +307,9 @@ export const LESSONS = [
       const st = ctx.endSt, op = 1 - ctx.me;
       const big = [0, 1, 2].find(l => ctx.total(st, l, op) >= 10);
       if (big !== undefined && st.players[op].protocols[big].compiled) {
-        return { ok: true, text: '相手の 13 点のラインが、コンパイル済みの METAL の位置になりました。相手のコンパイルはリコンパイル (相手のデッキの上の1枚をもらうだけ) になります。' };
+        return { ok: true, text: '相手の 10 点のラインが、コンパイル済みの METAL の位置になりました。相手のコンパイルはリコンパイル (相手のデッキの上の1枚をもらうだけ) になります。' };
       }
-      return { ok: false, text: '相手の 13 点のラインの位置に、コンパイル済みの METAL を並べ替えましょう。リフレッシュ → 「相手のプロトコルを並べ替える」です。' };
+      return { ok: false, text: '相手の 10 点のラインの位置に、コンパイル済みの METAL を並べ替えましょう。リフレッシュ → 「相手のプロトコルを並べ替える」です。' };
     }
   },
   {
@@ -410,20 +410,18 @@ export function showCoach(index, stepNo, onRetry) {
 /* 結果を出している間の「画面のどこでもタップ」の受け口。閉じるときに必ず外す */
 let resultUnhook = null;
 
-/* 結果を出し、読む時間が過ぎたら (画面をタップしたらすぐ) onDone。取り消し関数を返す */
+/* 結果を出し、画面をタップしたら onDone (勝手には進めない。読み終わる前に次のレッスンへ行ってしまうため)。取り消し関数を返す */
 export function showCoachResult(index, result, onDone) {
   coachKey = '';
   clearTimeout(coachTimer);
   const el = coachEl();
-  const ms = readingMs(result.text);
   const last = index === LESSONS.length - 1;
   el.className = 'show result ' + (result.ok ? 'ok' : 'ng');
   el.innerHTML =
     '<div class="tc-head"><span class="tc-tag">' + lessonTag(index) + '</span>' +
       '<b class="tc-verdict">' + (result.ok ? 'クリア！' : 'もう一度') + '</b></div>' +
     '<p class="tc-say">' + esc(result.text) + '</p>' +
-    '<p class="tc-next">' + (result.ok ? (last ? 'まとめへ' : '次のレッスンへ') : 'もう一度やってみよう') + '…<small>画面のどこかをタップですぐ進む</small></p>' +
-    '<i class="tc-bar" style="animation-duration:' + ms + 'ms"></i>';
+    '<p class="tc-next">画面をタップで' + (result.ok ? (last ? 'まとめへ' : '次のレッスンへ') : 'もう一度') + '</p>';
   let done = false;
   /* 結果を読んでいる間は、画面のどこをタップしても進む。そのタップは盤面の操作に渡さない
      (押した瞬間に進め、続く pointerup / click も握りつぶす)。ボタン (メニュー・設定など) はそのまま使える */
@@ -440,8 +438,8 @@ export function showCoachResult(index, result, onDone) {
   if (resultUnhook) resultUnhook();
   resultUnhook = unhook;
   const go = () => { if (done) return; done = true; clearTimeout(coachTimer); unhook(); onDone(); };
-  coachTimer = setTimeout(go, ms);
-  document.addEventListener('pointerdown', onTap, true);
+  /* 出た直後のタップは受けない (操作の続きの指が当たって、読む前に進むのを防ぐ) */
+  coachTimer = setTimeout(() => document.addEventListener('pointerdown', onTap, true), 700);
   syncCoachBottom();
   return () => { done = true; clearTimeout(coachTimer); unhook(); };
 }

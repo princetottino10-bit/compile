@@ -148,7 +148,7 @@ test('レッスン7: 2つ目のラインでリードすると、次の手番の�
   assert.equal(ng.ok, false);
 });
 
-test('レッスン8: コントロールを使って相手の 13 点のラインをコンパイル済みの METAL に並べ替えればクリア', async () => {
+test('レッスン8: コントロールを使って相手の 10 点のラインをコンパイル済みの METAL に並べ替えればクリア', async () => {
   const { LESSONS } = await loadTu();
   const pick = (who, order) => (req) => req.prompt === 'control-rearrange' ? [who] : req.kind === 'arrange' ? order : req.candidates.slice(0, req.min || 1);
   const ok = await playLesson(LESSONS[7], { type: 'refresh' }, pick(1, [1, 0, 2]));
