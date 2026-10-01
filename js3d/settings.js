@@ -5,6 +5,7 @@
  * ========================================================================= */
 import { talkSettingsHtml, bindTalkSettings } from './aitalk.js';
 import { BGM_RELEASED } from './rewards.js';
+import { openDiscord, copyReportInfo } from './support.js';
 const BGM_SHOWN = true;                 // 対戦の BGM (bgm.js の BATTLE_BGM_ON) があるので音量は出す
 
 const KEY = 'compileSettings';
@@ -167,6 +168,11 @@ export function openSettings(extra) {
           '<input type="checkbox" id="stOppVoice"' + (s.oppVoice !== false ? ' checked' : '') + '></label>' +
         talkSettingsHtml()
       : '') +
+    '<h4 class="st-group">不具合・要望</h4>' +
+    '<div class="st-row st-act"><span>Discord<small>不具合や要望は Discord で受け付けています。不具合のときは、下のボタンで情報をコピーして貼ってください</small></span>' +
+      '<button type="button" id="stDiscord">Discord を開く</button></div>' +
+    '<div class="st-row st-act"><span>報告用の情報<small>版・端末・開いている画面・途中で終わった対戦の記録 (名前や記録の中身は入りません)</small></span>' +
+      '<button type="button" id="stReportCopy">コピー</button></div>' +
     '<h4 class="st-group">クレジット</h4>' +
     (avatarOptionsShown() ? '<p class="st-credit">キャラの声 VOICEVOX:ずんだもん / VOICEVOX:四国めたん / VOICEVOX:春日部つむぎ / VOICEVOX:WhiteCUL　立ち絵 坂本アヒル</p>' : '') +
     '<p class="st-credit">BGM 煉獄庭園 (Z･E･R･O・彷徨いの言葉は天に導かれ' + (BGM_RELEASED ? '・オレンジトンネルを抜ける・Burst ほか' : '') + ') / OpenTracks: Yuyake Monster「超頭脳バトル」・まんぼう二等兵「Reflect」「Crescendo Jitter」「プラネタリウムガーデン」「Nine Jack」「沈殿するイルカ」・田中芳典「解読」・NEKOZOU「まどろむネオンの部屋」</p>' +
@@ -211,6 +217,11 @@ export function openSettings(extra) {
       el.querySelectorAll('[data-qlevel]').forEach(x => x.classList.toggle('on', x === b));
     };
   });
+  el.querySelector('#stDiscord').onclick = () => openDiscord();
+  el.querySelector('#stReportCopy').onclick = async (ev) => {
+    const msg = await copyReportInfo();
+    if (msg) { ev.target.textContent = 'コピーしました'; setTimeout(() => { ev.target.textContent = 'コピー'; }, 2400); }
+  };
   el.querySelector('#stCosOpen').onclick = () => { close(); import('./cosmetics-mode.js').then(m => m.openCosmetics()); };
   el.querySelectorAll('[data-extra]').forEach(b => {
     b.onclick = () => { const x = extra[+b.dataset.extra]; if (x) x.onClick(b); };

@@ -13,6 +13,7 @@ import { openSettings } from './settings.js';
 import { openStats } from './stats.js';
 import { openAccount, accountState, onAccountChange, loginNudgeNeeded } from './account.js';
 import { openAdmin } from './admin-ui.js';
+import { openDiscord } from './support.js';
 import { openCardList } from './cardlist-ov.js';
 import { settings } from './settings.js';
 import { profileOf } from './cosmetics-ui.js';
@@ -172,6 +173,7 @@ export function runTitle(protocols, opts) {
               '<button data-mode="tutorial" type="button">TUTORIAL <small>遊び方</small></button>' +
               '<button data-mode="training" type="button">TRAINING <small>盤面を自由に</small></button>' +
               '<button data-mode="cards" type="button">CARDS <small>カード一覧</small></button>' +
+              '<button data-mode="discord" type="button">DISCORD <small>不具合・要望</small></button>' +
             '</div>' +
           '</div>' +
         '</nav>';
@@ -212,6 +214,7 @@ export function runTitle(protocols, opts) {
         else if (button.dataset.mode === 'account') openAccount();
         else if (button.dataset.mode === 'admin') openAdmin();
         else if (button.dataset.mode === 'cards') openCardList();
+        else if (button.dataset.mode === 'discord') openDiscord();
         else if (button.dataset.mode === 'gacha') openGacha();
         else if (button.dataset.mode === 'more') {
           const pop = root.querySelector('.tt-morepop');

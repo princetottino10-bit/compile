@@ -35,9 +35,12 @@ export function checkLastBattle() {
   if (!v) return null;
   const secs = Math.round(((v.last || v.at) - v.at) / 1000);
   const how = v.closed ? 'ページを閉じた・読み直した' : v.hidden ? '裏に回ったあと' : '画面ごと落ちた (閉じた記録なし)';
-  reportError('対戦が途中で終わった: ' + v.mode + ' ・ ' + (v.turns | 0) + '手番 ・ 始めて' + secs + '秒 ・ ' + how +
+  const text = v.mode + ' ・ ' + (v.turns | 0) + '手番 ・ 始めて' + secs + '秒 ・ ' + how +
     ' ・ ' + (v.me || []).join('/') + ' vs ' + (v.opp || []).join('/') +
-    (v.what ? ' ・ 最後: ' + v.what + (v.info ? ' (' + v.info + ')' : '') : ''), 'crashwatch');
+    (v.what ? ' ・ 最後: ' + v.what + (v.info ? ' (' + v.info + ')' : '') : '');
+  reportError('対戦が途中で終わった: ' + text, 'crashwatch');
+  /* Discord に貼る情報 (support.js) にも出す */
+  try { localStorage.setItem('compileLastCrash', new Date(v.last || v.at).toLocaleString('ja-JP') + ' ・ ' + text); } catch (e) { /* private mode */ }
   return v;
 }
 
