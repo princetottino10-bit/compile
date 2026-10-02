@@ -5,7 +5,6 @@ import { playBgm, menuBgm } from './bgm.js';
 import { xpLog } from './xp.js';
 import { displayName, onDisplayNameChange } from './displayname.js';
 import { dailyView } from './daily.js';
-import { dailyPuzzleDone } from './tsume.js';
 import { emblemDataURL } from './emblems.js';
 import { drawTitleBackdrop } from './backdrops.js';
 import { initAudio, sfx } from './audio.js';
@@ -46,12 +45,13 @@ function profileChip(protocols) {
     '<b>LV ' + p.level + '</b>' + (p.title ? '<small>' + p.title + '</small>' : '') + dailyBadge(protocols) + '</button>';
 }
 
-/* 今日のデイリーミッションと今日の問題 (COMPUZZLE) の残り (全部済んでいれば出さない) */
+/* 今日のデイリーミッションの残り (全部済んでいれば出さない)。
+   前は今日の問題 (COMPUZZLE) の2つも足して 0/5 と出していて、決着の画面・プロフィールの 0/3 と食い違っていた。
+   数えるのはミッションの3つだけにそろえる (今日の問題は COMPUZZLE の画面で分かる) */
 function dailyBadge(protocols) {
   const list = dailyView(protocols.map(x => x.name));
-  const total = list.length + 2;
-  const done = list.filter(m => m.done).length + (dailyPuzzleDone() ? 1 : 0) + (dailyPuzzleDone(undefined, undefined, true) ? 1 : 0);
-  return done < total ? '<i class="tt-daily" title="デイリーミッションと今日の問題">DAILY ' + done + '/' + total + '</i>' : '';
+  const done = list.filter(m => m.done).length;
+  return done < list.length ? '<i class="tt-daily" title="デイリーミッション">DAILY ' + done + '/' + list.length + '</i>' : '';
 }
 
 /* ロゴの下の名前。押すとプロフィール (表示名を変えられる)。まだ決めていなければ決めるよう促す */

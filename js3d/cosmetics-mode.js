@@ -214,7 +214,7 @@ export function openCosmetics(opts) {
     el.id = 'cosOv';
     el.setAttribute('role', 'dialog');
     el.setAttribute('aria-modal', 'true');
-    el.setAttribute('aria-label', 'COSMETICS');
+    el.setAttribute('aria-label', 'COLLECTION');
     document.body.appendChild(el);
   }
   let tab = (opts && opts.tab) || 'sleeve';

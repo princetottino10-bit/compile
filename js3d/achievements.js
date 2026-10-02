@@ -60,7 +60,7 @@ export const TROPHIES = [
   { id: 'wins10', tier: 'bronze', name: 'TEN DOWN', desc: '10勝する', test: (c) => wins(c) >= 10, progress: (c) => [wins(c), 10] },
   { id: 'tutorial', tier: 'bronze', name: 'BOOT SEQUENCE', desc: 'チュートリアルを全部終える', test: (c) => xpHas(c, e => e.id === 'k:tu:all') },
   { id: 'puzzle', tier: 'bronze', name: 'SOLVER', desc: '問題を1つ解く (COMPUZZLE も)', test: (c) => xpHas(c, e => e.src === 'puzzle' || e.src === 'tsume') },
-  { id: 'gacha1', tier: 'bronze', name: 'FIRST PULL', desc: 'COSMETICS の GACHA を回す', test: (c) => gachaPulls(c) >= 1 },
+  { id: 'gacha1', tier: 'bronze', name: 'FIRST PULL', desc: 'COLLECTION の GACHA を回す', test: (c) => gachaPulls(c) >= 1 },
   { id: 'daily_puzzle', tier: 'bronze', name: 'PUZZLE OF THE DAY', desc: 'COMPUZZLE の今日の問題を解く', test: (c) => dailyPuzzles(c) >= 1 },
   { id: 'tsume_easy', tier: 'bronze', name: 'WARMED UP', desc: 'COMPUZZLE の初級を全部解く',
     test: (c) => tsumeSolved(c, [1]) >= tsumeTotal([1]), progress: (c) => [tsumeSolved(c, [1]), tsumeTotal([1])] },

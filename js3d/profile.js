@@ -96,8 +96,8 @@ export function openProfile(protocols) {
     dailyHtml(protocols) +
     (got.length ? '<ul class="pf-got">' + got.slice().reverse().map(r => '<li><b>LV ' + r.lv + '</b>' + esc(r.name) + '</li>').join('') + '</ul>' : '') +
     '<details class="pf-earn"><summary>HOW TO EARN XP</summary><ul>' + EARN.map(([k, v]) => '<li><span>' + k + '</span><b>' + v + '</b></li>').join('') + '</ul></details>' +
-    '<p class="pz-note">取った見た目は COSMETICS で選べます。</p>' +
-    '<div class="pz-row"><button type="button" id="pfCos">COSMETICS</button><button type="button" id="pfAcc">ACCOUNT</button></div>' +
+    '<p class="pz-note">取った見た目は COLLECTION で選べます。</p>' +
+    '<div class="pz-row"><button type="button" id="pfCos">COLLECTION</button><button type="button" id="pfAcc">ACCOUNT</button></div>' +
     '</div></div>' +
     '</div>';
   el.classList.add('show');

@@ -89,7 +89,7 @@ export function openGacha(opts) {
         '<em>EPIC 以上まで あと ' + toPity + ' 回で確定</em></p>' +
       (last ? '<div class="ga-results">' + last.map(r => '<div class="ga-res r' + r.rar + '"><small>' + RAR_NAMES[r.rar] + (r.dupe ? ' ・ かぶり +' + r.refund + ' CHIP' : ' ・ NEW') + '</small>' +
         '<b>' + esc(r.name) + '</b></div>').join('') + '</div>' +
-        '<div class="pz-row"><button type="button" class="pz-main" id="gaUse">COSMETICS で着ける</button></div>' : '') +
+        '<div class="pz-row"><button type="button" class="pz-main" id="gaUse">COLLECTION で着ける</button></div>' : '') +
       '<div class="ga-col"><h3>図鑑 <em>' + col.got + ' / ' + col.total + '</em></h3>' +
         ORDER.map(k => '<div class="ga-row r' + k + '"><small>' + RAR_NAMES[k] + '</small><div>' +
           col.list.filter(x => x.rar === k).map(x => '<span class="' + (x.owned ? 'on' : '') + '">' + (x.owned ? esc(x.name) : '???') + '</span>').join('') +

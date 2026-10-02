@@ -84,7 +84,7 @@ export function cosmeticsHtml(s, protocols) {
           '" title="' + esc(p.name) + '" aria-label="' + esc(p.name) + '"><img alt="" src="' + emblemDataURL(p.name, p.color || '#b9a4ff', 40, true) + '"></button>').join('') + '</div>'
       : '') + '</div>';
   const rows = row('mat') + row('sleeve') + row('marker') + row('ccolor') + row('victory');
-  return '<div class="st-cosmetics"><div class="st-cos-head"><b>COSMETICS</b><small>LV ' + level + ' ・ 「+」はまだ見ぬ見た目。レベルを上げると明かされます</small></div>' +
+  return '<div class="st-cosmetics"><div class="st-cos-head"><b>COLLECTION</b><small>LV ' + level + ' ・ 「+」はまだ見ぬ見た目。レベルを上げると明かされます</small></div>' +
     rows + titleRow.replace('<span>称号</span>', '<span>TITLE</span>').replace('<b>つけない</b>', '<b>NONE</b>') + iconRow + '</div>';
 }
 

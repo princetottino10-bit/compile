@@ -251,7 +251,7 @@ function rewardsHtml(pl) {
     '<details class="sr-rewards"><summary>REWARDS ' + got.length + ' / ' + REWARDS.length + '</summary><ul>' +
     got.map(r => '<li class="got"><b>Lv' + r.lv + '</b>' + esc(r.name) + '<i>✓</i></li>').join('') +
     (hidden ? '<li class="secret"><b>???</b>ほか ' + hidden + ' 個 (レベルを上げると明かされる)</li>' : '') +
-    '</ul><p class="pz-note">取った見た目は、設定 (⚙) の COSMETICS で選べます</p></details>';
+    '</ul><p class="pz-note">取った見た目は、タイトルの COLLECTION で選べます</p></details>';
 }
 
 /* タブは日本語 (COLLECTION のタブとそろえる) */

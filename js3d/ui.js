@@ -321,7 +321,7 @@ export function compileCutIn(info) {
       '<div class="cc-name" data-text="' + info.name + '">' + info.name + '</div>' +
       ccPips(info.remaining) +
       '<div class="cc-sub">' + (info.remaining > 0 ? 'あと ' + info.remaining + ' プロトコル' : 'ALL PROTOCOLS COMPILED') + '</div>' +
-      '<div class="cc-owner">' + (info.mine ? 'YOU' : 'OPPONENT') + '</div>' +
+      '<div class="cc-owner">' + (info.who ? String(info.who).replace(/[<>&]/g, '') : info.mine ? 'YOU' : 'OPPONENT') + '</div>' +
     '</div>' +
     '<div class="cc-scan"></div>';
   el.classList.add('show');
@@ -529,7 +529,7 @@ export function showFxBanner(o, ms) {
   el.innerHTML =
     '<div class="fx-body">' +
       '<div class="fx-head"><b>' + o.name + '</b><span class="fx-tag">発動</span>' +
-        '<span class="fx-who ' + (o.mine ? 'me' : 'opp') + '">' + (o.mine ? 'あなた' : '相手') + '</span></div>' +
+        '<span class="fx-who ' + (o.mine ? 'me' : 'opp') + '">' + (o.who ? String(o.who).replace(/[<>&]/g, '') : o.mine ? 'あなた' : '相手') + '</span></div>' +
       '<p><span class="fx-zone">' + (FX_ZONE[o.zone] || '') + '</span>' + condHtml(o.text) + '</p>' +
     '</div>' +
     '<i class="fx-sweep"></i>';

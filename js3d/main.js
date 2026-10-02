@@ -723,6 +723,7 @@ async function boot() {
       await panels.flipAt(info.line, info.side, true);
       await UI.compileCutIn({
         ...info,
+        who: spectate ? specName(info.side) : null,          // 観戦は「YOU / OPPONENT」ではなく、キャラの名前
         art: glitchArtUrl(info.name),
         emblem: emblemDataURL(info.name, info.color, 512, true)
       });
@@ -3148,8 +3149,10 @@ async function announceTurnFor(turn, atState) {
     if (tagMates) avatarTagTurn(tagSt);
     const pilot = tagSt.tag.pilot[turn];
     const mine = tagSt.tag.online ? tagSt.tag.mine : 0;
-    await UI.turnCutIn(turn === ME, turn === ME ? (pilot === mine ? 'YOUR TURN' : 'PARTNER TURN') : 'RIVAL ' + (pilot + 1) + ' TURN');
-  } else await UI.turnCutIn(turn === ME);
+    /* 観戦は「YOUR / PARTNER / RIVAL」ではなく、指すキャラの名前で */
+    await UI.turnCutIn(turn === ME, spectate ? specName(turn, pilot) + ' TURN'
+      : turn === ME ? (pilot === mine ? 'YOUR TURN' : 'PARTNER TURN') : 'RIVAL ' + (pilot + 1) + ' TURN');
+  } else await UI.turnCutIn(turn === ME, spectate ? specName(turn) + ' TURN' : undefined);
   /* 番を終えた側が劣勢なら、ひとこと (タッグフォースの「ターンエンド……」)。番が来た側は、優勢なら強気に、ふだんはいつものひとこと */
   const standSt = tagSt || (cur && cur.state);
   /* 番が来た側が、このままコンパイルすれば決着する (勝ちが決まるラインが 10 以上で相手を上回っている):
@@ -3260,7 +3263,8 @@ async function cueFor(step, st) {
   if (zone && card.faceUp && def[zone]) {
     UI.showFxBanner({
       name: def.proto + ' ' + def.value, color: def.color,
-      zone, text: def[zone], mine: card.owner === ME
+      zone, text: def[zone], mine: card.owner === ME,
+      who: spectate ? specName(card.owner) : null          // 観戦は「あなた / 相手」ではなく、キャラの名前
     }, Math.max(FX_BANNER_MS / settings().speed, demoMode ? readMs(def[zone]) + 400 : 0));
     /* 観戦: 発動した効果の文を読み切れるまで待つ */
     if (demoMode) await Promise.all([board.pulse(uid, def.color, 380), TW.wait(readMs(def[zone]))]);
@@ -5441,7 +5445,7 @@ async function celebrateUnderdog() {
   el.innerHTML = '<div class="ud-card"><small>UNDERDOG</small><h2>GIANT SLAYER</h2>' +
     '<p>最弱のデッキで、最強の CPU を倒しました。</p>' +
     '<ul><li>称号 GIANT SLAYER</li><li>専用スリーブ GIANT SLAYER</li><li>専用コントロールマーカー GIANT SLAYER</li><li>+' + UNDERDOG_XP + ' XP</li></ul>' +
-    '<p style="font-size:12px;opacity:.8">見た目は 設定 → COSMETICS で着けられます</p>' +
+    '<p style="font-size:12px;opacity:.8">見た目は タイトルの COLLECTION で着けられます</p>' +
     '<button type="button">受け取る</button></div>';
   el.classList.add('show');
   confetti(['#ffd65a', '#ff4f6e', '#fff4c8', '#ff8a5a'], 320);

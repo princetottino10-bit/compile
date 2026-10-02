@@ -153,8 +153,8 @@ export function openSettings(extra) {
     '<label class="st-row st-check"><span>カードのキラ加工<small>プロトコルの習熟度 3 で銀、6 で金、9 で虹。文字の上には光を乗せません</small></span>' +
       '<input type="checkbox" id="stFoil"' + (s.foil ? ' checked' : '') + '></label>' +
     /* 見た目は専用の画面 (cosmetics-mode.js) で。実物どおりのプレビューと図鑑つき */
-    '<div class="st-cosmetics"><div class="st-cos-head"><b>COSMETICS</b><small>盤面・スリーブ・マーカー・称号などは専用の画面で選べます</small></div>' +
-      '<div class="pz-row"><button type="button" id="stCosOpen" class="pz-main">COSMETICS を開く</button></div></div>' +
+    '<div class="st-cosmetics"><div class="st-cos-head"><b>COLLECTION</b><small>盤面・スリーブ・マーカー・称号などは専用の画面で選べます</small></div>' +
+      '<div class="pz-row"><button type="button" id="stCosOpen" class="pz-main">COLLECTION を開く</button></div></div>' +
     /* 対戦のキャラ: 相手の声のオンオフと、声と絵のクレジット (キャラが見える人にだけ) */
     (avatarOptionsShown()
       ? '<h4 class="st-group">キャラ</h4>' +
