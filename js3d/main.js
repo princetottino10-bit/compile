@@ -640,6 +640,8 @@ async function boot() {
     /* 落ちたときの手がかり: コンパイルの演出を始めた・覚えているカードの絵の数 */
     onCompileStart: () => CW.battleNote('compile', 'faces ' + faceCacheSize()),
     onCompileEnd: () => CW.battleNote('after-compile', 'faces ' + faceCacheSize()),
+    /* タッグ: 手札が入れ替わるのと同時に、キャラも入れ替える (前は手番の告知のときで、手札より遅れていた) */
+    onTagSwap: (st) => { if (tagMates) avatarTagTurn(st); },
     onCompile: async (info) => {
       CW.battleNote('compile-cutin', 'faces ' + faceCacheSize());
       FEEL.buzz(info.side === ME ? [30, 60, 50] : 40);
@@ -3444,6 +3446,7 @@ function battleBgm() {
 }
 
 /* ---------- 進行 ---------- */
+let refreshSayFor = null;          // リフレッシュのひとことを、並べ替えの選択のあとまで待たせている { side, st } (null なら待っていない)
 async function step(action) {
   if (roomMode) { await roomStep(action); return; }
   if (busy) return;
@@ -3481,7 +3484,14 @@ async function step(action) {
     /* 相手が表で出したら、こちらがときどき反応する (少し遅れて) */
     setTimeout(() => avatarSay(1 - before.turn, 'watch', null, null, 9000, 0.35), 1400);
   } else if (action.type === 'play') avatarSay(before.turn, 'down', null, before, 6000, 0.6);
-  else if (action.type === 'refresh') avatarSay(before.turn, 'refresh', null, before, 6000);
+  /* リフレッシュのひとこと。コントロールを持っているときは、先に並べ替え (その選択) があって、そのあとに引く。
+     前はリフレッシュを押した時点で「補充」のひとことを言い、並べ替えのひとことがあとに続いて、順番が逆だった。
+     選択が残っているなら覚えておき、引き終わったあとに言う */
+  else if (action.type === 'refresh') {
+    if (res.requests && res.requests.length) refreshSayFor = { side: before.turn, st: before };   // st: タッグで、押した人が言うように
+    else avatarSay(before.turn, 'refresh', null, before, 6000);
+  }
+  if (action.type === 'play') refreshSayFor = null;
   if (topLevel && assistGame() && before.turn === ME) {
     undoPoint = { cur, replayLen: replayLog ? replayLog.actions.length : 0, resumeLen: RS.resumeLength(), histLen: gameHistory.length };
   }
@@ -3496,6 +3506,11 @@ async function step(action) {
   cur = res;
   syncAssist();
   await replayResolution(prev, res, action);
+  if (refreshSayFor !== null && !(res.requests && res.requests.length)) {
+    const r = refreshSayFor;
+    refreshSayFor = null;
+    avatarSay(r.side, 'refresh', null, r.st, 6000);
+  }
   refreshHud();
   busy = false;
   syncAssist();

@@ -104,6 +104,12 @@ export function createBoard(stage, defIndex, me, hooks) {
   /* コンパイルの演出が始まる (落ちたときの手がかりに、main.js が印を残す) */
   const onCompileStart = (hooks && hooks.onCompileStart) || (() => {});
   const onCompileEnd = (hooks && hooks.onCompileEnd) || (() => {});
+  /* タッグ: 手番を終えて、いまの人の手札が控えに回り、次の人の手札が出てくる (キャラの入れ替わりと同時に動かすため) */
+  const onTagSwap = (hooks && hooks.onTagSwap) || (() => {});
+  const SWAP_MS = 340;                       // キャラの入れ替わり (.avatar の transform .35s) に合わせる
+  const onBench = (st, uid) => { const z = st.cards[uid] && st.cards[uid].zone; return typeof z === 'string' && z.startsWith('bench'); };
+  /* 入れ替わりで手札が引っ込む先・出てくる元: 自分の側は手前の下、相手の側は奥の上 */
+  const swapOffset = (mine) => (mine ? [0, -1.3, 1.5] : [0, 0.5, -1.7]);
   /* 自分のカードのオーラ (使って勝つほど光る・お気に入り)。defId -> { color, strength, holo, fav } | null */
   const auraFor = (hooks && hooks.auraFor) || (() => null);
   /* 表面のキラ加工 (プロトコルの習熟度)。defId -> { color, strength, rainbow } | null */
@@ -560,10 +566,32 @@ export function createBoard(stage, defIndex, me, hooks) {
     let sDelay = 0;
     for (const k of kinds) { setTimeout(() => sfx(k), sDelay); sDelay += 90; }
 
+    /* タッグの入れ替わり: 控えに回る手札があれば、キャラの入れ替わりも同時に始める */
+    const swapSides = new Set(jobs.filter(j => j.a && j.a.zone === 'hand' && onBench(next, j.uid)).map(j => j.a.side));
+    if (swapSides.size) onTagSwap(next);
     const anims = jobs.map(({ uid, a, b }) => {
       const card = cardOf(next, uid);
       const slot = slotFor(next, uid);
+      /* いまの人の手札: 下 (相手の側は奥) へ引っ込んでから消える */
+      if (!slot && a && a.zone === 'hand' && onBench(next, uid)) {
+        const off = swapOffset(a.side === me);
+        const to = { pos: [card.position.x + off[0], card.position.y + off[1], card.position.z + off[2]],
+          rot: [card.rotation.x, card.rotation.y, card.rotation.z], scale: card.scale.x * 0.9 };
+        return moveTo(card, to, card.rotation.x, ms(SWAP_MS), TW.Ease.inCubic, 0).then(() => { card.visible = false; });
+      }
       if (!slot) { card.visible = false; return Promise.resolve(); }
+      /* 次の人の手札: 同じ所から、前の手札が引っ込んだあとに出てくる */
+      if (b.zone === 'hand' && prev.cards[uid] && onBench(prev, uid)) {
+        const off = swapOffset(b.side === me);
+        card.position.set(slot.pos[0] + off[0], slot.pos[1] + off[1], slot.pos[2] + off[2]);
+        card.rotation.set(slot.rot[0], slot.rot[1], slot.rot[2]);
+        card.scale.setScalar((slot.scale || 1) * 0.9);
+        card.visible = false;
+        return TW.wait(ms(SWAP_MS * 0.75)).then(() => {
+          card.visible = !slot.hidden;
+          return moveTo(card, slot, null, ms(SWAP_MS), TW.Ease.outCubic, 0);
+        });
+      }
       /* 前の状態に存在しなかったカード (ルームの秘匿→公開) は、
          持ち主の山札 (自分) / 手札の弧 (相手) から湧かせる */
       if (!a && !prev.cards[uid]) {
