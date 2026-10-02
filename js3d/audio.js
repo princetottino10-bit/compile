@@ -51,11 +51,31 @@ function loadClip(url) {
   return p;
 }
 /** 短い音声を鳴らす。返り値: Promise<{ stop(), duration (秒) } | null> (鳴らせなかったら null) */
+/* 音の土台が動くまで待つ (最大 ms)。ページを開き直して始まる対戦 (REMATCH・おまかせ・ストーリー) は、まだ画面に触れていないので
+   土台が止まっている。前はその場であきらめていたので、対戦の始まりのひとことに声が出なかった。
+   触れたら (bgm.js の retry → initAudio → wake) 動き出すので、少しだけ待つ */
+function whenRunning(ms) {
+  if (!actx) return Promise.resolve(false);
+  if (actx.state === 'running') return Promise.resolve(true);
+  return new Promise((resolve) => {
+    const t0 = Date.now();
+    const tick = () => {
+      if (!actx) { resolve(false); return; }
+      if (actx.state === 'running') { resolve(true); return; }
+      if (Date.now() - t0 >= ms) { resolve(false); return; }
+      wake();
+      setTimeout(tick, 120);
+    };
+    tick();
+  });
+}
 export async function playClip(url, vol) {
+  if (!actx) initAudio();
   if (!actx || muted || !(vol > 0)) return null;
   wake();
   const buf = await loadClip(url);
-  if (!buf || !actx || actx.state !== 'running' || muted) return null;
+  if (!buf || !actx || muted) return null;
+  if (!(await whenRunning(2500)) || muted) return null;
   const src = actx.createBufferSource();
   src.buffer = buf;
   const g = actx.createGain();
