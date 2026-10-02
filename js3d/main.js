@@ -443,6 +443,9 @@ function avatarHandesCheck(a, b, actor, effectCard) {
         const hit = (a.lines[l][s] || []).some((u) => {
           const ca = a.cards[u], cb = b.cards[u], d = ca && defIndex[ca.def];
           if (!d || !cb || !(d.value >= 5)) return false;
+          /* 裏向きのカードの値は、持ち主しか知らない。相手のキャラが嫌がると「5 か 6 だった」とばれるので、
+             裏向きで反応するのは、CPU 戦の自分のキャラだけ (オンライン・観戦では表向きのカードだけ) */
+          if (!ca.faceUp && (s !== ME || roomMode || demoMode)) return false;
           const deleted = /^trash/.test(cb.zone || '');
           const flippedDown = ca.faceUp && !cb.faceUp && /^field/.test(cb.zone || '');
           return deleted || flippedDown;
@@ -669,12 +672,13 @@ async function boot() {
     /* 自分のカードが着地した瞬間に震わせる (飛び立つ前ではなく、音と光に合わせる)。表で値が大きいほど強く */
     onLand: (o) => { if (o.byMe) FEEL.buzz(o.faceUp ? 14 + o.value * 4 : 12); },
     /* 落ちたときの手がかり: コンパイルの演出を始めた・覚えているカードの絵の数 */
-    onCompileStart: () => CW.battleNote('compile', 'faces ' + faceCacheSize()),
-    onCompileEnd: () => CW.battleNote('after-compile', 'faces ' + faceCacheSize()),
+    onCompileStart: () => CW.battleNote('compile', memNote()),
+    onCompileEnd: () => { document.body.classList.remove('compiling'); CW.battleNote('after-compile', memNote()); },
     /* タッグ: 手札が入れ替わるのと同時に、キャラも入れ替える (前は手番の告知のときで、手札より遅れていた) */
     onTagSwap: (st) => { if (tagMates) avatarTagTurn(st); },
     onCompile: async (info) => {
-      CW.battleNote('compile-cutin', 'faces ' + faceCacheSize());
+      CW.battleNote('compile-cutin', memNote());
+      document.body.classList.add('compiling');       // iPhone: 演出の間だけ、すりガラスの効果を切る (three-play.html の body.ios.compiling)
       FEEL.buzz(info.side === ME ? [30, 60, 50] : 40);
       /* コンパイルした側は喜び、された側は少し遅れて悔しがる */
       avatarCompileAt = Date.now();
@@ -1149,6 +1153,8 @@ async function boot() {
     /* キャンバスを取り出す (記録・共有用)。
        preserveDrawingBuffer を有効にしてあるので、いつ呼んでも直前の描画が残っている。 */
     capture: (quality) => {
+      /* iPhone は直前の絵を残していないので、取り出す前にその場で描く */
+      try { stage.composer.render(); } catch (e) { /* 描けなくても、残っている絵で取る */ }
       const src = stage.renderer.domElement;
       if (quality === undefined) return src.toDataURL('image/png');
       const w = 960, h = Math.round(w * src.height / src.width);
@@ -1318,6 +1324,7 @@ async function startLesson(index) {
   showPreview(null);
   cur = Engine.newPuzzle(tutorial.lesson.spec, { seed: 1 });
   gameHistory.length = 0;
+  refreshSayFor = null;
   undoPoint = null;
   oppTurn = null;
   lastTurn = null;
@@ -3480,6 +3487,14 @@ function battleTier() {
   if (aiDifficulty === 3 || aiDifficulty === UNDERDOG_LEVEL) return 'boss';
   return aiDifficulty >= 3 ? 'strong' : null;
 }
+/* 落ちたときの手がかり (crashwatch): 覚えているカードの絵の数 f、描画が持っている絵 t・形 g・シェーダー p、画質の段 L。
+   コンパイルのたびに数が増えていれば、捨て忘れ (漏れ) がある */
+function memNote() {
+  try {
+    const i = stage.renderer.info;
+    return 'f' + faceCacheSize() + ' t' + i.memory.textures + ' g' + i.memory.geometries + ' p' + ((i.programs && i.programs.length) | 0) + ' L' + stage.gfx().level;
+  } catch (e) { return 'f' + faceCacheSize(); }
+}
 /* そのラインに、その側のカードが何枚積まれているか (いま画面に出ている盤面で) */
 function stackCount(line, side) {
   const st = shown();
@@ -3542,6 +3557,7 @@ async function step(action) {
     if (res.requests && res.requests.length) refreshSayFor = { side: before.turn, st: before };   // st: タッグで、押した人が言うように
     else avatarSay(before.turn, 'refresh', null, before, 6000);
   }
+  /* 待たせたひとことは、選択を解き終えたところ (drainRequests) で言う。次の手が始まったら古いので捨てる */
   if (action.type === 'play') refreshSayFor = null;
   if (topLevel && assistGame() && before.turn === ME) {
     undoPoint = { cur, replayLen: replayLog ? replayLog.actions.length : 0, resumeLen: RS.resumeLength(), histLen: gameHistory.length };
@@ -3557,11 +3573,6 @@ async function step(action) {
   cur = res;
   syncAssist();
   await replayResolution(prev, res, action);
-  if (refreshSayFor !== null && !(res.requests && res.requests.length)) {
-    const r = refreshSayFor;
-    refreshSayFor = null;
-    avatarSay(r.side, 'refresh', null, r.st, 6000);
-  }
   refreshHud();
   busy = false;
   syncAssist();
@@ -4562,6 +4573,12 @@ async function drainRequests() {
     logAction(answer);
     cur = res;
     await replayResolution(prev, res, null);
+    /* リフレッシュのひとこと: コントロールの並べ替えを解き終えて、引いたあとに言う (step で待たせたもの) */
+    if (refreshSayFor && !(res.requests && res.requests.length)) {
+      const r = refreshSayFor;
+      refreshSayFor = null;
+      avatarSay(r.side, 'refresh', null, r.st, 6000);
+    }
     busy = false;
     refreshHud();
   }
@@ -4909,6 +4926,7 @@ function syncAssist() {
 }
 /* 待った: 自分の最後の手の直前へ戻す (相手がそのあと指した手も戻る)。1手だけ */
 function undoLastMove() {
+  refreshSayFor = null;
   if (!undoPoint || !myMoment()) { UI.toast('いまは戻せません'); return; }
   const p = undoPoint;
   undoPoint = null;

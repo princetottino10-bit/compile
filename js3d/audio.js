@@ -41,13 +41,17 @@ export function onMuteChange(f) { muteListeners.push(f); }
    効果音と同じ Web Audio で鳴らす (音の土台が一度動けば、触れていなくても鳴る)。
    読んで解いた音は最近の 24 本だけ覚えておく (全部覚えると iPhone のメモリを食うため) */
 const clipCache = new Map();          // url -> Promise<AudioBuffer | null>
+/* 解いた声は 1 本で約 1MB。iPhone・iPad は 12 本まで */
+const CLIP_KEEP = typeof navigator !== 'undefined' && (/iPhone|iPad|iPod/.test(navigator.userAgent || '') || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) ? 12 : 24;
 function loadClip(url) {
   if (clipCache.has(url)) { const p = clipCache.get(url); clipCache.delete(url); clipCache.set(url, p); return p; }
   const p = fetch(url).then(r => (r.ok ? r.arrayBuffer() : null))
     .then(b => (b ? new Promise((res) => { try { actx.decodeAudioData(b, res, () => res(null)); } catch (e) { res(null); } }) : null))
     .catch(() => null);
   clipCache.set(url, p);
-  while (clipCache.size > 24) clipCache.delete(clipCache.keys().next().value);
+  /* 読めなかった・解けなかった声は覚えない (覚えると、その声はページを開き直すまで鳴らない) */
+  p.then((buf) => { if (!buf && clipCache.get(url) === p) clipCache.delete(url); });
+  while (clipCache.size > CLIP_KEEP) clipCache.delete(clipCache.keys().next().value);
   return p;
 }
 /** 短い音声を鳴らす。返り値: Promise<{ stop(), duration (秒) } | null> (鳴らせなかったら null) */

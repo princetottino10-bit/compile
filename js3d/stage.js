@@ -8,7 +8,7 @@ import { RenderPass } from '../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../vendor/jsm/postprocessing/OutputPass.js';
 import { RoomEnvironment } from '../vendor/jsm/environments/RoomEnvironment.js';
-import { COLOR, CAMERA, BOARD, CARD, TIMING, VIEW } from './theme.js';
+import { COLOR, CAMERA, BOARD, CARD, TIMING, VIEW, IOS } from './theme.js';
 import * as TW from './tween.js';
 
 /* 床: 手続き的なグリッドと、ライン位置のホットバンド */
@@ -73,10 +73,13 @@ const floorFrag = `
 `;
 
 export function createStage(container) {
+  /* iPhone・iPad は、使えるメモリが小さく、超えるとページごと落ちる (コンパイルの演出で落ちていた)。
+     描く先の大きさをへらす: キャンバス側のなめらか処理は使わず (なめらか処理は下の composer の描く先でかけている)、
+     直前の絵を残す設定もやめる (取り出すときは、その場で描き直してから取る: capture) */
   const renderer = new THREE.WebGLRenderer({
-    antialias: true, alpha: false, powerPreference: 'high-performance',
+    antialias: !IOS, alpha: false, powerPreference: 'high-performance',
     /* キャンバスを PNG で取り出せるようにする (記録・共有用) */
-    preserveDrawingBuffer: true
+    preserveDrawingBuffer: !IOS
   });
   /* モバイル/小画面は影解像度を落として GPU 負荷を抑える。
      描画解像度 (ピクセル比) は 2 まで許す。1.5 で頭打ちにすると、表示倍率 3 の
@@ -86,8 +89,10 @@ export function createStage(container) {
   /* 画質の段 (重い端末で自動に下げる。下の「画質の自動調整」)。0 がいちばんきれい */
   const GFX_KEY = 'compileGfx';
   const GFX_CAP = [2, 1.5, 1.25, 1];            // 段ごとの描画解像度 (ピクセル比) の上限
-  let gfxLevel = 0;
-  try { gfxLevel = Math.max(0, Math.min(GFX_CAP.length - 1, parseInt(localStorage.getItem(GFX_KEY), 10) || 0)); } catch (e) { /* 保存できない環境でも遊べる */ }
+  /* iPhone・iPad は 1 段目 (解像度 1.5 倍まで) から始め、それより上げない (2 倍だと描く先だけで 1.8 倍のメモリを使う) */
+  const GFX_MIN = IOS ? 1 : 0;
+  let gfxLevel = GFX_MIN;
+  try { gfxLevel = Math.max(GFX_MIN, Math.min(GFX_CAP.length - 1, parseInt(localStorage.getItem(GFX_KEY), 10) || 0)); } catch (e) { /* 保存できない環境でも遊べる */ }
   const pixelRatio = () => Math.min(window.devicePixelRatio || 1, GFX_CAP[gfxLevel]);
   renderer.setPixelRatio(pixelRatio());
   renderer.setSize(container.clientWidth, container.clientHeight);
@@ -208,7 +213,7 @@ export function createStage(container) {
     appliedW = -1;
   }
   function setGfx(level) {
-    const next = Math.max(0, Math.min(GFX_CAP.length - 1, level));
+    const next = Math.max(GFX_MIN, Math.min(GFX_CAP.length - 1, level));
     if (next === gfxLevel) return;
     gfxLevel = next;
     try { localStorage.setItem(GFX_KEY, String(gfxLevel)); } catch (e) { /* 覚えられなくても今回は効く */ }
@@ -240,7 +245,7 @@ export function createStage(container) {
       if (++f.bad >= 2) { setGfx(gfxLevel + 1); f.bad = 0; }
     } else {
       f.bad = 0;
-      if (fps >= 55 && gfxLevel > 0) { f.good += span; if (f.good >= 20000) { setGfx(gfxLevel - 1); f.good = 0; } }
+      if (fps >= 55 && gfxLevel > GFX_MIN) { f.good += span; if (f.good >= 20000) { setGfx(gfxLevel - 1); f.good = 0; } }
       else f.good = 0;
     }
     f.t0 = now; f.n = 0; f.capped = 0; f.gaps.length = 0;

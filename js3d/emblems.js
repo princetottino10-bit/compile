@@ -286,6 +286,9 @@ export function emblemDataURL(name, color, size, glow) {
   }
   drawEmblem(ctx, name, 0, 0, size, color);
   const url = cv.toDataURL('image/png');
+  cv.width = cv.height = 0;                  // 使い終わったキャンバスのメモリをすぐ返す (iPhone はなかなか返さない)
   urlCache.set(key, url);
+  /* 覚えておくのは最近の 40 個まで (大きい紋章は 1 個で数百 KB の文字列になる) */
+  while (urlCache.size > 40) urlCache.delete(urlCache.keys().next().value);
   return url;
 }

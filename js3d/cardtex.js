@@ -11,7 +11,7 @@
  *   本文は枠に収まるまで自動縮小し、切り捨てを出さない。
  * ========================================================================= */
 import * as THREE from '../vendor/three.module.js';
-import { CARD, FONT } from './theme.js';
+import { CARD, FONT, IOS } from './theme.js';
 import { drawIcon } from './icons.js';
 import { condChars } from './cardtext.js';
 
@@ -38,7 +38,7 @@ const faceCanvas = new Map();  // defId -> HTMLCanvasElement (プレビュー用
 const artCache = new Map();    // url -> HTMLImageElement | null (失敗)
 const backTextures = new Map();   // 裏面の柄 (スリーブ) -> テクスチャ
 /* 絵は対局をまたいで使い回すが、何試合も遊ぶと増え続けるので、新しい順に ART_KEEP 枚だけ残す */
-const ART_KEEP = 120;
+const ART_KEEP = IOS ? 30 : 120;       // iPhone・iPad は少なく (絵はカードに描き込んだあとは、描き直すときにしか使わない)
 function rememberArt(url, img) {
   artCache.delete(url);
   artCache.set(url, img);

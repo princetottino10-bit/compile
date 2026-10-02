@@ -124,7 +124,18 @@ export function mountAvatar(id, opts = {}) {
 
   let face = 'normal', faceTimer = null, sayTimer = null, blinkTimer = null, speakTimer = null;
   let speakEnd = 0;                  // 言い終わる時刻 (これより前に次のセリフを言わせない。main.js が待つ)
-  const show = (f) => el.querySelectorAll('img').forEach(img => img.classList.toggle('on', img.dataset.face === f));
+  /* 表情を替える。見えていない表情は display:none にして、絵としては持たない (8 枚ぶん重ねて持つと iPhone のメモリを食う)。
+     替える先の絵は、解いてから (decode) 入れ替える: 解く前に替えると一瞬消えて見える。まばたきの絵はいつも用意してある */
+  let showSeq = 0;
+  const swap = (f) => el.querySelectorAll('img').forEach(img => img.classList.toggle('on', img.dataset.face === f));
+  const show = (f) => {
+    const my = ++showSeq;
+    const img = el.querySelector('img[data-face="' + f + '"]');
+    if (!img || img.classList.contains('on') || f === 'blink' || typeof img.decode !== 'function') { swap(f); return; }
+    img.classList.add('warm');
+    img.decode().then(() => { if (my === showSeq) swap(f); img.classList.remove('warm'); },
+      () => { if (my === showSeq) swap(f); img.classList.remove('warm'); });
+  };
   /* まばたき: ふつうの顔のときだけ、3〜6秒ごとに 0.14 秒 */
   const scheduleBlink = () => {
     clearTimeout(blinkTimer);

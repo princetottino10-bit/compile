@@ -421,7 +421,7 @@ export function showCoachResult(index, result, onDone) {
     '<div class="tc-head"><span class="tc-tag">' + lessonTag(index) + '</span>' +
       '<b class="tc-verdict">' + (result.ok ? 'クリア！' : 'もう一度') + '</b></div>' +
     '<p class="tc-say">' + esc(result.text) + '</p>' +
-    '<p class="tc-next">画面をタップで' + (result.ok ? (last ? 'まとめへ' : '次のレッスンへ') : 'もう一度') + '</p>';
+    '<p class="tc-next">画面をタップ (または Enter) で' + (result.ok ? (last ? 'まとめへ' : '次のレッスンへ') : 'もう一度') + '</p>';
   let done = false;
   /* 結果を読んでいる間は、画面のどこをタップしても進む。そのタップは盤面の操作に渡さない
      (押した瞬間に進め、続く pointerup / click も握りつぶす)。ボタン (メニュー・設定など) はそのまま使える */
@@ -434,12 +434,14 @@ export function showCoachResult(index, result, onDone) {
     document.addEventListener('click', swallow, { capture: true, once: true });
     go();
   };
-  const unhook = () => { document.removeEventListener('pointerdown', onTap, true); if (resultUnhook === unhook) resultUnhook = null; };
+  /* キーボードでも進める (Enter・スペース)。タップだけだと、キーで遊ぶ人が先へ進めなかった */
+  const onKey = (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); ev.stopPropagation(); go(); } };
+  const unhook = () => { document.removeEventListener('pointerdown', onTap, true); document.removeEventListener('keydown', onKey, true); if (resultUnhook === unhook) resultUnhook = null; };
   if (resultUnhook) resultUnhook();
   resultUnhook = unhook;
   const go = () => { if (done) return; done = true; clearTimeout(coachTimer); unhook(); onDone(); };
   /* 出た直後のタップは受けない (操作の続きの指が当たって、読む前に進むのを防ぐ) */
-  coachTimer = setTimeout(() => document.addEventListener('pointerdown', onTap, true), 700);
+  coachTimer = setTimeout(() => { if (done) return; document.addEventListener('pointerdown', onTap, true); document.addEventListener('keydown', onKey, true); }, 700);
   syncCoachBottom();
   return () => { done = true; clearTimeout(coachTimer); unhook(); };
 }
