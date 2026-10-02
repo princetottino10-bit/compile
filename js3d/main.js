@@ -425,6 +425,25 @@ function avatarHandesCheck(a, b, actor, effectCard) {
   }
   /* 相手の効果でなければハンデスではない (コストで捨てた・手札の上限・どの効果か分からない場面は数えない) */
   if (!effectCard) return;
+  /* 大きいカード (値 5・6) を相手の効果で裏にされた・削除された側は嫌がる。
+     合計の減りで見る「崩された」(3 以上減ったとき) では、裏向きの 5・6 を消されたとき (減りは 2) に何も言わなかった。
+     コンパイルで捨て札になった分は数えない */
+  if (Date.now() - avatarCompileAt >= 6000) {
+    for (let l = 0; l < 3; l++) {
+      for (const s of [0, 1]) {
+        if (effectCard.owner === s) continue;
+        const hit = (a.lines[l][s] || []).some((u) => {
+          const ca = a.cards[u], cb = b.cards[u], d = ca && defIndex[ca.def];
+          if (!d || !cb || !(d.value >= 5)) return false;
+          const deleted = /^trash/.test(cb.zone || '');
+          const flippedDown = ca.faceUp && !cb.faceUp && /^field/.test(cb.zone || '');
+          return deleted || flippedDown;
+        });
+        /* 合計が 3 以上減っていれば、合計の減りの方 (崩された・悲鳴) が言うので、ここでは重ねない */
+        if (hit && totalOf(b, l, s) - totalOf(a, l, s) > -3) avatarSay(s, 'hurt', null, b, 8000);
+      }
+    }
+  }
   for (const s of [0, 1]) {
     if (effectCard.owner === s) continue;
     const now = new Set(b.players[s].hand);
@@ -435,7 +454,11 @@ function avatarHandesCheck(a, b, actor, effectCard) {
 /* コントロールを取った側がひとこと (変わったときだけ) */
 let avatarControl = null;
 let avatarCompileAt = 0;          // 最後にコンパイルが起きた時刻 (その直後の合計の減りでは驚かない)
-let avatarActor = null;           // いま再生している場面を動かした側 (その場面の手番)。再生の外では null
+let avatarActor = null;           // いま再生している場面を動かした側 (その効果のカードの持ち主。無ければその場面の手番)。再生の外では null
+let avatarTurn = null;            // いま再生している場面の手番の側。再生の外では null
+/* 喜ぶひとこと (つながった・積み上がった・まとめて消した) を言ってよいか: 自分の手番のときだけ。
+   相手のカードで自分のカードが発動した (表にされた・覆われた) ときは、自分の効果が動いても喜ばない */
+const ownTurn = (side) => (avatarTurn === null ? cur && cur.state && cur.state.turn : avatarTurn) === side;
 function avatarControlCheck(st) {
   const c = st && typeof st.control === 'number' ? st.control : -1;
   if (avatarControl !== null && c !== avatarControl && c >= 0) avatarSay(c, 'control', null, st, 6000);
@@ -687,7 +710,7 @@ async function boot() {
           if (actor !== e.side) {
             const big = e.delta <= -5;
             avatarSay(e.side, big ? 'crushed' : 'hurt', null, null, big ? 3000 : 8000);
-            avatarSay(actor, 'wipe', null, null, 8000);
+            if (ownTurn(actor)) avatarSay(actor, 'wipe', null, null, 8000);
             if (big && !matchMedia('(prefers-reduced-motion: reduce)').matches) stage.shake(0.1, 340);
           }
         }
@@ -696,7 +719,9 @@ async function boot() {
           const reach = reachLine(cur.state, e.side, e.line);
           avatarSay(e.side, reach ? 'reach' : 'almost', null, null, reach ? 4000 : 12000);
         }
-        else if (e.delta >= 4 && (avatarActor === null ? cur.state.turn : avatarActor) === e.side) avatarSay(e.side, 'boost', null, null, 10000, 0.6);
+        /* 「積み上がってきた」: 自分の手でラインが増えて、2枚目以降で、合計が 7 以上になったとき
+           (前は「一度に 4 以上増えた」で、1枚目を置いただけでも言っていた) */
+        else if (e.delta > 0 && e.total >= 7 && actor === e.side && ownTurn(e.side) && stackCount(e.line, e.side) >= 2) avatarSay(e.side, 'boost', null, null, 10000, 0.6);
       }
     }
   });
@@ -3338,7 +3363,7 @@ async function replayResolution(prev, res, action) {
          相手の効果で自分のカードが動かされたとき・相手のカードの効果・損しかない効果 (手札を捨てるだけ) では喜ばない */
       const cardOf = (k) => (k && st && st.cards && st.cards[k.uid]) || null;
       const root = cardOf(links[0]), last = cardOf(links[links.length - 1]);
-      if (root && last && root.owner === ME && last.owner === ME && !demeritDefs.has(last.def)) {
+      if (root && last && root.owner === ME && last.owner === ME && !demeritDefs.has(last.def) && st && st.turn === ME) {
         avatarSay(ME, 'chain', null, st, 7000);
       }
     }
@@ -3357,6 +3382,7 @@ async function replayResolution(prev, res, action) {
          追いつかせないと、効果の結果が出る前に「相手のターン」の演出が出ていた */
       if (visualFingerprint(from) !== step.fp) {
         avatarActor = actorOf(step, from);
+        avatarTurn = from.turn;
         await board.applyTransition(from, step.st, first ? action : null, { speed: STEP_MOTION, source: effectSource(step) });
         avatarHandesCheck(from, step.st, avatarActor, effectCardOf(step, from));
         await syncPanels(step.st, true);
@@ -3375,6 +3401,7 @@ async function replayResolution(prev, res, action) {
     const uid = step.uid || (step.cue && step.cue.uid) || null;
     /* チェーンの途中は動きもさらにゆっくり見せる */
     avatarActor = actorOf(step, from);
+    avatarTurn = from.turn;
     await board.applyTransition(from, step.st, first ? action : null,
       { speed: chainShown ? STEP_MOTION * 1.3 : STEP_MOTION, source: effectSource(step) });
     avatarHandesCheck(from, step.st, avatarActor, effectCardOf(step, from));
@@ -3394,6 +3421,7 @@ async function replayResolution(prev, res, action) {
     first = false;
   }
   avatarActor = null;                // 再生が終わったら、動かした側の覚えを捨てる
+  avatarTurn = null;
   /* 残りの行 (間引いたコマの分) を書き足す。手を解決し終えたら、次の手のために覚えを捨てる */
   if (liveLog) {
     logUpTo(res, Infinity);
@@ -3436,6 +3464,11 @@ function battleTier() {
   if (runMode && runKind === 'weekly') return (loadStoredWeekly().stage | 0) === 2 ? 'boss' : null;
   if (aiDifficulty === 3 || aiDifficulty === UNDERDOG_LEVEL) return 'boss';
   return aiDifficulty >= 3 ? 'strong' : null;
+}
+/* そのラインに、その側のカードが何枚積まれているか (いま画面に出ている盤面で) */
+function stackCount(line, side) {
+  const st = shown();
+  return st && st.lines && st.lines[line] && st.lines[line][side] ? st.lines[line][side].length : 0;
 }
 /* 対戦の BGM: ボスと強敵は専用の曲。ふつうの対戦は4曲からランダム (COLLECTION の BGM を出したら選んだ曲) */
 function battleBgm() {
