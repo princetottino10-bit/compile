@@ -79,7 +79,7 @@ export async function playClip(url, vol) {
   const src = actx.createBufferSource();
   src.buffer = buf;
   const g = actx.createGain();
-  g.gain.value = Math.min(1.25, vol);
+  g.gain.value = Math.min(1.6, vol);     // 小さい声のキャラは持ち上げる (avatar.js の voiceGain)。上げすぎて割れないよう 1.6 倍まで
   src.connect(g);
   g.connect(actx.destination);
   src.start();

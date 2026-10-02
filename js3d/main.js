@@ -316,6 +316,9 @@ function syncAvatar() {
     oppIds
   };
   if (avatars.opp) setTimeout(() => { if (avatars && avatars.opp) avatars.opp.react('hello'); }, 900);
+  /* 自分のキャラも、相手が言い終わるころに挨拶を返す。自分が先攻のときは「私の番」のひとことがすぐ出るので言わない
+     (チュートリアルの案内役は別のひとことを言う) */
+  if (avatars.me && !tutorial) setTimeout(() => { if (avatars && avatars.me && cur && (cur.state.turns | 0) <= 1 && cur.state.turn !== ME) avatarSay(ME, 'hello'); }, 3200);
 }
 /* いま、その側で話す人 (タッグは指している人) */
 function avatarOf(side, st) {
@@ -325,7 +328,7 @@ function avatarOf(side, st) {
   return avatars.mate && s && s.tag && s.tag.pilot[ME] === 1 ? avatars.mate : avatars.me;
 }
 /* 大事な場面 (コンパイル・勝敗など)。話している途中でも捨てずに、言い終わったらすぐ言う */
-const AVATAR_MUST_KINDS = new Set(['compile', 'compiled', 'win', 'lose', 'almost', 'reach', 'hurt', 'crushed', 'hello', 'lesson', 'good', 'retry', 'turn', 'lead']);
+const AVATAR_MUST_KINDS = new Set(['compile', 'compiled', 'win', 'lose', 'almost', 'reach', 'hurt', 'crushed', 'hello', 'lesson', 'good', 'retry', 'turn', 'lead', 'sure', 'doomed']);
 /* チュートリアルの案内 (tu...) も捨てない */
 const AVATAR_MUST = { has: (kind) => AVATAR_MUST_KINDS.has(kind) || /^tu(\d|ask)/.test(kind) };
 /* 話している途中に来たひとことは、1つだけ待たせて、言い終わったら言う (前は捨てていたので「喋ったり喋らなかったり」になっていた)。
@@ -379,6 +382,11 @@ function reachLine(st, side, line) {
   if (!ps || !ps[line] || ps[line].compiled) return false;
   const need = Array.isArray(st.winBySide) ? st.winBySide[side] : (st.winCompiles || 3);
   return ps.filter(p => p.compiled).length === need - 1;
+}
+/* その側に、コンパイルすれば決着するライン (reachLine) で、もう 10 以上で相手を上回っているものがあるか */
+function decidingLine(st, side) {
+  if (!st || !st.lines || st.winner !== null) return false;
+  return [0, 1, 2].some(l => reachLine(st, side, l) && totalOf(st, l, side) >= 10 && totalOf(st, l, side) > totalOf(st, l, 1 - side));
 }
 /* 形勢: 済みのプロトコル1本を 10 点として、ラインの合計の差と足す。+8 以上で優勢、-8 以下で劣勢 */
 function standingOf(st, side) {
@@ -3108,8 +3116,15 @@ async function announceTurnFor(turn, atState) {
   } else await UI.turnCutIn(turn === ME);
   /* 番を終えた側が劣勢なら、ひとこと (タッグフォースの「ターンエンド……」)。番が来た側は、優勢なら強気に、ふだんはいつものひとこと */
   const standSt = tagSt || (cur && cur.state);
-  if (standingOf(standSt, 1 - turn) < 0) avatarSay(1 - turn, 'behind', null, standSt, 20000, 0.7);
-  avatarSay(turn, standingOf(standSt, turn) > 0 && Math.random() < 0.7 ? 'lead' : 'turn', null, tagSt);
+  /* 番が来た側が、このままコンパイルすれば決着する (勝ちが決まるラインが 10 以上で相手を上回っている):
+     来た側は「勝ち確」、終えた側は「負け確」のひとこと。そうでなければ、いつもの優勢・劣勢・自分の番 */
+  if (decidingLine(standSt, turn)) {
+    avatarSay(1 - turn, 'doomed', null, standSt);
+    avatarSay(turn, 'sure', null, tagSt);
+  } else {
+    if (standingOf(standSt, 1 - turn) < 0) avatarSay(1 - turn, 'behind', null, standSt, 20000, 0.7);
+    avatarSay(turn, standingOf(standSt, turn) > 0 && Math.random() < 0.7 ? 'lead' : 'turn', null, tagSt);
+  }
   /* はじめの数戦だけ、自分の番に何をすればいいかを添える */
   if (turn === ME && !roomMode && !tutorial && !puzzle && !demoMode && !replayMode && localRecords().length < 3 && !firstGameHintShown) {
     firstGameHintShown = true;
@@ -3515,7 +3530,10 @@ async function step(action) {
     const pd = pc && defIndex[pc.def];
     avatarSay(before.turn, 'play', { card: pd ? pd.proto + ' ' + pd.value : 'カード' }, before);
     /* 相手が表で出したら、こちらがときどき反応する (少し遅れて) */
-    setTimeout(() => avatarSay(1 - before.turn, 'watch', null, null, 9000, 0.35), 1400);
+    /* その手で自分のラインを減らされた側は、感心しない (「いい手だね」ではなく、やられた方のひとことに任せる) */
+    const watcher = 1 - before.turn;
+    const lostSome = [0, 1, 2].some(l => totalOf(res.state, l, watcher) < totalOf(before, l, watcher));
+    if (!lostSome) setTimeout(() => avatarSay(watcher, 'watch', null, null, 9000, 0.35), 1400);
   } else if (action.type === 'play') avatarSay(before.turn, 'down', null, before, 6000, 0.6);
   /* リフレッシュのひとこと。コントロールを持っているときは、先に並べ替え (その選択) があって、そのあとに引く。
      前はリフレッシュを押した時点で「補充」のひとことを言い、並べ替えのひとことがあとに続いて、順番が逆だった。

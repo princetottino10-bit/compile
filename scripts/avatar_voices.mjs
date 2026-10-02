@@ -16,9 +16,9 @@ const SPEAKER = {
   tsumugi: { base: 8, happy: 8, angry: 8 },
   whitecul: { base: 23, happy: 24, angry: 25 }      // ノーマル / たのしい / かなしい
 };
-const TONE = { compile: 'happy', win: 'happy', good: 'happy', hello: 'happy', chain: 'happy', control: 'happy', fav: 'happy', reach: 'happy', lead: 'happy', recompile: 'happy', compiled: 'angry', hurt: 'angry', handes: 'angry', behind: 'angry', crushed: 'angry' };
+const TONE = { compile: 'happy', win: 'happy', good: 'happy', hello: 'happy', chain: 'happy', control: 'happy', fav: 'happy', reach: 'happy', lead: 'happy', recompile: 'happy', sure: 'happy', doomed: 'angry', compiled: 'angry', hurt: 'angry', handes: 'angry', behind: 'angry', crushed: 'angry' };
 /* キャラごとの声色の差し替え (ずんだもんは、やられたときに怒るより泣く) */
-const TONE_OF = { zundamon: { compiled: 'sad', hurt: 'sad', handes: 'sad', lose: 'sad', behind: 'sad', crushed: 'sad' } };
+const TONE_OF = { zundamon: { compiled: 'sad', hurt: 'sad', handes: 'sad', lose: 'sad', behind: 'sad', crushed: 'sad', doomed: 'sad' } };
 
 import { fixReading } from './voice_fix.mjs';
 
@@ -35,7 +35,11 @@ async function synth(text, speaker) {
   return Buffer.from(await r.arrayBuffer());
 }
 
-const ids = process.argv.slice(2).length ? process.argv.slice(2) : Object.keys(AVATARS).filter(id => AVATARS[id].voice);
+/* 何も指定しなければ VOICEVOX の4人だけ (紫苑たちの声は ElevenLabs で作る: scripts/voice_lines.py。ここで作ると上書きしてしまう) */
+/* --missing: いまある声は消さず、足りない分だけ作る (セリフを末尾に足したとき用。並びを変えたときは付けずに全部作り直す) */
+const onlyMissing = process.argv.includes('--missing');
+const named = process.argv.slice(2).filter(a => !a.startsWith('--'));
+const ids = named.length ? named : Object.keys(SPEAKER);
 const tmp = path.join(process.env.TEMP || '.', 'compile-voice.wav');
 let n = 0;
 for (const id of ids) {
@@ -45,14 +49,15 @@ for (const id of ids) {
   const dir = path.join('art', 'voice', id);
   fs.mkdirSync(dir, { recursive: true });
   /* 並びが変わると番号がずれるので、前の声は消してから作り直す */
-  for (const f of fs.readdirSync(dir)) if (f.endsWith('.mp3')) fs.unlinkSync(path.join(dir, f));
+  if (!onlyMissing) for (const f of fs.readdirSync(dir)) if (f.endsWith('.mp3')) fs.unlinkSync(path.join(dir, f));
   for (const [kind, list] of Object.entries(def.lines)) {
     for (let i = 0; i < list.length; i++) {
       const text = Array.isArray(list[i]) ? list[i][1] : list[i];
       const tone = (TONE_OF[id] && TONE_OF[id][kind]) || TONE[kind] || 'base';
       const speaker = sp[tone] ?? sp.base;
-      fs.writeFileSync(tmp, await synth(text, speaker));
       const out = path.join(dir, kind + '_' + i + '.mp3');
+      if (onlyMissing && fs.existsSync(out)) continue;
+      fs.writeFileSync(tmp, await synth(text, speaker));
       execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', tmp, '-ac', '1', '-b:a', '64k', out]);
       n++;
     }

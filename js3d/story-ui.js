@@ -5,7 +5,7 @@
  *   showStoryResult(win, node, actions)  決着のあと: 勝ち負けの会話 → ボタン (次へ・もう一度・地図・タイトル)
  * ========================================================================= */
 import { showTitleBack, hideTitleBack } from './titleback.js';
-import { faceFor, faceURL, VOICE_VER } from './avatar.js';
+import { faceFor, faceURL, VOICE_VER, voiceGain } from './avatar.js';
 import { accountState } from './account.js';
 import { playClip, isMuted } from './audio.js';
 import { duckBgm } from './bgm.js';
@@ -31,7 +31,7 @@ function makeVoice() {
   const play = (id, text) => {
     halt();
     if (!id || isMuted()) return;
-    const vol = Math.max(0, Math.min(1, ((settings().voiceVol ?? 80) | 0) / 100));
+    const vol = Math.max(0, Math.min(1, ((settings().voiceVol ?? 80) | 0) / 100)) * voiceGain(id);
     if (!vol) return;
     const my = seq;
     playClip('art/voice/' + id + '/story/' + lineKey(text) + '.mp3?v=' + VOICE_VER, vol).then((h) => {

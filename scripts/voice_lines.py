@@ -29,7 +29,7 @@ TAGS = {'sad': '[sad]', 'shy': '[shy]', 'fired': '[determined]', 'surprised': '[
 KIND_FACE = {'play': 'fired', 'compile': 'happy', 'compiled': 'frustrated', 'hurt': 'surprised', 'almost': 'fired', 'win': 'happy', 'lose': 'sad',
              'good': 'happy', 'down': 'fired', 'watch': 'surprised', 'chain': 'happy', 'control': 'happy', 'boost': 'fired',
              'handes': 'frustrated', 'wipe': 'fired', 'rearrange': 'fired', 'fav': 'happy', 'reach': 'fired', 'lead': 'happy', 'behind': 'frustrated',
-             'crushed': 'surprised', 'recompile': 'happy'}
+             'crushed': 'surprised', 'recompile': 'happy', 'sure': 'fired', 'doomed': 'sad'}
 
 
 def fnv1a(text):
@@ -67,7 +67,14 @@ def tts(key, voice, text):
         return r.read()
 
 
+# 読み間違える言葉は、声に渡す文だけひらがなにする (画面の文字はそのまま)。
+#   「焦らなくていい」を「じらなくていい」と読んだ (2026-10-02)
+READINGS = {'焦ら': 'あせら', '焦り': 'あせり', '焦る': 'あせる', '焦っ': 'あせっ'}
+
+
 def spoken(text, face):
+    for k, v in READINGS.items():
+        text = text.replace(k, v)
     tag = TAGS.get(face, '')
     return (tag + ' ' + text) if tag else text
 

@@ -92,8 +92,17 @@ const pick = (list) => list[Math.floor(Math.random() * list.length)];
 export const avatarIds = () => Object.keys(AVATARS).filter(id => !AVATARS[id].boss);
 /* 立ち絵の版。画像には版の印が付かないので、同じ名前で差し替えたらここを上げる (古い絵がしばらく出るのを防ぐ)。3 = 2026-10-01 頭の先まで入る枠で切り直し (E:SDSwarmUIOutputvatar_v2export_v4headroom.py) */
 export const ART_VER = 3;
-/* 声の版。同じ名前で声を作り直したらここを上げる (古い声がしばらく鳴るのを防ぐ)。3 = 2026-10-02 茜の一言を1本作り直した */
-export const VOICE_VER = 3;
+/* 声の版。同じ名前で声を作り直したらここを上げる (古い声がしばらく鳴るのを防ぐ)。4 = 2026-10-02 紫苑の「焦ら…」の読みを直した */
+export const VOICE_VER = 4;
+/* 声の大きさをキャラどうしでそろえる。測った大きさ (ラウドネス、LUFS。ffmpeg の ebur128 の中央値) から、VOICE_TARGET へ合わせる倍率を出す。
+   VOICEVOX の4人は -25 前後、ElevenLabs の4人は -15〜-19 で、6〜10 dB も差があった (2026-10-02 に測った)。
+   声を作り直したら測り直す: ffmpeg -i <声> -af ebur128=framelog=quiet -f null -  (最後の I: の値) */
+const VOICE_LOUDNESS = { zundamon: -25.8, metan: -24.6, tsumugi: -24.6, whitecul: -26.0, shion: -19.1, nadeshiko: -19.3, asagi: -15.1, yamabuki: -17.7 };
+const VOICE_TARGET = -23;
+export function voiceGain(id) {
+  const l = VOICE_LOUDNESS[id];
+  return l === undefined ? 1 : Math.min(1.6, Math.pow(10, (VOICE_TARGET - l) / 20));
+}
 export const faceURL = (id, face) => 'art/avatar/' + id + '_' + (AVATARS[id] && AVATARS[id].single ? 'normal' : (face || 'normal')) + '.webp?v=' + ART_VER;
 
 /** キャラを出す。opts.side: 'me' (左下) / 'opp' (右上)。opts.back: 自分の後ろに立つ (タッグの味方)。
@@ -166,7 +175,7 @@ export function mountAvatar(id, opts = {}) {
   const FACE_OF = { play: 'fired', compile: 'happy', compiled: 'frustrated', hurt: 'surprised', almost: 'fired', win: 'happy', lose: 'sad', hello: 'happy',
     lesson: 'normal', good: 'happy', retry: 'normal',
     turn: 'normal', down: 'fired', watch: 'surprised', chain: 'happy', refresh: 'normal', idle: 'normal', control: 'happy', boost: 'fired',
-    handes: 'frustrated', wipe: 'fired', rearrange: 'fired', fav: 'happy', reach: 'fired', lead: 'happy', behind: 'frustrated', crushed: 'surprised', recompile: 'happy' };
+    handes: 'frustrated', wipe: 'fired', rearrange: 'fired', fav: 'happy', reach: 'fired', lead: 'happy', behind: 'frustrated', crushed: 'surprised', recompile: 'happy', sure: 'fired', doomed: 'sad' };
   /* チュートリアルの案内 (tu...): できたら笑顔、ほかはふつう */
   const faceOf = (kind) => FACE_OF[kind] || (/^play_/.test(kind) ? 'fired' : null) || (/^tu\d+ok$/.test(kind) ? 'happy' : /^tu(\d|ask)/.test(kind) ? 'normal' : undefined);
   const lastPick = {};               // 種類ごとに、直前に言ったセリフの番号
@@ -207,7 +216,7 @@ export function mountAvatar(id, opts = {}) {
   function playVoice(url) {
     if (isMuted()) return;
     /* 設定の「キャラの声の音量」(0 でオフ)。効果音と同じ Web Audio で鳴らす (iPhone で止められないように。audio.js の playClip) */
-    const vol = Math.max(0, Math.min(1, ((settings().voiceVol ?? 80) | 0) / 100));
+    const vol = Math.max(0, Math.min(1, ((settings().voiceVol ?? 80) | 0) / 100)) * voiceGain(id);
     if (!vol) return;
     stopVoice();
     const my = voiceSeq;
