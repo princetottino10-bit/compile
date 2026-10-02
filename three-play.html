@@ -3247,22 +3247,25 @@
   .avatar.calm.bump .av-body{animation:none;}
   @keyframes av-breath{50%{transform:scaleY(1.012) translateY(-1px);}}
   @keyframes av-bump{0%{transform:translateY(0)}40%{transform:translateY(-8px)}100%{transform:translateY(0)}}
-  /* 吹き出し: 白地に、紫苑の方を指すしっぽ。名前は左上の黒い名札 (タッグフォース風)。
+  /* 吹き出し: 盤面の名札と同じ、暗い板に角を落とした形。話している子の色を、その子の側の縁と名前に使う。
+     (前は白い丸い吹き出しで、画面のほかの部品と合っていなかった)
      文字は1字ずつ下から流れ込み、表情ごとに出方が変わる (data-mood) */
   /* 吹き出しは立ち絵の外 (横) に出す。立ち絵を頭の先まで入る枠に切り直してから、前の位置 (74%) だと顔に重なっていた */
-  .avatar .av-bubble{position:absolute;left:97%;top:20%;width:max-content;min-width:110px;max-width:min(260px,44vw);padding:14px 14px 10px;
-    background:#fbf7ee;color:#1a1424;border-radius:14px;box-shadow:0 8px 22px rgba(0,0,0,.45);
+  .avatar .av-bubble{position:absolute;left:97%;top:20%;width:max-content;min-width:110px;max-width:min(260px,44vw);padding:9px 16px 11px 15px;
+    --bub:var(--av-c,#b9a4ff);
+    background:linear-gradient(100deg,rgba(12,9,22,.95),rgba(26,17,46,.9));color:#f6f1ff;
+    clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px));
+    box-shadow:inset 3px 0 0 var(--bub),inset 0 0 0 1px color-mix(in srgb,var(--bub) 42%,transparent);
     opacity:0;transform:translateY(6px) scale(.9);transform-origin:0 70%;transition:opacity .14s;}
-  .avatar .av-bubble::after{content:"";position:absolute;left:-10px;top:58%;border:8px solid transparent;border-right:12px solid #fbf7ee;border-left:0;}
   .avatar .av-bubble.show{opacity:1;transform:none;animation:av-pop .34s cubic-bezier(.2,.9,.3,1.3);}
-  .avatar .av-name{position:absolute;left:10px;top:-11px;padding:4px 9px;background:#140c22;color:#d9ccff;
-    font:800 10.5px/1 var(--font-ui);letter-spacing:.14em;clip-path:var(--cut-s);}
-  .avatar .av-text{margin:0;font:800 14.5px/1.4 var(--font-ui);}
+  .avatar .av-name{display:block;margin:0 0 4px;color:var(--bub);
+    font:800 10px/1 var(--font-hud,var(--font-ui));letter-spacing:.2em;}
+  .avatar .av-text{margin:0;font:800 14.5px/1.4 var(--font-ui);text-shadow:0 1px 0 rgba(0,0,0,.6);}
   .avatar .av-text span{display:inline-block;white-space:pre;opacity:0;animation:av-char .22s ease-out forwards;animation-delay:calc(var(--i) * 32ms + 120ms);}
   @keyframes av-char{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
   @keyframes av-pop{0%{transform:translateY(8px) scale(.86)}70%{transform:translateY(-2px) scale(1.03)}100%{transform:none}}
   /* 強気: 桃色の縁で少し傾く */
-  .avatar .av-bubble[data-mood="fired"]{box-shadow:0 0 0 2px var(--pink),0 8px 22px rgba(0,0,0,.45);}
+  .avatar .av-bubble[data-mood="fired"]{box-shadow:inset 5px 0 0 var(--bub),inset 0 0 0 1px var(--bub),inset 0 0 22px color-mix(in srgb,var(--bub) 26%,transparent);}
   .avatar .av-bubble[data-mood="fired"].show{transform:rotate(-2deg);animation:av-pop-tilt .34s cubic-bezier(.2,.9,.3,1.3);}
   @keyframes av-pop-tilt{0%{transform:translateY(8px) scale(.86) rotate(-6deg)}100%{transform:rotate(-2deg)}}
   /* 悔しい: 小刻みに震える */
@@ -3291,9 +3294,12 @@
   .avatar.av-opp[data-facing="left"] img{transform:none;}
   .avatar.av-opp .av-body{-webkit-mask-image:linear-gradient(180deg,#000 78%,transparent);mask-image:linear-gradient(180deg,#000 78%,transparent);}
   .avatar.av-opp .av-bubble{left:auto;right:97%;top:30%;transform-origin:100% 70%;}
-  .avatar.av-opp .av-bubble::after{left:auto;right:-10px;border-right:0;border-left:12px solid #fbf7ee;}
+  .avatar.av-opp .av-bubble{padding:9px 15px 11px 16px;text-align:left;
+    clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px);
+    box-shadow:inset -3px 0 0 var(--bub),inset 0 0 0 1px color-mix(in srgb,var(--bub) 42%,transparent);}
+  .avatar.av-opp .av-bubble[data-mood="fired"]{box-shadow:inset -5px 0 0 var(--bub),inset 0 0 0 1px var(--bub),inset 0 0 22px color-mix(in srgb,var(--bub) 26%,transparent);}
   .avatar.av-opp .av-bubble[data-mood="fired"].show{transform:rotate(2deg);}
-  .avatar.av-opp .av-name{background:#2a0c1c;color:#ffc2dd;}
+  .avatar.av-opp .av-name{text-align:right;}
   /* タッグの味方: 自分のキャラの後ろ (少し右・上・小さく・暗く)。指す番の人が前に出る */
   .avatar.av-me{transition:transform .35s cubic-bezier(.2,.9,.3,1),filter .35s,z-index 0s;}
   .avatar.av-me.av-back{z-index:10;transform:translate(46%,-10%) scale(.82);filter:brightness(.55) saturate(.8);}
@@ -3401,7 +3407,8 @@
   .cm-listen:hover,.cm-listen:focus-visible{background:rgba(255,79,163,.3);outline:0;}
   .cm-avview{position:relative;width:100%;height:100%;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;}
   .cm-avview img{flex:1 1 auto;min-height:0;max-height:100%;max-width:100%;object-fit:contain;filter:drop-shadow(0 10px 18px rgba(0,0,0,.5));}
-  .cm-avview p{position:absolute;left:4%;bottom:10%;max-width:70%;margin:0;padding:10px 14px;background:#fbf7ee;color:#1a1424;border-radius:12px;font:800 14px/1.4 var(--font-ui);box-shadow:0 0 0 2px var(--av-c),0 8px 18px rgba(0,0,0,.4);}
+  .cm-avview p{position:absolute;left:4%;bottom:10%;max-width:70%;margin:0;padding:10px 16px 11px 15px;background:linear-gradient(100deg,rgba(12,9,22,.95),rgba(26,17,46,.9));color:#f6f1ff;font:800 14px/1.4 var(--font-ui);
+    clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px));box-shadow:inset 3px 0 0 var(--av-c),inset 0 0 0 1px color-mix(in srgb,var(--av-c) 42%,transparent);}
   .cm-avview .cm-fav{position:absolute;right:4%;top:6%;padding:4px 10px;font:900 11px/1 var(--font-hud,var(--font-ui));font-style:normal;letter-spacing:.1em;
     color:#fff;background:color-mix(in srgb,var(--pc) 55%,rgba(8,8,20,.8));border:1px solid var(--pc);clip-path:var(--cut-s);}
   .cm-avview p b{display:block;font:800 10px/1 var(--font-ui);letter-spacing:.14em;color:#7a5cc4;margin-bottom:4px;}
@@ -3796,8 +3803,8 @@
       "./js3d/arena.js": "./js3d/arena.js?v=ef66a1e5bb",
       "./js3d/audio.js": "./js3d/audio.js?v=55aff3d892",
       "./js3d/avatar-boss-lines.js": "./js3d/avatar-boss-lines.js?v=507ebedfac",
-      "./js3d/avatar-lines.js": "./js3d/avatar-lines.js?v=b74a09235f",
-      "./js3d/avatar.js": "./js3d/avatar.js?v=748f8aed0f",
+      "./js3d/avatar-lines.js": "./js3d/avatar-lines.js?v=75ef8afcac",
+      "./js3d/avatar.js": "./js3d/avatar.js?v=ff53c141db",
       "./js3d/backdrops.js": "./js3d/backdrops.js?v=90faf9612d",
       "./js3d/bgm.js": "./js3d/bgm.js?v=22b4286542",
       "./js3d/board.js": "./js3d/board.js?v=46b7e96300",
@@ -3894,8 +3901,8 @@
   <link rel="modulepreload" href="js3d/feel.js?v=fa59a5b9fb">
   <link rel="modulepreload" href="js3d/pickaid.js?v=7fecd8f779">
   <link rel="modulepreload" href="js3d/spectate.js?v=e7aaf6e4e9">
-  <link rel="modulepreload" href="js3d/avatar.js?v=748f8aed0f">
-  <link rel="modulepreload" href="js3d/avatar-lines.js?v=b74a09235f">
+  <link rel="modulepreload" href="js3d/avatar.js?v=ff53c141db">
+  <link rel="modulepreload" href="js3d/avatar-lines.js?v=75ef8afcac">
   <link rel="modulepreload" href="js3d/motion.js?v=36861b0081">
   <link rel="modulepreload" href="js3d/gacha.js?v=ce3d4f3faa">
   <link rel="modulepreload" href="js3d/chips.js?v=e67e280b76">
