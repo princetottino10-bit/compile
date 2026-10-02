@@ -3231,7 +3231,8 @@
   @keyframes av-bump{0%{transform:translateY(0)}40%{transform:translateY(-8px)}100%{transform:translateY(0)}}
   /* 吹き出し: 白地に、紫苑の方を指すしっぽ。名前は左上の黒い名札 (タッグフォース風)。
      文字は1字ずつ下から流れ込み、表情ごとに出方が変わる (data-mood) */
-  .avatar .av-bubble{position:absolute;left:74%;top:6%;width:max-content;min-width:110px;max-width:min(260px,44vw);padding:14px 14px 10px;
+  /* 吹き出しは立ち絵の外 (横) に出す。立ち絵を頭の先まで入る枠に切り直してから、前の位置 (74%) だと顔に重なっていた */
+  .avatar .av-bubble{position:absolute;left:97%;top:20%;width:max-content;min-width:110px;max-width:min(260px,44vw);padding:14px 14px 10px;
     background:#fbf7ee;color:#1a1424;border-radius:14px;box-shadow:0 8px 22px rgba(0,0,0,.45);
     opacity:0;transform:translateY(6px) scale(.9);transform-origin:0 70%;transition:opacity .14s;}
   .avatar .av-bubble::after{content:"";position:absolute;left:-10px;top:58%;border:8px solid transparent;border-right:12px solid #fbf7ee;border-left:0;}
@@ -3262,7 +3263,7 @@
   /* 縦持ちのスマホは盤面が狭いので小さく、名札の下へ */
   @media (orientation:portrait) and (max-width:860px){
     .avatar{height:22vh;bottom:calc(30vh + env(safe-area-inset-bottom));left:-6px;}
-    .avatar .av-bubble{left:70%;top:0;}
+    .avatar .av-bubble{left:94%;top:10%;}
   }
   /* 相手のキャラ: 右上、上の帯の下。向かい合うよう左右を反転し、吹き出しは左に */
   .avatar.av-opp{left:auto;right:calc(-10px + env(safe-area-inset-right));top:calc(46px + env(safe-area-inset-top));bottom:auto;height:min(26vh,210px);}
@@ -3271,7 +3272,7 @@
   .avatar.av-me[data-facing="left"] img{transform:scaleX(-1);}
   .avatar.av-opp[data-facing="left"] img{transform:none;}
   .avatar.av-opp .av-body{-webkit-mask-image:linear-gradient(180deg,#000 78%,transparent);mask-image:linear-gradient(180deg,#000 78%,transparent);}
-  .avatar.av-opp .av-bubble{left:auto;right:74%;top:34%;transform-origin:100% 70%;}
+  .avatar.av-opp .av-bubble{left:auto;right:97%;top:30%;transform-origin:100% 70%;}
   .avatar.av-opp .av-bubble::after{left:auto;right:-10px;border-right:0;border-left:12px solid #fbf7ee;}
   .avatar.av-opp .av-bubble[data-mood="fired"].show{transform:rotate(2deg);}
   .avatar.av-opp .av-name{background:#2a0c1c;color:#ffc2dd;}
