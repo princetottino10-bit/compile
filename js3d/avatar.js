@@ -35,11 +35,13 @@ export const AVATARS = {
   },
   asagi: {
     name: '瑠璃', color: '#3d7dff',   /* id は asagi のまま。もと水族館の案内 AI */
-    lines: null
+    lines: null,
+    voice: true, credit: '声: ElevenLabs'
   },
   yamabuki: {
     name: '杏', color: '#ff8a2a',   /* id は yamabuki のまま (持っている記録が id で残っているため)。名前は色の名前 (杏色)。もと警備・レスキューの AI */
-    lines: null
+    lines: null,
+    voice: true, credit: '声: ElevenLabs'
   }
 ,
   /* ---- ゲスト: VOICEVOX のキャラ (声つき)。立ち絵は坂本アヒルさんの素材、声は VOICEVOX で作って art/voice/<id>/ に入れる。

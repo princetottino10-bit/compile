@@ -20,6 +20,8 @@ MODEL = 'eleven_v4'
 VOICES = {                                  # 本人が聞き比べて選んだ声 (2026-10-01)
     'shion': '0Q1COOYQZTkpxoapcYv0',
     'nadeshiko': 'lHjPE0jHselU3M6Jxlz1',   # 茜 (akane_cand2)
+    'asagi': 'VWoW7TQ9CGvooYN38vY3',       # 瑠璃 (ruri_v2_cand1。可愛らしさを増やした版)
+    'yamabuki': 'oThBM0pod38rD3lEOCRj',    # 杏 (anzu_v2_cand1。少年っぽさを抑えた版)
 }
 # 表情 → 声の感情の指示。normal / blink は無し
 TAGS = {'sad': '[sad]', 'shy': '[shy]', 'fired': '[determined]', 'surprised': '[surprised]', 'happy': '[gently]', 'frustrated': '[frustrated]'}
