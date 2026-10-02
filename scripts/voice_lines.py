@@ -30,7 +30,7 @@ TAGS = {'sad': '[sad]', 'shy': '[shy]', 'fired': '[determined]', 'surprised': '[
 KIND_FACE = {'play': 'fired', 'compile': 'happy', 'compiled': 'frustrated', 'hurt': 'surprised', 'almost': 'fired', 'win': 'happy', 'lose': 'sad',
              'good': 'happy', 'down': 'fired', 'watch': 'surprised', 'chain': 'happy', 'control': 'happy', 'boost': 'fired',
              'handes': 'frustrated', 'wipe': 'fired', 'rearrange': 'fired', 'fav': 'happy', 'reach': 'fired', 'lead': 'happy', 'behind': 'frustrated',
-             'crushed': 'surprised', 'recompile': 'happy', 'sure': 'fired', 'doomed': 'sad'}
+             'crushed': 'surprised', 'recompile': 'happy', 'sure': 'fired', 'doomed': 'sad', 'ace': 'fired'}
 
 
 def fnv1a(text):
@@ -123,7 +123,7 @@ def main():
             name = '%s_%d.mp3' % (kind, i)
             path = os.path.join(base, name)
             if force or not os.path.exists(path) or manifest.get(name) != text:
-                jobs.append((path, spoken(text, KIND_FACE.get(kind, 'normal')), text))
+                jobs.append((path, spoken(text, KIND_FACE.get(kind, 'fired' if kind.startswith('own_') else 'normal')), text))
                 manifest[name] = text
 
     chars = sum(len(t) for _, t, _ in jobs)

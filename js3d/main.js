@@ -333,7 +333,7 @@ function avatarOf(side, st) {
 /* 大事な場面 (コンパイル・勝敗など)。話している途中でも捨てずに、言い終わったらすぐ言う */
 const AVATAR_MUST_KINDS = new Set(['compile', 'compiled', 'win', 'lose', 'almost', 'reach', 'hurt', 'crushed', 'hello', 'lesson', 'good', 'retry', 'turn', 'lead', 'sure', 'doomed']);
 /* チュートリアルの案内 (tu...) も捨てない */
-const AVATAR_MUST = { has: (kind) => AVATAR_MUST_KINDS.has(kind) || /^tu(\d|ask)/.test(kind) };
+const AVATAR_MUST = { has: (kind) => AVATAR_MUST_KINDS.has(kind) || /^tu(\d|ask)/.test(kind) || /^(ace$|own_)/.test(kind) };
 /* 話している途中に来たひとことは、1つだけ待たせて、言い終わったら言う (前は捨てていたので「喋ったり喋らなかったり」になっていた)。
    待たせるのは大事な場面を優先。ふつうのひとことは 5 秒たったら古いので捨てる */
 const avatarQueue = new Map();       // avatar -> { kind, vars, at }
@@ -424,6 +424,32 @@ function actorOf(step, from) {
 function effectCardOf(step, from) {
   const src = effectSource(step);
   return (src && from && from.cards && from.cards[src]) || null;
+}
+/* 担当のカードのうち、効果が実際に働いたときに言うひとこと (avatar-lines.js の OWN_LATE)。どれも表向きで働く効果なので、見えている情報だけで決まる。
+   FIRE 3: 1コマずつの再生の中で見る (a → b の1コマと、そのコマを動かした効果のカード)。終了の効果で、1枚捨ててカードを反転させた */
+function avatarOwnCheck(a, b, effectCard) {
+  if (!avatars || !a || !b || !effectCard || !a.cards || !b.cards || effectCard.def !== 'FIRE_4') return;
+  const flipped = Object.keys(b.cards).some(uid => a.cards[uid] && a.cards[uid].zone === 'field' && b.cards[uid].zone === 'field' && a.cards[uid].faceUp !== b.cards[uid].faceUp);
+  if (flipped) avatarSay(effectCard.owner, 'own_FIRE_3', null, b, 4000);
+}
+/* ICE 3・SPEED 0 → SPEED 3: 答えた選択 (req) と、その前後の盤面から見る。
+   カードが動く・着地するコマでは、解決中の効果がもう別のカードに移っているので、1コマずつの見方では拾えない (60 戦で 0 回だった)。
+   通信対戦 (roomStep) では言わない */
+function avatarOwnAnswered(a, b, req) {
+  if (!avatars || !a || !b || !req || !a.cards || !b.cards) return;
+  const side = req.player;
+  const lineOf = (st, uid) => st.lines.findIndex(l => l[0].includes(uid) || l[1].includes(uid));
+  const mine = (def) => Object.keys(b.cards).filter(uid => b.cards[uid].def === def && b.cards[uid].owner === side && b.cards[uid].zone === 'field' && b.cards[uid].faceUp);
+  /* ICE 3: 自分の効果で、覆われた下から別のラインへ移動した */
+  if (req.prompt === 'shift-dest' && req.context === 'ICE_3') {
+    const moved = mine('ICE_3').some(uid => { const was = lineOf(a, uid), now = lineOf(b, uid); return was >= 0 && now >= 0 && was !== now; });
+    if (moved) avatarSay(side, 'own_ICE_3', null, b);
+  }
+  /* SPEED 0 → SPEED 3: SPEED 0 の「カードを1枚プレイする」で、SPEED 3 を表で出した */
+  if (req.prompt === 'play-free' && req.context === 'SPEED_1') {
+    const landed = mine('SPEED_4').some(uid => !a.cards[uid] || a.cards[uid].zone !== 'field');
+    if (landed) avatarSay(side, 'own_SPEED_3', null, b);
+  }
 }
 /* ハンデス: 相手 (の効果) に手札を失わされた側 (捨て札・相手の手札・山札へ。場に出したものは数えない) が嫌がる。
    actor: その場面を動かした側 (actorOf) */
@@ -3410,6 +3436,7 @@ async function replayResolution(prev, res, action) {
         avatarTurn = from.turn;
         await board.applyTransition(from, step.st, first ? action : null, { speed: STEP_MOTION, source: effectSource(step) });
         avatarHandesCheck(from, step.st, avatarActor, effectCardOf(step, from));
+        avatarOwnCheck(from, step.st, effectCardOf(step, from));
         await syncPanels(step.st, true);
         from = step.st;
         first = false;
@@ -3430,6 +3457,7 @@ async function replayResolution(prev, res, action) {
     await board.applyTransition(from, step.st, first ? action : null,
       { speed: chainShown ? STEP_MOTION * 1.3 : STEP_MOTION, source: effectSource(step) });
     avatarHandesCheck(from, step.st, avatarActor, effectCardOf(step, from));
+    avatarOwnCheck(from, step.st, effectCardOf(step, from));
     /* プロトコル板 (並び・合計値) もこのコマに合わせる。並べ替えは板が動き終わるまで待つ */
     await syncPanels(step.st, true);
     /* この絵の時点のチェーン。1つ解決して短くなったら、解決したことが分かるよう少し待つ */
@@ -3521,6 +3549,8 @@ async function step(action) {
   updatePads();
   const prev = shown();
   const before = cur.state;
+  /* いま答えた選択 (効果が働いたときのひとことに使う。avatarOwnAnswered) */
+  const answered = action.type === 'choose' && cur.requests ? cur.requests.find(q => q.id === action.id) || null : null;
   /* 観戦: 表で出すカードは、出す前に左の詳細に出して読む間を取る (文章の長さに合わせて) */
   if (demoMode && action.type === 'play' && action.faceUp) {
     const pc = before.cards[action.card];
@@ -3576,6 +3606,7 @@ async function step(action) {
   cur = res;
   syncAssist();
   await replayResolution(prev, res, action);
+  avatarOwnAnswered(prev, shown(), answered);
   refreshHud();
   busy = false;
   syncAssist();

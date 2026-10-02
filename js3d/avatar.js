@@ -9,7 +9,7 @@
 import { settings } from './settings.js';
 import { isMuted, playClip } from './audio.js';
 import { duckBgm } from './bgm.js';
-import { LINES, FAVORITE } from './avatar-lines.js';
+import { LINES, FAVORITE, ACE_CARDS, OWN_LATE } from './avatar-lines.js';
 import { BOSS_LINES } from './avatar-boss-lines.js';
 
 export const FACES = ['normal', 'blink', 'happy', 'fired', 'frustrated', 'surprised'];
@@ -93,7 +93,7 @@ export const avatarIds = () => Object.keys(AVATARS).filter(id => !AVATARS[id].bo
 /* 立ち絵の版。画像には版の印が付かないので、同じ名前で差し替えたらここを上げる (古い絵がしばらく出るのを防ぐ)。3 = 2026-10-01 頭の先まで入る枠で切り直し (E:SDSwarmUIOutputvatar_v2export_v4headroom.py) */
 export const ART_VER = 3;
 /* 声の版。同じ名前で声を作り直したらここを上げる (古い声がしばらく鳴るのを防ぐ)。5 = 2026-10-02 読みの直し (止められ・上回・開いた・命) とセリフの差し替え */
-export const VOICE_VER = 7;
+export const VOICE_VER = 8;
 /* 声の大きさをキャラどうしでそろえる。測った大きさ (ラウドネス、LUFS。ffmpeg の ebur128 の中央値) から、VOICE_TARGET へ合わせる倍率を出す。
    VOICEVOX の4人は -25 前後、ElevenLabs の4人は -15〜-19 で、6〜10 dB も差があった (2026-10-02 に測った)。
    声を作り直したら測り直す: ffmpeg -i <声> -af ebur128=framelog=quiet -f null -  (最後の I: の値) */
@@ -186,9 +186,9 @@ export function mountAvatar(id, opts = {}) {
   const FACE_OF = { play: 'fired', compile: 'happy', compiled: 'frustrated', hurt: 'surprised', almost: 'fired', win: 'happy', lose: 'sad', hello: 'happy',
     lesson: 'normal', good: 'happy', retry: 'normal',
     turn: 'normal', down: 'fired', watch: 'surprised', chain: 'happy', refresh: 'normal', idle: 'normal', control: 'happy', boost: 'fired',
-    handes: 'frustrated', wipe: 'fired', rearrange: 'fired', fav: 'happy', reach: 'fired', lead: 'happy', behind: 'frustrated', crushed: 'surprised', recompile: 'happy', sure: 'fired', doomed: 'sad' };
+    handes: 'frustrated', wipe: 'fired', rearrange: 'fired', fav: 'happy', reach: 'fired', lead: 'happy', behind: 'frustrated', crushed: 'surprised', recompile: 'happy', sure: 'fired', doomed: 'sad', ace: 'fired' };
   /* チュートリアルの案内 (tu...): できたら笑顔、ほかはふつう */
-  const faceOf = (kind) => FACE_OF[kind] || (/^play_/.test(kind) ? 'fired' : null) || (/^tu\d+ok$/.test(kind) ? 'happy' : /^tu(\d|ask)/.test(kind) ? 'normal' : undefined);
+  const faceOf = (kind) => FACE_OF[kind] || (/^(play|own)_/.test(kind) ? 'fired' : null) || (/^tu\d+ok$/.test(kind) ? 'happy' : /^tu(\d|ask)/.test(kind) ? 'normal' : undefined);
   const lastPick = {};               // 種類ごとに、直前に言ったセリフの番号
   function react(kind, vars) {
     /* そのキャラに無い種類 (チュートリアルの案内など) は紫苑のセリフを借りる (声は無し) */
@@ -196,6 +196,13 @@ export function mountAvatar(id, opts = {}) {
     const lines = own || AVATARS.shion.lines[kind];
     if (!lines) return;
     const proto = vars && vars.card ? String(vars.card).split(' ')[0] : null;
+    /* 担当のカードの専用のひとこと (own_HATE_1 など) → エースのカード (ace) → 得意プロトコル (fav) の順に当てる。
+       効果が働いたときに言う担当のカード (OWN_LATE) は、出したときには言わない */
+    if (kind === 'play' && vars && vars.card) {
+      const ownKind = 'own_' + String(vars.card).replace(' ', '_');
+      if (def.lines[ownKind] && !OWN_LATE.has(ownKind)) return react(ownKind, vars);
+      if (ACE_CARDS.has(vars.card) && def.lines.ace) return react('ace', vars);
+    }
     /* 得意プロトコルのカードを表で出したら、専用のセリフ (fav) で */
     if (kind === 'play' && proto && def.fav === proto && def.lines.fav) return react('fav', vars);
     /* プロトコルごとの専用セリフ (play_FIRE など。使うプロトコルが決まっているボス) があれば、7割はそちらで */
