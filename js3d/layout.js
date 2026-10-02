@@ -206,7 +206,9 @@ export function pilePos(kind, side, me, depth) {
   /* 縦持ちは画面幅がレーンでほぼ埋まる。レーンの外側 (|x|>2.12) の細い余白に
      小さくして置き、積み札やプロトコル板に重ならないようにする */
   /* 手前は遠近で大きく広がって見えるので、奥よりさらに内側へ (画面の端で切れないように) */
-  const x = (kind === 'deck' ? 1 : -1) * (near ? 1 : -1) * (3.45 + ((near ? 2.3 : 2.52) - 3.45) * k);
+  /* 自分の捨て札 (手前の左) は、左下のキャラの立ち絵に隠れるので、広い画面では少し内側へ寄せる */
+  const wide = near && kind !== 'deck' ? 3.12 : 3.45;
+  const x = (kind === 'deck' ? 1 : -1) * (near ? 1 : -1) * (wide + ((near ? 2.3 : 2.52) - wide) * k);
   return {
     pos: [x, CARD.thickness / 2 + (depth || 0) * 0.013, z],
     rot: [0, near ? 0 : Math.PI, 0],

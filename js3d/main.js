@@ -47,7 +47,7 @@ import { confetti } from './gachafx.js';
 import { setCosmeticProtocols, profileOf, myLook } from './cosmetics-ui.js';
 import { setCosmeticsProtocols } from './cosmetics-mode.js';
 import { displayName } from './displayname.js';
-import { showPlates, setCompileProgress } from './plates.js';
+import { showPlates, setCompileProgress, setTurnPlate } from './plates.js';
 import { matUnlocked, MAT_W, MAT_D } from './playmat.js';
 import { initAccount, openAccount, takeAccountResume, accountState, onAccountChange } from './account.js';
 import { openCardList } from './cardlist-ov.js';
@@ -2287,6 +2287,7 @@ function bindInput() {
   if (handBtn) handBtn.onclick = () => {
     /* ボタンで隠したら、マウスを下へ動かしても勝手に出さない (出すボタンかカード選択で戻す) */
     handPinnedClosed = VIEW.handOpen;
+    handHold = false;
     setHandDrawer(!VIEW.handOpen);
   };
   syncHandDrawerForViewport();
@@ -2479,10 +2480,24 @@ function syncHandDrawerForViewport() {
   }
 }
 
+/* パソコン: 自分の番が来たら、手札を開いて始める (handHold)。相手の番になったら畳んで盤面を広く見せる。
+   前はいつも畳んだ状態で、開き方 (マウスを下端へ寄せる) がどこにも書いておらず、はじめての人は手札の効果を読めなかった。
+   開いたままにするのは、マウスが一度手札の所へ入るまで。入ったあとは、いつもの「離れたら畳む」に戻る。
+   HIDE HAND で自分で隠した人には出さない。観戦・自動で指す番には関係ない */
+let handHold = false;
+function handForTurn(turn) {
+  if (isCompactHandUI() || handPinnedClosed || demoMode || spectate || !board) return;
+  const mine = turn === ME && !partnerMove() && !(autoPlay && !roomMode);
+  handHold = mine;
+  if (mine && !VIEW.handOpen) setHandDrawer(true);
+  else if (!mine && VIEW.handOpen && selectedUid === null) setHandDrawer(false);
+}
+
 function updateDesktopHandDrawer(ev) {
   if (isCompactHandUI() || !stage || selectedUid !== null || handPinnedClosed) return;
   const r = stage.renderer.domElement.getBoundingClientRect();
   const fromBottom = r.bottom - ev.clientY;
+  if (handHold) { if (fromBottom <= 120) handHold = false; return; }
   if (!VIEW.handOpen && fromBottom <= 120) setHandDrawer(true);
   else if (VIEW.handOpen && fromBottom > 230) setHandDrawer(false);
 }
@@ -3139,6 +3154,8 @@ async function announceTurnFor(turn, atState) {
   UI.hideFxBanner();
   UI.hideChain();
   if (arena && arena.setTurnSide) arena.setTurnSide(turn);
+  setTurnPlate(turn === ME ? 'me' : 'opp');
+  handForTurn(turn);
   /* 自分の番が回ってきたときは、相手の番とは別の音で知らせる */
   sfx(turn === ME && !partnerMove() ? 'yourTurn' : 'turn');
   /* タッグ: だれの番かを名札とカットインで。自分の側でも味方が指す番は PARTNER TURN */

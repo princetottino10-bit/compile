@@ -75,6 +75,15 @@ export function setCompileProgress(me, opp) {
   }
 }
 
+/* いま番が来ている側の名札に「TURN」の印を出したままにする (side: 'me' / 'opp' / null で消す)。
+   番の知らせの帯は一瞬で消えるので、目を離して戻ると、待つのか動くのかが分からなかった */
+export function setTurnPlate(side) {
+  for (const [id, key] of [['meTag', 'me'], ['vsTag', 'opp']]) {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('turn', side === key);
+  }
+}
+
 export function hidePlates() {
   for (const id of ['vsTag', 'meTag']) {
     const el = document.getElementById(id);
