@@ -139,6 +139,25 @@ function wake() {
   if (actx && actx.state !== 'running' && actx.state !== 'closed') actx.resume().catch(() => {});
 }
 
+/* 裏に回って戻ったあと、音が出ないままになるのを直す (iPhone の Safari)。
+   戻った直後は「running (動いている)」と答えるのに実際は無音、ということがあり、resume() だけでは起きない。
+   なので、裏に回るときに自分で止めておき (stale = 止めたあと)、戻って最初に画面に触れたときに、止める → 起こす をやり直す。
+   触れたときでないと、iPhone は音を起こさせてくれない (2026-10-02) */
+let stale = false;
+function onHidden() {
+  if (!actx || actx.state === 'closed') return;
+  stale = true;
+  actx.suspend().catch(() => {});
+}
+/** 画面に触れたときに呼ぶ (bgm.js の retry から)。裏から戻ったあとの最初の1回だけ、音の土台を起こし直す */
+export function kickAudio() {
+  if (!actx || actx.state === 'closed' || !stale) return;
+  stale = false;
+  const up = () => actx.resume().catch(() => {});
+  if (actx.state === 'running') actx.suspend().then(up, up);
+  else up();
+}
+
 /* iPhone の Safari: ゲームの音を「環境音」として鳴らす (Audio Session API)。コントロールセンターの「再生中」に出ない
    (出ると、押したときに iPhone が別のアプリを開いていた)。ほかのアプリの音楽とも重ねて鳴る。
    そのかわり、消音 (マナー) モードではゲームの音も鳴らない (ふつうのゲームアプリと同じ) */
@@ -162,7 +181,9 @@ export function initAudio() {
     noiseBuf = makeNoise(actx);
     loadSamples();
     /* 画面に戻ってきたとき・中断が終わったときにも起こす */
-    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') wake(); });
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') wake(); else onHidden(); });
+    window.addEventListener('pagehide', onHidden);
+    window.addEventListener('pageshow', () => wake());
     actx.onstatechange = () => { if (document.visibilityState === 'visible') wake(); };
   } catch (e) {
     actx = null; master = null; sfxBus = null; reverbIn = null;

@@ -6,7 +6,7 @@
  *   ブラウザの自動再生の制限で鳴らせなかったときは、次に画面に触れたときに鳴らし直す
  *   クレジット (必須): 煉獄庭園 (設定の画面と COLLECTION の BGM に出す)
  * ========================================================================= */
-import { routeMedia, isMuted, initAudio, onMuteChange } from './audio.js';
+import { routeMedia, isMuted, initAudio, onMuteChange, kickAudio } from './audio.js';
 import { settings, onSettings } from './settings.js';
 import { BGM_RELEASED } from './rewards.js';
 
@@ -144,7 +144,8 @@ export function refreshBgm() {
 
 /* 自動再生の制限: 画面に触れたときに鳴らし直す。iPhone の Safari は指を置いた瞬間 (pointerdown) では再生を許さず、
    指を離したとき (touchend)・タップ (click) だけ許すので、どれでも試す (ページを開き直して始まる対戦で鳴らなかった) */
-const retry = () => { initAudio(); prime(); if (want && el && el.paused && level() > 0) el.play().catch(() => {}); };
+/* kickAudio: 裏から戻ったあとの最初の1回、音の土台を起こし直す (audio.js) */
+const retry = () => { initAudio(); kickAudio(); prime(); if (want && el && el.paused && level() > 0) el.play().catch(() => {}); };
 /* iPhone: 画面に触れた瞬間に一度も鳴らしていない <audio> は、あとからプログラムで鳴らせない。
    対戦は「戦う」を押してから読み込みを待って始まるので、そのときにはもう触れた瞬間ではなく、1戦目の BGM が鳴らなかった。
    最初に触れたときに、無音で一瞬だけ鳴らして止めておく (以後は対戦の始まりにすぐ鳴らせる) */
