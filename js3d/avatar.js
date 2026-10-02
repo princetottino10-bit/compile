@@ -196,16 +196,8 @@ export function mountAvatar(id, opts = {}) {
       if (def.voice && own && voiceOn && (Array.isArray(entry) || !String(entry).includes('{'))) playVoice('art/voice/' + id + '/' + kind + '_' + i + '.mp3?v=' + VOICE_VER);
       say(text, faceOf(kind), ms);
     };
-    /* AI でしゃべらせる (opts.talk): 表情だけ先に変え、答えが来たら言う (声は無し)。来なければいつものセリフ。
-       待っている間に次のひとことが来たら、古い答えは捨てる */
-    const ask = opts.talk && opts.talk(def, kind, vars);
-    if (!ask) { talkSeq++; canned(); return; }
-    const my = ++talkSeq;
-    setFace(faceOf(kind), 4000);
-    ask.then((line) => { if (my === talkSeq && el.isConnected) (line ? say(line, faceOf(kind), Math.max(ms, 1200 + line.length * 90)) : canned()); },
-      () => { if (my === talkSeq && el.isConnected) canned(); });
+    canned();
   }
-  let talkSeq = 0;
   /* 声: 設定の「キャラの声の音量」で鳴らす。消音中は鳴らさない。前の声は止める */
   let voiceStop = null, voiceSeq = 0;
   /* 声を出すか (相手のキャラは設定の「相手のキャラの声」で消せる) */

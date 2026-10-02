@@ -12,7 +12,6 @@ import { createPickAid } from './pickaid.js';
 import { openSpectate } from './spectate.js';
 import { mountAvatar, AVATARS, avatarIds } from './avatar.js';
 import { FAVORITE } from './avatar-lines.js';
-import { aiLine, talkReady, setTalkGate } from './aitalk.js';
 import { countUp, dealIn } from './motion.js';
 import { loadGacha, chipsOf, giveChips } from './gacha.js';
 import { earnedChips } from './chips.js';
@@ -285,17 +284,6 @@ function oppAvatarIds(taken) {
   const a = pool[0] || 'nadeshiko';
   return [a, pool[1] || a];
 }
-/* AI でしゃべらせる (設定で自分の API キーを入れた人だけ)。渡すのはだれでも見えることだけ */
-function avatarTalk(side) {
-  return (def, kind, vars) => {
-    if (!talkReady()) return null;
-    const st = cur && cur.state;
-    const done = (s) => (st && st.players[s] ? st.players[s].protocols.filter(p => p.compiled).length : 0);
-    const other = avatars && (side === ME ? avatars.opp : avatars.me);
-    return aiLine(def, kind, vars, { turns: st ? (st.turns | 0) + 1 : 0, mine: done(side), theirs: done(1 - side),
-      foe: other && AVATARS[other.id] ? AVATARS[other.id].name : '' });
-  };
-}
 function syncAvatar() {
   /* 観戦 (demoMode) は、観戦の画面でキャラを選んだときだけ */
   /* チュートリアルは、キャラの公開前でもずんだもんが案内する */
@@ -322,9 +310,9 @@ function syncAvatar() {
     if (plan && plan !== me && plan !== mate) oppIds = [plan, oppIds[0]];
   }
   avatars = {
-    me: me ? mountAvatar(me, { side: 'me', talk: avatarTalk(ME) }) : null,
-    mate: mate ? mountAvatar(mate, { side: 'me', back: true, talk: avatarTalk(ME) }) : null,
-    opp: tutorial || !oppIds[0] ? null : mountAvatar(oppIds[0], { side: 'opp', voice: settings().oppVoice !== false, talk: avatarTalk(AI) }),
+    me: me ? mountAvatar(me, { side: 'me' }) : null,
+    mate: mate ? mountAvatar(mate, { side: 'me', back: true }) : null,
+    opp: tutorial || !oppIds[0] ? null : mountAvatar(oppIds[0], { side: 'opp', voice: settings().oppVoice !== false }),
     oppIds
   };
   if (avatars.opp) setTimeout(() => { if (avatars && avatars.opp) avatars.opp.react('hello'); }, 900);
@@ -462,12 +450,12 @@ function avatarTagTurn(st) {
     avatars.mate.setBack(!partner);
   }
   const want = avatars.oppIds[st.tag.pilot[AI]];
-  if (want && avatars.opp && avatars.opp.id !== want) { avatars.opp.destroy(); avatars.opp = mountAvatar(want, { side: 'opp', voice: settings().oppVoice !== false, talk: avatarTalk(AI) }); }
+  if (want && avatars.opp && avatars.opp.id !== want) { avatars.opp.destroy(); avatars.opp = mountAvatar(want, { side: 'opp', voice: settings().oppVoice !== false }); }
 }
 
 /* 設定の画面に、対戦のキャラの項目 (相手の声・クレジット) を出すのは、キャラが見える人だけ */
-/* AI でしゃべらせるは、いまは管理者だけ */
-setTalkGate(() => !!accountState().admin);
+/* 「AI でしゃべらせる」はなくした (2026-10-02。声が付かず、使わないため)。設定に入れた API キーが端末に残らないよう消す */
+try { localStorage.removeItem('compileAiTalk'); } catch (e) { /* private mode */ }
 setAvatarOptionsGate(() => AVATAR_RELEASED || !!accountState().admin, () => (COSMETICS.avatar || []).filter(([k]) => AVATARS[k]));
 
 /* 観戦 (spectate.js の結果)。{ a, b, level, bet } / null */

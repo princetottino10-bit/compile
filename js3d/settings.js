@@ -3,7 +3,6 @@
  *   ブラウザに保存し、次に開いたときも同じにする。
  *   タイトルの OPTION と、対戦中の上のバーの ⚙ から同じ画面を開く。
  * ========================================================================= */
-import { talkSettingsHtml, bindTalkSettings } from './aitalk.js';
 import { BGM_RELEASED } from './rewards.js';
 import { openDiscord, copyReportInfo } from './support.js';
 const BGM_SHOWN = true;                 // 対戦の BGM (bgm.js の BATTLE_BGM_ON) があるので音量は出す
@@ -165,8 +164,7 @@ export function openSettings(extra) {
           '<select class="lv-pick" id="stOppAvatar">' + [['random', 'ランダム']].concat(avatarList()).map(([id, name]) =>
             '<option value="' + id + '"' + ((s.oppAvatar || 'random') === id ? ' selected' : '') + '>' + name + '</option>').join('') + '</select></label>' +
         '<label class="st-row st-check"><span>相手のキャラの声<small>相手のキャラ (ずんだもんたち) がしゃべるときの声。オフにすると吹き出しだけ出ます</small></span>' +
-          '<input type="checkbox" id="stOppVoice"' + (s.oppVoice !== false ? ' checked' : '') + '></label>' +
-        talkSettingsHtml()
+          '<input type="checkbox" id="stOppVoice"' + (s.oppVoice !== false ? ' checked' : '') + '></label>'
       : '') +
     '<h4 class="st-group">不具合・要望</h4>' +
     '<div class="st-row st-act"><span>Discord<small>不具合や要望は Discord で受け付けています。不具合のときは、下のボタンで情報をコピーして貼ってください</small></span>' +
@@ -207,10 +205,6 @@ export function openSettings(extra) {
   if (oppAv) oppAv.onchange = (ev) => setSetting('oppAvatar', ev.target.value);
   const oppVoice = el.querySelector('#stOppVoice');
   if (oppVoice) oppVoice.onchange = (ev) => setSetting('oppVoice', ev.target.checked);
-  /* AI でしゃべらせる: 描き直すときは、いまの画面の位置を保つ */
-  bindTalkSettings(el, () => { const body = el.querySelector('.st-body'); const y = body ? body.scrollTop : 0; openSettings(extra);
-    const again = el.querySelector('.st-body'); if (again) again.scrollTop = y; },
-    async () => { const m = await import('./avatar.js'); return m.AVATARS[current.avatar] || m.AVATARS.shion; });
   el.querySelectorAll('[data-qlevel]').forEach(b => {
     b.onclick = () => {
       setSetting('quickLevel', +b.dataset.qlevel);
