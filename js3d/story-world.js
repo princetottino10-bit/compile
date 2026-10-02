@@ -250,7 +250,7 @@ export function openWorld(protocols, opts = {}) {
   async function runScene(id) {
     busy = true;
     keys.clear(); path = null;
-    await playScene(nodeById(id).lines);
+    await playScene(nodeById(id).lines, { title: nodeById(id).title });
     state = clearNode(state, id);
     saveStory(state);
     syncActors();

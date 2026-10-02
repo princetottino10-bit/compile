@@ -93,7 +93,7 @@ export const avatarIds = () => Object.keys(AVATARS).filter(id => !AVATARS[id].bo
 /* 立ち絵の版。画像には版の印が付かないので、同じ名前で差し替えたらここを上げる (古い絵がしばらく出るのを防ぐ)。3 = 2026-10-01 頭の先まで入る枠で切り直し (E:SDSwarmUIOutputvatar_v2export_v4headroom.py) */
 export const ART_VER = 3;
 /* 声の版。同じ名前で声を作り直したらここを上げる (古い声がしばらく鳴るのを防ぐ)。5 = 2026-10-02 読みの直し (止められ・上回・開いた・命) とセリフの差し替え */
-export const VOICE_VER = 6;
+export const VOICE_VER = 7;
 /* 声の大きさをキャラどうしでそろえる。測った大きさ (ラウドネス、LUFS。ffmpeg の ebur128 の中央値) から、VOICE_TARGET へ合わせる倍率を出す。
    VOICEVOX の4人は -25 前後、ElevenLabs の4人は -15〜-19 で、6〜10 dB も差があった (2026-10-02 に測った)。
    声を作り直したら測り直す: ffmpeg -i <声> -af ebur128=framelog=quiet -f null -  (最後の I: の値) */

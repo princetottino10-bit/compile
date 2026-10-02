@@ -15,6 +15,7 @@ import { CHAPTERS, SPEAKERS, loadStory, saveStory, canEnter, isCleared, currentN
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const LEVELS = ['かんたん', 'ふつう', 'つよい'];
 const TYPE_MS = 26;       // 1文字の間
+const TYPE_MS_TERMINAL = 18;   // 端末の文字は、機械が打つ速さで
 
 /* セリフの印 (声のファイル名)。scripts/voice_lines.py の fnv1a と同じ: UTF-8 の FNV-1a 32bit を 8桁の16進で */
 export function lineKey(text) {
@@ -60,7 +61,11 @@ function overlay(id, label) {
 /* ---------- 会話 ---------- */
 export function playScene(lines, opts = {}) {
   const el = overlay('storyScene', '会話');
+  /* opts.title: 場面の題。上に出したままにする (字間が縮まって決まる)。
+     line.alert: その行のあいだだけ、警告の帯を出す (見つかった・止められた場面) */
   el.innerHTML = '<img class="ss-still" alt="">' + '<div class="ss-veil"></div><img class="ss-portrait" alt="">' +
+    (opts.title ? '<div class="ss-title"><b>' + esc(opts.title) + '</b></div>' : '') +
+    '<div class="ss-alert" aria-hidden="true"><b></b></div>' +
     '<div class="ss-box"><div class="ss-name"></div><p class="ss-text"></p><span class="ss-next" aria-hidden="true">▼</span></div>' +
     '<button type="button" class="ss-skip">SKIP ▸▸</button>';
   el.classList.add('show');
@@ -70,6 +75,7 @@ export function playScene(lines, opts = {}) {
   const nameEl = el.querySelector('.ss-name');
   const textEl = el.querySelector('.ss-text');
   const box = el.querySelector('.ss-box');
+  const alertEl = el.querySelector('.ss-alert');
   let i = -1, typing = null, full = '';
   const voice = makeVoice();
 
@@ -89,6 +95,13 @@ export function playScene(lines, opts = {}) {
       box.classList.toggle('terminal', terminal);
       box.style.setProperty('--sc', sp.color);
       nameEl.textContent = sp.name;
+      alertEl.classList.remove('on');
+      if (line.alert) {
+        alertEl.style.setProperty('--sc', sp.color);
+        alertEl.firstChild.textContent = line.alert;
+        void alertEl.offsetWidth;            // 続けて出すときも、帯の動きを最初からやり直す
+        alertEl.classList.add('on');
+      }
       /* スチル (一枚絵): 出ているあいだは立ち絵を出さない (絵の中にその子がいる) */
       if (line.still !== undefined) {
         stillOn = !!line.still;
@@ -103,19 +116,21 @@ export function playScene(lines, opts = {}) {
       full = line.text;
       voice.play(sp.voice, line.text);
       textEl.textContent = '';
+      box.classList.add('typing');           // 端末の文字は、打っているあいだ印が点いたまま (打ち終えると点滅)
       let n = 0;
       clearInterval(typing);
       typing = setInterval(() => {
         n++;
         textEl.textContent = full.slice(0, n);
-        if (n >= full.length) { clearInterval(typing); typing = null; }
-      }, TYPE_MS);
+        if (n >= full.length) { clearInterval(typing); typing = null; box.classList.remove('typing'); }
+      }, terminal ? TYPE_MS_TERMINAL : TYPE_MS);
     };
     const advance = () => {
       if (typing) {                          // 途中なら、まず全部出す
         clearInterval(typing);
         typing = null;
         textEl.textContent = full;
+        box.classList.remove('typing');
         return;
       }
       i++;
@@ -194,7 +209,7 @@ export function openStory(protocols) {
       const n = nodeById(id);
       if (!n || !canEnter(state, id)) return;
       if (n.kind === 'scene') {
-        await playScene(n.lines);
+        await playScene(n.lines, { title: n.title });
         state = clearNode(state, id);
         saveStory(state);
         render();

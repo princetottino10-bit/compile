@@ -79,6 +79,7 @@ def spoken(text, face):
     for k, v in READINGS.items():
         text = text.replace(k, v)
     text = re.sub(r'命(?!令)', 'いのち', text)      # 「命」だけ (「命令」はそのまま)
+    text = re.sub(r'\s*[:：]\s*', '、', text)        # コロンは「コロン」と読んでしまうので、間 (ま) に置き換える (「隔離: 試験室」)
     tag = TAGS.get(face, '')
     return (tag + ' ' + text) if tag else text
 

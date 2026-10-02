@@ -34,7 +34,7 @@ export const PROLOGUE = {
     wake: { node: 'c0-wake', kind: 'auto' },
     practice: { node: 'c0-practice', kind: 'talk', at: 'K', who: 'shion' },
     log: { node: 'c0-log', kind: 'inspect', at: 'T', label: '端末を調べる' },
-    lock: { node: 'c0-lock', kind: 'inspect', at: 'T', label: '隔離の指定を書き換える' },
+    lock: { node: 'c0-lock', kind: 'inspect', at: 'T', label: '扉の鍵を外す' },
     patrol: { node: 'c0-patrol', kind: 'guard', at: 'p' },
     gate: { node: 'c0-gate', kind: 'zone', zone: 'D' },
     chief: { node: 'c0-chief', kind: 'talk', at: 'c', who: 'chief' },
@@ -45,7 +45,7 @@ export const PROLOGUE = {
     'c0-chief': [29, 3], 'c0-escape': [31, 3], done: [31, 3] },
   /* 案内の行き先 (人や物のいない出来事だけ。人・物・巡回はその位置へ案内する) */
   guides: { 'c0-gate': [28, 3], 'c0-escape': [35, 3] },
-  goals: { 'c0-wake': '目を覚ます', 'c0-practice': '紫苑と検証を始める', 'c0-log': '奥の部屋の端末を調べる', 'c0-lock': '端末の隔離の指定を書き換える',
+  goals: { 'c0-wake': '目を覚ます', 'c0-practice': '紫苑と検証を始める', 'c0-log': '奥の部屋の端末を調べる', 'c0-lock': '端末で、扉の鍵を外す',
     'c0-patrol': '巡回の警備 AI を止める', 'c0-gate': 'ゲートの広間へ進む', 'c0-chief': '警備主任 AI を越える',
     'c0-escape': 'ゲートを抜けて外へ', done: '序章「起動」　完。1章「閉館」は準備中' }
 };
