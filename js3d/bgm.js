@@ -44,8 +44,18 @@ export function trackGain(key) {
   const l = LOUDNESS[key];
   return l === undefined ? 1 : Math.min(1.6, Math.pow(10, (LOUD_TARGET - l) / 20));
 }
-/** ふつうの対戦の曲を1つ選ぶ */
-export const pickNormalBgm = () => NORMAL_BGMS[Math.floor(Math.random() * NORMAL_BGMS.length)];
+/** ふつうの対戦の曲を1つ選ぶ。前の対戦と同じ曲は選ばない (ただのランダムだと、4曲でも同じ曲が続くことがよくある)。
+    前の曲は端末に覚えておく (対戦はページを開き直して始まることがあるため) */
+const LAST_KEY = 'compileLastBgm';
+export function pickNormalBgm(rnd = Math.random) {
+  let last = null;
+  try { last = localStorage.getItem(LAST_KEY); } catch (e) { /* private mode */ }
+  const pool = NORMAL_BGMS.filter(k => k !== last);
+  const from = pool.length ? pool : NORMAL_BGMS;
+  const pick = from[Math.floor(rnd() * from.length)];
+  try { localStorage.setItem(LAST_KEY, pick); } catch (e) { /* private mode */ }
+  return pick;
+}
 
 let el = null;
 let route = null;
