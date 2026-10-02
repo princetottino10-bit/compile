@@ -220,6 +220,20 @@ export function runTitle(protocols, opts) {
           const pop = root.querySelector('.tt-morepop');
           pop.hidden = !pop.hidden;
           button.setAttribute('aria-expanded', String(!pop.hidden));
+          /* 開いている間は、外を押す・Esc でも閉じる (前は MORE をもう一度押すしかなかった) */
+          if (!pop.hidden) {
+            const close = () => {
+              pop.hidden = true;
+              button.setAttribute('aria-expanded', 'false');
+              document.removeEventListener('pointerdown', onOutside, true);
+              document.removeEventListener('keydown', onEsc, true);
+            };
+            const onOutside = (ev) => { if (!pop.contains(ev.target) && !button.contains(ev.target)) close(); };
+            const onEsc = (ev) => { if (ev.key === 'Escape') { close(); button.focus(); } };
+            button._closeMore = close;
+            document.addEventListener('pointerdown', onOutside, true);
+            document.addEventListener('keydown', onEsc, true);
+          } else if (button._closeMore) button._closeMore();
         }
         else if (button.dataset.mode === 'cosmetics') openCosmetics({ onClose: () => { const d = root.querySelector('.tt-cos .tt-newdot'); if (d && !hasNewCosmetics()) d.remove(); } });
         else if (button.dataset.mode === 'profile') openProfile(protocols);

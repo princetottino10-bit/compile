@@ -2716,7 +2716,7 @@ function placePileButtons(rect) {
       const half = el.offsetWidth / 2;
       el.style.left = Math.round(Math.min(window.innerWidth - half - 6, Math.max(half + 6, x))) + 'px';
       el.style.top = Math.round(y) + 'px';
-      y += el.offsetHeight + 6;
+      y += el.offsetHeight + 10;        // 指で押し分けられる間 (前は 6px)
     }
   }
 }

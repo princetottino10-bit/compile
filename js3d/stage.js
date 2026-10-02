@@ -341,6 +341,7 @@ export function createStage(container) {
     camera.aspect = aspect;
     const prevK = VIEW.k;
     VIEW.k = Math.max(0, Math.min(1, (1.45 - aspect) / (1.45 - 0.6)));
+    VIEW.aspect = aspect;                  // 縦持ちの手札の幅を決めるのに使う (layout.js の handSlot)
     const prevShort = VIEW.short;
     VIEW.short = h <= 500 && aspect > 1.2;
     camera.fov = CAMERA.fov + 14 * VIEW.k;

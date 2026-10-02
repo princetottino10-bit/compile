@@ -58,6 +58,13 @@
     width:42px;height:42px;border-radius:50%;align-items:center;justify-content:center;cursor:pointer;
     border:1px solid rgba(255,255,255,.22);background:rgba(8,11,22,.72);color:#e9eef8;backdrop-filter:blur(6px);}
   body.pregame #muteAll{display:flex;}
+  /* 縦持ちのスマホ: 音のボタン (左下に固定) が一覧の最後の項目に重なって読めなかった。
+     下まで送れば項目がボタンの上へ出るよう、一覧の下に余白を足す。物語の会話のあいだは、セリフの枠の上へ逃がす */
+  @media (max-width:860px) and (orientation:portrait){
+    #oppOv,#watchOv,#storyMap{padding-bottom:calc(84px + env(safe-area-inset-bottom));}
+    .ts-card,.rn-card,.cm-list{padding-bottom:calc(72px + env(safe-area-inset-bottom));}
+    body:has(#storyScene.show) #muteAll{bottom:calc(152px + env(safe-area-inset-bottom));}
+  }
   #muteAll.off{color:#ff4fa3;border-color:rgba(255,79,163,.6);}
   #muteAll:hover,#muteAll:focus-visible{border-color:#63f3ff;outline:0;}
   /* 管理者の自動プレイ (AUTO)。動いている間は色を変えて、止め忘れないように */
@@ -104,12 +111,17 @@
   #assist .btn{width:auto;min-height:32px;padding:0 12px;font-size:10px;}
   #assist .btn:disabled{opacity:.4;cursor:default;}
   body.pregame #assist,body.demo #assist{display:none!important;}
+  /* 縦持ちのスマホ: 小さかったボタンを指で押せる高さに (チュートリアルの「やり直す」・戦績のタブ) */
+  @media (orientation:portrait) and (max-width:860px){
+    #tutorialCoach .tc-retry{min-height:40px;padding:0 14px!important;font-size:12px!important;}
+    .sr-tabs button{padding:13px 0;}
+  }
   /* 縦持ち: 自分の山の下に置く (位置は main.js の placePileButtons)。盤面が透けるよう半透明に */
   body.pile-buttons #assist,body.pile-buttons #btnRefresh,body.pile-buttons #dock{
     right:auto!important;bottom:auto!important;transform:translateX(-50%);transition:none;}
   body.pile-buttons #assist{flex-direction:column;align-items:center;gap:6px;}
   body.pile-buttons #assist .btn,body.pile-buttons #btnRefresh,body.pile-buttons #dock .btn{
-    min-height:30px!important;padding:0 11px!important;font-size:9px!important;
+    min-height:44px!important;padding:0 14px!important;font-size:11px!important;    /* 指で押せる高さ (前は 30px) */
     background:rgba(8,12,22,.5);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);}
   /* 相手の番のまとめ: 画面の上の真ん中に短く出す (触れると消える) */
   #oppSummary{position:fixed;left:50%;top:64px;z-index:28;transform:translate(-50%,-6px);opacity:0;pointer-events:none;
@@ -859,9 +871,15 @@
   #endBar .end-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
   #endFloat{position:fixed;right:14px;bottom:64px;z-index:45;display:none;}
   #endFloat.show{display:block;}
+  /* 決着のあと (決着の窓・盤面の見直し) は、もう使わない手札・リフレッシュ・補助のボタンを出さない。
+     前は残っていて、名札の丸を隠したり、盤面のカードの上に浮いたりしていた */
+  body:has(#endBar.show) #dock,body:has(#endBar.show) #btnRefresh,body:has(#endBar.show) #assist,
+  body:has(#endFloat.show) #dock,body:has(#endFloat.show) #btnRefresh,body:has(#endFloat.show) #assist{display:none!important;}
   @media (max-width:860px) and (orientation:portrait){
     #endBar{left:10px;right:10px;transform:none;width:auto;bottom:14vh;}
     #endBar.show{transform:none;}
+    #endBar .end-btns{width:100%;}
+    #endBar .end-btns .arr-btn{flex:1 1 30%;min-height:48px;padding:0 10px;}      /* 指で押せる高さに (前は約 34px) */
     #endFloat{right:10px;bottom:70px;}
   }
 
@@ -1524,7 +1542,10 @@
     animation:ssBlink 1s steps(2) infinite;}
   .ss-box.terminal.typing .ss-text::after{animation:none;}
   /* 場面の題: 上に出したまま。字間が広い所から縮まって決まり、上下の線が中央から伸びる */
-  .ss-title{position:absolute;top:calc(18px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);padding:9px 6px 8px;pointer-events:none;white-space:nowrap;}
+  .ss-title{position:absolute;top:calc(18px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);padding:9px 16px 8px;pointer-events:none;white-space:nowrap;
+    background:rgba(5,7,15,.74);}                 /* 一枚絵の明るい所 (天井の明かりなど) の上でも読めるように、暗い下地を敷く */
+  /* 会話のあいだは、歩ける世界の章の札 (左上) を隠す。同じ場所に SKIP が出て、字が重なっていた */
+  body:has(#storyScene.show) .sw-hud{visibility:hidden;}
   .ss-title b{display:block;padding-left:.42em;font:800 15px/1 var(--font-hud),system-ui;letter-spacing:.42em;color:#fff;text-shadow:0 0 14px rgba(160,123,255,.7);
     animation:ssTitleIn .9s cubic-bezier(.16,1,.3,1) both;}
   .ss-title::before,.ss-title::after{content:"";position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(185,164,255,.8),transparent);
@@ -2287,7 +2308,11 @@
     #preview.show{transform:none;}
     #brand{display:none;}
     #logDock{top:calc(100px + env(safe-area-inset-top));bottom:66px;width:min(260px,70vw);}
-    #btnLog{top:48%;}   /* 縦持ちは親指の届く高さに (上だと触りづらかった)。自分の山の枚数表示にはかけない */
+    #btnLog{top:48%;width:34px;height:88px;font-size:11px;}   /* 縦持ちは親指の届く高さに (上だと触りづらかった)。自分の山の枚数表示にはかけない。幅は指で押せるように (前は 22px) */
+    /* 右上の CARDS・設定・音: 指で押せる高さに (前は 26px) */
+    #topRight{gap:8px;}
+    #topRight .btn{min-height:40px;padding:0 13px;font-size:11px;}
+    #topRight #btnMute{padding:0 12px;font-size:14px;}
     #btnInfo{display:none;}
     /* 下部の操作は指の届く高さに。手札を隠すは左、リフレッシュは右 */
     #dock{left:10px;bottom:12px;}
@@ -2397,6 +2422,11 @@
   @media (min-width:1100px) and (min-height:620px){
     #fxBanner{left:min(var(--dlg-x, 100vw), calc(100vw - min(300px,34vw) - 8px));right:auto;top:var(--dlg-y, 44px);}
   }
+  /* 相手のキャラ (右上。上 46px・高さ min(26vh,210px)) がいるときは、その下に出す。
+     前はキャラの顔の上に乗り、吹き出しも帯の下にもぐっていた */
+  @media (min-width:861px){
+    body:has(.avatar.av-opp) #fxBanner{top:max(var(--dlg-y, 44px), calc(58px + env(safe-area-inset-top) + min(26vh,210px)));}
+  }
   @media (orientation:landscape) and (max-height:500px){
     /* 一覧の画面が出ている間は左の詳細をしまう (画面が狭く、一覧の左端を覆っていた。一覧にも元のカードが出ている) */
     body:has(#modal.show) #preview,body:has(#modal.show) #btnInfo{display:none;}
@@ -2490,7 +2520,7 @@
     clip-path:var(--cut-s);transition:border-color .15s,color .15s,background .15s;}
   #title.menu .tt-report{display:block;}
   #title .tt-report:hover,#title .tt-report:focus-visible{border-color:var(--pink);color:#fff;background:rgba(255,79,163,.16);outline:0;}
-  @media (max-width:860px) and (orientation:portrait){ #title .tt-report{bottom:74px;} }
+  @media (max-width:860px) and (orientation:portrait){ #title .tt-report{bottom:calc(52px + env(safe-area-inset-bottom));background:rgba(10,8,20,.92);} }
   #reportOv .rp-card{width:min(520px,94vw);height:auto;min-height:0;max-height:none;}
   .rp-body{display:flex;flex-direction:column;gap:6px;padding:4px 2px 2px;}
   .rp-lead{margin:0 0 6px;font:500 12.5px/1.7 system-ui;color:#dce6f5;}
@@ -2514,6 +2544,8 @@
   @media (max-width:760px) and (orientation:portrait){
     .tt-hero{inset:0;width:auto;opacity:.28;gap:2vw;padding:12vh 4vw;}
     #title .tt-center{left:20px;right:20px;width:auto;}
+    /* 背景に敷いた絵の名前 (DIVERSITY など) がボタンの間に顔を出し、下の文字は案内の帯に隠れていた */
+    .th-panel figcaption,#title .tt-foot,#title.menu .tt-marquee{display:none;}
   }
   /* 横持ちのスマホ: 全体を詰める */
   @media (orientation:landscape) and (max-height:500px){
@@ -3004,9 +3036,18 @@
   @media (prefers-reduced-motion:reduce){ .ga-reveal,.ga-rc,.ga-rc.open,.ga-rc.rL .ga-front{animation:none;} .ga-flip{transition:none;} }
   /* タイトルの MORE (押すと出る) */
   #title .tt-more{position:relative;}
-  #title .tt-morepop{position:absolute;left:0;bottom:calc(100% + 8px);display:flex;flex-direction:column;gap:4px;padding:8px;min-width:220px;z-index:3;
-    background:rgba(12,8,22,.96);border:1px solid rgba(255,179,218,.35);clip-path:var(--cut);box-shadow:0 12px 30px rgba(0,0,0,.5);}
+  /* 前は列の左端から上へ開いて、CHALLENGE・RUN・ONLINE GAME にかぶり、後ろの字も透けていた。
+     広い画面: MORE の列の右横に (下端をそろえる)。縦持ちのスマホ: 画面の下に、幅いっぱいの板で */
+  #title .tt-morepop{position:absolute;left:calc(100% + 10px);bottom:0;display:flex;flex-direction:column;gap:4px;padding:8px;min-width:240px;z-index:6;
+    background:#0c0816;border:1px solid rgba(255,179,218,.5);clip-path:var(--cut);box-shadow:0 12px 30px rgba(0,0,0,.6);}
   #title .tt-morepop[hidden]{display:none;}
+  @media (max-width:860px) and (orientation:portrait){
+    #title .tt-morepop{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));min-width:0;gap:6px;padding:10px;
+      box-shadow:0 0 0 100vmax rgba(3,4,10,.72),0 12px 30px rgba(0,0,0,.6);clip-path:none;}
+    #title .tt-menu .tt-morepop button{min-height:46px;font-size:13px;}
+    #title .tt-menu .tt-morepop button small{font-size:11.5px;}
+    body:has(.tt-morepop:not([hidden])) #muteAll{display:none;}      /* 板の左下に音のボタンが重なるので、開いている間は隠す */
+  }
   #title .tt-menu .tt-morepop button{display:flex;justify-content:space-between;align-items:baseline;gap:10px;width:100%;text-align:left;}
   #title .tt-menu .tt-morepop button small{display:inline;margin:0;font:700 10px/1 system-ui;letter-spacing:0;color:var(--dim);}
   .cm-gacha{margin-left:auto;padding:9px 14px;cursor:pointer;border:0;clip-path:var(--cut-s);background:linear-gradient(100deg,#5fe0c0,#9d7bff);
@@ -3262,7 +3303,7 @@
   .plate .pl-comp{display:inline-flex;align-self:flex-start;align-items:center;gap:4px;padding:2px 7px;border-radius:999px;
     background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);flex:none;}
   .plate .pl-comp i{font:800 9px/1 var(--font-hud,system-ui);font-style:normal;letter-spacing:.14em;color:var(--dim);margin-right:2px;}
-  .plate .pl-comp b{width:10px;height:10px;border-radius:50%;border:2px solid rgba(255,255,255,.55);box-sizing:border-box;}
+  .plate .pl-comp b{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.6);box-sizing:border-box;}   /* 前は 10px で見落としやすかった */
   .plate .pl-comp b.on{background:#fff;border-color:#fff;box-shadow:0 0 8px rgba(255,255,255,.7);}
   #vsTag:not([hidden]) ~ #topRight{margin-left:0;}
   @media (orientation:portrait) and (max-width:860px){
@@ -3320,8 +3361,10 @@
   }
   /* 縦持ちのスマホは盤面が狭いので小さく、名札の下へ */
   @media (orientation:portrait) and (max-width:860px){
-    .avatar{height:22vh;bottom:calc(30vh + env(safe-area-inset-bottom));left:-6px;}
-    .avatar .av-bubble{left:94%;top:10%;}
+    /* 前は高さ 22vh・下から 30vh で、自分のプロトコルの段と同じ高さにあり、左のプロトコルと合計値を隠していた。
+       小さくして手札のすぐ上へ下げる (相手のキャラは下の指定で右上のまま) */
+    .avatar{height:15vh;bottom:calc(15vh + env(safe-area-inset-bottom));left:-6px;}
+    .avatar .av-bubble{left:92%;top:6%;max-width:60vw;}
   }
   /* 相手のキャラ: 右上、上の帯の下。向かい合うよう左右を反転し、吹き出しは左に */
   .avatar.av-opp{left:auto;right:calc(-10px + env(safe-area-inset-right));top:calc(46px + env(safe-area-inset-top));bottom:auto;height:min(26vh,210px);}
@@ -3871,9 +3914,9 @@
       "./js3d/holo.js": "./js3d/holo.js?v=9c52bc0510",
       "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c",
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
-      "./js3d/layout.js": "./js3d/layout.js?v=91b1b5570a",
+      "./js3d/layout.js": "./js3d/layout.js?v=3dd5b44c2a",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=de7de2c04d",
+      "./js3d/main.js": "./js3d/main.js?v=c9b71e189b",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=5ed0fd6fd9",
@@ -3904,7 +3947,7 @@
       "./js3d/setup.js": "./js3d/setup.js?v=7108890ecc",
       "./js3d/solodraft.js": "./js3d/solodraft.js?v=b036b97879",
       "./js3d/spectate.js": "./js3d/spectate.js?v=e7aaf6e4e9",
-      "./js3d/stage.js": "./js3d/stage.js?v=9a0d3bd5b4",
+      "./js3d/stage.js": "./js3d/stage.js?v=a47c0c4ec9",
       "./js3d/stats-data.js": "./js3d/stats-data.js?v=eb2be6d930",
       "./js3d/stats.js": "./js3d/stats.js?v=64bc2a272e",
       "./js3d/steps.js": "./js3d/steps.js?v=13e73b20fe",
@@ -3914,8 +3957,8 @@
       "./js3d/story-world.js": "./js3d/story-world.js?v=a765b7288b",
       "./js3d/story.js": "./js3d/story.js?v=ffb19e70f8",
       "./js3d/support.js": "./js3d/support.js?v=86cfbcc21a",
-      "./js3d/theme.js": "./js3d/theme.js?v=0c7b42a1d2",
-      "./js3d/title.js": "./js3d/title.js?v=ef0a29377a",
+      "./js3d/theme.js": "./js3d/theme.js?v=0fc8f69999",
+      "./js3d/title.js": "./js3d/title.js?v=f5abaed6ac",
       "./js3d/titleback.js": "./js3d/titleback.js?v=5663d0b7a4",
       "./js3d/training.js": "./js3d/training.js?v=3018b4399e",
       "./js3d/tsume.js": "./js3d/tsume.js?v=bd786cf3c9",
@@ -3951,12 +3994,12 @@
   <link rel="modulepreload" href="js3d/turning.js?v=9c7f79654e">
   <link rel="modulepreload" href="js3d/achievements-ui.js?v=4196457910">
   <link rel="modulepreload" href="vendor/three.module.js?v=985eb92490">
-  <link rel="modulepreload" href="js3d/stage.js?v=9a0d3bd5b4">
+  <link rel="modulepreload" href="js3d/stage.js?v=a47c0c4ec9">
   <link rel="modulepreload" href="js3d/board.js?v=46b7e96300">
   <link rel="modulepreload" href="js3d/control.js?v=c1b87ebc63">
   <link rel="modulepreload" href="js3d/panel.js?v=db3f19496c">
   <link rel="modulepreload" href="js3d/setup.js?v=7108890ecc">
-  <link rel="modulepreload" href="js3d/title.js?v=ef0a29377a">
+  <link rel="modulepreload" href="js3d/title.js?v=f5abaed6ac">
   <link rel="modulepreload" href="js3d/training.js?v=3018b4399e">
   <link rel="modulepreload" href="js3d/room.js?v=aa2b801fa6">
   <link rel="modulepreload" href="js3d/puzzle.js?v=6707164a75">
@@ -3993,8 +4036,8 @@
   <link rel="modulepreload" href="js3d/mutebutton.js?v=1362dbc4d6">
   <link rel="modulepreload" href="js3d/bgm.js?v=22b4286542">
   <link rel="modulepreload" href="js3d/emblems.js?v=7b77a0b2df">
-  <link rel="modulepreload" href="js3d/layout.js?v=91b1b5570a">
-  <link rel="modulepreload" href="js3d/theme.js?v=0c7b42a1d2">
+  <link rel="modulepreload" href="js3d/layout.js?v=3dd5b44c2a">
+  <link rel="modulepreload" href="js3d/theme.js?v=0fc8f69999">
   <link rel="modulepreload" href="js3d/tween.js?v=99b25c0d63">
   <link rel="modulepreload" href="js3d/ui.js?v=b088e1750f">
   <link rel="modulepreload" href="js3d/input.js?v=cc29feddd4">
@@ -4040,6 +4083,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=dcc4783d36">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=de7de2c04d"></script>
+  <script type="module" src="js3d/main.js?v=c9b71e189b"></script>
 </body>
 </html>

@@ -28,8 +28,11 @@ export function handSlot(i, n) {
     const rowIndex = i - rowStart;
     const t = rowCount <= 1 ? 0 : (rowIndex / (rowCount - 1) - .5);
     /* 画面幅に収まる範囲でできるだけ大きく。5枚並びで両端が切れないよう、
-       並べた全幅 (間隔×(枚数-1) + 1枚ぶん) を 4.7 以内に抑える */
-    const PORTRAIT_SCALE = Math.min(1.12, 4.7 / (CARD.w * (1.04 * Math.max(0, perRow - 1) + 1)));
+       並べた全幅 (間隔×(枚数-1) + 1枚ぶん) を、写る幅に収める。
+       写る幅は画面の縦横の割合に比例する。前は 4.7 に決め打ちで、細長い画面 (390×844 = 0.46) では
+       左右が 6% ずつ切れていた (「LIFE」が「IFE」、右端は値が見えない)。0.46 で 4.33 に収まるので 9.3 × 割合 */
+    const fitW = Math.min(4.7, 9.3 * (VIEW.aspect || 0.5));
+    const PORTRAIT_SCALE = Math.min(1.12, fitW / (CARD.w * (1.04 * Math.max(0, perRow - 1) + 1)));
     const step = PORTRAIT_SCALE * CARD.w * 1.04;         // 隣と重ならない間隔
     /* 6枚目以降は1列目の「後ろ」に重ね、見出し (プロトコル名と数字) だけ覗かせる。
        1列ぶん丸ごと上へずらすと自分の場のスタックの隣に並び、
