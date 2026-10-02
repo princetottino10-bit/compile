@@ -10,6 +10,7 @@
     python scripts/voice_lines.py shion --force    # 全部作り直す
 """
 import json
+import re
 import os
 import subprocess
 import sys
@@ -69,12 +70,15 @@ def tts(key, voice, text):
 
 # 読み間違える言葉は、声に渡す文だけひらがなにする (画面の文字はそのまま)。
 #   「焦らなくていい」を「じらなくていい」と読んだ (2026-10-02)
-READINGS = {'焦ら': 'あせら', '焦り': 'あせり', '焦る': 'あせる', '焦っ': 'あせっ'}
+READINGS = {'焦ら': 'あせら', '焦り': 'あせり', '焦る': 'あせる', '焦っ': 'あせっ',
+            # 読みが2つある言葉 (点検で挙がったもの): 止め (とめ/やめ)・上回 (うわまわ)・開いた (あいた/ひらいた)・命 (いのち/めい)
+            '止められ': 'とめられ', '止めらん': 'とめらん', '上回': 'うわまわ', '開いた': 'あいた'}
 
 
 def spoken(text, face):
     for k, v in READINGS.items():
         text = text.replace(k, v)
+    text = re.sub(r'命(?!令)', 'いのち', text)      # 「命」だけ (「命令」はそのまま)
     tag = TAGS.get(face, '')
     return (tag + ' ' + text) if tag else text
 

@@ -13,13 +13,22 @@ const CRASH_KEY = 'compileLastCrash';        // crashwatch.js: 前に途中で�
 const readJSON = (k) => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
 const readText = (k) => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } };
 
+/* いまの画面の名前。アドレスの後ろはそのまま入れず、知っている印だけを拾う */
+function screenName() {
+  const live = readJSON(LIVE_KEY);
+  if (live && live.mode) return '対戦 (' + live.mode + ')';
+  let keys = [];
+  try { keys = [...new URLSearchParams(location.search).keys()].filter(k => /^(story|run|tsume|tutorial|training|replay|puzzle|quick|join)$/.test(k)); } catch (e) { keys = []; }
+  return keys.length ? keys.join(',') : 'タイトル';
+}
+
 /** 報告に貼る文 (個人の情報は入れない: 端末の種類・版・画面・対戦の様子だけ) */
 export function reportInfo(now = new Date()) {
   const lines = [
     '【報告用の情報】',
     '版: ' + (versionOf() || '?'),
     '端末: ' + deviceOf() + ' ・ 画面 ' + window.innerWidth + 'x' + window.innerHeight,
-    '開いている画面: ' + (location.search ? location.search.slice(1, 80) : 'タイトル'),
+    '開いている画面: ' + screenName(),
     '時刻: ' + now.toLocaleString('ja-JP')
   ];
   const live = readJSON(LIVE_KEY);
@@ -40,6 +49,35 @@ export async function copyReportInfo() {
     window.prompt('この文をコピーして、Discord に貼ってください', text);
     return '';
   }
+}
+
+/** 不具合・要望の窓 (メニュー画面の「不具合・要望」から)。Discord を開く・報告用の情報をコピーする */
+export function openReport() {
+  let el = document.getElementById('reportOv');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'reportOv';
+    el.className = 'pz-ov';
+    document.body.appendChild(el);
+  }
+  el.innerHTML = '<div class="pz-card st-card rp-card" role="dialog" aria-modal="true" aria-label="不具合・要望">' +
+    '<div class="pz-head"><b>REPORT<small>不具合・要望</small></b><button type="button" class="pz-x"><span>閉じる</span></button></div>' +
+    '<div class="rp-body">' +
+    '<p class="rp-lead">不具合や要望は Discord で受け付けています。不具合のときは、先に下の「コピー」を押して、貼り付けてください (版や端末が分かり、すぐ調べられます)。</p>' +
+    '<div class="st-row st-act"><span>報告用の情報<small>版・端末・途中で終わった対戦の記録 (名前や記録の中身は入りません)</small></span>' +
+      '<button type="button" id="rpCopy">コピー</button></div>' +
+    '<div class="st-row st-act"><span>Discord<small>#不具合 か #要望 に書いてください</small></span>' +
+      '<button type="button" id="rpDiscord" class="rp-go">Discord を開く</button></div>' +
+    '</div></div>';
+  el.classList.add('show');
+  const close = () => el.classList.remove('show');
+  el.onclick = (ev) => { if (ev.target === el) close(); };
+  el.querySelector('.pz-x').onclick = close;
+  el.querySelector('#rpDiscord').onclick = () => openDiscord();
+  el.querySelector('#rpCopy').onclick = async (ev) => {
+    const msg = await copyReportInfo();
+    if (msg) { ev.target.textContent = 'コピーしました'; setTimeout(() => { ev.target.textContent = 'コピー'; }, 2400); }
+  };
 }
 
 export function openDiscord() {

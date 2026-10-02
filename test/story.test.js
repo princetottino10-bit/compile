@@ -24,7 +24,7 @@ test('章と場面: id は重ならず、会話には行が、対戦にはデッ
         assert.ok(n.lines.length > 0, n.id);
         for (const l of n.lines) assert.ok(S.SPEAKERS[l.who] && l.text, n.id + ' ' + l.who);
       } else if (n.kind === 'tsume') {
-        assert.ok(tsume.some(t => t.id === n.tsume), n.id + ' の問題 ' + n.tsume + ' が data/tsume.json にある');
+        assert.ok(n.puzzle ? (n.puzzle.goal && n.puzzle.spec && n.puzzle.steps.length) : tsume.some(t => t.id === n.tsume), n.id + ' の問題がある (場面に持つか、data/tsume.json の id)');
         assert.ok(n.oppName && n.winLines.length && n.loseLines.length, n.id);
       } else {
         assert.equal(n.me.length, 3, n.id);

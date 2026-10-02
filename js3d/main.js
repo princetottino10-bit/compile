@@ -310,9 +310,9 @@ function syncAvatar() {
     if (plan && plan !== me && plan !== mate) oppIds = [plan, oppIds[0]];
   }
   avatars = {
-    me: me ? mountAvatar(me, { side: 'me' }) : null,
+    me: me ? mountAvatar(me, { side: 'me', avoid: storyAvoid() }) : null,
     mate: mate ? mountAvatar(mate, { side: 'me', back: true }) : null,
-    opp: tutorial || !oppIds[0] ? null : mountAvatar(oppIds[0], { side: 'opp', voice: settings().oppVoice !== false }),
+    opp: tutorial || !oppIds[0] ? null : mountAvatar(oppIds[0], { side: 'opp', voice: settings().oppVoice !== false, avoid: storyAvoid() }),
     oppIds
   };
   if (avatars.opp) setTimeout(() => { if (avatars && avatars.opp) avatars.opp.react('hello'); }, 900);
@@ -320,6 +320,9 @@ function syncAvatar() {
      (チュートリアルの案内役は別のひとことを言う) */
   if (avatars.me && !tutorial) setTimeout(() => { if (avatars && avatars.me && cur && (cur.state.turns | 0) <= 1 && cur.state.turn !== ME) avatarSay(ME, 'hello'); }, 3200);
 }
+/* 物語の中では、コンパイルを遊びとして語らない: 勝ち・負け・遊び・手札・対戦などの言葉が入ったひとことは言わせない (avatar.js の avoid) */
+const STORY_AVOID = /勝|負|遊|手札|対戦|ゲーム|ターン|有利/;
+const storyAvoid = () => (storyNode ? STORY_AVOID : null);
 /* いま、その側で話す人 (タッグは指している人) */
 function avatarOf(side, st) {
   if (!avatars) return null;
@@ -970,7 +973,7 @@ async function boot() {
         storyNode = node;
         if (node.kind === 'tsume') {
           /* 詰めコンパイルの敵: 問題モードと同じ仕組みで、決着をストーリーへ返す (puzzle.story) */
-          const t = (await TS.loadTsume()).find(x => x.id === node.tsume);
+          const t = node.puzzle || (await TS.loadTsume()).find(x => x.id === node.tsume);
           if (!t) { UI.toast('詰めコンパイルの問題が見つかりません'); storyNode = null; history.replaceState(null, '', location.pathname); nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
           puzzle = { spec: t.spec, goal: t.goal.kind, task: TS.goalText(t.goal, t.spec.sides[0].protos), tsume: t, story: true };
           p0 = t.spec.sides[0].protos.slice(); p1 = t.spec.sides[1].protos.slice();
@@ -4652,14 +4655,18 @@ async function afterTurn() {
     }
     /* 観戦は A / B の勝ちで見せ、ベットを払い戻す */
     if (spectate) { await spectateEnd(win); return; }
-    avatarSay(ME, win ? 'win' : 'lose');
-    setTimeout(() => avatarSay(AI, win ? 'lose' : 'win'), 900);
+    /* 物語の決着は、そのあとの会話 (winLines / loseLines) が語る */
+    if (!storyNode) {
+      avatarSay(ME, win ? 'win' : 'lose');
+      setTimeout(() => avatarSay(AI, win ? 'lose' : 'win'), 900);
+    }
     UI.setPrompt(win ? 'あなたの勝ち' : '敗北', 'end');
     const victory = cosmetic('victory', 'default');
     sfx(win ? (victory === 'aurora' ? 'winAurora' : 'win') : 'lose');
     await finaleFx(win);
     FEEL.buzz(win ? [40, 70, 40, 70, 120] : [160]);
-  await UI.resultCutIn(win, { victory });
+  /* 物語の決着は、勝ち・負けの言葉を出さない */
+  await UI.resultCutIn(win, storyNode ? { victory, title: win ? 'COMPILED' : 'OVERWRITTEN' } : { victory });
     /* 最強に新しいプロトコルで勝った: 制覇の数を刻む */
     if (newConq.length) {
       await UI.conquerCutIn(newConq.map(n => ({ name: n, color: (protoIndex[n] || {}).color })), conquered(localRecords()).size,

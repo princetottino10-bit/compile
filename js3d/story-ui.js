@@ -139,7 +139,7 @@ export function askBattle(n, protocols) {
   const byName = Object.fromEntries(protocols.map(p => [p.name, p]));
   const chips = (names) => '<span class="sm-deck">' + names.map(x =>
     '<i style="--pc:' + esc((byName[x] || {}).color || '#b9a4ff') + '">' + esc(x) + '</i>').join('') + '</span>';
-  const box = overlay('storyConfirm', '対戦の確認');
+  const box = overlay('storyConfirm', '確認');
   box.className = 'sm-confirm';
   const tsume = n.kind === 'tsume';
   /* 管理者は対戦を飛ばせる (話の確認用)。返り値 'skip' */
@@ -224,9 +224,9 @@ export function openStory(protocols) {
 export async function showStoryResult(win, node, actions) {
   const lines = win ? node.winLines : node.loseLines;
   if (lines && lines.length) await playScene(lines);
-  const el = overlay('storyResult', win ? 'クリア' : 'もう一度');
+  const el = overlay('storyResult', win ? '先へ' : 'もう一度');
   el.innerHTML = '<div class="sty-res ' + (win ? 'win' : 'lose') + '"><small>' + esc(node.title) + '</small>' +
-    '<b>' + (win ? 'CLEAR' : 'FAILED') + '</b>' +
+    '<b>' + (win ? 'COMPILED' : 'OVERWRITTEN') + '</b>' +
     '<div class="sm-btns">' + (win
       ? '<button type="button" data-a="next" class="sm-go">次へ</button>'
       : '<button type="button" data-a="retry" class="sm-go">もう一度</button><button type="button" data-a="map">地図へ</button>') +

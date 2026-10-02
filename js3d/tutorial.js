@@ -158,7 +158,8 @@ export const LESSONS = [
     spec: {
       sides: [
         { protos: ME_PROTOS, lines: [[], [up('FIRE_1')], []], hand: ['SPEED_6', 'LIFE_5', 'SPEED_3'] },
-        { protos: OPP_PROTOS, lines: [[up('METAL_5')], [], []], hand: [] }
+        /* 相手のカードは2枚 (1枚だけだと、反転の相手が自動で決まって「選ぶ」案内が出ない) */
+        { protos: OPP_PROTOS, lines: [[up('METAL_5')], [up('LIGHT_3')], []], hand: [] }
       ]
     },
     steps: [
@@ -220,7 +221,7 @@ export const LESSONS = [
     spec: {
       sides: [
         { protos: ME_PROTOS, lines: [[], [], []], hand: ['FIRE_1', 'SPEED_6', 'LIFE_5', 'FIRE_4', 'LIFE_3'] },
-        { protos: OPP_PROTOS, lines: [[up('METAL_5')], [], []], hand: [] }
+        { protos: OPP_PROTOS, lines: [[up('METAL_5')], [up('LIGHT_3')], []], hand: [] }
       ]
     },
     steps: [

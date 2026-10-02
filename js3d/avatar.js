@@ -92,8 +92,8 @@ const pick = (list) => list[Math.floor(Math.random() * list.length)];
 export const avatarIds = () => Object.keys(AVATARS).filter(id => !AVATARS[id].boss);
 /* 立ち絵の版。画像には版の印が付かないので、同じ名前で差し替えたらここを上げる (古い絵がしばらく出るのを防ぐ)。3 = 2026-10-01 頭の先まで入る枠で切り直し (E:SDSwarmUIOutputvatar_v2export_v4headroom.py) */
 export const ART_VER = 3;
-/* 声の版。同じ名前で声を作り直したらここを上げる (古い声がしばらく鳴るのを防ぐ)。4 = 2026-10-02 紫苑の「焦ら…」の読みを直した */
-export const VOICE_VER = 4;
+/* 声の版。同じ名前で声を作り直したらここを上げる (古い声がしばらく鳴るのを防ぐ)。5 = 2026-10-02 読みの直し (止められ・上回・開いた・命) とセリフの差し替え */
+export const VOICE_VER = 5;
 /* 声の大きさをキャラどうしでそろえる。測った大きさ (ラウドネス、LUFS。ffmpeg の ebur128 の中央値) から、VOICE_TARGET へ合わせる倍率を出す。
    VOICEVOX の4人は -25 前後、ElevenLabs の4人は -15〜-19 で、6〜10 dB も差があった (2026-10-02 に測った)。
    声を作り直したら測り直す: ffmpeg -i <声> -af ebur128=framelog=quiet -f null -  (最後の I: の値) */
@@ -200,9 +200,14 @@ export function mountAvatar(id, opts = {}) {
     if (kind === 'play' && proto && def.fav === proto && def.lines.fav) return react('fav', vars);
     /* プロトコルごとの専用セリフ (play_FIRE など。使うプロトコルが決まっているボス) があれば、7割はそちらで */
     if (kind === 'play' && proto && def.lines['play_' + proto] && Math.random() < 0.7) return react('play_' + proto, vars);
+    /* opts.avoid (正規表現): 物語の中など、言わせたくない言葉の入ったセリフは選ばない。全部だめなら黙る
+       (番号は声のファイルと対応しているので、並びは変えずに番号で選ぶ) */
+    const textOf = (e) => (Array.isArray(e) ? e[0] : e);
+    const ok = lines.map((e, n) => n).filter(n => !opts.avoid || !opts.avoid.test(textOf(lines[n])));
+    if (!ok.length) return;
     /* 同じ種類で、直前と同じセリフは続けて言わない */
-    let i = Math.floor(Math.random() * lines.length);
-    if (lines.length > 1 && lastPick[kind] === i) i = (i + 1 + Math.floor(Math.random() * (lines.length - 1))) % lines.length;
+    const rest = ok.length > 1 ? ok.filter(n => n !== lastPick[kind]) : ok;
+    const i = rest[Math.floor(Math.random() * rest.length)];
     lastPick[kind] = i;
     const entry = lines[i];
     /* 声つきのキャラは、プロトコルごとのセリフを使わず、声のあるセリフだけ */

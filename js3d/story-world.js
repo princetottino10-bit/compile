@@ -258,7 +258,7 @@ export function openWorld(protocols, opts = {}) {
     /* 章の最後の会話が終わった */
     if (chapterCleared(state, chapter.id)) {
       if (opts.onChapterClear) await opts.onChapterClear(chapter.id);
-      await playScene([{ who: 'sys', text: '> ' + chapter.title + '「' + chapter.name + '」クリア。1章「閉館」は準備中です' }]);
+      await playScene([{ who: 'sys', text: '> ' + chapter.title + '「' + chapter.name + '」　完。1章「閉館」は準備中です' }]);
       close(null);
       return;
     }
@@ -344,7 +344,7 @@ export function openWorld(protocols, opts = {}) {
     }
     if (nearby) {
       actBtn.hidden = false;
-      actBtn.textContent = (nearby.label || (nodeById(nearby.node).kind === 'battle' ? '戦う' : '話す')) + '  [E]';
+      actBtn.textContent = (nearby.label || (nodeById(nearby.node).kind === 'battle' ? '向き合う' : '話す')) + '  [E]';
     } else actBtn.hidden = true;
     /* 区画に入ると始まる会話 */
     for (const ev of Object.values(map.events)) {

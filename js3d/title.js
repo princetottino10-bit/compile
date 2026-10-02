@@ -13,7 +13,7 @@ import { openSettings } from './settings.js';
 import { openStats } from './stats.js';
 import { openAccount, accountState, onAccountChange, loginNudgeNeeded } from './account.js';
 import { openAdmin } from './admin-ui.js';
-import { openDiscord } from './support.js';
+import { openReport } from './support.js';
 import { openCardList } from './cardlist-ov.js';
 import { settings } from './settings.js';
 import { profileOf } from './cosmetics-ui.js';
@@ -118,6 +118,8 @@ export function runTitle(protocols, opts) {
     '<div class="tt-foot">30 PROTOCOLS · 180 CARDS</div>' +
     /* 縦持ちのスマホだけに出す (CSS)。タイトル画面の部品なので、ほかの画面を開けば一緒に隠れて重ならない */
     '<div class="tt-rotate">対戦画面は横持ちに最適化されています (縦持ちでも遊べます)</div>' +
+    /* 不具合・要望の入口は、メニュー画面にそのまま出しておく (MORE の中だと見つけにくい) */
+    '<button type="button" class="tt-report" id="ttReport">不具合・要望</button>' +
     '<div class="tt-corner" id="ttCorner" hidden>' + profileChip(protocols) +
       '<button data-mode="admin" type="button" class="tt-admin"' + (accountState().admin ? '' : ' hidden') + '>ADMIN</button>' +
       '<button data-mode="account" type="button" class="tt-account" title="' + accountTitle() + '"><span>' + accountLabel() + '</span>' +
@@ -173,7 +175,6 @@ export function runTitle(protocols, opts) {
               '<button data-mode="tutorial" type="button">TUTORIAL <small>遊び方</small></button>' +
               '<button data-mode="training" type="button">TRAINING <small>盤面を自由に</small></button>' +
               '<button data-mode="cards" type="button">CARDS <small>カード一覧</small></button>' +
-              '<button data-mode="discord" type="button">DISCORD <small>不具合・要望</small></button>' +
             '</div>' +
           '</div>' +
         '</nav>';
@@ -214,7 +215,6 @@ export function runTitle(protocols, opts) {
         else if (button.dataset.mode === 'account') openAccount();
         else if (button.dataset.mode === 'admin') openAdmin();
         else if (button.dataset.mode === 'cards') openCardList();
-        else if (button.dataset.mode === 'discord') openDiscord();
         else if (button.dataset.mode === 'gacha') openGacha();
         else if (button.dataset.mode === 'more') {
           const pop = root.querySelector('.tt-morepop');
@@ -227,6 +227,7 @@ export function runTitle(protocols, opts) {
         else finish(button.dataset.mode);
       };
       center.onclick = onMenu;                        // メニューとロゴの下の名前 (どちらも data-mode のボタン)
+      root.querySelector('#ttReport').onclick = () => { sfx('select'); openReport(); };
       root.querySelector('#ttCorner').onclick = onMenu;
     };
     /* 先にメニューを出し、音はそのあと (失敗しても進める)。以前は音の初期化が先で、
