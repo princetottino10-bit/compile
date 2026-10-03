@@ -356,8 +356,18 @@ async function avatarsQuiet(maxMs = 2500) {
   const busy = () => avatars && [avatars.me, avatars.mate, avatars.opp].some(a => a && (a.idleIn() > 0 || avatarQueue.has(a)));
   while (busy() && Date.now() < until) await TW.wait(120);
 }
+/* UNDO (待った・練習の戻す) で盤面を戻したとき: 戻した手で起きたことのひとことは言わない。
+   待っているセリフを捨て、少しの間 (あとから言う予定だったもの: コンパイルされた・見ていた など) は何も言わない */
+let avatarHushUntil = 0;
+function avatarHush(st) {
+  avatarQueue.clear();
+  avatarHushUntil = Date.now() + 2500;
+  /* 戻した盤面のコントロールを「いまの持ち主」にしておく (戻ったのを、取ったと思って喜ばない) */
+  avatarControl = st && typeof st.control === 'number' ? st.control : -1;
+}
 /* chance: 言う確率 (毎回だとうるさいもの)。gapMs: 同じ種類を続けて言わない間 */
 function avatarSay(side, kind, vars, st, gapMs, chance, retried) {
+  if (Date.now() < avatarHushUntil) return;
   const a = avatarOf(side, st);
   /* キャラがまだ出ていない (対戦の始まりの最初の番の合図など) ときは、大事なセリフだけ少し待って言い直す */
   if (!a) {
@@ -1612,6 +1622,7 @@ function mountTraining() {
     undo: () => {
       if (busy || !training.undo.length) return;
       cur = training.undo.pop();
+      avatarHush(cur.state);
       resync();
       sfx('trash');
     },
@@ -5068,6 +5079,7 @@ function undoLastMove() {
   queuedAnswer = null;
   oppTurn = null;
   cur = p.cur;                         // 先に戻す (選択待ちを閉じると、処理の続きは戻した盤面を見て止まる)
+  avatarHush(cur.state);
   if (replayLog) replayLog.actions.length = p.replayLen;
   RS.truncateResume(p.resumeLen);
   gameHistory.length = p.histLen;
