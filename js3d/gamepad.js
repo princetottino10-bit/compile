@@ -19,7 +19,8 @@ const REPEAT_FIRST = 380;            // 押しっぱなしで次へ進むまで 
 const REPEAT_NEXT = 140;
 const CLICKABLE = 'button, [role="button"], a[href], summary, input[type="checkbox"], input[type="radio"], select';
 
-let canvasTargets = () => [];        // main.js が渡す: [{ key, x, y, w, h, hand? }] (画面の座標)
+let canvasTargets = () => [];
+let openHand = null;                 // main.js が渡す: 畳んである手札を開く (開いたら true)        // main.js が渡す: [{ key, x, y, w, h, hand? }] (画面の座標)
 let canvasOpt = null;                 // 盤面の canvas (または、それを返す関数。盤面はあとから作られる)
 const cv = () => (typeof canvasOpt === 'function' ? canvasOpt() : canvasOpt);
 let ring = null;
@@ -35,6 +36,7 @@ let raf = 0;
 export function initGamepad(opts) {
   canvasOpt = opts.canvas || null;
   canvasTargets = opts.targets || (() => []);
+  openHand = opts.openHand || null;
   if (!('getGamepads' in navigator)) return;
   window.addEventListener('gamepadconnected', () => { if (!enabled()) return; markPad(pickPad(), true); start(); });
   window.addEventListener('gamepaddisconnected', () => { if (!pickPad()) { stop(); markPad(null, false); } });
@@ -92,7 +94,6 @@ function setActive(on) {
     ring = document.createElement('div');
     ring.id = 'gpFocus';
     ring.setAttribute('aria-hidden', 'true');
-    ring.innerHTML = '<span class="gp-cap"><i class="gp-key gp-a"></i>決定<i class="gp-key gp-b"></i>戻る</span>';
     document.body.appendChild(ring);
     quadSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     quadSvg.id = 'gpQuad';
@@ -137,13 +138,20 @@ function boardTargets() {
   if (!canvasEl) return [];
   let list = [];
   try { list = canvasTargets() || []; } catch (e) { list = []; }
-  /* 盤面の上に窓が出ている所は指さない (覆っている物があれば、そちらのボタンを指す) */
-  return list.filter(t => {
-    const cx = t.x + t.w / 2, cy = t.y + t.h / 2;
-    if (cx < 0 || cy < 0 || cx > innerWidth || cy > innerHeight) return false;
-    const top = document.elementFromPoint(cx, cy);
-    return top === canvasEl;
-  });
+  /* 盤面の上に窓が出ている所は指さない (覆っている物があれば、そちらのボタンを指す)。
+     手札は下が画面からはみ出し、名札やボタンが一部に重なるので、画面に見えている部分の数か所を調べて、盤面が見えている点を押す所にする */
+  const out = [];
+  for (const t of list) {
+    const x0 = Math.max(0, t.x), y0 = Math.max(0, t.y);
+    const x1 = Math.min(innerWidth - 1, t.x + t.w), y1 = Math.min(innerHeight - 1, t.y + t.h);
+    if (x1 - x0 < 8 || y1 - y0 < 8) continue;
+    const pts = [[0.5, 0.5], [0.5, 0.25], [0.3, 0.3], [0.7, 0.3], [0.5, 0.75]];
+    for (const [fx, fy] of pts) {
+      const px = x0 + (x1 - x0) * fx, py = y0 + (y1 - y0) * fy;
+      if (document.elementFromPoint(px, py) === canvasEl) { out.push({ ...t, hit: { x: px, y: py } }); break; }
+    }
+  }
+  return out;
 }
 
 function allTargets() { return domTargets().concat(boardTargets()); }
@@ -180,7 +188,7 @@ function focus(t) {
   focusPos = center(t);
   draw(t);
   /* 盤面の物は、マウスを乗せたときと同じ扱い (カードの説明が出る・手札が持ち上がる) */
-  if (!t.el && cv()) fire('pointermove', focusPos);
+  if (!t.el && cv()) fire('pointermove', t.hit || focusPos);
   else if (t.el && t.el.scrollIntoView) t.el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 }
 
@@ -191,7 +199,7 @@ function draw(t) {
   ring.style.top = (t.y - pad) + 'px';
   ring.style.width = (t.w + pad * 2) + 'px';
   ring.style.height = (t.h + pad * 2) + 'px';
-  /* 盤面の物は、四隅を結んだ形 (台形) で囲む。四角の枠は「A 決定 B 戻る」の置き場としてだけ使う */
+  /* 盤面の物は、四隅を結んだ形 (台形) で囲む */
   const q = t.quad;
   ring.classList.toggle('quad', !!q);
   quadSvg.classList.toggle('show', !!q);
@@ -199,8 +207,6 @@ function draw(t) {
     const pts = q.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
     for (const poly of quadSvg.querySelectorAll('polygon')) poly.setAttribute('points', pts);
   }
-  /* 「A 決定 B 戻る」は枠の下に出す。画面の下端に近い物 (手札など) を指しているときは、枠の上に */
-  ring.classList.toggle('cap-top', t.y + t.h + 40 > innerHeight);
 }
 
 /* 盤面の canvas へ、その場所を触ったのと同じ合図を送る */
@@ -231,7 +237,7 @@ function activate() {
   const t = current(list);
   if (!t) { focus(nearest(list, focusPos || { x: innerWidth / 2, y: innerHeight * 0.8 })); return; }
   if (t.el) { t.el.click(); return; }
-  const p = center(t);
+  const p = t.hit || center(t);
   fire('pointermove', p);
   fire('pointerdown', p);
   fire('pointerup', p);
@@ -257,12 +263,21 @@ function move(dir) {
   if (!cur) { focus(nearest(list, focusPos || { x: innerWidth / 2, y: innerHeight * 0.8 })); return; }
   const next = nearest(list.filter(t => t !== cur), center(cur), dir);
   if (next) focus(next);
+  else if (dir === 'down') showHandThen(() => {
+    const hand = boardTargets().filter(t => t.hand);
+    if (hand.length) focus(nearest(hand, center(cur)));
+  });
+}
+
+/* 畳んである手札を開いて、出そろってから続ける */
+function showHandThen(fn) {
+  if (openHand && openHand()) setTimeout(fn, 260);
 }
 
 /* 手札を左右に送る (LB / RB) */
 function stepHand(delta) {
   const hand = boardTargets().filter(t => t.hand).sort((a, b) => center(a).x - center(b).x);
-  if (!hand.length) return;
+  if (!hand.length) { showHandThen(() => { if (boardTargets().some(t => t.hand)) stepHand(delta); }); return; }
   const i = hand.findIndex(t => t.key === focusKey);
   const n = i < 0 ? (delta > 0 ? 0 : hand.length - 1) : Math.max(0, Math.min(hand.length - 1, i + delta));
   focus(hand[n]);

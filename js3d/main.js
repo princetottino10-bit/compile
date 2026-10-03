@@ -5382,7 +5382,13 @@ function gamepadTargets() {
   }
   return out;
 }
-initGamepad({ canvas: () => (stage && stage.renderer ? stage.renderer.domElement : null), targets: gamepadTargets });
+/* 手札を畳んであるとき、パッドで下へ進む・LB/RB を押したら開く (開いたら true) */
+function gamepadOpenHand() {
+  if (!stage || !board || isCompactHandUI() || VIEW.handOpen) return false;
+  setHandDrawer(true);
+  return true;
+}
+initGamepad({ canvas: () => (stage && stage.renderer ? stage.renderer.domElement : null), targets: gamepadTargets, openHand: gamepadOpenHand });
 
 /* stage が実際の大きさの変化を検知したとき (回転直後の遅れて確定する大きさなど) */
 window.addEventListener('compile:viewport', onViewportChanged);
