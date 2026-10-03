@@ -109,6 +109,9 @@ function tallyOf(st) {
   if (!st.tally) st.tally = { compiles: [0, 0], faceUp: [[], []], effects: [{}, {}] };
   if (!st.tally.effects) st.tally.effects = [{}, {}];
   if (!st.tally.chains) st.tally.chains = [0, 0];
+  if (!st.tally.refreshes) st.tally.refreshes = [0, 0];   // リフレッシュした回数
+  if (!st.tally.touched) st.tally.touched = [0, 0];       // 相手の効果で削除・反転・移動・手札に戻されたカードの数 (持ち主の側)
+  if (!st.tally.maxLine) st.tally.maxLine = [0, 0];       // ラインの合計値の最高 (コンパイルで消える前の値)
   return st.tally;
 }
 /* チェーン (効果の途中で別の効果が割り込んだ並び) に効果を積む。
@@ -868,6 +871,7 @@ function doRefresh(ctx, side) {
   if (st.players[side].hand.length >= 5) return false;
   useControlBenefit(ctx, side, 'refresh');
   drawCards(ctx, side, 5 - st.players[side].hand.length);
+  tallyOf(st).refreshes[side]++;
   log(ctx, `P${side + 1}: リフレッシュ`);
   fireEvent(ctx, { on: 'refresh', player: side });
   return true;
@@ -882,8 +886,15 @@ function compilableLines(st, side) {
   return out;
 }
 
+/* いまのラインの合計値で、最高の記録を更新する (実績 OVERKILL)。コンパイルで消える前と、1手の終わりに呼ぶ */
+function tallyLines(st) {
+  const m = tallyOf(st).maxLine;
+  for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++) m[s] = Math.max(m[s], lineTotal(st, l, s));
+}
+
 function doCompile(ctx, side, line) {
   const st = ctx.st;
+  tallyLines(st);
   log(ctx, `P${side + 1}: ライン${line + 1}をコンパイル`);
   tallyOf(st).compiles[side]++;
   const darknessPowered = st.lines[line][side].some(uid =>
@@ -1488,6 +1499,7 @@ function execOp(ctx, fr, op) {
       st.players[fr.controller].protocols[idx].compiled = true;
       log(ctx, `P${fr.controller + 1}: ${proto} をコンパイル完了にした！`);
       tallyOf(st).compiles[fr.controller]++;
+      tallyLines(st);
       if (op.deleteLine) {
         const uids = st.lines[idx][0].concat(st.lines[idx][1]);
         massRemove(ctx, uids, 'trash', fr.controller);
@@ -1802,6 +1814,11 @@ function collectCandidates(ctx, fr, op, sel, chooser) {
 
 function performVerb(ctx, fr, op, uid) {
   const st = ctx.st;
+  /* 相手の効果で場のカードを触られた数 (実績 UNTOUCHABLE) */
+  if (op.op === 'flip' || op.op === 'delete' || op.op === 'return' || op.op === 'shift') {
+    const at = locate(st, uid);
+    if (at && st.cards[uid] && st.cards[uid].zone === 'field' && at.side !== fr.controller) tallyOf(st).touched[at.side]++;
+  }
   switch (op.op) {
     case 'flip':   return doFlip(ctx, uid, op.ignoreMiddle);
     case 'delete': return doDelete(ctx, uid, fr.controller);
@@ -2271,6 +2288,7 @@ function runReplay(base, action, choices) {
   const ctx = { st, choices, ci: 0, qn: 0, depth: 0, log: [], trace: TRACE ? [] : null, chain: [] };
   try {
     performAction(ctx, action);
+    tallyLines(st);
     runTurnLoop(ctx);
     st.pending = null;
     return { state: st, requests: [], log: ctx.log, trace: ctx.trace || [], winner: st.winner, error: null };
