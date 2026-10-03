@@ -61,7 +61,7 @@ window.__gpMap = () => {
   const list = allTargets();
   const name = (t) => (t.el ? (t.el.id || (t.el.textContent || '').trim().slice(0, 14) || t.el.className) : t.key) + (t.hand ? '[手札]' : '');
   return list.map(t => {
-    const c = center(t), o = { name: name(t), at: [Math.round(c.x), Math.round(c.y)] };
+    const c = center(t), o = { name: name(t), at: [Math.round(c.x), Math.round(c.y)], hit: t.hit ? [Math.round(t.hit.x), Math.round(t.hit.y)] : null };
     for (const d of ['up', 'down', 'left', 'right']) { const n = t.hand ? fromHand(list, t, d) : nearest(list.filter(x => x !== t), c, d); o[d] = n ? name(n) : null; }
     return o;
   });
@@ -161,6 +161,10 @@ function boardTargets() {
      手札は下が画面からはみ出し、名札やボタンが一部に重なるので、画面に見えている部分の数か所を調べて、盤面が見えている点を押す所にする */
   const out = [];
   for (const t of list) {
+    if (t.hit) {
+      if (document.elementFromPoint(t.hit.x, t.hit.y) === canvasEl) out.push(t);
+      continue;
+    }
     const x0 = Math.max(0, t.x), y0 = Math.max(0, t.y);
     const x1 = Math.min(innerWidth - 1, t.x + t.w), y1 = Math.min(innerHeight - 1, t.y + t.h);
     if (x1 - x0 < 8 || y1 - y0 < 8) continue;
@@ -173,7 +177,40 @@ function boardTargets() {
   return out;
 }
 
-function allTargets() { return domTargets().concat(boardTargets()); }
+function allTargets() {
+  const scope = placeScope();
+  if (scope) return domTargets().filter(t => scope.contains(t.el) && /place-face(up|down)/.test(t.el.className));
+  return domTargets().concat(boardTargets());
+}
+
+/* 手札のカードを選んだあと、置く場所 (ラインごとの「表」「裏」のボタン) が出ている間 */
+function placeScope() {
+  const root = document.getElementById('playChoices');
+  if (!root || root.hidden || !root.querySelector('.place-faceup, .place-facedown')) return null;
+  return getComputedStyle(root).display === 'none' ? null : root;
+}
+/* 置く場所を選びはじめたら「表」へ (無ければ真ん中に近い「裏」)。やめたら、選ぶ前に指していた手札へ戻る */
+let placing = false;
+let keyBeforePlace = null;
+function followPlaceScope(list) {
+  const scope = placeScope();
+  if (scope && !placing) {
+    placing = true;
+    keyBeforePlace = focusKey;
+    const up = list.find(t => t.el.classList.contains('place-faceup'));
+    focus(up || nearest(list, { x: innerWidth / 2, y: innerHeight / 2 }));
+    return true;
+  }
+  if (!scope && placing) {
+    placing = false;
+    focusKey = keyBeforePlace;
+    const back = current(list);
+    const hand = list.filter(t => t.hand);
+    focus(back || (hand.length ? nearest(hand, focusPos || { x: innerWidth / 2, y: innerHeight }) : null));
+    return !!(back || hand.length);
+  }
+  return false;
+}
 
 const center = (t) => ({ x: t.x + t.w / 2, y: t.y + t.h / 2 });
 
@@ -406,6 +443,7 @@ function loop(now) {
 
   /* 指している物が動いた・消えたら、枠を追わせる */
   const list = allTargets();
+  if (followPlaceScope(list)) { prevButtons = b; return; }
   const cur = current(list);
   if (cur) { focusPos = center(cur); draw(cur); }
   else if (list.length) focus(nearest(list, focusPos || { x: innerWidth / 2, y: innerHeight / 2 }));
@@ -413,7 +451,10 @@ function loop(now) {
   if (pressed(BTN.A)) activate();
   if (pressed(BTN.B)) {
     const ov = tapCloseOpen();
+    const scope = placeScope();
+    const cancel = scope && scope.querySelector('.placement-cancel');
     if (ov) ov.click();                              // 公開された札の一覧・拡大・演出は、札でない所を触ると閉じる
+    else if (cancel) cancel.click();                 // 置く場所を選んでいる間: カードを選ぶ前に戻る
     else key('Escape');
   }
   if (pressed(BTN.X)) {

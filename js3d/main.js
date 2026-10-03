@@ -589,6 +589,7 @@ function shown() { return reviewView || (cur && (cur.view || cur.state)) || null
 const gameHistory = [];
 /* 待った: 自分の最後の手 (出す・リフレッシュ) の直前。1手だけ戻せる (ふつうの CPU 戦のみ) */
 let undoPoint = null;
+let gpPickAt = null;                 // ゲームパッド用の当たり判定 (bindInput で作る。gpHitPoint)
 /* 相手の番のまとめ: { start: 相手の番の最初の盤面, lines: 相手の手の文 } */
 let oppTurn = null;
 
@@ -1953,6 +1954,20 @@ function bindInput() {
     if (card && (!accept || accept(card.userData))) return { obj: card, point: null };
     return hit;
   }
+
+  /* ゲームパッド用: 画面のその点を押したら、どのカードに当たるか (pickWithHand と同じ。シーンの行列は呼ぶ側で更新しておく) */
+  gpPickAt = (x, y, accept) => {
+    const r = el.getBoundingClientRect();
+    ndc.x = ((x - r.left) / r.width) * 2 - 1;
+    ndc.y = -((y - r.top) / r.height) * 2 + 1;
+    ray.setFromCamera(ndc, stage.camera);
+    const hit = pickCard(ray, [...board.hitList(), ...pads], accept);
+    if (hit && hit.obj.userData.isPad) return null;
+    const rest = handRestAt({ clientX: x, clientY: y });
+    const card = rest && board.cards.get(rest);
+    if (card && (!accept || accept(card.userData))) return rest;
+    return hit && hit.obj.userData ? hit.obj.userData.uid || null : null;
+  };
 
   /* プロトコル板に当たっていれば、その板 (そのラインのスタックを一覧で見せる) */
   function panelAt(ev) {
@@ -5371,12 +5386,21 @@ function gamepadTargets() {
   };
   const out = [];
   const seen = new Set();
+  /* 選ぶ場面では候補だけを当たりにする (押したときと同じ) */
+  const cands = boardPick && boardPick.req && Array.isArray(boardPick.req.candidates) ? new Set(boardPick.req.candidates) : null;
+  const accept = cands ? (ud) => !!ud.uid && cands.has(ud.uid) : (ud) => !!ud.uid;
+  if (gpPickAt) stage.scene.updateMatrixWorld(true);
   const addCard = (uid, hand) => {
     if (seen.has(uid)) return;
     const obj = board.cards.get(uid);
     if (!obj || !obj.visible) return;
     const rc = rectOf(obj);
-    if (rc) { seen.add(uid); out.push({ key: 'c:' + uid, hand, ...rc }); }
+    if (!rc) return;
+    seen.add(uid);
+    /* 場のカードは、押したら本当にそのカードに当たる点を探す。重なったカードや手札に隠れたカードは、
+       枠の真ん中が別のカードの上になり、A で別のカードを押していた (重なった SPEED の一番上が選べなかった) */
+    const hit = hand ? null : gpHitPoint(uid, rc.quad, r, accept);
+    out.push({ key: 'c:' + uid, hand, ...rc, ...(hit ? { hit } : {}) });
   };
   for (const uid of st.players[ME].hand) addCard(uid, true);
   if (boardPick && boardPick.req && Array.isArray(boardPick.req.candidates)) {
@@ -5403,6 +5427,31 @@ function gamepadTargets() {
   }
   return out;
 }
+/* そのカードの四隅の中で、押すとそのカードに当たる点 (無ければ null)。同じ形なら少しの間覚えておく (毎フレーム呼ばれる) */
+const gpHitCache = new Map();
+function gpHitPoint(uid, quad, r, accept) {
+  if (!gpPickAt || !quad) return null;
+  const sig = quad.map(p => p[0].toFixed(0) + ',' + p[1].toFixed(0)).join(' ') + (boardPick ? '|pick' : '');
+  const now = performance.now();
+  const c = gpHitCache.get(uid);
+  if (c && c.sig === sig && now - c.at < 300) return c.hit;
+  const at = (fx, fy) => {
+    const top = [quad[0][0] + (quad[1][0] - quad[0][0]) * fx, quad[0][1] + (quad[1][1] - quad[0][1]) * fx];
+    const bot = [quad[3][0] + (quad[2][0] - quad[3][0]) * fx, quad[3][1] + (quad[2][1] - quad[3][1]) * fx];
+    return { x: top[0] + (bot[0] - top[0]) * fy, y: top[1] + (bot[1] - top[1]) * fy };
+  };
+  let hit = null;
+  outer: for (const fy of [0.5, 0.3, 0.7, 0.12, 0.88, 0.04, 0.96]) {
+    for (const fx of [0.5, 0.25, 0.75]) {
+      const p = at(fx, fy);
+      if (p.x < r.left + 2 || p.y < r.top + 2 || p.x > r.right - 2 || p.y > r.bottom - 2) continue;
+      if (gpPickAt(p.x, p.y, accept) === uid) { hit = p; break outer; }
+    }
+  }
+  gpHitCache.set(uid, { sig, at: now, hit });
+  return hit;
+}
+
 /* 手札を畳んであるとき、パッドで下へ進む・LB/RB を押したら開く (開いたら true) */
 function gamepadOpenHand() {
   if (!stage || !board || isCompactHandUI() || VIEW.handOpen) return false;
