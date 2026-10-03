@@ -17,7 +17,11 @@ const BTN = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, BACK: 8, START: 9, UP: 12, D
 const STICK_ON = 0.55;               // スティックを倒したとみなす量
 const REPEAT_FIRST = 380;            // 押しっぱなしで次へ進むまで (ミリ秒)
 const REPEAT_NEXT = 140;
-const CLICKABLE = 'button, [role="button"], a[href], summary, input[type="checkbox"], input[type="radio"], input[type="range"], select';
+const CLICKABLE = 'button, [role="button"], a[href], summary, input[type="checkbox"], input[type="radio"], input[type="range"], select, ' +
+  'figure[data-z], i[data-info], input[type="text"], input[type="email"], input[type="password"], input:not([type]), textarea';
+const TEXT_INPUT = 'input[type="text"], input[type="email"], input[type="password"], input:not([type]), textarea';
+/* 見た目はボタンでも押しても何も起きない物 (RUN の地図で、まだ行けない所) */
+const DEAD = 'button.rn-node:not([data-node])';
 
 let canvasTargets = () => [];
 let openHand = null;                 // main.js が渡す: 畳んである手札を開く (開いたら true)        // main.js が渡す: [{ key, x, y, w, h, hand? }] (画面の座標)
@@ -158,7 +162,7 @@ function domTargets() {
   const out = [];
   for (const el of document.querySelectorAll(CLICKABLE)) {
     if (el.disabled || el.closest('[hidden], [inert]')) continue;
-    if (el.id === 'gpFocus' || el.classList.contains('rb-peek')) continue;
+    if (el.id === 'gpFocus' || el.classList.contains('rb-peek') || el.matches(DEAD)) continue;
     const r = visibleRect(el);
     if (!r) continue;
     out.push({ key: domKey(el), el, x: r.left, y: r.top, w: r.width, h: r.height });
@@ -244,7 +248,7 @@ function followNewWindow(list) {
   const fresh = list.filter(t => t.el && !seenEls.has(t.el));
   seenEls = new WeakSet(list.filter(t => t.el).map(t => t.el));
   if (!fresh.length) return false;
-  const box = fresh[0].el.closest('[role="dialog"], dialog, .show');
+  const box = fresh[0].el.closest('[role="dialog"], dialog, .show, .tt-morepop');
   if (!box || box.closest(NOT_WINDOW)) return false;
   const cur = current(list);
   if (cur && cur.el && box.contains(cur.el)) return false;
@@ -257,9 +261,11 @@ function followNewWindow(list) {
   return !!first;
 }
 /* 窓の中の主なボタン: 目立たせてあるもの、無ければ最初のもの (閉じる×は除く) */
+const PRIMARY = ['[autofocus]', '.tt-first .go', '.tt-main [data-mode="single"]', '#setupStart:not([disabled])', '.op-quick', '.op-card.last',
+  '.rn-node.reach', '.rn-go', '.sm-go', '.ts-daily:not(.done)', '#roomQuick', '.cm-item.cur', '#endAgain', '#pkYes', '.ga-pull',
+  '#tuPlay', '#pzAgain', '.pz-main', '.ok', '.primary', '.ready', '[data-primary]'];
 function primaryOf(list) {
-  const main = list.find(t => t.el.matches('[autofocus], .ok, .primary, .ready, [data-primary]'));
-  if (main) return main;
+  for (const sel of PRIMARY) { const t = list.find(x => x.el.matches(sel)); if (t) return t; }
   return list.find(t => !/close|(^|[\s-])x($|[\s-])/i.test(t.el.className) && !/^[×✕✖]$/.test((t.el.textContent || '').trim())) || list[0] || null;
 }
 
@@ -267,13 +273,19 @@ function primaryOf(list) {
 function scrollByStick(pad) {
   const y = pad.axes[3] || 0, x = pad.axes[2] || 0;
   if (Math.abs(y) < 0.3 && Math.abs(x) < 0.3) return;
+  const dx = Math.abs(x) >= 0.3 ? x * 22 : 0, dy = Math.abs(y) >= 0.3 ? y * 22 : 0;
+  const frame = document.querySelector('#cardListOv.show iframe');
+  if (frame && frame.contentWindow) { try { frame.contentWindow.scrollBy(dx, dy); return; } catch (e) { /* 別の場所のページは動かせない */ } }
   const cur = current(allTargets());
-  let box = null;
-  for (let p = cur && cur.el ? cur.el.parentElement : document.elementFromPoint(innerWidth / 2, innerHeight / 2); p && p !== document.body; p = p.parentElement) {
-    const cs = getComputedStyle(p);
-    if ((/(auto|scroll)/.test(cs.overflowY) && p.scrollHeight > p.clientHeight + 2) || (/(auto|scroll)/.test(cs.overflowX) && p.scrollWidth > p.clientWidth + 2)) { box = p; break; }
-  }
-  (box || document.scrollingElement).scrollBy(Math.abs(x) >= 0.3 ? x * 22 : 0, Math.abs(y) >= 0.3 ? y * 22 : 0);
+  const scroller = (start) => {
+    for (let p = start; p && p !== document.body; p = p.parentElement) {
+      const cs = getComputedStyle(p);
+      if ((/(auto|scroll)/.test(cs.overflowY) && p.scrollHeight > p.clientHeight + 2) || (/(auto|scroll)/.test(cs.overflowX) && p.scrollWidth > p.clientWidth + 2)) return p;
+    }
+    return null;
+  };
+  const box = (cur && cur.el && scroller(cur.el.parentElement)) || scroller(document.elementFromPoint(innerWidth / 2, innerHeight / 2));
+  (box || document.scrollingElement).scrollBy(dx, dy);
 }
 
 /* 選んでいる最中の「決定」(何枚か選ぶ・選んだ1枚・並べ替えの確定)。X で押せる */
@@ -355,7 +367,12 @@ function focus(t) {
   draw(t);
   /* 盤面の物は、マウスを乗せたときと同じ扱い (カードの説明が出る・手札が持ち上がる) */
   if (!t.el && cv()) fire('pointermove', t.hit || focusPos);
-  else if (t.el && t.el.scrollIntoView) t.el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  else if (t.el) {
+    if (t.el.scrollIntoView) t.el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    /* フォーカスを移すと、選んだときに説明が出る一覧 (対象を選ぶ窓) も動く。文字の欄は A で入るまで移さない */
+    const a = document.activeElement;
+    if (!t.el.matches(TEXT_INPUT) && !(a && a.matches && a.matches(TEXT_INPUT))) t.el.focus({ preventScroll: true });
+  }
 }
 
 function draw(t) {
@@ -388,7 +405,7 @@ function tapCenter() {
   if (el && el !== cv()) el.click();
 }
 /* ボタンのない、触ると閉じる全画面の表示 (B でも閉じる) */
-const TAP_CLOSE = ['#revealOv.show', '#zoomOv.show', '#levelUp.show', '.ga-reveal'];
+const TAP_CLOSE = ['.rn-stage', '#revealOv.show', '#zoomOv.show', '#levelUp.show', '.ga-reveal'];
 function tapCloseOpen() {
   for (const sel of TAP_CLOSE) {
     const el = [...document.querySelectorAll(sel)].pop();
@@ -402,6 +419,7 @@ function activate() {
   if (!list.length) { tapCenter(); return; }
   const t = current(list);
   if (!t) { focus(startTarget(list)); return; }
+  if (t.el && t.el.matches(TEXT_INPUT)) { t.el.focus(); if (t.el.select) t.el.select(); return; }
   if (t.el) { t.el.click(); return; }
   const p = t.hit || center(t);
   fire('pointermove', p);
@@ -415,7 +433,31 @@ function key(k) {
   const opts = { key: k, code: k, bubbles: true, cancelable: true };
   const el = document.activeElement;
   if (el && el !== document.body && el !== document.documentElement) el.dispatchEvent(new KeyboardEvent('keydown', opts));
-  else window.dispatchEvent(new KeyboardEvent('keydown', opts));
+  else document.dispatchEvent(new KeyboardEvent('keydown', opts));
+}
+
+/* B: ひとつ戻る。いちばん上の物から順に: 触ると閉じる表示 → 置く場所選びをやめる → 文字の欄から出る → MORE を閉じる →
+   その画面の「戻る」「閉じる」 → タイトルから入った画面ならタイトルへ → Esc。
+   その画面の戻るは、上に窓が重なっていない (見えている) ものだけ。「やめる」で中身が消えるもの (続きから遊ぶかの確認) は押さない */
+const BACK_SEL = ['.cl-x', '.cm-x', '.pc-x', '.cn-close', '.pz-x', '#storyConfirm .sm-back', '.sm-confirm [data-v=""]',
+  '#loginHint [data-h="close"]', '#pzLook', '#setupBack', '#roomBack', '#runOv [data-act="quitNo"]', '#runOv [data-act^="un"]', '#runOv [data-act="hub"]', '#runBack', '#endFloatBack'];
+function goBack() {
+  const ov = tapCloseOpen();
+  if (ov) { ov.click(); return; }                    // 公開された札の一覧・拡大・演出は、触ると閉じる
+  const scope = placeScope();
+  const cancel = scope && scope.querySelector('.placement-cancel');
+  if (cancel) { cancel.click(); return; }           // 置く場所を選んでいる間: カードを選ぶ前に戻る
+  const a = document.activeElement;
+  if (a && a.matches && a.matches(TEXT_INPUT)) { a.blur(); return; }
+  const more = document.querySelector('.tt-morepop:not([hidden])');
+  const moreBtn = document.querySelector('.tt-morebtn');
+  if (more && moreBtn) { moreBtn.click(); return; }
+  for (const sel of BACK_SEL) {
+    const el = [...document.querySelectorAll(sel)].reverse().find(x => !x.disabled && visibleRect(x));
+    if (el) { el.click(); return; }
+  }
+  if (titleBackShown()) { document.getElementById('titleBack').click(); return; }   // タイトルから入った画面: タイトルへ
+  key('Escape');
 }
 
 /* 右上の「← タイトル」が出ていて、上に窓が重なっていない (窓が出ていれば B はその窓を閉じる) */
@@ -428,6 +470,13 @@ function openOptions() {
   const btn = document.getElementById('btnSettings');
   if (btn && !btn.disabled && visibleRect(btn)) btn.click();
   else openSettings();
+}
+
+function clickIfShown(id) {
+  const el = document.getElementById(id);
+  if (!el || el.disabled || !visibleRect(el)) return false;
+  el.click();
+  return true;
 }
 
 function clickId(id) {
@@ -517,13 +566,13 @@ function stepHand(delta) {
 
 /* LB / RB: タブ (設定の左の項目・コレクションの絞り込みなど) を前後へ。
    タブは「選ばれている印」(aria-selected・.on/.active/.sel) を持つ、同じ親に並んだボタンの組。指している所に近い組を使う */
-const TAB_ON = (el) => el.getAttribute('aria-selected') === 'true' || el.getAttribute('aria-pressed') === 'true' || el.matches('.on, .active, .sel, .is-active, .selected, .cur');
+const TAB_ON = (el) => el.getAttribute('aria-selected') === 'true' || el.getAttribute('aria-pressed') === 'true' || el.matches('.on, .active, .sel, .is-active, .selected');
 function switchTab(delta) {
   const list = allTargets().filter(t => t.el);
   const groups = new Map();
   for (const t of list) {
     const el = t.el;
-    if (!(el.hasAttribute('aria-selected') || el.getAttribute('role') === 'tab' || /(^|[\s_-])tabs?([\s_-]|$)/i.test(el.className + ' ' + el.parentElement.className))) continue;
+    if (!el.parentElement || el.matches(TEXT_INPUT)) continue;
     const g = groups.get(el.parentElement) || [];
     g.push(t);
     groups.set(el.parentElement, g);
@@ -532,9 +581,11 @@ function switchTab(delta) {
   const from = cur ? center(cur) : { x: innerWidth / 2, y: innerHeight / 2 };
   let best = null, bestD = Infinity;
   for (const [parent, g] of groups) {
-    if (g.length < 2 || !g.some(t => TAB_ON(t.el))) continue;
+    /* 選ばれている印がちょうど1つの、2つ以上並んだボタン。タブらしい物 (role=tab・名前に tab) を先に */
+    if (g.length < 2 || g.filter(t => TAB_ON(t.el)).length !== 1) continue;
+    const tabby = g.some(t => t.el.getAttribute('role') === 'tab' || t.el.hasAttribute('aria-selected')) || /(^|[\s_-])tabs?([\s_-]|$)/i.test(parent.className) ? -1e12 : 0;
     const inside = cur && cur.el && parent.contains(cur.el) ? -1e9 : 0;
-    const d = Math.min(...g.map(t => Math.hypot(center(t).x - from.x, center(t).y - from.y))) + inside;
+    const d = Math.min(...g.map(t => Math.hypot(center(t).x - from.x, center(t).y - from.y))) + inside + tabby;
     if (d < bestD) { bestD = d; best = g; }
   }
   if (!best) return false;
@@ -620,23 +671,15 @@ function loop(now) {
   scrollByStick(pad);
 
   if (pressed(BTN.A)) activate();
-  if (pressed(BTN.B)) {
-    const ov = tapCloseOpen();
-    const scope = placeScope();
-    const cancel = scope && scope.querySelector('.placement-cancel');
-    if (ov) ov.click();                              // 公開された札の一覧・拡大・演出は、札でない所を触ると閉じる
-    else if (cancel) cancel.click();                 // 置く場所を選んでいる間: カードを選ぶ前に戻る
-    else if (titleBackShown()) document.getElementById('titleBack').click();   // タイトルから入った画面 (SINGLE GAME など): タイトルへ
-    else key('Escape');
-  }
+  if (pressed(BTN.B)) goBack();
   if (pressed(BTN.X)) {
     const go = confirmButton();
     if (go) go.click();                              // 選んでいる最中は「決定」(リフレッシュはその間できない)
     else clickId('btnRefresh');
   }
   if (pressed(BTN.Y)) clickId('btnHand');
-  if (pressed(BTN.LB)) stepHand(-1) || switchTab(-1);
-  if (pressed(BTN.RB)) stepHand(1) || switchTab(1);
+  if (pressed(BTN.LB)) stepHand(-1) || clickIfShown('rvPrev') || switchTab(-1);
+  if (pressed(BTN.RB)) stepHand(1) || clickIfShown('rvNext') || switchTab(1);
   if (pressed(BTN.BACK)) clickId('btnLog');
   if (pressed(BTN.START)) openOptions();
 

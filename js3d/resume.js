@@ -71,6 +71,24 @@ export function askResume(r) {
   });
 }
 
+/* はい / いいえ の確認 (ブラウザの confirm の代わり。confirm はゲームパッドで押せず、出ている間ゲームが止まった)。はいで true */
+export function askConfirm(title, note) {
+  const box = document.createElement('div');
+  box.className = 'sm-confirm';
+  box.setAttribute('role', 'dialog');
+  box.setAttribute('aria-modal', 'true');
+  box.setAttribute('aria-label', title);
+  box.innerHTML = '<div class="sm-card"><small>CONFIRM</small><h3></h3>' + (note ? '<p class="sm-note"></p>' : '') +
+    '<div class="sm-btns"><button type="button" class="sm-go" data-v="1">はい</button><button type="button" data-v="">戻る</button></div></div>';
+  box.querySelector('h3').textContent = title;
+  if (note) box.querySelector('.sm-note').textContent = note;
+  document.body.appendChild(box);
+  return new Promise((resolve) => {
+    box.querySelectorAll('[data-v]').forEach(b => { b.onclick = () => { box.remove(); resolve(!!b.dataset.v); }; });
+    box.querySelector('.sm-go').focus();
+  });
+}
+
 /* 対戦の途中でメニューへ戻るとき: 'suspend' (中断してあとで続きから) / 'quit' (やめる) / null (戻る) */
 export function askLeave() {
   const box = document.createElement('div');

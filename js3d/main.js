@@ -2298,17 +2298,17 @@ function bindInput() {
         location.href = location.pathname + (v === 'suspend' ? '?suspended=1' : '');
         return;
       }
-      if (!confirm('メニューに戻りますか？')) return;
+      if (!await RS.askConfirm('メニューに戻りますか？')) return;
       CW.battleEnded(); RS.endResume();
       location.href = location.pathname;
       return;
     }
     const st = shown();
     if (st && st.winner === null) {
-      if (!confirm('投了してメニューに戻りますか？')) return;
+      if (!await RS.askConfirm('投了してメニューに戻りますか？')) return;
       try { await ROOM.roomApi('action', { code: roomRm.code, version: roomRm.version, action: { type: 'surrender' } }); }
       catch (e) {
-        if (!isRoomGone(e) && !confirm('投了を送れませんでした (' + e.message + ')。それでもメニューに戻りますか？')) return;
+        if (!isRoomGone(e) && !await RS.askConfirm('投了を送れませんでした。それでもメニューに戻りますか？', e.message)) return;
       }
     }
     CW.battleEnded(); RS.endResume();
@@ -5405,6 +5405,12 @@ function gamepadTargets() {
   for (const uid of st.players[ME].hand) addCard(uid, true);
   if (boardPick && boardPick.req && Array.isArray(boardPick.req.candidates)) {
     for (const c of boardPick.req.candidates) if (typeof c === 'string' && !c.includes('|')) addCard(c, false);
+  }
+  /* 捨て札の山 (押すと中身の一覧。公開情報)。詰めコンパイルでは自分の山札も (押すと中身) */
+  if (!boardPick) {
+    for (const s of [ME, 1 - ME]) { const tr = st.players[s].trash; if (tr.length) addCard(tr[tr.length - 1], false); }
+    const dk = st.players[ME].deck;
+    if (puzzle && puzzle.tsume && dk.length) addCard(dk[0], false);
   }
   /* 場のカード (いちばん上の札だけ。重なった下の札は、上の札を指せば一覧で読める) */
   for (const line of st.lines) for (const side of [0, 1]) { const stack = line[side]; if (stack.length) addCard(stack[stack.length - 1], false); }
