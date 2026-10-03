@@ -4972,7 +4972,7 @@ function showEndActions(win) {
   el.querySelector('#endTop').onclick = goTitle;
   el.querySelector('#endBoard').onclick = () => {
     el.classList.remove('show');
-    UI.setPrompt('盤面を確認中 — 右下の「タイトルへ」で戻れます', 'end');
+    UI.setPrompt('盤面を確認中 — 右下の「結果を見る」で戻れます', 'end');
     /* 決着演出の斜めの寄りのままでは盤面が読めないので定位置へ戻す */
     stage.home(600);
     showEndFloat();
@@ -5188,8 +5188,17 @@ function showEndFloat() {
     el = document.createElement('div');
     el.id = 'endFloat';
     document.body.appendChild(el);
-    el.innerHTML = '<button class="btn" type="button">タイトルへ</button>';
-    el.querySelector('button').onclick = goTitle;
+    /* 結果を見る: 盤面を見たあと、対戦後の窓 (REMATCH・REVIEW・SAVE など) へ戻る。前は戻れず、タイトルへ行くしかなかった */
+    el.innerHTML = '<button class="btn" type="button" id="endFloatBack">結果を見る</button>' +
+      '<button class="btn" type="button" id="endFloatTop" style="margin-left:8px">タイトルへ</button>';
+    el.querySelector('#endFloatTop').onclick = goTitle;
+    el.querySelector('#endFloatBack').onclick = () => {
+      const bar = document.getElementById('endBar');
+      if (!bar) return;
+      el.classList.remove('show');
+      UI.setPrompt('');
+      bar.classList.add('show');
+    };
   }
   el.classList.add('show');
 }
