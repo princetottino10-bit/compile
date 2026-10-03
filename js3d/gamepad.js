@@ -56,6 +56,17 @@ export function initGamepad(opts) {
 
 const enabled = () => !!settings().gamepad;
 
+/* 点検用 (確かめの台本から): 指せる物の一覧と、それぞれから上下左右へ進んだ先 */
+window.__gpMap = () => {
+  const list = allTargets();
+  const name = (t) => (t.el ? (t.el.id || (t.el.textContent || '').trim().slice(0, 14) || t.el.className) : t.key) + (t.hand ? '[手札]' : '');
+  return list.map(t => {
+    const c = center(t), o = { name: name(t), at: [Math.round(c.x), Math.round(c.y)] };
+    for (const d of ['up', 'down', 'left', 'right']) { const n = t.hand ? fromHand(list, t, d) : nearest(list.filter(x => x !== t), c, d); o[d] = n ? name(n) : null; }
+    return o;
+  });
+};
+
 /* つないでいる間は body.gamepad。画面のボタンに、対応するコントローラーのボタンの印を出す (three-play.html の body.gamepad)。
    プレステのコントローラーは ✕ ○ □ △ (body.gp-ps)、ほかは Xbox の A B X Y。つないだときに一度だけ操作の案内を出す */
 function markPad(pad, announce) {
@@ -101,6 +112,14 @@ function setActive(on) {
     quadSvg.innerHTML = '<polygon class="gp-q-back"></polygon><polygon class="gp-q-line"></polygon>';
     document.body.appendChild(quadSvg);
   }
+  if (!document.getElementById('gpStyle')) {
+    const css = document.createElement('style');
+    css.id = 'gpStyle';
+    css.textContent = CONFIRM_IDS.map(id => 'body.gamepad #' + id + '::before').join(',') +
+      '{content:var(--gp-x);display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;margin-right:6px;' +
+      'vertical-align:-3px;font:900 10.5px/1 system-ui;color:#fff;background:var(--gp-x-c);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);}';
+    document.head.appendChild(css);
+  }
   ring.classList.toggle('on', on);
   quadSvg.classList.toggle('on', on);
   if (!on) { focusKey = null; releaseWalk(); }
@@ -125,7 +144,7 @@ function domTargets() {
   const out = [];
   for (const el of document.querySelectorAll(CLICKABLE)) {
     if (el.disabled || el.closest('[hidden], [inert]')) continue;
-    if (el.id === 'gpFocus') continue;
+    if (el.id === 'gpFocus' || el.classList.contains('rb-peek')) continue;
     const r = visibleRect(el);
     if (!r) continue;
     out.push({ key: el, el, x: r.left, y: r.top, w: r.width, h: r.height });
@@ -158,12 +177,35 @@ function allTargets() { return domTargets().concat(boardTargets()); }
 
 const center = (t) => ({ x: t.x + t.w / 2, y: t.y + t.h / 2 });
 
+/* 枠を新しく出すときの行き先: 前にいた所の近く。はじめては手札 (対戦ではまず手札を見る) */
+function startTarget(list) {
+  if (focusPos) return nearest(list, focusPos);
+  const hand = list.filter(t => t.hand);
+  return nearest(hand.length ? hand : list, { x: innerWidth / 2, y: innerHeight * 0.8 });
+}
+
+/* 選んでいる最中の「決定」(何枚か選ぶ・選んだ1枚・並べ替えの確定)。X で押せる */
+const CONFIRM_IDS = ['pkGo', 'pickGo', 'arrGo'];
+function confirmButton() {
+  for (const id of CONFIRM_IDS) {
+    const el = document.getElementById(id);
+    if (el && !el.disabled && visibleRect(el)) return el;
+  }
+  return null;
+}
+
 function current(list) {
   return list.find(t => t.key === focusKey) || null;
 }
 
 /* いちばん近い物 (向きの指定があれば、その向きにある物の中から) */
 function nearest(list, from, dir) {
+  /* 向きの指定があるときは、まず押した向きの扇の中 (横のずれが進む距離の1.5倍まで) から選ぶ。
+     無いときだけ広げる (前は右を押して斜め下の物へ行くことがあった) */
+  if (dir) return nearestIn(list, from, dir, 1.5) || nearestIn(list, from, dir, Infinity);
+  return nearestIn(list, from, null, Infinity);
+}
+function nearestIn(list, from, dir, cone) {
   let best = null, bestScore = Infinity;
   for (const t of list) {
     const c = center(t);
@@ -171,7 +213,7 @@ function nearest(list, from, dir) {
     if (dir) {
       const along = dir === 'left' ? -dx : dir === 'right' ? dx : dir === 'up' ? -dy : dy;
       const across = dir === 'left' || dir === 'right' ? Math.abs(dy) : Math.abs(dx);
-      if (along <= 4) continue;
+      if (along <= 4 || across > along * cone) continue;
       const score = along + across * 2.2;          // 横にずれた物より、まっすぐ先にある物を選ぶ
       if (score < bestScore) { bestScore = score; best = t; }
     } else {
@@ -235,7 +277,7 @@ function activate() {
   const list = allTargets();
   if (!list.length) { tapCenter(); return; }
   const t = current(list);
-  if (!t) { focus(nearest(list, focusPos || { x: innerWidth / 2, y: innerHeight * 0.8 })); return; }
+  if (!t) { focus(startTarget(list)); return; }
   if (t.el) { t.el.click(); return; }
   const p = t.hit || center(t);
   fire('pointermove', p);
@@ -260,13 +302,28 @@ function clickId(id) {
 function move(dir) {
   const list = allTargets();
   const cur = current(list);
-  if (!cur) { focus(nearest(list, focusPos || { x: innerWidth / 2, y: innerHeight * 0.8 })); return; }
-  const next = nearest(list.filter(t => t !== cur), center(cur), dir);
+  if (!cur) { focus(startTarget(list)); return; }
+  const next = cur.hand ? fromHand(list, cur, dir) : nearest(list.filter(t => t !== cur), center(cur), dir);
   if (next) focus(next);
   else if (dir === 'down') showHandThen(() => {
     const hand = boardTargets().filter(t => t.hand);
     if (hand.length) focus(nearest(hand, center(cur)));
   });
+}
+
+/* 手札からの行き先。手札は弧を描いて並び、選んだカードは持ち上がるので、高さで比べると手札の中を上下に迷う。
+   左右は並び順で隣のカード (端からは手札の外へ)、上下は手札の外へ出る */
+function fromHand(list, cur, dir) {
+  const hand = list.filter(t => t.hand).sort((a, b) => center(a).x - center(b).x);
+  const others = list.filter(t => !t.hand);
+  if (dir === 'left' || dir === 'right') {
+    const i = hand.findIndex(t => t.key === cur.key);
+    const n = hand[i + (dir === 'right' ? 1 : -1)];
+    if (n) return n;
+  }
+  /* 下は手札の下の物だけ (扇の外の REFRESH などへ横に飛ばない) */
+  if (dir === 'down') return nearestIn(others, center(cur), dir, 1.5);
+  return nearest(others, center(cur), dir);
 }
 
 /* 畳んである手札を開いて、出そろってから続ける */
@@ -339,7 +396,7 @@ function loop(now) {
   if (any && !active) {
     setActive(true);
     const list = allTargets();
-    focus(current(list) || nearest(list, focusPos || { x: innerWidth / 2, y: innerHeight * 0.8 }));
+    focus(current(list) || startTarget(list));
     prevButtons = b;
     return;                          // 最初のひと押しは、枠を出すだけ
   }
@@ -359,7 +416,11 @@ function loop(now) {
     if (ov) ov.click();                              // 公開された札の一覧・拡大・演出は、札でない所を触ると閉じる
     else key('Escape');
   }
-  if (pressed(BTN.X)) clickId('btnRefresh');
+  if (pressed(BTN.X)) {
+    const go = confirmButton();
+    if (go) go.click();                              // 選んでいる最中は「決定」(リフレッシュはその間できない)
+    else clickId('btnRefresh');
+  }
   if (pressed(BTN.Y)) clickId('btnHand');
   if (pressed(BTN.LB)) stepHand(-1);
   if (pressed(BTN.RB)) stepHand(1);
