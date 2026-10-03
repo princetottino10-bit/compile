@@ -30,12 +30,33 @@ export function initGamepad(opts) {
   canvasOpt = opts.canvas || null;
   canvasTargets = opts.targets || (() => []);
   if (!('getGamepads' in navigator)) return;
-  window.addEventListener('gamepadconnected', start);
-  window.addEventListener('gamepaddisconnected', () => { if (!pads().length) stop(); });
+  window.addEventListener('gamepadconnected', (ev) => { markPad(ev.gamepad, true); start(); });
+  window.addEventListener('gamepaddisconnected', () => { if (!pads().length) { stop(); markPad(null, false); } });
   /* マウス・タッチを使ったら枠を消す (パッドを触るとまた出る) */
   window.addEventListener('pointerdown', (ev) => { if (ev.isTrusted) setActive(false); }, true);
   window.addEventListener('mousemove', (ev) => { if (ev.isTrusted && (Math.abs(ev.movementX) + Math.abs(ev.movementY) > 2)) setActive(false); }, true);
-  if (pads().length) start();
+  if (pads().length) { markPad(pads()[0], false); start(); }
+}
+
+/* つないでいる間は body.gamepad。画面のボタンに、対応するコントローラーのボタンの印を出す (three-play.html の body.gamepad)。
+   プレステのコントローラーは ✕ ○ □ △ (body.gp-ps)、ほかは Xbox の A B X Y。つないだときに一度だけ操作の案内を出す */
+function markPad(pad, announce) {
+  const on = !!pad;
+  /* 名前で見分ける。「Wireless Controller」は Xbox の名前にも入るので、Xbox (045e) でないときだけプレステとみなす */
+  const id = (pad && pad.id) || '';
+  const ps = on && !/xbox|045e/i.test(id) && /054c|playstation|dualsense|dualshock|wireless controller/i.test(id);
+  document.body.classList.toggle('gamepad', on);
+  document.body.classList.toggle('gp-ps', ps);
+  if (on && announce) {
+    const t = document.getElementById('toast');
+    const a = ps ? '✕' : 'A', b = ps ? '○' : 'B';
+    if (t) {
+      t.textContent = 'コントローラーをつなぎました。十字キーで選んで ' + a + ' で決定、' + b + ' で戻る';
+      t.classList.add('show');
+      clearTimeout(markPad.timer);
+      markPad.timer = setTimeout(() => t.classList.remove('show'), 4200);
+    }
+  }
 }
 
 function pads() {
@@ -50,6 +71,7 @@ function setActive(on) {
     ring = document.createElement('div');
     ring.id = 'gpFocus';
     ring.setAttribute('aria-hidden', 'true');
+    ring.innerHTML = '<span class="gp-cap"><i class="gp-key gp-a"></i>決定<i class="gp-key gp-b"></i>戻る</span>';
     document.body.appendChild(ring);
   }
   ring.classList.toggle('on', on);
@@ -142,6 +164,8 @@ function draw(t) {
   ring.style.top = (t.y - pad) + 'px';
   ring.style.width = (t.w + pad * 2) + 'px';
   ring.style.height = (t.h + pad * 2) + 'px';
+  /* 「A 決定 B 戻る」は枠の下に出す。画面の下端に近い物 (手札など) を指しているときは、枠の上に */
+  ring.classList.toggle('cap-top', t.y + t.h + 40 > innerHeight);
 }
 
 /* 盤面の canvas へ、その場所を触ったのと同じ合図を送る */

@@ -878,6 +878,27 @@
   #gpFocus{position:fixed;z-index:9999;display:none;pointer-events:none;border:3px solid var(--pink);border-radius:8px;
     box-shadow:0 0 0 2px rgba(10,7,20,.85),0 0 16px rgba(255,79,163,.7);transition:left .12s ease-out,top .12s ease-out,width .12s ease-out,height .12s ease-out;}
   #gpFocus.on{display:block;}
+  /* コントローラーのボタンの印。Xbox は A B X Y (色つきの丸)、プレステは ✕ ○ □ △ (body.gp-ps) */
+  body.gamepad{--gp-a:"A";--gp-b:"B";--gp-x:"X";--gp-y:"Y";--gp-start:"\2261";--gp-back:"\29C9";
+    --gp-a-c:#3f9b2c;--gp-b-c:#d23a30;--gp-x-c:#2f6fe6;--gp-y-c:#c99a12;}
+  body.gamepad.gp-ps{--gp-a:"\2715";--gp-b:"\25CB";--gp-x:"\25A1";--gp-y:"\25B3";--gp-a-c:#3d6fd8;--gp-b-c:#d8394a;--gp-x-c:#c25fa8;--gp-y-c:#2fa37a;}
+  .gp-key{display:inline-grid;place-items:center;flex:none;width:19px;height:19px;border-radius:50%;margin:0 5px 0 0;
+    font:900 11px/1 system-ui;font-style:normal;color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);}
+  .gp-key.gp-a::before{content:var(--gp-a);} .gp-key.gp-a{background:var(--gp-a-c);}
+  .gp-key.gp-b::before{content:var(--gp-b);} .gp-key.gp-b{background:var(--gp-b-c);margin-left:10px;}
+  /* 指している枠の下に「A 決定 B 戻る」 */
+  #gpFocus .gp-cap{position:absolute;left:50%;top:calc(100% + 6px);transform:translateX(-50%);display:flex;align-items:center;white-space:nowrap;
+    padding:4px 10px 4px 5px;border-radius:999px;background:rgba(10,7,20,.88);border:1px solid rgba(255,79,163,.5);
+    font:800 11px/1 var(--font-ui,system-ui);letter-spacing:.06em;color:#fff;}
+  #gpFocus.cap-top .gp-cap{top:auto;bottom:calc(100% + 6px);}
+  /* 画面のボタンに、対応するボタンの印を前に付ける (つないでいる間だけ) */
+  body.gamepad #btnRefresh::before,body.gamepad #btnHand::before,body.gamepad #btnSettings::before,body.gamepad #btnLog::before{
+    display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;margin-right:7px;vertical-align:-3px;
+    font:900 10.5px/1 system-ui;color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);}
+  body.gamepad #btnRefresh::before{content:var(--gp-x);background:var(--gp-x-c);}
+  body.gamepad #btnHand::before{content:var(--gp-y);background:var(--gp-y-c);}
+  body.gamepad #btnSettings::before{content:var(--gp-start);background:#4a4560;border-radius:5px;width:20px;}
+  body.gamepad #btnLog::before{content:var(--gp-back);background:#4a4560;border-radius:5px;margin:0 0 6px;}
   @media (prefers-reduced-motion:reduce){ #gpFocus{transition:none;} }
   body:has(#endBar.show) #dock,body:has(#endBar.show) #btnRefresh,body:has(#endBar.show) #assist,
   body:has(#endFloat.show) #dock,body:has(#endFloat.show) #btnRefresh,body:has(#endFloat.show) #assist{display:none!important;}
@@ -3367,15 +3388,7 @@
   /* 喜ぶ: 軽く跳ねる */
   .avatar .av-bubble[data-mood="happy"].show{animation:av-pop .34s cubic-bezier(.2,.9,.3,1.3),av-hop .5s .34s ease-out;}
   @keyframes av-hop{40%{transform:translateY(-5px)}100%{transform:none}}
-  /* 館内放送の実況 (瑠璃): 名前の横に「館内放送」の札、地に細い走査線。縁はスピーカーの金色 */
-  .avatar .av-bubble[data-pa="1"]{
-    background:repeating-linear-gradient(0deg,rgba(255,211,107,.06) 0 1px,transparent 1px 3px),linear-gradient(100deg,rgba(16,13,8,.96),rgba(36,27,12,.92));
-    box-shadow:inset 3px 0 0 #ffd36b,inset 0 0 0 1px rgba(255,211,107,.5);}
-  .avatar.av-opp .av-bubble[data-pa="1"]{box-shadow:inset -3px 0 0 #ffd36b,inset 0 0 0 1px rgba(255,211,107,.5);}
-  .avatar .av-bubble[data-pa="1"] .av-name::after{content:"● 館内放送";margin-left:10px;color:#ffd36b;letter-spacing:.14em;animation:av-onair 1.1s steps(2,jump-none) infinite;}
-  @keyframes av-onair{50%{opacity:.35}}
   @media (prefers-reduced-motion:reduce){
-    .avatar .av-bubble[data-pa="1"] .av-name::after{animation:none;}
     .avatar .av-bubble.show,.avatar .av-bubble[data-mood].show{animation:none;}
     .avatar .av-text span{animation:none;opacity:1;}
   }
@@ -3901,10 +3914,10 @@
       "./js3d/aiclient.js": "./js3d/aiclient.js?v=0f85a7d42b",
       "./js3d/aidecks.js": "./js3d/aidecks.js?v=8d249240bd",
       "./js3d/arena.js": "./js3d/arena.js?v=ef66a1e5bb",
-      "./js3d/audio.js": "./js3d/audio.js?v=1f356ed161",
+      "./js3d/audio.js": "./js3d/audio.js?v=55aff3d892",
       "./js3d/avatar-boss-lines.js": "./js3d/avatar-boss-lines.js?v=507ebedfac",
-      "./js3d/avatar-lines.js": "./js3d/avatar-lines.js?v=1253b6112b",
-      "./js3d/avatar.js": "./js3d/avatar.js?v=7214803da1",
+      "./js3d/avatar-lines.js": "./js3d/avatar-lines.js?v=9990d92378",
+      "./js3d/avatar.js": "./js3d/avatar.js?v=5b1db0aa4f",
       "./js3d/backdrops.js": "./js3d/backdrops.js?v=90faf9612d",
       "./js3d/bgm.js": "./js3d/bgm.js?v=22b4286542",
       "./js3d/board.js": "./js3d/board.js?v=46b7e96300",
@@ -3931,7 +3944,7 @@
       "./js3d/gacha-ui.js": "./js3d/gacha-ui.js?v=9dfcb0ccbf",
       "./js3d/gacha.js": "./js3d/gacha.js?v=ce3d4f3faa",
       "./js3d/gachafx.js": "./js3d/gachafx.js?v=3d15a2226f",
-      "./js3d/gamepad.js": "./js3d/gamepad.js?v=ec4ba51993",
+      "./js3d/gamepad.js": "./js3d/gamepad.js?v=25ab4aee08",
       "./js3d/holo.js": "./js3d/holo.js?v=9c52bc0510",
       "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c",
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
@@ -4002,8 +4015,8 @@
   <link rel="modulepreload" href="js3d/feel.js?v=fa59a5b9fb">
   <link rel="modulepreload" href="js3d/pickaid.js?v=7fecd8f779">
   <link rel="modulepreload" href="js3d/spectate.js?v=e7aaf6e4e9">
-  <link rel="modulepreload" href="js3d/avatar.js?v=7214803da1">
-  <link rel="modulepreload" href="js3d/avatar-lines.js?v=1253b6112b">
+  <link rel="modulepreload" href="js3d/avatar.js?v=5b1db0aa4f">
+  <link rel="modulepreload" href="js3d/avatar-lines.js?v=9990d92378">
   <link rel="modulepreload" href="js3d/motion.js?v=36861b0081">
   <link rel="modulepreload" href="js3d/gacha.js?v=ce3d4f3faa">
   <link rel="modulepreload" href="js3d/chips.js?v=e67e280b76">
@@ -4053,7 +4066,7 @@
   <link rel="modulepreload" href="js3d/cardtex.js?v=dca3bfc6ef">
   <link rel="modulepreload" href="js3d/fx.js?v=f76521724c">
   <link rel="modulepreload" href="js3d/arena.js?v=ef66a1e5bb">
-  <link rel="modulepreload" href="js3d/audio.js?v=1f356ed161">
+  <link rel="modulepreload" href="js3d/audio.js?v=55aff3d892">
   <link rel="modulepreload" href="js3d/mutebutton.js?v=1362dbc4d6">
   <link rel="modulepreload" href="js3d/bgm.js?v=22b4286542">
   <link rel="modulepreload" href="js3d/emblems.js?v=7b77a0b2df">
@@ -4068,7 +4081,7 @@
   <link rel="modulepreload" href="js3d/logformat.js?v=6bbf54aba6">
   <link rel="modulepreload" href="js3d/steps.js?v=13e73b20fe">
   <link rel="modulepreload" href="js3d/dialogs.js?v=f93ba7f0c5">
-  <link rel="modulepreload" href="js3d/gamepad.js?v=ec4ba51993">
+  <link rel="modulepreload" href="js3d/gamepad.js?v=25ab4aee08">
   <link rel="modulepreload" href="js3d/cloudsave.js?v=3e6ea586df">
   <link rel="modulepreload" href="js3d/admin-ui.js?v=f467e2b1a6">
   <link rel="modulepreload" href="js3d/device.js?v=b519fe2cae">
