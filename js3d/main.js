@@ -2555,6 +2555,7 @@ function handForTurn(turn) {
 }
 
 function updateDesktopHandDrawer(ev) {
+  if (!ev.isTrusted) return;                       // ゲームパッド (gamepad.js) から送った動き: 手札を勝手に開け閉めしない
   if (isCompactHandUI() || !stage || selectedUid !== null || handPinnedClosed) return;
   const r = stage.renderer.domElement.getBoundingClientRect();
   const fromBottom = r.bottom - ev.clientY;
@@ -5362,11 +5363,19 @@ function gamepadTargets() {
   }
   /* 場のカード (いちばん上の札だけ。重なった下の札は、上の札を指せば一覧で読める) */
   for (const line of st.lines) for (const side of [0, 1]) { const stack = line[side]; if (stack.length) addCard(stack[stack.length - 1], false); }
-  /* 置ける所 (カードを選んでいるとき光る置き場) と、ラインを選ぶとき */
+  /* プロトコルの板: 並べ替え (効果・コントロール) で入れ替える板、ふだんは押すとスタックの一覧が開く */
+  const shownObj = (o) => { for (let x = o; x; x = x.parent) if (!x.visible) return false; return true; };
+  if (panels && panels.panels) panels.panels.forEach((p, i) => {
+    const m = [p.loading && p.loading.mesh, p.compiled && p.compiled.mesh].find(x => x && shownObj(x));
+    const rc = m && rectOf(m);
+    if (rc) out.push({ key: 'pl:' + i, ...rc });
+  });
+  /* 置ける所 (カードを選んでいるとき光る置き場)、ラインを選ぶとき、プレイする効果で札を選んだあとの置き場 (hover で光る) */
   const lineWanted = boardPick && boardPick.kind === 'line' ? new Set(boardPick.lines) : null;
   for (const pad of pads) {
     const ud = pad.userData;
-    const want = ud.pulse > 0 || (lineWanted && lineWanted.has(ud.line) && ud.side === ME);
+    const want = ud.pulse > 0 || (boardPick && boardPick.kind === 'free' && boardPick.sel && ud.hover)
+      || (lineWanted && lineWanted.has(ud.line) && ud.side === ME);
     if (!want) continue;
     const rc = rectOf(pad);
     if (rc) out.push({ key: 'p:' + ud.line + ':' + ud.side, ...rc });

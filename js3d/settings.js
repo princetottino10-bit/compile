@@ -15,7 +15,7 @@ let avatarList = () => [];
 export function setAvatarOptionsGate(shown, list) { avatarOptionsShown = shown; if (list) avatarList = list; }
 /* mat 以下は見た目 (レベルの報酬、cosmetics-ui.js) */
 /* autoPick: 選べるものが1つしかない選択は自動で選ぶ / oppSummary: 相手の番のまとめ / beginner: 初心者モード (おすすめの手の HINT を出す。最初はオフ) */
-const DEFAULTS = { speed: 1, sfx: 80, bgmVol: 30, voiceVol: 80, bgm: 'burst', pauses: true, autoPick: true, oppSummary: true, beginner: false, foil: true, mat: 'neon', sleeve: 'default', marker: 'default', ccolor: 'default',
+const DEFAULTS = { speed: 1, sfx: 80, bgmVol: 30, voiceVol: 80, bgm: 'burst', pauses: true, autoPick: true, oppSummary: true, beginner: false, gamepad: false, foil: true, mat: 'neon', sleeve: 'default', marker: 'default', ccolor: 'default',
   victory: 'default', title: '', icon: '',
   /* おまかせで今すぐ始める: 相手の強さ (0 かんたん / 1 ふつう / 2 つよい) と、今日のデイリーのプロトコルを自分に入れるか */
   quickLevel: 0, quickDaily: false,
@@ -143,6 +143,8 @@ export function openSettings(extra) {
       '<input type="checkbox" id="stOppSummary"' + (s.oppSummary ? ' checked' : '') + '></label>' +
     '<label class="st-row st-check"><span>初心者モード<small>CPU 戦で HINT ボタンを出します。押すと、CPU ならどう打つかを盤面で光らせます</small></span>' +
       '<input type="checkbox" id="stBeginner"' + (s.beginner ? ' checked' : '') + '></label>' +
+    '<label class="st-row st-check"><span>ゲームパッドで遊ぶ<small>Xbox・プレステなどのコントローラーで操作します。オンにしたら、コントローラーのボタンを1回押してください</small></span>' +
+      '<input type="checkbox" id="stGamepad"' + (s.gamepad ? ' checked' : '') + '></label>' +
     '<h4 class="st-group">おまかせで対戦</h4>' +
     '<div class="st-row"><span>おまかせで対戦する強さ<small>「おまかせで今すぐ始める」の相手</small></span><div class="st-seg" role="group" aria-label="おまかせで対戦する強さ">' +
       QUICK_LEVELS.map((label, i) => '<button type="button" data-qlevel="' + i + '" class="' + ((s.quickLevel | 0) === i ? 'on' : '') + '">' + label + '</button>').join('') +
@@ -197,6 +199,7 @@ export function openSettings(extra) {
   el.querySelector('#stAutoPick').onchange = (ev) => setSetting('autoPick', ev.target.checked);
   el.querySelector('#stOppSummary').onchange = (ev) => setSetting('oppSummary', ev.target.checked);
   el.querySelector('#stBeginner').onchange = (ev) => setSetting('beginner', ev.target.checked);
+  el.querySelector('#stGamepad').onchange = (ev) => setSetting('gamepad', ev.target.checked);
   el.querySelector('#stFoil').onchange = (ev) => setSetting('foil', ev.target.checked);
   el.querySelector('#stQuickDaily').onchange = (ev) => setSetting('quickDaily', ev.target.checked);
   const avShow = el.querySelector('#stAvatarShow');

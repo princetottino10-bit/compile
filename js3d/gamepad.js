@@ -5,10 +5,13 @@
  *     対戦の決まりや画面の流れには手を入れない (今のタップの処理をそのまま使う)
  *   ・指せる所 = 画面に見えていて、ほかの物に覆われていないボタン + main.js が渡す盤面の物 (手札・選べる札・ライン)
  *   ・マウスやタッチを使ったら枠は消える (パッドを触るとまた出る)
+ * 設定の「ゲームパッドで遊ぶ」をオンにしたときだけ動く (最初はオフ。ハンドルなどをつないでいる人が勝手に動かないように)。
  * ボタン: A 決定 / B 戻る (Esc) / X リフレッシュ / Y 手札を開く・畳む / LB・RB 手札を左右に / BACK ログ / START 設定
  * 物語の歩く画面 (story-world.js): 左スティック・十字キーで歩く (矢印キーと同じ)、A で話す・調べる (E と同じ)。
  *   会話が出ている間は A で次のセリフへ (Enter と同じ)。上に窓が出ているときは、ふつうに枠でボタンを選ぶ
  * ========================================================================= */
+
+import { settings, onSettings } from './settings.js';
 
 const BTN = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, BACK: 8, START: 9, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
 const STICK_ON = 0.55;               // スティックを倒したとみなす量
@@ -33,13 +36,23 @@ export function initGamepad(opts) {
   canvasOpt = opts.canvas || null;
   canvasTargets = opts.targets || (() => []);
   if (!('getGamepads' in navigator)) return;
-  window.addEventListener('gamepadconnected', (ev) => { markPad(ev.gamepad || pads()[0], true); start(); });
-  window.addEventListener('gamepaddisconnected', () => { if (!pads().length) { stop(); markPad(null, false); } });
+  window.addEventListener('gamepadconnected', () => { if (!enabled()) return; markPad(pickPad(), true); start(); });
+  window.addEventListener('gamepaddisconnected', () => { if (!pickPad()) { stop(); markPad(null, false); } });
+  /* 設定でオン・オフしたとき */
+  onSettings(() => {
+    if (enabled()) { const p = pickPad(); if (p) { markPad(p, false); start(); } }
+    else { stop(); markPad(null, false); }
+  });
+  /* 画面の裏に回った・ほかの窓へ移ったら、押しているつもりの矢印キーを離す (歩き続けないように) */
+  window.addEventListener('blur', () => releaseWalk());
+  document.addEventListener('visibilitychange', () => { if (document.hidden) releaseWalk(); });
   /* マウス・タッチを使ったら枠を消す (パッドを触るとまた出る) */
   window.addEventListener('pointerdown', (ev) => { if (ev.isTrusted) setActive(false); }, true);
   window.addEventListener('mousemove', (ev) => { if (ev.isTrusted && (Math.abs(ev.movementX) + Math.abs(ev.movementY) > 2)) setActive(false); }, true);
-  if (pads().length) { markPad(pads()[0], false); start(); }
+  if (enabled() && pickPad()) { markPad(pickPad(), false); start(); }
 }
+
+const enabled = () => !!settings().gamepad;
 
 /* つないでいる間は body.gamepad。画面のボタンに、対応するコントローラーのボタンの印を出す (three-play.html の body.gamepad)。
    プレステのコントローラーは ✕ ○ □ △ (body.gp-ps)、ほかは Xbox の A B X Y。つないだときに一度だけ操作の案内を出す */
@@ -65,8 +78,13 @@ function markPad(pad, announce) {
 function pads() {
   return [...(navigator.getGamepads ? navigator.getGamepads() : [])].filter(Boolean);
 }
+/* 使う機器: ボタンの並びが標準 (standard) のものだけ。いちばん最近さわったもの。
+   ハンドルやペダルは並びが標準でないことが多く、休んでいる位置の軸が端 (±1) のこともあるので読まない */
+function pickPad() {
+  return pads().filter(p => p.mapping === 'standard').sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))[0] || null;
+}
 function start() { if (!raf) raf = requestAnimationFrame(loop); }
-function stop() { cancelAnimationFrame(raf); raf = 0; setActive(false); }
+function stop() { cancelAnimationFrame(raf); raf = 0; setActive(false); releaseWalk(); }
 
 function setActive(on) {
   active = on;
@@ -84,7 +102,7 @@ function setActive(on) {
   }
   ring.classList.toggle('on', on);
   quadSvg.classList.toggle('on', on);
-  if (!on) focusKey = null;
+  if (!on) { focusKey = null; releaseWalk(); }
 }
 
 /* ---------- 指せる所 ---------- */
@@ -192,8 +210,24 @@ function fire(type, p) {
   if (el) el.dispatchEvent(ev);
 }
 
+/* 画面の真ん中にある物を押す。ボタンのない全画面の表示 (制覇の演出・カードの拡大・ガチャの結果など) は、触ると閉じる作り */
+function tapCenter() {
+  const el = document.elementFromPoint(innerWidth / 2, innerHeight / 2);
+  if (el && el !== cv()) el.click();
+}
+/* ボタンのない、触ると閉じる全画面の表示 (B でも閉じる) */
+const TAP_CLOSE = ['#revealOv.show', '#zoomOv.show', '#levelUp.show', '.ga-reveal'];
+function tapCloseOpen() {
+  for (const sel of TAP_CLOSE) {
+    const el = [...document.querySelectorAll(sel)].pop();
+    if (el && getComputedStyle(el).display !== 'none') return el;
+  }
+  return null;
+}
+
 function activate() {
   const list = allTargets();
+  if (!list.length) { tapCenter(); return; }
   const t = current(list);
   if (!t) { focus(nearest(list, focusPos || { x: innerWidth / 2, y: innerHeight * 0.8 })); return; }
   if (t.el) { t.el.click(); return; }
@@ -238,13 +272,14 @@ function stepHand(delta) {
 const ARROW = { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight' };
 const walkHeld = new Set();          // いま押しているつもりの矢印キー
 function storyMode() {
+  if (document.querySelector('#storyScene.show')) return 'scene';          // 会話が出ている (歩く画面の上でも、対戦のあとでも)
   const world = document.getElementById('storyWorld');
   if (!world || !world.isConnected || getComputedStyle(world).display === 'none') return null;
-  if (document.querySelector('#storyScene.show')) return 'scene';          // 会話が出ている
   /* 画面の真ん中が歩く画面のままなら歩ける (上に確認の窓などが出ていれば、ふつうの枠の操作) */
   const top = document.elementFromPoint(innerWidth / 2, innerHeight / 2);
   return top && world.contains(top) ? 'walk' : null;
 }
+function releaseWalk() { if (walkHeld.size) setWalk(new Set()); }
 function setWalk(dirs) {
   for (const d of Object.keys(ARROW)) {
     const want = dirs.has(d);
@@ -261,6 +296,7 @@ function storyInput(pad, b, pressed) {
   if (mode === 'scene') {
     if (walkHeld.size) setWalk(new Set());
     if (pressed(BTN.A)) key('Enter');                       // 次のセリフへ
+    if (pressed(BTN.B)) key('Escape');                      // 会話を飛ばす (SKIP と同じ)
     return true;
   }
   const ax = pad.axes[0] || 0, ay = pad.axes[1] || 0;
@@ -271,6 +307,7 @@ function storyInput(pad, b, pressed) {
   if (b[BTN.DOWN] || ay > 0.4) dirs.add('down');
   setWalk(dirs);
   if (pressed(BTN.A)) key('e');                             // 話す・調べる (近くに何もなければ何も起きない)
+  if (pressed(BTN.B)) { const back = document.getElementById('titleBack'); if (back && back.offsetParent) back.click(); }   // 歩く画面から戻る
   if (pressed(BTN.START)) clickId('btnSettings');
   return true;
 }
@@ -278,7 +315,8 @@ function storyInput(pad, b, pressed) {
 /* ---------- 毎フレーム: ボタンとスティックを読む ---------- */
 function loop(now) {
   raf = requestAnimationFrame(loop);
-  const pad = pads()[0];
+  if (!enabled()) return;
+  const pad = pickPad();
   if (!pad) return;
   const b = pad.buttons.map(x => x.pressed || x.value > 0.5);
   const pressed = (i) => b[i] && !prevButtons[i];
@@ -301,7 +339,11 @@ function loop(now) {
   else if (list.length) focus(nearest(list, focusPos || { x: innerWidth / 2, y: innerHeight / 2 }));
 
   if (pressed(BTN.A)) activate();
-  if (pressed(BTN.B)) key('Escape');
+  if (pressed(BTN.B)) {
+    const ov = tapCloseOpen();
+    if (ov) ov.click();                              // 公開された札の一覧・拡大・演出は、札でない所を触ると閉じる
+    else key('Escape');
+  }
   if (pressed(BTN.X)) clickId('btnRefresh');
   if (pressed(BTN.Y)) clickId('btnHand');
   if (pressed(BTN.LB)) stepHand(-1);
