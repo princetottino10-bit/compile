@@ -6,6 +6,8 @@
  *   ・指せる所 = 画面に見えていて、ほかの物に覆われていないボタン + main.js が渡す盤面の物 (手札・選べる札・ライン)
  *   ・マウスやタッチを使ったら枠は消える (パッドを触るとまた出る)
  * ボタン: A 決定 / B 戻る (Esc) / X リフレッシュ / Y 手札を開く・畳む / LB・RB 手札を左右に / BACK ログ / START 設定
+ * 物語の歩く画面 (story-world.js): 左スティック・十字キーで歩く (矢印キーと同じ)、A で話す・調べる (E と同じ)。
+ *   会話が出ている間は A で次のセリフへ (Enter と同じ)。上に窓が出ているときは、ふつうに枠でボタンを選ぶ
  * ========================================================================= */
 
 const BTN = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, BACK: 8, START: 9, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
@@ -201,10 +203,13 @@ function activate() {
   fire('pointerup', p);
 }
 
+/* キーを1回押したことにする。フォーカスのある物に送れば window まで上がって届くので、送るのは1か所だけ
+   (前は両方に送っていて、1回の押下が2回に数えられ、会話が1行飛ぶ・戻るが2回効くことがあった) */
 function key(k) {
   const opts = { key: k, code: k, bubbles: true, cancelable: true };
-  (document.activeElement || document.body).dispatchEvent(new KeyboardEvent('keydown', opts));
-  window.dispatchEvent(new KeyboardEvent('keydown', opts));
+  const el = document.activeElement;
+  if (el && el !== document.body && el !== document.documentElement) el.dispatchEvent(new KeyboardEvent('keydown', opts));
+  else window.dispatchEvent(new KeyboardEvent('keydown', opts));
 }
 
 function clickId(id) {
@@ -229,6 +234,47 @@ function stepHand(delta) {
   focus(hand[n]);
 }
 
+/* ---------- 物語の歩く画面 ---------- */
+const ARROW = { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight' };
+const walkHeld = new Set();          // いま押しているつもりの矢印キー
+function storyMode() {
+  const world = document.getElementById('storyWorld');
+  if (!world || !world.isConnected || getComputedStyle(world).display === 'none') return null;
+  if (document.querySelector('#storyScene.show')) return 'scene';          // 会話が出ている
+  /* 画面の真ん中が歩く画面のままなら歩ける (上に確認の窓などが出ていれば、ふつうの枠の操作) */
+  const top = document.elementFromPoint(innerWidth / 2, innerHeight / 2);
+  return top && world.contains(top) ? 'walk' : null;
+}
+function setWalk(dirs) {
+  for (const d of Object.keys(ARROW)) {
+    const want = dirs.has(d);
+    if (want && !walkHeld.has(d)) { walkHeld.add(d); window.dispatchEvent(new KeyboardEvent('keydown', { key: ARROW[d], bubbles: true, cancelable: true })); }
+    if (!want && walkHeld.has(d)) { walkHeld.delete(d); window.dispatchEvent(new KeyboardEvent('keyup', { key: ARROW[d], bubbles: true })); }
+  }
+}
+/* 歩く・話す。扱ったら true (ふつうの枠の操作はしない) */
+function storyInput(pad, b, pressed) {
+  const mode = storyMode();
+  if (!mode) { if (walkHeld.size) setWalk(new Set()); return false; }
+  ring && ring.classList.remove('on');
+  quadSvg && quadSvg.classList.remove('on');
+  if (mode === 'scene') {
+    if (walkHeld.size) setWalk(new Set());
+    if (pressed(BTN.A)) key('Enter');                       // 次のセリフへ
+    return true;
+  }
+  const ax = pad.axes[0] || 0, ay = pad.axes[1] || 0;
+  const dirs = new Set();
+  if (b[BTN.LEFT] || ax < -0.4) dirs.add('left');
+  if (b[BTN.RIGHT] || ax > 0.4) dirs.add('right');
+  if (b[BTN.UP] || ay < -0.4) dirs.add('up');
+  if (b[BTN.DOWN] || ay > 0.4) dirs.add('down');
+  setWalk(dirs);
+  if (pressed(BTN.A)) key('e');                             // 話す・調べる (近くに何もなければ何も起きない)
+  if (pressed(BTN.START)) clickId('btnSettings');
+  return true;
+}
+
 /* ---------- 毎フレーム: ボタンとスティックを読む ---------- */
 function loop(now) {
   raf = requestAnimationFrame(loop);
@@ -245,6 +291,8 @@ function loop(now) {
     return;                          // 最初のひと押しは、枠を出すだけ
   }
   if (!active) { prevButtons = b; return; }
+  if (storyInput(pad, b, pressed)) { prevButtons = b; held = { dir: null, since: now, last: now }; return; }
+  if (ring && !ring.classList.contains('on')) { ring.classList.add('on'); quadSvg.classList.add('on'); }
 
   /* 指している物が動いた・消えたら、枠を追わせる */
   const list = allTargets();
