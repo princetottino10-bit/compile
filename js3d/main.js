@@ -1328,7 +1328,7 @@ function startTsumeAuto(ts, test = false) {
   tsumeAutoUsed = true;
   UI.toast('AUTO: 模範解答を指します', 2400);
   deselect(); showPreview(null);
-  if (!busy) afterTurn();
+  tsumeAutoAction();                               // 手番の始まりの処理が先に指していれば、こちらは何もしない
 }
 /* 読み直したあと (?auto=1): 管理者だと分かってから始める (ログインの状態は裏で読むので、少し待つ) */
 async function resumeTsumeAuto(ts) {
@@ -1338,12 +1338,22 @@ async function resumeTsumeAuto(ts) {
   for (let i = 0; i < 25 && !accountState().admin; i++) await TW.wait(200);
   if (accountState().admin) startTsumeAuto(ts);
 }
-/* 自分の番の手 (play など) を AUTO で指す。指したら true */
+/* 自分の番の手 (play など) を AUTO で指す。指したら true。
+   手番の始まりの処理と AUTO を始める処理が同時に来ても、指すのは1か所だけにする (tsumeAutoBusy)。
+   前は読み直した直後 (?auto=1) に2か所が同じ手を取り合い、1つ目の選択の答えがなくなって途中で止まっていた */
+let tsumeAutoBusy = false;
 async function tsumeAutoAction() {
   if (!tsumeAuto || !tsumeAuto.length || tsumeAuto[0].type === 'choose') return false;
   if (!cur || cur.state.turn !== ME || (cur.requests && cur.requests.length)) return false;
-  await TW.wait(TSUME_AUTO_GAP);
-  const action = tsumeAuto.shift();
+  if (tsumeAutoBusy) return true;                  // もう片方が指す
+  tsumeAutoBusy = true;
+  let action;
+  try {
+    await TW.wait(TSUME_AUTO_GAP);
+    for (let i = 0; busy && i < 100; i++) await TW.wait(100);     // 前の表示 (手番の知らせなど) が終わるまで
+    if (!tsumeAuto || !tsumeAuto.length || tsumeAuto[0].type === 'choose') return true;
+    action = tsumeAuto.shift();
+  } finally { tsumeAutoBusy = false; }             // step の中でまた呼ばれるので、指す前に戻す
   await step(action);
   return true;
 }
@@ -4627,6 +4637,7 @@ async function drainRequests() {
     await uiHold;                                   // 前の表示 (公開されたカードなど) を閉じてから
     const req = cur.requests[0];
     let picks;
+    let fromTsumeAuto = false;                      // 詰めコンパイルの AUTO が答えた (受け付けられなければ AUTO を止める)
     /* タッグで味方が指しているとき・AUTO のときは、自分の側の選択も CPU が答える */
     const cpuMine = req.player === ME && (partnerMove() || autoFor(ME));
     const merged = !demoMode && !cpuMine ? mergedYesTarget(req) : null;
@@ -4642,6 +4653,7 @@ async function drainRequests() {
       UI.setPrompt('AUTO が選択しています…', 'wait');
       await TW.wait(TSUME_AUTO_GAP);
       picks = tsumeAuto.shift().picks;
+      fromTsumeAuto = true;
     } else if (controlAsk) {
       /* コントロールの「並べ替えますか」は聞かずに、盤面の板で並べ替えるかどうかまで決めてもらう */
       UI.setPrompt('');
@@ -4678,6 +4690,12 @@ async function drainRequests() {
     busy = true;
     const answer = picks === PICK_BACK ? { type: 'back', id: req.id } : { type: 'choose', id: req.id, picks };
     const res = Engine.apply(cur.state, answer);
+    if (res.error && fromTsumeAuto) {
+      /* AUTO の答えが合わない: 黙って待ち続けないよう、理由を出して AUTO を終える (このあとは自分で選べる) */
+      tsumeAuto = null;
+      UI.toast('AUTO: 模範解答の選択が受け付けられませんでした (' + res.error + ')。ここから先は自分で選べます', 6000);
+      busy = false; continue;
+    }
     if (res.error) { UI.toast(res.error); busy = false; continue; }   // 再質問へ
     logAction(answer);
     cur = res;
