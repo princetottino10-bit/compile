@@ -79,6 +79,7 @@ import { buildRunDefs } from './runcards.js';
 import { createLogFormat } from './logformat.js';
 import { meaningfulSteps as cutSteps } from './steps.js';
 import { initDialogs } from './dialogs.js';
+import { initGamepad } from './gamepad.js';
 
 const Engine = window.CompileEngine;
 initDialogs();
@@ -2195,7 +2196,8 @@ function bindInput() {
       select(ud.uid === selectedUid ? null : ud.uid);
       if (selectedUid) {
         drag = { uid: selectedUid, sx: ev.clientX, sy: ev.clientY, moved: false, lastX: ev.clientX };
-        el.setPointerCapture && el.setPointerCapture(ev.pointerId);
+        /* ゲームパッド (gamepad.js) から送った合図には、捕まえられる指がない。捕まえられなくても続ける */
+        if (ev.isTrusted && el.setPointerCapture) { try { el.setPointerCapture(ev.pointerId); } catch (e) { /* 指がもう離れた */ } }
       }
       return;
     }
@@ -5306,6 +5308,55 @@ function placeDialogsNearBoard() {
   root.setProperty('--dlg-x', Math.round(far.x + 18) + 'px');
   root.setProperty('--dlg-y', Math.round(Math.max(44, far.y)) + 'px');
 }
+/* ゲームパッド (gamepad.js) で指せる盤面の物。画面の座標で返す:
+   自分の手札 (hand)・場のカード (説明を読む)・選んでいる途中の候補・置けるライン (光っている置き場) */
+const gpBox = new THREE.Box3();
+const gpV = new THREE.Vector3();
+function gamepadTargets() {
+  if (!stage || !board || !cur) return [];
+  const st = shown();
+  if (!st) return [];
+  const r = stage.renderer.domElement.getBoundingClientRect();
+  const rectOf = (obj) => {
+    gpBox.setFromObject(obj);
+    if (gpBox.isEmpty()) return null;
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const x of [gpBox.min.x, gpBox.max.x]) for (const y of [gpBox.min.y, gpBox.max.y]) for (const z of [gpBox.min.z, gpBox.max.z]) {
+      gpV.set(x, y, z).project(stage.camera);
+      if (gpV.z > 1) return null;                     // カメラの後ろ
+      const sx = r.left + (gpV.x + 1) / 2 * r.width, sy = r.top + (1 - gpV.y) / 2 * r.height;
+      x0 = Math.min(x0, sx); y0 = Math.min(y0, sy); x1 = Math.max(x1, sx); y1 = Math.max(y1, sy);
+    }
+    return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+  };
+  const out = [];
+  const seen = new Set();
+  const addCard = (uid, hand) => {
+    if (seen.has(uid)) return;
+    const obj = board.cards.get(uid);
+    if (!obj || !obj.visible) return;
+    const rc = rectOf(obj);
+    if (rc) { seen.add(uid); out.push({ key: 'c:' + uid, hand, ...rc }); }
+  };
+  for (const uid of st.players[ME].hand) addCard(uid, true);
+  if (boardPick && boardPick.req && Array.isArray(boardPick.req.candidates)) {
+    for (const c of boardPick.req.candidates) if (typeof c === 'string' && !c.includes('|')) addCard(c, false);
+  }
+  /* 場のカード (いちばん上の札だけ。重なった下の札は、上の札を指せば一覧で読める) */
+  for (const line of st.lines) for (const side of [0, 1]) { const stack = line[side]; if (stack.length) addCard(stack[stack.length - 1], false); }
+  /* 置ける所 (カードを選んでいるとき光る置き場) と、ラインを選ぶとき */
+  const lineWanted = boardPick && boardPick.kind === 'line' ? new Set(boardPick.lines) : null;
+  for (const pad of pads) {
+    const ud = pad.userData;
+    const want = ud.pulse > 0 || (lineWanted && lineWanted.has(ud.line) && ud.side === ME);
+    if (!want) continue;
+    const rc = rectOf(pad);
+    if (rc) out.push({ key: 'p:' + ud.line + ':' + ud.side, ...rc });
+  }
+  return out;
+}
+initGamepad({ canvas: () => (stage && stage.renderer ? stage.renderer.domElement : null), targets: gamepadTargets });
+
 /* stage が実際の大きさの変化を検知したとき (回転直後の遅れて確定する大きさなど) */
 window.addEventListener('compile:viewport', onViewportChanged);
 
