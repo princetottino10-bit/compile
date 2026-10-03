@@ -52,7 +52,7 @@ import { matUnlocked, MAT_W, MAT_D } from './playmat.js';
 import { initAccount, openAccount, takeAccountResume, accountState, onAccountChange } from './account.js';
 import { openCardList } from './cardlist-ov.js';
 import { openOpponentSelect } from './opponent-select.js';
-import { UNDERDOG_DECK, STRONGEST_AI, UNDERDOG_LEVEL, levelLabel, fixedDeck } from './aidecks.js';
+import { UNDERDOG_DECK, STRONGEST_AI, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL, UNDERDOG_TAG_RIVAL_MATE, levelLabel, fixedDeck } from './aidecks.js';
 import { openRun, runHud, showRunAfterGame } from './run-ui.js';
 import { openWeekly, weeklyHud, showWeeklyAfterGame } from './weekly-ui.js';
 import { compilesBy, loadRun, RUN_WIN_COMPILES, battleOpts, lethal, nodeById } from './run.js';
@@ -1059,6 +1059,17 @@ async function boot() {
         if (!opp) { nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
         if (opp.quick) { location.href = location.pathname + '?quick=1'; return; }
         if (opp.watch) { nextMode = 'watch'; continue; }
+        if (opp.underdogTag) {
+          document.body.classList.remove('pregame');
+          p0 = UNDERDOG_DECK.slice();
+          p1 = STRONGEST_AI.slice();
+          /* 味方の3つは、あなたの3つと重ならないように残りからランダム。相手の味方は決まったデッキ */
+          const all = cards.protocols.map(x => x.name);
+          tagMates = { p0: shuffled(all.filter(n => !p0.includes(n))).slice(0, 3), p1: UNDERDOG_TAG_RIVAL_MATE.slice() };
+          applyAiDifficulty(UNDERDOG_TAG_LEVEL);
+          setupNote = '下剋上タッグ: あなた ' + p0.join(' / ') + ' ＋ かんたんの味方 ' + tagMates.p0.join(' / ') + '　vs 最強タッグ ' + p1.join(' / ') + ' ＋ ' + tagMates.p1.join(' / ');
+          break;
+        }
         if (opp.underdog) {
           document.body.classList.remove('pregame');
           p0 = UNDERDOG_DECK.slice();
@@ -1762,12 +1773,15 @@ function thinking(p) {
 let autoPlay = false;
 const AUTO_AI = { level: 2, blunder: 0, budget: 2400, specialist: true, kind: 'dsh', specSide: 0 };
 const autoFor = (side) => autoPlay && side === ME && !roomMode;
+/* 下剋上タッグの味方: かんたんと同じ読み (3割はでたらめ)。相手の最強タッグはいつもの最強の読み */
+const UNDERDOG_MATE_AI = { level: 0, blunder: 0.3, budget: 900, specialist: false, kind: 'dsh' };
+const weakMate = (side) => aiDifficulty === UNDERDOG_TAG_LEVEL && side === ME && !roomMode && partnerMove();
 function aiAction(st) {
-  const over = autoFor(st && st.turn) ? AUTO_AI : null;
+  const over = autoFor(st && st.turn) ? AUTO_AI : weakMate(st && st.turn) ? UNDERDOG_MATE_AI : null;
   return thinking(aiClient ? aiClient.action(st, over) : Promise.resolve(withoutTrace(() => Engine.ai.action(st))));
 }
 function aiAnswer(st, req) {
-  const over = req && autoFor(req.player) ? AUTO_AI : null;
+  const over = req && autoFor(req.player) ? AUTO_AI : req && weakMate(req.player) ? UNDERDOG_MATE_AI : null;
   return thinking(aiClient ? aiClient.answer(st, req, over) : Promise.resolve(withoutTrace(() => Engine.ai.answer(st, req))));
 }
 /* 上のバーの AUTO (管理者だけ。オンライン・チュートリアル・問題・検証盤面・リプレイ・観戦では出さない) */

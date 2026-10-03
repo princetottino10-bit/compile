@@ -33,11 +33,17 @@ export const LEVEL_LABELS = ['かんたん', 'ふつう', 'つよい', '最強',
 export const UNDERDOG_LEVEL = 20;
 export const UNDERDOG_DECK = ['SMOKE', 'UNITY', 'APATHY'];
 
+/* 下剋上タッグ: あなた (最弱で固定) と、かんたんの CPU の味方 vs 最強のタッグ。
+   相手は最強のデッキ (STRONGEST_AI) と、挑戦者のデッキ (DARKNESS / HATE / SMOKE。最強と重ならない)。
+   相手2人とも最強と同じ戦い方。味方の CPU だけ、かんたんの読み (main.js の UNDERDOG_MATE_AI) */
+export const UNDERDOG_TAG_LEVEL = 21;
+export const UNDERDOG_TAG_RIVAL_MATE = ['DARKNESS', 'HATE', 'SMOKE'];
+
 export const isChallenger = (level) => level >= CHALLENGER_BASE && level < CHALLENGER_BASE + CHALLENGERS.length;
 
 /* 難易度の固定デッキ (無ければ null = ランダム編成) */
 export function fixedDeck(level) {
-  if (level === 3 || level === UNDERDOG_LEVEL) return STRONGEST_AI;
+  if (level === 3 || level === UNDERDOG_LEVEL || level === UNDERDOG_TAG_LEVEL) return STRONGEST_AI;
   if (level === 4) return LOCK_AI;
   return isChallenger(level) ? CHALLENGERS[level - CHALLENGER_BASE].deck : null;
 }
@@ -50,5 +56,6 @@ export function challengerName(c) {
 export function levelLabel(level) {
   if (isChallenger(level)) return '挑戦者 ' + challengerName(CHALLENGERS[level - CHALLENGER_BASE]);
   if (level === UNDERDOG_LEVEL) return '下剋上 (最弱 vs 最強)';
+  if (level === UNDERDOG_TAG_LEVEL) return '下剋上タッグ (最弱＋かんたん vs 最強タッグ)';
   return LEVEL_LABELS[level] || '不明';
 }

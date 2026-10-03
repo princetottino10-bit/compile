@@ -7,7 +7,7 @@
  *   取ったものは compileTrophies { id: 取った時刻 } に残す (アカウントの保存 cloudsave.js にも入る)。
  *   ここは表示も通信もしない (achievements-ui.js / main.js が受け持つ)
  * ========================================================================= */
-import { CHALLENGER_BASE, CHALLENGERS, UNDERDOG_LEVEL } from './aidecks.js';
+import { CHALLENGER_BASE, CHALLENGERS, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL } from './aidecks.js';
 const BOSS_LEVELS = [3, 4, ...CHALLENGERS.map((_, i) => CHALLENGER_BASE + i)];
 import { XP_GAIN } from './xp.js';
 import { protocolSummary, conquered, CONQUER_TOTAL } from './stats-data.js';
@@ -118,6 +118,7 @@ export const TROPHIES = [
   { id: 'overkill', tier: 'silver', name: 'OVERKILL', desc: '1つのラインの合計値を20以上にする', test: (c) => !!g(c) && (g(c).maxLine | 0) >= 20 },
   { id: 'overclock2', tier: 'silver', name: 'OVERCLOCK II', desc: '1試合で自分の効果を40回発動させる', test: (c) => !!g(c) && (g(c).effects | 0) >= 40 },
   { id: 'blitz', tier: 'silver', hidden: true, name: 'BLITZ', desc: '20手番以内 (両者合わせて) で勝つ', test: (c) => !!g(c) && g(c).win && g(c).turns > 0 && g(c).turns <= 20 },
+  { id: 'underdog_tag', tier: 'gold', name: 'UNDERDOG DUO', desc: '下剋上タッグ (最弱＋かんたんの味方 vs 最強のタッグ) で勝つ (称号 UNDERDOG DUO)', test: (c) => beat(c, UNDERDOG_TAG_LEVEL) },
   { id: 'chain6', tier: 'gold', name: 'CHAIN BREAKER', desc: '自分の効果で割り込んで、チェーンを6つつなげる', test: (c) => !!g(c) && (g(c).chainMax | 0) >= 6 },
   { id: 'norefresh', tier: 'gold', name: 'NO REFRESH', desc: '一度もリフレッシュせずに勝つ', test: (c) => !!g(c) && g(c).win && g(c).refreshes === 0 },
   { id: 'norefresh_apex', tier: 'gold', name: 'NO REFRESH APEX', desc: '一度もリフレッシュせずに「最強」の CPU に勝つ', test: (c) => !!g(c) && g(c).win && g(c).refreshes === 0 && g(c).level === 3 },

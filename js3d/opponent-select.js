@@ -5,7 +5,7 @@
  *   → { level } / { underdog: true } / { quick: true } / { watch: true } / null (タイトルへ)
  * ========================================================================= */
 import { showTitleBack, hideTitleBack } from './titleback.js';
-import { LEVEL_LABELS, STRONGEST_AI, LOCK_AI, CHALLENGERS, CHALLENGER_BASE, UNDERDOG_DECK, UNDERDOG_LEVEL } from './aidecks.js';
+import { LEVEL_LABELS, STRONGEST_AI, LOCK_AI, CHALLENGERS, CHALLENGER_BASE, UNDERDOG_DECK, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL, UNDERDOG_TAG_RIVAL_MATE } from './aidecks.js';
 import { localRecords } from './stats.js';
 import { conquered, conquerable } from './stats-data.js';
 import { settings } from './settings.js';
@@ -39,6 +39,7 @@ export function openOpponentSelect(protocols, opts = {}) {
   const card = (key, title, note, body, extra) => '<button type="button" class="op-card' + (String(last) === key ? ' last' : '') + (extra || '') +
     '" data-opp="' + key + '"><b>' + title + '</b><small>' + note + '</small>' + (body || '') + '</button>';
   const cleared = underdogCleared();
+  const tagCleared = localRecords().some(r => r.win && r.level === UNDERDOG_TAG_LEVEL);
   /* 制覇: 最強に勝ったプロトコルの数。30 すべてで称号 CONQUEROR */
   const conq = conquered(localRecords()).size, total = conquerable(protocols.map(p => p.name)).length;
   const conqBar = '<span class="op-conq"><span>制覇 <b>' + conq + '</b>/' + total + '</span><i><s style="width:' + Math.round(conq / total * 100) + '%"></s></i></span>';
@@ -55,7 +56,10 @@ export function openOpponentSelect(protocols, opts = {}) {
       '<section><h3>下剋上 <small>いちばん弱いデッキで、いちばん強い CPU に挑む</small></h3>' +
       '<div class="op-row">' + card('underdog', '下剋上' + (cleared ? ' <em>✓ TITLE — GIANT SLAYER</em>' : ''),
         'あなた (最弱) vs 最強。勝つと 称号 GIANT SLAYER・専用スリーブとマーカー・+100 XP',
-        '<span class="op-vs">' + deck(UNDERDOG_DECK) + '<i>VS</i>' + deck(STRONGEST_AI) + '</span>', ' wide') + '</div></section>'
+        '<span class="op-vs">' + deck(UNDERDOG_DECK) + '<i>VS</i>' + deck(STRONGEST_AI) + '</span>', ' wide') + '</div>' +
+      '<div class="op-row">' + card('udtag', '下剋上タッグ' + (tagCleared ? ' <em>✓ TITLE — UNDERDOG DUO</em>' : ''),
+        'あなた (最弱) ＋ かんたんの味方 vs 最強のタッグ。手番は あなた → 相手1 → 味方 → 相手2。勝つと 称号 UNDERDOG DUO',
+        '<span class="op-vs">' + deck(UNDERDOG_DECK) + '<i>VS</i>' + deck(STRONGEST_AI) + deck(UNDERDOG_TAG_RIVAL_MATE) + '</span>', ' wide') + '</div></section>'
       : '<div class="op-head"><b>// SINGLE GAME</b><span>SELECT OPPONENT</span></div>' +
       /* 迷ったらこれ: 選ぶものを全部おまかせにして、すぐ始める */
       '<button type="button" class="op-quick" data-opp="quick"><b>おまかせで今すぐ始める</b>' +
@@ -82,6 +86,7 @@ export function openOpponentSelect(protocols, opts = {}) {
       if (key === 'watch') { resolve({ watch: true }); return; }
       try { localStorage.setItem(LAST_KEY, key); } catch (e) { /* private mode */ }
       if (/^tag\d$/.test(key)) { resolve({ tag: true, level: +key.slice(3) }); return; }
+      if (key === 'udtag') { resolve({ underdogTag: true, level: UNDERDOG_TAG_LEVEL }); return; }
       resolve(key === 'underdog' ? { underdog: true, level: UNDERDOG_LEVEL } : { level: +key });
     };
   });
