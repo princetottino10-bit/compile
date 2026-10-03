@@ -1169,6 +1169,8 @@ async function boot() {
       });
     },
     timing: TIMING,
+    /* 詰めコンパイルの AUTO を確かめる (管理者でなくても動く。解いても記録・経験値には入らない) */
+    tsumeAutoTest: () => (puzzle && puzzle.tsume ? (startTsumeAuto(puzzle.tsume, true), 'auto') : 'no tsume'),
     testResult: async (win) => { await finaleFx(!!win); await UI.resultCutIn(!!win); },
     endTest: (win) => showEndActions(!!win),
     spectateEndTest: (aWon) => (spectate ? spectateEnd(!!aWon) : null),
@@ -1207,6 +1209,7 @@ async function boot() {
   placeDialogsNearBoard();
   refreshHud();
   if (puzzle) PZ.showPuzzleBar(puzzle, retryPuzzle, puzzle.tsume ? tsumeBarOpts(puzzle.tsume) : null);
+  if (puzzle && puzzle.tsume && new URLSearchParams(location.search).get('auto') === '1') resumeTsumeAuto(puzzle.tsume);
   /* 詰めコンパイル: 管理者か (答えのボタンを出すか) はログイン状態を読んでから分かるので、分かったら帯を描き直す */
   if (puzzle && puzzle.tsume) {
     onAccountChange(() => PZ.showPuzzleBar(puzzle, retryPuzzle, tsumeBarOpts(puzzle.tsume)));
@@ -1262,10 +1265,15 @@ async function puzzleAfterTurn() {
     PZ.showPuzzleResult(result, retryPuzzle);
     return;
   }
+  /* AUTO (管理者の確認) で解いた分は、遊ばれ方の記録・経験値・今日の問題の済みに入れない */
+  if (tsumeAutoUsed) {
+    tsumeAuto = null;
+    UI.toast('AUTO: ' + (result.ok === false ? '模範解答で解けませんでした (問題か模範解答がおかしい)' : '模範解答で解けました'), 4200);
+  }
   /* 遊ばれ方の匿名の記録: 解けたか (level は段。今日の問題は 11・今日の上級は 13) */
-  logPlay({ mode: 'tsume', win: result.ok !== false, level: ts.daily != null ? (ts.hard ? 13 : 11) : (ts.tier | 0), logged: !!accountState().user });
+  if (!tsumeAutoUsed) logPlay({ mode: 'tsume', win: result.ok !== false, level: ts.daily != null ? (ts.hard ? 13 : 11) : (ts.tier | 0), logged: !!accountState().user });
   /* COMPUZZLE: 段ごとの経験値 (問題ごとに初回。今日の問題は日ごと)。実績の判定もここで */
-  if (result.ok) {
+  if (result.ok && !tsumeAutoUsed) {
     await gainXp('tsume', TS.tsumeXp(ts), TS.tsumeXpKey(ts));
     maybeLoginHint('tsume');
   }
@@ -1290,6 +1298,8 @@ function tsumeBarOpts(ts) {
       { label: 'ヒント', on: () => UI.toast('最初の一手: ' + ts.steps[0], 5200) },
       /* 模範解答は管理者のアカウントだけ (問題の確認用) */
       ...(accountState().admin ? [{ label: '答え', on: () => TS.showAnswer(ts) }] : []),
+      /* AUTO: 模範解答を盤面の上で自動で指して見せる (管理者だけ。報告を受けた問題の確認用) */
+      ...(accountState().admin && Array.isArray(ts.solution) && ts.solution.length ? [{ label: 'AUTO', on: () => startTsumeAuto(ts) }] : []),
       puzzle.story ? { label: '地図へ', on: () => { location.href = location.pathname + '?story=1'; } } : { label: '一覧', on: () => openTsume('list') }
     ]
   };
@@ -1297,6 +1307,45 @@ function tsumeBarOpts(ts) {
 
 function openTsume(id) {
   location.href = location.pathname + '?tsume=' + encodeURIComponent(id);
+}
+
+/* 詰めコンパイルの AUTO (管理者だけ): 模範解答 (ts.solution) を、ふつうに指したときと同じ流れで1つずつ指す。
+   もう手を進めていたら、?auto=1 を付けて初めから読み直してから始める。
+   AUTO で解いた分は経験値・今日の問題の済み・遊ばれ方の記録に入れない (tsumeAutoUsed) */
+let tsumeAuto = null;              // 残りの手と選択 (Engine.apply に渡す形)
+let tsumeAutoUsed = false;
+const TSUME_AUTO_GAP = 650;        // 1手ごとの間 (見て追えるように)
+function startTsumeAuto(ts, test = false) {
+  if ((!accountState().admin && !test) || tsumeAuto) return;
+  const fresh = cur && cur.state && cur.state.turn === ME && !puzzleJudged && !gameHistory.length && !(cur.requests && cur.requests.length);
+  if (!fresh) {
+    const q = new URLSearchParams(location.search);
+    q.set('auto', '1');
+    location.href = location.pathname + '?' + q.toString();
+    return;
+  }
+  tsumeAuto = ts.solution.map(a => ({ ...a }));
+  tsumeAutoUsed = true;
+  UI.toast('AUTO: 模範解答を指します', 2400);
+  deselect(); showPreview(null);
+  if (!busy) afterTurn();
+}
+/* 読み直したあと (?auto=1): 管理者だと分かってから始める (ログインの状態は裏で読むので、少し待つ) */
+async function resumeTsumeAuto(ts) {
+  const q = new URLSearchParams(location.search);
+  q.delete('auto');
+  history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q.toString() : ''));
+  for (let i = 0; i < 25 && !accountState().admin; i++) await TW.wait(200);
+  if (accountState().admin) startTsumeAuto(ts);
+}
+/* 自分の番の手 (play など) を AUTO で指す。指したら true */
+async function tsumeAutoAction() {
+  if (!tsumeAuto || !tsumeAuto.length || tsumeAuto[0].type === 'choose') return false;
+  if (!cur || cur.state.turn !== ME || (cur.requests && cur.requests.length)) return false;
+  await TW.wait(TSUME_AUTO_GAP);
+  const action = tsumeAuto.shift();
+  await step(action);
+  return true;
 }
 
 /* ---------- チュートリアル ----------
@@ -4588,6 +4637,11 @@ async function drainRequests() {
         || (queuedAnswer.kind && queuedAnswer.kind === req.kind && queuedAnswer.target === req.target))) {
       picks = queuedAnswer.picks;                   // まとめて答えた選択の続き
       queuedAnswer = null;
+    } else if (tsumeAuto && tsumeAuto.length && tsumeAuto[0].type === 'choose' && req.player === ME) {
+      /* 詰めコンパイルの AUTO: 模範解答の選択をそのまま答える (選んだものが見えるよう、少し待つ) */
+      UI.setPrompt('AUTO が選択しています…', 'wait');
+      await TW.wait(TSUME_AUTO_GAP);
+      picks = tsumeAuto.shift().picks;
     } else if (controlAsk) {
       /* コントロールの「並べ替えますか」は聞かずに、盤面の板で並べ替えるかどうかまで決めてもらう */
       UI.setPrompt('');
@@ -4647,6 +4701,7 @@ async function afterTurn() {
   if (puzzle) {
     /* 詰めコンパイル・問題も、はじめに自分の番であることを見せる (2回目からは announceTurnFor が出さない) */
     if (!puzzleJudged && cur && cur.state.winner === null && cur.state.turn === ME) await announceTurn();
+    if (await tsumeAutoAction()) return;          // AUTO: step が afterTurn をまた呼ぶ
     await puzzleAfterTurn();
     return;
   }
