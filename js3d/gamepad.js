@@ -18,6 +18,7 @@ let canvasTargets = () => [];        // main.js が渡す: [{ key, x, y, w, h, h
 let canvasOpt = null;                 // 盤面の canvas (または、それを返す関数。盤面はあとから作られる)
 const cv = () => (typeof canvasOpt === 'function' ? canvasOpt() : canvasOpt);
 let ring = null;
+let quadSvg = null;                  // 盤面のカードは斜めに写るので、四隅を結んだ形で囲む (SVG)
 let active = false;                  // パッドを使っている間 (枠を出す)
 let focusKey = null;
 let focusPos = null;                 // 最後に指していた所 (指していた物が消えたら、ここから近い物へ)
@@ -30,7 +31,7 @@ export function initGamepad(opts) {
   canvasOpt = opts.canvas || null;
   canvasTargets = opts.targets || (() => []);
   if (!('getGamepads' in navigator)) return;
-  window.addEventListener('gamepadconnected', (ev) => { markPad(ev.gamepad, true); start(); });
+  window.addEventListener('gamepadconnected', (ev) => { markPad(ev.gamepad || pads()[0], true); start(); });
   window.addEventListener('gamepaddisconnected', () => { if (!pads().length) { stop(); markPad(null, false); } });
   /* マウス・タッチを使ったら枠を消す (パッドを触るとまた出る) */
   window.addEventListener('pointerdown', (ev) => { if (ev.isTrusted) setActive(false); }, true);
@@ -73,8 +74,14 @@ function setActive(on) {
     ring.setAttribute('aria-hidden', 'true');
     ring.innerHTML = '<span class="gp-cap"><i class="gp-key gp-a"></i>決定<i class="gp-key gp-b"></i>戻る</span>';
     document.body.appendChild(ring);
+    quadSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    quadSvg.id = 'gpQuad';
+    quadSvg.setAttribute('aria-hidden', 'true');
+    quadSvg.innerHTML = '<polygon class="gp-q-back"></polygon><polygon class="gp-q-line"></polygon>';
+    document.body.appendChild(quadSvg);
   }
   ring.classList.toggle('on', on);
+  quadSvg.classList.toggle('on', on);
   if (!on) focusKey = null;
 }
 
@@ -164,6 +171,14 @@ function draw(t) {
   ring.style.top = (t.y - pad) + 'px';
   ring.style.width = (t.w + pad * 2) + 'px';
   ring.style.height = (t.h + pad * 2) + 'px';
+  /* 盤面の物は、四隅を結んだ形 (台形) で囲む。四角の枠は「A 決定 B 戻る」の置き場としてだけ使う */
+  const q = t.quad;
+  ring.classList.toggle('quad', !!q);
+  quadSvg.classList.toggle('show', !!q);
+  if (q) {
+    const pts = q.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+    for (const poly of quadSvg.querySelectorAll('polygon')) poly.setAttribute('points', pts);
+  }
   /* 「A 決定 B 戻る」は枠の下に出す。画面の下端に近い物 (手札など) を指しているときは、枠の上に */
   ring.classList.toggle('cap-top', t.y + t.h + 40 > innerHeight);
 }

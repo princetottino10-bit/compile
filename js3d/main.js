@@ -5310,24 +5310,42 @@ function placeDialogsNearBoard() {
 }
 /* ゲームパッド (gamepad.js) で指せる盤面の物。画面の座標で返す:
    自分の手札 (hand)・場のカード (説明を読む)・選んでいる途中の候補・置けるライン (光っている置き場) */
-const gpBox = new THREE.Box3();
 const gpV = new THREE.Vector3();
+/* 物の表面の四つの角 (その物の座標)。カードは横たわった長方形 (CARD.w × CARD.h)、置き場は平らな板の形から。
+   物まるごとの箱で測ると、まわりの光や影の板まで入って、枠が大きくずれていた */
+function gpCorners(obj) {
+  if (obj.userData && obj.userData.uid) {
+    const w = CARD.w / 2, h = CARD.h / 2, y = CARD.thickness / 2;
+    return [[-w, y, -h], [w, y, -h], [w, y, h], [-w, y, h]];
+  }
+  const g = obj.geometry;
+  if (!g) return null;
+  if (!g.boundingBox) g.computeBoundingBox();
+  const b = g.boundingBox;
+  const ex = b.max.x - b.min.x, ey = b.max.y - b.min.y, ez = b.max.z - b.min.z;
+  if (ey <= ex && ey <= ez) return [[b.min.x, 0, b.min.z], [b.max.x, 0, b.min.z], [b.max.x, 0, b.max.z], [b.min.x, 0, b.max.z]];
+  if (ez <= ex && ez <= ey) return [[b.min.x, b.min.y, 0], [b.max.x, b.min.y, 0], [b.max.x, b.max.y, 0], [b.min.x, b.max.y, 0]];
+  return [[0, b.min.y, b.min.z], [0, b.max.y, b.min.z], [0, b.max.y, b.max.z], [0, b.min.y, b.max.z]];
+}
 function gamepadTargets() {
   if (!stage || !board || !cur) return [];
   const st = shown();
   if (!st) return [];
   const r = stage.renderer.domElement.getBoundingClientRect();
+  /* 画面の上の四隅 (quad) と、それを囲む四角 */
   const rectOf = (obj) => {
-    gpBox.setFromObject(obj);
-    if (gpBox.isEmpty()) return null;
-    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-    for (const x of [gpBox.min.x, gpBox.max.x]) for (const y of [gpBox.min.y, gpBox.max.y]) for (const z of [gpBox.min.z, gpBox.max.z]) {
-      gpV.set(x, y, z).project(stage.camera);
+    const cs = gpCorners(obj);
+    if (!cs) return null;
+    obj.updateWorldMatrix(true, false);
+    const quad = [];
+    for (const [x, y, z] of cs) {
+      gpV.set(x, y, z).applyMatrix4(obj.matrixWorld).project(stage.camera);
       if (gpV.z > 1) return null;                     // カメラの後ろ
-      const sx = r.left + (gpV.x + 1) / 2 * r.width, sy = r.top + (1 - gpV.y) / 2 * r.height;
-      x0 = Math.min(x0, sx); y0 = Math.min(y0, sy); x1 = Math.max(x1, sx); y1 = Math.max(y1, sy);
+      quad.push([r.left + (gpV.x + 1) / 2 * r.width, r.top + (1 - gpV.y) / 2 * r.height]);
     }
-    return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+    const xs = quad.map(p => p[0]), ys = quad.map(p => p[1]);
+    const x0 = Math.min(...xs), y0 = Math.min(...ys);
+    return { x: x0, y: y0, w: Math.max(...xs) - x0, h: Math.max(...ys) - y0, quad };
   };
   const out = [];
   const seen = new Set();

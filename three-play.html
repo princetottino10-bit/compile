@@ -878,6 +878,12 @@
   #gpFocus{position:fixed;z-index:9999;display:none;pointer-events:none;border:3px solid var(--pink);border-radius:8px;
     box-shadow:0 0 0 2px rgba(10,7,20,.85),0 0 16px rgba(255,79,163,.7);transition:left .12s ease-out,top .12s ease-out,width .12s ease-out,height .12s ease-out;}
   #gpFocus.on{display:block;}
+  /* 盤面のカード・置き場は、四隅を結んだ形で囲む (#gpQuad)。そのときの四角の枠は見せず、案内の置き場にだけ使う */
+  #gpFocus.quad{border-color:transparent;box-shadow:none;}
+  #gpQuad{position:fixed;inset:0;width:100vw;height:100vh;z-index:9998;display:none;pointer-events:none;overflow:visible;}
+  #gpQuad.on.show{display:block;}
+  #gpQuad .gp-q-back{fill:none;stroke:rgba(10,7,20,.85);stroke-width:7;stroke-linejoin:round;}
+  #gpQuad .gp-q-line{fill:rgba(255,79,163,.08);stroke:var(--pink);stroke-width:3;stroke-linejoin:round;filter:drop-shadow(0 0 6px rgba(255,79,163,.75));}
   /* コントローラーのボタンの印。Xbox は A B X Y (色つきの丸)、プレステは ✕ ○ □ △ (body.gp-ps) */
   body.gamepad{--gp-a:"A";--gp-b:"B";--gp-x:"X";--gp-y:"Y";--gp-start:"\2261";--gp-back:"\29C9";
     --gp-a-c:#3f9b2c;--gp-b-c:#d23a30;--gp-x-c:#2f6fe6;--gp-y-c:#c99a12;}
@@ -3944,13 +3950,13 @@
       "./js3d/gacha-ui.js": "./js3d/gacha-ui.js?v=9dfcb0ccbf",
       "./js3d/gacha.js": "./js3d/gacha.js?v=ce3d4f3faa",
       "./js3d/gachafx.js": "./js3d/gachafx.js?v=3d15a2226f",
-      "./js3d/gamepad.js": "./js3d/gamepad.js?v=25ab4aee08",
+      "./js3d/gamepad.js": "./js3d/gamepad.js?v=85b87e3cdb",
       "./js3d/holo.js": "./js3d/holo.js?v=9c52bc0510",
       "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c",
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=2b4dbc6066",
       "./js3d/logformat.js": "./js3d/logformat.js?v=6bbf54aba6",
-      "./js3d/main.js": "./js3d/main.js?v=ac34337168",
+      "./js3d/main.js": "./js3d/main.js?v=4ea2fa0472",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=5ed0fd6fd9",
@@ -4081,7 +4087,7 @@
   <link rel="modulepreload" href="js3d/logformat.js?v=6bbf54aba6">
   <link rel="modulepreload" href="js3d/steps.js?v=13e73b20fe">
   <link rel="modulepreload" href="js3d/dialogs.js?v=f93ba7f0c5">
-  <link rel="modulepreload" href="js3d/gamepad.js?v=25ab4aee08">
+  <link rel="modulepreload" href="js3d/gamepad.js?v=85b87e3cdb">
   <link rel="modulepreload" href="js3d/cloudsave.js?v=3e6ea586df">
   <link rel="modulepreload" href="js3d/admin-ui.js?v=f467e2b1a6">
   <link rel="modulepreload" href="js3d/device.js?v=b519fe2cae">
@@ -4118,6 +4124,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=dcc4783d36">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=ac34337168"></script>
+  <script type="module" src="js3d/main.js?v=4ea2fa0472"></script>
 </body>
 </html>
