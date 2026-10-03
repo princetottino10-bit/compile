@@ -543,6 +543,9 @@ const SLEEVES = {
     ring2: 'rgba(0,0,0,0)', strip: '150,175,130' },
   momiji: { art: 'art/sleeves/momiji.webp', pattern: 'sakura', a: '#7a1a10', b: '#240603', grid: 'rgba(0,0,0,0)', halo: '255,120,80', ring: 'rgba(0,0,0,0)',
     ring2: 'rgba(0,0,0,0)', strip: '220,60,40' },
+  /* 2026年10月「ハロウィンの電脳街」: 回路の顔のかぼちゃと桃色の三日月 (E:\SD\scripts\event_2026_10.py の pumpkin 10101) */
+  pumpkin: { art: 'art/sleeves/pumpkin.webp', pattern: 'sakura', a: '#3a0f4a', b: '#12041a', grid: 'rgba(0,0,0,0)', halo: '255,140,60', ring: 'rgba(0,0,0,0)',
+    ring2: 'rgba(0,0,0,0)', strip: '255,120,40' },
   /* 週替わりの褒美: 深い緑に金の月桂冠 */
   laurel: { art: 'art/sleeves/laurel.webp', pattern: 'laurel', a: '#1d3512', b: '#050b03', grid: 'rgba(230,210,120,.05)', halo: '230,210,120', ring: 'rgba(240,215,120,.85)',
     ring2: 'rgba(150,210,110,.6)', strip: '200,180,90' },

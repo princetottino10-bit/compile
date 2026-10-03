@@ -70,7 +70,7 @@ export const COSMETICS = {
     ...MASTERY_PROTOS.map(p => [pkey(p), p])],
   sleeve: [['default', 'STANDARD'], ['crimson', 'CRIMSON'], ['circuit', 'CIRCUIT'], ['void', 'VOID'], ['holo', 'HOLO'], ['sakura', 'SAKURA'], ['aurum', 'AURUM'],
     ['mint', 'MINT'], ['ocean', 'OCEAN'], ['ember', 'EMBER'], ['glacier', 'GLACIER'], ['toxic', 'TOXIC'], ['galaxy', 'GALAXY'],
-    ['tiger', 'TIGER'], ['pixel', 'PIXEL'], ['koi', 'KOI'], ['aurora', 'AURORA'], ['nyanko', 'NYANKO'], ['sweets', 'SWEETS'], ['bunny', 'BUNNY'], ['rose', 'ROSE'], ['butterfly', 'GOLDEN BUTTERFLY'], ['momiji', 'MOMIJI'], ['sprout', 'SPROUT'], ['konpairu', 'KONPAIRU'], ['teaparty', 'TEA PARTY'],
+    ['tiger', 'TIGER'], ['pixel', 'PIXEL'], ['koi', 'KOI'], ['aurora', 'AURORA'], ['nyanko', 'NYANKO'], ['sweets', 'SWEETS'], ['bunny', 'BUNNY'], ['rose', 'ROSE'], ['butterfly', 'GOLDEN BUTTERFLY'], ['momiji', 'MOMIJI'], ['pumpkin', 'PUMPKIN'], ['sprout', 'SPROUT'], ['konpairu', 'KONPAIRU'], ['teaparty', 'TEA PARTY'],
     ['slayer', 'GIANT SLAYER'], ['laurel', 'LAUREL']],
   marker: [['default', 'STANDARD'], ['gold', 'GOLD'], ['crystal', 'CRYSTAL'], ['crimson', 'CRIMSON'], ['prism', 'PRISM'],
     ['emerald', 'EMERALD'], ['amber', 'AMBER'], ['sapphire', 'SAPPHIRE'], ['obsidian', 'OBSIDIAN'], ['nova', 'NOVA'],
@@ -109,7 +109,7 @@ export const GACHA_ITEMS = [
   { kind: 'title', key: 'highroller', rar: 'E' },
   { kind: 'sleeve', key: 'galaxy', rar: 'L' }, { kind: 'marker', key: 'nova', rar: 'L' }, { kind: 'title', key: 'fortune', rar: 'L' },
   { kind: 'sleeve', key: 'nyanko', rar: 'R' }, { kind: 'sleeve', key: 'sweets', rar: 'C' }, { kind: 'sleeve', key: 'bunny', rar: 'E' },
-  { kind: 'sleeve', key: 'rose', rar: 'E' }, { kind: 'sleeve', key: 'butterfly', rar: 'L' }, { kind: 'sleeve', key: 'momiji', rar: 'R' }, { kind: 'sleeve', key: 'konpairu', rar: 'E' }, { kind: 'sleeve', key: 'teaparty', rar: 'R' },
+  { kind: 'sleeve', key: 'rose', rar: 'E' }, { kind: 'sleeve', key: 'butterfly', rar: 'L' }, { kind: 'sleeve', key: 'momiji', rar: 'R' }, { kind: 'sleeve', key: 'pumpkin', rar: 'E' }, { kind: 'sleeve', key: 'konpairu', rar: 'E' }, { kind: 'sleeve', key: 'teaparty', rar: 'R' },
   /* BGM (煉獄庭園)。しまっている間はガチャに入れない */
   ...(BGM_RELEASED ? [{ kind: 'bgm', key: 'destroy_god', rar: 'R' }, { kind: 'bgm', key: 'reaper_phoenix', rar: 'E' }, { kind: 'bgm', key: 'final_2sec', rar: 'E' }] : []),
   /* 名札の枠 */
