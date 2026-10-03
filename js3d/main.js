@@ -5455,6 +5455,8 @@ function gpHitPoint(uid, quad, r, accept) {
 /* 手札を畳んであるとき、パッドで下へ進む・LB/RB を押したら開く (開いたら true) */
 function gamepadOpenHand() {
   if (!stage || !board || isCompactHandUI() || VIEW.handOpen) return false;
+  /* 盤面が見えているときだけ (タイトルなどの画面の裏で手札を開かない) */
+  if (document.elementFromPoint(innerWidth / 2, innerHeight - 30) !== stage.renderer.domElement) return false;
   setHandDrawer(true);
   return true;
 }

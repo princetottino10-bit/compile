@@ -11,13 +11,13 @@
  *   会話が出ている間は A で次のセリフへ (Enter と同じ)。上に窓が出ているときは、ふつうに枠でボタンを選ぶ
  * ========================================================================= */
 
-import { settings, onSettings } from './settings.js';
+import { settings, onSettings, openSettings } from './settings.js';
 
 const BTN = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, BACK: 8, START: 9, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
 const STICK_ON = 0.55;               // スティックを倒したとみなす量
 const REPEAT_FIRST = 380;            // 押しっぱなしで次へ進むまで (ミリ秒)
 const REPEAT_NEXT = 140;
-const CLICKABLE = 'button, [role="button"], a[href], summary, input[type="checkbox"], input[type="radio"], select';
+const CLICKABLE = 'button, [role="button"], a[href], summary, input[type="checkbox"], input[type="radio"], input[type="range"], select';
 
 let canvasTargets = () => [];
 let openHand = null;                 // main.js が渡す: 畳んである手札を開く (開いたら true)        // main.js が渡す: [{ key, x, y, w, h, hand? }] (画面の座標)
@@ -62,7 +62,7 @@ window.__gpMap = () => {
   const name = (t) => (t.el ? (t.el.id || (t.el.textContent || '').trim().slice(0, 14) || t.el.className) : t.key) + (t.hand ? '[手札]' : '');
   return list.map(t => {
     const c = center(t), o = { name: name(t), at: [Math.round(c.x), Math.round(c.y)], hit: t.hit ? [Math.round(t.hit.x), Math.round(t.hit.y)] : null };
-    for (const d of ['up', 'down', 'left', 'right']) { const n = t.hand ? fromHand(list, t, d) : nearest(list.filter(x => x !== t), c, d); o[d] = n ? name(n) : null; }
+    for (const d of ['up', 'down', 'left', 'right']) { const n = t.hand ? fromHand(list, t, d) : nearest(list.filter(x => x !== t), c, d, t); o[d] = n ? name(n) : null; }
     return o;
   });
 };
@@ -126,18 +126,32 @@ function setActive(on) {
 }
 
 /* ---------- 指せる所 ---------- */
-function visibleRect(el) {
+function visibleRect(el, owner) {
+  const cs = getComputedStyle(el);
+  /* ボタン自体は押せず、中の文字だけ押せる作り (窓の下の「閉じる」.pz-x) は、中の文字の所を使う */
+  if (cs.pointerEvents === 'none') {
+    const inner = [...el.children].find(c => getComputedStyle(c).pointerEvents !== 'none');
+    return inner ? visibleRect(inner, el) : null;
+  }
   const r = el.getBoundingClientRect();
   if (r.width < 4 || r.height < 4) return null;
   if (r.bottom < 0 || r.right < 0 || r.top > innerHeight || r.left > innerWidth) return null;
-  const cs = getComputedStyle(el);
-  if (cs.visibility === 'hidden' || cs.pointerEvents === 'none' || +cs.opacity === 0) return null;
+  if (cs.visibility === 'hidden' || +cs.opacity === 0) return null;
   /* 覆われていないか (いちばん上にある窓のボタンだけが残る) */
   const cx = Math.min(innerWidth - 1, Math.max(0, r.left + r.width / 2));
   const cy = Math.min(innerHeight - 1, Math.max(0, r.top + r.height / 2));
   const top = document.elementFromPoint(cx, cy);
-  if (!top || (top !== el && !el.contains(top) && !top.contains(el))) return null;
+  const o = owner || el;
+  if (!top || (top !== el && !el.contains(top) && !top.contains(el) && !o.contains(top))) return null;
   return r;
+}
+
+/* 画面のボタンの呼び名: 描き直されても同じボタンなら同じ名前 (窓を閉じたあと、前のボタンへ戻れるように) */
+function domKey(el) {
+  if (el.id) return '#' + el.id;
+  const same = el.parentElement ? [...el.parentElement.children].filter(c => c.tagName === el.tagName).indexOf(el) : 0;
+  const cls = String(el.className || '').split(/\s+/).filter(c => !/^(on|active|sel|selected|is-active|ready|focused|cur|hover)$/.test(c)).join('.');
+  return el.tagName + '.' + cls + ':' + (el.textContent || '').trim().slice(0, 24) + ':' + same;
 }
 
 function domTargets() {
@@ -147,7 +161,7 @@ function domTargets() {
     if (el.id === 'gpFocus' || el.classList.contains('rb-peek')) continue;
     const r = visibleRect(el);
     if (!r) continue;
-    out.push({ key: el, el, x: r.left, y: r.top, w: r.width, h: r.height });
+    out.push({ key: domKey(el), el, x: r.left, y: r.top, w: r.width, h: r.height });
   }
   return out;
 }
@@ -216,9 +230,50 @@ const center = (t) => ({ x: t.x + t.w / 2, y: t.y + t.h / 2 });
 
 /* 枠を新しく出すときの行き先: 前にいた所の近く。はじめては手札 (対戦ではまず手札を見る) */
 function startTarget(list) {
+  /* さっきまで指していた物がまた見えていれば、そこへ戻る (窓を閉じたら、開く前のボタンへ) */
+  for (let i = recent.length - 1; i >= 0; i--) { const t = list.find(x => x.key === recent[i]); if (t) return t; }
   if (focusPos) return nearest(list, focusPos);
   const hand = list.filter(t => t.hand);
   return nearest(hand.length ? hand : list, { x: innerWidth / 2, y: innerHeight * 0.8 });
+}
+
+/* 新しく窓が開いたら、その窓の主なボタンへ枠を移す (前は窓の外の、前に指していた所に残っていた) */
+let seenEls = new WeakSet();
+const NOT_WINDOW = '.pick-ribbon, #playChoices, #pickBar';
+function followNewWindow(list) {
+  const fresh = list.filter(t => t.el && !seenEls.has(t.el));
+  seenEls = new WeakSet(list.filter(t => t.el).map(t => t.el));
+  if (!fresh.length) return false;
+  const box = fresh[0].el.closest('[role="dialog"], dialog, .show');
+  if (!box || box.closest(NOT_WINDOW)) return false;
+  const cur = current(list);
+  if (cur && cur.el && box.contains(cur.el)) return false;
+  const inBox = list.filter(t => t.el && box.contains(t.el));
+  /* 前に来たことのある画面へ戻った (窓を閉じた) なら、そのとき指していたボタンへ */
+  let first = null;
+  for (let i = recent.length - 1; i >= 0 && !first; i--) first = inBox.find(t => t.key === recent[i]) || null;
+  first = first || primaryOf(inBox);
+  if (first) focus(first);
+  return !!first;
+}
+/* 窓の中の主なボタン: 目立たせてあるもの、無ければ最初のもの (閉じる×は除く) */
+function primaryOf(list) {
+  const main = list.find(t => t.el.matches('[autofocus], .ok, .primary, .ready, [data-primary]'));
+  if (main) return main;
+  return list.find(t => !/close|(^|[\s-])x($|[\s-])/i.test(t.el.className) && !/^[×✕✖]$/.test((t.el.textContent || '').trim())) || list[0] || null;
+}
+
+/* 右スティック: 指している物の入っている一覧 (無ければ画面) をスクロール */
+function scrollByStick(pad) {
+  const y = pad.axes[3] || 0, x = pad.axes[2] || 0;
+  if (Math.abs(y) < 0.3 && Math.abs(x) < 0.3) return;
+  const cur = current(allTargets());
+  let box = null;
+  for (let p = cur && cur.el ? cur.el.parentElement : document.elementFromPoint(innerWidth / 2, innerHeight / 2); p && p !== document.body; p = p.parentElement) {
+    const cs = getComputedStyle(p);
+    if ((/(auto|scroll)/.test(cs.overflowY) && p.scrollHeight > p.clientHeight + 2) || (/(auto|scroll)/.test(cs.overflowX) && p.scrollWidth > p.clientWidth + 2)) { box = p; break; }
+  }
+  (box || document.scrollingElement).scrollBy(Math.abs(x) >= 0.3 ? x * 22 : 0, Math.abs(y) >= 0.3 ? y * 22 : 0);
 }
 
 /* 選んでいる最中の「決定」(何枚か選ぶ・選んだ1枚・並べ替えの確定)。X で押せる */
@@ -236,22 +291,49 @@ function current(list) {
 }
 
 /* いちばん近い物 (向きの指定があれば、その向きにある物の中から) */
-function nearest(list, from, dir) {
+function nearest(list, from, dir, fromT) {
   /* 向きの指定があるときは、まず押した向きの扇の中 (横のずれが進む距離の1.5倍まで) から選ぶ。
      無いときだけ広げる (前は右を押して斜め下の物へ行くことがあった) */
-  if (dir) return nearestIn(list, from, dir, 1.5) || nearestIn(list, from, dir, Infinity);
+  if (dir) return nearestIn(list, from, dir, 1.5, fromT) || (fromT && fromT.el ? null : nearestIn(list, from, dir, Infinity, fromT));
   return nearestIn(list, from, null, Infinity);
 }
-function nearestIn(list, from, dir, cone) {
+/* 2つの区間のすき間 (重なっていれば 0) */
+const gap = (a0, a1, b0, b1) => Math.max(0, Math.max(a0, b0) - Math.min(a1, b1));
+function nearestIn(list, from, dir, cone, fromT) {
   let best = null, bestScore = Infinity;
   for (const t of list) {
     const c = center(t);
     const dx = c.x - from.x, dy = c.y - from.y;
     if (dir) {
-      const along = dir === 'left' ? -dx : dir === 'right' ? dx : dir === 'up' ? -dy : dy;
-      const across = dir === 'left' || dir === 'right' ? Math.abs(dy) : Math.abs(dx);
-      if (along <= 4 || across > along * cone) continue;
-      const score = along + across * 2.2;          // 横にずれた物より、まっすぐ先にある物を選ぶ
+      const cAlong = dir === 'left' ? -dx : dir === 'right' ? dx : dir === 'up' ? -dy : dy;
+      if (cAlong <= 4) continue;
+      /* 今いる物の枠があれば、真ん中どうしではなく端どうしで比べる。
+         横に長いボタン (タイトルの SINGLE GAME など) の真ん中は遠くにあり、下へ押すと下の段を飛ばしていた */
+      let along, across, off;
+      if (fromT) {
+        const horiz = dir === 'left' || dir === 'right';
+        along = horiz ? (dir === 'right' ? t.x - (fromT.x + fromT.w) : fromT.x - (t.x + t.w))
+          : (dir === 'down' ? t.y - (fromT.y + fromT.h) : fromT.y - (t.y + t.h));
+        along = Math.max(0, along);
+        across = horiz ? gap(t.y, t.y + t.h, fromT.y, fromT.y + fromT.h) : gap(t.x, t.x + t.w, fromT.x, fromT.x + fromT.w);
+        off = horiz ? Math.abs(dy) : Math.abs(dx);
+        if (across > (along + 24) * cone) continue;
+        /* 画面のボタンどうし: 押した向きの端より先にある物だけ。左右は同じ段 (高さが重なる・近い) の物だけ、
+           上下も大きく横にずれた物へは行かない (右で右下の「不具合・要望」へ飛んでいた) */
+        if (fromT.el && t.el) {
+          const beyond = dir === 'left' ? c.x <= fromT.x + 2 : dir === 'right' ? c.x >= fromT.x + fromT.w - 2
+            : dir === 'up' ? c.y <= fromT.y + 2 : c.y >= fromT.y + fromT.h - 2;
+          if (!beyond) continue;
+          if (horiz && across > Math.max(t.h, fromT.h) * 0.3) continue;
+          if (!horiz && across > Math.max(t.w, fromT.w) * 1.5) continue;
+        }
+      } else {
+        along = cAlong;
+        across = dir === 'left' || dir === 'right' ? Math.abs(dy) : Math.abs(dx);
+        off = 0;
+        if (across > along * cone) continue;
+      }
+      const score = along + across * 2.2 + off * 0.08;   // 横にずれた物より、まっすぐ先にある物を選ぶ
       if (score < bestScore) { bestScore = score; best = t; }
     } else {
       const d = dx * dx + dy * dy;
@@ -261,8 +343,13 @@ function nearestIn(list, from, dir, cone) {
   return best;
 }
 
+const recent = [];                  // 最近指した物 (新しい順に後ろ)。窓を閉じたときの戻り先
 function focus(t) {
   if (!t) return;
+  const i = recent.indexOf(t.key);
+  if (i >= 0) recent.splice(i, 1);
+  recent.push(t.key);
+  if (recent.length > 40) recent.shift();
   focusKey = t.key;
   focusPos = center(t);
   draw(t);
@@ -331,6 +418,18 @@ function key(k) {
   else window.dispatchEvent(new KeyboardEvent('keydown', opts));
 }
 
+/* 右上の「← タイトル」が出ていて、上に窓が重なっていない (窓が出ていれば B はその窓を閉じる) */
+function titleBackShown() {
+  const el = document.getElementById('titleBack');
+  return !!(el && !el.hidden && visibleRect(el));
+}
+/* START: 設定。対戦中は画面の設定ボタン、タイトルなどでは設定を直接開く (前はタイトルで何も起きなかった) */
+function openOptions() {
+  const btn = document.getElementById('btnSettings');
+  if (btn && !btn.disabled && visibleRect(btn)) btn.click();
+  else openSettings();
+}
+
 function clickId(id) {
   const el = document.getElementById(id);
   if (el && !el.disabled && visibleRect(el)) el.click();
@@ -340,7 +439,17 @@ function move(dir) {
   const list = allTargets();
   const cur = current(list);
   if (!cur) { focus(startTarget(list)); return; }
-  const next = cur.hand ? fromHand(list, cur, dir) : nearest(list.filter(t => t !== cur), center(cur), dir);
+  if (cur.el && adjustValue(cur.el, dir)) return;
+  const next = cur.hand ? fromHand(list, cur, dir) : nearest(list.filter(t => t !== cur), center(cur), dir, cur);
+  /* 長い一覧の中: 次の物が一覧の外なら、先に一覧をめくる (画面の外にある項目へ行けなかった) */
+  const sc = cur.el && (dir === 'up' || dir === 'down') ? scrollParent(cur.el, dir) : null;
+  if (sc && (!next || !next.el || !sc.contains(next.el))) {
+    sc.scrollBy({ top: (dir === 'down' ? 1 : -1) * Math.max(80, sc.clientHeight * 0.6), behavior: 'instant' });
+    const inside = allTargets().filter(t => t.el && t.el !== cur.el && sc.contains(t.el));
+    const n2 = nearest(inside, center(cur), dir, cur);
+    if (n2) focus(n2); else draw(cur);
+    return;
+  }
   if (next) focus(next);
   else if (dir === 'down') showHandThen(() => {
     const hand = boardTargets().filter(t => t.hand);
@@ -359,8 +468,36 @@ function fromHand(list, cur, dir) {
     if (n) return n;
   }
   /* 下は手札の下の物だけ (扇の外の REFRESH などへ横に飛ばない) */
-  if (dir === 'down') return nearestIn(others, center(cur), dir, 1.5);
-  return nearest(others, center(cur), dir);
+  if (dir === 'down') return nearestIn(others, center(cur), dir, 1.5, cur);
+  return nearest(others, center(cur), dir, cur);
+}
+
+/* つまみ (音量など) は左右で値を変える。選択肢 (select) は左右で前後の項目へ */
+function adjustValue(el, dir) {
+  if (dir !== 'left' && dir !== 'right') return false;
+  const d = dir === 'right' ? 1 : -1;
+  if (el.matches('input[type="range"]')) {
+    const step = parseFloat(el.step) || 1, min = parseFloat(el.min) || 0, max = el.max === '' ? 100 : parseFloat(el.max);
+    const big = Math.max(step, (max - min) / 20);
+    el.value = String(Math.min(max, Math.max(min, parseFloat(el.value) + d * big)));
+  } else if (el.tagName === 'SELECT') {
+    const i = Math.min(el.options.length - 1, Math.max(0, el.selectedIndex + d));
+    if (i === el.selectedIndex) return true;
+    el.selectedIndex = i;
+  } else return false;
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+  el.dispatchEvent(new Event('change', { bubbles: true }));
+  return true;
+}
+/* その向きにまだめくれる、いちばん近い一覧 (縦にスクロールする入れ物) */
+function scrollParent(el, dir) {
+  for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+    const oy = getComputedStyle(p).overflowY;
+    if ((oy !== 'auto' && oy !== 'scroll') || p.scrollHeight <= p.clientHeight + 2) continue;
+    const can = dir === 'down' ? p.scrollTop + p.clientHeight < p.scrollHeight - 2 : p.scrollTop > 2;
+    return can ? p : null;
+  }
+  return null;
 }
 
 /* 畳んである手札を開いて、出そろってから続ける */
@@ -371,10 +508,41 @@ function showHandThen(fn) {
 /* 手札を左右に送る (LB / RB) */
 function stepHand(delta) {
   const hand = boardTargets().filter(t => t.hand).sort((a, b) => center(a).x - center(b).x);
-  if (!hand.length) { showHandThen(() => { if (boardTargets().some(t => t.hand)) stepHand(delta); }); return; }
+  if (!hand.length) return openHand && openHand() ? (setTimeout(() => { if (boardTargets().some(t => t.hand)) stepHand(delta); }, 260), true) : false;
   const i = hand.findIndex(t => t.key === focusKey);
   const n = i < 0 ? (delta > 0 ? 0 : hand.length - 1) : Math.max(0, Math.min(hand.length - 1, i + delta));
   focus(hand[n]);
+  return true;
+}
+
+/* LB / RB: タブ (設定の左の項目・コレクションの絞り込みなど) を前後へ。
+   タブは「選ばれている印」(aria-selected・.on/.active/.sel) を持つ、同じ親に並んだボタンの組。指している所に近い組を使う */
+const TAB_ON = (el) => el.getAttribute('aria-selected') === 'true' || el.getAttribute('aria-pressed') === 'true' || el.matches('.on, .active, .sel, .is-active, .selected, .cur');
+function switchTab(delta) {
+  const list = allTargets().filter(t => t.el);
+  const groups = new Map();
+  for (const t of list) {
+    const el = t.el;
+    if (!(el.hasAttribute('aria-selected') || el.getAttribute('role') === 'tab' || /(^|[\s_-])tabs?([\s_-]|$)/i.test(el.className + ' ' + el.parentElement.className))) continue;
+    const g = groups.get(el.parentElement) || [];
+    g.push(t);
+    groups.set(el.parentElement, g);
+  }
+  const cur = current(list);
+  const from = cur ? center(cur) : { x: innerWidth / 2, y: innerHeight / 2 };
+  let best = null, bestD = Infinity;
+  for (const [parent, g] of groups) {
+    if (g.length < 2 || !g.some(t => TAB_ON(t.el))) continue;
+    const inside = cur && cur.el && parent.contains(cur.el) ? -1e9 : 0;
+    const d = Math.min(...g.map(t => Math.hypot(center(t).x - from.x, center(t).y - from.y))) + inside;
+    if (d < bestD) { bestD = d; best = g; }
+  }
+  if (!best) return false;
+  const i = best.findIndex(t => TAB_ON(t.el));
+  const n = best[(i + delta + best.length) % best.length];
+  n.el.click();
+  if (cur && cur.el && best.includes(cur)) focus(n);
+  return true;
 }
 
 /* ---------- 物語の歩く画面 ---------- */
@@ -417,7 +585,7 @@ function storyInput(pad, b, pressed) {
   setWalk(dirs);
   if (pressed(BTN.A)) key('e');                             // 話す・調べる (近くに何もなければ何も起きない)
   if (pressed(BTN.B)) { const back = document.getElementById('titleBack'); if (back && back.offsetParent) back.click(); }   // 歩く画面から戻る
-  if (pressed(BTN.START)) clickId('btnSettings');
+  if (pressed(BTN.START)) openOptions();
   return true;
 }
 
@@ -444,9 +612,12 @@ function loop(now) {
   /* 指している物が動いた・消えたら、枠を追わせる */
   const list = allTargets();
   if (followPlaceScope(list)) { prevButtons = b; return; }
-  const cur = current(list);
-  if (cur) { focusPos = center(cur); draw(cur); }
-  else if (list.length) focus(nearest(list, focusPos || { x: innerWidth / 2, y: innerHeight / 2 }));
+  if (!followNewWindow(list)) {
+    const cur = current(list);
+    if (cur) { focusPos = center(cur); draw(cur); }
+    else if (list.length) focus(startTarget(list));
+  }
+  scrollByStick(pad);
 
   if (pressed(BTN.A)) activate();
   if (pressed(BTN.B)) {
@@ -455,6 +626,7 @@ function loop(now) {
     const cancel = scope && scope.querySelector('.placement-cancel');
     if (ov) ov.click();                              // 公開された札の一覧・拡大・演出は、札でない所を触ると閉じる
     else if (cancel) cancel.click();                 // 置く場所を選んでいる間: カードを選ぶ前に戻る
+    else if (titleBackShown()) document.getElementById('titleBack').click();   // タイトルから入った画面 (SINGLE GAME など): タイトルへ
     else key('Escape');
   }
   if (pressed(BTN.X)) {
@@ -463,10 +635,10 @@ function loop(now) {
     else clickId('btnRefresh');
   }
   if (pressed(BTN.Y)) clickId('btnHand');
-  if (pressed(BTN.LB)) stepHand(-1);
-  if (pressed(BTN.RB)) stepHand(1);
+  if (pressed(BTN.LB)) stepHand(-1) || switchTab(-1);
+  if (pressed(BTN.RB)) stepHand(1) || switchTab(1);
   if (pressed(BTN.BACK)) clickId('btnLog');
-  if (pressed(BTN.START)) clickId('btnSettings');
+  if (pressed(BTN.START)) openOptions();
 
   /* 十字キー・左スティック (押しっぱなしで続けて進む) */
   const ax = pad.axes[0] || 0, ay = pad.axes[1] || 0;
