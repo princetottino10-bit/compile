@@ -85,8 +85,7 @@ test('COMPUZZLE の実績: 中級を全部で PUZZLER、全部で COMPUZZLER、�
   assert.equal(t('tsume_all').test(ctx(mids)), false);
   const all = list.map(p => 'k:ts:' + p.id);
   assert.equal(t('tsume_all').test(ctx(all)), true);
-  assert.equal(t('daily_puzzle7').test(ctx(['k:dp:1', 'k:dp:2', 'k:dp:3', 'k:dp:4', 'k:dp:5', 'k:dp:6'])), false);
-  assert.equal(t('daily_puzzle7').test(ctx(['k:dp:1', 'k:dp:2', 'k:dp:3', 'k:dp:4', 'k:dp:5', 'k:dp:6', 'k:dp:7'])), true);
+  assert.equal(t('daily_puzzle').test(ctx(['k:dp:1'])), true);
   assert.equal(t('puzzle').test(ctx(['k:ts:t1-01'])), true);
 });
 

@@ -54,7 +54,25 @@ test('積み上げ: 勝ち数・難易度・連勝', () => {
 test('オンラインの勝ちも勝ち数に入る (帳簿で多く入った分)', () => {
   const xp = [{ id: 'k:room:A:40', src: 'online', xp: 8, at: 1 }, { id: 'k:room:B:40', src: 'online', xp: 3, at: 2 }];
   const got = ids(newlyEarned({}, ctx({ xp })));
-  assert.deepEqual(got, ['first_win', 'online', 'online_win']);
+  assert.deepEqual(got, ['first_win']);
+});
+
+test('短縮マッチ (RUN・WEEKLY) の1試合は実績に数えない', () => {
+  const game = { win: true, turns: 12, compiles: 2, oppCompiles: 0, winCompiles: 2, effectsMap: {}, faceUpIds: [], refreshes: 0, touched: 0, maxLine: 25, short: true, at: Date.UTC(2026, 0, 1, 3) };
+  assert.deepEqual(ids(newlyEarned({}, ctx({ game }))), []);
+});
+
+test('縛りプレイ・記録の実績', () => {
+  const base = { win: true, level: 3, turns: 40, compiles: 3, oppCompiles: 1, winCompiles: 3, effectsMap: {}, effects: 5, chainMax: 0,
+    faceUpIds: ['FIRE_1'], refreshes: 0, touched: 0, maxLine: 12, short: false, at: Date.UTC(2026, 0, 1, 12) };
+  const got = ids(newlyEarned({}, ctx({ game: base })));
+  assert.ok(got.includes('norefresh') && got.includes('norefresh_apex') && got.includes('untouchable'));
+  assert.ok(!got.includes('shadow') && !got.includes('overkill'));
+  const more = ids(newlyEarned({}, ctx({ game: { ...base, level: 1, refreshes: 2, touched: 1, faceUpIds: [], maxLine: 21, effects: 40, chainMax: 6, turns: 18 } })));
+  assert.ok(more.includes('shadow') && more.includes('overkill') && more.includes('overclock2') && more.includes('chain6') && more.includes('blitz'));
+  assert.ok(!more.includes('norefresh') && !more.includes('untouchable'));
+  const lost = ids(newlyEarned({}, ctx({ game: { ...base, win: false } })));
+  assert.ok(!lost.includes('norefresh') && !lost.includes('shadow'));
 });
 
 test('その1試合: 完封・瀬戸際・早い勝ち (負けでは取れない)', () => {

@@ -180,7 +180,11 @@ function gameSummary(st, side, win, level, online) {
     effects: Object.values(effectsMap).reduce((n, v) => n + (v | 0), 0),
     faceUpIds: ((t.faceUp && t.faceUp[side]) || []).slice(),
     chainMax: (t.chains && t.chains[side]) | 0,      // 自分の効果で割り込んでつないだ、一番長いチェーン
-    turns: (st.turns || 0) + 1, at: Date.now()
+    turns: (st.turns || 0) + 1, at: Date.now(),
+    refreshes: (t.refreshes && t.refreshes[side]) | 0,   // リフレッシュした回数
+    touched: (t.touched && t.touched[side]) | 0,         // 自分のカードが相手の効果で削除・反転・移動・手札に戻された回数
+    maxLine: (t.maxLine && t.maxLine[side]) | 0,         // 自分のラインの合計値の最高
+    short: shortMatch                                    // 短縮マッチ (実績に数えない)
   };
 }
 
@@ -589,7 +593,8 @@ function shown() { return reviewView || (cur && (cur.view || cur.state)) || null
 const gameHistory = [];
 /* 待った: 自分の最後の手 (出す・リフレッシュ) の直前。1手だけ戻せる (ふつうの CPU 戦のみ) */
 let undoPoint = null;
-let gpPickAt = null;                 // ゲームパッド用の当たり判定 (bindInput で作る。gpHitPoint)
+let gpPickAt = null;
+let shortMatch = false;               // いまの対戦が短縮マッチか (3本より少ないコンパイルで決着)。実績に数えない                 // ゲームパッド用の当たり判定 (bindInput で作る。gpHitPoint)
 /* 相手の番のまとめ: { start: 相手の番の最初の盤面, lines: 相手の手の文 } */
 let oppTurn = null;
 
@@ -1108,6 +1113,8 @@ async function boot() {
   const seed = (Math.random() * 1e9) | 0;
   /* 勝ち抜き戦は2本先取 (序盤のふつうの戦闘は1本先取。run.js の runWinCompiles)。週替わりは2本先取 */
   const winCompiles = storyNode ? storyNode.win : runMode ? (runOpts ? runOpts.winCompiles : RUN_WIN_COMPILES) : undefined;
+  /* 短縮マッチ: 3本より少ないコンパイルで決着する (はじめからコンパイル済みのプロトコルがあるのも同じ) */
+  shortMatch = (!!winCompiles && winCompiles < 3) || !!(runOpts && Array.isArray(runOpts.startCompiled) && runOpts.startCompiled.some(n => n > 0));
   /* ストーリーの「2本先取」は、勝ち抜き戦と同じく自分は 3 本のうち 1 本がコンパイル済みから始まる (相手はそのまま 2 本) */
   const storyOpts = storyNode && storyNode.kind === 'battle' && storyNode.win < 3
     ? { winCompilesBySide: [3, storyNode.win], startCompiled: [3 - storyNode.win, 0] } : null;
@@ -4799,7 +4806,7 @@ async function afterTurn() {
         { turns: (st0.turns || 0) + 1,       // 決着した手番も1つと数える
           cards: ((st0.tally && st0.tally.faceUp[ME]) || []).slice(),
           effects: (st0.tally && st0.tally.effects && st0.tally.effects[ME]) || {},
-          mode: runMode ? runKind : tutorial ? 'tutorial' : tagMates ? 'tag' : quickGame ? 'quick' : 'cpu' });
+          mode: runMode ? runKind : tutorial ? 'tutorial' : tagMates ? 'tag' : quickGame ? 'quick' : 'cpu', short: shortMatch });
       refreshCardGlow();
       if (replayLog) {
         lastReplayId = addReplay({ me: replayLog.init.p0, opp: replayLog.init.p1, win, level: aiDifficulty,

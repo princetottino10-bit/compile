@@ -68,7 +68,9 @@ export function recordSoloResult(me, opp, win, level, extra) {
     turns: Number.isInteger(x.turns) ? x.turns : null, feats: Array.isArray(x.feats) ? x.feats.slice() : [],
     cards: Array.isArray(x.cards) ? x.cards.slice(0, 64) : [], effects: cleanEffects(x.effects),
     /* どのモードの対戦か (管理者の画面で数える) */
-    ...(MODES.includes(x.mode) ? { mode: x.mode } : {}) };
+    ...(MODES.includes(x.mode) ? { mode: x.mode } : {}),
+    /* 短縮マッチ (3本より少ないコンパイルで決着する試合)。実績には数えない */
+    ...(x.short ? { short: true } : {}) };
   list.push(rec);
   save(list);
   if (hooks.onRecord) hooks.onRecord(rec);

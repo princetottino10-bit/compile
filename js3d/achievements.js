@@ -19,7 +19,9 @@ const KEY = 'compileTrophies';
 export const TROPHY_XP = { bronze: 2, silver: 5, gold: 10, platinum: 20 };
 
 /* ctx: { records: CPU 戦の戦績, xp: 経験値の帳簿, level, cardWins: Map(defId → {wins}),
-          game: その1試合 (無ければ null) { win, turns, compiles, oppCompiles, winCompiles, effectsMap, faceUpIds, chainMax, at } } */
+          game: その1試合 (無ければ null) { win, level, turns, compiles, oppCompiles, winCompiles, effectsMap, faceUpIds, chainMax,
+                  refreshes, touched, maxLine, short, at } }
+   records は短縮マッチを除いたもの (achievements-ui.js の trophyContext) */
 const wins = (c) => c.records.filter(r => r.win).length + c.xp.filter(onlineWin).length;
 const xpHas = (c, fn) => c.xp.some(fn);
 const beat = (c, lv) => c.records.some(r => r.win && r.level === lv);
@@ -31,14 +33,11 @@ function streak(records, want) {
 const playedKinds = (c) => new Set(c.records.flatMap(r => r.cards || [])).size;
 const protoWins = (c) => new Set(c.records.filter(r => r.win).flatMap(r => r.me)).size;
 const tierCards = (c, min) => Array.from(c.cardWins.values()).filter(t => t.wins >= min).length;
-const g = (c) => c.game || null;
+/* その1試合。短縮マッチ (RUN・WEEKLY のように3本より少ないコンパイルで決着する試合) は数えない */
+const g = (c) => (c.game && !c.game.short ? c.game : null);
 /* プロトコルの習熟度のレベル (戦績から) の一覧 */
 const masteries = (c) => Array.from(protocolSummary(c.records).values()).map(t => t.mastery.level);
 const bestMastery = (c) => Math.max(0, ...masteries(c));
-/* 週替わり3連戦をクリアした週の数 */
-const weeklyWeeks = (c) => new Set(c.xp.map(e => e.id).filter(id => /^k:wk:W\d+$/.test(id || ''))).size;
-const onlineGames = (c) => c.xp.filter(e => e.src === 'online').length;
-const dailyAllDays = (c) => c.xp.filter(e => /^k:dm:\d+:all$/.test(e.id || '')).length;
 const playedProtos = (c) => new Set(c.records.flatMap(r => r.me || [])).size;
 const hour = (c) => new Date(g(c).at).getHours();
 /* COMPUZZLE (詰めコンパイル): 経験値の帳簿の k:ts:t2-03 (問題ごと) と k:dp:日 (今日の問題) で数える。
@@ -64,7 +63,6 @@ export const TROPHIES = [
   { id: 'daily_puzzle', tier: 'bronze', name: 'PUZZLE OF THE DAY', desc: 'COMPUZZLE の今日の問題を解く', test: (c) => dailyPuzzles(c) >= 1 },
   { id: 'tsume_easy', tier: 'bronze', name: 'WARMED UP', desc: 'COMPUZZLE の初級を全部解く',
     test: (c) => tsumeSolved(c, [1]) >= tsumeTotal([1]), progress: (c) => [tsumeSolved(c, [1]), tsumeTotal([1])] },
-  { id: 'online', tier: 'bronze', name: 'HELLO WORLD', desc: 'オンライン対戦を1戦する', test: (c) => xpHas(c, e => e.src === 'online') },
   { id: 'daily', tier: 'bronze', name: 'DAILY ROUTINE', desc: 'デイリーミッションを1日で3つそろえる', test: (c) => xpHas(c, e => /^k:dm:\d+:all$/.test(e.id)) },
   { id: 'cards60', tier: 'bronze', name: 'COLLECTOR', desc: '違うカードを60種類、表で出す', test: (c) => playedKinds(c) >= 60, progress: (c) => [Math.min(60, playedKinds(c)), 60] },
   { id: 'explorer', tier: 'bronze', name: 'EXPLORER', desc: '10種類のプロトコルで戦う', test: (c) => new Set(c.records.flatMap(r => r.me)).size >= 10, progress: (c) => [new Set(c.records.flatMap(r => r.me)).size, 10] },
@@ -81,21 +79,14 @@ export const TROPHIES = [
   { id: 'strong', tier: 'silver', name: 'STRONG ARM', desc: '「つよい」の CPU に勝つ', test: (c) => beat(c, 2) },
   { id: 'lock', tier: 'silver', name: 'LOCKSMITH', desc: '「ロック特化」の CPU に勝つ', test: (c) => beat(c, 4) },
   { id: 'streak5', tier: 'silver', name: 'ON A ROLL', desc: 'CPU 戦で5連勝する', test: (c) => streak(c.records, true) >= 5, progress: (c) => [Math.min(5, streak(c.records, true)), 5] },
-  { id: 'online_win', tier: 'silver', name: 'NETWORKED', desc: 'オンライン対戦で勝つ', test: (c) => xpHas(c, onlineWin) },
   { id: 'run', tier: 'silver', name: 'RUNNER', desc: 'RUN を全勝クリアする', test: (c) => xpHas(c, e => e.src === 'run') },
   { id: 'weekly', tier: 'silver', name: 'WEEKLY CHAMP', desc: 'WEEKLY をクリアする (専用スリーブ LAUREL)', test: (c) => xpHas(c, e => e.src === 'weekly') },
-  { id: 'weekly3', tier: 'silver', name: 'WEEKLY REGULAR', desc: 'WEEKLY を3つの週でクリアする (称号 WEEKLY REGULAR・専用マーカー)',
-    test: (c) => weeklyWeeks(c) >= 3, progress: (c) => [Math.min(3, weeklyWeeks(c)), 3] },
   { id: 'level10', tier: 'silver', name: 'VETERAN', desc: 'プレイヤーレベル10になる', test: (c) => c.level >= 10, progress: (c) => [Math.min(c.level, 10), 10] },
   { id: 'gold_card', tier: 'silver', name: 'GOLDEN TOUCH', desc: 'カードの縁を金にする (そのカードで25勝)', test: (c) => tierCards(c, 25) >= 1 },
   { id: 'chain4', tier: 'silver', name: 'CHAIN REACTION', desc: '自分の効果で割り込んで、チェーンを4つつなげる (称号 CHAIN MASTER)', test: (c) => !!g(c) && (g(c).chainMax | 0) >= 4 },
-  { id: 'online10', tier: 'silver', name: 'REGULAR', desc: 'オンライン対戦を10戦する', test: (c) => onlineGames(c) >= 10, progress: (c) => [Math.min(10, onlineGames(c)), 10] },
   { id: 'tsume_mid', tier: 'silver', name: 'PUZZLER', desc: 'COMPUZZLE の中級を全部解く (称号 PUZZLER)',
     test: (c) => tsumeSolved(c, [2]) >= tsumeTotal([2]), progress: (c) => [tsumeSolved(c, [2]), tsumeTotal([2])] },
   { id: 'gacha_legend', tier: 'silver', name: 'LUCKY STAR', desc: 'GACHA で LEGENDARY を引く', test: (c) => gachaHasRar(c, 'L') },
-  { id: 'daily_puzzle7', tier: 'silver', name: 'DAILY THINKER', desc: 'COMPUZZLE の今日の問題を7日解く',
-    test: (c) => dailyPuzzles(c) >= 7, progress: (c) => [Math.min(7, dailyPuzzles(c)), 7] },
-  { id: 'daily7', tier: 'silver', name: 'HABIT', desc: 'デイリーミッションを3つそろえた日を7日つくる', test: (c) => dailyAllDays(c) >= 7, progress: (c) => [Math.min(7, dailyAllDays(c)), 7] },
   { id: 'versatile', tier: 'silver', name: 'VERSATILE', desc: '5つのプロトコルの習熟度を3以上にする',
     test: (c) => masteries(c).filter(l => l >= 3).length >= 5, progress: (c) => [Math.min(5, masteries(c).filter(l => l >= 3).length), 5] },
   { id: 'all30play', tier: 'silver', name: 'CARTOGRAPHER', desc: '30のプロトコルすべてで戦う', test: (c) => playedProtos(c) >= 30, progress: (c) => [playedProtos(c), 30] },
@@ -123,10 +114,16 @@ export const TROPHIES = [
     test: (c) => tsumeSolved(c, [1, 2, 3]) >= tsumeTotal([1, 2, 3]), progress: (c) => [tsumeSolved(c, [1, 2, 3]), tsumeTotal([1, 2, 3])] },
   { id: 'gacha_all', tier: 'gold', name: 'COLLECTOR SUPREME', desc: 'GACHA の見た目と称号を全部そろえる',
     test: (c) => gachaGot(c) >= GACHA_ITEMS.length, progress: (c) => [gachaGot(c), GACHA_ITEMS.length] },
-  { id: 'daily_puzzle30', tier: 'gold', name: 'DEEP THOUGHT', desc: 'COMPUZZLE の今日の問題を30日解く',
-    test: (c) => dailyPuzzles(c) >= 30, progress: (c) => [Math.min(30, dailyPuzzles(c)), 30] },
-  { id: 'weekly10', tier: 'gold', name: 'WEEKLY LEGEND', desc: 'WEEKLY を10の週でクリアする (称号 WEEKLY LEGEND)',
-    test: (c) => weeklyWeeks(c) >= 10, progress: (c) => [Math.min(10, weeklyWeeks(c)), 10] },
+  /* ---- 縛りプレイ・記録 (2026-10-04) ---- */
+  { id: 'overkill', tier: 'silver', name: 'OVERKILL', desc: '1つのラインの合計値を20以上にする', test: (c) => !!g(c) && (g(c).maxLine | 0) >= 20 },
+  { id: 'overclock2', tier: 'silver', name: 'OVERCLOCK II', desc: '1試合で自分の効果を40回発動させる', test: (c) => !!g(c) && (g(c).effects | 0) >= 40 },
+  { id: 'blitz', tier: 'silver', hidden: true, name: 'BLITZ', desc: '20手番以内 (両者合わせて) で勝つ', test: (c) => !!g(c) && g(c).win && g(c).turns > 0 && g(c).turns <= 20 },
+  { id: 'chain6', tier: 'gold', name: 'CHAIN BREAKER', desc: '自分の効果で割り込んで、チェーンを6つつなげる', test: (c) => !!g(c) && (g(c).chainMax | 0) >= 6 },
+  { id: 'norefresh', tier: 'gold', name: 'NO REFRESH', desc: '一度もリフレッシュせずに勝つ', test: (c) => !!g(c) && g(c).win && g(c).refreshes === 0 },
+  { id: 'norefresh_apex', tier: 'gold', name: 'NO REFRESH APEX', desc: '一度もリフレッシュせずに「最強」の CPU に勝つ', test: (c) => !!g(c) && g(c).win && g(c).refreshes === 0 && g(c).level === 3 },
+  { id: 'shadow', tier: 'gold', name: 'SHADOW PLAY', desc: '一度も表でカードを出さずに勝つ', test: (c) => !!g(c) && g(c).win && g(c).faceUpIds.length === 0 },
+  { id: 'untouchable', tier: 'gold', name: 'UNTOUCHABLE', desc: '自分のカードを一度も相手の効果で削除・反転・移動・手札に戻されずに勝つ',
+    test: (c) => !!g(c) && g(c).win && g(c).touched === 0 },
   { id: 'flawless', tier: 'gold', hidden: true, name: 'FLAWLESS', desc: '相手に1回もコンパイルさせずに勝つ (称号 FLAWLESS)', test: (c) => !!g(c) && g(c).win && g(c).oppCompiles === 0 },
   /* ---- 全部 ---- */
   { id: 'platinum', tier: 'platinum', name: 'PLATINUM', desc: 'ほかの実績をすべて取る (称号 PLATINUM)', test: () => false }

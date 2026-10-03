@@ -10,8 +10,11 @@ import { xpLog, bonusXp } from './xp.js';
 
 /* 判定に使う材料をそろえる。game: その1試合 (無ければ null) */
 export function trophyContext(game) {
-  const records = localRecords();
-  return { records, xp: xpLog(), level: playerLevel(records, bonusXp()).level,
+  const all = localRecords();
+  /* 短縮マッチ (RUN・WEEKLY など3本より少ないコンパイルで決着する試合) は実績に数えない。
+     印 (short) が無い前の戦績は、RUN と WEEKLY を短縮マッチとみなす。レベルは経験値なので全部で */
+  const records = all.filter(r => !(r.short || (r.short === undefined && (r.mode === 'run' || r.mode === 'weekly'))));
+  return { records, xp: xpLog(), level: playerLevel(all, bonusXp()).level,
     cardWins: cardStats(records), game: game || null, gacha: loadGacha() };
 }
 
