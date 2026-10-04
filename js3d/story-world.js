@@ -58,7 +58,9 @@ export function openWorld(protocols, opts = {}) {
     '<div class="sw-hud"><b>' + chapter.title + '「' + chapter.name + '」</b><span class="sw-zone"></span><p class="sw-goal"></p></div>' +
     '<div class="sw-labels"></div>' +
     '<button type="button" class="sw-act" hidden></button>' +
-    '<p class="sw-help">WASD・矢印キー (Shift で走る) / 画面を押して動かす・床をタップで移動　E・Enter で話す</p>';
+    '<p class="sw-help">' + (window.matchMedia && matchMedia('(pointer: coarse)').matches
+      ? '画面を押して動かす / 床をタップでそこへ歩く　2本指で寄る・引く'
+      : 'WASD・矢印キーで歩く (Shift で走る) / 床をクリックでそこへ歩く　E・Enter で話す　ホイールで寄る・引く') + '</p>';
   document.body.appendChild(root);
   const canvas = root.querySelector('canvas');
   const actBtn = root.querySelector('.sw-act');
@@ -314,11 +316,23 @@ export function openWorld(protocols, opts = {}) {
   stick.innerHTML = '<i></i>';
   root.appendChild(stick);
   let joy = null;              // { id, x, y, dx, dy, moved }
+  /* 2本指: 指の間の広さで寄る / 引く (スティックより優先) */
+  const touches = new Map();
+  let pinch = null;            // { d0, z0 }
+  const spread = () => { const [a, b] = [...touches.values()]; return Math.hypot(a.x - b.x, a.y - b.y) || 1; };
   const onDown = (ev) => {
-    if (busy || joy) return;
+    touches.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+    if (touches.size === 2) {
+      joy = null; stick.hidden = true;
+      pinch = { d0: spread(), z0: zoom };
+      return;
+    }
+    if (busy || joy || pinch) return;
     joy = { id: ev.pointerId, x: ev.clientX, y: ev.clientY, dx: 0, dy: 0, moved: false };
   };
   const onMove = (ev) => {
+    if (touches.has(ev.pointerId)) touches.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+    if (pinch && touches.size >= 2) { zoom = THREE.MathUtils.clamp(pinch.z0 * pinch.d0 / spread(), 0.7, 1.45); return; }
     if (!joy || ev.pointerId !== joy.id) return;
     const dx = ev.clientX - joy.x, dy = ev.clientY - joy.y, d = Math.hypot(dx, dy);
     if (!joy.moved && d > 14) { joy.moved = true; path = null; marker.visible = false; stick.hidden = false; stick.style.left = joy.x + 'px'; stick.style.top = joy.y + 'px'; }
@@ -328,6 +342,8 @@ export function openWorld(protocols, opts = {}) {
     stick.firstChild.style.transform = 'translate(' + (joy.dx * 34) + 'px,' + (joy.dy * 34) + 'px)';
   };
   const onUp = (ev) => {
+    touches.delete(ev.pointerId);
+    if (pinch) { if (touches.size < 2) pinch = null; return; }
     if (!joy || ev.pointerId !== joy.id) return;
     const tap = !joy.moved;
     joy = null;
@@ -601,8 +617,14 @@ export function openWorld(protocols, opts = {}) {
 
     /* カメラはあなたを追う */
     /* カメラ: 少し先 (歩く向き) を見る。ホイール・2本指で寄る / 引く */
-    const ahead = new THREE.Vector3(vel.x * 0.32 * T, 0, vel.y * 0.32 * T);
-    tmp.copy(me.position).add(ahead).addScaledVector(CAM_OFFSET, zoom);
+    /* 縦持ちは横に見える幅が狭いので、引いて見せ、次の行き先の方へ大きめに寄せる */
+    const portrait = window.innerHeight > window.innerWidth;
+    const ahead = new THREE.Vector3(vel.x * (portrait ? 0.5 : 0.32) * T, 0, vel.y * 0.32 * T);
+    if (portrait && !busy) {
+      const g = guideTarget();
+      if (g) ahead.x += THREE.MathUtils.clamp(g.x - pos.x, -4, 4) * 0.35 * T;
+    }
+    tmp.copy(me.position).add(ahead).addScaledVector(CAM_OFFSET, zoom * (portrait ? 1.5 : 1));
     camera.position.lerp(tmp, Math.min(1, dt * 3.5));
     look.lerp(tmp.copy(me.position).add(ahead).setY(0.9), Math.min(1, dt * 5));
     camera.lookAt(look);
