@@ -31,6 +31,7 @@ import { fixReading } from './voice_fix.mjs';
 /* ずんだもんは「あまあま」だと元気がなく聞こえた (2026-10-04)。ふつう・明るいセリフはノーマルの声で、
    基本は抑揚強め (B)、気合いの入ったセリフ (「！」で盛り上がる場面) はさらに元気に (C)。泣く・怒るの声色はそのまま */
 const ZUN_VOICE = { base: { speed: 1.1, intonation: 1.35 }, hype: { speed: 1.15, intonation: 1.5, pitch: 0.04 } };
+const BRIGHT = { zundamon: { base: 3, happy: 3 }, metan: { base: 2, happy: 2 }, tsumugi: { base: 8, happy: 8 }, whitecul: { base: 23, happy: 24 } };
 const ZUN_HYPE_KINDS = new Set(['compile', 'win', 'chain', 'reach', 'fav', 'ace', 'sure', 'recompile', 'lead', 'boost', 'control', 'good', 'wipe', 'tag_in']);
 const zunHype = (kind, text, d) => /！/.test(text) && (ZUN_HYPE_KINDS.has(kind) || /^own_/.test(kind) || d.style === 'happy' || (d.intonation || 0) >= 1.3);
 
@@ -82,8 +83,10 @@ for (const id of ids) {
       if (d.style && sp[d.style] === undefined) console.log('  声色が無い', id, d.style, '→ ふつうの声で', text);
       let speaker = sp[tone] ?? sp.base;
       let dd = d;
-      if (id === 'zundamon' && (tone === 'base' || tone === 'happy')) {
-        speaker = sp.base;
+      /* ずんだもん・めたん・つむぎ・WhiteCUL のふつう・明るいセリフ: 基本は抑揚強め、気合いの入ったセリフはさらに元気に。
+         明るいセリフの声色は、ずんだもん・めたんはノーマル (「あまあま」だと元気がない)、WhiteCUL は「たのしい」 */
+      if (BRIGHT[id] && (tone === 'base' || tone === 'happy')) {
+        speaker = tone === 'happy' ? BRIGHT[id].happy : BRIGHT[id].base;
         dd = { ...d, ...(zunHype(kind, text, d) ? ZUN_VOICE.hype : ZUN_VOICE.base) };
       }
       const out = path.join(dir, kind + '_' + i + '.mp3');
