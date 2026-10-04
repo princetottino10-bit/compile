@@ -291,6 +291,33 @@ function auraTexture() {
   return auraTex;
 }
 
+/* ホロの縁: 輪の形 (auraTexture) の中に、縁に沿って虹色を並べ、その虹が回って流れる。
+   ほかの段 (銅・銀・金) は1色の光のまま */
+let holoMat = null;
+const holoTime = { value: 0 };
+function holoMaterial() {
+  if (holoMat) return holoMat;
+  holoMat = new THREE.ShaderMaterial({
+    uniforms: { uMask: { value: auraTexture() }, uTime: holoTime, uOpacity: { value: 0.8 } },
+    vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: `
+      uniform sampler2D uMask; uniform float uTime; uniform float uOpacity; varying vec2 vUv;
+      vec3 hue(float h){ return clamp(abs(mod(h * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.0) - 1.0, 0.0, 1.0); }
+      void main(){
+        vec4 m = texture2D(uMask, vUv);
+        vec2 d = vUv - 0.5;
+        float a = atan(d.y, d.x) / 6.2831853;
+        /* 縁に沿った虹 + 斜めに走るきらめき */
+        vec3 c = mix(hue(a * 2.0 - uTime * 0.35), vec3(1.0), 0.18);
+        float glint = smoothstep(0.92, 1.0, sin((vUv.x + vUv.y) * 9.0 - uTime * 2.4) * 0.5 + 0.5);
+        c += glint * 0.6;
+        gl_FragColor = vec4(c * m.a * uOpacity, m.a * uOpacity);
+      }`,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false
+  });
+  return holoMat;
+}
+
 export function setAura(card, spec) {
   let aura = card.userData.aura;
   if (!spec) {
@@ -314,8 +341,14 @@ export function setAura(card, spec) {
     card.userData.aura = aura;
   }
   aura.visible = true;
-  aura.material.color.set(spec.color);
-  aura.material.opacity = spec.strength;      // 揺らぎ (tickAura) が始まる前から見えるように
+  if (spec.holo) {
+    if (!aura.userData.basicMat) aura.userData.basicMat = aura.material;
+    aura.material = holoMaterial();
+  } else {
+    if (aura.userData.basicMat) aura.material = aura.userData.basicMat;
+    aura.material.color.set(spec.color);
+    aura.material.opacity = spec.strength;      // 揺らぎ (tickAura) が始まる前から見えるように
+  }
   card.userData.auraSpec = spec;
 }
 
@@ -390,7 +423,7 @@ export function tickAura(card, t) {
   const spec = card.userData.auraSpec;
   const aura = card.userData.aura;
   if (!spec || !aura || !aura.visible) return;
+  if (spec.holo) { holoTime.value = t; return; }   // ホロは虹の帯が流れる (holoMaterial)
   const pulse = 0.9 + 0.1 * Math.sin(t * 1.3);
   aura.material.opacity = spec.strength * pulse;
-  if (spec.holo) aura.material.color.setHSL((t * 0.08) % 1, 0.85, 0.62);
 }
