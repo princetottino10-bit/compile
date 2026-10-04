@@ -162,8 +162,13 @@ const FOIL_TIERS = [
   { min: 6, color: '#ffd98a', strength: 0.3 },
   { min: 3, color: '#dfe8ff', strength: 0.26 }
 ];
+/* ホロ (そのカードで50勝) の札は、縁だけでなく面全体に強い虹の光沢を乗せる (金の縁からひと目で変わるように) */
+const HOLO_FOIL = { color: '#ffffff', strength: 0.9, rainbow: true, holo: true };
 function foilFor(defId) {
   if (!settings().foil) return null;
+  const w = cardWins.get(defId);
+  const tier = w ? cardTier(w.wins) : null;
+  if (tier && tier.holo) return HOLO_FOIL;
   const d = defIndex[defId];
   const t = d && protoMastery.get(d.proto);
   const lv = t ? t.mastery.level : 0;

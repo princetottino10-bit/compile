@@ -370,12 +370,25 @@ uniform vec3 uColor;
 uniform float uStrength;
 uniform float uRainbow;
 uniform float uPhase;
+uniform float uHolo;
 varying vec2 vUv;
 vec3 hue(float h) {
   return clamp(abs(mod(h * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.0) - 1.0, 0.0, 1.0);
 }
 void main() {
   float m = texture2D(uMask, vUv).r;
+  /* ホロ (50勝): 面全体にいつも虹を乗せて流す。文字の所 (型紙の黒) も薄く乗せる */
+  if (uHolo > 0.5) {
+    float mh = max(m, 0.32);
+    float dh = vUv.x * 0.9 + vUv.y * 0.6;
+    float posh = fract(uTime * 0.18 + uPhase) * 2.4 - 0.55;
+    float bandh = exp(-pow((dh - posh) / 0.12, 2.0));
+    float fineh = 0.5 + 0.5 * sin(vUv.x * 60.0 + vUv.y * 40.0 + uTime * 2.0);
+    vec3 ch = hue(fract(dh * 1.6 - uTime * 0.12)) * 0.85 + 0.15;
+    float ah = (0.22 + bandh * 0.7 + fineh * 0.1) * uStrength * mh;
+    gl_FragColor = vec4(ch * ah, ah);
+    return;
+  }
   if (m < 0.02) discard;
   float d = vUv.x * 0.8 + vUv.y * 0.55;
   /* 光の帯: 数秒に1度、斜めに横切る (通っていない間は箔の筋だけ) */
@@ -398,7 +411,7 @@ export function setFoil(card, spec, mask) {
     foil = new THREE.Mesh(planeGeometry(), new THREE.ShaderMaterial({
       uniforms: {
         uMask: { value: mask }, uTime: foilTime, uColor: { value: new THREE.Color() },
-        uStrength: { value: 0 }, uRainbow: { value: 0 }, uPhase: { value: Math.random() }
+        uStrength: { value: 0 }, uRainbow: { value: 0 }, uHolo: { value: 0 }, uPhase: { value: Math.random() }
       },
       vertexShader: FOIL_VERT, fragmentShader: FOIL_FRAG,
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false
@@ -414,6 +427,7 @@ export function setFoil(card, spec, mask) {
   u.uColor.value.set(spec.color);
   u.uStrength.value = spec.strength;
   u.uRainbow.value = spec.rainbow ? 1 : 0;
+  u.uHolo.value = spec.holo ? 1 : 0;
   foil.visible = true;
   card.userData.foilSpec = spec;
 }
