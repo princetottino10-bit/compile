@@ -2420,8 +2420,10 @@ function bindInput() {
   if (settingsBtn) settingsBtn.onclick = () => {
     const st = shown();
     const live = roomMode && st && st.winner === null;
-    openSettings([{ label: live ? '投了してメニューに戻る' : 'メニューに戻る', button: 'メニューへ', warn: live,
-      note: live ? 'この対戦は負けになります' : RS.resumeActive() && st && st.winner === null ? '中断して、あとで続きから遊ぶこともできます' : 'この対戦をやめてタイトルに戻ります', onClick: goToMenu }]);
+    const items = [{ label: live ? '投了してメニューに戻る' : 'メニューに戻る', button: 'メニューへ', warn: live,
+      note: live ? 'この対戦は負けになります' : RS.resumeActive() && st && st.winner === null ? '中断して、あとで続きから遊ぶこともできます' : 'この対戦をやめてタイトルに戻ります', onClick: goToMenu }];
+    if (canSurrender()) items.unshift({ label: '降参する', button: '降参', warn: true, note: 'この対戦は負けとして記録されます (戦績・リプレイに残ります)', onClick: surrenderLocal });
+    openSettings(items);
   };
   /* 右上のボタン = すべての音を消す (タイトルなどの右下のボタンと同じ状態) */
   const muteBtn = document.getElementById('btnMute');
@@ -3325,6 +3327,26 @@ async function roomMaybeFinish() {
     await afterGameProgress(st, ME, win, null, true);     // 同じ決着を読み直したときは進めない
   }
   showEndActions(win);
+}
+
+/* 降参 (CPU 戦など手元の対戦): 負けとして決着させ、ふつうの決着の流れ (戦績・リプレイ・結果の画面) に乗せる。
+   オンラインは歯車の「投了してメニューに戻る」。問題・練習・チュートリアル・リプレイ・観戦では出さない */
+function canSurrender() {
+  const st = shown();
+  return !!st && st.winner === null && !roomMode && !puzzle && !tutorial && !trainingMode && !replayMode && !demoMode && !spectate && !reviewView;
+}
+async function surrenderLocal() {
+  if (!await RS.askConfirm('降参しますか？ この対戦は負けになります。')) return;
+  const ov = document.getElementById('settingsOv');
+  if (ov) ov.classList.remove('show');
+  /* 相手が指している途中なら、その手が終わるのを待ってから */
+  for (let i = 0; i < 100 && busy; i++) await TW.wait(100);
+  if (!canSurrender() || busy) return;
+  /* 自分の選択を待っている途中なら、その画面を閉じる。閉じた選択の待ちは、続けて呼ぶ step が盤面を
+     (同期のうちに) 決着に替えるので、聞き直さずに抜ける */
+  cancelPendingAsk();
+  removePickBar();
+  await step({ type: 'surrender', player: ME });
 }
 
 /* オンラインのリプレイ: 決着したらサーバーから始めの条件と手の列をもらって残す (1対1だけ)。
