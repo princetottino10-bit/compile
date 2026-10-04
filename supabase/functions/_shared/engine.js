@@ -4171,6 +4171,29 @@ function aiDecisionActions(state) {
       && state.cards[action.card] && state.cards[action.card].def === 'SPEED_1');
     if (speed0.length) acts = speed0;
   }
+  /* SPEED 3 は SPEED 0 と揃えて使う札。SPEED 0 がまだ来る (捨て札にも場にも無い) うちは単体で出さずに取っておく。
+     ただし、その1手でコンパイルに届くなら出してよい (監修 2026-10-04) */
+  if (aiUsesCombos(state, side) && aiWeightsFor(state, side).speedPairStrategy
+      && !aiHasDefOnField(state, side, 'SPEED_1') && !aiHasDefInHand(state, side, 'SPEED_1')
+      && !state.players[side].trash.some(u => state.cards[u] && state.cards[u].def === 'SPEED_1')) {
+    const reaches = (a) => {
+      const r = apply(state, a);
+      if (r.error) return false;
+      for (let l = 0; l < 3; l++) {
+        const m = lineTotal(r.state, l, side);
+        if (m >= 10 && m > lineTotal(r.state, l, 1 - side) && !r.state.players[side].protocols[l].compiled) return true;
+      }
+      return false;
+    };
+    const kept = acts.filter(a => !(a.type === 'play' && state.cards[a.card] && state.cards[a.card].def === 'SPEED_4') || reaches(a));
+    if (kept.length) acts = kept;
+  }
+  /* 揃っていても、SPEED 3 の移動に対象 (場の自分のカード) が無いうちは 0 も 3 も出さずに取っておく */
+  if (aiUsesCombos(state, side) && aiWeightsFor(state, side).speedPairStrategy
+      && aiHasDefInHand(state, side, 'SPEED_1') && aiHasDefInHand(state, side, 'SPEED_4') && !aiSpeedPairHasTarget(state, side)) {
+    const kept = acts.filter(a => !(a.type === 'play' && state.cards[a.card] && ['SPEED_1', 'SPEED_4'].includes(state.cards[a.card].def)));
+    if (kept.length) acts = kept;
+  }
   /* 裏向きは原則として表で使う。あえて裏で出してよいのは aiFaceDownAllowed の場面だけ
      (対戦者の原則: コンボ / コントロールを取る・渡さない / コンパイルに届かせる、ほかに手が無いとき)。
      ロック特化はサイキック①を裏で仕込むのが手筋なので対象外 */
