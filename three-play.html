@@ -3972,6 +3972,12 @@
   .ad-replays .ad-list{margin-top:6px;}
   /* REFRESH の確かめ (もう一度押すと補充) */
   #btnRefresh.armed{background:var(--pink)!important;color:#fff!important;border-color:var(--pink)!important;}
+  /* 名札の名前・称号は省略しない (「UI…」「GUEST…」と切れていた)。1行のまま、収まらなければ文字を小さくする (plates.js の fitText)。
+     TURN の印は名札の右上の角に載せて名前の幅を取らない */
+  .plate .pl-top{min-width:0;}
+  .plate b,#vsTag b,#meTag b{white-space:nowrap;overflow:hidden;text-overflow:clip;}
+  .plate small,#vsTag small,#meTag small{white-space:nowrap;overflow:hidden;text-overflow:clip;}
+  .plate.turn .pl-top::after,#vsTag.turn .pl-top::after{position:absolute;top:-8px;right:8px;padding:2px 6px 1px;font-size:9px;z-index:1;}
 </style>
 </head>
 <body>
@@ -4119,7 +4125,7 @@
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=6a0b3a0d99",
       "./js3d/panel.js": "./js3d/panel.js?v=994ec047da",
       "./js3d/pickaid.js": "./js3d/pickaid.js?v=fd33e4bc87",
-      "./js3d/plates.js": "./js3d/plates.js?v=caaa5823ae",
+      "./js3d/plates.js": "./js3d/plates.js?v=a1e3b996bb",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=55c71c637e",
       "./js3d/playlog.js": "./js3d/playlog.js?v=90aaffedee",
       "./js3d/playmat.js": "./js3d/playmat.js?v=1c8f36818a",
@@ -4214,7 +4220,7 @@
   <link rel="modulepreload" href="js3d/cosmetics-ui.js?v=a78ef23c9b">
   <link rel="modulepreload" href="js3d/cosmetics-mode.js?v=9f64a4e233">
   <link rel="modulepreload" href="js3d/displayname.js?v=613e18bf95">
-  <link rel="modulepreload" href="js3d/plates.js?v=caaa5823ae">
+  <link rel="modulepreload" href="js3d/plates.js?v=a1e3b996bb">
   <link rel="modulepreload" href="js3d/playmat.js?v=1c8f36818a">
   <link rel="modulepreload" href="js3d/cardlist-ov.js?v=d2cdfb8fb3">
   <link rel="modulepreload" href="js3d/opponent-select.js?v=6a0b3a0d99">

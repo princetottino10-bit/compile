@@ -47,6 +47,19 @@ function fill(el, plate, lead) {
   }
   el.append(ic, text);
   el.hidden = false;
+  /* 名前と称号は省略しない: 入りきらなければ文字を小さくして全部見せる */
+  requestAnimationFrame(() => { fitText(b, 8); const sm = text.querySelector('small'); if (sm) fitText(sm, 7); });
+}
+
+/* 1行に入りきらないとき、入るまで文字を小さくする (下限 min px) */
+function fitText(node, min) {
+  if (!node || !node.isConnected) return;
+  node.style.fontSize = '';
+  let size = parseFloat(getComputedStyle(node).fontSize) || 14;
+  for (let k = 0; k < 12 && node.scrollWidth > node.clientWidth + 1 && size > min; k++) {
+    size = Math.max(min, size - 1);
+    node.style.fontSize = size + 'px';
+  }
 }
 
 export function showPlates({ me, opp }) {
