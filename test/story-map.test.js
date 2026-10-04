@@ -41,11 +41,11 @@ test('出てくる場所: 進み具合に合わせて、次の出来事のある
   const inZone = (s) => M.zoneAt(map, M.spawnFor(map, s));
   assert.equal(inZone(S.blankStory()), 'A');
   assert.equal(inZone(upTo('c0-log')), 'A');
-  assert.equal(inZone(upTo('c0-patrol')), 'B');
-  assert.equal(inZone(upTo('c0-gate')), 'C');
+  assert.equal(inZone(upTo('c0-lock')), 'B');
+  assert.equal(inZone(upTo('c0-gate')), 'B');
   assert.equal(inZone(upTo('c0-chief')), 'D');
   assert.equal(inZone(upTo('c0-escape')), 'D');
-  for (const s of [S.blankStory(), upTo('c0-patrol'), upTo('c0-chief')]) {
+  for (const s of [S.blankStory(), upTo('c0-gate'), upTo('c0-chief')]) {
     const p = M.spawnFor(map, s);
     assert.ok(M.walkable(map, s, Math.floor(p.x), Math.floor(p.y)), '立つ所は歩ける');
   }
@@ -70,9 +70,9 @@ test('当たり判定: 円が壁にめり込まないように、軸ごとに止
 
 test('道探し: 壁をよけて、開いた扉を通る。閉じた扉の先へは道がない', () => {
   const map = M.PROLOGUE;
-  const cleared = upTo('c0-patrol');     // 扉 a・b は開いている、d は閉じている
+  const cleared = upTo('c0-lock');       // 扉 a は開いている、b・d は閉じている
   const from = { x: 3.5, y: 2.5 };        // 目覚めの部屋
-  const to = { x: 12.5, y: 1.5 };         // ログの保管庫
+  const to = { x: 12.5, y: 1.5 };         // 端末室
   const path = M.findPath(map, cleared, from, to);
   assert.ok(path && path.length > 0, '道がある');
   const last = path[path.length - 1];

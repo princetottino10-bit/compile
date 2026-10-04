@@ -279,7 +279,7 @@ export function openWorld(protocols, opts = {}) {
   for (const l of labels) { l.el.textContent = l.text; labelsEl.appendChild(l.el); }
 
   const syncActors = () => {
-    patrol.visible = !isCleared(state, 'c0-patrol');
+    patrol.visible = !isCleared(state, 'c0-lock');      /* 扉が開いたら、主任へ知らせに行っていなくなる */
     chief.visible = !isCleared(state, 'c0-chief');
     syncDoors();
   };
@@ -297,7 +297,6 @@ export function openWorld(protocols, opts = {}) {
   let path = null;       // タップした所までの道 (story-map.js の findPath)
   let busy = false;
   let wakeTimer = 0;      // 目覚めの会話を出すまでの待ち (閉じたら止める)
-  let guardCool = 0;
   const onKeyDown = (ev) => {
     if (busy) return;
     const k = ev.key.toLowerCase();
@@ -408,16 +407,7 @@ export function openWorld(protocols, opts = {}) {
     keys.clear(); path = null;
     const ok = await askBattle(nodeById(id), protocols);
     busy = false;
-    if (!ok) {
-      guardCool = 2;
-      /* 巡回を断ったら、巡回から少し離す (通り道に立ったままだと、確認が何度も出る) */
-      if (id === 'c0-patrol') {
-        guardCool = 4;
-        const away = Math.sign(pos.x - patrol.position.x / T) || -1;
-        for (let i = 0; i < 8; i++) pos = M.move(map, state, pos, { x: away * 0.2, y: 0 }, RADIUS);
-      }
-      return;
-    }
+    if (!ok) return;
     /* 管理者の「飛ばす」: 勝った扱いにして地図に残る (決着の会話は出ない) */
     if (ok === 'skip') { state = saveStory(clearNode(state, id)); syncActors(); return; }
     state = saveStory(startBattle(state, id));
@@ -436,7 +426,6 @@ export function openWorld(protocols, opts = {}) {
     const c = currentNode(state);
     const ev = c && eventFor(c.id);
     if (!ev) return null;
-    if (ev.kind === 'guard') return { x: patrol.position.x / T, y: patrol.position.z / T };
     const p = posOf(ev);
     if (p) return p;
     const g = map.guides && map.guides[c.id];
@@ -492,10 +481,6 @@ export function openWorld(protocols, opts = {}) {
     for (const ev of Object.values(map.events)) {
       if (ev.kind === 'zone' && isNext(ev.node) && M.zoneAt(map, pos) === ev.zone) { runScene(ev.node); return; }
     }
-    /* 巡回にぶつかった */
-    if (patrol.visible && isNext('c0-patrol') && guardCool <= 0 && dist({ x: patrol.position.x / T, y: patrol.position.z / T }, pos) < 0.9) {
-      runBattle('c0-patrol');
-    }
   };
 
   /* ---------- 描く ---------- */
@@ -521,7 +506,6 @@ export function openWorld(protocols, opts = {}) {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
     const t = (now - t0) / 1000;
-    guardCool = Math.max(0, guardCool - dt);
 
     /* 歩く */
     if (!busy) {
