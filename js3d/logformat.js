@@ -53,7 +53,7 @@ export function createLogFormat(ctx) {
     const actor = text.match(/^P([12])[:\s]/);
     const actorSeat = actor ? +actor[1] - 1 : null;
     /* 裏向きプレイは "カード をライン…" と余分な空白が入るので詰める */
-    const body = text.replace(/^(P[12]: )カード を/, '$1カードを');
+    const body = text.replace(/^(P[12](?:\.[12])?: )カード を/, '$1カードを');
     const plain = (t) => lineText(seatText(t), actorSeat);
     const parts = [];
     let last = 0, m;
