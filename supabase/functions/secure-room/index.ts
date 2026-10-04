@@ -428,6 +428,23 @@ Deno.serve(async (req) => {
       return json(req, { admin: await isAdmin(user), collect: !!col });
     }
     /* 棋譜を残す: replay_collect に載っている人の CPU 戦のリプレイだけ。ほかの人のものは受け取らない */
+    /* リプレイの共有リンクを短くする: 棋譜の符号を預かって短い ID を返す。1時間に60件まで */
+    if (op === "shareReplay") {
+      const code = typeof body.code === "string" ? body.code : "";
+      if (!/^[zj][A-Za-z0-9_-]{8,}$/.test(code) || code.length > 200_000) return fail(req, "棋譜の形が不正です");
+      const since = new Date(Date.now() - 3600_000).toISOString();
+      const { count } = await admin.from("shared_replays").select("id", { count: "exact", head: true }).eq("created_by", user.id).gte("created_at", since);
+      if ((count || 0) >= 60) return fail(req, "共有が多すぎます。少し時間をおいてください", 429);
+      const abc = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+      for (let t = 0; t < 5; t++) {
+        const bytes = crypto.getRandomValues(new Uint8Array(8));
+        const id = Array.from(bytes, (b) => abc[b % abc.length]).join("");
+        const { error } = await admin.from("shared_replays").insert({ id, code, created_by: user.id });
+        if (!error) return json(req, { id });
+      }
+      return fail(req, "共有リンクを作れませんでした", 500);
+    }
+
     if (op === "saveReplay") {
       const { data: col } = await admin.from("replay_collect").select("user_id").eq("user_id", user.id).maybeSingle();
       if (!col) return json(req, { ok: false });

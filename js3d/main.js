@@ -19,7 +19,19 @@ import * as CW from './crashwatch.js';
 import { unlockTrophies, TROPHY_XP, pruneTrophies } from './achievements.js';
 import { addReplay, getReplay, pinReplay, rebuild } from './replays.js';
 import * as RS from './resume.js';
-import { decodeReplay, sharedCodeFromHash, shareReplayLink } from './replayshare.js';
+import { decodeReplay, sharedCodeFromHash, shareReplayLink, setReplayShortener, shortIdFromHash, loadShortReplay } from './replayshare.js';
+/* リプレイの短いリンク: 符号をサーバーに預けて (ログインしている人だけ) ID を返す / ID から符号を受け取る (誰でも) */
+setReplayShortener(async (code) => {
+  await ROOM.roomLoadDeps();
+  if (!ROOM.roomConfigured() || !(await ROOM.roomSession())) return null;
+  const r = await ROOM.roomApi('shareReplay', { code });
+  return r && r.id ? r.id : null;
+}, async (id) => {
+  await ROOM.roomLoadDeps();
+  if (!ROOM.roomConfigured()) return null;
+  const { data, error } = await ROOM.roomClient().from('shared_replays').select('code').eq('id', id).maybeSingle();
+  return !error && data ? data.code : null;
+});
 import { advantageSeries, turningPoints } from './turning.js';
 import { trophyContext, showTrophyBanner } from './achievements-ui.js';
 import * as THREE from '../vendor/three.module.js';
@@ -917,7 +929,8 @@ async function boot() {
     } else UI.toast('リプレイが見つかりません (消したか、別の端末で保存したもの)');
   }
   /* 共有されたリプレイ (#rp=符号)。棋譜はリンクの中にある (replayshare.js) */
-  const sharedCode = !replayMode && sharedCodeFromHash();
+  const shortId = !replayMode && shortIdFromHash();
+  const sharedCode = !replayMode && (shortId ? await loadShortReplay(shortId) : sharedCodeFromHash());
   if (sharedCode) {
     replayMode = await decodeReplay(sharedCode, cards.protocols.map(p => p.name));
     if (replayMode) {
@@ -925,6 +938,7 @@ async function boot() {
       document.body.classList.add('replay');
     } else UI.toast('共有されたリプレイを開けませんでした (リンクが途中で切れているかもしれません)', 4200);
   }
+  if (shortId && !sharedCode) UI.toast('共有されたリプレイが見つかりませんでした', 4200);
 
   /* チュートリアル: レッスンの盤面から始める */
   const tuNo = parseInt(params.get('tutorial'), 10);

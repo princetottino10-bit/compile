@@ -103,10 +103,30 @@ export function sharedCodeFromHash(hash = location.hash) {
   return m ? m[1] : null;
 }
 
+/* 短いリンク (<ページ>#rs=<ID>): 符号をサーバーに預けて ID だけをリンクに載せる (main.js が預け方・受け取り方を差し込む)。
+   預けられないとき (ログインしていない・通信できない) は、今までの長いリンク */
+const SHORT_KEY = 'rs';
+let shortener = null, shortLoader = null;
+export function setReplayShortener(store, load) { shortener = store; shortLoader = load; }
+export function shortIdFromHash(hash = location.hash) {
+  const m = /^#rs=([A-Za-z0-9]{6,16})$/.exec(hash || '');
+  return m ? m[1] : null;
+}
+/* 短いリンクの ID から符号を受け取る (無ければ null) */
+export async function loadShortReplay(id) {
+  if (!shortLoader || !id) return null;
+  try { return await shortLoader(id); } catch (e) { return null; }
+}
+
 /* 端末の共有メニュー (無ければクリップボード) でリンクを渡す。返り値 'shared' | 'copied' | 'failed' */
 export async function shareReplayLink(rep, title) {
   let url;
-  try { url = replayShareUrl(await encodeReplay(rep)); } catch (e) { return 'failed'; }
+  try {
+    const code = await encodeReplay(rep);
+    let id = null;
+    if (shortener) { try { id = await shortener(code); } catch (e) { id = null; } }
+    url = id ? location.origin + location.pathname + '#' + SHORT_KEY + '=' + id : replayShareUrl(code);
+  } catch (e) { return 'failed'; }
   const text = title || 'COMPILE のリプレイ';
   if (navigator.share) {
     try { await navigator.share({ title: text, text, url }); return 'shared'; } catch (e) {
