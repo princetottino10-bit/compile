@@ -570,12 +570,14 @@ export function showChain(links) {
   chainKey = key;
   el.innerHTML = links.map((k, i) =>
     '<div class="ch-link' + (i === links.length - 1 ? ' now' : '') + (grew && i === links.length - 1 ? ' enter' : '') + '"'
+      + (k.def ? ' data-def="' + k.def + '" role="button" tabindex="0" aria-label="' + k.name + ' の効果を見る"' : '')
       + ' style="--pc:' + (k.color || '#b9a4ff') + '">'
       + '<div class="ch-card">' + (k.img ? '<img alt="" src="' + k.img + '">' : '<i></i>') + '</div>'
       + '<b class="ch-no">' + (i + 1) + '</b>'
       + '<span class="ch-name">' + k.name + '<small>' + (CHAIN_ZONE[k.zone] || '') + '</small></span>'
       + '</div>').join('')
     + '<div class="ch-head">CHAIN<b>' + links.length + '</b></div>';
+  el.onclick = (ev) => { const l = ev.target.closest('[data-def]'); if (l && chainTap) chainTap(l.dataset.def); };
   el.classList.add('show');
   if (grew) chainBurst(el, el.querySelector('.ch-link.enter'), links.length);
 }
@@ -611,6 +613,10 @@ export function zoomCard(img, label) {
   el.classList.add('show');
   el.onclick = (ev) => { ev.stopPropagation(); el.classList.remove('show'); };
 }
+
+let chainTap = null;
+/** チェーンに積まれたカードを押したときに呼ぶ (カードの効果を見せる) */
+export function onChainTap(fn) { chainTap = fn; }
 
 export function hideChain() {
   const el = $('#chainUi');

@@ -3862,6 +3862,9 @@
   @media (max-width:860px) and (orientation:portrait){
     #cardNote.show{pointer-events:none;}
   }
+  /* チェーンに積まれたカードは押すと効果が見られる (表示のほかの部分は触りを通す) */
+  #chainUi .ch-link[data-def]{pointer-events:auto;cursor:pointer;}
+  #chainUi .ch-link[data-def]:hover .ch-card,#chainUi .ch-link[data-def]:focus-visible .ch-card{outline:2px solid var(--gold);outline-offset:2px;}
 </style>
 </head>
 <body>
@@ -4003,7 +4006,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=2b4dbc6066",
       "./js3d/logformat.js": "./js3d/logformat.js?v=e3548c74d1",
-      "./js3d/main.js": "./js3d/main.js?v=c58f796cde",
+      "./js3d/main.js": "./js3d/main.js?v=e94ccb3a55",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=4463f5df6b",
@@ -4052,7 +4055,7 @@
       "./js3d/turning.js": "./js3d/turning.js?v=9c7f79654e",
       "./js3d/tutorial.js": "./js3d/tutorial.js?v=1b5e3a1067",
       "./js3d/tween.js": "./js3d/tween.js?v=99b25c0d63",
-      "./js3d/ui.js": "./js3d/ui.js?v=263ab47b68",
+      "./js3d/ui.js": "./js3d/ui.js?v=f774639a86",
       "./js3d/weekly-ui.js": "./js3d/weekly-ui.js?v=f449c2e66e",
       "./js3d/weekly.js": "./js3d/weekly.js?v=5605476b1c",
       "./js3d/xp.js": "./js3d/xp.js?v=2146fbc219"
@@ -4127,7 +4130,7 @@
   <link rel="modulepreload" href="js3d/layout.js?v=2b4dbc6066">
   <link rel="modulepreload" href="js3d/theme.js?v=0fc8f69999">
   <link rel="modulepreload" href="js3d/tween.js?v=99b25c0d63">
-  <link rel="modulepreload" href="js3d/ui.js?v=263ab47b68">
+  <link rel="modulepreload" href="js3d/ui.js?v=f774639a86">
   <link rel="modulepreload" href="js3d/input.js?v=cc29feddd4">
   <link rel="modulepreload" href="js3d/playchoices.js?v=55c71c637e">
   <link rel="modulepreload" href="js3d/aiclient.js?v=0f85a7d42b">
@@ -4173,6 +4176,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=ba24e41aa7">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=c58f796cde"></script>
+  <script type="module" src="js3d/main.js?v=e94ccb3a55"></script>
 </body>
 </html>

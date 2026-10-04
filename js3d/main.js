@@ -3527,7 +3527,7 @@ function chainLinksAt(t, action) {
     const d = c && defIndex[c.def];
     const visible = d && (c.faceUp || ((c.knownTo || 0) & (1 << ME)) || k.zone !== 'play');
     return visible
-      ? { uid: k.uid, img: faceImageURL(d), name: d.proto + ' ' + d.value, zone: k.zone, color: d.color }
+      ? { uid: k.uid, def: c.def, img: faceImageURL(d), name: d.proto + ' ' + d.value, zone: k.zone, color: d.color }
       : { uid: k.uid, img: null, name: '裏向きのカード', zone: k.zone, color: '#8fa8c8' };
   });
 }
@@ -5714,6 +5714,8 @@ function logParts(msg) {
 }
 
 /* ログのカード名をタップ: 拡大プレビューではなく、テキストだけの小さな表示 */
+/* チェーンに積まれたカードを押したら、そのカードの効果を出す */
+UI.onChainTap((defId) => showCardNoteFor(defId));
 function showCardNoteFor(defId) {
   const d = defIndex[defId];
   if (!d) return;
