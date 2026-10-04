@@ -56,6 +56,6 @@ export function challengerName(c) {
 export function levelLabel(level) {
   if (isChallenger(level)) return '挑戦者 ' + challengerName(CHALLENGERS[level - CHALLENGER_BASE]);
   if (level === UNDERDOG_LEVEL) return '下剋上 (最弱 vs 最強)';
-  if (level === UNDERDOG_TAG_LEVEL) return '下剋上タッグ (最弱＋かんたん vs 最強タッグ)';
+  if (level === UNDERDOG_TAG_LEVEL) return '下剋上タッグ (かんたんの味方 vs 最強タッグ)';
   return LEVEL_LABELS[level] || '不明';
 }

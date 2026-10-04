@@ -55,12 +55,15 @@ export function runSetup(protocols, options = {}) {
     document.getElementById('setupHead').after(rules);
   }
 
-  const picked = [];
+  /* options.preset: はじめから選んでおく3つ (下剋上タッグの最弱デッキなど) */
+  const picked = Array.isArray(options.preset) ? options.preset.slice(0, 3) : [];
   const presetLevel = Number.isInteger(options.level) ? options.level : null;
   let level = presetLevel === null ? 1 : presetLevel;
   /* 最強に勝ったプロトコル (制覇)。最強を相手に選ぶときだけ、まだのものに印を付ける */
   const conq = conquered(localRecords());
   let poolKey = poolKeyOf(groupsOf(lsGet('compileSoloPool', 'all')));
+  /* はじめから選んでおく3つがあるとき (下剋上タッグ) は、全部の範囲から (覚えている範囲の外だと消えていた) */
+  if (Array.isArray(options.preset)) poolKey = 'all';
   /* 強敵 (デッキの決まった相手) には、自分の3つを選ぶだけ */
   /* ふだんの CPU 戦は公式のドラフトから (以前の「自由に選ぶ」の保存は使わず、選び直したものだけ覚える) */
   let mode = training || (presetLevel !== null && fixedDeck(presetLevel)) ? 'free' : lsGet('compileSoloModeV2', 'draft');
@@ -79,7 +82,8 @@ export function runSetup(protocols, options = {}) {
   const pool = () => poolNames(protocols, poolKey);
   /* 自分で選ぶ決め方 (自由・一部)。固定デッキの相手と戦えるのはこのときだけ */
   const choosingMode = () => mode === 'free';
-  const fixedLocked = () => (choosingMode() ? fixedDeck(level) || [] : []);
+  /* 選べないもの: 固定デッキの相手のもの + options.lock (下剋上タッグの相手の味方のデッキなど) */
+  const fixedLocked = () => (choosingMode() ? (fixedDeck(level) || []).concat(options.lock || []) : []);
 
   /* ---------- 見出し・ルールの段 ---------- */
   function renderHead() {
@@ -91,7 +95,8 @@ export function runSetup(protocols, options = {}) {
       ? (trainingMine ? '自分: ' + trainingMine.join(' / ') + '　相手の3つを選ぶ (同じプロトコルも選べる)'
         : 'まず自分のプロトコルを3つ選ぶ。次に相手の3つを選ぶ。置けるのはこの6つのカードだけ。')
       : presetLevel !== null && fixedDeck(presetLevel)
-        ? '自分のプロトコルを3つ選ぶ。相手 (' + levelLabel(presetLevel) + ') のデッキは ' + fixedDeck(presetLevel).join(' / ') + '。'
+        ? '自分のプロトコルを3つ選ぶ。相手 (' + levelLabel(presetLevel) + ') のデッキは ' + fixedDeck(presetLevel).join(' / ') +
+          (options.lock && options.lock.length ? ' ＋ ' + options.lock.join(' / ') : '') + '。'
       : mode === 'free' ? '使用するプロトコルを3つ選ぶ (1つか2つ選んで「残りはランダム」でもよい)。相手は範囲の残りから自動で編成される。'
         : mode === 'draft' ? '公式ルールのドラフト: CPU と交互に 1 → 2 → 2 → 1 つ取り合う。先に取った側が先攻、取った順にラインへ並ぶ。'
           : '両者とも、範囲からランダムに3つ。';

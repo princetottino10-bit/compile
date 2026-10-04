@@ -128,7 +128,7 @@ export const TROPHIES = [
     test: (c) => [0, 1, 2].every(lv => tagWins(c).some(r => r.level === lv)), progress: (c) => [[0, 1, 2].filter(lv => tagWins(c).some(r => r.level === lv)).length, 3] },
   { id: 'tag_flawless', tier: 'gold', hidden: true, name: 'PERFECT SYNC', desc: 'タッグデュエルで、相手に1回もコンパイルさせずに勝つ (称号 PERFECT SYNC)',
     test: (c) => !!g(c) && g(c).tag && g(c).win && g(c).oppCompiles === 0 },
-  { id: 'underdog_tag', tier: 'gold', name: 'UNDERDOG DUO', desc: '下剋上タッグ (最弱＋かんたんの味方 vs 最強のタッグ) で勝つ (称号 UNDERDOG DUO)', test: (c) => beat(c, UNDERDOG_TAG_LEVEL) },
+  { id: 'underdog_tag', tier: 'gold', name: 'UNDERDOG DUO', desc: '下剋上タッグ (かんたんの味方と組んで、最強のタッグ) に勝つ (称号 UNDERDOG DUO)', test: (c) => beat(c, UNDERDOG_TAG_LEVEL) },
   { id: 'chain6', tier: 'gold', name: 'CHAIN BREAKER', desc: '自分の効果で割り込んで、チェーンを6つつなげる', test: (c) => !!g(c) && (g(c).chainMax | 0) >= 6 },
   { id: 'norefresh', tier: 'gold', name: 'NO REFRESH', desc: '一度もリフレッシュせずに勝つ', test: (c) => !!g(c) && g(c).win && g(c).refreshes === 0 },
   { id: 'norefresh_apex', tier: 'gold', name: 'NO REFRESH APEX', desc: '一度もリフレッシュせずに「最強」の CPU に勝つ', test: (c) => !!g(c) && g(c).win && g(c).refreshes === 0 && g(c).level === 3 },
