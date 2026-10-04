@@ -2425,7 +2425,7 @@ function bindInput() {
     sync();
   }
   const undoBtn = document.getElementById('btnUndo');
-  if (undoBtn) undoBtn.onclick = undoLastMove;
+  if (undoBtn) undoBtn.onclick = () => (roomMode ? roomUndo() : undoLastMove());
   const hintBtn = document.getElementById('btnHint');
   if (hintBtn) hintBtn.onclick = showHint;
   onSettings(() => syncAssist());
@@ -3094,9 +3094,12 @@ async function roomApplyView(rm, instant) {
   const st = ROOM.buildRoomState(rm, roomValOf);
   const nq = ROOM.normRequest(rm);
   cur = { state: st, requests: nq ? [nq] : [], log: rm.log || [], trace: entries, winner: st.winner, error: null };
+  syncAssist();                                  // 取り消せるか (canUndo) が変わる
   /* last_log はサーバーが直近の解決分だけ公開している。ポーリングのたびに
      同じ内容を積まないよう、ルームの版番号ごとに一度だけ表示する。 */
   if (Array.isArray(rm.log) && rm.version !== roomLoggedVersion) {
+    /* 相手が1手戻した */
+    if (roomLoggedVersion !== null && rm.log.some(l => /^P[12]: 1手戻した/.test(l) && !l.startsWith('P' + (rm.side + 1) + ':'))) UI.toast('相手が1手戻しました', 2400);
     UI.pushLog(rm.log);
     roomLoggedVersion = rm.version;
   }
@@ -5212,7 +5215,11 @@ function syncAssist() {
   const undoBtn = document.getElementById('btnUndo');
   const hintBtn = document.getElementById('btnHint');
   const game = assistGame() && !!cur;
-  if (undoBtn) {
+  /* オンライン: サーバーが戻せると言っている手だけ (自分の番の中で、引く・公開・相手の選択が入っていない手。レート戦は無し) */
+  if (undoBtn && roomMode) {
+    undoBtn.hidden = roomWatching || !(roomRm && roomRm.canUndo);
+    undoBtn.disabled = busy;
+  } else if (undoBtn) {
     undoBtn.hidden = !game || !undoPoint;
     undoBtn.disabled = !myMoment();
   }
@@ -5220,6 +5227,17 @@ function syncAssist() {
     hintBtn.hidden = !game || !settings().beginner;          // 初心者モードのときだけ
     hintBtn.disabled = !myMoment() || !!(cur && cur.requests.length);
   }
+}
+/* オンラインの1手取り消し (サーバーが戻せる手だけ受け付ける) */
+async function roomUndo() {
+  if (!roomRm || busy || !roomRm.canUndo) return;
+  let next;
+  try { next = await ROOM.roomApi('undo', { code: roomRm.code }); } catch (e) { UI.toast(e.message || 'いまは戻せません'); return; }
+  cancelPendingAsk();
+  deselect();
+  await roomApplyView(next, true);
+  UI.toast('1手戻しました', 1600);
+  syncAssist();
 }
 /* 待った: 自分の最後の手の直前へ戻す (相手がそのあと指した手も戻る)。1手だけ */
 function undoLastMove() {

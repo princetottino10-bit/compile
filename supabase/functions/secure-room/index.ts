@@ -319,6 +319,7 @@ function publicState(room: any, side: number, seat = -1, isHost = false) {
     lastActionAt: room.last_action_at || room.updated_at, turnLimitMs: TURN_LIMIT_MS, now: new Date().toISOString(),
     protocols: [room.host_protocols, room.guest_protocols],
     rated: !!room.rated,
+    canUndo: !!room.undo_state && room.undo_state.side === side && Number(room.undo_state.version) === Number(room.version) && room.status === "playing",
   };
   if (room.mode === "tag") {
     const seats = room.seats || [];
@@ -973,7 +974,19 @@ Deno.serve(async (req) => {
       let result = Engine.apply(st, action);
       if (result.error) return fail(req, result.error);
       if (room.mode === "tag") result = withCpu(result, room.seats || []);
-      return await commitResult(req, room, side, result, seat, isHost);
+      return await commitResult(req, room, side, result, seat, isHost, undoPointFor(room, side, st, result, action));
+    }
+    /* 1手取り消す: 自分の番の中で、引く・公開・相手の選択が入っていない手だけ (undo_state があり、そのあと誰も指していない) */
+    if (op === "undo") {
+      const u = room.undo_state;
+      if (room.status !== "playing" || !u || u.side !== side || Number(u.version) !== Number(room.version)) return fail(req, "いまは戻せません", 409);
+      const { data, error } = await admin.from("secure_rooms").update({
+        game_state: u.game, pending_request: u.pending, undo_state: null,
+        last_log: ["P" + (side + 1) + ": 1手戻した"], version: room.version + 1,
+        last_action_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+      }).eq("id", room.id).eq("version", room.version).select("*").single();
+      if (error) return fail(req, "相手の操作と競合しました。再読み込みします", 409);
+      return json(req, publicState(data, side, seat, isHost));
     }
     return fail(req, "未知の操作です", 404);
   } catch (error) {
@@ -984,7 +997,24 @@ Deno.serve(async (req) => {
 
 /* エンジンの結果を部屋に書き込み、決着していればレート戦を記録する (手を指す・時間切れ勝ちで共通)。
    レート戦の記録に失敗したら ratedError を付けて返す (画面で知らせる) */
-async function commitResult(req: Request, room: any, side: number, result: any, seat = -1, isHost = false) {
+/* 取り消しの戻り先。1対1・レート戦でない・相手の選択待ちでない・自分に新しい情報が見えていない手だけ。
+   コンパイルは1手で番が終わるので、番が相手に移っても、相手がまだ何も指していなければ戻せる (版が変わったら戻せない)。
+   新しい情報: 指す前は見えなかったカードが、指したあと見えている (引いた・公開された・相手が捨てた・裏が表になった など) */
+function undoPointFor(room: any, side: number, before: any, result: any, action: any) {
+  if (room.mode === "tag" || room.rated || action.type === "surrender" || result.winner !== null) return null;
+  const after = result.view || result.state;
+  if (!after) return null;
+  const req0 = result.requests && result.requests[0];
+  if (req0 && req0.player !== side) return null;
+  const bit = 1 << side;
+  const seen = (c: any) => !!c && (c.faceUp || !!((c.knownTo || 0) & bit));
+  for (const uid of Object.keys(after.cards || {})) if (seen(after.cards[uid]) && !seen(before.cards[uid])) return null;
+  const game = structuredClone(room.game_state);
+  delete game.__trace;
+  return { side, version: room.version + 1, game, pending: room.pending_request || null };
+}
+
+async function commitResult(req: Request, room: any, side: number, result: any, seat = -1, isHost = false, undo: any = null) {
       const nextVersion = room.version + 1;
       const nextGame = result.view
         ? { ...result.view, pending: result.state?.pending || null }
@@ -993,7 +1023,7 @@ async function commitResult(req: Request, room: any, side: number, result: any, 
       const { data, error } = await admin.from("secure_rooms").update({
         game_state: nextGame, pending_request: result.requests[0] || null,
         last_log: Array.isArray(result.log) ? result.log : [],
-        status: result.winner === null ? "playing" : "finished", version: nextVersion,
+        status: result.winner === null ? "playing" : "finished", version: nextVersion, undo_state: undo,
         last_action_at: new Date().toISOString(), updated_at: new Date().toISOString(),
       }).eq("id", room.id).eq("version", room.version).select("*").single();
       if (error) return fail(req, "相手の操作と競合しました。再読み込みします", 409);
