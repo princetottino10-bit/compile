@@ -261,17 +261,30 @@ export function createBoard(stage, defIndex, me, hooks) {
       }
       card.visible = !slot.hidden;
       seen.add(uid);
-      /* オーラは自分のカードで、表を向いているか手札にあるときだけ (裏向きは光らせない) */
-      const c = st.cards[uid];
-      const mine = c.owner === me && (c.faceUp || l.zone === 'hand');
-      setAura(card, mine && card.visible ? auraFor(c.def) : null);
-      const foil = mine && card.visible ? foilFor(c.def) : null;
-      setFoil(card, foil, foil && defIndex[c.def] ? foilMaskTexture(defIndex[c.def]) : null);
-      const back = backTex(c.owner === me ? sleeveOf() : oppSleeveOf());
-      if (card.userData.back.material.map !== back) { card.userData.back.material.map = back; card.userData.back.material.needsUpdate = true; }
-      card.userData.back.material.color.setScalar(backTint(back));
+      dressCard(st, uid, card);
     }
     for (const [uid, card] of cards) if (!seen.has(uid)) card.visible = false;
+  }
+
+  /* カードの見た目 (縁の光・キラ・スリーブとその明るさ)。並べ直したときも、演出で動かしたあとも、必ずここを通す。
+     前は並べ直したとき (syncInstant) にしか付けておらず、対戦中に引いた・出したカードは
+     次に並べ直すまでホロの縁やスリーブが付かないことがあった */
+  function dressCard(st, uid, card) {
+    const c = st.cards[uid];
+    if (!c || !card) return;
+    const l = locOf(st, uid);
+    /* オーラは自分のカードで、表を向いているか手札にあるときだけ (裏向きは光らせない) */
+    const mine = c.owner === me && (c.faceUp || (l && l.zone === 'hand'));
+    setAura(card, mine && card.visible ? auraFor(c.def) : null);
+    const foil = mine && card.visible ? foilFor(c.def) : null;
+    setFoil(card, foil, foil && defIndex[c.def] ? foilMaskTexture(defIndex[c.def]) : null);
+    const back = backTex(c.owner === me ? sleeveOf() : oppSleeveOf());
+    if (card.userData.back.material.map !== back) { card.userData.back.material.map = back; card.userData.back.material.needsUpdate = true; }
+    card.userData.back.material.color.setScalar(backTint(back));
+  }
+  function dressAll(st) {
+    if (!st || !st.cards) return;
+    for (const uid of Object.keys(st.cards)) { const card = cards.get(uid); if (card) dressCard(st, uid, card); }
   }
 
   /* 白っぽいスリーブは、照明と光の効果 (ブルーム) で白飛びして山札がぎらぎら光っていた。
@@ -545,6 +558,10 @@ export function createBoard(stage, defIndex, me, hooks) {
 
   /* ---------- 状態遷移の適用 ---------- */
   async function applyTransition(prev, next, action, opts) {
+    try { return await applyTransitionInner(prev, next, action, opts); }
+    finally { dressAll(next); }
+  }
+  async function applyTransitionInner(prev, next, action, opts) {
     const speed = (opts && opts.speed) || 1;
     const ms = (v) => Math.max(60, v * speed);
     /* プレイされたカードは専用演出 */

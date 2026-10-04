@@ -15,7 +15,9 @@ export function trophyContext(game) {
      印 (short) が無い前の戦績は、RUN と WEEKLY を短縮マッチとみなす。レベルは経験値なので全部で */
   const records = all.filter(r => !(r.short || (r.short === undefined && (r.mode === 'run' || r.mode === 'weekly'))));
   return { records, xp: xpLog(), level: playerLevel(all, bonusXp()).level,
-    cardWins: cardStats(records), game: game || null, gacha: loadGacha() };
+    /* カードの縁 (銅・金・ホロ) の実績は、盤面の縁の光り方と同じく全部の勝ちで数える
+       (縁はホロになったのに、実績は短縮マッチの勝ちを除いて数えていて付かなかった) */
+    cardWins: cardStats(all), game: game || null, gacha: loadGacha() };
 }
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
