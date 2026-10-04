@@ -84,25 +84,28 @@ function owned(kind, key, c) {
   if (kind === 'icon') return c.level >= unlockLevel('icon', 'icon');
   return c.level >= unlockLevel(kind, key);
 }
-function sourceOf(kind, key) {
-  if (key === '' || key === DEFAULT_KEY[kind]) return 'はじめから';
-  if (shopPrice(kind, key)) return 'CHIP ' + shopPrice(kind, key) + ' で交換';
-  if (kind === 'icon') return 'LV ' + unlockLevel('icon', 'icon') + ' で解放';
+/* 手に入れ方。[まだのときの言い方, 持っているときの言い方 (どうやって手に入れたか)] */
+function sourceInfo(kind, key) {
+  if (key === '' || key === DEFAULT_KEY[kind]) return ['はじめから', 'はじめから持っている'];
+  if (shopPrice(kind, key)) return ['CHIP ' + shopPrice(kind, key) + ' で交換', 'CHIP ' + shopPrice(kind, key) + ' で交換した'];
+  if (kind === 'icon') return ['LV ' + unlockLevel('icon', 'icon') + ' で解放', 'LV ' + unlockLevel('icon', 'icon') + ' になって解放'];
   const g = GACHA_ITEMS.find(x => x.kind === kind && x.key === key);
-  if (g) return 'GACHA (' + RAR_NAME[g.rar] + ')';
-  if (UNDERDOG_ITEMS.some(x => x.kind === kind && x.key === key) || (kind === 'title' && key === 'underdog')) return '下剋上に勝つ';
+  if (g) return ['GACHA (' + RAR_NAME[g.rar] + ')', 'GACHA で当てた (' + RAR_NAME[g.rar] + ')'];
+  if (UNDERDOG_ITEMS.some(x => x.kind === kind && x.key === key) || (kind === 'title' && key === 'underdog')) return ['下剋上に勝つ', '下剋上に勝ってもらった'];
   const m = masteryItem(kind, key);
-  if (m) return m.proto + ' の習熟度 ' + m.mastery + ' (いま ' + protoMastery(m.proto) + ')';
+  if (m) return [m.proto + ' の習熟度 ' + m.mastery + ' (いま ' + protoMastery(m.proto) + ')', m.proto + ' の習熟度が ' + m.mastery + ' になってもらった'];
   const w = WEEKLY_ITEMS.find(x => x.kind === kind && x.key === key);
-  if (w) return '週替わり3連戦を ' + w.weeks + ' 週クリア';
+  if (w) return ['週替わり3連戦を ' + w.weeks + ' 週クリア', '週替わり3連戦を ' + w.weeks + ' 週クリアしてもらった'];
   if (kind === 'title') {
     const t = Object.entries(TROPHY_TITLES).find(([, k]) => k === key);
-    if (t) return '実績 ' + (TROPHY_NAME[t[0]] || t[0]);
-    if (key === 'platinum') return 'ほかの実績を全部取る';
+    if (t) return ['実績 ' + (TROPHY_NAME[t[0]] || t[0]), '実績「' + (TROPHY_NAME[t[0]] || t[0]) + '」を取ってもらった'];
+    if (key === 'platinum') return ['ほかの実績を全部取る', 'ほかの実績を全部取ってもらった'];
   }
   const r = REWARDS.find(x => x.kind === kind && x.key === key);
-  return r ? 'LV ' + r.lv + ' で解放' : '';
+  return r ? ['LV ' + r.lv + ' で解放', 'LV ' + r.lv + ' のレベルアップでもらった'] : ['', ''];
 }
+function sourceOf(kind, key) { return sourceInfo(kind, key)[0]; }
+function gotHow(kind, key) { return sourceInfo(kind, key)[1]; }
 
 /* NEW: 持っているのにまだ見ていないもの */
 function seen() {
@@ -235,7 +238,7 @@ function preview(kind, key, name, isOwned, src) {
     default: break;
   }
   return '<div class="cm-art' + (isOwned ? '' : ' locked') + '">' + art + '</div>' +
-    '<div class="cm-cap"><b>' + esc(name) + '</b><span>' + (isOwned ? '持っている' : '未入手 — ' + esc(src)) + '</span></div>';
+    '<div class="cm-cap"><b>' + esc(name) + '</b><span>' + (isOwned ? (gotHow(kind, key) ? '入手: ' + esc(gotHow(kind, key)) : '持っている') : '未入手 — ' + esc(src)) + '</span></div>';
 }
 
 /* ---------- 画面 ---------- */
