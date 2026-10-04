@@ -616,7 +616,26 @@
   .cp-row p{margin:0;font:500 12px/1.55 system-ui;color:var(--ink);}
   .cp-row.off{opacity:.5;}
   .cp-row.off p{text-decoration:line-through;text-decoration-color:rgba(255,255,255,.3);}
-  @media (prefers-reduced-motion: reduce){ #preview{transition:opacity .12s;} }
+  /* いま効いている上段・下段 (INFO の下の段)。押すと盤面のその札が光って説明が出る */
+  .cp-fx{flex:none;max-height:45%;overflow-y:auto;scrollbar-width:thin;overscroll-behavior:contain;pointer-events:auto;
+    padding:6px 12px 12px;border-top:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;gap:6px;}
+  #preview.fxonly .cp-fx{max-height:none;flex:1;min-height:0;border-top:0;}
+  .cp-fxh{display:flex;align-items:center;gap:6px;font:800 10px/1.2 system-ui;letter-spacing:.1em;color:var(--dim);}
+  .cp-fxh small{padding:1px 6px;border-radius:999px;background:rgba(185,164,255,.18);color:var(--ink);font-size:10px;}
+  .cp-fxg{display:flex;flex-direction:column;gap:4px;}
+  .cp-fxwho{font:800 10px/1.2 system-ui;letter-spacing:.12em;color:var(--lav,#b9a4ff);}
+  .cp-fxi{display:flex;flex-direction:column;gap:2px;text-align:left;cursor:pointer;padding:6px 8px;border-radius:7px;
+    background:rgba(6,9,18,.32);border:1px solid rgba(255,255,255,.08);border-left:3px solid var(--fc);color:var(--ink);font:inherit;}
+  .cp-fxi:hover,.cp-fxi:focus-visible{border-color:var(--fc);outline:0;}
+  .cp-fxn1{display:flex;align-items:baseline;gap:6px;}
+  .cp-fxn1 b{font:800 11px/1.2 system-ui;color:#fff;letter-spacing:.04em;}
+  .cp-fxn1 em{font:800 9.5px/1.2 system-ui;font-style:normal;letter-spacing:.08em;color:var(--fc);}
+  .cp-fxt{font:500 11px/1.5 system-ui;color:var(--ink);}
+  .cp-fxnone{margin:0;font:600 11px/1.4 system-ui;color:var(--dim);}
+  #btnInfo .fx-n{display:block;margin-top:4px;font:900 10px/1 system-ui;font-style:normal;color:#0a0f1c;background:var(--gold);border-radius:999px;padding:2px 0;}
+  #btnInfo.ping{animation:infoPing 1.2s ease-out 2;}
+  @keyframes infoPing{0%{box-shadow:0 0 0 0 rgba(255,200,90,.7);}100%{box-shadow:0 0 0 12px rgba(255,200,90,0);}}
+  @media (prefers-reduced-motion: reduce){ #preview{transition:opacity .12s;} #btnInfo.ping{animation:none;} }
   /* ログと重なるので表示中は手前へ */
   #preview.show{z-index:31;}
   /* トレーニングは左にトレーニングの道具があるので、右 (枚数表示の下) に出す */
@@ -2346,7 +2365,9 @@
     #topRight{gap:8px;}
     #topRight .btn{min-height:40px;padding:0 13px;font-size:11px;}
     #topRight #btnMute{padding:0 12px;font-size:14px;}
-    #btnInfo{display:none;}
+    /* 縦持ちの INFO: 左の端のつまみ (LOG と同じ形)。開くと効いている上段・下段の一覧を左に出す */
+    #btnInfo{display:block;top:48%;left:env(safe-area-inset-left)!important;width:34px;height:88px;font-size:11px;}
+    #preview{left:calc(40px + env(safe-area-inset-left));right:auto;transform:translateX(-8px);}
     /* 下部の操作は指の届く高さに。手札を隠すは左、リフレッシュは右 */
     #dock{left:10px;bottom:12px;}
     #dock .btn{min-height:38px;padding:0 14px;font-size:9px;letter-spacing:.04em;}
@@ -4064,7 +4085,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=2b4dbc6066",
       "./js3d/logformat.js": "./js3d/logformat.js?v=e3548c74d1",
-      "./js3d/main.js": "./js3d/main.js?v=79280d3a5f",
+      "./js3d/main.js": "./js3d/main.js?v=71e21a1c21",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=4463f5df6b",
@@ -4113,7 +4134,7 @@
       "./js3d/turning.js": "./js3d/turning.js?v=9c7f79654e",
       "./js3d/tutorial.js": "./js3d/tutorial.js?v=1b5e3a1067",
       "./js3d/tween.js": "./js3d/tween.js?v=99b25c0d63",
-      "./js3d/ui.js": "./js3d/ui.js?v=f774639a86",
+      "./js3d/ui.js": "./js3d/ui.js?v=349deb0a12",
       "./js3d/weekly-ui.js": "./js3d/weekly-ui.js?v=f449c2e66e",
       "./js3d/weekly.js": "./js3d/weekly.js?v=5605476b1c",
       "./js3d/xp.js": "./js3d/xp.js?v=2146fbc219"
@@ -4188,7 +4209,7 @@
   <link rel="modulepreload" href="js3d/layout.js?v=2b4dbc6066">
   <link rel="modulepreload" href="js3d/theme.js?v=0fc8f69999">
   <link rel="modulepreload" href="js3d/tween.js?v=99b25c0d63">
-  <link rel="modulepreload" href="js3d/ui.js?v=f774639a86">
+  <link rel="modulepreload" href="js3d/ui.js?v=349deb0a12">
   <link rel="modulepreload" href="js3d/input.js?v=cc29feddd4">
   <link rel="modulepreload" href="js3d/playchoices.js?v=55c71c637e">
   <link rel="modulepreload" href="js3d/aiclient.js?v=0f85a7d42b">
@@ -4234,6 +4255,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=ba24e41aa7">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=79280d3a5f"></script>
+  <script type="module" src="js3d/main.js?v=71e21a1c21"></script>
 </body>
 </html>

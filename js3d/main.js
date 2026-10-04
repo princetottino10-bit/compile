@@ -2454,11 +2454,26 @@ function bindInput() {
   if (infoBtn) infoBtn.onclick = () => {
     const open = document.body.classList.contains('info-closed');
     UI.setInfoOpen(open);
-    try { localStorage.setItem('compileInfoOpen', open ? '1' : '0'); } catch (e) { /* private mode */ }
+    try { localStorage.setItem(isCompactHandUI() ? 'compileInfoOpenP' : 'compileInfoOpen', open ? '1' : '0'); } catch (e) { /* private mode */ }
   };
-  let infoWasOpen = true;
-  try { infoWasOpen = localStorage.getItem('compileInfoOpen') !== '0'; } catch (e) { /* private mode */ }
+  /* 縦持ちの INFO (効いている上段・下段の一覧) は、はじめは閉じておく (盤面を覆うので)。横持ちとは別に覚える */
+  const infoKey = () => (isCompactHandUI() ? 'compileInfoOpenP' : 'compileInfoOpen');
+  let infoWasOpen = !isCompactHandUI();
+  try { const v = localStorage.getItem(infoKey()); if (v !== null) infoWasOpen = v === '1'; } catch (e) { /* private mode */ }
   UI.setInfoOpen(infoWasOpen);
+  /* 効果の一覧の項目を押したら、その札を光らせて説明を出す */
+  UI.setFxTapHandler((uid) => {
+    board.pulse(uid);
+    if (isCompactHandUI()) showCardInspector(uid);
+    else { previewUid = null; showPreview(uid); }
+  });
+  /* 縦持ちは INFO の外に触れたら閉じる (ログと同じ) */
+  document.addEventListener('pointerdown', (ev) => {
+    if (!isCompactHandUI() || document.body.classList.contains('info-closed')) return;
+    if (ev.target && ev.target.closest && ev.target.closest('#preview, #btnInfo, #cardNote')) return;
+    UI.setInfoOpen(false);
+    try { localStorage.setItem('compileInfoOpenP', '0'); } catch (e) { /* private mode */ }
+  }, true);
   /* 縦持ちはログが盤面の大半を覆うので、ログの外に触れたら閉じる (触れた操作はそのまま通す) */
   document.addEventListener('pointerdown', (ev) => {
     if (!isCompactHandUI()) return;
@@ -5775,9 +5790,30 @@ function syncPanels(st, animate) {
   return panels.update(panelRows(st), { animate });
 }
 
+/* いま効いている上段・下段 (INFO に並べる)。上段は表の札なら覆われていても効く、下段はいちばん上の表の札だけ */
+function activeFx(st) {
+  const out = [];
+  if (!st || !st.lines) return out;
+  for (const side of [ME, 1 - ME]) {
+    for (let l = 0; l < 3; l++) {
+      const stack = st.lines[l][side] || [];
+      stack.forEach((uid, i) => {
+        const c = st.cards[uid];
+        const d = c && c.faceUp && defIndex[c.def];
+        if (!d) return;
+        const base = { uid, mine: side === ME, name: d.proto + ' ' + d.value, color: d.color };
+        if (d.upper) out.push({ ...base, zone: 'upper', text: d.upper });
+        if (d.lower && i === stack.length - 1) out.push({ ...base, zone: 'lower', text: d.lower });
+      });
+    }
+  }
+  return out;
+}
+
 function refreshHud() {
   syncCompileProgress(shown());      // 名札は作り直されると空になるので、表示の更新のたびに進み具合も合わせる
   const st = shown();
+  UI.setActiveFx(activeFx(st));
   checkRevealed(st);
   /* 盤面そのものの色で手番を示す (決着後はどちらも消す) */
   if (arena && arena.setTurnSide) arena.setTurnSide(st && st.winner === null && !trainingMode ? st.turn : null);

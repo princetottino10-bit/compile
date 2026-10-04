@@ -450,10 +450,62 @@ function favButton(o) {
     (w && w.effects ? '<span class="cp-fxn" title="このカードの効果が発動した回数 (これまでの合計)">効果 ' + w.effects + '</span>' : '');
 }
 
+/* ---------- いま効いている効果 (INFO の下の段) ----------
+   上段 (表なら覆われても効く) と下段 (いちばん上の表の札だけ。開始・終了や「〜したとき」)。
+   main.js が盤面が変わるたびに setActiveFx で渡す: [{ uid, mine, zone: 'upper'|'lower', name, color, text }] */
+let fxItems = [];
+let lastCardO = null;              // INFO に出しているカード (無ければ効果の一覧だけ)
+let onFxTap = null;
+export function setFxTapHandler(fn) { onFxTap = fn; }
+const compactUI = () => window.matchMedia('(max-width: 860px) and (orientation: portrait)').matches;
+function fxSectionHtml() {
+  const group = (mine) => {
+    const list = fxItems.filter(x => x.mine === mine);
+    if (!list.length) return '';
+    return '<div class="cp-fxg"><span class="cp-fxwho">' + (mine ? 'あなた' : '相手') + '</span>' + list.map(x =>
+      '<button type="button" class="cp-fxi z-' + x.zone + '" data-fxuid="' + x.uid + '" style="--fc:' + (x.color || '#b9a4ff') + '">' +
+        '<span class="cp-fxn1"><b>' + x.name + '</b><em>' + PANEL_ZONE[x.zone] + '</em></span>' +
+        '<span class="cp-fxt">' + condHtml(x.text) + '</span></button>').join('') + '</div>';
+  };
+  return '<div class="cp-fx"><div class="cp-fxh">効いている上段・下段<small>' + fxItems.length + '</small></div>' +
+    (fxItems.length ? group(true) + group(false) : '<p class="cp-fxnone">いまは無し</p>') + '</div>';
+}
+function bindFx(el) {
+  el.querySelectorAll('[data-fxuid]').forEach(b => { b.onclick = () => { if (onFxTap) onFxTap(b.dataset.fxuid); }; });
+}
+/* 効果の一覧だけを出す (カードを選んでいないとき・縦持ちで INFO を開いたとき) */
+function showFxOnly(el) {
+  el.style.setProperty('--accent', '#b9a4ff');
+  el.innerHTML = '<div class="cp-head"><b>INFO</b></div>' + fxSectionHtml();
+  el.classList.add('show', 'fxonly');
+  bindFx(el);
+  placeInfoTab();
+}
+export function setActiveFx(items) {
+  fxItems = Array.isArray(items) ? items : [];
+  const btn = $('#btnInfo');
+  if (btn) {
+    const n = fxItems.length;
+    const before = +(btn.dataset.fx || 0);
+    btn.dataset.fx = String(n);
+    btn.innerHTML = 'INFO' + (n ? '<i class="fx-n">' + n + '</i>' : '');
+    /* 新しく効き始めたら、つまみを軽く光らせる */
+    if (n > before) { btn.classList.remove('ping'); void btn.offsetWidth; btn.classList.add('ping'); }
+  }
+  const el = $('#preview');
+  if (!el) return;
+  if (compactUI()) { if (!document.body.classList.contains('info-closed')) showFxOnly(el); return; }
+  const fx = el.querySelector('.cp-fx');
+  if (fx) { fx.outerHTML = fxSectionHtml(); bindFx(el); }
+  else if (!lastCardO && fxItems.length) showFxOnly(el);
+}
+
 export function showCardPanel(o, opts) {
   const el = $('#preview');
   if (!el || !o) return;
   clearTimeout(hideTimer);
+  lastCardO = o;
+  el.classList.remove('fxonly');
   el.style.setProperty('--accent', o.color || '#b9a4ff');
   const rows = o.rows || [];
   el.innerHTML =
@@ -472,7 +524,9 @@ export function showCardPanel(o, opts) {
     (rows.length
       ? '<div class="cp-rows">' + rows.map(r => '<div class="cp-row' + (r.empty ? ' empty' : r.inactive ? ' off' : '') + '">' +
           '<span class="cp-zone">' + (PANEL_ZONE[r.key] || '') + '</span><p>' + (r.empty ? 'なし' : condHtml(r.text)) + '</p></div>').join('') + '</div>'
-      : '');
+      : '') +
+    fxSectionHtml();
+  bindFx(el);
   el.classList.add('show');
   placeInfoTab();
   if (opts && opts.transient) hideTimer = setTimeout(hideCardPanel, 2400);
@@ -498,6 +552,9 @@ export function setInfoOpen(open) {
   document.body.classList.toggle('info-closed', !open);
   const btn = $('#btnInfo');
   if (btn) btn.setAttribute('aria-expanded', String(open));
+  /* 縦持ちの INFO は効果の一覧だけ (カードの説明は触ったときの小さな表示) */
+  const el = $('#preview');
+  if (el && compactUI()) { if (open) showFxOnly(el); else el.classList.remove('show'); }
   placeInfoTab();
 }
 
@@ -505,6 +562,8 @@ export function hideCardPanel() {
   const el = $('#preview');
   if (!el) return;
   clearTimeout(hideTimer);
+  lastCardO = null;
+  if (fxItems.length && !compactUI()) { showFxOnly(el); return; }
   el.classList.remove('show');
   placeInfoTab();
 }
