@@ -65,7 +65,8 @@ import * as FX from './fx.js';
 import { buildArena } from './arena.js';
 import { initAudio, sfx, setMuted, isMuted, setSfxVolume, onMuteChange } from './audio.js';
 import { mountMuteButton, muteIcon } from './mutebutton.js';
-import { playBgm, refreshBgm, fadeOutBgm, pickNormalBgm, STRONG_BGM, BOSS_BGM } from './bgm.js';
+import { playBgm, refreshBgm, fadeOutBgm, pickNormalBgm, normalBattleBgm, STRONG_BGM, BOSS_BGM } from './bgm.js';
+import { trackOf } from './bgm-shop.js';
 import { BGM_RELEASED } from './rewards.js';
 import { emblemDataURL } from './emblems.js';
 import * as LAYOUT from './layout.js';
@@ -1153,7 +1154,7 @@ async function boot() {
           ...(storyOpts || {}),
           ...(tagMates ? { tag: tagMates } : {}) });
   cur = res;
-  playBgm(battleBgm());                          // 対戦の BGM (ボス戦は専用の曲)
+  playBattleBgm();                          // 対戦の BGM (ボス戦は専用の曲)
   gameStartedAt = Date.now();          // はじめの表示で合計値の演出が出ないように (feel.js)
   if (!trainingMode && !puzzle && !tutorial && !demoMode && !replayMode) CW.battleStarted(storyNode ? 'story' : runMode ? runKind : tagMates ? 'tag' : quickGame ? 'quick' : 'cpu', p0, p1);
   if (!trainingMode && !puzzle && !tutorial && !demoMode && !replayMode) lastSetup = { p0: p0.slice(), p1: p1.slice(), mates: tagMates };
@@ -3225,7 +3226,7 @@ async function roomMaybeFinish() {
 /* ロビーから playing の publicState を受けて対戦開始 */
 async function roomEnterGame(rm) {
   document.body.classList.add('room');
-  playBgm(battleBgm());
+  playBattleBgm();
   roomMode = true;
   roomResultShown = false;
   lastTurn = null;
@@ -3667,7 +3668,14 @@ function battleBgm() {
   const tier = battleTier();
   if (tier === 'boss') return BOSS_BGM;
   if (tier === 'strong') return STRONG_BGM;
-  return BGM_RELEASED ? (settings().bgm || pickNormalBgm()) : pickNormalBgm();
+  return BGM_RELEASED ? (settings().bgm || normalBattleBgm()) : normalBattleBgm();
+}
+/* 対戦の曲を流す。表記の要る曲 (煉獄庭園・魔王魂・Senses Circuit など) は、流れている画面に曲名と表記を小さく出す */
+function playBattleBgm() {
+  const key = battleBgm();
+  playBgm(key);
+  const t = trackOf(key);
+  if (t && t.credit) setTimeout(() => UI.toast('♪ ' + t.title + ' — ' + t.credit, 2600), 2400);
 }
 
 /* ---------- 進行 ---------- */

@@ -19,14 +19,18 @@ import { markerPreviewURL } from './control.js';
 import { emblemDataURL } from './emblems.js';
 import { displayName } from './displayname.js';
 import { openGacha, chipsNow } from './gacha-ui.js';
-import { playBgm, menuBgm, BGM_CREDIT } from './bgm.js';
+import { playBgm, menuBgm, previewBgm, BGM_CREDIT } from './bgm.js';
+import { TRACKS, trackOf, ownsTrack, trackPrice, buyTrack } from './bgm-shop.js';
 import { FACE_ICONS, FACE_ICON_PRICE, isFaceIcon, ownsFaceIcon, buyFaceIcon, faceIconURL, faceIconName, iconArt } from './face-icons.js';
 import { earnedChips } from './chips.js';
 
 /* CHIP で交換する品物 (ガチャに入れない)。値段 (0 なら交換の品物ではない) と、交換する関数 */
 const SHOP = {
-  icon: { price: (k) => (isFaceIcon(k) ? FACE_ICON_PRICE : 0), buy: (k) => buyFaceIcon(k, earnedChips()) }
+  icon: { price: (k) => (isFaceIcon(k) ? FACE_ICON_PRICE : 0), buy: (k) => buyFaceIcon(k, earnedChips()) },
+  track: { price: (k) => trackPrice(k), buy: (k) => buyTrack(k, earnedChips()) }
 };
+/* BGM はメニューの曲と対戦の曲を別に選ぶ (設定の bgmMenu / bgmBattle。'' はおまかせ) */
+const SLOTS = [['bgmMenu', 'メニュー'], ['bgmBattle', '対戦']];
 const shopPrice = (kind, key) => (SHOP[kind] ? SHOP[kind].price(key) : 0);
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -35,12 +39,12 @@ const SEEN_KEY = 'compileCosSeen';
 const ALL_TABS = [
   { kind: 'mat', label: '盤面' }, { kind: 'sleeve', label: 'スリーブ' }, { kind: 'marker', label: 'マーカー' },
   { kind: 'ccolor', label: 'コンパイルの光' }, { kind: 'victory', label: '勝ちの演出' }, { kind: 'title', label: '称号' }, { kind: 'icon', label: 'アイコン' },
-  { kind: 'plate', label: '名札' }, { kind: 'avatar', label: 'キャラ' }, { kind: 'bgm', label: 'BGM' }
+  { kind: 'plate', label: '名札' }, { kind: 'avatar', label: 'キャラ' }, { kind: 'track', label: 'BGM' }, { kind: 'bgm', label: 'BGM' }
 ];
 /* キャラのタブは、出すまでは管理者にだけ */
 const tabsNow = () => ALL_TABS.filter(t => (t.kind !== 'avatar' || AVATAR_RELEASED || accountState().admin) && (t.kind !== 'bgm' || BGM_RELEASED));
 const DEFAULT_KEY = { mat: 'neon', sleeve: 'default', marker: 'default', ccolor: 'default', victory: 'default', title: '', icon: '',
-  plate: 'default', avatar: 'shion', bgm: 'burst' };
+  plate: 'default', avatar: 'shion', bgm: 'burst', track: '' };
 const RAR_NAME = { C: 'COMMON', R: 'RARE', E: 'EPIC', L: 'LEGENDARY' };
 const TROPHY_NAME = { chain4: 'CHAIN REACTION', flawless: 'FLAWLESS', mastery10: 'GRANDMASTER', tsume_mid: '詰めコンパイル 中級を全部', tsume_all: '詰めコンパイル 全部', conqueror: '最強のデッキ以外の27のプロトコルすべてで最強に勝つ' };
 const CCOLOR = { default: 'linear-gradient(90deg,#ff5c5c,#b9a4ff,#a07bff)', gold: '#ffd86a', cyan: '#7ff3ff', rainbow: 'conic-gradient(#ff5f7a,#ffc05a,#7df28c,#5ab8ff,#b98cff,#ff5f7a)',
@@ -69,12 +73,14 @@ function ctx() {
 function itemsOf(kind) {
   if (kind === 'title') return [['', 'なし']].concat(Object.entries(TITLES));
   if (kind === 'icon') return [['', 'なし']].concat(protoList.map(p => [p.name, p.name]), FACE_ICONS.map(k => [k, faceIconName(k)]));
+  if (kind === 'track') return [['', 'おまかせ']].concat(TRACKS.map(t => [t.key, t.title]));
   return COSMETICS[kind] || [];
 }
 function owned(kind, key, c) {
   if (key === '' || key === DEFAULT_KEY[kind]) return true;
   if (kind === 'title') return c.titles.includes(key);
   if (kind === 'icon' && isFaceIcon(key)) return ownsFaceIcon(key);
+  if (kind === 'track') return ownsTrack(key);
   if (kind === 'icon') return c.level >= unlockLevel('icon', 'icon');
   return c.level >= unlockLevel(kind, key);
 }
@@ -160,7 +166,7 @@ function thumb(kind, key) {
     }
     case 'plate': return '<span class="cm-pf pf-' + esc(key) + '"' + pfcStyle(key) + '><b>' + esc((displayName() || 'YOU').slice(0, 8)) + '</b></span>';
     case 'avatar': return '<img class="cm-av" alt="" src="' + faceURL(key, 'normal') + '">';
-    case 'bgm': return '<span class="cm-note" aria-hidden="true">♪</span>';
+    case 'bgm': case 'track': return '<span class="cm-note" aria-hidden="true">♪</span>';
     default: return '<span class="cm-none">' + (key ? '★' : '—') + '</span>';
   }
 }
@@ -203,6 +209,14 @@ function preview(kind, key, name, isOwned, src) {
     case 'bgm': art = '<div class="cm-bgmview"><span class="cm-note big" aria-hidden="true">♪</span>' +
       '<button type="button" class="cm-listen" data-listen="' + esc(key) + '">▶ 試し聴き</button>' +
       '<small class="cm-credit">曲 ' + esc(BGM_CREDIT) + '　・　' + (key === 'orange_tunnel' ? 'タイトルでも流れる曲' : '選ぶと対戦で流れる') + '</small></div>'; break;
+    case 'track': {
+      const t = trackOf(key);
+      art = '<div class="cm-bgmview"><span class="cm-note big" aria-hidden="true">♪</span>' +
+        (t ? '<b>' + esc(t.title) + '</b><small class="cm-credit">' + esc(t.by) + (t.credit ? '　・　' + esc(t.credit) : '') + '</small>' +
+          '<button type="button" class="cm-listen" data-listen="' + esc(key) + '">▶ 試し聴き (15秒)</button>'
+          : '<small class="cm-credit">メニューと対戦で、いつもの曲を順に流します</small>') + '</div>';
+      break;
+    }
     case 'title': case 'icon': {
       const icon = kind === 'icon' ? key : s.icon;
       const ia = iconArt(icon, protoList, 96);
@@ -272,7 +286,10 @@ export function openCosmetics(opts) {
       }).join('') + '</div>' +
       '<div class="cm-body">' +
         '<section class="cm-preview">' + preview(tab, fItem[0], fItem[1], owned(tab, fItem[0], c), sourceOf(tab, fItem[0])) +
-          (owned(tab, fItem[0], c) && fItem[0] !== cur ? '<button type="button" class="cm-equip" data-equip="' + esc(fItem[0]) + '">着ける</button>'
+          (tab === 'track' && owned(tab, fItem[0], c) ? SLOTS.map(([slot, label]) => (s[slot] || '') === fItem[0]
+              ? '<p class="cm-on">' + label + 'で流しています</p>'
+              : '<button type="button" class="cm-equip" data-slot="' + slot + '" data-key-set="' + esc(fItem[0]) + '">' + label + 'で流す</button>').join('')
+            : owned(tab, fItem[0], c) && fItem[0] !== cur ? '<button type="button" class="cm-equip" data-equip="' + esc(fItem[0]) + '">着ける</button>'
             : fItem[0] === cur ? '<p class="cm-on">着けています</p>'
             : shopPrice(tab, fItem[0]) ? '<button type="button" class="cm-equip cm-buy' + (armed === fItem[0] ? ' armed' : '') + '" data-buy="' + esc(fItem[0]) + '"' +
               (chipsNow() < shopPrice(tab, fItem[0]) ? ' disabled' : '') + '>' +
@@ -288,7 +305,8 @@ export function openCosmetics(opts) {
             const isNew = !firstOpen && has && key !== '' && key !== DEFAULT_KEY[tab] && !sn.has(tab + ':' + key);
             return '<button type="button" data-key="' + esc(key) + '" class="cm-item' + (has ? '' : ' locked') + (key === cur ? ' cur' : '') + (key === fk ? ' focus' : '') + '">' +
               '<span class="cm-th">' + thumb(tab, key) + '</span><b>' + esc(name) + '</b>' +
-              (has ? (key === cur ? '<em>装備中</em>' : '') : '<small>' + esc(sourceOf(tab, key)) + '</small>') +
+              (has ? (tab === 'track' ? SLOTS.filter(([slot]) => (s[slot] || '') === key).map(([, label]) => '<em>' + label + '</em>').join('')
+                : key === cur ? '<em>装備中</em>' : '') : '<small>' + esc(sourceOf(tab, key)) + '</small>') +
               (isNew ? '<i class="cm-new">NEW</i>' : '') + '</button>';
           }).join('') + '</div></section>' +
       '</div></div></div>';
@@ -310,7 +328,9 @@ export function openCosmetics(opts) {
     const b = ev.target.closest('button');
     if (!b) return;
     if (b.classList.contains('cm-x')) { close(); return; }
-    if (b.dataset.listen) { listened = true; playBgm(b.dataset.listen); return; }
+    if (b.dataset.listen) { listened = true; (tab === 'track' ? previewBgm(b.dataset.listen, menuBgm) : playBgm(b.dataset.listen)); return; }
+    /* BGM: メニュー・対戦のどちらで流すか */
+    if (b.dataset.slot) { setSetting(b.dataset.slot, b.dataset.keySet); if (b.dataset.slot === 'bgmMenu') playBgm(menuBgm()); render(); return; }
     /* ガチャはこの画面から。閉じたら図鑑を描き直す (引いたものが並ぶ) */
     if (b.classList.contains('cm-gacha')) { openGacha({ onClose: () => render() }); return; }
     if (b.dataset.tab) { tab = b.dataset.tab; focus = null; render(); return; }
@@ -333,7 +353,7 @@ export function openCosmetics(opts) {
       /* BGM のタブは、押したら試し聴き */
       if (tab === 'bgm') { listened = true; playBgm(key); }
       /* 持っているものは、押したらそのまま着ける (プレビューにも出す) */
-      if (owned(tab, key, ctx())) setSetting(tab, key);
+      if (owned(tab, key, ctx()) && tab !== 'track') setSetting(tab, key);
       render();
     }
   };

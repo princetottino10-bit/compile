@@ -9,6 +9,7 @@
 import { routeMedia, isMuted, initAudio, onMuteChange, kickAudio } from './audio.js';
 import { settings, onSettings } from './settings.js';
 import { BGM_RELEASED } from './rewards.js';
+import { isTrack, chosenTrack } from './bgm-shop.js';
 
 export const TITLE_BGM = 'orange_tunnel';
 export const BGM_CREDIT = '煉獄庭園';
@@ -24,11 +25,17 @@ export const MENU_BGMS = ['planetarium', 'madoromu_neon', 'nine_jack'];
 /* 勝ち抜き戦 (RUN) の対戦以外の画面 (入口・地図・ショップ・休憩所など): 沈殿するイルカ */
 export const RUN_BGM = 'iruka';
 let menuPick = null;
-export const menuBgm = () => (menuPick = menuPick || MENU_BGMS[Math.floor(Math.random() * MENU_BGMS.length)]);
+/* COLLECTION の BGM で「メニューで流す」を選んでいれば、その曲 */
+export const menuBgm = () => chosenTrack(settings(), 'bgmMenu') || (menuPick = menuPick || MENU_BGMS[Math.floor(Math.random() * MENU_BGMS.length)]);
+/** ふつうの対戦の曲: 「対戦で流す」を選んでいればその曲、おまかせなら4曲からランダム */
+export const normalBattleBgm = () => chosenTrack(settings(), 'bgmBattle') || pickNormalBgm();
 export const BOSS_BGM = 'samayoi';
 /* 曲のファイル (無ければ <key>.mp3) */
 const FILES = { cho_zunou: 'cho_zunou.m4a', reflect: 'reflect.m4a', kaidoku: 'kaidoku.m4a', crescendo_jitter: 'crescendo_jitter.m4a',
-  planetarium: 'planetarium.m4a', madoromu_neon: 'madoromu_neon.m4a', nine_jack: 'nine_jack.m4a', iruka: 'iruka.m4a' };
+  planetarium: 'planetarium.m4a', madoromu_neon: 'madoromu_neon.m4a', nine_jack: 'nine_jack.m4a', iruka: 'iruka.m4a',
+  /* COLLECTION の BGM で交換する曲 (bgm-shop.js) */
+  ...Object.fromEntries(['noesis', 'sagittarius', 'engram', 'objective_point', 'virus_entry', 'uso_ni_naru', 'siege_buster', 'electric_highway', 'grenade',
+    'midnight_breaker', 'rapid4', 'irregular', 'rapid5', 'under_world', 'cyber10', 'cyber_prisoner'].map(k => [k, k + '.m4a'])) };
 export const bgmFile = (key) => 'art/bgm/' + (FILES[key] || key + '.mp3');
 /* 曲ごとの大きさ (ラウドネス、LUFS。ffmpeg の ebur128 で測った値)。曲によって 10 dB 近く違ったので、
    鳴らすときに LOUD_TARGET へそろえる (大きい曲は下げ、小さい曲は少しだけ上げる)。曲を足したら測って書き足す:
@@ -36,7 +43,9 @@ export const bgmFile = (key) => 'art/bgm/' + (FILES[key] || key + '.mp3');
 const LOUDNESS = {
   a: -15.1, burst: -12.1, cho_zunou: -11.8, crazy_cat: -12.3, crescendo_jitter: -5.6, destroy_god: -6.6, final_2sec: -9.4,
   iruka: -6.6, junk_smash: -13.5, kaidoku: -14.5, kessen_asa: -8.8, madoromu_neon: -14.3, nine_jack: -7.6, orange_tunnel: -11.0,
-  planetarium: -8.5, reaper_phoenix: -9.1, reflect: -7.9, samayoi: -8.9, zero: -13.4
+  planetarium: -8.5, reaper_phoenix: -9.1, reflect: -7.9, samayoi: -8.9, zero: -13.4,
+  noesis: -5.5, sagittarius: -6.9, engram: -6.1, objective_point: -7.1, virus_entry: -8.0, uso_ni_naru: -11.4, siege_buster: -7.0,
+  electric_highway: -9.3, grenade: -7.8, midnight_breaker: -9.9, rapid4: -6.8, irregular: -8.3, rapid5: -8.2, under_world: -9.7, cyber10: -6.5, cyber_prisoner: -6.9
 };
 const LOUD_TARGET = -11;              // 曲の真ん中あたり (全体の大きさは今までと同じくらいに)
 /** その曲を LOUD_TARGET にそろえる倍率 (上げるのは 1.6 倍まで。測っていない曲は 1) */
@@ -68,7 +77,7 @@ const level = () => (isMuted() ? 0 : Math.max(0, Math.min(1, (settings().bgmVol 
    ボス・強敵の曲、COLLECTION で選んだ曲は替えない */
 const ROTATE_LOOPS = 2;
 let loops = 0, lastTime = 0, swapping = false;
-const rotating = () => !!want && NORMAL_BGMS.includes(want) && !(BGM_RELEASED && settings().bgm);
+const rotating = () => !!want && NORMAL_BGMS.includes(want) && !chosenTrack(settings(), 'bgmBattle') && !(BGM_RELEASED && settings().bgm);
 function onTime() {
   if (!el || swapping) return;
   const t = el.currentTime;
@@ -106,7 +115,8 @@ function ensure() {
 /** 曲を鳴らす (同じ曲なら続きから)。key が無い・'off' なら止める */
 export function playBgm(key) {
   /* COLLECTION の BGM をしまっている間は、対戦の2曲だけ鳴らす (タイトルの曲・選んだ曲は鳴らさない) */
-  if (!BGM_RELEASED && !(BATTLE_BGM_ON && key && (NORMAL_BGMS.includes(key) || MENU_BGMS.includes(key) || key === RUN_BGM || key === STRONG_BGM || key === BOSS_BGM))) { stopBgm(); return; }
+  if (!BGM_RELEASED && !(BATTLE_BGM_ON && key && (isTrack(key) || NORMAL_BGMS.includes(key) || MENU_BGMS.includes(key) || key === RUN_BGM || key === STRONG_BGM || key === BOSS_BGM))) { stopBgm(); return; }
+  clearTimeout(previewTimer);
   want = key && key !== 'off' ? key : null;
   if (!want) { stopBgm(); return; }
   try {
@@ -115,6 +125,17 @@ export function playBgm(key) {
     if (!el.src.endsWith(url)) { el.src = url; loops = 0; lastTime = 0; }
     refreshBgm();
   } catch (e) { /* BGM が無くても遊べる */ }
+}
+
+/** 試し聴き: 頭から ms だけ流し、小さくして back() の曲に戻す (曲を選ぶための短い試し聴き。最後まで・繰り返しは流さない) */
+let previewTimer = null;
+export function previewBgm(key, back, ms = 15000) {
+  playBgm(key);
+  try { if (el) el.currentTime = 0; } catch (e) { /* 読み込み前 */ }
+  previewTimer = setTimeout(() => {
+    fadeOutBgm(1200);
+    previewTimer = setTimeout(() => playBgm(back ? back() : null), 1300);
+  }, ms);
 }
 
 /** 決着したときなど: 少しずつ小さくして止める (ms かけて) */
