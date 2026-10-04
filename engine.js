@@ -2564,7 +2564,12 @@ function setAiBreadth(rootEval, rootSearch, reply, shallow) {
 }
 
 /* 評価の重み。ai_arena の --weights で振り、昇格戦を通った値だけ既定値へ反映する。 */
+/* 毎ターン・何度も出る効果 (開始・終了・「〜したあと」)。覆われずに残れば効き続けるので、1回分より重く見る (2026-10-04) */
+const aiRepeats = (d, slot) => { const tr = d && d.eff && d.eff[slot] && d.eff[slot].trigger; return !!tr && /^(start|end|after)/.test(tr.on || ''); };
 const AI_W = {
+  /* persistUpper / persistLower: 何度も出る上段・下段の効果の重み (1回だけの効果は 0.18 / 0.22)。
+     persistKeep: 手札を捨てるとき、何度も出る効果の札を残す加点 (値の単位) */
+  persistUpper: 0.4, persistLower: 0.55, persistKeep: 3,
   ctrlHold: 65, ctrlHoldLev: 0.7,     // コントロールを持っている
   ctrlOpp: 90, ctrlOppLev: 0.75,      // 相手が持っている
   leadGain: 50, oppLeadGain: 78,      // 2ラインリード=次のコントロールフェイズで奪える見込み
@@ -2962,8 +2967,8 @@ function aiBoardEffectScore(st, side) {
           ? aiAnyLineValue(st, c.owner) : 10;
       }
       if (i === stack.length - 1 && d.eff.lower && d.eff.lower.static) cv += 12;
-      cv += aiTriggerValue(d, 'upper') * 0.18;
-      if (i === stack.length - 1) cv += aiTriggerValue(d, 'lower') * 0.22;
+      cv += aiTriggerValue(d, 'upper') * (aiRepeats(d, 'upper') ? AI_W.persistUpper : 0.18);
+      if (i === stack.length - 1) cv += aiTriggerValue(d, 'lower') * (aiRepeats(d, 'lower') ? AI_W.persistLower : 0.22);
       v += c.owner === side ? cv : -cv;
     }
   }
@@ -3938,6 +3943,8 @@ function smartPicks(st, req) {
         }
         if (bestLineFit === -Infinity) s -= 5;
         else s = bestLineFit;
+        /* 毎ターン効く札は捨てずに残す (永続は強い) */
+        if (aiRepeats(d, 'upper') || aiRepeats(d, 'lower')) s += AI_W.persistKeep;
         return { uid, s };
       });
       scored.sort((a, b) => a.s - b.s);
