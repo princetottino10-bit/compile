@@ -99,6 +99,7 @@ let pads = [];                  // 着地パッド (line × side)
 let demoMode = false;           // AI 同士の観戦 (?demo=1)
 let roomMode = false;           // オンライン対戦 (secure-room)
 let roomRm = null;              // 直近の publicState
+let roomWatching = false;        // オンラインの対戦を観戦している (指せない。両方の手札は伏せてある)
 let roomTracker = null;         // trace の差分追跡
 let roomPollTimer = null;
 let handCompactMode = null;
@@ -588,7 +589,7 @@ function partnerMove(st) {
 /* オンラインのタッグの席 (roomApplyView が覚える): 4つの席と、自分の側 (サーバーの 0 / 1) */
 let roomTag = null;
 /* 人が操作できる手番か (自分の側の手番で、タッグなら自分が指す番) */
-function humanTurn(st) { return !!st && st.turn === ME && !partnerMove(st) && !(autoPlay && !roomMode); }
+function humanTurn(st) { return !!st && st.turn === ME && !partnerMove(st) && !(autoPlay && !roomMode) && !roomWatching; }
 /* 自分が持ってきたプロトコル (タッグの複合プロトコルは、その側の1人目の分) */
 function ownProtos(st, side) { return st.players[side].protocols.map(p => (p.names ? p.names[0] : p.name)); }
 
@@ -1016,6 +1017,8 @@ async function boot() {
         if (!result) { nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
         document.getElementById('boot').style.display = 'none';
         document.body.classList.remove('pregame');
+        /* 観戦: 指す操作を出さず、手前に作った人・奥に参加した人で見る */
+        if (result.watch) { roomWatching = true; document.body.classList.add('room-watch'); }
         await roomEnterGame(result.rm);
         return;
       }
@@ -3043,6 +3046,12 @@ function showVsTag(rm) {
   if (rm && rm.ratedError) UI.toast('レート戦の結果を記録できませんでした。時間をおいて戦績を確かめてください', 5000);
   const el = document.getElementById('vsTag');
   if (!el || !rm || !Array.isArray(rm.names)) return;
+  /* 観戦: 手前と奥の2人の名前と称号 */
+  if (roomWatching) {
+    const plate = (k) => ({ name: rm.names[k] || '?', sub: (rm.badges && TITLES[rm.badges[k]]) || (k ? 'GUEST' : 'HOST') });
+    showPlates({ me: plate(0), opp: plate(1) });
+    return;
+  }
   const opp = 1 - rm.side;
   const name = rm.names[opp];
   const badge = rm.badges && TITLES[rm.badges[opp]];
@@ -3223,7 +3232,7 @@ async function roomPoll(force) {
   if (busy && !force) return;
   let next;
   /* 前回の印 (stamp) を渡すと、変わっていないときは盤面を省いた「変化なし」が返る */
-  try { next = await ROOM.roomApi('get', { code: roomRm.code, stamp: roomRm.stamp }); } catch (e) {
+  try { next = await ROOM.roomApi(roomWatching ? 'watch' : 'get', { code: roomRm.code, stamp: roomRm.stamp }); } catch (e) {
     if (isRoomGone(e)) { roomClosed(); return; }
     /* 一時的な通信の失敗は次の問い合わせで取り直す。続くときは知らせる */
     if (++roomPollFails === 4) UI.toast('通信が不安定です。つながり直すまで待っています…', 4000);
@@ -3246,6 +3255,17 @@ async function roomMaybeFinish() {
   const st = shown();
   if (!st || st.winner === null || roomResultShown) return;
   roomResultShown = true;
+  /* 観戦: 勝った人の名前を出すだけ (経験値・戦績には入れない) */
+  if (roomWatching) {
+    fadeOutBgm();
+    stopRoomPoll();
+    const nm = (roomRm && roomRm.names && roomRm.names[st.winner]) || '?';
+    UI.setPrompt(nm + ' の勝ち', 'end');
+    await finaleFx(true);
+    await UI.resultCutIn(true, { title: nm + ' WINS', sub: 'ONLINE MATCH' });
+    showWatchEnd();
+    return;
+  }
   fadeOutBgm();
   CW.battleEnded(); RS.endResume();
   stopRoomPoll();
@@ -3269,6 +3289,19 @@ async function roomMaybeFinish() {
     await afterGameProgress(st, ME, win, null, true);     // 同じ決着を読み直したときは進めない
   }
   showEndActions(win);
+}
+
+/* 観戦の決着のあと: タイトルへ戻るボタン */
+function showWatchEnd() {
+  let el = document.getElementById('watchEnd');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'watchEnd';
+    el.style.cssText = 'position:fixed;right:14px;bottom:calc(64px + env(safe-area-inset-bottom));z-index:45;';
+    el.innerHTML = '<button class="btn" type="button">タイトルへ</button>';
+    el.querySelector('button').onclick = () => { location.href = location.pathname; };
+    document.body.appendChild(el);
+  }
 }
 
 /* ロビーから playing の publicState を受けて対戦開始 */
@@ -5659,6 +5692,8 @@ function logParts(msg) {
       roomSide: () => (roomMode && roomRm ? roomRm.side : null),
       demo: () => demoMode,
       state: () => shown(),
+      /* 観戦: 「あなた」「相手」ではなく2人の名前 */
+      seatNames: () => (roomWatching && roomRm && Array.isArray(roomRm.names) ? roomRm.names : null),
       /* タッグ (CPU 戦): 何人目かから、あなた / 味方・相手のキャラの名前 */
       tagName: (side, k) => (!tagMates || roomMode ? '' : side === 0 ? (k ? avatarName(avatars && avatars.mate && avatars.mate.id) || '味方' : 'あなた') : oppCallName(k))
     });

@@ -13,6 +13,8 @@ const LOG_DEF_RE = /[A-Z]+_\d/g;
 export function createLogFormat(ctx) {
   function seatText(text) {
     if (ctx.demo()) return text;                    // 観戦は P1/P2 のまま
+    const names = ctx.seatNames ? ctx.seatNames() : null;   // オンラインの観戦: 2人の名前
+    if (names) return text.replace(/(^|[\s(（\[])P([12])(?:\.[12])?(?=[:\s：の])/g, (m, pre, n) => pre + (names[n - 1] || 'P' + n));
     const me = ctx.seat();
     const mine = 'P' + (me + 1), opp = 'P' + (2 - me);
     /* "P1:" や "P1 の" の形だけ置き換える (英字混じりの文言を壊さない) */

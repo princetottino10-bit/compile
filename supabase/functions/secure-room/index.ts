@@ -281,7 +281,7 @@ function publicGame(st: any, side: number, aliases = cardAliases(st), seat = -1)
         const hidden = !c.faceUp && !((c.knownTo || 0) & (1 << side));
         return { uid: aliases.forward[uid], owner, faceUp: c.faceUp, def: hidden ? null : c.def, value: Engine.cardValue(st, uid) };
       }))),
-    hand: (tagView ? TAG.viewerHand(st, seat) : st.players[side].hand).map((uid: string) => ({ uid: aliases.forward[uid], def: st.cards[uid].def })),
+    hand: (tagView ? TAG.viewerHand(st, seat) : side < 0 ? [] : st.players[side].hand).map((uid: string) => ({ uid: aliases.forward[uid], def: st.cards[uid].def })),
     trash: st.players.map((p: any) => p.trash.map((uid: string) => ({ uid: aliases.forward[uid], def: st.cards[uid].def }))),
     /* 手札公開 (PSYCHIC 0 等): 公開されたカードは両者に見える */
     revealed: st.revealed && Array.isArray(st.revealed.cards)
@@ -500,7 +500,15 @@ Deno.serve(async (req) => {
         admin.from("secure_rooms").select("id", { count: "exact", head: true }).eq("status", "playing")
           .gte("updated_at", new Date(Date.now() - 10 * 60_000).toISOString()),
       ]);
-      return json(req, { waiting: (data || []).length, playing: playing || 0, rooms: (data || []).map((room: any) => ({
+      /* 観戦できる対戦: 公開・合言葉なし・観戦を許した1対1の部屋で、10分以内に動いたもの */
+      const { data: live } = await admin.from("secure_rooms")
+        .select("code,title,host_name,guest_name,host_protocols,guest_protocols,rated,updated_at")
+        .eq("visibility", "public").eq("status", "playing").eq("allow_watch", true).is("password_hash", null).eq("mode", "duel")
+        .gte("updated_at", new Date(Date.now() - 10 * 60_000).toISOString())
+        .order("updated_at", { ascending: false }).limit(20);
+      const watch = (live || []).map((room: any) => ({ code: room.code, title: room.title, names: [room.host_name, room.guest_name],
+        protocols: [room.host_protocols || [], room.guest_protocols || []], rated: !!room.rated }));
+      return json(req, { watch, waiting: (data || []).length, playing: playing || 0, rooms: (data || []).map((room: any) => ({
         code: room.code, title: room.title, hostName: room.host_name,
         locked: !!room.password_hash, draft: !!room.draft_state, rated: !!room.rated, createdAt: room.created_at,
         draftRules: room.draft_state ? cleanDraftRules(room.draft_state.rules) : null,
@@ -625,6 +633,7 @@ Deno.serve(async (req) => {
           password_salt: password.salt, password_hash: password.hash,
           draft_state: !tagMode && body.draft ? { on: true, rules: cleanDraftRules(body.draftRules) } : null,
           rated: !tagMode && body.rated === true,
+          allow_watch: body.allowWatch !== false,
           mode: tagMode ? "tag" : "duel",
           seats: tagMode ? TAG.blankSeats({ uid: user.id, name, badge: cleanBadge(body.badge), look: cleanLook(body.look) }) : null,
         }).select("*").single();
@@ -705,6 +714,20 @@ Deno.serve(async (req) => {
       }
       const side = sideOf(room, user.id);
       return side < 0 ? fail(req, "参加できません", 403) : json(req, publicState(room, side));
+    }
+
+    /* 観戦: 公開・合言葉なし・観戦を許した1対1の対戦だけ。手札と裏向きのカードはどちらも伏せる (side = -1)。
+       見る向きは手前が作った人 (side 0)。指す操作は受け付けない (参加者ではないので下で弾かれる) */
+    if (op === "watch") {
+      if (!room.allow_watch || room.visibility !== "public" || room.password_hash || room.mode === "tag") return fail(req, "この対戦は観戦できません", 403);
+      if (room.status !== "playing" && room.status !== "finished") return fail(req, "まだ始まっていません", 409);
+      if (typeof body.stamp === "string" && body.stamp === stampOf(room)) {
+        return json(req, { code: room.code, status: room.status, version: room.version, side: 0, stamp: body.stamp, unchanged: true, spectator: true });
+      }
+      const view = publicState(room, -1, -1, false);
+      view.side = 0;
+      view.spectator = true;
+      return json(req, view);
     }
 
     const side = sideOf(room, user.id);

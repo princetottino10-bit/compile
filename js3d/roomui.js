@@ -206,6 +206,7 @@ export function runRoomLobby(protocols, opts = {}) {
               '<button type="button" class="ro-segbtn" data-mode="tag" role="radio">タッグ (2対2)</button></div>' +
             '<input class="ro-input" id="roomPw" maxlength="40" type="password" placeholder="パスワード (任意)">' +
             '<label class="ro-check"><input type="checkbox" id="roomDraft" checked> 公式ドラフトで開始</label>' +
+            '<label class="ro-check"><input type="checkbox" id="roomWatch"' + (lsGet('compileRoomWatch') === '0' ? '' : ' checked') + '> 観戦を許す (公開・合言葉なしの1対1だけ)</label>' +
             /* ドラフトのルール: 候補の抽選数と BAN 数 */
             '<div class="ro-rules" id="roomRules">' +
               '<label>候補<select class="ro-input" id="roomPool">' +
@@ -220,7 +221,9 @@ export function runRoomLobby(protocols, opts = {}) {
             '<input class="ro-input" id="roomJoinPw" maxlength="40" type="password" placeholder="パスワード (必要な場合)">' +
             '<button class="ro-btn" id="roomJoin" type="button">参加</button></div>' +
         '</div>' +
-        '<div class="ro-lbl" style="margin-top:14px">公開ルーム</div><div class="ro-list" id="roomList">読込中…</div>');
+        '<div class="ro-lbl" style="margin-top:14px">公開ルーム</div><div class="ro-list" id="roomList">読込中…</div>' +
+        '<div class="ro-lbl" style="margin-top:14px">観戦できる対戦</div><div class="ro-list" id="roomWatchList">読込中…</div>');
+      $('#roomWatch').onchange = function () { lsSet('compileRoomWatch', this.checked ? '1' : '0'); };
       $('#roomCode').oninput = function () { this.value = this.value.toUpperCase().replace(/[^A-Z2-9]/g, ''); };
       $('#roomLogout').onclick = guard(async () => {
         await roomSignOut();
@@ -300,7 +303,7 @@ export function runRoomLobby(protocols, opts = {}) {
         room = await roomApi('create', {
           name: name(), badge: myBadge(settings()), look: myLook(settings()), title: name() + ' のルーム',
           visibility: pw ? 'private' : 'public',
-          password: pw, draft: $('#roomDraft').checked, draftRules, rated: $('#roomRated').checked
+          password: pw, draft: $('#roomDraft').checked, draftRules, rated: $('#roomRated').checked, allowWatch: $('#roomWatch').checked
         });
         enterRoom();
       });
@@ -345,6 +348,22 @@ export function runRoomLobby(protocols, opts = {}) {
             on.innerHTML = w || pl
               ? '<b>' + w + '</b> 人が対戦相手を待っています ・ <b>' + pl + '</b> 部屋で対戦中'
               : 'いまは誰もいないようです。部屋を作って<b>招待リンク</b>を友達に送るか、クイックマッチで待ってみてください';
+          }
+          /* 観戦できる対戦 (人どうしの1対1)。押すと、両方の手札を伏せた盤面を見る */
+          const wl = $('#roomWatchList');
+          if (wl) {
+            const live = data.watch || [];
+            wl.innerHTML = live.length
+              ? live.map(r => '<button class="ro-room ro-watch" data-watch="' + esc(r.code) + '" type="button">' +
+                  esc(r.names[0] || '?') + ' <em>vs</em> ' + esc(r.names[1] || '?') + (r.rated ? ' ★' : '') +
+                  '<small>' + esc((r.protocols[0] || []).join(' / ')) + '　vs　' + esc((r.protocols[1] || []).join(' / ')) + '</small></button>').join('')
+              : '<span class="ro-sub">いま観戦できる対戦はありません</span>';
+            wl.querySelectorAll('[data-watch]').forEach(b => {
+              b.onclick = guard(async () => {
+                const rm = await roomApi('watch', { code: b.dataset.watch });
+                done({ rm, watch: true });
+              });
+            });
           }
           el.querySelectorAll('.ro-room').forEach(b => {
             b.onclick = guard(async () => {
