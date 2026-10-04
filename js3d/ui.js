@@ -495,8 +495,10 @@ export function setActiveFx(items) {
   const el = $('#preview');
   if (!el) return;
   if (compactUI()) { if (!document.body.classList.contains('info-closed')) showFxOnly(el); return; }
+  /* カードを出していない一覧だけの表示は、効いているものが無くなったらしまう */
+  if (el.classList.contains('fxonly') && !fxItems.length) { el.classList.remove('show', 'fxonly'); placeInfoTab(); return; }
   const fx = el.querySelector('.cp-fx');
-  if (fx) { fx.outerHTML = fxSectionHtml(); bindFx(el); }
+  if (fx && el.classList.contains('show')) { fx.outerHTML = fxSectionHtml(); bindFx(el); }
   else if (!lastCardO && fxItems.length) showFxOnly(el);
 }
 

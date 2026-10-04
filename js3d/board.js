@@ -158,6 +158,13 @@ export function createBoard(stage, defIndex, me, hooks) {
     setFoilTime(t);
     for (const [uid, card] of cards) {
       if (card.userData.auraSpec) tickAura(card, t);
+      /* スリーブの絵はあとから読み込まれる。読み込めたら明るさを測り直す (前は並べ直したときだけで、
+         白いスリーブの山札が暗くならずにぎらぎら光っていた) */
+      const bm = card.userData.back && card.userData.back.material;
+      if (bm && bm.map && card.visible && (card.userData.tintMap !== bm.map || card.userData.tintV !== bm.map.version)) {
+        bm.color.setScalar(backTint(bm.map));
+        card.userData.tintMap = bm.map; card.userData.tintV = bm.map.version;
+      }
       /* 手札のように宙にあるカードは床に光を落とさない (演出中は例外) */
       const grounded = card.userData.glowAlways || card.position.y < 0.42;
       const want = (card.visible && grounded) ? (card.userData.glowStrength || 0) : 0;
@@ -281,7 +288,7 @@ export function createBoard(stage, defIndex, me, hooks) {
       for (let i = 0; i < d.length; i += 4) sum += (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255;
       lum = sum / (d.length / 4);
     } catch (e) { /* 測れなければそのまま */ }
-    ud.tint = lum > 0.45 ? Math.max(0.55, 0.45 / lum) : 1;
+    ud.tint = lum > 0.4 ? Math.max(0.42, 0.4 / lum) : 1;
     ud.tintV = tex.version;
     return ud.tint;
   }
