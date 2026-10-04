@@ -61,8 +61,8 @@ export function runSetup(protocols, options = {}) {
   let level = presetLevel === null ? 1 : presetLevel;
   /* 最強に勝ったプロトコル (制覇)。最強を相手に選ぶときだけ、まだのものに印を付ける */
   const conq = conquered(localRecords());
-  /* 使うプロトコルの範囲は、毎回「全部」から始める (前に狭めた範囲を覚えていると、知らずに一部しか出ていなかった) */
-  let poolKey = 'all';
+  /* 使うプロトコルの範囲は前に選んだものを引き継ぐ (はじめは全部) */
+  let poolKey = poolKeyOf(groupsOf(lsGet('compileSoloPool', 'all')));
   /* はじめから選んでおく3つがあるとき (下剋上タッグ) は、全部の範囲から (覚えている範囲の外だと消えていた) */
   if (Array.isArray(options.preset)) poolKey = 'all';
   /* 強敵 (デッキの決まった相手) には、自分の3つを選ぶだけ */

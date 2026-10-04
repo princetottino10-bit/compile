@@ -23,8 +23,8 @@ export const CARD = {
    logo: ロゴ・勝敗など大きく見せる英字 (Orbitron)。hud: 見出し・ボタン・プロトコル名・数字 (Oxanium)。
    どちらも日本語を持たないので、日本語は自動で system-ui になる。three-play.html で読み込む */
 export const FONT = {
-  logo: "'Orbitron', system-ui, sans-serif",
-  hud: "'Oxanium', system-ui, sans-serif"
+  logo: "'Orbitron', 'Zen Kaku Gothic New', system-ui, sans-serif",
+  hud: "'Oxanium', 'Zen Kaku Gothic New', system-ui, sans-serif"
 };
 
 /* --- 盤面レイアウト --- */

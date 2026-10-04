@@ -97,7 +97,7 @@ function rgba(hex, a) {
 
 /* トリガー (「開始：」「〜たとき：」) は太字で測る・描く (カードリストと同じ強調) */
 const COND_WEIGHT = '800';
-const fontFor = (weight, px, cond) => (cond ? COND_WEIGHT : weight) + ' ' + px + 'px system-ui, sans-serif';
+const fontFor = (weight, px, cond) => (cond ? COND_WEIGHT : weight) + ' ' + px + 'px "Zen Kaku Gothic New", system-ui, sans-serif';
 
 /* condChars の文字列を、太字の幅も込みで折り返す (行 = 文字の配列) */
 function wrapRich(ctx, chars, maxW, weight, px) {
@@ -165,7 +165,7 @@ function measureTextBlock(ctx, text, maxW, opts) {
 /* 役割ラベルのチップ (高さ26)。塗り (bg) か枠線 (fg) のどちらか */
 function chip(ctx, x, y, glyph, label, fg, bg) {
   const text = glyph + ' ' + label;
-  ctx.font = '800 15px system-ui, sans-serif';
+  ctx.font = '800 15px "Zen Kaku Gothic New", system-ui, sans-serif';
   const w = ctx.measureText(text).width + 16;
   if (bg) {
     ctx.fillStyle = bg;
@@ -377,14 +377,28 @@ export function faceTexture(def) {
   tex.anisotropy = maxAnisotropy;
   faceCache.set(key, tex);
   faceCanvas.set(key, cv);
+  faceDefs.set(key, { def, art: null });
 
   if (def.proto === 'UNKNOWN' || !ART_SETS.has(def.set)) return tex;
   loadArt(artUrlFor(def), (img) => {
+    faceDefs.set(key, { def, art: img });
     paintFace(ctx, def, img);
     tex.needsUpdate = true;
     faceVersion.set(key, (faceVersion.get(key) || 0) + 1);
   });
   return tex;
+}
+
+/* 書体 (日本語) があとから届いたら、作ってあるカードの面を全部描き直す (前の書体の文字のまま残らないように) */
+const faceDefs = new Map();    // defId -> { def, art }
+export function repaintFaces() {
+  for (const [key, tex] of faceCache) {
+    const fd = faceDefs.get(key), cv = faceCanvas.get(key);
+    if (!fd || !cv) continue;
+    faceZones.set(key, paintFace(cv.getContext('2d'), fd.def, fd.art));
+    tex.needsUpdate = true;
+    faceVersion.set(key, (faceVersion.get(key) || 0) + 1);
+  }
 }
 
 /* キラ加工 (card.js の setFoil) の型紙: 白 = 光らせてよい所 (絵と縁)、黒 = 文字のある所。

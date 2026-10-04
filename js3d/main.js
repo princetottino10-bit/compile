@@ -72,7 +72,7 @@ import { loadWeekly, loadStoredWeekly, weekKey } from './weekly.js';
 import { openReview } from './review.js';
 import { runRoomLobby } from './roomui.js';
 import { bindSelectHead, questionText } from './selectui.js';
-import { faceImageURL, backImageURL, pruneFaceCache, ART_SETS, setMaxAnisotropy, faceCacheSize } from './cardtex.js';
+import { faceImageURL, backImageURL, pruneFaceCache, ART_SETS, setMaxAnisotropy, faceCacheSize, repaintFaces } from './cardtex.js';
 import * as FX from './fx.js';
 import { buildArena } from './arena.js';
 import { initAudio, sfx, setMuted, isMuted, setSfxVolume, onMuteChange } from './audio.js';
@@ -696,9 +696,17 @@ window.addEventListener('unhandledrejection', (ev) => {
 });
 
 /* ロゴ (Orbitron) と見出し・数字 (Oxanium) の書体を読み込む。届かなくても先へ進む (system-ui で描く) */
-function loadFonts(timeoutMs) {
+function loadFonts(timeoutMs, jpText) {
   if (!document.fonts || !document.fonts.load) return Promise.resolve();
   const loads = ['900 40px Orbitron', '800 40px Oxanium', '700 40px Oxanium'].map(f => document.fonts.load(f).catch(() => null));
+  /* 日本語の書体 (Zen Kaku Gothic New) は文字ごとに分かれて届くので、カードで使う文字をまとめて読み込む。
+     間に合わなかったら、届いたときにカードの面を描き直す */
+  if (jpText) {
+    const jp = Promise.all(['500', '700', '900'].map(w => document.fonts.load(w + ' 20px "Zen Kaku Gothic New"', jpText).catch(() => null)));
+    let ready = false;
+    jp.then(() => { if (!ready) { repaintFaces(); if (board && cur) board.syncInstant(shown()); } });
+    loads.push(jp.then(() => { ready = true; }));
+  }
   return Promise.race([Promise.all(loads), new Promise(r => setTimeout(r, timeoutMs))]);
 }
 
@@ -744,7 +752,9 @@ async function boot() {
   UI.bindLogFormatter(logParts, showCardNoteFor);
   mark('engineInit');
   /* カードやプロトコルの札は canvas に文字を描くので、書体が届いてから作る (最大1.5秒待つ) */
-  await loadFonts(600);                 // 待ちすぎると最初の画面が遅れる。間に合わなければ後から差し替わる
+  /* カードの文 (名前・上中下段) で使う文字 */
+  const jpText = Array.from(new Set(cards.protocols.flatMap(p => (p.cards || []).flatMap(c => [c.upper, c.middle, c.lower, p.name]).join('')).join(''))).join('') + '表裏手札山札捨て札';
+  await loadFonts(1200, jpText);        // 待ちすぎると最初の画面が遅れる。間に合わなければ届いたときにカードの面を描き直す
   mark('fonts');
   /* 盤面のスタックは、覆われた札に上段 (覆われても効く) があるときだけ上段が見える幅でずらし、無ければ詰める */
   LAYOUT.setStackCardInfo((st, uid) => {
