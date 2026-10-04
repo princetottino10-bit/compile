@@ -11,6 +11,8 @@
 import { mergeGacha } from './gacha.js';
 
 /* まとめて保存する項目。一時的な印 (ログインから戻った印など) は入れない */
+import { mergeStory } from './story.js';
+
 export const SAVE_KEYS = ['compileSettings', 'compileRun', 'compileRunBest', 'compileRunHeat', 'compileRunKind',
   'compileWeekly', 'compileOppLast', 'compileDaily', 'compileTrophies', 'compileRoomName', 'compileGacha', 'compileStory'];
 const META = 'compileCloudMeta';     // { user, hash: 最後に同期した中身, at: そのときのアカウント側の時刻 }
@@ -123,6 +125,10 @@ function mergeWeekly(a, b) {
 
 /* どちらを正にしても、残すべきもの (RUN の最高記録・実績) は合わせる */
 function keepBest(merged, local, rd) {
+  /* ストーリーの進み具合: クリアした場面を足し合わせる (「最初から」より前のものは足さない。story.js の mergeStory) */
+  if (local.compileStory && rd.compileStory) {
+    try { merged.compileStory = JSON.stringify(mergeStory(JSON.parse(local.compileStory), JSON.parse(rd.compileStory))); } catch (e) { /* 壊れた中身はそのまま */ }
+  }
   if (local.compileWeekly || rd.compileWeekly) merged.compileWeekly = local.compileWeekly && rd.compileWeekly ? mergeWeekly(local.compileWeekly, rd.compileWeekly) : (merged.compileWeekly || local.compileWeekly || rd.compileWeekly);
   if (local.compileRun && rd.compileRun) merged.compileRun = further(local.compileRun, rd.compileRun, runRank);
   if (local.compileDaily && rd.compileDaily) merged.compileDaily = mergeDaily(local.compileDaily, rd.compileDaily);

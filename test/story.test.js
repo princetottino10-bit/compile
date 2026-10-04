@@ -90,3 +90,27 @@ test('保存と読み込み: 壊れた保存は最初から。知らない id �
   assert.deepEqual(t.cleared, [S.CHAPTERS[0].nodes[0].id]);
   assert.equal(t.pending, null);
 });
+
+test('進み具合を合わせる: クリアした場面は足し合わせ、「最初から」より前のものは足さない', () => {
+  const a = { v: 1, cleared: ['c0-wake'], pending: null, resetAt: 0 };
+  const b = { v: 1, cleared: ['c0-wake', 'c0-practice'], pending: null, resetAt: 0 };
+  assert.deepEqual(S.mergeStory(a, b).cleared.sort(), ['c0-practice', 'c0-wake']);
+  /* 片方で「最初から」を押した: 押す前の進み具合は戻ってこない */
+  const reset = { v: 1, cleared: [], pending: null, resetAt: 100 };
+  assert.deepEqual(S.mergeStory(reset, b).cleared, []);
+  assert.deepEqual(S.mergeStory(b, reset).cleared, []);
+  /* 最初からやり直したあとの進み具合は残る */
+  assert.deepEqual(S.mergeStory({ ...reset, cleared: ['c0-wake'] }, b).cleared, ['c0-wake']);
+  /* 知らない場面の id は捨てる */
+  assert.deepEqual(S.mergeStory({ ...a, cleared: ['nope'] }, a).cleared, ['c0-wake']);
+});
+
+test('保存は、保存してある進み具合と合わせてから書く (ほかの端末の分を消さない)', () => {
+  localStorage.removeItem(S.STORY_KEY);
+  S.saveStory({ v: 1, cleared: ['c0-wake', 'c0-practice'], pending: null, resetAt: 0 });
+  const after = S.saveStory({ v: 1, cleared: ['c0-wake'], pending: null, resetAt: 0 });
+  assert.deepEqual(after.cleared.sort(), ['c0-practice', 'c0-wake']);
+  /* 「最初から」は消せる */
+  assert.deepEqual(S.saveStory(S.blankStory(Date.now())).cleared, []);
+  localStorage.removeItem(S.STORY_KEY);
+});

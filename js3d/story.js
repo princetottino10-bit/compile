@@ -146,20 +146,34 @@ export const CHAPTERS = [
 const ALL = CHAPTERS.flatMap(c => c.nodes.map(n => ({ ...n, chapter: c.id })));
 export const nodeById = (id) => ALL.find(n => n.id === id) || null;
 
-export function blankStory() { return { v: 1, cleared: [], pending: null }; }
+/* resetAt: 「最初から」で消した時刻。端末をまたいで合わせるとき、これより前の進み具合は足さない */
+export function blankStory(resetAt = 0) { return { v: 1, cleared: [], pending: null, resetAt }; }
+
+/** 2つの進み具合を合わせる (端末をまたぐ同期と、保存の直前)。
+    クリアした場面は足し合わせる。ただし「最初から」が新しい方より前の進み具合は足さない。始めた対戦は a を優先 */
+export function mergeStory(a, b) {
+  const r = Math.max(a.resetAt || 0, b.resetAt || 0);
+  const cleared = [...new Set([a, b].filter(x => (x.resetAt || 0) === r).flatMap(x => x.cleared || []))].filter(id => nodeById(id));
+  const pending = a.pending && nodeById(a.pending) ? a.pending : b.pending && nodeById(b.pending) && (b.resetAt || 0) === r ? b.pending : null;
+  return { v: 1, cleared, pending, resetAt: r };
+}
 
 export function loadStory() {
   try {
     const s = JSON.parse(localStorage.getItem(STORY_KEY) || 'null');
     if (!s || typeof s !== 'object') return blankStory();
     const cleared = Array.isArray(s.cleared) ? [...new Set(s.cleared.filter(id => nodeById(id)))] : [];
-    return { v: 1, cleared, pending: nodeById(s.pending) ? s.pending : null };
+    return { v: 1, cleared, pending: nodeById(s.pending) ? s.pending : null, resetAt: +s.resetAt || 0 };
   } catch (e) {
     return blankStory();
   }
 }
+/* 保存する。歩いている間にほかの端末の進み具合が届いていても消さないよう、保存の直前に読み直して合わせる。
+   返り値は合わせた後の進み具合 (呼んだ側はこれで持ち直す) */
 export function saveStory(s) {
-  try { localStorage.setItem(STORY_KEY, JSON.stringify(s)); } catch (e) { /* private mode */ }
+  const merged = mergeStory(s, loadStory());
+  try { localStorage.setItem(STORY_KEY, JSON.stringify(merged)); } catch (e) { /* private mode */ }
+  return merged;
 }
 
 export const isCleared = (s, id) => s.cleared.includes(id);
