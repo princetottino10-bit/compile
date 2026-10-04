@@ -110,11 +110,13 @@ export function makeCard(def) {
   shine.visible = false;
   shine.raycast = () => {};
 
+  /* 裏面はつや消し。金属っぽく照明を映すと、明るいスリーブの山札が照り返しで白く飛んで光って見えた
+     (色を暗くしても照り返しは消えない) */
   const back = new THREE.Mesh(planeGeometry(), new THREE.MeshStandardMaterial({
     map: backTex(),
-    roughness: 0.44,
-    metalness: 0.26,
-    envMapIntensity: 0.5,
+    roughness: 0.9,
+    metalness: 0,
+    envMapIntensity: 0.12,
     emissive: new THREE.Color(0x000000),
     emissiveIntensity: 1
   }));

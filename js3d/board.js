@@ -303,7 +303,7 @@ export function createBoard(stage, defIndex, me, hooks) {
       for (let i = 0; i < d.length; i += 4) sum += (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255;
       lum = sum / (d.length / 4);
     } catch (e) { /* 測れなければそのまま */ }
-    ud.tint = lum > 0.4 ? Math.max(0.42, 0.4 / lum) : 1;
+    ud.tint = lum > 0.28 ? Math.max(0.3, 0.28 / lum) : 1;   // 照明の強い所 (自分の山札) でも白く飛ばない明るさまで下げる
     ud.tintV = tex.version;
     return ud.tint;
   }
