@@ -23,6 +23,7 @@ import { playBgm, menuBgm, previewBgm, BGM_CREDIT } from './bgm.js';
 import { TRACKS, trackOf, ownsTrack, trackPrice, buyTrack } from './bgm-shop.js';
 import { FACE_ICONS, FACE_ICON_PRICE, isFaceIcon, ownsFaceIcon, buyFaceIcon, faceIconURL, faceIconName, iconArt } from './face-icons.js';
 import { earnedChips } from './chips.js';
+import { rarityOf, RARITIES, RARITY_NAME } from './cos-rarity.js';
 
 /* CHIP で交換する品物 (ガチャに入れない)。値段 (0 なら交換の品物ではない) と、交換する関数 */
 const SHOP = {
@@ -32,6 +33,9 @@ const SHOP = {
 /* BGM はメニューの曲と対戦の曲を別に選ぶ (設定の bgmMenu / bgmBattle。'' はおまかせ) */
 const SLOTS = [['bgmMenu', 'メニュー'], ['bgmBattle', '対戦']];
 const shopPrice = (kind, key) => (SHOP[kind] ? SHOP[kind].price(key) : 0);
+/* レア度 (C / R / E / L、印なしは null)。枠の色・印・光り方に使う */
+const rarOf = (kind, key) => rarityOf(kind, key, { defaultKey: DEFAULT_KEY[kind], shopPrice: shopPrice(kind, key) });
+const rarCls = (r) => (r ? ' rar-' + r : '');
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const SEEN_KEY = 'compileCosSeen';
@@ -106,6 +110,15 @@ function sourceInfo(kind, key) {
 }
 function sourceOf(kind, key) { return sourceInfo(kind, key)[0]; }
 function gotHow(kind, key) { return sourceInfo(kind, key)[1]; }
+
+/* レア度ごとの集まり具合 (例: L 1/4)。そのタブにある段だけ */
+function rarTally(kind, list, c) {
+  const rows = RARITIES.map(r => {
+    const all = list.filter(([k]) => rarOf(kind, k) === r);
+    return all.length ? '<span class="cm-rt rar-' + r + '" title="' + RARITY_NAME[r] + '">' + r + ' ' + all.filter(([k]) => owned(kind, k, c)).length + '/' + all.length + '</span>' : '';
+  }).join('');
+  return rows ? '<p class="cm-rts">' + rows + '</p>' : '';
+}
 
 /* NEW: 持っているのにまだ見ていないもの */
 function seen() {
@@ -237,8 +250,9 @@ function preview(kind, key, name, isOwned, src) {
     }
     default: break;
   }
-  return '<div class="cm-art' + (isOwned ? '' : ' locked') + '">' + art + '</div>' +
-    '<div class="cm-cap"><b>' + esc(name) + '</b><span>' + (isOwned ? (gotHow(kind, key) ? '入手: ' + esc(gotHow(kind, key)) : '持っている') : '未入手 — ' + esc(src)) + '</span></div>';
+  const rar = rarOf(kind, key);
+  return '<div class="cm-art' + (isOwned ? '' : ' locked') + rarCls(rar) + '">' + art + '</div>' +
+    '<div class="cm-cap' + rarCls(rar) + '">' + (rar ? '<i class="cm-rar">' + RARITY_NAME[rar] + '</i>' : '') + '<b>' + esc(name) + '</b><span>' + (isOwned ? (gotHow(kind, key) ? '入手: ' + esc(gotHow(kind, key)) : '持っている') : '未入手 — ' + esc(src)) + '</span></div>';
 }
 
 /* ---------- 画面 ---------- */
@@ -308,6 +322,7 @@ export function openCosmetics(opts) {
               (chipsNow() < shopPrice(tab, fItem[0]) ? 'CHIP が足りません (' + shopPrice(tab, fItem[0]) + ')'
                 : armed === fItem[0] ? 'もう一度押すと交換 (CHIP ' + shopPrice(tab, fItem[0]) + ')' : 'CHIP ' + shopPrice(tab, fItem[0]) + ' で交換') + '</button>' : '') + '</section>' +
         '<section class="cm-list" data-tab="' + tab + '"><div class="cm-filter"><p class="cm-count">' + TABS.find(t => t.kind === tab).label + ' ' + got + ' / ' + list.length + '</p>' +
+          rarTally(tab, list, c) +
           [['all', '全部'], ['own', '持っている'], ['not', 'まだ']].map(([k, label]) =>
             '<button type="button" class="cm-fbtn' + (filter === k ? ' on' : '') + '" data-filter="' + k + '">' + label + '</button>').join('') +
           (masteryHidden > 0 || showMastery ? '<button type="button" class="cm-fbtn' + (showMastery ? ' on' : '') + '" data-mastery="1">習熟度の分も見る' +
@@ -315,8 +330,8 @@ export function openCosmetics(opts) {
           '<div class="cm-grid ' + (tab === 'plate' ? 'nameplate' : tab === 'avatar' ? 'charas' : tab) + '">' + shownList.map(([key, name]) => {
             const has = owned(tab, key, c);
             const isNew = !firstOpen && has && key !== '' && key !== DEFAULT_KEY[tab] && !sn.has(tab + ':' + key);
-            return '<button type="button" data-key="' + esc(key) + '" class="cm-item' + (has ? '' : ' locked') + (key === cur ? ' cur' : '') + (key === fk ? ' focus' : '') + '">' +
-              '<span class="cm-th">' + thumb(tab, key) + '</span><b>' + esc(name) + '</b>' +
+            return '<button type="button" data-key="' + esc(key) + '" class="cm-item' + (has ? '' : ' locked') + rarCls(rarOf(tab, key)) + (key === cur ? ' cur' : '') + (key === fk ? ' focus' : '') + '">' +
+              '<span class="cm-th">' + thumb(tab, key) + '</span><b>' + (rarOf(tab, key) ? '<i class="cm-rb" title="' + RARITY_NAME[rarOf(tab, key)] + '">' + rarOf(tab, key) + '</i>' : '') + esc(name) + '</b>' +
               (has ? (tab === 'track' ? SLOTS.filter(([slot]) => (s[slot] || '') === key).map(([, label]) => '<em>' + label + '</em>').join('')
                 : key === cur ? '<em>装備中</em>' : '') : '<small>' + esc(sourceOf(tab, key)) + '</small>') +
               (isNew ? '<i class="cm-new">NEW</i>' : '') + '</button>';

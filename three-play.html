@@ -3008,6 +3008,32 @@
   .cm-grid.nameplate .cm-th{height:52px;}
   .cm-item{position:relative;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 6px 9px;cursor:pointer;text-align:center;
     border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);color:var(--ink);clip-path:var(--cut-s);transition:transform .12s,border-color .12s,background .12s;}
+  /* ---- レア度 (cos-rarity.js): 色はガチャと同じ。C 灰 / R 青 / E 金 / L 虹 ---- */
+  .rar-C{--rc:#b4bccd;--rc2:rgba(180,188,205,.12);}
+  .rar-R{--rc:#6fb8ff;--rc2:rgba(111,184,255,.16);}
+  .rar-E{--rc:#ffc85a;--rc2:rgba(255,200,90,.18);}
+  .rar-L{--rc:#ff7ac0;--rc2:rgba(255,122,192,.2);}
+  .cm-item[class*="rar-"]{border-color:color-mix(in srgb,var(--rc) 45%,transparent);
+    background:linear-gradient(0deg,var(--rc2),transparent 55%),rgba(255,255,255,.03);}
+  .cm-item.locked[class*="rar-"]{border-color:color-mix(in srgb,var(--rc) 22%,transparent);background:rgba(255,255,255,.02);}
+  .cm-rb{display:inline-block;margin-right:5px;padding:2px 4px;vertical-align:1px;font:900 8.5px/1.1 var(--font-ui);font-style:normal;
+    color:#0c0a14;background:var(--rc);clip-path:var(--cut-s);}
+  .cm-item.locked .cm-rb{opacity:.55;}
+  .cm-item.rar-L .cm-rb{background:linear-gradient(100deg,#ff4fa3,#ffc85a,#7cf0d0,#9d7bff);}
+  /* 持っている EPIC は内側に金の光、LEGENDARY は虹の光がゆっくり横切る */
+  .cm-item.rar-E:not(.locked){box-shadow:inset 0 0 18px rgba(255,200,90,.22);}
+  .cm-item.rar-L:not(.locked){box-shadow:inset 0 0 22px rgba(255,122,192,.25);}
+  .cm-item.rar-L:not(.locked)::after{content:"";position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;
+    background:linear-gradient(115deg,transparent 30%,rgba(255,79,163,.28) 42%,rgba(255,200,90,.3) 50%,rgba(124,240,208,.28) 58%,transparent 70%);
+    background-size:250% 100%;animation:cmHolo 3.2s linear infinite;}
+  @keyframes cmHolo{from{background-position:120% 0;}to{background-position:-120% 0;}}
+  .cm-cap .cm-rar{align-self:center;padding:3px 10px;font:900 10px/1.2 var(--font-ui);font-style:normal;letter-spacing:.16em;color:#0c0a14;background:var(--rc);clip-path:var(--cut-s);}
+  .cm-cap.rar-L .cm-rar{background:linear-gradient(100deg,#ff4fa3,#ffc85a,#7cf0d0,#9d7bff);background-size:200% 100%;animation:cmHolo 4s linear infinite;}
+  .cm-art.rar-E:not(.locked){background:radial-gradient(closest-side,rgba(255,200,90,.16),transparent);}
+  .cm-art.rar-L:not(.locked){background:radial-gradient(closest-side,rgba(255,122,192,.2),rgba(157,123,255,.08) 60%,transparent);}
+  .cm-rts{display:flex;gap:4px;margin:0 6px 0 0;}
+  .cm-rt{padding:3px 6px;font:800 10px/1 var(--font-ui);letter-spacing:.04em;color:var(--rc);border:1px solid color-mix(in srgb,var(--rc) 40%,transparent);font-variant-numeric:tabular-nums;}
+  @media (prefers-reduced-motion:reduce){ .cm-item.rar-L::after,.cm-cap.rar-L .cm-rar{animation:none;} }
   .cm-item:hover,.cm-item:focus-visible{transform:translateY(-2px);border-color:rgba(255,255,255,.35);outline:0;}
   .cm-item.focus{border-color:var(--pink);background:rgba(255,79,163,.1);}
   .cm-item.cur{border-color:var(--mint);}
@@ -4117,7 +4143,8 @@
       "./js3d/chips.js": "./js3d/chips.js?v=e67e280b76",
       "./js3d/cloudsave.js": "./js3d/cloudsave.js?v=16e480fbda",
       "./js3d/control.js": "./js3d/control.js?v=c1b87ebc63",
-      "./js3d/cosmetics-mode.js": "./js3d/cosmetics-mode.js?v=55a9a5c517",
+      "./js3d/cos-rarity.js": "./js3d/cos-rarity.js?v=ebced42017",
+      "./js3d/cosmetics-mode.js": "./js3d/cosmetics-mode.js?v=4ca0131385",
       "./js3d/cosmetics-ui.js": "./js3d/cosmetics-ui.js?v=a78ef23c9b",
       "./js3d/crashwatch.js": "./js3d/crashwatch.js?v=8b4bdaa28f",
       "./js3d/daily.js": "./js3d/daily.js?v=f56dabdf65",
@@ -4239,7 +4266,7 @@
   <link rel="modulepreload" href="js3d/rewards.js?v=ff8a27bac3">
   <link rel="modulepreload" href="js3d/gachafx.js?v=3d15a2226f">
   <link rel="modulepreload" href="js3d/cosmetics-ui.js?v=a78ef23c9b">
-  <link rel="modulepreload" href="js3d/cosmetics-mode.js?v=55a9a5c517">
+  <link rel="modulepreload" href="js3d/cosmetics-mode.js?v=4ca0131385">
   <link rel="modulepreload" href="js3d/displayname.js?v=613e18bf95">
   <link rel="modulepreload" href="js3d/plates.js?v=a1e3b996bb">
   <link rel="modulepreload" href="js3d/playmat.js?v=1c8f36818a">
@@ -4297,6 +4324,7 @@
   <link rel="modulepreload" href="vendor/jsm/postprocessing/ShaderPass.js">
   <link rel="modulepreload" href="js3d/story-map.js?v=8fa043c63d">
   <link rel="modulepreload" href="js3d/story-scenery.js?v=9fa267bcf9">
+  <link rel="modulepreload" href="js3d/cos-rarity.js?v=ebced42017">
   <link rel="modulepreload" href="js3d/prompts.js?v=348dff836d">
   <link rel="modulepreload" href="js3d/icons.js?v=15bacde80c">
   <link rel="modulepreload" href="js3d/cardtext.js?v=4cf5529855">
