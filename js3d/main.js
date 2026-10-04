@@ -1111,9 +1111,9 @@ async function boot() {
         if (opp.quick) { location.href = location.pathname + '?quick=1'; return; }
         if (opp.watch) { nextMode = 'watch'; continue; }
         if (opp.underdogTag) {
-          /* 自分の3つは選べる (はじめは最弱の3つを選んである)。相手の最強タッグの6つは選べない。何を選んでも勝てば実績 */
+          /* 自分の3つは選べる。相手の最強タッグの6つは選べない。何を選んでも勝てば実績 */
           const pick = await runSetup(cards.protocols, { allowOnline: false, cardsOf: protocolCards, level: UNDERDOG_TAG_LEVEL,
-            preset: UNDERDOG_DECK, lock: UNDERDOG_TAG_RIVAL_MATE });
+            lock: UNDERDOG_TAG_RIVAL_MATE });
           if (pick.back) { if (!pick.title) continue; nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
           document.body.classList.remove('pregame');
           p0 = pick.me.slice();
