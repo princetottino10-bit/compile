@@ -173,6 +173,15 @@ export function spendChips(n, earned) {
   saveGacha(addPaid(st, n));
   return true;
 }
+/** CHIP で品物を1つ交換する (顔のアイコンなど、ガチャに入れない品物)。持っている・足りなければ false */
+export function buyItem(kind, key, price, earned) {
+  const st = loadGacha();
+  const id = gachaId(kind, key);
+  if (st.owned[id] || !(price > 0) || chipsOf(st, earned) < price) return false;
+  const s = addPaid(st, price);
+  saveGacha({ ...s, owned: { ...s.owned, [id]: Date.now() } });
+  return true;
+}
 /** n CHIP を返す (ベットの当たり) */
 export function giveChips(n) {
   if (!(n > 0)) return;

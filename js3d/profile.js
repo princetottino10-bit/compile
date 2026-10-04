@@ -15,7 +15,7 @@ import { localRecords } from './stats.js';
 import { settings, openSettings } from './settings.js';
 import { profileOf } from './cosmetics-ui.js';
 import { REWARDS, nextReward } from './rewards.js';
-import { emblemDataURL } from './emblems.js';
+import { iconArt } from './face-icons.js';
 
 /* 経験値の入り方 (数は stats-data.js の playerXp と xp.js の XP_GAIN) */
 const EARN = [
@@ -63,7 +63,7 @@ export function openProfile(protocols) {
   const recs = localRecords();
   const pl = playerLevel(recs, bonusXp());
   const me = profileOf(settings(), recs);
-  const proto = (protocols || []).find(p => p.name === me.icon);
+  const art = iconArt(me.icon, protocols, 96);
   const nx = nextReward(pl.level);
   const got = REWARDS.filter(r => r.lv <= pl.level);
   const wins = recs.filter(r => r.win).length;
@@ -79,7 +79,7 @@ export function openProfile(protocols) {
     /* 横に広い画面では2列 (左: レベル・名前・経験値、右: 実績・ミッション・報酬) */
     '<div class="pf-cols"><div class="pf-col">' +
     '<div class="pf-top">' +
-      '<div class="pf-icon">' + (proto ? '<img alt="" src="' + emblemDataURL(proto.name, proto.color || '#b9a4ff', 96, true) + '">' : '<span>//</span>') + '</div>' +
+      '<div class="pf-icon">' + (art ? '<img alt="" class="' + (art.face ? 'face' : '') + '" src="' + art.src + '">' : '<span>//</span>') + '</div>' +
       '<div class="pf-id"><small>PLAYER LEVEL</small><b>' + pl.level + '</b>' + (me.title ? '<em>' + esc(me.title) + '</em>' : '') + '</div>' +
     '</div>' +
     nameFieldHtml('pf') +

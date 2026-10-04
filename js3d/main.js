@@ -80,6 +80,7 @@ import { createLogFormat } from './logformat.js';
 import { meaningfulSteps as cutSteps } from './steps.js';
 import { initDialogs } from './dialogs.js';
 import { initGamepad } from './gamepad.js';
+import { iconArt } from './face-icons.js';
 
 const Engine = window.CompileEngine;
 initDialogs();
@@ -2895,10 +2896,10 @@ function frameColor(frame) {
 }
 function myPlate() {
   const p = profileOf(settings(), localRecords());
-  const proto = p.icon && protoIndex[p.icon];
+  const art = iconArt(p.icon, Object.values(protoIndex), 40);
   const frame = myLook(settings()).plate;
   return { name: displayName() || 'YOU', level: p.level, sub: p.title || '', frame, frameColor: frameColor(frame),
-    icon: proto ? { name: proto.name, color: proto.color } : null };
+    icon: art ? { name: p.icon, color: art.color, src: art.src, face: !!art.face } : null };
 }
 /* CPU 戦の名札: 相手は CPU と難易度。アイコンは相手のデッキの1つ目のプロトコル */
 function showCpuPlates(p1) {

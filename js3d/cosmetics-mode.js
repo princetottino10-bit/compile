@@ -20,6 +20,14 @@ import { emblemDataURL } from './emblems.js';
 import { displayName } from './displayname.js';
 import { openGacha, chipsNow } from './gacha-ui.js';
 import { playBgm, menuBgm, BGM_CREDIT } from './bgm.js';
+import { FACE_ICONS, FACE_ICON_PRICE, isFaceIcon, ownsFaceIcon, buyFaceIcon, faceIconURL, faceIconName, iconArt } from './face-icons.js';
+import { earnedChips } from './chips.js';
+
+/* CHIP で交換する品物 (ガチャに入れない)。値段 (0 なら交換の品物ではない) と、交換する関数 */
+const SHOP = {
+  icon: { price: (k) => (isFaceIcon(k) ? FACE_ICON_PRICE : 0), buy: (k) => buyFaceIcon(k, earnedChips()) }
+};
+const shopPrice = (kind, key) => (SHOP[kind] ? SHOP[kind].price(key) : 0);
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const SEEN_KEY = 'compileCosSeen';
@@ -60,17 +68,19 @@ function ctx() {
 }
 function itemsOf(kind) {
   if (kind === 'title') return [['', 'なし']].concat(Object.entries(TITLES));
-  if (kind === 'icon') return [['', 'なし']].concat(protoList.map(p => [p.name, p.name]));
+  if (kind === 'icon') return [['', 'なし']].concat(protoList.map(p => [p.name, p.name]), FACE_ICONS.map(k => [k, faceIconName(k)]));
   return COSMETICS[kind] || [];
 }
 function owned(kind, key, c) {
   if (key === '' || key === DEFAULT_KEY[kind]) return true;
   if (kind === 'title') return c.titles.includes(key);
+  if (kind === 'icon' && isFaceIcon(key)) return ownsFaceIcon(key);
   if (kind === 'icon') return c.level >= unlockLevel('icon', 'icon');
   return c.level >= unlockLevel(kind, key);
 }
 function sourceOf(kind, key) {
   if (key === '' || key === DEFAULT_KEY[kind]) return 'はじめから';
+  if (shopPrice(kind, key)) return 'CHIP ' + shopPrice(kind, key) + ' で交換';
   if (kind === 'icon') return 'LV ' + unlockLevel('icon', 'icon') + ' で解放';
   const g = GACHA_ITEMS.find(x => x.kind === kind && x.key === key);
   if (g) return 'GACHA (' + RAR_NAME[g.rar] + ')';
@@ -144,6 +154,7 @@ function thumb(kind, key) {
     case 'ccolor': return '<span class="cm-glow" style="--gc:' + (CCOLOR[key] || CCOLOR.default) + '"></span>';
     case 'victory': return '<span class="cm-vic ' + esc(key) + '">WIN</span>';
     case 'icon': {
+      if (isFaceIcon(key)) return '<img class="cm-face" alt="" src="' + faceIconURL(key) + '">';
       const p = protoList.find(x => x.name === key);
       return p ? '<img alt="" src="' + emblemDataURL(p.name, p.color || '#b9a4ff', 64, true) + '">' : '<span class="cm-none">—</span>';
     }
@@ -170,8 +181,8 @@ function preview(kind, key, name, isOwned, src) {
       '<p class="cm-desc">' + esc(CC_DESC[key] || '') + '</p>'; break;
     case 'victory': art = '<div class="cm-vicview ' + esc(key) + '"><b>YOU WIN</b></div>'; break;
     case 'plate': {
-      const p = protoList.find(x => x.name === s.icon);
-      art = '<div class="cm-plate pf-' + esc(key) + '"' + pfcStyle(key) + '>' + (p ? '<img alt="" src="' + emblemDataURL(p.name, p.color || '#b9a4ff', 96, true) + '">' : '<span>//</span>') +
+      const ia = iconArt(s.icon, protoList, 96);
+      art = '<div class="cm-plate pf-' + esc(key) + '"' + pfcStyle(key) + '>' + (ia ? '<img alt="" class="' + (ia.face ? 'face' : '') + '" src="' + ia.src + '">' : '<span>//</span>') +
         '<div><b>' + esc(displayName() || 'YOU') + '</b>' + (TITLES[s.title] ? '<small>' + esc(TITLES[s.title]) + '</small>' : '') + '</div></div>';
       break;
     }
@@ -194,9 +205,9 @@ function preview(kind, key, name, isOwned, src) {
       '<small class="cm-credit">曲 ' + esc(BGM_CREDIT) + '　・　' + (key === 'orange_tunnel' ? 'タイトルでも流れる曲' : '選ぶと対戦で流れる') + '</small></div>'; break;
     case 'title': case 'icon': {
       const icon = kind === 'icon' ? key : s.icon;
-      const p = protoList.find(x => x.name === icon);
+      const ia = iconArt(icon, protoList, 96);
       const title = kind === 'title' ? (key ? TITLES[key] : '') : (TITLES[s.title] || '');
-      art = '<div class="cm-plate">' + (p ? '<img alt="" src="' + emblemDataURL(p.name, p.color || '#b9a4ff', 96, true) + '">' : '<span>//</span>') +
+      art = '<div class="cm-plate">' + (ia ? '<img alt="" class="' + (ia.face ? 'face' : '') + '" src="' + ia.src + '">' : '<span>//</span>') +
         '<div><b>' + esc(displayName() || 'YOU') + '</b>' + (title ? '<small>' + esc(title) + '</small>' : '') + '</div></div>';
       break;
     }
@@ -223,6 +234,7 @@ export function openCosmetics(opts) {
      持っているものだけ出し、まだのものは showMastery のときだけ (数が多すぎて、ほかが埋もれていた) */
   let filter = 'all', showMastery = false;
   let listened = false;                              // BGM を試し聴きした (閉じたらタイトルの曲に戻す)
+  let armed = null;                                  // 交換のボタンを1回押した品物 (もう一度押すと交換)
   const firstOpen = (() => { try { return !localStorage.getItem(SEEN_KEY); } catch (e) { return false; } })();
   const render = () => {
     const s = settings();
@@ -261,7 +273,11 @@ export function openCosmetics(opts) {
       '<div class="cm-body">' +
         '<section class="cm-preview">' + preview(tab, fItem[0], fItem[1], owned(tab, fItem[0], c), sourceOf(tab, fItem[0])) +
           (owned(tab, fItem[0], c) && fItem[0] !== cur ? '<button type="button" class="cm-equip" data-equip="' + esc(fItem[0]) + '">着ける</button>'
-            : fItem[0] === cur ? '<p class="cm-on">着けています</p>' : '') + '</section>' +
+            : fItem[0] === cur ? '<p class="cm-on">着けています</p>'
+            : shopPrice(tab, fItem[0]) ? '<button type="button" class="cm-equip cm-buy' + (armed === fItem[0] ? ' armed' : '') + '" data-buy="' + esc(fItem[0]) + '"' +
+              (chipsNow() < shopPrice(tab, fItem[0]) ? ' disabled' : '') + '>' +
+              (chipsNow() < shopPrice(tab, fItem[0]) ? 'CHIP が足りません (' + shopPrice(tab, fItem[0]) + ')'
+                : armed === fItem[0] ? 'もう一度押すと交換 (CHIP ' + shopPrice(tab, fItem[0]) + ')' : 'CHIP ' + shopPrice(tab, fItem[0]) + ' で交換') + '</button>' : '') + '</section>' +
         '<section class="cm-list" data-tab="' + tab + '"><div class="cm-filter"><p class="cm-count">' + TABS.find(t => t.kind === tab).label + ' ' + got + ' / ' + list.length + '</p>' +
           [['all', '全部'], ['own', '持っている'], ['not', 'まだ']].map(([k, label]) =>
             '<button type="button" class="cm-fbtn' + (filter === k ? ' on' : '') + '" data-filter="' + k + '">' + label + '</button>').join('') +
@@ -301,9 +317,19 @@ export function openCosmetics(opts) {
     if (b.dataset.filter) { filter = b.dataset.filter; render(); return; }
     if (b.dataset.mastery) { showMastery = !showMastery; render(); return; }
     if (b.dataset.equip !== undefined) { setSetting(tab, b.dataset.equip); render(); return; }
+    /* CHIP で交換: 1回目は確かめ、2回目で交換してそのまま着ける */
+    if (b.dataset.buy !== undefined) {
+      const key = b.dataset.buy;
+      if (armed !== key) { armed = key; render(); return; }
+      armed = null;
+      if (SHOP[tab] && SHOP[tab].buy(key)) setSetting(tab, key);
+      render();
+      return;
+    }
     if (b.dataset.key !== undefined) {
       const key = b.dataset.key;
       focus = key;
+      armed = null;
       /* BGM のタブは、押したら試し聴き */
       if (tab === 'bgm') { listened = true; playBgm(key); }
       /* 持っているものは、押したらそのまま着ける (プレビューにも出す) */

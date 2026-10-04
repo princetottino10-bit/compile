@@ -11,6 +11,7 @@ import { playerLevel } from './stats-data.js';
 import { localRecords } from './stats.js';
 import { UNDERDOG_LEVEL } from './aidecks.js';
 import { emblemDataURL } from './emblems.js';
+import { isFaceIcon, ownsFaceIcon, FACE_ICONS, faceIconURL, faceIconName } from './face-icons.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -32,7 +33,9 @@ export function profileOf(settings, records) {
   const level = playerLevel(records, bonusXp()).level;
   const titles = ownedTitles(level, extraTitles(records));
   const title = titles.includes(settings.title) ? TITLES[settings.title] : '';
-  const icon = level >= unlockLevel('icon', 'icon') && settings.icon ? settings.icon : '';
+  /* 顔のアイコンは CHIP で交換したもの (レベルに関係なく)。プロトコルの記号はレベルで解放 */
+  const icon = !settings.icon ? '' : isFaceIcon(settings.icon) ? (ownsFaceIcon(settings.icon) ? settings.icon : '')
+    : level >= unlockLevel('icon', 'icon') ? settings.icon : '';
   return { level, title, icon };
 }
 
@@ -81,7 +84,10 @@ export function cosmeticsHtml(s, protocols) {
     (iconOpen
       ? '<div class="st-icons">' + '<button type="button" data-cos="icon" data-key="" class="st-ic' + (!s.icon ? ' on' : '') + '" aria-label="アイコンなし">—</button>' +
         (protocols || []).map(p => '<button type="button" data-cos="icon" data-key="' + esc(p.name) + '" class="st-ic' + (s.icon === p.name ? ' on' : '') +
-          '" title="' + esc(p.name) + '" aria-label="' + esc(p.name) + '"><img alt="" src="' + emblemDataURL(p.name, p.color || '#b9a4ff', 40, true) + '"></button>').join('') + '</div>'
+          '" title="' + esc(p.name) + '" aria-label="' + esc(p.name) + '"><img alt="" src="' + emblemDataURL(p.name, p.color || '#b9a4ff', 40, true) + '"></button>').join('') +
+        /* CHIP で交換した顔のアイコン (交換は COLLECTION のアイコン) */
+        FACE_ICONS.filter(k => ownsFaceIcon(k)).map(k => '<button type="button" data-cos="icon" data-key="' + k + '" class="st-ic face' + (s.icon === k ? ' on' : '') +
+          '" title="' + esc(faceIconName(k)) + '" aria-label="' + esc(faceIconName(k)) + '"><img alt="" src="' + faceIconURL(k) + '"></button>').join('') + '</div>'
       : '') + '</div>';
   const rows = row('mat') + row('sleeve') + row('marker') + row('ccolor') + row('victory');
   return '<div class="st-cosmetics"><div class="st-cos-head"><b>COLLECTION</b><small>LV ' + level + ' ・ 「+」はまだ見ぬ見た目。レベルを上げると明かされます</small></div>' +

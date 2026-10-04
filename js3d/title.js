@@ -6,6 +6,7 @@ import { xpLog } from './xp.js';
 import { displayName, onDisplayNameChange } from './displayname.js';
 import { dailyView } from './daily.js';
 import { emblemDataURL } from './emblems.js';
+import { iconArt } from './face-icons.js';
 import { drawTitleBackdrop } from './backdrops.js';
 import { initAudio, sfx } from './audio.js';
 import { openSettings } from './settings.js';
@@ -38,10 +39,10 @@ function isNewcomer() {
 /* レベル・称号・アイコン (設定の「見た目」で選んだもの) */
 function profileChip(protocols) {
   const p = profileOf(settings(), localRecords());
-  const proto = protocols.find(x => x.name === p.icon);
+  const art = iconArt(p.icon, protocols, 40);
   /* 押すとプロフィール (レベル・経験値・次の報酬) が開く */
   return '<button type="button" data-mode="profile" class="tt-profile" aria-label="プロフィール">' +
-    (proto ? '<img alt="" src="' + emblemDataURL(proto.name, proto.color || '#b9a4ff', 40, true) + '">' : '') +
+    (art ? '<img alt="" class="' + (art.face ? 'face' : '') + '" src="' + art.src + '">' : '') +
     '<b>LV ' + p.level + '</b>' + (p.title ? '<small>' + p.title + '</small>' : '') + dailyBadge(protocols) + '</button>';
 }
 
