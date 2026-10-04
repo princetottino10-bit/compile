@@ -131,6 +131,9 @@ export function openSettings(extra) {
       '<input type="range" min="0" max="100" step="5" id="stVoice" value="' + (s.voiceVol ?? 80) + '"></label>' +
     '<label class="st-row"><span>効果音の音量 <i id="stSfxV">' + volText(s.sfx) + '</i></span>' +
       '<input type="range" min="0" max="100" step="5" id="stSfx" value="' + s.sfx + '"></label>' +
+    /* サウンドテスト (sound-test.html): キャラの声・効果音・BGM を鳴らして確かめる。キャラが見える人にだけ (公開前のキャラの声が入っているため) */
+    (avatarOptionsShown() ? '<div class="st-row st-act"><span>サウンドテスト<small>キャラのセリフ・効果音・BGM を1つずつ鳴らせます (別の画面で開きます)</small></span>' +
+      '<button type="button" id="stSoundTest">開く</button></div>' : '') +
     '<h4 class="st-group">対戦の進み方</h4>' +
     '<div class="st-row"><span>演出の速さ</span><div class="st-seg" role="group" aria-label="演出の速さ">' +
       SPEEDS.map(o => '<button type="button" data-speed="' + o.v + '" class="' + (s.speed === o.v ? 'on' : '') + '">' + o.label + '</button>').join('') +
@@ -215,6 +218,8 @@ export function openSettings(extra) {
     };
   });
   el.querySelector('#stDiscord').onclick = () => openDiscord();
+  const st = el.querySelector('#stSoundTest');
+  if (st) st.onclick = () => { if (!window.open('sound-test.html', '_blank')) location.href = 'sound-test.html'; };
   el.querySelector('#stReportCopy').onclick = async (ev) => {
     const msg = await copyReportInfo();
     if (msg) { ev.target.textContent = 'コピーしました'; setTimeout(() => { ev.target.textContent = 'コピー'; }, 2400); }
