@@ -360,6 +360,10 @@ export function openRun(protocols, cardsOf, opts) {
             : '<p class="rn-note">今のデッキ ' + deckLine(run.deck, byName) + '</p>' +
               '<h3>プロトコルを入れ替える (取らなくてもよい)</h3><div class="rn-offers">' + run.offers.map(n => '<div class="rn-offer">' +
                 protoChip(byName[n], 'data-add="' + esc(n) + '"') +
+                /* 後半の特典 (強化済みのカード・β カード) */
+                (((run.offerPerks || {})[n]) ? '<small class="rn-perk">特典: ' + [
+                  ...(run.offerPerks[n].ups || []).map(id => esc(cardLabel(id)) + ' 強化済み'),
+                  ...(run.offerPerks[n].star ? ['β ' + esc(starLabel(run.offerPerks[n].star))] : [])].join(' ・ ') + '</small>' : '') +
                 (cardsOf ? '<button type="button" class="rn-info" data-info="' + esc(n) + '">カードを見る</button>' : '') + '</div>').join('') + '</div>' +
               '<div class="rn-btns"><button type="button" class="rn-go" data-act="skip">取らずに進む</button></div>') +
             (run.pendingPatch && !swapAdd ? '<p class="rn-note rn-elite">精鋭の戦利品: このあとパッチを1つ選べます</p>' : '');

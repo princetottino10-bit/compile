@@ -729,10 +729,28 @@ export function finishBattle(run, win, compiles, names, rnd = Math.random) {
     next = { ...base, phase: 'cards', cardOffers: cardRewardOffers(base, rnd), pendingPatch: !!run.opp.elite,
       upgradedNow: null, removedNow: null, gotStar: null,
       offers: run.opp.elite ? sample(names.filter(n => !run.deck.includes(n)), hasPatch(run, 'search') ? 4 : 3, rnd) : [] };
+    next = { ...next, offerPerks: offerPerksFor(next, node.row | 0, rnd) };
   }
   if (next.phase === 'over' || next.phase === 'clear') saveBest(next);
   if (next.phase === 'clear') unlockHeat(next.heat | 0);
   return next;
+}
+
+/* 後半の入れ替えには特典を付ける (後半ほど、育ったデッキと入れ替える得が出るように)。
+   7段目 (row 6) から: そのプロトコルのカード1枚が強化済み。10段目 (row 9) から: 2枚が強化済み + そのプロトコルの β カード。
+   値 6 のカードは強化されないので、強化するのは 1〜5 番目のカードから */
+export const PERK_ROW_UP = 6, PERK_ROW_STAR = 9;
+function offerPerksFor(run, row, rnd) {
+  const out = {};
+  if (row < PERK_ROW_UP) return out;
+  for (const n of run.offers || []) {
+    const pool = [1, 2, 3, 4, 5].map(k => n + '_' + k);
+    const ups = [];
+    for (let k = 0; k < (row >= PERK_ROW_STAR ? 2 : 1) && pool.length; k++) ups.push(pool.splice(Math.floor(rnd() * pool.length), 1)[0]);
+    const st = row >= PERK_ROW_STAR ? starOf(n) : null;
+    out[n] = { ups, star: st ? st.id : null };
+  }
+  return out;
 }
 
 /* 報酬: { type: 'swap', add, remove } / { type: 'skip' }。精鋭に勝ったあとはパッチを選ぶ */
@@ -741,6 +759,12 @@ export function applyReward(run, choice, names, rnd = Math.random) {
   let next = run;
   if (choice.type === 'swap' && run.offers.includes(choice.add) && run.deck.includes(choice.remove)) {
     next = withDeck(run, run.deck.map(n => (n === choice.remove ? choice.add : n)));
+    /* 後半の特典: 強化済みのカードと β カード */
+    const perk = (run.offerPerks || {})[choice.add];
+    if (perk) {
+      next = { ...next, upgrades: (next.upgrades || []).concat((perk.ups || []).filter(id => !(next.upgrades || []).includes(id))) };
+      if (perk.star) next = addStar(next, perk.star);
+    }
   }
   if (run.pendingRare) {
     const offers = rarePatchOffers(next, rnd);
@@ -750,7 +774,7 @@ export function applyReward(run, choice, names, rnd = Math.random) {
     const offers = patchOffers(next, rnd);
     if (offers.length) return { ...next, offers: [], phase: 'patch', patchOffers: offers, after: 'map' };
   }
-  return { ...next, offers: [], phase: 'map', pendingPatch: false, pendingRare: false };
+  return { ...next, offers: [], offerPerks: null, phase: 'map', pendingPatch: false, pendingRare: false };
 }
 
 /* 試合のはじめ方 (パッチ・ビルド・呪い・カード除去)。me = 自分の席 */

@@ -326,3 +326,24 @@ test('パッチの候補は持っている系統に寄る (1つは必ず)。取�
   assert.equal(R.patchBonusStep({ ...run, patches: ['cache', 'buffer'] }, 'jammer'), 2);
   assert.equal(R.patchBonusStep(withHand, 'battery'), 0);
 });
+
+test('後半の入れ替えは特典つき: 7段目から強化済み1枚、10段目から強化済み2枚 + β カード', async () => {
+  const { R, run } = await started();
+  const e = goTo(R, run, 'elite');
+  const atRow = (row) => {
+    const base = { ...e, map: { rows: e.map.rows.map(r => r.map(n => (n.id === e.pos ? { ...n, row } : n))) } };
+    return R.chooseCardReward(R.finishBattle(base, true, 1, NAMES, seq()), null);
+  };
+  const early = atRow(3);
+  assert.equal(Object.keys(early.offerPerks || {}).length, 0, '前半は特典なし');
+  const mid = atRow(R.PERK_ROW_UP);
+  const n = mid.offers[0];
+  assert.equal(mid.offerPerks[n].ups.length, 1);
+  assert.equal(mid.offerPerks[n].star, null);
+  const late = atRow(R.PERK_ROW_STAR);
+  const m = late.offers[0];
+  assert.equal(late.offerPerks[m].ups.length, 2);
+  const swapped = R.applyReward(late, { type: 'swap', add: m, remove: late.deck[0] }, NAMES, seq());
+  assert.ok(late.offerPerks[m].ups.every(id => swapped.upgrades.includes(id)), '強化済みのカードが付く');
+  if (late.offerPerks[m].star) assert.ok(swapped.added.includes(late.offerPerks[m].star), 'β カードが付く');
+});
