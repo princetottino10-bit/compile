@@ -2640,7 +2640,7 @@ const AI_LOCK_W = {
   /* 相手の永続ロックは、そのラインをコンパイルすれば (ラインのカードが全部消えて) 外れる。
      lockBreakLine: そのラインの自分の合計が 10 に近いほど減点を軽く (最大この割合) /
      lockBreakReady: 次の自分の番にそのラインをコンパイルできる形なら、減点をこの割合だけ軽く */
-  lockBreakLine: 0.5, lockBreakReady: 0.85,
+  lockBreakLine: 0.8, lockBreakReady: 0.85, lockVictim: 420,
   threatLine: 0.85, threatAny: 0.6, threatCovered: 0.2,
   spLockCoverRoute: 170, spLockUpNoCover: -45, spLockDup: -20, spLockBadLine: -30,
   spLockKeyInHand: 150, spLockNoKey: 95, spCover: 80, spKeyOnLock: 170, spKeyHold: -55,
@@ -2849,8 +2849,12 @@ function aiLockScore(st, side) {
     /* 相手の永続ロックを受けている側: ロックのあるラインを取りに行くほど軽く (ロックされたまま裏で出し続けて負けていた) */
     if (covered && s.sideIdx !== side) {
       const mine = lineTotal(st, s.line, side), theirs = lineTotal(st, s.line, s.sideIdx);
-      const reach = Math.min(1, Math.max(0, mine) / 10);
-      w *= 1 - AI_LOCK_W.lockBreakLine * reach * reach;
+      /* コンパイルに要る合計 (10 以上かつ相手より上) にどれだけ近いか。裏でしか出せない間は、
+         このラインに集めてコンパイルするのが唯一の抜け道なので、近づいた分だけ素直に軽くする (前は2乗で、序盤はほぼ効かなかった) */
+      const need = Math.max(10, theirs + 1);
+      const reach = Math.min(1, Math.max(0, mine) / need);
+      /* 受けている側は、裏でしか出せないぶん持っている側の得より痛い (コントロールを守るより、ロックを割るほうが先) */
+      w = AI_LOCK_W.lockVictim * (1 - AI_LOCK_W.lockBreakLine * reach);
       if (mine >= 10 && mine > theirs) w *= 1 - AI_LOCK_W.lockBreakReady;
     }
     v += s.sideIdx === side ? w : -w;
