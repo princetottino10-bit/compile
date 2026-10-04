@@ -5,7 +5,7 @@
 import { randomDecks, shuffled } from './solodraft.js';
 import { bonusXp, grantXp, XP_GAIN, hashKey } from './xp.js';
 import { recordDailyGame, DAILY_XP, dailyView } from './daily.js';
-import { maybeLoginHint } from './account.js';
+import { maybeLoginHint, uploadReplay } from './account.js';
 import { logPlay } from './playlog.js';
 import * as FEEL from './feel.js';
 import { createPickAid } from './pickaid.js';
@@ -4925,8 +4925,10 @@ async function afterTurn() {
           mode: runMode ? runKind : tutorial ? 'tutorial' : tagMates ? 'tag' : quickGame ? 'quick' : 'cpu', short: shortMatch });
       refreshCardGlow();
       if (replayLog) {
-        lastReplayId = addReplay({ me: replayLog.init.p0, opp: replayLog.init.p1, win, level: aiDifficulty,
-          turns: (st0.turns || 0) + 1, kind: runMode ? runKind : null, init: replayLog.init, actions: replayLog.actions });
+        const rep = { me: replayLog.init.p0, opp: replayLog.init.p1, win, level: aiDifficulty,
+          turns: (st0.turns || 0) + 1, kind: runMode ? runKind : null, init: replayLog.init, actions: replayLog.actions };
+        lastReplayId = addReplay(rep);
+        uploadReplay({ ...rep, at: Date.now(), mode: tagMates ? 'tag' : quickGame ? 'quick' : runMode ? runKind : 'cpu' });
         replayLog = null;
       }
     }

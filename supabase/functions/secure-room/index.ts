@@ -408,7 +408,22 @@ Deno.serve(async (req) => {
 
   try {
     /* 管理者かどうか (ADMIN 画面の入口を出すため)。管理者の一覧は admins 表 (service role だけが読める) */
-    if (op === "whoami") return json(req, { admin: await isAdmin(user) });
+    /* collect: 棋譜を残してよい人か (replay_collect 表。本人の許可を取った人だけ、管理者が載せる) */
+    if (op === "whoami") {
+      const { data: col } = await admin.from("replay_collect").select("user_id").eq("user_id", user.id).maybeSingle();
+      return json(req, { admin: await isAdmin(user), collect: !!col });
+    }
+    /* 棋譜を残す: replay_collect に載っている人の CPU 戦のリプレイだけ。ほかの人のものは受け取らない */
+    if (op === "saveReplay") {
+      const { data: col } = await admin.from("replay_collect").select("user_id").eq("user_id", user.id).maybeSingle();
+      if (!col) return json(req, { ok: false });
+      const rep = body.replay;
+      const text = JSON.stringify(rep || null);
+      if (!rep || typeof rep !== "object" || !Array.isArray(rep.actions) || !rep.init || text.length > 200_000) return fail(req, "棋譜の形が不正です");
+      const { error } = await admin.from("player_replays").insert({ user_id: user.id, data: rep });
+      if (error) throw error;
+      return json(req, { ok: true });
+    }
 
     /* ---- ここから管理者だけ ---- */
     if (op.startsWith("admin")) {

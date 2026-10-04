@@ -157,6 +157,7 @@ async function checkAdmin() {
   try {
     const r = await ROOM.roomApi('whoami');
     state.admin = !!(r && r.admin);
+    state.collect = !!(r && r.collect);
   } catch (e) {
     state.admin = false;
   }
@@ -478,6 +479,12 @@ export function openAccount() {
   el.onclick = (ev) => { if (ev.target === el) close(); };
   render();
   el.classList.add('show');
+}
+
+/* 棋譜を残す (サーバーの replay_collect に載っている人だけ。本人の許可を取ってから管理者が載せる)。失敗しても遊ぶのは止めない */
+export async function uploadReplay(rep) {
+  if (!state.user || !state.collect || !rep) return;
+  try { await ROOM.roomApi('saveReplay', { replay: rep }); } catch (e) { /* 次の対戦で送ればよい */ }
 }
 
 /* ---------- 週替わり3連戦のクリア者一覧 ----------
