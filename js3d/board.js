@@ -259,8 +259,28 @@ export function createBoard(stage, defIndex, me, hooks) {
       setFoil(card, foil, foil && defIndex[c.def] ? foilMaskTexture(defIndex[c.def]) : null);
       const back = backTex(c.owner === me ? sleeveOf() : oppSleeveOf());
       if (card.userData.back.material.map !== back) { card.userData.back.material.map = back; card.userData.back.material.needsUpdate = true; }
+      card.userData.back.material.color.setScalar(backTint(back));
     }
     for (const [uid, card] of cards) if (!seen.has(uid)) card.visible = false;
+  }
+
+  /* 白っぽいスリーブは、照明と光の効果 (ブルーム) で白飛びして山札がぎらぎら光っていた。
+     絵の明るさを測って、明るいものは裏面を暗めに出す (絵を描き直したら測り直す) */
+  function backTint(tex) {
+    const ud = tex.userData || (tex.userData = {});
+    if (ud.tintV === tex.version) return ud.tint;
+    let lum = 0.4;
+    try {
+      const c = document.createElement('canvas'); c.width = c.height = 16;
+      const g = c.getContext('2d'); g.drawImage(tex.image, 0, 0, 16, 16);
+      const d = g.getImageData(0, 0, 16, 16).data;
+      let sum = 0;
+      for (let i = 0; i < d.length; i += 4) sum += (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255;
+      lum = sum / (d.length / 4);
+    } catch (e) { /* 測れなければそのまま */ }
+    ud.tint = lum > 0.45 ? Math.max(0.55, 0.45 / lum) : 1;
+    ud.tintV = tex.version;
+    return ud.tint;
   }
 
   /* ---------- 汎用の移動トゥイーン ---------- */
