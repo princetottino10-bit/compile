@@ -124,7 +124,14 @@ export function hasNewCosmetics() {
 const imgCache = new Map();
 /* 絵のスリーブは画像を読み込んでから描き直される。読めたら見本を作り直し、開いていれば画面も描き直す */
 let rerender = null;
-onSleeveArt((key) => { imgCache.delete('sleeve:' + key); if (rerender) rerender(); });
+/* 読めたスリーブの絵だけを差し替える (前は画面全体を描き直していて、絵が1枚読めるたびに全部の見本が貼り直されてチカチカしていた) */
+onSleeveArt((key) => {
+  imgCache.delete('sleeve:' + key);
+  const ov = document.getElementById('cosOv');
+  if (!ov) return;
+  const imgs = ov.querySelectorAll('img[data-sleeve="' + key + '"]');
+  if (imgs.length) { const url = sleeveURL(key); imgs.forEach(im => { if (im.src !== url) im.src = url; }); }
+});
 function sleeveURL(key) {
   const k = 'sleeve:' + key;
   if (!imgCache.has(k)) imgCache.set(k, backTex(key).image.toDataURL('image/png'));
@@ -154,7 +161,7 @@ export function itemArtHtml(kind, key) {
 /* 小さい見本 (図鑑のマス) */
 function thumb(kind, key) {
   switch (kind) {
-    case 'sleeve': return '<img alt="" src="' + sleeveURL(key) + '">';
+    case 'sleeve': return '<img alt="" data-sleeve="' + esc(key) + '" src="' + sleeveURL(key) + '">';
     case 'mat': return matURL(key) ? '<img alt="" src="' + matURL(key) + '">' : '<span class="cm-neon"></span>';
     case 'marker': return '<img alt="" src="' + markerURL(key) + '">';
     case 'ccolor': return '<span class="cm-glow" style="--gc:' + (CCOLOR[key] || CCOLOR.default) + '"></span>';
@@ -175,11 +182,11 @@ function preview(kind, key, name, isOwned, src) {
   const s = settings();
   let art = '';
   switch (kind) {
-    case 'sleeve': art = '<img class="cm-card" alt="" src="' + sleeveURL(key) + '">'; break;
+    case 'sleeve': art = '<img class="cm-card" alt="" data-sleeve="' + esc(key) + '" src="' + sleeveURL(key) + '">'; break;
     case 'mat': {
       const url = matURL(key);
       art = '<div class="cm-matview">' + (url ? '<img alt="" src="' + url + '">' : '<span class="cm-neon big"></span>') +
-        '<img class="cm-matcard" alt="" src="' + sleeveURL(s.sleeve || 'default') + '"></div>';
+        '<img class="cm-matcard" alt="" data-sleeve="' + esc(s.sleeve || 'default') + '" src="' + sleeveURL(s.sleeve || 'default') + '"></div>';
       break;
     }
     case 'marker': art = '<div class="cm-markerview"><img alt="" src="' + markerURL(key) + '"></div>'; break;
