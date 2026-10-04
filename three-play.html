@@ -633,6 +633,8 @@
   .cp-fxt{font:500 11px/1.5 "M PLUS 1",system-ui;color:var(--ink);}
   .cp-fxnone{margin:0;font:600 11px/1.4 "M PLUS 1",system-ui;color:var(--dim);}
   .cp-fx.withcard{max-height:38%;}
+  /* カードの説明 (#cardNote) が出ている間は、上段・下段の一覧だけの INFO を引っ込める (カードの効果を優先して見せる) */
+  body:has(#cardNote.show) #preview.fxonly{opacity:0;pointer-events:none;}
   .cp-fx.folded{padding-bottom:8px;}
   .cp-fxtoggle{width:100%;cursor:pointer;background:none;border:0;padding:4px 0;text-align:left;}
   .cp-fxtoggle i{margin-left:auto;font-style:normal;color:var(--ink);}
