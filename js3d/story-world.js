@@ -133,7 +133,7 @@ export function openWorld(protocols, opts = {}) {
   const syncDoors = () => scenery.syncDoors(state);
 
   /* タップした行き先の印 */
-  const marker = new THREE.Mesh(keep(new THREE.RingGeometry(0.28, 0.4, 32)), keep(new THREE.MeshBasicMaterial({ color: COLORS.pink, transparent: true, opacity: 0.9, side: THREE.DoubleSide })));
+  const marker = new THREE.Mesh(keep(new THREE.RingGeometry(0.28, 0.4, 32)), keep(new THREE.MeshBasicMaterial({ color: 0xffc65c, transparent: true, opacity: 0.9, side: THREE.DoubleSide })));
   marker.rotation.x = -Math.PI / 2;
   marker.visible = false;
   let markerT = 0;
@@ -155,7 +155,7 @@ export function openWorld(protocols, opts = {}) {
   scene.add(focus);
 
   /* 行き先の案内: 目的地の上の矢印と、足元からの光の点の道 */
-  const arrow = new THREE.Mesh(keep(new THREE.ConeGeometry(0.42, 0.9, 4)), keep(new THREE.MeshBasicMaterial({ color: COLORS.pink })));
+  const arrow = new THREE.Mesh(keep(new THREE.ConeGeometry(0.42, 0.9, 4)), keep(new THREE.MeshBasicMaterial({ color: 0xffc65c })));
   arrow.rotation.x = Math.PI;
   arrow.visible = false;
   scene.add(arrow);
@@ -163,7 +163,7 @@ export function openWorld(protocols, opts = {}) {
   const dotGeo = keep(new THREE.BufferGeometry());
   dotGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(DOTS * 3), 3));
   dotGeo.setDrawRange(0, 0);
-  const dots = new THREE.Points(dotGeo, keep(new THREE.PointsMaterial({ color: COLORS.pink, size: 0.3, transparent: true, opacity: 0.85, depthWrite: false, blending: THREE.AdditiveBlending })));
+  const dots = new THREE.Points(dotGeo, keep(new THREE.PointsMaterial({ color: 0xffc65c, size: 0.3, transparent: true, opacity: 0.85, depthWrite: false, blending: THREE.AdditiveBlending })));
   scene.add(dots);
   let guideT = 0;
 

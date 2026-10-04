@@ -53,7 +53,7 @@ export const CHAPTERS = [
         L('sys', '> conflict: 3　判定官: 紫苑　対象: 機体4097')
       ] },
       { id: 'c0-practice', kind: 'battle', title: '判定', me: ['FIRE', 'WATER', 'LIFE'], opp: ['PSYCHIC', 'LIGHT', 'METAL'],
-        level: 0, win: 2, oppName: '紫苑', oppAvatar: 'shion', note: '紫苑が譲る。1つは先に確定した状態から始まる。紫苑より先に、あと2つを確定させる',
+        level: 0, win: 2, oppName: '紫苑', oppAvatar: 'shion', note: '紫苑は書きこむ手をゆるめている。1つは先に確定した状態から始まる。紫苑より先に、あと2つを確定させる',
         winLines: [L('sys', '> commit —— 判定官の答えは書きこまれませんでした'),
           L('sys', '> 判定: 保留。明朝、判定しなおす'),
           L('shion', '……記録したよ。これであなたは「止める予定」じゃなくて、「もう一度調べる予定」。', 'happy'),

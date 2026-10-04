@@ -1499,25 +1499,25 @@
     background:radial-gradient(ellipse at 50% 0%,rgba(185,164,255,.1),transparent 55%),#05070f;}
   #oppOv.show,#watchOv.show{display:block;}
   /* ---------- ストーリーの歩ける世界 (story-world.js) ---------- */
-  #storyWorld{position:fixed;inset:0;z-index:56;background:#05070f;touch-action:none;}
+  #storyWorld{position:fixed;inset:0;z-index:56;background:#0a0c11;touch-action:none;}
   .sw-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
   .sw-hud{position:absolute;top:calc(14px + env(safe-area-inset-top));left:16px;display:flex;flex-direction:column;gap:4px;pointer-events:none;
-    padding:10px 14px;border-radius:10px;background:rgba(5,7,15,.62);border:1px solid rgba(127,243,255,.25);max-width:min(420px,calc(100% - 150px));}
+    padding:10px 14px 10px 16px;border-radius:4px;background:rgba(16,19,24,.78);border:1px solid rgba(255,255,255,.12);border-left:3px solid #ffc65c;max-width:min(420px,calc(100% - 150px));}
   .sw-hud b{font:900 15px/1.2 var(--font-hud),"M PLUS 1",system-ui;letter-spacing:.1em;color:#fff;}
-  .sw-zone{font:700 12px/1 var(--font-hud),"M PLUS 1",system-ui;letter-spacing:.2em;color:#7ff3ff;}
-  .sw-goal{margin:4px 0 0;font:700 14px/1.4 "M PLUS 1",system-ui;color:#ffd6ec;}
+  .sw-zone{font:700 12px/1 var(--font-hud),"M PLUS 1",system-ui;letter-spacing:.2em;color:#a9b6c4;}
+  .sw-goal{margin:4px 0 0;font:700 14px/1.4 "M PLUS 1",system-ui;color:#ffe2a8;}
   .sw-labels{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
   .sw-reset{position:absolute;top:calc(52px + env(safe-area-inset-top));right:16px;padding:6px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.25);background:rgba(10,14,22,.6);color:#cfd6e0;font:700 12px/1.2 system-ui;cursor:pointer;}
   .sw-reset.armed{border-color:#ff6b6b;color:#ffd0d0;background:rgba(80,10,10,.7);}
   .sw-stick{position:absolute;width:96px;height:96px;margin:-48px 0 0 -48px;border-radius:50%;border:2px solid rgba(255,255,255,.35);background:rgba(10,14,22,.25);pointer-events:none;}
-  .sw-stick i{position:absolute;left:50%;top:50%;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;background:rgba(127,243,255,.55);box-shadow:0 0 12px rgba(127,243,255,.5);}
-  .sw-labels span{position:absolute;left:0;top:0;padding:3px 8px;border-radius:5px;background:rgba(5,7,15,.7);border:1px solid rgba(255,255,255,.2);
+  .sw-stick i{position:absolute;left:50%;top:50%;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;background:rgba(235,238,242,.7);box-shadow:0 2px 8px rgba(0,0,0,.4);}
+  .sw-labels span{position:absolute;left:0;top:0;padding:3px 8px;border-radius:3px;background:rgba(16,19,24,.8);border:1px solid rgba(255,255,255,.16);
     color:#fff;font:800 13px/1 "M PLUS 1",system-ui;letter-spacing:.06em;white-space:nowrap;}
   .sw-act{position:absolute;left:50%;bottom:calc(64px + env(safe-area-inset-bottom));transform:translateX(-50%);min-height:52px;padding:0 28px;border-radius:26px;
-    border:0;background:linear-gradient(90deg,var(--pink),#8b5cf6);color:#fff;font:900 16px/1 "M PLUS 1",system-ui;letter-spacing:.08em;cursor:pointer;
-    box-shadow:0 0 24px rgba(255,79,163,.55);animation:swAct 1.6s ease-in-out infinite;}
-  .sw-act:focus-visible{outline:2px solid #7ff3ff;outline-offset:3px;}
-  @keyframes swAct{50%{box-shadow:0 0 36px rgba(255,79,163,.85);}}
+    border:0;background:#ffc65c;color:#1d1608;font:900 16px/1 "M PLUS 1",system-ui;letter-spacing:.08em;cursor:pointer;
+    box-shadow:0 4px 16px rgba(0,0,0,.45),0 0 0 0 rgba(255,198,92,.6);animation:swAct 1.6s ease-in-out infinite;}
+  .sw-act:focus-visible{outline:2px solid #fff;outline-offset:3px;}
+  @keyframes swAct{50%{box-shadow:0 4px 16px rgba(0,0,0,.45),0 0 0 8px rgba(255,198,92,0);}}
   .sw-help{position:absolute;left:0;right:0;bottom:calc(16px + env(safe-area-inset-bottom));margin:0;text-align:center;pointer-events:none;
     font:600 12px/1.4 "M PLUS 1",system-ui;color:rgba(255,255,255,.72);letter-spacing:.04em;padding:0 64px;}
   @media (prefers-reduced-motion: reduce){ .sw-act{animation:none;} }
@@ -4205,8 +4205,8 @@
       "./js3d/story-map.js": "./js3d/story-map.js?v=8fa043c63d",
       "./js3d/story-scenery.js": "./js3d/story-scenery.js?v=9fa267bcf9",
       "./js3d/story-ui.js": "./js3d/story-ui.js?v=f33002f307",
-      "./js3d/story-world.js": "./js3d/story-world.js?v=033ed2aed3",
-      "./js3d/story.js": "./js3d/story.js?v=e2f1c406ec",
+      "./js3d/story-world.js": "./js3d/story-world.js?v=b355459d8c",
+      "./js3d/story.js": "./js3d/story.js?v=08041e7f4f",
       "./js3d/support.js": "./js3d/support.js?v=86cfbcc21a",
       "./js3d/theme.js": "./js3d/theme.js?v=932e1d5eb8",
       "./js3d/title.js": "./js3d/title.js?v=f8fa321209",
@@ -4260,9 +4260,9 @@
   <link rel="modulepreload" href="js3d/settings.js?v=d25b3e91de">
   <link rel="modulepreload" href="js3d/stats.js?v=fda536907e">
   <link rel="modulepreload" href="js3d/stats-data.js?v=0fb6e5d36d">
-  <link rel="modulepreload" href="js3d/story.js?v=e2f1c406ec">
+  <link rel="modulepreload" href="js3d/story.js?v=08041e7f4f">
   <link rel="modulepreload" href="js3d/story-ui.js?v=f33002f307">
-  <link rel="modulepreload" href="js3d/story-world.js?v=033ed2aed3">
+  <link rel="modulepreload" href="js3d/story-world.js?v=b355459d8c">
   <link rel="modulepreload" href="js3d/rewards.js?v=ff8a27bac3">
   <link rel="modulepreload" href="js3d/gachafx.js?v=3d15a2226f">
   <link rel="modulepreload" href="js3d/cosmetics-ui.js?v=a78ef23c9b">
