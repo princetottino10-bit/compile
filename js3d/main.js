@@ -2165,8 +2165,17 @@ function bindInput() {
        操作できない場面 (相手ターン・選択待ち) でもテキストは読めるようにする */
     const hit = pickWithHand(ev);
     showPreview((hit && hit.obj.userData.uid) || null);
-    /* 選択の帯を透かしている間は、触ったカードの効果を見るだけ (選ばない) */
-    if (ribbonPeeking()) return;
+    /* 選択の帯を透かしている間は、選ばずに見るだけ。公開されている情報はふだんどおり開ける:
+       捨て札の山 → 中身の一覧、プロトコル板 → そのラインのスタックの一覧 (重なった下のカードも) */
+    if (ribbonPeeking()) {
+      const pu = hit && hit.obj.userData.uid;
+      const plt = pu && locOf(shown(), pu);
+      if (plt && plt.zone === 'trash') { showTrash(plt.side); return; }
+      if (plt && plt.zone === 'deck' && plt.side === ME && puzzle && puzzle.tsume) { TS.showDeck(shown(), defIndex, ME); return; }
+      if (plt && plt.zone === 'field' && shown().lines[plt.line][plt.side].length > 1) { showStack(plt.line, plt.side); return; }
+      if (!pu) { const pl = panelAt(ev); if (pl) showStack(pl.line, pl.side); }
+      return;
+    }
     /* 盤面対象選択モード中はタップを選択として扱う。
        ラインの判定はメッシュに頼らず、盤面平面の座標から最寄りレーンを取る
        (パネルやパッドの当たり判定に依存しない) */
