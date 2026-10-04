@@ -57,6 +57,13 @@ export async function showTrophyBanner(list) {
 }
 
 /* 一覧 */
+/* 取った数 / 全部の数 (RECORD の実績のタブ) */
+export function trophyCounts() {
+  const v = trophyView(trophyContext(null));
+  const list = Array.isArray(v) ? v : (v.list || v.items || []);
+  return { got: list.filter(t => t.at).length, total: list.length };
+}
+
 export function openTrophies() {
   const v = trophyView(trophyContext(null));
   let el = document.getElementById('trophyOv');

@@ -222,8 +222,11 @@ function effectTop(cs) {
 }
 
 /* カード: 全180枚をプロトコルごとに。光り方 (表で出して勝った数) */
+let cardsOnlyUnused = false;     // カードのタブ: まだ表で出していないカードだけ見る
 function cardsTab(list, protos) {
   const cs = cardStats(list);
+  const total = Object.keys(cardIndex).length;
+  const unused = Object.keys(cardIndex).filter(id => !cs.get(id)).length;
   const byProto = new Map();
   for (const [id, d] of Object.entries(cardIndex)) {
     if (!byProto.has(d.proto)) byProto.set(d.proto, []);
@@ -232,16 +235,29 @@ function cardsTab(list, protos) {
   return '<p class="pz-note">表で出して勝った試合の数で、盤面のカードが光ります: 銅 3勝・銀 10勝・金 25勝・ホロ 50勝。' +
     'カードにカーソルを乗せると、勝った数と効果の発動回数が出ます。</p>' +
     effectTop(cs) +
+    /* まだ表で出していないカード: 破線で薄く。数と、それだけ見る切り替え */
+    '<div class="sr-unused"><span>まだ表で出していないカード <b>' + unused + '</b> / ' + total + '枚</span>' +
+      '<button type="button" class="sr-ufilter' + (cardsOnlyUnused ? ' on' : '') + '" data-unused="1" aria-pressed="' + cardsOnlyUnused + '">' +
+      (cardsOnlyUnused ? '全部を見る' : 'まだのカードだけ見る') + '</button></div>' +
     '<div class="sr-cardgrid">' + protos.map(p => {
       const cards = (byProto.get(p.name) || []).sort((a, b) => a.value - b.value);
+      if (cardsOnlyUnused && cards.every(c => cs.get(c.id))) return '';
       return '<div class="sr-cgrow" style="--pc:' + esc(p.color) + '"><b>' + esc(p.name) + '</b>' + cards.map(c => {
         const t = cs.get(c.id);
         const tier = t ? cardTier(t.wins) : null;
-        return '<span class="sr-cc' + (tier ? ' t-' + tier.key : '') + '" title="' + esc(p.name + ' ' + c.value) +
+        if (cardsOnlyUnused && t) return '<span class="sr-cc gone"></span>';
+        return '<span class="sr-cc' + (tier ? ' t-' + tier.key : '') + (t ? '' : ' unused') + '" title="' + esc(p.name + ' ' + c.value) +
           (t ? ' - ' + t.wins + '勝 / ' + t.games + '戦・効果 ' + t.effects + '回' : ' - 未使用') + '">' +
           c.value + '</span>';
       }).join('') + '</div>';
     }).join('') + '</div>';
+}
+
+/* 実績: 取った数と、一覧を開くボタン (一覧はプロフィールから開くものと同じ) */
+function trophiesTab() {
+  return '<div class="sr-trophy"><p class="pz-note">取った実績・まだの実績と、その進み具合を見られます。</p>' +
+    '<b id="srTrophyCount" class="sr-trc">…</b>' +
+    '<button type="button" id="srTrophyOpen" class="sr-trbtn">実績の一覧を開く</button></div>';
 }
 
 /* レベルの報酬: 次は「いつ手に入るか」だけ (中身は取るまで秘密)。一覧は取ったものだけ */
@@ -257,7 +273,7 @@ function rewardsHtml(pl) {
 }
 
 /* タブは日本語 (COLLECTION のタブとそろえる) */
-const TABS = ['まとめ', 'プロトコル', 'カード', '相性', 'くわしく', 'リプレイ'];
+const TABS = ['まとめ', 'プロトコル', 'カード', '実績', '相性', 'くわしく', 'リプレイ'];
 
 export async function openStats() {
   const list = records();
@@ -281,12 +297,23 @@ export async function openStats() {
     (list.length ? '<div class="pz-row"><button type="button" id="srClear">記録を消す</button></div>' : '') +
     '</div>';
   const views = [() => summaryTab(list, protos), () => protocolTab(list, protos), () => cardsTab(list, protos),
-    () => matchupTab(list, protos), () => detailTab(list), () => replaysTab()];
+    () => trophiesTab(), () => matchupTab(list, protos), () => detailTab(list), () => replaysTab()];
   const show = (i) => {
     const body = el.querySelector('#srBody');
     body.innerHTML = views[i]();
     el.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('on', +b.dataset.tab === i));
     bindReplays(body, () => show(i));
+    const uf = body.querySelector('[data-unused]');
+    if (uf) uf.onclick = () => { cardsOnlyUnused = !cardsOnlyUnused; show(i); };
+    /* 実績: 数を出し、一覧 (プロフィールから開くものと同じ) を開く */
+    const tb = body.querySelector('#srTrophyOpen');
+    if (tb) {
+      import('./achievements-ui.js').then(m => {
+        const n = body.querySelector('#srTrophyCount');
+        if (n && m.trophyCounts) { const c = m.trophyCounts(); n.textContent = c.got + ' / ' + c.total; }
+        tb.onclick = () => m.openTrophies();
+      }).catch(() => { tb.disabled = true; });
+    }
   };
   el.querySelectorAll('[data-tab]').forEach(b => { b.onclick = () => show(+b.dataset.tab); });
   show(0);

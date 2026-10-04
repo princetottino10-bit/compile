@@ -1985,6 +1985,19 @@
   .sr-cc.t-silver{color:#0c1320;background:#cfe0f5;border-color:#cfe0f5;}
   .sr-cc.t-gold{color:#1d1502;background:#ffd45e;border-color:#ffd45e;}
   .sr-cc.t-holo{color:#0b0616;background:linear-gradient(135deg,#ff7ab4,#b98cff,#b9a4ff,#a07bff);border-color:transparent;}
+  /* まだ表で出していないカード: 破線で薄く */
+  .sr-cc.unused{border-style:dashed;border-color:rgba(255,255,255,.22);color:rgba(220,210,255,.38);background:transparent;}
+  .sr-cc.gone{visibility:hidden;}
+  .sr-unused{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:8px 0;font:600 12px/1.4 system-ui;color:var(--dim);}
+  .sr-unused b{font-size:15px;color:#fff;}
+  .sr-ufilter{cursor:pointer;padding:5px 12px;border-radius:999px;border:1px dashed rgba(255,255,255,.3);background:transparent;color:var(--ink);font:700 11px/1 system-ui;}
+  .sr-ufilter.on{border-style:solid;border-color:var(--pink);background:rgba(255,79,163,.16);color:#fff;}
+  /* RECORD の実績のタブ */
+  .sr-trophy{display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:8px 0;}
+  .sr-trc{font:900 30px/1 var(--font-hud,var(--font-ui));color:var(--gold);font-variant-numeric:tabular-nums;}
+  .sr-trbtn{cursor:pointer;padding:11px 22px;border:0;color:#fff;background:linear-gradient(100deg,#ff4fa3,#c86bff);font:900 13px/1 var(--font-ui);letter-spacing:.06em;clip-path:var(--cut-s);}
+  /* RECORD の上に重ねて開く */
+  #trophyOv{z-index:80;}
   .cp-tier{font:800 10px/1 system-ui;padding:3px 6px;border-radius:999px;text-align:center;}
   .cp-tier.t-bronze{color:#1a0d04;background:#d98b52;}
   .cp-tier.t-silver{color:#0c1320;background:#cfe0f5;}
@@ -4049,7 +4062,7 @@
       "three/addons/": "./vendor/jsm/",
       "./vendor/three.module.js": "./vendor/three.module.js?v=985eb92490",
       "./js3d/account.js": "./js3d/account.js?v=cba62b2be3",
-      "./js3d/achievements-ui.js": "./js3d/achievements-ui.js?v=4b9ced2e77",
+      "./js3d/achievements-ui.js": "./js3d/achievements-ui.js?v=d13f95139b",
       "./js3d/achievements.js": "./js3d/achievements.js?v=435f0f22a4",
       "./js3d/admin-ui.js": "./js3d/admin-ui.js?v=ea6be0ef14",
       "./js3d/ai-worker.js": "./js3d/ai-worker.js?v=a98e3444e3",
@@ -4127,7 +4140,7 @@
       "./js3d/spectate.js": "./js3d/spectate.js?v=e7aaf6e4e9",
       "./js3d/stage.js": "./js3d/stage.js?v=a47c0c4ec9",
       "./js3d/stats-data.js": "./js3d/stats-data.js?v=0fb6e5d36d",
-      "./js3d/stats.js": "./js3d/stats.js?v=fc8f52db64",
+      "./js3d/stats.js": "./js3d/stats.js?v=fda536907e",
       "./js3d/steps.js": "./js3d/steps.js?v=13e73b20fe",
       "./js3d/story-map.js": "./js3d/story-map.js?v=2947f93cb5",
       "./js3d/story-scenery.js": "./js3d/story-scenery.js?v=8925ee19eb",
@@ -4170,7 +4183,7 @@
   <link rel="modulepreload" href="js3d/resume.js?v=477cf75f6b">
   <link rel="modulepreload" href="js3d/replayshare.js?v=d54082bfab">
   <link rel="modulepreload" href="js3d/turning.js?v=9c7f79654e">
-  <link rel="modulepreload" href="js3d/achievements-ui.js?v=4b9ced2e77">
+  <link rel="modulepreload" href="js3d/achievements-ui.js?v=d13f95139b">
   <link rel="modulepreload" href="vendor/three.module.js?v=985eb92490">
   <link rel="modulepreload" href="js3d/stage.js?v=a47c0c4ec9">
   <link rel="modulepreload" href="js3d/board.js?v=1ef9fed09c">
@@ -4185,7 +4198,7 @@
   <link rel="modulepreload" href="js3d/errorreport.js?v=2a83f561e2">
   <link rel="modulepreload" href="js3d/tutorial.js?v=1b5e3a1067">
   <link rel="modulepreload" href="js3d/settings.js?v=073a108cb8">
-  <link rel="modulepreload" href="js3d/stats.js?v=fc8f52db64">
+  <link rel="modulepreload" href="js3d/stats.js?v=fda536907e">
   <link rel="modulepreload" href="js3d/stats-data.js?v=0fb6e5d36d">
   <link rel="modulepreload" href="js3d/story.js?v=ffb19e70f8">
   <link rel="modulepreload" href="js3d/story-ui.js?v=f33002f307">
