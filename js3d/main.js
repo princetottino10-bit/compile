@@ -3081,7 +3081,10 @@ function showVsTag(rm) {
   if (!el || !rm || !Array.isArray(rm.names)) return;
   /* 観戦: 手前と奥の2人の名前と称号 */
   if (roomWatching) {
-    const plate = (k) => ({ name: rm.names[k] || '?', sub: (rm.badges && TITLES[rm.badges[k]]) || (k ? 'GUEST' : 'HOST') });
+    /* 手札の中身は見えないので、枚数を名札に出す (手前の人の札は伏せて置くが、重なって数えにくい) */
+    /* 名札の幅が狭いと後ろが切れるので、枚数を先に */
+    const handOf = (k) => { const c = rm.game && rm.game.counts && rm.game.counts[k]; return c ? '手札 ' + (c.hand | 0) + '　' : ''; };
+    const plate = (k) => ({ name: rm.names[k] || '?', sub: handOf(k) + ((rm.badges && TITLES[rm.badges[k]]) || (k ? 'GUEST' : 'HOST')) });
     showPlates({ me: plate(0), opp: plate(1) });
     return;
   }
@@ -3089,7 +3092,9 @@ function showVsTag(rm) {
   const name = rm.names[opp];
   const badge = rm.badges && TITLES[rm.badges[opp]];
   setOppLook(rm.looks && rm.looks[opp]);
-  showPlates({ me: myPlate(), opp: name ? { name, sub: badge || '', frame: oppLook.plate, frameColor: frameColor(oppLook.plate) } : null });
+  const oc = rm.game && rm.game.counts && rm.game.counts[opp];
+  const oppHand = oc ? '手札 ' + (oc.hand | 0) : '';
+  showPlates({ me: myPlate(), opp: name ? { name, sub: [oppHand, badge].filter(Boolean).join('　'), frame: oppLook.plate, frameColor: frameColor(oppLook.plate) } : null });
 }
 
 async function roomApplyView(rm, instant) {
