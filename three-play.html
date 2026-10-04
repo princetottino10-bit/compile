@@ -1507,6 +1507,8 @@
   .sw-zone{font:700 10px/1 var(--font-hud),"M PLUS 1",system-ui;letter-spacing:.2em;color:#7ff3ff;}
   .sw-goal{margin:4px 0 0;font:700 13px/1.4 "M PLUS 1",system-ui;color:#ffd6ec;}
   .sw-labels{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+  .sw-reset{position:absolute;top:calc(52px + env(safe-area-inset-top));right:16px;padding:6px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.25);background:rgba(10,14,22,.6);color:#cfd6e0;font:700 12px/1.2 system-ui;cursor:pointer;}
+  .sw-reset.armed{border-color:#ff6b6b;color:#ffd0d0;background:rgba(80,10,10,.7);}
   .sw-stick{position:absolute;width:96px;height:96px;margin:-48px 0 0 -48px;border-radius:50%;border:2px solid rgba(255,255,255,.35);background:rgba(10,14,22,.25);pointer-events:none;}
   .sw-stick i{position:absolute;left:50%;top:50%;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;background:rgba(127,243,255,.55);box-shadow:0 0 12px rgba(127,243,255,.5);}
   .sw-labels span{position:absolute;left:0;top:0;padding:3px 8px;border-radius:5px;background:rgba(5,7,15,.7);border:1px solid rgba(255,255,255,.2);
@@ -4165,7 +4167,7 @@
       "./js3d/story-map.js": "./js3d/story-map.js?v=8fa043c63d",
       "./js3d/story-scenery.js": "./js3d/story-scenery.js?v=9fa267bcf9",
       "./js3d/story-ui.js": "./js3d/story-ui.js?v=f33002f307",
-      "./js3d/story-world.js": "./js3d/story-world.js?v=4b9021ce89",
+      "./js3d/story-world.js": "./js3d/story-world.js?v=c0c32d3008",
       "./js3d/story.js": "./js3d/story.js?v=d04e6e25ce",
       "./js3d/support.js": "./js3d/support.js?v=86cfbcc21a",
       "./js3d/theme.js": "./js3d/theme.js?v=932e1d5eb8",
@@ -4222,7 +4224,7 @@
   <link rel="modulepreload" href="js3d/stats-data.js?v=0fb6e5d36d">
   <link rel="modulepreload" href="js3d/story.js?v=d04e6e25ce">
   <link rel="modulepreload" href="js3d/story-ui.js?v=f33002f307">
-  <link rel="modulepreload" href="js3d/story-world.js?v=4b9021ce89">
+  <link rel="modulepreload" href="js3d/story-world.js?v=c0c32d3008">
   <link rel="modulepreload" href="js3d/rewards.js?v=ff8a27bac3">
   <link rel="modulepreload" href="js3d/gachafx.js?v=3d15a2226f">
   <link rel="modulepreload" href="js3d/cosmetics-ui.js?v=a78ef23c9b">

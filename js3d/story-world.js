@@ -12,7 +12,8 @@ import { UnrealBloomPass } from '../vendor/jsm/postprocessing/UnrealBloomPass.js
 import { OutputPass } from '../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../vendor/jsm/postprocessing/ShaderPass.js';
 import { showTitleBack, hideTitleBack } from './titleback.js';
-import { CHAPTERS, loadStory, saveStory, currentNode, clearNode, startBattle, nodeById, isCleared, chapterCleared } from './story.js';
+import { CHAPTERS, loadStory, saveStory, blankStory, currentNode, clearNode, startBattle, nodeById, isCleared, chapterCleared } from './story.js';
+import { accountState } from './account.js';
 import * as M from './story-map.js';
 import { playScene, askBattle } from './story-ui.js';
 import { buildScenery } from './story-scenery.js';
@@ -62,6 +63,22 @@ export function openWorld(protocols, opts = {}) {
   const canvas = root.querySelector('canvas');
   const actBtn = root.querySelector('.sw-act');
   const labelsEl = root.querySelector('.sw-labels');
+  /* ストーリーを最初からやり直す (管理者だけ。進み具合だけを消す。ほかの記録は残る)。
+     間違えて押さないよう、1回目で確認の文に変わり、3秒以内にもう1回押すと消える */
+  if (accountState().admin) {
+    const reset = document.createElement('button');
+    reset.type = 'button';
+    reset.className = 'sw-reset';
+    reset.textContent = '最初から';
+    let armed = 0;
+    reset.onclick = () => {
+      if (Date.now() - armed > 3000) { armed = Date.now(); reset.textContent = 'もう一度押すと、進み具合を消します'; reset.classList.add('armed');
+        setTimeout(() => { if (Date.now() - armed >= 3000) { reset.textContent = '最初から'; reset.classList.remove('armed'); } }, 3100); return; }
+      saveStory(blankStory());
+      location.reload();
+    };
+    root.appendChild(reset);
+  }
 
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
