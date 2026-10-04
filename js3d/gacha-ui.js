@@ -8,11 +8,11 @@ import * as G from './gacha.js';
 import { playCapsule, RAR_NAMES, confetti, RAR_COLORS } from './gachafx.js';
 import { itemArtHtml } from './cosmetics-mode.js';
 import { grantXp } from './xp.js';
-import { openSettings } from './settings.js';
 import { unlockTrophies, TROPHY_XP } from './achievements.js';
 import { trophyContext, showTrophyBanner } from './achievements-ui.js';
 import { loginNudgeNeeded, maybeLoginHint, openAccount } from './account.js';
 import { holo } from './holo.js';
+import { raise } from './dialogs.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const ORDER = ['L', 'E', 'R', 'C'];
@@ -63,6 +63,16 @@ function revealResults(results) {
   });
 }
 
+/* いちばん良い結果 (新しく手に入れたものを優先) */
+function bestOf(results) {
+  const list = (results || []).slice().sort((a, c) => (a.dupe - c.dupe) || (ORDER.indexOf(a.rar) - ORDER.indexOf(c.rar)));
+  return list[0] || null;
+}
+function useLabel(results) {
+  const b = bestOf(results);
+  return b ? '「' + b.name + '」を COLLECTION で見る' : 'COLLECTION で見る';
+}
+
 export function openGacha(opts) {
   let el = document.getElementById('gachaOv');
   if (!el) {
@@ -87,9 +97,11 @@ export function openGacha(opts) {
         '<button type="button" class="ga-pull ten" data-n="10"' + (chips >= G.TEN_COST ? '' : ' disabled') + '>10連 <small>' + G.TEN_COST + ' CHIP ・ RARE 以上1つ確定</small></button></div></div>' +
       '<p class="ga-rates">' + ORDER.map(k => '<span class="r' + k + '">' + RAR_NAMES[k] + ' ' + G.RATES[k] + '%</span>').join('') +
         '<em>EPIC 以上まで あと ' + toPity + ' 回で確定</em></p>' +
-      (last ? '<div class="ga-results">' + last.map(r => '<div class="ga-res r' + r.rar + '"><small>' + RAR_NAMES[r.rar] + (r.dupe ? ' ・ かぶり +' + r.refund + ' CHIP' : ' ・ NEW') + '</small>' +
-        '<b>' + esc(r.name) + '</b></div>').join('') + '</div>' +
-        '<div class="pz-row"><button type="button" class="pz-main" id="gaUse">COLLECTION で着ける</button></div>' : '') +
+      /* 結果は押すと、COLLECTION のその品物へ (すぐ着けられる) */
+      (last ? '<div class="ga-results">' + last.map(r => '<button type="button" class="ga-res r' + r.rar + '" data-kind="' + esc(r.kind) + '" data-key="' + esc(r.key) + '" title="COLLECTION で見る">' +
+        '<small>' + RAR_NAMES[r.rar] + (r.dupe ? ' ・ かぶり +' + r.refund + ' CHIP' : ' ・ NEW') + '</small>' +
+        '<b>' + esc(r.name) + '</b></button>').join('') + '</div>' +
+        '<div class="pz-row"><button type="button" class="pz-main" id="gaUse">' + esc(useLabel(last)) + '</button></div>' : '') +
       '<div class="ga-col"><h3>図鑑 <em>' + col.got + ' / ' + col.total + '</em></h3>' +
         ORDER.map(k => '<div class="ga-row r' + k + '"><small>' + RAR_NAMES[k] + '</small><div>' +
           col.list.filter(x => x.rar === k).map(x => '<span class="' + (x.owned ? 'on' : '') + '">' + (x.owned ? esc(x.name) : '???') + '</span>').join('') +
@@ -102,8 +114,18 @@ export function openGacha(opts) {
       if (opts && opts.onClose) opts.onClose();
       return;
     }
-    if (ev.target.closest('#gaUse')) { el.classList.remove('show'); openSettings(); return; }
-    if (ev.target.closest('#gaLogin')) { el.classList.remove('show'); openAccount(); return; }
+    /* 着けに行く: ガチャを閉じて COLLECTION のその品物を見せる (前は設定が開いて、COLLECTION の後ろに隠れていた) */
+    const res = ev.target.closest('.ga-res[data-kind]');
+    const use = ev.target.closest('#gaUse') ? bestOf(last) : res ? { kind: res.dataset.kind, key: res.dataset.key } : null;
+    if (use) {
+      el.classList.remove('show');
+      if (opts && opts.onUse) opts.onUse(use.kind, use.key);
+      else import('./cosmetics-mode.js').then(m => m.openCosmetics({ tab: use.kind, focus: use.key }));
+      if (opts && opts.onClose) opts.onClose();
+      return;
+    }
+    /* ログインはガチャの上に重ねる (閉じたらガチャに戻る) */
+    if (ev.target.closest('#gaLogin')) { openAccount(); return; }
     const b = ev.target.closest('.ga-pull');
     if (!b || b.disabled || busy) return;
     const chipsBefore = G.chipsOf(G.loadGacha(), earnedChips());
@@ -128,4 +150,5 @@ export function openGacha(opts) {
   };
   render();
   el.classList.add('show');
+  raise(el);   // 開いたままの画面をもう一度開いたときも、いちばん手前へ
 }

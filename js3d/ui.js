@@ -761,7 +761,8 @@ export function showRevealedHand(items, titleOverride, opts) {
   return closed;
 }
 
-/* レベルアップ: LEVEL UP と手に入った報酬を順に見せる。タップか数秒で閉じる */
+/* レベルアップ: LEVEL UP と手に入った報酬を順に見せる。
+   勝手には閉じない (タップで閉じる)。見た目の報酬は「見る」で COLLECTION のその品物へ (閉じてから開く) */
 export function levelUpCutIn(level, rewards) {
   let el = $('#levelUp');
   if (!el) {
@@ -771,18 +772,23 @@ export function levelUpCutIn(level, rewards) {
     el.setAttribute('aria-label', 'レベルアップ');
     document.body.appendChild(el);
   }
+  const seeable = (r) => !!(r && r.kind);
   el.innerHTML = '<div class="lu-card"><div class="lu-kicker">LEVEL UP</div><div class="lu-lv" data-text="' + level + '">' + level + '</div>' +
     (rewards && rewards.length
-      ? '<ul class="lu-rewards">' + rewards.map((r, i) => '<li style="--i:' + i + '"><b>Lv' + r.lv + '</b>' + r.name + '</li>').join('') + '</ul>' +
-        '<p class="lu-note">設定 (⚙) の「見た目」で選べます</p>'
+      ? '<ul class="lu-rewards">' + rewards.map((r, i) => '<li style="--i:' + i + '"><b>Lv' + r.lv + '</b><span>' + r.name + '</span>' +
+          (seeable(r) ? '<button type="button" class="lu-see" data-kind="' + r.kind + '" data-key="' + (r.key || '') + '">見る</button>' : '') + '</li>').join('') + '</ul>' +
+        '<p class="lu-note">COLLECTION で着けられます</p>'
       : '<p class="lu-note">次の報酬まであと少し</p>') +
     '<p class="lu-hint">タップで閉じる</p></div>';
   el.classList.add('show');
   sfx('yourTurn');
   return new Promise((resolve) => {
-    const close = () => { clearTimeout(t); el.classList.remove('show'); el.onclick = null; resolve(); };
-    const t = setTimeout(close, 3200 + (rewards ? rewards.length : 0) * 900);
-    el.onclick = close;
+    const close = () => { el.classList.remove('show'); el.onclick = null; resolve(); };
+    el.onclick = (ev) => {
+      const see = ev.target.closest('.lu-see');
+      close();
+      if (see) import('./cosmetics-mode.js').then(m => m.openCosmetics({ tab: see.dataset.kind, focus: see.dataset.key }));
+    };
   });
 }
 
@@ -835,10 +841,27 @@ export function resultCutIn(win, opts) {
   const art = el.querySelector('.rc-art');
   const drawWin = opts && opts.victory === 'aurora' ? drawAuroraBackdrop : drawVictoryBackdrop;
   try { (win ? drawWin : drawDefeatBackdrop)(art); } catch (e) { art.remove(); }
-  return new Promise((resolve) => setTimeout(() => {
-    el.classList.remove('show');
-    el.innerHTML = '';
-    resolve();
-  }, 3600));
+  /* タップ・Enter・Space で飛ばせる (毎回 3.6 秒待たされていた)。最後の一手のタップで飛ばないよう、少しあとから */
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      clearTimeout(t); clearTimeout(arm);
+      el.style.pointerEvents = '';
+      el.onclick = null;
+      window.removeEventListener('keydown', onKey, true);
+      el.classList.remove('show');
+      el.innerHTML = '';
+      resolve();
+    };
+    const onKey = (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); finish(); } };
+    const t = setTimeout(finish, 3600);
+    const arm = setTimeout(() => {
+      el.style.pointerEvents = 'auto';
+      el.onclick = finish;
+      window.addEventListener('keydown', onKey, true);
+    }, 600);
+  });
 }
 

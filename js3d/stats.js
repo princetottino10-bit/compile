@@ -6,9 +6,10 @@
 
 import { replaysTab, bindReplays } from './replays-ui.js';
 import { bonusXp } from './xp.js';
-import { levelLabel, UNDERDOG_LEVEL } from './aidecks.js';
+import { levelLabel } from './aidecks.js';
 import { conquerable, protocolSummary, matchups, winTrend, fastestWin, masteryLevel, cardStats, cardTier, playerLevel, xpForLevel } from './stats-data.js';
-import { REWARDS, nextReward } from './rewards.js';
+import { nextReward } from './rewards.js';
+import { raise } from './dialogs.js';
 
 const KEY = 'compileSoloRecords';
 const MAX = 2000;
@@ -145,14 +146,11 @@ function summaryTab(list, protos) {
   const fast = fastestWin(list);
   const fastTop = fastestWin(list, r => r.level >= 3);
   const tile = (label, value, sub) => '<div class="sr-kpi"><small>' + label + '</small><b>' + value + '</b>' + (sub ? '<span>' + sub + '</span>' : '') + '</div>';
-  /* 称号 (取ったものだけ) */
-  const titles = [];
-  if (list.some(r => r.win && r.level === UNDERDOG_LEVEL)) titles.push(['GIANT SLAYER', '最弱のデッキで最強に勝った']);
+  /* レベル・報酬・ミッションはプロフィールにまとめた (ここは短く、押すとプロフィールへ) */
   const pl = playerLevel(list, bonusXp());
-  return '<div class="sr-level"><b>Lv ' + pl.level + '</b><span class="sr-xp"><i style="width:' + Math.round(pl.progress * 100) + '%"></i></span>' +
-      '<small>次のレベルまで ' + (pl.next - pl.xp) + ' (CPU 戦・オンライン・チュートリアル・問題などで入ります)</small></div>' +
-    rewardsHtml(pl) +
-    (titles.length ? '<div class="sr-titles">' + titles.map(([t, d]) => '<span title="' + esc(d) + '">' + esc(t) + '</span>').join('') + '</div>' : '') +
+  const nx = nextReward(pl.level);
+  return '<button type="button" class="sr-level sr-tolink" data-open="profile"><b>Lv ' + pl.level + '</b><span class="sr-xp"><i style="width:' + Math.round(pl.progress * 100) + '%"></i></span>' +
+      '<small>' + (nx ? '次の報酬 Lv' + nx.lv + ' まで あと ' + (xpForLevel(nx.lv) - pl.xp) + ' XP' : '報酬はすべて手に入れました') + '</small><em>レベル・報酬・ミッション ▸</em></button>' +
     trendSvg(list) +
     '<div class="sr-kpis">' +
       tile('勝ったことのあるプロトコル', wonAny + '<i>/' + protos.length + '</i>') +
@@ -253,29 +251,18 @@ function cardsTab(list, protos) {
     }).join('') + '</div>';
 }
 
-/* 実績: 取った数と、一覧を開くボタン (一覧はプロフィールから開くものと同じ) */
+/* 実績: 一覧をそのまま (achievements-ui.js の trophyListHtml を、開いてから流し込む) */
 function trophiesTab() {
-  return '<div class="sr-trophy"><p class="pz-note">取った実績・まだの実績と、その進み具合を見られます。</p>' +
-    '<b id="srTrophyCount" class="sr-trc">…</b>' +
-    '<button type="button" id="srTrophyOpen" class="sr-trbtn">実績の一覧を開く</button></div>';
-}
-
-/* レベルの報酬: 次は「いつ手に入るか」だけ (中身は取るまで秘密)。一覧は取ったものだけ */
-function rewardsHtml(pl) {
-  const nx = nextReward(pl.level);
-  const got = REWARDS.filter(r => r.lv <= pl.level);
-  const hidden = REWARDS.length - got.length;
-  return (nx ? '<p class="sr-next">NEXT REWARD <b>Lv' + nx.lv + '</b> ??? <small>あと ' + (xpForLevel(nx.lv) - pl.xp) + '</small></p>' : '') +
-    '<details class="sr-rewards"><summary>REWARDS ' + got.length + ' / ' + REWARDS.length + '</summary><ul>' +
-    got.map(r => '<li class="got"><b>Lv' + r.lv + '</b>' + esc(r.name) + '<i>✓</i></li>').join('') +
-    (hidden ? '<li class="secret"><b>???</b>ほか ' + hidden + ' 個 (レベルを上げると明かされる)</li>' : '') +
-    '</ul><p class="pz-note">取った見た目は、タイトルの COLLECTION で選べます</p></details>';
+  return '<div class="sr-trophy" id="srTrophies"><p class="pz-note">読み込み中…</p></div>';
 }
 
 /* タブは日本語 (COLLECTION のタブとそろえる) */
 const TABS = ['まとめ', 'プロトコル', 'カード', '実績', '相性', 'くわしく', 'リプレイ'];
 
-export async function openStats() {
+const TAB_KEY = 'compileStatsTab';      // 前に見ていたタブ (次に開いたときもそこから)
+
+/** RECORD を開く。opts.tab: タブの名前か番号 (無ければ前に見ていたタブ)、opts.trophy: 実績のタブで送って光らせる実績 */
+export async function openStats(opts) {
   const list = records();
   const protos = await protocols();
   let el = document.getElementById('statsOv');
@@ -305,19 +292,29 @@ export async function openStats() {
     bindReplays(body, () => show(i));
     const uf = body.querySelector('[data-unused]');
     if (uf) uf.onclick = () => { cardsOnlyUnused = !cardsOnlyUnused; show(i); };
-    /* 実績: 数を出し、一覧 (プロフィールから開くものと同じ) を開く */
-    const tb = body.querySelector('#srTrophyOpen');
+    /* 実績: 一覧を流し込む。称号のボタンは COLLECTION へ */
+    const tb = body.querySelector('#srTrophies');
     if (tb) {
       import('./achievements-ui.js').then(m => {
-        const n = body.querySelector('#srTrophyCount');
-        if (n && m.trophyCounts) { const c = m.trophyCounts(); n.textContent = c.got + ' / ' + c.total; }
-        tb.onclick = () => m.openTrophies();
-      }).catch(() => { tb.disabled = true; });
+        tb.innerHTML = m.trophyListHtml();
+        m.bindTrophyList(tb);
+        const target = trophyFocus && tb.querySelector('#tr-' + trophyFocus);
+        trophyFocus = null;
+        if (target) { target.scrollIntoView({ block: 'center' }); target.classList.add('tr-flash'); }
+      }).catch(() => { tb.innerHTML = '<p class="pz-note">実績を読み込めませんでした</p>'; });
     }
+    /* まとめのレベル → プロフィール (重ねて開く。閉じると RECORD に戻る) */
+    const toProfile = body.querySelector('[data-open="profile"]');
+    if (toProfile) toProfile.onclick = () => import('./profile.js').then(m => m.openProfile(protos));
+    try { localStorage.setItem(TAB_KEY, String(i)); } catch (e) { /* private mode */ }
   };
   el.querySelectorAll('[data-tab]').forEach(b => { b.onclick = () => show(+b.dataset.tab); });
-  show(0);
+  let trophyFocus = (opts && opts.trophy) || null;
+  const want = opts && opts.tab !== undefined ? (typeof opts.tab === 'number' ? opts.tab : TABS.indexOf(opts.tab))
+    : (() => { try { return Number(localStorage.getItem(TAB_KEY)); } catch (e) { return 0; } })();
+  show(want >= 0 && want < TABS.length ? want : 0);
   el.classList.add('show');
+  raise(el);   // 開いたままの画面をもう一度開いたときも、いちばん手前へ
   const close = () => el.classList.remove('show');
   el.onclick = (ev) => { if (ev.target === el) close(); };
   el.querySelector('.pz-x').onclick = close;

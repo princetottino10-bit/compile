@@ -11,6 +11,7 @@ import { xpLog, mergeXp, setXpHooks } from './xp.js';
 import * as SAVE from './cloudsave.js';
 import { openAdmin } from './admin-ui.js';
 import { pinnedReplays, mergeReplays, setReplayHooks } from './replays.js';
+import { raise } from './dialogs.js';
 
 const TABLE = 'player_records';
 const XP_TABLE = 'player_xp';       // CPU 戦の戦績以外で入った経験値 (オンライン・チュートリアルなど)
@@ -481,6 +482,7 @@ export function openAccount() {
   el.onclick = (ev) => { if (ev.target === el) close(); };
   render();
   el.classList.add('show');
+  raise(el);   // 開いたままの画面をもう一度開いたときも、いちばん手前へ
 }
 
 /* 棋譜を残す (サーバーの replay_collect に載っている人だけ。本人の許可を取ってから管理者が載せる)。失敗しても遊ぶのは止めない */

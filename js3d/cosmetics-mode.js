@@ -24,6 +24,8 @@ import { TRACKS, trackOf, ownsTrack, trackPrice, buyTrack } from './bgm-shop.js'
 import { FACE_ICONS, FACE_ICON_PRICE, isFaceIcon, ownsFaceIcon, buyFaceIcon, faceIconURL, faceIconName, iconArt } from './face-icons.js';
 import { earnedChips } from './chips.js';
 import { rarityOf, RARITIES, RARITY_NAME } from './cos-rarity.js';
+import { TROPHIES } from './achievements.js';
+import { raise } from './dialogs.js';
 
 /* CHIP で交換する品物 (ガチャに入れない)。値段 (0 なら交換の品物ではない) と、交換する関数 */
 const SHOP = {
@@ -39,6 +41,7 @@ const rarCls = (r) => (r ? ' rar-' + r : '');
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const SEEN_KEY = 'compileCosSeen';
+const TAB_KEY = 'compileCosTab';            // 前に見ていたタブ (次に開いたときもそこから)
 
 const ALL_TABS = [
   { kind: 'mat', label: '盤面' }, { kind: 'sleeve', label: 'スリーブ' }, { kind: 'marker', label: 'マーカー' },
@@ -50,7 +53,8 @@ const tabsNow = () => ALL_TABS.filter(t => (t.kind !== 'avatar' || AVATAR_RELEAS
 const DEFAULT_KEY = { mat: 'neon', sleeve: 'default', marker: 'default', ccolor: 'default', victory: 'default', title: '', icon: '',
   plate: 'default', avatar: 'shion', bgm: 'burst', track: '' };
 const RAR_NAME = { C: 'COMMON', R: 'RARE', E: 'EPIC', L: 'LEGENDARY' };
-const TROPHY_NAME = { flawless: 'FLAWLESS', mastery10: 'GRANDMASTER', tsume_mid: '詰めコンパイル 中級を全部', tsume_all: '詰めコンパイル 全部', conqueror: '最強のデッキ以外の27のプロトコルすべてで最強に勝つ', underdog_tag: '下剋上タッグに勝つ', tag_all: 'TAG の3つの強さすべてに勝つ', tag_flawless: 'PERFECT SYNC (タッグで相手に1回もコンパイルさせずに勝つ)' };
+/* 実績の名前は achievements.js から (前はここに手で写していて、ずれていた) */
+const trophyName = (id) => (TROPHIES.find(t => t.id === id) || {}).name || id;
 const CCOLOR = { default: 'linear-gradient(90deg,#ff5c5c,#b9a4ff,#a07bff)', gold: '#ffd86a', cyan: '#7ff3ff', rainbow: 'conic-gradient(#ff5f7a,#ffc05a,#7df28c,#5ab8ff,#b98cff,#ff5f7a)',
   lime: '#b6ff4a', violet: '#b07bff', ember: '#ff7a2e' };
 
@@ -67,6 +71,7 @@ function pfcStyle(key) {
   return p ? ' style="--pfc:' + esc(p.color) + '"' : '';
 }
 export function setCosmeticsProtocols(list) { protoList = list || []; }
+export function cosmeticsProtocols() { return protoList; }
 
 /* ---------- 持っているか・手に入れ方 ---------- */
 function ctx() {
@@ -102,13 +107,25 @@ function sourceInfo(kind, key) {
   if (w) return ['週替わり3連戦を ' + w.weeks + ' 週クリア', '週替わり3連戦を ' + w.weeks + ' 週クリアしてもらった'];
   if (kind === 'title') {
     const t = Object.entries(TROPHY_TITLES).find(([, k]) => k === key);
-    if (t) return ['実績 ' + (TROPHY_NAME[t[0]] || t[0]), '実績「' + (TROPHY_NAME[t[0]] || t[0]) + '」を取ってもらった'];
+    if (t) return ['実績 ' + trophyName(t[0]), '実績「' + trophyName(t[0]) + '」を取ってもらった'];
     if (key === 'platinum') return ['ほかの実績を全部取る', 'ほかの実績を全部取ってもらった'];
   }
   const r = REWARDS.find(x => x.kind === kind && x.key === key);
   return r ? ['LV ' + r.lv + ' で解放', 'LV ' + r.lv + ' のレベルアップでもらった'] : ['', ''];
 }
 function sourceOf(kind, key) { return sourceInfo(kind, key)[0]; }
+/* 手に入れ方の場所へ飛ぶボタン (実績 → RECORD の実績、習熟度 → RECORD のプロトコル、レベル → プロフィール) */
+function sourceLink(kind, key) {
+  if (kind === 'title') {
+    const t = Object.entries(TROPHY_TITLES).find(([, k]) => k === key);
+    if (t || key === 'platinum') return '<button type="button" class="cm-src" data-src="trophy" data-id="' + esc(t ? t[0] : 'platinum') + '">実績を見る ▸</button>';
+  }
+  if (masteryItem(kind, key)) return '<button type="button" class="cm-src" data-src="mastery">習熟度を見る ▸</button>';
+  if (!GACHA_ITEMS.some(x => x.kind === kind && x.key === key) && REWARDS.some(x => x.kind === kind && x.key === key)) {
+    return '<button type="button" class="cm-src" data-src="level">レベルの報酬を見る ▸</button>';
+  }
+  return '';
+}
 function gotHow(kind, key) { return sourceInfo(kind, key)[1]; }
 
 /* レア度ごとの集まり具合 (例: L 1/4)。そのタブにある段だけ */
@@ -133,7 +150,10 @@ function markSeen(ids) {
 export function hasNewCosmetics() {
   try { if (!localStorage.getItem(SEEN_KEY)) return false; } catch (e) { return false; }   // はじめて開くまでは出さない (全部 NEW になるので)
   const c = ctx(), s = seen();
-  return tabsNow().some(t => t.kind !== 'icon' && itemsOf(t.kind).some(([key]) => owned(t.kind, key, c) && key !== '' && key !== DEFAULT_KEY[t.kind] && !s.has(t.kind + ':' + key)));
+  return tabsNow().some(t => t.kind !== 'icon' && hasNewIn(t.kind, c, s));
+}
+function hasNewIn(kind, c, s) {
+  return itemsOf(kind).some(([key]) => owned(kind, key, c) && key !== '' && key !== DEFAULT_KEY[kind] && !s.has(kind + ':' + key));
 }
 
 /* ---------- 見た目の絵 ---------- */
@@ -252,7 +272,7 @@ function preview(kind, key, name, isOwned, src) {
   }
   const rar = rarOf(kind, key);
   return '<div class="cm-art' + (isOwned ? '' : ' locked') + rarCls(rar) + '">' + art + '</div>' +
-    '<div class="cm-cap' + rarCls(rar) + '">' + (rar ? '<i class="cm-rar">' + RARITY_NAME[rar] + '</i>' : '') + '<b>' + esc(name) + '</b><span>' + (isOwned ? (gotHow(kind, key) ? '入手: ' + esc(gotHow(kind, key)) : '持っている') : '未入手 — ' + esc(src)) + '</span></div>';
+    '<div class="cm-cap' + rarCls(rar) + '">' + (rar ? '<i class="cm-rar">' + RARITY_NAME[rar] + '</i>' : '') + '<b>' + esc(name) + '</b><span>' + (isOwned ? (gotHow(kind, key) ? '入手: ' + esc(gotHow(kind, key)) : '持っている') : '未入手 — ' + esc(src)) + '</span>' + sourceLink(kind, key) + '</div>';
 }
 
 /* ---------- 画面 ---------- */
@@ -266,14 +286,20 @@ export function openCosmetics(opts) {
     el.setAttribute('aria-label', 'COLLECTION');
     document.body.appendChild(el);
   }
-  let tab = (opts && opts.tab) || 'sleeve';
-  let focus = null;                  // プレビューに出しているもの (押したもの。はじめは着けているもの)
+  /* 開くタブ: 指定 (報酬などから飛んできた) → 新しいものがあるタブ → 前に見ていたタブ → スリーブ */
+  const firstOpen = (() => { try { return !localStorage.getItem(SEEN_KEY); } catch (e) { return false; } })();
+  const tabOk = (t) => tabsNow().some(x => x.kind === t);
+  const newTab = firstOpen ? null : (tabsNow().find(t => t.kind !== 'icon' && hasNewIn(t.kind, ctx(), seen())) || {}).kind;
+  const lastTab = (() => { try { return localStorage.getItem(TAB_KEY); } catch (e) { return null; } })();
+  let tab = (opts && opts.tab && tabOk(opts.tab) && opts.tab) || newTab || (lastTab && tabOk(lastTab) && lastTab) || 'sleeve';
+  let focus = (opts && opts.focus !== undefined && opts.focus !== null) ? String(opts.focus) : null;   // プレビューに出しているもの (押したもの。はじめは着けているもの)
   /* 一覧のしぼり込み: 'all' / 'own' (持っている) / 'not' (まだ)。プロトコルの習熟度の分 (30 ずつ) は、
      持っているものだけ出し、まだのものは showMastery のときだけ (数が多すぎて、ほかが埋もれていた) */
   let filter = 'all', showMastery = false;
   let listened = false;                              // BGM を試し聴きした (閉じたらタイトルの曲に戻す)
   let armed = null;                                  // 交換のボタンを1回押した品物 (もう一度押すと交換)
-  const firstOpen = (() => { try { return !localStorage.getItem(SEEN_KEY); } catch (e) { return false; } })();
+  /* 見た印は、そのタブを離れるときと閉じるときに付ける (前は描き直すたびに付けていて、1回押しただけで NEW が全部消えていた) */
+  const commitSeen = () => { const c = ctx(); markSeen(itemsOf(tab).filter(([k]) => owned(tab, k, c)).map(([k]) => tab + ':' + k)); };
   const render = () => {
     const s = settings();
     const c = ctx();
@@ -348,19 +374,25 @@ export function openCosmetics(opts) {
         if (r.top < box.top || r.bottom > box.bottom) newTabs.scrollTop += (r.top + r.height / 2) - (box.top + box.height / 2);
       }
     }
-    /* 見た印: いま開いているタブの、持っているもの */
-    markSeen(list.filter(([k]) => owned(tab, k, c)).map(([k]) => tab + ':' + k));
+    try { localStorage.setItem(TAB_KEY, tab); } catch (e) { /* private mode */ }
   };
   el.onclick = (ev) => {
     const b = ev.target.closest('button');
     if (!b) return;
     if (b.classList.contains('cm-x')) { close(); return; }
+    /* 手に入れ方の場所へ (重ねて開く。閉じると COLLECTION に戻る) */
+    if (b.dataset.src === 'trophy') { import('./achievements-ui.js').then(m => m.openTrophies(b.dataset.id)); return; }
+    if (b.dataset.src === 'mastery') { import('./stats.js').then(m => m.openStats({ tab: 'プロトコル' })); return; }
+    if (b.dataset.src === 'level') { import('./profile.js').then(m => m.openProfile(protoList)); return; }
     if (b.dataset.listen) { listened = true; (tab === 'track' ? previewBgm(b.dataset.listen, menuBgm) : playBgm(b.dataset.listen)); return; }
     /* BGM: メニュー・対戦のどちらで流すか */
     if (b.dataset.slot) { setSetting(b.dataset.slot, b.dataset.keySet); if (b.dataset.slot === 'bgmMenu') playBgm(menuBgm()); render(); return; }
     /* ガチャはこの画面から。閉じたら図鑑を描き直す (引いたものが並ぶ) */
-    if (b.classList.contains('cm-gacha')) { openGacha({ onClose: () => render() }); return; }
-    if (b.dataset.tab) { tab = b.dataset.tab; focus = null; render(); return; }
+    if (b.classList.contains('cm-gacha')) {
+      openGacha({ onClose: () => render(), onUse: (kind, key) => { if (tabOk(kind)) { commitSeen(); tab = kind; } focus = key; filter = 'all'; render(); } });
+      return;
+    }
+    if (b.dataset.tab) { if (b.dataset.tab !== tab) commitSeen(); tab = b.dataset.tab; focus = null; render(); return; }
     if (b.dataset.filter) { filter = b.dataset.filter; render(); return; }
     if (b.dataset.mastery) { showMastery = !showMastery; render(); return; }
     if (b.dataset.equip !== undefined) { setSetting(tab, b.dataset.equip); render(); return; }
@@ -384,16 +416,21 @@ export function openCosmetics(opts) {
       render();
     }
   };
-  const onKey = (ev) => { if (ev.key === 'Escape') close(); };
+  /* Esc はいちばん上の画面だけ閉じる (ガチャを重ねているときは、ガチャのほう) */
+  const onKey = (ev) => { if (ev.key === 'Escape' && !document.querySelector('#gachaOv.show')) close(); };
   const close = () => {
+    commitSeen();
     /* 試し聴きしていたら、タイトルの曲に戻す */
     if (listened) playBgm(menuBgm());
     el.classList.remove('show');
     window.removeEventListener('keydown', onKey);
     if (opts && opts.onClose) opts.onClose();
+    /* どこから開いても、タイトルの NEW の印を合わせる */
+    window.dispatchEvent(new CustomEvent('compile:cosmetics-closed'));
   };
   window.addEventListener('keydown', onKey);
   rerender = () => { if (el.classList.contains('show')) render(); };
   render();
   el.classList.add('show');
+  raise(el);   // 開いたままの画面をもう一度開いたときも、いちばん手前へ
 }

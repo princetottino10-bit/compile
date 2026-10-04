@@ -47,7 +47,7 @@ import * as PZ from './puzzle.js';
 import * as TS from './tsume.js';
 import { watchErrors, reportError } from './errorreport.js';
 import * as TU from './tutorial.js';
-import { settings, onSettings, openSettings, setAvatarOptionsGate } from './settings.js';
+import { settings, onSettings, openSettings, setAvatarOptionsGate, setSetting } from './settings.js';
 import { recordSoloResult, localRecords } from './stats.js';
 import { conquered, newlyConquered, conquerable } from './stats-data.js';
 import * as STORY from './story.js';
@@ -57,7 +57,7 @@ import { cardStats, cardTier, playerLevel, protocolSummary } from './stats-data.
 import { isUnlocked, rewardsBetween, TITLES, UNDERDOG_XP, underdogCleared, AVATAR_RELEASED, COSMETICS } from './rewards.js';
 import { confetti } from './gachafx.js';
 import { setCosmeticProtocols, profileOf, myLook } from './cosmetics-ui.js';
-import { setCosmeticsProtocols } from './cosmetics-mode.js';
+import { setCosmeticsProtocols, cosmeticsProtocols } from './cosmetics-mode.js';
 import { displayName } from './displayname.js';
 import { showPlates, setCompileProgress, setTurnPlate } from './plates.js';
 import { matUnlocked, MAT_W, MAT_D } from './playmat.js';
@@ -5220,13 +5220,23 @@ function gainsHtml() {
     rows.push('<li class="eg-num"><small>経験値</small><b data-from="0" data-to="' + xp + '" data-plus="1">+' + xp + '</b></li>');
     rows.push('<li class="eg-num"><small>CHIP</small><b data-from="' + Math.max(0, chips - gotChips) + '" data-to="' + chips + '">' + chips + '</b><em>+' + gotChips + '</em></li>');
   }
-  if (myLevel > matchGains.lv0) rows.push('<li class="eg-lv"><small>レベル</small><b>LV ' + matchGains.lv0 + ' → ' + myLevel + '</b></li>');
-  for (const t of matchGains.daily) rows.push('<li class="eg-daily"><small>デイリー達成</small><span>' + esc(t) + '</span></li>');
-  for (const t of matchGains.trophies) rows.push('<li class="eg-trophy"><small>実績</small><span>' + esc(t) + '</span></li>');
+  /* レベル・デイリー → プロフィール、実績 → RECORD の実績 (押せる) */
+  if (myLevel > matchGains.lv0) rows.push('<li class="eg-lv eg-go" data-go="profile" role="button" tabindex="0"><small>レベル</small><b>LV ' + matchGains.lv0 + ' → ' + myLevel + '</b><i>▸</i></li>');
+  for (const t of matchGains.daily) rows.push('<li class="eg-daily eg-go" data-go="profile" role="button" tabindex="0"><small>デイリー達成</small><span>' + esc(t) + '</span><i>▸</i></li>');
+  for (const t of matchGains.trophies) rows.push('<li class="eg-trophy eg-go" data-go="trophy" role="button" tabindex="0"><small>実績</small><span>' + esc(t) + '</span><i>▸</i></li>');
   return '<ul class="end-gains" aria-label="この試合で手に入ったもの">' + rows.join('') + '</ul>';
 }
 function playGains(el) {
   const rows = el.querySelectorAll('.end-gains li');
+  const go = (li) => {
+    if (li.dataset.go === 'trophy') import('./achievements-ui.js').then(m => m.openTrophies());
+    else if (li.dataset.go === 'profile') import('./profile.js').then(m => m.openProfile(cosmeticsProtocols()));
+  };
+  rows.forEach(li => {
+    if (!li.dataset.go) return;
+    li.onclick = () => go(li);
+    li.onkeydown = (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); go(li); } };
+  });
   dealIn(rows, { stagger: 150, delay: 120 });
   rows.forEach((li, i) => {
     const b = li.querySelector('b[data-to]');
@@ -5273,7 +5283,7 @@ function showEndActions(win) {
   if (saveBtn) {
     saveBtn.onclick = () => {
       const r = pinReplay(lastReplayId, true);
-      UI.toast(r.ok ? 'リプレイを保存しました (RECORD → REPLAYS で見られます)' : r.message, 2600);
+      UI.toast(r.ok ? 'リプレイを保存しました (RECORD の「リプレイ」で見られます)' : r.message, 2600);
       if (r.ok) { saveBtn.disabled = true; saveBtn.textContent = 'SAVED'; }
     };
   }
@@ -6056,12 +6066,13 @@ async function celebrateUnderdog() {
   el.innerHTML = '<div class="ud-card"><small>UNDERDOG</small><h2>GIANT SLAYER</h2>' +
     '<p>最弱のデッキで、最強の CPU を倒しました。</p>' +
     '<ul><li>称号 GIANT SLAYER</li><li>専用スリーブ GIANT SLAYER</li><li>専用コントロールマーカー GIANT SLAYER</li><li>+' + UNDERDOG_XP + ' XP</li></ul>' +
-    '<p style="font-size:12px;opacity:.8">見た目は タイトルの COLLECTION で着けられます</p>' +
-    '<button type="button">受け取る</button></div>';
+    '<div class="ud-btns"><button type="button" data-ud="equip">受け取って着ける</button><button type="button" data-ud="ok" class="ud-sub">受け取る</button></div></div>';
   el.classList.add('show');
   confetti(['#ffd65a', '#ff4f6e', '#fff4c8', '#ff8a5a'], 320);
   setTimeout(() => confetti(['#ffd65a', '#ffffff', '#ff4f6e'], 220), 900);
-  await new Promise(resolve => { el.querySelector('button').onclick = resolve; });
+  const pick = await new Promise(resolve => { el.querySelectorAll('[data-ud]').forEach(b => { b.onclick = () => resolve(b.dataset.ud); }); });
   el.classList.remove('show');
   for (let i = 1; i <= UNDERDOG_XP / 20; i++) await gainXp('underdog', 20, 'ud:' + i, i < UNDERDOG_XP / 20);
+  /* 「着ける」なら、COLLECTION の専用スリーブへ (そこで着けている状態で開く) */
+  if (pick === 'equip') { setSetting('sleeve', 'slayer'); import('./cosmetics-mode.js').then(m => m.openCosmetics({ tab: 'sleeve', focus: 'slayer' })); }
 }

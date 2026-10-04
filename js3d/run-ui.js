@@ -513,7 +513,7 @@ export function showRunAfterGame(win, damage, protocols) {
       const back = document.createElement('button');
       back.type = 'button';
       back.id = 'runBack';
-      back.textContent = run.phase === 'over' || run.phase === 'clear' ? 'タイトルへ' : '勝ち抜き戦へ戻る';
+      back.textContent = run.phase === 'over' || run.phase === 'clear' ? '結果に戻る' : '勝ち抜き戦へ戻る';   // 押すと結果の画面に戻る (前は「タイトルへ」と出ていた)
       back.onclick = () => { back.remove(); el.classList.add('show'); };
       document.body.appendChild(back);
     }

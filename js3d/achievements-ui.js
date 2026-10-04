@@ -7,6 +7,8 @@ import { trophyView, TROPHY_XP } from './achievements.js';
 import { localRecords } from './stats.js';
 import { playerLevel, cardStats } from './stats-data.js';
 import { xpLog, bonusXp } from './xp.js';
+import { TROPHY_TITLES } from './cosmetics-ui.js';
+import { TITLES } from './rewards.js';
 
 /* 判定に使う材料をそろえる。game: その1試合 (無ければ null) */
 export function trophyContext(game) {
@@ -64,32 +66,41 @@ export function trophyCounts() {
   return { got: list.filter(t => t.at).length, total: list.length };
 }
 
-export function openTrophies() {
+/* 実績の一覧 (RECORD の「実績」のタブの中身)。称号がもらえる実績には、その称号へ飛ぶボタン */
+export function trophyListHtml() {
   const v = trophyView(trophyContext(null));
-  let el = document.getElementById('trophyOv');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'trophyOv';
-    el.className = 'pz-ov';
-    document.body.appendChild(el);
-  }
+  const titleChip = (id, got) => {
+    const key = id === 'platinum' ? 'platinum' : TROPHY_TITLES[id];
+    if (!key || !TITLES[key]) return '';
+    return got ? '<button type="button" class="tr-title" data-title="' + esc(key) + '" title="COLLECTION の称号で見る">称号 ' + esc(TITLES[key]) + ' ▸</button>'
+      : '<em class="tr-title off">称号 ' + esc(TITLES[key]) + '</em>';
+  };
   const row = (t) => {
     const secret = t.hidden && !t.at;
     const prog = t.prog ? '<i class="tr-bar"><i style="width:' + Math.min(100, Math.round(100 * t.prog[0] / t.prog[1])) + '%"></i></i><em>' + t.prog[0] + '/' + t.prog[1] + '</em>' : '';
-    return '<li class="tr-' + t.tier + (t.at ? ' got' : '') + (secret ? ' secret' : '') + '">' +
+    return '<li id="tr-' + esc(t.id) + '" class="tr-' + t.tier + (t.at ? ' got' : '') + (secret ? ' secret' : '') + '">' +
       '<i class="tb-medal" aria-hidden="true"></i>' +
-      '<div><b>' + (secret ? '???' : esc(t.name)) + '</b><span>' + (secret ? '隠し実績' : esc(t.desc)) + '</span>' + (t.at ? '' : prog) + '</div>' +
+      '<div><b>' + (secret ? '???' : esc(t.name)) + '</b><span>' + (secret ? '隠し実績' : esc(titleChip(t.id, false) ? t.desc.replace(/\s*\(称号 [^)]*\)/, '') : t.desc)) + '</span>' + (t.at ? '' : prog) +
+        (secret ? '' : titleChip(t.id, !!t.at)) + '</div>' +
       '<small>' + (t.at ? new Date(t.at).toLocaleDateString('ja-JP') : TIER[t.tier]) + '</small></li>';
   };
   const count = (tier) => v.list.filter(t => t.tier === tier && t.at).length + '/' + v.list.filter(t => t.tier === tier).length;
-  el.innerHTML = '<div class="pz-card tr-card" role="dialog" aria-modal="true" aria-label="実績">' +
-    '<div class="pz-head"><b>TROPHIES<small>実績</small></b><button type="button" class="pz-x"><span>閉じる</span></button></div>' +
-    '<div class="tr-top"><b>' + v.rate + '<i>%</i></b><div><span class="tr-meter"><i style="width:' + v.rate + '%"></i></span>' +
+  return '<div class="tr-top"><b>' + v.rate + '<i>%</i></b><div><span class="tr-meter"><i style="width:' + v.rate + '%"></i></span>' +
       '<small>' + v.done + ' / ' + v.total + ' ・ BRONZE ' + count('bronze') + ' ・ SILVER ' + count('silver') + ' ・ GOLD ' + count('gold') + '</small></div></div>' +
     '<ul class="tr-list">' + v.list.map(row).join('') + '</ul>' +
-    '<p class="pz-note">すべて取ると PLATINUM と称号「PLATINUM」。隠し実績は取るまで条件も見えません。</p></div>';
-  el.classList.add('show');
-  const close = () => el.classList.remove('show');
-  el.onclick = (ev) => { if (ev.target === el) close(); };
-  el.querySelector('.pz-x').onclick = close;
+    '<p class="pz-note">すべて取ると PLATINUM と称号「PLATINUM」。隠し実績は取るまで条件も見えません。</p>';
+}
+/* 一覧の中の「称号 X ▸」→ COLLECTION の称号 (重ねて開く。戻ると一覧へ) */
+export function bindTrophyList(root) {
+  root.addEventListener('click', (ev) => {
+    const b = ev.target.closest('.tr-title[data-title]');
+    if (!b) return;
+    import('./cosmetics-mode.js').then(m => m.openCosmetics({ tab: 'title', focus: b.dataset.title }));
+  });
+}
+
+/* 実績の一覧を開く = RECORD の「実績」のタブ (前は別の小窓で、RECORD のタブはボタンだけだった)。
+   id を渡すとその実績まで送って光らせる */
+export function openTrophies(id) {
+  import('./stats.js').then(m => m.openStats({ tab: '実績', trophy: id || null }));
 }

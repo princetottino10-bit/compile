@@ -5,6 +5,7 @@
  * ========================================================================= */
 import { BGM_RELEASED } from './rewards.js';
 import { openDiscord, copyReportInfo } from './support.js';
+import { raise } from './dialogs.js';
 const BGM_SHOWN = true;                 // 対戦の BGM (bgm.js の BATTLE_BGM_ON) があるので音量は出す
 
 const KEY = 'compileSettings';
@@ -182,6 +183,7 @@ export function openSettings(extra) {
     '</div>';
   framePanes(el.querySelector('.st-card'));
   el.classList.add('show');
+  raise(el);   // 開いたままの画面をもう一度開いたときも、いちばん手前へ
   const close = () => el.classList.remove('show');
   el.onclick = (ev) => { if (ev.target === el) close(); };
   el.querySelector('.pz-x').onclick = close;
@@ -224,7 +226,7 @@ export function openSettings(extra) {
     const msg = await copyReportInfo();
     if (msg) { ev.target.textContent = 'コピーしました'; setTimeout(() => { ev.target.textContent = 'コピー'; }, 2400); }
   };
-  el.querySelector('#stCosOpen').onclick = () => { close(); import('./cosmetics-mode.js').then(m => m.openCosmetics()); };
+  el.querySelector('#stCosOpen').onclick = () => import('./cosmetics-mode.js').then(m => m.openCosmetics());   // 重ねて開く (戻ると設定に戻る)
   el.querySelectorAll('[data-extra]').forEach(b => {
     b.onclick = () => { const x = extra[+b.dataset.extra]; if (x) x.onClick(b); };
   });

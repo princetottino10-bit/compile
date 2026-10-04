@@ -31,6 +31,12 @@ const BOOT_LINES = [
   '> awaiting operator input _'
 ];
 
+/* COLLECTION を閉じたら (タイトル・プロフィール・設定・報酬のどこから開いても)、見終わった NEW の印を消す */
+window.addEventListener('compile:cosmetics-closed', () => {
+  const d = document.querySelector('#title .tt-cos .tt-newdot');
+  if (d && !hasNewCosmetics()) d.remove();
+});
+
 /* まだ1戦もしておらず、チュートリアルも1つも終えていない人 */
 function isNewcomer() {
   return !localRecords().length && !xpLog().some(e => /^k:tu:/.test(e.id || ''));
@@ -238,7 +244,7 @@ export function runTitle(protocols, opts) {
             document.addEventListener('keydown', onEsc, true);
           } else if (button._closeMore) button._closeMore();
         }
-        else if (button.dataset.mode === 'cosmetics') openCosmetics({ onClose: () => { const d = root.querySelector('.tt-cos .tt-newdot'); if (d && !hasNewCosmetics()) d.remove(); } });
+        else if (button.dataset.mode === 'cosmetics') openCosmetics();
         else if (button.dataset.mode === 'profile') openProfile(protocols);
         else if (button.dataset.mode === 'quick') { location.href = location.pathname + '?quick=1'; }
         else finish(button.dataset.mode);
