@@ -132,7 +132,9 @@ export const TROPHIES = [
   { id: 'chain6', tier: 'gold', name: 'CHAIN BREAKER', desc: '自分の効果で割り込んで、チェーンを6つつなげる', test: (c) => !!g(c) && (g(c).chainMax | 0) >= 6 },
   { id: 'norefresh', tier: 'gold', name: 'NO REFRESH', desc: '一度もリフレッシュせずに勝つ', test: (c) => !!g(c) && g(c).win && g(c).refreshes === 0 },
   { id: 'norefresh_apex', tier: 'gold', name: 'NO REFRESH APEX', desc: '一度もリフレッシュせずに「最強」の CPU に勝つ', test: (c) => !!g(c) && g(c).win && g(c).refreshes === 0 && g(c).level === 3 },
-  { id: 'shadow', tier: 'gold', name: 'SHADOW PLAY', desc: '一度も表でカードを出さずに勝つ', test: (c) => !!g(c) && g(c).win && g(c).faceUpIds.length === 0 },
+  /* 表で出すのは値 0・1・2 のカードだけで勝つ (3〜6 は裏向きで出すならよい)。前の SHADOW PLAY (一度も表で出さずに勝つ) の代わり */
+  { id: 'lowkey', tier: 'gold', name: 'LOW KEY', desc: '表で出すのは 0・1・2 のカードだけで勝つ (3〜6 は裏向きならよい)',
+    test: (c) => !!g(c) && g(c).win && Array.isArray(g(c).faceUpVals) && g(c).faceUpVals.length > 0 && g(c).faceUpVals.every(v => v <= 2) },
   { id: 'untouchable', tier: 'gold', name: 'UNTOUCHABLE', desc: '自分のカードを一度も相手の効果で削除・反転・移動・手札に戻されずに勝つ',
     test: (c) => !!g(c) && g(c).win && g(c).touched === 0 },
   { id: 'flawless', tier: 'gold', hidden: true, name: 'FLAWLESS', desc: '相手に1回もコンパイルさせずに勝つ (称号 FLAWLESS)', test: (c) => !!g(c) && g(c).win && g(c).oppCompiles === 0 },

@@ -64,15 +64,17 @@ test('短縮マッチ (RUN・WEEKLY) の1試合は実績に数えない', () => 
 
 test('縛りプレイ・記録の実績', () => {
   const base = { win: true, level: 3, turns: 40, compiles: 3, oppCompiles: 1, winCompiles: 3, effectsMap: {}, effects: 5, chainMax: 0,
-    faceUpIds: ['FIRE_1'], refreshes: 0, touched: 0, maxLine: 12, short: false, at: Date.UTC(2026, 0, 1, 12) };
+    faceUpIds: ['FIRE_4'], faceUpVals: [3], refreshes: 0, touched: 0, maxLine: 12, short: false, at: Date.UTC(2026, 0, 1, 12) };
   const got = ids(newlyEarned({}, ctx({ game: base })));
   assert.ok(got.includes('norefresh') && got.includes('norefresh_apex') && got.includes('untouchable'));
-  assert.ok(!got.includes('shadow') && !got.includes('overkill'));
-  const more = ids(newlyEarned({}, ctx({ game: { ...base, level: 1, refreshes: 2, touched: 1, faceUpIds: [], maxLine: 21, effects: 40, chainMax: 6, turns: 18 } })));
-  assert.ok(more.includes('shadow') && more.includes('overkill') && more.includes('overclock2') && more.includes('chain6') && more.includes('blitz'));
+  assert.ok(!got.includes('lowkey') && !got.includes('overkill'));
+  const more = ids(newlyEarned({}, ctx({ game: { ...base, level: 1, refreshes: 2, touched: 1, faceUpIds: ['FIRE_1', 'GRAVITY_3'], faceUpVals: [0, 2], maxLine: 21, effects: 40, chainMax: 6, turns: 18 } })));
+  assert.ok(more.includes('lowkey') && more.includes('overkill') && more.includes('overclock2') && more.includes('chain6') && more.includes('blitz'));
   assert.ok(!more.includes('norefresh') && !more.includes('untouchable'));
   const lost = ids(newlyEarned({}, ctx({ game: { ...base, win: false } })));
-  assert.ok(!lost.includes('norefresh') && !lost.includes('shadow'));
+  assert.ok(!lost.includes('norefresh') && !lost.includes('lowkey'));
+  /* 表で1枚も出さない勝ちは LOW KEY ではない (表で 0・1・2 を使って勝つ実績) */
+  assert.ok(!ids(newlyEarned({}, ctx({ game: { ...base, faceUpIds: [], faceUpVals: [] } }))).includes('lowkey'));
 });
 
 test('その1試合: 完封・瀬戸際・早い勝ち (負けでは取れない)', () => {
@@ -154,10 +156,10 @@ test('外した実績は「~id」の印で外れたまま。取り直すと印�
   const store = {};
   globalThis.localStorage = { getItem: (k) => store[k] ?? null, setItem: (k, v) => { store[k] = String(v); }, removeItem: (k) => { delete store[k]; } };
   const A = await import('../js3d/achievements.js?x=' + Date.now());
-  store.compileTrophies = JSON.stringify({ shadow: 100, '~shadow': 200, first_win: 50 });
+  store.compileTrophies = JSON.stringify({ lowkey: 100, '~lowkey': 200, first_win: 50 });
   assert.deepEqual(Object.keys(A.loadTrophies()).sort(), ['first_win']);
-  const game = { win: true, turns: 40, compiles: 3, oppCompiles: 1, winCompiles: 3, effectsMap: {}, effects: 1, faceUpIds: [], refreshes: 2, touched: 3, maxLine: 10, short: false, at: Date.UTC(2026, 0, 1, 12) };
+  const game = { win: true, turns: 40, compiles: 3, oppCompiles: 1, winCompiles: 3, effectsMap: {}, effects: 1, faceUpIds: ['FIRE_1'], faceUpVals: [0], refreshes: 2, touched: 3, maxLine: 10, short: false, at: Date.UTC(2026, 0, 1, 12) };
   A.unlockTrophies(ctx({ game }), 300);
-  assert.ok(A.loadTrophies().shadow, '取り直したら戻る');
-  assert.equal(JSON.parse(store.compileTrophies)['~shadow'], 0);
+  assert.ok(A.loadTrophies().lowkey, '取り直したら戻る');
+  assert.equal(JSON.parse(store.compileTrophies)['~lowkey'], 0);
 });

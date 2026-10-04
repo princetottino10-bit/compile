@@ -183,6 +183,8 @@ function gameSummary(st, side, win, level, online) {
     winCompiles: st.winCompiles || 3, effectsMap,
     effects: Object.values(effectsMap).reduce((n, v) => n + (v | 0), 0),
     faceUpIds: ((t.faceUp && t.faceUp[side]) || []).slice(),
+    /* 表で出したカードの値 (ID の数字と値が合わないカードがあるので、カードの資料から) */
+    faceUpVals: ((t.faceUp && t.faceUp[side]) || []).map(id => (defIndex[id] ? defIndex[id].value : 99)),
     chainMax: (t.chains && t.chains[side]) | 0,      // 自分の効果で割り込んでつないだ、一番長いチェーン
     turns: (st.turns || 0) + 1, at: Date.now(),
     refreshes: (t.refreshes && t.refreshes[side]) | 0,   // リフレッシュした回数
