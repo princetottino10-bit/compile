@@ -2632,6 +2632,10 @@ const AI_W = {
    sp*: ロック特化の手筋の加点 (aiLockSpecialistBias) */
 const AI_LOCK_W = {
   lockPermanent: 260, lockTemporary: 55,
+  /* 相手の永続ロックは、そのラインをコンパイルすれば (ラインのカードが全部消えて) 外れる。
+     lockBreakLine: そのラインの自分の合計が 10 に近いほど減点を軽く (最大この割合) /
+     lockBreakReady: 次の自分の番にそのラインをコンパイルできる形なら、減点をこの割合だけ軽く */
+  lockBreakLine: 0.5, lockBreakReady: 0.85,
   threatLine: 0.85, threatAny: 0.6, threatCovered: 0.2,
   spLockCoverRoute: 170, spLockUpNoCover: -45, spLockDup: -20, spLockBadLine: -30,
   spLockKeyInHand: 150, spLockNoKey: 95, spCover: 80, spKeyOnLock: 170, spKeyHold: -55,
@@ -2836,7 +2840,14 @@ function aiLockScore(st, side) {
     if (s.kind !== 'playPermission' || s.rule !== 'oppFaceDownOnly') continue;
     const stack = st.lines[s.line][s.sideIdx];
     const covered = stack.indexOf(s.uid) < stack.length - 1;
-    const w = covered ? AI_LOCK_W.lockPermanent : AI_LOCK_W.lockTemporary;
+    let w = covered ? AI_LOCK_W.lockPermanent : AI_LOCK_W.lockTemporary;
+    /* 相手の永続ロックを受けている側: ロックのあるラインを取りに行くほど軽く (ロックされたまま裏で出し続けて負けていた) */
+    if (covered && s.sideIdx !== side) {
+      const mine = lineTotal(st, s.line, side), theirs = lineTotal(st, s.line, s.sideIdx);
+      const reach = Math.min(1, Math.max(0, mine) / 10);
+      w *= 1 - AI_LOCK_W.lockBreakLine * reach * reach;
+      if (mine >= 10 && mine > theirs) w *= 1 - AI_LOCK_W.lockBreakReady;
+    }
     v += s.sideIdx === side ? w : -w;
   }
   return v;

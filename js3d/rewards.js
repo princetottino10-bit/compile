@@ -169,9 +169,7 @@ function masterySummary() {
 
 export const WEEKLY_ITEMS = [
   { kind: 'sleeve', key: 'laurel', weeks: 1 },
-  { kind: 'marker', key: 'laurel', weeks: 3 },
-  { kind: 'title', key: 'regular', weeks: 3 },
-  { kind: 'title', key: 'weeklylegend', weeks: 10 }
+  { kind: 'marker', key: 'laurel', weeks: 3 }
 ];
 export function weeklyClears() {
   try {
@@ -216,11 +214,11 @@ export const TITLES = {
   puzzler: 'PUZZLER', compuzzler: 'COMPUZZLER',       // COMPUZZLE の中級を全部 / 全部
   platinum: 'PLATINUM',    // 実績をすべて取る (achievements.js)
   conqueror: 'CONQUEROR',  // 「最強」に30のプロトコルすべてで勝つ (achievements.js)
+  tagmaster: 'TAG MASTER', perfectsync: 'PERFECT SYNC',   // タッグデュエルの実績 ALL ROUND / PERFECT SYNC (2026-10-04)
   underdogduo: 'UNDERDOG DUO',   // 下剋上タッグに勝つ (achievements.js)
   /* ガチャで取る (GACHA_ITEMS) */
   gambler: 'GAMBLER', highroller: 'HIGH ROLLER', fortune: 'FORTUNE',
-  /* 週替わり3連戦 (WEEKLY_ITEMS) */
-  regular: 'WEEKLY REGULAR', weeklylegend: 'WEEKLY LEGEND'
+  /* 週替わり3連戦の称号 (3週・10週) は外した (時間のかかるものは置かない。2026-10-04) */
 };
 
 /* 全部解放 (管理者のテスト用。ADMIN 画面で切り替え、このブラウザに残す)。見た目と称号だけで、強さは変わらない */

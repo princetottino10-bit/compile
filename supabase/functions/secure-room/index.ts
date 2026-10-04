@@ -47,7 +47,7 @@ const TURN_LIMIT_MS = 120_000;
 const WAITING_FRESH_MS = 90_000;
 
 /* 相手に見せる称号 (見た目だけ)。決まった一覧にあるものだけ。無ければ null */
-const BADGES = ["compiler", "veteran", "tactician", "expert", "architect", "master", "legend", "ascended", "underdog", "underdogduo",
+const BADGES = ["compiler", "veteran", "tactician", "expert", "architect", "master", "legend", "ascended", "underdog", "underdogduo", "tagmaster", "perfectsync",
   "chainer", "flawless", "grandmaster", "platinum", "puzzler", "compuzzler", "gambler", "highroller", "fortune",
   "regular", "weeklylegend", "conqueror",
   /* プロトコルの習熟度 6 の称号 (m_ + 小文字のプロトコル名) */
