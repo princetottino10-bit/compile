@@ -84,8 +84,9 @@ test('制覇: 「最強」(難易度 3・最強のデッキ) に勝ったとき�
   assert.ok(!m.get('LIFE').wonStrongest, '負けは数えない');
   assert.ok(!m.get('ICE').wonStrongest, '勝ち抜き戦のボス (難易度 3 でもデッキが違う) は数えない');
   assert.ok(!m.get('DEATH').wonStrongest && !m.get('PEACE').wonStrongest && !m.get('APATHY').wonStrongest);
-  assert.deepEqual([...D.conquered(list)].sort(), ['FIRE', 'SPEED', 'WATER']);
-  assert.deepEqual(D.newlyConquered(list.slice(0, 0), list[0]).sort(), ['FIRE', 'SPEED', 'WATER']);
+  /* 最強のデッキと同じプロトコルは制覇に数えない (数えていたので、27 に届かずに CONQUEROR が付いた) */
+  assert.deepEqual([...D.conquered(list)].sort(), []);
+  assert.deepEqual(D.newlyConquered(list.slice(0, 0), list[0]).sort(), []);
   assert.deepEqual(D.newlyConquered(list.slice(0, 1), rec(deck('FIRE', 'LIFE', 'MIRROR'), S, true, 3)).sort(), ['LIFE', 'MIRROR']);
   assert.deepEqual(D.newlyConquered(list, rec(deck('FIRE', 'LIFE', 'MIRROR'), S, false, 3)), [], '負けたら無し');
   const cards = JSON.parse(require('node:fs').readFileSync(require('node:path').join(__dirname, '../data/cards.json'), 'utf8'));

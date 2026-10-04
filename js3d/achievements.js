@@ -162,6 +162,16 @@ function safeTest(t, ctx) {
   try { return !!t.test(ctx); } catch (e) { return false; }
 }
 
+/* 数え方の間違いで付いてしまった実績を外す (積み上げで判定し直せるものだけ)。外したものを返す。
+   CONQUEROR: 最強のデッキと同じプロトコルまで数えていて、27 に届いていないのに付いた (2026-10-04) */
+const RECHECK = ['conqueror'];
+export function pruneTrophies(ctx) {
+  const have = loadTrophies();
+  const wrong = RECHECK.filter(id => have[id] && !safeTest(TROPHIES.find(t => t.id === id), ctx));
+  if (wrong.length) { const next = { ...have }; for (const id of wrong) delete next[id]; delete next.platinum; saveTrophies(next); }
+  return wrong;
+}
+
 /* 判定して、取った分を保存する。今回取った実績を返す */
 export function unlockTrophies(ctx, now = Date.now()) {
   const have = loadTrophies();

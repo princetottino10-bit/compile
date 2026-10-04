@@ -3858,6 +3858,10 @@
   }
   /* オンラインの観戦: 指す操作のボタンは出さない */
   body.room-watch #dock,body.room-watch #btnRefresh,body.room-watch #assist,body.room-watch #turnTimer{display:none!important;}
+  /* 縦持ち: カードの説明は触りを通す (下のカードやボタンを押せる。ほかを押すと説明は閉じる) */
+  @media (max-width:860px) and (orientation:portrait){
+    #cardNote.show{pointer-events:none;}
+  }
 </style>
 </head>
 <body>
@@ -3955,7 +3959,7 @@
       "./vendor/three.module.js": "./vendor/three.module.js?v=985eb92490",
       "./js3d/account.js": "./js3d/account.js?v=ddfb83cf38",
       "./js3d/achievements-ui.js": "./js3d/achievements-ui.js?v=ec42b49651",
-      "./js3d/achievements.js": "./js3d/achievements.js?v=0913ae78da",
+      "./js3d/achievements.js": "./js3d/achievements.js?v=eaf8c311e9",
       "./js3d/admin-ui.js": "./js3d/admin-ui.js?v=f467e2b1a6",
       "./js3d/ai-worker.js": "./js3d/ai-worker.js?v=a98e3444e3",
       "./js3d/aiclient.js": "./js3d/aiclient.js?v=0f85a7d42b",
@@ -3999,12 +4003,12 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=2b4dbc6066",
       "./js3d/logformat.js": "./js3d/logformat.js?v=e3548c74d1",
-      "./js3d/main.js": "./js3d/main.js?v=032d4d5a95",
+      "./js3d/main.js": "./js3d/main.js?v=7a94c2932b",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=4463f5df6b",
       "./js3d/panel.js": "./js3d/panel.js?v=994ec047da",
-      "./js3d/pickaid.js": "./js3d/pickaid.js?v=7fecd8f779",
+      "./js3d/pickaid.js": "./js3d/pickaid.js?v=fd33e4bc87",
       "./js3d/plates.js": "./js3d/plates.js?v=caaa5823ae",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=55c71c637e",
       "./js3d/playlog.js": "./js3d/playlog.js?v=90aaffedee",
@@ -4031,7 +4035,7 @@
       "./js3d/solodraft.js": "./js3d/solodraft.js?v=b036b97879",
       "./js3d/spectate.js": "./js3d/spectate.js?v=e7aaf6e4e9",
       "./js3d/stage.js": "./js3d/stage.js?v=a47c0c4ec9",
-      "./js3d/stats-data.js": "./js3d/stats-data.js?v=eb2be6d930",
+      "./js3d/stats-data.js": "./js3d/stats-data.js?v=0fb6e5d36d",
       "./js3d/stats.js": "./js3d/stats.js?v=fc8f52db64",
       "./js3d/steps.js": "./js3d/steps.js?v=13e73b20fe",
       "./js3d/story-map.js": "./js3d/story-map.js?v=2947f93cb5",
@@ -4048,7 +4052,7 @@
       "./js3d/turning.js": "./js3d/turning.js?v=9c7f79654e",
       "./js3d/tutorial.js": "./js3d/tutorial.js?v=1b5e3a1067",
       "./js3d/tween.js": "./js3d/tween.js?v=99b25c0d63",
-      "./js3d/ui.js": "./js3d/ui.js?v=acf62b2cbe",
+      "./js3d/ui.js": "./js3d/ui.js?v=263ab47b68",
       "./js3d/weekly-ui.js": "./js3d/weekly-ui.js?v=f449c2e66e",
       "./js3d/weekly.js": "./js3d/weekly.js?v=5605476b1c",
       "./js3d/xp.js": "./js3d/xp.js?v=2146fbc219"
@@ -4062,7 +4066,7 @@
   <link rel="modulepreload" href="js3d/account.js?v=ddfb83cf38">
   <link rel="modulepreload" href="js3d/playlog.js?v=90aaffedee">
   <link rel="modulepreload" href="js3d/feel.js?v=fa59a5b9fb">
-  <link rel="modulepreload" href="js3d/pickaid.js?v=7fecd8f779">
+  <link rel="modulepreload" href="js3d/pickaid.js?v=fd33e4bc87">
   <link rel="modulepreload" href="js3d/spectate.js?v=e7aaf6e4e9">
   <link rel="modulepreload" href="js3d/avatar.js?v=c0bcf4804d">
   <link rel="modulepreload" href="js3d/avatar-lines.js?v=5e00862ad8">
@@ -4070,7 +4074,7 @@
   <link rel="modulepreload" href="js3d/gacha.js?v=c86c6a30ac">
   <link rel="modulepreload" href="js3d/chips.js?v=e67e280b76">
   <link rel="modulepreload" href="js3d/crashwatch.js?v=8b4bdaa28f">
-  <link rel="modulepreload" href="js3d/achievements.js?v=0913ae78da">
+  <link rel="modulepreload" href="js3d/achievements.js?v=eaf8c311e9">
   <link rel="modulepreload" href="js3d/replays.js?v=24bf97f591">
   <link rel="modulepreload" href="js3d/resume.js?v=477cf75f6b">
   <link rel="modulepreload" href="js3d/replayshare.js?v=8f01fe1204">
@@ -4091,7 +4095,7 @@
   <link rel="modulepreload" href="js3d/tutorial.js?v=1b5e3a1067">
   <link rel="modulepreload" href="js3d/settings.js?v=073a108cb8">
   <link rel="modulepreload" href="js3d/stats.js?v=fc8f52db64">
-  <link rel="modulepreload" href="js3d/stats-data.js?v=eb2be6d930">
+  <link rel="modulepreload" href="js3d/stats-data.js?v=0fb6e5d36d">
   <link rel="modulepreload" href="js3d/story.js?v=ffb19e70f8">
   <link rel="modulepreload" href="js3d/story-ui.js?v=f33002f307">
   <link rel="modulepreload" href="js3d/story-world.js?v=a765b7288b">
@@ -4123,7 +4127,7 @@
   <link rel="modulepreload" href="js3d/layout.js?v=2b4dbc6066">
   <link rel="modulepreload" href="js3d/theme.js?v=0fc8f69999">
   <link rel="modulepreload" href="js3d/tween.js?v=99b25c0d63">
-  <link rel="modulepreload" href="js3d/ui.js?v=acf62b2cbe">
+  <link rel="modulepreload" href="js3d/ui.js?v=263ab47b68">
   <link rel="modulepreload" href="js3d/input.js?v=cc29feddd4">
   <link rel="modulepreload" href="js3d/playchoices.js?v=55c71c637e">
   <link rel="modulepreload" href="js3d/aiclient.js?v=0f85a7d42b">
@@ -4169,6 +4173,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=ba24e41aa7">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=032d4d5a95"></script>
+  <script type="module" src="js3d/main.js?v=7a94c2932b"></script>
 </body>
 </html>

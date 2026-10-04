@@ -69,9 +69,8 @@ export function createPickAid(stage, board) {
       const n = run.chosen.indexOf(uid);
       el.classList.toggle('chosen', n >= 0);
       el.textContent = n >= 0 ? (run.multi ? String(n + 1) : '✓') : '';
-      /* 矢印はカードの上辺の真上、選んだ順番はカードの右上の角 */
-      if (n >= 0) { el.style.left = (r.right - 6) + 'px'; el.style.top = (r.top + 6) + 'px'; }
-      else { el.style.left = r.cx + 'px'; el.style.top = r.top + 'px'; }
+      /* 矢印も選んだ順番も、カードの上辺の真ん中 (右上の角だと、重なった手札では隣のカードの上に出ていた) */
+      el.style.left = r.cx + 'px'; el.style.top = (n >= 0 ? r.top + 14 : r.top) + 'px';
     }
     if (tip) {
       const r = rectOf(tip.uid);

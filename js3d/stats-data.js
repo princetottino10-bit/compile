@@ -53,14 +53,15 @@ export const CONQUER_TOTAL = 30 - STRONGEST_AI.length;
 /* 制覇: 「最強」に勝ったことのあるプロトコル。CONQUER_TOTAL すべてで称号 CONQUEROR (achievements.js) */
 export function conquered(records) {
   const out = new Set();
-  for (const r of records) if (beatStrongest(r)) for (const n of r.me || []) out.add(n);
+  /* 最強のデッキと同じプロトコル (FIRE / WATER / SPEED) は数えない。前は数えていて、27 に届いていないのに CONQUEROR になった */
+  for (const r of records) if (beatStrongest(r)) for (const n of r.me || []) if (!STRONGEST_AI.includes(n)) out.add(n);
   return out;
 }
 /* その1戦で新しく制覇したプロトコル (勝利画面に出す)。before = その試合より前の戦績 */
 export function newlyConquered(before, r) {
   if (!beatStrongest(r)) return [];
   const had = conquered(before);
-  return (r.me || []).filter(n => !had.has(n));
+  return (r.me || []).filter(n => !had.has(n) && !STRONGEST_AI.includes(n));
 }
 
 /* 自分のプロトコル × 相手のプロトコル の勝敗 */

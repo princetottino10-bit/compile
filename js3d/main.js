@@ -16,7 +16,7 @@ import { countUp, dealIn } from './motion.js';
 import { loadGacha, chipsOf, giveChips } from './gacha.js';
 import { earnedChips } from './chips.js';
 import * as CW from './crashwatch.js';
-import { unlockTrophies, TROPHY_XP } from './achievements.js';
+import { unlockTrophies, TROPHY_XP, pruneTrophies } from './achievements.js';
 import { addReplay, getReplay, pinReplay, rebuild } from './replays.js';
 import * as RS from './resume.js';
 import { decodeReplay, sharedCodeFromHash, shareReplayLink } from './replayshare.js';
@@ -209,6 +209,7 @@ async function afterGameProgress(st, side, win, level, online) {
 /* 実績を判定し、取った分の経験値を足して知らせる。レベルが上がって取れる実績もあるので数回まわす */
 let trophyBusy = null;
 async function checkTrophies(game) {
+  pruneTrophies(trophyContext(null));
   while (trophyBusy) await trophyBusy;              // 同時に2回判定しない
   let done;
   trophyBusy = new Promise(r => { done = r; });

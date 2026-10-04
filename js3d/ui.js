@@ -99,6 +99,8 @@ export function showCardNote(o) {
       : '<div class="cn-row"><span class="cn-text">テキストなし</span></div>');
   el.classList.add('show');
   el.querySelector('.cn-close').onclick = () => el.classList.remove('show');
+  /* 説明そのものを押しても閉じる (下のカードやボタンを隠して押せないことがあった) */
+  el.onclick = () => el.classList.remove('show');
   clearTimeout(el._t);
   /* 盤面から開いたときは、別の場所を触るまで出したままにする */
   if (!o.persist) el._t = setTimeout(() => el.classList.remove('show'), 9000);
