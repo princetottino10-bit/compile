@@ -158,8 +158,10 @@ async function checkAdmin() {
     const r = await ROOM.roomApi('whoami');
     state.admin = !!(r && r.admin);
     state.collect = !!(r && r.collect);
+    state.collectAt = Date.now();
   } catch (e) {
     state.admin = false;
+    state.collectAt = Date.now();
   }
   changed();
 }
@@ -483,7 +485,11 @@ export function openAccount() {
 
 /* 棋譜を残す (サーバーの replay_collect に載っている人だけ。本人の許可を取ってから管理者が載せる)。失敗しても遊ぶのは止めない */
 export async function uploadReplay(rep) {
-  if (!state.user || !state.collect || !rep) return;
+  if (!state.user || !rep) return;
+  /* 開いたあとで載せてもらった人もいる (ページを開いたときに1回聞くだけだと、開きっぱなしの間ずっと残らなかった)。
+     載っていないと聞いてから10分たっていたら、もう一度聞く */
+  if (!state.collect && Date.now() - (state.collectAt || 0) > 10 * 60 * 1000) await checkAdmin();
+  if (!state.collect) return;
   try { await ROOM.roomApi('saveReplay', { replay: rep }); } catch (e) { /* 次の対戦で送ればよい */ }
 }
 
