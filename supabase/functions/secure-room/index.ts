@@ -62,7 +62,7 @@ function cleanLook(value: unknown) {
   const v: any = value && typeof value === "object" ? value : null;
   if (!v) return null;
   const key = (x: unknown) => (typeof x === "string" && /^[a-z0-9_]{1,24}$/.test(x)) ? x : null;
-  return { mat: key(v.mat), marker: key(v.marker), sleeve: key(v.sleeve), plate: key(v.plate) };
+  return { mat: key(v.mat), marker: key(v.marker), sleeve: key(v.sleeve), plate: key(v.plate), avatar: key(v.avatar) };
 }
 
 function cleanCode(value: unknown) {

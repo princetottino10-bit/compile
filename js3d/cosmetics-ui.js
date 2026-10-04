@@ -45,7 +45,9 @@ export function myLook(s) {
   const recs = localRecords();
   const level = playerLevel(recs, bonusXp()).level;
   const pick = (kind) => (s[kind] && isUnlocked(kind, s[kind], level)) ? s[kind] : 'default';
-  return { mat: matUnlocked(s.mat, recs) ? s.mat : 'neon', marker: pick('marker'), sleeve: pick('sleeve'), plate: pick('plate') };
+  /* avatar: 対戦で着けているキャラ (オンラインでは相手と観戦する人に見せる) */
+  return { mat: matUnlocked(s.mat, recs) ? s.mat : 'neon', marker: pick('marker'), sleeve: pick('sleeve'), plate: pick('plate'),
+    avatar: s.avatar && isUnlocked('avatar', s.avatar, level) ? s.avatar : 'shion' };
 }
 
 export function myBadge(s) {

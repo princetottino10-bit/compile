@@ -121,7 +121,8 @@ const NO_LOOK = { mat: 'neon', marker: 'default', sleeve: 'default', plate: 'def
 let oppLook = NO_LOOK;
 function cleanLook(look) {
   const pick = (v, d) => (typeof v === 'string' && /^[a-z0-9_]{1,24}$/.test(v)) ? v : d;
-  return look ? { mat: pick(look.mat, 'neon'), marker: pick(look.marker, 'default'), sleeve: pick(look.sleeve, 'default'), plate: pick(look.plate, 'default') } : NO_LOOK;
+  return look ? { mat: pick(look.mat, 'neon'), marker: pick(look.marker, 'default'), sleeve: pick(look.sleeve, 'default'), plate: pick(look.plate, 'default'),
+    avatar: AVATARS[look.avatar] ? look.avatar : null } : NO_LOOK;
 }
 function applyLooks() {
   if (!arena || !ctrlMarker) return;
@@ -311,13 +312,17 @@ function syncAvatar() {
   /* 下剋上タッグの相手 (最強のタッグ) は紫苑と茜で決まり。自分と味方はほかの子から */
   const udTag = !sp && !storyNode && aiDifficulty === UNDERDOG_TAG_LEVEL;
   const UD_OPP = ['shion', 'nadeshiko'];
-  let me = sp ? sp.a : tutorial ? 'zundamon' : storyNode ? storyNode.mate || null : myAvatarId();
+  /* オンライン: 相手は相手が着けているキャラ。観戦は手前 (作った人) と奥 (参加した人) が着けているキャラ */
+  const roomLooks = roomMode && roomRm && Array.isArray(roomRm.looks) ? roomRm.looks.map(cleanLook) : null;
+  let me = sp ? sp.a : tutorial ? 'zundamon' : storyNode ? storyNode.mate || null
+    : roomWatching && roomLooks ? roomLooks[0].avatar || 'shion' : myAvatarId();
   if (udTag && UD_OPP.includes(me)) me = avatarIds().find(i => !UD_OPP.includes(i) && i !== 'asagi') || me;
   const pool = (ids) => shuffled(avatarIds().filter(i => !ids.includes(i)));
   const mate = tagMates && (!sp || sp.a) ? (sp ? pool([sp.a, sp.b])[0]
     : (avatarIds().find(i => i !== me && i === 'asagi' && !(udTag && UD_OPP.includes(i))) || avatarIds().find(i => i !== me && !(udTag && UD_OPP.includes(i))))) : null;
   let oppIds;
   if (udTag) oppIds = UD_OPP.slice();
+  else if (roomLooks && !tagMates) { const o = roomLooks[roomWatching ? 1 : 1 - roomRm.side].avatar; oppIds = [o || oppAvatarIds([me])[0], null]; }
   else if (sp) oppIds = sp.b ? [sp.b, pool([sp.a, sp.b, mate])[0] || sp.b] : [null, null];
   else if (storyNode) oppIds = [storyNode.oppAvatar || null, null];
   else {
@@ -2384,6 +2389,8 @@ function bindInput() {
       return;
     }
     const st = shown();
+    /* 観戦はそのまま抜ける (投了は送らない) */
+    if (roomWatching) { location.href = location.pathname; return; }
     if (st && st.winner === null) {
       if (!await RS.askConfirm('投了してメニューに戻りますか？')) return;
       try { await ROOM.roomApi('action', { code: roomRm.code, version: roomRm.version, action: { type: 'surrender' } }); }
@@ -3106,7 +3113,7 @@ async function roomApplyView(rm, instant) {
 }
 
 async function roomStep(action) {
-  if (busy || !roomRm) return;
+  if (busy || !roomRm || roomWatching) return;           // 観戦は指せない
   busy = true;
   updatePads();
   try {
@@ -3197,7 +3204,7 @@ function updateTurnTimer() {
   el.hidden = false;
   el.classList.toggle('mine', mine);
   el.classList.toggle('warn', left <= 30);
-  if (!mine && left <= 0) {
+  if (!mine && left <= 0 && !roomWatching) {
     if (!el.querySelector('button')) {
       el.innerHTML = '<span>相手の持ち時間が切れました</span><button type="button">時間切れで勝ちにする</button>';
       el.querySelector('button').onclick = async () => {
@@ -3326,6 +3333,8 @@ async function roomEnterGame(rm) {
   roomLoggedVersion = null;
   roomTracker = ROOM.createTraceTracker();
   await roomApplyView(rm, true);
+  if (avatars) { for (const k of ['me', 'mate', 'opp']) if (avatars[k]) avatars[k].destroy(); avatars = null; }
+  syncAvatar();                                          // 相手 (観戦は2人) が着けているキャラで出し直す
   await stage.home(600);
   placeDialogsNearBoard();
   startRoomPoll();
