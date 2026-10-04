@@ -3319,7 +3319,7 @@ async function roomMaybeFinish() {
   /* 遊ばれ方の匿名の記録 (同じ決着を読み直したときは送らない) */
   if (firstTime) logPlay({ mode: 'online', win, me: st.players[ME].protocols.map(p => p.name), opp: st.players[1 - ME].protocols.map(p => p.name),
     turns: (st.turns || 0) + 1, logged: !!accountState().user });
-  if (firstTime) await saveOnlineReplay(st, win);
+  await saveOnlineReplay(st, win, firstTime);
   if (firstTime) {
     const before = myLevel;
     refreshCardGlow();
@@ -3333,12 +3333,25 @@ async function roomMaybeFinish() {
    オンラインは歯車の「投了してメニューに戻る」。問題・練習・チュートリアル・リプレイ・観戦では出さない */
 function canSurrender() {
   const st = shown();
-  return !!st && st.winner === null && !roomMode && !puzzle && !tutorial && !trainingMode && !replayMode && !demoMode && !spectate && !reviewView;
+  return !!st && st.winner === null && !roomWatching && !puzzle && !tutorial && !trainingMode && !replayMode && !demoMode && !spectate && !reviewView;
 }
 async function surrenderLocal() {
   if (!await RS.askConfirm('降参しますか？ この対戦は負けになります。')) return;
   const ov = document.getElementById('settingsOv');
   if (ov) ov.classList.remove('show');
+  /* オンライン: 投了を送り、その場で結果の画面へ (感想戦・リプレイを見られる。メニューへは結果の画面から) */
+  if (roomMode) {
+    try {
+      const next = await ROOM.roomApi('action', { code: roomRm.code, version: roomRm.version, action: { type: 'surrender' } });
+      cancelPendingAsk();
+      removePickBar();
+      await roomApplyView(next);
+    } catch (e) {
+      if (isRoomGone(e)) { roomClosed(); return; }
+      UI.toast((e && e.message) || '投了を送れませんでした');
+    }
+    return;
+  }
   /* 相手が指している途中なら、その手が終わるのを待ってから */
   for (let i = 0; i < 100 && busy; i++) await TW.wait(100);
   if (!canSurrender() || busy) return;
@@ -3351,7 +3364,9 @@ async function surrenderLocal() {
 
 /* オンラインのリプレイ: 決着したらサーバーから始めの条件と手の列をもらって残す (1対1だけ)。
    後攻の部屋 (ゲスト) の人は view 1 で、盤面を入れ替えて自分を手前にして見る */
-async function saveOnlineReplay(st, win) {
+let onlineReview = null;           // オンラインの感想戦: { history, final } (棋譜から作り直したもの)
+async function saveOnlineReplay(st, win, firstTime) {
+  onlineReview = null;
   if (!roomRm || roomRm.mode === 'tag' || roomWatching) return;
   try {
     const r = await ROOM.roomApi('replay', { code: roomRm.code });
@@ -3359,6 +3374,12 @@ async function saveOnlineReplay(st, win) {
     const view = r.side === 1 ? 1 : 0;
     const rep = { me: view ? r.init.p1 : r.init.p0, opp: view ? r.init.p0 : r.init.p1, win, level: 2, kind: 'online', view,
       oppName: (roomRm.names && roomRm.names[1 - view]) || '', turns: (st.turns || 0) + 1, init: r.init, actions: r.actions };
+    try {
+      const built = rebuild(Engine, rep);
+      if (built.ok && built.history.length) onlineReview = { history: built.history, final: built.final };
+    } catch (e) { onlineReview = null; }
+    /* 同じ決着を読み直したとき (部屋に入り直した等) は、リプレイを2つ残さない */
+    if (!firstTime) return;
     lastReplayId = addReplay(rep);
     uploadReplay({ ...rep, at: Date.now(), mode: 'online' });
   } catch (e) { /* 残せなくても対戦の結果には響かない */ }
@@ -5153,7 +5174,7 @@ function showEndActions(win) {
       '<button class="arr-btn ok" id="endAgain" type="button">REMATCH</button>' +
       '<button class="arr-btn" id="endTop" type="button">TITLE</button>' +
       '<button class="arr-btn" id="endBoard" type="button">BOARD</button>' +
-      (gameHistory.length && !roomMode && !puzzle ? '<button class="arr-btn" id="endReview" type="button">REVIEW</button>' : '') +
+      ((gameHistory.length && !roomMode && !puzzle) || (roomMode && onlineReview) ? '<button class="arr-btn" id="endReview" type="button">REVIEW</button>' : '') +
       (lastReplayId ? '<button class="arr-btn" id="endSave" type="button">SAVE REPLAY</button>' : '') +
       (lastReplayId ? '<button class="arr-btn" id="endShare" type="button">SHARE</button>' : '') +
     '</div>';
@@ -5174,7 +5195,12 @@ function showEndActions(win) {
   const shareBtn = el.querySelector('#endShare');
   if (shareBtn) shareBtn.onclick = () => shareReplayById(lastReplayId);
   const reviewBtn = el.querySelector('#endReview');
-  if (reviewBtn) reviewBtn.onclick = () => { el.classList.remove('show'); startReview(win); };
+  if (reviewBtn) reviewBtn.onclick = () => {
+    el.classList.remove('show');
+    /* オンライン: サーバーの棋譜から作り直した盤面で振り返る (後攻の部屋の人は左右を入れ替えた盤面) */
+    if (roomMode && onlineReview) startReview(win, onlineReview.history, null, onlineReview.final);
+    else startReview(win);
+  };
   /* どちらもページを作り直す。シーンを組み直すのが最も確実 */
   /* もう1戦: 同じ組み合わせ・同じ強さで、タイトルと準備を飛ばして始め直す (勝ち抜き戦・オンラインは除く) */
   el.querySelector('#endAgain').onclick = () => {
@@ -5199,8 +5225,8 @@ function showEndActions(win) {
 }
 
 /* 感想戦: 棋譜を1手ずつ戻して見る。自分の手番では AI のおすすめも出す */
-function startReview(win, history, onExit) {
-  const final = cur.state;
+function startReview(win, history, onExit, finalState) {
+  const final = finalState || cur.state;
   const list = history || gameHistory;
   UI.setPrompt('');
   stage.home(400);
