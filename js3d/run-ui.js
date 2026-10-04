@@ -500,7 +500,9 @@ export function showRunAfterGame(win, damage, protocols) {
     lifeBar({ ...run, life: Math.max(0, run.life) }) + '<p class="rn-lead">' + line + '</p>' + heatNote +
     (run.phase === 'over' || run.phase === 'clear' ? '<p class="rn-note">デッキ ' + deckLine(run.deck, byName) + '</p>' + patchStrip(run) : '') +
     '<div class="rn-btns">' +
-      (run.phase === 'over' || run.phase === 'clear' ? '' : '<button type="button" class="rn-go" data-act="next">次へ</button>') +
+      /* 終わったら、すぐもう一度 (クリアしたら次の HEAT が開いている) */
+      (run.phase === 'over' || run.phase === 'clear' ? '<button type="button" class="rn-go" data-act="next">' + (run.phase === 'clear' ? '次の挑戦へ' : 'もう一度挑戦') + '</button>'
+        : '<button type="button" class="rn-go" data-act="next">次へ</button>') +
       '<button type="button" data-act="board">盤面を見る</button><button type="button" data-act="title">タイトルへ</button></div></div>';
   if (run.phase === 'clear') { el.classList.add('rn-clear'); confetti(RAR_COLORS.L, 320); setTimeout(() => confetti(RAR_COLORS.E, 200), 900); }
   el.onclick = (ev) => {

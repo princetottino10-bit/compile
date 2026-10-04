@@ -2616,6 +2616,16 @@
   #title .tt-main{display:flex;flex-direction:column;gap:7px;}
   #title .tt-main button{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:15px 20px 15px 18px;
     font:800 clamp(17px,1.9vw,24px)/1 var(--font-ui);letter-spacing:.14em;border-left:3px solid transparent;}
+  /* 縦持ちの狭い画面では、右上のレベルの札から称号を外す (称号があると左にはみ出して LV が切れていた。称号はプロフィールで見られる) */
+  @media (max-width:420px){ #title .tt-profile small{display:none;} }
+  /* メニューの進み具合の札 */
+  #title .tt-main button{position:relative;}
+  #title .tt-badge{position:absolute;top:4px;right:10px;padding:3px 7px;font:800 9.5px/1 var(--font-ui);font-style:normal;letter-spacing:.06em;
+    color:var(--ink);background:rgba(20,16,34,.95);border:1px solid rgba(255,255,255,.22);clip-path:var(--cut-s);pointer-events:none;}
+  #title .tt-badge.hot{color:#0c0a14;background:var(--mint);border-color:var(--mint);}
+  /* 中断した対戦の続き (メニューのいちばん上、2列ぶん) */
+  #title .tt-main .tt-resume{grid-column:1 / -1;border-color:var(--mint);background:linear-gradient(100deg,rgba(124,240,208,.16),rgba(124,240,208,.03));}
+  #title .tt-main .tt-resume small{color:var(--mint);text-transform:none;letter-spacing:.02em;}
   #title .tt-main button small{display:inline;margin:0;font:700 10px/1 var(--font-ui);letter-spacing:.2em;color:var(--dim);}
   #title .tt-main button:hover,#title .tt-main button:focus-visible{border-left-color:var(--pink);}
   #title .tt-more{justify-content:flex-start;gap:6px;flex-wrap:wrap;}
@@ -3021,6 +3031,10 @@
   .cm-plate small{display:block;margin-top:4px;font:900 12px/1 var(--font-hud,var(--font-ui));letter-spacing:.16em;color:var(--gold);}
   .cm-cap{text-align:center;display:flex;flex-direction:column;gap:4px;}
   .cm-cap b{font:900 17px/1.2 var(--font-ui);color:#fff;letter-spacing:.06em;}
+  .cm-undo{margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;font:600 11px/1.3 "M PLUS 1",system-ui;color:var(--dim);
+    animation:cmIn .25s ease-out;}
+  .cm-undo button{padding:4px 10px;cursor:pointer;border:1px solid rgba(255,255,255,.3);background:none;color:#fff;font:800 10.5px/1 var(--font-ui);clip-path:var(--cut-s);}
+  .cm-undo button:hover,.cm-undo button:focus-visible{border-color:var(--mint);color:var(--mint);outline:0;}
   .cm-src{align-self:center;margin-top:2px;padding:4px 10px;cursor:pointer;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.04);
     color:var(--ink);font:800 10.5px/1 var(--font-ui);letter-spacing:.04em;clip-path:var(--cut-s);}
   .cm-src:hover,.cm-src:focus-visible{border-color:var(--pink);background:rgba(255,79,163,.12);outline:0;}
@@ -4088,7 +4102,7 @@
     <div id="topRight">
       <button id="btnCards" class="btn" type="button" title="カードリスト" aria-label="カードリスト">CARDS</button>
       <button id="btnSettings" class="btn" type="button" title="設定・メニューに戻る" aria-label="設定・メニューに戻る">⚙</button>
-      <button id="btnMute" class="btn" type="button" title="効果音" aria-label="効果音">🔊</button>
+      <button id="btnMute" class="btn" type="button" title="すべての音を消す" aria-label="すべての音を消す">🔊</button>
     </div>
   </div>
 
@@ -4189,7 +4203,7 @@
       "./js3d/cloudsave.js": "./js3d/cloudsave.js?v=16e480fbda",
       "./js3d/control.js": "./js3d/control.js?v=c1b87ebc63",
       "./js3d/cos-rarity.js": "./js3d/cos-rarity.js?v=ebced42017",
-      "./js3d/cosmetics-mode.js": "./js3d/cosmetics-mode.js?v=0373749a08",
+      "./js3d/cosmetics-mode.js": "./js3d/cosmetics-mode.js?v=b8f5bfa057",
       "./js3d/cosmetics-ui.js": "./js3d/cosmetics-ui.js?v=a78ef23c9b",
       "./js3d/crashwatch.js": "./js3d/crashwatch.js?v=8b4bdaa28f",
       "./js3d/daily.js": "./js3d/daily.js?v=f56dabdf65",
@@ -4212,7 +4226,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=2b4dbc6066",
       "./js3d/logformat.js": "./js3d/logformat.js?v=e3548c74d1",
-      "./js3d/main.js": "./js3d/main.js?v=0ec072177d",
+      "./js3d/main.js": "./js3d/main.js?v=178f7e8f04",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=6a0b3a0d99",
@@ -4234,8 +4248,8 @@
       "./js3d/review.js": "./js3d/review.js?v=34f174153b",
       "./js3d/rewards.js": "./js3d/rewards.js?v=ff8a27bac3",
       "./js3d/room.js": "./js3d/room.js?v=be804bed77",
-      "./js3d/roomui.js": "./js3d/roomui.js?v=a8960ae303",
-      "./js3d/run-ui.js": "./js3d/run-ui.js?v=adb539a920",
+      "./js3d/roomui.js": "./js3d/roomui.js?v=356e2b8173",
+      "./js3d/run-ui.js": "./js3d/run-ui.js?v=418892f8e3",
       "./js3d/run.js": "./js3d/run.js?v=0cf822f354",
       "./js3d/runcards.js": "./js3d/runcards.js?v=c2bf20e9b7",
       "./js3d/selectui.js": "./js3d/selectui.js?v=208abdaebc",
@@ -4254,7 +4268,7 @@
       "./js3d/story.js": "./js3d/story.js?v=8327f55441",
       "./js3d/support.js": "./js3d/support.js?v=86cfbcc21a",
       "./js3d/theme.js": "./js3d/theme.js?v=932e1d5eb8",
-      "./js3d/title.js": "./js3d/title.js?v=784720f764",
+      "./js3d/title.js": "./js3d/title.js?v=ed413d8a3c",
       "./js3d/titleback.js": "./js3d/titleback.js?v=5663d0b7a4",
       "./js3d/training.js": "./js3d/training.js?v=3018b4399e",
       "./js3d/tsume.js": "./js3d/tsume.js?v=bd786cf3c9",
@@ -4262,7 +4276,7 @@
       "./js3d/tutorial.js": "./js3d/tutorial.js?v=1b5e3a1067",
       "./js3d/tween.js": "./js3d/tween.js?v=99b25c0d63",
       "./js3d/ui.js": "./js3d/ui.js?v=9e0da70279",
-      "./js3d/weekly-ui.js": "./js3d/weekly-ui.js?v=f449c2e66e",
+      "./js3d/weekly-ui.js": "./js3d/weekly-ui.js?v=92b645307a",
       "./js3d/weekly.js": "./js3d/weekly.js?v=5605476b1c",
       "./js3d/xp.js": "./js3d/xp.js?v=2146fbc219"
     }
@@ -4295,7 +4309,7 @@
   <link rel="modulepreload" href="js3d/control.js?v=c1b87ebc63">
   <link rel="modulepreload" href="js3d/panel.js?v=994ec047da">
   <link rel="modulepreload" href="js3d/setup.js?v=a56fbc692e">
-  <link rel="modulepreload" href="js3d/title.js?v=784720f764">
+  <link rel="modulepreload" href="js3d/title.js?v=ed413d8a3c">
   <link rel="modulepreload" href="js3d/training.js?v=3018b4399e">
   <link rel="modulepreload" href="js3d/room.js?v=be804bed77">
   <link rel="modulepreload" href="js3d/puzzle.js?v=6707164a75">
@@ -4311,19 +4325,19 @@
   <link rel="modulepreload" href="js3d/rewards.js?v=ff8a27bac3">
   <link rel="modulepreload" href="js3d/gachafx.js?v=3d15a2226f">
   <link rel="modulepreload" href="js3d/cosmetics-ui.js?v=a78ef23c9b">
-  <link rel="modulepreload" href="js3d/cosmetics-mode.js?v=0373749a08">
+  <link rel="modulepreload" href="js3d/cosmetics-mode.js?v=b8f5bfa057">
   <link rel="modulepreload" href="js3d/displayname.js?v=613e18bf95">
   <link rel="modulepreload" href="js3d/plates.js?v=a1e3b996bb">
   <link rel="modulepreload" href="js3d/playmat.js?v=1c8f36818a">
   <link rel="modulepreload" href="js3d/cardlist-ov.js?v=97693492b3">
   <link rel="modulepreload" href="js3d/opponent-select.js?v=6a0b3a0d99">
   <link rel="modulepreload" href="js3d/aidecks.js?v=5aae71f416">
-  <link rel="modulepreload" href="js3d/run-ui.js?v=adb539a920">
-  <link rel="modulepreload" href="js3d/weekly-ui.js?v=f449c2e66e">
+  <link rel="modulepreload" href="js3d/run-ui.js?v=418892f8e3">
+  <link rel="modulepreload" href="js3d/weekly-ui.js?v=92b645307a">
   <link rel="modulepreload" href="js3d/run.js?v=0cf822f354">
   <link rel="modulepreload" href="js3d/weekly.js?v=5605476b1c">
   <link rel="modulepreload" href="js3d/review.js?v=34f174153b">
-  <link rel="modulepreload" href="js3d/roomui.js?v=a8960ae303">
+  <link rel="modulepreload" href="js3d/roomui.js?v=356e2b8173">
   <link rel="modulepreload" href="js3d/selectui.js?v=208abdaebc">
   <link rel="modulepreload" href="js3d/cardtex.js?v=61e2262ea0">
   <link rel="modulepreload" href="js3d/fx.js?v=f76521724c">
@@ -4383,6 +4397,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=ba24e41aa7">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=0ec072177d"></script>
+  <script type="module" src="js3d/main.js?v=178f7e8f04"></script>
 </body>
 </html>

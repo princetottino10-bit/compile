@@ -1000,12 +1000,16 @@ async function boot() {
     } catch (e) { /* private mode */ }
     /* 中断した対戦 (画面が落ちた・閉じた) があれば、タイトルの前に続きから遊ぶか聞く */
     let resumeRec = null;
-    if (!joinCode && !accountResume && ![...params.keys()].length) {
+    /* タイトルの「CONTINUE」から来たときは、聞かずに続ける */
+    const resumeNow = (() => { try { const v = sessionStorage.getItem('compileResumeNow') === '1'; sessionStorage.removeItem('compileResumeNow'); return v; } catch (e) { return false; } })();
+    if (resumeNow) resumeRec = RS.loadResume();
+    else if (!joinCode && !accountResume && ![...params.keys()].length) {
       const r = RS.loadResume();
       if (r) { if (await RS.askResume(r)) resumeRec = r; else RS.endResume(); }
     }
     let nextMode = resumeRec ? 'resume'
       : joinCode ? 'online'
+      : params.get('online') === '1' ? 'online'      // オンラインの対戦のあと「LOBBY」で戻るとき
       : params.get('run') === '1' ? 'run'
       : params.get('story') === '1' ? 'story'
       : params.get('tsume') ? 'tsume'
@@ -5266,7 +5270,8 @@ function showEndActions(win) {
     nextGoalsHtml() +
     (underdogWin ? '<div class="end-sub">最弱のデッキで最強に勝ちました。称号 GIANT SLAYER・専用スリーブとマーカー・+' + UNDERDOG_XP + ' XP</div>' : '') +
     '<div class="end-btns">' +
-      '<button class="arr-btn ok" id="endAgain" type="button">REMATCH</button>' +
+      /* オンラインは同じ部屋で再戦できない (部屋は閉じている) ので、ロビーへ戻る (前は REMATCH でタイトルに戻っていた) */
+      '<button class="arr-btn ok" id="endAgain" type="button">' + (roomMode ? 'LOBBY' : 'REMATCH') + '</button>' +
       '<button class="arr-btn" id="endTop" type="button">TITLE</button>' +
       '<button class="arr-btn" id="endBoard" type="button">BOARD</button>' +
       ((gameHistory.length && !roomMode && !puzzle) || (roomMode && onlineReview) ? '<button class="arr-btn" id="endReview" type="button">REVIEW</button>' : '') +
@@ -5299,6 +5304,7 @@ function showEndActions(win) {
   /* どちらもページを作り直す。シーンを組み直すのが最も確実 */
   /* もう1戦: 同じ組み合わせ・同じ強さで、タイトルと準備を飛ばして始め直す (勝ち抜き戦・オンラインは除く) */
   el.querySelector('#endAgain').onclick = () => {
+    if (roomMode) { location.href = location.pathname + '?online=1'; return; }
     const st0 = cur && cur.state;
     if (!roomMode && !runMode && lastSetup && st0) {
       const q = new URLSearchParams({ me: lastSetup.p0.join(','), ai: lastSetup.p1.join(','), lv: String(aiDifficulty ?? 0) });

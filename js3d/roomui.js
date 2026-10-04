@@ -11,6 +11,21 @@ import { settings } from './settings.js';
 import { roomApi, roomLeaveKeepalive, roomIsAnonymous, roomLogin, roomSession, roomSignIn, roomSignInWithGitHub, roomSignInWithGoogle, roomSignOut, roomSignUp } from './room.js';
 import { emblemDataURL } from './emblems.js';
 import { showProtocolCards } from './protocards.js';
+import { sfx } from './audio.js';
+import { buzz } from './feel.js';
+
+/* 呼ぶ: 音・振動、見ていないタブならタブの名前を点滅 (戻ってきたら元に) */
+let titleBlink = null;
+function callMe(text) {
+  try { sfx('yourTurn'); } catch (e) { /* 音なしで続ける */ }
+  try { buzz([60, 40, 60]); } catch (e) { /* 振動なしで続ける */ }
+  if (typeof document === 'undefined' || !document.hidden || titleBlink) return;
+  const base = document.title;
+  let on = false;
+  titleBlink = setInterval(() => { on = !on; document.title = on ? '● ' + text : base; }, 900);
+  const stop = () => { clearInterval(titleBlink); titleBlink = null; document.title = base; document.removeEventListener('visibilitychange', stop); };
+  document.addEventListener('visibilitychange', stop);
+}
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -43,7 +58,8 @@ export function runRoomLobby(protocols, opts = {}) {
   let lobbyTimer = null;
   let finished = false;
   let session = null;
-  let wantRated = false;
+  /* レート戦のチェックは覚えておく (ほかのロビーの選択と同じく) */
+  let wantRated = (() => { try { return localStorage.getItem('compileRoomRated') === '1'; } catch (e) { return false; } })();
   let pendingJoin = opts.joinCode ? String(opts.joinCode).toUpperCase().replace(/[^A-Z2-9]/g, '').slice(0, 6) : '';
   let waitStart = 0;       // 待機を始めた時刻 (経過時間と「CPU と遊ぶ」の案内に使う)
   let pollFails = 0;       // 問い合わせが続けて失敗した回数
@@ -306,6 +322,7 @@ export function runRoomLobby(protocols, opts = {}) {
         if (needName()) return;
         const pw = $('#roomPw').value;
         wantRated = $('#roomRated').checked;
+        try { localStorage.setItem('compileRoomRated', wantRated ? '1' : '0'); } catch (e) { /* private mode */ }
         if (wantRated && roomIsAnonymous(session)) { await showLogin(); return; }
         if (pw && pw.length < 4) { status('パスワードは4文字以上です', 'err'); return; }
         const draftRules = { poolSize: +$('#roomPool').value, bans: +$('#roomBans').value };
@@ -517,7 +534,10 @@ export function runRoomLobby(protocols, opts = {}) {
       pollFails = 0;
       if (next.unchanged) return;                                  // 前回から変わっていない (盤面は省かれている)
       if (next.version === room.version && next.status === room.status) { room = next; return; }
+      const wasAttn = attention(room);
       room = next;
+      const nowAttn = attention(room);
+      if (nowAttn && nowAttn !== wasAttn) callMe(nowAttn === 'joined' ? '相手が来ました' : 'あなたの番です');
       if (room.status === 'playing' || room.status === 'finished') { done({ rm: room }); return; }
       renderRoom();
     }
@@ -530,6 +550,13 @@ export function runRoomLobby(protocols, opts = {}) {
       el.textContent = '待機 ' + Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
       const cpu = $('#roomCpu');
       if (cpu && sec >= 45) cpu.hidden = false;
+    }
+
+    /* 知らせること: 相手が来た / ドラフトで自分の番になった (ほかのタブで待っていても気づけるように) */
+    function attention(r) {
+      if (!r || !r.names || !r.names[1]) return null;
+      if (r.status === 'draft' && r.draft && r.draft.active === r.side) return 'myturn:' + JSON.stringify(r.draft.banned || '') + (r.protocols ? JSON.stringify(r.protocols) : '');
+      return 'joined';
     }
 
     function mode() {

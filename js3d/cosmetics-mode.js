@@ -5,12 +5,12 @@
  *   まだ持っていないものも並べ、手に入れ方を書く (押すとプレビューだけ見られる)。
  *   新しく手に入れたものには NEW (見た印は compileCosSeen、このブラウザだけ)
  * ========================================================================= */
-import { COSMETICS, TITLES, REWARDS, GACHA_ITEMS, UNDERDOG_ITEMS, WEEKLY_ITEMS, masteryItem, protoMastery, unlockLevel, ownedTitles, AVATAR_RELEASED, BGM_RELEASED } from './rewards.js';
+import { COSMETICS, TITLES, REWARDS, GACHA_ITEMS, UNDERDOG_ITEMS, WEEKLY_ITEMS, masteryItem, protoMastery, unlockLevel, ownedTitles, AVATAR_RELEASED, BGM_RELEASED, weeklyClears } from './rewards.js';
 import { AVATARS, faceURL } from './avatar.js';
 import { accountState } from './account.js';
 import { extraTitles, TROPHY_TITLES } from './cosmetics-ui.js';
 import { settings, setSetting } from './settings.js';
-import { playerLevel } from './stats-data.js';
+import { playerLevel, xpForLevel } from './stats-data.js';
 import { localRecords } from './stats.js';
 import { bonusXp } from './xp.js';
 import { backTex, onSleeveArt } from './cardtex.js';
@@ -93,25 +93,33 @@ function owned(kind, key, c) {
   if (kind === 'icon') return c.level >= unlockLevel('icon', 'icon');
   return c.level >= unlockLevel(kind, key);
 }
+/* いまの経験値 (まだの品物に「あと XP いくつ」を出す)。一覧の全部で数え直さないよう、少しのあいだ覚えておく */
+let xpMemo = { at: 0, xp: 0 };
+function xpNow() {
+  if (Date.now() - xpMemo.at > 1000) xpMemo = { at: Date.now(), xp: playerLevel(localRecords(), bonusXp()).xp };
+  return xpMemo.xp;
+}
+const lvLeft = (lv) => { const n = xpForLevel(lv) - xpNow(); return n > 0 ? ' (あと XP ' + n + ')' : ''; };
+
 /* 手に入れ方。[まだのときの言い方, 持っているときの言い方 (どうやって手に入れたか)] */
 function sourceInfo(kind, key) {
   if (key === '' || key === DEFAULT_KEY[kind]) return ['はじめから', 'はじめから持っている'];
   if (shopPrice(kind, key)) return ['CHIP ' + shopPrice(kind, key) + ' で交換', 'CHIP ' + shopPrice(kind, key) + ' で交換した'];
-  if (kind === 'icon') return ['LV ' + unlockLevel('icon', 'icon') + ' で解放', 'LV ' + unlockLevel('icon', 'icon') + ' になって解放'];
+  if (kind === 'icon') return ['LV ' + unlockLevel('icon', 'icon') + ' で解放' + lvLeft(unlockLevel('icon', 'icon')), 'LV ' + unlockLevel('icon', 'icon') + ' になって解放'];
   const g = GACHA_ITEMS.find(x => x.kind === kind && x.key === key);
   if (g) return ['GACHA (' + RAR_NAME[g.rar] + ')', 'GACHA で当てた (' + RAR_NAME[g.rar] + ')'];
   if (UNDERDOG_ITEMS.some(x => x.kind === kind && x.key === key) || (kind === 'title' && key === 'underdog')) return ['下剋上に勝つ', '下剋上に勝ってもらった'];
   const m = masteryItem(kind, key);
   if (m) return [m.proto + ' の習熟度 ' + m.mastery + ' (いま ' + protoMastery(m.proto) + ')', m.proto + ' の習熟度が ' + m.mastery + ' になってもらった'];
   const w = WEEKLY_ITEMS.find(x => x.kind === kind && x.key === key);
-  if (w) return ['週替わり3連戦を ' + w.weeks + ' 週クリア', '週替わり3連戦を ' + w.weeks + ' 週クリアしてもらった'];
+  if (w) return ['週替わり3連戦を ' + w.weeks + ' 週クリア (いま ' + weeklyClears() + ')', '週替わり3連戦を ' + w.weeks + ' 週クリアしてもらった'];
   if (kind === 'title') {
     const t = Object.entries(TROPHY_TITLES).find(([, k]) => k === key);
     if (t) return ['実績 ' + trophyName(t[0]), '実績「' + trophyName(t[0]) + '」を取ってもらった'];
     if (key === 'platinum') return ['ほかの実績を全部取る', 'ほかの実績を全部取ってもらった'];
   }
   const r = REWARDS.find(x => x.kind === kind && x.key === key);
-  return r ? ['LV ' + r.lv + ' で解放', 'LV ' + r.lv + ' のレベルアップでもらった'] : ['', ''];
+  return r ? ['LV ' + r.lv + ' で解放' + lvLeft(r.lv), 'LV ' + r.lv + ' のレベルアップでもらった'] : ['', ''];
 }
 function sourceOf(kind, key) { return sourceInfo(kind, key)[0]; }
 /* 手に入れ方の場所へ飛ぶボタン (実績 → RECORD の実績、習熟度 → RECORD のプロトコル、レベル → プロフィール) */
@@ -298,6 +306,16 @@ export function openCosmetics(opts) {
   let filter = 'all', showMastery = false;
   let listened = false;                              // BGM を試し聴きした (閉じたらタイトルの曲に戻す)
   let armed = null;                                  // 交換のボタンを1回押した品物 (もう一度押すと交換)
+  /* 押すとすぐ着け替わるので、直前のものに戻せるように (確かめの画面は出さず、あとから戻せる) */
+  let undo = null;                                   // { tab, prev, name }
+  const equip = (key) => {
+    const s0 = settings();
+    const prev = tab === 'title' || tab === 'icon' ? (s0[tab] || '') : (s0[tab] || DEFAULT_KEY[tab]);
+    if (prev === key) return;
+    setSetting(tab, key);
+    const item = itemsOf(tab).find(([k]) => k === key);
+    undo = { tab, prev, name: item ? item[1] : key };
+  };
   /* 見た印は、そのタブを離れるときと閉じるときに付ける (前は描き直すたびに付けていて、1回押しただけで NEW が全部消えていた) */
   const commitSeen = () => { const c = ctx(); markSeen(itemsOf(tab).filter(([k]) => owned(tab, k, c)).map(([k]) => tab + ':' + k)); };
   const render = () => {
@@ -346,7 +364,8 @@ export function openCosmetics(opts) {
             : shopPrice(tab, fItem[0]) ? '<button type="button" class="cm-equip cm-buy' + (armed === fItem[0] ? ' armed' : '') + '" data-buy="' + esc(fItem[0]) + '"' +
               (chipsNow() < shopPrice(tab, fItem[0]) ? ' disabled' : '') + '>' +
               (chipsNow() < shopPrice(tab, fItem[0]) ? 'CHIP が足りません (' + shopPrice(tab, fItem[0]) + ')'
-                : armed === fItem[0] ? 'もう一度押すと交換 (CHIP ' + shopPrice(tab, fItem[0]) + ')' : 'CHIP ' + shopPrice(tab, fItem[0]) + ' で交換') + '</button>' : '') + '</section>' +
+                : armed === fItem[0] ? 'もう一度押すと交換 (CHIP ' + shopPrice(tab, fItem[0]) + ')' : 'CHIP ' + shopPrice(tab, fItem[0]) + ' で交換') + '</button>' : '') +
+          (undo && undo.tab === tab ? '<p class="cm-undo">「' + esc(undo.name) + '」を着けました <button type="button" data-undo="1">元に戻す</button></p>' : '') + '</section>' +
         '<section class="cm-list" data-tab="' + tab + '"><div class="cm-filter"><p class="cm-count">' + TABS.find(t => t.kind === tab).label + ' ' + got + ' / ' + list.length + '</p>' +
           rarTally(tab, list, c) +
           [['all', '全部'], ['own', '持っている'], ['not', 'まだ']].map(([k, label]) =>
@@ -392,16 +411,17 @@ export function openCosmetics(opts) {
       openGacha({ onClose: () => render(), onUse: (kind, key) => { if (tabOk(kind)) { commitSeen(); tab = kind; } focus = key; filter = 'all'; render(); } });
       return;
     }
-    if (b.dataset.tab) { if (b.dataset.tab !== tab) commitSeen(); tab = b.dataset.tab; focus = null; render(); return; }
+    if (b.dataset.undo !== undefined) { if (undo) setSetting(undo.tab, undo.prev); undo = null; render(); return; }
+    if (b.dataset.tab) { if (b.dataset.tab !== tab) commitSeen(); tab = b.dataset.tab; focus = null; undo = null; render(); return; }
     if (b.dataset.filter) { filter = b.dataset.filter; render(); return; }
     if (b.dataset.mastery) { showMastery = !showMastery; render(); return; }
-    if (b.dataset.equip !== undefined) { setSetting(tab, b.dataset.equip); render(); return; }
+    if (b.dataset.equip !== undefined) { equip(b.dataset.equip); render(); return; }
     /* CHIP で交換: 1回目は確かめ、2回目で交換してそのまま着ける */
     if (b.dataset.buy !== undefined) {
       const key = b.dataset.buy;
       if (armed !== key) { armed = key; render(); return; }
       armed = null;
-      if (SHOP[tab] && SHOP[tab].buy(key)) setSetting(tab, key);
+      if (SHOP[tab] && SHOP[tab].buy(key)) equip(key);
       render();
       return;
     }
@@ -412,7 +432,7 @@ export function openCosmetics(opts) {
       /* BGM のタブは、押したら試し聴き */
       if (tab === 'bgm') { listened = true; playBgm(key); }
       /* 持っているものは、押したらそのまま着ける (プレビューにも出す) */
-      if (owned(tab, key, ctx()) && tab !== 'track') setSetting(tab, key);
+      if (owned(tab, key, ctx()) && tab !== 'track') equip(key);
       render();
     }
   };

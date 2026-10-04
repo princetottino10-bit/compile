@@ -21,6 +21,10 @@ import { localRecords } from './stats.js';
 import { openProfile } from './profile.js';
 import { openGacha, chipsNow } from './gacha-ui.js';
 import { openCosmetics, hasNewCosmetics } from './cosmetics-mode.js';
+import { loadResume, resumeLabel } from './resume.js';
+import { loadRun, nodeById, MAP_ROWS } from './run.js';
+import { loadWeekly } from './weekly.js';
+import { conquered, conquerable } from './stats-data.js';
 
 const BOOT_LINES = [
   '> COMPILE OS v3.1 — boot sequence initiated',
@@ -30,6 +34,32 @@ const BOOT_LINES = [
   '> control component .......... NEUTRAL',
   '> awaiting operator input _'
 ];
+
+const STARTED_KEY = 'compileStarted';
+
+/* メニューのボタンの右上の小さな札 (いまの進み具合。押す前に「続きがある」「まだやっていない」が分かる) */
+const badge = (b) => (b ? '<i class="tt-badge' + (b.hot ? ' hot' : '') + '">' + b.text + '</i>' : '');
+function runBadge() {
+  try {
+    const run = loadRun();
+    if (run && run.phase !== 'over' && run.phase !== 'clear') {
+      const n = nodeById(run, run.pos);
+      return { text: '続き ' + (n ? n.row + 1 : 1) + '/' + MAP_ROWS + '段', hot: true };
+    }
+    const w = loadWeekly();
+    if (w.phase === 'clear') return null;
+    if (w.phase === 'battle' || w.phase === 'choose') return { text: 'WEEKLY 第' + (w.stage + 1) + '戦', hot: true };
+    if (!w.attempt) return { text: 'WEEKLY 未挑戦' };
+  } catch (e) { /* 札なしで */ }
+  return null;
+}
+function challengeBadge(protocols) {
+  try {
+    const total = conquerable(protocols.map(p => p.name)).length;
+    const n = conquered(localRecords()).size;
+    return n < total ? { text: '制覇 ' + n + '/' + total } : null;
+  } catch (e) { return null; }
+}    // このタブで START を押した (sessionStorage)
 
 /* COLLECTION を閉じたら (タイトル・プロフィール・設定・報酬のどこから開いても)、見終わった NEW の印を消す */
 window.addEventListener('compile:cosmetics-closed', () => {
@@ -109,7 +139,11 @@ function accountTitle() {
 }
 
 export function runTitle(protocols, opts) {
-  const menuOnly = !!(opts && opts.menuOnly);    // ロビー等から戻るとき: 起動演出を飛ばしてメニューだけ
+  /* このタブで一度 START を押していたら、対戦のあとなどにタイトルへ戻ったときは起動演出を飛ばしてメニューから
+     (毎回 PRESS START を押させていた)。音は、次に画面に触れたときに鳴らし始める */
+  const startedBefore = (() => { try { return sessionStorage.getItem(STARTED_KEY) === '1'; } catch (e) { return false; } })();
+  const menuOnly = !!(opts && opts.menuOnly) || startedBefore;    // ロビー等から戻るとき: 起動演出を飛ばしてメニューだけ
+  const resumeRec = loadResume();
   const root = document.getElementById('title');
   if (!root) return Promise.resolve('single');
   const emblems = protocols
@@ -165,9 +199,11 @@ export function runTitle(protocols, opts) {
               '<button data-mode="quick" type="button">おまかせで1戦</button></div></div>'
             : '') +
           '<div class="tt-main">' +
+            /* 中断した対戦があれば、いちばん上に「続きから」 (前は次にページを開き直したときしか聞かれなかった) */
+            (resumeRec ? '<button data-mode="resumeGame" type="button" class="tt-resume">CONTINUE <small>' + resumeLabel(resumeRec).replace(/[&<>"]/g, '') + '</small></button>' : '') +
             '<button data-mode="single" type="button">SINGLE GAME <small>VS CPU</small></button>' +
-            '<button data-mode="challenge" type="button">CHALLENGE <small>BOSS · UNDERDOG</small></button>' +
-            '<button data-mode="run" type="button">RUN <small>ROGUELIKE · WEEKLY</small></button>' +
+            '<button data-mode="challenge" type="button">CHALLENGE <small>BOSS · UNDERDOG</small>' + badge(challengeBadge(protocols)) + '</button>' +
+            '<button data-mode="run" type="button">RUN <small>ROGUELIKE · WEEKLY</small>' + badge(runBadge()) + '</button>' +
             '<button data-mode="online" type="button">ONLINE GAME <small>ROOMS · RATED</small></button>' +
           '</div>' +
           /* 下の段は4つだけ (ごちゃつかせない)。GACHA は COLLECTION の中、TUTORIAL・TRAINING・CARDS は MORE の中 */
@@ -245,6 +281,8 @@ export function runTitle(protocols, opts) {
           } else if (button._closeMore) button._closeMore();
         }
         else if (button.dataset.mode === 'cosmetics') openCosmetics();
+        /* 中断した対戦の続き: 開き直して、聞かずにそのまま続ける */
+        else if (button.dataset.mode === 'resumeGame') { try { sessionStorage.setItem('compileResumeNow', '1'); } catch (e) { /* private mode */ } location.href = location.pathname; }
         else if (button.dataset.mode === 'profile') openProfile(protocols);
         else if (button.dataset.mode === 'quick') { location.href = location.pathname + '?quick=1'; }
         else finish(button.dataset.mode);
@@ -262,8 +300,14 @@ export function runTitle(protocols, opts) {
       const btn = root.querySelector('#ttStart');
       if (btn) btn.remove();
       showMenu();
-      try { initAudio(); sfx('turn'); } catch (e) { /* 音なしで続ける */ }
-      playBgm(menuBgm());                           // タイトル・メニューの曲 (対戦以外)
+      try { sessionStorage.setItem(STARTED_KEY, '1'); } catch (e) { /* private mode */ }
+      const sound = () => {
+        try { initAudio(); sfx('turn'); } catch (e) { /* 音なしで続ける */ }
+        playBgm(menuBgm());                         // タイトル・メニューの曲 (対戦以外)
+      };
+      /* 押さずに始まったとき (戻ってきたとき) は、ブラウザが音を止めているので、最初に触れたときに鳴らす */
+      if (startedBefore && !(opts && opts.menuOnly)) document.addEventListener('pointerdown', sound, { once: true, capture: true });
+      else sound();
     };
     root.querySelector('#ttStart').onclick = start;
     /* 画面のどこを押しても始まる (右上のレベル・ログイン・設定は除く) */

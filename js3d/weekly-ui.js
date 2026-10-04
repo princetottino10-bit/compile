@@ -87,6 +87,11 @@ export function openWeekly(protocols, cardsOf) {
   return new Promise((resolve) => {
     let s = W.loadWeekly(key);
     let picked = [];
+    /* 「この挑戦をやめる」は取り消せないので、2回押しで (RUN のあきらめると同じく、その場で確かめる) */
+    let armedGiveup = false;
+    const giveupBtn = () => armedGiveup
+      ? '<button type="button" class="rn-danger" data-act="giveup">本当にやめる (もう一度押す)</button>'
+      : '<button type="button" data-act="giveup">この挑戦をやめる</button>';
     let clears = '<p class="rn-note">クリア者を読み込み中…</p>';
     let submitNote = accountState().user ? 'クリア者の一覧に載せています…' : 'ログインすると、クリア者の一覧に名前が載ります (タイトル右上のログインから)';
     const save = (next) => { s = next; W.saveWeekly(s); render(); };
@@ -110,7 +115,7 @@ export function openWeekly(protocols, cardsOf) {
             ? '<p class="rn-note">アプリが落ちたときなどのために、同じ3つでこの戦いを<b>1回だけ</b>やり直せます (はじめから)。</p>'
             : '<p class="rn-warn">この戦いのやり直しはもう使いました。この挑戦はここまでです。</p>') +
           '<div class="rn-btns"><button type="button" data-act="hub">戻る</button>' +
-          '<button type="button" data-act="giveup">この挑戦をやめる</button>' +
+          giveupBtn() +
           (W.canResume(s) ? '<button type="button" class="rn-go" data-act="resume">第' + (s.stage + 1) + '戦をやり直す</button>' : '') + '</div>';
       } else if (s.phase === 'choose') {
         const opp = set.opponents[s.stage];
@@ -128,7 +133,7 @@ export function openWeekly(protocols, cardsOf) {
           }).join('') + '</div>' +
           (left.length > 3 ? '<p class="rn-note">残りの戦いのぶんも考えて選びましょう。使ったプロトコルは、この挑戦ではもう使えません。</p>' : '') +
           '<div class="rn-btns">' + (cardsOf ? '<button type="button" data-act="cards">カードを見る</button>' : '') +
-          '<button type="button" data-act="giveup">この挑戦をやめる</button>' +
+          giveupBtn() +
           '<button type="button" class="rn-go" data-act="fight"' + (picked.length === 3 ? '' : ' disabled') + '>戦う</button></div>';
       } else {
         body = '<h2>週替わり3連戦 <small>' + esc(W.weekRange(key)) + '</small></h2>' +
@@ -157,6 +162,7 @@ export function openWeekly(protocols, cardsOf) {
       if (chip) { openCards(chip.dataset.info); return; }
       const t = ev.target.closest('button');
       if (!t || t.disabled) return;
+      if (t.dataset.act !== 'giveup') armedGiveup = false;   // ほかを押したら確かめは取り消し
       if (t.dataset.pick) {
         const n = t.dataset.pick;
         picked = picked.includes(n) ? picked.filter(x => x !== n) : picked.length < 3 ? picked.concat(n) : picked;
@@ -166,7 +172,9 @@ export function openWeekly(protocols, cardsOf) {
       switch (t.dataset.act) {
         case 'hub': done({ go: 'hub' }); break;
         case 'start': picked = []; save(W.startAttempt(s)); break;
-        case 'giveup': picked = []; save({ ...s, phase: 'lost' }); break;
+        case 'giveup':
+          if (!armedGiveup) { armedGiveup = true; render(); break; }
+          armedGiveup = false; picked = []; save({ ...s, phase: 'lost' }); break;
         case 'resume': {
           const next = W.resumeBattle(s);
           if (next === s) return;
