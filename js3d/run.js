@@ -7,7 +7,7 @@
  *   報酬は「選ぶ」か「買う」(GACHA はやめた。2026-09-29)
  *   ・1試合は2本先取 (序盤の1〜2段目のふつうの戦闘は1本先取)。ライフは勝ち抜き戦を通して持ち越し、相手に1回コンパイルされるたびに 1 減る
  *   ・負けたら同じ相手とやり直し。ライフが 0 になったら終わり
- *   ・勝つとクレジットと、プロトコルの入れ替え (取らなくてもよい)
+ *   ・勝つとクレジット。精鋭に勝つと、プロトコルの入れ替え (取らなくてもよい)
  *   ・カード除去: デッキから1枚ずつ外して、欲しいカードが来やすくする (最大 6 枚)
  *   ・パッチ (勝ち抜き戦のあいだ効き続ける改造) には系統 (HAND / GUARD / GREED / TEMPO) があり、
  *     同じ系統を 2つ・3つ集めるとボーナス (ビルド)
@@ -724,10 +724,11 @@ export function finishBattle(run, win, compiles, names, rnd = Math.random) {
   else if (!win) next = base;                                          // 同じ相手とやり直す
   else if (run.opp.boss) next = { ...base, phase: 'clear' };
   else {
-    /* まずカードの報酬 (cards) を選び、そのあとプロトコルの入れ替え (reward) */
+    /* まずカードの報酬 (cards) を選び、そのあとプロトコルの入れ替え (reward)。
+       入れ替えは精鋭に勝ったときだけ (毎回入れ替えられると、デッキを育てる意味が薄かった) */
     next = { ...base, phase: 'cards', cardOffers: cardRewardOffers(base, rnd), pendingPatch: !!run.opp.elite,
       upgradedNow: null, removedNow: null, gotStar: null,
-      offers: sample(names.filter(n => !run.deck.includes(n)), hasPatch(run, 'search') ? 4 : 3, rnd) };
+      offers: run.opp.elite ? sample(names.filter(n => !run.deck.includes(n)), hasPatch(run, 'search') ? 4 : 3, rnd) : [] };
   }
   if (next.phase === 'over' || next.phase === 'clear') saveBest(next);
   if (next.phase === 'clear') unlockHeat(next.heat | 0);

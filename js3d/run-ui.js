@@ -353,6 +353,10 @@ export function openRun(protocols, cardsOf, opts) {
             ? '<p class="rn-note"><b>' + esc(swapAdd) + '</b> を入れる代わりに、外すプロトコルを選ぶ</p>' +
               '<div class="rn-offers">' + run.deck.map(n => protoChip(byName[n], 'data-remove="' + esc(n) + '"')).join('') + '</div>' +
               '<div class="rn-btns"><button type="button" data-act="unswap">戻る</button></div>'
+            : !run.offers.length
+              ? '<p class="rn-note">今のデッキ ' + deckLine(run.deck, byName) + '</p>' +
+                '<p class="rn-note">プロトコルの入れ替えは、精鋭 (☠) に勝ったときに選べます</p>' +
+                '<div class="rn-btns"><button type="button" class="rn-go" data-act="skip">進む</button></div>'
             : '<p class="rn-note">今のデッキ ' + deckLine(run.deck, byName) + '</p>' +
               '<h3>プロトコルを入れ替える (取らなくてもよい)</h3><div class="rn-offers">' + run.offers.map(n => '<div class="rn-offer">' +
                 protoChip(byName[n], 'data-add="' + esc(n) + '"') +

@@ -92,11 +92,15 @@ test('進めるのはつながっているマスだけ。戦闘で勝つとク�
   assert.equal(won0.credits, R.START_CREDITS + 3);
   const won = R.chooseCardReward(won0, null);
   assert.equal(won.phase, 'reward');
-  assert.equal(won.offers.length, 3);
-  const swapped = R.applyReward(won, { type: 'swap', add: won.offers[0], remove: won.deck[1] }, NAMES, seq());
-  assert.ok(swapped.deck.includes(won.offers[0]));
-  assert.equal(swapped.phase, 'map');
-  assert.deepEqual(R.reachable(swapped), R.nodeById(swapped, swapped.pos).next);
+  assert.equal(won.offers.length, 0, 'ふつうの戦闘ではプロトコルの入れ替えは出ない (精鋭に勝ったときだけ)');
+  const passed = R.applyReward(won, { type: 'skip' }, NAMES, seq());
+  assert.equal(passed.phase, 'map');
+  assert.deepEqual(R.reachable(passed), R.nodeById(passed, passed.pos).next);
+  /* 精鋭に勝ったら入れ替えを選べる */
+  const eliteWon = R.chooseCardReward(R.finishBattle({ ...lost, opp: { ...lost.opp, elite: true } }, true, 1, NAMES, seq()), null);
+  assert.equal(eliteWon.offers.length, 3);
+  const swapped = R.applyReward(eliteWon, { type: 'swap', add: eliteWon.offers[0], remove: eliteWon.deck[1] }, NAMES, seq());
+  assert.ok(swapped.deck.includes(eliteWon.offers[0]));
 });
 
 test('精鋭: 相手が強く、勝つとクレジット多めとパッチ。上の段の精鋭は挑戦者', async () => {
