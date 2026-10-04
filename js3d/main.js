@@ -4150,7 +4150,7 @@ function renderBoardPick() {
     count: bp.chosen.length, max: bp.max, back: canBack, skip: pickSkip,
     none: !pickSkip && bp.min === 0 && !bp.chosen.length,
     /* 選べる枚数をすべて選んだら、決定を光らせて「あとは押すだけ」と知らせる */
-    extra: goInRibbon ? '<button type="button" class="rb-btn ok' + (bp.chosen.length >= bp.max ? ' ready' : '') + '" id="pkGo">決定 (' + bp.chosen.length + ')</button>' : ''
+    extra: goInRibbon ? '<button type="button" class="rb-btn ok' + (bp.chosen.length >= bp.max ? ' ready' : '') + '" id="pkGo">' + pickGoLabel(bp) + '</button>' : ''
   });
   bindPickBar(el);
   bindRibbon(el, {
@@ -4450,8 +4450,9 @@ function toggleBoardPick(uid) {
   const bp = boardPick;
   if (!bp || bp.req.candidates.indexOf(uid) < 0) return;
   const i = bp.chosen.indexOf(uid);
-  /* 1枚選ぶ選択: 選んだカードをもう一度触ったら決める */
-  if (i >= 0 && bp.max === 1 && bp.chosen.length >= bp.min) { finishBoardPick(bp.chosen.slice()); return; }
+  /* 1枚選ぶ選択: 選んだカードをもう一度触ったら決める。手札から選ぶ (捨てる等) は帯の決定だけで決める
+     (2回続けて触っただけで捨てていた。もう一度触ると選び直し) */
+  if (i >= 0 && bp.max === 1 && bp.chosen.length >= bp.min && bp.req.kind !== 'pickHand') { finishBoardPick(bp.chosen.slice()); return; }
   if (i >= 0) bp.chosen.splice(i, 1);
   else {
     if (bp.max === 1) bp.chosen.length = 0;
@@ -4482,12 +4483,22 @@ window.addEventListener('pointerdown', (ev) => { lastTap = { x: ev.clientX, y: e
 /* 選んだカードのすぐ横の「決定」。ダイアログの決定まで手を伸ばさなくてよいように (Enter でも決定) */
 const GO_ARM_MS = 400;
 /* 何枚か選ぶ選択は、決定を帯の中に置く (カードの横には出さない) */
+/* 決定を帯の中に置くか。何枚か選ぶときと、手札から選ぶとき (捨てる等)。
+   手札は扇に重なっているので、選んだ札の横に決定を浮かべると、隣の札に選び直そうとして決定を押していた */
 function pickGoInRibbon(bp) {
-  return !!bp && !pickIsInstant(bp) && bp.max > 1 && bp.chosen.length > 0 && bp.chosen.length >= bp.min;
+  return !!bp && !pickIsInstant(bp) && (bp.max > 1 || bp.req.kind === 'pickHand') && bp.chosen.length > 0 && bp.chosen.length >= bp.min;
+}
+/* 帯の決定の文字。手札から1枚選ぶときは、選んだ札の名前を出す (どれを捨てるのか押す前に分かる) */
+function pickGoLabel(bp) {
+  if (bp.req.kind === 'pickHand' && bp.max === 1 && bp.chosen.length === 1) {
+    const nm = cardName(bp.chosen[0]);
+    if (nm) return '決定: ' + nm;   // プロトコル名と数字だけ (cardName)
+  }
+  return '決定 (' + bp.chosen.length + ')';
 }
 function renderPickGo(bp) {
   let go = document.getElementById('pickGo');
-  const show = bp && !pickIsInstant(bp) && bp.max === 1 && bp.chosen.length > 0 && bp.chosen.length >= bp.min && lastTap;
+  const show = bp && !pickIsInstant(bp) && !pickGoInRibbon(bp) && bp.max === 1 && bp.chosen.length > 0 && bp.chosen.length >= bp.min && lastTap;
   if (!show) { if (go) go.remove(); return; }
   if (!go) {
     go = document.createElement('button');
