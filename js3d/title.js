@@ -171,7 +171,8 @@ export function runTitle(protocols, opts) {
             '<button data-mode="record" type="button">RECORD</button>' +
             '<button data-mode="more" type="button" class="tt-morebtn" aria-expanded="false">MORE</button>' +
             '<div class="tt-morepop" hidden>' +
-              '<button data-mode="story" type="button">STORY <small>序章「起動」</small></button>' +
+              /* ストーリーは作り直しの間 (案8。2026-10-05〜) 管理者だけ。仕上がったら全員に戻す */
+              '<button data-mode="story" type="button"' + (accountState().admin ? '' : ' hidden') + '>STORY <small>序章「起動」</small></button>' +
               '<button data-mode="tutorial" type="button">TUTORIAL <small>遊び方</small></button>' +
               '<button data-mode="training" type="button">TRAINING <small>盤面を自由に</small></button>' +
               '<button data-mode="cards" type="button">CARDS <small>カード一覧</small></button>' +
@@ -193,6 +194,8 @@ export function runTitle(protocols, opts) {
         label.parentElement.classList.toggle('nudge', nudge);
         if (cap && nudge) cap.textContent = '記録はこのブラウザだけ！';
         root.querySelector('#ttCorner button[data-mode="admin"]').hidden = !accountState().admin;
+        const story = root.querySelector('button[data-mode="story"]');
+        if (story) story.hidden = !accountState().admin;
         return true;
       };
       /* メニューを出す前にログイン状態が読み終わっていることがある (そのときの知らせは聞き逃している)。
