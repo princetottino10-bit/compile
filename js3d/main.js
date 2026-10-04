@@ -4184,6 +4184,8 @@ function removePickBar() {
   if (el) el.remove();
   const go = document.getElementById('pickGo');
   if (go) go.remove();
+  const go2 = document.getElementById('pkGo');
+  if (go2) go2.remove();
   document.body.classList.remove('picking');
   pickPanelReq = null;
 }
@@ -4214,7 +4216,7 @@ function renderBoardPick() {
     count: bp.chosen.length, max: bp.max, back: canBack, skip: pickSkip,
     none: !pickSkip && bp.min === 0 && !bp.chosen.length,
     /* 選べる枚数をすべて選んだら、決定を光らせて「あとは押すだけ」と知らせる */
-    extra: goInRibbon ? '<button type="button" class="rb-btn ok' + (bp.chosen.length >= bp.max ? ' ready' : '') + '" id="pkGo">' + pickGoLabel(bp) + '</button>' : ''
+    extra: ''
   });
   bindPickBar(el);
   bindRibbon(el, {
@@ -4222,7 +4224,19 @@ function renderBoardPick() {
     skip: () => finishBoardPick(PICK_SKIP),
     none: () => finishBoardPick([])
   });
-  const pkGo = el.querySelector('#pkGo');
+  /* 決定は帯の中ではなく、右下 (リフレッシュの上・親指の届くところ) に出す。
+     帯は候補のカードに重なると画面の上へよけるので、帯の中の決定が上の端まで行っていた */
+  let pkGo = document.getElementById('pkGo');
+  if (goInRibbon) {
+    if (!pkGo) {
+      pkGo = document.createElement('button');
+      pkGo.type = 'button';
+      pkGo.id = 'pkGo';
+      document.body.appendChild(pkGo);
+    }
+    pkGo.className = 'pk-go' + (bp.chosen.length >= bp.max ? ' ready' : '');
+    pkGo.textContent = pickGoLabel(bp);
+  } else if (pkGo) { pkGo.remove(); pkGo = null; }
   if (pkGo) {
     /* 出た直後 (選んだ勢いの連打) は押しても決めない */
     const armedAt = performance.now() + GO_ARM_MS;

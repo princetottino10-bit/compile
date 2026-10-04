@@ -954,6 +954,13 @@
   @keyframes ribbonIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
   /* 帯が候補のカードに重なるときは画面の上へよける (js3d/pickaid.js) */
   .pick-ribbon.pa-top{bottom:auto;top:calc(52px + env(safe-area-inset-top));}
+  /* 選んだら押す「決定」: 右下 (リフレッシュの上)。帯がよけても指の届くところに残る */
+  #pkGo{position:fixed;z-index:33;left:var(--hand-right, calc(50% + 300px));bottom:calc(var(--hand-side, 22px) + 52px);
+    min-height:46px;padding:0 22px;border:0;cursor:pointer;color:#fff;background:linear-gradient(100deg,#ff4fa3,#c86bff);
+    font:900 13px/1 var(--font-ui);letter-spacing:.08em;clip-path:var(--cut-s);box-shadow:0 10px 26px rgba(255,79,163,.35);
+    animation:ribbonIn .2s cubic-bezier(.16,1,.3,1);}
+  #pkGo.ready{box-shadow:0 0 0 2px #fff,0 10px 30px rgba(255,79,163,.6);}
+  #pkGo:focus-visible{outline:2px solid var(--gold);outline-offset:3px;}
   /* ---------- カードを選ぶときの手助け (js3d/pickaid.js) ---------- */
   #pickAid{position:fixed;inset:0;z-index:33;pointer-events:none;}   /* 予告の札が選択の帯 (z-index:32) に潜らないように */
   /* 選べるカードの上の矢印: ふわっと上下して「ここを押す」 */
@@ -2372,6 +2379,7 @@
     #dock{left:10px;bottom:12px;}
     #dock .btn{min-height:38px;padding:0 14px;font-size:9px;letter-spacing:.04em;}
     #btnRefresh{left:auto;right:10px;bottom:12px;min-height:38px;font-size:9px;}
+    #pkGo{left:auto;right:10px;bottom:calc(var(--hand-gap, 14vh) + 12px);min-height:48px;font-size:13px;}
     #assist{left:10px;bottom:58px;}
     #oppSummary{top:calc(150px + env(safe-area-inset-top));}
   }
@@ -4085,7 +4093,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=2b4dbc6066",
       "./js3d/logformat.js": "./js3d/logformat.js?v=e3548c74d1",
-      "./js3d/main.js": "./js3d/main.js?v=71e21a1c21",
+      "./js3d/main.js": "./js3d/main.js?v=4c51481e24",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=4463f5df6b",
@@ -4255,6 +4263,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=ba24e41aa7">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=71e21a1c21"></script>
+  <script type="module" src="js3d/main.js?v=4c51481e24"></script>
 </body>
 </html>
