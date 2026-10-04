@@ -851,7 +851,9 @@ export function createBoard(stage, defIndex, me, hooks) {
   }
 
   /* 効果発動: そのカードだけ浮き上がって発光する */
-  function pulse(uid, colorHex, ms) {
+  /* opts.still: 持ち上げずに光るだけ (効果の元の札を指し示すときなど。浮いて見えて紛らわしかった) */
+  function pulse(uid, colorHex, ms, opts) {
+    const lift = opts && opts.still ? 0 : 1;
     const card = cards.get(uid);
     if (!card || !card.visible) return Promise.resolve();
     const c = colorHex || COLOR.gold;
@@ -859,12 +861,12 @@ export function createBoard(stage, defIndex, me, hooks) {
     const baseS = card.scale.x;
     card.userData.glowAlways = true;
     card.renderOrder = 5;
-    sfx('effect');
+    if (lift) sfx('effect');             // 指し示すだけのときは鳴らさない
     FX.shockwave(scene, card.position, c, 2.6, (ms || 620) * 0.7);
     return TW.tween(ms || 620, (t) => {
       const k = Math.sin(Math.PI * t);
-      card.position.y = baseY + k * 0.42;
-      card.scale.setScalar(baseS * (1 + k * 0.12));
+      card.position.y = baseY + k * 0.42 * lift;
+      card.scale.setScalar(baseS * (1 + k * 0.12 * lift));
       setHighlight(card, c, k * 0.34, k * 0.95);
     }, TW.Ease.linear, () => {
       clearHighlight(card);

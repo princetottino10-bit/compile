@@ -2465,7 +2465,7 @@ function bindInput() {
   UI.setInfoOpen(infoWasOpen);
   /* 効果の一覧の項目を押したら、その札を光らせて説明を出す */
   UI.setFxTapHandler((uid) => {
-    board.pulse(uid);
+    board.pulse(uid, undefined, undefined, { still: true });
     if (isCompactHandUI()) showCardInspector(uid);
     else { previewUid = null; showPreview(uid); }
   });
@@ -5476,7 +5476,7 @@ function pulseVisible(defId, color) {
   for (const [uid, c] of Object.entries(st.cards)) {
     if (c.def !== defId) continue;
     const seen = c.faceUp || ((c.knownTo || 0) & (1 << ME)) || c.zone === 'hand' + ME;
-    if (seen && (c.zone === 'field' || c.zone === 'hand' + ME)) board.pulse(uid, color, 800);
+    if (seen && (c.zone === 'field' || c.zone === 'hand' + ME)) board.pulse(uid, color, 800, { still: true });
   }
 }
 
