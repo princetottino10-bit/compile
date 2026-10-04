@@ -225,6 +225,7 @@ export function openRun(protocols, cardsOf, opts) {
           '<li>道は自分で選ぶ: 戦闘・精鋭・イベント・休憩所・ショップ・宝箱</li>' +
           '<li>ライフ ' + RUN.RUN_LIFE + '。コンパイルされるたびに 1 減る</li>' +
           '<li>勝つたびにカードの報酬 (強化・β カード・除去) を選ぶ。パッチ (改造) は系統をそろえるとボーナス</li>' +
+          '<li>精鋭 (☠) に勝つと、プロトコルを入れ替えられる。' + (RUN.PERK_ROW_UP + 1) + '段目からは入れ替えのプロトコルに強化済みのカードが付く</li>' +
           '<li>クレジットはショップで使う (報酬は選ぶか買う)</li>' +
           '<li>クリアすると次の HEAT (難しさ) が開く</li></ul>' + runStatus + heatPick +
           (active ? '<button type="button" class="rn-go" data-act="resume">続きから</button>'

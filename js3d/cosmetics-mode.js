@@ -271,7 +271,9 @@ export function openCosmetics(opts) {
       if (!showMastery && isMastery(k) && !has) return false;
       return filter === 'all' || (filter === 'own' ? has : !has);
     });
-    const cur = tab === 'title' ? (s.title || '') : tab === 'icon' ? (s.icon || '') : (s[tab] || DEFAULT_KEY[tab]);
+    const rawCur = tab === 'title' ? (s.title || '') : tab === 'icon' ? (s.icon || '') : (s[tab] || DEFAULT_KEY[tab]);
+    /* 設定に残っていても、まだ持っていない (鍵の付いた) ものは着けていない扱い。対戦でも標準のものになる */
+    const cur = tab === 'track' || owned(tab, rawCur, c) ? rawCur : (tab === 'title' || tab === 'icon' ? '' : DEFAULT_KEY[tab]);
     const fk = focus !== null && list.some(([k]) => k === focus) ? focus : cur;
     const fItem = list.find(([k]) => k === fk) || list[0];
     const got = list.filter(([k]) => owned(tab, k, c)).length;

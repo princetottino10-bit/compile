@@ -2357,6 +2357,8 @@
     .proto-name{font-size:11px;letter-spacing:.06em;}
     .proto-set{display:none;}
     .proto.mine .proto-set,.proto.theirs .proto-set,.proto.banned .proto-set{display:block;}
+    /* 縦持ちは名前が横いっぱいになる (ASSIMILATION など)。? は左上へ逃がす */
+    .proto-info{width:20px;height:20px;left:5px;top:5px;right:auto;bottom:auto;font-size:11px;}
     #setupHead,#setupFoot,#setupRules{padding-left:14px;padding-right:14px;}
   }
   /* 横持ちのスマホ: 30個が1画面に収まるよう小さく並べる */
@@ -2373,7 +2375,7 @@
     .proto-name{font-size:10px;letter-spacing:.04em;}
     .proto-set{display:none;}
     .proto.mine .proto-set,.proto.theirs .proto-set,.proto.banned .proto-set{display:block;font-size:7px;}
-    .proto-info{width:18px;height:18px;right:4px;bottom:4px;font-size:10px;}
+    .proto-info{width:18px;height:18px;right:4px;bottom:4px;left:auto;top:auto;font-size:10px;}
     #setupFoot{padding:6px calc(14px + env(safe-area-inset-right)) 8px calc(14px + env(safe-area-inset-left));gap:6px;}
     #setupFoot .lvl{padding:6px 10px;font-size:9px;}
     #setupFoot .lv-pick{padding:6px 26px 6px 10px;font-size:9px;max-width:46vw;}
@@ -2931,6 +2933,11 @@
   #cardNote .cn-close{display:none;}
   /* 画面の見出しの右端は、ボタンのぶん空けておく (観戦の CHIP など) */
   #oppOv .op-head,#watchOv .op-head{padding-right:118px;}
+  /* 縦持ちでは「// SINGLE GAME」が3行に割れていた。見出しは1行にして、横の小見出しは隠す */
+  @media (max-width:480px){
+    #oppOv .op-head b,#watchOv .op-head b{white-space:nowrap;font-size:17px;letter-spacing:.1em;}
+    #oppOv .op-head span,#watchOv .op-head span{display:none;}
+  }
   @media (prefers-reduced-motion:reduce){ .title-back,.title-back span{transition:none;} }
   /* ---- COSMETICS のモード (cosmetics-mode.js) ---- */
   #cosOv{position:fixed;inset:0;z-index:63;display:none;background:radial-gradient(circle at 25% 30%,rgba(139,92,246,.18),transparent 55%),rgba(5,4,12,.94);
@@ -3857,7 +3864,8 @@
   #statsOv .sr-tabs button{flex:1 0 auto;min-width:0;overflow:visible;padding:10px 9px;margin-bottom:-1px;clip-path:none;border:0;border-bottom:2px solid transparent;
     background:none;color:var(--dim);font:800 12px/1 var(--font-ui,"M PLUS 1",system-ui);letter-spacing:.06em;text-transform:none;}
   #statsOv .sr-tabs button:hover{color:var(--ink);}
-  @media (max-width:480px){ #statsOv .sr-tabs button{padding:10px 6px;font-size:11px;letter-spacing:.02em;} }
+  /* 縦持ちは7つのタブを1行に収める (右端の「リプレイ」が切れて、あることに気づけなかった) */
+  @media (max-width:480px){ #statsOv .sr-tabs button{flex:1 1 auto;padding:10px 3px;font-size:10.5px;letter-spacing:0;} }
   #statsOv .sr-tabs button.on{color:#fff;border-bottom-color:var(--pink);background:linear-gradient(0deg,rgba(255,79,163,.12),transparent 70%);}
   /* プロフィール: ふだんは1列。横に広い画面では左右2列にして、縦に長くしない */
   .pf-cols,.pf-col{display:flex;flex-direction:column;gap:12px;min-width:0;}
@@ -3893,9 +3901,9 @@
   .st-card .pz-x::before{top:-18px;}
   /* 幅が狭い (縦のスマホ) ときも左の一覧のまま。細くして、長い名前は2行に折る */
   @media (max-width:560px){
-    .st-frame{grid-template-columns:96px minmax(0,1fr);}
+    .st-frame{grid-template-columns:104px minmax(0,1fr);}
     .st-nav{padding:8px 4px;}
-    .st-nav button{padding:10px 8px;font-size:11px;letter-spacing:.02em;line-height:1.3;}
+    .st-nav button{padding:10px 5px 10px 6px;font-size:11px;letter-spacing:0;line-height:1.3;}
     .st-body{padding:12px 12px 8px;}
     .st-seg button{letter-spacing:0;}
   }
@@ -4106,7 +4114,7 @@
       "./js3d/chips.js": "./js3d/chips.js?v=e67e280b76",
       "./js3d/cloudsave.js": "./js3d/cloudsave.js?v=3e6ea586df",
       "./js3d/control.js": "./js3d/control.js?v=c1b87ebc63",
-      "./js3d/cosmetics-mode.js": "./js3d/cosmetics-mode.js?v=9f64a4e233",
+      "./js3d/cosmetics-mode.js": "./js3d/cosmetics-mode.js?v=703881515f",
       "./js3d/cosmetics-ui.js": "./js3d/cosmetics-ui.js?v=a78ef23c9b",
       "./js3d/crashwatch.js": "./js3d/crashwatch.js?v=8b4bdaa28f",
       "./js3d/daily.js": "./js3d/daily.js?v=f56dabdf65",
@@ -4152,7 +4160,7 @@
       "./js3d/rewards.js": "./js3d/rewards.js?v=ff8a27bac3",
       "./js3d/room.js": "./js3d/room.js?v=be804bed77",
       "./js3d/roomui.js": "./js3d/roomui.js?v=a8960ae303",
-      "./js3d/run-ui.js": "./js3d/run-ui.js?v=5d80132527",
+      "./js3d/run-ui.js": "./js3d/run-ui.js?v=9df2d2d4b6",
       "./js3d/run.js": "./js3d/run.js?v=0cf822f354",
       "./js3d/runcards.js": "./js3d/runcards.js?v=c2bf20e9b7",
       "./js3d/selectui.js": "./js3d/selectui.js?v=208abdaebc",
@@ -4228,14 +4236,14 @@
   <link rel="modulepreload" href="js3d/rewards.js?v=ff8a27bac3">
   <link rel="modulepreload" href="js3d/gachafx.js?v=3d15a2226f">
   <link rel="modulepreload" href="js3d/cosmetics-ui.js?v=a78ef23c9b">
-  <link rel="modulepreload" href="js3d/cosmetics-mode.js?v=9f64a4e233">
+  <link rel="modulepreload" href="js3d/cosmetics-mode.js?v=703881515f">
   <link rel="modulepreload" href="js3d/displayname.js?v=613e18bf95">
   <link rel="modulepreload" href="js3d/plates.js?v=a1e3b996bb">
   <link rel="modulepreload" href="js3d/playmat.js?v=1c8f36818a">
   <link rel="modulepreload" href="js3d/cardlist-ov.js?v=97693492b3">
   <link rel="modulepreload" href="js3d/opponent-select.js?v=6a0b3a0d99">
   <link rel="modulepreload" href="js3d/aidecks.js?v=5aae71f416">
-  <link rel="modulepreload" href="js3d/run-ui.js?v=5d80132527">
+  <link rel="modulepreload" href="js3d/run-ui.js?v=9df2d2d4b6">
   <link rel="modulepreload" href="js3d/weekly-ui.js?v=f449c2e66e">
   <link rel="modulepreload" href="js3d/run.js?v=0cf822f354">
   <link rel="modulepreload" href="js3d/weekly.js?v=5605476b1c">
