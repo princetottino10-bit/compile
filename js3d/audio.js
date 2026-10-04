@@ -470,6 +470,9 @@ const SOUNDS = {
   }
 };
 
+/** 効果音の名前の一覧 (サウンドテスト用) */
+export const SFX_NAMES = Object.keys(SOUNDS);
+
 /* 名前で再生。未解錠・ミュート・未知名は無視。arg は音ごとの引数 (chain の長さ等) */
 export function sfx(name, arg) {
   if (!actx || muted) return;

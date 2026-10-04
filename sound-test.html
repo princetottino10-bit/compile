@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>COMPILE サウンドテスト</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* サウンドテスト: キャラの声 (セリフごと)、効果音、BGM を鳴らして確かめる画面。ゲームと同じ鳴らし方 (audio.js の playClip / sfx) で鳴らす */
+:root { color-scheme: dark; --bg: #0d0b14; --panel: #17131f; --ink: #f1ecf8; --dim: #9d94ad; --rule: #2c2638; --accent: #b9a4ff; --pa: #ffd36b;
+  --mono: "IBM Plex Mono", Consolas, monospace; --body: "Zen Kaku Gothic New", "Yu Gothic", sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 500 15px/1.6 var(--body); padding: 0 16px; padding-bottom: env(safe-area-inset-bottom); }
+.wrap { max-width: 860px; margin: 0 auto; padding-block: 24px 64px; display: grid; gap: 18px; }
+h1 { margin: 0; font-size: 24px; letter-spacing: .06em; }
+.note { color: var(--dim); font-size: 13px; margin: 2px 0 0; }
+.tabs, .chars { display: flex; flex-wrap: wrap; gap: 8px; }
+.tabs button, .chars button { font: 700 14px var(--body); padding: 9px 14px; border-radius: 999px; border: 1px solid var(--rule); background: var(--panel); color: var(--ink); cursor: pointer; }
+.tabs button[aria-pressed="true"] { background: var(--accent); color: #140f1f; border-color: var(--accent); }
+.chars button[aria-pressed="true"] { background: var(--c); color: #120e18; border-color: var(--c); }
+.kind { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 10px 12px; }
+.kind h2 { margin: 0 0 6px; font: 500 12px var(--mono); color: var(--dim); letter-spacing: .08em; }
+.row { display: flex; gap: 10px; align-items: baseline; padding: 6px 0; border-top: 1px solid var(--rule); min-width: 0; }
+.row:first-of-type { border-top: 0; }
+.row button { flex: none; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--rule); background: #221c2e; color: var(--ink); cursor: pointer; font-size: 13px; }
+.row button.on { background: var(--accent); color: #140f1f; }
+.row .t { min-width: 0; overflow-wrap: anywhere; }
+.row .tag { font: 500 12px var(--mono); color: var(--dim); margin-left: 6px; }
+.row .t.pa::before { content: "館内放送"; font-size: 11px; color: var(--pa); border: 1px solid var(--pa); border-radius: 3px; padding: 0 4px; margin-right: 6px; }
+.row.none { opacity: .45; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.grid button { font: 500 14px var(--mono); padding: 12px; border-radius: 6px; border: 1px solid var(--rule); background: var(--panel); color: var(--ink); cursor: pointer; text-align: left; }
+.grid button.on { border-color: var(--accent); }
+.grid small { display: block; color: var(--dim); font: 500 11px var(--body); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.stop { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 2; display: flex; gap: 8px; align-items: center; background: var(--bg); padding-block: 8px; }
+.stop button { font: 700 14px var(--body); padding: 8px 14px; border-radius: 6px; border: 1px solid var(--rule); background: var(--panel); color: var(--ink); cursor: pointer; }
+#now { color: var(--dim); font-size: 13px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>サウンドテスト</h1>
+    <p class="note">キャラの声はセリフごとに、ゲームと同じ鳴らし方で鳴ります (館内放送の実況はチャイムとスピーカーの音つき)。灰色の行は声がないセリフ (札の名前が入る文など)。</p>
+  </header>
+  <div class="stop"><button type="button" id="stop">止める</button><span id="now"></span></div>
+  <nav class="tabs" id="tabs" aria-label="種類"></nav>
+  <section id="view"></section>
+</div>
+<script type="module">
+import { AVATARS, VOICE_VER, voiceGain } from './js3d/avatar.js';
+import { initAudio, kickAudio, playClip, sfx, SFX_NAMES } from './js3d/audio.js';
+import { TITLE_BGM, NORMAL_BGMS, STRONG_BGM, MENU_BGMS, RUN_BGM, BOSS_BGM, bgmFile } from './js3d/bgm.js';
+
+const PA_MARK = '〔放送〕';
+/* 場面の名前 (avatar-lines.js の種類) */
+const KIND_JA = { hello: '始まり', turn: '自分の番', sure: '勝ち目前', doomed: '負け目前', ace: 'エースのカード', play: 'カードを出す', fav: '得意のカード', down: '伏せる',
+  watch: '相手の手を見る', chain: '連鎖', refresh: '補充', idle: '相手待ち', control: '主導権', boost: '積み上がる', compile: 'コンパイル', compiled: 'コンパイルされた',
+  recompile: 'リコンパイル', hurt: 'やられた', crushed: 'ごっそりやられた', almost: 'あと少し', win: '勝ち', lose: '負け', handes: '手札を減らされた', wipe: 'まとめて消す',
+  rearrange: '並べ替え', reach: 'あと1本で勝ち', lead: '優勢', behind: '劣勢', lesson: '教える', good: 'ほめる', retry: 'もう一回', tag_in: 'タッグの交代' };
+const kindName = (k) => KIND_JA[k] || (k.startsWith('tag_hello_') ? 'タッグの試合前 (相方: ' + ((AVATARS[k.slice(10)] || {}).name || k.slice(10)) + ')' : k.startsWith('own_') ? '担当のカード ' + k.slice(4).replace('_', ' ') : k.startsWith('play_') ? 'カードを出す ' + k.slice(5) : k);
+const view = document.getElementById('view');
+const now = document.getElementById('now');
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let stopVoice = null, music = null, playingBtn = null;
+
+function stopAll() {
+  if (stopVoice) { stopVoice(); stopVoice = null; }
+  if (music) { music.pause(); music = null; }
+  if (playingBtn) { playingBtn.classList.remove('on'); playingBtn = null; }
+  now.textContent = '';
+}
+document.getElementById('stop').addEventListener('click', stopAll);
+const wake = () => { initAudio(); if (kickAudio) kickAudio(); };
+
+/* ---- キャラの声 ---- */
+const voiced = Object.entries(AVATARS).filter(([, d]) => d.voice);
+const dirCache = {};
+async function directions(id) {
+  if (!(id in dirCache)) {
+    try { const r = await fetch('scripts/voice_directions/' + id + '.json'); dirCache[id] = r.ok ? await r.json() : {}; }
+    catch (e) { dirCache[id] = {}; }
+  }
+  return dirCache[id];
+}
+let charId = voiced[0][0];
+async function showVoices() {
+  const def = AVATARS[charId];
+  const dir = await directions(charId);
+  const chars = voiced.map(([id, d]) => `<button type="button" data-char="${id}" aria-pressed="${id === charId}" style="--c:${d.color}">${esc(d.name)}</button>`).join('');
+  const kinds = Object.entries(def.lines).map(([kind, list]) => `<div class="kind"><h2>${esc(kindName(kind))}</h2>${list.map((e, i) => {
+    const shown = Array.isArray(e) ? e[0] : e;
+    const said = Array.isArray(e) ? e[1] : e;
+    const has = Array.isArray(e) || !String(e).includes('{');
+    const pa = String(said).startsWith(PA_MARK);
+    const d = dir[said];
+    const tag = typeof d === 'string' ? d : d && d.style ? d.style + (d.speed ? ' ×' + d.speed : '') : '';
+    return `<div class="row${has ? '' : ' none'}"><button type="button" ${has ? '' : 'disabled'} data-kind="${esc(kind)}" data-i="${i}" data-pa="${pa ? 1 : ''}" aria-label="再生">▶</button><span class="t${pa ? ' pa' : ''}">${esc(String(shown).replace(PA_MARK, ''))}${tag ? `<span class="tag">${esc(tag)}</span>` : ''}</span></div>`;
+  }).join('')}</div>`).join('');
+  view.innerHTML = `<div class="chars" style="margin-bottom:12px">${chars}</div><div style="display:grid;gap:10px">${kinds}</div>`;
+}
+view.addEventListener('click', async (e) => {
+  const c = e.target.closest('[data-char]');
+  if (c) { charId = c.dataset.char; showVoices(); return; }
+  const b = e.target.closest('button[data-kind]');
+  if (b) {
+    stopAll(); wake();
+    const pa = b.dataset.pa === '1';
+    if (pa) sfx('pa');
+    b.classList.add('on'); playingBtn = b;
+    now.textContent = AVATARS[charId].name + ' / ' + b.dataset.kind + '_' + b.dataset.i;
+    const h = await playClip('art/voice/' + charId + '/' + b.dataset.kind + '_' + b.dataset.i + '.mp3?v=' + VOICE_VER, Math.min(1.6, 0.85 * voiceGain(charId)), pa ? { pa: true, delay: 0.75 } : {});
+    if (!h) { now.textContent += ' (鳴らせませんでした)'; b.classList.remove('on'); return; }
+    stopVoice = h.stop;
+    setTimeout(() => { if (playingBtn === b) { b.classList.remove('on'); playingBtn = null; } }, h.duration * 1000 + 100);
+    return;
+  }
+  const s = e.target.closest('button[data-sfx]');
+  if (s) { wake(); sfx(s.dataset.sfx, s.dataset.sfx === 'chain' ? 3 : undefined); now.textContent = '効果音 / ' + s.dataset.sfx; return; }
+  const m = e.target.closest('button[data-bgm]');
+  if (m) {
+    stopAll();
+    music = new Audio(bgmFile(m.dataset.bgm)); music.loop = true; music.volume = 0.6;
+    music.play().catch(() => { now.textContent = '鳴らせませんでした'; });
+    m.classList.add('on'); playingBtn = m; now.textContent = 'BGM / ' + m.dataset.bgm;
+  }
+});
+
+/* ---- 効果音 ---- */
+function showSfx() {
+  view.innerHTML = `<div class="grid">${SFX_NAMES.map((n) => `<button type="button" data-sfx="${esc(n)}">${esc(n)}</button>`).join('')}</div>`;
+}
+
+/* ---- BGM ---- */
+function showBgm() {
+  const list = [[TITLE_BGM, 'タイトル'], ...MENU_BGMS.map((k) => [k, 'メニュー']), ...NORMAL_BGMS.map((k) => [k, '対戦']), [STRONG_BGM, '強い相手'], [BOSS_BGM, 'ボス'], [RUN_BGM, '勝ち抜き']];
+  view.innerHTML = `<div class="grid">${list.map(([k, where]) => `<button type="button" data-bgm="${esc(k)}">${esc(k)}<small>${where}</small></button>`).join('')}</div>`;
+}
+
+const TABS = [['voice', 'キャラの声', showVoices], ['sfx', '効果音', showSfx], ['bgm', 'BGM', showBgm]];
+const tabs = document.getElementById('tabs');
+tabs.innerHTML = TABS.map(([k, l]) => `<button type="button" data-tab="${k}" aria-pressed="${k === 'voice'}">${l}</button>`).join('');
+tabs.addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  stopAll();
+  tabs.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  TABS.find(([k]) => k === b.dataset.tab)[2]();
+});
+showVoices();
+</script>
+</body>
+</html>
