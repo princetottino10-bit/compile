@@ -485,7 +485,7 @@ export function runRoomLobby(protocols, opts = {}) {
     function enterRoom() {
       clearInterval(lobbyTimer);
       /* 事故で閉じても戻れるよう、部屋のコードを覚えておく */
-      if (room && room.code) lsSet('compileRoomLast', room.code);
+      if (room && room.code) lsSet('compileRoomLast', room.status === 'finished' ? '' : room.code);   // 終わった対戦は覚えない
       /* 再入室では既に対戦中のことがある (join が playing を返す) */
       if (room.status === 'playing' || room.status === 'finished') { done({ rm: room }); return; }
       sel = [];

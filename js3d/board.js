@@ -857,8 +857,12 @@ export function createBoard(stage, defIndex, me, hooks) {
     const card = cards.get(uid);
     if (!card || !card.visible) return Promise.resolve();
     const c = colorHex || COLOR.gold;
-    const baseY = card.position.y;
-    const baseS = card.scale.x;
+    /* 光っている途中にもう一度呼ばれても、元の高さ・大きさは最初の1回で覚えたものを使う
+       (途中の高さを元として覚えると、押すたびに札が上へずれて浮いたままになっていた) */
+    const ud = card.userData;
+    if (!ud.pulseN) { ud.pulseBaseY = card.position.y; ud.pulseBaseS = card.scale.x; }
+    ud.pulseN = (ud.pulseN || 0) + 1;
+    const baseY = ud.pulseBaseY, baseS = ud.pulseBaseS;
     card.userData.glowAlways = true;
     card.renderOrder = 5;
     if (lift) sfx('effect');             // 指し示すだけのときは鳴らさない
@@ -869,6 +873,8 @@ export function createBoard(stage, defIndex, me, hooks) {
       card.scale.setScalar(baseS * (1 + k * 0.12 * lift));
       setHighlight(card, c, k * 0.34, k * 0.95);
     }, TW.Ease.linear, () => {
+      ud.pulseN = Math.max(0, (ud.pulseN || 1) - 1);
+      if (ud.pulseN) return;                // まだほかの光が続いている
       clearHighlight(card);
       card.userData.glowAlways = false;
       card.position.y = baseY;

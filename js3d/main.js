@@ -3327,6 +3327,8 @@ async function roomMaybeFinish() {
   fadeOutBgm();
   CW.battleEnded(); RS.endResume();
   stopRoomPoll();
+  /* 決着したので「中断した対戦に戻る」の目印を消す (終わった対戦がロビーに残っていた) */
+  try { localStorage.removeItem('compileRoomLast'); } catch (e) { /* private mode */ }
   const win = st.winner === ME;
   UI.setPrompt(win ? 'あなたの勝ち' : '敗北', 'end');
   const victory = cosmetic('victory', 'default');
