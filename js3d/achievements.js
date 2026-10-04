@@ -69,7 +69,6 @@ export const TROPHIES = [
   { id: 'cards60', tier: 'bronze', name: 'COLLECTOR', desc: '違うカードを60種類、表で出す', test: (c) => playedKinds(c) >= 60, progress: (c) => [Math.min(60, playedKinds(c)), 60] },
   { id: 'explorer', tier: 'bronze', name: 'EXPLORER', desc: '10種類のプロトコルで戦う', test: (c) => new Set(c.records.flatMap(r => r.me)).size >= 10, progress: (c) => [new Set(c.records.flatMap(r => r.me)).size, 10] },
   { id: 'bronze_card', tier: 'bronze', name: 'FIRST SHINE', desc: 'カードの縁を銅にする (そのカードで3勝)', test: (c) => tierCards(c, 3) >= 1 },
-  { id: 'chain3', tier: 'bronze', name: 'CHAIN LINK', desc: '自分の効果で割り込んで、チェーンを3つつなげる', test: (c) => !!g(c) && (g(c).chainMax | 0) >= 3 },
   { id: 'mastery3', tier: 'bronze', name: 'APPRENTICE', desc: 'どれかのプロトコルの習熟度を3にする', test: (c) => bestMastery(c) >= 3, progress: (c) => [Math.min(3, bestMastery(c)), 3] },
   { id: 'overclock', tier: 'bronze', hidden: true, name: 'OVERCLOCK', desc: '1試合で自分の効果を15回発動させる', test: (c) => !!g(c) && (g(c).effects | 0) >= 15 },
   { id: 'loss5', tier: 'bronze', hidden: true, name: 'NEVER GIVE UP', desc: '5連敗する', test: (c) => streak(c.records, false) >= 5 },
@@ -85,7 +84,7 @@ export const TROPHIES = [
   { id: 'weekly', tier: 'silver', name: 'WEEKLY CHAMP', desc: 'WEEKLY をクリアする (専用スリーブ LAUREL)', test: (c) => xpHas(c, e => e.src === 'weekly') },
   { id: 'level10', tier: 'silver', name: 'VETERAN', desc: 'プレイヤーレベル10になる', test: (c) => c.level >= 10, progress: (c) => [Math.min(c.level, 10), 10] },
   { id: 'gold_card', tier: 'silver', name: 'GOLDEN TOUCH', desc: 'カードの縁を金にする (そのカードで25勝)', test: (c) => tierCards(c, 25) >= 1 },
-  { id: 'chain4', tier: 'silver', name: 'CHAIN REACTION', desc: '自分の効果で割り込んで、チェーンを4つつなげる (称号 CHAIN MASTER)', test: (c) => !!g(c) && (g(c).chainMax | 0) >= 4 },
+  { id: 'turnfx10', tier: 'silver', name: 'COMBO BURST', desc: '1つの手番に、自分のカードの効果を10回発動させる', test: (c) => !!g(c) && (g(c).turnFxMax | 0) >= 10 },
   { id: 'tsume_mid', tier: 'silver', name: 'PUZZLER', desc: 'COMPUZZLE の中級を全部解く (称号 PUZZLER)',
     test: (c) => tsumeSolved(c, [2]) >= tsumeTotal([2]), progress: (c) => [tsumeSolved(c, [2]), tsumeTotal([2])] },
   { id: 'gacha_legend', tier: 'silver', name: 'LUCKY STAR', desc: 'GACHA で LEGENDARY を引く', test: (c) => gachaHasRar(c, 'L') },
@@ -129,9 +128,10 @@ export const TROPHIES = [
   { id: 'tag_flawless', tier: 'gold', hidden: true, name: 'PERFECT SYNC', desc: 'タッグデュエルで、相手に1回もコンパイルさせずに勝つ (称号 PERFECT SYNC)',
     test: (c) => !!g(c) && g(c).tag && g(c).win && g(c).oppCompiles === 0 },
   { id: 'underdog_tag', tier: 'gold', name: 'UNDERDOG DUO', desc: '下剋上タッグ (かんたんの味方と組んで、最強のタッグ) に勝つ (称号 UNDERDOG DUO)', test: (c) => beat(c, UNDERDOG_TAG_LEVEL) },
-  { id: 'chain6', tier: 'gold', name: 'CHAIN BREAKER', desc: '自分の効果で割り込んで、チェーンを6つつなげる', test: (c) => !!g(c) && (g(c).chainMax | 0) >= 6 },
   { id: 'norefresh', tier: 'gold', name: 'NO REFRESH', desc: '一度もリフレッシュせずに勝つ', test: (c) => !!g(c) && g(c).win && g(c).refreshes === 0 },
   { id: 'norefresh_apex', tier: 'gold', name: 'NO REFRESH APEX', desc: '一度もリフレッシュせずに「最強」の CPU に勝つ', test: (c) => !!g(c) && g(c).win && g(c).refreshes === 0 && g(c).level === 3 },
+  /* 1つの手番にカードの効果を何回も発動させる (チェーン・連鎖で積み上げる)。勝ち負けは問わない */
+  { id: 'turnfx15', tier: 'gold', name: 'OVERDRIVE', desc: '1つの手番に、自分のカードの効果を15回発動させる', test: (c) => !!g(c) && (g(c).turnFxMax | 0) >= 15 },
   /* 表で出すのは値 0・1・2 のカードだけで勝つ (3〜6 は裏向きで出すならよい)。前の SHADOW PLAY (一度も表で出さずに勝つ) の代わり */
   { id: 'lowkey', tier: 'gold', name: 'LOW KEY', desc: '表で出すのは 0・1・2 のカードだけで勝つ (3〜6 は裏向きならよい)',
     test: (c) => !!g(c) && g(c).win && Array.isArray(g(c).faceUpVals) && g(c).faceUpVals.length > 0 && g(c).faceUpVals.every(v => v <= 2) },

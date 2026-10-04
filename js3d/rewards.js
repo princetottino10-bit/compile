@@ -210,7 +210,7 @@ export const TITLES = {
   /* プロトコルの習熟度 6 で取る */
   ...Object.fromEntries(MASTERY_PROTOS.map(p => [mkey(p), PROTO_TITLES[p]])),
   /* 実績で取る (cosmetics-ui.js の TROPHY_TITLES) */
-  chainer: 'CHAIN MASTER', flawless: 'FLAWLESS', grandmaster: 'GRANDMASTER',
+  flawless: 'FLAWLESS', grandmaster: 'GRANDMASTER',
   puzzler: 'PUZZLER', compuzzler: 'COMPUZZLER',       // COMPUZZLE の中級を全部 / 全部
   platinum: 'PLATINUM',    // 実績をすべて取る (achievements.js)
   conqueror: 'CONQUEROR',  // 「最強」に30のプロトコルすべてで勝つ (achievements.js)

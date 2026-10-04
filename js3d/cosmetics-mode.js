@@ -46,7 +46,7 @@ const tabsNow = () => ALL_TABS.filter(t => (t.kind !== 'avatar' || AVATAR_RELEAS
 const DEFAULT_KEY = { mat: 'neon', sleeve: 'default', marker: 'default', ccolor: 'default', victory: 'default', title: '', icon: '',
   plate: 'default', avatar: 'shion', bgm: 'burst', track: '' };
 const RAR_NAME = { C: 'COMMON', R: 'RARE', E: 'EPIC', L: 'LEGENDARY' };
-const TROPHY_NAME = { chain4: 'CHAIN REACTION', flawless: 'FLAWLESS', mastery10: 'GRANDMASTER', tsume_mid: '詰めコンパイル 中級を全部', tsume_all: '詰めコンパイル 全部', conqueror: '最強のデッキ以外の27のプロトコルすべてで最強に勝つ', underdog_tag: '下剋上タッグに勝つ', tag_all: 'TAG の3つの強さすべてに勝つ', tag_flawless: 'PERFECT SYNC (タッグで相手に1回もコンパイルさせずに勝つ)' };
+const TROPHY_NAME = { flawless: 'FLAWLESS', mastery10: 'GRANDMASTER', tsume_mid: '詰めコンパイル 中級を全部', tsume_all: '詰めコンパイル 全部', conqueror: '最強のデッキ以外の27のプロトコルすべてで最強に勝つ', underdog_tag: '下剋上タッグに勝つ', tag_all: 'TAG の3つの強さすべてに勝つ', tag_flawless: 'PERFECT SYNC (タッグで相手に1回もコンパイルさせずに勝つ)' };
 const CCOLOR = { default: 'linear-gradient(90deg,#ff5c5c,#b9a4ff,#a07bff)', gold: '#ffd86a', cyan: '#7ff3ff', rainbow: 'conic-gradient(#ff5f7a,#ffc05a,#7df28c,#5ab8ff,#b98cff,#ff5f7a)',
   lime: '#b6ff4a', violet: '#b07bff', ember: '#ff7a2e' };
 

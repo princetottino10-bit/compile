@@ -202,6 +202,7 @@ function gameSummary(st, side, win, level, online) {
     refreshes: (t.refreshes && t.refreshes[side]) | 0,   // リフレッシュした回数
     touched: (t.touched && t.touched[side]) | 0,         // 自分のカードが相手の効果で削除・反転・移動・手札に戻された回数
     maxLine: (t.maxLine && t.maxLine[side]) | 0,         // 自分のラインの合計値の最高
+    turnFxMax: (t.maxTurnFx && t.maxTurnFx[side]) | 0,  // 1つの手番に発動させた自分の効果の数の最高
     short: shortMatch,                                   // 短縮マッチ (実績に数えない)
     tag: !!tagMates                                      // タッグデュエル
   };

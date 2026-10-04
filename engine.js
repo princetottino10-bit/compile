@@ -112,6 +112,8 @@ function tallyOf(st) {
   if (!st.tally.refreshes) st.tally.refreshes = [0, 0];   // リフレッシュした回数
   if (!st.tally.touched) st.tally.touched = [0, 0];       // 相手の効果で削除・反転・移動・手札に戻されたカードの数 (持ち主の側)
   if (!st.tally.maxLine) st.tally.maxLine = [0, 0];       // ラインの合計値の最高 (コンパイルで消える前の値)
+  if (!st.tally.turnFx) st.tally.turnFx = { turn: -1, n: [0, 0] };   // いまの手番に発動した効果の数 (カードの持ち主ごと)
+  if (!st.tally.maxTurnFx) st.tally.maxTurnFx = [0, 0];   // 1つの手番に発動させた効果の数の最高
   return st.tally;
 }
 /* チェーン (効果の途中で別の効果が割り込んだ並び) に効果を積む。
@@ -135,8 +137,16 @@ function chainPush(ctx, uid, slot) {
 function tallyEffect(st, uid) {
   const c = st.cards[uid];
   if (!c) return;
-  const m = tallyOf(st).effects[c.owner];
+  const t = tallyOf(st);
+  const m = t.effects[c.owner];
   if (m) m[c.def] = (m[c.def] || 0) + 1;
+  /* 1つの手番 (相手の手番も1つと数える) に、そのカードの持ち主の効果が何回発動したか */
+  const now = st.turns | 0;
+  if (t.turnFx.turn !== now) t.turnFx = { turn: now, n: [0, 0] };
+  if (c.owner === 0 || c.owner === 1) {
+    t.turnFx.n[c.owner]++;
+    if (t.turnFx.n[c.owner] > t.maxTurnFx[c.owner]) t.maxTurnFx[c.owner] = t.turnFx.n[c.owner];
+  }
 }
 function tallyFaceUp(st, c) {
   const list = tallyOf(st).faceUp[c.owner];

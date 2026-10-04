@@ -69,7 +69,7 @@ test('縛りプレイ・記録の実績', () => {
   assert.ok(got.includes('norefresh') && got.includes('norefresh_apex') && got.includes('untouchable'));
   assert.ok(!got.includes('lowkey') && !got.includes('overkill'));
   const more = ids(newlyEarned({}, ctx({ game: { ...base, level: 1, refreshes: 2, touched: 1, faceUpIds: ['FIRE_1', 'GRAVITY_3'], faceUpVals: [0, 2], maxLine: 21, effects: 40, chainMax: 6, turns: 18 } })));
-  assert.ok(more.includes('lowkey') && more.includes('overkill') && more.includes('overclock2') && more.includes('chain6') && more.includes('blitz'));
+  assert.ok(more.includes('lowkey') && more.includes('overkill') && more.includes('overclock2') && more.includes('blitz'));
   assert.ok(!more.includes('norefresh') && !more.includes('untouchable'));
   const lost = ids(newlyEarned({}, ctx({ game: { ...base, win: false } })));
   assert.ok(!lost.includes('norefresh') && !lost.includes('lowkey'));
@@ -123,12 +123,6 @@ test('COLLECTOR: 違うカードを60種類、表で出す (お気に入りの�
   assert.deepEqual(few.list.find(t => t.id === 'cards60').prog, [7, 60]);
 });
 
-test('チェーン: 自分の効果で割り込んで3つなら銅、4つなら銀 (負けた試合でもよい)', () => {
-  const game = (chainMax) => ({ win: false, turns: 40, compiles: 0, oppCompiles: 3, winCompiles: 3, effectsMap: {}, faceUpIds: [], chainMax, at: Date.now() });
-  assert.ok(!ids(newlyEarned({}, ctx({ game: game(2) }))).some(id => id.startsWith('chain')));
-  assert.deepEqual(ids(newlyEarned({}, ctx({ game: game(3) }))).filter(id => id.startsWith('chain')), ['chain3']);
-  assert.deepEqual(ids(newlyEarned({}, ctx({ game: game(4) }))).filter(id => id.startsWith('chain')), ['chain3', 'chain4']);
-});
 
 test('GAUNTLET: 強敵の欄の全員 (最強・ロック特化・挑戦者4人) に勝つ。挑戦者だけでは取れない', () => {
   mem.clear();
@@ -162,4 +156,16 @@ test('外した実績は「~id」の印で外れたまま。取り直すと印�
   A.unlockTrophies(ctx({ game }), 300);
   assert.ok(A.loadTrophies().lowkey, '取り直したら戻る');
   assert.equal(JSON.parse(store.compileTrophies)['~lowkey'], 0);
+});
+
+test('1つの手番に効果を10回・15回発動させる', async () => {
+  const { newlyEarned } = await import('../js3d/achievements.js');
+  const base = { win: false, level: 1, turns: 30, compiles: 1, oppCompiles: 2, winCompiles: 3, effectsMap: {}, effects: 20, faceUpIds: [], faceUpVals: [], short: false, at: Date.UTC(2026, 0, 1, 12) };
+  const ids = (l) => l.map(t => t.id);
+  const c = (game) => ({ records: [], xp: [], level: 1, cardWins: new Map(), game, gacha: { owned: {} } });
+  assert.ok(!ids(newlyEarned({}, c({ ...base, turnFxMax: 9 }))).includes('turnfx10'));
+  const ten = ids(newlyEarned({}, c({ ...base, turnFxMax: 10 })));
+  assert.ok(ten.includes('turnfx10') && !ten.includes('turnfx15'));
+  assert.ok(ids(newlyEarned({}, c({ ...base, turnFxMax: 15 }))).includes('turnfx15'));
+  assert.ok(!ids(newlyEarned({}, c({ ...base, turnFxMax: 15, short: true }))).includes('turnfx15'), '短縮マッチは数えない');
 });
