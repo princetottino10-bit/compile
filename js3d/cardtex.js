@@ -543,7 +543,7 @@ const SLEEVES = {
     ring2: 'rgba(0,0,0,0)', strip: '255,140,180' },
   sweets: { pattern: 'sweets', noLogo: true, a: '#fff0f6', b: '#e6f7ff', grid: 'rgba(255,180,200,.12)', halo: '255,220,230', ring: 'rgba(0,0,0,0)',
     ring2: 'rgba(0,0,0,0)', strip: '255,150,190' },
-  bunny: { pattern: 'bunny', noLogo: true, a: '#bfe3ff', b: '#e8d8ff', grid: 'rgba(255,255,255,0)', halo: '255,255,255', ring: 'rgba(0,0,0,0)',
+  bunny: { art: 'art/sleeves/bunny.webp', noVignette: true, pattern: 'bunny', noLogo: true, a: '#bfe3ff', b: '#e8d8ff', grid: 'rgba(255,255,255,0)', halo: '255,255,255', ring: 'rgba(0,0,0,0)',
     ring2: 'rgba(0,0,0,0)', strip: '170,150,255' },
   rose: { art: 'art/sleeves/rose.webp', pattern: 'rose', noLogo: true, a: '#2a0610', b: '#060103', grid: 'rgba(255,80,110,.04)', halo: '220,40,70', ring: 'rgba(0,0,0,0)',
     ring2: 'rgba(0,0,0,0)', strip: '200,30,60' },
