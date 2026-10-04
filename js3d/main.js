@@ -2457,7 +2457,12 @@ function bindInput() {
     location.href = location.pathname;
   };
   const cardsBtn = document.getElementById('btnCards');
-  if (cardsBtn) cardsBtn.onclick = () => openCardList();
+  /* 対戦中の CARDS は、その対戦のプロトコル (自分・相手、タッグなら味方の分も) で絞り込んで開く */
+  if (cardsBtn) cardsBtn.onclick = () => {
+    const st = shown();
+    const names = st && st.players ? [...new Set(st.players.flatMap(pl => pl.protocols.map(x => x.name)).concat(tagMates ? tagMates.p0.concat(tagMates.p1) : []))] : [];
+    openCardList(names);
+  };
   const settingsBtn = document.getElementById('btnSettings');
   /* メニューへ戻るのは歯車の中 (上のバーの MENU は、縦持ちだと画面の外へ押し出されて押せなかった) */
   if (settingsBtn) settingsBtn.onclick = () => {

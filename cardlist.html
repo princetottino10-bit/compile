@@ -696,6 +696,18 @@
       BY = Object.fromEntries(PROTOS.map(p => [p.name, p]));
       ALL = PROTOS.flatMap(p => p.cards.map(c => ({ p, c })));
       $('total').textContent = PROTOS.length + ' PROTOCOLS · ' + ALL.length + ' CARDS';
+      /* 対戦中に開いたとき: その対戦のプロトコルで絞り込んで始める (?protos=A,B,C。開き直したときは postMessage) */
+      const applyProtos = (list) => {
+        const names = (list || []).filter(n => BY[n]);
+        if (!names.length) return false;
+        S.sel = names; S.fx = 'all'; S.q = ''; $('q').value = '';
+        return true;
+      };
+      applyProtos((new URLSearchParams(location.search).get('protos') || '').split(','));
+      window.addEventListener('message', (ev) => {
+        if (ev.origin !== location.origin || !ev.data || ev.data.type !== 'cl-protos') return;
+        if (applyProtos(ev.data.protos)) { setTab('list', false); renderFilters(); renderList(); }
+      });
       renderFilters();
       renderList();
       renderProtos();

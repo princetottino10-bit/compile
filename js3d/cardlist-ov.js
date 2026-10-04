@@ -17,7 +17,13 @@ function onKey(ev) {
   if (ev.key === 'Escape') close();
 }
 
-export function openCardList() {
+/* protos: 対戦中ならその対戦のプロトコル (自分と相手)。渡すとその絞り込みで開く */
+export function openCardList(protos) {
+  const list = Array.isArray(protos) ? protos.filter(Boolean) : [];
+  if (ov && list.length) {
+    const fr = ov.querySelector('.cl-frame');
+    try { fr.contentWindow.postMessage({ type: 'cl-protos', protos: list }, location.origin); } catch (e) { /* 読み込み中なら URL で効く */ }
+  }
   if (!ov) {
     ov = document.createElement('div');
     ov.id = 'cardListOv';
@@ -25,7 +31,7 @@ export function openCardList() {
     ov.setAttribute('aria-modal', 'true');
     ov.setAttribute('aria-label', 'カードリスト');
     ov.innerHTML = '<div class="cl-bar"><b>CARD LIST</b><button type="button" class="cl-x"><span aria-hidden="true">←</span>戻る</button></div>' +
-      '<iframe class="cl-frame" title="カードリスト" src="cardlist.html?embed=1"></iframe>';
+      '<iframe class="cl-frame" title="カードリスト" src="cardlist.html?embed=1' + (list.length ? '&protos=' + encodeURIComponent(list.join(',')) : '') + '"></iframe>';
     ov.querySelector('.cl-x').onclick = close;
     document.body.appendChild(ov);
   }
