@@ -114,6 +114,8 @@ export function createBoard(stage, defIndex, me, hooks) {
   const auraFor = (hooks && hooks.auraFor) || (() => null);
   /* 表面のキラ加工 (プロトコルの習熟度)。defId -> { color, strength, rainbow } | null */
   const foilFor = (hooks && hooks.foilFor) || (() => null);
+  /* 表で出したときの演出 (プロトコルの習熟度)。defId -> { level, colors } | null */
+  const masteryLand = (hooks && hooks.masteryLand) || (() => null);
   /* 見た目 (レベルの報酬): 自分のカードの裏面の柄 / 自分のコンパイルの光の色 (null ならプロトコルの色) */
   const sleeveOf = (hooks && hooks.sleeve) || (() => 'default');
   /* 相手のカードの裏面 (オンラインは相手の設定。CPU は標準) */
@@ -454,6 +456,14 @@ export function createBoard(stage, defIndex, me, hooks) {
     if (faceUp && value >= 3) FX.fxLandSparks(scene, target, accent, 6 + value * 3);
     pressBelow(next, uid);
     onLand({ byMe, faceUp, value });
+    /* 自分のカードを表で出したら、そのプロトコルの習熟度の光 (Lv3 銀・Lv6 金・Lv9 虹の輪を重ねて広げる) */
+    if (faceUp && next.cards[uid] && next.cards[uid].owner === me) {
+      const ml = masteryLand(next.cards[uid].def);
+      if (ml) {
+        ml.colors.forEach((c, i) => setTimeout(() => FX.shockwave(scene, target, c, 3.2 + i * 0.7, 520 + i * 90), i * 90));
+        FX.fxLandSparks(scene, target, ml.colors[0], 10 + ml.colors.length * 6);
+      }
+    }
     /* お気に入りのカードを表で出したときは、細い金の輪を1つ足すだけ (光らせすぎない) */
     const pc = next.cards[uid];
     const aura = pc && pc.owner === me && pc.faceUp ? auraFor(pc.def) : null;

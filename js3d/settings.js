@@ -155,7 +155,7 @@ export function openSettings(extra) {
     '<label class="st-row st-check"><span>おまかせの編成にデイリーのプロトコルを入れる<small>今日のデイリーミッションで指定されたプロトコルを、自分の3つのうち1つに必ず入れます</small></span>' +
       '<input type="checkbox" id="stQuickDaily"' + (s.quickDaily ? ' checked' : '') + '></label>' +
     '<h4 class="st-group">見た目</h4>' +
-    '<label class="st-row st-check"><span>カードのキラ加工<small>プロトコルの習熟度 3 で銀、6 で金、9 で虹。文字の上には光を乗せません</small></span>' +
+    '<label class="st-row st-check"><span>カードのキラ加工<small>そのカードで勝った数で、縁と面が光る (銅 3勝・銀 10勝・金 25勝・ホロ 50勝)。文字の上には光を乗せません</small></span>' +
       '<input type="checkbox" id="stFoil"' + (s.foil ? ' checked' : '') + '></label>' +
     /* 見た目は専用の画面 (cosmetics-mode.js) で。実物どおりのプレビューと図鑑つき */
     '<div class="st-cosmetics"><div class="st-cos-head"><b>COLLECTION</b><small>盤面・スリーブ・マーカー・称号などは専用の画面で選べます</small></div>' +

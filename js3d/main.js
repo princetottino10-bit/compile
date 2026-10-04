@@ -154,25 +154,31 @@ function cosmetic(kind, fallback) {
   const key = settings()[kind];
   return key && isUnlocked(kind, key, myLevel) ? key : fallback;
 }
-/* プロトコルの習熟度 (戦績から数える)。カード表面のキラ加工に使う */
+/* プロトコルの習熟度 (戦績から数える)。表で出したときの演出 (masteryLand) に使う */
 let protoMastery = protocolSummary(localRecords());
-/* 習熟度 3 で銀、6 で金、9 で虹のキラ。見た目だけで強さは変わらない (設定で切れる) */
-const FOIL_TIERS = [
-  { min: 9, color: '#ffffff', strength: 0.34, rainbow: true },
-  { min: 6, color: '#ffd98a', strength: 0.3 },
-  { min: 3, color: '#dfe8ff', strength: 0.26 }
-];
-/* ホロ (そのカードで50勝) の札は、縁だけでなく面全体に強い虹の光沢を乗せる (金の縁からひと目で変わるように) */
-const HOLO_FOIL = { color: '#ffffff', strength: 0.9, rainbow: true, holo: true };
+/* カードの面のキラも、縁の光と同じくそのカードで勝った数で決める (銅 3勝・銀 10勝・金 25勝・ホロ 50勝)。
+   見た目だけで強さは変わらない (設定で切れる) */
+const FOIL_BY_TIER = {
+  bronze: { color: '#f0b07a', strength: 0.22 },
+  silver: { color: '#dfe8ff', strength: 0.27 },
+  gold: { color: '#ffd98a', strength: 0.32 },
+  /* ホロは面全体に強い虹の光沢を乗せる (金からひと目で変わるように) */
+  holo: { color: '#ffffff', strength: 0.9, rainbow: true, holo: true }
+};
 function foilFor(defId) {
   if (!settings().foil) return null;
   const w = cardWins.get(defId);
   const tier = w ? cardTier(w.wins) : null;
-  if (tier && tier.holo) return HOLO_FOIL;
+  return tier ? FOIL_BY_TIER[tier.key] || null : null;
+}
+/* 習熟度は、表で出したときの演出に: Lv3 銀・Lv6 金・Lv9 虹の光の輪と粒 (null なら無し) */
+function masteryLand(defId) {
   const d = defIndex[defId];
   const t = d && protoMastery.get(d.proto);
   const lv = t ? t.mastery.level : 0;
-  return FOIL_TIERS.find(x => lv >= x.min) || null;
+  return lv >= 9 ? { level: lv, colors: ['#ff5f7a', '#ffc05a', '#7df28c', '#5ab8ff', '#b98cff'] }
+    : lv >= 6 ? { level: lv, colors: ['#ffd98a', '#fff1c2'] }
+      : lv >= 3 ? { level: lv, colors: ['#dfe8ff', '#ffffff'] } : null;
 }
 function refreshCardGlow() {
   cardWins = cardStats(localRecords());
@@ -778,6 +784,7 @@ async function boot() {
   board = createBoard(stage, defIndex, ME, {
     auraFor,
     foilFor,
+    masteryLand,
     sleeve: () => cosmetic('sleeve', 'default'),
     oppSleeve: () => oppLook.sleeve,
     /* 自分のコンパイルの光の色 (レベルの報酬)。虹は毎回ちがう色 */
