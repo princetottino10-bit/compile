@@ -16,8 +16,12 @@ export function createLogFormat(ctx) {
     const me = ctx.seat();
     const mine = 'P' + (me + 1), opp = 'P' + (2 - me);
     /* "P1:" や "P1 の" の形だけ置き換える (英字混じりの文言を壊さない) */
-    return text.replace(/(^|[\s(（\[])P([12])(?=[:\s：の])/g, (m, pre, n) =>
-      pre + ('P' + n === mine ? 'あなた' : 'P' + n === opp ? '相手' : 'P' + n));
+    /* タッグは P2.1 / P2.2 (何人目か)。名前を渡されていれば、その人の名前 (キャラ) にする */
+    return text.replace(/(^|[\s(（\[])P([12])(?:\.([12]))?(?=[:\s：の])/g, (m, pre, n, k) => {
+      const side = 'P' + n === mine ? 0 : 'P' + n === opp ? 1 : -1;
+      const named = k && side >= 0 && ctx.tagName ? ctx.tagName(side, +k - 1) : '';
+      return pre + (named || (side === 0 ? 'あなた' : side === 1 ? '相手' : 'P' + n));
+    });
   }
 
   /* 「ライン2」だけでは列が分からないので、行為者側のプロトコル名を添える */

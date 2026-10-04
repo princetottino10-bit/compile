@@ -34,10 +34,10 @@ export const UNDERDOG_LEVEL = 20;
 export const UNDERDOG_DECK = ['SMOKE', 'UNITY', 'APATHY'];
 
 /* 下剋上タッグ: あなた (最弱で固定) と、かんたんの CPU の味方 vs 最強のタッグ。
-   相手は最強のデッキ (STRONGEST_AI) と、挑戦者のデッキ (DARKNESS / HATE / SMOKE。最強と重ならない)。
+   相手は最強のデッキ (STRONGEST_AI) と、DARKNESS / HATE / PSYCHIC (最強とも、あなたの最弱とも重ならない。2026-10-04)。
    相手2人とも最強と同じ戦い方。味方の CPU だけ、かんたんの読み (main.js の UNDERDOG_MATE_AI) */
 export const UNDERDOG_TAG_LEVEL = 21;
-export const UNDERDOG_TAG_RIVAL_MATE = ['DARKNESS', 'HATE', 'SMOKE'];
+export const UNDERDOG_TAG_RIVAL_MATE = ['DARKNESS', 'HATE', 'PSYCHIC'];
 
 export const isChallenger = (level) => level >= CHALLENGER_BASE && level < CHALLENGER_BASE + CHALLENGERS.length;
 

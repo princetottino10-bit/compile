@@ -118,7 +118,6 @@ export function runTitle(protocols, opts) {
     '<div class="tt-marquee"><div class="tt-strip">' + emblems + emblems + '</div></div>' +
     '<div class="tt-foot">30 PROTOCOLS · 180 CARDS</div>' +
     /* 縦持ちのスマホだけに出す (CSS)。タイトル画面の部品なので、ほかの画面を開けば一緒に隠れて重ならない */
-    '<div class="tt-rotate">対戦画面は横持ちに最適化されています (縦持ちでも遊べます)</div>' +
     /* 不具合・要望の入口は、メニュー画面にそのまま出しておく (MORE の中だと見つけにくい) */
     '<button type="button" class="tt-report" id="ttReport">不具合・要望</button>' +
     '<div class="tt-corner" id="ttCorner" hidden>' + profileChip(protocols) +

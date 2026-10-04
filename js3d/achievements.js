@@ -30,6 +30,8 @@ function streak(records, want) {
   for (const r of records) { n = !!r.win === want ? n + 1 : 0; best = Math.max(best, n); }
   return best;
 }
+/* タッグデュエルの勝ち (戦績の mode が tag。下剋上タッグも入る) */
+const tagWins = (c) => c.records.filter(r => r.win && r.mode === 'tag');
 const playedKinds = (c) => new Set(c.records.flatMap(r => r.cards || [])).size;
 const protoWins = (c) => new Set(c.records.filter(r => r.win).flatMap(r => r.me)).size;
 const tierCards = (c, min) => Array.from(c.cardWins.values()).filter(t => t.wins >= min).length;
@@ -118,6 +120,14 @@ export const TROPHIES = [
   { id: 'overkill', tier: 'silver', name: 'OVERKILL', desc: '1つのラインの合計値を20以上にする', test: (c) => !!g(c) && (g(c).maxLine | 0) >= 20 },
   { id: 'overclock2', tier: 'silver', name: 'OVERCLOCK II', desc: '1試合で自分の効果を40回発動させる', test: (c) => !!g(c) && (g(c).effects | 0) >= 40 },
   { id: 'blitz', tier: 'silver', hidden: true, name: 'BLITZ', desc: '20手番以内 (両者合わせて) で勝つ', test: (c) => !!g(c) && g(c).win && g(c).turns > 0 && g(c).turns <= 20 },
+  /* ---- タッグデュエル (2026-10-04) ---- */
+  { id: 'tag_win', tier: 'bronze', name: 'TAG TEAM', desc: 'タッグデュエルで勝つ', test: (c) => tagWins(c).length >= 1 },
+  { id: 'tag5', tier: 'silver', name: 'PARTNERS', desc: 'タッグデュエルで5勝する', test: (c) => tagWins(c).length >= 5, progress: (c) => [Math.min(5, tagWins(c).length), 5] },
+  { id: 'tag_strong', tier: 'silver', name: 'POWER COUPLE', desc: 'タッグデュエルの「つよい」に勝つ', test: (c) => tagWins(c).some(r => r.level === 2) },
+  { id: 'tag_all', tier: 'silver', name: 'ALL ROUND', desc: 'タッグデュエルの「かんたん」「ふつう」「つよい」すべてに勝つ',
+    test: (c) => [0, 1, 2].every(lv => tagWins(c).some(r => r.level === lv)), progress: (c) => [[0, 1, 2].filter(lv => tagWins(c).some(r => r.level === lv)).length, 3] },
+  { id: 'tag_flawless', tier: 'gold', hidden: true, name: 'PERFECT SYNC', desc: 'タッグデュエルで、相手に1回もコンパイルさせずに勝つ',
+    test: (c) => !!g(c) && g(c).tag && g(c).win && g(c).oppCompiles === 0 },
   { id: 'underdog_tag', tier: 'gold', name: 'UNDERDOG DUO', desc: '下剋上タッグ (最弱＋かんたんの味方 vs 最強のタッグ) で勝つ (称号 UNDERDOG DUO)', test: (c) => beat(c, UNDERDOG_TAG_LEVEL) },
   { id: 'chain6', tier: 'gold', name: 'CHAIN BREAKER', desc: '自分の効果で割り込んで、チェーンを6つつなげる', test: (c) => !!g(c) && (g(c).chainMax | 0) >= 6 },
   { id: 'norefresh', tier: 'gold', name: 'NO REFRESH', desc: '一度もリフレッシュせずに勝つ', test: (c) => !!g(c) && g(c).win && g(c).refreshes === 0 },

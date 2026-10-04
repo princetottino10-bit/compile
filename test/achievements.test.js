@@ -136,3 +136,16 @@ test('GAUNTLET: 強敵の欄の全員 (最強・ロック特化・挑戦者4人)
   const all = challengers.concat([rec(true, 3), rec(true, 4)]);
   assert.ok(ids(newlyEarned({}, ctx({ records: all }))).includes('challengers'));
 });
+
+test('タッグデュエルの実績 (戦績の mode が tag)', () => {
+  const recs = (lvs) => lvs.map((level, i) => ({ win: true, level, mode: 'tag', me: ['FIRE', 'WATER', 'LIFE'], opp: ['DEATH', 'METAL', 'SPEED'], at: i + 1, cards: [] }));
+  const one = ids(newlyEarned({}, ctx({ records: recs([0]) })));
+  assert.ok(one.includes('tag_win') && !one.includes('tag5') && !one.includes('tag_strong'));
+  const many = ids(newlyEarned({}, ctx({ records: recs([0, 1, 2, 2, 1]) })));
+  assert.ok(many.includes('tag5') && many.includes('tag_strong') && many.includes('tag_all'));
+  const solo = ids(newlyEarned({}, ctx({ records: recs([2]).map(r => ({ ...r, mode: 'cpu' })) })));
+  assert.ok(!solo.includes('tag_win'));
+  const game = { win: true, tag: true, turns: 40, compiles: 3, oppCompiles: 0, winCompiles: 3, effectsMap: {}, faceUpIds: ['FIRE_1'], refreshes: 1, touched: 1, maxLine: 12, short: false, at: Date.UTC(2026, 0, 1, 12) };
+  assert.ok(ids(newlyEarned({}, ctx({ game }))).includes('tag_flawless'));
+  assert.ok(!ids(newlyEarned({}, ctx({ game: { ...game, tag: false } }))).includes('tag_flawless'));
+});

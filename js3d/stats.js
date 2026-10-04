@@ -58,7 +58,7 @@ export function mergeRecords(remote) {
 /* 1戦を記録する。me / opp: プロトコル名3つ、win: 勝ったか、level: 難易度 (aidecks.js の番号 / 不明なら null)
    extra: { turns: 決着までの手番の数 (両者合計), feats: 取った実績の id, cards: 自分が表で出したカードの defId,
             effects: { defId: 自分のそのカードの効果が発動した回数 } } */
-const MODES = ['cpu', 'quick', 'run', 'weekly', 'tutorial'];
+const MODES = ['cpu', 'quick', 'run', 'weekly', 'tutorial', 'tag'];   // tag: 2026-10-04 から残す (前のタッグ戦は印なし)
 export function recordSoloResult(me, opp, win, level, extra) {
   const list = records();
   const at = Date.now();

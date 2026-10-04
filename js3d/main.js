@@ -186,7 +186,8 @@ function gameSummary(st, side, win, level, online) {
     refreshes: (t.refreshes && t.refreshes[side]) | 0,   // リフレッシュした回数
     touched: (t.touched && t.touched[side]) | 0,         // 自分のカードが相手の効果で削除・反転・移動・手札に戻された回数
     maxLine: (t.maxLine && t.maxLine[side]) | 0,         // 自分のラインの合計値の最高
-    short: shortMatch                                    // 短縮マッチ (実績に数えない)
+    short: shortMatch,                                   // 短縮マッチ (実績に数えない)
+    tag: !!tagMates                                      // タッグデュエル
   };
 }
 
@@ -303,11 +304,17 @@ function syncAvatar() {
   if (avatars) return;
   /* 観戦: A (左下) と B (右上) は観戦の画面で選んだキャラ (なしも)。タッグの相棒はほかからランダム */
   const sp = spectate && spectate.av;
-  const me = sp ? sp.a : tutorial ? 'zundamon' : storyNode ? storyNode.mate || null : myAvatarId();
+  /* 下剋上タッグの相手 (最強のタッグ) は紫苑と茜で決まり。自分と味方はほかの子から */
+  const udTag = !sp && !storyNode && aiDifficulty === UNDERDOG_TAG_LEVEL;
+  const UD_OPP = ['shion', 'nadeshiko'];
+  let me = sp ? sp.a : tutorial ? 'zundamon' : storyNode ? storyNode.mate || null : myAvatarId();
+  if (udTag && UD_OPP.includes(me)) me = avatarIds().find(i => !UD_OPP.includes(i) && i !== 'asagi') || me;
   const pool = (ids) => shuffled(avatarIds().filter(i => !ids.includes(i)));
-  const mate = tagMates && (!sp || sp.a) ? (sp ? pool([sp.a, sp.b])[0] : (avatarIds().find(i => i !== me && i === 'asagi') || avatarIds().find(i => i !== me))) : null;
+  const mate = tagMates && (!sp || sp.a) ? (sp ? pool([sp.a, sp.b])[0]
+    : (avatarIds().find(i => i !== me && i === 'asagi' && !(udTag && UD_OPP.includes(i))) || avatarIds().find(i => i !== me && !(udTag && UD_OPP.includes(i))))) : null;
   let oppIds;
-  if (sp) oppIds = sp.b ? [sp.b, pool([sp.a, sp.b, mate])[0] || sp.b] : [null, null];
+  if (udTag) oppIds = UD_OPP.slice();
+  else if (sp) oppIds = sp.b ? [sp.b, pool([sp.a, sp.b, mate])[0] || sp.b] : [null, null];
   else if (storyNode) oppIds = [storyNode.oppAvatar || null, null];
   else {
     /* 相手のキャラ: 設定の「相手のキャラ」(ふだんはランダム)。自分・味方と同じ子は選ばない */
@@ -521,16 +528,33 @@ function avatarControlCheck(st) {
   if (avatarControl !== null && c !== avatarControl && c >= 0) avatarSay(c, 'control', null, st, 6000);
   avatarControl = c;
 }
-/* タッグ: 指す番の人が前に出る。相手は、その番の人のキャラに替える */
-function avatarTagTurn(st) {
+/* タッグ: 指す番の人が前に出る。相手のキャラは、相手の番が始まるときにその番の人へ替える
+   (前は相手が指し終えた瞬間に次の人へ替わり、いま指した人のひとことや名札が次の人のものになっていた)。
+   oppTurn: 相手の番が始まった (このときだけ相手を替える) */
+let oppShownPilot = 0;               // 相手の側で、いま出ている人 (0 = 相手1 / 1 = 相手2)
+function avatarTagTurn(st, oppTurn) {
   if (!avatars || !st || !st.tag) return;
   if (avatars.mate) {
     const partner = st.tag.pilot[ME] === 1;
     if (avatars.me) avatars.me.setBack(partner);
     avatars.mate.setBack(!partner);
   }
-  const want = avatars.oppIds[st.tag.pilot[AI]];
+  if (!oppTurn) return;
+  oppShownPilot = st.tag.pilot[AI];
+  const want = avatars.oppIds[oppShownPilot];
   if (want && avatars.opp && avatars.opp.id !== want) { avatars.opp.destroy(); avatars.opp = mountAvatar(want, { side: 'opp', voice: settings().oppVoice !== false }); }
+}
+/* 名札の呼び名: 出ているキャラの名前 (キャラを出さない設定なら CPU / 相手1・2)。モードの名前は呼び名にしない */
+const avatarName = (id) => (id && AVATARS[id] ? AVATARS[id].name : '');
+function oppCallName(pilot) {
+  const id = avatars ? (avatars.oppIds || [])[pilot] : (pilot ? null : oppAvatarPlan());
+  return avatarName(id) || (tagMates ? 'CPU ' + (pilot + 1) : 'CPU');
+}
+/* 難易度の短い名前 (名札の下の小さい字) */
+function shortLevel(lv) {
+  if (lv === null || lv === undefined) return '';
+  const t = levelLabel(lv);
+  return t === '不明' ? '' : t.replace(/\s*\(.*\)$/, '').replace(/^挑戦者 .*/, '挑戦者');
 }
 
 /* 設定の画面に、対戦のキャラの項目 (相手の声・クレジット) を出すのは、キャラが見える人だけ */
@@ -1067,7 +1091,7 @@ async function boot() {
           p1 = STRONGEST_AI.slice();
           /* 味方の3つは、あなたの3つと重ならないように残りからランダム。相手の味方は決まったデッキ */
           const all = cards.protocols.map(x => x.name);
-          tagMates = { p0: shuffled(all.filter(n => !p0.includes(n))).slice(0, 3), p1: UNDERDOG_TAG_RIVAL_MATE.slice() };
+          tagMates = { p0: shuffled(all.filter(n => !p0.includes(n) && !p1.includes(n) && !UNDERDOG_TAG_RIVAL_MATE.includes(n))).slice(0, 3), p1: UNDERDOG_TAG_RIVAL_MATE.slice() };
           applyAiDifficulty(UNDERDOG_TAG_LEVEL);
           setupNote = '下剋上タッグ: あなた ' + p0.join(' / ') + ' ＋ かんたんの味方 ' + tagMates.p0.join(' / ') + '　vs 最強タッグ ' + p1.join(' / ') + ' ＋ ' + tagMates.p1.join(' / ');
           break;
@@ -1185,6 +1209,7 @@ async function boot() {
     /* 動作確認用: 盤面をコードから進める */
     play: (uid, line, faceUp) => step({ type: 'play', card: uid, line, faceUp: faceUp !== false }),
     legal: () => Engine.legalActions(cur.state),
+    avatarIds: () => (avatars ? { me: avatars.me && avatars.me.id, mate: avatars.mate && avatars.mate.id, opp: avatars.opp && avatars.opp.id, oppIds: avatars.oppIds } : null),
     diag: () => ({ busy, selectedUid, tweens: TW.activeCount(), marks: window.__bootMarks }),
     arrange: (req, opts) => arrangeOnBoard(req, opts),
     pickTest: (req) => pickOnBoard(req),
@@ -1331,7 +1356,7 @@ function tsumeBarOpts(ts) {
       /* 模範解答は管理者のアカウントだけ (問題の確認用) */
       ...(accountState().admin ? [{ label: '答え', on: () => TS.showAnswer(ts) }] : []),
       /* AUTO: 模範解答を盤面の上で自動で指して見せる (管理者だけ。報告を受けた問題の確認用) */
-      ...(accountState().admin && Array.isArray(ts.solution) && ts.solution.length ? [{ label: 'AUTO', on: () => startTsumeAuto(ts) }] : []),
+      ...(accountState().admin && Array.isArray(ts.solution) && ts.solution.length ? [{ label: 'AUTO', on: () => (tsumeAuto ? stopTsumeAuto() : startTsumeAuto(ts)) }] : []),
       puzzle.story ? { label: '地図へ', on: () => { location.href = location.pathname + '?story=1'; } } : { label: '一覧', on: () => openTsume('list') }
     ]
   };
@@ -1361,6 +1386,11 @@ function startTsumeAuto(ts, test = false) {
   UI.toast('AUTO: 模範解答を指します', 2400);
   deselect(); showPreview(null);
   tsumeAutoAction();                               // 手番の始まりの処理が先に指していれば、こちらは何もしない
+}
+/* AUTO をもう一度押したら止める (残りの手は自分で指せる。経験値などに入れないのは止めてもそのまま) */
+function stopTsumeAuto() {
+  tsumeAuto = null;
+  UI.toast('AUTO を止めました。続きは自分で指せます', 2400);
 }
 /* 読み直したあと (?auto=1): 管理者だと分かってから始める (ログインの状態は裏で読むので、少し待つ) */
 async function resumeTsumeAuto(ts) {
@@ -2907,7 +2937,9 @@ function showCpuPlates(p1) {
   const first = p1 && protoIndex[p1[0]];
   /* 勝ち抜き戦・週替わりでは難易度名 (かんたん・ふつう…) を出さない */
   const sub = storyNode ? 'STORY' : aiDifficulty === null || runMode ? '' : levelLabel(aiDifficulty);
-  showPlates({ me: myPlate(), opp: { name: storyNode ? storyNode.oppName : 'CPU', sub: sub === '不明' ? '' : sub,
+  const showAv = avatarsOpen() && settings().avatarShow !== false && !tutorial;
+  showPlates({ me: myPlate(), opp: { name: storyNode ? storyNode.oppName : (showAv && avatarName(oppAvatarPlan())) || 'CPU',
+    sub: storyNode ? 'STORY' : runMode ? '' : shortLevel(aiDifficulty),
     icon: first ? { name: first.name, color: first.color } : null } });
 }
 
@@ -2940,9 +2972,13 @@ function tagPlates(st) {
     showPlates({ me: { name: specName(ME, mine), sub: mark(0), icon: iconOf(ME, mine) }, opp: { name: specName(AI, theirs), sub: mark(1), icon: iconOf(AI, theirs) } });
     return;
   }
+  /* 相手の側は、いま出ている人 (相手の番が始まるときに替わる。avatarTagTurn) */
+  const shownOpp = st.turn === AI ? theirs : oppShownPilot;
+  const mateName = avatarName(avatars && avatars.mate && avatars.mate.id) || 'PARTNER';
+  const short = shortLevel(aiDifficulty);
   showPlates({
-    me: mine ? { name: '味方', sub: 'PARTNER · CPU ' + lv, icon: iconOf(ME, 1) } : myPlate(),
-    opp: { name: '相手' + (theirs + 1), sub: 'CPU ' + lv, icon: iconOf(AI, theirs) }
+    me: mine ? { name: mateName, sub: 'PARTNER' + (short ? ' · ' + short : ''), icon: iconOf(ME, 1) } : myPlate(),
+    opp: { name: oppCallName(shownOpp), sub: 'RIVAL ' + (shownOpp + 1) + (short ? ' · ' + short : ''), icon: iconOf(AI, shownOpp) }
   });
 }
 
@@ -3274,12 +3310,13 @@ async function announceTurnFor(turn, atState) {
   const tagSt = atState || (cur && cur.state);
   if ((tagMates || roomTag) && tagSt && tagSt.tag) {
     tagPlates(tagSt);
-    if (tagMates) avatarTagTurn(tagSt);
+    if (tagMates) avatarTagTurn(tagSt, turn === AI);
+    tagPlates(tagSt);
     const pilot = tagSt.tag.pilot[turn];
     const mine = tagSt.tag.online ? tagSt.tag.mine : 0;
     /* 観戦は「YOUR / PARTNER / RIVAL」ではなく、指すキャラの名前で */
     await UI.turnCutIn(turn === ME, spectate ? specName(turn, pilot) + ' TURN'
-      : turn === ME ? (pilot === mine ? 'YOUR TURN' : 'PARTNER TURN') : 'RIVAL ' + (pilot + 1) + ' TURN');
+      : turn === ME ? (pilot === mine ? 'YOUR TURN' : 'PARTNER TURN') : (tagSt.tag.online ? 'RIVAL ' + (pilot + 1) : oppCallName(pilot)) + ' TURN');
   } else await UI.turnCutIn(turn === ME, spectate ? specName(turn) + ' TURN' : undefined);
   /* 番を終えた側が劣勢なら、ひとこと (タッグフォースの「ターンエンド……」)。番が来た側は、優勢なら強気に、ふだんはいつものひとこと */
   const standSt = tagSt || (cur && cur.state);
@@ -5606,7 +5643,9 @@ function logParts(msg) {
       seat: mySeat,
       roomSide: () => (roomMode && roomRm ? roomRm.side : null),
       demo: () => demoMode,
-      state: () => shown()
+      state: () => shown(),
+      /* タッグ (CPU 戦): 何人目かから、あなた / 味方・相手のキャラの名前 */
+      tagName: (side, k) => (!tagMates || roomMode ? '' : side === 0 ? (k ? avatarName(avatars && avatars.mate && avatars.mate.id) || '味方' : 'あなた') : oppCallName(k))
     });
   }
   return logFormat(msg);

@@ -286,9 +286,9 @@ export function openCosmetics(opts) {
       }).join('') + '</div>' +
       '<div class="cm-body">' +
         '<section class="cm-preview">' + preview(tab, fItem[0], fItem[1], owned(tab, fItem[0], c), sourceOf(tab, fItem[0])) +
-          (tab === 'track' && owned(tab, fItem[0], c) ? SLOTS.map(([slot, label]) => (s[slot] || '') === fItem[0]
+          (tab === 'track' && owned(tab, fItem[0], c) ? '<div class="cm-slots">' + SLOTS.map(([slot, label]) => (s[slot] || '') === fItem[0]
               ? '<p class="cm-on">' + label + 'で流しています</p>'
-              : '<button type="button" class="cm-equip" data-slot="' + slot + '" data-key-set="' + esc(fItem[0]) + '">' + label + 'で流す</button>').join('')
+              : '<button type="button" class="cm-equip" data-slot="' + slot + '" data-key-set="' + esc(fItem[0]) + '">' + label + 'で流す</button>').join('') + '</div>'
             : owned(tab, fItem[0], c) && fItem[0] !== cur ? '<button type="button" class="cm-equip" data-equip="' + esc(fItem[0]) + '">着ける</button>'
             : fItem[0] === cur ? '<p class="cm-on">着けています</p>'
             : shopPrice(tab, fItem[0]) ? '<button type="button" class="cm-equip cm-buy' + (armed === fItem[0] ? ' armed' : '') + '" data-buy="' + esc(fItem[0]) + '"' +

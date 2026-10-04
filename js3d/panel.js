@@ -57,6 +57,13 @@ function rgba(hex, a) {
 const smallScreen = () => typeof matchMedia === 'function' && matchMedia('(max-height: 500px), (max-width: 700px)').matches;
 
 /* 合計値の札の、板のテクスチャ上の位置と大きさ */
+/* 色を白に寄せる (暗い板の上で、プロトコルの色のまま読めるように) */
+function mixWhite(hex, k) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || ''));
+  if (!m) return '#ffffff';
+  const n = parseInt(m[1], 16), c = [n >> 16 & 255, n >> 8 & 255, n & 255].map(v => Math.round(v + (255 - v) * k));
+  return 'rgb(' + c.join(',') + ')';
+}
 const BADGE = { w: 128, h: 112, x: TEX_W - 128 - 18, y: (TEX_H - 112) / 2 + 8 };
 
 /* 合計値の札。10 以上はコンパイル圏内なので塗りを反転させる。
@@ -155,8 +162,10 @@ function paint(ctx, info, arts) {
   /* スマホのコンパイル済み (タッグ以外) は、紋章の場所に大きな ✓ のシールを置く (紋章より「済んだ」が先に目に入るように) */
   const sealLeft = compiled && !!info.big && !info.parts;
   /* 紋章。タッグの複合プロトコルは2つを同じ大きさで、それぞれの名前の横に */
-  const ROW = [H * 0.43, H * 0.74];
-  if (info.parts) {
+  /* スマホのタッグは、紋章と LOADING を省いて名前を大きく (2段の名前が小さすぎて読めなかった)。名前の色でプロトコルを分ける */
+  const tagBig = !!info.parts && !!info.big;
+  const ROW = tagBig ? [H * 0.32, H * 0.72] : [H * 0.43, H * 0.74];
+  if (info.parts && !tagBig) {
     for (let k = 0; k < 2; k++) {
       drawEmblem(ctx, info.parts[k].name, 30, ROW[k] - 29, 58, compiled ? 'rgba(255,255,255,.95)' : rgba(info.parts[k].color, 0.95), 6);
     }
@@ -178,7 +187,7 @@ function paint(ctx, info, arts) {
     ctx.font = '800 25px ' + FONT.hud;
     ctx.fillStyle = '#0a0614';
     ctx.fillText('✓ COMPILED', 120, 48);
-  } else {
+  } else if (!tagBig) {
     ctx.font = '700 22px ' + FONT.hud;
     ctx.fillStyle = rgba(accent, 0.9);
     ctx.fillText('LOADING...', 112, 48);
@@ -197,9 +206,17 @@ function paint(ctx, info, arts) {
   if (info.parts) {
     /* 2つの名前は同じ大きさ (長い方に合わせる)・同じ白で */
     const longer = info.parts[0].name.length >= info.parts[1].name.length ? info.parts[0].name : info.parts[1].name;
-    fit(longer, W - 270, 44);
-    ctx.fillStyle = '#ffffff';
-    for (let k = 0; k < 2; k++) ctx.fillText(info.parts[k].name, 112, ROW[k]);
+    if (tagBig) {
+      fit(longer, W - BADGE.w - 18 - 40, 72);
+      for (let k = 0; k < 2; k++) {
+        ctx.fillStyle = compiled ? '#ffffff' : mixWhite(info.parts[k].color, 0.45);
+        ctx.fillText(info.parts[k].name, 22, ROW[k]);
+      }
+    } else {
+      fit(longer, W - 270, 44);
+      ctx.fillStyle = '#ffffff';
+      for (let k = 0; k < 2; k++) ctx.fillText(info.parts[k].name, 112, ROW[k]);
+    }
   } else {
     fit(info.name, W - 270, 60);
     ctx.fillStyle = '#ffffff';

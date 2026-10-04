@@ -36,7 +36,7 @@
   #btnHand { display: inline-flex; }
   .placement-lane { gap: 5px; padding: 5px 4px; border-radius: 16px; }
   #playChoices button { min-width: 52px; min-height: 44px; padding: 5px 8px; font-size: 15px; }
-  .placement-cancel { position: fixed; right: 10px; bottom: calc(70px + env(safe-area-inset-bottom)); }
+  .placement-cancel { position: fixed; right: 10px; bottom: calc(12px + env(safe-area-inset-bottom)); }
 }
 
 /* 横持ちのスマホは縦が狭いので、ボタンを低くする */

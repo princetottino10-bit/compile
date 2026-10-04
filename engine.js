@@ -144,6 +144,8 @@ function tallyFaceUp(st, c) {
 }
 
 function log(ctx, msg, uid) {
+  /* タッグ: 「P2」に、いまその側に入っている人の印を付ける (P2.1 = 1人目 / P2.2 = 2人目)。画面で名前に置き換える */
+  if (ctx.st.tag) msg = String(msg).replace(/(^|[\s(（\[])P([12])(?=[:\s：の])/g, (m, pre, n) => pre + 'P' + n + '.' + (ctx.st.tag.pilot[n - 1] + 1));
   ctx.log.push(msg);
   ctx.st.actionLog.push(msg);
   if (ctx.st.actionLog.length > 300) ctx.st.actionLog.shift();
@@ -4682,12 +4684,38 @@ function aiRootValues(state) {
   return { best, candidates: collect };
 }
 
+/* 候補に、自分から見えない相手の裏向きのカードがあるか (表に返す・動かす等の対象選び) */
+function aiPicksHiddenOpp(state, req) {
+  if (req.kind !== 'pickCard' || !Array.isArray(req.candidates)) return false;
+  return req.candidates.some(uid => {
+    const c = state.cards[uid];
+    if (!c || c.faceUp || c.zone !== 'field') return false;
+    const loc = locate(state, uid);
+    return loc && loc.side !== req.player && !aiCardKnownTo(state, uid, req.player);
+  });
+}
+/* 見えないカードの中身を何通りか振り直し、それぞれで選んだ答えの多数決 (同数なら基準の答え)。
+   1通りだけで読むと、相手の裏向きを「たまたま 0 や 1」と仮定した世界で表に返し、
+   実際は 5 で相手に点を渡していた (希望的観測で表に返さない。2026-10-04) */
+const AI_PICK_WORLDS = 5;
+function aiPicksByVote(state, req, baseView) {
+  const base = smartPicks(baseView, req);
+  const votes = new Map();
+  const add = (picks) => { const k = JSON.stringify(picks); const v = votes.get(k) || { picks, n: 0 }; v.n++; votes.set(k, v); };
+  add(base);
+  for (let k = 1; k < AI_PICK_WORLDS; k++) add(smartPicks(aiInformationState(state, req.player, 1000 + k), req));
+  let best = votes.get(JSON.stringify(base));
+  for (const v of votes.values()) if (v.n > best.n) best = v;
+  return best.picks;
+}
+
 function aiAnswer(state, req) {
   const view = aiInformationState(state, req.player);
   const forcedControlWin = aiForcedControlWinPicks(req);
   if (forcedControlWin) return forcedControlWin;
   if (AI_BLUNDER > 0 && Math.random() < AI_BLUNDER) return randomPicks(req);
   if (AI_LEVEL >= 1) {
+    if (aiPicksHiddenOpp(state, req)) return aiPicksByVote(state, req, view);
     return smartPicks(view, req);
   }
   const me = req.player;
