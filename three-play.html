@@ -1039,7 +1039,7 @@
     padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);
     background:radial-gradient(ellipse at 50% 20%,rgba(16,10,34,.6),rgba(3,4,10,.88));}
   #roomOv.show{display:flex;}
-  .ro-panel{width:min(680px,94vw);max-height:88vh;overflow-y:auto;padding:24px 26px;
+  .ro-panel{width:min(560px,94vw);max-height:88vh;overflow-y:auto;padding:24px 26px;
     border-radius:16px;background:linear-gradient(180deg,rgba(11,15,28,.97),rgba(5,7,15,.98));
     border:1px solid rgba(185,164,255,.24);box-shadow:0 30px 90px rgba(0,0,0,.7);
     display:flex;flex-direction:column;gap:12px;}
@@ -2637,6 +2637,56 @@
   }
   /* ロビー: 人数・待機の経過時間・メールのログインは畳む・押せないレート戦 */
   .ro-online{margin:6px 0;font:600 12px/1.5 system-ui;color:var(--dim);}
+  /* ロビー: 1列に積む。カードで区切り、部屋を作る / コードで入るは切り替え */
+  .ro-card{display:flex;flex-direction:column;gap:9px;padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.025);}
+  .ro-card[hidden]{display:none;}
+  .ro-quick{border-color:rgba(185,164,255,.3);background:linear-gradient(160deg,rgba(139,92,246,.14),rgba(255,79,163,.06));}
+  .ro-quick .ro-big{width:100%;font-size:15px;letter-spacing:.14em;}
+  .ro-quick .ro-online{margin:0;}
+  .ro-tabs{margin-top:4px;}
+  .ro-tabs .ro-segbtn{min-height:42px;font-size:13px;}
+  .ro-acts{display:flex;gap:6px;}
+  .ro-name summary{cursor:pointer;font:600 12px/1.6 system-ui;color:var(--dim);}
+  .ro-name[open] summary{margin-bottom:6px;}
+  .ro-go{background:linear-gradient(100deg,rgba(255,79,163,.28),rgba(139,92,246,.28));border-color:rgba(255,79,163,.5);color:#fff;font-weight:800;}
+  .ro-card > .ro-go{width:100%;}
+  .ro-codein{flex:1;min-width:0;font:800 18px/1 ui-monospace,monospace;letter-spacing:.3em;text-transform:uppercase;}
+  .ro-row .ro-go{flex:none;padding:11px 22px;}
+  .ro-resume{width:100%;background:linear-gradient(100deg,#ffc85a,#ff9a5a);color:#1a0f00;}
+  .ro-panel > .ro-lbl{margin-top:10px;}
+  .ro-panel > *{flex-shrink:0;}
+  .ro-fill > *{flex:1;}
+  /* ドラフト: どちらの番か・選んだもの・候補 */
+  .ro-turn{display:flex;align-items:baseline;gap:12px;padding:12px 16px;border-radius:12px;border:1px solid;}
+  .ro-turn b{font:900 20px/1 var(--font-ui);letter-spacing:.08em;}
+  .ro-turn span{font:700 12px/1.3 system-ui;}
+  .ro-turn.mine{border-color:#7cf0d0;background:linear-gradient(90deg,rgba(124,240,208,.2),rgba(124,240,208,.04));color:#d9fff3;box-shadow:0 0 22px rgba(124,240,208,.18);}
+  .ro-turn.mine b{color:#7cf0d0;}
+  .ro-turn.theirs{border-color:rgba(255,79,163,.45);background:rgba(255,79,163,.08);color:var(--dim);}
+  .ro-turn.theirs b{color:#ffb3d6;}
+  .ro-picks{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:6px 12px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);}
+  .ro-picks .ro-lbl{margin:0;white-space:nowrap;}
+  .ro-picks .ro-tag{margin:1px 4px 1px 0;}
+  .ro-chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;}
+  .ro-chipwrap{display:flex;}
+  .ro-chipwrap .ro-chip{flex:1;min-width:0;}
+  #roomPick,#roomReady{position:sticky;bottom:0;z-index:1;box-shadow:0 -10px 24px rgba(5,7,15,.9);}
+  /* 下に貼りついた決定ボタンは、押せないときも透かさない (下の候補が透けて読みにくかった) */
+  #roomPick:disabled,#roomReady:disabled{opacity:1;background:#221d36;color:rgba(220,210,255,.45);}
+  .tg-presets .ro-btn{flex:1;min-width:0;padding:10px 8px;font-size:12px;}
+  /* 待機: コードと待ち時間を真ん中に */
+  .ro-center{justify-content:center;text-align:center;}
+  .ro-center .ro-head{text-align:left;}
+  .ro-center .ro-wait{text-align:center;}
+  .ro-room{flex-direction:column;align-items:flex-start;gap:3px;}
+  .ro-panel .ro-input{min-width:0;}
+  @media (max-width:560px){
+    #roomOv{padding:0;}
+    .ro-panel{width:100vw;max-height:100dvh;height:100dvh;border-radius:0;border:0;padding:calc(56px + env(safe-area-inset-top)) 16px calc(76px + env(safe-area-inset-bottom));}
+    .ro-grid2{grid-template-columns:1fr;}
+    .ro-card{padding:12px;}
+    .ro-list{max-height:none;overflow:visible;}
+  }
   .ro-online b{color:var(--pink);}
   .ro-wait{margin:4px 0;font:700 13px/1 var(--font-ui);color:var(--lav);font-variant-numeric:tabular-nums;}
   .ro-mail{margin-top:10px;}
@@ -4036,7 +4086,7 @@
       "./js3d/review.js": "./js3d/review.js?v=34f174153b",
       "./js3d/rewards.js": "./js3d/rewards.js?v=e32483b6f6",
       "./js3d/room.js": "./js3d/room.js?v=aa2b801fa6",
-      "./js3d/roomui.js": "./js3d/roomui.js?v=bc1a752887",
+      "./js3d/roomui.js": "./js3d/roomui.js?v=411a5bc71e",
       "./js3d/run-ui.js": "./js3d/run-ui.js?v=0cb55b154d",
       "./js3d/run.js": "./js3d/run.js?v=13b3d72425",
       "./js3d/runcards.js": "./js3d/runcards.js?v=c2bf20e9b7",
@@ -4125,7 +4175,7 @@
   <link rel="modulepreload" href="js3d/run.js?v=13b3d72425">
   <link rel="modulepreload" href="js3d/weekly.js?v=5605476b1c">
   <link rel="modulepreload" href="js3d/review.js?v=34f174153b">
-  <link rel="modulepreload" href="js3d/roomui.js?v=bc1a752887">
+  <link rel="modulepreload" href="js3d/roomui.js?v=411a5bc71e">
   <link rel="modulepreload" href="js3d/selectui.js?v=208abdaebc">
   <link rel="modulepreload" href="js3d/cardtex.js?v=dca3bfc6ef">
   <link rel="modulepreload" href="js3d/fx.js?v=f76521724c">

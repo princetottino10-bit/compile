@@ -182,47 +182,66 @@ export function runRoomLobby(protocols, opts = {}) {
     }
 
     async function showLobby() {
-      frame('ONLINE — ロビー',
-        '<div class="ro-account"><span>ログイン中: <b>' + esc(accountLabel()) + '</b></span>' +
-          '<button class="ro-ghost" id="roomLogout" type="button">ログアウト</button></div>' +
-        /* 対戦相手や順位表に出る名前。いつでも変えられる */
-        nameFieldHtml('ro') +
+      /* 上から: 自分 (名前・ログイン) → すぐ遊ぶ (クイックマッチ) → 部屋を作る / コードで入る (切り替え) → 募集中・観戦できる対戦 */
+      const lobbyTab = lsGet('compileRoomTab') === 'join' ? 'join' : 'create';
+      frame('ONLINE',
+        '<div class="ro-account"><span><b>' + esc(accountLabel()) + '</b></span>' +
+          '<span class="ro-acts"><button class="ro-ghost" id="roomStats" type="button">戦績</button>' +
+          '<button class="ro-ghost" id="roomLogout" type="button">ログアウト</button></span></div>' +
+        /* 対戦相手や順位表に出る名前。決めていなければ開いておく */
+        '<details class="ro-name"' + (displayName() ? '' : ' open') + '><summary>表示名を変える</summary>' + nameFieldHtml('ro') + '</details>' +
         /* 事故で閉じたときの戻り道。参加者本人ならサーバーが再入室を許す */
         (lsGet('compileRoomLast')
-          ? '<div class="ro-row"><button class="ro-big" id="roomResume" type="button">中断した対戦に戻る (' +
-              esc(lsGet('compileRoomLast')) + ')</button></div>'
+          ? '<button class="ro-big ro-resume" id="roomResume" type="button">中断した対戦に戻る (' + esc(lsGet('compileRoomLast')) + ')</button>'
           : '') +
-        '<div class="ro-row"><button class="ro-big" id="roomQuick" type="button">クイックマッチ</button>' +
-        '<button class="ro-ghost" id="roomStats" type="button">戦績・CSV</button></div>' +
-        '<p class="ro-online" id="roomOnline">オンラインの人数を確認中…</p>' +
-        (roomIsAnonymous(session)
-          ? '<label class="ro-check off"><input type="checkbox" id="roomRated" disabled> レート戦 (ログインすると遊べます)</label>'
-          : '<label class="ro-check"><input type="checkbox" id="roomRated"' + (wantRated ? ' checked' : '') + '> レート戦（結果を記録してレートを更新）</label>') +
-        '<div class="ro-grid2">' +
-          '<div><div class="ro-lbl">ルームを作る</div>' +
-            /* 1対1 か タッグ (2対2)。タッグはドラフト・レート戦なし */
-            '<div class="ro-seg" role="radiogroup" aria-label="対戦の形">' +
-              '<button type="button" class="ro-segbtn" data-mode="duel" role="radio">1対1</button>' +
-              '<button type="button" class="ro-segbtn" data-mode="tag" role="radio">タッグ (2対2)</button></div>' +
-            '<input class="ro-input" id="roomPw" maxlength="40" type="password" placeholder="パスワード (任意)">' +
-            '<label class="ro-check"><input type="checkbox" id="roomDraft" checked> 公式ドラフトで開始</label>' +
-            '<label class="ro-check"><input type="checkbox" id="roomWatch"' + (lsGet('compileRoomWatch') === '0' ? '' : ' checked') + '> 観戦を許す (公開・合言葉なしの1対1だけ)</label>' +
-            /* ドラフトのルール: 候補の抽選数と BAN 数 */
-            '<div class="ro-rules" id="roomRules">' +
-              '<label>候補<select class="ro-input" id="roomPool">' +
-                '<option value="0">全プロトコル</option><option value="12">ランダム12個</option>' +
-                '<option value="10">ランダム10個</option><option value="8">ランダム8個</option></select></label>' +
-              '<label>BAN<select class="ro-input" id="roomBans">' +
-                '<option value="0">なし</option><option value="1">各1つ</option><option value="2">各2つ</option></select></label>' +
-            '</div>' +
-            '<button class="ro-btn" id="roomCreate" type="button">作成</button></div>' +
-          '<div><div class="ro-lbl">コードで参加</div>' +
-            '<input class="ro-input" id="roomCode" maxlength="6" placeholder="6桁コード">' +
-            '<input class="ro-input" id="roomJoinPw" maxlength="40" type="password" placeholder="パスワード (必要な場合)">' +
-            '<button class="ro-btn" id="roomJoin" type="button">参加</button></div>' +
-        '</div>' +
-        '<div class="ro-lbl" style="margin-top:14px">公開ルーム</div><div class="ro-list" id="roomList">読込中…</div>' +
-        '<div class="ro-lbl" style="margin-top:14px">観戦できる対戦</div><div class="ro-list" id="roomWatchList">読込中…</div>');
+        '<section class="ro-card ro-quick">' +
+          '<button class="ro-big" id="roomQuick" type="button">クイックマッチ</button>' +
+          (roomIsAnonymous(session)
+            ? '<label class="ro-check off"><input type="checkbox" id="roomRated" disabled> レート戦 (ログインすると遊べます)</label>'
+            : '<label class="ro-check"><input type="checkbox" id="roomRated"' + (wantRated ? ' checked' : '') + '> レート戦 (結果を記録してレートを更新)</label>') +
+          '<p class="ro-online" id="roomOnline">オンラインの人数を確認中…</p>' +
+        '</section>' +
+        '<div class="ro-seg ro-tabs" role="tablist">' +
+          '<button type="button" class="ro-segbtn' + (lobbyTab === 'create' ? ' on' : '') + '" data-tab="create" role="tab" aria-selected="' + (lobbyTab === 'create') + '">部屋を作る</button>' +
+          '<button type="button" class="ro-segbtn' + (lobbyTab === 'join' ? ' on' : '') + '" data-tab="join" role="tab" aria-selected="' + (lobbyTab === 'join') + '">コードで入る</button></div>' +
+        '<section class="ro-card" id="roomTabCreate"' + (lobbyTab === 'create' ? '' : ' hidden') + '>' +
+          /* 1対1 か タッグ (2対2)。タッグはドラフト・レート戦なし */
+          '<div class="ro-seg" role="radiogroup" aria-label="対戦の形">' +
+            '<button type="button" class="ro-segbtn" data-mode="duel" role="radio">1対1</button>' +
+            '<button type="button" class="ro-segbtn" data-mode="tag" role="radio">タッグ (2対2)</button></div>' +
+          '<label class="ro-check"><input type="checkbox" id="roomDraft" checked> 公式ドラフトで決める</label>' +
+          /* ドラフトのルール: 候補の抽選数と BAN 数 */
+          '<div class="ro-rules" id="roomRules">' +
+            '<label>候補<select class="ro-input" id="roomPool">' +
+              '<option value="0">全プロトコル</option><option value="12">ランダム12個</option>' +
+              '<option value="10">ランダム10個</option><option value="8">ランダム8個</option></select></label>' +
+            '<label>BAN<select class="ro-input" id="roomBans">' +
+              '<option value="0">なし</option><option value="1">各1つ</option><option value="2">各2つ</option></select></label>' +
+          '</div>' +
+          '<label class="ro-check"><input type="checkbox" id="roomWatch"' + (lsGet('compileRoomWatch') === '0' ? '' : ' checked') + '> 観戦を許す (合言葉なしの1対1だけ)</label>' +
+          '<input class="ro-input" id="roomPw" maxlength="40" type="password" autocomplete="new-password" placeholder="合言葉 (任意。付けると一覧に鍵が付く)">' +
+          '<button class="ro-btn ro-go" id="roomCreate" type="button">部屋を作る</button>' +
+        '</section>' +
+        '<section class="ro-card" id="roomTabJoin"' + (lobbyTab === 'join' ? '' : ' hidden') + '>' +
+          '<div class="ro-row"><input class="ro-input ro-codein" id="roomCode" maxlength="6" autocomplete="off" autocapitalize="characters" placeholder="6桁のコード">' +
+            '<button class="ro-btn ro-go" id="roomJoin" type="button">入る</button></div>' +
+          '<input class="ro-input" id="roomJoinPw" maxlength="40" type="password" autocomplete="off" placeholder="合言葉 (付いている部屋だけ)">' +
+        '</section>' +
+        '<div class="ro-lbl">募集中の部屋</div><div class="ro-list" id="roomList"><span class="ro-sub">読込中…</span></div>' +
+        '<div class="ro-lbl">観戦できる対戦</div><div class="ro-list" id="roomWatchList"><span class="ro-sub">読込中…</span></div>');
+      root.querySelectorAll('.ro-tabs [data-tab]').forEach(b => {
+        b.onclick = () => {
+          const t = b.dataset.tab;
+          lsSet('compileRoomTab', t);
+          root.querySelectorAll('.ro-tabs [data-tab]').forEach(x => {
+            x.classList.toggle('on', x === b);
+            x.setAttribute('aria-selected', String(x === b));
+          });
+          $('#roomTabCreate').hidden = t !== 'create';
+          $('#roomTabJoin').hidden = t !== 'join';
+          if (t === 'join') $('#roomCode').focus();
+        };
+      });
       $('#roomWatch').onchange = function () { lsSet('compileRoomWatch', this.checked ? '1' : '0'); };
       $('#roomCode').oninput = function () { this.value = this.value.toUpperCase().replace(/[^A-Z2-9]/g, ''); };
       $('#roomLogout').onclick = guard(async () => {
@@ -238,18 +257,23 @@ export function runRoomLobby(protocols, opts = {}) {
         $('#roomRules').classList.toggle('off', tag || !$('#roomDraft').checked);
         $('#roomDraft').disabled = tag;
         $('#roomDraft').closest('label').classList.toggle('off', tag);
-        root.querySelectorAll('.ro-segbtn').forEach(b => {
+        /* 観戦は合言葉なしの1対1だけ */
+        const noWatch = tag || !!$('#roomPw').value;
+        $('#roomWatch').disabled = noWatch;
+        $('#roomWatch').closest('label').classList.toggle('off', noWatch);
+        root.querySelectorAll('.ro-segbtn[data-mode]').forEach(b => {
           const on = b.dataset.mode === createMode;
           b.classList.toggle('on', on);
           b.setAttribute('aria-checked', on ? 'true' : 'false');
         });
       };
-      root.querySelectorAll('.ro-segbtn').forEach(b => {
+      root.querySelectorAll('.ro-segbtn[data-mode]').forEach(b => {
         b.onclick = () => { createMode = b.dataset.mode; lsSet('compileRoomMode', createMode); syncRules(); };
       });
       $('#roomPool').value = lsGet('compileDraftPool') || '0';
       $('#roomBans').value = lsGet('compileDraftBans') || '0';
       $('#roomDraft').onchange = syncRules;
+      $('#roomPw').oninput = syncRules;
       syncRules();
 
       const name = () => displayName();
@@ -337,9 +361,9 @@ export function runRoomLobby(protocols, opts = {}) {
           if (!el) return;
           const rooms = data.rooms || [];
           el.innerHTML = rooms.length
-            ? rooms.map(r => '<button class="ro-room" data-code="' + esc(r.code) + '" data-locked="' + (r.locked ? '1' : '0') + '" type="button">' +
+            ? rooms.map(r => '<button class="ro-room" data-code="' + esc(r.code) + '" data-locked="' + (r.locked ? '1' : '0') + '" type="button"><span>' +
                 (r.mode === 'tag' ? '<em class="ro-tagmark">TAG ' + (r.seatsTaken | 0) + '/4</em> ' : '') +
-                esc(r.title || r.code) + (r.rated ? ' ★' : '') + (r.locked ? ' 🔒' : '') +
+                esc(r.title || r.code) + (r.rated ? ' ★' : '') + (r.locked ? ' 🔒' : '') + '</span>' +
                 '<small>' + esc(r.code) + (r.mode === 'tag' ? '　タッグ (2対2)' : r.draft ? '　' + esc(ruleText(r.draftRules)) : '　ドラフトなし') + '</small></button>').join('')
             : '<span class="ro-sub">現在募集中のルームはありません</span>';
           const on = $('#roomOnline');
@@ -354,8 +378,8 @@ export function runRoomLobby(protocols, opts = {}) {
           if (wl) {
             const live = data.watch || [];
             wl.innerHTML = live.length
-              ? live.map(r => '<button class="ro-room ro-watch" data-watch="' + esc(r.code) + '" type="button">' +
-                  esc(r.names[0] || '?') + ' <em>vs</em> ' + esc(r.names[1] || '?') + (r.rated ? ' ★' : '') +
+              ? live.map(r => '<button class="ro-room ro-watch" data-watch="' + esc(r.code) + '" type="button"><span>' +
+                  esc(r.names[0] || '?') + ' <em>vs</em> ' + esc(r.names[1] || '?') + (r.rated ? ' ★' : '') + '</span>' +
                   '<small>' + esc((r.protocols[0] || []).join(' / ')) + '　vs　' + esc((r.protocols[1] || []).join(' / ')) + '</small></button>').join('')
               : '<span class="ro-sub">いま観戦できる対戦はありません</span>';
             wl.querySelectorAll('[data-watch]').forEach(b => {
@@ -597,12 +621,14 @@ export function runRoomLobby(protocols, opts = {}) {
               '<button class="ro-btn" data-preset="duel" type="button">2人で対決<small>それぞれに CPU の味方</small></button>' +
               '<button class="ro-btn" data-preset="shuffle" type="button">ランダムに分ける</button></div>'
           : '') +
-        '<div class="ro-row"><button class="ro-btn" id="roomInvite" type="button">招待リンクを送る</button>' +
+        '<div class="ro-row ro-fill"><button class="ro-btn ro-go" id="roomInvite" type="button">招待リンクを送る</button>' +
         '<button class="ro-btn" id="roomCopy" type="button">コードをコピー</button></div>' +
         (room.host
           ? '<button class="ro-big" id="tagStart" type="button"' + (room.canStart ? '' : ' disabled') + '>' +
               (room.canStart ? 'この席で始める' : people < 2 ? 'もう1人を待っています (招待リンクを送ってください)' : '空いた席を埋めてください (CPU にもできます)') + '</button>'
-          : '<p class="ro-sub">部屋を作った人が始めるのを待っています…</p>'));
+          : '<p class="ro-sub">部屋を作った人が始めるのを待っています…</p>') +
+        '<button class="ro-ghost" id="roomLeave" type="button">部屋を出てロビーへ</button>');
+      $('#roomLeave').onclick = () => { clearInterval(pollTimer); leaveRoom(); showLobby(); };
       bindInvite();
       const send = (op, extra) => guard(async () => { room = await roomApi(op, { code: room.code, ...extra }); if (room.status !== 'waiting') { renderRoom(); return; } renderTagWait(); })();
       root.querySelectorAll('.tg-sit').forEach(b => { b.onclick = () => { if (!b.disabled && +b.dataset.to !== room.seat) send('tagSeat', { to: +b.dataset.to }); }; });
@@ -651,9 +677,12 @@ export function runRoomLobby(protocols, opts = {}) {
             : 'このコードを相手に共有して、参加を待ってください。') + '</p>' +
           (room.names[1] ? '' : '<div class="ro-loader" role="status" aria-label="対戦相手を待っています"><i></i><i></i><i></i><b></b></div>') +
           '<p class="ro-wait" id="roomWait"></p>' +
-          '<div class="ro-row"><button class="ro-btn" id="roomInvite" type="button">招待リンクを送る</button>' +
+          '<div class="ro-row ro-fill"><button class="ro-btn ro-go" id="roomInvite" type="button">招待リンクを送る</button>' +
           '<button class="ro-btn" id="roomCopy" type="button">コードをコピー</button></div>' +
-          '<div class="ro-row"><button class="ro-btn" id="roomCpu" type="button" hidden>待つのをやめて CPU と遊ぶ</button></div>');
+          '<button class="ro-btn" id="roomCpu" type="button" hidden>待つのをやめて CPU と遊ぶ</button>' +
+          '<button class="ro-ghost" id="roomLeave" type="button">部屋を閉じてロビーへ</button>');
+        root.querySelector('.ro-panel').classList.add('ro-center');
+        $('#roomLeave').onclick = () => { clearInterval(pollTimer); leaveRoom(); showLobby(); };
         tickWait();
         const link = location.origin + location.pathname + '?room=' + room.code;
         const copy = async (text, label) => {
@@ -682,22 +711,27 @@ export function runRoomLobby(protocols, opts = {}) {
         const banned = d.banned || [[], []];
         const bans = (d.rules && d.rules.bans) || 0;
         frame('ONLINE — ドラフト',
+          /* いまどちらが選ぶ番か (いちばん上に大きく) */
+          '<div class="ro-turn ' + (mine ? 'mine' : 'theirs') + '" role="status">' +
+            (mine ? '<b>あなたの番</b><span>' + (isBan ? 'BAN を ' : '') + d.toPick + ' つ' + (isBan ? '' : '選ぶ') + '</span>'
+              : '<b>相手の番</b><span>' + (isBan ? 'BAN' : '選択') + 'を待っています…</span>') + '</div>' +
           '<p class="ro-sub">' + esc(ruleText(d.rules)) + '　' +
             (bans ? 'BAN を先手から1つずつ交互に → ' : '') + '先手1 → 後手2 → 先手2 → 後手1。' +
             (d.first === room.side ? 'あなたが先手です。' : '相手が先手です。') + '</p>' +
-          '<div class="ro-lbl">あなた (' + myP.length + '/3)</div><div>' + picked(myP, 'mine') + '</div>' +
-          '<div class="ro-lbl">相手 (' + opP.length + '/3)</div><div>' + picked(opP, '') + '</div>' +
+          '<div class="ro-picks"><span class="ro-lbl">あなた ' + myP.length + '/3</span><div>' + picked(myP, 'mine') + '</div>' +
+          '<span class="ro-lbl">相手 ' + opP.length + '/3</span><div>' + picked(opP, '') + '</div>' +
           (bans
-            ? '<div class="ro-lbl">BAN 済み</div><div>' +
+            ? '<span class="ro-lbl">BAN</span><div>' +
                 (banned[room.side].concat(banned[1 - room.side]).map(n => '<span class="ro-tag ban">' + esc(n) + '</span>').join('')
                   || '<span class="ro-sub">まだありません</span>') + '</div>'
-            : '') +
+            : '') + '</div>' +
           (mine
             ? '<div class="ro-lbl">' + (isBan ? '相手に使わせたくないプロトコルを ' + d.toPick + ' 個 BAN' : 'プールから ' + d.toPick + ' 個選択') + '</div>' +
               chipGrid(d.pool || [], [], d.toPick) +
               '<button class="ro-big' + (isBan ? ' ban' : '') + '" id="roomPick" type="button"' + (sel.length === d.toPick ? '' : ' disabled') + '>' +
                 (isBan ? 'BAN する' : '確定') + ' (' + sel.length + '/' + d.toPick + ')</button>'
-            : '<p class="ro-sub">相手が' + (isBan ? 'BAN を選んでいます…' : 'ドラフト中です…') + '</p>'));
+            : '<div class="ro-lbl">残りの候補</div>' + chipGrid(d.pool || [], d.pool || [], 0)));
+        if (!mine) bindChips(0, renderRoom);          // 相手の番でも「?」でカードは見られる
         if (mine) {
           bindChips(d.toPick, renderRoom);
           $('#roomPick').onclick = guard(async () => {
