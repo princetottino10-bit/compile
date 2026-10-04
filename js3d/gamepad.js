@@ -121,7 +121,7 @@ function setActive(on) {
     css.id = 'gpStyle';
     css.textContent = CONFIRM_IDS.map(id => 'body.gamepad #' + id + '::before').join(',') +
       '{content:var(--gp-x);display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;margin-right:6px;' +
-      'vertical-align:-3px;font:900 10.5px/1 "Zen Kaku Gothic New",system-ui;color:#fff;background:var(--gp-x-c);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);}';
+      'vertical-align:-3px;font:900 10.5px/1 "M PLUS 1",system-ui;color:#fff;background:var(--gp-x-c);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);}';
     document.head.appendChild(css);
   }
   ring.classList.toggle('on', on);

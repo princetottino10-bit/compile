@@ -711,10 +711,10 @@ window.addEventListener('unhandledrejection', (ev) => {
 function loadFonts(timeoutMs, jpText) {
   if (!document.fonts || !document.fonts.load) return Promise.resolve();
   const loads = ['900 40px Orbitron', '800 40px Oxanium', '700 40px Oxanium'].map(f => document.fonts.load(f).catch(() => null));
-  /* 日本語の書体 (Zen Kaku Gothic New) は文字ごとに分かれて届くので、カードで使う文字をまとめて読み込む。
+  /* 日本語の書体 (M PLUS 1) は文字ごとに分かれて届くので、カードで使う文字をまとめて読み込む。
      間に合わなかったら、届いたときにカードの面を描き直す */
   if (jpText) {
-    const jp = Promise.all(['500', '700', '900'].map(w => document.fonts.load(w + ' 20px "Zen Kaku Gothic New"', jpText).catch(() => null)));
+    const jp = Promise.all(['500', '700', '900'].map(w => document.fonts.load(w + ' 20px "M PLUS 1"', jpText).catch(() => null)));
     let ready = false;
     jp.then(() => { if (!ready) { repaintFaces(); if (board && cur) board.syncInstant(shown()); } });
     loads.push(jp.then(() => { ready = true; }));

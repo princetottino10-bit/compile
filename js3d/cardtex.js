@@ -97,7 +97,7 @@ function rgba(hex, a) {
 
 /* トリガー (「開始：」「〜たとき：」) は太字で測る・描く (カードリストと同じ強調) */
 const COND_WEIGHT = '800';
-const fontFor = (weight, px, cond) => (cond ? COND_WEIGHT : weight) + ' ' + px + 'px "Zen Kaku Gothic New", system-ui, sans-serif';
+const fontFor = (weight, px, cond) => (cond ? COND_WEIGHT : weight) + ' ' + px + 'px "M PLUS 1", system-ui, sans-serif';
 
 /* condChars の文字列を、太字の幅も込みで折り返す (行 = 文字の配列) */
 function wrapRich(ctx, chars, maxW, weight, px) {
@@ -165,7 +165,7 @@ function measureTextBlock(ctx, text, maxW, opts) {
 /* 役割ラベルのチップ (高さ26)。塗り (bg) か枠線 (fg) のどちらか */
 function chip(ctx, x, y, glyph, label, fg, bg) {
   const text = glyph + ' ' + label;
-  ctx.font = '800 15px "Zen Kaku Gothic New", system-ui, sans-serif';
+  ctx.font = '800 15px "M PLUS 1", system-ui, sans-serif';
   const w = ctx.measureText(text).width + 16;
   if (bg) {
     ctx.fillStyle = bg;
