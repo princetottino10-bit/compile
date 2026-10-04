@@ -149,3 +149,15 @@ test('タッグデュエルの実績 (戦績の mode が tag)', () => {
   assert.ok(ids(newlyEarned({}, ctx({ game }))).includes('tag_flawless'));
   assert.ok(!ids(newlyEarned({}, ctx({ game: { ...game, tag: false } }))).includes('tag_flawless'));
 });
+
+test('外した実績は「~id」の印で外れたまま。取り直すと印が 0 になって戻る', async () => {
+  const store = {};
+  globalThis.localStorage = { getItem: (k) => store[k] ?? null, setItem: (k, v) => { store[k] = String(v); }, removeItem: (k) => { delete store[k]; } };
+  const A = await import('../js3d/achievements.js?x=' + Date.now());
+  store.compileTrophies = JSON.stringify({ shadow: 100, '~shadow': 200, first_win: 50 });
+  assert.deepEqual(Object.keys(A.loadTrophies()).sort(), ['first_win']);
+  const game = { win: true, turns: 40, compiles: 3, oppCompiles: 1, winCompiles: 3, effectsMap: {}, effects: 1, faceUpIds: [], refreshes: 2, touched: 3, maxLine: 10, short: false, at: Date.UTC(2026, 0, 1, 12) };
+  A.unlockTrophies(ctx({ game }), 300);
+  assert.ok(A.loadTrophies().shadow, '取り直したら戻る');
+  assert.equal(JSON.parse(store.compileTrophies)['~shadow'], 0);
+});

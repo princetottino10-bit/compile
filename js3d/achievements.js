@@ -141,13 +141,21 @@ export const TROPHIES = [
 ];
 const OTHERS = TROPHIES.filter(t => t.id !== 'platinum');
 
-export function loadTrophies() {
+/* 保存の中身そのまま。外した実績は「~id」に外した時刻を置く (同期は両方の端末の実績を合わせるので、
+   ただ消すだけだと別の端末やアカウントから戻ってきた)。取り直したら「~id」を 0 にする (合わせるときは小さい方が残る) */
+function loadRaw() {
   try {
     const m = JSON.parse(localStorage.getItem(KEY) || '{}');
     return m && typeof m === 'object' && !Array.isArray(m) ? m : {};
   } catch (e) {
     return {};
   }
+}
+/** 持っている実績 { id: 取った時刻 } (外したものは除く) */
+export function loadTrophies() {
+  const raw = loadRaw(), out = {};
+  for (const [k, v] of Object.entries(raw)) if (k[0] !== '~' && !(raw['~' + k] > 0)) out[k] = v;
+  return out;
 }
 function saveTrophies(m) { try { localStorage.setItem(KEY, JSON.stringify(m)); } catch (e) { /* private mode */ } }
 
@@ -168,7 +176,12 @@ const RECHECK = ['conqueror'];
 export function pruneTrophies(ctx) {
   const have = loadTrophies();
   const wrong = RECHECK.filter(id => have[id] && !safeTest(TROPHIES.find(t => t.id === id), ctx));
-  if (wrong.length) { const next = { ...have }; for (const id of wrong) delete next[id]; delete next.platinum; saveTrophies(next); }
+  if (wrong.length) {
+    const raw = loadRaw(), now = Date.now();
+    for (const id of wrong) raw['~' + id] = now;
+    if (raw.platinum) raw['~platinum'] = now;
+    saveTrophies(raw);
+  }
   return wrong;
 }
 
@@ -176,7 +189,11 @@ export function pruneTrophies(ctx) {
 export function unlockTrophies(ctx, now = Date.now()) {
   const have = loadTrophies();
   const got = newlyEarned(have, ctx);
-  if (got.length) saveTrophies({ ...have, ...Object.fromEntries(got.map(t => [t.id, now])) });
+  if (got.length) {
+    const raw = loadRaw();
+    for (const t of got) { raw[t.id] = raw[t.id] ? Math.min(raw[t.id], now) : now; if ('~' + t.id in raw) raw['~' + t.id] = 0; }
+    saveTrophies(raw);
+  }
   return got;
 }
 

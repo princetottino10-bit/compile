@@ -203,7 +203,9 @@ async function afterGameProgress(st, side, win, level, online) {
     for (const m of r.cleared) await gainXp('daily', m.xp, 'dm:' + r.day + ':' + m.key, true);
     if (r.allNow) await gainXp('daily', DAILY_XP.all, 'dm:' + r.day + ':all', true);
   }
-  await checkTrophies(game);
+  /* オンラインの対戦は1試合の集計 (リフレッシュ・表で出したカード・コンパイルの回数など) が届かないので、
+     その1試合の実績は判定しない (前は 0 回とみなして、勝っただけで SHADOW PLAY などが付いた) */
+  await checkTrophies(st.tally ? game : null);
 }
 
 /* 実績を判定し、取った分の経験値を足して知らせる。レベルが上がって取れる実績もあるので数回まわす */
