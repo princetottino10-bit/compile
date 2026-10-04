@@ -65,7 +65,7 @@ import * as FX from './fx.js';
 import { buildArena } from './arena.js';
 import { initAudio, sfx, setMuted, isMuted, setSfxVolume, onMuteChange } from './audio.js';
 import { mountMuteButton, muteIcon } from './mutebutton.js';
-import { playBgm, refreshBgm, fadeOutBgm, pickNormalBgm, normalBattleBgm, STRONG_BGM, BOSS_BGM } from './bgm.js';
+import { playBgm, refreshBgm, fadeOutBgm, pickNormalBgm, normalBattleBgm, onlineBattleBgm, STRONG_BGM, BOSS_BGM } from './bgm.js';
 import { trackOf } from './bgm-shop.js';
 import { BGM_RELEASED } from './rewards.js';
 import { emblemDataURL } from './emblems.js';
@@ -3401,8 +3401,8 @@ function showWatchEnd() {
 /* ロビーから playing の publicState を受けて対戦開始 */
 async function roomEnterGame(rm) {
   document.body.classList.add('room');
-  playBattleBgm();
   roomMode = true;
+  playBattleBgm();                       // roomMode を立ててから (オンラインの曲の選び方にする)
   roomResultShown = false;
   lastTurn = null;
   roomLoggedVersion = null;
@@ -3843,6 +3843,7 @@ function stackCount(line, side) {
 }
 /* 対戦の BGM: ボスと強敵は専用の曲。ふつうの対戦は4曲からランダム (COLLECTION の BGM を出したら選んだ曲) */
 function battleBgm() {
+  if (roomMode) return onlineBattleBgm();      // オンラインは毎回ランダム (同じ曲ばかり流れないように)
   const tier = battleTier();
   if (tier === 'boss') return BOSS_BGM;
   if (tier === 'strong') return STRONG_BGM;
