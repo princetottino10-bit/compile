@@ -5,33 +5,32 @@
  *     BAN を先手から1つずつ交互に → 先手1 → 後手2 → 先手2 → 後手1
  * ========================================================================= */
 
-/* 使うプロトコルの範囲 */
-/* 使うプロトコルの範囲。画面では「Main 1 + Aux 1」「Main 2 + Aux 2」の2つを出し入れし、両方なら全部 */
+/* 使うプロトコルの範囲。画面では Main 1 / Aux 1 / Main 2 / Aux 2 の4つを出し入れし、全部なら 'all'。
+   範囲の key は出ているものの記号をつなげたもの (例: 'M1A1M2')。前の保存 (set1 / set2 / main1 / main12) も読める */
 export const SET_GROUPS = [
-  { key: 'set1', label: 'Main 1 + Aux 1', sets: ['Main 1', 'Aux 1'] },
-  { key: 'set2', label: 'Main 2 + Aux 2', sets: ['Main 2', 'Aux 2'] }
+  { key: 'M1', label: 'Main 1', sets: ['Main 1'] },
+  { key: 'A1', label: 'Aux 1', sets: ['Aux 1'] },
+  { key: 'M2', label: 'Main 2', sets: ['Main 2'] },
+  { key: 'A2', label: 'Aux 2', sets: ['Aux 2'] }
 ];
-export const POOLS = SET_GROUPS.concat([
-  { key: 'all', label: '全部', sets: null },
-  /* 前の範囲 (保存が残っている人向け) */
-  { key: 'main1', label: 'Main 1', sets: ['Main 1'] },
-  { key: 'main12', label: 'Main 1+2', sets: ['Main 1', 'Main 2'] }
-]);
+const OLD_KEYS = { set1: 'M1A1', set2: 'M2A2', main1: 'M1', main12: 'M1M2' };
 
-export function poolNames(protocols, key) {
-  const pool = POOLS.find(p => p.key === key) || POOLS.find(p => p.key === 'all');
-  return protocols.filter(p => !pool.sets || pool.sets.includes(p.set)).map(p => p.name);
-}
-
-/** 2つの出し入れ ({ set1, set2 }) から範囲の key を作る。両方なら全部 */
-export function poolKeyOf(on) {
-  return on.set1 && on.set2 ? 'all' : on.set2 ? 'set2' : 'set1';
-}
-/** 範囲の key から、2つのどちらが出ているか (前の範囲は近いものに寄せる) */
+/** 範囲の key から、4つのどれが出ているか ({ M1: true, ... })。読めない key は全部 */
 export function groupsOf(key) {
-  if (key === 'set1' || key === 'main1') return { set1: true, set2: false };
-  if (key === 'set2') return { set1: false, set2: true };
-  return { set1: true, set2: true };
+  const k = OLD_KEYS[key] || key || 'all';
+  const on = {};
+  for (const g of SET_GROUPS) on[g.key] = k === 'all' || k.includes(g.key);
+  return SET_GROUPS.some(g => on[g.key]) ? on : groupsOf('all');
+}
+/** 出し入れ ({ M1, A1, M2, A2 }) から範囲の key を作る。全部なら 'all' */
+export function poolKeyOf(on) {
+  const keys = SET_GROUPS.filter(g => on[g.key]).map(g => g.key);
+  return !keys.length || keys.length === SET_GROUPS.length ? 'all' : keys.join('');
+}
+export function poolNames(protocols, key) {
+  const on = groupsOf(key);
+  const sets = SET_GROUPS.filter(g => on[g.key]).flatMap(g => g.sets);
+  return protocols.filter(p => sets.includes(p.set)).map(p => p.name);
 }
 
 /* 候補の数は「各自3つ + BAN ぶん」以上、範囲の数以下 (0 = 範囲の全部) */

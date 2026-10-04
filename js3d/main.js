@@ -1140,7 +1140,7 @@ async function boot() {
       p0 = chosen.me;
       /* ランダム・自由に選ぶ・一部ランダムの CPU のデッキには、相手のキャラの得意プロトコルが入りやすい (ドラフトは setup.js で)。
          最強・ロック特化・挑戦者の固定デッキは入れ替えない (挑戦者の名札のデッキと、盤面のデッキが食い違っていた) */
-      if (!p1 && !chosen.training && !chosen.first && !fixedDeck(chosen.level)) p1 = favorDeck(chosen.ai, p0);
+      if (!p1 && !chosen.training && !chosen.first && !fixedDeck(chosen.level)) p1 = favorDeck(chosen.ai, p0, chosen.pool);
       p1 = p1 || chosen.ai;
       trainingMode = !!chosen.training;
       /* タッグ: 味方と相手の味方の3つは、それぞれのチームで重ならないように残りからランダム */

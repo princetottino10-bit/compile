@@ -106,19 +106,22 @@ export function runSetup(protocols, options = {}) {
     if (draft) { renderDraftSummary(); return; }
     rules.innerHTML =
       '<div class="sr-group"><span>使うプロトコル</span>' + SET_GROUPS.map(g => '<button type="button" class="lvl' +
-        (groupsOf(poolKey)[g.key] ? ' on' : '') + '" data-pool="' + g.key + '" aria-pressed="' + !!groupsOf(poolKey)[g.key] + '">' + g.label + '</button>').join('') + '</div>' +
+        (groupsOf(poolKey)[g.key] ? ' on' : '') + '" data-pool="' + g.key + '" aria-pressed="' + !!groupsOf(poolKey)[g.key] + '">' + g.label + '</button>').join('') +
+        '<span>' + pool().length + '個</span></div>' +
       (training || (presetLevel !== null && fixedDeck(presetLevel)) ? ''
         : '<div class="sr-group"><span>決め方</span>' + seg(MODES.map(m => [m.key, m.label]), mode, 'mode') + '</div>') +
       (mode === 'draft'
         ? '<div class="sr-group"><span>候補</span>' + seg(CANDIDATES, draftSize, 'cand') +
           '<span>BAN</span>' + seg(BANS, draftBans, 'bans') + '</div>'
         : '');
-    /* 押すたびに出し入れする。2つとも消すことはできない */
+    /* 押すたびに出し入れする。両者で6つ要るので、6つより少なくなる外し方はできない (Aux だけ、など) */
     rules.querySelectorAll('[data-pool]').forEach(b => {
       b.onclick = () => {
-        const on = groupsOf(poolKey);
-        on[b.dataset.pool] = !on[b.dataset.pool];
-        if (!on.set1 && !on.set2) return;
+        const on = { ...groupsOf(poolKey), [b.dataset.pool]: !groupsOf(poolKey)[b.dataset.pool] };
+        if (!SET_GROUPS.some(g => on[g.key]) || poolNames(protocols, poolKeyOf(on)).length < 6) {
+          countEl.textContent = '6つより少なくはできない';
+          return;
+        }
         poolKey = poolKeyOf(on);
         lsSet('compileSoloPool', poolKey);
         refresh();
@@ -431,7 +434,7 @@ export function runSetup(protocols, options = {}) {
       const locked = fixedLocked();
       const me = picked.concat(shuffled(pool().filter(n => !picked.includes(n) && !locked.includes(n))).slice(0, 3 - picked.length));
       const ai = fixedDeck(level) ? fixedDeck(level).slice() : shuffled(pool().filter(n => !me.includes(n))).slice(0, 3);
-      close({ me, ai, level, training: false, partial: picked.slice() });
+      close({ me, ai, level, training: false, partial: picked.slice(), pool: pool() });
     };
     startBtn.onclick = () => {
       if (draft) {
@@ -464,7 +467,7 @@ export function runSetup(protocols, options = {}) {
       if (mode === 'draft') { startDraft(); return; }
       if (mode === 'random') {
         const { me, ai } = randomDecks(pool());
-        close({ me, ai, level, training: false, random: true });
+        close({ me, ai, level, training: false, random: true, pool: pool() });
         return;
       }
       if (picked.length !== 3) return;
@@ -474,7 +477,7 @@ export function runSetup(protocols, options = {}) {
         const rest = pool().filter(n => !picked.includes(n));
         ai = shuffled(rest).slice(0, 3);
       }
-      close({ me: picked.slice(), ai, level, training: false });
+      close({ me: picked.slice(), ai, level, training: false, pool: pool() });
     };
   });
 }
