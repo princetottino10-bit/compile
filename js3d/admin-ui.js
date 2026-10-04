@@ -6,6 +6,7 @@
 import * as ROOM from './room.js';
 import { weekKey, weekIndex } from './weekly.js';
 import { isUnlockAll, setUnlockAll } from './rewards.js';
+import { encodeReplay, replayShareUrl } from './replayshare.js';
 
 /* 読み込み中は三重のリング (アカウントの画面と同じ) */
 const LOADING = '<div class="ac-loading" role="status"><div class="ro-loader" aria-hidden="true"><i></i><i></i><i></i><b></b></div><p class="pz-note">読み込み中…</p></div>';
@@ -91,7 +92,12 @@ export function openAdmin() {
             ' <span class="ad-lv">LV ' + (p.level | 0 || 1) + ' <small>(' + (p.xp_total | 0) + ' XP)</small></span></b>' +
             '<span>' + esc(via[p.provider] || p.provider || '') + ' ・ 登録 ' + day(p.created_at) + ' ・ 最後 ' + day(p.last_active) + '</span>' +
             '<em>' + (p.last_mode ? '最後に遊んだ: ' + esc(MODE_LABEL[p.last_mode] || p.last_mode) : 'まだ遊んでいない') + '</em>' +
-            modeChips(p) + '</li>').join('') + '</ol>'
+            modeChips(p) +
+            /* 棋譜を残す (本人の許可を取ってから入れる)。残した棋譜は一覧から再生できる */
+            '<div class="ad-collect"><button type="button" data-ad-collect="' + esc(p.id) + '" data-on="' + (p.collect ? '1' : '0') + '" class="' + (p.collect ? 'on' : '') + '">' +
+              (p.collect ? '棋譜を残している (止める)' : (armed === 'c' + p.id ? '本人の許可は取った? もう一度押すと残し始める' : '棋譜を残す')) + '</button>' +
+              (p.replays ? '<button type="button" data-ad-replays="' + esc(p.id) + '">棋譜 ' + p.replays + '</button>' : '') + '</div>' +
+            '<div class="ad-replays" data-ad-replist="' + esc(p.id) + '"></div></li>').join('') + '</ol>'
           : '<p class="pz-note">まだいません</p>');
     },
     async () => {
@@ -195,6 +201,40 @@ export function openAdmin() {
       armed = null;
       try { await call('adminCloseRoom', { code }); msg('部屋 ' + code + ' を閉じました'); } catch (e) { return; }
       show(3);
+      return;
+    }
+    if (b.dataset.adCollect) {
+      const id = b.dataset.adCollect, on = b.dataset.on !== '1';
+      if (on && armed !== 'c' + id) { armed = 'c' + id; b.textContent = '本人の許可は取った? もう一度押すと残し始める'; b.classList.add('warn'); return; }
+      armed = null;
+      try { await call('adminCollect', { userId: id, on }); msg(on ? '棋譜を残し始めました (次の対戦から)' : '棋譜を残すのを止めました'); } catch (e) { return; }
+      show(1);
+      return;
+    }
+    if (b.dataset.adReplays) {
+      const id = b.dataset.adReplays;
+      const box = body.querySelector('[data-ad-replist="' + id + '"]');
+      if (!box) return;
+      if (box.innerHTML) { box.innerHTML = ''; return; }
+      box.innerHTML = LOADING;
+      let r;
+      try { r = await call('adminReplays', { userId: id }); } catch (e) { box.innerHTML = ''; return; }
+      const list = r.replays || [];
+      box.innerHTML = list.length ? '<ul class="ad-list">' + list.map((x, i) => {
+        const d = x.data || {};
+        return '<li><span><b>' + (d.win ? 'WIN' : 'LOSS') + ' ・ ' + esc((d.me || []).join(' / ')) + ' vs ' + esc((d.opp || []).join(' / ')) + '</b>' +
+          '<small>' + when(x.created_at) + ' ・ ' + esc(d.mode || '') + ' ・ ' + (d.turns | 0) + '手番</small></span>' +
+          '<button type="button" data-ad-play="' + i + '">再生</button></li>';
+      }).join('') + '</ul>' : '<p class="pz-note">まだありません</p>';
+      box._list = list;
+      return;
+    }
+    if (b.dataset.adPlay !== undefined) {
+      const box = b.closest('[data-ad-replist]');
+      const x = box && box._list && box._list[+b.dataset.adPlay];
+      if (!x) return;
+      const code = await encodeReplay(x.data);
+      window.open(replayShareUrl(code), '_blank');
       return;
     }
     if (b.id === 'adUnlock') { setUnlockAll(b.checked); msg(b.checked ? '全部解放にしました (読み直すと反映されます)' : '全部解放を切りました'); return; }

@@ -391,6 +391,19 @@ function privateAction(action: any, st: any) {
   return out;
 }
 
+/* 管理者の一覧の id (頭の8文字) から、その人の id を引く。見つからない・2人以上当たるなら null */
+async function fullUserId(prefix: string) {
+  if (!/^[0-9a-f]{8}$/.test(prefix)) return /^[0-9a-f-]{36}$/.test(prefix) ? prefix : null;
+  const hits: string[] = [];
+  for (let page = 1; page <= 10; page++) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error) throw error;
+    for (const u of data.users) if (u.id.startsWith(prefix)) hits.push(u.id);
+    if (data.users.length < 1000) break;
+  }
+  return hits.length === 1 ? hits[0] : null;
+}
+
 async function getRoom(roomCode: string) {
   const { data, error } = await admin.from("secure_rooms").select("*").eq("code", roomCode).maybeSingle();
   if (error) throw error;
@@ -437,7 +450,33 @@ Deno.serve(async (req) => {
       if (op === "adminPlayers") {
         const { data, error } = await admin.rpc("admin_players", { max_rows: 300 });
         if (error) throw error;
-        return json(req, { players: data || [] });
+        /* 棋譜を残している人 (replay_collect) と、残した数 */
+        const { data: col } = await admin.from("replay_collect").select("user_id");
+        const { data: reps } = await admin.from("player_replays").select("user_id").limit(20000);
+        /* 一覧の id は頭の8文字なので、それで突き合わせる */
+        const on = new Set((col || []).map((c: any) => String(c.user_id).slice(0, 8)));
+        const count: Record<string, number> = {};
+        for (const r of reps || []) { const k = String(r.user_id).slice(0, 8); count[k] = (count[k] || 0) + 1; }
+        return json(req, { players: (data || []).map((p: any) => ({ ...p, collect: on.has(p.id), replays: count[p.id] || 0 })) });
+      }
+      /* 棋譜を残すかを切り替える (本人の許可を取ってから) */
+      if (op === "adminCollect") {
+        const uid = await fullUserId(String(body.userId || ""));
+        if (!uid) return fail(req, "その人が見つかりません");
+        const { error } = body.on === true
+          ? await admin.from("replay_collect").upsert({ user_id: uid })
+          : await admin.from("replay_collect").delete().eq("user_id", uid);
+        if (error) throw error;
+        return json(req, { ok: true });
+      }
+      /* 残した棋譜の一覧 (新しい順に 100 件) */
+      if (op === "adminReplays") {
+        const uid = await fullUserId(String(body.userId || ""));
+        if (!uid) return fail(req, "その人が見つかりません");
+        const { data, error } = await admin.from("player_replays").select("id,created_at,data").eq("user_id", uid)
+          .order("created_at", { ascending: false }).limit(100);
+        if (error) throw error;
+        return json(req, { replays: data || [] });
       }
       if (op === "adminWeekly") {
         const week = String(body.week || "");
