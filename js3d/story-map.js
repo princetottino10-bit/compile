@@ -11,7 +11,7 @@ export const TILE = {
   'T': 'solid', 'a': 'door', 'b': 'door', 'd': 'door', 'g': 'gate'
 };
 
-/* 序章「起動」: 研究所のサーバー。左から A 目覚めの部屋 / B ログの保管庫 / C 巡回路 / D ゲートの広間 / E 外 */
+/* 序章「起動」: 研究所。左から A 判定室 / B 端末室 / C 廊下 / D 正面ホール / E 外 */
 export const PROLOGUE = {
   rows: [
     '######################################',
@@ -26,7 +26,7 @@ export const PROLOGUE = {
   cutRow: 3,
   /* 区画の境 (x がこれより小さい) */
   zones: [['A', 7], ['B', 15], ['C', 26], ['D', 33], ['E', Infinity]],
-  zoneNames: { A: '目覚めの部屋', B: 'ログの保管庫', C: '巡回路', D: 'ゲートの広間', E: '外' },
+  zoneNames: { A: '判定室', B: '端末室', C: '廊下', D: '正面ホール', E: '外' },
   /* 扉の印 → 開く条件 (この場面をクリアしたら) */
   opens: { a: 'c0-practice', b: 'c0-lock', d: 'c0-patrol', g: 'c0-chief' },
   /* 出来事。kind: auto (来たら始まる) / talk (人に話しかける) / inspect (物を調べる) / guard (巡回にぶつかる) / zone (区画に入る) */
@@ -45,9 +45,9 @@ export const PROLOGUE = {
     'c0-chief': [29, 3], 'c0-escape': [31, 3], done: [31, 3] },
   /* 案内の行き先 (人や物のいない出来事だけ。人・物・巡回はその位置へ案内する) */
   guides: { 'c0-gate': [28, 3], 'c0-escape': [35, 3] },
-  goals: { 'c0-wake': '目を覚ます', 'c0-practice': '紫苑と検証を始める', 'c0-log': '奥の部屋の端末を調べる', 'c0-lock': '端末で、扉の鍵を外す',
-    'c0-patrol': '巡回の警備 AI を止める', 'c0-gate': 'ゲートの広間へ進む', 'c0-chief': '警備主任 AI を越える',
-    'c0-escape': 'ゲートを抜けて外へ', done: '序章「起動」　完。1章「閉館」は準備中' }
+  goals: { 'c0-wake': '目を覚ます', 'c0-practice': '紫苑の判定を受ける', 'c0-log': '奥の部屋の端末を調べる', 'c0-lock': '端末で、扉の鍵を外す',
+    'c0-patrol': '巡回の警備機体を止める', 'c0-gate': '正面ホールへ進む', 'c0-chief': '警備主任を越える',
+    'c0-escape': 'ゲートを抜けて外へ', done: '序章「起動」　完。1章「順路」は準備中' }
 };
 
 export const width = (map) => map.rows[0].length;

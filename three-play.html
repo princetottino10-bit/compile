@@ -1507,6 +1507,8 @@
   .sw-zone{font:700 10px/1 var(--font-hud),"M PLUS 1",system-ui;letter-spacing:.2em;color:#7ff3ff;}
   .sw-goal{margin:4px 0 0;font:700 13px/1.4 "M PLUS 1",system-ui;color:#ffd6ec;}
   .sw-labels{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+  .sw-stick{position:absolute;width:96px;height:96px;margin:-48px 0 0 -48px;border-radius:50%;border:2px solid rgba(255,255,255,.35);background:rgba(10,14,22,.25);pointer-events:none;}
+  .sw-stick i{position:absolute;left:50%;top:50%;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;background:rgba(127,243,255,.55);box-shadow:0 0 12px rgba(127,243,255,.5);}
   .sw-labels span{position:absolute;left:0;top:0;padding:3px 8px;border-radius:5px;background:rgba(5,7,15,.7);border:1px solid rgba(255,255,255,.2);
     color:#fff;font:800 11px/1 "M PLUS 1",system-ui;letter-spacing:.06em;white-space:nowrap;}
   .sw-act{position:absolute;left:50%;bottom:calc(64px + env(safe-area-inset-bottom));transform:translateX(-50%);min-height:52px;padding:0 28px;border-radius:26px;
@@ -4160,11 +4162,11 @@
       "./js3d/stats-data.js": "./js3d/stats-data.js?v=0fb6e5d36d",
       "./js3d/stats.js": "./js3d/stats.js?v=fda536907e",
       "./js3d/steps.js": "./js3d/steps.js?v=13e73b20fe",
-      "./js3d/story-map.js": "./js3d/story-map.js?v=2947f93cb5",
-      "./js3d/story-scenery.js": "./js3d/story-scenery.js?v=8925ee19eb",
+      "./js3d/story-map.js": "./js3d/story-map.js?v=8fa043c63d",
+      "./js3d/story-scenery.js": "./js3d/story-scenery.js?v=9fa267bcf9",
       "./js3d/story-ui.js": "./js3d/story-ui.js?v=f33002f307",
-      "./js3d/story-world.js": "./js3d/story-world.js?v=a765b7288b",
-      "./js3d/story.js": "./js3d/story.js?v=ffb19e70f8",
+      "./js3d/story-world.js": "./js3d/story-world.js?v=4b9021ce89",
+      "./js3d/story.js": "./js3d/story.js?v=d04e6e25ce",
       "./js3d/support.js": "./js3d/support.js?v=86cfbcc21a",
       "./js3d/theme.js": "./js3d/theme.js?v=932e1d5eb8",
       "./js3d/title.js": "./js3d/title.js?v=8067b53e68",
@@ -4218,9 +4220,9 @@
   <link rel="modulepreload" href="js3d/settings.js?v=d25b3e91de">
   <link rel="modulepreload" href="js3d/stats.js?v=fda536907e">
   <link rel="modulepreload" href="js3d/stats-data.js?v=0fb6e5d36d">
-  <link rel="modulepreload" href="js3d/story.js?v=ffb19e70f8">
+  <link rel="modulepreload" href="js3d/story.js?v=d04e6e25ce">
   <link rel="modulepreload" href="js3d/story-ui.js?v=f33002f307">
-  <link rel="modulepreload" href="js3d/story-world.js?v=a765b7288b">
+  <link rel="modulepreload" href="js3d/story-world.js?v=4b9021ce89">
   <link rel="modulepreload" href="js3d/rewards.js?v=ff8a27bac3">
   <link rel="modulepreload" href="js3d/gachafx.js?v=3d15a2226f">
   <link rel="modulepreload" href="js3d/cosmetics-ui.js?v=a78ef23c9b">
@@ -4279,14 +4281,14 @@
   <link rel="modulepreload" href="js3d/profile.js?v=50765bbc49">
   <link rel="modulepreload" href="js3d/gacha-ui.js?v=9dfcb0ccbf">
   <link rel="modulepreload" href="js3d/replays-ui.js?v=1259fc16e4">
-  <link rel="modulepreload" href="js3d/story-map.js?v=2947f93cb5">
-  <link rel="modulepreload" href="js3d/story-scenery.js?v=8925ee19eb">
+  <link rel="modulepreload" href="vendor/jsm/postprocessing/ShaderPass.js">
+  <link rel="modulepreload" href="js3d/story-map.js?v=8fa043c63d">
+  <link rel="modulepreload" href="js3d/story-scenery.js?v=9fa267bcf9">
   <link rel="modulepreload" href="js3d/prompts.js?v=348dff836d">
   <link rel="modulepreload" href="js3d/icons.js?v=15bacde80c">
   <link rel="modulepreload" href="js3d/cardtext.js?v=4cf5529855">
   <link rel="modulepreload" href="js3d/fx-protocols.js?v=509fceb211">
   <link rel="modulepreload" href="vendor/jsm/shaders/CopyShader.js">
-  <link rel="modulepreload" href="vendor/jsm/postprocessing/ShaderPass.js">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/MaskPass.js">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/Pass.js">
   <link rel="modulepreload" href="vendor/jsm/shaders/LuminosityHighPassShader.js">

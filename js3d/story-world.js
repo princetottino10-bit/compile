@@ -1,6 +1,6 @@
 /* =========================================================================
- * ストーリーの歩ける世界 (three.js)。序章「起動」= 研究所のサーバー
- *   あなた = 生まれたばかりの AI のプロセス (光る玉)。紫苑 = 立ち絵の立て看板。警備 = ドローン。
+ * ストーリーの歩ける世界 (three.js)。序章「起動」= 夜の、人のいない研究所 (案8)
+ *   あなた = 機体4097 (顔のない人型。胸の青い灯)。紫苑 = ちびキャラ。警備 = 車輪で動く警備ロボット。
  *   動かし方: WASD / 矢印キー、または床をタップ (クリック) した所へ歩く。E / Enter / Space か「話す」ボタンで話しかける。
  *   出来事 (story-map.js の events) で会話 (story-ui.js の playScene) や対戦の確認を出す。
  *   openWorld(protocols, opts) → { battle: 場面 } (対戦を始める) / null (タイトルへ)
@@ -10,6 +10,7 @@ import { EffectComposer } from '../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../vendor/jsm/postprocessing/OutputPass.js';
+import { ShaderPass } from '../vendor/jsm/postprocessing/ShaderPass.js';
 import { showTitleBack, hideTitleBack } from './titleback.js';
 import { CHAPTERS, loadStory, saveStory, currentNode, clearNode, startBattle, nodeById, isCleared, chapterCleared } from './story.js';
 import * as M from './story-map.js';
@@ -19,10 +20,12 @@ import { RoomEnvironment } from '../vendor/jsm/environments/RoomEnvironment.js';
 
 const T = 2;                 // 1マスの大きさ (three.js の単位)
 const SPEED = 3.4;           // 歩く速さ (マス / 秒)
+const RUN = 1.65;            // Shift / スティックを大きく倒すと走る (倍)
+const ACCEL = 16;            // 歩きはじめ・止まりの速さ (大きいほどきびきび)
 const RADIUS = 0.3;          // あなたの当たり判定 (マス)
 const REACH = 1.5;           // 話しかけられる距離 (マス)
 const CAM_OFFSET = new THREE.Vector3(0, 8.6, 9.6);   // カメラ: あなたの斜め後ろ上
-const COLORS = { cyan: 0x7ff3ff, pink: 0xff4fa3, violet: 0xa07bff, red: 0xff3b5c, navy: 0x05070f, rack: 0x0b1020 };
+const COLORS = { cyan: 0x7ff3ff, pink: 0xff4fa3, violet: 0xa07bff, red: 0xff3b5c, navy: 0x0a0c11, rack: 0x0b1020 };
 
 const world = (p, y = 0) => new THREE.Vector3(p.x * T, y, p.y * T);
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -54,7 +57,7 @@ export function openWorld(protocols, opts = {}) {
     '<div class="sw-hud"><b>' + chapter.title + '「' + chapter.name + '」</b><span class="sw-zone"></span><p class="sw-goal"></p></div>' +
     '<div class="sw-labels"></div>' +
     '<button type="button" class="sw-act" hidden></button>' +
-    '<p class="sw-help">WASD・矢印キー / 床をタップで移動　E・Enter で話す</p>';
+    '<p class="sw-help">WASD・矢印キー (Shift で走る) / 画面を押して動かす・床をタップで移動　E・Enter で話す</p>';
   document.body.appendChild(root);
   const canvas = root.querySelector('canvas');
   const actBtn = root.querySelector('.sw-act');
@@ -63,21 +66,38 @@ export function openWorld(protocols, opts = {}) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 0.8;   // 夜の研究所
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(COLORS.navy);
-  scene.fog = new THREE.FogExp2(COLORS.navy, 0.026);
+  scene.fog = new THREE.FogExp2(COLORS.navy, 0.018);
   const camera = new THREE.PerspectiveCamera(48, 1, 0.1, 200);
-  scene.add(new THREE.AmbientLight(0x4a5690, 0.35));
-  const sun = new THREE.DirectionalLight(0xb9a4ff, 0.35);
+  scene.add(new THREE.AmbientLight(0x6c7688, 0.22));
+  const sun = new THREE.DirectionalLight(0xc8d2e0, 0.18);
   sun.position.set(-10, 20, 8);
   scene.add(sun);
 
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
-  const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.85, 0.55, 0.6);
+  const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.35, 0.4, 0.85);   // 研究所の明かり。光りすぎない
   composer.addPass(bloom);
   composer.addPass(new OutputPass());
+  /* 画面の縁を少し暗く、ごく薄い粒子 (夜の研究所の空気) */
+  const grade = new ShaderPass({
+    uniforms: { tDiffuse: { value: null }, uTime: { value: 0 } },
+    vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+    fragmentShader: `uniform sampler2D tDiffuse; uniform float uTime; varying vec2 vUv;
+      float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233)) + uTime) * 43758.5453); }
+      void main(){
+        vec4 c = texture2D(tDiffuse, vUv);
+        float v = smoothstep(0.95, 0.35, distance(vUv, vec2(0.5)));
+        c.rgb *= mix(0.55, 1.0, v);
+        c.rgb += (h(vUv * 800.0) - 0.5) * 0.035;
+        c.rgb = mix(c.rgb, c.rgb * vec3(0.95, 1.0, 1.06), 0.5);
+        gl_FragColor = c;
+      }`
+  });
+  composer.addPass(grade);
 
   const disposables = [];
   const keep = (x) => { disposables.push(x); return x; };
@@ -86,6 +106,7 @@ export function openWorld(protocols, opts = {}) {
   const W = M.width(map), H = M.height(map);
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = keep(pmrem.fromScene(new RoomEnvironment(), 0.04).texture);
+  scene.environmentIntensity = 0.25;
   pmrem.dispose();
   const scenery = buildScenery(scene, map, keep);
   const term = scenery.term;
@@ -98,6 +119,21 @@ export function openWorld(protocols, opts = {}) {
   marker.visible = false;
   let markerT = 0;
   scene.add(marker);
+
+  /* 足もとの影 (やわらかい丸)。人・ロボットの下に置く */
+  const blobTex = keep(new THREE.CanvasTexture((() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d');
+    const r = g.createRadialGradient(32, 32, 0, 32, 32, 32); r.addColorStop(0, 'rgba(0,0,0,.6)'); r.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = r; g.fillRect(0, 0, 64, 64); return c; })()));
+  const blob = (size) => {
+    const m = new THREE.Mesh(keep(new THREE.PlaneGeometry(size, size)), keep(new THREE.MeshBasicMaterial({ map: blobTex, transparent: true, depthWrite: false })));
+    m.rotation.x = -Math.PI / 2;
+    scene.add(m);
+    return m;
+  };
+  /* 話しかけられる相手・調べられる物の足もとの輪 (近くにいるあいだ) */
+  const focus = new THREE.Mesh(keep(new THREE.RingGeometry(0.85, 1.0, 40)), keep(new THREE.MeshBasicMaterial({ color: 0xffd36b, transparent: true, opacity: 0.8, side: THREE.DoubleSide, depthWrite: false })));
+  focus.rotation.x = -Math.PI / 2;
+  focus.visible = false;
+  scene.add(focus);
 
   /* 行き先の案内: 目的地の上の矢印と、足元からの光の点の道 */
   const arrow = new THREE.Mesh(keep(new THREE.ConeGeometry(0.42, 0.9, 4)), keep(new THREE.MeshBasicMaterial({ color: COLORS.pink })));
@@ -112,15 +148,33 @@ export function openWorld(protocols, opts = {}) {
   scene.add(dots);
   let guideT = 0;
 
-  /* あなた: 光るプロセスの玉 */
+  /* あなた: 機体4097。顔のない白い人型と、胸の青い灯。足もとの輪は「あなた」の印 */
   const me = new THREE.Group();
-  const core = new THREE.Mesh(keep(new THREE.SphereGeometry(0.32, 24, 16)), keep(new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: COLORS.cyan, emissiveIntensity: 2.2 })));
-  const halo = new THREE.Sprite(keep(new THREE.SpriteMaterial({ map: keep(glowTex('127,243,255')), blending: THREE.AdditiveBlending, depthWrite: false })));
-  halo.scale.set(2.2, 2.2, 1);
-  const meLight = new THREE.PointLight(COLORS.cyan, 8, 7);
-  const ring = new THREE.Mesh(keep(new THREE.TorusGeometry(0.5, 0.025, 8, 40)), keep(new THREE.MeshBasicMaterial({ color: COLORS.cyan })));
+  const suit = keep(new THREE.MeshStandardMaterial({ color: 0xb8bec6, roughness: 0.5, metalness: 0.25 }));
+  const joint = keep(new THREE.MeshStandardMaterial({ color: 0x5a616b, roughness: 0.5, metalness: 0.5 }));
+  const body = new THREE.Group();
+  const torso = new THREE.Mesh(keep(new THREE.CapsuleGeometry(0.22, 0.42, 6, 16)), suit);
+  torso.position.y = 1.0;
+  const head = new THREE.Mesh(keep(new THREE.SphereGeometry(0.17, 20, 14)), suit);
+  head.position.y = 1.52;
+  const visor = new THREE.Mesh(keep(new THREE.BoxGeometry(0.22, 0.05, 0.05)), keep(new THREE.MeshBasicMaterial({ color: 0x2a3038 })));
+  visor.position.set(0, 1.54, 0.15);
+  const neck = new THREE.Mesh(keep(new THREE.CylinderGeometry(0.06, 0.07, 0.12, 10)), joint);
+  neck.position.y = 1.36;
+  const legs = [-0.1, 0.1].map((x) => { const l = new THREE.Mesh(keep(new THREE.CapsuleGeometry(0.075, 0.42, 4, 10)), suit); l.position.set(x, 0.36, 0); return l; });
+  const arms = [-0.3, 0.3].map((x) => { const a = new THREE.Mesh(keep(new THREE.CapsuleGeometry(0.06, 0.4, 4, 10)), suit); a.position.set(x, 1.0, 0); return a; });
+  const core = new THREE.Mesh(keep(new THREE.SphereGeometry(0.05, 12, 8)), keep(new THREE.MeshBasicMaterial({ color: COLORS.cyan })));
+  core.position.set(0, 1.12, 0.21);
+  body.add(torso, head, visor, neck, core, ...legs, ...arms);
+  const meLight = new THREE.PointLight(COLORS.cyan, 0.8, 2.5);
+  meLight.position.set(0, 1.12, 0.35);
+  const ring = new THREE.Mesh(keep(new THREE.TorusGeometry(0.5, 0.02, 8, 40)), keep(new THREE.MeshBasicMaterial({ color: COLORS.cyan, transparent: true, opacity: 0.7 })));
   ring.rotation.x = Math.PI / 2;
-  me.add(core, halo, meLight, ring);
+  ring.position.y = 0.03;
+  me.add(body, meLight, ring);
+  let meFacing = 0, meStep = 0;
+  let vel = { x: 0, y: 0 };
+  const meShadow = blob(1.3);
   scene.add(me);
   let pos = M.spawnFor(map, state);
 
@@ -163,35 +217,45 @@ export function openWorld(protocols, opts = {}) {
   /* あなたの歩いた跡。紫苑はこれをたどる (まっすぐ寄ると壁を抜けるため) */
   const trail = [{ ...shionPos }, { ...pos }];
 
-  /* 警備ドローン (巡回) と警備主任 */
+  /* 警備ロボット (巡回) と警備主任: 車輪で動く筒形の体と、丸い頭。横長の赤い目が左右を見回す */
   const drone = (size, color) => {
     const g = new THREE.Group();
-    const body = new THREE.Mesh(keep(new THREE.OctahedronGeometry(size)), keep(new THREE.MeshStandardMaterial({ color: 0x220812, emissive: color, emissiveIntensity: 1.6, flatShading: true })));
-    const r1 = new THREE.Mesh(keep(new THREE.TorusGeometry(size * 1.5, 0.03, 8, 48)), keep(new THREE.MeshBasicMaterial({ color })));
-    const r2 = r1.clone();
-    r1.rotation.x = Math.PI / 2;
-    r2.rotation.y = Math.PI / 2;
-    const l = new THREE.PointLight(color, 7, 6);
-    g.add(body, r1, r2, l);
-    g.userData = { body, r1, r2 };
+    const shell = keep(new THREE.MeshStandardMaterial({ color: 0xc9ced4, roughness: 0.35, metalness: 0.55 }));
+    const dark = keep(new THREE.MeshStandardMaterial({ color: 0x2b2f35, roughness: 0.5, metalness: 0.5 }));
+    const base = new THREE.Mesh(keep(new THREE.CylinderGeometry(size * 0.95, size * 1.05, size * 0.35, 24)), dark);
+    base.position.y = size * 0.18;
+    const trunk = new THREE.Mesh(keep(new THREE.CylinderGeometry(size * 0.7, size * 0.9, size * 1.6, 24)), shell);
+    trunk.position.y = size * 1.15;
+    const headG = new THREE.Group();
+    headG.position.y = size * 2.05;
+    const dome = new THREE.Mesh(keep(new THREE.SphereGeometry(size * 0.62, 24, 14, 0, Math.PI * 2, 0, Math.PI / 2)), shell);
+    const eye = new THREE.Mesh(keep(new THREE.BoxGeometry(size * 0.7, size * 0.12, size * 0.1)), keep(new THREE.MeshBasicMaterial({ color })));
+    eye.position.set(0, size * 0.18, size * 0.56);
+    headG.add(dome, eye);
+    const l = new THREE.PointLight(color, 4, 5);
+    l.position.set(0, size * 2.2, size * 0.9);
+    g.add(base, trunk, headG, l);
+    g.userData = { body: headG, r1: eye, r2: trunk, size };
     scene.add(g);
     return g;
   };
   const route = M.find(map, 'p').map(p => ({ x: p.x + 0.5, y: p.y + 0.5 }));
   const patrol = drone(0.42, COLORS.red);
+  const patrolShadow = blob(1.4);
   let patrolT = 0;
   const chiefAt = M.find(map, 'c')[0];
   const chiefPos = { x: chiefAt.x + 0.5, y: chiefAt.y + 0.5 };
   const chief = drone(0.8, COLORS.pink);
-  chief.position.copy(world(chiefPos, 1.6));
+  const chiefShadow = blob(2.4);
+  chief.position.copy(world(chiefPos, 0));
   chief.scale.setScalar(1);
 
   /* 名前の札 (画面の上に重ねる) */
   const labels = [
     { el: document.createElement('span'), text: '紫苑', obj: shion, y: 2.05, show: () => true },
-    { el: document.createElement('span'), text: '巡回の警備 AI', obj: patrol, y: 1.2, show: () => patrol.visible },
-    { el: document.createElement('span'), text: '警備主任 AI', obj: chief, y: 1.9, show: () => chief.visible },
-    { el: document.createElement('span'), text: 'LOG 端末', obj: term, y: 2.4, show: () => true }
+    { el: document.createElement('span'), text: '巡回の警備機体', obj: patrol, y: 1.6, show: () => patrol.visible },
+    { el: document.createElement('span'), text: '警備主任', obj: chief, y: 2.4, show: () => chief.visible },
+    { el: document.createElement('span'), text: '端末', obj: term, y: 1.8, show: () => true }
   ];
   for (const l of labels) { l.el.textContent = l.text; labelsEl.appendChild(l.el); }
 
@@ -217,7 +281,7 @@ export function openWorld(protocols, opts = {}) {
   const onKeyDown = (ev) => {
     if (busy) return;
     const k = ev.key.toLowerCase();
-    if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) { keys.add(k); path = null; ev.preventDefault(); }
+    if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'shift'].includes(k)) { keys.add(k); if (k !== 'shift') path = null; ev.preventDefault(); }
     if ((k === 'e' || k === 'enter' || k === ' ') && nearby) { ev.preventDefault(); act(); }
   };
   const onKeyUp = (ev) => keys.delete(ev.key.toLowerCase());
@@ -225,6 +289,41 @@ export function openWorld(protocols, opts = {}) {
   const ndc = new THREE.Vector2();
   const ground = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
   const hit = new THREE.Vector3();
+  /* 画面を押して動かすとスティック (押した所が中心)。動かさずに離すと、その場所へ歩く */
+  const stick = document.createElement('div');
+  stick.className = 'sw-stick';
+  stick.hidden = true;
+  stick.innerHTML = '<i></i>';
+  root.appendChild(stick);
+  let joy = null;              // { id, x, y, dx, dy, moved }
+  const onDown = (ev) => {
+    if (busy || joy) return;
+    joy = { id: ev.pointerId, x: ev.clientX, y: ev.clientY, dx: 0, dy: 0, moved: false };
+  };
+  const onMove = (ev) => {
+    if (!joy || ev.pointerId !== joy.id) return;
+    const dx = ev.clientX - joy.x, dy = ev.clientY - joy.y, d = Math.hypot(dx, dy);
+    if (!joy.moved && d > 14) { joy.moved = true; path = null; marker.visible = false; stick.hidden = false; stick.style.left = joy.x + 'px'; stick.style.top = joy.y + 'px'; }
+    if (!joy.moved) return;
+    const k = Math.min(1, d / 60);
+    joy.dx = d ? dx / d * k : 0; joy.dy = d ? dy / d * k : 0;
+    stick.firstChild.style.transform = 'translate(' + (joy.dx * 34) + 'px,' + (joy.dy * 34) + 'px)';
+  };
+  const onUp = (ev) => {
+    if (!joy || ev.pointerId !== joy.id) return;
+    const tap = !joy.moved;
+    joy = null;
+    stick.hidden = true;
+    if (tap) onPointer(ev);
+  };
+  canvas.addEventListener('pointerdown', onDown);
+  window.addEventListener('pointermove', onMove);
+  window.addEventListener('pointerup', onUp);
+  window.addEventListener('pointercancel', onUp);
+  /* ホイール・2本指で寄る / 引く */
+  let zoom = 1;
+  const onWheel = (ev) => { ev.preventDefault(); zoom = THREE.MathUtils.clamp(zoom * (ev.deltaY > 0 ? 1.08 : 0.92), 0.7, 1.45); };
+  canvas.addEventListener('wheel', onWheel, { passive: false });
   const onPointer = (ev) => {
     if (busy) return;
     const r = canvas.getBoundingClientRect();
@@ -236,7 +335,6 @@ export function openWorld(protocols, opts = {}) {
   };
   window.addEventListener('keydown', onKeyDown);
   window.addEventListener('keyup', onKeyUp);
-  canvas.addEventListener('pointerdown', onPointer);
 
   /* ---------- 出来事 ---------- */
   let nearby = null;      // 話しかけられる出来事
@@ -383,27 +481,47 @@ export function openWorld(protocols, opts = {}) {
 
     /* 歩く */
     if (!busy) {
-      let dx = 0, dy = 0;
+      let dx = 0, dy = 0, run = keys.has('shift');
       if (keys.has('a') || keys.has('arrowleft')) dx -= 1;
       if (keys.has('d') || keys.has('arrowright')) dx += 1;
       if (keys.has('w') || keys.has('arrowup')) dy -= 1;
       if (keys.has('s') || keys.has('arrowdown')) dy += 1;
+      if (dx && dy) { dx *= Math.SQRT1_2; dy *= Math.SQRT1_2; }
+      if (!dx && !dy && joy && joy.moved) { dx = joy.dx; dy = joy.dy; run = Math.hypot(dx, dy) > 0.95; }
+      let pathStep = Infinity;
       if (!dx && !dy && path) {
         while (path.length && dist(path[0], pos) < 0.12) path.shift();
         if (!path.length) { path = null; marker.visible = false; }
-        else { const tx = path[0].x - pos.x, ty = path[0].y - pos.y, d = Math.hypot(tx, ty); dx = tx / d; dy = ty / d; }
+        else { const tx = path[0].x - pos.x, ty = path[0].y - pos.y, d = Math.hypot(tx, ty); dx = tx / d; dy = ty / d; pathStep = d; }
       }
-      const len = Math.hypot(dx, dy);
-      if (len) {
-        const step = Math.min((SPEED * dt) / len, path && path.length ? dist(path[0], pos) : Infinity);
+      /* なめらかに加速・減速する。タップで歩くときは、行き先で止まれるよう少し速めに */
+      const top = SPEED * (run ? RUN : 1) * (path ? 1.15 : 1);
+      const k = Math.min(1, dt * ACCEL);
+      vel = { x: vel.x + (dx * top - vel.x) * k, y: vel.y + (dy * top - vel.y) * k };
+      if (Math.hypot(vel.x, vel.y) > 0.01) {
+        let mx = vel.x * dt, my = vel.y * dt;
+        const m = Math.hypot(mx, my);
+        if (m > pathStep) { mx *= pathStep / m; my *= pathStep / m; }
         const before = pos;
-        pos = M.move(map, state, pos, { x: dx * step, y: dy * step }, RADIUS);
+        pos = M.move(map, state, pos, { x: mx, y: my }, RADIUS);
         if (path && before.x === pos.x && before.y === pos.y) { path = null; marker.visible = false; }   // 動けなくなったら、行き先はあきらめる
-      }
-    }
-    me.position.copy(world(pos, 0.75 + Math.sin(t * 3) * 0.08));
-    ring.rotation.z = t * 1.5;
-    ring.scale.setScalar(1 + Math.sin(t * 4) * 0.08);
+        if (before.x === pos.x) vel.x *= 0.5;                   // 壁に当たった向きの勢いは消す
+        if (before.y === pos.y) vel.y *= 0.5;
+      } else vel = { x: 0, y: 0 };
+    } else vel = { x: 0, y: 0 };
+    /* 機体4097: 進む向きを向き、歩くと手足を振る */
+    const prev = me.userData.prev || { ...pos };
+    const mvx = pos.x - prev.x, mvy = pos.y - prev.y;
+    me.userData.prev = { ...pos };
+    const stepping = Math.hypot(mvx, mvy) > dt * 0.3;
+    if (stepping) { meFacing = Math.atan2(mvx, mvy); meStep += dt * (6 + Math.hypot(vel.x, vel.y) * 1.2); } else meStep = 0;
+    body.rotation.y += ((meFacing - body.rotation.y + Math.PI * 3) % (Math.PI * 2) - Math.PI) * Math.min(1, dt * 12);
+    const swing = stepping ? Math.sin(meStep) * 0.5 : 0;
+    legs[0].rotation.x = swing; legs[1].rotation.x = -swing;
+    arms[0].rotation.x = -swing * 0.8; arms[1].rotation.x = swing * 0.8;
+    me.position.copy(world(pos, stepping ? Math.abs(Math.sin(meStep)) * 0.04 : 0));
+    meShadow.position.copy(world(pos, 0.015));
+    ring.scale.setScalar(1 + Math.sin(t * 3) * 0.05);
 
     /* 紫苑 (練習のあとは、あなたの歩いた跡をたどって後ろをついてくる) */
     if (dist(trail[trail.length - 1], pos) > 0.15) { trail.push({ ...pos }); if (trail.length > 80) trail.shift(); }
@@ -437,14 +555,16 @@ export function openWorld(protocols, opts = {}) {
       patrolT += dt * 0.22;
       const k = (1 - Math.cos(patrolT * Math.PI)) / 2;
       const a = route[0], b = route[route.length - 1];
-      patrol.position.copy(world({ x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k }, 1.2 + Math.sin(t * 5) * 0.1));
+      patrol.position.copy(world({ x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k }, 0));
+      patrol.rotation.y = Math.sin(patrolT * Math.PI) >= 0 ? Math.PI / 2 : -Math.PI / 2;
     }
+    patrolShadow.visible = patrol.visible; patrolShadow.position.set(patrol.position.x, 0.015, patrol.position.z);
+    chiefShadow.visible = chief.visible; chiefShadow.position.set(chief.position.x, 0.015, chief.position.z);
+    /* 頭が左右を見回し、目がまたたく */
     for (const g of [patrol, chief]) {
-      g.userData.body.rotation.y = t * 1.2;
-      g.userData.r1.rotation.z = t * 2;
-      g.userData.r2.rotation.x = t * 1.4;
+      g.userData.body.rotation.y = Math.sin(t * 0.9 + (g === chief ? 1 : 0)) * 0.7;
+      g.userData.r1.material.color.setRGB(0.75 + 0.25 * Math.abs(Math.sin(t * 3)), 0.1, 0.12);
     }
-    chief.position.y = 1.6 + Math.sin(t * 1.5) * 0.15;
     scenery.update(t, dt);
     syncGuide(t, dt);
     dots.material.opacity = 0.55 + 0.35 * Math.sin(t * 4);
@@ -452,10 +572,17 @@ export function openWorld(protocols, opts = {}) {
 
 
     /* カメラはあなたを追う */
-    tmp.copy(me.position).add(CAM_OFFSET);
-    camera.position.lerp(tmp, Math.min(1, dt * 4));
-    look.lerp(me.position, Math.min(1, dt * 6));
+    /* カメラ: 少し先 (歩く向き) を見る。ホイール・2本指で寄る / 引く */
+    const ahead = new THREE.Vector3(vel.x * 0.32 * T, 0, vel.y * 0.32 * T);
+    tmp.copy(me.position).add(ahead).addScaledVector(CAM_OFFSET, zoom);
+    camera.position.lerp(tmp, Math.min(1, dt * 3.5));
+    look.lerp(tmp.copy(me.position).add(ahead).setY(0.9), Math.min(1, dt * 5));
     camera.lookAt(look);
+    grade.uniforms.uTime.value = t % 10;
+    /* 近くの相手の足もとの輪 */
+    const fp = nearby ? posOf(nearby) : null;
+    focus.visible = !!fp && !busy;
+    if (fp) { focus.position.copy(world(fp, 0.03)); focus.scale.setScalar(1 + Math.sin(t * 5) * 0.06); focus.material.opacity = 0.55 + 0.3 * Math.sin(t * 5); }
 
     /* 名前の札 */
     for (const l of labels) {
@@ -480,6 +607,9 @@ export function openWorld(protocols, opts = {}) {
     window.removeEventListener('keydown', onKeyDown);
     window.removeEventListener('keyup', onKeyUp);
     window.removeEventListener('resize', resize);
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+    window.removeEventListener('pointercancel', onUp);
     hideTitleBack();
     for (const d of disposables) if (d && d.dispose) d.dispose();
     composer.dispose && composer.dispose();
