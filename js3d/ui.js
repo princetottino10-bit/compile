@@ -458,7 +458,10 @@ let lastCardO = null;              // INFO に出しているカード (無け�
 let onFxTap = null;
 export function setFxTapHandler(fn) { onFxTap = fn; }
 const compactUI = () => window.matchMedia('(max-width: 860px) and (orientation: portrait)').matches;
-function fxSectionHtml() {
+/* カードの説明と一緒に出すときは、一覧をたたんでおく (たくさんあるとカードの効果が見えなくなっていた)。押すと開く */
+let fxOpenWithCard = false;
+function fxSectionHtml(withCard) {
+  const folded = withCard && !fxOpenWithCard;
   const group = (mine) => {
     const list = fxItems.filter(x => x.mine === mine);
     if (!list.length) return '';
@@ -467,11 +470,21 @@ function fxSectionHtml() {
         '<span class="cp-fxn1"><b>' + x.name + '</b><em>' + PANEL_ZONE[x.zone] + '</em></span>' +
         '<span class="cp-fxt">' + condHtml(x.text) + '</span></button>').join('') + '</div>';
   };
-  return '<div class="cp-fx"><div class="cp-fxh">効いている上段・下段<small>' + fxItems.length + '</small></div>' +
-    (fxItems.length ? group(true) + group(false) : '<p class="cp-fxnone">いまは無し</p>') + '</div>';
+  if (withCard && !fxItems.length) return '<div class="cp-fx folded"></div>';
+  return '<div class="cp-fx' + (folded ? ' folded' : '') + (withCard ? ' withcard' : '') + '">' +
+    (withCard
+      ? '<button type="button" class="cp-fxh cp-fxtoggle" data-fxtoggle="1" aria-expanded="' + !folded + '">効いている上段・下段<small>' + fxItems.length + '</small><i>' + (folded ? '▸' : '▾') + '</i></button>'
+      : '<div class="cp-fxh">効いている上段・下段<small>' + fxItems.length + '</small></div>') +
+    (folded ? '' : fxItems.length ? group(true) + group(false) : '<p class="cp-fxnone">いまは無し</p>') + '</div>';
 }
 function bindFx(el) {
   el.querySelectorAll('[data-fxuid]').forEach(b => { b.onclick = () => { if (onFxTap) onFxTap(b.dataset.fxuid); }; });
+  const tg = el.querySelector('[data-fxtoggle]');
+  if (tg) tg.onclick = () => {
+    fxOpenWithCard = !fxOpenWithCard;
+    const fx = el.querySelector('.cp-fx');
+    if (fx) { fx.outerHTML = fxSectionHtml(true); bindFx(el); }
+  };
 }
 /* 効果の一覧だけを出す (カードを選んでいないとき・縦持ちで INFO を開いたとき) */
 function showFxOnly(el) {
@@ -498,7 +511,7 @@ export function setActiveFx(items) {
   /* カードを出していない一覧だけの表示は、効いているものが無くなったらしまう */
   if (el.classList.contains('fxonly') && !fxItems.length) { el.classList.remove('show', 'fxonly'); placeInfoTab(); return; }
   const fx = el.querySelector('.cp-fx');
-  if (fx && el.classList.contains('show')) { fx.outerHTML = fxSectionHtml(); bindFx(el); }
+  if (fx && el.classList.contains('show')) { fx.outerHTML = fxSectionHtml(!el.classList.contains('fxonly')); bindFx(el); }
   else if (!lastCardO && fxItems.length) showFxOnly(el);
 }
 
@@ -527,7 +540,7 @@ export function showCardPanel(o, opts) {
       ? '<div class="cp-rows">' + rows.map(r => '<div class="cp-row' + (r.empty ? ' empty' : r.inactive ? ' off' : '') + '">' +
           '<span class="cp-zone">' + (PANEL_ZONE[r.key] || '') + '</span><p>' + (r.empty ? 'なし' : condHtml(r.text)) + '</p></div>').join('') + '</div>'
       : '') +
-    fxSectionHtml();
+    fxSectionHtml(true);
   bindFx(el);
   el.classList.add('show');
   placeInfoTab();
