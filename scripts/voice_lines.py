@@ -75,12 +75,21 @@ READINGS = {'焦ら': 'あせら', '焦り': 'あせり', '焦る': 'あせる',
             '止められ': 'とめられ', '止めらん': 'とめらん', '上回': 'うわまわ', '開いた': 'あいた'}
 
 
-def spoken(text, face):
+def directions(who):
+    """セリフごとの演技指導 (scripts/voice_directions/<id>.json。{声の文: "[whispering]" など。"" は指示なし})。
+    場面の種類で一律に決めず、セリフの中身に合わせて1本ずつ決めたもの (2026-10-04 本人)。無いセリフは表情から決める"""
+    path = os.path.join(ROOT, 'scripts', 'voice_directions', who + '.json')
+    return json.load(open(path, encoding='utf-8')) if os.path.exists(path) else {}
+
+
+def spoken(text, face, tag=None):
+    text = text.removeprefix('〔放送〕')       # 館内放送の実況の印 (avatar.js の PA_MARK)。放送の音は鳴らすときに付ける
     for k, v in READINGS.items():
         text = text.replace(k, v)
     text = re.sub(r'命(?!令)', 'いのち', text)      # 「命」だけ (「命令」はそのまま)
     text = re.sub(r'\s*[:：]\s*', '、', text)        # コロンは「コロン」と読んでしまうので、間 (ま) に置き換える (「隔離: 試験室」)
-    tag = TAGS.get(face, '')
+    if tag is None:
+        tag = TAGS.get(face, '')
     return (tag + ' ' + text) if tag else text
 
 
@@ -115,6 +124,7 @@ def main():
 
     mpath = os.path.join(base, 'manifest.json')
     manifest = json.load(open(mpath, encoding='utf-8')) if os.path.exists(mpath) else {}
+    direct = directions(who)
     for kind, arr in battle_lines(who).items():
         for i, entry in enumerate(arr):
             text = entry[1] if isinstance(entry, list) else entry
@@ -122,9 +132,12 @@ def main():
                 continue                     # 札の名前が入る文は声にできない (表示だけ)
             name = '%s_%d.mp3' % (kind, i)
             path = os.path.join(base, name)
-            if force or not os.path.exists(path) or manifest.get(name) != text:
-                jobs.append((path, spoken(text, KIND_FACE.get(kind, 'fired' if kind.startswith('own_') else 'normal')), text))
-                manifest[name] = text
+            tag = direct.get(text)
+            said = spoken(text, KIND_FACE.get(kind, 'fired' if kind.startswith('own_') else 'normal'), tag)
+            # 覚えておくのは、指示も含めた声の文 (指示を変えたら作り直す)
+            if force or not os.path.exists(path) or manifest.get(name) not in (said, text if tag is None else None):
+                jobs.append((path, said, text))
+                manifest[name] = said
 
     chars = sum(len(t) for _, t, _ in jobs)
     print('%d 件 / %d 文字' % (len(jobs), chars))

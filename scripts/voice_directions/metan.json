@@ -1,0 +1,468 @@
+{
+ "よろしくてよ。": {
+  "style": "base"
+ },
+ "四国めたん、参りますわ。": {
+  "style": "base",
+  "speed": 1.05
+ },
+ "わたくしの相手、光栄に思いなさい。": {
+  "style": "angry"
+ },
+ "優雅にお相手いたしますわ。": {
+  "style": "base",
+  "speed": 0.98,
+  "intonation": 1.2
+ },
+ "さあ、宴の始まりですわ！": {
+  "style": "base",
+  "speed": 1.12,
+  "pitch": 0.02,
+  "intonation": 1.4
+ },
+ "わたくしの番ですわ。": {
+  "style": "base"
+ },
+ "さあ、参りますわよ。": {
+  "style": "base",
+  "speed": 1.1
+ },
+ "わたくしの腕の見せどころですわ。": {
+  "style": "base",
+  "intonation": 1.3
+ },
+ "優雅に参りますわよ。": {
+  "style": "base"
+ },
+ "次の一手、見ていらして。": {
+  "style": "base",
+  "speed": 0.95,
+  "intonation": 1.2
+ },
+ "わたくしの闇の力、見せてさしあげますわ。": {
+  "style": "angry"
+ },
+ "次の一手は……こちらですわ。": {
+  "style": "base",
+  "speed": 0.92
+ },
+ "お手並み、ご覧あそばせ。": {
+  "style": "base",
+  "speed": 0.98
+ },
+ "迷いはありませんわ。": {
+  "style": "base",
+  "intonation": 1.2
+ },
+ "さて、どう料理しましょうか。": {
+  "style": "angry"
+ },
+ "これで、おしまいですわ。": {
+  "style": "angry",
+  "speed": 0.95
+ },
+ "チェックメイトですわね。": {
+  "style": "base",
+  "speed": 0.95,
+  "intonation": 1.3
+ },
+ "勝負ありですわ。": {
+  "style": "base"
+ },
+ "くっ……止められませんわ。": {
+  "style": "angry",
+  "speed": 0.95
+ },
+ "ここまで、ですのね……。": {
+  "style": "base",
+  "speed": 0.88,
+  "pitch": -0.04
+ },
+ "……お見事ですわ。": {
+  "style": "base",
+  "speed": 0.9
+ },
+ "切り札ですわ！": {
+  "style": "angry",
+  "intonation": 1.3
+ },
+ "とくとご覧あそばせ！": {
+  "style": "base",
+  "speed": 1.12,
+  "intonation": 1.4
+ },
+ "ここで決めますわ！": {
+  "style": "angry"
+ },
+ "闇に伏せたものほど、強いのですわ！": {
+  "style": "angry",
+  "intonation": 1.3
+ },
+ "伏せたカードこそ、わたくしの牙ですわ！": {
+  "style": "angry"
+ },
+ "おいきなさい！": {
+  "style": "base",
+  "speed": 1.1
+ },
+ "でばんですわ！": {
+  "style": "base"
+ },
+ "これで決めますわ。": {
+  "style": "angry"
+ },
+ "ひれふしなさい！": {
+  "style": "angry",
+  "intonation": 1.3
+ },
+ "かれいにまいなさい。": {
+  "style": "base",
+  "intonation": 1.2
+ },
+ "とくとごらんあれ！": {
+  "style": "base",
+  "intonation": 1.3
+ },
+ "やみよ、やどりなさい！": {
+  "style": "angry"
+ },
+ "しっこくのちから、ごらんあれ！": {
+  "style": "angry"
+ },
+ "やみはわたくしのにわですわ！": {
+  "style": "base",
+  "intonation": 1.2
+ },
+ "やみにしずみなさい！": {
+  "style": "angry"
+ },
+ "伏せておきますわ。": {
+  "style": "base"
+ },
+ "何かは秘密ですわ。": {
+  "style": "hiso"
+ },
+ "乙女には秘密が付き物ですのよ。": {
+  "style": "hiso"
+ },
+ "のちほど驚かせてさしあげますわ。": {
+  "style": "base",
+  "speed": 1,
+  "intonation": 1.2
+ },
+ "あら、そう来ますの。": {
+  "style": "base",
+  "intonation": 1.3
+ },
+ "なかなかやりますわね。": {
+  "style": "base"
+ },
+ "ふふ、面白い手ですわ。": {
+  "style": "base",
+  "intonation": 1.2
+ },
+ "その程度、想定内ですわ。": {
+  "style": "angry"
+ },
+ "……少しは骨がありますわね。": {
+  "style": "angry",
+  "speed": 0.95
+ },
+ "まだ続きますわよ！": {
+  "style": "base",
+  "speed": 1.15,
+  "intonation": 1.3
+ },
+ "見事な連なりですわ。": {
+  "style": "base"
+ },
+ "すべてわたくしの手のひらの上ですわ。": {
+  "style": "base",
+  "intonation": 1.2
+ },
+ "美しい連鎖ですわね。": {
+  "style": "happy"
+ },
+ "おーっほっほ、止まりませんわ！": {
+  "style": "happy",
+  "speed": 1.15,
+  "pitch": 0.02,
+  "intonation": 1.4
+ },
+ "補充いたしますわ。": {
+  "style": "base"
+ },
+ "手札を整えますわ。": {
+  "style": "base"
+ },
+ "淑女は準備を怠りませんの。": {
+  "style": "base",
+  "speed": 0.98
+ },
+ "一度、仕切り直しですわ。": {
+  "style": "base"
+ },
+ "ごゆっくりお考えになって。": {
+  "style": "base",
+  "speed": 0.95
+ },
+ "まだですの？": {
+  "style": "base",
+  "intonation": 1.3
+ },
+ "お茶でもいただきながら待ちますわ。": {
+  "style": "base",
+  "speed": 0.95
+ },
+ "わたくし、待つのは得意ではありませんのよ？": {
+  "style": "angry"
+ },
+ "主導権はいただきましたわ。": {
+  "style": "base"
+ },
+ "流れはわたくしのものですわ。": {
+  "style": "base"
+ },
+ "この場を支配するのは、わたくしですわ。": {
+  "style": "angry"
+ },
+ "ふふ、思い通りですわ。": {
+  "style": "happy"
+ },
+ "順調ですわね。": {
+  "style": "base"
+ },
+ "積み上がってきましたわ。": {
+  "style": "base"
+ },
+ "華麗なる数字ですわ。": {
+  "style": "base",
+  "intonation": 1.2
+ },
+ "このまま押し切りますわよ。": {
+  "style": "base",
+  "speed": 1.12
+ },
+ "コンパイル、いただきましたわ！": {
+  "style": "happy",
+  "speed": 1.1
+ },
+ "当然の結果ですわね。": {
+  "style": "base"
+ },
+ "おーっほっほ、まずは一つ！": {
+  "style": "happy",
+  "speed": 1.15,
+  "pitch": 0.02,
+  "intonation": 1.4
+ },
+ "わたくしにかかれば、この通りですわ。": {
+  "style": "base",
+  "intonation": 1.2
+ },
+ "見事でしょう？": {
+  "style": "happy"
+ },
+ "くっ……やりますわね。": {
+  "style": "angry"
+ },
+ "まだ終わっていませんわ！": {
+  "style": "angry",
+  "speed": 1.1
+ },
+ "わたくしとしたことが……": {
+  "style": "base",
+  "speed": 0.92
+ },
+ "このくらい、なんともありませんわ！": {
+  "style": "angry",
+  "speed": 1.12
+ },
+ "……少し油断しましたわ。": {
+  "style": "base",
+  "speed": 0.9
+ },
+ "再びコンパイルですわ。一枚いただきますわね。": {
+  "style": "base"
+ },
+ "おかわりですわ。": {
+  "style": "happy"
+ },
+ "なっ……！": {
+  "style": "angry",
+  "speed": 1.12,
+  "intonation": 1.4
+ },
+ "ちょっと、ずいぶんですわね！": {
+  "style": "angry"
+ },
+ "わたくしの盤面が……！": {
+  "style": "angry",
+  "intonation": 1.3
+ },
+ "なんて無作法な！": {
+  "style": "angry"
+ },
+ "やってくれましたわね……": {
+  "style": "angry",
+  "speed": 0.95
+ },
+ "な、な、なんてことを……！": {
+  "style": "angry",
+  "speed": 1.1,
+  "intonation": 1.4
+ },
+ "わたくしの盤面が……一瞬で……！": {
+  "style": "base",
+  "speed": 0.9,
+  "intonation": 1.3
+ },
+ "ゆ、許しませんわよ！！": {
+  "style": "angry",
+  "speed": 1.15,
+  "intonation": 1.4
+ },
+ "こ、これは……さすがに効きましたわ……": {
+  "style": "base",
+  "speed": 0.88
+ },
+ "あと一押しですわ。": {
+  "style": "base"
+ },
+ "ふふ、次で決めますわ。": {
+  "style": "base"
+ },
+ "見せ場は目前ですわ。": {
+  "style": "base"
+ },
+ "もう逃がしませんわよ。": {
+  "style": "angry"
+ },
+ "わたくしの勝ちですわ！": {
+  "style": "happy",
+  "intonation": 1.3
+ },
+ "おーっほっほっほ！": {
+  "style": "happy",
+  "speed": 1.15,
+  "pitch": 0.02,
+  "intonation": 1.4
+ },
+ "楽しいひとときでしたわ。": {
+  "style": "happy",
+  "speed": 0.98
+ },
+ "またお相手してさしあげますわ。": {
+  "style": "base"
+ },
+ "……今日は負けを認めますわ。": {
+  "style": "base",
+  "speed": 0.92
+ },
+ "次は負けませんわよ！": {
+  "style": "angry",
+  "speed": 1.12
+ },
+ "くっ……覚えていらっしゃい！": {
+  "style": "angry"
+ },
+ "なかなかやりますわね……": {
+  "style": "base",
+  "speed": 0.95
+ },
+ "今日のところは引き分け、ということにしておきますわ。": {
+  "style": "angry",
+  "speed": 0.95
+ },
+ "わたくしの手札に、なんてことを！": {
+  "style": "angry"
+ },
+ "お行儀が悪いですわ！": {
+  "style": "angry"
+ },
+ "淑女の手札を奪うなんて！": {
+  "style": "angry"
+ },
+ "なんて品のない！": {
+  "style": "angry"
+ },
+ "一掃いたしましたわ。": {
+  "style": "base"
+ },
+ "すっきりしましたわね。": {
+  "style": "base"
+ },
+ "邪魔者は退場ですわ。": {
+  "style": "angry"
+ },
+ "並びを整えますわ。": {
+  "style": "base"
+ },
+ "この順番がよろしくてよ。": {
+  "style": "base"
+ },
+ "美しい配置でしょう？": {
+  "style": "happy"
+ },
+ "これで幕引きですわ！": {
+  "style": "base",
+  "speed": 1.1,
+  "intonation": 1.3
+ },
+ "最後の一本、いただきますわ！": {
+  "style": "base"
+ },
+ "おーっほっほ、勝利は目前ですわ！": {
+  "style": "happy"
+ },
+ "優雅に、このまま参りますわ。": {
+  "style": "base",
+  "speed": 0.98
+ },
+ "差は歴然ですわね。": {
+  "style": "base"
+ },
+ "わたくしのペースですわ。": {
+  "style": "base"
+ },
+ "……少々、分が悪いですわね。": {
+  "style": "base",
+  "speed": 0.92
+ },
+ "こ、この程度で終わりませんわ！": {
+  "style": "angry",
+  "speed": 1.12
+ },
+ "次の一手で、ひっくり返しますわ。": {
+  "style": "angry"
+ },
+ "わたくしが教えてさしあげますわ。": {
+  "style": "base"
+ },
+ "落ち着いてやればできますわ。": {
+  "style": "base",
+  "speed": 0.95
+ },
+ "ここをご覧になって。": {
+  "style": "base"
+ },
+ "お見事ですわ！": {
+  "style": "happy"
+ },
+ "やりますわね。": {
+  "style": "base"
+ },
+ "筋がよろしくてよ。": {
+  "style": "base"
+ },
+ "もう一度ですわ。": {
+  "style": "base"
+ },
+ "大丈夫、次はできますわ。": {
+  "style": "happy",
+  "speed": 0.98
+ },
+ "惜しかったですわね。": {
+  "style": "base"
+ }
+}

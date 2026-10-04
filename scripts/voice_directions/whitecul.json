@@ -1,0 +1,479 @@
+{
+ "ホワイトカルです。よろしく。": {
+  "style": "base"
+ },
+ "よろしくお願いします。": {
+  "style": "base"
+ },
+ "静かに、始めましょう。": {
+  "style": "base",
+  "speed": 0.95
+ },
+ "がんばりますね。": {
+  "style": "base"
+ },
+ "いい対戦に、しましょう。": {
+  "style": "base"
+ },
+ "私の番ですね。": {
+  "style": "base"
+ },
+ "えっと……考えます。": {
+  "style": "base",
+  "speed": 0.92
+ },
+ "落ち着いて、いきましょう。": {
+  "style": "base",
+  "speed": 0.95
+ },
+ "ここは冷静に。": {
+  "style": "base",
+  "speed": 0.95
+ },
+ "次の一手は……これにします。": {
+  "style": "base",
+  "speed": 0.92
+ },
+ "慎重にいきます。": {
+  "style": "base",
+  "speed": 0.95
+ },
+ "では、いきます。": {
+  "style": "base"
+ },
+ "どこに置きましょうか。": {
+  "style": "base",
+  "speed": 0.95
+ },
+ "手は、決まりました。": {
+  "style": "base"
+ },
+ "一手ずつ、丁寧に。": {
+  "style": "base",
+  "speed": 0.95
+ },
+ "これで、決まりです。": {
+  "style": "base",
+  "speed": 0.95
+ },
+ "最後の一手です。": {
+  "style": "base"
+ },
+ "届きました。": {
+  "style": "happy"
+ },
+ "……止められません。": {
+  "style": "sad"
+ },
+ "ここまで、ですね。": {
+  "style": "sad",
+  "speed": 0.92
+ },
+ "……お見事です。": {
+  "style": "sad",
+  "speed": 0.92
+ },
+ "切り札です。": {
+  "style": "base",
+  "intonation": 1.2
+ },
+ "とっておきを、出しますね。": {
+  "style": "happy"
+ },
+ "ここは、決めにいきます。": {
+  "style": "base",
+  "speed": 1.1,
+  "intonation": 1.2
+ },
+ "下から、すべり出ます。": {
+  "style": "base",
+  "speed": 0.98
+ },
+ "氷は、すべるものですから。": {
+  "style": "base",
+  "speed": 0.95,
+  "pitch": -0.02
+ },
+ "だしますね。": {
+  "style": "base"
+ },
+ "これで。": {
+  "style": "base"
+ },
+ "おねがい……！": {
+  "style": "base",
+  "speed": 0.95,
+  "intonation": 1.3
+ },
+ "いきます。": {
+  "style": "base",
+  "speed": 1.05
+ },
+ "ここは、これにします。": {
+  "style": "base"
+ },
+ "しんじてます。": {
+  "style": "happy",
+  "speed": 0.95
+ },
+ "こおらせます。": {
+  "style": "base"
+ },
+ "ひやしておきますね。": {
+  "style": "base"
+ },
+ "つめたく、しずかに。": {
+  "style": "base",
+  "speed": 0.92,
+  "pitch": -0.02
+ },
+ "これで、とめます。": {
+  "style": "base"
+ },
+ "伏せておきますね。": {
+  "style": "base",
+  "speed": 0.92
+ },
+ "見せませんよ。": {
+  "style": "base",
+  "intonation": 1.2
+ },
+ "内緒です。": {
+  "style": "happy",
+  "speed": 0.95
+ },
+ "あとで、わかります。": {
+  "style": "base",
+  "speed": 0.95
+ },
+ "なるほど……": {
+  "style": "base",
+  "speed": 0.9
+ },
+ "そう来ましたか。": {
+  "style": "base"
+ },
+ "手ごわいですね。": {
+  "style": "base"
+ },
+ "少し、驚きました。": {
+  "style": "base",
+  "intonation": 1.3
+ },
+ "いい手ですね。": {
+  "style": "happy",
+  "speed": 0.98
+ },
+ "つながりました。": {
+  "style": "happy"
+ },
+ "いい流れです。": {
+  "style": "base"
+ },
+ "思ったとおりです。": {
+  "style": "base",
+  "intonation": 1.2
+ },
+ "続けて、いきます。": {
+  "style": "base",
+  "speed": 1.1
+ },
+ "きれいに決まりました。": {
+  "style": "happy"
+ },
+ "補充しますね。": {
+  "style": "base"
+ },
+ "手札を整えます。": {
+  "style": "base"
+ },
+ "一度、立て直します。": {
+  "style": "base",
+  "speed": 0.92
+ },
+ "手札を揃えます。": {
+  "style": "base"
+ },
+ "ごゆっくり。": {
+  "style": "base",
+  "speed": 0.95
+ },
+ "迷っていますか？": {
+  "style": "base",
+  "speed": 0.95
+ },
+ "急がなくて大丈夫ですよ。": {
+  "style": "happy",
+  "speed": 0.95
+ },
+ "待っていますね。": {
+  "style": "happy",
+  "speed": 0.95
+ },
+ "主導権、いただきます。": {
+  "style": "base",
+  "intonation": 1.2
+ },
+ "流れが来ました。": {
+  "style": "base",
+  "speed": 1.05
+ },
+ "このまま、いきます。": {
+  "style": "base"
+ },
+ "いい感じですね。": {
+  "style": "happy"
+ },
+ "順調です。": {
+  "style": "base"
+ },
+ "積み上がってきました。": {
+  "style": "happy"
+ },
+ "数字が伸びてきましたね。": {
+  "style": "base"
+ },
+ "この調子で。": {
+  "style": "happy"
+ },
+ "コンパイル、完了です。": {
+  "style": "base",
+  "intonation": 1.2
+ },
+ "やった……！": {
+  "style": "happy",
+  "speed": 1.1,
+  "intonation": 1.4
+ },
+ "ひとつ、取りました。": {
+  "style": "base"
+ },
+ "うまくいきました。": {
+  "style": "happy"
+ },
+ "計算どおりです。": {
+  "style": "base",
+  "intonation": 1.2
+ },
+ "っ……やられました。": {
+  "style": "sad"
+ },
+ "まだ、冷静に……": {
+  "style": "base",
+  "speed": 0.92
+ },
+ "取られてしまいました。": {
+  "style": "sad",
+  "speed": 0.95
+ },
+ "取り返しますね。": {
+  "style": "base",
+  "speed": 1.05,
+  "intonation": 1.2
+ },
+ "大丈夫、まだいけます。": {
+  "style": "base",
+  "speed": 0.98
+ },
+ "もう一度、コンパイルします。": {
+  "style": "base"
+ },
+ "1枚、いただきますね。": {
+  "style": "base",
+  "speed": 0.98
+ },
+ "ひゃっ……！": {
+  "style": "sad",
+  "speed": 1.1,
+  "intonation": 1.4
+ },
+ "そ、そんな……": {
+  "style": "sad"
+ },
+ "崩されました……": {
+  "style": "sad",
+  "speed": 0.92
+ },
+ "ひどいです……": {
+  "style": "sad",
+  "speed": 0.95
+ },
+ "想定外でした。": {
+  "style": "base",
+  "intonation": 1.3
+ },
+ "ひゃあっ……！ そんな……": {
+  "style": "cry",
+  "speed": 1.1
+ },
+ "ぜ、全部……消えました……": {
+  "style": "sad",
+  "speed": 0.9,
+  "intonation": 1.3
+ },
+ "ひどいです……こんなに……": {
+  "style": "cry",
+  "speed": 0.95
+ },
+ "そ、それはあんまりです……": {
+  "style": "sad",
+  "intonation": 1.3
+ },
+ "あと少しです。": {
+  "style": "base"
+ },
+ "次で、決めます。": {
+  "style": "base",
+  "speed": 1.05,
+  "intonation": 1.2
+ },
+ "もう少しで届きます。": {
+  "style": "happy",
+  "speed": 0.98
+ },
+ "見えてきました。": {
+  "style": "base"
+ },
+ "勝ちました。ほっ……": {
+  "style": "happy",
+  "speed": 0.95
+ },
+ "よかった……勝てました。": {
+  "style": "happy",
+  "speed": 0.95,
+  "intonation": 1.2
+ },
+ "ありがとうございました。": {
+  "style": "base"
+ },
+ "楽しかったです。": {
+  "style": "happy"
+ },
+ "また、お願いしますね。": {
+  "style": "happy"
+ },
+ "負けちゃいました。": {
+  "style": "sad"
+ },
+ "次は、負けません。": {
+  "style": "base",
+  "intonation": 1.2
+ },
+ "強かったです。": {
+  "style": "base",
+  "speed": 0.95
+ },
+ "悔しいです……": {
+  "style": "sad",
+  "speed": 0.9
+ },
+ "もっと練習します。": {
+  "style": "base"
+ },
+ "手札が……！": {
+  "style": "sad",
+  "speed": 1.1,
+  "intonation": 1.4
+ },
+ "や、やめてください……": {
+  "style": "sad",
+  "intonation": 1.3
+ },
+ "困ります……": {
+  "style": "sad",
+  "speed": 0.95
+ },
+ "せっかくのカードが……": {
+  "style": "sad",
+  "speed": 0.92
+ },
+ "まとめて片付けました。": {
+  "style": "base"
+ },
+ "すっきりしましたね。": {
+  "style": "happy",
+  "speed": 0.98
+ },
+ "盤面を整えました。": {
+  "style": "base",
+  "speed": 0.98
+ },
+ "並びを変えますね。": {
+  "style": "base"
+ },
+ "この順番で。": {
+  "style": "base"
+ },
+ "この配置がいいです。": {
+  "style": "base"
+ },
+ "これで、決めます。": {
+  "style": "base",
+  "speed": 1.05,
+  "intonation": 1.2
+ },
+ "あと一本です。": {
+  "style": "base"
+ },
+ "最後です……！": {
+  "style": "base",
+  "speed": 1.08,
+  "intonation": 1.3
+ },
+ "有利ですね。": {
+  "style": "base"
+ },
+ "このまま、落ち着いて。": {
+  "style": "base",
+  "speed": 0.95
+ },
+ "順調です。油断はしませんよ。": {
+  "style": "base",
+  "speed": 0.95
+ },
+ "苦しいですね……": {
+  "style": "sad",
+  "speed": 0.92
+ },
+ "まだ、あきらめません。": {
+  "style": "base",
+  "speed": 1.05,
+  "intonation": 1.3
+ },
+ "次で取り返します。": {
+  "style": "base",
+  "speed": 1.05
+ },
+ "私が案内します。": {
+  "style": "base"
+ },
+ "落ち着いて、やりましょう。": {
+  "style": "base",
+  "speed": 0.95
+ },
+ "ここを見てください。": {
+  "style": "base"
+ },
+ "お見事です。": {
+  "style": "happy"
+ },
+ "上手ですね。": {
+  "style": "happy"
+ },
+ "完璧です。": {
+  "style": "happy",
+  "intonation": 1.2
+ },
+ "もう一度、どうぞ。": {
+  "style": "base",
+  "speed": 0.98
+ },
+ "大丈夫、落ち着いて。": {
+  "style": "happy",
+  "speed": 0.95
+ },
+ "惜しかったですね。": {
+  "style": "base",
+  "speed": 0.95
+ }
+}

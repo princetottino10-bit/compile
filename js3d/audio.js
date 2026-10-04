@@ -73,7 +73,8 @@ function whenRunning(ms) {
     tick();
   });
 }
-export async function playClip(url, vol) {
+/* opts.pa: 館内放送のように鳴らす (天井のスピーカーの細い音と、広い場所の響き)。opts.delay: 鳴らし始めを遅らせる秒数 */
+export async function playClip(url, vol, opts = {}) {
   if (!actx) initAudio();
   if (!actx || muted || !(vol > 0)) return null;
   wake();
@@ -84,10 +85,28 @@ export async function playClip(url, vol) {
   src.buffer = buf;
   const g = actx.createGain();
   g.gain.value = Math.min(1.6, vol);     // 小さい声のキャラは持ち上げる (avatar.js の voiceGain)。上げすぎて割れないよう 1.6 倍まで
-  src.connect(g);
+  src.connect(opts.pa ? paChain(g) : g);
   g.connect(actx.destination);
-  src.start();
-  return { stop() { try { src.stop(); } catch (e) { /* もう終わっている */ } }, duration: buf.duration };
+  src.start(actx.currentTime + (opts.delay || 0));
+  return { stop() { try { src.stop(); } catch (e) { /* もう終わっている */ } }, duration: buf.duration + (opts.delay || 0) };
+}
+/* 館内放送の音: 低音と高音を削ったスピーカーの声に、少し遅れて返ってくる響きを足す。返り値は入口 (出口は out) */
+function paChain(out) {
+  const hp = actx.createBiquadFilter();
+  hp.type = 'highpass'; hp.frequency.value = 420;
+  const lp = actx.createBiquadFilter();
+  lp.type = 'lowpass'; lp.frequency.value = 3400;
+  const peak = actx.createBiquadFilter();
+  peak.type = 'peaking'; peak.frequency.value = 1700; peak.gain.value = 6;
+  hp.connect(lp); lp.connect(peak); peak.connect(out);
+  const delay = actx.createDelay(1);
+  delay.delayTime.value = 0.16;
+  const fb = actx.createGain();
+  fb.gain.value = 0.33;
+  const dull = actx.createBiquadFilter();
+  dull.type = 'lowpass'; dull.frequency.value = 2200;
+  peak.connect(delay); delay.connect(dull); dull.connect(fb); fb.connect(delay); dull.connect(out);
+  return hp;
 }
 
 /** <audio> を音量つきで鳴らす道 (BGM)。iPhone は audio.volume が効かないので、Web Audio のゲインを通す。
@@ -438,6 +457,10 @@ const SOUNDS = {
     [146.8, 185, 220, 277.2].forEach((f) => {
       tone({ freq: f, dur: 2.6, type: 'sine', vol: 0.045, attack: 0.5, delay: 0.3, verb: 0.7 });
     });
+  },
+  /* 館内放送の始まりのチャイム (ピンポンパンポン)。瑠璃の実況の前に鳴らす。0.7 秒で鳴り終わる */
+  pa() {
+    [523.25, 659.25, 783.99, 1046.5].forEach((f, n) => bell(f, { dur: 0.42, vol: 0.05, delay: n * 0.16, verb: 0.5 }));
   },
   /* 負け: 下がる二音と、低く沈む響き (責めない音に) */
   lose() {

@@ -7,7 +7,7 @@
  *   動きを減らす設定では、息とまばたきと吹き出しの動きを止める (表情とセリフは出す)
  * ========================================================================= */
 import { settings } from './settings.js';
-import { isMuted, playClip } from './audio.js';
+import { isMuted, playClip, sfx } from './audio.js';
 import { duckBgm } from './bgm.js';
 import { LINES, FAVORITE, ACE_CARDS, OWN_LATE } from './avatar-lines.js';
 import { BOSS_LINES } from './avatar-boss-lines.js';
@@ -93,12 +93,17 @@ export const avatarIds = () => Object.keys(AVATARS).filter(id => !AVATARS[id].bo
 /* 立ち絵の版。画像には版の印が付かないので、同じ名前で差し替えたらここを上げる (古い絵がしばらく出るのを防ぐ)。3 = 2026-10-01 頭の先まで入る枠で切り直し (E:SDSwarmUIOutputvatar_v2export_v4headroom.py) */
 export const ART_VER = 3;
 /* 声の版。同じ名前で声を作り直したらここを上げる (古い声がしばらく鳴るのを防ぐ)。5 = 2026-10-02 読みの直し (止められ・上回・開いた・命) とセリフの差し替え */
-export const VOICE_VER = 8;
+export const VOICE_VER = 9;
 /* 声の大きさをキャラどうしでそろえる。測った大きさ (ラウドネス、LUFS。ffmpeg の ebur128 の中央値) から、VOICE_TARGET へ合わせる倍率を出す。
    VOICEVOX の4人は -25 前後、ElevenLabs の4人は -15〜-19 で、6〜10 dB も差があった (2026-10-02 に測った)。
    声を作り直したら測り直す: ffmpeg -i <声> -af ebur128=framelog=quiet -f null -  (最後の I: の値) */
 const VOICE_LOUDNESS = { zundamon: -25.8, metan: -24.6, tsumugi: -24.6, whitecul: -26.0, shion: -19.1, nadeshiko: -19.3, asagi: -15.1, yamabuki: -17.7 };
 const VOICE_TARGET = -23;
+/* 館内放送の実況の印 (avatar-lines.js でセリフの頭に付ける)。吹き出しには出さない。
+   声はチャイム (audio.js の pa) が鳴り終わってから出す */
+export const PA_MARK = '〔放送〕';
+const PA_LEAD_MS = 750;
+const PA_CHANCE = 0.55;              // 候補に入っても、ほかのセリフと等しく選ばれるので、実況になるのは 12% ほど (2026-10-03 本人)
 export function voiceGain(id) {
   const l = VOICE_LOUDNESS[id];
   return l === undefined ? 1 : Math.min(1.6, Math.pow(10, (VOICE_TARGET - l) / 20));
@@ -157,8 +162,9 @@ export function mountAvatar(id, opts = {}) {
     if (ms) faceTimer = setTimeout(() => { face = 'normal'; show('normal'); }, ms);
   }
   /* セリフ: 1字ずつ流れ込む (リソース集の Kinetics の文字送り)。吹き出しは表情ごとに出方を変える (data-mood) */
-  function say(text, f, ms) {
+  function say(text, f, ms, pa) {
     const bubble = el.querySelector('.av-bubble');
+    bubble.dataset.pa = pa ? '1' : '';
     const p = bubble.querySelector('.av-text');
     p.textContent = '';
     p.setAttribute('aria-label', text);
@@ -188,10 +194,17 @@ export function mountAvatar(id, opts = {}) {
     turn: 'normal', down: 'fired', watch: 'surprised', chain: 'happy', refresh: 'normal', idle: 'normal', control: 'happy', boost: 'fired',
     handes: 'frustrated', wipe: 'fired', rearrange: 'fired', fav: 'happy', reach: 'fired', lead: 'happy', behind: 'frustrated', crushed: 'surprised', recompile: 'happy', sure: 'fired', doomed: 'sad', ace: 'fired' };
   /* チュートリアルの案内 (tu...): できたら笑顔、ほかはふつう */
-  const faceOf = (kind) => FACE_OF[kind] || (/^(play|own)_/.test(kind) ? 'fired' : null) || (/^tu\d+ok$/.test(kind) ? 'happy' : /^tu(\d|ask)/.test(kind) ? 'normal' : undefined);
+  const faceOf = (kind) => FACE_OF[kind] || (/^tag_/.test(kind) ? 'happy' : null) || (/^(play|own)_/.test(kind) ? 'fired' : null) || (/^tu\d+ok$/.test(kind) ? 'happy' : /^tu(\d|ask)/.test(kind) ? 'normal' : undefined);
   const lastPick = {};               // 種類ごとに、直前に言ったセリフの番号
   function react(kind, vars) {
     /* そのキャラに無い種類 (チュートリアルの案内など) は紫苑のセリフを借りる (声は無し) */
+    /* タッグの相方へのひとこと (tag_hello / tag_in): 相方ごとのセリフ (tag_in_asagi など) があればそれを言う。
+       無いキャラは言わない (ほかの子のセリフを借りると、相方との関係が合わない) */
+    if (/^tag_/.test(kind)) {
+      const mk = vars && vars.mate ? kind + '_' + vars.mate : null;
+      if (mk && def.lines[mk]) kind = mk;
+      if (!def.lines[kind]) return;
+    }
     const own = def.lines[kind];
     const lines = own || AVATARS.shion.lines[kind];
     if (!lines) return;
@@ -210,7 +223,10 @@ export function mountAvatar(id, opts = {}) {
     /* opts.avoid (正規表現): 物語の中など、言わせたくない言葉の入ったセリフは選ばない。全部だめなら黙る
        (番号は声のファイルと対応しているので、並びは変えずに番号で選ぶ) */
     const textOf = (e) => (Array.isArray(e) ? e[0] : e);
-    const ok = lines.map((e, n) => n).filter(n => !opts.avoid || !opts.avoid.test(textOf(lines[n])));
+    /* 館内放送の実況は、たまにだけ (PA_CHANCE の確率で候補に入れる) */
+    const paTurn = Math.random() < PA_CHANCE;
+    const ok = lines.map((e, n) => n).filter(n => (!opts.avoid || !opts.avoid.test(textOf(lines[n])))
+      && (paTurn || !String(textOf(lines[n])).startsWith(PA_MARK)));
     if (!ok.length) return;
     /* 同じ種類で、直前と同じセリフは続けて言わない */
     const rest = ok.length > 1 ? ok.filter(n => n !== lastPick[kind]) : ok;
@@ -221,12 +237,16 @@ export function mountAvatar(id, opts = {}) {
     let text = !def.voice && kind === 'play' && proto && PROTO_LINES[proto] && Math.random() < 0.45 ? PROTO_LINES[proto]
       : Array.isArray(entry) ? entry[0] : entry;
     for (const [k, v] of Object.entries(vars || {})) text = text.split('{' + k + '}').join(v);
+    /* 館内放送の実況 (頭に PA_MARK の付いたセリフ): チャイムのあとに、スピーカーの声で言う */
+    const pa = text.startsWith(PA_MARK);
+    if (pa) text = text.slice(PA_MARK.length);
     /* 長いセリフ (チュートリアルの案内など) は、読み終わるまで出しておく */
-    const ms = Math.max(kind === 'win' || kind === 'lose' ? 5000 : 2400, 700 + text.length * 110);
+    const ms = Math.max(kind === 'win' || kind === 'lose' ? 5000 : 2400, 700 + text.length * 110) + (pa ? PA_LEAD_MS : 0);
     const canned = () => {
+      if (pa && voiceOn && !isMuted()) sfx('pa');
       /* 札の名前が入る一言は声がない (表示だけ)。[表示, 声] の組ならある */
-      if (def.voice && own && voiceOn && (Array.isArray(entry) || !String(entry).includes('{'))) playVoice('art/voice/' + id + '/' + kind + '_' + i + '.mp3?v=' + VOICE_VER);
-      say(text, faceOf(kind), ms);
+      if (def.voice && own && voiceOn && (Array.isArray(entry) || !String(entry).includes('{'))) playVoice('art/voice/' + id + '/' + kind + '_' + i + '.mp3?v=' + VOICE_VER, pa);
+      say(text, faceOf(kind), ms, pa);
     };
     canned();
   }
@@ -236,14 +256,14 @@ export function mountAvatar(id, opts = {}) {
   let voiceOn = opts.voice !== false;
   const stopVoice = () => { voiceSeq++; if (voiceStop) { voiceStop(); voiceStop = null; } };
   function setVoice(on) { voiceOn = !!on; if (!on) stopVoice(); }
-  function playVoice(url) {
+  function playVoice(url, pa) {
     if (isMuted()) return;
     /* 設定の「キャラの声の音量」(0 でオフ)。効果音と同じ Web Audio で鳴らす (iPhone で止められないように。audio.js の playClip) */
     const vol = Math.max(0, Math.min(1, ((settings().voiceVol ?? 80) | 0) / 100)) * voiceGain(id);
     if (!vol) return;
     stopVoice();
     const my = voiceSeq;
-    playClip(url, vol).then((h) => {
+    playClip(url, vol, pa ? { pa: true, delay: PA_LEAD_MS / 1000 } : {}).then((h) => {
       if (!h) return;
       if (my !== voiceSeq || !el.isConnected) { h.stop(); return; }
       voiceStop = h.stop;

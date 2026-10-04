@@ -330,6 +330,8 @@ function syncAvatar() {
     oppIds
   };
   if (avatars.opp) setTimeout(() => { if (avatars && avatars.opp) avatars.opp.react('hello'); }, 900);
+  /* タッグ: 前にいる子が、後ろの相方に声をかける (相方ごとのセリフ。avatar-lines.js の tag_hello_*) */
+  if (avatars.me && avatars.mate) setTimeout(() => avatarTagSay('tag_hello'), 5200);
   /* 自分のキャラも、相手が言い終わるころに挨拶を返す。自分が先攻のときは「私の番」のひとことがすぐ出るので言わない
      (チュートリアルの案内役は別のひとことを言う) */
   if (avatars.me && !tutorial) setTimeout(() => { if (avatars && avatars.me && cur && (cur.state.turns | 0) <= 1 && cur.state.turn !== ME) avatarSay(ME, 'hello'); }, 3200);
@@ -528,6 +530,13 @@ function avatarControlCheck(st) {
   if (avatarControl !== null && c !== avatarControl && c >= 0) avatarSay(c, 'control', null, st, 6000);
   avatarControl = c;
 }
+/* タッグの相方へのひとこと。前にいる子が、後ろの子の id を相方として言う (後ろの子の吹き出しは見えないため) */
+function avatarTagSay(kind, st) {
+  if (!avatars || !avatars.me || !avatars.mate) return;
+  const front = avatarOf(ME, st);
+  const back = front === avatars.mate ? avatars.me : avatars.mate;
+  avatarSay(ME, kind, { mate: back.id }, st, kind === 'tag_in' ? 15000 : 0, kind === 'tag_in' ? 0.5 : undefined);
+}
 /* タッグ: 指す番の人が前に出る。相手のキャラは、相手の番が始まるときにその番の人へ替える
    (前は相手が指し終えた瞬間に次の人へ替わり、いま指した人のひとことや名札が次の人のものになっていた)。
    oppTurn: 相手の番が始まった (このときだけ相手を替える) */
@@ -538,6 +547,9 @@ function avatarTagTurn(st, oppTurn) {
     const partner = st.tag.pilot[ME] === 1;
     if (avatars.me) avatars.me.setBack(partner);
     avatars.mate.setBack(!partner);
+    /* 交代して前に出た子が、下がった相方にひとこと (毎回だとうるさいので半分、15 秒あける) */
+    if (avatars._front !== undefined && avatars._front !== partner && st.turn === ME) avatarTagSay('tag_in', st);
+    avatars._front = partner;
   }
   if (!oppTurn) return;
   oppShownPilot = st.tag.pilot[AI];

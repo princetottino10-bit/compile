@@ -1,0 +1,616 @@
+{
+ "よろしくー！": {
+  "style": "base",
+  "speed": 1.12,
+  "intonation": 1.2
+ },
+ "春日部つむぎ、いくよー！": {
+  "style": "base",
+  "speed": 1.12,
+  "intonation": 1.3
+ },
+ "ぶち上げていこ！": {
+  "style": "base",
+  "speed": 1.18,
+  "pitch": 0.02,
+  "intonation": 1.3
+ },
+ "埼玉代表、参上！": {
+  "style": "base",
+  "speed": 1.1,
+  "intonation": 1.4
+ },
+ "楽しんでこー！": {
+  "style": "base",
+  "speed": 1.12,
+  "intonation": 1.2
+ },
+ "あーしの番！": {
+  "style": "base",
+  "speed": 1.1
+ },
+ "よーし、いくよー！": {
+  "style": "base",
+  "speed": 1.15
+ },
+ "あーしに任せて！": {
+  "style": "base",
+  "intonation": 1.2
+ },
+ "テンション上げてくよー！": {
+  "style": "base",
+  "speed": 1.18,
+  "intonation": 1.3
+ },
+ "ここはキメるとこっしょ！": {
+  "style": "base",
+  "intonation": 1.3
+ },
+ "どれにしよっかな〜。": {
+  "style": "base",
+  "speed": 0.98,
+  "intonation": 1.2
+ },
+ "次あーしね！": {
+  "style": "base",
+  "speed": 1.12
+ },
+ "うーん、迷う〜。": {
+  "style": "base",
+  "speed": 0.92,
+  "intonation": 1.2
+ },
+ "よし、決めた！": {
+  "style": "base",
+  "speed": 1.12
+ },
+ "いっちゃうよ〜！": {
+  "style": "base",
+  "speed": 1.15,
+  "pitch": 0.02,
+  "intonation": 1.3
+ },
+ "これで決まりっしょ！": {
+  "style": "base",
+  "speed": 1.12,
+  "intonation": 1.3
+ },
+ "もらったー！": {
+  "style": "base",
+  "speed": 1.18,
+  "intonation": 1.3
+ },
+ "あーしの勝ちじゃん！": {
+  "style": "base",
+  "speed": 1.12,
+  "pitch": 0.02
+ },
+ "うわ、止めらんない……": {
+  "style": "base",
+  "speed": 0.95,
+  "pitch": -0.03
+ },
+ "マジか……ここまで？": {
+  "style": "base",
+  "speed": 0.92,
+  "pitch": -0.03,
+  "intonation": 1.3
+ },
+ "やられた〜……": {
+  "style": "base",
+  "speed": 0.95,
+  "pitch": -0.04
+ },
+ "切り札いっちゃうよ〜！": {
+  "style": "base",
+  "speed": 1.15,
+  "intonation": 1.3
+ },
+ "これ、ガチのやつ！": {
+  "style": "base",
+  "speed": 1.1,
+  "intonation": 1.2
+ },
+ "とっておき、出しちゃお！": {
+  "style": "base",
+  "speed": 1.1,
+  "intonation": 1.3
+ },
+ "コンボ、キマった〜！": {
+  "style": "base",
+  "speed": 1.2,
+  "pitch": 0.03,
+  "intonation": 1.4
+ },
+ "秒で2枚！ついてこれる？": {
+  "style": "base",
+  "speed": 1.22,
+  "intonation": 1.3
+ },
+ "いっちゃえ！": {
+  "style": "base",
+  "speed": 1.2
+ },
+ "キメるし！": {
+  "style": "base",
+  "speed": 1.15
+ },
+ "ほいっ！": {
+  "style": "base",
+  "speed": 1.2,
+  "pitch": 0.03
+ },
+ "ばえるっしょ！": {
+  "style": "base",
+  "speed": 1.1,
+  "intonation": 1.3
+ },
+ "アゲてく！": {
+  "style": "base",
+  "speed": 1.18
+ },
+ "いけー！": {
+  "style": "base",
+  "speed": 1.2
+ },
+ "びょうでキメるし！": {
+  "style": "base",
+  "speed": 1.2
+ },
+ "おいてくよ〜！": {
+  "style": "base",
+  "speed": 1.12
+ },
+ "スピードならまけないし！": {
+  "style": "base",
+  "speed": 1.2,
+  "intonation": 1.2
+ },
+ "せんてとっちゃお！": {
+  "style": "base",
+  "speed": 1.15
+ },
+ "こっそり置いとくね。": {
+  "style": "base",
+  "speed": 0.95
+ },
+ "ナイショ〜。": {
+  "style": "base",
+  "intonation": 1.3
+ },
+ "あとでビビらせるし！": {
+  "style": "base",
+  "speed": 1.15,
+  "intonation": 1.3
+ },
+ "中身はお楽しみ〜。": {
+  "style": "base",
+  "intonation": 1.2
+ },
+ "え、やるじゃん！": {
+  "style": "base",
+  "speed": 1.1,
+  "intonation": 1.4
+ },
+ "そうくるかー！": {
+  "style": "base",
+  "speed": 1.12,
+  "intonation": 1.2
+ },
+ "マジ？ エグ！": {
+  "style": "base",
+  "speed": 1.15,
+  "intonation": 1.4
+ },
+ "ちょ、強くない？": {
+  "style": "base",
+  "speed": 1.1,
+  "intonation": 1.4
+ },
+ "ふーん、いいじゃん。": {
+  "style": "base",
+  "speed": 0.95,
+  "pitch": -0.02
+ },
+ "つながったじゃん！": {
+  "style": "base",
+  "speed": 1.15,
+  "intonation": 1.3
+ },
+ "止まんないし！": {
+  "style": "base",
+  "speed": 1.2
+ },
+ "え、ヤバ、全部つながった！": {
+  "style": "base",
+  "speed": 1.2,
+  "intonation": 1.4
+ },
+ "コンボ決まったー！": {
+  "style": "base",
+  "speed": 1.2,
+  "intonation": 1.3
+ },
+ "あーし天才かも！": {
+  "style": "base",
+  "speed": 1.12,
+  "intonation": 1.4
+ },
+ "手札補充〜！": {
+  "style": "base",
+  "speed": 1.12
+ },
+ "ドローするね！": {
+  "style": "base"
+ },
+ "手札もアゲてこ！": {
+  "style": "base",
+  "speed": 1.15
+ },
+ "手札、満タンにしとこ〜。": {
+  "style": "base"
+ },
+ "ゆっくりでいいよー。": {
+  "style": "base",
+  "speed": 0.95
+ },
+ "考え中？": {
+  "style": "base",
+  "speed": 0.95,
+  "intonation": 1.2
+ },
+ "あーしネイル見てるから、ごゆっくり〜。": {
+  "style": "base",
+  "speed": 0.95,
+  "intonation": 1.1
+ },
+ "迷ってる？": {
+  "style": "base",
+  "speed": 0.95
+ },
+ "コントロール、いただき！": {
+  "style": "base",
+  "speed": 1.15
+ },
+ "流れキテるじゃん！": {
+  "style": "base",
+  "speed": 1.15,
+  "intonation": 1.3
+ },
+ "主導権ゲット〜！": {
+  "style": "base",
+  "speed": 1.15
+ },
+ "ここからあーしのターン！": {
+  "style": "base",
+  "speed": 1.15,
+  "intonation": 1.3
+ },
+ "いい感じじゃん！": {
+  "style": "base",
+  "speed": 1.12
+ },
+ "ぐんぐんいくよ！": {
+  "style": "base",
+  "speed": 1.15
+ },
+ "数字エグくない？": {
+  "style": "base",
+  "speed": 1.12,
+  "intonation": 1.4
+ },
+ "どんどん盛ってこ！": {
+  "style": "base",
+  "speed": 1.18
+ },
+ "コンパイル、キタコレ！": {
+  "style": "base",
+  "speed": 1.2,
+  "pitch": 0.03,
+  "intonation": 1.4
+ },
+ "やったじゃん、あーし最強！": {
+  "style": "base",
+  "speed": 1.2,
+  "intonation": 1.3
+ },
+ "いっこ取ったー！": {
+  "style": "base",
+  "speed": 1.18
+ },
+ "これは映えるわ〜！": {
+  "style": "base",
+  "speed": 1.12,
+  "intonation": 1.3
+ },
+ "よゆーっしょ！": {
+  "style": "base",
+  "speed": 1.1
+ },
+ "えー、マジ？": {
+  "style": "base",
+  "pitch": -0.02,
+  "intonation": 1.4
+ },
+ "ちょ、待って待って！": {
+  "style": "base",
+  "speed": 1.2,
+  "intonation": 1.4
+ },
+ "うわ、取られた〜！": {
+  "style": "base",
+  "speed": 1.1,
+  "pitch": -0.02,
+  "intonation": 1.3
+ },
+ "まだイケるし！": {
+  "style": "base",
+  "speed": 1.15,
+  "intonation": 1.2
+ },
+ "くっそー、やられた！": {
+  "style": "base",
+  "speed": 1.1,
+  "pitch": -0.03,
+  "intonation": 1.3
+ },
+ "リコンパイル〜！ 1枚もーらい！": {
+  "style": "base",
+  "speed": 1.18
+ },
+ "おかわりいただきっ！": {
+  "style": "base",
+  "speed": 1.15
+ },
+ "うそでしょ！？": {
+  "style": "base",
+  "speed": 1.15,
+  "intonation": 1.4
+ },
+ "それはナシっしょ！": {
+  "style": "base",
+  "speed": 1.12,
+  "intonation": 1.3
+ },
+ "ちょ、あーしの盤面〜！": {
+  "style": "base",
+  "speed": 1.18,
+  "intonation": 1.4
+ },
+ "エグすぎない！？": {
+  "style": "base",
+  "speed": 1.15,
+  "intonation": 1.4
+ },
+ "マジ無理なんだけど！": {
+  "style": "base",
+  "speed": 1.1,
+  "pitch": -0.02,
+  "intonation": 1.3
+ },
+ "ちょ、マジ！？ ごっそりじゃん！": {
+  "style": "base",
+  "speed": 1.2,
+  "intonation": 1.4
+ },
+ "え、エグすぎ！ 無理なんだけど！": {
+  "style": "base",
+  "speed": 1.18,
+  "intonation": 1.4
+ },
+ "あーしのライン、返してー！": {
+  "style": "base",
+  "speed": 1.15,
+  "pitch": 0.02,
+  "intonation": 1.4
+ },
+ "うわ、ヤバ……一気に持ってかれた……": {
+  "style": "base",
+  "speed": 0.95,
+  "pitch": -0.04,
+  "intonation": 1.2
+ },
+ "あとちょいじゃん！": {
+  "style": "base",
+  "speed": 1.15,
+  "intonation": 1.3
+ },
+ "次でキメるよ！": {
+  "style": "base",
+  "speed": 1.15
+ },
+ "もうすぐゴールじゃん！": {
+  "style": "base",
+  "speed": 1.12
+ },
+ "ここで決めたら神っしょ！": {
+  "style": "base",
+  "speed": 1.15,
+  "intonation": 1.3
+ },
+ "勝ったー！ サイコー！": {
+  "style": "base",
+  "speed": 1.2,
+  "pitch": 0.04,
+  "intonation": 1.4
+ },
+ "あーしの勝ちー！": {
+  "style": "base",
+  "speed": 1.18,
+  "pitch": 0.03,
+  "intonation": 1.3
+ },
+ "めっちゃ楽しかった！": {
+  "style": "base",
+  "speed": 1.12,
+  "intonation": 1.2
+ },
+ "やっぱ埼玉最強っしょ！": {
+  "style": "base",
+  "speed": 1.15,
+  "intonation": 1.3
+ },
+ "また遊ぼーね！": {
+  "style": "base",
+  "speed": 1.1,
+  "intonation": 1.2
+ },
+ "くやしー！": {
+  "style": "base",
+  "speed": 1.15,
+  "pitch": -0.02,
+  "intonation": 1.4
+ },
+ "次は負けないし！": {
+  "style": "base",
+  "speed": 1.15,
+  "intonation": 1.2
+ },
+ "えー、負けた〜！": {
+  "style": "base",
+  "speed": 1.05,
+  "pitch": -0.03,
+  "intonation": 1.4
+ },
+ "でもいい勝負だったじゃん！": {
+  "style": "base",
+  "speed": 1.05,
+  "intonation": 1.2
+ },
+ "リベンジするから！": {
+  "style": "base",
+  "speed": 1.18,
+  "intonation": 1.3
+ },
+ "ちょ、あーしの手札！": {
+  "style": "base",
+  "speed": 1.2,
+  "intonation": 1.4
+ },
+ "それはナシっしょ〜！": {
+  "style": "base",
+  "speed": 1.12,
+  "intonation": 1.3
+ },
+ "カード取るとかひどくない？": {
+  "style": "base",
+  "speed": 1.1,
+  "intonation": 1.3
+ },
+ "あーしの作戦が〜！": {
+  "style": "base",
+  "speed": 1.05,
+  "pitch": -0.02,
+  "intonation": 1.3
+ },
+ "まとめてバイバーイ！": {
+  "style": "base",
+  "speed": 1.18,
+  "pitch": 0.03,
+  "intonation": 1.3
+ },
+ "全部どかしちゃった！": {
+  "style": "base",
+  "speed": 1.15
+ },
+ "すっきり〜！": {
+  "style": "base",
+  "speed": 1.12
+ },
+ "並び替えちゃお！": {
+  "style": "base",
+  "speed": 1.12
+ },
+ "こっちのほうが映えるし！": {
+  "style": "base",
+  "speed": 1.1,
+  "intonation": 1.2
+ },
+ "配置もおしゃれにね！": {
+  "style": "base",
+  "speed": 1.1,
+  "intonation": 1.2
+ },
+ "これキメたら勝ちじゃん！": {
+  "style": "base",
+  "speed": 1.15,
+  "intonation": 1.3
+ },
+ "ラスト一本、いくよー！": {
+  "style": "base",
+  "speed": 1.18,
+  "intonation": 1.3
+ },
+ "あーしの勝ち、見えた！": {
+  "style": "base",
+  "speed": 1.15,
+  "intonation": 1.3
+ },
+ "余裕っしょ〜。": {
+  "style": "base",
+  "intonation": 1.2
+ },
+ "このまま行っちゃうし！": {
+  "style": "base",
+  "speed": 1.12
+ },
+ "あーし、ノッてる！": {
+  "style": "base",
+  "speed": 1.15,
+  "intonation": 1.2
+ },
+ "ちょ、ヤバくない……？": {
+  "style": "base",
+  "pitch": -0.03,
+  "intonation": 1.3
+ },
+ "まだ巻き返せるし！": {
+  "style": "base",
+  "speed": 1.15,
+  "intonation": 1.2
+ },
+ "うー、ターンエンド……": {
+  "style": "base",
+  "speed": 0.92,
+  "pitch": -0.04
+ },
+ "あーしが教えたげる！": {
+  "style": "base",
+  "speed": 1.1,
+  "intonation": 1.2
+ },
+ "ここ見て見て！": {
+  "style": "base",
+  "speed": 1.12,
+  "intonation": 1.2
+ },
+ "やるじゃん！": {
+  "style": "base",
+  "speed": 1.12,
+  "intonation": 1.3
+ },
+ "いいね、その調子！": {
+  "style": "base",
+  "speed": 1.12
+ },
+ "天才じゃん！": {
+  "style": "base",
+  "speed": 1.15,
+  "intonation": 1.4
+ },
+ "ドンマイ、もう一回！": {
+  "style": "base",
+  "speed": 1.1,
+  "intonation": 1.2
+ },
+ "だいじょぶ、次いける！": {
+  "style": "base",
+  "speed": 1.1,
+  "intonation": 1.2
+ },
+ "おしい〜！": {
+  "style": "base",
+  "speed": 1.05,
+  "intonation": 1.3
+ }
+}

@@ -11,10 +11,16 @@ import { AVATARS } from '../js3d/avatar.js';
 const ENGINE = 'http://127.0.0.1:50021';
 /* キャラごとの声 (VOICEVOX の speaker id)。種類によって声色を変える */
 const SPEAKER = {
-  zundamon: { base: 3, happy: 1, angry: 7, sad: 76 },   // ノーマル / あまあま / ツンツン / なみだめ
-  metan: { base: 2, happy: 0, angry: 6 },
+  zundamon: { base: 3, happy: 1, angry: 7, sad: 76, whisper: 22, hiso: 38, tired: 75 },   // ノーマル / あまあま / ツンツン / なみだめ / ささやき / ヒソヒソ / ヘロヘロ
+  metan: { base: 2, happy: 0, angry: 6, whisper: 36, hiso: 37 },                           // ノーマル / あまあま / ツンツン / ささやき / ヒソヒソ
   tsumugi: { base: 8, happy: 8, angry: 8 },
-  whitecul: { base: 23, happy: 24, angry: 25 }      // ノーマル / たのしい / かなしい
+  whitecul: { base: 23, happy: 24, angry: 25, sad: 25, cry: 26 }      // ノーマル / たのしい / かなしい / びえーん
+};
+/* セリフごとの演技指導 (scripts/voice_directions/<id>.json。{声の文: { style, speed, pitch, intonation }})。
+   場面の種類で一律に決めず、セリフの中身に合わせて決めたもの (2026-10-04)。無いセリフは下の TONE で決める */
+const directionsOf = (id) => {
+  const p = path.join('scripts', 'voice_directions', id + '.json');
+  return fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, 'utf8')) : {};
 };
 const TONE = { compile: 'happy', win: 'happy', good: 'happy', hello: 'happy', chain: 'happy', control: 'happy', fav: 'happy', reach: 'happy', lead: 'happy', recompile: 'happy', sure: 'happy', doomed: 'angry', compiled: 'angry', hurt: 'angry', handes: 'angry', behind: 'angry', crushed: 'angry' };
 /* キャラごとの声色の差し替え (ずんだもんは、やられたときに怒るより泣く) */
@@ -22,12 +28,23 @@ const TONE_OF = { zundamon: { compiled: 'sad', hurt: 'sad', handes: 'sad', lose:
 
 import { fixReading } from './voice_fix.mjs';
 
-async function synth(text, speaker) {
+/* エンジンがたまに接続を落とす (fetch failed)。少し待って3回まで試す */
+async function synth(text, speaker, d = {}) {
+  for (let n = 1; ; n++) {
+    try { return await synthOnce(text, speaker, d); } catch (e) {
+      if (n >= 3) throw e;
+      await new Promise(r => setTimeout(r, 1500 * n));
+    }
+  }
+}
+async function synthOnce(text, speaker, d) {
   text = fixReading(text);
   const q = await fetch(ENGINE + '/audio_query?speaker=' + speaker + '&text=' + encodeURIComponent(text), { method: 'POST' });
   if (!q.ok) throw new Error('audio_query ' + q.status);
   const query = await q.json();
-  query.speedScale = 1.08;                   // 対戦の吹き出しに合わせて少し速め
+  query.speedScale = d.speed ?? 1.08;        // 対戦の吹き出しに合わせて少し速め
+  if (d.pitch !== undefined) query.pitchScale = d.pitch;
+  if (d.intonation !== undefined) query.intonationScale = d.intonation;
   const r = await fetch(ENGINE + '/synthesis?speaker=' + speaker, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(query)
   });
@@ -46,6 +63,7 @@ for (const id of ids) {
   const def = AVATARS[id];
   const sp = SPEAKER[id];
   if (!def || !def.voice || !sp) { console.log('skip', id); continue; }
+  const direct = directionsOf(id);
   const dir = path.join('art', 'voice', id);
   fs.mkdirSync(dir, { recursive: true });
   /* 並びが変わると番号がずれるので、前の声は消してから作り直す */
@@ -53,11 +71,13 @@ for (const id of ids) {
   for (const [kind, list] of Object.entries(def.lines)) {
     for (let i = 0; i < list.length; i++) {
       const text = Array.isArray(list[i]) ? list[i][1] : list[i];
-      const tone = (TONE_OF[id] && TONE_OF[id][kind]) || TONE[kind] || 'base';
+      const d = direct[text] || {};
+      const tone = d.style || (TONE_OF[id] && TONE_OF[id][kind]) || TONE[kind] || 'base';
+      if (d.style && sp[d.style] === undefined) console.log('  声色が無い', id, d.style, '→ ふつうの声で', text);
       const speaker = sp[tone] ?? sp.base;
       const out = path.join(dir, kind + '_' + i + '.mp3');
       if (onlyMissing && fs.existsSync(out)) continue;
-      fs.writeFileSync(tmp, await synth(text, speaker));
+      fs.writeFileSync(tmp, await synth(text, speaker, d));
       execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', tmp, '-ac', '1', '-b:a', '64k', out]);
       n++;
     }
