@@ -2367,6 +2367,18 @@ function bindInput() {
     if (busy || !cur || !humanTurn(shown()) || cur.requests.length) return;
     const ok = legalNow().some(a => a.type === 'refresh');
     if (!ok) { UI.toast('いまは補充できません'); return; }
+    /* 押し間違え防止: 1回目は確かめ、3秒以内にもう一度押したら補充 (補充すると番が終わる) */
+    if (!refreshBtn.classList.contains('armed')) {
+      refreshBtn.classList.add('armed');
+      refreshBtn.dataset.label = refreshBtn.dataset.label || refreshBtn.textContent;
+      refreshBtn.textContent = 'もう一度押すと補充';
+      clearTimeout(refreshBtn._t);
+      refreshBtn._t = setTimeout(() => { refreshBtn.classList.remove('armed'); refreshBtn.textContent = refreshBtn.dataset.label; }, 3000);
+      return;
+    }
+    clearTimeout(refreshBtn._t);
+    refreshBtn.classList.remove('armed');
+    refreshBtn.textContent = refreshBtn.dataset.label;
     deselect();
     await step({ type: 'refresh' });
   };
@@ -4421,6 +4433,8 @@ function toggleBoardPick(uid) {
   const bp = boardPick;
   if (!bp || bp.req.candidates.indexOf(uid) < 0) return;
   const i = bp.chosen.indexOf(uid);
+  /* 1枚選ぶ選択: 選んだカードをもう一度触ったら決める */
+  if (i >= 0 && bp.max === 1 && bp.chosen.length >= bp.min) { finishBoardPick(bp.chosen.slice()); return; }
   if (i >= 0) bp.chosen.splice(i, 1);
   else {
     if (bp.max === 1) bp.chosen.length = 0;
@@ -4491,8 +4505,9 @@ window.addEventListener('keydown', (ev) => {
 
 /* 1枚必須の選択をタップで即決するか。手札から選ぶ (捨てる・キャッシュの削除・渡す等) は
    取り消せないので、1枚でも「選んで → 決定」にする。選び直しはもう1枚をタップ */
+/* 1枚選ぶ選択は触ったら決まる。オンラインは取り消せない手が多いので、選んでから決める (同じカードをもう一度・決定) */
 function pickIsInstant(bp) {
-  return bp.max === 1 && bp.min >= 1 && bp.req.kind !== 'pickHand';
+  return bp.max === 1 && bp.min >= 1 && bp.req.kind !== 'pickHand' && !roomMode;
 }
 
 /* 選んだら何が起きるか (候補に乗せた / 選んだときの札)。

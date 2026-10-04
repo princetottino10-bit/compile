@@ -3871,6 +3871,8 @@
   .ad-collect button.on{border-color:var(--mint);color:var(--mint);}
   .ad-collect button.warn{border-color:var(--pink);color:var(--pink);}
   .ad-replays .ad-list{margin-top:6px;}
+  /* REFRESH の確かめ (もう一度押すと補充) */
+  #btnRefresh.armed{background:var(--pink)!important;color:#fff!important;border-color:var(--pink)!important;}
 </style>
 </head>
 <body>
@@ -4012,7 +4014,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=2b4dbc6066",
       "./js3d/logformat.js": "./js3d/logformat.js?v=e3548c74d1",
-      "./js3d/main.js": "./js3d/main.js?v=054cd5b16f",
+      "./js3d/main.js": "./js3d/main.js?v=9e3d7b6013",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=4463f5df6b",
@@ -4182,6 +4184,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=ba24e41aa7">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=054cd5b16f"></script>
+  <script type="module" src="js3d/main.js?v=9e3d7b6013"></script>
 </body>
 </html>
