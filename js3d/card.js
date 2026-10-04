@@ -227,8 +227,11 @@ export function setCandidate(card, on) {
 /* いま操作できないカードを沈める (MD の「発動できない札」に相当) */
 export function setDim(card, dim) {
   const v = dim ? (typeof dim === 'number' ? dim : 0.55) : 1;     // 数を渡すとその明るさまで沈める
+  card.userData.dimV = v;
   card.userData.front.material.color.setScalar(v);
-  card.userData.back.material.color.setScalar(v);
+  /* 裏面はスリーブの明るさの調整 (backTint。明るいスリーブを暗めに出す) と掛け合わせる。
+     前は 1 に戻していて、選ぶ場面のあと明るいスリーブの山札が白く光っていた */
+  card.userData.back.material.color.setScalar(v * (card.userData.backTint || 1));
   if (card.userData.ghost) card.userData.ghost.material.color.setScalar(v);
 }
 

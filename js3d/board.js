@@ -164,7 +164,8 @@ export function createBoard(stage, defIndex, me, hooks) {
          白いスリーブの山札が暗くならずにぎらぎら光っていた) */
       const bm = card.userData.back && card.userData.back.material;
       if (bm && bm.map && card.visible && (card.userData.tintMap !== bm.map || card.userData.tintV !== bm.map.version)) {
-        bm.color.setScalar(backTint(bm.map));
+        card.userData.backTint = backTint(bm.map);
+        bm.color.setScalar(card.userData.backTint * (card.userData.dimV || 1));
         card.userData.tintMap = bm.map; card.userData.tintV = bm.map.version;
       }
       /* 手札のように宙にあるカードは床に光を落とさない (演出中は例外) */
@@ -282,7 +283,8 @@ export function createBoard(stage, defIndex, me, hooks) {
     setFoil(card, foil, foil && defIndex[c.def] ? foilMaskTexture(defIndex[c.def]) : null);
     const back = backTex(c.owner === me ? sleeveOf() : oppSleeveOf());
     if (card.userData.back.material.map !== back) { card.userData.back.material.map = back; card.userData.back.material.needsUpdate = true; }
-    card.userData.back.material.color.setScalar(backTint(back));
+    card.userData.backTint = backTint(back);
+    card.userData.back.material.color.setScalar(card.userData.backTint * (card.userData.dimV || 1));
   }
   function dressAll(st) {
     if (!st || !st.cards) return;
