@@ -3295,8 +3295,10 @@ function aiActionBias(st, action, side) {
     const comboPlay = d.id === 'SPEED_1' && action.faceUp && W.fire0Water4Ready && aiFire0Water4Ready(st, side);
     if (!pairOnField && !comboPlay) {
       const pairReady = aiHasDefInHand(st, side, 'SPEED_1') && aiHasDefInHand(st, side, 'SPEED_4');
+      /* 揃えて出すのは、SPEED 3 の「自分の他のカードを移動」に動かす対象 (場の自分のカード) があるときだけ。
+         場が空のうち (初手など) に出すと、動かせるのが出したばかりの SPEED 0 だけで空振りする (監修 2026-10-04) */
       if (!pairReady) v -= 180;
-      else if (d.id === 'SPEED_1' && action.faceUp) v += 220;
+      else if (d.id === 'SPEED_1' && action.faceUp && aiSpeedPairHasTarget(st, side)) v += 220;
       else v -= 160;
     }
   }
@@ -3863,7 +3865,17 @@ function aiForcedControlWinPicks(req) {
   return null;
 }
 
+/* 「自分のカードを1枚戻す」(WATER 4 など) で、効果の元のカード自身は戻さない (ほかに戻せるカードがあるとき)。
+   自分を戻すと、出した1手がまるごと無駄になる (監修 2026-10-04: WATER 4 で WATER 4 を戻していた) */
+function aiPruneSelfReturn(st, req) {
+  if (req.kind !== 'pickCard' || !/^(optional-)?return$/.test(req.prompt || '') || !req.context || !Array.isArray(req.candidates)) return req;
+  const isSelf = (uid) => { const c = st.cards[uid]; return !!c && c.def === req.context && c.owner === req.player; };
+  const rest = req.candidates.filter(uid => !isSelf(uid));
+  return rest.length && rest.length < req.candidates.length ? { ...req, candidates: rest } : req;
+}
+
 function smartPicks(st, req) {
+  req = aiPruneSelfReturn(st, req);
   const me = req.player;
   const op = 1 - me;
   const forcedControlWin = aiForcedControlWinPicks(req);
@@ -4142,12 +4154,19 @@ function aiFaceDownAllowed(st, side, action, acts) {
   return false;
 }
 
+/* SPEED 0 → 3 を揃えて出すとき、SPEED 3 の移動に対象があるか (出す前から場に自分のカードがある) */
+function aiSpeedPairHasTarget(st, side) {
+  for (let l = 0; l < 3; l++) if (st.lines[l][side].length) return true;
+  return false;
+}
+
 function aiDecisionActions(state) {
   let acts = legalActions(state);
   const side = state.turn;
   if (aiUsesCombos(state, side) && aiWeightsFor(state, side).speedPairStrategy
       && !aiHasDefOnField(state, side, 'SPEED_1') && !aiHasDefOnField(state, side, 'SPEED_4')
-      && aiHasDefInHand(state, side, 'SPEED_1') && aiHasDefInHand(state, side, 'SPEED_4')) {
+      && aiHasDefInHand(state, side, 'SPEED_1') && aiHasDefInHand(state, side, 'SPEED_4')
+      && aiSpeedPairHasTarget(state, side)) {
     const speed0 = acts.filter(action => action.type === 'play' && action.faceUp
       && state.cards[action.card] && state.cards[action.card].def === 'SPEED_1');
     if (speed0.length) acts = speed0;
