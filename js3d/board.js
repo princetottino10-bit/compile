@@ -208,7 +208,10 @@ export function createBoard(stage, defIndex, me, hooks) {
     if (l.zone === 'transitPile') return LAYOUT.transitPileSlot(l.dest, l.side, me, l.idx);
     if (l.zone === 'hand') {
       const n = st.players[l.side].hand.length;
-      return l.side === me ? LAYOUT.handSlot(l.idx, n) : LAYOUT.oppHandSlot(l.idx, n);
+      if (l.side !== me) return LAYOUT.oppHandSlot(l.idx, n);
+      const slot = LAYOUT.handSlot(l.idx, n);
+      /* 観戦で中身の分からない手前の手札は、裏を見せる (同じ面のまま裏返す) */
+      return defFor(st, uid) === UNKNOWN_DEF ? { ...slot, rot: [slot.rot[0] + Math.PI, slot.rot[1], slot.rot[2]] } : slot;
     }
     if (l.zone === 'deck') return LAYOUT.pilePos('deck', l.side, me, Math.min(l.idx, 14));
     if (l.zone === 'trash') return LAYOUT.pilePos('trash', l.side, me, Math.min(l.idx, 14));

@@ -240,6 +240,8 @@ export function buildRoomState(rm, valOf) {
     };
     myHand.push(card.uid);
   }
+  /* 観戦: 手前の人の手札は中身が来ない (hand は空)。枚数だけ伏せた札を置く */
+  if (rm.spectator && !(g.hand || []).length) pushPlaceholders(cards, myHand, 'me:h', g.counts[me].hand, 'hand0', 0);
 
   const trash = [[], []];
   (g.trash || []).forEach((list, owner) => {
