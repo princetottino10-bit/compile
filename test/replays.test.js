@@ -100,3 +100,24 @@ test('保存・外す・消すをアカウントへ知らせる', () => {
   R.setReplayHooks({ onPin: null, onUnpin: null });
   assert.deepEqual(seen, ['pin:' + id, 'unpin:' + id]);
 });
+
+test('盤面の左右の入れ替え: 2回で元どおり、側の値が入れ替わる (オンラインの後攻の棋譜)', () => {
+  const init = { seed: 4242, p0: ['FIRE', 'WATER', 'SPEED'], p1: ['HATE', 'WAR', 'PSYCHIC'], first: 1 };
+  const rep = { init, actions: playSome(init, 60).actions };
+  const built = R.rebuild(Engine, rep);
+  const st = built.history[built.history.length - 1].st;
+  assert.deepEqual(R.mirrorState(R.mirrorState(st)), st);
+  const m = R.mirrorState(st);
+  assert.equal(m.turn, 1 - st.turn);
+  assert.deepEqual(m.players[0].protocols, st.players[1].protocols);
+  for (let l = 0; l < 3; l++) assert.equal(Engine.lineTotal(m, l, 0), Engine.lineTotal(st, l, 1));
+  for (const [uid, c] of Object.entries(m.cards)) {
+    assert.equal(c.owner, 1 - st.cards[uid].owner);
+    if (/^hand/.test(c.zone)) assert.ok(m.players[+c.zone.slice(-1)].hand.includes(uid), uid + ' は入れ替えた側の手札にある');
+  }
+  /* 左右を入れ替えた棋譜: 手前 (0) が後攻の部屋の人。手の側も入れ替わる */
+  const flipped = R.rebuild(Engine, { ...rep, view: 1 });
+  assert.equal(flipped.history.length, built.history.length);
+  assert.equal(flipped.history[0].st.turn, 1 - built.history[0].st.turn);
+  assert.equal(flipped.final.winner === null ? null : flipped.final.winner, built.final.winner === null ? null : 1 - built.final.winner);
+});

@@ -12,7 +12,7 @@ function row(r) {
   return '<li class="rp-row' + (r.win ? ' win' : '') + '">' +
     '<b class="rp-res">' + (r.win ? 'WIN' : 'LOSE') + '</b>' +
     '<div class="rp-main"><span>' + esc(r.me.join(' / ')) + ' <i>vs</i> ' + esc(r.opp.join(' / ')) + '</span>' +
-      '<small>' + when(r.at) + ' ・ ' + esc(r.kind === 'weekly' ? 'WEEKLY' : r.kind === 'run' ? 'RUN' : levelLabel(r.level)) +
+      '<small>' + when(r.at) + ' ・ ' + esc(r.kind === 'weekly' ? 'WEEKLY' : r.kind === 'run' ? 'RUN' : r.kind === 'online' ? 'ONLINE' + (r.oppName ? ' vs ' + r.oppName : '') : levelLabel(r.level)) +
       (r.turns ? ' ・ ' + r.turns + '手番' : '') + '</small></div>' +
     '<div class="rp-btns"><button type="button" data-rp-watch="' + r.id + '">WATCH</button>' +
       '<button type="button" data-rp-share="' + r.id + '" title="リンクで送る">SHARE</button>' +

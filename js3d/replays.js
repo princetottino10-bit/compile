@@ -94,5 +94,44 @@ export function rebuild(Engine, rep) {
     if (action.type === 'play' || action.type === 'refresh') history.push({ st: before, action });
     res = next;
   }
+  /* view 1: オンラインで後攻の部屋 (ゲスト) にいた人の棋譜。盤面を左右入れ替えて、自分を手前にして見せる */
+  if (rep.view === 1) {
+    return { history: history.map(h => ({ st: mirrorState(h.st), action: mirrorAction(h.action) })), final: mirrorState(res.state), res, ok };
+  }
   return { history, final: res.state, res, ok };
+}
+
+/* ---------- 盤面の左右の入れ替え (P1 と P2 を取り替える) ----------
+   手を指す前の盤面 (選択待ちの途中ではないところ) を、側の番号だけ取り替えた同じ盤面にする。
+   2回かけると元に戻る */
+const flip = (v) => (v === 0 ? 1 : v === 1 ? 0 : v);
+const swap2 = (a) => (Array.isArray(a) && a.length === 2 ? [a[1], a[0]] : a);
+const flipBits = (k) => ((k || 0) & ~3) | ((k & 1) << 1) | ((k & 2) >> 1);
+const flipZone = (z) => (typeof z === 'string' && /^(hand|deck|trash)[01]$/.test(z) ? z.slice(0, -1) + flip(+z.slice(-1)) : z);
+const flipLog = (line) => (typeof line === 'string' ? line.replace(/\bP([12])\b/g, (m, n) => 'P' + (n === '1' ? '2' : '1')) : line);
+const withPlayer = (o) => (o && typeof o === 'object' && 'player' in o ? { ...o, player: flip(o.player) } : o);
+
+export function mirrorState(st) {
+  if (!st) return st;
+  const cards = {};
+  for (const [uid, c] of Object.entries(st.cards || {})) {
+    cards[uid] = { ...c, owner: flip(c.owner), zone: flipZone(c.zone), knownTo: flipBits(c.knownTo) };
+  }
+  const tally = st.tally ? Object.fromEntries(Object.entries(st.tally).map(([k, v]) => [k, swap2(v)])) : st.tally;
+  return {
+    ...st, cards, tally,
+    turn: flip(st.turn), control: flip(st.control), winner: st.winner === null ? null : flip(st.winner),
+    players: swap2(st.players),
+    lines: (st.lines || []).map(swap2),
+    ...('perks' in st ? { perks: swap2(st.perks) } : {}), ...('winBySide' in st ? { winBySide: swap2(st.winBySide) } : {}),
+    revealed: withPlayer(st.revealed), announce: withPlayer(st.announce), pending: withPlayer(st.pending),
+    actionLog: Array.isArray(st.actionLog) ? st.actionLog.map(flipLog) : st.actionLog
+  };
+}
+export function mirrorAction(a) {
+  if (!a || typeof a !== 'object') return a;
+  const out = { ...a };
+  if ('side' in out) out.side = flip(out.side);
+  if ('player' in out) out.player = flip(out.player);
+  return out;
 }

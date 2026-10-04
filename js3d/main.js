@@ -3310,12 +3310,14 @@ async function roomMaybeFinish() {
   await finaleFx(win);
   FEEL.buzz(win ? [40, 70, 40, 70, 120] : [160]);
   await UI.resultCutIn(win, { victory });
+  lastReplayId = null;
   /* 同じ部屋の同じ決着を読み直しても2回は入らない */
   const firstTime = grantXp('online', XP_GAIN.onlinePlay + (win ? XP_GAIN.onlineWin : 0),
     'room:' + (roomRm && roomRm.code) + ':' + (st.turns || 0));
   /* 遊ばれ方の匿名の記録 (同じ決着を読み直したときは送らない) */
   if (firstTime) logPlay({ mode: 'online', win, me: st.players[ME].protocols.map(p => p.name), opp: st.players[1 - ME].protocols.map(p => p.name),
     turns: (st.turns || 0) + 1, logged: !!accountState().user });
+  if (firstTime) await saveOnlineReplay(st, win);
   if (firstTime) {
     const before = myLevel;
     refreshCardGlow();
@@ -3323,6 +3325,21 @@ async function roomMaybeFinish() {
     await afterGameProgress(st, ME, win, null, true);     // 同じ決着を読み直したときは進めない
   }
   showEndActions(win);
+}
+
+/* オンラインのリプレイ: 決着したらサーバーから始めの条件と手の列をもらって残す (1対1だけ)。
+   後攻の部屋 (ゲスト) の人は view 1 で、盤面を入れ替えて自分を手前にして見る */
+async function saveOnlineReplay(st, win) {
+  if (!roomRm || roomRm.mode === 'tag' || roomWatching) return;
+  try {
+    const r = await ROOM.roomApi('replay', { code: roomRm.code });
+    if (!r || !r.init || !Array.isArray(r.actions)) return;
+    const view = r.side === 1 ? 1 : 0;
+    const rep = { me: view ? r.init.p1 : r.init.p0, opp: view ? r.init.p0 : r.init.p1, win, level: 2, kind: 'online', view,
+      oppName: (roomRm.names && roomRm.names[1 - view]) || '', turns: (st.turns || 0) + 1, init: r.init, actions: r.actions };
+    lastReplayId = addReplay(rep);
+    uploadReplay({ ...rep, at: Date.now(), mode: 'online' });
+  } catch (e) { /* 残せなくても対戦の結果には響かない */ }
 }
 
 /* 観戦の決着のあと: タイトルへ戻るボタン */

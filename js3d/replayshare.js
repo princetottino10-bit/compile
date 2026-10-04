@@ -42,7 +42,7 @@ async function pipeBytes(bytes, stream, limit) {
 /* 共有に載せる項目だけにする (保存用の id・★・日時以外の内部の印は載せない) */
 export function sharePayload(rep) {
   return { v: 1, me: rep.me, opp: rep.opp, win: !!rep.win, level: rep.level, turns: rep.turns, kind: rep.kind,
-    at: rep.at, init: rep.init, actions: rep.actions };
+    at: rep.at, init: rep.init, actions: rep.actions, ...(rep.view === 1 ? { view: 1 } : {}) };
 }
 
 export async function encodeReplay(rep) {
@@ -66,12 +66,12 @@ export function validateReplay(r, protoNames) {
   if (!Array.isArray(r.actions) || r.actions.length > MAX_ACTIONS) return null;
   if (!r.actions.every(a => a && typeof a === 'object' && typeof a.type === 'string')) return null;
   return {
-    me: i.p0.slice(), opp: i.p1.slice(), win: !!r.win,
+    me: (r.view === 1 ? i.p1 : i.p0).slice(), opp: (r.view === 1 ? i.p0 : i.p1).slice(), win: !!r.win,
     level: Number.isFinite(r.level) ? r.level : 0,
     turns: Number.isFinite(r.turns) ? r.turns : 0,
     kind: typeof r.kind === 'string' ? r.kind.slice(0, 12) : 'cpu',
     at: Number.isFinite(r.at) ? r.at : Date.now(),
-    init: i, actions: r.actions, shared: true
+    init: i, actions: r.actions, shared: true, view: r.view === 1 ? 1 : 0
   };
 }
 

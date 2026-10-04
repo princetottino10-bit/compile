@@ -871,9 +871,11 @@ Deno.serve(async (req) => {
       if (room.host_protocols?.length === 3 && room.guest_protocols?.length === 3 && !room.game_state) {
         /* 先攻・後攻はランダム (以前は部屋を作った側が必ず先攻だった) */
         const first = Math.random() < 0.5 ? 0 : 1;
-        const result = Engine.newGame({ p0: room.host_protocols, p1: room.guest_protocols, seed: crypto.getRandomValues(new Uint32Array(1))[0], useControl: true, first });
+        const seed = crypto.getRandomValues(new Uint32Array(1))[0];
+        const result = Engine.newGame({ p0: room.host_protocols, p1: room.guest_protocols, seed, useControl: true, first });
         const { data: started, error: startError } = await admin.from("secure_rooms").update({
           game_state: result.state, pending_request: result.requests[0] || null,
+          replay_log: replayStart(seed, room.host_protocols, room.guest_protocols, first),
           last_log: Array.isArray(result.log) ? result.log : [],
           status: "playing", version: room.version + 1,
           updated_at: new Date().toISOString(),
@@ -914,11 +916,10 @@ Deno.serve(async (req) => {
       if (nextStep >= steps.length) {
         const host = side === 0 ? nextProtos : (room.host_protocols || []);
         const guest = side === 1 ? nextProtos : (room.guest_protocols || []);
-        const result = Engine.newGame({
-          p0: host, p1: guest, seed: crypto.getRandomValues(new Uint32Array(1))[0],
-          useControl: true, first: ds.first,
-        });
+        const seed = crypto.getRandomValues(new Uint32Array(1))[0];
+        const result = Engine.newGame({ p0: host, p1: guest, seed, useControl: true, first: ds.first });
         upd.game_state = result.state;
+        upd.replay_log = replayStart(seed, host, guest, ds.first);
         upd.pending_request = result.requests[0] || null;
         upd.last_log = Array.isArray(result.log) ? result.log : [];
         upd.status = "playing";
@@ -957,7 +958,13 @@ Deno.serve(async (req) => {
       if (Date.now() - since < TURN_LIMIT_MS) return fail(req, "相手の持ち時間はまだ残っています", 409);
       const result = Engine.apply(st, { type: "surrender", player: waiting });
       if (result.error) return fail(req, result.error);
-      return await commitResult(req, room, side, result, seat, isHost);
+      return await commitResult(req, room, side, result, seat, isHost, null, { type: "surrender", player: waiting });
+    }
+
+    /* リプレイ: 決着した1対1の部屋の、始めの条件と手の列。参加者だけ (対戦中は手札の中身が分かるので返さない) */
+    if (op === "replay") {
+      if (room.status !== "finished" || room.mode === "tag" || !room.replay_log) return fail(req, "リプレイはありません", 404);
+      return json(req, { init: room.replay_log.init, actions: room.replay_log.actions || [], side });
     }
 
     if (op === "action") {
@@ -974,7 +981,7 @@ Deno.serve(async (req) => {
       let result = Engine.apply(st, action);
       if (result.error) return fail(req, result.error);
       if (room.mode === "tag") result = withCpu(result, room.seats || []);
-      return await commitResult(req, room, side, result, seat, isHost, undoPointFor(room, side, st, result, action));
+      return await commitResult(req, room, side, result, seat, isHost, undoPointFor(room, side, st, result, action), action);
     }
     /* 1手取り消す: 自分の番の中で、引く・公開・相手の選択が入っていない手だけ (undo_state があり、そのあと誰も指していない) */
     if (op === "undo") {
@@ -982,6 +989,7 @@ Deno.serve(async (req) => {
       if (room.status !== "playing" || !u || u.side !== side || Number(u.version) !== Number(room.version)) return fail(req, "いまは戻せません", 409);
       const { data, error } = await admin.from("secure_rooms").update({
         game_state: u.game, pending_request: u.pending, undo_state: null,
+        ...(room.replay_log && Number.isFinite(u.replayLen) ? { replay_log: { ...room.replay_log, actions: (room.replay_log.actions || []).slice(0, u.replayLen) } } : {}),
         last_log: ["P" + (side + 1) + ": 1手戻した"], version: room.version + 1,
         last_action_at: new Date().toISOString(), updated_at: new Date().toISOString(),
       }).eq("id", room.id).eq("version", room.version).select("*").single();
@@ -994,6 +1002,17 @@ Deno.serve(async (req) => {
     return fail(req, "サーバー処理に失敗しました", 500);
   }
 });
+
+/* リプレイの記録 (1対1だけ)。手は多くても数百なので、上限を超えたら残さない (null) */
+const REPLAY_MAX_ACTIONS = 4000;
+function replayStart(seed: number, p0: string[], p1: string[], first: number) {
+  return { init: { seed, p0: p0.slice(), p1: p1.slice(), first }, actions: [] };
+}
+function replayPush(log: any, action: any) {
+  const actions = Array.isArray(log.actions) ? log.actions : [];
+  if (actions.length >= REPLAY_MAX_ACTIONS) return null;
+  return { ...log, actions: actions.concat([structuredClone(action)]) };
+}
 
 /* エンジンの結果を部屋に書き込み、決着していればレート戦を記録する (手を指す・時間切れ勝ちで共通)。
    レート戦の記録に失敗したら ratedError を付けて返す (画面で知らせる) */
@@ -1011,10 +1030,11 @@ function undoPointFor(room: any, side: number, before: any, result: any, action:
   for (const uid of Object.keys(after.cards || {})) if (seen(after.cards[uid]) && !seen(before.cards[uid])) return null;
   const game = structuredClone(room.game_state);
   delete game.__trace;
-  return { side, version: room.version + 1, game, pending: room.pending_request || null };
+  return { side, version: room.version + 1, game, pending: room.pending_request || null,
+    replayLen: room.replay_log && Array.isArray(room.replay_log.actions) ? room.replay_log.actions.length : null };
 }
 
-async function commitResult(req: Request, room: any, side: number, result: any, seat = -1, isHost = false, undo: any = null) {
+async function commitResult(req: Request, room: any, side: number, result: any, seat = -1, isHost = false, undo: any = null, action: any = null) {
       const nextVersion = room.version + 1;
       const nextGame = result.view
         ? { ...result.view, pending: result.state?.pending || null }
@@ -1024,6 +1044,7 @@ async function commitResult(req: Request, room: any, side: number, result: any, 
         game_state: nextGame, pending_request: result.requests[0] || null,
         last_log: Array.isArray(result.log) ? result.log : [],
         status: result.winner === null ? "playing" : "finished", version: nextVersion, undo_state: undo,
+        ...(room.replay_log && action ? { replay_log: replayPush(room.replay_log, action) } : {}),
         last_action_at: new Date().toISOString(), updated_at: new Date().toISOString(),
       }).eq("id", room.id).eq("version", room.version).select("*").single();
       if (error) return fail(req, "相手の操作と競合しました。再読み込みします", 409);
