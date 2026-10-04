@@ -3768,7 +3768,8 @@ async function step(action) {
   }
   /* 待たせたひとことは、選択を解き終えたところ (drainRequests) で言う。次の手が始まったら古いので捨てる */
   if (action.type === 'play') refreshSayFor = null;
-  if (topLevel && assistGame() && before.turn === ME) {
+  /* 戻り先は人が指した手だけ (タッグの味方 = CPU の手を戻り先にすると、戻したあと誰も指さずに止まっていた) */
+  if (topLevel && assistGame() && before.turn === ME && !partnerMove(before) && !autoFor(ME)) {
     undoPoint = { cur, replayLen: replayLog ? replayLog.actions.length : 0, resumeLen: RS.resumeLength(), histLen: gameHistory.length };
   }
   if (topLevel && !demoMode && !trainingMode && !tutorial && !puzzle && before.turn === AI) {
@@ -5175,6 +5176,8 @@ function undoLastMove() {
   refreshHud();
   syncAssist();
   UI.toast('1手戻しました', 1600);
+  /* 戻した盤面が CPU (タッグの味方・相手) の番なら、CPU に指させ直す */
+  if (!myMoment()) afterTurn();
 }
 /* おすすめの手: CPU ならどう打つかを考えて、そのカードを光らせ、文で出す */
 async function showHint() {
