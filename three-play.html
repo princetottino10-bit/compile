@@ -3244,7 +3244,10 @@
   .rn-c span{font:500 10px/1.4 "M PLUS 1",system-ui;color:var(--dim);}
   button.rn-c{cursor:pointer;transition:background .12s,transform .12s;}
   button.rn-c:hover,button.rn-c:focus-visible{background:rgba(255,60,90,.2);border-color:#ff3c5a;transform:translateX(3px);outline:0;}
-  button.rn-c:hover b::after,button.rn-c:focus-visible b::after{content:"  × 外す";color:#ff7a8e;font-size:10px;}
+  /* 強化の画面 (data-up) は「外す」の赤ではなく、強くなる金色 */
+  button.rn-c[data-up]:hover,button.rn-c[data-up]:focus-visible{background:rgba(255,200,90,.16);border-color:var(--gold);}
+  /* 「× 外す」はカードを外す画面 (data-rm) のときだけ。強化の画面 (data-up) でも出ていた */
+  button.rn-c[data-rm]:hover b::after,button.rn-c[data-rm]:focus-visible b::after{content:"  × 外す";color:#ff7a8e;font-size:10px;}
   .rn-c.gone{opacity:.35;text-decoration:line-through;}
   @media (max-width:560px){ .rn-cards{grid-template-columns:1fr;} }
   /* ショップ */
