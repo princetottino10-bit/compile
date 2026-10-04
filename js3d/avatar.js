@@ -104,6 +104,9 @@ const VOICE_TARGET = -23;
 export const PA_MARK = '〔放送〕';
 const PA_LEAD_MS = 750;
 const PA_CHANCE = 0.55;              // 候補に入っても、ほかのセリフと等しく選ばれるので、実況になるのは 12% ほど (2026-10-03 本人)
+/* レアなセリフ: たまにしか言わない (RARE_CHANCE の確率で候補に入れる。番のセリフなら 1 戦に 1 回聞けるかどうか) */
+const RARE_LINES = new Set(['この局面、前にも見た気がするんだ。']);
+const RARE_CHANCE = 0.2;
 export function voiceGain(id) {
   const l = VOICE_LOUDNESS[id];
   return l === undefined ? 1 : Math.min(1.6, Math.pow(10, (VOICE_TARGET - l) / 20));
@@ -225,8 +228,10 @@ export function mountAvatar(id, opts = {}) {
     const textOf = (e) => (Array.isArray(e) ? e[0] : e);
     /* 館内放送の実況は、たまにだけ (PA_CHANCE の確率で候補に入れる) */
     const paTurn = Math.random() < PA_CHANCE;
+    const rareTurn = Math.random() < RARE_CHANCE;
     const ok = lines.map((e, n) => n).filter(n => (!opts.avoid || !opts.avoid.test(textOf(lines[n])))
-      && (paTurn || !String(textOf(lines[n])).startsWith(PA_MARK)));
+      && (paTurn || !String(textOf(lines[n])).startsWith(PA_MARK))
+      && (rareTurn || !RARE_LINES.has(textOf(lines[n]))));
     if (!ok.length) return;
     /* 同じ種類で、直前と同じセリフは続けて言わない */
     const rest = ok.length > 1 ? ok.filter(n => n !== lastPick[kind]) : ok;
