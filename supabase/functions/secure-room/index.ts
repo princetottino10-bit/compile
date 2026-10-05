@@ -498,7 +498,7 @@ Deno.serve(async (req) => {
       const rep = body.replay;
       const text = JSON.stringify(rep || null);
       if (!rep || typeof rep !== "object" || !Array.isArray(rep.actions) || !rep.init || text.length > 200_000) return fail(req, "棋譜の形が不正です");
-      const { error } = await admin.from("player_replays").insert({ user_id: user.id, data: rep });
+      const { error } = await admin.from("collected_replays").insert({ user_id: user.id, data: rep });
       if (error) throw error;
       return json(req, { ok: true });
     }
@@ -517,7 +517,7 @@ Deno.serve(async (req) => {
         if (error) throw error;
         /* 棋譜を残している人 (replay_collect) と、残した数 */
         const { data: col } = await admin.from("replay_collect").select("user_id");
-        const { data: reps } = await admin.from("player_replays").select("user_id").limit(20000);
+        const { data: reps } = await admin.from("collected_replays").select("user_id").limit(20000);
         /* 一覧の id は頭の8文字なので、それで突き合わせる */
         const on = new Set((col || []).map((c: any) => String(c.user_id).slice(0, 8)));
         const count: Record<string, number> = {};
@@ -538,7 +538,7 @@ Deno.serve(async (req) => {
       if (op === "adminReplays") {
         const uid = await fullUserId(String(body.userId || ""));
         if (!uid) return fail(req, "その人が見つかりません");
-        const { data, error } = await admin.from("player_replays").select("id,created_at,data").eq("user_id", uid)
+        const { data, error } = await admin.from("collected_replays").select("id,created_at,data").eq("user_id", uid)
           .order("created_at", { ascending: false }).limit(100);
         if (error) throw error;
         return json(req, { replays: data || [] });
