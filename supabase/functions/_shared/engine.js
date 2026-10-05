@@ -3905,6 +3905,17 @@ function smartPicks(st, req) {
         if (self) return [self];
       }
       if (req.prompt === 'optional-shift' && req.context === AI_LOCK_COVER && aiLockKeepsCover(st, me)) return [];
+      /* 反転で、自分の覆われた裏向きのサイキック①を表にできるなら必ずそれ (永続ロックの完成)。
+         ダークネス②をロックのラインに出したのに、別のカードを反転してロックを逃していた (160戦で11回。2026-10-05) */
+      if (/^(optional-)?flip$/.test(req.prompt || '') && (aiUsesCombos(st, me) || aiIsLockSpecialist(st, me))) {
+        const lock = req.candidates.find(uid => {
+          const c = st.cards[uid], loc = c && locate(st, uid);
+          if (!loc || loc.side !== me || c.faceUp || c.def !== AI_LOCK_CARD) return false;
+          const stack = st.lines[loc.line][loc.side];
+          return stack.indexOf(uid) < stack.length - 1;
+        });
+        if (lock) return [lock];
+      }
       const scored = req.candidates.map(uid => {
         const c = st.cards[uid];
         if (!c) return { uid, s: 0 };
