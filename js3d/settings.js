@@ -204,6 +204,8 @@ export function openSettings(extra) {
       '<input type="checkbox" id="stBeginner"' + (s.beginner ? ' checked' : '') + '></label>' +
     '<label class="st-row st-check"><span>ゲームパッドで遊ぶ<small>Xbox・プレステなどのコントローラーで操作します。オンにしたら、コントローラーのボタンを1回押してください</small></span>' +
       '<input type="checkbox" id="stGamepad"' + (s.gamepad ? ' checked' : '') + '></label>' +
+    /* キーボードの近道 (main.js)。どこにも書いていないと使われないので、ここに一覧 */
+    '<div class="st-row st-keys"><span>キーボードの近道<small>Z 1手戻す ・ H ヒント ・ R 補充 (2回) ・ L ログ ・ I 詳細 ・ 1〜3 置く場所 (Shift で裏) ・ Esc 選び直す / 戻る</small></span></div>' +
     '<h4 class="st-group">おまかせで対戦</h4>' +
     '<div class="st-row"><span>おまかせで対戦する強さ<small>「おまかせで今すぐ始める」の相手</small></span><div class="st-seg" role="group" aria-label="おまかせで対戦する強さ">' +
       QUICK_LEVELS.map((label, i) => '<button type="button" data-qlevel="' + i + '" class="' + ((s.quickLevel | 0) === i ? 'on' : '') + '">' + label + '</button>').join('') +
