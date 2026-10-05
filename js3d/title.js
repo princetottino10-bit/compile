@@ -162,6 +162,7 @@ export function runTitle(protocols, opts) {
   const startedBefore = (() => { try { return sessionStorage.getItem(STARTED_KEY) === '1'; } catch (e) { return false; } })();
   const menuOnly = !!(opts && opts.menuOnly) || startedBefore;    // ロビー等から戻るとき: 起動演出を飛ばしてメニューだけ
   const resumeRec = loadResume();
+  const roomLast = (() => { try { const c = localStorage.getItem('compileRoomLast') || ''; return /^[A-Za-z0-9]{3,12}$/.test(c) ? c : ''; } catch (e) { return ''; } })();
   const root = document.getElementById('title');
   if (!root) return Promise.resolve('single');
   const emblems = protocols
@@ -224,6 +225,8 @@ export function runTitle(protocols, opts) {
           '<div class="tt-main">' +
             /* 中断した対戦があれば、いちばん上に「続きから」 (前は次にページを開き直したときしか聞かれなかった) */
             (resumeRec ? '<button data-mode="resumeGame" type="button" class="tt-resume">CONTINUE <small>' + resumeLabel(resumeRec).replace(/[&<>"]/g, '') + '</small></button>' : '') +
+            /* オンラインの対戦の途中で落ちた・閉じたときも、すぐ戻れるように (前はロビーまで行かないと戻れず、その間も持ち時間が減っていた) */
+            (roomLast ? '<button data-mode="resumeRoom" type="button" class="tt-resume">CONTINUE ONLINE <small>部屋 ' + roomLast + ' の対戦に戻る</small></button>' : '') +
             '<button data-mode="single" type="button">SINGLE GAME <small>VS CPU</small></button>' +
             '<button data-mode="challenge" type="button">CHALLENGE <small>BOSS · UNDERDOG</small>' + badge(challengeBadge(protocols)) + '</button>' +
             '<button data-mode="run" type="button">RUN <small>ROGUELIKE · WEEKLY</small>' + badge(runBadge()) + '</button>' +
@@ -313,6 +316,7 @@ export function runTitle(protocols, opts) {
         }
         else if (button.dataset.mode === 'cosmetics') openCosmetics();
         /* 中断した対戦の続き: 開き直して、聞かずにそのまま続ける */
+        else if (button.dataset.mode === 'resumeRoom') { location.href = location.pathname + '?room=' + encodeURIComponent(roomLast); }
         else if (button.dataset.mode === 'resumeGame') { try { sessionStorage.setItem('compileResumeNow', '1'); } catch (e) { /* private mode */ } location.href = location.pathname; }
         else if (button.dataset.mode === 'profile') openProfile(protocols);
         else if (button.dataset.mode === 'quick') { location.href = location.pathname + '?quick=1'; }

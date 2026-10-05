@@ -11,37 +11,8 @@ import { settings } from './settings.js';
 import { roomApi, roomLeaveKeepalive, roomIsAnonymous, roomLogin, roomSession, roomSignIn, roomSignInWithGitHub, roomSignInWithGoogle, roomSignOut, roomSignUp } from './room.js';
 import { emblemDataURL } from './emblems.js';
 import { showProtocolCards } from './protocards.js';
-import { sfx } from './audio.js';
-import { buzz } from './feel.js';
-import { listReplays, findMatchReplay } from './replays.js';
-
-/* ?online=1 で開いたときに、はじめに出す画面 (RECORD の「ONLINE RATED」から来たら 'history')。stats.js と同じ名前 */
-const ROOM_OPEN_KEY = 'compileRoomOpen';
-function takeRoomOpen() {
-  try { const v = sessionStorage.getItem(ROOM_OPEN_KEY); sessionStorage.removeItem(ROOM_OPEN_KEY); return v || ''; } catch (e) { return ''; }
-}
-
-/* 部屋ができてからの時間 (ロビーの一覧の「待ち 3分」)。created: ISO の日時 */
-export function waitingLabel(created, now = Date.now()) {
-  const t = Date.parse(created);
-  if (!Number.isFinite(t)) return '';
-  const min = Math.max(0, Math.floor((now - t) / 60000));
-  return min < 1 ? '待ち 1分未満' : min < 60 ? '待ち ' + min + '分' : '待ち ' + Math.floor(min / 60) + '時間';
-}
-import { friendlyMessage, noteError } from './errtext.js';
-
-/* 呼ぶ: 音・振動、見ていないタブならタブの名前を点滅 (戻ってきたら元に) */
-let titleBlink = null;
-function callMe(text) {
-  try { sfx('yourTurn'); } catch (e) { /* 音なしで続ける */ }
-  try { buzz([60, 40, 60]); } catch (e) { /* 振動なしで続ける */ }
-  if (typeof document === 'undefined' || !document.hidden || titleBlink) return;
-  const base = document.title;
-  let on = false;
-  titleBlink = setInterval(() => { on = !on; document.title = on ? '● ' + text : base; }, 900);
-  const stop = () => { clearInterval(titleBlink); titleBlink = null; document.title = base; document.removeEventListener('visibilitychange', stop); };
-  document.addEventListener('visibilitychange', stop);
-}
+/* 呼ぶ (音・振動・見ていないタブの名前を点滅)。対戦中と同じもの */
+import { callMe } from './callme.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -123,6 +94,7 @@ export function runRoomLobby(protocols, opts = {}) {
     function inPregameRoom() {
       return room && room.code && room.status !== 'playing' && room.status !== 'finished';
     }
+    let quickHost = null;            // クイックマッチで自分が部屋を作って待っている ({ rated })
     function leaveRoom() {
       if (!inPregameRoom()) return;
       const code = room.code;
@@ -334,6 +306,7 @@ export function runRoomLobby(protocols, opts = {}) {
         room = open
           ? await roomApi('join', { name: name(), badge: myBadge(settings()), look: myLook(settings()), code: open.code, password: '' })
           : await roomApi('create', { name: name(), badge: myBadge(settings()), look: myLook(settings()), title: rated ? 'レート戦' : 'クイック対戦', visibility: 'public', password: '', draft: true, rated });
+        quickHost = open ? null : { rated };
         enterRoom();
       });
       $('#roomCreate').onclick = guard(async () => {
@@ -463,7 +436,21 @@ export function runRoomLobby(protocols, opts = {}) {
         pendingJoin = '';
         guard(async () => {
           status('招待された部屋 ' + code + ' に入っています…');
-          room = await roomApi('join', { name: name(), badge: myBadge(settings()), look: myLook(settings()), code, password: '' });
+          try {
+            room = await roomApi('join', { name: name(), badge: myBadge(settings()), look: myLook(settings()), code, password: '' });
+          } catch (e) {
+            /* 合言葉の付いた部屋: 「コードで入る」にコードを入れた状態で、合言葉の欄へ (前は失敗して止まっていた) */
+            if (/パスワード|合言葉/.test((e && e.message) || '')) {
+              const tab = root.querySelector('.ro-tabs [data-tab="join"]');
+              if (tab) tab.click();
+              const codeIn = $('#roomCode'), pw = $('#roomJoinPw');
+              if (codeIn) codeIn.value = code;
+              status('この部屋には合言葉が付いています。招待した人に聞いて入れてください', 'err');
+              if (pw) pw.focus();
+              return;
+            }
+            throw e;
+          }
           enterRoom();
         })();
       }
@@ -570,10 +557,34 @@ export function runRoomLobby(protocols, opts = {}) {
       pollTimer = setInterval(poll, 2500);   // 相手を待つ間の問い合わせ (無料枠の節約。以前は 1.3 秒)
     }
 
+    /* クイックマッチのすれ違い: 同時に押した2人が別々の部屋を作ると、どちらも待ち続けていた。
+       待っている間もときどき一覧を見て、ほかのクイックの部屋があれば、コードの大きいほうが小さいほうへ移る (片方だけが動く) */
+    let quickScan = 0;
+    async function quickMerge() {
+      if (!quickHost || !room || room.status !== 'waiting' || (room.names && room.names[1])) return false;
+      if (++quickScan % 4) return false;              // 見張りの 4 回に 1 回
+      let data;
+      try { data = await roomApi('list'); } catch (e) { return false; }
+      const other = (data.rooms || []).filter(r => r.code !== room.code && !r.locked && !!r.rated === quickHost.rated && r.mode !== 'tag'
+        && (r.title === 'クイック対戦' || r.title === 'レート戦')).sort((a, b) => (a.code < b.code ? -1 : 1))[0];
+      if (!other || !(other.code < room.code)) return false;
+      const mine = room.code;
+      try {
+        const next = await roomApi('join', { name: name(), badge: myBadge(settings()), look: myLook(settings()), code: other.code, password: '' });
+        roomApi('leave', { code: mine }).catch(() => {});
+        quickHost = null;
+        room = next;
+        status('ほかに待っていた人の部屋に入りました', 'ok');
+        enterRoom();
+        return true;
+      } catch (e) { return false; }
+    }
+
     async function poll() {
       if (busy || !room) return;
       let next;
       tickWait();
+      if (await quickMerge()) return;
       try { next = await roomApi('get', { code: room.code, stamp: room.stamp }); } catch (e) {
         /* 部屋が消えた (相手が抜けた・片付けられた) ならロビーへ。一時的な失敗は何回か続いたら知らせる */
         if (/ルームが見つかりません/.test(e.message || '')) {
