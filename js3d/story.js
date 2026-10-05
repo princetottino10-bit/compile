@@ -20,12 +20,16 @@ export const STORY_KEY = 'compileStory';
 /* 話す人。portrait: 立ち絵 (art/avatar/<id>_<face>.webp) / 無ければターミナル風の文字だけ */
 export const SPEAKERS = {
   shion: { name: '紫苑', portrait: 'shion', color: '#a07bff', voice: 'shion' },   /* voice: art/voice/<id>/story/<セリフの印>.mp3 (scripts/voice_lines.py) */
+  ruri: { name: '瑠璃', portrait: 'asagi', color: '#3d7dff', voice: 'asagi' },      /* 立ち絵と声の id は avatar.js のまま (asagi / nadeshiko / yamabuki) */
+  akane: { name: '茜', portrait: 'nadeshiko', color: '#e0283c', voice: 'nadeshiko' },
+  anzu: { name: '杏', portrait: 'yamabuki', color: '#ff8a2a', voice: 'yamabuki' },
   sys: { name: 'SYSTEM', color: '#7ff3ff' },
   guard: { name: '巡回の警備機体', color: '#ff8a5c' },
   chief: { name: '警備主任', color: '#ff4f6a' }
 };
 
-/* 行: { who, face?, text } */
+/* 行: { who, face?, text, stage? }。stage: 立ち絵に出す人を決め直す (話す人の id の並び。右から。[] で全員下げる)。
+   決めなければ、話した人が空いている所 (右 → 左) に出て、そのまま残る */
 const L = (who, text, face) => ({ who, text, ...(face ? { face } : {}) });
 
 /* 対戦: me / opp = プロトコル3つ、level = CPU の強さ (0 かんたん / 1 ふつう / 2 つよい)、

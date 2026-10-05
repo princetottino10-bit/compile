@@ -1598,6 +1598,12 @@
   .ss-portrait{position:absolute;right:max(4vw,8px);bottom:0;height:min(78vh,720px);max-width:70vw;object-fit:contain;object-position:bottom;
     opacity:0;transform:translateY(12px);transition:opacity .25s,transform .25s;filter:drop-shadow(0 0 18px rgba(160,123,255,.35));pointer-events:none;}
   .ss-portrait.on{opacity:1;transform:none;}
+  /* 2人目は左に。聞いている人は暗く沈める (話している人が分かるように) */
+  .ss-portrait[data-slot="l"]{right:auto;left:max(4vw,8px);}
+  .ss-portrait{transition:opacity .25s,transform .25s,filter .25s;}
+  .ss-portrait.dim{filter:brightness(.5) saturate(.65);transform:translateY(10px) scale(.97);transform-origin:bottom center;z-index:0;}
+  .ss-portrait.on:not(.dim){z-index:1;}   /* 重なったら、話している人を前に */
+  .ss-box,.ss-title,.ss-alert,.ss-skip{z-index:2;}
   .ss-box{position:absolute;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(820px,calc(100% - 24px));
     min-height:118px;padding:26px 24px 20px;border-radius:12px;background:rgba(8,11,22,.92);border:1px solid color-mix(in srgb,var(--sc,#a07bff) 60%,transparent);
     box-shadow:0 0 0 1px rgba(0,0,0,.4),0 18px 50px rgba(0,0,0,.6);}
@@ -1638,7 +1644,7 @@
   @keyframes ssAlertText{from{opacity:0;letter-spacing:1.1em;}to{opacity:1;letter-spacing:.5em;}}
   .ss-skip{position:absolute;top:calc(14px + env(safe-area-inset-top));left:14px;padding:8px 12px;border-radius:7px;border:1px solid rgba(255,255,255,.2);
     background:rgba(8,11,22,.7);color:#fff;font:800 11px/1 var(--font-hud),"M PLUS 1",system-ui;letter-spacing:.12em;cursor:pointer;}
-  @media (max-width:600px){ .ss-text{font-size:15px;} .ss-portrait{height:min(58vh,520px);right:-6vw;} }
+  @media (max-width:600px){ .ss-text{font-size:15px;} .ss-portrait{height:min(58vh,520px);right:-6vw;} .ss-portrait[data-slot="l"]{left:-14vw;right:auto;} }
   @media (prefers-reduced-motion: reduce){ .sm-node.next::before,.ss-next{animation:none;} .ss-portrait{transition:none;}
     .ss-title b,.ss-title::before,.ss-title::after,.ss-alert.on,.ss-alert::before,.ss-alert::after,.ss-alert b,.sty-res.lose>b,.ss-box.terminal .ss-text::after{animation:none;} }
   .op-wrap{width:min(980px,100%);margin:0 auto;display:flex;flex-direction:column;gap:18px;}
@@ -4263,9 +4269,9 @@
       "./js3d/steps.js": "./js3d/steps.js?v=13e73b20fe",
       "./js3d/story-map.js": "./js3d/story-map.js?v=7d2717836a",
       "./js3d/story-scenery.js": "./js3d/story-scenery.js?v=9fa267bcf9",
-      "./js3d/story-ui.js": "./js3d/story-ui.js?v=f33002f307",
+      "./js3d/story-ui.js": "./js3d/story-ui.js?v=9ce55df260",
       "./js3d/story-world.js": "./js3d/story-world.js?v=8b6fef78a9",
-      "./js3d/story.js": "./js3d/story.js?v=8327f55441",
+      "./js3d/story.js": "./js3d/story.js?v=fa166b216b",
       "./js3d/support.js": "./js3d/support.js?v=86cfbcc21a",
       "./js3d/theme.js": "./js3d/theme.js?v=932e1d5eb8",
       "./js3d/title.js": "./js3d/title.js?v=ed413d8a3c",
@@ -4319,8 +4325,8 @@
   <link rel="modulepreload" href="js3d/settings.js?v=f32405f149">
   <link rel="modulepreload" href="js3d/stats.js?v=d24404cb85">
   <link rel="modulepreload" href="js3d/stats-data.js?v=0fb6e5d36d">
-  <link rel="modulepreload" href="js3d/story.js?v=8327f55441">
-  <link rel="modulepreload" href="js3d/story-ui.js?v=f33002f307">
+  <link rel="modulepreload" href="js3d/story.js?v=fa166b216b">
+  <link rel="modulepreload" href="js3d/story-ui.js?v=9ce55df260">
   <link rel="modulepreload" href="js3d/story-world.js?v=8b6fef78a9">
   <link rel="modulepreload" href="js3d/rewards.js?v=ff8a27bac3">
   <link rel="modulepreload" href="js3d/gachafx.js?v=3d15a2226f">

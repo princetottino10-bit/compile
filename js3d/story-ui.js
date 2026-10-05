@@ -63,13 +63,23 @@ export function playScene(lines, opts = {}) {
   const el = overlay('storyScene', '会話');
   /* opts.title: 場面の題。上に出したままにする (字間が縮まって決まる)。
      line.alert: その行のあいだだけ、警告の帯を出す (見つかった・止められた場面) */
-  el.innerHTML = '<img class="ss-still" alt="">' + '<div class="ss-veil"></div><img class="ss-portrait" alt="">' +
+  el.innerHTML = '<img class="ss-still" alt="">' + '<div class="ss-veil"></div>' +
+    '<img class="ss-portrait" data-slot="l" alt=""><img class="ss-portrait" data-slot="r" alt="">' +
     (opts.title ? '<div class="ss-title"><b>' + esc(opts.title) + '</b></div>' : '') +
     '<div class="ss-alert" aria-hidden="true"><b></b></div>' +
     '<div class="ss-box"><div class="ss-name"></div><p class="ss-text"></p><span class="ss-next" aria-hidden="true">▼</span></div>' +
     '<button type="button" class="ss-skip">SKIP ▸▸</button>';
   el.classList.add('show');
-  const portrait = el.querySelector('.ss-portrait');
+  /* 立ち絵は右と左の2か所。話している人は明るく、聞いている人は少し暗く */
+  const slots = ['r', 'l'].map(k => ({ el: el.querySelector('.ss-portrait[data-slot="' + k + '"]'), who: null, face: 'normal' }));
+  const portraitOf = (who) => (SPEAKERS[who] || {}).portrait;
+  const setStage = (list) => slots.forEach((s, j) => { s.who = list[j] && portraitOf(list[j]) ? list[j] : null; s.face = 'normal'; });
+  let lastWho = null;
+  const enter = (who) => {
+    if (slots.some(s => s.who === who)) return;
+    const s = slots.find(x => !x.who) || slots.find(x => x.who !== lastWho) || slots[0];
+    s.who = who; s.face = 'normal';
+  };
   const still = el.querySelector('.ss-still');
   let stillOn = false;
   const nameEl = el.querySelector('.ss-name');
@@ -109,10 +119,19 @@ export function playScene(lines, opts = {}) {
         still.classList.toggle('on', stillOn);
         el.classList.toggle('with-still', stillOn);
       }
-      if (sp.portrait && !stillOn) {
-        portrait.src = faceURL(sp.portrait, faceFor(sp.portrait, line.face || 'normal'));
-        portrait.classList.add('on');
-      } else portrait.classList.remove('on');
+      if (Array.isArray(line.stage)) setStage(line.stage);
+      if (sp.portrait) { enter(line.who); lastWho = line.who; }
+      for (const s of slots) {
+        const on = !!s.who && !stillOn;
+        if (on) {
+          const pid = portraitOf(s.who);
+          if (s.who === line.who) s.face = line.face || 'normal';
+          const src = faceURL(pid, faceFor(pid, s.face));
+          if (s.el.getAttribute('src') !== src) s.el.src = src;
+        }
+        s.el.classList.toggle('on', on);
+        s.el.classList.toggle('dim', on && s.who !== line.who);
+      }
       full = line.text;
       voice.play(sp.voice, line.text);
       textEl.textContent = '';
@@ -198,7 +217,7 @@ export function openStory(protocols) {
             (n.kind === 'battle' ? '<small>' + esc(n.oppName) + ' · ' + LEVELS[n.level] + '</small>' : '') +
             '<span class="sm-state">' + (clear ? '✓ CLEAR' : next ? 'NEXT' : 'LOCKED') + '</span></button></li>';
         }).join('') + '</ol></section>').join('') +
-        '<p class="sm-more">1章「閉館」は準備中</p></div>';
+        '<p class="sm-more">1章「順路」は準備中</p></div>';
       el.classList.add('show');
       el.querySelectorAll('[data-node]').forEach(b => { b.onclick = () => enter(b.dataset.node); });
       const nextBtn = el.querySelector('.sm-node.next button');
