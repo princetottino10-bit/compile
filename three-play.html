@@ -2377,6 +2377,14 @@
   .proto::after{content:"";position:absolute;inset:0;
     background:linear-gradient(180deg,rgba(4,6,13,.15),rgba(4,6,13,.92));}
   .proto-name,.proto-set{position:relative;z-index:1;}
+  /* 戦い方のタグ (広い画面だけ。狭い画面は長押しで説明に出る)・今日のミッションの印 */
+  .proto-tags{position:relative;z-index:1;display:block;margin-bottom:3px;font:600 9.5px/1.3 "M PLUS 1",system-ui;color:rgba(255,255,255,.72);
+    max-width:calc(100% - 38px);}
+  .proto-daily{position:absolute;top:8px;left:8px;z-index:2;padding:3px 6px;font:900 8.5px/1 var(--font-ui);letter-spacing:.1em;
+    color:#0c0a14;background:var(--mint);clip-path:var(--cut-s);}
+  .proto:has(.proto-conq) .proto-daily{top:30px;}
+  @media (max-width:700px){ .proto-tags{display:none;} .proto-daily{top:auto;left:auto;bottom:6px;right:6px;padding:2px 4px;font-size:7.5px;} }
+  @media (orientation:landscape) and (max-height:500px){ .proto-tags{display:none;} .proto-daily{top:auto;left:auto;bottom:4px;right:24px;padding:2px 4px;font-size:7px;} }
   /* 最強を相手に選ぶとき、まだ最強に勝っていないプロトコルの印 */
   .proto-conq{position:absolute;top:8px;left:8px;z-index:1;font:800 9px/1 "M PLUS 1",system-ui;letter-spacing:.08em;color:#fff;
     background:linear-gradient(90deg,var(--pink),#ff8a3d);padding:4px 6px;border-radius:4px;box-shadow:0 2px 8px rgba(255,79,163,.4);}
@@ -4330,7 +4338,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=2b4dbc6066",
       "./js3d/logformat.js": "./js3d/logformat.js?v=e3548c74d1",
-      "./js3d/main.js": "./js3d/main.js?v=54bf7ec896",
+      "./js3d/main.js": "./js3d/main.js?v=bb97713fb5",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=6a0b3a0d99",
@@ -4340,7 +4348,7 @@
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=61d7b57093",
       "./js3d/playlog.js": "./js3d/playlog.js?v=90aaffedee",
       "./js3d/playmat.js": "./js3d/playmat.js?v=1c8f36818a",
-      "./js3d/profile.js": "./js3d/profile.js?v=c7332b69cb",
+      "./js3d/profile.js": "./js3d/profile.js?v=9add797c56",
       "./js3d/prompts.js": "./js3d/prompts.js?v=348dff836d",
       "./js3d/protocards.js": "./js3d/protocards.js?v=5919129971",
       "./js3d/protocol-strength.js": "./js3d/protocol-strength.js?v=c719e5b65c",
@@ -4358,7 +4366,7 @@
       "./js3d/runcards.js": "./js3d/runcards.js?v=c2bf20e9b7",
       "./js3d/selectui.js": "./js3d/selectui.js?v=208abdaebc",
       "./js3d/settings.js": "./js3d/settings.js?v=f32405f149",
-      "./js3d/setup.js": "./js3d/setup.js?v=5086ca39b4",
+      "./js3d/setup.js": "./js3d/setup.js?v=c5e051ede2",
       "./js3d/solodraft.js": "./js3d/solodraft.js?v=33f32f2481",
       "./js3d/spectate.js": "./js3d/spectate.js?v=e7aaf6e4e9",
       "./js3d/stage.js": "./js3d/stage.js?v=a47c0c4ec9",
@@ -4414,7 +4422,7 @@
   <link rel="modulepreload" href="js3d/board.js?v=0d4f2a81d5">
   <link rel="modulepreload" href="js3d/control.js?v=c1b87ebc63">
   <link rel="modulepreload" href="js3d/panel.js?v=994ec047da">
-  <link rel="modulepreload" href="js3d/setup.js?v=5086ca39b4">
+  <link rel="modulepreload" href="js3d/setup.js?v=c5e051ede2">
   <link rel="modulepreload" href="js3d/title.js?v=bdc87931d3">
   <link rel="modulepreload" href="js3d/training.js?v=3018b4399e">
   <link rel="modulepreload" href="js3d/room.js?v=be804bed77">
@@ -4486,7 +4494,7 @@
   <link rel="modulepreload" href="js3d/protocards.js?v=5919129971">
   <link rel="modulepreload" href="js3d/backdrops.js?v=90faf9612d">
   <link rel="modulepreload" href="js3d/support.js?v=86cfbcc21a">
-  <link rel="modulepreload" href="js3d/profile.js?v=c7332b69cb">
+  <link rel="modulepreload" href="js3d/profile.js?v=9add797c56">
   <link rel="modulepreload" href="js3d/gacha-ui.js?v=becd381735">
   <link rel="modulepreload" href="js3d/replays-ui.js?v=1259fc16e4">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/ShaderPass.js">
@@ -4507,6 +4515,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=a30eb3f65a">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=54bf7ec896"></script>
+  <script type="module" src="js3d/main.js?v=bb97713fb5"></script>
 </body>
 </html>

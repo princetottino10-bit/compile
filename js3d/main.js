@@ -902,7 +902,12 @@ async function boot() {
   let p1 = pick('ai', null);
   /* カードリストのデッキ分析の「このデッキで対戦」(?deck=A,B,C): すぐには始めず、タイトルを飛ばして相手を選ぶ画面へ。
      プロトコル選択ではこの3つを選んだ状態にする (相手と強さはいつもどおり選べる)。?me= はすぐ始まるので使わない */
-  let deckPreset = p0 ? null : pick('deck', null);
+  /* デイリーミッションの「▶ 遊ぶ」(?deck=FEAR) のように、1つか2つだけのこともある (残りは自分で選ぶか、ランダム) */
+  let deckPreset = p0 ? null : (() => {
+    const v = params.get('deck');
+    const list = v ? v.split(',').map(s => s.trim().toUpperCase()).filter(n => protoIndex[n]) : [];
+    return list.length >= 1 && list.length <= 3 ? [...new Set(list)] : null;
+  })();
   if (deckPreset) history.replaceState(null, '', location.pathname);
   /* タッグのもう1戦 (?tag=1&mate=&omate=) */
   if (params.get('tag') === '1' && p0 && p1) {

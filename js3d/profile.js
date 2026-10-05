@@ -39,7 +39,9 @@ function dailyHtml(protocols) {
   const hard = dailyPuzzleDone(undefined, undefined, true);
   return '<div class="pf-daily"><div class="pf-daily-h"><small>DAILY MISSIONS</small><b>' + done + '/' + list.length + '</b>' +
     '<em>3つ達成で +' + DAILY_XP.all + ' XP</em></div><ul>' + list.map(m =>
-      '<li class="' + m.tier + (m.done ? ' done' : '') + '"><span>' + esc(m.text) + '</span>' +
+      '<li class="' + m.tier + (m.done ? ' done' : '') + '"><span>' + esc(m.text) +
+        /* そのプロトコルを入れて、すぐ遊べる (相手を選んでから、そのプロトコルを選んだ状態でプロトコル選びへ) */
+        (m.proto && !m.done ? ' <button type="button" class="pf-go" data-daily="' + esc(m.proto) + '">遊ぶ ▶</button>' : '') + '</span>' +
       '<i style="--p:' + Math.round(100 * m.n / m.goal) + '%"></i>' +
       '<b>' + (m.done ? 'CLEAR' : m.n + '/' + m.goal) + '</b><em>+' + m.xp + '</em></li>').join('') +
     /* 今日の問題 (COMPUZZLE)。ミッションの3つとは別に数える */
@@ -117,6 +119,7 @@ export function openProfile(protocols) {
   if (login) login.onclick = () => openAccount();
   bindNameField(el, 'pf');
   /* 今日の問題へそのまま飛ぶ */
+  el.querySelectorAll('[data-daily]').forEach(b => { b.onclick = () => { location.href = location.pathname + '?deck=' + encodeURIComponent(b.dataset.daily); }; });
   const go = el.querySelector('#pfDailyPuzzle');
   if (go) go.onclick = () => { location.href = location.pathname + '?tsume=daily'; };
   const goHard = el.querySelector('#pfDailyHard');

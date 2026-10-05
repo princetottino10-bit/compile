@@ -19,7 +19,8 @@ import { LEVEL_LABELS as AI_LABELS, CHALLENGERS, CHALLENGER_BASE, isChallenger, 
 export { STRONGEST_AI, LOCK_AI } from './aidecks.js';
 import { showTitleBack, hideTitleBack } from './titleback.js';
 import { localRecords } from './stats.js';
-import { conquered, conquerable } from './stats-data.js';
+import { conquered, conquerable, protocolSummary } from './stats-data.js';
+import { dailyView } from './daily.js';
 
 const MODES = [
   { key: 'draft', label: 'ドラフト (公式)' },
@@ -70,7 +71,7 @@ export function runSetup(protocols, options = {}) {
   let mode = training || (presetLevel !== null && fixedDeck(presetLevel)) ? 'free' : lsGet('compileSoloModeV2', 'draft');
   if (!MODES.some(m => m.key === mode)) mode = 'free';     // なくした決め方 (一部を選ぶ) を覚えていたとき
   /* カードリストの「このデッキで対戦」で3つ持ってきたときは、そのまま START できる「自由に選ぶ」で開く (覚えている決め方は変えない) */
-  if (!training && picked.length === 3) mode = 'free';
+  if (!training && picked.length >= 1 && options.presetFree !== false) mode = 'free';   // 1つか2つ (デイリーの「▶ 遊ぶ」) なら残りを選ぶか「残りはランダム」
   let draftSize = +lsGet('compileSoloDraftPool', '0');
   let draftBans = +lsGet('compileSoloDraftBans', '0');
   let challenger = Math.min(CHALLENGERS.length - 1, Math.max(0, +lsGet('compileSoloChallenger', '0') || 0));
@@ -181,16 +182,22 @@ export function runSetup(protocols, options = {}) {
   }
 
   /* ---------- プロトコルの一覧 ---------- */
+  /* タイルに足す情報: 戦い方のタグ (説明として)・今日のミッションの印・自分の習熟度と勝ち数 (30 個から当てずっぽうで選ばないように) */
+  const mySummary = protocolSummary(localRecords());
+  const dailyProto = (() => { try { const m = dailyView(protocols.map(x => x.name)).find(x => x.proto && !x.done); return m ? m.proto : null; } catch (e) { return null; } })();
   function tile(name, cls, tag) {
     const p = byName[name] || {};
+    const me = mySummary.get(name);
     return '<div class="proto-wrap"><button type="button" class="proto' + (cls ? ' ' + cls : '') + '" data-name="' + esc(name) + '"' +
-      ' style="--accent:' + (p.color || '#b9a4ff') + '">' +
+      ' style="--accent:' + (p.color || '#b9a4ff') + '"' + (p.tags ? ' data-tip="' + esc(name + ': ' + p.tags) + '"' : '') + '>' +
+      (name === dailyProto ? '<span class="proto-daily" title="今日のミッション">DAILY</span>' : '') +
+      (p.tags ? '<span class="proto-tags">' + esc(p.tags) + '</span>' : '') +
       '<span class="proto-art" style="background-image:url(&quot;art/' + name.charAt(0) + name.slice(1).toLowerCase() + '.webp&quot;)"></span>' +
       '<img class="proto-emblem" alt="" src="' + emblemDataURL(name, p.color || '#b9a4ff', 96, true) + '">' +
       /* 最強のデッキ (FIRE / WATER / SPEED) は選べないので、制覇の数にも入らない。印も付けない */
       (level === 3 && !conq.has(name) && conquerable([name]).length ? '<span class="proto-conq" title="まだ最強に勝っていない">未制覇</span>' : '') +
       '<span class="proto-name">' + esc(name) + '</span>' +
-      '<span class="proto-set">' + esc(tag || p.set || '') + '</span></button>' +
+      '<span class="proto-set">' + esc(tag || p.set || '') + (!tag && me ? ' ・ Lv' + me.mastery.level + ' ' + me.wins + '勝' : '') + '</span></button>' +
       (options.cardsOf ? '<button type="button" class="proto-info" data-info="' + esc(name) + '" aria-label="' + esc(name) +
         ' のカードを見る" title="カードを見る">?</button>' : '') + '</div>';
   }
