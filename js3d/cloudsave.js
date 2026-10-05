@@ -142,14 +142,27 @@ function keepBest(merged, local, rd) {
   return merged;
 }
 
+/* どちらを正にしても合わせる項目 (keepBest)。食い違っても上書きにはならない */
+const MERGED_KEYS = ['compileStory', 'compileWeekly', 'compileRun', 'compileDaily', 'compileRunHeat', 'compileRunBest', 'compileTrophies', 'compileGacha'];
+/** この端末とアカウントの両方にあって、中身が違う項目 (アカウントを正にすると、この端末の分が消えるもの) */
+export function conflictKeys(local, remoteData) {
+  const rd = cleanRemote(remoteData);
+  return SAVE_KEYS.filter(k => !MERGED_KEYS.includes(k) && k in local && k in rd && local[k] !== rd[k]);
+}
+
 /* 同期の中身を決める。
    local: いまのブラウザ、remote: アカウントの行 ({ data, at } / 無ければ null)、meta: 前回の同期
+   opts.keepDevice: この端末で初めての同期で、この端末の方を残すと選んだ (アカウントに無い項目はアカウントのを足す)
    返り値 { apply: ブラウザに書く中身 or null, push: アカウントに送る中身 or null } */
-export function decide(local, remote, meta) {
+export function decide(local, remote, meta, opts) {
   const localChanged = !meta || hashOf(local) !== meta.hash;
   if (!remote) return { apply: null, push: Object.keys(local).length ? local : null };
   const rd = cleanRemote(remote.data);
   const remoteNewer = !meta || remote.at > meta.at;
+  if (!meta && opts && opts.keepDevice) {
+    const merged = keepBest({ ...rd, ...local }, local, rd);
+    return { apply: hashOf(merged) === hashOf(local) ? null : merged, push: hashOf(merged) === hashOf(rd) ? null : merged };
+  }
   if (!meta) {
     /* この端末で初めての同期: アカウントの中身を正にし、アカウントに無い項目だけこちらのを足す */
     const merged = keepBest({ ...local, ...rd }, local, rd);
@@ -166,9 +179,10 @@ export function decide(local, remote, meta) {
   return { apply: hashOf(merged) === hashOf(local) ? null : merged, push: hashOf(merged) === hashOf(rd) ? null : merged };
 }
 
-/* 上書きする前のこの端末の中身を控えておく (1つだけ。上書きのたびに新しくする) */
-export function backupLocal(local) {
-  try { localStorage.setItem('compileSaveBackup', JSON.stringify({ at: Date.now(), data: local })); } catch (e) { /* 容量不足・private mode */ }
+/* 上書きする前の中身を控えておく (1つだけ。上書きのたびに新しくする)。
+   from: 'device' (アカウントで上書きした、この端末の中身) / 'account' (この端末の方を残すと選んだときの、アカウントの中身) */
+export function backupLocal(data, from) {
+  try { localStorage.setItem('compileSaveBackup', JSON.stringify({ at: Date.now(), from: from || 'device', data })); } catch (e) { /* 容量不足・private mode */ }
 }
 
 /* ブラウザに書く。apply に無い項目は消す (アカウント側で消えたものに合わせる) */

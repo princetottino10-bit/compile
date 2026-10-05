@@ -1,0 +1,17 @@
+{
+  "name": "COMPILE 3D ARENA",
+  "short_name": "3D ARENA",
+  "description": "プロトコル・カードゲーム COMPILE を、ブラウザですぐ遊べるファンメイドの3D版",
+  "lang": "ja",
+  "start_url": "./three-play.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#03040a",
+  "theme_color": "#03040a",
+  "icons": [
+    { "src": "icons/arena-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icons/arena-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/arena-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

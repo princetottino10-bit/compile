@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { decide, hashOf, cleanRemote } from '../js3d/cloudsave.js';
+import { decide, hashOf, cleanRemote, conflictKeys } from '../js3d/cloudsave.js';
 
 const best = (reached, life) => JSON.stringify({ reached, life });
 
@@ -96,4 +96,21 @@ test('デイリー: 新しい日の方。同じ日なら達成と進みを合わ
   assert.deepEqual(m.done.sort(), ['a', 'b']);
   const d2 = decide({ compileDaily: day({ day: 99, done: ['x'] }) }, { data: { compileDaily: day({ day: 100 }) }, at: 200 }, { hash: 'x', at: 100 });
   assert.equal(JSON.parse(d2.push.compileDaily).day, 100);
+});
+
+test('食い違う項目: 両方にあって中身が違うものだけ。合わせる項目 (RUN の最高記録など) は数えない', () => {
+  const local = { compileSettings: 'L', compileRoomName: 'A', compileRunBest: best(1, 1), compileOppLast: 'X' };
+  const remote = { compileSettings: 'R', compileRoomName: 'A', compileRunBest: best(2, 2) };
+  assert.deepEqual(conflictKeys(local, remote), ['compileSettings']);
+  assert.deepEqual(conflictKeys({}, remote), []);
+});
+
+test('この端末の方を残すと選んだ: こちらを正にして、アカウントにしか無い項目は足す。RUN の最高記録は良い方', () => {
+  const local = { compileSettings: 'L', compileRunBest: best(3, 3) };
+  const remote = { data: { compileSettings: 'R', compileOppLast: 'R', compileRunBest: best(9, 1) }, at: 100 };
+  const d = decide(local, remote, null, { keepDevice: true });
+  assert.deepEqual(d.apply, { compileSettings: 'L', compileOppLast: 'R', compileRunBest: best(9, 1) });
+  assert.deepEqual(d.push, d.apply);
+  /* 選ばなければ、これまでどおりアカウントが正 */
+  assert.equal(decide(local, remote, null).apply.compileSettings, 'R');
 });

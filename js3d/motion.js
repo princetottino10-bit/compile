@@ -4,7 +4,8 @@
  *   dealIn:  並んだものを1つずつ、配るように出す (対戦のあとの「手に入ったもの」)
  *   どちらも動きを減らす設定では、すぐ最後の形にする。待ち時間は足さない (呼んだ側は待たなくてよい)
  * ========================================================================= */
-const calm = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
+/* 動きを減らすか (設定の「動きを減らす」→ 端末の設定。prefs.js) */
+import { calm } from './prefs.js';
 
 /** el の数字を from から to へ数え上げる。fmt で表示を整える (既定は '+' を付けない整数) */
 export function countUp(el, from, to, opts) {

@@ -99,6 +99,16 @@ import { initGamepad } from './gamepad.js';
 import { iconArt } from './face-icons.js';
 import { callMe } from './callme.js';
 import { initTapTips } from './tips.js';
+import { calm as calmMotion } from './prefs.js';
+import { bootStage, bootFail, bootVisible } from './bootui.js';
+import { webglAvailable, gpuName } from './envcheck.js';
+import { friendlyMessage, noteError } from './errtext.js';
+import { addReportLines, setCaptureSource, copyReportInfo } from './support.js';
+import { setGfxSource } from './settings.js';
+import { initFirstRun, onMatchStart } from './firstrun.js';
+import { watchNet } from './net.js';
+import { notice } from './notice.js';
+import { isNewcomer } from './title.js';
 
 const Engine = window.CompileEngine;
 initDialogs();
@@ -701,19 +711,28 @@ if (IOS) document.body.classList.add('ios');
 /* 画面で起きたエラーはサーバーに知らせる (報告がなくても気づけるように。errorreport.js) */
 watchErrors();
 CW.checkLastBattle();                 // 前の対戦が途中で落ちていたら知らせる (crashwatch.js)
+watchNet();                           // オフラインの札と、つながったときの同期 (net.js)
+try { initFirstRun({ newcomer: isNewcomer() }); } catch (e) { /* 案内が出せなくても遊べる */ }
+/* 起動に失敗したら、起動の画面の中に理由と「再読み込み」「報告用にコピー」を出す (隠れる通知だと見落とすため。bootui.js)。
+   起動の画面がもう消えていれば、閉じるまで残るお知らせで */
 boot().catch((e) => {
   console.error(e);
   reportError(e, 'boot');
-  UI.toast('初期化に失敗: ' + e.message + ' (ページを読み直してください)', 8000);
+  if (bootVisible()) { bootFail(e); return; }
+  noteError(e);
+  notice({ id: 'bootErr', title: 'うまく動いていません', tone: 'warn', text: friendlyMessage(e, { online: navigator.onLine !== false }),
+    actions: [{ label: '再読み込み', main: true, onClick: () => location.reload() }, { label: '報告用にコピー', keep: true, onClick: async (b) => { if (await copyReportInfo()) b.textContent = 'コピーしました'; } }] });
 });
-/* 取りこぼした非同期のエラーも、黙って固まらずに知らせる (同じ内容は一度だけ) */
+/* 取りこぼした非同期のエラーも、黙って固まらずに知らせる (同じ内容は一度だけ)。
+   文は分かる言葉に直す (Failed to fetch → 通信できませんでした…)。元の文は報告用の情報に入る (errtext.js) */
 const shownErrors = new Set();
 window.addEventListener('unhandledrejection', (ev) => {
   const msg = (ev.reason && (ev.reason.message || String(ev.reason))) || '不明なエラー';
   console.error(ev.reason);
+  noteError(ev.reason || msg);
   if (shownErrors.has(msg)) return;
   shownErrors.add(msg);
-  UI.toast('エラー: ' + msg, 5000);
+  UI.toast(friendlyMessage(ev.reason || msg, { online: navigator.onLine !== false }), 5000);
 });
 
 /* ロゴ (Orbitron) と見出し・数字 (Oxanium) の書体を読み込む。届かなくても先へ進む (system-ui で描く) */
@@ -733,12 +752,14 @@ function loadFonts(timeoutMs, jpText) {
 
 async function boot() {
   const T0 = performance.now();
-  const mark = (label) => { window.__bootMarks = window.__bootMarks || []; window.__bootMarks.push(label + ':' + Math.round(performance.now() - T0)); };
+  /* 起動の段を記録し、起動の画面のバーと「いま何をしているか」を進める (bootui.js) */
+  const mark = (label) => { window.__bootMarks = window.__bootMarks || []; window.__bootMarks.push(label + ':' + Math.round(performance.now() - T0)); bootStage(label); };
+  bootStage('start');
   /* OAuth の戻り先では、ゲーム初期化より先にセッション復元と URL の掃除を行う。 */
   await ROOM.roomRestoreOAuthRedirect();
   /* 読み込めなかったとき (通信の失敗・404 の HTML) に、何が起きたか分かるようにする */
   const getJson = (url) => fetch(url).then((r) => {
-    if (!r.ok) throw new Error(url + ' を読み込めませんでした (' + r.status + ')');
+    if (!r.ok) throw Object.assign(new Error(url + ' を読み込めませんでした (' + r.status + ')'), { status: r.status });
     return r.json();
   });
   const [cards, effects] = await Promise.all([getJson('data/cards.json'), getJson('data/effects.json')]);
@@ -785,8 +806,20 @@ async function boot() {
     return !!(d && d.upper && String(d.upper).trim());
   });
 
+  /* 3D の土台 (WebGL) が無い端末では、作る前に分かる言葉で止める (真っ黒のまま固まらないように) */
+  if (!webglAvailable()) {
+    throw Object.assign(new Error('WebGL is not available'), { status: 0 });
+  }
   stage = createStage(document.getElementById('stage'));
   setMaxAnisotropy(stage.renderer.capabilities.getMaxAnisotropy());
+  /* 設定の「画質」に、いまの自動の段と FPS を出す。報告用の情報に画質・GPU の名前を入れる */
+  setGfxSource(() => stage.gfx());
+  const gpu = gpuName(stage.renderer);
+  addReportLines(() => { const g = stage.gfx(); return ['画質: ' + g.mode + ' (段 ' + g.level + ')' + (g.powerSave ? ' 省電力' : '') + ' ・ ' + g.fps + ' fps ・ GPU ' + gpu]; });
+  /* 設定の「画面の写しもコピー」: いまの盤面を PNG に (iPhone は直前の絵を残していないので、その場で描いてから取る) */
+  setCaptureSource(() => new Promise((resolve) => {
+    try { stage.composer.render(); stage.renderer.domElement.toBlob((b) => resolve(b), 'image/png'); } catch (e) { resolve(null); }
+  }));
   ctrlMarker = createControlMarker(stage.scene);
   ctrlMarker.group.visible = false;          // 対戦開始 (refreshHud) まで隠す
   stage.onFrame((dt) => ctrlMarker.tick(dt));
@@ -863,7 +896,7 @@ async function boot() {
             const big = e.delta <= -5;
             avatarSay(e.side, big ? 'crushed' : 'hurt', null, null, big ? 3000 : 8000);
             if (ownTurn(actor)) avatarSay(actor, 'wipe', null, null, 8000);
-            if (big && !matchMedia('(prefers-reduced-motion: reduce)').matches) stage.shake(0.1, 340);
+            if (big && !calmMotion()) stage.shake(0.1, 340);
           }
         }
         else if (e.ready) {
@@ -883,6 +916,8 @@ async function boot() {
   /* 盤面の柄は解放されているものだけ (記録を消したあとなどに、未解放のまま残らないように) */
   onSettings((s) => {
     TW.setSpeed(s.speed);
+    stage.setGfxMode(s.gfx);                                  // 設定の「画質」(自動 / 高 / 標準 / 軽量)
+    stage.setPowerSave(!!s.powerSave);                        // 省電力 (30 コマ)
     setSfxVolume(s.sfx);
     applyLooks();
     if (cur) board.syncInstant(shown());                      // カードの裏面を付け替える
@@ -1077,8 +1112,8 @@ async function boot() {
       if (nextMode === 'online') {
         try {
           await ROOM.roomLoadDeps();
-        } catch (e) { UI.toast('オンライン機能を読み込めませんでした'); nextMode = 'single'; continue; }
-        if (!ROOM.roomConfigured()) { UI.toast('オンライン対戦は未設定です (secure-room-config.js)'); nextMode = 'single'; continue; }
+        } catch (e) { noteError(e); UI.toast('オンライン機能を読み込めませんでした。' + friendlyMessage(e, { online: navigator.onLine !== false }), 5000); nextMode = 'single'; continue; }
+        if (!ROOM.roomConfigured()) { UI.toast('この環境ではオンライン対戦を使えません (CPU 戦はこのまま遊べます)', 4000); nextMode = 'single'; continue; }
         /* ドラフト中にプロトコルの6枚を見る */
         const result = await runRoomLobby(cards.protocols, { cardsOf: protocolCards, joinCode });
         joinCode = '';
@@ -1366,6 +1401,8 @@ async function boot() {
   await stage.home(0);
   placeDialogsNearBoard();
   refreshHud();
+  /* はじめての案内 (横持ち・初心者モード・ホーム画面に追加。firstrun.js) */
+  try { onMatchStart(tutorial ? 'tutorial' : puzzle || demoMode || replayMode || trainingMode ? 'other' : 'cpu'); } catch (e) { /* 案内が出せなくても遊べる */ }
   if (puzzle) PZ.showPuzzleBar(puzzle, retryPuzzle, puzzle.tsume ? tsumeBarOpts(puzzle.tsume) : null);
   if (puzzle && puzzle.tsume && new URLSearchParams(location.search).get('auto') === '1') resumeTsumeAuto(puzzle.tsume);
   /* 詰めコンパイル: 管理者か (答えのボタンを出すか) はログイン状態を読んでから分かるので、分かったら帯を描き直す */
@@ -3938,10 +3975,9 @@ function netDeltaShow(st) {
       setTimeout(() => {
         if (!swing) { FEEL.floatDelta(stage, pos, delta, color); return; }
         FEEL.bigSwing(stage, pos, delta, color);
-        const calmMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-        if (!calmMotion) FX.shockwave(stage.scene, pos, delta > 0 ? 0xffd86a : 0xff3b6b, 2.8, 900);
+        if (!calmMotion()) FX.shockwave(stage.scene, pos, delta > 0 ? 0xffd86a : 0xff3b6b, 2.8, 900);
         sfx(delta > 0 ? 'charge' : 'boom');
-        if (delta < 0 && !calmMotion) stage.shake(0.12, 380);
+        if (delta < 0 && !calmMotion()) stage.shake(0.12, 380);
       }, k++ * 140);
     }
   }

@@ -92,7 +92,11 @@ export function createStage(container) {
   /* iPhone・iPad は 1 段目 (解像度 1.5 倍まで) から始め、それより上げない (2 倍だと描く先だけで 1.8 倍のメモリを使う) */
   const GFX_MIN = IOS ? 1 : 0;
   let gfxLevel = GFX_MIN;
+  /* 設定の「画質」: 'auto' なら下の自動調整。'high' / 'normal' / 'light' は段を決めたまま動かさない (覚えた自動の段は変えない) */
+  let gfxMode = 'auto';
+  let autoLevel = GFX_MIN;              // 自動にしていたら、いまどの段か (設定の画面に「いまの自動: 標準」と出す)
   try { gfxLevel = Math.max(GFX_MIN, Math.min(GFX_CAP.length - 1, parseInt(localStorage.getItem(GFX_KEY), 10) || 0)); } catch (e) { /* 保存できない環境でも遊べる */ }
+  autoLevel = gfxLevel;
   const pixelRatio = () => Math.min(window.devicePixelRatio || 1, GFX_CAP[gfxLevel]);
   renderer.setPixelRatio(pixelRatio());
   renderer.setSize(container.clientWidth, container.clientHeight);
@@ -214,11 +218,25 @@ export function createStage(container) {
   }
   function setGfx(level) {
     const next = Math.max(GFX_MIN, Math.min(GFX_CAP.length - 1, level));
+    if (gfxMode === 'auto') autoLevel = next;
     if (next === gfxLevel) return;
     gfxLevel = next;
-    try { localStorage.setItem(GFX_KEY, String(gfxLevel)); } catch (e) { /* 覚えられなくても今回は効く */ }
+    if (gfxMode === 'auto') { try { localStorage.setItem(GFX_KEY, String(gfxLevel)); } catch (e) { /* 覚えられなくても今回は効く */ } }
     applyGfx();
   }
+  /* 設定の「画質」: 高 = いちばんきれいな段、標準 = 解像度を少し下げる、軽量 = 発光と影を切って解像度 1 倍 */
+  const FIXED = { high: GFX_MIN, normal: Math.min(GFX_CAP.length - 1, GFX_MIN + 1), light: GFX_CAP.length - 1 };
+  function setGfxMode(mode) {
+    const m = FIXED[mode] !== undefined ? mode : 'auto';
+    if (m === gfxMode) return;
+    gfxMode = m;
+    fpsProbe.bad = 0; fpsProbe.good = 0;
+    if (m === 'auto') { const lv = autoLevel; gfxLevel = -1; setGfx(lv); }
+    else { const lv = FIXED[m]; if (lv !== gfxLevel) { gfxLevel = lv; applyGfx(); } }
+  }
+  /* 省電力: 1 秒に描く回数を 30 までにする (スマホの電池と熱のため) */
+  let powerSave = false;
+  function setPowerSave(on) { powerSave = !!on; }
   /* 平均ではなく「ふつうのコマ」(真ん中の値) の長さで見る。読み込み直後などの一瞬の引っかかりでは下げない。
      下げるのは、2回続けて (4 秒) 重かったときだけ */
   const fpsProbe = { t0: 0, n: 0, capped: 0, good: 0, bad: 0, last: 0, fps: 0, gaps: [] };
@@ -240,7 +258,9 @@ export function createStage(container) {
     const fps = (f.gaps.filter(g => g <= 100).length * 1000) / Math.max(1, span - hitch);
     f.fps = (f.n * 1000) / span;
     const cappedAt30 = f.capped > f.n * 0.85;
-    if (fps < 50 && !cappedAt30 && elapsed > 8) {
+    /* 段を決めている (設定で画質を選んだ)・省電力で 30 回にしているときは、測るだけで段は動かさない */
+    if (gfxMode !== 'auto' || powerSave) { f.bad = 0; f.good = 0; }
+    else if (fps < 50 && !cappedAt30 && elapsed > 8) {
       f.good = 0;
       if (++f.bad >= 2) { setGfx(gfxLevel + 1); f.bad = 0; }
     } else {
@@ -391,7 +411,7 @@ export function createStage(container) {
     now = now || performance.now();
     if (TW.activeCount() > 0 || camState.shake > 0.0001) lastActive = now;
     idleNow = now - lastActive > IDLE_AFTER;
-    const step = idleNow ? IDLE_FRAME_MS : FRAME_MS;
+    const step = idleNow || powerSave ? IDLE_FRAME_MS : FRAME_MS;
     /* 少し早めでも描く (2ms)。遅れたら次の予定を今に合わせる (まとめて描かない) */
     if (now < nextDue - 2) return;
     nextDue = Math.max(nextDue + step, now - step);
@@ -451,7 +471,8 @@ export function createStage(container) {
     THREE, renderer, scene, camera, composer, bloom,
     setCamera, home, focusOn, cinematicHold, shake, onFrame, resize,
     /* 画質の段と、直近に測った FPS (確かめ用) */
-    gfx: () => ({ level: gfxLevel, fps: Math.round(fpsProbe.fps), frames, idle: idleNow }), setGfx,
+    gfx: () => ({ level: gfxLevel, fps: Math.round(fpsProbe.fps), frames, idle: idleNow, mode: gfxMode, auto: autoLevel, powerSave }), setGfx,
+    setGfxMode, setPowerSave,
     lights: { key, rimSelf, rimOpp, fill }
   };
 }

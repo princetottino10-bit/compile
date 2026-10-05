@@ -3,7 +3,9 @@
  * ========================================================================= */
 import { playBgm, menuBgm } from './bgm.js';
 import { xpLog } from './xp.js';
-import { displayName, onDisplayNameChange } from './displayname.js';
+import { displayName, onDisplayNameChange, nameFieldHtml, bindNameField } from './displayname.js';
+import { isOnline, OFFLINE_TEXT } from './net.js';
+import { notice, once } from './notice.js';
 import { dailyView } from './daily.js';
 import { emblemDataURL } from './emblems.js';
 import { iconArt } from './face-icons.js';
@@ -83,8 +85,8 @@ window.addEventListener('compile:cosmetics-closed', () => {
   if (d && !hasNewCosmetics()) d.remove();
 });
 
-/* まだ1戦もしておらず、チュートリアルも1つも終えていない人 */
-function isNewcomer() {
+/* まだ1戦もしておらず、チュートリアルも1つも終えていない人 (main.js も、初心者モードを最初からオンにするのに使う) */
+export function isNewcomer() {
   return !localRecords().length && !xpLog().some(e => /^k:tu:/.test(e.id || ''));
 }
 
@@ -212,7 +214,10 @@ export function runTitle(protocols, opts) {
           (isNewcomer()
             ? '<div class="tt-first"><b>はじめての方へ</b><span>遊び方は TUTORIAL で5分ほど。すぐ遊びたいなら「おまかせで1戦」</span>' +
               '<div><button data-mode="tutorial" type="button" class="go">TUTORIAL</button>' +
-              '<button data-mode="quick" type="button">おまかせで1戦</button></div></div>'
+              '<button data-mode="quick" type="button">おまかせで1戦</button></div>' +
+              /* 表示名はここで決められる (オンラインで相手に見える。あとから何度でも変えられる)。決めていれば出さない */
+              (displayName() ? '' : nameFieldHtml('tt') + '<small class="tt-first-note">表示名はオンライン対戦で相手に見えます。プロフィールからいつでも変えられます</small>') +
+              '</div>'
             : '') +
           /* チュートリアルを途中までやった人には、全部終えるまで「続き」を出す (前は1つ終えると MORE の奥だけになった) */
           tutorialContinueHtml() +
@@ -275,6 +280,11 @@ export function runTitle(protocols, opts) {
         const button = ev.target.closest('button[data-mode]');
         if (!button) return;
         sfx('select');
+        /* オフラインの間は、通信が要る入口 (ONLINE・ログイン) を押しても進めず、理由を出す */
+        if (!isOnline() && (button.dataset.mode === 'online' || (button.dataset.mode === 'account' && !accountState().user))) {
+          notice({ id: 'offline', title: 'オフライン', text: OFFLINE_TEXT });
+          return;
+        }
         /* 設定 (演出の速さ・効果音の音量・待ち時間)。音の ON/OFF は対戦中の 🔊 で */
         if (button.dataset.mode === 'options') openSettings();
         else if (button.dataset.mode === 'record') openStats();
@@ -309,6 +319,13 @@ export function runTitle(protocols, opts) {
         else finish(button.dataset.mode);
       };
       center.onclick = onMenu;                        // メニューとロゴの下の名前 (どちらも data-mode のボタン)
+      bindNameField(center, 'tt');                    // はじめての人の表示名の欄 (保存するとロゴの下も変わる: onDisplayNameChange)
+      /* 表示名をまだ決めていない人には、最初の1戦 (かチュートリアル) のあとに一度だけ聞く。
+         背の低い画面では上の欄を出さない (メニューがはみ出す) ので、こちらで */
+      if (!isNewcomer() && !displayName() && once('askName')) {
+        notice({ id: 'askName', title: '表示名を決めませんか', text: 'オンライン対戦で相手に見える名前です。あとからいつでも変えられます',
+          actions: [{ label: '決める', main: true, onClick: () => openProfile(protocols) }] });
+      }
       root.querySelector('#ttReport').onclick = () => { sfx('select'); openReport(); };
       root.querySelector('#ttCorner').onclick = onMenu;
       /* リプレイを見終わって戻ってきた: RECORD のリプレイのタブを、見る前の位置で開き直す */

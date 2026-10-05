@@ -67,6 +67,13 @@ export async function roomRestoreOAuthRedirect() {
   const hasCallback = /(?:^#|[&])(?:access_token|error)=/.test(location.hash) ||
     query.has('code') || query.has('error') || query.has('error_description');
   if (!hasCallback) return false;
+  /* Google の画面で「キャンセル」した・断られたときは error が付いて戻ってくる。
+     ACCOUNT を開いて「中断しました」と知らせる (account.js が読む)。オンラインへ直行する目印は消す */
+  if (query.has('error') || query.has('error_description') || /(?:^#|[&])error=/.test(location.hash)) {
+    try { sessionStorage.setItem('compileOAuthError', '1'); } catch (e) { /* private mode */ }
+    try { localStorage.setItem('compileAccountResume', '1'); } catch (e) { /* private mode */ }
+    clearOnlineResume();
+  }
   try {
     await roomLoadDeps();
     await roomSession();

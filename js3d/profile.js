@@ -104,7 +104,7 @@ export function openProfile(protocols) {
     /* もらった報酬。押すと COLLECTION のその品物へ */
     (got.length ? '<ul class="pf-got">' + got.slice().reverse().map(r => '<li><b>LV ' + r.lv + '</b><span>' + esc(r.name) + '</span>' +
       (r.kind ? '<button type="button" class="pf-see" data-cos="' + esc(r.kind) + '" data-key="' + esc(r.key || '') + '">見る</button>' : '') + '</li>').join('') + '</ul>' : '') +
-    '<details class="pf-earn"><summary>HOW TO EARN XP</summary><ul>' + EARN.map(([k, v]) => '<li><span>' + k + '</span><b>' + v + '</b></li>').join('') + '</ul></details>' +
+    '<details class="pf-earn"><summary>HOW TO EARN XP <small>経験値のもらい方</small></summary><ul>' + EARN.map(([k, v]) => '<li><span>' + k + '</span><b>' + v + '</b></li>').join('') + '</ul></details>' +
     '<div class="pz-row"><button type="button" id="pfCos">COLLECTION</button><button type="button" id="pfRec2">RECORD</button><button type="button" id="pfAcc">ACCOUNT</button></div>' +
     '</div></div>' +
     '</div>';

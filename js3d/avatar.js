@@ -86,7 +86,8 @@ export const PROTO_LINES = {
   DIVERSITY: 'いろいろ試そう、{card}！', UNITY: 'ひとつになって、{card}！'
 };
 
-const calm = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
+/* 動きを減らすか (設定の「動きを減らす」→ 端末の設定。prefs.js) */
+import { calm } from './prefs.js';
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
 /* 選べる・ランダムに出るキャラ (ボスは除く) */
 export const avatarIds = () => Object.keys(AVATARS).filter(id => !AVATARS[id].boss);

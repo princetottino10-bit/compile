@@ -54,7 +54,11 @@ export function initGamepad(opts) {
   canvasTargets = opts.targets || (() => []);
   openHand = opts.openHand || null;
   if (!('getGamepads' in navigator)) return;
-  window.addEventListener('gamepadconnected', () => { if (!enabled()) return; markPad(pickPad(), true); start(); });
+  /* 設定がオフのときは動かさず、「使う?」と聞くだけ (firstrun.js がお知らせを出す。ハンドルなどで勝手に動かないように) */
+  window.addEventListener('gamepadconnected', () => {
+    if (!enabled()) { window.dispatchEvent(new CustomEvent('compile:gamepad-offer')); return; }
+    markPad(pickPad(), true); start();
+  });
   window.addEventListener('gamepaddisconnected', () => { if (!pickPad()) { stop(); markPad(null, false); } });
   /* 設定でオン・オフしたとき */
   onSettings(() => {

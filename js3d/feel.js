@@ -8,7 +8,8 @@
  * ========================================================================= */
 import * as THREE from '../vendor/three.module.js';
 
-const calm = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
+/* 動きを減らすか (設定の「動きを減らす」→ 端末の設定。prefs.js) */
+import { calm, vibrationOn } from './prefs.js';
 const v = new THREE.Vector3();
 
 /* 3D の位置 → 画面の位置 (見えていなければ null) */
@@ -96,10 +97,10 @@ export function setThinking(on) {
   }, 250);
 }
 
-/** 手応えの震え (ms か [ms, 休み, ms…])。対応していない端末 (iPhone など) では何もしない */
+/** 手応えの震え (ms か [ms, 休み, ms…])。対応していない端末 (iPhone など) と、設定の「振動」がオフのときは何もしない */
 export function buzz(pattern) {
   try {
-    if (calm() || !navigator.vibrate) return;
+    if (!vibrationOn() || calm() || !navigator.vibrate) return;
     /* まだ画面に触れていないと、ブラウザが振動を断ってエラーを出す (CPU どうしの観戦など) */
     if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
     navigator.vibrate(pattern);

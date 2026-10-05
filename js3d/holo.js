@@ -4,9 +4,11 @@
    ドラッグして傾けたあとの指離れでは click を起こさない (カードを押すと進む画面で、傾けただけで進まないように) */
 const MAX = 14;            // 端を触ったときの傾き (度)
 
+import { calm } from './prefs.js';
+
 export function holo(el, opts) {
   if (!el || el._holo) return;
-  try { if (matchMedia('(prefers-reduced-motion: reduce)').matches) return; } catch (e) { /* 古いブラウザ */ }
+  if (calm()) return;                // 動きを減らす (設定・端末の設定。prefs.js)
   const max = (opts && opts.max) || MAX;
   let sx = 0, sy = 0, down = false, moved = false;
   const set = (rx, ry, mx, my, op) => {

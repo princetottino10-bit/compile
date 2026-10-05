@@ -5,7 +5,8 @@
  * ========================================================================= */
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const calm = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
+/* 動きを減らすか (設定の「動きを減らす」→ 端末の設定。prefs.js) */
+import { calm } from './prefs.js';
 
 export const RAR_NAMES = { C: 'COMMON', R: 'RARE', E: 'EPIC', L: 'LEGENDARY' };
 export const RAR_COLORS = {

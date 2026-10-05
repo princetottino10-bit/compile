@@ -10,6 +10,7 @@
  *   決まりごと (範囲・順番・CPU の選び方) は solodraft.js。
  * ========================================================================= */
 
+import { calm as prefCalm } from './prefs.js';
 import { emblemDataURL } from './emblems.js';
 import { showProtocolCards } from './protocards.js';
 import { SET_GROUPS, poolKeyOf, groupsOf, poolNames, clampCandidates, draftSteps, shuffled, randomDecks, cpuDraftPick } from './solodraft.js';
@@ -362,7 +363,7 @@ export function runSetup(protocols, options = {}) {
 
   /* コイントス: 回るコインのあとに「あなたが先攻 / 後攻」。見せ終わったらドラフトへ */
   function coinToss(token) {
-    const calm = (() => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } })();
+    const calm = prefCalm();
     head.innerHTML = '<b>//</b> COIN TOSS';
     note.textContent = '先攻・後攻を決めます。先攻が先にドラフトします。';
     renderDraftSummary();

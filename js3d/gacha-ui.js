@@ -2,6 +2,7 @@
  * COSMETICS のガチャの画面 (進行と保存は gacha.js)
  *   タイトルの GACHA から開く。CHIP で1回 / 10連。出たものは図鑑にたまり、COSMETICS で選べる
  * ========================================================================= */
+import { calm as prefCalm } from './prefs.js';
 import { countUp, dealIn } from './motion.js';
 import { earnedChips, CHIP_PER_XP } from './chips.js';
 import * as G from './gacha.js';
@@ -27,7 +28,7 @@ export function chipsNow() {
 
 /* 出たものを1枚ずつめくって、実物の見た目で見せる。押すと飛ばせる。EPIC 以上はめくった瞬間に光る */
 function revealResults(results) {
-  const calm = (() => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } })();
+  const calm = prefCalm();
   const el = document.createElement('div');
   el.className = 'ga-reveal' + (results.length > 1 ? ' ten' : ' one');
   el.innerHTML = '<div class="ga-cards">' + results.map((r, i) =>

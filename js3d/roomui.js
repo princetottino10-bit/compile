@@ -28,6 +28,7 @@ export function waitingLabel(created, now = Date.now()) {
   const min = Math.max(0, Math.floor((now - t) / 60000));
   return min < 1 ? '待ち 1分未満' : min < 60 ? '待ち ' + min + '分' : '待ち ' + Math.floor(min / 60) + '時間';
 }
+import { friendlyMessage, noteError } from './errtext.js';
 
 /* 呼ぶ: 音・振動、見ていないタブならタブの名前を点滅 (戻ってきたら元に) */
 let titleBlink = null;
@@ -95,8 +96,10 @@ export function runRoomLobby(protocols, opts = {}) {
       resolve(result);
     };
 
+    /* 失敗の文は、分かる言葉に直して出す (Failed to fetch・サーバーの番号など。元の文は報告用に残す: errtext.js) */
     const status = (text, type) => {
       const el = $('#roomStatus');
+      if (type === 'err' && text) { noteError(text); text = friendlyMessage(text, { online: navigator.onLine !== false }); }
       if (el) { el.textContent = text || ''; el.dataset.type = type || ''; }
     };
 
@@ -509,9 +512,9 @@ export function runRoomLobby(protocols, opts = {}) {
         '<div class="ro-season"><small>SEASON ' + seasonLabel(data.season) + '</small><b>' + (data.seasonRating || 1500) + '</b>' +
           '<span>' + sWins + '勝 ' + (sGames - sWins) + '敗' + (myRank ? '　' + myRank.rank + '位' : '') + '</span></div>' +
         '<p class="ro-sub">月が変わると、その月の結果を記念に残して、レートを 1500 に半分近づけて始め直します。</p>' +
-        '<h4 class="ro-h">LEADERBOARD</h4>' + board +
-        (past ? '<h4 class="ro-h">PAST SEASONS</h4>' + past : '') +
-        '<h4 class="ro-h">MATCHES <small>通算 レート ' + rate + '　' + wins + '勝 ' + (games - wins) + '敗</small></h4>' +
+        '<h4 class="ro-h">LEADERBOARD <small>順位表</small></h4>' + board +
+        (past ? '<h4 class="ro-h">PAST SEASONS <small>前のシーズン</small></h4>' + past : '') +
+        '<h4 class="ro-h">MATCHES <small>対戦の記録　通算 レート ' + rate + '　' + wins + '勝 ' + (games - wins) + '敗</small></h4>' +
         '<div class="ro-row ro-histbar">' +
           (rows.length ? '<input class="ro-input" id="roomHistFind" type="search" maxlength="20" autocomplete="off" placeholder="相手の名前で絞る" aria-label="相手の名前で絞る">' : '') +
           '<button class="ro-btn" id="roomCsv" type="button">CSVをエクスポート</button></div>' +

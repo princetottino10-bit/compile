@@ -89,8 +89,8 @@ export function replaysTab() {
   const pinned = list.filter(r => r.pinned), recent = list.filter(r => !r.pinned);
   return filterBar(all) +
     (list.length ? '' : '<p class="pz-note">この条件に合うリプレイはありません。</p>') +
-    (pinned.length ? '<h4 class="rp-h">SAVED <small>' + all.filter(r => r.pinned).length + ' / ' + PINNED + '</small></h4><ul class="rp-list">' + pinned.map(row).join('') + '</ul>' : '') +
-    (recent.length ? '<h4 class="rp-h">RECENT <small>直近 ' + RECENT + ' 戦ずつ (CPU 戦など・オンライン・観戦で別。☆ で保存)</small></h4><ul class="rp-list">' + recent.map(row).join('') + '</ul>' : '') +
+    (pinned.length ? '<h4 class="rp-h">SAVED <small>保存したリプレイ ' + all.filter(r => r.pinned).length + ' / ' + PINNED + '</small></h4><ul class="rp-list">' + pinned.map(row).join('') + '</ul>' : '') +
+    (recent.length ? '<h4 class="rp-h">RECENT <small>最近のリプレイ　直近 ' + RECENT + ' 戦ずつ (CPU 戦など・オンライン・観戦で別。☆ で保存)</small></h4><ul class="rp-list">' + recent.map(row).join('') + '</ul>' : '') +
     '<p class="pz-note" id="rpMsg" role="status">リプレイはこのブラウザに残ります。WATCH で1手ずつ見返せます (自分の手番では AI のおすすめも)。SHARE でリンクにして送れます (受け取った人は開くだけで見られます)。✎ で名前を付けられます。</p>';
 }
 
