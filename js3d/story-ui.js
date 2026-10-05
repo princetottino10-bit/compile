@@ -292,11 +292,14 @@ export function askChoice(options) {
 export async function playNode(n) {
   await playScene(n.lines, { title: n.title });
   if (!n.choice) return;
+  let wavered = false;                 // 選び直しの道を一度選んだ
   for (;;) {
     const o = n.choice.options[await askChoice(n.choice.options)];
     logChoice(o.label);
-    if (o.lines && o.lines.length) await playScene(o.lines);
+    const lines = [...(wavered && o.ifAgain ? o.ifAgain : []), ...(o.lines || [])];
+    if (lines.length) await playScene(lines);
     if (!o.again) return;
+    wavered = true;
   }
 }
 

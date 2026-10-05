@@ -128,3 +128,13 @@ test('保存は、保存してある進み具合と合わせてから書く (ほ
   assert.deepEqual(S.saveStory(S.blankStory(Date.now())).cleared, []);
   localStorage.removeItem(S.STORY_KEY);
 });
+
+test('台本: 1つの箱は40字まで (一目で読める量。.claude/skills/story-craft の決まり 1)', () => {
+  const over = [];
+  for (const c of S.CHAPTERS) for (const n of c.nodes) {
+    const ls = [...(n.lines || []), ...(n.winLines || []), ...(n.loseLines || []),
+      ...((n.choice && n.choice.options.flatMap(o => [...(o.lines || []), ...(o.ifAgain || [])])) || [])];
+    for (const l of ls) if ([...l.text].length > 40) over.push(n.id + ': ' + l.text);
+  }
+  assert.deepEqual(over, []);
+});
