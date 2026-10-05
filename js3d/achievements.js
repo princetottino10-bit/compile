@@ -21,8 +21,11 @@ export const TROPHY_XP = { bronze: 2, silver: 5, gold: 10, platinum: 20 };
 /* ctx: { records: CPU 戦の戦績, xp: 経験値の帳簿, level, cardWins: Map(defId → {wins}),
           game: その1試合 (無ければ null) { win, level, turns, compiles, oppCompiles, winCompiles, effectsMap, faceUpIds, chainMax,
                   refreshes, touched, maxLine, short, at } }
-   records は短縮マッチを除いたもの (achievements-ui.js の trophyContext) */
-const wins = (c) => c.records.filter(r => r.win).length + c.xp.filter(onlineWin).length;
+   records は短縮マッチを除いたもの (achievements-ui.js の trophyContext)。
+   all は全部の戦績: 積み上げの数 (勝った数・表で出した種類・戦ったプロトコル・習熟度) は、プロフィールや RECORD と同じく
+   勝ち抜き戦・週替わりも数える (画面では 100勝・0/180 なのに CENTURY・ARCHIVIST が付かなかった。2026-10-06) */
+const every = (c) => c.all || c.records;
+const wins = (c) => every(c).filter(r => r.win).length + c.xp.filter(onlineWin).length;
 const xpHas = (c, fn) => c.xp.some(fn);
 const beat = (c, lv) => c.records.some(r => r.win && r.level === lv);
 function streak(records, want) {
@@ -32,15 +35,15 @@ function streak(records, want) {
 }
 /* タッグデュエルの勝ち (戦績の mode が tag。下剋上タッグも入る) */
 const tagWins = (c) => c.records.filter(r => r.win && r.mode === 'tag');
-const playedKinds = (c) => new Set(c.records.flatMap(r => r.cards || [])).size;
-const protoWins = (c) => new Set(c.records.filter(r => r.win).flatMap(r => r.me)).size;
+const playedKinds = (c) => new Set(every(c).flatMap(r => r.cards || [])).size;
+const protoWins = (c) => new Set(every(c).filter(r => r.win).flatMap(r => r.me || [])).size;
 const tierCards = (c, min) => Array.from(c.cardWins.values()).filter(t => t.wins >= min).length;
 /* その1試合。短縮マッチ (RUN・WEEKLY のように3本より少ないコンパイルで決着する試合) は数えない */
 const g = (c) => (c.game && !c.game.short ? c.game : null);
 /* プロトコルの習熟度のレベル (戦績から) の一覧 */
-const masteries = (c) => Array.from(protocolSummary(c.records).values()).map(t => t.mastery.level);
+const masteries = (c) => Array.from(protocolSummary(every(c)).values()).map(t => t.mastery.level);
 const bestMastery = (c) => Math.max(0, ...masteries(c));
-const playedProtos = (c) => new Set(c.records.flatMap(r => r.me || [])).size;
+const playedProtos = (c) => new Set(every(c).flatMap(r => r.me || [])).size;
 const hour = (c) => new Date(g(c).at).getHours();
 /* COMPUZZLE (詰めコンパイル): 経験値の帳簿の k:ts:t2-03 (問題ごと) と k:dp:日 (今日の問題) で数える。
    問題の数は data/tsume.json と揃える (test/tsume.test.js で確かめる) */
@@ -67,7 +70,7 @@ export const TROPHIES = [
     test: (c) => tsumeSolved(c, [1]) >= tsumeTotal([1]), progress: (c) => [tsumeSolved(c, [1]), tsumeTotal([1])] },
   { id: 'daily', tier: 'bronze', name: 'DAILY ROUTINE', desc: 'デイリーミッションを1日で3つそろえる', test: (c) => xpHas(c, e => /^k:dm:\d+:all$/.test(e.id)) },
   { id: 'cards60', tier: 'bronze', name: 'COLLECTOR', desc: '違うカードを60種類、表で出す', test: (c) => playedKinds(c) >= 60, progress: (c) => [Math.min(60, playedKinds(c)), 60] },
-  { id: 'explorer', tier: 'bronze', name: 'EXPLORER', desc: '10種類のプロトコルで戦う', test: (c) => new Set(c.records.flatMap(r => r.me)).size >= 10, progress: (c) => [new Set(c.records.flatMap(r => r.me)).size, 10] },
+  { id: 'explorer', tier: 'bronze', name: 'EXPLORER', desc: '10種類のプロトコルで戦う', test: (c) => playedProtos(c) >= 10, progress: (c) => [Math.min(10, playedProtos(c)), 10] },
   { id: 'bronze_card', tier: 'bronze', name: 'FIRST SHINE', desc: 'カードの縁を銅にする (そのカードで3勝)', test: (c) => tierCards(c, 3) >= 1 },
   { id: 'mastery3', tier: 'bronze', name: 'APPRENTICE', desc: 'どれかのプロトコルの習熟度を3にする', test: (c) => bestMastery(c) >= 3, progress: (c) => [Math.min(3, bestMastery(c)), 3] },
   { id: 'overclock', tier: 'bronze', hidden: true, name: 'OVERCLOCK', desc: '1試合で自分の効果を15回発動させる', test: (c) => !!g(c) && (g(c).effects | 0) >= 15 },
