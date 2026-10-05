@@ -100,7 +100,7 @@ export function runRoomLobby(protocols, opts = {}) {
       const code = room.code;
       room = null;
       lsSet('compileRoomLast', '');
-      roomApi('leave', { code }).catch(() => {});
+      roomApi('leave', { code, now: true }).catch(() => {});   // 自分から閉じた: すぐ片付ける (読み直しのときはサーバーが少し待つ)
     }
     function onPageHide() { if (inPregameRoom()) roomLeaveKeepalive(room.code); }
     function onVisible() { if (document.visibilityState === 'visible' && room) poll(); }
@@ -600,7 +600,10 @@ export function runRoomLobby(protocols, opts = {}) {
       }
       if (pollFails >= 3) status('');
       pollFails = 0;
-      if (next.unchanged) return;                                  // 前回から変わっていない (盤面は省かれている)
+      if (next.now) serverOffset = Date.parse(next.now) - Date.now();
+      /* 始まる前に相手が抜けた: 戻ってくるのを少し待っていることを出す (待っても戻らなければサーバーが部屋を片付ける) */
+      leftNotice(next.unchanged ? next.opponentLeftAt : next.opponentLeftAt);
+      if (next.unchanged) { await pickTimeoutIfDue(); return; }    // 前回から変わっていない (盤面は省かれている)
       if (next.version === room.version && next.status === room.status) { room = next; return; }
       const wasAttn = attention(room);
       room = next;
@@ -610,8 +613,51 @@ export function runRoomLobby(protocols, opts = {}) {
       renderRoom();
     }
 
+    /* ドラフト・プロトコル選びの持ち時間 (棚卸し O3)。相手の番で切れていたら、サーバーに自動で選ばせて先へ進める */
+    let serverOffset = 0, timeoutAsked = '';
+    function clockLeft() {
+      if (!room || !room.lastActionAt) return null;
+      const limit = room.status === 'draft' ? room.draftLimitMs : room.status === 'setup' ? room.setupLimitMs : 0;
+      if (!limit) return null;
+      return limit - (Date.now() + serverOffset - Date.parse(room.lastActionAt));
+    }
+    function waitingOnOpponent() {
+      if (!room) return false;
+      if (room.status === 'draft') return !!room.draft && room.draft.active !== room.side;
+      if (room.status === 'setup') {
+        const mineP = (room.protocols && room.protocols[room.side]) || [];
+        const theirs = (room.protocols && room.protocols[1 - room.side]) || [];
+        return mineP.length === 3 && theirs.length !== 3;
+      }
+      return false;
+    }
+    async function pickTimeoutIfDue() {
+      const left = clockLeft();
+      if (left === null || left > 0 || !waitingOnOpponent()) return;
+      const key = room.code + ':' + room.version + ':' + room.status;
+      if (timeoutAsked === key) return;
+      timeoutAsked = key;
+      try {
+        const next = await roomApi('pickTimeout', { code: room.code, version: room.version });
+        status('相手の持ち時間が切れたので、相手の分を自動で選びました', 'ok');
+        room = next;
+        if (room.status === 'playing' || room.status === 'finished') { done({ rm: room }); return; }
+        renderRoom();
+      } catch (e) { /* もう相手が選んだ・時間がまだ: 次の見張りで */ }
+    }
+    function leftNotice(at) {
+      if (!at) return;
+      const grace = (room && room.leaveGraceMs) || 30000;
+      const sec = Math.max(0, Math.ceil((grace - (Date.now() + serverOffset - Date.parse(at))) / 1000));
+      status('相手が画面を離れました。戻ってくるのを待っています (' + sec + ' 秒)', 'err');
+    }
+
     /* 待機中の経過時間。45秒たったら「CPU と遊ぶ」を出す */
     function tickWait() {
+      /* ドラフト・プロトコル選びの残り時間 */
+      const clock = $('#roClock');
+      const left = clockLeft();
+      if (clock) clock.textContent = left === null ? '' : '残り ' + Math.max(0, Math.ceil(left / 1000)) + ' 秒';
       const el = $('#roomWait');
       if (!el || !waitStart) return;
       const sec = Math.floor((Date.now() - waitStart) / 1000);
@@ -810,7 +856,9 @@ export function runRoomLobby(protocols, opts = {}) {
           /* いまどちらが選ぶ番か (いちばん上に大きく) */
           '<div class="ro-turn ' + (mine ? 'mine' : 'theirs') + '" role="status">' +
             (mine ? '<b>あなたの番</b><span>' + (isBan ? 'BAN を ' : '') + d.toPick + ' つ' + (isBan ? '' : '選ぶ') + '</span>'
-              : '<b>相手の番</b><span>' + (isBan ? 'BAN' : '選択') + 'を待っています…</span>') + '</div>' +
+              : '<b>相手の番</b><span>' + (isBan ? 'BAN' : '選択') + 'を待っています…</span>') +
+            /* 1回ぶんの持ち時間 (切れたら、止まっている側の分を自動で選ぶ) */
+            '<em class="ro-clock" id="roClock"></em></div>' +
           '<p class="ro-sub">' + esc(ruleText(d.rules)) + '　' +
             (bans ? 'BAN を先手から1つずつ交互に → ' : '') + '先手1 → 後手2 → 先手2 → 後手1。' +
             (d.first === room.side ? 'あなたが先手です。' : '相手が先手です。') + '</p>' +
@@ -844,7 +892,7 @@ export function runRoomLobby(protocols, opts = {}) {
       const other = (room.protocols && room.protocols[1 - room.side]) || [];
       sel = sel.filter(n => !other.includes(n));
       frame('ONLINE — プロトコル選択',
-        '<p class="ro-sub">使用するプロトコルを3つ。相手が選んだものは使えません。</p>' +
+        '<p class="ro-sub">使用するプロトコルを3つ。相手が選んだものは使えません。<em class="ro-clock" id="roClock"></em></p>' +
         chipGrid(protocols.map(p => p.name), other, 3) +
         '<button class="ro-big" id="roomReady" type="button"' + (sel.length === 3 ? '' : ' disabled') + '>準備完了 (' + sel.length + '/3)</button>');
       bindChips(3, renderRoom);

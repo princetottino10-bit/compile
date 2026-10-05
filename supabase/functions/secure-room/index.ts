@@ -45,6 +45,19 @@ function cleanName(value: unknown) {
 const TURN_LIMIT_MS = 120_000;
 /* 待機中の部屋を「まだ人がいる」とみなす長さ。作った人の画面が問い合わせるたびに更新時刻を新しくする */
 const WAITING_FRESH_MS = 90_000;
+/* 1試合で使える持ち時間の合計。毎手 120 秒ぎりぎりまで粘られても、合計がこれを超えたら時間切れ勝ちを主張できる (棚卸し O22) */
+const BANK_MS = 12 * 60_000;
+/* ドラフトの1回ぶん・プロトコル選びの持ち時間。過ぎたら相手が「時間切れ」を押すと、止まっている側の分を自動で選ぶ (棚卸し O3) */
+const DRAFT_LIMIT_MS = 75_000;
+const SETUP_LIMIT_MS = 120_000;
+/* 相手の画面がこれより長く問い合わせてこなければ「接続が切れている」とみなす (棚卸し O2)。
+   切れていて、その人の番で 30 秒以上止まっていれば、120 秒を待たずに時間切れ勝ちを主張できる */
+const OFFLINE_MS = 45_000;
+const OFFLINE_CLAIM_MS = 30_000;
+/* 始まる前に抜けた人を待つ長さ (うっかり読み直しで部屋が消えないように。棚卸し O18) */
+const LEAVE_GRACE_MS = 30_000;
+/* その人の画面が最後に見に来た時刻を残す間隔 (問い合わせのたびには書かない) */
+const SEEN_WRITE_MS = 8_000;
 
 /* 相手に見せる称号 (見た目だけ)。決まった一覧にあるものだけ。無ければ null */
 const BADGES = ["compiler", "veteran", "tactician", "expert", "architect", "master", "legend", "ascended", "underdog", "underdogduo", "tagmaster", "perfectsync",
@@ -259,6 +272,34 @@ async function recordRatedMatch(room: any, winner: number) {
   if (error) throw error;
 }
 
+/* レート戦の結果で、その人のレートがいくつからいくつになったか (終わった画面に出す)。記録が無ければ null */
+async function ratingChangeFor(room: any, side: number) {
+  if (!room || !room.rated || room.status !== "finished" || side < 0) return null;
+  const { data } = await admin.from("rated_matches")
+    .select("host_rating_before,host_rating_after,guest_rating_before,guest_rating_after").eq("room_id", room.id).maybeSingle();
+  if (!data) return null;
+  return side === 0 ? { before: data.host_rating_before, after: data.host_rating_after }
+    : { before: data.guest_rating_before, after: data.guest_rating_after };
+}
+
+/* いま誰の番か (選択待ちなら選ぶ人)。持ち時間を数える相手 */
+function waitingSide(room: any) {
+  const st = room.game_state;
+  if (!st) return -1;
+  const pend = room.pending_request;
+  return pend ? pend.player : st.turn;
+}
+
+/* 1試合の持ち時間: その番で使った時間を、番だった人の合計に足す (手を指すたび) */
+function usedAfter(room: any) {
+  const w = waitingSide(room);
+  if (room.mode === "tag" || (w !== 0 && w !== 1)) return {};
+  const since = Date.parse(room.last_action_at || room.updated_at);
+  const spent = Math.max(0, Math.min(TURN_LIMIT_MS, Date.now() - (Number.isFinite(since) ? since : Date.now())));
+  const field = w === 0 ? "host_used_ms" : "guest_used_ms";
+  return { [field]: (room[field] | 0) + spent };
+}
+
 function engineState(roomState: any) {
   const st = structuredClone(roomState);
   delete st.__trace;
@@ -317,6 +358,12 @@ function publicState(room: any, side: number, seat = -1, isHost = false) {
     badges: [room.host_badge || null, room.guest_badge || null],
     looks: [room.host_look || null, room.guest_look || null],
     lastActionAt: room.last_action_at || room.updated_at, turnLimitMs: TURN_LIMIT_MS, now: new Date().toISOString(),
+    /* 棚卸し O2・O3・O6・O18・O22: 相手の接続・1試合の持ち時間・ドラフトの持ち時間・決着の仕方・始まる前に抜けた人 */
+    seenAt: [room.host_seen_at || null, room.guest_seen_at || null],
+    usedMs: [room.host_used_ms | 0, room.guest_used_ms | 0], bankMs: BANK_MS, offlineMs: OFFLINE_MS, offlineClaimMs: OFFLINE_CLAIM_MS,
+    draftLimitMs: DRAFT_LIMIT_MS, setupLimitMs: SETUP_LIMIT_MS,
+    endReason: room.end_reason || null,
+    opponentLeftAt: room.left_at && side >= 0 && room.left_side !== side ? room.left_at : null, leaveGraceMs: LEAVE_GRACE_MS,
     protocols: [room.host_protocols, room.guest_protocols],
     rated: !!room.rated,
     canUndo: !!room.undo_state && room.undo_state.side === side && Number(room.undo_state.version) === Number(room.version) && room.status === "playing",
@@ -765,7 +812,8 @@ Deno.serve(async (req) => {
           return fail(req, "パスワードが違います", 403);
         }
         const isDraft = !!(room.draft_state && room.draft_state.on);
-        const upd: any = { guest_id: user.id, guest_name: name, guest_badge: cleanBadge(body.badge), guest_look: cleanLook(body.look), updated_at: new Date().toISOString() };
+        /* last_action_at: ドラフト・プロトコル選びの持ち時間はここから数える */
+        const upd: any = { guest_id: user.id, guest_name: name, guest_badge: cleanBadge(body.badge), guest_look: cleanLook(body.look), updated_at: new Date().toISOString(), last_action_at: new Date().toISOString() };
         if (isDraft) {
           // ドラフト開始: 先手後攻をランダム抽選し、ルールどおりの数だけプロトコルを抽選してプールに並べる
           const first = Math.random() < 0.5 ? 0 : 1;
@@ -785,7 +833,14 @@ Deno.serve(async (req) => {
         room = data;
       }
       const side = sideOf(room, user.id);
-      return side < 0 ? fail(req, "参加できません", 403) : json(req, publicState(room, side));
+      if (side < 0) return fail(req, "参加できません", 403);
+      /* 始まる前に抜けた人が戻ってきた: 待っていた印を消す */
+      if (room.left_at && room.left_side === side) {
+        const { data } = await admin.from("secure_rooms").update({ left_side: null, left_at: null, updated_at: new Date().toISOString() })
+          .eq("id", room.id).select("*").maybeSingle();
+        if (data) room = data;
+      }
+      return json(req, publicState(room, side));
     }
 
     /* 観戦: 公開・合言葉なし・観戦を許した1対1の対戦だけ。手札と裏向きのカードはどちらも伏せる (side = -1)。
@@ -817,6 +872,23 @@ Deno.serve(async (req) => {
           if (cont.state !== st) return await commitResult(req, room, side, cont, seat, isHost);
         }
       }
+      /* 始まる前に相手が抜けて、待っても戻ってこなかった: ここで片付ける (すぐ消すと、うっかり読み直しで部屋が消えていた) */
+      if (room.mode !== "tag" && room.left_at && room.left_side !== side && room.status !== "playing") {
+        if (Date.now() - Date.parse(room.left_at) > LEAVE_GRACE_MS) {
+          await admin.from("secure_rooms").delete().eq("id", room.id);
+          return fail(req, "ルームが見つかりません", 404);
+        }
+      }
+      /* この人の画面が見に来た時刻 (相手に「接続が切れています」を出すため)。毎回は書かない。更新時刻は変えない (相手の画面の描き直しを起こさない) */
+      if (room.mode !== "tag") {
+        const field = side === 0 ? "host_seen_at" : "guest_seen_at";
+        const seen = Date.parse(room[field] || "");
+        if (!Number.isFinite(seen) || Date.now() - seen > SEEN_WRITE_MS) {
+          const now = new Date().toISOString();
+          await admin.from("secure_rooms").update({ [field]: now }).eq("id", room.id);
+          room[field] = now;
+        }
+      }
       if (room.status === "waiting" && isHost && Date.now() - Date.parse(room.updated_at) > 25_000) {
         const now = new Date().toISOString();
         await admin.from("secure_rooms").update({ updated_at: now }).eq("id", room.id);
@@ -824,9 +896,15 @@ Deno.serve(async (req) => {
       }
       /* 前回から変わっていなければ、盤面を丸ごと返さずに「変化なし」だけ返す (ポーリングの通信を減らす) */
       if (typeof body.stamp === "string" && body.stamp === stampOf(room)) {
-        return json(req, { code: room.code, status: room.status, version: room.version, side, stamp: body.stamp, unchanged: true });
+        /* 変化なしでも、相手が最後に見に来た時刻と今の時刻は渡す (接続が切れたかを出すため) */
+        return json(req, { code: room.code, status: room.status, version: room.version, side, stamp: body.stamp, unchanged: true,
+          seenAt: [room.host_seen_at || null, room.guest_seen_at || null], now: new Date().toISOString(),
+          opponentLeftAt: room.left_at && room.left_side !== side ? room.left_at : null });
       }
-      return json(req, stateOf(room));
+      const view: any = stateOf(room);
+      /* レート戦が終わっていたら、レートの増減も (終わった画面に出す) */
+      if (room.status === "finished" && room.rated) view.ratingChange = await ratingChangeFor(room, side).catch(() => null);
+      return json(req, view);
     }
 
     /* ---- タッグの待合室: 席を移る・CPU にする・よく使う形・始める ---- */
@@ -895,13 +973,50 @@ Deno.serve(async (req) => {
           replay_log: replayStart(seed, room.host_protocols, room.guest_protocols, first),
           last_log: Array.isArray(result.log) ? result.log : [],
           status: "playing", version: room.version + 1,
-          updated_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(), last_action_at: new Date().toISOString(),
         }).eq("id", room.id).eq("version", room.version).select("*").single();
         if (startError) return fail(req, "対戦開始が競合しました", 409);
         room = started;
       }
       return json(req, publicState(room, side));
     }
+
+    /* ドラフトの1回ぶんを指す (自分で選んだ / 持ち時間が切れて自動で選んだ) */
+    const applyDraftPick = async (pickSide: number, picks: string[]) => {
+      const ds = room.draft_state;
+      const rules = cleanDraftRules(ds.rules);
+      const steps = draftSteps(ds.first, rules.bans);
+      const step = steps[ds.step];
+      const field = pickSide === 0 ? "host_protocols" : "guest_protocols";
+      /* BAN は自分のプロトコルにはならず、プールから外れるだけ */
+      const isBan = step.kind === "ban";
+      const nextProtos = isBan ? (room[field] || []) : (room[field] || []).concat(picks);
+      const banned = [((ds.banned || [])[0] || []).slice(), ((ds.banned || [])[1] || []).slice()];
+      if (isBan) banned[pickSide] = banned[pickSide].concat(picks);
+      const nextPool = (ds.pool || []).filter((p: string) => picks.indexOf(p) < 0);
+      const nextStep = ds.step + 1;
+      const upd: any = {
+        [field]: nextProtos,
+        draft_state: { on: true, rules, pool: nextPool, first: ds.first, step: nextStep, banned },
+        version: room.version + 1, updated_at: new Date().toISOString(), last_action_at: new Date().toISOString(),
+      };
+      if (nextStep >= steps.length) {
+        const host = pickSide === 0 ? nextProtos : (room.host_protocols || []);
+        const guest = pickSide === 1 ? nextProtos : (room.guest_protocols || []);
+        const seed = crypto.getRandomValues(new Uint32Array(1))[0];
+        const result = Engine.newGame({ p0: host, p1: guest, seed, useControl: true, first: ds.first });
+        upd.game_state = result.state;
+        upd.replay_log = replayStart(seed, host, guest, ds.first);
+        upd.pending_request = result.requests[0] || null;
+        upd.last_log = Array.isArray(result.log) ? result.log : [];
+        upd.status = "playing";
+        upd.draft_state = { on: true, rules, pool: [], first: ds.first, step: nextStep, banned, done: true };
+      }
+      const { data, error } = await admin.from("secure_rooms").update(upd)
+        .eq("id", room.id).eq("version", room.version).select("*").single();
+      if (error) return fail(req, "相手の操作と競合しました。再読み込みします", 409);
+      return json(req, publicState(data, side));
+    };
 
     if (op === "draftpick") {
       if (room.status !== "draft" || !room.draft_state || !room.draft_state.on) return fail(req, "ドラフト中ではありません", 409);
@@ -917,35 +1032,47 @@ Deno.serve(async (req) => {
       if (new Set(picks).size !== picks.length || picks.some((p: string) => (ds.pool || []).indexOf(p) < 0)) {
         return fail(req, "選択が不正です");
       }
-      const field = side === 0 ? "host_protocols" : "guest_protocols";
-      /* BAN は自分のプロトコルにはならず、プールから外れるだけ */
-      const isBan = step.kind === "ban";
-      const nextProtos = isBan ? (room[field] || []) : (room[field] || []).concat(picks);
-      const banned = [((ds.banned || [])[0] || []).slice(), ((ds.banned || [])[1] || []).slice()];
-      if (isBan) banned[side] = banned[side].concat(picks);
-      const nextPool = (ds.pool || []).filter((p: string) => picks.indexOf(p) < 0);
-      const nextStep = ds.step + 1;
-      const upd: any = {
-        [field]: nextProtos,
-        draft_state: { on: true, rules, pool: nextPool, first: ds.first, step: nextStep, banned },
-        version: room.version + 1, updated_at: new Date().toISOString(),
-      };
-      if (nextStep >= steps.length) {
-        const host = side === 0 ? nextProtos : (room.host_protocols || []);
-        const guest = side === 1 ? nextProtos : (room.guest_protocols || []);
-        const seed = crypto.getRandomValues(new Uint32Array(1))[0];
-        const result = Engine.newGame({ p0: host, p1: guest, seed, useControl: true, first: ds.first });
-        upd.game_state = result.state;
-        upd.replay_log = replayStart(seed, host, guest, ds.first);
-        upd.pending_request = result.requests[0] || null;
-        upd.last_log = Array.isArray(result.log) ? result.log : [];
-        upd.status = "playing";
-        upd.draft_state = { on: true, rules, pool: [], first: ds.first, step: nextStep, banned, done: true };
+      return await applyDraftPick(side, picks);
+    }
+
+    /* ドラフト・プロトコル選びの時間切れ: 止まっている相手の分を自動で選んで先へ進める (棚卸し O3。
+       前はドラフト中に持ち時間が無く、相手が止まると何時間でも待たされた)。待っている側の画面が呼ぶ */
+    if (op === "pickTimeout") {
+      if (room.mode === "tag") return fail(req, "タッグでは使えません", 409);
+      const since = Date.parse(room.last_action_at || room.updated_at);
+      const elapsed = Date.now() - (Number.isFinite(since) ? since : Date.now());
+      if (room.status === "draft" && room.draft_state && room.draft_state.on) {
+        const ds = room.draft_state;
+        const rules = cleanDraftRules(ds.rules);
+        const step = draftSteps(ds.first, rules.bans)[ds.step];
+        if (!step) return fail(req, "ドラフトは終了しています", 409);
+        if (step.side === side) return fail(req, "あなたの番です", 409);
+        if (elapsed < DRAFT_LIMIT_MS) return fail(req, "相手の持ち時間はまだ残っています", 409);
+        if (Number(body.version) !== Number(room.version)) return fail(req, "状態が更新されています", 409);
+        return await applyDraftPick(step.side, shuffled(ds.pool || []).slice(0, step.n));
       }
-      const { data, error } = await admin.from("secure_rooms").update(upd)
-        .eq("id", room.id).eq("version", room.version).select("*").single();
-      if (error) return fail(req, "相手の操作と競合しました。再読み込みします", 409);
-      return json(req, publicState(data, side));
+      if (room.status === "setup") {
+        const mine = side === 0 ? room.host_protocols : room.guest_protocols;
+        const theirs = side === 0 ? room.guest_protocols : room.host_protocols;
+        if (!(mine && mine.length === 3)) return fail(req, "先に自分の3つを選んでください", 409);
+        if (theirs && theirs.length === 3) return fail(req, "相手はもう選んでいます", 409);
+        if (elapsed < SETUP_LIMIT_MS) return fail(req, "相手の持ち時間はまだ残っています", 409);
+        const auto = shuffled(ALL_PROTOCOLS.filter((p: string) => mine.indexOf(p) < 0)).slice(0, 3);
+        const hostP = side === 0 ? mine : auto, guestP = side === 0 ? auto : mine;
+        const first = Math.random() < 0.5 ? 0 : 1;
+        const seed = crypto.getRandomValues(new Uint32Array(1))[0];
+        const result = Engine.newGame({ p0: hostP, p1: guestP, seed, useControl: true, first });
+        const { data, error } = await admin.from("secure_rooms").update({
+          host_protocols: hostP, guest_protocols: guestP,
+          game_state: result.state, pending_request: result.requests[0] || null,
+          replay_log: replayStart(seed, hostP, guestP, first),
+          last_log: Array.isArray(result.log) ? result.log : [],
+          status: "playing", version: room.version + 1, updated_at: new Date().toISOString(), last_action_at: new Date().toISOString(),
+        }).eq("id", room.id).eq("version", room.version).select("*").single();
+        if (error) return fail(req, "相手の操作と競合しました。再読み込みします", 409);
+        return json(req, publicState(data, side));
+      }
+      return fail(req, "いまは使えません", 409);
     }
 
     /* 待機・ドラフト・プロトコル選択の途中で抜ける: 部屋を片付ける (対戦中は投了を使う) */
@@ -956,9 +1083,16 @@ Deno.serve(async (req) => {
         if (error) throw error;
         return json(req, { ok: true });
       }
-      const { error } = await admin.from("secure_rooms").delete().eq("id", room.id);
+      /* 相手がまだいない部屋は、すぐ片付ける。相手がいるとき (ドラフト・プロトコル選び) は、しばらく戻ってくるのを待つ
+         (読み直しや一瞬の切り替えで部屋が消え、相手が放り出されていた)。待っても戻らなければ、相手の画面の問い合わせで片付く */
+      if (!room.guest_id || room.left_at || body.now === true) {      // now: 「部屋を閉じる」で自分から閉じたとき (待たない)
+        const { error } = await admin.from("secure_rooms").delete().eq("id", room.id);
+        if (error) throw error;
+        return json(req, { ok: true });
+      }
+      const { error } = await admin.from("secure_rooms").update({ left_side: side, left_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", room.id);
       if (error) throw error;
-      return json(req, { ok: true });
+      return json(req, { ok: true, grace: true });
     }
 
     /* 時間切れ勝ち: 相手の番 (相手の選択待ち) のまま持ち時間を過ぎていたら、相手の投了として決着させる */
@@ -972,10 +1106,18 @@ Deno.serve(async (req) => {
       if (tagRoom ? waitingSeat === seat : waiting === side) return fail(req, "あなたの番です", 409);
       if (tagRoom && (room.seats || [])[waitingSeat]?.cpu) return fail(req, "CPU の番です。少し待ってください", 409);
       const since = Date.parse(room.last_action_at || room.updated_at);
-      if (Date.now() - since < TURN_LIMIT_MS) return fail(req, "相手の持ち時間はまだ残っています", 409);
+      const elapsed = Date.now() - since;
+      /* 時間切れの3つの形: この手で 120 秒 / 1試合の持ち時間の合計を超えた (棚卸し O22) /
+         接続が切れていて、その人の番で 30 秒以上止まっている (棚卸し O2) */
+      const usedField = waiting === 0 ? "host_used_ms" : "guest_used_ms";
+      const seenField = waiting === 0 ? "host_seen_at" : "guest_seen_at";
+      const seen = Date.parse(room[seenField] || "");
+      const offline = !tagRoom && Number.isFinite(seen) && Date.now() - seen > OFFLINE_MS;
+      const overBank = !tagRoom && (room[usedField] | 0) + elapsed > BANK_MS;
+      if (elapsed < TURN_LIMIT_MS && !overBank && !(offline && elapsed > OFFLINE_CLAIM_MS)) return fail(req, "相手の持ち時間はまだ残っています", 409);
       const result = Engine.apply(st, { type: "surrender", player: waiting });
       if (result.error) return fail(req, result.error);
-      return await commitResult(req, room, side, result, seat, isHost, null, { type: "surrender", player: waiting });
+      return await commitResult(req, room, side, result, seat, isHost, null, { type: "surrender", player: waiting, timeout: true });
     }
 
     /* リプレイ: 決着した1対1の部屋の、始めの条件と手の列。参加者だけ (対戦中は手札の中身が分かるので返さない) */
@@ -1061,6 +1203,9 @@ async function commitResult(req: Request, room: any, side: number, result: any, 
         game_state: nextGame, pending_request: result.requests[0] || null,
         last_log: Array.isArray(result.log) ? result.log : [],
         status: result.winner === null ? "playing" : "finished", version: nextVersion, undo_state: undo,
+        /* 1試合の持ち時間 (番だった人が使った時間を足す)・決着の仕方 (終わった画面に出す) */
+        ...usedAfter(room),
+        ...(result.winner !== null ? { end_reason: action && action.type === "surrender" ? (action.timeout ? "timeout" : "surrender") : "compile" } : {}),
         ...(room.replay_log && action ? { replay_log: replayPush(room.replay_log, action) } : {}),
         last_action_at: new Date().toISOString(), updated_at: new Date().toISOString(),
       }).eq("id", room.id).eq("version", room.version).select("*").single();
@@ -1070,6 +1215,7 @@ async function commitResult(req: Request, room: any, side: number, result: any, 
         try { await recordRatedMatch(room, result.winner); }
         catch (ratingError) { console.error("rated match record failed", ratingError); ratedError = true; }
       }
-      const view = publicState(data, side, seat, isHost);
+      const view: any = publicState(data, side, seat, isHost);
+      if (result.winner !== null && room.rated && !ratedError) view.ratingChange = await ratingChangeFor(data, side).catch(() => null);
       return json(req, ratedError ? { ...view, ratedError: true } : view);
 }

@@ -3484,8 +3484,16 @@ function updateTurnTimer() {
   if (!el) return;
   if (!roomMode || !rm || rm.status !== 'playing' || !rm.lastActionAt || !rm.turnLimitMs || !st || st.winner !== null) { el.hidden = true; return; }
   const mine = (rm.legalActions || []).length > 0 || !!rm.request;
-  const left = Math.ceil((rm.turnLimitMs - (Date.now() + roomServerOffset - Date.parse(rm.lastActionAt))) / 1000);
+  const elapsedMs = Date.now() + roomServerOffset - Date.parse(rm.lastActionAt);
+  /* この手の 120 秒と、1試合の持ち時間の残り (毎手ぎりぎりまで粘れないように) の、短いほう */
+  const waitSeat = mine ? rm.side : 1 - rm.side;
+  const bankLeft = rm.bankMs && Array.isArray(rm.usedMs) ? rm.bankMs - (rm.usedMs[waitSeat] | 0) - elapsedMs : Infinity;
+  const left = Math.ceil(Math.min(rm.turnLimitMs - elapsedMs, bankLeft) / 1000);
   const fmt = (n) => Math.floor(Math.max(0, n) / 60) + ':' + String(Math.max(0, n) % 60).padStart(2, '0');
+  /* 相手の接続が切れているか (相手の画面がしばらく問い合わせてこない) */
+  const oppSeen = Array.isArray(rm.seenAt) ? Date.parse(rm.seenAt[1 - rm.side] || '') : NaN;
+  const oppOffline = !roomWatching && Number.isFinite(oppSeen) && rm.offlineMs && Date.now() + roomServerOffset - oppSeen > rm.offlineMs;
+  const offlineClaim = oppOffline && !mine && rm.offlineClaimMs && elapsedMs > rm.offlineClaimMs;
   el.hidden = false;
   el.classList.toggle('mine', mine);
   el.classList.toggle('warn', left <= 30);
@@ -3495,9 +3503,9 @@ function updateTurnTimer() {
     const key = rm.lastActionAt + ':' + mark;
     if (mark && turnWarned !== key && left > 0) { turnWarned = key; callMe('残り ' + left + ' 秒', 'tick'); }
   }
-  if (!mine && left <= 0 && !roomWatching) {
+  if (!mine && (left <= 0 || offlineClaim) && !roomWatching) {
     if (!el.querySelector('button')) {
-      el.innerHTML = '<span>相手の持ち時間が切れました</span><button type="button">時間切れで勝ちにする</button>';
+      el.innerHTML = '<span>' + (left <= 0 ? '相手の持ち時間が切れました' : '相手の接続が切れたままです') + '</span><button type="button">時間切れで勝ちにする</button>';
       el.querySelector('button').onclick = async () => {
         try { const next = await ROOM.roomApi('claimTimeout', { code: rm.code }); await roomApplyView(next); }
         catch (e) { UI.toast(e.message || '通信エラー'); }
@@ -3505,7 +3513,9 @@ function updateTurnTimer() {
     }
     return;
   }
-  el.textContent = (mine ? 'あなたの持ち時間 ' : '相手の持ち時間 ') + fmt(left);
+  el.textContent = (mine ? 'あなたの持ち時間 ' : '相手の持ち時間 ') + fmt(left) +
+    (oppOffline && !mine ? ' ・ 相手の接続が切れています (戻るのを待っています)' : '');
+  el.classList.toggle('offline', !!oppOffline && !mine);
 }
 /* 問い合わせの間隔 (サーバーの呼び出し回数 = 無料枠を節約する)。
    自分が操作する番 (手番・自分への選択待ち) は相手が盤面を変えないので 4 秒。
@@ -3554,6 +3564,7 @@ async function roomPoll(force) {
   if (next.unchanged || (next.version === roomRm.version && next.status === roomRm.status)) {
     roomPollIdle++;
     if (!next.unchanged) roomRm = next;
+    else if (next.seenAt) roomRm = { ...roomRm, seenAt: next.seenAt };     // 相手の接続 (持ち時間の表示に出す)
     await roomDrainRequest();          // 取りこぼしたリクエストの再開
     return;
   }
@@ -5459,6 +5470,18 @@ async function storyAfterGame(win) {
 
 /* 決着の画面に出す「次の目標」: 次のレベルまでの経験値と、今日のデイリーミッションの残り */
 /* この試合のまとめ: 何手で決着したか・コンパイルの順番 (gameHistory の盤面から)。終わった画面に1行で */
+/* オンラインの決着の仕方 (投了・時間切れ) とレートの増減 (前はどの決着も同じ見た目で、レートも出なかった) */
+function onlineEndHtml(win) {
+  if (!roomMode || !roomRm) return '';
+  const r = roomRm.endReason;
+  const why = r === 'surrender' ? (win ? '相手が投了しました' : '投了しました')
+    : r === 'timeout' ? (win ? '相手の時間切れで勝ち' : '時間切れで負け') : '';
+  const rc = roomRm.ratingChange;
+  const rate = rc && Number.isFinite(rc.before) && Number.isFinite(rc.after)
+    ? 'レート ' + rc.before + ' → ' + rc.after + ' (' + (rc.after - rc.before >= 0 ? '+' : '') + (rc.after - rc.before) + ')' : '';
+  return why || rate ? '<p class="end-sum">' + [why, rate].filter(Boolean).join(' ・ ') + '</p>' : '';
+}
+
 function canRedeck() {
   return !roomMode && !runMode && !storyNode && !tutorial && !puzzle && !trainingMode && !demoMode && !tagMates && !replayMode
     && Number.isInteger(aiDifficulty) && aiDifficulty !== UNDERDOG_LEVEL;   // 下剋上はデッキが決まっている
@@ -5581,6 +5604,7 @@ function showEndActions(win) {
   if (underdogWin) celebrateUnderdog();
   el.innerHTML =
     '<div class="end-title">' + (underdogWin ? '下剋上 達成！' : win ? 'あなたの勝ち' : '敗北') + '</div>' +
+    onlineEndHtml(win) +
     gainsHtml() +
     matchSummaryHtml() +
     nextGoalsHtml() +
