@@ -2742,12 +2742,16 @@
   #title .tt-tutcont button:hover,#title .tt-tutcont button:focus-visible{background:rgba(124,240,208,.14);outline:0;}
   #title .tt-cos,#title .tt-tsume{position:relative;}
   #title .tt-daily-n{color:var(--mint);border-color:rgba(124,240,208,.45);}
-  #title .tt-chipn{position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);padding:2px 6px;white-space:nowrap;pointer-events:none;
+  /* 下の段のボタンの札 (今日の問題・CHIP): ボタンの中の2行目に。前は下にはみ出して、ボタンの切り欠きで切れていた */
+  #title .tt-chipn{display:block;width:max-content;margin:6px auto 0;padding:2px 6px;white-space:nowrap;pointer-events:none;
     font:800 9px/1 var(--font-ui);font-style:normal;letter-spacing:.06em;color:var(--gold);background:rgba(20,16,34,.95);border:1px solid rgba(255,200,90,.4);}
-  /* メニューの進み具合の札 */
+  /* メニューの進み具合の札: 見出しのすぐ右に (前は右上に重ねていて、BOSS · UNDERDOG などの小見出しと重なっていた) */
   #title .tt-main button{position:relative;}
-  #title .tt-badge{position:absolute;top:4px;right:10px;padding:3px 7px;font:800 9.5px/1 var(--font-ui);font-style:normal;letter-spacing:.06em;
+  #title .tt-main button small{order:2;}
+  #title .tt-badge{order:1;align-self:center;margin:0 auto 0 4px;padding:3px 7px;white-space:nowrap;font:800 9.5px/1 var(--font-ui);font-style:normal;letter-spacing:.06em;
     color:var(--ink);background:rgba(20,16,34,.95);border:1px solid rgba(255,255,255,.22);clip-path:var(--cut-s);pointer-events:none;}
+  /* 狭い画面は、札があるボタンの英語の小見出しを外す (3つは1行に入らない) */
+  @media (max-width:520px){ #title .tt-main button:has(.tt-badge) small{display:none;} }
   #title .tt-badge.hot{color:#0c0a14;background:var(--mint);border-color:var(--mint);}
   /* 中断した対戦の続き (メニューのいちばん上、2列ぶん) */
   #title .tt-main .tt-resume{grid-column:1 / -1;border-color:var(--mint);background:linear-gradient(100deg,rgba(124,240,208,.16),rgba(124,240,208,.03));}
@@ -3307,7 +3311,7 @@
   .tt-first .dn-field{margin-top:8px;cursor:auto;}
   .tt-first-note{display:block;margin-top:4px;font:500 10.5px/1.5 "M PLUS 1",system-ui;color:var(--dim);}
   /* 背の低い画面 (ノート PC・スマホ) では、メニューが下にはみ出すので出さない (最初の1戦のあとにタイトルで一度聞く: title.js) */
-  @media (max-height:800px){ #title .tt-first .dn-field,#title .tt-first-note{display:none;} }   /* #title .tt-first div より強く (狭い画面でメニューが押し出されていた) */
+  @media (max-height:900px),(max-width:520px){ #title .tt-first .dn-field,#title .tt-first-note{display:none;} }   /* スマホではメニューが押し出されて下のボタンと重なった (名前は最初の対戦のあとに聞く) */   /* #title .tt-first div より強く (狭い画面でメニューが押し出されていた) */
 
   /* 文字の大きさ「大」(html.ui-big と --text-scale。対戦のログは main.js 側の CSS が同じ変数を使う) */
   html.ui-big #toast{font-size:calc(11px * var(--text-scale, 1));line-height:1.3;}
