@@ -1603,7 +1603,7 @@
   .ss-portrait{transition:opacity .25s,transform .25s,filter .25s;}
   .ss-portrait.dim{filter:brightness(.5) saturate(.65);transform:translateY(10px) scale(.97);transform-origin:bottom center;z-index:0;}
   .ss-portrait.on:not(.dim){z-index:1;}   /* 重なったら、話している人を前に */
-  .ss-box,.ss-title,.ss-alert,.ss-skip{z-index:2;}
+  .ss-box,.ss-title,.ss-alert{z-index:2;}
   /* 館内放送: 金色の名札と、名札の横で点滅する印 (天井のスピーカーから流れている) */
   .ss-box.pa{border-color:rgba(255,211,107,.45);}
   .ss-box.pa .ss-name::after{content:"●";margin-left:8px;animation:ssBlink 1.1s steps(2) infinite;}
@@ -1655,8 +1655,21 @@
   @keyframes ssAlertOpen{from{clip-path:inset(0 50% 0 50%);}to{clip-path:inset(0 0 0 0);}}
   @keyframes ssAlertRun{to{transform:translateX(34px);}}
   @keyframes ssAlertText{from{opacity:0;letter-spacing:1.1em;}to{opacity:1;letter-spacing:.5em;}}
-  .ss-skip{position:absolute;top:calc(14px + env(safe-area-inset-top));left:14px;padding:8px 12px;border-radius:7px;border:1px solid rgba(255,255,255,.2);
+  /* 左上の道具: SKIP (既読だけ) / AUTO / LOG。押しやすいよう高さ 32px 以上 */
+  .ss-tools{position:absolute;top:calc(14px + env(safe-area-inset-top));left:14px;display:flex;gap:8px;z-index:2;}
+  .ss-tools button{min-height:34px;padding:8px 12px;border-radius:7px;border:1px solid rgba(255,255,255,.2);
     background:rgba(8,11,22,.7);color:#fff;font:800 11px/1 var(--font-hud),"M PLUS 1",system-ui;letter-spacing:.12em;cursor:pointer;}
+  .ss-tools button:hover,.ss-tools button:focus-visible{border-color:rgba(255,255,255,.55);outline:none;}
+  .ss-tools .ss-auto.on{background:#ffc65c;color:#1d1608;border-color:#ffc65c;}
+  .ss-tools .ss-skip.armed{background:#7a1f2c;border-color:#ff8a9a;}
+  /* ログ: 画面を暗くして、これまでの会話を上へさかのぼる */
+  .ss-logview{position:absolute;inset:0;z-index:5;background:rgba(3,4,10,.9);display:flex;flex-direction:column;align-items:center;cursor:pointer;}
+  .ss-logwrap{flex:1;overflow-y:auto;width:min(760px,calc(100% - 32px));padding:calc(64px + env(safe-area-inset-top)) 0 24px;}
+  .ss-logwrap p{margin:0 0 14px;color:#e8eaf0;font:500 15px/1.7 "M PLUS 1",system-ui;}
+  .ss-logwrap b{display:block;margin-bottom:2px;color:var(--sc,#a07bff);font:800 12px/1.2 "M PLUS 1",system-ui;letter-spacing:.08em;}
+  .ss-logclose{padding:14px 0 calc(18px + env(safe-area-inset-bottom));color:rgba(255,255,255,.7);font:700 13px/1 "M PLUS 1",system-ui;letter-spacing:.1em;}
+  /* 文字の枠を消す (H・右クリック) */
+  #storyScene.hide-ui .ss-box,#storyScene.hide-ui .ss-tools,#storyScene.hide-ui .ss-title{opacity:0;pointer-events:none;}
   @media (max-width:600px){ .ss-text{font-size:15px;} .ss-portrait{height:min(58vh,520px);right:-6vw;} .ss-portrait[data-slot="l"]{left:-14vw;right:auto;} }
   @media (prefers-reduced-motion: reduce){ .sm-node.next::before,.ss-next{animation:none;} .ss-portrait{transition:none;}
     .ss-title b,.ss-title::before,.ss-title::after,.ss-alert.on,.ss-alert::before,.ss-alert::after,.ss-alert b,.sty-res.lose>b,.ss-box.terminal .ss-text::after{animation:none;} }
@@ -4307,7 +4320,7 @@
       "./js3d/story-map.js": "./js3d/story-map.js?v=3e07667ec4",
       "./js3d/story-scenery-aquarium.js": "./js3d/story-scenery-aquarium.js?v=b4b046214b",
       "./js3d/story-scenery.js": "./js3d/story-scenery.js?v=9fa267bcf9",
-      "./js3d/story-ui.js": "./js3d/story-ui.js?v=d439cd3f59",
+      "./js3d/story-ui.js": "./js3d/story-ui.js?v=6a77f85f20",
       "./js3d/story-world.js": "./js3d/story-world.js?v=0151b89955",
       "./js3d/story.js": "./js3d/story.js?v=391b6bfafa",
       "./js3d/support.js": "./js3d/support.js?v=86cfbcc21a",
@@ -4365,7 +4378,7 @@
   <link rel="modulepreload" href="js3d/stats.js?v=d24404cb85">
   <link rel="modulepreload" href="js3d/stats-data.js?v=0fb6e5d36d">
   <link rel="modulepreload" href="js3d/story.js?v=391b6bfafa">
-  <link rel="modulepreload" href="js3d/story-ui.js?v=d439cd3f59">
+  <link rel="modulepreload" href="js3d/story-ui.js?v=6a77f85f20">
   <link rel="modulepreload" href="js3d/story-world.js?v=0151b89955">
   <link rel="modulepreload" href="js3d/rewards.js?v=ff8a27bac3">
   <link rel="modulepreload" href="js3d/gachafx.js?v=3d15a2226f">

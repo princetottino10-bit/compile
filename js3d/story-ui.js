@@ -28,8 +28,8 @@ export function lineKey(text) {
 
 /* 会話の声: 設定の「キャラの声の音量」で鳴らし、次の行へ進んだら止める。無い行は黙って飛ばす */
 function makeVoice() {
-  let stop = null, seq = 0;
-  const halt = () => { seq++; if (stop) { stop(); stop = null; } };
+  let stop = null, seq = 0, endsAt = 0;
+  const halt = () => { seq++; endsAt = 0; if (stop) { stop(); stop = null; } };
   const play = (id, text) => {
     halt();
     if (!id || isMuted()) return;
@@ -40,11 +40,37 @@ function makeVoice() {
       if (!h) return;
       if (my !== seq) { h.stop(); return; }
       stop = h.stop;
+      endsAt = performance.now() + h.duration * 1000;
       duckBgm(h.duration * 1000 + 200);
     }, () => { /* 声が無くても読める */ });
   };
-  return { play, halt };
+  /* 声の残り (ミリ秒)。鳴っていなければ 0 */
+  const left = () => Math.max(0, endsAt - performance.now());
+  return { play, halt, left };
 }
+
+/* ---------- 既読・ログ・オート (ADV の当たり前の機能。.claude/skills/story-craft/research/06_adv_ui.md) ---------- */
+const READ_KEY = 'compileStoryRead';
+const AUTO_KEY = 'compileStoryAuto';
+const LOG_MAX = 200;
+const AUTO_WAIT = 900, AUTO_PER_CHAR = 55;      // オート: 読み終えてから次へ進むまでの間 (文字が多いほど長く)
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* private mode */ } }
+};
+const readSet = new Set(store.get(READ_KEY, []));
+const lineId = (line) => lineKey((line.who || '') + '|' + line.text);
+const isRead = (line) => readSet.has(lineId(line));
+function markRead(line) {
+  const k = lineId(line);
+  if (readSet.has(k)) return;
+  readSet.add(k);
+  store.set(READ_KEY, [...readSet].slice(-5000));
+}
+/* 会話のログ: 場面をまたいで、地図を開いているあいだ残す (古いものから捨てる) */
+const LOG = [];
+const logPush = (name, text, color) => { LOG.push({ name, text, color }); if (LOG.length > LOG_MAX) LOG.shift(); };
+export const logChoice = (label) => logPush('▶', label, '#ffc65c');
 
 function overlay(id, label) {
   let el = document.getElementById(id);
@@ -69,7 +95,9 @@ export function playScene(lines, opts = {}) {
     (opts.title ? '<div class="ss-title"><b>' + esc(opts.title) + '</b></div>' : '') +
     '<div class="ss-alert" aria-hidden="true"><b></b></div>' +
     '<div class="ss-box"><div class="ss-name"></div><p class="ss-text"></p><span class="ss-next" aria-hidden="true">▼</span></div>' +
-    '<button type="button" class="ss-skip">SKIP ▸▸</button>';
+    '<div class="ss-tools"><button type="button" class="ss-skip" title="読んだ所を飛ばす (Esc)">SKIP ▸▸</button>' +
+    '<button type="button" class="ss-auto" title="自動で進める (A)">AUTO</button>' +
+    '<button type="button" class="ss-log" title="これまでの会話 (L・ホイールを上へ)">LOG</button></div>';
   el.classList.add('show');
   /* 立ち絵は右と左の2か所。話している人は明るく、聞いている人は少し暗く */
   const slots = ['r', 'l'].map(k => ({ el: el.querySelector('.ss-portrait[data-slot="' + k + '"]'), who: null, face: 'normal' }));
@@ -89,9 +117,14 @@ export function playScene(lines, opts = {}) {
   const alertEl = el.querySelector('.ss-alert');
   let i = -1, typing = null, full = '';
   const voice = makeVoice();
+  const skipBtn = el.querySelector('.ss-skip'), autoBtn = el.querySelector('.ss-auto'), logBtn = el.querySelector('.ss-log');
+  let auto = !!store.get(AUTO_KEY, false), autoTimer = 0, armed = 0, logView = null;
+  autoBtn.classList.toggle('on', auto);
 
   return new Promise((resolve) => {
     const finish = () => {
+      clearTimeout(autoTimer);
+      el.oncontextmenu = null; el.onwheel = null;
       clearInterval(typing);
       voice.halt();
       window.removeEventListener('keydown', onKey);
@@ -99,7 +132,15 @@ export function playScene(lines, opts = {}) {
       el.innerHTML = '';
       resolve();
     };
-    const show = (k) => {
+    /* オート: 文字を出し終え、声も終えたら、少し待って次へ */
+    const scheduleAuto = () => {
+      clearTimeout(autoTimer);
+      if (!auto || typing || logView) return;
+      autoTimer = setTimeout(() => { if (auto && !logView && !el.classList.contains('hide-ui')) advance(); },
+        voice.left() + AUTO_WAIT + full.length * AUTO_PER_CHAR);
+    };
+    /* quiet: 既読を飛ばすときの途中の行。立ち絵・一枚絵の入れ替わりだけ反映して、音も文字の動きも出さない */
+    const show = (k, quiet = false) => {
       const line = lines[k];
       const sp = SPEAKERS[line.who] || SPEAKERS.sys;
       /* 館内放送: 話す人は姿を見せない。名前は「館内放送」、チャイムのあとに読む */
@@ -109,7 +150,9 @@ export function playScene(lines, opts = {}) {
       box.classList.toggle('pa', pa);
       box.style.setProperty('--sc', pa ? '#ffd36b' : sp.color);
       nameEl.textContent = pa ? '館内放送' : sp.name;
-      if (pa) sfx('pa');
+      logPush(nameEl.textContent, line.text, pa ? '#ffd36b' : sp.color);
+      markRead(line);
+      if (pa && !quiet) sfx('pa');
       alertEl.classList.remove('on');
       if (line.alert) {
         alertEl.style.setProperty('--sc', sp.color);
@@ -139,6 +182,7 @@ export function playScene(lines, opts = {}) {
         s.el.classList.toggle('dim', on && s.who !== speaker);
       }
       full = line.text;
+      if (quiet) { voice.halt(); textEl.textContent = full; return; }
       voice.play(sp.voice, line.text);
       textEl.textContent = '';
       box.classList.add('typing');           // 端末の文字は、打っているあいだ印が点いたまま (打ち終えると点滅)
@@ -147,27 +191,82 @@ export function playScene(lines, opts = {}) {
       typing = setInterval(() => {
         n++;
         textEl.textContent = full.slice(0, n);
-        if (n >= full.length) { clearInterval(typing); typing = null; box.classList.remove('typing'); }
+        if (n >= full.length) { clearInterval(typing); typing = null; box.classList.remove('typing'); scheduleAuto(); }
       }, terminal ? TYPE_MS_TERMINAL : TYPE_MS);
     };
     const advance = () => {
+      clearTimeout(autoTimer);
       if (typing) {                          // 途中なら、まず全部出す
         clearInterval(typing);
         typing = null;
         textEl.textContent = full;
         box.classList.remove('typing');
+        scheduleAuto();
         return;
       }
       i++;
       if (i >= lines.length) { finish(); return; }
       show(i);
     };
-    const onKey = (ev) => {
-      if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); advance(); }
-      else if (ev.key === 'Escape' && opts.skippable !== false) { ev.preventDefault(); finish(); }
+    /* SKIP: 読んだことのある行だけ飛ばし、まだ読んでいない行で止まる。
+       すぐ次が未読なら、ボタンが「未読も飛ばす?」に変わり、3秒以内にもう一度押すと場面の最後まで飛ばす (誤って押して話を失わないように) */
+    const skip = () => {
+      if (opts.skippable === false) return;
+      if (Date.now() - armed < 3000) { finish(); return; }
+      let j = i + 1;
+      while (j < lines.length && isRead(lines[j])) j++;
+      if (j >= lines.length) { finish(); return; }
+      if (j === i + 1) {
+        armed = Date.now();
+        skipBtn.textContent = '未読も飛ばす?';
+        skipBtn.classList.add('armed');
+        setTimeout(() => { if (Date.now() - armed >= 3000) { skipBtn.textContent = 'SKIP ▸▸'; skipBtn.classList.remove('armed'); } }, 3100);
+        return;
+      }
+      clearInterval(typing); typing = null; box.classList.remove('typing');
+      for (let k = i + 1; k < j; k++) show(k, true);
+      i = j;
+      show(i);
     };
-    el.querySelector('.ss-skip').onclick = (ev) => { ev.stopPropagation(); finish(); };
-    el.onclick = advance;
+    const toggleAuto = () => {
+      auto = !auto;
+      store.set(AUTO_KEY, auto);
+      autoBtn.classList.toggle('on', auto);
+      if (auto && !typing) scheduleAuto(); else clearTimeout(autoTimer);
+    };
+    /* ログ: これまでの会話を、上へさかのぼって読める。どこかを押すか、Esc・L で閉じる */
+    const closeLog = () => { if (!logView) return; logView.remove(); logView = null; scheduleAuto(); };
+    const openLog = () => {
+      if (logView) return;
+      clearTimeout(autoTimer);
+      logView = document.createElement('div');
+      logView.className = 'ss-logview';
+      logView.setAttribute('role', 'log');
+      logView.innerHTML = '<div class="ss-logwrap">' + LOG.map(e => '<p><b style="--sc:' + esc(e.color) + '">' + esc(e.name) + '</b>' + esc(e.text) + '</p>').join('') +
+        '</div><span class="ss-logclose">閉じる ×</span>';
+      logView.onclick = (ev) => { ev.stopPropagation(); closeLog(); };
+      el.appendChild(logView);
+      const wrap = logView.firstChild;
+      wrap.scrollTop = wrap.scrollHeight;
+    };
+    /* 文字の枠を消して、一枚絵や立ち絵を見る (H・右クリック)。もう一度押すか、画面を押すと戻る */
+    const toggleHide = () => el.classList.toggle('hide-ui');
+    const onKey = (ev) => {
+      if (logView) { if (ev.key === 'Escape' || ev.key.toLowerCase() === 'l') { ev.preventDefault(); closeLog(); } return; }
+      const k = ev.key.toLowerCase();
+      if (el.classList.contains('hide-ui') && (k === 'enter' || k === ' ' || k === 'h' || k === 'escape')) { ev.preventDefault(); toggleHide(); return; }
+      if (k === 'enter' || k === ' ') { ev.preventDefault(); advance(); }
+      else if (k === 'escape') { ev.preventDefault(); skip(); }
+      else if (k === 'a') { ev.preventDefault(); toggleAuto(); }
+      else if (k === 'l') { ev.preventDefault(); openLog(); }
+      else if (k === 'h') { ev.preventDefault(); toggleHide(); }
+    };
+    skipBtn.onclick = (ev) => { ev.stopPropagation(); skip(); };
+    autoBtn.onclick = (ev) => { ev.stopPropagation(); toggleAuto(); };
+    logBtn.onclick = (ev) => { ev.stopPropagation(); openLog(); };
+    el.onclick = () => { if (el.classList.contains('hide-ui')) { toggleHide(); return; } advance(); };
+    el.oncontextmenu = (ev) => { ev.preventDefault(); toggleHide(); };
+    el.onwheel = (ev) => { if (ev.deltaY < 0) openLog(); };
     window.addEventListener('keydown', onKey);
     advance();
   });
@@ -195,6 +294,7 @@ export async function playNode(n) {
   if (!n.choice) return;
   for (;;) {
     const o = n.choice.options[await askChoice(n.choice.options)];
+    logChoice(o.label);
     if (o.lines && o.lines.length) await playScene(o.lines);
     if (!o.again) return;
   }
