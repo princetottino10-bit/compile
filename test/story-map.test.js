@@ -83,3 +83,21 @@ test('道探し: 壁をよけて、開いた扉を通る。閉じた扉の先へ
   assert.equal(M.findPath(map, cleared, from, { x: 0.5, y: 0.5 }), null, '壁の中は行き先にならない');
   assert.deepEqual(M.findPath(map, cleared, from, { x: 3.8, y: 2.6 }), [{ x: 3.8, y: 2.6 }], '同じマスならそのまま');
 });
+
+test('1章の地図: どの行も同じ幅。出来事は1章の場面をすべて使い、案内係の前まで歩いて行ける', () => {
+  const map = M.AQUARIUM;
+  for (const r of map.rows) assert.equal(r.length, map.rows[0].length);
+  for (const ch of map.rows.join('')) assert.ok(M.TILE[ch] !== undefined, '知らない印: ' + ch);
+  const used = new Set(Object.values(map.events).map(e => e.node));
+  for (const n of S.CHAPTERS[1].nodes) assert.ok(used.has(n.id), n.id + ' を使う出来事がない');
+  assert.equal(M.mapFor('ch1'), map);
+  let s = S.blankStory();
+  for (const n of S.CHAPTERS[0].nodes) s = S.clearNode(s, n.id);
+  const start = M.spawnFor(map, s);
+  assert.equal(M.zoneAt(map, start), 'A');
+  const r = M.find(map, 'R')[0];
+  assert.ok(M.findPath(map, s, start, { x: r.x + 0.5, y: r.y + 1.5 }), '入口から案内係の前まで道がある');
+  const dark = M.find(map, 'x')[0];
+  assert.equal(M.walkable(map, s, dark.x, dark.y), false, '明かりの落ちた通路には入れない');
+  assert.equal(M.objective(s), map.goals['c1-arrive']);
+});

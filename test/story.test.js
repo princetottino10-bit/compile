@@ -76,7 +76,21 @@ test('章のクリア: 全部の場面をクリアすると chapterCleared', () 
   assert.ok(!S.chapterCleared(s, ch.id));
   for (const n of ch.nodes) s = S.clearNode(s, n.id);
   assert.ok(S.chapterCleared(s, ch.id));
+  assert.equal(S.currentNode(s).id, S.CHAPTERS[1].nodes[0].id, '次の章の最初の場面へ進む');
+  assert.equal(S.chapterOf(s).id, S.CHAPTERS[1].id);
+  for (const c of S.CHAPTERS) for (const n of c.nodes) s = S.clearNode(s, n.id);
   assert.equal(S.currentNode(s), null, '全部終われば今の場面は無い');
+  assert.equal(S.chapterOf(s).id, S.CHAPTERS[S.CHAPTERS.length - 1].id, '全部終われば最後の章');
+});
+
+test('場面の id は章をまたいでも重ならない。選択肢は、話が先へ進む道を1つ以上持つ', () => {
+  const ids = S.CHAPTERS.flatMap(c => c.nodes.map(n => n.id));
+  assert.equal(new Set(ids).size, ids.length);
+  for (const c of S.CHAPTERS) for (const n of c.nodes) {
+    if (!n.choice) continue;
+    assert.ok(n.choice.options.length >= 2, n.id);
+    assert.ok(n.choice.options.some(o => !o.again), n.id + ' は選び直しの道しかない');
+  }
 });
 
 test('保存と読み込み: 壊れた保存は最初から。知らない id は捨てる', () => {

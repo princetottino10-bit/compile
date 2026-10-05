@@ -1,9 +1,10 @@
 /* =========================================================================
- * ストーリーの歩ける世界 (three.js)。序章「起動」= 夜の、人のいない研究所 (案8)
+ * ストーリーの歩ける世界 (three.js)。章ごとの地図 (story-map.js の MAPS) を歩く。
+ *   序章「起動」= 夜の、人のいない研究所 / 1章「順路」= 閉館した水族館 (案8)
  *   あなた = 機体4097 (顔のない人型。胸の青い灯)。紫苑 = ちびキャラ。警備 = 車輪で動く警備ロボット。
  *   動かし方: WASD / 矢印キー、または床をタップ (クリック) した所へ歩く。E / Enter / Space か「話す」ボタンで話しかける。
- *   出来事 (story-map.js の events) で会話 (story-ui.js の playScene) や対戦の確認を出す。
- *   openWorld(protocols, opts) → { battle: 場面 } (対戦を始める) / null (タイトルへ)
+ *   出来事 (story-map.js の events) で会話 (story-ui.js の playNode) や対戦の確認を出す。
+ *   openWorld(protocols, opts) → { battle: 場面 } (対戦を始める) / { reopen: true } (章が終わり、次の章の地図を開き直す) / null (タイトルへ)
  * ========================================================================= */
 import * as THREE from '../vendor/three.module.js';
 import { EffectComposer } from '../vendor/jsm/postprocessing/EffectComposer.js';
@@ -12,11 +13,12 @@ import { UnrealBloomPass } from '../vendor/jsm/postprocessing/UnrealBloomPass.js
 import { OutputPass } from '../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../vendor/jsm/postprocessing/ShaderPass.js';
 import { showTitleBack, hideTitleBack } from './titleback.js';
-import { CHAPTERS, loadStory, saveStory, blankStory, currentNode, clearNode, startBattle, nodeById, isCleared, chapterCleared } from './story.js';
+import { loadStory, saveStory, blankStory, currentNode, clearNode, startBattle, nodeById, isCleared, chapterCleared, chapterOf } from './story.js';
 import { accountState } from './account.js';
 import * as M from './story-map.js';
-import { playScene, askBattle } from './story-ui.js';
+import { playNode, askBattle } from './story-ui.js';
 import { buildScenery } from './story-scenery.js';
+import { buildAquarium } from './story-scenery-aquarium.js';
 import { RoomEnvironment } from '../vendor/jsm/environments/RoomEnvironment.js';
 
 const T = 2;                 // 1マスの大きさ (three.js の単位)
@@ -48,9 +50,10 @@ const glowTex = (rgb) => canvasTex(64, 64, (g, w) => {
 
 /* ---------- 世界を作る ---------- */
 export function openWorld(protocols, opts = {}) {
-  const map = M.PROLOGUE;
-  const chapter = CHAPTERS[0];
   let state = loadStory();
+  const chapter = chapterOf(state);
+  const map = M.mapFor(chapter.id);
+  const aquarium = map.look === 'aquarium';
 
   const root = document.createElement('div');
   root.id = 'storyWorld';
@@ -85,11 +88,12 @@ export function openWorld(protocols, opts = {}) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.8;   // 夜の研究所
+  renderer.toneMappingExposure = aquarium ? 0.9 : 0.8;   // 夜の研究所 / 水槽の明かりだけの水族館
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(COLORS.navy);
-  scene.fog = new THREE.FogExp2(COLORS.navy, 0.018);
+  const bg = aquarium ? 0x02070f : COLORS.navy;
+  scene.background = new THREE.Color(bg);
+  scene.fog = new THREE.FogExp2(bg, aquarium ? 0.024 : 0.018);
   const camera = new THREE.PerspectiveCamera(48, 1, 0.1, 200);
   scene.add(new THREE.AmbientLight(0x6c7688, 0.22));
   const sun = new THREE.DirectionalLight(0xc8d2e0, 0.18);
@@ -127,8 +131,8 @@ export function openWorld(protocols, opts = {}) {
   scene.environment = keep(pmrem.fromScene(new RoomEnvironment(), 0.04).texture);
   scene.environmentIntensity = 0.25;
   pmrem.dispose();
-  const scenery = buildScenery(scene, map, keep);
-  const term = scenery.term;
+  const scenery = (aquarium ? buildAquarium : buildScenery)(scene, map, keep);
+  const term = scenery.term || null;           // 研究所の端末 (序章だけ)
   const termAt = M.find(map, 'T')[0];
   const syncDoors = () => scenery.syncDoors(state);
 
@@ -229,10 +233,10 @@ export function openWorld(protocols, opts = {}) {
   const shionShadow = new THREE.Mesh(keep(new THREE.CircleGeometry(0.55, 24)), keep(new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.45 })));
   shionShadow.rotation.x = -Math.PI / 2;
   scene.add(shion, shionShadow);
-  const joined = () => isCleared(state, 'c0-practice');
+  const joined = () => chapter.id !== 'ch0' || isCleared(state, 'c0-practice');
   /* 相棒になったあとは、あなたの少し後ろ (左が壁なら同じ所) に立つ */
   const behind = M.walkable(map, state, Math.floor(pos.x - 1.2), Math.floor(pos.y)) ? { x: pos.x - 1.2, y: pos.y } : { ...pos };
-  let shionPos = joined() ? behind : { x: shionAt.x + 0.5, y: shionAt.y + 0.5 };
+  let shionPos = joined() || !shionAt ? behind : { x: shionAt.x + 0.5, y: shionAt.y + 0.5 };
   /* あなたの歩いた跡。紫苑はこれをたどる (まっすぐ寄ると壁を抜けるため) */
   const trail = [{ ...shionPos }, { ...pos }];
 
@@ -263,24 +267,54 @@ export function openWorld(protocols, opts = {}) {
   const patrolShadow = blob(1.4);
   let patrolT = 0;
   const chiefAt = M.find(map, 'c')[0];
-  const chiefPos = { x: chiefAt.x + 0.5, y: chiefAt.y + 0.5 };
+  const chiefPos = chiefAt ? { x: chiefAt.x + 0.5, y: chiefAt.y + 0.5 } : { x: -99, y: -99 };
   const chief = drone(0.8, COLORS.pink);
   const chiefShadow = blob(2.4);
   chief.position.copy(world(chiefPos, 0));
   chief.scale.setScalar(1);
+
+  /* 瑠璃 (1章の案内係): ちびキャラの絵ができるまでの仮の姿。水色の制服の人型と、頭のクラゲ (半透明の傘)。
+     名乗るまでは名札を「案内係」にする */
+  const ruriAt = M.find(map, 'R')[0];
+  const ruriPos = ruriAt ? { x: ruriAt.x + 0.5, y: ruriAt.y + 0.5 } : { x: -99, y: -99 };
+  const ruri = new THREE.Group();
+  if (ruriAt) {
+    const uni = keep(new THREE.MeshStandardMaterial({ color: 0xe8eef6, roughness: 0.6 }));
+    const navy = keep(new THREE.MeshStandardMaterial({ color: 0x223a6b, roughness: 0.6 }));
+    const hair = keep(new THREE.MeshStandardMaterial({ color: 0x9fdcf0, roughness: 0.5 }));
+    const skirt = new THREE.Mesh(keep(new THREE.ConeGeometry(0.3, 0.5, 18)), navy);
+    skirt.position.y = 0.62;
+    const top = new THREE.Mesh(keep(new THREE.CapsuleGeometry(0.17, 0.3, 6, 14)), uni);
+    top.position.y = 1.02;
+    const headR = new THREE.Mesh(keep(new THREE.SphereGeometry(0.18, 20, 14)), hair);
+    headR.position.y = 1.42;
+    const tails = [-0.2, 0.2].map((x) => { const t = new THREE.Mesh(keep(new THREE.CapsuleGeometry(0.06, 0.32, 4, 8)), hair); t.position.set(x, 1.3, -0.04); return t; });
+    const jelly = new THREE.Mesh(keep(new THREE.SphereGeometry(0.14, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2)),
+      keep(new THREE.MeshBasicMaterial({ color: 0xbfefff, transparent: true, opacity: 0.55 })));
+    jelly.position.set(0.08, 1.58, 0);
+    const shins = [-0.08, 0.08].map((x) => { const l = new THREE.Mesh(keep(new THREE.CapsuleGeometry(0.05, 0.3, 4, 8)), uni); l.position.set(x, 0.22, 0); return l; });
+    const glow = new THREE.PointLight(0x7fdcff, 1.2, 3);
+    glow.position.set(0, 1.6, 0.4);
+    ruri.add(skirt, top, headR, jelly, glow, ...tails, ...shins);
+    ruri.userData = { jelly };
+    ruri.position.copy(world(ruriPos, 0));
+    scene.add(ruri);
+    blob(1.1).position.copy(world(ruriPos, 0.015));
+  } else ruri.visible = false;
 
   /* 名前の札 (画面の上に重ねる) */
   const labels = [
     { el: document.createElement('span'), text: '紫苑', obj: shion, y: 2.05, show: () => true },
     { el: document.createElement('span'), text: '巡回の警備機体', obj: patrol, y: 1.6, show: () => patrol.visible },
     { el: document.createElement('span'), text: '警備主任', obj: chief, y: 2.4, show: () => chief.visible },
-    { el: document.createElement('span'), text: '端末', obj: term, y: 1.8, show: () => true }
-  ];
+    { el: document.createElement('span'), text: '端末', obj: term, y: 1.8, show: () => true },
+    { el: document.createElement('span'), text: '案内係', obj: ruri, y: 2.0, show: () => !!ruriAt, name: () => (isCleared(state, 'c1-ruri') ? '瑠璃' : '案内係') }
+  ].filter(l => l.obj);
   for (const l of labels) { l.el.textContent = l.text; labelsEl.appendChild(l.el); }
 
   const syncActors = () => {
-    patrol.visible = !isCleared(state, 'c0-lock');      /* 扉が開いたら、主任へ知らせに行っていなくなる */
-    chief.visible = !isCleared(state, 'c0-chief');
+    patrol.visible = route.length >= 2 && !isCleared(state, 'c0-lock');      /* 扉が開いたら、主任へ知らせに行っていなくなる */
+    chief.visible = !!chiefAt && !isCleared(state, 'c0-chief');
     syncDoors();
   };
   syncActors();
@@ -376,7 +410,8 @@ export function openWorld(protocols, opts = {}) {
   let nearby = null;      // 話しかけられる出来事
   const eventFor = (id) => Object.values(map.events).find(e => e.node === id);
   const isNext = (id) => { const c = currentNode(state); return !!c && c.id === id; };
-  const posOf = (ev) => (ev.at === 'K' ? shionPos : ev.at === 'c' ? chiefPos : ev.at === 'T' ? { x: termAt.x + 0.5, y: termAt.y + 1.5 } : null);
+  const posOf = (ev) => (ev.at === 'K' ? shionPos : ev.at === 'c' ? chiefPos : ev.at === 'R' ? ruriPos
+    : ev.at === 'T' && termAt ? { x: termAt.x + 0.5, y: termAt.y + 1.5 } : null);
 
   let finish;
   const done = new Promise((resolve) => { finish = resolve; });
@@ -384,7 +419,7 @@ export function openWorld(protocols, opts = {}) {
   async function runScene(id) {
     busy = true;
     keys.clear(); path = null;
-    await playScene(nodeById(id).lines, { title: nodeById(id).title });
+    await playNode(nodeById(id));
     state = clearNode(state, id);
     state = saveStory(state);
     syncActors();
@@ -392,7 +427,8 @@ export function openWorld(protocols, opts = {}) {
     /* 章の最後の会話が終わった */
     if (chapterCleared(state, chapter.id)) {
       if (opts.onChapterClear) await opts.onChapterClear(chapter.id);
-      close(null);
+      /* 次の章があれば、その地図を開き直す */
+      close(currentNode(state) ? { reopen: true } : null);
       return;
     }
     /* 会話のすぐあとが、その場の人との対戦なら、そのまま確認を出す */
@@ -593,6 +629,7 @@ export function openWorld(protocols, opts = {}) {
       g.userData.body.rotation.y = Math.sin(t * 0.9 + (g === chief ? 1 : 0)) * 0.7;
       g.userData.r1.material.color.setRGB(0.75 + 0.25 * Math.abs(Math.sin(t * 3)), 0.1, 0.12);
     }
+    if (ruriAt) { ruri.rotation.y = Math.atan2(pos.x - ruriPos.x, pos.y - ruriPos.y); ruri.userData.jelly.position.y = 1.58 + Math.sin(t * 1.6) * 0.03; }
     scenery.update(t, dt);
     syncGuide(t, dt);
     dots.material.opacity = 0.55 + 0.35 * Math.sin(t * 4);
@@ -625,6 +662,7 @@ export function openWorld(protocols, opts = {}) {
       tmp.copy(l.obj.position); tmp.y += l.y;
       tmp.project(camera);
       l.el.hidden = tmp.z > 1 || Math.abs(tmp.x) > 1.1 || Math.abs(tmp.y) > 1.1;
+      if (l.name) { const n = l.name(); if (l.el.textContent !== n) l.el.textContent = n; }
       l.el.style.transform = 'translate(-50%,-100%) translate(' + ((tmp.x + 1) / 2 * window.innerWidth) + 'px,' + ((1 - tmp.y) / 2 * window.innerHeight) + 'px)';
     }
 
@@ -657,8 +695,9 @@ export function openWorld(protocols, opts = {}) {
   const onTitle = () => { if (busy) { showTitleBack(onTitle); return; } close(null); };
   showTitleBack(onTitle);
 
-  /* はじめて来たら、目覚めの会話から */
-  if (isNext('c0-wake')) wakeTimer = setTimeout(() => runScene('c0-wake'), 700);
+  /* 来たら始まる会話 (目覚め・朝・決着のあとの会話) */
+  const auto = Object.values(map.events).find(e => e.kind === 'auto' && isNext(e.node));
+  if (auto) wakeTimer = setTimeout(() => runScene(auto.node), 700);
 
   return done;
 }

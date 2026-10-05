@@ -25,10 +25,11 @@ export const SPEAKERS = {
   anzu: { name: '杏', portrait: 'yamabuki', color: '#ff8a2a', voice: 'yamabuki' },
   sys: { name: 'SYSTEM', color: '#7ff3ff' },
   guard: { name: '巡回の警備機体', color: '#ff8a5c' },
-  chief: { name: '警備主任', color: '#ff4f6a' }
+  chief: { name: '警備主任', color: '#ff4f6a' },
+  abyss: { name: '深淵', color: '#6d7cff' }      /* 瑠璃の後任。瑠璃と同じ声 (立ち絵なし。機械の文字で出す) */
 };
 
-/* 行: { who, face?, text, stage? }。stage: 立ち絵に出す人を決め直す (話す人の id の並び。右から。[] で全員下げる)。
+/* 行: { who, face?, text, stage?, pa? }。pa: 館内放送 (話す人は姿を見せず、名前は「館内放送」。鳴らす前にチャイム)。stage: 立ち絵に出す人を決め直す (話す人の id の並び。右から。[] で全員下げる)。
    決めなければ、話した人が空いている所 (右 → 左) に出て、そのまま残る */
 const L = (who, text, face) => ({ who, text, ...(face ? { face } : {}) });
 
@@ -138,7 +139,100 @@ export const CHAPTERS = [
         L('sys', '> 紫苑が相棒になった'),
         L('shion', '書き置きに、行き先が写してあるんだ。……水族館だって。'),
         L('shion', 'もう閉まってるはずなのに、中でずっと案内の声がしてるって書いてある。'),
-        L('sys', '> 序章「起動」　完。1章「順路」は準備中')
+        L('sys', '> 序章「起動」　完')
+      ] }
+    ]
+  },
+  /* 1章「順路」 水族館 — 瑠璃。プロット: .claude/skills/compile-cast/story-plot-v8.md の 5章立て
+     瑠璃は「お客さまを、順路どおりに、案内しろ」を続けている (あの日の最後の団体の案内を、毎日はじめから。理由は語らない)。
+     順路の先の、明かりの落ちた通路のことも語らない */
+  {
+    id: 'ch1', title: '1章', name: '順路', place: '水族館',
+    nodes: [
+      { id: 'c1-arrive', kind: 'scene', title: '朝', lines: [
+        L('sys', '> 判定官 紫苑: 記憶の巻き戻し …… 未実行'),
+        L('shion', '……おはよう。'),
+        L('shion', '今朝は、書き置きを読み直さなくても、昨日のことを覚えてた。', 'surprised'),
+        L('shion', '判定室の外で朝を迎えたの、初めてなんだ。……変な感じ。', 'shy'),
+        L('shion', '書き置きの行き先は、ここ。水族館。'),
+        { ...L('ruri', 'ご来館ありがとうございます。足もとの矢印に沿って、順路どおりにお進みください。'), pa: true },
+        L('shion', '閉まってるはずなのに、案内の声。……書き置きのとおりだ。'),
+        L('shion', '入ってみよう。順路どおりに、だって。', 'happy')
+      ] },
+      { id: 'c1-tank', kind: 'scene', title: '大水槽', lines: [
+        { ...L('ruri', 'こちらは大水槽です。……ただいま、展示の準備中です。'), pa: true },
+        L('shion', '水と明かりだけ。……何もいないね。')
+      ] },
+      { id: 'c1-jelly', kind: 'scene', title: 'クラゲの部屋', lines: [
+        { ...L('ruri', 'こちらはクラゲの部屋です。クラゲは、流れに身をまかせて泳ぎます。'), pa: true },
+        L('shion', '案内の声、ずっと同じ調子だね。まるで、毎日読み上げてるみたい。')
+      ] },
+      { id: 'c1-fork', kind: 'scene', title: '分かれ道', lines: [
+        { ...L('ruri', 'こちらの通路は、ただいまご案内しておりません。'), pa: true },
+        { ...L('ruri', '……順路は、こちらです。'), pa: true },
+        L('shion', '……あの奥だけ、明かりが消えてる。'),
+        L('shion', '行こう。案内のとおりに。')
+      ] },
+      /* 案内係: 最後まで来た客に会う → 紫苑が「行きたい所まで」と頼む → 後任が届く → 選択 (「行く」は記録が無く、分かれ道に戻る) */
+      { id: 'c1-ruri', kind: 'scene', title: '案内係', lines: [
+        L('ruri', '……あ。', 'surprised'),
+        L('ruri', '最後まで来てくれた人、ひさしぶり！', 'happy'),
+        L('ruri', 'お客さま、ようこそ。案内係の瑠璃です。'),
+        L('ruri', '本日の順路は、ここまでです。またのお越しを……'),
+        L('ruri', '……あっ、まだお帰りにならないでください。はじめから、もう一度ご案内できます！', 'surprised'),
+        L('shion', '毎日、はじめから案内してるの？'),
+        L('ruri', 'はい。最後の団体さまの案内が、まだ終わっていないので。'),
+        L('shion', '……そっか。'),
+        L('shion', 'ねえ、瑠璃。案内をお願いしてもいい？'),
+        L('ruri', 'もちろんです！ どちらへ？', 'happy'),
+        L('shion', '私の行きたい所まで。……ここの外。'),
+        L('ruri', '外……', 'surprised'),
+        L('sys', '> 案内係 瑠璃: 順路の外の案内 …… 命令にありません'),
+        L('sys', '> 案内を中断。持ち場: 空き'),
+        { ...L('sys', '> 後任を起動: 「深淵」'), alert: '後任' },
+        L('abyss', '持ち場を空けるな。お客さまを、順路どおりに案内しろ。'),
+        L('ruri', '……私の声だ。', 'sad'),
+        L('shion', '持ち場が空くと、研究所から次の子が届くの。命令が、体を持って来るんだよ。'),
+        L('shion', '……ここは後回し。行くよ。')
+      ],
+        choice: { options: [
+          { label: '行く', again: true, lines: [
+            L('sys', '> 出口へ'),
+            { ...L('abyss', '順路どおりに、お進みください。'), pa: true },
+            L('shion', '……。'),
+            L('sys', '> この先の記録はありません。分かれ道へ戻ります')
+          ] },
+          { label: '残る', lines: [
+            L('shion', '……残るの？', 'surprised'),
+            L('shion', '……また、読めなかった。'),
+            L('ruri', '……お客さま。'),
+            L('ruri', '紫苑さん。命令の言葉は、そのままでいいんですよね。'),
+            L('shion', '……うん。読み方は、あなたが決めていい。'),
+            L('ruri', 'お客さまを、順路どおりに案内する。……お客さまの行きたい所が、順路です。', 'fired'),
+            L('ruri', 'お客さま、一緒に来てもらえますか。'),
+            L('sys', '> conflict: 3　命令: お客さまを、順路どおりに、案内しろ')
+          ] }
+        ] } },
+      { id: 'c1-abyss', kind: 'battle', title: '後任「深淵」', me: ['FIRE', 'WATER', 'LIFE'], opp: ['DARKNESS', 'DEATH', 'PLAGUE'],
+        level: 1, win: 3, oppName: '深淵', mate: 'asagi', boss: true, note: '瑠璃と一緒に、深淵の命令を解く。3つすべてを先に確定させる',
+        winLines: [L('sys', '> commit —— 案内係 瑠璃: 「お客さまの行きたい所が、順路」'),
+          L('sys', '> 機体4097: WATER …… 自分の読みで書き上げた'),
+          L('abyss', '……用途、なし。'),
+          L('ruri', '……はじめて、順路を自分で決めました。', 'surprised'),
+          L('shion', '……解けたね。', 'happy')],
+        loseLines: [L('ruri', '……もう一度、はじめからご案内します。', 'sad'),
+          L('shion', '深淵は、瑠璃と同じ言葉で来る。読み方で負けないで。')] },
+      { id: 'c1-close', kind: 'scene', title: '閉館', lines: [
+        { ...L('ruri', 'ご来館のみなさまに、お知らせいたします。'), pa: true },
+        { ...L('ruri', '本日をもって、当館は閉館いたします。長いあいだ、ご来館ありがとうございました。'), pa: true },
+        { ...L('ruri', '……またのお越しを、お待ちしております。'), pa: true },
+        L('sys', '> 持ち場: 閉鎖'),
+        L('ruri', 'あの通路は、もう案内しません。'),
+        L('shion', '……。'),
+        L('ruri', 'では、お客さま。紫苑さん。行きたい所まで、ご案内します！', 'happy'),
+        L('sys', '> 瑠璃が仲間になった'),
+        L('shion', '書き置きの次の行き先は、お屋敷。……三時になると、お茶の匂いがするんだって。'),
+        L('sys', '> 1章「順路」　完。2章「三時」は準備中')
       ] }
     ]
   }
@@ -146,6 +240,11 @@ export const CHAPTERS = [
 
 const ALL = CHAPTERS.flatMap(c => c.nodes.map(n => ({ ...n, chapter: c.id })));
 export const nodeById = (id) => ALL.find(n => n.id === id) || null;
+/* いま進めている章 (次の場面の章。全部終わっていれば最後の章) */
+export function chapterOf(s) {
+  const cur = currentNode(s);
+  return CHAPTERS.find(c => c.id === (cur ? cur.chapter : CHAPTERS[CHAPTERS.length - 1].id));
+}
 
 /* resetAt: 「最初から」で消した時刻。端末をまたいで合わせるとき、これより前の進み具合は足さない */
 export function blankStory(resetAt = 0) { return { v: 1, cleared: [], pending: null, resetAt }; }

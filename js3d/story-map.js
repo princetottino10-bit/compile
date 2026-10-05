@@ -3,16 +3,19 @@
  *   地図は文字の並び。1文字 = 1マス。座標はマス単位 (x = 列, y = 行。マスの真ん中は +0.5)。
  *   扉は「前の出来事 (story.js の場面) を終えたら開く」。出来事は場面 (node) と結びつく。
  * ========================================================================= */
-import { isCleared, currentNode } from './story.js';
+import { isCleared, currentNode, chapterOf } from './story.js';
 
 /* 印 → マスの種類。wall / solid (物が置いてある) は通れない。door / gate は開くまで通れない */
 export const TILE = {
-  '#': 'wall', '.': 'floor', 'S': 'floor', 'K': 'floor', 'p': 'floor', 'c': 'floor', 'e': 'floor',
-  'T': 'solid', 'a': 'door', 'b': 'door', 'd': 'door', 'g': 'gate'
+  '#': 'wall', '.': 'floor', 'S': 'floor', 'K': 'floor', 'p': 'floor', 'c': 'floor', 'e': 'floor', 'R': 'floor',
+  'T': 'solid', 'a': 'door', 'b': 'door', 'd': 'door', 'g': 'gate',
+  /* 水族館: W 大水槽 / J クラゲの水槽 / Q 案内カウンター / X 通せんぼの柵 / x 明かりの落ちた通路 (入れない) */
+  'W': 'solid', 'J': 'solid', 'Q': 'solid', 'X': 'solid', 'x': 'solid'
 };
 
 /* 序章「起動」: 研究所。左から A 判定室 / B 端末室 / C 廊下 / D 正面ホール / E 外 */
 export const PROLOGUE = {
+  look: 'lab',          /* 背景の作り (story-world.js が選ぶ) */
   rows: [
     '######################################',
     '#......#.......#..........#......####',
@@ -49,6 +52,44 @@ export const PROLOGUE = {
     'c0-escape': 'ゲートを抜けて外へ', done: '序章「起動」　完。1章「順路」は準備中' }
 };
 
+/* 1章「順路」: 閉館した水族館。左から A 入口ホール / B 大水槽 / C クラゲの部屋 / D 分かれ道 / E 出口ホール。
+   扉はない。順路は一本道で、区画に入ると案内の放送が流れる。分かれ道の上 (x) は明かりの落ちた通路で、柵 (X) から先へは行けない */
+export const AQUARIUM = {
+  look: 'aquarium',
+  rows: [
+    '###########################xxxx#######',
+    '#######WWWWWWWWWWJJJJJJJJJ#xxxx#######',
+    '#......WWWWWWWWWW..........XXXX...QQQ#',
+    '#.S...............................R..#',
+    '#....................................#',
+    '#......#.........#........#.....#....#',
+    '######################################'
+  ],
+  cutRow: 3,
+  zones: [['A', 7], ['B', 17], ['C', 26], ['D', 32], ['E', Infinity]],
+  zoneNames: { A: '入口ホール', B: '大水槽', C: 'クラゲの部屋', D: '分かれ道', E: '出口ホール' },
+  opens: {},
+  events: {
+    arrive: { node: 'c1-arrive', kind: 'auto' },
+    tank: { node: 'c1-tank', kind: 'zone', zone: 'B' },
+    jelly: { node: 'c1-jelly', kind: 'zone', zone: 'C' },
+    fork: { node: 'c1-fork', kind: 'zone', zone: 'D' },
+    ruri: { node: 'c1-ruri', kind: 'talk', at: 'R', who: 'ruri' },
+    abyss: { node: 'c1-abyss', kind: 'talk', at: 'R', who: 'ruri' },
+    close: { node: 'c1-close', kind: 'auto' }
+  },
+  spawn: { 'c1-arrive': [2, 3], 'c1-tank': [2, 3], 'c1-jelly': [15, 3], 'c1-fork': [24, 3], 'c1-ruri': [29, 3],
+    'c1-abyss': [33, 4], 'c1-close': [33, 4], done: [33, 4] },
+  guides: { 'c1-tank': [9, 4], 'c1-jelly': [19, 4], 'c1-fork': [28, 4] },
+  goals: { 'c1-arrive': '水族館に入る', 'c1-tank': '順路どおりに進む', 'c1-jelly': '順路どおりに進む', 'c1-fork': '順路どおりに進む',
+    'c1-ruri': '順路の終わりにいる案内係に話しかける', 'c1-abyss': '瑠璃と一緒に、深淵と向き合う', 'c1-close': '……',
+    done: '1章「順路」　完。2章「三時」は準備中' }
+};
+
+/* 章ごとの地図 */
+export const MAPS = { ch0: PROLOGUE, ch1: AQUARIUM };
+export const mapFor = (chapterId) => MAPS[chapterId] || PROLOGUE;
+
 export const width = (map) => map.rows[0].length;
 export const height = (map) => map.rows.length;
 export function charAt(map, x, y) {
@@ -82,7 +123,7 @@ export function spawnFor(map, s) {
 }
 export function objective(s) {
   const cur = currentNode(s);
-  return PROLOGUE.goals[cur ? cur.id : 'done'];
+  return mapFor(chapterOf(s).id).goals[cur ? cur.id : 'done'];
 }
 
 /* 円 (半径 r) が通れないマスに重なるか */

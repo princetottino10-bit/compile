@@ -1104,9 +1104,10 @@ async function boot() {
       if (nextMode === 'story') {
         let node = params.get('play') === '1' ? STORY.pendingBattle(STORY.loadStory()) : null;
         if (!node) {
-          const pick = await openWorld(cards.protocols, {
-            onChapterClear: (id) => gainXp('story', XP_GAIN.storyChapter, 'stc:' + id)
-          });
+          const worldOpts = { onChapterClear: (id) => gainXp('story', XP_GAIN.storyChapter, 'stc:' + id) };
+          let pick = await openWorld(cards.protocols, worldOpts);
+          /* 章が終わったら、次の章の地図を開き直す */
+          for (let hop = 0; pick && pick.reopen && hop < 8; hop++) pick = await openWorld(cards.protocols, worldOpts);
           node = pick && pick.battle;
         }
         if (!node) { history.replaceState(null, '', location.pathname); nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }

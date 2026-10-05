@@ -1604,6 +1604,19 @@
   .ss-portrait.dim{filter:brightness(.5) saturate(.65);transform:translateY(10px) scale(.97);transform-origin:bottom center;z-index:0;}
   .ss-portrait.on:not(.dim){z-index:1;}   /* 重なったら、話している人を前に */
   .ss-box,.ss-title,.ss-alert,.ss-skip{z-index:2;}
+  /* 館内放送: 金色の名札と、名札の横で点滅する印 (天井のスピーカーから流れている) */
+  .ss-box.pa{border-color:rgba(255,211,107,.45);}
+  .ss-box.pa .ss-name::after{content:"●";margin-left:8px;animation:ssBlink 1.1s steps(2) infinite;}
+  .ss-box.pa .ss-text{letter-spacing:.04em;}
+  /* 選択肢: 会話の上に、縦に並べたボタン */
+  #storyChoice{position:fixed;inset:0;z-index:72;display:none;align-items:center;justify-content:center;background:rgba(3,4,10,.45);}
+  #storyChoice.show{display:flex;}
+  .sc-list{display:flex;flex-direction:column;gap:12px;width:min(420px,calc(100% - 48px));}
+  .sc-list button{display:flex;align-items:center;gap:14px;padding:16px 20px;border-radius:6px;border:1px solid rgba(255,255,255,.22);border-left:3px solid #ffc65c;
+    background:rgba(16,19,24,.92);color:#fff;font:700 17px/1.2 "M PLUS 1",system-ui;letter-spacing:.1em;cursor:pointer;text-align:left;transition:transform .15s,background .15s;}
+  .sc-list button i{font:800 12px/1 var(--font-hud),system-ui;font-style:normal;color:#ffc65c;}
+  .sc-list button:hover,.sc-list button:focus-visible{background:rgba(40,34,20,.95);transform:translateX(4px);outline:none;}
+  @media (prefers-reduced-motion: reduce){ .ss-box.pa .ss-name::after{animation:none;} .sc-list button{transition:none;} }
   .ss-box{position:absolute;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(820px,calc(100% - 24px));
     min-height:118px;padding:26px 24px 20px;border-radius:12px;background:rgba(8,11,22,.92);border:1px solid color-mix(in srgb,var(--sc,#a07bff) 60%,transparent);
     box-shadow:0 0 0 1px rgba(0,0,0,.4),0 18px 50px rgba(0,0,0,.6);}
@@ -4256,7 +4269,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=2b4dbc6066",
       "./js3d/logformat.js": "./js3d/logformat.js?v=e3548c74d1",
-      "./js3d/main.js": "./js3d/main.js?v=0edb4e3a2e",
+      "./js3d/main.js": "./js3d/main.js?v=2b880d41ca",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=6a0b3a0d99",
@@ -4291,11 +4304,12 @@
       "./js3d/stats-data.js": "./js3d/stats-data.js?v=0fb6e5d36d",
       "./js3d/stats.js": "./js3d/stats.js?v=d24404cb85",
       "./js3d/steps.js": "./js3d/steps.js?v=13e73b20fe",
-      "./js3d/story-map.js": "./js3d/story-map.js?v=7d2717836a",
+      "./js3d/story-map.js": "./js3d/story-map.js?v=3e07667ec4",
+      "./js3d/story-scenery-aquarium.js": "./js3d/story-scenery-aquarium.js?v=b4b046214b",
       "./js3d/story-scenery.js": "./js3d/story-scenery.js?v=9fa267bcf9",
-      "./js3d/story-ui.js": "./js3d/story-ui.js?v=9ce55df260",
-      "./js3d/story-world.js": "./js3d/story-world.js?v=8b6fef78a9",
-      "./js3d/story.js": "./js3d/story.js?v=390290fb59",
+      "./js3d/story-ui.js": "./js3d/story-ui.js?v=d439cd3f59",
+      "./js3d/story-world.js": "./js3d/story-world.js?v=0151b89955",
+      "./js3d/story.js": "./js3d/story.js?v=391b6bfafa",
       "./js3d/support.js": "./js3d/support.js?v=86cfbcc21a",
       "./js3d/theme.js": "./js3d/theme.js?v=932e1d5eb8",
       "./js3d/title.js": "./js3d/title.js?v=ed413d8a3c",
@@ -4350,9 +4364,9 @@
   <link rel="modulepreload" href="js3d/equip.js?v=51faa70a25">
   <link rel="modulepreload" href="js3d/stats.js?v=d24404cb85">
   <link rel="modulepreload" href="js3d/stats-data.js?v=0fb6e5d36d">
-  <link rel="modulepreload" href="js3d/story.js?v=390290fb59">
-  <link rel="modulepreload" href="js3d/story-ui.js?v=9ce55df260">
-  <link rel="modulepreload" href="js3d/story-world.js?v=8b6fef78a9">
+  <link rel="modulepreload" href="js3d/story.js?v=391b6bfafa">
+  <link rel="modulepreload" href="js3d/story-ui.js?v=d439cd3f59">
+  <link rel="modulepreload" href="js3d/story-world.js?v=0151b89955">
   <link rel="modulepreload" href="js3d/rewards.js?v=ff8a27bac3">
   <link rel="modulepreload" href="js3d/gachafx.js?v=3d15a2226f">
   <link rel="modulepreload" href="js3d/cosmetics-ui.js?v=a78ef23c9b">
@@ -4412,8 +4426,9 @@
   <link rel="modulepreload" href="js3d/gacha-ui.js?v=becd381735">
   <link rel="modulepreload" href="js3d/replays-ui.js?v=1259fc16e4">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/ShaderPass.js">
-  <link rel="modulepreload" href="js3d/story-map.js?v=7d2717836a">
+  <link rel="modulepreload" href="js3d/story-map.js?v=3e07667ec4">
   <link rel="modulepreload" href="js3d/story-scenery.js?v=9fa267bcf9">
+  <link rel="modulepreload" href="js3d/story-scenery-aquarium.js?v=b4b046214b">
   <link rel="modulepreload" href="js3d/cos-rarity.js?v=ebced42017">
   <link rel="modulepreload" href="js3d/prompts.js?v=348dff836d">
   <link rel="modulepreload" href="js3d/icons.js?v=15bacde80c">
@@ -4428,6 +4443,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=ba24e41aa7">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=0edb4e3a2e"></script>
+  <script type="module" src="js3d/main.js?v=2b880d41ca"></script>
 </body>
 </html>

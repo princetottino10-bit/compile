@@ -2,12 +2,13 @@
  * ストーリーモードの画面 (story.js の中身を描く)
  *   openStory(protocols)      章の地図。会話はその場で再生し、対戦を選んだら { battle: 場面 } で返す (null はタイトルへ)
  *   playScene(lines)          会話 (ノベル風)。タップ・Enter・Space で1行ずつ。勝手には進まない
+ *   playNode(node)            場面の会話と、あれば選択肢 (node.choice)。again の選択肢は、その会話のあと選び直し
  *   showStoryResult(win, node, actions)  決着のあと: 勝ち負けの会話 → ボタン (次へ・もう一度・地図・タイトル)
  * ========================================================================= */
 import { showTitleBack, hideTitleBack } from './titleback.js';
 import { faceFor, faceURL, VOICE_VER, voiceGain } from './avatar.js';
 import { accountState } from './account.js';
-import { playClip, isMuted } from './audio.js';
+import { playClip, isMuted, sfx } from './audio.js';
 import { duckBgm } from './bgm.js';
 import { settings } from './settings.js';
 import { CHAPTERS, SPEAKERS, loadStory, saveStory, canEnter, isCleared, currentNode, clearNode, startBattle, nodeById } from './story.js';
@@ -101,10 +102,14 @@ export function playScene(lines, opts = {}) {
     const show = (k) => {
       const line = lines[k];
       const sp = SPEAKERS[line.who] || SPEAKERS.sys;
-      const terminal = !sp.portrait;
+      /* 館内放送: 話す人は姿を見せない。名前は「館内放送」、チャイムのあとに読む */
+      const pa = !!line.pa;
+      const terminal = !sp.portrait && !pa;
       box.classList.toggle('terminal', terminal);
-      box.style.setProperty('--sc', sp.color);
-      nameEl.textContent = sp.name;
+      box.classList.toggle('pa', pa);
+      box.style.setProperty('--sc', pa ? '#ffd36b' : sp.color);
+      nameEl.textContent = pa ? '館内放送' : sp.name;
+      if (pa) sfx('pa');
       alertEl.classList.remove('on');
       if (line.alert) {
         alertEl.style.setProperty('--sc', sp.color);
@@ -120,17 +125,18 @@ export function playScene(lines, opts = {}) {
         el.classList.toggle('with-still', stillOn);
       }
       if (Array.isArray(line.stage)) setStage(line.stage);
-      if (sp.portrait) { enter(line.who); lastWho = line.who; }
+      const speaker = pa ? null : line.who;
+      if (sp.portrait && !pa) { enter(line.who); lastWho = line.who; }
       for (const s of slots) {
         const on = !!s.who && !stillOn;
         if (on) {
           const pid = portraitOf(s.who);
-          if (s.who === line.who) s.face = line.face || 'normal';
+          if (s.who === speaker) s.face = line.face || 'normal';
           const src = faceURL(pid, faceFor(pid, s.face));
           if (s.el.getAttribute('src') !== src) s.el.src = src;
         }
         s.el.classList.toggle('on', on);
-        s.el.classList.toggle('dim', on && s.who !== line.who);
+        s.el.classList.toggle('dim', on && s.who !== speaker);
       }
       full = line.text;
       voice.play(sp.voice, line.text);
@@ -165,6 +171,33 @@ export function playScene(lines, opts = {}) {
     window.addEventListener('keydown', onKey);
     advance();
   });
+}
+
+/* ---------- 選択肢 ---------- */
+/* options: [{ label }]。選んだ番号を返す。数字キー (1, 2 …) でも選べる */
+export function askChoice(options) {
+  const el = overlay('storyChoice', '選択');
+  el.innerHTML = '<div class="sc-list">' + options.map((o, k) =>
+    '<button type="button" data-k="' + k + '"><i>' + (k + 1) + '</i>' + esc(o.label) + '</button>').join('') + '</div>';
+  el.classList.add('show');
+  return new Promise((resolve) => {
+    const end = (k) => { window.removeEventListener('keydown', onKey); el.classList.remove('show'); el.innerHTML = ''; resolve(k); };
+    const onKey = (ev) => { const k = parseInt(ev.key, 10) - 1; if (k >= 0 && k < options.length) { ev.preventDefault(); end(k); } };
+    window.addEventListener('keydown', onKey);
+    el.querySelectorAll('[data-k]').forEach(b => { b.onclick = () => end(+b.dataset.k); });
+    el.querySelector('[data-k]').focus();
+  });
+}
+
+/* 場面の会話 → 選択肢。again の選択肢は、その会話のあとにもう一度選ぶ (記録が無い道。話は先へ進まない) */
+export async function playNode(n) {
+  await playScene(n.lines, { title: n.title });
+  if (!n.choice) return;
+  for (;;) {
+    const o = n.choice.options[await askChoice(n.choice.options)];
+    if (o.lines && o.lines.length) await playScene(o.lines);
+    if (!o.again) return;
+  }
 }
 
 /* ---------- 対戦の前の確認 ---------- */
@@ -228,7 +261,7 @@ export function openStory(protocols) {
       const n = nodeById(id);
       if (!n || !canEnter(state, id)) return;
       if (n.kind === 'scene') {
-        await playScene(n.lines, { title: n.title });
+        await playNode(n);
         state = clearNode(state, id);
         saveStory(state);
         render();
