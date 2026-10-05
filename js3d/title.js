@@ -27,6 +27,7 @@ import { openCosmetics, hasNewCosmetics } from './cosmetics-mode.js';
 import { loadResume, resumeLabel } from './resume.js';
 import { dailyPuzzleDone } from './tsume.js';
 import { tutorialProgress, LESSONS } from './tutorial.js';
+import { currentNode, loadStory, CHAPTERS } from './story.js';
 import { loadRun, nodeById, MAP_ROWS } from './run.js';
 import { loadWeekly } from './weekly.js';
 import { conquered, conquerable } from './stats-data.js';
@@ -57,6 +58,14 @@ function runBadge() {
     if (!w.attempt) return { text: 'WEEKLY 未挑戦' };
   } catch (e) { /* 札なしで */ }
   return null;
+}
+function storyLabel() {
+  try {
+    const node = currentNode(loadStory());
+    if (!node) return '✓ クリア';
+    const ch = CHAPTERS.find(c => c.id === node.chapter);
+    return String((ch ? ch.title + ' ' : '') + 'NEXT: ' + (node.title || '')).replace(/[<>&"]/g, '');
+  } catch (e) { return ''; }
 }
 function tutorialContinueHtml() {
   try {
@@ -243,7 +252,8 @@ export function runTitle(protocols, opts) {
             '<button data-mode="more" type="button" class="tt-morebtn" aria-expanded="false">MORE</button>' +
             '<div class="tt-morepop" hidden>' +
               /* ストーリーは作り直しの間 (案8。2026-10-05〜) 管理者だけ。仕上がったら全員に戻す */
-              '<button data-mode="story" type="button"' + (accountState().admin ? '' : ' hidden') + '>STORY <small>序章「起動」</small></button>' +
+              /* 物語の進み具合 (前はいつも「序章「起動」」のまま) */
+              '<button data-mode="story" type="button"' + (accountState().admin ? '' : ' hidden') + '>STORY <small>' + storyLabel() + '</small></button>' +
               '<button data-mode="tutorial" type="button">TUTORIAL <small>遊び方</small></button>' +
               '<button data-mode="training" type="button">TRAINING <small>盤面を自由に</small></button>' +
               '<button data-mode="cards" type="button">CARDS <small>カード一覧</small></button>' +

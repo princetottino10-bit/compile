@@ -1174,7 +1174,10 @@ async function boot() {
         } else {
           p0 = node.me.slice();
           p1 = node.opp.slice();
-          applyAiDifficulty(node.level);
+          /* 何度も負けたあとの「かんたんで挑む」: この1戦だけ CPU を かんたん に (話の進み方は同じ) */
+          let easy = false;
+          try { easy = sessionStorage.getItem('compileStoryEasy') === node.id; sessionStorage.removeItem('compileStoryEasy'); } catch (e) { /* private mode */ }
+          applyAiDifficulty(easy ? 0 : node.level);
         }
         history.replaceState(null, '', location.pathname + '?story=1');
         break;
@@ -5460,16 +5463,28 @@ async function storyAfterGame(win) {
     if (STORY.chapterCleared(after, node.chapter)) await gainXp('story', XP_GAIN.storyChapter, 'stc:' + node.chapter);
   }
   const go = (q) => { location.href = location.pathname + q; };
+  /* 同じ対戦で続けて負けた数 (2回目から「かんたんで挑む」を出す)。勝ったら数え直す */
+  let losses = 0;
+  try {
+    const m = JSON.parse(localStorage.getItem('compileStoryLoss') || '{}') || {};
+    m[node.id] = win ? 0 : (m[node.id] | 0) + 1;
+    losses = m[node.id];
+    localStorage.setItem('compileStoryLoss', JSON.stringify(m));
+  } catch (e) { /* private mode */ }
+  const retry = (easy) => {
+    STORY.saveStory(STORY.startBattle(STORY.loadStory(), node.id));
+    if (easy) { try { sessionStorage.setItem('compileStoryEasy', node.id); } catch (e) { /* private mode */ } }
+    go('?story=1&play=1');
+  };
   await showStoryResult(win, node, {
     next: () => go('?story=1'),
     map: () => go('?story=1'),
-    retry: () => { STORY.saveStory(STORY.startBattle(STORY.loadStory(), node.id)); go('?story=1&play=1'); },
+    retry: () => retry(false),
+    ...(!win && losses >= 2 && node.level > 0 ? { retryEasy: () => retry(true) } : {}),
     title: () => go('')
   });
 }
 
-/* 決着の画面に出す「次の目標」: 次のレベルまでの経験値と、今日のデイリーミッションの残り */
-/* この試合のまとめ: 何手で決着したか・コンパイルの順番 (gameHistory の盤面から)。終わった画面に1行で */
 /* オンラインの決着の仕方 (投了・時間切れ) とレートの増減 (前はどの決着も同じ見た目で、レートも出なかった) */
 function onlineEndHtml(win) {
   if (!roomMode || !roomRm) return '';
@@ -5494,6 +5509,7 @@ function masteryUnlocks() {
   return MASTERY_ITEMS.filter(it => m0[it.proto] !== undefined && m0[it.proto] < it.mastery && masteryOf(it.proto) >= it.mastery);
 }
 
+/* この試合のまとめ: 何ターンで決着したか・コンパイルの順番 (gameHistory の盤面から)。終わった画面に1行で */
 function matchSummaryHtml() {
   try {
     const st = cur && cur.state;
@@ -5516,6 +5532,7 @@ function matchSummaryHtml() {
   } catch (e) { return ''; }
 }
 
+/* 決着の画面に出す「次の目標」: 次のレベルまでの経験値と、今日のデイリーミッションの残り */
 function nextGoalsHtml() {
   if (roomMode && !localRecords().length) return '';
   const pl = playerLevel(localRecords(), bonusXp());

@@ -397,9 +397,13 @@ export async function showStoryResult(win, node, actions) {
   const el = overlay('storyResult', win ? '先へ' : 'もう一度');
   el.innerHTML = '<div class="sty-res ' + (win ? 'win' : 'lose') + '"><small>' + esc(node.title) + '</small>' +
     '<b>' + (win ? 'COMPILED' : 'OVERWRITTEN') + '</b>' +
+    (!win && actions.retryEasy ? '<p class="sty-tip">続けて負けています。「かんたんで挑む」で、この1戦だけ CPU を弱くできます (話の進み方は同じ)</p>' : '') +
     '<div class="sm-btns">' + (win
       ? '<button type="button" data-a="next" class="sm-go">次へ</button>'
-      : '<button type="button" data-a="retry" class="sm-go">もう一度</button><button type="button" data-a="map">地図へ</button>') +
+      : '<button type="button" data-a="retry" class="sm-go">もう一度</button>' +
+        /* 続けて負けたら、CPU を かんたん にして挑める (話の進み方は同じ) */
+        (actions.retryEasy ? '<button type="button" data-a="retryEasy">かんたんで挑む</button>' : '') +
+        '<button type="button" data-a="map">地図へ</button>') +
     '<button type="button" data-a="title">タイトル</button></div></div>';
   el.classList.add('show');
   el.querySelectorAll('[data-a]').forEach(b => {

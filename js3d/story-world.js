@@ -68,6 +68,33 @@ export function openWorld(protocols, opts = {}) {
   const canvas = root.querySelector('canvas');
   const actBtn = root.querySelector('.sw-act');
   const labelsEl = root.querySelector('.sw-labels');
+  /* 記録: この章で終えた会話をもう一度見る (前は一度見た場面を見直せなかった)。見るだけで、進み具合は変わらない */
+  const recallBtn = document.createElement('button');
+  recallBtn.type = 'button';
+  recallBtn.className = 'sw-recall';
+  recallBtn.textContent = '記録';
+  recallBtn.title = 'この章で見た会話をもう一度見る';
+  root.appendChild(recallBtn);
+  recallBtn.onclick = () => {
+    if (busy) return;
+    const seen = (chapter.nodes || []).filter(n => n.kind === 'scene' && isCleared(state, n.id));
+    let box = root.querySelector('.sw-recall-list');
+    if (box) { box.remove(); return; }
+    box = document.createElement('div');
+    box.className = 'sw-recall-list';
+    box.innerHTML = seen.length
+      ? '<b>見た会話</b>' + seen.map(n => '<button type="button" data-node="' + String(n.id).replace(/[<>&"]/g, '') + '">' + String(n.title || n.id).replace(/[<>&"]/g, '') + '</button>').join('')
+      : '<b>見た会話</b><p>まだありません。この章で話を進めると、ここから見直せます</p>';
+    root.appendChild(box);
+    box.onclick = async (ev) => {
+      const b = ev.target.closest('[data-node]');
+      if (!b || busy) return;
+      box.remove();
+      busy = true;
+      keys.clear(); path = null;
+      try { await playNode(nodeById(b.dataset.node)); } finally { busy = false; }
+    };
+  };
   /* ストーリーを最初からやり直す (管理者だけ。進み具合だけを消す。ほかの記録は残る)。
      間違えて押さないよう、1回目で確認の文に変わり、3秒以内にもう1回押すと消える */
   if (accountState().admin) {
