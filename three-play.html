@@ -1452,7 +1452,9 @@
     background:radial-gradient(ellipse at 50% 30%,rgba(255,79,163,.14),transparent 60%),rgba(3,4,10,.94);}
   #runOv.after{background:rgba(3,4,10,.78);}
   #runOv.show{display:flex;}
-  .rn-card{width:min(640px,100%);max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);overflow-y:auto;display:flex;flex-direction:column;gap:14px;
+  /* 高さは iPhone の上下の帯 (時刻・ホームバー) のぶんも引く (前は引いておらず、カードの上が時刻の下に潜っていた) */
+  .rn-card{width:min(640px,100%);max-height:calc(100vh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    max-height:calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));overflow-y:auto;display:flex;flex-direction:column;gap:14px;
     padding:20px 22px;border-radius:16px;background:linear-gradient(180deg,rgba(13,16,30,.98),rgba(6,8,16,.98));
     border:1px solid rgba(255,79,163,.3);box-shadow:0 30px 90px rgba(0,0,0,.7);color:var(--ink);}
   .rn-head{display:flex;align-items:baseline;gap:12px;}
@@ -4396,7 +4398,10 @@
     #setupHead{padding-right:118px;}
     #setupHead h1{font-size:18px;letter-spacing:.16em;}
     /* 準備画面・相手選びでは、左下の音のボタンを出さない (下のボタンや説明に重なっていた。音はタイトルと設定で) */
-    body:has(#setup.show) #muteAll,body:has(#oppOv.show) #muteAll,body:has(#watchOv.show) #muteAll{display:none;}
+    body:has(#setup.show) #muteAll,body:has(#oppOv.show) #muteAll,body:has(#watchOv.show) #muteAll,body:has(#runOv.show) #muteAll{display:none;}
+    /* 勝ち抜き戦・週替わりの画面は、右上の「← タイトル」の下から始める (カードの角に重なっていた) */
+    #runOv{padding-top:calc(64px + env(safe-area-inset-top));}
+    #runOv .rn-card{max-height:calc(100dvh - 80px - env(safe-area-inset-top) - env(safe-area-inset-bottom));}
     /* カードを置く場所を選んでいる間は、REFRESH と手札のボタンをしまい、CANCEL をその場所に (重なっていた) */
     body:has(#playChoices:not([hidden]) .placement-cancel) #btnRefresh,
     body:has(#playChoices:not([hidden]) .placement-cancel) #dock{visibility:hidden;}
