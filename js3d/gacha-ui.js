@@ -13,6 +13,7 @@ import { trophyContext, showTrophyBanner } from './achievements-ui.js';
 import { loginNudgeNeeded, maybeLoginHint, openAccount } from './account.js';
 import { holo } from './holo.js';
 import { raise } from './dialogs.js';
+import { equipNow, canEquip, isEquipped } from './equip.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const ORDER = ['L', 'E', 'R', 'C'];
@@ -97,10 +98,14 @@ export function openGacha(opts) {
         '<button type="button" class="ga-pull ten" data-n="10"' + (chips >= G.TEN_COST ? '' : ' disabled') + '>10連 <small>' + G.TEN_COST + ' CHIP ・ RARE 以上1つ確定</small></button></div></div>' +
       '<p class="ga-rates">' + ORDER.map(k => '<span class="r' + k + '">' + RAR_NAMES[k] + ' ' + G.RATES[k] + '%</span>').join('') +
         '<em>EPIC 以上まで あと ' + toPity + ' 回で確定</em></p>' +
-      /* 結果は押すと、COLLECTION のその品物へ (すぐ着けられる) */
-      (last ? '<div class="ga-results">' + last.map(r => '<button type="button" class="ga-res r' + r.rar + '" data-kind="' + esc(r.kind) + '" data-key="' + esc(r.key) + '" title="COLLECTION で見る">' +
+      /* 結果ごとに「着ける」(その場で1回) と、押すと COLLECTION のその品物へ */
+      (last ? '<div class="ga-results">' + last.map(r => '<div class="ga-res r' + r.rar + '">' +
+        '<button type="button" class="ga-see" data-kind="' + esc(r.kind) + '" data-key="' + esc(r.key) + '" title="COLLECTION で見る">' +
         '<small>' + RAR_NAMES[r.rar] + (r.dupe ? ' ・ かぶり +' + r.refund + ' CHIP' : ' ・ NEW') + '</small>' +
-        '<b>' + esc(r.name) + '</b></button>').join('') + '</div>' +
+        '<b>' + esc(r.name) + '</b></button>' +
+        (canEquip(r.kind, r.key) ? (isEquipped(r.kind, r.key) ? '<em class="ga-on">着けています</em>'
+          : '<button type="button" class="ga-equip" data-kind="' + esc(r.kind) + '" data-key="' + esc(r.key) + '">着ける</button>') : '') +
+        '</div>').join('') + '</div>' +
         '<div class="pz-row"><button type="button" class="pz-main" id="gaUse">' + esc(useLabel(last)) + '</button></div>' : '') +
       '<div class="ga-col"><h3>図鑑 <em>' + col.got + ' / ' + col.total + '</em></h3>' +
         ORDER.map(k => '<div class="ga-row r' + k + '"><small>' + RAR_NAMES[k] + '</small><div>' +
@@ -115,7 +120,17 @@ export function openGacha(opts) {
       return;
     }
     /* 着けに行く: ガチャを閉じて COLLECTION のその品物を見せる (前は設定が開いて、COLLECTION の後ろに隠れていた) */
-    const res = ev.target.closest('.ga-res[data-kind]');
+    /* その場で着ける (閉じない。ほかの結果も着けられる) */
+    const eq = ev.target.closest('.ga-equip');
+    if (eq) {
+      if (equipNow([[eq.dataset.kind, eq.dataset.key]])) {
+        render();
+        /* 描き直しで結果がもう一度飛び込んでこないように */
+        el.querySelectorAll('.ga-res').forEach(x => { x.style.animation = 'none'; });
+      }
+      return;
+    }
+    const res = ev.target.closest('.ga-see[data-kind]');
     const use = ev.target.closest('#gaUse') ? bestOf(last) : res ? { kind: res.dataset.kind, key: res.dataset.key } : null;
     if (use) {
       el.classList.remove('show');

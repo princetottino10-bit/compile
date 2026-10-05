@@ -7,6 +7,7 @@ import { selectHead, bindSelectHead, optionBody, choiceLabel } from './selectui.
 import { drawVictoryBackdrop, drawDefeatBackdrop, drawAuroraBackdrop } from './backdrops.js';
 import { condHtml } from './cardtext.js';
 import { sfx } from './audio.js';
+import { equipNow, canEquip, isEquipped } from './equip.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -776,8 +777,11 @@ export function levelUpCutIn(level, rewards) {
   el.innerHTML = '<div class="lu-card"><div class="lu-kicker">LEVEL UP</div><div class="lu-lv" data-text="' + level + '">' + level + '</div>' +
     (rewards && rewards.length
       ? '<ul class="lu-rewards">' + rewards.map((r, i) => '<li style="--i:' + i + '"><b>Lv' + r.lv + '</b><span>' + r.name + '</span>' +
+          /* その場で着ける (1回で)。見るは COLLECTION のその品物へ */
+          (canEquip(r.kind, r.key) ? (isEquipped(r.kind, r.key) ? '<em class="lu-on">着けています</em>'
+            : '<button type="button" class="lu-equip" data-kind="' + r.kind + '" data-key="' + (r.key || '') + '">着ける</button>') : '') +
           (seeable(r) ? '<button type="button" class="lu-see" data-kind="' + r.kind + '" data-key="' + (r.key || '') + '">見る</button>' : '') + '</li>').join('') + '</ul>' +
-        '<p class="lu-note">COLLECTION で着けられます</p>'
+        '<p class="lu-note">ほかの見た目は COLLECTION で選べます</p>'
       : '<p class="lu-note">次の報酬まであと少し</p>') +
     '<p class="lu-hint">タップで閉じる</p></div>';
   el.classList.add('show');
@@ -785,6 +789,12 @@ export function levelUpCutIn(level, rewards) {
   return new Promise((resolve) => {
     const close = () => { el.classList.remove('show'); el.onclick = null; resolve(); };
     el.onclick = (ev) => {
+      /* 着けるは閉じない (ほかの報酬も着けられるように)。押したところを「着けています」に */
+      const eq = ev.target.closest('.lu-equip');
+      if (eq) {
+        if (equipNow([[eq.dataset.kind, eq.dataset.key]])) eq.outerHTML = '<em class="lu-on">着けています</em>';
+        return;
+      }
       const see = ev.target.closest('.lu-see');
       close();
       if (see) import('./cosmetics-mode.js').then(m => m.openCosmetics({ tab: see.dataset.kind, focus: see.dataset.key }));

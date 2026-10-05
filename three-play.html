@@ -1949,6 +1949,19 @@
   .lu-card.conq .lu-lv small{font-size:.4em;opacity:.7;margin-left:4px;}
   .lu-card.conq .lu-rewards li b.conq-p{color:var(--pc);font-size:13px;letter-spacing:.08em;}
   .lu-rewards li span{flex:1;}
+  .lu-equip{flex:none;padding:5px 12px;cursor:pointer;border:0;background:var(--pink);color:#fff;
+    font:900 11px/1 var(--font-ui);letter-spacing:.06em;clip-path:var(--cut-s);}
+  .lu-equip:hover,.lu-equip:focus-visible{filter:brightness(1.15);outline:0;}
+  .lu-on{flex:none;font:800 10.5px/1 var(--font-ui);font-style:normal;color:var(--mint);}
+  /* その場で着けたあとの「元に戻す」 (equip.js)。いちばん手前に */
+  #equipToast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));z-index:95;display:none;align-items:center;gap:12px;
+    max-width:calc(100vw - 32px);padding:10px 12px 10px 16px;transform:translateX(-50%);background:rgba(14,11,26,.97);
+    border:1px solid rgba(124,240,208,.5);box-shadow:0 12px 30px rgba(0,0,0,.55);clip-path:var(--cut-s);
+    font:700 12.5px/1.35 "M PLUS 1",system-ui;color:#fff;}
+  #equipToast.show{display:flex;animation:cmIn .25s ease-out;}
+  #equipToast button{flex:none;padding:6px 12px;cursor:pointer;border:1px solid rgba(255,255,255,.35);background:none;color:#fff;
+    font:800 11px/1 var(--font-ui);clip-path:var(--cut-s);}
+  #equipToast button:hover,#equipToast button:focus-visible{border-color:var(--mint);color:var(--mint);outline:0;}
   .lu-see{flex:none;padding:5px 10px;cursor:pointer;border:1px solid var(--pink);background:rgba(255,79,163,.16);color:#fff;
     font:800 11px/1 var(--font-ui);letter-spacing:.06em;clip-path:var(--cut-s);}
   .lu-see:hover,.lu-see:focus-visible{background:rgba(255,79,163,.34);outline:0;}
@@ -2807,6 +2820,11 @@
   .end-gains b{font:900 17px/1 var(--font-hud,var(--font-ui));font-variant-numeric:tabular-nums;color:#fff;}
   .end-gains em{font:800 11px/1 var(--font-ui);font-style:normal;color:var(--gold);}
   .end-gains span{font:700 12px/1.35 var(--font-ui);color:var(--ink);}
+  .end-gains .eg-title{border-left-color:var(--gold);background:linear-gradient(90deg,rgba(255,200,90,.14),rgba(255,200,90,.02));align-items:center;}
+  .end-gains .eg-title span{color:var(--gold);font-weight:800;}
+  .eg-equip{padding:5px 12px;cursor:pointer;border:0;background:var(--pink);color:#fff;font:900 11px/1 var(--font-ui);letter-spacing:.06em;clip-path:var(--cut-s);}
+  .eg-equip:hover,.eg-equip:focus-visible{filter:brightness(1.15);outline:0;}
+  .eg-on{font:800 10.5px/1 var(--font-ui);font-style:normal;color:var(--mint);}
   .end-gains .eg-go{cursor:pointer;transition:background .12s,transform .12s;}
   .end-gains .eg-go > i{font-style:normal;font-weight:900;color:var(--dim);}
   .end-gains .eg-go:hover,.end-gains .eg-go:focus-visible{background:rgba(255,255,255,.08);outline:0;transform:translateX(2px);}
@@ -3199,9 +3217,14 @@
   .ga-res:nth-child(8){animation-delay:.28s} .ga-res:nth-child(9){animation-delay:.32s} .ga-res:nth-child(10){animation-delay:.36s}
   .ga-res small{font:900 9px/1 var(--font-hud,var(--font-ui));letter-spacing:.16em;color:var(--dim);}
   .ga-res b{font:800 12px/1.35 var(--font-ui);color:#fff;}
-  /* 押すと COLLECTION のその品物へ */
-  button.ga-res{appearance:none;text-align:left;cursor:pointer;color:inherit;font:inherit;transition:border-color .12s,background .12s,transform .12s;}
-  button.ga-res:hover,button.ga-res:focus-visible{border-color:rgba(255,255,255,.55);background:rgba(255,255,255,.08);outline:0;transform:translateY(-1px);}
+  /* 結果: 押すと COLLECTION のその品物へ / 着ける */
+  .ga-see{appearance:none;display:flex;flex-direction:column;gap:4px;padding:0;text-align:left;cursor:pointer;border:0;background:none;color:inherit;font:inherit;}
+  .ga-see:hover b,.ga-see:focus-visible b{text-decoration:underline;text-underline-offset:3px;}
+  .ga-see:focus-visible{outline:0;}
+  .ga-equip{align-self:flex-start;margin-top:2px;padding:4px 10px;cursor:pointer;border:0;background:var(--pink);color:#fff;
+    font:900 10.5px/1 var(--font-ui);letter-spacing:.06em;clip-path:var(--cut-s);}
+  .ga-equip:hover,.ga-equip:focus-visible{filter:brightness(1.15);outline:0;}
+  .ga-on{font:800 10px/1 var(--font-ui);font-style:normal;color:var(--mint);}
   .ga-res.rR{border-color:rgba(124,196,255,.6);background:rgba(124,196,255,.1);} .ga-res.rR small{color:#9fd0ff;}
   .ga-res.rE{border-color:var(--gold);background:linear-gradient(110deg,rgba(255,200,90,.18),rgba(255,79,163,.12));} .ga-res.rE small{color:var(--gold);}
   .ga-res.rL{border-color:transparent;background:linear-gradient(100deg,rgba(255,79,163,.35),rgba(255,200,90,.3),rgba(124,240,208,.3),rgba(157,123,255,.35));
@@ -4217,13 +4240,14 @@
       "./js3d/dialogs.js": "./js3d/dialogs.js?v=2aa018b7c1",
       "./js3d/displayname.js": "./js3d/displayname.js?v=613e18bf95",
       "./js3d/emblems.js": "./js3d/emblems.js?v=7b77a0b2df",
+      "./js3d/equip.js": "./js3d/equip.js?v=51faa70a25",
       "./js3d/errorreport.js": "./js3d/errorreport.js?v=2a83f561e2",
       "./js3d/face-icons.js": "./js3d/face-icons.js?v=afd858ff97",
       "./js3d/feel.js": "./js3d/feel.js?v=fa59a5b9fb",
       "./js3d/fx-compile.js": "./js3d/fx-compile.js?v=2fbcc8e763",
       "./js3d/fx-protocols.js": "./js3d/fx-protocols.js?v=509fceb211",
       "./js3d/fx.js": "./js3d/fx.js?v=f76521724c",
-      "./js3d/gacha-ui.js": "./js3d/gacha-ui.js?v=fd64af3f47",
+      "./js3d/gacha-ui.js": "./js3d/gacha-ui.js?v=becd381735",
       "./js3d/gacha.js": "./js3d/gacha.js?v=c86c6a30ac",
       "./js3d/gachafx.js": "./js3d/gachafx.js?v=3d15a2226f",
       "./js3d/gamepad.js": "./js3d/gamepad.js?v=bd1e0d378f",
@@ -4232,7 +4256,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=2b4dbc6066",
       "./js3d/logformat.js": "./js3d/logformat.js?v=e3548c74d1",
-      "./js3d/main.js": "./js3d/main.js?v=178f7e8f04",
+      "./js3d/main.js": "./js3d/main.js?v=0edb4e3a2e",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=6a0b3a0d99",
@@ -4281,7 +4305,7 @@
       "./js3d/turning.js": "./js3d/turning.js?v=9c7f79654e",
       "./js3d/tutorial.js": "./js3d/tutorial.js?v=1b5e3a1067",
       "./js3d/tween.js": "./js3d/tween.js?v=99b25c0d63",
-      "./js3d/ui.js": "./js3d/ui.js?v=9e0da70279",
+      "./js3d/ui.js": "./js3d/ui.js?v=8da9622df4",
       "./js3d/weekly-ui.js": "./js3d/weekly-ui.js?v=92b645307a",
       "./js3d/weekly.js": "./js3d/weekly.js?v=5605476b1c",
       "./js3d/xp.js": "./js3d/xp.js?v=2146fbc219"
@@ -4323,6 +4347,7 @@
   <link rel="modulepreload" href="js3d/errorreport.js?v=2a83f561e2">
   <link rel="modulepreload" href="js3d/tutorial.js?v=1b5e3a1067">
   <link rel="modulepreload" href="js3d/settings.js?v=f32405f149">
+  <link rel="modulepreload" href="js3d/equip.js?v=51faa70a25">
   <link rel="modulepreload" href="js3d/stats.js?v=d24404cb85">
   <link rel="modulepreload" href="js3d/stats-data.js?v=0fb6e5d36d">
   <link rel="modulepreload" href="js3d/story.js?v=390290fb59">
@@ -4356,7 +4381,7 @@
   <link rel="modulepreload" href="js3d/layout.js?v=2b4dbc6066">
   <link rel="modulepreload" href="js3d/theme.js?v=932e1d5eb8">
   <link rel="modulepreload" href="js3d/tween.js?v=99b25c0d63">
-  <link rel="modulepreload" href="js3d/ui.js?v=9e0da70279">
+  <link rel="modulepreload" href="js3d/ui.js?v=8da9622df4">
   <link rel="modulepreload" href="js3d/input.js?v=cc29feddd4">
   <link rel="modulepreload" href="js3d/playchoices.js?v=55c71c637e">
   <link rel="modulepreload" href="js3d/aiclient.js?v=0f85a7d42b">
@@ -4384,7 +4409,7 @@
   <link rel="modulepreload" href="js3d/backdrops.js?v=90faf9612d">
   <link rel="modulepreload" href="js3d/support.js?v=86cfbcc21a">
   <link rel="modulepreload" href="js3d/profile.js?v=c7332b69cb">
-  <link rel="modulepreload" href="js3d/gacha-ui.js?v=fd64af3f47">
+  <link rel="modulepreload" href="js3d/gacha-ui.js?v=becd381735">
   <link rel="modulepreload" href="js3d/replays-ui.js?v=1259fc16e4">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/ShaderPass.js">
   <link rel="modulepreload" href="js3d/story-map.js?v=7d2717836a">
@@ -4403,6 +4428,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=ba24e41aa7">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=178f7e8f04"></script>
+  <script type="module" src="js3d/main.js?v=0edb4e3a2e"></script>
 </body>
 </html>
