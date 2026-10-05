@@ -561,7 +561,9 @@ export function createBoard(stage, defIndex, me, hooks) {
       mine: ev.side === me,
       /* 済みのプロトコルをもう一度コンパイルした (相手のデッキの一番上をもらうだけ) */
       recompile: !!(prev.players[ev.side] && prev.players[ev.side].protocols[ev.line] && prev.players[ev.side].protocols[ev.line].compiled),
-      remaining: (next.winCompiles || 3) - next.players[ev.side].protocols.filter(p => p.compiled).length
+      /* 勝つのに要る本数は側ごとに違うことがある (ボス「聖域」など)。演出の丸の数もこれに合わせる */
+      total: (Array.isArray(next.winBySide) ? next.winBySide[ev.side] : 0) || next.winCompiles || 3,
+      remaining: ((Array.isArray(next.winBySide) ? next.winBySide[ev.side] : 0) || next.winCompiles || 3) - next.players[ev.side].protocols.filter(p => p.compiled).length
     });
 
     await stage.home(420);

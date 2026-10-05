@@ -103,8 +103,20 @@ function pickPad() {
 function start() { if (!raf) raf = requestAnimationFrame(loop); }
 function stop() { cancelAnimationFrame(raf); raf = 0; setActive(false); releaseWalk(); }
 
+/* 対戦中の隅に、ボタンの割り当てを小さく出す (どこにも書いていなかった)。パッドを使っている間だけ */
+function ensureLegend() {
+  if (document.getElementById('gpLegend')) return;
+  const el = document.createElement('div');
+  el.id = 'gpLegend';
+  el.setAttribute('aria-hidden', 'true');
+  el.innerHTML = [['A', '決定'], ['B', '戻る'], ['X', '補充'], ['Y', '手札'], ['LB/RB', '手札を送る'], ['BACK', 'ログ'], ['START', '設定']]
+    .map(([k, v]) => '<span><b>' + k + '</b>' + v + '</span>').join('');
+  document.body.appendChild(el);
+}
+
 function setActive(on) {
   active = on;
+  if (on) ensureLegend();
   if (!ring) {
     ring = document.createElement('div');
     ring.id = 'gpFocus';

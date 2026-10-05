@@ -60,7 +60,7 @@ import { confetti } from './gachafx.js';
 import { setCosmeticProtocols, profileOf, myLook, TROPHY_TITLES } from './cosmetics-ui.js';
 import { setCosmeticsProtocols, cosmeticsProtocols } from './cosmetics-mode.js';
 import { displayName } from './displayname.js';
-import { showPlates, setCompileProgress, setTurnPlate } from './plates.js';
+import { showPlates, setCompileProgress, setTurnPlate, setPlateHand } from './plates.js';
 import { matUnlocked, MAT_W, MAT_D } from './playmat.js';
 import { initAccount, openAccount, takeAccountResume, accountState, onAccountChange } from './account.js';
 import { openCardList } from './cardlist-ov.js';
@@ -95,6 +95,7 @@ import { meaningfulSteps as cutSteps } from './steps.js';
 import { initDialogs } from './dialogs.js';
 import { initGamepad } from './gamepad.js';
 import { iconArt } from './face-icons.js';
+import { callMe } from './callme.js';
 
 const Engine = window.CompileEngine;
 initDialogs();
@@ -2018,6 +2019,26 @@ function updatePads() {
   }
 }
 
+/* 出せない理由を言葉に (engine の playBlockReason)。出せるなら null */
+function playBlockText(uid, line, faceUp) {
+  const st = shown();
+  let r = null;
+  try { r = Engine.playBlockReason(st, ME, uid, line, faceUp); } catch (e) { return null; }
+  if (!r) return null;
+  const by = r.by != null ? (cardName(r.by) || 'カード') : '';
+  switch (r.rule) {
+    case 'oppNoPlayThisLine': return '相手の ' + by + ' の効果: このラインには出せない';
+    case 'oppNoFaceDownThisLine': return '相手の ' + by + ' の効果: このラインには裏向きで出せない';
+    case 'oppFaceDownOnly': return '相手の ' + by + ' の効果: 表向きでは出せない (裏向きだけ)';
+    case 'protoMatch': return '表向きは同じプロトコルのラインだけ (このラインは ' + (r.names || []).join('・') + ')';
+    default: return null;
+  }
+}
+
+function isPlainProtoBlock(uid, line, faceUp) {
+  try { const r = Engine.playBlockReason(shown(), ME, uid, line, faceUp); return !!r && r.rule === 'protoMatch'; } catch (e) { return false; }
+}
+
 function canPlaceOnLine(st, uid, line, side) {
   return placementChoices(legalNow(), uid, st.turn)
     .some(a => a.line === line && a.side === side);
@@ -2307,7 +2328,7 @@ function bindInput() {
       if (cands) {
         /* 候補外でも捨て札の山だけは中身を見せる (公開情報) */
         const lt = hit && hit.obj.userData.uid && locOf(shown(), hit.obj.userData.uid);
-        if (lt && (lt.zone === 'field' || lt.zone === 'hand') && pickAid) pickAid.reason(hit.obj.userData.uid, pickReason(lt));
+        if (lt && (lt.zone === 'field' || lt.zone === 'hand') && pickAid) pickAid.reason(hit.obj.userData.uid, pickReason(lt, hit.obj.userData.uid, cands));
         if (lt && lt.zone === 'trash') showTrash(lt.side);
         else if (lt && lt.zone === 'deck' && lt.side === ME && puzzle && puzzle.tsume) TS.showDeck(shown(), defIndex, ME);
         return;
@@ -2402,15 +2423,48 @@ function bindInput() {
 
   async function dropOnPad(ud) {
     if (!canPlaceOnLine(cur.state, selectedUid, ud.line, ud.side)) {
-      sfx('tick'); UI.toast('そのラインにはプレイできません'); return;
+      /* なぜ出せないかを言う (裏でも出せないときは裏の理由、表だけなら表の理由) */
+      const why = ud.side === ME ? (playBlockText(selectedUid, ud.line, false) || playBlockText(selectedUid, ud.line, true)) : null;
+      sfx('tick'); UI.toast(why || 'そのラインにはプレイできません', 2600); return;
     }
     const card = board.cards.get(selectedUid);
     if (card) { card.renderOrder = 0; raiseHandCard(selectedUid); }
     focusPlayChoice(ud.line, ud.side);
+    /* そのラインに置ける向きが1つだけなら、落としたらそのまま置く (表/裏をもう1回押させていた)。
+       戻せる対戦 (CPU 戦) だけ。オンラインは押し間違いを戻せないので、いままでどおり選んでもらう */
+    if (!roomMode && assistGame()) {
+      const cell = document.querySelector('#playChoices section[data-line="' + ud.line + '"][data-side="' + ud.side + '"]');
+      const btns = cell ? cell.querySelectorAll('button:not(.place-locked)') : [];
+      if (btns.length === 1) btns[0].click();
+    }
   }
 
   window.addEventListener('keydown', (ev) => {
     if (ev.key === 'Escape') deselect();
+  });
+  /* 対戦中のキーボードの近道: Z (Ctrl+Z) 戻す / H ヒント / R 補充 (2回押しはそのまま) / L ログ / I 詳細 /
+     1〜3 置き場所 (Shift で裏)。文字を入力している最中と、上に窓が開いているときは何もしない */
+  window.addEventListener('keydown', (ev) => {
+    if (ev.defaultPrevented || ev.altKey || ev.metaKey || document.body.classList.contains('pregame')) return;
+    const t = ev.target;
+    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+    if (document.querySelector('.pz-ov.show, #cosOv.show, #cardListOv.show, #endBar.show')) return;
+    const click = (id) => { const b = document.getElementById(id); if (b && !b.hidden && !b.disabled && b.offsetParent !== null) { b.click(); return true; } return false; };
+    const k = ev.key.toLowerCase();
+    let done = false;
+    if (k === 'z' && !ev.shiftKey) done = click('btnUndo');
+    else if (ev.ctrlKey) return;
+    else if (k === 'h') done = click('btnHint');
+    else if (k === 'r') done = click('btnRefresh');
+    else if (k === 'l') done = click('btnLog');
+    else if (k === 'i') done = click('btnInfo');
+    else if (/^[1-3]$/.test(ev.key) || /^Digit[1-3]$/.test(ev.code)) {
+      const line = Number(ev.code ? ev.code.slice(-1) : ev.key) - 1;
+      const cell = document.querySelector('#playChoices:not([hidden]) section[data-line="' + line + '"][data-side="' + ME + '"]');
+      const btn = cell && cell.querySelector(ev.shiftKey ? 'button.place-facedown:not(.place-locked)' : 'button:not(.place-locked)');
+      if (btn) { btn.click(); done = true; }
+    }
+    if (done) ev.preventDefault();
   });
   window.addEventListener('keyup', (ev) => {
   });
@@ -2419,12 +2473,13 @@ function bindInput() {
   if (refreshBtn) refreshBtn.onclick = async () => {
     if (busy || !cur || !humanTurn(shown()) || cur.requests.length) return;
     const ok = legalNow().some(a => a.type === 'refresh');
-    if (!ok) { UI.toast('いまは補充できません'); return; }
+    /* 補充できないのは手札が 5 枚以上のとき (ルール)。理由を言う */
+    if (!ok) { UI.toast(shown().players[ME].hand.length >= 5 ? '手札が 5 枚以上のときは補充できません' : 'いまは補充できません', 2400); return; }
     /* 押し間違え防止: 1回目は確かめ、3秒以内にもう一度押したら補充 (補充すると番が終わる) */
     if (!refreshBtn.classList.contains('armed')) {
       refreshBtn.classList.add('armed');
       refreshBtn.dataset.label = refreshBtn.dataset.label || refreshBtn.textContent;
-      refreshBtn.textContent = 'もう一度押すと補充';
+      refreshBtn.textContent = 'もう一度押すと補充 (番が終わる)';
       clearTimeout(refreshBtn._t);
       refreshBtn._t = setTimeout(() => { refreshBtn.classList.remove('armed'); refreshBtn.textContent = refreshBtn.dataset.label; }, 3000);
       return;
@@ -2853,7 +2908,14 @@ function updatePlayChoices() {
     }, () => {
       if (boardPick?.kind === 'free') { boardPick.sel = null; renderFreePick(); }
       else { deselect(); showPreview(null); }
-    }, (action) => placedTotal(shown(), action));
+    }, (action) => placedTotal(shown(), action),
+    /* 自分の側のラインで出せない向きと、その理由 (自由に選ぶ効果の途中は出さない) */
+    (side, line) => (boardPick?.kind === 'free' || !options.length || side !== ME) ? []
+      : [true, false].filter(f => !options.some(a => a.side === side && a.line === line && a.faceUp === f))
+        /* ふつうの「プロトコルが違うので表は無理」は毎回出るとうるさいので、初心者モードのときだけ。相手の効果のせいなら必ず */
+        .filter(f => settings().beginner || !isPlainProtoBlock(uid, line, f))
+        .map(f => ({ faceUp: f, reason: playBlockText(uid, line, f) })).filter(b => b.reason),
+    (reason) => { sfx('tick'); UI.toast(reason, 2600); });
   positionPlayChoices();
   if (tutorial) applyTutorialFocus();
 }
@@ -3170,6 +3232,7 @@ function showVsTag(rm) {
   showPlates({ me: myPlate(), opp: name ? { name, sub: [oppHand, badge].filter(Boolean).join('　'), frame: oppLook.plate, frameColor: frameColor(oppLook.plate) } : null });
 }
 
+let roomOppTurn = null;          // オンラインの相手の番に起きたこと (自分の番になったらまとめて出す)
 async function roomApplyView(rm, instant) {
   if (!gameStartedAt) { gameStartedAt = Date.now(); CW.battleStarted('online'); }
   showVsTag(rm);
@@ -3193,7 +3256,21 @@ async function roomApplyView(rm, instant) {
     /* 相手が1手戻した */
     if (roomLoggedVersion !== null && rm.log.some(l => /^P[12]: 1手戻した/.test(l) && !l.startsWith('P' + (rm.side + 1) + ':'))) UI.toast('相手が1手戻しました', 2400);
     UI.pushLog(rm.log);
+    /* 相手の番のまとめ (CPU 戦と同じもの) を、サーバーのログの相手の行から作る */
+    if (roomLoggedVersion !== null && !roomWatching) {
+      const tag = 'P' + (1 - rm.side + 1) + ':';
+      const theirs = rm.log.filter(l => typeof l === 'string' && l.startsWith(tag)).map(l => l.slice(tag.length).trim()).filter(Boolean);
+      if (theirs.length) {
+        if (!roomOppTurn) roomOppTurn = { start: prev || st, lines: [] };
+        roomOppTurn.lines.push(...theirs);
+      }
+    }
     roomLoggedVersion = rm.version;
+  }
+  if (roomOppTurn && (st.turn === ME || st.winner !== null)) {
+    const o = roomOppTurn;
+    roomOppTurn = null;
+    if (st.winner === null && settings().oppSummary) showOppSummary(o, st);
   }
   if (instant || !prev) {
     board.syncInstant(st);
@@ -3276,6 +3353,18 @@ async function roomDrainRequest() {
    次の問い合わせは前の応答が返ってから予約する (重なって飛ばない) */
 let roomPollOn = false;
 let roomPollFails = 0;
+/* つながり直している間は、画面の上に「再接続中」を出し続ける (知らせが消えると、止まっているのか分からなかった) */
+function setReconnecting(on) {
+  let el = document.getElementById('reconnectChip');
+  if (!el && on) {
+    el = document.createElement('div');
+    el.id = 'reconnectChip';
+    el.setAttribute('role', 'status');
+    el.textContent = '再接続中…';
+    document.body.appendChild(el);
+  }
+  if (el) el.classList.toggle('show', !!on);
+}
 /* タブが表に戻ったら、すぐに問い合わせる (裏ではブラウザがタイマーを間引く) */
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && roomMode && roomPollOn) roomPoll(true);
@@ -3283,6 +3372,7 @@ document.addEventListener('visibilitychange', () => {
 
 /* 手番の持ち時間 (サーバーの TURN_LIMIT_MS)。相手の番が長引いたら、時間切れ勝ちを主張できる */
 let turnTimerId = null;
+let turnWarned = '';            // 持ち時間の警告を鳴らした手 (同じ手で何度も鳴らさない)
 function startTurnTimer() {
   clearInterval(turnTimerId);
   turnTimerId = setInterval(updateTurnTimer, 1000);
@@ -3299,6 +3389,12 @@ function updateTurnTimer() {
   el.hidden = false;
   el.classList.toggle('mine', mine);
   el.classList.toggle('warn', left <= 30);
+  /* 自分の持ち時間が残り 30 秒・10 秒になったら音と振動で (色が変わるだけでは気づけない) */
+  if (mine && !roomWatching) {
+    const mark = left <= 10 ? 10 : left <= 30 ? 30 : 0;
+    const key = rm.lastActionAt + ':' + mark;
+    if (mark && turnWarned !== key && left > 0) { turnWarned = key; callMe('残り ' + left + ' 秒', 'tick'); }
+  }
   if (!mine && left <= 0 && !roomWatching) {
     if (!el.querySelector('button')) {
       el.innerHTML = '<span>相手の持ち時間が切れました</span><button type="button">時間切れで勝ちにする</button>';
@@ -3349,10 +3445,10 @@ async function roomPoll(force) {
   try { next = await ROOM.roomApi(roomWatching ? 'watch' : 'get', { code: roomRm.code, stamp: roomRm.stamp }); } catch (e) {
     if (isRoomGone(e)) { roomClosed(); return; }
     /* 一時的な通信の失敗は次の問い合わせで取り直す。続くときは知らせる */
-    if (++roomPollFails === 4) UI.toast('通信が不安定です。つながり直すまで待っています…', 4000);
+    if (++roomPollFails === 4) { UI.toast('通信が不安定です。つながり直すまで待っています…', 4000); setReconnecting(true); }
     return;
   }
-  if (roomPollFails >= 4) UI.toast('つながりました', 1600);
+  if (roomPollFails >= 4) { UI.toast('つながりました', 1600); setReconnecting(false); }
   roomPollFails = 0;
   if (next.unchanged || (next.version === roomRm.version && next.status === roomRm.status)) {
     roomPollIdle++;
@@ -3524,8 +3620,10 @@ async function announceTurnFor(turn, atState) {
   if (arena && arena.setTurnSide) arena.setTurnSide(turn);
   setTurnPlate(turn === ME ? 'me' : 'opp');
   handForTurn(turn);
-  /* 自分の番が回ってきたときは、相手の番とは別の音で知らせる */
-  sfx(turn === ME && !partnerMove() ? 'yourTurn' : 'turn');
+  /* 自分の番が回ってきたときは、相手の番とは別の音で知らせる。
+     オンラインでほかのタブを見ているときは、タブの名前の点滅と振動でも呼ぶ (気づかず時間切れになっていた) */
+  if (roomMode && !roomWatching && turn === ME && !partnerMove() && typeof document !== 'undefined' && document.hidden) callMe('あなたの番です');
+  else sfx(turn === ME && !partnerMove() ? 'yourTurn' : 'turn');
   /* タッグ: だれの番かを名札とカットインで。自分の側でも味方が指す番は PARTNER TURN */
   /* 名札とカットインは、手番が替わった時点の盤面で (再生の途中は cur がもう先へ進んでいる) */
   const tagSt = atState || (cur && cur.state);
@@ -3934,7 +4032,7 @@ function playBattleBgm() {
   const key = battleBgm();
   playBgm(key);
   const t = trackOf(key);
-  if (t && t.credit) setTimeout(() => UI.toast('♪ ' + t.title + ' — ' + t.credit, 2600), 2400);
+  if (t && t.credit) setTimeout(() => UI.toast('♪ ' + t.title + ' — ' + t.credit, 2600, { low: true }), 2400);
 }
 
 /* ---------- 進行 ---------- */
@@ -4764,8 +4862,24 @@ function pickPreview(bp, uid) {
   return bp._tips[uid];
 }
 /* 選べないカードを押したときの理由 */
-function pickReason(l) {
+/* 選べないカードを押したときの理由。候補の顔ぶれと見比べて、何が違うのかを具体的に言う
+   (前は「この効果では選べない」で終わっていた) */
+function pickReason(l, uid, cands) {
   if (l.zone === 'hand' && l.side !== ME) return '相手の手札は選べない';
+  const st = shown();
+  const locs = (cands || []).map(u => locOf(st, u)).filter(Boolean);
+  if (locs.length) {
+    const all = (f) => locs.every(f);
+    if (l.zone === 'field' && l.len && l.idx < l.len - 1 && all(c => c.zone !== 'field' || c.idx === c.len - 1)) return '覆われているので選べない (いちばん上のカードだけ)';
+    if (all(c => c.side !== ME) && l.side === ME) return '自分のカードは対象外 (相手のカードだけ)';
+    if (all(c => c.side === ME) && l.side !== ME) return '相手のカードは対象外 (自分のカードだけ)';
+    if (all(c => c.zone === 'hand') && l.zone !== 'hand') return '手札のカードから選ぶ';
+    if (all(c => c.zone === 'field') && l.zone !== 'field') return '場のカードから選ぶ';
+    const up = (u) => !!(st.cards[u] && st.cards[u].faceUp);
+    if (l.zone === 'field' && cands.every(up) && !up(uid)) return '表向きのカードだけ';
+    if (l.zone === 'field' && cands.every(u => !up(u)) && up(uid)) return '裏向きのカードだけ';
+    if (l.zone === 'field' && all(c => c.zone === 'field' && c.line === locs[0].line) && l.line !== locs[0].line) return 'このラインのカードは対象外';
+  }
   if (l.zone === 'field' && l.len && l.idx < l.len - 1) return '覆われているので選べない';
   return 'この効果では選べない';
 }
@@ -5204,6 +5318,29 @@ async function storyAfterGame(win) {
 }
 
 /* 決着の画面に出す「次の目標」: 次のレベルまでの経験値と、今日のデイリーミッションの残り */
+/* この試合のまとめ: 何手で決着したか・コンパイルの順番 (gameHistory の盤面から)。終わった画面に1行で */
+function matchSummaryHtml() {
+  try {
+    const st = cur && cur.state;
+    if (!st || !gameHistory.length) return '';
+    const order = [];
+    let prev = gameHistory[0].st;
+    const frames = gameHistory.map(h => h.st).concat([st]);
+    for (const f of frames.slice(1)) {
+      for (let side = 0; side < 2; side++) {
+        f.players[side].protocols.forEach((p, i) => {
+          const was = prev.players[side].protocols[i];
+          if (p.compiled && was && !was.compiled) order.push((side === ME ? 'あなた ' : '相手 ') + p.name);
+        });
+      }
+      prev = f;
+    }
+    const turns = (st.turns || 0) + 1;
+    const esc = (t) => String(t).replace(/[<>&"]/g, '');
+    return '<p class="end-sum"><b>' + turns + '</b> ターンで決着' + (order.length ? ' ・ コンパイル: ' + order.map(esc).join(' → ') : '') + '</p>';
+  } catch (e) { return ''; }
+}
+
 function nextGoalsHtml() {
   if (roomMode && !localRecords().length) return '';
   const pl = playerLevel(localRecords(), bonusXp());
@@ -5285,6 +5422,7 @@ function showEndActions(win) {
   el.innerHTML =
     '<div class="end-title">' + (underdogWin ? '下剋上 達成！' : win ? 'あなたの勝ち' : '敗北') + '</div>' +
     gainsHtml() +
+    matchSummaryHtml() +
     nextGoalsHtml() +
     (underdogWin ? '<div class="end-sub">最弱のデッキで最強に勝ちました。称号 GIANT SLAYER・専用スリーブとマーカー・+' + UNDERDOG_XP + ' XP</div>' : '') +
     '<div class="end-btns">' +
@@ -5545,9 +5683,18 @@ function showOppSummary(o, st) {
     list.append(li);
   }
   el.append(head, list);
+  el.classList.remove('mini');
   el.classList.add('show');
-  const hide = () => { el.classList.remove('show'); clearTimeout(oppSummaryTimer); };
-  el.onclick = hide;
+  /* しまったあとも「相手の番 ▸」として小さく残し、押すと開き直せる (前は消えたら見返せなかった) */
+  const mini = document.createElement('span');
+  mini.className = 'os-mini';
+  mini.textContent = '相手の番 (' + lines.length + ') ▸';
+  el.append(mini);
+  const hide = () => { el.classList.add('mini'); clearTimeout(oppSummaryTimer); };
+  el.onclick = () => {
+    if (el.classList.contains('mini')) { el.classList.remove('mini'); clearTimeout(oppSummaryTimer); return; }
+    hide();
+  };
   clearTimeout(oppSummaryTimer);
   oppSummaryTimer = setTimeout(hide, 3200 + lines.length * 1400);
 }
@@ -5911,6 +6058,8 @@ function activeFx(st) {
 function refreshHud() {
   syncCompileProgress(shown());      // 名札は作り直されると空になるので、表示の更新のたびに進み具合も合わせる
   const st = shown();
+  /* CPU 戦でも相手の手札の枚数を名札に (オンラインは名札の下の段に出している) */
+  if (!roomMode && st && st.players && !trainingMode && !st.tag) setPlateHand(st.players[1 - ME].hand.length);
   UI.setActiveFx(activeFx(st));
   checkRevealed(st);
   /* 盤面そのものの色で手番を示す (決着後はどちらも消す) */

@@ -302,6 +302,19 @@ function canPlay(st, player, uid, line, faceUp, anyProto) {
   return true;
 }
 
+/* canPlay が断る理由 (画面で「なぜ出せないか」を言うため)。出せるなら null。
+   { rule: 'oppNoPlayThisLine' | 'oppNoFaceDownThisLine' | 'oppFaceDownOnly' | 'protoMatch', by: 効果の元のカード uid, names: ラインのプロトコル名 } */
+function playBlockReason(st, player, uid, line, faceUp, anyProto) {
+  for (const s of activeStatics(st)) {
+    if (s.kind !== 'playPermission' || player === s.sideIdx) continue;
+    if (s.rule === 'oppNoPlayThisLine' && line === s.line) return { rule: s.rule, by: s.uid };
+    if (s.rule === 'oppNoFaceDownThisLine' && line === s.line && !faceUp) return { rule: s.rule, by: s.uid };
+    if (s.rule === 'oppFaceDownOnly' && faceUp) return { rule: s.rule, by: s.uid };
+  }
+  if (canPlay(st, player, uid, line, faceUp, anyProto)) return null;
+  return { rule: 'protoMatch', by: null, names: lineProtoNames(st, line) };
+}
+
 function ignoreMiddleAt(st, line) {
   return activeStatics(st).some(s => s.kind === 'ignoreMiddle' && (s.scope === 'field' || s.line === line));
 }
@@ -4818,7 +4831,7 @@ function aiAnswer(state, req) {
 
 const Engine = {
   init, newGame, newPuzzle, apply, legalActions, setTrace, setAiLevel, setAiBlunder, setAiThinkBudget, setAiBreadth, setAiPimc, setAiWeights, setAiSpecialist, setAiSpecialistWeights,
-  lineTotal, cardValue, compilableLines, canPlay, locate,
+  lineTotal, cardValue, compilableLines, canPlay, playBlockReason, locate,
   ai: { action: aiAction, answer: aiAnswer, score: aiScore, middleFizzles: aiMiddleFizzles, transitionScore: aiTransitionScore, compilePassChance: aiCompilePassChance, informationState: aiInformationState, rootValues: aiRootValues, vetoOrder: aiVetoOrder, actionBias: aiActionBias, opsValue: aiOpsValue, boardEffect: aiBoardEffectScore, randomPicks, smartPicks },
   get defs() { return DEFS; },
   get protos() { return PROTOS; }

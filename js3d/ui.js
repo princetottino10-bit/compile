@@ -8,16 +8,45 @@ import { drawVictoryBackdrop, drawDefeatBackdrop, drawAuroraBackdrop } from './b
 import { condHtml } from './cardtext.js';
 import { sfx } from './audio.js';
 import { equipNow, canEquip, isEquipped } from './equip.js';
+import { speedNow } from './tween.js';
+
+/* 演出の待ち: 速さの設定に合わせて縮め (前は設定を無視して毎回同じ長さ)、skip なら画面を押すと飛ばせる */
+function cutWait(el, ms, skip) {
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      clearTimeout(t); clearTimeout(arm);
+      if (skip) { el.style.pointerEvents = ''; el.removeEventListener('pointerdown', finish); }
+      resolve();
+    };
+    const t = setTimeout(finish, ms / speedNow());
+    /* 直前の操作のタッチで飛ばないよう、少しあとから受け付ける */
+    const arm = skip ? setTimeout(() => { el.style.pointerEvents = 'auto'; el.addEventListener('pointerdown', finish); }, 250) : 0;
+  });
+}
 
 const $ = (sel) => document.querySelector(sel);
 
-export function toast(msg, ms) {
+/* 知らせ。opts.low: 急がないもの (曲名など) は、いま出ている知らせを消さずに、終わってから出す
+   (前は最初の対戦の案内が BGM の曲名で上書きされていた) */
+const lowQueue = [];
+export function toast(msg, ms, opts) {
   const el = $('#toast');
   if (!el) return;
+  if (opts && opts.low && el.classList.contains('show')) {
+    if (lowQueue.length < 3) lowQueue.push([msg, ms]);
+    return;
+  }
   el.textContent = msg;
   el.classList.add('show');
   clearTimeout(el._t);
-  el._t = setTimeout(() => el.classList.remove('show'), ms || 1900);
+  el._t = setTimeout(() => {
+    el.classList.remove('show');
+    const next = lowQueue.shift();
+    if (next) setTimeout(() => toast(next[0], next[1]), 250);
+  }, ms || 1900);
 }
 
 export function setPrompt(text, tone) {
@@ -71,7 +100,8 @@ export function pushLog(lines) {
     }
     el.appendChild(row);
   }
-  while (el.children.length > 80) el.removeChild(el.firstChild);
+  /* 試合のはじめから見返せるよう多めに残す (前は 80 行で古いものから消えていた) */
+  while (el.children.length > 600) el.removeChild(el.firstChild);
   el.scrollTop = el.scrollHeight;
 }
 
@@ -300,10 +330,11 @@ export function askChoice(req, ctx) {
  *   CSS アニメーションで一気に見せる。終わるまで待てるよう Promise を返す。
  * ------------------------------------------------------------------------- */
 /* コンパイルの進み具合: 3つの枠のうち済んだぶんを埋め、今コンパイルした枠を光らせる */
-function ccPips(remaining) {
-  const done = Math.max(1, 3 - (remaining || 0));
-  let html = '<div class="cc-pips" aria-label="' + done + ' / 3 コンパイル">';
-  for (let i = 0; i < 3; i++) html += '<i class="' + (i < done - 1 ? 'on' : i === done - 1 ? 'now' : '') + '"></i>';
+function ccPips(remaining, total) {
+  const n = Math.max(1, Math.min(6, total || 3));      // 勝つのに要る本数 (ボス戦などは 3 でないことがある)
+  const done = Math.max(1, n - (remaining || 0));
+  let html = '<div class="cc-pips" aria-label="' + done + ' / ' + n + ' コンパイル">';
+  for (let i = 0; i < n; i++) html += '<i class="' + (i < done - 1 ? 'on' : i === done - 1 ? 'now' : '') + '"></i>';
   return html + '</div>';
 }
 
@@ -322,19 +353,16 @@ export function compileCutIn(info) {
     '<div class="cc-body">' +
       '<div class="cc-kicker">PROTOCOL COMPILED</div>' +
       '<div class="cc-name" data-text="' + info.name + '">' + info.name + '</div>' +
-      ccPips(info.remaining) +
+      ccPips(info.remaining, info.total) +
       '<div class="cc-sub">' + (info.remaining > 0 ? 'あと ' + info.remaining + ' プロトコル' : 'ALL PROTOCOLS COMPILED') + '</div>' +
       '<div class="cc-owner">' + (info.who ? String(info.who).replace(/[<>&]/g, '') : info.mine ? 'YOU' : 'OPPONENT') + '</div>' +
     '</div>' +
     '<div class="cc-scan"></div>';
   el.classList.add('show');
 
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      el.classList.remove('show');
-      el.innerHTML = '';
-      resolve();
-    }, 2200);
+  return cutWait(el, 2200, true).then(() => {
+    el.classList.remove('show');
+    el.innerHTML = '';
   });
 }
 
@@ -398,10 +426,10 @@ export function declareCutIn(o) {
     '</div>';
   el.classList.add('show');
   const hold = o.hold || (tone === 'call' ? 900 : 1150);           // o.hold: 読ませたい長さ (コントロールの告知など)
-  return new Promise((resolve) => setTimeout(() => {
+  return cutWait(el, hold, false).then(() => new Promise((resolve) => {
     el.classList.remove('show');
     setTimeout(resolve, 180);
-  }, hold));
+  }));
 }
 
 /* label: 真ん中の文字を変えるとき (タッグの PARTNER TURN など) */
@@ -422,11 +450,11 @@ export function turnCutIn(mine, label) {
     '<div class="tc-text">' + (label || (mine ? 'YOUR TURN' : 'OPPONENT TURN')) + '</div>' +
     '<div class="tc-sub">' + (mine ? 'COMMAND READY' : 'STAND BY') + '</div>';
   el.classList.add('show');
-  return new Promise((resolve) => setTimeout(() => {
+  /* 手番の演出は押すと飛ばせる */
+  return cutWait(el, 1250, true).then(() => {
     el.classList.remove('show');
     el.innerHTML = '';
-    resolve();
-  }, 1250));
+  });
 }
 
 /* -------------------------------------------------------------------------

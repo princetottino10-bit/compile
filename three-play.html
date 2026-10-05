@@ -108,7 +108,7 @@
   /* 待った・おすすめの手: 手札を隠すボタンの上に並べる (右は自分の山札にかかるので左に。ふつうの CPU 戦だけ) */
   #assist{position:fixed;z-index:12;left:var(--hand-left, 14px);bottom:calc(var(--hand-side, 22px) + 48px);
     display:flex;gap:6px;transition:left .22s cubic-bezier(.16,1,.3,1);}
-  #assist .btn{width:auto;min-height:32px;padding:0 12px;font-size:10px;}
+  #assist .btn{width:auto;min-height:40px;padding:0 14px;font-size:11px;}   /* 指で押せる高さ (前は 32px) */
   #assist .btn:disabled{opacity:.4;cursor:default;}
   body.pregame #assist,body.demo #assist{display:none!important;}
   /* 縦持ちのスマホ: 小さかったボタンを指で押せる高さに (チュートリアルの「やり直す」・戦績のタブ) */
@@ -131,6 +131,24 @@
   #oppSummary b{display:block;margin-bottom:5px;font:800 10px/1 var(--font-ui);letter-spacing:.24em;color:var(--pink);}
   #oppSummary ol{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:3px;font:600 12px/1.45 "M PLUS 1",system-ui;color:var(--ink);}
   @media (prefers-reduced-motion:reduce){ #oppSummary{transition:opacity .2s;} }
+  .end-sum{margin:2px 0 6px;font:600 12px/1.5 "M PLUS 1",system-ui;color:var(--dim);text-align:center;overflow-wrap:anywhere;}
+  .end-sum b{font:800 15px/1 var(--font-ui);color:#fff;margin-right:2px;}
+  #gpLegend{display:none;position:fixed;left:max(10px,env(safe-area-inset-left));top:calc(56px + env(safe-area-inset-top));z-index:11;
+    flex-direction:column;gap:3px;padding:7px 9px;background:rgba(8,6,16,.7);border:1px solid rgba(255,255,255,.12);pointer-events:none;
+    font:600 10.5px/1.25 "M PLUS 1",system-ui;color:#cfc8e6;}
+  body.gamepad:not(.pregame) #gpLegend{display:flex;}
+  #gpLegend b{display:inline-block;min-width:3.4em;font:800 10px/1 var(--font-ui);color:#fff;}
+  #reconnectChip{position:fixed;left:50%;top:calc(10px + env(safe-area-inset-top));z-index:60;display:none;transform:translateX(-50%);
+    padding:6px 14px;background:rgba(40,12,24,.95);border:1px solid var(--pink);color:#fff;font:800 12px/1 "M PLUS 1",system-ui;clip-path:var(--cut-s);}
+  #reconnectChip.show{display:block;animation:rcBlink 1.4s ease-in-out infinite;}
+  @keyframes rcBlink{50%{opacity:.6;}}
+  @media (prefers-reduced-motion:reduce){ #reconnectChip.show{animation:none;} }
+  /* しまったあとは小さな札「相手の番 (3) ▸」だけ。押すと開き直す */
+  #oppSummary .os-mini{display:none;}
+  #oppSummary.mini{padding:5px 10px;opacity:.85;}
+  #oppSummary.mini > b,#oppSummary.mini > ol{display:none;}
+  #oppSummary.mini .os-mini{display:inline;font:800 10.5px/1 var(--font-ui);letter-spacing:.06em;color:var(--pink);}
+  body:has(#endBar.show) #oppSummary{display:none;}
   /* いま補充できないときは薄くする (押せば理由を出す) */
   #btnRefresh.idle{opacity:.42;}
   #btnRefresh.idle:hover{opacity:.7;}
@@ -658,7 +676,7 @@
     /* 詳細と同じく、盤面が透けて見えるように (文字は影で読みやすく) */
     background:rgba(5,8,16,.58);border:1px solid rgba(185,164,255,.24);border-right:0;
     -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);box-shadow:-18px 0 44px rgba(0,0,0,.3);
-    font:500 10px/1.6 "M PLUS 1",system-ui;color:#c9c4dc;text-shadow:0 1px 3px rgba(0,0,0,.9);scrollbar-width:thin;
+    font:500 calc(11px * var(--text-scale, 1))/1.6 "M PLUS 1",system-ui;color:#c9c4dc;text-shadow:0 1px 3px rgba(0,0,0,.9);scrollbar-width:thin;   /* 読みやすく (前は 10px)。文字の大きさの設定に合わせる */
     visibility:hidden;transition:visibility 0s .26s;}
   #logDock.open #log{visibility:visible;transition:none;}
   #log:empty::before{content:"まだ何も起きていません";color:var(--dim);}
@@ -1027,11 +1045,13 @@
   .pick-ribbon .rb-act{display:flex;gap:6px;margin-left:auto;}   /* ボタンはまとめて右に (折り返しても一緒) */
   /* 帯が出ている間 (選択の最中) は、横のボタン (UNDO・HINT・REFRESH・手札をしまう) を隠す (縦持ちでは帯と重なる。盤面は目のボタンで見られる) */
   body:has(.pick-ribbon) #assist,body:has(.pick-ribbon) #btnRefresh,body:has(.pick-ribbon) #dock{visibility:hidden;}
+  /* ただし UNDO は残す: 置き間違えて効果の選択が始まっても、選び終える前に戻せるように */
+  body:has(.pick-ribbon) #assist #btnUndo:not([hidden]):not(:disabled){visibility:visible;}
   .pick-ribbon .rb-btn:hover,.pick-ribbon .rb-btn:focus-visible,.pick-ribbon .rb-src:focus-visible{filter:brightness(1.25);outline:0;}
   @media (orientation:landscape) and (max-height:500px){
     .pick-ribbon{padding:4px 6px 4px 4px;gap:6px;max-width:min(560px,calc(100vw - 120px));}
     .pick-ribbon .rb-q{font-size:11px;}
-    .pick-ribbon .rb-btn{min-height:28px;padding:0 10px;font-size:10px;}
+    .pick-ribbon .rb-btn{min-height:36px;padding:0 12px;font-size:11px;}   /* 横持ちでも指で押せる高さ (前は 28px) */
   }
   /* 狭い画面 (縦持ち) だけ、ボタンを次の行へ回してよい */
   @media (max-width:560px){ .pick-ribbon{flex-wrap:wrap;} .pick-ribbon .rb-q{flex:1 1 10em;} }
@@ -2491,7 +2511,7 @@
     #topbar{justify-content:flex-end;padding:calc(8px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) 8px calc(10px + env(safe-area-inset-left));}
     #btnRefresh,#dock .btn{min-height:32px;padding:0 13px;font-size:10px;}
     #logDock{top:40px;bottom:52px;width:min(156px,17vw);}
-    #log{font-size:9px;padding:8px 9px;}
+    #log{font-size:calc(10px * var(--text-scale, 1));padding:8px 9px;}
     /* スマホの横向きは画面が狭いので、つまみをさらに細く */
     #btnLog{top:132px;height:70px;width:18px;font-size:9px;}
     #btnInfo{top:172px;height:70px;width:18px;font-size:9px;}
@@ -4161,7 +4181,7 @@
     </div>
   </div>
 
-  <div id="prompt" class="hidden"></div>
+  <div id="prompt" class="hidden" role="status" aria-live="polite"></div>
 
   <!-- 山札・捨て札の枚数: 盤面の山のそばに出す (位置は main.js が山から計算) -->
   <div id="pileCounts" aria-label="山札と捨て札の枚数">
@@ -4193,7 +4213,7 @@
   <div id="resultCut"></div>
   <div id="fxBanner" role="status" aria-live="polite"></div>
 
-  <div id="toast"></div>
+  <div id="toast" role="status" aria-live="polite"></div>
 
   <div id="modal">
     <button id="modalPeek" type="button" title="盤面を見る">&#128065;</button>
@@ -4227,7 +4247,7 @@
     <div id="bootBar"><i></i></div>
   </div>
 
-  <script src="engine.js?v=a0ff4ba459"></script>
+  <script src="engine.js?v=8714f4a2e4"></script>
   <script type="importmap">
   {
     "imports": {
@@ -4249,7 +4269,8 @@
       "./js3d/backdrops.js": "./js3d/backdrops.js?v=90faf9612d",
       "./js3d/bgm-shop.js": "./js3d/bgm-shop.js?v=c1b34e6d03",
       "./js3d/bgm.js": "./js3d/bgm.js?v=13a05307f5",
-      "./js3d/board.js": "./js3d/board.js?v=0ee234c796",
+      "./js3d/board.js": "./js3d/board.js?v=0d4f2a81d5",
+      "./js3d/callme.js": "./js3d/callme.js?v=6918030993",
       "./js3d/card.js": "./js3d/card.js?v=88ebb0dbcb",
       "./js3d/cardlist-ov.js": "./js3d/cardlist-ov.js?v=97693492b3",
       "./js3d/cardtex.js": "./js3d/cardtex.js?v=61e2262ea0",
@@ -4276,20 +4297,20 @@
       "./js3d/gacha-ui.js": "./js3d/gacha-ui.js?v=becd381735",
       "./js3d/gacha.js": "./js3d/gacha.js?v=c86c6a30ac",
       "./js3d/gachafx.js": "./js3d/gachafx.js?v=3d15a2226f",
-      "./js3d/gamepad.js": "./js3d/gamepad.js?v=bd1e0d378f",
+      "./js3d/gamepad.js": "./js3d/gamepad.js?v=f23b88b822",
       "./js3d/holo.js": "./js3d/holo.js?v=9c52bc0510",
       "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c",
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=2b4dbc6066",
       "./js3d/logformat.js": "./js3d/logformat.js?v=e3548c74d1",
-      "./js3d/main.js": "./js3d/main.js?v=2b880d41ca",
+      "./js3d/main.js": "./js3d/main.js?v=b892a45c3f",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=6a0b3a0d99",
       "./js3d/panel.js": "./js3d/panel.js?v=994ec047da",
       "./js3d/pickaid.js": "./js3d/pickaid.js?v=fd33e4bc87",
-      "./js3d/plates.js": "./js3d/plates.js?v=a1e3b996bb",
-      "./js3d/playchoices.js": "./js3d/playchoices.js?v=55c71c637e",
+      "./js3d/plates.js": "./js3d/plates.js?v=44c8ea3081",
+      "./js3d/playchoices.js": "./js3d/playchoices.js?v=61d7b57093",
       "./js3d/playlog.js": "./js3d/playlog.js?v=90aaffedee",
       "./js3d/playmat.js": "./js3d/playmat.js?v=1c8f36818a",
       "./js3d/profile.js": "./js3d/profile.js?v=c7332b69cb",
@@ -4331,8 +4352,8 @@
       "./js3d/tsume.js": "./js3d/tsume.js?v=bd786cf3c9",
       "./js3d/turning.js": "./js3d/turning.js?v=9c7f79654e",
       "./js3d/tutorial.js": "./js3d/tutorial.js?v=1b5e3a1067",
-      "./js3d/tween.js": "./js3d/tween.js?v=99b25c0d63",
-      "./js3d/ui.js": "./js3d/ui.js?v=8da9622df4",
+      "./js3d/tween.js": "./js3d/tween.js?v=6fe8c0fb03",
+      "./js3d/ui.js": "./js3d/ui.js?v=23bce5e682",
       "./js3d/weekly-ui.js": "./js3d/weekly-ui.js?v=92b645307a",
       "./js3d/weekly.js": "./js3d/weekly.js?v=5605476b1c",
       "./js3d/xp.js": "./js3d/xp.js?v=2146fbc219"
@@ -4362,7 +4383,7 @@
   <link rel="modulepreload" href="js3d/achievements-ui.js?v=8f005170c0">
   <link rel="modulepreload" href="vendor/three.module.js?v=985eb92490">
   <link rel="modulepreload" href="js3d/stage.js?v=a47c0c4ec9">
-  <link rel="modulepreload" href="js3d/board.js?v=0ee234c796">
+  <link rel="modulepreload" href="js3d/board.js?v=0d4f2a81d5">
   <link rel="modulepreload" href="js3d/control.js?v=c1b87ebc63">
   <link rel="modulepreload" href="js3d/panel.js?v=994ec047da">
   <link rel="modulepreload" href="js3d/setup.js?v=a56fbc692e">
@@ -4385,7 +4406,7 @@
   <link rel="modulepreload" href="js3d/cosmetics-ui.js?v=a78ef23c9b">
   <link rel="modulepreload" href="js3d/cosmetics-mode.js?v=b8f5bfa057">
   <link rel="modulepreload" href="js3d/displayname.js?v=613e18bf95">
-  <link rel="modulepreload" href="js3d/plates.js?v=a1e3b996bb">
+  <link rel="modulepreload" href="js3d/plates.js?v=44c8ea3081">
   <link rel="modulepreload" href="js3d/playmat.js?v=1c8f36818a">
   <link rel="modulepreload" href="js3d/cardlist-ov.js?v=97693492b3">
   <link rel="modulepreload" href="js3d/opponent-select.js?v=6a0b3a0d99">
@@ -4407,17 +4428,18 @@
   <link rel="modulepreload" href="js3d/emblems.js?v=7b77a0b2df">
   <link rel="modulepreload" href="js3d/layout.js?v=2b4dbc6066">
   <link rel="modulepreload" href="js3d/theme.js?v=932e1d5eb8">
-  <link rel="modulepreload" href="js3d/tween.js?v=99b25c0d63">
-  <link rel="modulepreload" href="js3d/ui.js?v=8da9622df4">
+  <link rel="modulepreload" href="js3d/tween.js?v=6fe8c0fb03">
+  <link rel="modulepreload" href="js3d/ui.js?v=23bce5e682">
   <link rel="modulepreload" href="js3d/input.js?v=cc29feddd4">
-  <link rel="modulepreload" href="js3d/playchoices.js?v=55c71c637e">
+  <link rel="modulepreload" href="js3d/playchoices.js?v=61d7b57093">
   <link rel="modulepreload" href="js3d/aiclient.js?v=0f85a7d42b">
   <link rel="modulepreload" href="js3d/runcards.js?v=c2bf20e9b7">
   <link rel="modulepreload" href="js3d/logformat.js?v=e3548c74d1">
   <link rel="modulepreload" href="js3d/steps.js?v=13e73b20fe">
   <link rel="modulepreload" href="js3d/dialogs.js?v=2aa018b7c1">
-  <link rel="modulepreload" href="js3d/gamepad.js?v=bd1e0d378f">
+  <link rel="modulepreload" href="js3d/gamepad.js?v=f23b88b822">
   <link rel="modulepreload" href="js3d/face-icons.js?v=afd858ff97">
+  <link rel="modulepreload" href="js3d/callme.js?v=6918030993">
   <link rel="modulepreload" href="js3d/cloudsave.js?v=16e480fbda">
   <link rel="modulepreload" href="js3d/admin-ui.js?v=ea6be0ef14">
   <link rel="modulepreload" href="js3d/device.js?v=b519fe2cae">
@@ -4454,8 +4476,8 @@
   <link rel="modulepreload" href="vendor/jsm/shaders/OutputShader.js">
   <link rel="modulepreload" href="js3d/holo.js?v=9c52bc0510">
   <!-- modulepreload:end -->
-  <link rel="stylesheet" href="js3d/playchoices.css?v=ba24e41aa7">
+  <link rel="stylesheet" href="js3d/playchoices.css?v=a30eb3f65a">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=2b880d41ca"></script>
+  <script type="module" src="js3d/main.js?v=b892a45c3f"></script>
 </body>
 </html>

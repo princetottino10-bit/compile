@@ -69,6 +69,22 @@ export function showPlates({ me, opp }) {
   if (meEl) fill(meEl, me, '');
 }
 
+/* 相手の手札の枚数を名札に (CPU 戦。手前の札は重なって数えにくい)。n が null なら消す */
+export function setPlateHand(n) {
+  const el = document.getElementById('vsTag');
+  const text = el && el.querySelector('.pl-text');
+  if (!text) return;
+  let h = text.querySelector('.pl-hand');
+  if (n === null || n === undefined) { if (h) h.remove(); return; }
+  if (!h) {
+    h = document.createElement('small');
+    h.className = 'pl-hand';
+    text.append(h);
+  }
+  const t = '手札 ' + n;
+  if (h.textContent !== t) h.textContent = t;
+}
+
 /* 勝ちまでの進み具合: 名札の横に、コンパイル済みの数だけ埋まった丸 (●●○)。
    need: 勝ちに要るコンパイルの数 (ボス戦などで側ごとに違う)。名札が出ていないときは何もしない */
 export function setCompileProgress(me, opp) {

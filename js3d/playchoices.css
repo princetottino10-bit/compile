@@ -29,6 +29,10 @@
 .placement-cancel { position: fixed; right: calc(14px + env(safe-area-inset-right)); bottom: 24px; border-color: rgba(99,243,255,.4) !important;
   background: rgba(8,12,22,.9) !important; }
 /* 表・裏だけを大きくする。選択解除は元の大きさ */
+/* 出せない向き (鍵付き)。押すと理由が出る。薄くして、置けるボタンと見分ける */
+#playChoices .place-locked { opacity: .45; background: rgba(20,20,30,.6) !important; border-style: dashed !important; filter: grayscale(.6); }
+#playChoices .place-locked:hover, #playChoices .place-locked:focus-visible { opacity: .8; }
+#playChoices .place-lock { font-style: normal; font-size: .7em; }
 #playChoices .placement-cancel { min-width: 38px; min-height: 36px; border-radius: 999px; padding: 5px 12px; font-size: 12px; }
 .effect-target-legend { display: inline-flex; min-height: 38px; align-items: center; padding: 0 8px; border: 1px solid #567881; border-radius: 8px; background: #0c1725; color: #d5ebf0; font-size: 12px; }
 
@@ -42,7 +46,7 @@
 /* 横持ちのスマホは縦が狭いので、ボタンを低くする */
 @media (orientation:landscape) and (max-height:500px) {
   .placement-lane { gap: 3px; padding: 4px 3px; border-radius: 14px; }
-  #playChoices button { min-width: 44px; min-height: 32px; padding: 4px 7px; font-size: 13px; }
+  #playChoices button { min-width: 46px; min-height: 40px; padding: 4px 8px; font-size: 13px; }   /* 指で押せる高さ (前は 32px) */
   .placement-cancel { right: calc(10px + env(safe-area-inset-right)); bottom: 12px; }
 }
 

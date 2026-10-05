@@ -4,8 +4,9 @@ export function placementChoices(actions, uid, turn) {
     .map(a => ({ ...a, side: a.side ?? turn }));
 }
 
-/* totalAfter(action): 置いたあとのそのラインの合計 (効果を解く前)。無ければ出さない */
-export function renderPlayChoices(root, options, protocols, title, choose, cancel, totalAfter) {
+/* totalAfter(action): 置いたあとのそのラインの合計 (効果を解く前)。無ければ出さない
+   blocked(side, line): そのラインで出せない向きと理由 [{ faceUp, reason }]。鍵付きのボタンで見せ、押すと理由を言う (notice) */
+export function renderPlayChoices(root, options, protocols, title, choose, cancel, totalAfter, blocked, notice) {
   root.replaceChildren();
   root.hidden = !title;
   document.body.classList.toggle('choosing-placement', !!title);
@@ -21,7 +22,8 @@ export function renderPlayChoices(root, options, protocols, title, choose, cance
     for (let line = 0; line < 3; line++) {
       const choices = options.filter(a => a.side === side && a.line === line)
         .sort((a, b) => Number(b.faceUp) - Number(a.faceUp));
-      if (!choices.length) continue;
+      const locked = blocked ? blocked(side, line) || [] : [];
+      if (!choices.length && !locked.length) continue;
       const cell = document.createElement('section');
       cell.className = 'placement-lane';
       cell.dataset.side = side; cell.dataset.line = line;
@@ -45,6 +47,20 @@ export function renderPlayChoices(root, options, protocols, title, choose, cance
         button.setAttribute('aria-label', name + 'に' + (action.faceUp ? '表で置く' : '裏で置く')
           + (Number.isFinite(total) ? '。置くと合計 ' + total : ''));
         button.onclick = () => choose(action); cell.append(button);
+      }
+      /* 出せない向き: 鍵付きで残し、押すと理由 (前は黙って消えていて、なぜ表で出せないか分からなかった) */
+      for (const b of locked) {
+        const button = document.createElement('button'); button.type = 'button';
+        button.className = 'place-locked ' + (b.faceUp ? 'place-faceup' : 'place-facedown');
+        const face = document.createElement('span');
+        face.textContent = (b.faceUp ? '表' : '裏');
+        const lock = document.createElement('i');
+        lock.className = 'place-lock'; lock.setAttribute('aria-hidden', 'true'); lock.textContent = '🔒';
+        button.append(face, lock);
+        button.setAttribute('aria-label', name + 'に' + (b.faceUp ? '表' : '裏') + 'では出せない。' + b.reason);
+        button.title = b.reason;
+        button.onclick = () => { if (notice) notice(b.reason); };
+        if (b.faceUp) cell.prepend(button); else cell.append(button);
       }
       root.append(cell);
     }
