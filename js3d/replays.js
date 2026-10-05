@@ -2,7 +2,7 @@
  * リプレイ (CPU 戦の棋譜の保存と再現)
  *   盤面を丸ごと残すと重いので、「始めの条件 (種・プロトコル・先手) + 指した手の列」だけを残す。
  *   エンジンの乱数は盤面の種から決まるので、同じ手を順に当て直せば同じ試合になる。
- *   直近 RECENT 戦は自動で残し、SAVE を押した試合は PINNED 戦まで別に残す。
+ *   直近 RECENT 戦は自動で残し (オンライン・観戦・それ以外で枠を分ける)、SAVE を押した試合は PINNED 戦まで別に残す。
  *   保存 (★) したものはログインしていればアカウントにも残す (1戦 5KB ほど。account.js が送る)
  * ========================================================================= */
 
@@ -25,11 +25,86 @@ function save(list) {
   try { localStorage.setItem(KEY, JSON.stringify({ v: 1, list })); return true; } catch (e) { return false; }
 }
 
-/* 残す数に切り詰める: 保存したものは全部、ほかは新しい順に RECENT 戦 */
+/* 自動で残す枠の分け方: オンライン・観戦・それ以外 (CPU 戦・勝ち抜き・週替わり) で別々に RECENT 戦ずつ。
+   1つの枠だと、CPU 戦を続けて遊ぶうちに、めったにないオンラインの対戦が押し出されて消えていた */
+export function poolOf(r) {
+  return r && r.kind === 'online' ? 'online' : r && r.kind === 'watch' ? 'watch' : 'local';
+}
+
+/* 残す数に切り詰める: 保存したものは全部、ほかは枠ごとに新しい順に RECENT 戦 */
 export function trim(list) {
   const pinned = list.filter(r => r.pinned);
-  const recent = list.filter(r => !r.pinned).sort((a, b) => b.at - a.at).slice(0, RECENT);
+  const recent = [];
+  for (const pool of ['local', 'online', 'watch']) {
+    recent.push(...list.filter(r => !r.pinned && poolOf(r) === pool).sort((a, b) => b.at - a.at).slice(0, RECENT));
+  }
   return pinned.concat(recent).sort((a, b) => b.at - a.at);
+}
+
+/* 一覧の絞り込みに使う種類: cpu / online / run / weekly / watch */
+export function kindOf(r) {
+  const k = r && r.kind;
+  return k === 'online' || k === 'run' || k === 'weekly' || k === 'watch' ? k : 'cpu';
+}
+
+/* 絞り込み。f: { kind: 'all' | kindOf の値, result: 'all' | 'win' | 'lose' } */
+export function filterReplays(list, f) {
+  const kind = (f && f.kind) || 'all', result = (f && f.result) || 'all';
+  return list.filter(r => (kind === 'all' || kindOf(r) === kind) && (result === 'all' || (result === 'win') === !!r.win));
+}
+
+export const LONG_TURNS = 36;      // 長期戦の目安 (両者の手番の合計)
+/* 手元にある数字だけで付ける印 (重い計算はしない)。
+   接戦: 負けた側があと1本 (コンパイルの数が1つ差)。長期戦: 手番が LONG_TURNS 以上。
+   大逆転: 感想戦を開いたときに、勝った側が大きく不利だった場面があった (noteReplayFacts で残した印) */
+export function replayTags(r) {
+  const tags = [];
+  if (!r) return tags;
+  if (r.comeback) tags.push('大逆転');
+  const s = r.score;
+  if (Array.isArray(s) && s.length === 2 && Math.max(s[0], s[1]) - Math.min(s[0], s[1]) === 1 && Math.min(s[0], s[1]) >= 1) tags.push('接戦');
+  if (Number.isFinite(r.turns) && r.turns >= LONG_TURNS) tags.push('長期戦');
+  if (r.fromShare) tags.push('共有から');
+  return tags;
+}
+
+/* 自分で付けた名前 (40 文字まで。空なら外す) */
+export function setReplayTitle(id, title) {
+  const t = String(title || '').replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 40);
+  const list = load();
+  if (!list.some(r => r.id === id)) return false;
+  return save(list.map(r => {
+    if (r.id !== id) return r;
+    const { title: _old, ...rest } = r;
+    return t ? { ...rest, title: t } : rest;
+  }));
+}
+
+/* 感想戦で分かったこと (大逆転など) を残す。facts: { comeback: true } など */
+export function noteReplayFacts(id, facts) {
+  const list = load();
+  const r = list.find(x => x.id === id);
+  if (!r || !facts) return false;
+  const next = { ...r, ...facts };
+  if (JSON.stringify(next) === JSON.stringify(r)) return true;
+  return save(list.map(x => (x.id === id ? next : x)));
+}
+
+/* 優勢の推移 (自分から見て -1..1) から「大逆転」かを決める: 勝った側が一度でも LIMIT より不利だった */
+export const COMEBACK_LIMIT = 0.5;
+export function isComeback(adv, win) {
+  if (!Array.isArray(adv) || adv.length < 2) return false;
+  return win ? Math.min(...adv) <= -COMEBACK_LIMIT : Math.max(...adv) >= COMEBACK_LIMIT;
+}
+
+/* レート戦の記録 (オンラインの戦績) に合う、手元のリプレイを探す。
+   サーバーの記録には部屋のコードが無いので、相手の名前・プロトコル・終わった時刻 (前後 15 分) で合わせる */
+const sameSet = (a, b) => Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.slice().sort().join() === b.slice().sort().join();
+export function findMatchReplay(list, m) {
+  if (!m) return null;
+  const end = Date.parse(m.endedAt);
+  return list.find(r => r.kind === 'online' && sameSet(r.me, m.myProtocols) && sameSet(r.opp, m.opponentProtocols) &&
+    (!r.oppName || !m.opponent || r.oppName === m.opponent) && Number.isFinite(end) && Math.abs(r.at - end) < 15 * 60_000) || null;
 }
 
 export function listReplays() { return load().sort((a, b) => b.at - a.at); }

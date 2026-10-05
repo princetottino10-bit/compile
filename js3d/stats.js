@@ -157,7 +157,9 @@ function summaryTab(list, protos) {
       tile('最強に勝ったプロトコル (制覇)', wonStrongest + '<i>/' + conquerable(protos.map(p => p.name)).length + '</i>') +
       tile('最短で勝った手番', fast ? fast.turns : '—', fast ? esc(fast.me.join(' / ')) : '記録なし') +
       tile('最強に最短で勝った手番', fastTop ? fastTop.turns : '—', fastTop ? esc(fastTop.me.join(' / ')) : '記録なし') +
-    '</div>';
+    '</div>' +
+    /* ここは CPU 戦の戦績。オンラインのレート戦の戦績はロビーの「戦績」にあるので、そこへの道を置く */
+    '<button type="button" class="sr-tolink sr-rated" data-open="rated"><b>ONLINE RATED</b><small>オンラインのレート戦の戦績・順位表を見る</small><em>▸</em></button>';
 }
 
 /* 30プロトコルの習熟度と制覇 (勝った / つよいに勝った / 最強に勝った) */
@@ -260,8 +262,10 @@ function trophiesTab() {
 const TABS = ['まとめ', 'プロトコル', 'カード', '実績', '相性', 'くわしく', 'リプレイ'];
 
 const TAB_KEY = 'compileStatsTab';      // 前に見ていたタブ (次に開いたときもそこから)
+export const ROOM_OPEN_KEY = 'compileRoomOpen';   // ?online=1 で開いたロビーで、はじめに出す画面 ('history' = レート戦の戦績)
 
-/** RECORD を開く。opts.tab: タブの名前か番号 (無ければ前に見ていたタブ)、opts.trophy: 実績のタブで送って光らせる実績 */
+/** RECORD を開く。opts.tab: タブの名前か番号 (無ければ前に見ていたタブ)、opts.trophy: 実績のタブで送って光らせる実績、
+    opts.scroll: はじめのスクロールの位置、opts.fromRated: ロビーのレート戦の戦績から開いた */
 export async function openStats(opts) {
   const list = records();
   const protos = await protocols();
@@ -306,16 +310,27 @@ export async function openStats(opts) {
     /* まとめのレベル → プロフィール (重ねて開く。閉じると RECORD に戻る) */
     const toProfile = body.querySelector('[data-open="profile"]');
     if (toProfile) toProfile.onclick = () => import('./profile.js').then(m => m.openProfile(protos));
+    /* まとめ → オンラインのレート戦の戦績。ロビーの戦績から開いたときは、閉じればそこへ戻る */
+    const toRated = body.querySelector('[data-open="rated"]');
+    if (toRated) {
+      toRated.onclick = () => {
+        if (opts && opts.fromRated) { close(); return; }
+        try { sessionStorage.setItem(ROOM_OPEN_KEY, 'history'); } catch (e) { /* private mode */ }
+        location.href = location.pathname + '?online=1';
+      };
+    }
     try { localStorage.setItem(TAB_KEY, String(i)); } catch (e) { /* private mode */ }
   };
   el.querySelectorAll('[data-tab]').forEach(b => { b.onclick = () => show(+b.dataset.tab); });
   let trophyFocus = (opts && opts.trophy) || null;
   const want = opts && opts.tab !== undefined ? (typeof opts.tab === 'number' ? opts.tab : TABS.indexOf(opts.tab))
     : (() => { try { return Number(localStorage.getItem(TAB_KEY)); } catch (e) { return 0; } })();
+  const close = () => el.classList.remove('show');
   show(want >= 0 && want < TABS.length ? want : 0);
   el.classList.add('show');
   raise(el);   // 開いたままの画面をもう一度開いたときも、いちばん手前へ
-  const close = () => el.classList.remove('show');
+  /* リプレイを見て戻ってきたときは、見る前のスクロールの位置へ */
+  if (opts && opts.scroll) { const card = el.querySelector('.pz-card'); if (card) card.scrollTop = opts.scroll; }
   el.onclick = (ev) => { if (ev.target === el) close(); };
   el.querySelector('.pz-x').onclick = close;
   const clear = el.querySelector('#srClear');

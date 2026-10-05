@@ -9,7 +9,9 @@ import { maybeLoginHint, uploadReplay } from './account.js';
 import { logPlay } from './playlog.js';
 import * as FEEL from './feel.js';
 import { createPickAid } from './pickaid.js';
-import { openSpectate } from './spectate.js';
+import { openSpectate, watchAgainUrl } from './spectate.js';
+import { watchGate, mountCpuWatchTools, mountRoomWatchTools, unmountWatchTools, catchUpText } from './watchtools.js';
+import { returnToReplays } from './replays-ui.js';
 import { mountAvatar, AVATARS, avatarIds } from './avatar.js';
 import { FAVORITE } from './avatar-lines.js';
 import { countUp, dealIn } from './motion.js';
@@ -17,9 +19,9 @@ import { loadGacha, chipsOf, giveChips } from './gacha.js';
 import { earnedChips } from './chips.js';
 import * as CW from './crashwatch.js';
 import { unlockTrophies, TROPHY_XP, pruneTrophies } from './achievements.js';
-import { addReplay, getReplay, pinReplay, rebuild } from './replays.js';
+import { addReplay, getReplay, pinReplay, rebuild, noteReplayFacts, isComeback } from './replays.js';
 import * as RS from './resume.js';
-import { decodeReplay, sharedCodeFromHash, shareReplayLink, setReplayShortener, shortIdFromHash, loadShortReplay } from './replayshare.js';
+import { decodeReplay, sharedCodeFromHash, shareReplayLink, setReplayShortener, shortIdFromHash, loadShortReplay, moveFromHash } from './replayshare.js';
 /* リプレイの短いリンク: 符号をサーバーに預けて (ログインしている人だけ) ID を返す / ID から符号を受け取る (誰でも) */
 setReplayShortener(async (code) => {
   await ROOM.roomLoadDeps();
@@ -1293,7 +1295,8 @@ async function boot() {
     ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods, winCompilesBySide: runOpts.winCompilesBySide, perks: runOpts.perks, startCompiled: runOpts.startCompiled } : {}),
     ...(storyOpts || {}) };
   const priorActions = resumed ? resumed.rec.actions : [];
-  replayLog = !replayMode && !trainingMode && !puzzle && !tutorial && !demoMode && !tagMates && !storyNode
+  /* CPU どうしの観戦も残す (RECORD のリプレイの「観戦」の枠。?demo=1 の流しっぱなしは残さない) */
+  replayLog = !replayMode && !trainingMode && !puzzle && !tutorial && (!demoMode || !!spectate) && !tagMates && !storyNode
     ? { init: gameInit, actions: priorActions.slice() } : null;
   /* 落ちても続きから遊べるように、はじめの状態と手を端末に書き残す (タッグ・トレーニング・問題・観戦・オンラインは除く) */
   if (!replayMode && !trainingMode && !puzzle && !tutorial && !demoMode && !tagMates && !roomMode && !spectate) {
@@ -3236,6 +3239,8 @@ function spectateStart() {
   const mates = spectate.mates || {};
   UI.toast(bet ? 'ベット: ' + specTeam(bet.side ? AI : ME) + ' に ' + bet.amount + ' CHIP (当たれば ' + bet.payout + ')'
     : '観戦: ' + specTeam(ME) + ' ' + team(spectate.a, mates.p0) + '　' + specTeam(AI) + ' ' + team(spectate.b, mates.p1), 4200);
+  /* 一時停止と速さ (この観戦の間だけ。設定の「演出の速さ」には残さない) */
+  mountCpuWatchTools({ onSpeed: (v) => TW.setSpeed(settings().speed * v) });
 }
 /* 観戦の決着: A / B の勝ちを見せ、ベットが当たっていれば払い戻す。次は観戦のメニューかタイトルへ */
 async function spectateEnd(aWon) {
@@ -3250,10 +3255,15 @@ async function spectateEnd(aWon) {
   if (!el) { el = document.createElement('div'); el.id = 'endBar'; document.body.appendChild(el); }
   el.innerHTML = '<div class="end-title">' + winner + ' の勝ち</div>' +
     (bet ? '<div class="end-sub">' + (hit ? '当たり！ ' + bet.payout + ' CHIP が戻りました' : 'はずれ (' + bet.amount + ' CHIP)') + '</div>' : '') +
+    (lastReplayId ? '<div class="end-sub end-note">この観戦は RECORD のリプレイ (WATCH) に残りました</div>' : '') +
     '<div class="end-btns"><button class="arr-btn ok" id="endWatch" type="button">もう一度観戦</button>' +
+    '<button class="arr-btn" id="endAgainBet" type="button">' + (bet ? '同じ組み合わせでもう一度賭ける' : '同じ組み合わせでもう一度見る') + '</button>' +
     '<button class="arr-btn" id="endTop" type="button">TITLE</button></div>';
+  unmountWatchTools();
+  TW.setSpeed(settings().speed);
   el.classList.add('show');
   el.querySelector('#endWatch').onclick = () => { location.href = location.pathname + '?watch=1'; };
+  el.querySelector('#endAgainBet').onclick = () => { location.href = watchAgainUrl(spectate); };
   el.querySelector('#endTop').onclick = goTitle;
 }
 
@@ -3271,7 +3281,8 @@ function showVsTag(rm) {
     /* 名札の幅が狭いと後ろが切れるので、枚数を先に */
     const handOf = (k) => { const c = rm.game && rm.game.counts && rm.game.counts[k]; return c ? '手札 ' + (c.hand | 0) + '　' : ''; };
     const plate = (k) => ({ name: rm.names[k] || '?', sub: handOf(k) + ((rm.badges && TITLES[rm.badges[k]]) || (k ? 'GUEST' : 'HOST')) });
-    showPlates({ me: plate(0), opp: plate(1) });
+    const front = rm.side === 1 ? 1 : 0;                  // 手前と奥を入れ替えていれば 1
+    showPlates({ me: plate(front), opp: plate(1 - front) });
     return;
   }
   const opp = 1 - rm.side;
@@ -3502,6 +3513,7 @@ async function roomPoll(force) {
   }
   if (roomPollFails >= 4) { UI.toast('つながりました', 1600); setReconnecting(false); }
   roomPollFails = 0;
+  if (roomWatching && watchFlipped && next) next = { ...next, side: 1 };   // 観戦で手前と奥を入れ替えている
   if (next.unchanged || (next.version === roomRm.version && next.status === roomRm.status)) {
     roomPollIdle++;
     if (!next.unchanged) roomRm = next;
@@ -3521,7 +3533,8 @@ async function roomMaybeFinish() {
   if (roomWatching) {
     fadeOutBgm();
     stopRoomPoll();
-    const nm = (roomRm && roomRm.names && roomRm.names[st.winner]) || '?';
+    const seat = roomRm && roomRm.side ? 1 - st.winner : st.winner;          // 手前と奥を入れ替えていれば戻す
+    const nm = (roomRm && roomRm.names && roomRm.names[seat]) || '?';
     UI.setPrompt(nm + ' の勝ち', 'end');
     await finaleFx(true);
     await UI.resultCutIn(true, { title: nm + ' WINS', sub: 'ONLINE MATCH' });
@@ -3601,7 +3614,8 @@ async function saveOnlineReplay(st, win, firstTime) {
     if (!r || !r.init || !Array.isArray(r.actions)) return;
     const view = r.side === 1 ? 1 : 0;
     const rep = { me: view ? r.init.p1 : r.init.p0, opp: view ? r.init.p0 : r.init.p1, win, level: 2, kind: 'online', view,
-      oppName: (roomRm.names && roomRm.names[1 - view]) || '', turns: (st.turns || 0) + 1, init: r.init, actions: r.actions };
+      oppName: (roomRm.names && roomRm.names[1 - view]) || '', turns: (st.turns || 0) + 1, init: r.init, actions: r.actions,
+      ...(roomRm.rated ? { rated: true } : {}), score: compiledScore(st) };
     try {
       const built = rebuild(Engine, rep);
       if (built.ok && built.history.length) onlineReview = { history: built.history, final: built.final };
@@ -3613,17 +3627,39 @@ async function saveOnlineReplay(st, win, firstTime) {
   } catch (e) { /* 残せなくても対戦の結果には響かない */ }
 }
 
-/* 観戦の決着のあと: タイトルへ戻るボタン */
+/* 観戦の決着のあと: 観戦できる対戦の一覧 (ロビー) へ・タイトルへ */
 function showWatchEnd() {
+  unmountWatchTools();
   let el = document.getElementById('watchEnd');
   if (!el) {
     el = document.createElement('div');
     el.id = 'watchEnd';
-    el.style.cssText = 'position:fixed;right:14px;bottom:calc(64px + env(safe-area-inset-bottom));z-index:45;';
-    el.innerHTML = '<button class="btn" type="button">タイトルへ</button>';
-    el.querySelector('button').onclick = () => { location.href = location.pathname; };
+    el.style.cssText = 'position:fixed;right:14px;bottom:calc(64px + env(safe-area-inset-bottom));z-index:45;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;';
+    el.innerHTML = '<button class="btn" type="button" data-to="lobby">観戦一覧へ</button><button class="btn" type="button" data-to="title">タイトルへ</button>';
+    el.querySelector('[data-to="lobby"]').onclick = () => { location.href = location.pathname + '?online=1'; };
+    el.querySelector('[data-to="title"]').onclick = () => { location.href = location.pathname; };
     document.body.appendChild(el);
   }
+}
+
+/* 決着の盤面のコンパイルの数 [手前, 奥] (リプレイの「接戦」の印に使う) */
+function compiledScore(st) {
+  try { return [0, 1].map(k => st.players[k].protocols.filter(p => p.compiled).length); } catch (e) { return undefined; }
+}
+
+/* オンラインの観戦: 手前と奥を入れ替える (この端末の見え方だけ)。サーバーの返す side を入れ替えて盤面を作り直す */
+let watchFlipped = false;
+function roomWatchFlip() {
+  if (!roomWatching || !roomRm || busy) return;
+  watchFlipped = !watchFlipped;
+  roomRm = { ...roomRm, side: watchFlipped ? 1 : 0 };
+  const st = ROOM.buildRoomState(roomRm, roomValOf);
+  cur = { ...cur, state: st, trace: [], winner: st.winner };
+  lastTurn = st.turn;                                   // 入れ替えただけで「ターン」の告知を出さない
+  board.syncInstant(st);
+  showVsTag(roomRm);
+  refreshHud();
+  UI.toast('手前: ' + ((roomRm.names && roomRm.names[roomRm.side]) || '?'), 1600);
 }
 
 /* ロビーから playing の publicState を受けて対戦開始 */
@@ -3640,6 +3676,10 @@ async function roomEnterGame(rm) {
   syncAvatar();                                          // 相手 (観戦は2人) が着けているキャラで出し直す
   await stage.home(600);
   placeDialogsNearBoard();
+  if (roomWatching) {
+    /* 途中から入ったときの、ここまでのまとめ (読み終わるまで出しておく) と、手前と奥の入れ替え */
+    mountRoomWatchTools({ onFlip: roomWatchFlip, note: catchUpText(rm) });
+  }
   startRoomPoll();
 }
 
@@ -5243,6 +5283,7 @@ async function afterTurn() {
          && !cur.requests.length && guardAi++ < 40) {
     await uiHold;                                   // 前の表示を閉じてから相手が動く
     await avatarsQuiet();                           // キャラが言い終わってから
+    if (spectate) await watchGate();                // 観戦の一時停止 (手の合間で止める)
     const at = cur;
     const [action] = await Promise.all([aiAction(cur.state), TW.wait(demoMode ? 420 : 260)]);
     if (cur !== at) return;                       // 考えている間に対戦をやめた
@@ -5289,14 +5330,23 @@ async function afterTurn() {
       refreshCardGlow();
       if (replayLog) {
         const rep = { me: replayLog.init.p0, opp: replayLog.init.p1, win, level: aiDifficulty,
-          turns: (st0.turns || 0) + 1, kind: runMode ? runKind : null, init: replayLog.init, actions: replayLog.actions };
+          turns: (st0.turns || 0) + 1, kind: runMode ? runKind : null, init: replayLog.init, actions: replayLog.actions,
+          score: compiledScore(st0), cpuName: avatarName(avatars && avatars.opp && avatars.opp.id) || undefined };
         lastReplayId = addReplay(rep);
         uploadReplay({ ...rep, at: Date.now(), mode: tagMates ? 'tag' : quickGame ? 'quick' : runMode ? runKind : 'cpu' });
         replayLog = null;
       }
     }
-    /* 観戦は A / B の勝ちで見せ、ベットを払い戻す */
-    if (spectate) { await spectateEnd(win); return; }
+    /* 観戦は A / B の勝ちで見せ、ベットを払い戻す。棋譜は RECORD のリプレイ (観戦の枠) に残す */
+    if (spectate) {
+      if (replayLog) {
+        lastReplayId = addReplay({ me: replayLog.init.p0, opp: replayLog.init.p1, win, level: spectate.level, kind: 'watch',
+          turns: (cur.state.turns || 0) + 1, score: compiledScore(cur.state), init: replayLog.init, actions: replayLog.actions });
+        replayLog = null;
+      }
+      await spectateEnd(win);
+      return;
+    }
     /* 物語の決着は、そのあとの会話 (winLines / loseLines) が語る */
     if (!storyNode) {
       avatarSay(ME, win ? 'win' : 'lose');
@@ -5559,8 +5609,9 @@ function showEndActions(win) {
   };
 }
 
-/* 感想戦: 棋譜を1手ずつ戻して見る。自分の手番では AI のおすすめも出す */
-function startReview(win, history, onExit, finalState) {
+/* 感想戦: 棋譜を1手ずつ戻して見る。自分の手番では AI のおすすめも出す。
+   extra: { rep: 見ているリプレイ (無ければ直前に残したもの), start: はじめに見る手 (0 から) } */
+function startReview(win, history, onExit, finalState, extra) {
   const final = finalState || cur.state;
   const list = history || gameHistory;
   UI.setPrompt('');
@@ -5571,8 +5622,28 @@ function startReview(win, history, onExit, finalState) {
     adv = advantageSeries(list.map(h => withoutTrace(() => Engine.ai.score(h.st, ME))).concat(withoutTrace(() => Engine.ai.score(final, ME))));
     turning = turningPoints(adv);
   } catch (e) { adv = null; }
+  const rep = (extra && extra.rep) || (lastReplayId ? getReplay(lastReplayId) : null);
+  /* 優勢の推移が分かったので「大逆転」の印をリプレイに残す (一覧で重い計算をしないため、ここで1回だけ) */
+  if (rep && rep.id && adv) noteReplayFacts(rep.id, { comeback: isComeback(adv, !!rep.win) });
   openReview(list, final, {
     adv, turning,
+    start: (extra && extra.start) || 0,
+    /* この局面を共有: その手から開くリンクをコピーする */
+    shareAt: rep ? async (i) => {
+      const out = {};
+      const r = await shareReplayLink(rep, 'COMPILE のリプレイ — ' + (i + 1) + '手目', { move: i + 1, copyOnly: true, out });
+      if (r === 'copied') return 'この局面 (' + Math.min(i + 1, list.length) + '手目から) のリンクをコピーしました';
+      /* コピーできない (ブラウザが許さない) ときは、リンクを見せて手でコピーしてもらう */
+      return out.url ? { text: 'コピーできませんでした。下のリンクを長押し (右クリック) でコピーしてください', url: out.url } : 'リンクを作れませんでした';
+    } : null,
+    /* 共有されたリプレイを、自分のリプレイ (RECORD) に残す */
+    saveShared: rep && rep.shared ? () => {
+      const { shared: _s, ...own } = rep;
+      const id = addReplay({ ...own, fromShare: true });
+      if (!id) return { ok: false, message: 'ブラウザの保存がいっぱいで残せませんでした' };
+      const p = pinReplay(id, true);
+      return { ok: true, message: p.ok ? 'RECORD のリプレイに保存しました' : 'RECORD のリプレイ (直近) に残しました。' + p.message };
+    } : null,
     show: (st) => {
       reviewView = st === final ? null : st;
       board.clearCandidates();
@@ -5607,7 +5678,9 @@ function startReplayView(built) {
   if (!built.ok) UI.toast(rep.shared ? 'ルールが変わったため、途中までしか再現できません (そこまでを見られます)' : '途中から再現できませんでした (そこまでを見られます)', 4200);
   if (!built.history.length) { UI.toast('見られる手がありません'); return; }
   busy = true;                        // 見ている間は盤面から手を指せないように
-  startReview(!!rep.win, built.history, () => { location.href = location.pathname; });
+  /* リンクに &m=23 があれば、その手から見る。見終わったら RECORD のリプレイへ戻る */
+  const m = moveFromHash();
+  startReview(!!rep.win, built.history, returnToReplays, null, { rep, start: m ? Math.min(m - 1, built.history.length) : 0 });
 }
 
 /* 棋譜の1手を文にする。相手の裏向きは中身を出さない */

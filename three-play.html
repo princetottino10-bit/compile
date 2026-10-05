@@ -3104,6 +3104,97 @@
     #oppOv .op-head span,#watchOv .op-head span{display:none;}
   }
   @media (prefers-reduced-motion:reduce){ .title-back,.title-back span{transition:none;} }
+  /* ---- リプレイ・観戦・ロビー (棚卸し O) ---- */
+  /* 感想戦の帯: 中身は描き直す (.rv-body)。読み上げ用の欄 (.rv-sr) は画面には出さない */
+  #reviewBar{touch-action:pan-y;}
+  #reviewBar .rv-body{display:contents;}
+  #reviewBar .rv-sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;}
+  #reviewBar .rv-nav button{min-width:40px;width:auto;padding:0 8px;font-size:12px;}
+  #reviewBar .rv-nav button:focus-visible,#reviewBar .rv-tools button:focus-visible{outline:2px solid var(--cyan);outline-offset:1px;}
+  #reviewBar .rv-tools{flex:1 1 auto;order:4;display:flex;flex-wrap:wrap;align-items:center;gap:6px;}
+  #reviewBar .rv-tool,#reviewBar .rv-speed button{padding:7px 11px;border-radius:999px;cursor:pointer;border:1px solid rgba(255,255,255,.2);
+    background:rgba(8,11,21,.9);color:var(--ink);font:800 11px/1 "M PLUS 1",system-ui;}
+  #reviewBar .rv-tool[aria-pressed="true"]{border-color:var(--gold);color:#ffeab4;}
+  #reviewBar .rv-tool:disabled{opacity:.5;cursor:default;}
+  #reviewBar .rv-speed{display:inline-flex;gap:0;}
+  #reviewBar .rv-speed button{border-radius:0;padding:7px 9px;font-weight:700;color:var(--dim);}
+  #reviewBar .rv-speed button:first-child{border-radius:999px 0 0 999px;}
+  #reviewBar .rv-speed button:last-child{border-radius:0 999px 999px 0;}
+  #reviewBar .rv-speed button[aria-pressed="true"]{color:#ffeab4;border-color:rgba(255,179,218,.6);background:rgba(255,179,218,.12);}
+  #reviewBar .rv-note{font:700 11px/1.4 "M PLUS 1",system-ui;color:var(--mint);}
+  #reviewBar .rv-url{flex:1 0 100%;min-width:0;padding:6px 8px;border-radius:6px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.4);
+    color:var(--ink);font:600 11px/1.2 ui-monospace,monospace;}
+  #reviewBar .rv-exit{order:5;margin-left:auto;}
+  /* スマホ: ◆ は小さいので、押せる範囲だけ広げる (見た目の大きさは変えない) */
+  @media (pointer:coarse){
+    #reviewBar .rv-g-tp::before{content:"";position:absolute;inset:-13px -9px;}
+    #reviewBar .rv-graph{height:52px;}
+  }
+  @media (max-width:600px){
+    #reviewBar .rv-nav{gap:4px;flex:1 0 100%;justify-content:center;}
+    #reviewBar .rv-nav button{min-width:34px;padding:0 6px;font-size:11px;}
+    #reviewBar .rv-nav b{min-width:62px;font-size:12px;}
+    #reviewBar .rv-tools{justify-content:center;}
+  }
+  @media (orientation:landscape) and (max-height:500px){
+    #reviewBar .rv-nav button{min-width:30px;padding:0 6px;}
+    #reviewBar .rv-tool,#reviewBar .rv-speed button{padding:5px 9px;}
+  }
+  @media (prefers-reduced-motion:reduce){ #reviewBar .rv-g-tp:hover,#reviewBar .rv-g-tp:focus-visible{transform:none;} }
+
+  /* RECORD のリプレイ: 絞り込みの札・名前・印 */
+  .rp-filter{display:flex;flex-wrap:wrap;gap:4px;margin:2px 0 6px;}
+  .rp-filter button{padding:6px 10px;font:800 10.5px/1 var(--font-ui);letter-spacing:.1em;color:var(--dim);border:1px solid rgba(255,255,255,.14);background:transparent;cursor:pointer;}
+  .rp-filter button small{margin-left:5px;font-weight:600;letter-spacing:0;opacity:.75;}
+  .rp-filter button[aria-pressed="true"]{color:#fff;border-color:var(--lav);background:rgba(185,164,255,.14);}
+  .rp-filter button:hover,.rp-filter button:focus-visible{color:#fff;border-color:var(--cyan);outline:0;}
+  .rp-main .rp-title{font:800 12.5px/1.3 var(--font-ui);color:#ffeab4;}
+  .rp-main .rp-tags{display:flex;flex-wrap:wrap;gap:4px;white-space:normal;}
+  .rp-tags em{font:800 9.5px/1 var(--font-ui);font-style:normal;letter-spacing:.06em;padding:3px 6px;border-radius:999px;color:var(--gold);background:rgba(255,179,218,.12);}
+  .rp-rename{display:flex;flex-wrap:wrap;gap:4px;align-items:center;}
+  .rp-rename input{flex:1 1 140px;min-width:0;padding:7px 9px;font:600 12px/1.2 var(--font-ui);color:#fff;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.25);}
+  .rp-rename input:focus{outline:2px solid var(--cyan);outline-offset:0;}
+  .rp-rename button{padding:7px 10px;font:800 10.5px/1 var(--font-ui);}
+  @media (max-width:520px){
+    .rp-row{grid-template-columns:44px minmax(0,1fr);}
+    .rp-btns{grid-column:1 / -1;justify-content:flex-end;flex-wrap:wrap;}
+  }
+  /* RECORD のまとめ → オンラインのレート戦 */
+  .sr-rated{display:flex;align-items:center;gap:10px;width:100%;margin-top:4px;padding:11px 14px;text-align:left;cursor:pointer;}
+  .sr-rated b{font:900 12px/1 var(--font-ui);letter-spacing:.18em;color:var(--lav);}
+  .sr-rated small{flex:1;font:600 11px/1.3 var(--font-ui);color:var(--dim);}
+  .sr-rated em{font-style:normal;color:var(--dim);}
+
+  /* 観戦の手元の操作 (CPU どうし: 一時停止・速さ / オンライン: 手前と奥の入れ替え・途中からのまとめ) */
+  /* 手札 (観戦でも A の札が並ぶ) に重ならないよう、感想戦の帯と同じく手札の上に置く */
+  #watchTools{position:fixed;right:calc(14px + env(safe-area-inset-right));bottom:calc(var(--hand-gap, 14vh) + 12px);z-index:41;
+    display:none;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:6px;max-width:min(360px,calc(100vw - 28px));}
+  #watchTools.show{display:flex;}
+  #watchTools .wt-tool{min-height:36px;padding:0 13px;border-radius:999px;cursor:pointer;border:1px solid rgba(255,255,255,.22);
+    background:rgba(6,9,18,.9);color:var(--ink);font:800 11px/1 "M PLUS 1",system-ui;}
+  #watchTools .wt-tool[aria-pressed="true"]{border-color:var(--gold);color:#ffeab4;}
+  #watchTools .wt-tool:hover,#watchTools .wt-tool:focus-visible{border-color:var(--cyan);outline:0;}
+  #watchTools .wt-speeds{display:inline-flex;gap:3px;}
+  #watchTools .wt-speeds .wt-tool{padding:0 10px;}
+  #watchTools .wt-paused{flex:1 0 100%;text-align:right;font:700 10.5px/1.3 "M PLUS 1",system-ui;color:var(--gold);text-shadow:0 1px 4px #000;}
+  #watchTools .wt-catchup{flex:1 0 100%;display:flex;align-items:flex-start;gap:8px;margin:0;padding:9px 10px 9px 12px;border-radius:10px;
+    background:rgba(6,9,18,.94);border:1px solid rgba(185,164,255,.45);font:600 11.5px/1.5 "M PLUS 1",system-ui;color:var(--ink);}
+  #watchTools .wt-x{flex:none;width:28px;height:28px;margin:-4px -4px 0 auto;border-radius:999px;border:0;background:transparent;color:var(--dim);font:800 14px/1 system-ui;cursor:pointer;}
+  #watchTools .wt-x:hover,#watchTools .wt-x:focus-visible{color:#fff;outline:0;}
+  #endBar .end-note{color:var(--dim);font-weight:600;font-size:11px;}
+
+  /* ロビー: 鍵の付いた部屋の合言葉の欄・レート戦の戦績の絞り込みとリプレイ */
+  .ro-pwrow{display:flex;gap:6px;align-items:center;margin:-2px 0 4px;padding:8px;border-radius:9px;background:rgba(255,255,255,.04);}
+  .ro-pwrow .ro-input{flex:1 1 auto;min-width:0;}
+  .ro-histbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+  .ro-histbar .ro-input{flex:1 1 160px;min-width:0;}
+  .ro-hist{position:relative;cursor:default;}
+  .ro-hist[hidden]{display:none;}
+  .ro-rplink{float:right;margin-left:8px;padding:4px 10px;border-radius:999px;border:1px solid rgba(185,164,255,.5);color:var(--lav);
+    font:800 10.5px/1 "M PLUS 1",system-ui;text-decoration:none;}
+  .ro-rplink:hover,.ro-rplink:focus-visible{border-color:var(--cyan);color:#fff;outline:0;}
+  .ro-torecord{margin-top:8px;}
+
   /* ---- COSMETICS のモード (cosmetics-mode.js) ---- */
   #cosOv{position:fixed;inset:0;z-index:63;display:none;background:radial-gradient(circle at 25% 30%,rgba(139,92,246,.18),transparent 55%),rgba(5,4,12,.94);
     backdrop-filter:blur(6px);padding:max(14px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));}
@@ -4351,7 +4442,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=2b4dbc6066",
       "./js3d/logformat.js": "./js3d/logformat.js?v=e3548c74d1",
-      "./js3d/main.js": "./js3d/main.js?v=0ceb8999c3",
+      "./js3d/main.js": "./js3d/main.js?v=3b326e32a0",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=293f1c32f7",
@@ -4366,14 +4457,14 @@
       "./js3d/protocards.js": "./js3d/protocards.js?v=5919129971",
       "./js3d/protocol-strength.js": "./js3d/protocol-strength.js?v=c719e5b65c",
       "./js3d/puzzle.js": "./js3d/puzzle.js?v=65360765a2",
-      "./js3d/replays-ui.js": "./js3d/replays-ui.js?v=1259fc16e4",
-      "./js3d/replays.js": "./js3d/replays.js?v=7565c2e63b",
-      "./js3d/replayshare.js": "./js3d/replayshare.js?v=e41f99f1cc",
+      "./js3d/replays-ui.js": "./js3d/replays-ui.js?v=a0f24b0269",
+      "./js3d/replays.js": "./js3d/replays.js?v=c3ec491e07",
+      "./js3d/replayshare.js": "./js3d/replayshare.js?v=dedb1ad773",
       "./js3d/resume.js": "./js3d/resume.js?v=477cf75f6b",
-      "./js3d/review.js": "./js3d/review.js?v=34f174153b",
+      "./js3d/review.js": "./js3d/review.js?v=8ce98555a7",
       "./js3d/rewards.js": "./js3d/rewards.js?v=ff8a27bac3",
       "./js3d/room.js": "./js3d/room.js?v=be804bed77",
-      "./js3d/roomui.js": "./js3d/roomui.js?v=356e2b8173",
+      "./js3d/roomui.js": "./js3d/roomui.js?v=774e00cf1a",
       "./js3d/run-ui.js": "./js3d/run-ui.js?v=64d2e02e1b",
       "./js3d/run.js": "./js3d/run.js?v=0cf822f354",
       "./js3d/runcards.js": "./js3d/runcards.js?v=c2bf20e9b7",
@@ -4381,10 +4472,10 @@
       "./js3d/settings.js": "./js3d/settings.js?v=f32405f149",
       "./js3d/setup.js": "./js3d/setup.js?v=74e692ebfd",
       "./js3d/solodraft.js": "./js3d/solodraft.js?v=33f32f2481",
-      "./js3d/spectate.js": "./js3d/spectate.js?v=e7aaf6e4e9",
+      "./js3d/spectate.js": "./js3d/spectate.js?v=ed159bd7b8",
       "./js3d/stage.js": "./js3d/stage.js?v=a47c0c4ec9",
       "./js3d/stats-data.js": "./js3d/stats-data.js?v=0fb6e5d36d",
-      "./js3d/stats.js": "./js3d/stats.js?v=d24404cb85",
+      "./js3d/stats.js": "./js3d/stats.js?v=28e83414b3",
       "./js3d/steps.js": "./js3d/steps.js?v=13e73b20fe",
       "./js3d/story-map.js": "./js3d/story-map.js?v=3e07667ec4",
       "./js3d/story-scenery-aquarium.js": "./js3d/story-scenery-aquarium.js?v=b4b046214b",
@@ -4395,7 +4486,7 @@
       "./js3d/support.js": "./js3d/support.js?v=86cfbcc21a",
       "./js3d/theme.js": "./js3d/theme.js?v=932e1d5eb8",
       "./js3d/tips.js": "./js3d/tips.js?v=3faae17957",
-      "./js3d/title.js": "./js3d/title.js?v=b11948ec4c",
+      "./js3d/title.js": "./js3d/title.js?v=92e999ced6",
       "./js3d/titleback.js": "./js3d/titleback.js?v=5663d0b7a4",
       "./js3d/training.js": "./js3d/training.js?v=3018b4399e",
       "./js3d/tsume.js": "./js3d/tsume.js?v=e53c5647ba",
@@ -4403,6 +4494,7 @@
       "./js3d/tutorial.js": "./js3d/tutorial.js?v=a2ad20f672",
       "./js3d/tween.js": "./js3d/tween.js?v=6fe8c0fb03",
       "./js3d/ui.js": "./js3d/ui.js?v=23bce5e682",
+      "./js3d/watchtools.js": "./js3d/watchtools.js?v=ad10da8d17",
       "./js3d/weekly-ui.js": "./js3d/weekly-ui.js?v=92b645307a",
       "./js3d/weekly.js": "./js3d/weekly.js?v=5605476b1c",
       "./js3d/xp.js": "./js3d/xp.js?v=2146fbc219"
@@ -4417,7 +4509,9 @@
   <link rel="modulepreload" href="js3d/playlog.js?v=90aaffedee">
   <link rel="modulepreload" href="js3d/feel.js?v=fa59a5b9fb">
   <link rel="modulepreload" href="js3d/pickaid.js?v=fd33e4bc87">
-  <link rel="modulepreload" href="js3d/spectate.js?v=e7aaf6e4e9">
+  <link rel="modulepreload" href="js3d/spectate.js?v=ed159bd7b8">
+  <link rel="modulepreload" href="js3d/watchtools.js?v=ad10da8d17">
+  <link rel="modulepreload" href="js3d/replays-ui.js?v=a0f24b0269">
   <link rel="modulepreload" href="js3d/avatar.js?v=24c31cded1">
   <link rel="modulepreload" href="js3d/avatar-lines.js?v=5e00862ad8">
   <link rel="modulepreload" href="js3d/motion.js?v=36861b0081">
@@ -4425,9 +4519,9 @@
   <link rel="modulepreload" href="js3d/chips.js?v=e67e280b76">
   <link rel="modulepreload" href="js3d/crashwatch.js?v=8b4bdaa28f">
   <link rel="modulepreload" href="js3d/achievements.js?v=bde0931b29">
-  <link rel="modulepreload" href="js3d/replays.js?v=7565c2e63b">
+  <link rel="modulepreload" href="js3d/replays.js?v=c3ec491e07">
   <link rel="modulepreload" href="js3d/resume.js?v=477cf75f6b">
-  <link rel="modulepreload" href="js3d/replayshare.js?v=e41f99f1cc">
+  <link rel="modulepreload" href="js3d/replayshare.js?v=dedb1ad773">
   <link rel="modulepreload" href="js3d/turning.js?v=9c7f79654e">
   <link rel="modulepreload" href="js3d/achievements-ui.js?v=6e93185b18">
   <link rel="modulepreload" href="vendor/three.module.js?v=985eb92490">
@@ -4436,7 +4530,7 @@
   <link rel="modulepreload" href="js3d/control.js?v=c1b87ebc63">
   <link rel="modulepreload" href="js3d/panel.js?v=994ec047da">
   <link rel="modulepreload" href="js3d/setup.js?v=74e692ebfd">
-  <link rel="modulepreload" href="js3d/title.js?v=b11948ec4c">
+  <link rel="modulepreload" href="js3d/title.js?v=92e999ced6">
   <link rel="modulepreload" href="js3d/training.js?v=3018b4399e">
   <link rel="modulepreload" href="js3d/room.js?v=be804bed77">
   <link rel="modulepreload" href="js3d/puzzle.js?v=65360765a2">
@@ -4445,7 +4539,7 @@
   <link rel="modulepreload" href="js3d/tutorial.js?v=a2ad20f672">
   <link rel="modulepreload" href="js3d/settings.js?v=f32405f149">
   <link rel="modulepreload" href="js3d/equip.js?v=51faa70a25">
-  <link rel="modulepreload" href="js3d/stats.js?v=d24404cb85">
+  <link rel="modulepreload" href="js3d/stats.js?v=28e83414b3">
   <link rel="modulepreload" href="js3d/stats-data.js?v=0fb6e5d36d">
   <link rel="modulepreload" href="js3d/story.js?v=2d0a16ed47">
   <link rel="modulepreload" href="js3d/story-ui.js?v=7d98e3f95d">
@@ -4464,8 +4558,8 @@
   <link rel="modulepreload" href="js3d/weekly-ui.js?v=92b645307a">
   <link rel="modulepreload" href="js3d/run.js?v=0cf822f354">
   <link rel="modulepreload" href="js3d/weekly.js?v=5605476b1c">
-  <link rel="modulepreload" href="js3d/review.js?v=34f174153b">
-  <link rel="modulepreload" href="js3d/roomui.js?v=356e2b8173">
+  <link rel="modulepreload" href="js3d/review.js?v=8ce98555a7">
+  <link rel="modulepreload" href="js3d/roomui.js?v=774e00cf1a">
   <link rel="modulepreload" href="js3d/selectui.js?v=208abdaebc">
   <link rel="modulepreload" href="js3d/cardtex.js?v=61e2262ea0">
   <link rel="modulepreload" href="js3d/fx.js?v=f76521724c">
@@ -4509,7 +4603,6 @@
   <link rel="modulepreload" href="js3d/support.js?v=86cfbcc21a">
   <link rel="modulepreload" href="js3d/profile.js?v=9add797c56">
   <link rel="modulepreload" href="js3d/gacha-ui.js?v=becd381735">
-  <link rel="modulepreload" href="js3d/replays-ui.js?v=1259fc16e4">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/ShaderPass.js">
   <link rel="modulepreload" href="js3d/story-map.js?v=3e07667ec4">
   <link rel="modulepreload" href="js3d/story-scenery.js?v=9fa267bcf9">
@@ -4528,6 +4621,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=a30eb3f65a">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=0ceb8999c3"></script>
+  <script type="module" src="js3d/main.js?v=3b326e32a0"></script>
 </body>
 </html>

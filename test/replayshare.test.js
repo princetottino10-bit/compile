@@ -66,3 +66,16 @@ test('共有: リンクの形', () => {
   assert.equal(sharedCodeFromHash('#rp=a<b'), null);
   assert.equal(sharedCodeFromHash(''), null);
 });
+
+test('リンクの「何手目から」(&m=): #rp= と #rs= の後ろに付けられる', async () => {
+  const S = await import('../js3d/replayshare.js');
+  assert.equal(S.sharedCodeFromHash('#rp=zAB-_9&m=23'), 'zAB-_9');
+  assert.equal(S.shortIdFromHash('#rs=abc123XY&m=5'), 'abc123XY');
+  assert.equal(S.shortIdFromHash('#rs=abc123XY&m=x'), null);
+  assert.equal(S.moveFromHash('#rp=zAB&m=23', ''), 23);
+  assert.equal(S.moveFromHash('#rs=abc123XY', '?replay=r1&m=7'), 7);
+  assert.equal(S.moveFromHash('#rp=zAB', ''), null);
+  assert.equal(S.moveFromHash('#rp=zAB&m=0', ''), null);
+  assert.equal(S.withMove('https://x.io/p#rp=z', 12), 'https://x.io/p#rp=z&m=12');
+  assert.equal(S.withMove('https://x.io/p#rp=z', undefined), 'https://x.io/p#rp=z');
+});

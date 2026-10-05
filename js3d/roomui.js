@@ -13,6 +13,21 @@ import { emblemDataURL } from './emblems.js';
 import { showProtocolCards } from './protocards.js';
 import { sfx } from './audio.js';
 import { buzz } from './feel.js';
+import { listReplays, findMatchReplay } from './replays.js';
+
+/* ?online=1 で開いたときに、はじめに出す画面 (RECORD の「ONLINE RATED」から来たら 'history')。stats.js と同じ名前 */
+const ROOM_OPEN_KEY = 'compileRoomOpen';
+function takeRoomOpen() {
+  try { const v = sessionStorage.getItem(ROOM_OPEN_KEY); sessionStorage.removeItem(ROOM_OPEN_KEY); return v || ''; } catch (e) { return ''; }
+}
+
+/* 部屋ができてからの時間 (ロビーの一覧の「待ち 3分」)。created: ISO の日時 */
+export function waitingLabel(created, now = Date.now()) {
+  const t = Date.parse(created);
+  if (!Number.isFinite(t)) return '';
+  const min = Math.max(0, Math.floor((now - t) / 60000));
+  return min < 1 ? '待ち 1分未満' : min < 60 ? '待ち ' + min + '分' : '待ち ' + Math.floor(min / 60) + '時間';
+}
 
 /* 呼ぶ: 音・振動、見ていないタブならタブの名前を点滅 (戻ってきたら元に) */
 let titleBlink = null;
@@ -90,7 +105,7 @@ export function runRoomLobby(protocols, opts = {}) {
         '<div class="ro-panel">' +
           '<div class="ro-head"><b>//</b> ' + title + '</div>' +
           bodyHtml +
-          '<div class="ro-status" id="roomStatus"></div>' +
+          '<div class="ro-status" id="roomStatus" role="status" aria-live="polite"></div>' +
           /* 一段前 (戦績 → ロビー) に戻るときだけ。タイトルへは右上の「タイトル」(待機・ドラフト中なら部屋を出てから) */
           (backLabel ? '<button class="ro-ghost" id="roomBack" type="button">' + backLabel + '</button>' : '') +
         '</div>';
@@ -377,11 +392,14 @@ export function runRoomLobby(protocols, opts = {}) {
           const el = $('#roomList');
           if (!el) return;
           const rooms = data.rooms || [];
-          el.innerHTML = rooms.length
+          /* 合言葉を入れている途中は、一覧を描き直さない (打った文字と入力欄が消えないように) */
+          const typing = el.querySelector('.ro-pwrow');
+          if (!typing) el.innerHTML = rooms.length
             ? rooms.map(r => '<button class="ro-room" data-code="' + esc(r.code) + '" data-locked="' + (r.locked ? '1' : '0') + '" type="button"><span>' +
                 (r.mode === 'tag' ? '<em class="ro-tagmark">TAG ' + (r.seatsTaken | 0) + '/4</em> ' : '') +
                 esc(r.title || r.code) + (r.rated ? ' ★' : '') + (r.locked ? ' 🔒' : '') + '</span>' +
-                '<small>' + esc(r.code) + (r.mode === 'tag' ? '　タッグ (2対2)' : r.draft ? '　' + esc(ruleText(r.draftRules)) : '　ドラフトなし') + '</small></button>').join('')
+                '<small>' + esc(r.code) + (r.mode === 'tag' ? '　タッグ (2対2)' : r.draft ? '　' + esc(ruleText(r.draftRules)) : '　ドラフトなし') +
+                (r.createdAt ? '　' + esc(waitingLabel(r.createdAt)) : '') + '</small></button>').join('')
             : '<span class="ro-sub">現在募集中のルームはありません</span>';
           const on = $('#roomOnline');
           if (on) {
@@ -406,14 +424,27 @@ export function runRoomLobby(protocols, opts = {}) {
               });
             });
           }
-          el.querySelectorAll('.ro-room').forEach(b => {
-            b.onclick = guard(async () => {
-        if (needName()) return;
-              const pw = b.dataset.locked === '1' ? (prompt('パスワード') || '') : '';
+          if (!typing) el.querySelectorAll('.ro-room').forEach(b => {
+            const join = guard(async (pw) => {
+              if (needName()) return;
               if (b.textContent.includes('★') && roomIsAnonymous(session)) { wantRated = true; await showLogin(); return; }
-              room = await roomApi('join', { name: name(), badge: myBadge(settings()), look: myLook(settings()), code: b.dataset.code, password: pw });
+              room = await roomApi('join', { name: name(), badge: myBadge(settings()), look: myLook(settings()), code: b.dataset.code, password: pw || '' });
               enterRoom();
             });
+            b.onclick = () => {
+              if (b.dataset.locked !== '1') { join(''); return; }
+              /* 鍵の付いた部屋: ブラウザの入力ダイアログではなく、その部屋の下に合言葉の欄を出す */
+              el.querySelectorAll('.ro-pwrow').forEach(x => x.remove());
+              b.insertAdjacentHTML('afterend', '<form class="ro-pwrow"><input class="ro-input" type="password" maxlength="40" autocomplete="off" aria-label="' +
+                esc(b.dataset.code) + ' の合言葉" placeholder="合言葉"><button class="ro-btn ro-go" type="submit">入る</button>' +
+                '<button class="ro-ghost" type="button" data-cancel="1">やめる</button></form>');
+              const form = b.nextElementSibling;
+              const input = form.querySelector('input');
+              input.focus();
+              form.onsubmit = (ev) => { ev.preventDefault(); if (!input.value) { status('合言葉を入れてください', 'err'); input.focus(); return; } join(input.value); };
+              form.querySelector('[data-cancel]').onclick = () => { form.remove(); b.focus(); };
+              input.onkeydown = (ev) => { if (ev.key === 'Escape') { form.remove(); b.focus(); } };
+            };
           });
         } catch (e) {
           const on = $('#roomOnline');
@@ -449,10 +480,17 @@ export function runRoomLobby(protocols, opts = {}) {
       const rate = data.rating || 1500;
       const wins = data.wins || 0;
       const games = data.games || 0;
-      const list = rows.length
-        ? rows.map(m => '<div class="ro-room"><b>' + (m.result === 'win' ? 'WIN' : 'LOSS') + '</b>　' + esc(m.opponent) +
+      /* この端末に残っているリプレイ (オンライン) と合う試合には「リプレイ」を付ける */
+      const local = listReplays();
+      const matchRow = (m) => {
+        const rp = findMatchReplay(local, m);
+        return '<div class="ro-room ro-hist" data-opp="' + esc(String(m.opponent || '').toLowerCase()) + '"><b>' + (m.result === 'win' ? 'WIN' : 'LOSS') + '</b>　' + esc(m.opponent) +
+          (rp ? '<a class="ro-rplink" href="?replay=' + encodeURIComponent(rp.id) + '">リプレイ</a>' : '') +
           '<small>' + esc((m.myProtocols || []).join(' / ')) + ' vs ' + esc((m.opponentProtocols || []).join(' / ')) +
-          '　' + m.ratingBefore + ' → ' + m.ratingAfter + '　' + new Date(m.endedAt).toLocaleString('ja-JP') + '</small></div>').join('')
+          '　' + m.ratingBefore + ' → ' + m.ratingAfter + '　' + new Date(m.endedAt).toLocaleString('ja-JP') + '</small></div>';
+      };
+      const list = rows.length
+        ? rows.map(matchRow).join('')
         : '<span class="ro-sub">レート戦の記録はまだありません。</span>';
       /* シーズン (1か月ごと。月が変わるとレートが 1500 へ半分近づいて始め直す) */
       const seasonLabel = (k) => k ? k.slice(1, 5) + '-' + k.slice(5, 7) : '';
@@ -474,7 +512,23 @@ export function runRoomLobby(protocols, opts = {}) {
         '<h4 class="ro-h">LEADERBOARD</h4>' + board +
         (past ? '<h4 class="ro-h">PAST SEASONS</h4>' + past : '') +
         '<h4 class="ro-h">MATCHES <small>通算 レート ' + rate + '　' + wins + '勝 ' + (games - wins) + '敗</small></h4>' +
-        '<button class="ro-btn" id="roomCsv" type="button">CSVをエクスポート</button><div class="ro-list">' + list + '</div>');
+        '<div class="ro-row ro-histbar">' +
+          (rows.length ? '<input class="ro-input" id="roomHistFind" type="search" maxlength="20" autocomplete="off" placeholder="相手の名前で絞る" aria-label="相手の名前で絞る">' : '') +
+          '<button class="ro-btn" id="roomCsv" type="button">CSVをエクスポート</button></div>' +
+        '<p class="ro-sub" id="roomHistCount" role="status" aria-live="polite"></p>' +
+        '<div class="ro-list" id="roomHistList">' + list + '</div>' +
+        /* CPU 戦の戦績 (RECORD) へ。閉じるとこの画面に戻る */
+        '<button class="ro-ghost ro-torecord" id="roomToRecord" type="button">RECORD (CPU 戦の戦績・リプレイ) を開く</button>');
+      const find = $('#roomHistFind');
+      if (find) {
+        find.oninput = () => {
+          const q = find.value.trim().toLowerCase();
+          let shown = 0;
+          root.querySelectorAll('#roomHistList .ro-hist').forEach(r => { const on = !q || r.dataset.opp.includes(q); r.hidden = !on; if (on) shown++; });
+          $('#roomHistCount').textContent = q ? (shown ? shown + ' 戦' : '「' + find.value.trim() + '」との試合はありません') : '';
+        };
+      }
+      $('#roomToRecord').onclick = () => import('./stats.js').then(m => m.openStats({ tab: 'まとめ', fromRated: true }));
       $('#roomCsv').onclick = () => {
         const header = ['終了日時', '結果', '相手', '自分のプロトコル', '相手のプロトコル', 'レート前', 'レート後'];
         const csv = [header].concat(rows.map(m => [
@@ -489,10 +543,10 @@ export function runRoomLobby(protocols, opts = {}) {
     }
 
     function guard(fn) {
-      return async () => {
+      return async (...args) => {
         if (busy) return;
         busy = true;
-        try { await fn(); }
+        try { await fn(...args); }
         catch (e) { status(e.message || '通信エラー', 'err'); }
         finally { busy = false; }
       };
@@ -571,6 +625,7 @@ export function runRoomLobby(protocols, opts = {}) {
         const isTaken = taken.includes(n);
         const isSel = sel.includes(n);
         return '<span class="ro-chipwrap"><button type="button" class="ro-chip' + (isSel ? ' on' : '') + (isTaken ? ' taken' : '') + '" data-name="' + esc(n) + '"' +
+          ' aria-pressed="' + isSel + '"' + (isTaken ? ' aria-disabled="true"' : '') +
           ' style="--accent:' + (p.color || '#b9a4ff') + '">' +
           '<img alt="" src="' + emblemDataURL(n, p.color || '#b9a4ff', 48, true) + '">' + esc(n) + '</button>' +
           (opts.cardsOf ? '<button type="button" class="ro-info" data-info="' + esc(n) + '" aria-label="' + esc(n) + ' のカードを見る" title="カードを見る">?</button>' : '') +
@@ -791,7 +846,9 @@ export function runRoomLobby(protocols, opts = {}) {
     (async () => {
       try {
         session = await roomSession();
-        if (session) showLobby(); else showLogin();
+        const openFirst = takeRoomOpen();
+        if (session && openFirst === 'history') guard(showHistory)();   // RECORD の「ONLINE RATED」から来た
+        else if (session) showLobby(); else showLogin();
       } catch (e) { showLogin(); }
     })();
   });

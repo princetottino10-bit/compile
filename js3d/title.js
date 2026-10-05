@@ -11,6 +11,7 @@ import { drawTitleBackdrop } from './backdrops.js';
 import { initAudio, sfx } from './audio.js';
 import { openSettings } from './settings.js';
 import { openStats } from './stats.js';
+import { takeRecordReturn } from './replays-ui.js';
 import { openAccount, accountState, onAccountChange, loginNudgeNeeded } from './account.js';
 import { openAdmin } from './admin-ui.js';
 import { openReport } from './support.js';
@@ -310,6 +311,9 @@ export function runTitle(protocols, opts) {
       center.onclick = onMenu;                        // メニューとロゴの下の名前 (どちらも data-mode のボタン)
       root.querySelector('#ttReport').onclick = () => { sfx('select'); openReport(); };
       root.querySelector('#ttCorner').onclick = onMenu;
+      /* リプレイを見終わって戻ってきた: RECORD のリプレイのタブを、見る前の位置で開き直す */
+      const back = takeRecordReturn();
+      if (back) openStats({ tab: back.tab, scroll: back.scroll });
     };
     /* 先にメニューを出し、音はそのあと (失敗しても進める)。以前は音の初期化が先で、
        音を作れないブラウザ (アプリ内ブラウザ等) では例外でメニューが出ず、

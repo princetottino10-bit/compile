@@ -97,10 +97,20 @@ export async function decodeReplay(code, protoNames) {
 export function replayShareUrl(code, loc = location) {
   return loc.origin + loc.pathname + '#' + SHARE_KEY + '=' + code;
 }
-/* いま開いているリンクの符号 (無ければ null) */
+/* いま開いているリンクの符号 (無ければ null)。後ろに &m=手目 が付いていてもよい */
 export function sharedCodeFromHash(hash = location.hash) {
-  const m = /^#rp=([A-Za-z0-9_-]+)$/.exec(hash || '');
+  const m = /^#rp=([A-Za-z0-9_-]+)(?:&m=\d{1,5})?$/.exec(hash || '');
   return m ? m[1] : null;
+}
+/* リンクの「この手から見る」(&m=23 → 23 手目)。無ければ null。?replay=id&m=23 の形も読む */
+export function moveFromHash(hash = location.hash, search = location.search) {
+  const m = /[#&?]m=(\d{1,5})(?:&|$)/.exec(hash || '') || /[?&]m=(\d{1,5})(?:&|$)/.exec(search || '');
+  const n = m ? parseInt(m[1], 10) : NaN;
+  return n >= 1 ? n : null;
+}
+/* リンクに「何手目から」を付ける (move: 1 から数えた手目) */
+export function withMove(url, move) {
+  return Number.isInteger(move) && move >= 1 ? url + '&m=' + move : url;
 }
 
 /* 短いリンク (<ページ>#rs=<ID>): 符号をサーバーに預けて ID だけをリンクに載せる (main.js が預け方・受け取り方を差し込む)。
@@ -109,7 +119,7 @@ const SHORT_KEY = 'rs';
 let shortener = null, shortLoader = null;
 export function setReplayShortener(store, load) { shortener = store; shortLoader = load; }
 export function shortIdFromHash(hash = location.hash) {
-  const m = /^#rs=([A-Za-z0-9]{6,16})$/.exec(hash || '');
+  const m = /^#rs=([A-Za-z0-9]{6,16})(?:&m=\d{1,5})?$/.exec(hash || '');
   return m ? m[1] : null;
 }
 /* 短いリンクの ID から符号を受け取る (無ければ null) */
@@ -118,20 +128,23 @@ export async function loadShortReplay(id) {
   try { return await shortLoader(id); } catch (e) { return null; }
 }
 
-/* 端末の共有メニュー (無ければクリップボード) でリンクを渡す。返り値 'shared' | 'copied' | 'failed' */
-export async function shareReplayLink(rep, title) {
+/* 端末の共有メニュー (無ければクリップボード) でリンクを渡す。返り値 'shared' | 'copied' | 'failed'
+   opts.move: その手目から開くリンクにする。opts.copyOnly: 共有メニューを出さずにコピーだけ (感想戦の「この局面を共有」)。
+   opts.out: 渡すと、作ったリンクを out.url に入れる */
+export async function shareReplayLink(rep, title, opts = {}) {
   let url;
   try {
     const code = await encodeReplay(rep);
     let id = null;
     if (shortener) { try { id = await shortener(code); } catch (e) { id = null; } }
-    url = id ? location.origin + location.pathname + '#' + SHORT_KEY + '=' + id : replayShareUrl(code);
+    url = withMove(id ? location.origin + location.pathname + '#' + SHORT_KEY + '=' + id : replayShareUrl(code), opts.move);
   } catch (e) { return 'failed'; }
   const text = title || 'COMPILE のリプレイ';
-  if (navigator.share) {
+  if (navigator.share && !opts.copyOnly) {
     try { await navigator.share({ title: text, text, url }); return 'shared'; } catch (e) {
       if (e && e.name === 'AbortError') return 'cancelled';
     }
   }
+  if (opts.out) opts.out.url = url;               // コピーできなかったときに、リンクをそのまま見せるため
   try { await navigator.clipboard.writeText(url); return 'copied'; } catch (e) { return 'failed'; }
 }

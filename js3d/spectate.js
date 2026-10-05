@@ -29,6 +29,27 @@ export function oddsOf(p) { return Math.max(1.1, Math.round((0.95 / p) * 10) / 1
 /** 当たったときに戻る CHIP (賭けた分こみ)。5 の倍数に切り上げ */
 export function payoutOf(amount, odds) { return Math.ceil(amount * odds / 5) * 5; }
 
+/* 観戦の決着の画面の「同じ組み合わせでもう一度」: 組み合わせ・賭けた側と額をこのタブに覚えて、観戦の画面を開き直す。
+   CHIP はここでは払わない (開いた画面でもう一度押して賭ける) */
+const AGAIN_KEY = 'compileWatchAgain';
+export function watchAgainUrl(w) {
+  try {
+    sessionStorage.setItem(AGAIN_KEY, JSON.stringify({ a: w.a, b: w.b, mates: w.mates || null, level: w.level,
+      bet: w.bet ? { side: w.bet.side, amount: w.bet.amount } : null }));
+  } catch (e) { /* private mode */ }
+  return location.pathname + '?watch=1';
+}
+function takeAgain(names) {
+  try {
+    const v = JSON.parse(sessionStorage.getItem(AGAIN_KEY) || 'null');
+    sessionStorage.removeItem(AGAIN_KEY);
+    const ok = (d) => Array.isArray(d) && d.length === 3 && d.every(n => names.includes(n));
+    if (!v || !ok(v.a) || !ok(v.b)) return null;
+    if (v.mates && !(ok(v.mates.p0) && ok(v.mates.p1))) v.mates = null;
+    return v;
+  } catch (e) { return null; }
+}
+
 /* opts.avatars: 選べるキャラ [[id, 名前], ...] (持っているもの)。無ければキャラの欄は出さない。opts.pool: ランダムで選ぶキャラの id (全員) */
 export function openSpectate(protocols, opts = {}) {
   const avList = opts.avatars || [];
@@ -72,12 +93,24 @@ export function openSpectate(protocols, opts = {}) {
   let side = null, amount = 15;
   const free = { a: [], b: [], level: 2 };
   let freeSide = 'a';                                   // タイルを押したときに入る側
+  /* 「同じ組み合わせでもう一度」から来た: 前と同じ組み合わせ・側・額を選んだところから (賭けるのはもう一度押してから) */
+  const again = takeAgain(names);
+  if (again && again.bet) {
+    tag = !!again.mates;
+    match = { a: again.a.slice(), b: again.b.slice(), am: again.mates ? again.mates.p0.slice() : match.am, bm: again.mates ? again.mates.p1.slice() : match.bm };
+    side = again.bet.side === 1 ? 1 : 0;
+    if (BET_AMOUNTS.includes(again.bet.amount)) amount = again.bet.amount;
+  } else if (again) {
+    tag = !!again.mates;
+    free.a = again.a.slice(); free.b = again.b.slice();
+    if ([0, 1, 2].includes(again.level)) free.level = again.level;
+  }
 
   const render = () => {
     const chips = G.chipsOf(G.loadGacha(), earnedChips());
     const pA = winChance(teamA(), teamB());
     const odds = [oddsOf(pA), oddsOf(1 - pA)];
-    const team = (k, label) => '<button type="button" class="wt-team' + (side === k ? ' on' : '') + '" data-side="' + k + '">' +
+    const team = (k, label) => '<button type="button" class="wt-team' + (side === k ? ' on' : '') + '" data-side="' + k + '" aria-pressed="' + (side === k) + '">' +
       '<b>' + label + '</b>' + deckHtml(k ? match.b : match.a) +
       (tag ? '<small class="wt-mate">相棒</small>' + deckHtml(k ? match.bm : match.am) : '') +
       '<em>' + odds[k].toFixed(1) + ' 倍</em></button>';
@@ -101,14 +134,14 @@ export function openSpectate(protocols, opts = {}) {
     }).join('');
     el.innerHTML = '<div class="op-wrap">' +
       '<div class="op-head"><b>// WATCH</b><span>CPU どうしの対戦を観戦する</span><span class="wt-chips">CHIP <b>' + chips + '</b></span></div>' +
-      '<div class="wt-bar"><span>対戦の形</span><button type="button" class="lvl' + (tag ? '' : ' on') + '" data-tag="0">1 対 1</button>' +
-        '<button type="button" class="lvl' + (tag ? ' on' : '') + '" data-tag="1">タッグ (2 対 2)</button>' +
+      '<div class="wt-bar"><span>対戦の形</span><button type="button" class="lvl' + (tag ? '' : ' on') + '" data-tag="0" aria-pressed="' + !tag + '">1 対 1</button>' +
+        '<button type="button" class="lvl' + (tag ? ' on' : '') + '" data-tag="1" aria-pressed="' + tag + '">タッグ (2 対 2)</button>' +
         (tag ? '<small class="wt-note">ラインは2人のプロトコルを合わせた複合プロトコル。自由に選ぶときの相棒はランダム</small>' : '') + '</div>' +
       (avList.length ? '<div class="wt-bar"><span>キャラ</span>A ' + avPick('a') + '　B ' + avPick('b') + '</div>' : '') +
       '<section><h3>ベットして観戦 <small>どちらが勝つかに CHIP を賭ける。当たれば倍率ぶん戻る。CPU は' + LEVEL_LABELS[BET_LEVEL] + '</small></h3>' +
         '<div class="wt-match">' + team(0, 'A') + '<i class="wt-vs">VS</i>' + team(1, 'B') + '</div>' +
         '<div class="wt-bar"><span>賭ける CHIP</span>' + BET_AMOUNTS.map(v => '<button type="button" class="lvl' + (v === amount ? ' on' : '') +
-          '" data-amount="' + v + '"' + (chips < v ? ' disabled' : '') + '>' + v + '</button>').join('') +
+          '" data-amount="' + v + '" aria-pressed="' + (v === amount) + '"' + (chips < v ? ' disabled' : '') + '>' + v + '</button>').join('') +
           '<button type="button" class="lvl" data-reroll="1">組み合わせを引き直す</button>' +
           '<button type="button" class="wt-go" data-bet="1"' + (canBet ? '' : ' disabled') + '>' +
             (side === null ? 'A か B を選ぶ' : (side ? 'B' : 'A') + ' に ' + amount + ' 賭けて観戦 (当たれば ' + payoutOf(amount, odds[side]) + ')') + '</button></div>' +
@@ -119,7 +152,7 @@ export function openSpectate(protocols, opts = {}) {
           (free.a.length || free.b.length ? '<button type="button" class="lvl" data-clear="1">全部外す</button>' : '') + '</div>' +
         '<div class="wt-tiles">' + tiles + '</div>' +
         '<div class="wt-bar"><span>CPU の強さ</span>' + [0, 1, 2].map(i => '<button type="button" class="lvl' + (free.level === i ? ' on' : '') +
-          '" data-level="' + i + '">' + LEVEL_LABELS[i] + '</button>').join('') +
+          '" data-level="' + i + '" aria-pressed="' + (free.level === i) + '">' + LEVEL_LABELS[i] + '</button>').join('') +
           '<button type="button" class="wt-go" data-free="1"' + (free.a.length === 3 && free.b.length === 3 ? '' : ' disabled') + '>観戦する</button></div>' +
       '</section>' +
       '</div>';

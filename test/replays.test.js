@@ -121,3 +121,50 @@ test('盤面の左右の入れ替え: 2回で元どおり、側の値が入れ�
   assert.equal(flipped.history[0].st.turn, 1 - built.history[0].st.turn);
   assert.equal(flipped.final.winner === null ? null : flipped.final.winner, built.final.winner === null ? null : 1 - built.final.winner);
 });
+
+test('自動で残す枠はオンライン・観戦・それ以外で別 (CPU 戦を続けてもオンラインが押し出されない)', () => {
+  mem.clear();
+  const online = R.addReplay({ ...rep(0), kind: 'online' }, 10);
+  const watch = R.addReplay({ ...rep(0), kind: 'watch' }, 11);
+  for (let i = 1; i <= R.RECENT + 5; i++) R.addReplay(rep(i), 100 + i);
+  const list = R.listReplays();
+  assert.ok(list.find(r => r.id === online), 'オンラインは残る');
+  assert.ok(list.find(r => r.id === watch), '観戦は残る');
+  assert.equal(list.filter(r => R.poolOf(r) === 'local').length, R.RECENT);
+  for (let i = 1; i <= R.RECENT + 2; i++) R.addReplay({ ...rep(i), kind: 'online' }, 500 + i);
+  assert.equal(R.listReplays().filter(r => r.kind === 'online').length, R.RECENT);
+  assert.equal(R.getReplay(online), null, 'オンラインの枠の中では古いものから押し出す');
+});
+
+test('絞り込み・名前・印', () => {
+  mem.clear();
+  const a = R.addReplay({ ...rep(0), kind: 'online', score: [3, 2], turns: 40 }, 10);
+  const b = R.addReplay({ ...rep(1), kind: 'run', turns: 20 }, 11);
+  R.addReplay({ ...rep(2), kind: null }, 12);
+  const all = R.listReplays();
+  assert.equal(R.filterReplays(all, { kind: 'online', result: 'all' }).length, 1);
+  assert.equal(R.filterReplays(all, { kind: 'cpu', result: 'all' }).length, 1);
+  assert.equal(R.filterReplays(all, { kind: 'all', result: 'win' }).length, 2);
+  assert.equal(R.filterReplays(all, { kind: 'run', result: 'lose' }).length, 1);
+  assert.ok(R.setReplayTitle(a, '  初めての<レート戦>\u0007 '));
+  assert.equal(R.getReplay(a).title, '初めての<レート戦>');
+  assert.ok(R.setReplayTitle(a, ''));
+  assert.equal('title' in R.getReplay(a), false);
+  assert.deepEqual(R.replayTags(R.getReplay(a)), ['接戦', '長期戦']);
+  assert.deepEqual(R.replayTags(R.getReplay(b)), []);
+  assert.ok(R.noteReplayFacts(b, { comeback: true }));
+  assert.deepEqual(R.replayTags(R.getReplay(b)), ['大逆転']);
+  assert.equal(R.isComeback([0, -0.6, 0.2, 1], true), true);
+  assert.equal(R.isComeback([0, -0.3, 0.2, 1], true), false);
+  assert.equal(R.isComeback([0, 0.7, -1], false), true);
+});
+
+test('レート戦の記録に合うリプレイを探す (相手・プロトコル・時刻)', () => {
+  const end = Date.parse('2026-10-01T12:00:00Z');
+  const r = { id: 'r1', kind: 'online', me: ['FIRE', 'WATER', 'SPEED'], opp: ['DEATH', 'LIFE', 'LIGHT'], oppName: 'あお', at: end + 30_000 };
+  const m = { endedAt: '2026-10-01T12:00:00Z', opponent: 'あお', myProtocols: ['SPEED', 'FIRE', 'WATER'], opponentProtocols: ['LIGHT', 'DEATH', 'LIFE'] };
+  assert.equal(R.findMatchReplay([r], m), r);
+  assert.equal(R.findMatchReplay([{ ...r, at: end + 3600_000 }], m), null);
+  assert.equal(R.findMatchReplay([{ ...r, oppName: 'ほか' }], m), null);
+  assert.equal(R.findMatchReplay([{ ...r, kind: null }], m), null);
+});
