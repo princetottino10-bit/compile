@@ -2737,9 +2737,40 @@
   #tutorialCoach .tc-skip{margin-top:8px;padding:6px 12px;cursor:pointer;border:1px solid rgba(255,255,255,.35);background:none;color:#fff;
     font:700 11.5px/1 "M PLUS 1",system-ui;clip-path:var(--cut-s);}
   #tutorialCoach .tc-skip:hover,#tutorialCoach .tc-skip:focus-visible{border-color:var(--mint);color:var(--mint);outline:0;}
-  .op-wl{display:block;margin-top:6px;font:700 10.5px/1 "M PLUS 1",system-ui;color:var(--dim);font-variant-numeric:tabular-nums;}
-  .op-wl.won{color:var(--mint);}
-  .op-wl.none{opacity:.7;}
+  /* ---- CHALLENGE: まとめ・タブ・戦績の札 ---- */
+  .op-sum{display:flex;flex-wrap:wrap;gap:6px;}
+  .op-sumc{display:flex;align-items:baseline;gap:6px;padding:6px 10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);clip-path:var(--cut-s);}
+  .op-sumc small{font:700 10px/1 "M PLUS 1",system-ui;color:var(--dim);}
+  .op-sumc b{font:800 14px/1 var(--font-ui);color:#fff;font-variant-numeric:tabular-nums;}
+  .op-sumc.ok{border-color:rgba(124,240,208,.45);} .op-sumc.ok b{color:var(--mint);}
+  .op-tabs{display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,.12);}
+  .op-tabs button{appearance:none;flex:1;padding:10px 12px;cursor:pointer;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;
+    color:var(--dim);font:800 13px/1 var(--font-ui);letter-spacing:.08em;}
+  .op-tabs button small{margin-left:4px;font-size:10px;opacity:.8;}
+  .op-tabs button.on{color:#fff;border-bottom-color:var(--pink);background:linear-gradient(0deg,rgba(255,79,163,.12),transparent 70%);}
+  .op-tabs button:focus-visible{outline:2px solid var(--cyan);outline-offset:-2px;}
+  #oppOv section[hidden]{display:none;}
+  .op-card > b{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .op-rec{margin-left:auto;padding:3px 7px;font:800 10px/1 "M PLUS 1",system-ui;letter-spacing:.02em;color:var(--dim);border:1px solid rgba(255,255,255,.18);
+    font-variant-numeric:tabular-nums;clip-path:var(--cut-s);}
+  .op-rec.won{color:#0c0a14;background:var(--mint);border-color:var(--mint);}
+  .op-rec.lost{color:var(--pink);border-color:rgba(255,79,163,.45);}
+  /* 最強は金の枠で目立たせる */
+  .op-row.boss .op-card.top{border-color:rgba(255,200,90,.55);background:linear-gradient(160deg,rgba(255,200,90,.1),rgba(8,12,24,.86) 55%);}
+  .op-row.boss .op-card.top:hover{border-color:var(--gold);}
+  /* 見出しは上に止める (下の一覧がスクロールしても見出しは残る。右上の「タイトル」が一覧に重ならない) */
+  #oppOv .op-head{position:sticky;top:-8px;z-index:3;margin:calc(-20px - env(safe-area-inset-top)) -16px 0;
+    padding:calc(20px + env(safe-area-inset-top)) 118px 14px 16px;background:linear-gradient(180deg,rgb(5,6,13) 90%,rgba(5,6,13,0));}
+  /* 縦持ちは札を詰めて、少ないスクロールで全部見られるように */
+  @media (max-width:700px){
+    .op-challenge .op-card{padding:11px 13px;gap:6px;}
+    .op-challenge .op-card small{font-size:10.5px;line-height:1.45;}
+    .op-challenge .rn-deck i{font-size:10px;padding:3px 7px;}
+    .op-sum{gap:4px;flex-wrap:nowrap;}
+    .op-sumc{padding:5px 7px;gap:4px;flex:1 1 auto;justify-content:center;}
+    .op-sumc small{font-size:9px;}
+    .op-sumc b{font-size:12.5px;}
+  }
   #title .tt-tutcont{margin-bottom:8px;}
   #title .tt-tutcont button{width:100%;display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:10px 16px;
     border:1px dashed rgba(124,240,208,.5);background:rgba(124,240,208,.06);color:#fff;font:800 13px/1 var(--font-ui);letter-spacing:.12em;cursor:pointer;}
@@ -4619,7 +4650,7 @@
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
       "./js3d/net.js": "./js3d/net.js?v=3134839bca",
       "./js3d/notice.js": "./js3d/notice.js?v=029a81acaa",
-      "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=293f1c32f7",
+      "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=f9d257ac8a",
       "./js3d/panel.js": "./js3d/panel.js?v=994ec047da",
       "./js3d/pickaid.js": "./js3d/pickaid.js?v=fd33e4bc87",
       "./js3d/plates.js": "./js3d/plates.js?v=44c8ea3081",
@@ -4727,7 +4758,7 @@
   <link rel="modulepreload" href="js3d/plates.js?v=44c8ea3081">
   <link rel="modulepreload" href="js3d/playmat.js?v=1c8f36818a">
   <link rel="modulepreload" href="js3d/cardlist-ov.js?v=47bc96bbb6">
-  <link rel="modulepreload" href="js3d/opponent-select.js?v=293f1c32f7">
+  <link rel="modulepreload" href="js3d/opponent-select.js?v=f9d257ac8a">
   <link rel="modulepreload" href="js3d/aidecks.js?v=5aae71f416">
   <link rel="modulepreload" href="js3d/run-ui.js?v=64d2e02e1b">
   <link rel="modulepreload" href="js3d/weekly-ui.js?v=92b645307a">
