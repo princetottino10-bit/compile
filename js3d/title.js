@@ -22,6 +22,8 @@ import { openProfile } from './profile.js';
 import { openGacha, chipsNow } from './gacha-ui.js';
 import { openCosmetics, hasNewCosmetics } from './cosmetics-mode.js';
 import { loadResume, resumeLabel } from './resume.js';
+import { dailyPuzzleDone } from './tsume.js';
+import { tutorialProgress, LESSONS } from './tutorial.js';
 import { loadRun, nodeById, MAP_ROWS } from './run.js';
 import { loadWeekly } from './weekly.js';
 import { conquered, conquerable } from './stats-data.js';
@@ -52,6 +54,16 @@ function runBadge() {
     if (!w.attempt) return { text: 'WEEKLY 未挑戦' };
   } catch (e) { /* 札なしで */ }
   return null;
+}
+function tutorialContinueHtml() {
+  try {
+    if (isNewcomer()) return '';
+    const p = tutorialProgress(xpLog());
+    if (!p.started || p.all) return '';
+    const lesson = LESSONS[p.next];
+    return '<div class="tt-tutcont"><button data-mode="tutorial" type="button">TUTORIAL <small>続き ' + p.done + ' / ' + p.total +
+      (lesson && lesson.title ? ' ・ 次は「' + String(lesson.title).replace(/[<>&"]/g, '') + '」' : '') + '</small></button></div>';
+  } catch (e) { return ''; }
 }
 function chipBadge() {
   try { const n = chipsNow(); return n > 0 ? '<i class="tt-chipn" aria-label="CHIP ' + n + '">CHIP ' + n + '</i>' : ''; } catch (e) { return ''; }
@@ -201,6 +213,8 @@ export function runTitle(protocols, opts) {
               '<div><button data-mode="tutorial" type="button" class="go">TUTORIAL</button>' +
               '<button data-mode="quick" type="button">おまかせで1戦</button></div></div>'
             : '') +
+          /* チュートリアルを途中までやった人には、全部終えるまで「続き」を出す (前は1つ終えると MORE の奥だけになった) */
+          tutorialContinueHtml() +
           '<div class="tt-main">' +
             /* 中断した対戦があれば、いちばん上に「続きから」 (前は次にページを開き直したときしか聞かれなかった) */
             (resumeRec ? '<button data-mode="resumeGame" type="button" class="tt-resume">CONTINUE <small>' + resumeLabel(resumeRec).replace(/[&<>"]/g, '') + '</small></button>' : '') +
@@ -211,7 +225,8 @@ export function runTitle(protocols, opts) {
           '</div>' +
           /* 下の段は4つだけ (ごちゃつかせない)。GACHA は COLLECTION の中、TUTORIAL・TRAINING・CARDS は MORE の中 */
           '<div class="tt-more">' +
-            '<button data-mode="tsume" type="button">COMPUZZLE</button>' +
+            /* 今日の問題がまだなら印 (CHALLENGE・RUN と同じく、押す前にやることが分かるように) */
+            '<button data-mode="tsume" type="button" class="tt-tsume">COMPUZZLE' + (dailyPuzzleDone() ? '' : '<i class="tt-chipn tt-daily-n">今日の問題</i>') + '</button>' +
             /* CHIP の残りも小さく (ガチャを開くまで分からなかった) */
             '<button data-mode="cosmetics" type="button" class="tt-cos">COLLECTION' + (hasNewCosmetics() ? '<i class="tt-newdot" aria-label="新しい見た目"></i>' : '') +
               chipBadge() + '</button>' +

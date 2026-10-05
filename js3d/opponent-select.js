@@ -39,6 +39,14 @@ export function openOpponentSelect(protocols, opts = {}) {
   const card = (key, title, note, body, extra) => '<button type="button" class="op-card' + (String(last) === key ? ' last' : '') + (extra || '') +
     '" data-opp="' + key + '"><b>' + title + '</b><small>' + note + '</small>' + (body || '') + '</button>';
   const cleared = underdogCleared();
+  /* 強敵ごとの戦績 (勝ち・負け)。押す前に、どの相手に勝っていないかが分かるように */
+  const recs = localRecords();
+  const wl = (lv) => {
+    const g = recs.filter(r => r.level === lv && (!r.mode || r.mode === 'cpu'));   // 勝ち抜き戦・タッグなどは数えない
+    if (!g.length) return '<span class="op-wl none">まだ戦っていない</span>';
+    const w = g.filter(r => r.win).length;
+    return '<span class="op-wl' + (w ? ' won' : '') + '">' + w + '勝 ' + (g.length - w) + '敗</span>';
+  };
   const tagCleared = localRecords().some(r => r.win && r.level === UNDERDOG_TAG_LEVEL);
   /* 制覇: 最強に勝ったプロトコルの数。30 すべてで称号 CONQUEROR */
   const conq = conquered(localRecords()).size, total = conquerable(protocols.map(p => p.name)).length;
@@ -49,9 +57,10 @@ export function openOpponentSelect(protocols, opts = {}) {
       '<section><h3>強敵 <small>相手のデッキは決まっている。次の画面で自分の3つを選ぶ</small></h3>' +
       '<div class="op-row boss">' +
         card('3', '最強' + (conq >= total ? ' <em>✓ TITLE — CONQUEROR</em>' : ''),
-          'いちばん強い CPU。残りの' + total + 'のプロトコルすべてで勝つと 称号 CONQUEROR', deck(STRONGEST_AI) + conqBar) +
-        card('4', 'ロック特化', 'サイキック①で「裏向きでしか出せない」を狙う', deck(LOCK_AI)) +
-        CHALLENGERS.map((c, k) => card(String(CHALLENGER_BASE + k), '挑戦者', esc(c.name || '最強の候補だったデッキ'), deck(c.deck))).join('') +
+          'いちばん強い CPU。残りの' + total + 'のプロトコルすべてで勝つと 称号 CONQUEROR', deck(STRONGEST_AI) + conqBar + wl(3)) +
+        card('4', 'ロック特化', 'サイキック①で「裏向きでしか出せない」を狙う', deck(LOCK_AI) + wl(4)) +
+        /* 挑戦者は、どれも「挑戦者」だった見出しをデッキの名前に */
+        CHALLENGERS.map((c, k) => card(String(CHALLENGER_BASE + k), esc(c.name || '挑戦者'), c.name ? '挑戦者 ・ 最強の候補だったデッキ' : '最強の候補だったデッキ', deck(c.deck) + wl(CHALLENGER_BASE + k))).join('') +
       '</div></section>' +
       '<section><h3>下剋上 <small>いちばん弱いデッキで、いちばん強い CPU に挑む</small></h3>' +
       '<div class="op-row">' + card('underdog', '下剋上' + (cleared ? ' <em>✓ TITLE — GIANT SLAYER</em>' : ''),

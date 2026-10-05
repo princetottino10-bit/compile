@@ -115,9 +115,22 @@ export function judgeTsume(goal, endSt, finalSt, me, Engine) {
 }
 
 /** 次の問題 (同じ段の次、段の最後なら次の段の最初)。無ければ null */
-export function nextOf(list, id) {
+/** 次の問題: 同じ段のまだ解いていない問題 (後ろ → 前の順で探す)。無ければ、次の段のまだの問題。
+    cleared を渡さなければ、並びの次 (前と同じ) */
+export function nextOf(list, id, cleared) {
   const i = list.findIndex(p => p.id === id);
-  return i >= 0 && i + 1 < list.length ? list[i + 1] : null;
+  if (!cleared) return i >= 0 && i + 1 < list.length ? list[i + 1] : null;
+  const me = list[i];
+  const open = (p) => p && p.id !== id && !cleared[p.id];
+  const tier = me ? me.tier : null;
+  const sameTier = list.filter(p => p.tier === tier);
+  const after = sameTier.slice(sameTier.indexOf(me) + 1).find(open) || sameTier.find(open);
+  if (after) return after;
+  return list.filter(p => tier == null || p.tier > tier).find(open) || null;
+}
+/** 今日の問題を解いたあとの続き: いちばん下の段のまだ解いていない問題 */
+export function firstOpen(list, cleared) {
+  return list.find(p => !cleared[p.id]) || null;
 }
 
 function overlay(html) {
@@ -133,10 +146,25 @@ function overlay(html) {
   return el;
 }
 
+/* 挑戦した問題 (解けたかは帳簿で分かる。解けていないのに挑戦したものに印を付ける) と、最後に開いた問題 */
+const TRIED_KEY = 'compileTsumeTried', LAST_KEY = 'compileTsumeLast';
+function triedSet() { try { return new Set(JSON.parse(localStorage.getItem(TRIED_KEY) || '[]')); } catch (e) { return new Set(); } }
+/** 問題を開いたときに呼ぶ (一覧の「挑戦中」の印と、次に一覧を開いたときの位置のため) */
+export function markTsumeTried(id) {
+  if (!id || id === 'list' || /^daily/.test(id)) return;
+  try {
+    const t = triedSet(); t.add(id);
+    localStorage.setItem(TRIED_KEY, JSON.stringify([...t].slice(-300)));
+    localStorage.setItem(LAST_KEY, id);
+  } catch (e) { /* private mode */ }
+}
+
 /** 問題の一覧。選んだ問題の id か、戻るなら null */
 export async function openTsumeList() {
   const list = await loadTsume();
   const cleared = clearedMap();
+  const tried = triedSet();
+  const lastId = (() => { try { return localStorage.getItem(LAST_KEY); } catch (e) { return null; } })();
   const done = list.filter(p => cleared[p.id]).length;
   const today = dailyPuzzleDone();
   const todayHard = dailyPuzzleDone(undefined, undefined, true);
@@ -157,9 +185,9 @@ export async function openTsumeList() {
         return '<section class="ts-tier" data-tier="' + t.tier + '">' +
           '<h3><span>' + t.name + '</span><small>' + esc(t.note) + '</small><em>' + got + '/' + items.length + '</em></h3>' +
           '<div class="ts-grid">' + items.map((p, i) =>
-            '<button type="button" data-id="' + esc(p.id) + '" class="' + (cleared[p.id] ? 'done' : '') + '">' +
+            '<button type="button" data-id="' + esc(p.id) + '" class="' + (cleared[p.id] ? 'done' : tried.has(p.id) ? 'tried' : '') + (p.id === lastId ? ' last' : '') + '">' +
               '<b>' + (i + 1) + '</b><span>' + esc(shortGoal(p.goal, p.spec.sides[0].protos)) + '</span>' +
-              (cleared[p.id] ? '<i aria-label="クリア済み">✓</i>' : '') +
+              (cleared[p.id] ? '<i aria-label="クリア済み">✓</i>' : tried.has(p.id) ? '<i class="ts-tried" aria-label="挑戦中">…</i>' : '') +
             '</button>').join('') +
           '</div></section>';
       }).join('') : '<p class="pz-note">問題を読み込めませんでした。通信を確かめて、もう一度開いてください。</p>') +
@@ -172,6 +200,9 @@ export async function openTsumeList() {
       const b = ev.target.closest('button[data-id]');
       if (b) close(b.dataset.id);
     };
+    /* 前に開いた問題があればそこへ (前は毎回いちばん上から) */
+    const lastBtn = el.querySelector('.ts-grid button.last');
+    if (lastBtn) { lastBtn.scrollIntoView({ block: 'center' }); lastBtn.focus({ preventScroll: true }); return; }
     const first = el.querySelector('.ts-daily:not(.done)') || el.querySelector('.ts-grid button:not(.done)') || el.querySelector('.ts-grid button');
     if (first) first.focus();
   });

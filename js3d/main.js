@@ -3,7 +3,7 @@
  *   engine.js (window.CompileEngine) をルール担当として、描画と入力だけを担う。
  * ========================================================================= */
 import { randomDecks, shuffled } from './solodraft.js';
-import { bonusXp, grantXp, XP_GAIN, hashKey } from './xp.js';
+import { bonusXp, grantXp, XP_GAIN, hashKey, xpLog } from './xp.js';
 import { recordDailyGame, DAILY_XP, dailyView } from './daily.js';
 import { maybeLoginHint, uploadReplay } from './account.js';
 import { logPlay } from './playlog.js';
@@ -1091,7 +1091,8 @@ async function boot() {
         await roomEnterGame(result.rm);
         return;
       }
-      if (nextMode === 'tutorial') { location.href = location.pathname + '?tutorial=1'; return; }
+      /* まだ終えていないレッスンから (前はいつもレッスン 1 から) */
+      if (nextMode === 'tutorial') { location.href = location.pathname + '?tutorial=' + (TU.tutorialProgress(xpLog()).next + 1); return; }
       /* 観戦: CPU どうし (A = 手前、B = 奥)。ベットしていれば、決着で払い戻す */
       if (nextMode === 'watch') {
         const w = await openSpectate(cards.protocols, avatarsOpen() ? { avatars: ownedAvatars(), pool: avatarIds() } : { avatars: [] });
@@ -1431,11 +1432,15 @@ async function puzzleAfterTurn() {
     await gainXp('tsume', TS.tsumeXp(ts), TS.tsumeXpKey(ts));
     maybeLoginHint('tsume');
   }
-  const next = ts.daily == null ? TS.nextOf(await TS.loadTsume(), ts.id) : null;
+  /* 次の問題は、まだ解いていないものへ (前は解き済みでも並びの次へ)。今日の問題のあとは、ふだんの問題の続きへ */
+  const allTsume = await TS.loadTsume();
+  const next = ts.daily == null ? TS.nextOf(allTsume, ts.id, TS.clearedMap()) : TS.firstOpen(allTsume, TS.clearedMap());
   PZ.showPuzzleResult(result, retryPuzzle, {
     buttons: [
-      ...(result.ok && next ? [{ label: '次の問題', main: true, on: () => openTsume(next.id) }] : []),
+      ...(result.ok && next ? [{ label: ts.daily == null ? '次の問題' : '問題の続きへ', main: true, on: () => openTsume(next.id) }] : []),
       ...(result.ok || !accountState().admin ? [] : [{ label: '答えを見る', on: () => TS.showAnswer(ts) }]),
+      /* 解けなかったら、次のヒントを出してやり直せる */
+      ...(result.ok || !Array.isArray(ts.steps) || tsumeHintN(ts) >= ts.steps.length ? [] : [{ label: 'ヒントを見てもう一度', on: () => { revealTsumeHint(ts); retryPuzzle(); } }]),
       { label: '一覧へ', on: () => openTsume('list') }
     ]
   });
@@ -1446,10 +1451,15 @@ function tsumeBarOpts(ts) {
   const tier = TS.TIERS.find(t => t.tier === ts.tier);
   return {
     tag: puzzle.story ? 'STORY' : ts.daily != null ? (ts.hard ? '今日の上級' : '今日の問題') : '詰め ' + (tier ? tier.name : ''),
+    hint: tsumeHintN(ts) ? ts.steps.slice(0, tsumeHintN(ts)).map((t, i) => (i + 1) + '. ' + t).join('　') : '',
     sub: '1手番で達成する' + (ts.solutions > 1 ? ' (解き方は2通り)' : ''),
     buttons: [
       { label: '山札', on: () => TS.showDeck(shown(), defIndex, ME) },
-      { label: 'ヒント', on: () => UI.toast('最初の一手: ' + ts.steps[0], 5200) },
+      /* ヒントは押すたびに1手ずつ先まで (前はいつも最初の一手だけで、数秒で消えた)。出したぶんは帯に残す */
+      ...(Array.isArray(ts.steps) && ts.steps.length ? [{
+        label: tsumeHintN(ts) >= ts.steps.length ? 'ヒント (全部)' : 'ヒント' + (tsumeHintN(ts) ? ' ' + tsumeHintN(ts) + '/' + ts.steps.length : ''),
+        on: () => { revealTsumeHint(ts); }
+      }] : []),
       /* 模範解答は管理者のアカウントだけ (問題の確認用) */
       ...(accountState().admin ? [{ label: '答え', on: () => TS.showAnswer(ts) }] : []),
       /* AUTO: 模範解答を盤面の上で自動で指して見せる (管理者だけ。報告を受けた問題の確認用) */
@@ -1459,7 +1469,19 @@ function tsumeBarOpts(ts) {
   };
 }
 
+/* COMPUZZLE のヒント: いくつ目まで見たか (やり直しても同じ問題のあいだは覚えておく) */
+const tsumeHintKey = (ts) => 'compileTsumeHint:' + (ts.daily != null ? 'd' + ts.daily + (ts.hard ? 'h' : '') : ts.id);
+function tsumeHintN(ts) {
+  try { return Math.min(ts.steps.length, +(sessionStorage.getItem(tsumeHintKey(ts)) || 0)); } catch (e) { return 0; }
+}
+function revealTsumeHint(ts) {
+  const n = Math.min(ts.steps.length, tsumeHintN(ts) + 1);
+  try { sessionStorage.setItem(tsumeHintKey(ts), String(n)); } catch (e) { /* 覚えられなくても、その場では出す */ }
+  PZ.showPuzzleBar(puzzle, retryPuzzle, tsumeBarOpts(ts));
+}
+
 function openTsume(id) {
+  TS.markTsumeTried(id);
   location.href = location.pathname + '?tsume=' + encodeURIComponent(id);
 }
 
@@ -1554,13 +1576,15 @@ async function tutorialAfterStep() {
         /* チュートリアルのあとは、そのまま「おまかせ」で CPU と1戦 */
         onPlay: () => { location.href = location.pathname + '?quick=1'; },
         onTop: () => { location.href = location.pathname; },
+        onPuzzle: () => { location.href = location.pathname + '?tsume=list'; },
         onRestart: () => startLesson(0)
       });
     } else startLesson(r.ok ? i + 1 : i);
-  });
+  }, (!r.ok && (tutorialFails[i] = (tutorialFails[i] || 0) + 1) >= 2) ? { onSkip: () => startLesson(i + 1) } : undefined);
   return true;
 }
 
+const tutorialFails = {};      // レッスンごとの失敗の数 (2回目から「飛ばして次へ」を出す)
 /* レッスンをその場で始める (ページを読み直さない) */
 async function startLesson(index) {
   tutorial = { index, lesson: TU.LESSONS[index] };
@@ -1758,6 +1782,13 @@ function mountTraining() {
     refreshHud();
     trainingSelect(null);
   };
+  /* はじめてのトレーニングだけ、使い方をひとこと (何をする画面か分かりにくかった) */
+  try {
+    if (!localStorage.getItem('compileTrainingSeen')) {
+      localStorage.setItem('compileTrainingSeen', '1');
+      setTimeout(() => UI.toast('TRAINING: 手札や山札のカードを選んで、好きなラインに置いて試せます。効果を発動させるかは左の道具で切り替え', 7000), 900);
+    }
+  } catch (e) { /* private mode */ }
   trainingTools = mountTrainingTools(defIndex, {
     select: (uid) => { if (!uid) training.collapsed = false; trainingSelect(uid); },
     setSide: (side) => { training.side = side; trainingSelect(null); },

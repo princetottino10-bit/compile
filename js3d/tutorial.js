@@ -412,7 +412,8 @@ export function showCoach(index, stepNo, onRetry) {
 let resultUnhook = null;
 
 /* 結果を出し、画面をタップしたら onDone (勝手には進めない。読み終わる前に次のレッスンへ行ってしまうため)。取り消し関数を返す */
-export function showCoachResult(index, result, onDone) {
+/* opts.onSkip: 何度か失敗したレッスンは「飛ばして次へ」を出す (同じところで詰まって先へ進めなかった) */
+export function showCoachResult(index, result, onDone, opts) {
   coachKey = '';
   clearTimeout(coachTimer);
   const el = coachEl();
@@ -422,7 +423,8 @@ export function showCoachResult(index, result, onDone) {
     '<div class="tc-head"><span class="tc-tag">' + lessonTag(index) + '</span>' +
       '<b class="tc-verdict">' + (result.ok ? 'クリア！' : 'もう一度') + '</b></div>' +
     '<p class="tc-say">' + esc(result.text) + '</p>' +
-    '<p class="tc-next">画面をタップ (または Enter) で' + (result.ok ? (last ? 'まとめへ' : '次のレッスンへ') : 'もう一度') + '</p>';
+    '<p class="tc-next">画面をタップ (または Enter) で' + (result.ok ? (last ? 'まとめへ' : '次のレッスンへ') : 'もう一度') + '</p>' +
+    (!result.ok && opts && opts.onSkip && !last ? '<button type="button" class="tc-skip">このレッスンを飛ばして次へ</button>' : '');
   let done = false;
   /* 結果を読んでいる間は、画面のどこをタップしても進む。そのタップは盤面の操作に渡さない
      (押した瞬間に進め、続く pointerup / click も握りつぶす)。ボタン (メニュー・設定など) はそのまま使える */
@@ -431,6 +433,13 @@ export function showCoachResult(index, result, onDone) {
     const btn = ev.target.closest && ev.target.closest('button, a, input, select, textarea');
     if (btn && !el.contains(btn)) return;
     swallow(ev);
+    if (btn && btn.classList.contains('tc-skip')) {
+      document.addEventListener('pointerup', swallow, { capture: true, once: true });
+      document.addEventListener('click', swallow, { capture: true, once: true });
+      if (done) return;
+      done = true; clearTimeout(coachTimer); unhook(); opts.onSkip();
+      return;
+    }
     document.addEventListener('pointerup', swallow, { capture: true, once: true });
     document.addEventListener('click', swallow, { capture: true, once: true });
     go();
@@ -471,11 +480,30 @@ export function showTutorialDone(handlers) {
       '<p>3つのプロトコルをすべてコンパイルして、勝利しました！</p><p>' + esc(OUTRO) + '</p></div>' +
     '<div class="pz-row">' +
       '<button type="button" class="pz-main" id="tuPlay">CPU と対戦する</button>' +
+      /* 次の一歩: 1手番で解く問題 (COMPUZZLE) で、覚えた動きを試せる */
+      (handlers.onPuzzle ? '<button type="button" id="tuPuzzle">COMPUZZLE 初級を解く</button>' : '') +
       '<button type="button" id="tuTop">タイトルへ</button>' +
       '<button type="button" id="tuAgain">最初から</button>' +
     '</div></div>';
   el.classList.add('show');
   el.querySelector('#tuPlay').onclick = handlers.onPlay;
   el.querySelector('#tuTop').onclick = handlers.onTop;
+  const pz = el.querySelector('#tuPuzzle');
+  if (pz) pz.onclick = handlers.onPuzzle;
   el.querySelector('#tuAgain').onclick = () => { el.classList.remove('show'); handlers.onRestart(); };
+}
+
+/** 進み具合 (経験値の帳簿の k:tu:<番号> / k:tu:all から)。next: まだのいちばん前のレッスン (全部済みなら 0) */
+export function tutorialProgress(log) {
+  const done = new Set();
+  let all = false;
+  for (const e of log || []) {
+    const m = /^k:tu:(\d+|all)$/.exec((e && e.id) || '');
+    if (!m) continue;
+    if (m[1] === 'all') all = true; else done.add(+m[1]);
+  }
+  let next = 0;
+  while (next < LESSONS.length && done.has(next)) next++;
+  if (next >= LESSONS.length) next = 0;
+  return { done: done.size, total: LESSONS.length, all, next, started: done.size > 0 };
 }

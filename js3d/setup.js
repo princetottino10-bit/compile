@@ -76,6 +76,10 @@ export function runSetup(protocols, options = {}) {
   let draftBans = +lsGet('compileSoloDraftBans', '0');
   let challenger = Math.min(CHALLENGERS.length - 1, Math.max(0, +lsGet('compileSoloChallenger', '0') || 0));
   let trainingMine = null;     // トレーニングは 自分 → 相手 の2段階で選ぶ
+  /* トレーニングは前回の組み合わせを覚えておく (毎回 3+3 を選び直していた) */
+  const lastTraining = () => { try { const v = JSON.parse(lsGet('compileTrainingLast', 'null')); return v && Array.isArray(v.me) && Array.isArray(v.ai) && v.me.length === 3 && v.ai.length === 3 ? v : null; } catch (e) { return null; } };
+  const saveTraining = (me, ai) => lsSet('compileTrainingLast', JSON.stringify({ me: me.slice(), ai: ai.slice() }));
+  if (training && !picked.length) { const last = lastTraining(); if (last && last.me.every(n => byName[n])) picked.push(...last.me); }
   let draft = null;            // ドラフト中の状態
   let onDraftDone = () => {};  // ドラフトが終わったら (Promise の中で差し替える)
   let sameBtn = document.getElementById('setupSame');
@@ -164,13 +168,26 @@ export function runSetup(protocols, options = {}) {
     levelWrap.innerHTML = (mode === 'draft' ? '<span class="lv-lbl">CPU のドラフト</span>' : '') +
       shown.map(([i, label]) => '<button type="button" class="lvl' + (i === level ? ' on' : '') +
       (lockedLevel(i) ? ' locked' : '') + '" data-level="' + i + '"' +
-      (lockedLevel(i) ? ' disabled title="自由に選ぶときだけ"' : '') + '>' + label + '</button>').join('') +
+      (lockedLevel(i) ? ' aria-disabled="true" title="デッキの決まった相手は「自由に選ぶ」のときだけ選べます"' : '') + '>' + label + '</button>').join('') +
       (isChallenger(level)
         ? '<select class="lv-pick" aria-label="挑戦者のデッキ">' + CHALLENGERS.map((c, k) =>
           '<option value="' + k + '"' + (k === challenger ? ' selected' : '') + '>' + esc(challengerName(c)) + '</option>').join('') + '</select>'
         : '');
     levelWrap.querySelectorAll('[data-level]').forEach(b => {
-      b.onclick = () => { level = +b.dataset.level; refresh(); };
+      /* 選べない難しさは押したら理由を出す (前は押せないだけで、理由はマウスを乗せたときだけ) */
+      b.onclick = () => {
+        if (b.getAttribute('aria-disabled') === 'true') {
+          b.classList.remove('nope'); void b.offsetWidth; b.classList.add('nope');
+          const prev = countEl.dataset.prev || countEl.textContent;
+          countEl.dataset.prev = prev;
+          countEl.textContent = b.title;
+          countEl.classList.add('warn');
+          clearTimeout(countEl._t);
+          countEl._t = setTimeout(() => { countEl.textContent = countEl.dataset.prev || ''; countEl.classList.remove('warn'); delete countEl.dataset.prev; }, 2800);
+          return;
+        }
+        level = +b.dataset.level; refresh();
+      };
     });
     const pick = levelWrap.querySelector('.lv-pick');
     if (pick) pick.onchange = () => {
@@ -520,6 +537,9 @@ export function runSetup(protocols, options = {}) {
         if (!trainingMine) {
           trainingMine = picked.slice();
           picked.length = 0;
+          /* 相手の3つも前回のものを選んでおく (自分が前回と同じなら) */
+          const last = lastTraining();
+          if (last && last.me.join() === trainingMine.join() && last.ai.every(n => byName[n])) picked.push(...last.ai);
           backBtn.textContent = '← 自分のプロトコル';
           sameBtn = document.createElement('button');
           sameBtn.id = 'setupSame';
@@ -527,11 +547,12 @@ export function runSetup(protocols, options = {}) {
           sameBtn.className = 'lvl';
           sameBtn.style.marginLeft = 'auto';
           sameBtn.textContent = '自分と同じ3つ';
-          sameBtn.onclick = () => close({ me: trainingMine.slice(), ai: trainingMine.slice(), level, training });
+          sameBtn.onclick = () => { saveTraining(trainingMine, trainingMine); close({ me: trainingMine.slice(), ai: trainingMine.slice(), level, training }); };
           startBtn.before(sameBtn);
           refresh();
           return;
         }
+        saveTraining(trainingMine, picked);
         close({ me: trainingMine.slice(), ai: picked.slice(), level, training });
         return;
       }

@@ -169,7 +169,9 @@ export function showPuzzleBar(puzzle, onRetry, opts) {
   const o = opts || {};
   el.innerHTML = '<span class="pz-tag">' + esc(o.tag || '問題') + '</span>' +
     '<div class="pz-text"><b>' + esc(puzzle.task || 'この盤面をどう動かす？') + '</b>' +
-      '<small>' + esc(o.sub || 'クリア条件: ' + PUZZLE_GOALS[puzzle.goal]) + '</small></div>' +
+      '<small>' + esc(o.sub || 'クリア条件: ' + PUZZLE_GOALS[puzzle.goal]) + '</small>' +
+      /* 出したヒントは帯に残す (前は数秒の知らせで消えていた) */
+      (o.hint ? '<small class="pz-hint">' + esc(o.hint) + '</small>' : '') + '</div>' +
     (o.buttons || []).map((b, i) => '<button type="button" data-i="' + i + '">' + esc(b.label) + '</button>').join('') +
     '<button type="button" id="pzRetry">やり直す</button>';
   el.querySelector('#pzRetry').onclick = onRetry;
