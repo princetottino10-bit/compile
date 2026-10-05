@@ -2401,8 +2401,9 @@
   .proto-daily{position:absolute;top:8px;left:8px;z-index:2;padding:3px 6px;font:900 8.5px/1 var(--font-ui);letter-spacing:.1em;
     color:#0c0a14;background:var(--mint);clip-path:var(--cut-s);}
   .proto:has(.proto-conq) .proto-daily{top:30px;}
-  @media (max-width:700px){ .proto-tags{display:none;} .proto-daily{top:auto;left:auto;bottom:6px;right:6px;padding:2px 4px;font-size:7.5px;} }
-  @media (orientation:landscape) and (max-height:500px){ .proto-tags{display:none;} .proto-daily{top:auto;left:auto;bottom:4px;right:24px;padding:2px 4px;font-size:7px;} }
+  /* 狭い画面は右下に (「未制覇」があっても上へ伸ばさない。上下の両方が決まって縦長の箱になっていた) */
+  @media (max-width:700px){ .proto-tags{display:none;} .proto-daily,.proto:has(.proto-conq) .proto-daily{top:auto;left:auto;bottom:6px;right:6px;padding:2px 4px;font-size:7.5px;} }
+  @media (orientation:landscape) and (max-height:500px){ .proto-tags{display:none;} .proto-daily,.proto:has(.proto-conq) .proto-daily{top:auto;left:auto;bottom:4px;right:24px;padding:2px 4px;font-size:7px;} }
   /* 最強を相手に選ぶとき、まだ最強に勝っていないプロトコルの印 */
   .proto-conq{position:absolute;top:8px;left:8px;z-index:1;font:800 9px/1 "M PLUS 1",system-ui;letter-spacing:.08em;color:#fff;
     background:linear-gradient(90deg,var(--pink),#ff8a3d);padding:4px 6px;border-radius:4px;box-shadow:0 2px 8px rgba(255,79,163,.4);}
@@ -2474,6 +2475,8 @@
     .proto.mine .proto-set,.proto.theirs .proto-set,.proto.banned .proto-set{display:block;}
     /* 縦持ちは名前が横いっぱいになる (ASSIMILATION など)。? は左上へ逃がす */
     .proto-info{width:20px;height:20px;left:5px;top:5px;right:auto;bottom:auto;font-size:11px;}
+    /* 「未制覇」の印は ? の右に (左上に重なって「未」が隠れ、「制覇」と読めてしまっていた) */
+    .proto-conq{top:6px;left:29px;padding:3px 5px;font-size:8.5px;}
     #setupHead,#setupFoot,#setupRules{padding-left:14px;padding-right:14px;}
   }
   /* 横持ちのスマホ: 30個が1画面に収まるよう小さく並べる */
