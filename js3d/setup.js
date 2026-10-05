@@ -125,7 +125,14 @@ export function runSetup(protocols, options = {}) {
       b.onclick = () => {
         const on = { ...groupsOf(poolKey), [b.dataset.pool]: !groupsOf(poolKey)[b.dataset.pool] };
         if (!SET_GROUPS.some(g => on[g.key]) || poolNames(protocols, poolKeyOf(on)).length < 6) {
-          countEl.textContent = '6つより少なくはできない';
+          /* 外せない理由を、押したボタンを揺らして目立つ色で少しのあいだ出す (前は数の欄に一瞬出るだけで気づけなかった) */
+          b.classList.remove('nope'); void b.offsetWidth; b.classList.add('nope');
+          const prev = countEl.dataset.prev || countEl.textContent;
+          countEl.dataset.prev = prev;
+          countEl.textContent = '両者で6つ要るので、これ以上は外せません';
+          countEl.classList.add('warn');
+          clearTimeout(countEl._t);
+          countEl._t = setTimeout(() => { countEl.textContent = countEl.dataset.prev || ''; countEl.classList.remove('warn'); delete countEl.dataset.prev; }, 2600);
           return;
         }
         poolKey = poolKeyOf(on);
@@ -267,10 +274,42 @@ export function runSetup(protocols, options = {}) {
     }
   }
 
+  /* 自由に選ぶ: 前回の3つと、最近使ったデッキ (前は毎回3つを選び直していた)。押すとその3つを選んだ状態に */
+  let recentRow = document.getElementById('setupRecent');
+  if (!recentRow) {
+    recentRow = document.createElement('div');
+    recentRow.id = 'setupRecent';
+    grid.before(recentRow);
+  }
+  function recentDecks() {
+    const seen = new Set(), out = [];
+    const recs = localRecords();
+    for (let i = recs.length - 1; i >= 0 && out.length < 4; i--) {
+      const me = recs[i].me;
+      if (!Array.isArray(me) || me.length !== 3) continue;
+      const k = me.slice().sort().join(',');
+      if (seen.has(k)) continue;
+      seen.add(k);
+      out.push(me.slice());
+    }
+    return out;
+  }
+  function renderRecent() {
+    const ok = new Set(pool());
+    const decks = (mode === 'free' && !training && !draft) ? recentDecks().filter(d => d.every(n => ok.has(n))) : [];
+    recentRow.hidden = !decks.length;
+    recentRow.innerHTML = decks.length ? '<small>最近のデッキ</small>' + decks.map((d, i) =>
+      '<button type="button" class="lvl sr-deck" data-deck="' + esc(d.join(',')) + '">' + (i === 0 ? '<em>前回</em>' : '') + esc(d.join(' / ')) + '</button>').join('') : '';
+    recentRow.querySelectorAll('[data-deck]').forEach(b => {
+      b.onclick = () => { picked.length = 0; picked.push(...b.dataset.deck.split(',')); refresh(); };
+    });
+  }
+
   function refresh() {
     renderHead();
     renderRules();
     renderLevels();
+    renderRecent();
     renderGrid();
     syncStart();
   }
@@ -419,7 +458,20 @@ export function runSetup(protocols, options = {}) {
     const backLabel = presetLevel !== null ? '← 相手を選び直す' : '← モード選択';
     backBtn.textContent = backLabel;
     backBtn.onclick = () => {
-      if (draft) { draft = null; backBtn.textContent = backLabel; refresh(); return; }
+      if (draft) {
+        /* 選び始めていたら、2回押しで確かめる (前は選んだ分が黙って消えた) */
+        const started = draft.mine.length || draft.theirs.length || draft.banned[0].length || draft.banned[1].length;
+        if (started && !backBtn.classList.contains('armed')) {
+          backBtn.classList.add('armed');
+          backBtn.textContent = 'ドラフトをやめる (もう一度押す)';
+          clearTimeout(backBtn._t);
+          backBtn._t = setTimeout(() => { backBtn.classList.remove('armed'); if (draft) backBtn.textContent = '← ルールに戻る'; }, 3000);
+          return;
+        }
+        clearTimeout(backBtn._t);
+        backBtn.classList.remove('armed');
+        draft = null; backBtn.textContent = backLabel; refresh(); return;
+      }
       if (training && trainingMine) {
         picked.length = 0;
         picked.push(...trainingMine);

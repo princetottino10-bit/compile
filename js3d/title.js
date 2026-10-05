@@ -53,6 +53,9 @@ function runBadge() {
   } catch (e) { /* 札なしで */ }
   return null;
 }
+function chipBadge() {
+  try { const n = chipsNow(); return n > 0 ? '<i class="tt-chipn" aria-label="CHIP ' + n + '">CHIP ' + n + '</i>' : ''; } catch (e) { return ''; }
+}
 function challengeBadge(protocols) {
   try {
     const total = conquerable(protocols.map(p => p.name)).length;
@@ -209,7 +212,9 @@ export function runTitle(protocols, opts) {
           /* 下の段は4つだけ (ごちゃつかせない)。GACHA は COLLECTION の中、TUTORIAL・TRAINING・CARDS は MORE の中 */
           '<div class="tt-more">' +
             '<button data-mode="tsume" type="button">COMPUZZLE</button>' +
-            '<button data-mode="cosmetics" type="button" class="tt-cos">COLLECTION' + (hasNewCosmetics() ? '<i class="tt-newdot" aria-label="新しい見た目"></i>' : '') + '</button>' +
+            /* CHIP の残りも小さく (ガチャを開くまで分からなかった) */
+            '<button data-mode="cosmetics" type="button" class="tt-cos">COLLECTION' + (hasNewCosmetics() ? '<i class="tt-newdot" aria-label="新しい見た目"></i>' : '') +
+              chipBadge() + '</button>' +
             '<button data-mode="record" type="button">RECORD</button>' +
             '<button data-mode="more" type="button" class="tt-morebtn" aria-expanded="false">MORE</button>' +
             '<div class="tt-morepop" hidden>' +

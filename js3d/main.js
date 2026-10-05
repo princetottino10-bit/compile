@@ -55,7 +55,7 @@ import * as STORY from './story.js';
 import { showStoryResult } from './story-ui.js';
 import { openWorld } from './story-world.js';
 import { cardStats, cardTier, playerLevel, protocolSummary } from './stats-data.js';
-import { isUnlocked, rewardsBetween, TITLES, UNDERDOG_XP, underdogCleared, AVATAR_RELEASED, COSMETICS } from './rewards.js';
+import { isUnlocked, rewardsBetween, TITLES, UNDERDOG_XP, underdogCleared, AVATAR_RELEASED, COSMETICS, MASTERY_ITEMS, protoMastery as masteryOf } from './rewards.js';
 import { confetti } from './gachafx.js';
 import { setCosmeticProtocols, profileOf, myLook, TROPHY_TITLES } from './cosmetics-ui.js';
 import { setCosmeticsProtocols, cosmeticsProtocols } from './cosmetics-mode.js';
@@ -96,6 +96,7 @@ import { initDialogs } from './dialogs.js';
 import { initGamepad } from './gamepad.js';
 import { iconArt } from './face-icons.js';
 import { callMe } from './callme.js';
+import { initTapTips } from './tips.js';
 
 const Engine = window.CompileEngine;
 initDialogs();
@@ -1016,6 +1017,7 @@ async function boot() {
     let nextMode = resumeRec ? 'resume'
       : joinCode ? 'online'
       : params.get('online') === '1' ? 'online'      // オンラインの対戦のあと「LOBBY」で戻るとき
+      : Number.isInteger(parseInt(params.get('redeck'), 10)) ? 'single'      // 終わった画面の「デッキを変える」
       : params.get('run') === '1' ? 'run'
       : params.get('story') === '1' ? 'story'
       : params.get('tsume') ? 'tsume'
@@ -1153,7 +1155,13 @@ async function boot() {
       }
       /* SINGLE GAME は先に相手を選ぶ (CPU / 強敵 / 下剋上)。トレーニングは相手も自分で置くので飛ばす */
       let opp = null;
-      if (nextMode !== 'training') {
+      /* 終わった画面の「デッキを変える」(?redeck=強さ): 同じ強さの相手で、プロトコル選びから (相手選びは飛ばす) */
+      const redeck = parseInt(params.get('redeck'), 10);
+      if (nextMode !== 'training' && Number.isInteger(redeck) && !redeckUsed) {
+        redeckUsed = true;
+        history.replaceState(null, '', location.pathname);
+        opp = { level: redeck };
+      } else if (nextMode !== 'training') {
         opp = await openOpponentSelect(cards.protocols, { challenge: nextMode === 'challenge' });
         if (!opp) { nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
         if (opp.quick) { location.href = location.pathname + '?quick=1'; return; }
@@ -3232,7 +3240,8 @@ function showVsTag(rm) {
   showPlates({ me: myPlate(), opp: name ? { name, sub: [oppHand, badge].filter(Boolean).join('　'), frame: oppLook.plate, frameColor: frameColor(oppLook.plate) } : null });
 }
 
-let roomOppTurn = null;          // オンラインの相手の番に起きたこと (自分の番になったらまとめて出す)
+let roomOppTurn = null;
+let redeckUsed = false;          // ?redeck= は最初の1回だけ (戻ったら、ふつうに相手選びから)          // オンラインの相手の番に起きたこと (自分の番になったらまとめて出す)
 async function roomApplyView(rm, instant) {
   if (!gameStartedAt) { gameStartedAt = Date.now(); CW.battleStarted('online'); }
   showVsTag(rm);
@@ -5220,7 +5229,9 @@ async function afterTurn() {
     const levelBefore = myLevel;
     let newConq = [];     // この1戦で新しく制覇した (最強に初めて勝った) プロトコル
     if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial && !storyNode) {
-      matchGains = { xp0: playerLevel(localRecords(), bonusXp()).xp, chip0: earnedChips(), lv0: myLevel, daily: [], trophies: [], titles: [] };
+      matchGains = { xp0: playerLevel(localRecords(), bonusXp()).xp, chip0: earnedChips(), lv0: myLevel, daily: [], trophies: [], titles: [],
+        /* 習熟度で手に入る見た目 (名札・称号・盤面) を、この試合の前の習熟度で覚えておく。終わったら越えたものを出す */
+        mastery0: Object.fromEntries([...new Set(MASTERY_ITEMS.map(it => it.proto))].map(p => [p, masteryOf(p)])) };
     }
     /* チュートリアルとストーリーは戦績・リプレイ・実績に数えない */
     if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial && !storyNode) {
@@ -5319,6 +5330,18 @@ async function storyAfterGame(win) {
 
 /* 決着の画面に出す「次の目標」: 次のレベルまでの経験値と、今日のデイリーミッションの残り */
 /* この試合のまとめ: 何手で決着したか・コンパイルの順番 (gameHistory の盤面から)。終わった画面に1行で */
+function canRedeck() {
+  return !roomMode && !runMode && !storyNode && !tutorial && !puzzle && !trainingMode && !demoMode && !tagMates && !replayMode
+    && Number.isInteger(aiDifficulty) && aiDifficulty !== UNDERDOG_LEVEL;   // 下剋上はデッキが決まっている
+}
+
+/* この試合で習熟度が上がって手に入った見た目 */
+function masteryUnlocks() {
+  const m0 = matchGains && matchGains.mastery0;
+  if (!m0) return [];
+  return MASTERY_ITEMS.filter(it => m0[it.proto] !== undefined && m0[it.proto] < it.mastery && masteryOf(it.proto) >= it.mastery);
+}
+
 function matchSummaryHtml() {
   try {
     const st = cur && cur.state;
@@ -5358,7 +5381,8 @@ function nextGoalsHtml() {
 function gainsHtml() {
   if (!matchGains) return '';
   const xp = playerLevel(localRecords(), bonusXp()).xp - matchGains.xp0;
-  if (xp <= 0 && !matchGains.daily.length && !matchGains.trophies.length && !matchGains.titles.length) return '';
+  const unlocked = masteryUnlocks();
+  if (xp <= 0 && !matchGains.daily.length && !matchGains.trophies.length && !matchGains.titles.length && !unlocked.length) return '';
   const chips = chipsOf(loadGacha(), earnedChips());
   const gotChips = earnedChips() - matchGains.chip0;
   const esc = (t) => String(t).replace(/[<>&"]/g, '');
@@ -5371,6 +5395,13 @@ function gainsHtml() {
   if (myLevel > matchGains.lv0) rows.push('<li class="eg-lv eg-go" data-go="profile" role="button" tabindex="0"><small>レベル</small><b>LV ' + matchGains.lv0 + ' → ' + myLevel + '</b><i>▸</i></li>');
   for (const t of matchGains.daily) rows.push('<li class="eg-daily eg-go" data-go="profile" role="button" tabindex="0"><small>デイリー達成</small><span>' + esc(t) + '</span><i>▸</i></li>');
   for (const t of matchGains.trophies) rows.push('<li class="eg-trophy eg-go" data-go="trophy" role="button" tabindex="0"><small>実績</small><span>' + esc(t) + '</span><i>▸</i></li>');
+  /* 習熟度で手に入った見た目: その場で着ける (前は手に入っても何も知らせなかった) */
+  const KIND = { plate: '名札', title: '称号', mat: '盤面', sleeve: 'スリーブ' };
+  for (const it of unlocked) {
+    if (!canEquip(it.kind, it.key)) continue;
+    rows.push('<li class="eg-title"><small>' + (KIND[it.kind] || '見た目') + '</small><span>' + esc(itemLabel(it.kind, it.key)) + ' <em class="eg-why">' + esc(it.proto) + ' 習熟度 ' + it.mastery + '</em></span>' +
+      (isEquipped(it.kind, it.key) ? '<em class="eg-on">着けています</em>' : '<button type="button" class="eg-equip" data-kind="' + esc(it.kind) + '" data-key="' + esc(it.key) + '">着ける</button>') + '</li>');
+  }
   /* もらった称号: その場で着ける */
   for (const k of matchGains.titles) {
     if (!canEquip('title', k)) continue;
@@ -5388,7 +5419,7 @@ function playGains(el) {
   el.querySelectorAll('.eg-equip').forEach(b => {
     b.onclick = (ev) => {
       ev.stopPropagation();
-      if (equipNow([['title', b.dataset.key]])) b.outerHTML = '<em class="eg-on">着けています</em>';
+      if (equipNow([[b.dataset.kind || 'title', b.dataset.key]])) b.outerHTML = '<em class="eg-on">着けています</em>';
     };
   });
   rows.forEach(li => {
@@ -5428,6 +5459,8 @@ function showEndActions(win) {
     '<div class="end-btns">' +
       /* オンラインは同じ部屋で再戦できない (部屋は閉じている) ので、ロビーへ戻る (前は REMATCH でタイトルに戻っていた) */
       '<button class="arr-btn ok" id="endAgain" type="button">' + (roomMode ? 'LOBBY' : 'REMATCH') + '</button>' +
+      /* 同じ強さの相手と、プロトコルを選び直して (ふつうの CPU 戦だけ。負けたあとに3つを変えたい人向け) */
+      (canRedeck() ? '<button class="arr-btn" id="endRedeck" type="button">デッキを変える</button>' : '') +
       '<button class="arr-btn" id="endTop" type="button">TITLE</button>' +
       '<button class="arr-btn" id="endBoard" type="button">BOARD</button>' +
       ((gameHistory.length && !roomMode && !puzzle) || (roomMode && onlineReview) ? '<button class="arr-btn" id="endReview" type="button">REVIEW</button>' : '') +
@@ -5472,6 +5505,8 @@ function showEndActions(win) {
     location.hash = ''; location.reload();
   };
   el.querySelector('#endTop').onclick = goTitle;
+  const redeckBtn = el.querySelector('#endRedeck');
+  if (redeckBtn) redeckBtn.onclick = () => { location.href = location.pathname + '?redeck=' + aiDifficulty; };
   el.querySelector('#endBoard').onclick = () => {
     el.classList.remove('show');
     UI.setPrompt('盤面を確認中 — 右下の「結果を見る」で戻れます', 'end');
@@ -5979,6 +6014,7 @@ function gamepadOpenHand() {
   setHandDrawer(true);
   return true;
 }
+initTapTips();          // スマホでも説明 (title) を見られるように
 initGamepad({ canvas: () => (stage && stage.renderer ? stage.renderer.domElement : null), targets: gamepadTargets, openHand: gamepadOpenHand });
 
 /* stage が実際の大きさの変化を検知したとき (回転直後の遅れて確定する大きさなど) */

@@ -39,6 +39,10 @@ function lifeBar(run, lost) {
     '<b>LIFE</b><span>' + pips.join('') + '</span><em>' + Math.max(0, run.life - (lost || 0)) + '<small>/' + run.maxLife + '</small></em></div>';
 }
 
+/* 押せないボタンの理由 (前は灰色になるだけで、なぜ押せないか分からなかった) */
+const why = (t) => '<em class="rn-why">' + esc(t) + '</em>';
+const removeWhy = (run) => ((run.removed || []).length >= RUN.MAX_REMOVED ? '除去は上限 (' + RUN.MAX_REMOVED + ' / ' + RUN.MAX_REMOVED + ')' : 'これ以上外せない');
+
 /* いま何段目か (地図に出る前は -1) */
 function rowNow(run) {
   const n = RUN.nodeById(run, run.pos);
@@ -279,13 +283,13 @@ export function openRun(protocols, cardsOf, opts) {
           return '<img class="rn-eventart" alt="" src="art/run/event_' + esc(run.event) + '.webp">' +
             '<h2>EVENT — ' + esc(ev.title) + '</h2><p class="rn-lead">' + esc(ev.text) + '</p>' +
             '<div class="rn-routes">' + ev.options.map((o, i) => '<button type="button" class="rn-route event" data-event="' + i + '"' +
-              (o.need && !o.need(run) ? ' disabled' : '') + '><b>' + esc(o.label) + '</b></button>').join('') + '</div>';
+              (o.need && !o.need(run) ? ' disabled' : '') + '><b>' + esc(o.label) + '</b>' + (o.need && !o.need(run) ? why('いまは条件を満たしていない') : '') + '</button>').join('') + '</div>';
         }
         case 'rest':
           return '<h2>✚ 休憩所</h2><p class="rn-lead">焚き火のそばで一息つく。どれか1つ。</p><div class="rn-routes">' +
-            '<button type="button" class="rn-route rest" data-act="rest"' + (run.life >= run.maxLife ? ' disabled' : '') + '><small>REST</small><b>休む</b><span>ライフ +' + RUN.healAmount(run) + '</span></button>' +
-            '<button type="button" class="rn-route smith" data-act="restRemove"' + (RUN.canRemove(run) ? '' : ' disabled') + '><small>PURGE</small><b>研ぐ</b><span>デッキからカードを1枚外す</span></button>' +
-            '<button type="button" class="rn-route forge" data-act="restUpgrade"' + (RUN.canUpgradeAny(run) ? '' : ' disabled') + '><small>FORGE</small><b>鍛える</b><span>カードを1枚強化 (値 +1)</span></button>' +
+            '<button type="button" class="rn-route rest" data-act="rest"' + (run.life >= run.maxLife ? ' disabled' : '') + '><small>REST</small><b>休む</b><span>ライフ +' + RUN.healAmount(run) + '</span>' + (run.life >= run.maxLife ? why('ライフ満タン') : '') + '</button>' +
+            '<button type="button" class="rn-route smith" data-act="restRemove"' + (RUN.canRemove(run) ? '' : ' disabled') + '><small>PURGE</small><b>研ぐ</b><span>デッキからカードを1枚外す</span>' + (RUN.canRemove(run) ? '' : why(removeWhy(run))) + '</button>' +
+            '<button type="button" class="rn-route forge" data-act="restUpgrade"' + (RUN.canUpgradeAny(run) ? '' : ' disabled') + '><small>FORGE</small><b>鍛える</b><span>カードを1枚強化 (値 +1)</span>' + (RUN.canUpgradeAny(run) ? '' : why('強化できるカードがない')) + '</button>' +
             '</div>';
         case 'upgrade':
           return '<h2>強化するカードを選ぶ <small>強化 ' + (run.upgrades || []).length + ' 枚</small></h2>' +
@@ -314,9 +318,12 @@ export function openRun(protocols, cardsOf, opts) {
           return '<h2>$ ショップ <small>CREDIT ' + credits + '</small></h2>' +
             '<div class="rn-patchlist">' + items + starWare + '</div>' +
             '<div class="rn-routes">' +
-              '<button type="button" class="rn-route forge" data-act="buyUpgrade"' + (RUN.canUpgradeAny(run) && credits >= up ? '' : ' disabled') + '><small>' + up + ' CR</small><b>強化</b><span>カードを1枚、値 +1 に (買うたびに +2)</span></button>' +
-              '<button type="button" class="rn-route smith" data-act="buyRemove"' + (RUN.canRemove(run) && credits >= rp ? '' : ' disabled') + '><small>' + rp + ' CR</small><b>カード除去</b><span>デッキから1枚外す (買うたびに +2)</span></button>' +
-              '<button type="button" class="rn-route rest" data-act="buyHeal"' + (!run.shop.healed && run.life < run.maxLife && credits >= hp ? '' : ' disabled') + '><small>' + hp + ' CR</small><b>修理</b><span>ライフ +' + RUN.RUN_HEAL + ' (1回だけ)</span></button>' +
+              '<button type="button" class="rn-route forge" data-act="buyUpgrade"' + (RUN.canUpgradeAny(run) && credits >= up ? '' : ' disabled') + '><small>' + up + ' CR</small><b>強化</b><span>カードを1枚、値 +1 に (買うたびに +2)</span>' +
+                (!RUN.canUpgradeAny(run) ? why('強化できるカードがない') : credits < up ? why('CREDIT があと ' + (up - credits) + ' 足りない') : '') + '</button>' +
+              '<button type="button" class="rn-route smith" data-act="buyRemove"' + (RUN.canRemove(run) && credits >= rp ? '' : ' disabled') + '><small>' + rp + ' CR</small><b>カード除去</b><span>デッキから1枚外す (買うたびに +2)</span>' +
+                (!RUN.canRemove(run) ? why(removeWhy(run)) : credits < rp ? why('CREDIT があと ' + (rp - credits) + ' 足りない') : '') + '</button>' +
+              '<button type="button" class="rn-route rest" data-act="buyHeal"' + (!run.shop.healed && run.life < run.maxLife && credits >= hp ? '' : ' disabled') + '><small>' + hp + ' CR</small><b>修理</b><span>ライフ +' + RUN.RUN_HEAL + ' (1回だけ)</span>' +
+                (run.shop.healed ? why('この店ではもう修理した') : run.life >= run.maxLife ? why('ライフ満タン') : credits < hp ? why('CREDIT があと ' + (hp - credits) + ' 足りない') : '') + '</button>' +
             '</div><div class="rn-btns"><button type="button" class="rn-go" data-act="leave">店を出る</button></div>';
         }
         case 'cards': {

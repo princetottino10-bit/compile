@@ -38,6 +38,18 @@ let raf = 0;
 
 /* main.js から: 盤面の canvas と、盤面で指せる物を返す関数 */
 export function initGamepad(opts) {
+  /* キーボードの Esc も、メニューの画面ではパッドの B と同じ戻り方に (相手選び・プロトコル選び・RUN・ロビーで Esc が効かなかった)。
+     小窓は dialogs.js が先に閉じる (そのときはここまで来ない)。対戦中は Esc は選択の取り消しなので触らない */
+  window.addEventListener('keydown', (ev) => {
+    if (ev.key !== 'Escape' || ev.defaultPrevented || !document.body.classList.contains('pregame')) return;
+    const a = document.activeElement;
+    if (a && a.matches && a.matches(TEXT_INPUT)) return;
+    for (const sel of BACK_SEL) {
+      const el = [...document.querySelectorAll(sel)].reverse().find(x => !x.disabled && visibleRect(x));
+      if (el) { ev.preventDefault(); el.click(); return; }
+    }
+    if (titleBackShown()) { ev.preventDefault(); document.getElementById('titleBack').click(); }
+  });
   canvasOpt = opts.canvas || null;
   canvasTargets = opts.targets || (() => []);
   openHand = opts.openHand || null;

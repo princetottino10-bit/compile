@@ -35,10 +35,13 @@ export async function showTrophyBanner(list) {
     el.setAttribute('role', 'status');
     document.body.appendChild(el);
   }
+  /* 帯を押すと RECORD のその実績へ (前は押せず、どこで見られるか分からなかった) */
+  el.onclick = () => { const id = el.dataset.trophy; el.classList.remove('show'); openTrophies(id || null); };
   /* まとめて取ったとき (前から遊んでいた人の初回など) は1枚にまとめる */
   if (list.length > 3) {
     const top = ['platinum', 'gold', 'silver', 'bronze'].find(k => list.some(t => t.tier === k));
     el.className = 'tb-' + top;
+    el.dataset.trophy = '';
     el.innerHTML = '<i class="tb-medal" aria-hidden="true"></i><div><small>TROPHIES UNLOCKED</small><b>' + list.length + ' TROPHIES</b>' +
       '<span>' + esc(list.map(t => t.name).join(' · ')) + '</span></div><em>+' + list.reduce((n, t) => n + TROPHY_XP[t.tier], 0) + ' XP</em>';
     el.classList.add('show');
@@ -49,6 +52,7 @@ export async function showTrophyBanner(list) {
   }
   for (const t of list) {
     el.className = 'tb-' + t.tier;
+    el.dataset.trophy = t.id;
     el.innerHTML = '<i class="tb-medal" aria-hidden="true"></i><div><small>' + (t.hidden ? 'HIDDEN ' : '') + 'TROPHY UNLOCKED · ' + TIER[t.tier] + '</small>' +
       '<b>' + esc(t.name) + '</b><span>' + esc(t.desc) + '</span></div><em>+' + TROPHY_XP[t.tier] + ' XP</em>';
     el.classList.add('show');
