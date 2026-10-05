@@ -69,6 +69,8 @@ export function runSetup(protocols, options = {}) {
   /* ふだんの CPU 戦は公式のドラフトから (以前の「自由に選ぶ」の保存は使わず、選び直したものだけ覚える) */
   let mode = training || (presetLevel !== null && fixedDeck(presetLevel)) ? 'free' : lsGet('compileSoloModeV2', 'draft');
   if (!MODES.some(m => m.key === mode)) mode = 'free';     // なくした決め方 (一部を選ぶ) を覚えていたとき
+  /* カードリストの「このデッキで対戦」で3つ持ってきたときは、そのまま START できる「自由に選ぶ」で開く (覚えている決め方は変えない) */
+  if (!training && picked.length === 3) mode = 'free';
   let draftSize = +lsGet('compileSoloDraftPool', '0');
   let draftBans = +lsGet('compileSoloDraftBans', '0');
   let challenger = Math.min(CHALLENGERS.length - 1, Math.max(0, +lsGet('compileSoloChallenger', '0') || 0));
@@ -193,12 +195,16 @@ export function runSetup(protocols, options = {}) {
         ' のカードを見る" title="カードを見る">?</button>' : '') + '</div>';
   }
 
+  /* 「?」で開いた6枚の画面は、上のタブで今の候補どうしを切り替えられるように (勝ち抜き戦・週替わりと同じ)。
+     ドラフト中はドラフトの候補、そうでなければ今並んでいる範囲 */
   function bindInfo() {
+    const names = draft ? draft.candidates : pool();
+    const list = names.filter(n => byName[n]).map(n => ({ name: n, color: byName[n].color }));
     grid.querySelectorAll('.proto-info').forEach(b => {
       b.onclick = (ev) => {
         ev.stopPropagation();
         const p = byName[b.dataset.info] || {};
-        showProtocolCards(b.dataset.info, p.color, options.cardsOf);
+        showProtocolCards(b.dataset.info, p.color, options.cardsOf, list);
       };
     });
   }

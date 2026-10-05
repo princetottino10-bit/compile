@@ -900,6 +900,10 @@ async function boot() {
   };
   let p0 = pick('me', null);
   let p1 = pick('ai', null);
+  /* カードリストのデッキ分析の「このデッキで対戦」(?deck=A,B,C): すぐには始めず、タイトルを飛ばして相手を選ぶ画面へ。
+     プロトコル選択ではこの3つを選んだ状態にする (相手と強さはいつもどおり選べる)。?me= はすぐ始まるので使わない */
+  let deckPreset = p0 ? null : pick('deck', null);
+  if (deckPreset) history.replaceState(null, '', location.pathname);
   /* タッグのもう1戦 (?tag=1&mate=&omate=) */
   if (params.get('tag') === '1' && p0 && p1) {
     const mate = pick('mate', null), omate = pick('omate', null);
@@ -1022,6 +1026,7 @@ async function boot() {
       : params.get('story') === '1' ? 'story'
       : params.get('tsume') ? 'tsume'
       : params.get('watch') === '1' ? 'watch'
+      : deckPreset ? 'single'
       : params.get('title') !== '0'
         ? await runTitle(cards.protocols, accountResume ? { menuOnly: true, after: () => accountReady.then(openAccount) } : undefined)
         : 'single';
@@ -1163,7 +1168,7 @@ async function boot() {
         opp = { level: redeck };
       } else if (nextMode !== 'training') {
         opp = await openOpponentSelect(cards.protocols, { challenge: nextMode === 'challenge' });
-        if (!opp) { nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
+        if (!opp) { deckPreset = null; nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
         if (opp.quick) { location.href = location.pathname + '?quick=1'; return; }
         if (opp.watch) { nextMode = 'watch'; continue; }
         if (opp.underdogTag) {
@@ -1191,10 +1196,12 @@ async function boot() {
         }
       }
       const chosen = await runSetup(cards.protocols, { training: nextMode === 'training', allowOnline: false, cardsOf: protocolCards,
-        level: opp ? opp.level : undefined, favorite: opp && opp.level < 3 ? oppFavorite() : null });
+        level: opp ? opp.level : undefined, favorite: opp && opp.level < 3 ? oppFavorite() : null,
+        preset: deckPreset && nextMode !== 'training' ? deckPreset.slice() : undefined });
       if (chosen.online) { nextMode = 'online'; continue; }
       if (chosen.back) {
         if (opp && !chosen.title) continue;                // 相手を選び直す (右上の「タイトル」ならタイトルまで)
+        deckPreset = null;                                 // タイトルまで戻ったら、カードリストから持ってきた3つは忘れる
         nextMode = await runTitle(cards.protocols, { menuOnly: true });
         continue;
       }

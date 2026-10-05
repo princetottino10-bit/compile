@@ -94,6 +94,14 @@
     .result-bar { display: flex; align-items: center; gap: 10px; margin: 4px 0 12px; }
     .result-bar .n { font: 900 12px/1 system-ui, sans-serif; letter-spacing: .12em; color: var(--mint); }
     .result-bar .grow { flex: 1; }
+    /* 値の絞り込み: 数字1つのボタンは小さくなりすぎるので、指で押せる幅をとる */
+    .frow .val-chip { min-width: 40px; min-height: 36px; justify-content: center; font-size: 12px; }
+    /* 何も出ないとき: いま効いている条件を並べ、1つずつ外せるように */
+    .cards > .empty-f { grid-column: 1 / -1; padding: 28px 16px; }
+    .empty-f p { margin: 0 0 14px; }
+    .ef-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+    .ef-row .lvl { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; max-width: 100%; white-space: normal; text-align: left; line-height: 1.3; }
+    .ef-row .lvl span { font-size: 14px; color: var(--pink); }
 
     /* ---------- カード ---------- */
     .cards { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); }
@@ -266,6 +274,8 @@
     .hist small { font: 800 10px/1 system-ui, sans-serif; color: var(--ink); }
     .ana-sel { display: grid; gap: 8px; grid-template-columns: repeat(3, 1fr); }
     .ana-sel .proto { height: 84px; }
+    .ana-go { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-top: 12px; }
+    .ana-go span { font: 600 12px/1.6 system-ui, sans-serif; color: var(--dim); }
 
     /* ---------- カードの詳しい表示 ---------- */
     .dt { display: grid; grid-template-columns: 220px 1fr; gap: 22px; padding: 22px; }
@@ -313,6 +323,12 @@
     .sib-row button b { position: absolute; left: 6px; top: 4px; font: 900 16px/1 system-ui, sans-serif; color: #fff; text-shadow: 0 1px 6px #000; }
     .sib-row button:hover { opacity: .9; }
     .sib-row button[aria-current="true"] { opacity: 1; border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+    /* 前後のカードへ (いまの絞り込みの順)。長い説明でも手元に残るよう、シートの下に貼り付ける */
+    .dt-nav { grid-column: 1 / -1; position: sticky; bottom: 0; z-index: 3; display: flex; align-items: center; gap: 10px;
+      margin: 0 -22px -22px; padding: 10px 22px calc(10px + env(safe-area-inset-bottom)); background: rgba(7, 10, 20, .94); border-top: 1px solid var(--edge); }
+    .dt-nav button { min-height: 44px; min-width: 96px; justify-content: center; }
+    .dt-nav button:disabled { opacity: .3; cursor: default; }
+    .dt-nav span { flex: 1; text-align: center; font: 800 11px/1.4 system-ui, sans-serif; letter-spacing: .08em; color: var(--dim); }
 
     /* プロトコルの詳しい表示 */
     .pv-hero { position: relative; height: 170px; background-size: cover; background-position: center 30%; }
@@ -335,6 +351,8 @@
       .dt { grid-template-columns: 1fr; padding: 18px 16px; gap: 14px; }
       .dt-art { width: 150px; margin: 0 auto; }
       .sib-row { gap: 5px; }
+      .dt-nav { margin: 0 -16px -18px; padding-left: 16px; padding-right: 16px; }
+      .dt-nav button { min-width: 84px; }
       .pv-hero { height: 140px; }
       .pv-body { padding: 4px 16px 18px; }
       .pv-list { grid-template-columns: 1fr; }
@@ -375,13 +393,14 @@
       <div class="filters">
         <label class="search">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-          <input class="cp-input" id="q" type="search" placeholder="効果の文を検索（例: 反転、手札、削除）" autocomplete="off" aria-label="効果の文を検索">
+          <input class="cp-input" id="q" type="search" placeholder="効果の文を検索（例: 反転、てふだ、ドロー）" autocomplete="off" aria-label="効果の文を検索 (ひらがな・カタカナどちらでも。空白で区切ると両方を含むカード)">
         </label>
         <details class="pick-protos" id="ppBox">
           <summary>プロトコル <span class="sel-names" id="ppNames">すべて</span></summary>
           <div class="pp-body" id="ppBody"></div>
         </details>
         <div class="frow" id="fxRow"><span class="flbl">効果</span></div>
+        <div class="frow" id="valRow"><span class="flbl">値</span></div>
       </div>
       <div class="result-bar">
         <span class="n" id="hits"></span>
@@ -422,25 +441,95 @@
 
     const KEY = 'compile.cardlist.v2';
     const TABS = ['list', 'proto', 'lookup', 'ana'];
-    const S = Object.assign({ tab: 'list', view: 'tile', fx: 'all', sel: [], q: '', ana: [], anaFx: null }, store.get(KEY, {}));
-    S.q = '';
-    const save = () => store.set(KEY, { view: S.view });
+    const EMBED = document.documentElement.classList.contains('embed');
+    const VALS = [0, 1, 2, 3, 4, 5, 6];
+    /* 絞り込み (プロトコル・効果・値)・開いていたタブ・分析の3つは、次に開いたときも残す。検索の文字は残さない */
+    const S = Object.assign({ tab: 'list', view: 'tile', fx: 'all', val: null, sel: [], q: '', ana: [], anaFx: null }, store.get(KEY, {}));
+    S.q = ''; S.anaFx = null;
+    /* 対戦中に CARDS から開いたときの絞り込み (その対戦のプロトコル) は、その場かぎり。
+       覚えている絞り込みは書き換えず、タイトルから開き直したらそちらへ戻す */
+    let gameCtx = false;
+    /* 「このデッキで対戦」を出してよいか。アプリの中では、タイトルから開いたときだけ (対戦中は今の対戦を壊すので出さない) */
+    let canPlay = !EMBED || new URLSearchParams(location.search).get('play') === '1';
+    const save = () => {
+      const keep = gameCtx ? store.get(KEY, {}) : S;
+      store.set(KEY, {
+        view: S.view, tab: S.tab, ana: S.ana,
+        sel: Array.isArray(keep.sel) ? keep.sel : [], fx: keep.fx || 'all', val: Number.isInteger(keep.val) ? keep.val : null
+      });
+    };
 
     let PROTOS = [], BY = {}, ALL = [];
+    let HITS = [];          // いまの絞り込みの結果 (詳しい表示の前後送りに使う)
     const $ = (id) => document.getElementById(id);
     const sh = sheet();
 
-    /* ---------- カード1枚 ---------- */
-    function highlight(html, q) {
-      if (!q) return html;
-      /* タグの中は触らない */
-      const re = new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'g');
-      return html.split(/(<[^>]+>)/).map(s => (s.startsWith('<') ? s : s.replace(re, '<mark>$1</mark>'))).join('');
+    /* 覚えていた値が古い (なくなったプロトコル・壊れた値) ときは、ふつうの値へ戻す */
+    function cleanState() {
+      S.sel = (Array.isArray(S.sel) ? S.sel : []).filter(n => BY[n]);
+      S.ana = (Array.isArray(S.ana) ? S.ana : []).filter(n => BY[n]).slice(0, 3);
+      if (S.fx !== 'all' && !EFFECTS.includes(S.fx)) S.fx = 'all';
+      if (!VALS.includes(S.val)) S.val = null;
+      if (!TABS.includes(S.tab)) S.tab = 'list';
+      if (S.view !== 'list') S.view = 'tile';
     }
 
-    function cardHtml(p, c, q) {
+    /* ---------- 検索 ----------
+       ひらがなとカタカナ、全角と半角、大文字と小文字を同じ文字として見る。
+       1文字ずつそろえるので、そろえたあとの位置から元の文字の位置へ戻せる (印を付けるため) */
+    const normCh = (ch) => ch.normalize('NFKC').toUpperCase().replace(/[ぁ-ゖ]/g, (h) => String.fromCharCode(h.charCodeAt(0) + 0x60));
+    const norm = (s) => Array.from(String(s == null ? '' : s)).map(normCh).join('');
+    /* 言い換え: カードの文で使う言葉 (左端) と、ほかの呼び方・読み。どれで探しても同じものが出る */
+    const SYN = [
+      ['引く', '引き', 'ひく', 'ドロー', 'DRAW'],
+      ['捨て', 'すてる', '破棄', 'はき', 'ディスカード', 'DISCARD'],
+      ['捨て札', 'すてふだ', 'トラッシュ', '墓地'],
+      ['削除', 'さくじょ', 'デリート', 'DELETE'],
+      ['反転', 'はんてん', 'フリップ', 'ひっくり返す', 'FLIP'],
+      ['移動', 'いどう', 'シフト', 'SHIFT'],
+      ['戻す', 'もどす', 'リターン', 'RETURN'],
+      ['覆', 'おおう', 'カバー', 'COVER'],
+      ['手札', 'てふだ', 'ハンド', 'HAND'],
+      ['デッキ', '山札', 'やまふだ'],
+      ['並べ替え', '並び替え', 'ならべかえ', 'リアレンジ', 'REARRANGE'],
+      ['裏向き', 'うらむき', '伏せ'],
+      ['表向き', 'おもてむき']
+    ].map(g => g.map(norm));
+    /* 空白で区切ると「どれも含む」。1語ずつ、言い換えも含めた探し方の一覧にする */
+    function queryTerms(q) {
+      /* 半角カナの濁点 (ﾀﾞ) は1文字ずつだと合わさらないので、入力は先にまとめてそろえる */
+      return norm(String(q || '').normalize('NFKC')).split(/\s+/).filter(Boolean).map(t => {
+        const g = SYN.find(list => list.includes(t));
+        return g ? [...new Set([t].concat(g))] : [t];
+      });
+    }
+
+    function highlight(html, terms) {
+      if (!terms || !terms.length) return html;
+      const alts = terms.flat();
+      /* タグと文字参照 (&amp; など) の中は触らない */
+      return html.split(/(<[^>]+>|&[#\w]+;)/).map(s => (s.startsWith('<') || /^&[#\w]+;$/.test(s) ? s : markSeg(s, alts))).join('');
+    }
+    function markSeg(seg, alts) {
+      let n = '';
+      const at = [];
+      for (let i = 0; i < seg.length; i++) { const t = normCh(seg[i]); n += t; for (let k = 0; k < t.length; k++) at.push(i); }
+      const on = new Array(seg.length).fill(false);
+      for (const a of alts) {
+        for (let i = a ? n.indexOf(a) : -1; i >= 0; i = n.indexOf(a, i + 1)) for (let k = i; k < i + a.length; k++) on[at[k]] = true;
+      }
+      let out = '', open = false;
+      for (let i = 0; i < seg.length; i++) {
+        if (on[i] !== open) { out += open ? '</mark>' : '<mark>'; open = on[i]; }
+        out += seg[i];
+      }
+      return open ? out + '</mark>' : out;
+    }
+
+    /* ---------- カード1枚 ---------- */
+    function cardHtml(p, c, terms) {
       const zones = ZONES.filter(([k]) => c[k]).map(([k, mark]) =>
-        '<span class="z ' + k + '"><i>' + mark + '</i><span>' + highlight(cardText(c[k]), q) + '</span></span>').join('');
+        '<span class="z ' + k + '"><i>' + mark + '</i><span>' + highlight(cardText(c[k]), terms) + '</span></span>').join('');
       return '<button type="button" class="card" data-id="' + esc(c.id) + '" style="--pc:' + esc(p.color) + '">' +
         '<span class="c-art"><img class="art" alt="" loading="lazy" decoding="async" src="' + cardArt(p.name, c) + '">' +
         '<span class="c-val">' + c.value + '</span><img class="c-emb" alt="" src="' + emblem(p, 48) + '"></span>' +
@@ -472,10 +561,47 @@
       el.addEventListener('pointercancel', leave);
     }
 
-    function openCard(id) {
+    /* 前後送りの並び: 一覧から開いたら絞り込みの結果、ほかからはその場に並んでいた順。
+       どちらにも入っていないカード (6枚の列から別のカードを開いたなど) はそのプロトコルの6枚 */
+    let NAV = { seq: [], label: '' };
+    function navFor(id, seq, label) {
+      if (seq && seq.includes(id)) return { seq, label: label || '' };
+      if (NAV.seq.includes(id)) return NAV;
+      const hit = ALL.find(x => x.c.id === id);
+      return { seq: hit ? hit.p.cards.map(x => x.id) : [id], label: hit ? hit.p.name + ' の6枚' : '' };
+    }
+    function stepCard(d) {
+      const i = NAV.seq.indexOf(NAV.cur) + d;
+      if (i < 0 || i >= NAV.seq.length) return;
+      openCard(NAV.seq[i]);
+      /* 押したボタンは描き直しで消えるので、同じ向きのボタンへ戻す (キーボードで続けて送れるように) */
+      const b = document.querySelector('#cpSheet [data-step="' + d + '"]:not([disabled])') || document.querySelector('#cpSheet [data-step]:not([disabled])');
+      if (b && (!document.activeElement || document.activeElement === document.body)) b.focus({ preventScroll: true });
+    }
+    /* 詳しい表示の中: 左右のスワイプで前後のカードへ (絵の上は傾ける操作なので除く)。シートの中身の箱は使い回すので1回だけ付ける */
+    function bindNav(body) {
+      if (body._nav) return;
+      body._nav = true;
+      let x0 = 0, y0 = 0, on = false;
+      body.addEventListener('touchstart', (e) => {
+        on = !e.target.closest('.dt-art') && !!body.querySelector('.dt-nav');
+        if (on) { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }
+      }, { passive: true });
+      body.addEventListener('touchend', (e) => {
+        if (!on) return;
+        on = false;
+        const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+        if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.6) return;
+        stepCard(dx < 0 ? 1 : -1);
+      });
+    }
+
+    function openCard(id, seq, label) {
       const hit = ALL.find(x => x.c.id === id);
       if (!hit) return;
       const { p, c } = hit;
+      NAV = Object.assign({}, navFor(id, seq, label), { cur: id });
+      const ni = NAV.seq.indexOf(id), nn = NAV.seq.length;
       const zone = ([k, mark, jp]) => '<div class="dz ' + k + (c[k] ? '' : ' empty') + '"><div class="dz-h">' + mark + ' ' + jp + 'コマンド</div>' +
         '<div class="dz-b">' + (c[k] ? cardText(c[k]) : '効果なし') + '</div></div>';
       const html = '<div class="dt">' +
@@ -488,10 +614,17 @@
         (c.codex ? '<div class="codex"><b>CODEX</b>' + esc(c.codex) + '</div>' : '') + '</div>' +
         '<div class="sib"><p class="sib-h">' + esc(p.name) + ' の6枚</p><div class="sib-row">' +
         p.cards.map(x => '<button type="button" data-sib="' + esc(x.id) + '" aria-current="' + (x.id === c.id) + '" aria-label="' + esc(p.name) + ' ' + x.value + '">' +
-          '<img alt="" loading="lazy" src="' + cardArt(p.name, x) + '"><b>' + x.value + '</b></button>').join('') + '</div></div></div>';
+          '<img alt="" loading="lazy" src="' + cardArt(p.name, x) + '"><b>' + x.value + '</b></button>').join('') + '</div></div>' +
+        (nn > 1
+          ? '<div class="dt-nav"><button type="button" class="cp-ghost" data-step="-1"' + (ni <= 0 ? ' disabled' : '') + '>‹ 前</button>' +
+            '<span>' + (ni + 1) + ' / ' + nn + (NAV.label ? '<br>' + esc(NAV.label) : '') + '</span>' +
+            '<button type="button" class="cp-ghost" data-step="1"' + (ni >= nn - 1 ? ' disabled' : '') + '>次 ›</button></div>'
+          : '') + '</div>';
       const body = sh.open(html, p.color);
       holo(body.querySelector('.dt-art'));
+      bindNav(body);
       body.querySelectorAll('[data-sib]').forEach(b => b.addEventListener('click', () => openCard(b.dataset.sib)));
+      body.querySelectorAll('[data-step]').forEach(b => b.addEventListener('click', () => stepCard(+b.dataset.step)));
     }
 
     function openProto(name) {
@@ -502,9 +635,9 @@
         '<button type="button" class="cp-ghost" id="pvList">カード一覧でこのプロトコルを見る →</button>' +
         '<div class="pv-list cards">' + p.cards.map(c => cardHtml(p, c)).join('') + '</div></div>';
       const body = sh.open(html, p.color);
-      body.querySelectorAll('.card').forEach(b => b.addEventListener('click', () => openCard(b.dataset.id)));
+      body.querySelectorAll('.card').forEach(b => b.addEventListener('click', () => openCard(b.dataset.id, p.cards.map(x => x.id), p.name + ' の6枚')));
       body.querySelector('#pvList').addEventListener('click', () => {
-        S.sel = [p.name]; S.fx = 'all'; S.q = ''; $('q').value = '';
+        S.sel = [p.name]; S.fx = 'all'; S.val = null; S.q = ''; $('q').value = '';
         sh.close(); renderFilters(); renderList(); setTab('list');
         window.scrollTo({ top: 0 });
       });
@@ -523,21 +656,38 @@
       $('fxRow').innerHTML = '<span class="flbl">効果</span>' +
         ['all'].concat(EFFECTS).map(f => '<button type="button" class="lvl sm fx-chip" data-fx="' + f + '" aria-pressed="' + (S.fx === f) + '">' +
           (f === 'all' ? 'すべて' : effectIcon(f, null, 13) + esc(EFFECT_LABEL[f])) + '</button>').join('');
+      $('valRow').innerHTML = '<span class="flbl">値</span>' +
+        ['all'].concat(VALS).map(v => '<button type="button" class="lvl sm val-chip" data-val="' + v + '" aria-pressed="' +
+          (v === 'all' ? S.val === null : S.val === v) + '"' + (v === 'all' ? '' : ' aria-label="値 ' + v + '"') + '>' + (v === 'all' ? 'すべて' : v) + '</button>').join('');
       document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', b.dataset.view === S.view));
     }
 
     function renderList() {
-      const q = S.q.trim();
-      const hits = ALL.filter(({ p, c }) =>
+      const terms = queryTerms(S.q);
+      HITS = ALL.filter(({ p, c, hay }) =>
         (!S.sel.length || S.sel.includes(p.name)) &&
         (S.fx === 'all' || c.effectTypes.includes(S.fx)) &&
-        (!q || [c.upper, c.middle, c.lower, p.name, p.tags].some(t => t && t.toUpperCase().includes(q.toUpperCase()))));
-      $('hits').textContent = hits.length + ' 枚';
+        (S.val === null || c.value === S.val) &&
+        terms.every(alts => alts.some(a => hay.includes(a))));
+      $('hits').textContent = HITS.length + ' 枚';
       const g = $('grid');
       g.className = 'cards' + (S.view === 'list' ? ' list' : '');
-      g.innerHTML = hits.length
-        ? hits.map(({ p, c }) => cardHtml(p, c, q)).join('')
-        : '<div class="cp-empty">該当するカードがありません</div>';
+      g.innerHTML = HITS.length
+        ? HITS.map(({ p, c }) => cardHtml(p, c, terms)).join('')
+        : emptyHtml();
+      save();
+    }
+
+    /* 何も出ないとき: 行き止まりにせず、いま効いている条件を並べて1つずつ外せるようにする */
+    function emptyHtml() {
+      const items = [];
+      if (S.sel.length) items.push(['sel', 'プロトコル: ' + (S.sel.length > 3 ? S.sel.slice(0, 3).join(', ') + ' ほか' + (S.sel.length - 3) + 'つ' : S.sel.join(', '))]);
+      if (S.fx !== 'all') items.push(['fx', '効果: ' + EFFECT_LABEL[S.fx]]);
+      if (S.val !== null) items.push(['val', '値: ' + S.val]);
+      if (S.q.trim()) items.push(['q', '検索: 「' + S.q.trim() + '」']);
+      return '<div class="cp-empty empty-f"><p>この条件に合うカードはありません。' + (items.length ? '外す条件を選んでください。' : '') + '</p>' +
+        '<div class="ef-row">' + items.map(([k, t]) => '<button type="button" class="lvl ef-x" data-clear="' + k + '" aria-label="' + esc(t) + ' を外す">' +
+          esc(t) + '<span aria-hidden="true">×</span></button>').join('') + '</div></div>';
     }
 
     /* ---------- プロトコル ---------- */
@@ -582,6 +732,7 @@
       $('anaPick').innerHTML = SETS.map(set => '<div class="pp-set">' +
         PROTOS.filter(p => p.set === set).map(p => protoChip(p, S.ana.includes(p.name))).join('') + '</div>').join('');
       const out = $('anaOut');
+      save();
       if (S.ana.length !== 3) {
         S.anaFx = null;
         out.innerHTML = '<div class="cp-empty" style="margin-top:14px">プロトコルを3つ選ぶと、効果の偏りや値の分布が出ます。</div>';
@@ -600,7 +751,11 @@
       cards.forEach(({ c }) => { byVal[c.value] = (byVal[c.value] || 0) + 1; });
       const vals = [0, 1, 2, 3, 4, 5, 6];
       const hmx = Math.max(1, ...Object.values(byVal));
-      let h = '<div class="ana-sel" style="margin-top:14px">' + ps.map(p => protoTile(p, { attrs: 'data-open="' + esc(p.name) + '"' })).join('') + '</div>' +
+      /* このデッキで対戦: 相手と強さは、ゲームの側でいつもどおり選ぶ (プロトコル選択にこの3つを選んだ状態で入る) */
+      const go = '<div class="ana-go">' + (canPlay
+        ? '<button type="button" class="cp-go" id="anaPlay">このデッキで対戦</button><span>相手と強さは、このあと選べます</span>'
+        : '<span>対戦中は、ここから新しい対戦を始められません。タイトルの CARDS から開くと始められます。</span>') + '</div>';
+      let h = '<div class="ana-sel" style="margin-top:14px">' + ps.map(p => protoTile(p, { attrs: 'data-open="' + esc(p.name) + '"' })).join('') + '</div>' + go +
         '<div class="ana-grid"><div class="cp-panel ana-card"><h3>効果の種類 (18枚)</h3>' + bars(total, mx, t => EFFECT_COLOR[t]) + '</div>' +
         '<div class="cp-panel ana-card"><h3>値の分布</h3><div class="hist">' + vals.map(v =>
           '<div><small>' + (byVal[v] || 0) + '</small><i style="height:' + ((byVal[v] || 0) / hmx * 72) + 'px"></i><b>' + v + '</b></div>').join('') + '</div></div></div>';
@@ -624,7 +779,19 @@
       document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.tab === tab));
       document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'v-' + tab));
       if (tab === 'ana') renderAna();
+      else save();
       if (push !== false && location.hash !== '#' + tab) history.replaceState(null, '', '#' + tab);
+    }
+
+    /* 分析の3つで、ゲームのプロトコル選択へ (この3つを選んだ状態。相手と強さはそこで選ぶ)。
+       アプリの中ではアプリ側 (cardlist-ov.js) が移る。ここだけで開いているときは 3D アリーナへ */
+    function playDeck() {
+      if (!canPlay || S.ana.length !== 3) return;
+      if (EMBED && window.parent !== window) {
+        window.parent.postMessage({ type: 'cl-play', protos: S.ana.slice() }, location.origin);
+        return;
+      }
+      location.href = 'three-play.html?deck=' + encodeURIComponent(S.ana.join(','));
     }
 
     /* ---------- 操作 ---------- */
@@ -634,6 +801,20 @@
       if (b.dataset.tab) { setTab(b.dataset.tab); return; }
       if (b.dataset.view) { S.view = b.dataset.view; save(); renderFilters(); renderList(); if (S.tab === 'ana') renderAna(); return; }
       if (b.dataset.fx) { S.fx = b.dataset.fx; renderFilters(); renderList(); return; }
+      if (b.dataset.val) { S.val = b.dataset.val === 'all' ? null : +b.dataset.val; renderFilters(); renderList(); return; }
+      if (b.dataset.clear) {
+        const k = b.dataset.clear;
+        if (k === 'sel') S.sel = [];
+        else if (k === 'fx') S.fx = 'all';
+        else if (k === 'val') S.val = null;
+        else if (k === 'q') { S.q = ''; $('q').value = ''; }
+        renderFilters(); renderList();
+        /* 押したボタンは消えるので、次の「外す」か一覧の先頭へ */
+        const next = document.querySelector('#grid [data-clear], #grid .card');
+        if (next) next.focus({ preventScroll: true });
+        return;
+      }
+      if (b.id === 'anaPlay') { playDeck(); return; }
       if (b.dataset.set) {
         const names = PROTOS.filter(p => p.set === b.dataset.set).map(p => p.name);
         const all = names.every(n => S.sel.includes(n));
@@ -653,11 +834,31 @@
       }
       if (b.dataset.afx) { S.anaFx = S.anaFx === b.dataset.afx ? null : b.dataset.afx; renderAna(); return; }
       if (b.id === 'anaReset') { S.ana = []; S.anaFx = null; renderAna(); return; }
-      if (b.id === 'reset') { S.sel = []; S.fx = 'all'; S.q = ''; $('q').value = ''; renderFilters(); renderList(); return; }
+      if (b.id === 'reset') { S.sel = []; S.fx = 'all'; S.val = null; S.q = ''; $('q').value = ''; renderFilters(); renderList(); return; }
       if (b.dataset.open) { openProto(b.dataset.open); return; }
       if (b.classList.contains('proto') && b.closest('#protoSets')) { openProto(b.dataset.name); return; }
-      if (b.dataset.id) { openCard(b.dataset.id); }
+      if (b.dataset.id) {
+        /* 前後送りは、そのカードが並んでいた所の順 (一覧なら絞り込みの結果) */
+        const box = b.closest('#grid, #mx, .cards');
+        const seq = box ? [...box.querySelectorAll('[data-id]')].map(x => x.dataset.id) : null;
+        openCard(b.dataset.id, seq, box && box.id === 'grid' ? '絞り込みの結果' : box && box.id === 'mx' ? '逆引きの表' : 'この一覧');
+      }
     });
+
+    /* 詳しい表示の ← → で前後のカードへ。
+       Esc: 詳しい表示が開いていれば (companion.js が) それを閉じる。開いていなければ、アプリの中ならカードリストごと閉じる。
+       検索欄に文字があるときの Esc は、文字を消す方 (ブラウザの決まり) を優先する */
+    window.addEventListener('keydown', (e) => {
+      const open = !!document.querySelector('#cpSheet.show');
+      if (open && (e.key === 'ArrowLeft' || e.key === 'ArrowRight') && document.querySelector('#cpSheet .dt-nav')) {
+        e.preventDefault();
+        stepCard(e.key === 'ArrowRight' ? 1 : -1);
+        return;
+      }
+      if (e.key !== 'Escape' || open || !EMBED || window.parent === window) return;
+      if (e.target === $('q') && $('q').value) return;
+      window.parent.postMessage({ type: 'cl-close' }, location.origin);
+    }, true);
 
     let qTimer = 0;
     $('q').addEventListener('input', (e) => {
@@ -694,25 +895,43 @@
     try {
       PROTOS = await loadProtocols();
       BY = Object.fromEntries(PROTOS.map(p => [p.name, p]));
-      ALL = PROTOS.flatMap(p => p.cards.map(c => ({ p, c })));
+      /* 検索用に、文・名前・タグをそろえた形で持っておく */
+      ALL = PROTOS.flatMap(p => p.cards.map(c => ({ p, c, hay: norm([c.upper, c.middle, c.lower, p.name, p.tags].filter(Boolean).join('\n')) })));
       $('total').textContent = PROTOS.length + ' PROTOCOLS · ' + ALL.length + ' CARDS';
-      /* 対戦中に開いたとき: その対戦のプロトコルで絞り込んで始める (?protos=A,B,C。開き直したときは postMessage) */
+      cleanState();
+      /* 対戦中に開いたとき: その対戦のプロトコルで絞り込んで始める (?protos=A,B,C。開き直したときは postMessage)。
+         覚えている絞り込みより、こちらが勝つ */
       const applyProtos = (list) => {
-        const names = (list || []).filter(n => BY[n]);
+        const names = (Array.isArray(list) ? list : []).filter(n => BY[n]);
         if (!names.length) return false;
-        S.sel = names; S.fx = 'all'; S.q = ''; $('q').value = '';
+        gameCtx = true;
+        S.sel = names; S.fx = 'all'; S.val = null; S.q = ''; $('q').value = '';
         return true;
       };
-      applyProtos((new URLSearchParams(location.search).get('protos') || '').split(','));
+      /* プロトコルなしで開き直した (タイトルの CARDS): 対戦の絞り込みを捨てて、覚えている絞り込みへ戻す */
+      const leaveGame = () => {
+        if (!gameCtx) return false;
+        const saved = store.get(KEY, {});
+        gameCtx = false;
+        S.sel = saved.sel; S.fx = saved.fx; S.val = saved.val; S.q = ''; $('q').value = '';
+        cleanState();
+        return true;
+      };
+      const firstTab = applyProtos((new URLSearchParams(location.search).get('protos') || '').split(',')) ? 'list' : null;
       window.addEventListener('message', (ev) => {
-        if (ev.origin !== location.origin || !ev.data || ev.data.type !== 'cl-protos') return;
-        if (applyProtos(ev.data.protos)) { setTab('list', false); renderFilters(); renderList(); }
+        if (ev.origin !== location.origin || ev.source !== window.parent || !ev.data || ev.data.type !== 'cl-protos') return;
+        if (typeof ev.data.canPlay === 'boolean' && ev.data.canPlay !== canPlay) {
+          canPlay = ev.data.canPlay;
+          if (S.tab === 'ana') renderAna();
+        }
+        const changed = applyProtos(ev.data.protos) ? (setTab('list', false), true) : leaveGame();
+        if (changed) { renderFilters(); renderList(); }
       });
       renderFilters();
       renderList();
       renderProtos();
       renderLookup();
-      setTab(location.hash.slice(1) || 'list', false);
+      setTab(firstTab || location.hash.slice(1) || S.tab || 'list', false);
     } catch (err) {
       $('grid').innerHTML = '<div class="cp-empty">カードデータを読み込めませんでした。ページを読み直してください。</div>';
       setTab('list', false);

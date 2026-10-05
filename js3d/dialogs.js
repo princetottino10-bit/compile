@@ -10,7 +10,8 @@
 const CLOSERS = [
   ['.pz-ov.show', '.pz-x'],
   ['#cosOv.show', '.cm-x'],
-  ['#protoCardsOv.show', '.pc-x']
+  ['#protoCardsOv.show', '.pc-x'],
+  ['#cardListOv.show', '.cl-x']
 ];
 /* 重ねて開く画面。あとから開いたものが必ず手前に出る (前は画面ごとの z-index がばらばらで、
    ガチャから開いたログインやプロフィールから開いた画面が、後ろに隠れることがあった) */

@@ -1202,6 +1202,10 @@
     color:#e8e4f4;font:800 11px/1 "M PLUS 1",system-ui;letter-spacing:.08em;padding:7px 10px;border-radius:6px;cursor:pointer;}
   #protoCardsOv .pc-tabs button.on{background:color-mix(in srgb,var(--pc) 35%,#0a0e1a);border-color:var(--pc);color:#fff;}
   #protoCardsOv .pc-tabs button:focus-visible{outline:2px solid #fff;outline-offset:2px;}
+  #protoCardsOv .pc-tabs button{min-height:38px;}
+  /* 候補が多い (選択画面の範囲ぜんぶ) ときは1段にして横へすべらせる。折り返すと縦持ちでカードが見えなくなる */
+  #protoCardsOv .pc-tabs.many{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;padding:2px 2px 6px;}
+  #protoCardsOv .pc-tabs.many button{flex:none;}
   #runOv .rn-deck i[data-info]{cursor:pointer;}
   #runOv .rn-deck i[data-info]:hover{filter:brightness(1.35);}
   #protoCardsOv .pc-head{display:flex;align-items:baseline;gap:8px;width:min(980px,100%);}
@@ -4130,6 +4134,8 @@
   /* ---- 縦持ちの直し (2026-10-04) ---- */
   .cm-slots{display:flex;flex-direction:column;align-items:center;gap:8px;}
   body:has(#cosOv.show) .title-back{display:none;}
+  /* プロトコルの6枚を見ている間は、右上の「タイトル」がタブに重なるので隠す (閉じれば戻る) */
+  body:has(#protoCardsOv.show) .title-back{display:none;}
   @media (orientation:portrait) and (max-width:700px){
     .cm-preview > .cm-slots{align-self:start;}
     .cm-slots .cm-equip{padding:8px 14px;font-size:12px;}
@@ -4293,7 +4299,7 @@
       "./js3d/board.js": "./js3d/board.js?v=0d4f2a81d5",
       "./js3d/callme.js": "./js3d/callme.js?v=6918030993",
       "./js3d/card.js": "./js3d/card.js?v=88ebb0dbcb",
-      "./js3d/cardlist-ov.js": "./js3d/cardlist-ov.js?v=97693492b3",
+      "./js3d/cardlist-ov.js": "./js3d/cardlist-ov.js?v=47bc96bbb6",
       "./js3d/cardtex.js": "./js3d/cardtex.js?v=61e2262ea0",
       "./js3d/cardtext.js": "./js3d/cardtext.js?v=4cf5529855",
       "./js3d/chips.js": "./js3d/chips.js?v=e67e280b76",
@@ -4305,7 +4311,7 @@
       "./js3d/crashwatch.js": "./js3d/crashwatch.js?v=8b4bdaa28f",
       "./js3d/daily.js": "./js3d/daily.js?v=f56dabdf65",
       "./js3d/device.js": "./js3d/device.js?v=b519fe2cae",
-      "./js3d/dialogs.js": "./js3d/dialogs.js?v=2aa018b7c1",
+      "./js3d/dialogs.js": "./js3d/dialogs.js?v=eb84fac39f",
       "./js3d/displayname.js": "./js3d/displayname.js?v=613e18bf95",
       "./js3d/emblems.js": "./js3d/emblems.js?v=7b77a0b2df",
       "./js3d/equip.js": "./js3d/equip.js?v=51faa70a25",
@@ -4324,7 +4330,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=2b4dbc6066",
       "./js3d/logformat.js": "./js3d/logformat.js?v=e3548c74d1",
-      "./js3d/main.js": "./js3d/main.js?v=7ae9963b74",
+      "./js3d/main.js": "./js3d/main.js?v=54bf7ec896",
       "./js3d/motion.js": "./js3d/motion.js?v=36861b0081",
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=6a0b3a0d99",
@@ -4336,7 +4342,7 @@
       "./js3d/playmat.js": "./js3d/playmat.js?v=1c8f36818a",
       "./js3d/profile.js": "./js3d/profile.js?v=c7332b69cb",
       "./js3d/prompts.js": "./js3d/prompts.js?v=348dff836d",
-      "./js3d/protocards.js": "./js3d/protocards.js?v=dece76398d",
+      "./js3d/protocards.js": "./js3d/protocards.js?v=5919129971",
       "./js3d/protocol-strength.js": "./js3d/protocol-strength.js?v=c719e5b65c",
       "./js3d/puzzle.js": "./js3d/puzzle.js?v=6707164a75",
       "./js3d/replays-ui.js": "./js3d/replays-ui.js?v=1259fc16e4",
@@ -4352,7 +4358,7 @@
       "./js3d/runcards.js": "./js3d/runcards.js?v=c2bf20e9b7",
       "./js3d/selectui.js": "./js3d/selectui.js?v=208abdaebc",
       "./js3d/settings.js": "./js3d/settings.js?v=f32405f149",
-      "./js3d/setup.js": "./js3d/setup.js?v=232dafa9c0",
+      "./js3d/setup.js": "./js3d/setup.js?v=5086ca39b4",
       "./js3d/solodraft.js": "./js3d/solodraft.js?v=33f32f2481",
       "./js3d/spectate.js": "./js3d/spectate.js?v=e7aaf6e4e9",
       "./js3d/stage.js": "./js3d/stage.js?v=a47c0c4ec9",
@@ -4408,7 +4414,7 @@
   <link rel="modulepreload" href="js3d/board.js?v=0d4f2a81d5">
   <link rel="modulepreload" href="js3d/control.js?v=c1b87ebc63">
   <link rel="modulepreload" href="js3d/panel.js?v=994ec047da">
-  <link rel="modulepreload" href="js3d/setup.js?v=232dafa9c0">
+  <link rel="modulepreload" href="js3d/setup.js?v=5086ca39b4">
   <link rel="modulepreload" href="js3d/title.js?v=bdc87931d3">
   <link rel="modulepreload" href="js3d/training.js?v=3018b4399e">
   <link rel="modulepreload" href="js3d/room.js?v=be804bed77">
@@ -4430,7 +4436,7 @@
   <link rel="modulepreload" href="js3d/displayname.js?v=613e18bf95">
   <link rel="modulepreload" href="js3d/plates.js?v=44c8ea3081">
   <link rel="modulepreload" href="js3d/playmat.js?v=1c8f36818a">
-  <link rel="modulepreload" href="js3d/cardlist-ov.js?v=97693492b3">
+  <link rel="modulepreload" href="js3d/cardlist-ov.js?v=47bc96bbb6">
   <link rel="modulepreload" href="js3d/opponent-select.js?v=6a0b3a0d99">
   <link rel="modulepreload" href="js3d/aidecks.js?v=5aae71f416">
   <link rel="modulepreload" href="js3d/run-ui.js?v=64d2e02e1b">
@@ -4458,7 +4464,7 @@
   <link rel="modulepreload" href="js3d/runcards.js?v=c2bf20e9b7">
   <link rel="modulepreload" href="js3d/logformat.js?v=e3548c74d1">
   <link rel="modulepreload" href="js3d/steps.js?v=13e73b20fe">
-  <link rel="modulepreload" href="js3d/dialogs.js?v=2aa018b7c1">
+  <link rel="modulepreload" href="js3d/dialogs.js?v=eb84fac39f">
   <link rel="modulepreload" href="js3d/gamepad.js?v=101e4efbcb">
   <link rel="modulepreload" href="js3d/face-icons.js?v=afd858ff97">
   <link rel="modulepreload" href="js3d/callme.js?v=6918030993">
@@ -4477,7 +4483,7 @@
   <link rel="modulepreload" href="vendor/jsm/environments/RoomEnvironment.js">
   <link rel="modulepreload" href="js3d/card.js?v=88ebb0dbcb">
   <link rel="modulepreload" href="js3d/fx-compile.js?v=2fbcc8e763">
-  <link rel="modulepreload" href="js3d/protocards.js?v=dece76398d">
+  <link rel="modulepreload" href="js3d/protocards.js?v=5919129971">
   <link rel="modulepreload" href="js3d/backdrops.js?v=90faf9612d">
   <link rel="modulepreload" href="js3d/support.js?v=86cfbcc21a">
   <link rel="modulepreload" href="js3d/profile.js?v=c7332b69cb">
@@ -4501,6 +4507,6 @@
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=a30eb3f65a">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=7ae9963b74"></script>
+  <script type="module" src="js3d/main.js?v=54bf7ec896"></script>
 </body>
 </html>
