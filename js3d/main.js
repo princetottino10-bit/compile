@@ -252,8 +252,12 @@ async function afterGameProgress(st, side, win, level, online) {
 
 /* 実績を判定し、取った分の経験値を足して知らせる。レベルが上がって取れる実績もあるので数回まわす */
 let trophyBusy = null;
+/* アカウントから記録を読み終えたら、実績を判定し直す (別の端末で条件を満たしたもの・外されたまま戻っていないものを取り直す) */
+window.addEventListener('compile:synced', () => { setTimeout(() => { checkTrophies(null).catch(() => {}); }, 1500); });
 async function checkTrophies(game) {
-  pruneTrophies(trophyContext(null));
+  /* 数え方の間違いで付いた実績を外すのは、記録がそろってから (ログインしていて、まだアカウントから記録を読んでいない端末で
+     外すと、手元の記録が足りないせいで正しく取った CONQUEROR まで外れていた) */
+  if (!accountState().user || accountState().syncedOnce) pruneTrophies(trophyContext(null));
   while (trophyBusy) await trophyBusy;              // 同時に2回判定しない
   let done;
   trophyBusy = new Promise(r => { done = r; });

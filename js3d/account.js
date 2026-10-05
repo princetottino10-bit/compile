@@ -357,6 +357,8 @@ export async function syncRecords() {
     state.sync = '同期しました' + (added ? ' (' + added + '戦を読み込み)' : '') + (xpAdded ? ' (経験値 ' + xpAdded + '件を読み込み)' : '') +
       (rpAdded ? ' (リプレイ ' + rpAdded + '件を読み込み)' : '');
     state.error = '';
+    /* この画面で1回でも同期できた (実績の判定し直しは、記録がそろってから) */
+    if (!state.syncedOnce) { state.syncedOnce = true; try { window.dispatchEvent(new CustomEvent('compile:synced')); } catch (e) { /* 古いブラウザ */ } }
     state.errorRaw = '';
     noteSynced(state.user.id);
     if (applied || switched) { changed(); reloadIfIdle(); }

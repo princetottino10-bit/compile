@@ -75,7 +75,9 @@ function unionTrophies(a, b) {
   try {
     const x = JSON.parse(a || '{}') || {}, y = JSON.parse(b || '{}') || {};
     const out = { ...y };
-    for (const [k, v] of Object.entries(x)) out[k] = out[k] ? Math.min(out[k], v) : v;
+    /* 小さいほうを残す。0 も値として比べる (「外した印 ~id」を 0 にして取り直した実績が、
+       相手側の古い「外した印」に上書きされて、取り直したのにまた消えていた。CONQUEROR 2026-10-05) */
+    for (const [k, v] of Object.entries(x)) out[k] = (k in out) && Number.isFinite(out[k]) ? Math.min(out[k], v) : v;
     return JSON.stringify(out);
   } catch (e) {
     return a || b;

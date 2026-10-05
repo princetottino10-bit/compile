@@ -53,6 +53,16 @@ test('実績は両方の端末で取った分を合わせる', () => {
   assert.deepEqual(JSON.parse(d.push.compileTrophies), { a: 5, b: 3, c: 7 });
 });
 
+test('外した実績を取り直した印 (~id: 0) は、どちらの向きで合わせても古い「外した印」に負けない (CONQUEROR が取り直しても消えていた)', () => {
+  const meta = { hash: 'old', at: 100 };
+  const regranted = JSON.stringify({ conqueror: 10, '~conqueror': 0 });
+  const stale = JSON.stringify({ conqueror: 10, '~conqueror': 500 });
+  const a = decide({ compileTrophies: regranted }, { data: { compileTrophies: stale }, at: 200 }, meta);
+  assert.equal(JSON.parse(a.push.compileTrophies)['~conqueror'], 0);
+  const b = decide({ compileTrophies: stale }, { data: { compileTrophies: regranted }, at: 200 }, meta);
+  assert.equal(JSON.parse(b.push.compileTrophies)['~conqueror'], 0);
+});
+
 /* 週替わり3連戦・RUN の途中の進み具合は、アカウントの古い中身で巻き戻さない (対戦中に同期が走って、勝ちが消えていた) */
 const wk = (o) => JSON.stringify({ v: 1, week: 'W2960', attempt: 11, stage: 0, decks: [], phase: 'choose', clears: 0, bestStage: 2, submitted: false, ...o });
 test('週替わり: 対戦中にアカウントの古い「負け」が来ても、進んでいる方を残す', () => {
