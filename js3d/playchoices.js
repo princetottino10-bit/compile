@@ -5,8 +5,9 @@ export function placementChoices(actions, uid, turn) {
 }
 
 /* totalAfter(action): 置いたあとのそのラインの合計 (効果を解く前)。無ければ出さない
-   blocked(side, line): そのラインで出せない向きと理由 [{ faceUp, reason }]。鍵付きのボタンで見せ、押すと理由を言う (notice) */
-export function renderPlayChoices(root, options, protocols, title, choose, cancel, totalAfter, blocked, notice) {
+   blocked(side, line): そのラインで出せない向きと理由 [{ faceUp, reason }]。鍵付きのボタンで見せ、押すと理由を言う (notice)
+   valueNote(action): 置いた札の数え方がふつうと違うとき { base, value } (勝ち抜き戦のパッチなど)。「5→10」と添える */
+export function renderPlayChoices(root, options, protocols, title, choose, cancel, totalAfter, blocked, notice, valueNote) {
   root.replaceChildren();
   root.hidden = !title;
   document.body.classList.toggle('choosing-placement', !!title);
@@ -43,9 +44,19 @@ export function renderPlayChoices(root, options, protocols, title, choose, cance
           t.append(arrow, String(total));
           button.append(t);
         }
+        const vn = valueNote ? valueNote(action) : null;
+        let why = '';
+        if (vn) {
+          const n = document.createElement('b');
+          n.className = 'place-note ' + (vn.value > vn.base ? 'up' : 'down');
+          n.textContent = vn.base + '→' + vn.value;
+          button.append(n);
+          why = 'パッチの効果で、この札は ' + vn.base + ' ではなく ' + vn.value + ' として数えます';
+          button.title = why;
+        }
         button.className = action.faceUp ? 'place-faceup' : 'place-facedown';
         button.setAttribute('aria-label', name + 'に' + (action.faceUp ? '表で置く' : '裏で置く')
-          + (Number.isFinite(total) ? '。置くと合計 ' + total : ''));
+          + (Number.isFinite(total) ? '。置くと合計 ' + total : '') + (why ? '。' + why : ''));
         button.onclick = () => choose(action); cell.append(button);
       }
       /* 出せない向き: 鍵付きで残し、押すと理由 (前は黙って消えていて、なぜ表で出せないか分からなかった) */

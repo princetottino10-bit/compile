@@ -7,7 +7,7 @@ import { BGM_RELEASED } from './rewards.js';
 import { openDiscord, copyReportInfo, addReportLines, canCopyScreenshot, copyScreenshot } from './support.js';
 import { raise } from './dialogs.js';
 import { setMotionPrefs, osReducedMotion, calm } from './prefs.js';
-import { isMuted, setMuted, onMuteChange } from './audio.js';
+import { isMuted, setMuted, onMuteChange, setMasterVolume } from './audio.js';
 import { isPhoneLike } from './envcheck.js';
 const BGM_SHOWN = true;                 // 対戦の BGM (bgm.js の BATTLE_BGM_ON) があるので音量は出す
 
@@ -19,7 +19,7 @@ let avatarList = () => [];
 export function setAvatarOptionsGate(shown, list) { avatarOptionsShown = shown; if (list) avatarList = list; }
 /* mat 以下は見た目 (レベルの報酬、cosmetics-ui.js) */
 /* autoPick: 選べるものが1つしかない選択は自動で選ぶ (最初はオフ。何が選ばれたか分からないまま進むことがあったので) / oppSummary: 相手の番のまとめ / beginner: 初心者モード (おすすめの手の HINT を出す。最初はオフ) */
-const DEFAULTS = { speed: 1, sfx: 80, bgmVol: 30, voiceVol: 80, bgm: 'burst', bgmMenu: '', bgmBattle: '', pauses: true, autoPick: false, oppSummary: true, beginner: false, gamepad: false, foil: true, mat: 'neon', sleeve: 'default', marker: 'default', ccolor: 'default',
+const DEFAULTS = { speed: 1, masterVol: 100, sfx: 80, bgmVol: 30, voiceVol: 80, bgm: 'burst', bgmMenu: '', bgmBattle: '', pauses: true, autoPick: false, oppSummary: true, beginner: false, gamepad: false, foil: true, mat: 'neon', sleeve: 'default', marker: 'default', ccolor: 'default',
   victory: 'default', title: '', icon: '',
   /* おまかせで今すぐ始める: 相手の強さ (0 かんたん / 1 ふつう / 2 つよい) と、今日のデイリーのプロトコルを自分に入れるか */
   quickLevel: 0, quickDaily: false,
@@ -29,7 +29,7 @@ const DEFAULTS = { speed: 1, sfx: 80, bgmVol: 30, voiceVol: 80, bgm: 'burst', bg
      文字の大きさ ('normal' / 'large')・くっきり表示 (板を濃く、薄い文字を明るく) */
   gfx: 'auto', powerSave: false, motion: 'auto', vibrate: true, textSize: 'normal', contrast: false };
 /* 「初期設定に戻す」で戻す項目 (この画面で変えられるもの。COLLECTION で選んだ見た目とキャラは戻さない) */
-const RESETTABLE = ['speed', 'sfx', 'bgmVol', 'voiceVol', 'pauses', 'autoPick', 'oppSummary', 'beginner', 'gamepad', 'foil', 'quickLevel', 'quickDaily',
+const RESETTABLE = ['speed', 'masterVol', 'sfx', 'bgmVol', 'voiceVol', 'pauses', 'autoPick', 'oppSummary', 'beginner', 'gamepad', 'foil', 'quickLevel', 'quickDaily',
   'oppVoice', 'avatarShow', 'oppAvatar', 'gfx', 'powerSave', 'motion', 'vibrate', 'textSize', 'contrast'];
 const GFX_MODES = [['auto', '自動'], ['high', '高'], ['normal', '標準'], ['light', '軽量']];
 const GFX_LEVEL_NAMES = ['高', '標準', '軽め', '軽量'];           // stage.js の段 (0〜3)
@@ -53,6 +53,7 @@ function applyLook(s) {
     document.body.classList.toggle('hi-contrast', !!s.contrast);
   } catch (e) { /* 画面がまだ無い (テスト) */ }
   setMotionPrefs(s);
+  setMasterVolume(s.masterVol ?? 100);      // 全体の音量 (効果音・声・BGM が最後に通る出口)
 }
 applyLook(current);
 /* 画質の段と FPS を見る口 (main.js が 3D の画面を作ったら渡す)。() => { level, fps, mode, auto } */
@@ -178,7 +179,9 @@ export function openSettings(extra) {
     /* すべての音: 左下の 🔊 と同じ (BGM・声・効果音をまとめて止める) */
     '<label class="st-row st-check st-master"><span>すべての音<small>オフにすると BGM・キャラの声・効果音をまとめて止めます (左下の 🔊 と同じ)</small></span>' +
       '<input type="checkbox" id="stAllSound"' + (isMuted() ? '' : ' checked') + '></label>' +
-    /* 音量: BGM・キャラの声・効果音 (0 でオフ) */
+    /* 音量: 全体 (下の3つにまとめて掛かる)・BGM・キャラの声・効果音 (0 でオフ) */
+    '<label class="st-row"><span>全体の音量 <i id="stMasterV">' + volText(s.masterVol ?? 100) + '</i><small>BGM・キャラの声・効果音にまとめて掛かります</small></span>' +
+      '<input type="range" min="0" max="100" step="5" id="stMaster" value="' + (s.masterVol ?? 100) + '"></label>' +
     (BGM_SHOWN ? '<label class="st-row"><span>BGM の音量 <i id="stBgmV">' + volText(s.bgmVol ?? 30) + '</i></span>' +
       '<input type="range" min="0" max="100" step="5" id="stBgm" value="' + (s.bgmVol ?? 30) + '"></label>' : '') +
     '<label class="st-row"><span>キャラの声の音量 <i id="stVoiceV">' + volText(s.voiceVol ?? 80) + '</i></span>' +
@@ -321,6 +324,7 @@ export function openSettings(extra) {
     const input = el.querySelector(id);
     input.oninput = () => { el.querySelector(out).textContent = volText(+input.value); setSetting(key, +input.value); };
   };
+  range('#stMaster', 'masterVol', '#stMasterV');
   range('#stSfx', 'sfx', '#stSfxV');
   if (BGM_SHOWN) range('#stBgm', 'bgmVol', '#stBgmV');
   range('#stVoice', 'voiceVol', '#stVoiceV');

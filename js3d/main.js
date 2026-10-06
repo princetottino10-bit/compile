@@ -2969,20 +2969,36 @@ function currentPlacementChoices() {
   return placementChoices(legalNow(), selectedUid, shown().turn);
 }
 
-/* 置いたあとのそのラインの合計 (効果を解く前)。写しの盤面に積んで、エンジンと同じ数え方で数える */
+/* 置いたあとの盤面の写し (効果を解く前)。エンジンと同じ数え方で数えるために使う */
+function placedState(st, action) {
+  const s = JSON.parse(JSON.stringify(st));
+  delete s._totals;
+  const c = s.cards[action.card];
+  if (!c) return null;
+  const side = action.side ?? s.turn;
+  for (const p of s.players) p.hand = p.hand.filter(u => u !== action.card);
+  c.faceUp = !!action.faceUp;
+  c.zone = 'field';
+  c.owner = side;
+  s.lines[action.line][side].push(action.card);
+  return s;
+}
+/* 置いたあとのそのラインの合計 (効果を解く前) */
 function placedTotal(st, action) {
   try {
-    const s = JSON.parse(JSON.stringify(st));
-    delete s._totals;
-    const c = s.cards[action.card];
-    if (!c) return null;
-    const side = action.side ?? s.turn;
-    for (const p of s.players) p.hand = p.hand.filter(u => u !== action.card);
-    c.faceUp = !!action.faceUp;
-    c.zone = 'field';
-    c.owner = side;
-    s.lines[action.line][side].push(action.card);
-    return Engine.lineTotal(s, action.line, side);
+    const s = placedState(st, action);
+    return s ? Engine.lineTotal(s, action.line, action.side ?? s.turn) : null;
+  } catch (e) { return null; }
+}
+/* 置いた札そのものの数え方が、ふつう (表=印刷の値・裏=2) と違うとき { base, value }。
+   勝ち抜き戦のパッチ (プロトコル2倍・裏の値4 など) で合計が大きく変わり、見立てが狂って見えていた */
+function placedValueNote(st, action) {
+  try {
+    const s = placedState(st, action);
+    if (!s) return null;
+    const base = action.faceUp ? (Engine.defs[s.cards[action.card].def] || {}).value : 2;
+    const value = Engine.cardValue(s, action.card);
+    return Number.isFinite(base) && value !== base ? { base, value } : null;
   } catch (e) { return null; }
 }
 function updatePlayChoices() {
@@ -3013,7 +3029,8 @@ function updatePlayChoices() {
         /* ふつうの「プロトコルが違うので表は無理」は毎回出るとうるさいので、初心者モードのときだけ。相手の効果のせいなら必ず */
         .filter(f => settings().beginner || !isPlainProtoBlock(uid, line, f))
         .map(f => ({ faceUp: f, reason: playBlockText(uid, line, f) })).filter(b => b.reason),
-    (reason) => { sfx('tick'); UI.toast(reason, 2600); });
+    (reason) => { sfx('tick'); UI.toast(reason, 2600); },
+    (action) => placedValueNote(shown(), action));
   positionPlayChoices();
   if (tutorial) applyTutorialFocus();
 }

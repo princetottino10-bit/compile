@@ -28,6 +28,16 @@ export function setSfxVolume(pct) {
   if (sfxBus) sfxBus.gain.setTargetAtTime(sfxLevel, actx.currentTime, 0.05);
 }
 
+/* マスター音量 (0..100)。効果音・キャラの声・BGM がすべて最後に通る出口 (outNode) の大きさ */
+let outNode = null;
+let masterLevel = 1;
+export function setMasterVolume(pct) {
+  masterLevel = Math.max(0, Math.min(1, (pct ?? 100) / 100));
+  if (outNode) outNode.gain.setTargetAtTime(masterLevel, actx.currentTime, 0.05);
+}
+/** 出口を通せないとき (<audio> の volume で代わりにするとき) に掛ける */
+export const masterVolume = () => masterLevel;
+
 export function setMuted(v) {
   muted = !!v;
   try { localStorage.setItem(MUTE_KEY, muted ? '1' : '0'); } catch (e) { /* private mode */ }
@@ -86,7 +96,7 @@ export async function playClip(url, vol, opts = {}) {
   const g = actx.createGain();
   g.gain.value = Math.min(1.6, vol);     // 小さい声のキャラは持ち上げる (avatar.js の voiceGain)。上げすぎて割れないよう 1.6 倍まで
   src.connect(opts.pa ? paChain(g) : g);
-  g.connect(actx.destination);
+  g.connect(outNode || actx.destination);
   src.start(actx.currentTime + (opts.delay || 0));
   return { stop() { try { src.stop(); } catch (e) { /* もう終わっている */ } }, duration: buf.duration + (opts.delay || 0) };
 }
@@ -112,14 +122,14 @@ function paChain(out) {
 /** <audio> を音量つきで鳴らす道 (BGM)。iPhone は audio.volume が効かないので、Web Audio のゲインを通す。
     返り値: { set(音量 0..1) }。音を作れないブラウザでは audio.volume で代わりにする */
 export function routeMedia(media, vol) {
-  const plain = { set(v) { try { media.volume = Math.max(0, Math.min(1, v)); } catch (e) { /* 読み取り専用の端末 */ } } };   // フェードは効かない (すぐ切り替わる)
+  const plain = { set(v) { try { media.volume = Math.max(0, Math.min(1, v * masterLevel)); } catch (e) { /* 読み取り専用の端末 */ } } };   // フェードは効かない (すぐ切り替わる)
   if (!actx) { plain.set(vol); return plain; }
   try {
     const src = actx.createMediaElementSource(media);
     const g = actx.createGain();
     g.gain.value = vol;
     src.connect(g);
-    g.connect(actx.destination);
+    g.connect(outNode || actx.destination);
     return { set(v, tc) { g.gain.setTargetAtTime(Math.max(0, v), actx.currentTime, tc || 0.05); } };
   } catch (e) {
     plain.set(vol);
@@ -138,7 +148,10 @@ function buildGraph(ctx) {
   const m = ctx.createGain();
   m.gain.value = 0.42;
   m.connect(comp);
-  comp.connect(ctx.destination);
+  const out = ctx.createGain();
+  out.gain.value = masterLevel;
+  out.connect(ctx.destination);
+  comp.connect(out);
   const bus = ctx.createGain();
   bus.gain.value = sfxLevel;
   /* 高い音のとげを少し丸める (合成音のキンキンした感じを抑える) */
@@ -155,7 +168,7 @@ function buildGraph(ctx) {
   wet.gain.value = 0.55;
   conv.connect(wet);
   wet.connect(bus);
-  return { master: m, bus, reverb: conv };
+  return { master: m, bus, reverb: conv, out };
 }
 
 function impulse(ctx, seconds, decay) {
@@ -220,7 +233,7 @@ export function initAudio() {
   try {
     actx = new AC();
     const g = buildGraph(actx);
-    master = g.master; sfxBus = g.bus; reverbIn = g.reverb;
+    master = g.master; sfxBus = g.bus; reverbIn = g.reverb; outNode = g.out;
     noiseBuf = makeNoise(actx);
     loadSamples();
     /* 画面に戻ってきたとき・中断が終わったときにも起こす */
@@ -229,7 +242,7 @@ export function initAudio() {
     window.addEventListener('pageshow', () => wake());
     actx.onstatechange = () => { if (document.visibilityState === 'visible') wake(); };
   } catch (e) {
-    actx = null; master = null; sfxBus = null; reverbIn = null;
+    actx = null; master = null; sfxBus = null; reverbIn = null; outNode = null;
   }
 }
 
