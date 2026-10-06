@@ -1,0 +1,95 @@
+/* 勝ち抜き戦の手触り (run-fx.js と組)。候補が配られる・レアが光る・選ぶと弾む・数字が増える・そろうと祝う */
+
+/* 候補を1枚ずつ配る (画面に出たときだけ。待たせないよう全部で 0.5 秒以内) */
+#runOv .rn-patchlist > *, #runOv .rn-routes > *, #runOv .rn-offers > * { animation: rnDeal .38s cubic-bezier(.2, 1.3, .4, 1) backwards; }
+#runOv .rn-patchlist > :nth-child(2), #runOv .rn-routes > :nth-child(2), #runOv .rn-offers > :nth-child(2) { animation-delay: .07s; }
+#runOv .rn-patchlist > :nth-child(3), #runOv .rn-routes > :nth-child(3), #runOv .rn-offers > :nth-child(3) { animation-delay: .14s; }
+#runOv .rn-patchlist > :nth-child(n+4), #runOv .rn-routes > :nth-child(n+4), #runOv .rn-offers > :nth-child(n+4) { animation-delay: .21s; }
+@keyframes rnDeal { from { opacity: 0; transform: translateY(26px) rotate(-3deg) scale(.9); } }
+
+/* レア: EPIC は光の筋が走る、LEGENDARY は虹の筋 + ふわっと浮く */
+#runOv .rn-patch, #runOv .rn-route { position: relative; overflow: hidden; }
+#runOv .rn-patch.rE::after, #runOv .rn-patch.rL::after {
+  content: ''; position: absolute; inset: -40% auto -40% -60%; width: 40%; pointer-events: none;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .45), transparent);
+  transform: skewX(-18deg); animation: rnShine 2.4s ease-in-out infinite;
+}
+#runOv .rn-patch.rL::after { background: linear-gradient(100deg, transparent, rgba(255, 210, 120, .6), rgba(124, 240, 208, .5), transparent); animation-duration: 1.7s; }
+#runOv .rn-patch.rL { animation: rnDeal .38s cubic-bezier(.2, 1.3, .4, 1) backwards, rnFloat 2.6s ease-in-out .5s infinite; }
+@keyframes rnShine { 0%, 55% { left: -60%; } 100% { left: 130%; } }
+@keyframes rnFloat { 50% { transform: translateY(-4px); } }
+
+/* 選んだ瞬間: 弾んで光る (その間は他を押せない) */
+#runOv .fx-picked { animation: rnPick .24s ease-out forwards !important; border-color: #fff !important; }
+@keyframes rnPick { 40% { transform: scale(1.07); filter: brightness(1.6); } 100% { transform: scale(.97); filter: brightness(1.3); } }
+#runOv .fx-busy button { pointer-events: none; }
+
+/* 数字が増える・減る */
+#runOv .rn-credit b { font-weight: 900; color: #fff; display: inline-block; font-variant-numeric: tabular-nums; }
+#runOv .fx-up { color: #ffd86a !important; animation: rnBump .25s ease-out infinite alternate; }
+#runOv .fx-down { color: #ff8fa8 !important; }
+@keyframes rnBump { to { transform: scale(1.22); } }
+
+/* 勝った画面の見出しと、もらったクレジット */
+#runOv h2.rn-win { font: 900 34px/1 var(--font-logo), "M PLUS 1", system-ui; letter-spacing: .08em; color: #fff;
+  text-shadow: 0 0 18px rgba(255, 79, 163, .7), 3px 3px 0 var(--pink); animation: rnSlam .45s cubic-bezier(.2, 1.6, .4, 1) backwards; }
+#runOv h2.rn-win small { font: 800 15px/1 var(--font-hud), "M PLUS 1", system-ui; color: #ffd86a; text-shadow: none; letter-spacing: .1em; margin-left: 8px; }
+#runOv h2.rn-win .rn-gainnum, #runOv .rn-gainbig .rn-gainnum { display: inline-block; font-variant-numeric: tabular-nums; }
+@keyframes rnSlam { from { opacity: 0; transform: scale(2.2); } }
+
+/* 決着後の見出し: WIN! / BOSS 撃破！ は大きく叩きつける、負けは沈む */
+#runOv h2.rn-result { font: 900 44px/1 var(--font-logo), "M PLUS 1", system-ui; letter-spacing: .06em; position: relative; }
+#runOv h2.rn-result.win, #runOv h2.rn-result.clear { color: #fff; text-shadow: 0 0 24px rgba(255, 79, 163, .8), 4px 4px 0 var(--pink), -2px -2px 0 var(--cyan, #5ff3ff);
+  animation: rnSlam .5s cubic-bezier(.2, 1.6, .4, 1) backwards; }
+#runOv h2.rn-result.clear { font-size: 40px; color: #ffe8a8; }
+#runOv h2.rn-result.lose { color: #b9b2d6; animation: rnSink .6s ease-out backwards; }
+@keyframes rnSink { from { opacity: 0; transform: translateY(-14px); } }
+#runOv .rn-gainbig { margin: 0; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+  font: 900 22px/1 var(--font-hud), "M PLUS 1", system-ui; color: #ffd86a; letter-spacing: .08em; }
+#runOv .rn-gainbig .rn-gainnum { font-size: 34px; }
+
+/* 連勝 (2連勝から。続くほど熱く) */
+#runOv .rn-streak { margin-left: auto; font: 900 12px/1 var(--font-hud), "M PLUS 1", system-ui; font-style: normal; letter-spacing: .12em;
+  padding: 5px 10px; border-radius: 999px; color: #fff; background: linear-gradient(90deg, #ff6a3d, #ff4fa3); box-shadow: 0 0 14px rgba(255, 106, 61, .5);
+  animation: rnSlam .4s cubic-bezier(.2, 1.6, .4, 1) backwards; }
+#runOv .rn-streak.lv2 { background: linear-gradient(90deg, #ffb13d, #ff3d6a); box-shadow: 0 0 20px rgba(255, 140, 61, .7); }
+#runOv .rn-streak.lv3 { background: linear-gradient(90deg, #ffe066, #ff7a3d, #ff3d9a); box-shadow: 0 0 26px rgba(255, 200, 80, .8); animation: rnSlam .4s cubic-bezier(.2, 1.6, .4, 1) backwards, rnGlow 1s ease-in-out .4s infinite alternate; }
+#runOv .rn-gainbig .rn-streak { margin-left: 4px; font-size: 13px; }
+@keyframes rnGlow { to { filter: brightness(1.3); } }
+
+/* 頂上までの道のり */
+#runOv .rn-climb { position: relative; height: 22px; border-radius: 6px; background: rgba(255, 255, 255, .06); overflow: hidden; }
+#runOv .rn-climb i { position: absolute; inset: 0 auto 0 0; width: calc(var(--k) * 100%); background: linear-gradient(90deg, rgba(160, 123, 255, .5), var(--pink)); animation: rnFill .7s cubic-bezier(.2, .9, .3, 1) backwards; }
+#runOv .rn-climb span { position: relative; display: flex; align-items: center; height: 100%; padding: 0 10px; font: 800 11px/1 "M PLUS 1", system-ui; color: #fff; letter-spacing: .06em; }
+#runOv .rn-climb b { font: 900 14px/1 var(--font-hud), "M PLUS 1", system-ui; margin: 0 3px; color: #ffd86a; }
+@keyframes rnFill { from { width: 0; } }
+
+/* 手に入れたパッチ・増えたライフ */
+#runOv .rn-pchip.new { animation: rnGet .7s cubic-bezier(.2, 1.6, .4, 1); filter: brightness(1.5); }
+@keyframes rnGet { 0% { transform: scale(2); opacity: 0; } 60% { transform: scale(.92); } }
+#runOv .rn-life i.gain { animation: rnGain .8s ease-out; }
+@keyframes rnGain { 0% { background: #fff; box-shadow: 0 0 18px #fff; transform: scaleY(1.8); } }
+#runOv .rn-life i.hit { animation: rnHit .9s ease-out, rnCrack .45s ease-out; }
+@keyframes rnCrack { 20% { transform: translateX(-3px) rotate(-6deg); } 50% { transform: translateX(3px) rotate(5deg); } }
+
+/* 系統ボーナスがそろった帯 (消えない。次に描き直すまで) */
+#runOv .rn-bonusup { display: flex; flex-direction: column; gap: 6px; }
+#runOv .rn-bonusup p { margin: 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px; border-radius: 10px;
+  border: 1px solid var(--tc); background: linear-gradient(90deg, color-mix(in srgb, var(--tc) 30%, transparent), transparent);
+  box-shadow: 0 0 22px color-mix(in srgb, var(--tc) 45%, transparent); animation: rnSlam .5s cubic-bezier(.2, 1.6, .4, 1) backwards; }
+#runOv .rn-bonusup small { font: 900 10px/1 var(--font-hud), "M PLUS 1", system-ui; letter-spacing: .24em; color: var(--tc); }
+#runOv .rn-bonusup b { font: 900 18px/1 var(--font-logo), "M PLUS 1", system-ui; color: #fff; letter-spacing: .06em; }
+#runOv .rn-bonusup span { font: 700 13px/1.4 "M PLUS 1", system-ui; color: #fff; }
+
+/* 戦う: いちばん押してほしいボタンだけ、縁を光が回る */
+#runOv .rn-btns .rn-cta { position: relative; box-shadow: 0 0 0 0 rgba(255, 79, 163, .6); animation: rnCall 1.4s ease-out infinite; }
+@keyframes rnCall { 70% { box-shadow: 0 0 0 12px rgba(255, 79, 163, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 79, 163, 0); } }
+
+/* たたんだルール */
+#runOv .rn-rules summary { cursor: pointer; font: 700 12px/1 "M PLUS 1", system-ui; color: var(--dim); padding: 4px 0; }
+#runOv .rn-rules[open] summary { color: #fff; }
+
+@media (prefers-reduced-motion: reduce) {
+  #runOv *, #runOv *::after { animation: none !important; }
+}
+body.calm #runOv *, body.calm #runOv *::after { animation: none !important; }

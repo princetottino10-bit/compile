@@ -12,6 +12,8 @@ import * as RUN from './run.js';
 import { emblemDataURL } from './emblems.js';
 import { showProtocolCards } from './protocards.js';
 import { confetti, RAR_COLORS } from './gachafx.js';
+import { sfx } from './audio.js';
+import { afterRender, pressThen, winStreak, rowsLeft, countUp } from './run-fx.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -93,10 +95,10 @@ const patchArt = (id) => 'art/run/patch_' + id + '.webp';
 /* 持っているパッチと HEAT (いつも上に出す) */
 function patchStrip(run) {
   const list = (run.patches || []).map(id => RUN.patchInfo(id)).filter(Boolean);
-  return '<div class="rn-patches"><span class="rn-credit" title="勝つと増える。ショップで使う">CREDIT ' + (run.credits | 0) + '</span>' +
+  return '<div class="rn-patches"><span class="rn-credit" title="勝つと増える。ショップで使う">CREDIT <b>' + (run.credits | 0) + '</b></span>' +
     (run.heat ? '<span class="rn-heatb">HEAT ' + run.heat + '</span>' : '') +
     buildHtml(run) +
-    list.map(p => '<span class="rn-pchip ' + p.kind + ' r' + p.rar + ((p.id === 'failsafe' && run.failsafeUsed) || (p.id === 'phoenix' && run.phoenixUsed) ? ' used' : '') + '" title="' + esc(RUN.patchText(run, p)) + '">' +
+    list.map(p => '<span data-id="' + esc(p.id) + '" class="rn-pchip ' + p.kind + ' r' + p.rar + ((p.id === 'failsafe' && run.failsafeUsed) || (p.id === 'phoenix' && run.phoenixUsed) ? ' used' : '') + '" title="' + esc(RUN.patchText(run, p)) + '">' +
       '<img alt="" src="' + patchArt(p.id) + '">' + esc(p.name) + '</span>').join('') + '</div>';
 }
 
@@ -181,7 +183,7 @@ export function openRun(protocols, cardsOf, opts) {
     let showDeck = false;        // 地図の画面でデッキを広げる
     let hub = !!(opts && opts.hub);
     let heatSel = RUN.unlockedHeat();      // はじめるときの HEAT (解放した一番上から)
-    const set = (next) => { run = next; RUN.saveRun(run); render(); };
+    const set = (next) => { const prev = run; run = next; RUN.saveRun(run); render(prev); };
     /* defId → 「FIRE 2」 (カードに印刷された値で) */
     const cardLabel = (id) => {
       const proto = String(id).replace(/_\d+$/, '');
@@ -224,14 +226,16 @@ export function openRun(protocols, cardsOf, opts) {
         : w.phase === 'battle' || w.phase === 'choose' ? '<em class="now">第' + (w.stage + 1) + '戦の途中 (' + w.attempt + '回目の挑戦)</em>'
           : w.attempt ? '<em>今週 ' + w.attempt + '回挑戦 ・ 最高 ' + (w.bestStage || 0) + '勝</em>' : '<em>今週はまだ挑戦していません</em>';
       return '<p class="rn-pick">遊ぶモードを選んでください</p><div class="rn-modes">' +
-        '<section class="rn-mcard"><small>ROGUELIKE</small><h3>勝ち抜き戦</h3><ul>' +
+        '<section class="rn-mcard"><small>ROGUELIKE</small><h3>勝ち抜き戦</h3>' +
+          /* 一度でも挑戦した人には、ルールはたたんでおく (読まずにすぐ始められるように) */
+          (best ? '<details class="rn-rules"><summary>ルールを見る</summary>' : '') + '<ul>' +
           '<li>地図を下から登り、頂上の BOSS を倒す (自分は ' + (3 - RUN.RUN_WIN_COMPILES) + ' つコンパイル済みから始まり、あと ' + RUN.RUN_WIN_COMPILES + ' 本で勝ち。序盤は2つ済みから)</li>' +
           '<li>道は自分で選ぶ: 戦闘・精鋭・イベント・休憩所・ショップ・宝箱</li>' +
           '<li>ライフ ' + RUN.RUN_LIFE + '。コンパイルされるたびに 1 減る</li>' +
           '<li>勝つたびにカードの報酬 (強化・β カード・除去) を選ぶ。パッチ (改造) は系統をそろえるとボーナス</li>' +
           '<li>精鋭 (☠) に勝つと、プロトコルを入れ替えられる。' + (RUN.PERK_ROW_UP + 1) + '段目からは入れ替えのプロトコルに強化済みのカードが付く</li>' +
           '<li>クレジットはショップで使う (報酬は選ぶか買う)</li>' +
-          '<li>クリアすると次の HEAT (難しさ) が開く</li></ul>' + runStatus + heatPick +
+          '<li>クリアすると次の HEAT (難しさ) が開く</li></ul>' + (best ? '</details>' : '') + runStatus + heatPick +
           (active ? '<button type="button" class="rn-go" data-act="resume">続きから</button>'
             : '<button type="button" class="rn-go" data-act="start">はじめる</button>') + '</section>' +
         '<section class="rn-mcard"><small>WEEKLY</small><h3>週替わり3連戦</h3><ul>' +
@@ -269,6 +273,9 @@ export function openRun(protocols, cardsOf, opts) {
         }
         case 'map':
           return '<h2>進むマスを選ぶ <small>' + (rowNow(run) + 2) + ' / ' + RUN.MAP_ROWS + ' 段</small></h2>' +
+            /* 頂上までの道のり (あと何段で BOSS か) */
+            '<div class="rn-climb" style="--k:' + ((rowNow(run) + 1) / RUN.MAP_ROWS).toFixed(3) + '"><i></i><span>' +
+              (rowsLeft(run) <= 1 ? '次は <b>BOSS</b>' : 'BOSS まで あと <b>' + rowsLeft(run) + '</b> 段') + '</span></div>' +
             (run.removedNow ? '<p class="rn-note">' + esc(cardLabel(run.removedNow)) + ' をデッキから外した</p>' : '') +
             (run.upgradedNow ? '<p class="rn-note rn-gain">' + esc(starLabel(run.upgradedNow)) + ' を強化した (値 +1)</p>' : '') +
             (run.gotStar ? '<p class="rn-note rn-gain">β カード ' + esc(starLabel(run.gotStar)) + ' をデッキに入れた</p>' : '') +
@@ -336,7 +343,7 @@ export function openRun(protocols, cardsOf, opts) {
             }
             return '<button type="button" class="rn-route" data-card="' + i + '"><small>CREDIT</small><b>+' + RUN.CARD_REWARD_CREDITS + ' クレジット</b><span>ショップで使う</span></button>';
           };
-          return '<h2>勝利！ <small>+' + (run.lastGain | 0) + ' CREDIT</small></h2>' +
+          return '<h2 class="rn-win">WIN! <small><span class="rn-gainnum">+' + (run.lastGain | 0) + '</span> CREDIT</small></h2>' +
             (run.cursedWin ? '<p class="rn-cursebreak">CURSE BROKEN — 呪いを破った！ このあと RARE 以上のパッチを3つから選べる</p>' : '') +
             '<h3>カードの報酬を1つ選ぶ</h3><p class="rn-note">今のデッキ ' + deckLine(run.deck, byName) + '</p>' +
             '<div class="rn-routes">' + (run.cardOffers || []).map(offer).join('') + '</div>' +
@@ -353,7 +360,7 @@ export function openRun(protocols, cardsOf, opts) {
             }).join('') + '</div>' +
             '<div class="rn-btns"><button type="button" data-act="unstar">やめる (報酬を選び直す)</button></div>';
         case 'reward':
-          return '<h2>勝利！ <small>+' + (run.lastGain | 0) + ' CREDIT</small></h2>' +
+          return '<h2 class="rn-win">WIN! <small><span class="rn-gainnum">+' + (run.lastGain | 0) + '</span> CREDIT</small></h2>' +
             (run.upgradedNow ? '<p class="rn-note rn-gain">' + esc(starLabel(run.upgradedNow)) + ' を強化した (値 +1)</p>' : '') +
             (run.removedNow ? '<p class="rn-note">' + esc(cardLabel(run.removedNow)) + ' をデッキから外した</p>' : '') +
             (run.gotStar ? '<p class="rn-note rn-gain">β カード ' + esc(starLabel(run.gotStar)) + ' をデッキに入れた</p>' : '') +
@@ -390,14 +397,14 @@ export function openRun(protocols, cardsOf, opts) {
             '<div class="rn-vs"><div><small>あなた' + ((run.removed || []).length ? ' (除去 ' + run.removed.length + ' 枚)' : '') + '</small>' + deckLine(run.deck, byName) + '</div><b>VS</b>' +
             /* 勝ち抜き戦では CPU の難易度名 (かんたん・ふつう…) は出さない */
             '<div><small>' + (run.opp.boss ? 'BOSS' : run.opp.elite ? '精鋭' : '相手') + '</small>' + deckLine(run.opp.deck, byName) + '</div></div>' +
-            (confirmQuit ? '' : '<div class="rn-btns"><button type="button" class="rn-go" data-act="fight">戦う</button>' +
+            (confirmQuit ? '' : '<div class="rn-btns"><button type="button" class="rn-go rn-cta" data-act="fight">戦う</button>' +
               '<button type="button" data-act="quit">あきらめる</button></div>');
         }
         default: return '';
       }
     };
 
-    const render = () => {
+    const render = (prev) => {
       const active = run && run.phase !== 'over' && run.phase !== 'clear';
       if ((hub && active) || !active) {
         el.innerHTML = '<div class="rn-card"><div class="rn-head"><b>// RUN</b><span>2つのモード</span></div>' + hubHtml() + '</div>';
@@ -407,7 +414,9 @@ export function openRun(protocols, cardsOf, opts) {
         ? '<p class="rn-warn">この勝ち抜き戦をあきらめて終わりにしますか？ (記録は残ります)</p>' +
           '<div class="rn-btns"><button type="button" class="rn-danger" data-act="quitYes">あきらめる</button><button type="button" data-act="quitNo">続ける</button></div>'
         : '';
-      el.innerHTML = '<div class="rn-card rn-ph-' + run.phase + '"><div class="rn-head"><b>// RUN</b><span>勝ち抜き戦</span></div>' +
+      const streak = winStreak(run);
+      el.innerHTML = '<div class="rn-card rn-ph-' + run.phase + '"><div class="rn-head"><b>// RUN</b><span>勝ち抜き戦</span>' +
+        (streak >= 2 ? '<em class="rn-streak lv' + Math.min(3, streak - 1) + '" title="続けて勝っている数">' + streak + ' 連勝</em>' : '') + '</div>' +
         (run.phase !== 'draft' ? lifeBar(run) + patchStrip(run) : '') + phaseBody() + quit +
         '</div>';
       /* 地図は、いまの段が見えるところまで送る */
@@ -416,6 +425,7 @@ export function openRun(protocols, cardsOf, opts) {
         const here = wrap.querySelector('.rn-node.reach') || wrap.querySelector('.rn-node.here');
         if (here) wrap.scrollTop = Math.max(0, here.offsetTop - wrap.clientHeight * 0.6);
       }
+      afterRender(el, prev || null, run);
     };
 
     el.onclick = (ev) => {
@@ -423,15 +433,17 @@ export function openRun(protocols, cardsOf, opts) {
       if (!t || t.disabled) return;
       if (t.dataset.info) { info(t.dataset.info); return; }
       if (t.dataset.heat) { heatSel = +t.dataset.heat; render(); return; }
-      if (t.dataset.node) { set(RUN.chooseNode(run, t.dataset.node, names)); return; }
-      if (t.dataset.patch) { set(RUN.choosePatch(run, t.dataset.patch, names)); return; }
-      if (t.dataset.star) { set(RUN.chooseStar(run, t.dataset.star)); return; }
-      if (t.dataset.card !== undefined) { showDeck = false; set(RUN.chooseCardReward(run, +t.dataset.card)); return; }
-      if (t.dataset.buy) { set(RUN.buyPatch(run, t.dataset.buy)); return; }
+      if (t.closest('.fx-busy')) return;
+      /* 選ぶボタンは、弾ませてから進める (選んだ手応え) */
+      if (t.dataset.node) { const id = t.dataset.node; pressThen(t, () => set(RUN.chooseNode(run, id, names))); return; }
+      if (t.dataset.patch) { const id = t.dataset.patch; pressThen(t, () => set(RUN.choosePatch(run, id, names))); return; }
+      if (t.dataset.star) { const id = t.dataset.star; pressThen(t, () => set(RUN.chooseStar(run, id))); return; }
+      if (t.dataset.card !== undefined) { const i = +t.dataset.card; showDeck = false; pressThen(t, () => set(RUN.chooseCardReward(run, i))); return; }
+      if (t.dataset.buy) { const id = t.dataset.buy; pressThen(t, () => set(RUN.buyPatch(run, id))); return; }
       if (t.dataset.rm) { set(RUN.removeCard(run, t.dataset.rm)); return; }
       if (t.dataset.up) { set(RUN.upgradeCard(run, t.dataset.up)); return; }
       if (t.dataset.event) { set(RUN.resolveEvent(run, +t.dataset.event, names)); return; }
-      if (t.dataset.pick) { set(RUN.draftPick(run, t.dataset.pick, names)); return; }
+      if (t.dataset.pick) { const n = t.dataset.pick; pressThen(t, () => set(RUN.draftPick(run, n, names))); return; }
       if (t.dataset.add) { swapAdd = t.dataset.add; render(); return; }
       if (t.dataset.remove) { const add = swapAdd; swapAdd = null; set(RUN.applyReward(run, { type: 'swap', add, remove: t.dataset.remove }, names)); return; }
       switch (t.dataset.act) {
@@ -492,7 +504,10 @@ export function showRunAfterGame(win, damage, protocols) {
   RUN.saveRun(run);
   const el = overlay();
   el.classList.add('after');
-  const title = run.phase === 'clear' ? 'BOSS 撃破！' : run.phase === 'over' ? 'ライフが尽きた' : win ? '勝利' : '敗北';
+  const title = run.phase === 'clear' ? 'BOSS 撃破！' : run.phase === 'over' ? 'ライフが尽きた' : win ? 'WIN!' : '敗北';
+  const tone = run.phase === 'clear' ? 'clear' : win ? 'win' : 'lose';
+  /* ライフは試合前の数から減らして見せる (減った目盛りが割れる) */
+  const lostNow = last => (last && last.saved) ? 0 : Math.max(0, (before.life | 0) - Math.max(0, run.life));
   const last = run.history[run.history.length - 1] || { damage };
   const heatNote = run.phase === 'clear' && (run.heat | 0) < RUN.MAX_HEAT ? '<p class="rn-note">HEAT ' + ((run.heat | 0) + 1) + ' が解放されました</p>' : '';
   const line = run.phase === 'clear'
@@ -500,17 +515,21 @@ export function showRunAfterGame(win, damage, protocols) {
     : run.phase === 'over' ? (rowNow(run) + 1) + ' 段目で終わりました。'
       : win ? '+' + (run.lastGain | 0) + ' クレジット。報酬を選んでから地図へ戻ります。' : '同じ相手ともう一度戦います。';
   el.innerHTML = '<div class="rn-card"><div class="rn-head"><b>// RUN</b><span>勝ち抜き戦</span></div>' +
-    '<h2>' + title + '</h2><p class="rn-note">この試合でコンパイルされた回数 <b>' + damage + '</b> → ライフ −' + last.damage +
+    '<h2 class="rn-result ' + tone + '" data-text="' + title + '">' + title + '</h2>' +
+    (win ? '<p class="rn-gainbig"><span class="rn-gainnum">+' + (run.lastGain | 0) + '</span> CREDIT' + (winStreak(run) >= 2 ? ' <em class="rn-streak lv' + Math.min(3, winStreak(run) - 1) + '">' + winStreak(run) + ' 連勝</em>' : '') + '</p>' : '') +
+    '<p class="rn-note">この試合でコンパイルされた回数 <b>' + damage + '</b> → ライフ −' + last.damage +
       (last.damage < damage ? ' (FIREWALL で1回防いだ)' : '') + '</p>' +
     (last.saved === 'phoenix' ? '<p class="rn-warn rn-phoenix">PHOENIX — ライフ全回復でよみがえった！</p>'
       : last.saved ? '<p class="rn-warn">FAILSAFE が作動 — ライフ 1 で耐えた</p>' : '') +
-    lifeBar({ ...run, life: Math.max(0, run.life) }) + '<p class="rn-lead">' + line + '</p>' + heatNote +
+    (lostNow(last) ? lifeBar({ ...run, life: before.life | 0 }, lostNow(last)) : lifeBar({ ...run, life: Math.max(0, run.life) })) + '<p class="rn-lead">' + line + '</p>' + heatNote +
     (run.phase === 'over' || run.phase === 'clear' ? '<p class="rn-note">デッキ ' + deckLine(run.deck, byName) + '</p>' + patchStrip(run) : '') +
     '<div class="rn-btns">' +
       /* 終わったら、すぐもう一度 (クリアしたら次の HEAT が開いている) */
       (run.phase === 'over' || run.phase === 'clear' ? '<button type="button" class="rn-go" data-act="next">' + (run.phase === 'clear' ? '次の挑戦へ' : 'もう一度挑戦') + '</button>'
         : '<button type="button" class="rn-go" data-act="next">次へ</button>') +
       '<button type="button" data-act="board">盤面を見る</button><button type="button" data-act="title">タイトルへ</button></div></div>';
+  countUp(el.querySelector('.rn-gainnum'), 0, run.lastGain | 0, { fmt: (v) => '+' + v });
+  if (lostNow(last)) sfx('shatter');
   if (run.phase === 'clear') { el.classList.add('rn-clear'); confetti(RAR_COLORS.L, 320); setTimeout(() => confetti(RAR_COLORS.E, 200), 900); }
   el.onclick = (ev) => {
     const t = ev.target.closest('button');
