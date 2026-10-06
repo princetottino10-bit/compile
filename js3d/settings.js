@@ -18,8 +18,8 @@ let avatarList = () => [];
 /* shown: キャラの項目を見せるか。list: 相手に選べるキャラ [[id, 名前], ...] */
 export function setAvatarOptionsGate(shown, list) { avatarOptionsShown = shown; if (list) avatarList = list; }
 /* mat 以下は見た目 (レベルの報酬、cosmetics-ui.js) */
-/* autoPick: 選べるものが1つしかない選択は自動で選ぶ (最初はオフ。何が選ばれたか分からないまま進むことがあったので) / oppSummary: 相手の番のまとめ / beginner: 初心者モード (おすすめの手の HINT を出す。最初はオフ) */
-const DEFAULTS = { speed: 1, masterVol: 100, sfx: 80, bgmVol: 30, voiceVol: 80, bgm: 'burst', bgmMenu: '', bgmBattle: '', pauses: true, autoPick: false, oppSummary: true, beginner: false, gamepad: false, foil: true, mat: 'neon', sleeve: 'default', marker: 'default', ccolor: 'default',
+/* autoPick: 選べるものが1つしかない選択は自動で選ぶ (最初はオフ。何が選ばれたか分からないまま進むことがあったので) / oppSummary: 相手の番のまとめ (最初はオフ。2026-10-07 から) / beginner: 初心者モード (おすすめの手の HINT を出す。最初はオフ) */
+const DEFAULTS = { speed: 1, masterVol: 100, sfx: 80, bgmVol: 30, voiceVol: 80, bgm: 'burst', bgmMenu: '', bgmBattle: '', pauses: true, autoPick: false, oppSummary: false, beginner: false, gamepad: false, foil: true, mat: 'neon', sleeve: 'default', marker: 'default', ccolor: 'default',
   victory: 'default', title: '', icon: '',
   /* おまかせで今すぐ始める: 相手の強さ (0 かんたん / 1 ふつう / 2 つよい) と、今日のデイリーのプロトコルを自分に入れるか */
   quickLevel: 0, quickDaily: false,
@@ -71,6 +71,8 @@ addReportLines(() => {
 function load() {
   try {
     const raw = JSON.parse(localStorage.getItem(KEY) || '{}');
+    /* 相手の番のまとめを最初はオフにした (2026-10-07)。前の初期値 (オン) のまま保存されている人も、一度だけオフにする */
+    if (raw.oppSummaryV !== 2) { raw.oppSummary = false; raw.oppSummaryV = 2; }
     return { ...DEFAULTS, ...raw };
   } catch (e) {
     return { ...DEFAULTS };
