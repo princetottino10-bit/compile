@@ -185,7 +185,14 @@ async function loadAccount() {
       ROOM.roomClient().from(REPLAY_TABLE).delete().eq('id', id).then(() => {});
     }
   });
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveSoon(); });
+  /* 隠れたら送る。戻ってきたら、1分以上たっていれば読み直す (スマホはアプリを開いたままにすることが多く、
+     ページを開いたときにしか読まなかったので、別の端末で取った実績や戦績がいつまでも出てこなかった) */
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') { saveSoon(); return; }
+    /* 対戦の途中では読まない (対戦中の同期で週替わりの進み具合が書き戻ったことがある)。メニューの画面にいるときだけ */
+    const inMenu = document.body.classList.contains('pregame');
+    if (state.user && inMenu && state.sync !== '同期中…' && Date.now() - lastSyncAt(state.user.id) > 60 * 1000) syncRecords();
+  });
   /* つながったら、オフラインの間に遊んだ分をすぐ送る (オフラインの間の失敗の知らせも消す) */
   onNetChange((on) => { if (on && state.user) syncRecords(); else changed(); });
   changed();
