@@ -546,7 +546,12 @@ export function runRoomLobby(protocols, opts = {}) {
     function enterRoom() {
       clearInterval(lobbyTimer);
       /* 事故で閉じても戻れるよう、部屋のコードを覚えておく */
-      if (room && room.code) lsSet('compileRoomLast', room.status === 'finished' ? '' : room.code);   // 終わった対戦は覚えない
+      /* 終わった対戦・相手を待っているだけの部屋は覚えない (待っただけでタイトルに CONTINUE ONLINE が残っていた) */
+      if (room && room.code) {
+        const keep = room.status !== 'finished' && room.status !== 'waiting';
+        lsSet('compileRoomLast', keep ? room.code : '');
+        if (keep) lsSet('compileRoomLastAt', String(Date.now()));
+      }
       /* 再入室では既に対戦中のことがある (join が playing を返す) */
       if (room.status === 'playing' || room.status === 'finished') { done({ rm: room }); return; }
       sel = [];

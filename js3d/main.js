@@ -3536,6 +3536,8 @@ function roomPollDelay() {
 }
 async function roomPollTick() {
   if (!roomPollOn) return;
+  /* 対戦が続いている印。タイトルの CONTINUE ONLINE は、しばらく触っていない部屋には出さない */
+  try { localStorage.setItem('compileRoomLastAt', String(Date.now())); } catch (e) { /* private mode */ }
   try { await roomPoll(); } finally {
     if (roomPollOn) roomPollTimer = setTimeout(roomPollTick, roomPollDelay());
   }

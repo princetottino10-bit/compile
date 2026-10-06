@@ -171,7 +171,15 @@ export function runTitle(protocols, opts) {
   const startedBefore = (() => { try { return sessionStorage.getItem(STARTED_KEY) === '1'; } catch (e) { return false; } })();
   const menuOnly = !!(opts && opts.menuOnly) || startedBefore;    // ロビー等から戻るとき: 起動演出を飛ばしてメニューだけ
   const resumeRec = loadResume();
-  const roomLast = (() => { try { const c = localStorage.getItem('compileRoomLast') || ''; return /^[A-Za-z0-9]{3,12}$/.test(c) ? c : ''; } catch (e) { return ''; } })();
+  /* 中断したオンライン対戦。最後に部屋とやり取りしてから 15 分を過ぎたら、もう決着しているか片付けられているので出さない
+     (古い印が残って、遊んでいないのに CONTINUE ONLINE が出ていた) */
+  const roomLast = (() => {
+    try {
+      const c = localStorage.getItem('compileRoomLast') || '';
+      const at = Number(localStorage.getItem('compileRoomLastAt')) || 0;
+      return /^[A-Za-z0-9]{3,12}$/.test(c) && Date.now() - at < 15 * 60 * 1000 ? c : '';
+    } catch (e) { return ''; }
+  })();
   const root = document.getElementById('title');
   if (!root) return Promise.resolve('single');
   const emblems = protocols
