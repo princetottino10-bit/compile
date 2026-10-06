@@ -93,7 +93,7 @@ const pick = (list) => list[Math.floor(Math.random() * list.length)];
 export const avatarIds = () => Object.keys(AVATARS).filter(id => !AVATARS[id].boss);
 /* 立ち絵の版。画像には版の印が付かないので、同じ名前で差し替えたらここを上げる (古い絵がしばらく出るのを防ぐ)。3 = 2026-10-01 頭の先まで入る枠で切り直し (E:SDSwarmUIOutputvatar_v2export_v4headroom.py) */
 /* 4 = 2026-10-05 4人の服と髪飾りを新デザインに寄せた (顔は前のまま。E:/SD/SwarmUI/Output/avatar_v2/export_v4/design_restyle.py) */
-export const ART_VER = 5;
+export const ART_VER = 6;
 /* 声の版。同じ名前で声を作り直したらここを上げる (古い声がしばらく鳴るのを防ぐ)。5 = 2026-10-02 読みの直し (止められ・上回・開いた・命) とセリフの差し替え */
 export const VOICE_VER = 9;
 /* 声の大きさをキャラどうしでそろえる。測った大きさ (ラウドネス、LUFS。ffmpeg の ebur128 の中央値) から、VOICE_TARGET へ合わせる倍率を出す。
