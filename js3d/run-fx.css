@@ -125,6 +125,7 @@ body.calm #runOv *, body.calm #runOv *::after { animation: none !important; }
 body.calm #runHud, body.calm #runHud * { animation: none !important; }
 
 /* 試合中ボーナスの札と、決着後の内訳 */
+#runHud .rh-chip.short { color: #05070f; background: #ffd86a; border-color: transparent; }
 #runHud .rh-chip.bonus { color: #fff; background: linear-gradient(90deg, #ffb13d, #ff4fa3); border-color: transparent; }
 #runHud .rh-chip.bump { animation: rnGet .6s cubic-bezier(.2, 1.6, .4, 1); }
 #runOv .rn-bonusof { font: 700 12px/1 "M PLUS 1", system-ui; color: #ffd0e6; letter-spacing: .02em; }
@@ -158,3 +159,45 @@ body.calm #runHud, body.calm #runHud * { animation: none !important; }
 @media (prefers-reduced-motion: reduce) { #hype .hp-slam, #hype .hp-slam b { animation: hpFade 1.2s ease forwards !important; } }
 body.calm #hype .hp-slam, body.calm #hype .hp-slam b { animation: hpFade 1.2s ease forwards !important; }
 @keyframes hpFade { 0%, 80% { opacity: 1; } 100% { opacity: 0; } }
+
+/* ---- 試合中スコア (run-score.js): ライフ表示の中の大きな数字・COMBO の倍率・クレジットまでのバー ---- */
+#runHud .rs-score { position: relative; display: flex; align-items: baseline; gap: 6px; padding: 0 10px 7px 0; margin-right: 2px;
+  border-right: 1px solid rgba(255, 255, 255, .14); white-space: nowrap; }
+#runHud .rs-score > small:first-child { font: 900 9px/1 var(--font-hud), "M PLUS 1", system-ui; letter-spacing: .2em; color: var(--dim); }
+#runHud .rs-num { display: inline-block; font: 900 20px/1 var(--font-hud), "M PLUS 1", system-ui; color: #fff; font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 12px rgba(255, 216, 106, .55); }
+#runHud .rs-mult { font: 900 12px/1 var(--font-hud), "M PLUS 1", system-ui; font-style: normal; padding: 3px 6px; border-radius: 6px;
+  color: #fff; background: linear-gradient(90deg, #ff6a3d, #ff4fa3); }
+#runHud .rs-mult.lv1 { box-shadow: 0 0 10px rgba(255, 120, 60, .6); }
+#runHud .rs-mult.lv2 { box-shadow: 0 0 16px rgba(255, 160, 60, .8); animation: rnGlow .6s ease-in-out infinite alternate; }
+#runHud .rs-mult.lv3, #runHud .rs-mult.lv4 { background: linear-gradient(90deg, #ffe066, #ff7a3d, #ff3d9a); box-shadow: 0 0 22px rgba(255, 200, 80, .9);
+  animation: rnGlow .35s ease-in-out infinite alternate, rsShiver .12s linear infinite; }
+@keyframes rsShiver { 50% { translate: .6px -.6px; } }
+#runHud .rs-bar { position: absolute; left: 0; right: 10px; bottom: 0; display: block; height: 3px; border-radius: 2px; background: rgba(255, 255, 255, .1); overflow: hidden; }
+#runHud .rs-bar > i { display: block; height: 100%; background: linear-gradient(90deg, #ffb13d, #ffd86a); transition: width .4s ease-out; }
+#runHud .rs-bar.full > i { background: linear-gradient(90deg, #7cf0d0, #ffd86a); }
+#runHud .rs-cr { font: 800 9px/1 "M PLUS 1", system-ui; color: #ffd86a; letter-spacing: .04em; white-space: nowrap; }
+#runHud .rs-score.bump .rs-num { animation: rsBump .35s cubic-bezier(.2, 1.6, .4, 1); }
+@keyframes rsBump { 40% { transform: scale(1.35); color: #ffd86a; } }
+#runHud .rs-gain { position: absolute; left: 0; top: -6px; white-space: nowrap; pointer-events: none; font: 900 16px/1 var(--font-logo), "M PLUS 1", system-ui;
+  color: #ffd86a; text-shadow: 0 0 12px rgba(255, 200, 80, .9); animation: rhPop 1.4s ease-out forwards; }
+#runHud .rs-gain.broke { color: #ff8fa8; text-shadow: 0 0 10px rgba(255, 60, 100, .8); font-size: 13px; }
+/* 動いたラインから飛び出して、スコアに吸い込まれる点 */
+.rs-pop { position: fixed; z-index: 29; pointer-events: none; white-space: nowrap; font: 900 22px/1 var(--font-hud), "M PLUS 1", system-ui; color: #ffd86a;
+  text-shadow: 0 0 14px rgba(255, 200, 80, .9), 2px 2px 0 #4a2600; }
+.rs-pop.big { font-size: 30px; color: #fff; text-shadow: 0 0 18px #ff4fa3, 3px 3px 0 #ff4fa3; }
+/* 決着後のスコア */
+#runOv .rn-scoreline { margin: 0; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+#runOv .rn-scoreline small { font: 900 10px/1 var(--font-hud), "M PLUS 1", system-ui; letter-spacing: .2em; color: var(--dim); }
+#runOv .rn-scoreline b { font: 900 30px/1 var(--font-hud), "M PLUS 1", system-ui; color: #fff; font-variant-numeric: tabular-nums; }
+#runOv .rn-scoreline span { font: 700 12px/1.4 "M PLUS 1", system-ui; color: var(--dim); }
+#runOv .rn-scoreline em { font: 900 16px/1 var(--font-logo), "M PLUS 1", system-ui; font-style: normal; color: #ffd86a; letter-spacing: .08em;
+  text-shadow: 0 0 14px rgba(255, 200, 80, .8); animation: rnSlam .5s cubic-bezier(.2, 1.6, .4, 1) .9s backwards; }
+/* 縦持ち: スコアは1段目いっぱい、案内の文字はライフ表示の下端の下へ */
+@media (max-width: 860px) and (orientation: portrait) {
+  #runHud .rs-score { padding-right: 8px; }
+  #runHud .rs-num { font-size: 18px; }
+  #runHud .rs-cr { display: none; }              /* 狭いので、クレジットまでの残りはバーだけで見せる */
+  #runHud .rn-life span { min-width: 80px; }
+  body:has(#runHud .rh-chips) #prompt { top: calc(var(--run-hud-bottom, 166px) + 8px); }
+}

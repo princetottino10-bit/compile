@@ -9,10 +9,10 @@ import { confetti } from './gachafx.js';
 import { calm } from './prefs.js';
 
 export const RANKS = [
-  { min: 24, name: 'INSANE', cls: 'r4' },
-  { min: 16, name: 'EXCELLENT', cls: 'r3' },
-  { min: 11, name: 'GREAT', cls: 'r2' },
-  { min: 7, name: 'NICE', cls: 'r1' }
+  { min: 21, name: 'INSANE', cls: 'r4' },
+  { min: 14, name: 'EXCELLENT', cls: 'r3' },
+  { min: 9, name: 'GREAT', cls: 'r2' },
+  { min: 5, name: 'NICE', cls: 'r1' }
 ];
 
 /** 1手の点数。swing = 自分のラインの伸び + 相手のラインの減り、chain = いちばん長かったチェーン、compiled = コンパイルした */
@@ -54,7 +54,7 @@ export function hypePlay(info, bonus) {
   if (info.chain >= 2) parts.push('CHAIN ×' + info.chain);
   if (info.compiled) parts.push('COMPILE');
   if (info.swing >= 6) parts.push('SWING +' + info.swing);
-  if (bonus) parts.push('<em>+' + bonus + ' CR</em>');
+  if (bonus) parts.push('<em>+' + bonus + ' CR</em>');   // スコアがクレジットの区切りを越えた
   slam(r.name, parts.join(' ・ '), r.cls);
   if (r.cls === 'r4') { sfx('boom'); confetti(['#ffd86a', '#ff4fa3', '#7cf0d0', '#9d7bff', '#ffffff'], 200); }
   else if (r.cls === 'r3') { sfx('chain', 5); confetti(['#ffd86a', '#ff4fa3', '#ffffff'], 90); }

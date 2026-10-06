@@ -122,8 +122,9 @@ export function pressThen(btn, fn) {
 export function hudChips(run, lost, bonus, fresh) {
   const has = (id) => (run.patches || []).includes(id);
   const chips = [];
-  chips.push('<b class="rh-chip cr' + (fresh ? ' bump' : '') + '" title="いま勝てばもらえるクレジット (試合中ボーナスを含む)">WIN +' + RUN.creditGain(run, lost, bonus) + '</b>');
-  if (bonus) chips.push('<b class="rh-chip bonus' + (fresh ? ' bump' : '') + '" title="GREAT 以上の手で +1 (1試合 ' + RUN.RUN_BONUS_MAX + ' まで。勝てばもらえる)">BONUS ' + bonus + '/' + RUN.RUN_BONUS_MAX + '</b>');
+  /* 短縮マッチ (どちらも1本で勝ち) は、試合中ずっと見えるように */
+  if (RUN.runWinCompiles(run) === 1) chips.push('<b class="rh-chip short" title="短縮マッチ: 先にコンパイルした方の勝ち">1本先取</b>');
+  chips.push('<b class="rh-chip cr' + (fresh ? ' bump' : '') + '" title="いま勝てばもらえるクレジット (試合中スコアの分を含む)">WIN +' + RUN.creditGain(run, lost, bonus) + '</b>');
   /* ノーダメージで勝つとクレジット +1 (creditGain)。コンパイルされたら割れる */
   chips.push('<b class="rh-chip perfect' + (lost ? ' broken' : '') + '" title="コンパイルされずに勝つとクレジット +1">PERFECT</b>');
   if (has('firewall')) chips.push('<b class="rh-chip guard' + (lost ? ' used' : '') + '" title="FIREWALL: 最初の1回のコンパイルではライフが減らない">FIREWALL</b>');

@@ -8,7 +8,8 @@ import { recordDailyGame, DAILY_XP, dailyView } from './daily.js';
 import { maybeLoginHint, uploadReplay } from './account.js';
 import { logPlay } from './playlog.js';
 import * as FEEL from './feel.js';
-import { hypePlay, matchPoint, rankOf, playScore } from './hype.js';
+import { hypePlay, matchPoint, rankOf, playScore, slam } from './hype.js';
+import { scoreBegin, scoreAction, scoreCredits, scoreNow } from './run-score.js';
 import { createPickAid } from './pickaid.js';
 import { openSpectate, watchAgainUrl } from './spectate.js';
 import { watchGate, mountCpuWatchTools, mountRoomWatchTools, unmountWatchTools, catchUpText } from './watchtools.js';
@@ -71,7 +72,7 @@ import { openOpponentSelect } from './opponent-select.js';
 import { UNDERDOG_DECK, STRONGEST_AI, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL, UNDERDOG_TAG_RIVAL_MATE, levelLabel, fixedDeck } from './aidecks.js';
 import { openRun, runHud, showRunAfterGame } from './run-ui.js';
 import { openWeekly, weeklyHud, showWeeklyAfterGame } from './weekly-ui.js';
-import { compilesBy, loadRun, RUN_WIN_COMPILES, RUN_BONUS_MAX, battleOpts, lethal, nodeById } from './run.js';
+import { compilesBy, loadRun, RUN_WIN_COMPILES, runWinCompiles, battleOpts, lethal, nodeById } from './run.js';
 import { loadWeekly, loadStoredWeekly, weekKey } from './weekly.js';
 import { openReview } from './review.js';
 import { runRoomLobby } from './roomui.js';
@@ -1324,6 +1325,16 @@ async function boot() {
   cur = res;
   playBattleBgm();                          // 対戦の BGM (ボス戦は専用の曲)
   gameStartedAt = Date.now();          // はじめの表示で合計値の演出が出ないように (feel.js)
+  /* 勝ち抜き戦の短縮マッチ (序盤のふつうの戦闘): どちらも1本取れば勝ち。始めに大きく知らせる。
+     自分は2つ済みから始まるので、はじめから「あと1本」。MATCH POINT / DANGER は出さない (分かりにくかった) */
+  if (runMode && runKind === 'run' && !replayMode && !reviewView) {
+    const r = loadRun();
+    scoreBegin(runBonusKey());
+    if (r && r.phase === 'battle' && runWinCompiles(r) === 1) {
+      mpShown.mp = mpShown.dg = true;
+      setTimeout(() => slam('SHORT MATCH', '1本先取 ・ 先にコンパイルした方の勝ち', 'mp'), 700);
+    }
+  }
   if (!trainingMode && !puzzle && !tutorial && !demoMode && !replayMode) CW.battleStarted(storyNode ? 'story' : runMode ? runKind : tagMates ? 'tag' : quickGame ? 'quick' : 'cpu', p0, p1);
   if (!trainingMode && !puzzle && !tutorial && !demoMode && !replayMode) lastSetup = { p0: p0.slice(), p1: p1.slice(), mates: tagMates };
   /* 対戦を始めたら、アドレスの「この対戦を始める」指定 (REMATCH の ?me=&ai=&lv=、おまかせの ?quick=1、タッグ) を消す。
@@ -3993,41 +4004,46 @@ function netDeltaBegin(st) {
   netDelta = { base: [0, 1, 2].map(l => [0, 1].map(s => totalOf(st, l, s))), at: Date.now(),
     actor: st.turn, myComp: compilesBy(st, ME), chain: 0 };
 }
-/* ---- 勝ち抜き戦の試合中のほめ言葉 (hype.js。週替わりには出さない) と、勝ち抜き戦の試合中ボーナス ----
-   自分の手番の1手を解き終えたら、その大きさで NICE〜INSANE。勝ち抜き戦では GREAT 以上でクレジット +1 (1試合 3 まで、勝てばもらえる) */
+/* ---- 勝ち抜き戦の試合中: ほめ言葉 (hype.js) とスコア (run-score.js) ----
+   自分の手番の1手を解き終えたら、動いたラインから点を飛ばしてスコアに積み、大きさで NICE〜INSANE。
+   スコア 300 点ごとにクレジット +1 (1試合 3 まで、勝てばもらえる) */
 const hypeOn = () => runMode && runKind === 'run' && !reviewView && !replayMode && !trainingMode && !demoMode && !roomMode;
-const runBonusKey = () => { const r = loadRun(); return r ? 'compileRunBonus:' + (r.startedAt || 0) + ':' + (r.history || []).length : ''; };
-function runBonus() {
-  try { return Math.min(RUN_BONUS_MAX, +sessionStorage.getItem(runBonusKey()) || 0); } catch (e) { return 0; }
-}
-function addRunBonus() {
-  const n = runBonus();
-  if (n >= RUN_BONUS_MAX) return 0;
-  try { sessionStorage.setItem(runBonusKey(), String(n + 1)); } catch (e) { return 0; }
-  return 1;
-}
+const runBonusKey = () => { const r = loadRun(); return r ? 'compileRunScore:' + (r.startedAt || 0) + ':' + (r.history || []).length : ''; };
+function runBonus() { return runMode && runKind === 'run' ? scoreCredits() : 0; }
 function hypeAfter(d, st) {
   /* 決着した手は、このあと勝敗の演出があるので出さない */
   if (!hypeOn() || !d || d.actor !== ME || !st || st.winner != null) return;
   const compiled = compilesBy(st, ME) > d.myComp;
   let swing = 0;
+  const lines = [];
   for (let l = 0; l < 3; l++) {
     const mine = totalOf(st, l, ME) - d.base[l][ME];
     const opp = totalOf(st, l, AI) - d.base[l][AI];
     /* コンパイルで空になったラインは数えない (コンパイルの点で数える) */
     const emptied = compiled && !st.lines[l][0].length && !st.lines[l][1].length;
-    if (emptied) continue;
-    if (mine > 0) swing += mine;
-    if (opp < 0) swing -= opp;
+    if (emptied) { lines.push({ pos: platePos(l, ME), gain: 10 }); continue; }
+    const gain = Math.max(0, mine) + Math.max(0, -opp);
+    swing += gain;
+    if (gain > 0) lines.push({ pos: platePos(l, mine > 0 ? ME : AI), gain });
   }
   const info = { swing, chain: d.chain, compiled };
+  /* 毎手の手応え: 動いたラインに小さな衝撃波、画面を少しだけ揺らす */
+  if (!calmMotion() && swing > 0) {
+    for (const ln of lines) if (ln.pos) FX.shockwave(stage.scene, ln.pos, 0xffd86a, 1.2 + Math.min(1.6, ln.gain * 0.12), 520);
+    stage.shake(Math.min(0.1, 0.02 + swing * 0.006), 180);
+    FEEL.buzz(12);
+  }
+  const res = scoreAction(info, lines.filter(x => x.pos), stage, THREE);
   const r = rankOf(playScore(info));
-  if (!r) return;
-  const bonus = runKind === 'run' && r.cls !== 'r1' ? addRunBonus() : 0;
-  setTimeout(() => {
-    hypePlay(info, bonus);
-    if (bonus) runHud(compilesBy(cur.state, AI), runBonus());
-  }, 260);
+  if (r) setTimeout(() => hypePlay(info, res.credited), 260);
+}
+/* そのラインのプロトコル板の位置 (3D) */
+function platePos(line, side) {
+  const p = panels && panels.panels.find(q => q.line === line && q.side === side);
+  if (!p) return null;
+  const v = new THREE.Vector3();
+  p.group.getWorldPosition(v);
+  return v;
 }
 function netDeltaShow(st) {
   const d = netDelta;
@@ -5185,7 +5201,7 @@ function arrangeOnBoard(req, opts) {
     const onHover = (ev) => { canvas.style.cursor = hitPos(ev) ? 'pointer' : ''; };
     canvas.addEventListener('pointerdown', onPlate, true);
     canvas.addEventListener('pointermove', onHover);
-    /* 確定ボタンを、並べ替えている板の右隣にも浮かべる (帯まで押しに行かなくてよいように)。Enter でも確定 */
+    /* 確定ボタンは、最後にタップした板のすぐ下 (手前) に浮かべる (前は右端の板の横で、指から遠かった)。Enter でも確定 */
     const go = document.createElement('button');
     go.id = 'arrGo';
     go.type = 'button';
@@ -5194,14 +5210,15 @@ function arrangeOnBoard(req, opts) {
     go.hidden = true;
     document.body.appendChild(go);
     const goAt = new THREE.Vector3();
+    let goPos = 1;                                 // 最後にタップした板の位置 (はじめは真ん中)
     const placeGo = () => {
       if (go.hidden || targetSide === null) return;
-      const s = slotX(2);
-      goAt.set(s[0] + 1.05, s[1], s[2]).project(stage.camera);
+      const s = slotX(goPos);
+      goAt.set(s[0], s[1], s[2] + 0.78).project(stage.camera);
       const r = canvas.getBoundingClientRect();
       const x = r.left + (goAt.x + 1) / 2 * r.width, y = r.top + (1 - goAt.y) / 2 * r.height;
-      go.style.left = Math.min(window.innerWidth - go.offsetWidth - 8, Math.max(8, x)) + 'px';
-      go.style.top = Math.min(window.innerHeight - go.offsetHeight - 8, Math.max(8, y - go.offsetHeight / 2)) + 'px';
+      go.style.left = Math.min(window.innerWidth - go.offsetWidth - 8, Math.max(8, x - go.offsetWidth / 2)) + 'px';
+      go.style.top = Math.min(window.innerHeight - go.offsetHeight - 8, Math.max(8, y)) + 'px';
     };
     const offFrame = stage.onFrame(placeGo);
     const onKey = (ev) => {
@@ -5265,6 +5282,7 @@ function arrangeOnBoard(req, opts) {
 
       tapLine = (line, side) => {
         sfx('pick');
+        goPos = line;
         /* コントロール: 反対側の板をタップしたら、そちらを並べ替える (前の側は元に戻す) */
         if (control && side !== undefined && side !== targetSide) {
           resetPlates(list);
@@ -5503,7 +5521,7 @@ async function afterTurn() {
           }
         } else {
           const was = loadRun();
-          showRunAfterGame(win, compilesBy(cur.state, AI), Object.values(protoIndex), win ? runBonus() : 0);
+          showRunAfterGame(win, compilesBy(cur.state, AI), Object.values(protoIndex), win ? runBonus() : 0, scoreNow());
           if (win) maybeLoginHint('runWin');
           const now = loadRun();
           if (was && was.phase === 'battle' && now && now.phase === 'clear') await gainXp('run', XP_GAIN.runClear);
@@ -6328,7 +6346,7 @@ function syncPanels(st, animate) {
     if (run && lethal(run, lost)) {
       runEnded = true;
       fadeOutBgm();
-      showRunAfterGame(false, lost, Object.values(protoIndex));
+      showRunAfterGame(false, lost, Object.values(protoIndex), 0, scoreNow());
     }
   }
   if (!panels || !st) return Promise.resolve();

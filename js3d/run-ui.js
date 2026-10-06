@@ -14,6 +14,7 @@ import { showProtocolCards } from './protocards.js';
 import { confetti, RAR_COLORS } from './gachafx.js';
 import { sfx } from './audio.js';
 import { afterRender, pressThen, winStreak, rowsLeft, countUp, hudChips, hudPop } from './run-fx.js';
+import { scoreHtml, scoreHurt, SCORE_PER_CREDIT } from './run-score.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -481,6 +482,14 @@ export function openRun(protocols, cardsOf, opts) {
 /* 対戦中のライフ表示。lost = この試合でここまでにコンパイルされた回数。
    横に「いま勝てばもらえるクレジット」・ノーダメージの印・FIREWALL などの守りの残り・連勝を出す。
    コンパイルされた瞬間だけ揺れて「-1 LIFE」(FIREWALL が防いだら「BLOCK!」) が浮かぶ */
+/* 縦持ちでは、ライフ表示の下端に合わせて案内の文字を下げる (札やスコアで高さが変わる。向きを変えたときも) */
+function hudBottom() {
+  requestAnimationFrame(() => {
+    const el = document.getElementById('runHud');
+    if (el) document.documentElement.style.setProperty('--run-hud-bottom', Math.round(el.getBoundingClientRect().bottom) + 'px');
+  });
+}
+if (typeof window !== 'undefined') window.addEventListener('resize', hudBottom);
 let hudLost = null;
 let hudBonus = 0;
 export function runHud(lost, bonus) {
@@ -499,15 +508,32 @@ export function runHud(lost, bonus) {
   hudLost = n; hudBonus = b;
   const dmg = RUN.damageOf(run, n);          // FIREWALL は最初の1回を防ぐ
   const label = run.opp && run.opp.boss ? 'BOSS' : (rowNow(run) + 1) + '段目' + (run.opp && run.opp.elite ? ' 精鋭' : '');
-  el.innerHTML = '<small>' + label + '</small>' + lifeBar(run, Math.min(run.life, dmg)) + hudChips(run, n, b, b > prevBonus);
+  el.innerHTML = '<small>' + label + '</small>' + scoreHtml() + lifeBar(run, Math.min(run.life, dmg)) + hudChips(run, n, b, b > prevBonus);
+  /* 縦持ちでは、ライフ表示の下端に合わせて案内の文字を下げる (札やスコアで高さが変わる) */
+  hudBottom();
   el.classList.toggle('danger', run.life - dmg <= 2);
   if (prevLost !== null && n > prevLost) {
+    scoreHurt();
     const blocked = RUN.damageOf(run, n) === RUN.damageOf(run, prevLost);
     hudPop(el, blocked ? 'BLOCK!' : '-' + (RUN.damageOf(run, n) - RUN.damageOf(run, prevLost)) + ' LIFE', blocked ? 'block' : 'hurt');
   }
 }
+/* 決着後のスコアの行: 今回のスコアと、いちばんの記録 (更新したら NEW RECORD) */
+const HI_KEY = 'compileRunHiScore';
+function scoreLine(score, win) {
+  const sc = score | 0;
+  if (!sc) return '';
+  let hi = 0;
+  try { hi = +localStorage.getItem(HI_KEY) || 0; } catch (e) { /* private mode */ }
+  const record = sc > hi;
+  if (record) try { localStorage.setItem(HI_KEY, String(sc)); } catch (e) { /* private mode */ }
+  return '<p class="rn-scoreline' + (record ? ' record' : '') + '"><small>SCORE</small><b class="rn-scorenum">' + sc.toLocaleString() + '</b>' +
+    (record ? '<em>NEW RECORD!</em>' : '<span>最高 ' + hi.toLocaleString() + '</span>') +
+    (win ? '' : '<span>負けたのでクレジットにはならない (' + SCORE_PER_CREDIT + ' 点ごとに +1)</span>') + '</p>';
+}
+
 /* 決着後: 結果を入れて、次の画面 (報酬・やり直し・終わり) へ */
-export function showRunAfterGame(win, damage, protocols, bonus) {
+export function showRunAfterGame(win, damage, protocols, bonus, score) {
   const names = protocols.map(p => p.name);
   const byName = Object.fromEntries(protocols.map(p => [p.name, p]));
   const before = RUN.loadRun();
@@ -528,7 +554,8 @@ export function showRunAfterGame(win, damage, protocols, bonus) {
       : win ? '+' + (run.lastGain | 0) + ' クレジット。報酬を選んでから地図へ戻ります。' : '同じ相手ともう一度戦います。';
   el.innerHTML = '<div class="rn-card"><div class="rn-head"><b>// RUN</b><span>勝ち抜き戦</span></div>' +
     '<h2 class="rn-result ' + tone + '" data-text="' + title + '">' + title + '</h2>' +
-    (win ? '<p class="rn-gainbig"><span class="rn-gainnum">+' + (run.lastGain | 0) + '</span> CREDIT' + (run.lastBonus ? ' <small class="rn-bonusof">うち試合中ボーナス +' + run.lastBonus + '</small>' : '') + (winStreak(run) >= 2 ? ' <em class="rn-streak lv' + Math.min(3, winStreak(run) - 1) + '">' + winStreak(run) + ' 連勝</em>' : '') + '</p>' : '') +
+    (win ? '<p class="rn-gainbig"><span class="rn-gainnum">+' + (run.lastGain | 0) + '</span> CREDIT' + (run.lastBonus ? ' <small class="rn-bonusof">うち試合中スコアの分 +' + run.lastBonus + '</small>' : '') + (winStreak(run) >= 2 ? ' <em class="rn-streak lv' + Math.min(3, winStreak(run) - 1) + '">' + winStreak(run) + ' 連勝</em>' : '') + '</p>' : '') +
+    scoreLine(score, win) +
     '<p class="rn-note">この試合でコンパイルされた回数 <b>' + damage + '</b> → ライフ −' + last.damage +
       (last.damage < damage ? ' (FIREWALL で1回防いだ)' : '') + '</p>' +
     (last.saved === 'phoenix' ? '<p class="rn-warn rn-phoenix">PHOENIX — ライフ全回復でよみがえった！</p>'
@@ -541,6 +568,8 @@ export function showRunAfterGame(win, damage, protocols, bonus) {
         : '<button type="button" class="rn-go" data-act="next">次へ</button>') +
       '<button type="button" data-act="board">盤面を見る</button><button type="button" data-act="title">タイトルへ</button></div></div>';
   countUp(el.querySelector('.rn-gainnum'), 0, run.lastGain | 0, { fmt: (v) => '+' + v });
+  countUp(el.querySelector('.rn-scorenum'), 0, score | 0, { fmt: (v) => v.toLocaleString(), ms: 900 });
+  if (el.querySelector('.rn-scoreline.record')) setTimeout(() => { sfx('win'); confetti(RAR_COLORS.E, 160); }, 950);
   if (lostNow(last)) sfx('shatter');
   if (run.phase === 'clear') { el.classList.add('rn-clear'); confetti(RAR_COLORS.L, 320); setTimeout(() => confetti(RAR_COLORS.E, 200), 900); }
   el.onclick = (ev) => {
