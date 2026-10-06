@@ -117,3 +117,33 @@ export function pressThen(btn, fn) {
   if (box) box.classList.add('fx-busy');      // 弾んでいる間の2度押しを防ぐ
   setTimeout(fn, 240);
 }
+
+/** 対戦中のライフの横に出す札: いま勝てばもらえるクレジット・ノーダメージ・守りの残り・連勝 */
+export function hudChips(run, lost, bonus, fresh) {
+  const has = (id) => (run.patches || []).includes(id);
+  const chips = [];
+  chips.push('<b class="rh-chip cr' + (fresh ? ' bump' : '') + '" title="いま勝てばもらえるクレジット (試合中ボーナスを含む)">WIN +' + RUN.creditGain(run, lost, bonus) + '</b>');
+  if (bonus) chips.push('<b class="rh-chip bonus' + (fresh ? ' bump' : '') + '" title="GREAT 以上の手で +1 (1試合 ' + RUN.RUN_BONUS_MAX + ' まで。勝てばもらえる)">BONUS ' + bonus + '/' + RUN.RUN_BONUS_MAX + '</b>');
+  /* ノーダメージで勝つとクレジット +1 (creditGain)。コンパイルされたら割れる */
+  chips.push('<b class="rh-chip perfect' + (lost ? ' broken' : '') + '" title="コンパイルされずに勝つとクレジット +1">PERFECT</b>');
+  if (has('firewall')) chips.push('<b class="rh-chip guard' + (lost ? ' used' : '') + '" title="FIREWALL: 最初の1回のコンパイルではライフが減らない">FIREWALL</b>');
+  if (has('failsafe') && !run.failsafeUsed) chips.push('<b class="rh-chip guard" title="FAILSAFE: ライフが尽きる試合を1度だけ、ライフ 1 で耐える">FAILSAFE</b>');
+  if (has('phoenix') && !run.phoenixUsed) chips.push('<b class="rh-chip guard" title="PHOENIX: ライフが尽きても1度だけ全回復">PHOENIX</b>');
+  const st = winStreak(run);
+  if (st >= 2) chips.push('<b class="rh-chip streak" title="続けて勝っている数 (負けると切れる)">' + st + '連勝中</b>');
+  return '<span class="rh-chips">' + chips.join('') + '</span>';
+}
+
+/** 対戦中のライフ表示を揺らして、文字を浮かべる (kind: hurt / block) */
+export function hudPop(hud, text, kind) {
+  sfx(kind === 'block' ? 'shift' : 'shatter');
+  if (calm()) return;
+  hud.classList.remove('rh-hurt', 'rh-block');
+  void hud.offsetWidth;
+  hud.classList.add(kind === 'block' ? 'rh-block' : 'rh-hurt');
+  const pop = document.createElement('b');
+  pop.className = 'rh-pop ' + kind;
+  pop.textContent = text;
+  hud.appendChild(pop);
+  setTimeout(() => pop.remove(), 1400);
+}

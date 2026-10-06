@@ -13,7 +13,7 @@ import { emblemDataURL } from './emblems.js';
 import { showProtocolCards } from './protocards.js';
 import { confetti, RAR_COLORS } from './gachafx.js';
 import { sfx } from './audio.js';
-import { afterRender, pressThen, winStreak, rowsLeft, countUp } from './run-fx.js';
+import { afterRender, pressThen, winStreak, rowsLeft, countUp, hudChips, hudPop } from './run-fx.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -478,8 +478,12 @@ export function openRun(protocols, cardsOf, opts) {
   });
 }
 
-/* 対戦中のライフ表示。lost = この試合でここまでにコンパイルされた回数 */
-export function runHud(lost) {
+/* 対戦中のライフ表示。lost = この試合でここまでにコンパイルされた回数。
+   横に「いま勝てばもらえるクレジット」・ノーダメージの印・FIREWALL などの守りの残り・連勝を出す。
+   コンパイルされた瞬間だけ揺れて「-1 LIFE」(FIREWALL が防いだら「BLOCK!」) が浮かぶ */
+let hudLost = null;
+let hudBonus = 0;
+export function runHud(lost, bonus) {
   const run = RUN.loadRun();
   if (!run || run.phase !== 'battle') return;
   let el = document.getElementById('runHud');
@@ -488,19 +492,27 @@ export function runHud(lost) {
     el.id = 'runHud';
     document.body.appendChild(el);
   }
-  const dmg = RUN.damageOf(run, lost);          // FIREWALL は最初の1回を防ぐ
+  const n = lost | 0;
+  const b = bonus | 0;
+  if (hudLost === n && hudBonus === b && el.childElementCount) return;          // 変わっていなければ描き直さない (揺れ・光を繰り返さない)
+  const prevLost = hudLost, prevBonus = hudBonus;
+  hudLost = n; hudBonus = b;
+  const dmg = RUN.damageOf(run, n);          // FIREWALL は最初の1回を防ぐ
   const label = run.opp && run.opp.boss ? 'BOSS' : (rowNow(run) + 1) + '段目' + (run.opp && run.opp.elite ? ' 精鋭' : '');
-  el.innerHTML = '<small>' + label + '</small>' + lifeBar(run, Math.min(run.life, dmg));
+  el.innerHTML = '<small>' + label + '</small>' + lifeBar(run, Math.min(run.life, dmg)) + hudChips(run, n, b, b > prevBonus);
   el.classList.toggle('danger', run.life - dmg <= 2);
+  if (prevLost !== null && n > prevLost) {
+    const blocked = RUN.damageOf(run, n) === RUN.damageOf(run, prevLost);
+    hudPop(el, blocked ? 'BLOCK!' : '-' + (RUN.damageOf(run, n) - RUN.damageOf(run, prevLost)) + ' LIFE', blocked ? 'block' : 'hurt');
+  }
 }
-
 /* 決着後: 結果を入れて、次の画面 (報酬・やり直し・終わり) へ */
-export function showRunAfterGame(win, damage, protocols) {
+export function showRunAfterGame(win, damage, protocols, bonus) {
   const names = protocols.map(p => p.name);
   const byName = Object.fromEntries(protocols.map(p => [p.name, p]));
   const before = RUN.loadRun();
   if (!before || before.phase !== 'battle') return;
-  const run = RUN.finishBattle(before, win, damage, names);
+  const run = RUN.finishBattle(before, win, damage, names, Math.random, bonus | 0);
   RUN.saveRun(run);
   const el = overlay();
   el.classList.add('after');
@@ -516,7 +528,7 @@ export function showRunAfterGame(win, damage, protocols) {
       : win ? '+' + (run.lastGain | 0) + ' クレジット。報酬を選んでから地図へ戻ります。' : '同じ相手ともう一度戦います。';
   el.innerHTML = '<div class="rn-card"><div class="rn-head"><b>// RUN</b><span>勝ち抜き戦</span></div>' +
     '<h2 class="rn-result ' + tone + '" data-text="' + title + '">' + title + '</h2>' +
-    (win ? '<p class="rn-gainbig"><span class="rn-gainnum">+' + (run.lastGain | 0) + '</span> CREDIT' + (winStreak(run) >= 2 ? ' <em class="rn-streak lv' + Math.min(3, winStreak(run) - 1) + '">' + winStreak(run) + ' 連勝</em>' : '') + '</p>' : '') +
+    (win ? '<p class="rn-gainbig"><span class="rn-gainnum">+' + (run.lastGain | 0) + '</span> CREDIT' + (run.lastBonus ? ' <small class="rn-bonusof">うち試合中ボーナス +' + run.lastBonus + '</small>' : '') + (winStreak(run) >= 2 ? ' <em class="rn-streak lv' + Math.min(3, winStreak(run) - 1) + '">' + winStreak(run) + ' 連勝</em>' : '') + '</p>' : '') +
     '<p class="rn-note">この試合でコンパイルされた回数 <b>' + damage + '</b> → ライフ −' + last.damage +
       (last.damage < damage ? ' (FIREWALL で1回防いだ)' : '') + '</p>' +
     (last.saved === 'phoenix' ? '<p class="rn-warn rn-phoenix">PHOENIX — ライフ全回復でよみがえった！</p>'

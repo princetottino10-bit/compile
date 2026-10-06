@@ -8,6 +8,7 @@ import { recordDailyGame, DAILY_XP, dailyView } from './daily.js';
 import { maybeLoginHint, uploadReplay } from './account.js';
 import { logPlay } from './playlog.js';
 import * as FEEL from './feel.js';
+import { hypePlay, matchPoint, rankOf, playScore } from './hype.js';
 import { createPickAid } from './pickaid.js';
 import { openSpectate, watchAgainUrl } from './spectate.js';
 import { watchGate, mountCpuWatchTools, mountRoomWatchTools, unmountWatchTools, catchUpText } from './watchtools.js';
@@ -70,7 +71,7 @@ import { openOpponentSelect } from './opponent-select.js';
 import { UNDERDOG_DECK, STRONGEST_AI, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL, UNDERDOG_TAG_RIVAL_MATE, levelLabel, fixedDeck } from './aidecks.js';
 import { openRun, runHud, showRunAfterGame } from './run-ui.js';
 import { openWeekly, weeklyHud, showWeeklyAfterGame } from './weekly-ui.js';
-import { compilesBy, loadRun, RUN_WIN_COMPILES, battleOpts, lethal, nodeById } from './run.js';
+import { compilesBy, loadRun, RUN_WIN_COMPILES, RUN_BONUS_MAX, battleOpts, lethal, nodeById } from './run.js';
 import { loadWeekly, loadStoredWeekly, weekKey } from './weekly.js';
 import { openReview } from './review.js';
 import { runRoomLobby } from './roomui.js';
@@ -297,7 +298,8 @@ let storyNode = null;            // ストーリーの対戦の場面 (story.js)
 let resumed = null;              // 中断した対戦を続きから遊ぶ (resume.js): { rec, built }
 let runKind = 'run';             // 'run' (勝ち抜き戦) / 'weekly' (週替わり3連戦)
 let quickGame = false;           // おまかせで1戦 (?quick=1)
-let runEnded = false;            // 勝ち抜き戦の結果を出したか (ライフが尽きたらその場で出す)
+let runEnded = false;
+const mpShown = { mp: false, dg: false };   // MATCH POINT / DANGER を出したか (1試合で1回ずつ)            // 勝ち抜き戦の結果を出したか (ライフが尽きたらその場で出す)
 let setupNote = '';
 let lastSetup = null;
 let firstGameHintShown = false;    // はじめの数戦の操作の案内 (1戦に1回)              // いまの CPU 戦のプロトコル { p0, p1 } (もう1戦で同じ組み合わせにする)
@@ -3988,12 +3990,50 @@ function netDeltaBegin(st) {
   /* 途中で止まったまま (エラー等) 古い記録が残っていたら捨てる */
   if (netDelta && Date.now() - netDelta.at > 90000) netDelta = null;
   if (netDelta || !st || !st.lines) return;
-  netDelta = { base: [0, 1, 2].map(l => [0, 1].map(s => totalOf(st, l, s))), at: Date.now() };
+  netDelta = { base: [0, 1, 2].map(l => [0, 1].map(s => totalOf(st, l, s))), at: Date.now(),
+    actor: st.turn, myComp: compilesBy(st, ME), chain: 0 };
+}
+/* ---- 勝ち抜き戦の試合中のほめ言葉 (hype.js。週替わりには出さない) と、勝ち抜き戦の試合中ボーナス ----
+   自分の手番の1手を解き終えたら、その大きさで NICE〜INSANE。勝ち抜き戦では GREAT 以上でクレジット +1 (1試合 3 まで、勝てばもらえる) */
+const hypeOn = () => runMode && runKind === 'run' && !reviewView && !replayMode && !trainingMode && !demoMode && !roomMode;
+const runBonusKey = () => { const r = loadRun(); return r ? 'compileRunBonus:' + (r.startedAt || 0) + ':' + (r.history || []).length : ''; };
+function runBonus() {
+  try { return Math.min(RUN_BONUS_MAX, +sessionStorage.getItem(runBonusKey()) || 0); } catch (e) { return 0; }
+}
+function addRunBonus() {
+  const n = runBonus();
+  if (n >= RUN_BONUS_MAX) return 0;
+  try { sessionStorage.setItem(runBonusKey(), String(n + 1)); } catch (e) { return 0; }
+  return 1;
+}
+function hypeAfter(d, st) {
+  /* 決着した手は、このあと勝敗の演出があるので出さない */
+  if (!hypeOn() || !d || d.actor !== ME || !st || st.winner != null) return;
+  const compiled = compilesBy(st, ME) > d.myComp;
+  let swing = 0;
+  for (let l = 0; l < 3; l++) {
+    const mine = totalOf(st, l, ME) - d.base[l][ME];
+    const opp = totalOf(st, l, AI) - d.base[l][AI];
+    /* コンパイルで空になったラインは数えない (コンパイルの点で数える) */
+    const emptied = compiled && !st.lines[l][0].length && !st.lines[l][1].length;
+    if (emptied) continue;
+    if (mine > 0) swing += mine;
+    if (opp < 0) swing -= opp;
+  }
+  const info = { swing, chain: d.chain, compiled };
+  const r = rankOf(playScore(info));
+  if (!r) return;
+  const bonus = runKind === 'run' && r.cls !== 'r1' ? addRunBonus() : 0;
+  setTimeout(() => {
+    hypePlay(info, bonus);
+    if (bonus) runHud(compilesBy(cur.state, AI), runBonus());
+  }, 260);
 }
 function netDeltaShow(st) {
   const d = netDelta;
   netDelta = null;
   if (!d || !st || !st.lines || !panels) return;
+  hypeAfter(d, st);
   /* コンパイルで空になったラインの減りは出さない (コンパイルの演出がある) */
   const compiled = avatarCompileAt >= d.at;
   let k = 0;
@@ -4063,6 +4103,7 @@ async function replayResolution(prev, res, action) {
     chainShown = n;
     if (delta > 0) {                                     // チェーンがつながった
       sfx('chain', n);
+      if (netDelta) netDelta.chain = Math.max(netDelta.chain || 0, n);
       /* 喜ぶのは、自分のカードから始まって自分のカードの効果がつながったときだけ。
          相手の効果で自分のカードが動かされたとき・相手のカードの効果・損しかない効果 (手札を捨てるだけ) では喜ばない */
       const cardOf = (k) => (k && st && st.cards && st.cards[k.uid]) || null;
@@ -5462,7 +5503,7 @@ async function afterTurn() {
           }
         } else {
           const was = loadRun();
-          showRunAfterGame(win, compilesBy(cur.state, AI), Object.values(protoIndex));
+          showRunAfterGame(win, compilesBy(cur.state, AI), Object.values(protoIndex), win ? runBonus() : 0);
           if (win) maybeLoginHint('runWin');
           const now = loadRun();
           if (was && was.phase === 'battle' && now && now.phase === 'clear') await gainXp('run', XP_GAIN.runClear);
@@ -6267,6 +6308,13 @@ function syncCompileProgress(st) {
   const need = (side) => (Array.isArray(st.winBySide) ? st.winBySide[side] : 0) || st.winCompiles || 3;
   const done = (side) => st.players[side].protocols.filter(p => p.compiled).length;
   setCompileProgress({ done: done(ME), need: need(ME) }, { done: done(1 - ME), need: need(1 - ME) });
+  /* あと1本で決まる場面になった瞬間に、MATCH POINT / DANGER (勝ち抜き戦だけ。1試合で1回ずつ) */
+  if (hypeOn() && st.winner == null && gameStartedAt && Date.now() - gameStartedAt > 1500) {
+    for (const side of [ME, AI]) {
+      const key = side === ME ? 'mp' : 'dg';
+      if (need(side) > 1 && done(side) === need(side) - 1 && !mpShown[key]) { mpShown[key] = true; setTimeout(() => matchPoint(side === ME), 900); }
+    }
+  }
 }
 
 /* 再生の途中でプロトコル板を合わせる。並べ替えは板を滑らせて見せ、終わるまで待つ */
@@ -6275,7 +6323,7 @@ function syncPanels(st, animate) {
   if (runMode && runKind === 'run' && st && !runEnded) {
     /* 勝ち抜き戦: 相手にコンパイルされた回数だけライフを減らして見せる。尽きたらその場で終わり */
     const lost = compilesBy(st, AI);
-    runHud(lost);
+    runHud(lost, runBonus());
     const run = loadRun();
     if (run && lethal(run, lost)) {
       runEnded = true;

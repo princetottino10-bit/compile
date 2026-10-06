@@ -93,3 +93,68 @@
   #runOv *, #runOv *::after { animation: none !important; }
 }
 body.calm #runOv *, body.calm #runOv *::after { animation: none !important; }
+
+/* ---- 対戦中のライフ表示 (#runHud) ---- */
+#runHud .rh-chips { display: flex; gap: 4px; align-items: center; }
+#runHud .rh-chip { font: 900 10px/1 var(--font-hud), "M PLUS 1", system-ui; letter-spacing: .08em; padding: 4px 7px; border-radius: 999px; white-space: nowrap;
+  color: #fff; background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .16); }
+#runHud .rh-chip.cr { color: #ffd86a; border-color: rgba(255, 216, 106, .55); background: rgba(255, 200, 90, .12); }
+#runHud .rh-chip.perfect { color: #7cf0d0; border-color: rgba(124, 240, 208, .5); }
+#runHud .rh-chip.perfect.broken { color: rgba(255, 255, 255, .3); border-color: rgba(255, 255, 255, .1); text-decoration: line-through; }
+#runHud .rh-chip.guard { color: #b9e2ff; border-color: rgba(124, 196, 255, .55); }
+#runHud .rh-chip.guard.used { opacity: .35; text-decoration: line-through; }
+#runHud .rh-chip.streak { background: linear-gradient(90deg, #ff6a3d, #ff4fa3); border-color: transparent; }
+#runHud.rh-hurt { animation: rhShake .45s ease-out; border-color: #ff4f7a; box-shadow: 0 0 26px rgba(255, 60, 100, .7); }
+#runHud.rh-block { animation: rhBlock .5s ease-out; }
+@keyframes rhShake { 15% { translate: -6px 0; } 35% { translate: 6px 0; } 55% { translate: -4px 0; } 75% { translate: 3px 0; } }
+@keyframes rhBlock { 30% { box-shadow: 0 0 0 6px rgba(124, 196, 255, .6), 0 0 30px rgba(124, 196, 255, .8); } }
+#runHud .rh-pop { position: absolute; left: 50%; top: 100%; translate: -50% 0; pointer-events: none; white-space: nowrap;
+  font: 900 22px/1 var(--font-logo), "M PLUS 1", system-ui; letter-spacing: .06em; animation: rhPop 1.3s ease-out forwards; }
+#runHud .rh-pop.hurt { color: #ff6a8a; text-shadow: 0 0 14px rgba(255, 60, 100, .8), 2px 2px 0 #3a0010; }
+#runHud .rh-pop.block { color: #b9e2ff; text-shadow: 0 0 14px rgba(124, 196, 255, .9), 2px 2px 0 #001a3a; }
+@keyframes rhPop { 0% { opacity: 0; transform: translateY(-6px) scale(1.8); } 15% { opacity: 1; transform: translateY(4px) scale(1); } 75% { opacity: 1; } 100% { opacity: 0; transform: translateY(26px); } }
+/* 縦持ちの狭い画面: 札は小さく、ライフの目盛りも詰める */
+@media (max-width: 860px) and (orientation: portrait) {
+  #runHud { flex-wrap: wrap; max-width: calc(100vw - 28px); row-gap: 4px; border-radius: 14px; }
+  #runHud .rn-life span { min-width: 96px; }
+  #runHud .rh-chip { font-size: 9px; padding: 3px 5px; }
+  /* 札で2段になる分、案内の文字を下げる (重なっていた) */
+  body:has(#runHud .rh-chips) #prompt { top: calc(166px + env(safe-area-inset-top)); }
+}
+@media (prefers-reduced-motion: reduce) { #runHud, #runHud * { animation: none !important; } }
+body.calm #runHud, body.calm #runHud * { animation: none !important; }
+
+/* 試合中ボーナスの札と、決着後の内訳 */
+#runHud .rh-chip.bonus { color: #fff; background: linear-gradient(90deg, #ffb13d, #ff4fa3); border-color: transparent; }
+#runHud .rh-chip.bump { animation: rnGet .6s cubic-bezier(.2, 1.6, .4, 1); }
+#runOv .rn-bonusof { font: 700 12px/1 "M PLUS 1", system-ui; color: #ffd0e6; letter-spacing: .02em; }
+
+/* ---- 試合中のほめ言葉 (hype.js): NICE / GREAT / EXCELLENT / INSANE / MATCH POINT / DANGER ---- */
+#hype { position: fixed; left: 0; right: 0; top: 30%; z-index: 30; display: flex; justify-content: center; pointer-events: none; }
+#hype .hp-slam { display: flex; flex-direction: column; align-items: center; gap: 6px; animation: hpIn 1.7s cubic-bezier(.2, 1.5, .4, 1) forwards; }
+#hype .hp-slam b { position: relative; font: 900 clamp(40px, 9vw, 92px)/1 var(--font-logo), "M PLUS 1", system-ui; letter-spacing: .06em; font-style: italic;
+  color: #fff; -webkit-text-stroke: 2px rgba(0, 0, 0, .35); text-shadow: 0 0 24px var(--hc, #ff4fa3), 5px 5px 0 var(--hc, #ff4fa3); }
+#hype .hp-slam small { font: 900 13px/1 var(--font-hud), "M PLUS 1", system-ui; letter-spacing: .18em; color: #fff;
+  padding: 6px 12px; border-radius: 999px; background: rgba(6, 8, 16, .78); border: 1px solid var(--hc, #ff4fa3); }
+#hype .hp-slam small em { font-style: normal; color: #ffd86a; }
+#hype .r1 { --hc: #7cc4ff; }
+#hype .r2 { --hc: #ff4fa3; }
+#hype .r3 { --hc: #ffb13d; }
+#hype .r4 { --hc: #c58bff; }
+#hype .r4 b { background: linear-gradient(90deg, #ffd86a, #ff4fa3, #7cf0d0, #9d7bff, #ffd86a); background-size: 200% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent; animation: hpRainbow .8s linear infinite;
+  text-shadow: none; filter: drop-shadow(0 0 18px #c58bff) drop-shadow(5px 5px 0 #6a2bd6); }
+#hype .mp { --hc: #ffd86a; }
+#hype .dg { --hc: #ff3b6b; }
+#hype .dg b { color: #ffd0da; }
+@keyframes hpIn {
+  0% { opacity: 0; transform: scale(2.6) rotate(-4deg); }
+  12% { opacity: 1; transform: scale(.94) rotate(-4deg); }
+  20% { transform: scale(1.04) rotate(-4deg); }
+  28%, 78% { opacity: 1; transform: scale(1) rotate(-4deg); }
+  100% { opacity: 0; transform: scale(1.08) translateY(-18px) rotate(-4deg); }
+}
+@keyframes hpRainbow { to { background-position: 200% 0; } }
+@media (prefers-reduced-motion: reduce) { #hype .hp-slam, #hype .hp-slam b { animation: hpFade 1.2s ease forwards !important; } }
+body.calm #hype .hp-slam, body.calm #hype .hp-slam b { animation: hpFade 1.2s ease forwards !important; }
+@keyframes hpFade { 0%, 80% { opacity: 1; } 100% { opacity: 0; } }

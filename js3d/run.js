@@ -684,10 +684,13 @@ export function lethal(run, compiles) {
 }
 
 /** 勝ったときのクレジット */
-export function creditGain(run, compiles) {
+/* 試合中ボーナス: 試合中に GREAT 以上の手を打つたび +1 (1試合でここまで。勝てばもらえる。main.js / hype.js) */
+export const RUN_BONUS_MAX = 3;
+export function creditGain(run, compiles, bonus = 0) {
   const hard = run.route === 'elite' || run.route === 'alarm' || run.route === 'cursed';
   let gain = hard ? 5 : 3;
   if ((compiles | 0) === 0) gain += 1;
+  gain += Math.max(0, Math.min(RUN_BONUS_MAX, bonus | 0));
   if (hasPatch(run, 'jackpot')) gain += 2;
   if (setLevel(run, 'GREED') >= 1) gain += 2;
   if (setLevel(run, 'TEMPO') >= 1 && (run.route === 'elite' || run.route === 'cursed')) gain += 3;
@@ -697,7 +700,7 @@ export function creditGain(run, compiles) {
 }
 
 /* 1戦の結果。compiles = その試合で相手にコンパイルされた回数 */
-export function finishBattle(run, win, compiles, names, rnd = Math.random) {
+export function finishBattle(run, win, compiles, names, rnd = Math.random, bonus = 0) {
   if (run.phase !== 'battle') return run;
   const damage = damageOf(run, compiles) + (!win && hasPatch(run, 'allin') ? 2 : 0);
   let life = run.life - damage;
@@ -706,7 +709,8 @@ export function finishBattle(run, win, compiles, names, rnd = Math.random) {
   let saved = false;
   if (life <= 0 && hasPatch(run, 'failsafe') && !failsafeUsed) { life = 1; failsafeUsed = true; saved = 'failsafe'; }
   else if (life <= 0 && hasPatch(run, 'phoenix') && !phoenixUsed) { life = run.maxLife; phoenixUsed = true; saved = 'phoenix'; }
-  const gain = win ? creditGain(run, compiles) : 0;
+  const gain = win ? creditGain(run, compiles, bonus) : 0;
+  const lastBonus = win ? Math.max(0, Math.min(RUN_BONUS_MAX, bonus | 0)) : 0;
   if (win && life > 0) {
     if (hasPatch(run, 'repair')) life += 1;
     if (setLevel(run, 'GUARD') >= 2) life += 1;
@@ -716,7 +720,7 @@ export function finishBattle(run, win, compiles, names, rnd = Math.random) {
   }
   const node = nodeById(run, run.pos) || { row: 0 };
   const history = run.history.concat({ row: node.row, win: !!win, damage, opp: run.opp.deck, route: run.route || 'normal', saved });
-  let base = { ...run, life, history, failsafeUsed, phoenixUsed, lastSaved: saved, credits: (run.credits | 0) + gain, lastGain: gain, lastPull: null };
+  let base = { ...run, life, history, failsafeUsed, phoenixUsed, lastSaved: saved, credits: (run.credits | 0) + gain, lastGain: gain, lastBonus, lastPull: null };
   /* 呪いの試合に勝った: 報酬のあとで RARE 以上のパッチ (LEGENDARY も) を3つから選べる */
   if (win && life > 0 && run.route === 'cursed') base = { ...base, cursedWin: true, pendingRare: true };
   let next;
