@@ -201,7 +201,7 @@ export function openSettings(extra) {
       '<input type="checkbox" id="stPauses"' + (s.pauses ? ' checked' : '') + '></label>' +
     '<label class="st-row st-check"><span>選べるものが1つなら自動で選ぶ<small>対象が1つしかない選択は、確認せずに進めます</small></span>' +
       '<input type="checkbox" id="stAutoPick"' + (s.autoPick ? ' checked' : '') + '></label>' +
-    '<label class="st-row st-check"><span>相手の番のまとめを出す<small>相手の番が終わったら、何をしたかを短く出します</small></span>' +
+    '<label class="st-row st-check"><span>相手の番のまとめを出す<small>相手の番に2つ以上のことが起きたら、何をしたかを短く出します</small></span>' +
       '<input type="checkbox" id="stOppSummary"' + (s.oppSummary ? ' checked' : '') + '></label>' +
     '<label class="st-row st-check"><span>初心者モード<small>CPU 戦で HINT ボタンを出します。押すと、CPU ならどう打つかを盤面で光らせます。はじめての方は最初からオンです</small></span>' +
       '<input type="checkbox" id="stBeginner"' + (s.beginner ? ' checked' : '') + '></label>' +

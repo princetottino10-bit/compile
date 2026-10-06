@@ -5975,7 +5975,8 @@ function showOppSummary(o, st) {
     const a = o.start.players[AI].protocols[l], b = st.players[AI].protocols[l];
     if (a && b && !a.compiled && b.compiled) lines.push(b.name + ' をコンパイル');
   }
-  if (!lines.length) return;
+  /* 1つだけ (カードを1枚置いただけ など) なら、いま目の前で見たとおりなので出さない。2つ以上起きた番だけまとめる */
+  if (lines.length < 2) { const old = document.getElementById('oppSummary'); if (old) old.classList.remove('show'); return; }
   let el = document.getElementById('oppSummary');
   if (!el) {
     el = document.createElement('div');
