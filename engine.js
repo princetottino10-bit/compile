@@ -2659,14 +2659,17 @@ const AI_W = {
    threat*: 相手の裏向きカードがロックになりうる危険度 (aiLockThreat)
    sp*: ロック特化の手筋の加点 (aiLockSpecialistBias) */
 const AI_LOCK_W = {
-  lockPermanent: 260, lockTemporary: 55,
+  lockPermanent: 260, lockTemporary: 110,
   /* 相手の永続ロックは、そのラインをコンパイルすれば (ラインのカードが全部消えて) 外れる。
      lockBreakLine: そのラインの自分の合計が 10 に近いほど減点を軽く (最大この割合) /
      lockBreakReady: 次の自分の番にそのラインをコンパイルできる形なら、減点をこの割合だけ軽く */
   lockBreakLine: 0.8, lockBreakReady: 0.85, lockVictim: 420,
   threatLine: 0.85, threatAny: 0.6, threatCovered: 0.2,
-  spLockCoverRoute: 170, spLockUpNoCover: -45, spLockDup: -20, spLockBadLine: -30,
-  spLockKeyInHand: 150, spLockNoKey: 95, spCover: 80, spKeyOnLock: 170, spKeyHold: -55,
+  /* ぱぱぱのぱの指し方に寄せる (2026-10-08): PSYCHIC 1 は捨てない・消さない (lockInHand: ロック未完成の間、手札にあるだけで加点)、
+     鍵 (DARKNESS 2) が手札に来るまで裏で仕込まない (spLockNoKey)、表で出す1ターンのロックも使う (lockTemporary / spLockUpNoCover) */
+  spLockCoverRoute: 170, spLockUpNoCover: 0, spLockDup: -20, spLockBadLine: -30,
+  spLockKeyInHand: 150, spLockNoKey: -15, spCover: 80, spKeyOnLock: 170, spKeyHold: -55,
+  lockInHand: 45,
 };
 /* 知らないキーは無視して配列で返す (計測スクリプトが打ち間違いに気づけるように) */
 function setAiWeights(obj) {
@@ -3013,6 +3016,11 @@ function aiUsesCombos(st, side) {
   return aiIsDshSpecialist(st, side) || AI_LEVEL >= 2;
 }
 
+/* side の永続ロック (覆われた表向きの PSYCHIC 1) が効いているか */
+function aiLockLive(st, side) {
+  return activeStatics(st).some(s => s.rule === 'oppFaceDownOnly' && s.sideIdx === side
+    && st.lines[s.line][s.sideIdx].indexOf(s.uid) < st.lines[s.line][s.sideIdx].length - 1);
+}
 function aiIsLockSpecialist(st, side) {
   return AI_SPECIALIST_ENABLED && AI_SPECIALIST_KIND === 'psylock' && !!st.players[side]
     && (AI_SPECIALIST_SIDE < 0 || AI_SPECIALIST_SIDE === side);
@@ -3589,6 +3597,8 @@ function aiScore(st, me) {
   if (aiUsesCombos(st, me) && W.fire0Water4Ready && aiFire0Water4Ready(st, me)) sc += W.fire0Water4Ready;
   sc += aiBoardEffectScore(st, me);
   sc += aiLockScore(st, me);
+  /* ロック特化: ロックが未完成なら、手札の PSYCHIC 1 そのものに値打ちがある (捨てる・消す候補にしない) */
+  if (aiIsLockSpecialist(st, me) && aiHasDefInHand(st, me, AI_LOCK_CARD) && !aiLockLive(st, me)) sc += AI_LOCK_W.lockInHand;
   sc -= aiLockThreat(st, me);
   sc += aiLockThreat(st, 1 - me);
   sc += aiCompileSafetyScore(st, me) * W.compileSafety;
