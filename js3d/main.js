@@ -3211,6 +3211,40 @@ function positionPlayChoices() {
     cell.style.left = (rect.left + (choiceWorld.x + 1) * rect.width / 2) + 'px';
     cell.style.top = (rect.top + (1 - choiceWorld.y) * rect.height / 2) + 'px';
   }
+  /* 選んで持ち上げた手札とボタンが重なったら、ボタンを札の上へ逃がす。
+     重なったままだと、札をもう一度押して選び直そうとしたときに下のボタンが押され、
+     そのラインに置いてしまっていた (FIRE 1 を押し直したら WATER のラインに裏で出た) */
+  const card = selectedCardRect();
+  if (!card) return;
+  for (const cell of root.querySelectorAll('.placement-lane')) {
+    if (cell.hidden) continue;
+    const r = cell.getBoundingClientRect();
+    const overlap = r.right > card.left && r.left < card.right && r.bottom > card.top && r.top < card.bottom;
+    if (!overlap) continue;
+    const top = parseFloat(cell.style.top) - (r.bottom - card.top) - 8;
+    cell.style.top = Math.max(rect.top + r.height / 2 + 4, top) + 'px';
+  }
+}
+/* 選んでいる手札 (持ち上げて大きく見せている札) の画面上の範囲。無ければ null */
+const selBox = new THREE.Box3();
+const selCorner = new THREE.Vector3();
+function selectedCardRect() {
+  const uid = boardPick?.kind === 'free' ? boardPick.sel : selectedUid;
+  if (!uid || !board || !stage) return null;
+  const st = shown();
+  if (!st || !st.cards || !st.cards[uid]) return null;
+  const mesh = board.cardOf(st, uid);
+  if (!mesh || !mesh.visible) return null;
+  selBox.setFromObject(mesh);
+  if (selBox.isEmpty()) return null;
+  const cr = stage.renderer.domElement.getBoundingClientRect();
+  let left = Infinity, right = -Infinity, top = Infinity, bottom = -Infinity;
+  for (let i = 0; i < 8; i++) {
+    selCorner.set(i & 1 ? selBox.max.x : selBox.min.x, i & 2 ? selBox.max.y : selBox.min.y, i & 4 ? selBox.max.z : selBox.min.z).project(stage.camera);
+    const x = cr.left + (selCorner.x + 1) * cr.width / 2, y = cr.top + (1 - selCorner.y) * cr.height / 2;
+    left = Math.min(left, x); right = Math.max(right, x); top = Math.min(top, y); bottom = Math.max(bottom, y);
+  }
+  return { left, right, top, bottom };
 }
 
 /* AI の思考中だけ trace を止める (state の clone が入って探索が重くなるため) */
