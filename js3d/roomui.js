@@ -10,6 +10,22 @@ import { myBadge, myLook } from './cosmetics-ui.js';
 import { settings } from './settings.js';
 import { roomApi, roomLeaveKeepalive, roomIsAnonymous, roomLogin, roomSession, roomSignIn, roomSignInWithGitHub, roomSignInWithGoogle, roomSignOut, roomSignUp } from './room.js';
 import { emblemDataURL } from './emblems.js';
+import { friendlyMessage, noteError } from './errtext.js';
+import { listReplays, findMatchReplay } from './replays.js';
+
+/* ?online=1 で開いたときに、はじめに出す画面 (RECORD の「ONLINE RATED」から来たら 'history')。stats.js と同じ名前 */
+const ROOM_OPEN_KEY = 'compileRoomOpen';
+function takeRoomOpen() {
+  try { const v = sessionStorage.getItem(ROOM_OPEN_KEY); sessionStorage.removeItem(ROOM_OPEN_KEY); return v || ''; } catch (e) { return ''; }
+}
+
+/* 部屋ができてからの時間 (ロビーの一覧の「待ち 3分」)。created: ISO の日時 */
+export function waitingLabel(created, now = Date.now()) {
+  const t = Date.parse(created);
+  if (!Number.isFinite(t)) return '';
+  const min = Math.max(0, Math.floor((now - t) / 60000));
+  return min < 1 ? '待ち 1分未満' : min < 60 ? '待ち ' + min + '分' : '待ち ' + Math.floor(min / 60) + '時間';
+}
 import { showProtocolCards } from './protocards.js';
 /* 呼ぶ (音・振動・見ていないタブの名前を点滅)。対戦中と同じもの */
 import { callMe } from './callme.js';
@@ -575,7 +591,7 @@ export function runRoomLobby(protocols, opts = {}) {
       if (!other || !(other.code < room.code)) return false;
       const mine = room.code;
       try {
-        const next = await roomApi('join', { name: name(), badge: myBadge(settings()), look: myLook(settings()), code: other.code, password: '' });
+        const next = await roomApi('join', { name: displayName(), badge: myBadge(settings()), look: myLook(settings()), code: other.code, password: '' });
         roomApi('leave', { code: mine }).catch(() => {});
         quickHost = null;
         room = next;

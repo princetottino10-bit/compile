@@ -1067,7 +1067,14 @@ async function boot() {
       const r = RS.loadResume();
       if (r) { if (await RS.askResume(r)) resumeRec = r; else RS.endResume(); }
     }
+    /* Google 等のログインはページを離れて戻ってくる。目印があれば、タイトルを出さずにオンラインへ直行する
+       (前はタイトルを出してから見ていたので、ログインしたのにホームへ戻されたように見えた) */
+    let onlineResume = false;
+    try {
+      if (localStorage.getItem('compileOnlineResume') === '1') { localStorage.removeItem('compileOnlineResume'); onlineResume = true; }
+    } catch (e) { /* private mode */ }
     let nextMode = resumeRec ? 'resume'
+      : onlineResume ? 'online'
       : joinCode ? 'online'
       : params.get('online') === '1' ? 'online'      // オンラインの対戦のあと「LOBBY」で戻るとき
       : Number.isInteger(parseInt(params.get('redeck'), 10)) ? 'single'      // 終わった画面の「デッキを変える」
@@ -1079,14 +1086,6 @@ async function boot() {
       : params.get('title') !== '0'
         ? await runTitle(cards.protocols, accountResume ? { menuOnly: true, after: () => accountReady.then(openAccount) } : undefined)
         : 'single';
-    /* Google 等のログインはページを離れて戻ってくる。
-       戻り先はタイトルなので、目印があればオンラインへ直行する。 */
-    try {
-      if (localStorage.getItem('compileOnlineResume') === '1') {
-        localStorage.removeItem('compileOnlineResume');
-        nextMode = 'online';
-      }
-    } catch (e) { /* private mode */ }
     for (;;) {
       /* 中断した対戦の続き: はじめの状態から手を並べ直す。並べ直せなければ、ふつうにタイトルへ */
       if (nextMode === 'resume') {
