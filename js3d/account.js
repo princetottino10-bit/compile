@@ -214,9 +214,26 @@ async function checkAdmin() {
 }
 
 async function pushXp(rows) {
+  await pushTolerant(XP_TABLE, rows, null);
+}
+
+/* まとめて送って、表の決まりに合わない行 (値の範囲外など) があって断られたら、1行ずつ送り直す。
+   合わない行は直せるところ (fix) を直してもう一度、それでもだめなら飛ばす。
+   前は1行の不合格でまとめて失敗し、その先の戦績・経験値がずっと送れなくなっていた
+   (下剋上タッグの難易度 21 が、戦績の表の「20 まで」に合わず、2026-10-07 にぱうぷるさんの同期が止まった) */
+const isRowReject = (e) => !!e && /^2[23]/.test(String(e.code || ''));       // 22xxx: 値の誤り / 23xxx: 決まり違反
+async function pushTolerant(table, rows, fix) {
   if (!rows.length) return;
-  const r = await ROOM.roomClient().from(XP_TABLE).upsert(rows, { onConflict: 'user_id,id', ignoreDuplicates: true });
-  if (r.error) throw new Error(r.error.message);
+  const c = ROOM.roomClient();
+  const opts = { onConflict: 'user_id,id', ignoreDuplicates: true };
+  const r = await c.from(table).upsert(rows, opts);
+  if (!r.error) return;
+  if (!isRowReject(r.error)) throw new Error(r.error.message);
+  for (const row of rows) {
+    let e = (await c.from(table).upsert([row], opts)).error;
+    if (e && isRowReject(e) && fix) e = (await c.from(table).upsert([fix(row)], opts)).error;
+    if (e && !isRowReject(e)) throw new Error(e.message);
+  }
 }
 
 /* 経験値の帳簿も、戦績と同じく差分を送り合う。読み込んだ件数を返す */
@@ -304,9 +321,8 @@ function reloadIfIdle() {
 }
 
 async function pushRows(rows) {
-  if (!rows.length) return;
-  const r = await ROOM.roomClient().from(TABLE).upsert(rows, { onConflict: 'user_id,id', ignoreDuplicates: true });
-  if (r.error) throw new Error(r.error.message);
+  /* 合わなかった行は、範囲外になりやすいところ (難易度・効果の集計) を外して送り直す */
+  await pushTolerant(TABLE, rows, (row) => ({ ...row, level: null, effects: {}, feats: [] }));
 }
 
 /* このブラウザの記録が誰のものか。前にほかのアカウントで同期していれば、その人の記録 (compileSyncMark の user でもわかる)。
