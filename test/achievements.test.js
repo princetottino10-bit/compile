@@ -169,3 +169,11 @@ test('1つの手番に効果を10回・15回発動させる', async () => {
   assert.ok(ids(newlyEarned({}, c({ ...base, turnFxMax: 15 }))).includes('turnfx15'));
   assert.ok(!ids(newlyEarned({}, c({ ...base, turnFxMax: 15, short: true }))).includes('turnfx15'), '短縮マッチは数えない');
 });
+
+test('BLITZ は 28 手番以内の勝ち (短縮マッチは数えない)', () => {
+  const base = { win: true, level: 1, turns: 28, compiles: 3, oppCompiles: 1, winCompiles: 3, effectsMap: {}, effects: 0, chainMax: 0,
+    faceUpIds: [], faceUpVals: [], refreshes: 1, touched: 1, maxLine: 12, at: Date.UTC(2026, 0, 1, 12) };
+  assert.ok(ids(newlyEarned({}, ctx({ game: base }))).includes('blitz'));
+  assert.ok(!ids(newlyEarned({}, ctx({ game: { ...base, turns: 29 } }))).includes('blitz'));
+  assert.ok(!ids(newlyEarned({}, ctx({ game: { ...base, short: true } }))).includes('blitz'));
+});
