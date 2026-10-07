@@ -122,7 +122,10 @@ export const TROPHIES = [
   { id: 'overkill', tier: 'silver', name: 'OVERKILL', desc: '1つのラインの合計値を20以上にする', test: (c) => !!g(c) && (g(c).maxLine | 0) >= 20 },
   { id: 'overclock2', tier: 'silver', name: 'OVERCLOCK II', desc: '1試合で自分の効果を40回発動させる', test: (c) => !!g(c) && (g(c).effects | 0) >= 40 },
   /* 2026-10-08: 20 → 28。3本で決まる試合では、みんなの勝ちのいちばん速いものでも 27 手番で、20 は届かなかった */
-  { id: 'blitz', tier: 'silver', hidden: true, name: 'BLITZ', desc: '28手番以内 (両者合わせて) で勝つ', test: (c) => !!g(c) && g(c).win && g(c).turns > 0 && g(c).turns <= 28 },
+  /* 戦績からもさかのぼって見る (条件を緩める前に 28 以内で勝っていた人の分)。CPU 戦・クイックは必ず3本で決まるので、短縮マッチは混ざらない */
+  { id: 'blitz', tier: 'silver', hidden: true, name: 'BLITZ', desc: '28手番以内 (両者合わせて) で勝つ',
+    test: (c) => (!!g(c) && g(c).win && g(c).turns > 0 && g(c).turns <= 28) ||
+      (every(c) || []).some(r => r.win && (r.mode === 'cpu' || r.mode === 'quick') && r.turns > 0 && r.turns <= 28) },
   /* ---- タッグデュエル (2026-10-04) ---- */
   { id: 'tag_win', tier: 'bronze', name: 'TAG TEAM', desc: 'タッグデュエルで勝つ', test: (c) => tagWins(c).length >= 1 },
   { id: 'tag5', tier: 'silver', name: 'PARTNERS', desc: 'タッグデュエルで5勝する', test: (c) => tagWins(c).length >= 5, progress: (c) => [Math.min(5, tagWins(c).length), 5] },

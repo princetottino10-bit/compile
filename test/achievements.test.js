@@ -177,3 +177,10 @@ test('BLITZ は 28 手番以内の勝ち (短縮マッチは数えない)', () =
   assert.ok(!ids(newlyEarned({}, ctx({ game: { ...base, turns: 29 } }))).includes('blitz'));
   assert.ok(!ids(newlyEarned({}, ctx({ game: { ...base, short: true } }))).includes('blitz'));
 });
+
+test('BLITZ は戦績からもさかのぼって付く (CPU 戦・クイックだけ。勝ち抜き戦・週替わりの短い試合は数えない)', () => {
+  const rec = (o) => ({ id: 'r' + Math.random(), me: ['FIRE', 'WATER', 'LIFE'], opp: ['DEATH', 'METAL', 'LIGHT'], win: true, level: 0, at: 1, turns: 22, ...o });
+  assert.ok(ids(newlyEarned({}, ctx({ records: [rec({ mode: 'cpu' })] }))).includes('blitz'));
+  assert.ok(!ids(newlyEarned({}, ctx({ records: [rec({ mode: 'run', turns: 12 }), rec({ mode: 'weekly', turns: 14 })] }))).includes('blitz'));
+  assert.ok(!ids(newlyEarned({}, ctx({ records: [rec({ mode: 'cpu', turns: 29 }), rec({ mode: 'cpu', win: false, turns: 20 })] }))).includes('blitz'));
+});
