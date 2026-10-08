@@ -117,6 +117,8 @@ def main():
                  '<link rel="stylesheet" href="js3d/playchoices.css?v=' + version('js3d/playchoices.css') + '">', out, count=1)
     out = re.sub(r'<link rel="stylesheet" href="js3d/run-fx\.css(\?v=[0-9a-f]+)?">',
                  '<link rel="stylesheet" href="js3d/run-fx.css?v=' + version('js3d/run-fx.css') + '">', out, count=1)
+    out = re.sub(r'<link rel="stylesheet" href="js3d/deus\.css(\?v=[0-9a-f]+)?">',
+                 '<link rel="stylesheet" href="js3d/deus.css?v=' + version('js3d/deus.css') + '">', out, count=1)
     out = re.sub(r'<script type="module" src="js3d/main\.js(\?v=[0-9a-f]+)?"></script>',
                  '<script type="module" src="js3d/main.js?v=' + version('js3d/main.js') + '"></script>', out, count=1)
     if out == html:

@@ -2,6 +2,7 @@
    CPU 戦・勝ち抜き戦・週替わり・オンラインで共通。観戦・問題・チュートリアル・トレーニングでは出さない。
    plate: { name, sub, level, icon: { name, color } | null, frame } (sub は称号や難易度。無ければ出さない。frame は名札の枠の見た目) */
 import { emblemDataURL } from './emblems.js';
+import { DEUS_TITLE, gearSvg } from './deus.js';
 
 function fill(el, plate, lead) {
   el.textContent = '';
@@ -45,6 +46,14 @@ function fill(el, plate, lead) {
     s.textContent = plate.sub;
     text.append(s);
   }
+  /* 称号 DEUS EX MACHINA (実績をすべて取った人): 称号の文字に光を流し、前で歯車を回す */
+  const deus = !!plate.sub && plate.sub.indexOf(DEUS_TITLE) >= 0;
+  el.classList.toggle('deus', deus);
+  if (deus) {
+    const s = text.querySelector('small');
+    s.classList.add('dx-title');
+    s.insertAdjacentHTML('afterbegin', gearSvg(10, 'dx-mini'));
+  }
   el.append(ic, text);
   el.hidden = false;
   /* 名前と称号は省略しない: 入りきらなければ文字を小さくして全部見せる */
@@ -67,7 +76,14 @@ export function showPlates({ me, opp }) {
   const meEl = document.getElementById('meTag');
   if (oppEl) fill(oppEl, opp, 'VS');
   if (meEl) fill(meEl, me, '');
+  /* 名札に DEUS EX MACHINA が初めて出たら知らせる (main.js が降臨の演出を出す。ページを開くたびに側ごとに1回) */
+  for (const [side, el, plate] of [['me', meEl, me], ['opp', oppEl, opp]]) {
+    if (!el || !el.classList.contains('deus') || deusAnnounced.has(side)) continue;
+    deusAnnounced.add(side);
+    try { window.dispatchEvent(new CustomEvent('compile:deus', { detail: { side, name: plate.name } })); } catch (e) { /* 古いブラウザ */ }
+  }
 }
+const deusAnnounced = new Set();
 
 /* 相手の手札の枚数を名札に (CPU 戦。手前の札は重なって数えにくい)。n が null なら消す */
 export function setPlateHand(n) {

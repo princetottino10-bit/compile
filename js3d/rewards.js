@@ -212,7 +212,7 @@ export const TITLES = {
   /* 実績で取る (cosmetics-ui.js の TROPHY_TITLES) */
   flawless: 'FLAWLESS', grandmaster: 'GRANDMASTER',
   puzzler: 'PUZZLER', compuzzler: 'COMPUZZLER',       // COMPUZZLE の中級を全部 / 全部
-  platinum: 'PLATINUM',    // 実績をすべて取る (achievements.js)
+  platinum: 'DEUS EX MACHINA',    // 実績をすべて取る (achievements.js)。鍵は platinum のまま (サーバーの一覧・持っている人の印が変わらないように)
   conqueror: 'CONQUEROR',  // 「最強」に30のプロトコルすべてで勝つ (achievements.js)
   tagmaster: 'TAG MASTER', perfectsync: 'PERFECT SYNC',   // タッグデュエルの実績 ALL ROUND / PERFECT SYNC (2026-10-04)
   underdogduo: 'UNDERDOG DUO',   // 下剋上タッグに勝つ (achievements.js)

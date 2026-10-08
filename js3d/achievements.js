@@ -146,7 +146,7 @@ export const TROPHIES = [
     test: (c) => !!g(c) && g(c).win && g(c).touched === 0 },
   { id: 'flawless', tier: 'gold', hidden: true, name: 'FLAWLESS', desc: '相手に1回もコンパイルさせずに勝つ (称号 FLAWLESS)', test: (c) => !!g(c) && g(c).win && g(c).oppCompiles === 0 },
   /* ---- 全部 ---- */
-  { id: 'platinum', tier: 'platinum', name: 'PLATINUM', desc: 'ほかの実績をすべて取る (称号 PLATINUM)', test: () => false }
+  { id: 'platinum', tier: 'platinum', name: 'PLATINUM', desc: 'ほかの実績をすべて取る (称号 DEUS EX MACHINA)', test: () => false }
 ];
 const OTHERS = TROPHIES.filter(t => t.id !== 'platinum');
 

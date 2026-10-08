@@ -471,6 +471,16 @@ const SOUNDS = {
       tone({ freq: f, dur: 2.6, type: 'sine', vol: 0.045, attack: 0.5, delay: 0.3, verb: 0.7 });
     });
   },
+  /* 称号 DEUS EX MACHINA の降臨 (deus.js): 歯車の軋む低い音から、オルガンのような和音がゆっくり立ち上がり、高い鐘で締める */
+  deus() {
+    tone({ freq: 48, end: 36, dur: 1.4, type: 'sine', vol: 0.3 });
+    noise({ kind: 'bandpass', freq: 900, end: 300, dur: 0.6, vol: 0.03, attack: 0.05, verb: 0.3 });     // 歯車の軋み
+    /* C の和音 (C G C E G) を、オルガンらしく三角波で。わずかにずらした2本で厚く */
+    [130.8, 196, 261.6, 329.6, 392].forEach((f, i) => {
+      for (const d of [1, 1.003]) tone({ freq: f * d, dur: 2.4, type: 'triangle', vol: i ? 0.03 : 0.05, attack: 0.6, delay: 0.25, verb: 0.75 });
+    });
+    [1046.5, 1318.5, 1568].forEach((f, i) => bell(f, { dur: 1.6, vol: 0.05, delay: 0.9 + i * 0.14, verb: 0.8 }));
+  },
   /* 館内放送の始まりのチャイム (ピンポンパンポン)。瑠璃の実況の前に鳴らす。0.7 秒で鳴り終わる */
   pa() {
     [523.25, 659.25, 783.99, 1046.5].forEach((f, n) => bell(f, { dur: 0.42, vol: 0.05, delay: n * 0.16, verb: 0.5 }));

@@ -10,6 +10,7 @@ import { logPlay } from './playlog.js';
 import * as FEEL from './feel.js';
 import { hypePlay, matchPoint, rankOf, playScore, slam } from './hype.js';
 import { scoreBegin, scoreAction, scoreCredits, scoreNow } from './run-score.js';
+import { descend as deusDescend } from './deus.js';
 import { createPickAid } from './pickaid.js';
 import { openSpectate, watchAgainUrl } from './spectate.js';
 import { watchGate, mountCpuWatchTools, mountRoomWatchTools, unmountWatchTools, catchUpText } from './watchtools.js';
@@ -255,6 +256,12 @@ async function afterGameProgress(st, side, win, level, online) {
 /* 実績を判定し、取った分の経験値を足して知らせる。レベルが上がって取れる実績もあるので数回まわす */
 let trophyBusy = null;
 /* アカウントから記録を読み終えたら、実績を判定し直す (別の端末で条件を満たしたもの・外されたまま戻っていないものを取り直す) */
+/* 称号 DEUS EX MACHINA の名札が初めて出たら、降臨の演出 (自分でも、オンラインの相手でも。リプレイ・感想戦・デモでは出さない) */
+window.addEventListener('compile:deus', (ev) => {
+  if (replayMode || reviewView || demoMode || tutorial) return;
+  const d = ev.detail || {};
+  setTimeout(() => deusDescend(d.name || '', d.side === 'me'), 700);
+});
 window.addEventListener('compile:synced', () => { setTimeout(() => { checkTrophies(null).catch(() => {}); }, 1500); });
 async function checkTrophies(game) {
   /* 数え方の間違いで付いた実績を外すのは、記録がそろってから (ログインしていて、まだアカウントから記録を読んでいない端末で
@@ -3672,7 +3679,7 @@ async function roomMaybeFinish() {
   sfx(win ? (victory === 'aurora' ? 'winAurora' : 'win') : 'lose');
   await finaleFx(win);
   FEEL.buzz(win ? [40, 70, 40, 70, 120] : [160]);
-  await UI.resultCutIn(win, { victory });
+  await UI.resultCutIn(win, { victory, deus: win && myPlate().sub === TITLES.platinum });
   lastReplayId = null;
   /* 同じ部屋の同じ決着を読み直しても2回は入らない */
   const firstTime = grantXp('online', XP_GAIN.onlinePlay + (win ? XP_GAIN.onlineWin : 0),
@@ -5523,7 +5530,8 @@ async function afterTurn() {
     await finaleFx(win);
     FEEL.buzz(win ? [40, 70, 40, 70, 120] : [160]);
   /* 物語の決着は、勝ち・負けの言葉を出さない */
-  await UI.resultCutIn(win, storyNode ? { victory, title: win ? 'COMPILED' : 'OVERWRITTEN' } : { victory });
+  const deusWin = win && myPlate().sub === TITLES.platinum;      // 称号 DEUS EX MACHINA で勝った: 勝ちの演出に後光と歯車
+  await UI.resultCutIn(win, storyNode ? { victory, deus: deusWin, title: win ? 'COMPILED' : 'OVERWRITTEN' } : { victory, deus: deusWin });
     /* 最強に新しいプロトコルで勝った: 制覇の数を刻む */
     if (newConq.length) {
       await UI.conquerCutIn(newConq.map(n => ({ name: n, color: (protoIndex[n] || {}).color })), conquered(localRecords()).size,

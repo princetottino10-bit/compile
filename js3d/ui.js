@@ -7,6 +7,7 @@ import { selectHead, bindSelectHead, optionBody, choiceLabel } from './selectui.
 import { drawVictoryBackdrop, drawDefeatBackdrop, drawAuroraBackdrop } from './backdrops.js';
 import { condHtml } from './cardtext.js';
 import { sfx } from './audio.js';
+import { gearSvg } from './deus.js';
 import { equipNow, canEquip, isEquipped } from './equip.js';
 import { speedNow } from './tween.js';
 
@@ -869,6 +870,8 @@ export function resultCutIn(win, opts) {
     '<div class="rc-veil"></div>' +
     '<canvas class="rc-art" aria-hidden="true"></canvas>' +
     '<div class="rc-rays"></div>' +
+    /* 称号 DEUS EX MACHINA で勝った: 後ろに後光と歯車 (deus.js の歯車) */
+    (opts && opts.deus && win ? '<div class="rc-deus" aria-hidden="true"><i class="dx-halo big"></i>' + gearSvg(16, 'g1') + gearSvg(11, 'g2') + gearSvg(13, 'g3') + '<small>DEUS EX MACHINA</small></div>' : '') +
     '<div class="rc-body">' +
       '<div class="rc-title" data-text="' + title + '">' + title + '</div>' +
       '<div class="rc-rule"></div>' +
