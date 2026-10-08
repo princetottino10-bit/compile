@@ -5492,7 +5492,7 @@ async function afterTurn() {
     /* チュートリアルとストーリーは戦績・リプレイ・実績に数えない */
     if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial && !storyNode) {
       const st0 = cur.state;
-      newConq = newlyConquered(localRecords(), { win, level: aiDifficulty, me: ownProtos(st0, ME), opp: ownProtos(st0, AI) });
+      newConq = newlyConquered(localRecords(), { win, level: aiDifficulty, me: ownProtos(st0, ME), opp: ownProtos(st0, AI), short: shortMatch, mode: runMode ? runKind : 'cpu' });
       /* タッグは、自分が持ってきた3つで記録する (習熟度・デイリーも自分のプロトコルで数える) */
       recordSoloResult(ownProtos(st0, ME), ownProtos(st0, AI), win, aiDifficulty,
         { turns: (st0.turns || 0) + 1,       // 決着した手番も1つと数える

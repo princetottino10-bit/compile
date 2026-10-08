@@ -146,3 +146,15 @@ test('プレイヤーレベル: 1戦 +1・勝ち +2・つよい以上に勝つ�
   assert.equal(D.playerLevel(wins(29, 3)).level, 10, 'xp 116 は Lv10 (115 以上 140 未満)');
   assert.equal(D.playerLevel(wins(40, 3)).level, 11, 'xp 160 は Lv11 (140 以上 170 未満)');
 });
+
+test('制覇は 3 本で決まる試合と週替わりの最強で数える (勝ち抜き戦・ほかの短縮マッチは数えない)', async () => {
+  const D = await loadData();
+  const S = ['FIRE', 'WATER', 'SPEED'];
+  const win = (me, o) => ({ id: 'x' + Math.random(), me, opp: S, win: true, level: 3, at: 1, ...o });
+  const list = [win(['LUCK', 'UNITY', 'LIFE'], { mode: 'weekly' }), win(['HATE', 'PSYCHIC', 'LIFE'], { mode: 'run' }), win(['ICE', 'MIRROR', 'LOVE'], { mode: 'cpu', short: true }),
+    win(['DEATH', 'METAL', 'LIGHT'], { mode: 'cpu' })];
+  /* 週替わりの最強は数える。勝ち抜き戦・ほかの短縮マッチは数えない */
+  assert.deepEqual([...D.conquered(list)].sort(), ['DEATH', 'LIFE', 'LIGHT', 'LUCK', 'METAL', 'UNITY']);
+  assert.deepEqual(D.newlyConquered([], win(['ICE', 'MIRROR', 'LOVE'], { short: true, mode: 'run' })), []);
+  assert.deepEqual(D.newlyConquered([], win(['ICE', 'MIRROR', 'LOVE'], { short: true, mode: 'weekly' })).sort(), ['ICE', 'LOVE', 'MIRROR']);
+});

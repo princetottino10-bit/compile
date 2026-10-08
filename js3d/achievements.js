@@ -106,7 +106,8 @@ export const TROPHIES = [
     progress: (c) => [BOSS_LEVELS.filter(lv => beat(c, lv)).length, BOSS_LEVELS.length] },
   { id: 'underdog', tier: 'gold', name: 'GIANT SLAYER', desc: '下剋上 (最弱 vs 最強) で勝つ', test: (c) => beat(c, UNDERDOG_LEVEL) },
   { id: 'conqueror', tier: 'gold', name: 'CONQUEROR', desc: '「最強」の CPU に、最強のデッキ以外の' + CONQUER_TOTAL + 'のプロトコルすべてで勝つ (称号 CONQUEROR)',
-    test: (c) => conquered(c.records).size >= CONQUER_TOTAL, progress: (c) => [Math.min(CONQUER_TOTAL, conquered(c.records).size), CONQUER_TOTAL] },
+    /* 数える試合は conquered が決める (週替わりの最強も入れるので、短縮マッチを除く前の全部の戦績を渡す) */
+    test: (c) => conquered(every(c)).size >= CONQUER_TOTAL, progress: (c) => [Math.min(CONQUER_TOTAL, conquered(every(c)).size), CONQUER_TOTAL] },
   { id: 'all30', tier: 'gold', name: 'OMNISCIENT', desc: '30のプロトコルすべてで1勝する', test: (c) => protoWins(c) >= 30, progress: (c) => [protoWins(c), 30] },
   { id: 'holo_card', tier: 'gold', name: 'HOLOGRAM', desc: 'カードをホロにする (そのカードで50勝)', test: (c) => tierCards(c, 50) >= 1 },
   { id: 'level20', tier: 'gold', name: 'MASTER', desc: 'プレイヤーレベル20になる', test: (c) => c.level >= 20, progress: (c) => [Math.min(c.level, 20), 20] },
