@@ -20,6 +20,7 @@ import { playNode, playScene, askBattle } from './story-ui.js';
 import { buildScenery } from './story-scenery.js';
 import { buildAquarium } from './story-scenery-aquarium.js';
 import { RoomEnvironment } from '../vendor/jsm/environments/RoomEnvironment.js';
+import { GLTFLoader } from '../vendor/jsm/loaders/GLTFLoader.js';
 
 const T = 2;                 // 1マスの大きさ (three.js の単位)
 const SPEED = 3.4;           // 歩く速さ (マス / 秒)
@@ -261,33 +262,39 @@ export function openWorld(protocols, opts = {}) {
   shionShadow.rotation.x = -Math.PI / 2;
   scene.add(shion, shionShadow);
 
-  /* あなた (機体4097) のちびキャラ: art/chibi/hero4097_<向き>_<コマ>.webp が9枚そろったら、仮の3Dの人型と入れ替える。
-     まだ無ければ (読み込みに失敗したら) 3Dの人型のまま。絵の決まりは .claude/skills/compile-cast/hero-4097.md */
-  const heroTex = {};
-  let heroReady = false, heroLoaded = 0, heroDir = 'front';
-  const heroMat = keep(new THREE.SpriteMaterial({ transparent: true, toneMapped: false }));
-  heroMat.color.setScalar(0.75);
-  const heroSprite = new THREE.Sprite(heroMat);
-  heroSprite.center.set(0.5, 0.02);
-  heroSprite.scale.set(CHIBI, CHIBI, 1);
-  heroSprite.visible = false;
-  me.add(heroSprite);
-  for (const dir of ['front', 'side', 'back']) {
-    for (const fr of ['stand', 'walk1', 'walk2']) {
-      loader.load('art/chibi/hero4097_' + dir + '_' + fr + '.webp', (tex) => {
-        tex.colorSpace = THREE.SRGBColorSpace;
-        heroTex[dir + '_' + fr] = keep(tex);
-        if (dir === 'side') {
-          const left = keep(tex.clone());
-          left.wrapS = THREE.RepeatWrapping;
-          left.repeat.set(-1, 1);
-          left.offset.set(1, 0);
-          heroTex['left_' + fr] = left;
-        }
-        if (++heroLoaded === 9) { heroReady = true; heroSprite.visible = true; body.visible = false; heroMat.map = heroTex.front_stand; heroMat.needsUpdate = true; }
-      }, undefined, () => { /* 絵がまだ無い: 仮の人型のまま */ });
-    }
-  }
+  /* あなた (機体4097) の3Dモデル: Blender で作った art/models/hero4097.glb (scripts/blender/chibi_rig.py。見た目の決まりは
+     .claude/skills/compile-cast/hero-4097.md)。読めたら、仮の人型と入れ替える。読めなければ仮の人型のまま。
+     アニメ調に見せるため、色はトゥーン (3段の陰)、外側に黒い縁 (裏返した殻) を付ける。腕と足は付け根で振る */
+  let heroModel = null;
+  const heroLimbs = {};
+  const toonRamp = keep(new THREE.DataTexture(new Uint8Array([90, 170, 255]), 3, 1, THREE.RedFormat));
+  toonRamp.minFilter = toonRamp.magFilter = THREE.NearestFilter;
+  toonRamp.needsUpdate = true;
+  const outlineMat = keep(new THREE.MeshBasicMaterial({ color: 0x0b0f18, side: THREE.BackSide }));
+  new GLTFLoader().load('art/models/hero4097.glb?v=1', (gltf) => {
+    const g = gltf.scene;
+    const meshes = [];
+    g.traverse((o) => { if (o.isMesh) meshes.push(o); });    // 先に集める (縁を足しながらたどると、足した縁もたどってしまう)
+    meshes.forEach((o) => {
+      keep(o.geometry);
+      const src = o.material;
+      const core = src.name === 'Core';
+      o.material = keep(core ? new THREE.MeshBasicMaterial({ color: 0x6ff0ff })
+        : new THREE.MeshToonMaterial({ color: src.color, gradientMap: toonRamp, emissive: src.color.clone().multiplyScalar(0.32) }));   // 紫苑の絵 (光を受けない) と明るさをそろえる
+      if (!core) {
+        const hull = new THREE.Mesh(o.geometry, outlineMat);     // 縁: 同じ形を少し大きく、裏側だけ描く
+        hull.scale.setScalar(1.035);
+        o.add(hull);
+      }
+    });
+    for (const n of ['LegL', 'LegR', 'ArmL', 'ArmR']) heroLimbs[n] = g.getObjectByName(n);
+    heroModel = new THREE.Group();
+    g.scale.setScalar(1.12);                  // 紫苑のちびと背丈をそろえる
+    heroModel.add(g);
+    me.add(heroModel);
+    body.visible = false;
+    meLight.intensity = 0.25;                 // 白い外套が胸の灯で白く飛ばないように
+  }, undefined, () => { /* 読めなければ仮の人型のまま */ });
   const joined = () => chapter.id !== 'ch0' || isCleared(state, 'c0-practice');
   /* 相棒になったあとは、あなたの少し後ろ (左が壁なら同じ所) に立つ */
   const behind = M.walkable(map, state, Math.floor(pos.x - 1.2), Math.floor(pos.y)) ? { x: pos.x - 1.2, y: pos.y } : { ...pos };
@@ -662,14 +669,13 @@ export function openWorld(protocols, opts = {}) {
     const swing = stepping ? Math.sin(meStep) * 0.5 : 0;
     legs[0].rotation.x = swing; legs[1].rotation.x = -swing;
     arms[0].rotation.x = -swing * 0.8; arms[1].rotation.x = swing * 0.8;
-    if (heroReady) {
-      /* ちびキャラ: 紫苑と同じく、左右は横 (左は反転した絵)、奥は後ろ姿、手前は前。歩き1 → 立ち → 歩き2 → 立ち */
-      if (stepping) heroDir = Math.abs(mvx) >= Math.abs(mvy) ? (mvx < 0 ? 'left' : 'side') : mvy < 0 ? 'back' : 'front';
-      const ph = Math.floor(meStep * 7 / 6) % 4;
-      const tx = heroTex[heroDir + '_' + (!stepping ? 'stand' : ph === 0 ? 'walk1' : ph === 2 ? 'walk2' : 'stand')];
-      if (tx && heroMat.map !== tx) { heroMat.map = tx; heroMat.needsUpdate = true; }
+    if (heroModel) {
+      heroModel.rotation.y = body.rotation.y;
+      const sw = stepping ? Math.sin(meStep) * 0.5 : 0;
+      if (heroLimbs.LegL) { heroLimbs.LegL.rotation.x = sw; heroLimbs.LegR.rotation.x = -sw; }
+      if (heroLimbs.ArmL) { heroLimbs.ArmL.rotation.x = -sw * 0.8; heroLimbs.ArmR.rotation.x = sw * 0.8; }
     }
-    me.position.copy(world(pos, stepping ? Math.abs(Math.sin(meStep)) * (heroReady ? 0.07 : 0.04) : 0));
+    me.position.copy(world(pos, stepping ? Math.abs(Math.sin(meStep)) * (heroModel ? 0.06 : 0.04) : 0));
     meShadow.position.copy(world(pos, 0.015));
     ring.scale.setScalar(1 + Math.sin(t * 3) * 0.05);
 
