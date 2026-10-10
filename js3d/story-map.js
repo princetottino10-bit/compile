@@ -10,7 +10,9 @@ export const TILE = {
   '#': 'wall', '.': 'floor', 'S': 'floor', 'K': 'floor', 'p': 'floor', 'c': 'floor', 'e': 'floor', 'R': 'floor',
   'T': 'solid', 'a': 'door', 'b': 'door', 'd': 'door', 'g': 'gate',
   /* 水族館: W 大水槽 / J クラゲの水槽 / Q 案内カウンター / X 通せんぼの柵 / x 明かりの落ちた通路 (入れない) */
-  'W': 'solid', 'J': 'solid', 'Q': 'solid', 'X': 'solid', 'x': 'solid'
+  'W': 'solid', 'J': 'solid', 'Q': 'solid', 'X': 'solid', 'x': 'solid',
+  /* 調べられる物 (looks) の置き場所。床として歩ける */
+  '1': 'floor', '2': 'floor'
 };
 
 /* 序章「起動」: 研究所。左から A 判定室 / B 端末室 / C 廊下 / D 正面ホール / E 外 */
@@ -59,7 +61,7 @@ export const AQUARIUM = {
   rows: [
     '###########################xxxx#######',
     '#######WWWWWWWWWWJJJJJJJJJ#xxxx#######',
-    '#......WWWWWWWWWW..........XXXX...QQQ#',
+    '#..2...WWWWWWWWWW.........1XXXX...QQQ#',
     '#.S...............................R..#',
     '#....................................#',
     '#......#.........#........#.....#....#',
@@ -81,6 +83,18 @@ export const AQUARIUM = {
   spawn: { 'c1-arrive': [2, 3], 'c1-tank': [2, 3], 'c1-jelly': [15, 3], 'c1-fork': [24, 3], 'c1-ruri': [29, 3],
     'c1-abyss': [33, 4], 'c1-close': [33, 4], done: [33, 4] },
   guides: { 'c1-tank': [9, 4], 'c1-jelly': [19, 4], 'c1-fork': [28, 4] },
+  /* 調べられる物: 話の進み具合と関係なく、近くで「調べる」と読める (読まなくても進める) */
+  looks: [
+    { at: '2', name: '案内板', lines: [
+      { who: 'sys', text: '> 案内板: 本日の催し' },
+      { who: 'sys', text: '> 「団体のお客さま、ご来館」' },
+      { who: 'sys', text: '> 日付: 14,203日前' }
+    ] },
+    { at: '1', name: '張り紙', lines: [
+      { who: 'sys', text: '> 張り紙: 「混雑時は、係員の案内に従ってください」' },
+      { who: 'sys', text: '> 下の段は、はがれている' }
+    ] }
+  ],
   goals: { 'c1-arrive': '水族館に入る', 'c1-tank': '順路どおりに進む', 'c1-jelly': '順路どおりに進む', 'c1-fork': '順路どおりに進む',
     'c1-ruri': '放送の声のする方へ', 'c1-abyss': '瑠璃と一緒に、深淵と向き合う', 'c1-close': '瑠璃の放送を聞く',
     done: '1章「順路」　完。2章「三時」は準備中' }

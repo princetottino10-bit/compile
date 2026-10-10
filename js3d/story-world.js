@@ -16,7 +16,7 @@ import { showTitleBack, hideTitleBack } from './titleback.js';
 import { loadStory, saveStory, blankStory, currentNode, clearNode, startBattle, nodeById, isCleared, chapterCleared, chapterOf } from './story.js';
 import { accountState } from './account.js';
 import * as M from './story-map.js';
-import { playNode, askBattle } from './story-ui.js';
+import { playNode, playScene, askBattle } from './story-ui.js';
 import { buildScenery } from './story-scenery.js';
 import { buildAquarium } from './story-scenery-aquarium.js';
 import { RoomEnvironment } from '../vendor/jsm/environments/RoomEnvironment.js';
@@ -335,7 +335,10 @@ export function openWorld(protocols, opts = {}) {
     { el: document.createElement('span'), text: '巡回の警備機体', obj: patrol, y: 1.6, show: () => patrol.visible },
     { el: document.createElement('span'), text: '警備主任', obj: chief, y: 2.4, show: () => chief.visible },
     { el: document.createElement('span'), text: '端末', obj: term, y: 1.8, show: () => true },
-    { el: document.createElement('span'), text: '案内係', obj: ruri, y: 2.0, show: () => !!ruriAt, name: () => (isCleared(state, 'c1-ruri') ? '瑠璃' : '案内係') }
+    { el: document.createElement('span'), text: '案内係', obj: ruri, y: 2.0, show: () => !!ruriAt, name: () => (isCleared(state, 'c1-ruri') ? '瑠璃' : '案内係') },
+    /* 調べられる物の名札 */
+    ...(map.looks || []).map(l => { const m = M.find(map, l.at)[0]; const o = new THREE.Object3D(); if (m) o.position.copy(world({ x: m.x + 0.5, y: m.y + 0.5 }, 0));
+      return { el: document.createElement('span'), text: l.name, obj: m ? o : null, y: 1.7, show: () => true }; })
   ].filter(l => l.obj);
   for (const l of labels) { l.el.textContent = l.text; labelsEl.appendChild(l.el); }
 
@@ -439,8 +442,11 @@ export function openWorld(protocols, opts = {}) {
   let nearby = null;      // 話しかけられる出来事
   const eventFor = (id) => Object.values(map.events).find(e => e.node === id);
   const isNext = (id) => { const c = currentNode(state); return !!c && c.id === id; };
+  const markAt = (ch) => { const m = M.find(map, ch)[0]; return m ? { x: m.x + 0.5, y: m.y + 0.5 } : null; };
   const posOf = (ev) => (ev.at === 'K' ? shionPos : ev.at === 'c' ? chiefPos : ev.at === 'R' ? ruriPos
-    : ev.at === 'T' && termAt ? { x: termAt.x + 0.5, y: termAt.y + 1.5 } : null);
+    : ev.at === 'T' && termAt ? { x: termAt.x + 0.5, y: termAt.y + 1.5 } : ev.look ? markAt(ev.at) : null);
+  /* 調べられる物 (地図の looks)。話の進み具合と関係なく読める */
+  const looks = (map.looks || []).map(l => ({ ...l, look: true, label: '調べる' }));
 
   let finish;
   const done = new Promise((resolve) => { finish = resolve; });
@@ -449,6 +455,7 @@ export function openWorld(protocols, opts = {}) {
     if (busy || closed) return;              // 「記録」で見ている会話や、ほかの会話と重ねない
     busy = true;
     nearby = null;                           // 押しっぱなしのキーで、終えた場面をもう一度始めない
+    actBtn.hidden = true;                    // 会話のあいだは「話す・調べる」を隠す
     keys.clear(); path = null;
     await playNode(nodeById(id));
     state = clearNode(state, id);
@@ -474,6 +481,7 @@ export function openWorld(protocols, opts = {}) {
     if (busy || closed) return;
     busy = true;
     nearby = null;
+    actBtn.hidden = true;
     keys.clear(); path = null;
     const ok = await askBattle(nodeById(id), protocols);
     busy = false;
@@ -483,8 +491,16 @@ export function openWorld(protocols, opts = {}) {
     state = saveStory(startBattle(state, id));
     close({ battle: nodeById(id) });
   }
+  async function readLook(l) {
+    busy = true;
+    nearby = null;
+    actBtn.hidden = true;
+    keys.clear(); path = null;
+    try { await playScene(l.lines, { title: l.name }); } finally { busy = false; }
+  }
   function act() {
     if (!nearby || busy) return;
+    if (nearby.look) { readLook(nearby); return; }
     const n = nodeById(nearby.node);
     if (n.kind === 'scene') runScene(n.id);
     else runBattle(n.id);
@@ -543,6 +559,7 @@ export function openWorld(protocols, opts = {}) {
       const p = posOf(ev);
       if (p && dist(p, pos) < REACH) nearby = ev;
     }
+    if (!nearby) for (const l of looks) { const p = posOf(l); if (p && dist(p, pos) < REACH) nearby = l; }
     if (nearby) {
       actBtn.hidden = false;
       actBtn.textContent = (nearby.label || (nodeById(nearby.node).kind === 'battle' ? '向き合う' : '話す')) + '  [E]';

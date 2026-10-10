@@ -220,6 +220,17 @@ export function buildAquarium(scene, map, keep) {
     pool(x0 + w / 2, z + 1.6, 5, 3.4, 0xffd9a0, 0.18);
   }
 
+  /* 調べられる物 (地図の looks) の掲示板: 細い脚と、うっすら光る白い板 */
+  for (const l of map.looks || []) {
+    const m = M.find(map, l.at)[0];
+    if (!m) continue;
+    const c = cell(m.x, m.y);
+    const legMat = std({ color: 0x3a4456, roughness: 0.5, metalness: 0.5 });
+    box(0.05, 1.0, 0.05, legMat, c.x - 0.3, 0.5, c.z - 0.6);
+    box(0.05, 1.0, 0.05, legMat, c.x + 0.3, 0.5, c.z - 0.6);
+    box(0.8, 0.55, 0.04, basic({ color: 0xcfd8e6, toneMapped: false }), c.x, 1.15, c.z - 0.6);
+  }
+
   /* 非常口の緑の灯 (出口ホールの奥の壁) と、入口ホールの弱い明かり */
   const exitX = (W - 3) * T;
   box(0.9, 0.4, 0.06, basic({ color: 0x2bd96b, toneMapped: false }), exitX, 2.9, 1 * T + T + 0.05);

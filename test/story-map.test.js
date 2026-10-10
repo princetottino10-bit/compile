@@ -101,3 +101,16 @@ test('1章の地図: どの行も同じ幅。出来事は1章の場面をすべ�
   assert.equal(M.walkable(map, s, dark.x, dark.y), false, '明かりの落ちた通路には入れない');
   assert.equal(M.objective(s), map.goals['c1-arrive']);
 });
+
+test('調べられる物 (looks): 置き場所が地図にあって歩ける。話の場面とは別', () => {
+  const map = M.AQUARIUM;
+  assert.ok(map.looks.length >= 1);
+  const s = S.blankStory();
+  for (const l of map.looks) {
+    const m = M.find(map, l.at)[0];
+    assert.ok(m, l.name + ' の置き場所');
+    assert.equal(M.TILE[l.at], 'floor');
+    assert.ok(l.lines.length >= 1 && l.lines.every(x => [...x.text].length <= 40), l.name);
+    assert.equal(S.nodeById(l.at), null);
+  }
+});
