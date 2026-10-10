@@ -22,7 +22,9 @@ import { buildAquarium } from './story-scenery-aquarium.js';
 import { RoomEnvironment } from '../vendor/jsm/environments/RoomEnvironment.js';
 import { GLTFLoader } from '../vendor/jsm/loaders/GLTFLoader.js';
 
-const T = 2;                 // 1マスの大きさ (three.js の単位)
+const T = 2;
+const HERO_VER = 2;            // 主人公の glb を作り直したら上げる (古いモデルがしばらく出るのを防ぐ)
+const TOUCH = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;   // タッチの端末 (キーの印を出さない)                 // 1マスの大きさ (three.js の単位)
 const SPEED = 3.4;           // 歩く速さ (マス / 秒)
 const RUN = 1.65;            // Shift / スティックを大きく倒すと走る (倍)
 const ACCEL = 16;            // 歩きはじめ・止まりの速さ (大きいほどきびきび)
@@ -274,13 +276,15 @@ export function openWorld(protocols, opts = {}) {
   toonRamp.minFilter = toonRamp.magFilter = THREE.NearestFilter;
   toonRamp.needsUpdate = true;
   const outlineMat = keep(new THREE.MeshBasicMaterial({ color: 0x0b0f18, side: THREE.BackSide }));
-  new GLTFLoader().load('art/models/hero4097.glb?v=1', (gltf) => {
+  new GLTFLoader().load('art/models/hero4097.glb?v=' + HERO_VER, (gltf) => {
     const g = gltf.scene;
+    if (closed) { g.traverse((o) => { if (o.isMesh) { o.geometry.dispose(); o.material.dispose(); } }); return; }   // 閉じたあとに読み終えた
     const meshes = [];
     g.traverse((o) => { if (o.isMesh) meshes.push(o); });    // 先に集める (縁を足しながらたどると、足した縁もたどってしまう)
     meshes.forEach((o) => {
       keep(o.geometry);
       const src = o.material;
+      src.dispose && setTimeout(() => src.dispose(), 0);     // 元の材質は置き換えたら要らない
       const core = src.name === 'Core';
       o.material = keep(core ? new THREE.MeshBasicMaterial({ color: 0x6ff0ff })
         : new THREE.MeshToonMaterial({ color: src.color, gradientMap: toonRamp, emissive: src.color.clone().multiplyScalar(0.32) }));   // 紫苑の絵 (光を受けない) と明るさをそろえる
@@ -370,18 +374,20 @@ export function openWorld(protocols, opts = {}) {
   /* 記録の断片: 床の上で、ゆっくり回って光る小さな欠片。拾うと消える */
   const fragMat = keep(new THREE.MeshBasicMaterial({ color: 0x9ff4ff, transparent: true, opacity: 0.9, toneMapped: false }));
   const fragGeo = keep(new THREE.OctahedronGeometry(0.16, 0));
+  const fragGlowGeo = keep(new THREE.SphereGeometry(0.42, 16, 10));
+  const fragGlowMat = keep(new THREE.MeshBasicMaterial({ color: 0x9ff4ff, transparent: true, opacity: 0.18, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
   const frags = (map.fragments || []).map((f) => {
     const m = M.find(map, f.at)[0];
     const p = { x: m.x + 0.5, y: m.y + 0.5 };
     const mesh = new THREE.Mesh(fragGeo, fragMat);
     mesh.position.copy(world(p, 0.7));
     mesh.visible = !(state.found || []).includes(f.id);
-    const glow = new THREE.PointLight(0x9ff4ff, 1.2, 2.5);
-    glow.position.y = 0.1;
+    const glow = new THREE.Mesh(fragGlowGeo, fragGlowMat);       // 点光源は使わない (拾ったときに光源の数が変わると、スマホで一瞬止まる)
     mesh.add(glow);
     scene.add(mesh);
     return { ...f, p, mesh, fragment: true, label: '拾う' };
   });
+  const closeRecall = () => { const l = root.querySelector('.sw-recall-list'); if (l) l.remove(); };
   let lastZone = null;
   const heard = new Set();
 
@@ -510,10 +516,11 @@ export function openWorld(protocols, opts = {}) {
   async function runScene(id) {
     if (busy || closed) return;              // 「記録」で見ている会話や、ほかの会話と重ねない
     busy = true;
+    closeRecall();
     nearby = null;                           // 押しっぱなしのキーで、終えた場面をもう一度始めない
     actBtn.hidden = true;                    // 会話のあいだは「話す・調べる」を隠す
     keys.clear(); path = null;
-    await playNode(nodeById(id));
+    try { await playNode(nodeById(id)); } catch (e) { busy = false; throw e; }
     state = clearNode(state, id);
     state = saveStory(state);
     syncActors();
@@ -549,6 +556,7 @@ export function openWorld(protocols, opts = {}) {
   }
   /* 記録の断片を拾う: 読んで、進み具合 (found) に残す。光る欠片は消える */
   async function pickFragment(f) {
+    closeRecall();
     busy = true;
     nearby = null;
     actBtn.hidden = true;
@@ -632,7 +640,7 @@ export function openWorld(protocols, opts = {}) {
     if (!nearby) for (const f of frags) { if (f.mesh.visible && dist(f.p, pos) < REACH) nearby = f; }
     if (nearby) {
       actBtn.hidden = false;
-      actBtn.textContent = (nearby.label || (nodeById(nearby.node).kind === 'battle' ? '向き合う' : '話す')) + '  [E]';
+      actBtn.textContent = (nearby.label || (nodeById(nearby.node).kind === 'battle' ? '向き合う' : '話す')) + (TOUCH ? '' : '  [E]');
     } else actBtn.hidden = true;
     /* 区画に入ると始まる会話 */
     for (const ev of Object.values(map.events)) {
@@ -641,16 +649,17 @@ export function openWorld(protocols, opts = {}) {
     /* 区画に入ると流れる放送 (map.ambient。話は進まない)。地図を開いているあいだ、区画ごとに1度。2つ聞いたら手がかりの一言 */
     const amb = map.ambient;
     const z = M.zoneAt(map, pos);
-    if (amb && z !== lastZone) {
+    if (amb && z !== lastZone && isCleared(state, amb.after) && !isCleared(state, amb.until)) {
       lastZone = z;
-      if (isCleared(state, amb.after) && !isCleared(state, amb.until) && amb.zones[z] && !heard.has(z)) {
+      if (amb.zones[z] && !heard.has(z)) {
         heard.add(z);
         const lines = amb.zones[z].concat(heard.size === 2 && amb.hint ? amb.hint : []);
-        readLines(lines);
+        readLines(lines).catch(() => { busy = false; });
       }
     }
   };
   async function readLines(lines) {
+    closeRecall();
     busy = true;
     nearby = null;
     actBtn.hidden = true;

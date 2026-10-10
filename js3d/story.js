@@ -260,19 +260,21 @@ export function chapterOf(s) {
 }
 
 /* resetAt: 「最初から」で消した時刻。端末をまたいで合わせるとき、これより前の進み具合は足さない */
-/* found: 地図で拾った物 (記録の断片の id)。章をまたいで残り、5章で回収する */
+/* found: 地図で拾った物 (記録の断片の id)。章をまたいで残り、5章で回収する。多くても FOUND_MAX まで (同期で壊れた保存が来ても膨らまない) */
+const FOUND_MAX = 64;
 export function blankStory(resetAt = 0) { return { v: 1, cleared: [], pending: null, resetAt, found: [] }; }
 
 /** 2つの進み具合を合わせる (端末をまたぐ同期と、保存の直前)。
     クリアした場面は足し合わせる。ただし「最初から」が新しい方より前の進み具合は足さない。始めた対戦は a を優先 */
 export function mergeStory(a, b) {
   const r = Math.max(a.resetAt || 0, b.resetAt || 0);
-  const cleared = [...new Set([a, b].filter(x => (x.resetAt || 0) === r).flatMap(x => x.cleared || []))].filter(id => nodeById(id));
+  const cleared = [...new Set([a, b].filter(x => (x.resetAt || 0) === r).flatMap(x => x.cleared || []))].filter(id => nodeById(id)).sort();
   /* 始めた対戦は a を優先。ただし、もう終えた (クリアした) 対戦は拾わない。
      決着のあと a.pending = null で保存したとき、保存済みの b の古い pending を拾い直していた (2026-10-10) */
   const live = (id, x) => id && nodeById(id) && (x.resetAt || 0) === r && !cleared.includes(id);
   const pending = live(a.pending, a) ? a.pending : !a.pending && a.endedBattle !== b.pending && live(b.pending, b) ? b.pending : null;
-  const found = [...new Set([a, b].filter(x => (x.resetAt || 0) === r).flatMap(x => x.found || []))];
+  /* 並べ替えてそろえる (端末ごとに拾った順が違っても、同じ中身は同じ形になり、同期で行き来しない) */
+  const found = [...new Set([a, b].filter(x => (x.resetAt || 0) === r).flatMap(x => x.found || []))].filter(x => typeof x === 'string').sort().slice(0, FOUND_MAX);
   return { v: 1, cleared, pending, resetAt: r, found };
 }
 
@@ -281,7 +283,7 @@ export function loadStory() {
     const s = JSON.parse(localStorage.getItem(STORY_KEY) || 'null');
     if (!s || typeof s !== 'object') return blankStory();
     const cleared = Array.isArray(s.cleared) ? [...new Set(s.cleared.filter(id => nodeById(id)))] : [];
-    const found = Array.isArray(s.found) ? [...new Set(s.found.filter(x => typeof x === 'string'))] : [];
+    const found = Array.isArray(s.found) ? [...new Set(s.found.filter(x => typeof x === 'string'))].sort().slice(0, FOUND_MAX) : [];
     return { v: 1, cleared, pending: nodeById(s.pending) ? s.pending : null, resetAt: +s.resetAt || 0, found };
   } catch (e) {
     return blankStory();
@@ -306,7 +308,7 @@ export function canEnter(s, id) {
 /* 拾った物を足す (同じものは1回だけ) */
 export function addFound(s, id) {
   const found = s.found || [];
-  return found.includes(id) ? s : { ...s, found: found.concat(id) };
+  return found.includes(id) ? s : { ...s, found: found.concat(id).sort() };
 }
 export function clearNode(s, id) {
   if (!nodeById(id) || isCleared(s, id)) return s;

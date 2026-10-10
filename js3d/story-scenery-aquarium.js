@@ -81,6 +81,8 @@ export function buildAquarium(scene, map, keep) {
   const box = (w, h, d, mat, x, y, z, parent = scene) => { const m = new THREE.Mesh(keep(new THREE.BoxGeometry(w, h, d)), mat); m.position.set(x, y, z); parent.add(m); return m; };
   const flat = (w, d, mat, x, z, y = 0.012, ry = 0) => { const m = new THREE.Mesh(keep(new THREE.PlaneGeometry(w, d)), mat); m.rotation.set(-Math.PI / 2, 0, ry); m.position.set(x, y, z); scene.add(m); return m; };
   const floorOf = (x, y) => M.TILE[M.charAt(map, x, y)] === 'floor';
+  /* 床か、床に置いた物 (水槽・カウンター・柵・扉)。壁がどこに面しているかを見るのに使う */
+  const openOf = (x, y) => { const c = M.charAt(map, x, y); return floorOf(x, y) || 'WJQXd'.includes(c); };
   const pTex = keep(poolTex());
   const pool = (x, z, w, d, color, opacity) => flat(w, d, basic({ map: pTex, color, transparent: true, opacity, depthWrite: false, blending: THREE.AdditiveBlending }), x, z, 0.014);
 
@@ -101,9 +103,9 @@ export function buildAquarium(scene, map, keep) {
   const faceMat = std({ map: keep(wallTex()), roughness: 0.8 });
   const faceGeo = keep(new THREE.PlaneGeometry(T, WALL_H));
   for (const w of M.find(map, '#')) {
-    const n = floorOf(w.x, w.y - 1), s = floorOf(w.x, w.y + 1), e = floorOf(w.x + 1, w.y), wv = floorOf(w.x - 1, w.y);
-    if (!n && !s && !e && !wv) continue;
-    if (!(s && !n)) {
+    const n = openOf(w.x, w.y - 1), s = openOf(w.x, w.y + 1), e = floorOf(w.x + 1, w.y), wv = floorOf(w.x - 1, w.y);
+    if (!n && !s && !e && !wv && !openOf(w.x + 1, w.y) && !openOf(w.x - 1, w.y)) continue;
+    if (!(s && !n && !e && !wv)) {
       const low = new THREE.Mesh(lowGeo, topMat);
       low.position.copy(cell(w.x, w.y, LOW_H / 2));
       scene.add(low);
