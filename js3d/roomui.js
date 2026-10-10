@@ -11,6 +11,7 @@ import { settings } from './settings.js';
 import { roomApi, roomLeaveKeepalive, roomIsAnonymous, roomLogin, roomSession, roomSignIn, roomSignInWithGitHub, roomSignInWithGoogle, roomSignOut, roomSignUp } from './room.js';
 import { emblemDataURL } from './emblems.js';
 import { friendlyMessage, noteError } from './errtext.js';
+import { reportError } from './errorreport.js';
 import { listReplays, findMatchReplay } from './replays.js';
 
 /* ?online=1 で開いたときに、はじめに出す画面 (RECORD の「ONLINE RATED」から来たら 'history')。stats.js と同じ名前 */
@@ -926,13 +927,30 @@ export function runRoomLobby(protocols, opts = {}) {
     }
 
     /* ---------- 起動 ---------- */
+    /* ログインの確かめ (roomSession) の失敗だけをログイン画面へ。画面を組む途中の失敗まで「未ログイン」にしない
+       (前は何が壊れてもログイン画面になり、ログインしている人が入れなかった: 2026-10-08 の takeRoomOpen の件) */
     (async () => {
+      const openFirst = takeRoomOpen();
       try {
         session = await roomSession();
-        const openFirst = takeRoomOpen();
+      } catch (e) {
+        noteError(e);
+        showLogin();
+        status('ログインの状態を確かめられませんでした。' + friendlyMessage(e, { online: navigator.onLine !== false }), 'err');
+        return;
+      }
+      try {
         if (session && openFirst === 'history') guard(showHistory)();   // RECORD の「ONLINE RATED」から来た
         else if (session) showLobby(); else showLogin();
-      } catch (e) { showLogin(); }
+      } catch (e) {
+        noteError(e);
+        reportError(e, 'roomui');
+        frame('ONLINE — 読み込めませんでした',
+          '<p class="ro-sub">オンラインの画面を開けませんでした。再読み込みしても続くときは「不具合・要望」から知らせてください。</p>' +
+          '<div class="ro-row"><button class="ro-big" id="roomReload" type="button">再読み込み</button></div>', '');
+        const rb = $('#roomReload');
+        if (rb) rb.onclick = () => location.reload();
+      }
     })();
   });
 }

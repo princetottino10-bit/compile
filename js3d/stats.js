@@ -49,10 +49,24 @@ export function cleanEffects(e) {
 /* 別の端末で記録した分 (アカウントから読んだ分) を足す。同じ id は足さない */
 export function mergeRecords(remote) {
   const list = records();
+  const byId = new Map(remote.filter(r => r && r.id).map(r => [r.id, r]));
+  /* 手元にある戦績で、試合の種類 (mode)・短縮マッチの印 (short) が抜けているものは、アカウントの方から埋める
+     (前はアカウントから読むときに種類を落としていて、別の端末から来た戦績は種類が分からなかった) */
+  let patched = 0;
+  const next = list.map(r => {
+    const x = byId.get(r.id);
+    if (!x) return r;
+    const fill = {};
+    if (r.mode === undefined && x.mode !== undefined) fill.mode = x.mode;
+    if (r.short === undefined && x.short !== undefined) fill.short = x.short;
+    if (!Object.keys(fill).length) return r;
+    patched++;
+    return { ...r, ...fill };
+  });
   const have = new Set(list.map(r => r.id));
   const add = remote.filter(r => r && r.id && !have.has(r.id));
-  if (!add.length) return 0;
-  save(list.concat(add).sort((a, b) => a.at - b.at));
+  if (!add.length && !patched) return 0;
+  save(next.concat(add).sort((a, b) => a.at - b.at));
   return add.length;
 }
 

@@ -5,6 +5,7 @@
  *   選ぶのは設定の「見た目」(cosmetics-ui.js)。レベルは stats-data.js の playerLevel
  * ========================================================================= */
 import { protocolSummary } from './stats-data.js';
+import { xpLog } from './xp.js';
 
 /* BGM を出すか (2026-09-28 に一旦しまった。曲を選び直したら true に戻す) */
 export const BGM_RELEASED = false;
@@ -171,14 +172,11 @@ export const WEEKLY_ITEMS = [
   { kind: 'sleeve', key: 'laurel', weeks: 1 },
   { kind: 'marker', key: 'laurel', weeks: 3 }
 ];
+/* 週替わりをクリアした週の数。経験値の帳簿は古い分を [id, src, xp, at] の短い形で持つので、xpLog() で読む
+   (前は保存をそのまま読んでいて、帳簿が 300 件を超えると古いクリアを数えず、LAUREL に鍵がかかった) */
 export function weeklyClears() {
-  try {
-    const list = JSON.parse(localStorage.getItem('compileXpLog') || '[]');
-    const ids = (Array.isArray(list) ? list : []).map(e => e && (e.id || (e.key ? 'k:' + e.key : ''))).filter(id => /^k:wk:W\d+$/.test(id || ''));
-    return new Set(ids).size;
-  } catch (e) {
-    return 0;
-  }
+  const ids = xpLog().map(e => e.id).filter(id => /^k:wk:W\d+$/.test(id || ''));
+  return new Set(ids).size;
 }
 const weeklyItem = (kind, key) => WEEKLY_ITEMS.find(g => g.kind === kind && g.key === key);
 

@@ -9,7 +9,8 @@ import * as ROOM from './room.js';
 import { localRecords, mergeRecords, setStatsHooks } from './stats.js';
 import { xpLog, mergeXp, setXpHooks, bonusXp } from './xp.js';
 import { playerLevel } from './stats-data.js';
-import { friendlyMessage, rawText, noteError } from './errtext.js';
+import { friendlyMessage, friendlyError, rawText, noteError } from './errtext.js';
+import { reportError } from './errorreport.js';
 import { isOnline, onNetChange, OFFLINE_TEXT } from './net.js';
 import { notice } from './notice.js';
 import { setSignedInGate } from './settings.js';
@@ -34,6 +35,9 @@ function loadMark(user) {
   } catch (e) { /* 壊れていたら最初から */ }
   return { user, rec: { pulled: null, pushed: 0 }, xp: { pulled: null, pushed: 0 } };
 }
+/* 戦績の読み込みの版。2: 試合の種類 (mode)・短縮マッチの印 (short) も読む (2026-10-10)。
+   それより前に読み込んだ戦績は種類が抜けているので、一度だけ最初から読み直して埋める (mergeRecords) */
+const REC_PULL_VER = 2;
 function saveMark(m) { try { localStorage.setItem(MARK, JSON.stringify(m)); } catch (e) { /* private mode */ } }
 
 /* table の、mark.pulled より後に作られた行を全部読む */
@@ -96,12 +100,15 @@ const toRow = (r) => ({
   turns: Number.isInteger(r.turns) ? r.turns : null, feats: Array.isArray(r.feats) ? r.feats.slice(0, 32) : [],
   cards: Array.isArray(r.cards) ? r.cards.slice(0, 64) : [],
   effects: r.effects && typeof r.effects === 'object' ? r.effects : {},
-  mode: ['cpu', 'quick', 'run', 'weekly', 'tutorial'].includes(r.mode) ? r.mode : null
+  mode: ['cpu', 'quick', 'run', 'weekly', 'tutorial', 'tag'].includes(r.mode) ? r.mode : null,
+  /* 短縮マッチの印 (無い前の戦績は null。読む側は勝ち抜き戦・週替わりを短縮マッチとみなす: stats-data.js isShortRecord) */
+  short: typeof r.short === 'boolean' ? r.short : null
 });
 const fromRow = (row) => ({
   id: row.id, me: row.me, opp: row.opp, win: row.win, level: row.level, at: Date.parse(row.played_at),
   turns: row.turns, feats: row.feats || [], cards: row.cards || [], effects: row.effects || {},
-  ...(row.mode ? { mode: row.mode } : {})
+  ...(row.mode ? { mode: row.mode } : {}),
+  ...(typeof row.short === 'boolean' ? { short: row.short } : {})
 });
 
 const xpToRow = (e) => ({ id: e.id, src: e.src, xp: e.xp, earned_at: new Date(e.at).toISOString() });
@@ -153,8 +160,13 @@ async function loadAccount() {
       });
     }
   } catch (e) {
+    /* 読み込みの失敗 (通信) も、そのあとの処理の失敗 (不具合) も、原因を報告用に残す。不具合なら知らせる
+       (前は何が起きても「読み込めませんでした」だけで、同期が黙って止まっていた) */
+    noteError(e);
+    const kind = friendlyError(e).kind;
+    if (!['network', 'offline', 'timeout'].includes(kind)) reportError(e, 'account-init');
     state.available = false;
-    state.error = 'ログインの機能を読み込めませんでした';
+    state.error = 'ログインの機能を読み込めませんでした。' + friendlyMessage(e, { online: navigator.onLine !== false });
   }
   state.ready = true;
   setStatsHooks({
@@ -365,7 +377,8 @@ export async function syncRecords() {
     /* この端末で初めて同期する: 上書きの前に「この端末」と「アカウント」のレベル・戦数を比べて見せるため、混ぜる前に数える */
     const firstHere = !switched && !SAVE.loadMeta(state.user.id) && mark.rec.pulled === null && mark.xp.pulled === null;
     const deviceSum = firstHere ? summarize(localRecords(), xpLog()) : null;
-    const remote = await pullSince(TABLE, 'id,me,opp,win,level,played_at,turns,feats,cards,effects', mark.rec.pulled);
+    if ((mark.rec.v | 0) < REC_PULL_VER) mark.rec = { ...mark.rec, pulled: null, v: REC_PULL_VER };
+    const remote = await pullSince(TABLE, 'id,me,opp,win,level,played_at,turns,feats,cards,effects,mode,short', mark.rec.pulled);
     const local = localRecords();
     const send = local.filter(x => x.at > mark.rec.pushed).map(toRow);
     for (let i = 0; i < send.length; i += 200) await pushRows(send.slice(i, i + 200));
