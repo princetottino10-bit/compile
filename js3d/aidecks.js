@@ -4,7 +4,7 @@
  *   3    : 最強 (dsh 特化 + STRONGEST_AI)
  *   4    : ロック特化 (psylock 特化 + LOCK_AI)
  *   5..  : 挑戦者 (dsh 特化 + CHALLENGERS の固定デッキ)
- *   22   : 機械仕掛けの神 CODE:PURPLE (psylock 特化 + DEUS_AI。対戦の始めに降臨の演出)
+ *   22   : 機械仕掛けの神 CODE:PURPLE (psylock 特化 + DEUS_AI、4 秒の読み。称号 CONQUEROR で挑める。対戦の始めに降臨の演出)
  *   固定デッキの難易度は「自由に選ぶ」でだけ使える (setup.js)。
  *   エンジンの設定は main.js の applyAiDifficulty、戦績の表示名は stats.js。
  * ========================================================================= */
@@ -43,7 +43,11 @@ export const UNDERDOG_TAG_RIVAL_MATE = ['DARKNESS', 'HATE', 'PSYCHIC'];
 /* 機械仕掛けの神 (仮の名前 CODE:PURPLE): ぱぱぱのぱの棋譜から学んだ指し方 (ロック特化がもと) と、その得意デッキ。
    CHALLENGE の画面にだけ出す (週替わり・勝ち抜き戦の CHALLENGERS には入れない)。対戦の始めにデウス・エクス・マキナの降臨 (deus.js) */
 export const DEUS_LEVEL = 22;
-export const DEUS_AI = ['WAR', 'DARKNESS', 'PSYCHIC'];
+/* デッキ: 3つ目を10通り試し (2026-10-11)、最強 (1.2 秒) 相手に 4 秒の読みで 480戦 55.7% (95%: 51.3〜60.1%) だった FIRE。
+   ぱぱぱのぱの得意は WAR だが、WAR は 47% で最強に届かなかった */
+export const DEUS_AI = ['PSYCHIC', 'DARKNESS', 'FIRE'];
+/* 考える時間 (ms)。最強は 1200。読みを深くした分だけ強い (0.9 秒で 42% → 2.4 秒で 47%、WAR のとき) */
+export const DEUS_BUDGET = 4000;
 export const DEUS_NAME = 'CODE:PURPLE';
 
 export const isChallenger = (level) => level >= CHALLENGER_BASE && level < CHALLENGER_BASE + CHALLENGERS.length;

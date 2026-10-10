@@ -71,7 +71,7 @@ import { matUnlocked, MAT_W, MAT_D } from './playmat.js';
 import { initAccount, openAccount, takeAccountResume, accountState, onAccountChange } from './account.js';
 import { openCardList } from './cardlist-ov.js';
 import { openOpponentSelect } from './opponent-select.js';
-import { UNDERDOG_DECK, STRONGEST_AI, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL, UNDERDOG_TAG_RIVAL_MATE, levelLabel, fixedDeck, DEUS_LEVEL, DEUS_NAME } from './aidecks.js';
+import { UNDERDOG_DECK, STRONGEST_AI, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL, UNDERDOG_TAG_RIVAL_MATE, levelLabel, fixedDeck, DEUS_LEVEL, DEUS_NAME, DEUS_BUDGET } from './aidecks.js';
 import { openRun, runHud, showRunAfterGame } from './run-ui.js';
 import { openWeekly, weeklyHud, showWeeklyAfterGame } from './weekly-ui.js';
 import { compilesBy, loadRun, RUN_WIN_COMPILES, runWinCompiles, battleOpts, lethal, nodeById } from './run.js';
@@ -2007,7 +2007,7 @@ function applyAiDifficulty(level, opts) {
   const config = {
     level: opts && opts.engine !== undefined ? opts.engine : level <= 0 ? 0 : level === 1 ? 1 : 2,
     blunder: opts && opts.engine !== undefined ? 0 : level <= 0 ? 0.3 : 0,
-    budget: level >= 2 ? 1200 : 900,
+    budget: level === DEUS_LEVEL ? DEUS_BUDGET : level >= 2 ? 1200 : 900,
     /* 最強・挑戦者 = dsh 特化 + 固定デッキ (aidecks.js)、ロック特化 = PSYCHIC 1 の永続ロック狙い。
        機械仕掛けの神 (CODE:PURPLE) もロック特化の読み (ぱぱぱのぱの棋譜から寄せたもの) */
     specialist: level >= 3,
