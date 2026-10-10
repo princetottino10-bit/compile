@@ -49,7 +49,7 @@ const STRONGEST_KEY = STRONGEST_AI.slice().sort().join('|');
 export const isShortRecord = (r) => !!r && !!(r.short || (r.short === undefined && (r.mode === 'run' || r.mode === 'weekly')));
 /* 制覇は 3 本で決まる試合と、週替わり3連戦の最強 (3戦目) で数える (2026-10-09)。勝ち抜き戦のボスの最強などほかの短縮マッチは数えない。
    前は CHALLENGE の「制覇」の数・タイトルの数字・制覇の演出は短縮マッチの勝ちも数え、実績 CONQUEROR は数えず、画面では 27/27 なのに実績が外れていた */
-function beatStrongest(r) {
+export function beatStrongest(r) {
   return !!r && !!r.win && (!isShortRecord(r) || r.mode === 'weekly') && r.level === STRONGEST && Array.isArray(r.opp) && r.opp.slice().sort().join('|') === STRONGEST_KEY;
 }
 /* 制覇できるプロトコル: 最強のデッキと同じプロトコルは自分では選べないので、それ以外 (30 - 3 = 27) */

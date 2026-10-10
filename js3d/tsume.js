@@ -28,30 +28,38 @@ export function tsumeXpKey(p) {
   return p.daily != null ? (p.hard ? 'dph:' : 'dp:') + p.daily : 'ts:' + p.id;
 }
 
+/* 読めなかったときは覚えない (前は空の一覧を覚え続け、通信の失敗なのに「問題が見つかりません」と出て、読み直すまで直らなかった)。
+   loadFailed: 最後の読み込みが通信などで失敗したか (呼ぶ側が「通信できませんでした」と出し分ける) */
+export let loadFailed = false;
+async function loadJson(url) {
+  try {
+    const res = await fetch(url, { cache: 'no-cache' });
+    if (!res.ok) { loadFailed = true; return null; }
+    const v = await res.json();
+    loadFailed = false;
+    return Array.isArray(v) ? v : [];
+  } catch (e) {
+    loadFailed = true;
+    return null;
+  }
+}
+
 let cache = null;
-/** @returns {Promise<Array<object>>} 問題の一覧 (読めなければ空) */
+/** @returns {Promise<Array<object>>} 問題の一覧 (読めなければ空。そのときは覚えず、次に読み直す) */
 export async function loadTsume() {
   if (cache) return cache;
-  try {
-    const res = await fetch('data/tsume.json', { cache: 'no-cache' });
-    cache = res.ok ? await res.json() : [];
-  } catch (e) {
-    cache = [];
-  }
-  return cache;
+  const v = await loadJson('data/tsume.json');
+  if (v) cache = v;
+  return v || [];
 }
 
 let dailyCache = null;
 /** 今日の問題の出題元 (一覧に置いていない問題) */
 export async function loadDailyList() {
   if (dailyCache) return dailyCache;
-  try {
-    const res = await fetch('data/tsume-daily.json', { cache: 'no-cache' });
-    dailyCache = res.ok ? await res.json() : [];
-  } catch (e) {
-    dailyCache = [];
-  }
-  return dailyCache;
+  const v = await loadJson('data/tsume-daily.json');
+  if (v) dailyCache = v;
+  return v || [];
 }
 
 /** その日の問題。日本時間の0時に替わり、どの端末でも同じ。

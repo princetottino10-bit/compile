@@ -9,6 +9,7 @@
  *   ・持っているものが出たら CHIP を少し返す (かぶり)
  *   保存は compileGacha { spent, owned: { 'kind:key': 時刻 }, pulls, pity }。アカウントの保存 (cloudsave.js) にも入る
  * ========================================================================= */
+import { keepBroken } from './broken.js';
 import { GACHA_ITEMS, gachaId, itemName } from './rewards.js';
 import { deviceId } from './device.js';
 
@@ -50,16 +51,15 @@ function addBack(state, n) {
 }
 
 export function loadGacha() {
-  try {
-    const s = JSON.parse(localStorage.getItem(KEY) || 'null');
-    if (s && typeof s === 'object') {
-      const st = normalize(s);
-      const fixed = compensateOldPrice(st);
-      if (fixed !== st) saveGacha(fixed);
-      return fixed;
-    }
-  } catch (e) { /* 壊れていれば空から */ }
-  return normalize({});
+  /* 読めない (壊れた) ときは空から始めるが、元の文字列は控えておく (broken.js)。
+     読めたあとの整え直しの失敗は空にしない (前は catch の中に整え直しも入っていて、不具合でも空になり、次に引いたときに持ち物が上書きされた) */
+  let raw = null, s = null;
+  try { raw = localStorage.getItem(KEY); s = JSON.parse(raw || 'null'); } catch (e) { keepBroken(KEY, raw); return normalize({}); }
+  if (!s || typeof s !== 'object') return normalize({});
+  const st = normalize(s);
+  const fixed = compensateOldPrice(st);
+  if (fixed !== st) saveGacha(fixed);
+  return fixed;
 }
 
 /* 1回 30 → 15 に下げた (2026-09-27)。それまでに使った CHIP の半分 (5 の倍数に切り上げ) を返す (新しい値段で引いたのと同じになる)。

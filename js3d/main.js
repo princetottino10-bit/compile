@@ -265,8 +265,10 @@ window.addEventListener('compile:deus', (ev) => {
 window.addEventListener('compile:synced', () => { setTimeout(() => { checkTrophies(null).catch(() => {}); }, 1500); });
 async function checkTrophies(game) {
   /* 数え方の間違いで付いた実績を外すのは、記録がそろってから (ログインしていて、まだアカウントから記録を読んでいない端末で
-     外すと、手元の記録が足りないせいで正しく取った CONQUEROR まで外れていた) */
-  if (!accountState().user || accountState().syncedOnce) pruneTrophies(trophyContext(null));
+     外すと、手元の記録が足りないせいで正しく取った CONQUEROR まで外れていた)。
+     ログインの確かめが終わる前 (ready でない) も外さない: 回線が遅いと、ログインしている人も一瞬「未ログイン」に見えるため */
+  const acc = accountState();
+  if (acc.ready && (!acc.user || acc.syncedOnce)) pruneTrophies(trophyContext(null));
   while (trophyBusy) await trophyBusy;              // 同時に2回判定しない
   let done;
   trophyBusy = new Promise(r => { done = r; });
@@ -1007,7 +1009,7 @@ async function boot() {
       puzzle = { spec: t.spec, goal: t.goal.kind, task: TS.goalText(t.goal, t.spec.sides[0].protos), tsume: t };
       p0 = t.spec.sides[0].protos.slice(); p1 = t.spec.sides[1].protos.slice();
       document.body.classList.add('puzzle', 'tsume');
-    } else UI.toast('詰めコンパイルの問題が見つかりません');
+    } else UI.toast(TS.loadFailed ? '詰めコンパイルの問題を読み込めませんでした。通信を確かめて、もう一度開いてください' : '詰めコンパイルの問題が見つかりません');
   }
 
   /* 保存したリプレイを見る (?replay=id) */
@@ -1078,7 +1080,8 @@ async function boot() {
        (前はタイトルを出してから見ていたので、ログインしたのにホームへ戻されたように見えた) */
     let onlineResume = false;
     try {
-      if (localStorage.getItem('compileOnlineResume') === '1') { localStorage.removeItem('compileOnlineResume'); onlineResume = true; }
+      const v = localStorage.getItem('compileOnlineResume');
+      if (v !== null) { localStorage.removeItem('compileOnlineResume'); onlineResume = ROOM.resumeFresh(v); }
     } catch (e) { /* private mode */ }
     let nextMode = resumeRec ? 'resume'
       : onlineResume ? 'online'
@@ -1125,8 +1128,8 @@ async function boot() {
       if (nextMode === 'online') {
         try {
           await ROOM.roomLoadDeps();
-        } catch (e) { noteError(e); UI.toast('オンライン機能を読み込めませんでした。' + friendlyMessage(e, { online: navigator.onLine !== false }), 5000); nextMode = 'single'; continue; }
-        if (!ROOM.roomConfigured()) { UI.toast('この環境ではオンライン対戦を使えません (CPU 戦はこのまま遊べます)', 4000); nextMode = 'single'; continue; }
+        } catch (e) { noteError(e); dropJoinCode(); UI.toast('オンライン機能を読み込めませんでした。' + friendlyMessage(e, { online: navigator.onLine !== false }), 5000); nextMode = 'single'; continue; }
+        if (!ROOM.roomConfigured()) { dropJoinCode(); UI.toast('この環境ではオンライン対戦を使えません (CPU 戦はこのまま遊べます)', 4000); nextMode = 'single'; continue; }
         /* ドラフト中にプロトコルの6枚を見る */
         const result = await runRoomLobby(cards.protocols, { cardsOf: protocolCards, joinCode });
         joinCode = '';
@@ -1180,7 +1183,7 @@ async function boot() {
         if (node.kind === 'tsume') {
           /* 詰めコンパイルの敵: 問題モードと同じ仕組みで、決着をストーリーへ返す (puzzle.story) */
           const t = node.puzzle || (await TS.loadTsume()).find(x => x.id === node.tsume);
-          if (!t) { UI.toast('詰めコンパイルの問題が見つかりません'); storyNode = null; history.replaceState(null, '', location.pathname); nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
+          if (!t) { UI.toast(TS.loadFailed ? '詰めコンパイルの問題を読み込めませんでした。通信を確かめて、もう一度開いてください' : '詰めコンパイルの問題が見つかりません'); storyNode = null; history.replaceState(null, '', location.pathname); nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
           puzzle = { spec: t.spec, goal: t.goal.kind, task: TS.goalText(t.goal, t.spec.sides[0].protos), tsume: t, story: true };
           p0 = t.spec.sides[0].protos.slice(); p1 = t.spec.sides[1].protos.slice();
           document.body.classList.add('puzzle', 'tsume');
@@ -3626,6 +3629,9 @@ function stopRoomPoll() {
   clearTimeout(roomPollTimer);
 }
 
+/* 招待リンクの部屋のコードを忘れる。オンラインを読み込めずに CPU 戦へ回したときも消す
+   (前は残り続け、同じタブでタイトルへ戻るたびにオンラインの読み込み → 失敗 → 相手選び、と飛ばされた) */
+function dropJoinCode() { try { sessionStorage.removeItem('compileJoinCode'); } catch (e) { /* private mode */ } }
 let roomAuthWarned = false;      // ログイン切れを知らせたか (ログインし直して問い合わせが通ったら戻す)
 async function roomPoll(force) {
   if (!roomMode || !roomRm) return;

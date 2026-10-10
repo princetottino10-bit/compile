@@ -189,12 +189,14 @@ async function loadAccount() {
   setReplayHooks({
     onPin: (r) => {
       if (!state.user) return;
+      unpinLater(r.id, false);          // 外してから付け直した: 消し直しの予定から外す
       ROOM.roomClient().from(REPLAY_TABLE).upsert(replayRow(r), { onConflict: 'user_id,id' })
         .then((w) => { if (w.error) { fail('リプレイを保存できませんでした (次の同期で送り直します)。', w.error); changed(); } });
     },
     onUnpin: (id) => {
       if (!state.user) return;
-      ROOM.roomClient().from(REPLAY_TABLE).delete().eq('id', id).then(() => {});
+      unpinLater(id, true);
+      deleteReplay(id);
     }
   });
   /* 隠れたら送る。戻ってきたら、1分以上たっていれば読み直す (スマホはアプリを開いたままにすることが多く、
@@ -268,7 +270,24 @@ async function syncXp(mark) {
 }
 
 /* 保存したリプレイ: 向こうに無いものを送り、こちらに無いものだけ中身を読む。読み込んだ数を返す */
+/* 外した (★を消した) のに、アカウントから消せなかったリプレイ。消せるまで覚えておき、同期のたびに消し直す。
+   前は消すのに失敗すると黙って残り、次の同期で「端末に無いもの」として読み戻されて★が復活した */
+const UNPIN_KEY = 'compileReplayUnpinPending';
+function unpinPending() { try { const v = JSON.parse(localStorage.getItem(UNPIN_KEY) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
+function unpinLater(id, add) {
+  const set = new Set(unpinPending());
+  if (add) set.add(id); else set.delete(id);
+  try { localStorage.setItem(UNPIN_KEY, JSON.stringify([...set].slice(-100))); } catch (e) { /* private mode */ }
+}
+async function deleteReplay(id) {
+  try {
+    const r = await ROOM.roomClient().from(REPLAY_TABLE).delete().eq('id', id);
+    if (!r.error) unpinLater(id, false);
+  } catch (e) { /* 次の同期で消し直す */ }
+}
 async function syncReplays() {
+  for (const id of unpinPending()) await deleteReplay(id);
+  const pending = new Set(unpinPending());
   const ids = await ROOM.roomClient().from(REPLAY_TABLE).select('id').limit(100);
   if (ids.error) throw new Error(ids.error.message);
   const remote = new Set(ids.data.map(x => x.id));
@@ -279,7 +298,7 @@ async function syncReplays() {
     if (w.error) throw new Error(w.error.message);
   }
   const have = new Set(local.map(r => r.id));
-  const need = Array.from(remote).filter(id => !have.has(id));
+  const need = Array.from(remote).filter(id => !have.has(id) && !pending.has(id));
   if (!need.length) return 0;
   const r = await ROOM.roomClient().from(REPLAY_TABLE).select('id,data').in('id', need);
   if (r.error) throw new Error(r.error.message);
@@ -510,8 +529,10 @@ export function maybeLoginHint(reason) {
 /* Google から戻ってきたらアカウントの画面を開く (main.js が呼ぶ) */
 export function takeAccountResume() {
   try {
-    if (localStorage.getItem('compileAccountResume') !== '1') return false;
+    const v = localStorage.getItem('compileAccountResume');
+    if (v === null) return false;
     localStorage.removeItem('compileAccountResume');
+    if (!ROOM.resumeFresh(v)) return false;          // 古い目印 (ログインの途中でやめた) は捨てる
     return true;
   } catch (e) {
     return false;

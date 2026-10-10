@@ -71,11 +71,13 @@ export async function roomRestoreOAuthRedirect() {
      ACCOUNT を開いて「中断しました」と知らせる (account.js が読む)。オンラインへ直行する目印は消す */
   if (query.has('error') || query.has('error_description') || /(?:^#|[&])error=/.test(location.hash)) {
     try { sessionStorage.setItem('compileOAuthError', '1'); } catch (e) { /* private mode */ }
-    try { localStorage.setItem('compileAccountResume', '1'); } catch (e) { /* private mode */ }
+    try { localStorage.setItem('compileAccountResume', String(Date.now())); } catch (e) { /* private mode */ }
     clearOnlineResume();
   }
+  /* ログインの部品を読めなかった (通信) ときは、アドレスの code を消さない。再読み込みでログインをやり直せるように
+     (前は消してから失敗し、再読み込みしてもログインが成り立たなかった) */
+  await roomLoadDeps();
   try {
-    await roomLoadDeps();
     await roomSession();
   } finally {
     const clean = new URL(location.href);
@@ -122,9 +124,11 @@ export async function roomSignUp(email, password, displayName) {
 }
 
 /* OAuth はページを離れる。戻り先はタイトル画面なので、
-   オンラインへ直行するための目印を残しておく (main.js が読む)。 */
+   オンラインへ直行するための目印を残しておく (main.js が読む)。目印は時刻で、古いもの (15 分より前) は読む側で捨てる
+   (Google の画面で「戻る」やタブを閉じると目印が残り、数日後に開いたときロビーへ勝手に飛んでいた) */
+export const resumeFresh = (v) => { const t = Number(v); return Number.isFinite(t) && t > 0 && Date.now() - t < 15 * 60 * 1000; };
 function markOnlineResume() {
-  try { localStorage.setItem('compileOnlineResume', '1'); } catch (e) { /* private mode */ }
+  try { localStorage.setItem('compileOnlineResume', String(Date.now())); } catch (e) { /* private mode */ }
 }
 function clearOnlineResume() {
   try { localStorage.removeItem('compileOnlineResume'); } catch (e) { /* private mode */ }
@@ -151,7 +155,7 @@ export async function roomSignInWithGoogle() {
 /* アカウント (戦績の保存) から使う。ログイン後はタイトルへ戻り、アカウントの画面を開き直す */
 export function roomClient() { return client(); }
 export async function accountSignInWithGoogle() {
-  try { localStorage.setItem('compileAccountResume', '1'); } catch (e) { /* private mode */ }
+  try { localStorage.setItem('compileAccountResume', String(Date.now())); } catch (e) { /* private mode */ }
   const r = await client().auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo: location.origin + location.pathname }

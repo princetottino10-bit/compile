@@ -4,10 +4,11 @@
  *   全体・自分のプロトコル別・相手のプロトコル別・デッキ別の勝率を出す。
  * ========================================================================= */
 
+import { keepBroken } from './broken.js';
 import { replaysTab, bindReplays } from './replays-ui.js';
 import { bonusXp } from './xp.js';
 import { levelLabel } from './aidecks.js';
-import { conquerable, protocolSummary, matchups, winTrend, fastestWin, masteryLevel, cardStats, cardTier, playerLevel, xpForLevel } from './stats-data.js';
+import { conquerable, conquered, beatStrongest, isShortRecord, protocolSummary, matchups, winTrend, fastestWin, masteryLevel, cardStats, cardTier, playerLevel, xpForLevel } from './stats-data.js';
 import { nextReward } from './rewards.js';
 import { raise } from './dialogs.js';
 
@@ -27,6 +28,7 @@ function records() {
     /* チュートリアルの対戦は戦績に数えない (前に残ったものも読み飛ばす) */
     return Array.isArray(list) ? list.filter(r => r && r.mode !== 'tutorial').map(r => (r.id ? r : { ...r, id: idOf(r) })) : [];
   } catch (e) {
+    keepBroken(KEY, localStorage.getItem(KEY));      // 壊れた戦績は空として扱うが、元の文字列は控える (broken.js)
     return [];
   }
 }
@@ -155,10 +157,13 @@ function trendSvg(list) {
 
 function summaryTab(list, protos) {
   const sum = protocolSummary(list);
-  const wonStrongest = protos.filter(p => (sum.get(p.name) || {}).wonStrongest).length;
+  /* 制覇は CHALLENGE・タイトル・実績 CONQUEROR と同じ数え方 (最強のデッキと同じプロトコルは数えない。前は 30 全部を数えて 28/27 になりえた) */
+  const wonStrongest = conquered(list).size;
   const wonAny = protos.filter(p => (sum.get(p.name) || {}).won).length;
-  const fast = fastestWin(list);
-  const fastTop = fastestWin(list, r => r.level >= 3);
+  /* 最短は 3 本で決まる試合だけ (BLITZ・SPEEDRUN と同じ。前は勝ち抜き戦の1本先取も入れていて「最短 15 手番」なのに BLITZ が付かなかった)。
+     「最強に」は制覇と同じく最強のデッキに勝った試合 (前は難易度 3 以上で、ロック特化・挑戦者・下剋上まで入っていた) */
+  const fast = fastestWin(list, r => !isShortRecord(r));
+  const fastTop = fastestWin(list, r => beatStrongest(r) && !isShortRecord(r));
   const tile = (label, value, sub) => '<div class="sr-kpi"><small>' + label + '</small><b>' + value + '</b>' + (sub ? '<span>' + sub + '</span>' : '') + '</div>';
   /* レベル・報酬・ミッションはプロフィールにまとめた (ここは短く、押すとプロフィールへ) */
   const pl = playerLevel(list, bonusXp());
@@ -359,13 +364,15 @@ function confirmClear(el) {
     '<button type="button" id="srClearYes" class="warn">消す</button><button type="button" id="srClearNo">やめる</button>';
   row.querySelector('#srClearNo').onclick = () => openStats();
   row.querySelector('#srClearYes').onclick = async () => {
-    try { localStorage.removeItem(KEY); } catch (e) { /* private mode */ }
+    /* アカウントの記録を消せてから、このブラウザの記録を消す (前は先にブラウザを消していて、アカウント側で失敗すると
+       ブラウザだけ空になり、残ったアカウントの記録はこの端末へ戻ってこなかった) */
     if (cloud) {
       try { await hooks.onClear(); } catch (e) {
-        row.innerHTML = '<span class="sr-warn">アカウントの記録を消せませんでした: ' + esc(e.message) + '</span>';
+        row.innerHTML = '<span class="sr-warn">アカウントの記録を消せませんでした (この端末の記録も消していません): ' + esc(e.message) + '</span>';
         return;
       }
     }
+    try { localStorage.removeItem(KEY); } catch (e) { /* private mode */ }
     openStats();
   };
 }

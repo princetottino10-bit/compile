@@ -8,7 +8,7 @@ import { openAccount, loginNudgeNeeded } from './account.js';
 import { openCosmetics } from './cosmetics-mode.js';
 import { trophyView } from './achievements.js';
 import { trophyContext, openTrophies } from './achievements-ui.js';
-import { bonusXp, XP_GAIN } from './xp.js';
+import { bonusXp, XP_GAIN, xpLog } from './xp.js';
 import { dailyView, DAILY_XP } from './daily.js';
 import { dailyPuzzleDone } from './tsume.js';
 import { playerLevel, xpForLevel } from './stats-data.js';
@@ -70,7 +70,10 @@ export function openProfile(protocols) {
   const art = iconArt(me.icon, protocols, 96);
   const nx = nextReward(pl.level);
   const got = REWARDS.filter(r => r.lv <= pl.level);
-  const wins = recs.filter(r => r.win).length;
+  /* 勝った数は実績 (CENTURY など) と同じく、オンラインの勝ちも入れる (オンラインは戦績ではなく経験値の帳簿に残る: achievements.js の onlineWin)。
+     前は CPU 戦の戦績だけで、実績は 100 勝で付いたのにここは 96 WINS と出ていた */
+  const onlineWins = xpLog().filter(e => e.src === 'online' && e.xp > XP_GAIN.onlinePlay).length;
+  const wins = recs.filter(r => r.win).length + onlineWins;
   let el = document.getElementById('profileOv');
   if (!el) {
     el = document.createElement('div');

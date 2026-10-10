@@ -3,6 +3,7 @@
  *   CPU 戦の分は戦績 (stats.js) から数える。ここは「どこで何点入ったか」の帳簿だけ持つ。
  *   once: 同じ key では2回入らない (レッスンの初回クリア、同じ部屋の同じ決着を読み直したときなど)
  * ========================================================================= */
+import { keepBroken } from './broken.js';
 
 const KEY = 'compileXpLog';
 /* 帳簿は長く残す (一度きりの経験値の印・実績の数え方に使うので、捨てると同じ経験値が2回入ったり称号が減ったりする)。
@@ -44,6 +45,7 @@ export function xpLog() {
     return list.map(e => (Array.isArray(e) ? { id: e[0], src: e[1], xp: e[2], at: e[3] } : e))
       .filter(e => e && Number.isInteger(e.xp) && e.xp > 0).map(e => ({ ...e, id: idOf(e) }));
   } catch (e) {
+    keepBroken(KEY, localStorage.getItem(KEY));      // 壊れた帳簿は空として扱うが、元の文字列は控える (broken.js)
     return [];
   }
 }

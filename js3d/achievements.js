@@ -7,6 +7,7 @@
  *   取ったものは compileTrophies { id: 取った時刻 } に残す (アカウントの保存 cloudsave.js にも入る)。
  *   ここは表示も通信もしない (achievements-ui.js / main.js が受け持つ)
  * ========================================================================= */
+import { keepBroken } from './broken.js';
 import { CHALLENGER_BASE, CHALLENGERS, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL } from './aidecks.js';
 const BOSS_LEVELS = [3, 4, ...CHALLENGERS.map((_, i) => CHALLENGER_BASE + i)];
 import { XP_GAIN } from './xp.js';
@@ -158,6 +159,7 @@ function loadRaw() {
     const m = JSON.parse(localStorage.getItem(KEY) || '{}');
     return m && typeof m === 'object' && !Array.isArray(m) ? m : {};
   } catch (e) {
+    keepBroken(KEY, localStorage.getItem(KEY));      // 壊れた実績は空として扱うが、元の文字列は控える (broken.js)
     return {};
   }
 }
