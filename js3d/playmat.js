@@ -333,6 +333,7 @@ const artImages = new Map();       // key -> Image (読み込み済みなら com
 const DRAW = { nebula: drawNebula, vortex: drawVortex, biomech: drawBiomech, prism: drawPrism, eclipse: drawEclipse };
 for (const key of Object.keys(ART_MATS)) DRAW[key] = null;          // 絵のマットは playmatTexture で描く
 const cache = new Map();
+const MAT_KEEP = 4;
 
 /* 柄のテクスチャ (neon は柄なし = null) */
 /* 画面の形で山の置き場が動くので、その形ごとに描き分ける */
@@ -342,7 +343,7 @@ export function playmatTexture(key, full) {
   if (!DRAW[key] && !artMatOf(key)) return null;
   full = !!full && !!artMatOf(key);                // 柄のマットは元から全面が同じ柄
   const ck = key + ':' + layoutKey() + (full ? ':full' : '');
-  if (cache.has(ck)) return cache.get(ck);
+  if (cache.has(ck)) { const t = cache.get(ck); cache.delete(ck); cache.set(ck, t); return t; }   // 使ったものを新しい側へ
   const cv = document.createElement('canvas');
   cv.width = W; cv.height = H;
   const tex = new THREE.CanvasTexture(cv);
@@ -359,6 +360,13 @@ export function playmatTexture(key, full) {
     DRAW[key](cv.getContext('2d'));
   }
   cache.set(ck, tex);
+  /* 置いておくのは新しいほうから MAT_KEEP 枚まで。1枚が大きい (約 4MB の描画面 + GPU 側) うえ、画面の向きや大きさが変わるたびに
+     別の鍵で増えていた (iPhone でページごと落ちるもと)。古いものは描画面ごと手放す */
+  while (cache.size > MAT_KEEP) {
+    const [oldKey, old] = cache.entries().next().value;
+    cache.delete(oldKey);
+    try { old.dispose(); if (old.image) { old.image.width = 0; old.image.height = 0; } } catch (e) { /* 手放せなくても続ける */ }
+  }
   return tex;
 }
 

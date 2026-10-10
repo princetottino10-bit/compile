@@ -774,7 +774,8 @@ async function boot() {
   /* OAuth の戻り先では、ゲーム初期化より先にセッション復元と URL の掃除を行う。 */
   await ROOM.roomRestoreOAuthRedirect();
   /* 読み込めなかったとき (通信の失敗・404 の HTML) に、何が起きたか分かるようにする */
-  const getJson = (url) => fetch(url).then((r) => {
+  /* カードの資料は毎回サーバーに確かめる (ブラウザの控えで最大10分古いままだと、新しい engine.js と食い違う) */
+  const getJson = (url) => fetch(url, { cache: 'no-cache' }).then((r) => {
     if (!r.ok) throw Object.assign(new Error(url + ' を読み込めませんでした (' + r.status + ')'), { status: r.status });
     return r.json();
   });
@@ -1172,9 +1173,14 @@ async function boot() {
         let node = params.get('play') === '1' ? STORY.pendingBattle(STORY.loadStory()) : null;
         if (!node) {
           const worldOpts = { onChapterClear: (id) => gainXp('story', XP_GAIN.storyChapter, 'stc:' + id) };
-          let pick = await openWorld(cards.protocols, worldOpts);
-          /* 章が終わったら、次の章の地図を開き直す */
-          for (let hop = 0; pick && pick.reopen && hop < 8; hop++) pick = await openWorld(cards.protocols, worldOpts);
+          /* 地図は自分の 3D 画面を持つので、その間は盤面の 3D を描かない (iPhone のメモリ) */
+          if (stage) stage.setPaused(true);
+          let pick;
+          try {
+            pick = await openWorld(cards.protocols, worldOpts);
+            /* 章が終わったら、次の章の地図を開き直す */
+            for (let hop = 0; pick && pick.reopen && hop < 8; hop++) pick = await openWorld(cards.protocols, worldOpts);
+          } finally { if (stage) stage.setPaused(false); }
           node = pick && pick.battle;
         }
         if (!node) { history.replaceState(null, '', location.pathname); nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }

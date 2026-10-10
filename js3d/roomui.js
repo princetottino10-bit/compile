@@ -589,6 +589,7 @@ export function runRoomLobby(protocols, opts = {}) {
       if (++quickScan % 4) return false;              // 見張りの 4 回に 1 回
       let data;
       try { data = await roomApi('list'); } catch (e) { return false; }
+      if (!quickHost || !room) return false;           // 待つ間に部屋を出た (ロビーへ戻った・対戦が始まった)
       const other = (data.rooms || []).filter(r => r.code !== room.code && !r.locked && !!r.rated === quickHost.rated && r.mode !== 'tag'
         && (r.title === 'クイック対戦' || r.title === 'レート戦')).sort((a, b) => (a.code < b.code ? -1 : 1))[0];
       if (!other || !(other.code < room.code)) return false;
@@ -609,7 +610,12 @@ export function runRoomLobby(protocols, opts = {}) {
       let next;
       tickWait();
       if (await quickMerge()) return;
-      try { next = await roomApi('get', { code: room.code, stamp: room.stamp }); } catch (e) {
+      /* 問い合わせを待つ間に部屋を出る・別の部屋に移ることがある。返事が来たら、まだ同じ部屋にいるか確かめる
+         (前は出たあとに返事を読んで room が空のまま使い、エラーになっていた: 2026-10-08) */
+      if (!room) return;
+      const code = room.code;
+      try { next = await roomApi('get', { code, stamp: room.stamp }); if (!room || room.code !== code) return; } catch (e) {
+        if (!room || room.code !== code) return;
         /* 部屋が消えた (相手が抜けた・片付けられた) ならロビーへ。一時的な失敗は何回か続いたら知らせる */
         if (/ルームが見つかりません/.test(e.message || '')) {
           clearInterval(pollTimer);
@@ -665,6 +671,7 @@ export function runRoomLobby(protocols, opts = {}) {
       timeoutAsked = key;
       try {
         const next = await roomApi('pickTimeout', { code: room.code, version: room.version });
+        if (!room) return;                              // 待つ間に部屋を出た
         status('相手の持ち時間が切れたので、相手の分を自動で選びました', 'ok');
         room = next;
         if (room.status === 'playing' || room.status === 'finished') { done({ rm: room }); return; }

@@ -406,6 +406,10 @@ export function createStage(container) {
   let lastActive = 0, nextDue = 0, idleNow = false, frames = 0;
   const wake = () => { lastActive = performance.now(); };
   for (const ev of ['pointerdown', 'pointermove', 'wheel', 'keydown', 'touchstart']) window.addEventListener(ev, wake, { passive: true, capture: true });
+  /* 止める (ストーリーの地図など、別の 3D 画面を出している間)。トゥイーンは進めるが描かない。
+     iPhone で 3D の描画先が2組同時に生きて、ページごと落ちるもとになっていた */
+  let paused = false;
+  const setPaused = (v) => { paused = !!v; };
   function loop(now) {
     requestAnimationFrame(loop);
     now = now || performance.now();
@@ -447,7 +451,7 @@ export function createStage(container) {
     }
     camera.lookAt(camState.look);
     /* 表示領域が 0 (たたまれた枠の中など) のときは描かない (大きさ 0 の描画先で警告が大量に出る) */
-    if (container.clientWidth > 1 && container.clientHeight > 1) composer.render();
+    if (!paused && container.clientWidth > 1 && container.clientHeight > 1) composer.render();
     if (!catchUp) { frames++; probeFps(lastTick, idleNow); }
   }
   applyGfx();
@@ -472,7 +476,7 @@ export function createStage(container) {
     setCamera, home, focusOn, cinematicHold, shake, onFrame, resize,
     /* 画質の段と、直近に測った FPS (確かめ用) */
     gfx: () => ({ level: gfxLevel, fps: Math.round(fpsProbe.fps), frames, idle: idleNow, mode: gfxMode, auto: autoLevel, powerSave }), setGfx,
-    setGfxMode, setPowerSave,
+    setGfxMode, setPowerSave, setPaused,
     lights: { key, rimSelf, rimOpp, fill }
   };
 }

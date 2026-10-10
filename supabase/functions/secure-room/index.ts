@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { createHmac } from "node:crypto";
 import "../_shared/engine.js";
 import cards from "../_shared/cards.json" with { type: "json" };
 import effects from "../_shared/effects.json" with { type: "json" };
@@ -205,9 +206,17 @@ function draftSteps(first: number, bans = 0) {
   ]);
 }
 
+/* カードの uid ('p1:FIRE_2' のようにカードの種類を含む) を、相手に見せる別名 c0.. に置き換える。
+   別名の順番は、サーバーだけが知る鍵とその試合の seed で混ぜる。前は uid の名前順に振っていて、
+   相手の3つのプロトコルが分かれば、裏向きの札の別名から正体が分かった (2026-10-10 の点検)。
+   同じ試合ならいつ計算しても同じ順番になる (再接続・リプレイでも別名が変わらない) */
+function aliasOrder(st: any, uid: string) {
+  return createHmac("sha256", SERVICE_KEY).update(String(st.seed ?? "") + "|" + uid).digest("hex");
+}
 function cardAliases(st: any) {
   const forward: Record<string, string> = {}, reverse: Record<string, string> = {};
-  Object.keys(st.cards).sort().forEach((uid, i) => { const alias = "c" + i; forward[uid] = alias; reverse[alias] = uid; });
+  const keyed = Object.keys(st.cards).map((uid) => [aliasOrder(st, uid), uid]).sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
+  keyed.forEach(([, uid], i) => { const alias = "c" + i; forward[uid] = alias; reverse[alias] = uid; });
   return { forward, reverse };
 }
 
@@ -676,6 +685,8 @@ Deno.serve(async (req) => {
           res = Engine.newGame({ seed: Number(init.seed) | 0, p0, p1, first: init.first === 1 ? 1 : 0, winCompiles: 2 });
           for (const a of actions) {
             if (res.winner !== null) break;
+            /* 投了で勝ったことにはしない (相手の投了を並べるだけで勝ちを作れた: 2026-10-10 の点検)。週替わりの CPU は投了しない */
+            if (a && a.type === "surrender") return fail(req, "第" + (i + 1) + "戦の勝ちを確かめられませんでした", 409);
             res = Engine.apply(res.state, a);
             if (res.error) break;
           }
@@ -951,6 +962,9 @@ Deno.serve(async (req) => {
     }
 
     if (op === "protocols") {
+      /* プロトコルを選べるのは、選ぶ段階 (setup) で試合がまだ始まっていないときだけ。
+         前は確かめておらず、ドラフト中や対戦後にも書き換えられた (BAN した札を使う・レート戦の履歴を書き換える: 2026-10-10 の点検) */
+      if (room.status !== "setup" || room.game_state) return fail(req, "プロトコルを選ぶときではありません", 409);
       const protocols = Array.isArray(body.protocols) ? body.protocols.map(String) : [];
       const valid = new Set((cards as any).protocols.map((p: any) => p.name));
       if (protocols.length !== 3 || new Set(protocols).size !== 3 || protocols.some((p: string) => !valid.has(p))) {

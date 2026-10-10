@@ -6,7 +6,8 @@
  *   止めたいとき: サイトに sw-off という名前のファイルを置く (開いた人の登録を外す)。
  *   1人だけなら、アドレスに ?nosw=1 を付けて開く (js3d/firstrun.js が登録を外す)
  * ========================================================================= */
-const VERSION = 'v1';
+/* v2 (2026-10-10): ページは毎回サーバーに確かめる・同じファイルの古い版の控えを捨てる。上げると前の控えはまとめて捨てられる */
+const VERSION = 'v2';
 const CACHE = 'compile-arena-' + VERSION;
 
 /* sw-off があれば、自分の登録を外して控えを捨てる */
@@ -46,11 +47,22 @@ self.addEventListener('fetch', (ev) => {
   if (req.headers.has('range')) return;
   ev.respondWith((async () => {
     try {
-      const res = await fetch(req);
+      /* ページ (three-play.html など) は、ブラウザの控え (最大10分) を使わずサーバーに確かめる。
+         古いページが新しい部品を読んで混ざり、「開き直しを2回しないと新しい版にならない」原因になっていた */
+      const res = await fetch(req, req.mode === 'navigate' ? { cache: 'no-cache' } : undefined);
       /* 取れたものだけ控える (控えるのに失敗しても、届いたものはそのまま返す) */
       if (res.ok && res.type === 'basic') {
         const copy = res.clone();
-        ev.waitUntil(caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {}));
+        ev.waitUntil(caches.open(CACHE).then(async (c) => {
+          await c.put(req, copy);
+          /* 版の付いた部品 (?v=) は、同じファイルの古い版の控えを捨てる (公開のたびに増えて、端末の容量を食っていた) */
+          if (url.searchParams.has('v')) {
+            for (const k of await c.keys()) {
+              const ku = new URL(k.url);
+              if (ku.pathname === url.pathname && ku.search !== url.search) await c.delete(k);
+            }
+          }
+        }).catch(() => {}));
       }
       return res;
     } catch (err) {
