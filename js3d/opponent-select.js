@@ -10,6 +10,7 @@ import { LEVEL_LABELS, STRONGEST_AI, LOCK_AI, CHALLENGERS, CHALLENGER_BASE, UNDE
 import { localRecords } from './stats.js';
 import { conquered, conquerable } from './stats-data.js';
 import { settings } from './settings.js';
+import { accountState } from './account.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const LAST_KEY = 'compileOppLast';
@@ -57,7 +58,9 @@ export function openOpponentSelect(protocols, opts = {}) {
   const conq = conquered(localRecords()).size, total = conquerable(protocols.map(p => p.name)).length;
   const conqBar = '<span class="op-conq"><span>制覇 <b>' + conq + '</b>/' + total + '</span><i><s style="width:' + Math.round(conq / total * 100) + '%"></s></i></span>';
   /* 強敵の一覧と、勝ったことのある数 (見出しの下にまとめて出す) */
-  const bossLevels = [3, 4].concat(CHALLENGERS.map((c, k) => CHALLENGER_BASE + k), [DEUS_LEVEL]);
+  /* 機械仕掛けの神 (最強の上): 称号 CONQUEROR (最強を除く全プロトコルで最強に勝つ) を取ると挑める。管理者は試せるように常に */
+  const deusOpen = conq >= total || !!accountState().admin;
+  const bossLevels = (deusOpen ? [DEUS_LEVEL] : []).concat([3, 4], CHALLENGERS.map((c, k) => CHALLENGER_BASE + k));
   const beaten = bossLevels.filter(lv => recOf(lv).wins > 0).length;
   /* 挑戦者は名前のないものに番号 (前は「挑戦者」が3つ並んで見分けがつかなかった) */
   const ROMAN = ['Ⅰ', 'Ⅱ', 'Ⅲ', 'Ⅳ', 'Ⅴ', 'Ⅵ', 'Ⅶ', 'Ⅷ'];
@@ -80,13 +83,16 @@ export function openOpponentSelect(protocols, opts = {}) {
         '<button type="button" role="tab" data-ctab="ud" aria-selected="' + (ctab === 'ud') + '" class="' + (ctab === 'ud' ? 'on' : '') + '">下剋上 <small>2</small></button></div>' +
       '<section data-cpane="boss"' + (ctab === 'boss' ? '' : ' hidden') + '><h3><small>相手のデッキは決まっている。次の画面で自分の3つを選ぶ</small></h3>' +
       '<div class="op-row boss">' +
+        (deusOpen
+          ? card(String(DEUS_LEVEL), '<span class="op-deus">' + gearSvg(10) + esc(DEUS_NAME) + '</span>' + rec(DEUS_LEVEL),
+            '最強の上に座る、機械仕掛けの神', deck(DEUS_AI), ' deus top')
+          : '<div class="op-card deus top locked" aria-disabled="true"><b><span class="op-deus">' + gearSvg(10) + '？？？</span></b>' +
+            '<small>最強の上に、まだ誰かいる。称号 CONQUEROR (最強を除く ' + total + ' のプロトコルすべてで最強に勝つ) を取ると挑める</small>' +
+            '<span class="op-deus-lock">制覇 ' + conq + ' / ' + total + '</span></div>') +
         card('3', '最強' + rec(3) + (conq >= total ? ' <em>✓ TITLE — CONQUEROR</em>' : ''),
           'いちばん強い CPU。残りの' + total + 'のプロトコルすべてで勝つと 称号 CONQUEROR', deck(STRONGEST_AI) + conqBar, ' top') +
         card('4', 'ロック特化' + rec(4), 'サイキック①で「裏向きでしか出せない」を狙う', deck(LOCK_AI)) +
         CHALLENGERS.map((c, k) => card(String(CHALLENGER_BASE + k), challengerTitle(c, k) + rec(CHALLENGER_BASE + k), '最強の候補だったデッキ', deck(c.deck))).join('') +
-        /* 機械仕掛けの神: いちばん下に、ほかと見分けのつく札で */
-        card(String(DEUS_LEVEL), '<span class="op-deus">' + gearSvg(10) + esc(DEUS_NAME) + '</span>' + rec(DEUS_LEVEL),
-          '機械仕掛けの神。ある人の指し方を写した CPU', deck(DEUS_AI), ' deus') +
       '</div></section>' +
       '<section data-cpane="ud"' + (ctab === 'ud' ? '' : ' hidden') + '><h3><small>いちばん弱いデッキで、いちばん強い CPU に挑む</small></h3>' +
       '<div class="op-row">' + card('underdog', '下剋上' + (cleared ? ' <em>✓ TITLE — GIANT SLAYER</em>' : rec(UNDERDOG_LEVEL)),

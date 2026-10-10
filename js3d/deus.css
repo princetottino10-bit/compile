@@ -128,3 +128,7 @@
 .op-deus { display: inline-flex; align-items: center; gap: 6px; color: #d9caff; }
 .op-deus .dx-gear { width: 1.2em; height: 1.2em; fill: rgba(177, 140, 255, .2); stroke: #c9a8ff; animation: dxSpin 8s linear infinite; }
 .op-card.deus { border-color: rgba(177, 140, 255, .55) !important; box-shadow: 0 0 22px rgba(177, 140, 255, .18), inset 0 0 18px rgba(177, 140, 255, .08); }
+.op-card.deus.locked { cursor: default; opacity: .78; filter: saturate(.6); }
+.op-card.deus.locked .op-deus .dx-gear { animation-duration: 30s; }
+.op-deus-lock { align-self: flex-start; margin-top: 6px; padding: 3px 8px; font: 800 11px/1 var(--font-ui), "M PLUS 1", system-ui; color: #d9caff;
+  border: 1px solid rgba(177, 140, 255, .45); font-variant-numeric: tabular-nums; }
