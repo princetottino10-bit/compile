@@ -80,14 +80,16 @@ def build(hero=True):
     root = bpy.data.objects.new('Hero', None)
     bpy.context.scene.collection.objects.link(root)
     parts = {}
-    parts['Torso'] = blob('Torso', (0.17, 0.13, 0.22), (0, 0, 0.72), skin)
+    parts['Torso'] = blob('Torso', (0.19, 0.14, 0.25), (0, 0, 0.74), skin)
+    parts['Neck'] = blob('Neck', (0.06, 0.06, 0.08), (0, 0, 0.98), skin)
+    parts['Pelvis'] = blob('Pelvis', (0.17, 0.13, 0.1), (0, 0, 0.55), skin)
     parts['Head'] = blob('Head', (HEAD_R * 1.04, HEAD_R * 0.96, HEAD_R), (0, 0, HEAD_Z), dark if hero else skin, segments=32)
     for side, x in (('L', 0.085), ('R', -0.085)):
-        leg = blob('Leg' + side, (0.07, 0.07, LEG_LEN / 2), (x, 0, HIP_Z), skin, origin_top=True)
+        leg = blob('Leg' + side, (0.08, 0.08, LEG_LEN / 2), (x, 0, HIP_Z), skin, origin_top=True)
         shoe = blob('Shoe' + side, (0.08, 0.11, 0.05), (x, -0.025, HIP_Z - LEG_LEN + 0.02), dark if hero else skin)
         shoe.parent = leg
         shoe.matrix_parent_inverse = leg.matrix_world.inverted()
-        arm = blob('Arm' + side, (0.055, 0.055, ARM_LEN / 2), (x * 2.2, 0, SHOULDER_Z), skin, origin_top=True)
+        arm = blob('Arm' + side, (0.062, 0.062, ARM_LEN / 2), (x * 2.2, 0, SHOULDER_Z), skin, origin_top=True)
         hand = blob('Hand' + side, (0.06, 0.06, 0.06), (x * 2.2, 0, SHOULDER_Z - ARM_LEN), skin)
         hand.parent = arm
         hand.matrix_parent_inverse = arm.matrix_world.inverted()
@@ -138,7 +140,8 @@ def build(hero=True):
             parts['Arm' + side].location.y = -0.02
         # 胸の灯
         parts['Core'] = blob('Core', (0.035, 0.02, 0.035), (0, -0.272, 0.8), material('Core', CYAN, emission=6.0))
-        bpy.data.objects.remove(parts.pop('Torso'))       # 外套の下で見えない
+        for k in ('Torso', 'Neck', 'Pelvis'):
+            bpy.data.objects.remove(parts.pop(k))       # 外套の下で見えない
     for o in parts.values():
         if o.parent is None:
             o.parent = root
@@ -150,6 +153,9 @@ def pose(parts, frame):
     a = {'stand': 0, 'walk1': 1, 'walk2': -1}[frame] * math.radians(28)
     parts['LegR'].rotation_euler = (-a, 0, 0)
     parts['LegL'].rotation_euler = (a, 0, 0)
+    # 後ろへ蹴った足は少し縮めて、かかとを浮かせる (正面から見ても、どちらの足が前か分かる)
+    parts['LegR'].scale = (1, 1, 0.9 if a < 0 else 1)
+    parts['LegL'].scale = (1, 1, 0.9 if a > 0 else 1)
     parts['ArmL'].rotation_euler = (-a * 0.8, 0, math.radians(0))
     parts['ArmR'].rotation_euler = (a * 0.8, 0, 0)
     out = math.radians(13) if 'Cloak' in parts else math.radians(8)   # 外套の上に腕を出す
@@ -216,7 +222,15 @@ def do_base():
     scn.render.film_transparent = True
     scn.render.use_freestyle = True
     scn.render.line_thickness_mode = 'ABSOLUTE'
-    scn.render.line_thickness = 2.0
+    vl = scn.view_layers[0]
+    vl.use_freestyle = True
+    fs = vl.freestyle_settings
+    ls = fs.linesets[0] if len(fs.linesets) else fs.linesets.new('Lines')
+    ls.select_silhouette = ls.select_border = ls.select_crease = True
+    if ls.linestyle is None:
+        ls.linestyle = bpy.data.linestyles.new('Line')
+    ls.linestyle.thickness = 3.0
+    ls.linestyle.color = (0, 0, 0)
     for dir_, rz in (('front', 0), ('side', 90), ('back', 180)):
         root.rotation_euler = (0, 0, math.radians(rz))
         for fr in ('stand', 'walk1', 'walk2'):
