@@ -69,3 +69,62 @@
   .dx-title, .dx-title .dx-mini, .dx-descend *, #resultCut .rc-deus * { animation: none !important; }
 }
 .dx-descend.calm *, body.calm .dx-title, body.calm .dx-title .dx-mini, body.calm #resultCut .rc-deus * { animation: none !important; }
+
+/* ---- 機械仕掛けの神 CODE:PURPLE の降臨 (deusIntro)。称号の白金に紫を足して、別のものに見せる ---- */
+.dxi { --dxi-v: #b18cff; --dxi-v2: rgba(177, 140, 255, .55); position: fixed; inset: 0; z-index: 9000; display: flex; align-items: center; justify-content: center;
+  overflow: hidden; cursor: pointer; animation: dxFadeIn .3s ease-out; }
+.dxi.out { animation: dxFadeOut .45s ease-in forwards; }
+/* 暗転 */
+.dxi-veil { position: absolute; inset: 0; background: radial-gradient(ellipse 70% 60% at 50% 45%, rgba(20, 10, 40, .82), rgba(2, 1, 6, .95)); }
+/* 天からの紫の光の柱 */
+.dxi-pillar { position: absolute; left: 50%; top: 0; width: min(54vw, 420px); height: 100%; translate: -50% 0; transform-origin: top; mix-blend-mode: screen;
+  background: radial-gradient(ellipse 50% 100% at 50% 0%, rgba(232, 220, 255, .7), var(--dxi-v2) 40%, transparent 78%);
+  animation: dxBeam .9s .25s cubic-bezier(.2, .9, .3, 1) both; }
+/* 外から寄ってきて噛み合う歯車 */
+.dxi-gears { position: absolute; left: 50%; top: 46%; width: 0; height: 0; }
+.dxi-gears .dx-gear { position: absolute; fill: rgba(177, 140, 255, .14); stroke: rgba(214, 196, 255, .8); }
+.dxi-gears .g1 { --s: min(70vw, 460px); --fx: 0; --fy: -40vh; width: var(--s); height: var(--s); left: calc(var(--s) / -2); top: calc(var(--s) / -2);
+  animation: dxSpin 12s linear infinite, dxiGather .9s .5s cubic-bezier(.2, 1.2, .4, 1) both; }
+.dxi-gears .g2 { --s: min(32vw, 210px); --fx: -50vw; --fy: -10vh; width: var(--s); height: var(--s); left: calc(var(--s) * -1.75); top: calc(var(--s) * -1.1);
+  animation: dxSpinR 7s linear infinite, dxiGather .8s .65s cubic-bezier(.2, 1.2, .4, 1) both; }
+.dxi-gears .g3 { --s: min(38vw, 250px); --fx: 50vw; --fy: 10vh; width: var(--s); height: var(--s); left: calc(var(--s) * .6); top: calc(var(--s) * -.15);
+  animation: dxSpinR 9s linear infinite, dxiGather .8s .75s cubic-bezier(.2, 1.2, .4, 1) both; }
+.dxi-gears .g4 { --s: min(22vw, 140px); --fx: 0; --fy: 40vh; width: var(--s); height: var(--s); left: calc(var(--s) * -.5); top: calc(var(--s) * 1.9);
+  animation: dxSpin 5s linear infinite, dxiGather .7s .9s cubic-bezier(.2, 1.2, .4, 1) both; }
+@keyframes dxiGather { from { translate: var(--fx) var(--fy); opacity: 0; } }
+/* 上の小さな見出し (打ち込まれ、ときどき乱れる) */
+.dxi-kicker { position: absolute; top: 14%; left: 0; right: 0; margin: 0; text-align: center; font: 900 clamp(12px, 2.4vw, 16px)/1 var(--font-hud), "M PLUS 1", system-ui;
+  letter-spacing: .6em; color: var(--dxi-v); text-shadow: 0 0 14px var(--dxi-v2); animation: dxiType .5s .2s steps(8) both, dxiGlitch 2.6s .8s steps(1) infinite; }
+@keyframes dxiType { from { clip-path: inset(0 100% 0 0); } }
+@keyframes dxiGlitch { 0%, 92%, 100% { translate: 0 0; } 94% { translate: -3px 0; color: #ff4fa3; } 96% { translate: 3px 0; color: #7cf0d0; } }
+/* 吊られて降りる名前の札 */
+.dxi-hang { position: relative; display: flex; flex-direction: column; align-items: center; animation: dxiLower 1.25s 1s cubic-bezier(.3, 1.3, .45, 1) both; }
+@keyframes dxiLower { from { transform: translateY(-75vh); } }
+.dxi-plaque { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 22px 34px 20px;
+  border: 1px solid rgba(214, 196, 255, .8); border-radius: 6px; background: linear-gradient(180deg, rgba(24, 14, 44, .95), rgba(8, 4, 16, .95));
+  box-shadow: 0 0 50px var(--dxi-v2), inset 0 0 26px rgba(214, 196, 255, .1); }
+.dxi-plaque small { font: 800 12px/1 "M PLUS 1", system-ui; letter-spacing: .5em; color: #d9caff; }
+.dxi-plaque b { font: 900 clamp(30px, 8vw, 64px)/1 var(--font-logo), "M PLUS 1", system-ui; letter-spacing: .06em; white-space: nowrap;
+  background: linear-gradient(100deg, #9a86c8 0%, #ffffff 30%, #c9a8ff 45%, #ffffff 60%, #9a86c8 100%); background-size: 220% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent; animation: dxSheen 2.2s linear infinite; filter: drop-shadow(0 0 14px var(--dxi-v2)); }
+.dxi-halo { position: absolute; left: 50%; top: -36px; width: 150px; height: 40px; translate: -50% 0; border-radius: 50%;
+  border: 3px solid rgba(214, 196, 255, .95); box-shadow: 0 0 22px var(--dxi-v), inset 0 0 12px var(--dxi-v2); animation: dxHalo 1.6s ease-in-out infinite alternate; }
+/* 着地: 光と輪が広がる */
+.dxi-ring, .dxi-flash { position: absolute; pointer-events: none; opacity: 0; }
+.dxi-ring { left: 50%; top: 50%; width: 40px; height: 40px; translate: -50% -50%; border-radius: 50%; border: 2px solid rgba(214, 196, 255, .9); box-shadow: 0 0 30px var(--dxi-v); }
+.dxi-flash { inset: 0; background: radial-gradient(circle at 50% 50%, rgba(240, 232, 255, .85), transparent 60%); mix-blend-mode: screen; }
+.dxi.landed .dxi-ring { animation: dxiRing .9s ease-out; }
+.dxi.landed .dxi-flash { animation: dxiFlash .6s ease-out; }
+@keyframes dxiRing { 0% { opacity: 1; } 100% { opacity: 0; width: 160vmax; height: 160vmax; border-width: 1px; } }
+@keyframes dxiFlash { 0% { opacity: 1; } 100% { opacity: 0; } }
+.dxi-skip { position: absolute; bottom: calc(18px + env(safe-area-inset-bottom)); margin: 0; font: 700 11px/1 "M PLUS 1", system-ui; color: rgba(217, 202, 255, .55);
+  letter-spacing: .1em; animation: dxFadeIn 1s 1.2s both; }
+/* 動きを減らす: 暗転して光り、名前が出るだけ */
+@media (prefers-reduced-motion: reduce) { .dxi * { animation: none !important; } .dxi-ring, .dxi-flash { display: none; } }
+.dxi.calm * { animation: none !important; }
+.dxi.calm .dxi-ring, .dxi.calm .dxi-flash { display: none; }
+
+/* CHALLENGE の相手の札 (機械仕掛けの神) */
+.op-deus { display: inline-flex; align-items: center; gap: 6px; color: #d9caff; }
+.op-deus .dx-gear { width: 1.2em; height: 1.2em; fill: rgba(177, 140, 255, .2); stroke: #c9a8ff; animation: dxSpin 8s linear infinite; }
+.op-card.deus { border-color: rgba(177, 140, 255, .55) !important; box-shadow: 0 0 22px rgba(177, 140, 255, .18), inset 0 0 18px rgba(177, 140, 255, .08); }

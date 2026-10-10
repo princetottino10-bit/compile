@@ -10,7 +10,7 @@ import { logPlay } from './playlog.js';
 import * as FEEL from './feel.js';
 import { hypePlay, matchPoint, rankOf, playScore, slam } from './hype.js';
 import { scoreBegin, scoreAction, scoreCredits, scoreNow } from './run-score.js';
-import { descend as deusDescend } from './deus.js';
+import { descend as deusDescend, deusIntro } from './deus.js';
 import { createPickAid } from './pickaid.js';
 import { openSpectate, watchAgainUrl } from './spectate.js';
 import { watchGate, mountCpuWatchTools, mountRoomWatchTools, unmountWatchTools, catchUpText } from './watchtools.js';
@@ -71,7 +71,7 @@ import { matUnlocked, MAT_W, MAT_D } from './playmat.js';
 import { initAccount, openAccount, takeAccountResume, accountState, onAccountChange } from './account.js';
 import { openCardList } from './cardlist-ov.js';
 import { openOpponentSelect } from './opponent-select.js';
-import { UNDERDOG_DECK, STRONGEST_AI, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL, UNDERDOG_TAG_RIVAL_MATE, levelLabel, fixedDeck } from './aidecks.js';
+import { UNDERDOG_DECK, STRONGEST_AI, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL, UNDERDOG_TAG_RIVAL_MATE, levelLabel, fixedDeck, DEUS_LEVEL, DEUS_NAME } from './aidecks.js';
 import { openRun, runHud, showRunAfterGame } from './run-ui.js';
 import { openWeekly, weeklyHud, showWeeklyAfterGame } from './weekly-ui.js';
 import { compilesBy, loadRun, RUN_WIN_COMPILES, runWinCompiles, battleOpts, lethal, nodeById } from './run.js';
@@ -84,7 +84,7 @@ import * as FX from './fx.js';
 import { buildArena } from './arena.js';
 import { initAudio, sfx, setMuted, isMuted, setSfxVolume, onMuteChange } from './audio.js';
 import { mountMuteButton, muteIcon } from './mutebutton.js';
-import { playBgm, refreshBgm, fadeOutBgm, pickNormalBgm, normalBattleBgm, onlineBattleBgm, STRONG_BGM, BOSS_BGM } from './bgm.js';
+import { playBgm, refreshBgm, fadeOutBgm, pickNormalBgm, normalBattleBgm, onlineBattleBgm, STRONG_BGM, BOSS_BGM, DEUS_BGM } from './bgm.js';
 import { trackOf } from './bgm-shop.js';
 import { BGM_RELEASED } from './rewards.js';
 import { emblemDataURL } from './emblems.js';
@@ -327,9 +327,14 @@ function ownedAvatars() { return (COSMETICS.avatar || []).filter(([k]) => AVATAR
 /* 相手のキャラは、デッキを決める前に決めておく (その子の得意プロトコルを CPU のデッキに入りやすくするため)。
    設定の「相手のキャラ」(ふだんはランダム)。自分と同じ子は選ばない */
 let plannedOpp;
+/* 機械仕掛けの神 (CHALLENGE の CODE:PURPLE) との対戦か。勝ち抜き戦・ストーリー・タッグなどで同じ番号が残っていても数えない */
+function deusMatch() {
+  return aiDifficulty === DEUS_LEVEL && !runMode && !storyNode && !tagMates && !roomMode && !puzzle && !tutorial && !demoMode && !trainingMode;
+}
 function oppAvatarPlan() {
   if (plannedOpp !== undefined) return plannedOpp;
   if (storyNode) return (plannedOpp = storyNode.oppAvatar || null);
+  if (deusMatch()) return (plannedOpp = null);      // 人のキャラは出さない (相手は機械の神)
   /* 勝ち抜き戦のボス戦は、ボス本人 (avatar.js の boss_<id>) */
   if (runMode && runKind === 'run') {
     const run = loadRun();
@@ -387,6 +392,7 @@ function syncAvatar() {
   else if (roomLooks && !tagMates) { const o = roomLooks[roomWatching ? 1 : 1 - roomRm.side].avatar; oppIds = [o || oppAvatarIds([me])[0], null]; }
   else if (sp) oppIds = sp.b ? [sp.b, pool([sp.a, sp.b, mate])[0] || sp.b] : [null, null];
   else if (storyNode) oppIds = [storyNode.oppAvatar || null, null];
+  else if (deusMatch()) oppIds = [null, null];
   else {
     /* 相手のキャラ: 設定の「相手のキャラ」(ふだんはランダム)。自分・味方と同じ子は選ばない */
     /* デッキを決める前に決めておいた子 (oppAvatarPlan。得意プロトコルを CPU のデッキに入れるため) */
@@ -1349,7 +1355,9 @@ async function boot() {
           ...(storyOpts || {}),
           ...(tagMates ? { tag: tagMates } : {}) });
   cur = res;
-  playBattleBgm();                          // 対戦の BGM (ボス戦は専用の曲)
+  /* 対戦の BGM (ボス戦は専用の曲)。機械仕掛けの神は、降臨の演出で着地したときに流す (それまでは静か) */
+  const deusEntrance = deusMatch() && !resumed && !replayMode && !reviewView && !spectate;
+  if (deusEntrance) fadeOutBgm(); else playBattleBgm();
   gameStartedAt = Date.now();          // はじめの表示で合計値の演出が出ないように (feel.js)
   /* 勝ち抜き戦の短縮マッチ (序盤のふつうの戦闘): どちらも1本取れば勝ち。始めに大きく知らせる。
      自分は2つ済みから始まるので、はじめから「あと1本」。MATCH POINT / DANGER は出さない (分かりにくかった) */
@@ -1459,6 +1467,8 @@ async function boot() {
   if (tutorial) coachUpdate();
   if (replayMode) { startReplayView(replayBuilt); return; }
   if (!roomMode) setOppLook(null);                 // CPU 戦などの相手は標準の見た目
+  /* 機械仕掛けの神: 名札とキャラが出る前に、天から降りてくる (押せば飛ばせる)。着地で曲を流す */
+  if (deusEntrance) await deusIntro(DEUS_NAME, { onLand: () => { playBattleBgm(); stage.shake && stage.shake(0.6, 420); } });
   if (!puzzle && !tutorial && !demoMode && !trainingMode && !roomMode) showCpuPlates(p1);
   if (spectate) spectateStart();
   syncAvatar();
@@ -1998,9 +2008,10 @@ function applyAiDifficulty(level, opts) {
     level: opts && opts.engine !== undefined ? opts.engine : level <= 0 ? 0 : level === 1 ? 1 : 2,
     blunder: opts && opts.engine !== undefined ? 0 : level <= 0 ? 0.3 : 0,
     budget: level >= 2 ? 1200 : 900,
-    /* 最強・挑戦者 = dsh 特化 + 固定デッキ (aidecks.js)、ロック特化 = サイキック①の永続ロック狙い */
+    /* 最強・挑戦者 = dsh 特化 + 固定デッキ (aidecks.js)、ロック特化 = PSYCHIC 1 の永続ロック狙い。
+       機械仕掛けの神 (CODE:PURPLE) もロック特化の読み (ぱぱぱのぱの棋譜から寄せたもの) */
     specialist: level >= 3,
-    kind: level === 4 ? 'psylock' : 'dsh'
+    kind: level === 4 || level === DEUS_LEVEL ? 'psylock' : 'dsh'
   };
   Engine.setAiLevel(config.level);
   if (Engine.setAiBlunder) Engine.setAiBlunder(config.blunder);
@@ -3309,8 +3320,9 @@ function showCpuPlates(p1) {
   /* 勝ち抜き戦・週替わりでは難易度名 (かんたん・ふつう…) を出さない */
   const sub = storyNode ? 'STORY' : aiDifficulty === null || runMode ? '' : levelLabel(aiDifficulty);
   const showAv = avatarsOpen() && settings().avatarShow !== false && !tutorial;
-  showPlates({ me: myPlate(), opp: { name: storyNode ? storyNode.oppName : (showAv && avatarName(oppAvatarPlan())) || 'CPU',
-    sub: storyNode ? 'STORY' : runMode ? '' : shortLevel(aiDifficulty),
+  /* 機械仕掛けの神の名札は名前と「機械仕掛けの神」(称号の DEUS EX MACHINA は書かない。書くと称号の降臨がもう一度出る) */
+  showPlates({ me: myPlate(), opp: { name: storyNode ? storyNode.oppName : deusMatch() ? DEUS_NAME : (showAv && avatarName(oppAvatarPlan())) || 'CPU',
+    sub: storyNode ? 'STORY' : runMode ? '' : deusMatch() ? '機械仕掛けの神' : shortLevel(aiDifficulty),
     icon: first ? { name: first.name, color: first.color } : null } });
 }
 
@@ -4301,7 +4313,7 @@ function battleTier() {
     return node && node.type === 'boss' ? 'boss' : node && node.type === 'elite' ? 'strong' : null;
   }
   if (runMode && runKind === 'weekly') return (loadStoredWeekly().stage | 0) === 2 ? 'boss' : null;
-  if (aiDifficulty === 3 || aiDifficulty === UNDERDOG_LEVEL) return 'boss';
+  if (aiDifficulty === 3 || aiDifficulty === UNDERDOG_LEVEL || deusMatch()) return 'boss';
   return aiDifficulty >= 3 ? 'strong' : null;
 }
 /* 落ちたときの手がかり (crashwatch): 覚えているカードの絵の数 f、描画が持っている絵 t・形 g・シェーダー p、画質の段 L。
@@ -4320,6 +4332,7 @@ function stackCount(line, side) {
 /* 対戦の BGM: ボスと強敵は専用の曲。ふつうの対戦は4曲からランダム (COLLECTION の BGM を出したら選んだ曲) */
 function battleBgm() {
   if (roomMode) return onlineBattleBgm();      // オンラインは毎回ランダム (同じ曲ばかり流れないように)
+  if (deusMatch()) return DEUS_BGM;            // 機械仕掛けの神: 「神を破壊せよ」
   const tier = battleTier();
   if (tier === 'boss') return BOSS_BGM;
   if (tier === 'strong') return STRONG_BGM;

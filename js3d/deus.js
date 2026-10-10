@@ -48,3 +48,59 @@ export function descend(name, mine) {
   window.addEventListener('pointerdown', early, true);
   setTimeout(() => window.removeEventListener('pointerdown', early, true), 2600);
 }
+
+/**
+ * 機械仕掛けの神 (CHALLENGE の CODE:PURPLE) が対戦の始めに降りてくる演出。画面全体を使い、4秒ほど。
+ *   暗転 → 天から紫の光の柱 → 歯車が組み上がる → 名前の札が吊られて降りる → 着地 (opts.onLand: 曲を流す・画面を揺らす) → 消える。
+ *   押す・キーで飛ばせる (着地前なら onLand もそのとき呼ぶ)。動きを減らす設定では、光って名前が出るだけで短く。
+ *   終わったら解決する Promise を返す (対戦の始まりはこれを待つ)
+ */
+export function deusIntro(name, opts = {}) {
+  const quiet = calm();
+  return new Promise((resolve) => {
+    const el = document.createElement('div');
+    el.className = 'dxi' + (quiet ? ' calm' : '');
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-label', '機械仕掛けの神 ' + name + ' が降臨した');
+    el.innerHTML =
+      '<i class="dxi-veil"></i><i class="dxi-pillar"></i>' +
+      '<div class="dxi-gears">' + gearSvg(16, 'g1') + gearSvg(10, 'g2') + gearSvg(12, 'g3') + gearSvg(8, 'g4') + '</div>' +
+      '<p class="dxi-kicker">' + DEUS_TITLE + '</p>' +
+      '<div class="dxi-hang"><i class="dx-wire l"></i><i class="dx-wire r"></i>' +
+        '<div class="dxi-plaque"><i class="dxi-halo"></i><small>機械仕掛けの神</small>' +
+        '<b>' + esc(name) + '</b></div></div>' +
+      '<i class="dxi-ring"></i><i class="dxi-flash"></i>' +
+      '<p class="dxi-skip">押すと飛ばせます</p>';
+    document.body.appendChild(el);
+    sfx('deus');
+    let landed = false, done = false;
+    const land = () => {
+      if (landed) return;
+      landed = true;
+      el.classList.add('landed');
+      try { if (opts.onLand) opts.onLand(); } catch (e) { /* 曲や揺れが失敗しても演出は続ける */ }
+    };
+    const shownAt = Date.now();
+    /* 出てすぐの誤タップでは飛ばさない */
+    const skip = (e) => {
+      if (Date.now() - shownAt < 450) return;
+      if (e.type === 'keydown' && !['Enter', 'Escape', ' '].includes(e.key)) return;
+      e.preventDefault(); e.stopPropagation();
+      finish();
+    };
+    const tLand = setTimeout(land, quiet ? 500 : 2250);
+    const tEnd = setTimeout(() => finish(), quiet ? 1700 : 4200);
+    function finish() {
+      if (done) return;
+      done = true;
+      land();
+      clearTimeout(tLand); clearTimeout(tEnd);
+      window.removeEventListener('pointerdown', skip, true);
+      window.removeEventListener('keydown', skip, true);
+      el.classList.add('out');
+      setTimeout(() => { el.remove(); resolve(); }, 450);
+    }
+    window.addEventListener('pointerdown', skip, true);
+    window.addEventListener('keydown', skip, true);
+  });
+}

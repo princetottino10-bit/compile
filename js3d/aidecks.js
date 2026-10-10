@@ -4,6 +4,7 @@
  *   3    : 最強 (dsh 特化 + STRONGEST_AI)
  *   4    : ロック特化 (psylock 特化 + LOCK_AI)
  *   5..  : 挑戦者 (dsh 特化 + CHALLENGERS の固定デッキ)
+ *   22   : 機械仕掛けの神 CODE:PURPLE (psylock 特化 + DEUS_AI。対戦の始めに降臨の演出)
  *   固定デッキの難易度は「自由に選ぶ」でだけ使える (setup.js)。
  *   エンジンの設定は main.js の applyAiDifficulty、戦績の表示名は stats.js。
  * ========================================================================= */
@@ -39,12 +40,19 @@ export const UNDERDOG_DECK = ['SMOKE', 'UNITY', 'APATHY'];
 export const UNDERDOG_TAG_LEVEL = 21;
 export const UNDERDOG_TAG_RIVAL_MATE = ['DARKNESS', 'HATE', 'PSYCHIC'];
 
+/* 機械仕掛けの神 (仮の名前 CODE:PURPLE): ぱぱぱのぱの棋譜から学んだ指し方 (ロック特化がもと) と、その得意デッキ。
+   CHALLENGE の画面にだけ出す (週替わり・勝ち抜き戦の CHALLENGERS には入れない)。対戦の始めにデウス・エクス・マキナの降臨 (deus.js) */
+export const DEUS_LEVEL = 22;
+export const DEUS_AI = ['WAR', 'DARKNESS', 'PSYCHIC'];
+export const DEUS_NAME = 'CODE:PURPLE';
+
 export const isChallenger = (level) => level >= CHALLENGER_BASE && level < CHALLENGER_BASE + CHALLENGERS.length;
 
 /* 難易度の固定デッキ (無ければ null = ランダム編成) */
 export function fixedDeck(level) {
   if (level === 3 || level === UNDERDOG_LEVEL || level === UNDERDOG_TAG_LEVEL) return STRONGEST_AI;
   if (level === 4) return LOCK_AI;
+  if (level === DEUS_LEVEL) return DEUS_AI;
   return isChallenger(level) ? CHALLENGERS[level - CHALLENGER_BASE].deck : null;
 }
 
@@ -56,6 +64,7 @@ export function challengerName(c) {
 export function levelLabel(level) {
   if (isChallenger(level)) return '挑戦者 ' + challengerName(CHALLENGERS[level - CHALLENGER_BASE]);
   if (level === UNDERDOG_LEVEL) return '下剋上 (最弱 vs 最強)';
+  if (level === DEUS_LEVEL) return '機械仕掛けの神 ' + DEUS_NAME;
   if (level === UNDERDOG_TAG_LEVEL) return '下剋上タッグ (かんたんの味方 vs 最強タッグ)';
   return LEVEL_LABELS[level] || '不明';
 }
