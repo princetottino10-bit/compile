@@ -226,15 +226,19 @@ async function checkAdmin() {
 }
 
 async function pushXp(rows) {
-  await pushTolerant(XP_TABLE, rows, null);
+  await pushTolerant(XP_TABLE, rows, [(row) => ({ ...row, earned_at: notFuture(row.earned_at) })]);
 }
 
 /* まとめて送って、表の決まりに合わない行 (値の範囲外など) があって断られたら、1行ずつ送り直す。
    合わない行は直せるところ (fix) を直してもう一度、それでもだめなら飛ばす。
    前は1行の不合格でまとめて失敗し、その先の戦績・経験値がずっと送れなくなっていた
    (下剋上タッグの難易度 21 が、戦績の表の「20 まで」に合わず、2026-10-07 にぱうぷるさんの同期が止まった) */
-const isRowReject = (e) => !!e && /^2[23]/.test(String(e.code || ''));       // 22xxx: 値の誤り / 23xxx: 決まり違反
-async function pushTolerant(table, rows, fix) {
+/* 22xxx: 値の誤り / 23xxx: 決まり違反 (行数の上限もここ) / 42501: 書き込みの許可の決まりに合わない (端末の時計が1日以上進んでいる記録など)。
+   前は 42501 で断られると throw になり、時計が進んでいた端末は、その時刻に追いつくまで同期がずっと止まった */
+const isRowReject = (e) => !!e && (/^2[23]/.test(String(e.code || '')) || String(e.code || '') === '42501');
+/* 未来の時刻 (端末の時計が進んでいた) を今に丸める */
+const notFuture = (iso) => { const t = Date.parse(iso); return Number.isFinite(t) && t > Date.now() ? new Date().toISOString() : iso; };
+async function pushTolerant(table, rows, fixes = []) {
   if (!rows.length) return;
   const c = ROOM.roomClient();
   const opts = { onConflict: 'user_id,id', ignoreDuplicates: true };
@@ -243,7 +247,11 @@ async function pushTolerant(table, rows, fix) {
   if (!isRowReject(r.error)) throw new Error(r.error.message);
   for (const row of rows) {
     let e = (await c.from(table).upsert([row], opts)).error;
-    if (e && isRowReject(e) && fix) e = (await c.from(table).upsert([fix(row)], opts)).error;
+    /* 直し方は軽いものから順に試す (fixes: 行 → 直した行 の並び) */
+    for (const fix of fixes) {
+      if (!e || !isRowReject(e)) break;
+      e = (await c.from(table).upsert([fix(row)], opts)).error;
+    }
     if (e && !isRowReject(e)) throw new Error(e.message);
   }
 }
@@ -334,7 +342,9 @@ function reloadIfIdle() {
 
 async function pushRows(rows) {
   /* 合わなかった行は、範囲外になりやすいところ (難易度・効果の集計) を外して送り直す */
-  await pushTolerant(TABLE, rows, (row) => ({ ...row, level: null, effects: {}, feats: [] }));
+  /* 1. 時刻だけ今に丸める (端末の時計が進んでいた) 2. 範囲外になりやすいところ (難易度・効果の集計) も外す */
+  const now = (row) => ({ ...row, played_at: notFuture(row.played_at) });
+  await pushTolerant(TABLE, rows, [now, (row) => ({ ...now(row), level: null, effects: {}, feats: [] })]);
 }
 
 /* このブラウザの記録が誰のものか。前にほかのアカウントで同期していれば、その人の記録 (compileSyncMark の user でもわかる)。
@@ -371,25 +381,29 @@ export async function syncRecords() {
        ほかのアカウントの記録なら、混ぜずに入れ替える */
     const owner = localOwner();
     const switched = !!(owner && owner !== state.user.id);
-    if (switched) switchOwner(owner);
-    try { localStorage.setItem(OWNER, state.user.id); } catch (e) { /* private mode */ }
     const mark = loadMark(state.user.id);
     /* この端末で初めて同期する: 上書きの前に「この端末」と「アカウント」のレベル・戦数を比べて見せるため、混ぜる前に数える */
     const firstHere = !switched && !SAVE.loadMeta(state.user.id) && mark.rec.pulled === null && mark.xp.pulled === null;
     const deviceSum = firstHere ? summarize(localRecords(), xpLog()) : null;
     if ((mark.rec.v | 0) < REC_PULL_VER) mark.rec = { ...mark.rec, pulled: null, v: REC_PULL_VER };
     const remote = await pullSince(TABLE, 'id,me,opp,win,level,played_at,turns,feats,cards,effects,mode,short', mark.rec.pulled);
+    /* 別のアカウントに入れ替えるのは、新しいアカウントの戦績を読めてから (前は先に手元を空にしていて、
+       通信に失敗すると戦績が消えたように見えた) */
+    if (switched) switchOwner(owner);
+    try { localStorage.setItem(OWNER, state.user.id); } catch (e) { /* private mode */ }
     const local = localRecords();
     const send = local.filter(x => x.at > mark.rec.pushed).map(toRow);
     for (let i = 0; i < send.length; i += 200) await pushRows(send.slice(i, i + 200));
     const added = mergeRecords(remote.map(fromRow));
-    mark.rec = { pulled: maxCreated(remote, mark.rec.pulled), pushed: local.reduce((m, x) => Math.max(m, x.at), mark.rec.pushed) };
+    mark.rec = { pulled: maxCreated(remote, mark.rec.pulled), pushed: local.reduce((m, x) => Math.max(m, x.at), mark.rec.pushed), v: REC_PULL_VER };
     const xp = await syncXp(mark);
     const xpAdded = xp.added;
     saveMark(mark);
     const compare = deviceSum ? { device: deviceSum, account: summarize(remote.map(fromRow), xp.rows.map(xpFromRow)) } : null;
     const applied = await syncSaves(compare);
-    const rpAdded = await syncReplays();
+    /* 保存 (★) したリプレイの同期は、失敗しても戦績・経験値・保存の同期を失敗扱いにしない (上限の 40 件に届いたときなど) */
+    let rpAdded = 0;
+    try { rpAdded = await syncReplays(); } catch (e) { noteError(e); }
     state.sync = '同期しました' + (added ? ' (' + added + '戦を読み込み)' : '') + (xpAdded ? ' (経験値 ' + xpAdded + '件を読み込み)' : '') +
       (rpAdded ? ' (リプレイ ' + rpAdded + '件を読み込み)' : '');
     state.error = '';

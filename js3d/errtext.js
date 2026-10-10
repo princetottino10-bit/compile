@@ -49,7 +49,7 @@ export function friendlyError(err, opts) {
   if (/timed? ?out|timeout|aborterror|aborted|時間切れ/i.test(raw) || status === 408 || status === 504) {
     return r('timeout', '時間がかかりすぎて止まりました。', '少し待ってから、もう一度試してください');
   }
-  if (/jwt|refresh token|token.*(expired|invalid)|not authenticated|unauthori[sz]ed|invalid login|session.*(missing|expired)/i.test(raw) || status === 401 || status === 403) {
+  if (/jwt|refresh token|token.*(expired|invalid)|not authenticated|unauthori[sz]ed|invalid login|session.*(missing|expired)|セッションが切れ|認証が必要/i.test(raw) || status === 401 || status === 403) {
     return r('auth', 'ログインの期限が切れました。', 'ACCOUNT からログインし直してください');
   }
   if (/quota|storage.*full|exceeded the quota/i.test(raw)) {

@@ -10,7 +10,7 @@ import { myBadge, myLook } from './cosmetics-ui.js';
 import { settings } from './settings.js';
 import { roomApi, roomLeaveKeepalive, roomIsAnonymous, roomLogin, roomSession, roomSignIn, roomSignInWithGitHub, roomSignInWithGoogle, roomSignOut, roomSignUp } from './room.js';
 import { emblemDataURL } from './emblems.js';
-import { friendlyMessage, noteError } from './errtext.js';
+import { friendlyMessage, friendlyError, noteError } from './errtext.js';
 import { reportError } from './errorreport.js';
 import { listReplays, findMatchReplay } from './replays.js';
 
@@ -364,10 +364,12 @@ export function runRoomLobby(protocols, opts = {}) {
           room = await roomApi('join', { name: name(), badge: myBadge(settings()), look: myLook(settings()), code, password: '' });
           enterRoom();
         } catch (e) {
-          /* 部屋が消えている / 別アカウントになっている場合は目印を消す */
-          lsSet('compileRoomLast', '');
+          /* 部屋が消えている / 別アカウントになっている (もう戻れない) ときだけ目印を消す。
+             通信の失敗では消さない (前は電波が弱いだけでも消えて、まだ続いている対戦に戻れなくなった) */
+          const gone = /ルームが見つかりません|満室|もう始まっています|参加できません|参加者ではありません/.test((e && e.message) || '');
+          if (gone) lsSet('compileRoomLast', '');
           status(e.message || 'その対戦には戻れませんでした', 'err');
-          setTimeout(showLobby, 1200);
+          if (gone) setTimeout(showLobby, 1200);
         }
       });
       $('#roomStats').onclick = guard(showHistory);
@@ -617,6 +619,8 @@ export function runRoomLobby(protocols, opts = {}) {
           setTimeout(showLobby, 1400);
           return;
         }
+        /* ログインが切れた (別のタブでログアウトした) ときは、通信の不調ではないと分かるように */
+        if (friendlyError(e).kind === 'auth') { status('ログインが切れました。ACCOUNT からログインし直すと、この部屋に戻れます', 'err'); return; }
         if (++pollFails >= 3) status('接続が不安定です。再接続を試みています…', 'err');
         return;
       }

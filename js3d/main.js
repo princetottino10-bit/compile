@@ -105,7 +105,7 @@ import { initTapTips } from './tips.js';
 import { calm as calmMotion } from './prefs.js';
 import { bootStage, bootFail, bootVisible } from './bootui.js';
 import { webglAvailable, gpuName } from './envcheck.js';
-import { friendlyMessage, noteError } from './errtext.js';
+import { friendlyMessage, friendlyError, noteError } from './errtext.js';
 import { addReportLines, setCaptureSource, copyReportInfo } from './support.js';
 import { setGfxSource } from './settings.js';
 import { initFirstRun, onMatchStart } from './firstrun.js';
@@ -3626,6 +3626,7 @@ function stopRoomPoll() {
   clearTimeout(roomPollTimer);
 }
 
+let roomAuthWarned = false;      // ログイン切れを知らせたか (ログインし直して問い合わせが通ったら戻す)
 async function roomPoll(force) {
   if (!roomMode || !roomRm) return;
   if (busy && !force) return;
@@ -3633,10 +3634,22 @@ async function roomPoll(force) {
   /* 前回の印 (stamp) を渡すと、変わっていないときは盤面を省いた「変化なし」が返る */
   try { next = await ROOM.roomApi(roomWatching ? 'watch' : 'get', { code: roomRm.code, stamp: roomRm.stamp }); } catch (e) {
     if (isRoomGone(e)) { roomClosed(); return; }
+    /* ログインが切れた (別のタブでログアウトした・期限切れ): 通信の不調ではないので、ログインし直すよう知らせる。
+       問い合わせは続け、ログインし直せばそのまま対戦に戻る (前は「通信が不安定です」が出続け、持ち時間が切れて負けた) */
+    if (friendlyError(e).kind === 'auth') {
+      if (!roomAuthWarned) {
+        roomAuthWarned = true;
+        notice({ id: 'roomAuth', title: 'ログインが切れました', tone: 'warn',
+          text: 'この対戦を続けるには、ACCOUNT からログインし直してください (別のタブでログアウトした場合も)。ログインし直すと、そのまま続きから遊べます。',
+          actions: [{ label: 'ACCOUNT を開く', main: true, onClick: () => openAccount() }] });
+      }
+      return;
+    }
     /* 一時的な通信の失敗は次の問い合わせで取り直す。続くときは知らせる */
     if (++roomPollFails === 4) { UI.toast('通信が不安定です。つながり直すまで待っています…', 4000); setReconnecting(true); }
     return;
   }
+  roomAuthWarned = false;
   if (roomPollFails >= 4) { UI.toast('つながりました', 1600); setReconnecting(false); }
   roomPollFails = 0;
   if (roomWatching && watchFlipped && next) next = { ...next, side: 1 };   // 観戦で手前と奥を入れ替えている
