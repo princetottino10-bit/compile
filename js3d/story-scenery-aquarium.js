@@ -1,6 +1,8 @@
 /* =========================================================================
  * 1章「順路」の背景: 閉館した水族館 (story-world.js が呼ぶ。story-scenery.js の研究所と同じ形で返す)
- *   電源だけが残っている。天井の明かりは消えていて、光は水槽の青と、床の順路の矢印と、非常口の緑だけ。
+ *   電源だけが残っている。天井の明かりは消えていて、光は水槽の青と、床の順路の矢印と、非常口の緑と、天井のスピーカーの灯だけ。
+ *   順路の矢印は広場をぐるりと回る輪になっている (順路どおりに歩いても、どこへも出られない。答えは順路の外にある)。
+ *   スピーカーは部屋ごとに1つ。放送のたびに輪が広がる。北の職員通路のスピーカーだけ壊れていて、火花を散らす (放送が途切れる場所の手がかり)。
  *   W 大水槽 (水と明かりだけで、何もいない) / J クラゲの水槽 (空) / Q 案内カウンター / X 通せんぼの柵 / x 明かりの落ちた通路
  *   buildAquarium(scene, map, keep) → { update(t, dt), syncDoors(state) }
  * ========================================================================= */
@@ -91,17 +93,17 @@ export function buildAquarium(scene, map, keep) {
   floor.position.set(W * T / 2, 0, H * T / 2);
   scene.add(floor);
 
-  /* 壁: 奥は高く、手前 (cutRow より下) は低く切り落とす */
+  /* 壁: 部屋の奥の壁 (南に床があり、北に床がない) だけ高くする。部屋のあいだ・手前の壁は低く切って、中が見えるようにする */
   const tallGeo = keep(new THREE.BoxGeometry(T, WALL_H, T));
   const lowGeo = keep(new THREE.BoxGeometry(T, LOW_H, T));
-  const topMat = std({ color: 0x080d18, roughness: 0.9 });
+  const topMat = std({ color: 0x2c3a52, roughness: 0.8 });          // 低い壁の上: 部屋の形が読めるよう、床より明るく
   const sideMat = std({ color: 0x18233a, roughness: 0.85 });
   const faceMat = std({ map: keep(wallTex()), roughness: 0.8 });
   const faceGeo = keep(new THREE.PlaneGeometry(T, WALL_H));
   for (const w of M.find(map, '#')) {
     const n = floorOf(w.x, w.y - 1), s = floorOf(w.x, w.y + 1), e = floorOf(w.x + 1, w.y), wv = floorOf(w.x - 1, w.y);
     if (!n && !s && !e && !wv) continue;
-    if (w.y > map.cutRow) {
+    if (!(s && !n)) {
       const low = new THREE.Mesh(lowGeo, topMat);
       low.position.copy(cell(w.x, w.y, LOW_H / 2));
       scene.add(low);
@@ -160,7 +162,7 @@ export function buildAquarium(scene, map, keep) {
     const r = rnd(11);
     for (let i = 0; i < N; i++) { arr[i * 3] = x0 + r() * w; arr[i * 3 + 1] = r() * WALL_H; arr[i * 3 + 2] = zBack + 0.1 + r() * (zFront - zBack - 0.3); }
     geo.setAttribute('position', new THREE.BufferAttribute(arr, 3));
-    const bubbles = new THREE.Points(geo, basic({ color: 0xcff4ff, size: 0.06, transparent: true, opacity: 0.6, depthWrite: false }));
+    const bubbles = new THREE.Points(geo, keep(new THREE.PointsMaterial({ color: 0xcff4ff, size: 0.06, transparent: true, opacity: 0.6, depthWrite: false })));
     scene.add(bubbles);
     updates.push((t, dt) => {
       wt.offset.x = (t * 0.02) % 1;
@@ -174,10 +176,11 @@ export function buildAquarium(scene, map, keep) {
   tank(bounds(map, 'W'), 0xffffff, 0x3aa8ff);
   tank(bounds(map, 'J'), 0xb9a4ff, 0x8a7bff);
 
-  /* 床の順路の矢印: 一本道に沿って右へ。分かれ道では、明かりの落ちた通路へは向けない */
+  /* 床の順路の矢印: 入口から広場へ入り、広場から西の大水槽 → 東のクラゲの部屋 → 広場、とぐるりと回る輪。北の通路へは向かない */
   const aMat = basic({ map: keep(arrowTex()), transparent: true, opacity: 0.85, depthWrite: false, toneMapped: false });
-  const arrows = [];
-  for (let x = 3; x < W - 4; x += 3) arrows.push(flat(1.1, 0.55, aMat, (x + 0.5) * T, 4.0 * T, 0.016));
+  const ARROW = { E: 0, N: Math.PI / 2, W: Math.PI, S: -Math.PI / 2 };
+  const route = map.route || [];
+  for (const [x, y, d] of route) flat(1.1, 0.55, aMat, (x + 0.5) * T, (y + 0.5) * T, 0.016, ARROW[d]);
   updates.push((t) => { aMat.opacity = 0.65 + 0.25 * Math.sin(t * 2.2); });
 
   /* 明かりの落ちた通路: 柵の向こうは真っ暗な床。ずっと奥まで続いて見えるように、地図の外へも伸ばす */
@@ -231,25 +234,77 @@ export function buildAquarium(scene, map, keep) {
     box(0.8, 0.55, 0.04, basic({ color: 0xcfd8e6, toneMapped: false }), c.x, 1.15, c.z - 0.6);
   }
 
-  /* 非常口の緑の灯 (出口ホールの奥の壁) と、入口ホールの弱い明かり */
-  const exitX = (W - 3) * T;
-  box(0.9, 0.4, 0.06, basic({ color: 0x2bd96b, toneMapped: false }), exitX, 2.9, 1 * T + T + 0.05);
-  const exitL = new THREE.PointLight(0x2bd96b, 1.5, 5);
-  exitL.position.set(exitX, 2.6, 2.6 * T);
-  scene.add(exitL);
+  /* 扉 (地図の opens): 閉じているあいだは金属の引き戸と赤い灯。開いたら戸を消して、灯は緑 */
+  const doors = [];
+  for (const ch of Object.keys(map.opens || {})) {
+    const cells = M.find(map, ch);
+    if (!cells.length) continue;
+    const xs = cells.map(c => c.x), ys = cells.map(c => c.y);
+    const x0 = Math.min(...xs), x1 = Math.max(...xs) + 1, y0 = Math.min(...ys), y1 = Math.max(...ys) + 1;
+    const vertical = (y1 - y0) > (x1 - x0);
+    const leafMat = std({ color: 0x4a5568, roughness: 0.4, metalness: 0.7 });
+    const leaf = box(vertical ? 0.2 : (x1 - x0) * T, 2.6, vertical ? (y1 - y0) * T : 0.2, leafMat, (x0 + x1) / 2 * T, 1.3, (y0 + y1) / 2 * T);
+    const lamp = box(0.18, 0.18, 0.18, basic({ color: 0xff3b3b, toneMapped: false }), (x0 + x1) / 2 * T + (vertical ? -0.2 : 0), 2.9, (y0 + y1) / 2 * T);
+    doors.push({ ch, leaf, lamp });
+  }
+
+  /* 非常口の緑の灯 (出口ホールの奥の壁) */
+  const exitRect = (map.rects || []).find(r => r.z === 'E');
+  if (exitRect) {
+    const ex = (exitRect.x0 + 2.5) * T, ez = exitRect.y0 * T + 0.05;
+    box(0.9, 0.4, 0.06, basic({ color: 0x2bd96b, toneMapped: false }), ex, 2.9, ez);
+    const exitL = new THREE.PointLight(0x2bd96b, 1.5, 5);
+    exitL.position.set(ex, 2.6, ez + 1.2);
+    scene.add(exitL);
+  }
   /* 全体の、ごく弱い青 (真っ暗で床が見えなくならないように) */
-  scene.add(new THREE.HemisphereLight(0x3a5a9a, 0x05080f, 0.6));
-  const hall = new THREE.PointLight(0x8fb4ff, 3, 10, 1.6);
-  hall.position.set(3 * T, 2.8, 3.5 * T);
-  scene.add(hall);
-  pool(3.5 * T, 3.6 * T, 5, 4, 0x8fb4ff, 0.14);
+  scene.add(new THREE.HemisphereLight(0x4a6aa8, 0x0a1020, 1.1));
+  /* 天井のスピーカー: 部屋ごとに1つ。ふだんは放送の輪がゆっくり広がる。北の通路 (N) のだけ壊れて火花を散らす */
+  const spkMat = std({ color: 0x1b2230, roughness: 0.5, metalness: 0.6 });
+  const waveTex = keep(canvasTex(128, 128, (g) => { g.strokeStyle = 'rgba(255,255,255,1)'; g.lineWidth = 6; g.beginPath(); g.arc(64, 64, 56, 0, Math.PI * 2); g.stroke(); }));
+  for (const r of map.rects || []) {
+    const broken = r.z === 'N';
+    const cx = (broken ? 17.5 : (r.x0 + r.x1 + 1) / 2) * T, cz = (broken ? 4 : (r.y0 + r.y1 + 1) / 2) * T;
+    box(0.5, 0.18, 0.5, spkMat, cx, 3.25, cz);
+    if (broken) {
+      const spark = new THREE.PointLight(0xffb15c, 0, 4);
+      spark.position.set(cx, 3.0, cz);
+      scene.add(spark);
+      const dots = [];
+      for (let k = 0; k < 6; k++) dots.push(box(0.04, 0.04, 0.04, basic({ color: 0xffd08a, toneMapped: false }), cx, 3.1, cz));
+      updates.push((t) => {
+        const on = Math.sin(t * 17) > 0.6 && Math.sin(t * 3.1) > -0.2;       // ときどき、ばちっと光る
+        spark.intensity = on ? 4 : 0;
+        dots.forEach((d, k) => {
+          const ph = (t * 1.7 + k / 6) % 1;
+          d.visible = on || ph < 0.25;
+          d.position.set(cx + Math.sin(k * 2.1) * ph * 0.6, 3.1 - ph * 1.6, cz + Math.cos(k * 1.7) * ph * 0.6);
+        });
+      });
+    } else {
+      const ring = new THREE.Mesh(keep(new THREE.PlaneGeometry(1, 1)), basic({ map: waveTex, color: 0x8fd6ff, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
+      ring.rotation.x = Math.PI / 2;
+      ring.position.set(cx, 3.12, cz);
+      scene.add(ring);
+      const lamp = new THREE.PointLight(0x8fb4ff, 3.2, 11, 1.4);
+      lamp.position.set(cx, 2.8, cz);
+      scene.add(lamp);
+      pool(cx, cz, 6, 5, 0x8fb4ff, 0.16);
+      const phase = (r.x0 * 0.37 + r.y0 * 0.21) % 1;
+      updates.push((t) => {
+        const ph = (t * 0.45 + phase) % 1;                                   // 放送の輪が、天井から広がって消える
+        ring.scale.setScalar(0.4 + ph * 2.6);
+        ring.material.opacity = (1 - ph) * 0.35;
+      });
+    }
+  }
 
   /* 漂うほこり (水槽の光の中で見える) */
   const DN = 160;
   const dGeo = keep(new THREE.BufferGeometry());
   const dArr = new Float32Array(DN * 3);
   const r = rnd(5);
-  for (let i = 0; i < DN; i++) { dArr[i * 3] = r() * W * T; dArr[i * 3 + 1] = 0.3 + r() * 3; dArr[i * 3 + 2] = (2 + r() * 3) * T; }
+  for (let i = 0; i < DN; i++) { dArr[i * 3] = r() * W * T; dArr[i * 3 + 1] = 0.3 + r() * 3; dArr[i * 3 + 2] = (1 + r() * (H - 2)) * T; }
   dGeo.setAttribute('position', new THREE.BufferAttribute(dArr, 3));
   scene.add(new THREE.Points(dGeo, basic({ color: 0x9fd0ff, size: 0.035, transparent: true, opacity: 0.35, depthWrite: false })));
   updates.push((t, dt) => {
@@ -259,6 +314,6 @@ export function buildAquarium(scene, map, keep) {
 
   return {
     update: (t, dt) => { for (const u of updates) u(t, dt); },
-    syncDoors: () => {}
+    syncDoors: (state) => { for (const d of doors) { const open = M.isOpen(map, state, d.ch); d.leaf.visible = !open; d.lamp.material.color.setHex(open ? 0x2bd96b : 0xff3b3b); } }
   };
 }

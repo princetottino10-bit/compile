@@ -153,3 +153,12 @@ test('決着のあと、保存し直しても「始めた対戦」を拾い直�
   /* 別の端末に古い pending が残っていても、クリア済みなら拾わない */
   assert.equal(S.mergeStory(won, { ...won, pending: 'c0-practice' }).pending, null);
 });
+
+test('拾った物 (found): 足すのは1回だけ。端末をまたいで合わせると足し合わさる。「最初から」より前のものは消える', () => {
+  let a = S.addFound(S.blankStory(), 'u3611');
+  a = S.addFound(a, 'u3611');
+  assert.deepEqual(a.found, ['u3611']);
+  const b = S.addFound(S.blankStory(), 'u3740');
+  assert.deepEqual(S.mergeStory(a, b).found.sort(), ['u3611', 'u3740']);
+  assert.deepEqual(S.mergeStory(S.blankStory(Date.now()), a).found, []);
+});

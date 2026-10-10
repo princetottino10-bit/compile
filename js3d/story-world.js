@@ -13,7 +13,7 @@ import { UnrealBloomPass } from '../vendor/jsm/postprocessing/UnrealBloomPass.js
 import { OutputPass } from '../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../vendor/jsm/postprocessing/ShaderPass.js';
 import { showTitleBack, hideTitleBack } from './titleback.js';
-import { loadStory, saveStory, blankStory, currentNode, clearNode, startBattle, nodeById, isCleared, chapterCleared, chapterOf } from './story.js';
+import { loadStory, saveStory, blankStory, currentNode, clearNode, startBattle, nodeById, isCleared, chapterCleared, chapterOf, addFound } from './story.js';
 import { accountState } from './account.js';
 import * as M from './story-map.js';
 import { playNode, playScene, askBattle } from './story-ui.js';
@@ -83,9 +83,12 @@ export function openWorld(protocols, opts = {}) {
     if (box) { box.remove(); return; }
     box = document.createElement('div');
     box.className = 'sw-recall-list';
-    box.innerHTML = seen.length
+    const frags = (map.fragments || []).filter(f => (state.found || []).includes(f.id));
+    const fragHtml = (map.fragments || []).length ? '<b>拾った記録 ' + frags.length + ' / ' + map.fragments.length + '</b>' +
+      frags.map(f => '<p>機体' + (f.unit | 0) + ' の最後の一手</p>').join('') : '';
+    box.innerHTML = fragHtml + (seen.length
       ? '<b>見た会話</b>' + seen.map(n => '<button type="button" data-node="' + String(n.id).replace(/[<>&"]/g, '') + '">' + String(n.title || n.id).replace(/[<>&"]/g, '') + '</button>').join('')
-      : '<b>見た会話</b><p>まだありません。この章で話を進めると、ここから見直せます</p>';
+      : '<b>見た会話</b><p>まだありません。この章で話を進めると、ここから見直せます</p>');
     root.appendChild(box);
     box.onclick = async (ev) => {
       const b = ev.target.closest('[data-node]');
@@ -364,6 +367,24 @@ export function openWorld(protocols, opts = {}) {
     blob(1.1).position.copy(world(ruriPos, 0.015));
   } else ruri.visible = false;
 
+  /* 記録の断片: 床の上で、ゆっくり回って光る小さな欠片。拾うと消える */
+  const fragMat = keep(new THREE.MeshBasicMaterial({ color: 0x9ff4ff, transparent: true, opacity: 0.9, toneMapped: false }));
+  const fragGeo = keep(new THREE.OctahedronGeometry(0.16, 0));
+  const frags = (map.fragments || []).map((f) => {
+    const m = M.find(map, f.at)[0];
+    const p = { x: m.x + 0.5, y: m.y + 0.5 };
+    const mesh = new THREE.Mesh(fragGeo, fragMat);
+    mesh.position.copy(world(p, 0.7));
+    mesh.visible = !(state.found || []).includes(f.id);
+    const glow = new THREE.PointLight(0x9ff4ff, 1.2, 2.5);
+    glow.position.y = 0.1;
+    mesh.add(glow);
+    scene.add(mesh);
+    return { ...f, p, mesh, fragment: true, label: '拾う' };
+  });
+  let lastZone = null;
+  const heard = new Set();
+
   /* 名前の札 (画面の上に重ねる) */
   const labels = [
     { el: document.createElement('span'), text: '紫苑', obj: shion, y: 2.05, show: () => true },
@@ -478,7 +499,7 @@ export function openWorld(protocols, opts = {}) {
   const eventFor = (id) => Object.values(map.events).find(e => e.node === id);
   const isNext = (id) => { const c = currentNode(state); return !!c && c.id === id; };
   const markAt = (ch) => { const m = M.find(map, ch)[0]; return m ? { x: m.x + 0.5, y: m.y + 0.5 } : null; };
-  const posOf = (ev) => (ev.at === 'K' ? shionPos : ev.at === 'c' ? chiefPos : ev.at === 'R' ? ruriPos
+  const posOf = (ev) => ev.fragment ? ev.p : (ev.at === 'K' ? shionPos : ev.at === 'c' ? chiefPos : ev.at === 'R' ? ruriPos
     : ev.at === 'T' && termAt ? { x: termAt.x + 0.5, y: termAt.y + 1.5 } : ev.look ? markAt(ev.at) : null);
   /* 調べられる物 (地図の looks)。話の進み具合と関係なく読める */
   const looks = (map.looks || []).map(l => ({ ...l, look: true, label: '調べる' }));
@@ -526,6 +547,18 @@ export function openWorld(protocols, opts = {}) {
     state = saveStory(startBattle(state, id));
     close({ battle: nodeById(id) });
   }
+  /* 記録の断片を拾う: 読んで、進み具合 (found) に残す。光る欠片は消える */
+  async function pickFragment(f) {
+    busy = true;
+    nearby = null;
+    actBtn.hidden = true;
+    keys.clear(); path = null;
+    try {
+      await playScene(f.lines, { title: '記録の断片' });
+      state = saveStory(addFound(state, f.id));
+      f.mesh.visible = false;
+    } finally { busy = false; }
+  }
   async function readLook(l) {
     busy = true;
     nearby = null;
@@ -536,6 +569,7 @@ export function openWorld(protocols, opts = {}) {
   function act() {
     if (!nearby || busy) return;
     if (nearby.look) { readLook(nearby); return; }
+    if (nearby.fragment) { pickFragment(nearby); return; }
     const n = nodeById(nearby.node);
     if (n.kind === 'scene') runScene(n.id);
     else runBattle(n.id);
@@ -595,6 +629,7 @@ export function openWorld(protocols, opts = {}) {
       if (p && dist(p, pos) < REACH) nearby = ev;
     }
     if (!nearby) for (const l of looks) { const p = posOf(l); if (p && dist(p, pos) < REACH) nearby = l; }
+    if (!nearby) for (const f of frags) { if (f.mesh.visible && dist(f.p, pos) < REACH) nearby = f; }
     if (nearby) {
       actBtn.hidden = false;
       actBtn.textContent = (nearby.label || (nodeById(nearby.node).kind === 'battle' ? '向き合う' : '話す')) + '  [E]';
@@ -603,7 +638,25 @@ export function openWorld(protocols, opts = {}) {
     for (const ev of Object.values(map.events)) {
       if (ev.kind === 'zone' && isNext(ev.node) && M.zoneAt(map, pos) === ev.zone) { runScene(ev.node); return; }
     }
+    /* 区画に入ると流れる放送 (map.ambient。話は進まない)。地図を開いているあいだ、区画ごとに1度。2つ聞いたら手がかりの一言 */
+    const amb = map.ambient;
+    const z = M.zoneAt(map, pos);
+    if (amb && z !== lastZone) {
+      lastZone = z;
+      if (isCleared(state, amb.after) && !isCleared(state, amb.until) && amb.zones[z] && !heard.has(z)) {
+        heard.add(z);
+        const lines = amb.zones[z].concat(heard.size === 2 && amb.hint ? amb.hint : []);
+        readLines(lines);
+      }
+    }
   };
+  async function readLines(lines) {
+    busy = true;
+    nearby = null;
+    actBtn.hidden = true;
+    keys.clear(); path = null;
+    try { await playScene(lines); } finally { busy = false; }
+  }
 
   /* ---------- 描く ---------- */
   const resize = () => {
@@ -722,6 +775,7 @@ export function openWorld(protocols, opts = {}) {
       g.userData.r1.material.color.setRGB(0.75 + 0.25 * Math.abs(Math.sin(t * 3)), 0.1, 0.12);
     }
     if (ruriAt) { ruri.rotation.y = Math.atan2(pos.x - ruriPos.x, pos.y - ruriPos.y); ruri.userData.jelly.position.y = 1.58 + Math.sin(t * 1.6) * 0.03; }
+    for (const f of frags) if (f.mesh.visible) { f.mesh.rotation.y = t * 1.2; f.mesh.position.y = 0.7 + Math.sin(t * 2 + f.p.x) * 0.06; }
     scenery.update(t, dt);
     syncGuide(t, dt);
     dots.material.opacity = 0.55 + 0.35 * Math.sin(t * 4);

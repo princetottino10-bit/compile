@@ -96,7 +96,15 @@ test('1章の地図: どの行も同じ幅。出来事は1章の場面をすべ�
   const start = M.spawnFor(map, s);
   assert.equal(M.zoneAt(map, start), 'A');
   const r = M.find(map, 'R')[0];
-  assert.ok(M.findPath(map, s, start, { x: r.x + 0.5, y: r.y + 1.5 }), '入口から案内係の前まで道がある');
+  assert.equal(M.findPath(map, s, start, { x: r.x + 0.5, y: r.y + 1.5 }), null, '放送が途切れる場所を見つけるまで、出口ホールの扉は閉じている');
+  let after = s;
+  for (const id of ['c1-arrive', 'c1-fork']) after = S.clearNode(after, id);
+  assert.ok(M.findPath(map, after, start, { x: r.x + 0.5, y: r.y + 1.5 }), '見つけたあとは、入口から案内係の前まで道がある');
+  /* 寄り道: 入口から、大水槽・クラゲの部屋・記録の断片へ行ける (本筋の前でも) */
+  for (const ch of ['f', '3']) { const m = M.find(map, ch)[0]; assert.ok(M.findPath(map, after, start, { x: m.x + 0.5, y: m.y + 0.5 }), ch); }
+  for (const z of ['B', 'C', 'N']) assert.ok(map.rects.some(q => q.z === z), z);
+  assert.equal(M.zoneAt(map, { x: 16.5, y: 4.5 }), 'N');
+  for (const f of map.fragments) { assert.ok(M.find(map, f.at)[0], f.id); assert.ok(f.unit >= 3584 && f.unit <= 4096, '513 体の範囲の番号: ' + f.unit); }
   const dark = M.find(map, 'x')[0];
   assert.equal(M.walkable(map, s, dark.x, dark.y), false, '明かりの落ちた通路には入れない');
   assert.equal(M.objective(s), map.goals['c1-arrive']);

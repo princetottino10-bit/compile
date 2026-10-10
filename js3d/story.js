@@ -159,26 +159,18 @@ export const CHAPTERS = [
         { ...L('ruri', 'ご来館のみなさまに、ご案内いたします。'), pa: true },
         { ...L('ruri', 'ただいま、館内が大変混み合っております。順路どおりに、お進みください。'), pa: true },
         L('shion', '……混み合ってる？', 'surprised'),
-        L('shion', '誰もいないのに。……入ってみよう。')
+        L('shion', '誰もいないのに。……放送の声を探してみよう。')
       ] },
-      { id: 'c1-tank', kind: 'scene', title: '大水槽', lines: [
-        { ...L('ruri', 'ただいま館内が、大変混み合っております。順路どおりに、お進みください。'), pa: true },
-        L('shion', 'さっきと同じ放送。言葉は、一字も変わってない。')
-      ] },
-      { id: 'c1-jelly', kind: 'scene', title: 'クラゲの部屋', lines: [
-        { ...L('ruri', 'ただいま、館内が大変、混み合っております。順路どおりに、お進みください。'), pa: true },
-        L('shion', '録音じゃない。息つぎの場所が、毎回ちょっとずつ違う。'),
-        L('shion', '……誰かが、今も読んでるんだ。')
-      ] },
-      { id: 'c1-fork', kind: 'scene', title: '分かれ道', lines: [
+      { id: 'c1-fork', kind: 'scene', title: '職員通路', lines: [
         { ...L('ruri', 'ご来館のみなさまに、ご案内いたします。'), pa: true },
         { ...L('ruri', 'こちらの通路は、ただいま……'), pa: true },
         L('sys', '> 館内放送: 中断'),
         L('sys', '> 館内放送: はじめから'),
         { ...L('ruri', 'ご来館のみなさまに、ご案内いたします。'), pa: true },
-        L('shion', '……放送が、あの通路の話の所で止まった。', 'surprised'),
+        L('shion', '……ここだ。放送が、この通路の話の所で途切れる。', 'surprised'),
         L('shion', 'あの奥だけ、明かりが消えてる。'),
-        L('shion', '放送は、出口の方からだね。行こう。')
+        L('sys', '> 出口ホールの扉: 開いた'),
+        L('shion', '放送の声は、あの扉の向こうから。')
       ] },
       /* 案内係: カウンターで放送を読み続けている瑠璃に会う → 紫苑が「行きたい所まで」と頼む → 後任が届く → 選択
          (「行く」は記録が無く、分かれ道に戻る)。選択肢の ifAgain: 先に again の道を選んでいたら、その選択肢の会話の前に足す */
@@ -268,7 +260,8 @@ export function chapterOf(s) {
 }
 
 /* resetAt: 「最初から」で消した時刻。端末をまたいで合わせるとき、これより前の進み具合は足さない */
-export function blankStory(resetAt = 0) { return { v: 1, cleared: [], pending: null, resetAt }; }
+/* found: 地図で拾った物 (記録の断片の id)。章をまたいで残り、5章で回収する */
+export function blankStory(resetAt = 0) { return { v: 1, cleared: [], pending: null, resetAt, found: [] }; }
 
 /** 2つの進み具合を合わせる (端末をまたぐ同期と、保存の直前)。
     クリアした場面は足し合わせる。ただし「最初から」が新しい方より前の進み具合は足さない。始めた対戦は a を優先 */
@@ -279,7 +272,8 @@ export function mergeStory(a, b) {
      決着のあと a.pending = null で保存したとき、保存済みの b の古い pending を拾い直していた (2026-10-10) */
   const live = (id, x) => id && nodeById(id) && (x.resetAt || 0) === r && !cleared.includes(id);
   const pending = live(a.pending, a) ? a.pending : !a.pending && a.endedBattle !== b.pending && live(b.pending, b) ? b.pending : null;
-  return { v: 1, cleared, pending, resetAt: r };
+  const found = [...new Set([a, b].filter(x => (x.resetAt || 0) === r).flatMap(x => x.found || []))];
+  return { v: 1, cleared, pending, resetAt: r, found };
 }
 
 export function loadStory() {
@@ -287,7 +281,8 @@ export function loadStory() {
     const s = JSON.parse(localStorage.getItem(STORY_KEY) || 'null');
     if (!s || typeof s !== 'object') return blankStory();
     const cleared = Array.isArray(s.cleared) ? [...new Set(s.cleared.filter(id => nodeById(id)))] : [];
-    return { v: 1, cleared, pending: nodeById(s.pending) ? s.pending : null, resetAt: +s.resetAt || 0 };
+    const found = Array.isArray(s.found) ? [...new Set(s.found.filter(x => typeof x === 'string'))] : [];
+    return { v: 1, cleared, pending: nodeById(s.pending) ? s.pending : null, resetAt: +s.resetAt || 0, found };
   } catch (e) {
     return blankStory();
   }
@@ -307,6 +302,11 @@ export function currentNode(s) { return ALL.find(n => !isCleared(s, n.id)) || nu
 export function canEnter(s, id) {
   const cur = currentNode(s);
   return isCleared(s, id) || (!!cur && cur.id === id);
+}
+/* 拾った物を足す (同じものは1回だけ) */
+export function addFound(s, id) {
+  const found = s.found || [];
+  return found.includes(id) ? s : { ...s, found: found.concat(id) };
 }
 export function clearNode(s, id) {
   if (!nodeById(id) || isCleared(s, id)) return s;
