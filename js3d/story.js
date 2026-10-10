@@ -26,7 +26,7 @@ export const SPEAKERS = {
   sys: { name: 'SYSTEM', color: '#7ff3ff' },
   guard: { name: '巡回の警備機体', color: '#ff8a5c' },
   chief: { name: '警備主任', color: '#ff4f6a' },
-  abyss: { name: '深淵', color: '#6d7cff' }      /* 瑠璃の後任。瑠璃と同じ声 (立ち絵なし。機械の文字で出す) */
+  abyss: { name: '深淵', color: '#6d7cff', voice: 'asagi' }      /* 瑠璃の後任。瑠璃と同じ声 (立ち絵なし。文字は機械の形で出す)。「……私の声だ」は声が同じで効く */
 };
 
 /* 行: { who, face?, text, stage?, pa? }。pa: 館内放送 (話す人は姿を見せず、名前は「館内放送」。鳴らす前にチャイム)。stage: 立ち絵に出す人を決め直す (話す人の id の並び。右から。[] で全員下げる)。
@@ -286,7 +286,10 @@ export function blankStory(resetAt = 0) { return { v: 1, cleared: [], pending: n
 export function mergeStory(a, b) {
   const r = Math.max(a.resetAt || 0, b.resetAt || 0);
   const cleared = [...new Set([a, b].filter(x => (x.resetAt || 0) === r).flatMap(x => x.cleared || []))].filter(id => nodeById(id));
-  const pending = a.pending && nodeById(a.pending) ? a.pending : b.pending && nodeById(b.pending) && (b.resetAt || 0) === r ? b.pending : null;
+  /* 始めた対戦は a を優先。ただし、もう終えた (クリアした) 対戦は拾わない。
+     決着のあと a.pending = null で保存したとき、保存済みの b の古い pending を拾い直していた (2026-10-10) */
+  const live = (id, x) => id && nodeById(id) && (x.resetAt || 0) === r && !cleared.includes(id);
+  const pending = live(a.pending, a) ? a.pending : !a.pending && a.endedBattle !== b.pending && live(b.pending, b) ? b.pending : null;
   return { v: 1, cleared, pending, resetAt: r };
 }
 
@@ -334,6 +337,7 @@ export function startBattle(s, id) {
 export const pendingBattle = (s) => (s.pending ? nodeById(s.pending) : null);
 export function finishBattle(s, win) {
   const id = s.pending;
-  const next = { ...s, pending: null };
+  /* endedBattle: 保存の直前に合わせるとき (mergeStory)、保存済みの側に残る同じ対戦を「始めた対戦」として拾い直さない印。保存はしない */
+  const next = { ...s, pending: null, endedBattle: id || null };
   return win && id ? clearNode(next, id) : next;
 }

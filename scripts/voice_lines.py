@@ -50,9 +50,14 @@ def dump(js):
 
 
 def story_lines(who):
-    js = ("import('./js3d/story.js').then(S=>{const o=[];for(const c of S.CHAPTERS)for(const n of c.nodes)for(const k of ['lines','winLines','loseLines'])"
-          "for(const l of (n[k]||[]))if(l.who==='%s')o.push({text:l.text,face:l.face||'normal'});console.log(JSON.stringify(o))})" % who)
-    return dump(js)
+    """その声で読む会話の行。話す人 (who) は SPEAKERS の voice で声の id に直す (瑠璃は who が ruri、声は asagi。深淵も瑠璃の声)。
+    選択肢の中の行 (choice.options[].lines と ifAgain) も拾う (2026-10-10。前は拾っておらず、選択肢のあとの会話が声なしだった)。
+    「……。」のように記号だけの行は声にしない (間として、文字だけで見せる)"""
+    js = ("import('./js3d/story.js').then(S=>{const o=[];const v=w=>(S.SPEAKERS[w]||{}).voice;"
+          "for(const c of S.CHAPTERS)for(const n of c.nodes){const ls=[...(n.lines||[]),...(n.winLines||[]),...(n.loseLines||[])];"
+          "if(n.choice)for(const op of n.choice.options)ls.push(...(op.ifAgain||[]),...(op.lines||[]));"
+          "for(const l of ls)if(v(l.who)==='%s')o.push({text:l.text,face:l.face||'normal',pa:!!l.pa})}console.log(JSON.stringify(o))})" % who)
+    return [l for l in dump(js) if re.sub(r'[…。、・！？!?\s]', '', l['text'])]
 
 
 def battle_lines(who):
@@ -72,7 +77,10 @@ def tts(key, voice, text):
 #   「焦らなくていい」を「じらなくていい」と読んだ (2026-10-02)
 READINGS = {'焦ら': 'あせら', '焦り': 'あせり', '焦る': 'あせる', '焦っ': 'あせっ',
             # 読みが2つある言葉 (点検で挙がったもの): 止め (とめ/やめ)・上回 (うわまわ)・開いた (あいた/ひらいた)・命 (いのち/めい)
-            '止められ': 'とめられ', '止めらん': 'とめらん', '上回': 'うわまわ', '開いた': 'あいた'}
+            '止められ': 'とめられ', '止めらん': 'とめらん', '上回': 'うわまわ', '開いた': 'あいた',
+            # 2026-10-10 の点検で挙がったもの: 解く (とく/ほどく)・開かない (あかない/ひらかない)・止める・1行・空く (あく/すく)
+            '解い': 'とい', '解け': 'とけ', '開か': 'あか', '止める': 'とめる', '1行': 'いちぎょう', '空く': 'あく'}
+DIGIT = ['まる', 'いち', 'に', 'さん', 'よん', 'ご', 'ろく', 'なな', 'はち', 'きゅう']
 
 
 def directions(who):
@@ -87,6 +95,8 @@ def spoken(text, face, tag=None):
     for k, v in READINGS.items():
         text = text.replace(k, v)
     text = re.sub(r'命(?!令)', 'いのち', text)      # 「命」だけ (「命令」はそのまま)
+    # 機体の番号 (4097・3584 など4けた) は、1字ずつ読む (よん・まる・きゅう・なな)。数 (4096体・14,203日) はそのまま
+    text = re.sub(r'(?<![\d,])(\d{4})(?![\d,]|体|日|年)', lambda m: '・'.join(DIGIT[int(c)] for c in m.group(1)), text)
     text = re.sub(r'\s*[:：]\s*', '、', text)        # コロンは「コロン」と読んでしまうので、間 (ま) に置き換える (「隔離: 試験室」)
     if tag is None:
         tag = TAGS.get(face, '')

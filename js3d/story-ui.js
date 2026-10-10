@@ -1,20 +1,17 @@
 /* =========================================================================
  * ストーリーモードの画面 (story.js の中身を描く)
- *   openStory(protocols)      章の地図。会話はその場で再生し、対戦を選んだら { battle: 場面 } で返す (null はタイトルへ)
  *   playScene(lines)          会話 (ノベル風)。タップ・Enter・Space で1行ずつ。勝手には進まない
  *   playNode(node)            場面の会話と、あれば選択肢 (node.choice)。again の選択肢は、その会話のあと選び直し
  *   showStoryResult(win, node, actions)  決着のあと: 勝ち負けの会話 → ボタン (次へ・もう一度・地図・タイトル)
  * ========================================================================= */
-import { showTitleBack, hideTitleBack } from './titleback.js';
 import { faceFor, faceURL, VOICE_VER, voiceGain } from './avatar.js';
 import { accountState } from './account.js';
 import { playClip, isMuted, sfx } from './audio.js';
 import { duckBgm } from './bgm.js';
 import { settings } from './settings.js';
-import { CHAPTERS, SPEAKERS, loadStory, saveStory, canEnter, isCleared, currentNode, clearNode, startBattle, nodeById } from './story.js';
+import { SPEAKERS } from './story.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const LEVELS = ['かんたん', 'ふつう', 'つよい'];
 const TYPE_MS = 26;       // 1文字の間
 const TYPE_MS_TERMINAL = 18;   // 端末の文字は、機械が打つ速さで
 
@@ -30,13 +27,14 @@ export function lineKey(text) {
 function makeVoice() {
   let stop = null, seq = 0, endsAt = 0;
   const halt = () => { seq++; endsAt = 0; if (stop) { stop(); stop = null; } };
-  const play = (id, text) => {
+  const play = (id, text, pa = false) => {
     halt();
     if (!id || isMuted()) return;
     const vol = Math.max(0, Math.min(1, ((settings().voiceVol ?? 80) | 0) / 100)) * voiceGain(id);
     if (!vol) return;
     const my = seq;
-    playClip('art/voice/' + id + '/story/' + lineKey(text) + '.mp3?v=' + VOICE_VER, vol).then((h) => {
+    /* 館内放送の行は、天井のスピーカーの音にして、チャイムのあとに鳴らす (avatar.js の PA_LEAD_MS と同じ間) */
+    playClip('art/voice/' + id + '/story/' + lineKey(text) + '.mp3?v=' + VOICE_VER, vol, pa ? { pa: true, delay: 0.75 } : {}).then((h) => {
       if (!h) return;
       if (my !== seq) { h.stop(); return; }
       stop = h.stop;
@@ -97,7 +95,8 @@ export function playScene(lines, opts = {}) {
     '<div class="ss-box"><div class="ss-name"></div><p class="ss-text"></p><span class="ss-next" aria-hidden="true">▼</span></div>' +
     '<div class="ss-tools"><button type="button" class="ss-skip" title="読んだ所を飛ばす (Esc)">SKIP ▸▸</button>' +
     '<button type="button" class="ss-auto" title="自動で進める (A)">AUTO</button>' +
-    '<button type="button" class="ss-log" title="これまでの会話 (L・ホイールを上へ)">LOG</button></div>';
+    '<button type="button" class="ss-log" title="これまでの会話 (L・ホイールを上へ)">LOG</button>' +
+    '<button type="button" class="ss-hide" title="文字の枠を消す (H・右クリック)。画面を押すと戻る">HIDE</button></div>';
   el.classList.add('show');
   /* 立ち絵は右と左の2か所。話している人は明るく、聞いている人は少し暗く */
   const slots = ['r', 'l'].map(k => ({ el: el.querySelector('.ss-portrait[data-slot="' + k + '"]'), who: null, face: 'normal' }));
@@ -128,7 +127,7 @@ export function playScene(lines, opts = {}) {
       clearInterval(typing);
       voice.halt();
       window.removeEventListener('keydown', onKey);
-      el.classList.remove('show');
+      el.classList.remove('show', 'with-still', 'hide-ui');
       el.innerHTML = '';
       resolve();
     };
@@ -183,7 +182,7 @@ export function playScene(lines, opts = {}) {
       }
       full = line.text;
       if (quiet) { voice.halt(); textEl.textContent = full; return; }
-      voice.play(sp.voice, line.text);
+      voice.play(sp.voice, line.text, pa);
       textEl.textContent = '';
       box.classList.add('typing');           // 端末の文字は、打っているあいだ印が点いたまま (打ち終えると点滅)
       let n = 0;
@@ -223,6 +222,7 @@ export function playScene(lines, opts = {}) {
         setTimeout(() => { if (Date.now() - armed >= 3000) { skipBtn.textContent = 'SKIP ▸▸'; skipBtn.classList.remove('armed'); } }, 3100);
         return;
       }
+      clearTimeout(autoTimer);
       clearInterval(typing); typing = null; box.classList.remove('typing');
       for (let k = i + 1; k < j; k++) show(k, true);
       i = j;
@@ -250,7 +250,7 @@ export function playScene(lines, opts = {}) {
       wrap.scrollTop = wrap.scrollHeight;
     };
     /* 文字の枠を消して、一枚絵や立ち絵を見る (H・右クリック)。もう一度押すか、画面を押すと戻る */
-    const toggleHide = () => el.classList.toggle('hide-ui');
+    const toggleHide = () => { el.classList.toggle('hide-ui'); if (el.classList.contains('hide-ui')) clearTimeout(autoTimer); else scheduleAuto(); };
     const onKey = (ev) => {
       if (logView) { if (ev.key === 'Escape' || ev.key.toLowerCase() === 'l') { ev.preventDefault(); closeLog(); } return; }
       const k = ev.key.toLowerCase();
@@ -264,6 +264,7 @@ export function playScene(lines, opts = {}) {
     skipBtn.onclick = (ev) => { ev.stopPropagation(); skip(); };
     autoBtn.onclick = (ev) => { ev.stopPropagation(); toggleAuto(); };
     logBtn.onclick = (ev) => { ev.stopPropagation(); openLog(); };
+    el.querySelector('.ss-hide').onclick = (ev) => { ev.stopPropagation(); toggleHide(); };
     el.onclick = () => { if (el.classList.contains('hide-ui')) { toggleHide(); return; } advance(); };
     el.oncontextmenu = (ev) => { ev.preventDefault(); toggleHide(); };
     el.onwheel = (ev) => { if (ev.deltaY < 0) openLog(); };
@@ -328,64 +329,6 @@ export function askBattle(n, protocols) {
     box.querySelector('.sm-go').onclick = () => end(true);
     if (admin) box.querySelector('.sm-skip').onclick = () => end('skip');
     box.querySelector('.sm-go').focus();
-  });
-}
-
-/* ---------- 章の地図 ---------- */
-export function openStory(protocols) {
-  const el = overlay('storyMap', 'ストーリー');
-  let state = loadStory();
-
-  return new Promise((resolve) => {
-    const done = (v) => { el.classList.remove('show'); hideTitleBack(); resolve(v); };
-    showTitleBack(() => done(null));
-
-    const render = () => {
-      const cur = currentNode(state);
-      el.innerHTML = '<div class="sm-wrap">' + CHAPTERS.map(ch =>
-        '<section class="sm-ch"><header><b>// ' + esc(ch.title) + '「' + esc(ch.name) + '」</b><span>' + esc(ch.place) + '</span></header><ol class="sm-path">' +
-        ch.nodes.map(n => {
-          const clear = isCleared(state, n.id), next = cur && cur.id === n.id;
-          const cls = clear ? 'clear' : next ? 'next' : 'lock';
-          return '<li class="sm-node ' + cls + ' ' + n.kind + '"><button type="button" data-node="' + esc(n.id) + '"' + (canEnter(state, n.id) ? '' : ' disabled') + '>' +
-            '<span class="sm-kind">' + (n.kind === 'battle' ? 'BATTLE' : 'TALK') + '</span>' +
-            '<b>' + esc(n.title) + '</b>' +
-            (n.kind === 'battle' ? '<small>' + esc(n.oppName) + ' · ' + LEVELS[n.level] + '</small>' : '') +
-            '<span class="sm-state">' + (clear ? '✓ CLEAR' : next ? 'NEXT' : 'LOCKED') + '</span></button></li>';
-        }).join('') + '</ol></section>').join('') +
-        '<p class="sm-more">1章「順路」は準備中</p></div>';
-      el.classList.add('show');
-      el.querySelectorAll('[data-node]').forEach(b => { b.onclick = () => enter(b.dataset.node); });
-      const nextBtn = el.querySelector('.sm-node.next button');
-      if (nextBtn) nextBtn.scrollIntoView({ block: 'center' });
-    };
-
-    const enter = async (id) => {
-      const n = nodeById(id);
-      if (!n || !canEnter(state, id)) return;
-      if (n.kind === 'scene') {
-        await playNode(n);
-        state = clearNode(state, id);
-        saveStory(state);
-        render();
-        /* 会話のすぐ次が対戦なら、そのまま対戦の前の確認へ */
-        const cur = currentNode(state);
-        if (cur && cur.kind === 'battle') confirmBattle(cur);
-        return;
-      }
-      confirmBattle(n);
-    };
-
-    const confirmBattle = async (n) => {
-      if (!(await askBattle(n, protocols))) return;
-      state = startBattle(state, n.id);
-      saveStory(state);
-      done({ battle: n });
-    };
-
-    render();
-    const first = currentNode(state);
-    if (first && first.kind === 'scene') enter(first.id);
   });
 }
 

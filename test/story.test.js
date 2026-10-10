@@ -138,3 +138,18 @@ test('台本: 1つの箱は40字まで (一目で読める量。.claude/skills/s
   }
   assert.deepEqual(over, []);
 });
+
+test('決着のあと、保存し直しても「始めた対戦」を拾い直さない (勝ち・負けとも)', () => {
+  localStorage.clear && localStorage.clear();
+  let s = S.saveStory(S.clearNode(S.blankStory(), 'c0-wake'));
+  s = S.saveStory(S.startBattle(s, 'c0-practice'));
+  assert.equal(s.pending, 'c0-practice');
+  const lost = S.saveStory(S.finishBattle(s, false));
+  assert.equal(lost.pending, null, '負けたあと');
+  s = S.saveStory(S.startBattle(lost, 'c0-practice'));
+  const won = S.saveStory(S.finishBattle(s, true));
+  assert.equal(won.pending, null, '勝ったあと');
+  assert.ok(won.cleared.includes('c0-practice'));
+  /* 別の端末に古い pending が残っていても、クリア済みなら拾わない */
+  assert.equal(S.mergeStory(won, { ...won, pending: 'c0-practice' }).pending, null);
+});

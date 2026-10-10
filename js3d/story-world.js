@@ -357,6 +357,7 @@ export function openWorld(protocols, opts = {}) {
   const keys = new Set();
   let path = null;       // タップした所までの道 (story-map.js の findPath)
   let busy = false;
+  let closed = false;     // close() を2回通らない
   let wakeTimer = 0;      // 目覚めの会話を出すまでの待ち (閉じたら止める)
   const onKeyDown = (ev) => {
     if (busy) return;
@@ -411,6 +412,7 @@ export function openWorld(protocols, opts = {}) {
     if (tap) onPointer(ev);
   };
   canvas.addEventListener('pointerdown', onDown);
+  canvas.addEventListener('pointerdown', () => { const l = root.querySelector('.sw-recall-list'); if (l) l.remove(); });   // 記録の一覧は、床を押したら閉じる
   window.addEventListener('pointermove', onMove);
   window.addEventListener('pointerup', onUp);
   window.addEventListener('pointercancel', onUp);
@@ -444,20 +446,23 @@ export function openWorld(protocols, opts = {}) {
   const done = new Promise((resolve) => { finish = resolve; });
 
   async function runScene(id) {
+    if (busy || closed) return;              // 「記録」で見ている会話や、ほかの会話と重ねない
     busy = true;
+    nearby = null;                           // 押しっぱなしのキーで、終えた場面をもう一度始めない
     keys.clear(); path = null;
     await playNode(nodeById(id));
     state = clearNode(state, id);
     state = saveStory(state);
     syncActors();
-    busy = false;
-    /* 章の最後の会話が終わった */
+    /* 章の最後の会話が終わった (XP を足し終えるまで動かさない。タイトルも押させない) */
     if (chapterCleared(state, chapter.id)) {
       if (opts.onChapterClear) await opts.onChapterClear(chapter.id);
+      busy = false;
       /* 次の章があれば、その地図を開き直す */
       close(currentNode(state) ? { reopen: true } : null);
       return;
     }
+    busy = false;
     /* 会話のすぐあとが、その場の人との対戦なら、そのまま確認を出す */
     const next = currentNode(state);
     if (next && next.kind !== 'scene') {
@@ -466,13 +471,15 @@ export function openWorld(protocols, opts = {}) {
     }
   }
   async function runBattle(id) {
+    if (busy || closed) return;
     busy = true;
+    nearby = null;
     keys.clear(); path = null;
     const ok = await askBattle(nodeById(id), protocols);
     busy = false;
     if (!ok) return;
     /* 管理者の「飛ばす」: 勝った扱いにして地図に残る (決着の会話は出ない) */
-    if (ok === 'skip') { state = saveStory(clearNode(state, id)); syncActors(); return; }
+    if (ok === 'skip') { state = saveStory(clearNode(state, id)); syncActors(); startAuto(); return; }
     state = saveStory(startBattle(state, id));
     close({ battle: nodeById(id) });
   }
@@ -702,6 +709,8 @@ export function openWorld(protocols, opts = {}) {
 
   /* ---------- 片付け ---------- */
   function close(result) {
+    if (closed) return;
+    closed = true;
     cancelAnimationFrame(raf);
     window.removeEventListener('keydown', onKeyDown);
     window.removeEventListener('keyup', onKeyUp);
@@ -714,7 +723,10 @@ export function openWorld(protocols, opts = {}) {
     hideTitleBack();
     for (const d of disposables) if (d && d.dispose) d.dispose();
     composer.dispose && composer.dispose();
+    bloom.dispose();                         // composer.dispose は自分の描き先しか片付けない
+    grade.material.dispose();
     renderer.dispose();
+    renderer.forceContextLoss();             // 章を開き直すたびに WebGL の文脈が残らないように
     root.remove();
     finish(result);
   }
@@ -723,8 +735,12 @@ export function openWorld(protocols, opts = {}) {
   showTitleBack(onTitle);
 
   /* 来たら始まる会話 (目覚め・朝・決着のあとの会話) */
-  const auto = Object.values(map.events).find(e => e.kind === 'auto' && isNext(e.node));
-  if (auto) wakeTimer = setTimeout(() => runScene(auto.node), 700);
+  function startAuto() {
+    const auto = Object.values(map.events).find(e => e.kind === 'auto' && isNext(e.node));
+    clearTimeout(wakeTimer);
+    if (auto) wakeTimer = setTimeout(() => runScene(auto.node), 700);
+  }
+  startAuto();
 
   return done;
 }
