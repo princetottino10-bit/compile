@@ -2,6 +2,7 @@
 /* 今日の問題 (data/tsume-daily.json) のうち、相手の山札の並び (見えない) 次第で解けなくなる問題を、
  * 新しい候補 (tsume_gen.js の出力) と入れ替える。番号 (id) と段 (tier) はそのまま、日ごとの巡りも変えない。
  *   node scripts/tsume_daily_replace.js 候補1.json 候補2.json ...
+ *   node scripts/tsume_daily_replace.js --ids d017,d190 候補1.json ...   (入れ替える問題を指定する。tsume_audit.js で外れた問題など)
  * 候補の選び方は tsume_pick.js と同じ (CPU がそのまま解けない・相手の裏向きのカードや山札に頼らない) */
 const fs = require('fs');
 const path = require('path');
@@ -12,11 +13,15 @@ const DAILY = path.join(root, 'data/tsume-daily.json');
 
 (async () => {
   const { PROMPT_TEXT, optionLabel } = await import('../js3d/prompts.js');
-  const files = process.argv.slice(2);
+  const args = process.argv.slice(2);
+  const idsAt = args.indexOf('--ids');
+  const only = idsAt >= 0 ? new Set(String(args[idsAt + 1] || '').split(',').filter(Boolean)) : null;
+  const files = idsAt >= 0 ? args.filter((_, i) => i !== idsAt && i !== idsAt + 1) : args;
   if (!files.length) { console.error('候補のファイルを指定してください'); process.exit(1); }
   const daily = JSON.parse(fs.readFileSync(DAILY, 'utf8'));
   const fixed = JSON.parse(fs.readFileSync(path.join(root, 'data/tsume.json'), 'utf8'));
-  const bad = daily.filter(p => !P.deckFair(p));
+  /* 指定がなければ、相手の山札の並び次第で解けない問題 (想定の答えでお題を満たさない問題も、ここで外れる) */
+  const bad = only ? daily.filter(p => only.has(p.id)) : daily.filter(p => !P.deckFair(p));
   console.log('入れ替える問題: ' + (bad.map(p => p.id).join(' ') || 'なし'));
   if (!bad.length) return;
 

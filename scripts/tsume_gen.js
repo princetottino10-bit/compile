@@ -124,6 +124,8 @@ function explore(res0) {
         ready: E.compilableLines(es, ME).length > 0,
         hand: es.players[ME].hand.length,
         totals: [0, 1, 2].map(l => E.lineTotal(es, l, ME)),
+        /* プロトコルごとの合計 (並べ替えたあとも、そのプロトコルのライン。お題「○○ のライン」はこちらで判定する) */
+        byProto: Object.fromEntries(es.players[ME].protocols.map((pr, l) => [pr.name, E.lineTotal(es, l, ME)])),
         chain: ((st.tally && st.tally.chains) || [0, 0])[ME] | 0,
         won: st.winner === ME,
         /* 相手の盤面を使ったか: 相手の場が変わった、または相手のカードの効果が発動した (手番の終わりの時点で比べる) */
@@ -183,8 +185,9 @@ function levelOf(depth) {
   return 1;
 }
 
-/* 1つの盤面から作れる問題 (無ければ null) */
-function tryBoard(spec) {
+/* 1つの盤面から作れる問題 (無ければ null)。
+   only を渡すと、そのお題だけで確かめる (もう出している問題が、いまのエンジンでも条件を満たすか: scripts/tsume_audit.js) */
+function tryBoard(spec, only) {
   const runs = [];
   for (const seed of SEEDS) {
     let res0;
@@ -198,21 +201,33 @@ function tryBoard(spec) {
   if (base.legalCount < 10) return null;
   const start = E.newPuzzle(spec, { seed: SEEDS[0] }).state;
   const handStart = start.players[ME].hand.length;
-  const totalsStart = [0, 1, 2].map(l => E.lineTotal(start, l, ME));
+  const protosStart = start.players[ME].protocols.map(pr => pr.name);
+  const byProtoStart = Object.fromEntries(protosStart.map((n, l) => [n, E.lineTotal(start, l, ME)]));
 
   /* お題ごとに「どの種でも成功する最初の1手」を数える */
-  const goals = [
+  const goals = only ? [] : [
     { kind: 'ready', ok: (o) => o.ready || o.won },
     { kind: 'emptyHand', ok: (o) => o.hand === 0 && handStart >= 3 }
   ];
-  /* ちょうど X 点: 最初の盤面と違う値で、10 未満 (コンパイルの判定と混ざらない) のもの */
+  /* ちょうど X 点: 最初の盤面と違う値で、10 未満 (コンパイルの判定と混ざらない) のもの。
+     ラインはプロトコルで決める (並べ替えたあとも、そのプロトコルのライン。前は位置で決めていて、並べ替えるとお題の文と違うラインで
+     正解になった: 2026-10-11) */
+  if (only) {
+    if (only.kind === 'ready') goals.push({ kind: 'ready', ok: (o) => o.ready || o.won });
+    else if (only.kind === 'emptyHand') goals.push({ kind: 'emptyHand', ok: (o) => o.hand === 0 && handStart >= 3 });
+    else {
+      const name = only.proto || protosStart[only.line];
+      goals.push({ kind: 'lineExact', proto: name, line: protosStart.indexOf(name), value: only.value, ok: (o) => o.byProto[name] === only.value });
+    }
+  }
   const seen = new Set();
-  for (const e of base.firstMap.values()) for (const o of e.outs) o.totals.forEach((v, l) => {
-    if (v !== totalsStart[l] && v >= 1 && v <= 12) seen.add(l + ':' + v);
-  });
+  if (!only) for (const e of base.firstMap.values()) for (const o of e.outs) for (const [name, v] of Object.entries(o.byProto)) {
+    if (v !== byProtoStart[name] && v >= 1 && v <= 12) seen.add(name + ':' + v);
+  }
   for (const k of seen) {
-    const [l, v] = k.split(':').map(Number);
-    goals.push({ kind: 'lineExact', line: l, value: v, ok: (o) => o.totals[l] === v });
+    const [name, vs] = k.split(':');
+    const v = Number(vs);
+    goals.push({ kind: 'lineExact', proto: name, line: protosStart.indexOf(name), value: v, ok: (o) => o.byProto[name] === v });
   }
   const leaves = [...base.firstMap.values()].reduce((n, e) => n + e.outs.length, 0);
   let best = null;
@@ -244,10 +259,12 @@ function tryBoard(spec) {
   }
   if (!best) return null;
   const g = best.goal;
-  const goal = g.kind === 'lineExact' ? { kind: 'lineExact', line: g.line, value: g.value } : { kind: g.kind };
+  const goal = g.kind === 'lineExact' ? { kind: 'lineExact', line: g.line, proto: g.proto, value: g.value } : { kind: g.kind };
   return { spec, goal, level: best.level, chain: best.chain, dec: best.dec, depth: best.depth, rate: Math.round(best.rate * 1000) / 1000, opp: best.opp, solutions: best.sols, legal: base.legalCount, solution: best.solution };
 }
 
+module.exports = { tryBoard };
+if (require.main === module) {
 const found = [];
 const t0 = Date.now();
 const r = rng(SEED0);
@@ -263,3 +280,4 @@ for (let i = 0; i < TRIES; i++) {
 }
 fs.writeFileSync(OUT, JSON.stringify(found, null, 1));
 console.log('done', found.length, 'puzzles ->', OUT);
+}

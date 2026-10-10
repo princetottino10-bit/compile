@@ -49,8 +49,8 @@ let cache = null;
 export async function loadTsume() {
   if (cache) return cache;
   const v = await loadJson('data/tsume.json');
-  if (v) cache = v;
-  return v || [];
+  if (v) cache = v.map(withGoalProto);
+  return (v || []).map(withGoalProto);
 }
 
 let dailyCache = null;
@@ -58,8 +58,8 @@ let dailyCache = null;
 export async function loadDailyList() {
   if (dailyCache) return dailyCache;
   const v = await loadJson('data/tsume-daily.json');
-  if (v) dailyCache = v;
-  return v || [];
+  if (v) dailyCache = v.map(withGoalProto);
+  return (v || []).map(withGoalProto);
 }
 
 /** その日の問題。日本時間の0時に替わり、どの端末でも同じ。
@@ -87,17 +87,29 @@ export function clearedMap(log = xpLog()) {
   return out;
 }
 
-/** お題の文。protos は自分のプロトコル名 (ラインの呼び名に使う) */
+/* 「○○ のラインを X に」のラインは、プロトコルで決める (goal.proto)。並べ替えたあとも、そのプロトコルがあるライン。
+   前は位置 (goal.line) で判定し、文は最初にその位置にあるプロトコルの名前で書いていたので、並べ替えるとお題の文と違うラインで
+   正解になった (2026-10-11、今日の上級)。proto の無い前の問題は、最初の盤面でその位置にあるプロトコル (= お題の文に出していた名前) */
+export function goalProto(goal, protos) {
+  return goal.proto || (protos && protos[goal.line]) || '';
+}
+/** proto を埋めたお題 (問題を読み込んだときに一度だけ) */
+export function withGoalProto(p) {
+  if (!p || !p.goal || p.goal.kind !== 'lineExact' || p.goal.proto) return p;
+  return { ...p, goal: { ...p.goal, proto: goalProto(p.goal, p.spec && p.spec.sides && p.spec.sides[0].protos) } };
+}
+
+/** お題の文。protos は自分のプロトコル名 (proto の無い前の問題のラインの呼び名に使う) */
 export function goalText(goal, protos) {
   if (goal.kind === 'ready') return '次のターンにコンパイルできる状態にする';
   if (goal.kind === 'emptyHand') return 'この手番の終わりに手札を0枚にする';
-  return 'この手番の終わりに ' + protos[goal.line] + ' のラインの合計を ちょうど ' + goal.value + ' にする';
+  return 'この手番の終わりに ' + goalProto(goal, protos) + ' のラインの合計を ちょうど ' + goal.value + ' にする';
 }
 
 function shortGoal(goal, protos) {
   if (goal.kind === 'ready') return 'コンパイルの準備';
   if (goal.kind === 'emptyHand') return '手札を0枚に';
-  return protos[goal.line] + ' を ' + goal.value + ' に';
+  return goalProto(goal, protos) + ' を ' + goal.value + ' に';
 }
 
 /** 判定。endSt = 手番を終えた時点、finalSt = いまの盤面。Engine は compilableLines / lineTotal を使う */
@@ -115,8 +127,11 @@ export function judgeTsume(goal, endSt, finalSt, me, Engine) {
     const n = endSt.players[me].hand.length;
     return n === 0 ? { ok: true, text: '手札を使い切りました' } : { ok: false, text: '手札が ' + n + ' 枚残っています' };
   }
-  const v = Engine.lineTotal(endSt, goal.line, me);
-  const name = endSt.players[me].protocols[goal.line].name;
+  /* お題のプロトコルが、手番の終わりにあるライン (並べ替えていれば動いている) */
+  const name = goal.proto || endSt.players[me].protocols[goal.line].name;
+  const line = endSt.players[me].protocols.findIndex(pr => pr.name === name);
+  if (line < 0) return { ok: false, text: name + ' のラインが見つかりません' };
+  const v = Engine.lineTotal(endSt, line, me);
   return v === goal.value
     ? { ok: true, text: name + ' のラインがちょうど ' + v + ' です' }
     : { ok: false, text: name + ' のラインは ' + v + ' でした (お題は ' + goal.value + ')' };

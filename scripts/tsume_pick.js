@@ -186,7 +186,10 @@ function solved(p, res) {
   if (res.state.winner === ME) return p.goal.kind === 'ready';
   if (p.goal.kind === 'ready') return E.compilableLines(es, ME).length > 0;
   if (p.goal.kind === 'emptyHand') return es.players[ME].hand.length === 0;
-  return E.lineTotal(es, p.goal.line, ME) === p.goal.value;
+  /* お題のラインはプロトコルで決める (並べ替えたあとも、そのプロトコルのライン。js3d/tsume.js の judgeTsume と同じ) */
+  const name = p.goal.proto || p.spec.sides[ME].protos[p.goal.line];
+  const line = es.players[ME].protocols.findIndex(pr => pr.name === name);
+  return line >= 0 && E.lineTotal(es, line, ME) === p.goal.value;
 }
 
 module.exports = { aiSolves, fair, deckFair, solved, describe, tierOf };
