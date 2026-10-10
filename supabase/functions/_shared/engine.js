@@ -2670,6 +2670,10 @@ const AI_LOCK_W = {
   spLockCoverRoute: 170, spLockUpNoCover: 0, spLockDup: -20, spLockBadLine: -30,
   spLockKeyInHand: 150, spLockNoKey: -15, spCover: 80, spKeyOnLock: 170, spKeyHold: -55,
   lockInHand: 45,
+  /* ぱぱぱのぱの指し方その2 (2026-10-10): 鍵 (DARKNESS 2) も捨てない (keyInHand)、手札の枚数を大事にする
+     (handCard: 1枚あたりの上乗せ。捨ててよい場面で捨てず、最後の1枚を残してリフレッシュする)、
+     PSYCHIC 4 の「相手のカードを戻す」は使う (returnWithP4) */
+  keyInHand: 40, handCard: 3, returnWithP4: 1,
 };
 /* 知らないキーは無視して配列で返す (計測スクリプトが打ち間違いに気づけるように) */
 function setAiWeights(obj) {
@@ -3598,7 +3602,15 @@ function aiScore(st, me) {
   sc += aiBoardEffectScore(st, me);
   sc += aiLockScore(st, me);
   /* ロック特化: ロックが未完成なら、手札の PSYCHIC 1 そのものに値打ちがある (捨てる・消す候補にしない) */
-  if (aiIsLockSpecialist(st, me) && aiHasDefInHand(st, me, AI_LOCK_CARD) && !aiLockLive(st, me)) sc += AI_LOCK_W.lockInHand;
+  if (aiIsLockSpecialist(st, me)) {
+    const live = aiLockLive(st, me);
+    if (aiHasDefInHand(st, me, AI_LOCK_CARD) && !live) sc += AI_LOCK_W.lockInHand;
+    /* 鍵: ①がまだ使える (手札・山札・場に裏で仕込み済み) うちは、手札の DARKNESS 2 にも値打ち */
+    if (!live && aiHasDefInHand(st, me, AI_LOCK_KEY) && (aiHasDefInHand(st, me, AI_LOCK_CARD)
+        || st.players[me].deck.some(uid => st.cards[uid].def === AI_LOCK_CARD)
+        || [0, 1, 2].some(l => st.lines[l][me].some(uid => st.cards[uid].def === AI_LOCK_CARD && !st.cards[uid].faceUp)))) sc += AI_LOCK_W.keyInHand;
+    sc += Math.min(st.players[me].hand.length, 7) * AI_LOCK_W.handCard;
+  }
   sc -= aiLockThreat(st, me);
   sc += aiLockThreat(st, 1 - me);
   sc += aiCompileSafetyScore(st, me) * W.compileSafety;
@@ -3928,6 +3940,18 @@ function smartPicks(st, req) {
         if (self) return [self];
       }
       if (req.prompt === 'optional-shift' && req.context === AI_LOCK_COVER && aiLockKeepsCover(st, me)) return [];
+      /* ロック特化: PSYCHIC 4 の「相手のカードを戻す」は使う (このカードが裏返って値は下がるが、相手の手を1つ遅らせる)。
+         相手の合計がいちばん高いラインの一番上を戻す */
+      if (req.prompt === 'optional-return' && req.context === 'PSYCHIC_5' && AI_LOCK_W.returnWithP4 && aiIsLockSpecialist(st, me)) {
+        let best = null, bestSc = -Infinity;
+        for (const uid of req.candidates) {
+          const loc = locate(st, uid);
+          if (!loc || loc.side !== op) continue;
+          const sc = lineTotal(st, loc.line, op) * 2 + (isTop(st, loc) ? 6 : 0) + cardValue(st, uid);
+          if (sc > bestSc) { bestSc = sc; best = uid; }
+        }
+        if (best) return [best];
+      }
       /* 反転で、自分の覆われた裏向きのサイキック①を表にできるなら必ずそれ (永続ロックの完成)。
          ダークネス②をロックのラインに出したのに、別のカードを反転してロックを逃していた (160戦で11回。2026-10-05) */
       if (/^(optional-)?flip$/.test(req.prompt || '') && (aiUsesCombos(st, me) || aiIsLockSpecialist(st, me))) {
