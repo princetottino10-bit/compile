@@ -86,6 +86,12 @@ export function openWeekly(protocols, cardsOf) {
   const el = overlay();
   return new Promise((resolve) => {
     let s = W.loadWeekly(key);
+    /* 週が変わって、先週の挑戦が途中で終わった: 黙って消さず、どこまで進んでいたかを一度だけ知らせる
+       (前は日本時間の月曜0時をまたぐと、途中の挑戦が知らせもなく消えていた: 2026-10-10 の点検) */
+    const prev = W.loadStoredWeekly();
+    const lastWeekNote = prev.week !== key && (prev.phase === 'choose' || prev.phase === 'battle') && (prev.stage > 0 || (prev.decks || []).length)
+      ? '<p class="rn-warn">週が変わったので、先週の挑戦は終わりました (第' + (prev.stage + 1) + '戦の途中まで' + (prev.stage ? '・' + prev.stage + '勝' : '') + ')。今週の9つで、はじめから挑戦できます。</p>'
+      : '';
     let picked = [];
     /* 「この挑戦をやめる」は取り消せないので、2回押しで (RUN のあきらめると同じく、その場で確かめる) */
     let armedGiveup = false;
@@ -150,7 +156,7 @@ export function openWeekly(protocols, cardsOf) {
           (cardsOf ? '<button type="button" data-act="cards">カードを見る</button>' : '') +
           '<button type="button" class="rn-go" data-act="start">' + (s.attempt ? 'もう一度挑戦する' : '挑戦する') + '</button></div>';
       }
-      el.innerHTML = '<div class="rn-card"><div class="rn-head"><b>// WEEKLY</b><span>週替わり3連戦</span></div>' + body + '</div>';
+      el.innerHTML = '<div class="rn-card"><div class="rn-head"><b>// WEEKLY</b><span>週替わり3連戦</span></div>' + (s.attempt ? '' : lastWeekNote) + body + '</div>';
     };
 
     /* 今週の9つ → 相手の順に、重なりなく並べる (カード一覧のタブ) */

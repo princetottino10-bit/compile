@@ -34,8 +34,9 @@ setReplayShortener(async (code) => {
 }, async (id) => {
   await ROOM.roomLoadDeps();
   if (!ROOM.roomConfigured()) return null;
-  const { data, error } = await ROOM.roomClient().from('shared_replays').select('code').eq('id', id).maybeSingle();
-  return !error && data ? data.code : null;
+  /* 表は直接読めない (全件の一覧を見られないように)。ID を渡して、その1件の符号だけを受け取る */
+  const { data, error } = await ROOM.roomClient().rpc('get_shared_replay', { p_id: String(id) });
+  return !error && typeof data === 'string' && data ? data : null;
 });
 import { advantageSeries, turningPoints } from './turning.js';
 import { trophyContext, showTrophyBanner } from './achievements-ui.js';
@@ -1072,8 +1073,18 @@ async function boot() {
     let resumeRec = null;
     /* タイトルの「CONTINUE」から来たときは、聞かずに続ける */
     const resumeNow = (() => { try { const v = sessionStorage.getItem('compileResumeNow') === '1'; sessionStorage.removeItem('compileResumeNow'); return v; } catch (e) { return false; } })();
-    if (resumeNow) resumeRec = RS.loadResume();
-    else if (!joinCode && !accountResume && ![...params.keys()].length) {
+    /* 決着の演出の途中で閉じた・落ちた対戦は、聞かずに結果を記録する (並べ直すと決着している記録)。
+       前は「決着済み」として捨てていて、勝ちが戦績に入らず、負けそうなら閉じて負けを消すこともできた (2026-10-10 の点検) */
+    let resumeFinished = false;
+    if (!joinCode && !accountResume) {
+      const r0 = RS.loadResume();
+      if (r0) {
+        try { const b = rebuild(Engine, r0); resumeFinished = !!(b && b.ok && b.res && !b.res.error && b.res.state.winner !== null); } catch (e) { resumeFinished = false; }
+        if (resumeFinished) resumeRec = r0;
+      }
+    }
+    if (!resumeRec && resumeNow) resumeRec = RS.loadResume();
+    else if (!resumeRec && !joinCode && !accountResume && ![...params.keys()].length) {
       const r = RS.loadResume();
       if (r) { if (await RS.askResume(r)) resumeRec = r; else RS.endResume(); }
     }
@@ -1102,7 +1113,7 @@ async function boot() {
       if (nextMode === 'resume') {
         let built = null, why = '';
         try { built = rebuild(Engine, resumeRec); } catch (e) { built = null; why = 'exception: ' + (e && e.message); }
-        if (!built || !built.ok || !built.res || built.res.error || built.res.state.winner !== null) {
+        if (!built || !built.ok || !built.res || built.res.error || (built.res.state.winner !== null && !resumeFinished)) {
           /* なぜ続けられなかったかを知らせる (どの手で崩れたか。記録は手の数と最後の手だけ) */
           const acts = (resumeRec && resumeRec.actions) || [];
           const last = acts.length ? JSON.stringify(acts[acts.length - 1]).slice(0, 120) : '-';
@@ -1463,7 +1474,7 @@ async function boot() {
       const turnNote = chosenFirst !== null
         ? (firstPlayer === ME ? 'ドラフトの先手: あなたが先攻です' : 'ドラフトの後手: あなたは後攻です')
         : (firstPlayer === ME ? 'コイントス: あなたが先攻です' : 'コイントス: あなたは後攻です');
-      UI.toast(resumed ? '中断した対戦の続きから' : setupNote ? setupNote + '　' + turnNote : turnNote, setupNote ? 4200 : 2600);
+      UI.toast(resumed ? (cur && cur.state.winner !== null ? '前の対戦は決着していました。結果を記録します' : '中断した対戦の続きから') : setupNote ? setupNote + '　' + turnNote : turnNote, setupNote ? 4200 : 2600);
     }
     await drainRequests();
     await afterTurn();
