@@ -144,9 +144,12 @@ export function playScene(lines, opts = {}) {
       const sp = SPEAKERS[line.who] || SPEAKERS.sys;
       /* 館内放送: 話す人は姿を見せない。名前は「館内放送」、チャイムのあとに読む */
       const pa = !!line.pa;
-      const terminal = !sp.portrait && !pa;
+      /* 紫苑のメモ: 紙の色の枠と、手書きの字。立ち絵は出したまま (紫苑が読んでいる) */
+      const memo = !!sp.memo;
+      const terminal = !sp.portrait && !pa && !memo;
       box.classList.toggle('terminal', terminal);
       box.classList.toggle('pa', pa);
+      box.classList.toggle('memo', memo);
       box.style.setProperty('--sc', pa ? '#ffd36b' : sp.color);
       nameEl.textContent = pa ? '館内放送' : sp.name;
       logPush(nameEl.textContent, line.text, pa ? '#ffd36b' : sp.color);
@@ -167,7 +170,7 @@ export function playScene(lines, opts = {}) {
         el.classList.toggle('with-still', stillOn);
       }
       if (Array.isArray(line.stage)) setStage(line.stage);
-      const speaker = pa ? null : line.who;
+      const speaker = pa || memo ? null : line.who;
       if (sp.portrait && !pa) { enter(line.who); lastWho = line.who; }
       for (const s of slots) {
         const on = !!s.who && !stillOn;

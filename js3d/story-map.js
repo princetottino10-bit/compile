@@ -152,11 +152,13 @@ export const AQUARIUM = {
   fragments: [
     { at: 'f', id: 'u3611', unit: 3611, lines: [
       { who: 'sys', text: '> 記録の断片: 機体3611' },
-      { who: 'sys', text: '> 最後の一手 …… 読めない' }
+      { who: 'sys', text: '> 最後の一手 …… 読めない' },
+      { who: 'shion', text: '……3611。メモの、止められた子の番号だ。' }
     ] },
     { at: 'h', id: 'u3740', unit: 3740, lines: [
       { who: 'sys', text: '> 記録の断片: 機体3740' },
-      { who: 'sys', text: '> 最後の一手 …… 読めない' }
+      { who: 'sys', text: '> 最後の一手 …… 読めない' },
+      { who: 'shion', text: '……3740。この子も、メモにある。' }
     ] }
   ],
   goals: { 'c1-arrive': '水族館に入る', 'c1-fork': '放送が途切れる場所を探す',

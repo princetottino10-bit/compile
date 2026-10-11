@@ -18,7 +18,7 @@
 <link rel="apple-touch-icon" href="icons/arena-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Oxanium:wght@500;600;700;800&family=M+PLUS+1:wght@500;700;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Oxanium:wght@500;600;700;800&family=M+PLUS+1:wght@500;700;900&family=Klee+One:wght@600&display=swap">
 <link rel="icon" href="icons/arena-180.png">
 <meta name="apple-mobile-web-app-title" content="3D ARENA">
 <meta name="theme-color" content="#03040a">
@@ -1652,6 +1652,11 @@
   .ss-box,.ss-title,.ss-alert{z-index:2;}
   /* 館内放送: 金色の名札と、名札の横で点滅する印 (天井のスピーカーから流れている) */
   .ss-box.pa{border-color:rgba(255,211,107,.45);}
+  /* 紫苑のメモ: 罫線の入った紙と、手書きの字 (ほかの会話と見分けられるように) */
+  .ss-box.memo{background:#efe9dc repeating-linear-gradient(transparent 0 27px,rgba(110,90,160,.18) 27px 28px);border-color:#b49cf0;}
+  .ss-box.memo .ss-text{color:#2a2238;font-family:"Klee One","M PLUS 1",serif;font-weight:600;letter-spacing:.03em;}
+  .ss-box.memo .ss-name{color:#fff;}
+  .ss-box.memo .ss-next{color:#6d5a9a;}
   .ss-box.pa .ss-name::after{content:"●";margin-left:8px;animation:ssBlink 1.1s steps(2) infinite;}
   .ss-box.pa .ss-text{letter-spacing:.04em;}
   /* 選択肢: 会話の上に、縦に並べたボタン */
@@ -4694,12 +4699,12 @@
       "./js3d/stats-data.js": "./js3d/stats-data.js?v=61334c9347",
       "./js3d/stats.js": "./js3d/stats.js?v=70cda680a1",
       "./js3d/steps.js": "./js3d/steps.js?v=13e73b20fe",
-      "./js3d/story-map.js": "./js3d/story-map.js?v=6919da4969",
+      "./js3d/story-map.js": "./js3d/story-map.js?v=ab7eca23c4",
       "./js3d/story-scenery-aquarium.js": "./js3d/story-scenery-aquarium.js?v=0140f6873e",
       "./js3d/story-scenery.js": "./js3d/story-scenery.js?v=9fa267bcf9",
-      "./js3d/story-ui.js": "./js3d/story-ui.js?v=f6a273195d",
+      "./js3d/story-ui.js": "./js3d/story-ui.js?v=5a922b23c3",
       "./js3d/story-world.js": "./js3d/story-world.js?v=0fe67aa0d0",
-      "./js3d/story.js": "./js3d/story.js?v=4b8e4482f1",
+      "./js3d/story.js": "./js3d/story.js?v=ba41f068f4",
       "./js3d/support.js": "./js3d/support.js?v=efb00a908c",
       "./js3d/theme.js": "./js3d/theme.js?v=932e1d5eb8",
       "./js3d/tips.js": "./js3d/tips.js?v=3faae17957",
@@ -4761,8 +4766,8 @@
   <link rel="modulepreload" href="js3d/equip.js?v=51faa70a25">
   <link rel="modulepreload" href="js3d/stats.js?v=70cda680a1">
   <link rel="modulepreload" href="js3d/stats-data.js?v=61334c9347">
-  <link rel="modulepreload" href="js3d/story.js?v=4b8e4482f1">
-  <link rel="modulepreload" href="js3d/story-ui.js?v=f6a273195d">
+  <link rel="modulepreload" href="js3d/story.js?v=ba41f068f4">
+  <link rel="modulepreload" href="js3d/story-ui.js?v=5a922b23c3">
   <link rel="modulepreload" href="js3d/story-world.js?v=0fe67aa0d0">
   <link rel="modulepreload" href="js3d/rewards.js?v=2922121ad3">
   <link rel="modulepreload" href="js3d/gachafx.js?v=6192cc6d66">
@@ -4832,7 +4837,7 @@
   <link rel="modulepreload" href="js3d/profile.js?v=704205fbfe">
   <link rel="modulepreload" href="js3d/gacha-ui.js?v=211fdbbd5f">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/ShaderPass.js">
-  <link rel="modulepreload" href="js3d/story-map.js?v=6919da4969">
+  <link rel="modulepreload" href="js3d/story-map.js?v=ab7eca23c4">
   <link rel="modulepreload" href="js3d/story-scenery.js?v=9fa267bcf9">
   <link rel="modulepreload" href="js3d/story-scenery-aquarium.js?v=0140f6873e">
   <link rel="modulepreload" href="vendor/jsm/loaders/GLTFLoader.js">
