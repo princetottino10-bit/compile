@@ -404,9 +404,10 @@ function syncAvatar() {
     if (plan && plan !== me && plan !== mate) oppIds = [plan, oppIds[0]];
   }
   avatars = {
-    me: me ? mountAvatar(me, { side: 'me', avoid: storyAvoid() }) : null,
+    me: me ? mountAvatar(me, { side: 'me', avoid: storyAvoid(), lines: storyNode && storyNode.talk ? storyNode.talk.me : undefined }) : null,
     mate: mate ? mountAvatar(mate, { side: 'me', back: true }) : null,
-    opp: tutorial || !oppIds[0] ? null : mountAvatar(oppIds[0], { side: 'opp', voice: settings().oppVoice !== false, avoid: storyAvoid() }),
+    opp: tutorial || !oppIds[0] ? null : mountAvatar(oppIds[0], { side: 'opp', voice: settings().oppVoice !== false, avoid: storyAvoid(),
+      lines: storyNode && storyNode.talk ? storyNode.talk.opp : undefined }),
     oppIds
   };
   if (avatars.opp) setTimeout(() => { if (avatars && avatars.opp) avatars.opp.react('hello'); }, 900);

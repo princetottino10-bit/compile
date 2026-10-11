@@ -72,6 +72,10 @@ const BOSS_LOOK = { inferno: ['業火の王', '#ff5a3c'], abyss: ['深淵の主'
 for (const [id, [name, color]] of Object.entries(BOSS_LOOK)) AVATARS['boss_' + id] = { name, color, boss: true, single: true, lines: null };
 
 /* セリフは avatar-lines.js (ボスは avatar-boss-lines.js)。得意プロトコル (fav) も */
+/* ストーリーの対戦だけに出る相手 (boss: ランダムやガチャには出ない)。セリフは story.js の場面 (talk.opp) が渡す。
+   art: 立ち絵を借りる子 (二号機は瑠璃と同じ型。CSS で色を抜いて暗く見せる) / noArt: 絵を出さず、吹き出しだけ (警備主任) */
+AVATARS.story_nigoki = { name: '二号機', color: '#6d7cff', boss: true, single: true, art: 'asagi', lines: null };
+AVATARS.story_chief = { name: '警備主任', color: '#ff4f6a', boss: true, single: true, noArt: true, lines: null };
 for (const [id, def] of Object.entries(AVATARS)) { def.lines = LINES[id] || BOSS_LINES[id] || {}; def.fav = FAVORITE[id] || null; }
 
 /* プロトコルごとのセリフ (カードを表で出したときに、ときどきこちらを言う) */
@@ -113,9 +117,11 @@ export function voiceGain(id) {
   const l = VOICE_LOUDNESS[id];
   return l === undefined ? 1 : Math.min(1.6, Math.pow(10, (VOICE_TARGET - l) / 20));
 }
-export const faceURL = (id, face) => 'art/avatar/' + id + '_' + (AVATARS[id] && AVATARS[id].single ? 'normal' : (face || 'normal')) + '.webp?v=' + ART_VER;
+export const faceURL = (id, face) => 'art/avatar/' + ((AVATARS[id] && AVATARS[id].art) || id) + '_' + (AVATARS[id] && AVATARS[id].single ? 'normal' : (face || 'normal')) + '.webp?v=' + ART_VER;
 
 /** キャラを出す。opts.side: 'me' (左下) / 'opp' (右上)。opts.back: 自分の後ろに立つ (タッグの味方)。
+ *  opts.lines: ストーリーの対戦のセリフ一覧 ({ 場面: [セリフ] })。渡したら、その子のふだんのセリフは使わない
+ *  (無い場面は黙る。ほかの子のセリフも借りない。声はまだ無いので出さない)。
  *  返り値: { react(kind, vars), say(text, face, ms), setFace(face, ms), setBack(on), destroy(), id } */
 export function mountAvatar(id, opts = {}) {
   const def = AVATARS[id];
@@ -125,8 +131,9 @@ export function mountAvatar(id, opts = {}) {
   el.style.setProperty('--av-c', def.color);
   /* 絵の向き (facing: 'left' は左を向いている絵)。盤面の方を向くよう、CSS で左右を反転する */
   el.dataset.facing = def.facing || 'front';
+  el.dataset.av = id;
   el.setAttribute('aria-hidden', 'true');
-  el.innerHTML = '<div class="av-body">' + facesOf(id).map(f =>
+  el.innerHTML = '<div class="av-body">' + (def.noArt ? [] : facesOf(id)).map(f =>
     '<img alt="" draggable="false" data-face="' + f + '" src="' + faceURL(id, f) + '"' + (f === 'normal' ? ' class="on"' : '') + '>').join('') +
     '</div><div class="av-bubble" role="status"><b class="av-name">' + def.name + '</b><p class="av-text"></p></div>';
   (opts.root || document.body).appendChild(el);
@@ -205,6 +212,7 @@ export function mountAvatar(id, opts = {}) {
     /* そのキャラに無い種類 (チュートリアルの案内など) は紫苑のセリフを借りる (声は無し) */
     /* タッグの相方へのひとこと (tag_hello / tag_in): 相方ごとのセリフ (tag_in_asagi など) があればそれを言う。
        無いキャラは言わない (ほかの子のセリフを借りると、相方との関係が合わない) */
+    if (opts.lines) return reactStory(kind, vars);
     if (/^tag_/.test(kind)) {
       const mk = vars && vars.mate ? kind + '_' + vars.mate : null;
       if (mk && def.lines[mk]) kind = mk;
@@ -256,6 +264,21 @@ export function mountAvatar(id, opts = {}) {
       say(text, faceOf(kind), ms, pa);
     };
     canned();
+  }
+  /* ストーリーの対戦: 渡されたセリフ一覧だけから選ぶ。館内放送の印のセリフは、いつでも放送として言う */
+  function reactStory(kind) {
+    const lines = opts.lines[kind];
+    if (!lines || !lines.length) return;
+    const ok = lines.map((e, n) => n);
+    const rest = ok.length > 1 ? ok.filter(n => n !== lastPick[kind]) : ok;
+    const i = rest[Math.floor(Math.random() * rest.length)];
+    lastPick[kind] = i;
+    let text = lines[i];
+    const pa = text.startsWith(PA_MARK);
+    if (pa) text = text.slice(PA_MARK.length);
+    const ms = Math.max(kind === 'win' || kind === 'lose' ? 5000 : 2400, 700 + text.length * 110) + (pa ? PA_LEAD_MS : 0);
+    if (pa && voiceOn && !isMuted()) sfx('pa');
+    say(text, faceOf(kind), ms, pa);
   }
   /* 声: 設定の「キャラの声の音量」で鳴らす。消音中は鳴らさない。前の声は止める */
   let voiceStop = null, voiceSeq = 0;
