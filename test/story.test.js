@@ -133,7 +133,7 @@ test('台本: 1つの箱は40字まで (一目で読める量。.claude/skills/s
   const over = [];
   for (const c of S.CHAPTERS) for (const n of c.nodes) {
     const ls = [...(n.lines || []), ...(n.winLines || []), ...(n.loseLines || []),
-      ...((n.choice && n.choice.options.flatMap(o => [...(o.lines || []), ...(o.ifAgain || [])])) || [])];
+      ...((n.choice && n.choice.options.flatMap(o => [...(o.lines || []), ...(o.ifAgain || [])])) || []), ...((n.choice && n.choice.after) || [])];
     for (const l of ls) if ([...l.text].length > 40) over.push(n.id + ': ' + l.text);
   }
   assert.deepEqual(over, []);

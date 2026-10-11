@@ -302,9 +302,11 @@ export async function playNode(n) {
     logChoice(o.label);
     const lines = [...(wavered && o.ifAgain ? o.ifAgain : []), ...(o.lines || [])];
     if (lines.length) await playScene(lines);
-    if (!o.again) return;
+    if (!o.again) break;
     wavered = true;
   }
+  /* どれを選んでも流れる続き (気持ちを選ぶ選択肢: 話の行き先は変えず、そのあとの会話を共通にする) */
+  if (n.choice.after && n.choice.after.length) await playScene(n.choice.after);
 }
 
 /* ---------- 対戦の前の確認 ---------- */

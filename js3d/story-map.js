@@ -110,8 +110,12 @@ export const AQUARIUM = {
     after: 'c1-arrive', until: 'c1-fork',
     zones: {
       H: [{ who: 'ruri', pa: true, text: 'ただいま館内が、大変混み合っております。順路どおりに、お進みください。' }],
-      B: [{ who: 'ruri', pa: true, text: 'ただいま、館内が大変、混み合っております。順路どおりに、お進みください。' }],
-      C: [{ who: 'ruri', pa: true, text: 'ただいま、館内が大変混み合っております。順路どおりに、お進み、ください。' }]
+      B: [{ who: 'ruri', pa: true, text: 'ただいま、館内が大変、混み合っております。順路どおりに、お進みください。' },
+        { who: 'shion', text: 'わあ……水槽、大きいね。', face: 'surprised' },
+        { who: 'shion', text: '中、何もいないね。水の音だけ、する。' }],
+      C: [{ who: 'ruri', pa: true, text: 'ただいま、館内が大変混み合っております。順路どおりに、お進み、ください。' },
+        { who: 'shion', text: 'クラゲの部屋、だって。', face: 'happy' },
+        { who: 'shion', text: '……クラゲ、見てみたかったな。', face: 'sad' }]
     },
     hint: [
       { who: 'shion', text: '同じ放送。言葉は、一字も変わってない。' },

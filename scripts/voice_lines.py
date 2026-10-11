@@ -55,7 +55,7 @@ def story_lines(who):
     「……。」のように記号だけの行は声にしない (間として、文字だけで見せる)"""
     js = ("import('./js3d/story.js').then(S=>{const o=[];const v=w=>(S.SPEAKERS[w]||{}).voice;"
           "for(const c of S.CHAPTERS)for(const n of c.nodes){const ls=[...(n.lines||[]),...(n.winLines||[]),...(n.loseLines||[])];"
-          "if(n.choice)for(const op of n.choice.options)ls.push(...(op.ifAgain||[]),...(op.lines||[]));"
+          "if(n.choice){for(const op of n.choice.options)ls.push(...(op.ifAgain||[]),...(op.lines||[]));ls.push(...(n.choice.after||[]))}"
           "for(const l of ls)if(v(l.who)==='%s')o.push({text:l.text,face:l.face||'normal',pa:!!l.pa})}console.log(JSON.stringify(o))})" % who)
     return [l for l in dump(js) if re.sub(r'[…。、・！？!?\s]', '', l['text'])]
 
