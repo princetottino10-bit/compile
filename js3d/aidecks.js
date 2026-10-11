@@ -4,7 +4,8 @@
  *   3    : 最強 (dsh 特化 + STRONGEST_AI)
  *   4    : ロック特化 (psylock 特化 + LOCK_AI)
  *   5..  : 挑戦者 (dsh 特化 + CHALLENGERS の固定デッキ)
- *   22   : 機械仕掛けの神 CODE:PURPLE (psylock 特化 + DEUS_AI、4 秒の読み。称号 CONQUEROR で挑める。対戦の始めに降臨の演出)
+ *   22   : 機械仕掛けの神 CODE:PURPLE (psylock 特化 + DEUS_AI、4 秒の読み。対戦の始めに降臨の演出)
+ *   23   : すべてを見る者 ALL-SEEING (22 と同じ + のぞき見。神に勝つと現れる。対戦の始めに目が開く演出)
  *   固定デッキの難易度は「自由に選ぶ」でだけ使える (setup.js)。
  *   エンジンの設定は main.js の applyAiDifficulty、戦績の表示名は stats.js。
  * ========================================================================= */
@@ -48,6 +49,11 @@ export const DEUS_LEVEL = 22;
 export const DEUS_AI = ['PSYCHIC', 'DARKNESS', 'FIRE'];
 /* 考える時間 (ms)。最強は 1200。読みを深くした分だけ強い (0.9 秒で 42% → 2.4 秒で 47%、WAR のとき) */
 export const DEUS_BUDGET = 4000;
+/* ALL-SEEING (機械仕掛けの神の先、のぞき見の敵): 神と同じ読み・デッキに、こちらの手札・裏向き・山札の並びをすべて見る力。
+   最強 (1.2 秒) 相手に 480戦 66.5% (神は 54.6%)。神に勝つと CHALLENGE に現れる */
+export const PEEK_LEVEL = 23;
+export const PEEK_AI = ['PSYCHIC', 'DARKNESS', 'FIRE'];
+export const PEEK_NAME = 'ALL-SEEING';
 export const DEUS_NAME = 'CODE:PURPLE';
 
 export const isChallenger = (level) => level >= CHALLENGER_BASE && level < CHALLENGER_BASE + CHALLENGERS.length;
@@ -57,6 +63,7 @@ export function fixedDeck(level) {
   if (level === 3 || level === UNDERDOG_LEVEL || level === UNDERDOG_TAG_LEVEL) return STRONGEST_AI;
   if (level === 4) return LOCK_AI;
   if (level === DEUS_LEVEL) return DEUS_AI;
+  if (level === PEEK_LEVEL) return PEEK_AI;
   return isChallenger(level) ? CHALLENGERS[level - CHALLENGER_BASE].deck : null;
 }
 
@@ -69,6 +76,7 @@ export function levelLabel(level) {
   if (isChallenger(level)) return '挑戦者 ' + challengerName(CHALLENGERS[level - CHALLENGER_BASE]);
   if (level === UNDERDOG_LEVEL) return '下剋上 (最弱 vs 最強)';
   if (level === DEUS_LEVEL) return '機械仕掛けの神 ' + DEUS_NAME;
+  if (level === PEEK_LEVEL) return 'すべてを見る者 ' + PEEK_NAME;
   if (level === UNDERDOG_TAG_LEVEL) return '下剋上タッグ (かんたんの味方 vs 最強タッグ)';
   return LEVEL_LABELS[level] || '不明';
 }

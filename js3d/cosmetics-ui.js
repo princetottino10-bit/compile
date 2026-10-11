@@ -9,7 +9,7 @@ import { COSMETICS, TITLES, unlockLevel, ownedTitles, isUnlocked } from './rewar
 import { matUnlocked } from './playmat.js';
 import { playerLevel } from './stats-data.js';
 import { localRecords } from './stats.js';
-import { UNDERDOG_LEVEL } from './aidecks.js';
+import { UNDERDOG_LEVEL, DEUS_LEVEL, PEEK_LEVEL } from './aidecks.js';
 import { emblemDataURL } from './emblems.js';
 import { isFaceIcon, ownsFaceIcon, FACE_ICONS, faceIconURL, faceIconName } from './face-icons.js';
 
@@ -23,6 +23,10 @@ const DEFAULT_KEY = { mat: 'neon', sleeve: 'default', marker: 'default', ccolor:
 export const TROPHY_TITLES = { flawless: 'flawless', mastery10: 'grandmaster', tsume_mid: 'puzzler', tsume_all: 'compuzzler', conqueror: 'conqueror', underdog_tag: 'underdogduo', tag_all: 'tagmaster', tag_flawless: 'perfectsync' };
 export function extraTitles(records) {
   const out = records.some(r => r.win && r.level === UNDERDOG_LEVEL) ? ['underdog'] : [];
+  /* 機械仕掛けの神・すべてを見る者 (CHALLENGE の CPU 戦で勝ったとき) */
+  const beat = (lv) => records.some(r => r.win && r.level === lv && (!r.mode || r.mode === 'cpu'));
+  if (beat(DEUS_LEVEL)) out.push('deicide');
+  if (beat(PEEK_LEVEL)) out.push('blindspot');
   const got = loadTrophies();
   for (const [id, key] of Object.entries(TROPHY_TITLES)) if (got[id]) out.push(key);
   return hasPlatinum() ? out.concat('platinum') : out;

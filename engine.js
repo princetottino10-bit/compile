@@ -4667,8 +4667,14 @@ function aiRestoreKnownCards(target, source, side) {
   }
 }
 
+/* のぞき見の CPU (機械仕掛けの神の先の敵): その側は、相手の手札・裏向きのカード・山札の並びまで本当のまま見る。
+   ふだんの CPU は見えないカードを並べ替えた想像の盤面で読む (下の aiInformationState) */
+let AI_PEEK_SIDE = -1;
+function setAiPeek(side) { AI_PEEK_SIDE = side === 0 || side === 1 ? side : -1; }
+
 /* AIには、本人が知るカードを固定し、未知カードだけを同じ出自のプール内で再配置した状態を渡す。 */
 function aiInformationState(state, side, salt) {
+  if (side === AI_PEEK_SIDE) { const real = clone(state); real.__unknownCount = 0; return real; }
   const view = clone(state);
   const baseSeed = aiPublicHash(state, side);
   const seed = salt ? (baseSeed ^ Math.imul(salt, 0x9e3779b1)) >>> 0 : baseSeed;
@@ -4864,7 +4870,7 @@ function aiAnswer(state, req) {
 /* ---------- 公開 API ---------- */
 
 const Engine = {
-  init, newGame, newPuzzle, apply, legalActions, setTrace, setAiLevel, setAiBlunder, setAiThinkBudget, setAiBreadth, setAiPimc, setAiWeights, setAiSpecialist, setAiSpecialistWeights,
+  init, newGame, newPuzzle, apply, legalActions, setTrace, setAiPeek, setAiLevel, setAiBlunder, setAiThinkBudget, setAiBreadth, setAiPimc, setAiWeights, setAiSpecialist, setAiSpecialistWeights,
   lineTotal, cardValue, compilableLines, canPlay, playBlockReason, locate,
   ai: { action: aiAction, answer: aiAnswer, score: aiScore, middleFizzles: aiMiddleFizzles, transitionScore: aiTransitionScore, compilePassChance: aiCompilePassChance, informationState: aiInformationState, rootValues: aiRootValues, vetoOrder: aiVetoOrder, actionBias: aiActionBias, opsValue: aiOpsValue, boardEffect: aiBoardEffectScore, randomPicks, smartPicks },
   get defs() { return DEFS; },

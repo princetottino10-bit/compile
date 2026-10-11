@@ -13,6 +13,8 @@ function configure(cfg) {
   Engine.setAiThinkBudget(cfg.budget);
   /* specSide: 特化をどちらの側に使うか (ふだんは CPU = 1。管理者の AUTO は自分の側 = 0) */
   if (Engine.setAiSpecialist) Engine.setAiSpecialist(!!cfg.specialist, cfg.specSide === 0 ? 0 : 1, cfg.kind || 'dsh');
+  /* ALL-SEEING (のぞき見の敵): CPU の側だけ、こちらの手札・裏向き・山札の並びを本当のまま見て読む */
+  if (Engine.setAiPeek) Engine.setAiPeek(cfg.peek ? 1 : -1);
 }
 
 self.onmessage = (e) => {

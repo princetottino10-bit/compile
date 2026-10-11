@@ -5,8 +5,8 @@
  *   → { level } / { underdog: true } / { quick: true } / { watch: true } / null (タイトルへ)
  * ========================================================================= */
 import { showTitleBack, hideTitleBack } from './titleback.js';
-import { gearSvg } from './deus.js';
-import { LEVEL_LABELS, STRONGEST_AI, LOCK_AI, CHALLENGERS, CHALLENGER_BASE, UNDERDOG_DECK, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL, UNDERDOG_TAG_RIVAL_MATE, DEUS_LEVEL, DEUS_AI, DEUS_NAME } from './aidecks.js';
+import { gearSvg, eyeSvg } from './deus.js';
+import { LEVEL_LABELS, STRONGEST_AI, LOCK_AI, CHALLENGERS, CHALLENGER_BASE, UNDERDOG_DECK, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL, UNDERDOG_TAG_RIVAL_MATE, DEUS_LEVEL, DEUS_AI, DEUS_NAME, PEEK_LEVEL, PEEK_AI, PEEK_NAME } from './aidecks.js';
 import { localRecords } from './stats.js';
 import { conquered, conquerable } from './stats-data.js';
 import { settings } from './settings.js';
@@ -59,8 +59,9 @@ export function openOpponentSelect(protocols, opts = {}) {
   const conqBar = '<span class="op-conq"><span>制覇 <b>' + conq + '</b>/' + total + '</span><i><s style="width:' + Math.round(conq / total * 100) + '%"></s></i></span>';
   /* 強敵の一覧と、勝ったことのある数 (見出しの下にまとめて出す) */
   /* 機械仕掛けの神 (最強の上): 称号 CONQUEROR (最強を除く全プロトコルで最強に勝つ) を取ると挑める。管理者は試せるように常に */
-  const deusOpen = conq >= total || !!accountState().admin;
-  const bossLevels = (deusOpen ? [DEUS_LEVEL] : []).concat([3, 4], CHALLENGERS.map((c, k) => CHALLENGER_BASE + k));
+  /* 機械仕掛けの神 (最強の上) は誰でも挑める。すべてを見る者は、神に勝つと現れる (それまでは札も出さない)。管理者は試せるように常に */
+  const peekOpen = recOf(DEUS_LEVEL).wins > 0 || !!accountState().admin;
+  const bossLevels = (peekOpen ? [PEEK_LEVEL] : []).concat([DEUS_LEVEL, 3, 4], CHALLENGERS.map((c, k) => CHALLENGER_BASE + k));
   const beaten = bossLevels.filter(lv => recOf(lv).wins > 0).length;
   /* 挑戦者は名前のないものに番号 (前は「挑戦者」が3つ並んで見分けがつかなかった) */
   const ROMAN = ['Ⅰ', 'Ⅱ', 'Ⅲ', 'Ⅳ', 'Ⅴ', 'Ⅵ', 'Ⅶ', 'Ⅷ'];
@@ -83,12 +84,11 @@ export function openOpponentSelect(protocols, opts = {}) {
         '<button type="button" role="tab" data-ctab="ud" aria-selected="' + (ctab === 'ud') + '" class="' + (ctab === 'ud' ? 'on' : '') + '">下剋上 <small>2</small></button></div>' +
       '<section data-cpane="boss"' + (ctab === 'boss' ? '' : ' hidden') + '><h3><small>相手のデッキは決まっている。次の画面で自分の3つを選ぶ</small></h3>' +
       '<div class="op-row boss">' +
-        (deusOpen
-          ? card(String(DEUS_LEVEL), '<span class="op-deus">' + gearSvg(10) + esc(DEUS_NAME) + '</span>' + rec(DEUS_LEVEL),
-            '最強の上に座る、機械仕掛けの神', deck(DEUS_AI), ' deus top')
-          : '<div class="op-card deus top locked" aria-disabled="true"><b><span class="op-deus">' + gearSvg(10) + '？？？</span></b>' +
-            '<small>最強の上に、まだ誰かいる。称号 CONQUEROR (最強を除く ' + total + ' のプロトコルすべてで最強に勝つ) を取ると挑める</small>' +
-            '<span class="op-deus-lock">制覇 ' + conq + ' / ' + total + '</span></div>') +
+        (peekOpen ? card(String(PEEK_LEVEL), '<span class="op-deus op-peek">' + eyeSvg() + esc(PEEK_NAME) + '</span>' + rec(PEEK_LEVEL),
+          'すべてを見る者。あなたの手札も、裏向きのカードも、山札の並びも見えている', deck(PEEK_AI), ' deus peek top') : '') +
+        card(String(DEUS_LEVEL), '<span class="op-deus">' + gearSvg(10) + esc(DEUS_NAME) + '</span>' + rec(DEUS_LEVEL) +
+            (recOf(DEUS_LEVEL).wins ? ' <em>✓ TITLE — DEICIDE</em>' : ''),
+          '最強の上に座る、機械仕掛けの神。勝つと 称号 DEICIDE', deck(DEUS_AI), ' deus top') +
         card('3', '最強' + rec(3) + (conq >= total ? ' <em>✓ TITLE — CONQUEROR</em>' : ''),
           'いちばん強い CPU。残りの' + total + 'のプロトコルすべてで勝つと 称号 CONQUEROR', deck(STRONGEST_AI) + conqBar, ' top') +
         card('4', 'ロック特化' + rec(4), 'サイキック①で「裏向きでしか出せない」を狙う', deck(LOCK_AI)) +

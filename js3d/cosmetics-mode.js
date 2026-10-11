@@ -80,7 +80,8 @@ function ctx() {
   return { level, titles: ownedTitles(level, extraTitles(recs)) };
 }
 function itemsOf(kind) {
-  if (kind === 'title') return [['', 'なし']].concat(Object.entries(TITLES));
+  /* 隠し称号 (BLIND SPOT) は取るまで並べない */
+  if (kind === 'title') return [['', 'なし']].concat(Object.entries(TITLES).filter(([k]) => k !== 'blindspot' || ctx().titles.includes(k)));
   if (kind === 'icon') return [['', 'なし']].concat(protoList.map(p => [p.name, p.name]), FACE_ICONS.map(k => [k, faceIconName(k)]));
   if (kind === 'track') return [['', 'おまかせ']].concat(TRACKS.map(t => [t.key, t.title]));
   return COSMETICS[kind] || [];
@@ -109,6 +110,8 @@ function sourceInfo(kind, key) {
   const g = GACHA_ITEMS.find(x => x.kind === kind && x.key === key);
   if (g) return ['GACHA (' + RAR_NAME[g.rar] + ')', 'GACHA で当てた (' + RAR_NAME[g.rar] + ')'];
   if (UNDERDOG_ITEMS.some(x => x.kind === kind && x.key === key) || (kind === 'title' && key === 'underdog')) return ['下剋上に勝つ', '下剋上に勝ってもらった'];
+  if (kind === 'title' && key === 'deicide') return ['機械仕掛けの神 (CHALLENGE) に勝つ', '機械仕掛けの神に勝ってもらった'];
+  if (kind === 'title' && key === 'blindspot') return ['？？？', 'すべてを見る者に勝ってもらった'];
   const m = masteryItem(kind, key);
   if (m) return [m.proto + ' の習熟度 ' + m.mastery + ' (いま ' + protoMastery(m.proto) + ')', m.proto + ' の習熟度が ' + m.mastery + ' になってもらった'];
   const w = WEEKLY_ITEMS.find(x => x.kind === kind && x.key === key);

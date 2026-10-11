@@ -104,3 +104,61 @@ export function deusIntro(name, opts = {}) {
     window.addEventListener('keydown', skip, true);
   });
 }
+
+/** 目の形 (SVG)。ALL-SEEING (すべてを見る者) の印 */
+export function eyeSvg(cls = '') {
+  return '<svg class="dx-eye ' + cls + '" viewBox="0 0 100 60" aria-hidden="true">' +
+    '<path class="lid" d="M4 30 Q50 -6 96 30 Q50 66 4 30 Z"/><circle class="iris" cx="50" cy="30" r="15"/><circle class="pupil" cx="50" cy="30" r="6"/></svg>';
+}
+
+/**
+ * すべてを見る者 (ALL-SEEING) の登場。暗転 → 巨大な目が開く → 走査の光が画面をなめる (手札・盤面を読まれる) →
+ * 名前 → 目が光って曲 (opts.onLand)。4秒ほど。押す・キーで飛ばせる。動きを減らす設定では短く。終わったら解決する Promise
+ */
+export function eyeIntro(name, opts = {}) {
+  const quiet = calm();
+  return new Promise((resolve) => {
+    const el = document.createElement('div');
+    el.className = 'dxi dxe' + (quiet ? ' calm' : '');
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-label', 'すべてを見る者 ' + name + ' が現れた');
+    el.innerHTML =
+      '<i class="dxi-veil"></i>' +
+      '<div class="dxe-eye">' + eyeSvg('big') + '</div>' +
+      '<i class="dxe-scan"></i>' +
+      '<p class="dxi-kicker">ALL YOUR CARDS ARE VISIBLE</p>' +
+      '<div class="dxe-name"><small>すべてを見る者</small><b>' + esc(name) + '</b></div>' +
+      '<i class="dxi-flash"></i>' +
+      '<p class="dxi-skip">押すと飛ばせます</p>';
+    document.body.appendChild(el);
+    sfx('deus');
+    let landed = false, done = false;
+    const land = () => {
+      if (landed) return;
+      landed = true;
+      el.classList.add('landed');
+      try { if (opts.onLand) opts.onLand(); } catch (e) { /* 曲や揺れが失敗しても演出は続ける */ }
+    };
+    const shownAt = Date.now();
+    const skip = (e) => {
+      if (Date.now() - shownAt < 450) return;
+      if (e.type === 'keydown' && !['Enter', 'Escape', ' '].includes(e.key)) return;
+      e.preventDefault(); e.stopPropagation();
+      finish();
+    };
+    const tLand = setTimeout(land, quiet ? 500 : 2400);
+    const tEnd = setTimeout(() => finish(), quiet ? 1700 : 4200);
+    function finish() {
+      if (done) return;
+      done = true;
+      land();
+      clearTimeout(tLand); clearTimeout(tEnd);
+      window.removeEventListener('pointerdown', skip, true);
+      window.removeEventListener('keydown', skip, true);
+      el.classList.add('out');
+      setTimeout(() => { el.remove(); resolve(); }, 450);
+    }
+    window.addEventListener('pointerdown', skip, true);
+    window.addEventListener('keydown', skip, true);
+  });
+}

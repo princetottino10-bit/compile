@@ -36,7 +36,7 @@ export function rarityOf(kind, key, opt = {}) {
   const w = WEEKLY_ITEMS.find(x => x.kind === kind && x.key === key);
   if (w) return w.weeks >= 3 ? 'E' : 'R';
   if (kind === 'title') {
-    if (key === 'platinum') return 'L';
+    if (key === 'platinum' || key === 'deicide' || key === 'blindspot') return 'L';
     const t = TROPHIES.find(x => x.id === TROPHY_OF_TITLE[key]);
     if (t) return TIER_RAR[t.tier] || 'E';
   }

@@ -10,7 +10,7 @@ import { logPlay } from './playlog.js';
 import * as FEEL from './feel.js';
 import { hypePlay, matchPoint, rankOf, playScore, slam } from './hype.js';
 import { scoreBegin, scoreAction, scoreCredits, scoreNow } from './run-score.js';
-import { descend as deusDescend, deusIntro } from './deus.js';
+import { descend as deusDescend, deusIntro, eyeIntro } from './deus.js';
 import { createPickAid } from './pickaid.js';
 import { openSpectate, watchAgainUrl } from './spectate.js';
 import { watchGate, mountCpuWatchTools, mountRoomWatchTools, unmountWatchTools, catchUpText } from './watchtools.js';
@@ -71,7 +71,7 @@ import { matUnlocked, MAT_W, MAT_D } from './playmat.js';
 import { initAccount, openAccount, takeAccountResume, accountState, onAccountChange } from './account.js';
 import { openCardList } from './cardlist-ov.js';
 import { openOpponentSelect } from './opponent-select.js';
-import { UNDERDOG_DECK, STRONGEST_AI, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL, UNDERDOG_TAG_RIVAL_MATE, levelLabel, fixedDeck, DEUS_LEVEL, DEUS_NAME, DEUS_BUDGET } from './aidecks.js';
+import { UNDERDOG_DECK, STRONGEST_AI, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL, UNDERDOG_TAG_RIVAL_MATE, levelLabel, fixedDeck, DEUS_LEVEL, DEUS_NAME, DEUS_BUDGET, PEEK_LEVEL, PEEK_NAME } from './aidecks.js';
 import { openRun, runHud, showRunAfterGame } from './run-ui.js';
 import { openWeekly, weeklyHud, showWeeklyAfterGame } from './weekly-ui.js';
 import { compilesBy, loadRun, RUN_WIN_COMPILES, runWinCompiles, battleOpts, lethal, nodeById } from './run.js';
@@ -84,7 +84,7 @@ import * as FX from './fx.js';
 import { buildArena } from './arena.js';
 import { initAudio, sfx, setMuted, isMuted, setSfxVolume, onMuteChange } from './audio.js';
 import { mountMuteButton, muteIcon } from './mutebutton.js';
-import { playBgm, refreshBgm, fadeOutBgm, pickNormalBgm, normalBattleBgm, onlineBattleBgm, STRONG_BGM, BOSS_BGM, DEUS_BGM } from './bgm.js';
+import { playBgm, refreshBgm, fadeOutBgm, pickNormalBgm, normalBattleBgm, onlineBattleBgm, STRONG_BGM, BOSS_BGM, DEUS_BGM, PEEK_BGM } from './bgm.js';
 import { trackOf } from './bgm-shop.js';
 import { BGM_RELEASED } from './rewards.js';
 import { emblemDataURL } from './emblems.js';
@@ -328,13 +328,16 @@ function ownedAvatars() { return (COSMETICS.avatar || []).filter(([k]) => AVATAR
    設定の「相手のキャラ」(ふだんはランダム)。自分と同じ子は選ばない */
 let plannedOpp;
 /* 機械仕掛けの神 (CHALLENGE の CODE:PURPLE) との対戦か。勝ち抜き戦・ストーリー・タッグなどで同じ番号が残っていても数えない */
-function deusMatch() {
-  return aiDifficulty === DEUS_LEVEL && !runMode && !storyNode && !tagMates && !roomMode && !puzzle && !tutorial && !demoMode && !trainingMode;
-}
+function deusMatch() { return aiDifficulty === DEUS_LEVEL && plainCpuMatch(); }
+/* すべてを見る者 (ALL-SEEING、神の先) との対戦か */
+function peekMatch() { return aiDifficulty === PEEK_LEVEL && plainCpuMatch(); }
+/* 神か、すべてを見る者 (人のキャラは出さず、登場の演出がある相手) */
+function machineMatch() { return deusMatch() || peekMatch(); }
+function plainCpuMatch() { return !runMode && !storyNode && !tagMates && !roomMode && !puzzle && !tutorial && !demoMode && !trainingMode; }
 function oppAvatarPlan() {
   if (plannedOpp !== undefined) return plannedOpp;
   if (storyNode) return (plannedOpp = storyNode.oppAvatar || null);
-  if (deusMatch()) return (plannedOpp = null);      // 人のキャラは出さない (相手は機械の神)
+  if (machineMatch()) return (plannedOpp = null);   // 人のキャラは出さない (相手は機械の神・目)
   /* 勝ち抜き戦のボス戦は、ボス本人 (avatar.js の boss_<id>) */
   if (runMode && runKind === 'run') {
     const run = loadRun();
@@ -392,7 +395,7 @@ function syncAvatar() {
   else if (roomLooks && !tagMates) { const o = roomLooks[roomWatching ? 1 : 1 - roomRm.side].avatar; oppIds = [o || oppAvatarIds([me])[0], null]; }
   else if (sp) oppIds = sp.b ? [sp.b, pool([sp.a, sp.b, mate])[0] || sp.b] : [null, null];
   else if (storyNode) oppIds = [storyNode.oppAvatar || null, null];
-  else if (deusMatch()) oppIds = [null, null];
+  else if (machineMatch()) oppIds = [null, null];
   else {
     /* 相手のキャラ: 設定の「相手のキャラ」(ふだんはランダム)。自分・味方と同じ子は選ばない */
     /* デッキを決める前に決めておいた子 (oppAvatarPlan。得意プロトコルを CPU のデッキに入れるため) */
@@ -1356,7 +1359,7 @@ async function boot() {
           ...(tagMates ? { tag: tagMates } : {}) });
   cur = res;
   /* 対戦の BGM (ボス戦は専用の曲)。機械仕掛けの神は、降臨の演出で着地したときに流す (それまでは静か) */
-  const deusEntrance = deusMatch() && !resumed && !replayMode && !reviewView && !spectate;
+  const deusEntrance = machineMatch() && !resumed && !replayMode && !reviewView && !spectate;
   if (deusEntrance) fadeOutBgm(); else playBattleBgm();
   gameStartedAt = Date.now();          // はじめの表示で合計値の演出が出ないように (feel.js)
   /* 勝ち抜き戦の短縮マッチ (序盤のふつうの戦闘): どちらも1本取れば勝ち。始めに大きく知らせる。
@@ -1468,7 +1471,10 @@ async function boot() {
   if (replayMode) { startReplayView(replayBuilt); return; }
   if (!roomMode) setOppLook(null);                 // CPU 戦などの相手は標準の見た目
   /* 機械仕掛けの神: 名札とキャラが出る前に、天から降りてくる (押せば飛ばせる)。着地で曲を流す */
-  if (deusEntrance) await deusIntro(DEUS_NAME, { onLand: () => { playBattleBgm(); stage.shake && stage.shake(0.6, 420); } });
+  if (deusEntrance) {
+    const onLand = () => { playBattleBgm(); stage.shake && stage.shake(0.6, 420); };
+    await (peekMatch() ? eyeIntro(PEEK_NAME, { onLand }) : deusIntro(DEUS_NAME, { onLand }));
+  }
   if (!puzzle && !tutorial && !demoMode && !trainingMode && !roomMode) showCpuPlates(p1);
   if (spectate) spectateStart();
   syncAvatar();
@@ -2007,16 +2013,19 @@ function applyAiDifficulty(level, opts) {
   const config = {
     level: opts && opts.engine !== undefined ? opts.engine : level <= 0 ? 0 : level === 1 ? 1 : 2,
     blunder: opts && opts.engine !== undefined ? 0 : level <= 0 ? 0.3 : 0,
-    budget: level === DEUS_LEVEL ? DEUS_BUDGET : level >= 2 ? 1200 : 900,
+    budget: level === DEUS_LEVEL || level === PEEK_LEVEL ? DEUS_BUDGET : level >= 2 ? 1200 : 900,
     /* 最強・挑戦者 = dsh 特化 + 固定デッキ (aidecks.js)、ロック特化 = PSYCHIC 1 の永続ロック狙い。
        機械仕掛けの神 (CODE:PURPLE) もロック特化の読み (ぱぱぱのぱの棋譜から寄せたもの) */
     specialist: level >= 3,
-    kind: level === 4 || level === DEUS_LEVEL ? 'psylock' : 'dsh'
+    kind: level === 4 || level === DEUS_LEVEL || level === PEEK_LEVEL ? 'psylock' : 'dsh',
+    /* すべてを見る者: こちらの手札・裏向き・山札の並びを本当のまま見て読む (engine の setAiPeek) */
+    peek: level === PEEK_LEVEL
   };
   Engine.setAiLevel(config.level);
   if (Engine.setAiBlunder) Engine.setAiBlunder(config.blunder);
   Engine.setAiThinkBudget(config.budget);
   if (Engine.setAiSpecialist) Engine.setAiSpecialist(config.specialist, 1, config.kind);
+  if (Engine.setAiPeek) Engine.setAiPeek(config.peek ? 1 : -1);
   if (aiClient) aiClient.setConfig(config);
 }
 
@@ -3321,8 +3330,8 @@ function showCpuPlates(p1) {
   const sub = storyNode ? 'STORY' : aiDifficulty === null || runMode ? '' : levelLabel(aiDifficulty);
   const showAv = avatarsOpen() && settings().avatarShow !== false && !tutorial;
   /* 機械仕掛けの神の名札は名前と「機械仕掛けの神」(称号の DEUS EX MACHINA は書かない。書くと称号の降臨がもう一度出る) */
-  showPlates({ me: myPlate(), opp: { name: storyNode ? storyNode.oppName : deusMatch() ? DEUS_NAME : (showAv && avatarName(oppAvatarPlan())) || 'CPU',
-    sub: storyNode ? 'STORY' : runMode ? '' : deusMatch() ? '機械仕掛けの神' : shortLevel(aiDifficulty),
+  showPlates({ me: myPlate(), opp: { name: storyNode ? storyNode.oppName : deusMatch() ? DEUS_NAME : peekMatch() ? PEEK_NAME : (showAv && avatarName(oppAvatarPlan())) || 'CPU',
+    sub: storyNode ? 'STORY' : runMode ? '' : deusMatch() ? '機械仕掛けの神' : peekMatch() ? 'すべてを見る者' : shortLevel(aiDifficulty),
     icon: first ? { name: first.name, color: first.color } : null } });
 }
 
@@ -4313,7 +4322,7 @@ function battleTier() {
     return node && node.type === 'boss' ? 'boss' : node && node.type === 'elite' ? 'strong' : null;
   }
   if (runMode && runKind === 'weekly') return (loadStoredWeekly().stage | 0) === 2 ? 'boss' : null;
-  if (aiDifficulty === 3 || aiDifficulty === UNDERDOG_LEVEL || deusMatch()) return 'boss';
+  if (aiDifficulty === 3 || aiDifficulty === UNDERDOG_LEVEL || machineMatch()) return 'boss';
   return aiDifficulty >= 3 ? 'strong' : null;
 }
 /* 落ちたときの手がかり (crashwatch): 覚えているカードの絵の数 f、描画が持っている絵 t・形 g・シェーダー p、画質の段 L。
@@ -4333,6 +4342,7 @@ function stackCount(line, side) {
 function battleBgm() {
   if (roomMode) return onlineBattleBgm();      // オンラインは毎回ランダム (同じ曲ばかり流れないように)
   if (deusMatch()) return DEUS_BGM;            // 機械仕掛けの神: 「神を破壊せよ」
+  if (peekMatch()) return PEEK_BGM;            // すべてを見る者: 「最終決戦２秒前」
   const tier = battleTier();
   if (tier === 'boss') return BOSS_BGM;
   if (tier === 'strong') return STRONG_BGM;
@@ -5791,6 +5801,9 @@ function showEndActions(win) {
   }
   const underdogWin = win && aiDifficulty === UNDERDOG_LEVEL;
   if (underdogWin) celebrateUnderdog();
+  /* 機械仕掛けの神・すべてを見る者にはじめて勝ったら、称号を知らせる (DEICIDE / 隠し称号 BLIND SPOT) */
+  const machineTitle = win && machineMatch() ? MACHINE_TITLES[aiDifficulty] : null;
+  if (machineTitle && localRecords().filter(r => r.win && r.level === aiDifficulty && (!r.mode || r.mode === 'cpu')).length === 1) celebrateMachineTitle(machineTitle);
   el.innerHTML =
     '<div class="end-title">' + (underdogWin ? '下剋上 達成！' : win ? 'あなたの勝ち' : '敗北') + '</div>' +
     onlineEndHtml(win) +
@@ -6633,6 +6646,30 @@ function choiceCtx() {
 
 /* 下剋上 (最弱のデッキで最強に勝つ) を達成: 大きく祝い、褒美 (経験値 +100・専用の見た目・称号) を渡す。
    経験値は 20 ずつ 5 回に分けて入れる (帳簿の1件は 20 まで)。key が同じなので何度勝っても1回だけ */
+/* 機械仕掛けの神・すべてを見る者に勝ったときの称号 (cosmetics-ui.js の extraTitles で持ち物になる) */
+const MACHINE_TITLES = {
+  [DEUS_LEVEL]: { key: 'deicide', name: 'DEICIDE', kicker: 'DEUS EX MACHINA', text: '機械仕掛けの神を倒しました。最強の、さらに上を。', colors: ['#c9a8ff', '#ffffff', '#ffd98a'] },
+  [PEEK_LEVEL]: { key: 'blindspot', name: 'BLIND SPOT', kicker: 'ALL-SEEING', text: 'すべてを見通す目を、見えないところから倒しました。(隠し称号)', colors: ['#ff5a6e', '#ffffff', '#ffb0b8'] }
+};
+async function celebrateMachineTitle(t) {
+  let el = document.getElementById('underdogWin');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'underdogWin';
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-modal', 'true');
+    document.body.appendChild(el);
+  }
+  el.innerHTML = '<div class="ud-card"><small>' + t.kicker + '</small><h2>' + t.name + '</h2><p>' + t.text + '</p>' +
+    '<ul><li>称号 ' + t.name + '</li></ul>' +
+    '<div class="ud-btns"><button type="button" data-ud="equip">受け取って着ける</button><button type="button" data-ud="ok" class="ud-sub">受け取る</button></div></div>';
+  el.classList.add('show');
+  confetti(t.colors, 320);
+  setTimeout(() => confetti(t.colors, 220), 900);
+  const pick = await new Promise(resolve => { el.querySelectorAll('[data-ud]').forEach(b => { b.onclick = () => resolve(b.dataset.ud); }); });
+  el.classList.remove('show');
+  if (pick === 'equip') equipNow([['title', t.key]]);
+}
 let underdogShown = false;
 async function celebrateUnderdog() {
   if (underdogShown) return;

@@ -214,6 +214,8 @@ export const TITLES = {
   conqueror: 'CONQUEROR',  // 「最強」に30のプロトコルすべてで勝つ (achievements.js)
   tagmaster: 'TAG MASTER', perfectsync: 'PERFECT SYNC',   // タッグデュエルの実績 ALL ROUND / PERFECT SYNC (2026-10-04)
   underdogduo: 'UNDERDOG DUO',   // 下剋上タッグに勝つ (achievements.js)
+  deicide: 'DEICIDE',            // 機械仕掛けの神 CODE:PURPLE に勝つ (cosmetics-ui.js の extraTitles)
+  blindspot: 'BLIND SPOT',       // 隠し: すべてを見る者 ALL-SEEING に勝つ。取るまで COLLECTION にも出さない
   /* ガチャで取る (GACHA_ITEMS) */
   gambler: 'GAMBLER', highroller: 'HIGH ROLLER', fortune: 'FORTUNE',
   /* 週替わり3連戦の称号 (3週・10週) は外した (時間のかかるものは置かない。2026-10-04) */
