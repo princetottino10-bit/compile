@@ -1387,6 +1387,10 @@
     display:none;align-items:center;gap:14px;width:min(760px,calc(100vw - 32px));padding:10px 14px;border-radius:14px;
     background:rgba(6,9,18,.94);border:1px solid rgba(255,179,218,.4);box-shadow:0 18px 50px rgba(0,0,0,.6);}
   #reviewBar.show{display:flex;}
+  /* たたんだ帯: 「◀ n手目 ▶」・広げる・感想戦を終えるだけ。グラフ・手の説明・道具は隠す (盤面を広く見る) */
+  #reviewBar.mini{width:auto;gap:10px;padding:6px 10px;}
+  #reviewBar.mini .rv-graph,#reviewBar.mini .rv-info,#reviewBar.mini .rv-tools{display:none!important;}
+  #reviewBar .rv-mini-btn{margin-left:6px;}
   /* 優勢の推移 (試合後の分かれ目)。帯の上に1段 */
   #reviewBar{flex-wrap:wrap;}
   #reviewBar .rv-graph{position:relative;flex:1 0 100%;height:46px;}
@@ -4670,7 +4674,7 @@
       "./js3d/replays.js": "./js3d/replays.js?v=c3ec491e07",
       "./js3d/replayshare.js": "./js3d/replayshare.js?v=dedb1ad773",
       "./js3d/resume.js": "./js3d/resume.js?v=477cf75f6b",
-      "./js3d/review.js": "./js3d/review.js?v=8ce98555a7",
+      "./js3d/review.js": "./js3d/review.js?v=f2069b69f8",
       "./js3d/rewards.js": "./js3d/rewards.js?v=2922121ad3",
       "./js3d/room.js": "./js3d/room.js?v=456725b5f4",
       "./js3d/roomui.js": "./js3d/roomui.js?v=c33e7b53b2",
@@ -4772,7 +4776,7 @@
   <link rel="modulepreload" href="js3d/weekly-ui.js?v=97a2e533b4">
   <link rel="modulepreload" href="js3d/run.js?v=043554d396">
   <link rel="modulepreload" href="js3d/weekly.js?v=5605476b1c">
-  <link rel="modulepreload" href="js3d/review.js?v=8ce98555a7">
+  <link rel="modulepreload" href="js3d/review.js?v=f2069b69f8">
   <link rel="modulepreload" href="js3d/roomui.js?v=c33e7b53b2">
   <link rel="modulepreload" href="js3d/selectui.js?v=208abdaebc">
   <link rel="modulepreload" href="js3d/cardtex.js?v=61e2262ea0">

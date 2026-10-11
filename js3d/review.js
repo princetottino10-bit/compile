@@ -10,6 +10,9 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 /* 自動再生の速さ (1手を見せる時間)。読む時間を残すため、いちばん速くても 0.7 秒 */
 export const AUTO_SPEEDS = [{ label: 'ゆっくり', ms: 2600 }, { label: 'ふつう', ms: 1500 }, { label: '速い', ms: 700 }];
 const SPEED_KEY = 'compileReviewSpeed';
+/* 帯をたたんだか (たたむと「◀ n手目 ▶」と終えるだけの細い帯。盤面を広く見られる)。次に開いたときも同じ */
+const MINI_KEY = 'compileReviewMini';
+const loadMini = () => { try { return localStorage.getItem(MINI_KEY) === '1'; } catch (e) { return false; } };
 const SWIPE_MIN = 48;          // これより長く横に動かしたらスワイプ (縦のぶれは SWIPE_MIN 未満まで)
 
 /* 分かれ目の前後: i より前 (dir -1) / 後 (dir 1) でいちばん近い分かれ目の手。無ければ null */
@@ -72,6 +75,7 @@ export function openReview(history, final, hooks) {
   let token = 0;
   let auto = null;                 // 自動再生のタイマー
   let speed = loadSpeed();
+  let mini = loadMini();
   let note = '';                   // 共有・保存のあとの一言 (次に動かすまで出す)
   let saved = false;
 
@@ -116,6 +120,8 @@ export function openReview(history, final, hooks) {
         navBtn('rvNext', '▶', '1手進む', last) +
         (turning.length ? navBtn('rvNextTp', '▶◆', '次の分かれ目へ', nextTp === null) : '') +
         navBtn('rvLast', '最後', '最後 (終局) へ (End)', last) +
+        '<button type="button" id="rvMini" class="rv-mini-btn" aria-pressed="' + mini + '" title="' + (mini ? '帯を広げる (H)' : '帯をたたんで盤面を広く見る (H)') + '">' +
+          (mini ? '▲ 広げる' : '▼ たたむ') + '</button>' +
       '</div>' +
       '<div class="rv-info">' +
         (entry
@@ -135,6 +141,7 @@ export function openReview(history, final, hooks) {
       '</div>' +
       '<button type="button" id="rvExit" class="rv-exit">感想戦を終える</button>';
     el.classList.add('show');
+    el.classList.toggle('mini', mini);
     live.textContent = (last ? '終局' : (i + 1) + '手目') + '。' + (tp ? '分かれ目。' : '') + moveText;
     const on = (id, fn) => { const b = body.querySelector('#' + id); if (b) b.onclick = fn; };
     on('rvFirst', () => go(0));
@@ -144,6 +151,7 @@ export function openReview(history, final, hooks) {
     on('rvPrevTp', () => { const k = nextTurning(turning, i, -1); if (k !== null) go(k); });
     on('rvNextTp', () => { const k = nextTurning(turning, i, 1); if (k !== null) go(k); });
     on('rvExit', exit);
+    on('rvMini', toggleMini);
     on('rvAuto', () => { if (auto) { stopAuto(); render(); } else startAuto(); });
     body.querySelectorAll('[data-speed]').forEach(b => {
       b.onclick = () => {
@@ -201,7 +209,13 @@ export function openReview(history, final, hooks) {
     else if (ev.key === 'Home') { ev.preventDefault(); go(0); }
     else if (ev.key === 'End') { ev.preventDefault(); go(history.length); }
     else if (ev.key === 'Escape') exit();
+    else if (ev.key === 'h' || ev.key === 'H') toggleMini();
   };
+  function toggleMini() {
+    mini = !mini;
+    try { localStorage.setItem(MINI_KEY, mini ? '1' : '0'); } catch (e) { /* private mode */ }
+    render();
+  }
   /* スマホ: 帯の上を左右になぞると1手ずつ (左へ = 次の手) */
   let touch = null;
   const onDown = (ev) => { if (ev.pointerType === 'touch') touch = { x: ev.clientX, y: ev.clientY }; };
