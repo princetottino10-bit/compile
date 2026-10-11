@@ -302,7 +302,7 @@ export const CHAPTERS = [
           ] },
           { label: '残る',
             ifAgain: [L('sys', '> 記録のない分岐: 1'),
-              L('shion', '……今、一度迷ったでしょ。それは読めたよ。', 'happy')],
+              L('shion', '……今、一度ついてきかけて、足が止まったね。', 'surprised')],
             lines: [
             L('shion', '……残るの？', 'surprised'),
             L('shion', '私、「行くよ」って言ったのに。……ううん。置いていくところだった。', 'sad'),
