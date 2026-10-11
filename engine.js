@@ -2603,6 +2603,9 @@ const AI_W = {
   refreshPerCard: 13, refreshTempo: 26, compileSafety: 1,
   // 対象の無い中段を表で切る (空撃ち) 減点: fizzle + 中段の効果値 × fizzleMid
   fizzle: 45, fizzleMid: 0.6,
+  /* 手札が最後の1枚のとき、それを出して手札を空にする減点 (つよい以上)。出せば次の手番はリフレッシュしかできず、
+     今リフレッシュして5枚から選ぶより必ず損。そのラインをコンパイルできる形にする手だけは別 (2026-10-11、監修) */
+  lastCardPlay: 90,
   // 手の事前評価 (aiActionBias) の表向き/裏向きまわり。
   // recompile: 済ラインで再コンパイルしそうなときの減点、midUp: 表向きの中段効果の重み。
   // 表で出すか裏で出すかは値の大小で誘導しない (裏向きは aiFaceDownAllowed の原則で絞る。監修 2026-09-23)
@@ -3304,6 +3307,10 @@ function aiActionBias(st, action, side) {
   const mine = lineTotal(st, action.line, side), theirs = lineTotal(st, action.line, op);
   const gap = Math.max(0, 10 - mine);
   let v = 0;
+  if (AI_LEVEL >= 2 && st.players[side].hand.length === 1) {
+    const after = mine + (action.faceUp ? d.value : 2);
+    if (!(after >= 10 && after > theirs)) v -= AI_W.lastCardPlay;
+  }
   /* 対象がいない盤面で対象取りの中段を表で切るのは効果の空撃ち。
      カードを1枚使って何も起きないので、温存 (または裏向き) の方が価値が残る。
      例: 自分の場が空のときの SPEED 3「あなたの他のカードを1枚移動させる」。
