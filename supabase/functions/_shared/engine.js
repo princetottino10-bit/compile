@@ -2663,6 +2663,10 @@ const AI_W = {
    sp*: ロック特化の手筋の加点 (aiLockSpecialistBias) */
 const AI_LOCK_W = {
   lockPermanent: 260, lockTemporary: 110,
+  /* 自分の永続ロックのラインを相手に伸ばされない (2026-10-12、ぱうぷるの棋譜: ロックのラインに裏で足されてコンパイルで消された)。
+     lockOppLine: 相手の合計が 10 に近いほど、ロックの価値をこの割合まで下げる (FIRE 1 / FIRE 2 / PSYCHIC 3 / DARKNESS 4 で
+     相手のカードをどかす手に値打ちが出る) / lockLineTarget: 削除・戻す・移動の対象に、ロックのラインの相手のカードを選ぶ上乗せ */
+  lockOppLine: 0.75, lockLineTarget: 45,
   /* 相手の永続ロックは、そのラインをコンパイルすれば (ラインのカードが全部消えて) 外れる。
      lockBreakLine: そのラインの自分の合計が 10 に近いほど減点を軽く (最大この割合) /
      lockBreakReady: 次の自分の番にそのラインをコンパイルできる形なら、減点をこの割合だけ軽く */
@@ -2890,6 +2894,11 @@ function aiLockScore(st, side) {
       w = AI_LOCK_W.lockVictim * (1 - AI_LOCK_W.lockBreakLine * reach);
       if (mine >= 10 && mine > theirs) w *= 1 - AI_LOCK_W.lockBreakReady;
     }
+    /* 自分のロック: そのラインの相手の合計が 10 に近いほど、コンパイルで消されやすい */
+    if (covered && s.sideIdx === side) {
+      const theirs = lineTotal(st, s.line, 1 - side);
+      w *= 1 - AI_LOCK_W.lockOppLine * Math.min(1, Math.max(0, theirs) / 10);
+    }
     v += s.sideIdx === side ? w : -w;
   }
   return v;
@@ -3024,6 +3033,12 @@ function aiUsesCombos(st, side) {
 }
 
 /* side の永続ロック (覆われた表向きの PSYCHIC 1) が効いているか */
+/* side の永続ロックのあるライン (無ければ -1) */
+function aiLockLineOf(st, side) {
+  const s = activeStatics(st).find(x => x.rule === 'oppFaceDownOnly' && x.sideIdx === side
+    && st.lines[x.line][x.sideIdx].indexOf(x.uid) < st.lines[x.line][x.sideIdx].length - 1);
+  return s ? s.line : -1;
+}
 function aiLockLive(st, side) {
   return activeStatics(st).some(s => s.rule === 'oppFaceDownOnly' && s.sideIdx === side
     && st.lines[s.line][s.sideIdx].indexOf(s.uid) < st.lines[s.line][s.sideIdx].length - 1);
@@ -3987,6 +4002,8 @@ function smartPicks(st, req) {
             if (lt >= 8 && !st.players[me].protocols[loc.line].compiled) s -= 15;
           }
           if (isTop(st, loc)) s += 8;
+          /* 自分のロックのラインから、相手のカードをどかす (伸ばされてコンパイルで消されないように) */
+          if (loc.side === op && /^(optional-)?(delete|return|shift)$/.test(req.prompt || '') && aiLockLineOf(st, me) === loc.line) s += AI_LOCK_W.lockLineTarget;
           /* 場から動かすと下の表向きカードの中段が再発動する (WATER 1 に WATER 4 を重ねて戻す等)。
              自分のものなら狙い、相手のものなら避ける */
           if (/^(optional-)?(return|delete|shift)$/.test(req.prompt || '')) {
@@ -4060,8 +4077,11 @@ function smartPicks(st, req) {
       return fallbackHand;
     }
     case 'pickLine': {
-      let bestLine = req.lines[0], bestSc = -Infinity;
-      for (const l of req.lines) {
+      /* 移動の行き先に、自分のロックのラインは選ばない (相手のカードなら相手が伸び、自分のカードなら自分のコンパイルでロックが消える) */
+      const lockL = /shift-dest/.test(req.prompt || '') ? aiLockLineOf(st, me) : -1;
+      const lines = lockL >= 0 && req.lines.length > 1 ? req.lines.filter(l => l !== lockL) : req.lines;
+      let bestLine = lines[0], bestSc = -Infinity;
+      for (const l of lines) {
         const mine = lineTotal(st, l, me), theirs = lineTotal(st, l, op);
         let s = 0;
         const gap = Math.max(0, 10 - mine);
@@ -4072,9 +4092,9 @@ function smartPicks(st, req) {
         }
         if (s > bestSc) { bestSc = s; bestLine = l; }
       }
-      if (AI_CHOICE_DEPTH <= aiWeightsFor(st, me).choiceDepth && req.lines.length > 1) {
+      if (AI_CHOICE_DEPTH <= aiWeightsFor(st, me).choiceDepth && lines.length > 1) {
         let simBest = -Infinity, simLine = bestLine;
-        for (const l of req.lines) {
+        for (const l of lines) {
           const score = aiChoiceScore(st, req, [l], me);
           if (score > simBest) { simBest = score; simLine = l; }
         }
