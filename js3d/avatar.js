@@ -81,6 +81,9 @@ AVATARS.story_patrol = { name: '巡回の警備機体', color: '#ff8a5c', boss: 
 AVATARS.story_collector = { name: '回収機', color: '#8a93b8', boss: true, single: true, noArt: true, lines: null };
 for (const [id, def] of Object.entries(AVATARS)) { def.lines = LINES[id] || BOSS_LINES[id] || {}; def.fav = FAVORITE[id] || null; }
 
+/* 1本目のコンパイルでだけ言うひとこと (「まずは一つ目」など)。2本目からは選ばない */
+const FIRST_COMPILE = /まずは/;
+
 /* プロトコルごとのセリフ (カードを表で出したときに、ときどきこちらを言う) */
 export const PROTO_LINES = {
   FIRE: '燃やして、{card}！', WATER: '流れを変える、{card}。', SPEED: '先に動く、{card}！', DEATH: '終わらせて、{card}。',
@@ -244,7 +247,8 @@ export function mountAvatar(id, opts = {}) {
     const rareTurn = Math.random() < RARE_CHANCE;
     const ok = lines.map((e, n) => n).filter(n => (!opts.avoid || !opts.avoid.test(textOf(lines[n])))
       && (paTurn || !String(textOf(lines[n])).startsWith(PA_MARK))
-      && (rareTurn || !RARE_LINES.has(textOf(lines[n]))));
+      && (rareTurn || !RARE_LINES.has(textOf(lines[n])))
+      && !(kind === 'compile' && vars && vars.nth > 1 && FIRST_COMPILE.test(textOf(lines[n]))));
     if (!ok.length) return;
     /* 同じ種類で、直前と同じセリフは続けて言わない */
     const rest = ok.length > 1 ? ok.filter(n => n !== lastPick[kind]) : ok;

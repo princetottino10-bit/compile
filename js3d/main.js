@@ -895,7 +895,9 @@ async function boot() {
       /* リコンパイル (済みのプロトコルでもう一度) は、1枚もらうだけなので軽いひとことだけ。された側は何も言わない */
       if (info.recompile) avatarSay(info.side, 'recompile', null, null, 6000);
       else if (!decisive) {
-        avatarSay(info.side, 'compile');
+        /* 何本目のコンパイルか (「まずは一つ目」を2本目以降で言わせない) */
+        const done = cur && cur.state ? cur.state.players[info.side].protocols.filter(x => x.compiled).length : 1;
+        avatarSay(info.side, 'compile', { nth: done });
         setTimeout(() => avatarSay(1 - info.side, 'compiled'), 1300);
       }
       /* まず盤上のプロトコルカードを "Compiled" 面へ裏返し、その後にカットイン */
