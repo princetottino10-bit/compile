@@ -6,6 +6,9 @@ Kenney (www.kenney.nl) の次の素材を、使う音だけ mp3 (モノラル・
 - Casino Audio 1.1  https://kenney.nl/assets/casino-audio
   card-place-*, card-slide-*, card-shove-*, card-fan-1
 - Sci-fi Sounds 1.0  https://kenney.nl/assets/sci-fi-sounds
-  forceField_*, explosionCrunch_000, lowFrequency_explosion_001, impactMetal_*
+  lowFrequency_explosion_001
 
 Thanks, Kenney!
+
+
+gen-*.mp3: ElevenLabs の効果音生成 (Text to Sound Effects, eleven_text_to_sound_v2) で 2026-10-13 に作成。音量をそろえ、長さを詰めた

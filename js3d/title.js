@@ -365,7 +365,7 @@ export function runTitle(protocols, opts) {
       showMenu();
       try { sessionStorage.setItem(STARTED_KEY, '1'); } catch (e) { /* private mode */ }
       const sound = () => {
-        try { initAudio(); sfx('turn'); } catch (e) { /* 音なしで続ける */ }
+        try { initAudio(); sfx('start'); } catch (e) { /* 音なしで続ける */ }
         playBgm(menuBgm());                         // タイトル・メニューの曲 (対戦以外)
       };
       /* 押さずに始まったとき (戻ってきたとき) は、ブラウザが音を止めているので、最初に触れたときに鳴らす */

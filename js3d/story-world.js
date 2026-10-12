@@ -17,6 +17,7 @@ import { loadStory, saveStory, blankStory, currentNode, clearNode, startBattle, 
 import { accountState } from './account.js';
 import * as M from './story-map.js';
 import { playNode, playScene, askBattle } from './story-ui.js';
+import { sfx } from './audio.js';
 import { buildScenery } from './story-scenery.js';
 import { buildAquarium } from './story-scenery-aquarium.js';
 import { RoomEnvironment } from '../vendor/jsm/environments/RoomEnvironment.js';
@@ -167,7 +168,14 @@ export function openWorld(protocols, opts = {}) {
   const scenery = (aquarium ? buildAquarium : buildScenery)(scene, map, keep);
   const term = scenery.term || null;           // 研究所の端末 (序章だけ)
   const termAt = M.find(map, 'T')[0];
-  const syncDoors = () => scenery.syncDoors(state);
+  /* 扉: 開いた数が増えたら、開く音 (地図を開いたときにもう開いている扉は鳴らさない) */
+  let openDoors = null;
+  const syncDoors = () => {
+    scenery.syncDoors(state);
+    const n = Object.keys(map.opens || {}).filter(ch => M.isOpen(map, state, ch)).length;
+    if (openDoors !== null && n > openDoors) sfx('door');
+    openDoors = n;
+  };
 
   /* タップした行き先の印 */
   const marker = new THREE.Mesh(keep(new THREE.RingGeometry(0.28, 0.4, 32)), keep(new THREE.MeshBasicMaterial({ color: 0xffc65c, transparent: true, opacity: 0.9, side: THREE.DoubleSide })));
@@ -561,6 +569,7 @@ export function openWorld(protocols, opts = {}) {
     nearby = null;
     actBtn.hidden = true;
     keys.clear(); path = null;
+    sfx('pickup');
     try {
       await playScene(f.lines, { title: '記録の断片' });
       state = saveStory(addFound(state, f.id));
@@ -576,6 +585,7 @@ export function openWorld(protocols, opts = {}) {
   }
   function act() {
     if (!nearby || busy) return;
+    if (nearby.look || nearby.kind === 'inspect') sfx('inspect');
     if (nearby.look) { readLook(nearby); return; }
     if (nearby.fragment) { pickFragment(nearby); return; }
     const n = nodeById(nearby.node);

@@ -253,8 +253,11 @@ const SAMPLE_FILES = [
   'card-place-1', 'card-place-2', 'card-place-3', 'card-place-4',
   'card-slide-1', 'card-slide-2', 'card-slide-3', 'card-slide-4', 'card-slide-5', 'card-slide-7', 'card-slide-8',
   'card-shove-1', 'card-shove-2', 'card-shove-3', 'card-shove-4', 'card-fan-1',
-  'forceField_000', 'forceField_002', 'explosionCrunch_000', 'lowFrequency_explosion_001',
-  'impactMetal_002', 'impactMetal_004'
+  'lowFrequency_explosion_001',
+  /* ElevenLabs の効果音生成で作った音 (2026-10-13)。合成音が軽かった所を差し替え。読めなければ合成音のまま。
+     音量 (vol) は書き出して測り、カードを置く音とつり合うように決めた (高い音ほど同じ vol で小さく聞こえるので大きめ) */
+  'gen-effect', 'gen-chain', 'gen-compile-charge', 'gen-compile-hit', 'gen-shatter', 'gen-turn-opp', 'gen-turn-mine',
+  'gen-win', 'gen-lose', 'gen-deus', 'gen-door-open', 'gen-pickup', 'gen-inspect'
 ];
 const buffers = new Map();
 let samplesRequested = false;
@@ -411,8 +414,9 @@ const SOUNDS = {
     if (!sample(['card-fan-1'], { vol: 0.35 })) noise({ freq: 1800, end: 3800, dur: 0.3, vol: 0.06, q: 1.2 });
     for (let k = 0; k < 4; k++) sample(['card-slide-1', 'card-slide-3', 'card-slide-5'], { vol: 0.18, rate: 1.3, delay: 0.32 + k * 0.07 });
   },
-  /* コンパイルでラインのカードが消える: 紙が散る音 + 高いところで消える息 */
+  /* コンパイルでラインのカードが消える: 光の粒に崩れる音 + 紙が散る音 */
   shatter() {
+    if (sample(['gen-shatter'], { vol: 0.68 })) { sample(['card-fan-1'], { vol: 0.2 }); return; }
     sample(['card-fan-1'], { vol: 0.4 });
     noise({ freq: 5200, end: 1800, dur: 0.45, vol: 0.06, kind: 'highpass', attack: 0.02, verb: 0.4 });
   },
@@ -420,20 +424,28 @@ const SOUNDS = {
   /* チェーンがつながった: つながるたびに半音ずつ上がる鈴を1つ (n = チェーンの長さ) */
   chain(n) {
     const k = Math.max(2, Math.min(7, n || 2)) - 2;
+    /* 録音: つながるたびに全音ずつ高く、少しずつ大きく。4つ目からは鈴を重ねて厚くする */
+    if (sample(['gen-chain'], { vol: 0.9 + k * 0.25, rate: Math.pow(2, (k * 2) / 12) })) {
+      if (k >= 2) bell(1567.98 * Math.pow(2, (k * 2) / 12), { dur: 0.5, vol: 0.03 + k * 0.006, verb: 0.45 });
+      return;
+    }
     bell(783.99 * Math.pow(2, (k * 2) / 12), { dur: 0.45, vol: 0.06, verb: 0.4 });
   },
 
   /* 効果発動 (いちばんよく鳴る): 小さな鈴を一つだけ */
   effect() {
+    if (sample(['gen-effect'], { vol: 1.0 })) return;
     bell(j(1318.5), { dur: 0.28, vol: 0.04, verb: 0.3 });
   },
 
   /* コンパイル: 低いところからふくらむ息 → 深い一撃と澄んだ和音 */
   charge() {
+    if (sample(['gen-compile-charge'], { vol: 0.36 })) return;
     noise({ kind: 'lowpass', freq: 200, end: 2600, dur: 0.6, vol: 0.07, attack: 0.3, verb: 0.35 });
     tone({ freq: 110, end: 220, dur: 0.6, type: 'sine', vol: 0.08, attack: 0.3 });
   },
   boom() {
+    if (sample(['gen-compile-hit'], { vol: 1.05 })) return;
     if (!sample(['lowFrequency_explosion_001'], { vol: 0.55 })) {
       tone({ freq: 58, end: 32, dur: 0.9, type: 'sine', vol: 0.5, attack: 0.002 });
     }
@@ -442,14 +454,22 @@ const SOUNDS = {
 
   /* ターン: 相手の番は低い一音、自分の番は上がる二音 */
   turn() {
+    if (sample(['gen-turn-opp'], { vol: 0.3 })) return;
     bell(392, { dur: 0.35, vol: 0.05, verb: 0.25 });
   },
+  /* タイトルの PRESS START (前は相手の番の音を借りていた) */
+  start() {
+    bell(392, { dur: 0.35, vol: 0.06, verb: 0.25 });
+    bell(587.33, { dur: 0.5, vol: 0.05, delay: 0.09, verb: 0.3 });
+  },
   yourTurn() {
+    if (sample(['gen-turn-mine'], { vol: 0.42 })) return;
     bell(659.25, { dur: 0.35, vol: 0.065, verb: 0.3 });
     bell(987.77, { dur: 0.55, vol: 0.06, delay: 0.1, verb: 0.35 });
   },
   /* 勝ち: 重い一撃 → 和音がふくらむ → 上で細かく瞬く → 鐘で締める */
   win() {
+    if (sample(['gen-win'], { vol: 0.5 })) return;
     tone({ freq: 70, end: 38, dur: 0.7, type: 'sine', vol: 0.36 });
     noise({ kind: 'lowpass', freq: 500, end: 6000, dur: 0.55, vol: 0.05, attack: 0.2, verb: 0.4 });
     /* D の9th の和音 (D A C# E F#)。わずかにずらした2本を重ねて厚みを出す */
@@ -473,6 +493,7 @@ const SOUNDS = {
   },
   /* 称号 DEUS EX MACHINA の降臨 (deus.js): 歯車の軋む低い音から、オルガンのような和音がゆっくり立ち上がり、高い鐘で締める */
   deus() {
+    if (sample(['gen-deus'], { vol: 0.75 })) return;
     tone({ freq: 48, end: 36, dur: 1.4, type: 'sine', vol: 0.3 });
     noise({ kind: 'bandpass', freq: 900, end: 300, dur: 0.6, vol: 0.03, attack: 0.05, verb: 0.3 });     // 歯車の軋み
     /* C の和音 (C G C E G) を、オルガンらしく三角波で。わずかにずらした2本で厚く */
@@ -481,12 +502,17 @@ const SOUNDS = {
     });
     [1046.5, 1318.5, 1568].forEach((f, i) => bell(f, { dur: 1.6, vol: 0.05, delay: 0.9 + i * 0.14, verb: 0.8 }));
   },
+  /* ストーリーの地図: 扉が開く / 記録の断片を拾う / 物を調べる */
+  door() { if (!sample(['gen-door-open'], { vol: 0.6 })) noise({ freq: 600, end: 200, dur: 0.6, vol: 0.08, kind: 'lowpass' }); },
+  pickup() { if (!sample(['gen-pickup'], { vol: 0.34 })) bell(1318.5, { dur: 0.5, vol: 0.05, verb: 0.4 }); },
+  inspect() { if (!sample(['gen-inspect'], { vol: 0.22 })) SOUNDS.select(); },
   /* 館内放送の始まりのチャイム (ピンポンパンポン)。瑠璃の実況の前に鳴らす。0.7 秒で鳴り終わる */
   pa() {
     [523.25, 659.25, 783.99, 1046.5].forEach((f, n) => bell(f, { dur: 0.42, vol: 0.05, delay: n * 0.16, verb: 0.5 }));
   },
   /* 負け: 下がる二音と、低く沈む響き (責めない音に) */
   lose() {
+    if (sample(['gen-lose'], { vol: 0.42 })) return;
     bell(440, { dur: 0.7, vol: 0.06, verb: 0.45 });
     bell(329.63, { dur: 1.1, vol: 0.06, delay: 0.28, verb: 0.5 });
     tone({ freq: 82.4, dur: 1.6, type: 'sine', vol: 0.12, attack: 0.25, delay: 0.3, verb: 0.3 });
