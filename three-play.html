@@ -139,6 +139,19 @@
   .end-gains .eg-why{font:600 10px/1 "M PLUS 1",system-ui;font-style:normal;color:var(--dim);margin-left:4px;}
   .end-sum{margin:2px 0 6px;font:600 12px/1.5 "M PLUS 1",system-ui;color:var(--dim);text-align:center;overflow-wrap:anywhere;}
   .end-sum b{font:800 15px/1 var(--font-ui);color:#fff;margin-right:2px;}
+  /* コンパイルの順番: 1回ずつ1行。あなたは左に紫、相手は桃色の線。リコンパイルは札を付ける */
+  .end-compiles{align-self:stretch;width:min(420px,100%);margin:0 auto 4px;}
+  .end-compiles > span{display:block;margin-bottom:5px;font:700 11px/1 "M PLUS 1",system-ui;letter-spacing:.08em;color:var(--dim);}
+  .end-compiles ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px;}
+  .end-compiles li{display:flex;align-items:center;gap:6px;min-height:26px;padding:3px 8px 3px 6px;
+    border-left:3px solid var(--violet,#8b5cf6);background:rgba(139,92,246,.08);font:600 12px/1.2 "M PLUS 1",system-ui;color:var(--ink);}
+  .end-compiles li.opp{border-left-color:var(--pink);background:rgba(255,79,163,.07);}
+  .end-compiles li i{flex:none;width:14px;font:800 11px/1 var(--font-ui);font-style:normal;color:var(--dim);text-align:right;}
+  .end-compiles .cs-who{flex:none;width:3em;font-size:10.5px;color:var(--dim);}
+  .end-compiles li b{font:800 13px/1 var(--font-ui);letter-spacing:.04em;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+  .end-compiles li b::before{content:"";display:inline-block;width:8px;height:8px;margin-right:6px;vertical-align:1px;background:var(--pc,#b9a4ff);border-radius:2px;}
+  .end-compiles li em{flex:none;padding:2px 4px;border-radius:4px;font:700 9.5px/1.2 "M PLUS 1",system-ui;font-style:normal;color:#1a1405;background:var(--gold);}
+  .end-compiles li small{flex:none;margin-left:auto;font:600 10px/1 "M PLUS 1",system-ui;color:var(--dim);}
   #gpLegend{display:none;position:fixed;left:max(10px,env(safe-area-inset-left));top:calc(56px + env(safe-area-inset-top));z-index:11;
     flex-direction:column;gap:3px;padding:7px 9px;background:rgba(8,6,16,.7);border:1px solid rgba(255,255,255,.12);pointer-events:none;
     font:600 10.5px/1.25 "M PLUS 1",system-ui;color:#cfc8e6;}
@@ -920,6 +933,12 @@
   #endBar .end-title{font:900 16px/1 "M PLUS 1",system-ui;letter-spacing:.16em;color:var(--ink);}
   #endBar .end-sub{font:700 12px/1.5 "M PLUS 1",system-ui;color:var(--gold);}
   #endBar .end-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+  /* 報酬の行が多いと板が画面の上へはみ出し、「あなたの勝ち」や経験値が見えず戻せなかった。
+     板の高さを画面の中に収め、中をスクロールできるように。下のボタンの段はいつも見えるよう、板の下端に貼りつける */
+  #endBar{max-height:calc(82vh - 12px - env(safe-area-inset-top));max-height:calc(100dvh - 18vh - 12px - env(safe-area-inset-top));
+    overflow-y:auto;overscroll-behavior:contain;padding-bottom:0;}
+  #endBar > *{flex-shrink:0;}
+  #endBar .end-btns{position:sticky;bottom:0;align-self:stretch;padding:8px 0 16px;background:rgba(6,9,18,.96);}
   #endFloat{position:fixed;right:14px;bottom:64px;z-index:45;display:none;}
   #endFloat.show{display:block;}
   /* 決着のあと (決着の窓・盤面の見直し) は、もう使わない手札・リフレッシュ・補助のボタンを出さない。
@@ -959,7 +978,8 @@
   body:has(#endBar.show) #dock,body:has(#endBar.show) #btnRefresh,body:has(#endBar.show) #assist,
   body:has(#endFloat.show) #dock,body:has(#endFloat.show) #btnRefresh,body:has(#endFloat.show) #assist{display:none!important;}
   @media (max-width:860px) and (orientation:portrait){
-    #endBar{left:10px;right:10px;transform:none;width:auto;bottom:14vh;}
+    #endBar{left:10px;right:10px;transform:none;width:auto;bottom:14vh;
+      max-height:calc(86vh - 12px - env(safe-area-inset-top));max-height:calc(100dvh - 14vh - 12px - env(safe-area-inset-top));}
     #endBar.show{transform:none;}
     #endBar .end-btns{width:100%;}
     #endBar .end-btns .arr-btn{flex:1 1 30%;min-height:48px;padding:0 10px;}      /* 指で押せる高さに (前は約 34px) */
@@ -4627,7 +4647,7 @@
   })();
   </script>
 
-  <script src="engine.js?v=a153e52583"></script>
+  <script src="engine.js?v=43a39719b4"></script>
   <script type="importmap">
   {
     "imports": {
@@ -4690,7 +4710,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=2b4dbc6066",
       "./js3d/logformat.js": "./js3d/logformat.js?v=e3548c74d1",
-      "./js3d/main.js": "./js3d/main.js?v=a3dde58715",
+      "./js3d/main.js": "./js3d/main.js?v=78d3a773a8",
       "./js3d/motion.js": "./js3d/motion.js?v=71cd68f8ff",
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
       "./js3d/net.js": "./js3d/net.js?v=3134839bca",
@@ -4890,6 +4910,6 @@
   <link rel="stylesheet" href="js3d/run-fx.css?v=ed3eded16b">
   <link rel="stylesheet" href="js3d/deus.css?v=3e6919eb01">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=a3dde58715"></script>
+  <script type="module" src="js3d/main.js?v=78d3a773a8"></script>
 </body>
 </html>

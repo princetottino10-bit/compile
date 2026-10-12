@@ -5706,26 +5706,41 @@ function masteryUnlocks() {
   return MASTERY_ITEMS.filter(it => m0[it.proto] !== undefined && m0[it.proto] < it.mastery && masteryOf(it.proto) >= it.mastery);
 }
 
-/* この試合のまとめ: 何ターンで決着したか・コンパイルの順番 (gameHistory の盤面から)。終わった画面に1行で */
+/* この試合のまとめ: 何ターンで決着したか・コンパイルの順番。順番は1回ずつの表で (前は1行に → でつないでいて読みづらく、
+   リコンパイルも区別がなかった)。エンジンが残す記録 (tally.compileLog) を使い、無いとき (オンラインの盤面など) は盤面を比べる */
+function compileOrder(st) {
+  const log = !roomMode && st.tally && Array.isArray(st.tally.compileLog) ? st.tally.compileLog : null;
+  if (log) return log.map(e => ({ side: e.p, name: e.n, re: !!e.r, turn: e.t }));
+  /* 盤面を比べる: ラインの位置ではなく名前で見る (コントロールの並べ替えで、同じものを何度も数えていた)。リコンパイルは分からない */
+  const order = [];
+  let prev = gameHistory[0].st;
+  for (const f of gameHistory.map(h => h.st).concat([st]).slice(1)) {
+    for (let side = 0; side < 2; side++) {
+      const before = new Set(prev.players[side].protocols.filter(p => p.compiled).map(p => p.name));
+      for (const p of f.players[side].protocols) if (p.compiled && !before.has(p.name)) order.push({ side, name: p.name, re: false, turn: null });
+    }
+    prev = f;
+  }
+  return order;
+}
 function matchSummaryHtml() {
   try {
     const st = cur && cur.state;
     if (!st || !gameHistory.length) return '';
-    const order = [];
-    let prev = gameHistory[0].st;
-    const frames = gameHistory.map(h => h.st).concat([st]);
-    for (const f of frames.slice(1)) {
-      for (let side = 0; side < 2; side++) {
-        f.players[side].protocols.forEach((p, i) => {
-          const was = prev.players[side].protocols[i];
-          if (p.compiled && was && !was.compiled) order.push((side === ME ? 'あなた ' : '相手 ') + p.name);
-        });
-      }
-      prev = f;
-    }
+    const order = compileOrder(st);
     const turns = (st.turns || 0) + 1;
     const esc = (t) => String(t).replace(/[<>&"]/g, '');
-    return '<p class="end-sum"><b>' + turns + '</b> ターンで決着' + (order.length ? ' ・ コンパイル: ' + order.map(esc).join(' → ') : '') + '</p>';
+    const rows = order.map((o, i) => {
+      const color = (protoIndex[o.name] && protoIndex[o.name].color) || '#b9a4ff';
+      return '<li class="' + (o.side === ME ? 'me' : 'opp') + (o.re ? ' re' : '') + '">' +
+        '<i>' + (i + 1) + '</i>' +
+        '<span class="cs-who">' + (o.side === ME ? 'あなた' : '相手') + '</span>' +
+        '<b style="--pc:' + esc(color) + '">' + esc(o.name) + '</b>' +
+        (o.re ? '<em>リコンパイル</em>' : '') +
+        (o.turn ? '<small>' + o.turn + 'ターン</small>' : '') + '</li>';
+    }).join('');
+    return '<p class="end-sum"><b>' + turns + '</b> ターンで決着</p>' +
+      (rows ? '<div class="end-compiles"><span>コンパイルの順番</span><ol>' + rows + '</ol></div>' : '');
   } catch (e) { return ''; }
 }
 

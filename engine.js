@@ -966,6 +966,10 @@ function doCompile(ctx, side, line) {
   if (removed.length) fireEvent(ctx, { on: 'delete', actor: side, count: removed.length });
   // プロトコル反転 / リコンパイル
   const prot = st.players[side].protocols[line];
+  /* 決着の画面の「コンパイルの順番」用: だれが・どのプロトコルを・リコンパイルか・何手番目か (盤面の比べ合いでは、
+     コントロールでプロトコルを並べ替えると同じものが何度も数えられ、リコンパイルは拾えなかった) */
+  const clog = tallyOf(st).compileLog || (tallyOf(st).compileLog = []);
+  clog.push({ p: side, n: prot.name, r: prot.compiled ? 1 : 0, t: (st.turns | 0) + 1 });
   if (!prot.compiled) {
     prot.compiled = true;
     log(ctx, `P${side + 1}: ${prot.name} をコンパイル！`);
