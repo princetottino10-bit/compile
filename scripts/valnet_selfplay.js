@@ -5,7 +5,7 @@
  *
  * 使い方:
  *   node scripts/valnet_selfplay.js --games 2000 --budget 300 --seed 1 --out _valnet/data_001.jsonl
- * 1行 = 1局面: {"x":[...], "y":1 か 0 (見る側が勝ったか), "g":対局番号, "t":手番}
+ * 1行 = 1局面: {"x":[...], "y":1 か 0 (見る側が勝ったか), "g":対局番号, "t":手番, "s":今の CPU の点数 (aiScore、比べる用)}
  * 手番をとる側から見た盤面だけを残す (同じ局面を両側から見た2行にはしない)。
  */
 const fs = require('node:fs');
@@ -61,7 +61,7 @@ if (!isMainThread) {
       const st = res.state;
       if (!res.requests.length && (st.turns || 0) !== lastTurn) {
         lastTurn = st.turns || 0;
-        rows.push({ x: features(E, st, st.turn), side: st.turn, t: lastTurn });
+        rows.push({ x: features(E, st, st.turn), side: st.turn, t: lastTurn, s: Math.round(E.ai.score(st, st.turn)) });
       }
       if (res.requests.length) {
         const req = res.requests[0];
@@ -74,7 +74,7 @@ if (!isMainThread) {
       if (res.error) break;
     }
     if (res.winner === 0 || res.winner === 1) {
-      for (const r of rows) out.push(JSON.stringify({ x: r.x.map(v => Math.round(v * 1000) / 1000), y: r.side === res.winner ? 1 : 0, g: job.seed, t: r.t }));
+      for (const r of rows) out.push(JSON.stringify({ x: r.x.map(v => Math.round(v * 1000) / 1000), y: r.side === res.winner ? 1 : 0, g: job.seed, t: r.t, s: r.s }));
     }
   }
   parentPort.postMessage(out);
