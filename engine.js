@@ -2606,6 +2606,10 @@ const AI_W = {
   /* 手札が最後の1枚のとき、それを出して手札を空にする減点 (つよい以上)。出せば次の手番はリフレッシュしかできず、
      今リフレッシュして5枚から選ぶより必ず損。そのラインをコンパイルできる形にする手だけは別 (2026-10-11、監修) */
   lastCardPlay: 90,
+  /* 勝てないラインの張り合いの減点 (つよい以上、2026-10-13、本人の AUTO の対局: 相手 SPEED 13 に DEATH 12 で足し続けた)。
+     相手がそのラインで 10 以上かつ上回っていて (相手がコンパイルできる形)、出しても相手 + 2 以下にしかならない
+     (相手は裏1枚 = 値2で抜き返せる) なら、その札は相手のコンパイルでラインごと消えるだけ。相手の手札が無いときは別 */
+  futileContest: 90,
   // 手の事前評価 (aiActionBias) の表向き/裏向きまわり。
   // recompile: 済ラインで再コンパイルしそうなときの減点、midUp: 表向きの中段効果の重み。
   // 表で出すか裏で出すかは値の大小で誘導しない (裏向きは aiFaceDownAllowed の原則で絞る。監修 2026-09-23)
@@ -3322,6 +3326,8 @@ function aiActionBias(st, action, side) {
   const mine = lineTotal(st, action.line, side), theirs = lineTotal(st, action.line, op);
   const gap = Math.max(0, 10 - mine);
   let v = 0;
+  if (AI_LEVEL >= 2 && theirs >= 10 && theirs > mine && st.players[op].hand.length > 0
+      && mine + (action.faceUp ? d.value : 2) <= theirs + 2) v -= AI_W.futileContest;
   if (AI_LEVEL >= 2 && st.players[side].hand.length === 1) {
     const after = mine + (action.faceUp ? d.value : 2);
     if (!(after >= 10 && after > theirs)) v -= AI_W.lastCardPlay;
