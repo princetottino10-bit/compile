@@ -23,6 +23,7 @@ function parseArgs(argv) {
     else if (a === '--budget') o.budget = +argv[++i];
     else if (a === '--seed') o.seed = +argv[++i];
     else if (a === '--workers') o.workers = +argv[++i];
+    else if (a === '--by-proto') o.byProto = true;   // プロトコルごとの勝率も出す
     else { console.error('未知の引数: ' + a); process.exit(1); }
   }
   return o;
@@ -64,7 +65,7 @@ if (!isMainThread) {
       else { const a = ai.ai.action(st); if (!a) break; res = C.apply(st, a); }
       if (res.error) break;
     }
-    out.push({ seed: job.seed, cs, won: res.winner === cs, decided: res.winner === 0 || res.winner === 1 });
+    out.push({ seed: job.seed, cs, won: res.winner === cs, decided: res.winner === 0 || res.winner === 1, mine: cs === 0 ? p0 : p1, theirs: cs === 0 ? p1 : p0 });
   }
   parentPort.postMessage(out);
   return;
@@ -87,5 +88,13 @@ Promise.all(chunks.filter(c => c.length).map(c => new Promise((resolve, reject) 
   const all = parts.flat().filter(g => g.decided);
   const n = all.length, w = all.filter(g => g.won).length, p = w / n, z = 1.96;
   const d = 1 + z * z / n, c = (p + z * z / (2 * n)) / d, h = z * Math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d;
+  /* プロトコルごと: 学習モデル入りの側がそのプロトコルを使った試合の勝率 */
+  if (opt.byProto) {
+    const rows = PROTOCOLS.map(pr => {
+      const gs = all.filter(g => g.mine.includes(pr));
+      return [pr, gs.length, gs.filter(g => g.won).length];
+    }).sort((a, b) => b[2] / b[1] - a[2] / a[1]);
+    for (const [pr, n2, w2] of rows) console.log('  ' + pr.padEnd(13) + ' ' + (100 * w2 / n2).toFixed(0).padStart(3) + '%  (' + w2 + '/' + n2 + ')');
+  }
   console.log('重み ' + opt.weight + '  学習モデル入りの勝率 ' + (100 * p).toFixed(1) + '% (95%: ' + (100 * (c - h)).toFixed(1) + '〜' + (100 * (c + h)).toFixed(1) + '%)  ' + n + '戦  ' + Math.round((Date.now() - t0) / 1000) + 's');
 }).catch(e => { console.error(e); process.exit(1); });
