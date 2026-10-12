@@ -3494,6 +3494,83 @@ function aiCompileSafetyScore(st, observer) {
   return score;
 }
 
+/* ---------- 学習モデル (盤面の良し悪し) ----------
+   CPU 同士の対戦から「この盤面から勝つ見込み」を学んだ小さなネット (scripts/valnet_train.py)。
+   setAiValueNet(model, weight) で重みを渡すと、aiScore にロジット × weight を足す。渡さなければ何もしない。
+   特徴量は scripts/valnet_features.js と同じ並び (test/valnet.test.js で突き合わせる) */
+const VALNET_PROTOCOLS = ['DARKNESS', 'DEATH', 'FIRE', 'GRAVITY', 'LIFE', 'LIGHT', 'METAL', 'PLAGUE', 'PSYCHIC', 'SPEED', 'SPIRIT', 'WATER',
+  'APATHY', 'HATE', 'LOVE', 'CHAOS', 'CLARITY', 'CORRUPTION', 'COURAGE', 'FEAR', 'ICE', 'LUCK', 'MIRROR', 'PEACE', 'SMOKE', 'TIME',
+  'WAR', 'ASSIMILATION', 'DIVERSITY', 'UNITY'];
+const VALNET_SIZE = 3 * 2 * 7 + 3 * 2 * VALNET_PROTOCOLS.length + 12;
+let AI_VALNET = null, AI_VALNET_W = 0;
+function setAiValueNet(model, weight) {
+  if (!model || !Array.isArray(model.layers)) { AI_VALNET = null; AI_VALNET_W = 0; return; }
+  AI_VALNET = model.layers.map(L => ({ w: L.w.map(row => Float64Array.from(row)), b: Float64Array.from(L.b) }));
+  AI_VALNET_W = +weight || 0;
+}
+function aiValnetFeatures(st, me) {
+  const op = 1 - me;
+  const x = new Array(VALNET_SIZE).fill(0);
+  let k = 0;
+  const lockOf = (side) => {
+    let perm = 0, temp = 0;
+    for (let l = 0; l < 3; l++) {
+      const stack = st.lines[l][side];
+      for (let j = 0; j < stack.length; j++) {
+        const c = st.cards[stack[j]];
+        if (c.faceUp && c.def === 'PSYCHIC_2') { if (j < stack.length - 1) perm = 1; else temp = 1; }
+      }
+    }
+    return [perm, temp];
+  };
+  for (let l = 0; l < 3; l++) {
+    for (const s of [me, op]) {
+      const stack = st.lines[l][s];
+      const mine = lineTotal(st, l, s), theirs = lineTotal(st, l, 1 - s);
+      const top = stack.length ? st.cards[stack[stack.length - 1]] : null;
+      x[k++] = mine / 10;
+      x[k++] = stack.length / 6;
+      x[k++] = stack.filter(u => !st.cards[u].faceUp).length / 6;
+      x[k++] = top && top.faceUp ? 1 : 0;
+      x[k++] = st.players[s].protocols[l].compiled ? 1 : 0;
+      x[k++] = mine >= 10 && mine > theirs ? 1 : 0;
+      x[k++] = top ? cardValue(st, stack[stack.length - 1]) / 6 : 0;
+    }
+  }
+  for (let l = 0; l < 3; l++) {
+    for (const s of [me, op]) {
+      const idx = VALNET_PROTOCOLS.indexOf(st.players[s].protocols[l].name);
+      if (idx >= 0) x[k + idx] = 1;
+      k += VALNET_PROTOCOLS.length;
+    }
+  }
+  const P = st.players;
+  x[k++] = P[me].hand.length / 6; x[k++] = P[op].hand.length / 6;
+  x[k++] = P[me].deck.length / 18; x[k++] = P[op].deck.length / 18;
+  x[k++] = (P[me].trash || []).length / 18; x[k++] = (P[op].trash || []).length / 18;
+  x[k++] = P[me].protocols.filter(p => p.compiled).length / 3;
+  x[k++] = P[op].protocols.filter(p => p.compiled).length / 3;
+  x[k++] = st.control === me ? 1 : st.control === op ? -1 : 0;
+  const lm = lockOf(me), lo = lockOf(op);
+  x[k++] = lm[0]; x[k++] = lo[0]; x[k++] = lm[1] - lo[1];
+  return x;
+}
+/* 勝つ見込みのロジット (0 で五分、正なら有利) */
+function aiValnetLogit(st, me) {
+  let h = aiValnetFeatures(st, me);
+  for (let i = 0; i < AI_VALNET.length; i++) {
+    const L = AI_VALNET[i], out = new Array(L.b.length);
+    for (let j = 0; j < L.b.length; j++) {
+      const w = L.w[j];
+      let v = L.b[j];
+      for (let q = 0; q < h.length; q++) v += w[q] * h[q];
+      out[j] = i < AI_VALNET.length - 1 && v < 0 ? 0 : v;
+    }
+    h = out;
+  }
+  return h[0];
+}
+
 function aiScore(st, me) {
   if (st.winner === me) return 1e9;
   if (st.winner === 1 - me) return -1e9;
@@ -3672,6 +3749,7 @@ function aiScore(st, me) {
   }
 
   if (st.turn === me) sc += 5;
+  if (AI_VALNET && AI_VALNET_W) sc += AI_VALNET_W * aiValnetLogit(st, me);
   return sc;
 }
 
@@ -4897,9 +4975,9 @@ function aiAnswer(state, req) {
 /* ---------- 公開 API ---------- */
 
 const Engine = {
-  init, newGame, newPuzzle, apply, legalActions, setTrace, setAiPeek, setAiLevel, setAiBlunder, setAiThinkBudget, setAiBreadth, setAiPimc, setAiWeights, setAiSpecialist, setAiSpecialistWeights,
+  init, newGame, newPuzzle, apply, legalActions, setTrace, setAiPeek, setAiValueNet, setAiLevel, setAiBlunder, setAiThinkBudget, setAiBreadth, setAiPimc, setAiWeights, setAiSpecialist, setAiSpecialistWeights,
   lineTotal, cardValue, compilableLines, canPlay, playBlockReason, locate,
-  ai: { action: aiAction, answer: aiAnswer, score: aiScore, middleFizzles: aiMiddleFizzles, transitionScore: aiTransitionScore, compilePassChance: aiCompilePassChance, informationState: aiInformationState, rootValues: aiRootValues, vetoOrder: aiVetoOrder, actionBias: aiActionBias, opsValue: aiOpsValue, boardEffect: aiBoardEffectScore, randomPicks, smartPicks },
+  ai: { action: aiAction, answer: aiAnswer, score: aiScore, valnetFeatures: aiValnetFeatures, middleFizzles: aiMiddleFizzles, transitionScore: aiTransitionScore, compilePassChance: aiCompilePassChance, informationState: aiInformationState, rootValues: aiRootValues, vetoOrder: aiVetoOrder, actionBias: aiActionBias, opsValue: aiOpsValue, boardEffect: aiBoardEffectScore, randomPicks, smartPicks },
   get defs() { return DEFS; },
   get protos() { return PROTOS; }
 };

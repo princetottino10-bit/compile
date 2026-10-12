@@ -2048,7 +2048,8 @@ function thinking(p) {
 }
 /* 管理者の自動プレイ (AUTO): 自分の側も CPU が指す。自分の側は最強と同じ読み (探索・特化の手筋・長めの思考)、相手はいつもの強さのまま */
 let autoPlay = false;
-const AUTO_AI = { level: 2, blunder: 0, budget: 2400, specialist: true, kind: 'dsh', specSide: 0 };
+/* valnet: 学習モデル (data/valnet.json) を読みに混ぜる重み。強くしている途中は AUTO だけで使う (2026-10-12) */
+const AUTO_AI = { level: 2, blunder: 0, budget: 2400, specialist: true, kind: 'dsh', specSide: 0, valnet: 150 };
 const autoFor = (side) => autoPlay && side === ME && !roomMode;
 /* 下剋上タッグの味方: かんたんと同じ読み (3割はでたらめ)。相手の最強タッグはいつもの最強の読み */
 const UNDERDOG_MATE_AI = { level: 0, blunder: 0.3, budget: 900, specialist: false, kind: 'dsh' };
