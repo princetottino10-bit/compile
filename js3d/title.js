@@ -319,17 +319,33 @@ export function runTitle(protocols, opts) {
           button.setAttribute('aria-expanded', String(!pop.hidden));
           /* 開いている間は、外を押す・Esc でも閉じる (前は MORE をもう一度押すしかなかった) */
           if (!pop.hidden) {
+            /* 広い画面は MORE の列の右横に開く。メニューの列はスクロールできる枠なので、枠の外 (右横) は切れてしまう。
+               画面に対して置き直す (縦持ちのスマホは CSS で画面の下の板) */
+            pop.style.position = pop.style.left = pop.style.bottom = '';
+            if (getComputedStyle(pop).position === 'absolute') {
+              const r = button.closest('.tt-more').getBoundingClientRect();
+              pop.style.position = 'fixed';
+              pop.style.left = (r.right + 10) + 'px';
+              pop.style.bottom = Math.max(8, window.innerHeight - r.bottom) + 'px';
+            }
+            const scroller = root.querySelector('#ttCenter');
+            const top0 = scroller ? scroller.scrollTop : 0;
+            /* 開いた直後の位置の微調整でも scroll が届くので、実際に動いたときだけ閉じる */
+            const onScroll = () => { if (Math.abs(scroller.scrollTop - top0) > 4) close(); };
             const close = () => {
               pop.hidden = true;
               button.setAttribute('aria-expanded', 'false');
               document.removeEventListener('pointerdown', onOutside, true);
               document.removeEventListener('keydown', onEsc, true);
+              if (scroller) scroller.removeEventListener('scroll', onScroll);
             };
             const onOutside = (ev) => { if (!pop.contains(ev.target) && !button.contains(ev.target)) close(); };
             const onEsc = (ev) => { if (ev.key === 'Escape') { close(); button.focus(); } };
             button._closeMore = close;
             document.addEventListener('pointerdown', onOutside, true);
             document.addEventListener('keydown', onEsc, true);
+            /* 列をスクロールしたら、置いた位置がずれるので閉じる */
+            if (scroller) scroller.addEventListener('scroll', onScroll, { passive: true });
           } else if (button._closeMore) button._closeMore();
         }
         else if (button.dataset.mode === 'cosmetics') openCosmetics();

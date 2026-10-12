@@ -1721,6 +1721,13 @@
   .ss-logclose{padding:14px 0 calc(18px + env(safe-area-inset-bottom));color:rgba(255,255,255,.7);font:700 13px/1 "M PLUS 1",system-ui;letter-spacing:.1em;}
   /* 文字の枠を消す (H・右クリック) */
   #storyScene.hide-ui .ss-box,#storyScene.hide-ui .ss-tools,#storyScene.hide-ui .ss-title{opacity:0;pointer-events:none;}
+  /* 狭い画面: 左上の道具を詰めて、右上の「← タイトル」とかぶらないように。章の題は道具の下の段へ
+     (前は HIDE が「← タイトル」の下に入り、AUTO・LOG が章の題にかぶっていた) */
+  @media (max-width:600px){
+    .ss-tools{left:10px;gap:5px;}
+    .ss-tools button{min-width:40px;min-height:38px;padding:8px 7px;letter-spacing:.04em;}
+    .ss-title{top:calc(62px + env(safe-area-inset-top));}
+  }
   @media (max-width:600px){ .ss-text{font-size:15px;} .ss-portrait{height:min(58vh,520px);right:-6vw;} .ss-portrait[data-slot="l"]{left:-14vw;right:auto;} }
   @media (prefers-reduced-motion: reduce){ .sm-node.next::before,.ss-next{animation:none;} .ss-portrait{transition:none;}
     .ss-title b,.ss-title::before,.ss-title::after,.ss-alert.on,.ss-alert::before,.ss-alert::after,.ss-alert b,.sty-res.lose>b,.ss-box.terminal .ss-text::after{animation:none;} }
@@ -2365,6 +2372,10 @@
       padding:5px 6px 5px 10px;gap:8px;}
     #puzzleBar .pz-text small{font-size:9px;}
     body.picking #puzzleBar{top:28%;width:min(250px,34vw);}
+    /* 左の INFO が開いているときは、その右から (前は INFO の下に隠れて、問題文の左半分と「やり直す」が見えなかった)。
+       INFO の幅は下の #preview と同じ min(200px,24vw)、右につまみが付く */
+    body:not(.info-closed):not(.training) #puzzleBar{left:calc(8px + env(safe-area-inset-left) + min(200px,24vw) + 30px);
+      max-width:calc(100vw - 310px - min(200px,24vw) - 30px);}
   }
   .tr-foot button.warn{color:#ffb3d6!important;border-color:rgba(255,79,163,.35);}
   @media (prefers-reduced-motion: reduce){
@@ -3678,6 +3689,24 @@
   }
   #title .tt-menu .tt-morepop button{display:flex;justify-content:space-between;align-items:baseline;gap:10px;width:100%;text-align:left;}
   #title .tt-menu .tt-morepop button small{display:inline;margin:0;font:700 10px/1 "M PLUS 1",system-ui;letter-spacing:0;color:var(--dim);}
+  /* 管理者だけの STORY など、隠したボタンは出さない (上の display:flex が hidden に勝っていて、誰にでも出ていた) */
+  #title .tt-menu .tt-morepop button[hidden]{display:none;}
+  /* メニューが画面に入りきらないとき (横持ちのスマホで「はじめての方へ」が出ている、など) は、左の列をスクロールできるように。
+     前は列が上下にはみ出して切れ、下の段 (COMPUZZLE・COLLECTION・RECORD・MORE) に届かなかった。入りきるときは今までどおり上下の真ん中 */
+  #title.menu .tt-center{top:0;bottom:0;transform:none;justify-content:flex-start;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;
+    padding:calc(12px + env(safe-area-inset-top)) 8px calc(12px + env(safe-area-inset-bottom)) 0;}
+  #title.menu .tt-center::-webkit-scrollbar{display:none;}
+  #title.menu .tt-center > *{flex-shrink:0;}
+  #title.menu .tt-center > :first-child{margin-top:auto;}
+  #title.menu .tt-center > :last-child{margin-bottom:auto;}
+  /* 下の紋章の帯は飾り。押しても何も起きないので、ボタンを押す邪魔をしない (前はパソコンで下の段の真ん中を押すと帯に当たって開かなかった) */
+  #title .tt-marquee{pointer-events:none;}
+  /* 帯が出ている大きさでは、列の下を帯の上で止める (帯は下から 44px・高さ約 56px) */
+  @media (min-height:501px) and (orientation:landscape),(min-height:501px) and (min-width:761px){ #title.menu .tt-center{padding-bottom:108px;} }
+  /* 横持ちのスマホは左下の音のボタン (🔊) が下の段の左端にかかるので、その上までスクロールできるように */
+  @media (orientation:landscape) and (max-height:500px){ #title.menu .tt-center{padding-bottom:calc(66px + env(safe-area-inset-bottom));} }
+  /* 縦持ちのスマホは右上の隅のボタン (LV・SIGN IN・⚙) が列の上にかかるので、その下から */
+  @media (max-width:760px) and (orientation:portrait){ #title.menu .tt-center{padding-top:calc(60px + env(safe-area-inset-top));} }
   .cm-gacha{margin-left:auto;padding:9px 14px;cursor:pointer;border:0;clip-path:var(--cut-s);background:linear-gradient(100deg,#5fe0c0,#9d7bff);
     color:#07101a;font:900 12px/1 var(--font-ui);letter-spacing:.12em;}
   .cm-gacha small{margin-left:6px;font:800 10px/1 "M PLUS 1",system-ui;letter-spacing:0;}
@@ -4708,7 +4737,7 @@
       "./js3d/support.js": "./js3d/support.js?v=efb00a908c",
       "./js3d/theme.js": "./js3d/theme.js?v=932e1d5eb8",
       "./js3d/tips.js": "./js3d/tips.js?v=3faae17957",
-      "./js3d/title.js": "./js3d/title.js?v=c2ab8ebd67",
+      "./js3d/title.js": "./js3d/title.js?v=949a3a33fb",
       "./js3d/titleback.js": "./js3d/titleback.js?v=5663d0b7a4",
       "./js3d/training.js": "./js3d/training.js?v=3018b4399e",
       "./js3d/tsume.js": "./js3d/tsume.js?v=2d63bf0cd7",
@@ -4755,7 +4784,7 @@
   <link rel="modulepreload" href="js3d/control.js?v=c1b87ebc63">
   <link rel="modulepreload" href="js3d/panel.js?v=994ec047da">
   <link rel="modulepreload" href="js3d/setup.js?v=f896d33617">
-  <link rel="modulepreload" href="js3d/title.js?v=c2ab8ebd67">
+  <link rel="modulepreload" href="js3d/title.js?v=949a3a33fb">
   <link rel="modulepreload" href="js3d/training.js?v=3018b4399e">
   <link rel="modulepreload" href="js3d/room.js?v=456725b5f4">
   <link rel="modulepreload" href="js3d/puzzle.js?v=65360765a2">
