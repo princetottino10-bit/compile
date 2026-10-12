@@ -7,6 +7,7 @@
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 /* 動きを減らすか (設定の「動きを減らす」→ 端末の設定。prefs.js) */
 import { calm } from './prefs.js';
+import { sfx } from './audio.js';
 
 export const RAR_NAMES = { C: 'COMMON', R: 'RARE', E: 'EPIC', L: 'LEGENDARY' };
 export const RAR_COLORS = {
@@ -70,13 +71,14 @@ export function playCapsule(host, rar, name) {
     };
     const open = () => {
       stage.classList.add('open');
+      sfx('gachaOpen', rar);
       if (rar === 'E' || rar === 'L') {
         document.body.classList.add('rn-flash-' + rar);
         setTimeout(() => document.body.classList.remove('rn-flash-' + rar), 700);
         confetti(RAR_COLORS[rar], rar === 'L' ? 260 : 140);
       }
     };
-    T.s.forEach((t, k) => timers.push(setTimeout(() => { stage.classList.remove('s1', 's2', 's3'); stage.classList.add('s' + (k + 1)); }, t)));
+    T.s.forEach((t, k) => timers.push(setTimeout(() => { stage.classList.remove('s1', 's2', 's3'); stage.classList.add('s' + (k + 1)); sfx('gachaShake'); }, t)));
     timers.push(setTimeout(open, T.open));
     timers.push(setTimeout(finish, T.end));
     /* 押したら: 開く前なら開いたところへ、開いたあとなら終わる */

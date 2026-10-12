@@ -3,6 +3,7 @@
  *   隠し実績は取るまで「???」。取っていない普通の実績は条件と進み具合を出す
  * ========================================================================= */
 import { loadGacha } from './gacha.js';
+import { sfx } from './audio.js';
 import { trophyView, TROPHY_XP } from './achievements.js';
 import { localRecords } from './stats.js';
 import { playerLevel, cardStats } from './stats-data.js';
@@ -45,6 +46,7 @@ export async function showTrophyBanner(list) {
     el.innerHTML = '<i class="tb-medal" aria-hidden="true"></i><div><small>TROPHIES UNLOCKED</small><b>' + list.length + ' TROPHIES</b>' +
       '<span>' + esc(list.map(t => t.name).join(' · ')) + '</span></div><em>+' + list.reduce((n, t) => n + TROPHY_XP[t.tier], 0) + ' XP</em>';
     el.classList.add('show');
+    sfx('trophy', top);
     await wait(4200);
     el.classList.remove('show');
     await wait(360);
@@ -56,6 +58,7 @@ export async function showTrophyBanner(list) {
     el.innerHTML = '<i class="tb-medal" aria-hidden="true"></i><div><small>' + (t.hidden ? 'HIDDEN ' : '') + 'TROPHY UNLOCKED · ' + TIER[t.tier] + '</small>' +
       '<b>' + esc(t.name) + '</b><span>' + esc(t.desc) + '</span></div><em>+' + TROPHY_XP[t.tier] + ' XP</em>';
     el.classList.add('show');
+    sfx('trophy', t.tier);
     await wait(2800);
     el.classList.remove('show');
     await wait(360);

@@ -257,7 +257,9 @@ const SAMPLE_FILES = [
   /* ElevenLabs の効果音生成で作った音 (2026-10-13)。合成音が軽かった所を差し替え。読めなければ合成音のまま。
      音量 (vol) は書き出して測り、カードを置く音とつり合うように決めた (高い音ほど同じ vol で小さく聞こえるので大きめ) */
   'gen-effect', 'gen-chain', 'gen-compile-charge', 'gen-compile-hit', 'gen-shatter', 'gen-turn-opp', 'gen-turn-mine',
-  'gen-win', 'gen-lose', 'gen-deus', 'gen-door-open', 'gen-pickup', 'gen-inspect'
+  'gen-win', 'gen-lose', 'gen-deus', 'gen-door-open', 'gen-pickup', 'gen-inspect',
+  'gen-gacha-shake', 'gen-gacha-flip', 'gen-gacha-open-c', 'gen-gacha-open-r', 'gen-gacha-open-e', 'gen-gacha-open-l',
+  'gen-trophy', 'gen-trophy-gold'
 ];
 const buffers = new Map();
 let samplesRequested = false;
@@ -506,6 +508,21 @@ const SOUNDS = {
   door() { if (!sample(['gen-door-open'], { vol: 0.6 })) noise({ freq: 600, end: 200, dur: 0.6, vol: 0.08, kind: 'lowpass' }); },
   pickup() { if (!sample(['gen-pickup'], { vol: 0.34 })) bell(1318.5, { dur: 0.5, vol: 0.05, verb: 0.4 }); },
   inspect() { if (!sample(['gen-inspect'], { vol: 0.22 })) SOUNDS.select(); },
+  /* ガチャ: カプセルが揺れる (3回) → レア度ごとに開く音 → 結果のカードをめくる (EPIC 以上は開く音を小さく重ねる) */
+  gachaShake() { if (!sample(['gen-gacha-shake'], { vol: 0.55 })) noise({ freq: 1800, end: 900, dur: 0.12, vol: 0.05, q: 2 }); },
+  gachaOpen(rar) {
+    const v = { C: 0.5, R: 0.55, E: 0.8, L: 0.9 }[rar] || 0.5;
+    if (!sample(['gen-gacha-open-' + String(rar || 'C').toLowerCase()], { vol: v })) SOUNDS.select();
+  },
+  gachaFlip(rar) {
+    if (!sample(['gen-gacha-flip'], { vol: 0.5 })) SOUNDS.flip();
+    if (rar === 'E' || rar === 'L') sample(['gen-gacha-open-' + rar.toLowerCase()], { vol: rar === 'L' ? 0.45 : 0.35 });
+  },
+  /* 実績を取った: 銅・銀はふつうの音、金・プラチナは大きい音 */
+  trophy(tier) {
+    const big = tier === 'gold' || tier === 'platinum';
+    if (!sample([big ? 'gen-trophy-gold' : 'gen-trophy'], { vol: big ? 0.6 : 1.2 })) SOUNDS.yourTurn();
+  },
   /* 館内放送の始まりのチャイム (ピンポンパンポン)。瑠璃の実況の前に鳴らす。0.7 秒で鳴り終わる */
   pa() {
     [523.25, 659.25, 783.99, 1046.5].forEach((f, n) => bell(f, { dur: 0.42, vol: 0.05, delay: n * 0.16, verb: 0.5 }));

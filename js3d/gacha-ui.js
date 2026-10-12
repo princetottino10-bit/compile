@@ -3,6 +3,7 @@
  *   タイトルの GACHA から開く。CHIP で1回 / 10連。出たものは図鑑にたまり、COSMETICS で選べる
  * ========================================================================= */
 import { calm as prefCalm } from './prefs.js';
+import { sfx } from './audio.js';
 import { countUp, dealIn } from './motion.js';
 import { earnedChips, CHIP_PER_XP } from './chips.js';
 import * as G from './gacha.js';
@@ -48,6 +49,7 @@ function revealResults(results) {
       const c = cards[i++];
       c.classList.add('open');
       const rar = results[i - 1].rar;
+      if (!calm || i === 1) sfx('gachaFlip', rar);      // 動きを抑える設定では一度にめくれるので、音は1回だけ
       if (!calm && (rar === 'E' || rar === 'L')) confetti(RAR_COLORS[rar], rar === 'L' ? 160 : 70);
       timer = setTimeout(flipNext, calm ? 0 : rar === 'L' ? 900 : rar === 'E' ? 600 : 260);
     };
