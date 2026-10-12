@@ -2540,7 +2540,9 @@
     #topRight .btn{min-height:40px;padding:0 13px;font-size:11px;}
     #topRight #btnMute{padding:0 12px;font-size:14px;}
     /* 縦持ちの INFO: 左の端のつまみ (LOG と同じ形)。開くと効いている上段・下段の一覧を左に出す */
-    #btnInfo{display:block;top:48%;left:env(safe-area-inset-left)!important;width:34px;height:88px;font-size:11px;}
+    #btnInfo{display:block;left:env(safe-area-inset-left)!important;width:34px;height:88px;font-size:11px;
+      /* LOG のつまみと同じ高さに (LOG はログの枠 (上 100px・下 66px) の中の 48%。前は画面全体の 48% で、INFO が上にずれていた) */
+      top:calc(100px + env(safe-area-inset-top) + (100% - 166px - env(safe-area-inset-top)) * .48);}
     #preview{left:calc(40px + env(safe-area-inset-left));right:auto;transform:translateX(-8px);}
     /* 下部の操作は指の届く高さに。手札を隠すは左、リフレッシュは右 */
     #dock{left:10px;bottom:12px;}
