@@ -278,18 +278,34 @@ export function playScene(lines, opts = {}) {
 
 /* ---------- 選択肢 ---------- */
 /* options: [{ label }]。選んだ番号を返す。数字キー (1, 2 …) でも選べる */
-export function askChoice(options) {
+/* gone: 選べなくなった選択肢の番号 (記録のない道を一度通ったもの)。打ち消し線と「記録なし」を付けて残す */
+export function askChoice(options, gone = new Set()) {
   const el = overlay('storyChoice', '選択');
-  el.innerHTML = '<div class="sc-list">' + options.map((o, k) =>
-    '<button type="button" data-k="' + k + '"><i>' + (k + 1) + '</i>' + esc(o.label) + '</button>').join('') + '</div>';
+  el.innerHTML = '<div class="sc-list">' + options.map((o, k) => gone.has(k)
+    ? '<button type="button" class="sc-gone" disabled><i>' + (k + 1) + '</i><s>' + esc(o.label) + '</s><em>記録なし</em></button>'
+    : '<button type="button" data-k="' + k + '"><i>' + (k + 1) + '</i>' + esc(o.label) + '</button>').join('') + '</div>';
   el.classList.add('show');
   return new Promise((resolve) => {
     const end = (k) => { window.removeEventListener('keydown', onKey); el.classList.remove('show'); el.innerHTML = ''; resolve(k); };
-    const onKey = (ev) => { const k = parseInt(ev.key, 10) - 1; if (k >= 0 && k < options.length) { ev.preventDefault(); end(k); } };
+    const onKey = (ev) => { const k = parseInt(ev.key, 10) - 1; if (k >= 0 && k < options.length && !gone.has(k)) { ev.preventDefault(); end(k); } };
     window.addEventListener('keydown', onKey);
     el.querySelectorAll('[data-k]').forEach(b => { b.onclick = () => end(+b.dataset.k); });
     el.querySelector('[data-k]').focus();
   });
+}
+
+/* 記録のない道の巻き戻し: 画面がざらつき、いま流れた会話が逆の順に早送りで消えていく。終わったら選ぶ前へ */
+function rewind(lines) {
+  const el = overlay('storyRewind', '巻き戻し');
+  const texts = lines.filter(l => l.text && l.who !== 'sys').map(l => l.text).reverse();
+  el.innerHTML = '<div class="rw-noise"></div><div class="rw-lines">' +
+    texts.map((t, k) => '<p style="--k:' + k + '">' + esc(t) + '</p>').join('') + '</div>' +
+    '<div class="rw-mark"><b>◀◀</b>記録なし</div>';
+  el.classList.add('show');
+  sfx('rewind');
+  logPush('◀◀', '記録のない道。選ぶ前へ戻った', '#8fa3c7');
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  return new Promise((resolve) => setTimeout(() => { el.classList.remove('show'); el.innerHTML = ''; resolve(); }, reduce ? 900 : 1700));
 }
 
 /* 場面の会話 → 選択肢。again の選択肢は、その会話のあとにもう一度選ぶ (記録が無い道。話は先へ進まない) */
@@ -297,12 +313,16 @@ export async function playNode(n) {
   await playScene(n.lines, { title: n.title });
   if (!n.choice) return;
   let wavered = false;                 // 選び直しの道を一度選んだ
+  const gone = new Set();              // 通った記録のない道 (もう選べない)
   for (;;) {
-    const o = n.choice.options[await askChoice(n.choice.options)];
+    const k = await askChoice(n.choice.options, gone);
+    const o = n.choice.options[k];
     logChoice(o.label);
     const lines = [...(wavered && o.ifAgain ? o.ifAgain : []), ...(o.lines || [])];
     if (lines.length) await playScene(lines);
     if (!o.again) break;
+    await rewind(lines);
+    gone.add(k);
     wavered = true;
   }
   /* どれを選んでも流れる続き (気持ちを選ぶ選択肢: 話の行き先は変えず、そのあとの会話を共通にする) */

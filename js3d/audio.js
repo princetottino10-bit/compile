@@ -482,6 +482,12 @@ const SOUNDS = {
     [1046.5, 1318.5, 1568].forEach((f, i) => bell(f, { dur: 1.6, vol: 0.05, delay: 0.9 + i * 0.14, verb: 0.8 }));
   },
   /* 館内放送の始まりのチャイム (ピンポンパンポン)。瑠璃の実況の前に鳴らす。0.7 秒で鳴り終わる */
+  /* 記録のない道を巻き戻す: テープを逆に回すような、高い所から沈むうなりとざらつき。最後に小さく噛む音 */
+  rewind() {
+    tone({ freq: 1400, end: 180, dur: 1.2, type: 'sawtooth', vol: 0.035, attack: 0.05 });
+    noise({ freq: 4200, end: 500, dur: 1.25, vol: 0.06, q: 0.9, attack: 0.04 });
+    tone({ freq: 2400, dur: 0.04, type: 'square', vol: 0.03, delay: 1.25 });
+  },
   pa() {
     [523.25, 659.25, 783.99, 1046.5].forEach((f, n) => bell(f, { dur: 0.42, vol: 0.05, delay: n * 0.16, verb: 0.5 }));
   },

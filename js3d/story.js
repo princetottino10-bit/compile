@@ -298,11 +298,10 @@ export const CHAPTERS = [
             { ...L('abyss', 'ご来館のみなさまに、ご案内いたします。'), pa: true },
             { ...L('abyss', '順路どおりに、お進みください。'), pa: true },
             L('shion', '……。'),
-            L('sys', '> この先の記録はありません。選ぶ前へ戻ります')
+            L('sys', '> この先の記録はありません')
           ] },
           { label: '残る',
-            ifAgain: [L('sys', '> 記録のない分岐: 1'),
-              L('shion', '……今、一度ついてきかけて、足が止まったね。', 'surprised')],
+            ifAgain: [L('shion', '……今、一度ついてきかけて、足が止まったね。', 'surprised')],
             lines: [
             L('shion', '……残るの？', 'surprised'),
             L('shion', '私、「行くよ」って言ったのに。……ううん。置いていくところだった。', 'sad'),
