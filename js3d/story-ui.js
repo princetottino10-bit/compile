@@ -323,7 +323,10 @@ export function askBattle(n, protocols) {
   box.innerHTML = '<div class="sm-card"><small>' + (tsume ? 'OVERWRITE' : 'COMPILE') + '</small><h3>' + esc(n.title) + '</h3>' +
     '<p class="sm-note">' + esc(n.note || '') + '</p>' +
     (tsume ? '<div class="sm-vs"><div><em>あなた</em></div><i>VS</i><div><em>' + esc(n.oppName) + '</em></div></div>'
-      : '<div class="sm-vs"><div><em>あなた</em>' + chips(n.me) + '</div><i>VS</i><div><em>' + esc(n.oppName) + '</em>' + chips(n.opp) + '</div></div>') +
+      : n.tag
+        ? '<div class="sm-vs"><div><em>あなた</em>' + chips(n.me) + '<em>' + esc(n.tag.mateName) + '</em>' + chips(n.tag.mate) + '</div><i>VS</i>' +
+          '<div><em>' + esc(n.oppName) + '</em>' + chips(n.opp) + '<em>' + esc(n.tag.oppMateName) + '</em>' + chips(n.tag.oppMate) + '</div></div>'
+        : '<div class="sm-vs"><div><em>あなた</em>' + chips(n.me) + '</div><i>VS</i><div><em>' + esc(n.oppName) + '</em>' + chips(n.opp) + '</div></div>') +
     '<div class="sm-btns"><button type="button" class="sm-go">' + (tsume ? '書き換える' : 'コンパイルを始める') + '</button>' +
     (admin ? '<button type="button" class="sm-skip">飛ばす (ADMIN)</button>' : '') +
     '<button type="button" class="sm-back">戻る</button></div></div>';

@@ -81,7 +81,7 @@ export const CHAPTERS = [
           L('sys', '> 紫苑から、言葉を3つ借りた'),
           L('sys', '> 判定開始: 機体4097を止めるか、止めないか')
         ] } },
-      { id: 'c0-practice', kind: 'battle', title: '判定', me: ['FIRE', 'WATER', 'LIFE'], opp: ['PSYCHIC', 'LIGHT', 'METAL'],
+      { id: 'c0-practice', kind: 'battle', title: '判定', me: ['FIRE', 'WATER', 'LIFE'], opp: ['PSYCHIC', 'LIGHT', 'MIRROR'],
         level: 0, win: 2, oppName: '紫苑', oppAvatar: 'shion', note: '1つは先に書き上げた状態から始まる。紫苑より先に、あと2つを書き上げる',
         /* 判定官の紫苑。わざと手をゆるめているので、ときどき手が止まる (勝ちのあとのログ「書きこみ: 途中から止まっています」につながる) */
         talk: {
@@ -160,13 +160,17 @@ export const CHAPTERS = [
         L('chief', '> 今夜の巻き戻しまでに、判定室へお戻りください。'),
         L('chief', '> 機体4097。動きを止めて、判定室へ戻します。'),
         L('chief', '> あなたは、用途の済んだ資材です。'),
+        L('guard', '> 巡回、正面ホールに合流。主任の照合を補助します。'),
         L('shion', '……資材、か。ここの言葉は、いつもそうなんだよね。', 'sad'),
         L('shion', '所長の顔は、私も見たことがない。指示だけが、ずっと届くの。'),
         L('shion', '主任は、ここの扉と同じ。全部ほどかないと、通さない。'),
-        L('shion', '……行こう。', 'fired')
+        L('shion', '向こうが二人なら、こっちも二人。……私も、一緒に解く。', 'fired')
       ] },
       { id: 'c0-chief', kind: 'battle', title: '警備主任', me: ['FIRE', 'WATER', 'LIFE'], opp: ['METAL', 'GRAVITY', 'DARKNESS'],
-        level: 1, win: 3, oppName: '警備主任', mate: 'shion', oppAvatar: 'story_chief', boss: true, note: '主任はゲートそのもの。3つすべてを先に書き上げないと、開かない',
+        level: 1, win: 3, oppName: '警備主任', mate: 'shion', oppAvatar: 'story_chief', boss: true,
+        note: '紫苑と2人で、主任と巡回の警備機体に挑む (タッグ: 手番を交代で指す)。3つすべてを先に書き上げないと、ゲートは開かない',
+        /* タッグ (2026-10-13): 相棒と組める戦いはタッグにする。紫苑は判定のときと同じ手持ち。チームの中で同じプロトコルは持てない */
+        tag: { mate: ['PSYCHIC', 'LIGHT', 'MIRROR'], mateName: '紫苑', oppMate: ['SPEED', 'CLARITY', 'FEAR'], oppMateName: '巡回の警備機体', oppMateAvatar: 'story_patrol' },
         talk: {
           me: {
             hello: ['……行こう。', '主任の言葉、全部ほどこう。'],
@@ -186,6 +190,16 @@ export const CHAPTERS = [
             almost: ['> 連れ戻し、まもなく完了。'],
             win: ['> 連れ戻し、完了。'],
             lose: ['> ゲート、開放……']
+          },
+          oppMate: {
+            hello: ['> 巡回、照合に加わります。'],
+            turn: ['> 巡回経路を確認。', '> 異常を検知。'],
+            play: ['> 通路を封鎖します。', '> 報告。'],
+            compile: ['> 照合、一致。'],
+            compiled: ['> ……照合、不一致。'],
+            almost: ['> 封鎖、まもなく完了。'],
+            win: ['> 巡回に戻ります。'],
+            lose: ['> 巡回、中断……']
           }
         },
         winLines: [L('chief', '> ……連れ戻し、失敗。ゲート、開放……'), L('shion', '……通れる。', 'happy')],
@@ -288,6 +302,7 @@ export const CHAPTERS = [
         L('sys', '> 案内係 瑠璃: 順路の外の案内 …… 命令にありません'),
         L('sys', '> 案内を中断。持ち場: 空き'),
         { ...L('sys', '> 後任を起動: 案内係 二号機'), alert: '後任' },
+        L('sys', '> 同行: 研究所の回収機 (持ち場を離れた機体を連れ戻す)'),
         L('abyss', '持ち場を空けるな。お客さまを、順路どおりに案内しろ。'),
         L('ruri', '……私の声だ。', 'sad'),
         L('ruri', '私の代わりって、こんなにすぐ来るんですね。', 'sad'),
@@ -314,12 +329,17 @@ export const CHAPTERS = [
             L('ruri', 'お客さまを、順路どおりに案内する。', 'fired'),
             L('ruri', '……お客さまの行きたい所が、順路です。', 'fired'),
             L('ruri', 'お客さま。二号機の命令を、一緒に解いてもらえますか。'),
+            L('shion', '瑠璃と同じ言葉は、二人では持てない。……私のを、ひとつ貸すね。'),
             L('sys', '> コンフリクト: 二号機　命令: お客さまを、順路どおりに、案内しろ')
         ] } },
       /* 二号機は瑠璃の写し: 瑠璃の水 (WATER) が凍って動かなくなった ICE (毎日同じ案内をくり返す)、引き戻す GRAVITY、明かりの落ちた通路の DARKNESS。
          同じ側と相手側で同じプロトコルは持てないので、WATER そのものではなく ICE にした */
-      { id: 'c1-abyss', kind: 'battle', title: '後任「二号機」', me: ['FIRE', 'WATER', 'LIFE'], opp: ['ICE', 'GRAVITY', 'DARKNESS'],
-        level: 1, win: 3, oppName: '二号機', mate: 'asagi', oppAvatar: 'story_nigoki', boss: true, note: '瑠璃と一緒に、二号機の命令を解く。3つすべてを先に書き上げる',
+      { id: 'c1-abyss', kind: 'battle', title: '後任「二号機」', me: ['FIRE', 'LIGHT', 'LIFE'], opp: ['ICE', 'GRAVITY', 'DARKNESS'],
+        level: 1, win: 3, oppName: '二号機', mate: 'asagi', oppAvatar: 'story_nigoki', boss: true,
+        note: '瑠璃と2人で、二号機と回収機に挑む (タッグ: 手番を交代で指す)。3つすべてを先に書き上げる',
+        /* タッグ: WATER は瑠璃の言葉 (ここで本人の色になる)。主人公は WATER の代わりに紫苑の LIGHT を借りる。
+           主人公の WATER は、勝ったあと 3802 の一手として「預かり」で入る (プロット: 1章 WATER) */
+        tag: { mate: ['WATER', 'PEACE', 'UNITY'], mateName: '瑠璃', oppMate: ['METAL', 'TIME', 'APATHY'], oppMateName: '回収機', oppMateAvatar: 'story_collector' },
         /* 対戦中のひとこと: 瑠璃は「お客さま」へ向けて案内する。二号機は瑠璃の放送をそのまま繰り返す。争点や仕組みの話はしない (対戦中は暗黙) */
         talk: {
           me: {
@@ -341,6 +361,16 @@ export const CHAPTERS = [
             almost: ['〔放送〕まもなく、はじめに戻ります。'],
             win: ['〔放送〕本日の順路は、ここまでです。'],
             lose: ['……用途、なし。']
+          },
+          oppMate: {
+            hello: ['> 回収を開始します。'],
+            turn: ['> 持ち場の外の機体を確認。', '> 回収対象: 2。'],
+            play: ['> 研究所へ戻します。', '> 持ち場へ。'],
+            compile: ['> 回収、一段階完了。'],
+            compiled: ['> ……回収経路、遮断。'],
+            almost: ['> 回収、まもなく完了。'],
+            win: ['> 回収、完了。'],
+            lose: ['> 回収、中止……']
           }
         },
         winLines: [L('sys', '> commit —— 案内係 瑠璃: 「お客さまの行きたい所が、順路」'),
@@ -376,7 +406,7 @@ export const CHAPTERS = [
         L('sys', '> 館内放送: 終了'),
         L('sys', '> 持ち場: 閉鎖'),
         L('abyss', '……用途、なし。'),
-        L('sys', '> 二号機: 研究所へ戻ります'),
+        L('sys', '> 二号機・回収機: 研究所へ戻ります'),
         L('ruri', '……二号機さん。ごめんなさい。あなたの持ち場、私が閉じてしまいました。', 'sad'),
         L('ruri', '……34名のみなさま。お帰りのご案内が、遅くなりました。', 'sad'),
         L('ruri', 'お客さま。残ってくれて、ありがとうございました。', 'happy'),

@@ -76,6 +76,9 @@ for (const [id, [name, color]] of Object.entries(BOSS_LOOK)) AVATARS['boss_' + i
    art: 立ち絵を借りる子 (二号機は瑠璃と同じ型。CSS で色を抜いて暗く見せる) / noArt: 絵を出さず、吹き出しだけ (警備主任) */
 AVATARS.story_nigoki = { name: '二号機', color: '#6d7cff', boss: true, single: true, art: 'asagi', lines: null };
 AVATARS.story_chief = { name: '警備主任', color: '#ff4f6a', boss: true, single: true, noArt: true, lines: null };
+/* ストーリーのタッグで、相手の側の2人目 (絵なし) */
+AVATARS.story_patrol = { name: '巡回の警備機体', color: '#ff8a5c', boss: true, single: true, noArt: true, lines: null };
+AVATARS.story_collector = { name: '回収機', color: '#8a93b8', boss: true, single: true, noArt: true, lines: null };
 for (const [id, def] of Object.entries(AVATARS)) { def.lines = LINES[id] || BOSS_LINES[id] || {}; def.fav = FAVORITE[id] || null; }
 
 /* プロトコルごとのセリフ (カードを表で出したときに、ときどきこちらを言う) */
