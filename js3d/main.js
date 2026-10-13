@@ -84,7 +84,7 @@ import * as FX from './fx.js';
 import { buildArena } from './arena.js';
 import { initAudio, sfx, setMuted, isMuted, setSfxVolume, onMuteChange } from './audio.js';
 import { mountMuteButton, muteIcon } from './mutebutton.js';
-import { playBgm, refreshBgm, fadeOutBgm, crossBgm, pickNormalBgm, normalBattleBgm, onlineBattleBgm, STRONG_BGM, BOSS_BGM, DEUS_BGM, PEEK_BGM, TENSE_BGM } from './bgm.js';
+import { playBgm, refreshBgm, fadeOutBgm, crossBgm, pickNormalBgm, normalBattleBgm, onlineBattleBgm, STRONG_BGM, BOSS_BGM, DEUS_BGM, PEEK_BGM, pickTenseBgm } from './bgm.js';
 import { trackOf } from './bgm-shop.js';
 import { BGM_RELEASED } from './rewards.js';
 import { emblemDataURL } from './emblems.js';
@@ -4355,7 +4355,7 @@ function stackCount(line, side) {
   const st = shown();
   return st && st.lines && st.lines[line] && st.lines[line][side] ? st.lines[line][side].length : 0;
 }
-/* どちらかが勝ちまであと1本 (ふつうの3本勝負なら2本コンパイル済み) になったら、曲を「決戦の朝」に替えて緊迫感を出す。
+/* どちらかが勝ちまであと1本 (ふつうの3本勝負なら2本コンパイル済み) になったら、曲を速い曲 (bgm.js の TENSE_BGMS からランダム) に替えて緊迫感を出す。
    手番が替わるとき (ターンの表示と同じとき) に一度だけ。ボス・機械仕掛けの神・すべてを見る者は専用の曲のまま。
    練習・問題・チュートリアル・ストーリー・リプレイでは替えない */
 let tenseBgmOn = false;
@@ -4369,7 +4369,7 @@ function maybeTenseBgm(st) {
   });
   if (!oneLeft) return;
   tenseBgmOn = true;
-  crossBgm(TENSE_BGM);
+  crossBgm(pickTenseBgm());
 }
 /* 対戦の BGM: ボスと強敵は専用の曲。ふつうの対戦は4曲からランダム (COLLECTION の BGM を出したら選んだ曲) */
 function battleBgm() {

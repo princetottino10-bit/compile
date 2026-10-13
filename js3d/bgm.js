@@ -40,14 +40,27 @@ export const BOSS_BGM = 'samayoi';
 export const DEUS_BGM = 'destroy_god';
 /* すべてを見る者 (ALL-SEEING) の曲 */
 export const PEEK_BGM = 'final_2sec';
-/* どちらかが勝ちまであと1本になったら (ふつうの3本勝負なら2本目のコンパイルのあと) 切り替える曲: 決戦の朝 (煉獄庭園) */
-export const TENSE_BGM = 'kessen_asa';
+/* どちらかが勝ちまであと1本になったら (ふつうの3本勝負なら2本目のコンパイルのあと) 切り替える曲。
+   まんぼう二等兵 (OpenTracks) の速くて緊張感のある6曲 (BPM 162〜216。ふつうの対戦の曲は 140〜170) から、試合ごとにランダム */
+export const TENSE_BGMS = ['interception', 'strike_despair', 'lobelia', 'will_you_cry', 'tactical_encounter', 'hangeki'];
+/** あと1本の曲を1つ選ぶ (前の試合と同じ曲は選ばない) */
+const LAST_TENSE_KEY = 'compileLastTenseBgm';
+export function pickTenseBgm(rnd = Math.random) {
+  let last = null;
+  try { last = localStorage.getItem(LAST_TENSE_KEY); } catch (e) { /* private mode */ }
+  const pool = TENSE_BGMS.filter(k => k !== last);
+  const pick = pool[Math.floor(rnd() * pool.length)];
+  try { localStorage.setItem(LAST_TENSE_KEY, pick); } catch (e) { /* private mode */ }
+  return pick;
+}
 /* 曲のファイル (無ければ <key>.mp3) */
 const FILES = { cho_zunou: 'cho_zunou.m4a', reflect: 'reflect.m4a', kaidoku: 'kaidoku.m4a', crescendo_jitter: 'crescendo_jitter.m4a',
   planetarium: 'planetarium.m4a', madoromu_neon: 'madoromu_neon.m4a', nine_jack: 'nine_jack.m4a', iruka: 'iruka.m4a',
   /* COLLECTION の BGM で交換する曲 (bgm-shop.js) */
   ...Object.fromEntries(['noesis', 'sagittarius', 'engram', 'objective_point', 'virus_entry', 'uso_ni_naru', 'siege_buster', 'electric_highway', 'grenade',
-    'midnight_breaker', 'rapid4', 'irregular', 'rapid5', 'under_world', 'cyber10', 'cyber_prisoner'].map(k => [k, k + '.m4a'])) };
+    'midnight_breaker', 'rapid4', 'irregular', 'rapid5', 'under_world', 'cyber10', 'cyber_prisoner'].map(k => [k, k + '.m4a'])),
+  /* あと1本の曲 */
+  ...Object.fromEntries(['interception', 'strike_despair', 'lobelia', 'will_you_cry', 'tactical_encounter', 'hangeki'].map(k => [k, k + '.m4a'])) };
 export const bgmFile = (key) => 'art/bgm/' + (FILES[key] || key + '.mp3');
 /* 曲ごとの大きさ (ラウドネス、LUFS。ffmpeg の ebur128 で測った値)。曲によって 10 dB 近く違ったので、
    鳴らすときに LOUD_TARGET へそろえる (大きい曲は下げ、小さい曲は少しだけ上げる)。曲を足したら測って書き足す:
@@ -57,7 +70,8 @@ const LOUDNESS = {
   iruka: -6.6, junk_smash: -13.5, kaidoku: -14.5, kessen_asa: -8.8, madoromu_neon: -14.3, nine_jack: -7.6, orange_tunnel: -11.0,
   planetarium: -8.5, reaper_phoenix: -9.1, reflect: -7.9, samayoi: -8.9, zero: -13.4,
   noesis: -5.5, sagittarius: -6.9, engram: -6.1, objective_point: -7.1, virus_entry: -8.0, uso_ni_naru: -11.4, siege_buster: -7.0,
-  electric_highway: -9.3, grenade: -7.8, midnight_breaker: -9.9, rapid4: -6.8, irregular: -8.3, rapid5: -8.2, under_world: -9.7, cyber10: -6.5, cyber_prisoner: -6.9
+  electric_highway: -9.3, grenade: -7.8, midnight_breaker: -9.9, rapid4: -6.8, irregular: -8.3, rapid5: -8.2, under_world: -9.7, cyber10: -6.5, cyber_prisoner: -6.9,
+  interception: -4.3, strike_despair: -6.5, lobelia: -5.6, will_you_cry: -6.2, tactical_encounter: -6.4, hangeki: -5.8
 };
 const LOUD_TARGET = -11;              // 曲の真ん中あたり (全体の大きさは今までと同じくらいに)
 /** その曲を LOUD_TARGET にそろえる倍率 (上げるのは 1.6 倍まで。測っていない曲は 1) */
@@ -131,7 +145,7 @@ function ensure() {
 /** 曲を鳴らす (同じ曲なら続きから)。key が無い・'off' なら止める */
 export function playBgm(key) {
   /* COLLECTION の BGM をしまっている間は、対戦の2曲だけ鳴らす (タイトルの曲・選んだ曲は鳴らさない) */
-  if (!BGM_RELEASED && !(BATTLE_BGM_ON && key && (isTrack(key) || NORMAL_BGMS.includes(key) || MENU_BGMS.includes(key) || key === RUN_BGM || key === STRONG_BGM || key === BOSS_BGM || key === DEUS_BGM || key === PEEK_BGM || key === TENSE_BGM))) { stopBgm(); return; }
+  if (!BGM_RELEASED && !(BATTLE_BGM_ON && key && (isTrack(key) || NORMAL_BGMS.includes(key) || MENU_BGMS.includes(key) || key === RUN_BGM || key === STRONG_BGM || key === BOSS_BGM || key === DEUS_BGM || key === PEEK_BGM || TENSE_BGMS.includes(key)))) { stopBgm(); return; }
   clearTimeout(previewTimer);
   if (rotatePool && !rotatePool.includes(key)) rotatePool = null;   // オンラインの対戦から別の画面の曲へ
   want = key && key !== 'off' ? key : null;

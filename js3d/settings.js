@@ -265,7 +265,7 @@ export function openSettings(extra) {
     '<p class="st-msg" id="stResetMsg" role="status"></p>' +
     '<h4 class="st-group">クレジット</h4>' +
     (avatarOptionsShown() ? '<p class="st-credit">キャラの声 VOICEVOX:ずんだもん / VOICEVOX:四国めたん / VOICEVOX:春日部つむぎ / VOICEVOX:WhiteCUL　立ち絵 坂本アヒル</p><p class="st-credit">紫苑・茜・瑠璃・杏の声 ElevenLabs</p>' : '') +
-    '<p class="st-credit">BGM 煉獄庭園 (Z･E･R･O・彷徨いの言葉は天に導かれ' + (BGM_RELEASED ? '・オレンジトンネルを抜ける・Burst ほか' : '') + ') / OpenTracks: Yuyake Monster「超頭脳バトル」・まんぼう二等兵「Reflect」「Crescendo Jitter」「プラネタリウムガーデン」「Nine Jack」「沈殿するイルカ」・田中芳典「解読」・NEKOZOU「まどろむネオンの部屋」 ほか (COLLECTION の BGM の曲は、それぞれの見本に作者を記載) / PeriTune / 音楽：魔王魂 / BGM：hitoshi by Senses Circuit</p>' +
+    '<p class="st-credit">BGM 煉獄庭園 (Z･E･R･O・彷徨いの言葉は天に導かれ' + (BGM_RELEASED ? '・オレンジトンネルを抜ける・Burst ほか' : '') + ') / OpenTracks: Yuyake Monster「超頭脳バトル」・まんぼう二等兵「Reflect」「Crescendo Jitter」「プラネタリウムガーデン」「Nine Jack」「沈殿するイルカ」「Interception」「Strike the Despair」「ロベリア」「Will you still cry?」「タクティカルエンカウンター」「反撃の一矢」・田中芳典「解読」・NEKOZOU「まどろむネオンの部屋」 ほか (COLLECTION の BGM の曲は、それぞれの見本に作者を記載) / PeriTune / 音楽：魔王魂 / BGM：hitoshi by Senses Circuit</p>' +
     '</div>';
   framePanes(el.querySelector('.st-card'));
   el.classList.add('show');
