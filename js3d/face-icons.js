@@ -14,10 +14,14 @@ const CHARS = ['shion', 'nadeshiko', 'asagi', 'yamabuki', 'zundamon', 'metan', '
 /* ゲスト (ずんだもんたち) の立ち絵は、てれ・しょんぼりの表情が無い */
 const FACES = ['normal', 'happy', 'fired', 'surprised', 'shy', 'sad', 'frustrated'];
 const GUEST_FACES = ['normal', 'happy', 'fired', 'surprised', 'frustrated'];
-const FACE_NAMES = { normal: 'ふつう', happy: '笑顔', fired: 'やる気', surprised: 'おどろき', shy: 'てれ', sad: 'しょんぼり', frustrated: 'くやしい' };
+const FACE_NAMES = { normal: 'ふつう', happy: '笑顔', fired: 'やる気', surprised: 'おどろき', shy: 'てれ', sad: 'しょんぼり', frustrated: 'くやしい', chibi: 'ちび' };
+
+/* ちびの顔アイコン (ねりんず4人だけ、1人1つ)。key は <キャラ>_chibi (E:\SD\scripts\chibi_icons.py で描く) */
+const CHIBI_CHARS = ['shion', 'nadeshiko', 'asagi', 'yamabuki'];
 
 export const FACE_ICONS = CHARS.filter(c => AVATARS[c])
-  .flatMap(c => (AVATARS[c].guest ? GUEST_FACES : FACES).map(f => c + '_' + f));
+  .flatMap(c => (AVATARS[c].guest ? GUEST_FACES : FACES).map(f => c + '_' + f)
+    .concat(CHIBI_CHARS.includes(c) ? [c + '_chibi'] : []));
 export const isFaceIcon = (key) => FACE_ICONS.includes(key);
 export const faceIconURL = (key) => 'art/icons/' + key + '.webp';
 

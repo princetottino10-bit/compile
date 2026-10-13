@@ -285,6 +285,11 @@ const ART_MATS = {
   garden: { slot: ['rgba(30,50,30,.35)', 'rgba(255,255,245,.7)'] },
   sakura: { slot: ['rgba(10,10,30,.5)', 'rgba(255,200,220,.6)'] },
   library: { slot: ['rgba(40,24,10,.4)', 'rgba(250,235,200,.7)'] },
+  /* ねりんず4人のマット (パステル、E:\SD\scripts\nerinzu_goods.py) */
+  nerinzu_shion: { slot: ['rgba(40,30,60,.35)', 'rgba(255,255,255,.7)'] },
+  nerinzu_asagi: { slot: ['rgba(4,14,34,.5)', 'rgba(190,230,255,.7)'] },
+  nerinzu_nadeshiko: { slot: ['rgba(20,6,10,.5)', 'rgba(255,200,210,.65)'] },
+  nerinzu_yamabuki: { slot: ['rgba(10,10,24,.5)', 'rgba(255,210,160,.7)'] },
 };
 /* プロトコルの習熟度のマット (p_fire など): そのプロトコルの絵 (art/Fire.webp) を敷く */
 const PROTO_SLOT = ['rgba(6,6,14,.5)', 'rgba(255,255,255,.6)'];

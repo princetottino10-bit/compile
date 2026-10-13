@@ -67,11 +67,11 @@ const mkey = (p) => 'm_' + p.toLowerCase();
 
 export const COSMETICS = {
   mat: [['neon', 'NEON GRID'], ['nebula', 'NEBULA'], ['vortex', 'VORTEX'], ['biomech', 'BIOMECH'], ['prism', 'PRISM'], ['eclipse', 'ECLIPSE'],
-    ['celestial', 'CELESTIAL'], ['hokusai', 'FUJI'], ['seigaiha', 'GREAT WAVE'], ['sakura', 'YOZAKURA'], ['garden', 'ROSE GARDEN'], ['library', 'LIBRARY'],
+    ['celestial', 'CELESTIAL'], ['hokusai', 'FUJI'], ['seigaiha', 'GREAT WAVE'], ['sakura', 'YOZAKURA'], ['garden', 'ROSE GARDEN'], ['library', 'LIBRARY'], ['nerinzu_shion', 'SHION'], ['nerinzu_asagi', 'RURI'], ['nerinzu_nadeshiko', 'AKANE'], ['nerinzu_yamabuki', 'ANZU'],
     ...MASTERY_PROTOS.map(p => [pkey(p), p])],
   sleeve: [['default', 'STANDARD'], ['crimson', 'CRIMSON'], ['circuit', 'CIRCUIT'], ['void', 'VOID'], ['holo', 'HOLO'], ['sakura', 'SAKURA'], ['aurum', 'AURUM'],
     ['mint', 'MINT'], ['ocean', 'OCEAN'], ['ember', 'EMBER'], ['glacier', 'GLACIER'], ['toxic', 'TOXIC'], ['galaxy', 'GALAXY'],
-    ['tiger', 'TIGER'], ['pixel', 'PIXEL'], ['koi', 'KOI'], ['aurora', 'AURORA'], ['nyanko', 'NYANKO'], ['sweets', 'SWEETS'], ['bunny', 'BUNNY'], ['rose', 'ROSE'], ['butterfly', 'GOLDEN BUTTERFLY'], ['momiji', 'MOMIJI'], ['pumpkin', 'PUMPKIN'], ['sprout', 'SPROUT'], ['konpairu', 'KONPAIRU'], ['teaparty', 'TEA PARTY'],
+    ['tiger', 'TIGER'], ['pixel', 'PIXEL'], ['koi', 'KOI'], ['aurora', 'AURORA'], ['nyanko', 'NYANKO'], ['sweets', 'SWEETS'], ['bunny', 'BUNNY'], ['rose', 'ROSE'], ['butterfly', 'GOLDEN BUTTERFLY'], ['momiji', 'MOMIJI'], ['pumpkin', 'PUMPKIN'], ['sprout', 'SPROUT'], ['konpairu', 'KONPAIRU'], ['teaparty', 'TEA PARTY'], ['nerinzu_shion', 'SHION'], ['nerinzu_asagi', 'RURI'], ['nerinzu_nadeshiko', 'AKANE'], ['nerinzu_yamabuki', 'ANZU'],
     ['slayer', 'GIANT SLAYER'], ['laurel', 'LAUREL']],
   marker: [['default', 'STANDARD'], ['gold', 'GOLD'], ['crystal', 'CRYSTAL'], ['crimson', 'CRIMSON'], ['prism', 'PRISM'],
     ['emerald', 'EMERALD'], ['amber', 'AMBER'], ['sapphire', 'SAPPHIRE'], ['obsidian', 'OBSIDIAN'], ['nova', 'NOVA'],
@@ -120,6 +120,9 @@ export const GACHA_ITEMS = [
   /* 絵のプレイマット */
   { kind: 'mat', key: 'hokusai', rar: 'R' }, { kind: 'mat', key: 'sakura', rar: 'R' }, { kind: 'mat', key: 'garden', rar: 'R' },
   { kind: 'mat', key: 'library', rar: 'E' }, { kind: 'mat', key: 'celestial', rar: 'E' }, { kind: 'mat', key: 'seigaiha', rar: 'L' },
+  /* ねりんず4人のスリーブとマット */
+  { kind: 'sleeve', key: 'nerinzu_shion', rar: 'E' }, { kind: 'sleeve', key: 'nerinzu_asagi', rar: 'E' }, { kind: 'sleeve', key: 'nerinzu_nadeshiko', rar: 'E' }, { kind: 'sleeve', key: 'nerinzu_yamabuki', rar: 'E' },
+  { kind: 'mat', key: 'nerinzu_shion', rar: 'E' }, { kind: 'mat', key: 'nerinzu_asagi', rar: 'E' }, { kind: 'mat', key: 'nerinzu_nadeshiko', rar: 'E' }, { kind: 'mat', key: 'nerinzu_yamabuki', rar: 'E' },
   { kind: 'sleeve', key: 'tiger', rar: 'R' }, { kind: 'sleeve', key: 'pixel', rar: 'R' }, { kind: 'sleeve', key: 'koi', rar: 'E' }, { kind: 'sleeve', key: 'aurora', rar: 'L' }
 ];
 /* 下剋上 (最弱のデッキで最強に勝つ) の褒美。勝った記録 (compileSoloRecords に level 20 の勝ち) があれば使える */

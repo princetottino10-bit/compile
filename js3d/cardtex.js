@@ -560,6 +560,15 @@ const SLEEVES = {
   /* 2026年10月「ハロウィンの電脳街」: 回路の顔のかぼちゃと桃色の三日月 (E:\SD\scripts\event_2026_10.py の pumpkin 10101) */
   pumpkin: { art: 'art/sleeves/pumpkin.webp', pattern: 'sakura', a: '#3a0f4a', b: '#12041a', grid: 'rgba(0,0,0,0)', halo: '255,140,60', ring: 'rgba(0,0,0,0)',
     ring2: 'rgba(0,0,0,0)', strip: '255,120,40' },
+  /* ねりんず4人のスリーブ (パステル、E:\SD\scripts\nerinzu_goods.py) */
+  nerinzu_shion: { art: 'art/sleeves/nerinzu_shion.webp', pattern: 'sakura', a: '#c8b6e6', b: '#2a2340', grid: 'rgba(0,0,0,0)', halo: '190,160,230', ring: 'rgba(0,0,0,0)',
+    ring2: 'rgba(0,0,0,0)', strip: '190,160,230' },
+  nerinzu_asagi: { art: 'art/sleeves/nerinzu_asagi.webp', pattern: 'sakura', a: '#9fd4f0', b: '#0b1f3a', grid: 'rgba(0,0,0,0)', halo: '120,200,240', ring: 'rgba(0,0,0,0)',
+    ring2: 'rgba(0,0,0,0)', strip: '120,200,240' },
+  nerinzu_nadeshiko: { art: 'art/sleeves/nerinzu_nadeshiko.webp', pattern: 'sakura', a: '#3a0d14', b: '#0a0306', grid: 'rgba(0,0,0,0)', halo: '190,40,60', ring: 'rgba(0,0,0,0)',
+    ring2: 'rgba(0,0,0,0)', strip: '190,40,60' },
+  nerinzu_yamabuki: { art: 'art/sleeves/nerinzu_yamabuki.webp', pattern: 'sakura', a: '#ff9a3c', b: '#1a0f08', grid: 'rgba(0,0,0,0)', halo: '255,140,50', ring: 'rgba(0,0,0,0)',
+    ring2: 'rgba(0,0,0,0)', strip: '255,140,50' },
   /* 週替わりの褒美: 深い緑に金の月桂冠 */
   laurel: { art: 'art/sleeves/laurel.webp', pattern: 'laurel', a: '#1d3512', b: '#050b03', grid: 'rgba(230,210,120,.05)', halo: '230,210,120', ring: 'rgba(240,215,120,.85)',
     ring2: 'rgba(150,210,110,.6)', strip: '200,180,90' },
