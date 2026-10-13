@@ -84,7 +84,7 @@ import * as FX from './fx.js';
 import { buildArena } from './arena.js';
 import { initAudio, sfx, setMuted, isMuted, setSfxVolume, onMuteChange } from './audio.js';
 import { mountMuteButton, muteIcon } from './mutebutton.js';
-import { playBgm, refreshBgm, fadeOutBgm, pickNormalBgm, normalBattleBgm, onlineBattleBgm, STRONG_BGM, BOSS_BGM, DEUS_BGM, PEEK_BGM } from './bgm.js';
+import { playBgm, refreshBgm, fadeOutBgm, crossBgm, pickNormalBgm, normalBattleBgm, onlineBattleBgm, STRONG_BGM, BOSS_BGM, DEUS_BGM, PEEK_BGM, TENSE_BGM } from './bgm.js';
 import { trackOf } from './bgm-shop.js';
 import { BGM_RELEASED } from './rewards.js';
 import { emblemDataURL } from './emblems.js';
@@ -3868,6 +3868,7 @@ async function roomEnterGame(rm) {
   playBattleBgm();                       // roomMode を立ててから (オンラインの曲の選び方にする)
   roomResultShown = false;
   lastTurn = null;
+  tenseBgmOn = false;
   roomLoggedVersion = null;
   roomTracker = ROOM.createTraceTracker();
   await roomApplyView(rm, true);
@@ -3905,6 +3906,7 @@ async function announceTurnFor(turn, atState) {
   if (trainingMode) return;                         // 検証盤面に手番はない
   if (turn === undefined || turn === null || turn === lastTurn) return;
   lastTurn = turn;
+  maybeTenseBgm(atState || (cur && cur.state));
   /* 前の手番の効果の帯が残っていると、効果がまだ終わっていないように見えるのでしまう */
   UI.hideFxBanner();
   UI.hideChain();
@@ -4352,6 +4354,22 @@ function memNote() {
 function stackCount(line, side) {
   const st = shown();
   return st && st.lines && st.lines[line] && st.lines[line][side] ? st.lines[line][side].length : 0;
+}
+/* どちらかが勝ちまであと1本 (ふつうの3本勝負なら2本コンパイル済み) になったら、曲を「決戦の朝」に替えて緊迫感を出す。
+   手番が替わるとき (ターンの表示と同じとき) に一度だけ。ボス・機械仕掛けの神・すべてを見る者は専用の曲のまま。
+   練習・問題・チュートリアル・ストーリー・リプレイでは替えない */
+let tenseBgmOn = false;
+function maybeTenseBgm(st) {
+  if (tenseBgmOn || !st || st.winner !== null || !Array.isArray(st.players)) return;
+  if (tutorial || puzzle || trainingMode || demoMode || replayMode || storyNode) return;
+  if (!roomMode && (deusMatch() || peekMatch() || battleTier() === 'boss')) return;
+  const oneLeft = [0, 1].some(side => {
+    const need = Array.isArray(st.winBySide) ? st.winBySide[side] : (st.winCompiles || 3);
+    return need - st.players[side].protocols.filter(p => p.compiled).length === 1;
+  });
+  if (!oneLeft) return;
+  tenseBgmOn = true;
+  crossBgm(TENSE_BGM);
 }
 /* 対戦の BGM: ボスと強敵は専用の曲。ふつうの対戦は4曲からランダム (COLLECTION の BGM を出したら選んだ曲) */
 function battleBgm() {

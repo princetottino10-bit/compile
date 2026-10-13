@@ -40,6 +40,8 @@ export const BOSS_BGM = 'samayoi';
 export const DEUS_BGM = 'destroy_god';
 /* すべてを見る者 (ALL-SEEING) の曲 */
 export const PEEK_BGM = 'final_2sec';
+/* どちらかが勝ちまであと1本になったら (ふつうの3本勝負なら2本目のコンパイルのあと) 切り替える曲: 決戦の朝 (煉獄庭園) */
+export const TENSE_BGM = 'kessen_asa';
 /* 曲のファイル (無ければ <key>.mp3) */
 const FILES = { cho_zunou: 'cho_zunou.m4a', reflect: 'reflect.m4a', kaidoku: 'kaidoku.m4a', crescendo_jitter: 'crescendo_jitter.m4a',
   planetarium: 'planetarium.m4a', madoromu_neon: 'madoromu_neon.m4a', nine_jack: 'nine_jack.m4a', iruka: 'iruka.m4a',
@@ -129,7 +131,7 @@ function ensure() {
 /** 曲を鳴らす (同じ曲なら続きから)。key が無い・'off' なら止める */
 export function playBgm(key) {
   /* COLLECTION の BGM をしまっている間は、対戦の2曲だけ鳴らす (タイトルの曲・選んだ曲は鳴らさない) */
-  if (!BGM_RELEASED && !(BATTLE_BGM_ON && key && (isTrack(key) || NORMAL_BGMS.includes(key) || MENU_BGMS.includes(key) || key === RUN_BGM || key === STRONG_BGM || key === BOSS_BGM || key === DEUS_BGM || key === PEEK_BGM))) { stopBgm(); return; }
+  if (!BGM_RELEASED && !(BATTLE_BGM_ON && key && (isTrack(key) || NORMAL_BGMS.includes(key) || MENU_BGMS.includes(key) || key === RUN_BGM || key === STRONG_BGM || key === BOSS_BGM || key === DEUS_BGM || key === PEEK_BGM || key === TENSE_BGM))) { stopBgm(); return; }
   clearTimeout(previewTimer);
   if (rotatePool && !rotatePool.includes(key)) rotatePool = null;   // オンラインの対戦から別の画面の曲へ
   want = key && key !== 'off' ? key : null;
@@ -150,6 +152,18 @@ export function previewBgm(key, back, ms = 15000) {
   previewTimer = setTimeout(() => {
     fadeOutBgm(1200);
     previewTimer = setTimeout(() => playBgm(back ? back() : null), 1300);
+  }, ms);
+}
+
+/** 対戦の途中で曲を替える: いまの曲を ms かけて小さくしてから、次の曲を頭から (ぶつ切りにしない) */
+export function crossBgm(key, ms = 1100) {
+  if (!el || !want || !route) { playBgm(key); return; }
+  if (want === key) return;
+  const was = want;
+  route.set(0, ms / 1000 / 3);
+  setTimeout(() => {
+    if (want !== was) return;             // その間に止めた・別の曲にした (決着など)
+    playBgm(key);
   }, ms);
 }
 
