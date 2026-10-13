@@ -23,6 +23,15 @@ const ROWS = [
   ['iruka', '沈殿するイルカ', 'まんぼう二等兵 (OpenTracks)', '', true],
   ['zero', 'Z･E･R･O', '煉獄庭園', 'BGM 煉獄庭園', true],
   ['samayoi', '彷徨いの言葉は天に導かれ', '煉獄庭園', 'BGM 煉獄庭園', true],
+  /* ふつうの対戦に足した曲 (2026-10-13) */
+  ['switcheroo', 'SWITCHEROO!', 'まんぼう二等兵 (OpenTracks)', '', true],
+  ['monolith_black', 'Monolith Black', 'まんぼう二等兵 (OpenTracks)', '', true],
+  ['particle_tones', 'particle tones', 'まんぼう二等兵 (OpenTracks)', '', true],
+  ['tsuisekisha', '追跡者', 'まんぼう二等兵 (OpenTracks)', '', true],
+  ['clock_jitter', 'Clock Jitter', 'まんぼう二等兵 (OpenTracks)', '', true],
+  ['joudou_catharsis', '情動カタルシス', 'まんぼう二等兵 (OpenTracks)', '', true],
+  ['blaze_a_trail', 'Blaze a Trail', 'まんぼう二等兵 (OpenTracks)', '', true],
+  ['killer_roll', 'Killer Roll', 'まんぼう二等兵 (OpenTracks)', '', true],
   /* CHIP で交換 (2026-10-04 に足した) */
   ['noesis', 'Noesis', 'まんぼう二等兵 (OpenTracks)', '', false],
   ['sagittarius', 'Sagittarius', 'まんぼう二等兵 (OpenTracks)', '', false],

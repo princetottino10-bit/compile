@@ -4371,7 +4371,7 @@ function maybeTenseBgm(st) {
   tenseBgmOn = true;
   crossBgm(pickTenseBgm());
 }
-/* 対戦の BGM: ボスと強敵は専用の曲。ふつうの対戦は4曲からランダム (COLLECTION の BGM を出したら選んだ曲) */
+/* 対戦の BGM: ボスと強敵は専用の曲。ふつうの対戦は12曲からランダム (COLLECTION の BGM を出したら選んだ曲) */
 function battleBgm() {
   if (roomMode) return onlineBattleBgm();      // オンラインは毎回ランダム (同じ曲ばかり流れないように)
   if (deusMatch()) return DEUS_BGM;            // 機械仕掛けの神: 「神を破壊せよ」

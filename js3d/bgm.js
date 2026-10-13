@@ -16,9 +16,10 @@ export const BGM_CREDIT = '煉獄庭園';
 /* 対戦で流す曲 (COLLECTION で選ぶ仕組み BGM_RELEASED とは別)。2026-09-28: ボスは「彷徨いの言葉は天に導かれ」、
    強敵は Z･E･R･O。タイトルは無音 */
 export const BATTLE_BGM_ON = true;
-/* ふつうの対戦: OpenTracks (旧 DOVA-SYNDROME) の4曲から毎試合ランダム。
+/* ふつうの対戦: OpenTracks (旧 DOVA-SYNDROME) の12曲から毎試合ランダム (2026-10-13 に、まんぼう二等兵の BPM 135〜165 の8曲を足した。
+   あと1本の曲 TENSE_BGMS より遅くして、切り替わったときの差を残す)。
    OpenTracks の規約 (ファイルのまま取り出せる形で置かない) に合わせて m4a に変換して置いている */
-export const NORMAL_BGMS = ['cho_zunou', 'reflect', 'kaidoku', 'crescendo_jitter'];
+export const NORMAL_BGMS = ['cho_zunou', 'reflect', 'kaidoku', 'crescendo_jitter', 'switcheroo', 'monolith_black', 'particle_tones', 'tsuisekisha', 'clock_jitter', 'joudou_catharsis', 'blaze_a_trail', 'killer_roll'];
 export const STRONG_BGM = 'zero';
 /* タイトル・メニュー (対戦以外): 落ち着いた3曲から、ページを開くたびに1曲 (メニューの間は同じ曲が続く) */
 export const MENU_BGMS = ['planetarium', 'madoromu_neon', 'nine_jack'];
@@ -27,7 +28,7 @@ export const RUN_BGM = 'iruka';
 let menuPick = null;
 /* COLLECTION の BGM で「メニューで流す」を選んでいれば、その曲 */
 export const menuBgm = () => chosenTrack(settings(), 'bgmMenu') || (menuPick = menuPick || MENU_BGMS[Math.floor(Math.random() * MENU_BGMS.length)]);
-/** ふつうの対戦の曲: 「対戦で流す」を選んでいればその曲、おまかせなら4曲からランダム */
+/** ふつうの対戦の曲: 「対戦で流す」を選んでいればその曲、おまかせなら12曲からランダム */
 export const normalBattleBgm = () => chosenTrack(settings(), 'bgmBattle') || pickNormalBgm();
 /* オンライン対戦の曲: 選んだ曲に決めず、いつもの曲と交換した曲から毎回ランダム (前の対戦と同じ曲は選ばない) */
 export function onlineBattleBgm() {
@@ -59,8 +60,8 @@ const FILES = { cho_zunou: 'cho_zunou.m4a', reflect: 'reflect.m4a', kaidoku: 'ka
   /* COLLECTION の BGM で交換する曲 (bgm-shop.js) */
   ...Object.fromEntries(['noesis', 'sagittarius', 'engram', 'objective_point', 'virus_entry', 'uso_ni_naru', 'siege_buster', 'electric_highway', 'grenade',
     'midnight_breaker', 'rapid4', 'irregular', 'rapid5', 'under_world', 'cyber10', 'cyber_prisoner'].map(k => [k, k + '.m4a'])),
-  /* あと1本の曲 */
-  ...Object.fromEntries(['interception', 'strike_despair', 'lobelia', 'will_you_cry', 'tactical_encounter', 'hangeki'].map(k => [k, k + '.m4a'])) };
+  /* ふつうの対戦に足した曲と、あと1本の曲 */
+  ...Object.fromEntries(['switcheroo', 'monolith_black', 'particle_tones', 'tsuisekisha', 'clock_jitter', 'joudou_catharsis', 'blaze_a_trail', 'killer_roll', 'interception', 'strike_despair', 'lobelia', 'will_you_cry', 'tactical_encounter', 'hangeki'].map(k => [k, k + '.m4a'])) };
 export const bgmFile = (key) => 'art/bgm/' + (FILES[key] || key + '.mp3');
 /* 曲ごとの大きさ (ラウドネス、LUFS。ffmpeg の ebur128 で測った値)。曲によって 10 dB 近く違ったので、
    鳴らすときに LOUD_TARGET へそろえる (大きい曲は下げ、小さい曲は少しだけ上げる)。曲を足したら測って書き足す:
@@ -71,7 +72,8 @@ const LOUDNESS = {
   planetarium: -8.5, reaper_phoenix: -9.1, reflect: -7.9, samayoi: -8.9, zero: -13.4,
   noesis: -5.5, sagittarius: -6.9, engram: -6.1, objective_point: -7.1, virus_entry: -8.0, uso_ni_naru: -11.4, siege_buster: -7.0,
   electric_highway: -9.3, grenade: -7.8, midnight_breaker: -9.9, rapid4: -6.8, irregular: -8.3, rapid5: -8.2, under_world: -9.7, cyber10: -6.5, cyber_prisoner: -6.9,
-  interception: -4.3, strike_despair: -6.5, lobelia: -5.6, will_you_cry: -6.2, tactical_encounter: -6.4, hangeki: -5.8
+  interception: -4.3, strike_despair: -6.5, lobelia: -5.6, will_you_cry: -6.2, tactical_encounter: -6.4, hangeki: -5.8,
+  switcheroo: -6.2, monolith_black: -6.4, particle_tones: -5.6, tsuisekisha: -8.5, clock_jitter: -6.2, joudou_catharsis: -5.4, blaze_a_trail: -8.1, killer_roll: -6.4
 };
 const LOUD_TARGET = -11;              // 曲の真ん中あたり (全体の大きさは今までと同じくらいに)
 /** その曲を LOUD_TARGET にそろえる倍率 (上げるのは 1.6 倍まで。測っていない曲は 1) */
@@ -100,7 +102,7 @@ let want = null;                 // 鳴らしたい曲 (null なら止める)
 /* 音量: 設定の「BGM」(はじめは 30。キャラの声が聞き取りやすいよう控えめに) */
 const level = () => (isMuted() ? 0 : Math.max(0, Math.min(1, (settings().bgmVol ?? 30) / 100)) * 0.7 * (want ? trackGain(want) : 1));
 
-/* ふつうの対戦の曲 (ランダムの4曲) は、ROTATE_LOOPS 周したら別の曲へつなぐ (同じ曲がずっと続かないように)。
+/* ふつうの対戦の曲 (ランダムの12曲) は、ROTATE_LOOPS 周したら別の曲へつなぐ (同じ曲がずっと続かないように)。
    ボス・強敵の曲、COLLECTION で選んだ曲は替えない */
 const ROTATE_LOOPS = 2;
 let loops = 0, lastTime = 0, swapping = false;
