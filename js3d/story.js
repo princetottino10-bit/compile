@@ -35,8 +35,8 @@ export const SPEAKERS = {
    決めなければ、話した人が空いている所 (右 → 左) に出て、そのまま残る */
 const L = (who, text, face) => ({ who, text, ...(face ? { face } : {}) });
 
-/* 対戦: me / opp = プロトコル3つ、level = CPU の強さ (0 かんたん / 1 ふつう / 2 つよい)、
-   win = 勝ちに必要なコンパイルの数、oppAvatar = 相手の立ち絵 (無ければ出さない)、mate = 自分の側で話す相棒、
+/* 対戦: me / opp = プロトコル3つ、level = CPU の強さ (0 かんたん / 1 ふつう / 2 つよい。タッグでは味方の CPU も同じ強さ)、
+   win = 相手が勝ちに必要なコンパイルの数 (自分はいつも 3)、head = 自分がはじめからコンパイル済みの数 (無ければ 3 - win)、oppAvatar = 相手の立ち絵 (無ければ出さない)、mate = 自分の側で話す相棒、
    winLines / loseLines = 決着のあとの会話 */
 export const CHAPTERS = [
   {
@@ -82,7 +82,9 @@ export const CHAPTERS = [
           L('sys', '> 判定開始: 機体4097を止めるか、止めないか')
         ] } },
       { id: 'c0-practice', kind: 'battle', title: '判定', me: ['FIRE', 'WATER', 'LIFE'], opp: ['PSYCHIC', 'LIGHT', 'MIRROR'],
-        level: 0, win: 2, oppName: '紫苑', oppAvatar: 'shion', note: '1つは先に書き上げた状態から始まる。紫苑より先に、あと2つを書き上げる',
+        /* 最初の一戦は、初めての人がまず勝てるように (2026-10-13 ユーザー: 最初のほうはまじで勝てるバランスで)。
+           CPU 同士の試算で、かんたん相当の人が 100 戦 94 勝 (前の win: 2 では 48 勝) */
+        level: 0, win: 3, head: 2, oppName: '紫苑', oppAvatar: 'shion', note: '2つは先に書き上げた状態から始まる。紫苑より先に、あと1つを書き上げる',
         /* 判定官の紫苑。わざと手をゆるめているので、ときどき手が止まる (勝ちのあとのログ「書きこみ: 途中から止まっています」につながる) */
         talk: {
           opp: {
@@ -167,8 +169,9 @@ export const CHAPTERS = [
         L('shion', '向こうが二人なら、こっちも二人。……私も、一緒に解く。', 'fired')
       ] },
       { id: 'c0-chief', kind: 'battle', title: '警備主任', me: ['FIRE', 'WATER', 'LIFE'], opp: ['METAL', 'GRAVITY', 'DARKNESS'],
-        level: 1, win: 3, oppName: '警備主任', mate: 'shion', oppAvatar: 'story_chief', boss: true,
-        note: '紫苑と2人で、主任と巡回の警備機体に挑む (タッグ: 手番を交代で指す)。3つすべてを先に書き上げないと、ゲートは開かない',
+        /* 序盤なので かんたん + 1つ済みから (試算: かんたん相当の人が 30 戦 24 勝。前の ふつう・済みなしでは 40 戦 20 勝) */
+        level: 0, win: 3, head: 1, oppName: '警備主任', mate: 'shion', oppAvatar: 'story_chief', boss: true,
+        note: '紫苑と2人で、主任と巡回の警備機体に挑む (タッグ: 手番を交代で指す)。1つは書き上げた状態から始まる。あと2つを先に書き上げると、ゲートが開く',
         /* タッグ (2026-10-13): 相棒と組める戦いはタッグにする。紫苑は判定のときと同じ手持ち。チームの中で同じプロトコルは持てない */
         tag: { mate: ['PSYCHIC', 'LIGHT', 'MIRROR'], mateName: '紫苑', oppMate: ['SPEED', 'CLARITY', 'FEAR'], oppMateName: '巡回の警備機体', oppMateAvatar: 'story_patrol' },
         talk: {
@@ -335,8 +338,9 @@ export const CHAPTERS = [
       /* 二号機は瑠璃の写し: 瑠璃の水 (WATER) が凍って動かなくなった ICE (毎日同じ案内をくり返す)、引き戻す GRAVITY、明かりの落ちた通路の DARKNESS。
          同じ側と相手側で同じプロトコルは持てないので、WATER そのものではなく ICE にした */
       { id: 'c1-abyss', kind: 'battle', title: '後任「二号機」', me: ['FIRE', 'LIGHT', 'LIFE'], opp: ['ICE', 'GRAVITY', 'DARKNESS'],
-        level: 1, win: 3, oppName: '二号機', mate: 'asagi', oppAvatar: 'story_nigoki', boss: true,
-        note: '瑠璃と2人で、二号機と回収機に挑む (タッグ: 手番を交代で指す)。3つすべてを先に書き上げる',
+        /* 序盤なので かんたん + 1つ済みから (試算: かんたん相当の人が 40 戦 32 勝。前の ふつう・済みなしでは 40 戦 13 勝) */
+        level: 0, win: 3, head: 1, oppName: '二号機', mate: 'asagi', oppAvatar: 'story_nigoki', boss: true,
+        note: '瑠璃と2人で、二号機と回収機に挑む (タッグ: 手番を交代で指す)。1つは書き上げた状態から始まる。あと2つを先に書き上げる',
         /* タッグ: WATER は瑠璃の言葉 (ここで本人の色になる)。主人公は WATER の代わりに紫苑の LIGHT を借りる。
            主人公の WATER は、勝ったあと 3802 の一手として「預かり」で入る (プロット: 1章 WATER) */
         tag: { mate: ['WATER', 'PEACE', 'UNITY'], mateName: '瑠璃', oppMate: ['METAL', 'TIME', 'APATHY'], oppMateName: '回収機', oppMateAvatar: 'story_collector' },
