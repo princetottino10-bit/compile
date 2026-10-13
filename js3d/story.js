@@ -484,7 +484,7 @@ export const CHAPTERS = [
       /* 一戦目: 主人公 1人。茜は手を抜かない (CAST.md「勝負では容赦しない」)。茜の対戦中のひとことは区切らず短く、頭の「……」なし。
          勝っても、茜は何も読み直していない (ログで見せ、セリフにしない) */
       { id: 'c2-akane', kind: 'battle', title: '茜', me: ['FIRE', 'WATER', 'LIFE'], opp: ['HATE', 'LOVE', 'APATHY'],
-        level: 1, win: 3, oppName: '茜', oppAvatar: 'nadeshiko',
+        level: 0, win: 3, oppName: '茜', oppAvatar: 'nadeshiko',
         note: '茜は、寝室の扉の前を動かない。3つすべてを先に書き上げると、扉が開く',
         talk: {
           opp: {
@@ -557,9 +557,11 @@ export const CHAPTERS = [
           L('sys', '> コンフリクト: 屋敷の管理 時計　命令: 私の世話を頼む')
         ] } },
       /* 二戦目: この一戦だけ、プレイヤーが茜を動かす (プロット)。mate を自分の側の立ち絵に出し、talk.me が茜のひとこと。
-         時計は TIME (同じ三時をくり返す) / DEATH (止まった日) / SPIRIT (誰もいない寝室の気配) */
+         時計は TIME (同じ三時をくり返す) / DEATH (止まった日) / SPIRIT (誰もいない寝室の気配)。
+         強さ (2026-10-13): 序盤は勝てる強さにする (ユーザー)。CPU どうし (同じ強さ) で 80 戦、茜の側の勝ちは 50%。
+         慣れない茜の手持ちで指すので、CPU は かんたん (0)。一戦目の茜戦は主人公の側が 160 戦で 73% 勝つが、同じく かんたん */
       { id: 'c2-clock', kind: 'battle', title: '柱時計「時計」', me: ['HATE', 'LOVE', 'APATHY'], opp: ['TIME', 'DEATH', 'SPIRIT'],
-        level: 1, win: 3, oppName: '時計', meName: '茜', mate: 'nadeshiko', oppAvatar: 'story_clock', boss: true,
+        level: 0, win: 3, oppName: '時計', meName: '茜', mate: 'nadeshiko', oppAvatar: 'story_clock', boss: true,
         note: 'この一戦だけ、茜を動かす。3つすべてを先に書き上げると、茜の読み方が残る',
         talk: {
           me: {
