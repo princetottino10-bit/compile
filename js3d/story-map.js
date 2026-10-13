@@ -14,7 +14,9 @@ export const TILE = {
   /* 調べられる物 (looks) の置き場所。床として歩ける */
   '1': 'floor', '2': 'floor', '3': 'floor', '4': 'floor',
   /* 記録の断片の置き場所 (拾える物。歩ける) */
-  'f': 'floor', 'h': 'floor'
+  'f': 'floor', 'h': 'floor',
+  /* 屋敷: N 茜の立つ所 (床) / G 柱時計 / Z 食卓 */
+  'N': 'floor', 'G': 'solid', 'Z': 'solid'
 };
 
 /* 序章「起動」: 研究所。左から A 判定室 / B 端末室 / C 廊下 / D 正面ホール / E 外 */
@@ -167,11 +169,107 @@ export const AQUARIUM = {
   ],
   goals: { 'c1-arrive': '水族館に入る', 'c1-fork': '放送が途切れる場所を探す',
     'c1-ruri': '放送の声のする方へ', 'c1-abyss': '瑠璃と一緒に、二号機と向き合う', 'c1-close': '瑠璃の放送を聞く',
-    done: '1章「順路」　完。2章「三時」は準備中' }
+    done: '1章「順路」　完' }
+};
+
+/* 2章「三時」: 屋敷。玄関ホール (止まった柱時計) → 西 (食堂) / 東 (台所) / 北の階段の上 (寝室の前に茜)。寝室の扉 (b) は茜を越えると開く。
+   仕掛け: どの部屋にいても、茜がお茶を運ぶ同じ音がくり返し聞こえる (1章の放送と同じ役)。2つ聞くと、瑠璃が放送の耳で気づく
+   (前の仲間の技能が鍵。research/10)。調べられる物は柱時計・呼び鈴の盤・家事日誌・枕元のお茶 (寝室。茜を越えたあと) */
+export const MANSION = {
+  look: 'mansion',
+  rows: [
+    '##############################',
+    '#########............#......##',
+    '#########....N.......b...4..##',
+    '#########............#......##',
+    '#############....#############',
+    '#.......#............#.......#',
+    '#..ZZZ..#..G.........#..3....#',
+    '#..ZZZ.....1............f....#',
+    '#.2..........................#',
+    '#....h..#............#.......#',
+    '#.......#.....S......#.......#',
+    '##############################'
+  ],
+  rects: [
+    { z: 'U', x0: 9, y0: 1, x1: 20, y1: 4 },
+    { z: 'R', x0: 21, y0: 1, x1: 28, y1: 3 },
+    { z: 'D', x0: 1, y0: 5, x1: 8, y1: 10 },
+    { z: 'K', x0: 21, y0: 5, x1: 28, y1: 10 },
+    { z: 'H', x0: 9, y0: 5, x1: 20, y1: 10 }
+  ],
+  zones: [['H', Infinity]],
+  zoneNames: { H: '玄関ホール', D: '食堂', K: '台所', U: '階段の上', R: '寝室' },
+  opens: { b: 'c2-akane' },
+  events: {
+    arrive: { node: 'c2-arrive', kind: 'auto' },
+    tea: { node: 'c2-tea', kind: 'talk', at: 'N', who: 'akane' },
+    akane: { node: 'c2-akane', kind: 'talk', at: 'N', who: 'akane' },
+    room: { node: 'c2-room', kind: 'talk', at: 'N', who: 'akane' },
+    clock: { node: 'c2-clock', kind: 'inspect', at: 'G', label: '柱時計と向き合う' },
+    close: { node: 'c2-close', kind: 'auto' }
+  },
+  /* 区画に入ると聞こえる音 (茜が三時のお茶を運ぶ)。区画ごとに同じ音。茜に会うまで */
+  ambient: {
+    after: 'c2-arrive', until: 'c2-tea',
+    zones: {
+      H: [{ who: 'sys', text: '> 湯の沸く音' }, { who: 'sys', text: '> 階段を上がる足音 …… 13' }, { who: 'sys', text: '> ノック 2回' },
+        { who: 'sys', text: '> 遠くの声:「失礼いたします。お茶をお持ちしました」' }],
+      D: [{ who: 'sys', text: '> 湯の沸く音' }, { who: 'sys', text: '> 階段を上がる足音 …… 13' }, { who: 'sys', text: '> ノック 2回' },
+        { who: 'shion', text: '食卓、きれいに拭いてある。……椅子は、ひとつだけ。' }],
+      K: [{ who: 'sys', text: '> 湯の沸く音' }, { who: 'sys', text: '> 階段を上がる足音 …… 13' }, { who: 'sys', text: '> ノック 2回' },
+        { who: 'shion', text: 'やかん、まだあたたかい。' }]
+    },
+    hint: [
+      { who: 'ruri', text: 'さっきと同じ音です。お湯、階段が十三段、ノックが二回。' },
+      { who: 'ruri', text: '足音の間まで同じなんです。案内の放送と同じで。', face: 'surprised' },
+      { who: 'shion', text: '……この家、ずっと同じ時間をくり返してるんだ。' },
+      { who: 'shion', text: '足音は、階段の上で止まる。行ってみよう。' }
+    ]
+  },
+  spawn: { 'c2-arrive': [14, 10], 'c2-tea': [14, 10], 'c2-akane': [13, 3], 'c2-room': [13, 3],
+    'c2-clock': [12, 7], 'c2-close': [12, 7], done: [12, 7] },
+  guides: {},
+  looks: [
+    { at: '1', name: '柱時計', lines: [
+      { who: 'sys', text: '> 柱時計: 15時00分で止まっている' },
+      { who: 'sys', text: '> 振り子 …… 動いていない' },
+      { who: 'sys', text: '> 鐘 …… 毎日、鳴っている' }
+    ] },
+    { at: '2', name: '呼び鈴の盤', lines: [
+      { who: 'sys', text: '> 呼び鈴の盤: 寝室' },
+      { who: 'sys', text: '> 最後の呼び出し …… 15時00分' },
+      { who: 'sys', text: '> そのあとの呼び出し …… なし' }
+    ] },
+    { at: '3', name: '家事日誌', lines: [
+      { who: 'sys', text: '> 家事日誌: 本日' },
+      { who: 'sys', text: '> 三時: お茶 (淹れ直し 11回)' },
+      { who: 'sys', text: '> ご主人さま: お休み中' }
+    ] },
+    { at: '4', name: '枕元', lines: [
+      { who: 'sys', text: '> 寝台: 整えてある' },
+      { who: 'sys', text: '> 枕元のお茶 …… 1杯 (冷めている)' }
+    ] }
+  ],
+  fragments: [
+    { at: 'f', id: 'u3672', unit: 3672, lines: [
+      { who: 'sys', text: '> 記録の断片: 機体3672' },
+      { who: 'sys', text: '> 最後の一手 …… 読めない' },
+      { who: 'shion', text: '……3672。メモにある番号だ。' }
+    ] },
+    { at: 'h', id: 'u4011', unit: 4011, lines: [
+      { who: 'sys', text: '> 記録の断片: 機体4011' },
+      { who: 'sys', text: '> 最後の一手 …… 読めない' },
+      { who: 'shion', text: '……4011。4097に、近い番号。', face: 'sad' }
+    ] }
+  ],
+  goals: { 'c2-arrive': '屋敷に入る', 'c2-tea': '音のする方へ', 'c2-akane': '茜と向き合う',
+    'c2-room': '茜に話しかける', 'c2-clock': '玄関ホールの柱時計へ', 'c2-close': '茜の片付けを見る',
+    done: '2章「三時」　完。3章「順番」は準備中' }
 };
 
 /* 章ごとの地図 */
-export const MAPS = { ch0: PROLOGUE, ch1: AQUARIUM };
+export const MAPS = { ch0: PROLOGUE, ch1: AQUARIUM, ch2: MANSION };
 export const mapFor = (chapterId) => MAPS[chapterId] || PROLOGUE;
 
 export const width = (map) => map.rows[0].length;

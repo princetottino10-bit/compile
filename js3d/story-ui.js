@@ -326,7 +326,7 @@ export function askBattle(n, protocols) {
       : n.tag
         ? '<div class="sm-vs"><div><em>あなた</em>' + chips(n.me) + '<em>' + esc(n.tag.mateName) + '</em>' + chips(n.tag.mate) + '</div><i>VS</i>' +
           '<div><em>' + esc(n.oppName) + '</em>' + chips(n.opp) + '<em>' + esc(n.tag.oppMateName) + '</em>' + chips(n.tag.oppMate) + '</div></div>'
-        : '<div class="sm-vs"><div><em>あなた</em>' + chips(n.me) + '</div><i>VS</i><div><em>' + esc(n.oppName) + '</em>' + chips(n.opp) + '</div></div>') +
+        : '<div class="sm-vs"><div><em>' + esc(n.meName || 'あなた') + '</em>' + chips(n.me) + '</div><i>VS</i><div><em>' + esc(n.oppName) + '</em>' + chips(n.opp) + '</div></div>') +
     '<div class="sm-btns"><button type="button" class="sm-go">' + (tsume ? '書き換える' : 'コンパイルを始める') + '</button>' +
     (admin ? '<button type="button" class="sm-skip">飛ばす (ADMIN)</button>' : '') +
     '<button type="button" class="sm-back">戻る</button></div></div>';

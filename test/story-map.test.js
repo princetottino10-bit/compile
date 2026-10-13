@@ -122,3 +122,32 @@ test('調べられる物 (looks): 置き場所が地図にあって歩ける。�
     assert.equal(S.nodeById(l.at), null);
   }
 });
+
+test('2章の地図: 出来事は2章の場面をすべて使い、茜の前まで歩ける。寝室の扉は茜を越えるまで閉じている', () => {
+  const map = M.MANSION;
+  for (const r of map.rows) assert.equal(r.length, map.rows[0].length);
+  for (const ch of map.rows.join('')) assert.ok(M.TILE[ch] !== undefined, '知らない印: ' + ch);
+  const used = new Set(Object.values(map.events).map(e => e.node));
+  for (const n of S.CHAPTERS[2].nodes) assert.ok(used.has(n.id), n.id + ' を使う出来事がない');
+  for (const e of Object.values(map.events)) { assert.ok(S.nodeById(e.node), e.node); if (e.at) assert.ok(M.find(map, e.at)[0], e.node + ' の置き場所'); }
+  assert.equal(M.mapFor('ch2'), map);
+  let s = S.blankStory();
+  for (const c of S.CHAPTERS.slice(0, 2)) for (const n of c.nodes) s = S.clearNode(s, n.id);
+  const start = M.spawnFor(map, s);
+  assert.equal(M.zoneAt(map, start), 'H');
+  assert.equal(M.objective(s), map.goals['c2-arrive']);
+  const n = M.find(map, 'N')[0];
+  assert.ok(M.findPath(map, s, start, { x: n.x + 0.5, y: n.y + 1.5 }), '玄関から階段の上の茜の前まで道がある');
+  for (const ch of ['f', 'h', '1', '2', '3']) { const m = M.find(map, ch)[0]; assert.ok(M.findPath(map, s, start, { x: m.x + 0.5, y: m.y + 0.5 }), ch); }
+  const bed = M.find(map, '4')[0];
+  assert.equal(M.findPath(map, s, start, { x: bed.x + 0.5, y: bed.y + 0.5 }), null, '茜を越えるまで寝室には入れない');
+  let after = s;
+  for (const id of ['c2-arrive', 'c2-tea', 'c2-akane']) after = S.clearNode(after, id);
+  assert.ok(M.findPath(map, after, start, { x: bed.x + 0.5, y: bed.y + 0.5 }), '茜を越えたら寝室に入れる');
+  for (const id of Object.keys(map.spawn)) { const [x, y] = map.spawn[id]; assert.ok(M.walkable(map, s, x, y), '立つ所は歩ける: ' + id); }
+  for (const f of map.fragments) assert.ok(f.unit >= 3584 && f.unit <= 4096, '513 体の範囲の番号: ' + f.unit);
+  const ids = [M.AQUARIUM, map].flatMap(m => m.fragments.map(f => f.id));
+  assert.equal(new Set(ids).size, ids.length, '記録の断片の id は章をまたいでも重ならない');
+  for (const l of map.looks) assert.ok(l.lines.every(x => [...x.text].length <= 40), l.name);
+  for (const ls of [...Object.values(map.ambient.zones), map.ambient.hint]) for (const l of ls) assert.ok([...l.text].length <= 40 && S.SPEAKERS[l.who], l.text);
+});

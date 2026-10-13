@@ -79,6 +79,8 @@ AVATARS.story_chief = { name: '警備主任', color: '#ff4f6a', boss: true, sing
 /* ストーリーのタッグで、相手の側の2人目 (絵なし) */
 AVATARS.story_patrol = { name: '巡回の警備機体', color: '#ff8a5c', boss: true, single: true, noArt: true, lines: null };
 AVATARS.story_collector = { name: '回収機', color: '#8a93b8', boss: true, single: true, noArt: true, lines: null };
+/* 2章: 屋敷の柱時計に入っている管理の機体 (絵なし) */
+AVATARS.story_clock = { name: '時計', color: '#c9a25a', boss: true, single: true, noArt: true, lines: null };
 for (const [id, def] of Object.entries(AVATARS)) { def.lines = LINES[id] || BOSS_LINES[id] || {}; def.fav = FAVORITE[id] || null; }
 
 /* 1本目のコンパイルでだけ言うひとこと (「まずは一つ目」など)。2本目からは選ばない */

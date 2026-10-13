@@ -20,6 +20,7 @@ import { playNode, playScene, askBattle } from './story-ui.js';
 import { sfx } from './audio.js';
 import { buildScenery } from './story-scenery.js';
 import { buildAquarium } from './story-scenery-aquarium.js';
+import { buildMansion } from './story-scenery-mansion.js';
 import { RoomEnvironment } from '../vendor/jsm/environments/RoomEnvironment.js';
 import { GLTFLoader } from '../vendor/jsm/loaders/GLTFLoader.js';
 
@@ -58,6 +59,7 @@ export function openWorld(protocols, opts = {}) {
   const chapter = chapterOf(state);
   const map = M.mapFor(chapter.id);
   const aquarium = map.look === 'aquarium';
+  const mansion = map.look === 'mansion';
 
   const root = document.createElement('div');
   root.id = 'storyWorld';
@@ -122,12 +124,12 @@ export function openWorld(protocols, opts = {}) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = aquarium ? 0.9 : 0.8;   // 夜の研究所 / 水槽の明かりだけの水族館
+  renderer.toneMappingExposure = aquarium ? 0.9 : mansion ? 0.95 : 0.8;   // 夜の研究所 / 水槽の明かりだけの水族館 / 西日の屋敷
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   const scene = new THREE.Scene();
-  const bg = aquarium ? 0x02070f : COLORS.navy;
+  const bg = aquarium ? 0x02070f : mansion ? 0x120a06 : COLORS.navy;
   scene.background = new THREE.Color(bg);
-  scene.fog = new THREE.FogExp2(bg, aquarium ? 0.024 : 0.018);
+  scene.fog = new THREE.FogExp2(bg, aquarium ? 0.024 : mansion ? 0.02 : 0.018);
   const camera = new THREE.PerspectiveCamera(48, 1, 0.1, 200);
   scene.add(new THREE.AmbientLight(0x6c7688, 0.22));
   const sun = new THREE.DirectionalLight(0xc8d2e0, 0.18);
@@ -165,7 +167,7 @@ export function openWorld(protocols, opts = {}) {
   scene.environment = keep(pmrem.fromScene(new RoomEnvironment(), 0.04).texture);
   scene.environmentIntensity = 0.25;
   pmrem.dispose();
-  const scenery = (aquarium ? buildAquarium : buildScenery)(scene, map, keep);
+  const scenery = (aquarium ? buildAquarium : mansion ? buildMansion : buildScenery)(scene, map, keep);
   const term = scenery.term || null;           // 研究所の端末 (序章だけ)
   const termAt = M.find(map, 'T')[0];
   /* 扉: 開いた数が増えたら、開く音 (地図を開いたときにもう開いている扉は鳴らさない) */
@@ -379,6 +381,42 @@ export function openWorld(protocols, opts = {}) {
     blob(1.1).position.copy(world(ruriPos, 0.015));
   } else ruri.visible = false;
 
+  /* 茜 (2章の家事係): ちびキャラの絵ができるまでの仮の姿。黒と深い赤のメイド服 (白は入れない。compile-cast)、黒い髪、頭に黒いレース、手にお盆。
+     名乗るまでは名札を「家事係」にする */
+  const akaneAt = M.find(map, 'N')[0];
+  const akanePos = akaneAt ? { x: akaneAt.x + 0.5, y: akaneAt.y + 0.5 } : { x: -99, y: -99 };
+  const akane = new THREE.Group();
+  if (akaneAt) {
+    const black = keep(new THREE.MeshStandardMaterial({ color: 0x15121a, roughness: 0.6 }));
+    const red = keep(new THREE.MeshStandardMaterial({ color: 0x7a1424, roughness: 0.55 }));
+    const skin = keep(new THREE.MeshStandardMaterial({ color: 0xf1d6c8, roughness: 0.7 }));
+    const skirt = new THREE.Mesh(keep(new THREE.ConeGeometry(0.34, 0.6, 18)), black);
+    skirt.position.y = 0.58;
+    const apron = new THREE.Mesh(keep(new THREE.ConeGeometry(0.26, 0.5, 18, 1, true, -0.9, 1.8)), red);
+    apron.position.y = 0.6;
+    const top = new THREE.Mesh(keep(new THREE.CapsuleGeometry(0.17, 0.3, 6, 14)), red);
+    top.position.y = 1.02;
+    const face = new THREE.Mesh(keep(new THREE.SphereGeometry(0.17, 20, 14)), skin);
+    face.position.y = 1.42;
+    const hair = new THREE.Mesh(keep(new THREE.SphereGeometry(0.19, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.6)), black);
+    hair.position.set(0, 1.45, -0.02);
+    const lace = new THREE.Mesh(keep(new THREE.TorusGeometry(0.15, 0.025, 6, 20, Math.PI)), black);
+    lace.position.set(0, 1.56, 0.02);
+    const tray = new THREE.Mesh(keep(new THREE.CylinderGeometry(0.2, 0.2, 0.02, 20)), keep(new THREE.MeshStandardMaterial({ color: 0x8a6a3a, roughness: 0.3, metalness: 0.6 })));
+    tray.position.set(0, 1.0, 0.3);
+    const cup = new THREE.Mesh(keep(new THREE.CylinderGeometry(0.05, 0.04, 0.06, 12)), red);
+    cup.position.set(0.05, 1.05, 0.3);
+    const shins = [-0.08, 0.08].map((x) => { const l = new THREE.Mesh(keep(new THREE.CapsuleGeometry(0.05, 0.3, 4, 8)), black); l.position.set(x, 0.22, 0); return l; });
+    const glow = new THREE.PointLight(0xff6a5a, 0.9, 3);
+    glow.position.set(0, 1.6, 0.4);
+    akane.add(skirt, apron, top, face, hair, lace, tray, cup, glow, ...shins);
+    akane.position.copy(world(akanePos, 0));
+    scene.add(akane);
+  }
+  const akaneShadow = blob(akaneAt ? 1.1 : 0.01);
+  akaneShadow.position.copy(world(akanePos, 0.015));
+  akane.visible = !!akaneAt;
+
   /* 記録の断片: 床の上で、ゆっくり回って光る小さな欠片。拾うと消える */
   const fragMat = keep(new THREE.MeshBasicMaterial({ color: 0x9ff4ff, transparent: true, opacity: 0.9, toneMapped: false }));
   const fragGeo = keep(new THREE.OctahedronGeometry(0.16, 0));
@@ -406,6 +444,7 @@ export function openWorld(protocols, opts = {}) {
     { el: document.createElement('span'), text: '警備主任', obj: chief, y: 2.4, show: () => chief.visible },
     { el: document.createElement('span'), text: '端末', obj: term, y: 1.8, show: () => true },
     { el: document.createElement('span'), text: '案内係', obj: ruri, y: 2.0, show: () => !!ruriAt, name: () => (isCleared(state, 'c1-ruri') ? '瑠璃' : '案内係') },
+    { el: document.createElement('span'), text: '家事係', obj: akane, y: 2.0, show: () => !!akaneAt, name: () => (isCleared(state, 'c2-tea') ? '茜' : '家事係') },
     /* 調べられる物の名札 */
     ...(map.looks || []).map(l => { const m = M.find(map, l.at)[0]; const o = new THREE.Object3D(); if (m) o.position.copy(world({ x: m.x + 0.5, y: m.y + 0.5 }, 0));
       return { el: document.createElement('span'), text: l.name, obj: m ? o : null, y: 1.7, show: () => true }; })
@@ -415,6 +454,9 @@ export function openWorld(protocols, opts = {}) {
   const syncActors = () => {
     patrol.visible = route.length >= 2 && !isCleared(state, 'c0-lock');      /* 扉が開いたら、主任へ知らせに行っていなくなる */
     chief.visible = !!chiefAt && !isCleared(state, 'c0-chief');
+    /* 茜は寝室の前の話を終えたら、玄関の柱時計のそばへ下りてくる (時計と向き合うのは茜) */
+    const clockAt = M.find(map, 'G')[0];
+    if (akaneAt && clockAt && isCleared(state, 'c2-room')) { akanePos.x = clockAt.x + 2.8; akanePos.y = clockAt.y + 0.6; akane.position.copy(world(akanePos, 0)); akaneShadow.position.copy(world(akanePos, 0.015)); }
     syncDoors();
   };
   syncActors();
@@ -513,8 +555,8 @@ export function openWorld(protocols, opts = {}) {
   const eventFor = (id) => Object.values(map.events).find(e => e.node === id);
   const isNext = (id) => { const c = currentNode(state); return !!c && c.id === id; };
   const markAt = (ch) => { const m = M.find(map, ch)[0]; return m ? { x: m.x + 0.5, y: m.y + 0.5 } : null; };
-  const posOf = (ev) => ev.fragment ? ev.p : (ev.at === 'K' ? shionPos : ev.at === 'c' ? chiefPos : ev.at === 'R' ? ruriPos
-    : ev.at === 'T' && termAt ? { x: termAt.x + 0.5, y: termAt.y + 1.5 } : ev.look ? markAt(ev.at) : null);
+  const posOf = (ev) => ev.fragment ? ev.p : (ev.at === 'K' ? shionPos : ev.at === 'c' ? chiefPos : ev.at === 'R' ? ruriPos : ev.at === 'N' ? akanePos
+    : ev.at === 'T' && termAt ? { x: termAt.x + 0.5, y: termAt.y + 1.5 } : markAt(ev.at));
   /* 調べられる物 (地図の looks)。話の進み具合と関係なく読める */
   const looks = (map.looks || []).map(l => ({ ...l, look: true, label: '調べる' }));
 
@@ -794,6 +836,7 @@ export function openWorld(protocols, opts = {}) {
       g.userData.r1.material.color.setRGB(0.75 + 0.25 * Math.abs(Math.sin(t * 3)), 0.1, 0.12);
     }
     if (ruriAt) { ruri.rotation.y = Math.atan2(pos.x - ruriPos.x, pos.y - ruriPos.y); ruri.userData.jelly.position.y = 1.58 + Math.sin(t * 1.6) * 0.03; }
+    if (akaneAt) akane.rotation.y = Math.atan2(pos.x - akanePos.x, pos.y - akanePos.y);
     for (const f of frags) if (f.mesh.visible) { f.mesh.rotation.y = t * 1.2; f.mesh.position.y = 0.7 + Math.sin(t * 2 + f.p.x) * 0.06; }
     scenery.update(t, dt);
     syncGuide(t, dt);
