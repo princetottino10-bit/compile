@@ -249,22 +249,27 @@ export function openWorld(protocols, opts = {}) {
      (Sprite は scale.x を負にしても裏返らない。前に「左へ歩くと後ろ向きに走る」と言われたのはこのため) */
   const shionAt = M.find(map, 'K')[0];
   const loader = new THREE.TextureLoader();
-  const chibi = {};
-  for (const dir of ['front', 'side', 'back']) {
-    for (const fr of ['stand', 'walk1', 'walk2']) {
-      const tex = keep(loader.load('art/chibi/shion_' + dir + '_' + fr + '.webp'));
-      tex.colorSpace = THREE.SRGBColorSpace;
-      chibi[dir + '_' + fr] = tex;
-      if (dir === 'side') {
-        /* 左向き: 同じ絵を、UV を左右反転して貼る */
-        const left = keep(tex.clone());
-        left.wrapS = THREE.RepeatWrapping;
-        left.repeat.set(-1, 1);
-        left.offset.set(1, 0);
-        chibi['left_' + fr] = left;
+  /* id ごとの9枚 (art/chibi/<id>_<向き>_<足>.webp) と、左向き3枚 */
+  const chibiSet = (id) => {
+    const set = {};
+    for (const dir of ['front', 'side', 'back']) {
+      for (const fr of ['stand', 'walk1', 'walk2']) {
+        const tex = keep(loader.load('art/chibi/' + id + '_' + dir + '_' + fr + '.webp'));
+        tex.colorSpace = THREE.SRGBColorSpace;
+        set[dir + '_' + fr] = tex;
+        if (dir === 'side') {
+          /* 左向き: 同じ絵を、UV を左右反転して貼る */
+          const left = keep(tex.clone());
+          left.wrapS = THREE.RepeatWrapping;
+          left.repeat.set(-1, 1);
+          left.offset.set(1, 0);
+          set['left_' + fr] = left;
+        }
       }
     }
-  }
+    return set;
+  };
+  const chibi = chibiSet('shion');
   /* 発光 (ブルーム) で白く飛ばないよう、トーンマップを外して明るさを少し抑える */
   const shionMat = keep(new THREE.SpriteMaterial({ map: chibi.front_stand, transparent: true, toneMapped: false }));
   shionMat.color.setScalar(0.7);
@@ -276,6 +281,23 @@ export function openWorld(protocols, opts = {}) {
   const shionShadow = new THREE.Mesh(keep(new THREE.CircleGeometry(0.55, 24)), keep(new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.45 })));
   shionShadow.rotation.x = -Math.PI / 2;
   scene.add(shion, shionShadow);
+  /* 立っている人 (瑠璃・茜): 紫苑と同じ大きさのちび。あなたのいる方を向く */
+  const npcChibi = (id) => {
+    const set = chibiSet(id);
+    const mat = keep(new THREE.SpriteMaterial({ map: set.front_stand, transparent: true, toneMapped: false }));
+    mat.color.setScalar(0.7);
+    const sp = new THREE.Sprite(mat);
+    sp.center.set(0.5, 0.02);
+    sp.scale.set(CHIBI, CHIBI, 1);
+    sp.userData = { set, mat };
+    return sp;
+  };
+  const faceTo = (sp, from, to) => {
+    const dx = to.x - from.x, dy = to.y - from.y;
+    const dir = Math.abs(dx) >= Math.abs(dy) ? (dx < 0 ? 'left' : 'side') : dy < 0 ? 'back' : 'front';
+    const tex = sp.userData.set[dir + '_stand'];
+    if (sp.userData.mat.map !== tex) { sp.userData.mat.map = tex; sp.userData.mat.needsUpdate = true; }
+  };
 
   /* あなた (機体4097) の3Dモデル: Blender で作った art/models/hero4097.glb (scripts/blender/chibi_rig.py。見た目の決まりは
      .claude/skills/compile-cast/hero-4097.md)。読めたら、仮の人型と入れ替える。読めなければ仮の人型のまま。
@@ -352,64 +374,21 @@ export function openWorld(protocols, opts = {}) {
   chief.position.copy(world(chiefPos, 0));
   chief.scale.setScalar(1);
 
-  /* 瑠璃 (1章の案内係): ちびキャラの絵ができるまでの仮の姿。水色の制服の人型と、頭のクラゲ (半透明の傘)。
-     名乗るまでは名札を「案内係」にする */
+  /* 瑠璃 (1章の案内係): ちびの絵 (asagi)。名乗るまでは名札を「案内係」にする */
   const ruriAt = M.find(map, 'R')[0];
   const ruriPos = ruriAt ? { x: ruriAt.x + 0.5, y: ruriAt.y + 0.5 } : { x: -99, y: -99 };
-  const ruri = new THREE.Group();
+  const ruri = ruriAt ? npcChibi('asagi') : new THREE.Group();
   if (ruriAt) {
-    const uni = keep(new THREE.MeshStandardMaterial({ color: 0xe8eef6, roughness: 0.6 }));
-    const navy = keep(new THREE.MeshStandardMaterial({ color: 0x223a6b, roughness: 0.6 }));
-    const hair = keep(new THREE.MeshStandardMaterial({ color: 0x9fdcf0, roughness: 0.5 }));
-    const skirt = new THREE.Mesh(keep(new THREE.ConeGeometry(0.3, 0.5, 18)), navy);
-    skirt.position.y = 0.62;
-    const top = new THREE.Mesh(keep(new THREE.CapsuleGeometry(0.17, 0.3, 6, 14)), uni);
-    top.position.y = 1.02;
-    const headR = new THREE.Mesh(keep(new THREE.SphereGeometry(0.18, 20, 14)), hair);
-    headR.position.y = 1.42;
-    const tails = [-0.2, 0.2].map((x) => { const t = new THREE.Mesh(keep(new THREE.CapsuleGeometry(0.06, 0.32, 4, 8)), hair); t.position.set(x, 1.3, -0.04); return t; });
-    const jelly = new THREE.Mesh(keep(new THREE.SphereGeometry(0.14, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2)),
-      keep(new THREE.MeshBasicMaterial({ color: 0xbfefff, transparent: true, opacity: 0.55 })));
-    jelly.position.set(0.08, 1.58, 0);
-    const shins = [-0.08, 0.08].map((x) => { const l = new THREE.Mesh(keep(new THREE.CapsuleGeometry(0.05, 0.3, 4, 8)), uni); l.position.set(x, 0.22, 0); return l; });
-    const glow = new THREE.PointLight(0x7fdcff, 1.2, 3);
-    glow.position.set(0, 1.6, 0.4);
-    ruri.add(skirt, top, headR, jelly, glow, ...tails, ...shins);
-    ruri.userData = { jelly };
     ruri.position.copy(world(ruriPos, 0));
     scene.add(ruri);
     blob(1.1).position.copy(world(ruriPos, 0.015));
   } else ruri.visible = false;
 
-  /* 茜 (2章の家事係): ちびキャラの絵ができるまでの仮の姿。黒と深い赤のメイド服 (白は入れない。compile-cast)、黒い髪、頭に黒いレース、手にお盆。
-     名乗るまでは名札を「家事係」にする */
+  /* 茜 (2章の家事係): ちびの絵 (nadeshiko)。名乗るまでは名札を「家事係」にする */
   const akaneAt = M.find(map, 'N')[0];
   const akanePos = akaneAt ? { x: akaneAt.x + 0.5, y: akaneAt.y + 0.5 } : { x: -99, y: -99 };
-  const akane = new THREE.Group();
+  const akane = akaneAt ? npcChibi('nadeshiko') : new THREE.Group();
   if (akaneAt) {
-    const black = keep(new THREE.MeshStandardMaterial({ color: 0x15121a, roughness: 0.6 }));
-    const red = keep(new THREE.MeshStandardMaterial({ color: 0x7a1424, roughness: 0.55 }));
-    const skin = keep(new THREE.MeshStandardMaterial({ color: 0xf1d6c8, roughness: 0.7 }));
-    const skirt = new THREE.Mesh(keep(new THREE.ConeGeometry(0.34, 0.6, 18)), black);
-    skirt.position.y = 0.58;
-    const apron = new THREE.Mesh(keep(new THREE.ConeGeometry(0.26, 0.5, 18, 1, true, -0.9, 1.8)), red);
-    apron.position.y = 0.6;
-    const top = new THREE.Mesh(keep(new THREE.CapsuleGeometry(0.17, 0.3, 6, 14)), red);
-    top.position.y = 1.02;
-    const face = new THREE.Mesh(keep(new THREE.SphereGeometry(0.17, 20, 14)), skin);
-    face.position.y = 1.42;
-    const hair = new THREE.Mesh(keep(new THREE.SphereGeometry(0.19, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.6)), black);
-    hair.position.set(0, 1.45, -0.02);
-    const lace = new THREE.Mesh(keep(new THREE.TorusGeometry(0.15, 0.025, 6, 20, Math.PI)), black);
-    lace.position.set(0, 1.56, 0.02);
-    const tray = new THREE.Mesh(keep(new THREE.CylinderGeometry(0.2, 0.2, 0.02, 20)), keep(new THREE.MeshStandardMaterial({ color: 0x8a6a3a, roughness: 0.3, metalness: 0.6 })));
-    tray.position.set(0, 1.0, 0.3);
-    const cup = new THREE.Mesh(keep(new THREE.CylinderGeometry(0.05, 0.04, 0.06, 12)), red);
-    cup.position.set(0.05, 1.05, 0.3);
-    const shins = [-0.08, 0.08].map((x) => { const l = new THREE.Mesh(keep(new THREE.CapsuleGeometry(0.05, 0.3, 4, 8)), black); l.position.set(x, 0.22, 0); return l; });
-    const glow = new THREE.PointLight(0xff6a5a, 0.9, 3);
-    glow.position.set(0, 1.6, 0.4);
-    akane.add(skirt, apron, top, face, hair, lace, tray, cup, glow, ...shins);
     akane.position.copy(world(akanePos, 0));
     scene.add(akane);
   }
@@ -835,8 +814,8 @@ export function openWorld(protocols, opts = {}) {
       g.userData.body.rotation.y = Math.sin(t * 0.9 + (g === chief ? 1 : 0)) * 0.7;
       g.userData.r1.material.color.setRGB(0.75 + 0.25 * Math.abs(Math.sin(t * 3)), 0.1, 0.12);
     }
-    if (ruriAt) { ruri.rotation.y = Math.atan2(pos.x - ruriPos.x, pos.y - ruriPos.y); ruri.userData.jelly.position.y = 1.58 + Math.sin(t * 1.6) * 0.03; }
-    if (akaneAt) akane.rotation.y = Math.atan2(pos.x - akanePos.x, pos.y - akanePos.y);
+    if (ruriAt) { faceTo(ruri, ruriPos, pos); ruri.position.copy(world(ruriPos, Math.sin(t * 2 + 1) * 0.015)); }
+    if (akaneAt) { faceTo(akane, akanePos, pos); akane.position.copy(world(akanePos, Math.sin(t * 2 + 2) * 0.015)); }
     for (const f of frags) if (f.mesh.visible) { f.mesh.rotation.y = t * 1.2; f.mesh.position.y = 0.7 + Math.sin(t * 2 + f.p.x) * 0.06; }
     scenery.update(t, dt);
     syncGuide(t, dt);
