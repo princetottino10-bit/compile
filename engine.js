@@ -4098,7 +4098,11 @@ function smartPicks(st, req) {
       if (req.prompt === 'optional-shift' && req.context === AI_LOCK_COVER && aiLockKeepsCover(st, me)) return [];
       /* ロック特化: PSYCHIC 4 の「相手のカードを戻す」は使う (このカードが裏返って値は下がるが、相手の手を1つ遅らせる)。
          相手の合計がいちばん高いラインの一番上を戻す */
-      if (req.prompt === 'optional-return' && req.context === 'PSYCHIC_5' && AI_LOCK_W.returnWithP4 && aiIsLockSpecialist(st, me)) {
+      /* ぱうぷるの指し方 (2026-10-14): PSYCHIC 4 の効果はすぐ使わずに取っておき、リフレッシュのような
+         手の空いた手番で使う。使うとこのカードが裏返るので、カードを出した手番では温存する (評価に任せると一度も使わなかった) */
+      const p4Downtime = req.prompt === 'optional-return' && req.context === 'PSYCHIC_5'
+        && st.turn === me && !!st.pending && !!st.pending.action && st.pending.action.type === 'refresh';
+      if (p4Downtime || (req.prompt === 'optional-return' && req.context === 'PSYCHIC_5' && AI_LOCK_W.returnWithP4 && aiIsLockSpecialist(st, me))) {
         let best = null, bestSc = -Infinity;
         for (const uid of req.candidates) {
           const loc = locate(st, uid);
