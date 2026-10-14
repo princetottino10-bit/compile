@@ -4016,6 +4016,8 @@ function effectSource(step) {
   return x.slice(0, x.lastIndexOf('|'));
 }
 
+/* MIRROR 1 が相手の中段を写したときのログの行 (engine.js の mirrorMiddle)。1つ目が写した側、2つ目が写された側 */
+const COPY_RE = /\[([A-Z]+_\d)\] 相手の ([A-Z]+_\d) の中段をコピーして解決/;
 /* そのステップの主役カードを光らせ、効果テキストを出す */
 async function cueFor(step, st) {
   const cue = step.cue || step;
@@ -4037,6 +4039,25 @@ async function cueFor(step, st) {
   /* 効果が発動したとき (どの段かが分かるとき) だけ、右上に発動の帯を滑り込ませる (マスターデュエル風)。
      プレイや削除などの手では出さない (裏向きでプレイした札が「発動」に見えてしまう)。
      左上の詳細パネルは触ったカードのまま替えない */
+  /* MIRROR 1 が相手の中段を写したとき: 帯には MIRROR 1 自身の文ではなく、写した中段の文を出す */
+  const copy = msg.match(COPY_RE);
+  const copied = copy && defIndex[copy[2]];
+  if (copied && card.faceUp && copied.middle) {
+    const copiedUid = Object.keys(st.cards).find(k => st.cards[k].def === copy[2] && st.cards[k].faceUp);
+    const ms = Math.max(FX_BANNER_MS / settings().speed, demoMode ? readMs(copied.middle) + 400 : 0);
+    UI.showFxBanner({
+      name: def.proto + ' ' + def.value, color: def.color, tag: 'コピー',
+      via: { name: copied.proto + ' ' + copied.value, color: copied.color },
+      zone: 'middle', text: copied.middle, mine: card.owner === ME,
+      who: spectate ? specName(card.owner) : null
+    }, ms);
+    /* 写された相手のカードも光らせて、どれを写したかを盤面で示す */
+    const pulses = [board.pulse(uid, def.color, 380)];
+    if (copiedUid) pulses.push(board.pulse(copiedUid, copied.color, 380));
+    if (demoMode) pulses.push(TW.wait(readMs(copied.middle)));
+    await Promise.all(pulses);
+    return;
+  }
   if (zone && card.faceUp && def[zone]) {
     UI.showFxBanner({
       name: def.proto + ' ' + def.value, color: def.color,
@@ -4685,7 +4706,8 @@ function bindPickBar(el) {
 function showSourcePanel(req) {
   if (!req || req === pickPanelReq || isCompactHandUI()) return;
   pickPanelReq = req;
-  const d = req.context && defIndex[req.context];
+  /* MIRROR 1 で写した中段の選択なら、写した元のカードの効果を出す */
+  const d = (req.copied && defIndex[req.copied]) || (req.context && defIndex[req.context]);
   if (d) { previewUid = null; UI.showCardPanel(defDetail(d)); }
 }
 
@@ -4767,7 +4789,7 @@ function renderBoardPick() {
 /* 選択の1行の帯: [効果の元のカード] 何を選ぶか (数) [戻る] [しない]。
    手札のすぐ上に出す (three-play.html の .pick-ribbon)。元のカードを押すと効果の全文 */
 function pickRibbon(req, m) {
-  const s = sourceInfo(req && req.context);
+  const s = reqSource(req);
   const d = s && defIndex[s.def];
   const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   return '<button type="button" class="rb-peek" aria-pressed="false" title="帯を透かして盤面を見る" aria-label="盤面を見る">&#128065;</button>' +
@@ -5384,7 +5406,7 @@ function arrangeOnBoard(req, opts) {
     const render = () => {
       const isIdentity = perm[0] === 0 && perm[1] === 1 && perm[2] === 2;
       /* 選択と同じ1行の帯 (手札の上)。確定は盤面の板の横に浮かぶボタン (#arrGo) で、どの入れ替えも確定を押してから決まる */
-      const s = sourceInfo(req && req.context);
+      const s = reqSource(req);
       const d = s && defIndex[s.def];
       const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
       const text = control
@@ -6626,11 +6648,20 @@ function sourceInfo(defId) {
   const d = defId && defIndex[defId];
   return d ? { def: d.id, name: d.proto + ' ' + d.value, color: d.color } : null;
 }
+/* 選択の発動元。MIRROR 1 で写した中段の選択なら、写した元のカードを「MIRROR 1 › DARKNESS 1」の形で出し、
+   押したときに読む効果も写した元のカードにする (MIRROR 1 の文を出しても何を選んでいるのか分からない) */
+function reqSource(req) {
+  const s = sourceInfo(req && req.context);
+  const c = req && req.copied && defIndex[req.copied];
+  if (!s || !c) return s;
+  return { def: c.id, name: s.name + ' › ' + c.proto + ' ' + c.value, color: c.color };
+}
 
 function choiceCtx() {
   return {
     cardName,
     sourceInfo,
+    reqSource,
     onSource: (defId) => showCardNoteFor(defId),
     protoInfo: (name) => {
       const st = shown();

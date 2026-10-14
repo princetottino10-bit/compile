@@ -336,6 +336,8 @@ function skipCacheFor(st, side) {
 /* ---------- 選択(request / 再開) ---------- */
 
 function choose(ctx, req) {
+  /* MIRROR 1 で写した中段の選択: context は MIRROR 1 のまま、写した元を copied に入れる */
+  if (ctx.copying && req.context === ctx.copying.source && !req.copied) req.copied = ctx.copying.def;
   ctx.qn++;
   req.id = 'q' + ctx.qn;
   if (ctx.ci < ctx.choices.length) {
@@ -1457,10 +1459,15 @@ function execOp(ctx, fr, op) {
         : choose(ctx, { kind: 'pickCard', player: fr.controller, candidates: cands, min: op.optional ? 0 : 1, max: 1,
           prompt: 'mirror-middle', context: defOf(st, fr.source).id })[0];
       if (!pick) { fr.done = false; return; }
-      log(ctx, `[${defOf(st, fr.source).id}] ${DEFS[st.cards[pick].def].id} の中段コマンドをコピー解決`, fr.source);
+      const srcId = defOf(st, fr.source).id, copiedId = DEFS[st.cards[pick].def].id;
+      /* 画面がこの行から「どのカードの中段を写したか」を読む (帯とログ)。書き方を変えるなら js3d/main.js の COPY_RE も */
+      log(ctx, `[${srcId}] 相手の ${copiedId} の中段をコピーして解決`, fr.source);
       const loc = locate(st, fr.source);
       const sub = { source: fr.source, slot: 'middle', controller: fr.controller, line: loc ? loc.line : fr.line, bind: {}, done: false };
-      execOps(ctx, sub, DEFS[st.cards[pick].def].eff.middle.ops);
+      /* 写した効果の途中で聞く選択には、写した元のカードを添える (画面が「何の効果で選んでいるか」を出せるように) */
+      const prevCopy = ctx.copying;
+      ctx.copying = { source: srcId, def: copiedId };
+      try { execOps(ctx, sub, DEFS[st.cards[pick].def].eff.middle.ops); } finally { ctx.copying = prevCopy; }
       fr.done = true;
       return;
     }
