@@ -23,35 +23,45 @@ export function lineKey(text) {
   return h.toString(16).padStart(8, '0');
 }
 
-/* 会話の声: 設定の「キャラの声の音量」で鳴らし、次の行へ進んだら止める。無い行は黙って飛ばす */
-function makeVoice() {
-  let stop = null, seq = 0, endsAt = 0;
-  const halt = () => { seq++; endsAt = 0; if (stop) { stop(); stop = null; } };
+/* 会話の声: 設定の「キャラの声の音量」で鳴らし、次の行へ進んだら止める。無い行は黙って飛ばす。
+   onSettle: 声が鳴り始めた (または無いと分かった) ときに呼ぶ。声は読み込みに時間がかかり、短い行は文字を出し終えたあとで鳴り始めるので、
+   オートの待ち時間はそこで計り直す */
+function makeVoice(onSettle = () => {}) {
+  let stop = null, seq = 0, endsAt = 0, pending = false;
+  const halt = () => { seq++; endsAt = 0; pending = false; if (stop) { stop(); stop = null; } };
   const play = (id, text, pa = false) => {
     halt();
     if (!id || isMuted()) return;
     const vol = Math.max(0, Math.min(1, ((settings().voiceVol ?? 80) | 0) / 100)) * voiceGain(id);
     if (!vol) return;
     const my = seq;
+    pending = true;
     /* 館内放送の行は、天井のスピーカーの音にして、チャイムのあとに鳴らす (avatar.js の PA_LEAD_MS と同じ間) */
+    const settle = () => { if (my !== seq) return; pending = false; onSettle(); };
     playClip('art/voice/' + id + '/story/' + lineKey(text) + '.mp3?v=' + VOICE_VER, vol, pa ? { pa: true, delay: 0.75 } : {}).then((h) => {
-      if (!h) return;
-      if (my !== seq) { h.stop(); return; }
-      stop = h.stop;
-      endsAt = performance.now() + h.duration * 1000;
-      duckBgm(h.duration * 1000 + 200);
-    }, () => { /* 声が無くても読める */ });
+      if (h && my !== seq) { h.stop(); return; }
+      if (h) {
+        stop = h.stop;
+        endsAt = performance.now() + h.duration * 1000;
+        duckBgm(h.duration * 1000 + 200);
+      }
+      settle();
+    }, settle /* 声が無くても読める */);
   };
   /* 声の残り (ミリ秒)。鳴っていなければ 0 */
   const left = () => Math.max(0, endsAt - performance.now());
-  return { play, halt, left };
+  /* 声を読み込んでいる途中 (鳴るかどうか、まだ分からない) */
+  const loading = () => pending;
+  return { play, halt, left, loading };
 }
 
 /* ---------- 既読・ログ・オート (ADV の当たり前の機能。.claude/skills/story-craft/research/06_adv_ui.md) ---------- */
 const READ_KEY = 'compileStoryRead';
 const AUTO_KEY = 'compileStoryAuto';
 const LOG_MAX = 200;
-const AUTO_WAIT = 900, AUTO_PER_CHAR = 55;      // オート: 読み終えてから次へ進むまでの間 (文字が多いほど長く)
+/* オート: 文字を出し終えてから次へ進むまでの間 (文字が多いほど長く)。1文字 55ms だと、文字送りと合わせても1秒に12文字ほどで、
+   読み切る前に進んでしまっていた。文字送りと合わせて1秒に8文字ほど + 最後の一呼吸。声があれば、声が終わってから一呼吸 */
+const AUTO_WAIT = 1200, AUTO_PER_CHAR = 95, AUTO_AFTER_VOICE = 800;
 const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* private mode */ } }
@@ -114,8 +124,9 @@ export function playScene(lines, opts = {}) {
   const textEl = el.querySelector('.ss-text');
   const box = el.querySelector('.ss-box');
   const alertEl = el.querySelector('.ss-alert');
-  let i = -1, typing = null, full = '';
-  const voice = makeVoice();
+  let i = -1, typing = null, full = '', shownAt = 0;   // shownAt: 行の文字を全部出し終えた時刻 (オートの読む時間はここから数える)
+  let onVoice = () => {};
+  const voice = makeVoice(() => onVoice());
   const skipBtn = el.querySelector('.ss-skip'), autoBtn = el.querySelector('.ss-auto'), logBtn = el.querySelector('.ss-log');
   let auto = !!store.get(AUTO_KEY, false), autoTimer = 0, armed = 0, logView = null;
   autoBtn.classList.toggle('on', auto);
@@ -131,13 +142,24 @@ export function playScene(lines, opts = {}) {
       el.innerHTML = '';
       resolve();
     };
-    /* オート: 文字を出し終え、声も終えたら、少し待って次へ */
+    /* オート: 文字を出し終え、声も終えたら、少し待って次へ。
+       読む時間と声の長さの長いほうを待つ。声を読み込んでいる途中なら、鳴り始めたとき (voice の onSettle) に計り直す */
     const scheduleAuto = () => {
       clearTimeout(autoTimer);
       if (!auto || typing || logView) return;
-      autoTimer = setTimeout(() => { if (auto && !logView && !el.classList.contains('hide-ui')) advance(); },
-        voice.left() + AUTO_WAIT + full.length * AUTO_PER_CHAR);
+      const left = voice.left();
+      const wait = Math.max(shownAt + AUTO_WAIT + full.length * AUTO_PER_CHAR - performance.now(), left ? left + AUTO_AFTER_VOICE : 0);
+      const tick = () => {
+        if (!auto || logView || el.classList.contains('hide-ui')) return;
+        if (voice.loading()) return;                     // 声がこれから鳴る: 鳴り始めたら onVoice で計り直す
+        if (voice.left() > 0) { autoTimer = setTimeout(tick, voice.left() + AUTO_AFTER_VOICE); return; }
+        advance();
+      };
+      autoTimer = setTimeout(tick, Math.max(0, wait));
     };
+    onVoice = scheduleAuto;
+    /* ログを閉じた・枠を戻した・オートを入れた: そこから読み直す時間をとる (すぐ次へ飛ばない) */
+    const resumeAuto = () => { shownAt = performance.now(); scheduleAuto(); };
     /* quiet: 既読を飛ばすときの途中の行。立ち絵・一枚絵の入れ替わりだけ反映して、音も文字の動きも出さない */
     const show = (k, quiet = false) => {
       const line = lines[k];
@@ -193,7 +215,7 @@ export function playScene(lines, opts = {}) {
       typing = setInterval(() => {
         n++;
         textEl.textContent = full.slice(0, n);
-        if (n >= full.length) { clearInterval(typing); typing = null; box.classList.remove('typing'); scheduleAuto(); }
+        if (n >= full.length) { clearInterval(typing); typing = null; box.classList.remove('typing'); shownAt = performance.now(); scheduleAuto(); }
       }, terminal ? TYPE_MS_TERMINAL : TYPE_MS);
     };
     const advance = () => {
@@ -203,6 +225,7 @@ export function playScene(lines, opts = {}) {
         typing = null;
         textEl.textContent = full;
         box.classList.remove('typing');
+        shownAt = performance.now();
         scheduleAuto();
         return;
       }
@@ -235,10 +258,10 @@ export function playScene(lines, opts = {}) {
       auto = !auto;
       store.set(AUTO_KEY, auto);
       autoBtn.classList.toggle('on', auto);
-      if (auto && !typing) scheduleAuto(); else clearTimeout(autoTimer);
+      if (auto && !typing) resumeAuto(); else clearTimeout(autoTimer);
     };
     /* ログ: これまでの会話を、上へさかのぼって読める。どこかを押すか、Esc・L で閉じる */
-    const closeLog = () => { if (!logView) return; logView.remove(); logView = null; scheduleAuto(); };
+    const closeLog = () => { if (!logView) return; logView.remove(); logView = null; resumeAuto(); };
     const openLog = () => {
       if (logView) return;
       clearTimeout(autoTimer);
@@ -253,7 +276,7 @@ export function playScene(lines, opts = {}) {
       wrap.scrollTop = wrap.scrollHeight;
     };
     /* 文字の枠を消して、一枚絵や立ち絵を見る (H・右クリック)。もう一度押すか、画面を押すと戻る */
-    const toggleHide = () => { el.classList.toggle('hide-ui'); if (el.classList.contains('hide-ui')) clearTimeout(autoTimer); else scheduleAuto(); };
+    const toggleHide = () => { el.classList.toggle('hide-ui'); if (el.classList.contains('hide-ui')) clearTimeout(autoTimer); else resumeAuto(); };
     const onKey = (ev) => {
       if (logView) { if (ev.key === 'Escape' || ev.key.toLowerCase() === 'l') { ev.preventDefault(); closeLog(); } return; }
       const k = ev.key.toLowerCase();

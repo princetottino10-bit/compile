@@ -10,10 +10,18 @@ Aux 2:
 
 Main 2:
     The publisher's toolkit contains no card illustrations.  The physical
-    product (see `Compile 2/Compile_ Main 2/Photo/`) uses abstract mosaic
-    shard art in each protocol's palette, so we synthesise the same style
-    procedurally: a jittered triangle mosaic with glitch displacement bars.
-    Colors follow data/cards.json so the app stays consistent.
+    product (see `Compile 2/Compile_ Main 2/Photo/`) uses painted scenes cut
+    into displaced rectangular blocks.  We paint one scene per protocol
+    locally (SwarmUI, oneObsession v2.4), break it up with
+    scripts/main2_shatter.py, pull its colours toward the printed card with
+    scripts/main2_grade.py, and drop the 2688x1920 result in
+    `Compile 2/Compile_ Main 2/Illustrations/<Proto>.png` (gitignored).
+    From that one image, like Aux 2:
+        protocol face   -> art/Chaos.webp
+        glitched face   -> art/Chaos_Glitched.webp (heavy glitch() on the face)
+        per-card art    -> six crops (art/1chaos.webp ..)
+    A protocol without an illustration falls back to the old procedural
+    triangle mosaic in its data/cards.json color.
 
 Deterministic: same seed -> same image, safe to re-run.
 """
@@ -28,6 +36,7 @@ from PIL import Image, ImageDraw, ImageFilter
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_DIR = os.path.join(ROOT, 'art')
 AUX2_DIR = os.path.join(ROOT, 'Compile 2', 'Compile_ Aux 2', 'Toolkit', 'Illustrations')
+MAIN2_DIR = os.path.join(ROOT, 'Compile 2', 'Compile_ Main 2', 'Illustrations')
 
 CARD_W, CARD_H = 360, 490      # 個別カード (既存 art/1darkness.webp と同寸)
 FACE_W, FACE_H = 640, 457      # プロトコル面 (既存 art/Darkness.webp と同寸)
@@ -209,10 +218,21 @@ def main():
             total += save_webp(card, '{}{}.webp'.format(n, proto.lower()))
             count += 1
 
-    # ---- Main 2: モザイク・シャードを手続き生成 ----
+    # ---- Main 2: 手元で描いて割った絵があればそれを使う (Aux 2 と同じ切り出し) ----
     for proto in MAIN2:
         rgb = hex_rgb(colors[proto])
         capname = cap(proto)
+        src = os.path.join(MAIN2_DIR, capname + '.png')
+        if os.path.exists(src):
+            illust = Image.open(src).convert('RGB')
+            face = crop_cover(illust, FACE_W, FACE_H)
+            total += save_webp(face, capname + '.webp')
+            total += save_webp(glitch(face, 'gg:' + proto, heavy=True), capname + '_Glitched.webp')
+            count += 2
+            for n, card in enumerate(aux2_cards(illust, seed=proto), start=1):
+                total += save_webp(card, '{}{}.webp'.format(n, proto.lower()))
+                count += 1
+            continue
 
         face = mosaic(FACE_W, FACE_H, 'face:' + proto, rgb, cell=26)
         face = glitch(face, 'fg:' + proto, heavy=False)

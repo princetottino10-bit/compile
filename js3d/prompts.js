@@ -38,7 +38,9 @@ export const OP_LABEL = {
 export function reqText(req, cardName) {
   let t = PROMPT_TEXT[req.prompt] || '選択してください';
   if (req.context) {
-    const label = (cardName && cardName(req.context)) || req.context;
+    let label = (cardName && cardName(req.context)) || req.context;
+    /* MIRROR 1 で写した中段の選択: 写した元も添える */
+    if (req.copied) label += ' › ' + ((cardName && cardName(req.copied)) || req.copied);
     t = '[' + label + '] ' + t;
   }
   return t;
