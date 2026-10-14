@@ -1344,10 +1344,12 @@ async function boot() {
   /* 勝ち抜き戦は2本先取 (序盤のふつうの戦闘は1本先取。run.js の runWinCompiles)。週替わりは2本先取 */
   const winCompiles = storyNode ? storyNode.win : runMode ? (runOpts ? runOpts.winCompiles : RUN_WIN_COMPILES) : undefined;
   /* 短縮マッチ: 3本より少ないコンパイルで決着する (はじめからコンパイル済みのプロトコルがあるのも同じ) */
-  shortMatch = (!!winCompiles && winCompiles < 3) || !!(runOpts && Array.isArray(runOpts.startCompiled) && runOpts.startCompiled.some(n => n > 0));
-  /* ストーリーの「2本先取」は、勝ち抜き戦と同じく自分は 3 本のうち 1 本がコンパイル済みから始まる (相手はそのまま 2 本) */
-  const storyOpts = storyNode && storyNode.kind === 'battle' && storyNode.win < 3
-    ? { winCompilesBySide: [3, storyNode.win], startCompiled: [3 - storyNode.win, 0] } : null;
+  /* ストーリーの対戦: 相手は win 本、自分は 3 本で勝ち。自分は head 本がはじめからコンパイル済み (無ければ 3 - win。
+     「2本先取」は勝ち抜き戦と同じく、自分は 3 本のうち 1 本が済みから始まる)。序盤は初めての人でも勝てるように head で先を譲る */
+  const storyHead = storyNode && storyNode.kind === 'battle' ? (storyNode.head !== undefined ? storyNode.head : 3 - storyNode.win) : 0;
+  const storyOpts = storyNode && storyNode.kind === 'battle' && (storyHead > 0 || storyNode.win < 3)
+    ? { winCompilesBySide: [3, storyNode.win], startCompiled: [storyHead, 0] } : null;
+  shortMatch = (!!winCompiles && winCompiles < 3) || !!(runOpts && Array.isArray(runOpts.startCompiled) && runOpts.startCompiled.some(n => n > 0)) || !!storyOpts;
   /* 共有された棋譜は外から来たものなので、作り直しで落ちても止まらないように */
   let replayBuilt = null;
   if (replayMode) {
