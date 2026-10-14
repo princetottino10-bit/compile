@@ -310,6 +310,95 @@ export function buildRoomState(rm, valOf) {
   };
 }
 
+/* 管理者の AUTO をオンラインで使うときの、CPU に渡す盤面。
+   画面用の盤面 (buildRoomState) は、見えないカード (相手の手札・山札・相手の裏向き) の中身が空なので、
+   エンジンの読みがそのままでは動かない。見えないカードには「その人のデッキのうち、まだ見えていないカード」を仮に入れる。
+   中身はどうせ読みのたびに並べ替えられる (engine の aiInformationState) ので、本当の中身は使わない (のぞき見はしない)。
+   並べ替えはカード名の頭 ('p0:' / 'p1:') で出自を分けるため、見えないカードは 'p<側>:?<元の名前>' に付け替え、
+   CPU の答え (手・選択) は toRoom で元の名前に戻してからサーバーへ送る。作れないとき (タッグの複合プロトコル等) は null */
+export function buildRoomAiState(rm, Engine, valOf) {
+  if (!rm || !rm.game || rm.mode === 'tag' || rm.game.tag) return null;
+  const view = buildRoomState(rm, valOf);
+  const protos = Engine.protos || {};
+  const defs = Engine.defs || {};
+  const sides = [0, 1];
+  if (!sides.every(p => view.players[p].protocols.every(pr => protos[pr.name]))) return null;
+  /* その側のデッキの全カード (各プロトコルのカード) から、見えているものを引いた残り */
+  const pool = sides.map(p => view.players[p].protocols.flatMap(pr => protos[pr.name].slice()));
+  const ownerOf = (c) => {
+    const proto = defs[c.def] && defs[c.def].proto;
+    const has = (p) => view.players[p].protocols.some(pr => pr.name === proto);
+    return has(c.owner) ? c.owner : has(1 - c.owner) ? 1 - c.owner : c.owner;
+  };
+  for (const c of Object.values(view.cards)) {
+    if (!c.def) continue;
+    const list = pool[ownerOf(c)];
+    const i = list.indexOf(c.def);
+    if (i >= 0) list.splice(i, 1);
+  }
+  const rename = {}, back = {};
+  const cards = {};
+  for (const uid of Object.keys(view.cards)) {
+    const c = { ...view.cards[uid] };
+    delete c._value;
+    if (!c.def) {
+      const side = /^hand1|^deck1/.test(c.zone) ? 1 : /^hand0|^deck0/.test(c.zone) ? 0 : c.owner;
+      const list = pool[side].length ? pool[side] : view.players[side].protocols.flatMap(pr => protos[pr.name]);
+      c.def = pool[side].length ? list.shift() : list[0];
+      c.uid = 'p' + side + ':?' + uid;
+      c.knownTo = c.zone === 'hand1' ? 2 : 0;          // 相手の手札は相手だけが知っている
+      rename[uid] = c.uid;
+      back[c.uid] = uid;
+    } else if (c.zone === 'field' || c.zone === 'committed') {
+      c.knownTo = c.faceUp ? 3 : c.owner === 0 ? 1 : 3;   // 自分の裏向きは自分だけ、見えている相手の裏向きは両方
+    } else if (c.zone === 'hand0') c.knownTo = 1;
+    cards[c.uid] = c;
+  }
+  /* 'uid|段' の形 (選択の候補) も、頭の uid だけ付け替える */
+  const swap = (map) => (v) => {
+    if (typeof v !== 'string') return v;
+    if (map[v]) return map[v];
+    const i = v.indexOf('|');
+    return i > 0 && map[v.slice(0, i)] ? map[v.slice(0, i)] + v.slice(i) : v;
+  };
+  const ren = swap(rename);
+  const st = {
+    seed: (Math.random() * 0x7fffffff) | 0, rngN: 0,
+    useControl: view.useControl, turn: view.turn, phase: view.phase, control: view.control, winner: view.winner,
+    players: view.players.map(p => ({
+      protocols: p.protocols.map(pr => ({ ...pr })), hand: p.hand.map(ren), deck: p.deck.map(ren),
+      trash: p.trash.slice(), cannotCompile: false
+    })),
+    lines: view.lines.map(line => line.map(stack => stack.map(ren))),
+    cards, actionLog: [], commitStack: (view.commitStack || []).map(ren), commitSeq: 0,
+    revealed: null, announce: null, pending: null
+  };
+  const toRoom = swap(back);
+  return {
+    state: st,
+    /* サーバーの選択の問いを、この盤面の名前に */
+    request: (req) => {
+      if (!req) return req;
+      const out = JSON.parse(JSON.stringify(req));
+      if (Array.isArray(out.candidates)) out.candidates = out.candidates.map(ren);
+      if (Array.isArray(out.focus)) out.focus = out.focus.map(ren);
+      else if (out.focus) out.focus = ren(out.focus);
+      return out;
+    },
+    /* CPU の手・選択を、サーバーの名前に戻す */
+    action: (a) => (a && a.card ? { ...a, card: toRoom(a.card) } : a),
+    picks: (picks) => (Array.isArray(picks) ? picks.map(p => (Array.isArray(p) ? p.map(toRoom) : toRoom(p))) : picks)
+  };
+}
+
+/* CPU の手が、サーバーの出した合法手のどれかと同じか。同じならサーバーの合法手 (余計な項目の無いもの) を返す */
+export function matchLegalAction(legal, action) {
+  if (!action || !Array.isArray(legal)) return null;
+  const same = (l) => Object.keys(l).every(k => l[k] === undefined || l[k] === action[k])
+    && Object.keys(action).every(k => action[k] === undefined || action[k] === l[k]);
+  return legal.find(same) || null;
+}
+
 /* サーバーのリクエストは常に自分宛て。player をローカル index0 に正規化 */
 export function normRequest(rm) {
   if (!rm.request) return null;
