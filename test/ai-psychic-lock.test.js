@@ -324,3 +324,78 @@ test('ロック特化: 表のサイキック①が覆われずにあれば、ス
     Engine.setAiSpecialist(false);
   }
 });
+
+/* ---- ぱうぷるの手筋 (2026-10-14) ---- */
+function resolveMine(res) {
+  let guard = 0;
+  while (res.requests.length && res.requests[0].player === 0 && guard++ < 10) {
+    const req = res.requests[0];
+    res = Engine.apply(res.state, { type: 'choose', id: req.id, picks: Engine.ai.answer(res.state, req) });
+    assert.equal(res.error, null);
+  }
+  return res;
+}
+
+test('ぱうぷる: 表のサイキック①が一番上なら、ダークネス④で裏向きを上に移して覆い、永続ロックにする', () => {
+  const st = game();
+  const psy = place(st, 'PSYCHIC_2', 0, 0, true);
+  place(st, 'FIRE_6', 0, 2, false);
+  place(st, 'METAL_2', 1, 0, true);
+  setHand(st, 0, ['DARKNESS_5', 'FIRE_3', 'PSYCHIC_6']);
+  const act = Engine.ai.action(st);
+  assert.equal(act.card, uidOf('DARKNESS_5', 0), 'ダークネス④を選ぶ: ' + JSON.stringify(act));
+  const fin = resolveMine(Engine.apply(st, act)).state;
+  const stack = fin.lines[0][0];
+  assert.ok(stack.indexOf(psy) < stack.length - 1, '①が覆われている: ' + stack.map(u => fin.cards[u].def).join(','));
+  assert.equal(fin.cards[psy].faceUp, true);
+});
+
+test('ぱうぷる: ファイア⓪に重ねたときの反転で、裏返ったサイキック①をもう一度表にする', () => {
+  const st = game();
+  const psy = place(st, 'PSYCHIC_2', 0, 0, false);
+  place(st, 'FIRE_1', 0, 2, true);
+  place(st, 'METAL_2', 1, 0, true);
+  setHand(st, 0, ['DARKNESS_6', 'FIRE_6', 'PSYCHIC_6']);
+  const act = Engine.ai.action(st);
+  assert.equal(act.line, 2, 'ファイア⓪の上に重ねる: ' + JSON.stringify(act));
+  const fin = resolveMine(Engine.apply(st, act)).state;
+  assert.equal(fin.cards[psy].faceUp, true, '①が表に戻っている');
+});
+
+test('ぱうぷる: ファイア⓪の反転は、相手の値の大きい表向きを選ぶ (相手の裏向きや値の小さい札より)', () => {
+  const st = game();
+  place(st, 'METAL_6', 1, 0, true);
+  place(st, 'LIGHT_3', 1, 1, true);
+  place(st, 'WATER_2', 1, 2, false);
+  setHand(st, 0, ['FIRE_1', 'FIRE_6', 'PSYCHIC_6']);
+  let res = Engine.apply(st, { type: 'play', card: uidOf('FIRE_1', 0), line: 2, faceUp: true });
+  const req = res.requests[0];
+  assert.equal(req.context, 'FIRE_1');
+  assert.deepEqual(Engine.ai.answer(res.state, req), [uidOf('METAL_6', 1)]);
+});
+
+test('ぱうぷる: ヘイト①は例外で、自分の裏向きなら積極的に反転して効果を使う', () => {
+  const st = Engine.newGame({ p0: ['HATE', 'PSYCHIC', 'FIRE'], p1: ['METAL', 'LIGHT', 'WATER'], seed: 9, first: 0 }).state;
+  place(st, 'WATER_2', 1, 2, false);
+  place(st, 'LIGHT_3', 1, 1, true);
+  place(st, 'HATE_2', 0, 0, false);
+  setHand(st, 0, ['FIRE_1', 'FIRE_6', 'PSYCHIC_6', 'PSYCHIC_3']);
+  const res = Engine.apply(st, { type: 'play', card: uidOf('FIRE_1', 0), line: 2, faceUp: true });
+  assert.deepEqual(Engine.ai.answer(res.state, res.requests[0]), [uidOf('HATE_2', 0)]);
+});
+
+test('ぱうぷる: サイキック④の効果は、カードを出した手番では取っておき、リフレッシュの手番で使う', () => {
+  const setup = (hand) => {
+    const st = game();
+    place(st, 'PSYCHIC_5', 0, 0, true);
+    place(st, 'METAL_4', 1, 1, true);
+    setHand(st, 0, hand);
+    return st;
+  };
+  const played = resolveMine(Engine.apply(setup(['FIRE_6', 'DARKNESS_6', 'PSYCHIC_6', 'FIRE_3']),
+    { type: 'play', card: uidOf('FIRE_6', 0), line: 2, faceUp: true })).state;
+  assert.equal(played.cards[uidOf('PSYCHIC_5', 0)].faceUp, true, '出した手番では使わない');
+  const refreshed = resolveMine(Engine.apply(setup(['FIRE_6']), { type: 'refresh' })).state;
+  assert.equal(refreshed.cards[uidOf('PSYCHIC_5', 0)].faceUp, false, 'リフレッシュの手番で使う');
+  assert.equal(refreshed.lines[1][1].length, 0, '相手のカードを戻している');
+});

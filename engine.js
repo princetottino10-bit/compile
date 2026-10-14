@@ -3588,6 +3588,44 @@ function aiValnetLogit(st, me) {
   return h[0];
 }
 
+/* ---------- コンボ学習 (組み合わせの値) ----------
+   CPU 同士の対戦から「自分の持ち札のどの2枚が同時にあると勝ちやすいか」を学んだ表 (scripts/combo_train.py)。
+   札は「手札 H / 一番上の表 T / 覆われた表 C / 裏向き D」+ 内部 ID (scripts/combo_features.js と同じ)。
+   値 = Σ 1枚ずつの重み + Σ 2枚の組の <v_i, v_j> (ロジット)。setAiComboNet(model, weight) で aiScore に × weight を足す。
+   学習モデル (valnet) とは別の項。渡さなければ何もしない */
+let AI_COMBONET = null, AI_COMBONET_W = 0;
+function setAiComboNet(model, weight) {
+  if (!model || !model.tokens) { AI_COMBONET = null; AI_COMBONET_W = 0; return; }
+  const tok = new Map();
+  for (const key of Object.keys(model.tokens)) {
+    const t = model.tokens[key];
+    tok.set(key, { w: +t.w || 0, v: Float64Array.from(t.v || []) });
+  }
+  AI_COMBONET = { k: model.k | 0, tok };
+  AI_COMBONET_W = +weight || 0;
+}
+function aiComboLogit(st, me) {
+  const k = AI_COMBONET.k, sum = new Float64Array(k);
+  let z = 0, sq = 0;
+  const add = (key) => {
+    const t = AI_COMBONET.tok.get(key);
+    if (!t) return;
+    z += t.w;
+    for (let i = 0; i < k; i++) { sum[i] += t.v[i]; sq += t.v[i] * t.v[i]; }
+  };
+  for (const uid of st.players[me].hand) add('H:' + st.cards[uid].def);
+  for (let l = 0; l < 3; l++) {
+    const stack = st.lines[l][me];
+    for (let j = 0; j < stack.length; j++) {
+      const c = st.cards[stack[j]];
+      add((!c.faceUp ? 'D:' : j === stack.length - 1 ? 'T:' : 'C:') + c.def);
+    }
+  }
+  let pair = 0;
+  for (let i = 0; i < k; i++) pair += sum[i] * sum[i];
+  return z + 0.5 * (pair - sq);
+}
+
 function aiScore(st, me) {
   if (st.winner === me) return 1e9;
   if (st.winner === 1 - me) return -1e9;
@@ -3767,6 +3805,7 @@ function aiScore(st, me) {
 
   if (st.turn === me) sc += 5;
   if (AI_VALNET && AI_VALNET_W) sc += AI_VALNET_W * aiValnetLogit(st, me);
+  if (AI_COMBONET && AI_COMBONET_W) sc += AI_COMBONET_W * aiComboLogit(st, me);
   return sc;
 }
 
@@ -4059,7 +4098,11 @@ function smartPicks(st, req) {
       if (req.prompt === 'optional-shift' && req.context === AI_LOCK_COVER && aiLockKeepsCover(st, me)) return [];
       /* ロック特化: PSYCHIC 4 の「相手のカードを戻す」は使う (このカードが裏返って値は下がるが、相手の手を1つ遅らせる)。
          相手の合計がいちばん高いラインの一番上を戻す */
-      if (req.prompt === 'optional-return' && req.context === 'PSYCHIC_5' && AI_LOCK_W.returnWithP4 && aiIsLockSpecialist(st, me)) {
+      /* ぱうぷるの指し方 (2026-10-14): PSYCHIC 4 の効果はすぐ使わずに取っておき、リフレッシュのような
+         手の空いた手番で使う。使うとこのカードが裏返るので、カードを出した手番では温存する (評価に任せると一度も使わなかった) */
+      const p4Downtime = req.prompt === 'optional-return' && req.context === 'PSYCHIC_5'
+        && st.turn === me && !!st.pending && !!st.pending.action && st.pending.action.type === 'refresh';
+      if (p4Downtime || (req.prompt === 'optional-return' && req.context === 'PSYCHIC_5' && AI_LOCK_W.returnWithP4 && aiIsLockSpecialist(st, me))) {
         let best = null, bestSc = -Infinity;
         for (const uid of req.candidates) {
           const loc = locate(st, uid);
@@ -4992,9 +5035,9 @@ function aiAnswer(state, req) {
 /* ---------- 公開 API ---------- */
 
 const Engine = {
-  init, newGame, newPuzzle, apply, legalActions, setTrace, setAiPeek, setAiValueNet, setAiLevel, setAiBlunder, setAiThinkBudget, setAiBreadth, setAiPimc, setAiWeights, setAiSpecialist, setAiSpecialistWeights,
+  init, newGame, newPuzzle, apply, legalActions, setTrace, setAiPeek, setAiValueNet, setAiComboNet, setAiLevel, setAiBlunder, setAiThinkBudget, setAiBreadth, setAiPimc, setAiWeights, setAiSpecialist, setAiSpecialistWeights,
   lineTotal, cardValue, compilableLines, canPlay, playBlockReason, locate,
-  ai: { action: aiAction, answer: aiAnswer, score: aiScore, valnetFeatures: aiValnetFeatures, middleFizzles: aiMiddleFizzles, transitionScore: aiTransitionScore, compilePassChance: aiCompilePassChance, informationState: aiInformationState, rootValues: aiRootValues, vetoOrder: aiVetoOrder, actionBias: aiActionBias, opsValue: aiOpsValue, boardEffect: aiBoardEffectScore, randomPicks, smartPicks },
+  ai: { action: aiAction, answer: aiAnswer, score: aiScore, valnetFeatures: aiValnetFeatures, comboLogit: aiComboLogit, middleFizzles: aiMiddleFizzles, transitionScore: aiTransitionScore, compilePassChance: aiCompilePassChance, informationState: aiInformationState, rootValues: aiRootValues, vetoOrder: aiVetoOrder, actionBias: aiActionBias, opsValue: aiOpsValue, boardEffect: aiBoardEffectScore, randomPicks, smartPicks },
   get defs() { return DEFS; },
   get protos() { return PROTOS; }
 };
