@@ -13,7 +13,8 @@ Main 2:
     product (see `Compile 2/Compile_ Main 2/Photo/`) uses painted scenes cut
     into displaced rectangular blocks.  We paint one scene per protocol
     locally (SwarmUI, oneObsession v2.4), break it up with
-    scripts/main2_shatter.py, and drop the 2688x1920 result in
+    scripts/main2_shatter.py, pull its colours toward the printed card with
+    scripts/main2_grade.py, and drop the 2688x1920 result in
     `Compile 2/Compile_ Main 2/Illustrations/<Proto>.png` (gitignored).
     From that one image, like Aux 2:
         protocol face   -> art/Chaos.webp
