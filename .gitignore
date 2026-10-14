@@ -21,3 +21,4 @@ _shots/
 scripts/fuzz_out/
 _valnet/
 _combo/
+_combo_log.txt
