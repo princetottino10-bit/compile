@@ -7,6 +7,8 @@
  * 学習モデル (valnet) のデータとは置き場所 (_combo/) と種の範囲 (既定 900001〜) を分けてある。上書きしない。
  *
  *   node scripts/combo_selfplay.js --games 600 --budget 150 --seed 900001 --out _combo/data_900001.jsonl
+ * デッキを決めて集める (そのデッキの側の局面だけ残す。相手は残りからランダム、先手後手は対局ごとに入れ替え):
+ *   node scripts/combo_selfplay.js --deck PSYCHIC,DARKNESS,FIRE --games 550 --seed 910001 --out _combo/pdf_910001.jsonl
  * 1行 = 1局面: {"k":[トークン...], "s":点数, "sn":次の手番の点数, "y":1/0, "g":対局番号, "t":手番, "p":[自分の3プロトコル]}
  */
 const fs = require('node:fs');
@@ -20,7 +22,7 @@ const { PROTOCOLS } = require('./valnet_features.js');
 const ROOT = path.join(__dirname, '..');
 
 function parseArgs(argv) {
-  const o = { games: 200, budget: 150, seed: 900001, out: '_combo/data.jsonl', workers: 0 };
+  const o = { games: 200, budget: 150, seed: 900001, out: '_combo/data.jsonl', workers: 0, deck: null };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--games') o.games = +argv[++i];
@@ -28,23 +30,27 @@ function parseArgs(argv) {
     else if (a === '--seed') o.seed = +argv[++i];
     else if (a === '--out') o.out = argv[++i];
     else if (a === '--workers') o.workers = +argv[++i];
+    else if (a === '--deck') o.deck = argv[++i].split(',').map(x => x.trim().toUpperCase());
     else { console.error('未知の引数: ' + a); process.exit(1); }
   }
   return o;
 }
 
 /* valnet_selfplay.js と同じ作り方のランダムな編成 */
-function decks(seed) {
+function decks(seed, fixed) {
   let a = seed >>> 0;
   const rnd = () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a);
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
   const pool = PROTOCOLS.slice();
   const pick = () => pool.splice(Math.floor(rnd() * pool.length), 1)[0];
-  return [[pick(), pick(), pick()], [pick(), pick(), pick()]];
+  if (!fixed) return [[pick(), pick(), pick()], [pick(), pick(), pick()]];
+  for (const p of fixed) pool.splice(pool.indexOf(p), 1);
+  const opp = [pick(), pick(), pick()];
+  return seed % 2 ? [fixed, opp] : [opp, fixed];
 }
 
 if (!isMainThread) {
-  const { src, cards, effects, jobs, budget } = workerData;
+  const { src, cards, effects, jobs, budget, deck } = workerData;
   const ctx = { module: { exports: {} }, exports: {}, console, structuredClone, performance };
   ctx.globalThis = ctx;
   vm.runInNewContext(src, ctx, { filename: 'engine.js' });
@@ -55,7 +61,8 @@ if (!isMainThread) {
   if (E.setAiSpecialist) E.setAiSpecialist(false, -1);
   const out = [];
   for (const job of jobs) {
-    const pr = decks(job.seed);
+    const pr = decks(job.seed, deck);
+    const keepSide = deck ? (job.seed % 2 ? 0 : 1) : -1;
     let res = E.newGame({ p0: pr[0], p1: pr[1], seed: job.seed, useControl: true });
     const rows = [];
     let lastTurn = -1, guard = 0;
@@ -63,7 +70,7 @@ if (!isMainThread) {
       const st = res.state;
       if (!res.requests.length && (st.turns || 0) !== lastTurn) {
         lastTurn = st.turns || 0;
-        rows.push({ k: comboTokens(st, st.turn), side: st.turn, t: lastTurn, s: Math.round(E.ai.score(st, st.turn)) });
+        if (keepSide < 0 || st.turn === keepSide) rows.push({ k: comboTokens(st, st.turn), side: st.turn, t: lastTurn, s: Math.round(E.ai.score(st, st.turn)) });
       }
       if (res.requests.length) {
         const req = res.requests[0];
@@ -98,7 +105,7 @@ const chunks = Array.from({ length: nW }, () => []);
 jobs.forEach((j, i) => chunks[i % nW].push(j));
 const t0 = Date.now();
 Promise.all(chunks.filter(c => c.length).map(c => new Promise((resolve, reject) => {
-  const w = new Worker(__filename, { workerData: { src, cards, effects, jobs: c, budget: opt.budget } });
+  const w = new Worker(__filename, { workerData: { src, cards, effects, jobs: c, budget: opt.budget, deck: opt.deck } });
   w.on('message', resolve); w.on('error', reject);
 }))).then(parts => {
   const lines = parts.flat();
