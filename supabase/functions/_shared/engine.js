@@ -2696,6 +2696,10 @@ const AI_LOCK_W = {
      (handCard: 1枚あたりの上乗せ。捨ててよい場面で捨てず、最後の1枚を残してリフレッシュする)、
      PSYCHIC 4 の「相手のカードを戻す」は使う (returnWithP4) */
   keyInHand: 40, handCard: 3, returnWithP4: 1,
+  /* ぱうぷるの手筋 (2026-10-14): サイキック① → ファイア⓪ → ファイア⓪の上に裏向き → ダークネス④でその裏向きを①の上へ。
+     移した裏向きが①を覆い、覆いの外れたファイア⓪の中段の反転で①を表にする = 1手で永続ロック (aiPsyChainReady)。
+     chainReady: 3つ揃った構え / chainHalf: ファイア⓪の上の裏向きとダークネス④があり、①が手札に居る */
+  chainReady: 120, chainHalf: 50,
 };
 /* 知らないキーは無視して配列で返す (計測スクリプトが打ち間違いに気づけるように) */
 function setAiWeights(obj) {
@@ -3244,6 +3248,24 @@ function aiFire0Water4Ready(st, side) {
   return false;
 }
 
+/* ぱうぷるのロックの構え (AI_LOCK_W.chainReady)。2: ダークネス④を出せばこの手で永続ロックになる / 1: ①が手札に居てあと1手 / 0: 無い。
+   ファイア⓪ (表) のすぐ上に自分の裏向きが一番上で乗っていること、ダークネス④を表で出せる場所があること、
+   ①が場で一番上 (表でも裏でも、移した裏向きで覆える) か手札に居ること */
+function aiPsyChainReady(st, side) {
+  if (aiLockLive(st, side)) return 0;
+  const key = st.players[side].hand.find(uid => st.cards[uid].def === 'DARKNESS_5');
+  if (!key || ![0, 1, 2].some(l => canPlay(st, side, key, l, true))) return 0;
+  let fire = false, psyTop = false;
+  for (let l = 0; l < 3; l++) {
+    const stack = st.lines[l][side], n = stack.length;
+    if (n >= 2 && !st.cards[stack[n - 1]].faceUp && st.cards[stack[n - 2]].faceUp && st.cards[stack[n - 2]].def === 'FIRE_1') fire = true;
+    if (n && st.cards[stack[n - 1]].def === AI_LOCK_CARD) psyTop = true;
+  }
+  if (!fire) return 0;
+  if (psyTop) return 2;
+  return aiHasDefInHand(st, side, AI_LOCK_CARD) ? 1 : 0;
+}
+
 /* 中段の対象取り効果 (shift/flip/delete/return) が今の盤面で
    空撃ちになるかの近似判定。fr を仮組みして matchesSel を再利用する。
    bind 依存のセレクタは判定できないため「対象あり」扱いで除外 */
@@ -3755,6 +3777,8 @@ function aiScore(st, me) {
   if (aiUsesCombos(st, me) && W.fire0Water4Ready && aiFire0Water4Ready(st, me)) sc += W.fire0Water4Ready;
   sc += aiBoardEffectScore(st, me);
   sc += aiLockScore(st, me);
+  const chain = aiPsyChainReady(st, me);
+  if (chain) sc += chain === 2 ? AI_LOCK_W.chainReady : AI_LOCK_W.chainHalf;
   /* ロック特化: ロックが未完成なら、手札の PSYCHIC 1 そのものに値打ちがある (捨てる・消す候補にしない) */
   if (aiIsLockSpecialist(st, me)) {
     const live = aiLockLive(st, me);
@@ -4359,6 +4383,10 @@ function aiFaceDownAllowed(st, side, action, acts) {
     /* 「覆われることになったとき」を起こすコンボ。表で同じ札を覆えるならそちらで起こす */
     if (tr && tr.on === 'wouldBeCovered'
         && !ups.some(u => u.line === action.line && (u.side === undefined || u.side === side))) return true;
+    /* ぱうぷるのロックの構え (aiPsyChainReady): ファイア⓪の上の裏向きは、あとでダークネス④が①の上へ移す札。
+       表で重ねるとダークネス④で動かせないので、裏で重ねる手も読みに入れる */
+    if (tc && tc.faceUp && tc.def === 'FIRE_1' && aiHasDefInHand(st, side, 'DARKNESS_5') && !aiLockLive(st, side)
+        && (aiHasDefInHand(st, side, AI_LOCK_CARD) || [0, 1, 2].some(l => st.lines[l][side].some(u => st.cards[u].def === AI_LOCK_CARD)))) return true;
   }
   if (destSide !== side) return false;
   const total = (l, s) => lineTotal(st, l, s);

@@ -399,3 +399,45 @@ test('ぱうぷる: サイキック④の効果は、カードを出した手番
   assert.equal(refreshed.cards[uidOf('PSYCHIC_5', 0)].faceUp, false, 'リフレッシュの手番で使う');
   assert.equal(refreshed.lines[1][1].length, 0, '相手のカードを戻している');
 });
+
+/* ぱうぷるの手順: サイキック① → ファイア⓪ → ファイア⓪の上に裏向き → ダークネス④でその裏向きを①の上へ。
+   移した裏向きが①を覆い、覆いの外れたファイア⓪の中段の反転で①を表にする = 1手で永続ロック。
+   形ができたら打つだけでなく、形を作りにいくか (狙っているか) を見る */
+test('ぱうぷる (狙い): 構えが揃っていれば、ダークネス④の1手で永続ロックにする', () => {
+  const st = game();
+  const psy = place(st, 'PSYCHIC_2', 0, 0, false);
+  place(st, 'FIRE_1', 0, 2, true);
+  place(st, 'PSYCHIC_6', 0, 2, false);
+  place(st, 'METAL_2', 1, 0, true);
+  setHand(st, 0, ['DARKNESS_5', 'FIRE_6', 'DARKNESS_6', 'PSYCHIC_4']);
+  const act = Engine.ai.action(st);
+  assert.equal(act.card, uidOf('DARKNESS_5', 0), JSON.stringify(act));
+  const fin = resolveMine(Engine.apply(st, act)).state;
+  const stack = fin.lines[0][0];
+  assert.ok(stack.indexOf(psy) < stack.length - 1 && fin.cards[psy].faceUp, '①が覆われて表: ' + stack.map(u => fin.cards[u].def).join(','));
+});
+
+test('ぱうぷる (狙い): ダークネス④を持っていて①が場にあれば、ファイア⓪の上に裏向きで重ねて構える', () => {
+  const st = game();
+  place(st, 'PSYCHIC_2', 0, 0, false);
+  const fire0 = place(st, 'FIRE_1', 0, 2, true);
+  place(st, 'METAL_2', 1, 0, true);
+  setHand(st, 0, ['DARKNESS_5', 'FIRE_6', 'DARKNESS_6', 'PSYCHIC_4']);
+  const act = Engine.ai.action(st);
+  assert.equal(act.line, 2, JSON.stringify(act));
+  assert.equal(act.faceUp, false, '裏で重ねる (表だとダークネス④で動かせない)');
+  assert.notEqual(act.card, uidOf('DARKNESS_5', 0), 'ダークネス④は手に残す');
+  const fin = resolveMine(Engine.apply(st, act)).state;
+  const stack = fin.lines[2][0];
+  assert.equal(stack[stack.length - 2], fire0);
+});
+
+test('ぱうぷる (狙い): ファイア⓪の上に裏向きが乗っていれば、ダークネス④を空撃ちせず①を出す', () => {
+  const st = game();
+  place(st, 'FIRE_1', 0, 2, true);
+  place(st, 'PSYCHIC_6', 0, 2, false);
+  place(st, 'METAL_2', 1, 0, true);
+  setHand(st, 0, ['DARKNESS_5', 'PSYCHIC_2', 'DARKNESS_6', 'PSYCHIC_4']);
+  const act = Engine.ai.action(st);
+  assert.equal(act.card, uidOf('PSYCHIC_2', 0), JSON.stringify(act));
+});
