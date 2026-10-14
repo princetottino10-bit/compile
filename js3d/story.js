@@ -169,8 +169,9 @@ export const CHAPTERS = [
         L('shion', '向こうが二人なら、こっちも二人。……私も、一緒に解く。', 'fired')
       ] },
       { id: 'c0-chief', kind: 'battle', title: '警備主任', me: ['FIRE', 'WATER', 'LIFE'], opp: ['METAL', 'GRAVITY', 'DARKNESS'],
-        /* 序盤なので かんたん + 1つ済みから (試算: かんたん相当の人が 30 戦 24 勝。前の ふつう・済みなしでは 40 戦 20 勝) */
-        level: 0, win: 3, head: 1, oppName: '警備主任', mate: 'shion', oppAvatar: 'story_chief', boss: true,
+        /* ふつう + 1つ済みから (2026-10-14 ユーザー: 主任戦はふつうで。味方の紫苑も同じ強さになるので、かんたんにはしない)。
+           試算: かんたん相当の人が 40 戦 29 勝 (済みなしでは 40 戦 20 勝)。2 敗すると「かんたんで挑む」が出る */
+        level: 1, win: 3, head: 1, oppName: '警備主任', mate: 'shion', oppAvatar: 'story_chief', boss: true,
         note: '紫苑と2人で、主任と巡回の警備機体に挑む (タッグ: 手番を交代で指す)。1つは書き上げた状態から始まる。あと2つを先に書き上げると、ゲートが開く',
         /* タッグ (2026-10-13): 相棒と組める戦いはタッグにする。紫苑は判定のときと同じ手持ち。チームの中で同じプロトコルは持てない */
         tag: { mate: ['PSYCHIC', 'LIGHT', 'MIRROR'], mateName: '紫苑', oppMate: ['SPEED', 'CLARITY', 'FEAR'], oppMateName: '巡回の警備機体', oppMateAvatar: 'story_patrol' },
