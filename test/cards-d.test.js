@@ -466,6 +466,26 @@ test('MIRROR_2: 終了時、相手のカード1枚の中段を自分のものと
   assert.equal(st.players[1].hand.length, 2, '相手は捨てない');
 });
 
+// 画面が「どの効果を写したか」を出せるように、ログに写した元を書き、写した効果の選択に copied を添える
+test('MIRROR_2: 写した中段がログと選択の copied で分かる', () => {
+  let res = start(side(LUCK, { lines: [[], [['MIRROR_2', true]], []], hand: ['LUCK_6', 'PEACE_5', 'PEACE_6'] }),
+    side(OPP, { lines: [[['DEATH_6', true]], [], []], hand: ['WATER_1', 'WATER_2'] }));
+  res = play(res, 'LUCK_6', 0, false);
+  let discardReq = null;
+  res = drive(res, {
+    'mirror-middle': (req) => {
+      assert.equal(req.copied, undefined, '写す前の選択には付かない');
+      return req.kind === 'yesNo' ? ['yes'] : [u('DEATH_6', 1)];
+    },
+    'optional-': () => ['yes'],
+    discard: (req) => { discardReq = req; return [u('PEACE_5')]; },
+  });
+  assert.ok(res.state.actionLog.includes('[MIRROR_2] 相手の DEATH_6 の中段をコピーして解決'));
+  assert.ok(discardReq, '写した中段の選択が来る');
+  assert.equal(discardReq.context, 'MIRROR_2');
+  assert.equal(discardReq.copied, 'DEATH_6');
+});
+
 // 裁定 (Mirror 1 / FEAR 0): 自分の手番中に FEAR_1 があると相手のカードには中段が「ない」ので写せない (以前はエンジンが写していた。直した)
 test('MIRROR_2: 自分の FEAR_1 があると相手の中段は無いので写せない (裁定)', () => {
   let res = start(side(['MIRROR', 'FEAR', 'PEACE'], { lines: [[['MIRROR_2', true]], [['FEAR_1', true]], []], hand: ['PEACE_5', 'PEACE_6', 'MIRROR_6'] }),

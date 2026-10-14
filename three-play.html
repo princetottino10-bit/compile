@@ -455,6 +455,9 @@
   #fxBanner .fx-who.me{color:var(--mint);}
   #fxBanner .fx-who.opp{color:var(--pink);}
   #fxBanner p{margin:0;font:600 11.5px/1.5 "M PLUS 1",system-ui;color:var(--ink);}
+  /* MIRROR 1 で写した効果: 写した元のカード名をその色で (帯の名前は MIRROR 1 のまま) */
+  #fxBanner .fx-via{font:700 10.5px/1.3 "M PLUS 1",system-ui;color:var(--ink);opacity:.85;}
+  #fxBanner .fx-via b{color:color-mix(in srgb,var(--vc) 50%,#fff);font-weight:900;letter-spacing:.04em;}   /* DARKNESS など暗い色はそのままだと地に沈むので白を混ぜる */
   #fxBanner .fx-zone{margin-right:5px;font:800 9.5px/1 "M PLUS 1",system-ui;letter-spacing:.06em;color:var(--gold);}
   #fxBanner .fx-sweep{position:absolute;inset:0;pointer-events:none;
     background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.15) 50%,transparent 70%);transform:translateX(-100%);}
@@ -4647,7 +4650,7 @@
   })();
   </script>
 
-  <script src="engine.js?v=43a39719b4"></script>
+  <script src="engine.js?v=5c5dbba3d8"></script>
   <script type="importmap">
   {
     "imports": {
@@ -4710,7 +4713,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=2b4dbc6066",
       "./js3d/logformat.js": "./js3d/logformat.js?v=e3548c74d1",
-      "./js3d/main.js": "./js3d/main.js?v=6d88c758c9",
+      "./js3d/main.js": "./js3d/main.js?v=23a5e811fd",
       "./js3d/motion.js": "./js3d/motion.js?v=71cd68f8ff",
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
       "./js3d/net.js": "./js3d/net.js?v=3134839bca",
@@ -4724,7 +4727,7 @@
       "./js3d/playmat.js": "./js3d/playmat.js?v=cfc563a42a",
       "./js3d/prefs.js": "./js3d/prefs.js?v=0d92d36092",
       "./js3d/profile.js": "./js3d/profile.js?v=704205fbfe",
-      "./js3d/prompts.js": "./js3d/prompts.js?v=348dff836d",
+      "./js3d/prompts.js": "./js3d/prompts.js?v=513817485c",
       "./js3d/protocards.js": "./js3d/protocards.js?v=5919129971",
       "./js3d/protocol-strength.js": "./js3d/protocol-strength.js?v=c719e5b65c",
       "./js3d/puzzle.js": "./js3d/puzzle.js?v=65360765a2",
@@ -4766,7 +4769,7 @@
       "./js3d/turning.js": "./js3d/turning.js?v=9c7f79654e",
       "./js3d/tutorial.js": "./js3d/tutorial.js?v=a2ad20f672",
       "./js3d/tween.js": "./js3d/tween.js?v=6fe8c0fb03",
-      "./js3d/ui.js": "./js3d/ui.js?v=f3770702f8",
+      "./js3d/ui.js": "./js3d/ui.js?v=915b41fe40",
       "./js3d/watchtools.js": "./js3d/watchtools.js?v=ad10da8d17",
       "./js3d/weekly-ui.js": "./js3d/weekly-ui.js?v=97a2e533b4",
       "./js3d/weekly.js": "./js3d/weekly.js?v=5605476b1c",
@@ -4848,7 +4851,7 @@
   <link rel="modulepreload" href="js3d/layout.js?v=2b4dbc6066">
   <link rel="modulepreload" href="js3d/theme.js?v=932e1d5eb8">
   <link rel="modulepreload" href="js3d/tween.js?v=6fe8c0fb03">
-  <link rel="modulepreload" href="js3d/ui.js?v=f3770702f8">
+  <link rel="modulepreload" href="js3d/ui.js?v=915b41fe40">
   <link rel="modulepreload" href="js3d/input.js?v=cc29feddd4">
   <link rel="modulepreload" href="js3d/playchoices.js?v=b461cb2bb3">
   <link rel="modulepreload" href="js3d/aiclient.js?v=0f85a7d42b">
@@ -4894,7 +4897,7 @@
   <link rel="modulepreload" href="vendor/jsm/loaders/GLTFLoader.js">
   <link rel="modulepreload" href="js3d/cos-rarity.js?v=55e65b53fa">
   <link rel="modulepreload" href="js3d/run-fx.js?v=a380c76677">
-  <link rel="modulepreload" href="js3d/prompts.js?v=348dff836d">
+  <link rel="modulepreload" href="js3d/prompts.js?v=513817485c">
   <link rel="modulepreload" href="js3d/icons.js?v=15bacde80c">
   <link rel="modulepreload" href="js3d/cardtext.js?v=4cf5529855">
   <link rel="modulepreload" href="js3d/fx-protocols.js?v=509fceb211">
@@ -4910,6 +4913,6 @@
   <link rel="stylesheet" href="js3d/run-fx.css?v=ed3eded16b">
   <link rel="stylesheet" href="js3d/deus.css?v=3e6919eb01">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=6d88c758c9"></script>
+  <script type="module" src="js3d/main.js?v=23a5e811fd"></script>
 </body>
 </html>

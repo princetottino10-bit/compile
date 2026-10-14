@@ -226,7 +226,7 @@ export function askChoice(req, ctx) {
     };
     activeModalFinish = finish;
 
-    const source = ctx.sourceInfo ? ctx.sourceInfo(req.context) : null;
+    const source = ctx.reqSource ? ctx.reqSource(req) : ctx.sourceInfo ? ctx.sourceInfo(req.context) : null;
     const multi = (req.kind === 'pickCard' || req.kind === 'pickHand') && (req.max === undefined ? 1 : req.max) > 1;
     const head = (count) => {
       title.innerHTML = selectHead(req, source, {
@@ -634,8 +634,10 @@ export function showFxBanner(o, ms) {
   el.style.setProperty('--pc', o.color || '#b9a4ff');
   el.innerHTML =
     '<div class="fx-body">' +
-      '<div class="fx-head"><b>' + o.name + '</b><span class="fx-tag">発動</span>' +
+      '<div class="fx-head"><b>' + o.name + '</b><span class="fx-tag">' + (o.tag || '発動') + '</span>' +
         '<span class="fx-who ' + (o.mine ? 'me' : 'opp') + '">' + (o.who ? String(o.who).replace(/[<>&]/g, '') : o.mine ? 'あなた' : '相手') + '</span></div>' +
+      /* 写した効果 (MIRROR 1): どのカードの段を写したか */
+      (o.via ? '<div class="fx-via">相手の <b style="--vc:' + (o.via.color || '#b9a4ff') + '">' + o.via.name + '</b> の' + (FX_ZONE[o.zone] || '').replace(/^\S+\s/, '') + 'を写して使う</div>' : '') +
       '<p><span class="fx-zone">' + (FX_ZONE[o.zone] || '') + '</span>' + condHtml(o.text) + '</p>' +
     '</div>' +
     '<i class="fx-sweep"></i>';
