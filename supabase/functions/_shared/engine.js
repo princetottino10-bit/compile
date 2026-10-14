@@ -2695,7 +2695,9 @@ const AI_LOCK_W = {
   /* ぱぱぱのぱの指し方その2 (2026-10-10): 鍵 (DARKNESS 2) も捨てない (keyInHand)、手札の枚数を大事にする
      (handCard: 1枚あたりの上乗せ。捨ててよい場面で捨てず、最後の1枚を残してリフレッシュする)、
      PSYCHIC 4 の「相手のカードを戻す」は使う (returnWithP4) */
-  keyInHand: 40, handCard: 3, returnWithP4: 1,
+  /* returnWithP4: 1 で PSYCHIC 4 の戻す効果を出した手番でもすぐ使う (ぱぱぱのぱ)。
+     0 = ぱうぷるの指し方 (2026-10-14): 取っておいて、リフレッシュの手番で使う (CODE:PURPLE / ALL-SEEING もこちら) */
+  keyInHand: 40, handCard: 3, returnWithP4: 0,
   /* ぱうぷるの手筋 (2026-10-14): サイキック① → ファイア⓪ → ファイア⓪の上に裏向き → ダークネス④でその裏向きを①の上へ。
      移した裏向きが①を覆い、覆いの外れたファイア⓪の中段の反転で①を表にする = 1手で永続ロック (aiPsyChainReady)。
      chainReady: 3つ揃った構え / chainHalf: ファイア⓪の上の裏向きとダークネス④があり、①が手札に居る */

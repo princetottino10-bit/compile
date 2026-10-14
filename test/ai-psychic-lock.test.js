@@ -441,3 +441,27 @@ test('ぱうぷる (狙い): ファイア⓪の上に裏向きが乗っていれ
   const act = Engine.ai.action(st);
   assert.equal(act.card, uidOf('PSYCHIC_2', 0), JSON.stringify(act));
 });
+
+/* CODE:PURPLE / ALL-SEEING (ロック特化) にも、ぱうぷるの手筋が入っている */
+test('ロック特化 (CODE:PURPLE / ALL-SEEING): ファイア⓪の上に裏で構え、サイキック④はリフレッシュの手番まで取っておく', () => {
+  Engine.setAiSpecialist(true, 0, 'psylock');
+  try {
+    const st = game();
+    place(st, 'PSYCHIC_2', 0, 0, false);
+    place(st, 'FIRE_1', 0, 2, true);
+    place(st, 'METAL_2', 1, 0, true);
+    setHand(st, 0, ['DARKNESS_5', 'FIRE_6', 'DARKNESS_6', 'PSYCHIC_4']);
+    const act = Engine.ai.action(st);
+    assert.equal(act.line, 2, JSON.stringify(act));
+    assert.equal(act.faceUp, false);
+
+    const p4 = game();
+    place(p4, 'PSYCHIC_5', 0, 0, true);
+    place(p4, 'METAL_4', 1, 1, true);
+    setHand(p4, 0, ['FIRE_6', 'DARKNESS_6', 'PSYCHIC_6', 'FIRE_3']);
+    const played = resolveMine(Engine.apply(p4, { type: 'play', card: uidOf('FIRE_6', 0), line: 2, faceUp: true })).state;
+    assert.equal(played.cards[uidOf('PSYCHIC_5', 0)].faceUp, true, '出した手番では使わない');
+  } finally {
+    Engine.setAiSpecialist(false);
+  }
+});
