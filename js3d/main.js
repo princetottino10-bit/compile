@@ -677,7 +677,7 @@ function partnerMove(st) {
 /* オンラインのタッグの席 (roomApplyView が覚える): 4つの席と、自分の側 (サーバーの 0 / 1) */
 let roomTag = null;
 /* 人が操作できる手番か (自分の側の手番で、タッグなら自分が指す番) */
-function humanTurn(st) { return !!st && st.turn === ME && !partnerMove(st) && !(autoPlay && !roomMode) && !roomWatching; }
+function humanTurn(st) { return !!st && st.turn === ME && !partnerMove(st) && !autoOn() && !roomWatching; }
 /* 自分が持ってきたプロトコル (タッグの複合プロトコルは、その側の1人目の分) */
 function ownProtos(st, side) { return st.players[side].protocols.map(p => (p.names ? p.names[0] : p.name)); }
 
@@ -2052,7 +2052,11 @@ function thinking(p) {
 let autoPlay = false;
 /* valnet: 学習モデル (data/valnet.json) を読みに混ぜる重み。強くしている途中は AUTO だけで使う (2026-10-12) */
 const AUTO_AI = { level: 2, blunder: 0, budget: 2400, specialist: true, kind: 'dsh', specSide: 0, valnet: 400 };
-const autoFor = (side) => autoPlay && side === ME && !roomMode;
+/* オンラインでも使える (2026-10-14)。ただし 1対1 で、レート戦ではない部屋だけ (レートに CPU の指した対戦を混ぜない)。
+   タッグ・観戦では使わない */
+const roomAutoOk = () => roomMode && !!roomRm && !roomWatching && !roomTag && roomRm.mode !== 'tag' && !roomRm.rated;
+const autoOn = () => autoPlay && (!roomMode || roomAutoOk());
+const autoFor = (side) => autoOn() && side === ME;
 /* 下剋上タッグの味方: かんたんと同じ読み (3割はでたらめ)。相手の最強タッグはいつもの最強の読み */
 const UNDERDOG_MATE_AI = { level: 0, blunder: 0.3, budget: 900, specialist: false, kind: 'dsh' };
 const weakMate = (side) => aiDifficulty === UNDERDOG_TAG_LEVEL && side === ME && !roomMode && partnerMove();
@@ -2064,12 +2068,12 @@ function aiAnswer(st, req) {
   const over = req && autoFor(req.player) ? AUTO_AI : req && weakMate(req.player) ? UNDERDOG_MATE_AI : null;
   return thinking(aiClient ? aiClient.answer(st, req, over) : Promise.resolve(withoutTrace(() => Engine.ai.answer(st, req))));
 }
-/* 上のバーの AUTO (管理者だけ。オンライン・チュートリアル・問題・検証盤面・リプレイ・観戦では出さない) */
+/* 上のバーの AUTO (管理者だけ。チュートリアル・問題・検証盤面・リプレイ・観戦、オンラインのタッグ・レート戦では出さない) */
 function syncAutoButton() {
   const bar = document.getElementById('topRight');
   if (!bar) return;
   let b = document.getElementById('btnAuto');
-  const want = !!accountState().admin && !roomMode && !tutorial && !puzzle && !trainingMode && !replayMode && !demoMode;
+  const want = !!accountState().admin && (!roomMode || roomAutoOk()) && !tutorial && !puzzle && !trainingMode && !replayMode && !demoMode;
   if (!want) { if (b) b.remove(); if (autoPlay) autoPlay = false; return; }
   if (!b) {
     b = document.createElement('button');
@@ -2974,7 +2978,7 @@ function syncHandDrawerForViewport() {
 let handHold = false;
 function handForTurn(turn) {
   if (isCompactHandUI() || handPinnedClosed || demoMode || spectate || !board) return;
-  const mine = turn === ME && !partnerMove() && !(autoPlay && !roomMode);
+  const mine = turn === ME && !partnerMove() && !autoOn();
   handHold = mine;
   if (mine && !VIEW.handOpen) setHandDrawer(true);
   else if (!mine && VIEW.handOpen && selectedUid === null) setHandDrawer(false);
@@ -3519,6 +3523,55 @@ async function roomApplyView(rm, instant) {
   await roomDrainRequest();
 }
 
+/* 管理者の AUTO (オンライン): 見えている情報だけで作った盤面を CPU に読ませ (ROOM.buildRoomAiState)、手や選択をサーバーへ送る。
+   のぞき見はしない (見えないカードの中身は仮のもので、読みのたびに並べ替えられる)。
+   サーバーに通らなかったら、同じ手を送り続けないよう AUTO を止めて、自分で指せるようにする */
+const ROOM_AUTO_AI = { ...AUTO_AI, peek: false };
+let roomAutoBusy = false;
+function roomAutoStop(why) {
+  autoPlay = false;
+  syncAutoButton();
+  refreshHud();
+  UI.toast('AUTO を止めました (' + why + ')。ここから先は自分で指せます', 5000);
+}
+async function roomAutoAct() {
+  if (roomAutoBusy || busy || !autoFor(ME) || !cur || cur.requests.length || !roomRm) return;
+  const st = shown();
+  const legal = ROOM.normLegalActions(roomRm);
+  if (!st || st.winner !== null || st.turn !== ME || !legal.length) return;
+  const at = roomRm.version;
+  const ai = ROOM.buildRoomAiState(roomRm, Engine);
+  if (!ai) { roomAutoStop('この部屋では読めません'); return; }
+  roomAutoBusy = true;
+  let hit = null;
+  try {
+    UI.setPrompt('AUTO が考えています…', 'wait');
+    const [a] = await Promise.all([thinking(aiClient ? aiClient.action(ai.state, ROOM_AUTO_AI) : Promise.resolve(withoutTrace(() => Engine.ai.action(ai.state)))), TW.wait(260)]);
+    hit = ROOM.matchLegalAction(legal, ai.action(a));
+  } catch (e) { hit = null; } finally { roomAutoBusy = false; UI.setPrompt(''); }
+  if (!autoFor(ME) || !roomRm) return;                           // 考えている間に AUTO を止めた
+  if (roomRm.version !== at) { await roomAutoAct(); return; }      // 考えている間に盤面が進んだ: 読み直す
+  if (!hit) { roomAutoStop('合う手が見つかりませんでした'); return; }
+  if (await roomStep(hit) === false) roomAutoStop('サーバーが手を受け付けませんでした');
+}
+/* 選択の答え。答えられないときは null (ふつうに自分で選ぶ) */
+async function roomAutoAnswer(req) {
+  if (!roomRm) return null;
+  const ai = ROOM.buildRoomAiState(roomRm, Engine);
+  if (!ai) { roomAutoStop('この部屋では読めません'); return null; }
+  const at = roomRm.version;
+  try {
+    UI.setPrompt('AUTO が選択しています…', 'wait');
+    const [picks] = await Promise.all([thinking(aiClient ? aiClient.answer(ai.state, ai.request(req), ROOM_AUTO_AI) : Promise.resolve(withoutTrace(() => Engine.ai.answer(ai.state, ai.request(req))))), TW.wait(260)]);
+    if (!roomRm || roomRm.version !== at || !autoFor(ME)) return PICK_CANCEL;
+    if (!Array.isArray(picks)) { roomAutoStop('選び方が見つかりませんでした'); return null; }
+    return ai.picks(picks);
+  } catch (e) {
+    roomAutoStop('選び方が見つかりませんでした');
+    return null;
+  }
+}
+
 async function roomStep(action) {
   if (busy || !roomRm || roomWatching) return;           // 観戦は指せない
   busy = true;
@@ -3531,9 +3584,10 @@ async function roomStep(action) {
     await roomApplyView(next);
   } catch (e) {
     busy = false;
-    if (isRoomGone(e)) { roomClosed(); return; }
+    if (isRoomGone(e)) { roomClosed(); return false; }
     UI.toast((e && e.message) || '通信エラー');
     await roomPoll(true);
+    return false;                      // 通らなかった (AUTO はここで止める)
   }
 }
 
@@ -3573,11 +3627,12 @@ async function roomDrainRequest() {
     while (cur && cur.requests.length && shown().winner === null && guard++ < 40) {
       const req = cur.requests[0];
       UI.setPrompt('');
-      const picks = await askUser(req);
+      const auto = autoFor(ME) ? await roomAutoAnswer(req) : null;
+      const picks = auto || await askUser(req);
       UI.setPrompt('');
       if (picks === PICK_CANCEL) continue;   // 外部更新で取り直し
       if (picks === PICK_BACK) { await roomStep({ type: 'back', id: req.id }); continue; }
-      await roomStep({ type: 'choose', id: req.id, picks });
+      if (await roomStep({ type: 'choose', id: req.id, picks }) === false && auto) roomAutoStop('サーバーが選択を受け付けませんでした');
     }
   } finally {
     roomAsking = false;
@@ -3719,6 +3774,7 @@ async function roomPoll(force) {
     if (!next.unchanged) roomRm = next;
     else if (next.seenAt) roomRm = { ...roomRm, seenAt: next.seenAt };     // 相手の接続 (持ち時間の表示に出す)
     await roomDrainRequest();          // 取りこぼしたリクエストの再開
+    await roomAutoAct();               // AUTO の手番の取りこぼし
     return;
   }
   roomPollIdle = 0;
@@ -3874,6 +3930,7 @@ async function roomEnterGame(rm) {
   roomLoggedVersion = null;
   roomTracker = ROOM.createTraceTracker();
   await roomApplyView(rm, true);
+  syncAutoButton();                                      // 管理者の AUTO (1対1・レート戦でない部屋だけ)
   if (avatars) { for (const k of ['me', 'mate', 'opp']) if (avatars[k]) avatars[k].destroy(); avatars = null; }
   syncAvatar();                                          // 相手 (観戦は2人) が着けているキャラで出し直す
   await stage.home(600);
@@ -5556,7 +5613,7 @@ async function drainRequests() {
 
 /* AI のターンを回す */
 async function afterTurn() {
-  if (roomMode) { await announceTurn(); await roomMaybeFinish(); return; }
+  if (roomMode) { await announceTurn(); await roomMaybeFinish(); await roomAutoAct(); return; }
   if (puzzle) {
     /* 詰めコンパイル・問題も、はじめに自分の番であることを見せる (2回目からは announceTurnFor が出さない) */
     if (!puzzleJudged && cur && cur.state.winner === null && cur.state.turn === ME) await announceTurn();
@@ -6299,7 +6356,7 @@ function checkRevealed(st) {
     const d = defIndex[id];
     return d ? { img: faceImageURL(d), label: d.proto + ' ' + d.value } : null;
   /* 観戦・AUTO (押す人がいない) では、決めた秒数で閉じて先へ進む */
-  }).filter(Boolean), title, demoMode ? { autoClose: 4 } : autoPlay && !roomMode ? { autoClose: 3 } : undefined);
+  }).filter(Boolean), title, demoMode ? { autoClose: 4 } : autoOn() ? { autoClose: 3 } : undefined);
   return uiHold;
 }
 
