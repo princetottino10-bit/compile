@@ -3344,7 +3344,9 @@ function showCpuPlates(p1) {
   const sub = storyNode ? 'STORY' : aiDifficulty === null || runMode ? '' : levelLabel(aiDifficulty);
   const showAv = avatarsOpen() && settings().avatarShow !== false && !tutorial;
   /* 機械仕掛けの神の名札は名前と「機械仕掛けの神」(称号の DEUS EX MACHINA は書かない。書くと称号の降臨がもう一度出る) */
-  showPlates({ me: myPlate(), opp: { name: storyNode ? storyNode.oppName : deusMatch() ? DEUS_NAME : peekMatch() ? PEEK_NAME : (showAv && avatarName(oppAvatarPlan())) || 'CPU',
+  /* ストーリーで、主人公でなく仲間を動かす一戦 (2章の茜) は、自分の名札もその子の名前にする */
+  const mine = storyNode && storyNode.meName ? { ...myPlate(), name: storyNode.meName, sub: 'STORY', icon: null } : myPlate();
+  showPlates({ me: mine, opp: { name: storyNode ? storyNode.oppName : deusMatch() ? DEUS_NAME : peekMatch() ? PEEK_NAME : (showAv && avatarName(oppAvatarPlan())) || 'CPU',
     sub: storyNode ? 'STORY' : runMode ? '' : deusMatch() ? '機械仕掛けの神' : peekMatch() ? 'すべてを見る者' : shortLevel(aiDifficulty),
     icon: first ? { name: first.name, color: first.color } : null } });
 }

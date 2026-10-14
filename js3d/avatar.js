@@ -73,12 +73,14 @@ for (const [id, [name, color]] of Object.entries(BOSS_LOOK)) AVATARS['boss_' + i
 
 /* セリフは avatar-lines.js (ボスは avatar-boss-lines.js)。得意プロトコル (fav) も */
 /* ストーリーの対戦だけに出る相手 (boss: ランダムやガチャには出ない)。セリフは story.js の場面 (talk.opp) が渡す。
-   art: 立ち絵を借りる子 (二号機は瑠璃と同じ型。CSS で色を抜いて暗く見せる) / noArt: 絵を出さず、吹き出しだけ (警備主任) */
+   art: 立ち絵を借りる子 (二号機は瑠璃と同じ型。CSS で色を抜いて暗く見せる) / noArt: 絵を出さず、吹き出しだけ */
 AVATARS.story_nigoki = { name: '二号機', color: '#6d7cff', boss: true, single: true, art: 'asagi', lines: null };
-AVATARS.story_chief = { name: '警備主任', color: '#ff4f6a', boss: true, single: true, noArt: true, lines: null };
-/* ストーリーのタッグで、相手の側の2人目 (絵なし) */
-AVATARS.story_patrol = { name: '巡回の警備機体', color: '#ff8a5c', boss: true, single: true, noArt: true, lines: null };
-AVATARS.story_collector = { name: '回収機', color: '#8a93b8', boss: true, single: true, noArt: true, lines: null };
+AVATARS.story_chief = { name: '警備主任', color: '#ff4f6a', boss: true, single: true, lines: null };
+/* ストーリーのタッグで、相手の側の2人目 */
+AVATARS.story_patrol = { name: '巡回の警備機体', color: '#ff8a5c', boss: true, single: true, lines: null };
+AVATARS.story_collector = { name: '回収機', color: '#8a93b8', boss: true, single: true, lines: null };
+/* 2章: 屋敷の柱時計に入っている管理の機体 */
+AVATARS.story_clock = { name: '時計', color: '#c9a25a', boss: true, single: true, lines: null };
 for (const [id, def] of Object.entries(AVATARS)) { def.lines = LINES[id] || BOSS_LINES[id] || {}; def.fav = FAVORITE[id] || null; }
 
 /* 1本目のコンパイルでだけ言うひとこと (「まずは一つ目」など)。2本目からは選ばない */
