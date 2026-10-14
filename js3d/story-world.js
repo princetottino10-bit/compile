@@ -247,22 +247,27 @@ export function openWorld(protocols, opts = {}) {
      (Sprite は scale.x を負にしても裏返らない。前に「左へ歩くと後ろ向きに走る」と言われたのはこのため) */
   const shionAt = M.find(map, 'K')[0];
   const loader = new THREE.TextureLoader();
-  const chibi = {};
-  for (const dir of ['front', 'side', 'back']) {
-    for (const fr of ['stand', 'walk1', 'walk2']) {
-      const tex = keep(loader.load('art/chibi/shion_' + dir + '_' + fr + '.webp'));
-      tex.colorSpace = THREE.SRGBColorSpace;
-      chibi[dir + '_' + fr] = tex;
-      if (dir === 'side') {
-        /* 左向き: 同じ絵を、UV を左右反転して貼る */
-        const left = keep(tex.clone());
-        left.wrapS = THREE.RepeatWrapping;
-        left.repeat.set(-1, 1);
-        left.offset.set(1, 0);
-        chibi['left_' + fr] = left;
+  /* ちびキャラの絵を読む: art/chibi/<id>_<向き>_<コマ>.webp。frames を絞ると、その絵だけ読む (立っているだけの人は stand だけ) */
+  const loadChibi = (id, frames = ['stand', 'walk1', 'walk2']) => {
+    const set = {};
+    for (const dir of ['front', 'side', 'back']) {
+      for (const fr of frames) {
+        const tex = keep(loader.load('art/chibi/' + id + '_' + dir + '_' + fr + '.webp'));
+        tex.colorSpace = THREE.SRGBColorSpace;
+        set[dir + '_' + fr] = tex;
+        if (dir === 'side') {
+          /* 左向き: 同じ絵を、UV を左右反転して貼る */
+          const left = keep(tex.clone());
+          left.wrapS = THREE.RepeatWrapping;
+          left.repeat.set(-1, 1);
+          left.offset.set(1, 0);
+          set['left_' + fr] = left;
+        }
       }
     }
-  }
+    return set;
+  };
+  const chibi = loadChibi('shion');
   /* 発光 (ブルーム) で白く飛ばないよう、トーンマップを外して明るさを少し抑える */
   const shionMat = keep(new THREE.SpriteMaterial({ map: chibi.front_stand, transparent: true, toneMapped: false }));
   shionMat.color.setScalar(0.7);
@@ -350,30 +355,17 @@ export function openWorld(protocols, opts = {}) {
   chief.position.copy(world(chiefPos, 0));
   chief.scale.setScalar(1);
 
-  /* 瑠璃 (1章の案内係): ちびキャラの絵ができるまでの仮の姿。水色の制服の人型と、頭のクラゲ (半透明の傘)。
+  /* 瑠璃 (1章の案内係): ちびキャラ。カウンターに立ったまま、あなたのいる方へ向く (前・横・後ろの立ち絵)。
      名乗るまでは名札を「案内係」にする */
   const ruriAt = M.find(map, 'R')[0];
   const ruriPos = ruriAt ? { x: ruriAt.x + 0.5, y: ruriAt.y + 0.5 } : { x: -99, y: -99 };
-  const ruri = new THREE.Group();
+  const ruriChibi = ruriAt ? loadChibi('asagi', ['stand']) : null;
+  const ruriMat = keep(new THREE.SpriteMaterial({ map: ruriChibi ? ruriChibi.front_stand : null, transparent: true, toneMapped: false }));
+  ruriMat.color.setScalar(0.7);
+  const ruri = new THREE.Sprite(ruriMat);
+  ruri.center.set(0.5, 0.02);
+  ruri.scale.set(CHIBI, CHIBI, 1);
   if (ruriAt) {
-    const uni = keep(new THREE.MeshStandardMaterial({ color: 0xe8eef6, roughness: 0.6 }));
-    const navy = keep(new THREE.MeshStandardMaterial({ color: 0x223a6b, roughness: 0.6 }));
-    const hair = keep(new THREE.MeshStandardMaterial({ color: 0x9fdcf0, roughness: 0.5 }));
-    const skirt = new THREE.Mesh(keep(new THREE.ConeGeometry(0.3, 0.5, 18)), navy);
-    skirt.position.y = 0.62;
-    const top = new THREE.Mesh(keep(new THREE.CapsuleGeometry(0.17, 0.3, 6, 14)), uni);
-    top.position.y = 1.02;
-    const headR = new THREE.Mesh(keep(new THREE.SphereGeometry(0.18, 20, 14)), hair);
-    headR.position.y = 1.42;
-    const tails = [-0.2, 0.2].map((x) => { const t = new THREE.Mesh(keep(new THREE.CapsuleGeometry(0.06, 0.32, 4, 8)), hair); t.position.set(x, 1.3, -0.04); return t; });
-    const jelly = new THREE.Mesh(keep(new THREE.SphereGeometry(0.14, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2)),
-      keep(new THREE.MeshBasicMaterial({ color: 0xbfefff, transparent: true, opacity: 0.55 })));
-    jelly.position.set(0.08, 1.58, 0);
-    const shins = [-0.08, 0.08].map((x) => { const l = new THREE.Mesh(keep(new THREE.CapsuleGeometry(0.05, 0.3, 4, 8)), uni); l.position.set(x, 0.22, 0); return l; });
-    const glow = new THREE.PointLight(0x7fdcff, 1.2, 3);
-    glow.position.set(0, 1.6, 0.4);
-    ruri.add(skirt, top, headR, jelly, glow, ...tails, ...shins);
-    ruri.userData = { jelly };
     ruri.position.copy(world(ruriPos, 0));
     scene.add(ruri);
     blob(1.1).position.copy(world(ruriPos, 0.015));
@@ -793,7 +785,14 @@ export function openWorld(protocols, opts = {}) {
       g.userData.body.rotation.y = Math.sin(t * 0.9 + (g === chief ? 1 : 0)) * 0.7;
       g.userData.r1.material.color.setRGB(0.75 + 0.25 * Math.abs(Math.sin(t * 3)), 0.1, 0.12);
     }
-    if (ruriAt) { ruri.rotation.y = Math.atan2(pos.x - ruriPos.x, pos.y - ruriPos.y); ruri.userData.jelly.position.y = 1.58 + Math.sin(t * 1.6) * 0.03; }
+    if (ruriAt) {
+      /* あなたの方を向く: 左右に離れていれば横 (左は反転)、奥にいれば後ろ姿、手前なら前。息づかいで少しだけ上下する */
+      const dx = pos.x - ruriPos.x, dy = pos.y - ruriPos.y;
+      const dir = Math.abs(dx) > Math.abs(dy) * 1.3 ? (dx < 0 ? 'left' : 'side') : dy < 0 ? 'back' : 'front';
+      const rtex = ruriChibi[dir + '_stand'];
+      if (ruriMat.map !== rtex) { ruriMat.map = rtex; ruriMat.needsUpdate = true; }
+      ruri.position.copy(world(ruriPos, Math.sin(t * 2 + 1) * 0.015));
+    }
     for (const f of frags) if (f.mesh.visible) { f.mesh.rotation.y = t * 1.2; f.mesh.position.y = 0.7 + Math.sin(t * 2 + f.p.x) * 0.06; }
     scenery.update(t, dt);
     syncGuide(t, dt);
