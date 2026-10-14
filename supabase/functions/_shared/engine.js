@@ -2702,6 +2702,9 @@ const AI_LOCK_W = {
      移した裏向きが①を覆い、覆いの外れたファイア⓪の中段の反転で①を表にする = 1手で永続ロック (aiPsyChainReady)。
      chainReady: 3つ揃った構え / chainHalf: ファイア⓪の上の裏向きとダークネス④があり、①が手札に居る */
   chainReady: 120, chainHalf: 50,
+  /* ぱうぷるの棋譜 (2026-10-14): 一番上で表のファイア③を覆わずに残し、終了時の反転で自分の裏向きを毎手番表に返す。
+     裏のサイキック①なら相手の手番ごとに一時ロック、サイキック⓪・ダークネス②なら中段をもう一度 (aiFire3Loop) */
+  fire3Psy: 60, fire3Other: 25,
 };
 /* 知らないキーは無視して配列で返す (計測スクリプトが打ち間違いに気づけるように) */
 function setAiWeights(obj) {
@@ -3250,6 +3253,25 @@ function aiFire0Water4Ready(st, side) {
   return false;
 }
 
+/* ぱうぷるのファイア③の回し方 (AI_LOCK_W.fire3Psy / fire3Other)。一番上で表のファイア③があり、手札があり (捨てて反転する)、
+   一番上に自分の裏向きのサイキック① (ロック未完成のとき) / サイキック⓪ / ダークネス② があれば、その値 */
+const AI_FIRE3_TARGETS = { PSYCHIC_1: 1, DARKNESS_3: 1 };
+function aiFire3Loop(st, side) {
+  if (!st.players[side].hand.length) return 0;
+  let fire3 = false;
+  const tops = [];
+  for (let l = 0; l < 3; l++) {
+    const stack = st.lines[l][side], top = stack[stack.length - 1];
+    if (!top) continue;
+    const c = st.cards[top];
+    if (c.faceUp && c.def === 'FIRE_4') fire3 = true;
+    else if (!c.faceUp) tops.push(c.def);
+  }
+  if (!fire3) return 0;
+  if (tops.indexOf(AI_LOCK_CARD) >= 0 && !aiLockLive(st, side)) return AI_LOCK_W.fire3Psy;
+  return tops.some(d => AI_FIRE3_TARGETS[d]) ? AI_LOCK_W.fire3Other : 0;
+}
+
 /* ぱうぷるのロックの構え (AI_LOCK_W.chainReady)。2: ダークネス④を出せばこの手で永続ロックになる / 1: ①が手札に居てあと1手 / 0: 無い。
    ファイア⓪ (表) のすぐ上に自分の裏向きが一番上で乗っていること、ダークネス④を表で出せる場所があること、
    ①が場で一番上 (表でも裏でも、移した裏向きで覆える) か手札に居ること */
@@ -3781,6 +3803,7 @@ function aiScore(st, me) {
   sc += aiLockScore(st, me);
   const chain = aiPsyChainReady(st, me);
   if (chain) sc += chain === 2 ? AI_LOCK_W.chainReady : AI_LOCK_W.chainHalf;
+  sc += aiFire3Loop(st, me);
   /* ロック特化: ロックが未完成なら、手札の PSYCHIC 1 そのものに値打ちがある (捨てる・消す候補にしない) */
   if (aiIsLockSpecialist(st, me)) {
     const live = aiLockLive(st, me);

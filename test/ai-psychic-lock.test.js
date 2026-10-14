@@ -465,3 +465,36 @@ test('ロック特化 (CODE:PURPLE / ALL-SEEING): ファイア⓪の上に裏で
     Engine.setAiSpecialist(false);
   }
 });
+
+/* ぱうぷるの棋譜 (2026-10-14): ファイア③を一番上で表のまま残し、終了時に捨てて自分の裏向きを表に返す。
+   覆うと回せなくなるので、一番上のファイア③と自分の裏向き (サイキック⓪・①、ダークネス②) が揃った盤面に値をつける */
+test('ぱうぷる (棋譜): 一番上のファイア③と裏のサイキック⓪/①が揃った盤面に値をつけ、終了時に裏の①を表に返す', () => {
+  const withP0 = game();
+  place(withP0, 'FIRE_4', 0, 2, true);
+  place(withP0, 'PSYCHIC_1', 0, 0, false);
+  place(withP0, 'METAL_2', 1, 0, true);
+  setHand(withP0, 0, ['DARKNESS_6', 'PSYCHIC_6']);
+  const coveredP0 = Engine.apply(withP0, { type: 'play', card: uidOf('DARKNESS_6', 0), line: 2, faceUp: false }).state;
+  const scoreOff = (st) => {
+    Engine.setAiWeights({ fire3Psy: 0, fire3Other: 0 });
+    try { return Engine.ai.score(st, 0); } finally { Engine.setAiWeights({ fire3Psy: 60, fire3Other: 25 }); }
+  };
+  assert.equal(Engine.ai.score(withP0, 0) - scoreOff(withP0), 25, '裏のサイキック⓪');
+  assert.equal(Engine.ai.score(coveredP0, 0) - scoreOff(coveredP0), 0, 'ファイア③を覆えば回せない');
+
+  const withP1 = game();
+  place(withP1, 'FIRE_4', 0, 2, true);
+  place(withP1, 'PSYCHIC_2', 0, 0, false);
+  place(withP1, 'METAL_2', 1, 0, true);
+  setHand(withP1, 0, ['DARKNESS_6']);
+  assert.equal(Engine.ai.score(withP1, 0) - scoreOff(withP1), 60, '裏のサイキック① (相手の手番ごとに一時ロック)');
+
+  const st = game();
+  const psy = place(st, 'PSYCHIC_2', 0, 0, false);
+  place(st, 'FIRE_4', 0, 2, true);
+  place(st, 'METAL_2', 1, 0, true);
+  place(st, 'LIGHT_3', 1, 1, true);
+  setHand(st, 0, ['DARKNESS_6', 'FIRE_6', 'PSYCHIC_6', 'DARKNESS_2']);
+  const fin = playAndDrain(st, Engine.ai.action(st));
+  assert.equal(fin.cards[psy].faceUp, true, '終了時のファイア③で裏の①を表にする');
+});
