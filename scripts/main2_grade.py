@@ -38,6 +38,15 @@ STRENGTH = 1.0
 CAST_GAIN = 1.5
 SPREAD_MIN = 0.8
 
+# Per-card exceptions.  CLARITY's print is a pale pastel rainbow, so it keeps its
+# full colour spread and is lifted in lightness (every other card stays dark).
+# MIRROR's lower half is painted orange where the card's is pink-red, and a cast
+# shift can't rotate one band of hues, so those warm hues are turned toward red.
+EXTRA = {
+    'CLARITY': {'spread_min': 1.0, 'l_shift': 30.0},
+    'MIRROR': {'warm_rotate': -40.0},
+}
+
 
 def _lin(c):
     return np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) ** 2.4)
@@ -78,14 +87,31 @@ def ab_stats(lab, mask=None):
     return float(a.mean()), float(a.std()), float(b.mean()), float(b.std())
 
 
-def grade(im, target, strength=STRENGTH):
+def rotate_warm(lab, degrees):
+    """Rotate hues in the orange-yellow band (CIELAB hue 30-100 deg), fading out at its edges."""
+    h = np.degrees(np.arctan2(lab[..., 2], lab[..., 1])) % 360
+    c = np.hypot(lab[..., 1], lab[..., 2])
+    w = np.clip(1 - np.abs(h - 65) / 45, 0, 1)
+    h2 = np.radians(h + degrees * w)
+    out = lab.copy()
+    out[..., 1] = c * np.cos(h2)
+    out[..., 2] = c * np.sin(h2)
+    return out
+
+
+def grade(im, target, strength=STRENGTH, spread_min=SPREAD_MIN, l_shift=0.0, warm_rotate=0.0):
     lab = rgb_to_lab(np.asarray(im.convert('RGB'), dtype=np.float64))
+    if warm_rotate:
+        lab = rotate_warm(lab, warm_rotate)
     am, asd, bm, bsd = ab_stats(lab)
     ta, tasd, tb, tbsd = target
     ta, tb = ta * CAST_GAIN, tb * CAST_GAIN
-    ka = min(1.0, max(SPREAD_MIN, tasd / max(asd, 1e-6)))
-    kb = min(1.0, max(SPREAD_MIN, tbsd / max(bsd, 1e-6)))
+    ka = min(1.0, max(spread_min, tasd / max(asd, 1e-6)))
+    kb = min(1.0, max(spread_min, tbsd / max(bsd, 1e-6)))
     out = lab.copy()
+    if l_shift:
+        # lift the darks more than the lights so highlights don't clip to white
+        out[..., 0] = lab[..., 0] + l_shift * (1 - lab[..., 0] / 100)
     out[..., 1] = (lab[..., 1] - am) * ka + ta
     out[..., 2] = (lab[..., 2] - bm) * kb + tb
     out[..., 1:] = lab[..., 1:] + (out[..., 1:] - lab[..., 1:]) * strength
@@ -97,7 +123,7 @@ def main():
     strength = float(sys.argv[4]) if len(sys.argv) > 4 else STRENGTH
     im = Image.open(src)
     if proto in TARGET:
-        im = grade(im, TARGET[proto], strength)
+        im = grade(im, TARGET[proto], strength, **EXTRA.get(proto, {}))
     im.save(dst)
 
 
