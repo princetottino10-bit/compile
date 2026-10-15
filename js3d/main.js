@@ -2080,19 +2080,19 @@ function syncAutoButton() {
   if (!b) {
     b = document.createElement('button');
     b.id = 'btnAuto'; b.className = 'btn'; b.type = 'button';
-    b.title = '強い CPU に自分の手を指させる (管理者)';
+    b.title = 'ORACLE (学習モデル入りの最強の読み) に自分の手を指させる (管理者)';
     b.onclick = () => {
       const waitingMe = !!cur && !busy && !cur.requests.length && cur.state.winner === null && humanTurn(cur.state);
       autoPlay = !autoPlay;
       syncAutoButton();
-      UI.toast(autoPlay ? 'AUTO: 自分の手を強い CPU が指します' : 'AUTO を止めました。次の判断から自分で指せます', 2600);
+      UI.toast(autoPlay ? 'ORACLE: 自分の手を強い CPU が指します' : 'ORACLE を止めました。次の判断から自分で指せます', 2600);
       /* 自分の番で待っているところなら、すぐ動かす (選択の画面を開いているときは、次の判断から) */
       if (autoPlay && waitingMe) { deselect(); showPreview(null); afterTurn(); }
       refreshHud();
     };
     bar.insertBefore(b, bar.firstChild);
   }
-  b.textContent = autoPlay ? 'AUTO ●' : 'AUTO';
+  b.textContent = autoPlay ? 'ORACLE ●' : 'ORACLE';
   b.classList.toggle('on', autoPlay);
   b.setAttribute('aria-pressed', String(autoPlay));
 }
@@ -3534,7 +3534,7 @@ function roomAutoStop(why) {
   autoPlay = false;
   syncAutoButton();
   refreshHud();
-  UI.toast('AUTO を止めました (' + why + ')。ここから先は自分で指せます', 5000);
+  UI.toast('ORACLE を止めました (' + why + ')。ここから先は自分で指せます', 5000);
 }
 async function roomAutoAct() {
   if (roomAutoBusy || busy || !autoFor(ME) || !cur || cur.requests.length || !roomRm) return;
@@ -3547,7 +3547,7 @@ async function roomAutoAct() {
   roomAutoBusy = true;
   let hit = null;
   try {
-    UI.setPrompt('AUTO が考えています…', 'wait');
+    UI.setPrompt('ORACLE が考えています…', 'wait');
     const [a] = await Promise.all([thinking(aiClient ? aiClient.action(ai.state, ROOM_AUTO_AI) : Promise.resolve(withoutTrace(() => Engine.ai.action(ai.state)))), TW.wait(260)]);
     hit = ROOM.matchLegalAction(legal, ai.action(a));
   } catch (e) { hit = null; } finally { roomAutoBusy = false; UI.setPrompt(''); }
@@ -3563,7 +3563,7 @@ async function roomAutoAnswer(req) {
   if (!ai) { roomAutoStop('この部屋では読めません'); return null; }
   const at = roomRm.version;
   try {
-    UI.setPrompt('AUTO が選択しています…', 'wait');
+    UI.setPrompt('ORACLE が選択しています…', 'wait');
     const [picks] = await Promise.all([thinking(aiClient ? aiClient.answer(ai.state, ai.request(req), ROOM_AUTO_AI) : Promise.resolve(withoutTrace(() => Engine.ai.answer(ai.state, ai.request(req))))), TW.wait(260)]);
     if (!roomRm || roomRm.version !== at || !autoFor(ME)) return PICK_CANCEL;
     if (!Array.isArray(picks)) { roomAutoStop('選び方が見つかりませんでした'); return null; }
@@ -5577,7 +5577,7 @@ async function drainRequests() {
       else picks = await askUser(req);
     } else {
       UI.setPrompt(spectate ? specName(req.player, cur.state.tag ? cur.state.tag.pilot[req.player] : 0) + ' が選択しています…'
-        : req.player === ME ? (autoFor(ME) ? 'AUTO が選択しています…' : '味方が選択しています…') : '相手が選択しています…', 'wait');
+        : req.player === ME ? (autoFor(ME) ? 'ORACLE が選択しています…' : '味方が選択しています…') : '相手が選択しています…', 'wait');
       const at = cur;
       const [ans] = await Promise.all([aiAnswer(cur.state, req), TW.wait(260)]);
       if (cur !== at) return;                     // 考えている間に対戦をやめた
