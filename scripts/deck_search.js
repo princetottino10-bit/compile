@@ -12,6 +12,8 @@
  *
  * 得意プロトコル入りの強いデッキ探し (本気のキャラ): --must X で X を必ず入れ、残り2つを上位 --top 個から選ぶ
  *   node scripts/deck_search.js --must WATER --top 14 --budget 60
+ * 決勝: --decks で候補を直に渡し、--rounds で種を増やす (1回あたり 相手の顔ぶれ × 先手後手)
+ *   node scripts/deck_search.js --decks WATER/ICE/PSYCHIC,WATER/FIRE/TIME --rounds 4 --budget 300
  */
 const fs = require('node:fs');
 const path = require('node:path');
@@ -70,14 +72,17 @@ if (!isMainThread) {
   const decks = [];
   if (must) for (let a = 0; a < pool.length; a++) for (let b = a + 1; b < pool.length; b++) decks.push([must, pool[a], pool[b]]);
   else for (let a = 0; a < pool.length; a++) for (let b = a + 1; b < pool.length; b++) for (let c = b + 1; c < pool.length; c++) decks.push([pool[a], pool[b], pool[c]]);
+  if (argv('--decks', '')) { decks.length = 0; String(argv('--decks')).split(',').forEach(d => decks.push(d.split('/'))); }
   if (!bottom && !decks.some(d => d.slice().sort().join() === CURRENT.slice().sort().join())) decks.push(CURRENT);
   const budget = +argv('--budget', 60);
   const seed = +argv('--seed', 20260923);
   const jobs = [];
   for (const deck of decks) {
-    OPPONENTS.filter(o => o.every(n => !deck.includes(n))).forEach((opp, i) => {
-      for (const side of [0, 1]) jobs.push({ deck, opp, side, seed: seed + i * 2 + side });
-    });
+    for (let r = 0; r < +argv('--rounds', 1); r++) {
+      OPPONENTS.filter(o => o.every(n => !deck.includes(n))).forEach((opp, i) => {
+        for (const side of [0, 1]) jobs.push({ deck, opp, side, seed: seed + r * 1000 + i * 2 + side });
+      });
+    }
   }
   const workers = Math.max(1, Math.min(+argv('--workers', os.cpus().length - 1), jobs.length));
   const chunks = Array.from({ length: workers }, () => []);
