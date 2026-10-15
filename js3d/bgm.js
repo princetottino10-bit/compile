@@ -27,11 +27,12 @@ export const MENU_BGMS = ['planetarium', 'madoromu_neon', 'nine_jack'];
 export const RUN_BGM = 'iruka';
 let menuPick = null;
 /* COLLECTION の BGM で「メニューで流す」を選んでいれば、その曲 */
-export const menuBgm = () => chosenTrack(settings(), 'bgmMenu') || (menuPick = menuPick || MENU_BGMS[Math.floor(Math.random() * MENU_BGMS.length)]);
+export const menuBgm = () => shuffleOn() ? shuffleMenuBgm() : (chosenTrack(settings(), 'bgmMenu') || (menuPick = menuPick || MENU_BGMS[Math.floor(Math.random() * MENU_BGMS.length)]));
 /** ふつうの対戦の曲: 「対戦で流す」を選んでいればその曲、おまかせなら12曲からランダム */
-export const normalBattleBgm = () => chosenTrack(settings(), 'bgmBattle') || pickNormalBgm();
+export const normalBattleBgm = () => shuffleOn() ? shuffleBattleBgm() : (chosenTrack(settings(), 'bgmBattle') || pickNormalBgm());
 /* オンライン対戦の曲: 選んだ曲に決めず、いつもの曲と交換した曲から毎回ランダム (前の対戦と同じ曲は選ばない) */
 export function onlineBattleBgm() {
+  if (shuffleOn()) return shuffleBattleBgm();
   const extra = TRACKS.filter(t => ownsTrack(t.key)).map(t => t.key);
   rotatePool = NORMAL_BGMS.concat(extra.filter(k => !NORMAL_BGMS.includes(k)));
   return pickNormalBgm(Math.random, extra);
@@ -95,6 +96,60 @@ export function pickNormalBgm(rnd = Math.random, extra = []) {
   return pick;
 }
 
+/* =========================================================================
+ * シャッフル (設定の「BGM をシャッフル」、bgmShuffle)
+ *   メニューとふつうの対戦 (オンラインも) の曲を、持っている COLLECTION の曲 (はじめからの曲と交換した曲) から無作為に選び、
+ *   1曲終わるたびに次の曲も無作為に選ぶ (繰り返さない)。COLLECTION で選んだ曲より優先する。
+ *   ボス・強敵・機械仕掛けの神・すべてを見る者・あと1本の曲・勝ち抜き戦の画面の曲は、場面の曲なのでそのまま
+ * ========================================================================= */
+const shuffleOn = () => !!settings().bgmShuffle;
+/** シャッフルで選ぶ曲 (持っている COLLECTION の曲) */
+export const shufflePool = () => TRACKS.filter(t => ownsTrack(t.key)).map(t => t.key);
+/* 最近流した曲 (同じ曲が近くに続かないよう、曲数の半分 (最大8曲) までは選ばない) */
+const SHUFFLE_RECENT_KEY = 'compileShuffleRecent';
+let shuffleRecent = null;
+let shuffled = null;             // シャッフルで選んで流している曲 (終わったら次へ。ほかの曲を鳴らしたら null 扱い)
+let shuffleCtx = null;           // 'menu' / 'battle' (メニューへ戻ったら、対戦で流していた曲は続けない)
+/** シャッフルで次の曲を1つ選ぶ (最近流した曲は避ける) */
+export function pickShuffleBgm(rnd = Math.random, pool = shufflePool()) {
+  if (!shuffleRecent) {
+    try { shuffleRecent = JSON.parse(localStorage.getItem(SHUFFLE_RECENT_KEY) || '[]'); } catch (e) { shuffleRecent = []; }
+    if (!Array.isArray(shuffleRecent)) shuffleRecent = [];
+  }
+  if (!pool.length) return null;
+  const keep = Math.min(8, Math.floor(pool.length / 2));
+  const recent = shuffleRecent.slice(-keep);
+  const fresh = pool.filter(k => !recent.includes(k));
+  const from = fresh.length ? fresh : pool;
+  const pick = from[Math.floor(rnd() * from.length)];
+  shuffleRecent = shuffleRecent.filter(k => k !== pick).concat(pick).slice(-8);
+  try { localStorage.setItem(SHUFFLE_RECENT_KEY, JSON.stringify(shuffleRecent)); } catch (e) { /* private mode */ }
+  return pick;
+}
+function shuffleMenuBgm() {
+  /* メニューの間は、いま流れている曲を続ける (画面を移るたびに替えない。試し聴きのあともその曲へ戻す) */
+  if (shuffleCtx === 'menu' && shuffled) return shuffled;
+  shuffleCtx = 'menu';
+  return (shuffled = pickShuffleBgm());
+}
+function shuffleBattleBgm() {
+  shuffleCtx = 'battle';
+  return (shuffled = pickShuffleBgm());
+}
+/* シャッフルで流している曲か (この曲は繰り返さず、終わったら次の曲へ) */
+const shuffling = () => shuffleOn() && !!want && want === shuffled;
+/* 次の曲に替わったら知らせる (main.js が、表記の要る曲の曲名と表記を出す) */
+let onShuffleTrack = null;
+export const setShuffleNotify = (fn) => { onShuffleTrack = fn; };
+function nextShuffle() {
+  const next = pickShuffleBgm(Math.random, shufflePool().filter(k => k !== want));
+  if (!next) return;
+  shuffled = next;
+  playBgm(next);
+  try { el.currentTime = 0; } catch (e) { /* 読み込み前 */ }
+  if (onShuffleTrack) onShuffleTrack(next);
+}
+
 let el = null;
 let route = null;
 let want = null;                 // 鳴らしたい曲 (null なら止める)
@@ -111,7 +166,7 @@ let rotatePool = null;
 const rotating = () => !!want && ((rotatePool && rotatePool.includes(want))
   || (NORMAL_BGMS.includes(want) && !chosenTrack(settings(), 'bgmBattle') && !(BGM_RELEASED && settings().bgm)));
 function onTime() {
-  if (!el || swapping) return;
+  if (!el || swapping || shuffling()) return;
   const t = el.currentTime;
   if (t + 1 < lastTime) loops++;          // 頭に戻った = 1周した
   lastTime = t;
@@ -141,6 +196,7 @@ function ensure() {
   el.loop = true;
   el.preload = 'auto';
   el.addEventListener('timeupdate', onTime);
+  el.addEventListener('ended', () => { if (shuffling()) nextShuffle(); });
   route = routeMedia(el, level());
 }
 
@@ -212,6 +268,7 @@ onMuteChange(() => refreshBgm());
 
 export function refreshBgm() {
   if (!el) return;
+  el.loop = !shuffling();          // シャッフルの曲は1回で終わらせて次へ (設定を切り替えたらすぐ合わせる)
   const v = level();
   route.set(v);
   if (!v || !want) { el.pause(); return; }

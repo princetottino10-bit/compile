@@ -19,7 +19,7 @@ let avatarList = () => [];
 export function setAvatarOptionsGate(shown, list) { avatarOptionsShown = shown; if (list) avatarList = list; }
 /* mat 以下は見た目 (レベルの報酬、cosmetics-ui.js) */
 /* autoPick: 選べるものが1つしかない選択は自動で選ぶ (最初はオフ。何が選ばれたか分からないまま進むことがあったので) / oppSummary: 相手の番のまとめ (最初はオフ。2026-10-07 から) / beginner: 初心者モード (おすすめの手の HINT を出す。最初はオフ) */
-const DEFAULTS = { speed: 1, masterVol: 100, sfx: 80, bgmVol: 30, voiceVol: 80, bgm: 'burst', bgmMenu: '', bgmBattle: '', pauses: true, autoPick: false, oppSummary: false, beginner: false, gamepad: false, foil: true, mat: 'neon', sleeve: 'default', marker: 'default', ccolor: 'default',
+const DEFAULTS = { speed: 1, masterVol: 100, sfx: 80, bgmVol: 30, voiceVol: 80, bgm: 'burst', bgmMenu: '', bgmBattle: '', bgmShuffle: false, pauses: true, autoPick: false, oppSummary: false, beginner: false, gamepad: false, foil: true, mat: 'neon', sleeve: 'default', marker: 'default', ccolor: 'default',
   victory: 'default', title: '', icon: '',
   /* おまかせで今すぐ始める: 相手の強さ (0 かんたん / 1 ふつう / 2 つよい) と、今日のデイリーのプロトコルを自分に入れるか */
   quickLevel: 0, quickDaily: false,
@@ -29,7 +29,7 @@ const DEFAULTS = { speed: 1, masterVol: 100, sfx: 80, bgmVol: 30, voiceVol: 80, 
      文字の大きさ ('normal' / 'large')・くっきり表示 (板を濃く、薄い文字を明るく) */
   gfx: 'auto', powerSave: false, motion: 'auto', vibrate: true, textSize: 'normal', contrast: false };
 /* 「初期設定に戻す」で戻す項目 (この画面で変えられるもの。COLLECTION で選んだ見た目とキャラは戻さない) */
-const RESETTABLE = ['speed', 'masterVol', 'sfx', 'bgmVol', 'voiceVol', 'pauses', 'autoPick', 'oppSummary', 'beginner', 'gamepad', 'foil', 'quickLevel', 'quickDaily',
+const RESETTABLE = ['speed', 'masterVol', 'sfx', 'bgmVol', 'bgmShuffle', 'voiceVol', 'pauses', 'autoPick', 'oppSummary', 'beginner', 'gamepad', 'foil', 'quickLevel', 'quickDaily',
   'oppVoice', 'avatarShow', 'oppAvatar', 'gfx', 'powerSave', 'motion', 'vibrate', 'textSize', 'contrast'];
 const GFX_MODES = [['auto', '自動'], ['high', '高'], ['normal', '標準'], ['light', '軽量']];
 const GFX_LEVEL_NAMES = ['高', '標準', '軽め', '軽量'];           // stage.js の段 (0〜3)
@@ -186,6 +186,9 @@ export function openSettings(extra) {
       '<input type="range" min="0" max="100" step="5" id="stMaster" value="' + (s.masterVol ?? 100) + '"></label>' +
     (BGM_SHOWN ? '<label class="st-row"><span>BGM の音量 <i id="stBgmV">' + volText(s.bgmVol ?? 30) + '</i></span>' +
       '<input type="range" min="0" max="100" step="5" id="stBgm" value="' + (s.bgmVol ?? 30) + '"></label>' : '') +
+    /* BGM をシャッフル (bgm.js): メニューとふつうの対戦の曲を、持っている曲から無作為に。1曲終わるたびに次の曲へ */
+    (BGM_SHOWN ? '<label class="st-row st-check"><span>BGM をシャッフル<small>メニューとふつうの対戦で、持っている曲 (COLLECTION の BGM) から無作為に流し、1曲終わるたびに次の曲へ替えます。ボス戦などの曲はそのまま</small></span>' +
+      '<input type="checkbox" id="stBgmShuffle"' + (s.bgmShuffle ? ' checked' : '') + '></label>' : '') +
     '<label class="st-row"><span>キャラの声の音量 <i id="stVoiceV">' + volText(s.voiceVol ?? 80) + '</i></span>' +
       '<input type="range" min="0" max="100" step="5" id="stVoice" value="' + (s.voiceVol ?? 80) + '"></label>' +
     '<label class="st-row"><span>効果音の音量 <i id="stSfxV">' + volText(s.sfx) + '</i></span>' +
@@ -329,6 +332,7 @@ export function openSettings(extra) {
   range('#stMaster', 'masterVol', '#stMasterV');
   range('#stSfx', 'sfx', '#stSfxV');
   if (BGM_SHOWN) range('#stBgm', 'bgmVol', '#stBgmV');
+  check('#stBgmShuffle', 'bgmShuffle');
   range('#stVoice', 'voiceVol', '#stVoiceV');
   el.querySelector('#stPauses').onchange = (ev) => setSetting('pauses', ev.target.checked);
   el.querySelector('#stAutoPick').onchange = (ev) => setSetting('autoPick', ev.target.checked);
