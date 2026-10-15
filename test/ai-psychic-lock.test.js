@@ -399,3 +399,105 @@ test('ぱうぷる: サイキック④の効果は、カードを出した手番
   assert.equal(refreshed.cards[uidOf('PSYCHIC_5', 0)].faceUp, false, 'リフレッシュの手番で使う');
   assert.equal(refreshed.lines[1][1].length, 0, '相手のカードを戻している');
 });
+
+/* ぱうぷるの手順: サイキック① → ファイア⓪ → ファイア⓪の上に裏向き → ダークネス④でその裏向きを①の上へ。
+   移した裏向きが①を覆い、覆いの外れたファイア⓪の中段の反転で①を表にする = 1手で永続ロック。
+   形ができたら打つだけでなく、形を作りにいくか (狙っているか) を見る */
+test('ぱうぷる (狙い): 構えが揃っていれば、ダークネス④の1手で永続ロックにする', () => {
+  const st = game();
+  const psy = place(st, 'PSYCHIC_2', 0, 0, false);
+  place(st, 'FIRE_1', 0, 2, true);
+  place(st, 'PSYCHIC_6', 0, 2, false);
+  place(st, 'METAL_2', 1, 0, true);
+  setHand(st, 0, ['DARKNESS_5', 'FIRE_6', 'DARKNESS_6', 'PSYCHIC_4']);
+  const act = Engine.ai.action(st);
+  assert.equal(act.card, uidOf('DARKNESS_5', 0), JSON.stringify(act));
+  const fin = resolveMine(Engine.apply(st, act)).state;
+  const stack = fin.lines[0][0];
+  assert.ok(stack.indexOf(psy) < stack.length - 1 && fin.cards[psy].faceUp, '①が覆われて表: ' + stack.map(u => fin.cards[u].def).join(','));
+});
+
+test('ぱうぷる (狙い): ダークネス④を持っていて①が場にあれば、ファイア⓪の上に裏向きで重ねて構える', () => {
+  const st = game();
+  place(st, 'PSYCHIC_2', 0, 0, false);
+  const fire0 = place(st, 'FIRE_1', 0, 2, true);
+  place(st, 'METAL_2', 1, 0, true);
+  setHand(st, 0, ['DARKNESS_5', 'FIRE_6', 'DARKNESS_6', 'PSYCHIC_4']);
+  const act = Engine.ai.action(st);
+  assert.equal(act.line, 2, JSON.stringify(act));
+  assert.equal(act.faceUp, false, '裏で重ねる (表だとダークネス④で動かせない)');
+  assert.notEqual(act.card, uidOf('DARKNESS_5', 0), 'ダークネス④は手に残す');
+  const fin = resolveMine(Engine.apply(st, act)).state;
+  const stack = fin.lines[2][0];
+  assert.equal(stack[stack.length - 2], fire0);
+});
+
+test('ぱうぷる (狙い): ファイア⓪の上に裏向きが乗っていれば、ダークネス④を空撃ちせず①を出す', () => {
+  const st = game();
+  place(st, 'FIRE_1', 0, 2, true);
+  place(st, 'PSYCHIC_6', 0, 2, false);
+  place(st, 'METAL_2', 1, 0, true);
+  setHand(st, 0, ['DARKNESS_5', 'PSYCHIC_2', 'DARKNESS_6', 'PSYCHIC_4']);
+  const act = Engine.ai.action(st);
+  assert.equal(act.card, uidOf('PSYCHIC_2', 0), JSON.stringify(act));
+});
+
+/* CODE:PURPLE / ALL-SEEING (ロック特化) にも、ぱうぷるの手筋が入っている */
+test('ロック特化 (CODE:PURPLE / ALL-SEEING): ファイア⓪の上に裏で構え、サイキック④はリフレッシュの手番まで取っておく', () => {
+  Engine.setAiSpecialist(true, 0, 'psylock');
+  try {
+    const st = game();
+    place(st, 'PSYCHIC_2', 0, 0, false);
+    place(st, 'FIRE_1', 0, 2, true);
+    place(st, 'METAL_2', 1, 0, true);
+    setHand(st, 0, ['DARKNESS_5', 'FIRE_6', 'DARKNESS_6', 'PSYCHIC_4']);
+    const act = Engine.ai.action(st);
+    assert.equal(act.line, 2, JSON.stringify(act));
+    assert.equal(act.faceUp, false);
+
+    const p4 = game();
+    place(p4, 'PSYCHIC_5', 0, 0, true);
+    place(p4, 'METAL_4', 1, 1, true);
+    setHand(p4, 0, ['FIRE_6', 'DARKNESS_6', 'PSYCHIC_6', 'FIRE_3']);
+    const played = resolveMine(Engine.apply(p4, { type: 'play', card: uidOf('FIRE_6', 0), line: 2, faceUp: true })).state;
+    assert.equal(played.cards[uidOf('PSYCHIC_5', 0)].faceUp, true, '出した手番では使わない');
+  } finally {
+    Engine.setAiSpecialist(false);
+  }
+});
+
+/* ぱうぷるの棋譜 (2026-10-14): ファイア③を一番上で表のまま残し、終了時に捨てて自分の裏向きを表に返す。
+   覆うと回せなくなるので、一番上のファイア③と自分の裏向き (サイキック⓪・①、ダークネス②) が揃った盤面に値をつける */
+test('ぱうぷる (棋譜): 別のラインのサイキック①を、開始で裏返るたびにファイア③で表に戻す (ファイア③を覆わない)', () => {
+  const withP0 = game();
+  place(withP0, 'FIRE_4', 0, 2, true);
+  place(withP0, 'PSYCHIC_1', 0, 0, false);
+  place(withP0, 'METAL_2', 1, 0, true);
+  setHand(withP0, 0, ['DARKNESS_6', 'PSYCHIC_6']);
+  const coveredP0 = Engine.apply(withP0, { type: 'play', card: uidOf('DARKNESS_6', 0), line: 2, faceUp: false }).state;
+  const scoreOff = (st) => {
+    Engine.setAiWeights({ fire3Psy: 0, fire3Other: 0 });
+    try { return Engine.ai.score(st, 0); } finally { Engine.setAiWeights({ fire3Psy: 60, fire3Other: 25 }); }
+  };
+  assert.equal(Engine.ai.score(withP0, 0) - scoreOff(withP0), 25, '裏のサイキック⓪');
+  assert.equal(Engine.ai.score(coveredP0, 0) - scoreOff(coveredP0), 0, 'ファイア③を覆えば回せない');
+
+  const withP1 = game();
+  place(withP1, 'FIRE_4', 0, 2, true);
+  place(withP1, 'PSYCHIC_2', 0, 0, false);
+  place(withP1, 'METAL_2', 1, 0, true);
+  setHand(withP1, 0, ['DARKNESS_6']);
+  assert.equal(Engine.ai.score(withP1, 0) - scoreOff(withP1), 60, '裏のサイキック① (相手の手番ごとに一時ロック)');
+  /* ファイア③で表に戻した直後も同じ値: ①は次の開始で自分を裏返し、ファイア③がまた戻す */
+  withP1.cards[uidOf('PSYCHIC_2', 0)].faceUp = true;
+  assert.ok(Math.abs(Engine.ai.score(withP1, 0) - scoreOff(withP1) - 60) < 1e-6, '表のサイキック①');
+
+  const st = game();
+  const psy = place(st, 'PSYCHIC_2', 0, 0, false);
+  place(st, 'FIRE_4', 0, 2, true);
+  place(st, 'METAL_2', 1, 0, true);
+  place(st, 'LIGHT_3', 1, 1, true);
+  setHand(st, 0, ['DARKNESS_6', 'FIRE_6', 'PSYCHIC_6', 'DARKNESS_2']);
+  const fin = playAndDrain(st, Engine.ai.action(st));
+  assert.equal(fin.cards[psy].faceUp, true, '終了時のファイア③で裏の①を表にする');
+});
