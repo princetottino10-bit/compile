@@ -2053,7 +2053,7 @@ function thinking(p) {
 /* 管理者の自動プレイ (AUTO): 自分の側も CPU が指す。自分の側は最強と同じ読み (探索・特化の手筋・長めの思考)、相手はいつもの強さのまま */
 let autoPlay = false;
 /* valnet: 学習モデル (data/valnet.json) を読みに混ぜる重み。強くしている途中は AUTO だけで使う (2026-10-12) */
-const AUTO_AI = { level: 2, blunder: 0, budget: 2400, specialist: true, kind: 'dsh', specSide: 0, valnet: 400 };
+const AUTO_AI = { level: 2, blunder: 0, budget: 2400, specialist: true, kind: 'dsh', specSide: 0, valnet: 400, oracle: true };
 /* オンラインでも使える (2026-10-14)。ただし 1対1 で、レート戦ではない部屋だけ (レートに CPU の指した対戦を混ぜない)。
    タッグ・観戦では使わない */
 const roomAutoOk = () => roomMode && !!roomRm && !roomWatching && !roomTag && roomRm.mode !== 'tag' && !roomRm.rated;

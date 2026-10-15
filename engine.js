@@ -2744,6 +2744,12 @@ const AI_LOCK_W = {
   /* ぱうぷるの棋譜 (2026-10-14): 一番上で表のファイア③を覆わずに残し、別のラインのサイキック①を、開始で裏返るたびに
      終了時の反転で表に戻す (相手の手番は毎回ロック)。裏のサイキック⓪・ダークネス②なら中段をもう一度 (aiFire3Loop) */
   fire3Psy: 60, fire3Other: 25,
+  /* ORACLE だけ (ユーザー 2026-10-15、ぱうぷる戦の指摘「サイキック①を重ねるプレイをケア」「①のラインを割りに行って」)。
+     oThreatPrior: 相手が①と鍵 (ダークネス②) をまだ見せていないとき、鍵を表で出せるラインの相手の裏向きを①とみる確率の下限
+       (一様に数えると1割を切り、仕込みを放っておいていた) / oLockVictim, oLockBreakLine: 相手の永続ロックを受けたときの
+       lockVictim / lockBreakLine (ロックのラインに集めてコンパイルで割る手を、ほかのラインを伸ばす手より先にする) /
+     oKeep: ウォーター①・ファイア③を捨てる・キャッシュで手放す損 (「かなり強いからできれば使いたい」) */
+  oThreatPrior: 0.3, oLockVictim: 650, oLockBreakLine: 0.9, oKeep: 90,
 };
 /* 知らないキーは無視して配列で返す (計測スクリプトが打ち間違いに気づけるように) */
 function setAiWeights(obj) {
@@ -2755,6 +2761,10 @@ function setAiWeights(obj) {
   }
   return unknown;
 }
+/* ORACLE (管理者が自分の手を指させる、学習モデル入りの読み) か。ORACLE だけの手筋 (AI_LOCK_W の o*) を使う */
+let AI_ORACLE = false;
+function setAiOracle(on) { AI_ORACLE = !!on; }
+function aiIsOracle(st, side) { return AI_ORACLE && aiIsDshSpecialist(st, side); }
 let AI_SPECIALIST_ENABLED = false;
 let AI_SPECIALIST_SIDE = -1;
 /* 'dsh': 最強の特化戦略 (重みは DARKNESS/SPEED/HATE で調整、今の最強は FIRE/WATER/SPEED) / 'psylock': サイキック①の永続ロック狙い */
@@ -2956,7 +2966,8 @@ function aiLockScore(st, side) {
       const need = Math.max(10, theirs + 1);
       const reach = Math.min(1, Math.max(0, mine) / need);
       /* 受けている側は、裏でしか出せないぶん持っている側の得より痛い (コントロールを守るより、ロックを割るほうが先) */
-      w = AI_LOCK_W.lockVictim * (1 - AI_LOCK_W.lockBreakLine * reach);
+      w = aiIsOracle(st, side) ? AI_LOCK_W.oLockVictim * (1 - AI_LOCK_W.oLockBreakLine * reach)
+        : AI_LOCK_W.lockVictim * (1 - AI_LOCK_W.lockBreakLine * reach);
       if (mine >= 10 && mine > theirs) w *= 1 - AI_LOCK_W.lockBreakReady;
     }
     /* 自分のロック: そのラインの相手の合計が 10 に近いほど、コンパイルで消されやすい */
@@ -3034,6 +3045,11 @@ function aiLockThreat(st, side) {
   for (let l = 0; l < 3; l++) for (const uid of st.lines[l][op]) if (!st.cards[uid].faceUp) hidden++;
   if (!hidden) return 0;
   const chance = Math.min(1, hiddenLocks / hidden);
+  /* ORACLE: 鍵を表で出せるラインの裏向きは、①の仕込みとみる (相手がわざわざ裏で置いた札。ぱうぷるの①はここに来る)。
+     受ける側の痛さ (lockVictim) で数える */
+  const oracle = aiIsOracle(st, side);
+  const lineChance = oracle ? Math.max(chance, AI_LOCK_W.oThreatPrior) : chance;
+  const scale = oracle ? AI_LOCK_W.oLockVictim : AI_LOCK_W.lockPermanent;
 
   let risk = 0;
   for (let l = 0; l < 3; l++) {
@@ -3048,7 +3064,7 @@ function aiLockThreat(st, side) {
       if (lineReady) w = AI_LOCK_W.threatLine;      // 上に出して覆い、そのまま反転できる
       else if (covered && anyEnablers) w = AI_LOCK_W.threatAny;
       else if (covered) w = AI_LOCK_W.threatCovered; // 手段は見えないが、覆われてはいる
-      risk += w * chance * AI_LOCK_W.lockPermanent;
+      risk += w * (lineReady ? lineChance : chance) * scale;
     }
   }
   return risk;
@@ -3986,6 +4002,8 @@ const AI_COMBO_PAIRS = [
   ['HATE_2', 'HATE_1']        // HATE 1 の上に HATE 0、自分を消して HATE 1 をもう一度起動
 ];
 const AI_COMBO_KEEP = { hand: 60, field: 40, deck: 15 };
+/* ORACLE が手放したがらない札: ウォーター① (山札の上を他の各ラインに裏で) とファイア③ (終了時に捨てて反転) */
+const AI_ORACLE_KEEP = ['WATER_2', 'FIRE_4'];
 
 /* 捨てる・渡す選択で、組み合わせの相方が生きている札を手放す損。
    相方が手札にある (セットが揃っている) ときが一番重く、場にある・山札に残っている順に軽い */
@@ -4015,6 +4033,7 @@ function aiComboKeepCost(st, req, picks, me) {
     /* FIRE 0 は、場にあるときは手札の FIRE を上に重ねるたびに得をする (FIRE の札を守る) */
     const fire0OnField = [0, 1, 2].some(l => st.lines[l][me].includes('p' + me + ':FIRE_1'));
     if (fire0OnField && DEFS[c.def].proto === 'FIRE' && c.def !== 'FIRE_1') best = Math.max(best, AI_COMBO_KEEP.field * 0.5);
+    if (aiIsOracle(st, me) && AI_ORACLE_KEEP.indexOf(c.def) >= 0) best = Math.max(best, AI_LOCK_W.oKeep);
     cost += best;
   }
   return cost;
@@ -5234,7 +5253,7 @@ function aiAnswer(state, req) {
 /* ---------- 公開 API ---------- */
 
 const Engine = {
-  init, newGame, newPuzzle, apply, legalActions, setTrace, setAiPeek, setAiValueNet, setAiComboNet, setAiLevel, setAiBlunder, setAiThinkBudget, setAiBreadth, setAiPimc, setAiWeights, setAiSpecialist, setAiSpecialistWeights,
+  init, newGame, newPuzzle, apply, legalActions, setTrace, setAiPeek, setAiValueNet, setAiComboNet, setAiLevel, setAiBlunder, setAiThinkBudget, setAiBreadth, setAiPimc, setAiWeights, setAiSpecialist, setAiSpecialistWeights, setAiOracle,
   lineTotal, cardValue, compilableLines, canPlay, playBlockReason, locate,
   ai: { action: aiAction, answer: aiAnswer, score: aiScore, valnetFeatures: aiValnetFeatures, comboLogit: aiComboLogit, middleFizzles: aiMiddleFizzles, transitionScore: aiTransitionScore, compilePassChance: aiCompilePassChance, informationState: aiInformationState, rootValues: aiRootValues, vetoOrder: aiVetoOrder, actionBias: aiActionBias, opsValue: aiOpsValue, boardEffect: aiBoardEffectScore, randomPicks, smartPicks },
   get defs() { return DEFS; },
