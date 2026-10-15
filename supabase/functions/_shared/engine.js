@@ -2705,6 +2705,11 @@ const AI_W = {
   /* HATE 0 を表向きの HATE 1 の上に出し、HATE 0 自身を削除すると、めくれた HATE 1 がもう一度起動する。
      hate0Combo: その重ね方への加点 / hate0Self: HATE 0 の削除で自分を選ぶ加点 */
   hate0Combo: 120, hate0Self: 180,
+  /* ぱうぷる (2026-10-15): HATE 2 (値が最も大きい自分のカードを削除) も、値2で自分の場のいちばん上が並ぶなら自分を選べるので、
+     表向きの HATE 1 の上に出して自分を消すと HATE 1 がもう一度起動する (HATE 3 の上段があれば削除のたびに引く)。
+     守る側: 相手の場の一番上に表向きの HATE 1 があり、相手が HATE 0 / HATE 2 を持っていれば、反転して裏にしておく。
+     hate1Reuse: 手札にあると分かっているとき (すべてを見る者は常に) / hate1ReuseMaybe: 見えていないが残っているとき */
+  hate1Reuse: 150, hate1ReuseMaybe: 40,
 };
 /* サイキック①ロックまわりの重み。通常 AI・特化 AI の区別なく共通で使う。
    lockPermanent/lockTemporary: 覆われた (永続) / 一番上 (1ターン) のロックの価値
@@ -2760,6 +2765,8 @@ function setAiSpecialist(enabled, side, kind) {
   AI_SPECIALIST_KIND = kind === 'psylock' ? 'psylock' : 'dsh';
 }
 const AI_DSH_W = {
+  /* ヘイトの手筋は通常の重み (AI_W) と同じ値。最強・挑戦者にも入れる (2026-10-15。それまで入っていなかった) */
+  hate1Up: 160, hate1Few: 400, hate0Combo: 120, hate0Self: 180, hate1Reuse: 150, hate1ReuseMaybe: 40,
   think: 1.5, rootSearch: 32, reply: 18, shallow: 8,
   opponentInfo: 1,
   ctrlHold: 65, ctrlHoldLev: 0.7, ctrlOpp: 90, ctrlOppLev: 0.75,
@@ -3101,6 +3108,11 @@ function aiLockLive(st, side) {
   return activeStatics(st).some(s => s.rule === 'oppFaceDownOnly' && s.sideIdx === side
     && st.lines[s.line][s.sideIdx].indexOf(s.uid) < st.lines[s.line][s.sideIdx].length - 1);
 }
+/* 対戦者から教わった手筋を使う CPU か: つよい以上 (探索) と特化 (最強・挑戦者・ロック特化・ボス) */
+function aiTaughtTactics(st, side) {
+  return aiUsesCombos(st, side) || aiIsLockSpecialist(st, side);
+}
+
 function aiIsLockSpecialist(st, side) {
   return AI_SPECIALIST_ENABLED && AI_SPECIALIST_KIND === 'psylock' && !!st.players[side]
     && (AI_SPECIALIST_SIDE < 0 || AI_SPECIALIST_SIDE === side);
@@ -3437,10 +3449,10 @@ function aiActionBias(st, action, side) {
   if (d.id === 'HATE_2' && action.faceUp && W.hate1Up) {
     v += aiOppFieldCount(st, side) >= 2 ? W.hate1Up : -W.hate1Few;
   }
-  if (d.id === 'HATE_1' && action.faceUp && W.hate0Combo && aiOppFieldCount(st, side) >= 2) {
+  if ((d.id === 'HATE_1' || d.id === 'HATE_3') && action.faceUp && W.hate0Combo && aiOppFieldCount(st, side) >= 2) {
     const stack = st.lines[action.line][side];
     const top = stack.length ? st.cards[stack[stack.length - 1]] : null;
-    if (top && top.faceUp && top.def === 'HATE_2') v += W.hate0Combo;
+    if (top && top.faceUp && top.def === 'HATE_2' && (d.id === 'HATE_1' || (aiTaughtTactics(st, side) && aiHate2CanPickSelf(st, side, action.line)))) v += W.hate0Combo;
   }
   /* DIVERSITY 0 の即コンパイルは3本目まで取っておく (出すだけで通る切り札を1本目・2本目に使わない) */
   if (d.id === 'DIVERSITY_1' && action.faceUp && W.diversityEarly && aiDiversityReady(st, side) && !aiDiversityIsLast(st, side)) {
@@ -3855,9 +3867,14 @@ function aiScoreRaw(st, me) {
   if (aiUsesCombos(st, me) && W.fire0Water4Ready && aiFire0Water4Ready(st, me)) sc += W.fire0Water4Ready;
   sc += aiBoardEffectScore(st, me);
   sc += aiLockScore(st, me);
-  const chain = aiPsyChainReady(st, me);
-  if (chain) sc += chain === 2 ? AI_LOCK_W.chainReady : AI_LOCK_W.chainHalf;
-  sc += aiFire3Loop(st, me);
+  /* 対戦者から教わった手筋 (docs/ai-combos.md のぱうぷるの節) は、つよい以上とロック特化だけ。ふつう・かんたんには入れない
+     (ユーザー 2026-10-15: ふつうの CPU は凝ったことをしなくてよい) */
+  if (aiTaughtTactics(st, me)) {
+    const chain = aiPsyChainReady(st, me);
+    if (chain) sc += chain === 2 ? AI_LOCK_W.chainReady : AI_LOCK_W.chainHalf;
+    sc += aiFire3Loop(st, me);
+    sc -= aiHate1ReuseThreat(st, me);
+  }
   /* ロック特化: ロックが未完成なら、手札の PSYCHIC 1 そのものに値打ちがある (捨てる・消す候補にしない) */
   if (aiIsLockSpecialist(st, me)) {
     const live = aiLockLive(st, me);
@@ -4117,6 +4134,45 @@ function aiStrategicCardPicks(st, req, me, ranked, fallback) {
   return bestScore > -1e8 ? best : fallback;
 }
 
+/* HATE 2 を line の一番上に出したとき、「値が最も大きく覆われていない自分のカード」に HATE 2 自身が入るか
+   (ほかのラインの一番上に値3以上の自分の表向きが無い。裏向きは値2で並ぶので、自分を選べる) */
+function aiHate2CanPickSelf(st, side, line) {
+  for (let l = 0; l < 3; l++) {
+    if (l === line) continue;
+    const stack = st.lines[l][side];
+    if (stack.length && cardValue(st, stack[stack.length - 1]) > 2) return false;
+  }
+  return true;
+}
+
+/* 守り: 相手の場の一番上の表向きの HATE 1 を、相手が HATE 0 / HATE 2 を重ねて自分を消し、もう一度起動できるか。
+   裏にしておけば、めくれても起動しない。相手の場の一番上 (覆われていない) だけを見る */
+function aiHate1ReuseThreat(st, me) {
+  const op = 1 - me, W = aiWeightsFor(st, me);
+  if (!W.hate1Reuse || !st.players[op].hand.length) return 0;
+  let fieldMine = 0;
+  for (let l = 0; l < 3; l++) fieldMine += st.lines[l][me].length;
+  if (fieldMine < 1) return 0;
+  let line = -1;
+  for (let l = 0; l < 3; l++) {
+    const stack = st.lines[l][op];
+    const top = stack.length ? st.cards[stack[stack.length - 1]] : null;
+    if (top && top.faceUp && top.def === 'HATE_2' && lineProtoNames(st, l).indexOf('HATE') >= 0) { line = l; break; }
+  }
+  if (line < 0) return 0;
+  /* 見えていない札は読みの世界ごとに中身が入れ替わるので、uid ではなく札の種類で探す */
+  const want = { HATE_1: true, HATE_3: aiHate2CanPickSelf(st, op, line) };
+  let maybe = false;
+  for (const uid in st.cards) {
+    const c = st.cards[uid];
+    if (c.owner !== op || !want[c.def]) continue;
+    const known = AI_PEEK_SIDE === me || !!(c.knownTo & (1 << me));
+    if (known) { if (c.zone === 'hand' + op) return W.hate1Reuse; }
+    else if (c.zone === 'hand' + op || c.zone === 'deck' + op) maybe = true;
+  }
+  return maybe ? W.hate1ReuseMaybe : 0;
+}
+
 /* 相手の場のカードの枚数 (HATE 1 の2回の削除を両方とも相手に向けられるか) */
 function aiOppFieldCount(st, side) {
   let n = 0;
@@ -4129,7 +4185,7 @@ function aiOppFieldCount(st, side) {
 function aiHate0SelfPick(st, uid, me) {
   if (aiOppFieldCount(st, me) < 2) return false;
   const c = st.cards[uid];
-  if (!c || c.def !== 'HATE_1' || c.owner !== me) return false;
+  if (!c || c.owner !== me || (c.def !== 'HATE_1' && !(c.def === 'HATE_3' && aiTaughtTactics(st, me)))) return false;
   const topHate1 = (stack) => {
     const t = stack.length ? st.cards[stack[stack.length - 1]] : null;
     return !!t && t.faceUp && t.def === 'HATE_2';
@@ -4203,7 +4259,7 @@ function smartPicks(st, req) {
          相手の合計がいちばん高いラインの一番上を戻す */
       /* ぱうぷるの指し方 (2026-10-14): PSYCHIC 4 の効果はすぐ使わずに取っておき、リフレッシュのような
          手の空いた手番で使う。使うとこのカードが裏返るので、カードを出した手番では温存する (評価に任せると一度も使わなかった) */
-      const p4Downtime = req.prompt === 'optional-return' && req.context === 'PSYCHIC_5'
+      const p4Downtime = req.prompt === 'optional-return' && req.context === 'PSYCHIC_5' && aiTaughtTactics(st, me)
         && st.turn === me && !!st.pending && !!st.pending.action && st.pending.action.type === 'refresh';
       if (p4Downtime || (req.prompt === 'optional-return' && req.context === 'PSYCHIC_5' && AI_LOCK_W.returnWithP4 && aiIsLockSpecialist(st, me))) {
         let best = null, bestSc = -Infinity;
@@ -4252,7 +4308,8 @@ function smartPicks(st, req) {
             const index = stack.indexOf(uid);
             if (index > 0 && index === stack.length - 1) {
               const below = st.cards[stack[index - 1]];
-              if (below.faceUp) {
+              /* 中段の無いカード (HATE 3 など) はめくれても何も起きない */
+              if (below.faceUp && DEFS[below.def].eff && DEFS[below.def].eff.middle) {
                 const W = aiWeightsFor(st, me);
                 const gain = W.uncoverBase + Math.max(0, aiMiddleValue(DEFS[below.def])) * W.uncoverMid;
                 s += loc.side === me ? gain : -gain;
@@ -4261,6 +4318,10 @@ function smartPicks(st, req) {
               }
             }
           }
+        }
+        /* 相手の裏向きを表にすると、相手の中段が起動する (相手の HATE 0 を表にして、こちらのカードを消させる等) */
+        if (loc && loc.side === op && !c.faceUp && /^(optional-)?flip$/.test(req.prompt || '')) {
+          s -= Math.max(0, aiMiddleValue(DEFS[c.def])) * aiWeightsFor(st, me).uncoverMid;
         }
         s += (c.zone ? cardValue(st, uid) : DEFS[c.def].value) * 2;
         return { uid, s };
@@ -4464,7 +4525,7 @@ function aiFaceDownAllowed(st, side, action, acts) {
         && !ups.some(u => u.line === action.line && (u.side === undefined || u.side === side))) return true;
     /* ぱうぷるのロックの構え (aiPsyChainReady): ファイア⓪の上の裏向きは、あとでダークネス④が①の上へ移す札。
        表で重ねるとダークネス④で動かせないので、裏で重ねる手も読みに入れる */
-    if (tc && tc.faceUp && tc.def === 'FIRE_1' && aiHasDefInHand(st, side, 'DARKNESS_5') && !aiLockLive(st, side)
+    if (tc && tc.faceUp && tc.def === 'FIRE_1' && aiTaughtTactics(st, side) && aiHasDefInHand(st, side, 'DARKNESS_5') && !aiLockLive(st, side)
         && (aiHasDefInHand(st, side, AI_LOCK_CARD) || [0, 1, 2].some(l => st.lines[l][side].some(u => st.cards[u].def === AI_LOCK_CARD)))) return true;
   }
   if (destSide !== side) return false;
