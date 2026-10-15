@@ -93,3 +93,28 @@ for (const peek of [true, false]) {
     }
   });
 }
+
+/* 教わった手筋はつよい以上 (探索) と特化だけ。ふつうには入れず、最強・挑戦者 (dsh 特化) には入れる */
+test('ヘイト①の撃ち直しを止める評価は、ふつうには入れず、つよい・最強には入れる', () => {
+  const threat = () => {
+    const st = board();
+    const on = Engine.ai.score(st, 1);
+    Engine.setAiWeights({ hate1Reuse: 0, hate1ReuseMaybe: 0 });
+    Engine.setAiSpecialistWeights && Engine.setAiSpecialistWeights({ hate1Reuse: 0, hate1ReuseMaybe: 0 });
+    try { return Engine.ai.score(st, 1) - on; } finally {
+      Engine.setAiWeights({ hate1Reuse: 150, hate1ReuseMaybe: 40 });
+      Engine.setAiSpecialistWeights && Engine.setAiSpecialistWeights({ hate1Reuse: 150, hate1ReuseMaybe: 40 });
+    }
+  };
+  try {
+    Engine.setAiLevel(1);
+    assert.equal(threat(), 0, 'ふつう');
+    Engine.setAiLevel(2);
+    assert.ok(threat() > 0, 'つよい');
+    Engine.setAiSpecialist(true, 1, 'dsh');
+    assert.ok(threat() > 0, '最強');
+  } finally {
+    Engine.setAiSpecialist(false);
+    Engine.setAiLevel(1);
+  }
+});
