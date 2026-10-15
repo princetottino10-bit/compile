@@ -2751,12 +2751,12 @@ const AI_LOCK_W = {
        (一様に数えると1割を切り、仕込みを放っておいていた) / oLockVictim, oLockBreakLine: 相手の永続ロックを受けたときの
        lockVictim / lockBreakLine (ロックのラインに集めてコンパイルで割る手を、ほかのラインを伸ばす手より先にする) /
      oKeep: ウォーター①・ファイア③を捨てる・キャッシュで手放す損 (「かなり強いからできれば使いたい」) /
-     oLockLinePlay: 相手の永続ロックのラインに出す手の上乗せ (aiActionBias。全 CPU) /
+     oLockLinePlay: 相手の永続ロックのラインに出す手の上乗せ (aiActionBias。全 CPU) / lockSettledPlay: 相手のコンパイルが確定したロックのラインに裏で出す損 /
      oHate1Maybe: 相手の一番上の表の HATE 1 を、見えていない HATE 0 / HATE 2 で撃ち直される危うさ (aiHate1ReuseThreat の hate1ReuseMaybe の代わり) /
      oSelfFlip: 自分の覆われた表向きの札 (中段あり) を反転の対象に選ぶ損 (aiOracleSelfFlipCost) /
      oHate3, oHate1, oHate1Reuse, oPersist, oLowerTop, oPlayBoost: 相手の場で得を生み続ける札の脅威 (aiOracleCardThreat) /
      oHateBack: 脅威の札を手札に戻しても、出し直されるので残る割合 / oReplayMid: 表の札を戻して中段を撃ち直される損 (中段の値に掛ける。aiOracleThreatBackCost) */
-  oThreatPrior: 0.3, oLockVictim: 650, oLockBreakLine: 0.9, oKeep: 90, oLockLinePlay: 400, oHate1Maybe: 120, oSelfFlip: 60, oHate3: 320, oHateBack: 0.85, oReplayMid: 3, oPersist: 100, oLowerTop: 0.7, oPlayBoost: 1.5, oHate1: 180, oHate1Reuse: 150,
+  oThreatPrior: 0.3, oLockVictim: 650, oLockBreakLine: 0.9, oKeep: 90, oLockLinePlay: 400, lockSettledPlay: 60, oHate1Maybe: 120, oSelfFlip: 60, oHate3: 320, oHateBack: 0.85, oReplayMid: 3, oPersist: 100, oLowerTop: 0.7, oPlayBoost: 1.5, oHate1: 180, oHate1Reuse: 150,
 };
 /* 知らないキーは無視して配列で返す (計測スクリプトが打ち間違いに気づけるように) */
 function setAiWeights(obj) {
@@ -2971,7 +2971,8 @@ function aiLockScore(st, side) {
       /* コンパイルに要る合計 (10 以上かつ相手より上) にどれだけ近いか。裏でしか出せない間は、
          このラインに集めてコンパイルするのが唯一の抜け道なので、近づいた分だけ素直に軽くする (前は2乗で、序盤はほぼ効かなかった) */
       const need = Math.max(10, theirs + 1);
-      const reach = Math.min(1, Math.max(0, mine) / need);
+      /* 持ち主がもう10以上で上回っている (次の開始でそのラインをコンパイルする) なら、積んだ分は流されるだけで割れない (ユーザー 2026-10-15) */
+      const reach = theirs >= 10 && theirs > mine ? 0 : Math.min(1, Math.max(0, mine) / need);
       /* 受けている側は、裏でしか出せないぶん持っている側の得より痛い (コントロールを守るより、ロックを割るほうが先) */
       w = aiIsOracle(st, side) ? AI_LOCK_W.oLockVictim * (1 - AI_LOCK_W.oLockBreakLine * reach)
         : AI_LOCK_W.lockVictim * (1 - AI_LOCK_W.lockBreakLine * reach);
@@ -3430,17 +3431,17 @@ function aiComboDiscardCost(st, side, action, d) {
   return costs.slice(0, n).reduce((a, b) => a + b, 0);
 }
 
-/* 相手のそのラインのコンパイルが、この1枚では止まらない (相手が10以上で、この札を足しても上回れない) か。
+/* 相手のそのラインのコンパイルが、この1枚では止まらない (相手が10以上で、この札を出したあとも上回れない) か。
    止まらないなら、ロックのラインに張り合って出しても札を流されるだけなので、ほかのラインかリフレッシュでよい
-   (ユーザー 2026-10-15「相手のコンパイルが確定したときにはもう張り合わずに他のラインかリフレッシュでいい」)。
-   裏向きの値は DARKNESS 2 などで4まで上がるので、多めに4と見る */
+   (ユーザー 2026-10-15「相手のコンパイルが確定したときにはもう張り合わずに他のラインかリフレッシュでいい」。ぱうぷる戦1局目の終盤)。
+   裏向きの値は DARKNESS 2 などで変わるので、実際に出した盤面の合計で見る (相手が10以上のときだけ試すので軽い) */
 function aiOppCompileSettled(st, side, action) {
   const op = 1 - side, line = action.line;
   const theirs = lineTotal(st, line, op);
   if (theirs < 10) return false;
-  const c = st.cards[action.card];
-  const add = action.faceUp && c ? DEFS[c.def].value : 4;
-  return theirs > lineTotal(st, line, side) + add;
+  const res = apply(st, action);
+  if (!res || res.error || !res.state) return false;
+  return lineTotal(res.state, line, op) > lineTotal(res.state, line, side);
 }
 function aiActionBias(st, action, side) {
   if (!action) return 0;
@@ -3470,7 +3471,11 @@ function aiActionBias(st, action, side) {
      2手読みは相手の妨害を見てほかのラインへ逃げがちなので、読みの値に勝る上乗せにする */
   if (action.side === undefined || action.side === side) {
     const lockLine = aiLockLineOf(st, op);
-    if (lockLine >= 0 && action.line === lockLine && !aiOppCompileSettled(st, side, action)) return AI_LOCK_W.oLockLinePlay;
+    if (lockLine >= 0 && action.line === lockLine) {
+      /* 相手のコンパイルが確定したラインに裏で出すと、札は何もせずに流される。張り合わずにほかへ */
+      if (aiOppCompileSettled(st, side, action)) return action.faceUp ? 0 : -AI_LOCK_W.lockSettledPlay;
+      return AI_LOCK_W.oLockLinePlay;
+    }
   }
   /* CORRUPTION 0 などの相手側プレイは、それ自体がその札の狙い。決め打ちで足し引きせず、
      出したあとの盤面 (相手の札を覆えたか、相手に点を渡したか) で判断する (監修 2026-09-24) */
