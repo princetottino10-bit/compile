@@ -230,7 +230,7 @@ export function openRun(protocols, cardsOf, opts) {
         '<section class="rn-mcard"><small>ROGUELIKE</small><h3>勝ち抜き戦</h3>' +
           /* 一度でも挑戦した人には、ルールはたたんでおく (読まずにすぐ始められるように) */
           (best ? '<details class="rn-rules"><summary>ルールを見る</summary>' : '') + '<ul>' +
-          '<li>地図を下から登り、頂上の BOSS を倒す (自分は ' + (3 - RUN.RUN_WIN_COMPILES) + ' つコンパイル済みから始まり、あと ' + RUN.RUN_WIN_COMPILES + ' 本で勝ち。序盤は2つ済みから)</li>' +
+          '<li>地図を下から登り、頂上の BOSS を倒す (自分も相手も ' + (3 - RUN.RUN_WIN_COMPILES) + ' つコンパイル済みから始まり、残りの ' + RUN.RUN_WIN_COMPILES + ' つを先にコンパイルした方の勝ち。序盤は2つ済みから)</li>' +
           '<li>道は自分で選ぶ: 戦闘・精鋭・イベント・休憩所・ショップ・宝箱</li>' +
           '<li>ライフ ' + RUN.RUN_LIFE + '。コンパイルされるたびに 1 減る</li>' +
           '<li>勝つたびにカードの報酬 (強化・β カード・除去) を選ぶ。パッチ (改造) は系統をそろえるとボーナス</li>' +
@@ -393,7 +393,7 @@ export function openRun(protocols, cardsOf, opts) {
             (run.route === 'cursed' ? '<p class="rn-cursed">CURSED — この試合は 自分の手札 4 枚・相手 7 枚。勝てば RARE 以上のパッチを3つから選べる</p>' : '') +
             (retry ? '<p class="rn-warn">負けたので同じ相手とやり直しです (ライフ −' + last.damage + ')' + (last.saved === 'phoenix' ? ' — PHOENIX でよみがえった！' : last.saved ? ' — FAILSAFE が作動してライフ 1 で耐えました' : '') + '</p>' : '') +
             (run.swapped ? '<p class="rn-note">転送装置: <b>' + esc(run.swapped.out) + '</b> が <b>' + esc(run.swapped.add) + '</b> に入れ替わった</p>' : '') +
-            (RUN.runWinCompiles(run) === 1 ? '<p class="rn-note">序盤なので、はじめから2つコンパイル済み — あと1回コンパイルしたら勝ち</p>' : '') +
+            (RUN.runWinCompiles(run) === 1 ? '<p class="rn-note">序盤なので、どちらもはじめから2つコンパイル済み — 残りの1つを先にコンパイルしたら勝ち</p>' : '') +
             (run.opp.elite ? '<p class="rn-note rn-elite">ELITE — 勝つとクレジット多めとパッチを1つ</p>' : run.route === 'alarm' ? '<p class="rn-warn">警報が鳴っている — 相手が1段強い</p>' : '') +
             '<div class="rn-vs"><div><small>あなた' + ((run.removed || []).length ? ' (除去 ' + run.removed.length + ' 枚)' : '') + '</small>' + deckLine(run.deck, byName) + '</div><b>VS</b>' +
             /* 勝ち抜き戦では CPU の難易度名 (かんたん・ふつう…) は出さない */
