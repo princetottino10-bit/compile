@@ -30,6 +30,8 @@ function configure(cfg) {
   if (Engine.setAiPeek) Engine.setAiPeek(cfg.peek ? 1 : -1);
   /* 学習モデル (盤面の良し悪し、data/valnet.json): 管理者の AUTO だけ。重みは使うときに初めて読む */
   if (Engine.setAiValueNet) Engine.setAiValueNet(cfg.valnet ? valnetModel() : null, cfg.valnet || 0);
+  /* ORACLE だけの手筋 (サイキック①の仕込みへの備え・ロックを割りに行く・ウォーター①とファイア③を手放さない) */
+  if (Engine.setAiOracle) Engine.setAiOracle(!!cfg.oracle);
 }
 
 self.onmessage = (e) => {

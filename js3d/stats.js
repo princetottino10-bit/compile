@@ -38,12 +38,17 @@ function save(list) {
 
 export function localRecords() { return records(); }
 
+/* 勝ち抜き戦で強化したカード (FIRE_1_UP) は、元のカード (FIRE_1) の記録に数える。
+   前は形が合わずに捨てていて、強化したカードを出しても効果を使っても戦績に残らなかった */
+const baseCardId = (k) => (typeof k === 'string' && k.endsWith('_UP') ? k.slice(0, -3) : k);
+
 /* 効果の発動回数 { defId: 回数 } の形だけ通す (カードの種類は64まで) */
 export function cleanEffects(e) {
   const out = {};
   if (!e || typeof e !== 'object') return out;
-  for (const [k, v] of Object.entries(e).slice(0, 64)) {
-    if (/^[A-Z]{2,16}_\d$/.test(k) && Number.isInteger(v) && v > 0) out[k] = Math.min(v, 999);
+  for (const [k0, v] of Object.entries(e).slice(0, 64)) {
+    const k = baseCardId(k0);
+    if (/^[A-Z]{2,16}_\d$/.test(k) && Number.isInteger(v) && v > 0) out[k] = Math.min((out[k] || 0) + v, 999);
   }
   return out;
 }
@@ -83,7 +88,7 @@ export function recordSoloResult(me, opp, win, level, extra) {
   const rec = { id: 't' + at + '_' + Math.random().toString(36).slice(2, 6), me: me.slice(), opp: opp.slice(),
     win: !!win, level: level === undefined ? null : level, at,
     turns: Number.isInteger(x.turns) ? x.turns : null, feats: Array.isArray(x.feats) ? x.feats.slice() : [],
-    cards: Array.isArray(x.cards) ? x.cards.slice(0, 64) : [], effects: cleanEffects(x.effects),
+    cards: Array.isArray(x.cards) ? [...new Set(x.cards.map(baseCardId))].slice(0, 64) : [], effects: cleanEffects(x.effects),
     /* どのモードの対戦か (管理者の画面で数える) */
     ...(MODES.includes(x.mode) ? { mode: x.mode } : {}),
     /* 短縮マッチ (3本より少ないコンパイルで決着する試合)。実績には数えない */
@@ -245,7 +250,9 @@ let cardsOnlyUnused = false;     // カードのタブ: まだ表で出してい
 function cardsTab(list, protos) {
   const cs = cardStats(list);
   const total = Object.keys(cardIndex).length;
-  const unused = Object.keys(cardIndex).filter(id => !cs.get(id)).length;
+  /* 表で出した試合があるか (裏から返って効果だけ使ったカードは、記録はあっても「まだ表で出していない」) */
+  const played = (id) => { const t = cs.get(id); return !!(t && t.games); };
+  const unused = Object.keys(cardIndex).filter(id => !played(id)).length;
   const byProto = new Map();
   for (const [id, d] of Object.entries(cardIndex)) {
     if (!byProto.has(d.proto)) byProto.set(d.proto, []);
@@ -260,12 +267,12 @@ function cardsTab(list, protos) {
       (cardsOnlyUnused ? '全部を見る' : 'まだのカードだけ見る') + '</button></div>' +
     '<div class="sr-cardgrid">' + protos.map(p => {
       const cards = (byProto.get(p.name) || []).sort((a, b) => a.value - b.value);
-      if (cardsOnlyUnused && cards.every(c => cs.get(c.id))) return '';
+      if (cardsOnlyUnused && cards.every(c => played(c.id))) return '';
       return '<div class="sr-cgrow" style="--pc:' + esc(p.color) + '"><b>' + esc(p.name) + '</b>' + cards.map(c => {
         const t = cs.get(c.id);
         const tier = t ? cardTier(t.wins) : null;
-        if (cardsOnlyUnused && t) return '<span class="sr-cc gone"></span>';
-        return '<span class="sr-cc' + (tier ? ' t-' + tier.key : '') + (t ? '' : ' unused') + '" title="' + esc(p.name + ' ' + c.value) +
+        if (cardsOnlyUnused && played(c.id)) return '<span class="sr-cc gone"></span>';
+        return '<span class="sr-cc' + (tier ? ' t-' + tier.key : '') + (played(c.id) ? '' : ' unused') + '" title="' + esc(p.name + ' ' + c.value) +
           (t ? ' - ' + t.wins + '勝 / ' + t.games + '戦・効果 ' + t.effects + '回' : ' - 未使用') + '">' +
           c.value + '</span>';
       }).join('') + '</div>';
