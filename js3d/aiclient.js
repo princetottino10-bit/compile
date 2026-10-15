@@ -72,12 +72,14 @@ export function createAiClient(Engine, { cards, effects, extra, engineUrl }) {
 
   /* 画面側で考えるときも、Worker と同じ設定を当てる (前は over を捨てていて、ORACLE が黙ってふつうの強さ・学習モデルなしで指していた)。
      考え終わったら、ふだんの設定 (config) に戻す */
-  let valnet;                      // 学習モデル (undefined = まだ読んでいない、null = 読めなかった)
-  async function valnetModel() {
-    if (valnet === undefined) {
-      try { const r = await fetch(new URL('../data/valnet.json', import.meta.url)); valnet = r.ok ? await r.json() : null; } catch { valnet = null; }
+  const valnet = {};               // 学習モデル (名前ごと。undefined = まだ読んでいない、null = 読めなかった)
+  async function valnetModel(name) {
+    const key = name || 'main';
+    if (valnet[key] === undefined) {
+      const file = name ? '../data/valnet-' + name + '.json' : '../data/valnet.json';
+      try { const r = await fetch(new URL(file, import.meta.url)); valnet[key] = r.ok ? await r.json() : null; } catch { valnet[key] = null; }
     }
-    return valnet;
+    return valnet[key];
   }
   function configure(cfg, model) {
     Engine.setAiLevel(cfg.level);
@@ -92,7 +94,7 @@ export function createAiClient(Engine, { cards, effects, extra, engineUrl }) {
   async function localWith(over, fn) {
     if (!over) return local(fn);
     const cfg = { ...config, ...over };
-    configure(cfg, cfg.valnet ? await valnetModel() : null);
+    configure(cfg, cfg.valnet ? await valnetModel(cfg.valnetModel) : null);
     try { return local(fn); } finally { configure(config, null); }
   }
 

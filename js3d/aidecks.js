@@ -60,6 +60,16 @@ export const PEEK_NAME = 'ALL-SEEING';
 export const ORACLE_LEVEL = 24;
 export const ORACLE_AI = STRONGEST_AI;
 export const ORACLE_NAME = 'ORACLE';
+/* ORACLE (管理者の自動プレイ・CHALLENGE の相手) がロックのデッキ (PSYCHIC を含む) を持ったときだけ、読みを差し替える:
+   サイキック①ロックの手筋 + ロック用の学習モデル (data/valnet-lock.json: ロックのミラー3,000局 + 第1世代のデータで学習) + 3.6 秒。
+   ALL-SEEING とのミラー (両者 PSYCHIC / DARKNESS / FIRE) で 600戦 RESULT_PLACEHOLDER */
+export const ORACLE_LOCK_AI = { kind: 'psylock', budget: 3600, valnetModel: 'lock' };
+export const isLockDeck = (protocols) => (protocols || []).some(p => String(p && p.name || p || '').split('+').includes('PSYCHIC'));
+/* cfg: ORACLE の設定 (main.js の AUTO_AI など)。特化を当てる側のデッキがロックなら、差し替えた設定を返す */
+export function oracleAi(cfg, st) {
+  const me = st && st.players && st.players[cfg.specSide === 0 ? 0 : 1];
+  return cfg.oracle && me && isLockDeck(me.protocols) ? { ...cfg, ...ORACLE_LOCK_AI } : cfg;
+}
 export const DEUS_NAME = 'CODE:PURPLE';
 
 export const isChallenger = (level) => level >= CHALLENGER_BASE && level < CHALLENGER_BASE + CHALLENGERS.length;
