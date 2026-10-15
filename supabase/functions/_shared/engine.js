@@ -2746,6 +2746,17 @@ const AI_LOCK_W = {
   /* ぱうぷるの棋譜 (2026-10-14): 一番上で表のファイア③を覆わずに残し、別のラインのサイキック①を、開始で裏返るたびに
      終了時の反転で表に戻す (相手の手番は毎回ロック)。裏のサイキック⓪・ダークネス②なら中段をもう一度 (aiFire3Loop) */
   fire3Psy: 60, fire3Other: 25,
+  /* ORACLE だけ (ユーザー 2026-10-15、ぱうぷる戦の指摘「サイキック①を重ねるプレイをケア」「①のラインを割りに行って」)。
+     oThreatPrior: 相手が①と鍵 (ダークネス②) をまだ見せていないとき、鍵を表で出せるラインの相手の裏向きを①とみる確率の下限
+       (一様に数えると1割を切り、仕込みを放っておいていた) / oLockVictim, oLockBreakLine: 相手の永続ロックを受けたときの
+       lockVictim / lockBreakLine (ロックのラインに集めてコンパイルで割る手を、ほかのラインを伸ばす手より先にする) /
+     oKeep: ウォーター①・ファイア③を捨てる・キャッシュで手放す損 (「かなり強いからできれば使いたい」) /
+     oLockLinePlay: 相手の永続ロックのラインに出す手の上乗せ (aiActionBias) /
+     oHate1Maybe: 相手の一番上の表の HATE 1 を、見えていない HATE 0 / HATE 2 で撃ち直される危うさ (aiHate1ReuseThreat の hate1ReuseMaybe の代わり) /
+     oSelfFlip: 自分の覆われた表向きの札 (中段あり) を反転の対象に選ぶ損 (aiOracleSelfFlipCost) /
+     oHate3, oHate1, oHate1Reuse, oPersist, oLowerTop, oPlayBoost: 相手の場で得を生み続ける札の脅威 (aiOracleCardThreat) /
+     oHateBack: 脅威の札を手札に戻しても、出し直されるので残る割合 / oReplayMid: 表の札を戻して中段を撃ち直される損 (中段の値に掛ける。aiOracleThreatBackCost) */
+  oThreatPrior: 0.3, oLockVictim: 650, oLockBreakLine: 0.9, oKeep: 90, oLockLinePlay: 400, oHate1Maybe: 120, oSelfFlip: 60, oHate3: 320, oHateBack: 0.85, oReplayMid: 3, oPersist: 100, oLowerTop: 0.7, oPlayBoost: 1.5, oHate1: 180, oHate1Reuse: 150,
 };
 /* 知らないキーは無視して配列で返す (計測スクリプトが打ち間違いに気づけるように) */
 function setAiWeights(obj) {
@@ -2757,6 +2768,10 @@ function setAiWeights(obj) {
   }
   return unknown;
 }
+/* ORACLE (管理者が自分の手を指させる、学習モデル入りの読み) か。ORACLE だけの手筋 (AI_LOCK_W の o*) を使う */
+let AI_ORACLE = false;
+function setAiOracle(on) { AI_ORACLE = !!on; }
+function aiIsOracle(st, side) { return AI_ORACLE && aiIsDshSpecialist(st, side); }
 let AI_SPECIALIST_ENABLED = false;
 let AI_SPECIALIST_SIDE = -1;
 /* 'dsh': 最強の特化戦略 (重みは DARKNESS/SPEED/HATE で調整、今の最強は FIRE/WATER/SPEED) / 'psylock': サイキック①の永続ロック狙い */
@@ -2958,7 +2973,8 @@ function aiLockScore(st, side) {
       const need = Math.max(10, theirs + 1);
       const reach = Math.min(1, Math.max(0, mine) / need);
       /* 受けている側は、裏でしか出せないぶん持っている側の得より痛い (コントロールを守るより、ロックを割るほうが先) */
-      w = AI_LOCK_W.lockVictim * (1 - AI_LOCK_W.lockBreakLine * reach);
+      w = aiIsOracle(st, side) ? AI_LOCK_W.oLockVictim * (1 - AI_LOCK_W.oLockBreakLine * reach)
+        : AI_LOCK_W.lockVictim * (1 - AI_LOCK_W.lockBreakLine * reach);
       if (mine >= 10 && mine > theirs) w *= 1 - AI_LOCK_W.lockBreakReady;
     }
     /* 自分のロック: そのラインの相手の合計が 10 に近いほど、コンパイルで消されやすい */
@@ -3036,6 +3052,11 @@ function aiLockThreat(st, side) {
   for (let l = 0; l < 3; l++) for (const uid of st.lines[l][op]) if (!st.cards[uid].faceUp) hidden++;
   if (!hidden) return 0;
   const chance = Math.min(1, hiddenLocks / hidden);
+  /* ORACLE: 鍵を表で出せるラインの裏向きは、①の仕込みとみる (相手がわざわざ裏で置いた札。ぱうぷるの①はここに来る)。
+     受ける側の痛さ (lockVictim) で数える */
+  const oracle = aiIsOracle(st, side);
+  const lineChance = oracle ? Math.max(chance, AI_LOCK_W.oThreatPrior) : chance;
+  const scale = oracle ? AI_LOCK_W.oLockVictim : AI_LOCK_W.lockPermanent;
 
   let risk = 0;
   for (let l = 0; l < 3; l++) {
@@ -3050,7 +3071,7 @@ function aiLockThreat(st, side) {
       if (lineReady) w = AI_LOCK_W.threatLine;      // 上に出して覆い、そのまま反転できる
       else if (covered && anyEnablers) w = AI_LOCK_W.threatAny;
       else if (covered) w = AI_LOCK_W.threatCovered; // 手段は見えないが、覆われてはいる
-      risk += w * chance * AI_LOCK_W.lockPermanent;
+      risk += w * (lineReady ? lineChance : chance) * scale;
     }
   }
   return risk;
@@ -3351,6 +3372,10 @@ function aiMiddleFizzles(st, side, action, d) {
   const fr = { controller: side, source: action.card, line: action.line,
     currentLine: action.line, bind: {} };
   let sawTargeted = false;
+  /* 山札の上を出す効果 (WATER 1 など) は、山札が空なら何も起きない (リシャッフルしない。ルール仕様 §5.2)。
+     ユーザー 2026-10-15「デッキないのに Water1 撃つのとか本当ダメ」 */
+  const playsTop = (ops) => (ops || []).some(o => o && ((o.op === 'play' && o.source === 'topDeck') || playsTop(o.ops)));
+  if (playsTop(mid) && !st.players[side].deck.length) return true;
   /* 中段は「置いたあと」に解決する。置いた札が一番上の札を覆うので、
      覆われたカードを対象にする効果 (ダークネス②など) は、置く前の盤面では
      対象が無くても、置いた瞬間に対象ができる。一時的に積んでから判定する。 */
@@ -3428,6 +3453,13 @@ function aiActionBias(st, action, side) {
     return v;
   }
   if (action.type !== 'play') return 0;
+  /* ORACLE: 相手のサイキック①が覆われている (永続ロック) 間は、とにかくそのラインに置き続けて割りに行く
+     (ユーザー 2026-10-15「サイキック①覆われたらとにかくそこに置き続けないとダメ」)。2手読みは相手の妨害を見て
+     ほかのラインへ逃げがちなので、読みの値に勝る上乗せにする */
+  if (aiIsOracle(st, side) && (action.side === undefined || action.side === side)) {
+    const lockLine = aiLockLineOf(st, op);
+    if (lockLine >= 0 && action.line === lockLine) return AI_LOCK_W.oLockLinePlay;
+  }
   /* CORRUPTION 0 などの相手側プレイは、それ自体がその札の狙い。決め打ちで足し引きせず、
      出したあとの盤面 (相手の札を覆えたか、相手に点を渡したか) で判断する (監修 2026-09-24) */
   if (action.side !== undefined && action.side !== side) return 0;
@@ -3470,6 +3502,9 @@ function aiActionBias(st, action, side) {
       /* 揃えて出すのは、SPEED 3 の「自分の他のカードを移動」に動かす対象 (場の自分のカード) があるときだけ。
          場が空のうち (初手など) に出すと、動かせるのが出したばかりの SPEED 0 だけで空振りする (監修 2026-10-04) */
       if (!pairReady) v -= 180;
+      else if (aiIsOracle(st, side)) {
+        if (d.id === 'SPEED_1' && action.faceUp && aiSpeedPairUncovers(st, side)) v += 220;
+      }
       else if (d.id === 'SPEED_1' && action.faceUp && aiSpeedPairHasTarget(st, side)) v += 220;
       else v -= 160;
     }
@@ -3506,6 +3541,28 @@ function aiNow() {
 
 function aiTransitionScore(before, result, side) {
   if (!before || !result || !result.state) return 0;
+  return aiTransitionScoreBase(before, result, side)
+    - (aiIsOracle(before, side) ? aiOracleThreatBackCost(before, result.state, side) : 0);
+}
+/* ORACLE: 相手の脅威の札 (aiOracleCardThreat) を手札に戻すと、場の脅威は消えて見えるが、相手は出し直す
+   (2局目51手目: FIRE 2 で HATE 3 を戻して下の DEATH 0 まで起こし、HATE 3 は次の手番で置き直された)。
+   戻した札は脅威の大半を残すと数え、反転・削除を選ばせる */
+function aiOracleThreatBackCost(before, after, me) {
+  const op = 1 - me;
+  let cost = 0;
+  for (let l = 0; l < 3; l++) {
+    const stack = before.lines[l][op];
+    for (let i = 0; i < stack.length; i++) {
+      const a = after.cards[stack[i]];
+      if (!a || a.zone !== 'hand' + op || !before.cards[stack[i]].faceUp) continue;
+      cost += aiOracleCardThreat(before, stack, i) * AI_LOCK_W.oHateBack;
+      /* 表の札を戻すと、相手は出し直して中段をもう一度使える (ぱうぷる戦: 1枚捨ててデス2を戻し、出し直された) */
+      cost += Math.max(0, aiMiddleValue(DEFS[before.cards[stack[i]].def])) * AI_LOCK_W.oReplayMid;
+    }
+  }
+  return cost;
+}
+function aiTransitionScoreBase(before, result, side) {
   const beforeLog = before.actionLog || [];
   const afterLog = result.state.actionLog || [];
   const ownTag = `P${side + 1}: リコンパイル`;
@@ -3889,6 +3946,7 @@ function aiScoreRaw(st, me) {
   }
   sc -= aiLockThreat(st, me);
   sc += aiLockThreat(st, 1 - me);
+  if (aiIsOracle(st, me)) sc -= aiOracleThreat(st, me);
   sc += aiCompileSafetyScore(st, me) * W.compileSafety;
 
   if (st.useControl) {
@@ -3967,8 +4025,23 @@ function aiChoiceScore(st, req, picks, me) {
     if (!res || res.error) return -1e8;
     const out = res.requests && res.requests.length ? resolveRequests(res, smartPicks, 8) : res;
     if (!out || out.error || (out.requests && out.requests.length)) return -1e8;
-    return aiScore(out.state, me) + aiTransitionScore(st, out, me) - aiComboKeepCost(st, req, picks, me);
+    return aiScore(out.state, me) + aiTransitionScore(st, out, me) - aiComboKeepCost(st, req, picks, me) - aiOracleSelfFlipCost(st, req, picks, me);
   } finally { AI_CHOICE_DEPTH--; }
+}
+
+/* ORACLE: 反転の対象に、自分の表向きの札 (中段のある札) を選ぶ損。上をどかせば起動し直せる札を自分で裏にすると、
+   その先の得が消える (ぱうぷる戦の7手目: WATER 0 の反転で自分の FIRE 0 を裏にし、後の SPEED 3 の移動で起こせなくなった。2026-10-15) */
+function aiOracleSelfFlipCost(st, req, picks, me) {
+  if (!aiIsOracle(st, me) || req.kind !== 'pickCard' || !/^(optional-)?flip$/.test(req.prompt || '') || !Array.isArray(picks)) return 0;
+  let cost = 0;
+  for (const uid of picks) {
+    const c = st.cards[uid], loc = c && locate(st, uid);
+    if (!loc || loc.side !== me || !c.faceUp) continue;
+    /* 一番上でも数える: FIRE 0 の「覆われることになったとき」の反転は、覆われる直前 (まだ一番上) に選ぶ */
+    const eff = DEFS[c.def].eff;
+    if (eff && eff.middle && Array.isArray(eff.middle.ops) && eff.middle.ops.length) cost += AI_LOCK_W.oSelfFlip;
+  }
+  return cost;
 }
 
 /* 組み合わせて使う札 (docs/ai-combos.md の手筋)。どちらかを捨てると手筋が消える。
@@ -3988,6 +4061,8 @@ const AI_COMBO_PAIRS = [
   ['HATE_2', 'HATE_1']        // HATE 1 の上に HATE 0、自分を消して HATE 1 をもう一度起動
 ];
 const AI_COMBO_KEEP = { hand: 60, field: 40, deck: 15 };
+/* ORACLE が手放したがらない札: ウォーター① (山札の上を他の各ラインに裏で) とファイア③ (終了時に捨てて反転) */
+const AI_ORACLE_KEEP = ['WATER_2', 'FIRE_4'];
 
 /* 捨てる・渡す選択で、組み合わせの相方が生きている札を手放す損。
    相方が手札にある (セットが揃っている) ときが一番重く、場にある・山札に残っている順に軽い */
@@ -4017,6 +4092,7 @@ function aiComboKeepCost(st, req, picks, me) {
     /* FIRE 0 は、場にあるときは手札の FIRE を上に重ねるたびに得をする (FIRE の札を守る) */
     const fire0OnField = [0, 1, 2].some(l => st.lines[l][me].includes('p' + me + ':FIRE_1'));
     if (fire0OnField && DEFS[c.def].proto === 'FIRE' && c.def !== 'FIRE_1') best = Math.max(best, AI_COMBO_KEEP.field * 0.5);
+    if (aiIsOracle(st, me) && AI_ORACLE_KEEP.indexOf(c.def) >= 0) best = Math.max(best, AI_LOCK_W.oKeep);
     cost += best;
   }
   return cost;
@@ -4054,7 +4130,8 @@ function aiBestCombo(st, req, ordered, min, max, fallback) {
 }
 
 function aiPlayFreePicks(st, req, me) {
-  if (aiUsesCombos(st, me) && aiWeightsFor(st, me).speedPairStrategy && req.context === 'SPEED_1'
+  /* ORACLE は SPEED 0 の追加プレイ先も決め打ちしない (出したあとの盤面で比べる) */
+  if (aiUsesCombos(st, me) && aiWeightsFor(st, me).speedPairStrategy && req.context === 'SPEED_1' && !aiIsOracle(st, me)
       && !aiHasDefOnField(st, me, 'SPEED_1') && !aiHasDefOnField(st, me, 'SPEED_4')
       && !(aiWeightsFor(st, me).fire0Water4Ready && aiFire0Water4Ready(st, me))) {
     const speed3 = req.candidates.find(raw => {
@@ -4172,7 +4249,9 @@ function aiHate1ReuseThreat(st, me) {
     if (known) { if (c.zone === 'hand' + op) return W.hate1Reuse; }
     else if (c.zone === 'hand' + op || c.zone === 'deck' + op) maybe = true;
   }
-  return maybe ? W.hate1ReuseMaybe : 0;
+  /* ORACLE: 見えていなくても重く見て、表の HATE 1 を裏にする・消す手を先に打つ
+     (ユーザー 2026-10-15「HATE1 を裏向きにするなり削除するなりの対応しないと一方的に殴られてる」) */
+  return maybe ? (aiIsOracle(st, me) ? Math.max(W.hate1ReuseMaybe, AI_LOCK_W.oHate1Maybe) : W.hate1ReuseMaybe) : 0;
 }
 
 /* 相手の場のカードの枚数 (HATE 1 の2回の削除を両方とも相手に向けられるか) */
@@ -4254,7 +4333,10 @@ function smartPicks(st, req) {
       if (aiUsesCombos(st, me) && aiWeightsFor(st, me).speedPairStrategy
           && req.prompt === 'optional-shift' && req.context === 'SPEED_4') {
         const self = req.candidates.find(uid => st.cards[uid] && st.cards[uid].def === 'SPEED_4');
-        if (self) return [self];
+        /* ORACLE: 決め打ちしない。自分を動かす・動かさない・ほかの札を動かすを、動かした後の盤面で比べる。
+           自分を動かすと SPEED 3 が裏返って値が 3 → 2 になり、次の手番からの移動も失う。下の SPEED 0 を起こしても、
+           0 と 3 を出し直して同じ札を行き来させるだけの空回りがあった (ユーザー 2026-10-15「無駄に使って裏に向ける」) */
+        if (self && !aiIsOracle(st, me)) return [self];
       }
       if (req.prompt === 'optional-shift' && req.context === AI_LOCK_COVER && aiLockKeepsCover(st, me)) return [];
       /* ロック特化: PSYCHIC 4 の「相手のカードを戻す」は使う (このカードが裏返って値は下がるが、相手の手を1つ遅らせる)。
@@ -4324,6 +4406,17 @@ function smartPicks(st, req) {
         /* 相手の裏向きを表にすると、相手の中段が起動する (相手の HATE 0 を表にして、こちらのカードを消させる等) */
         if (loc && loc.side === op && !c.faceUp && /^(optional-)?flip$/.test(req.prompt || '')) {
           s -= Math.max(0, aiMiddleValue(DEFS[c.def])) * aiWeightsFor(st, me).uncoverMid;
+        }
+        if (loc && aiIsOracle(st, me)) {
+          /* ORACLE: 相手の場で得を生み続ける札 (HATE 3 / HATE 1 など、aiOracleCardThreat) を、反転・削除・戻すの的に優先して選ぶ */
+          if (/^(optional-)?(flip|delete|return)$/.test(req.prompt || '')) s += aiOracleThreatTarget(st, uid, me);
+          /* ORACLE: 自分の覆われた表の札 (中段あり) は、上をどかせば起動し直せるので自分で裏にしない (aiOracleSelfFlipCost と同じ) */
+          if (loc.side === me && c.faceUp && /^(optional-)?flip$/.test(req.prompt || '')
+              && DEFS[c.def].eff && DEFS[c.def].eff.middle) s -= AI_LOCK_W.oSelfFlip;
+          /* 相手の表の札を手札に戻すと、相手はもう一度出して中段を使える (ぱうぷる戦: 1枚捨ててデス2を戻し、出し直された。2026-10-15) */
+          if (loc.side === op && c.faceUp && /^(optional-)?return$/.test(req.prompt || '')) {
+            s -= Math.max(0, aiMiddleValue(DEFS[c.def])) * aiWeightsFor(st, me).uncoverMid;
+          }
         }
         s += (c.zone ? cardValue(st, uid) : DEFS[c.def].value) * 2;
         return { uid, s };
@@ -4562,6 +4655,19 @@ function aiSpeedPairHasTarget(st, side) {
   for (let l = 0; l < 3; l++) if (st.lines[l][side].length) return true;
   return false;
 }
+/* SPEED 3 の中段の移動で、下の表向きのカードを起動できるか (一番上をどかすと、表向きの札が出てきて中段が動く)。
+   ユーザー 2026-10-15 (ぱうぷる戦の11手目): 0と3を揃えても、1回目の移動で下の札を起動できず、2回目の追加プレイでも
+   点が伸びないなら、揃えて出す意味がない。ORACLE はこれがあるときだけ揃える手に上乗せし、決め打ちもしない */
+function aiSpeedPairUncovers(st, side) {
+  for (let l = 0; l < 3; l++) {
+    const stack = st.lines[l][side];
+    if (stack.length < 2) continue;
+    const below = st.cards[stack[stack.length - 2]];
+    const eff = DEFS[below.def].eff;
+    if (below.faceUp && below.def !== 'SPEED_1' && eff && eff.middle && Array.isArray(eff.middle.ops) && eff.middle.ops.length) return true;
+  }
+  return false;
+}
 
 function aiDecisionActions(state) {
   let acts = legalActions(state);
@@ -4569,7 +4675,7 @@ function aiDecisionActions(state) {
   if (aiUsesCombos(state, side) && aiWeightsFor(state, side).speedPairStrategy
       && !aiHasDefOnField(state, side, 'SPEED_1') && !aiHasDefOnField(state, side, 'SPEED_4')
       && aiHasDefInHand(state, side, 'SPEED_1') && aiHasDefInHand(state, side, 'SPEED_4')
-      && aiSpeedPairHasTarget(state, side)) {
+      && aiSpeedPairHasTarget(state, side) && !aiIsOracle(state, side)) {
     const speed0 = acts.filter(action => action.type === 'play' && action.faceUp
       && state.cards[action.card] && state.cards[action.card].def === 'SPEED_1');
     if (speed0.length) acts = speed0;
@@ -4758,10 +4864,178 @@ function aiIsLosingAfter(s1, me, deadline) {
   return false;
 }
 
+/* ORACLE: 相手の場に残って得を生み続ける札の脅威。反転・削除・戻すの的にする。
+   ユーザー 2026-10-15「HATE3 と HATE1 に良いようにやられすぎ」「HATE1 の上に Water4 一生置かれる」
+   「1枚で複数枚プレイしたり複数の効果が発動するカード、永続的にリターンを得られるカードは割りに行ってほしい」。
+   ぱうぷる戦では HATE 1 の削除が8回 (起き直しが6回)、HATE 3 のドローが21回。場の札1枚ぶんとしか見ていなかった。
+   - 上段 (覆われても表なら効く) の常在・誘発: oPersist。HATE 3 は oHate3
+   - 一番上の下段の誘発 (開始・終了・「〜したあと」): oPersist × oLowerTop。札を出す誘発 (ASSIMILATION 2 など) は × oPlayBoost
+   - 中段が複数の効果・札を出す札 (HATE 1、WATER 1、SPEED 0 など) のすぐ上に、自分を戻す・動かす札 (WATER 4 など) が
+     表で乗っていると、相手の毎手番で起き直す: oHate1Reuse。HATE 1 は覆われていても oHate1 */
+const AI_ORACLE_SPECIAL = { HATE_4: 'oHate3', HATE_2: 'oHate1' };
+/* 持ち主の損になる・自分で消える上段/下段 (割る必要がない) */
+const AI_ORACLE_SELF_HARM = ['LIFE_1', 'CORRUPTION_6', 'DIVERSITY_6', 'COURAGE_6', 'PSYCHIC_2', 'SPIRIT_2', 'CHAOS_5', 'METAL_6', 'ICE_4', 'CHAOS_4', 'CORRUPTION_1'];
+const AI_ORACLE_REUSERS = ['WATER_5', 'SPEED_4', 'SPIRIT_4', 'ICE_3', 'UNITY_2', 'TIME_3'];
+function aiOracleOpsPlay(ops) {
+  return Array.isArray(ops) && ops.some(o => o && (o.op === 'play' || aiOracleOpsPlay(o.ops)));
+}
+const AI_ORACLE_MULTI = {};
+function aiOracleMultiMiddle(def) {
+  if (!(def in AI_ORACLE_MULTI)) AI_ORACLE_MULTI[def] = aiOracleMultiMiddleOf(def);
+  return AI_ORACLE_MULTI[def];
+}
+function aiOracleMultiMiddleOf(def) {
+  const m = DEFS[def] && DEFS[def].eff && DEFS[def].eff.middle;
+  if (!m || !Array.isArray(m.ops)) return false;
+  return aiOracleOpsPlay(m.ops) || m.ops.filter(o => o && o.op !== 'ifDone').length >= 2 && aiMiddleValue(DEFS[def]) > 0;
+}
+function aiOracleCardThreat(st, stack, i) {
+  const c = st.cards[stack[i]];
+  if (!c.faceUp) return 0;
+  const W = AI_LOCK_W, eff = DEFS[c.def].eff || {};
+  let v = 0;
+  if (AI_ORACLE_SPECIAL[c.def]) v += W[AI_ORACLE_SPECIAL[c.def]];
+  else if (AI_ORACLE_SELF_HARM.indexOf(c.def) < 0) {
+    if (eff.upper && (eff.upper.trigger || eff.upper.static)) v += W.oPersist * (eff.upper.trigger && aiOracleOpsPlay(eff.upper.trigger.ops) ? W.oPlayBoost : 1);
+    const lo = eff.lower;
+    if (lo && i === stack.length - 1 && lo.trigger && !/^wouldBe/.test(lo.trigger.on || '')) {
+      v += W.oPersist * W.oLowerTop * (aiOracleOpsPlay(lo.trigger.ops) ? W.oPlayBoost : 1);
+    }
+  }
+  /* 自分を戻す・動かす札がすぐ上に乗った、中段の強い札は毎手番起き直す */
+  if (i === stack.length - 2 && aiOracleMultiMiddle(c.def)) {
+    const top = st.cards[stack[i + 1]];
+    if (top.faceUp && AI_ORACLE_REUSERS.indexOf(top.def) >= 0) v += W.oHate1Reuse;
+  }
+  return v;
+}
+function aiOracleThreat(st, me) {
+  const op = 1 - me;
+  let v = 0;
+  for (let l = 0; l < 3; l++) {
+    const stack = st.lines[l][op];
+    for (let i = 0; i < stack.length; i++) v += aiOracleCardThreat(st, stack, i);
+  }
+  return v;
+}
+/* 的として選ぶときの点: その札を消したときに消える脅威。すぐ上の起き直し役 (WATER 4 など) を選んでも下の脅威が消える */
+function aiOracleThreatTarget(st, uid, me) {
+  const c = st.cards[uid], loc = c && locate(st, uid);
+  if (!loc || loc.side === me || !c.faceUp) return 0;
+  const stack = st.lines[loc.line][loc.side], i = stack.indexOf(uid);
+  let v = aiOracleCardThreat(st, stack, i);
+  if (i > 0 && i === stack.length - 1 && AI_ORACLE_REUSERS.indexOf(c.def) >= 0 && aiOracleMultiMiddle(st.cards[stack[i - 1]].def)
+      && st.cards[stack[i - 1]].faceUp) v += AI_LOCK_W.oHate1Reuse;
+  return v;
+}
+
+/* ---------- ORACLE の負け阻止の全探索 ----------
+   相手があと1本のとき、自分の手と効果の選び方を全部、相手の応手と相手の選び方も全部たどって、
+   相手の3本目が通らない手を探す (ユーザー 2026-10-15「負け阻止は全探索してほしい」)。
+   ふだんの読みは選択を smartPicks の1通りで決め打ちし、締め切りで打ち切るので、受けの筋を見落としていた。
+   全部たどると時間がかかるので、上限は AI_ORACLE_SAFETY_MS (ふだんの持ち時間とは別枠) */
+const AI_ORACLE_SAFETY_MS = 6000;
+const AI_ORACLE_OUTCOMES = 300;
+/* 根で見つけた「負け筋を避ける選び方」。そのあとの aiAnswer で順に使う (同じ全探索を選択ごとにやり直さない) */
+let AI_ORACLE_PLAN = null;
+/* 選択の答えを全部 (複数枚選びは候補7枚までなら組み合わせを全部、それより多ければ見本と smartPicks) */
+function aiAllPicks(st, req) {
+  let out = null;
+  if (req.kind === 'pickCard' || req.kind === 'pickHand') {
+    const min = req.min !== undefined ? req.min : 1;
+    const max = Math.min(req.max !== undefined ? req.max : 1, req.candidates.length);
+    if (max > 1 && req.candidates.length <= 7) {
+      out = [];
+      const c = req.candidates, n = c.length;
+      for (let mask = 0; mask < (1 << n); mask++) {
+        const pick = c.filter((x, i) => mask & (1 << i));
+        if (pick.length >= min && pick.length <= max) out.push(pick);
+      }
+    } else if (max <= 1) {
+      out = req.candidates.map(x => [x]);
+      if (min === 0) out.push([]);
+    }
+  }
+  if (!out) out = enumeratePicks(req);
+  const smart = smartPicks(st, req), key = JSON.stringify(smart);
+  return [smart].concat(out.filter(p => JSON.stringify(p) !== key));
+}
+/* res から、who の選択を全部たどった解決後の盤面を { state, path } で out に集める (もう一方の選択は smartPicks の1通り)。
+   path は who が答えた選択の列 */
+function aiOutcomes(res, who, deadline, out, depth, path, cap) {
+  if (!res || res.error) return;
+  if (!res.requests || !res.requests.length) { out.push({ state: res.state, path }); return; }
+  if (aiNow() > deadline || out.length >= cap || depth > 12) {
+    const r = resolveRequests(res, smartPicks, 30);
+    if (r && !r.error && !r.requests.length) out.push({ state: r.state, path: null });
+    return;
+  }
+  const q = res.requests[0];
+  if (q.player !== who) { aiOutcomes(apply(res.state, { type: 'choose', id: q.id, picks: smartPicks(res.state, q) }), who, deadline, out, depth + 1, path, cap); return; }
+  for (const picks of aiAllPicks(res.state, q)) {
+    if (out.length >= cap) break;
+    aiOutcomes(apply(res.state, { type: 'choose', id: q.id, picks }), who, deadline, out, depth + 1, path.concat([picks]), cap);
+  }
+}
+/* s1 (自分の手のあと) から、相手が応手と選び方のどれかで3本目を通せるか (相手の手番の始めのコンパイルを含む)。
+   読み切れなければ「通せない」とみる */
+function aiOppCanWin(s1, me, deadline) {
+  const op = 1 - me;
+  if (s1.winner === op) return true;
+  if (s1.winner !== null || s1.turn !== op) return false;
+  for (const r of legalActions(s1)) {
+    if (aiNow() > deadline) return false;
+    const outs = [];
+    aiOutcomes(apply(s1, r), op, deadline, outs, 0, [], 60);
+    if (outs.some(o => o.state.winner === op)) return true;
+  }
+  return false;
+}
+/* res (自分の手を指した直後) から、自分の選び方のどれかで負け筋を避けられるか。
+   { r: 2 勝ち / 1 避けられる / 0 無理, path: その選び方 } */
+function aiOracleEscape(res, me, deadline) {
+  const outs = [];
+  aiOutcomes(res, me, deadline, outs, 0, [], AI_ORACLE_OUTCOMES);
+  let found = { r: 0, path: null };
+  for (const o of outs) {
+    if (o.state.winner === me) return { r: 2, path: o.path };
+    if (found.r < 1 && o.path && o.state.winner === null && !aiOppCanWin(o.state, me, deadline)) found = { r: 1, path: o.path };
+    if (found.r === 1 && o === outs[0]) break;          // いつもの選び方で避けられるなら、それで指す
+    if (aiNow() > deadline) break;
+  }
+  return found;
+}
+/* 読みで選んだ手から順に、負け筋を避けられる手を探す。見つからなければ null (読みどおりに指す) */
+function aiOracleSafeAction(state, me, ordered) {
+  const deadline = aiNow() + AI_ORACLE_SAFETY_MS;
+  AI_SEARCH_DEADLINE = deadline;
+  AI_REPLAY_CACHE = new WeakMap();
+  AI_SCORE_CACHE = new WeakMap();
+  let escape = null;
+  for (const a of ordered) {
+    if (aiNow() > deadline) break;
+    const e = aiOracleEscape(apply(state, a), me, deadline);
+    if (e.r === 2) { escape = { a, path: e.path }; break; }
+    if (e.r === 1 && !escape) { escape = { a, path: e.path }; if (a === ordered[0]) break; }
+  }
+  AI_ORACLE_PLAN = escape && escape.path && escape.path.length ? { path: escape.path.slice() } : null;
+  return escape ? escape.a : null;
+}
+/* aiAnswer: 根で決めた選び方があれば、その次の答え (いまの選択に当てはまらなければ捨てる) */
+function aiOraclePlannedPicks(req) {
+  if (!AI_ORACLE_PLAN || !AI_ORACLE_PLAN.path.length) { AI_ORACLE_PLAN = null; return null; }
+  const picks = AI_ORACLE_PLAN.path.shift();
+  const ok = Array.isArray(picks) && picks.every(p => (req.candidates && req.candidates.indexOf(p) >= 0)
+    || (req.lines && req.lines.indexOf(p) >= 0) || (req.options && typeof p === 'number') || req.kind === 'arrange' || p === 'yes');
+  if (!ok) { AI_ORACLE_PLAN = null; return null; }
+  return picks;
+}
+
 /* --- Hard AI (2-ply minimax + alpha-beta) --- */
 
 function aiActionHard(state, collect) {
   const me = state.turn;
+  AI_ORACLE_PLAN = null;
   const acts = aiDecisionActions(state);
   if (!acts.length) return null;
   if (acts.length === 1) return acts[0];
@@ -4843,6 +5117,14 @@ function aiActionHard(state, collect) {
       }
     }
 
+    /* ORACLE: 相手があと1本なら、読みで選んだ手から順に、選び方まで全部たどって負け筋を避けられる手を探す */
+    if (aiIsOracle(state, me) && aiCompiledTowardWin(state, 1 - me) === 2) {
+      const first = best2 || best;
+      const rest = viable.slice().sort((x, y) => (y.val2 !== undefined ? y.val2 : y.val1) - (x.val2 !== undefined ? x.val2 : x.val1)).map(x => x.a);
+      const ordered = [first].concat(rest.filter(a => a !== first), acts.filter(a => a !== first && rest.indexOf(a) < 0));
+      const safe = aiOracleSafeAction(state, me, ordered);
+      if (safe) return safe;
+    }
     /* 終盤の受け: 相手が2本済みなら、評価順に「指しても即負け筋が
        残らない」手を選び直す。全候補が負け筋なら評価どおりに指す */
     if (aiCompiledTowardWin(state, 1 - me) === 2 && viable.length > 1) {
@@ -5217,6 +5499,11 @@ function aiAnswer(state, req) {
   const view = aiInformationState(state, req.player);
   const forcedControlWin = aiForcedControlWinPicks(req);
   if (forcedControlWin) return forcedControlWin;
+  /* ORACLE: 相手があと1本のとき、根の全探索で決めた選び方があればそれで答える */
+  if (aiIsOracle(view, req.player) && view.turn === req.player) {
+    const planned = aiOraclePlannedPicks(req);
+    if (planned) return planned;
+  }
   if (AI_BLUNDER > 0 && Math.random() < AI_BLUNDER) return randomPicks(req);
   if (AI_LEVEL >= 1) {
     if (aiPicksHiddenOpp(state, req)) return aiPicksByVote(state, req, view);
@@ -5236,7 +5523,7 @@ function aiAnswer(state, req) {
 /* ---------- 公開 API ---------- */
 
 const Engine = {
-  init, newGame, newPuzzle, apply, legalActions, setTrace, setAiPeek, setAiValueNet, setAiComboNet, setAiLevel, setAiBlunder, setAiThinkBudget, setAiBreadth, setAiPimc, setAiWeights, setAiSpecialist, setAiSpecialistWeights,
+  init, newGame, newPuzzle, apply, legalActions, setTrace, setAiPeek, setAiValueNet, setAiComboNet, setAiLevel, setAiBlunder, setAiThinkBudget, setAiBreadth, setAiPimc, setAiWeights, setAiSpecialist, setAiSpecialistWeights, setAiOracle,
   lineTotal, cardValue, compilableLines, canPlay, playBlockReason, locate,
   ai: { action: aiAction, answer: aiAnswer, score: aiScore, valnetFeatures: aiValnetFeatures, comboLogit: aiComboLogit, middleFizzles: aiMiddleFizzles, transitionScore: aiTransitionScore, compilePassChance: aiCompilePassChance, informationState: aiInformationState, rootValues: aiRootValues, vetoOrder: aiVetoOrder, actionBias: aiActionBias, opsValue: aiOpsValue, boardEffect: aiBoardEffectScore, randomPicks, smartPicks },
   get defs() { return DEFS; },
