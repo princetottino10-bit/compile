@@ -70,13 +70,37 @@ export function createAiClient(Engine, { cards, effects, extra, engineUrl }) {
     try { return fn(); } finally { Engine.setTrace(true); }
   }
 
+  /* 画面側で考えるときも、Worker と同じ設定を当てる (前は over を捨てていて、ORACLE が黙ってふつうの強さ・学習モデルなしで指していた)。
+     考え終わったら、ふだんの設定 (config) に戻す */
+  let valnet;                      // 学習モデル (undefined = まだ読んでいない、null = 読めなかった)
+  async function valnetModel() {
+    if (valnet === undefined) {
+      try { const r = await fetch(new URL('../data/valnet.json', import.meta.url)); valnet = r.ok ? await r.json() : null; } catch { valnet = null; }
+    }
+    return valnet;
+  }
+  function configure(cfg, model) {
+    Engine.setAiLevel(cfg.level);
+    if (Engine.setAiBlunder) Engine.setAiBlunder(cfg.blunder || 0);
+    Engine.setAiThinkBudget(cfg.budget);
+    if (Engine.setAiSpecialist) Engine.setAiSpecialist(!!cfg.specialist, cfg.specSide === 0 ? 0 : 1, cfg.kind || 'dsh');
+    if (Engine.setAiPeek) Engine.setAiPeek(cfg.peek ? 1 : -1);
+    if (Engine.setAiValueNet) Engine.setAiValueNet(cfg.valnet ? model : null, cfg.valnet || 0);
+  }
+  async function localWith(over, fn) {
+    if (!over) return local(fn);
+    const cfg = { ...config, ...over };
+    configure(cfg, cfg.valnet ? await valnetModel() : null);
+    try { return local(fn); } finally { configure(config, null); }
+  }
+
   /* over: この1回だけの設定 (管理者の自動プレイで、自分の側だけ強い読みにする) */
   async function ask(type, st, req, over) {
     if (worker) {
       try { return await post({ type, state: lean(st), req, config: over ? { ...config, ...over } : config }); }
       catch (err) { console.warn('AI worker fallback', err && err.message); dropWorker(); }
     }
-    return local(() => (type === 'answer' ? Engine.ai.answer(st, req) : Engine.ai.action(st)));
+    return localWith(over, () => (type === 'answer' ? Engine.ai.answer(st, req) : Engine.ai.action(st)));
   }
 
   return {

@@ -22,7 +22,7 @@ import { loadGacha, chipsOf, giveChips } from './gacha.js';
 import { earnedChips } from './chips.js';
 import * as CW from './crashwatch.js';
 import { unlockTrophies, TROPHY_XP, pruneTrophies } from './achievements.js';
-import { addReplay, getReplay, pinReplay, rebuild, noteReplayFacts, isComeback } from './replays.js';
+import { addReplay, listReplays, getReplay, pinReplay, rebuild, noteReplayFacts, isComeback } from './replays.js';
 import * as RS from './resume.js';
 import { decodeReplay, sharedCodeFromHash, shareReplayLink, setReplayShortener, shortIdFromHash, loadShortReplay, moveFromHash } from './replayshare.js';
 /* リプレイの短いリンク: 符号をサーバーに預けて (ログインしている人だけ) ID を返す / ID から符号を受け取る (誰でも) */
@@ -2084,6 +2084,7 @@ function syncAutoButton() {
     b.onclick = () => {
       const waitingMe = !!cur && !busy && !cur.requests.length && cur.state.winner === null && humanTurn(cur.state);
       autoPlay = !autoPlay;
+      if (autoPlay && roomMode) markOracleRoom();      // オンラインで ORACLE を使った対戦は記録に数えない
       syncAutoButton();
       UI.toast(autoPlay ? 'ORACLE: 自分の手を強い CPU が指します' : 'ORACLE を止めました。次の判断から自分で指せます', 2600);
       /* 自分の番で待っているところなら、すぐ動かす (選択の画面を開いているときは、次の判断から) */
@@ -3485,6 +3486,18 @@ async function roomApplyView(rm, instant) {
      フル再生され、盤面が巻き戻って見えた。安全性は traceKey の前方一致が担保 */
   const mayContinue = !!(roomRm && roomRm.code === rm.code);
   const entries = roomTracker.take(rm, mayContinue, roomValOf);
+  /* 公開された相手の手札を覚えておく (ORACLE の読みに使う)。途中経過の盤面も順にたどる (公開はその手の盤面にしか載らない) */
+  if (!mayContinue) roomOppHand = null;
+  if (!roomWatching && rm.game) {
+    for (const t of rm.trace || []) if (t && t.game) roomOppHand = ROOM.trackOppHand(roomOppHand, { side: rm.side, game: t.game });
+    roomOppHand = ROOM.trackOppHand(roomOppHand, rm);
+    /* ORACLE: 相手の番の盤面を覚える (相手の手から始まった選択を、あとで組み立て直すため) */
+    if (!mayContinue) roomPending().reset();
+    if (autoPlay) {
+      const ai = ROOM.buildRoomAiState(rm, Engine, null, roomOppHand && roomOppHand.defs);
+      if (ai) roomPending().onView(ai.state, !!rm.request);
+    }
+  }
   roomRm = rm;
   const prev = cur ? shown() : null;
   const st = ROOM.buildRoomState(rm, roomValOf);
@@ -3530,6 +3543,24 @@ async function roomApplyView(rm, instant) {
    サーバーに通らなかったら、同じ手を送り続けないよう AUTO を止めて、自分で指せるようにする */
 const ROOM_AUTO_AI = { ...AUTO_AI, peek: false };
 let roomAutoBusy = false;
+let roomOppHand = null;            // 公開されて覚えている相手の手札 (ROOM.trackOppHand)
+let roomPend = null;               // 効果の解決途中の選択を組み立て直す (ROOM.createPendingTracker)
+const roomPending = () => roomPend || (roomPend = ROOM.createPendingTracker(Engine));
+/* ORACLE を一度でも使った部屋 (部屋の番号)。その対戦は記録に数えない (2026-10-15 「一旦ノーカン」):
+   経験値・デイリー・実績・遊ばれ方の記録・リプレイの送信をしない (手元のリプレイは残す)。
+   部屋に入り直しても分かるよう、端末に覚えておく */
+const ORACLE_ROOMS_KEY = 'compileOracleRooms';
+function oracleRooms() {
+  try { const v = JSON.parse(localStorage.getItem(ORACLE_ROOMS_KEY) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; }
+}
+function markOracleRoom() {
+  const code = roomRm && roomRm.code;
+  if (!code) return;
+  const list = oracleRooms();
+  if (list.includes(code)) return;
+  try { localStorage.setItem(ORACLE_ROOMS_KEY, JSON.stringify(list.concat(code).slice(-50))); } catch (e) { /* private mode */ }
+}
+const oracleUsedHere = () => !!(roomRm && roomRm.code && oracleRooms().includes(roomRm.code));
 function roomAutoStop(why) {
   autoPlay = false;
   syncAutoButton();
@@ -3542,8 +3573,9 @@ async function roomAutoAct() {
   const legal = ROOM.normLegalActions(roomRm);
   if (!st || st.winner !== null || st.turn !== ME || !legal.length) return;
   const at = roomRm.version;
-  const ai = ROOM.buildRoomAiState(roomRm, Engine);
+  const ai = ROOM.buildRoomAiState(roomRm, Engine, null, roomOppHand && roomOppHand.defs);
   if (!ai) { roomAutoStop('この部屋では読めません'); return; }
+  markOracleRoom();
   roomAutoBusy = true;
   let hit = null;
   try {
@@ -3554,19 +3586,27 @@ async function roomAutoAct() {
   if (!autoFor(ME) || !roomRm) return;                           // 考えている間に AUTO を止めた
   if (roomRm.version !== at) { await roomAutoAct(); return; }      // 考えている間に盤面が進んだ: 読み直す
   if (!hit) { roomAutoStop('合う手が見つかりませんでした'); return; }
+  roomPending().onMyAction(ai.state, hit);          // この手から始まる選択を、あとで組み立て直すため
   if (await roomStep(hit) === false) roomAutoStop('サーバーが手を受け付けませんでした');
 }
 /* 選択の答え。答えられないときは null (ふつうに自分で選ぶ) */
 async function roomAutoAnswer(req) {
   if (!roomRm) return null;
-  const ai = ROOM.buildRoomAiState(roomRm, Engine);
+  const ai = ROOM.buildRoomAiState(roomRm, Engine, null, roomOppHand && roomOppHand.defs);
   if (!ai) { roomAutoStop('この部屋では読めません'); return null; }
+  markOracleRoom();
   const at = roomRm.version;
   try {
     UI.setPrompt('ORACLE が選択しています…', 'wait');
-    const [picks] = await Promise.all([thinking(aiClient ? aiClient.answer(ai.state, ai.request(req), ROOM_AUTO_AI) : Promise.resolve(withoutTrace(() => Engine.ai.answer(ai.state, ai.request(req))))), TW.wait(260)]);
+    /* 選択待ちの盤面 (打つ前の盤面 + 手 + 答え) を組み立て直せたら、それで読む (答えごとに続きを試せる)。
+       組み立てられなければ、今の盤面だけで答える */
+    const aiReq = ai.request(req);
+    const rec = roomPending().resolve(ai.state, aiReq);
+    const st = rec ? rec.state : ai.state, q = rec ? rec.req : aiReq;
+    const [picks] = await Promise.all([thinking(aiClient ? aiClient.answer(st, q, ROOM_AUTO_AI) : Promise.resolve(withoutTrace(() => Engine.ai.answer(st, q)))), TW.wait(260)]);
     if (!roomRm || roomRm.version !== at || !autoFor(ME)) return PICK_CANCEL;
     if (!Array.isArray(picks)) { roomAutoStop('選び方が見つかりませんでした'); return null; }
+    roomPending().onMyPicks(picks);
     return ai.picks(picks);
   } catch (e) {
     roomAutoStop('選び方が見つかりませんでした');
@@ -3630,6 +3670,7 @@ async function roomDrainRequest() {
       const req = cur.requests[0];
       UI.setPrompt('');
       const auto = autoFor(ME) ? await roomAutoAnswer(req) : null;
+      if (!auto) roomPending().drop();               // 自分で答えた選択は、ORACLE の続きの組み立てに使えない
       const picks = auto || await askUser(req);
       UI.setPrompt('');
       if (picks === PICK_CANCEL) continue;   // 外部更新で取り直し
@@ -3813,6 +3854,13 @@ async function roomMaybeFinish() {
   FEEL.buzz(win ? [40, 70, 40, 70, 120] : [160]);
   await UI.resultCutIn(win, { victory, deus: win && myPlate().sub === TITLES.platinum });
   lastReplayId = null;
+  /* ORACLE を使った対戦: 記録に数えない (経験値・デイリー・実績・遊ばれ方の記録・リプレイの送信なし)。手元のリプレイだけ残す */
+  if (oracleUsedHere()) {
+    UI.toast('ORACLE を使った対戦なので、記録には数えません', 3600);
+    await saveOnlineReplay(st, win, true, { oracle: true });
+    showEndActions(win);
+    return;
+  }
   /* 同じ部屋の同じ決着を読み直しても2回は入らない */
   const firstTime = grantXp('online', XP_GAIN.onlinePlay + (win ? XP_GAIN.onlineWin : 0),
     'room:' + (roomRm && roomRm.code) + ':' + (st.turns || 0));
@@ -3865,7 +3913,8 @@ async function surrenderLocal() {
 /* オンラインのリプレイ: 決着したらサーバーから始めの条件と手の列をもらって残す (1対1だけ)。
    後攻の部屋 (ゲスト) の人は view 1 で、盤面を入れ替えて自分を手前にして見る */
 let onlineReview = null;           // オンラインの感想戦: { history, final } (棋譜から作り直したもの)
-async function saveOnlineReplay(st, win, firstTime) {
+async function saveOnlineReplay(st, win, firstTime, opts) {
+  const oracle = !!(opts && opts.oracle);
   onlineReview = null;
   if (!roomRm || roomRm.mode === 'tag' || roomWatching) return;
   try {
@@ -3874,15 +3923,18 @@ async function saveOnlineReplay(st, win, firstTime) {
     const view = r.side === 1 ? 1 : 0;
     const rep = { me: view ? r.init.p1 : r.init.p0, opp: view ? r.init.p0 : r.init.p1, win, level: 2, kind: 'online', view,
       oppName: (roomRm.names && roomRm.names[1 - view]) || '', turns: (st.turns || 0) + 1, init: r.init, actions: r.actions,
-      ...(roomRm.rated ? { rated: true } : {}), score: compiledScore(st) };
+      ...(roomRm.rated ? { rated: true } : {}), ...(oracle ? { oracle: true } : {}), score: compiledScore(st) };
     try {
       const built = rebuild(Engine, rep);
       if (built.ok && built.history.length) onlineReview = { history: built.history, final: built.final };
     } catch (e) { onlineReview = null; }
     /* 同じ決着を読み直したとき (部屋に入り直した等) は、リプレイを2つ残さない */
     if (!firstTime) return;
+    /* ORACLE の対戦は、同じ決着を読み直しても2つ残さない (経験値の帳簿で見分けられないので、手元のリプレイの一覧で見る) */
+    if (oracle && listReplays().some(x => x.oracle && x.kind === 'online' && JSON.stringify(x.init) === JSON.stringify(rep.init)
+      && (x.actions || []).length === rep.actions.length)) return;
     lastReplayId = addReplay(rep);
-    uploadReplay({ ...rep, at: Date.now(), mode: 'online' });
+    if (!oracle) uploadReplay({ ...rep, at: Date.now(), mode: 'online' });   // ORACLE の対戦は集めない (学習のデータに混ぜない)
   } catch (e) { /* 残せなくても対戦の結果には響かない */ }
 }
 
