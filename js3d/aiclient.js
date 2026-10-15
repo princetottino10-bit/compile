@@ -86,6 +86,8 @@ export function createAiClient(Engine, { cards, effects, extra, engineUrl }) {
     if (Engine.setAiSpecialist) Engine.setAiSpecialist(!!cfg.specialist, cfg.specSide === 0 ? 0 : 1, cfg.kind || 'dsh');
     if (Engine.setAiPeek) Engine.setAiPeek(cfg.peek ? 1 : -1);
     if (Engine.setAiValueNet) Engine.setAiValueNet(cfg.valnet ? model : null, cfg.valnet || 0);
+    /* ORACLE だけの手筋 (サイキック①の仕込みへの備え・ロックを割りに行く・ウォーター①とファイア③を手放さない) */
+    if (Engine.setAiOracle) Engine.setAiOracle(!!cfg.oracle);
   }
   async function localWith(over, fn) {
     if (!over) return local(fn);
