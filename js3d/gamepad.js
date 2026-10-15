@@ -321,7 +321,7 @@ const CONFIRM_IDS = ['pkGo', 'pickGo', 'arrGo'];
 function confirmButton() {
   for (const id of CONFIRM_IDS) {
     const el = document.getElementById(id);
-    if (el && !el.disabled && visibleRect(el)) return el;
+    if (el && !el.disabled && el.getAttribute('aria-disabled') !== 'true' && visibleRect(el)) return el;
   }
   return null;
 }
