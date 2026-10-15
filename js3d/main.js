@@ -3718,7 +3718,7 @@ function updateTurnTimer() {
   if (!roomMode || !rm || rm.status !== 'playing' || !rm.lastActionAt || !rm.turnLimitMs || !st || st.winner !== null) { el.hidden = true; return; }
   const mine = (rm.legalActions || []).length > 0 || !!rm.request;
   const elapsedMs = Date.now() + roomServerOffset - Date.parse(rm.lastActionAt);
-  /* この手の 180 秒と、1試合の持ち時間の残り (毎手ぎりぎりまで粘れないように) の、短いほう */
+  /* この手の 300 秒と、1試合の持ち時間の残り (毎手ぎりぎりまで粘れないように) の、短いほう */
   const waitSeat = mine ? rm.side : 1 - rm.side;
   const bankLeft = rm.bankMs && Array.isArray(rm.usedMs) ? rm.bankMs - (rm.usedMs[waitSeat] | 0) - elapsedMs : Infinity;
   const left = Math.ceil(Math.min(rm.turnLimitMs - elapsedMs, bankLeft) / 1000);
