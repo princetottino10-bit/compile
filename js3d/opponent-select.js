@@ -6,7 +6,7 @@
  * ========================================================================= */
 import { showTitleBack, hideTitleBack } from './titleback.js';
 import { gearSvg, eyeSvg } from './deus.js';
-import { LEVEL_LABELS, STRONGEST_AI, LOCK_AI, CHALLENGERS, CHALLENGER_BASE, UNDERDOG_DECK, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL, UNDERDOG_TAG_RIVAL_MATE, DEUS_LEVEL, DEUS_AI, DEUS_NAME, PEEK_LEVEL, PEEK_AI, PEEK_NAME } from './aidecks.js';
+import { LEVEL_LABELS, STRONGEST_AI, LOCK_AI, CHALLENGERS, CHALLENGER_BASE, UNDERDOG_DECK, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL, UNDERDOG_TAG_RIVAL_MATE, DEUS_LEVEL, DEUS_AI, DEUS_NAME, PEEK_LEVEL, PEEK_AI, PEEK_NAME, ORACLE_LEVEL, ORACLE_AI, ORACLE_NAME } from './aidecks.js';
 import { localRecords } from './stats.js';
 import { conquered, conquerable } from './stats-data.js';
 import { settings } from './settings.js';
@@ -61,7 +61,7 @@ export function openOpponentSelect(protocols, opts = {}) {
   /* 機械仕掛けの神 (最強の上): 称号 CONQUEROR (最強を除く全プロトコルで最強に勝つ) を取ると挑める。管理者は試せるように常に */
   /* 機械仕掛けの神 (最強の上) は誰でも挑める。すべてを見る者は、神に勝つと現れる (それまでは札も出さない)。管理者は試せるように常に */
   const peekOpen = recOf(DEUS_LEVEL).wins > 0 || !!accountState().admin;
-  const bossLevels = (peekOpen ? [PEEK_LEVEL] : []).concat([DEUS_LEVEL, 3, 4], CHALLENGERS.map((c, k) => CHALLENGER_BASE + k));
+  const bossLevels = (peekOpen ? [PEEK_LEVEL] : []).concat([DEUS_LEVEL, ORACLE_LEVEL, 3, 4], CHALLENGERS.map((c, k) => CHALLENGER_BASE + k));
   const beaten = bossLevels.filter(lv => recOf(lv).wins > 0).length;
   /* 挑戦者は名前のないものに番号 (前は「挑戦者」が3つ並んで見分けがつかなかった) */
   const ROMAN = ['Ⅰ', 'Ⅱ', 'Ⅲ', 'Ⅳ', 'Ⅴ', 'Ⅵ', 'Ⅶ', 'Ⅷ'];
@@ -89,6 +89,9 @@ export function openOpponentSelect(protocols, opts = {}) {
         card(String(DEUS_LEVEL), '<span class="op-deus">' + gearSvg(10) + esc(DEUS_NAME) + '</span>' + rec(DEUS_LEVEL) +
             (recOf(DEUS_LEVEL).wins ? ' <em>✓ TITLE — DEICIDE</em>' : ''),
           '最強の上に座る、機械仕掛けの神。勝つと 称号 DEICIDE', deck(DEUS_AI), ' deus top') +
+        /* ORACLE: 管理者の自動プレイと同じ読み (学習モデル入り)。誰でも挑める (2026-10-15) */
+        card(String(ORACLE_LEVEL), esc(ORACLE_NAME) + rec(ORACLE_LEVEL),
+          '管理者の自動プレイと同じ読み。学習モデルと、上級者の棋譜から教わった手筋で打つ', deck(ORACLE_AI), ' top') +
         card('3', '最強' + rec(3) + (conq >= total ? ' <em>✓ TITLE — CONQUEROR</em>' : ''),
           'いちばん強い CPU。残りの' + total + 'のプロトコルすべてで勝つと 称号 CONQUEROR', deck(STRONGEST_AI) + conqBar, ' top') +
         card('4', 'ロック特化' + rec(4), 'サイキック①で「裏向きでしか出せない」を狙う', deck(LOCK_AI)) +

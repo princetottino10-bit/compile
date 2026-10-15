@@ -71,7 +71,7 @@ import { matUnlocked, MAT_W, MAT_D } from './playmat.js';
 import { initAccount, openAccount, takeAccountResume, accountState, onAccountChange } from './account.js';
 import { openCardList } from './cardlist-ov.js';
 import { openOpponentSelect } from './opponent-select.js';
-import { UNDERDOG_DECK, STRONGEST_AI, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL, UNDERDOG_TAG_RIVAL_MATE, levelLabel, fixedDeck, DEUS_LEVEL, DEUS_NAME, DEUS_BUDGET, PEEK_LEVEL, PEEK_NAME } from './aidecks.js';
+import { UNDERDOG_DECK, STRONGEST_AI, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL, UNDERDOG_TAG_RIVAL_MATE, levelLabel, fixedDeck, DEUS_LEVEL, DEUS_NAME, DEUS_BUDGET, PEEK_LEVEL, PEEK_NAME, ORACLE_LEVEL } from './aidecks.js';
 import { openRun, runHud, showRunAfterGame } from './run-ui.js';
 import { openWeekly, weeklyHud, showWeeklyAfterGame } from './weekly-ui.js';
 import { compilesBy, loadRun, RUN_WIN_COMPILES, runWinCompiles, battleOpts, lethal, nodeById } from './run.js';
@@ -2035,8 +2035,12 @@ function applyAiDifficulty(level, opts) {
     specialist: level >= 3,
     kind: level === 4 || level === DEUS_LEVEL || level === PEEK_LEVEL ? 'psylock' : 'dsh',
     /* すべてを見る者: こちらの手札・裏向き・山札の並びを本当のまま見て読む (engine の setAiPeek) */
-    peek: level === PEEK_LEVEL
+    peek: level === PEEK_LEVEL,
+    /* aiClient.setConfig は前の設定に重ねるので、ORACLE の設定が次の対戦に残らないよう毎回決め直す */
+    specSide: 1, valnet: 0, oracle: false
   };
+  /* ORACLE (CHALLENGE の相手): 管理者の自動プレイと同じ読み。学習モデルは Worker が読む。画面側で考えるときは aiAction の ORACLE_CPU_AI で当てる */
+  if (level === ORACLE_LEVEL) Object.assign(config, ORACLE_CPU_AI);
   Engine.setAiLevel(config.level);
   if (Engine.setAiBlunder) Engine.setAiBlunder(config.blunder);
   Engine.setAiThinkBudget(config.budget);
@@ -2060,15 +2064,18 @@ const AUTO_AI = { level: 2, blunder: 0, budget: 2400, specialist: true, kind: 'd
 const roomAutoOk = () => roomMode && !!roomRm && !roomWatching && !roomTag && roomRm.mode !== 'tag' && !roomRm.rated;
 const autoOn = () => autoPlay && (!roomMode || roomAutoOk());
 const autoFor = (side) => autoOn() && side === ME;
+/* CPU 戦の相手としての ORACLE (CHALLENGE、誰でも選べる)。CPU の側 (1) に特化と ORACLE の手筋を当てる。オート操作の開放ではない */
+const ORACLE_CPU_AI = { ...AUTO_AI, specSide: 1 };
+const oracleFor = (side) => aiDifficulty === ORACLE_LEVEL && plainCpuMatch() && side !== ME && !autoFor(side);
 /* 下剋上タッグの味方: かんたんと同じ読み (3割はでたらめ)。相手の最強タッグはいつもの最強の読み */
 const UNDERDOG_MATE_AI = { level: 0, blunder: 0.3, budget: 900, specialist: false, kind: 'dsh' };
 const weakMate = (side) => aiDifficulty === UNDERDOG_TAG_LEVEL && side === ME && !roomMode && partnerMove();
 function aiAction(st) {
-  const over = autoFor(st && st.turn) ? AUTO_AI : weakMate(st && st.turn) ? UNDERDOG_MATE_AI : null;
+  const over = autoFor(st && st.turn) ? AUTO_AI : weakMate(st && st.turn) ? UNDERDOG_MATE_AI : st && oracleFor(st.turn) ? ORACLE_CPU_AI : null;
   return thinking(aiClient ? aiClient.action(st, over) : Promise.resolve(withoutTrace(() => Engine.ai.action(st))));
 }
 function aiAnswer(st, req) {
-  const over = req && autoFor(req.player) ? AUTO_AI : req && weakMate(req.player) ? UNDERDOG_MATE_AI : null;
+  const over = req && autoFor(req.player) ? AUTO_AI : req && weakMate(req.player) ? UNDERDOG_MATE_AI : req && oracleFor(req.player) ? ORACLE_CPU_AI : null;
   return thinking(aiClient ? aiClient.answer(st, req, over) : Promise.resolve(withoutTrace(() => Engine.ai.answer(st, req))));
 }
 /* 上のバーの AUTO (管理者だけ。チュートリアル・問題・検証盤面・リプレイ・観戦、オンラインのタッグ・レート戦では出さない) */
