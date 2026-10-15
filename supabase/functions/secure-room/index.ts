@@ -353,6 +353,17 @@ function publicGame(st: any, side: number, aliases = cardAliases(st), seat = -1)
   };
 }
 
+/* 決着後に送る1試合の集計。どれも [P1 の値, P2 の値] (effects は { defId: 回数 } の組)。
+   途中の手番の記録 (turnFx) やコンパイルの履歴は送らない */
+function publicTally(t: any) {
+  const pair = (v: any, empty: any) => (Array.isArray(v) && v.length === 2 ? v : [empty, empty]);
+  return {
+    compiles: pair(t.compiles, 0), effects: pair(t.effects, {}), faceUp: pair(t.faceUp, []),
+    chains: pair(t.chains, 0), refreshes: pair(t.refreshes, 0), touched: pair(t.touched, 0),
+    maxLine: pair(t.maxLine, 0), maxTurnFx: pair(t.maxTurnFx, 0),
+  };
+}
+
 /* 部屋が前回から変わったかを見分ける印。版 (手を指すたびに上がる)・状態・更新時刻をまとめる
    (待合室の参加・プロトコル決めは版を上げないので、更新時刻も入れる) */
 function stampOf(room: any) {
@@ -403,6 +414,9 @@ function publicState(room: any, side: number, seat = -1, isHost = false) {
      公開 (revealed)・宣言 (announce)・移動中 (committed) が現在の盤面に載らず、
      部屋に戻ったときや途中経過の無い更新で演出が出ない・移動中の札が消えることがあった。 */
   base.game = publicGame(st, side, aliases, seat);
+  /* 決着したら、1試合の集計 (効果の発動回数・コンパイル・表で出したカードなど) を添える。
+     クライアントのデイリーミッションと実績の判定に使う。決着後なので隠し情報にはならない */
+  if (st.winner !== null && st.tally) base.game.tally = publicTally(st.tally);
   base.trace = Array.isArray(st.__trace)
     ? st.__trace.map((entry: any) => ({
       msg: entry.msg,

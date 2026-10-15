@@ -233,8 +233,9 @@ function gameSummary(st, side, win, level, online) {
     touched: (t.touched && t.touched[side]) | 0,         // 自分のカードが相手の効果で削除・反転・移動・手札に戻された回数
     maxLine: (t.maxLine && t.maxLine[side]) | 0,         // 自分のラインの合計値の最高
     turnFxMax: (t.maxTurnFx && t.maxTurnFx[side]) | 0,  // 1つの手番に発動させた自分の効果の数の最高
-    short: shortMatch,                                   // 短縮マッチ (実績に数えない)
-    tag: !!tagMates                                      // タッグデュエル
+    /* オンラインは CPU 戦の設定 (shortMatch・tagMates) を使わない。前の CPU 戦の値が残っているため */
+    short: online ? false : shortMatch,                  // 短縮マッチ (実績に数えない)
+    tag: online ? !!st.tag : !!tagMates                  // タッグデュエル
   };
 }
 
@@ -249,8 +250,8 @@ async function afterGameProgress(st, side, win, level, online) {
     for (const m of r.cleared) await gainXp('daily', m.xp, 'dm:' + r.day + ':' + m.key, true);
     if (r.allNow) await gainXp('daily', DAILY_XP.all, 'dm:' + r.day + ':all', true);
   }
-  /* オンラインの対戦は1試合の集計 (リフレッシュ・表で出したカード・コンパイルの回数など) が届かないので、
-     その1試合の実績は判定しない (前は 0 回とみなして、勝っただけで SHADOW PLAY などが付いた) */
+  /* オンラインの対戦は、決着後にサーバーが1試合の集計 (効果の発動回数・表で出したカードなど) を添える。
+     集計が届かなかったとき (古いサーバー) は、その1試合の実績は判定しない (0 回とみなすと、勝っただけで SHADOW PLAY などが付く) */
   await checkTrophies(st.tally ? game : null);
 }
 
@@ -3872,7 +3873,9 @@ async function roomMaybeFinish() {
     const before = myLevel;
     refreshCardGlow();
     if (myLevel > before) await UI.levelUpCutIn(myLevel, rewardsBetween(before, myLevel));
-    await afterGameProgress(st, ME, win, null, true);     // 同じ決着を読み直したときは進めない
+    /* 集計 (tally) はサーバーの最新の盤面 (cur.state) にだけ付く。画面の盤面 (shown) が途中経過のものでも拾う */
+    const fin = st.tally || !(cur && cur.state && cur.state.tally) ? st : { ...st, tally: cur.state.tally };
+    await afterGameProgress(fin, ME, win, null, true);    // 同じ決着を読み直したときは進めない
   }
   showEndActions(win);
 }
