@@ -30,7 +30,7 @@ function publicView(st, side, request) {
     }))),
     hand: st.players[side].hand.map(uid => ({ uid: fwd[uid], def: st.cards[uid].def })),
     trash: st.players.map(p => p.trash.map(uid => ({ uid: fwd[uid], def: st.cards[uid].def }))),
-    revealed: null, announce: null,
+    revealed: st.revealed ? { kind: st.revealed.kind, player: st.revealed.player, cards: (st.revealed.cards || []).slice() } : null, announce: null,
     committed: (st.commitStack || []).map(uid => {
       const c = st.cards[uid];
       if (!c || c.zone !== 'committed') return null;
@@ -68,15 +68,23 @@ test('オンラインの AUTO: 見えている情報だけの盤面で読んだ�
     { seed: 23, first: 1, p0: ['SPEED', 'LIGHT', 'SPIRIT'], p1: ['FIRE', 'WATER', 'LIFE'] },
     { seed: 37, first: 0, p0: ['PSYCHIC', 'DARKNESS', 'FIRE'], p1: ['PSYCHIC', 'DARKNESS', 'FIRE'] }
   ];
-  let actions = 0, answers = 0;
+  let actions = 0, answers = 0, remembered = 0;
   for (const g of games) {
     let res = Engine.newGame(g);
+    const mem = [null, null];
     for (let i = 0; i < 160 && res.winner === null; i++) {
       const st = res.state;
       const req = res.requests[0] || null;
       const side = req ? req.player : st.turn;
+      /* 両方の側で、公開された相手の手札を覚える。覚えている札は、いつも相手の本当の手札の中にある */
+      for (const k of [0, 1]) {
+        mem[k] = ROOM.trackOppHand(mem[k], publicView(st, k, null).rm);
+        const real = st.players[1 - k].hand.map(u => st.cards[u].def);
+        for (const d of mem[k].defs) { const j = real.indexOf(d); assert.ok(j >= 0, '覚えた札 ' + d + ' が相手の手札にない'); real.splice(j, 1); }
+        remembered += mem[k].defs.length;
+      }
       const { rm, rev } = publicView(st, side, req);
-      const ai = ROOM.buildRoomAiState(rm, Engine);
+      const ai = ROOM.buildRoomAiState(rm, Engine, null, mem[side].defs);
       assert.ok(ai, 'AUTO の盤面を作れる');
       /* 見えないカードの中身は、本当のものではなく仮のもの (名前も付け替えてある) */
       assert.ok(Object.keys(ai.state.cards).every(u => ai.state.cards[u].def), 'どのカードにも中身がある');
@@ -106,4 +114,34 @@ test('オンラインの AUTO: 見えている情報だけの盤面で読んだ�
 test('オンラインの AUTO: タッグの部屋では作らない', async () => {
   const ROOM = await import('../js3d/room.js');
   assert.equal(ROOM.buildRoomAiState({ mode: 'tag', side: 0, game: {} }, Engine), null);
+});
+
+test('オンラインの ORACLE: 公開された相手の手札は、出ていったカードが見えているあいだだけ覚えている', async () => {
+  const ROOM = await import('../js3d/room.js');
+  const view = (hand, deck, opFace, revealed) => ({ side: 0, game: {
+    counts: [{ hand: 5, deck: 10 }, { hand, deck }],
+    lines: [[[], opFace.map((def, i) => ({ uid: 'f' + i, def, faceUp: true }))], [[], []], [[], []]],
+    trash: [[], []], revealed
+  } });
+  let m = ROOM.trackOppHand(null, view(3, 10, [], { kind: 'hand', player: 1, cards: ['FIRE_1', 'FIRE_2', 'WATER_1'] }));
+  assert.deepEqual(m.defs, ['FIRE_1', 'FIRE_2', 'WATER_1']);
+  m = ROOM.trackOppHand(m, view(4, 9, [], null));                     // 1枚引いた: 覚えた3枚はそのまま
+  assert.deepEqual(m.defs, ['FIRE_1', 'FIRE_2', 'WATER_1']);
+  m = ROOM.trackOppHand(m, view(3, 9, ['FIRE_2'], null));             // FIRE 2 を表で出した
+  assert.deepEqual(m.defs, ['FIRE_1', 'WATER_1']);
+  m = ROOM.trackOppHand(m, view(2, 9, ['FIRE_2'], null));             // 何かを裏で出した: どれか分からないので忘れる
+  assert.deepEqual(m.defs, []);
+});
+
+test('オンラインの ORACLE: 覚えた相手の手札は、並べ替えずに本当の中身として読む', async () => {
+  const ROOM = await import('../js3d/room.js');
+  const res = Engine.newGame({ seed: 5, first: 0, p0: ['FIRE', 'WATER', 'LIFE'], p1: ['PSYCHIC', 'DARKNESS', 'HATE'] });
+  const st = res.state;
+  const { rm } = publicView(st, 0, null);
+  const real = st.players[1].hand.map(u => st.cards[u].def);
+  const ai = ROOM.buildRoomAiState(rm, Engine, null, real.slice(0, 2));
+  const hand = ai.state.players[1].hand.map(u => ai.state.cards[u]);
+  assert.deepEqual(hand.slice(0, 2).map(c => c.def), real.slice(0, 2));
+  assert.ok(hand.slice(0, 2).every(c => c.knownTo === 3));
+  assert.ok(hand.slice(2).every(c => c.knownTo === 2));
 });

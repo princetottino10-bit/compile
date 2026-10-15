@@ -3486,6 +3486,12 @@ async function roomApplyView(rm, instant) {
      フル再生され、盤面が巻き戻って見えた。安全性は traceKey の前方一致が担保 */
   const mayContinue = !!(roomRm && roomRm.code === rm.code);
   const entries = roomTracker.take(rm, mayContinue, roomValOf);
+  /* 公開された相手の手札を覚えておく (ORACLE の読みに使う)。途中経過の盤面も順にたどる (公開はその手の盤面にしか載らない) */
+  if (!mayContinue) roomOppHand = null;
+  if (!roomWatching && rm.game) {
+    for (const t of rm.trace || []) if (t && t.game) roomOppHand = ROOM.trackOppHand(roomOppHand, { side: rm.side, game: t.game });
+    roomOppHand = ROOM.trackOppHand(roomOppHand, rm);
+  }
   roomRm = rm;
   const prev = cur ? shown() : null;
   const st = ROOM.buildRoomState(rm, roomValOf);
@@ -3531,6 +3537,7 @@ async function roomApplyView(rm, instant) {
    サーバーに通らなかったら、同じ手を送り続けないよう AUTO を止めて、自分で指せるようにする */
 const ROOM_AUTO_AI = { ...AUTO_AI, peek: false };
 let roomAutoBusy = false;
+let roomOppHand = null;            // 公開されて覚えている相手の手札 (ROOM.trackOppHand)
 /* ORACLE を一度でも使った部屋 (部屋の番号)。その対戦は記録に数えない (2026-10-15 「一旦ノーカン」):
    経験値・デイリー・実績・遊ばれ方の記録・リプレイの送信をしない (手元のリプレイは残す)。
    部屋に入り直しても分かるよう、端末に覚えておく */
@@ -3558,7 +3565,7 @@ async function roomAutoAct() {
   const legal = ROOM.normLegalActions(roomRm);
   if (!st || st.winner !== null || st.turn !== ME || !legal.length) return;
   const at = roomRm.version;
-  const ai = ROOM.buildRoomAiState(roomRm, Engine);
+  const ai = ROOM.buildRoomAiState(roomRm, Engine, null, roomOppHand && roomOppHand.defs);
   if (!ai) { roomAutoStop('この部屋では読めません'); return; }
   markOracleRoom();
   roomAutoBusy = true;
@@ -3576,7 +3583,7 @@ async function roomAutoAct() {
 /* 選択の答え。答えられないときは null (ふつうに自分で選ぶ) */
 async function roomAutoAnswer(req) {
   if (!roomRm) return null;
-  const ai = ROOM.buildRoomAiState(roomRm, Engine);
+  const ai = ROOM.buildRoomAiState(roomRm, Engine, null, roomOppHand && roomOppHand.defs);
   if (!ai) { roomAutoStop('この部屋では読めません'); return null; }
   markOracleRoom();
   const at = roomRm.version;

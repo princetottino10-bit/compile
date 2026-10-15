@@ -316,7 +316,7 @@ export function buildRoomState(rm, valOf) {
    中身はどうせ読みのたびに並べ替えられる (engine の aiInformationState) ので、本当の中身は使わない (のぞき見はしない)。
    並べ替えはカード名の頭 ('p0:' / 'p1:') で出自を分けるため、見えないカードは 'p<側>:?<元の名前>' に付け替え、
    CPU の答え (手・選択) は toRoom で元の名前に戻してからサーバーへ送る。作れないとき (タッグの複合プロトコル等) は null */
-export function buildRoomAiState(rm, Engine, valOf) {
+export function buildRoomAiState(rm, Engine, valOf, oppKnown) {
   if (!rm || !rm.game || rm.mode === 'tag' || rm.game.tag) return null;
   const view = buildRoomState(rm, valOf);
   const protos = Engine.protos || {};
@@ -336,6 +336,10 @@ export function buildRoomAiState(rm, Engine, valOf) {
     const i = list.indexOf(c.def);
     if (i >= 0) list.splice(i, 1);
   }
+  /* 公開されて覚えている相手の手札 (trackOppHand)。プールから先に抜いて、相手の手札の頭から本当の中身として置く */
+  const known = Array.isArray(oppKnown) ? oppKnown.filter(d => defs[d]) : [];
+  const knownLeft = [];
+  for (const d of known) { const i = pool[1].indexOf(d); if (i >= 0) { pool[1].splice(i, 1); knownLeft.push(d); } }
   const rename = {}, back = {};
   const cards = {};
   for (const uid of Object.keys(view.cards)) {
@@ -343,6 +347,15 @@ export function buildRoomAiState(rm, Engine, valOf) {
     delete c._value;
     if (!c.def) {
       const side = /^hand1|^deck1/.test(c.zone) ? 1 : /^hand0|^deck0/.test(c.zone) ? 0 : c.owner;
+      if (c.zone === 'hand1' && knownLeft.length) {
+        c.def = knownLeft.shift();
+        c.uid = 'p1:!' + uid;
+        c.knownTo = 3;                                  // 公開されたので、こちらも知っている (並べ替えの対象にしない)
+        rename[uid] = c.uid;
+        back[c.uid] = uid;
+        cards[c.uid] = c;
+        continue;
+      }
       const list = pool[side].length ? pool[side] : view.players[side].protocols.flatMap(pr => protos[pr.name]);
       c.def = pool[side].length ? list.shift() : list[0];
       c.uid = 'p' + side + ':?' + uid;
@@ -380,6 +393,20 @@ export function buildRoomAiState(rm, Engine, valOf) {
     request: (req) => {
       if (!req) return req;
       const out = JSON.parse(JSON.stringify(req));
+      /* 候補に、この盤面に無いカード (山札から出す札など。サーバーは中身を伏せたまま別名で渡す) があれば、
+         山札の仮の札を1枚その名前に付け替えて置く (読みが、無いカードを引いて止まらないように) */
+      for (const v of Array.isArray(out.candidates) ? out.candidates : []) {
+        const u = typeof v === 'string' ? v.split('|')[0] : null;
+        if (!u || st.cards[ren(u)]) continue;
+        const p = st.players[0].deck.length ? 0 : st.players[1].deck.length ? 1 : -1;
+        if (p < 0) break;
+        const from = st.players[p].deck.pop();
+        const c = { ...st.cards[from], uid: u };
+        delete st.cards[from];
+        st.cards[u] = c;
+        st.players[p].deck.push(u);
+        delete back[from];
+      }
       if (Array.isArray(out.candidates)) out.candidates = out.candidates.map(ren);
       if (Array.isArray(out.focus)) out.focus = out.focus.map(ren);
       else if (out.focus) out.focus = ren(out.focus);
@@ -389,6 +416,43 @@ export function buildRoomAiState(rm, Engine, valOf) {
     action: (a) => (a && a.card ? { ...a, card: toRoom(a.card) } : a),
     picks: (picks) => (Array.isArray(picks) ? picks.map(p => (Array.isArray(p) ? p.map(toRoom) : toRoom(p))) : picks)
   };
+}
+
+/* 公開された相手の手札 (PSYCHIC 0 など) を覚えておく。サーバーは公開したその手の盤面にしか載せないので、こちらで持ち越す。
+   mem: 前の { defs: 覚えている相手の手札, hand: 相手の手札の枚数, deck: 相手の山札の枚数, seen: 相手の見えているカード } (無ければ null)。
+   相手の手札から出たカードが全部見えている (表で出した・捨てた) あいだだけ覚えておく。裏で出すなど、
+   どれが出たか分からなくなったら忘れる (違う中身を確かなものとして読むより、知らないほうがよい)。新しい mem を返す */
+export function trackOppHand(mem, rm) {
+  const g = rm && rm.game;
+  if (!g || !g.counts) return null;
+  const op = 1 - rm.side;
+  const hand = g.counts[op].hand | 0, deck = g.counts[op].deck | 0;
+  /* 中身の見えているカード (場の、こちらに見えているもの・両方の捨て札・自分の手札)。ここから消えたカードは、相手の手札に入ったかもしれない */
+  const seen = [];
+  for (const line of g.lines || []) for (const stack of line || []) for (const c of stack || []) if (c.def) seen.push(c.def);
+  for (const list of g.trash || []) for (const c of list || []) if (c.def) seen.push(c.def);
+  for (const c of g.hand || []) if (c.def) seen.push(c.def);
+  let defs = mem && Array.isArray(mem.defs) ? mem.defs.slice() : [];
+  if (mem && defs.length) {
+    const before = (mem.seen || []).slice();
+    const fresh = [];
+    for (const d of seen) { const i = before.indexOf(d); if (i >= 0) before.splice(i, 1); else fresh.push(d); }
+    const drawn = mem.deck - deck;
+    const left = mem.hand + drawn - hand;                         // 手札から出ていった枚数
+    /* 見えていたカードが消えた・山札が増えた・どこからか手札に入った: 出入りが追えないので忘れる */
+    if (before.length || drawn < 0 || left < 0) defs = [];
+    else if (left > 0) {
+      const gone = [];
+      for (const d of fresh) { const i = defs.indexOf(d); if (i >= 0) { gone.push(d); defs.splice(i, 1); } }
+      /* 出ていった枚数が、見えて消せた枚数より多い: 覚えていた札が裏で出たかもしれない */
+      if (left > gone.length) defs = [];
+    }
+  }
+  /* いま公開されている相手の手札 (手札ぜんぶの公開) は、そのまま覚え直す */
+  const r = g.revealed;
+  if (r && r.kind === 'hand' && r.player === op && Array.isArray(r.cards) && r.cards.length === hand) defs = r.cards.slice();
+  if (defs.length > hand) defs = [];
+  return { defs, hand, deck, seen };
 }
 
 /* CPU の手が、サーバーの出した合法手のどれかと同じか。同じならサーバーの合法手 (余計な項目の無いもの) を返す */
