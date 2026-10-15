@@ -2733,8 +2733,10 @@
   /* ---------- トップページ v2: 左にロゴとメニュー、右に公式アート ---------- */
   #title .tt-center{left:max(6vw,28px);right:auto;top:50%;transform:translateY(-50%);width:min(540px,46vw);
     align-items:flex-start;gap:10px;}
+  /* COMPILE は Orbitron で約 5.4 文字幅 (字間込み)。左の列 (最大 540px・46vw) に収まる大きさで止める。
+     前は 128px まで大きくなり、幅の広い画面では列からはみ出た最後の E が列のスクロール枠で切れて「COMPIL」に見えた */
   #title .tt-logo{display:flex;flex-direction:column;align-items:flex-start;gap:0;
-    font:900 clamp(54px,8.4vw,128px)/.9 var(--font-logo);letter-spacing:.04em;text-shadow:none!important;animation:ttLogo .9s cubic-bezier(.16,1,.3,1) both;}
+    font:900 clamp(54px,8vw,96px)/.9 var(--font-logo);letter-spacing:.04em;text-shadow:none!important;animation:ttLogo .9s cubic-bezier(.16,1,.3,1) both;}
   #title .tt-logo b{font-size:.36em;letter-spacing:.1em;color:var(--pink);margin-bottom:.08em;}
   #title .tt-logo span{position:relative;color:#fff;}
   #title .tt-logo span::before,#title .tt-logo span::after{content:attr(data-text);position:absolute;left:0;top:0;pointer-events:none;}
