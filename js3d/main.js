@@ -2391,7 +2391,7 @@ function bindInput() {
       const cands = boardPick.req.candidates;
       const over = pickWithHand(ev, (ud) => ud.uid && cands.indexOf(ud.uid) >= 0);
       const ou = over && over.obj.userData.uid;
-      if (ou) { if (pickAid.tipUid() !== ou) { const pv = pickPreview(boardPick, ou); pickAid.tip(ou, pv.now, pv.later); } }
+      if (ou) { if (pickAid.tipUid() !== ou) { const pv = pickPreview(boardPick, ou); pickAid.tip(ou, isHandDiscard(boardPick.req) ? null : pv.now, pv.later); } }
       else pickAid.untip();
     }
     const hit = pickWithHand(ev);
@@ -4920,6 +4920,17 @@ function renderBoardPick() {
   if (!pickAid) pickAid = createPickAid(stage, board);
   pickAid.show({ cands: bp.req.candidates, chosen: bp.chosen, multi: bp.max > 1, ribbon: el,
     userMoved: () => !!(ribbonOffset.x || ribbonOffset.y) });
+  fitRibbonBesideGo(el, pkGo);
+}
+
+/* 帯が右下の決定 (#pkGo) に重なるときは、帯を決定の左までに縮める。
+   縦持ちでは決定が帯の右端に乗って、何枚選んだか (1/2) と文の終わりが隠れていた */
+function fitRibbonBesideGo(rb, go) {
+  rb.style.right = '';
+  if (!go || !go.isConnected) return;
+  const g = go.getBoundingClientRect(), r = rb.getBoundingClientRect();
+  if (r.right <= g.left - 6 || r.bottom <= g.top || r.top >= g.bottom) return;
+  rb.style.right = Math.round(window.innerWidth - g.left + 8) + 'px';
 }
 
 /* 選択の1行の帯: [効果の元のカード] 何を選ぶか (数) [戻る] [しない]。
@@ -4933,10 +4944,21 @@ function pickRibbon(req, m) {
       ? '<button type="button" class="rb-src" data-def="' + esc(s.def) + '" style="--accent:' + esc(s.color || '#b9a4ff') + '" title="効果を読む">' +
           (d ? '<img alt="" src="' + faceImageURL(d) + '">' : '') + '<b>' + esc(s.name) + '</b></button>'
       : '') +
-    '<span class="rb-q">' + esc(questionText(req)) + (m.max > 1 ? ' <em>' + (m.count || 0) + '/' + m.max + '</em>' : '') + '</span>' +
+    '<span class="rb-q">' + esc(handDiscardQuestion(req, m.max) || questionText(req)) + (m.max > 1 ? ' <em>' + (m.count || 0) + '/' + m.max + '</em>' : '') + '</span>' +
     ribbonActs((m.back ? '<button type="button" class="rb-btn" id="pkBack">← 戻る</button>' : '') +
       (m.skip ? '<button type="button" class="rb-btn skip" id="pkSkip">しない</button>' : '') +
       (m.none ? '<button type="button" class="rb-btn skip" id="pkNone">選ばない</button>' : '') + (m.extra || ''));
+}
+/* 手札を捨てる選択 (効果で捨てる・手札の上限) の帯の文。何枚捨てるのかを書く
+   (前は「手札が6枚以上: 捨て札にするカードを選択」で、何枚捨てればいいのかが分からなかった) */
+function isHandDiscard(req) {
+  return !!req && req.kind === 'pickHand' && (req.prompt === 'discard' || req.prompt === 'clear-cache');
+}
+function handDiscardQuestion(req, max) {
+  if (!isHandDiscard(req) || !(max >= 1)) return null;
+  if (req.prompt === 'clear-cache') return '手札は5枚まで: ' + max + '枚捨てる';
+  const min = req.min === undefined ? 1 : req.min;
+  return min === max ? '捨てる手札を' + max + '枚選ぶ' : null;
 }
 /* 帯のボタンはひとまとめにする (折り返すときも一緒に右へ) */
 function ribbonActs(html) { return html ? '<span class="rb-act">' + html + '</span>' : ''; }
@@ -5217,7 +5239,8 @@ function toggleBoardPick(uid) {
   /* スマホは乗せる (ホバー) が無いので、選んだカードの上に「選んだら何が起きるか」を出す */
   if (pickAid && isCompactHandUI()) {
     const pv = bp.chosen.indexOf(uid) >= 0 ? pickPreview(bp, uid) : null;
-    pickAid.tip(uid, pv && pv.now, pv && pv.later);
+    /* 手札を捨てるときの「→ 捨て札」は帯の文と同じで、縦持ちでは帯に重なって文を隠していた */
+    pickAid.tip(uid, pv && !isHandDiscard(bp.req) ? pv.now : null, pv && pv.later);
   }
   /* 何枚か選ぶ選択は、盤面でも手札でも「選ぶ → 帯の決定」にそろえる
      (盤面だけ N 枚目で勝手に決まると、押し間違えを取り消せず、手札の選択と操作も食い違っていた) */
@@ -5238,11 +5261,13 @@ function pickGoInRibbon(bp) {
 }
 /* 帯の決定の文字。手札から1枚選ぶときは、選んだ札の名前を出す (どれを捨てるのか押す前に分かる) */
 function pickGoLabel(bp) {
+  /* 手札を捨てるときは「決定」ではなく「捨てる」と書く (押すと何が起きるかをそのまま) */
+  const verb = isHandDiscard(bp.req) ? '捨てる' : '決定';
   if (bp.req.kind === 'pickHand' && bp.max === 1 && bp.chosen.length === 1) {
     const nm = cardName(bp.chosen[0]);
-    if (nm) return '決定: ' + nm;   // プロトコル名と数字だけ (cardName)
+    if (nm) return verb + ': ' + nm;   // プロトコル名と数字だけ (cardName)
   }
-  return '決定 (' + bp.chosen.length + ')';
+  return isHandDiscard(bp.req) ? bp.chosen.length + '枚捨てる' : '決定 (' + bp.chosen.length + ')';
 }
 function renderPickGo(bp) {
   let go = document.getElementById('pickGo');
@@ -5491,28 +5516,11 @@ function arrangeOnBoard(req, opts) {
     const onHover = (ev) => { canvas.style.cursor = hitPos(ev) ? 'pointer' : ''; };
     canvas.addEventListener('pointerdown', onPlate, true);
     canvas.addEventListener('pointermove', onHover);
-    /* 確定ボタンは、最後にタップした板のすぐ下 (手前) に浮かべる (前は右端の板の横で、指から遠かった)。Enter でも確定 */
-    const go = document.createElement('button');
-    go.id = 'arrGo';
-    go.type = 'button';
-    go.textContent = '確定';
-    go.title = 'Enter でも確定できます';
-    go.hidden = true;
-    document.body.appendChild(go);
-    const goAt = new THREE.Vector3();
-    let goPos = 1;                                 // 最後にタップした板の位置 (はじめは真ん中)
-    const placeGo = () => {
-      if (go.hidden || targetSide === null) return;
-      const s = slotX(goPos);
-      goAt.set(s[0], s[1], s[2] + 0.78).project(stage.camera);
-      const r = canvas.getBoundingClientRect();
-      const x = r.left + (goAt.x + 1) / 2 * r.width, y = r.top + (1 - goAt.y) / 2 * r.height;
-      go.style.left = Math.min(window.innerWidth - go.offsetWidth - 8, Math.max(8, x - go.offsetWidth / 2)) + 'px';
-      go.style.top = Math.min(window.innerHeight - go.offsetHeight - 8, Math.max(8, y)) + 'px';
-    };
-    const offFrame = stage.onFrame(placeGo);
+    /* 確定ボタンは帯の右端 (縦持ちは帯の2行目の右端) に固定する。
+       前は最後にタップした板の下に浮かべていたが、押すたびに場所が動き、横持ちでは帯の「やり直し」に重なっていた */
+    let goReady = false;                           // 入れ替えてあって、押せば決まる
     const onKey = (ev) => {
-      if (ev.key !== 'Enter' || go.hidden) return;
+      if (ev.key !== 'Enter' || !goReady) return;
       if (ev.target && /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(ev.target.tagName)) return;
       ev.preventDefault();
       done();
@@ -5521,9 +5529,7 @@ function arrangeOnBoard(req, opts) {
     const finish = (picks) => {
       closed = true;
       activeArrange = null;
-      if (typeof offFrame === 'function') offFrame();
       window.removeEventListener('keydown', onKey);
-      go.remove();
       window.removeEventListener('resize', onResize);
       canvas.removeEventListener('pointerdown', onPlate, true);
       canvas.removeEventListener('pointermove', onHover);
@@ -5541,7 +5547,8 @@ function arrangeOnBoard(req, opts) {
 
     const render = () => {
       const isIdentity = perm[0] === 0 && perm[1] === 1 && perm[2] === 2;
-      /* 選択と同じ1行の帯 (手札の上)。確定は盤面の板の横に浮かぶボタン (#arrGo) で、どの入れ替えも確定を押してから決まる */
+      goReady = targetSide !== null && !isIdentity;
+      /* 選択と同じ1行の帯 (手札の上)。どの入れ替えも、帯の右端の確定 (#arrGo) を押してから決まる */
       const s = reqSource(req);
       const d = s && defIndex[s.def];
       const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -5557,7 +5564,9 @@ function arrangeOnBoard(req, opts) {
             (d ? '<img alt="" src="' + faceImageURL(d) + '">' : '') + '<b>' + esc(s.name) + '</b></button>' : '') +
           '<span class="rb-q">' + esc(text) + '</span>' +
           ribbonActs((targetSide === null || isIdentity ? '' : '<button type="button" class="rb-btn" id="arrReset">やり直し</button>') +
-            (control ? '<button type="button" class="rb-btn skip" id="arrSkip">並べ替えない</button>' : '')) +
+            (control ? '<button type="button" class="rb-btn skip" id="arrSkip">並べ替えない</button>' : '') +
+            /* 確定はいつも同じ場所に出しておき、まだ入れ替えていないときは薄くして、押したら理由を出す */
+            '<button type="button" id="arrGo" class="' + (goReady ? 'ready' : 'wait') + '" aria-disabled="' + !goReady + '" title="Enter でも確定できます">確定</button>') +
         '</div>';
       const peekBtn = ov.querySelector('.rb-peek');
       if (peekBtn) peekBtn.onclick = (ev) => {
@@ -5572,7 +5581,6 @@ function arrangeOnBoard(req, opts) {
 
       tapLine = (line, side) => {
         sfx('pick');
-        goPos = line;
         /* コントロール: 反対側の板をタップしたら、そちらを並べ替える (前の側は元に戻す) */
         if (control && side !== undefined && side !== targetSide) {
           resetPlates(list);
@@ -5593,9 +5601,12 @@ function arrangeOnBoard(req, opts) {
         layPlates(320);
         render();
       };
-      go.hidden = targetSide === null || isIdentity;
-      go.onclick = (ev) => { ev.stopPropagation(); done(); };
-      placeGo();
+      const go = ov.querySelector('#arrGo');
+      go.onclick = (ev) => {
+        ev.stopPropagation();
+        if (goReady) { done(); return; }
+        UI.toast(targetSide === null ? '先に、並べ替えるプロトコルをタップしてください' : 'プロトコルを2つタップして入れ替えてから確定してください', 2200);
+      };
       const reset = ov.querySelector('#arrReset');
       if (reset) reset.onclick = () => { perm[0] = 0; perm[1] = 1; perm[2] = 2; sel = -1; layPlates(320); render(); };
       const skip = ov.querySelector('#arrSkip');
