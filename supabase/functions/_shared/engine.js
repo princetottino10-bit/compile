@@ -4605,12 +4605,26 @@ function aiDecisionActions(state) {
   const opponent = 1 - side;
   const opponentPending = 3 - aiCompiledTowardWin(state, opponent);   // 勝ちまであと何本
   if (state.useControl && opponentPending === 1 && state.control !== opponent) {
-    const safe = acts.filter(action => {
-      const result = applyAndResolve(state, action, smartPicks);
-      if (!result || result.error || result.requests.length) return false;
-      return result.state.winner !== opponent && result.state.control !== opponent;
-    });
-    if (safe.length) acts = safe;
+    /* 全部の手を、選択まで試し打ちして確かめるので重い (合法手20で20秒を超える局面があった)。
+       考える時間の半分で打ち切り、確かめきれなかった手は候補に残す。
+       締め切りを読みの締め切りにも立てて、選択の試し打ちも打ち切らせ、再生と評価の使い回しを効かせる */
+    const previousDeadline = AI_SEARCH_DEADLINE;
+    const ownDeadline = aiNow() + AI_THINK_BUDGET_MS * 0.5;
+    const checkDeadline = previousDeadline > 0 ? Math.min(previousDeadline, ownDeadline) : ownDeadline;
+    AI_SEARCH_DEADLINE = checkDeadline;
+    if (previousDeadline <= 0) { AI_REPLAY_CACHE = new WeakMap(); AI_SCORE_CACHE = new WeakMap(); }
+    try {
+      const safe = [];
+      for (const action of acts) {
+        if (aiNow() >= checkDeadline) { safe.push(action); continue; }
+        const result = applyAndResolve(state, action, smartPicks);
+        /* 試し打ちの途中で締め切りが来た手は、確かめられなかったものとして残す */
+        if (aiNow() >= checkDeadline) { safe.push(action); continue; }
+        if (!result || result.error || result.requests.length) continue;
+        if (result.state.winner !== opponent && result.state.control !== opponent) safe.push(action);
+      }
+      if (safe.length) acts = safe;
+    } finally { AI_SEARCH_DEADLINE = previousDeadline; }
   }
 
   const avoidsWaste = acts.filter(action => !aiWouldWasteHate4(state, action, side));
