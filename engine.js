@@ -842,18 +842,6 @@ function massRemove(ctx, uids, destKind, actor) {
     markCommitted(st, u);
     st.cards[u].commitDest = destKind === 'trash' ? 'trash' : 'hand';
   }
-  for (const u of present) {
-    if (destKind === 'trash') { landTrash(ctx, u); continue; }
-    /* CORRUPTION_2 lower: 相手の手札に戻るカードは、代わりに相手のデッキの一番上へ裏向きで (1枚ずつ戻すとき doReturn と同じ) */
-    const owner = st.cards[u].owner;
-    if (activeStatics(st).some(s => s.kind === 'returnToDeckTop' && s.sideIdx !== owner)) {
-      const c = st.cards[u];
-      c.zone = 'deck' + owner; c.faceUp = false; c.commitDest = null; c.knownTo = 0;
-      st.players[owner].deck.unshift(u);
-      removeFrom(st.commitStack, u);
-      log(ctx, `${cardLabel(st, u)} は手札の代わりにデッキの一番上へ戻された`, u);
-    } else landHand(ctx, u);
-  }
   if (present.length) log(ctx, `${present.length}枚を同時に${destKind === 'trash' ? '削除' : '手札に戻'}した`);
   // 一括処理後、新たに uncovered になった表向きカードの中段が場に入る
   let news = [];
@@ -872,6 +860,20 @@ function massRemove(ctx, uids, destKind, actor) {
     else pick = choose(ctx, { kind: 'pickCard', player: st.turn, candidates: news.slice(), prompt: 'uncover-order' })[0];
     removeFrom(news, pick);
     resolveMiddle(ctx, pick, 'uncover');
+  }
+  /* 着地は uncover の解決を終えてから (ルール 5.3)。先に着地させると、WATER 3 で戻したカードが
+     uncover した WATER 5 の「手札を1枚捨てる」の候補に入るなど、移動中のカードを選べてしまっていた */
+  for (const u of present) {
+    if (destKind === 'trash') { landTrash(ctx, u); continue; }
+    /* CORRUPTION_2 lower: 相手の手札に戻るカードは、代わりに相手のデッキの一番上へ裏向きで (1枚ずつ戻すとき doReturn と同じ) */
+    const owner = st.cards[u].owner;
+    if (activeStatics(st).some(s => s.kind === 'returnToDeckTop' && s.sideIdx !== owner)) {
+      const c = st.cards[u];
+      c.zone = 'deck' + owner; c.faceUp = false; c.commitDest = null; c.knownTo = 0;
+      st.players[owner].deck.unshift(u);
+      removeFrom(st.commitStack, u);
+      log(ctx, `${cardLabel(st, u)} は手札の代わりにデッキの一番上へ戻された`, u);
+    } else landHand(ctx, u);
   }
   if (destKind === 'trash' && present.length) fireEvent(ctx, { on: 'delete', actor, count: present.length });
   return present.length;

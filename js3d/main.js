@@ -95,7 +95,7 @@ import * as UI from './ui.js';
 import { pickCard, placementPad } from './input.js';
 import { placementChoices, renderPlayChoices } from './playchoices.js';
 import { createAiClient } from './aiclient.js';
-import { buildRunDefs } from './runcards.js';
+import { buildRunDefs, baseOf } from './runcards.js';
 import { createLogFormat } from './logformat.js';
 import { meaningfulSteps as cutSteps } from './steps.js';
 import { initDialogs } from './dialogs.js';
@@ -186,7 +186,7 @@ const FOIL_BY_TIER = {
 };
 function foilFor(defId) {
   if (!settings().foil) return null;
-  const w = cardWins.get(defId);
+  const w = cardWins.get(baseOf(defId));
   const tier = w ? cardTier(w.wins) : null;
   return tier ? FOIL_BY_TIER[tier.key] || null : null;
 }
@@ -295,14 +295,14 @@ async function checkTrophies(game) {
   }
 }
 function auraFor(defId) {
-  const t = cardWins.get(defId);
+  const t = cardWins.get(baseOf(defId));
   const tier = t ? cardTier(t.wins) : null;
   if (!tier) return null;
   return { color: tier.color, strength: tier.key === 'bronze' ? 0.45 : tier.key === 'silver' ? 0.55 : 0.7, holo: !!tier.holo, fav: false };
 }
 /* 詳細パネルに、そのカードの光り方 (表で出して勝った数) と効果の発動回数を添える */
 UI.setCardInfoHandler({
-  winsOf: (defId) => { const t = cardWins.get(defId); return t ? { wins: t.wins, games: t.games, effects: t.effects, tier: cardTier(t.wins) } : null; }
+  winsOf: (defId) => { const t = cardWins.get(baseOf(defId)); return t ? { wins: t.wins, games: t.games, effects: t.effects, tier: cardTier(t.wins) } : null; }
 });
 let runMode = false;             // 勝ち抜き戦・週替わり3連戦の1戦 (?run=1)
 let storyNode = null;            // ストーリーの対戦の場面 (story.js)。決着したら ?story=1 で地図に戻る
@@ -3718,7 +3718,7 @@ function updateTurnTimer() {
   if (!roomMode || !rm || rm.status !== 'playing' || !rm.lastActionAt || !rm.turnLimitMs || !st || st.winner !== null) { el.hidden = true; return; }
   const mine = (rm.legalActions || []).length > 0 || !!rm.request;
   const elapsedMs = Date.now() + roomServerOffset - Date.parse(rm.lastActionAt);
-  /* この手の 120 秒と、1試合の持ち時間の残り (毎手ぎりぎりまで粘れないように) の、短いほう */
+  /* この手の 300 秒と、1試合の持ち時間の残り (毎手ぎりぎりまで粘れないように) の、短いほう */
   const waitSeat = mine ? rm.side : 1 - rm.side;
   const bankLeft = rm.bankMs && Array.isArray(rm.usedMs) ? rm.bankMs - (rm.usedMs[waitSeat] | 0) - elapsedMs : Infinity;
   const left = Math.ceil(Math.min(rm.turnLimitMs - elapsedMs, bankLeft) / 1000);

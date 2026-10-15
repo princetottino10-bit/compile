@@ -631,6 +631,20 @@ test('WATER_4 中段: 裏向きのカード (値2) も戻す', () => {
   assert.deepEqual(handDefs(r.state, 1), ['METAL_6']);
 });
 
+test('WATER_4 中段: 戻したカードは、uncover の効果を解決し終えるまで手札に着地しない (選べない)', () => {
+  let r = puzzle(
+    { protos: ['WATER', 'FIRE', 'SPEED'], lines: [[], [['WATER_6', true], ['SPEED_3', true]], []], hand: ['WATER_4', 'FIRE_1', 'FIRE_2'] },
+    { protos: ['METAL', 'PLAGUE', 'PSYCHIC'], lines: [[], [], []], hand: [] });
+  r = play(r, 'WATER_4', 0);
+  /* SPEED_3 を戻して WATER_6 が uncover → 「手札を1枚捨てる」。戻る途中の SPEED_3 は候補に入らない */
+  r = answer(r, [(req) => {
+    assert.equal(req.prompt, 'discard');
+    assert.deepEqual(req.candidates.slice().sort(), [u0('FIRE_1'), u0('FIRE_2')]);
+    return [u0('FIRE_1')];
+  }]);
+  assert.deepEqual(handDefs(r.state, 0).sort(), ['FIRE_2', 'SPEED_3']);
+});
+
 test('WATER_5 中段: あなたのカードを1枚戻す', () => {
   let r = puzzle(
     { protos: ['WATER', 'SPIRIT', 'SPEED'], lines: [[], [['SPIRIT_6', true]], []], hand: ['WATER_5'] },
