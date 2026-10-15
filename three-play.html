@@ -1082,6 +1082,24 @@
     .pick-ribbon .rb-q{font-size:11px;}
     .pick-ribbon .rb-btn{min-height:36px;padding:0 12px;font-size:11px;}   /* 横持ちでも指で押せる高さ (前は 28px) */
   }
+  /* プロトコルの並べ替えの「確定」: 帯の右端に固定して大きく (前は最後にタップした板の下に浮かび、
+     押すたびに場所が動いた。横持ちでは帯の「やり直し」に重なっていた)。帯の幅を決めておき、文の長さで右端が動かないように */
+  #arrOv .pick-ribbon{width:min(620px,calc(100vw - 16px));}
+  #arrOv .rb-act{align-self:flex-end;}   /* 文が2行になっても確定の高さが動かない */
+  #arrGo{flex:none;min-width:124px;min-height:52px;padding:0 26px;border:0;cursor:pointer;color:#fff;
+    font:900 17px/1 var(--font-ui);letter-spacing:.24em;text-indent:.24em;clip-path:var(--cut-s);
+    background:linear-gradient(100deg,#ff4fa3,#c86bff);}
+  #arrGo.ready{animation:goReady 1.1s ease-in-out infinite;}
+  /* まだ入れ替えていない: 場所は同じまま薄く出し、押したら理由を出す */
+  #arrGo.wait{background:rgba(8,12,22,.8);color:rgba(255,255,255,.42);box-shadow:inset 0 0 0 1px rgba(255,255,255,.22);}
+  #arrGo:focus-visible{outline:2px solid var(--gold);outline-offset:-4px;}
+  @media (prefers-reduced-motion:reduce){#arrGo.ready{animation:none;box-shadow:0 0 12px rgba(255,79,163,.8);}}
+  @media (orientation:landscape) and (max-height:500px){
+    #arrOv .pick-ribbon{width:min(620px,calc(100vw - 120px));max-width:none;}
+    #arrGo{min-width:108px;min-height:44px;font-size:15px;}
+  }
+  /* 縦持ち: ボタンは帯の2行目にまとめ、確定はその右端 (やり直しが出ても確定の場所は変わらない) */
+  @media (max-width:560px){ #arrOv .rb-act{flex:1 0 100%;justify-content:flex-end;} }
   /* 狭い画面 (縦持ち) だけ、ボタンを次の行へ回してよい */
   @media (max-width:560px){ .pick-ribbon{flex-wrap:wrap;} .pick-ribbon .rb-q{flex:1 1 10em;} }
   @media (prefers-reduced-motion:reduce){ .pick-ribbon{animation:none;} }
@@ -3921,16 +3939,15 @@
   .ro-board li em,.ro-past li em{font-style:normal;font-weight:800;}
   .ro-board li small,.ro-past li small{color:var(--dim);text-align:right;}
   /* 選んだカードのすぐ横の「決定」(ダイアログの決定まで手を伸ばさなくてよいように) */
-  #pickGo,#arrGo{position:fixed;z-index:31;padding:9px 16px;border:1px solid var(--pink);background:rgba(12,9,20,.94);color:#fff;cursor:pointer;
+  #pickGo{position:fixed;z-index:31;padding:9px 16px;border:1px solid var(--pink);background:rgba(12,9,20,.94);color:#fff;cursor:pointer;
     font:800 12px/1 var(--font-ui);letter-spacing:.14em;clip-path:var(--cut-s);box-shadow:0 8px 24px rgba(0,0,0,.5);
     animation:pickGoIn .18s cubic-bezier(.16,1,.3,1);}
-  #pickGo:hover,#pickGo:focus-visible,#arrGo:hover,#arrGo:focus-visible{background:var(--pink);outline:0;}
-  #arrGo{z-index:34;}
-  /* 決定・確定は縁を光が回る (design-lab 02 の回る縁。押せる合図) */
-  #pickGo,#arrGo{border:2px solid transparent;
+  #pickGo:hover,#pickGo:focus-visible{background:var(--pink);outline:0;}
+  /* 決定は縁を光が回る (design-lab 02 の回る縁。押せる合図) */
+  #pickGo{border:2px solid transparent;
     background:linear-gradient(rgba(12,9,20,.96),rgba(12,9,20,.96)) padding-box,conic-gradient(from var(--ang),#fff,var(--violet),var(--cyan),var(--pink),#fff) border-box;
     animation:goSpin 2.6s linear infinite;}
-  #pickGo:hover,#pickGo:focus-visible,#arrGo:hover,#arrGo:focus-visible{background:linear-gradient(var(--pink),var(--pink)) padding-box,conic-gradient(from var(--ang),#fff,var(--violet),var(--cyan),var(--pink),#fff) border-box;}
+  #pickGo:hover,#pickGo:focus-visible{background:linear-gradient(var(--pink),var(--pink)) padding-box,conic-gradient(from var(--ang),#fff,var(--violet),var(--cyan),var(--pink),#fff) border-box;}
   /* 押し心地 (MicroKit 系): どのボタンも押している間だけ少し沈む */
   button:not(:disabled):active{transform:translateY(1px) scale(.97);filter:brightness(.92);transition:transform .05s,filter .05s;}
   /* ---------- 手触りの演出 (feel.js) ---------- */
@@ -3976,10 +3993,9 @@
   .ai-think i:nth-child(1){border-top-color:#ff4fa3;animation:roRot 1.1s linear infinite;}
   .ai-think i:nth-child(2){inset:4px;border-right-color:#8b5cf6;animation:roRot 1.6s linear infinite reverse;}
   .ai-think i:nth-child(3){inset:8px;border-bottom-color:#63f3ff;animation:roRot .8s linear infinite;}
-  @media (prefers-reduced-motion:reduce){ #pickGo,#arrGo{animation:none;} .ai-think i{animation-duration:4s;} button:not(:disabled):active{transform:none;} }
-  #arrGo[hidden]{display:none;}
+  @media (prefers-reduced-motion:reduce){ #pickGo{animation:none;} .ai-think i{animation-duration:4s;} button:not(:disabled):active{transform:none;} }
   @keyframes pickGoIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
-  @media (prefers-reduced-motion: reduce){ #pickGo,#arrGo{animation:none;} }
+  @media (prefers-reduced-motion: reduce){ #pickGo{animation:none;} }
   /* 対戦中の名札: 相手は左上、自分は左下。アイコン・名前・レベル・称号 (CPU は難易度) */
   .plate{position:absolute;left:calc(14px + env(safe-area-inset-left));top:38px;display:flex;align-items:center;gap:9px;max-width:min(360px,40vw);
     padding:6px 14px 6px 6px;background:rgba(12,9,20,.74);clip-path:var(--cut-s);font-family:var(--font-ui);white-space:nowrap;pointer-events:none;}
@@ -4658,7 +4674,7 @@
   })();
   </script>
 
-  <script src="engine.js?v=e43682ae0e"></script>
+  <script src="engine.js?v=2f422aef24"></script>
   <script type="importmap">
   {
     "imports": {
@@ -4714,14 +4730,14 @@
       "./js3d/gacha-ui.js": "./js3d/gacha-ui.js?v=b5bf4956cc",
       "./js3d/gacha.js": "./js3d/gacha.js?v=ecda5be85c",
       "./js3d/gachafx.js": "./js3d/gachafx.js?v=24484640c3",
-      "./js3d/gamepad.js": "./js3d/gamepad.js?v=7fed835509",
+      "./js3d/gamepad.js": "./js3d/gamepad.js?v=a5ab588b81",
       "./js3d/holo.js": "./js3d/holo.js?v=cfbd164861",
       "./js3d/hype.js": "./js3d/hype.js?v=cfa52803f2",
       "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c",
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=2b4dbc6066",
       "./js3d/logformat.js": "./js3d/logformat.js?v=e3548c74d1",
-      "./js3d/main.js": "./js3d/main.js?v=26b114dbb5",
+      "./js3d/main.js": "./js3d/main.js?v=2487717dde",
       "./js3d/motion.js": "./js3d/motion.js?v=71cd68f8ff",
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
       "./js3d/net.js": "./js3d/net.js?v=3134839bca",
@@ -4868,7 +4884,7 @@
   <link rel="modulepreload" href="js3d/logformat.js?v=e3548c74d1">
   <link rel="modulepreload" href="js3d/steps.js?v=13e73b20fe">
   <link rel="modulepreload" href="js3d/dialogs.js?v=eb84fac39f">
-  <link rel="modulepreload" href="js3d/gamepad.js?v=7fed835509">
+  <link rel="modulepreload" href="js3d/gamepad.js?v=a5ab588b81">
   <link rel="modulepreload" href="js3d/face-icons.js?v=69eb7a7d80">
   <link rel="modulepreload" href="js3d/callme.js?v=6918030993">
   <link rel="modulepreload" href="js3d/tips.js?v=3faae17957">
@@ -4923,6 +4939,6 @@
   <link rel="stylesheet" href="js3d/run-fx.css?v=ed3eded16b">
   <link rel="stylesheet" href="js3d/deus.css?v=3e6919eb01">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=26b114dbb5"></script>
+  <script type="module" src="js3d/main.js?v=2487717dde"></script>
 </body>
 </html>
