@@ -3368,6 +3368,10 @@ function aiMiddleFizzles(st, side, action, d) {
   const fr = { controller: side, source: action.card, line: action.line,
     currentLine: action.line, bind: {} };
   let sawTargeted = false;
+  /* 山札の上を出す効果 (WATER 1 など) は、山札が空なら何も起きない (リシャッフルしない。ルール仕様 §5.2)。
+     ユーザー 2026-10-15「デッキないのに Water1 撃つのとか本当ダメ」 */
+  const playsTop = (ops) => (ops || []).some(o => o && ((o.op === 'play' && o.source === 'topDeck') || playsTop(o.ops)));
+  if (playsTop(mid) && !st.players[side].deck.length) return true;
   /* 中段は「置いたあと」に解決する。置いた札が一番上の札を覆うので、
      覆われたカードを対象にする効果 (ダークネス②など) は、置く前の盤面では
      対象が無くても、置いた瞬間に対象ができる。一時的に積んでから判定する。 */
