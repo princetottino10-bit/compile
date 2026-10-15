@@ -5491,28 +5491,11 @@ function arrangeOnBoard(req, opts) {
     const onHover = (ev) => { canvas.style.cursor = hitPos(ev) ? 'pointer' : ''; };
     canvas.addEventListener('pointerdown', onPlate, true);
     canvas.addEventListener('pointermove', onHover);
-    /* 確定ボタンは、最後にタップした板のすぐ下 (手前) に浮かべる (前は右端の板の横で、指から遠かった)。Enter でも確定 */
-    const go = document.createElement('button');
-    go.id = 'arrGo';
-    go.type = 'button';
-    go.textContent = '確定';
-    go.title = 'Enter でも確定できます';
-    go.hidden = true;
-    document.body.appendChild(go);
-    const goAt = new THREE.Vector3();
-    let goPos = 1;                                 // 最後にタップした板の位置 (はじめは真ん中)
-    const placeGo = () => {
-      if (go.hidden || targetSide === null) return;
-      const s = slotX(goPos);
-      goAt.set(s[0], s[1], s[2] + 0.78).project(stage.camera);
-      const r = canvas.getBoundingClientRect();
-      const x = r.left + (goAt.x + 1) / 2 * r.width, y = r.top + (1 - goAt.y) / 2 * r.height;
-      go.style.left = Math.min(window.innerWidth - go.offsetWidth - 8, Math.max(8, x - go.offsetWidth / 2)) + 'px';
-      go.style.top = Math.min(window.innerHeight - go.offsetHeight - 8, Math.max(8, y)) + 'px';
-    };
-    const offFrame = stage.onFrame(placeGo);
+    /* 確定ボタンは帯の右端 (縦持ちは帯の2行目の右端) に固定する。
+       前は最後にタップした板の下に浮かべていたが、押すたびに場所が動き、横持ちでは帯の「やり直し」に重なっていた */
+    let goReady = false;                           // 入れ替えてあって、押せば決まる
     const onKey = (ev) => {
-      if (ev.key !== 'Enter' || go.hidden) return;
+      if (ev.key !== 'Enter' || !goReady) return;
       if (ev.target && /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(ev.target.tagName)) return;
       ev.preventDefault();
       done();
@@ -5521,9 +5504,7 @@ function arrangeOnBoard(req, opts) {
     const finish = (picks) => {
       closed = true;
       activeArrange = null;
-      if (typeof offFrame === 'function') offFrame();
       window.removeEventListener('keydown', onKey);
-      go.remove();
       window.removeEventListener('resize', onResize);
       canvas.removeEventListener('pointerdown', onPlate, true);
       canvas.removeEventListener('pointermove', onHover);
@@ -5541,7 +5522,8 @@ function arrangeOnBoard(req, opts) {
 
     const render = () => {
       const isIdentity = perm[0] === 0 && perm[1] === 1 && perm[2] === 2;
-      /* 選択と同じ1行の帯 (手札の上)。確定は盤面の板の横に浮かぶボタン (#arrGo) で、どの入れ替えも確定を押してから決まる */
+      goReady = targetSide !== null && !isIdentity;
+      /* 選択と同じ1行の帯 (手札の上)。どの入れ替えも、帯の右端の確定 (#arrGo) を押してから決まる */
       const s = reqSource(req);
       const d = s && defIndex[s.def];
       const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -5557,7 +5539,9 @@ function arrangeOnBoard(req, opts) {
             (d ? '<img alt="" src="' + faceImageURL(d) + '">' : '') + '<b>' + esc(s.name) + '</b></button>' : '') +
           '<span class="rb-q">' + esc(text) + '</span>' +
           ribbonActs((targetSide === null || isIdentity ? '' : '<button type="button" class="rb-btn" id="arrReset">やり直し</button>') +
-            (control ? '<button type="button" class="rb-btn skip" id="arrSkip">並べ替えない</button>' : '')) +
+            (control ? '<button type="button" class="rb-btn skip" id="arrSkip">並べ替えない</button>' : '') +
+            /* 確定はいつも同じ場所に出しておき、まだ入れ替えていないときは薄くして、押したら理由を出す */
+            '<button type="button" id="arrGo" class="' + (goReady ? 'ready' : 'wait') + '" aria-disabled="' + !goReady + '" title="Enter でも確定できます">確定</button>') +
         '</div>';
       const peekBtn = ov.querySelector('.rb-peek');
       if (peekBtn) peekBtn.onclick = (ev) => {
@@ -5572,7 +5556,6 @@ function arrangeOnBoard(req, opts) {
 
       tapLine = (line, side) => {
         sfx('pick');
-        goPos = line;
         /* コントロール: 反対側の板をタップしたら、そちらを並べ替える (前の側は元に戻す) */
         if (control && side !== undefined && side !== targetSide) {
           resetPlates(list);
@@ -5593,9 +5576,12 @@ function arrangeOnBoard(req, opts) {
         layPlates(320);
         render();
       };
-      go.hidden = targetSide === null || isIdentity;
-      go.onclick = (ev) => { ev.stopPropagation(); done(); };
-      placeGo();
+      const go = ov.querySelector('#arrGo');
+      go.onclick = (ev) => {
+        ev.stopPropagation();
+        if (goReady) { done(); return; }
+        UI.toast(targetSide === null ? '先に、並べ替えるプロトコルをタップしてください' : 'プロトコルを2つタップして入れ替えてから確定してください', 2200);
+      };
       const reset = ov.querySelector('#arrReset');
       if (reset) reset.onclick = () => { perm[0] = 0; perm[1] = 1; perm[2] = 2; sel = -1; layPlates(320); render(); };
       const skip = ov.querySelector('#arrSkip');
