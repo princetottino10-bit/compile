@@ -2748,8 +2748,9 @@ const AI_LOCK_W = {
      oThreatPrior: 相手が①と鍵 (ダークネス②) をまだ見せていないとき、鍵を表で出せるラインの相手の裏向きを①とみる確率の下限
        (一様に数えると1割を切り、仕込みを放っておいていた) / oLockVictim, oLockBreakLine: 相手の永続ロックを受けたときの
        lockVictim / lockBreakLine (ロックのラインに集めてコンパイルで割る手を、ほかのラインを伸ばす手より先にする) /
-     oKeep: ウォーター①・ファイア③を捨てる・キャッシュで手放す損 (「かなり強いからできれば使いたい」) */
-  oThreatPrior: 0.3, oLockVictim: 650, oLockBreakLine: 0.9, oKeep: 90,
+     oKeep: ウォーター①・ファイア③を捨てる・キャッシュで手放す損 (「かなり強いからできれば使いたい」) /
+     oLockLinePlay: 相手の永続ロックのラインに出す手の上乗せ (aiActionBias) */
+  oThreatPrior: 0.3, oLockVictim: 650, oLockBreakLine: 0.9, oKeep: 90, oLockLinePlay: 400,
 };
 /* 知らないキーは無視して配列で返す (計測スクリプトが打ち間違いに気づけるように) */
 function setAiWeights(obj) {
@@ -3442,6 +3443,13 @@ function aiActionBias(st, action, side) {
     return v;
   }
   if (action.type !== 'play') return 0;
+  /* ORACLE: 相手のサイキック①が覆われている (永続ロック) 間は、とにかくそのラインに置き続けて割りに行く
+     (ユーザー 2026-10-15「サイキック①覆われたらとにかくそこに置き続けないとダメ」)。2手読みは相手の妨害を見て
+     ほかのラインへ逃げがちなので、読みの値に勝る上乗せにする */
+  if (aiIsOracle(st, side) && (action.side === undefined || action.side === side)) {
+    const lockLine = aiLockLineOf(st, op);
+    if (lockLine >= 0 && action.line === lockLine) return AI_LOCK_W.oLockLinePlay;
+  }
   /* CORRUPTION 0 などの相手側プレイは、それ自体がその札の狙い。決め打ちで足し引きせず、
      出したあとの盤面 (相手の札を覆えたか、相手に点を渡したか) で判断する (監修 2026-09-24) */
   if (action.side !== undefined && action.side !== side) return 0;
