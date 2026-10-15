@@ -84,7 +84,7 @@ import * as FX from './fx.js';
 import { buildArena } from './arena.js';
 import { initAudio, sfx, setMuted, isMuted, setSfxVolume, onMuteChange } from './audio.js';
 import { mountMuteButton, muteIcon } from './mutebutton.js';
-import { playBgm, refreshBgm, fadeOutBgm, crossBgm, pickNormalBgm, normalBattleBgm, onlineBattleBgm, STRONG_BGM, BOSS_BGM, DEUS_BGM, PEEK_BGM, pickTenseBgm } from './bgm.js';
+import { playBgm, refreshBgm, fadeOutBgm, crossBgm, pickNormalBgm, normalBattleBgm, onlineBattleBgm, STRONG_BGM, BOSS_BGM, DEUS_BGM, PEEK_BGM, pickTenseBgm, setShuffleNotify } from './bgm.js';
 import { trackOf } from './bgm-shop.js';
 import { BGM_RELEASED } from './rewards.js';
 import { emblemDataURL } from './emblems.js';
@@ -4519,9 +4519,14 @@ function battleBgm() {
 function playBattleBgm() {
   const key = battleBgm();
   playBgm(key);
-  const t = trackOf(key);
-  if (t && t.credit) setTimeout(() => UI.toast('♪ ' + t.title + ' — ' + t.credit, 2600, { low: true }), 2400);
+  creditToast(key, 2400);
 }
+function creditToast(key, wait) {
+  const t = trackOf(key);
+  if (t && t.credit) setTimeout(() => UI.toast('♪ ' + t.title + ' — ' + t.credit, 2600, { low: true }), wait);
+}
+/* BGM のシャッフルで次の曲に替わったときも、表記の要る曲なら出す */
+setShuffleNotify((key) => creditToast(key, 600));
 
 /* ---------- 進行 ---------- */
 let refreshSayFor = null;          // リフレッシュのひとことを、並べ替えの選択のあとまで待たせている { side, st } (null なら待っていない)

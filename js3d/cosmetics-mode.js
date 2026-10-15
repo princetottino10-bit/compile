@@ -268,7 +268,7 @@ function preview(kind, key, name, isOwned, src) {
       art = '<div class="cm-bgmview"><span class="cm-note big" aria-hidden="true">♪</span>' +
         (t ? '<b>' + esc(t.title) + '</b><small class="cm-credit">' + esc(t.by) + (t.credit ? '　・　' + esc(t.credit) : '') + '</small>' +
           '<button type="button" class="cm-listen" data-listen="' + esc(key) + '">▶ 試し聴き (15秒)</button>'
-          : '<small class="cm-credit">メニューと対戦で、いつもの曲を順に流します</small>') + '</div>';
+          : '<small class="cm-credit">持っている曲から無作為に流し、1曲終わるたびに次の曲へ替えます (シャッフル)</small>') + '</div>';
       break;
     }
     case 'title': case 'icon': {
