@@ -6,6 +6,7 @@
  *   5..  : 挑戦者 (dsh 特化 + CHALLENGERS の固定デッキ)
  *   22   : 機械仕掛けの神 CODE:PURPLE (psylock 特化 + DEUS_AI、4 秒の読み。対戦の始めに降臨の演出)
  *   23   : すべてを見る者 ALL-SEEING (22 と同じ + のぞき見。神に勝つと現れる。対戦の始めに目が開く演出)
+ *   24   : ORACLE (管理者の自動プレイと同じ読み: 学習モデル入り・ORACLE だけの手筋・2.4 秒。のぞき見なし)
  *   固定デッキの難易度は「自由に選ぶ」でだけ使える (setup.js)。
  *   エンジンの設定は main.js の applyAiDifficulty、戦績の表示名は stats.js。
  * ========================================================================= */
@@ -54,6 +55,11 @@ export const DEUS_BUDGET = 4000;
 export const PEEK_LEVEL = 23;
 export const PEEK_AI = ['PSYCHIC', 'DARKNESS', 'FIRE'];
 export const PEEK_NAME = 'ALL-SEEING';
+/* ORACLE: 管理者だけの自動プレイの読み (main.js の AUTO_AI) を、CPU 戦の相手として誰でも選べるようにしたもの (2026-10-15 ユーザー「CPU 戦の相手として戦えるように。オート操作に開放はしない」)。
+   デッキは ORACLE を鍛えた FIRE / WATER / SPEED (最強と同じ) */
+export const ORACLE_LEVEL = 24;
+export const ORACLE_AI = STRONGEST_AI;
+export const ORACLE_NAME = 'ORACLE';
 export const DEUS_NAME = 'CODE:PURPLE';
 
 export const isChallenger = (level) => level >= CHALLENGER_BASE && level < CHALLENGER_BASE + CHALLENGERS.length;
@@ -64,6 +70,7 @@ export function fixedDeck(level) {
   if (level === 4) return LOCK_AI;
   if (level === DEUS_LEVEL) return DEUS_AI;
   if (level === PEEK_LEVEL) return PEEK_AI;
+  if (level === ORACLE_LEVEL) return ORACLE_AI;
   return isChallenger(level) ? CHALLENGERS[level - CHALLENGER_BASE].deck : null;
 }
 
@@ -77,6 +84,7 @@ export function levelLabel(level) {
   if (level === UNDERDOG_LEVEL) return '下剋上 (最弱 vs 最強)';
   if (level === DEUS_LEVEL) return '機械仕掛けの神 ' + DEUS_NAME;
   if (level === PEEK_LEVEL) return 'すべてを見る者 ' + PEEK_NAME;
+  if (level === ORACLE_LEVEL) return ORACLE_NAME;
   if (level === UNDERDOG_TAG_LEVEL) return '下剋上タッグ (かんたんの味方 vs 最強タッグ)';
   return LEVEL_LABELS[level] || '不明';
 }
