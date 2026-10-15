@@ -71,7 +71,7 @@ import { matUnlocked, MAT_W, MAT_D } from './playmat.js';
 import { initAccount, openAccount, takeAccountResume, accountState, onAccountChange } from './account.js';
 import { openCardList } from './cardlist-ov.js';
 import { openOpponentSelect } from './opponent-select.js';
-import { UNDERDOG_DECK, STRONGEST_AI, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL, UNDERDOG_TAG_RIVAL_MATE, levelLabel, fixedDeck, DEUS_LEVEL, DEUS_NAME, DEUS_BUDGET, PEEK_LEVEL, PEEK_NAME, ORACLE_LEVEL, oracleAi } from './aidecks.js';
+import { UNDERDOG_DECK, STRONGEST_AI, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL, UNDERDOG_TAG_RIVAL_MATE, levelLabel, fixedDeck, DEUS_LEVEL, DEUS_NAME, DEUS_BUDGET, PEEK_LEVEL, PEEK_NAME, ORACLE_LEVEL, oracleAi, isHonki, honkiOf, honkiAi } from './aidecks.js';
 import { openRun, runHud, showRunAfterGame } from './run-ui.js';
 import { openWeekly, weeklyHud, showWeeklyAfterGame } from './weekly-ui.js';
 import { compilesBy, loadRun, RUN_WIN_COMPILES, runWinCompiles, battleOpts, lethal, nodeById } from './run.js';
@@ -335,14 +335,16 @@ function peekMatch() { return aiDifficulty === PEEK_LEVEL && plainCpuMatch(); }
 /* 神か、すべてを見る者 (人のキャラは出さず、登場の演出がある相手) */
 function machineMatch() { return deusMatch() || peekMatch(); }
 /* CHALLENGE の ORACLE との対戦か。相手のキャラは紫苑で固定 (2026-10-15 ユーザー「ORACLE は紫苑に固定しよう 特別にね」) */
-function oracleMatch() { return aiDifficulty === ORACLE_LEVEL && plainCpuMatch(); }
-const ORACLE_AVATAR = 'shion';
+/* 本気の4人 (aidecks.js の HONKI) も ORACLE の読みで、相手のキャラはその子で固定 */
+function oracleMatch() { return (aiDifficulty === ORACLE_LEVEL || isHonki(aiDifficulty)) && plainCpuMatch(); }
+const ORACLE_AVATAR_DEFAULT = 'shion';
+const oracleAvatar = () => (isHonki(aiDifficulty) ? honkiOf(aiDifficulty).avatar : ORACLE_AVATAR_DEFAULT);
 function plainCpuMatch() { return !runMode && !storyNode && !tagMates && !roomMode && !puzzle && !tutorial && !demoMode && !trainingMode; }
 function oppAvatarPlan() {
   if (plannedOpp !== undefined) return plannedOpp;
   if (storyNode) return (plannedOpp = storyNode.oppAvatar || null);
   if (machineMatch()) return (plannedOpp = null);   // 人のキャラは出さない (相手は機械の神・目)
-  if (oracleMatch()) return (plannedOpp = ORACLE_AVATAR);
+  if (oracleMatch()) return (plannedOpp = oracleAvatar());
   /* 勝ち抜き戦のボス戦は、ボス本人 (avatar.js の boss_<id>) */
   if (runMode && runKind === 'run') {
     const run = loadRun();
@@ -393,9 +395,9 @@ function syncAvatar() {
   let me = sp ? sp.a : tutorial ? 'zundamon' : storyNode ? (storyTag ? null : storyNode.mate || null)
     : roomWatching && roomLooks ? roomLooks[0].avatar || 'shion' : myAvatarId();
   if (udTag && UD_OPP.includes(me)) me = avatarIds().find(i => !UD_OPP.includes(i) && i !== 'asagi') || me;
-  /* ORACLE の相手は紫苑で決まり。自分が紫苑なら、自分はほかの子にする */
+  /* ORACLE の相手は紫苑 (本気の4人はその子) で決まり。自分が同じ子なら、自分はほかの子にする */
   const oracleOpp = !sp && !storyNode && !tagMates && oracleMatch();
-  if (oracleOpp && me === ORACLE_AVATAR) me = avatarIds().find(i => i !== ORACLE_AVATAR) || me;
+  if (oracleOpp && me === oracleAvatar()) me = avatarIds().find(i => i !== oracleAvatar()) || me;
   const pool = (ids) => shuffled(avatarIds().filter(i => !ids.includes(i)));
   const mate = storyTag ? storyNode.mate || null : tagMates && (!sp || sp.a) ? (sp ? pool([sp.a, sp.b])[0]
     : (avatarIds().find(i => i !== me && i === 'asagi' && !(udTag && UD_OPP.includes(i))) || avatarIds().find(i => i !== me && !(udTag && UD_OPP.includes(i))))) : null;
@@ -405,7 +407,7 @@ function syncAvatar() {
   else if (sp) oppIds = sp.b ? [sp.b, pool([sp.a, sp.b, mate])[0] || sp.b] : [null, null];
   else if (storyNode) oppIds = [storyNode.oppAvatar || null, storyTag ? storyNode.tag.oppMateAvatar || null : null];
   else if (machineMatch()) oppIds = [null, null];
-  else if (oracleOpp) oppIds = [ORACLE_AVATAR, null];
+  else if (oracleOpp) oppIds = [oracleAvatar(), null];
   else {
     /* 相手のキャラ: 設定の「相手のキャラ」(ふだんはランダム)。自分・味方と同じ子は選ばない */
     /* デッキを決める前に決めておいた子 (oppAvatarPlan。得意プロトコルを CPU のデッキに入れるため) */
@@ -2039,8 +2041,9 @@ function applyAiDifficulty(level, opts) {
     blunder: opts && opts.engine !== undefined ? 0 : level <= 0 ? 0.3 : 0,
     budget: level === DEUS_LEVEL || level === PEEK_LEVEL ? DEUS_BUDGET : level >= 2 ? 1200 : 900,
     /* 最強・挑戦者 = dsh 特化 + 固定デッキ (aidecks.js)、ロック特化 = PSYCHIC 1 の永続ロック狙い。
-       機械仕掛けの神 (CODE:PURPLE) もロック特化の読み (ぱぱぱのぱの棋譜から寄せたもの) */
-    specialist: level >= 3,
+       機械仕掛けの神 (CODE:PURPLE) もロック特化の読み (ぱぱぱのぱの棋譜から寄せたもの)。
+       つよいも最強と同じ dsh 特化の読み (2026-10-16 ユーザー「つよいと最強統合しない？」)。違いはデッキが決まっているかだけ */
+    specialist: level >= 2,
     kind: level === 4 || level === DEUS_LEVEL || level === PEEK_LEVEL ? 'psylock' : 'dsh',
     /* すべてを見る者: こちらの手札・裏向き・山札の並びを本当のまま見て読む (engine の setAiPeek) */
     peek: level === PEEK_LEVEL,
@@ -2049,6 +2052,7 @@ function applyAiDifficulty(level, opts) {
   };
   /* ORACLE (CHALLENGE の相手): 管理者の自動プレイと同じ読み。学習モデルは Worker が読む。画面側で考えるときは aiAction の ORACLE_CPU_AI で当てる */
   if (level === ORACLE_LEVEL) Object.assign(config, ORACLE_CPU_AI);
+  if (isHonki(level)) Object.assign(config, honkiAi(ORACLE_CPU_AI, level));
   Engine.setAiLevel(config.level);
   if (Engine.setAiBlunder) Engine.setAiBlunder(config.blunder);
   Engine.setAiThinkBudget(config.budget);
@@ -2074,16 +2078,18 @@ const autoOn = () => autoPlay && (!roomMode || roomAutoOk());
 const autoFor = (side) => autoOn() && side === ME;
 /* CPU 戦の相手としての ORACLE (CHALLENGE、誰でも選べる)。CPU の側 (1) に特化と ORACLE の手筋を当てる。オート操作の開放ではない */
 const ORACLE_CPU_AI = { ...AUTO_AI, specSide: 1 };
-const oracleFor = (side) => aiDifficulty === ORACLE_LEVEL && plainCpuMatch() && side !== ME && !autoFor(side);
+const oracleFor = (side) => oracleMatch() && side !== ME && !autoFor(side);
+/* CPU の側に当てる ORACLE の設定 (本気の4人はその子の設定、ORACLE はロックのデッキならロック用に切り替え) */
+const oracleCpuAi = (st) => (isHonki(aiDifficulty) ? honkiAi(ORACLE_CPU_AI, aiDifficulty) : oracleAi(ORACLE_CPU_AI, st));
 /* 下剋上タッグの味方: かんたんと同じ読み (3割はでたらめ)。相手の最強タッグはいつもの最強の読み */
 const UNDERDOG_MATE_AI = { level: 0, blunder: 0.3, budget: 900, specialist: false, kind: 'dsh' };
 const weakMate = (side) => aiDifficulty === UNDERDOG_TAG_LEVEL && side === ME && !roomMode && partnerMove();
 function aiAction(st) {
-  const over = autoFor(st && st.turn) ? oracleAi(AUTO_AI, st) : weakMate(st && st.turn) ? UNDERDOG_MATE_AI : st && oracleFor(st.turn) ? oracleAi(ORACLE_CPU_AI, st) : null;
+  const over = autoFor(st && st.turn) ? oracleAi(AUTO_AI, st) : weakMate(st && st.turn) ? UNDERDOG_MATE_AI : st && oracleFor(st.turn) ? oracleCpuAi(st) : null;
   return thinking(aiClient ? aiClient.action(st, over) : Promise.resolve(withoutTrace(() => Engine.ai.action(st))));
 }
 function aiAnswer(st, req) {
-  const over = req && autoFor(req.player) ? oracleAi(AUTO_AI, st) : req && weakMate(req.player) ? UNDERDOG_MATE_AI : req && oracleFor(req.player) ? oracleAi(ORACLE_CPU_AI, st) : null;
+  const over = req && autoFor(req.player) ? oracleAi(AUTO_AI, st) : req && weakMate(req.player) ? UNDERDOG_MATE_AI : req && oracleFor(req.player) ? oracleCpuAi(st) : null;
   return thinking(aiClient ? aiClient.answer(st, req, over) : Promise.resolve(withoutTrace(() => Engine.ai.answer(st, req))));
 }
 /* 上のバーの AUTO (管理者だけ。チュートリアル・問題・検証盤面・リプレイ・観戦、オンラインのタッグ・レート戦では出さない) */

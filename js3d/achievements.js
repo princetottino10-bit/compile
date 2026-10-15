@@ -8,8 +8,8 @@
  *   ここは表示も通信もしない (achievements-ui.js / main.js が受け持つ)
  * ========================================================================= */
 import { keepBroken } from './broken.js';
-import { CHALLENGER_BASE, CHALLENGERS, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL } from './aidecks.js';
-const BOSS_LEVELS = [3, 4, ...CHALLENGERS.map((_, i) => CHALLENGER_BASE + i)];
+import { HONKI_BASE, HONKI, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL } from './aidecks.js';
+const BOSS_LEVELS = [3, ...HONKI.map((_, i) => HONKI_BASE + i)];
 import { XP_GAIN } from './xp.js';
 import { protocolSummary, conquered, CONQUER_TOTAL } from './stats-data.js';
 import { GACHA_ITEMS } from './rewards.js';
@@ -101,7 +101,7 @@ export const TROPHIES = [
   /* ---- 金 ---- */
   { id: 'wins100', tier: 'gold', name: 'CENTURY', desc: '100勝する', test: (c) => wins(c) >= 100, progress: (c) => [wins(c), 100] },
   { id: 'apex', tier: 'gold', name: 'APEX', desc: '「最強」の CPU に勝つ', test: (c) => beat(c, 3) },
-  /* 強敵 = 相手を選ぶ画面の「強敵」の欄の全員 (最強・ロック特化・挑戦者) */
+  /* 強敵 = 相手を選ぶ画面の「強敵」の欄の、称号のない相手 (最強・本気の4人)。2026-10-16 にロック特化・挑戦者から本気の4人へ置きかえ */
   { id: 'challengers', tier: 'gold', name: 'GAUNTLET', desc: '強敵を全員倒す',
     test: (c) => BOSS_LEVELS.every(lv => beat(c, lv)),
     progress: (c) => [BOSS_LEVELS.filter(lv => beat(c, lv)).length, BOSS_LEVELS.length] },
