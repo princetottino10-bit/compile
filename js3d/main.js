@@ -22,7 +22,7 @@ import { loadGacha, chipsOf, giveChips } from './gacha.js';
 import { earnedChips } from './chips.js';
 import * as CW from './crashwatch.js';
 import { unlockTrophies, TROPHY_XP, pruneTrophies } from './achievements.js';
-import { addReplay, getReplay, pinReplay, rebuild, noteReplayFacts, isComeback } from './replays.js';
+import { addReplay, listReplays, getReplay, pinReplay, rebuild, noteReplayFacts, isComeback } from './replays.js';
 import * as RS from './resume.js';
 import { decodeReplay, sharedCodeFromHash, shareReplayLink, setReplayShortener, shortIdFromHash, loadShortReplay, moveFromHash } from './replayshare.js';
 /* リプレイの短いリンク: 符号をサーバーに預けて (ログインしている人だけ) ID を返す / ID から符号を受け取る (誰でも) */
@@ -2084,6 +2084,7 @@ function syncAutoButton() {
     b.onclick = () => {
       const waitingMe = !!cur && !busy && !cur.requests.length && cur.state.winner === null && humanTurn(cur.state);
       autoPlay = !autoPlay;
+      if (autoPlay && roomMode) markOracleRoom();      // オンラインで ORACLE を使った対戦は記録に数えない
       syncAutoButton();
       UI.toast(autoPlay ? 'ORACLE: 自分の手を強い CPU が指します' : 'ORACLE を止めました。次の判断から自分で指せます', 2600);
       /* 自分の番で待っているところなら、すぐ動かす (選択の画面を開いているときは、次の判断から) */
@@ -3530,6 +3531,21 @@ async function roomApplyView(rm, instant) {
    サーバーに通らなかったら、同じ手を送り続けないよう AUTO を止めて、自分で指せるようにする */
 const ROOM_AUTO_AI = { ...AUTO_AI, peek: false };
 let roomAutoBusy = false;
+/* ORACLE を一度でも使った部屋 (部屋の番号)。その対戦は記録に数えない (2026-10-15 「一旦ノーカン」):
+   経験値・デイリー・実績・遊ばれ方の記録・リプレイの送信をしない (手元のリプレイは残す)。
+   部屋に入り直しても分かるよう、端末に覚えておく */
+const ORACLE_ROOMS_KEY = 'compileOracleRooms';
+function oracleRooms() {
+  try { const v = JSON.parse(localStorage.getItem(ORACLE_ROOMS_KEY) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; }
+}
+function markOracleRoom() {
+  const code = roomRm && roomRm.code;
+  if (!code) return;
+  const list = oracleRooms();
+  if (list.includes(code)) return;
+  try { localStorage.setItem(ORACLE_ROOMS_KEY, JSON.stringify(list.concat(code).slice(-50))); } catch (e) { /* private mode */ }
+}
+const oracleUsedHere = () => !!(roomRm && roomRm.code && oracleRooms().includes(roomRm.code));
 function roomAutoStop(why) {
   autoPlay = false;
   syncAutoButton();
@@ -3544,6 +3560,7 @@ async function roomAutoAct() {
   const at = roomRm.version;
   const ai = ROOM.buildRoomAiState(roomRm, Engine);
   if (!ai) { roomAutoStop('この部屋では読めません'); return; }
+  markOracleRoom();
   roomAutoBusy = true;
   let hit = null;
   try {
@@ -3561,6 +3578,7 @@ async function roomAutoAnswer(req) {
   if (!roomRm) return null;
   const ai = ROOM.buildRoomAiState(roomRm, Engine);
   if (!ai) { roomAutoStop('この部屋では読めません'); return null; }
+  markOracleRoom();
   const at = roomRm.version;
   try {
     UI.setPrompt('ORACLE が選択しています…', 'wait');
@@ -3813,6 +3831,13 @@ async function roomMaybeFinish() {
   FEEL.buzz(win ? [40, 70, 40, 70, 120] : [160]);
   await UI.resultCutIn(win, { victory, deus: win && myPlate().sub === TITLES.platinum });
   lastReplayId = null;
+  /* ORACLE を使った対戦: 記録に数えない (経験値・デイリー・実績・遊ばれ方の記録・リプレイの送信なし)。手元のリプレイだけ残す */
+  if (oracleUsedHere()) {
+    UI.toast('ORACLE を使った対戦なので、記録には数えません', 3600);
+    await saveOnlineReplay(st, win, true, { oracle: true });
+    showEndActions(win);
+    return;
+  }
   /* 同じ部屋の同じ決着を読み直しても2回は入らない */
   const firstTime = grantXp('online', XP_GAIN.onlinePlay + (win ? XP_GAIN.onlineWin : 0),
     'room:' + (roomRm && roomRm.code) + ':' + (st.turns || 0));
@@ -3865,7 +3890,8 @@ async function surrenderLocal() {
 /* オンラインのリプレイ: 決着したらサーバーから始めの条件と手の列をもらって残す (1対1だけ)。
    後攻の部屋 (ゲスト) の人は view 1 で、盤面を入れ替えて自分を手前にして見る */
 let onlineReview = null;           // オンラインの感想戦: { history, final } (棋譜から作り直したもの)
-async function saveOnlineReplay(st, win, firstTime) {
+async function saveOnlineReplay(st, win, firstTime, opts) {
+  const oracle = !!(opts && opts.oracle);
   onlineReview = null;
   if (!roomRm || roomRm.mode === 'tag' || roomWatching) return;
   try {
@@ -3874,15 +3900,18 @@ async function saveOnlineReplay(st, win, firstTime) {
     const view = r.side === 1 ? 1 : 0;
     const rep = { me: view ? r.init.p1 : r.init.p0, opp: view ? r.init.p0 : r.init.p1, win, level: 2, kind: 'online', view,
       oppName: (roomRm.names && roomRm.names[1 - view]) || '', turns: (st.turns || 0) + 1, init: r.init, actions: r.actions,
-      ...(roomRm.rated ? { rated: true } : {}), score: compiledScore(st) };
+      ...(roomRm.rated ? { rated: true } : {}), ...(oracle ? { oracle: true } : {}), score: compiledScore(st) };
     try {
       const built = rebuild(Engine, rep);
       if (built.ok && built.history.length) onlineReview = { history: built.history, final: built.final };
     } catch (e) { onlineReview = null; }
     /* 同じ決着を読み直したとき (部屋に入り直した等) は、リプレイを2つ残さない */
     if (!firstTime) return;
+    /* ORACLE の対戦は、同じ決着を読み直しても2つ残さない (経験値の帳簿で見分けられないので、手元のリプレイの一覧で見る) */
+    if (oracle && listReplays().some(x => x.oracle && x.kind === 'online' && JSON.stringify(x.init) === JSON.stringify(rep.init)
+      && (x.actions || []).length === rep.actions.length)) return;
     lastReplayId = addReplay(rep);
-    uploadReplay({ ...rep, at: Date.now(), mode: 'online' });
+    if (!oracle) uploadReplay({ ...rep, at: Date.now(), mode: 'online' });   // ORACLE の対戦は集めない (学習のデータに混ぜない)
   } catch (e) { /* 残せなくても対戦の結果には響かない */ }
 }
 
