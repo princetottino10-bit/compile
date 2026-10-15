@@ -231,16 +231,17 @@ test('パッチ: FIREWALL・FAILSAFE・PHOENIX・SELF REPAIR・CLEAN SWEEP・MID
 test('パッチとビルド: 試合のはじめ方 (手札・先攻・コントロール)', async () => {
   const R = await load();
   const base = { patches: [], route: 'normal' };
-  /* 自分は3本 (足りない分ははじめから済み)、相手は勝ち抜き戦の本数のまま */
-  assert.deepEqual(R.battleOpts(base, 0), { winCompiles: R.RUN_WIN_COMPILES, startCompiled: [3 - R.RUN_WIN_COMPILES, 0], handSize: [5, 5], winCompilesBySide: [3, R.RUN_WIN_COMPILES] });
-  /* 序盤の1本先取は相手も2つ済みから (相手だけどのラインでも1本、にしない) */
+  /* どちらも3本 (足りない分ははじめから済み。相手だけどのラインでも N 本、にしない) */
+  const k = 3 - R.RUN_WIN_COMPILES;
+  assert.deepEqual(R.battleOpts(base, 0), { winCompiles: R.RUN_WIN_COMPILES, startCompiled: [k, k], handSize: [5, 5], winCompilesBySide: [3, 3] });
+  /* 序盤の1本先取は、どちらも2つ済みから */
   const quick = { ...base, map: { rows: [[{ id: '0-0', row: 0, type: 'battle', next: [] }]] }, pos: '0-0', opp: { deck: [], level: 0 } };
   assert.equal(R.runWinCompiles(quick), 1);
   assert.deepEqual(R.battleOpts(quick, 0).startCompiled, [2, 2]);
   assert.deepEqual(R.battleOpts(quick, 1).startCompiled, [2, 2]);
   assert.deepEqual(R.battleOpts(quick, 0).winCompilesBySide, [3, 3]);
-  /* ONE SHOT は自分だけ。2本先取の相手はそのまま */
-  assert.deepEqual(R.battleOpts({ ...base, patches: ['oneshot'] }, 0).startCompiled, [2, 0]);
+  /* ONE SHOT は自分だけ (相手は2本先取のまま1つ済み) */
+  assert.deepEqual(R.battleOpts({ ...base, patches: ['oneshot'] }, 0).startCompiled, [2, 1]);
   assert.deepEqual(R.battleOpts({ ...base, patches: ['cache'] }, 0).handSize, [6, 5]);
   assert.deepEqual(R.battleOpts({ ...base, patches: ['cache', 'jammer'] }, 0).handSize, [6, 3], 'HAND 2つ: 相手 さらに −1');
   assert.deepEqual(R.battleOpts({ ...base, patches: ['cache', 'buffer', 'jammer'] }, 0).handSize, [7, 3], 'HAND 3つ: 自分 +1 (上限 7)');

@@ -230,7 +230,7 @@ export function openRun(protocols, cardsOf, opts) {
         '<section class="rn-mcard"><small>ROGUELIKE</small><h3>勝ち抜き戦</h3>' +
           /* 一度でも挑戦した人には、ルールはたたんでおく (読まずにすぐ始められるように) */
           (best ? '<details class="rn-rules"><summary>ルールを見る</summary>' : '') + '<ul>' +
-          '<li>地図を下から登り、頂上の BOSS を倒す (自分は ' + (3 - RUN.RUN_WIN_COMPILES) + ' つコンパイル済みから始まり、あと ' + RUN.RUN_WIN_COMPILES + ' 本で勝ち。序盤は2つ済みから)</li>' +
+          '<li>地図を下から登り、頂上の BOSS を倒す (自分も相手も ' + (3 - RUN.RUN_WIN_COMPILES) + ' つコンパイル済みから始まり、残りの ' + RUN.RUN_WIN_COMPILES + ' つを先にコンパイルした方の勝ち。序盤は2つ済みから)</li>' +
           '<li>道は自分で選ぶ: 戦闘・精鋭・イベント・休憩所・ショップ・宝箱</li>' +
           '<li>ライフ ' + RUN.RUN_LIFE + '。コンパイルされるたびに 1 減る</li>' +
           '<li>勝つたびにカードの報酬 (強化・β カード・除去) を選ぶ。パッチ (改造) は系統をそろえるとボーナス</li>' +
