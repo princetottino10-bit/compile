@@ -3430,6 +3430,18 @@ function aiComboDiscardCost(st, side, action, d) {
   return costs.slice(0, n).reduce((a, b) => a + b, 0);
 }
 
+/* 相手のそのラインのコンパイルが、この1枚では止まらない (相手が10以上で、この札を足しても上回れない) か。
+   止まらないなら、ロックのラインに張り合って出しても札を流されるだけなので、ほかのラインかリフレッシュでよい
+   (ユーザー 2026-10-15「相手のコンパイルが確定したときにはもう張り合わずに他のラインかリフレッシュでいい」)。
+   裏向きの値は DARKNESS 2 などで4まで上がるので、多めに4と見る */
+function aiOppCompileSettled(st, side, action) {
+  const op = 1 - side, line = action.line;
+  const theirs = lineTotal(st, line, op);
+  if (theirs < 10) return false;
+  const c = st.cards[action.card];
+  const add = action.faceUp && c ? DEFS[c.def].value : 4;
+  return theirs > lineTotal(st, line, side) + add;
+}
 function aiActionBias(st, action, side) {
   if (!action) return 0;
   const op = 1 - side;
@@ -3458,7 +3470,7 @@ function aiActionBias(st, action, side) {
      2手読みは相手の妨害を見てほかのラインへ逃げがちなので、読みの値に勝る上乗せにする */
   if (action.side === undefined || action.side === side) {
     const lockLine = aiLockLineOf(st, op);
-    if (lockLine >= 0 && action.line === lockLine) return AI_LOCK_W.oLockLinePlay;
+    if (lockLine >= 0 && action.line === lockLine && !aiOppCompileSettled(st, side, action)) return AI_LOCK_W.oLockLinePlay;
   }
   /* CORRUPTION 0 などの相手側プレイは、それ自体がその札の狙い。決め打ちで足し引きせず、
      出したあとの盤面 (相手の札を覆えたか、相手に点を渡したか) で判断する (監修 2026-09-24) */
