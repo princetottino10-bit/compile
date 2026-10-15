@@ -11,8 +11,24 @@
 
 /* ---------- ユーティリティ ---------- */
 
+/* 盤面は JSON で表せる値だけでできている (structuredClone が無いときの JSON 経由と同じ前提)。
+   AI の試算は1手で数万回複製するので、structuredClone (汎用で遅い) ではなく配列と素のオブジェクトだけをたどって写す。
+   それ以外の値 (Date など) が来たら structuredClone に任せる */
 function clone(o) {
-  return (typeof structuredClone === 'function') ? structuredClone(o) : JSON.parse(JSON.stringify(o));
+  if (o === null || typeof o !== 'object') return o;
+  if (Array.isArray(o)) {
+    const n = o.length, out = new Array(n);
+    for (let i = 0; i < n; i++) { const v = o[i]; out[i] = (v === null || typeof v !== 'object') ? v : clone(v); }
+    return out;
+  }
+  const proto = Object.getPrototypeOf(o);
+  /* 素のオブジェクトかどうかは、別の実行環境 (Worker・vm) で作られたものも含めて「プロトタイプの先が null」で見る */
+  if (proto !== null && Object.getPrototypeOf(proto) !== null) {
+    return (typeof structuredClone === 'function') ? structuredClone(o) : JSON.parse(JSON.stringify(o));
+  }
+  const out = {};
+  for (const k in o) { const v = o[k]; out[k] = (v === null || typeof v !== 'object') ? v : clone(v); }
+  return out;
 }
 /* プロトコル板の名前。タッグの複合プロトコル (FIRE+WATER) は names に2つ持ち、どちらのカードも「そのプロトコル」として扱う */
 function protoNamesOf(p) { return p && Array.isArray(p.names) ? p.names : [p && p.name]; }
@@ -2315,7 +2331,22 @@ function performAction(ctx, action) {
   }
 }
 
+/* AI の読みの中では、同じ盤面から同じ手と同じ選択列を何度も再生する (試し打ちした選択を、選んだあとにもう一度打つ等。
+   実測で再生の6割が重複)。読みの中 (締め切りがある間) だけ、結果を打つ前の盤面ごとに覚えて使い回す。
+   読みの中で結果の盤面を書き換える所は無い (aiRestoreKnownCards は複製に対して行う) */
+let AI_REPLAY_CACHE = new WeakMap();
 function runReplay(base, action, choices) {
+  if (AI_SEARCH_DEADLINE > 0 && !TRACE) {
+    let memo = AI_REPLAY_CACHE.get(base);
+    if (!memo) { memo = new Map(); AI_REPLAY_CACHE.set(base, memo); }
+    const key = JSON.stringify(action) + JSON.stringify(choices);
+    let res = memo.get(key);
+    if (!res) { res = runReplayRaw(base, action, choices); memo.set(key, res); }
+    return res;
+  }
+  return runReplayRaw(base, action, choices);
+}
+function runReplayRaw(base, action, choices) {
   const st = clone(base);
   st.revealed = null;
   st.announce = null;
@@ -2330,7 +2361,10 @@ function runReplay(base, action, choices) {
     return { state: st, requests: [], log: ctx.log, trace: ctx.trace || [], winner: st.winner, error: null };
   } catch (e) {
     if (e && e.__suspend) {
-      const out = clone(base);
+      /* 選択待ちの盤面は「打つ前の盤面 + pending」。AI の読みの中 (締め切りがある間) は、誰も中身を書き換えないので
+         打つ前の盤面と中身を共有して複製を省く (試算1回ごとに1回の複製になり、読みの時間の大きな割合を占めていた)。
+         画面に返す盤面は書き換えられることがあるので、今までどおり丸ごと複製する */
+      const out = AI_SEARCH_DEADLINE > 0 ? Object.assign({}, base) : clone(base);
       out.pending = { base, action, choices, requestId: e.__suspend.id };
       return { state: out, view: ctx.st, requests: [e.__suspend], log: ctx.log, trace: ctx.trace || [], winner: null, error: null };
     }
@@ -3463,6 +3497,11 @@ function aiTransitionScore(before, result, side) {
   const ownTag = `P${side + 1}: リコンパイル`;
   const oppTag = `P${2 - side}: リコンパイル`;
   const count = (logs, tag) => logs.reduce((n, line) => n + (String(line).includes(tag) ? 1 : 0), 0);
+  /* 300行の上限で古い行が捨てられていなければ、後の棋譜は前の棋譜に行を足しただけなので、足された行だけ数えればよい */
+  if (afterLog.length < 300 && beforeLog.length <= afterLog.length) {
+    const added = afterLog.slice(beforeLog.length);
+    return count(added, oppTag) * 55 - count(added, ownTag) * 35;
+  }
   const own = Math.max(0, count(afterLog, ownTag) - count(beforeLog, ownTag));
   const opp = Math.max(0, count(afterLog, oppTag) - count(beforeLog, oppTag));
   return opp * 55 - own * 35;
@@ -3676,7 +3715,18 @@ function aiComboLogit(st, me) {
   return z + 0.5 * (pair - sq);
 }
 
+/* 読みの中では同じ盤面を何度も評価する (再生の使い回しで同じ盤面オブジェクトが戻る)。締め切りがある間だけ覚えておく */
+let AI_SCORE_CACHE = new WeakMap();
 function aiScore(st, me) {
+  if (AI_SEARCH_DEADLINE > 0 && st && typeof st === 'object') {
+    let memo = AI_SCORE_CACHE.get(st);
+    if (!memo) { memo = [undefined, undefined]; AI_SCORE_CACHE.set(st, memo); }
+    if (memo[me] === undefined) memo[me] = aiScoreRaw(st, me);
+    return memo[me];
+  }
+  return aiScoreRaw(st, me);
+}
+function aiScoreRaw(st, me) {
   if (st.winner === me) return 1e9;
   if (st.winner === 1 - me) return -1e9;
   const op = 1 - me;
@@ -4644,13 +4694,21 @@ function aiActionHard(state, collect) {
     /* 終盤: 自分が2本済みなら、読み切りの勝ち筋を評価探索より先に探す。
        専用の時間枠で行い、本体探索の予算はこの後から数え始める */
     if (aiCompiledTowardWin(state, me) === 2) {
-      const forced = aiForcedWinAction(state, me, aiNow() + AI_THINK_BUDGET_MS * 0.6);
+      /* この枠の締め切りを読みの締め切りにも立てて、再生と評価の使い回しを効かせる */
+      const forcedDeadline = aiNow() + AI_THINK_BUDGET_MS * 0.6;
+      AI_SEARCH_DEADLINE = forcedDeadline;
+      AI_REPLAY_CACHE = new WeakMap();
+      AI_SCORE_CACHE = new WeakMap();
+      const forced = aiForcedWinAction(state, me, forcedDeadline);
       if (forced) return forced;
     }
 
     const specialist = aiIsDshSpecialist(state, me);
     const deadline = aiNow() + AI_THINK_BUDGET_MS * (specialist ? AI_DSH_W.think : 1);
     AI_SEARCH_DEADLINE = deadline;
+    /* 覚えた再生と評価は、この1回の読みの中だけで使う (重みや特化の設定が次の手で変わりうる) */
+    AI_REPLAY_CACHE = new WeakMap();
+    AI_SCORE_CACHE = new WeakMap();
 
     // 静的orderingで全手を候補に残す(重い解決はしない=ここで時間を使い切らない)
     const ordered = orderMovesStatic(acts, state, me);
@@ -4752,9 +4810,10 @@ function minimaxMin(state, me, alpha, beta, deadline) {
   let val = Infinity;
   for (let i = 0; i < limit; i++) {
     if (deadline && aiNow() > deadline) break;
-    const res = resolveOrdered(ordered[i], searchState);
+    let res = resolveOrdered(ordered[i], searchState);
     if (!res || res.error || res.requests.length) continue;
-    if (fairOpponent) aiRestoreKnownCards(res.state, state, me);
+    /* 再生の結果は使い回すので、書き換えるときは複製に対して行う */
+    if (fairOpponent) { const restored = clone(res.state); aiRestoreKnownCards(restored, state, me); res = Object.assign({}, res, { state: restored }); }
     const s2 = res.state;
     let sc;
     if (s2.winner === null && s2.turn === me) {
@@ -4895,9 +4954,17 @@ let AI_PEEK_SIDE = -1;
 function setAiPeek(side) { AI_PEEK_SIDE = side === 0 || side === 1 ? side : -1; }
 
 /* AIには、本人が知るカードを固定し、未知カードだけを同じ出自のプール内で再配置した状態を渡す。 */
+/* 読みの中では過去の棋譜 (actionLog、最大300行) を使わない。aiTransitionScore が見るのは
+   読み始めてから増えた行だけなので、空にしておけば数え方は変わらない。
+   空にしないと、試算のたびに300行を複製し、全行を2回なめるので、1局面の試算が重くなる */
+function aiDropLog(s) {
+  for (let x = s; x; x = x.pending && x.pending.base) x.actionLog = [];
+  return s;
+}
+
 function aiInformationState(state, side, salt) {
-  if (side === AI_PEEK_SIDE) { const real = clone(state); real.__unknownCount = 0; return real; }
-  const view = clone(state);
+  if (side === AI_PEEK_SIDE) { const real = aiDropLog(clone(state)); real.__unknownCount = 0; return real; }
+  const view = aiDropLog(clone(state));
   const baseSeed = aiPublicHash(state, side);
   const seed = salt ? (baseSeed ^ Math.imul(salt, 0x9e3779b1)) >>> 0 : baseSeed;
   const rng = mulberry32(seed);
