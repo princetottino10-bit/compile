@@ -16,26 +16,23 @@ export const BGM_CREDIT = '煉獄庭園';
 /* 対戦で流す曲 (COLLECTION で選ぶ仕組み BGM_RELEASED とは別)。2026-09-28: ボスは「彷徨いの言葉は天に導かれ」、
    強敵は Z･E･R･O。タイトルは無音 */
 export const BATTLE_BGM_ON = true;
-/* ふつうの対戦: OpenTracks (旧 DOVA-SYNDROME) の12曲から毎試合ランダム (2026-10-13 に、まんぼう二等兵の BPM 135〜165 の8曲を足した。
+/* ふつうの対戦のいつもの12曲 (2026-10-15 からおまかせはシャッフルで、持っている曲すべてから選ぶ。この12曲は鳴らせる曲の印と、iPhone の下準備に使う): OpenTracks (旧 DOVA-SYNDROME) (2026-10-13 に、まんぼう二等兵の BPM 135〜165 の8曲を足した。
    あと1本の曲 TENSE_BGMS より遅くして、切り替わったときの差を残す)。
    OpenTracks の規約 (ファイルのまま取り出せる形で置かない) に合わせて m4a に変換して置いている */
 export const NORMAL_BGMS = ['cho_zunou', 'reflect', 'kaidoku', 'crescendo_jitter', 'switcheroo', 'monolith_black', 'particle_tones', 'tsuisekisha', 'clock_jitter', 'joudou_catharsis', 'blaze_a_trail', 'killer_roll'];
 export const STRONG_BGM = 'zero';
-/* タイトル・メニュー (対戦以外): 落ち着いた3曲から、ページを開くたびに1曲 (メニューの間は同じ曲が続く) */
+/* タイトル・メニュー (対戦以外) の落ち着いた3曲。2026-10-15 からおまかせはシャッフルになったので、選ぶのには使っていない (鳴らせる曲の印) */
 export const MENU_BGMS = ['planetarium', 'madoromu_neon', 'nine_jack'];
 /* 勝ち抜き戦 (RUN) の対戦以外の画面 (入口・地図・ショップ・休憩所など): 沈殿するイルカ */
 export const RUN_BGM = 'iruka';
-let menuPick = null;
-/* COLLECTION の BGM で「メニューで流す」を選んでいれば、その曲 */
-export const menuBgm = () => shuffleOn() ? shuffleMenuBgm() : (chosenTrack(settings(), 'bgmMenu') || (menuPick = menuPick || MENU_BGMS[Math.floor(Math.random() * MENU_BGMS.length)]));
-/** ふつうの対戦の曲: 「対戦で流す」を選んでいればその曲、おまかせなら12曲からランダム */
-export const normalBattleBgm = () => shuffleOn() ? shuffleBattleBgm() : (chosenTrack(settings(), 'bgmBattle') || pickNormalBgm());
-/* オンライン対戦の曲: 選んだ曲に決めず、いつもの曲と交換した曲から毎回ランダム (前の対戦と同じ曲は選ばない) */
+/* COLLECTION の BGM で「メニューで流す」を選んでいればその曲、おまかせならシャッフル */
+export const menuBgm = () => chosenTrack(settings(), 'bgmMenu') || shuffleMenuBgm();
+/** ふつうの対戦の曲: 「対戦で流す」を選んでいればその曲、おまかせならシャッフル (持っている曲から無作為に。1曲ごとに替える) */
+export const normalBattleBgm = () => chosenTrack(settings(), 'bgmBattle') || shuffleBattleBgm();
+/* オンライン対戦の曲: 選んだ曲に決めず、いつもシャッフル (同じ曲ばかり流れないように) */
 export function onlineBattleBgm() {
-  if (shuffleOn()) return shuffleBattleBgm();
-  const extra = TRACKS.filter(t => ownsTrack(t.key)).map(t => t.key);
-  rotatePool = NORMAL_BGMS.concat(extra.filter(k => !NORMAL_BGMS.includes(k)));
-  return pickNormalBgm(Math.random, extra);
+  shuffleCtx = 'online';
+  return (shuffled = pickShuffleBgm());
 }
 export const BOSS_BGM = 'samayoi';
 /* 機械仕掛けの神 (CHALLENGE の CODE:PURPLE) の曲 */
@@ -97,19 +94,18 @@ export function pickNormalBgm(rnd = Math.random, extra = []) {
 }
 
 /* =========================================================================
- * シャッフル (設定の「BGM をシャッフル」、bgmShuffle)
- *   メニューとふつうの対戦 (オンラインも) の曲を、持っている COLLECTION の曲 (はじめからの曲と交換した曲) から無作為に選び、
- *   1曲終わるたびに次の曲も無作為に選ぶ (繰り返さない)。COLLECTION で選んだ曲より優先する。
+ * シャッフル (COLLECTION の BGM で「おまかせ」のとき。2026-10-15 に本人の希望で)
+ *   メニューとふつうの対戦 (オンラインはいつも) の曲を、持っている COLLECTION の曲 (はじめからの曲と交換した曲) から無作為に選び、
+ *   1曲終わるたびに次の曲も無作為に選ぶ (繰り返さない)。
  *   ボス・強敵・機械仕掛けの神・すべてを見る者・あと1本の曲・勝ち抜き戦の画面の曲は、場面の曲なのでそのまま
  * ========================================================================= */
-const shuffleOn = () => !!settings().bgmShuffle;
 /** シャッフルで選ぶ曲 (持っている COLLECTION の曲) */
 export const shufflePool = () => TRACKS.filter(t => ownsTrack(t.key)).map(t => t.key);
 /* 最近流した曲 (同じ曲が近くに続かないよう、曲数の半分 (最大8曲) までは選ばない) */
 const SHUFFLE_RECENT_KEY = 'compileShuffleRecent';
 let shuffleRecent = null;
 let shuffled = null;             // シャッフルで選んで流している曲 (終わったら次へ。ほかの曲を鳴らしたら null 扱い)
-let shuffleCtx = null;           // 'menu' / 'battle' (メニューへ戻ったら、対戦で流していた曲は続けない)
+let shuffleCtx = null;           // 'menu' / 'battle' / 'online' (メニューへ戻ったら、対戦で流していた曲は続けない)
 /** シャッフルで次の曲を1つ選ぶ (最近流した曲は避ける) */
 export function pickShuffleBgm(rnd = Math.random, pool = shufflePool()) {
   if (!shuffleRecent) {
@@ -136,8 +132,9 @@ function shuffleBattleBgm() {
   shuffleCtx = 'battle';
   return (shuffled = pickShuffleBgm());
 }
-/* シャッフルで流している曲か (この曲は繰り返さず、終わったら次の曲へ) */
-const shuffling = () => shuffleOn() && !!want && want === shuffled;
+/* シャッフルで流している曲か (この曲は繰り返さず、終わったら次の曲へ)。途中で曲を選んだら、その曲は繰り返す */
+const shuffling = () => !!want && want === shuffled
+  && (shuffleCtx === 'online' || !chosenTrack(settings(), shuffleCtx === 'menu' ? 'bgmMenu' : 'bgmBattle'));
 /* 次の曲に替わったら知らせる (main.js が、表記の要る曲の曲名と表記を出す) */
 let onShuffleTrack = null;
 export const setShuffleNotify = (fn) => { onShuffleTrack = fn; };
@@ -157,45 +154,12 @@ let want = null;                 // 鳴らしたい曲 (null なら止める)
 /* 音量: 設定の「BGM」(はじめは 30。キャラの声が聞き取りやすいよう控えめに) */
 const level = () => (isMuted() ? 0 : Math.max(0, Math.min(1, (settings().bgmVol ?? 30) / 100)) * 0.7 * (want ? trackGain(want) : 1));
 
-/* ふつうの対戦の曲 (ランダムの12曲) は、ROTATE_LOOPS 周したら別の曲へつなぐ (同じ曲がずっと続かないように)。
-   ボス・強敵の曲、COLLECTION で選んだ曲は替えない */
-const ROTATE_LOOPS = 2;
-let loops = 0, lastTime = 0, swapping = false;
-/* オンライン対戦は、選んだ曲があっても、いつもの曲と交換した曲 (rotatePool) から替えていく */
-let rotatePool = null;
-const rotating = () => !!want && ((rotatePool && rotatePool.includes(want))
-  || (NORMAL_BGMS.includes(want) && !chosenTrack(settings(), 'bgmBattle') && !(BGM_RELEASED && settings().bgm)));
-function onTime() {
-  if (!el || swapping || shuffling()) return;
-  const t = el.currentTime;
-  if (t + 1 < lastTime) loops++;          // 頭に戻った = 1周した
-  lastTime = t;
-  if (loops >= ROTATE_LOOPS && rotating()) swapTrack();
-}
-function swapTrack() {
-  const others = (rotatePool || NORMAL_BGMS).filter(k => k !== want);
-  const next = others[Math.floor(Math.random() * others.length)];
-  if (!next) return;
-  swapping = true;
-  const was = want;
-  route.set(0, 0.4);                      // 1.2 秒ほどで小さくしてから替える
-  setTimeout(() => {
-    swapping = false;
-    loops = 0; lastTime = 0;
-    if (want !== was) return;             // その間に止めた・別の曲にした
-    want = next;
-    el.src = bgmFile(next);
-    refreshBgm();
-  }, 1300);
-}
-
 function ensure() {
   if (el) return;
   initAudio();                   // まだ触れていなくても作っておく (触れたときに再開する)
   el = new Audio();
   el.loop = true;
   el.preload = 'auto';
-  el.addEventListener('timeupdate', onTime);
   el.addEventListener('ended', () => { if (shuffling()) nextShuffle(); });
   route = routeMedia(el, level());
 }
@@ -205,13 +169,12 @@ export function playBgm(key) {
   /* COLLECTION の BGM をしまっている間は、対戦の2曲だけ鳴らす (タイトルの曲・選んだ曲は鳴らさない) */
   if (!BGM_RELEASED && !(BATTLE_BGM_ON && key && (isTrack(key) || NORMAL_BGMS.includes(key) || MENU_BGMS.includes(key) || key === RUN_BGM || key === STRONG_BGM || key === BOSS_BGM || key === DEUS_BGM || key === PEEK_BGM || TENSE_BGMS.includes(key)))) { stopBgm(); return; }
   clearTimeout(previewTimer);
-  if (rotatePool && !rotatePool.includes(key)) rotatePool = null;   // オンラインの対戦から別の画面の曲へ
   want = key && key !== 'off' ? key : null;
   if (!want) { stopBgm(); return; }
   try {
     ensure();
     const url = bgmFile(want);
-    if (!el.src.endsWith(url)) { el.src = url; loops = 0; lastTime = 0; }
+    if (!el.src.endsWith(url)) el.src = url;
     refreshBgm();
   } catch (e) { /* BGM が無くても遊べる */ }
 }
