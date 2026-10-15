@@ -4481,7 +4481,7 @@ async function announceControl(req, choice) {
   await UI.declareCutIn({ label: who + 'のコントロール', value, tone: 'call', small: true, hold: 1800, note: req.controlReason === 'refresh' ? 'リフレッシュ' : 'コンパイル' });
 }
 
-/* 対戦の格: 'boss' (勝ち抜き戦の BOSS・週替わりの BOSS・CHALLENGE の最強・下剋上) / 'strong' (勝ち抜き戦の精鋭・CHALLENGE のロック特化と挑戦者) / null */
+/* 対戦の格: 'boss' (勝ち抜き戦の BOSS・週替わりの BOSS・CHALLENGE の最強・ORACLE・下剋上) / 'strong' (勝ち抜き戦の精鋭・CHALLENGE のロック特化と挑戦者) / null */
 function battleTier() {
   if (demoMode || roomMode || tutorial || puzzle || trainingMode) return null;
   if (storyNode) return storyNode.boss ? 'boss' : null;
@@ -4491,7 +4491,7 @@ function battleTier() {
     return node && node.type === 'boss' ? 'boss' : node && node.type === 'elite' ? 'strong' : null;
   }
   if (runMode && runKind === 'weekly') return (loadStoredWeekly().stage | 0) === 2 ? 'boss' : null;
-  if (aiDifficulty === 3 || aiDifficulty === UNDERDOG_LEVEL || machineMatch()) return 'boss';
+  if (aiDifficulty === 3 || aiDifficulty === UNDERDOG_LEVEL || machineMatch() || oracleMatch()) return 'boss';
   return aiDifficulty >= 3 ? 'strong' : null;
 }
 /* 落ちたときの手がかり (crashwatch): 覚えているカードの絵の数 f、描画が持っている絵 t・形 g・シェーダー p、画質の段 L。
