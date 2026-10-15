@@ -214,11 +214,17 @@ if (opt.mode === 'collect') {
   const data = JSON.parse(fs.readFileSync(opt.states, 'utf8'));
   let items = data.states.map((s, idx) => ({ idx, winner: s.winner, st: s.st }));
   if (opt.max) items = items.slice(0, opt.max);
+  /* 途中経過を1盤面ずつ書き足す (--out の .part)。止まっても同じコマンドで続きから回る */
+  const part = opt.out ? opt.out + '.part' : null;
+  const prev = part && fs.existsSync(part) ? fs.readFileSync(part, 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l)) : [];
+  const doneIdx = new Set(prev.map(r => r.idx));
+  items = items.filter(it => !doneIdx.has(it.idx));
   const defs = candidates(data.deck);
   const EFFS = effectList();
-  const rows = [];
+  const rows = prev.slice();
+  const total = rows.length + items.length;
   run((i) => { const it = items.filter((_, j) => j % nW === i); return it.length ? { mode: 'judge', items: it, defs, answer: opt.answer } : null; },
-    (m) => { rows.push(m.r); if (rows.length % 20 === 0) console.error(rows.length + '/' + items.length + ' 盤面 ' + Math.round((Date.now() - t0) / 1000) + 's'); })
+    (m) => { rows.push(m.r); if (part) fs.appendFileSync(part, JSON.stringify(m.r) + '\n'); if (rows.length % 20 === 0) console.error(rows.length + '/' + total + ' 盤面 ' + Math.round((Date.now() - t0) / 1000) + 's'); })
     .then(() => {
       const keys = EFFS.flatMap(ef => VALUES.map(v => ef.key + '@' + v));
       const text = Object.fromEntries(EFFS.map(ef => [ef.key, ef.text]));
