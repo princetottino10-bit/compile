@@ -9,6 +9,9 @@
  *
  * 最弱探し: --bottom N で下位 N 個から作れる組合せを戦わせ、弱い順に並べる
  *   node scripts/deck_search.js --bottom 10 --budget 60
+ *
+ * 得意プロトコル入りの強いデッキ探し (本気のキャラ): --must X で X を必ず入れ、残り2つを上位 --top 個から選ぶ
+ *   node scripts/deck_search.js --must WATER --top 14 --budget 60
  */
 const fs = require('node:fs');
 const path = require('node:path');
@@ -62,9 +65,11 @@ if (!isMainThread) {
   const names = Object.keys(strength);
   const top = bottom ? names.slice(-bottom) : names.slice(0, +argv('--top', 10));
   const extra = String(argv('--extra', '')).split(',').filter(Boolean);
-  const pool = [...new Set(top.concat(extra))];
+  const must = argv('--must', '');
+  const pool = [...new Set(top.concat(extra))].filter(n => n !== must);
   const decks = [];
-  for (let a = 0; a < pool.length; a++) for (let b = a + 1; b < pool.length; b++) for (let c = b + 1; c < pool.length; c++) decks.push([pool[a], pool[b], pool[c]]);
+  if (must) for (let a = 0; a < pool.length; a++) for (let b = a + 1; b < pool.length; b++) decks.push([must, pool[a], pool[b]]);
+  else for (let a = 0; a < pool.length; a++) for (let b = a + 1; b < pool.length; b++) for (let c = b + 1; c < pool.length; c++) decks.push([pool[a], pool[b], pool[c]]);
   if (!bottom && !decks.some(d => d.slice().sort().join() === CURRENT.slice().sort().join())) decks.push(CURRENT);
   const budget = +argv('--budget', 60);
   const seed = +argv('--seed', 20260923);
