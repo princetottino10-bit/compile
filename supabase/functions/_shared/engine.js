@@ -3658,12 +3658,36 @@ function aiCompilePassChance(st, side, line, observer) {
     if (response >= requiredSwing) answers += count;
   }
   const unknownHand = st.players[opponent].hand.reduce((n, uid) => n + (aiCardKnownTo(st, uid, observer) ? 0 : 1), 0);
-  if (!unknownHand || !unknownCount || !answers) return 1;
+  /* 相手に並べ替えられて、このラインに済みのプロトコルを持ってこられると、コンパイルはリコンパイルになる
+     (ユーザー 2026-10-15「コントロール取られてるのにコンパイルしにいっちゃうのが弱い。PSYCHIC と CHAOS 相手だとプロトコルを入れ替えられる可能性に気を付けたい」) */
+  const keep = 1 - aiRearrangeChance(st, side, observer, remaining, unknownCount, unknownHand);
+  if (!unknownHand || !unknownCount || !answers) return keep;
   let noAnswer = 1;
   for (let i = 0; i < Math.min(unknownHand, unknownCount); i++) {
     noAnswer *= Math.max(0, unknownCount - answers - i) / (unknownCount - i);
   }
-  return Math.max(0, Math.min(1, noAnswer));
+  return Math.max(0, Math.min(1, noAnswer * keep));
+}
+/* side が次に開始フェイズでコンパイルする前に、相手 (次に指す側) が side のプロトコルを並べ替えられる見込み。
+   済みのプロトコルが無ければ、並べ替えられても困らない (0)。
+   - 相手のコントロール: 相手がコンパイルかリフレッシュをすれば使える。たいてい使えるので AI_CTRL_REARRANGE と見る
+   - 相手の手札の PSYCHIC 2 (相手のプロトコルを並べ替える) / CHAOS 1 (両方を並べ替える): 見えていればそのまま、
+     見えていなければ残りの札から引いている見込み */
+const AI_CTRL_REARRANGE = 0.8;
+const AI_REARRANGE_DEFS = ['PSYCHIC_3', 'CHAOS_2'];
+function aiRearrangeChance(st, side, observer, remaining, unknownCount, unknownHand) {
+  const opponent = 1 - side;
+  if (!st.players[side].protocols.some(p => p.compiled)) return 0;
+  let none = st.useControl && st.control === opponent ? 1 - AI_CTRL_REARRANGE : 1;
+  if (st.players[opponent].hand.some(uid => aiCardKnownTo(st, uid, observer) && AI_REARRANGE_DEFS.indexOf(st.cards[uid].def) >= 0)) return 1;
+  let hits = 0;
+  for (const d of AI_REARRANGE_DEFS) hits += remaining.get(d) || 0;
+  if (hits && unknownHand && unknownCount) {
+    let miss = 1;
+    for (let i = 0; i < Math.min(unknownHand, unknownCount); i++) miss *= Math.max(0, unknownCount - hits - i) / (unknownCount - i);
+    none *= miss;
+  }
+  return 1 - none;
 }
 
 function aiCompileSafetyScore(st, observer) {
