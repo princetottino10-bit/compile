@@ -96,6 +96,7 @@ import { pickCard, placementPad } from './input.js';
 import { placementChoices, renderPlayChoices } from './playchoices.js';
 import { createAiClient } from './aiclient.js';
 import { buildRunDefs, baseOf } from './runcards.js';
+import { buildMobDefs, mobDeckMods } from './mobcards.js';
 import { createLogFormat } from './logformat.js';
 import { meaningfulSteps as cutSteps } from './steps.js';
 import { initDialogs } from './dialogs.js';
@@ -824,8 +825,11 @@ async function boot() {
     }
   }
   /* 勝ち抜き戦だけのカード (★ と ＋)。画面の defIndex とエンジン・CPU の Worker に登録する */
+  /* ストーリーのモブだけのカード (量産。mobcards.js) も同じ所に足す */
   const runDefs = buildRunDefs(cards, effects);
-  for (const d of runDefs.ui) defIndex[d.id] = d;
+  const mobDefs = buildMobDefs(cards, effects);
+  runDefs.engine.push(...mobDefs.engine);
+  for (const d of runDefs.ui.concat(mobDefs.ui)) defIndex[d.id] = d;
   markDemerits(effects, runDefs.engine);
   mark('fetch');
   Engine.init(cards, effects, runDefs.engine);
@@ -1237,7 +1241,8 @@ async function boot() {
           p0 = node.me.slice();
           p1 = node.opp.slice();
           /* 相棒と組める戦いはタッグ (2026-10-13)。主人公 + 相棒 vs 相手 + 相手の相方 */
-          tagMates = node.tag ? { p0: node.tag.mate.slice(), p1: node.tag.oppMate.slice() } : null;
+          tagMates = node.tag ? { p0: node.tag.mate.slice(), p1: node.tag.oppMate.slice(),
+            ...(node.tag.oppMob && mobDeckMods(node.tag.oppMob) ? { mods: [null, mobDeckMods(node.tag.oppMob)] } : {}) } : null;
           /* 何度も負けたあとの「かんたんで挑む」: この1戦だけ CPU を かんたん に (話の進み方は同じ) */
           let easy = false;
           try { easy = sessionStorage.getItem('compileStoryEasy') === node.id; sessionStorage.removeItem('compileStoryEasy'); } catch (e) { /* private mode */ }
@@ -1356,9 +1361,11 @@ async function boot() {
   /* ストーリーの対戦: 相手は win 本、自分は 3 本で勝ち。自分は head 本がはじめからコンパイル済み (無ければ 3 - win。
      「2本先取」は勝ち抜き戦と同じく、自分は 3 本のうち 1 本が済みから始まる)。序盤は初めての人でも勝てるように head で先を譲る */
   const storyHead = storyNode && storyNode.kind === 'battle' ? (storyNode.head !== undefined ? storyNode.head : 3 - storyNode.win) : 0;
-  const storyOpts = storyNode && storyNode.kind === 'battle' && (storyHead > 0 || storyNode.win < 3)
-    ? { winCompilesBySide: [3, storyNode.win], startCompiled: [storyHead, 0] } : null;
-  shortMatch = (!!winCompiles && winCompiles < 3) || !!(runOpts && Array.isArray(runOpts.startCompiled) && runOpts.startCompiled.some(n => n > 0)) || !!storyOpts;
+  /* mob: 相手 (モブの機体) の山札の一部を量産カード (mobcards.js) に入れ替える */
+  const storyMob = storyNode && storyNode.kind === 'battle' && storyNode.mob ? mobDeckMods(storyNode.mob) : null;
+  const storyOpts = storyNode && storyNode.kind === 'battle' && (storyHead > 0 || storyNode.win < 3 || storyMob)
+    ? { winCompilesBySide: [3, storyNode.win], startCompiled: [storyHead, 0], ...(storyMob ? { deckMods: [{}, storyMob] } : {}) } : null;
+  shortMatch = (!!winCompiles && winCompiles < 3) || !!(runOpts && Array.isArray(runOpts.startCompiled) && runOpts.startCompiled.some(n => n > 0)) || storyHead > 0 || !!(storyOpts && storyNode.win < 3);
   /* 共有された棋譜は外から来たものなので、作り直しで落ちても止まらないように */
   let replayBuilt = null;
   if (replayMode) {

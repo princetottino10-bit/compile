@@ -2527,9 +2527,13 @@ function setupTag(st, tag) {
     if (!Array.isArray(mate) || mate.length !== 3) throw new Error('タッグ: 味方も3プロトコルを指定すること');
     if (new Set(own.concat(mate)).size !== 6) throw new Error('タッグ: チームの中で同じプロトコルは使えない');
     const deck = [];
+    /* tag.mods: [P1 の味方, P2 の味方] の { swap: { 元の defId: 替える defId } } (ストーリーのモブの量産カード。newGame の deckMods と同じ) */
+    const mod = (Array.isArray(tag.mods) && tag.mods[p]) || {};
+    const swap = mod.swap && typeof mod.swap === 'object' ? mod.swap : {};
     for (const name of mate) {
       if (!PROTOS[name]) throw new Error('未知のプロトコル: ' + name);
-      for (const defId of PROTOS[name]) {
+      for (const base of PROTOS[name]) {
+        const defId = DEFS[swap[base]] && DEFS[swap[base]].proto === name ? swap[base] : base;
         const uid = 'p' + p + ':' + defId;
         st.cards[uid] = { uid, def: defId, owner: p, faceUp: false, zone: 'bench' + p, knownTo: 0 };
         deck.push(uid);

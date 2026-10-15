@@ -38,6 +38,7 @@ const L = (who, text, face) => ({ who, text, ...(face ? { face } : {}) });
 
 /* 対戦: me / opp = プロトコル3つ、level = CPU の強さ (0 かんたん / 1 ふつう / 2 つよい。タッグでは味方の CPU も同じ強さ)、
    win = 相手が勝ちに必要なコンパイルの数 (自分はいつも 3)、head = 自分がはじめからコンパイル済みの数 (無ければ 3 - win)、oppAvatar = 相手の立ち絵 (無ければ出さない)、mate = 自分の側で話す相棒、
+   mob / tag.oppMob = 相手 / 相手の味方の山札の一部を弱い量産カードに替える (js3d/mobcards.js の MOB_DECKS の鍵。名前のない機体だけ)、
    winLines / loseLines = 決着のあとの会話 */
 export const CHAPTERS = [
   {
@@ -172,10 +173,10 @@ export const CHAPTERS = [
       { id: 'c0-chief', kind: 'battle', title: '警備主任', me: ['FIRE', 'WATER', 'LIFE'], opp: ['METAL', 'GRAVITY', 'DARKNESS'],
         /* ふつう + 1つ済みから (2026-10-14 ユーザー: 主任戦はふつうで。味方の紫苑も同じ強さになるので、かんたんにはしない)。
            試算: かんたん相当の人が 40 戦 29 勝 (済みなしでは 40 戦 20 勝)。2 敗すると「かんたんで挑む」が出る */
-        level: 1, win: 3, head: 1, oppName: '警備主任', mate: 'shion', oppAvatar: 'story_chief', boss: true,
+        level: 1, win: 3, head: 1, oppName: '警備主任', mate: 'shion', oppAvatar: 'story_chief', boss: true, mob: 'chief',
         note: '紫苑と2人で、主任と巡回の警備機体に挑む (タッグ: 手番を交代で指す)。1つは書き上げた状態から始まる。あと2つを先に書き上げると、ゲートが開く',
         /* タッグ (2026-10-13): 相棒と組める戦いはタッグにする。紫苑は判定のときと同じ手持ち。チームの中で同じプロトコルは持てない */
-        tag: { mate: ['PSYCHIC', 'LIGHT', 'MIRROR'], mateName: '紫苑', oppMate: ['SPEED', 'CLARITY', 'FEAR'], oppMateName: '巡回の警備機体', oppMateAvatar: 'story_patrol' },
+        tag: { mate: ['PSYCHIC', 'LIGHT', 'MIRROR'], mateName: '紫苑', oppMate: ['SPEED', 'CLARITY', 'FEAR'], oppMateName: '巡回の警備機体', oppMateAvatar: 'story_patrol', oppMob: 'patrol' },
         talk: {
           me: {
             hello: ['……行こう。', '主任の言葉、全部ほどこう。'],
