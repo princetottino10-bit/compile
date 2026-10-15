@@ -68,22 +68,31 @@ test('オンラインの AUTO: 見えている情報だけの盤面で読んだ�
     { seed: 23, first: 1, p0: ['SPEED', 'LIGHT', 'SPIRIT'], p1: ['FIRE', 'WATER', 'LIFE'] },
     { seed: 37, first: 0, p0: ['PSYCHIC', 'DARKNESS', 'FIRE'], p1: ['PSYCHIC', 'DARKNESS', 'FIRE'] }
   ];
-  let actions = 0, answers = 0, remembered = 0;
+  let actions = 0, answers = 0, remembered = 0, rebuilt = 0;
   for (const g of games) {
     let res = Engine.newGame(g);
     const mem = [null, null];
+    const pend = [ROOM.createPendingTracker(Engine), ROOM.createPendingTracker(Engine)];
     for (let i = 0; i < 160 && res.winner === null; i++) {
       const st = res.state;
+      /* サーバーが見せるのは、選択待ちなら解決の途中の盤面 (view) */
+      const vst = res.view || res.state;
       const req = res.requests[0] || null;
       const side = req ? req.player : st.turn;
       /* 両方の側で、公開された相手の手札を覚える。覚えている札は、いつも相手の本当の手札の中にある */
       for (const k of [0, 1]) {
-        mem[k] = ROOM.trackOppHand(mem[k], publicView(st, k, null).rm);
-        const real = st.players[1 - k].hand.map(u => st.cards[u].def);
+        mem[k] = ROOM.trackOppHand(mem[k], publicView(vst, k, null).rm);
+        const real = vst.players[1 - k].hand.map(u => vst.cards[u].def);
         for (const d of mem[k].defs) { const j = real.indexOf(d); assert.ok(j >= 0, '覚えた札 ' + d + ' が相手の手札にない'); real.splice(j, 1); }
         remembered += mem[k].defs.length;
       }
-      const { rm, rev } = publicView(st, side, req);
+      /* 両方の側で、相手の番の盤面を覚える (相手の手から始まった選択を組み立て直すため) */
+      for (const k of [0, 1]) {
+        const v = publicView(vst, k, req && req.player === k ? req : null).rm;
+        const a = ROOM.buildRoomAiState(v, Engine, null, mem[k].defs);
+        pend[k].onView(a.state, !!v.request);
+      }
+      const { rm, rev } = publicView(vst, side, req);
       const ai = ROOM.buildRoomAiState(rm, Engine, null, mem[side].defs);
       assert.ok(ai, 'AUTO の盤面を作れる');
       /* 見えないカードの中身は、本当のものではなく仮のもの (名前も付け替えてある) */
@@ -91,7 +100,12 @@ test('オンラインの AUTO: 見えている情報だけの盤面で読んだ�
       let next;
       if (req) {
         const nq = ROOM.normRequest(rm);
-        const picks = ai.picks(Engine.ai.answer(ai.state, ai.request(nq)));
+        const aiReq = ai.request(nq);
+        const rec = pend[side].resolve(ai.state, aiReq);
+        rebuilt += rec ? 1 : 0;
+        const raw = rec ? Engine.ai.answer(rec.state, rec.req) : Engine.ai.answer(ai.state, aiReq);
+        pend[side].onMyPicks(raw);
+        const picks = ai.picks(raw);
         next = Engine.apply(st, { type: 'choose', id: req.id, picks: picks.map(p => (Array.isArray(p) ? p.map(x => unalias(rev, x)) : unalias(rev, p))) });
         assert.ok(!next.error, '選択が通る: ' + next.error + ' ' + JSON.stringify(req));
         answers++;
@@ -100,6 +114,7 @@ test('オンラインの AUTO: 見えている情報だけの盤面で読んだ�
         const a = ai.action(Engine.ai.action(ai.state));
         const hit = ROOM.matchLegalAction(legal, a);
         assert.ok(hit, '手がサーバーの合法手にある: ' + JSON.stringify(a));
+        pend[side].onMyAction(ai.state, hit);
         const wire = ROOM.toRoomAction(hit, side);
         next = Engine.apply(st, wire.card ? { ...wire, card: unalias(rev, wire.card) } : wire);
         assert.ok(!next.error, next.error);
@@ -109,6 +124,9 @@ test('オンラインの AUTO: 見えている情報だけの盤面で読んだ�
     }
   }
   assert.ok(actions > 60 && answers > 5, `手 ${actions} / 選択 ${answers}`);
+  /* 選択の多くで、選択待ちの盤面を組み立て直せる (答えごとに続きを試して読める) */
+  console.log('rebuilt', rebuilt, '/', answers);
+  assert.ok(rebuilt >= answers * 0.8, `組み立て直せた選択 ${rebuilt} / ${answers}`);
 });
 
 test('オンラインの AUTO: タッグの部屋では作らない', async () => {

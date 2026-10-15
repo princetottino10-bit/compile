@@ -3491,6 +3491,12 @@ async function roomApplyView(rm, instant) {
   if (!roomWatching && rm.game) {
     for (const t of rm.trace || []) if (t && t.game) roomOppHand = ROOM.trackOppHand(roomOppHand, { side: rm.side, game: t.game });
     roomOppHand = ROOM.trackOppHand(roomOppHand, rm);
+    /* ORACLE: 相手の番の盤面を覚える (相手の手から始まった選択を、あとで組み立て直すため) */
+    if (!mayContinue) roomPending().reset();
+    if (autoPlay) {
+      const ai = ROOM.buildRoomAiState(rm, Engine, null, roomOppHand && roomOppHand.defs);
+      if (ai) roomPending().onView(ai.state, !!rm.request);
+    }
   }
   roomRm = rm;
   const prev = cur ? shown() : null;
@@ -3538,6 +3544,8 @@ async function roomApplyView(rm, instant) {
 const ROOM_AUTO_AI = { ...AUTO_AI, peek: false };
 let roomAutoBusy = false;
 let roomOppHand = null;            // 公開されて覚えている相手の手札 (ROOM.trackOppHand)
+let roomPend = null;               // 効果の解決途中の選択を組み立て直す (ROOM.createPendingTracker)
+const roomPending = () => roomPend || (roomPend = ROOM.createPendingTracker(Engine));
 /* ORACLE を一度でも使った部屋 (部屋の番号)。その対戦は記録に数えない (2026-10-15 「一旦ノーカン」):
    経験値・デイリー・実績・遊ばれ方の記録・リプレイの送信をしない (手元のリプレイは残す)。
    部屋に入り直しても分かるよう、端末に覚えておく */
@@ -3578,6 +3586,7 @@ async function roomAutoAct() {
   if (!autoFor(ME) || !roomRm) return;                           // 考えている間に AUTO を止めた
   if (roomRm.version !== at) { await roomAutoAct(); return; }      // 考えている間に盤面が進んだ: 読み直す
   if (!hit) { roomAutoStop('合う手が見つかりませんでした'); return; }
+  roomPending().onMyAction(ai.state, hit);          // この手から始まる選択を、あとで組み立て直すため
   if (await roomStep(hit) === false) roomAutoStop('サーバーが手を受け付けませんでした');
 }
 /* 選択の答え。答えられないときは null (ふつうに自分で選ぶ) */
@@ -3589,9 +3598,15 @@ async function roomAutoAnswer(req) {
   const at = roomRm.version;
   try {
     UI.setPrompt('ORACLE が選択しています…', 'wait');
-    const [picks] = await Promise.all([thinking(aiClient ? aiClient.answer(ai.state, ai.request(req), ROOM_AUTO_AI) : Promise.resolve(withoutTrace(() => Engine.ai.answer(ai.state, ai.request(req))))), TW.wait(260)]);
+    /* 選択待ちの盤面 (打つ前の盤面 + 手 + 答え) を組み立て直せたら、それで読む (答えごとに続きを試せる)。
+       組み立てられなければ、今の盤面だけで答える */
+    const aiReq = ai.request(req);
+    const rec = roomPending().resolve(ai.state, aiReq);
+    const st = rec ? rec.state : ai.state, q = rec ? rec.req : aiReq;
+    const [picks] = await Promise.all([thinking(aiClient ? aiClient.answer(st, q, ROOM_AUTO_AI) : Promise.resolve(withoutTrace(() => Engine.ai.answer(st, q)))), TW.wait(260)]);
     if (!roomRm || roomRm.version !== at || !autoFor(ME)) return PICK_CANCEL;
     if (!Array.isArray(picks)) { roomAutoStop('選び方が見つかりませんでした'); return null; }
+    roomPending().onMyPicks(picks);
     return ai.picks(picks);
   } catch (e) {
     roomAutoStop('選び方が見つかりませんでした');
@@ -3655,6 +3670,7 @@ async function roomDrainRequest() {
       const req = cur.requests[0];
       UI.setPrompt('');
       const auto = autoFor(ME) ? await roomAutoAnswer(req) : null;
+      if (!auto) roomPending().drop();               // 自分で答えた選択は、ORACLE の続きの組み立てに使えない
       const picks = auto || await askUser(req);
       UI.setPrompt('');
       if (picks === PICK_CANCEL) continue;   // 外部更新で取り直し

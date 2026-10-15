@@ -400,11 +400,11 @@ export function buildRoomAiState(rm, Engine, valOf, oppKnown) {
         if (!u || st.cards[ren(u)]) continue;
         const p = st.players[0].deck.length ? 0 : st.players[1].deck.length ? 1 : -1;
         if (p < 0) break;
-        const from = st.players[p].deck.pop();
+        const from = st.players[p].deck.shift();          // 山札の上 (engine は deck[0] から出す)
         const c = { ...st.cards[from], uid: u };
         delete st.cards[from];
         st.cards[u] = c;
-        st.players[p].deck.push(u);
+        st.players[p].deck.unshift(u);
         delete back[from];
       }
       if (Array.isArray(out.candidates)) out.candidates = out.candidates.map(ren);
@@ -453,6 +453,99 @@ export function trackOppHand(mem, rm) {
   if (r && r.kind === 'hand' && r.player === op && Array.isArray(r.cards) && r.cards.length === hand) defs = r.cards.slice();
   if (defs.length > hand) defs = [];
   return { defs, hand, deck, seen };
+}
+
+/* ---------- 効果の解決途中の選択を、ORACLE が深く読めるようにする ----------
+   CPU の選択の読み (engine の aiChoiceScore) は、選択待ちの盤面の「打つ前の盤面 + 打った手 + それまでの答え」(pending) を
+   もとに、答えごとに続きを試す。サーバーはこれを渡さない (中に見えないカードが入っている) ので、
+   こちらで覚えている盤面と手から組み立て直す:
+   - 自分の手から始まった選択: 打つ前の盤面 (ORACLE が読んだもの) + 送った手 + 自分の答え
+   - 相手の手から始まった選択: 相手の番に見えていた盤面 + 相手が打てた手のどれか (サーバーの問いと同じ問いになるもの)
+   途中で相手が答える選択は、CPU の答えで埋める。組み立てた続きの問いがサーバーの問いと同じになったときだけ使う
+   (違えば null。今までどおり盤面だけで答える)。見えないカードは仮のものなので、引いた札などは今の盤面から戻して入れる */
+const isGuess = (uid) => /^p[01]:[?!]/.test(uid);
+function sameRequest(a, b) {
+  if (!a || !b || a.kind !== b.kind || (a.prompt || '') !== (b.prompt || '')) return false;
+  const key = (x) => JSON.stringify([(x.candidates || []).slice().sort(), x.lines || null, (x.options || []).length,
+    x.min === undefined ? null : x.min, x.max === undefined ? null : x.max, x.target === undefined ? null : x.target]);
+  return key(a) === key(b);
+}
+/* 打つ前の盤面に、今の盤面で中身の分かったカード (引いた札・相手が出した札) を、仮の札と入れ替えて入れておく */
+function patchBase(base, now) {
+  const b = JSON.parse(JSON.stringify(base));
+  const fresh = Object.keys(now.cards).filter(u => !isGuess(u) && !b.cards[u] && now.cards[u].def);
+  const order = (u) => (now.players[0].hand.indexOf(u) >= 0 ? now.players[0].hand.indexOf(u) : 1000);
+  fresh.sort((x, y) => order(x) - order(y));
+  let top = 0;
+  for (const u of fresh) {
+    const c = now.cards[u];
+    const mine = c.zone === 'hand0' || c.zone === 'trash0' || (c.zone === 'field' && c.owner === 0);
+    const list = mine ? b.players[0].deck : b.players[1].hand.length ? b.players[1].hand : b.players[1].deck;
+    const at = mine ? list.findIndex((x, i) => i >= top && isGuess(x)) : list.findIndex(isGuess);
+    if (at < 0) continue;
+    const old = list[at];
+    list[at] = u;
+    if (mine) top = at + 1;
+    const z = b.cards[old].zone;
+    delete b.cards[old];
+    b.cards[u] = { uid: u, def: c.def, owner: mine ? 0 : 1, faceUp: false, zone: z, knownTo: z === 'hand1' ? 2 : 0 };
+  }
+  return b;
+}
+function replayTo(Engine, base, action, myPicks, target) {
+  let res = Engine.apply(base, action);
+  let k = 0;
+  for (let guard = 0; guard < 40; guard++) {
+    if (!res || res.error || !res.requests || !res.requests.length) return null;
+    const r = res.requests[0];
+    if (r.player === 0) {
+      if (k < myPicks.length) { res = Engine.apply(res.state, { type: 'choose', id: r.id, picks: myPicks[k++] }); continue; }
+      return sameRequest(r, target) ? { state: res.state, req: r } : null;
+    }
+    res = Engine.apply(res.state, { type: 'choose', id: r.id, picks: Engine.ai.smartPicks(res.state, r) });
+  }
+  return null;
+}
+export function createPendingTracker(Engine) {
+  let chain = null;              // { base, action, picks } 今の選択の続き
+  let oppBases = [];             // 相手の番に見えていた盤面 (新しい順、3つまで)
+  const quiet = (fn) => { if (Engine.setTrace) Engine.setTrace(false); try { return fn(); } finally { if (Engine.setTrace) Engine.setTrace(true); } };
+  return {
+    reset() { chain = null; oppBases = []; },
+    /* 届いた盤面 (相手の番で、こちらへの問いが無いもの) を覚える */
+    onView(aiState, hasRequest) {
+      if (hasRequest || !aiState || aiState.turn !== 1 || aiState.winner !== null) return;
+      oppBases = [JSON.parse(JSON.stringify(aiState))].concat(oppBases).slice(0, 3);
+    },
+    /* 自分の番に手を送った (ORACLE が読んだ盤面と、その手) */
+    onMyAction(aiState, action) { chain = { base: JSON.parse(JSON.stringify(aiState)), action, picks: [] }; oppBases = []; },
+    /* 自分の選択に答えた (この盤面の名前で) */
+    onMyPicks(picks) { if (chain) chain.picks.push(picks); },
+    /* 自分で答えた・戻したなど、続きを追えなくなった */
+    drop() { chain = null; },
+    /* 今の問いの、選択待ちの盤面 (pending 付き) と、その盤面での問い。作れなければ null */
+    resolve(now, req) {
+      return quiet(() => {
+        try {
+          if (chain) {
+            const hit = replayTo(Engine, patchBase(chain.base, now), chain.action, chain.picks, req);
+            if (hit) return hit;
+          }
+          /* 相手の手を1つずつ試すのは画面の処理の中なので、長くても 0.5 秒で切り上げる */
+          const until = Date.now() + 500;
+          for (const ob of oppBases) {
+            const base = patchBase(ob, now);
+            for (const a of Engine.legalActions(base)) {
+              if (Date.now() > until) return null;
+              const hit = replayTo(Engine, base, a, [], req);
+              if (hit) { chain = { base: ob, action: a, picks: [] }; return hit; }
+            }
+          }
+        } catch (e) { /* 組み立てられないときは、盤面だけで答える */ }
+        return null;
+      });
+    }
+  };
 }
 
 /* CPU の手が、サーバーの出した合法手のどれかと同じか。同じならサーバーの合法手 (余計な項目の無いもの) を返す */
