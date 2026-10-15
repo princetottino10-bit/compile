@@ -342,11 +342,11 @@ export const CHAPTERS = [
          同じ側と相手側で同じプロトコルは持てないので、WATER そのものではなく ICE にした */
       { id: 'c1-abyss', kind: 'battle', title: '後任「二号機」', me: ['FIRE', 'LIGHT', 'LIFE'], opp: ['ICE', 'GRAVITY', 'DARKNESS'],
         /* 序盤なので かんたん + 1つ済みから (試算: かんたん相当の人が 40 戦 32 勝。前の ふつう・済みなしでは 40 戦 13 勝) */
-        level: 0, win: 3, head: 1, oppName: '二号機', mate: 'asagi', oppAvatar: 'story_nigoki', boss: true,
+        level: 0, win: 3, head: 1, oppName: '二号機', mate: 'asagi', oppAvatar: 'story_nigoki', boss: true, mob: 'nigoki',
         note: '瑠璃と2人で、二号機と回収機に挑む (タッグ: 手番を交代で指す)。1つは書き上げた状態から始まる。あと2つを先に書き上げる',
         /* タッグ: WATER は瑠璃の言葉 (ここで本人の色になる)。主人公は WATER の代わりに紫苑の LIGHT を借りる。
            主人公の WATER は、勝ったあと 3802 の一手として「預かり」で入る (プロット: 1章 WATER) */
-        tag: { mate: ['WATER', 'PEACE', 'UNITY'], mateName: '瑠璃', oppMate: ['METAL', 'TIME', 'APATHY'], oppMateName: '回収機', oppMateAvatar: 'story_collector' },
+        tag: { mate: ['WATER', 'PEACE', 'UNITY'], mateName: '瑠璃', oppMate: ['METAL', 'TIME', 'APATHY'], oppMateName: '回収機', oppMateAvatar: 'story_collector', oppMob: 'collector' },
         /* 対戦中のひとこと: 瑠璃は「お客さま」へ向けて案内する。二号機は瑠璃の放送をそのまま繰り返す。争点や仕組みの話はしない (対戦中は暗黙) */
         talk: {
           me: {
@@ -569,8 +569,9 @@ export const CHAPTERS = [
          強さ (2026-10-13): 序盤は勝てる強さにする (ユーザー)。CPU どうし (同じ強さ) で 80 戦、茜の側の勝ちは 50%。
          慣れない茜の手持ちで指すので、CPU は かんたん (0)。一戦目の茜戦は主人公の側が 160 戦で 73% 勝つが、同じく かんたん */
       { id: 'c2-clock', kind: 'battle', title: '柱時計「時計」', me: ['HATE', 'LOVE', 'APATHY'], opp: ['TIME', 'DEATH', 'SPIRIT'],
-        level: 0, win: 3, oppName: '時計', meName: '茜', mate: 'nadeshiko', oppAvatar: 'story_clock', boss: true,
-        note: 'この一戦だけ、茜を動かす。3つすべてを先に書き上げると、茜の読み方が残る',
+        /* 2026-10-15: 主人公をかんたんの CPU にした試算で 400 戦 29% (量産カードを入れても 30%) と低かったので、1つ済みから (400 戦 54.5%。2つ済みなら 84%) */
+        level: 0, win: 3, head: 1, oppName: '時計', meName: '茜', mate: 'nadeshiko', oppAvatar: 'story_clock', boss: true, mob: 'clock',
+        note: 'この一戦だけ、茜を動かす。1つは書き上げた状態から始まる。あと2つを先に書き上げると、茜の読み方が残る',
         talk: {
           me: {
             hello: ['片付けを始めます。', '三時は、もう終わりです。'],

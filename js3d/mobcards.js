@@ -8,7 +8,7 @@
 
 export const MOB_MARK = '量産';
 
-/* base: 弱める元のカード。upper / middle / lower: 書き換える段 ({ text, ops }。誘発の段は on に元と同じきっかけ)。書かない段は元のまま */
+/* base: 弱める元のカード。upper / middle / lower: 書き換える段 ({ text, ops }。誘発の段は on に元と同じきっかけ。null はその段を外す)。書かない段は元のまま */
 export const MOB_CARDS = [
   /* 警備主任 (序章): 規則どおりにしか動かない。元のカードから、引く枚数を1枚に減らした */
   { id: 'M_METAL_2', base: 'METAL_2',
@@ -24,13 +24,24 @@ export const MOB_CARDS = [
     middle: { text: 'カードを1枚引く。相手は自身の手札をすべて捨て札にして、捨て札にした枚数-1枚のカードを引く。',
       ops: [{ op: 'draw', count: 1 }, { op: 'discard', player: 'opp', count: 'all', bind: 'n' }, { op: 'drawByCount', ref: 'n', plus: -1, player: 'opp' }] } },
   { id: 'M_CLARITY_2', base: 'CLARITY_2',
-    lower: { text: 'このカードが覆われることになったとき：先にカードを1枚引く。', ops: [{ op: 'draw', count: 1 }], on: 'wouldBeCovered' } }
+    lower: { text: 'このカードが覆われることになったとき：先にカードを1枚引く。', ops: [{ op: 'draw', count: 1 }], on: 'wouldBeCovered' } },
+  /* 二号機 (1章): 瑠璃の写し。GRAVITY 1・DARKNESS 0 は警備主任と同じ量産。ICE 1 は相手に捨てさせる下段を外した */
+  { id: 'M_ICE_1', base: 'ICE_1', lower: null },
+  /* 回収機 (1章・二号機の味方) と 時計 (2章): TIME 4 は引く枚数を1枚に (捨てる2枚はそのまま)。METAL 1 は警備主任と同じ */
+  { id: 'M_TIME_5', base: 'TIME_5',
+    middle: { text: 'カードを1枚引く。あなたは手札を2枚捨て札にする。', ops: [{ op: 'draw', count: 1 }, { op: 'discard', count: 2 }] } },
+  /* 時計 (2章): SPIRIT 1 の中段を1枚に */
+  { id: 'M_SPIRIT_2', base: 'SPIRIT_2',
+    middle: { text: 'カードを1枚引く。', ops: [{ op: 'draw', count: 1 }] } }
 ];
 
 /* モブごとに入れ替えるカード。story.js の対戦の mob に書く */
 export const MOB_DECKS = {
   chief: ['M_METAL_2', 'M_GRAVITY_2', 'M_DARKNESS_1'],
-  patrol: ['M_SPEED_2', 'M_FEAR_2', 'M_CLARITY_2']
+  patrol: ['M_SPEED_2', 'M_FEAR_2', 'M_CLARITY_2'],
+  nigoki: ['M_ICE_1', 'M_GRAVITY_2', 'M_DARKNESS_1'],
+  collector: ['M_METAL_2', 'M_TIME_5'],
+  clock: ['M_TIME_5', 'M_SPIRIT_2']
 };
 
 const copy = (x) => JSON.parse(JSON.stringify(x));
@@ -45,6 +56,7 @@ export function buildMobDefs(cardsJson, effectsJson) {
     const eff = copy((effectsJson && effectsJson[c.id]) || {});
     const face = { upper: c.upper, middle: c.middle, lower: c.lower };
     for (const slot of ['upper', 'middle', 'lower']) {
+      if (m[slot] === null) { delete eff[slot]; face[slot] = ''; continue; }
       if (!m[slot]) continue;
       eff[slot] = m[slot].on ? { _text: m[slot].text, trigger: { on: m[slot].on, ops: copy(m[slot].ops) } } : { _text: m[slot].text, ops: copy(m[slot].ops) };
       face[slot] = m[slot].text;

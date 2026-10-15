@@ -33,6 +33,7 @@ test('量産カード: 元のカードと同じプロトコル・同じ値で、
     assert.equal(u.mark, '量産');
     for (const slot of ['upper', 'middle', 'lower']) {
       if (u[slot]) assert.equal(e.eff[slot]._text, u[slot], m.id + ' ' + slot);
+      if (m[slot] === null) assert.ok(!e.eff[slot] && !u[slot], m.id + ' ' + slot + ' は外す');
     }
   }
 });
