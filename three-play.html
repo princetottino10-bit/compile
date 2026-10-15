@@ -4524,6 +4524,12 @@
   @media (max-width:860px) and (orientation:portrait){
     #cardNote.show{pointer-events:none;}
   }
+  /* 横持ちのスマホで手札から選んでいる間 (捨てる等): カードの説明を手札の上へ上げ、触りを通す。
+     左下に出していたので、選びたい左端の手札に重なって押せなかった */
+  @media (max-height:500px) and (orientation:landscape){
+    body.picking #cardNote{bottom:calc(var(--hand-gap, 14vh) + 8px);max-height:calc(100dvh - var(--hand-gap, 14vh) - 64px);overflow-y:auto;}
+    body.picking #cardNote.show{pointer-events:none;}
+  }
   /* チェーンに積まれたカードは押すと効果が見られる (表示のほかの部分は触りを通す) */
   #chainUi .ch-link[data-def]{pointer-events:auto;cursor:pointer;}
   #chainUi .ch-link[data-def]:hover .ch-card,#chainUi .ch-link[data-def]:focus-visible .ch-card{outline:2px solid var(--gold);outline-offset:2px;}
@@ -4715,7 +4721,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=2b4dbc6066",
       "./js3d/logformat.js": "./js3d/logformat.js?v=e3548c74d1",
-      "./js3d/main.js": "./js3d/main.js?v=d6f360a9e7",
+      "./js3d/main.js": "./js3d/main.js?v=26b114dbb5",
       "./js3d/motion.js": "./js3d/motion.js?v=71cd68f8ff",
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
       "./js3d/net.js": "./js3d/net.js?v=3134839bca",
@@ -4917,6 +4923,6 @@
   <link rel="stylesheet" href="js3d/run-fx.css?v=ed3eded16b">
   <link rel="stylesheet" href="js3d/deus.css?v=3e6919eb01">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=d6f360a9e7"></script>
+  <script type="module" src="js3d/main.js?v=26b114dbb5"></script>
 </body>
 </html>
