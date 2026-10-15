@@ -3492,6 +3492,9 @@ function aiActionBias(st, action, side) {
       /* 揃えて出すのは、SPEED 3 の「自分の他のカードを移動」に動かす対象 (場の自分のカード) があるときだけ。
          場が空のうち (初手など) に出すと、動かせるのが出したばかりの SPEED 0 だけで空振りする (監修 2026-10-04) */
       if (!pairReady) v -= 180;
+      else if (aiIsOracle(st, side)) {
+        if (d.id === 'SPEED_1' && action.faceUp && aiSpeedPairUncovers(st, side)) v += 220;
+      }
       else if (d.id === 'SPEED_1' && action.faceUp && aiSpeedPairHasTarget(st, side)) v += 220;
       else v -= 160;
     }
@@ -4587,6 +4590,19 @@ function aiSpeedPairHasTarget(st, side) {
   for (let l = 0; l < 3; l++) if (st.lines[l][side].length) return true;
   return false;
 }
+/* SPEED 3 の中段の移動で、下の表向きのカードを起動できるか (一番上をどかすと、表向きの札が出てきて中段が動く)。
+   ユーザー 2026-10-15 (ぱうぷる戦の11手目): 0と3を揃えても、1回目の移動で下の札を起動できず、2回目の追加プレイでも
+   点が伸びないなら、揃えて出す意味がない。ORACLE はこれがあるときだけ揃える手に上乗せし、決め打ちもしない */
+function aiSpeedPairUncovers(st, side) {
+  for (let l = 0; l < 3; l++) {
+    const stack = st.lines[l][side];
+    if (stack.length < 2) continue;
+    const below = st.cards[stack[stack.length - 2]];
+    const eff = DEFS[below.def].eff;
+    if (below.faceUp && below.def !== 'SPEED_1' && eff && eff.middle && Array.isArray(eff.middle.ops) && eff.middle.ops.length) return true;
+  }
+  return false;
+}
 
 function aiDecisionActions(state) {
   let acts = legalActions(state);
@@ -4594,7 +4610,7 @@ function aiDecisionActions(state) {
   if (aiUsesCombos(state, side) && aiWeightsFor(state, side).speedPairStrategy
       && !aiHasDefOnField(state, side, 'SPEED_1') && !aiHasDefOnField(state, side, 'SPEED_4')
       && aiHasDefInHand(state, side, 'SPEED_1') && aiHasDefInHand(state, side, 'SPEED_4')
-      && aiSpeedPairHasTarget(state, side)) {
+      && aiSpeedPairHasTarget(state, side) && !aiIsOracle(state, side)) {
     const speed0 = acts.filter(action => action.type === 'play' && action.faceUp
       && state.cards[action.card] && state.cards[action.card].def === 'SPEED_1');
     if (speed0.length) acts = speed0;
