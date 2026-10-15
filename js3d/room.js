@@ -305,6 +305,8 @@ export function buildRoomState(rm, valOf) {
       ? { kind: g.revealed.kind, player: li(g.revealed.player), cards: g.revealed.cards, seq: g.revealed.seq }
       : null,
     _totals: totals, _room: true,
+    /* 決着後にサーバーが添える1試合の集計 (効果の発動回数など)。ローカルの側の順 (自分が 0) に並べ替える */
+    ...(g.tally ? { tally: Object.fromEntries(Object.entries(g.tally).map(([k, v]) => [k, Array.isArray(v) && v.length === 2 ? [v[me], v[op]] : v])) } : {}),
     /* オンラインのタッグ: 両チームのいまの人 (ローカルの側の順)。mine = 自分が何人目か (0 / 1) */
     ...(g.tag ? { tag: { pilot: [g.tag.pilot[me], g.tag.pilot[op]], mine: rm.seat >= 0 ? Math.floor(rm.seat / 2) : 0, online: true } } : {})
   };

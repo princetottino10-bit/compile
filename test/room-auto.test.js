@@ -163,3 +163,16 @@ test('オンラインの ORACLE: 覚えた相手の手札は、並べ替えず�
   assert.ok(hand.slice(0, 2).every(c => c.knownTo === 3));
   assert.ok(hand.slice(2).every(c => c.knownTo === 2));
 });
+
+test('オンラインの決着: サーバーが添えた1試合の集計を、自分が 0 の並びに入れ替えて盤面に載せる', async () => {
+  const ROOM = await import('../js3d/room.js');
+  const res = Engine.newGame({ seed: 5, first: 0, p0: ['FIRE', 'WATER', 'LIFE'], p1: ['PSYCHIC', 'DARKNESS', 'HATE'] });
+  const { rm } = publicView(res.state, 1, null);
+  assert.equal(ROOM.buildRoomState(rm).tally, undefined, '決着前は集計が無い');
+  rm.game.tally = { compiles: [3, 1], effects: [{ FIRE_1: 2 }, { HATE_2: 5 }], faceUp: [['FIRE_1'], ['HATE_2']], maxTurnFx: [4, 7] };
+  const t = ROOM.buildRoomState(rm).tally;
+  assert.deepEqual(t.compiles, [1, 3]);
+  assert.deepEqual(t.effects, [{ HATE_2: 5 }, { FIRE_1: 2 }]);
+  assert.deepEqual(t.faceUp, [['HATE_2'], ['FIRE_1']]);
+  assert.deepEqual(t.maxTurnFx, [7, 4]);
+});
