@@ -2702,8 +2702,8 @@ const AI_LOCK_W = {
      移した裏向きが①を覆い、覆いの外れたファイア⓪の中段の反転で①を表にする = 1手で永続ロック (aiPsyChainReady)。
      chainReady: 3つ揃った構え / chainHalf: ファイア⓪の上の裏向きとダークネス④があり、①が手札に居る */
   chainReady: 120, chainHalf: 50,
-  /* ぱうぷるの棋譜 (2026-10-14): 一番上で表のファイア③を覆わずに残し、終了時の反転で自分の裏向きを毎手番表に返す。
-     裏のサイキック①なら相手の手番ごとに一時ロック、サイキック⓪・ダークネス②なら中段をもう一度 (aiFire3Loop) */
+  /* ぱうぷるの棋譜 (2026-10-14): 一番上で表のファイア③を覆わずに残し、別のラインのサイキック①を、開始で裏返るたびに
+     終了時の反転で表に戻す (相手の手番は毎回ロック)。裏のサイキック⓪・ダークネス②なら中段をもう一度 (aiFire3Loop) */
   fire3Psy: 60, fire3Other: 25,
 };
 /* 知らないキーは無視して配列で返す (計測スクリプトが打ち間違いに気づけるように) */
@@ -3253,22 +3253,26 @@ function aiFire0Water4Ready(st, side) {
   return false;
 }
 
-/* ぱうぷるのファイア③の回し方 (AI_LOCK_W.fire3Psy / fire3Other)。一番上で表のファイア③があり、手札があり (捨てて反転する)、
-   一番上に自分の裏向きのサイキック① (ロック未完成のとき) / サイキック⓪ / ダークネス② があれば、その値 */
+/* ぱうぷるのファイア③の回し方 (AI_LOCK_W.fire3Psy / fire3Other)。一番上で表のファイア③があり、手札がある (捨てて反転する) とき:
+   - 別のラインの一番上にサイキック① (ロック未完成のとき): 表でも裏でも数える。①は自分の開始で自分を裏返し、
+     ファイア③が終了時に表へ戻すので、相手の手番は毎回ロックがかかる。表向きを外すと「ファイア③で表に戻した直後」を
+     低く見て、反転を使わない手が得に見えてしまう
+   - 一番上に自分の裏向きのサイキック⓪ / ダークネス②: 表に返して中段をもう一度 (自分では裏返らないので1回きり) */
 const AI_FIRE3_TARGETS = { PSYCHIC_1: 1, DARKNESS_3: 1 };
 function aiFire3Loop(st, side) {
   if (!st.players[side].hand.length) return 0;
-  let fire3 = false;
+  let fire3 = false, psy = false;
   const tops = [];
   for (let l = 0; l < 3; l++) {
     const stack = st.lines[l][side], top = stack[stack.length - 1];
     if (!top) continue;
     const c = st.cards[top];
     if (c.faceUp && c.def === 'FIRE_4') fire3 = true;
+    else if (c.def === AI_LOCK_CARD) psy = true;
     else if (!c.faceUp) tops.push(c.def);
   }
   if (!fire3) return 0;
-  if (tops.indexOf(AI_LOCK_CARD) >= 0 && !aiLockLive(st, side)) return AI_LOCK_W.fire3Psy;
+  if (psy && !aiLockLive(st, side)) return AI_LOCK_W.fire3Psy;
   return tops.some(d => AI_FIRE3_TARGETS[d]) ? AI_LOCK_W.fire3Other : 0;
 }
 

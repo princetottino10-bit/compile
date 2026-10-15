@@ -468,7 +468,7 @@ test('ロック特化 (CODE:PURPLE / ALL-SEEING): ファイア⓪の上に裏で
 
 /* ぱうぷるの棋譜 (2026-10-14): ファイア③を一番上で表のまま残し、終了時に捨てて自分の裏向きを表に返す。
    覆うと回せなくなるので、一番上のファイア③と自分の裏向き (サイキック⓪・①、ダークネス②) が揃った盤面に値をつける */
-test('ぱうぷる (棋譜): 一番上のファイア③と裏のサイキック⓪/①が揃った盤面に値をつけ、終了時に裏の①を表に返す', () => {
+test('ぱうぷる (棋譜): 別のラインのサイキック①を、開始で裏返るたびにファイア③で表に戻す (ファイア③を覆わない)', () => {
   const withP0 = game();
   place(withP0, 'FIRE_4', 0, 2, true);
   place(withP0, 'PSYCHIC_1', 0, 0, false);
@@ -488,6 +488,9 @@ test('ぱうぷる (棋譜): 一番上のファイア③と裏のサイキック
   place(withP1, 'METAL_2', 1, 0, true);
   setHand(withP1, 0, ['DARKNESS_6']);
   assert.equal(Engine.ai.score(withP1, 0) - scoreOff(withP1), 60, '裏のサイキック① (相手の手番ごとに一時ロック)');
+  /* ファイア③で表に戻した直後も同じ値: ①は次の開始で自分を裏返し、ファイア③がまた戻す */
+  withP1.cards[uidOf('PSYCHIC_2', 0)].faceUp = true;
+  assert.ok(Math.abs(Engine.ai.score(withP1, 0) - scoreOff(withP1) - 60) < 1e-6, '表のサイキック①');
 
   const st = game();
   const psy = place(st, 'PSYCHIC_2', 0, 0, false);
