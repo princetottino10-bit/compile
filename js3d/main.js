@@ -334,11 +334,15 @@ function deusMatch() { return aiDifficulty === DEUS_LEVEL && plainCpuMatch(); }
 function peekMatch() { return aiDifficulty === PEEK_LEVEL && plainCpuMatch(); }
 /* 神か、すべてを見る者 (人のキャラは出さず、登場の演出がある相手) */
 function machineMatch() { return deusMatch() || peekMatch(); }
+/* CHALLENGE の ORACLE との対戦か。相手のキャラは紫苑で固定 (2026-10-15 ユーザー「ORACLE は紫苑に固定しよう 特別にね」) */
+function oracleMatch() { return aiDifficulty === ORACLE_LEVEL && plainCpuMatch(); }
+const ORACLE_AVATAR = 'shion';
 function plainCpuMatch() { return !runMode && !storyNode && !tagMates && !roomMode && !puzzle && !tutorial && !demoMode && !trainingMode; }
 function oppAvatarPlan() {
   if (plannedOpp !== undefined) return plannedOpp;
   if (storyNode) return (plannedOpp = storyNode.oppAvatar || null);
   if (machineMatch()) return (plannedOpp = null);   // 人のキャラは出さない (相手は機械の神・目)
+  if (oracleMatch()) return (plannedOpp = ORACLE_AVATAR);
   /* 勝ち抜き戦のボス戦は、ボス本人 (avatar.js の boss_<id>) */
   if (runMode && runKind === 'run') {
     const run = loadRun();
@@ -389,6 +393,9 @@ function syncAvatar() {
   let me = sp ? sp.a : tutorial ? 'zundamon' : storyNode ? (storyTag ? null : storyNode.mate || null)
     : roomWatching && roomLooks ? roomLooks[0].avatar || 'shion' : myAvatarId();
   if (udTag && UD_OPP.includes(me)) me = avatarIds().find(i => !UD_OPP.includes(i) && i !== 'asagi') || me;
+  /* ORACLE の相手は紫苑で決まり。自分が紫苑なら、自分はほかの子にする */
+  const oracleOpp = !sp && !storyNode && !tagMates && oracleMatch();
+  if (oracleOpp && me === ORACLE_AVATAR) me = avatarIds().find(i => i !== ORACLE_AVATAR) || me;
   const pool = (ids) => shuffled(avatarIds().filter(i => !ids.includes(i)));
   const mate = storyTag ? storyNode.mate || null : tagMates && (!sp || sp.a) ? (sp ? pool([sp.a, sp.b])[0]
     : (avatarIds().find(i => i !== me && i === 'asagi' && !(udTag && UD_OPP.includes(i))) || avatarIds().find(i => i !== me && !(udTag && UD_OPP.includes(i))))) : null;
@@ -398,6 +405,7 @@ function syncAvatar() {
   else if (sp) oppIds = sp.b ? [sp.b, pool([sp.a, sp.b, mate])[0] || sp.b] : [null, null];
   else if (storyNode) oppIds = [storyNode.oppAvatar || null, storyTag ? storyNode.tag.oppMateAvatar || null : null];
   else if (machineMatch()) oppIds = [null, null];
+  else if (oracleOpp) oppIds = [ORACLE_AVATAR, null];
   else {
     /* 相手のキャラ: 設定の「相手のキャラ」(ふだんはランダム)。自分・味方と同じ子は選ばない */
     /* デッキを決める前に決めておいた子 (oppAvatarPlan。得意プロトコルを CPU のデッキに入れるため) */
