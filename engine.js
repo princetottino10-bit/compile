@@ -2749,8 +2749,10 @@ const AI_LOCK_W = {
        (一様に数えると1割を切り、仕込みを放っておいていた) / oLockVictim, oLockBreakLine: 相手の永続ロックを受けたときの
        lockVictim / lockBreakLine (ロックのラインに集めてコンパイルで割る手を、ほかのラインを伸ばす手より先にする) /
      oKeep: ウォーター①・ファイア③を捨てる・キャッシュで手放す損 (「かなり強いからできれば使いたい」) /
-     oLockLinePlay: 相手の永続ロックのラインに出す手の上乗せ (aiActionBias) */
-  oThreatPrior: 0.3, oLockVictim: 650, oLockBreakLine: 0.9, oKeep: 90, oLockLinePlay: 400,
+     oLockLinePlay: 相手の永続ロックのラインに出す手の上乗せ (aiActionBias) /
+     oHate1Maybe: 相手の一番上の表の HATE 1 を、見えていない HATE 0 / HATE 2 で撃ち直される危うさ (aiHate1ReuseThreat の hate1ReuseMaybe の代わり) /
+     oSelfFlip: 自分の覆われた表向きの札 (中段あり) を反転の対象に選ぶ損 (aiOracleSelfFlipCost) */
+  oThreatPrior: 0.3, oLockVictim: 650, oLockBreakLine: 0.9, oKeep: 90, oLockLinePlay: 400, oHate1Maybe: 120, oSelfFlip: 60,
 };
 /* 知らないキーは無視して配列で返す (計測スクリプトが打ち間違いに気づけるように) */
 function setAiWeights(obj) {
@@ -3992,8 +3994,23 @@ function aiChoiceScore(st, req, picks, me) {
     if (!res || res.error) return -1e8;
     const out = res.requests && res.requests.length ? resolveRequests(res, smartPicks, 8) : res;
     if (!out || out.error || (out.requests && out.requests.length)) return -1e8;
-    return aiScore(out.state, me) + aiTransitionScore(st, out, me) - aiComboKeepCost(st, req, picks, me);
+    return aiScore(out.state, me) + aiTransitionScore(st, out, me) - aiComboKeepCost(st, req, picks, me) - aiOracleSelfFlipCost(st, req, picks, me);
   } finally { AI_CHOICE_DEPTH--; }
+}
+
+/* ORACLE: 反転の対象に、自分の表向きの札 (中段のある札) を選ぶ損。上をどかせば起動し直せる札を自分で裏にすると、
+   その先の得が消える (ぱうぷる戦の7手目: WATER 0 の反転で自分の FIRE 0 を裏にし、後の SPEED 3 の移動で起こせなくなった。2026-10-15) */
+function aiOracleSelfFlipCost(st, req, picks, me) {
+  if (!aiIsOracle(st, me) || req.kind !== 'pickCard' || !/^(optional-)?flip$/.test(req.prompt || '') || !Array.isArray(picks)) return 0;
+  let cost = 0;
+  for (const uid of picks) {
+    const c = st.cards[uid], loc = c && locate(st, uid);
+    if (!loc || loc.side !== me || !c.faceUp) continue;
+    /* 一番上でも数える: FIRE 0 の「覆われることになったとき」の反転は、覆われる直前 (まだ一番上) に選ぶ */
+    const eff = DEFS[c.def].eff;
+    if (eff && eff.middle && Array.isArray(eff.middle.ops) && eff.middle.ops.length) cost += AI_LOCK_W.oSelfFlip;
+  }
+  return cost;
 }
 
 /* 組み合わせて使う札 (docs/ai-combos.md の手筋)。どちらかを捨てると手筋が消える。
@@ -4200,7 +4217,9 @@ function aiHate1ReuseThreat(st, me) {
     if (known) { if (c.zone === 'hand' + op) return W.hate1Reuse; }
     else if (c.zone === 'hand' + op || c.zone === 'deck' + op) maybe = true;
   }
-  return maybe ? W.hate1ReuseMaybe : 0;
+  /* ORACLE: 見えていなくても重く見て、表の HATE 1 を裏にする・消す手を先に打つ
+     (ユーザー 2026-10-15「HATE1 を裏向きにするなり削除するなりの対応しないと一方的に殴られてる」) */
+  return maybe ? (aiIsOracle(st, me) ? Math.max(W.hate1ReuseMaybe, AI_LOCK_W.oHate1Maybe) : W.hate1ReuseMaybe) : 0;
 }
 
 /* 相手の場のカードの枚数 (HATE 1 の2回の削除を両方とも相手に向けられるか) */
@@ -4282,7 +4301,10 @@ function smartPicks(st, req) {
       if (aiUsesCombos(st, me) && aiWeightsFor(st, me).speedPairStrategy
           && req.prompt === 'optional-shift' && req.context === 'SPEED_4') {
         const self = req.candidates.find(uid => st.cards[uid] && st.cards[uid].def === 'SPEED_4');
-        if (self) return [self];
+        /* ORACLE: 決め打ちしない。自分を動かす・動かさない・ほかの札を動かすを、動かした後の盤面で比べる。
+           自分を動かすと SPEED 3 が裏返って値が 3 → 2 になり、次の手番からの移動も失う。下の SPEED 0 を起こしても、
+           0 と 3 を出し直して同じ札を行き来させるだけの空回りがあった (ユーザー 2026-10-15「無駄に使って裏に向ける」) */
+        if (self && !aiIsOracle(st, me)) return [self];
       }
       if (req.prompt === 'optional-shift' && req.context === AI_LOCK_COVER && aiLockKeepsCover(st, me)) return [];
       /* ロック特化: PSYCHIC 4 の「相手のカードを戻す」は使う (このカードが裏返って値は下がるが、相手の手を1つ遅らせる)。
@@ -4352,6 +4374,15 @@ function smartPicks(st, req) {
         /* 相手の裏向きを表にすると、相手の中段が起動する (相手の HATE 0 を表にして、こちらのカードを消させる等) */
         if (loc && loc.side === op && !c.faceUp && /^(optional-)?flip$/.test(req.prompt || '')) {
           s -= Math.max(0, aiMiddleValue(DEFS[c.def])) * aiWeightsFor(st, me).uncoverMid;
+        }
+        if (loc && aiIsOracle(st, me)) {
+          /* ORACLE: 自分の覆われた表の札 (中段あり) は、上をどかせば起動し直せるので自分で裏にしない (aiOracleSelfFlipCost と同じ) */
+          if (loc.side === me && c.faceUp && /^(optional-)?flip$/.test(req.prompt || '')
+              && DEFS[c.def].eff && DEFS[c.def].eff.middle) s -= AI_LOCK_W.oSelfFlip;
+          /* 相手の表の札を手札に戻すと、相手はもう一度出して中段を使える (ぱうぷる戦: 1枚捨ててデス2を戻し、出し直された。2026-10-15) */
+          if (loc.side === op && c.faceUp && /^(optional-)?return$/.test(req.prompt || '')) {
+            s -= Math.max(0, aiMiddleValue(DEFS[c.def])) * aiWeightsFor(st, me).uncoverMid;
+          }
         }
         s += (c.zone ? cardValue(st, uid) : DEFS[c.def].value) * 2;
         return { uid, s };
