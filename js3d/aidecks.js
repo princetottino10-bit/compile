@@ -78,14 +78,17 @@ export const DEUS_NAME = 'CODE:PURPLE';
 /* 本気の4人 (CHALLENGE の強敵、2026-10-16 ユーザー「チャレンジモードは本気紫苑 本気瑠璃みたいな感じにしたい」)。
    中身は ORACLE の読み (main.js の ORACLE_CPU_AI) に、その子の得意プロトコル (avatar-lines.js の FAVORITE) を必ず入れたデッキと、
    そのデッキ用の学習モデル (ai.valnetModel → data/valnet-<名前>.json。無い間は第1世代) を当てたもの。相手のキャラはその子で固定。
-   デッキの残り2つは scripts/deck_search.js --must <得意> でふるい分けて決める */
+   デッキの残り2つは scripts/deck_search.js --must <得意> --top 14 (60ms、各79デッキ) でふるい分け、上位6つずつを
+   --rounds 4 --budget 300 で比べ直して決めた (2026-10-16、1デッキ約66戦、95% の幅は ±10 ポイントほど)。
+   茜 HATE/FIRE/DEATH 96.4% (飛び抜けて1位)。杏 FIRE/WATER/COURAGE 76.4%・瑠璃 WATER/HATE/TIME 76.1% は、
+   最上位 (FIRE/WATER/HATE 83.3%・WATER/FIRE/DEATH 79.7%) と幅の中で差がなく、4人のデッキが重ならない組を選んだ */
 export const HONKI_BASE = 30;
 export const HONKI = [
   /* 紫苑: 機械仕掛けの神と同じロックのデッキ。ロック用の学習モデル (ORACLE_LOCK_AI) がそのまま使える */
   { avatar: 'shion', color: '#a07bff', name: '本気紫苑', note: '読みを解析しきって、サイキック①で縛りに来る', fav: 'PSYCHIC', deck: ['PSYCHIC', 'DARKNESS', 'FIRE'], ai: ORACLE_LOCK_AI },
-  { avatar: 'asagi', color: '#3d7dff', name: '本気瑠璃', note: 'ウォーターの流れで、自分の順路へ連れていく', fav: 'WATER', deck: ['WATER', 'FIRE', 'LIFE'], ai: {} },
-  { avatar: 'yamabuki', color: '#ff8a2a', name: '本気杏', note: 'ファイアの勢いで、押しきりに来る', fav: 'FIRE', deck: ['FIRE', 'WATER', 'LIFE'], ai: {} },
-  { avatar: 'nadeshiko', color: '#e0283c', name: '本気茜', note: 'ヘイトで、盤面をきれいに片づけに来る', fav: 'HATE', deck: ['HATE', 'FIRE', 'WATER'], ai: {} }
+  { avatar: 'asagi', color: '#3d7dff', name: '本気瑠璃', note: 'ウォーターの流れで、自分の順路へ連れていく', fav: 'WATER', deck: ['WATER', 'HATE', 'TIME'], ai: {} },
+  { avatar: 'yamabuki', color: '#ff8a2a', name: '本気杏', note: 'ファイアの勢いで、押しきりに来る', fav: 'FIRE', deck: ['FIRE', 'WATER', 'COURAGE'], ai: {} },
+  { avatar: 'nadeshiko', color: '#e0283c', name: '本気茜', note: 'ヘイトで、盤面をきれいに片づけに来る', fav: 'HATE', deck: ['HATE', 'FIRE', 'DEATH'], ai: {} }
 ];
 export const isHonki = (level) => level >= HONKI_BASE && level < HONKI_BASE + HONKI.length;
 export const honkiOf = (level) => (isHonki(level) ? HONKI[level - HONKI_BASE] : null);
