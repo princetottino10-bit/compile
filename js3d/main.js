@@ -1378,7 +1378,7 @@ async function boot() {
   if (deusEntrance) fadeOutBgm(); else playBattleBgm();
   gameStartedAt = Date.now();          // はじめの表示で合計値の演出が出ないように (feel.js)
   /* 勝ち抜き戦の短縮マッチ (序盤のふつうの戦闘): どちらも1本取れば勝ち。始めに大きく知らせる。
-     自分は2つ済みから始まるので、はじめから「あと1本」。MATCH POINT / DANGER は出さない (分かりにくかった) */
+     どちらも2つ済みから始まるので、はじめから「あと1本」 (残りの1つ)。MATCH POINT / DANGER は出さない (分かりにくかった) */
   if (runMode && runKind === 'run' && !replayMode && !reviewView) {
     const r = loadRun();
     scoreBegin(runBonusKey());

@@ -831,6 +831,10 @@ export function battleOpts(run, me) {
      「1本で勝ち」なら 2 つ済みの状態から始まる。相手の本数はそのまま (2026-09-29) */
   const startCompiled = [0, 0];
   if (win[me] < 3) { startCompiled[me] = 3 - win[me]; win[me] = 3; }
+  /* 序盤の1本先取 (1〜2段目のふつうの戦闘) は相手も同じ形にする: 2つ済みから、残りの1つをコンパイルしたら勝ち。
+     相手だけ「どのラインでも1本」だと、自分は決まった1本しか狙えないぶん不利で、
+     かんたん同士で 38% しか勝てず、3段目 (2本先取) の 45% より難しかった (2026-10-15) */
+  if (base === 1 && !boss && win[other] === 1) { startCompiled[other] = 2; win[other] = 3; }
   return {
     winCompiles: base,
     startCompiled,
