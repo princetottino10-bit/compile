@@ -2756,7 +2756,7 @@ const AI_LOCK_W = {
      oSelfFlip: 自分の覆われた表向きの札 (中段あり) を反転の対象に選ぶ損 (aiOracleSelfFlipCost) /
      oHate3, oHate1, oHate1Reuse, oPersist, oLowerTop, oPlayBoost: 相手の場で得を生み続ける札の脅威 (aiOracleCardThreat) /
      oHateBack: 脅威の札を手札に戻しても、出し直されるので残る割合 / oReplayMid: 表の札を戻して中段を撃ち直される損 (中段の値に掛ける。aiOracleThreatBackCost) */
-  oThreatPrior: 0.3, oLockVictim: 650, oLockBreakLine: 0.9, oKeep: 90, oLockLinePlay: 400, lockSettledPlay: 60, oHate1Maybe: 120, oSelfFlip: 60, oHate3: 320, oHateBack: 0.85, oReplayMid: 3, oPersist: 100, oLowerTop: 0.7, oPlayBoost: 1.5, oHate1: 180, oHate1Reuse: 150,
+  oThreatPrior: 0.3, oLockVictim: 650, oLockBreakLine: 0.9, oKeep: 90, oLockLinePlay: 400, lockSettledPlay: 60, oHate1Maybe: 120, oSelfFlip: 60, oHate3: 320, oHateBack: 0.85, oReplayMid: 3, oPersist: 100, oLowerTop: 0.7, oPlayBoost: 1.5, oHate1: 180, oHate1Reuse: 150, oSpirit1: 200, namedOwn: 0.5, oFireGuard: 60,
 };
 /* 知らないキーは無視して配列で返す (計測スクリプトが打ち間違いに気づけるように) */
 function setAiWeights(obj) {
@@ -3559,7 +3559,7 @@ function aiNow() {
 function aiTransitionScore(before, result, side) {
   if (!before || !result || !result.state) return 0;
   return aiTransitionScoreBase(before, result, side)
-    - (aiIsOracle(before, side) ? aiOracleThreatBackCost(before, result.state, side) : 0);
+    - (aiIsOracle(before, side) || aiIsSpecialistCpu(before, side) ? aiOracleThreatBackCost(before, result.state, side) : 0);
 }
 /* ORACLE: 相手の脅威の札 (aiOracleCardThreat) を手札に戻すと、場の脅威は消えて見えるが、相手は出し直す
    (2局目51手目: FIRE 2 で HATE 3 を戻して下の DEATH 0 まで起こし、HATE 3 は次の手番で置き直された)。
@@ -3572,7 +3572,7 @@ function aiOracleThreatBackCost(before, after, me) {
     for (let i = 0; i < stack.length; i++) {
       const a = after.cards[stack[i]];
       if (!a || a.zone !== 'hand' + op || !before.cards[stack[i]].faceUp) continue;
-      cost += aiOracleCardThreat(before, stack, i) * AI_LOCK_W.oHateBack;
+      cost += (aiIsOracle(before, me) ? aiOracleCardThreat(before, stack, i) : aiNamedCardThreat(before, stack, i)) * AI_LOCK_W.oHateBack;
       /* 表の札を戻すと、相手は出し直して中段をもう一度使える (ぱうぷる戦: 1枚捨ててデス2を戻し、出し直された) */
       cost += Math.max(0, aiMiddleValue(DEFS[before.cards[stack[i]].def])) * AI_LOCK_W.oReplayMid;
     }
@@ -3670,10 +3670,10 @@ function aiCompilePassChance(st, side, line, observer) {
 }
 /* side が次に開始フェイズでコンパイルする前に、相手 (次に指す側) が side のプロトコルを並べ替えられる見込み。
    済みのプロトコルが無ければ、並べ替えられても困らない (0)。
-   - 相手のコントロール: 相手がコンパイルかリフレッシュをすれば使える。たいてい使えるので AI_CTRL_REARRANGE と見る
+   - 相手のコントロール: 相手がコンパイルかリフレッシュをすれば使える。ほぼ必ず使える (ユーザー「8割どころじゃない」) ので AI_CTRL_REARRANGE と見る
    - 相手の手札の PSYCHIC 2 (相手のプロトコルを並べ替える) / CHAOS 1 (両方を並べ替える): 見えていればそのまま、
      見えていなければ残りの札から引いている見込み */
-const AI_CTRL_REARRANGE = 0.8;
+const AI_CTRL_REARRANGE = 0.95;
 const AI_REARRANGE_DEFS = ['PSYCHIC_3', 'CHAOS_2'];
 function aiRearrangeChance(st, side, observer, remaining, unknownCount, unknownHand) {
   const opponent = 1 - side;
@@ -3987,7 +3987,18 @@ function aiScoreRaw(st, me) {
   }
   sc -= aiLockThreat(st, me);
   sc += aiLockThreat(st, 1 - me);
-  if (aiIsOracle(st, me)) sc -= aiOracleThreat(st, me);
+  if (aiIsOracle(st, me)) {
+    sc -= aiOracleThreat(st, me);
+    /* 相手が PSYCHIC を持ち、ロックがまだ無いうちは、一番上に表の FIRE 0 / FIRE 3 を残しておく (覆われたら・終了時に反転を撃てるので、
+       PSYCHIC 1 を裏に返してロックを割れる。ぱうぷる戦3局目はロック中に FIRE 0 を裏で出して潰していた。2026-10-15) */
+    if (!aiLockLive(st, op) && st.players[op].protocols.some(p => p.name === 'PSYCHIC')) {
+      for (let l = 0; l < 3; l++) {
+        const stack = st.lines[l][me], top = stack.length && st.cards[stack[stack.length - 1]];
+        if (top && top.faceUp && (top.def === 'FIRE_1' || top.def === 'FIRE_4')) sc += AI_LOCK_W.oFireGuard;
+      }
+    }
+  }
+  else if (aiIsSpecialistCpu(st, me)) sc -= aiNamedThreat(st, op) - aiNamedThreat(st, me) * AI_LOCK_W.namedOwn;
   sc += aiCompileSafetyScore(st, me) * W.compileSafety;
 
   if (st.useControl) {
@@ -4447,6 +4458,10 @@ function smartPicks(st, req) {
         /* 相手の裏向きを表にすると、相手の中段が起動する (相手の HATE 0 を表にして、こちらのカードを消させる等) */
         if (loc && loc.side === op && !c.faceUp && /^(optional-)?flip$/.test(req.prompt || '')) {
           s -= Math.max(0, aiMiddleValue(DEFS[c.def])) * aiWeightsFor(st, me).uncoverMid;
+        }
+        /* 最強以上: 名指しの脅威 (HATE 3・SPIRIT 1・起き直す HATE 1) を、反転・削除・戻すの的に優先 */
+        if (loc && !aiIsOracle(st, me) && aiIsSpecialistCpu(st, me) && /^(optional-)?(flip|delete|return)$/.test(req.prompt || '')) {
+          s += aiNamedThreatTarget(st, uid, me);
         }
         if (loc && aiIsOracle(st, me)) {
           /* ORACLE: 相手の場で得を生み続ける札 (HATE 3 / HATE 1 など、aiOracleCardThreat) を、反転・削除・戻すの的に優先して選ぶ */
@@ -4913,9 +4928,9 @@ function aiIsLosingAfter(s1, me, deadline) {
    - 一番上の下段の誘発 (開始・終了・「〜したあと」): oPersist × oLowerTop。札を出す誘発 (ASSIMILATION 2 など) は × oPlayBoost
    - 中段が複数の効果・札を出す札 (HATE 1、WATER 1、SPEED 0 など) のすぐ上に、自分を戻す・動かす札 (WATER 4 など) が
      表で乗っていると、相手の毎手番で起き直す: oHate1Reuse。HATE 1 は覆われていても oHate1 */
-const AI_ORACLE_SPECIAL = { HATE_4: 'oHate3', HATE_2: 'oHate1' };
+const AI_ORACLE_SPECIAL = { HATE_4: 'oHate3', HATE_2: 'oHate1', SPIRIT_2: 'oSpirit1' };
 /* 持ち主の損になる・自分で消える上段/下段 (割る必要がない) */
-const AI_ORACLE_SELF_HARM = ['LIFE_1', 'CORRUPTION_6', 'DIVERSITY_6', 'COURAGE_6', 'PSYCHIC_2', 'SPIRIT_2', 'CHAOS_5', 'METAL_6', 'ICE_4', 'CHAOS_4', 'CORRUPTION_1'];
+const AI_ORACLE_SELF_HARM = ['LIFE_1', 'CORRUPTION_6', 'DIVERSITY_6', 'COURAGE_6', 'PSYCHIC_2', 'CHAOS_5', 'METAL_6', 'ICE_4', 'CHAOS_4', 'CORRUPTION_1'];
 const AI_ORACLE_REUSERS = ['WATER_5', 'SPEED_4', 'SPIRIT_4', 'ICE_3', 'UNITY_2', 'TIME_3'];
 function aiOracleOpsPlay(ops) {
   return Array.isArray(ops) && ops.some(o => o && (o.op === 'play' || aiOracleOpsPlay(o.ops)));
@@ -4967,6 +4982,41 @@ function aiOracleThreatTarget(st, uid, me) {
   let v = aiOracleCardThreat(st, stack, i);
   if (i > 0 && i === stack.length - 1 && AI_ORACLE_REUSERS.indexOf(c.def) >= 0 && aiOracleMultiMiddle(st.cards[stack[i - 1]].def)
       && st.cards[stack[i - 1]].faceUp) v += AI_LOCK_W.oHate1Reuse;
+  return v;
+}
+
+/* 最強以上 (特化の CPU: 最強・挑戦者・ロック特化・神・ALL-SEEING) の名指しの脅威。ORACLE の脅威表 (aiOracleCardThreat) のうち、
+   ユーザーが名指しした札だけを数える (ユーザー 2026-10-15「脅威度の高い永続カード・コンボで猛威を振るうカードへの対応の優先度アップを最強以上に。HATE 3 と SPIRIT 1」)。
+   SPIRIT 1 は「プロトコルを合わせずに表で出せる」コンボの要。表を全部重く見る ORACLE の重みのままだと、最強の主軸 (FIRE 0 + WATER 4) が崩れる。
+   自分の場の同じ札は、残して使い続ける得として namedOwn 倍で足す */
+function aiIsSpecialistCpu(st, side) {
+  return aiIsDshSpecialist(st, side) || aiIsLockSpecialist(st, side);
+}
+function aiNamedCardThreat(st, stack, i) {
+  const c = st.cards[stack[i]];
+  if (!c.faceUp || !AI_ORACLE_SPECIAL[c.def]) return 0;
+  let v = AI_LOCK_W[AI_ORACLE_SPECIAL[c.def]];
+  if (c.def === 'HATE_2') {
+    /* HATE 1 は表で残っていても、上をどかされるか自分を戻す札が乗っているときだけ起き直す */
+    const top = i === stack.length - 2 && st.cards[stack[i + 1]];
+    v = top && top.faceUp && AI_ORACLE_REUSERS.indexOf(top.def) >= 0 ? AI_LOCK_W.oHate1Reuse : 0;
+  }
+  return v;
+}
+function aiNamedThreat(st, side) {
+  let v = 0;
+  for (let l = 0; l < 3; l++) {
+    const stack = st.lines[l][side];
+    for (let i = 0; i < stack.length; i++) v += aiNamedCardThreat(st, stack, i);
+  }
+  return v;
+}
+function aiNamedThreatTarget(st, uid, me) {
+  const c = st.cards[uid], loc = c && locate(st, uid);
+  if (!loc || loc.side === me || !c.faceUp) return 0;
+  const stack = st.lines[loc.line][loc.side], i = stack.indexOf(uid);
+  let v = aiNamedCardThreat(st, stack, i);
+  if (i > 0 && i === stack.length - 1 && AI_ORACLE_REUSERS.indexOf(c.def) >= 0) v += aiNamedCardThreat(st, stack, i - 1);
   return v;
 }
 
