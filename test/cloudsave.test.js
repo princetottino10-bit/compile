@@ -124,3 +124,10 @@ test('この端末の方を残すと選んだ: こちらを正にして、アカ
   /* 選ばなければ、これまでどおりアカウントが正 */
   assert.equal(decide(local, remote, null).apply.compileSettings, 'R');
 });
+
+test('ORACLE を使った部屋は、どちらの端末の分も残す (食い違いとして聞かない)', () => {
+  const local = { compileOracleRooms: '["A1","B2"]' };
+  const d = decide(local, { data: { compileOracleRooms: '["C3","A1"]' }, at: 200 }, null);
+  assert.deepEqual(JSON.parse(d.apply.compileOracleRooms).sort(), ['A1', 'B2', 'C3']);
+  assert.deepEqual(conflictKeys(local, { compileOracleRooms: '["C3"]' }), []);
+});

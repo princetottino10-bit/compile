@@ -14,7 +14,9 @@ import { mergeGacha } from './gacha.js';
 import { mergeStory } from './story.js';
 
 export const SAVE_KEYS = ['compileSettings', 'compileRun', 'compileRunBest', 'compileRunHeat', 'compileRunKind',
-  'compileWeekly', 'compileOppLast', 'compileDaily', 'compileTrophies', 'compileRoomName', 'compileGacha', 'compileStory'];
+  'compileWeekly', 'compileOppLast', 'compileDaily', 'compileTrophies', 'compileRoomName', 'compileGacha', 'compileStory',
+  /* ORACLE を使ったオンラインの部屋 (記録に数えない対戦)。別の端末で決着を見ても数えないように */
+  'compileOracleRooms'];
 const META = 'compileCloudMeta';     // { user, hash: 最後に同期した中身, at: そのときのアカウント側の時刻 }
 const MAX_BYTES = 60000;
 
@@ -139,13 +141,18 @@ function keepBest(merged, local, rd) {
   if (local.compileRunBest && rd.compileRunBest) merged.compileRunBest = betterBest(local.compileRunBest, rd.compileRunBest);
   else if (rd.compileRunBest && !merged.compileRunBest) merged.compileRunBest = rd.compileRunBest;
   if (local.compileTrophies || rd.compileTrophies) merged.compileTrophies = unionTrophies(local.compileTrophies, rd.compileTrophies);
+  /* ORACLE を使った部屋は両方を足す (新しい 50 部屋) */
+  if (local.compileOracleRooms || rd.compileOracleRooms) {
+    const list = (v) => { const x = parse(v); return Array.isArray(x) ? x.filter(c => typeof c === 'string') : []; };
+    merged.compileOracleRooms = JSON.stringify([...new Set([...list(rd.compileOracleRooms), ...list(local.compileOracleRooms)])].slice(-50));
+  }
   /* ガチャで取った見た目は両方残す。使った CHIP は多い方 (増やしすぎない) */
   if (local.compileGacha || rd.compileGacha) merged.compileGacha = mergeGacha(local.compileGacha, rd.compileGacha);
   return merged;
 }
 
 /* どちらを正にしても合わせる項目 (keepBest)。食い違っても上書きにはならない */
-const MERGED_KEYS = ['compileStory', 'compileWeekly', 'compileRun', 'compileDaily', 'compileRunHeat', 'compileRunBest', 'compileTrophies', 'compileGacha'];
+const MERGED_KEYS = ['compileStory', 'compileWeekly', 'compileRun', 'compileDaily', 'compileRunHeat', 'compileRunBest', 'compileTrophies', 'compileGacha', 'compileOracleRooms'];
 /** この端末とアカウントの両方にあって、中身が違う項目 (アカウントを正にすると、この端末の分が消えるもの) */
 export function conflictKeys(local, remoteData) {
   const rd = cleanRemote(remoteData);

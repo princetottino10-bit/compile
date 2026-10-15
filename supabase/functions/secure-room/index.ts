@@ -43,16 +43,16 @@ function cleanName(value: unknown) {
 }
 
 /* 手番の持ち時間 (ミリ秒)。相手がこれより長く止まっていたら、時間切れ勝ちを主張できる */
-const TURN_LIMIT_MS = 120_000;
+const TURN_LIMIT_MS = 300_000;
 /* 待機中の部屋を「まだ人がいる」とみなす長さ。作った人の画面が問い合わせるたびに更新時刻を新しくする */
 const WAITING_FRESH_MS = 90_000;
-/* 1試合で使える持ち時間の合計。毎手 120 秒ぎりぎりまで粘られても、合計がこれを超えたら時間切れ勝ちを主張できる (棚卸し O22) */
-const BANK_MS = 12 * 60_000;
+/* 1試合で使える持ち時間の合計。毎手 300 秒ぎりぎりまで粘られても、合計がこれを超えたら時間切れ勝ちを主張できる (棚卸し O22) */
+const BANK_MS = 30 * 60_000;
 /* ドラフトの1回ぶん・プロトコル選びの持ち時間。過ぎたら相手が「時間切れ」を押すと、止まっている側の分を自動で選ぶ (棚卸し O3) */
 const DRAFT_LIMIT_MS = 75_000;
 const SETUP_LIMIT_MS = 120_000;
 /* 相手の画面がこれより長く問い合わせてこなければ「接続が切れている」とみなす (棚卸し O2)。
-   切れていて、その人の番で 30 秒以上止まっていれば、120 秒を待たずに時間切れ勝ちを主張できる */
+   切れていて、その人の番で 30 秒以上止まっていれば、300 秒を待たずに時間切れ勝ちを主張できる */
 const OFFLINE_MS = 45_000;
 const OFFLINE_CLAIM_MS = 30_000;
 /* 始まる前に抜けた人を待つ長さ (うっかり読み直しで部屋が消えないように。棚卸し O18) */
@@ -1121,7 +1121,7 @@ Deno.serve(async (req) => {
       if (tagRoom && (room.seats || [])[waitingSeat]?.cpu) return fail(req, "CPU の番です。少し待ってください", 409);
       const since = Date.parse(room.last_action_at || room.updated_at);
       const elapsed = Date.now() - since;
-      /* 時間切れの3つの形: この手で 120 秒 / 1試合の持ち時間の合計を超えた (棚卸し O22) /
+      /* 時間切れの3つの形: この手で 300 秒 / 1試合の持ち時間の合計を超えた (棚卸し O22) /
          接続が切れていて、その人の番で 30 秒以上止まっている (棚卸し O2) */
       const usedField = waiting === 0 ? "host_used_ms" : "guest_used_ms";
       const seenField = waiting === 0 ? "host_seen_at" : "guest_seen_at";

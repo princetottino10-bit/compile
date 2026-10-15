@@ -136,6 +136,17 @@ test('効果の発動回数: 記録には { defId: 回数 } だけを残し、�
   assert.equal(cs.get('WATER_2').games, 0);
 });
 
+test('勝ち抜き戦で強化したカード (_UP) の発動回数と表で出した記録は、元のカードに数える', async () => {
+  const S = await load();
+  assert.deepEqual(S.cleanEffects({ FIRE_1_UP: 2, FIRE_1: 1, X_FIRE: 3 }), { FIRE_1: 3 });
+  store.set(KEY, '[]');
+  S.recordSoloResult(deck('FIRE', 'WATER', 'SPEED'), deck('LIFE', 'LIGHT', 'METAL'), true, 1,
+    { cards: ['FIRE_1_UP', 'FIRE_1', 'WATER_2'], effects: { FIRE_1_UP: 2, WATER_2: 1 }, mode: 'run' });
+  const r = S.localRecords().at(-1);
+  assert.deepEqual(r.cards, ['FIRE_1', 'WATER_2']);
+  assert.deepEqual(r.effects, { FIRE_1: 2, WATER_2: 1 });
+});
+
 test('プレイヤーレベル: 1戦 +1・勝ち +2・つよい以上に勝つと +1。段階で上がる', async () => {
   const D = await loadData();
   assert.equal(D.playerLevel([]).level, 1);
