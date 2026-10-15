@@ -2751,7 +2751,7 @@ const AI_LOCK_W = {
        (一様に数えると1割を切り、仕込みを放っておいていた) / oLockVictim, oLockBreakLine: 相手の永続ロックを受けたときの
        lockVictim / lockBreakLine (ロックのラインに集めてコンパイルで割る手を、ほかのラインを伸ばす手より先にする) /
      oKeep: ウォーター①・ファイア③を捨てる・キャッシュで手放す損 (「かなり強いからできれば使いたい」) /
-     oLockLinePlay: 相手の永続ロックのラインに出す手の上乗せ (aiActionBias) /
+     oLockLinePlay: 相手の永続ロックのラインに出す手の上乗せ (aiActionBias。全 CPU) /
      oHate1Maybe: 相手の一番上の表の HATE 1 を、見えていない HATE 0 / HATE 2 で撃ち直される危うさ (aiHate1ReuseThreat の hate1ReuseMaybe の代わり) /
      oSelfFlip: 自分の覆われた表向きの札 (中段あり) を反転の対象に選ぶ損 (aiOracleSelfFlipCost) /
      oHate3, oHate1, oHate1Reuse, oPersist, oLowerTop, oPlayBoost: 相手の場で得を生み続ける札の脅威 (aiOracleCardThreat) /
@@ -3453,10 +3453,10 @@ function aiActionBias(st, action, side) {
     return v;
   }
   if (action.type !== 'play') return 0;
-  /* ORACLE: 相手のサイキック①が覆われている (永続ロック) 間は、とにかくそのラインに置き続けて割りに行く
-     (ユーザー 2026-10-15「サイキック①覆われたらとにかくそこに置き続けないとダメ」)。2手読みは相手の妨害を見て
-     ほかのラインへ逃げがちなので、読みの値に勝る上乗せにする */
-  if (aiIsOracle(st, side) && (action.side === undefined || action.side === side)) {
+  /* 相手のサイキック①が覆われている (永続ロック) 間は、とにかくそのラインに置き続けて割りに行く
+     (ユーザー 2026-10-15「サイキック①覆われたらとにかくそこに置き続けないとダメ」。はじめ ORACLE だけ、同日「全 CPU に入れよう」)。
+     2手読みは相手の妨害を見てほかのラインへ逃げがちなので、読みの値に勝る上乗せにする */
+  if (action.side === undefined || action.side === side) {
     const lockLine = aiLockLineOf(st, op);
     if (lockLine >= 0 && action.line === lockLine) return AI_LOCK_W.oLockLinePlay;
   }

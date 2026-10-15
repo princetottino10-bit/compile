@@ -89,9 +89,9 @@ export function openOpponentSelect(protocols, opts = {}) {
         card(String(DEUS_LEVEL), '<span class="op-deus">' + gearSvg(10) + esc(DEUS_NAME) + '</span>' + rec(DEUS_LEVEL) +
             (recOf(DEUS_LEVEL).wins ? ' <em>✓ TITLE — DEICIDE</em>' : ''),
           '最強の上に座る、機械仕掛けの神。勝つと 称号 DEICIDE', deck(DEUS_AI), ' deus top') +
-        /* ORACLE: 管理者の自動プレイと同じ読み (学習モデル入り)。誰でも挑める (2026-10-15) */
+        /* ORACLE: 学習モデル入りの読み (読みの設定は管理者の自動プレイと同じ)。誰でも挑める (2026-10-15) */
         card(String(ORACLE_LEVEL), esc(ORACLE_NAME) + rec(ORACLE_LEVEL),
-          '管理者の自動プレイと同じ読み。学習モデルと、上級者の棋譜から教わった手筋で打つ', deck(ORACLE_AI), ' top') +
+          '学習モデルと、上級者の棋譜から教わった手筋で打つ', deck(ORACLE_AI), ' top') +
         card('3', '最強' + rec(3) + (conq >= total ? ' <em>✓ TITLE — CONQUEROR</em>' : ''),
           'いちばん強い CPU。残りの' + total + 'のプロトコルすべてで勝つと 称号 CONQUEROR', deck(STRONGEST_AI) + conqBar, ' top') +
         card('4', 'ロック特化' + rec(4), 'サイキック①で「裏向きでしか出せない」を狙う', deck(LOCK_AI)) +
