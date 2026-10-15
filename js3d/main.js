@@ -71,7 +71,7 @@ import { matUnlocked, MAT_W, MAT_D } from './playmat.js';
 import { initAccount, openAccount, takeAccountResume, accountState, onAccountChange } from './account.js';
 import { openCardList } from './cardlist-ov.js';
 import { openOpponentSelect } from './opponent-select.js';
-import { UNDERDOG_DECK, STRONGEST_AI, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL, UNDERDOG_TAG_RIVAL_MATE, levelLabel, fixedDeck, DEUS_LEVEL, DEUS_NAME, DEUS_BUDGET, PEEK_LEVEL, PEEK_NAME, ORACLE_LEVEL } from './aidecks.js';
+import { UNDERDOG_DECK, STRONGEST_AI, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL, UNDERDOG_TAG_RIVAL_MATE, levelLabel, fixedDeck, DEUS_LEVEL, DEUS_NAME, DEUS_BUDGET, PEEK_LEVEL, PEEK_NAME, ORACLE_LEVEL, oracleAi } from './aidecks.js';
 import { openRun, runHud, showRunAfterGame } from './run-ui.js';
 import { openWeekly, weeklyHud, showWeeklyAfterGame } from './weekly-ui.js';
 import { compilesBy, loadRun, RUN_WIN_COMPILES, runWinCompiles, battleOpts, lethal, nodeById } from './run.js';
@@ -2045,7 +2045,7 @@ function applyAiDifficulty(level, opts) {
     /* すべてを見る者: こちらの手札・裏向き・山札の並びを本当のまま見て読む (engine の setAiPeek) */
     peek: level === PEEK_LEVEL,
     /* aiClient.setConfig は前の設定に重ねるので、ORACLE の設定が次の対戦に残らないよう毎回決め直す */
-    specSide: 1, valnet: 0, oracle: false
+    specSide: 1, valnet: 0, oracle: false, valnetModel: null
   };
   /* ORACLE (CHALLENGE の相手): 管理者の自動プレイと同じ読み。学習モデルは Worker が読む。画面側で考えるときは aiAction の ORACLE_CPU_AI で当てる */
   if (level === ORACLE_LEVEL) Object.assign(config, ORACLE_CPU_AI);
@@ -2079,11 +2079,11 @@ const oracleFor = (side) => aiDifficulty === ORACLE_LEVEL && plainCpuMatch() && 
 const UNDERDOG_MATE_AI = { level: 0, blunder: 0.3, budget: 900, specialist: false, kind: 'dsh' };
 const weakMate = (side) => aiDifficulty === UNDERDOG_TAG_LEVEL && side === ME && !roomMode && partnerMove();
 function aiAction(st) {
-  const over = autoFor(st && st.turn) ? AUTO_AI : weakMate(st && st.turn) ? UNDERDOG_MATE_AI : st && oracleFor(st.turn) ? ORACLE_CPU_AI : null;
+  const over = autoFor(st && st.turn) ? oracleAi(AUTO_AI, st) : weakMate(st && st.turn) ? UNDERDOG_MATE_AI : st && oracleFor(st.turn) ? oracleAi(ORACLE_CPU_AI, st) : null;
   return thinking(aiClient ? aiClient.action(st, over) : Promise.resolve(withoutTrace(() => Engine.ai.action(st))));
 }
 function aiAnswer(st, req) {
-  const over = req && autoFor(req.player) ? AUTO_AI : req && weakMate(req.player) ? UNDERDOG_MATE_AI : req && oracleFor(req.player) ? ORACLE_CPU_AI : null;
+  const over = req && autoFor(req.player) ? oracleAi(AUTO_AI, st) : req && weakMate(req.player) ? UNDERDOG_MATE_AI : req && oracleFor(req.player) ? oracleAi(ORACLE_CPU_AI, st) : null;
   return thinking(aiClient ? aiClient.answer(st, req, over) : Promise.resolve(withoutTrace(() => Engine.ai.answer(st, req))));
 }
 /* 上のバーの AUTO (管理者だけ。チュートリアル・問題・検証盤面・リプレイ・観戦、オンラインのタッグ・レート戦では出さない) */
@@ -3596,7 +3596,7 @@ async function roomAutoAct() {
   let hit = null;
   try {
     UI.setPrompt('ORACLE が考えています…', 'wait');
-    const [a] = await Promise.all([thinking(aiClient ? aiClient.action(ai.state, ROOM_AUTO_AI) : Promise.resolve(withoutTrace(() => Engine.ai.action(ai.state)))), TW.wait(260)]);
+    const [a] = await Promise.all([thinking(aiClient ? aiClient.action(ai.state, oracleAi(ROOM_AUTO_AI, ai.state)) : Promise.resolve(withoutTrace(() => Engine.ai.action(ai.state)))), TW.wait(260)]);
     hit = ROOM.matchLegalAction(legal, ai.action(a));
   } catch (e) { hit = null; } finally { roomAutoBusy = false; UI.setPrompt(''); }
   if (!autoFor(ME) || !roomRm) return;                           // 考えている間に AUTO を止めた
@@ -3619,7 +3619,7 @@ async function roomAutoAnswer(req) {
     const aiReq = ai.request(req);
     const rec = roomPending().resolve(ai.state, aiReq);
     const st = rec ? rec.state : ai.state, q = rec ? rec.req : aiReq;
-    const [picks] = await Promise.all([thinking(aiClient ? aiClient.answer(st, q, ROOM_AUTO_AI) : Promise.resolve(withoutTrace(() => Engine.ai.answer(st, q)))), TW.wait(260)]);
+    const [picks] = await Promise.all([thinking(aiClient ? aiClient.answer(st, q, oracleAi(ROOM_AUTO_AI, st)) : Promise.resolve(withoutTrace(() => Engine.ai.answer(st, q)))), TW.wait(260)]);
     if (!roomRm || roomRm.version !== at || !autoFor(ME)) return PICK_CANCEL;
     if (!Array.isArray(picks)) { roomAutoStop('選び方が見つかりませんでした'); return null; }
     roomPending().onMyPicks(picks);
