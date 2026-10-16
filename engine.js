@@ -69,11 +69,14 @@ function shuffle(st, arr) {
 
 let DEFS = null;     // defId -> {id, proto, value, eff}
 let PROTOS = null;   // protoName -> [defId x6]
+let REPEATABLE = null;   // 同じ側で何度並べてもよいプロトコル (ストーリーのモブの量産プロトコル。init の extra の newProto)
 
 /* extra: 勝ち抜き戦だけのカード [{ id, proto, value, eff }] (js3d/runcards.js)。
-   プロトコルの 6 枚 (PROTOS) には入れず、newGame の deckMods で山札に入れたときだけ使う */
+   プロトコルの 6 枚 (PROTOS) には入れず、newGame の deckMods で山札に入れたときだけ使う。
+   newProto: true のカードは cards.json に無いプロトコル (ストーリーのモブの量産プロトコル。js3d/mobcards.js) の6枚として登録する。
+   このプロトコルは1人で3ライン並べてよく、タッグでも味方と重ねてよい */
 function init(cardsJson, effectsJson, extra) {
-  DEFS = {}; PROTOS = {};
+  DEFS = {}; PROTOS = {}; REPEATABLE = new Set();
   for (const p of cardsJson.protocols) {
     PROTOS[p.name] = [];
     for (const c of p.cards) {
@@ -82,6 +85,12 @@ function init(cardsJson, effectsJson, extra) {
     }
   }
   for (const d of (Array.isArray(extra) ? extra : [])) {
+    if (d && d.id && !DEFS[d.id] && d.newProto && d.proto && (!PROTOS[d.proto] || REPEATABLE.has(d.proto))) {
+      if (!PROTOS[d.proto]) { PROTOS[d.proto] = []; REPEATABLE.add(d.proto); }
+      DEFS[d.id] = { id: d.id, proto: d.proto, value: d.value | 0, eff: d.eff || {} };
+      PROTOS[d.proto].push(d.id);
+      continue;
+    }
     if (d && d.id && !DEFS[d.id] && PROTOS[d.proto]) DEFS[d.id] = { id: d.id, proto: d.proto, value: d.value | 0, eff: d.eff || {} };
   }
 }
@@ -2525,16 +2534,15 @@ function setupTag(st, tag) {
     const mate = tag['p' + p];
     const own = pl.protocols.map(x => x.name);
     if (!Array.isArray(mate) || mate.length !== 3) throw new Error('タッグ: 味方も3プロトコルを指定すること');
-    if (new Set(own.concat(mate)).size !== 6) throw new Error('タッグ: チームの中で同じプロトコルは使えない');
+    const plain = own.concat(mate).filter(n => !REPEATABLE.has(n));
+    if (new Set(plain).size !== plain.length) throw new Error('タッグ: チームの中で同じプロトコルは使えない');
     const deck = [];
-    /* tag.mods: [P1 の味方, P2 の味方] の { swap: { 元の defId: 替える defId } } (ストーリーのモブの量産カード。newGame の deckMods と同じ) */
-    const mod = (Array.isArray(tag.mods) && tag.mods[p]) || {};
-    const swap = mod.swap && typeof mod.swap === 'object' ? mod.swap : {};
     for (const name of mate) {
       if (!PROTOS[name]) throw new Error('未知のプロトコル: ' + name);
-      for (const base of PROTOS[name]) {
-        const defId = DEFS[swap[base]] && DEFS[swap[base]].proto === name ? swap[base] : base;
-        const uid = 'p' + p + ':' + defId;
+      for (const defId of PROTOS[name]) {
+        /* 量産プロトコルは自分と味方で同じカードを持つので、2枚目からは ~2 を付ける (newGame の put と同じ) */
+        let uid = 'p' + p + ':' + defId;
+        for (let n = 2; st.cards[uid]; n++) uid = 'p' + p + ':' + defId + '~' + n;
         st.cards[uid] = { uid, def: defId, owner: p, faceUp: false, zone: 'bench' + p, knownTo: 0 };
         deck.push(uid);
       }

@@ -1,81 +1,43 @@
 /* =========================================================================
- * ストーリーのモブ (名前のない機体) だけが使うカード「量産」
- *   元のカードと同じプロトコル・同じ値で、効果を弱めたもの。名前は「METAL 1 量産」。
- *   story.js の対戦の mob / tag.oppMob (MOB_DECKS の鍵) で、相手 / 相手の味方の山札の元のカードと入れ替える (engine.js newGame の deckMods / tag.mods)。
+ * ストーリーのモブ (名前のない機体) だけが使うプロトコル「量産」 (名前は仮で MASS)
+ *   元のカードと β カードは名前のある人物が使う。モブは3ラインとも、この同じ量産プロトコルで戦う (18 枚 = 同じ6枚 x3)。
  *   cards.json には入れないので、カードリスト・ふつうの対戦・勝ち抜き戦には出てこない。
- *   エンジン (engine.js の init の3つ目) と CPU の Worker、画面の defIndex に、runcards.js のカードと一緒に登録する
+ *   エンジン (engine.js の init の3つ目。newProto) と CPU の Worker、画面の protoIndex / defIndex に登録する。
+ *   名前を決めたら MOB_PROTO を書き換える (カードの id も MOB_PROTO_番号 になる)
  * ========================================================================= */
 
-export const MOB_MARK = '量産';
+export const MOB_PROTO = 'MASS';
+/** モブのデッキ (3ラインとも同じ) */
+export const MOB_DECK = [MOB_PROTO, MOB_PROTO, MOB_PROTO];
 
-/* base: 弱める元のカード。upper / middle / lower: 書き換える段 ({ text, ops }。誘発の段は on に元と同じきっかけ。null はその段を外す)。書かない段は元のまま */
-export const MOB_CARDS = [
-  /* 警備主任 (序章): 規則どおりにしか動かない。元のカードから、引く枚数を1枚に減らした */
-  { id: 'M_METAL_2', base: 'METAL_2',
-    middle: { text: 'カードを1枚引く。相手は次の手番でコンパイルすることはできない。', ops: [{ op: 'draw', count: 1 }, { op: 'noCompileNextTurn' }] } },
-  { id: 'M_GRAVITY_2', base: 'GRAVITY_2',
-    middle: { text: 'カードを1枚引く。このラインから、またはこのラインへとカードを1枚移動させる。', ops: [{ op: 'draw', count: 1 }, { op: 'shift', dest: 'fromOrToThisLine' }] } },
-  { id: 'M_DARKNESS_1', base: 'DARKNESS_1',
-    middle: { text: 'カードを1枚引く。相手の覆われているカードを1枚移動させる。', ops: [{ op: 'draw', count: 1 }, { op: 'shift', select: { owner: 'opp', coverage: 'covered' } }] } },
-  /* 巡回の警備機体 (序章・主任の味方): 同じく、引く枚数を1枚に */
-  { id: 'M_SPEED_2', base: 'SPEED_2',
-    middle: { text: 'カードを1枚引く。', ops: [{ op: 'draw', count: 1 }] } },
-  { id: 'M_FEAR_2', base: 'FEAR_2',
-    middle: { text: 'カードを1枚引く。相手は自身の手札をすべて捨て札にして、捨て札にした枚数-1枚のカードを引く。',
-      ops: [{ op: 'draw', count: 1 }, { op: 'discard', player: 'opp', count: 'all', bind: 'n' }, { op: 'drawByCount', ref: 'n', plus: -1, player: 'opp' }] } },
-  { id: 'M_CLARITY_2', base: 'CLARITY_2',
-    lower: { text: 'このカードが覆われることになったとき：先にカードを1枚引く。', ops: [{ op: 'draw', count: 1 }], on: 'wouldBeCovered' } },
-  /* 二号機 (1章): 瑠璃の写し。GRAVITY 1・DARKNESS 0 は警備主任と同じ量産。ICE 1 は相手に捨てさせる下段を外した */
-  { id: 'M_ICE_1', base: 'ICE_1', lower: null },
-  /* 回収機 (1章・二号機の味方) と 時計 (2章): TIME 4 は引く枚数を1枚に (捨てる2枚はそのまま)。METAL 1 は警備主任と同じ */
-  { id: 'M_TIME_5', base: 'TIME_5',
-    middle: { text: 'カードを1枚引く。あなたは手札を2枚捨て札にする。', ops: [{ op: 'draw', count: 1 }, { op: 'discard', count: 2 }] } },
-  /* 時計 (2章): SPIRIT 1 の中段を1枚に */
-  { id: 'M_SPIRIT_2', base: 'SPIRIT_2',
-    middle: { text: 'カードを1枚引く。', ops: [{ op: 'draw', count: 1 }] } }
+/* 6枚。値 0〜5。どれも元のプロトコルのカードより弱い (引くのは1枚まで、相手には手を出さない、効果の無いカードが2枚) */
+const CARDS = [
+  { value: 0, types: ['draw'], middle: 'カードを1枚引く。', ops: [{ op: 'draw', count: 1 }] },
+  { value: 1, types: ['draw', 'discard'], middle: 'カードを1枚引く。あなたは手札を1枚捨て札にする。',
+    ops: [{ op: 'draw', count: 1 }, { op: 'discard', count: 1 }] },
+  { value: 2, types: [] },
+  { value: 3, types: ['shift'], middle: 'あなたは自分のカードを1枚移動させることができる。',
+    ops: [{ op: 'shift', select: { owner: 'self' }, optional: true }] },
+  { value: 4, types: [] },
+  { value: 5, types: ['discard'], middle: 'あなたは手札を1枚捨て札にする。', ops: [{ op: 'discard', count: 1 }] }
 ];
 
-/* モブごとに入れ替えるカード。story.js の対戦の mob に書く */
-export const MOB_DECKS = {
-  chief: ['M_METAL_2', 'M_GRAVITY_2', 'M_DARKNESS_1'],
-  patrol: ['M_SPEED_2', 'M_FEAR_2', 'M_CLARITY_2'],
-  nigoki: ['M_ICE_1', 'M_GRAVITY_2', 'M_DARKNESS_1'],
-  collector: ['M_METAL_2', 'M_TIME_5'],
-  clock: ['M_TIME_5', 'M_SPIRIT_2']
+/** 画面に足すプロトコル (cards.json の protocols の1つと同じ形。mob: true で、プロトコルを並べる画面からは外す) */
+export const MOB_PROTOCOL = {
+  name: MOB_PROTO, displayName: MOB_PROTO, tags: '量産', color: '#7d8590', set: 'Mob', mob: true,
+  cards: CARDS.map((c, i) => ({ id: MOB_PROTO + '_' + (i + 1), number: i + 1, value: c.value, upper: '', middle: c.middle || '', lower: '', effectTypes: c.types }))
 };
 
-const copy = (x) => JSON.parse(JSON.stringify(x));
-
-/** 量産カードの定義を作る。engine: engine.js に登録する形 / ui: 画面の defIndex に足す形 (runcards.js の buildRunDefs と同じ) */
-export function buildMobDefs(cardsJson, effectsJson) {
+/** 量産プロトコルの定義。engine: engine.js の init の3つ目に足す形 / ui: 画面の defIndex に足す形 */
+export function buildMobDefs() {
   const engine = [], ui = [];
-  for (const m of MOB_CARDS) {
-    const p = cardsJson.protocols.find(x => x.cards.some(c => c.id === m.base));
-    const c = p && p.cards.find(x => x.id === m.base);
-    if (!c) throw new Error('量産の元のカードが無い: ' + m.id);
-    const eff = copy((effectsJson && effectsJson[c.id]) || {});
-    const face = { upper: c.upper, middle: c.middle, lower: c.lower };
-    for (const slot of ['upper', 'middle', 'lower']) {
-      if (m[slot] === null) { delete eff[slot]; face[slot] = ''; continue; }
-      if (!m[slot]) continue;
-      eff[slot] = m[slot].on ? { _text: m[slot].text, trigger: { on: m[slot].on, ops: copy(m[slot].ops) } } : { _text: m[slot].text, ops: copy(m[slot].ops) };
-      face[slot] = m[slot].text;
-    }
-    engine.push({ id: m.id, proto: p.name, value: c.value, eff });
-    ui.push({ id: m.id, proto: p.name, color: p.color, set: p.set, number: c.number, value: c.value, ...face,
-      effectTypes: c.effectTypes || [], mark: MOB_MARK });
-  }
-  return { engine, ui };
-}
-
-/** 対戦の deckMods (1人分): 元のカード → 量産カード */
-export function mobDeckMods(key) {
-  const ids = MOB_DECKS[key];
-  if (!ids) return null;
-  const swap = {};
-  for (const id of ids) {
-    const m = MOB_CARDS.find(x => x.id === id);
-    if (m) swap[m.base] = m.id;
-  }
-  return { swap };
+  const p = MOB_PROTOCOL;
+  p.cards.forEach((c, i) => {
+    const src = CARDS[i];
+    const eff = src.ops ? { middle: { _text: src.middle, ops: JSON.parse(JSON.stringify(src.ops)) } } : {};
+    engine.push({ id: c.id, proto: p.name, value: c.value, eff, newProto: true });
+    ui.push({ id: c.id, proto: p.name, color: p.color, number: c.number, set: p.set, value: c.value,
+      upper: c.upper, middle: c.middle, lower: c.lower, effectTypes: c.effectTypes });
+  });
+  return { engine, ui, protocol: p };
 }
