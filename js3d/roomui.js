@@ -51,6 +51,7 @@ function esc(s) {
 
 /* opts.cardsOf(name) -> そのプロトコルの6枚 (protocards.js の形。ドラフト中に中身を見る) */
 export function runRoomLobby(protocols, opts = {}) {
+  let listedOnce = false;
   const root = $('#roomOv');
   const protoMap = {};
   for (const p of protocols) protoMap[p.name] = p;
@@ -384,6 +385,8 @@ export function runRoomLobby(protocols, opts = {}) {
       const loadList = async () => {
         try {
           const data = await roomApi('list');
+          /* 観戦の賭けの払い戻し (決着を見届けずに閉じた分も)。ロビーを開いて最初に一覧が取れたときに1度だけ */
+          if (opts.onListed && !listedOnce) { listedOnce = true; opts.onListed(); }
           const el = $('#roomList');
           if (!el) return;
           const rooms = data.rooms || [];
@@ -410,7 +413,11 @@ export function runRoomLobby(protocols, opts = {}) {
             wl.innerHTML = live.length
               ? live.map(r => '<button class="ro-room ro-watch" data-watch="' + esc(r.code) + '" type="button"><span>' +
                   esc(r.names[0] || '?') + ' <em>vs</em> ' + esc(r.names[1] || '?') + (r.rated ? ' ★' : '') + '</span>' +
-                  '<small>' + esc((r.protocols[0] || []).join(' / ')) + '　vs　' + esc((r.protocols[1] || []).join(' / ')) + '</small></button>').join('')
+                  '<small>' + esc((r.protocols[0] || []).join(' / ')) + '　vs　' + esc((r.protocols[1] || []).join(' / ')) + '</small>' +
+                  /* 観客の賭け: 受付中か・何人が賭けたか */
+                  (r.bet && (r.bet.open || r.bet.count) ? '<small class="ro-bet' + (r.bet.open ? ' open' : '') + '">' +
+                    (r.bet.open ? '賭け受付中' : '賭け締め切り') + (r.bet.count ? '　' + r.bet.count + ' 人が合計 ' + r.bet.pool + ' CHIP' : '') + '</small>' : '') +
+                  '</button>').join('')
               : '<span class="ro-sub">いま観戦できる対戦はありません</span>';
             wl.querySelectorAll('[data-watch]').forEach(b => {
               b.onclick = guard(async () => {
