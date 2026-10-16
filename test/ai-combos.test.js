@@ -553,6 +553,49 @@ test('手筋 Diversity0: 他の2本が済んでいれば、6種類そろえて�
   assert.equal(res.state.winner, 0, 'DIVERSITY 0 で3本目をコンパイルして勝つ (実際: ' + JSON.stringify(act) + ')');
 });
 
+/* ユーザー 2026-10-16「3本目のコンパイルでいきなり DIVERSITY 0 を出して勝つのがめっちゃ強い」。つよい以上と特化は、
+   2本済んで DIVERSITY 0 を持っていれば、場の種類をそろえて残す (相手の返しで1種類崩される読みで構えを捨てない) */
+function diversityLastGame() {
+  const st = game(['DIVERSITY', 'FIRE', 'WATER'], ['METAL', 'LIGHT', 'LIFE']);
+  st.players[0].protocols[1].compiled = true;
+  st.players[0].protocols[2].compiled = true;
+  return st;
+}
+for (const specialist of [false, true]) {
+  test('手筋 Diversity0 (3本目): 相手の札を消して種類を減らさず、5種類目を表で出して構える' + (specialist ? ' (最強)' : ''), () => {
+    const st = diversityLastGame();
+    place(st, 'FIRE_5', 0, 1, true);
+    place(st, 'METAL_5', 1, 0, true);
+    place(st, 'LIGHT_6', 1, 1, true);
+    place(st, 'LIFE_3', 1, 2, true);          // 場: FIRE METAL LIGHT LIFE。WATER を表で足すと5種類
+    /* FIRE 1 (FIRE_2) で相手の METAL 5 を消す手もあるが、種類が3つに減って3本目が遠のく */
+    setHand(st, 0, ['DIVERSITY_1', 'WATER_6', 'FIRE_6', 'FIRE_2']);
+    if (specialist) Engine.setAiSpecialist(true, 0, 'dsh');
+    try {
+      const act = aiAct(st);
+      const res = resolveWithAi(Engine.apply(st, act));
+      assert.equal(DIVERSITY_KINDS(res.state).size, 5, '5種類そろえる (実際: ' + JSON.stringify(act) + ' → ' + [...DIVERSITY_KINDS(res.state)] + ')');
+      assert.ok(res.state.players[0].hand.includes(uidOf('DIVERSITY_1', 0)), 'DIVERSITY 0 は手札に残す');
+    } finally {
+      Engine.setAiSpecialist(false);
+    }
+  });
+}
+
+test('手筋 Diversity0 (3本目): 反転は相手の裏の札を表にして種類を足す (相手の表の札を裏にして種類を減らさない)', () => {
+  const st = diversityLastGame();
+  place(st, 'FIRE_5', 0, 1, true);
+  place(st, 'WATER_6', 0, 2, true);
+  place(st, 'METAL_5', 1, 0, true);
+  place(st, 'LIGHT_6', 1, 1, true);
+  const life = place(st, 'LIFE_3', 1, 2, false);
+  st.cards[life].knownTo = 3;               // 中身が LIFE と分かっている裏向き (公開された札など)
+  setHand(st, 0, ['DIVERSITY_1', 'FIRE_1', 'FIRE_6']);
+  const act = aiAct(st);
+  const res = resolveWithAi(Engine.apply(st, act));
+  assert.equal(DIVERSITY_KINDS(res.state).size, 5, '5種類そろえる (実際: ' + JSON.stringify(act) + ' → ' + [...DIVERSITY_KINDS(res.state)] + ')');
+});
+
 test('手筋 Diversity0 を持っている間は、DIVERSITY のラインを10点でコンパイルしにいかない', () => {
   const st = game(['DIVERSITY', 'FIRE', 'WATER'], ['METAL', 'LIGHT', 'LIFE']);
   for (const d of ['FIRE_6', 'WATER_6', 'FIRE_5', 'WATER_5']) place(st, d, 0, 0, false);   // DIVERSITY のライン: 裏向き4枚で8点
@@ -569,6 +612,52 @@ test('手筋 Diversity0 を持っている間は、DIVERSITY のラインを10�
   assert.ok(res.state.players[0].hand.includes(uidOf('DIVERSITY_1', 0)), 'DIVERSITY 0 は手札に残す');
 });
 
+/* DIVERSITY のライン (裏向き4枚で8点) と、10点に届く手札。control: 自分がコントロールを持っているか */
+function diversityHoldGame(control, hand) {
+  const st = game(['DIVERSITY', 'FIRE', 'WATER'], ['METAL', 'LIGHT', 'LIFE']);
+  st.useControl = true;
+  st.control = control ? 0 : -1;
+  for (const d of ['FIRE_6', 'WATER_6', 'FIRE_5', 'WATER_5']) place(st, d, 0, 0, false);
+  place(st, 'FIRE_4', 0, 1, true);
+  place(st, 'METAL_2', 1, 0, true);
+  place(st, 'LIGHT_3', 1, 1, true);
+  setHand(st, 0, hand);
+  return st;
+}
+
+test('手筋 Diversity0: DIVERSITY 0 自身を出して DIVERSITY のラインを10点にしない (切り札を手札に残す)', () => {
+  const st = diversityHoldGame(false, ['DIVERSITY_1', 'FIRE_3', 'DIVERSITY_4']);
+  const act = aiAct(st);
+  const res = resolveWithAi(Engine.apply(st, act));
+  assert.ok(res.state.players[0].hand.includes(uidOf('DIVERSITY_1', 0)), 'DIVERSITY 0 は手札に残す (実際: ' + JSON.stringify(act) + ')');
+});
+
+test('手筋 Diversity0: コントロールを持っていれば、DIVERSITY のラインも10点にしてよい (コンパイルの前に並べ替えて逃がす)', () => {
+  const hand = ['DIVERSITY_1', 'FIRE_3', 'WATER_4'];
+  const without = resolveWithAi(Engine.apply(diversityHoldGame(false, hand), aiAct(diversityHoldGame(false, hand))));
+  assert.ok(Engine.lineTotal(without.state, 0, 0) < 10, 'コントロールが無ければ10点にしない');
+  const st = diversityHoldGame(true, hand);
+  const act = aiAct(st);
+  const res = resolveWithAi(Engine.apply(st, act));
+  assert.ok(Engine.lineTotal(res.state, 0, 0) >= 10, 'コントロールがあれば10点にする (実際: ' + JSON.stringify(act) + ')');
+  assert.ok(res.state.players[0].hand.includes(uidOf('DIVERSITY_1', 0)), 'DIVERSITY 0 は手札に残す');
+});
+
+test('手筋 Diversity0: 切り札を持って DIVERSITY のラインをコンパイルするときは、コントロールで DIVERSITY を逃がす', () => {
+  const st = game(['DIVERSITY', 'FIRE', 'WATER'], ['METAL', 'LIGHT', 'LIFE']);
+  st.players[0].protocols[2].compiled = true;
+  setHand(st, 0, ['DIVERSITY_1', 'FIRE_2']);
+  Engine.setAiLevel(2);
+  const protocols = st.players[0].protocols.map(p => ({ name: p.name, names: p.names, compiled: p.compiled }));
+  const option = Engine.ai.answer(st, { id: 1, kind: 'option', player: 0, optional: false, prompt: 'control-rearrange',
+    options: ['自分のプロトコルを並べ替える', '相手のプロトコルを並べ替える', '並べ替えない'],
+    controlReason: 'compile', controlLine: 0, protocols });
+  assert.deepEqual(option, [0], '自分のプロトコルを並べ替える');
+  const order = Engine.ai.answer(st, { id: 2, kind: 'arrange', player: 0, target: 0, prompt: 'rearrange',
+    current: protocols.map(p => p.name), compiled: protocols.map(p => p.compiled), controlReason: 'compile', controlLine: 0 });
+  assert.equal(protocols[order[0]].name, 'FIRE', 'コンパイルするラインに未コンパイルの FIRE を持ってくる (実際: ' + JSON.stringify(order) + ')');
+});
+
 test('手筋 Diversity0: DIVERSITY が最後の1本なら、10点で普通にコンパイルしてもよい', () => {
   const st = game(['DIVERSITY', 'FIRE', 'WATER'], ['METAL', 'LIGHT', 'LIFE']);
   st.players[0].protocols[1].compiled = true;
@@ -581,3 +670,95 @@ test('手筋 Diversity0: DIVERSITY が最後の1本なら、10点で普通にコ
   assert.ok(Engine.lineTotal(res.state, 0, 0) >= 10 || res.state.winner === 0,
     '最後の1本は10点にして通しにいく (実際: ' + JSON.stringify(act) + ')');
 });
+
+/* ---------- SPEED 0 / SPEED 3 (2026-10-16 の点検。ぱうぷる戦 2026-10-15 の指摘が残っているか) ----------
+   ・ORACLE は、1回目の移動で下の表向きの札を起こせないなら 0 と 3 を揃えて出さない
+   ・SPEED 3 の終了時の移動は、自分をどかして下の札を起こせるときだけ自分を動かす。
+     何も起きないのに自分を動かすと裏返って値 3 → 2、移動も失う (GATEKEEPER・つよいが毎回これをしていた) */
+function withOracle(fn) {
+  Engine.setAiOracle(true);
+  try { return withDsh(fn); } finally { Engine.setAiOracle(false); }
+}
+function speedPairBoard() {
+  const st = game(FWS, ['METAL', 'LIGHT', 'HATE']);
+  place(st, 'FIRE_6', 0, 0, true);           // 移動の対象はあるが、どかしても下に起こす札が無い
+  place(st, 'METAL_5', 1, 0, true);
+  place(st, 'LIGHT_6', 1, 1, true);
+  setHand(st, 0, ['SPEED_1', 'SPEED_4', 'WATER_6', 'FIRE_5', 'WATER_3']);
+  return st;
+}
+const speed0Play = { type: 'play', card: uidOf('SPEED_1', 0), line: 2, faceUp: true };
+
+test('ORACLE: 下の札を起こせないなら、SPEED 0 と 3 を揃えて出さない', () => withOracle(() => {
+  const st = speedPairBoard();
+  Engine.setAiLevel(2);
+  Engine.setAiThinkBudget(1500);
+  const act = Engine.ai.action(st);
+  assert.ok(!(act.type === 'play' && ['SPEED_1', 'SPEED_4'].includes(st.cards[act.card].def)),
+    'SPEED 0 / 3 を出さない (実際: ' + JSON.stringify(act) + ')');
+  assert.ok(Engine.ai.actionBias(st, speed0Play, 0) < 100, '揃える加点が入らない');
+}));
+
+test('ORACLE: 1回目の移動で下の表向きの札を起こせるなら、揃える加点が入る', () => withOracle(() => {
+  const st = speedPairBoard();
+  place(st, 'WATER_4', 0, 1, true);          // WATER 3 (中段あり) の上に
+  place(st, 'WATER_3', 0, 1, true);          // WATER 2 を重ねる: どかすと WATER 3 が起きる
+  assert.ok(Engine.ai.actionBias(st, speed0Play, 0) >= 200, '揃える加点が入る');
+}));
+
+test('つよい以上: SPEED 3 の終了時の移動で、下に何も無い自分を動かして裏返さない (ほかの札でラインを10にする)', () => {
+  for (const oracle of [false, true]) {
+    Engine.setAiOracle(oracle);
+    try {
+      withDsh(() => {
+        const st = game(FWS, ['METAL', 'LIGHT', 'HATE']);
+        place(st, 'SPEED_4', 0, 2, true);   // 前の手番に出した SPEED 3 (下に何も無い)
+        place(st, 'FIRE_6', 0, 0, true);
+        place(st, 'METAL_5', 1, 0, true);
+        place(st, 'LIGHT_6', 1, 1, true);
+        setHand(st, 0, ['WATER_6', 'FIRE_5', 'WATER_3', 'FIRE_2']);
+        Engine.setAiLevel(2);
+        Engine.setAiThinkBudget(300);
+        const answers = [];
+        const res = resolveWithAi(Engine.apply(st, { type: 'play', card: uidOf('WATER_6', 0), line: 1, faceUp: true }), answers);
+        const end = answers.find(x => x.q.prompt === 'optional-shift' && x.q.context === 'SPEED_4');
+        assert.ok(end, '終了時の移動を聞かれる');
+        assert.notDeepEqual(end.picks, [uidOf('SPEED_4', 0)], (oracle ? 'ORACLE' : 'GATEKEEPER') + ': SPEED 3 自身を動かさない');
+        assert.equal(lineOf(res.state, uidOf('WATER_6', 0)), 0, (oracle ? 'ORACLE' : 'GATEKEEPER') + ': WATER 5 を FIRE 5 のラインへ動かして10点にする');
+      });
+    } finally { Engine.setAiOracle(false); }
+  }
+});
+
+test('つよい以上: SPEED 0 の上の SPEED 3 は、終了時に自分をどかして SPEED 0 をもう一度起こす', () => withDsh(() => {
+  const st = speedPairBoard();
+  Engine.setAiLevel(2);
+  Engine.setAiThinkBudget(300);
+  const answers = [];
+  resolveWithAi(Engine.apply(st, speed0Play), answers);
+  const free = answers.filter(x => x.q.prompt === 'play-free');
+  assert.equal(free[0].picks[0], uidOf('SPEED_4', 0) + '|2|u', '追加プレイで SPEED 3 を SPEED 0 の上に表で');
+  const end = answers.find(x => x.q.prompt === 'optional-shift' && x.q.context === 'SPEED_4');
+  assert.deepEqual(end && end.picks, [uidOf('SPEED_4', 0)], '終了時に SPEED 3 自身をどかす');
+  assert.equal(free.length, 2, 'どいた SPEED 0 の追加プレイがもう一度来る');
+}));
+
+test('つよい以上: 下の札を起こせないうちは、SPEED 0 と 3 をセットで手札にキープする (ユーザー「基本セットキープ」)', () => withDsh(() => {
+  const st = speedPairBoard();
+  Engine.setAiLevel(2);
+  Engine.setAiThinkBudget(1500);
+  const act = Engine.ai.action(st);
+  assert.ok(!(act.type === 'play' && ['SPEED_1', 'SPEED_4'].includes(st.cards[act.card].def)),
+    'SPEED 0 / 3 を出さない (実際: ' + JSON.stringify(act) + ')');
+}));
+
+test('つよい以上: 下の札を起こせる形なら、SPEED 0 から揃えて出す', () => withDsh(() => {
+  const st = speedPairBoard();
+  place(st, 'WATER_4', 0, 1, true);
+  place(st, 'WATER_3', 0, 1, true);
+  Engine.setAiLevel(2);
+  Engine.setAiThinkBudget(1500);
+  const act = Engine.ai.action(st);
+  assert.ok(act.type === 'play' && st.cards[act.card].def === 'SPEED_1' && act.faceUp,
+    'SPEED 0 を表で出す (実際: ' + JSON.stringify(act) + ')');
+}));

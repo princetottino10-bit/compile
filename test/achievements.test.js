@@ -124,12 +124,12 @@ test('COLLECTOR: 違うカードを60種類、表で出す (お気に入りの�
 });
 
 
-test('GAUNTLET: 強敵の欄の全員 (最強・ロック特化・挑戦者4人) に勝つ。挑戦者だけでは取れない', () => {
+test('GAUNTLET: 強敵の欄の全員 (最強・本気の4人) に勝つ。本気の4人だけでは取れない', () => {
   mem.clear();
-  const challengers = [5, 6, 7, 8].map(lv => rec(true, lv));
-  assert.ok(!ids(newlyEarned({}, ctx({ records: challengers }))).includes('challengers'));
-  assert.deepEqual(trophyView(ctx({ records: challengers })).list.find(t => t.id === 'challengers').prog, [4, 6]);
-  const all = challengers.concat([rec(true, 3), rec(true, 4)]);
+  const honki = [30, 31, 32, 33].map(lv => rec(true, lv));
+  assert.ok(!ids(newlyEarned({}, ctx({ records: honki }))).includes('challengers'));
+  assert.deepEqual(trophyView(ctx({ records: honki })).list.find(t => t.id === 'challengers').prog, [4, 5]);
+  const all = honki.concat([rec(true, 3)]);
   assert.ok(ids(newlyEarned({}, ctx({ records: all }))).includes('challengers'));
 });
 

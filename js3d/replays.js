@@ -190,7 +190,7 @@ export function mirrorState(st) {
   if (!st) return st;
   const cards = {};
   for (const [uid, c] of Object.entries(st.cards || {})) {
-    cards[uid] = { ...c, owner: flip(c.owner), zone: flipZone(c.zone), knownTo: flipBits(c.knownTo) };
+    cards[uid] = { ...c, owner: flip(c.owner), zone: flipZone(c.zone), knownTo: flipBits(c.knownTo), ...(c.seenBy !== undefined ? { seenBy: flipBits(c.seenBy) } : {}) };
   }
   const tally = st.tally ? Object.fromEntries(Object.entries(st.tally).map(([k, v]) => [k, swap2(v)])) : st.tally;
   return {

@@ -44,10 +44,36 @@ function knowCard(st, uid, side) {
 }
 function revealCardToAll(st, uid) {
   const c = st.cards[uid];
-  if (c) c.knownTo = 3;
+  if (c) { c.knownTo = 3; c.seenBy = 3; }
+}
+/* CPU の記憶 (seenBy): 一度公開されて、そのあと行き先を目で追えているカード。
+   knownTo は「いま見てよいか」(画面で表にするか・オンラインで伏せるか) で、手札に戻ると切れる。
+   seenBy はそれとは別に、人なら覚えていること (表で戻された札がまだ相手の手札にある、
+   裏返された札の正体、公開された手札) を残す。見るのは CPU の読み (aiCardKnownTo) だけ。
+   シャッフルと、どれが動いたか見えない動き (手札から裏で出す) で消える */
+/* いま見てよい人を狭めるとき、それまで見ていた人の記憶は残す */
+function narrowKnown(c, bits) {
+  c.seenBy = (c.seenBy || 0) | (c.knownTo || 0);
+  c.knownTo = bits;
+}
+function rememberCard(st, uid, bits) {
+  const c = st.cards[uid];
+  if (c) c.seenBy = (c.seenBy || 0) | bits;
+}
+/* 手札から1枚を裏のまま動かしたとき: 相手にはどれが動いたか分からないので、
+   その手札で相手が覚えていた札は、動いた札も残った札もまとめて記憶から外す。
+   (動いた札だけ外すと「覚えていた札がまだ手札にあるか」が uid から漏れる)。
+   手札が1枚だけなら、どれが動いたかは明らか */
+function blurHandMemory(st, side, uid) {
+  const hand = st.players[side].hand;
+  if (hand.length <= 1) return;
+  const bit = 1 << (1 - side);
+  if (!hand.some(u => (st.cards[u].seenBy || 0) & bit)) return;
+  for (const u of hand) st.cards[u].seenBy = (st.cards[u].seenBy || 0) & ~bit;
+  if (hand.indexOf(uid) < 0) st.cards[uid].seenBy = (st.cards[uid].seenBy || 0) & ~bit;
 }
 function forgetDeckOrder(st, side) {
-  for (const uid of st.players[side].deck) st.cards[uid].knownTo = 0;
+  for (const uid of st.players[side].deck) { st.cards[uid].knownTo = 0; st.cards[uid].seenBy = 0; }
 }
 function mulberry32(a) {
   return function () {
@@ -568,7 +594,7 @@ function fireUncover(ctx, info) {
 function landLine(ctx, uid, line, side) {
   const st = ctx.st;
   const c = st.cards[uid];
-  if (!c.faceUp) c.knownTo = 1 << side;   // 自分側の裏向きはその側だけが見てよい
+  if (!c.faceUp) narrowKnown(c, 1 << side);   // 自分側の裏向きはその側だけが見てよい
   const stack = st.lines[line][side];
   const seq = c.commitSeq || 0;
   let i = stack.length;
@@ -594,8 +620,9 @@ function landHand(ctx, uid) {
   c.faceUp = false;
   c.commitDest = null;
   ctx.st.players[c.owner].hand.push(uid);
-  /* 手札に戻った時点で相手の記憶は切れる (再び裏向きで出したとき正体は非公開) */
-  c.knownTo = 1 << c.owner;
+  /* 手札に戻ったら相手はもう見られない (再び裏向きで出したとき正体は非公開)。
+     表で戻されたのを見ていた記憶は seenBy に残る */
+  narrowKnown(c, 1 << c.owner);
   removeFrom(ctx.st.commitStack, uid);
 }
 
@@ -636,7 +663,7 @@ function doReturn(ctx, uid) {
     c.zone = 'deck' + owner;
     c.faceUp = false;
     c.commitDest = null;
-    c.knownTo = 0;   // デッキに入った時点で誰も見えない
+    narrowKnown(c, 0);   // デッキに入った時点で誰も見えない (一番上にあるのは覚えている。シャッフルで消える)
     st.players[owner].deck.unshift(uid);
     removeFrom(st.commitStack, uid);
     log(ctx, `${label} は手札の代わりにデッキの一番上へ戻された`, uid);
@@ -661,7 +688,7 @@ function doFlip(ctx, uid, ignoreMiddleOnce) {
   else {
     /* 裏になった時点で相手は中身を確認できなくなる (自分側のカードなら自分は閲覧可) */
     const lf = locate(st, uid);
-    c.knownTo = lf ? (1 << lf.side) : 0;
+    narrowKnown(c, lf ? (1 << lf.side) : 0);
   }
   log(ctx, `${cardLabel(st, uid)} を${c.faceUp ? '表' : '裏'}に反転`, uid);
   const loc = locate(st, uid);
@@ -698,6 +725,10 @@ function playToField(ctx, uid, line, side, faceUp, belowUid) {
   /* 裁定: 相手の側に置いたカードは、置いた時点で相手のカードになる (CORRUPTION 0・ASSIMILATION 3/6 など)。
      持ち主が変わったら以後はそのまま (ルール: 持ち主の変更はゲームの終わりまで、または次に変わるまで続く) */
   if (c.owner !== side) c.owner = side;
+  if (!faceUp) {
+    narrowKnown(c, c.knownTo || 0);
+    for (let p = 0; p < 2; p++) if (st.players[p].hand.indexOf(uid) >= 0) blurHandMemory(st, p, uid);
+  }
   removeFrom(st.players[0].hand, uid); removeFrom(st.players[1].hand, uid);
   removeFrom(st.players[0].deck, uid); removeFrom(st.players[1].deck, uid);
   markCommitted(st, uid);
@@ -790,7 +821,7 @@ function drawCards(ctx, side, n, fromOpp) {
     c.zone = 'hand' + side;
     if (fromOpp) c.owner = side;
     st.players[side].hand.push(u);
-    c.knownTo = 1 << side;   // 引いた本人だけが知る (デッキ上で公開されていても再び非公開)
+    narrowKnown(c, 1 << side);   // 引いた本人だけが見られる (デッキ上で公開されていたなら、それを覚えている)
     drawn++;
   }
   if (drawn) {
@@ -878,7 +909,7 @@ function massRemove(ctx, uids, destKind, actor) {
     const owner = st.cards[u].owner;
     if (activeStatics(st).some(s => s.kind === 'returnToDeckTop' && s.sideIdx !== owner)) {
       const c = st.cards[u];
-      c.zone = 'deck' + owner; c.faceUp = false; c.commitDest = null; c.knownTo = 0;
+      c.zone = 'deck' + owner; c.faceUp = false; c.commitDest = null; narrowKnown(c, 0);
       st.players[owner].deck.unshift(u);
       removeFrom(st.commitStack, u);
       log(ctx, `${cardLabel(st, u)} は手札の代わりにデッキの一番上へ戻された`, u);
@@ -1156,7 +1187,7 @@ function execOp(ctx, fr, op) {
         st.cards[u].owner = 1 - who;
         st.cards[u].zone = 'hand' + (1 - who);
         st.players[1 - who].hand.push(u);
-        st.cards[u].knownTo = 1 << (1 - who);   // 渡した側は以後見えない
+        narrowKnown(st.cards[u], 1 << (1 - who));   // 渡した側は以後見えない (何を渡したかは覚えている)
       }
       log(ctx, `P${who + 1}: 手札を1枚相手に渡した`);
       fr.done = true;
@@ -1174,7 +1205,7 @@ function execOp(ctx, fr, op) {
       st.cards[u].owner = who;
       st.cards[u].zone = 'hand' + who;
       st.players[who].hand.push(u);
-      st.cards[u].knownTo = 1 << who;   // 取られた側は以後見えない
+      narrowKnown(st.cards[u], 1 << who);   // 取られた側は以後見えない (何を取られたかは分かる)
       log(ctx, `P${who + 1}: 相手の手札からランダムに1枚引いた`);
       fireEvent(ctx, { on: 'draw', player: who, count: 1 });
       fr.done = true;
@@ -1289,7 +1320,8 @@ function execOp(ctx, fr, op) {
       if (!deck.length) { fr.done = false; return; }
       const top = deck[0];
       st.revealed = { seq: (st.actionLog || []).length, kind: 'card', uid: top, player: fr.controller, cards: [DEFS[st.cards[top].def].id] };
-      /* 公開はその瞬間だけ (オーバーレイ)。捨てなければデッキ上で非公開のまま */
+      /* 公開はその瞬間だけ (オーバーレイ)。捨てなければデッキ上で非公開のまま (記憶には残る) */
+      rememberCard(st, top, 3);
       log(ctx, `P${fr.controller + 1}: デッキトップ ${DEFS[st.cards[top].def].id} を公開`, top);
       const ans = choose(ctx, { kind: 'yesNo', player: fr.controller, prompt: 'optional-discard-top', context: DEFS[st.cards[top].def].id });
       if (ans.length) {
@@ -1325,6 +1357,7 @@ function execOp(ctx, fr, op) {
         st.cards[u].zone = 'hand' + fr.controller;
         p.hand.push(u);
         st.cards[u].knownTo = 1 << fr.controller;
+        rememberCard(st, u, 3);   // 何を加えたかは名前で告げている
       }
       if (take.length) log(ctx, `P${fr.controller + 1}: ${take.map(u => DEFS[st.cards[u].def].id).join(', ')} を手札に加えた`);
       shuffleDeck(ctx, fr.controller);
@@ -1433,6 +1466,7 @@ function execOp(ctx, fr, op) {
       st.announce = { seq: (st.actionLog || []).length, kind: 'declareResult', player: fr.controller, hit: true, what: 'value',
         value: declared, card: DEFS[st.cards[pick].def].id, context: defOf(st, fr.source).id };
       knowCard(st, pick, fr.controller);   // 本人は見る。相手はオーバーレイの瞬間だけ
+      rememberCard(st, pick, 3);
       log(ctx, `P${fr.controller + 1}: ${DEFS[st.cards[pick].def].id} を公開`, pick);
       const yn = choose(ctx, { kind: 'yesNo', player: fr.controller, prompt: 'optional-play', context: DEFS[st.cards[pick].def].id });
       if (yn.length) {
@@ -1660,6 +1694,7 @@ function execTargetedOp(ctx, fr, op) {
       /* 公開はその瞬間だけ (オーバーレイ)。閲覧権は残さない */
       log(ctx, `P${2 - fr.controller}: 手札を公開: ` + oh.map(u => DEFS[st.cards[u].def].id).join(', '));
       st.revealed = { seq: (st.actionLog || []).length, kind: 'hand', player: 1 - fr.controller, cards: oh.map(u => DEFS[st.cards[u].def].id) };
+      for (const u of oh) rememberCard(st, u, 3);
       fr.done = true; return;
     }
     if (op.target === 'ownHandCard') {
@@ -1669,6 +1704,7 @@ function execTargetedOp(ctx, fr, op) {
         : choose(ctx, { kind: 'pickHand', player: fr.controller, candidates: hand.slice(), min: 1, max: 1, prompt: 'reveal-hand-card' });
       /* 公開はその瞬間だけ (オーバーレイ)。閲覧権は残さない */
       st.revealed = { seq: (st.actionLog || []).length, kind: 'card', player: fr.controller, cards: [DEFS[st.cards[picks[0]].def].id] };
+      rememberCard(st, picks[0], 3);
       log(ctx, `P${fr.controller + 1}: 手札の ${DEFS[st.cards[picks[0]].def].id} を公開`);
       fr.done = true; return;
     }
@@ -1891,6 +1927,7 @@ function performVerb(ctx, fr, op, uid) {
       /* ルール: 公開後は元の状態に戻す → 閲覧権は残さず、公開の瞬間だけオーバーレイで見せる */
       log(ctx, `${DEFS[c.def].id} を公開`);
       st.revealed = { seq: (st.actionLog || []).length, kind: 'card', uid, player: fr.controller, cards: [DEFS[c.def].id] };
+      rememberCard(st, uid, 3);
       return true;
     }
     case 'shift': {
@@ -1950,7 +1987,7 @@ function performMass(ctx, fr, op, cands) {
       st.cards[u].faceUp = !st.cards[u].faceUp;
       /* 閲覧権の再計算: 表=公開、裏=その側のプレイヤーだけ */
       if (st.cards[u].faceUp) revealCardToAll(st, u);
-      else { const lm = locate(st, u); st.cards[u].knownTo = lm ? (1 << lm.side) : 0; }
+      else { const lm = locate(st, u); narrowKnown(st.cards[u], lm ? (1 << lm.side) : 0); }
     }
     log(ctx, `${cands.length}枚を同時に反転`);
     return true;
@@ -2712,6 +2749,17 @@ const AI_W = {
   diversityLast: 380, diversityEarly: 420,
   /* diversityHoldLine: 切り札を持ったまま DIVERSITY のラインをコンパイル圏 (10点以上でリード) にする減点 */
   diversityHoldLine: 90,
+  /* ユーザー 2026-10-16「3本目のコンパイルでいきなり DIVERSITY 0 を出して勝つのがめっちゃ強い」。つよい以上と特化だけ。
+     diversityKind: 3本目が DIVERSITY で手札に DIVERSITY 0 があるとき、場の表向きの DIVERSITY 以外の種類1つあたりの価値
+     (5種類まで)。5種類そろった構えだけを見ると、相手の返しで1種類崩される読みで構えを捨て、
+     自分で相手の札を消して種類を減らしていた。種類を残す・相手の裏を表に返す・新しい種類を表で出す手に値打ちを出す /
+     diversityWin: 2本済みで5種類そろった構え (次の手番に出すだけで勝つ) の価値。diversityLast の代わりに使う。
+     380 では「2ラインでリードしてコントロールを取りにいく」手 (2本済みのとき 300〜600) に負け、構えを崩していた /
+     diversityNear: あと1種類の構え。相手の返しで1種類崩されても、次の手番に1種類足せば構え直せるので、崩される読みで捨てない */
+  diversityKind: 90, diversityWin: 700, diversityNear: 300,
+  /* diversityKeep: 1本目・2本目のうち、手札の DIVERSITY 0 そのものの価値。DIVERSITY のラインを10点で止める減点
+     (diversityHoldLine) は手札に DIVERSITY 0 があるときだけ効くので、DIVERSITY 0 自身を裏で出して10点にする手が素通りしていた */
+  diversityKeep: 250,
   /* HATE 1 (手札を3枚捨てて2枚削除) は代償が見えやすく、読みだけだと出し渋る。
      相手の場に2枚以上あれば (一番上を消すと下が出てくるので、同じラインの2枚でもよい) 表で出す手に加点、
      1枚以下なら自分のカードまで消すことになるので出さない (hate1Few の減点)。監修 2026-09-28 */
@@ -2814,7 +2862,7 @@ const AI_DSH_W = {
   refreshUrgency: 120,
   choiceDepth: 1,
   orderSim: 4,
-  diversityReady: 120, diversityLast: 380, diversityEarly: 420, diversityHoldLine: 90,
+  diversityReady: 120, diversityLast: 380, diversityEarly: 420, diversityHoldLine: 90, diversityKind: 90, diversityWin: 700, diversityNear: 300, diversityKeep: 250,
 };
 function setAiSpecialistWeights(obj) {
   const unknown = [];
@@ -3302,18 +3350,50 @@ function aiDiversityReady(st, side) {
   if (!d0) return false;
   const prot = st.players[side].protocols.find(p => protoHas(p, 'DIVERSITY'));
   if (!prot || prot.compiled) return false;
+  if (aiDiversityOtherKinds(st) < 5) return false;
+  return [0, 1, 2].some(line => canPlay(st, side, d0, line, true));
+}
+/* 場の表向きの札の、DIVERSITY 以外のプロトコルの種類数 (DIVERSITY 0 は自分で DIVERSITY を足すので、残り5種類が要る) */
+function aiDiversityOtherKinds(st) {
   const kinds = new Set();
   for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++) for (const uid of st.lines[l][s]) {
     if (st.cards[uid].faceUp) kinds.add(DEFS[st.cards[uid].def].proto);
   }
   kinds.delete('DIVERSITY');
-  if (kinds.size < 5) return false;
-  return [0, 1, 2].some(line => canPlay(st, side, d0, line, true));
+  return kinds.size;
+}
+/* 両者のプロトコルに DIVERSITY 以外が5種類あるか (重なっていて足りなければ、DIVERSITY 0 の条件は満たせない) */
+function aiDiversityPossible(st) {
+  const names = new Set();
+  for (const p of st.players) for (const prot of p.protocols) for (const n of protoNamesOf(prot)) names.add(n);
+  names.delete('DIVERSITY');
+  return names.size >= 5;
+}
+/* 3本目の DIVERSITY 0 を狙っているとき、反転・削除・戻すの的で場の種類がどう変わるか (つよい以上と特化)。
+   相手の裏の札を表にして種類を足す・唯一の種類の札を裏にしない (相手のコンパイルを止める的のほうが重いので半分の重み) */
+function aiDiversityPickGain(st, me, uid, prompt) {
+  const W = aiWeightsFor(st, me);
+  if (!W.diversityKind || !aiTaughtTactics(st, me) || !aiDiversityIsLast(st, me) || !aiHasDefInHand(st, me, 'DIVERSITY_1')
+      || !aiDiversityPossible(st)) return 0;
+  const flip = /^(optional-)?flip$/.test(prompt);
+  if (!flip && !/^(optional-)?(delete|return)$/.test(prompt)) return 0;
+  const c = st.cards[uid];
+  const before = Math.min(5, aiDiversityOtherKinds(st));
+  const was = c.faceUp;
+  c.faceUp = flip ? !was : false;
+  const after = Math.min(5, aiDiversityOtherKinds(st));
+  c.faceUp = was;
+  return (after - before) * W.diversityKind * 0.5;
 }
 /* DIVERSITY 0 を切り札として手札に持っている (DIVERSITY 未コンパイルで、まだ最後の1本ではない) */
 function aiHoldsDiversityTrump(st, side) {
   const prot = st.players[side].protocols.find(p => protoHas(p, 'DIVERSITY'));
   return !!prot && !prot.compiled && aiHasDefInHand(st, side, 'DIVERSITY_1') && !aiDiversityIsLast(st, side);
+}
+/* 切り札を持ったまま DIVERSITY のラインを10点で通してよいか: コントロールを持っていれば、コンパイルの前に
+   自分のプロトコルを並べ替えて DIVERSITY をよそへ逃がし、そのスタックを別のプロトコルで通せる (ユーザー 2026-10-16) */
+function aiDiversityHoldsLine(st, side) {
+  return aiHoldsDiversityTrump(st, side) && !(st.useControl && st.control === side);
 }
 /* DIVERSITY 以外が2本とも済んでいる = DIVERSITY 0 の即コンパイルがそのまま勝ちになる */
 function aiDiversityIsLast(st, side) {
@@ -3528,20 +3608,17 @@ function aiActionBias(st, action, side) {
     const comboPlay = d.id === 'SPEED_1' && action.faceUp && W.fire0Water4Ready && aiFire0Water4Ready(st, side);
     if (!pairOnField && !comboPlay) {
       const pairReady = aiHasDefInHand(st, side, 'SPEED_1') && aiHasDefInHand(st, side, 'SPEED_4');
-      /* 揃えて出すのは、SPEED 3 の「自分の他のカードを移動」に動かす対象 (場の自分のカード) があるときだけ。
-         場が空のうち (初手など) に出すと、動かせるのが出したばかりの SPEED 0 だけで空振りする (監修 2026-10-04) */
+      /* 揃えて出すのは、SPEED 3 の「自分の他のカードを移動」で下の表向きの札を起こせるときだけ。それまでは基本キープ
+         (ユーザー 2026-10-16「基本セットキープだよ」。場が空のうちは空振り: 監修 2026-10-04) */
       if (!pairReady) v -= 180;
-      else if (aiIsOracle(st, side)) {
-        if (d.id === 'SPEED_1' && action.faceUp && aiSpeedPairUncovers(st, side)) v += 220;
-      }
-      else if (d.id === 'SPEED_1' && action.faceUp && aiSpeedPairHasTarget(st, side)) v += 220;
+      else if (d.id === 'SPEED_1' && action.faceUp && aiSpeedPairUncovers(st, side)) v += 220;
       else v -= 160;
     }
   }
   const compiledLine = !!st.players[side].protocols[action.line].compiled;
   /* DIVERSITY 0 を切り札として持っている間は、DIVERSITY のラインを10点に届かせる加点を入れない */
   const reachLine = !(W.diversityHoldLine && protoHas(st.players[side].protocols[action.line], 'DIVERSITY')
-    && aiHoldsDiversityTrump(st, side));
+    && aiDiversityHoldsLine(st, side));
   if (compiledLine) {
     const add = action.faceUp ? d.value : 2;
     const likelyRecompile = mine + add >= 10 && mine + add > theirs;
@@ -3876,7 +3953,7 @@ function aiScoreRaw(st, me) {
 
   const myGaps = [], opGaps = [];
   /* DIVERSITY 0 を切り札として持っている間は、DIVERSITY のラインを10点で普通にコンパイルすると切り札が無駄になる */
-  const saveDiversity = W.diversityHoldLine && aiHoldsDiversityTrump(st, me);
+  const saveDiversity = W.diversityHoldLine && aiDiversityHoldsLine(st, me);
   for (let l = 0; l < 3; l++) {
     const li = lineInfo[l];
 
@@ -3974,7 +4051,17 @@ function aiScoreRaw(st, me) {
     const s0 = aiHasDefInHand(st, me, 'SPEED_1'), s3 = aiHasDefInHand(st, me, 'SPEED_4');
     sc += W.speedPairKeep * ((s0 ? 1 : 0) + (s3 ? 1 : 0) + (s0 && s3 ? 1 : 0));
   }
-  if (W.diversityReady && aiDiversityReady(st, me)) sc += aiDiversityIsLast(st, me) ? W.diversityLast : W.diversityReady;
+  /* 3本目の DIVERSITY 0 に向けて、場の種類をそろえる・残す (つよい以上と特化。ふつう・かんたんは従来の diversityLast だけ) */
+  const diversityTaught = aiTaughtTactics(st, me) && aiDiversityIsLast(st, me) && aiHasDefInHand(st, me, 'DIVERSITY_1');
+  if (W.diversityReady && aiDiversityReady(st, me)) {
+    sc += !aiDiversityIsLast(st, me) ? W.diversityReady : diversityTaught && W.diversityWin ? W.diversityWin : W.diversityLast;
+  }
+  if (W.diversityKeep && aiTaughtTactics(st, me) && aiHoldsDiversityTrump(st, me) && aiDiversityPossible(st)) sc += W.diversityKeep;
+  if (diversityTaught && aiDiversityPossible(st)) {
+    const kinds = Math.min(5, aiDiversityOtherKinds(st));
+    sc += W.diversityKind * kinds;
+    if (kinds === 4) sc += W.diversityNear;
+  }
   /* 特化 (DSH): FIRE 0 + WATER 4 の構え。WATER 4 は自分を戻すので、撃ったあとも構えは残る */
   if (aiUsesCombos(st, me) && W.fire0Water4Ready && aiFire0Water4Ready(st, me)) sc += W.fire0Water4Ready;
   sc += aiBoardEffectScore(st, me);
@@ -4075,6 +4162,7 @@ function randomPicks(req) {
 }
 
 let AI_CHOICE_DEPTH = 0;
+const AI_YESNO_MAX_DEPTH = 4;
 let AI_SEARCH_DEADLINE = 0;
 
 function aiSearchExpired() {
@@ -4309,7 +4397,7 @@ function aiHate1ReuseThreat(st, me) {
   for (const uid in st.cards) {
     const c = st.cards[uid];
     if (c.owner !== op || !want[c.def]) continue;
-    const known = AI_PEEK_SIDE === me || !!(c.knownTo & (1 << me));
+    const known = AI_PEEK_SIDE === me || aiCardKnownTo(st, uid, me);
     if (known) { if (c.zone === 'hand' + op) return W.hate1Reuse; }
     else if (c.zone === 'hand' + op || c.zone === 'deck' + op) maybe = true;
   }
@@ -4400,7 +4488,9 @@ function smartPicks(st, req) {
         /* ORACLE: 決め打ちしない。自分を動かす・動かさない・ほかの札を動かすを、動かした後の盤面で比べる。
            自分を動かすと SPEED 3 が裏返って値が 3 → 2 になり、次の手番からの移動も失う。下の SPEED 0 を起こしても、
            0 と 3 を出し直して同じ札を行き来させるだけの空回りがあった (ユーザー 2026-10-15「無駄に使って裏に向ける」) */
-        if (self && !aiIsOracle(st, me)) return [self];
+        /* ORACLE 以外も、自分を動かすのは下の表向きの札 (SPEED 0 など) の中段を起こせるときだけ。
+           下に何も無いのに動かすと、ただ裏返って値 3 → 2 になり、移動も失う (2026-10-16、GATEKEEPER・つよいで確認) */
+        if (self && !aiIsOracle(st, me) && aiUncoversBelow(st, self)) return [self];
       }
       if (req.prompt === 'optional-shift' && req.context === AI_LOCK_COVER && aiLockKeepsCover(st, me)) return [];
       /* ロック特化: PSYCHIC 4 の「相手のカードを戻す」は使う (このカードが裏返って値は下がるが、相手の手を1つ遅らせる)。
@@ -4486,6 +4576,7 @@ function smartPicks(st, req) {
             s -= Math.max(0, aiMiddleValue(DEFS[c.def])) * aiWeightsFor(st, me).uncoverMid;
           }
         }
+        if (loc) s += aiDiversityPickGain(st, me, uid, req.prompt || '');
         s += (c.zone ? cardValue(st, uid) : DEFS[c.def].value) * 2;
         return { uid, s };
       });
@@ -4574,6 +4665,13 @@ function smartPicks(st, req) {
         const otherPending = req.protocols.some(protocol => !protoHas(protocol, 'DARKNESS') && !protocol.compiled);
         if (darkness && !darkness.compiled && otherPending) return [0];
       }
+      /* 切り札の DIVERSITY 0 を持っていて、DIVERSITY のラインをコンパイルするなら、自分のプロトコルを並べ替えて DIVERSITY を逃がす */
+      if (req.prompt === 'control-rearrange' && req.controlReason === 'compile' && Number.isInteger(req.controlLine)
+          && Array.isArray(req.protocols) && aiHoldsDiversityTrump(st, me)) {
+        const here = req.protocols[req.controlLine];
+        const otherPending = req.protocols.some(protocol => !protoHas(protocol, 'DIVERSITY') && !protocol.compiled);
+        if (here && protoHas(here, 'DIVERSITY') && otherPending) return [0];
+      }
       if (req.options.length <= 1 && !req.optional) return [0];
       let best = [0], bestSc = -Infinity;
       for (let i = 0; i < req.options.length; i++) {
@@ -4587,6 +4685,9 @@ function smartPicks(st, req) {
       return best;
     }
     case 'yesNo': {
+      /* 読みの中の読みで yes/no を両方試し続けると、引くたびに動かせる札 (SPIRIT 3 系) が2枚あるときなどに
+         「引く → 動かすか? → 動かした先で引く → …」が倍々に枝分かれして止まらなくなる。深いところでは「する」に決める */
+      if (AI_CHOICE_DEPTH > AI_YESNO_MAX_DEPTH) return ['yes'];
       const yS = aiChoiceScore(st, req, ['yes'], me);
       const nS = aiChoiceScore(st, req, [], me);
       return yS >= nS ? ['yes'] : [];
@@ -4603,6 +4704,16 @@ function smartPicks(st, req) {
           const sourceIndex = order[req.controlLine];
           return darknessIndex >= 0 && !req.compiled[darknessIndex]
             && sourceIndex !== darknessIndex && !req.compiled[sourceIndex];
+        });
+        if (candidates.length) perms = candidates;
+      }
+      /* 切り札の DIVERSITY 0 を持っていれば、コンパイルするラインには DIVERSITY 以外の未コンパイルを持ってくる */
+      if (req.target === me && req.controlReason === 'compile' && Number.isInteger(req.controlLine)
+          && Array.isArray(req.current) && Array.isArray(req.compiled) && aiHoldsDiversityTrump(st, me)) {
+        const diversityIndex = req.current.indexOf('DIVERSITY');
+        const candidates = perms.filter(order => {
+          const sourceIndex = order[req.controlLine];
+          return diversityIndex >= 0 && sourceIndex !== diversityIndex && !req.compiled[sourceIndex];
         });
         if (candidates.length) perms = candidates;
       }
@@ -4718,11 +4829,6 @@ function aiFaceDownAllowed(st, side, action, acts) {
   return false;
 }
 
-/* SPEED 0 → 3 を揃えて出すとき、SPEED 3 の移動に対象があるか (出す前から場に自分のカードがある) */
-function aiSpeedPairHasTarget(st, side) {
-  for (let l = 0; l < 3; l++) if (st.lines[l][side].length) return true;
-  return false;
-}
 /* SPEED 3 の中段の移動で、下の表向きのカードを起動できるか (一番上をどかすと、表向きの札が出てきて中段が動く)。
    ユーザー 2026-10-15 (ぱうぷる戦の11手目): 0と3を揃えても、1回目の移動で下の札を起動できず、2回目の追加プレイでも
    点が伸びないなら、揃えて出す意味がない。ORACLE はこれがあるときだけ揃える手に上乗せし、決め打ちもしない */
@@ -4737,13 +4843,35 @@ function aiSpeedPairUncovers(st, side) {
   return false;
 }
 
+/* その1手で、未コンパイルのラインが10以上かつ相手より上になるか */
+function aiPlayReachesCompile(state, side, a) {
+  const r = apply(state, a);
+  if (r.error) return false;
+  for (let l = 0; l < 3; l++) {
+    const m = lineTotal(r.state, l, side);
+    if (m >= 10 && m > lineTotal(r.state, l, 1 - side) && !r.state.players[side].protocols[l].compiled) return true;
+  }
+  return false;
+}
+/* uid (一番上) をどかすと、すぐ下の自分の表向きの札の中段がもう一度動くか */
+function aiUncoversBelow(st, uid) {
+  for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++) {
+    const stack = st.lines[l][s], i = stack.indexOf(uid);
+    if (i < 1 || i !== stack.length - 1) continue;
+    const below = st.cards[stack[i - 1]];
+    const eff = DEFS[below.def].eff;
+    return !!(below.faceUp && eff && eff.middle && Array.isArray(eff.middle.ops) && eff.middle.ops.length);
+  }
+  return false;
+}
+
 function aiDecisionActions(state) {
   let acts = legalActions(state);
   const side = state.turn;
   if (aiUsesCombos(state, side) && aiWeightsFor(state, side).speedPairStrategy
       && !aiHasDefOnField(state, side, 'SPEED_1') && !aiHasDefOnField(state, side, 'SPEED_4')
       && aiHasDefInHand(state, side, 'SPEED_1') && aiHasDefInHand(state, side, 'SPEED_4')
-      && aiSpeedPairHasTarget(state, side) && !aiIsOracle(state, side)) {
+      && aiSpeedPairUncovers(state, side) && !aiIsOracle(state, side)) {
     const speed0 = acts.filter(action => action.type === 'play' && action.faceUp
       && state.cards[action.card] && state.cards[action.card].def === 'SPEED_1');
     if (speed0.length) acts = speed0;
@@ -4753,22 +4881,15 @@ function aiDecisionActions(state) {
   if (aiUsesCombos(state, side) && aiWeightsFor(state, side).speedPairStrategy
       && !aiHasDefOnField(state, side, 'SPEED_1') && !aiHasDefInHand(state, side, 'SPEED_1')
       && !state.players[side].trash.some(u => state.cards[u] && state.cards[u].def === 'SPEED_1')) {
-    const reaches = (a) => {
-      const r = apply(state, a);
-      if (r.error) return false;
-      for (let l = 0; l < 3; l++) {
-        const m = lineTotal(r.state, l, side);
-        if (m >= 10 && m > lineTotal(r.state, l, 1 - side) && !r.state.players[side].protocols[l].compiled) return true;
-      }
-      return false;
-    };
-    const kept = acts.filter(a => !(a.type === 'play' && state.cards[a.card] && state.cards[a.card].def === 'SPEED_4') || reaches(a));
+    const kept = acts.filter(a => !(a.type === 'play' && state.cards[a.card] && state.cards[a.card].def === 'SPEED_4') || aiPlayReachesCompile(state, side, a));
     if (kept.length) acts = kept;
   }
-  /* 揃っていても、SPEED 3 の移動に対象 (場の自分のカード) が無いうちは 0 も 3 も出さずに取っておく */
+  /* 揃っていても、SPEED 3 の移動で下の表向きの札を起こせないうちは、0 も 3 も出さずにセットでキープする
+     (ユーザー 2026-10-16「基本セットキープだよ」)。その1手でコンパイルに届くなら出してよい */
   if (aiUsesCombos(state, side) && aiWeightsFor(state, side).speedPairStrategy
-      && aiHasDefInHand(state, side, 'SPEED_1') && aiHasDefInHand(state, side, 'SPEED_4') && !aiSpeedPairHasTarget(state, side)) {
-    const kept = acts.filter(a => !(a.type === 'play' && state.cards[a.card] && ['SPEED_1', 'SPEED_4'].includes(state.cards[a.card].def)));
+      && aiHasDefInHand(state, side, 'SPEED_1') && aiHasDefInHand(state, side, 'SPEED_4') && !aiSpeedPairUncovers(state, side)) {
+    const kept = acts.filter(a => !(a.type === 'play' && state.cards[a.card] && ['SPEED_1', 'SPEED_4'].includes(state.cards[a.card].def))
+      || aiPlayReachesCompile(state, side, a));
     if (kept.length) acts = kept;
   }
   /* 裏向きは原則として表で使う。あえて裏で出してよいのは aiFaceDownAllowed の場面だけ
@@ -5346,7 +5467,7 @@ function resolveOrdered(item, state) {
 function aiCardKnownTo(st, uid, side) {
   const c = st.cards[uid];
   if (!c) return false;
-  if (c.knownTo !== undefined) return !!(c.knownTo & (1 << side));
+  if (c.knownTo !== undefined) return !!((c.knownTo | (c.seenBy || 0)) & (1 << side));
   if (c.faceUp || (c.zone && c.zone.indexOf('trash') === 0)) return true;
   return c.zone === 'hand' + side;
 }

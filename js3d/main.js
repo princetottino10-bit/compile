@@ -71,7 +71,7 @@ import { matUnlocked, MAT_W, MAT_D } from './playmat.js';
 import { initAccount, openAccount, takeAccountResume, accountState, onAccountChange } from './account.js';
 import { openCardList } from './cardlist-ov.js';
 import { openOpponentSelect } from './opponent-select.js';
-import { UNDERDOG_DECK, STRONGEST_AI, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL, UNDERDOG_TAG_RIVAL_MATE, levelLabel, fixedDeck, DEUS_LEVEL, DEUS_NAME, DEUS_BUDGET, PEEK_LEVEL, PEEK_NAME, ORACLE_LEVEL, oracleAi } from './aidecks.js';
+import { UNDERDOG_DECK, STRONGEST_AI, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL, UNDERDOG_TAG_RIVAL_MATE, levelLabel, fixedDeck, DEUS_LEVEL, DEUS_NAME, DEUS_BUDGET, PEEK_LEVEL, PEEK_NAME, ORACLE_LEVEL, oracleAi, isHonki, honkiOf, honkiAi } from './aidecks.js';
 import { openRun, runHud, showRunAfterGame } from './run-ui.js';
 import { openWeekly, weeklyHud, showWeeklyAfterGame } from './weekly-ui.js';
 import { compilesBy, loadRun, RUN_WIN_COMPILES, runWinCompiles, battleOpts, lethal, nodeById } from './run.js';
@@ -339,14 +339,16 @@ function peekMatch() { return aiDifficulty === PEEK_LEVEL && plainCpuMatch(); }
 /* 神か、すべてを見る者 (人のキャラは出さず、登場の演出がある相手) */
 function machineMatch() { return deusMatch() || peekMatch(); }
 /* CHALLENGE の ORACLE との対戦か。相手のキャラは紫苑で固定 (2026-10-15 ユーザー「ORACLE は紫苑に固定しよう 特別にね」) */
-function oracleMatch() { return aiDifficulty === ORACLE_LEVEL && plainCpuMatch(); }
-const ORACLE_AVATAR = 'shion';
+/* 本気の4人 (aidecks.js の HONKI) も ORACLE の読みで、相手のキャラはその子で固定 */
+function oracleMatch() { return (aiDifficulty === ORACLE_LEVEL || isHonki(aiDifficulty)) && plainCpuMatch(); }
+const ORACLE_AVATAR_DEFAULT = 'shion';
+const oracleAvatar = () => (isHonki(aiDifficulty) ? honkiOf(aiDifficulty).avatar : ORACLE_AVATAR_DEFAULT);
 function plainCpuMatch() { return !runMode && !storyNode && !tagMates && !roomMode && !puzzle && !tutorial && !demoMode && !trainingMode; }
 function oppAvatarPlan() {
   if (plannedOpp !== undefined) return plannedOpp;
   if (storyNode) return (plannedOpp = storyNode.oppAvatar || null);
   if (machineMatch()) return (plannedOpp = null);   // 人のキャラは出さない (相手は機械の神・目)
-  if (oracleMatch()) return (plannedOpp = ORACLE_AVATAR);
+  if (oracleMatch()) return (plannedOpp = oracleAvatar());
   /* 勝ち抜き戦のボス戦は、ボス本人 (avatar.js の boss_<id>) */
   if (runMode && runKind === 'run') {
     const run = loadRun();
@@ -397,9 +399,9 @@ function syncAvatar() {
   let me = sp ? sp.a : tutorial ? 'zundamon' : storyNode ? (storyTag ? null : storyNode.mate || null)
     : roomWatching && roomLooks ? roomLooks[0].avatar || 'shion' : myAvatarId();
   if (udTag && UD_OPP.includes(me)) me = avatarIds().find(i => !UD_OPP.includes(i) && i !== 'asagi') || me;
-  /* ORACLE の相手は紫苑で決まり。自分が紫苑なら、自分はほかの子にする */
+  /* ORACLE の相手は紫苑 (本気の4人はその子) で決まり。自分が同じ子なら、自分はほかの子にする */
   const oracleOpp = !sp && !storyNode && !tagMates && oracleMatch();
-  if (oracleOpp && me === ORACLE_AVATAR) me = avatarIds().find(i => i !== ORACLE_AVATAR) || me;
+  if (oracleOpp && me === oracleAvatar()) me = avatarIds().find(i => i !== oracleAvatar()) || me;
   const pool = (ids) => shuffled(avatarIds().filter(i => !ids.includes(i)));
   const mate = storyTag ? storyNode.mate || null : tagMates && (!sp || sp.a) ? (sp ? pool([sp.a, sp.b])[0]
     : (avatarIds().find(i => i !== me && i === 'asagi' && !(udTag && UD_OPP.includes(i))) || avatarIds().find(i => i !== me && !(udTag && UD_OPP.includes(i))))) : null;
@@ -409,7 +411,7 @@ function syncAvatar() {
   else if (sp) oppIds = sp.b ? [sp.b, pool([sp.a, sp.b, mate])[0] || sp.b] : [null, null];
   else if (storyNode) oppIds = [storyNode.oppAvatar || null, storyTag ? storyNode.tag.oppMateAvatar || null : null];
   else if (machineMatch()) oppIds = [null, null];
-  else if (oracleOpp) oppIds = [ORACLE_AVATAR, null];
+  else if (oracleOpp) oppIds = [oracleAvatar(), null];
   else {
     /* 相手のキャラ: 設定の「相手のキャラ」(ふだんはランダム)。自分・味方と同じ子は選ばない */
     /* デッキを決める前に決めておいた子 (oppAvatarPlan。得意プロトコルを CPU のデッキに入れるため) */
@@ -1301,7 +1303,7 @@ async function boot() {
           const all = cards.protocols.map(x => x.name);
           tagMates = { p0: shuffled(all.filter(n => !p0.includes(n) && !p1.includes(n) && !UNDERDOG_TAG_RIVAL_MATE.includes(n))).slice(0, 3), p1: UNDERDOG_TAG_RIVAL_MATE.slice() };
           applyAiDifficulty(UNDERDOG_TAG_LEVEL);
-          setupNote = '下剋上タッグ: あなた ' + p0.join(' / ') + ' ＋ かんたんの味方 ' + tagMates.p0.join(' / ') + '　vs 最強タッグ ' + p1.join(' / ') + ' ＋ ' + tagMates.p1.join(' / ');
+          setupNote = '下剋上タッグ: あなた ' + p0.join(' / ') + ' ＋ かんたんの味方 ' + tagMates.p0.join(' / ') + '　vs GATEKEEPER タッグ ' + p1.join(' / ') + ' ＋ ' + tagMates.p1.join(' / ');
           break;
         }
         if (opp.underdog) {
@@ -1309,7 +1311,7 @@ async function boot() {
           p0 = UNDERDOG_DECK.slice();
           p1 = STRONGEST_AI.slice();
           applyAiDifficulty(UNDERDOG_LEVEL);
-          setupNote = '下剋上: 最弱 ' + p0.join(' / ') + ' で最強に挑む';
+          setupNote = '下剋上: 最弱 ' + p0.join(' / ') + ' で GATEKEEPER に挑む';
           break;
         }
       }
@@ -2047,8 +2049,9 @@ function applyAiDifficulty(level, opts) {
     blunder: opts && opts.engine !== undefined ? 0 : level <= 0 ? 0.3 : 0,
     budget: level === DEUS_LEVEL || level === PEEK_LEVEL ? DEUS_BUDGET : level >= 2 ? 1200 : 900,
     /* 最強・挑戦者 = dsh 特化 + 固定デッキ (aidecks.js)、ロック特化 = PSYCHIC 1 の永続ロック狙い。
-       機械仕掛けの神 (CODE:PURPLE) もロック特化の読み (ぱぱぱのぱの棋譜から寄せたもの) */
-    specialist: level >= 3,
+       機械仕掛けの神 (CODE:PURPLE) もロック特化の読み (ぱぱぱのぱの棋譜から寄せたもの)。
+       つよいも最強と同じ dsh 特化の読み (2026-10-16 ユーザー「つよいと最強統合しない？」)。違いはデッキが決まっているかだけ */
+    specialist: level >= 2,
     kind: level === 4 || level === DEUS_LEVEL || level === PEEK_LEVEL ? 'psylock' : 'dsh',
     /* すべてを見る者: こちらの手札・裏向き・山札の並びを本当のまま見て読む (engine の setAiPeek) */
     peek: level === PEEK_LEVEL,
@@ -2057,6 +2060,7 @@ function applyAiDifficulty(level, opts) {
   };
   /* ORACLE (CHALLENGE の相手): 管理者の自動プレイと同じ読み。学習モデルは Worker が読む。画面側で考えるときは aiAction の ORACLE_CPU_AI で当てる */
   if (level === ORACLE_LEVEL) Object.assign(config, ORACLE_CPU_AI);
+  if (isHonki(level)) Object.assign(config, honkiAi(ORACLE_CPU_AI, level));
   Engine.setAiLevel(config.level);
   if (Engine.setAiBlunder) Engine.setAiBlunder(config.blunder);
   Engine.setAiThinkBudget(config.budget);
@@ -2082,16 +2086,18 @@ const autoOn = () => autoPlay && (!roomMode || roomAutoOk());
 const autoFor = (side) => autoOn() && side === ME;
 /* CPU 戦の相手としての ORACLE (CHALLENGE、誰でも選べる)。CPU の側 (1) に特化と ORACLE の手筋を当てる。オート操作の開放ではない */
 const ORACLE_CPU_AI = { ...AUTO_AI, specSide: 1 };
-const oracleFor = (side) => aiDifficulty === ORACLE_LEVEL && plainCpuMatch() && side !== ME && !autoFor(side);
+const oracleFor = (side) => oracleMatch() && side !== ME && !autoFor(side);
+/* CPU の側に当てる ORACLE の設定 (本気の4人はその子の設定、ORACLE はロックのデッキならロック用に切り替え) */
+const oracleCpuAi = (st) => (isHonki(aiDifficulty) ? honkiAi(ORACLE_CPU_AI, aiDifficulty) : oracleAi(ORACLE_CPU_AI, st));
 /* 下剋上タッグの味方: かんたんと同じ読み (3割はでたらめ)。相手の最強タッグはいつもの最強の読み */
 const UNDERDOG_MATE_AI = { level: 0, blunder: 0.3, budget: 900, specialist: false, kind: 'dsh' };
 const weakMate = (side) => aiDifficulty === UNDERDOG_TAG_LEVEL && side === ME && !roomMode && partnerMove();
 function aiAction(st) {
-  const over = autoFor(st && st.turn) ? oracleAi(AUTO_AI, st) : weakMate(st && st.turn) ? UNDERDOG_MATE_AI : st && oracleFor(st.turn) ? oracleAi(ORACLE_CPU_AI, st) : null;
+  const over = autoFor(st && st.turn) ? oracleAi(AUTO_AI, st) : weakMate(st && st.turn) ? UNDERDOG_MATE_AI : st && oracleFor(st.turn) ? oracleCpuAi(st) : null;
   return thinking(aiClient ? aiClient.action(st, over) : Promise.resolve(withoutTrace(() => Engine.ai.action(st))));
 }
 function aiAnswer(st, req) {
-  const over = req && autoFor(req.player) ? oracleAi(AUTO_AI, st) : req && weakMate(req.player) ? UNDERDOG_MATE_AI : req && oracleFor(req.player) ? oracleAi(ORACLE_CPU_AI, st) : null;
+  const over = req && autoFor(req.player) ? oracleAi(AUTO_AI, st) : req && weakMate(req.player) ? UNDERDOG_MATE_AI : req && oracleFor(req.player) ? oracleCpuAi(st) : null;
   return thinking(aiClient ? aiClient.answer(st, req, over) : Promise.resolve(withoutTrace(() => Engine.ai.answer(st, req))));
 }
 /* 上のバーの AUTO (管理者だけ。チュートリアル・問題・検証盤面・リプレイ・観戦、オンラインのタッグ・レート戦では出さない) */
@@ -2104,7 +2110,7 @@ function syncAutoButton() {
   if (!b) {
     b = document.createElement('button');
     b.id = 'btnAuto'; b.className = 'btn'; b.type = 'button';
-    b.title = 'ORACLE (学習モデル入りの最強の読み) に自分の手を指させる (管理者)';
+    b.title = 'ORACLE (学習モデル入りの GATEKEEPER の読み) に自分の手を指させる (管理者)';
     b.onclick = () => {
       const waitingMe = !!cur && !busy && !cur.requests.length && cur.state.winner === null && humanTurn(cur.state);
       autoPlay = !autoPlay;
@@ -2553,6 +2559,15 @@ function bindInput() {
     /* 縦持ちは、画面下の手札が見た目では盤面と離れていても透視投影上は
        盤面レイに重なることがある。選択済みなら配置枠のワールド座標を
        優先し、手札に当たり判定を奪われず盤面へ置けるようにする。 */
+    /* 持ち上がった選択中の札そのものに触れたときは、札の操作 (掴む・選び直す) として扱い、下のラインには置かない。
+       前は札を透かして真下のパッドや積み札を拾っていて、横持ちでは真ん中の手札が真ん中のラインの上に浮くため、
+       札を掴もう・選択を外そうとして札の上のほうに触れると、真ん中のラインに裏向きで置かれていた */
+    const onSelected = !!(selectedUid && hit && hit.obj.userData.uid === selectedUid);
+    if (onSelected) {
+      drag = { uid: selectedUid, sx: ev.clientX, sy: ev.clientY, moved: false, lastX: ev.clientX, wasSelected: true };
+      if (ev.isTrusted && el.setPointerCapture) { try { el.setPointerCapture(ev.pointerId); } catch (e) { /* 指がもう離れた */ } }
+      return;
+    }
     if (selectedUid && isCompactHandUI()) {
       const directPad = padUnder(planePoint(ev));
       if (directPad) { await dropOnPad(directPad.userData); return; }
@@ -2601,7 +2616,8 @@ function bindInput() {
     if (d.stopShadow) d.stopShadow();
     for (const pad of pads) pad.userData.hover = false;
     el.style.cursor = 'default';
-    if (!d.moved) return;             // ただのクリック → 選択のまま
+    /* ただのクリック: 選んだばかりの札は選択のまま。もう選んであった札をもう一度押したら選択を外す */
+    if (!d.moved) { if (d.wasSelected && selectedUid === d.uid) deselect(); return; }
 
     const pt = planePoint(ev);
     const over = padUnder(pt);
@@ -2632,12 +2648,14 @@ function bindInput() {
     const card = board.cards.get(selectedUid);
     if (card) { card.renderOrder = 0; raiseHandCard(selectedUid); }
     focusPlayChoice(ud.line, ud.side);
-    /* そのラインに置ける向きが1つだけなら、落としたらそのまま置く (表/裏をもう1回押させていた)。
-       戻せる対戦 (CPU 戦) だけ。オンラインは押し間違いを戻せないので、いままでどおり選んでもらう */
+    /* そのラインに置ける向きが表だけなら、落としたらそのまま置く (表/裏をもう1回押させていた)。
+       戻せる対戦 (CPU 戦) だけ。オンラインは押し間違いを戻せないので、いままでどおり選んでもらう。
+       裏しか置けないラインには自動で置かず、「裏」を押してもらう: プロトコルの違うラインはどこでも裏だけになるので、
+       触れ間違い・離し間違いがそのまま裏向きのプレイになり、真ん中に裏向きで置いてしまう誤操作が多かった */
     if (!roomMode && assistGame()) {
       const cell = document.querySelector('#playChoices section[data-line="' + ud.line + '"][data-side="' + ud.side + '"]');
       const btns = cell ? cell.querySelectorAll('button:not(.place-locked)') : [];
-      if (btns.length === 1) btns[0].click();
+      if (btns.length === 1 && btns[0].classList.contains('place-faceup')) btns[0].click();
     }
   }
 
@@ -6035,7 +6053,7 @@ function showEndActions(win) {
     gainsHtml() +
     matchSummaryHtml() +
     nextGoalsHtml() +
-    (underdogWin ? '<div class="end-sub">最弱のデッキで最強に勝ちました。称号 GIANT SLAYER・専用スリーブとマーカー・+' + UNDERDOG_XP + ' XP</div>' : '') +
+    (underdogWin ? '<div class="end-sub">最弱のデッキで GATEKEEPER に勝ちました。称号 GIANT SLAYER・専用スリーブとマーカー・+' + UNDERDOG_XP + ' XP</div>' : '') +
     '<div class="end-btns">' +
       /* オンラインは同じ部屋で再戦できない (部屋は閉じている) ので、ロビーへ戻る (前は REMATCH でタイトルに戻っていた) */
       '<button class="arr-btn ok" id="endAgain" type="button">' + (roomMode ? 'LOBBY' : 'REMATCH') + '</button>' +
@@ -6882,7 +6900,7 @@ function choiceCtx() {
    経験値は 20 ずつ 5 回に分けて入れる (帳簿の1件は 20 まで)。key が同じなので何度勝っても1回だけ */
 /* 機械仕掛けの神・すべてを見る者に勝ったときの称号 (cosmetics-ui.js の extraTitles で持ち物になる) */
 const MACHINE_TITLES = {
-  [DEUS_LEVEL]: { key: 'deicide', name: 'DEICIDE', kicker: 'DEUS EX MACHINA', text: '機械仕掛けの神を倒しました。最強の、さらに上を。', colors: ['#c9a8ff', '#ffffff', '#ffd98a'] },
+  [DEUS_LEVEL]: { key: 'deicide', name: 'DEICIDE', kicker: 'DEUS EX MACHINA', text: '機械仕掛けの神を倒しました。GATEKEEPER の、さらに上を。', colors: ['#c9a8ff', '#ffffff', '#ffd98a'] },
   [PEEK_LEVEL]: { key: 'blindspot', name: 'BLIND SPOT', kicker: 'ALL-SEEING', text: 'すべてを見通す目を、見えないところから倒しました。(隠し称号)', colors: ['#ff5a6e', '#ffffff', '#ffb0b8'] }
 };
 async function celebrateMachineTitle(t) {
@@ -6917,7 +6935,7 @@ async function celebrateUnderdog() {
     document.body.appendChild(el);
   }
   el.innerHTML = '<div class="ud-card"><small>UNDERDOG</small><h2>GIANT SLAYER</h2>' +
-    '<p>最弱のデッキで、最強の CPU を倒しました。</p>' +
+    '<p>最弱のデッキで、GATEKEEPER を倒しました。</p>' +
     '<ul><li>称号 GIANT SLAYER</li><li>専用スリーブ GIANT SLAYER</li><li>専用コントロールマーカー GIANT SLAYER</li><li>+' + UNDERDOG_XP + ' XP</li></ul>' +
     '<div class="ud-btns"><button type="button" data-ud="equip">受け取って全部着ける</button><button type="button" data-ud="ok" class="ud-sub">受け取る</button></div></div>';
   el.classList.add('show');

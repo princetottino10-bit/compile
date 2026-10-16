@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
-import { buildRunDefs, UP } from '../js3d/runcards.js';
+import { buildRunDefs, UP, ORACLE_CARDS, isOracleCard } from '../js3d/runcards.js';
 import { BOSSES, FINAL_BOSS, bossOf, battleOpts, newRun } from '../js3d/run.js';
 
 const require = createRequire(import.meta.url);
@@ -46,7 +46,15 @@ test('ボスのルールが試合の設定に入る', () => {
   assert.deepEqual(battleOpts(atBoss('sanctuary'), 0).winCompilesBySide, [3, 3]);
   assert.deepEqual(battleOpts(atBoss('sanctuary'), 0).startCompiled, [0, 1]);
   assert.deepEqual(battleOpts(atBoss('sanctuary'), 1).startCompiled, [1, 0]);
-  assert.deepEqual(battleOpts(atBoss('glacier'), 0).deckMods[1].add, ['X_WATER', 'X_WATER' + UP]);
+  assert.deepEqual(battleOpts(atBoss('glacier'), 0).deckMods[1].add, ['X_WATER', 'X_WATER' + UP, 'XO_8']);
+  /* どのボスにも ORACLE が考えた Ω カードが入り、そのプロトコルはボスのデッキにある */
+  for (const b of BOSSES) {
+    const om = (b.rule.stars || []).filter(isOracleCard);
+    assert.equal(om.length, 1, b.id);
+    assert.ok(b.deck.includes(ORACLE_CARDS.find(o => o.id === om[0]).proto), b.id);
+  }
+  /* 最強: ORACLE が考えた Ω カード2枚がボスの山札に入る */
+  assert.deepEqual(battleOpts(atBoss('strongest'), 0).deckMods[1].add, ['XO_1', 'XO_2']);
   /* 聖域: エンジンも側ごとの本数で決着を見る */
   const st = Engine.newGame({ seed: 1, p0: ['GRAVITY', 'SPIRIT', 'PSYCHIC'], p1: ['LIGHT', 'LIFE', 'PEACE'], winCompiles: 2, winCompilesBySide: [3, 2] }).state;
   assert.deepEqual(st.winBySide, [3, 2]);
