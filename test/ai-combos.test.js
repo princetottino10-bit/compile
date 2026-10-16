@@ -612,6 +612,52 @@ test('手筋 Diversity0 を持っている間は、DIVERSITY のラインを10�
   assert.ok(res.state.players[0].hand.includes(uidOf('DIVERSITY_1', 0)), 'DIVERSITY 0 は手札に残す');
 });
 
+/* DIVERSITY のライン (裏向き4枚で8点) と、10点に届く手札。control: 自分がコントロールを持っているか */
+function diversityHoldGame(control, hand) {
+  const st = game(['DIVERSITY', 'FIRE', 'WATER'], ['METAL', 'LIGHT', 'LIFE']);
+  st.useControl = true;
+  st.control = control ? 0 : -1;
+  for (const d of ['FIRE_6', 'WATER_6', 'FIRE_5', 'WATER_5']) place(st, d, 0, 0, false);
+  place(st, 'FIRE_4', 0, 1, true);
+  place(st, 'METAL_2', 1, 0, true);
+  place(st, 'LIGHT_3', 1, 1, true);
+  setHand(st, 0, hand);
+  return st;
+}
+
+test('手筋 Diversity0: DIVERSITY 0 自身を出して DIVERSITY のラインを10点にしない (切り札を手札に残す)', () => {
+  const st = diversityHoldGame(false, ['DIVERSITY_1', 'FIRE_3', 'DIVERSITY_4']);
+  const act = aiAct(st);
+  const res = resolveWithAi(Engine.apply(st, act));
+  assert.ok(res.state.players[0].hand.includes(uidOf('DIVERSITY_1', 0)), 'DIVERSITY 0 は手札に残す (実際: ' + JSON.stringify(act) + ')');
+});
+
+test('手筋 Diversity0: コントロールを持っていれば、DIVERSITY のラインも10点にしてよい (コンパイルの前に並べ替えて逃がす)', () => {
+  const hand = ['DIVERSITY_1', 'FIRE_3', 'WATER_4'];
+  const without = resolveWithAi(Engine.apply(diversityHoldGame(false, hand), aiAct(diversityHoldGame(false, hand))));
+  assert.ok(Engine.lineTotal(without.state, 0, 0) < 10, 'コントロールが無ければ10点にしない');
+  const st = diversityHoldGame(true, hand);
+  const act = aiAct(st);
+  const res = resolveWithAi(Engine.apply(st, act));
+  assert.ok(Engine.lineTotal(res.state, 0, 0) >= 10, 'コントロールがあれば10点にする (実際: ' + JSON.stringify(act) + ')');
+  assert.ok(res.state.players[0].hand.includes(uidOf('DIVERSITY_1', 0)), 'DIVERSITY 0 は手札に残す');
+});
+
+test('手筋 Diversity0: 切り札を持って DIVERSITY のラインをコンパイルするときは、コントロールで DIVERSITY を逃がす', () => {
+  const st = game(['DIVERSITY', 'FIRE', 'WATER'], ['METAL', 'LIGHT', 'LIFE']);
+  st.players[0].protocols[2].compiled = true;
+  setHand(st, 0, ['DIVERSITY_1', 'FIRE_2']);
+  Engine.setAiLevel(2);
+  const protocols = st.players[0].protocols.map(p => ({ name: p.name, names: p.names, compiled: p.compiled }));
+  const option = Engine.ai.answer(st, { id: 1, kind: 'option', player: 0, optional: false, prompt: 'control-rearrange',
+    options: ['自分のプロトコルを並べ替える', '相手のプロトコルを並べ替える', '並べ替えない'],
+    controlReason: 'compile', controlLine: 0, protocols });
+  assert.deepEqual(option, [0], '自分のプロトコルを並べ替える');
+  const order = Engine.ai.answer(st, { id: 2, kind: 'arrange', player: 0, target: 0, prompt: 'rearrange',
+    current: protocols.map(p => p.name), compiled: protocols.map(p => p.compiled), controlReason: 'compile', controlLine: 0 });
+  assert.equal(protocols[order[0]].name, 'FIRE', 'コンパイルするラインに未コンパイルの FIRE を持ってくる (実際: ' + JSON.stringify(order) + ')');
+});
+
 test('手筋 Diversity0: DIVERSITY が最後の1本なら、10点で普通にコンパイルしてもよい', () => {
   const st = game(['DIVERSITY', 'FIRE', 'WATER'], ['METAL', 'LIGHT', 'LIFE']);
   st.players[0].protocols[1].compiled = true;
