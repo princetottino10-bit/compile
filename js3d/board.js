@@ -185,9 +185,12 @@ export function createBoard(stage, defIndex, me, hooks) {
   });
 
   /* ---------- カードの生成・テクスチャ ---------- */
+  /* カオス勝ち抜き戦の「目隠し」: 自分の手札と自分の裏向きのカードも見えない (表向きになった札だけ見える) */
+  let blind = false;
   function defFor(st, uid) {
     const c = st.cards[uid];
     if (!c) return UNKNOWN_DEF;
+    if (blind && c.owner === me && !c.faceUp) return UNKNOWN_DEF;
     const known = c.faceUp || ((c.knownTo || 0) & (1 << me));
     return known ? (defIndex[c.def] || UNKNOWN_DEF) : UNKNOWN_DEF;
   }
@@ -942,6 +945,7 @@ export function createBoard(stage, defIndex, me, hooks) {
         }
       }
     },
+    setBlind(v) { blind = !!v; },
     group, cards, cardOf, slotFor, syncInstant, applyTransition,
     moveTo, highlightPlayable, pulse, locOf, playLanding,
     setHighlight, clearHighlight, detectCompiles, compileSequence, visualFingerprint,
