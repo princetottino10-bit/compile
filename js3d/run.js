@@ -64,7 +64,8 @@ export const BOSSES = [
     text: 'ボスの山札に β-WATER と、強化した β-WATER が入る', rule: { stars: ['X_WATER', 'X_WATER' + UP] } }
 ];
 export const FINAL_BOSS = { id: 'strongest', name: '最強', title: '頂に立つ者', deck: STRONGEST_AI.slice(), color: '#ff4fa3',
-  text: 'いちばん強い CPU。ボスのカードは全部 強化済み、はじめの手札は 6 枚', rule: { upgradeAll: true, bossHand: 6 } };
+  text: 'いちばん強い CPU。ボスのカードは全部 強化済み、はじめの手札は 6 枚。山札に ORACLE が考えた Ω カードが2枚入る',
+  rule: { upgradeAll: true, bossHand: 6, stars: ['XO_1', 'XO_2'] } };
 export const bossOf = (run) => (run && run.boss === FINAL_BOSS.id ? FINAL_BOSS : BOSSES.find(b => b.id === (run && run.boss)) || FINAL_BOSS);
 function chooseBoss(heat, rnd) {
   return heat >= 5 ? FINAL_BOSS.id : BOSSES[Math.floor(rnd() * BOSSES.length)].id;

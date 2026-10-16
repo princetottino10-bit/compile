@@ -76,6 +76,25 @@ export const STAR_CARDS = [
   { id: 'X_DIVERSITY', proto: 'DIVERSITY', value: 2, from: { upper: 3, middle: 1 } },
   { id: 'X_UNITY', proto: 'UNITY', value: 2, from: { middle: [0, 2] } }
 ];
+/* Ω カード (2026-10-16): ORACLE が考えたカード。勝ち抜き戦の最終ボス「最強」(FIRE / WATER / SPEED) の山札にだけ入る (あなたは手に入れられない)。
+   作り方: ORACLE 同士の対戦から拾った196盤面で、手番の側に候補を1枚足して表で出させ、学習モデルで勝つ見込みを読んだ
+   (scripts/card_oracle.js)。効果を3つつないだ値4の候補のうち、元の手札の最善手より見込みを一番上げた2枚 (平均 +20.0pt / +19.1pt)。
+   id は β と見分けるため XO_ (isStar に当たらない) */
+export const ORACLE_CARDS = [
+  { id: 'XO_1', proto: 'WATER', value: 4, art: 3, types: ['delete', 'play'],
+    middle: 'カードを1枚削除する。カードを1枚プレイする。あなたのデッキの一番上のカードを、他の各ラインに裏向きで1枚ずつプレイする。',
+    ops: [{ op: 'delete' }, { op: 'play', source: 'hand' },
+      { op: 'forEachLine', lines: 'otherLines', ops: [{ op: 'play', source: 'topDeck', facing: 'down', dest: 'currentLine' }] }] },
+  { id: 'XO_2', proto: 'SPEED', value: 4, art: 2, types: ['shift', 'play'],
+    middle: 'カードを1枚移動させる。カードを1枚プレイする。あなたのデッキの一番上のカードを、他の各ラインに裏向きで1枚ずつプレイする。',
+    ops: [{ op: 'shift' }, { op: 'play', source: 'hand' },
+      { op: 'forEachLine', lines: 'otherLines', ops: [{ op: 'play', source: 'topDeck', facing: 'down', dest: 'currentLine' }] }] }
+];
+const ORACLE = Object.fromEntries(ORACLE_CARDS.map(s => [s.id, s]));
+export const isOracleCard = (id) => !!ORACLE[baseOf(id)];
+/** ORACLE のカードの呼び名: Ω-プロトコル 値 */
+export const omegaName = (proto, value) => 'Ω-' + proto + ' ' + value;
+
 /** オリジナルカードの呼び名: β-プロトコル 値 (元のカードと見分けられるように) */
 export const betaName = (proto, value) => 'β-' + proto + ' ' + value;
 const STAR = Object.fromEntries(STAR_CARDS.map(s => [s.id, s]));
@@ -145,6 +164,14 @@ export function buildRunDefs(cardsJson, effectsJson) {
       add({ id: s.id + UP, proto: p.name, value: s.value + 1, eff }, { ...face, id: s.id + UP, value: s.value + 1, mark: 'β＋', baseId: s.id });
     }
   }
+  for (const o of ORACLE_CARDS) {
+    const p = cardsJson.protocols.find(x => x.name === o.proto);
+    if (!p) continue;
+    const { eff, face: text, types, art } = starParts(o, p, effectsJson);
+    const look = p.cards.find(c => c.number === art) || p.cards[p.cards.length - 1];
+    add({ id: o.id, proto: p.name, value: o.value, eff },
+      { proto: p.name, color: p.color, set: p.set, number: look.number, upper: text.upper, middle: text.middle, lower: text.lower, effectTypes: types, id: o.id, value: o.value, mark: 'Ω' });
+  }
   return { engine, ui };
 }
 
@@ -152,6 +179,7 @@ export function buildRunDefs(cardsJson, effectsJson) {
 export function runCardLabel(id, defIndex) {
   const d = defIndex && defIndex[id];
   if (!d) return String(id);
+  if (ORACLE[baseOf(id)]) return omegaName(d.proto, d.value);
   if (STAR[baseOf(id)]) return betaName(d.proto, d.value) + (isUpgraded(id) ? '＋' : '');
   return d.proto + ' ' + d.value + (isUpgraded(id) ? '＋' : '');
 }

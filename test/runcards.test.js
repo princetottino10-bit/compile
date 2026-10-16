@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
-import { buildRunDefs, STAR_CARDS, UP, upgradeOf, baseOf, isStar } from '../js3d/runcards.js';
+import { buildRunDefs, STAR_CARDS, ORACLE_CARDS, UP, upgradeOf, baseOf, isStar, isOracleCard, runCardLabel } from '../js3d/runcards.js';
 import { battleOpts } from '../js3d/run.js';
 
 const require = createRequire(import.meta.url);
@@ -94,4 +94,34 @@ test('β カード: 全プロトコルにあり、元のカードの段を写し
     }
     assert.notEqual(res.state.winner, null, s.id + ' で決着しない');
   }
+});
+
+test('Ω カード (ORACLE が考えた): β とは別の印・呼び名で、β の選択肢 (isStar) には入らない。表で出すと3つの効果が順に解決する', () => {
+  const ui = Object.fromEntries(defs.ui.map(d => [d.id, d]));
+  for (const o of ORACLE_CARDS) {
+    assert.equal(ui[o.id].mark, 'Ω');
+    assert.ok(!isStar(o.id) && isOracleCard(o.id));
+    assert.equal(runCardLabel(o.id, ui), 'Ω-' + o.proto + ' ' + o.value);
+  }
+  /* WATER のラインに XO_1 を表で出す: 削除 → 手札から1枚プレイ → デッキの一番上を他の2ラインに裏で */
+  let res = Engine.newGame({ seed: 11, p0: ['FIRE', 'WATER', 'SPEED'], p1: ['DEATH', 'METAL', 'LIFE'], first: 0, deckMods: [{ add: ['XO_1'] }, {}] });
+  /* 盤面にカードが無いと削除は自分自身に当たって残りが止まる (「カードを1枚削除する」の決まり) ので、両者が2手ずつ打ってから */
+  for (let i = 0; i < 200 && !(res.state.turn === 0 && !res.requests.length && res.state.actionLog.filter(l => /のターン/.test(l)).length >= 5); i++) {
+    const q = res.requests[0];
+    res = Engine.apply(res.state, q ? { type: 'choose', id: q.id, picks: Engine.ai.answer(res.state, q) } : Engine.ai.action(res.state));
+  }
+  const st = res.state;
+  const uid = Object.keys(st.cards).find(u => st.cards[u].def === 'XO_1');
+  for (const pl of st.players) { const i = pl.deck.indexOf(uid); if (i >= 0) pl.deck.splice(i, 1); }
+  st.cards[uid].zone = 'hand0'; if (!st.players[0].hand.includes(uid)) st.players[0].hand.push(uid);
+  const line = st.players[0].protocols.findIndex(p => p.name === 'WATER');
+  const deckBefore = st.players[0].deck.length;
+  res = Engine.apply(st, { type: 'play', card: uid, line, faceUp: true });
+  for (let i = 0; i < 20 && res.requests.length && res.state.turn === 0; i++) {
+    const q = res.requests[0];
+    res = Engine.apply(res.state, { type: 'choose', id: q.id, picks: Engine.ai.answer(res.state, q) });
+    assert.equal(res.error, null);
+  }
+  assert.equal(res.error, null);
+  assert.ok(res.state.players[0].deck.length <= deckBefore - 2, 'デッキの一番上が他の2ラインに置かれる');
 });
