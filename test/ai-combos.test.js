@@ -670,3 +670,95 @@ test('手筋 Diversity0: DIVERSITY が最後の1本なら、10点で普通にコ
   assert.ok(Engine.lineTotal(res.state, 0, 0) >= 10 || res.state.winner === 0,
     '最後の1本は10点にして通しにいく (実際: ' + JSON.stringify(act) + ')');
 });
+
+/* ---------- SPEED 0 / SPEED 3 (2026-10-16 の点検。ぱうぷる戦 2026-10-15 の指摘が残っているか) ----------
+   ・ORACLE は、1回目の移動で下の表向きの札を起こせないなら 0 と 3 を揃えて出さない
+   ・SPEED 3 の終了時の移動は、自分をどかして下の札を起こせるときだけ自分を動かす。
+     何も起きないのに自分を動かすと裏返って値 3 → 2、移動も失う (GATEKEEPER・つよいが毎回これをしていた) */
+function withOracle(fn) {
+  Engine.setAiOracle(true);
+  try { return withDsh(fn); } finally { Engine.setAiOracle(false); }
+}
+function speedPairBoard() {
+  const st = game(FWS, ['METAL', 'LIGHT', 'HATE']);
+  place(st, 'FIRE_6', 0, 0, true);           // 移動の対象はあるが、どかしても下に起こす札が無い
+  place(st, 'METAL_5', 1, 0, true);
+  place(st, 'LIGHT_6', 1, 1, true);
+  setHand(st, 0, ['SPEED_1', 'SPEED_4', 'WATER_6', 'FIRE_5', 'WATER_3']);
+  return st;
+}
+const speed0Play = { type: 'play', card: uidOf('SPEED_1', 0), line: 2, faceUp: true };
+
+test('ORACLE: 下の札を起こせないなら、SPEED 0 と 3 を揃えて出さない', () => withOracle(() => {
+  const st = speedPairBoard();
+  Engine.setAiLevel(2);
+  Engine.setAiThinkBudget(1500);
+  const act = Engine.ai.action(st);
+  assert.ok(!(act.type === 'play' && ['SPEED_1', 'SPEED_4'].includes(st.cards[act.card].def)),
+    'SPEED 0 / 3 を出さない (実際: ' + JSON.stringify(act) + ')');
+  assert.ok(Engine.ai.actionBias(st, speed0Play, 0) < 100, '揃える加点が入らない');
+}));
+
+test('ORACLE: 1回目の移動で下の表向きの札を起こせるなら、揃える加点が入る', () => withOracle(() => {
+  const st = speedPairBoard();
+  place(st, 'WATER_4', 0, 1, true);          // WATER 3 (中段あり) の上に
+  place(st, 'WATER_3', 0, 1, true);          // WATER 2 を重ねる: どかすと WATER 3 が起きる
+  assert.ok(Engine.ai.actionBias(st, speed0Play, 0) >= 200, '揃える加点が入る');
+}));
+
+test('つよい以上: SPEED 3 の終了時の移動で、下に何も無い自分を動かして裏返さない (ほかの札でラインを10にする)', () => {
+  for (const oracle of [false, true]) {
+    Engine.setAiOracle(oracle);
+    try {
+      withDsh(() => {
+        const st = game(FWS, ['METAL', 'LIGHT', 'HATE']);
+        place(st, 'SPEED_4', 0, 2, true);   // 前の手番に出した SPEED 3 (下に何も無い)
+        place(st, 'FIRE_6', 0, 0, true);
+        place(st, 'METAL_5', 1, 0, true);
+        place(st, 'LIGHT_6', 1, 1, true);
+        setHand(st, 0, ['WATER_6', 'FIRE_5', 'WATER_3', 'FIRE_2']);
+        Engine.setAiLevel(2);
+        Engine.setAiThinkBudget(300);
+        const answers = [];
+        const res = resolveWithAi(Engine.apply(st, { type: 'play', card: uidOf('WATER_6', 0), line: 1, faceUp: true }), answers);
+        const end = answers.find(x => x.q.prompt === 'optional-shift' && x.q.context === 'SPEED_4');
+        assert.ok(end, '終了時の移動を聞かれる');
+        assert.notDeepEqual(end.picks, [uidOf('SPEED_4', 0)], (oracle ? 'ORACLE' : 'GATEKEEPER') + ': SPEED 3 自身を動かさない');
+        assert.equal(lineOf(res.state, uidOf('WATER_6', 0)), 0, (oracle ? 'ORACLE' : 'GATEKEEPER') + ': WATER 5 を FIRE 5 のラインへ動かして10点にする');
+      });
+    } finally { Engine.setAiOracle(false); }
+  }
+});
+
+test('つよい以上: SPEED 0 の上の SPEED 3 は、終了時に自分をどかして SPEED 0 をもう一度起こす', () => withDsh(() => {
+  const st = speedPairBoard();
+  Engine.setAiLevel(2);
+  Engine.setAiThinkBudget(300);
+  const answers = [];
+  resolveWithAi(Engine.apply(st, speed0Play), answers);
+  const free = answers.filter(x => x.q.prompt === 'play-free');
+  assert.equal(free[0].picks[0], uidOf('SPEED_4', 0) + '|2|u', '追加プレイで SPEED 3 を SPEED 0 の上に表で');
+  const end = answers.find(x => x.q.prompt === 'optional-shift' && x.q.context === 'SPEED_4');
+  assert.deepEqual(end && end.picks, [uidOf('SPEED_4', 0)], '終了時に SPEED 3 自身をどかす');
+  assert.equal(free.length, 2, 'どいた SPEED 0 の追加プレイがもう一度来る');
+}));
+
+test('つよい以上: 下の札を起こせないうちは、SPEED 0 と 3 をセットで手札にキープする (ユーザー「基本セットキープ」)', () => withDsh(() => {
+  const st = speedPairBoard();
+  Engine.setAiLevel(2);
+  Engine.setAiThinkBudget(1500);
+  const act = Engine.ai.action(st);
+  assert.ok(!(act.type === 'play' && ['SPEED_1', 'SPEED_4'].includes(st.cards[act.card].def)),
+    'SPEED 0 / 3 を出さない (実際: ' + JSON.stringify(act) + ')');
+}));
+
+test('つよい以上: 下の札を起こせる形なら、SPEED 0 から揃えて出す', () => withDsh(() => {
+  const st = speedPairBoard();
+  place(st, 'WATER_4', 0, 1, true);
+  place(st, 'WATER_3', 0, 1, true);
+  Engine.setAiLevel(2);
+  Engine.setAiThinkBudget(1500);
+  const act = Engine.ai.action(st);
+  assert.ok(act.type === 'play' && st.cards[act.card].def === 'SPEED_1' && act.faceUp,
+    'SPEED 0 を表で出す (実際: ' + JSON.stringify(act) + ')');
+}));

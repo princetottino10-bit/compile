@@ -3596,13 +3596,10 @@ function aiActionBias(st, action, side) {
     const comboPlay = d.id === 'SPEED_1' && action.faceUp && W.fire0Water4Ready && aiFire0Water4Ready(st, side);
     if (!pairOnField && !comboPlay) {
       const pairReady = aiHasDefInHand(st, side, 'SPEED_1') && aiHasDefInHand(st, side, 'SPEED_4');
-      /* 揃えて出すのは、SPEED 3 の「自分の他のカードを移動」に動かす対象 (場の自分のカード) があるときだけ。
-         場が空のうち (初手など) に出すと、動かせるのが出したばかりの SPEED 0 だけで空振りする (監修 2026-10-04) */
+      /* 揃えて出すのは、SPEED 3 の「自分の他のカードを移動」で下の表向きの札を起こせるときだけ。それまでは基本キープ
+         (ユーザー 2026-10-16「基本セットキープだよ」。場が空のうちは空振り: 監修 2026-10-04) */
       if (!pairReady) v -= 180;
-      else if (aiIsOracle(st, side)) {
-        if (d.id === 'SPEED_1' && action.faceUp && aiSpeedPairUncovers(st, side)) v += 220;
-      }
-      else if (d.id === 'SPEED_1' && action.faceUp && aiSpeedPairHasTarget(st, side)) v += 220;
+      else if (d.id === 'SPEED_1' && action.faceUp && aiSpeedPairUncovers(st, side)) v += 220;
       else v -= 160;
     }
   }
@@ -4479,7 +4476,9 @@ function smartPicks(st, req) {
         /* ORACLE: 決め打ちしない。自分を動かす・動かさない・ほかの札を動かすを、動かした後の盤面で比べる。
            自分を動かすと SPEED 3 が裏返って値が 3 → 2 になり、次の手番からの移動も失う。下の SPEED 0 を起こしても、
            0 と 3 を出し直して同じ札を行き来させるだけの空回りがあった (ユーザー 2026-10-15「無駄に使って裏に向ける」) */
-        if (self && !aiIsOracle(st, me)) return [self];
+        /* ORACLE 以外も、自分を動かすのは下の表向きの札 (SPEED 0 など) の中段を起こせるときだけ。
+           下に何も無いのに動かすと、ただ裏返って値 3 → 2 になり、移動も失う (2026-10-16、GATEKEEPER・つよいで確認) */
+        if (self && !aiIsOracle(st, me) && aiUncoversBelow(st, self)) return [self];
       }
       if (req.prompt === 'optional-shift' && req.context === AI_LOCK_COVER && aiLockKeepsCover(st, me)) return [];
       /* ロック特化: PSYCHIC 4 の「相手のカードを戻す」は使う (このカードが裏返って値は下がるが、相手の手を1つ遅らせる)。
@@ -4818,11 +4817,6 @@ function aiFaceDownAllowed(st, side, action, acts) {
   return false;
 }
 
-/* SPEED 0 → 3 を揃えて出すとき、SPEED 3 の移動に対象があるか (出す前から場に自分のカードがある) */
-function aiSpeedPairHasTarget(st, side) {
-  for (let l = 0; l < 3; l++) if (st.lines[l][side].length) return true;
-  return false;
-}
 /* SPEED 3 の中段の移動で、下の表向きのカードを起動できるか (一番上をどかすと、表向きの札が出てきて中段が動く)。
    ユーザー 2026-10-15 (ぱうぷる戦の11手目): 0と3を揃えても、1回目の移動で下の札を起動できず、2回目の追加プレイでも
    点が伸びないなら、揃えて出す意味がない。ORACLE はこれがあるときだけ揃える手に上乗せし、決め打ちもしない */
@@ -4837,13 +4831,35 @@ function aiSpeedPairUncovers(st, side) {
   return false;
 }
 
+/* その1手で、未コンパイルのラインが10以上かつ相手より上になるか */
+function aiPlayReachesCompile(state, side, a) {
+  const r = apply(state, a);
+  if (r.error) return false;
+  for (let l = 0; l < 3; l++) {
+    const m = lineTotal(r.state, l, side);
+    if (m >= 10 && m > lineTotal(r.state, l, 1 - side) && !r.state.players[side].protocols[l].compiled) return true;
+  }
+  return false;
+}
+/* uid (一番上) をどかすと、すぐ下の自分の表向きの札の中段がもう一度動くか */
+function aiUncoversBelow(st, uid) {
+  for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++) {
+    const stack = st.lines[l][s], i = stack.indexOf(uid);
+    if (i < 1 || i !== stack.length - 1) continue;
+    const below = st.cards[stack[i - 1]];
+    const eff = DEFS[below.def].eff;
+    return !!(below.faceUp && eff && eff.middle && Array.isArray(eff.middle.ops) && eff.middle.ops.length);
+  }
+  return false;
+}
+
 function aiDecisionActions(state) {
   let acts = legalActions(state);
   const side = state.turn;
   if (aiUsesCombos(state, side) && aiWeightsFor(state, side).speedPairStrategy
       && !aiHasDefOnField(state, side, 'SPEED_1') && !aiHasDefOnField(state, side, 'SPEED_4')
       && aiHasDefInHand(state, side, 'SPEED_1') && aiHasDefInHand(state, side, 'SPEED_4')
-      && aiSpeedPairHasTarget(state, side) && !aiIsOracle(state, side)) {
+      && aiSpeedPairUncovers(state, side) && !aiIsOracle(state, side)) {
     const speed0 = acts.filter(action => action.type === 'play' && action.faceUp
       && state.cards[action.card] && state.cards[action.card].def === 'SPEED_1');
     if (speed0.length) acts = speed0;
@@ -4853,22 +4869,15 @@ function aiDecisionActions(state) {
   if (aiUsesCombos(state, side) && aiWeightsFor(state, side).speedPairStrategy
       && !aiHasDefOnField(state, side, 'SPEED_1') && !aiHasDefInHand(state, side, 'SPEED_1')
       && !state.players[side].trash.some(u => state.cards[u] && state.cards[u].def === 'SPEED_1')) {
-    const reaches = (a) => {
-      const r = apply(state, a);
-      if (r.error) return false;
-      for (let l = 0; l < 3; l++) {
-        const m = lineTotal(r.state, l, side);
-        if (m >= 10 && m > lineTotal(r.state, l, 1 - side) && !r.state.players[side].protocols[l].compiled) return true;
-      }
-      return false;
-    };
-    const kept = acts.filter(a => !(a.type === 'play' && state.cards[a.card] && state.cards[a.card].def === 'SPEED_4') || reaches(a));
+    const kept = acts.filter(a => !(a.type === 'play' && state.cards[a.card] && state.cards[a.card].def === 'SPEED_4') || aiPlayReachesCompile(state, side, a));
     if (kept.length) acts = kept;
   }
-  /* 揃っていても、SPEED 3 の移動に対象 (場の自分のカード) が無いうちは 0 も 3 も出さずに取っておく */
+  /* 揃っていても、SPEED 3 の移動で下の表向きの札を起こせないうちは、0 も 3 も出さずにセットでキープする
+     (ユーザー 2026-10-16「基本セットキープだよ」)。その1手でコンパイルに届くなら出してよい */
   if (aiUsesCombos(state, side) && aiWeightsFor(state, side).speedPairStrategy
-      && aiHasDefInHand(state, side, 'SPEED_1') && aiHasDefInHand(state, side, 'SPEED_4') && !aiSpeedPairHasTarget(state, side)) {
-    const kept = acts.filter(a => !(a.type === 'play' && state.cards[a.card] && ['SPEED_1', 'SPEED_4'].includes(state.cards[a.card].def)));
+      && aiHasDefInHand(state, side, 'SPEED_1') && aiHasDefInHand(state, side, 'SPEED_4') && !aiSpeedPairUncovers(state, side)) {
+    const kept = acts.filter(a => !(a.type === 'play' && state.cards[a.card] && ['SPEED_1', 'SPEED_4'].includes(state.cards[a.card].def))
+      || aiPlayReachesCompile(state, side, a));
     if (kept.length) acts = kept;
   }
   /* 裏向きは原則として表で使う。あえて裏で出してよいのは aiFaceDownAllowed の場面だけ
