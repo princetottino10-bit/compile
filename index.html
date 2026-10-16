@@ -93,6 +93,29 @@
     .tool:hover{border-left-color:var(--pink);background:rgba(255,79,163,.08)}
     .tool b{display:block;font:800 13px/1.3 var(--ui);letter-spacing:.08em;color:#fff}
     .tool span{font-size:12px;color:var(--dim)}
+    /* 更新情報 (中身は js3d/news.js。タイトル画面の「お知らせ」と同じもの) */
+    .news{display:flex;flex-direction:column;background:var(--panel);clip-path:var(--cut);border-top:3px solid var(--violet)}
+    .nw-item{border-bottom:1px solid rgba(255,255,255,.07)}
+    .nw-item:last-child{border-bottom:0}
+    .nw-item summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 14px;align-items:center;padding:12px 40px 12px 18px;position:relative}
+    .nw-thumb{width:96px;height:54px;object-fit:cover;border:1px solid rgba(255,255,255,.12);background:#000}
+    .nw-item[open] .nw-thumb{display:none}
+    .nw-shot{display:block;width:min(100%,560px);height:auto;aspect-ratio:16/9;object-fit:cover;border:1px solid rgba(255,255,255,.12);background:#000;margin-bottom:4px}
+    .nw-item summary::-webkit-details-marker{display:none}
+    .nw-item summary::after{content:"▸";position:absolute;right:16px;top:50%;transform:translateY(-50%);color:var(--dim);transition:transform .15s}
+    .nw-item[open] summary::after{transform:translateY(-50%) rotate(90deg)}
+    .nw-item summary:focus-visible{outline:2px solid var(--pink);outline-offset:-2px}
+    .nw-item summary b{font-weight:700;font-size:14px;line-height:1.5;color:#fff}
+    .nw-meta{display:flex;gap:8px;align-items:center;font:600 12px/1 var(--ui);color:var(--dim);font-variant-numeric:tabular-nums;white-space:nowrap}
+    .nw-tag{font:700 10.5px/1 system-ui,sans-serif;font-style:normal;padding:3px 7px;border:1px solid rgba(185,164,255,.35);color:var(--lav)}
+    .nw-item[data-kind="new"] .nw-tag{border-color:rgba(255,179,218,.5);color:#ffb3da}
+    .nw-item[data-kind="fix"] .nw-tag,.nw-item[data-kind="info"] .nw-tag{border-color:rgba(255,255,255,.18);color:var(--dim)}
+    .nw-body{padding:0 18px 14px;display:flex;flex-direction:column;gap:6px}
+    .nw-body p{font-size:13px;color:rgba(241,237,248,.8)}
+    .news-more{display:block;padding:12px 18px;font:700 13px/1.4 system-ui,sans-serif;text-decoration:none;color:var(--lav);border-top:1px solid rgba(255,255,255,.07)}
+    .news-more:hover{color:#fff;background:rgba(255,79,163,.08)}
+    @media (max-width:560px){ .nw-item summary{grid-template-columns:minmax(0,1fr) auto;padding-left:14px} .nw-meta,.nw-item summary b{grid-column:1} .nw-thumb{grid-column:2;grid-row:1 / span 2;width:72px;height:41px} }
+    @media (prefers-reduced-motion:reduce){ .nw-item summary::after{transition:none} }
     footer{text-align:center;padding:28px 20px 40px;font:600 11px/1.8 var(--ui);letter-spacing:.08em;color:var(--dim)}
     footer a{color:var(--dim)}
     @media (max-width:760px){
@@ -127,6 +150,11 @@
     </div>
   </div>
 
+  <section aria-labelledby="news-h">
+    <h2 id="news-h">NEWS <span style="color:var(--dim);letter-spacing:.06em;font-weight:600">更新情報</span></h2>
+    <div class="news" id="news"><noscript><p class="nw-body">更新情報は JavaScript を有効にすると見られます</p></noscript></div>
+  </section>
+
   <section aria-labelledby="modes-h">
     <h2 id="modes-h">MODES</h2>
     <div class="modes">
@@ -146,6 +174,13 @@
     </div>
   </section>
 </main>
+<script type="module">
+  /* 新しいものから4つ (直したことは出さない)。続きはゲームのタイトル画面の「お知らせ」で */
+  import { headlines, newsListHtml } from './js3d/news.js';
+  const el = document.getElementById('news');
+  el.innerHTML = newsListHtml(headlines().slice(0, 4)) +
+    '<a class="news-more" href="three-play.html">すべてのお知らせは、タイトル画面の右上「お知らせ」から ▸</a>';
+</script>
 <footer>
   FAN-MADE · NOT AFFILIATED WITH THE OFFICIAL GAME<br>
   <a href="privacy.html">プライバシーポリシー</a> · <a href="terms.html">利用規約</a>

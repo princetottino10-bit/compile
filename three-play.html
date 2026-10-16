@@ -1489,7 +1489,7 @@
     background:transparent;color:var(--dim);font:800 11px/1 "M PLUS 1",system-ui;}
   .st-seg button.on,.sr-tabs button.on{border-color:var(--cyan);color:var(--ink);background:rgba(185,164,255,.12);}
   /* タイトル画面 (z 58) の上にも出す */
-  #settingsOv,#statsOv,#accountOv,#reportOv{z-index:62;}
+  #settingsOv,#statsOv,#accountOv,#reportOv,#newsOv{z-index:62;}
   .sr-card{width:min(680px,100%);}
   /* 勝ち抜き戦 */
   #runOv{position:fixed;inset:0;z-index:63;display:none;align-items:center;justify-content:center;padding:16px;
@@ -4263,6 +4263,49 @@
   }
   .tt-corner .tt-admin{padding:0 14px;color:var(--pink);border-color:rgba(255,79,163,.55);font-family:var(--font-ui);font-weight:800;letter-spacing:.14em;}
   .tt-corner .tt-admin[hidden]{display:none;}
+  /* お知らせ (js3d/news.js)。未読の数はボタンの中に置く (ボタンは clip-path で切り欠くので、外に出すと切れる) */
+  .tt-corner .tt-news{display:inline-flex;align-items:center;gap:6px;padding:0 13px;white-space:nowrap;}
+  .tt-newsn{min-width:18px;height:18px;padding:0 5px;display:grid;place-items:center;background:var(--pink);color:#fff;
+    font:800 11px/1 var(--font-hud);font-style:normal;font-variant-numeric:tabular-nums;clip-path:var(--cut-s);}
+  /* 縦持ちのスマホは右上が詰まる (レベル・SIGN IN・設定と並ぶと、左のレベルが画面の外へ押し出された)。鈴と数だけにする */
+  @media (max-width:560px){ .tt-corner .tt-news{padding:0 10px;gap:4px;} .tt-corner .tt-news span{display:none;} }
+  .pz-card.nw-card{width:min(560px,100%);}
+  .nw-card .pz-head b small{display:block;margin-top:4px;font:700 11px/1 system-ui;letter-spacing:.06em;color:var(--dim);text-transform:none;}
+  /* なかまの切り替え。縦持ちでも1段に収まらなければ横にすべらせる (折り返すと一覧が下へ押される) */
+  .nw-tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;flex:none;margin:0 -2px;padding:0 2px;}
+  .nw-tabs::-webkit-scrollbar{display:none;}
+  .nw-tabs button{flex:none;min-height:34px;padding:0 14px;cursor:pointer;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);
+    color:var(--dim);font:800 12px/1 system-ui;letter-spacing:.04em;clip-path:var(--cut-s);}
+  .nw-tabs button[aria-selected="true"]{color:#fff;border-color:var(--pink);background:rgba(255,79,163,.18);}
+  .nw-tabs button:focus-visible{outline:2px solid var(--gold);outline-offset:-2px;}
+  .nw-list{flex:1;min-height:0;overflow-y:auto;margin:0 -18px;padding:0 18px 8px;border-top:1px solid rgba(255,255,255,.08);}
+  .nw-item{border-bottom:1px solid rgba(255,255,255,.07);}
+  .nw-item summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px 12px;padding:13px 22px 13px 0;position:relative;}
+  .nw-meta,.nw-item summary b{grid-column:1;}
+  /* スクショ: 一覧では右に小さく、開いたら本文の上に大きく (開いている間は小さい方を隠す) */
+  .nw-thumb{grid-column:2;grid-row:1 / span 2;width:96px;height:54px;object-fit:cover;border:1px solid rgba(255,255,255,.12);background:#000;}
+  .nw-item[open] .nw-thumb{display:none;}
+  .nw-shot{display:block;width:min(100%,520px);height:auto;aspect-ratio:16/9;object-fit:cover;border:1px solid rgba(255,255,255,.12);background:#000;}
+  @media (max-width:420px){ .nw-thumb{width:72px;height:41px;} }
+  .nw-item summary::-webkit-details-marker{display:none;}
+  /* 開く・閉じるの印 (右端の ▸ が下を向く) */
+  .nw-item summary::after{content:"▸";position:absolute;right:4px;top:50%;transform:translateY(-50%);color:var(--dim);transition:transform .15s;}
+  .nw-item[open] summary::after{transform:translateY(-50%) rotate(90deg);}
+  .nw-item summary:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+  .nw-item summary b{font:700 14px/1.45 system-ui;color:var(--ink);}
+  .nw-item summary:hover b{color:#fff;}
+  .nw-meta{display:flex;align-items:center;gap:8px;font:700 11px/1 var(--font-hud);color:var(--dim);font-variant-numeric:tabular-nums;}
+  .nw-tag{font:700 10.5px/1 system-ui;font-style:normal;padding:3px 7px;border:1px solid rgba(185,164,255,.35);color:var(--cyan);}
+  .nw-item[data-kind="new"] .nw-tag{border-color:rgba(255,179,218,.5);color:var(--gold);}
+  .nw-item[data-kind="fix"] .nw-tag,.nw-item[data-kind="info"] .nw-tag{border-color:rgba(255,255,255,.18);color:var(--dim);}
+  .nw-new{font:800 10px/1 var(--font-hud);font-style:normal;letter-spacing:.1em;padding:3px 6px;background:var(--pink);color:#fff;}
+  .nw-body{padding:0 0 14px;display:flex;flex-direction:column;gap:8px;}
+  .nw-body p{margin:0;font:400 13px/1.7 system-ui;color:rgba(233,238,248,.82);}
+  .nw-go{align-self:flex-start;margin-top:2px;min-height:34px;padding:0 16px;cursor:pointer;border:1px solid var(--pink);background:rgba(255,79,163,.14);
+    color:#fff;font:700 12px/1 system-ui;letter-spacing:.04em;clip-path:var(--cut-s);}
+  .nw-go:hover,.nw-go:focus-visible{background:rgba(255,79,163,.3);outline:0;}
+  .nw-empty{padding:24px 0;text-align:center;color:var(--dim);font-size:13px;}
+  @media (prefers-reduced-motion:reduce){ .nw-item summary::after{transition:none;} }
   /* 管理者の画面 (ACCOUNT → ADMIN) */
   #adminOv{z-index:66;}
   .ad-card{width:min(620px,100%);max-height:min(90vh,780px);display:flex;flex-direction:column;}
@@ -4745,6 +4788,7 @@
       "./js3d/motion.js": "./js3d/motion.js?v=71cd68f8ff",
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
       "./js3d/net.js": "./js3d/net.js?v=3134839bca",
+      "./js3d/news.js": "./js3d/news.js?v=107df38a33",
       "./js3d/notice.js": "./js3d/notice.js?v=029a81acaa",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=fee989c0b5",
       "./js3d/panel.js": "./js3d/panel.js?v=994ec047da",
@@ -4791,7 +4835,7 @@
       "./js3d/support.js": "./js3d/support.js?v=efb00a908c",
       "./js3d/theme.js": "./js3d/theme.js?v=932e1d5eb8",
       "./js3d/tips.js": "./js3d/tips.js?v=3faae17957",
-      "./js3d/title.js": "./js3d/title.js?v=949a3a33fb",
+      "./js3d/title.js": "./js3d/title.js?v=5421a14eb7",
       "./js3d/titleback.js": "./js3d/titleback.js?v=5663d0b7a4",
       "./js3d/training.js": "./js3d/training.js?v=3018b4399e",
       "./js3d/tsume.js": "./js3d/tsume.js?v=2d63bf0cd7",
@@ -4838,7 +4882,7 @@
   <link rel="modulepreload" href="js3d/control.js?v=c1b87ebc63">
   <link rel="modulepreload" href="js3d/panel.js?v=994ec047da">
   <link rel="modulepreload" href="js3d/setup.js?v=e17da5ca65">
-  <link rel="modulepreload" href="js3d/title.js?v=949a3a33fb">
+  <link rel="modulepreload" href="js3d/title.js?v=5421a14eb7">
   <link rel="modulepreload" href="js3d/training.js?v=3018b4399e">
   <link rel="modulepreload" href="js3d/room.js?v=918fccde40">
   <link rel="modulepreload" href="js3d/puzzle.js?v=65360765a2">
@@ -4920,6 +4964,7 @@
   <link rel="modulepreload" href="js3d/backdrops.js?v=90faf9612d">
   <link rel="modulepreload" href="js3d/profile.js?v=704205fbfe">
   <link rel="modulepreload" href="js3d/gacha-ui.js?v=b5bf4956cc">
+  <link rel="modulepreload" href="js3d/news.js?v=107df38a33">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/ShaderPass.js">
   <link rel="modulepreload" href="js3d/story-map.js?v=18e79132eb">
   <link rel="modulepreload" href="js3d/story-scenery.js?v=9fa267bcf9">
