@@ -15,7 +15,7 @@ import { accountState } from './account.js';
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const LAST_KEY = 'compileOppLast';
 
-const CPU_NOTES = ['はじめての人に。読みは浅く、ときどき迷う', '標準。1手先を読んで指す', '最強と同じ読みと手筋。デッキはドラフトで決まる'];
+const CPU_NOTES = ['はじめての人に。読みは浅く、ときどき迷う', '標準。1手先を読んで指す', 'GATEKEEPER と同じ読みと手筋。デッキはドラフトで決まる'];
 
 export function underdogCleared() {
   return localRecords().some(r => r.win && r.level === UNDERDOG_LEVEL);
@@ -87,21 +87,21 @@ export function openOpponentSelect(protocols, opts = {}) {
           'すべてを見る者。あなたの手札も、裏向きのカードも、山札の並びも見えている', deck(PEEK_AI), ' deus peek top') : '') +
         card(String(DEUS_LEVEL), '<span class="op-deus">' + gearSvg(10) + esc(DEUS_NAME) + '</span>' + rec(DEUS_LEVEL) +
             (recOf(DEUS_LEVEL).wins ? ' <em>✓ TITLE — DEICIDE</em>' : ''),
-          '最強の上に座る、機械仕掛けの神。勝つと 称号 DEICIDE', deck(DEUS_AI), ' deus top') +
+          'GATEKEEPER の上に座る、機械仕掛けの神。勝つと 称号 DEICIDE', deck(DEUS_AI), ' deus top') +
         /* ORACLE: 学習モデル入りの読み (読みの設定は管理者の自動プレイと同じ)。誰でも挑める (2026-10-15) */
         card(String(ORACLE_LEVEL), esc(ORACLE_NAME) + rec(ORACLE_LEVEL),
           '学習モデルと、上級者の棋譜から教わった手筋で打つ', deck(ORACLE_AI), ' top') +
         /* 本気の4人: ORACLE の読みに、その子の得意プロトコル入りのデッキと学習モデル。最強の上、神の下 */
         HONKI.map((h, k) => card(String(HONKI_BASE + k), esc(h.name) + rec(HONKI_BASE + k), esc(h.note), deck(h.deck), ' honki', h.color)).join('') +
-        card('3', '最強' + rec(3) + (conq >= total ? ' <em>✓ TITLE — CONQUEROR</em>' : ''),
-          'いちばん強い CPU。残りの' + total + 'のプロトコルすべてで勝つと 称号 CONQUEROR', deck(STRONGEST_AI) + conqBar, ' top') +
+        card('3', 'GATEKEEPER' + rec(3) + (conq >= total ? ' <em>✓ TITLE — CONQUEROR</em>' : ''),
+          'CHALLENGE の門番。残りの' + total + 'のプロトコルすべてで勝つと 称号 CONQUEROR', deck(STRONGEST_AI) + conqBar, ' top') +
       '</div></section>' +
       '<section data-cpane="ud"' + (ctab === 'ud' ? '' : ' hidden') + '><h3><small>いちばん弱いデッキで、いちばん強い CPU に挑む</small></h3>' +
       '<div class="op-row">' + card('underdog', '下剋上' + (cleared ? ' <em>✓ TITLE — GIANT SLAYER</em>' : rec(UNDERDOG_LEVEL)),
-        'あなた (最弱) vs 最強。勝つと 称号 GIANT SLAYER・専用スリーブとマーカー・+100 XP',
+        'あなた (最弱) vs GATEKEEPER。勝つと 称号 GIANT SLAYER・専用スリーブとマーカー・+100 XP',
         '<span class="op-vs">' + deck(UNDERDOG_DECK) + '<i>VS</i>' + deck(STRONGEST_AI) + '</span>', ' wide') + '</div>' +
       '<div class="op-row">' + card('udtag', '下剋上タッグ' + (tagCleared ? ' <em>✓ TITLE — UNDERDOG DUO</em>' : ''),
-        'あなた (好きな3つ) ＋ かんたんの味方 vs 最強のタッグ。手番は あなた → 相手1 → 味方 → 相手2。勝つと 称号 UNDERDOG DUO',
+        'あなた (好きな3つ) ＋ かんたんの味方 vs GATEKEEPER のタッグ。手番は あなた → 相手1 → 味方 → 相手2。勝つと 称号 UNDERDOG DUO',
         '<span class="op-vs"><span class="op-any">好きな3つ</span><i>VS</i>' + deck(STRONGEST_AI) + deck(UNDERDOG_TAG_RIVAL_MATE) + '</span>', ' wide') + '</div></section>'
       : '<div class="op-head"><b>// SINGLE GAME</b><span>SELECT OPPONENT</span></div>' +
       /* 迷ったらこれ: 選ぶものを全部おまかせにして、すぐ始める */

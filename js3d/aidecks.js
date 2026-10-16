@@ -1,7 +1,7 @@
 /* =========================================================================
  * CPU の難易度と固定デッキ
  *   0..2 : かんたん / ふつう / つよい (通常 AI、ランダム編成)
- *   3    : 最強 (dsh 特化 + STRONGEST_AI)
+ *   3    : GATEKEEPER (旧名 最強。dsh 特化 + STRONGEST_AI)
  *   4    : ロック特化 (psylock 特化 + LOCK_AI)
  *   5..  : 挑戦者 (dsh 特化 + CHALLENGERS の固定デッキ)
  *   22   : 機械仕掛けの神 CODE:PURPLE (psylock 特化 + DEUS_AI、4 秒の読み。対戦の始めに降臨の演出)
@@ -28,7 +28,7 @@ export const CHALLENGERS = [
   { deck: ['SMOKE', 'WATER', 'PEACE'] }
 ];
 
-export const LEVEL_LABELS = ['かんたん', 'ふつう', 'つよい', '最強', 'ロック特化'];
+export const LEVEL_LABELS = ['かんたん', 'ふつう', 'つよい', 'GATEKEEPER', 'ロック特化'];
 
 /* 下剋上: 最弱のデッキ (あなた) で最強 (STRONGEST_AI) に挑む。相手の戦い方は最強と同じ。
    最弱は 2026-09-24 に探したもの: プロトコル単体の強さの下位10個から作れる120デッキを
@@ -115,11 +115,11 @@ export function challengerName(c) {
 /* 戦績などに出す難易度の名前 */
 export function levelLabel(level) {
   if (isChallenger(level)) return '挑戦者 ' + challengerName(CHALLENGERS[level - CHALLENGER_BASE]);
-  if (level === UNDERDOG_LEVEL) return '下剋上 (最弱 vs 最強)';
+  if (level === UNDERDOG_LEVEL) return '下剋上 (最弱 vs GATEKEEPER)';
   if (level === DEUS_LEVEL) return '機械仕掛けの神 ' + DEUS_NAME;
   if (level === PEEK_LEVEL) return 'すべてを見る者 ' + PEEK_NAME;
   if (level === ORACLE_LEVEL) return ORACLE_NAME;
   if (isHonki(level)) return honkiOf(level).name;
-  if (level === UNDERDOG_TAG_LEVEL) return '下剋上タッグ (かんたんの味方 vs 最強タッグ)';
+  if (level === UNDERDOG_TAG_LEVEL) return '下剋上タッグ (かんたんの味方 vs GATEKEEPER タッグ)';
   return LEVEL_LABELS[level] || '不明';
 }

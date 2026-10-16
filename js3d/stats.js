@@ -178,9 +178,9 @@ function summaryTab(list, protos) {
     trendSvg(list) +
     '<div class="sr-kpis">' +
       tile('勝ったことのあるプロトコル', wonAny + '<i>/' + protos.length + '</i>') +
-      tile('最強に勝ったプロトコル (制覇)', wonStrongest + '<i>/' + conquerable(protos.map(p => p.name)).length + '</i>') +
+      tile('GATEKEEPER に勝ったプロトコル (制覇)', wonStrongest + '<i>/' + conquerable(protos.map(p => p.name)).length + '</i>') +
       tile('最短で勝った手番', fast ? fast.turns : '—', fast ? esc(fast.me.join(' / ')) : '記録なし') +
-      tile('最強に最短で勝った手番', fastTop ? fastTop.turns : '—', fastTop ? esc(fastTop.me.join(' / ')) : '記録なし') +
+      tile('GATEKEEPER に最短で勝った手番', fastTop ? fastTop.turns : '—', fastTop ? esc(fastTop.me.join(' / ')) : '記録なし') +
     '</div>' +
     /* ここは CPU 戦の戦績。オンラインのレート戦の戦績はロビーの「戦績」にあるので、そこへの道を置く */
     '<button type="button" class="sr-tolink sr-rated" data-open="rated"><b>ONLINE RATED</b><small>オンラインのレート戦の戦績・順位表を見る</small><em>▸</em></button>';
@@ -190,7 +190,7 @@ function summaryTab(list, protos) {
 function protocolTab(list, protos) {
   const sum = protocolSummary(list);
   return '<p class="pz-note">そのプロトコルを入れて戦うと習熟度が上がります (1戦 +1、勝ち +2、つよい以上に勝つと +1)。' +
-    '印は 勝った・つよいに勝った・最強に勝った。</p>' +
+    '印は 勝った・つよいに勝った・GATEKEEPER に勝った。</p>' +
     '<div class="sr-protos">' + protos.map(p => {
       const t = sum.get(p.name);
       const m = t ? t.mastery : masteryLevel(0);
@@ -199,7 +199,7 @@ function protocolTab(list, protos) {
         '<div class="sr-ph"><b>' + esc(p.name) + '</b><span>Lv' + m.level + '</span></div>' +
         '<div class="sr-xp"><i style="width:' + Math.round(m.progress * 100) + '%"></i></div>' +
         '<div class="sr-pf"><span class="sr-pips">' + pip(t && t.won, '勝った') + pip(t && t.wonStrong, 'つよいに勝った') +
-          pip(t && t.wonStrongest, '最強に勝った') + '</span><small>' + (t ? t.wins + '勝' + (t.games - t.wins) + '敗' : '未使用') + '</small></div>' +
+          pip(t && t.wonStrongest, 'GATEKEEPER に勝った') + '</span><small>' + (t ? t.wins + '勝' + (t.games - t.wins) + '敗' : '未使用') + '</small></div>' +
       '</div>';
     }).join('') + '</div>';
 }
