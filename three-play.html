@@ -2823,6 +2823,9 @@
   /* 最強は金の枠で目立たせる */
   .op-row.boss .op-card.top{border-color:rgba(255,200,90,.55);background:linear-gradient(160deg,rgba(255,200,90,.1),rgba(8,12,24,.86) 55%);}
   .op-row.boss .op-card.top:hover{border-color:var(--gold);}
+  /* 本気の4人: その子の色 (aidecks.js の HONKI の color) */
+  .op-row.boss .op-card.honki{border-color:color-mix(in srgb,var(--hc) 60%,transparent);background:linear-gradient(160deg,color-mix(in srgb,var(--hc) 14%,transparent),rgba(8,12,24,.86) 55%);}
+  .op-row.boss .op-card.honki:hover{border-color:var(--hc);}
   /* 見出しは上に止める (下の一覧がスクロールしても見出しは残る。右上の「タイトル」が一覧に重ならない) */
   #oppOv .op-head{position:sticky;top:-8px;z-index:3;margin:calc(-20px - env(safe-area-inset-top)) -16px 0;
     padding:calc(20px + env(safe-area-inset-top)) 118px 14px 16px;background:linear-gradient(180deg,rgb(5,6,13) 90%,rgba(5,6,13,0));}
@@ -4683,11 +4686,11 @@
       "./vendor/three.module.js": "./vendor/three.module.js?v=985eb92490",
       "./js3d/account.js": "./js3d/account.js?v=6cf36078ae",
       "./js3d/achievements-ui.js": "./js3d/achievements-ui.js?v=37fe12aa73",
-      "./js3d/achievements.js": "./js3d/achievements.js?v=0327019c77",
+      "./js3d/achievements.js": "./js3d/achievements.js?v=ee55de086d",
       "./js3d/admin-ui.js": "./js3d/admin-ui.js?v=ea6be0ef14",
       "./js3d/ai-worker.js": "./js3d/ai-worker.js?v=462073cba5",
       "./js3d/aiclient.js": "./js3d/aiclient.js?v=f88eb8a3b5",
-      "./js3d/aidecks.js": "./js3d/aidecks.js?v=e779e3f430",
+      "./js3d/aidecks.js": "./js3d/aidecks.js?v=c52bb8d93b",
       "./js3d/arena.js": "./js3d/arena.js?v=ef66a1e5bb",
       "./js3d/audio.js": "./js3d/audio.js?v=883c9531ac",
       "./js3d/avatar-boss-lines.js": "./js3d/avatar-boss-lines.js?v=507ebedfac",
@@ -4737,12 +4740,12 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=2b4dbc6066",
       "./js3d/logformat.js": "./js3d/logformat.js?v=e3548c74d1",
-      "./js3d/main.js": "./js3d/main.js?v=a10ae9c01d",
+      "./js3d/main.js": "./js3d/main.js?v=c45e585460",
       "./js3d/motion.js": "./js3d/motion.js?v=71cd68f8ff",
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
       "./js3d/net.js": "./js3d/net.js?v=3134839bca",
       "./js3d/notice.js": "./js3d/notice.js?v=029a81acaa",
-      "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=59fa32831e",
+      "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=276af94ec6",
       "./js3d/panel.js": "./js3d/panel.js?v=994ec047da",
       "./js3d/pickaid.js": "./js3d/pickaid.js?v=fd33e4bc87",
       "./js3d/plates.js": "./js3d/plates.js?v=02563e1cf1",
@@ -4822,7 +4825,7 @@
   <link rel="modulepreload" href="js3d/gacha.js?v=ecda5be85c">
   <link rel="modulepreload" href="js3d/chips.js?v=e67e280b76">
   <link rel="modulepreload" href="js3d/crashwatch.js?v=8b4bdaa28f">
-  <link rel="modulepreload" href="js3d/achievements.js?v=0327019c77">
+  <link rel="modulepreload" href="js3d/achievements.js?v=ee55de086d">
   <link rel="modulepreload" href="js3d/replays.js?v=c3ec491e07">
   <link rel="modulepreload" href="js3d/resume.js?v=477cf75f6b">
   <link rel="modulepreload" href="js3d/replayshare.js?v=dedb1ad773">
@@ -4856,8 +4859,8 @@
   <link rel="modulepreload" href="js3d/plates.js?v=02563e1cf1">
   <link rel="modulepreload" href="js3d/playmat.js?v=cfc563a42a">
   <link rel="modulepreload" href="js3d/cardlist-ov.js?v=47bc96bbb6">
-  <link rel="modulepreload" href="js3d/opponent-select.js?v=59fa32831e">
-  <link rel="modulepreload" href="js3d/aidecks.js?v=e779e3f430">
+  <link rel="modulepreload" href="js3d/opponent-select.js?v=276af94ec6">
+  <link rel="modulepreload" href="js3d/aidecks.js?v=c52bb8d93b">
   <link rel="modulepreload" href="js3d/run-ui.js?v=7d9aad7f55">
   <link rel="modulepreload" href="js3d/weekly-ui.js?v=97a2e533b4">
   <link rel="modulepreload" href="js3d/run.js?v=f10a7ef769">
@@ -4939,6 +4942,6 @@
   <link rel="stylesheet" href="js3d/run-fx.css?v=ed3eded16b">
   <link rel="stylesheet" href="js3d/deus.css?v=3e6919eb01">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=a10ae9c01d"></script>
+  <script type="module" src="js3d/main.js?v=c45e585460"></script>
 </body>
 </html>

@@ -7,6 +7,7 @@
  *   22   : 機械仕掛けの神 CODE:PURPLE (psylock 特化 + DEUS_AI、4 秒の読み。対戦の始めに降臨の演出)
  *   23   : すべてを見る者 ALL-SEEING (22 と同じ + のぞき見。神に勝つと現れる。対戦の始めに目が開く演出)
  *   24   : ORACLE (管理者の自動プレイと同じ読み: 学習モデル入り・ORACLE だけの手筋・2.4 秒。のぞき見なし)
+ *   30..33 : 本気の4人 (本気紫苑・本気瑠璃・本気杏・本気茜。ORACLE の読み + その子の得意プロトコル入りのデッキと学習モデル)
  *   固定デッキの難易度は「自由に選ぶ」でだけ使える (setup.js)。
  *   エンジンの設定は main.js の applyAiDifficulty、戦績の表示名は stats.js。
  * ========================================================================= */
@@ -74,6 +75,26 @@ export function oracleAi(cfg, st) {
 }
 export const DEUS_NAME = 'CODE:PURPLE';
 
+/* 本気の4人 (CHALLENGE の強敵、2026-10-16 ユーザー「チャレンジモードは本気紫苑 本気瑠璃みたいな感じにしたい」)。
+   中身は ORACLE の読み (main.js の ORACLE_CPU_AI) に、その子の得意プロトコル (avatar-lines.js の FAVORITE) を必ず入れたデッキと、
+   そのデッキ用の学習モデル (ai.valnetModel → data/valnet-<名前>.json。無い間は第1世代) を当てたもの。相手のキャラはその子で固定。
+   デッキの残り2つは scripts/deck_search.js --must <得意> --top 14 (60ms、各79デッキ) でふるい分け、上位6つずつを
+   --rounds 4 --budget 300 で比べ直して決めた (2026-10-16、1デッキ約66戦、95% の幅は ±10 ポイントほど)。
+   茜 HATE/FIRE/DEATH 96.4% (飛び抜けて1位)。杏 FIRE/WATER/COURAGE 76.4%・瑠璃 WATER/HATE/TIME 76.1% は、
+   最上位 (FIRE/WATER/HATE 83.3%・WATER/FIRE/DEATH 79.7%) と幅の中で差がなく、4人のデッキが重ならない組を選んだ */
+export const HONKI_BASE = 30;
+export const HONKI = [
+  /* 紫苑: 機械仕掛けの神と同じロックのデッキ。ロック用の学習モデル (ORACLE_LOCK_AI) がそのまま使える */
+  { avatar: 'shion', color: '#a07bff', name: '本気紫苑', note: '読みを解析しきって、サイキック①で縛りに来る', fav: 'PSYCHIC', deck: ['PSYCHIC', 'DARKNESS', 'FIRE'], ai: ORACLE_LOCK_AI },
+  { avatar: 'asagi', color: '#3d7dff', name: '本気瑠璃', note: 'ウォーターの流れで、自分の順路へ連れていく', fav: 'WATER', deck: ['WATER', 'HATE', 'TIME'], ai: {} },
+  { avatar: 'yamabuki', color: '#ff8a2a', name: '本気杏', note: 'ファイアの勢いで、押しきりに来る', fav: 'FIRE', deck: ['FIRE', 'WATER', 'COURAGE'], ai: {} },
+  { avatar: 'nadeshiko', color: '#e0283c', name: '本気茜', note: 'ヘイトで、盤面をきれいに片づけに来る', fav: 'HATE', deck: ['HATE', 'FIRE', 'DEATH'], ai: {} }
+];
+export const isHonki = (level) => level >= HONKI_BASE && level < HONKI_BASE + HONKI.length;
+export const honkiOf = (level) => (isHonki(level) ? HONKI[level - HONKI_BASE] : null);
+/* cfg: ORACLE の設定。本気のキャラはその子の設定を重ねる (ロックへの切り替え oracleAi は通さない: デッキごとに決めてあるため) */
+export const honkiAi = (cfg, level) => ({ ...cfg, ...honkiOf(level).ai });
+
 export const isChallenger = (level) => level >= CHALLENGER_BASE && level < CHALLENGER_BASE + CHALLENGERS.length;
 
 /* 難易度の固定デッキ (無ければ null = ランダム編成) */
@@ -83,6 +104,7 @@ export function fixedDeck(level) {
   if (level === DEUS_LEVEL) return DEUS_AI;
   if (level === PEEK_LEVEL) return PEEK_AI;
   if (level === ORACLE_LEVEL) return ORACLE_AI;
+  if (isHonki(level)) return honkiOf(level).deck;
   return isChallenger(level) ? CHALLENGERS[level - CHALLENGER_BASE].deck : null;
 }
 
@@ -97,6 +119,7 @@ export function levelLabel(level) {
   if (level === DEUS_LEVEL) return '機械仕掛けの神 ' + DEUS_NAME;
   if (level === PEEK_LEVEL) return 'すべてを見る者 ' + PEEK_NAME;
   if (level === ORACLE_LEVEL) return ORACLE_NAME;
+  if (isHonki(level)) return honkiOf(level).name;
   if (level === UNDERDOG_TAG_LEVEL) return '下剋上タッグ (かんたんの味方 vs 最強タッグ)';
   return LEVEL_LABELS[level] || '不明';
 }
