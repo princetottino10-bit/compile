@@ -31,6 +31,7 @@ import { currentNode, loadStory, CHAPTERS } from './story.js';
 import { loadRun, nodeById, MAP_ROWS } from './run.js';
 import { loadWeekly } from './weekly.js';
 import { conquered, conquerable } from './stats-data.js';
+import { openNews, unreadNews, seenIds, markAllRead, shouldPop, markPopped } from './news.js';
 
 const BOOT_LINES = [
   '> COMPILE OS v3.1 — boot sequence initiated',
@@ -156,6 +157,15 @@ function startHero(el, protocols) {
   return () => clearInterval(t);
 }
 
+/* お知らせのボタン。読んでいない数を右上に (ソシャゲの「お知らせ」と同じ) */
+function newsButton() {
+  const n = unreadNews().length;
+  return '<button data-mode="news" type="button" class="tt-news" aria-label="お知らせ' + (n ? ' (未読 ' + n + ')' : '') + '">' +
+    '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5.5-6.84V3a1.5 1.5 0 0 0-3 0v1.16A7 7 0 0 0 5 11v5l-2 2v1h18v-1Z"/></svg>' +
+    '<span>お知らせ</span>' +
+    (n ? '<i class="tt-newsn" aria-hidden="true">' + (n > 9 ? '9+' : n) + '</i>' : '') + '</button>';
+}
+
 /* ログイン中は「ACCOUNT」(名前は重ねたときの説明に)、していなければ「SIGN IN」 */
 function accountLabel() {
   return accountState().user ? 'ACCOUNT' : 'SIGN IN';
@@ -182,6 +192,8 @@ export function runTitle(protocols, opts) {
   })();
   const root = document.getElementById('title');
   if (!root) return Promise.resolve('single');
+  /* はじめての人には、これまでのお知らせを読んだことにしておく (遊ぶ前に昔の更新を並べても分からない) */
+  if (seenIds() === null && isNewcomer()) markAllRead();
   const emblems = protocols
     .map(p => '<img alt="" src="' + emblemDataURL(p.name, p.color || '#b9a4ff', 72, true) + '">')
     .join('');
@@ -196,7 +208,7 @@ export function runTitle(protocols, opts) {
     /* 縦持ちのスマホだけに出す (CSS)。タイトル画面の部品なので、ほかの画面を開けば一緒に隠れて重ならない */
     /* 不具合・要望の入口は、メニュー画面にそのまま出しておく (MORE の中だと見つけにくい) */
     '<button type="button" class="tt-report" id="ttReport">不具合・要望</button>' +
-    '<div class="tt-corner" id="ttCorner" hidden>' + profileChip(protocols) +
+    '<div class="tt-corner" id="ttCorner" hidden>' + profileChip(protocols) + newsButton() +
       '<button data-mode="admin" type="button" class="tt-admin"' + (accountState().admin ? '' : ' hidden') + '>ADMIN</button>' +
       '<button data-mode="account" type="button" class="tt-account" title="' + accountTitle() + '"><span>' + accountLabel() + '</span>' +
         '<small' + (accountState().user ? ' hidden' : '') + '>記録を保存・レート戦</small></button>' +
@@ -223,7 +235,13 @@ export function runTitle(protocols, opts) {
       clearInterval(logTimer); stopHero(); window.removeEventListener('keydown', onKey); root.classList.add('gone');
       setTimeout(() => { root.classList.remove('show', 'gone'); root.innerHTML = ''; resolve(mode); }, 420);
     };
+    /* お知らせ。記事の「CHALLENGE へ」などからそのモードへ進む。閉じたら未読の数を消す */
+    const showNews = () => openNews({
+      onGo: (mode) => finish(mode),
+      onClose: () => { const b = root.querySelector('#ttCorner .tt-news'); if (b) b.outerHTML = newsButton(); }
+    });
     const showMenu = () => {
+      const back = takeRecordReturn();
       const center = root.querySelector('#ttCenter');
       center.innerHTML = LOGO + helloHtml() +
         /* 遊ぶ入口は大きく2つだけ。練習・記録は小さく下に、アカウントと設定は右上の隅に置く */
@@ -312,6 +330,7 @@ export function runTitle(protocols, opts) {
         else if (button.dataset.mode === 'account') openAccount();
         else if (button.dataset.mode === 'admin') openAdmin();
         else if (button.dataset.mode === 'cards') openCardList();
+        else if (button.dataset.mode === 'news') showNews();
         else if (button.dataset.mode === 'gacha') openGacha();
         else if (button.dataset.mode === 'more') {
           const pop = root.querySelector('.tt-morepop');
@@ -364,10 +383,11 @@ export function runTitle(protocols, opts) {
         notice({ id: 'askName', title: '表示名を決めませんか', text: 'オンライン対戦で相手に見える名前です。あとからいつでも変えられます',
           actions: [{ label: '決める', main: true, onClick: () => openProfile(protocols) }] });
       }
+      /* 新しいお知らせがあれば、メニューを出したときに一度だけ開く (リプレイから戻ったときは記録を開き直すので出さない) */
+      if (!back && !isNewcomer() && shouldPop()) { markPopped(); showNews(); }
       root.querySelector('#ttReport').onclick = () => { sfx('select'); openReport(); };
       root.querySelector('#ttCorner').onclick = onMenu;
       /* リプレイを見終わって戻ってきた: RECORD のリプレイのタブを、見る前の位置で開き直す */
-      const back = takeRecordReturn();
       if (back) openStats({ tab: back.tab, scroll: back.scroll });
     };
     /* 先にメニューを出し、音はそのあと (失敗しても進める)。以前は音の初期化が先で、
