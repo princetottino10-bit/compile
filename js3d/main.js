@@ -96,6 +96,7 @@ import { pickCard, placementPad } from './input.js';
 import { placementChoices, renderPlayChoices } from './playchoices.js';
 import { createAiClient } from './aiclient.js';
 import { buildRunDefs, baseOf } from './runcards.js';
+import { buildMobDefs } from './mobcards.js';
 import { createLogFormat } from './logformat.js';
 import { meaningfulSteps as cutSteps } from './steps.js';
 import { initDialogs } from './dialogs.js';
@@ -242,7 +243,7 @@ function gameSummary(st, side, win, level, online) {
 /* 決着のあと: デイリーミッションを進め、実績を判定する (CPU 戦・オンライン共通) */
 async function afterGameProgress(st, side, win, level, online) {
   const game = gameSummary(st, side, win, level, online);
-  const r = recordDailyGame(game, Object.keys(protoIndex));
+  const r = recordDailyGame(game, realProtoNames());
   if (matchGains) matchGains.daily.push(...r.cleared.map(m => m.text));
   if (r.cleared.length) {
     const xp = r.cleared.reduce((n, m) => n + m.xp, 0) + (r.allNow ? DAILY_XP.all : 0);
@@ -306,6 +307,9 @@ UI.setCardInfoHandler({
   winsOf: (defId) => { const t = cardWins.get(baseOf(defId)); return t ? { wins: t.wins, games: t.games, effects: t.effects, tier: cardTier(t.wins) } : null; }
 });
 let runMode = false;             // 勝ち抜き戦・週替わり3連戦の1戦 (?run=1)
+/* 遊ぶ人が選べるプロトコル (ストーリーのモブの量産プロトコルを除く。デイリー・制覇・勝ち抜き戦の数え方に混ぜない) */
+const realProtos = () => Object.values(protoIndex).filter(p => !p.mob);
+const realProtoNames = () => realProtos().map(p => p.name);
 let storyNode = null;            // ストーリーの対戦の場面 (story.js)。決着したら ?story=1 で地図に戻る
 let resumed = null;              // 中断した対戦を続きから遊ぶ (resume.js): { rec, built }
 let runKind = 'run';             // 'run' (勝ち抜き戦) / 'weekly' (週替わり3連戦)
@@ -697,7 +701,7 @@ let matchGains = null;
 /* 今日のデイリーミッションで指定されたプロトコル (まだ達成していないものを優先)。無ければ null */
 function todayDailyProto() {
   try {
-    const list = dailyView(Object.keys(protoIndex)).filter(m => m.proto && protoIndex[m.proto]);
+    const list = dailyView(realProtoNames()).filter(m => m.proto && protoIndex[m.proto]);
     const open = list.find(m => !m.done) || list[0];
     return open ? open.proto : null;
   } catch (e) { return null; }
@@ -826,8 +830,12 @@ async function boot() {
     }
   }
   /* 勝ち抜き戦だけのカード (★ と ＋)。画面の defIndex とエンジン・CPU の Worker に登録する */
+  /* ストーリーのモブだけのプロトコル (量産。mobcards.js) も同じ所に足す。protoIndex には mob: true で入る (並べて選ぶ画面には出さない) */
   const runDefs = buildRunDefs(cards, effects);
-  for (const d of runDefs.ui) defIndex[d.id] = d;
+  const mobDefs = buildMobDefs();
+  runDefs.engine.push(...mobDefs.engine);
+  for (const p of mobDefs.protocols) protoIndex[p.name] = p;
+  for (const d of runDefs.ui.concat(mobDefs.ui)) defIndex[d.id] = d;
   markDemerits(effects, runDefs.engine);
   mark('fetch');
   Engine.init(cards, effects, runDefs.engine);
@@ -981,7 +989,7 @@ async function boot() {
   demoMode = params.get('demo') === '1';
   const pick = (key, fallback) => {
     const v = params.get(key);
-    const list = v ? v.split(',').map(s => s.trim().toUpperCase()).filter(n => protoIndex[n]) : [];
+    const list = v ? v.split(',').map(s => s.trim().toUpperCase()).filter(n => protoIndex[n] && !protoIndex[n].mob) : [];
     return list.length === 3 ? list : fallback;
   };
   let p0 = pick('me', null);
@@ -991,7 +999,7 @@ async function boot() {
   /* デイリーミッションの「▶ 遊ぶ」(?deck=FEAR) のように、1つか2つだけのこともある (残りは自分で選ぶか、ランダム) */
   let deckPreset = p0 ? null : (() => {
     const v = params.get('deck');
-    const list = v ? v.split(',').map(s => s.trim().toUpperCase()).filter(n => protoIndex[n]) : [];
+    const list = v ? v.split(',').map(s => s.trim().toUpperCase()).filter(n => protoIndex[n] && !protoIndex[n].mob) : [];
     return list.length >= 1 && list.length <= 3 ? [...new Set(list)] : null;
   })();
   if (deckPreset) history.replaceState(null, '', location.pathname);
@@ -1006,7 +1014,7 @@ async function boot() {
   /* おまかせ (?quick=1): 基本セットから両者のプロトコルを選び、すぐ始める (はじめての人向け)。
      相手の強さは設定の「おまかせで対戦する強さ」、デイリーのプロトコルを入れる設定なら自分の1つ目にそれを入れる */
   if (params.get('quick') === '1' && !p0) {
-    const basic = QUICK_POOL.filter(n => protoIndex[n]);
+    const basic = QUICK_POOL.filter(n => protoIndex[n] && !protoIndex[n].mob);
     const from = basic.length >= 6 ? basic : cards.protocols.map(x => x.name);
     const lv = Math.min(2, Math.max(0, settings().quickLevel | 0));
     const dailyProto = settings().quickDaily ? todayDailyProto() : null;
@@ -3373,7 +3381,7 @@ function frameColor(frame) {
 }
 function myPlate() {
   const p = profileOf(settings(), localRecords());
-  const art = iconArt(p.icon, Object.values(protoIndex), 40);
+  const art = iconArt(p.icon, realProtos(), 40);
   const frame = myLook(settings()).plate;
   return { name: displayName() || 'YOU', level: p.level, sub: p.title || '', frame, frameColor: frameColor(frame),
     icon: art ? { name: p.icon, color: art.color, src: art.src, face: !!art.face } : null };
@@ -5814,7 +5822,7 @@ async function afterTurn() {
     /* 最強に新しいプロトコルで勝った: 制覇の数を刻む */
     if (newConq.length) {
       await UI.conquerCutIn(newConq.map(n => ({ name: n, color: (protoIndex[n] || {}).color })), conquered(localRecords()).size,
-        conquerable(Object.keys(protoIndex)).length, { auto: autoPlay });
+        conquerable(realProtoNames()).length, { auto: autoPlay });
     }
     /* レベルが上がったら、手に入った報酬を見せる */
     if (myLevel > levelBefore) await UI.levelUpCutIn(myLevel, rewardsBetween(levelBefore, myLevel));
@@ -5833,7 +5841,7 @@ async function afterTurn() {
         if (runKind === 'weekly') {
           /* 対戦中に週が変わっても、挑戦した週 (保存してある week) で数える */
           const was = loadStoredWeekly();
-          showWeeklyAfterGame(win, Object.values(protoIndex));
+          showWeeklyAfterGame(win, realProtos());
           const after = loadStoredWeekly();
           if (was.phase === 'battle' && after.phase === 'clear' && after.week === was.week) {
             await gainXp('weekly', XP_GAIN.weeklyClear, 'wk:' + was.week, true);
@@ -5841,7 +5849,7 @@ async function afterTurn() {
           }
         } else {
           const was = loadRun();
-          showRunAfterGame(win, compilesBy(cur.state, AI), Object.values(protoIndex), win ? runBonus() : 0, scoreNow());
+          showRunAfterGame(win, compilesBy(cur.state, AI), realProtos(), win ? runBonus() : 0, scoreNow());
           if (win) maybeLoginHint('runWin');
           const now = loadRun();
           if (was && was.phase === 'battle' && now && now.phase === 'clear') await gainXp('run', XP_GAIN.runClear);
@@ -5955,7 +5963,7 @@ function nextGoalsHtml() {
   const pl = playerLevel(localRecords(), bonusXp());
   let daily = '';
   try {
-    const list = dailyView(Object.keys(protoIndex));
+    const list = dailyView(realProtoNames());
     const left = list.filter(m => !m.done);
     daily = left.length ? 'DAILY ' + (list.length - left.length) + '/' + list.length + ' — 次: ' + left[0].text : 'DAILY 3/3 達成';
   } catch (e) { daily = ''; }
@@ -6685,7 +6693,7 @@ function syncPanels(st, animate) {
     if (run && lethal(run, lost)) {
       runEnded = true;
       fadeOutBgm();
-      showRunAfterGame(false, lost, Object.values(protoIndex), 0, scoreNow());
+      showRunAfterGame(false, lost, realProtos(), 0, scoreNow());
     }
   }
   if (!panels || !st) return Promise.resolve();

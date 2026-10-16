@@ -10,6 +10,7 @@ import { playClip, isMuted, sfx } from './audio.js';
 import { duckBgm } from './bgm.js';
 import { settings } from './settings.js';
 import { SPEAKERS } from './story.js';
+import { MOB_PROTOCOLS } from './mobcards.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const TYPE_MS = 26;       // 1文字の間
@@ -335,7 +336,7 @@ export async function playNode(n) {
 /* ---------- 対戦の前の確認 ---------- */
 /* 対戦の中身 (自分と相手のデッキ・強さ・勝ちの条件) を見せて、対戦するか聞く。true = 対戦する */
 export function askBattle(n, protocols) {
-  const byName = Object.fromEntries(protocols.map(p => [p.name, p]));
+  const byName = Object.fromEntries(protocols.concat(MOB_PROTOCOLS).map(p => [p.name, p]));
   const chips = (names) => '<span class="sm-deck">' + names.map(x =>
     '<i style="--pc:' + esc((byName[x] || {}).color || '#b9a4ff') + '">' + esc(x) + '</i>').join('') + '</span>';
   const box = overlay('storyConfirm', '確認');

@@ -15,6 +15,8 @@
  *   対戦は画面を開き直して始め (勝ち抜き戦と同じ)、決着したら ?story=1 で地図に戻る。
  * ========================================================================= */
 
+import { MOB_DECK, MOB_MATE_DECK } from './mobcards.js';
+
 export const STORY_KEY = 'compileStory';
 
 /* 話す人。portrait: 立ち絵 (art/avatar/<id>_<face>.webp) / 無ければターミナル風の文字だけ */
@@ -34,6 +36,8 @@ export const SPEAKERS = {
 
 /* 行: { who, face?, text, stage?, pa? }。pa: 館内放送 (話す人は姿を見せず、名前は「館内放送」。鳴らす前にチャイム)。stage: 立ち絵に出す人を決め直す (話す人の id の並び。右から。[] で全員下げる)。
    決めなければ、話した人が空いている所 (右 → 左) に出て、そのまま残る */
+/* 名前のない機体 (モブ) は、量産プロトコル3つ (js3d/mobcards.js)。タッグの相方も同じ3つを並べ替えて使う。元のカードと β は名前のある人物だけが使う (2026-10-16 ユーザー) */
+const MOB = MOB_DECK, MOB_MATE = MOB_MATE_DECK;
 const L = (who, text, face) => ({ who, text, ...(face ? { face } : {}) });
 
 /* 対戦: me / opp = プロトコル3つ、level = CPU の強さ (0 かんたん / 1 ふつう / 2 つよい。タッグでは味方の CPU も同じ強さ)、
@@ -169,13 +173,14 @@ export const CHAPTERS = [
         L('shion', 'でも、主任の手は読めるよ。規則どおりにしか動かないから。', 'happy'),
         L('shion', '向こうが二人なら、こっちも二人。……私も、一緒に解く。', 'fired')
       ] },
-      { id: 'c0-chief', kind: 'battle', title: '警備主任', me: ['FIRE', 'WATER', 'LIFE'], opp: ['METAL', 'GRAVITY', 'DARKNESS'],
+      { id: 'c0-chief', kind: 'battle', title: '警備主任', me: ['FIRE', 'WATER', 'LIFE'], opp: MOB,
         /* ふつう + 1つ済みから (2026-10-14 ユーザー: 主任戦はふつうで。味方の紫苑も同じ強さになるので、かんたんにはしない)。
-           試算: かんたん相当の人が 40 戦 29 勝 (済みなしでは 40 戦 20 勝)。2 敗すると「かんたんで挑む」が出る */
+           試算: かんたん相当の人が 40 戦 29 勝 (済みなしでは 40 戦 20 勝)。2 敗すると「かんたんで挑む」が出る。
+           2026-10-16: 相手と相方を量産プロトコル3つにして 300 戦 90.0% (済みなしなら 68.7%) */
         level: 1, win: 3, head: 1, oppName: '警備主任', mate: 'shion', oppAvatar: 'story_chief', boss: true,
         note: '紫苑と2人で、主任と巡回の警備機体に挑む (タッグ: 手番を交代で指す)。1つは書き上げた状態から始まる。あと2つを先に書き上げると、ゲートが開く',
         /* タッグ (2026-10-13): 相棒と組める戦いはタッグにする。紫苑は判定のときと同じ手持ち。チームの中で同じプロトコルは持てない */
-        tag: { mate: ['PSYCHIC', 'LIGHT', 'MIRROR'], mateName: '紫苑', oppMate: ['SPEED', 'CLARITY', 'FEAR'], oppMateName: '巡回の警備機体', oppMateAvatar: 'story_patrol' },
+        tag: { mate: ['PSYCHIC', 'LIGHT', 'MIRROR'], mateName: '紫苑', oppMate: MOB_MATE, oppMateName: '巡回の警備機体', oppMateAvatar: 'story_patrol' },
         talk: {
           me: {
             hello: ['……行こう。', '主任の言葉、全部ほどこう。'],
@@ -337,15 +342,15 @@ export const CHAPTERS = [
             L('shion', '瑠璃と同じ言葉は、二人では持てない。……私のを、ひとつ貸すね。'),
             L('sys', '> コンフリクト: 二号機　命令: お客さまを、順路どおりに、案内しろ')
         ] } },
-      /* 二号機は瑠璃の写し: 瑠璃の水 (WATER) が凍って動かなくなった ICE (毎日同じ案内をくり返す)、引き戻す GRAVITY、明かりの落ちた通路の DARKNESS。
-         同じ側と相手側で同じプロトコルは持てないので、WATER そのものではなく ICE にした */
-      { id: 'c1-abyss', kind: 'battle', title: '後任「二号機」', me: ['FIRE', 'LIGHT', 'LIFE'], opp: ['ICE', 'GRAVITY', 'DARKNESS'],
-        /* 序盤なので かんたん + 1つ済みから (試算: かんたん相当の人が 40 戦 32 勝。前の ふつう・済みなしでは 40 戦 13 勝) */
+      /* 二号機は瑠璃の写し。2026-10-16 から、名前のない機体なので量産プロトコル3つ (前は ICE / GRAVITY / DARKNESS) */
+      { id: 'c1-abyss', kind: 'battle', title: '後任「二号機」', me: ['FIRE', 'LIGHT', 'LIFE'], opp: MOB,
+        /* 序盤なので かんたん + 1つ済みから (試算: かんたん相当の人が 40 戦 32 勝。前の ふつう・済みなしでは 40 戦 13 勝)。
+           2026-10-16: 相手と相方を量産プロトコル3つにして 300 戦 92.0% (済みなしなら 76.0%) */
         level: 0, win: 3, head: 1, oppName: '二号機', mate: 'asagi', oppAvatar: 'story_nigoki', boss: true,
         note: '瑠璃と2人で、二号機と回収機に挑む (タッグ: 手番を交代で指す)。1つは書き上げた状態から始まる。あと2つを先に書き上げる',
         /* タッグ: WATER は瑠璃の言葉 (ここで本人の色になる)。主人公は WATER の代わりに紫苑の LIGHT を借りる。
            主人公の WATER は、勝ったあと 3802 の一手として「預かり」で入る (プロット: 1章 WATER) */
-        tag: { mate: ['WATER', 'PEACE', 'UNITY'], mateName: '瑠璃', oppMate: ['METAL', 'TIME', 'APATHY'], oppMateName: '回収機', oppMateAvatar: 'story_collector' },
+        tag: { mate: ['WATER', 'PEACE', 'UNITY'], mateName: '瑠璃', oppMate: MOB_MATE, oppMateName: '回収機', oppMateAvatar: 'story_collector' },
         /* 対戦中のひとこと: 瑠璃は「お客さま」へ向けて案内する。二号機は瑠璃の放送をそのまま繰り返す。争点や仕組みの話はしない (対戦中は暗黙) */
         talk: {
           me: {
@@ -564,12 +569,13 @@ export const CHAPTERS = [
           L('sys', '> コンフリクト: 屋敷の管理 時計　命令: 私の世話を頼む')
         ] } },
       /* 二戦目: この一戦だけ、プレイヤーが茜を動かす (プロット)。mate を自分の側の立ち絵に出し、talk.me が茜のひとこと。
-         時計は TIME (同じ三時をくり返す) / DEATH (止まった日) / SPIRIT (誰もいない寝室の気配)。
+         時計は名前のない管理の機体なので、2026-10-16 から量産プロトコル (前は TIME / DEATH / SPIRIT)。
          強さ (2026-10-13): 序盤は勝てる強さにする (ユーザー)。CPU どうし (同じ強さ) で 80 戦、茜の側の勝ちは 50%。
          慣れない茜の手持ちで指すので、CPU は かんたん (0)。一戦目の茜戦は主人公の側が 160 戦で 73% 勝つが、同じく かんたん */
-      { id: 'c2-clock', kind: 'battle', title: '柱時計「時計」', me: ['HATE', 'LOVE', 'APATHY'], opp: ['TIME', 'DEATH', 'SPIRIT'],
-        level: 0, win: 3, oppName: '時計', meName: '茜', mate: 'nadeshiko', oppAvatar: 'story_clock', boss: true,
-        note: 'この一戦だけ、茜を動かす。3つすべてを先に書き上げると、茜の読み方が残る',
+      { id: 'c2-clock', kind: 'battle', title: '柱時計「時計」', me: ['HATE', 'LOVE', 'APATHY'], opp: MOB,
+        /* 2026-10-16: 相手を量産プロトコル3つにし、1つ済みから。主人公をかんたんの CPU にした試算で 300 戦 86.7% (済みなしは 69.3%。元のデッキ・済みなしは 29%) */
+        level: 0, win: 3, head: 1, oppName: '時計', meName: '茜', mate: 'nadeshiko', oppAvatar: 'story_clock', boss: true,
+        note: 'この一戦だけ、茜を動かす。1つは書き上げた状態から始まる。あと2つを先に書き上げると、茜の読み方が残る',
         talk: {
           me: {
             hello: ['片付けを始めます。', '三時は、もう終わりです。'],

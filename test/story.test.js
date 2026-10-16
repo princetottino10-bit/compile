@@ -9,7 +9,10 @@ globalThis.localStorage = {
 };
 const S = await import('../js3d/story.js');
 const cards = JSON.parse(await (await import('node:fs/promises')).readFile(new URL('../data/cards.json', import.meta.url), 'utf8'));
-const PROTOS = new Set(cards.protocols.map(p => p.name));
+const { MOB_NAMES, isMobProto } = await import('../js3d/mobcards.js');
+/* モブ (名前のない機体) は量産プロトコル3つを使う。タッグの相方も同じ3つ (js3d/mobcards.js) */
+const PROTOS = new Set(cards.protocols.map(p => p.name).concat(MOB_NAMES));
+const uniq = (a) => new Set(a.filter(p => !isMobProto(p))).size === a.filter(p => !isMobProto(p)).length;
 const tsume = JSON.parse(await (await import('node:fs/promises')).readFile(new URL('../data/tsume.json', import.meta.url), 'utf8'));
 
 test('章と場面: id は重ならず、会話には行が、対戦にはデッキがある', () => {
@@ -30,11 +33,11 @@ test('章と場面: id は重ならず、会話には行が、対戦にはデッ
         assert.equal(n.me.length, 3, n.id);
         assert.equal(n.opp.length, 3, n.id);
         for (const p of n.me.concat(n.opp)) assert.ok(PROTOS.has(p), n.id + ' ' + p);
-        assert.equal(new Set(n.me.concat(n.opp)).size, 6, n.id + ' 自分と相手のプロトコルは重ならない');
+        assert.ok(uniq(n.me.concat(n.opp)), n.id + ' 自分と相手のプロトコルは重ならない (量産は除く)');
         if (n.tag) {
           /* タッグ: 相棒・相手の相方も3つずつ。4人の12個は重ならない (チームの中は決まりで、チームどうしは見分けやすさのため) */
           for (const k of ['mate', 'oppMate']) { assert.equal(n.tag[k].length, 3, n.id + ' ' + k); for (const p of n.tag[k]) assert.ok(PROTOS.has(p), n.id + ' ' + p); }
-          assert.equal(new Set(n.me.concat(n.opp, n.tag.mate, n.tag.oppMate)).size, 12, n.id + ' タッグの4人のプロトコルは重ならない');
+          assert.ok(uniq(n.me.concat(n.opp, n.tag.mate, n.tag.oppMate)), n.id + ' タッグの4人のプロトコルは重ならない (量産は除く)');
           assert.ok(n.mate && n.tag.mateName && n.tag.oppMateName && n.tag.oppMateAvatar, n.id + ' タッグの相棒と相手の相方');
         }
         assert.ok([0, 1, 2].includes(n.level), n.id);
