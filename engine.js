@@ -2218,6 +2218,7 @@ function runTurnLoop(ctx) {
         st.turn = 1 - st.turn;
         st.turns = (st.turns || 0) + 1;     // 終えた手番の数 (両者合計)。古い盤面には無いので 0 から数える
         if (st.handSwap && st.winner === null && st.turns % st.handSwap === 0) swapHands(ctx);
+        if (st.turncoat && st.winner === null && st.turns % st.turncoat === 0) turncoat(ctx);
         st.phase = 'start';
         break;
       default:
@@ -2240,6 +2241,18 @@ function swapHands(ctx) {
     }
   }
   log(ctx, '手札が入れ替わった！');
+}
+
+/* 勝ち抜き戦の異変「寝返り」(newGame の turncoat: n): n 手番ごとに、両側にカードがあるラインを1つ選び、
+   いちばん上のカードどうしが向こう側へ寝返る (持ち主はそのまま、表裏もそのまま) */
+function turncoat(ctx) {
+  const st = ctx.st;
+  const lines = [0, 1, 2].filter(l => st.lines[l][0].length && st.lines[l][1].length);
+  if (!lines.length) return;
+  const l = lines[Math.floor(rand(st) * lines.length)];
+  const a = st.lines[l][0].pop(), b = st.lines[l][1].pop();
+  st.lines[l][0].push(b); st.lines[l][1].push(a);
+  log(ctx, `寝返り！ ライン${l + 1} のいちばん上のカードが入れ替わった`);
 }
 
 /* CORRUPTION_1: どちらのプレイヤー側でもプレイできるカードか */
@@ -2485,6 +2498,7 @@ function newGame(opts) {
     /* 勝ち抜き戦の異変: 負けるが勝ち (先にコンパイルし終えた側の負け) と、手札交換 (n 手番ごとに手札が入れ替わる) */
     ...(opts.misere ? { misere: true } : {}),
     ...(opts.handSwap >= 2 ? { handSwap: opts.handSwap | 0 } : {}),
+    ...(opts.turncoat >= 2 ? { turncoat: opts.turncoat | 0 } : {}),
     ...(Array.isArray(opts.winCompilesBySide) && opts.winCompilesBySide.length === 2 && opts.winCompilesBySide.every(n => n >= 1 && n <= 3)
       ? { winBySide: opts.winCompilesBySide.map(n => n | 0) } : {}),
     players: [],
