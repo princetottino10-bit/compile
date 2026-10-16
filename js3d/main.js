@@ -1391,7 +1391,7 @@ async function boot() {
       : tutorial
         ? Engine.newPuzzle(tutorial.lesson.spec, { seed: 1 })
         : Engine.newGame({ seed, p0, p1, first: firstPlayer, training: trainingMode, winCompiles,
-          ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods, winCompilesBySide: runOpts.winCompilesBySide, perks: runOpts.perks, startCompiled: runOpts.startCompiled } : {}),
+          ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods, winCompilesBySide: runOpts.winCompilesBySide, perks: runOpts.perks, startCompiled: runOpts.startCompiled, misere: runOpts.misere, handSwap: runOpts.handSwap } : {}),
           ...(storyOpts || {}),
           ...(tagMates ? { tag: tagMates } : {}) });
   cur = res;
@@ -1424,7 +1424,7 @@ async function boot() {
   /* CPU 戦は棋譜を取る (決着したらリプレイとして残す) */
   /* タッグはリプレイに残さない (棋譜の形が 1 対 1 のため) */
   const gameInit = resumed ? resumed.rec.init : { seed, p0: p0.slice(), p1: p1.slice(), first: firstPlayer, winCompiles: winCompiles || null,
-    ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods, winCompilesBySide: runOpts.winCompilesBySide, perks: runOpts.perks, startCompiled: runOpts.startCompiled } : {}),
+    ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods, winCompilesBySide: runOpts.winCompilesBySide, perks: runOpts.perks, startCompiled: runOpts.startCompiled, misere: runOpts.misere, handSwap: runOpts.handSwap } : {}),
     ...(storyOpts || {}) };
   const priorActions = resumed ? resumed.rec.actions : [];
   /* CPU どうしの観戦も残す (RECORD のリプレイの「観戦」の枠。?demo=1 の流しっぱなしは残さない) */
@@ -5892,7 +5892,7 @@ async function afterTurn() {
           }
         } else {
           const was = loadRun();
-          showRunAfterGame(win, compilesBy(cur.state, AI), realProtos(), win ? runBonus() : 0, scoreNow());
+          showRunAfterGame(win, lifeHits(cur.state), realProtos(), win ? runBonus() : 0, scoreNow());
           if (win) maybeLoginHint('runWin');
           const now = loadRun();
           if (was && was.phase === 'battle' && now && now.phase === 'clear') await gainXp('run', XP_GAIN.runClear);
@@ -6709,6 +6709,9 @@ function panelRows(st) {
   });
 }
 
+/* 勝ち抜き戦でライフが減る数: ふつうは相手にコンパイルされた数。負けるが勝ちでは、自分がコンパイルしてしまった数 */
+const lifeHits = (st) => compilesBy(st, st && st.misere ? ME : AI);
+
 /* 名札の横の「勝ちまでの進み具合」(●●○) を盤面に合わせる */
 function syncCompileProgress(st) {
   if (!st || !st.players) return;
@@ -6717,7 +6720,7 @@ function syncCompileProgress(st) {
   const done = (side) => st.players[side].protocols.filter(p => p.compiled).length;
   setCompileProgress({ done: done(ME), need: need(ME) }, { done: done(1 - ME), need: need(1 - ME) });
   /* あと1本で決まる場面になった瞬間に、MATCH POINT / DANGER (勝ち抜き戦だけ。1試合で1回ずつ) */
-  if (hypeOn() && st.winner == null && gameStartedAt && Date.now() - gameStartedAt > 1500) {
+  if (hypeOn() && !st.misere && st.winner == null && gameStartedAt && Date.now() - gameStartedAt > 1500) {
     for (const side of [ME, AI]) {
       const key = side === ME ? 'mp' : 'dg';
       if (need(side) > 1 && done(side) === need(side) - 1 && !mpShown[key]) { mpShown[key] = true; setTimeout(() => matchPoint(side === ME), 900); }
@@ -6730,7 +6733,7 @@ function syncPanels(st, animate) {
   syncCompileProgress(st);
   if (runMode && runKind === 'run' && st && !runEnded) {
     /* 勝ち抜き戦: 相手にコンパイルされた回数だけライフを減らして見せる。尽きたらその場で終わり */
-    const lost = compilesBy(st, AI);
+    const lost = lifeHits(st);
     runHud(lost, runBonus());
     const run = loadRun();
     if (run && lethal(run, lost)) {
