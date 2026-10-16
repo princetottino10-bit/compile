@@ -341,11 +341,12 @@ function saveBest(run) {
   const best = isChaos(run) ? loadChaosBest() : loadBest();
   const reached = run.phase === 'clear' ? MAP_ROWS + 1 : rowOf(run) + 1;
   const heat = run.heat | 0;
-  const better = !best || heat > (best.heat | 0) ||
-    (heat === (best.heat | 0) && (best.reached < reached || (best.reached === reached && best.life < run.life)));
+  const loop = run.loop | 0;
+  const better = !best || loop > (best.loop | 0) || (loop === (best.loop | 0) && heat > (best.heat | 0)) ||
+    (loop === (best.loop | 0) && heat === (best.heat | 0) && (best.reached < reached || (best.reached === reached && best.life < run.life)));
   if (!better) return;
   try {
-    localStorage.setItem(isChaos(run) ? CHAOS_BEST_KEY : BEST_KEY, JSON.stringify({ reached, rows: MAP_ROWS, life: Math.max(0, run.life), deck: run.deck, heat, patches: run.patches || [], at: Date.now() }));
+    localStorage.setItem(isChaos(run) ? CHAOS_BEST_KEY : BEST_KEY, JSON.stringify({ reached, rows: MAP_ROWS, life: Math.max(0, run.life), deck: run.deck, heat, ...(loop ? { loop } : {}), patches: run.patches || [], at: Date.now() }));
   } catch (e) { /* private mode */ }
 }
 /** 選べる HEAT の上限 (クリアした HEAT + 1) */
@@ -668,7 +669,7 @@ export function chooseNode(run, id, names, rnd = Math.random) {
   if (run.phase !== 'map' || !reachable(run).includes(id)) return run;
   const node = nodeById(run, id);
   const moved = { ...run, pos: id, visited: (run.visited || []).concat(id), swapped: null, lastPull: null, lastSaved: false,
-    cursedWin: false, removedNow: null, upgradedNow: null, gotStar: null, lastGain: 0, lastRoulette: null, gifted: null, gotOmega: null, copiedNow: null, mimic: false };
+    cursedWin: false, removedNow: null, upgradedNow: null, gotStar: null, lastGain: 0, lastRoulette: null, gifted: null, gotOmega: null, copiedNow: null, mimic: false, stolen: null };
   switch (node.type) {
     case 'battle': case 'elite': case 'boss': return prepareBattle(moved, names, rnd, node.type === 'elite' ? 'elite' : 'normal');
     case 'event': {
@@ -814,7 +815,7 @@ export function prepareBattle(run, names, rnd = Math.random, route = 'normal') {
   /* カオス: 異変をかける (やり直しのときもかけ直す。毎回ちがう試合になる) */
   if (isChaos(run)) {
     const kind = node.type === 'boss' ? 'boss' : route === 'elite' ? 'elite' : 'battle';
-    opp.chaos = rollMutators(mutatorCount(node.row | 0, kind), rnd, { boss: !!opp.boss });
+    opp.chaos = rollMutators(Math.min(5, mutatorCount(node.row | 0, kind) + (run.loop | 0)), rnd, { boss: !!opp.boss });
     if (opp.chaos.includes('mirror')) opp.deck = run.deck.slice();
     if (opp.chaos.includes('giant')) { opp.deck = STRONGEST_AI.slice(); opp.level = 3; }
     if (opp.chaos.includes('baby')) opp.level = 0;
@@ -1075,12 +1076,12 @@ function applyMutators(run, o, me) {
 
 /* ---------- カオスのごほうび ---------- */
 /* Ω カードを1枚もらう。デッキにそのプロトコルが無ければ、どれか1つと入れ替える (入れ替えたプロトコルの強化・除去・β は消える) */
-function gainOmega(run, c) {
+function gainOmega(run, c, want = null) {
   if ((run.added || []).length >= maxAdded(run)) return run;
   const pool = ORACLE_CARDS.filter(o => !(run.added || []).includes(o.id));
-  if (!pool.length) return run;
+  if (!pool.length || (want && !pool.some(x => x.id === want))) return run;
   /* デッキのプロトコルのものがあれば少し出やすく (入れ替えずに済む) */
-  const o = weighted(pool.map(x => [x.id, run.deck.includes(x.proto) ? 2 : 1]), c.rnd);
+  const o = want || weighted(pool.map(x => [x.id, run.deck.includes(x.proto) ? 2 : 1]), c.rnd);
   const card = ORACLE_CARDS.find(x => x.id === o);
   let next = run;
   let swapped = null;
@@ -1125,6 +1126,25 @@ function spinRoulette(run, c, again = false) {
 }
 export const spinRouletteFor = (run, rnd = Math.random, names = []) => spinRoulette(run, { rnd, names });
 export const gainOmegaFor = (run, rnd = Math.random) => gainOmega(run, { rnd });
+
+/* ---------- カオスの LOOP (ボスを倒したら、もう1周) ----------
+   倒したボスの Ω カードを奪い (デッキにそのプロトコルが無ければ入れ替わる)、ライフ全回復で新しい地図へ。
+   周を重ねるほど異変が増える (mutatorCount + loop)。ボスは別の1体 */
+export function canLoop(run) { return isChaos(run) && run.phase === 'clear'; }
+export function nextLoop(run, rnd = Math.random) {
+  if (!canLoop(run)) return run;
+  const B = bossOf(run);
+  const steal = ((B.rule && B.rule.stars) || []).filter(id => /^XO_/.test(id) && !(run.added || []).includes(id));
+  let next = { ...run, added: (run.added || []).slice() };
+  /* 持ちきれなければ、いちばん古い β・Ω を手放してでも奪う */
+  if (steal.length && next.added.length >= maxAdded(next)) next.added = next.added.slice(1);
+  const before = next;
+  if (steal.length) next = gainOmega(next, { rnd }, pickOne(steal, rnd));
+  let boss = chooseBoss(0, rnd, true);
+  for (let k = 0; k < 8 && boss === run.boss; k++) boss = chooseBoss(0, rnd, true);
+  return { ...next, loop: (run.loop | 0) + 1, phase: 'map', map: makeMap(rnd, true), pos: null, visited: [], life: next.maxLife, boss,
+    stolen: next !== before ? next.gotOmega : null, opp: null, route: 'normal', shop: null, event: null };
+}
 
 /* 相手 (side) がコンパイルした回数 (効果でコンパイル完了にしたものも)。
    エンジンの集計 (state.tally) を使う。古い行が捨てられる actionLog は、集計の無い盤面だけに使う */

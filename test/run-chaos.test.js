@@ -189,3 +189,26 @@ test('カオス: 酔っぱらいは CPU のでたらめの割合を上げる', a
   assert.equal(R.runAiBlunder({ ...b, opp: { ...b.opp, chaos: [] } }), 0);
   assert.equal(R.runAiBlunder(null), 0);
 });
+
+test('カオス: ボスを倒すと LOOP。ボスの Ω を奪い、ライフ全回復で新しい地図、異変が1つ増える', async () => {
+  const { R, run } = await chaosOnMap();
+  const top = run.map.rows[R.MAP_ROWS - 1][0];
+  const atBoss = { ...run, boss: 'abyss', life: 3, pos: top.id, phase: 'battle', route: 'normal',
+    opp: { deck: ['DARKNESS', 'DEATH', 'PLAGUE'], level: 3, boss: true, bossId: 'abyss', chaos: [] } };
+  const clear = R.finishBattle(atBoss, true, 1, NAMES, seq());
+  assert.equal(clear.phase, 'clear');
+  assert.ok(R.canLoop(clear));
+  const next = R.nextLoop(clear, seq());
+  assert.equal(next.loop, 1);
+  assert.equal(next.phase, 'map');
+  assert.equal(next.life, next.maxLife);
+  assert.equal(next.pos, null);
+  assert.notEqual(next.boss, 'abyss');
+  assert.ok(next.added.includes('XO_4'));
+  assert.ok(next.deck.includes('DEATH'));
+  assert.equal(next.stolen, 'XO_4');
+  const b = R.chooseNode(next, R.reachable(next)[0], NAMES, seq());
+  assert.equal(R.mutatorsOf(b).length, 2);
+  /* ふつうの勝ち抜き戦には LOOP は無い */
+  assert.ok(!R.canLoop({ ...clear, mode: undefined }));
+});

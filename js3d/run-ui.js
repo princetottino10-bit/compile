@@ -216,7 +216,8 @@ export function openRun(protocols, cardsOf, opts) {
     };
     const starDesc = (id) => { const x = STAR_CARDS.find(c => c.id === id) || ORACLE_CARDS.find(c => c.id === id); return x ? starText(x, byName[x.proto]) : ''; };
     /* カオス: ルーレットの結果・Ω・入れ替わりのお知らせ (地図と報酬の画面に) */
-    const chaosNotes = () => (run.lastRoulette || []).map(x => '<p class="rn-note rn-roulette ' + (x.good === false ? 'bad' : 'good') + '">🎰 ' + esc(x.text) + '</p>').join('') +
+    const chaosNotes = () => (run.stolen && !run.pos ? '<p class="rn-note rn-gain">LOOP ' + ((run.loop | 0) + 1) + ' — 前のボスから Ω カード ' + esc(starLabel(run.stolen)) + ' を奪った！</p>' : '') +
+      (run.lastRoulette || []).map(x => '<p class="rn-note rn-roulette ' + (x.good === false ? 'bad' : 'good') + '">🎰 ' + esc(x.text) + '</p>').join('') +
       (run.gotOmega ? '<p class="rn-note rn-gain">Ω カード ' + esc(starLabel(run.gotOmega)) + ' をデッキに入れた — ' + esc(starDesc(run.gotOmega)) + '</p>' : '') +
       (run.copiedNow ? '<p class="rn-note rn-gain">' + esc(cardLabel(run.copiedNow)) + ' の写しを山札に足した</p>' : '') +
       (run.gotOmega && run.swapped ? '<p class="rn-note">Ω に合わせて <b>' + esc(run.swapped.out) + '</b> が <b>' + esc(run.swapped.add) + '</b> に入れ替わった</p>' : '');
@@ -253,15 +254,15 @@ export function openRun(protocols, cardsOf, opts) {
         : w.phase === 'battle' || w.phase === 'choose' ? '<em class="now">第' + (w.stage + 1) + '戦の途中 (' + w.attempt + '回目の挑戦)</em>'
           : w.attempt ? '<em>今週 ' + w.attempt + '回挑戦 ・ 最高 ' + (w.bestStage || 0) + '勝</em>' : '<em>今週はまだ挑戦していません</em>';
       const chaosStatus = chaosRun
-        ? '<em class="now">' + (rowNow(chaosRun) + 1) + ' / ' + RUN.MAP_ROWS + ' 段 ・ ライフ ' + chaosRun.life + '</em>'
-        : cbest ? '<em>最高記録: ' + bestText({ ...cbest, heat: 0 }) + '</em>' : '<em>まだ挑戦していません</em>';
+        ? '<em class="now">' + ((chaosRun.loop | 0) ? 'LOOP ' + ((chaosRun.loop | 0) + 1) + ' ・ ' : '') + (rowNow(chaosRun) + 1) + ' / ' + RUN.MAP_ROWS + ' 段 ・ ライフ ' + chaosRun.life + '</em>'
+        : cbest ? '<em>最高記録: ' + (cbest.loop ? 'LOOP ' + (cbest.loop + 1) + ' で ' : '') + bestText({ ...cbest, heat: 0 }) + '</em>' : '<em>まだ挑戦していません</em>';
       const chaosCard = '<section class="rn-mcard rn-chaoscard"><small>ROGUELIKE ・ CHAOS</small><h3>カオス勝ち抜き戦</h3>' +
           (cbest ? '<details class="rn-rules"><summary>ルールを見る</summary>' : '') + '<ul>' +
           '<li>地図はいつもと同じ。でも<b>試合ごとに「異変」</b>がルーレットで 1〜3 個かかる (手札 7 枚・値が 2 倍・Ω の雨・デッキの入れ替わり…)</li>' +
           '<li>はじめから<b>パッチ2つ (LEGENDARY も)</b>。ライフ ' + 12 + '・クレジット 12</li>' +
           '<li>イベントに <b>Ω の祭壇</b> (ボスの Ω カードが手に入る) と <b>運命のルーレット</b></li>' +
           '<li>勝ったときの報酬に<b>ルーレット</b>が足される。当たりも外れも大きい</li>' +
-          '<li>ボスは GATEKEEPER を含む7体からランダム。HEAT は無し</li></ul>' + (cbest ? '</details>' : '') + chaosStatus +
+          '<li>ボスは GATEKEEPER を含む7体からランダム。倒すと <b>LOOP</b>: ボスの Ω を奪って、異変が増えた新しい地図をもう1周</li></ul>' + (cbest ? '</details>' : '') + chaosStatus +
           (chaosRun ? '<button type="button" class="rn-go" data-act="chaosResume">続きから</button>'
             : '<button type="button" class="rn-go" data-act="chaosStart">はじめる</button>') + '</section>';
       return '<p class="rn-pick">遊ぶモードを選んでください</p><div class="rn-modes">' +
@@ -467,7 +468,7 @@ export function openRun(protocols, cardsOf, opts) {
         : '';
       const streak = winStreak(run);
       const chaos = RUN.isChaos(run);
-      el.innerHTML = '<div class="rn-card rn-ph-' + run.phase + (chaos ? ' rn-chaos' : '') + '"><div class="rn-head"><b>// RUN</b><span>' + (chaos ? 'カオス勝ち抜き戦' : '勝ち抜き戦') + '</span>' +
+      el.innerHTML = '<div class="rn-card rn-ph-' + run.phase + (chaos ? ' rn-chaos' : '') + '"><div class="rn-head"><b>// RUN</b><span>' + (chaos ? 'カオス勝ち抜き戦' + ((run.loop | 0) ? ' ・ LOOP ' + ((run.loop | 0) + 1) : '') : '勝ち抜き戦') + '</span>' +
         (streak >= 2 ? '<em class="rn-streak lv' + Math.min(3, streak - 1) + '" title="続けて勝っている数">' + streak + ' 連勝</em>' : '') + '</div>' +
         (run.phase !== 'draft' ? lifeBar(run) + patchStrip(run) : '') + phaseBody() + quit +
         '</div>';
@@ -602,12 +603,15 @@ export function showRunAfterGame(win, damage, protocols, bonus, score) {
   /* ライフは試合前の数から減らして見せる (減った目盛りが割れる) */
   const lostNow = last => (last && last.saved) ? 0 : Math.max(0, (before.life | 0) - Math.max(0, run.life));
   const last = run.history[run.history.length - 1] || { damage };
-  const heatNote = run.phase === 'clear' && (run.heat | 0) < RUN.MAX_HEAT ? '<p class="rn-note">HEAT ' + ((run.heat | 0) + 1) + ' が解放されました</p>' : '';
+  const chaos = RUN.isChaos(run);
+  const heatNote = run.phase === 'clear' && !chaos && (run.heat | 0) < RUN.MAX_HEAT ? '<p class="rn-note">HEAT ' + ((run.heat | 0) + 1) + ' が解放されました</p>' : '';
   const line = run.phase === 'clear'
     ? '頂上まで登りきりました。ライフ ' + run.life + ' 残し。'
     : run.phase === 'over' ? (rowNow(run) + 1) + ' 段目で終わりました。'
       : win ? '+' + (run.lastGain | 0) + ' クレジット。報酬を選んでから地図へ戻ります。' : '同じ相手ともう一度戦います。';
-  el.innerHTML = '<div class="rn-card"><div class="rn-head"><b>// RUN</b><span>勝ち抜き戦</span></div>' +
+  const loopNote = RUN.canLoop(run)
+    ? '<p class="rn-note rn-gain">LOOP — 倒したボスの Ω カードを奪って、もう1周できます。ライフは全回復、異変は1つずつ増える</p>' : '';
+  el.innerHTML = '<div class="rn-card' + (chaos ? ' rn-chaos' : '') + '"><div class="rn-head"><b>// RUN</b><span>' + (chaos ? 'カオス勝ち抜き戦' + ((run.loop | 0) ? ' ・ LOOP ' + ((run.loop | 0) + 1) : '') : '勝ち抜き戦') + '</span></div>' +
     '<h2 class="rn-result ' + tone + '" data-text="' + title + '">' + title + '</h2>' +
     (win ? '<p class="rn-gainbig"><span class="rn-gainnum">+' + (run.lastGain | 0) + '</span> CREDIT' + (run.lastBonus ? ' <small class="rn-bonusof">うち試合中スコアの分 +' + run.lastBonus + '</small>' : '') + (winStreak(run) >= 2 ? ' <em class="rn-streak lv' + Math.min(3, winStreak(run) - 1) + '">' + winStreak(run) + ' 連勝</em>' : '') + '</p>' : '') +
     scoreLine(score, win) +
@@ -615,9 +619,10 @@ export function showRunAfterGame(win, damage, protocols, bonus, score) {
       (last.damage < damage ? ' (FIREWALL で1回防いだ)' : '') + '</p>' +
     (last.saved === 'phoenix' ? '<p class="rn-warn rn-phoenix">PHOENIX — ライフ全回復でよみがえった！</p>'
       : last.saved ? '<p class="rn-warn">FAILSAFE が作動 — ライフ 1 で耐えた</p>' : '') +
-    (lostNow(last) ? lifeBar({ ...run, life: before.life | 0 }, lostNow(last)) : lifeBar({ ...run, life: Math.max(0, run.life) })) + '<p class="rn-lead">' + line + '</p>' + heatNote +
+    (lostNow(last) ? lifeBar({ ...run, life: before.life | 0 }, lostNow(last)) : lifeBar({ ...run, life: Math.max(0, run.life) })) + '<p class="rn-lead">' + line + '</p>' + heatNote + loopNote +
     (run.phase === 'over' || run.phase === 'clear' ? '<p class="rn-note">デッキ ' + deckLine(run.deck, byName) + '</p>' + patchStrip(run) : '') +
     '<div class="rn-btns">' +
+      (RUN.canLoop(run) ? '<button type="button" class="rn-go rn-cta" data-act="loop">LOOP ' + ((run.loop | 0) + 2) + ' へ</button>' : '') +
       /* 終わったら、すぐもう一度 (クリアしたら次の HEAT が開いている) */
       (run.phase === 'over' || run.phase === 'clear' ? '<button type="button" class="rn-go" data-act="next">' + (run.phase === 'clear' ? '次の挑戦へ' : 'もう一度挑戦') + '</button>'
         : '<button type="button" class="rn-go" data-act="next">次へ</button>') +
@@ -631,6 +636,7 @@ export function showRunAfterGame(win, damage, protocols, bonus, score) {
     const t = ev.target.closest('button');
     if (!t) return;
     if (t.dataset.act === 'next') location.href = location.pathname + '?run=1';
+    else if (t.dataset.act === 'loop') { RUN.saveRun(RUN.nextLoop(RUN.loadRun())); location.href = location.pathname + '?run=1'; }
     else if (t.dataset.act === 'title') location.href = location.pathname;
     else if (t.dataset.act === 'board') {
       el.classList.remove('show');
