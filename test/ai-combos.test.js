@@ -742,3 +742,23 @@ test('つよい以上: SPEED 0 の上の SPEED 3 は、終了時に自分をど�
   assert.deepEqual(end && end.picks, [uidOf('SPEED_4', 0)], '終了時に SPEED 3 自身をどかす');
   assert.equal(free.length, 2, 'どいた SPEED 0 の追加プレイがもう一度来る');
 }));
+
+test('つよい以上: 下の札を起こせないうちは、SPEED 0 と 3 をセットで手札にキープする (ユーザー「基本セットキープ」)', () => withDsh(() => {
+  const st = speedPairBoard();
+  Engine.setAiLevel(2);
+  Engine.setAiThinkBudget(1500);
+  const act = Engine.ai.action(st);
+  assert.ok(!(act.type === 'play' && ['SPEED_1', 'SPEED_4'].includes(st.cards[act.card].def)),
+    'SPEED 0 / 3 を出さない (実際: ' + JSON.stringify(act) + ')');
+}));
+
+test('つよい以上: 下の札を起こせる形なら、SPEED 0 から揃えて出す', () => withDsh(() => {
+  const st = speedPairBoard();
+  place(st, 'WATER_4', 0, 1, true);
+  place(st, 'WATER_3', 0, 1, true);
+  Engine.setAiLevel(2);
+  Engine.setAiThinkBudget(1500);
+  const act = Engine.ai.action(st);
+  assert.ok(act.type === 'play' && st.cards[act.card].def === 'SPEED_1' && act.faceUp,
+    'SPEED 0 を表で出す (実際: ' + JSON.stringify(act) + ')');
+}));

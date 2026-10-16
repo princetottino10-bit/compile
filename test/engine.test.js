@@ -928,7 +928,8 @@ test('AI specialist: SPEED 0/3 pair is held while the board is empty', () => {
 
 test('AI specialist: SPEED 0/3 pair starts with SPEED 0 and free-plays SPEED 3 faceup', () => {
   const st = ng({ p0: ['DARKNESS', 'SPEED', 'HATE'], p1: ['LIFE', 'LIGHT', 'PLAGUE'] }).state;
-  place(st, 'DARKNESS_2', 0, 0, true);     // SPEED 3 で動かす対象
+  place(st, 'DARKNESS_2', 0, 0, true);     // SPEED 3 で上の札をどかすと、この中段がもう一度動く
+  place(st, 'DARKNESS_5', 0, 0, true);     // SPEED 3 で動かす対象
   setHand(st, 0, ['SPEED_1', 'SPEED_4', 'DARKNESS_6', 'SPEED_6', 'HATE_6']);
   st.turn = 0;
   Engine.setAiLevel(2);
