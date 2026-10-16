@@ -16,7 +16,7 @@ usage: main2_grade.py <PROTO> <in.png> <out.png> [strength]
 import sys
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFilter
 
 # proto: (a_mean, a_std, b_mean, b_std)  measured from the card photo
 TARGET = {
@@ -45,6 +45,9 @@ SPREAD_MIN = 0.8
 EXTRA = {
     'CLARITY': {'spread_min': 1.0, 'l_shift': 30.0},
     'MIRROR': {'warm_rotate': -40.0},
+    # COURAGE (2026-10-16 描き直し) は実物どおり青い剣が主役。全体を寄せると剣まで
+    # 橙に転ぶので、背景だけを半分の強さで寄せ、青い所は描いたままにする。
+    'COURAGE': {'strength': 0.5, 'keep_blue': True},
 }
 
 
@@ -99,8 +102,10 @@ def rotate_warm(lab, degrees):
     return out
 
 
-def grade(im, target, strength=STRENGTH, spread_min=SPREAD_MIN, l_shift=0.0, warm_rotate=0.0):
-    lab = rgb_to_lab(np.asarray(im.convert('RGB'), dtype=np.float64))
+def grade(im, target, strength=STRENGTH, spread_min=SPREAD_MIN, l_shift=0.0, warm_rotate=0.0,
+          keep_blue=False):
+    src = im.convert('RGB')
+    lab = rgb_to_lab(np.asarray(src, dtype=np.float64))
     if warm_rotate:
         lab = rotate_warm(lab, warm_rotate)
     am, asd, bm, bsd = ab_stats(lab)
@@ -115,15 +120,22 @@ def grade(im, target, strength=STRENGTH, spread_min=SPREAD_MIN, l_shift=0.0, war
     out[..., 1] = (lab[..., 1] - am) * ka + ta
     out[..., 2] = (lab[..., 2] - bm) * kb + tb
     out[..., 1:] = lab[..., 1:] + (out[..., 1:] - lab[..., 1:]) * strength
-    return Image.fromarray(lab_to_rgb(out))
+    graded = Image.fromarray(lab_to_rgb(out))
+    if keep_blue:
+        blue = ((lab[..., 2] < -4) & (np.hypot(lab[..., 1], lab[..., 2]) > 6)).astype(np.uint8) * 255
+        mask = Image.fromarray(blue).filter(ImageFilter.MaxFilter(5)).filter(ImageFilter.GaussianBlur(3))
+        graded = Image.composite(src, graded, mask)
+    return graded
 
 
 def main():
     proto, src, dst = sys.argv[1].upper(), sys.argv[2], sys.argv[3]
-    strength = float(sys.argv[4]) if len(sys.argv) > 4 else STRENGTH
+    kw = dict(EXTRA.get(proto, {}))
+    if len(sys.argv) > 4:
+        kw['strength'] = float(sys.argv[4])
     im = Image.open(src)
     if proto in TARGET:
-        im = grade(im, TARGET[proto], strength, **EXTRA.get(proto, {}))
+        im = grade(im, TARGET[proto], **kw)
     im.save(dst)
 
 
