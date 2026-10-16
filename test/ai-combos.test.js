@@ -553,6 +553,49 @@ test('手筋 Diversity0: 他の2本が済んでいれば、6種類そろえて�
   assert.equal(res.state.winner, 0, 'DIVERSITY 0 で3本目をコンパイルして勝つ (実際: ' + JSON.stringify(act) + ')');
 });
 
+/* ユーザー 2026-10-16「3本目のコンパイルでいきなり DIVERSITY 0 を出して勝つのがめっちゃ強い」。つよい以上と特化は、
+   2本済んで DIVERSITY 0 を持っていれば、場の種類をそろえて残す (相手の返しで1種類崩される読みで構えを捨てない) */
+function diversityLastGame() {
+  const st = game(['DIVERSITY', 'FIRE', 'WATER'], ['METAL', 'LIGHT', 'LIFE']);
+  st.players[0].protocols[1].compiled = true;
+  st.players[0].protocols[2].compiled = true;
+  return st;
+}
+for (const specialist of [false, true]) {
+  test('手筋 Diversity0 (3本目): 相手の札を消して種類を減らさず、5種類目を表で出して構える' + (specialist ? ' (最強)' : ''), () => {
+    const st = diversityLastGame();
+    place(st, 'FIRE_5', 0, 1, true);
+    place(st, 'METAL_5', 1, 0, true);
+    place(st, 'LIGHT_6', 1, 1, true);
+    place(st, 'LIFE_3', 1, 2, true);          // 場: FIRE METAL LIGHT LIFE。WATER を表で足すと5種類
+    /* FIRE 1 (FIRE_2) で相手の METAL 5 を消す手もあるが、種類が3つに減って3本目が遠のく */
+    setHand(st, 0, ['DIVERSITY_1', 'WATER_6', 'FIRE_6', 'FIRE_2']);
+    if (specialist) Engine.setAiSpecialist(true, 0, 'dsh');
+    try {
+      const act = aiAct(st);
+      const res = resolveWithAi(Engine.apply(st, act));
+      assert.equal(DIVERSITY_KINDS(res.state).size, 5, '5種類そろえる (実際: ' + JSON.stringify(act) + ' → ' + [...DIVERSITY_KINDS(res.state)] + ')');
+      assert.ok(res.state.players[0].hand.includes(uidOf('DIVERSITY_1', 0)), 'DIVERSITY 0 は手札に残す');
+    } finally {
+      Engine.setAiSpecialist(false);
+    }
+  });
+}
+
+test('手筋 Diversity0 (3本目): 反転は相手の裏の札を表にして種類を足す (相手の表の札を裏にして種類を減らさない)', () => {
+  const st = diversityLastGame();
+  place(st, 'FIRE_5', 0, 1, true);
+  place(st, 'WATER_6', 0, 2, true);
+  place(st, 'METAL_5', 1, 0, true);
+  place(st, 'LIGHT_6', 1, 1, true);
+  const life = place(st, 'LIFE_3', 1, 2, false);
+  st.cards[life].knownTo = 3;               // 中身が LIFE と分かっている裏向き (公開された札など)
+  setHand(st, 0, ['DIVERSITY_1', 'FIRE_1', 'FIRE_6']);
+  const act = aiAct(st);
+  const res = resolveWithAi(Engine.apply(st, act));
+  assert.equal(DIVERSITY_KINDS(res.state).size, 5, '5種類そろえる (実際: ' + JSON.stringify(act) + ' → ' + [...DIVERSITY_KINDS(res.state)] + ')');
+});
+
 test('手筋 Diversity0 を持っている間は、DIVERSITY のラインを10点でコンパイルしにいかない', () => {
   const st = game(['DIVERSITY', 'FIRE', 'WATER'], ['METAL', 'LIGHT', 'LIFE']);
   for (const d of ['FIRE_6', 'WATER_6', 'FIRE_5', 'WATER_5']) place(st, d, 0, 0, false);   // DIVERSITY のライン: 裏向き4枚で8点
