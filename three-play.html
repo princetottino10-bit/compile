@@ -3309,6 +3309,55 @@
   #watchTools .wt-x{flex:none;width:28px;height:28px;margin:-4px -4px 0 auto;border-radius:999px;border:0;background:transparent;color:var(--dim);font:800 14px/1 system-ui;cursor:pointer;}
   #watchTools .wt-x:hover,#watchTools .wt-x:focus-visible{color:#fff;outline:0;}
   #endBar .end-note{color:var(--dim);font-weight:600;font-size:11px;}
+  /* オンラインの観戦の賭け (roombet.js)。左上、上の帯の下。右下の観戦の操作 (#watchTools) と手札にかからない場所 */
+  #roomBet{position:fixed;left:calc(14px + env(safe-area-inset-left));top:calc(64px + env(safe-area-inset-top));z-index:41;display:none;
+    width:min(320px,calc(100vw - 28px - env(safe-area-inset-left) - env(safe-area-inset-right)));
+    background:rgba(8,6,16,.9);border:1px solid rgba(255,255,255,.14);clip-path:var(--cut);color:var(--ink);
+    font:600 11.5px/1.45 "M PLUS 1",system-ui;}
+  #roomBet.show{display:block;}
+  #roomBet::before{content:"";display:block;height:2px;background:linear-gradient(90deg,var(--mint),var(--pink));}
+  /* 閉じた形でも高さ 36px (指で押せる大きさ) */
+  #roomBet .rb-head{display:flex;align-items:center;gap:8px;width:100%;min-height:36px;padding:6px 12px;border:0;background:transparent;color:inherit;
+    text-align:left;cursor:pointer;font:inherit;}
+  #roomBet .rb-head b{font:800 12px/1 "M PLUS 1",system-ui;white-space:nowrap;}
+  #roomBet .rb-head span{flex:1 1 auto;min-width:0;color:var(--dim);font-size:10.5px;font-variant-numeric:tabular-nums;}
+  #roomBet .rb-head i{font-style:normal;font-weight:800;color:var(--dim);margin-right:4px;}
+  #roomBet .rb-head i.rb-live{color:var(--gold);}
+  #roomBet .rb-head em{font-style:normal;color:var(--dim);}
+  #roomBet .rb-head:focus-visible{outline:1px solid var(--cyan);outline-offset:-3px;}
+  #roomBet .rb-body{padding:0 12px 12px;display:flex;flex-direction:column;gap:8px;}
+  #roomBet .rb-sides{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+  #roomBet .rb-side{display:flex;flex-direction:column;gap:3px;min-height:64px;padding:8px 10px;text-align:left;cursor:pointer;
+    border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);clip-path:var(--cut-s);color:var(--ink);font:inherit;}
+  #roomBet .rb-side b{font:800 12.5px/1.2 "M PLUS 1",system-ui;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  #roomBet .rb-side em{font:800 16px/1 var(--font-hud),"M PLUS 1",system-ui;font-style:normal;color:var(--gold);font-variant-numeric:tabular-nums;}
+  #roomBet .rb-side small{color:var(--dim);font-size:10px;font-variant-numeric:tabular-nums;}
+  #roomBet .rb-side:disabled{cursor:default;}
+  #roomBet .rb-side:not(:disabled):hover,#roomBet .rb-side:focus-visible{border-color:var(--cyan);outline:0;}
+  #roomBet .rb-side.on,#roomBet .rb-side.mine{border-color:var(--gold);background:linear-gradient(160deg,rgba(255,179,218,.16),rgba(8,12,24,.9));}
+  #roomBet .rb-amounts{display:flex;align-items:center;gap:4px;flex-wrap:wrap;}
+  #roomBet .rb-amounts span{margin-right:auto;color:var(--dim);font-size:10.5px;}
+  #roomBet .rb-amounts span b{color:var(--gold);font-size:13px;font-variant-numeric:tabular-nums;}
+  #roomBet .rb-amounts .lvl{min-height:32px;min-width:40px;padding:0 8px;}
+  #roomBet .rb-go{min-height:40px;padding:0 12px;border:0;clip-path:var(--cut-s);background:var(--pink);color:#fff;cursor:pointer;
+    font:800 12px/1.2 "M PLUS 1",system-ui;}
+  #roomBet .rb-go:disabled{background:rgba(255,255,255,.08);color:var(--dim);cursor:default;}
+  #roomBet .rb-note,#roomBet .rb-mine{margin:0;color:var(--dim);font-size:10.5px;}
+  #roomBet .rb-mine{color:var(--ink);font-size:11.5px;}
+  #roomBet .rb-list{list-style:none;margin:0;padding:6px 0 0;border-top:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;gap:2px;
+    font-size:10.5px;color:var(--dim);}
+  #roomBet .rb-list b{color:var(--ink);font-weight:700;}
+  #roomBet .rb-list em{font-style:normal;color:var(--gold);font-variant-numeric:tabular-nums;}
+  /* 左端の INFO のつまみを隠さないように左を空ける。背の低い画面 (横持ちスマホ) は中をスクロールさせる (開くと 375px で画面いっぱいだった) */
+  #roomBet{left:calc(40px + env(safe-area-inset-left));max-height:calc(100dvh - 76px - env(safe-area-inset-top));overflow-y:auto;}
+  @media (max-height:500px){ #roomBet .rb-list{display:none;} #roomBet .rb-side{min-height:52px;} }
+  /* 縦持ち: 上は相手の名札と「選択しています」の帯に重なったので、右下の観戦の操作 (一時停止など) の1段上へ */
+  @media (max-width:700px) and (orientation:portrait){
+    #roomBet{top:auto;left:calc(8px + env(safe-area-inset-left));bottom:calc(var(--hand-gap, 14vh) + 60px);width:calc(100vw - 16px - env(safe-area-inset-left) - env(safe-area-inset-right));
+      max-height:calc(100dvh - var(--hand-gap, 14vh) - 140px);}
+  }
+  .ro-room small.ro-bet{color:var(--dim);font-family:"M PLUS 1",system-ui;letter-spacing:.04em;}
+  .ro-room small.ro-bet.open{color:var(--gold);}
 
   /* ロビー: 鍵の付いた部屋の合言葉の欄・レート戦の戦績の絞り込みとリプレイ */
   .ro-pwrow{display:flex;gap:6px;align-items:center;margin:-2px 0 4px;padding:8px;border-radius:9px;background:rgba(255,255,255,.04);}
@@ -4783,7 +4832,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=2b4dbc6066",
       "./js3d/logformat.js": "./js3d/logformat.js?v=e3548c74d1",
-      "./js3d/main.js": "./js3d/main.js?v=0e5d6c2c91",
+      "./js3d/main.js": "./js3d/main.js?v=3fb875fab5",
       "./js3d/mobcards.js": "./js3d/mobcards.js?v=2a6bc79376",
       "./js3d/motion.js": "./js3d/motion.js?v=71cd68f8ff",
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
@@ -4810,7 +4859,8 @@
       "./js3d/review.js": "./js3d/review.js?v=f2069b69f8",
       "./js3d/rewards.js": "./js3d/rewards.js?v=ef3a012bdb",
       "./js3d/room.js": "./js3d/room.js?v=918fccde40",
-      "./js3d/roomui.js": "./js3d/roomui.js?v=c33e7b53b2",
+      "./js3d/roombet.js": "./js3d/roombet.js?v=cc2e51d3f4",
+      "./js3d/roomui.js": "./js3d/roomui.js?v=9ceaa14fce",
       "./js3d/run-fx.js": "./js3d/run-fx.js?v=a380c76677",
       "./js3d/run-score.js": "./js3d/run-score.js?v=8359a3008a",
       "./js3d/run-ui.js": "./js3d/run-ui.js?v=7d9aad7f55",
@@ -4885,6 +4935,7 @@
   <link rel="modulepreload" href="js3d/title.js?v=5421a14eb7">
   <link rel="modulepreload" href="js3d/training.js?v=3018b4399e">
   <link rel="modulepreload" href="js3d/room.js?v=918fccde40">
+  <link rel="modulepreload" href="js3d/roombet.js?v=cc2e51d3f4">
   <link rel="modulepreload" href="js3d/puzzle.js?v=65360765a2">
   <link rel="modulepreload" href="js3d/tsume.js?v=2d63bf0cd7">
   <link rel="modulepreload" href="js3d/errorreport.js?v=2a83f561e2">
@@ -4911,7 +4962,7 @@
   <link rel="modulepreload" href="js3d/run.js?v=6223d21e47">
   <link rel="modulepreload" href="js3d/weekly.js?v=5605476b1c">
   <link rel="modulepreload" href="js3d/review.js?v=f2069b69f8">
-  <link rel="modulepreload" href="js3d/roomui.js?v=c33e7b53b2">
+  <link rel="modulepreload" href="js3d/roomui.js?v=9ceaa14fce">
   <link rel="modulepreload" href="js3d/selectui.js?v=208abdaebc">
   <link rel="modulepreload" href="js3d/cardtex.js?v=c00c980d11">
   <link rel="modulepreload" href="js3d/fx.js?v=f76521724c">
@@ -4989,6 +5040,6 @@
   <link rel="stylesheet" href="js3d/run-fx.css?v=ed3eded16b">
   <link rel="stylesheet" href="js3d/deus.css?v=3e6919eb01">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=0e5d6c2c91"></script>
+  <script type="module" src="js3d/main.js?v=3fb875fab5"></script>
 </body>
 </html>
