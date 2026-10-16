@@ -47,6 +47,8 @@ test('ボスのルールが試合の設定に入る', () => {
   assert.deepEqual(battleOpts(atBoss('sanctuary'), 0).startCompiled, [0, 1]);
   assert.deepEqual(battleOpts(atBoss('sanctuary'), 1).startCompiled, [1, 0]);
   assert.deepEqual(battleOpts(atBoss('glacier'), 0).deckMods[1].add, ['X_WATER', 'X_WATER' + UP]);
+  /* 最強: ORACLE が考えた Ω カード2枚がボスの山札に入る */
+  assert.deepEqual(battleOpts(atBoss('strongest'), 0).deckMods[1].add, ['XO_1', 'XO_2']);
   /* 聖域: エンジンも側ごとの本数で決着を見る */
   const st = Engine.newGame({ seed: 1, p0: ['GRAVITY', 'SPIRIT', 'PSYCHIC'], p1: ['LIGHT', 'LIFE', 'PEACE'], winCompiles: 2, winCompilesBySide: [3, 2] }).state;
   assert.deepEqual(st.winBySide, [3, 2]);
