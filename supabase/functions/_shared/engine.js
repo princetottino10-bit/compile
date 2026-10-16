@@ -2700,6 +2700,17 @@ const AI_W = {
   diversityLast: 380, diversityEarly: 420,
   /* diversityHoldLine: 切り札を持ったまま DIVERSITY のラインをコンパイル圏 (10点以上でリード) にする減点 */
   diversityHoldLine: 90,
+  /* ユーザー 2026-10-16「3本目のコンパイルでいきなり DIVERSITY 0 を出して勝つのがめっちゃ強い」。つよい以上と特化だけ。
+     diversityKind: 3本目が DIVERSITY で手札に DIVERSITY 0 があるとき、場の表向きの DIVERSITY 以外の種類1つあたりの価値
+     (5種類まで)。5種類そろった構えだけを見ると、相手の返しで1種類崩される読みで構えを捨て、
+     自分で相手の札を消して種類を減らしていた。種類を残す・相手の裏を表に返す・新しい種類を表で出す手に値打ちを出す /
+     diversityWin: 2本済みで5種類そろった構え (次の手番に出すだけで勝つ) の価値。diversityLast の代わりに使う。
+     380 では「2ラインでリードしてコントロールを取りにいく」手 (2本済みのとき 300〜600) に負け、構えを崩していた /
+     diversityNear: あと1種類の構え。相手の返しで1種類崩されても、次の手番に1種類足せば構え直せるので、崩される読みで捨てない */
+  diversityKind: 90, diversityWin: 700, diversityNear: 300,
+  /* diversityKeep: 1本目・2本目のうち、手札の DIVERSITY 0 そのものの価値。DIVERSITY のラインを10点で止める減点
+     (diversityHoldLine) は手札に DIVERSITY 0 があるときだけ効くので、DIVERSITY 0 自身を裏で出して10点にする手が素通りしていた */
+  diversityKeep: 250,
   /* HATE 1 (手札を3枚捨てて2枚削除) は代償が見えやすく、読みだけだと出し渋る。
      相手の場に2枚以上あれば (一番上を消すと下が出てくるので、同じラインの2枚でもよい) 表で出す手に加点、
      1枚以下なら自分のカードまで消すことになるので出さない (hate1Few の減点)。監修 2026-09-28 */
@@ -2802,7 +2813,7 @@ const AI_DSH_W = {
   refreshUrgency: 120,
   choiceDepth: 1,
   orderSim: 4,
-  diversityReady: 120, diversityLast: 380, diversityEarly: 420, diversityHoldLine: 90,
+  diversityReady: 120, diversityLast: 380, diversityEarly: 420, diversityHoldLine: 90, diversityKind: 90, diversityWin: 700, diversityNear: 300, diversityKeep: 250,
 };
 function setAiSpecialistWeights(obj) {
   const unknown = [];
@@ -3290,18 +3301,50 @@ function aiDiversityReady(st, side) {
   if (!d0) return false;
   const prot = st.players[side].protocols.find(p => protoHas(p, 'DIVERSITY'));
   if (!prot || prot.compiled) return false;
+  if (aiDiversityOtherKinds(st) < 5) return false;
+  return [0, 1, 2].some(line => canPlay(st, side, d0, line, true));
+}
+/* 場の表向きの札の、DIVERSITY 以外のプロトコルの種類数 (DIVERSITY 0 は自分で DIVERSITY を足すので、残り5種類が要る) */
+function aiDiversityOtherKinds(st) {
   const kinds = new Set();
   for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++) for (const uid of st.lines[l][s]) {
     if (st.cards[uid].faceUp) kinds.add(DEFS[st.cards[uid].def].proto);
   }
   kinds.delete('DIVERSITY');
-  if (kinds.size < 5) return false;
-  return [0, 1, 2].some(line => canPlay(st, side, d0, line, true));
+  return kinds.size;
+}
+/* 両者のプロトコルに DIVERSITY 以外が5種類あるか (重なっていて足りなければ、DIVERSITY 0 の条件は満たせない) */
+function aiDiversityPossible(st) {
+  const names = new Set();
+  for (const p of st.players) for (const prot of p.protocols) for (const n of protoNamesOf(prot)) names.add(n);
+  names.delete('DIVERSITY');
+  return names.size >= 5;
+}
+/* 3本目の DIVERSITY 0 を狙っているとき、反転・削除・戻すの的で場の種類がどう変わるか (つよい以上と特化)。
+   相手の裏の札を表にして種類を足す・唯一の種類の札を裏にしない (相手のコンパイルを止める的のほうが重いので半分の重み) */
+function aiDiversityPickGain(st, me, uid, prompt) {
+  const W = aiWeightsFor(st, me);
+  if (!W.diversityKind || !aiTaughtTactics(st, me) || !aiDiversityIsLast(st, me) || !aiHasDefInHand(st, me, 'DIVERSITY_1')
+      || !aiDiversityPossible(st)) return 0;
+  const flip = /^(optional-)?flip$/.test(prompt);
+  if (!flip && !/^(optional-)?(delete|return)$/.test(prompt)) return 0;
+  const c = st.cards[uid];
+  const before = Math.min(5, aiDiversityOtherKinds(st));
+  const was = c.faceUp;
+  c.faceUp = flip ? !was : false;
+  const after = Math.min(5, aiDiversityOtherKinds(st));
+  c.faceUp = was;
+  return (after - before) * W.diversityKind * 0.5;
 }
 /* DIVERSITY 0 を切り札として手札に持っている (DIVERSITY 未コンパイルで、まだ最後の1本ではない) */
 function aiHoldsDiversityTrump(st, side) {
   const prot = st.players[side].protocols.find(p => protoHas(p, 'DIVERSITY'));
   return !!prot && !prot.compiled && aiHasDefInHand(st, side, 'DIVERSITY_1') && !aiDiversityIsLast(st, side);
+}
+/* 切り札を持ったまま DIVERSITY のラインを10点で通してよいか: コントロールを持っていれば、コンパイルの前に
+   自分のプロトコルを並べ替えて DIVERSITY をよそへ逃がし、そのスタックを別のプロトコルで通せる (ユーザー 2026-10-16) */
+function aiDiversityHoldsLine(st, side) {
+  return aiHoldsDiversityTrump(st, side) && !(st.useControl && st.control === side);
 }
 /* DIVERSITY 以外が2本とも済んでいる = DIVERSITY 0 の即コンパイルがそのまま勝ちになる */
 function aiDiversityIsLast(st, side) {
@@ -3529,7 +3572,7 @@ function aiActionBias(st, action, side) {
   const compiledLine = !!st.players[side].protocols[action.line].compiled;
   /* DIVERSITY 0 を切り札として持っている間は、DIVERSITY のラインを10点に届かせる加点を入れない */
   const reachLine = !(W.diversityHoldLine && protoHas(st.players[side].protocols[action.line], 'DIVERSITY')
-    && aiHoldsDiversityTrump(st, side));
+    && aiDiversityHoldsLine(st, side));
   if (compiledLine) {
     const add = action.faceUp ? d.value : 2;
     const likelyRecompile = mine + add >= 10 && mine + add > theirs;
@@ -3864,7 +3907,7 @@ function aiScoreRaw(st, me) {
 
   const myGaps = [], opGaps = [];
   /* DIVERSITY 0 を切り札として持っている間は、DIVERSITY のラインを10点で普通にコンパイルすると切り札が無駄になる */
-  const saveDiversity = W.diversityHoldLine && aiHoldsDiversityTrump(st, me);
+  const saveDiversity = W.diversityHoldLine && aiDiversityHoldsLine(st, me);
   for (let l = 0; l < 3; l++) {
     const li = lineInfo[l];
 
@@ -3962,7 +4005,17 @@ function aiScoreRaw(st, me) {
     const s0 = aiHasDefInHand(st, me, 'SPEED_1'), s3 = aiHasDefInHand(st, me, 'SPEED_4');
     sc += W.speedPairKeep * ((s0 ? 1 : 0) + (s3 ? 1 : 0) + (s0 && s3 ? 1 : 0));
   }
-  if (W.diversityReady && aiDiversityReady(st, me)) sc += aiDiversityIsLast(st, me) ? W.diversityLast : W.diversityReady;
+  /* 3本目の DIVERSITY 0 に向けて、場の種類をそろえる・残す (つよい以上と特化。ふつう・かんたんは従来の diversityLast だけ) */
+  const diversityTaught = aiTaughtTactics(st, me) && aiDiversityIsLast(st, me) && aiHasDefInHand(st, me, 'DIVERSITY_1');
+  if (W.diversityReady && aiDiversityReady(st, me)) {
+    sc += !aiDiversityIsLast(st, me) ? W.diversityReady : diversityTaught && W.diversityWin ? W.diversityWin : W.diversityLast;
+  }
+  if (W.diversityKeep && aiTaughtTactics(st, me) && aiHoldsDiversityTrump(st, me) && aiDiversityPossible(st)) sc += W.diversityKeep;
+  if (diversityTaught && aiDiversityPossible(st)) {
+    const kinds = Math.min(5, aiDiversityOtherKinds(st));
+    sc += W.diversityKind * kinds;
+    if (kinds === 4) sc += W.diversityNear;
+  }
   /* 特化 (DSH): FIRE 0 + WATER 4 の構え。WATER 4 は自分を戻すので、撃ったあとも構えは残る */
   if (aiUsesCombos(st, me) && W.fire0Water4Ready && aiFire0Water4Ready(st, me)) sc += W.fire0Water4Ready;
   sc += aiBoardEffectScore(st, me);
@@ -4474,6 +4527,7 @@ function smartPicks(st, req) {
             s -= Math.max(0, aiMiddleValue(DEFS[c.def])) * aiWeightsFor(st, me).uncoverMid;
           }
         }
+        if (loc) s += aiDiversityPickGain(st, me, uid, req.prompt || '');
         s += (c.zone ? cardValue(st, uid) : DEFS[c.def].value) * 2;
         return { uid, s };
       });
@@ -4562,6 +4616,13 @@ function smartPicks(st, req) {
         const otherPending = req.protocols.some(protocol => !protoHas(protocol, 'DARKNESS') && !protocol.compiled);
         if (darkness && !darkness.compiled && otherPending) return [0];
       }
+      /* 切り札の DIVERSITY 0 を持っていて、DIVERSITY のラインをコンパイルするなら、自分のプロトコルを並べ替えて DIVERSITY を逃がす */
+      if (req.prompt === 'control-rearrange' && req.controlReason === 'compile' && Number.isInteger(req.controlLine)
+          && Array.isArray(req.protocols) && aiHoldsDiversityTrump(st, me)) {
+        const here = req.protocols[req.controlLine];
+        const otherPending = req.protocols.some(protocol => !protoHas(protocol, 'DIVERSITY') && !protocol.compiled);
+        if (here && protoHas(here, 'DIVERSITY') && otherPending) return [0];
+      }
       if (req.options.length <= 1 && !req.optional) return [0];
       let best = [0], bestSc = -Infinity;
       for (let i = 0; i < req.options.length; i++) {
@@ -4591,6 +4652,16 @@ function smartPicks(st, req) {
           const sourceIndex = order[req.controlLine];
           return darknessIndex >= 0 && !req.compiled[darknessIndex]
             && sourceIndex !== darknessIndex && !req.compiled[sourceIndex];
+        });
+        if (candidates.length) perms = candidates;
+      }
+      /* 切り札の DIVERSITY 0 を持っていれば、コンパイルするラインには DIVERSITY 以外の未コンパイルを持ってくる */
+      if (req.target === me && req.controlReason === 'compile' && Number.isInteger(req.controlLine)
+          && Array.isArray(req.current) && Array.isArray(req.compiled) && aiHoldsDiversityTrump(st, me)) {
+        const diversityIndex = req.current.indexOf('DIVERSITY');
+        const candidates = perms.filter(order => {
+          const sourceIndex = order[req.controlLine];
+          return diversityIndex >= 0 && sourceIndex !== diversityIndex && !req.compiled[sourceIndex];
         });
         if (candidates.length) perms = candidates;
       }

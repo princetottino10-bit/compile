@@ -63,7 +63,7 @@ export const BOSSES = [
   { id: 'glacier', name: '氷結の女帝', title: '凍てつく者', deck: ['ICE', 'WATER', 'METAL'], color: '#9fd8ff',
     text: 'ボスの山札に β-WATER と強化した β-WATER、ORACLE が考えた Ω カードが1枚入る', rule: { stars: ['X_WATER', 'X_WATER' + UP, 'XO_8'] } }
 ];
-export const FINAL_BOSS = { id: 'strongest', name: '最強', title: '頂に立つ者', deck: STRONGEST_AI.slice(), color: '#ff4fa3',
+export const FINAL_BOSS = { id: 'strongest', name: 'GATEKEEPER', title: '頂に立つ者', deck: STRONGEST_AI.slice(), color: '#ff4fa3',
   text: 'いちばん強い CPU。ボスのカードは全部 強化済み、はじめの手札は 6 枚。山札に ORACLE が考えた Ω カードが2枚入る',
   rule: { upgradeAll: true, bossHand: 6, stars: ['XO_1', 'XO_2'] } };
 export const bossOf = (run) => (run && run.boss === FINAL_BOSS.id ? FINAL_BOSS : BOSSES.find(b => b.id === (run && run.boss)) || FINAL_BOSS);

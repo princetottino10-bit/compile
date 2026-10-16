@@ -54,3 +54,26 @@ test('ロック用の学習モデルは、エンジンの特徴量と同じ大�
     Engine.setAiSpecialist(false, -1, 'dsh');
   }
 });
+
+test('本気の4人: 得意プロトコル入りの決まったデッキ、ORACLE の読みにその子の設定を重ねる', async () => {
+  const { HONKI, HONKI_BASE, isHonki, honkiOf, honkiAi, fixedDeck, levelLabel } = await import('../js3d/aidecks.js');
+  const { FAVORITE } = await import('../js3d/avatar-lines.js');
+  assert.equal(HONKI.length, 4);
+  HONKI.forEach((h, k) => {
+    const lv = HONKI_BASE + k;
+    assert.ok(isHonki(lv));
+    assert.equal(honkiOf(lv), h);
+    assert.equal(FAVORITE[h.avatar], h.fav, h.name + ' の得意プロトコル');
+    assert.ok(h.deck.includes(h.fav) && new Set(h.deck).size === 3, h.name + ' のデッキ');
+    assert.deepEqual(fixedDeck(lv), h.deck);
+    assert.equal(levelLabel(lv), h.name);
+    const cfg = honkiAi({ ...AUTO, specSide: 1 }, lv);
+    assert.equal(cfg.oracle, true);
+    assert.equal(cfg.specSide, 1);
+  });
+  assert.equal(isHonki(HONKI_BASE + HONKI.length), false);
+  assert.equal(isHonki(24), false);
+  /* 本気紫苑はロックのデッキとロック用のモデル */
+  assert.equal(honkiAi(AUTO, HONKI_BASE).valnetModel, 'lock');
+  assert.equal(honkiAi(AUTO, HONKI_BASE).kind, 'psylock');
+});

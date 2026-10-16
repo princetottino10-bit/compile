@@ -213,7 +213,7 @@ export function runSetup(protocols, options = {}) {
       '<span class="proto-art" style="background-image:url(&quot;art/' + name.charAt(0) + name.slice(1).toLowerCase() + '.webp&quot;)"></span>' +
       '<img class="proto-emblem" alt="" src="' + emblemDataURL(name, p.color || '#b9a4ff', 96, true) + '">' +
       /* 最強のデッキ (FIRE / WATER / SPEED) は選べないので、制覇の数にも入らない。印も付けない */
-      (level === 3 && !conq.has(name) && conquerable([name]).length ? '<span class="proto-conq" title="まだ最強に勝っていない">未制覇</span>' : '') +
+      (level === 3 && !conq.has(name) && conquerable([name]).length ? '<span class="proto-conq" title="まだ GATEKEEPER に勝っていない">未制覇</span>' : '') +
       '<span class="proto-name">' + esc(name) + '</span>' +
       '<span class="proto-set">' + esc(tag || p.set || '') + (!tag && me ? ' ・ Lv' + me.mastery.level + ' ' + me.wins + '勝' : '') + '</span></button>' +
       (options.cardsOf ? '<button type="button" class="proto-info" data-info="' + esc(name) + '" aria-label="' + esc(name) +

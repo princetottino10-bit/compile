@@ -1,12 +1,12 @@
 /* =========================================================================
  * 相手を選ぶ画面
  *   SINGLE GAME: おまかせ (プロトコルも相手も自動) / CPU (かんたん / ふつう / つよい。次の画面で公式のドラフトで取り合う) / タッグ
- *   CHALLENGE (opts.challenge): 強敵 (最強・ロック特化・挑戦者。相手のデッキは決まっている) / 下剋上 (最弱のデッキで最強に挑む。勝つと称号)
+ *   CHALLENGE (opts.challenge): 強敵 (最強・本気の4人・ORACLE・神。相手のデッキは決まっている。ロック特化・挑戦者は「自由に選ぶ」にだけ残す) / 下剋上 (最弱のデッキで最強に挑む。勝つと称号)
  *   → { level } / { underdog: true } / { quick: true } / { watch: true } / null (タイトルへ)
  * ========================================================================= */
 import { showTitleBack, hideTitleBack } from './titleback.js';
 import { gearSvg, eyeSvg } from './deus.js';
-import { LEVEL_LABELS, STRONGEST_AI, LOCK_AI, CHALLENGERS, CHALLENGER_BASE, UNDERDOG_DECK, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL, UNDERDOG_TAG_RIVAL_MATE, DEUS_LEVEL, DEUS_AI, DEUS_NAME, PEEK_LEVEL, PEEK_AI, PEEK_NAME, ORACLE_LEVEL, ORACLE_AI, ORACLE_NAME } from './aidecks.js';
+import { LEVEL_LABELS, STRONGEST_AI, HONKI, HONKI_BASE, UNDERDOG_DECK, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL, UNDERDOG_TAG_RIVAL_MATE, DEUS_LEVEL, DEUS_AI, DEUS_NAME, PEEK_LEVEL, PEEK_AI, PEEK_NAME, ORACLE_LEVEL, ORACLE_AI, ORACLE_NAME } from './aidecks.js';
 import { localRecords } from './stats.js';
 import { conquered, conquerable } from './stats-data.js';
 import { settings } from './settings.js';
@@ -15,7 +15,7 @@ import { accountState } from './account.js';
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const LAST_KEY = 'compileOppLast';
 
-const CPU_NOTES = ['はじめての人に。読みは浅く、ときどき迷う', '標準。1手先を読んで指す', '読みが深く、時間をかけて考える'];
+const CPU_NOTES = ['はじめての人に。読みは浅く、ときどき迷う', '標準。1手先を読んで指す', 'GATEKEEPER と同じ読みと手筋。デッキはドラフトで決まる'];
 
 export function underdogCleared() {
   return localRecords().some(r => r.win && r.level === UNDERDOG_LEVEL);
@@ -38,8 +38,8 @@ export function openOpponentSelect(protocols, opts = {}) {
     el.setAttribute('aria-label', '相手を選ぶ');
     document.body.appendChild(el);
   }
-  const card = (key, title, note, body, extra) => '<button type="button" class="op-card' + (String(last) === key ? ' last' : '') + (extra || '') +
-    '" data-opp="' + key + '"><b>' + title + '</b><small>' + note + '</small>' + (body || '') + '</button>';
+  const card = (key, title, note, body, extra, color) => '<button type="button" class="op-card' + (String(last) === key ? ' last' : '') + (extra || '') +
+    '"' + (color ? ' style="--hc:' + esc(color) + '"' : '') + ' data-opp="' + key + '"><b>' + title + '</b><small>' + note + '</small>' + (body || '') + '</button>';
   const cleared = underdogCleared();
   /* 強敵ごとの戦績 (勝ち・負け)。見出しの右に小さく: 勝った ✓ / 負けだけ / 未挑戦 (押す前に、どの相手に勝っていないかが分かる) */
   const recs = localRecords();
@@ -61,11 +61,10 @@ export function openOpponentSelect(protocols, opts = {}) {
   /* 機械仕掛けの神 (最強の上): 称号 CONQUEROR (最強を除く全プロトコルで最強に勝つ) を取ると挑める。管理者は試せるように常に */
   /* 機械仕掛けの神 (最強の上) は誰でも挑める。すべてを見る者は、神に勝つと現れる (それまでは札も出さない)。管理者は試せるように常に */
   const peekOpen = recOf(DEUS_LEVEL).wins > 0 || !!accountState().admin;
-  const bossLevels = (peekOpen ? [PEEK_LEVEL] : []).concat([DEUS_LEVEL, ORACLE_LEVEL, 3, 4], CHALLENGERS.map((c, k) => CHALLENGER_BASE + k));
+  /* ロック特化・挑戦者は CHALLENGE から外した (2026-10-16 本気の4人に置きかえ。ロック特化は本気紫苑と、挑戦者は最強と役が重なる)。
+     「自由に選ぶ」ではまだ選べ、戦績も残る */
+  const bossLevels = (peekOpen ? [PEEK_LEVEL] : []).concat([DEUS_LEVEL, ORACLE_LEVEL], HONKI.map((h, k) => HONKI_BASE + k), [3]);
   const beaten = bossLevels.filter(lv => recOf(lv).wins > 0).length;
-  /* 挑戦者は名前のないものに番号 (前は「挑戦者」が3つ並んで見分けがつかなかった) */
-  const ROMAN = ['Ⅰ', 'Ⅱ', 'Ⅲ', 'Ⅳ', 'Ⅴ', 'Ⅵ', 'Ⅶ', 'Ⅷ'];
-  const challengerTitle = (c, k) => esc(c.name || ('挑戦者 ' + (ROMAN[k] || String(k + 1))));
   /* 強敵 / 下剋上 はタブで切り替える (前は縦に8枚並び、下剋上がずっと下にあった)。最後に選んだ方で開く */
   const tabKey = 'compileChallengeTab';
   let ctab = (() => { try { return localStorage.getItem(tabKey) || ''; } catch (e) { return ''; } })();
@@ -88,21 +87,21 @@ export function openOpponentSelect(protocols, opts = {}) {
           'すべてを見る者。あなたの手札も、裏向きのカードも、山札の並びも見えている', deck(PEEK_AI), ' deus peek top') : '') +
         card(String(DEUS_LEVEL), '<span class="op-deus">' + gearSvg(10) + esc(DEUS_NAME) + '</span>' + rec(DEUS_LEVEL) +
             (recOf(DEUS_LEVEL).wins ? ' <em>✓ TITLE — DEICIDE</em>' : ''),
-          '最強の上に座る、機械仕掛けの神。勝つと 称号 DEICIDE', deck(DEUS_AI), ' deus top') +
+          'GATEKEEPER の上に座る、機械仕掛けの神。勝つと 称号 DEICIDE', deck(DEUS_AI), ' deus top') +
         /* ORACLE: 学習モデル入りの読み (読みの設定は管理者の自動プレイと同じ)。誰でも挑める (2026-10-15) */
         card(String(ORACLE_LEVEL), esc(ORACLE_NAME) + rec(ORACLE_LEVEL),
           '学習モデルと、上級者の棋譜から教わった手筋で打つ', deck(ORACLE_AI), ' top') +
-        card('3', '最強' + rec(3) + (conq >= total ? ' <em>✓ TITLE — CONQUEROR</em>' : ''),
-          'いちばん強い CPU。残りの' + total + 'のプロトコルすべてで勝つと 称号 CONQUEROR', deck(STRONGEST_AI) + conqBar, ' top') +
-        card('4', 'ロック特化' + rec(4), 'サイキック①で「裏向きでしか出せない」を狙う', deck(LOCK_AI)) +
-        CHALLENGERS.map((c, k) => card(String(CHALLENGER_BASE + k), challengerTitle(c, k) + rec(CHALLENGER_BASE + k), '最強の候補だったデッキ', deck(c.deck))).join('') +
+        /* 本気の4人: ORACLE の読みに、その子の得意プロトコル入りのデッキと学習モデル。最強の上、神の下 */
+        HONKI.map((h, k) => card(String(HONKI_BASE + k), esc(h.name) + rec(HONKI_BASE + k), esc(h.note), deck(h.deck), ' honki', h.color)).join('') +
+        card('3', 'GATEKEEPER' + rec(3) + (conq >= total ? ' <em>✓ TITLE — CONQUEROR</em>' : ''),
+          'CHALLENGE の門番。残りの' + total + 'のプロトコルすべてで勝つと 称号 CONQUEROR', deck(STRONGEST_AI) + conqBar, ' top') +
       '</div></section>' +
       '<section data-cpane="ud"' + (ctab === 'ud' ? '' : ' hidden') + '><h3><small>いちばん弱いデッキで、いちばん強い CPU に挑む</small></h3>' +
       '<div class="op-row">' + card('underdog', '下剋上' + (cleared ? ' <em>✓ TITLE — GIANT SLAYER</em>' : rec(UNDERDOG_LEVEL)),
-        'あなた (最弱) vs 最強。勝つと 称号 GIANT SLAYER・専用スリーブとマーカー・+100 XP',
+        'あなた (最弱) vs GATEKEEPER。勝つと 称号 GIANT SLAYER・専用スリーブとマーカー・+100 XP',
         '<span class="op-vs">' + deck(UNDERDOG_DECK) + '<i>VS</i>' + deck(STRONGEST_AI) + '</span>', ' wide') + '</div>' +
       '<div class="op-row">' + card('udtag', '下剋上タッグ' + (tagCleared ? ' <em>✓ TITLE — UNDERDOG DUO</em>' : ''),
-        'あなた (好きな3つ) ＋ かんたんの味方 vs 最強のタッグ。手番は あなた → 相手1 → 味方 → 相手2。勝つと 称号 UNDERDOG DUO',
+        'あなた (好きな3つ) ＋ かんたんの味方 vs GATEKEEPER のタッグ。手番は あなた → 相手1 → 味方 → 相手2。勝つと 称号 UNDERDOG DUO',
         '<span class="op-vs"><span class="op-any">好きな3つ</span><i>VS</i>' + deck(STRONGEST_AI) + deck(UNDERDOG_TAG_RIVAL_MATE) + '</span>', ' wide') + '</div></section>'
       : '<div class="op-head"><b>// SINGLE GAME</b><span>SELECT OPPONENT</span></div>' +
       /* 迷ったらこれ: 選ぶものを全部おまかせにして、すぐ始める */

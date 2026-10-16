@@ -843,13 +843,13 @@ export function conquerCutIn(protos, count, total, opts) {
     el.setAttribute('role', 'dialog');
     document.body.appendChild(el);
   }
-  el.setAttribute('aria-label', '最強を制覇');
+  el.setAttribute('aria-label', 'GATEKEEPER を制覇');
   const done = count >= total;
-  el.innerHTML = '<div class="lu-card conq"><div class="lu-kicker">CONQUERED — 最強を制覇</div>' +
+  el.innerHTML = '<div class="lu-card conq"><div class="lu-kicker">CONQUERED — GATEKEEPER を制覇</div>' +
     '<div class="lu-lv" data-text="' + count + '">' + count + '<small>/' + total + '</small></div>' +
     '<ul class="lu-rewards">' + protos.map((p, i) => '<li style="--i:' + i + ';--pc:' + (p.color || '#b9a4ff') + '"><b class="conq-p">' +
-      String(p.name).replace(/[&<>"]/g, '') + '</b>で最強に勝った</li>').join('') + '</ul>' +
-    '<p class="lu-note">' + (done ? total + 'のプロトコルすべてで最強に勝った。称号 CONQUEROR を手に入れた' : '最強のデッキ以外の' + total + 'のプロトコルすべてで勝つと 称号 CONQUEROR') + '</p>' +
+      String(p.name).replace(/[&<>"]/g, '') + '</b>で GATEKEEPER に勝った</li>').join('') + '</ul>' +
+    '<p class="lu-note">' + (done ? total + 'のプロトコルすべてで GATEKEEPER に勝った。称号 CONQUEROR を手に入れた' : 'GATEKEEPER のデッキ以外の' + total + 'のプロトコルすべてで勝つと 称号 CONQUEROR') + '</p>' +
     '<p class="lu-hint">タップで閉じる</p></div>';
   el.classList.add('show');
   sfx('yourTurn');

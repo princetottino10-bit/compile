@@ -8,8 +8,8 @@
  *   ここは表示も通信もしない (achievements-ui.js / main.js が受け持つ)
  * ========================================================================= */
 import { keepBroken } from './broken.js';
-import { CHALLENGER_BASE, CHALLENGERS, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL } from './aidecks.js';
-const BOSS_LEVELS = [3, 4, ...CHALLENGERS.map((_, i) => CHALLENGER_BASE + i)];
+import { HONKI_BASE, HONKI, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL } from './aidecks.js';
+const BOSS_LEVELS = [3, ...HONKI.map((_, i) => HONKI_BASE + i)];
 import { XP_GAIN } from './xp.js';
 import { protocolSummary, conquered, CONQUER_TOTAL } from './stats-data.js';
 import { GACHA_ITEMS } from './rewards.js';
@@ -100,13 +100,13 @@ export const TROPHIES = [
   { id: 'onecard', tier: 'silver', hidden: true, name: 'ONE CARD SHOW', desc: '1試合で同じカードの効果を6回使う', test: (c) => !!g(c) && Object.values(g(c).effectsMap).some(n => n >= 6) },
   /* ---- 金 ---- */
   { id: 'wins100', tier: 'gold', name: 'CENTURY', desc: '100勝する', test: (c) => wins(c) >= 100, progress: (c) => [wins(c), 100] },
-  { id: 'apex', tier: 'gold', name: 'APEX', desc: '「最強」の CPU に勝つ', test: (c) => beat(c, 3) },
-  /* 強敵 = 相手を選ぶ画面の「強敵」の欄の全員 (最強・ロック特化・挑戦者) */
+  { id: 'apex', tier: 'gold', name: 'APEX', desc: '「GATEKEEPER」の CPU に勝つ', test: (c) => beat(c, 3) },
+  /* 強敵 = 相手を選ぶ画面の「強敵」の欄の、称号のない相手 (最強・本気の4人)。2026-10-16 にロック特化・挑戦者から本気の4人へ置きかえ */
   { id: 'challengers', tier: 'gold', name: 'GAUNTLET', desc: '強敵を全員倒す',
     test: (c) => BOSS_LEVELS.every(lv => beat(c, lv)),
     progress: (c) => [BOSS_LEVELS.filter(lv => beat(c, lv)).length, BOSS_LEVELS.length] },
-  { id: 'underdog', tier: 'gold', name: 'GIANT SLAYER', desc: '下剋上 (最弱 vs 最強) で勝つ', test: (c) => beat(c, UNDERDOG_LEVEL) },
-  { id: 'conqueror', tier: 'gold', name: 'CONQUEROR', desc: '「最強」の CPU に、最強のデッキ以外の' + CONQUER_TOTAL + 'のプロトコルすべてで勝つ (称号 CONQUEROR)',
+  { id: 'underdog', tier: 'gold', name: 'GIANT SLAYER', desc: '下剋上 (最弱 vs GATEKEEPER) で勝つ', test: (c) => beat(c, UNDERDOG_LEVEL) },
+  { id: 'conqueror', tier: 'gold', name: 'CONQUEROR', desc: '「GATEKEEPER」の CPU に、GATEKEEPER のデッキ以外の' + CONQUER_TOTAL + 'のプロトコルすべてで勝つ (称号 CONQUEROR)',
     /* 数える試合は conquered が決める (週替わりの最強も入れるので、短縮マッチを除く前の全部の戦績を渡す) */
     test: (c) => conquered(every(c)).size >= CONQUER_TOTAL, progress: (c) => [Math.min(CONQUER_TOTAL, conquered(every(c)).size), CONQUER_TOTAL] },
   { id: 'all30', tier: 'gold', name: 'OMNISCIENT', desc: '30のプロトコルすべてで1勝する', test: (c) => protoWins(c) >= 30, progress: (c) => [protoWins(c), 30] },
@@ -136,9 +136,9 @@ export const TROPHIES = [
     test: (c) => [0, 1, 2].every(lv => tagWins(c).some(r => r.level === lv)), progress: (c) => [[0, 1, 2].filter(lv => tagWins(c).some(r => r.level === lv)).length, 3] },
   { id: 'tag_flawless', tier: 'gold', hidden: true, name: 'PERFECT SYNC', desc: 'タッグデュエルで、相手に1回もコンパイルさせずに勝つ (称号 PERFECT SYNC)',
     test: (c) => !!g(c) && g(c).tag && g(c).win && g(c).oppCompiles === 0 },
-  { id: 'underdog_tag', tier: 'gold', name: 'UNDERDOG DUO', desc: '下剋上タッグ (かんたんの味方と組んで、最強のタッグ) に勝つ (称号 UNDERDOG DUO)', test: (c) => beat(c, UNDERDOG_TAG_LEVEL) },
+  { id: 'underdog_tag', tier: 'gold', name: 'UNDERDOG DUO', desc: '下剋上タッグ (かんたんの味方と組んで、GATEKEEPER のタッグ) に勝つ (称号 UNDERDOG DUO)', test: (c) => beat(c, UNDERDOG_TAG_LEVEL) },
   { id: 'norefresh', tier: 'gold', name: 'NO REFRESH', desc: '一度もリフレッシュせずに勝つ', test: (c) => !!g(c) && g(c).win && g(c).refreshes === 0 },
-  { id: 'norefresh_apex', tier: 'gold', name: 'NO REFRESH APEX', desc: '一度もリフレッシュせずに「最強」の CPU に勝つ', test: (c) => !!g(c) && g(c).win && g(c).refreshes === 0 && g(c).level === 3 },
+  { id: 'norefresh_apex', tier: 'gold', name: 'NO REFRESH APEX', desc: '一度もリフレッシュせずに「GATEKEEPER」の CPU に勝つ', test: (c) => !!g(c) && g(c).win && g(c).refreshes === 0 && g(c).level === 3 },
   /* 1つの手番にカードの効果を何回も発動させる (チェーン・連鎖で積み上げる)。勝ち負けは問わない */
   { id: 'turnfx15', tier: 'gold', name: 'OVERDRIVE', desc: '1つの手番に、自分のカードの効果を15回発動させる', test: (c) => !!g(c) && (g(c).turnFxMax | 0) >= 15 },
   /* 表で出すのは値 0・1・2 のカードだけで勝つ (3〜6 は裏向きで出すならよい)。前の SHADOW PLAY (一度も表で出さずに勝つ) の代わり */
