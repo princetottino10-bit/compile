@@ -199,6 +199,27 @@ def aux2_cards(im, seed):
     return crops
 
 
+# 題材が中央の1点にある絵は、格子の切り出しだと剣の端だけが映るカードが出る。
+# そういうプロトコルは窓を手で決める (左上 x, 上 y, 幅。いずれも原画に対する割合)。
+CARD_WINDOWS = {
+    # COURAGE: 中央に縦の剣。剣を入れる窓 (2・5) と、剣にかからない窓 (1・3・4・6) に分ける
+    'COURAGE': [(0.0, 0.0, 0.36), (0.31, 0.0, 0.38), (0.64, 0.0, 0.36),
+                (0.0, 0.25, 0.36), (0.38, 0.25, 0.38), (0.64, 0.25, 0.36)],
+}
+
+
+def window_cards(im, windows):
+    w, h = im.size
+    crops = []
+    for fx, fy, fw in windows:
+        cw = int(w * fw)
+        ch = min(h, int(cw * CARD_H / CARD_W))
+        x = max(0, min(w - cw, int(fx * w)))
+        y = max(0, min(h - ch, int(fy * h)))
+        crops.append(im.crop((x, y, x + cw, y + ch)).resize((CARD_W, CARD_H), Image.LANCZOS))
+    return crops
+
+
 def main():
     os.makedirs(OUT_DIR, exist_ok=True)
     colors = load_colors()
@@ -229,7 +250,9 @@ def main():
             total += save_webp(face, capname + '.webp')
             total += save_webp(glitch(face, 'gg:' + proto, heavy=True), capname + '_Glitched.webp')
             count += 2
-            for n, card in enumerate(aux2_cards(illust, seed=proto), start=1):
+            cards = (window_cards(illust, CARD_WINDOWS[proto]) if proto in CARD_WINDOWS
+                     else aux2_cards(illust, seed=proto))
+            for n, card in enumerate(cards, start=1):
                 total += save_webp(card, '{}{}.webp'.format(n, proto.lower()))
                 count += 1
             continue
