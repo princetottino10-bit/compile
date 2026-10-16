@@ -832,7 +832,7 @@ async function boot() {
   const runDefs = buildRunDefs(cards, effects);
   const mobDefs = buildMobDefs();
   runDefs.engine.push(...mobDefs.engine);
-  protoIndex[mobDefs.protocol.name] = mobDefs.protocol;
+  for (const p of mobDefs.protocols) protoIndex[p.name] = p;
   for (const d of runDefs.ui.concat(mobDefs.ui)) defIndex[d.id] = d;
   markDemerits(effects, runDefs.engine);
   mark('fetch');

@@ -9,10 +9,10 @@ globalThis.localStorage = {
 };
 const S = await import('../js3d/story.js');
 const cards = JSON.parse(await (await import('node:fs/promises')).readFile(new URL('../data/cards.json', import.meta.url), 'utf8'));
-const { MOB_PROTO } = await import('../js3d/mobcards.js');
-/* モブ (名前のない機体) は量産プロトコルを3ラインとも使う (js3d/mobcards.js) */
-const PROTOS = new Set(cards.protocols.map(p => p.name).concat(MOB_PROTO));
-const uniq = (a) => new Set(a.filter(p => p !== MOB_PROTO)).size === a.filter(p => p !== MOB_PROTO).length;
+const { MOB_NAMES, isMobProto } = await import('../js3d/mobcards.js');
+/* モブ (名前のない機体) は量産プロトコル3つを使う。タッグの相方も同じ3つ (js3d/mobcards.js) */
+const PROTOS = new Set(cards.protocols.map(p => p.name).concat(MOB_NAMES));
+const uniq = (a) => new Set(a.filter(p => !isMobProto(p))).size === a.filter(p => !isMobProto(p)).length;
 const tsume = JSON.parse(await (await import('node:fs/promises')).readFile(new URL('../data/tsume.json', import.meta.url), 'utf8'));
 
 test('章と場面: id は重ならず、会話には行が、対戦にはデッキがある', () => {

@@ -74,7 +74,7 @@ let REPEATABLE = null;   // 同じ側で何度並べてもよいプロトコル 
 /* extra: 勝ち抜き戦だけのカード [{ id, proto, value, eff }] (js3d/runcards.js)。
    プロトコルの 6 枚 (PROTOS) には入れず、newGame の deckMods で山札に入れたときだけ使う。
    newProto: true のカードは cards.json に無いプロトコル (ストーリーのモブの量産プロトコル。js3d/mobcards.js) の6枚として登録する。
-   このプロトコルは1人で3ライン並べてよく、タッグでも味方と重ねてよい */
+   量産プロトコルは同じ側で重ねてよい (タッグで味方と同じ3つを使う) */
 function init(cardsJson, effectsJson, extra) {
   DEFS = {}; PROTOS = {}; REPEATABLE = new Set();
   for (const p of cardsJson.protocols) {
