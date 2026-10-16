@@ -76,11 +76,11 @@ test('β カード: 全プロトコルにあり、元のカードの段を写し
   assert.equal(new Set(STAR_CARDS.map(s => s.proto)).size, cards.protocols.length);
   const ui = Object.fromEntries(defs.ui.map(d => [d.id, d]));
   const eng = Object.fromEntries(defs.engine.map(d => [d.id, d]));
-  /* 例: β-METAL 3 は METAL 0 の上段 */
+  /* 例: β-METAL 4 は METAL 0 の上段 (＋1枚プレイ) */
   const metal0 = cards.protocols.find(p => p.name === 'METAL').cards.find(c => c.value === 0);
   assert.equal(ui.X_METAL.upper, metal0.upper);
   assert.deepEqual(eng.X_METAL.eff.upper, effects[metal0.id].upper);
-  assert.equal(eng.X_METAL.value, 3);
+  assert.equal(eng.X_METAL.value, 4);   // 弱いプロトコルの β は値 4 + 1枚プレイ
   const others = ['DEATH', 'METAL', 'LIFE', 'FIRE', 'WATER', 'SPEED'];
   for (const s of STAR_CARDS.filter(x => x.from || x.id === 'X_LUCK')) {
     const p0 = [s.proto].concat(others.filter(n => n !== s.proto).slice(0, 2));
