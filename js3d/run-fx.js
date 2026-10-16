@@ -5,6 +5,7 @@
  *   画面を勝手に進めたり閉じたりはしない (見た目と音だけ)。動きを減らす設定では数え上げ・紙吹雪をやめる
  * ========================================================================= */
 import * as RUN from './run.js';
+import { mutatorInfo, MUTATORS } from './run-chaos.js';
 import { sfx } from './audio.js';
 import { confetti, RAR_COLORS } from './gachafx.js';
 import { calm } from './prefs.js';
@@ -68,6 +69,8 @@ export function afterRender(el, prev, run) {
   /* 勝利の報酬画面: 「+N CREDIT」を 0 から数え上げる */
   const gain = card.querySelector('.rn-gainnum');
   if (gain && (!prev || prev.phase !== run.phase)) countUp(gain, 0, run.lastGain | 0, { fmt: (v) => '+' + v });
+  /* カオスの異変: 新しい試合の画面では、スロットのように名前が回ってから止まる */
+  if ((!prev || prev.phase !== 'battle' || prev.pos !== run.pos) && run.phase === 'battle') spinMutators(card);
   if (!prev) return;
   /* ライフが増えた: 増えた目盛りを光らせる */
   if ((run.life | 0) > (prev.life | 0)) {
@@ -108,6 +111,30 @@ export function afterRender(el, prev, run) {
   if (prev.pos !== run.pos && run.phase !== 'draft') sfx('land');
 }
 
+/* 異変の名前を回す (止まる順に1つずつ。動きを減らす設定では回さない) */
+function spinMutators(card) {
+  const cells = [...card.querySelectorAll('.rn-mut')];
+  if (!cells.length || calm()) return;
+  const names = MUTATORS.map(m => m.name);
+  const btn = card.querySelector('[data-act=fight]');
+  if (btn) btn.disabled = true;
+  cells.forEach((c, i) => {
+    const b = c.querySelector('b');
+    const real = b.textContent;
+    c.classList.add('spinning');
+    let k = Math.floor(Math.random() * names.length);
+    const tick = setInterval(() => { b.textContent = names[k++ % names.length]; if (k % 2) sfx('select'); }, 70);
+    setTimeout(() => {
+      clearInterval(tick);
+      b.textContent = real;
+      c.classList.remove('spinning');
+      c.classList.add('landed');
+      sfx(i === cells.length - 1 ? 'boom' : 'land');
+      if (i === cells.length - 1 && btn) btn.disabled = false;
+    }, 900 + i * 550);
+  });
+}
+
 /** 押したボタンを弾ませてから fn を呼ぶ (選んだ手応え)。動きを減らす設定ではすぐ */
 export function pressThen(btn, fn) {
   if (!btn || calm()) { fn(); return; }
@@ -124,6 +151,11 @@ export function hudChips(run, lost, bonus, fresh) {
   const chips = [];
   /* 短縮マッチ (どちらも1本で勝ち) は、試合中ずっと見えるように */
   if (RUN.runWinCompiles(run) === 1) chips.push('<b class="rh-chip short" title="短縮マッチ: 先にコンパイルした方の勝ち">1本先取</b>');
+  /* カオスの異変は、試合中ずっと見えるように */
+  for (const id of RUN.mutatorsOf(run)) {
+    const m = mutatorInfo(id);
+    if (m) chips.push('<b class="rh-chip chaos" title="' + m.text.replace(/"/g, '&quot;') + '">' + m.name + '</b>');
+  }
   chips.push('<b class="rh-chip cr' + (fresh ? ' bump' : '') + '" title="いま勝てばもらえるクレジット (試合中スコアの分を含む)">WIN +' + RUN.creditGain(run, lost, bonus) + '</b>');
   /* ノーダメージで勝つとクレジット +1 (creditGain)。コンパイルされたら割れる */
   chips.push('<b class="rh-chip perfect' + (lost ? ' broken' : '') + '" title="コンパイルされずに勝つとクレジット +1">PERFECT</b>');
