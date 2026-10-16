@@ -12,6 +12,8 @@
  *
  * 得意プロトコル入りの強いデッキ探し (本気のキャラ): --must X で X を必ず入れ、残り2つを上位 --top 個から選ぶ
  *   node scripts/deck_search.js --must WATER --top 14 --budget 60
+ * 2つ目のデッキ (本気のキャラ同士の対戦でゆずる側): --exclude で相手たちのデッキにあるプロトコルを除く
+ *   node scripts/deck_search.js --must HATE --exclude PSYCHIC,DARKNESS,FIRE,WATER,TIME,COURAGE --top 18 --budget 60
  * 決勝: --decks で候補を直に渡し、--rounds で種を増やす (1回あたり 相手の顔ぶれ × 先手後手)
  *   node scripts/deck_search.js --decks WATER/ICE/PSYCHIC,WATER/FIRE/TIME --rounds 4 --budget 300
  */
@@ -68,7 +70,8 @@ if (!isMainThread) {
   const top = bottom ? names.slice(-bottom) : names.slice(0, +argv('--top', 10));
   const extra = String(argv('--extra', '')).split(',').filter(Boolean);
   const must = argv('--must', '');
-  const pool = [...new Set(top.concat(extra))].filter(n => n !== must);
+  const exclude = String(argv('--exclude', '')).split(',').filter(Boolean);
+  const pool = [...new Set(top.concat(extra))].filter(n => n !== must && !exclude.includes(n));
   const decks = [];
   if (must) for (let a = 0; a < pool.length; a++) for (let b = a + 1; b < pool.length; b++) decks.push([must, pool[a], pool[b]]);
   else for (let a = 0; a < pool.length; a++) for (let b = a + 1; b < pool.length; b++) for (let c = b + 1; c < pool.length; c++) decks.push([pool[a], pool[b], pool[c]]);
