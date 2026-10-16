@@ -229,3 +229,13 @@ test('カオス: 目隠し・5秒ルール・天地逆転は画面側の異変�
     assert.ok(got.filter(id => ['blind', 'tick', 'flip'].includes(id)).length <= 1);
   }
 });
+
+test('カオス: 負けるが勝ち・手札交換は試合のはじめ方に乗る', async () => {
+  const { R, run } = await chaosOnMap();
+  const b = R.chooseNode(run, R.reachable(run)[0], NAMES, seq());
+  const o = R.battleOpts({ ...b, opp: { ...b.opp, chaos: ['misere', 'handswap'] } }, 0);
+  assert.equal(o.misere, true);
+  assert.equal(o.handSwap, R.HAND_SWAP_EVERY);
+  const plain = R.battleOpts({ ...b, opp: { ...b.opp, chaos: [] } }, 0);
+  assert.equal(plain.misere, undefined);
+});

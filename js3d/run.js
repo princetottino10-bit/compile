@@ -829,6 +829,7 @@ const mut = (run, id) => mutatorsOf(run).includes(id);
 /** CPU がでたらめに指す割合 (異変「酔っぱらい」) */
 export const runAiBlunder = (run) => (mut(run, 'drunk') ? DRUNK_BLUNDER : 0);
 export const DRUNK_BLUNDER = 0.5;
+export const HAND_SWAP_EVERY = 4;
 /** 画面側で効かせる異変 (目隠し・5秒ルール・天地逆転)。いまの試合の分だけ */
 export const runRules = (run) => ({ blind: mut(run, 'blind'), tick: mut(run, 'tick'), flip: mut(run, 'flip') });
 /** 戦うデッキ { me, ai }。異変「入れ替わり」では入れ替える */
@@ -1056,6 +1057,8 @@ function applyMutators(run, o, me) {
       }
     }
     if (id === 'baby') { out.handSize[me] = 2; out.handSize[other] = 7; }
+    if (id === 'misere') out.misere = true;
+    if (id === 'handswap') out.handSwap = HAND_SWAP_EVERY;
     if (id === 'marathon') { out.startCompiled = [0, 0]; out.winCompilesBySide = [3, 3]; out.winCompiles = 3; }
     if (id === 'twin') {
       /* 6 枚 x 2 プロトコルぶん (engine は足すカードを 12 枚まで)。強化していれば ＋ 版で */
