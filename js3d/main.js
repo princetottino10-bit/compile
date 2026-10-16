@@ -2551,6 +2551,15 @@ function bindInput() {
     /* 縦持ちは、画面下の手札が見た目では盤面と離れていても透視投影上は
        盤面レイに重なることがある。選択済みなら配置枠のワールド座標を
        優先し、手札に当たり判定を奪われず盤面へ置けるようにする。 */
+    /* 持ち上がった選択中の札そのものに触れたときは、札の操作 (掴む・選び直す) として扱い、下のラインには置かない。
+       前は札を透かして真下のパッドや積み札を拾っていて、横持ちでは真ん中の手札が真ん中のラインの上に浮くため、
+       札を掴もう・選択を外そうとして札の上のほうに触れると、真ん中のラインに裏向きで置かれていた */
+    const onSelected = !!(selectedUid && hit && hit.obj.userData.uid === selectedUid);
+    if (onSelected) {
+      drag = { uid: selectedUid, sx: ev.clientX, sy: ev.clientY, moved: false, lastX: ev.clientX, wasSelected: true };
+      if (ev.isTrusted && el.setPointerCapture) { try { el.setPointerCapture(ev.pointerId); } catch (e) { /* 指がもう離れた */ } }
+      return;
+    }
     if (selectedUid && isCompactHandUI()) {
       const directPad = padUnder(planePoint(ev));
       if (directPad) { await dropOnPad(directPad.userData); return; }
@@ -2599,7 +2608,8 @@ function bindInput() {
     if (d.stopShadow) d.stopShadow();
     for (const pad of pads) pad.userData.hover = false;
     el.style.cursor = 'default';
-    if (!d.moved) return;             // ただのクリック → 選択のまま
+    /* ただのクリック: 選んだばかりの札は選択のまま。もう選んであった札をもう一度押したら選択を外す */
+    if (!d.moved) { if (d.wasSelected && selectedUid === d.uid) deselect(); return; }
 
     const pt = planePoint(ev);
     const over = padUnder(pt);
@@ -2630,12 +2640,14 @@ function bindInput() {
     const card = board.cards.get(selectedUid);
     if (card) { card.renderOrder = 0; raiseHandCard(selectedUid); }
     focusPlayChoice(ud.line, ud.side);
-    /* そのラインに置ける向きが1つだけなら、落としたらそのまま置く (表/裏をもう1回押させていた)。
-       戻せる対戦 (CPU 戦) だけ。オンラインは押し間違いを戻せないので、いままでどおり選んでもらう */
+    /* そのラインに置ける向きが表だけなら、落としたらそのまま置く (表/裏をもう1回押させていた)。
+       戻せる対戦 (CPU 戦) だけ。オンラインは押し間違いを戻せないので、いままでどおり選んでもらう。
+       裏しか置けないラインには自動で置かず、「裏」を押してもらう: プロトコルの違うラインはどこでも裏だけになるので、
+       触れ間違い・離し間違いがそのまま裏向きのプレイになり、真ん中に裏向きで置いてしまう誤操作が多かった */
     if (!roomMode && assistGame()) {
       const cell = document.querySelector('#playChoices section[data-line="' + ud.line + '"][data-side="' + ud.side + '"]');
       const btns = cell ? cell.querySelectorAll('button:not(.place-locked)') : [];
-      if (btns.length === 1) btns[0].click();
+      if (btns.length === 1 && btns[0].classList.contains('place-faceup')) btns[0].click();
     }
   }
 
