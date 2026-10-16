@@ -5,7 +5,7 @@
  *   画面を勝手に進めたり閉じたりはしない (見た目と音だけ)。動きを減らす設定では数え上げ・紙吹雪をやめる
  * ========================================================================= */
 import * as RUN from './run.js';
-import { mutatorInfo } from './run-chaos.js';
+import { mutatorInfo, MUTATORS } from './run-chaos.js';
 import { sfx } from './audio.js';
 import { confetti, RAR_COLORS } from './gachafx.js';
 import { calm } from './prefs.js';
@@ -69,6 +69,8 @@ export function afterRender(el, prev, run) {
   /* 勝利の報酬画面: 「+N CREDIT」を 0 から数え上げる */
   const gain = card.querySelector('.rn-gainnum');
   if (gain && (!prev || prev.phase !== run.phase)) countUp(gain, 0, run.lastGain | 0, { fmt: (v) => '+' + v });
+  /* カオスの異変: 新しい試合の画面では、スロットのように名前が回ってから止まる */
+  if ((!prev || prev.phase !== 'battle' || prev.pos !== run.pos) && run.phase === 'battle') spinMutators(card);
   if (!prev) return;
   /* ライフが増えた: 増えた目盛りを光らせる */
   if ((run.life | 0) > (prev.life | 0)) {
@@ -107,6 +109,30 @@ export function afterRender(el, prev, run) {
   }
   /* 地図で進んだ */
   if (prev.pos !== run.pos && run.phase !== 'draft') sfx('land');
+}
+
+/* 異変の名前を回す (止まる順に1つずつ。動きを減らす設定では回さない) */
+function spinMutators(card) {
+  const cells = [...card.querySelectorAll('.rn-mut')];
+  if (!cells.length || calm()) return;
+  const names = MUTATORS.map(m => m.name);
+  const btn = card.querySelector('[data-act=fight]');
+  if (btn) btn.disabled = true;
+  cells.forEach((c, i) => {
+    const b = c.querySelector('b');
+    const real = b.textContent;
+    c.classList.add('spinning');
+    let k = Math.floor(Math.random() * names.length);
+    const tick = setInterval(() => { b.textContent = names[k++ % names.length]; if (k % 2) sfx('select'); }, 70);
+    setTimeout(() => {
+      clearInterval(tick);
+      b.textContent = real;
+      c.classList.remove('spinning');
+      c.classList.add('landed');
+      sfx(i === cells.length - 1 ? 'boom' : 'land');
+      if (i === cells.length - 1 && btn) btn.disabled = false;
+    }, 900 + i * 550);
+  });
 }
 
 /** 押したボタンを弾ませてから fn を呼ぶ (選んだ手応え)。動きを減らす設定ではすぐ */
