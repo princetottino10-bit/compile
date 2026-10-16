@@ -97,6 +97,11 @@ export const NEWS = [
   }
 ];
 
+/* 「すべて」・未読の数・自動で開くのに使うお知らせ。直したことは「直したこと」のタブでだけ見せる
+   (ソシャゲのお知らせと同じく、目に入る一覧は新しい遊びと調整に絞る) */
+export const isHeadline = (n) => n.kind !== 'fix';
+export const headlines = (list = NEWS) => list.filter(isHeadline);
+
 const SEEN_KEY = 'compileNewsSeen';      // 読んだお知らせの id (配列)
 const POPPED_KEY = 'compileNewsPopped';  // 自動で開いたときの、いちばん新しいお知らせの id
 
@@ -112,7 +117,7 @@ export function seenIds(ls = store()) {
 /** まだ読んでいないお知らせ。一度も開いていない人 (seen が null) は、全部まだ */
 export function unreadNews(seen = seenIds(), list = NEWS) {
   const s = new Set(seen || []);
-  return list.filter(n => !s.has(n.id));
+  return headlines(list).filter(n => !s.has(n.id));
 }
 export function markAllRead(ls = store(), list = NEWS) {
   try { if (ls) ls.setItem(SEEN_KEY, JSON.stringify(list.map(n => n.id))); } catch (e) { /* private mode */ }
@@ -161,9 +166,11 @@ export function openNews({ onGo = null, onClose = null } = {}) {
     el.className = 'pz-ov';
     document.body.appendChild(el);
   }
-  /* 開いたときに読んでいなかったものだけ NEW (開いたら読んだことにする。ソシャゲの「お知らせ」と同じ) */
-  const unread = new Set(unreadNews().map(n => n.id));
-  const first = NEWS.find(n => unread.has(n.id)) || NEWS[0];
+  /* 開いたときに読んでいなかったものだけ NEW (開いたら読んだことにする。ソシャゲの「お知らせ」と同じ)。
+     直したことにも NEW は付ける (未読の数には数えないが、タブを開けば新しいものが分かる) */
+  const seen = new Set(seenIds() || []);
+  const unread = new Set(NEWS.filter(n => !seen.has(n.id)).map(n => n.id));
+  const first = headlines().find(n => unread.has(n.id)) || headlines()[0];
   markAllRead();
   el.innerHTML = '<div class="pz-card st-card nw-card" role="dialog" aria-modal="true" aria-label="お知らせ">' +
     '<div class="pz-head"><b>NEWS<small>お知らせ・更新情報</small></b><button type="button" class="pz-x"><span>閉じる</span></button></div>' +
@@ -173,7 +180,7 @@ export function openNews({ onGo = null, onClose = null } = {}) {
   const listEl = el.querySelector('.nw-list');
   const goLabel = onGo ? (m) => GO_LABEL[m] : null;
   const show = (tab, open) => {
-    const list = tab === 'all' ? NEWS : NEWS.filter(n => n.kind === tab);
+    const list = tab === 'all' ? headlines() : NEWS.filter(n => n.kind === tab);
     listEl.innerHTML = newsListHtml(list, { unread, open, goLabel });
     listEl.scrollTop = 0;
   };

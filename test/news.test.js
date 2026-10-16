@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { NEWS, KINDS, unreadNews, markAllRead, seenIds, shouldPop, markPopped, newsListHtml, shortDate } from '../js3d/news.js';
+import { NEWS, KINDS, headlines, unreadNews, markAllRead, seenIds, shouldPop, markPopped, newsListHtml, shortDate } from '../js3d/news.js';
 
 const mem = () => { const m = new Map(); return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)) }; };
 
@@ -17,7 +17,7 @@ test('お知らせ: id は重ならず、新しいものが先頭、なかまと
 test('はじめは全部まだ読んでいない。全部読んだら0、あとから足したものだけ未読', () => {
   const ls = mem();
   assert.equal(seenIds(ls), null);
-  assert.equal(unreadNews(seenIds(ls)).length, NEWS.length);
+  assert.equal(unreadNews(seenIds(ls)).length, headlines().length);
   markAllRead(ls);
   assert.equal(unreadNews(seenIds(ls)).length, 0);
   const more = [{ id: 'later', date: '2099-01-01', kind: 'new', title: 't', body: ['b'] }, ...NEWS];
@@ -44,4 +44,13 @@ test('一覧の HTML: 未読に NEW、文字は書き換えられないように
   assert.match(html, /data-news-go="run"/);
   assert.doesNotMatch(newsListHtml(list), /NEW|data-news-go/);
   assert.equal(shortDate('2026-01-05'), '1/5');
+});
+
+test('直したことは「すべて」・未読の数・自動で開くのに入れない', () => {
+  assert.ok(NEWS.some(n => n.kind === 'fix'), '直したことのお知らせがある');
+  assert.ok(headlines().every(n => n.kind !== 'fix'));
+  const fixOnly = [{ id: 'f', date: '2099-01-01', kind: 'fix', title: 't', body: ['b'] }];
+  const ls = mem();
+  assert.equal(unreadNews(null, fixOnly).length, 0);
+  assert.equal(shouldPop(ls, fixOnly), false);
 });
