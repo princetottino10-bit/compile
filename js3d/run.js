@@ -196,9 +196,9 @@ export const EVENTS = {
       { label: '見送る', apply: (r) => r }
     ]
   },
-  /* ここから2つはカオス勝ち抜き戦だけ (chaos: true)。絵は既存のイベントの絵を借りる (art) */
+  /* ここから5つはカオス勝ち抜き戦だけ (chaos: true)。絵は art/run/event_chaos_*.webp (art。E:\SD\scripts\run_events_chaos.py で描いた) */
   omegaAltar: {
-    chaos: true, art: 'altar',
+    chaos: true, art: 'chaos_omega',
     title: 'Ω の祭壇', text: 'ORACLE が考えたカードが祀られている。手に取れば、デッキのプロトコルが1つ、そのカードのものに置き換わる。',
     options: [
       { label: 'Ω カードを手に取る (デッキにそのプロトコルが無ければ、どれか1つと入れ替わる)', need: (r) => (r.added || []).length < maxAdded(r),
@@ -207,7 +207,7 @@ export const EVENTS = {
     ]
   },
   roulette: {
-    chaos: true, art: 'arcade',
+    chaos: true, art: 'chaos_roulette',
     title: '運命のルーレット', text: '派手に光るルーレット台。回せば何かが起きる。いいことか、悪いことか。',
     options: [
       { label: 'ルーレットを回す', apply: (r, c) => spinRoulette(r, c) },
@@ -216,7 +216,7 @@ export const EVENTS = {
     ]
   },
   copier: {
-    chaos: true, art: 'lab',
+    chaos: true, art: 'chaos_copier',
     title: 'コピー機', text: '「カードを入れると増えます」と書かれた古いコピー機。',
     options: [
       { label: 'カードを1枚選んで、写しを山札に足す', need: (r) => (r.copies || []).length < MAX_COPIES, apply: (r) => ({ ...r, phase: 'copy', after: 'map' }) },
@@ -230,7 +230,7 @@ export const EVENTS = {
     ]
   },
   casino: {
-    chaos: true, art: 'meteor',
+    chaos: true, art: 'chaos_casino',
     title: '地下カジノ', text: 'ネオンの奥で、ディーラーがコインを弾いている。「賭けるかい？」',
     options: [
       { label: 'クレジットを半分賭ける (半々で 2 倍)', need: (r) => (r.credits | 0) >= 2, apply: (r, c) => bet(r, c, Math.floor((r.credits | 0) / 2), 0.5, 2) },
@@ -243,7 +243,7 @@ export const EVENTS = {
     ]
   },
   merchant: {
-    chaos: true, art: 'shady',
+    chaos: true, art: 'chaos_merchant',
     title: '闇の商人', text: 'フードの男が、ささやく。「なんでも買うし、なんでも売るよ」',
     options: [
       { label: '最大ライフ −2 を売る (クレジット +20)', need: (r) => r.maxLife > 4,
