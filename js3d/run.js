@@ -818,12 +818,16 @@ export function prepareBattle(run, names, rnd = Math.random, route = 'normal') {
     if (opp.chaos.includes('mirror')) opp.deck = run.deck.slice();
     if (opp.chaos.includes('giant')) { opp.deck = STRONGEST_AI.slice(); opp.level = 3; }
     if (opp.chaos.includes('baby')) opp.level = 0;
+    if (opp.chaos.includes('drunk')) opp.level = Math.max(2, opp.level);
   }
   return { ...run, phase: 'battle', opp, offers: [], route, event: null };
 }
 /** その試合の異変 (カオスでなければ空) */
 export const mutatorsOf = (run) => (run && run.opp && run.opp.chaos) || [];
 const mut = (run, id) => mutatorsOf(run).includes(id);
+/** CPU がでたらめに指す割合 (異変「酔っぱらい」) */
+export const runAiBlunder = (run) => (mut(run, 'drunk') ? DRUNK_BLUNDER : 0);
+export const DRUNK_BLUNDER = 0.5;
 /** 戦うデッキ { me, ai }。異変「入れ替わり」では入れ替える */
 export function fightDecks(run) {
   const me = run.deck.slice(), ai = run.opp.deck.slice();

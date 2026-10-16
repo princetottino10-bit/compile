@@ -74,7 +74,7 @@ import { openOpponentSelect } from './opponent-select.js';
 import { UNDERDOG_DECK, STRONGEST_AI, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL, UNDERDOG_TAG_RIVAL_MATE, levelLabel, fixedDeck, DEUS_LEVEL, DEUS_NAME, DEUS_BUDGET, PEEK_LEVEL, PEEK_NAME, ORACLE_LEVEL, oracleAi, isHonki, honkiOf, honkiAi } from './aidecks.js';
 import { openRun, runHud, showRunAfterGame } from './run-ui.js';
 import { openWeekly, weeklyHud, showWeeklyAfterGame } from './weekly-ui.js';
-import { compilesBy, loadRun, RUN_WIN_COMPILES, runWinCompiles, battleOpts, lethal, nodeById } from './run.js';
+import { compilesBy, loadRun, RUN_WIN_COMPILES, runWinCompiles, battleOpts, lethal, nodeById, runAiBlunder } from './run.js';
 import { loadWeekly, loadStoredWeekly, weekKey } from './weekly.js';
 import { openReview } from './review.js';
 import { runRoomLobby } from './roomui.js';
@@ -2060,6 +2060,8 @@ function applyAiDifficulty(level, opts) {
   };
   /* ORACLE (CHALLENGE の相手): 管理者の自動プレイと同じ読み。学習モデルは Worker が読む。画面側で考えるときは aiAction の ORACLE_CPU_AI で当てる */
   if (level === ORACLE_LEVEL) Object.assign(config, ORACLE_CPU_AI);
+  /* カオス勝ち抜き戦の異変「酔っぱらい」: 強い読みのまま、手の半分がでたらめ */
+  if (runMode && runKind === 'run') config.blunder = Math.max(config.blunder, runAiBlunder(loadRun()));
   if (isHonki(level)) Object.assign(config, honkiAi(ORACLE_CPU_AI, level));
   Engine.setAiLevel(config.level);
   if (Engine.setAiBlunder) Engine.setAiBlunder(config.blunder);

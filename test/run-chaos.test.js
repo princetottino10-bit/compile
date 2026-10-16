@@ -181,3 +181,11 @@ test('カオス: カジノは当たれば増え、外れれば減る', async () 
   assert.equal(lose.credits, 0);
   assert.ok(ev.chaos);
 });
+
+test('カオス: 酔っぱらいは CPU のでたらめの割合を上げる', async () => {
+  const { R, run } = await chaosOnMap();
+  const b = R.chooseNode(run, R.reachable(run)[0], NAMES, seq());
+  assert.equal(R.runAiBlunder({ ...b, opp: { ...b.opp, chaos: ['drunk'] } }), R.DRUNK_BLUNDER);
+  assert.equal(R.runAiBlunder({ ...b, opp: { ...b.opp, chaos: [] } }), 0);
+  assert.equal(R.runAiBlunder(null), 0);
+});
