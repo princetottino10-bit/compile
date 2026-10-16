@@ -4153,6 +4153,7 @@ function randomPicks(req) {
 }
 
 let AI_CHOICE_DEPTH = 0;
+const AI_YESNO_MAX_DEPTH = 4;
 let AI_SEARCH_DEADLINE = 0;
 
 function aiSearchExpired() {
@@ -4673,6 +4674,9 @@ function smartPicks(st, req) {
       return best;
     }
     case 'yesNo': {
+      /* 読みの中の読みで yes/no を両方試し続けると、引くたびに動かせる札 (SPIRIT 3 系) が2枚あるときなどに
+         「引く → 動かすか? → 動かした先で引く → …」が倍々に枝分かれして止まらなくなる。深いところでは「する」に決める */
+      if (AI_CHOICE_DEPTH > AI_YESNO_MAX_DEPTH) return ['yes'];
       const yS = aiChoiceScore(st, req, ['yes'], me);
       const nS = aiChoiceScore(st, req, [], me);
       return yS >= nS ? ['yes'] : [];
