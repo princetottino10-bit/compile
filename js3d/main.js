@@ -1295,7 +1295,7 @@ async function boot() {
           const all = cards.protocols.map(x => x.name);
           tagMates = { p0: shuffled(all.filter(n => !p0.includes(n) && !p1.includes(n) && !UNDERDOG_TAG_RIVAL_MATE.includes(n))).slice(0, 3), p1: UNDERDOG_TAG_RIVAL_MATE.slice() };
           applyAiDifficulty(UNDERDOG_TAG_LEVEL);
-          setupNote = '下剋上タッグ: あなた ' + p0.join(' / ') + ' ＋ かんたんの味方 ' + tagMates.p0.join(' / ') + '　vs 最強タッグ ' + p1.join(' / ') + ' ＋ ' + tagMates.p1.join(' / ');
+          setupNote = '下剋上タッグ: あなた ' + p0.join(' / ') + ' ＋ かんたんの味方 ' + tagMates.p0.join(' / ') + '　vs GATEKEEPER タッグ ' + p1.join(' / ') + ' ＋ ' + tagMates.p1.join(' / ');
           break;
         }
         if (opp.underdog) {
@@ -1303,7 +1303,7 @@ async function boot() {
           p0 = UNDERDOG_DECK.slice();
           p1 = STRONGEST_AI.slice();
           applyAiDifficulty(UNDERDOG_LEVEL);
-          setupNote = '下剋上: 最弱 ' + p0.join(' / ') + ' で最強に挑む';
+          setupNote = '下剋上: 最弱 ' + p0.join(' / ') + ' で GATEKEEPER に挑む';
           break;
         }
       }
@@ -2102,7 +2102,7 @@ function syncAutoButton() {
   if (!b) {
     b = document.createElement('button');
     b.id = 'btnAuto'; b.className = 'btn'; b.type = 'button';
-    b.title = 'ORACLE (学習モデル入りの最強の読み) に自分の手を指させる (管理者)';
+    b.title = 'ORACLE (学習モデル入りの GATEKEEPER の読み) に自分の手を指させる (管理者)';
     b.onclick = () => {
       const waitingMe = !!cur && !busy && !cur.requests.length && cur.state.winner === null && humanTurn(cur.state);
       autoPlay = !autoPlay;
@@ -6033,7 +6033,7 @@ function showEndActions(win) {
     gainsHtml() +
     matchSummaryHtml() +
     nextGoalsHtml() +
-    (underdogWin ? '<div class="end-sub">最弱のデッキで最強に勝ちました。称号 GIANT SLAYER・専用スリーブとマーカー・+' + UNDERDOG_XP + ' XP</div>' : '') +
+    (underdogWin ? '<div class="end-sub">最弱のデッキで GATEKEEPER に勝ちました。称号 GIANT SLAYER・専用スリーブとマーカー・+' + UNDERDOG_XP + ' XP</div>' : '') +
     '<div class="end-btns">' +
       /* オンラインは同じ部屋で再戦できない (部屋は閉じている) ので、ロビーへ戻る (前は REMATCH でタイトルに戻っていた) */
       '<button class="arr-btn ok" id="endAgain" type="button">' + (roomMode ? 'LOBBY' : 'REMATCH') + '</button>' +
@@ -6880,7 +6880,7 @@ function choiceCtx() {
    経験値は 20 ずつ 5 回に分けて入れる (帳簿の1件は 20 まで)。key が同じなので何度勝っても1回だけ */
 /* 機械仕掛けの神・すべてを見る者に勝ったときの称号 (cosmetics-ui.js の extraTitles で持ち物になる) */
 const MACHINE_TITLES = {
-  [DEUS_LEVEL]: { key: 'deicide', name: 'DEICIDE', kicker: 'DEUS EX MACHINA', text: '機械仕掛けの神を倒しました。最強の、さらに上を。', colors: ['#c9a8ff', '#ffffff', '#ffd98a'] },
+  [DEUS_LEVEL]: { key: 'deicide', name: 'DEICIDE', kicker: 'DEUS EX MACHINA', text: '機械仕掛けの神を倒しました。GATEKEEPER の、さらに上を。', colors: ['#c9a8ff', '#ffffff', '#ffd98a'] },
   [PEEK_LEVEL]: { key: 'blindspot', name: 'BLIND SPOT', kicker: 'ALL-SEEING', text: 'すべてを見通す目を、見えないところから倒しました。(隠し称号)', colors: ['#ff5a6e', '#ffffff', '#ffb0b8'] }
 };
 async function celebrateMachineTitle(t) {
@@ -6915,7 +6915,7 @@ async function celebrateUnderdog() {
     document.body.appendChild(el);
   }
   el.innerHTML = '<div class="ud-card"><small>UNDERDOG</small><h2>GIANT SLAYER</h2>' +
-    '<p>最弱のデッキで、最強の CPU を倒しました。</p>' +
+    '<p>最弱のデッキで、GATEKEEPER を倒しました。</p>' +
     '<ul><li>称号 GIANT SLAYER</li><li>専用スリーブ GIANT SLAYER</li><li>専用コントロールマーカー GIANT SLAYER</li><li>+' + UNDERDOG_XP + ' XP</li></ul>' +
     '<div class="ud-btns"><button type="button" data-ud="equip">受け取って全部着ける</button><button type="button" data-ud="ok" class="ud-sub">受け取る</button></div></div>';
   el.classList.add('show');
