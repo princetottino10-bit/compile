@@ -3139,6 +3139,14 @@
   .rn-mut{display:flex;flex-direction:column;gap:3px;padding:10px 12px;border:1px solid rgba(124,240,255,.45);background:rgba(124,240,255,.07);clip-path:var(--cut-s);animation:rnMutIn .45s cubic-bezier(.2,1.4,.4,1) both;animation-delay:calc(var(--i) * .18s);}
   .rn-mut.me{border-color:rgba(255,216,106,.55);background:rgba(255,216,106,.08);}
   .rn-mut.opp{border-color:rgba(255,79,109,.55);background:rgba(255,79,109,.08);}
+  .rn-mut.rule{border-color:rgba(214,120,255,.65);background:rgba(214,120,255,.10);}
+  /* カオス勝ち抜き戦の「5秒ルール」の秒読み */
+  .chaos-tick{position:fixed;top:14%;left:50%;transform:translateX(-50%);z-index:60;pointer-events:none;font:900 64px/1 var(--font-ui);color:#ffd86a;text-shadow:0 0 18px rgba(255,216,106,.7),0 3px 0 #000;}
+  .chaos-tick.hot{color:#ff4f6d;text-shadow:0 0 22px rgba(255,79,109,.85),0 3px 0 #000;}
+  .chaos-tick.beat{animation:chaosTickBeat .9s cubic-bezier(.2,1.6,.4,1);}
+  .chaos-tick.up{font-size:44px;letter-spacing:.12em;color:#ff4f6d;animation:chaosTickUp .9s ease-out both;}
+  @keyframes chaosTickBeat{0%{transform:translateX(-50%) scale(1.7);opacity:.2;}35%{transform:translateX(-50%) scale(1);opacity:1;}100%{transform:translateX(-50%) scale(.92);opacity:.85;}}
+  @keyframes chaosTickUp{0%{transform:translateX(-50%) scale(.6);opacity:0;}25%{transform:translateX(-50%) scale(1.25);opacity:1;}100%{transform:translateX(-50%) scale(1.05);opacity:0;}}
   .rn-mut b{font:900 15px/1.1 var(--font-hud,var(--font-ui));letter-spacing:.08em;color:#fff;}
   .rn-mut em{font:800 11px/1 var(--font-ui);font-style:normal;color:#7cf0ff;}
   .rn-mut.me em{color:#ffd86a;} .rn-mut.opp em{color:#ff8fa3;}
@@ -4767,7 +4775,7 @@
       "./js3d/backdrops.js": "./js3d/backdrops.js?v=90faf9612d",
       "./js3d/bgm-shop.js": "./js3d/bgm-shop.js?v=da2eff66b8",
       "./js3d/bgm.js": "./js3d/bgm.js?v=141d43939f",
-      "./js3d/board.js": "./js3d/board.js?v=0d4f2a81d5",
+      "./js3d/board.js": "./js3d/board.js?v=ddbba82776",
       "./js3d/bootui.js": "./js3d/bootui.js?v=15220963bc",
       "./js3d/broken.js": "./js3d/broken.js?v=943ae15321",
       "./js3d/callme.js": "./js3d/callme.js?v=6918030993",
@@ -4808,7 +4816,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=2b4dbc6066",
       "./js3d/logformat.js": "./js3d/logformat.js?v=e3548c74d1",
-      "./js3d/main.js": "./js3d/main.js?v=cbae57c429",
+      "./js3d/main.js": "./js3d/main.js?v=49a9b4a103",
       "./js3d/mobcards.js": "./js3d/mobcards.js?v=2a6bc79376",
       "./js3d/motion.js": "./js3d/motion.js?v=71cd68f8ff",
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
@@ -4836,18 +4844,18 @@
       "./js3d/rewards.js": "./js3d/rewards.js?v=ef3a012bdb",
       "./js3d/room.js": "./js3d/room.js?v=918fccde40",
       "./js3d/roomui.js": "./js3d/roomui.js?v=c33e7b53b2",
-      "./js3d/run-chaos.js": "./js3d/run-chaos.js?v=d5025b109c",
+      "./js3d/run-chaos.js": "./js3d/run-chaos.js?v=3fc0f27e88",
       "./js3d/run-fx.js": "./js3d/run-fx.js?v=48dc7163fa",
       "./js3d/run-score.js": "./js3d/run-score.js?v=8359a3008a",
       "./js3d/run-ui.js": "./js3d/run-ui.js?v=cca678871b",
-      "./js3d/run.js": "./js3d/run.js?v=4d6baea719",
+      "./js3d/run.js": "./js3d/run.js?v=826d36567c",
       "./js3d/runcards.js": "./js3d/runcards.js?v=fad1e510e4",
       "./js3d/selectui.js": "./js3d/selectui.js?v=208abdaebc",
       "./js3d/settings.js": "./js3d/settings.js?v=0aa9440129",
       "./js3d/setup.js": "./js3d/setup.js?v=e17da5ca65",
       "./js3d/solodraft.js": "./js3d/solodraft.js?v=33f32f2481",
       "./js3d/spectate.js": "./js3d/spectate.js?v=ed159bd7b8",
-      "./js3d/stage.js": "./js3d/stage.js?v=00f6623dc9",
+      "./js3d/stage.js": "./js3d/stage.js?v=f4cae41c31",
       "./js3d/stats-data.js": "./js3d/stats-data.js?v=61334c9347",
       "./js3d/stats.js": "./js3d/stats.js?v=5e9acbdde6",
       "./js3d/steps.js": "./js3d/steps.js?v=13e73b20fe",
@@ -4903,8 +4911,8 @@
   <link rel="modulepreload" href="js3d/turning.js?v=9c7f79654e">
   <link rel="modulepreload" href="js3d/achievements-ui.js?v=37fe12aa73">
   <link rel="modulepreload" href="vendor/three.module.js?v=985eb92490">
-  <link rel="modulepreload" href="js3d/stage.js?v=00f6623dc9">
-  <link rel="modulepreload" href="js3d/board.js?v=0d4f2a81d5">
+  <link rel="modulepreload" href="js3d/stage.js?v=f4cae41c31">
+  <link rel="modulepreload" href="js3d/board.js?v=ddbba82776">
   <link rel="modulepreload" href="js3d/control.js?v=c1b87ebc63">
   <link rel="modulepreload" href="js3d/panel.js?v=994ec047da">
   <link rel="modulepreload" href="js3d/setup.js?v=e17da5ca65">
@@ -4934,7 +4942,7 @@
   <link rel="modulepreload" href="js3d/aidecks.js?v=1595eec022">
   <link rel="modulepreload" href="js3d/run-ui.js?v=cca678871b">
   <link rel="modulepreload" href="js3d/weekly-ui.js?v=97a2e533b4">
-  <link rel="modulepreload" href="js3d/run.js?v=4d6baea719">
+  <link rel="modulepreload" href="js3d/run.js?v=826d36567c">
   <link rel="modulepreload" href="js3d/weekly.js?v=5605476b1c">
   <link rel="modulepreload" href="js3d/review.js?v=f2069b69f8">
   <link rel="modulepreload" href="js3d/roomui.js?v=c33e7b53b2">
@@ -4998,7 +5006,7 @@
   <link rel="modulepreload" href="js3d/story-scenery-mansion.js?v=c47d97ebb0">
   <link rel="modulepreload" href="vendor/jsm/loaders/GLTFLoader.js">
   <link rel="modulepreload" href="js3d/cos-rarity.js?v=55e65b53fa">
-  <link rel="modulepreload" href="js3d/run-chaos.js?v=d5025b109c">
+  <link rel="modulepreload" href="js3d/run-chaos.js?v=3fc0f27e88">
   <link rel="modulepreload" href="js3d/run-fx.js?v=48dc7163fa">
   <link rel="modulepreload" href="js3d/prompts.js?v=513817485c">
   <link rel="modulepreload" href="js3d/icons.js?v=15bacde80c">
@@ -5016,6 +5024,6 @@
   <link rel="stylesheet" href="js3d/run-fx.css?v=f46298c0a6">
   <link rel="stylesheet" href="js3d/deus.css?v=3e6919eb01">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=cbae57c429"></script>
+  <script type="module" src="js3d/main.js?v=49a9b4a103"></script>
 </body>
 </html>

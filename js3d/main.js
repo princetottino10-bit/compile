@@ -74,7 +74,7 @@ import { openOpponentSelect } from './opponent-select.js';
 import { UNDERDOG_DECK, STRONGEST_AI, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL, UNDERDOG_TAG_RIVAL_MATE, levelLabel, fixedDeck, DEUS_LEVEL, DEUS_NAME, DEUS_BUDGET, PEEK_LEVEL, PEEK_NAME, ORACLE_LEVEL, oracleAi, isHonki, honkiOf, honkiAi } from './aidecks.js';
 import { openRun, runHud, showRunAfterGame } from './run-ui.js';
 import { openWeekly, weeklyHud, showWeeklyAfterGame } from './weekly-ui.js';
-import { compilesBy, loadRun, RUN_WIN_COMPILES, runWinCompiles, battleOpts, lethal, nodeById, runAiBlunder } from './run.js';
+import { compilesBy, loadRun, RUN_WIN_COMPILES, runWinCompiles, battleOpts, lethal, nodeById, runAiBlunder, runRules } from './run.js';
 import { loadWeekly, loadStoredWeekly, weekKey } from './weekly.js';
 import { openReview } from './review.js';
 import { runRoomLobby } from './roomui.js';
@@ -125,6 +125,9 @@ let pickAid = null;           // カードを選ぶときの手助け (矢印・
 let cur = null;                 // { state, requests, log, winner }
 let busy = false;               // 演出中はクリックを無視
 let selectedUid = null;
+/* カオス勝ち抜き戦の、遊び方を壊す異変 (目隠し・5秒ルール・天地逆転)。forcedMe: 5秒を過ぎて、自分の手を CPU がでたらめに打っている */
+let chaosRules = {};
+let forcedMe = false, forcedSpent = false;
 let hoverUid = null;
 let ctrlMarker = null;
 let pads = [];                  // 着地パッド (line × side)
@@ -1392,6 +1395,9 @@ async function boot() {
           ...(storyOpts || {}),
           ...(tagMates ? { tag: tagMates } : {}) });
   cur = res;
+  chaosRules = runMode && runKind === 'run' && !replayMode && !reviewView ? runRules(loadRun()) : {};
+  board.setBlind(!!chaosRules.blind);
+  stage.setFlip(!!chaosRules.flip);
   /* 対戦の BGM (ボス戦は専用の曲)。機械仕掛けの神は、降臨の演出で着地したときに流す (それまでは静か) */
   const deusEntrance = machineMatch() && !resumed && !replayMode && !reviewView && !spectate;
   if (deusEntrance) fadeOutBgm(); else playBattleBgm();
@@ -2084,7 +2090,7 @@ const AUTO_AI = { level: 2, blunder: 0, budget: 2400, specialist: true, kind: 'd
 /* オンラインでも使える (2026-10-14)。ただし 1対1 で、レート戦ではない部屋だけ (レートに CPU の指した対戦を混ぜない)。
    タッグ・観戦では使わない */
 const roomAutoOk = () => roomMode && !!roomRm && !roomWatching && !roomTag && roomRm.mode !== 'tag' && !roomRm.rated;
-const autoOn = () => autoPlay && (!roomMode || roomAutoOk());
+const autoOn = () => (autoPlay && (!roomMode || roomAutoOk())) || forcedMe;
 const autoFor = (side) => autoOn() && side === ME;
 /* CPU 戦の相手としての ORACLE (CHALLENGE、誰でも選べる)。CPU の側 (1) に特化と ORACLE の手筋を当てる。オート操作の開放ではない */
 const ORACLE_CPU_AI = { ...AUTO_AI, specSide: 1 };
@@ -2094,12 +2100,14 @@ const oracleCpuAi = (st) => (isHonki(aiDifficulty) ? honkiAi(ORACLE_CPU_AI, aiDi
 /* 下剋上タッグの味方: かんたんと同じ読み (3割はでたらめ)。相手の最強タッグはいつもの最強の読み */
 const UNDERDOG_MATE_AI = { level: 0, blunder: 0.3, budget: 900, specialist: false, kind: 'dsh' };
 const weakMate = (side) => aiDifficulty === UNDERDOG_TAG_LEVEL && side === ME && !roomMode && partnerMove();
+/* 5秒ルールで時間切れのときの自分の手: 読まずに合法手からでたらめに */
+const FORCED_AI = { level: 0, blunder: 1, budget: 300, specialist: false, kind: 'dsh', specSide: 0 };
 function aiAction(st) {
-  const over = autoFor(st && st.turn) ? oracleAi(AUTO_AI, st) : weakMate(st && st.turn) ? UNDERDOG_MATE_AI : st && oracleFor(st.turn) ? oracleCpuAi(st) : null;
+  const over = forcedMe && st && st.turn === ME ? FORCED_AI : autoFor(st && st.turn) ? oracleAi(AUTO_AI, st) : weakMate(st && st.turn) ? UNDERDOG_MATE_AI : st && oracleFor(st.turn) ? oracleCpuAi(st) : null;
   return thinking(aiClient ? aiClient.action(st, over) : Promise.resolve(withoutTrace(() => Engine.ai.action(st))));
 }
 function aiAnswer(st, req) {
-  const over = req && autoFor(req.player) ? oracleAi(AUTO_AI, st) : req && weakMate(req.player) ? UNDERDOG_MATE_AI : req && oracleFor(req.player) ? oracleCpuAi(st) : null;
+  const over = forcedMe && req && req.player === ME ? FORCED_AI : req && autoFor(req.player) ? oracleAi(AUTO_AI, st) : req && weakMate(req.player) ? UNDERDOG_MATE_AI : req && oracleFor(req.player) ? oracleCpuAi(st) : null;
   return thinking(aiClient ? aiClient.answer(st, req, over) : Promise.resolve(withoutTrace(() => Engine.ai.answer(st, req))));
 }
 /* 上のバーの AUTO (管理者だけ。チュートリアル・問題・検証盤面・リプレイ・観戦、オンラインのタッグ・レート戦では出さない) */
@@ -2882,7 +2890,8 @@ function cardDetail(uid, st = shown()) {
   const card = uid && st && st.cards[uid];
   if (!card) return null;
   /* トレーニングは検証用の盤面なので、どちらの裏向きも中身を出す */
-  const visible = card.def && (trainingMode || card.faceUp || ((card.knownTo || 0) & (1 << ME)));
+  const blindHide = chaosRules.blind && card.owner === ME && !card.faceUp;     // 目隠し: 自分の札も、表でなければ読めない
+  const visible = card.def && !blindHide && (trainingMode || card.faceUp || ((card.knownTo || 0) & (1 << ME)));
   if (!visible) {
     return { hidden: true, title: '裏向きのカード', proto: '裏向きのカード', value: 2, color: '#8fa8c8',
       badge: '非公開', note: '値2', rows: [] };
@@ -4650,6 +4659,35 @@ async function step(action) {
   await afterTurn();
 }
 
+/* カオス勝ち抜き戦の「5秒ルール」: 自分の手番に 5 秒の秒読み。過ぎたら、その手番は CPU がでたらめに打つ。
+   盤面が変わった (手を打った・対戦をやめた) ら秒読みは消える */
+let tickTimer = null;
+function startTick() {
+  if (tickTimer) { clearInterval(tickTimer); tickTimer = null; }
+  const old = document.getElementById('chaosTick');
+  if (old) old.remove();
+  if (!cur || cur.state.winner !== null || cur.requests.length || !humanTurn(cur.state)) return;
+  const at = cur;
+  const el = document.createElement('div');
+  el.id = 'chaosTick'; el.className = 'chaos-tick';
+  document.body.appendChild(el);
+  let left = 5;
+  const show = () => { el.textContent = String(left); el.classList.toggle('hot', left <= 2); el.classList.remove('beat'); void el.offsetWidth; el.classList.add('beat'); };
+  show();
+  tickTimer = setInterval(() => {
+    if (cur !== at || !humanTurn(cur.state)) { clearInterval(tickTimer); tickTimer = null; el.remove(); return; }
+    if (left > 0) { left--; if (left > 0) { show(); sfx('tick'); } }
+    if (left > 0 || busy) return;                    // 演出の途中なら、終わるまで待ってから
+    clearInterval(tickTimer); tickTimer = null;
+    el.textContent = 'TIME UP'; el.classList.add('up');
+    setTimeout(() => el.remove(), 900);
+    forcedMe = true;
+    deselect();
+    UI.toast('時間切れ！ でたらめに打ちます', 1800);
+    afterTurn();
+  }, 1000);
+}
+
 /* 選択要求を処理し切る */
 /* 選択リクエストをユーザーに聞く。盤面の直接タップを優先し、
    使えない状況ではモーダルにフォールバックする */
@@ -5691,7 +5729,7 @@ async function drainRequests() {
       else picks = await askUser(req);
     } else {
       UI.setPrompt(spectate ? specName(req.player, cur.state.tag ? cur.state.tag.pilot[req.player] : 0) + ' が選択しています…'
-        : req.player === ME ? (autoFor(ME) ? 'ORACLE が選択しています…' : '味方が選択しています…') : '相手が選択しています…', 'wait');
+        : req.player === ME ? (forcedMe ? '時間切れ… でたらめに選んでいます' : autoFor(ME) ? 'ORACLE が選択しています…' : '味方が選択しています…') : '相手が選択しています…', 'wait');
       const at = cur;
       const [ans] = await Promise.all([aiAnswer(cur.state, req), TW.wait(260)]);
       if (cur !== at) return;                     // 考えている間に対戦をやめた
@@ -5710,7 +5748,6 @@ async function drainRequests() {
       UI.toast('AUTO: 模範解答の選択が受け付けられませんでした (' + res.error + ')。ここから先は自分で選べます', 6000);
       busy = false; continue;
     }
-    if (res.error) { UI.toast(res.error); busy = false; continue; }   // 再質問へ
     logAction(answer);
     cur = res;
     await replayResolution(prev, res, null);
@@ -5738,6 +5775,8 @@ async function afterTurn() {
     return;
   }
   if (tutorial && await tutorialAfterStep()) return;
+  /* 5秒ルールのでたらめな手は1手だけ (その手の選択まで CPU が答えたら、手を返す) */
+  if (forcedSpent) { forcedMe = false; forcedSpent = false; }
   await announceTurn();
   let guardAi = 0;
   while (cur && cur.state.winner === null && (demoMode || cur.state.turn === AI || partnerMove() || autoFor(cur.state.turn))
@@ -5748,7 +5787,8 @@ async function afterTurn() {
     const at = cur;
     const [action] = await Promise.all([aiAction(cur.state), TW.wait(demoMode ? 420 : 260)]);
     if (cur !== at) return;                       // 考えている間に対戦をやめた
-    if (!action) break;
+    if (!action) { forcedMe = false; break; }
+    if (forcedMe && cur.state.turn === ME) forcedSpent = true;
     await step(action);
     return;   // step が再帰的に afterTurn を呼ぶ
   }
@@ -5759,6 +5799,7 @@ async function afterTurn() {
   }
   refreshHud();
   syncAssist();
+  if (chaosRules.tick) startTick();
   if (cur.state.winner !== null && !resultShown) {
     resultShown = true;
     fadeOutBgm();                                   // 決着したら BGM は引いて、勝ち・負けの音だけにする
