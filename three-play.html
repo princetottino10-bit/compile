@@ -4280,7 +4280,13 @@
   .nw-tabs button:focus-visible{outline:2px solid var(--gold);outline-offset:-2px;}
   .nw-list{flex:1;min-height:0;overflow-y:auto;margin:0 -18px;padding:0 18px 8px;border-top:1px solid rgba(255,255,255,.08);}
   .nw-item{border-bottom:1px solid rgba(255,255,255,.07);}
-  .nw-item summary{list-style:none;cursor:pointer;display:flex;flex-direction:column;gap:6px;padding:13px 22px 13px 0;position:relative;}
+  .nw-item summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px 12px;padding:13px 22px 13px 0;position:relative;}
+  .nw-meta,.nw-item summary b{grid-column:1;}
+  /* スクショ: 一覧では右に小さく、開いたら本文の上に大きく (開いている間は小さい方を隠す) */
+  .nw-thumb{grid-column:2;grid-row:1 / span 2;width:96px;height:54px;object-fit:cover;border:1px solid rgba(255,255,255,.12);background:#000;}
+  .nw-item[open] .nw-thumb{display:none;}
+  .nw-shot{display:block;width:min(100%,520px);height:auto;aspect-ratio:16/9;object-fit:cover;border:1px solid rgba(255,255,255,.12);background:#000;}
+  @media (max-width:420px){ .nw-thumb{width:72px;height:41px;} }
   .nw-item summary::-webkit-details-marker{display:none;}
   /* 開く・閉じるの印 (右端の ▸ が下を向く) */
   .nw-item summary::after{content:"▸";position:absolute;right:4px;top:50%;transform:translateY(-50%);color:var(--dim);transition:transform .15s;}
@@ -4781,7 +4787,7 @@
       "./js3d/motion.js": "./js3d/motion.js?v=71cd68f8ff",
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
       "./js3d/net.js": "./js3d/net.js?v=3134839bca",
-      "./js3d/news.js": "./js3d/news.js?v=bc71c7e563",
+      "./js3d/news.js": "./js3d/news.js?v=2638c85b14",
       "./js3d/notice.js": "./js3d/notice.js?v=029a81acaa",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=fee989c0b5",
       "./js3d/panel.js": "./js3d/panel.js?v=994ec047da",
@@ -4956,7 +4962,7 @@
   <link rel="modulepreload" href="js3d/backdrops.js?v=90faf9612d">
   <link rel="modulepreload" href="js3d/profile.js?v=704205fbfe">
   <link rel="modulepreload" href="js3d/gacha-ui.js?v=b5bf4956cc">
-  <link rel="modulepreload" href="js3d/news.js?v=bc71c7e563">
+  <link rel="modulepreload" href="js3d/news.js?v=2638c85b14">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/ShaderPass.js">
   <link rel="modulepreload" href="js3d/story-map.js?v=18e79132eb">
   <link rel="modulepreload" href="js3d/story-scenery.js?v=9fa267bcf9">

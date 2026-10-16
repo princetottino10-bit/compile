@@ -97,7 +97,10 @@
     .news{display:flex;flex-direction:column;background:var(--panel);clip-path:var(--cut);border-top:3px solid var(--violet)}
     .nw-item{border-bottom:1px solid rgba(255,255,255,.07)}
     .nw-item:last-child{border-bottom:0}
-    .nw-item summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 14px;align-items:baseline;padding:14px 40px 14px 18px;position:relative}
+    .nw-item summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 14px;align-items:center;padding:12px 40px 12px 18px;position:relative}
+    .nw-thumb{width:96px;height:54px;object-fit:cover;border:1px solid rgba(255,255,255,.12);background:#000}
+    .nw-item[open] .nw-thumb{display:none}
+    .nw-shot{display:block;width:min(100%,560px);height:auto;aspect-ratio:16/9;object-fit:cover;border:1px solid rgba(255,255,255,.12);background:#000;margin-bottom:4px}
     .nw-item summary::-webkit-details-marker{display:none}
     .nw-item summary::after{content:"▸";position:absolute;right:16px;top:50%;transform:translateY(-50%);color:var(--dim);transition:transform .15s}
     .nw-item[open] summary::after{transform:translateY(-50%) rotate(90deg)}
@@ -111,7 +114,7 @@
     .nw-body p{font-size:13px;color:rgba(241,237,248,.8)}
     .news-more{display:block;padding:12px 18px;font:700 13px/1.4 system-ui,sans-serif;text-decoration:none;color:var(--lav);border-top:1px solid rgba(255,255,255,.07)}
     .news-more:hover{color:#fff;background:rgba(255,79,163,.08)}
-    @media (max-width:560px){ .nw-item summary{grid-template-columns:1fr;padding-left:14px} }
+    @media (max-width:560px){ .nw-item summary{grid-template-columns:minmax(0,1fr) auto;padding-left:14px} .nw-meta,.nw-item summary b{grid-column:1} .nw-thumb{grid-column:2;grid-row:1 / span 2;width:72px;height:41px} }
     @media (prefers-reduced-motion:reduce){ .nw-item summary::after{transition:none} }
     footer{text-align:center;padding:28px 20px 40px;font:600 11px/1.8 var(--ui);letter-spacing:.08em;color:var(--dim)}
     footer a{color:var(--dim)}
