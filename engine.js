@@ -4441,7 +4441,9 @@ function smartPicks(st, req) {
         /* ORACLE: 決め打ちしない。自分を動かす・動かさない・ほかの札を動かすを、動かした後の盤面で比べる。
            自分を動かすと SPEED 3 が裏返って値が 3 → 2 になり、次の手番からの移動も失う。下の SPEED 0 を起こしても、
            0 と 3 を出し直して同じ札を行き来させるだけの空回りがあった (ユーザー 2026-10-15「無駄に使って裏に向ける」) */
-        if (self && !aiIsOracle(st, me)) return [self];
+        /* ORACLE 以外も、自分を動かすのは下の表向きの札 (SPEED 0 など) の中段を起こせるときだけ。
+           下に何も無いのに動かすと、ただ裏返って値 3 → 2 になり、移動も失う (2026-10-16、GATEKEEPER・つよいで確認) */
+        if (self && !aiIsOracle(st, me) && aiUncoversBelow(st, self)) return [self];
       }
       if (req.prompt === 'optional-shift' && req.context === AI_LOCK_COVER && aiLockKeepsCover(st, me)) return [];
       /* ロック特化: PSYCHIC 4 の「相手のカードを戻す」は使う (このカードが裏返って値は下がるが、相手の手を1つ遅らせる)。
@@ -4792,6 +4794,18 @@ function aiSpeedPairUncovers(st, side) {
     const below = st.cards[stack[stack.length - 2]];
     const eff = DEFS[below.def].eff;
     if (below.faceUp && below.def !== 'SPEED_1' && eff && eff.middle && Array.isArray(eff.middle.ops) && eff.middle.ops.length) return true;
+  }
+  return false;
+}
+
+/* uid (一番上) をどかすと、すぐ下の自分の表向きの札の中段がもう一度動くか */
+function aiUncoversBelow(st, uid) {
+  for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++) {
+    const stack = st.lines[l][s], i = stack.indexOf(uid);
+    if (i < 1 || i !== stack.length - 1) continue;
+    const below = st.cards[stack[i - 1]];
+    const eff = DEFS[below.def].eff;
+    return !!(below.faceUp && eff && eff.middle && Array.isArray(eff.middle.ops) && eff.middle.ops.length);
   }
   return false;
 }

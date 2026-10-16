@@ -994,8 +994,9 @@ test('AI: 手札を捨てるとき、コンボの相方がいる札 (LIFE 3 + LI
   }
 });
 
-test('AI specialist: SPEED 3 moves itself for its optional end effect', () => {
+test('AI specialist: SPEED 3 moves itself for its optional end effect (SPEED 0 の上なら、どいて SPEED 0 をもう一度起こす)', () => {
   const st = ng({ p0: ['DARKNESS', 'SPEED', 'HATE'] }).state;
+  place(st, 'SPEED_1', 0, 1, true);
   const speed3 = place(st, 'SPEED_4', 0, 1, true);
   const other = place(st, 'HATE_6', 0, 2, true);
   Engine.setAiSpecialist(true, 0);
