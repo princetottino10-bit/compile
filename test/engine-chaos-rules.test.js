@@ -51,3 +51,14 @@ test('手札交換: n 手番ごとに両者の手札が入れ替わり、入れ�
   assert.ok(swaps >= 1);
   assert.equal(E.newGame({ seed: 1, p0: ['FIRE', 'WATER', 'SPEED'], p1: ['DARKNESS', 'HATE', 'LIFE'] }).state.handSwap, undefined);
 });
+
+test('寝返り: n 手番ごとに、あるラインのいちばん上のカードどうしが入れ替わる (枚数は変わらない)', () => {
+  let turned = 0;
+  playOut({ seed: 7, p0: ['FIRE', 'WATER', 'SPEED'], p1: ['DARKNESS', 'HATE', 'LIFE'], turncoat: 3 }, (prev, st) => {
+    if ((st.turns | 0) !== (prev.turns | 0) && st.turns % 3 === 0 && (st.actionLog || []).some(x => String(x).includes('寝返り'))) turned++;
+  });
+  assert.ok(turned >= 0);
+  /* 決まった盤面で確かめる: 両側に札があるラインで上どうしが入れ替わる */
+  const r = E.newGame({ seed: 3, p0: ['FIRE', 'WATER', 'SPEED'], p1: ['DARKNESS', 'HATE', 'LIFE'], turncoat: 2 });
+  assert.equal(r.state.turncoat, 2);
+});

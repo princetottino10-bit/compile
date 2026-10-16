@@ -128,6 +128,7 @@ let selectedUid = null;
 /* カオス勝ち抜き戦の、遊び方を壊す異変 (目隠し・5秒ルール・天地逆転)。forcedMe: 5秒を過ぎて、自分の手を CPU がでたらめに打っている */
 let chaosRules = {};
 let forcedMe = false, forcedSpent = false;
+let swapSeen = 0;               // 手札交換・寝返りの知らせを出した手番 (同じ入れ替わりで2度出さない)
 let hoverUid = null;
 let ctrlMarker = null;
 let pads = [];                  // 着地パッド (line × side)
@@ -1391,7 +1392,7 @@ async function boot() {
       : tutorial
         ? Engine.newPuzzle(tutorial.lesson.spec, { seed: 1 })
         : Engine.newGame({ seed, p0, p1, first: firstPlayer, training: trainingMode, winCompiles,
-          ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods, winCompilesBySide: runOpts.winCompilesBySide, perks: runOpts.perks, startCompiled: runOpts.startCompiled, misere: runOpts.misere, handSwap: runOpts.handSwap } : {}),
+          ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods, winCompilesBySide: runOpts.winCompilesBySide, perks: runOpts.perks, startCompiled: runOpts.startCompiled, misere: runOpts.misere, handSwap: runOpts.handSwap, turncoat: runOpts.turncoat } : {}),
           ...(storyOpts || {}),
           ...(tagMates ? { tag: tagMates } : {}) });
   cur = res;
@@ -1411,6 +1412,9 @@ async function boot() {
       mpShown.mp = mpShown.dg = true;
       setTimeout(() => slam('SHORT MATCH', '1本先取 ・ 先にコンパイルした方の勝ち', 'mp'), 700);
     }
+    /* カオスの「負けるが勝ち」: SHORT MATCH の言い方とあべこべになるので、あとから上書きして知らせる */
+    if (cur.state.misere) setTimeout(() => slam('MISÈRE', '負けるが勝ち ・ 先にコンパイルし終えた方の負け', 'dg'), 2400);
+    swapSeen = cur.state.turns | 0;
   }
   if (!trainingMode && !puzzle && !tutorial && !demoMode && !replayMode) CW.battleStarted(storyNode ? 'story' : runMode ? runKind : tagMates ? 'tag' : quickGame ? 'quick' : 'cpu', p0, p1);
   if (!trainingMode && !puzzle && !tutorial && !demoMode && !replayMode) lastSetup = { p0: p0.slice(), p1: p1.slice(), mates: tagMates };
@@ -1424,7 +1428,7 @@ async function boot() {
   /* CPU 戦は棋譜を取る (決着したらリプレイとして残す) */
   /* タッグはリプレイに残さない (棋譜の形が 1 対 1 のため) */
   const gameInit = resumed ? resumed.rec.init : { seed, p0: p0.slice(), p1: p1.slice(), first: firstPlayer, winCompiles: winCompiles || null,
-    ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods, winCompilesBySide: runOpts.winCompilesBySide, perks: runOpts.perks, startCompiled: runOpts.startCompiled, misere: runOpts.misere, handSwap: runOpts.handSwap } : {}),
+    ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods, winCompilesBySide: runOpts.winCompilesBySide, perks: runOpts.perks, startCompiled: runOpts.startCompiled, misere: runOpts.misere, handSwap: runOpts.handSwap, turncoat: runOpts.turncoat } : {}),
     ...(storyOpts || {}) };
   const priorActions = resumed ? resumed.rec.actions : [];
   /* CPU どうしの観戦も残す (RECORD のリプレイの「観戦」の枠。?demo=1 の流しっぱなしは残さない) */
@@ -5799,6 +5803,15 @@ async function afterTurn() {
   }
   refreshHud();
   syncAssist();
+  /* 手札交換・寝返り: 手番の変わり目に起きたら大きく知らせる (同じ手番で2度出さない) */
+  const tn = cur.state.turns | 0;
+  if (tn !== swapSeen && cur.state.winner === null) {
+    const swapped = cur.state.handSwap && tn % cur.state.handSwap === 0;
+    const turned = cur.state.turncoat && tn % cur.state.turncoat === 0;
+    if (swapped || turned) swapSeen = tn;
+    if (swapped) slam('HAND SWAP', '手札がまるごと入れ替わった！', 'mp');
+    else if (turned) slam('TURNCOAT', 'いちばん上のカードが寝返った！', 'dg');
+  }
   if (chaosRules.tick) startTick();
   if (cur.state.winner !== null && !resultShown) {
     resultShown = true;

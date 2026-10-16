@@ -40,7 +40,8 @@ export const MUTATORS = [
   { id: 'flip', group: 'rule', who: 'rule', name: 'TOPSY-TURVY', label: '天地逆転', text: '画面が上下さかさまになる。勝てばクレジット +4' },
   /* 勝ち負けの決まり方を壊す (エンジンの newGame の misere・handSwap) */
   { id: 'misere', group: 'win', who: 'both', name: 'MISÈRE', label: '負けるが勝ち', text: '先にコンパイルし終えた側の負け。ラインを伸ばさず、相手に伸ばさせる' },
-  { id: 'handswap', who: 'both', name: 'HAND SWAP', label: '手札交換', text: '4 手番ごとに、あなたと相手の手札がまるごと入れ替わる' }
+  { id: 'handswap', who: 'both', name: 'HAND SWAP', label: '手札交換', text: '4 手番ごとに、あなたと相手の手札がまるごと入れ替わる' },
+  { id: 'turncoat', who: 'both', name: 'TURNCOAT', label: '寝返り', text: '3 手番ごとに、どこかのラインのいちばん上のカードどうしが、向こう側へ寝返る' }
 ];
 /* 画面側で効かせる異変 (エンジンには何も渡さない) */
 export const RULE_MUTATORS = ['blind', 'tick', 'flip'];
