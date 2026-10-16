@@ -79,6 +79,8 @@ export const STAR_CARDS = [
 /* Ω カード (2026-10-16): ORACLE が考えたカード。勝ち抜き戦の最終ボス「最強」(FIRE / WATER / SPEED) の山札にだけ入る (あなたは手に入れられない)。
    作り方: ORACLE 同士の対戦から拾った196盤面で、手番の側に候補を1枚足して表で出させ、学習モデルで勝つ見込みを読んだ
    (scripts/card_oracle.js)。効果を3つつないだ値4の候補のうち、元の手札の最善手より見込みを一番上げた2枚 (平均 +20.0pt / +19.1pt)。
+   XO_3〜8 (2026-10-16): ほかの6体のボスにも1枚ずつ。各ボスのデッキどうしの自己対戦から約100盤面を拾い、効果を2つつないだ値4の候補で
+   平均の上積みが一番大きかったもの (+14.5〜18.7pt)。プロトコルはボスのデッキのうち効果に合うもの。
    id は β と見分けるため XO_ (isStar に当たらない) */
 export const ORACLE_CARDS = [
   { id: 'XO_1', proto: 'WATER', value: 4, art: 3, types: ['delete', 'play'],
@@ -88,7 +90,31 @@ export const ORACLE_CARDS = [
   { id: 'XO_2', proto: 'SPEED', value: 4, art: 2, types: ['shift', 'play'],
     middle: 'カードを1枚移動させる。カードを1枚プレイする。あなたのデッキの一番上のカードを、他の各ラインに裏向きで1枚ずつプレイする。',
     ops: [{ op: 'shift' }, { op: 'play', source: 'hand' },
-      { op: 'forEachLine', lines: 'otherLines', ops: [{ op: 'play', source: 'topDeck', facing: 'down', dest: 'currentLine' }] }] }
+      { op: 'forEachLine', lines: 'otherLines', ops: [{ op: 'play', source: 'topDeck', facing: 'down', dest: 'currentLine' }] }] },
+  /* inferno のデッキで読んだ2つつなぎの1位 (+14.5pt) */
+  { id: 'XO_3', proto: 'WAR', value: 4, art: 5, types: ['play'],
+    middle: 'カードを1枚プレイする。あなたのデッキの一番上のカードを、他の各ラインに裏向きで1枚ずつプレイする。',
+    ops: [{ op: 'play', source: 'hand' }, { op: 'forEachLine', lines: 'otherLines', ops: [{ op: 'play', source: 'topDeck', facing: 'down', dest: 'currentLine' }] }] },
+  /* abyss のデッキで読んだ2つつなぎの1位 (+14.9pt) */
+  { id: 'XO_4', proto: 'DEATH', value: 4, art: 5, types: ['delete', 'play'],
+    middle: 'カードを1枚削除する。あなたのデッキの一番上のカードを、他の各ラインに裏向きで1枚ずつプレイする。',
+    ops: [{ op: 'delete' }, { op: 'forEachLine', lines: 'otherLines', ops: [{ op: 'play', source: 'topDeck', facing: 'down', dest: 'currentLine' }] }] },
+  /* clock のデッキで読んだ2つつなぎの1位 (+16.3pt) */
+  { id: 'XO_5', proto: 'TIME', value: 4, art: 5, types: ['delete', 'play'],
+    middle: 'カードを1枚削除する。カードを1枚プレイする。',
+    ops: [{ op: 'delete' }, { op: 'play', source: 'hand' }] },
+  /* mirror のデッキで読んだ2つつなぎの1位 (+16.2pt) */
+  { id: 'XO_6', proto: 'CHAOS', value: 4, art: 5, types: ['delete', 'play'],
+    middle: 'カードを1枚削除する。カードを1枚プレイする。',
+    ops: [{ op: 'delete' }, { op: 'play', source: 'hand' }] },
+  /* sanctuary のデッキで読んだ2つつなぎの1位 (+16.0pt) */
+  { id: 'XO_7', proto: 'LIFE', value: 4, art: 5, types: ['delete', 'play'],
+    middle: 'カードを1枚削除する。あなたのデッキの一番上のカードを、他の各ラインに裏向きで1枚ずつプレイする。',
+    ops: [{ op: 'delete' }, { op: 'forEachLine', lines: 'otherLines', ops: [{ op: 'play', source: 'topDeck', facing: 'down', dest: 'currentLine' }] }] },
+  /* glacier のデッキで読んだ2つつなぎの1位 (+18.7pt) */
+  { id: 'XO_8', proto: 'METAL', value: 4, art: 5, types: ['delete', 'play'],
+    middle: 'カードを1枚削除する。カードを1枚プレイする。',
+    ops: [{ op: 'delete' }, { op: 'play', source: 'hand' }] }
 ];
 const ORACLE = Object.fromEntries(ORACLE_CARDS.map(s => [s.id, s]));
 export const isOracleCard = (id) => !!ORACLE[baseOf(id)];

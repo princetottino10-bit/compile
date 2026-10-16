@@ -51,17 +51,17 @@ export const START_CREDITS = 4;
    HEAT 5 は「最強」 (いちばん強い CPU のデッキ) */
 export const BOSSES = [
   { id: 'inferno', name: '業火の王', title: '焼き尽くす者', deck: ['FIRE', 'HATE', 'WAR'], color: '#ff5a3c',
-    text: 'ボスのカードは全部 強化済み (値 +1)', rule: { upgradeAll: true } },
+    text: 'ボスのカードは全部 強化済み (値 +1)。山札に ORACLE が考えた Ω カードが1枚入る', rule: { upgradeAll: true, stars: ['XO_3'] } },
   { id: 'abyss', name: '深淵の主', title: '底なしの闇', deck: ['DARKNESS', 'DEATH', 'PLAGUE'], color: '#8a4dff',
-    text: 'ボスのはじめの手札は 7 枚', rule: { bossHand: 7 } },
+    text: 'ボスのはじめの手札は 7 枚。山札に ORACLE が考えた Ω カードが1枚入る', rule: { bossHand: 7, stars: ['XO_4'] } },
   { id: 'clock', name: '時計塔の番人', title: '刻を統べる者', deck: ['TIME', 'SPEED', 'CLARITY'], color: '#ffc85a',
-    text: 'ボスがいつも先攻で、はじめからコントロールを持つ', rule: { bossFirst: true, bossControl: true } },
+    text: 'ボスがいつも先攻で、はじめからコントロールを持つ。山札に ORACLE が考えた Ω カードが1枚入る', rule: { bossFirst: true, bossControl: true, stars: ['XO_5'] } },
   { id: 'mirror', name: '鏡の迷宮', title: '惑わす者', deck: ['MIRROR', 'CHAOS', 'LUCK'], color: '#7cf0ff',
-    text: 'あなたのはじめの手札は 4 枚', rule: { meHand: 4 } },
+    text: 'あなたのはじめの手札は 4 枚。山札に ORACLE が考えた Ω カードが1枚入る', rule: { meHand: 4, stars: ['XO_6'] } },
   { id: 'sanctuary', name: '聖域の守り手', title: '揺るがぬ者', deck: ['LIGHT', 'LIFE', 'PEACE'], color: '#fff2a8',
-    text: 'あなたは 3 本、ボスは 2 本コンパイルで勝ち', rule: { win: [3, 2] } },
+    text: 'あなたは 3 本、ボスは 2 本コンパイルで勝ち。山札に ORACLE が考えた Ω カードが1枚入る', rule: { win: [3, 2], stars: ['XO_7'] } },
   { id: 'glacier', name: '氷結の女帝', title: '凍てつく者', deck: ['ICE', 'WATER', 'METAL'], color: '#9fd8ff',
-    text: 'ボスの山札に β-WATER と、強化した β-WATER が入る', rule: { stars: ['X_WATER', 'X_WATER' + UP] } }
+    text: 'ボスの山札に β-WATER と強化した β-WATER、ORACLE が考えた Ω カードが1枚入る', rule: { stars: ['X_WATER', 'X_WATER' + UP, 'XO_8'] } }
 ];
 export const FINAL_BOSS = { id: 'strongest', name: 'GATEKEEPER', title: '頂に立つ者', deck: STRONGEST_AI.slice(), color: '#ff4fa3',
   text: 'いちばん強い CPU。ボスのカードは全部 強化済み、はじめの手札は 6 枚。山札に ORACLE が考えた Ω カードが2枚入る',
