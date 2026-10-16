@@ -3128,6 +3128,26 @@
   .rn-mcard + .rn-mcard button.rn-go{background:var(--violet);}
   .rn-mcard button.rn-go:hover,.rn-mcard button.rn-go:focus-visible{filter:brightness(1.15);outline:0;}
   @media (max-width:560px){ .rn-modes{grid-template-columns:1fr;} }
+  /* カオス勝ち抜き戦: 入口のカードは横いっぱい、虹色の縁 */
+  .rn-mcard.rn-chaoscard{grid-column:1 / -1;border-top-color:#ff4fa3;background:linear-gradient(120deg,rgba(255,79,163,.10),rgba(124,240,255,.08) 50%,rgba(255,216,106,.10));}
+  .rn-mcard.rn-chaoscard small{color:#7cf0ff;}
+  .rn-mcard.rn-chaoscard h3{background:linear-gradient(90deg,#ff4fa3,#ffd86a,#7cf0ff,#b98cff);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .rn-mcard.rn-chaoscard button.rn-go{background:linear-gradient(90deg,#ff4fa3,#b98cff);}
+  .rn-card.rn-chaos .rn-head span{background:linear-gradient(90deg,#ff4fa3,#ffd86a,#7cf0ff);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:900;}
+  .rn-mutators{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin:8px 0 10px;}
+  .rn-mutators > small{grid-column:1 / -1;font:800 10px/1 var(--font-ui);letter-spacing:.24em;color:#7cf0ff;}
+  .rn-mut{display:flex;flex-direction:column;gap:3px;padding:10px 12px;border:1px solid rgba(124,240,255,.45);background:rgba(124,240,255,.07);clip-path:var(--cut-s);animation:rnMutIn .45s cubic-bezier(.2,1.4,.4,1) both;animation-delay:calc(var(--i) * .18s);}
+  .rn-mut.me{border-color:rgba(255,216,106,.55);background:rgba(255,216,106,.08);}
+  .rn-mut.opp{border-color:rgba(255,79,109,.55);background:rgba(255,79,109,.08);}
+  .rn-mut b{font:900 15px/1.1 var(--font-hud,var(--font-ui));letter-spacing:.08em;color:#fff;}
+  .rn-mut em{font:800 11px/1 var(--font-ui);font-style:normal;color:#7cf0ff;}
+  .rn-mut.me em{color:#ffd86a;} .rn-mut.opp em{color:#ff8fa3;}
+  .rn-mut span{font:600 12px/1.5 "M PLUS 1",system-ui;color:var(--ink);}
+  @keyframes rnMutIn{from{opacity:0;transform:scale(.6) rotate(-4deg);}to{opacity:1;transform:none;}}
+  @media (prefers-reduced-motion:reduce){ .rn-mut{animation:none;} }
+  .rn-route.gamble{border-color:rgba(255,79,163,.6);background:linear-gradient(120deg,rgba(255,79,163,.12),rgba(124,240,255,.08));} .rn-route.gamble small{color:#ff4fa3;}
+  .rn-roulette.good{color:#ffd86a;font-weight:800;} .rn-roulette.bad{color:#ff8fa3;font-weight:800;}
+  .rn-c.omega{border-color:#ff4fa3 !important;}
   /* 勝ち抜き戦のローグライク要素: HEAT・パッチ・道・イベント */
   .rn-heat{display:flex;flex-wrap:wrap;align-items:center;gap:5px;}
   .rn-heat small{font:800 10px/1 var(--font-hud,var(--font-ui));letter-spacing:.2em;color:var(--gold);margin-right:4px;}
@@ -4811,10 +4831,11 @@
       "./js3d/rewards.js": "./js3d/rewards.js?v=ef3a012bdb",
       "./js3d/room.js": "./js3d/room.js?v=918fccde40",
       "./js3d/roomui.js": "./js3d/roomui.js?v=c33e7b53b2",
-      "./js3d/run-fx.js": "./js3d/run-fx.js?v=a380c76677",
+      "./js3d/run-chaos.js": "./js3d/run-chaos.js?v=457d05b3b2",
+      "./js3d/run-fx.js": "./js3d/run-fx.js?v=7951eb4326",
       "./js3d/run-score.js": "./js3d/run-score.js?v=8359a3008a",
-      "./js3d/run-ui.js": "./js3d/run-ui.js?v=7d9aad7f55",
-      "./js3d/run.js": "./js3d/run.js?v=6223d21e47",
+      "./js3d/run-ui.js": "./js3d/run-ui.js?v=129c227769",
+      "./js3d/run.js": "./js3d/run.js?v=ca8c632045",
       "./js3d/runcards.js": "./js3d/runcards.js?v=fad1e510e4",
       "./js3d/selectui.js": "./js3d/selectui.js?v=208abdaebc",
       "./js3d/settings.js": "./js3d/settings.js?v=0aa9440129",
@@ -4906,9 +4927,9 @@
   <link rel="modulepreload" href="js3d/cardlist-ov.js?v=47bc96bbb6">
   <link rel="modulepreload" href="js3d/opponent-select.js?v=fee989c0b5">
   <link rel="modulepreload" href="js3d/aidecks.js?v=1595eec022">
-  <link rel="modulepreload" href="js3d/run-ui.js?v=7d9aad7f55">
+  <link rel="modulepreload" href="js3d/run-ui.js?v=129c227769">
   <link rel="modulepreload" href="js3d/weekly-ui.js?v=97a2e533b4">
-  <link rel="modulepreload" href="js3d/run.js?v=6223d21e47">
+  <link rel="modulepreload" href="js3d/run.js?v=ca8c632045">
   <link rel="modulepreload" href="js3d/weekly.js?v=5605476b1c">
   <link rel="modulepreload" href="js3d/review.js?v=f2069b69f8">
   <link rel="modulepreload" href="js3d/roomui.js?v=c33e7b53b2">
@@ -4972,7 +4993,8 @@
   <link rel="modulepreload" href="js3d/story-scenery-mansion.js?v=c47d97ebb0">
   <link rel="modulepreload" href="vendor/jsm/loaders/GLTFLoader.js">
   <link rel="modulepreload" href="js3d/cos-rarity.js?v=55e65b53fa">
-  <link rel="modulepreload" href="js3d/run-fx.js?v=a380c76677">
+  <link rel="modulepreload" href="js3d/run-chaos.js?v=457d05b3b2">
+  <link rel="modulepreload" href="js3d/run-fx.js?v=7951eb4326">
   <link rel="modulepreload" href="js3d/prompts.js?v=513817485c">
   <link rel="modulepreload" href="js3d/icons.js?v=15bacde80c">
   <link rel="modulepreload" href="js3d/cardtext.js?v=4cf5529855">
@@ -4986,7 +5008,7 @@
   <link rel="modulepreload" href="vendor/jsm/utils/BufferGeometryUtils.js">
   <!-- modulepreload:end -->
   <link rel="stylesheet" href="js3d/playchoices.css?v=79a1ef3e30">
-  <link rel="stylesheet" href="js3d/run-fx.css?v=ed3eded16b">
+  <link rel="stylesheet" href="js3d/run-fx.css?v=f46298c0a6">
   <link rel="stylesheet" href="js3d/deus.css?v=3e6919eb01">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
   <script type="module" src="js3d/main.js?v=0e5d6c2c91"></script>

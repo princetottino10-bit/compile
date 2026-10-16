@@ -5,6 +5,7 @@
  *   画面を勝手に進めたり閉じたりはしない (見た目と音だけ)。動きを減らす設定では数え上げ・紙吹雪をやめる
  * ========================================================================= */
 import * as RUN from './run.js';
+import { mutatorInfo } from './run-chaos.js';
 import { sfx } from './audio.js';
 import { confetti, RAR_COLORS } from './gachafx.js';
 import { calm } from './prefs.js';
@@ -124,6 +125,11 @@ export function hudChips(run, lost, bonus, fresh) {
   const chips = [];
   /* 短縮マッチ (どちらも1本で勝ち) は、試合中ずっと見えるように */
   if (RUN.runWinCompiles(run) === 1) chips.push('<b class="rh-chip short" title="短縮マッチ: 先にコンパイルした方の勝ち">1本先取</b>');
+  /* カオスの異変は、試合中ずっと見えるように */
+  for (const id of RUN.mutatorsOf(run)) {
+    const m = mutatorInfo(id);
+    if (m) chips.push('<b class="rh-chip chaos" title="' + m.text.replace(/"/g, '&quot;') + '">' + m.name + '</b>');
+  }
   chips.push('<b class="rh-chip cr' + (fresh ? ' bump' : '') + '" title="いま勝てばもらえるクレジット (試合中スコアの分を含む)">WIN +' + RUN.creditGain(run, lost, bonus) + '</b>');
   /* ノーダメージで勝つとクレジット +1 (creditGain)。コンパイルされたら割れる */
   chips.push('<b class="rh-chip perfect' + (lost ? ' broken' : '') + '" title="コンパイルされずに勝つとクレジット +1">PERFECT</b>');
