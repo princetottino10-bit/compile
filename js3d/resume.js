@@ -30,6 +30,15 @@ export function truncateResume(n) {
   live.actions.length = Math.max(0, Math.min(live.actions.length, n | 0));
   save();
 }
+/* 決着して戦績・リプレイを書き終えた印。印を消すのは決着の演出と結果の画面 (ストーリー・勝ち抜き戦の進み具合) まで済んでから。
+   演出の途中で iPhone がページごと落としても、開き直すと同じ決着から結果の画面へ戻れる (前は印を先に消していて、タイトルへ戻され、
+   ストーリー・勝ち抜き戦・週替わりの勝ちが進み具合に入らなかった)。印のある段は二度数えない。
+   step: 'recorded' (戦績・リプレイ) / 'progressed' (デイリー・実績) */
+export function markResumeRecorded(step = 'recorded') {
+  if (!live) return;
+  live[step] = true;
+  save();
+}
 export const resumeLength = () => (live ? live.actions.length : 0);
 export const resumeActive = () => !!live;
 export function endResume() {

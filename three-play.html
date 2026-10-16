@@ -293,6 +293,12 @@
   body.ios .cc-kicker{text-shadow:none;}
   body.ios .cc-art{-webkit-mask-image:none;mask-image:none;}
   body.ios #flash{mix-blend-mode:normal;}
+  /* 決着のカットインも軽く。勝った瞬間は最後のコンパイルのすぐあとで、合成のメモリがいちばん残っている。
+     回る光線 (画面の約2倍の正方形の層)・グリッチの2枚の文字・大きなぼかしの影・絵の拡大をやめる */
+  body.ios .rc-rays,body.ios .rc-title::before,body.ios .rc-title::after{display:none;}
+  body.ios .rc-title{text-shadow:0 0 16px var(--accent);}
+  body.ios .rc-art{animation-name:rcArtFlat;}
+  @keyframes rcArtFlat{0%{opacity:0}10%{opacity:.95}86%{opacity:.9}100%{opacity:0}}
   /* コンパイルの演出の間だけ、すりガラスの効果を切る (3D の上で毎コマぼかし直すのが重い) */
   body.ios.compiling *{-webkit-backdrop-filter:none!important;backdrop-filter:none!important;}
 
@@ -4783,7 +4789,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=2b4dbc6066",
       "./js3d/logformat.js": "./js3d/logformat.js?v=e3548c74d1",
-      "./js3d/main.js": "./js3d/main.js?v=0e5d6c2c91",
+      "./js3d/main.js": "./js3d/main.js?v=429858a6fd",
       "./js3d/mobcards.js": "./js3d/mobcards.js?v=2a6bc79376",
       "./js3d/motion.js": "./js3d/motion.js?v=71cd68f8ff",
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
@@ -4806,7 +4812,7 @@
       "./js3d/replays-ui.js": "./js3d/replays-ui.js?v=c76f859c99",
       "./js3d/replays.js": "./js3d/replays.js?v=9a1564826d",
       "./js3d/replayshare.js": "./js3d/replayshare.js?v=dedb1ad773",
-      "./js3d/resume.js": "./js3d/resume.js?v=477cf75f6b",
+      "./js3d/resume.js": "./js3d/resume.js?v=6be1546ea7",
       "./js3d/review.js": "./js3d/review.js?v=f2069b69f8",
       "./js3d/rewards.js": "./js3d/rewards.js?v=ef3a012bdb",
       "./js3d/room.js": "./js3d/room.js?v=918fccde40",
@@ -4872,7 +4878,7 @@
   <link rel="modulepreload" href="js3d/crashwatch.js?v=8b4bdaa28f">
   <link rel="modulepreload" href="js3d/achievements.js?v=c596ffc129">
   <link rel="modulepreload" href="js3d/replays.js?v=9a1564826d">
-  <link rel="modulepreload" href="js3d/resume.js?v=477cf75f6b">
+  <link rel="modulepreload" href="js3d/resume.js?v=6be1546ea7">
   <link rel="modulepreload" href="js3d/replayshare.js?v=dedb1ad773">
   <link rel="modulepreload" href="js3d/turning.js?v=9c7f79654e">
   <link rel="modulepreload" href="js3d/achievements-ui.js?v=37fe12aa73">
@@ -4989,6 +4995,6 @@
   <link rel="stylesheet" href="js3d/run-fx.css?v=ed3eded16b">
   <link rel="stylesheet" href="js3d/deus.css?v=3e6919eb01">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=0e5d6c2c91"></script>
+  <script type="module" src="js3d/main.js?v=429858a6fd"></script>
 </body>
 </html>
