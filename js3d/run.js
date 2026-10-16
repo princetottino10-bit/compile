@@ -76,6 +76,7 @@ function chooseBoss(heat, rnd, chaos) {
   if (chaos) { const all = BOSSES.concat(FINAL_BOSS); return all[Math.floor(rnd() * all.length)].id; }
   return heat >= 5 ? FINAL_BOSS.id : BOSSES[Math.floor(rnd() * BOSSES.length)].id;
 }
+export const MIMIC_RATE = 0.25;
 export const isChaos = (run) => !!(run && run.mode === 'chaos');
 
 /* 地図のマス */
@@ -211,6 +212,48 @@ export const EVENTS = {
     options: [
       { label: 'ルーレットを回す', apply: (r, c) => spinRoulette(r, c) },
       { label: 'もう一度回す (ライフ −1。2回分まとめて起きる)', need: (r) => r.life > 1, apply: (r, c) => spinRoulette(spinRoulette({ ...r, life: r.life - 1 }, c), c, true) },
+      { label: '立ち去る', apply: (r) => r }
+    ]
+  },
+  copier: {
+    chaos: true, art: 'lab',
+    title: 'コピー機', text: '「カードを入れると増えます」と書かれた古いコピー機。',
+    options: [
+      { label: 'カードを1枚選んで、写しを山札に足す', need: (r) => (r.copies || []).length < MAX_COPIES, apply: (r) => ({ ...r, phase: 'copy', after: 'map' }) },
+      { label: '壊れるまで連打する (ランダムに3枚コピー。ライフ −1)', need: (r) => r.life > 1 && (r.copies || []).length < MAX_COPIES,
+        apply: (r, c) => {
+          const pool = r.deck.flatMap(n => [1, 2, 3, 4, 5, 6].map(k => n + '_' + k)).filter(id => !(r.removed || []).includes(id));
+          const got = sample(pool, Math.min(3, MAX_COPIES - (r.copies || []).length), c.rnd);
+          return { ...r, life: r.life - 1, copies: (r.copies || []).concat(got), lastRoulette: [{ good: true, text: 'コピー機が火を吹いた！ カードの写しが ' + got.length + ' 枚増えた (デッキを見ると ×2 の印)' }] };
+        } },
+      { label: '立ち去る', apply: (r) => r }
+    ]
+  },
+  casino: {
+    chaos: true, art: 'meteor',
+    title: '地下カジノ', text: 'ネオンの奥で、ディーラーがコインを弾いている。「賭けるかい？」',
+    options: [
+      { label: 'クレジットを半分賭ける (半々で 2 倍)', need: (r) => (r.credits | 0) >= 2, apply: (r, c) => bet(r, c, Math.floor((r.credits | 0) / 2), 0.5, 2) },
+      { label: '全部賭ける (4 割で 3 倍)', need: (r) => (r.credits | 0) >= 1, apply: (r, c) => bet(r, c, r.credits | 0, 0.4, 3) },
+      { label: 'ライフを賭ける (半々で最大ライフ +2、外れたらライフ −2)', need: (r) => r.life > 2,
+        apply: (r, c) => (c.rnd() < 0.5
+          ? { ...r, maxLife: r.maxLife + 2, life: r.life + 2, lastRoulette: [{ good: true, text: '当たり！ 最大ライフ +2' }] }
+          : { ...r, life: r.life - 2, lastRoulette: [{ good: false, text: '外れ… ライフ −2' }] }) },
+      { label: '立ち去る', apply: (r) => r }
+    ]
+  },
+  merchant: {
+    chaos: true, art: 'shady',
+    title: '闇の商人', text: 'フードの男が、ささやく。「なんでも買うし、なんでも売るよ」',
+    options: [
+      { label: '最大ライフ −2 を売る (クレジット +20)', need: (r) => r.maxLife > 4,
+        apply: (r) => ({ ...r, maxLife: r.maxLife - 2, life: Math.min(r.life, r.maxLife - 2), credits: (r.credits | 0) + 20 }) },
+      { label: 'クレジット 10 で、正体不明のパッチを買う (LEGENDARY もある)', need: (r) => (r.credits | 0) >= 10,
+        apply: (r, c) => { const n = gainRandomPatch({ ...r, credits: r.credits - 10 }, c.rnd, true); const got = n.patches.find(id => !r.patches.includes(id));
+          return { ...n, lastRoulette: [{ good: true, text: got ? 'パッチ ' + PATCH[got].name + ' を手に入れた' : '何も入っていなかった…' }] }; } },
+      { label: 'パッチを1つ売る (どれかはランダム。クレジット +12)', need: (r) => (r.patches || []).length > 0,
+        apply: (r, c) => { const out = pickOne(r.patches, c.rnd);
+          return { ...r, patches: r.patches.filter(id => id !== out), credits: (r.credits | 0) + 12, lastRoulette: [{ good: false, text: PATCH[out].name + ' を売った (+12)' }] }; } },
       { label: '立ち去る', apply: (r) => r }
     ]
   },
@@ -477,7 +520,8 @@ export function protoOfCard(id) {
 /* デッキを変えたら、外したプロトコルのカードの除去・強化・★ は取り消す */
 function withDeck(run, deck) {
   const keep = (id) => deck.includes(protoOfCard(id));
-  return { ...run, deck, removed: (run.removed || []).filter(keep), upgrades: (run.upgrades || []).filter(keep), added: (run.added || []).filter(keep) };
+  return { ...run, deck, removed: (run.removed || []).filter(keep), upgrades: (run.upgrades || []).filter(keep), added: (run.added || []).filter(keep),
+    ...(run.copies ? { copies: run.copies.filter(keep) } : {}) };
 }
 const pickOne = (list, rnd) => list[Math.floor(rnd() * list.length)];
 
@@ -624,7 +668,7 @@ export function chooseNode(run, id, names, rnd = Math.random) {
   if (run.phase !== 'map' || !reachable(run).includes(id)) return run;
   const node = nodeById(run, id);
   const moved = { ...run, pos: id, visited: (run.visited || []).concat(id), swapped: null, lastPull: null, lastSaved: false,
-    cursedWin: false, removedNow: null, upgradedNow: null, gotStar: null, lastGain: 0, lastRoulette: null, gifted: null, gotOmega: null };
+    cursedWin: false, removedNow: null, upgradedNow: null, gotStar: null, lastGain: 0, lastRoulette: null, gifted: null, gotOmega: null, copiedNow: null, mimic: false };
   switch (node.type) {
     case 'battle': case 'elite': case 'boss': return prepareBattle(moved, names, rnd, node.type === 'elite' ? 'elite' : 'normal');
     case 'event': {
@@ -634,7 +678,10 @@ export function chooseNode(run, id, names, rnd = Math.random) {
     }
     case 'rest': return { ...moved, phase: 'rest' };
     case 'shop': return { ...moved, phase: 'shop', shop: makeShop(moved, rnd) };
-    case 'treasure': return { ...moved, phase: 'patch', patchOffers: patchOffers(moved, rnd), after: 'map' };
+    case 'treasure':
+      /* カオス: 宝箱の 1/4 はミミック (精鋭と同じ強さで、異変つき。勝てばパッチ) */
+      if (isChaos(moved) && rnd() < MIMIC_RATE) return { ...prepareBattle(moved, names, rnd, 'elite'), mimic: true };
+      return { ...moved, phase: 'patch', patchOffers: patchOffers(moved, rnd), after: 'map' };
     default: return run;
   }
 }
@@ -646,7 +693,7 @@ export function resolveEvent(run, index, names, rnd = Math.random) {
   const opt = ev && ev.options[index];
   if (!opt || (opt.need && !opt.need(run))) return run;
   const next = opt.apply({ ...run, eventDone: { id: run.event, choice: index } }, { names, rnd });
-  if (next.phase === 'patch' || next.phase === 'remove' || next.phase === 'upgrade') return { ...next, event: null };
+  if (next.phase === 'patch' || next.phase === 'remove' || next.phase === 'upgrade' || next.phase === 'copy') return { ...next, event: null };
   if (next.fight) return prepareBattle({ ...next, fight: null, event: null }, names, rnd, next.fight);
   return { ...next, event: null, phase: 'map' };
 }
@@ -733,6 +780,19 @@ export function leaveShop(run) {
   return run.phase === 'shop' ? { ...run, phase: 'map' } : run;
 }
 
+/* ---------- カオスのコピー (同じカードを山札にもう1枚) ---------- */
+export const MAX_COPIES = 4;
+export function copyCard(run, defId) {
+  if (run.phase !== 'copy' || (run.copies || []).length >= MAX_COPIES) return run;
+  if (!run.deck.includes(protoOfCard(defId)) || (run.removed || []).includes(defId) || isOracleCard(defId)) return run;
+  return { ...run, copies: (run.copies || []).concat(defId), copiedNow: defId, phase: 'map' };
+}
+export const cancelCopy = (run) => (run.phase === 'copy' ? { ...run, phase: 'map' } : run);
+function bet(run, c, stake, p, mul) {
+  if (c.rnd() < p) return { ...run, credits: (run.credits | 0) - stake + stake * mul, lastRoulette: [{ good: true, text: '当たり！ ' + stake + ' が ' + stake * mul + ' になった' }] };
+  return { ...run, credits: (run.credits | 0) - stake, lastRoulette: [{ good: false, text: '外れ… ' + stake + ' クレジットが消えた' }] };
+}
+
 /* ---------- 戦闘 ---------- */
 /* いまのマスの相手を決めて、戦う前の状態にする。
    route: normal / elite (強い。勝つとパッチ) / alarm (保管庫の警報。1段強いだけ) / cursed (呪い) */
@@ -757,6 +817,7 @@ export function prepareBattle(run, names, rnd = Math.random, route = 'normal') {
     opp.chaos = rollMutators(mutatorCount(node.row | 0, kind), rnd, { boss: !!opp.boss });
     if (opp.chaos.includes('mirror')) opp.deck = run.deck.slice();
     if (opp.chaos.includes('giant')) { opp.deck = STRONGEST_AI.slice(); opp.level = 3; }
+    if (opp.chaos.includes('baby')) opp.level = 0;
   }
   return { ...run, phase: 'battle', opp, offers: [], route, event: null };
 }
@@ -791,6 +852,7 @@ export function creditGain(run, compiles, bonus = 0) {
   if (setLevel(run, 'GREED') >= 1) gain += 2;
   if (setLevel(run, 'TEMPO') >= 1 && (run.route === 'elite' || run.route === 'cursed')) gain += 3;
   if (mut(run, 'jackpot')) gain += 10;
+  if (mut(run, 'marathon')) gain += 6;
   if (hasPatch(run, 'midas')) gain *= 2;
   if (hasPatch(run, 'allin')) gain *= 3;
   if (mut(run, 'giant')) gain *= 3;
@@ -909,7 +971,9 @@ export function battleOpts(run, me) {
   const ups = run.upgrades || [];
   const added = run.added || [];
   const deckMods = [{}, {}];
-  deckMods[me] = { swap: Object.fromEntries(ups.filter(id => !isStar(id)).map(id => [id, id + UP])), add: added.map(id => (ups.includes(id) ? id + UP : id)) };
+  /* カオスのコピー: 強化していれば ＋ 版の写し */
+  const copies = (run.copies || []).map(id => (ups.includes(id) ? id + UP : id));
+  deckMods[me] = { swap: Object.fromEntries(ups.filter(id => !isStar(id)).map(id => [id, id + UP])), add: added.map(id => (ups.includes(id) ? id + UP : id)).concat(copies) };
   if (boss && (boss.upgradeAll || boss.stars)) {
     const swap = {};
     if (boss.upgradeAll) for (const n of run.opp.deck) for (let k = 1; k <= 6; k++) swap[n + '_' + k] = n + '_' + k + UP;   // 値 6 は ＋ が無いのでそのまま (engine)
@@ -941,7 +1005,7 @@ export function battleOpts(run, me) {
     startCompiled,
     handSize: hand,
     ...(exclude[me].length ? { exclude } : {}),
-    ...(ups.length || added.length || deckMods[other].swap || deckMods[other].add ? { deckMods } : {}),
+    ...(ups.length || added.length || copies.length || deckMods[other].swap || deckMods[other].add ? { deckMods } : {}),
     winCompilesBySide: win,
     ...(perks[me] ? { perks } : {}),
     ...(bossFirst ? { first: other } : hasPatch(run, 'initiative') || tempo ? { first: me } : {}),
@@ -950,6 +1014,12 @@ export function battleOpts(run, me) {
   return mutatorsOf(run).length ? applyMutators(run, out, me) : out;
 }
 
+/* 同じ試合なら同じ結果になる乱数 (読み直しても山札の足し方が変わらないように) */
+function seeded(run, salt) {
+  let h = 2166136261 ^ (salt | 0);
+  for (const ch of String(run.startedAt) + '|' + run.pos + '|' + (run.history || []).length) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+  return () => { h = Math.imul(h ^ (h >>> 15), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); h ^= h >>> 16; return (h >>> 0) / 4294967296; };
+}
 /* カオスの異変を、試合のはじめ方 (battleOpts の結果) にかける。異変はパッチ・ボスのルールより強い */
 function applyMutators(run, o, me) {
   const other = 1 - me;
@@ -975,6 +1045,17 @@ function applyMutators(run, o, me) {
         const extra = decks[p].map(n => starOf(n)).filter(Boolean).map(x => x.id)
           .concat(ORACLE_CARDS.filter(x => decks[p].includes(x.proto)).map(x => x.id));
         mods[p].add = mods[p].add.concat(extra.filter(id2 => !mods[p].add.includes(id2) && !mods[p].add.includes(id2 + UP)));
+      }
+    }
+    if (id === 'baby') { out.handSize[me] = 2; out.handSize[other] = 7; }
+    if (id === 'marathon') { out.startCompiled = [0, 0]; out.winCompilesBySide = [3, 3]; out.winCompiles = 3; }
+    if (id === 'twin') {
+      /* 6 枚 x 2 プロトコルぶん (engine は足すカードを 12 枚まで)。強化していれば ＋ 版で */
+      for (const p of [0, 1]) {
+        const ups = p === me && !mut(run, 'swap') ? (run.upgrades || []) : [];
+        const extra = sample(decks[p].flatMap(n => [1, 2, 3, 4, 5, 6].map(k => n + '_' + k)), 12, seeded(run, p))
+          .map(id2 => (mods[p].swap[id2] || (ups.includes(id2) ? id2 + UP : id2)));
+        mods[p].add = mods[p].add.concat(extra);
       }
     }
     if (id === 'sudden') {
@@ -1036,7 +1117,7 @@ function spinRoulette(run, c, again = false) {
   } else if (kind === 'hurt') next = { ...run, life: Math.max(1, run.life - 3) };
   else if (kind === 'broke') next = { ...run, credits: 0 };
   const prevText = again && run.lastRoulette ? run.lastRoulette.concat() : [];
-  return { ...next, lastRoulette: prevText.concat({ kind, text }) };
+  return { ...next, lastRoulette: prevText.concat({ kind, text, good: kind !== 'hurt' && kind !== 'broke' }) };
 }
 export const spinRouletteFor = (run, rnd = Math.random, names = []) => spinRoulette(run, { rnd, names });
 export const gainOmegaFor = (run, rnd = Math.random) => gainOmega(run, { rnd });

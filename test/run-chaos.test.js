@@ -142,3 +142,42 @@ test('カオスのイベントはふつうの勝ち抜き戦には出ない', as
     assert.ok(!R.EVENTS[e.event].chaos);
   }
 });
+
+test('カオス: 異変「長期戦」「二重の山札」「赤ちゃん」', async () => {
+  const { R, run } = await chaosOnMap();
+  const b = R.chooseNode(run, R.reachable(run)[0], NAMES, seq());
+  const withMut = (ids) => ({ ...b, opp: { ...b.opp, deck: ['DEATH', 'TIME', 'WAR'], chaos: ids } });
+  const m = R.battleOpts(withMut(['marathon']), 0);
+  assert.deepEqual(m.startCompiled, [0, 0]);
+  assert.equal(m.winCompiles, 3);
+  const t1 = R.battleOpts(withMut(['twin']), 0), t2 = R.battleOpts(withMut(['twin']), 0);
+  assert.equal(t1.deckMods[1].add.length, 12);
+  assert.deepEqual(t1.deckMods, t2.deckMods);                 // 同じ試合なら同じ写し (読み直しても変わらない)
+  assert.ok(t1.deckMods[1].add.every(id => /^(DEATH|TIME|WAR)_\d$/.test(id)));
+  assert.deepEqual(R.battleOpts(withMut(['baby']), 0).handSize, [2, 7]);
+});
+
+test('カオス: コピー機で写しが山札に入る。プロトコルを入れ替えると写しも消える', async () => {
+  const { R, run } = await chaosOnMap();
+  const id = run.deck[0] + '_3';
+  const c = R.copyCard({ ...run, phase: 'copy' }, id);
+  assert.deepEqual(c.copies, [id]);
+  assert.equal(c.phase, 'map');
+  const b = R.chooseNode(c, R.reachable(c)[0], NAMES, seq());
+  assert.ok(R.battleOpts({ ...b, opp: { ...b.opp, chaos: [] } }, 0).deckMods[0].add.includes(id));
+  const up = R.battleOpts({ ...b, upgrades: [id], opp: { ...b.opp, chaos: [] } }, 0);
+  assert.ok(up.deckMods[0].add.includes(id + '_UP'));
+  const sw = R.applyReward({ ...c, phase: 'reward', offers: ['DEATH'] }, { type: 'swap', add: 'DEATH', remove: c.deck[0] }, NAMES, seq());
+  assert.deepEqual(sw.copies, []);
+});
+
+test('カオス: カジノは当たれば増え、外れれば減る', async () => {
+  const { R, run } = await chaosOnMap();
+  const ev = R.EVENTS.casino;
+  const r0 = { ...run, credits: 10, phase: 'event', event: 'casino' };
+  const win = R.resolveEvent(r0, 0, NAMES, () => 0.1);
+  assert.equal(win.credits, 15);
+  const lose = R.resolveEvent(r0, 1, NAMES, () => 0.9);
+  assert.equal(lose.credits, 0);
+  assert.ok(ev.chaos);
+});

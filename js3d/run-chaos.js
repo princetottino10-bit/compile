@@ -28,7 +28,10 @@ export const MUTATORS = [
   { id: 'swap', group: 'opp', who: 'opp', name: 'BODY SWAP', label: '入れ替わり', text: 'この試合だけ、あなたと相手のデッキが入れ替わる (強化・β は相手のデッキには付かない)' },
   { id: 'giant', group: 'opp', who: 'opp', name: 'GIANT KILLING', label: '巨人狩り', text: '相手がいちばん強い CPU。勝てばクレジット 3 倍' },
   { id: 'jackpot', group: 'stake', who: 'me', name: 'JACKPOT', label: '一攫千金', text: '勝てばクレジット +10。負けるとライフがさらに −2' },
-  { id: 'vampire', group: 'stake', who: 'me', name: 'VAMPIRE', label: '吸血', text: '勝てばライフ +2' }
+  { id: 'vampire', group: 'stake', who: 'me', name: 'VAMPIRE', label: '吸血', text: '勝てばライフ +2' },
+  { id: 'marathon', group: 'win', who: 'both', name: 'MARATHON', label: '長期戦', text: 'どちらも、コンパイル済みなしの 3 本勝負 (ルールどおりの長い試合)。勝てばクレジット +6' },
+  { id: 'twin', who: 'both', name: 'DOUBLE DECK', label: '二重の山札', text: 'どちらの山札にも、自分のカードの写しが最大 12 枚混ざる (山札がぶ厚くなる)' },
+  { id: 'baby', group: 'opp', who: 'opp', name: 'BABY MODE', label: '赤ちゃん', text: '相手は「かんたん」になるが、あなたの手札は 2 枚、相手は 7 枚' }
 ];
 const MUT = Object.fromEntries(MUTATORS.map(m => [m.id, m]));
 export const mutatorInfo = (id) => MUT[id] || null;

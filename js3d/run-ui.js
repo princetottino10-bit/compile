@@ -161,10 +161,11 @@ function deckCards(run, byName, pick) {
   const cell = (id, name, value, text, gone, star) => {
     const up = ups.has(id);
     const v = up ? value + 1 : value;
-    const inner = '<b>' + (star === 'omega' ? 'Ω-' : star ? 'β-' : '') + esc(name) + ' ' + v + (up ? '<em class="rn-up">＋</em>' : '') + '</b>' +
+    const nCopy = (run.copies || []).filter(x => x === id).length;
+    const inner = '<b>' + (star === 'omega' ? 'Ω-' : star ? 'β-' : '') + esc(name) + ' ' + v + (up ? '<em class="rn-up">＋</em>' : '') + (nCopy ? '<em class="rn-copyn">×' + (nCopy + 1) + '</em>' : '') + '</b>' +
       '<span>' + esc(text.length > 38 ? text.slice(0, 37) + '…' : text) + '</span>';
-    const can = pick === 'remove' ? !gone && !star : pick === 'upgrade' ? !gone && !up && value < MAX_VALUE && star !== 'omega' : false;
-    const attr = pick === 'remove' ? 'data-rm' : 'data-up';
+    const can = pick === 'remove' || pick === 'copy' ? !gone && !star : pick === 'upgrade' ? !gone && !up && value < MAX_VALUE && star !== 'omega' : false;
+    const attr = pick === 'remove' ? 'data-rm' : pick === 'copy' ? 'data-copy' : 'data-up';
     const cls = 'rn-c' + (gone ? ' gone' : '') + (up ? ' up' : '') + (star ? ' star' : '') + (star === 'omega' ? ' omega' : '');
     return can
       ? '<button type="button" class="' + cls + '" ' + attr + '="' + esc(id) + '" title="' + esc(text) + '">' + inner + (pick === 'upgrade' ? '<i class="rn-upto">→ ' + (value + 1) + '</i>' : '') + '</button>'
@@ -215,8 +216,9 @@ export function openRun(protocols, cardsOf, opts) {
     };
     const starDesc = (id) => { const x = STAR_CARDS.find(c => c.id === id) || ORACLE_CARDS.find(c => c.id === id); return x ? starText(x, byName[x.proto]) : ''; };
     /* カオス: ルーレットの結果・Ω・入れ替わりのお知らせ (地図と報酬の画面に) */
-    const chaosNotes = () => (run.lastRoulette || []).map(x => '<p class="rn-note rn-roulette ' + (x.kind === 'hurt' || x.kind === 'broke' ? 'bad' : 'good') + '">🎰 ' + esc(x.text) + '</p>').join('') +
+    const chaosNotes = () => (run.lastRoulette || []).map(x => '<p class="rn-note rn-roulette ' + (x.good === false ? 'bad' : 'good') + '">🎰 ' + esc(x.text) + '</p>').join('') +
       (run.gotOmega ? '<p class="rn-note rn-gain">Ω カード ' + esc(starLabel(run.gotOmega)) + ' をデッキに入れた — ' + esc(starDesc(run.gotOmega)) + '</p>' : '') +
+      (run.copiedNow ? '<p class="rn-note rn-gain">' + esc(cardLabel(run.copiedNow)) + ' の写しを山札に足した</p>' : '') +
       (run.gotOmega && run.swapped ? '<p class="rn-note">Ω に合わせて <b>' + esc(run.swapped.out) + '</b> が <b>' + esc(run.swapped.add) + '</b> に入れ替わった</p>' : '');
     /* カード一覧は、いま候補に出ているものと自分のデッキをタブで切り替えられるように */
     const info = (name) => {
@@ -344,6 +346,11 @@ export function openRun(protocols, cardsOf, opts) {
             '<p class="rn-note">選んだカードは、この勝ち抜き戦のあいだ値が 1 大きくなります (効果は同じ)。値 ' + MAX_VALUE + ' のカードは強化できません。</p>' +
             deckCards(run, byName, 'upgrade') +
             '<div class="rn-btns"><button type="button" data-act="unupgrade">やめる' + (run.after === 'shop' ? ' (代金は戻ります)' : run.after === 'reward' ? ' (報酬を選び直す)' : '') + '</button></div>';
+        case 'copy':
+          return '<h2>コピーするカードを選ぶ <small>写し ' + (run.copies || []).length + ' / ' + RUN.MAX_COPIES + '</small></h2>' +
+            '<p class="rn-note">選んだカードの写しが、この勝ち抜き戦のあいだ山札に1枚増えます (強化すると写しも強化されます)。</p>' +
+            deckCards(run, byName, 'copy') +
+            '<div class="rn-btns"><button type="button" data-act="uncopy">やめる</button></div>';
         case 'remove':
           return '<h2>外すカードを選ぶ <small>除去 ' + (run.removed || []).length + ' / ' + RUN.MAX_REMOVED + '</small></h2>' +
             '<p class="rn-note">外したカードは、この勝ち抜き戦のあいだ山札に入りません (プロトコルを入れ替えると戻ります)。</p>' +
@@ -429,7 +436,8 @@ export function openRun(protocols, cardsOf, opts) {
           const last = run.history[run.history.length - 1];
           const retry = last && last.row === (node ? node.row : -1) && !last.win;
           const kind = run.opp.boss ? 'BOSS' : run.opp.elite ? '精鋭' : '戦闘';
-          return (run.opp.boss ? '<div class="rn-bossban" data-text="FINAL BOSS" aria-hidden="true">FINAL BOSS</div>' + bossCard({ boss: run.opp.bossId || run.boss }, byName, true) : '') +
+          return (run.mimic ? '<div class="rn-bossban rn-mimic" data-text="MIMIC!" aria-hidden="true">MIMIC!</div><p class="rn-warn">宝箱だと思ったらミミックだった！ 勝てばパッチを1つ選べる</p>' : '') +
+            (run.opp.boss ? '<div class="rn-bossban" data-text="FINAL BOSS" aria-hidden="true">FINAL BOSS</div>' + bossCard({ boss: run.opp.bossId || run.boss }, byName, true) : '') +
             '<h2>' + (run.opp.boss ? '♛' : run.opp.elite ? '☠' : '⚔') + ' ' + kind + ' <small>' + (rowNow(run) + 1) + ' / ' + RUN.MAP_ROWS + ' 段</small></h2>' +
             bonusList(run) + mutatorBlock(run) +
             (run.route === 'cursed' ? '<p class="rn-cursed">CURSED — この試合は 自分の手札 4 枚・相手 7 枚。勝てば RARE 以上のパッチを3つから選べる</p>' : '') +
@@ -485,6 +493,7 @@ export function openRun(protocols, cardsOf, opts) {
       if (t.dataset.card !== undefined) { const i = +t.dataset.card; showDeck = false; pressThen(t, () => set(RUN.chooseCardReward(run, i))); return; }
       if (t.dataset.buy) { const id = t.dataset.buy; pressThen(t, () => set(RUN.buyPatch(run, id))); return; }
       if (t.dataset.rm) { set(RUN.removeCard(run, t.dataset.rm)); return; }
+      if (t.dataset.copy) { set(RUN.copyCard(run, t.dataset.copy)); return; }
       if (t.dataset.up) { set(RUN.upgradeCard(run, t.dataset.up)); return; }
       if (t.dataset.event) { set(RUN.resolveEvent(run, +t.dataset.event, names)); return; }
       if (t.dataset.pick) { const n = t.dataset.pick; pressThen(t, () => set(RUN.draftPick(run, n, names))); return; }
@@ -505,6 +514,7 @@ export function openRun(protocols, cardsOf, opts) {
         case 'buyUpgrade': set(RUN.buyUpgrade(run)); break;
         case 'buyStar': set(RUN.buyStar(run)); break;
         case 'unremove': set(RUN.cancelRemove(run)); break;
+        case 'uncopy': set(RUN.cancelCopy(run)); break;
         case 'buyRemove': set(RUN.buyRemove(run)); break;
         case 'buyHeal': set(RUN.buyHeal(run)); break;
         case 'leave': set(RUN.leaveShop(run)); break;
