@@ -135,3 +135,32 @@ test('ヒーロー融合: 自分がコンパイルすると FIRE 1・FIRE 3 が�
   assert.equal(f.hero, 'HERO_PHOENIX');
   assert.equal(f.p, 0);
 });
+
+test('ヒーロー融合: 表向きのヒーローと LIGHT がそろうと、手番の終わりにレインボーネオス (4500) になり、次の攻撃で勝つ', () => {
+  E.setTrace(false); E.setAiLevel(0);
+  const st = JSON.parse(JSON.stringify(E.newGame({ seed: 4, p0: ['LIGHT', 'WATER', 'SPEED'], p1: ['DARKNESS', 'HATE', 'LIFE'], heroFusion: true }).state));
+  const take = (uid) => {
+    for (const p of st.players) for (const k of ['deck', 'hand', 'trash']) { const i = p[k].indexOf(uid); if (i >= 0) p[k].splice(i, 1); }
+  };
+  st.cards['p0:HERO_WINGMAN'] = { uid: 'p0:HERO_WINGMAN', def: 'HERO_WINGMAN', owner: 0, faceUp: true, zone: 'field', knownTo: 3 };
+  st.lines[1][0].push('p0:HERO_WINGMAN');
+  take('p0:LIGHT_2'); st.lines[0][0].push('p0:LIGHT_2'); Object.assign(st.cards['p0:LIGHT_2'], { zone: 'field', faceUp: true, knownTo: 3 });
+  const oppTop = st.players[1].deck[0];
+  take(oppTop); st.lines[2][1].push(oppTop); Object.assign(st.cards[oppTop], { zone: 'field', faceUp: false, knownTo: 2 });
+  /* 相手は手札も山札も無く、何もできない (レインボーネオスの攻撃までを確かめる) */
+  for (const u of st.players[1].hand.concat(st.players[1].deck)) Object.assign(st.cards[u], { zone: 'trash1', faceUp: true });
+  st.players[1].trash.push(...st.players[1].hand.splice(0), ...st.players[1].deck.splice(0));
+  /* 裏向きで1枚出して手番を終える (効果は起きない) */
+  let res = E.apply(st, { type: 'play', card: st.players[0].hand[0], line: 2, faceUp: false });
+  assert.equal(res.error, null);
+  const f = (res.state.heroLog || []).find(h => h.hero === 'HERO_RAINBOW');
+  assert.ok(f, '融合した');
+  assert.equal(res.state.cards['p0:HERO_WINGMAN'].zone, 'trash0');
+  assert.equal(res.state.cards['p0:LIGHT_2'].zone, 'trash0');
+  assert.equal(res.state.cards[oppTop].zone, 'trash1');
+  for (let k = 0; k < 80 && res.state.winner === null; k++) res = step(res);
+  const atk = (res.state.heroLog || []).find(h => h.kind === 'attack' && h.hero === 'HERO_RAINBOW');
+  assert.ok(atk, "レインボーネオスが攻撃した");
+  assert.equal(atk.lp, 0);
+  assert.equal(res.state.winner, 0);
+});

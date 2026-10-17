@@ -5785,6 +5785,7 @@ async function afterTurn() {
   /* 5秒ルールのでたらめな手は1手だけ (その手の選択まで CPU が答えたら、手を返す) */
   if (forcedSpent) { forcedMe = false; forcedSpent = false; }
   await announceTurn();
+  heroNotice(cur && cur.state);                   // ヒーロー融合: 自分の手番の終わりの融合は、相手が動き出す前に知らせる
   let guardAi = 0;
   while (cur && cur.state.winner === null && (demoMode || cur.state.turn === AI || partnerMove() || autoFor(cur.state.turn))
          && !cur.requests.length && guardAi++ < 40) {
@@ -6786,7 +6787,7 @@ function activeFx(st) {
 
 /* ---------- 異変「ヒーロー融合」(engine.js の heroFusion) ----------
    ライフ 4000 を画面の上に出し、融合と攻撃を大きく知らせる */
-const HERO_NAMES = { HERO_WINGMAN: 'シャイニングフレアウィングマン', HERO_PHOENIX: 'フェニックスガイ' };
+const HERO_NAMES = { HERO_WINGMAN: 'シャイニングフレアウィングマン', HERO_PHOENIX: 'フェニックスガイ', HERO_RAINBOW: 'レインボーネオス' };
 function heroNotice(st) {
   const logs = (st && st.heroLog) || [];
   if (logs.length <= heroSeen) return;
@@ -6798,8 +6799,9 @@ function heroNotice(st) {
   fresh.forEach((h, i) => setTimeout(() => {
     if (cur !== at) return;
     const who = h.p === ME ? 'あなた' : '相手';
-    if (h.kind === 'fusion') { slam('FUSION!', who + 'の ' + HERO_NAMES[h.hero] + ' ・ 攻撃力 2100', h.p === ME ? 'r4' : 'dg'); sfx('boom'); }
-    else slam('ATTACK!', HERO_NAMES[h.hero] + ' の攻撃 ・ ' + (h.p === ME ? '相手' : 'あなた') + 'に 2100 ダメージ (残り ' + h.lp + ')', h.p === ME ? 'r3' : 'dg');
+    const atk = h.atk || 2100;
+    if (h.kind === 'fusion') { slam('FUSION!', who + 'の ' + HERO_NAMES[h.hero] + ' ・ 攻撃力 ' + atk, h.p === ME ? 'r4' : 'dg'); sfx('boom'); }
+    else slam('ATTACK!', HERO_NAMES[h.hero] + ' の攻撃 ・ ' + (h.p === ME ? '相手' : 'あなた') + 'に ' + atk + ' ダメージ (残り ' + h.lp + ')', h.p === ME ? 'r3' : 'dg');
   }, 900 + i * 1900));
 }
 function heroHud(st) {
