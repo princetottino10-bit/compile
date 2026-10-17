@@ -120,7 +120,7 @@ function init(cardsJson, effectsJson, extra) {
     if (d && d.id && !DEFS[d.id] && PROTOS[d.proto]) DEFS[d.id] = { id: d.id, proto: d.proto, value: d.value | 0, eff: d.eff || {} };
   }
   /* 異変「ヒーロー融合」で場に出てくる融合ヒーロー (山札には入らない)。効果は heroFusion / heroAttack が受け持つ */
-  if (PROTOS.FIRE) for (const h of HEROES) if (!DEFS[h.id]) DEFS[h.id] = { id: h.id, proto: 'FIRE', value: h.value, eff: {} };
+  for (const h of HEROES) if (PROTOS[h.proto] && !DEFS[h.id]) DEFS[h.id] = { id: h.id, proto: h.proto, value: h.value, eff: {} };
 }
 
 /* ---------- 勝ち抜き戦の異変「ヒーロー融合」(newGame の heroFusion) ----------
@@ -128,12 +128,15 @@ function init(cardsJson, effectsJson, extra) {
    相手がコンパイルしたら、2枚を削除してシャイニングフレアウィングマンにする。攻撃力 2100、攻撃したら 2100 ダメージ。
    フェニックスガイも同じ2枚から: こちらは自分がコンパイルしたとき。表向きの間は効果で削除されない (原作の「戦闘では破壊されない」の代わり)。
    Compile には攻撃もライフも無いので、この異変の試合だけ両者にライフ 4000 を持たせ、表向きのヒーローは持ち主の手番のはじめに
-   相手を攻撃する (覆われていても攻撃する。裏返されたら止まる)。ライフが 0 になった側の負け。2回攻撃が通れば勝ち */
+   相手を攻撃する (覆われていても攻撃する。裏返されたら止まる)。ライフが 0 になった側の負け。2回攻撃が通れば勝ち。
+   レインボーネオス (2026-10-17 ユーザー「導入したい」、素材は判断カードで「ヒーロー＋LIGHT」): 表向きのウィングマンかフェニックスガイと、
+   表向きの LIGHT のカードが自分の側にそろっていると、自分の手番の終わりに2枚を削除して融合する。攻撃力 4500 (ライフ 4000 を1回で削り切る)。出てきたとき、相手の側の一番上のカードをすべて削除する
+   (原作の「相手のモンスターをすべて破壊」の代わり。表向きのフェニックスガイは残る) */
 const HERO_LP = 4000;
-const HERO_ATK = 2100;
 const HEROES = [
-  { id: 'HERO_WINGMAN', value: 4, name: 'シャイニングフレアウィングマン', on: 'opp' },
-  { id: 'HERO_PHOENIX', value: 4, name: 'フェニックスガイ', on: 'self' }
+  { id: 'HERO_WINGMAN', proto: 'FIRE', value: 4, atk: 2100, name: 'シャイニングフレアウィングマン', on: 'opp' },
+  { id: 'HERO_PHOENIX', proto: 'FIRE', value: 4, atk: 2100, name: 'フェニックスガイ', on: 'self' },
+  { id: 'HERO_RAINBOW', proto: 'LIGHT', value: 4, atk: 4500, name: 'レインボーネオス', on: 'evolve' }
 ];
 const HERO_PARTS = ['FIRE_1', 'FIRE_3'];      // フェザーマン / バーストレディ
 const isHero = (defId) => HEROES.some(h => h.id === defId);
@@ -156,15 +159,47 @@ function heroFusion(ctx, compiler) {
     const line = found.FIRE_3.line;
     log(ctx, `融合！ P${s + 1}: フェザーマン (FIRE 1) とバーストレディ (FIRE 3) を削除して、${hero.name} を呼ぶ`);
     massRemove(ctx, HERO_PARTS.map(id => found[id].uid), 'trash', s);
-    let uid = 'p' + s + ':' + hero.id;
-    for (let n = 2; st.cards[uid]; n++) uid = 'p' + s + ':' + hero.id + '~' + n;
-    st.cards[uid] = { uid, def: hero.id, owner: s, faceUp: true, zone: 'committed', knownTo: 3 };
-    st.cards[uid].commitSeq = ++st.commitSeq;
-    landLine(ctx, uid, line, s);
-    revealCardToAll(st, uid);
-    log(ctx, `${hero.name} (攻撃力 ${HERO_ATK}) がライン${line + 1}に現れた`, uid);
-    (st.heroLog || (st.heroLog = [])).push({ kind: 'fusion', p: s, hero: hero.id, t: st.turns | 0 });
+    summonHero(ctx, hero, s, line);
   }
+}
+
+/* 融合ヒーローを、そのラインの一番上に表向きで出す */
+function summonHero(ctx, hero, s, line) {
+  const st = ctx.st;
+  let uid = 'p' + s + ':' + hero.id;
+  for (let n = 2; st.cards[uid]; n++) uid = 'p' + s + ':' + hero.id + '~' + n;
+  st.cards[uid] = { uid, def: hero.id, owner: s, faceUp: true, zone: 'committed', knownTo: 3 };
+  st.cards[uid].commitSeq = ++st.commitSeq;
+  landLine(ctx, uid, line, s);
+  revealCardToAll(st, uid);
+  log(ctx, `${hero.name} (攻撃力 ${hero.atk}) がライン${line + 1}に現れた`, uid);
+  (st.heroLog || (st.heroLog = [])).push({ kind: 'fusion', p: s, hero: hero.id, atk: hero.atk, t: st.turns | 0 });
+  return uid;
+}
+
+/* 手番の終わり: その側に表向きのヒーロー (ウィングマン・フェニックスガイ) と表向きの LIGHT がそろっていれば、レインボーネオスに融合する */
+function heroEvolve(ctx, s) {
+  const st = ctx.st;
+  let from = null, light = null;
+  for (let l = 0; l < 3; l++) for (const uid of st.lines[l][s]) {
+    const c = st.cards[uid];
+    if (!c.faceUp) continue;
+    if (!from && (c.def === 'HERO_WINGMAN' || c.def === 'HERO_PHOENIX')) from = { uid, line: l };
+    else if (!light && DEFS[c.def] && DEFS[c.def].proto === 'LIGHT') light = uid;
+  }
+  if (!from || !light) return false;
+  const rainbow = HEROES.find(h => h.on === 'evolve');
+  log(ctx, `融合！ P${s + 1}: ${HEROES.find(h => h.id === st.cards[from.uid].def).name} と ${DEFS[st.cards[light].def].id} を削除して、レインボーネオスを呼ぶ`);
+  massRemove(ctx, [from.uid, light], 'trash', s);
+  summonHero(ctx, rainbow, s, from.line);
+  /* 出てきたとき: 相手の側の一番上のカードをすべて削除 (表向きのフェニックスガイは効果で削除されない) */
+  const tops = [0, 1, 2].map(l => st.lines[l][1 - s]).filter(stk => stk.length).map(stk => stk[stk.length - 1])
+    .filter(u => !(st.cards[u].faceUp && st.cards[u].def === 'HERO_PHOENIX'));
+  if (tops.length) {
+    log(ctx, `レインボーネオスの効果: 相手の一番上のカードを ${tops.length} 枚削除`);
+    massRemove(ctx, tops, 'trash', s);
+  }
+  return true;
 }
 
 /* 手番のはじめ: その側の表向きのヒーローが、1体ずつ相手を攻撃する */
@@ -175,9 +210,9 @@ function heroAttack(ctx) {
     const c = st.cards[uid];
     if (st.winner !== null || !c.faceUp || !isHero(c.def)) continue;
     const hero = HEROES.find(h => h.id === c.def);
-    st.lp[1 - side] = Math.max(0, st.lp[1 - side] - HERO_ATK);
-    log(ctx, `${hero.name} の攻撃！ P${2 - side} に ${HERO_ATK} ダメージ (残りライフ ${st.lp[1 - side]})`, uid);
-    (st.heroLog || (st.heroLog = [])).push({ kind: 'attack', p: side, hero: hero.id, lp: st.lp[1 - side], t: st.turns | 0 });
+    st.lp[1 - side] = Math.max(0, st.lp[1 - side] - hero.atk);
+    log(ctx, `${hero.name} の攻撃！ P${2 - side} に ${hero.atk} ダメージ (残りライフ ${st.lp[1 - side]})`, uid);
+    (st.heroLog || (st.heroLog = [])).push({ kind: 'attack', p: side, hero: hero.id, atk: hero.atk, lp: st.lp[1 - side], t: st.turns | 0 });
     if (st.lp[1 - side] <= 0) {
       st.winner = side;                                    // ライフが尽きたら、負けるが勝ちでも負け
       log(ctx, `P${side + 1} の勝利！ (ライフ 0)`);
@@ -2281,6 +2316,7 @@ function runTurnLoop(ctx) {
         break;
       case 'end':
         doStartEnd(ctx, 'end');
+        if (st.heroFusion && st.winner === null) heroEvolve(ctx, st.turn);
         /* タッグ: 手番を終えたチームは、次に指す味方に替わる */
         if (st.tag && st.winner === null) tagSwap(st, st.turn);
         st.turn = 1 - st.turn;
