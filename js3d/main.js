@@ -129,6 +129,7 @@ let selectedUid = null;
 let chaosRules = {};
 let forcedMe = false, forcedSpent = false;
 let swapSeen = 0;               // 手札交換・寝返りの知らせを出した手番 (同じ入れ替わりで2度出さない)
+let heroSeen = 0;               // ヒーロー融合: 知らせを出した heroLog の数 (融合・攻撃を1回ずつ大きく出す)
 let hoverUid = null;
 let ctrlMarker = null;
 let pads = [];                  // 着地パッド (line × side)
@@ -1392,7 +1393,7 @@ async function boot() {
       : tutorial
         ? Engine.newPuzzle(tutorial.lesson.spec, { seed: 1 })
         : Engine.newGame({ seed, p0, p1, first: firstPlayer, training: trainingMode, winCompiles,
-          ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods, winCompilesBySide: runOpts.winCompilesBySide, perks: runOpts.perks, startCompiled: runOpts.startCompiled, misere: runOpts.misere, handSwap: runOpts.handSwap, turncoat: runOpts.turncoat } : {}),
+          ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods, winCompilesBySide: runOpts.winCompilesBySide, perks: runOpts.perks, startCompiled: runOpts.startCompiled, misere: runOpts.misere, handSwap: runOpts.handSwap, turncoat: runOpts.turncoat, heroFusion: runOpts.heroFusion } : {}),
           ...(storyOpts || {}),
           ...(tagMates ? { tag: tagMates } : {}) });
   cur = res;
@@ -1415,6 +1416,8 @@ async function boot() {
     /* カオスの「負けるが勝ち」: SHORT MATCH の言い方とあべこべになるので、あとから上書きして知らせる */
     if (cur.state.misere) setTimeout(() => slam('MISÈRE', '負けるが勝ち ・ 先にコンパイルし終えた方の負け', 'dg'), 2400);
     swapSeen = cur.state.turns | 0;
+    heroSeen = (cur.state.heroLog || []).length;
+    if (cur.state.heroFusion) setTimeout(() => slam('HERO FUSION', 'ライフ 4000 ・ FIRE 1 と FIRE 3 をそろえて融合', 'mp'), 2400);
   }
   if (!trainingMode && !puzzle && !tutorial && !demoMode && !replayMode) CW.battleStarted(storyNode ? 'story' : runMode ? runKind : tagMates ? 'tag' : quickGame ? 'quick' : 'cpu', p0, p1);
   if (!trainingMode && !puzzle && !tutorial && !demoMode && !replayMode) lastSetup = { p0: p0.slice(), p1: p1.slice(), mates: tagMates };
@@ -1428,7 +1431,7 @@ async function boot() {
   /* CPU 戦は棋譜を取る (決着したらリプレイとして残す) */
   /* タッグはリプレイに残さない (棋譜の形が 1 対 1 のため) */
   const gameInit = resumed ? resumed.rec.init : { seed, p0: p0.slice(), p1: p1.slice(), first: firstPlayer, winCompiles: winCompiles || null,
-    ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods, winCompilesBySide: runOpts.winCompilesBySide, perks: runOpts.perks, startCompiled: runOpts.startCompiled, misere: runOpts.misere, handSwap: runOpts.handSwap, turncoat: runOpts.turncoat } : {}),
+    ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods, winCompilesBySide: runOpts.winCompilesBySide, perks: runOpts.perks, startCompiled: runOpts.startCompiled, misere: runOpts.misere, handSwap: runOpts.handSwap, turncoat: runOpts.turncoat, heroFusion: runOpts.heroFusion } : {}),
     ...(storyOpts || {}) };
   const priorActions = resumed ? resumed.rec.actions : [];
   /* CPU どうしの観戦も残す (RECORD のリプレイの「観戦」の枠。?demo=1 の流しっぱなしは残さない) */
@@ -5812,6 +5815,7 @@ async function afterTurn() {
     if (swapped) slam('HAND SWAP', '手札がまるごと入れ替わった！', 'mp');
     else if (turned) slam('TURNCOAT', 'いちばん上のカードが寝返った！', 'dg');
   }
+  heroNotice(cur.state);
   if (chaosRules.tick) startTick();
   if (cur.state.winner !== null && !resultShown) {
     resultShown = true;
@@ -6748,6 +6752,7 @@ function syncPanels(st, animate) {
     /* 勝ち抜き戦: 相手にコンパイルされた回数だけライフを減らして見せる。尽きたらその場で終わり */
     const lost = lifeHits(st);
     runHud(lost, runBonus());
+    heroHud(st);                                    // runHud が描き直すとライフ 4000 の札が外れるので付け直す
     const run = loadRun();
     if (run && lethal(run, lost)) {
       runEnded = true;
@@ -6779,7 +6784,48 @@ function activeFx(st) {
   return out;
 }
 
+/* ---------- 異変「ヒーロー融合」(engine.js の heroFusion) ----------
+   ライフ 4000 を画面の上に出し、融合と攻撃を大きく知らせる */
+const HERO_NAMES = { HERO_WINGMAN: 'シャイニングフレアウィングマン', HERO_PHOENIX: 'フェニックスガイ' };
+function heroNotice(st) {
+  const logs = (st && st.heroLog) || [];
+  if (logs.length <= heroSeen) return;
+  /* 相手の手番の間に「融合 → 攻撃」が続けて起きることがある。1つずつ間をあけて出し、
+     コンパイルのほめ言葉 (hype.js の slam) に上書きされないよう少し遅らせる */
+  const fresh = logs.slice(heroSeen);
+  heroSeen = logs.length;
+  const at = cur;
+  fresh.forEach((h, i) => setTimeout(() => {
+    if (cur !== at) return;
+    const who = h.p === ME ? 'あなた' : '相手';
+    if (h.kind === 'fusion') { slam('FUSION!', who + 'の ' + HERO_NAMES[h.hero] + ' ・ 攻撃力 2100', h.p === ME ? 'r4' : 'dg'); sfx('boom'); }
+    else slam('ATTACK!', HERO_NAMES[h.hero] + ' の攻撃 ・ ' + (h.p === ME ? '相手' : 'あなた') + 'に 2100 ダメージ (残り ' + h.lp + ')', h.p === ME ? 'r3' : 'dg');
+  }, 900 + i * 1900));
+}
+function heroHud(st) {
+  let el = document.getElementById('heroLp');
+  if (!st || !st.heroFusion || !Array.isArray(st.lp)) { if (el) el.hidden = true; return; }
+  /* 勝ち抜き戦の札 (#runHud) の中の、異変の札の下に入れる (runHud は描き直すたびに中身を作り直すので、外れていたら付け直す) */
+  const host = document.getElementById('runHud');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'heroLp';
+    el.setAttribute('aria-label', 'ライフ');
+    el.style.cssText = 'display:flex;justify-content:center;gap:12px;margin-top:6px;padding:3px 10px;border-radius:999px;white-space:nowrap;'
+      + 'background:rgba(8,10,20,.78);color:#fff;font:800 13px/1.4 system-ui,sans-serif;letter-spacing:.04em;pointer-events:none;border:1px solid rgba(255,140,60,.6)';
+  }
+  if (host && el.parentNode !== host) host.appendChild(el);
+  else if (!host && !el.parentNode) {
+    el.style.position = 'fixed'; el.style.top = 'calc(env(safe-area-inset-top,0px) + 58px)'; el.style.left = '50%'; el.style.transform = 'translateX(-50%)'; el.style.zIndex = '30';
+    document.body.appendChild(el);
+  }
+  el.hidden = false;
+  const lp = (n) => '<b style="color:' + (n <= 1900 ? '#ff6a5a' : '#ffd86a') + '">' + n + '</b>';
+  el.innerHTML = '<span>あなた LP ' + lp(st.lp[ME]) + '</span><span>相手 LP ' + lp(st.lp[AI]) + '</span>';
+}
+
 function refreshHud() {
+  heroHud(shown());
   syncCompileProgress(shown());      // 名札は作り直されると空になるので、表示の更新のたびに進み具合も合わせる
   const st = shown();
   /* CPU 戦でも相手の手札の枚数を名札に (オンラインは名札の下の段に出している) */

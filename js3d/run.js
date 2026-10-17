@@ -43,6 +43,8 @@ export const EASY_ROWS = 3;
 export function runWinCompiles(run) {
   const node = nodeById(run, run.pos);
   const plain = !run.opp || (!run.opp.boss && !run.opp.elite && run.route !== 'alarm' && run.route !== 'cursed');
+  /* 長期戦・ヒーロー融合は 1 本先取にしない (applyMutators で 3 本勝負にする。序盤の「1本先取」の知らせも出さない) */
+  if (run.opp && (run.opp.chaos || []).some(id => id === 'marathon' || id === 'hero')) return RUN_WIN_COMPILES;
   return node && node.row < QUICK_ROWS && plain ? 1 : RUN_WIN_COMPILES;
 }
 export const MAX_REMOVED = 6;               // 山札を 12 枚より減らさない
@@ -1061,6 +1063,8 @@ function applyMutators(run, o, me) {
     if (id === 'misere') out.misere = true;
     if (id === 'handswap') out.handSwap = HAND_SWAP_EVERY;
     if (id === 'turncoat') out.turncoat = TURNCOAT_EVERY;
+    /* ヒーロー融合: 1本で決着すると融合する前に終わるので、長期戦と同じ 3 本勝負にする (ライフ 4000 を削り切るのが近道) */
+    if (id === 'hero') { out.heroFusion = true; out.startCompiled = [0, 0]; out.winCompilesBySide = [3, 3]; out.winCompiles = 3; }
     if (id === 'marathon') { out.startCompiled = [0, 0]; out.winCompilesBySide = [3, 3]; out.winCompiles = 3; }
     if (id === 'twin') {
       /* 6 枚 x 2 プロトコルぶん (engine は足すカードを 12 枚まで)。強化していれば ＋ 版で */
