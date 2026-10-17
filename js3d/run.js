@@ -18,7 +18,7 @@
  * ========================================================================= */
 import { STRONGEST_AI, CHALLENGERS, CHALLENGER_BASE } from './aidecks.js';
 import { UP, isStar, baseOf, starOf, STAR_CARDS, ORACLE_CARDS, isOracleCard } from './runcards.js';
-import { CHAOS_LIFE, CHAOS_CREDITS, CHAOS_MAX_ADDED, mutatorCount, rollMutators, ROULETTE } from './run-chaos.js';
+import { CHAOS_LIFE, CHAOS_CREDITS, CHAOS_MAX_ADDED, mutatorCount, rollMutators, ROULETTE, RULE_MUTATORS } from './run-chaos.js';
 
 const KEY = 'compileRun';
 const BEST_KEY = 'compileRunBest';
@@ -196,9 +196,9 @@ export const EVENTS = {
       { label: '見送る', apply: (r) => r }
     ]
   },
-  /* ここから2つはカオス勝ち抜き戦だけ (chaos: true)。絵は既存のイベントの絵を借りる (art) */
+  /* ここから5つはカオス勝ち抜き戦だけ (chaos: true)。絵は art/run/event_chaos_*.webp (art。E:\SD\scripts\run_events_chaos.py で描いた) */
   omegaAltar: {
-    chaos: true, art: 'altar',
+    chaos: true, art: 'chaos_omega',
     title: 'Ω の祭壇', text: 'ORACLE が考えたカードが祀られている。手に取れば、デッキのプロトコルが1つ、そのカードのものに置き換わる。',
     options: [
       { label: 'Ω カードを手に取る (デッキにそのプロトコルが無ければ、どれか1つと入れ替わる)', need: (r) => (r.added || []).length < maxAdded(r),
@@ -207,7 +207,7 @@ export const EVENTS = {
     ]
   },
   roulette: {
-    chaos: true, art: 'arcade',
+    chaos: true, art: 'chaos_roulette',
     title: '運命のルーレット', text: '派手に光るルーレット台。回せば何かが起きる。いいことか、悪いことか。',
     options: [
       { label: 'ルーレットを回す', apply: (r, c) => spinRoulette(r, c) },
@@ -216,7 +216,7 @@ export const EVENTS = {
     ]
   },
   copier: {
-    chaos: true, art: 'lab',
+    chaos: true, art: 'chaos_copier',
     title: 'コピー機', text: '「カードを入れると増えます」と書かれた古いコピー機。',
     options: [
       { label: 'カードを1枚選んで、写しを山札に足す', need: (r) => (r.copies || []).length < MAX_COPIES, apply: (r) => ({ ...r, phase: 'copy', after: 'map' }) },
@@ -230,7 +230,7 @@ export const EVENTS = {
     ]
   },
   casino: {
-    chaos: true, art: 'meteor',
+    chaos: true, art: 'chaos_casino',
     title: '地下カジノ', text: 'ネオンの奥で、ディーラーがコインを弾いている。「賭けるかい？」',
     options: [
       { label: 'クレジットを半分賭ける (半々で 2 倍)', need: (r) => (r.credits | 0) >= 2, apply: (r, c) => bet(r, c, Math.floor((r.credits | 0) / 2), 0.5, 2) },
@@ -243,7 +243,7 @@ export const EVENTS = {
     ]
   },
   merchant: {
-    chaos: true, art: 'shady',
+    chaos: true, art: 'chaos_merchant',
     title: '闇の商人', text: 'フードの男が、ささやく。「なんでも買うし、なんでも売るよ」',
     options: [
       { label: '最大ライフ −2 を売る (クレジット +20)', need: (r) => r.maxLife > 4,
@@ -829,6 +829,10 @@ const mut = (run, id) => mutatorsOf(run).includes(id);
 /** CPU がでたらめに指す割合 (異変「酔っぱらい」) */
 export const runAiBlunder = (run) => (mut(run, 'drunk') ? DRUNK_BLUNDER : 0);
 export const DRUNK_BLUNDER = 0.5;
+export const HAND_SWAP_EVERY = 4;
+export const TURNCOAT_EVERY = 3;
+/** 画面側で効かせる異変 (目隠し・5秒ルール・天地逆転)。いまの試合の分だけ */
+export const runRules = (run) => ({ blind: mut(run, 'blind'), tick: mut(run, 'tick'), flip: mut(run, 'flip') });
 /** 戦うデッキ { me, ai }。異変「入れ替わり」では入れ替える */
 export function fightDecks(run) {
   const me = run.deck.slice(), ai = run.opp.deck.slice();
@@ -858,6 +862,7 @@ export function creditGain(run, compiles, bonus = 0) {
   if (setLevel(run, 'TEMPO') >= 1 && (run.route === 'elite' || run.route === 'cursed')) gain += 3;
   if (mut(run, 'jackpot')) gain += 10;
   if (mut(run, 'marathon')) gain += 6;
+  for (const id of RULE_MUTATORS) if (mut(run, id)) gain += 4;
   if (hasPatch(run, 'midas')) gain *= 2;
   if (hasPatch(run, 'allin')) gain *= 3;
   if (mut(run, 'giant')) gain *= 3;
@@ -1053,6 +1058,9 @@ function applyMutators(run, o, me) {
       }
     }
     if (id === 'baby') { out.handSize[me] = 2; out.handSize[other] = 7; }
+    if (id === 'misere') out.misere = true;
+    if (id === 'handswap') out.handSwap = HAND_SWAP_EVERY;
+    if (id === 'turncoat') out.turncoat = TURNCOAT_EVERY;
     if (id === 'marathon') { out.startCompiled = [0, 0]; out.winCompilesBySide = [3, 3]; out.winCompiles = 3; }
     if (id === 'twin') {
       /* 6 枚 x 2 プロトコルぶん (engine は足すカードを 12 枚まで)。強化していれば ＋ 版で */

@@ -212,3 +212,30 @@ test('カオス: ボスを倒すと LOOP。ボスの Ω を奪い、ライフ全
   /* ふつうの勝ち抜き戦には LOOP は無い */
   assert.ok(!R.canLoop({ ...clear, mode: undefined }));
 });
+
+test('カオス: 目隠し・5秒ルール・天地逆転は画面側の異変。試合の始め方は変えず、勝てばクレジット +4。1試合に1つまで', async () => {
+  const { R, run } = await chaosOnMap();
+  const { rollMutators } = await import('../js3d/run-chaos.js');
+  const b = R.chooseNode(run, R.reachable(run)[0], NAMES, seq());
+  const with_ = (ids) => ({ ...b, patches: [], opp: { ...b.opp, chaos: ids } });
+  assert.deepEqual(R.runRules(with_(['blind', 'bighand'])), { blind: true, tick: false, flip: false });
+  assert.deepEqual(R.runRules(with_(['tick'])), { blind: false, tick: true, flip: false });
+  assert.deepEqual(R.runRules(with_(['flip'])), { blind: false, tick: false, flip: true });
+  assert.deepEqual(R.runRules(null), { blind: false, tick: false, flip: false });
+  assert.deepEqual(R.battleOpts(with_(['flip']), 0), R.battleOpts(with_([]), 0));
+  assert.equal(R.creditGain(with_(['tick']), 1), R.creditGain(with_([]), 1) + 4);
+  for (let k = 0; k < 40; k++) {
+    const got = rollMutators(3, seq(0.13 + k * 0.017));
+    assert.ok(got.filter(id => ['blind', 'tick', 'flip'].includes(id)).length <= 1);
+  }
+});
+
+test('カオス: 負けるが勝ち・手札交換は試合のはじめ方に乗る', async () => {
+  const { R, run } = await chaosOnMap();
+  const b = R.chooseNode(run, R.reachable(run)[0], NAMES, seq());
+  const o = R.battleOpts({ ...b, opp: { ...b.opp, chaos: ['misere', 'handswap'] } }, 0);
+  assert.equal(o.misere, true);
+  assert.equal(o.handSwap, R.HAND_SWAP_EVERY);
+  const plain = R.battleOpts({ ...b, opp: { ...b.opp, chaos: [] } }, 0);
+  assert.equal(plain.misere, undefined);
+});

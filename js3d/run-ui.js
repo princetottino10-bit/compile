@@ -444,7 +444,7 @@ export function openRun(protocols, cardsOf, opts) {
             (run.route === 'cursed' ? '<p class="rn-cursed">CURSED — この試合は 自分の手札 4 枚・相手 7 枚。勝てば RARE 以上のパッチを3つから選べる</p>' : '') +
             (retry ? '<p class="rn-warn">負けたので同じ相手とやり直しです (ライフ −' + last.damage + ')' + (last.saved === 'phoenix' ? ' — PHOENIX でよみがえった！' : last.saved ? ' — FAILSAFE が作動してライフ 1 で耐えました' : '') + '</p>' : '') +
             (run.swapped ? '<p class="rn-note">転送装置: <b>' + esc(run.swapped.out) + '</b> が <b>' + esc(run.swapped.add) + '</b> に入れ替わった</p>' : '') +
-            (RUN.runWinCompiles(run) === 1 ? '<p class="rn-note">序盤なので、どちらもはじめから2つコンパイル済み — 残りの1つを先にコンパイルしたら勝ち</p>' : '') +
+            (RUN.runWinCompiles(run) === 1 ? '<p class="rn-note">序盤なので、どちらもはじめから2つコンパイル済み — 残りの1つを先にコンパイルしたら ' + (RUN.mutatorsOf(run).includes('misere') ? '<b>負け</b>' : '勝ち') + '</p>' : '') +
             (run.opp.elite ? '<p class="rn-note rn-elite">ELITE — 勝つとクレジット多めとパッチを1つ</p>' : run.route === 'alarm' ? '<p class="rn-warn">警報が鳴っている — 相手が1段強い</p>' : '') +
             '<div class="rn-vs"><div><small>あなた' + ((run.removed || []).length ? ' (除去 ' + run.removed.length + ' 枚)' : '') + '</small>' + deckLine(run.deck, byName) + '</div><b>VS</b>' +
             /* 勝ち抜き戦では CPU の難易度名 (かんたん・ふつう…) は出さない */

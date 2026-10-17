@@ -1034,8 +1034,8 @@ function doCompile(ctx, side, line) {
     prot.compiled = true;
     log(ctx, `P${side + 1}: ${prot.name} をコンパイル！`);
     if (hasCompiledToWin(st, side)) {
-      st.winner = side;
-      log(ctx, `P${side + 1} の勝利！`);
+      st.winner = st.misere ? 1 - side : side;            // 負けるが勝ち (newGame の misere): 先に揃えた側の負け
+      log(ctx, `P${st.winner + 1} の勝利！`);
     }
   } else {
     log(ctx, `P${side + 1}: リコンパイル — 相手のデッキトップを獲得`);
@@ -1602,8 +1602,8 @@ function execOp(ctx, fr, op) {
         massRemove(ctx, uids, 'trash', fr.controller);
       }
       if (hasCompiledToWin(st, fr.controller)) {
-        st.winner = fr.controller;
-        log(ctx, `P${fr.controller + 1} の勝利！`);
+        st.winner = st.misere ? 1 - fr.controller : fr.controller;
+        log(ctx, `P${st.winner + 1} の勝利！`);
       }
       fr.done = true;
       return;
@@ -2216,12 +2216,42 @@ function runTurnLoop(ctx) {
         if (st.tag && st.winner === null) tagSwap(st, st.turn);
         st.turn = 1 - st.turn;
         st.turns = (st.turns || 0) + 1;     // 終えた手番の数 (両者合計)。古い盤面には無いので 0 から数える
+        if (st.handSwap && st.winner === null && st.turns % st.handSwap === 0) swapHands(ctx);
+        if (st.turncoat && st.winner === null && st.turns % st.turncoat === 0) turncoat(ctx);
         st.phase = 'start';
         break;
       default:
         throw { __err: '不明なフェイズ: ' + st.phase };
     }
   }
+}
+
+/* 勝ち抜き戦の異変「手札交換」(newGame の handSwap: n): n 手番ごとに、両者の手札がまるごと入れ替わる。
+   持ち主 (owner) はそのまま (捨て札は持ち主の側へ)。入れ替わった札は両者とも中身を知っている */
+function swapHands(ctx) {
+  const st = ctx.st;
+  const [a, b] = [st.players[0].hand, st.players[1].hand];
+  st.players[0].hand = b; st.players[1].hand = a;
+  for (const side of [0, 1]) {
+    for (const uid of st.players[side].hand) {
+      const c = st.cards[uid];
+      c.zone = 'hand' + side;
+      c.knownTo = 3; c.seenBy = 3;
+    }
+  }
+  log(ctx, '手札が入れ替わった！');
+}
+
+/* 勝ち抜き戦の異変「寝返り」(newGame の turncoat: n): n 手番ごとに、両側にカードがあるラインを1つ選び、
+   いちばん上のカードどうしが向こう側へ寝返る (持ち主はそのまま、表裏もそのまま) */
+function turncoat(ctx) {
+  const st = ctx.st;
+  const lines = [0, 1, 2].filter(l => st.lines[l][0].length && st.lines[l][1].length);
+  if (!lines.length) return;
+  const l = lines[Math.floor(rand(st) * lines.length)];
+  const a = st.lines[l][0].pop(), b = st.lines[l][1].pop();
+  st.lines[l][0].push(b); st.lines[l][1].push(a);
+  log(ctx, `寝返り！ ライン${l + 1} のいちばん上のカードが入れ替わった`);
 }
 
 /* CORRUPTION_1: どちらのプレイヤー側でもプレイできるカードか */
@@ -2464,6 +2494,10 @@ function newGame(opts) {
     winner: null,
     winCompiles: opts.winCompiles === 2 || opts.winCompiles === 1 ? opts.winCompiles : 3,
     ...(Array.isArray(opts.perks) && opts.perks.some(Boolean) ? { perks: [opts.perks[0] || null, opts.perks[1] || null] } : {}),
+    /* 勝ち抜き戦の異変: 負けるが勝ち (先にコンパイルし終えた側の負け) と、手札交換 (n 手番ごとに手札が入れ替わる) */
+    ...(opts.misere ? { misere: true } : {}),
+    ...(opts.handSwap >= 2 ? { handSwap: opts.handSwap | 0 } : {}),
+    ...(opts.turncoat >= 2 ? { turncoat: opts.turncoat | 0 } : {}),
     ...(Array.isArray(opts.winCompilesBySide) && opts.winCompilesBySide.length === 2 && opts.winCompilesBySide.every(n => n >= 1 && n <= 3)
       ? { winBySide: opts.winCompilesBySide.map(n => n | 0) } : {}),
     players: [],
@@ -3929,6 +3963,11 @@ function aiScore(st, me) {
 function aiScoreRaw(st, me) {
   if (st.winner === me) return 1e9;
   if (st.winner === 1 - me) return -1e9;
+  /* 負けるが勝ち: 決着の点は上のとおり (winner は入れ替わっている)。途中の盤面は、ふだんの見立てを裏返す
+     (自分のラインは伸ばさず、相手のラインを伸ばしたい) */
+  return st.misere ? -aiHeuristic(st, me) : aiHeuristic(st, me);
+}
+function aiHeuristic(st, me) {
   const op = 1 - me;
   const W = aiWeightsFor(st, me);
   let sc = 0;
