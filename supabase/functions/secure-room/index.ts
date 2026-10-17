@@ -648,30 +648,7 @@ Deno.serve(async (req) => {
         return json(req, { rooms: data || [] });
       }
       if (op === "adminCloseRoom") {
-        /* 観戦の賭けの受け取り: 自分のまだ受け取っていない賭けのうち、決着したもの (部屋が消えたものは賭けた分を戻す)。
-       受け取り済みの印はここで1度だけ立てる (読み直し・別の端末で2回もらえない) */
-    if (op === "betClaim") {
-      const { data: rows, error } = await admin.from("room_bets").select("id,room_id,room_code,side,amount,names,result,payout")
-        .eq("user_id", user.id).eq("claimed", false).order("created_at", { ascending: true }).limit(50);
-      if (error) throw error;
-      for (const b of (rows || []).filter((r: any) => !r.result)) {
-        const { data: rm } = await admin.from("secure_rooms").select("id,status,winner:game_state->winner").eq("id", b.room_id).maybeSingle();
-        if (rm && rm.status !== "finished") continue;                      // まだ対戦中
-        /* game_state->winner は JSON の値で来る。決着していない (null) を 0 と読まないように、数と文字の両方を見る */
-        const w = rm ? String(rm.winner) : "";
-        await settleRoomBets(b.room_id, w === "0" || w === "1" ? Number(w) : null);
-      }
-      const ids = (rows || []).map((r: any) => r.id);
-      const claimed: any[] = [];
-      if (ids.length) {
-        const { data: done } = await admin.from("room_bets").update({ claimed: true }).in("id", ids).eq("claimed", false)
-          .not("result", "is", null).select("id,room_code,side,amount,names,result,payout");
-        for (const r of done || []) claimed.push({ id: r.id, code: r.room_code, side: r.side, amount: r.amount, names: r.names || null, result: r.result, payout: r.payout | 0 });
-      }
-      return json(req, { claimed, pending: ids.length - claimed.length });
-    }
-
-    const roomCode = cleanCode(body.code);
+        const roomCode = cleanCode(body.code);
         if (roomCode.length !== 6) return fail(req, "部屋の番号が不正です");
         const { error } = await admin.from("secure_rooms").delete().eq("code", roomCode);
         if (error) throw error;
@@ -858,6 +835,29 @@ Deno.serve(async (req) => {
       }
       if (!created) return fail(req, "ルームコードを作成できませんでした", 503);
       return json(req, publicState(created, 0, tagMode ? 0 : -1, true));
+    }
+
+    /* 観戦の賭けの受け取り: 自分のまだ受け取っていない賭けのうち、決着したもの (部屋が消えたものは賭けた分を戻す)。
+       受け取り済みの印はここで1度だけ立てる (読み直し・別の端末で2回もらえない) */
+    if (op === "betClaim") {
+      const { data: rows, error } = await admin.from("room_bets").select("id,room_id,room_code,side,amount,names,result,payout")
+        .eq("user_id", user.id).eq("claimed", false).order("created_at", { ascending: true }).limit(50);
+      if (error) throw error;
+      for (const b of (rows || []).filter((r: any) => !r.result)) {
+        const { data: rm } = await admin.from("secure_rooms").select("id,status,winner:game_state->winner").eq("id", b.room_id).maybeSingle();
+        if (rm && rm.status !== "finished") continue;                      // まだ対戦中
+        /* game_state->winner は JSON の値で来る。決着していない (null) を 0 と読まないように、数と文字の両方を見る */
+        const w = rm ? String(rm.winner) : "";
+        await settleRoomBets(b.room_id, w === "0" || w === "1" ? Number(w) : null);
+      }
+      const ids = (rows || []).map((r: any) => r.id);
+      const claimed: any[] = [];
+      if (ids.length) {
+        const { data: done } = await admin.from("room_bets").update({ claimed: true }).in("id", ids).eq("claimed", false)
+          .not("result", "is", null).select("id,room_code,side,amount,names,result,payout");
+        for (const r of done || []) claimed.push({ id: r.id, code: r.room_code, side: r.side, amount: r.amount, names: r.names || null, result: r.result, payout: r.payout | 0 });
+      }
+      return json(req, { claimed, pending: ids.length - claimed.length });
     }
 
     const roomCode = cleanCode(body.code);
