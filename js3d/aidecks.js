@@ -85,15 +85,26 @@ export const DEUS_NAME = 'CODE:PURPLE';
 export const HONKI_BASE = 30;
 export const HONKI = [
   /* 紫苑: 機械仕掛けの神と同じロックのデッキ。ロック用の学習モデル (ORACLE_LOCK_AI) がそのまま使える */
-  { avatar: 'shion', color: '#a07bff', name: '本気紫苑', note: '読みを解析しきって、サイキック①で縛りに来る', fav: 'PSYCHIC', deck: ['PSYCHIC', 'DARKNESS', 'FIRE'], ai: ORACLE_LOCK_AI },
-  { avatar: 'asagi', color: '#3d7dff', name: '本気瑠璃', note: 'ウォーターの流れで、自分の順路へ連れていく', fav: 'WATER', deck: ['WATER', 'HATE', 'TIME'], ai: {} },
-  { avatar: 'yamabuki', color: '#ff8a2a', name: '本気杏', note: 'ファイアの勢いで、押しきりに来る', fav: 'FIRE', deck: ['FIRE', 'WATER', 'COURAGE'], ai: {} },
-  { avatar: 'nadeshiko', color: '#e0283c', name: '本気茜', note: 'ヘイトで、盤面をきれいに片づけに来る', fav: 'HATE', deck: ['HATE', 'FIRE', 'DEATH'], ai: {} }
+  { avatar: 'shion', color: '#a07bff', name: '本気紫苑', note: '読みを解析しきって、サイキック①で縛りに来る', fav: 'PSYCHIC', deck: ['PSYCHIC', 'DARKNESS', 'FIRE'], alt: ['PSYCHIC', 'DIVERSITY', 'FEAR'], ai: ORACLE_LOCK_AI },
+  { avatar: 'asagi', color: '#3d7dff', name: '本気瑠璃', note: 'ウォーターの流れで、自分の順路へ連れていく', fav: 'WATER', deck: ['WATER', 'HATE', 'TIME'], alt: ['WATER', 'TIME', 'DIVERSITY'], ai: {} },
+  { avatar: 'yamabuki', color: '#ff8a2a', name: '本気杏', note: 'ファイアの勢いで、押しきりに来る', fav: 'FIRE', deck: ['FIRE', 'WATER', 'COURAGE'], alt: ['FIRE', 'FEAR', 'CORRUPTION'], ai: {} },
+  { avatar: 'nadeshiko', color: '#e0283c', name: '本気茜', note: 'ヘイトで、盤面をきれいに片づけに来る', fav: 'HATE', deck: ['HATE', 'FIRE', 'DEATH'], alt: ['HATE', 'LUCK', 'DIVERSITY'], ai: {} }
 ];
 export const isHonki = (level) => level >= HONKI_BASE && level < HONKI_BASE + HONKI.length;
 export const honkiOf = (level) => (isHonki(level) ? HONKI[level - HONKI_BASE] : null);
 /* cfg: ORACLE の設定。本気のキャラはその子の設定を重ねる (ロックへの切り替え oracleAi は通さない: デッキごとに決めてあるため) */
 export const honkiAi = (cfg, level) => ({ ...cfg, ...honkiOf(level).ai });
+/* 本気のキャラ同士の対戦 (2026-10-16 ユーザー「お互いが対戦したりする時用に」): デッキのプロトコルがかぶったら、片方が alt (2つ目のデッキ) にゆずる。
+   かぶったプロトコルが誰かの得意なら、その持ち主が残す (FIRE は杏、WATER は瑠璃)。どちらの得意でもなければ、HONKI で後ろの子がゆずる (紫苑と茜の FIRE は茜がゆずる)。
+   alt はほかの3人の1つ目のデッキのプロトコルを除いて探した (scripts/deck_search.js --exclude、2026-10-18) ので、ゆずった側はもうかぶらない。
+   a, b: HONKI の要素。返り値: [a のデッキ, b のデッキ] */
+export function honkiPairDecks(a, b) {
+  const shared = a.deck.filter(p => b.deck.includes(p));
+  if (!shared.length) return [a.deck, b.deck];
+  const aFav = shared.includes(a.fav), bFav = shared.includes(b.fav);
+  const bKeeps = aFav === bFav ? HONKI.indexOf(b) < HONKI.indexOf(a) : bFav;
+  return bKeeps ? [a.alt, b.deck] : [a.deck, b.alt];
+}
 
 export const isChallenger = (level) => level >= CHALLENGER_BASE && level < CHALLENGER_BASE + CHALLENGERS.length;
 

@@ -77,3 +77,25 @@ test('本気の4人: 得意プロトコル入りの決まったデッキ、ORACL
   assert.equal(honkiAi(AUTO, HONKI_BASE).valnetModel, 'lock');
   assert.equal(honkiAi(AUTO, HONKI_BASE).kind, 'psylock');
 });
+
+test('本気のキャラ同士: かぶったら得意でない側が2つ目のデッキにゆずり、どの組もかぶらない', async () => {
+  const { HONKI, honkiPairDecks } = await import('../js3d/aidecks.js');
+  const [shion, ruri, an, akane] = HONKI;
+  /* FIRE は杏の得意 → 紫苑・茜がゆずる。WATER は瑠璃 → 杏がゆずる。HATE は茜 → 瑠璃がゆずる */
+  assert.deepEqual(honkiPairDecks(shion, an), [shion.alt, an.deck]);
+  assert.deepEqual(honkiPairDecks(an, akane), [an.deck, akane.alt]);
+  assert.deepEqual(honkiPairDecks(an, ruri), [an.alt, ruri.deck]);
+  assert.deepEqual(honkiPairDecks(ruri, akane), [ruri.alt, akane.deck]);
+  /* FIRE はどちらの得意でもない → 後ろの茜がゆずる。並べる順によらない */
+  assert.deepEqual(honkiPairDecks(akane, shion), [akane.alt, shion.deck]);
+  assert.deepEqual(honkiPairDecks(shion, akane), [shion.deck, akane.alt]);
+  for (const a of HONKI) {
+    assert.ok(a.alt.includes(a.fav), a.name + ' の2つ目のデッキにも得意が入る');
+    for (const b of HONKI) {
+      if (a === b) continue;
+      const [da, db] = honkiPairDecks(a, b);
+      assert.ok(!da.some(p => db.includes(p)), a.name + ' vs ' + b.name);
+      assert.ok(da === a.deck || db === b.deck, '片方は1つ目のまま');
+    }
+  }
+});
