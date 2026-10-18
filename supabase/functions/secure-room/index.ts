@@ -5,6 +5,7 @@ import cards from "../_shared/cards.json" with { type: "json" };
 import effects from "../_shared/effects.json" with { type: "json" };
 import { weeklySet } from "../_shared/weekly-set.js";
 import * as TAG from "../_shared/tag.js";
+import { ROOM_BET_AMOUNTS, ROOM_BET_TURNS, roomBetOdds, roomBetPools, roomBetSettle } from "../_shared/roombet.js";
 
 const Engine = (globalThis as any).CompileEngine;
 Engine.init(cards, effects);
@@ -462,6 +463,45 @@ function privateAction(action: any, st: any) {
   return out;
 }
 
+/* ---- オンラインの観戦の賭け (観客どうし。CHIP だけ。migrations/202610160001_room_bets.sql) ---- */
+/* 観客の人数に数える長さ (観戦の画面は 15 秒ごとに知らせる) */
+const WATCHER_FRESH_MS = 45_000;
+const watchable = (room: any) => !!room.allow_watch && room.visibility === "public" && !room.password_hash && room.mode !== "tag";
+/* 受付中か: 対戦中で、両者合わせて ROOM_BET_TURNS 手番を終える前 */
+const betOpen = (room: any) => watchable(room) && room.status === "playing" && ((room.game_state && room.game_state.turns) | 0) < ROOM_BET_TURNS;
+
+/* 観戦の画面に出す賭けのようす: 受付中か・両側の合計と倍率・賭けた人 (新しい 30 人)・自分の賭け・観客の人数 */
+async function betSummary(room: any, userId: string) {
+  const [{ data: rows }, { count: watchers }] = await Promise.all([
+    admin.from("room_bets").select("id,user_id,name,side,amount,result,payout,claimed").eq("room_id", room.id)
+      .order("created_at", { ascending: true }).limit(300),
+    admin.from("room_watchers").select("user_id", { count: "exact", head: true }).eq("room_id", room.id)
+      .gte("seen_at", new Date(Date.now() - WATCHER_FRESH_MS).toISOString()),
+  ]);
+  const list = rows || [];
+  const pools = roomBetPools(list);
+  const mine = list.find((r: any) => r.user_id === userId);
+  return {
+    open: betOpen(room), closeTurns: ROOM_BET_TURNS, turns: (room.game_state && room.game_state.turns) | 0,
+    amounts: ROOM_BET_AMOUNTS, pools, odds: roomBetOdds(pools), count: list.length,
+    counts: [0, 1].map((k) => list.filter((r: any) => r.side === k).length),
+    bettors: list.slice(-30).map((r: any) => ({ name: r.name || "観客", side: r.side, amount: r.amount })),
+    mine: mine ? { id: mine.id, side: mine.side, amount: mine.amount, result: mine.result, payout: mine.payout, claimed: mine.claimed } : null,
+    watchers: watchers || 0,
+  };
+}
+
+/* 決着した (winner 0 / 1) か、不成立 (null: 部屋が消えた) の部屋の賭けを払い戻しの額まで決める。何度呼んでも同じ (決めた行は変えない) */
+async function settleRoomBets(roomId: string, winner: number | null) {
+  const { data: rows, error } = await admin.from("room_bets").select("id,side,amount,result").eq("room_id", roomId).limit(1000);
+  if (error) throw error;
+  const pools = roomBetPools(rows || []);
+  for (const b of (rows || []).filter((r: any) => !r.result)) {
+    const out = roomBetSettle(b, winner, pools);
+    await admin.from("room_bets").update(out).eq("id", b.id).is("result", null);
+  }
+}
+
 /* 管理者の一覧の id (頭の8文字) から、その人の id を引く。見つからない・2人以上当たるなら null */
 async function fullUserId(prefix: string) {
   if (!/^[0-9a-f]{8}$/.test(prefix)) return /^[0-9a-f-]{36}$/.test(prefix) ? prefix : null;
@@ -644,12 +684,21 @@ Deno.serve(async (req) => {
       ]);
       /* 観戦できる対戦: 公開・合言葉なし・観戦を許した1対1の部屋で、10分以内に動いたもの */
       const { data: live } = await admin.from("secure_rooms")
-        .select("code,title,host_name,guest_name,host_protocols,guest_protocols,rated,updated_at")
+        .select("id,code,title,host_name,guest_name,host_protocols,guest_protocols,rated,updated_at,turns:game_state->turns")
         .eq("visibility", "public").eq("status", "playing").eq("allow_watch", true).is("password_hash", null).eq("mode", "duel")
         .gte("updated_at", new Date(Date.now() - 10 * 60_000).toISOString())
         .order("updated_at", { ascending: false }).limit(20);
+      /* 賭けのようす (賭けた人数・合計・受付中か) も添える */
+      const liveIds = (live || []).map((room: any) => room.id);
+      const { data: liveBets } = liveIds.length
+        ? await admin.from("room_bets").select("room_id,amount").in("room_id", liveIds).limit(2000) : { data: [] };
+      const betOf = (id: string) => {
+        const rows = (liveBets || []).filter((b: any) => b.room_id === id);
+        return { count: rows.length, pool: rows.reduce((n: number, b: any) => n + (b.amount | 0), 0) };
+      };
       const watch = (live || []).map((room: any) => ({ code: room.code, title: room.title, names: [room.host_name, room.guest_name],
-        protocols: [room.host_protocols || [], room.guest_protocols || []], rated: !!room.rated }));
+        protocols: [room.host_protocols || [], room.guest_protocols || []], rated: !!room.rated,
+        bet: { ...betOf(room.id), open: (Number(room.turns) | 0) < ROOM_BET_TURNS } }));
       return json(req, { watch, waiting: (data || []).length, playing: playing || 0, rooms: (data || []).map((room: any) => ({
         code: room.code, title: room.title, hostName: room.host_name,
         locked: !!room.password_hash, draft: !!room.draft_state, rated: !!room.rated, createdAt: room.created_at,
@@ -788,6 +837,29 @@ Deno.serve(async (req) => {
       return json(req, publicState(created, 0, tagMode ? 0 : -1, true));
     }
 
+    /* 観戦の賭けの受け取り: 自分のまだ受け取っていない賭けのうち、決着したもの (部屋が消えたものは賭けた分を戻す)。
+       受け取り済みの印はここで1度だけ立てる (読み直し・別の端末で2回もらえない) */
+    if (op === "betClaim") {
+      const { data: rows, error } = await admin.from("room_bets").select("id,room_id,room_code,side,amount,names,result,payout")
+        .eq("user_id", user.id).eq("claimed", false).order("created_at", { ascending: true }).limit(50);
+      if (error) throw error;
+      for (const b of (rows || []).filter((r: any) => !r.result)) {
+        const { data: rm } = await admin.from("secure_rooms").select("id,status,winner:game_state->winner").eq("id", b.room_id).maybeSingle();
+        if (rm && rm.status !== "finished") continue;                      // まだ対戦中
+        /* game_state->winner は JSON の値で来る。決着していない (null) を 0 と読まないように、数と文字の両方を見る */
+        const w = rm ? String(rm.winner) : "";
+        await settleRoomBets(b.room_id, w === "0" || w === "1" ? Number(w) : null);
+      }
+      const ids = (rows || []).map((r: any) => r.id);
+      const claimed: any[] = [];
+      if (ids.length) {
+        const { data: done } = await admin.from("room_bets").update({ claimed: true }).in("id", ids).eq("claimed", false)
+          .not("result", "is", null).select("id,room_code,side,amount,names,result,payout");
+        for (const r of done || []) claimed.push({ id: r.id, code: r.room_code, side: r.side, amount: r.amount, names: r.names || null, result: r.result, payout: r.payout | 0 });
+      }
+      return json(req, { claimed, pending: ids.length - claimed.length });
+    }
+
     const roomCode = cleanCode(body.code);
     if (roomCode.length !== 6) return fail(req, "6桁のルームコードを入力してください");
     let room = await getRoom(roomCode);
@@ -871,15 +943,42 @@ Deno.serve(async (req) => {
     /* 観戦: 公開・合言葉なし・観戦を許した1対1の対戦だけ。手札と裏向きのカードはどちらも伏せる (side = -1)。
        見る向きは手前が作った人 (side 0)。指す操作は受け付けない (参加者ではないので下で弾かれる) */
     if (op === "watch") {
-      if (!room.allow_watch || room.visibility !== "public" || room.password_hash || room.mode === "tag") return fail(req, "この対戦は観戦できません", 403);
+      if (!watchable(room)) return fail(req, "この対戦は観戦できません", 403);
       if (room.status !== "playing" && room.status !== "finished") return fail(req, "まだ始まっていません", 409);
+      /* ping: 観戦の画面がときどき「見ています」を知らせる (観客の人数に数える)。毎回の問い合わせでは書かない */
+      if (body.ping === true && sideOf(room, user.id) < 0) {
+        await admin.from("room_watchers").upsert({ room_id: room.id, user_id: user.id, seen_at: new Date().toISOString() });
+      }
+      /* 賭けのようすは盤面が変わらなくても動くので、「変化なし」のときも付ける */
+      const bet = await betSummary(room, user.id).catch(() => null);
       if (typeof body.stamp === "string" && body.stamp === stampOf(room)) {
-        return json(req, { code: room.code, status: room.status, version: room.version, side: 0, stamp: body.stamp, unchanged: true, spectator: true });
+        return json(req, { code: room.code, status: room.status, version: room.version, side: 0, stamp: body.stamp, unchanged: true, spectator: true, bet });
       }
       const view = publicState(room, -1, -1, false);
       view.side = 0;
       view.spectator = true;
+      view.bet = bet;
       return json(req, view);
+    }
+
+    /* 観戦の賭け: 観ている人 (対戦している2人は賭けられない) が、序盤のうちに片方へ CHIP を賭ける。1部屋1回、取り消しなし。
+       CHIP の残りは端末側にあるので、ここでは額が決まった4つのどれかであることだけを見る */
+    if (op === "bet") {
+      if (!watchable(room)) return fail(req, "この対戦には賭けられません", 403);
+      if (sideOf(room, user.id) >= 0) return fail(req, "対戦している人は賭けられません", 403);
+      if (!betOpen(room)) return fail(req, "賭けの受付は終わりました", 409);
+      const betSide = Number(body.side), amount = Number(body.amount);
+      if (betSide !== 0 && betSide !== 1) return fail(req, "どちらに賭けるかを選んでください");
+      if (!ROOM_BET_AMOUNTS.includes(amount)) return fail(req, "賭ける CHIP が不正です");
+      const { error } = await admin.from("room_bets").insert({
+        room_id: room.id, room_code: room.code, user_id: user.id, name: cleanName(body.name).slice(0, 12) || "観客",
+        side: betSide, amount, names: [room.host_name || "", room.guest_name || ""],
+      });
+      if (error) {
+        if (error.code === "23505") return fail(req, "この対戦にはもう賭けています", 409);
+        throw error;
+      }
+      return json(req, { bet: await betSummary(room, user.id) });
     }
 
     const side = sideOf(room, user.id);
@@ -1238,6 +1337,10 @@ async function commitResult(req: Request, room: any, side: number, result: any, 
         last_action_at: new Date().toISOString(), updated_at: new Date().toISOString(),
       }).eq("id", room.id).eq("version", room.version).select("*").single();
       if (error) return fail(req, "相手の操作と競合しました。再読み込みします", 409);
+      /* 観戦の賭けの払い戻しの額を決める (受け取りは観客の画面の betClaim)。ここで失敗しても betClaim が決め直す */
+      if (result.winner !== null && room.mode !== "tag") {
+        try { await settleRoomBets(room.id, result.winner); } catch (betError) { console.error("room bets settle failed", betError); }
+      }
       let ratedError = false;
       if (result.winner !== null && room.rated) {
         try { await recordRatedMatch(room, result.winner); }

@@ -49,6 +49,7 @@ import { runSetup } from './setup.js';
 import { runTitle } from './title.js';
 import { mountTrainingTools } from './training.js';
 import * as ROOM from './room.js';
+import * as RB from './roombet.js';
 import * as PZ from './puzzle.js';
 import * as TS from './tsume.js';
 import { watchErrors, reportError } from './errorreport.js';
@@ -136,6 +137,8 @@ let demoMode = false;           // AI 同士の観戦 (?demo=1)
 let roomMode = false;           // オンライン対戦 (secure-room)
 let roomRm = null;              // 直近の publicState
 let roomWatching = false;        // オンラインの対戦を観戦している (指せない。両方の手札は伏せてある)
+let roomBetUi = null;            // 観戦の賭けの板 (roombet.js)
+let roomWatchPingAt = 0;         // 観客の人数に数えてもらうために最後に知らせた時刻
 let roomTracker = null;         // trace の差分追跡
 let roomPollTimer = null;
 let handCompactMode = null;
@@ -1186,7 +1189,7 @@ async function boot() {
         } catch (e) { noteError(e); dropJoinCode(); UI.toast('オンライン機能を読み込めませんでした。' + friendlyMessage(e, { online: navigator.onLine !== false }), 5000); nextMode = 'single'; continue; }
         if (!ROOM.roomConfigured()) { dropJoinCode(); UI.toast('この環境ではオンライン対戦を使えません (CPU 戦はこのまま遊べます)', 4000); nextMode = 'single'; continue; }
         /* ドラフト中にプロトコルの6枚を見る */
-        const result = await runRoomLobby(cards.protocols, { cardsOf: protocolCards, joinCode });
+        const result = await runRoomLobby(cards.protocols, { cardsOf: protocolCards, joinCode, onListed: () => { settleWatchBets(); } });
         joinCode = '';
         try { sessionStorage.removeItem('compileJoinCode'); } catch (e) { /* private mode */ }
         if (result && result.quick) { location.href = location.pathname + '?quick=1'; return; }
@@ -3848,7 +3851,10 @@ async function roomPoll(force) {
   if (busy && !force) return;
   let next;
   /* 前回の印 (stamp) を渡すと、変わっていないときは盤面を省いた「変化なし」が返る */
-  try { next = await ROOM.roomApi(roomWatching ? 'watch' : 'get', { code: roomRm.code, stamp: roomRm.stamp }); } catch (e) {
+  /* 観戦: 15 秒ごとに「見ています」を添える (観客の人数に数えてもらう) */
+  const ping = roomWatching && Date.now() - roomWatchPingAt > 15_000;
+  if (ping) roomWatchPingAt = Date.now();
+  try { next = await ROOM.roomApi(roomWatching ? 'watch' : 'get', { code: roomRm.code, stamp: roomRm.stamp, ...(ping ? { ping: true } : {}) }); } catch (e) {
     if (isRoomGone(e)) { roomClosed(); return; }
     /* ログインが切れた (別のタブでログアウトした・期限切れ): 通信の不調ではないので、ログインし直すよう知らせる。
        問い合わせは続け、ログインし直せばそのまま対戦に戻る (前は「通信が不安定です」が出続け、持ち時間が切れて負けた) */
@@ -3869,6 +3875,7 @@ async function roomPoll(force) {
   if (roomPollFails >= 4) { UI.toast('つながりました', 1600); setReconnecting(false); }
   roomPollFails = 0;
   if (roomWatching && watchFlipped && next) next = { ...next, side: 1 };   // 観戦で手前と奥を入れ替えている
+  if (roomBetUi && next) roomBetUi.update({ ...next, names: next.names || roomRm.names });   // 賭けのようすは盤面が変わらなくても動く
   if (next.unchanged || (next.version === roomRm.version && next.status === roomRm.status)) {
     roomPollIdle++;
     if (!next.unchanged) roomRm = next;
@@ -3896,6 +3903,7 @@ async function roomMaybeFinish() {
     await finaleFx(true);
     await UI.resultCutIn(true, { title: nm + ' WINS', sub: 'ONLINE MATCH' });
     showWatchEnd();
+    await settleWatchBets();
     return;
   }
   fadeOutBgm();
@@ -3997,6 +4005,16 @@ async function saveOnlineReplay(st, win, firstTime, opts) {
   } catch (e) { /* 残せなくても対戦の結果には響かない */ }
 }
 
+/* 観戦の賭けを受け取る (決着を見届けたとき・オンラインのロビーを開いたとき)。受け取ったものを知らせる */
+async function settleWatchBets() {
+  if (roomWatching && roomRm) {
+    /* 板の表示を当たり・外れに変える (決着の最後の問い合わせより後に額が決まることがある) */
+    try { const v = await ROOM.roomApi('watch', { code: roomRm.code, stamp: roomRm.stamp }); if (roomBetUi && v) roomBetUi.update({ ...v, names: roomRm.names }); } catch (e) { /* 板が古いままでも受け取りは下で */ }
+  }
+  const got = await RB.claimRoomBets(ROOM.roomApi);
+  for (const c of got) notice({ id: 'roomBet:' + c.id, title: c.result === 'win' ? '観戦の賭け: 当たり' : '観戦の賭け', text: RB.claimText(c) });
+}
+
 /* 観戦の決着のあと: 観戦できる対戦の一覧 (ロビー) へ・タイトルへ */
 function showWatchEnd() {
   unmountWatchTools();
@@ -4051,6 +4069,9 @@ async function roomEnterGame(rm) {
   if (roomWatching) {
     /* 途中から入ったときの、ここまでのまとめ (読み終わるまで出しておく) と、手前と奥の入れ替え */
     mountRoomWatchTools({ onFlip: roomWatchFlip, note: catchUpText(rm) });
+    /* 観客どうしの賭け (序盤のうちだけ受け付ける) */
+    roomBetUi = RB.mountRoomBet({ api: ROOM.roomApi, code: rm.code, name: displayName, toast: (m, ms) => UI.toast(m, ms) });
+    roomBetUi.update(rm);
   }
   startRoomPoll();
 }
