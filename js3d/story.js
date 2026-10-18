@@ -292,8 +292,8 @@ export const CHAPTERS = [
       { id: 'c1-ruri', kind: 'scene', title: '案内係', lines: [
         L('ruri', 'ご来館のみなさまに、ご案内いたします。'),
         L('ruri', 'あっ、みなさま、ようこそ！ 順路はこちらです。', 'surprised'),
-        L('ruri', '案内係の瑠璃です。パンフレット、どうぞ！', 'happy'),
-        L('sys', '> 瑠璃からパンフレットを受け取った'),
+        { ...L('ruri', '案内係の瑠璃です。パンフレット、どうぞ！', 'happy'), still: 'c1_open' },
+        { ...L('sys', '> 瑠璃からパンフレットを受け取った'), still: null },
         L('ruri', 'おすすめは、クラゲの部屋です。ゆらゆらしてて、ずっと見ていられるんです。', 'happy'),
         L('shion', '……。'),
         L('ruri', 'あ、えっと……今日は、お休みかもしれません。'),
@@ -438,8 +438,8 @@ export const CHAPTERS = [
           ] }
         ],
         after: [
-          L('ruri', 'わあ、外って、明るいんですね。', 'surprised'),
-          L('ruri', 'いつか、クラゲがまだ泳いでいる水族館、見てみたいです。', 'shy'),
+          { ...L('ruri', 'わあ、外って、明るいんですね。', 'surprised'), still: 'c1_join' },
+          { ...L('ruri', 'いつか、クラゲがまだ泳いでいる水族館、見てみたいです。', 'shy'), still: null },
           L('shion', 'うん。私も。', 'happy'),
           L('ruri', 'では、お客さま。紫苑さん。行きたい所まで、ご案内します！', 'happy'),
           L('sys', '> 瑠璃が仲間になった'),
