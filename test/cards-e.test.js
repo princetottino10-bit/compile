@@ -418,6 +418,17 @@ test('ASSIMILATION_6 下段: 終了時、自分のデッキの一番上を相手
   assert.deepEqual(stack(st, 1, 1), [['DIVERSITY_1', true], ['TIME_6', false]]);
 });
 
+test('ASSIMILATION_6 下段: 相手側のカードの無いラインにも置ける', () => {
+  let res = pz(
+    { protos: A, lines: [[['ASSIMILATION_6', true]], [], []], hand: ['SMOKE_1'], deck: ['TIME_6'] },
+    { protos: B, lines: [[['WAR_1', true]], [], []], hand: ['UNITY_2'] });
+  let lines = null;
+  res = drive(playDown(res, U0('SMOKE_1'), 1), { 'play-dest': (req) => { lines = req.lines; return [2]; } });
+  const st = res.state;
+  assert.deepEqual(lines, [0, 1, 2], '空いているラインも選べる');
+  assert.deepEqual(stack(st, 2, 1), [['TIME_6', false]]);
+});
+
 /* ================= DIVERSITY ================= */
 
 test('DIVERSITY_1 中段: フィールドに6種類のプロトコルがあれば DIVERSITY をコンパイル完了面にする', () => {

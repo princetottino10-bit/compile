@@ -14,10 +14,14 @@ export const baseOf = (id) => (isUpgraded(id) ? String(id).slice(0, -UP.length) 
 export const upgradeOf = (id) => (isUpgraded(id) ? null : String(id) + UP);
 export const isStar = (id) => /^X_[A-Z]+$/.test(baseOf(id));
 
-/* ★ カード。art: 絵に使う元のカードの番号 (1〜6) */
+/* ★ カード。art: 絵に使う元のカードの番号 (1〜6)
+   弱いプロトコル (js3d/protocol-strength.js で勝率 0.44 未満: ASSIMILATION / UNITY / LIGHT / METAL / CHAOS / APATHY) の β は、
+   値を 4 にして「カードを1枚プレイする。」を足してある (2026-10-16 ユーザー「弱いプロトコルのオリカは特に強く」。
+   ORACLE に盤面ごとに読ませた結果 (scripts/card_oracle.js)、局面を一番返す効果が「1枚プレイ」と値4だった)。
+   同じ命令を2回くり返す効果は「2枚〜する」とまとめず、「1枚〜する」を2回書く (2026-10-16 ユーザー指定。まとめると2枚同時に見える) */
 export const STAR_CARDS = [
   { id: 'X_FIRE', proto: 'FIRE', value: 2, art: 6, types: ['discard', 'delete'],
-    middle: 'あなたは手札を1枚捨て札にする。そうした場合、カードを2枚削除する。',
+    middle: 'あなたは手札を1枚捨て札にする。そうした場合、カードを1枚削除し、カードを1枚削除する。',
     ops: [{ op: 'discard', count: 1 }, { op: 'ifDone', ops: [{ op: 'delete' }, { op: 'delete' }] }] },
   { id: 'X_WATER', proto: 'WATER', value: 2, art: 5, types: ['draw', 'return'],
     middle: 'カードを2枚引く。カードを1枚戻す。',
@@ -34,14 +38,14 @@ export const STAR_CARDS = [
   { id: 'X_PSYCHIC', proto: 'PSYCHIC', value: 2, art: 5, types: ['discard', 'reveal'],
     middle: '相手は手札を2枚捨て札にし、そのあと手札を公開する。',
     ops: [{ op: 'discard', count: 2, player: 'opp' }, { op: 'reveal', target: 'oppHand' }] },
-  { id: 'X_LIGHT', proto: 'LIGHT', value: 3, art: 5, types: ['flip', 'draw'],
-    middle: 'カードを1枚反転させる。カードを2枚引く。',
-    ops: [{ op: 'flip' }, { op: 'draw', count: 2 }] },
+  { id: 'X_LIGHT', proto: 'LIGHT', value: 4, art: 5, types: ['flip', 'draw', 'play'],
+    middle: 'カードを1枚反転させる。カードを2枚引く。カードを1枚プレイする。',
+    ops: [{ op: 'flip' }, { op: 'draw', count: 2 }, { op: 'play', source: 'hand' }] },
   { id: 'X_DARKNESS', proto: 'DARKNESS', value: 1, art: 5, types: ['flip'],
-    middle: '相手のカードを2枚反転させる。',
+    middle: '相手のカードを1枚反転させる。相手のカードを1枚反転させる。',
     ops: [{ op: 'flip', select: { owner: 'opp' } }, { op: 'flip', select: { owner: 'opp' } }] },
   { id: 'X_GRAVITY', proto: 'GRAVITY', value: 2, art: 5, types: ['shift', 'draw'],
-    middle: 'カードを2枚移動させる。カードを1枚引く。',
+    middle: 'カードを1枚移動させる。カードを1枚移動させる。カードを1枚引く。',
     ops: [{ op: 'shift' }, { op: 'shift' }, { op: 'draw', count: 1 }] },
   { id: 'X_PLAGUE', proto: 'PLAGUE', value: 1, art: 5, types: ['discard', 'flip'],
     middle: '相手は手札を1枚捨て札にする。相手のカードを1枚反転させる。',
@@ -54,10 +58,10 @@ export const STAR_CARDS = [
     ops: [{ op: 'draw', count: 3 }, { op: 'draw', count: 1, player: 'opp' }] },
   /* ここから (2026-09-29): 同じプロトコルの元のカードの段を組み合わせて作る。from: { 段: 元のカードの値 (配列なら順につなぐ) }。
      文と効果は元のカードからそのまま写す (かみ合わせ・関係が必ずあり、エンジンの仕組みもそのまま動く) */
-  { id: 'X_METAL', proto: 'METAL', value: 3, from: { upper: 0 } },
+  { id: 'X_METAL', proto: 'METAL', value: 4, from: { upper: 0 }, append: { text: 'カードを1枚プレイする。', ops: [{ op: 'play', source: 'hand' }] } },
   { id: 'X_SPIRIT', proto: 'SPIRIT', value: 2, from: { upper: 3, middle: 1 } },
-  { id: 'X_APATHY', proto: 'APATHY', value: 2, from: { upper: 0, middle: 3 } },
-  { id: 'X_CHAOS', proto: 'CHAOS', value: 2, from: { middle: 2, lower: 3 } },
+  { id: 'X_APATHY', proto: 'APATHY', value: 4, from: { upper: 0, middle: 3 }, append: { text: 'カードを1枚プレイする。', ops: [{ op: 'play', source: 'hand' }] } },
+  { id: 'X_CHAOS', proto: 'CHAOS', value: 4, from: { middle: 2, lower: 3 }, append: { text: 'カードを1枚プレイする。', ops: [{ op: 'play', source: 'hand' }] } },
   { id: 'X_CLARITY', proto: 'CLARITY', value: 2, from: { middle: 1, lower: 1 } },
   { id: 'X_CORRUPTION', proto: 'CORRUPTION', value: 2, from: { upper: 2, middle: 2 } },
   { id: 'X_COURAGE', proto: 'COURAGE', value: 3, from: { middle: 1, lower: 2 } },
@@ -72,9 +76,9 @@ export const STAR_CARDS = [
   { id: 'X_SMOKE', proto: 'SMOKE', value: 2, from: { upper: 2, middle: 3 } },
   { id: 'X_TIME', proto: 'TIME', value: 2, from: { middle: 3 }, append: { text: 'カードを1枚引く。', ops: [{ op: 'draw', count: 1 }] } },
   { id: 'X_WAR', proto: 'WAR', value: 2, from: { middle: 4, lower: 3 } },
-  { id: 'X_ASSIMILATION', proto: 'ASSIMILATION', value: 2, from: { middle: 4, lower: 2 } },
+  { id: 'X_ASSIMILATION', proto: 'ASSIMILATION', value: 4, from: { middle: 4, lower: 2 }, append: { text: 'カードを1枚プレイする。', ops: [{ op: 'play', source: 'hand' }] } },
   { id: 'X_DIVERSITY', proto: 'DIVERSITY', value: 2, from: { upper: 3, middle: 1 } },
-  { id: 'X_UNITY', proto: 'UNITY', value: 2, from: { middle: [0, 2] } }
+  { id: 'X_UNITY', proto: 'UNITY', value: 4, from: { middle: [0, 2] }, append: { text: 'カードを1枚プレイする。', ops: [{ op: 'play', source: 'hand' }] } }
 ];
 /* Ω カード (2026-10-16): ORACLE が考えたカード。勝ち抜き戦の最終ボス「最強」(FIRE / WATER / SPEED) の山札にだけ入る (あなたは手に入れられない)。
    作り方: ORACLE 同士の対戦から拾った196盤面で、手番の側に候補を1枚足して表で出させ、学習モデルで勝つ見込みを読んだ

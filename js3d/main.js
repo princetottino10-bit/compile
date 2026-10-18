@@ -49,6 +49,7 @@ import { runSetup } from './setup.js';
 import { runTitle } from './title.js';
 import { mountTrainingTools } from './training.js';
 import * as ROOM from './room.js';
+import * as RB from './roombet.js';
 import * as PZ from './puzzle.js';
 import * as TS from './tsume.js';
 import { watchErrors, reportError } from './errorreport.js';
@@ -74,7 +75,7 @@ import { openOpponentSelect } from './opponent-select.js';
 import { UNDERDOG_DECK, STRONGEST_AI, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL, UNDERDOG_TAG_RIVAL_MATE, levelLabel, fixedDeck, DEUS_LEVEL, DEUS_NAME, DEUS_BUDGET, PEEK_LEVEL, PEEK_NAME, ORACLE_LEVEL, oracleAi, isHonki, honkiOf, honkiAi } from './aidecks.js';
 import { openRun, runHud, showRunAfterGame } from './run-ui.js';
 import { openWeekly, weeklyHud, showWeeklyAfterGame } from './weekly-ui.js';
-import { compilesBy, loadRun, RUN_WIN_COMPILES, runWinCompiles, battleOpts, lethal, nodeById } from './run.js';
+import { compilesBy, loadRun, RUN_WIN_COMPILES, runWinCompiles, battleOpts, lethal, nodeById, runAiBlunder, runRules } from './run.js';
 import { loadWeekly, loadStoredWeekly, weekKey } from './weekly.js';
 import { openReview } from './review.js';
 import { runRoomLobby } from './roomui.js';
@@ -125,6 +126,10 @@ let pickAid = null;           // カードを選ぶときの手助け (矢印・
 let cur = null;                 // { state, requests, log, winner }
 let busy = false;               // 演出中はクリックを無視
 let selectedUid = null;
+/* カオス勝ち抜き戦の、遊び方を壊す異変 (目隠し・5秒ルール・天地逆転)。forcedMe: 5秒を過ぎて、自分の手を CPU がでたらめに打っている */
+let chaosRules = {};
+let forcedMe = false, forcedSpent = false;
+let swapSeen = 0;               // 手札交換・寝返りの知らせを出した手番 (同じ入れ替わりで2度出さない)
 let hoverUid = null;
 let ctrlMarker = null;
 let pads = [];                  // 着地パッド (line × side)
@@ -132,6 +137,8 @@ let demoMode = false;           // AI 同士の観戦 (?demo=1)
 let roomMode = false;           // オンライン対戦 (secure-room)
 let roomRm = null;              // 直近の publicState
 let roomWatching = false;        // オンラインの対戦を観戦している (指せない。両方の手札は伏せてある)
+let roomBetUi = null;            // 観戦の賭けの板 (roombet.js)
+let roomWatchPingAt = 0;         // 観客の人数に数えてもらうために最後に知らせた時刻
 let roomTracker = null;         // trace の差分追跡
 let roomPollTimer = null;
 let handCompactMode = null;
@@ -1182,7 +1189,7 @@ async function boot() {
         } catch (e) { noteError(e); dropJoinCode(); UI.toast('オンライン機能を読み込めませんでした。' + friendlyMessage(e, { online: navigator.onLine !== false }), 5000); nextMode = 'single'; continue; }
         if (!ROOM.roomConfigured()) { dropJoinCode(); UI.toast('この環境ではオンライン対戦を使えません (CPU 戦はこのまま遊べます)', 4000); nextMode = 'single'; continue; }
         /* ドラフト中にプロトコルの6枚を見る */
-        const result = await runRoomLobby(cards.protocols, { cardsOf: protocolCards, joinCode });
+        const result = await runRoomLobby(cards.protocols, { cardsOf: protocolCards, joinCode, onListed: () => { settleWatchBets(); } });
         joinCode = '';
         try { sessionStorage.removeItem('compileJoinCode'); } catch (e) { /* private mode */ }
         if (result && result.quick) { location.href = location.pathname + '?quick=1'; return; }
@@ -1388,10 +1395,13 @@ async function boot() {
       : tutorial
         ? Engine.newPuzzle(tutorial.lesson.spec, { seed: 1 })
         : Engine.newGame({ seed, p0, p1, first: firstPlayer, training: trainingMode, winCompiles,
-          ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods, winCompilesBySide: runOpts.winCompilesBySide, perks: runOpts.perks, startCompiled: runOpts.startCompiled } : {}),
+          ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods, winCompilesBySide: runOpts.winCompilesBySide, perks: runOpts.perks, startCompiled: runOpts.startCompiled, misere: runOpts.misere, handSwap: runOpts.handSwap, turncoat: runOpts.turncoat } : {}),
           ...(storyOpts || {}),
           ...(tagMates ? { tag: tagMates } : {}) });
   cur = res;
+  chaosRules = runMode && runKind === 'run' && !replayMode && !reviewView ? runRules(loadRun()) : {};
+  board.setBlind(!!chaosRules.blind);
+  stage.setFlip(!!chaosRules.flip);
   /* 対戦の BGM (ボス戦は専用の曲)。機械仕掛けの神は、降臨の演出で着地したときに流す (それまでは静か) */
   const deusEntrance = machineMatch() && !resumed && !replayMode && !reviewView && !spectate;
   if (deusEntrance) fadeOutBgm(); else playBattleBgm();
@@ -1405,6 +1415,9 @@ async function boot() {
       mpShown.mp = mpShown.dg = true;
       setTimeout(() => slam('SHORT MATCH', '1本先取 ・ 先にコンパイルした方の勝ち', 'mp'), 700);
     }
+    /* カオスの「負けるが勝ち」: SHORT MATCH の言い方とあべこべになるので、あとから上書きして知らせる */
+    if (cur.state.misere) setTimeout(() => slam('MISÈRE', '負けるが勝ち ・ 先にコンパイルし終えた方の負け', 'dg'), 2400);
+    swapSeen = cur.state.turns | 0;
   }
   if (!trainingMode && !puzzle && !tutorial && !demoMode && !replayMode) CW.battleStarted(storyNode ? 'story' : runMode ? runKind : tagMates ? 'tag' : quickGame ? 'quick' : 'cpu', p0, p1);
   if (!trainingMode && !puzzle && !tutorial && !demoMode && !replayMode) lastSetup = { p0: p0.slice(), p1: p1.slice(), mates: tagMates };
@@ -1418,7 +1431,7 @@ async function boot() {
   /* CPU 戦は棋譜を取る (決着したらリプレイとして残す) */
   /* タッグはリプレイに残さない (棋譜の形が 1 対 1 のため) */
   const gameInit = resumed ? resumed.rec.init : { seed, p0: p0.slice(), p1: p1.slice(), first: firstPlayer, winCompiles: winCompiles || null,
-    ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods, winCompilesBySide: runOpts.winCompilesBySide, perks: runOpts.perks, startCompiled: runOpts.startCompiled } : {}),
+    ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods, winCompilesBySide: runOpts.winCompilesBySide, perks: runOpts.perks, startCompiled: runOpts.startCompiled, misere: runOpts.misere, handSwap: runOpts.handSwap, turncoat: runOpts.turncoat } : {}),
     ...(storyOpts || {}) };
   const priorActions = resumed ? resumed.rec.actions : [];
   /* CPU どうしの観戦も残す (RECORD のリプレイの「観戦」の枠。?demo=1 の流しっぱなしは残さない) */
@@ -2063,6 +2076,8 @@ function applyAiDifficulty(level, opts) {
   };
   /* ORACLE (CHALLENGE の相手): 管理者の自動プレイと同じ読み。学習モデルは Worker が読む。画面側で考えるときは aiAction の ORACLE_CPU_AI で当てる */
   if (level === ORACLE_LEVEL) Object.assign(config, ORACLE_CPU_AI);
+  /* カオス勝ち抜き戦の異変「酔っぱらい」: 強い読みのまま、手の半分がでたらめ */
+  if (runMode && runKind === 'run') config.blunder = Math.max(config.blunder, runAiBlunder(loadRun()));
   if (isHonki(level)) Object.assign(config, honkiAi(ORACLE_CPU_AI, level));
   Engine.setAiLevel(config.level);
   if (Engine.setAiBlunder) Engine.setAiBlunder(config.blunder);
@@ -2085,7 +2100,7 @@ const AUTO_AI = { level: 2, blunder: 0, budget: 2400, specialist: true, kind: 'd
 /* オンラインでも使える (2026-10-14)。ただし 1対1 で、レート戦ではない部屋だけ (レートに CPU の指した対戦を混ぜない)。
    タッグ・観戦では使わない */
 const roomAutoOk = () => roomMode && !!roomRm && !roomWatching && !roomTag && roomRm.mode !== 'tag' && !roomRm.rated;
-const autoOn = () => autoPlay && (!roomMode || roomAutoOk());
+const autoOn = () => (autoPlay && (!roomMode || roomAutoOk())) || forcedMe;
 const autoFor = (side) => autoOn() && side === ME;
 /* CPU 戦の相手としての ORACLE (CHALLENGE、誰でも選べる)。CPU の側 (1) に特化と ORACLE の手筋を当てる。オート操作の開放ではない */
 const ORACLE_CPU_AI = { ...AUTO_AI, specSide: 1 };
@@ -2095,12 +2110,14 @@ const oracleCpuAi = (st) => (isHonki(aiDifficulty) ? honkiAi(ORACLE_CPU_AI, aiDi
 /* 下剋上タッグの味方: かんたんと同じ読み (3割はでたらめ)。相手の最強タッグはいつもの最強の読み */
 const UNDERDOG_MATE_AI = { level: 0, blunder: 0.3, budget: 900, specialist: false, kind: 'dsh' };
 const weakMate = (side) => aiDifficulty === UNDERDOG_TAG_LEVEL && side === ME && !roomMode && partnerMove();
+/* 5秒ルールで時間切れのときの自分の手: 読まずに合法手からでたらめに */
+const FORCED_AI = { level: 0, blunder: 1, budget: 300, specialist: false, kind: 'dsh', specSide: 0 };
 function aiAction(st) {
-  const over = autoFor(st && st.turn) ? oracleAi(AUTO_AI, st) : weakMate(st && st.turn) ? UNDERDOG_MATE_AI : st && oracleFor(st.turn) ? oracleCpuAi(st) : null;
+  const over = forcedMe && st && st.turn === ME ? FORCED_AI : autoFor(st && st.turn) ? oracleAi(AUTO_AI, st) : weakMate(st && st.turn) ? UNDERDOG_MATE_AI : st && oracleFor(st.turn) ? oracleCpuAi(st) : null;
   return thinking(aiClient ? aiClient.action(st, over) : Promise.resolve(withoutTrace(() => Engine.ai.action(st))));
 }
 function aiAnswer(st, req) {
-  const over = req && autoFor(req.player) ? oracleAi(AUTO_AI, st) : req && weakMate(req.player) ? UNDERDOG_MATE_AI : req && oracleFor(req.player) ? oracleCpuAi(st) : null;
+  const over = forcedMe && req && req.player === ME ? FORCED_AI : req && autoFor(req.player) ? oracleAi(AUTO_AI, st) : req && weakMate(req.player) ? UNDERDOG_MATE_AI : req && oracleFor(req.player) ? oracleCpuAi(st) : null;
   return thinking(aiClient ? aiClient.answer(st, req, over) : Promise.resolve(withoutTrace(() => Engine.ai.answer(st, req))));
 }
 /* 上のバーの AUTO (管理者だけ。チュートリアル・問題・検証盤面・リプレイ・観戦、オンラインのタッグ・レート戦では出さない) */
@@ -2883,7 +2900,8 @@ function cardDetail(uid, st = shown()) {
   const card = uid && st && st.cards[uid];
   if (!card) return null;
   /* トレーニングは検証用の盤面なので、どちらの裏向きも中身を出す */
-  const visible = card.def && (trainingMode || card.faceUp || ((card.knownTo || 0) & (1 << ME)));
+  const blindHide = chaosRules.blind && card.owner === ME && !card.faceUp;     // 目隠し: 自分の札も、表でなければ読めない
+  const visible = card.def && !blindHide && (trainingMode || card.faceUp || ((card.knownTo || 0) & (1 << ME)));
   if (!visible) {
     return { hidden: true, title: '裏向きのカード', proto: '裏向きのカード', value: 2, color: '#8fa8c8',
       badge: '非公開', note: '値2', rows: [] };
@@ -3836,7 +3854,10 @@ async function roomPoll(force) {
   if (busy && !force) return;
   let next;
   /* 前回の印 (stamp) を渡すと、変わっていないときは盤面を省いた「変化なし」が返る */
-  try { next = await ROOM.roomApi(roomWatching ? 'watch' : 'get', { code: roomRm.code, stamp: roomRm.stamp }); } catch (e) {
+  /* 観戦: 15 秒ごとに「見ています」を添える (観客の人数に数えてもらう) */
+  const ping = roomWatching && Date.now() - roomWatchPingAt > 15_000;
+  if (ping) roomWatchPingAt = Date.now();
+  try { next = await ROOM.roomApi(roomWatching ? 'watch' : 'get', { code: roomRm.code, stamp: roomRm.stamp, ...(ping ? { ping: true } : {}) }); } catch (e) {
     if (isRoomGone(e)) { roomClosed(); return; }
     /* ログインが切れた (別のタブでログアウトした・期限切れ): 通信の不調ではないので、ログインし直すよう知らせる。
        問い合わせは続け、ログインし直せばそのまま対戦に戻る (前は「通信が不安定です」が出続け、持ち時間が切れて負けた) */
@@ -3857,6 +3878,7 @@ async function roomPoll(force) {
   if (roomPollFails >= 4) { UI.toast('つながりました', 1600); setReconnecting(false); }
   roomPollFails = 0;
   if (roomWatching && watchFlipped && next) next = { ...next, side: 1 };   // 観戦で手前と奥を入れ替えている
+  if (roomBetUi && next) roomBetUi.update({ ...next, names: next.names || roomRm.names });   // 賭けのようすは盤面が変わらなくても動く
   if (next.unchanged || (next.version === roomRm.version && next.status === roomRm.status)) {
     roomPollIdle++;
     if (!next.unchanged) roomRm = next;
@@ -3884,6 +3906,7 @@ async function roomMaybeFinish() {
     await finaleFx(true);
     await UI.resultCutIn(true, { title: nm + ' WINS', sub: 'ONLINE MATCH' });
     showWatchEnd();
+    await settleWatchBets();
     return;
   }
   fadeOutBgm();
@@ -3985,6 +4008,16 @@ async function saveOnlineReplay(st, win, firstTime, opts) {
   } catch (e) { /* 残せなくても対戦の結果には響かない */ }
 }
 
+/* 観戦の賭けを受け取る (決着を見届けたとき・オンラインのロビーを開いたとき)。受け取ったものを知らせる */
+async function settleWatchBets() {
+  if (roomWatching && roomRm) {
+    /* 板の表示を当たり・外れに変える (決着の最後の問い合わせより後に額が決まることがある) */
+    try { const v = await ROOM.roomApi('watch', { code: roomRm.code, stamp: roomRm.stamp }); if (roomBetUi && v) roomBetUi.update({ ...v, names: roomRm.names }); } catch (e) { /* 板が古いままでも受け取りは下で */ }
+  }
+  const got = await RB.claimRoomBets(ROOM.roomApi);
+  for (const c of got) notice({ id: 'roomBet:' + c.id, title: c.result === 'win' ? '観戦の賭け: 当たり' : '観戦の賭け', text: RB.claimText(c) });
+}
+
 /* 観戦の決着のあと: 観戦できる対戦の一覧 (ロビー) へ・タイトルへ */
 function showWatchEnd() {
   unmountWatchTools();
@@ -4039,6 +4072,9 @@ async function roomEnterGame(rm) {
   if (roomWatching) {
     /* 途中から入ったときの、ここまでのまとめ (読み終わるまで出しておく) と、手前と奥の入れ替え */
     mountRoomWatchTools({ onFlip: roomWatchFlip, note: catchUpText(rm) });
+    /* 観客どうしの賭け (序盤のうちだけ受け付ける) */
+    roomBetUi = RB.mountRoomBet({ api: ROOM.roomApi, code: rm.code, name: displayName, toast: (m, ms) => UI.toast(m, ms) });
+    roomBetUi.update(rm);
   }
   startRoomPoll();
 }
@@ -4649,6 +4685,35 @@ async function step(action) {
   syncAssist();
   await drainRequests();
   await afterTurn();
+}
+
+/* カオス勝ち抜き戦の「5秒ルール」: 自分の手番に 5 秒の秒読み。過ぎたら、その手番は CPU がでたらめに打つ。
+   盤面が変わった (手を打った・対戦をやめた) ら秒読みは消える */
+let tickTimer = null;
+function startTick() {
+  if (tickTimer) { clearInterval(tickTimer); tickTimer = null; }
+  const old = document.getElementById('chaosTick');
+  if (old) old.remove();
+  if (!cur || cur.state.winner !== null || cur.requests.length || !humanTurn(cur.state)) return;
+  const at = cur;
+  const el = document.createElement('div');
+  el.id = 'chaosTick'; el.className = 'chaos-tick';
+  document.body.appendChild(el);
+  let left = 5;
+  const show = () => { el.textContent = String(left); el.classList.toggle('hot', left <= 2); el.classList.remove('beat'); void el.offsetWidth; el.classList.add('beat'); };
+  show();
+  tickTimer = setInterval(() => {
+    if (cur !== at || !humanTurn(cur.state)) { clearInterval(tickTimer); tickTimer = null; el.remove(); return; }
+    if (left > 0) { left--; if (left > 0) { show(); sfx('tick'); } }
+    if (left > 0 || busy) return;                    // 演出の途中なら、終わるまで待ってから
+    clearInterval(tickTimer); tickTimer = null;
+    el.textContent = 'TIME UP'; el.classList.add('up');
+    setTimeout(() => el.remove(), 900);
+    forcedMe = true;
+    deselect();
+    UI.toast('時間切れ！ でたらめに打ちます', 1800);
+    afterTurn();
+  }, 1000);
 }
 
 /* 選択要求を処理し切る */
@@ -5692,7 +5757,7 @@ async function drainRequests() {
       else picks = await askUser(req);
     } else {
       UI.setPrompt(spectate ? specName(req.player, cur.state.tag ? cur.state.tag.pilot[req.player] : 0) + ' が選択しています…'
-        : req.player === ME ? (autoFor(ME) ? 'ORACLE が選択しています…' : '味方が選択しています…') : '相手が選択しています…', 'wait');
+        : req.player === ME ? (forcedMe ? '時間切れ… でたらめに選んでいます' : autoFor(ME) ? 'ORACLE が選択しています…' : '味方が選択しています…') : '相手が選択しています…', 'wait');
       const at = cur;
       const [ans] = await Promise.all([aiAnswer(cur.state, req), TW.wait(260)]);
       if (cur !== at) return;                     // 考えている間に対戦をやめた
@@ -5711,7 +5776,6 @@ async function drainRequests() {
       UI.toast('AUTO: 模範解答の選択が受け付けられませんでした (' + res.error + ')。ここから先は自分で選べます', 6000);
       busy = false; continue;
     }
-    if (res.error) { UI.toast(res.error); busy = false; continue; }   // 再質問へ
     logAction(answer);
     cur = res;
     await replayResolution(prev, res, null);
@@ -5739,6 +5803,8 @@ async function afterTurn() {
     return;
   }
   if (tutorial && await tutorialAfterStep()) return;
+  /* 5秒ルールのでたらめな手は1手だけ (その手の選択まで CPU が答えたら、手を返す) */
+  if (forcedSpent) { forcedMe = false; forcedSpent = false; }
   await announceTurn();
   let guardAi = 0;
   while (cur && cur.state.winner === null && (demoMode || cur.state.turn === AI || partnerMove() || autoFor(cur.state.turn))
@@ -5749,7 +5815,8 @@ async function afterTurn() {
     const at = cur;
     const [action] = await Promise.all([aiAction(cur.state), TW.wait(demoMode ? 420 : 260)]);
     if (cur !== at) return;                       // 考えている間に対戦をやめた
-    if (!action) break;
+    if (!action) { forcedMe = false; break; }
+    if (forcedMe && cur.state.turn === ME) forcedSpent = true;
     await step(action);
     return;   // step が再帰的に afterTurn を呼ぶ
   }
@@ -5760,6 +5827,16 @@ async function afterTurn() {
   }
   refreshHud();
   syncAssist();
+  /* 手札交換・寝返り: 手番の変わり目に起きたら大きく知らせる (同じ手番で2度出さない) */
+  const tn = cur.state.turns | 0;
+  if (tn !== swapSeen && cur.state.winner === null) {
+    const swapped = cur.state.handSwap && tn % cur.state.handSwap === 0;
+    const turned = cur.state.turncoat && tn % cur.state.turncoat === 0;
+    if (swapped || turned) swapSeen = tn;
+    if (swapped) slam('HAND SWAP', '手札がまるごと入れ替わった！', 'mp');
+    else if (turned) slam('TURNCOAT', 'いちばん上のカードが寝返った！', 'dg');
+  }
+  if (chaosRules.tick) startTick();
   if (cur.state.winner !== null && !resultShown) {
     resultShown = true;
     fadeOutBgm();                                   // 決着したら BGM は引いて、勝ち・負けの音だけにする
@@ -5872,7 +5949,7 @@ async function afterTurn() {
           }
         } else {
           const was = loadRun();
-          showRunAfterGame(win, compilesBy(cur.state, AI), realProtos(), win ? runBonus() : 0, scoreNow());
+          showRunAfterGame(win, lifeHits(cur.state), realProtos(), win ? runBonus() : 0, scoreNow());
           if (win) maybeLoginHint('runWin');
           const now = loadRun();
           if (was && was.phase === 'battle' && now && now.phase === 'clear') await gainXp('run', XP_GAIN.runClear);
@@ -6695,6 +6772,9 @@ function panelRows(st) {
   });
 }
 
+/* 勝ち抜き戦でライフが減る数: ふつうは相手にコンパイルされた数。負けるが勝ちでは、自分がコンパイルしてしまった数 */
+const lifeHits = (st) => compilesBy(st, st && st.misere ? ME : AI);
+
 /* 名札の横の「勝ちまでの進み具合」(●●○) を盤面に合わせる */
 function syncCompileProgress(st) {
   if (!st || !st.players) return;
@@ -6703,7 +6783,7 @@ function syncCompileProgress(st) {
   const done = (side) => st.players[side].protocols.filter(p => p.compiled).length;
   setCompileProgress({ done: done(ME), need: need(ME) }, { done: done(1 - ME), need: need(1 - ME) });
   /* あと1本で決まる場面になった瞬間に、MATCH POINT / DANGER (勝ち抜き戦だけ。1試合で1回ずつ) */
-  if (hypeOn() && st.winner == null && gameStartedAt && Date.now() - gameStartedAt > 1500) {
+  if (hypeOn() && !st.misere && st.winner == null && gameStartedAt && Date.now() - gameStartedAt > 1500) {
     for (const side of [ME, AI]) {
       const key = side === ME ? 'mp' : 'dg';
       if (need(side) > 1 && done(side) === need(side) - 1 && !mpShown[key]) { mpShown[key] = true; setTimeout(() => matchPoint(side === ME), 900); }
@@ -6716,7 +6796,7 @@ function syncPanels(st, animate) {
   syncCompileProgress(st);
   if (runMode && runKind === 'run' && st && !runEnded) {
     /* 勝ち抜き戦: 相手にコンパイルされた回数だけライフを減らして見せる。尽きたらその場で終わり */
-    const lost = compilesBy(st, AI);
+    const lost = lifeHits(st);
     runHud(lost, runBonus());
     const run = loadRun();
     if (run && lethal(run, lost)) {
