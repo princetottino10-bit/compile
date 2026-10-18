@@ -2089,10 +2089,9 @@ function execPlayOp(ctx, fr, op) {
       } else {
         const allowed = [0, 1, 2].filter(l3 => canPlay(st, who, uid, l3, false));
         if (!allowed.length) { fr.done = false; return; }
-        const nonEmpty = allowed.filter(l3 => st.lines[l3][stSide].length > 0);
-        const lines2 = nonEmpty.length ? nonEmpty : allowed;
-        l2 = lines2.length === 1 ? lines2[0]
-          : choose(ctx, { kind: 'pickLine', player: fr.controller, lines: lines2, prompt: 'play-dest', side: stSide, context: defOf(st, fr.source).id })[0];
+        /* 「任意のスタック」なので、カードの無いラインも含めてどこにでも置ける */
+        l2 = allowed.length === 1 ? allowed[0]
+          : choose(ctx, { kind: 'pickLine', player: fr.controller, lines: allowed, prompt: 'play-dest', side: stSide, context: defOf(st, fr.source).id })[0];
       }
       deck.shift();
       playToField(ctx, uid, l2, stSide, false);
