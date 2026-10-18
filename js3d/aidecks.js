@@ -85,10 +85,10 @@ export const DEUS_NAME = 'CODE:PURPLE';
 export const HONKI_BASE = 30;
 export const HONKI = [
   /* 紫苑: 機械仕掛けの神と同じロックのデッキ。ロック用の学習モデル (ORACLE_LOCK_AI) がそのまま使える */
-  { avatar: 'shion', color: '#a07bff', name: '本気紫苑', note: '読みを解析しきって、サイキック①で縛りに来る', fav: 'PSYCHIC', deck: ['PSYCHIC', 'DARKNESS', 'FIRE'], alt: ['PSYCHIC', 'DIVERSITY', 'FEAR'], ai: ORACLE_LOCK_AI },
-  { avatar: 'asagi', color: '#3d7dff', name: '本気瑠璃', note: 'ウォーターの流れで、自分の順路へ連れていく', fav: 'WATER', deck: ['WATER', 'HATE', 'TIME'], alt: ['WATER', 'TIME', 'DIVERSITY'], ai: {} },
-  { avatar: 'yamabuki', color: '#ff8a2a', name: '本気杏', note: 'ファイアの勢いで、押しきりに来る', fav: 'FIRE', deck: ['FIRE', 'WATER', 'COURAGE'], alt: ['FIRE', 'FEAR', 'CORRUPTION'], ai: {} },
-  { avatar: 'nadeshiko', color: '#e0283c', name: '本気茜', note: 'ヘイトで、盤面をきれいに片づけに来る', fav: 'HATE', deck: ['HATE', 'FIRE', 'DEATH'], alt: ['HATE', 'LUCK', 'DIVERSITY'], ai: {} }
+  { avatar: 'shion', color: '#a07bff', name: '本気紫苑', note: '読みを解析しきって、サイキック①で縛りに来る', fav: 'PSYCHIC', deck: ['PSYCHIC', 'DARKNESS', 'FIRE'], alt: ['PSYCHIC', 'DIVERSITY', 'MIRROR'], ai: ORACLE_LOCK_AI },
+  { avatar: 'asagi', color: '#3d7dff', name: '本気瑠璃', note: 'ウォーターの流れで、自分の順路へ連れていく', fav: 'WATER', deck: ['WATER', 'HATE', 'TIME'], alt: ['WATER', 'FEAR', 'LUCK'], ai: {} },
+  { avatar: 'yamabuki', color: '#ff8a2a', name: '本気杏', note: 'ファイアの勢いで、押しきりに来る', fav: 'FIRE', deck: ['FIRE', 'WATER', 'COURAGE'], alt: ['FIRE', 'LIFE', 'SPEED'], ai: {} },
+  { avatar: 'nadeshiko', color: '#e0283c', name: '本気茜', note: 'ヘイトで、盤面をきれいに片づけに来る', fav: 'HATE', deck: ['HATE', 'FIRE', 'DEATH'], alt: ['HATE', 'GRAVITY', 'PLAGUE'], ai: {} }
 ];
 export const isHonki = (level) => level >= HONKI_BASE && level < HONKI_BASE + HONKI.length;
 export const honkiOf = (level) => (isHonki(level) ? HONKI[level - HONKI_BASE] : null);
@@ -96,8 +96,10 @@ export const honkiOf = (level) => (isHonki(level) ? HONKI[level - HONKI_BASE] : 
 export const honkiAi = (cfg, level) => ({ ...cfg, ...honkiOf(level).ai });
 /* 本気のキャラ同士の対戦 (2026-10-16 ユーザー「お互いが対戦したりする時用に」): デッキのプロトコルがかぶったら、片方が alt (2つ目のデッキ) にゆずる。
    かぶったプロトコルが誰かの得意なら、その持ち主が残す (FIRE は杏、WATER は瑠璃)。どちらの得意でもなければ、HONKI で後ろの子がゆずる (紫苑と茜の FIRE は茜がゆずる)。
-   alt はほかの3人の1つ目のデッキのプロトコルを除いて探した (scripts/deck_search.js --exclude、2026-10-18) ので、ゆずった側はもうかぶらない。
-   ORACLE の読みで alt 対 1つ目を200戦: 瑠璃 46.2%・杏 33.8%・茜 46.0%・紫苑 28.5% (ロック) で、どれも1つ目を上回らないので1つ目は変えない。
+   alt は4人同時のタッグでもかぶらないように、ほかの3人の1つ目のプロトコルも、ほかの子の alt のプロトコルも使わない (12個すべて別)。
+   選び方 (2026-10-18 ユーザー「可能な限り強くして、ストーリーで握る組み合わせもそれにしよう」): 使える中で強さの目安 (proto_strength) が上位の8個を、いちばん弱い子の勝率が最大になるように配った。
+   ストーリーで主人公の FIRE/WATER/LIFE・FIRE/LIGHT/LIFE と同じ卓に並ぶので、LIFE は杏だけ (杏はまだストーリーで戦わない)。js3d/story.js の手持ちも同じ組
+   前の alt (--exclude で探した最強の組) は ORACLE の読みで1つ目に 28〜46% だったので、1つ目は変えない
    a, b: HONKI の要素。返り値: [a のデッキ, b のデッキ] */
 export function honkiPairDecks(a, b) {
   const shared = a.deck.filter(p => b.deck.includes(p));
