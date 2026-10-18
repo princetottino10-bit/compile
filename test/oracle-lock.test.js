@@ -89,6 +89,10 @@ test('本気のキャラ同士: かぶったら得意でない側が2つ目の�
   /* FIRE はどちらの得意でもない → 後ろの茜がゆずる。並べる順によらない */
   assert.deepEqual(honkiPairDecks(akane, shion), [akane.alt, shion.deck]);
   assert.deepEqual(honkiPairDecks(shion, akane), [shion.deck, akane.alt]);
+  /* タッグで4人同時でも: alt 同士はかぶらない。得意以外は、ほかの子の1つ目ともかぶらない (得意は誰かの1つ目に入っていてよい: ゆずる側の得意はかぶっていないので) */
+  const altAll = HONKI.flatMap(h => h.alt);
+  assert.equal(new Set(altAll).size, altAll.length, '4人の2つ目のデッキはすべて別のプロトコル');
+  for (const a of HONKI) for (const b of HONKI) if (a !== b) assert.ok(!a.alt.some(p => p !== a.fav && b.deck.includes(p)), a.name + ' の2つ目が ' + b.name + ' の1つ目とかぶらない');
   for (const a of HONKI) {
     assert.ok(a.alt.includes(a.fav), a.name + ' の2つ目のデッキにも得意が入る');
     for (const b of HONKI) {
@@ -98,4 +102,13 @@ test('本気のキャラ同士: かぶったら得意でない側が2つ目の�
       assert.ok(da === a.deck || db === b.deck, '片方は1つ目のまま');
     }
   }
+});
+
+test('ストーリーで紫苑・瑠璃・茜が握るデッキは、本気の2つ目のデッキと同じ', async () => {
+  const { HONKI } = await import('../js3d/aidecks.js');
+  globalThis.localStorage ??= { getItem: () => null, setItem() {}, removeItem() {} };
+  const S = await import('../js3d/story.js');
+  const nodes = JSON.stringify(S);
+  const alt = Object.fromEntries(HONKI.map(h => [h.avatar, h.alt]));
+  for (const av of ['shion', 'asagi', 'nadeshiko']) assert.ok(nodes.includes(JSON.stringify(alt[av])), av + ' の2つ目のデッキがストーリーに出る');
 });

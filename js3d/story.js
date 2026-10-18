@@ -86,7 +86,7 @@ export const CHAPTERS = [
           L('sys', '> 紫苑から、言葉を3つ借りた'),
           L('sys', '> 判定開始: 機体4097を止めるか、止めないか')
         ] } },
-      { id: 'c0-practice', kind: 'battle', title: '判定', me: ['FIRE', 'WATER', 'LIFE'], opp: ['PSYCHIC', 'LIGHT', 'MIRROR'],
+      { id: 'c0-practice', kind: 'battle', title: '判定', me: ['FIRE', 'WATER', 'LIFE'], opp: ['PSYCHIC', 'DIVERSITY', 'MIRROR'],
         /* 最初の一戦は、初めての人がまず勝てるように (2026-10-13 ユーザー: 最初のほうはまじで勝てるバランスで)。
            CPU 同士の試算で、かんたん相当の人が 100 戦 94 勝 (前の win: 2 では 48 勝) */
         level: 0, win: 3, head: 2, oppName: '紫苑', oppAvatar: 'shion', note: '2つは先に書き上げた状態から始まる。紫苑より先に、あと1つを書き上げる',
@@ -180,7 +180,7 @@ export const CHAPTERS = [
         level: 1, win: 3, head: 1, oppName: '警備主任', mate: 'shion', oppAvatar: 'story_chief', boss: true,
         note: '紫苑と2人で、主任と巡回の警備機体に挑む (タッグ: 手番を交代で指す)。1つは書き上げた状態から始まる。あと2つを先に書き上げると、ゲートが開く',
         /* タッグ (2026-10-13): 相棒と組める戦いはタッグにする。紫苑は判定のときと同じ手持ち。チームの中で同じプロトコルは持てない */
-        tag: { mate: ['PSYCHIC', 'LIGHT', 'MIRROR'], mateName: '紫苑', oppMate: MOB_MATE, oppMateName: '巡回の警備機体', oppMateAvatar: 'story_patrol' },
+        tag: { mate: ['PSYCHIC', 'DIVERSITY', 'MIRROR'], mateName: '紫苑', oppMate: MOB_MATE, oppMateName: '巡回の警備機体', oppMateAvatar: 'story_patrol' },
         talk: {
           me: {
             hello: ['……行こう。', '主任の言葉、全部ほどこう。'],
@@ -348,9 +348,9 @@ export const CHAPTERS = [
            2026-10-16: 相手と相方を量産プロトコル3つにして 300 戦 92.0% (済みなしなら 76.0%) */
         level: 0, win: 3, head: 1, oppName: '二号機', mate: 'asagi', oppAvatar: 'story_nigoki', boss: true,
         note: '瑠璃と2人で、二号機と回収機に挑む (タッグ: 手番を交代で指す)。1つは書き上げた状態から始まる。あと2つを先に書き上げる',
-        /* タッグ: WATER は瑠璃の言葉 (ここで本人の色になる)。主人公は WATER の代わりに紫苑の LIGHT を借りる。
+        /* タッグ: WATER は瑠璃の言葉 (ここで本人の色になる)。主人公は WATER の代わりに LIGHT を借りる。
            主人公の WATER は、勝ったあと 3802 の一手として「預かり」で入る (プロット: 1章 WATER) */
-        tag: { mate: ['WATER', 'PEACE', 'UNITY'], mateName: '瑠璃', oppMate: MOB_MATE, oppMateName: '回収機', oppMateAvatar: 'story_collector' },
+        tag: { mate: ['WATER', 'FEAR', 'LUCK'], mateName: '瑠璃', oppMate: MOB_MATE, oppMateName: '回収機', oppMateAvatar: 'story_collector' },
         /* 対戦中のひとこと: 瑠璃は「お客さま」へ向けて案内する。二号機は瑠璃の放送をそのまま繰り返す。争点や仕組みの話はしない (対戦中は暗黙) */
         talk: {
           me: {
@@ -495,7 +495,8 @@ export const CHAPTERS = [
       ] },
       /* 一戦目: 主人公 1人。茜は手を抜かない (CAST.md「勝負では容赦しない」)。茜の対戦中のひとことは区切らず短く、頭の「……」なし。
          勝っても、茜は何も読み直していない (ログで見せ、セリフにしない) */
-      { id: 'c2-akane', kind: 'battle', title: '茜', me: ['FIRE', 'WATER', 'LIFE'], opp: ['HATE', 'LOVE', 'APATHY'],
+      /* 2026-10-18: 茜の手持ちを本気茜の2つ目と同じ HATE/GRAVITY/PLAGUE に (ユーザー「ストーリーで握る組み合わせもそれに」)。かんたん相当の人が 200 戦 37.5% (前の HATE/LOVE/APATHY は 46.5%) */
+      { id: 'c2-akane', kind: 'battle', title: '茜', me: ['FIRE', 'WATER', 'LIFE'], opp: ['HATE', 'GRAVITY', 'PLAGUE'],
         level: 0, win: 3, oppName: '茜', oppAvatar: 'nadeshiko',
         note: '茜は、寝室の扉の前を動かない。3つすべてを先に書き上げると、扉が開く',
         talk: {
@@ -572,7 +573,7 @@ export const CHAPTERS = [
          時計は名前のない管理の機体なので、2026-10-16 から量産プロトコル (前は TIME / DEATH / SPIRIT)。
          強さ (2026-10-13): 序盤は勝てる強さにする (ユーザー)。CPU どうし (同じ強さ) で 80 戦、茜の側の勝ちは 50%。
          慣れない茜の手持ちで指すので、CPU は かんたん (0)。一戦目の茜戦は主人公の側が 160 戦で 73% 勝つが、同じく かんたん */
-      { id: 'c2-clock', kind: 'battle', title: '柱時計「時計」', me: ['HATE', 'LOVE', 'APATHY'], opp: MOB,
+      { id: 'c2-clock', kind: 'battle', title: '柱時計「時計」', me: ['HATE', 'GRAVITY', 'PLAGUE'], opp: MOB,
         /* 2026-10-16: 相手を量産プロトコル3つにし、1つ済みから。主人公をかんたんの CPU にした試算で 300 戦 86.7% (済みなしは 69.3%。元のデッキ・済みなしは 29%) */
         level: 0, win: 3, head: 1, oppName: '時計', meName: '茜', mate: 'nadeshiko', oppAvatar: 'story_clock', boss: true,
         note: 'この一戦だけ、茜を動かす。1つは書き上げた状態から始まる。あと2つを先に書き上げると、茜の読み方が残る',
