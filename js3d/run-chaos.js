@@ -41,9 +41,7 @@ export const MUTATORS = [
   /* 勝ち負けの決まり方を壊す (エンジンの newGame の misere・handSwap) */
   { id: 'misere', group: 'win', who: 'both', name: 'MISÈRE', label: '負けるが勝ち', text: '先にコンパイルし終えた側の負け。ラインを伸ばさず、相手に伸ばさせる' },
   { id: 'handswap', who: 'both', name: 'HAND SWAP', label: '手札交換', text: '4 手番ごとに、あなたと相手の手札がまるごと入れ替わる' },
-  { id: 'turncoat', who: 'both', name: 'TURNCOAT', label: '寝返り', text: '3 手番ごとに、どこかのラインのいちばん上のカードどうしが、向こう側へ寝返る' },
-  /* 2026-10-17 ユーザー: FIRE 1 (フェザーマン) と FIRE 3 (バーストレディ) で融合。エンジンの newGame の heroFusion */
-  { id: 'hero', group: 'win', who: 'both', name: 'HERO FUSION', label: 'ヒーロー融合', text: 'どちらもライフ 4000。FIRE 1 (フェザーマン) と FIRE 3 (バーストレディ) が自分の側にそろっていると、相手がコンパイルしたらシャイニングフレアウィングマン、自分がコンパイルしたらフェニックスガイに融合 (攻撃力 2100。手番のはじめに相手へ 2100 ダメージ)。FIRE が無いデッキにも2枚が混ざる。ヒーローと表向きの LIGHT がそろうと、手番の終わりにレインボーネオス (攻撃力 4500。出たとき相手の一番上のカードを全部削除) に融合。コンパイル済みなしの 3 本勝負' }
+  { id: 'turncoat', who: 'both', name: 'TURNCOAT', label: '寝返り', text: '3 手番ごとに、どこかのラインのいちばん上のカードどうしが、向こう側へ寝返る' }
 ];
 /* 画面側で効かせる異変 (エンジンには何も渡さない) */
 export const RULE_MUTATORS = ['blind', 'tick', 'flip'];

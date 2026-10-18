@@ -202,24 +202,8 @@ export function buildRunDefs(cardsJson, effectsJson) {
     add({ id: o.id, proto: p.name, value: o.value, eff },
       { proto: p.name, color: p.color, set: p.set, number: look.number, upper: text.upper, middle: text.middle, lower: text.lower, effectTypes: types, id: o.id, value: o.value, mark: 'Ω' });
   }
-  /* カオス勝ち抜き戦の異変「ヒーロー融合」で場に出る融合ヒーロー (エンジンは engine.js の HEROES で自分で登録する。ここは画面の分だけ)。
-     上段に書くのは、覆われても攻撃するのが見えるように */
-  for (const h of HERO_FACES) {
-    const p = cardsJson.protocols.find(x => x.name === h.proto);
-    if (!p) continue;
-    ui.push({ id: h.id, proto: h.proto, color: p.color, set: p.set, number: h.art, value: 4, mark: h.mark,
-      upper: h.upper, middle: '', lower: '', effectTypes: ['other'] });
-  }
   return { engine, ui };
 }
-const HERO_FACES = [
-  { id: 'HERO_WINGMAN', proto: 'FIRE', art: 6, mark: 'HERO', name: 'シャイニングフレアウィングマン',
-    upper: 'シャイニングフレアウィングマン 攻撃力 2100。あなたのターンのはじめに相手を攻撃し、2100 ダメージを与える。' },
-  { id: 'HERO_PHOENIX', proto: 'FIRE', art: 5, mark: 'HERO', name: 'フェニックスガイ',
-    upper: 'フェニックスガイ 攻撃力 2100。あなたのターンのはじめに相手を攻撃し、2100 ダメージを与える。表向きの間、効果では削除されない。' },
-  { id: 'HERO_RAINBOW', proto: 'LIGHT', art: 6, mark: 'HERO', name: 'レインボーネオス',
-    upper: 'レインボーネオス 攻撃力 4500。出てきたとき、相手の一番上のカードをすべて削除する。あなたのターンのはじめに相手を攻撃し、4500 ダメージを与える。' }
-];
 
 /** カードの呼び名 (「FIRE 3」「FIRE 4＋」「FIRE ★」) */
 export function runCardLabel(id, defIndex) {
@@ -227,7 +211,5 @@ export function runCardLabel(id, defIndex) {
   if (!d) return String(id);
   if (ORACLE[baseOf(id)]) return omegaName(d.proto, d.value);
   if (STAR[baseOf(id)]) return betaName(d.proto, d.value) + (isUpgraded(id) ? '＋' : '');
-  const hero = HERO_FACES.find(h => h.id === id);
-  if (hero) return hero.name;
   return d.proto + ' ' + d.value + (isUpgraded(id) ? '＋' : '');
 }
