@@ -1441,6 +1441,9 @@ async function boot() {
   if (!replayMode && !trainingMode && !puzzle && !tutorial && !demoMode && !tagMates && !roomMode && !spectate) {
     RS.startResume({ mode: storyNode ? 'story' : runMode ? runKind : quickGame ? 'quick' : 'cpu', level: aiDifficulty, me: p0.slice(), opp: p1.slice(),
       story: storyNode ? storyNode.id : null, run: runMode ? runKind : null, quick: quickGame, oppAvatar: oppAvatarPlan() }, gameInit, Date.now(), priorActions);
+    /* 決着の演出の途中で落ちた対戦の続き: 書き終えた段の印も引き継ぐ (もう一度落ちても二度数えない) */
+    if (resumed && resumed.rec.recorded) RS.markResumeRecorded();
+    if (resumed && resumed.rec.progressed) RS.markResumeRecorded('progressed');
   }
   if (trainingMode) training.protos = [p0.slice(), p1.slice()];
   window.__3d = {
@@ -5837,11 +5840,16 @@ async function afterTurn() {
   if (cur.state.winner !== null && !resultShown) {
     resultShown = true;
     fadeOutBgm();                                   // 決着したら BGM は引いて、勝ち・負けの音だけにする
-    CW.battleEnded(); RS.endResume();
+    /* 落ちたかを見る印 (crashwatch) と中断の記録 (resume) は、決着の演出と結果の画面まで済んでから消す (finishLiveGame)。
+       前はここで消していて、勝った瞬間の演出で iPhone がページごと落とすと、記録にも残らずタイトルへ戻されていた */
+    CW.battleNote('decided', memNote());
+    if (spectate) RS.endResume();
+    /* 演出の途中で落ちて、開き直して続きから結果を出すとき: 戦績は書いてあるので二度数えず、重い演出も省く */
+    const recordedBefore = !!(resumed && resumed.rec && resumed.rec.recorded);
     const win = cur.state.winner === ME;
     /* 遊ばれ方の匿名の記録 (ログインしていない人も。チュートリアルも数える) */
     /* AUTO (管理者の自動プレイ) で指した対戦も数える (戦績・経験値の動きを確かめるためのもの) */
-    if (!trainingMode && !puzzle && !demoMode && !roomMode) {
+    if (!trainingMode && !puzzle && !demoMode && !roomMode && !recordedBefore) {
       logPlay({ mode: storyNode ? 'story' : runMode ? runKind : tutorial ? 'tutorial' : tagMates ? 'tag' : quickGame ? 'quick' : 'cpu', win, level: aiDifficulty,
         me: ownProtos(cur.state, ME), opp: ownProtos(cur.state, AI),
         turns: (cur.state.turns || 0) + 1, logged: !!accountState().user });
@@ -5854,7 +5862,7 @@ async function afterTurn() {
         mastery0: Object.fromEntries([...new Set(MASTERY_ITEMS.map(it => it.proto))].map(p => [p, masteryOf(p)])) };
     }
     /* チュートリアルとストーリーは戦績・リプレイ・実績に数えない */
-    if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial && !storyNode) {
+    if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial && !storyNode && !recordedBefore) {
       const st0 = cur.state;
       newConq = newlyConquered(localRecords(), { win, level: aiDifficulty, me: ownProtos(st0, ME), opp: ownProtos(st0, AI), short: shortMatch, mode: runMode ? runKind : 'cpu' });
       /* タッグは、自分が持ってきた3つで記録する (習熟度・デイリーも自分のプロトコルで数える) */
@@ -5873,6 +5881,7 @@ async function afterTurn() {
         replayLog = null;
       }
     }
+    RS.markResumeRecorded();
     /* 観戦は A / B の勝ちで見せ、ベットを払い戻す。棋譜は RECORD のリプレイ (観戦の枠) に残す */
     if (spectate) {
       if (replayLog) {
@@ -5880,6 +5889,7 @@ async function afterTurn() {
           turns: (cur.state.turns || 0) + 1, score: compiledScore(cur.state), init: replayLog.init, actions: replayLog.actions });
         replayLog = null;
       }
+      finishLiveGame();
       await spectateEnd(win);
       return;
     }
@@ -5891,11 +5901,20 @@ async function afterTurn() {
     UI.setPrompt(win ? 'あなたの勝ち' : '敗北', 'end');
     const victory = cosmetic('victory', 'default');
     sfx(win ? (victory === 'aurora' ? 'winAurora' : 'win') : 'lose');
-    await finaleFx(win);
+    /* iPhone: 決着の演出の間も、すりガラスの効果を切っておく (コンパイルの演出が終わると戻していた。結果の画面を出すときに戻す) */
+    document.body.classList.add('compiling');
+    if (!recordedBefore) {
+      CW.battleNote('finale', memNote());
+      await finaleFx(win);
+    }
     FEEL.buzz(win ? [40, 70, 40, 70, 120] : [160]);
-  /* 物語の決着は、勝ち・負けの言葉を出さない */
-  const deusWin = win && myPlate().sub === TITLES.platinum;      // 称号 DEUS EX MACHINA で勝った: 勝ちの演出に後光と歯車
-  await UI.resultCutIn(win, storyNode ? { victory, deus: deusWin, title: win ? 'COMPILED' : 'OVERWRITTEN' } : { victory, deus: deusWin });
+    /* 物語の決着は、勝ち・負けの言葉を出さない */
+    const deusWin = win && myPlate().sub === TITLES.platinum;      // 称号 DEUS EX MACHINA で勝った: 勝ちの演出に後光と歯車
+    if (!recordedBefore) {
+      CW.battleNote('result-cut', memNote());
+      await UI.resultCutIn(win, storyNode ? { victory, deus: deusWin, title: win ? 'COMPILED' : 'OVERWRITTEN' } : { victory, deus: deusWin });
+    }
+    document.body.classList.remove('compiling');
     /* 最強に新しいプロトコルで勝った: 制覇の数を刻む */
     if (newConq.length) {
       await UI.conquerCutIn(newConq.map(n => ({ name: n, color: (protoIndex[n] || {}).color })), conquered(localRecords()).size,
@@ -5903,9 +5922,13 @@ async function afterTurn() {
     }
     /* レベルが上がったら、手に入った報酬を見せる */
     if (myLevel > levelBefore) await UI.levelUpCutIn(myLevel, rewardsBetween(levelBefore, myLevel));
-    if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial && !storyNode) await afterGameProgress(cur.state, ME, win, aiDifficulty, false);
+    if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial && !storyNode && !(resumed && resumed.rec && resumed.rec.progressed)) {
+      await afterGameProgress(cur.state, ME, win, aiDifficulty, false);
+      RS.markResumeRecorded('progressed');
+    }
     if (win && !trainingMode && !puzzle && !demoMode && !roomMode) maybeLoginHint('firstWin');
     if (demoMode) {
+      finishLiveGame();
       await TW.wait(900);
       location.reload();
       return;
@@ -5932,11 +5955,16 @@ async function afterTurn() {
           if (was && was.phase === 'battle' && now && now.phase === 'clear') await gainXp('run', XP_GAIN.runClear);
         }
       }
+      finishLiveGame();
       return;
     }
+    finishLiveGame();
     showEndActions(win);
   }
 }
+
+/* 決着の演出と結果 (戦績・ストーリー・勝ち抜き戦の進み具合) を書き終えた: 落ちたかを見る印と、中断の記録を消す */
+function finishLiveGame() { CW.battleEnded(); RS.endResume(); }
 
 /* ストーリーの決着: 勝てばクリア (初めてなら経験値。章を終えたらさらに)、決着の会話 → 次へ / もう一度 */
 async function storyAfterGame(win) {
@@ -5945,6 +5973,7 @@ async function storyAfterGame(win) {
   const had = STORY.isCleared(before, node.id);
   const after = STORY.finishBattle({ ...before, pending: node.id }, win);
   STORY.saveStory(after);
+  finishLiveGame();
   if (win && !had) {
     await gainXp('story', XP_GAIN.storyBattle, 'st:' + node.id);
     if (STORY.chapterCleared(after, node.chapter)) await gainXp('story', XP_GAIN.storyChapter, 'stc:' + node.chapter);
