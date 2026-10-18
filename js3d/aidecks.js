@@ -97,6 +97,7 @@ export const honkiAi = (cfg, level) => ({ ...cfg, ...honkiOf(level).ai });
 /* 本気のキャラ同士の対戦 (2026-10-16 ユーザー「お互いが対戦したりする時用に」): デッキのプロトコルがかぶったら、片方が alt (2つ目のデッキ) にゆずる。
    かぶったプロトコルが誰かの得意なら、その持ち主が残す (FIRE は杏、WATER は瑠璃)。どちらの得意でもなければ、HONKI で後ろの子がゆずる (紫苑と茜の FIRE は茜がゆずる)。
    alt はほかの3人の1つ目のデッキのプロトコルを除いて探した (scripts/deck_search.js --exclude、2026-10-18) ので、ゆずった側はもうかぶらない。
+   ORACLE の読みで alt 対 1つ目を200戦: 瑠璃 46.2%・杏 33.8%・茜 46.0%・紫苑 28.5% (ロック) で、どれも1つ目を上回らないので1つ目は変えない。
    a, b: HONKI の要素。返り値: [a のデッキ, b のデッキ] */
 export function honkiPairDecks(a, b) {
   const shared = a.deck.filter(p => b.deck.includes(p));
