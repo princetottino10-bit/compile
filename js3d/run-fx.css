@@ -126,6 +126,7 @@ body.calm #runHud, body.calm #runHud * { animation: none !important; }
 
 /* 試合中ボーナスの札と、決着後の内訳 */
 #runHud .rh-chip.short { color: #05070f; background: #ffd86a; border-color: transparent; }
+#runHud .rh-chip.chaos { color: #05070f; background: linear-gradient(90deg, #ff4fa3, #7cf0ff); border-color: transparent; }
 #runHud .rh-chip.bonus { color: #fff; background: linear-gradient(90deg, #ffb13d, #ff4fa3); border-color: transparent; }
 #runHud .rh-chip.bump { animation: rnGet .6s cubic-bezier(.2, 1.6, .4, 1); }
 #runOv .rn-bonusof { font: 700 12px/1 "M PLUS 1", system-ui; color: #ffd0e6; letter-spacing: .02em; }

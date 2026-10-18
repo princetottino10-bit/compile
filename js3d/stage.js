@@ -409,6 +409,7 @@ export function createStage(container) {
   /* 止める (ストーリーの地図など、別の 3D 画面を出している間)。トゥイーンは進めるが描かない。
      iPhone で 3D の描画先が2組同時に生きて、ページごと落ちるもとになっていた */
   let paused = false;
+  let flipped = false;
   const setPaused = (v) => { paused = !!v; };
   function loop(now) {
     requestAnimationFrame(loop);
@@ -450,6 +451,7 @@ export function createStage(container) {
       camState.shake = Math.max(0, camState.shake - camState.shakeDecay * dt * 1000);
     }
     camera.lookAt(camState.look);
+    if (flipped) camera.rotateZ(Math.PI);            // カオス勝ち抜き戦の「天地逆転」: 画面ごと上下さかさま
     /* 表示領域が 0 (たたまれた枠の中など) のときは描かない (大きさ 0 の描画先で警告が大量に出る) */
     if (!paused && container.clientWidth > 1 && container.clientHeight > 1) composer.render();
     if (!catchUp) { frames++; probeFps(lastTick, idleNow); }
@@ -477,6 +479,7 @@ export function createStage(container) {
     /* 画質の段と、直近に測った FPS (確かめ用) */
     gfx: () => ({ level: gfxLevel, fps: Math.round(fpsProbe.fps), frames, idle: idleNow, mode: gfxMode, auto: autoLevel, powerSave }), setGfx,
     setGfxMode, setPowerSave, setPaused,
+    setFlip(v) { flipped = !!v; },
     lights: { key, rimSelf, rimOpp, fill }
   };
 }
