@@ -17,6 +17,9 @@ import { sfx } from './audio.js';
 import { afterRender, pressThen, winStreak, rowsLeft, countUp, hudChips, hudPop } from './run-fx.js';
 import { scoreHtml, scoreHurt, SCORE_PER_CREDIT } from './run-score.js';
 
+/* カオス勝ち抜き戦の入口を出すか。2026-10-19 いったん閉じた (中身と途中の保存は残してあり、true に戻せばまた遊べる) */
+const CHAOS_OPEN = false;
+
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 function overlay() {
@@ -192,6 +195,8 @@ export function openRun(protocols, cardsOf, opts) {
   playBgm(RUN_BGM);                                    // 勝ち抜き戦の画面の曲 (対戦に入ると対戦の曲に替わる)
   return new Promise((resolve) => {
     let run = RUN.loadRun();
+    /* 入口を閉じているあいだは、枠にあるカオスの途中を取っておきに回す (消さない) */
+    if (!CHAOS_OPEN && RUN.isChaos(run)) run = RUN.switchRun('normal');
     let swapAdd = null;          // 報酬で入れ替えるプロトコル (選んだあと、外すほうを選ぶ)
     let confirmQuit = false;
     let showDeck = false;        // 地図の画面でデッキを広げる
@@ -284,7 +289,7 @@ export function openRun(protocols, cardsOf, opts) {
           '<li>クリアすると名前が一覧に載る</li>' +
           '<li>クリアで +30 XP。初クリアで専用スリーブ LAUREL、3週で専用マーカー</li></ul>' + weekStatus +
           '<button type="button" class="rn-go" data-act="weekly">開く</button></section>' +
-        chaosCard +
+        (CHAOS_OPEN ? chaosCard : '') +
       '</div>';
     };
 
@@ -459,7 +464,7 @@ export function openRun(protocols, cardsOf, opts) {
     const render = (prev) => {
       const active = run && run.phase !== 'over' && run.phase !== 'clear';
       if ((hub && active) || !active) {
-        el.innerHTML = '<div class="rn-card"><div class="rn-head"><b>// RUN</b><span>3つのモード</span></div>' + hubHtml() + '</div>';
+        el.innerHTML = '<div class="rn-card"><div class="rn-head"><b>// RUN</b><span>' + (CHAOS_OPEN ? 3 : 2) + 'つのモード</span></div>' + hubHtml() + '</div>';
         return;
       }
       const quit = confirmQuit
