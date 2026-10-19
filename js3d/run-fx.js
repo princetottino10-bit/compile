@@ -145,6 +145,30 @@ export function pressThen(btn, fn) {
   setTimeout(fn, 240);
 }
 
+/** 挑む子のちびを、地図のマス id まで歩かせてから fn を呼ぶ。ちびがいなければ false (呼び手が別の手応えを出す)。
+    上へ登るので後ろ姿 (back) の2コマを交互に。動きを減らす設定では、歩かずにすぐ */
+export const WALK_MS = 560;
+export function walkThen(el, id, fn) {
+  const img = el && el.querySelector('.rn-chibi');
+  const to = el && el.querySelector('.rn-node[data-node="' + id + '"]');
+  if (!img || !to) return false;
+  if (calm()) { fn(); return true; }
+  const card = img.closest('.rn-card');
+  if (card) card.classList.add('fx-busy');      // 歩いている間の2度押しを防ぐ
+  sfx('select');
+  to.classList.add('fx-picked');
+  const who = img.dataset.chibi;
+  let k = 0;
+  const step = () => { img.src = 'art/chibi/' + who + '_back_walk' + (1 + (k++ % 2)) + '.webp'; };
+  step();
+  const tick = setInterval(step, 140);
+  img.classList.add('walking');
+  img.style.left = to.style.left;
+  img.style.top = to.style.top;
+  setTimeout(() => { clearInterval(tick); fn(); }, WALK_MS);
+  return true;
+}
+
 /** 対戦中のライフの横に出す札: いま勝てばもらえるクレジット・ノーダメージ・守りの残り・連勝 */
 export function hudChips(run, lost, bonus, fresh) {
   const has = (id) => (run.patches || []).includes(id);

@@ -1,6 +1,7 @@
 /* =========================================================================
  * 勝ち抜き戦 (ローグライク。Slay the Spire のような地図を登る形) の進行と保存。画面は run-ui.js
  *   ・3回のドラフト (3つの候補から1つ) でデッキを作り、はじめのパッチを1つ選ぶ
+ *     挑む子 (run-pilots.js) を選んだときは、その子の得意プロトコルが固定でドラフトは2回。専用パッチが付く
  *   ・地図は下から上へ 12 段。最初から全部見えていて、つながっている道を1段ずつ選んで登る
  *       ⚔ 戦闘 / ☠ 精鋭 (強い。勝つとパッチ) / ? イベント / ✚ 休憩所 (回復かカード除去) /
  *       $ ショップ (パッチ・★ カード・強化・カード除去・回復) / ◆ 宝箱 (パッチ) / ♛ BOSS (最上段)
@@ -18,6 +19,7 @@
  * ========================================================================= */
 import { STRONGEST_AI, CHALLENGERS, CHALLENGER_BASE } from './aidecks.js';
 import { UP, isStar, baseOf, starOf, STAR_CARDS, ORACLE_CARDS, isOracleCard } from './runcards.js';
+import { pilotPerk, lockedProto, pilotInfo } from './run-pilots.js';
 import { CHAOS_LIFE, CHAOS_CREDITS, CHAOS_MAX_ADDED, mutatorCount, rollMutators, ROULETTE, RULE_MUTATORS } from './run-chaos.js';
 
 const KEY = 'compileRun';
@@ -346,7 +348,7 @@ function saveBest(run) {
     (loop === (best.loop | 0) && heat === (best.heat | 0) && (best.reached < reached || (best.reached === reached && best.life < run.life)));
   if (!better) return;
   try {
-    localStorage.setItem(isChaos(run) ? CHAOS_BEST_KEY : BEST_KEY, JSON.stringify({ reached, rows: MAP_ROWS, life: Math.max(0, run.life), deck: run.deck, heat, ...(loop ? { loop } : {}), patches: run.patches || [], at: Date.now() }));
+    localStorage.setItem(isChaos(run) ? CHAOS_BEST_KEY : BEST_KEY, JSON.stringify({ reached, rows: MAP_ROWS, life: Math.max(0, run.life), deck: run.deck, heat, ...(loop ? { loop } : {}), ...(run.pilot ? { pilot: run.pilot } : {}), patches: run.patches || [], at: Date.now() }));
   } catch (e) { /* private mode */ }
 }
 /** 選べる HEAT の上限 (クリアした HEAT + 1) */
@@ -443,6 +445,8 @@ export function reachable(run) {
 
 /* ---------- パッチ ---------- */
 export const hasPatch = (run, id) => (run.patches || []).includes(id);
+/* 候補に出さないパッチ: 持っているものと、挑む子の専用パッチと同じ効き目のもの (杏の FIRST RESPONDER = INITIATIVE) */
+const offerable = (run, id) => !hasPatch(run, id) && !(id === 'initiative' && pilotPerk(run, 'responder'));
 export const patchInfo = (id) => PATCH[id] || null;
 /** パッチの説明文 ({first} はデッキのいちばん左のプロトコルの名前。まだ無ければ「いちばん左のプロトコル」) */
 export function patchText(run, p) {
@@ -463,7 +467,7 @@ export function setLevel(run, tag) {
 /* パッチの候補 3 つ。持っている系統のものが出やすい (系統を狙ってそろえられるように)。
    持っている系統があれば、そのうち1つは必ず入れる (2026-09-29) */
 function patchOffers(run, rnd) {
-  const pool = PATCHES.filter(p => !p.gachaOnly && !hasPatch(run, p.id));
+  const pool = PATCHES.filter(p => !p.gachaOnly && offerable(run, p.id));
   const weightOf = (p) => 1 + 2 * Math.min(2, tagCount(run, p.tag));
   const picks = [];
   const owned = pool.filter(p => tagCount(run, p.tag) > 0);
@@ -478,7 +482,7 @@ function patchOffers(run, rnd) {
 }
 /* RARE 以上 (LEGENDARY も) のパッチの候補 3 つ (呪いの試合の報酬) */
 function rarePatchOffers(run, rnd) {
-  return sample(PATCHES.filter(p => p.rar !== 'C' && !hasPatch(run, p.id)).map(p => p.id), 3, rnd);
+  return sample(PATCHES.filter(p => p.rar !== 'C' && offerable(run, p.id)).map(p => p.id), 3, rnd);
 }
 /** テスト用: パッチの候補を作る */
 export const patchOffersFor = (run, rnd = Math.random) => patchOffers(run, rnd);
@@ -502,13 +506,15 @@ function addPatch(run, id) {
   return next;
 }
 function gainRandomPatch(run, rnd, any = false) {
-  const pool = PATCHES.filter(p => (any || !p.gachaOnly) && !hasPatch(run, p.id));
+  const pool = PATCHES.filter(p => (any || !p.gachaOnly) && offerable(run, p.id));
   return pool.length ? addPatch(run, pool[Math.floor(rnd() * pool.length)].id) : run;
 }
 function randomSwap(run, c) {
   const pool = c.names.filter(n => !run.deck.includes(n));
-  if (!pool.length) return run;
-  const out = run.deck[Math.floor(c.rnd() * run.deck.length)];
+  /* 挑む子の得意プロトコルは飛ばさない */
+  const outs = run.deck.filter(n => n !== lockedProto(run));
+  if (!pool.length || !outs.length) return run;
+  const out = outs[Math.floor(c.rnd() * outs.length)];
   const add = pool[Math.floor(c.rnd() * pool.length)];
   return withDeck({ ...run, swapped: { out, add } }, run.deck.map(n => (n === out ? add : n)));
 }
@@ -626,16 +632,22 @@ export function cancelRemove(run) {
 }
 
 /* ---------- 進行 (すべて新しい状態を返す) ---------- */
-/* mode: 'normal' / 'chaos' (カオス勝ち抜き戦。HEAT は無し) */
-export function newRun(names, rnd = Math.random, heat = 0, mode = 'normal') {
+/* mode: 'normal' / 'chaos' (カオス勝ち抜き戦。HEAT は無し)。
+   pilot: 挑む子の id (run-pilots.js。ふつうの勝ち抜き戦だけ)。得意プロトコルがはじめからデッキに入り、ドラフトは残りの2つ */
+export function newRun(names, rnd = Math.random, heat = 0, mode = 'normal', pilot = null) {
   const chaos = mode === 'chaos';
   const h = chaos ? 0 : Math.max(0, Math.min(MAX_HEAT, heat | 0));
   const life = chaos ? CHAOS_LIFE : RUN_LIFE - (h >= 1 ? HEAT_LIFE : 0);
-  return { v: VERSION, ...(chaos ? { mode: 'chaos', names: names.slice() } : {}),
+  return withPilot({ v: VERSION, ...(chaos ? { mode: 'chaos', names: names.slice() } : {}),
     phase: 'draft', deck: [], removed: [], life, maxLife: life, heat: h, patches: [], failsafeUsed: false, phoenixUsed: false,
     credits: chaos ? CHAOS_CREDITS : START_CREDITS, pulls: 0, map: makeMap(rnd, chaos), pos: null, visited: [], removeCost: 5, upgradeCost: 4, upgrades: [], added: [],
     boss: chooseBoss(h, rnd, chaos),
-    offers: sample(names, 3, rnd), opp: null, route: 'normal', history: [], startedAt: Date.now() };
+    offers: sample(names, 3, rnd), opp: null, route: 'normal', history: [], startedAt: Date.now() }, names, rnd, pilot);
+}
+function withPilot(run, names, rnd, pilot) {
+  const P = pilotInfo(pilot);
+  if (!P || isChaos(run) || !names.includes(P.favorite)) return run;
+  return { ...run, pilot: P.id, deck: [P.favorite], offers: sample(names.filter(n => n !== P.favorite), 3, rnd) };
 }
 
 export function draftPick(run, name, names, rnd = Math.random) {
@@ -701,8 +713,9 @@ export function resolveEvent(run, index, names, rnd = Math.random) {
 
 /* ---------- 休憩所 ---------- */
 /** 回復の量 (HEAT 3 から +1) */
+export const PILOT_HEAL = 3;                 // 瑠璃の TIDE GUIDE
 export function healAmount(run) {
-  return (run.heat | 0) >= 3 ? RUN_HEAL - 1 : RUN_HEAL;
+  return ((run.heat | 0) >= 3 ? RUN_HEAL - 1 : RUN_HEAL) + (pilotPerk(run, 'tideGuide') ? PILOT_HEAL : 0);
 }
 export function restHeal(run) {
   if (run.phase !== 'rest') return run;
@@ -720,7 +733,7 @@ export function restRemove(run) {
 /* ---------- ショップ ---------- */
 function makeShop(run, rnd) {
   /* パッチ3つ (LEGENDARY も並ぶことがある)。値段はレア度で決まる */
-  const pool = PATCHES.filter(p => !hasPatch(run, p.id));
+  const pool = PATCHES.filter(p => offerable(run, p.id));
   const picks = [];
   for (let i = 0; i < 3; i++) {
     const left = pool.filter(p => !picks.includes(p.id));
@@ -752,7 +765,9 @@ export function buyUpgrade(run) {
 export function patchPrice(run, id) {
   return RARITY[PATCH[id].rar].price - discount(run);
 }
+export const PILOT_REMOVE_OFF = 3;           // 茜の TIDY UP
 export function removePrice(run) {
+  if (pilotPerk(run, 'tidyUp')) return Math.max(1, (run.removeCost | 0) - discount(run) - PILOT_REMOVE_OFF);
   return (run.removeCost | 0) - discount(run);
 }
 export function healPrice(run) {
@@ -933,7 +948,7 @@ function offerPerksFor(run, row, rnd) {
 export function applyReward(run, choice, names, rnd = Math.random) {
   if (run.phase !== 'reward') return run;
   let next = run;
-  if (choice.type === 'swap' && run.offers.includes(choice.add) && run.deck.includes(choice.remove)) {
+  if (choice.type === 'swap' && run.offers.includes(choice.add) && run.deck.includes(choice.remove) && choice.remove !== lockedProto(run)) {
     next = withDeck(run, run.deck.map(n => (n === choice.remove ? choice.add : n)));
     /* 後半の特典: 強化済みのカードと β カード */
     const perk = (run.offerPerks || {})[choice.add];
@@ -961,6 +976,7 @@ export function battleOpts(run, me) {
   if (hasPatch(run, 'buffer')) hand[me] += 1;
   if (hasPatch(run, 'overflow')) hand[me] = 7;
   if (hasPatch(run, 'jammer')) hand[other] = 4;
+  if (pilotPerk(run, 'deepScan')) hand[other] -= 1;          // 紫苑の DEEP SCAN (JAMMER とも重なる)
   if (hasPatch(run, 'singularity')) hand[other] = 3;
   if (hasPatch(run, 'gluttony')) { hand[me] = Math.max(hand[me], 7); hand[other] = 7; }
   if (hasPatch(run, 'nocost')) hand[me] -= 2;
@@ -1018,7 +1034,7 @@ export function battleOpts(run, me) {
     ...(ups.length || added.length || copies.length || deckMods[other].swap || deckMods[other].add ? { deckMods } : {}),
     winCompilesBySide: win,
     ...(perks[me] ? { perks } : {}),
-    ...(bossFirst ? { first: other } : hasPatch(run, 'initiative') || tempo ? { first: me } : {}),
+    ...(bossFirst ? { first: other } : hasPatch(run, 'initiative') || tempo || pilotPerk(run, 'responder') ? { first: me } : {}),
     ...(bossControl ? { startControl: other } : hasPatch(run, 'root') || tempo ? { startControl: me } : {})
   };
   return mutatorsOf(run).length ? applyMutators(run, out, me) : out;
