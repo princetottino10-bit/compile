@@ -151,3 +151,30 @@ test('2章の地図: 出来事は2章の場面をすべて使い、茜の前ま�
   for (const l of map.looks) assert.ok(l.lines.every(x => [...x.text].length <= 40), l.name);
   for (const ls of [...Object.values(map.ambient.zones), map.ambient.hint]) for (const l of ls) assert.ok([...l.text].length <= 40 && S.SPEAKERS[l.who], l.text);
 });
+
+test('3章の地図: 出来事は3章の場面をすべて使い、杏と指令の盤の前まで歩ける。対戦のあとに盤の前で確認が出る', () => {
+  const map = M.WAREHOUSE;
+  for (const r of map.rows) assert.equal(r.length, map.rows[0].length);
+  for (const ch of map.rows.join('')) assert.ok(M.TILE[ch] !== undefined, '知らない印: ' + ch);
+  const used = new Set(Object.values(map.events).map(e => e.node));
+  for (const n of S.CHAPTERS[3].nodes) assert.ok(used.has(n.id), n.id + ' を使う出来事がない');
+  for (const e of Object.values(map.events)) { assert.ok(S.nodeById(e.node), e.node); if (e.at) assert.ok(M.find(map, e.at)[0], e.node + ' の置き場所'); }
+  assert.equal(M.mapFor('ch3'), map);
+  let s = S.blankStory();
+  for (const c of S.CHAPTERS.slice(0, 3)) for (const n of c.nodes) s = S.clearNode(s, n.id);
+  const start = M.spawnFor(map, s);
+  assert.equal(M.zoneAt(map, start), 'A');
+  assert.equal(M.objective(s), map.goals['c3-arrive']);
+  for (const ch of ['Y', 'w', 'f', 'h', '1', '2', '4']) { const m = M.find(map, ch)[0]; assert.ok(M.findPath(map, s, start, { x: m.x + 0.5, y: m.y + 0.5 }), ch); }
+  const o = M.find(map, 'O')[0];
+  assert.ok(M.findPath(map, s, start, { x: o.x + 0.5, y: o.y + 1.5 }), '指令の盤の前まで道がある');
+  /* 順番の会話のあと、立っている所から盤まで近い (話のすぐあとに「向き合う」の確認が出る。story-world.js の REACH + 1.5) */
+  const [sx, sy] = map.spawn['c3-command'];
+  assert.ok(Math.hypot(o.x - sx, o.y - sy) < 3, '盤の近くに立つ');
+  for (const id of Object.keys(map.spawn)) { const [x, y] = map.spawn[id]; assert.ok(M.walkable(map, s, x, y), '立つ所は歩ける: ' + id); }
+  for (const f of map.fragments) assert.ok(f.unit >= 3584 && f.unit <= 4096, '513 体の範囲の番号: ' + f.unit);
+  const ids = [M.AQUARIUM, M.MANSION, map].flatMap(m => m.fragments.map(f => f.id));
+  assert.equal(new Set(ids).size, ids.length, '記録の断片の id は章をまたいでも重ならない');
+  for (const l of map.looks) assert.ok(l.lines.every(x => [...x.text].length <= 40), l.name);
+  for (const z of Object.values(map.ambient.zones)) assert.ok(z.every(x => [...x.text].length <= 40));
+});

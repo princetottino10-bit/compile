@@ -104,11 +104,11 @@ test('本気のキャラ同士: かぶったら得意でない側が2つ目の�
   }
 });
 
-test('ストーリーで紫苑・瑠璃・茜が握るデッキは、本気の2つ目のデッキと同じ', async () => {
+test('ストーリーで紫苑・瑠璃・茜・杏が握るデッキは、本気の2つ目のデッキと同じ', async () => {
   const { HONKI } = await import('../js3d/aidecks.js');
   globalThis.localStorage ??= { getItem: () => null, setItem() {}, removeItem() {} };
   const S = await import('../js3d/story.js');
   const nodes = JSON.stringify(S);
   const alt = Object.fromEntries(HONKI.map(h => [h.avatar, h.alt]));
-  for (const av of ['shion', 'asagi', 'nadeshiko']) assert.ok(nodes.includes(JSON.stringify(alt[av])), av + ' の2つ目のデッキがストーリーに出る');
+  for (const av of ['shion', 'asagi', 'nadeshiko', 'yamabuki']) assert.ok(nodes.includes(JSON.stringify(alt[av])), av + ' の2つ目のデッキがストーリーに出る');
 });

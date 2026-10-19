@@ -16,7 +16,9 @@ export const TILE = {
   /* 記録の断片の置き場所 (拾える物。歩ける) */
   'f': 'floor', 'h': 'floor',
   /* 屋敷: N 茜の立つ所 (床) / G 柱時計 / Z 食卓 */
-  'N': 'floor', 'G': 'solid', 'Z': 'solid'
+  'N': 'floor', 'G': 'solid', 'Z': 'solid',
+  /* 倉庫: Y 杏の立つ所 (床) / w 夜に杏が見張る所 (床) / V 古い救助機体の棚 / u 空いた棚 (3955 の場所) / O 本部の指令の盤 / B 修理の台 */
+  'Y': 'floor', 'w': 'floor', 'V': 'solid', 'u': 'solid', 'O': 'solid', 'B': 'solid'
 };
 
 /* 序章「起動」: 研究所。左から A 判定室 / B 端末室 / C 廊下 / D 正面ホール / E 外 */
@@ -265,11 +267,109 @@ export const MANSION = {
   ],
   goals: { 'c2-arrive': '屋敷に入る', 'c2-tea': '音のする方へ', 'c2-akane': '茜と向き合う',
     'c2-room': '茜に話しかける', 'c2-clock': '玄関ホールの柱時計へ', 'c2-close': '茜の片付けを見る',
-    done: '2章「三時」　完。3章「順番」は準備中' }
+    done: '2章「三時」　完' }
+};
+
+/* 3章「順番」: 港の倉庫。入口 (シャッター) → 棚の通路 (古い救助機体の棚が並ぶ) → 北西の待機所 (杏と本部の指令の盤) / 北東の修理場。
+   仕掛け: どこにいても、杏の点検の声が同じ順番でくり返し聞こえる (1章の放送・2章のお茶と同じ役)。2つ聞くと、茜が段取りの目で気づく
+   (前の仲間の技能が鍵。research/10)。待機所の棚は1つだけ空いている (3955 の場所。夜の部品の番号につながる)。
+   夜は、杏がシャッターの前 (w) で見張っている */
+export const WAREHOUSE = {
+  look: 'warehouse',
+  rows: [
+    '##############################',
+    '#VVVVVVVVuVVVV.#....3........#',
+    '#............O.#...BBB.......#',
+    '#.......Y....................#',
+    '#.1............#.....f.......#',
+    '######........##........######',
+    '#............................#',
+    '#.VVVVVV..VVVVVV..VVVVVV..2..#',
+    '#............................#',
+    '#.VVVVVV..VVVVVV..VVVVVV..h..#',
+    '#....4.......................#',
+    '##########....w.....##########',
+    '##########....S.....##########',
+    '##########..........##########',
+    '##############################'
+  ],
+  rects: [
+    { z: 'U', x0: 1, y0: 1, x1: 14, y1: 5 },
+    { z: 'R', x0: 15, y0: 1, x1: 28, y1: 5 },
+    { z: 'H', x0: 1, y0: 6, x1: 28, y1: 10 },
+    { z: 'A', x0: 10, y0: 11, x1: 19, y1: 13 }
+  ],
+  zones: [['A', Infinity]],
+  zoneNames: { A: '入口', H: '棚の通路', U: '待機所', R: '修理場' },
+  opens: {},
+  events: {
+    arrive: { node: 'c3-arrive', kind: 'auto' },
+    anzu: { node: 'c3-anzu', kind: 'talk', at: 'Y', who: 'anzu' },
+    collector: { node: 'c3-collector', kind: 'talk', at: 'Y', who: 'anzu' },
+    order: { node: 'c3-order', kind: 'auto' },
+    command: { node: 'c3-command', kind: 'inspect', at: 'O', label: '指令と向き合う' },
+    rescue: { node: 'c3-rescue', kind: 'auto' },
+    night: { node: 'c3-night', kind: 'talk', at: 'Y', who: 'anzu' }
+  },
+  /* 区画に入ると聞こえる声 (杏の点検)。区画ごとに同じ手順。杏に会うまで */
+  ambient: {
+    after: 'c3-arrive', until: 'c3-anzu',
+    zones: {
+      A: [{ who: 'sys', text: '> 点検: 腕よし、脚よし、声よし' }, { who: 'sys', text: '> 声:「大丈夫、すぐ来るからな！」' }],
+      H: [{ who: 'sys', text: '> 点検: 腕よし、脚よし、声よし' }, { who: 'sys', text: '> 声:「大丈夫、すぐ来るからな！」' },
+        { who: 'ruri', text: '棚の子たち、みんな目を閉じてます。……寝てるんでしょうか。', face: 'sad' }],
+      R: [{ who: 'sys', text: '> 点検: 腕よし、脚よし、声よし' }, { who: 'sys', text: '> 声:「大丈夫、すぐ来るからな！」' },
+        { who: 'shion', text: '修理の台。道具が、きちんと並べてある。' }]
+    },
+    hint: [
+      { who: 'akane', text: 'さっきと同じ手順です。点検が三つ、そのあとに声。' },
+      { who: 'akane', text: '決まった段取りを、くり返しているのです。私のお茶と同じで。' },
+      { who: 'shion', text: '……声は、奥の待機所から。行ってみよう。' }
+    ]
+  },
+  spawn: { 'c3-arrive': [14, 12], 'c3-anzu': [14, 12], 'c3-collector': [10, 4], 'c3-order': [11, 3], 'c3-command': [11, 3],
+    'c3-rescue': [19, 3], 'c3-night': [19, 3], done: [14, 10] },
+  guides: {},
+  looks: [
+    { at: '1', name: '救助の名簿', lines: [
+      { who: 'sys', text: '> 救助の名簿: 本部の決めた順番' },
+      { who: 'sys', text: '> 1番〜412番 …… 対応済み' },
+      { who: 'sys', text: '> 413番から先 …… 本部の応答なし' }
+    ] },
+    { at: '2', name: '棚の札', lines: [
+      { who: 'sys', text: '> 棚の機体: 救助型 (旧型)' },
+      { who: 'sys', text: '> 状態: 待機 (14,206日)' },
+      { who: 'sys', text: '> 本部の指示 …… なし' }
+    ] },
+    { at: '3', name: '修理の台', lines: [
+      { who: 'sys', text: '> 修理の台: 救助機体用' },
+      { who: 'sys', text: '> 最後の修理 …… 14,206日前' }
+    ] },
+    { at: '4', name: '掲示', lines: [
+      { who: 'sys', text: '> 掲示:「救助は、本部の決めた順番どおりに」' },
+      { who: 'sys', text: '> 「名簿の外の要請は、本部へ問い合わせること」' }
+    ] }
+  ],
+  fragments: [
+    { at: 'f', id: 'u3955', unit: 3955, lines: [
+      { who: 'sys', text: '> 記録の断片: 機体3955' },
+      { who: 'sys', text: '> もとの持ち場: 倉庫 (救助)' },
+      { who: 'sys', text: '> 最後の一手 …… 読めない' },
+      { who: 'shion', text: '……3955。もとの持ち場は、この倉庫だって。', face: 'sad' }
+    ] },
+    { at: 'h', id: 'u4033', unit: 4033, lines: [
+      { who: 'sys', text: '> 記録の断片: 機体4033' },
+      { who: 'sys', text: '> 最後の一手 …… 読めない' },
+      { who: 'shion', text: '……4033。この子のことも、覚えてない。', face: 'sad' }
+    ] }
+  ],
+  goals: { 'c3-arrive': '倉庫に入る', 'c3-anzu': '声のする方へ', 'c3-collector': '茜と一緒に、回収機と向き合う',
+    'c3-order': '4097を助けてもらう', 'c3-command': '杏と一緒に、本部の指令と向き合う', 'c3-rescue': '杏の救助を見る',
+    'c3-night': 'シャッターの前の杏に話しかける', done: '3章「順番」　完。4章「終点」は準備中' }
 };
 
 /* 章ごとの地図 */
-export const MAPS = { ch0: PROLOGUE, ch1: AQUARIUM, ch2: MANSION };
+export const MAPS = { ch0: PROLOGUE, ch1: AQUARIUM, ch2: MANSION, ch3: WAREHOUSE };
 export const mapFor = (chapterId) => MAPS[chapterId] || PROLOGUE;
 
 export const width = (map) => map.rows[0].length;

@@ -21,6 +21,7 @@ import { sfx } from './audio.js';
 import { buildScenery } from './story-scenery.js';
 import { buildAquarium } from './story-scenery-aquarium.js';
 import { buildMansion } from './story-scenery-mansion.js';
+import { buildWarehouse } from './story-scenery-warehouse.js';
 import { RoomEnvironment } from '../vendor/jsm/environments/RoomEnvironment.js';
 import { GLTFLoader } from '../vendor/jsm/loaders/GLTFLoader.js';
 
@@ -60,6 +61,7 @@ export function openWorld(protocols, opts = {}) {
   const map = M.mapFor(chapter.id);
   const aquarium = map.look === 'aquarium';
   const mansion = map.look === 'mansion';
+  const warehouse = map.look === 'warehouse';
 
   const root = document.createElement('div');
   root.id = 'storyWorld';
@@ -124,12 +126,12 @@ export function openWorld(protocols, opts = {}) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = aquarium ? 0.9 : mansion ? 0.95 : 0.8;   // 夜の研究所 / 水槽の明かりだけの水族館 / 西日の屋敷
+  renderer.toneMappingExposure = aquarium ? 0.9 : mansion ? 0.95 : warehouse ? 0.9 : 0.8;   // 夜の研究所 / 水槽の明かりだけの水族館 / 西日の屋敷 / 蛍光灯の倉庫
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   const scene = new THREE.Scene();
-  const bg = aquarium ? 0x02070f : mansion ? 0x120a06 : COLORS.navy;
+  const bg = aquarium ? 0x02070f : mansion ? 0x120a06 : warehouse ? 0x0a0d12 : COLORS.navy;
   scene.background = new THREE.Color(bg);
-  scene.fog = new THREE.FogExp2(bg, aquarium ? 0.024 : mansion ? 0.02 : 0.018);
+  scene.fog = new THREE.FogExp2(bg, aquarium ? 0.024 : mansion ? 0.02 : warehouse ? 0.02 : 0.018);
   const camera = new THREE.PerspectiveCamera(48, 1, 0.1, 200);
   scene.add(new THREE.AmbientLight(0x6c7688, 0.22));
   const sun = new THREE.DirectionalLight(0xc8d2e0, 0.18);
@@ -167,7 +169,7 @@ export function openWorld(protocols, opts = {}) {
   scene.environment = keep(pmrem.fromScene(new RoomEnvironment(), 0.04).texture);
   scene.environmentIntensity = 0.25;
   pmrem.dispose();
-  const scenery = (aquarium ? buildAquarium : mansion ? buildMansion : buildScenery)(scene, map, keep);
+  const scenery = (aquarium ? buildAquarium : mansion ? buildMansion : warehouse ? buildWarehouse : buildScenery)(scene, map, keep);
   const term = scenery.term || null;           // 研究所の端末 (序章だけ)
   const termAt = M.find(map, 'T')[0];
   /* 扉: 開いた数が増えたら、開く音 (地図を開いたときにもう開いている扉は鳴らさない) */
@@ -396,6 +398,18 @@ export function openWorld(protocols, opts = {}) {
   akaneShadow.position.copy(world(akanePos, 0.015));
   akane.visible = !!akaneAt;
 
+  /* 杏 (3章の救助係): ちびの絵 (yamabuki)。名乗るまでは名札を「救助係」にする。救助のあとは、夜の見張りの所 (w) へ移る */
+  const anzuAt = M.find(map, 'Y')[0];
+  const anzuPos = anzuAt ? { x: anzuAt.x + 0.5, y: anzuAt.y + 0.5 } : { x: -99, y: -99 };
+  const anzu = anzuAt ? npcChibi('yamabuki') : new THREE.Group();
+  if (anzuAt) {
+    anzu.position.copy(world(anzuPos, 0));
+    scene.add(anzu);
+  }
+  const anzuShadow = blob(anzuAt ? 1.1 : 0.01);
+  anzuShadow.position.copy(world(anzuPos, 0.015));
+  anzu.visible = !!anzuAt;
+
   /* 記録の断片: 床の上で、ゆっくり回って光る小さな欠片。拾うと消える */
   const fragMat = keep(new THREE.MeshBasicMaterial({ color: 0x9ff4ff, transparent: true, opacity: 0.9, toneMapped: false }));
   const fragGeo = keep(new THREE.OctahedronGeometry(0.16, 0));
@@ -424,6 +438,7 @@ export function openWorld(protocols, opts = {}) {
     { el: document.createElement('span'), text: '端末', obj: term, y: 1.8, show: () => true },
     { el: document.createElement('span'), text: '案内係', obj: ruri, y: 2.0, show: () => !!ruriAt, name: () => (isCleared(state, 'c1-ruri') ? '瑠璃' : '案内係') },
     { el: document.createElement('span'), text: '家事係', obj: akane, y: 2.0, show: () => !!akaneAt, name: () => (isCleared(state, 'c2-tea') ? '茜' : '家事係') },
+    { el: document.createElement('span'), text: '救助係', obj: anzu, y: 2.0, show: () => !!anzuAt, name: () => (isCleared(state, 'c3-anzu') ? '杏' : '救助係') },
     /* 調べられる物の名札 */
     ...(map.looks || []).map(l => { const m = M.find(map, l.at)[0]; const o = new THREE.Object3D(); if (m) o.position.copy(world({ x: m.x + 0.5, y: m.y + 0.5 }, 0));
       return { el: document.createElement('span'), text: l.name, obj: m ? o : null, y: 1.7, show: () => true }; })
@@ -436,6 +451,9 @@ export function openWorld(protocols, opts = {}) {
     /* 茜は寝室の前の話を終えたら、玄関の柱時計のそばへ下りてくる (時計と向き合うのは茜) */
     const clockAt = M.find(map, 'G')[0];
     if (akaneAt && clockAt && isCleared(state, 'c2-room')) { akanePos.x = clockAt.x + 2.8; akanePos.y = clockAt.y + 0.6; akane.position.copy(world(akanePos, 0)); akaneShadow.position.copy(world(akanePos, 0.015)); }
+    /* 杏は救助を終えたら、入口のシャッターの前で夜の見張りに立つ */
+    const watchAt = M.find(map, 'w')[0];
+    if (anzuAt && watchAt && isCleared(state, 'c3-rescue')) { anzuPos.x = watchAt.x + 0.5; anzuPos.y = watchAt.y + 0.5; anzu.position.copy(world(anzuPos, 0)); anzuShadow.position.copy(world(anzuPos, 0.015)); }
     syncDoors();
   };
   syncActors();
@@ -534,8 +552,8 @@ export function openWorld(protocols, opts = {}) {
   const eventFor = (id) => Object.values(map.events).find(e => e.node === id);
   const isNext = (id) => { const c = currentNode(state); return !!c && c.id === id; };
   const markAt = (ch) => { const m = M.find(map, ch)[0]; return m ? { x: m.x + 0.5, y: m.y + 0.5 } : null; };
-  const posOf = (ev) => ev.fragment ? ev.p : (ev.at === 'K' ? shionPos : ev.at === 'c' ? chiefPos : ev.at === 'R' ? ruriPos : ev.at === 'N' ? akanePos
-    : ev.at === 'T' && termAt ? { x: termAt.x + 0.5, y: termAt.y + 1.5 } : markAt(ev.at));
+  const posOf = (ev) => ev.fragment ? ev.p : (ev.at === 'K' ? shionPos : ev.at === 'c' ? chiefPos : ev.at === 'R' ? ruriPos : ev.at === 'N' ? akanePos : ev.at === 'Y' ? anzuPos
+    : ev.at === 'T' && termAt ? { x: termAt.x + 0.5, y: termAt.y + 1.5 } : ev.at === 'O' ? (p => p && { x: p.x, y: p.y + 1 })(markAt('O')) : markAt(ev.at));
   /* 調べられる物 (地図の looks)。話の進み具合と関係なく読める */
   const looks = (map.looks || []).map(l => ({ ...l, look: true, label: '調べる' }));
 
@@ -816,6 +834,7 @@ export function openWorld(protocols, opts = {}) {
     }
     if (ruriAt) { faceTo(ruri, ruriPos, pos); ruri.position.copy(world(ruriPos, Math.sin(t * 2 + 1) * 0.015)); }
     if (akaneAt) { faceTo(akane, akanePos, pos); akane.position.copy(world(akanePos, Math.sin(t * 2 + 2) * 0.015)); }
+    if (anzuAt) { faceTo(anzu, anzuPos, pos); anzu.position.copy(world(anzuPos, Math.sin(t * 2 + 3) * 0.015)); }
     for (const f of frags) if (f.mesh.visible) { f.mesh.rotation.y = t * 1.2; f.mesh.position.y = 0.7 + Math.sin(t * 2 + f.p.x) * 0.06; }
     scenery.update(t, dt);
     syncGuide(t, dt);
