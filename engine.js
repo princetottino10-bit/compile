@@ -2805,6 +2805,11 @@ const AI_W = {
      守る側: 相手の場の一番上に表向きの HATE 1 があり、相手が HATE 0 / HATE 2 を持っていれば、反転して裏にしておく。
      hate1Reuse: 手札にあると分かっているとき (すべてを見る者は常に) / hate1ReuseMaybe: 見えていないが残っているとき */
   hate1Reuse: 150, hate1ReuseMaybe: 40,
+  /* 茜の2つ目 HATE/ICE/FEAR (2026-10-19 ユーザー「HATE1を使い回すプレイングを作り込みたい」):
+     覆われた表向きの HATE 1 は、上をどかすか HATE 1 自身を動かして一番上に出すと、もう一度起動する。
+     ICE 1 (他のカードを移動)・FEAR 0 (移動か反転)・GRAVITY 1 (このラインから/へ移動) でそれをする手と、その移動先の選び方への加点。
+     裏向きで一番上の HATE 1 を表に返す (FEAR 0 の反転) のも同じ */
+  hate1Expose: 140,
 };
 /* サイキック①ロックまわりの重み。通常 AI・特化 AI の区別なく共通で使う。
    lockPermanent/lockTemporary: 覆われた (永続) / 一番上 (1ターン) のロックの価値
@@ -2876,7 +2881,7 @@ function setAiSpecialist(enabled, side, kind) {
 }
 const AI_DSH_W = {
   /* ヘイトの手筋は通常の重み (AI_W) と同じ値。最強・挑戦者にも入れる (2026-10-15。それまで入っていなかった) */
-  hate1Up: 160, hate1Few: 400, hate0Combo: 120, hate0Self: 180, hate1Reuse: 150, hate1ReuseMaybe: 40,
+  hate1Up: 160, hate1Few: 400, hate0Combo: 120, hate0Self: 180, hate1Reuse: 150, hate1ReuseMaybe: 40, hate1Expose: 140,
   think: 1.5, rootSearch: 32, reply: 18, shallow: 8,
   opponentInfo: 1,
   ctrlHold: 65, ctrlHoldLev: 0.7, ctrlOpp: 90, ctrlOppLev: 0.75,
@@ -3630,6 +3635,10 @@ function aiActionBias(st, action, side) {
     const top = stack.length ? st.cards[stack[stack.length - 1]] : null;
     if (top && top.faceUp && top.def === 'HATE_2' && (d.id === 'HATE_1' || (aiTaughtTactics(st, side) && aiHate2CanPickSelf(st, side, action.line)))) v += W.hate0Combo;
   }
+  if (W.hate1Expose && action.faceUp && AI_HATE1_EXPOSERS[d.id] && !fizzles && aiTaughtTactics(st, side) && aiOppFieldCount(st, side) >= 2
+      && aiHate1Exposable(st, side, d.id === 'FEAR_1')) {
+    v += W.hate1Expose;
+  }
   /* DIVERSITY 0 の即コンパイルは3本目まで取っておく (出すだけで通る切り札を1本目・2本目に使わない) */
   if (d.id === 'DIVERSITY_1' && action.faceUp && W.diversityEarly && aiDiversityReady(st, side) && !aiDiversityIsLast(st, side)) {
     v -= W.diversityEarly;
@@ -4248,7 +4257,10 @@ const AI_COMBO_PAIRS = [
   ['LIFE_4', 'LIFE_1'],       // LIFE 3 の覆われ時 → LIFE 0
   ['FIRE_4', 'PLAGUE_5'],     // FIRE 3 で裏返し、PLAGUE 4 で削除させる
   ['SPIRIT_2', 'DEATH_1'],    // SPIRIT 1 の表向きプレイ中に DEATH 0
-  ['HATE_2', 'HATE_1']        // HATE 1 の上に HATE 0、自分を消して HATE 1 をもう一度起動
+  ['HATE_2', 'HATE_1'],       // HATE 1 の上に HATE 0、自分を消して HATE 1 をもう一度起動
+  ['HATE_2', 'ICE_2'],        // ICE 1 で HATE 1 の上をどかす / HATE 1 を動かして起動し直す
+  ['HATE_2', 'FEAR_1'],       // FEAR 0 で同じく (裏の HATE 1 なら表に返す)
+  ['HATE_2', 'FEAR_2']        // FEAR 1 で2枚引いて、HATE 1 の「3枚捨てる」の手札を作る
 ];
 const AI_COMBO_KEEP = { hand: 60, field: 40, deck: 15 };
 /* ORACLE が手放したがらない札: ウォーター① (山札の上を他の各ラインに裏で) とファイア③ (終了時に捨てて反転) */
@@ -4398,6 +4410,8 @@ function aiStrategicCardPicks(st, req, me, ranked, fallback) {
     if (aiSearchExpired()) break;
     let score = aiChoiceScore(st, req, picks, me);
     if (picks.length === 1 && W.hate0Self && aiHate0SelfPick(st, picks[0], me)) score += W.hate0Self;
+    if (picks.length === 1 && W.hate1Expose && /^(optional-)?(shift|flip)$/.test(req.prompt || '') && aiTaughtTactics(st, me)
+        && aiHate1ExposePick(st, picks[0], me, req.prompt)) score += W.hate1Expose;
     if (score > bestScore) { bestScore = score; best = picks; }
   }
   return bestScore > -1e8 ? best : fallback;
@@ -4449,6 +4463,35 @@ function aiOppFieldCount(st, side) {
   let n = 0;
   for (let l = 0; l < 3; l++) n += st.lines[l][1 - side].length;
   return n;
+}
+
+/* 中段で自分の場の札を動かせる札。覆われた表の HATE 1 (HATE_2) の上をどかすか、HATE 1 自身を別のラインの一番上へ動かせる */
+const AI_HATE1_EXPOSERS = { ICE_2: true, FEAR_1: true, GRAVITY_2: true };
+/* 起動し直せる HATE 1 があるか: 覆われた表向き、または (反転できる札なら) 一番上で裏向き */
+function aiHate1Exposable(st, me, canFlip) {
+  for (let l = 0; l < 3; l++) {
+    const stack = st.lines[l][me];
+    for (let i = 0; i < stack.length; i++) {
+      const c = st.cards[stack[i]];
+      if (c.def !== 'HATE_2') continue;
+      if (c.faceUp && i < stack.length - 1) return true;
+      if (canFlip && !c.faceUp && i === stack.length - 1) return true;
+    }
+  }
+  return false;
+}
+/* 移動・反転の的として、自分の HATE 1 を起動し直せる札か (HATE 1 のすぐ上の札・覆われた HATE 1 自身・一番上で裏の HATE 1) */
+function aiHate1ExposePick(st, uid, me, prompt) {
+  const loc = locate(st, uid);
+  if (!loc || loc.side !== me || aiOppFieldCount(st, me) < 2) return false;
+  const stack = st.lines[loc.line][me], i = stack.indexOf(uid), c = st.cards[uid];
+  if (/shift$/.test(prompt)) {
+    if (c.def === 'HATE_2' && c.faceUp && i < stack.length - 1) return true;
+    const below = i > 0 ? st.cards[stack[i - 1]] : null;
+    return i === stack.length - 1 && !!below && below.faceUp && below.def === 'HATE_2';
+  }
+  if (/flip$/.test(prompt)) return c.def === 'HATE_2' && !c.faceUp && i === stack.length - 1;
+  return false;
 }
 
 /* HATE 0 が自分自身を削除すると、すぐ下の表向きの HATE 1 がめくれてもう一度起動する。
@@ -4594,6 +4637,10 @@ function smartPicks(st, req) {
               }
             }
           }
+        }
+        if (loc && /^(optional-)?(shift|flip)$/.test(req.prompt || '') && aiWeightsFor(st, me).hate1Expose && aiTaughtTactics(st, me)
+            && aiHate1ExposePick(st, uid, me, req.prompt)) {
+          s += aiWeightsFor(st, me).hate1Expose;
         }
         /* 相手の裏向きを表にすると、相手の中段が起動する (相手の HATE 0 を表にして、こちらのカードを消させる等) */
         if (loc && loc.side === op && !c.faceUp && /^(optional-)?flip$/.test(req.prompt || '')) {

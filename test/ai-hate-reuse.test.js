@@ -118,3 +118,48 @@ test('ヘイト①の撃ち直しを止める評価は、ふつうには入れ�
     Engine.setAiLevel(1);
   }
 });
+
+/* 茜の2つ目 HATE/ICE/FEAR (2026-10-19 ユーザー「HATE1を使い回すプレイングを作り込みたい」):
+   覆われた表のヘイト①の上を、アイス① (他のカードを移動) やフィア⓪ (移動か反転) でどかして、もう一度起動する */
+function coveredBoard(hand) {
+  const st = Engine.newGame({ p0: ['HATE', 'ICE', 'FEAR'], p1: ['FIRE', 'WATER', 'COURAGE'], seed: 7, first: 0 }).state;
+  place(st, 'HATE_2', 0, 0, true);
+  place(st, 'HATE_6', 0, 0, false);
+  place(st, 'FIRE_3', 1, 0, true);
+  place(st, 'WATER_4', 1, 1, true);
+  place(st, 'COURAGE_3', 1, 2, true);
+  place(st, 'FIRE_2', 1, 2, false);
+  setHand(st, 0, hand);
+  st.turn = 0;
+  return st;
+}
+for (const [card, line] of [['ICE_2', 1], ['FEAR_1', 2]]) {
+  test('ヘイト①の使い回し: ' + card + ' で覆った札をどかして、ヘイト①をもう一度起動する', () => {
+    Engine.setAiLevel(2);
+    Engine.setAiSpecialist(true, 0, 'dsh');
+    try {
+      const st = coveredBoard([card, 'ICE_5', 'FEAR_6', 'ICE_4']);
+      const { picks } = drain(Engine.apply(st, { type: 'play', card: uidOf(card, 0), line, faceUp: true }), 0);
+      const shift = picks.find(p => p.req.prompt === 'shift');
+      assert.ok(shift, JSON.stringify(picks.map(p => p.req.prompt + '/' + p.req.context)));
+      assert.deepEqual(shift.picks, ['HATE_6']);
+      assert.ok(picks.some(p => p.req.context === 'HATE_2' && p.req.prompt === 'delete'), 'ヘイト①がもう一度起動する');
+    } finally {
+      Engine.setAiSpecialist(false);
+      Engine.setAiLevel(1);
+    }
+  });
+}
+
+test('ヘイト①の使い回し: 手札にアイス①があれば、その手を選ぶ', () => {
+  Engine.setAiLevel(2);
+  Engine.setAiSpecialist(true, 0, 'dsh');
+  try {
+    const st = coveredBoard(['ICE_2', 'FEAR_3', 'ICE_5', 'FEAR_6']);
+    const a = Engine.ai.action(st);
+    assert.equal(st.cards[a.card].def, 'ICE_2');
+  } finally {
+    Engine.setAiSpecialist(false);
+    Engine.setAiLevel(1);
+  }
+});
