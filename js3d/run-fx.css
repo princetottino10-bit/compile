@@ -202,3 +202,43 @@ body.calm #hype .hp-slam, body.calm #hype .hp-slam b { animation: hpFade 1.2s ea
   #runHud .rn-life span { min-width: 80px; }
   body:has(#runHud .rh-chips) #prompt { top: calc(var(--run-hud-bottom, 166px) + 8px); }
 }
+
+/* ---------- 挑む子 (run-pilots.js) ---------- */
+/* 選ぶ画面: 4人を並べる (縦持ちは2列) */
+#runOv .rn-pilots { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 6px 0 4px; }
+#runOv .rn-pilot { display: flex; flex-direction: column; align-items: center; gap: 5px; min-width: 0; padding: 10px 8px 12px; cursor: pointer;
+  border: 1px solid color-mix(in srgb, var(--pc) 55%, transparent); border-top: 3px solid var(--pc);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--pc) 22%, transparent), rgba(255,255,255,.03) 60%); color: #fff; text-align: center;
+  clip-path: var(--cut-s); animation: rnDeal .38s cubic-bezier(.2, 1.3, .4, 1) backwards; transition: transform .15s, filter .15s; }
+#runOv .rn-pilot:nth-child(2) { animation-delay: .07s; }
+#runOv .rn-pilot:nth-child(3) { animation-delay: .14s; }
+#runOv .rn-pilot:nth-child(4) { animation-delay: .21s; }
+#runOv .rn-pilot:hover, #runOv .rn-pilot:focus-visible { transform: translateY(-3px); filter: brightness(1.12); outline: 0; }
+#runOv .rn-pilotart { width: 84px; height: 84px; object-fit: contain; image-rendering: auto; filter: drop-shadow(0 4px 6px rgba(0,0,0,.45)); pointer-events: none; }
+#runOv .rn-pilot:hover .rn-pilotart { animation: rnHop .5s ease-in-out infinite alternate; }
+#runOv .rn-pilot > b { font: 900 18px/1.1 var(--font-ui); color: var(--pc); text-shadow: 0 0 10px color-mix(in srgb, var(--pc) 50%, transparent); }
+#runOv .rn-pilot > small { font: 600 11px/1.45 "M PLUS 1", system-ui; color: var(--ink, #ddd); }
+#runOv .rn-pilotproto { display: inline-flex; align-items: center; gap: 4px; font: 800 12px/1 var(--font-ui); letter-spacing: .08em; }
+#runOv .rn-pilotproto img { width: 22px; height: 22px; }
+#runOv .rn-pilotperk { display: flex; flex-direction: column; gap: 2px; width: 100%; margin-top: auto; padding: 6px 6px 0; border-top: 1px dashed rgba(255,255,255,.18);
+  font: 600 11px/1.4 "M PLUS 1", system-ui; color: #f2ecff; }
+#runOv .rn-pilotperk i { font: 900 11px/1 var(--font-ui); font-style: normal; letter-spacing: .12em; color: #ffd86a; }
+@media (max-width: 640px) {
+  #runOv .rn-pilots { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  #runOv .rn-pilotart { width: 64px; height: 64px; }
+}
+@keyframes rnHop { from { transform: translateY(0); } to { transform: translateY(-5px); } }
+
+/* 持っているパッチの列の、専用パッチ */
+#runOv .rn-pilotchip { border-color: var(--pc) !important; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pc) 40%, transparent); }
+#runOv .rn-pilotchip img { border-radius: 50%; background: color-mix(in srgb, var(--pc) 30%, #120d22); }
+
+/* 地図を歩くちび。足もとがマスの少し右下に来るように (マスの印を隠さない) */
+#runOv .rn-chibi { position: absolute; z-index: 3; width: 44px; height: 44px; margin-left: 16px; object-fit: contain; pointer-events: none; user-select: none;
+  transform: translate(-50%, -78%); filter: drop-shadow(0 3px 3px rgba(0,0,0,.55)); }
+#runOv .rn-chibi.walking { transition: left .56s linear, top .56s linear; }
+#runOv .rn-map-wrap.has-chibi .rn-map { margin-bottom: 40px; }
+@media (prefers-reduced-motion: reduce) {
+  #runOv .rn-pilot, #runOv .rn-pilot:hover .rn-pilotart { animation: none; }
+  #runOv .rn-chibi.walking { transition: none; }
+}
