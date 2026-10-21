@@ -39,6 +39,8 @@ export const PROLOGUE = {
   /* 扉の印 → 開く条件 (この場面をクリアしたら) */
   opens: { a: 'c0-practice', b: 'c0-lock', d: 'c0-lock', g: 'c0-chief' },
   /* 出来事。kind: auto (来たら始まる) / talk (人に話しかける) / inspect (物を調べる) / zone (区画に入る) */
+  /* 立っている人 (ちびの絵): 印 → { who: 話す人の id, moves: { 場面: [x, y] } }。仲間 (story.js の PARTY) になれば後ろにつく */
+  cast: { K: { who: 'shion' } },
   events: {
     wake: { node: 'c0-wake', kind: 'auto' },
     practice: { node: 'c0-practice', kind: 'talk', at: 'K', who: 'shion' },
@@ -98,6 +100,7 @@ export const AQUARIUM = {
   zones: [['A', Infinity]],
   zoneNames: { A: '入口ホール', H: '広場', B: '大水槽', C: 'クラゲの部屋', N: '職員通路', S: '職員室', E: '出口ホール' },
   opens: { d: 'c1-fork' },
+  cast: { R: { who: 'ruri' } },
   events: {
     arrive: { node: 'c1-arrive', kind: 'auto' },
     fork: { node: 'c1-fork', kind: 'zone', zone: 'N' },
@@ -201,6 +204,8 @@ export const MANSION = {
   zones: [['H', Infinity]],
   zoneNames: { H: '玄関ホール', D: '食堂', K: '台所', U: '階段の上', R: '寝室' },
   opens: { b: 'c2-akane' },
+  /* 茜は寝室の前の話を終えたら、玄関の柱時計のそばへ下りてくる (時計と向き合うのは茜) */
+  cast: { N: { who: 'akane', moves: { 'c2-room': [13.8, 6.6] } } },
   events: {
     arrive: { node: 'c2-arrive', kind: 'auto' },
     tea: { node: 'c2-tea', kind: 'talk', at: 'N', who: 'akane' },

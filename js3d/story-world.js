@@ -13,7 +13,7 @@ import { UnrealBloomPass } from '../vendor/jsm/postprocessing/UnrealBloomPass.js
 import { OutputPass } from '../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../vendor/jsm/postprocessing/ShaderPass.js';
 import { showTitleBack, hideTitleBack } from './titleback.js';
-import { loadStory, saveStory, blankStory, currentNode, clearNode, startBattle, nodeById, isCleared, chapterCleared, chapterOf, addFound } from './story.js';
+import { loadStory, saveStory, blankStory, currentNode, clearNode, startBattle, nodeById, isCleared, chapterCleared, chapterOf, addFound, SPEAKERS, PARTY } from './story.js';
 import { accountState } from './account.js';
 import * as M from './story-map.js';
 import { playNode, playScene, askBattle } from './story-ui.js';
@@ -26,6 +26,7 @@ import { GLTFLoader } from '../vendor/jsm/loaders/GLTFLoader.js';
 
 const T = 2;
 const HERO_VER = 2;            // 主人公の glb を作り直したら上げる (古いモデルがしばらく出るのを防ぐ)
+const CHIBI_VER = 3;           // ちびの絵 (art/chibi) を描き直したら上げる
 const TOUCH = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;   // タッチの端末 (キーの印を出さない)                 // 1マスの大きさ (three.js の単位)
 const SPEED = 3.4;           // 歩く速さ (マス / 秒)
 const RUN = 1.65;            // Shift / スティックを大きく倒すと走る (倍)
@@ -101,7 +102,7 @@ export function openWorld(protocols, opts = {}) {
       box.remove();
       busy = true;
       keys.clear(); path = null;
-      try { await playNode(nodeById(b.dataset.node)); } finally { busy = false; }
+      try { await playNodeStaged(nodeById(b.dataset.node)); } finally { busy = false; }
     };
   };
   /* ストーリーを最初からやり直す (管理者だけ。進み具合だけを消す。ほかの記録は残る)。
@@ -244,17 +245,19 @@ export function openWorld(protocols, opts = {}) {
   scene.add(me);
   let pos = M.spawnFor(map, state);
 
-  /* 紫苑: ちびキャラ。向き (前・横・後ろ) と足の動き (立ち・歩き2枚)。練習のあとは、あなたについてくる。
+  /* ちびキャラ (紫苑・瑠璃・茜・杏)。向き (前・横・後ろ) と足の動き (立ち・歩き2枚)。
+     仲間 (story.js の PARTY) は、加わったあと、あなたの歩いた跡をたどって後ろを1列でついてくる。
+     まだ仲間でない人は、地図の cast の印の所に立ち、あなたのいる方を向く。
+     会話の行の walk (story-ui.js の stage) で、会話の途中にも歩く。
      横の絵は右向き。左へ歩くときは、絵そのものを左右反転した別のテクスチャを使う
      (Sprite は scale.x を負にしても裏返らない。前に「左へ歩くと後ろ向きに走る」と言われたのはこのため) */
-  const shionAt = M.find(map, 'K')[0];
   const loader = new THREE.TextureLoader();
   /* id ごとの9枚 (art/chibi/<id>_<向き>_<足>.webp) と、左向き3枚 */
   const chibiSet = (id) => {
     const set = {};
     for (const dir of ['front', 'side', 'back']) {
       for (const fr of ['stand', 'walk1', 'walk2']) {
-        const tex = keep(loader.load('art/chibi/' + id + '_' + dir + '_' + fr + '.webp'));
+        const tex = keep(loader.load('art/chibi/' + id + '_' + dir + '_' + fr + '.webp?v=' + CHIBI_VER));
         tex.colorSpace = THREE.SRGBColorSpace;
         set[dir + '_' + fr] = tex;
         if (dir === 'side') {
@@ -269,34 +272,66 @@ export function openWorld(protocols, opts = {}) {
     }
     return set;
   };
-  const chibi = chibiSet('shion');
-  /* 発光 (ブルーム) で白く飛ばないよう、トーンマップを外して明るさを少し抑える */
-  const shionMat = keep(new THREE.SpriteMaterial({ map: chibi.front_stand, transparent: true, toneMapped: false }));
-  shionMat.color.setScalar(0.7);
-  const shion = new THREE.Sprite(shionMat);
   const CHIBI = 1.8;                          // 絵の一辺 (足もとが下の真ん中)
-  shion.center.set(0.5, 0.02);
-  shion.scale.set(CHIBI, CHIBI, 1);
-  let shionDir = 'front', shionStep = 0;
-  const shionShadow = new THREE.Mesh(keep(new THREE.CircleGeometry(0.55, 24)), keep(new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.45 })));
-  shionShadow.rotation.x = -Math.PI / 2;
-  scene.add(shion, shionShadow);
-  /* 立っている人 (瑠璃・茜): 紫苑と同じ大きさのちび。あなたのいる方を向く */
-  const npcChibi = (id) => {
-    const set = chibiSet(id);
+  const shadowGeo = keep(new THREE.CircleGeometry(0.55, 24));
+  const shadowMat = keep(new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.45 }));
+  const actors = {};                          // 話す人の id (story.js の SPEAKERS) → ちび
+  const makeActor = (who, at) => {
+    const set = chibiSet(SPEAKERS[who].portrait);
+    /* 発光 (ブルーム) で白く飛ばないよう、トーンマップを外して明るさを少し抑える */
     const mat = keep(new THREE.SpriteMaterial({ map: set.front_stand, transparent: true, toneMapped: false }));
     mat.color.setScalar(0.7);
     const sp = new THREE.Sprite(mat);
     sp.center.set(0.5, 0.02);
     sp.scale.set(CHIBI, CHIBI, 1);
-    sp.userData = { set, mat };
-    return sp;
+    const shadow = new THREE.Mesh(shadowGeo, shadowMat);
+    shadow.rotation.x = -Math.PI / 2;
+    scene.add(sp, shadow);
+    return actors[who] = { who, sp, mat, set, shadow, pos: { ...at }, dir: 'front', step: 0, route: null, follow: false, home: null, cast: null, k: Object.keys(actors).length };
   };
-  const faceTo = (sp, from, to) => {
-    const dx = to.x - from.x, dy = to.y - from.y;
-    const dir = Math.abs(dx) >= Math.abs(dy) ? (dx < 0 ? 'left' : 'side') : dy < 0 ? 'back' : 'front';
-    const tex = sp.userData.set[dir + '_stand'];
-    if (sp.userData.mat.map !== tex) { sp.userData.mat.map = tex; sp.userData.mat.needsUpdate = true; }
+  const cellPos = (m) => (m ? { x: m.x + 0.5, y: m.y + 0.5 } : null);
+  const inParty = (p) => isCleared(state, p.after);
+  /* 地図に立っている人 (cast: 印 → { who, moves? })。仲間になっていれば立たせず、後ろにつく */
+  for (const [ch, c] of Object.entries(map.cast || {})) {
+    const at = cellPos(M.find(map, ch)[0]);
+    if (!at || !SPEAKERS[c.who]) continue;
+    const p = PARTY.find(q => q.id === c.who);
+    const a = makeActor(c.who, p && inParty(p) ? pos : at);
+    a.cast = c;
+    a.home = at;
+  }
+  PARTY.forEach((p) => { if (!actors[p.id] && inParty(p)) makeActor(p.id, pos); });
+  /* あなたの歩いた跡。仲間はこれをたどる (まっすぐ寄ると壁を抜けるため) */
+  const GAP = 9;                              // 跡の点の数で、1人ぶんの間 (1.3 マスくらい)
+  /* はじめは、あなたの左へ (壁までは) 伸ばした跡にしておく (仲間が同じ所に重ならないように) */
+  const trail = [{ ...pos }];
+  for (let i = 1; i <= GAP * 4; i++) {
+    const q = { x: pos.x - i * 0.15, y: pos.y };
+    if (!M.walkable(map, state, Math.floor(q.x - RADIUS), Math.floor(q.y))) break;
+    trail.unshift(q);
+  }
+  while (trail.length < GAP * 4 + 1) trail.unshift({ ...trail[0] });
+  /* 仲間の並び (後ろへ順に) と、立っている人の帰る所。場面を終えるたびに決め直す */
+  const syncCast = () => {
+    let n = 0;
+    for (const p of PARTY) {
+      const a = actors[p.id];
+      if (!a) continue;
+      a.follow = inParty(p);
+      if (a.follow) a.k = n++;
+    }
+    for (const a of Object.values(actors)) {
+      if (a.follow || !a.cast) continue;
+      /* moves: { 場面の id: [x, y] }。その場面を終えたら、立つ所を移す (茜は寝室の前の話のあと柱時計のそばへ) */
+      for (const [id, xy] of Object.entries(a.cast.moves || {})) if (isCleared(state, id)) a.home = { x: xy[0], y: xy[1] };
+    }
+  };
+  syncCast();
+  for (const a of Object.values(actors)) if (a.follow) a.pos = { ...trail[Math.max(0, trail.length - GAP * (a.k + 1))] };
+  const faceTo = (a, to) => {
+    const dx = to.x - a.pos.x, dy = to.y - a.pos.y;
+    if (Math.hypot(dx, dy) < 0.01) return;
+    a.dir = Math.abs(dx) >= Math.abs(dy) ? (dx < 0 ? 'left' : 'side') : dy < 0 ? 'back' : 'front';
   };
 
   /* あなた (機体4097) の3Dモデル: Blender で作った art/models/hero4097.glb (scripts/blender/chibi_rig.py。見た目の決まりは
@@ -334,12 +369,6 @@ export function openWorld(protocols, opts = {}) {
     body.visible = false;
     meLight.intensity = 0.25;                 // 白い外套が胸の灯で白く飛ばないように
   }, undefined, () => { /* 読めなければ仮の人型のまま */ });
-  const joined = () => chapter.id !== 'ch0' || isCleared(state, 'c0-practice');
-  /* 相棒になったあとは、あなたの少し後ろ (左が壁なら同じ所) に立つ */
-  const behind = M.walkable(map, state, Math.floor(pos.x - 1.2), Math.floor(pos.y)) ? { x: pos.x - 1.2, y: pos.y } : { ...pos };
-  let shionPos = joined() || !shionAt ? behind : { x: shionAt.x + 0.5, y: shionAt.y + 0.5 };
-  /* あなたの歩いた跡。紫苑はこれをたどる (まっすぐ寄ると壁を抜けるため) */
-  const trail = [{ ...shionPos }, { ...pos }];
 
   /* 警備ロボット (巡回) と警備主任: 車輪で動く筒形の体と、丸い頭。横長の赤い目が左右を見回す */
   const drone = (size, color) => {
@@ -374,27 +403,6 @@ export function openWorld(protocols, opts = {}) {
   chief.position.copy(world(chiefPos, 0));
   chief.scale.setScalar(1);
 
-  /* 瑠璃 (1章の案内係): ちびの絵 (asagi)。名乗るまでは名札を「案内係」にする */
-  const ruriAt = M.find(map, 'R')[0];
-  const ruriPos = ruriAt ? { x: ruriAt.x + 0.5, y: ruriAt.y + 0.5 } : { x: -99, y: -99 };
-  const ruri = ruriAt ? npcChibi('asagi') : new THREE.Group();
-  if (ruriAt) {
-    ruri.position.copy(world(ruriPos, 0));
-    scene.add(ruri);
-    blob(1.1).position.copy(world(ruriPos, 0.015));
-  } else ruri.visible = false;
-
-  /* 茜 (2章の家事係): ちびの絵 (nadeshiko)。名乗るまでは名札を「家事係」にする */
-  const akaneAt = M.find(map, 'N')[0];
-  const akanePos = akaneAt ? { x: akaneAt.x + 0.5, y: akaneAt.y + 0.5 } : { x: -99, y: -99 };
-  const akane = akaneAt ? npcChibi('nadeshiko') : new THREE.Group();
-  if (akaneAt) {
-    akane.position.copy(world(akanePos, 0));
-    scene.add(akane);
-  }
-  const akaneShadow = blob(akaneAt ? 1.1 : 0.01);
-  akaneShadow.position.copy(world(akanePos, 0.015));
-  akane.visible = !!akaneAt;
 
   /* 記録の断片: 床の上で、ゆっくり回って光る小さな欠片。拾うと消える */
   const fragMat = keep(new THREE.MeshBasicMaterial({ color: 0x9ff4ff, transparent: true, opacity: 0.9, toneMapped: false }));
@@ -416,14 +424,11 @@ export function openWorld(protocols, opts = {}) {
   let lastZone = null;
   const heard = new Set();
 
-  /* 名前の札 (画面の上に重ねる) */
+  /* 名前の札 (画面の上に重ねる)。ちびは絵で分かるので札を出さない */
   const labels = [
-    { el: document.createElement('span'), text: '紫苑', obj: shion, y: 2.05, show: () => true },
     { el: document.createElement('span'), text: '巡回の警備機体', obj: patrol, y: 1.6, show: () => patrol.visible },
     { el: document.createElement('span'), text: '警備主任', obj: chief, y: 2.4, show: () => chief.visible },
     { el: document.createElement('span'), text: '端末', obj: term, y: 1.8, show: () => true },
-    { el: document.createElement('span'), text: '案内係', obj: ruri, y: 2.0, show: () => !!ruriAt, name: () => (isCleared(state, 'c1-ruri') ? '瑠璃' : '案内係') },
-    { el: document.createElement('span'), text: '家事係', obj: akane, y: 2.0, show: () => !!akaneAt, name: () => (isCleared(state, 'c2-tea') ? '茜' : '家事係') },
     /* 調べられる物の名札 */
     ...(map.looks || []).map(l => { const m = M.find(map, l.at)[0]; const o = new THREE.Object3D(); if (m) o.position.copy(world({ x: m.x + 0.5, y: m.y + 0.5 }, 0));
       return { el: document.createElement('span'), text: l.name, obj: m ? o : null, y: 1.7, show: () => true }; })
@@ -433,9 +438,7 @@ export function openWorld(protocols, opts = {}) {
   const syncActors = () => {
     patrol.visible = route.length >= 2 && !isCleared(state, 'c0-lock');      /* 扉が開いたら、主任へ知らせに行っていなくなる */
     chief.visible = !!chiefAt && !isCleared(state, 'c0-chief');
-    /* 茜は寝室の前の話を終えたら、玄関の柱時計のそばへ下りてくる (時計と向き合うのは茜) */
-    const clockAt = M.find(map, 'G')[0];
-    if (akaneAt && clockAt && isCleared(state, 'c2-room')) { akanePos.x = clockAt.x + 2.8; akanePos.y = clockAt.y + 0.6; akane.position.copy(world(akanePos, 0)); akaneShadow.position.copy(world(akanePos, 0.015)); }
+    syncCast();
     syncDoors();
   };
   syncActors();
@@ -534,10 +537,47 @@ export function openWorld(protocols, opts = {}) {
   const eventFor = (id) => Object.values(map.events).find(e => e.node === id);
   const isNext = (id) => { const c = currentNode(state); return !!c && c.id === id; };
   const markAt = (ch) => { const m = M.find(map, ch)[0]; return m ? { x: m.x + 0.5, y: m.y + 0.5 } : null; };
-  const posOf = (ev) => ev.fragment ? ev.p : (ev.at === 'K' ? shionPos : ev.at === 'c' ? chiefPos : ev.at === 'R' ? ruriPos : ev.at === 'N' ? akanePos
+  const posOf = (ev) => ev.fragment ? ev.p : (ev.who && actors[ev.who] ? actors[ev.who].pos : ev.at === 'c' ? chiefPos
     : ev.at === 'T' && termAt ? { x: termAt.x + 0.5, y: termAt.y + 1.5 } : markAt(ev.at));
   /* 調べられる物 (地図の looks)。話の進み具合と関係なく読める */
   const looks = (map.looks || []).map(l => ({ ...l, look: true, label: '調べる' }));
+
+  /* ---------- 会話の途中で歩く (story-ui.js の playScene に渡す) ----------
+     行の walk: { 話す人の id | 'me': 行き先 }。行き先は [x, y] (マス単位。マスの真ん中は +0.5) / 'me' (あなたの隣) / 話す人の id (その人の隣) /
+     'home' (元の所。仲間はあなたの後ろ) / 地図の印1文字。
+     歩いた人は、その場面が終わるまでそこに留まる (held)。場面が終わったら、仲間は後ろへ、立っている人は帰る所へ歩いて戻る */
+  let meRoute = null;
+  /* p の隣 (from の側。そこが壁なら左・右・手前・奥) */
+  const beside = (p, from) => {
+    const d = dist(from, p) || 1;
+    const tries = [{ x: p.x + (from.x - p.x) / d * 1.1, y: p.y + (from.y - p.y) / d * 1.1 },
+      { x: p.x - 1.1, y: p.y }, { x: p.x + 1.1, y: p.y }, { x: p.x, y: p.y + 1.1 }, { x: p.x, y: p.y - 1.1 }];
+    return tries.find(q => M.walkable(map, state, Math.floor(q.x), Math.floor(q.y))) || { ...from };
+  };
+  const walkTarget = (to, from, a) => {
+    if (Array.isArray(to)) return { x: to[0], y: to[1] };
+    if (to === 'me') return beside(pos, from);
+    if (actors[to]) return beside(actors[to].pos, from);
+    if (to === 'home') return a && a.follow ? trail[Math.max(0, trail.length - GAP * (a.k + 1))] : (a && a.home) || from;
+    return cellPos(M.find(map, to)[0]) || from;
+  };
+  const stage = {
+    walk(spec) {
+      for (const [who, to] of Object.entries(spec || {})) {
+        if (who === 'me') { const t = walkTarget(to, pos); meRoute = M.findPath(map, state, pos, t) || [t]; continue; }
+        const a = actors[who];
+        if (!a) continue;                     // この地図にいない人は歩かせない
+        const t = walkTarget(to, a.pos, a);
+        a.held = true;
+        a.route = M.findPath(map, state, a.pos, t) || [t];
+      }
+    },
+    release() {
+      meRoute = null;
+      for (const a of Object.values(actors)) a.held = false;
+    }
+  };
+  const playNodeStaged = async (n) => { try { await playNode(n, { stage }); } finally { stage.release(); } };
 
   let finish;
   const done = new Promise((resolve) => { finish = resolve; });
@@ -549,7 +589,7 @@ export function openWorld(protocols, opts = {}) {
     nearby = null;                           // 押しっぱなしのキーで、終えた場面をもう一度始めない
     actBtn.hidden = true;                    // 会話のあいだは「話す・調べる」を隠す
     keys.clear(); path = null;
-    try { await playNode(nodeById(id)); } catch (e) { busy = false; throw e; }
+    try { await playNodeStaged(nodeById(id)); } catch (e) { busy = false; throw e; }
     state = clearNode(state, id);
     state = saveStory(state);
     syncActors();
@@ -751,6 +791,12 @@ export function openWorld(protocols, opts = {}) {
         if (before.x === pos.x) vel.x *= 0.5;                   // 壁に当たった向きの勢いは消す
         if (before.y === pos.y) vel.y *= 0.5;
       } else vel = { x: 0, y: 0 };
+    } else if (meRoute) {
+      /* 会話の途中で、台本どおりに歩く (行の walk の me) */
+      while (meRoute.length > 1 && dist(meRoute[0], pos) < 0.08) meRoute.shift();
+      const q = meRoute[0], dx = q.x - pos.x, dy = q.y - pos.y, d = Math.hypot(dx, dy);
+      if (d < 0.02) { meRoute = null; vel = { x: 0, y: 0 }; }
+      else { const s = Math.min(d, SPEED * dt); pos = { x: pos.x + dx / d * s, y: pos.y + dy / d * s }; vel = { x: dx / d * SPEED, y: dy / d * SPEED }; }
     } else vel = { x: 0, y: 0 };
     /* 機体4097: 進む向きを向き、歩くと手足を振る */
     const prev = me.userData.prev || { ...pos };
@@ -772,32 +818,44 @@ export function openWorld(protocols, opts = {}) {
     meShadow.position.copy(world(pos, 0.015));
     ring.scale.setScalar(1 + Math.sin(t * 3) * 0.05);
 
-    /* 紫苑 (練習のあとは、あなたの歩いた跡をたどって後ろをついてくる) */
+    /* ちび: 台本で歩く (route) / 仲間はあなたの跡をたどる / 立っている人は帰る所へ戻り、あなたの方を向く */
     if (dist(trail[trail.length - 1], pos) > 0.15) { trail.push({ ...pos }); if (trail.length > 80) trail.shift(); }
-    let moved = null;
-    if (joined()) {
-      const goal = trail[Math.max(0, trail.length - 9)];      // 1.3 マスくらい後ろ
-      const d = dist(shionPos, goal);
-      if (d > 0.05) {
-        const k = Math.min(1, dt * 5);
-        moved = { x: (goal.x - shionPos.x) * k, y: (goal.y - shionPos.y) * k };
-        shionPos = { x: shionPos.x + moved.x, y: shionPos.y + moved.y };
+    for (const a of Object.values(actors)) {
+      let moved = null;
+      if (!a.route && !a.held) {
+        const goal = a.follow ? trail[Math.max(0, trail.length - GAP * (a.k + 1))] : a.home;
+        const d = goal ? dist(a.pos, goal) : 0;
+        /* 台本で離れた所から戻るときは、道をたどって歩く (まっすぐ寄ると壁を抜ける) */
+        if (d > (a.follow ? 2.5 : 0.1)) a.route = M.findPath(map, state, a.pos, goal) || [goal];
+        else if (a.follow && d > 0.05) {
+          const k = Math.min(1, dt * 5);
+          moved = { x: (goal.x - a.pos.x) * k, y: (goal.y - a.pos.y) * k };
+        }
       }
+      if (a.route) {
+        while (a.route.length > 1 && dist(a.route[0], a.pos) < 0.08) a.route.shift();
+        const q = a.route[0], dx = q.x - a.pos.x, dy = q.y - a.pos.y, d = Math.hypot(dx, dy);
+        if (d < 0.02) a.route = null;
+        else { const s = Math.min(d, SPEED * 0.85 * dt); moved = { x: dx / d * s, y: dy / d * s }; }
+      }
+      if (moved) a.pos = { x: a.pos.x + moved.x, y: a.pos.y + moved.y };
+      /* 向き: 左右に進むときは横 (左は反転した絵)、奥 (地図の上) へは後ろ姿、手前へは前。仲間は止まったら最後の向きのまま */
+      const walking = moved && Math.hypot(moved.x, moved.y) > dt * 0.4;
+      if (walking) {
+        a.dir = Math.abs(moved.x) >= Math.abs(moved.y) ? (moved.x < 0 ? 'left' : 'side') : moved.y < 0 ? 'back' : 'front';
+        a.step += dt * 7;
+      } else {
+        a.step = 0;
+        if (!a.follow && !a.route) faceTo(a, pos);
+      }
+      const phase = Math.floor(a.step) % 4;               // 歩き1 → 立ち → 歩き2 → 立ち
+      const tex = a.set[a.dir + '_' + (!walking ? 'stand' : phase === 0 ? 'walk1' : phase === 2 ? 'walk2' : 'stand')];
+      if (a.mat.map !== tex) { a.mat.map = tex; a.mat.needsUpdate = true; }
+      /* 上下のゆれはコードで (歩くときは一歩ごとに弾む、止まっているときは息づかい。人ごとに少しずらす) */
+      const bob = walking ? Math.abs(Math.sin(a.step * Math.PI / 2)) * 0.07 : Math.sin(t * 2 + a.k) * 0.015;
+      a.sp.position.copy(world(a.pos, bob));
+      a.shadow.position.copy(world(a.pos, 0.02));
     }
-    /* 向き: 左右に進むときは横 (左は反転した絵)、奥 (地図の上) へは後ろ姿、手前へは前。止まったら最後の向きのまま */
-    const walking = moved && Math.hypot(moved.x, moved.y) > dt * 0.4;
-    if (walking) {
-      shionDir = Math.abs(moved.x) >= Math.abs(moved.y) ? (moved.x < 0 ? 'left' : 'side') : moved.y < 0 ? 'back' : 'front';
-      shionStep += dt * 7;
-    } else shionStep = 0;
-    const phase = Math.floor(shionStep) % 4;               // 歩き1 → 立ち → 歩き2 → 立ち
-    const shionFrame = !walking ? 'stand' : phase === 0 ? 'walk1' : phase === 2 ? 'walk2' : 'stand';
-    const tex = chibi[shionDir + '_' + shionFrame];
-    if (shionMat.map !== tex) { shionMat.map = tex; shionMat.needsUpdate = true; }
-    /* 上下のゆれはコードで (歩くときは一歩ごとに弾む、止まっているときは息づかい) */
-    const bob = walking ? Math.abs(Math.sin(shionStep * Math.PI / 2)) * 0.07 : Math.sin(t * 2) * 0.015;
-    shion.position.copy(world(shionPos, bob));
-    shionShadow.position.copy(world(shionPos, 0.02));
 
     /* 巡回: 2点のあいだを行き来する */
     if (patrol.visible && route.length >= 2) {
@@ -814,8 +872,6 @@ export function openWorld(protocols, opts = {}) {
       g.userData.body.rotation.y = Math.sin(t * 0.9 + (g === chief ? 1 : 0)) * 0.7;
       g.userData.r1.material.color.setRGB(0.75 + 0.25 * Math.abs(Math.sin(t * 3)), 0.1, 0.12);
     }
-    if (ruriAt) { faceTo(ruri, ruriPos, pos); ruri.position.copy(world(ruriPos, Math.sin(t * 2 + 1) * 0.015)); }
-    if (akaneAt) { faceTo(akane, akanePos, pos); akane.position.copy(world(akanePos, Math.sin(t * 2 + 2) * 0.015)); }
     for (const f of frags) if (f.mesh.visible) { f.mesh.rotation.y = t * 1.2; f.mesh.position.y = 0.7 + Math.sin(t * 2 + f.p.x) * 0.06; }
     scenery.update(t, dt);
     syncGuide(t, dt);

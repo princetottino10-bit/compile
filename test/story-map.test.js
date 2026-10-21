@@ -151,3 +151,44 @@ test('2章の地図: 出来事は2章の場面をすべて使い、茜の前ま�
   for (const l of map.looks) assert.ok(l.lines.every(x => [...x.text].length <= 40), l.name);
   for (const ls of [...Object.values(map.ambient.zones), map.ambient.hint]) for (const l of ls) assert.ok([...l.text].length <= 40 && S.SPEAKERS[l.who], l.text);
 });
+
+/* 会話の途中で歩く (行の walk。story-world.js の stage): 行き先が、その場面のときに歩ける所で、歩く人がその地図にいる */
+test('会話の walk: 行き先は歩ける所で、歩く人はその章の地図に立っているか、仲間になっている', () => {
+  const linesOf = (n) => [...(n.lines || []), ...((n.choice && n.choice.options) || []).flatMap(o => [...(o.lines || []), ...(o.ifAgain || [])]),
+    ...((n.choice && n.choice.after) || [])];
+  let s = S.blankStory();
+  let count = 0;
+  for (const ch of S.CHAPTERS) {
+    const map = M.mapFor(ch.id);
+    for (const n of ch.nodes) {
+      const here = new Set([...Object.values(map.cast || {}).map(c => c.who), ...S.PARTY.filter(p => S.isCleared(s, p.after)).map(p => p.id)]);
+      for (const line of linesOf(n)) {
+        for (const [who, to] of Object.entries(line.walk || {})) {
+          count++;
+          const where = n.id + ' の「' + line.text + '」: ' + who;
+          if (who !== 'me') { assert.ok(S.SPEAKERS[who] && S.SPEAKERS[who].portrait, where + ' はちびの絵がない'); assert.ok(here.has(who), where + ' はこの地図にいない'); }
+          if (Array.isArray(to)) assert.ok(M.walkable(map, s, Math.floor(to[0]), Math.floor(to[1])), where + ' の行き先 ' + to + ' は歩けない');
+          else if (to.length === 1) assert.ok(M.find(map, to).length, where + ' の印 ' + to + ' が地図にない');
+          else assert.ok(to === 'me' || to === 'home' || here.has(to), where + ' の行き先 ' + to + ' が分からない');
+        }
+      }
+      s = S.clearNode(s, n.id);
+    }
+  }
+  assert.ok(count >= 10);
+});
+
+test('地図に立っている人 (cast): 印が地図にあり、ちびの絵がある。移る先 (moves) は歩ける', () => {
+  for (const [id, map] of Object.entries(M.MAPS)) {
+    for (const [ch, c] of Object.entries(map.cast || {})) {
+      assert.equal(M.find(map, ch).length, 1, id + ': 印 ' + ch);
+      assert.ok(S.SPEAKERS[c.who] && S.SPEAKERS[c.who].portrait, id + ': ' + c.who);
+      for (const [n, [x, y]] of Object.entries(c.moves || {})) {
+        assert.ok(S.nodeById(n), n);
+        let s = S.blankStory(); for (const k of S.CHAPTERS.flatMap(q => q.nodes)) s = S.clearNode(s, k.id);
+        assert.ok(M.walkable(map, s, Math.floor(x), Math.floor(y)), id + ': ' + c.who + ' の移る先');
+      }
+    }
+  }
+  for (const p of S.PARTY) { assert.ok(S.SPEAKERS[p.id] && S.SPEAKERS[p.id].portrait, p.id); assert.ok(S.nodeById(p.after), p.after); }
+});
