@@ -6,7 +6,7 @@
  * ========================================================================= */
 import { STAR_CARDS, ORACLE_CARDS, MAX_VALUE, betaName, omegaName, starText } from './runcards.js';
 import { mutatorInfo } from './run-chaos.js';
-import { PILOTS, pilotOf, pilotInfo, chibiArt, lockedProto } from './run-pilots.js';
+import { PILOTS, pilotOf, pilotInfo, chibiArt, lockedProto, FAVORITE_MINUS } from './run-pilots.js';
 import { playBgm, RUN_BGM } from './bgm.js';
 import { showTitleBack, hideTitleBack } from './titleback.js';
 import { loadWeekly } from './weekly.js';
@@ -308,14 +308,14 @@ export function openRun(protocols, cardsOf, opts) {
 
     /* 挑む子を選ぶ (Slay the Spire のキャラ選び)。選ばずに、いままでどおりのドラフトで始めてもよい */
     const pilotHtml = () => '<h2>挑む子を選ぶ</h2>' +
-      '<p class="rn-lead">選んだ子の<b>得意プロトコル</b>が、はじめからデッキに入っています (外れません)。ドラフトで残りの2つを選んでください。<br>' +
+      '<p class="rn-lead">選んだ子の<b>得意プロトコル</b>が、はじめからデッキに入っています (外れません。そのかわり表向きの値が −' + FAVORITE_MINUS + ')。ドラフトで残りの2つを選んでください。<br>' +
         'その子だけの<b>専用パッチ</b>が1つ付き、地図はその子が歩きます。</p>' +
       '<div class="rn-pilots">' + PILOTS.map(P => {
         const proto = byName[P.favorite] || { name: P.favorite, color: P.color };
         return '<button type="button" class="rn-pilot" style="--pc:' + esc(P.color) + '" data-pilot="' + esc(P.id) + '">' +
           '<img class="rn-pilotart" alt="" src="' + chibiArt(P.id) + '" draggable="false">' +
           '<b>' + esc(P.name) + '</b><small>' + esc(P.bio) + '</small>' +
-          '<span class="rn-pilotproto"><img alt="" src="' + emblemDataURL(proto.name, proto.color, 40, true) + '">' + esc(P.favorite) + '</span>' +
+          '<span class="rn-pilotproto"><img alt="" src="' + emblemDataURL(proto.name, proto.color, 40, true) + '">' + esc(P.favorite) + ' <em>値 −' + FAVORITE_MINUS + '</em></span>' +
           '<span class="rn-pilotperk"><i>' + esc(P.perk.name) + '</i>' + esc(P.perk.text) + '</span></button>';
       }).join('') + '</div>' +
       '<div class="rn-btns"><button type="button" data-pilot="">選ばずに始める (3つともドラフト)</button>' +
@@ -328,7 +328,7 @@ export function openRun(protocols, cardsOf, opts) {
           /* はじめの1つを選ぶときだけ、何をするモードなのかを書いておく */
           const P = pilotOf(run);
           const intro = P && run.deck.length === 1
-            ? '<p class="rn-lead"><b>' + esc(P.name) + '</b> で挑みます。得意の <b>' + esc(P.favorite) + '</b> はもうデッキに入っています。残りの<b>プロトコルを2つ</b>選んでください。<br>' +
+            ? '<p class="rn-lead"><b>' + esc(P.name) + '</b> で挑みます。得意の <b>' + esc(P.favorite) + '</b> はもうデッキに入っています (表向きの値 −' + FAVORITE_MINUS + ')。残りの<b>プロトコルを2つ</b>選んでください。<br>' +
               'そのあと<b>地図を下から登り</b>、頂上の <b>BOSS</b> を倒せばクリア。専用パッチ <b>' + esc(P.perk.name) + '</b>: ' + esc(P.perk.text) + '</p>'
             : !run.deck.length
             ? '<p class="rn-lead">まず<b>プロトコルを3つ</b>、1つずつ選んでデッキを作ります。そのあと<b>地図を下から登り</b>、頂上の <b>BOSS</b> を倒せばクリア。<br>' +
