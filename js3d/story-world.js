@@ -338,7 +338,8 @@ export function openWorld(protocols, opts = {}) {
     body.visible = false;
     meLight.intensity = 0.25;                 // 白い外套が胸の灯で白く飛ばないように
   }, undefined, () => { /* 読めなければ仮の人型のまま */ });
-  const joined = () => chapter.id !== 'ch0' || isCleared(state, 'c0-practice');
+  /* 5章の研究所では、紫苑は判定室 (K) で待っていて、ついてこない (map.shionStays) */
+  const joined = () => !map.shionStays && (chapter.id !== 'ch0' || isCleared(state, 'c0-practice'));
   /* 相棒になったあとは、あなたの少し後ろ (左が壁なら同じ所) に立つ */
   const behind = M.walkable(map, state, Math.floor(pos.x - 1.2), Math.floor(pos.y)) ? { x: pos.x - 1.2, y: pos.y } : { ...pos };
   let shionPos = joined() || !shionAt ? behind : { x: shionAt.x + 0.5, y: shionAt.y + 0.5 };
@@ -449,7 +450,7 @@ export function openWorld(protocols, opts = {}) {
 
   const syncActors = () => {
     patrol.visible = route.length >= 2 && !isCleared(state, 'c0-lock');      /* 扉が開いたら、主任へ知らせに行っていなくなる */
-    chief.visible = !!chiefAt && !isCleared(state, 'c0-chief');
+    chief.visible = !!chiefAt && !isCleared(state, map.chiefUntil || 'c0-chief');
     /* 茜は寝室の前の話を終えたら、玄関の柱時計のそばへ下りてくる (時計と向き合うのは茜) */
     const clockAt = M.find(map, 'G')[0];
     if (akaneAt && clockAt && isCleared(state, 'c2-room')) { akanePos.x = clockAt.x + 2.8; akanePos.y = clockAt.y + 0.6; akane.position.copy(world(akanePos, 0)); akaneShadow.position.copy(world(akanePos, 0.015)); }

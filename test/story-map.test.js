@@ -212,3 +212,29 @@ test('4章の地図: 出来事は4章の場面をすべて使い、改札と聖�
   for (const l of map.looks) assert.ok(l.lines.every(x => [...x.text].length <= 40), l.name);
   for (const ls of [...Object.values(map.ambient.zones), map.ambient.hint]) for (const l of ls) assert.ok([...l.text].length <= 40 && S.SPEAKERS[l.who], l.text);
 });
+
+test('5章の地図: 出来事は5章の場面をすべて使う。主任を越えるまで奥へ行けず、端末を調べるまで判定室へ入れない', () => {
+  const map = M.LAB_RETURN;
+  for (const r of map.rows) assert.equal(r.length, map.rows[0].length);
+  for (const ch of map.rows.join('')) assert.ok(M.TILE[ch] !== undefined, '知らない印: ' + ch);
+  const used = new Set(Object.values(map.events).map(e => e.node));
+  for (const n of S.CHAPTERS[5].nodes) assert.ok(used.has(n.id), n.id + ' を使う出来事がない');
+  for (const e of Object.values(map.events)) { assert.ok(S.nodeById(e.node), e.node); if (e.at) assert.ok(M.find(map, e.at)[0], e.node + ' の置き場所'); }
+  assert.equal(M.mapFor('ch5'), map);
+  let s = S.blankStory();
+  for (const c of S.CHAPTERS.slice(0, 5)) for (const n of c.nodes) s = S.clearNode(s, n.id);
+  const start = M.spawnFor(map, s);
+  assert.equal(M.zoneAt(map, start), 'E');
+  assert.equal(M.objective(s), map.goals['c5-return']);
+  s = S.clearNode(s, 'c5-return');
+  const c = M.find(map, 'c')[0], t = M.find(map, 'T')[0], k = M.find(map, 'K')[0];
+  assert.ok(M.findPath(map, s, start, { x: c.x + 1.5, y: c.y + 0.5 }), '主任の前まで行ける');
+  assert.equal(M.findPath(map, s, start, { x: t.x + 0.5, y: t.y + 1.5 }), null, '主任を越えるまで端末へは行けない');
+  s = S.clearNode(s, 'c5-chief');
+  assert.ok(M.findPath(map, s, start, { x: t.x + 0.5, y: t.y + 1.5 }), '主任を越えたら端末へ行ける');
+  assert.equal(M.findPath(map, s, start, { x: k.x + 0.5, y: k.y + 0.5 }), null, '端末を調べるまで判定室へは入れない');
+  s = S.clearNode(s, 'c5-hall');
+  assert.ok(M.findPath(map, s, start, { x: k.x + 1.5, y: k.y + 0.5 }), '判定室の紫苑の前まで行ける');
+  for (const id of Object.keys(map.spawn)) { const [x, y] = map.spawn[id]; assert.ok(M.walkable(map, s, x, y), '立つ所は歩ける: ' + id); }
+  for (const l of map.looks) assert.ok(l.lines.every(x => [...x.text].length <= 40), l.name);
+});

@@ -469,11 +469,54 @@ export const STATION = {
   ],
   goals: { 'c4-arrive': '駅に入る', 'c4-gate': '改札を通る', 'c4-wicket': '杏と一緒に、改札と向き合う',
     'c4-platform': '外行きのホームへ', 'c4-seiiki': '紫苑と瑠璃で、聖域と向き合う', 'c4-root': '……',
-    'c4-night': 'ホームの端のベンチへ', done: '4章「終点」　完。5章「判定」は準備中' }
+    'c4-night': 'ホームの端のベンチへ', done: '4章「終点」　完' }
+};
+
+/* 5章「判定」: 研究所に戻る。序章の地図を東から西へ逆にたどる: E 外 → D 正面ホール (主任) → C 廊下 → B 端末室 → A 判定室 (紫苑)。
+   紫苑は判定室で待っていて、ついてこない (巻き戻されて旅を覚えていない)。巡回はいない (主任のそばに回収機)。
+   判定のあと (c5-answer) は、紫苑を出さない */
+export const LAB_RETURN = {
+  look: 'lab',
+  rows: [
+    '######################################',
+    '#......#.......#..........#......####',
+    '#.S....#...T...#..........#...c..geee#',
+    '#......a.......b..........d......geee#',
+    '#..K...#....1..#..........#......geee#',
+    '#......#.......#..........#......####',
+    '######################################'
+  ].map(r => r.padEnd(38, '#')),
+  cutRow: 3,
+  zones: [['A', 7], ['B', 15], ['C', 26], ['D', 33], ['E', Infinity]],
+  zoneNames: { A: '判定室', B: '端末室', C: '廊下', D: '正面ホール', E: '外' },
+  opens: { g: 'c5-return', d: 'c5-chief', b: 'c5-chief', a: 'c5-hall' },
+  shionStays: true,
+  shionLeaves: 'c5-answer',
+  chiefUntil: 'c5-chief',
+  events: {
+    ret: { node: 'c5-return', kind: 'auto' },
+    chief: { node: 'c5-chief', kind: 'talk', at: 'c', who: 'chief' },
+    hall: { node: 'c5-hall', kind: 'inspect', at: 'T', label: '端末を調べる' },
+    room: { node: 'c5-room', kind: 'talk', at: 'K', who: 'shion' },
+    judge: { node: 'c5-judge', kind: 'talk', at: 'K', who: 'shion' },
+    answer: { node: 'c5-answer', kind: 'auto' }
+  },
+  spawn: { 'c5-return': [35, 3], 'c5-chief': [34, 3], 'c5-hall': [24, 3], 'c5-room': [9, 3], 'c5-judge': [5, 3], 'c5-answer': [5, 3], done: [5, 3] },
+  guides: {},
+  looks: [
+    { at: '1', name: '判定の記録', lines: [
+      { who: 'sys', text: '> 判定済み: 4,096体' },
+      { who: 'sys', text: '> 答え: すべて「止める」' },
+      { who: 'sys', text: '> 次の判定: 機体4097 (交代の判定)' }
+    ] }
+  ],
+  fragments: [],
+  goals: { 'c5-return': '研究所へ戻る', 'c5-chief': '瑠璃と一緒に、警備主任を越える', 'c5-hall': '端末室の端末を調べる',
+    'c5-room': '判定室の紫苑に会う', 'c5-judge': '紫苑の判定を受ける', 'c5-answer': '……', done: '5章「判定」　完。終章「名前」は準備中' }
 };
 
 /* 章ごとの地図 */
-export const MAPS = { ch0: PROLOGUE, ch1: AQUARIUM, ch2: MANSION, ch3: WAREHOUSE, ch4: STATION };
+export const MAPS = { ch0: PROLOGUE, ch1: AQUARIUM, ch2: MANSION, ch3: WAREHOUSE, ch4: STATION, ch5: LAB_RETURN };
 export const mapFor = (chapterId) => MAPS[chapterId] || PROLOGUE;
 
 export const width = (map) => map.rows[0].length;
