@@ -6,6 +6,7 @@
  * ========================================================================= */
 import { STAR_CARDS, ORACLE_CARDS, MAX_VALUE, betaName, omegaName, starText } from './runcards.js';
 import { mutatorInfo } from './run-chaos.js';
+import { PILOTS, pilotOf, pilotInfo, chibiArt, lockedProto } from './run-pilots.js';
 import { playBgm, RUN_BGM } from './bgm.js';
 import { showTitleBack, hideTitleBack } from './titleback.js';
 import { loadWeekly } from './weekly.js';
@@ -14,7 +15,7 @@ import { emblemDataURL } from './emblems.js';
 import { showProtocolCards } from './protocards.js';
 import { confetti, RAR_COLORS } from './gachafx.js';
 import { sfx } from './audio.js';
-import { afterRender, pressThen, winStreak, rowsLeft, countUp, hudChips, hudPop } from './run-fx.js';
+import { afterRender, pressThen, walkThen, winStreak, rowsLeft, countUp, hudChips, hudPop } from './run-fx.js';
 import { scoreHtml, scoreHurt, SCORE_PER_CREDIT } from './run-score.js';
 
 /* カオス勝ち抜き戦の入口を出すか。2026-10-19 いったん閉じた (中身と途中の保存は残してあり、true に戻せばまた遊べる) */
@@ -56,6 +57,8 @@ function rowNow(run) {
   return n ? n.row : -1;
 }
 const ROW_H = 58;
+/* ちびが地図に出る前に立つところ (いちばん下の段より下。CSS の .has-chibi の余白に収まる) */
+const CHIBI_START = 34;
 /* 地図 (下から上へ登る)。進めるマスだけ押せる。通った道は太く、進める道は光らせる */
 function mapHtml(run, canMove) {
   const rows = run.map.rows;
@@ -78,8 +81,13 @@ function mapHtml(run, canMove) {
       (reach.includes(n.id) ? 'data-node="' + n.id + '"' : 'tabindex="-1"') + ' title="' + esc(N.name + ' — ' + N.text) + '" aria-label="' + esc(N.name) + '">' +
       '<img alt="" src="' + nodeArt(n.type) + '" draggable="false"></button>';
   }).join('');
-  return '<div class="rn-map-wrap"><div class="rn-map" style="height:' + H + 'px">' +
-    '<svg viewBox="0 0 100 ' + H + '" preserveAspectRatio="none" aria-hidden="true">' + lines.join('') + '</svg>' + nodes + '</div></div>' +
+  /* 挑む子のちび: いまのマスに立つ (地図に出る前は、いちばん下のまん中)。進むときは walkThen が歩かせる */
+  const P = pilotOf(run);
+  const here = RUN.nodeById(run, run.pos);
+  const chibi = P ? '<img class="rn-chibi" alt="" aria-hidden="true" draggable="false" data-chibi="' + esc(P.id) + '" src="' + chibiArt(P.id) + '" style="left:' +
+    (here ? here.x * 100 : 50) + '%;top:' + (here ? y(here.row) : H + CHIBI_START) + 'px">' : '';
+  return '<div class="rn-map-wrap' + (P ? ' has-chibi' : '') + '"><div class="rn-map" style="height:' + H + 'px">' +
+    '<svg viewBox="0 0 100 ' + H + '" preserveAspectRatio="none" aria-hidden="true">' + lines.join('') + '</svg>' + nodes + chibi + '</div></div>' +
     '<div class="rn-legend">' + Object.keys(RUN.NODES).map(k => '<span class="' + k + '"><img alt="" src="' + nodeArt(k) + '">' + RUN.NODES[k].name + '</span>').join('') + '</div>';
 }
 
@@ -100,8 +108,11 @@ const patchArt = (id) => 'art/run/patch_' + id + '.webp';
 /* 持っているパッチと HEAT (いつも上に出す) */
 function patchStrip(run) {
   const list = (run.patches || []).map(id => RUN.patchInfo(id)).filter(Boolean);
+  const P = pilotOf(run);
   return '<div class="rn-patches"><span class="rn-credit" title="勝つと増える。ショップで使う">CREDIT <b>' + (run.credits | 0) + '</b></span>' +
     (run.heat ? '<span class="rn-heatb">HEAT ' + run.heat + '</span>' : '') +
+    (P ? '<span class="rn-pchip rn-pilotchip" style="--pc:' + esc(P.color) + '" title="' + esc(P.name + 'の専用パッチ: ' + P.perk.text) + '">' +
+      '<img alt="" src="art/icons/' + esc(P.id) + '_chibi.webp">' + esc(P.perk.name) + '</span>' : '') +
     buildHtml(run) +
     list.map(p => '<span data-id="' + esc(p.id) + '" class="rn-pchip ' + p.kind + ' r' + p.rar + ((p.id === 'failsafe' && run.failsafeUsed) || (p.id === 'phoenix' && run.phoenixUsed) ? ' used' : '') + '" title="' + esc(RUN.patchText(run, p)) + '">' +
       '<img alt="" src="' + patchArt(p.id) + '">' + esc(p.name) + '</span>').join('') + '</div>';
@@ -202,6 +213,7 @@ export function openRun(protocols, cardsOf, opts) {
     let showDeck = false;        // 地図の画面でデッキを広げる
     let hub = !!(opts && opts.hub);
     let heatSel = RUN.unlockedHeat();      // はじめるときの HEAT (解放した一番上から)
+    let pickPilot = false;       // 「はじめる」のあと、挑む子を選ぶ画面
     const set = (next) => { const prev = run; run = next; RUN.saveRun(run); render(prev); };
     /* defId → 「FIRE 2」 (カードに印刷された値で) */
     const cardLabel = (id) => {
@@ -243,10 +255,10 @@ export function openRun(protocols, cardsOf, opts) {
       const best = RUN.loadBest();
       const cbest = RUN.loadChaosBest();
       const top = RUN.unlockedHeat();
-      const bestText = (b) => (b.heat ? 'HEAT ' + b.heat + ' で ' : '') +
+      const bestText = (b) => (pilotInfo(b.pilot) ? pilotInfo(b.pilot).name + ' ・ ' : '') + (b.heat ? 'HEAT ' + b.heat + ' で ' : '') +
         (b.reached > (b.rows || RUN.MAP_ROWS) ? 'BOSS 撃破 (ライフ ' + b.life + ' 残し)' : b.rows ? b.reached + ' / ' + b.rows + ' 段まで' : b.reached + '戦目まで');
       const runStatus = active
-        ? '<em class="now">' + (rowNow(normalRun) + 1) + ' / ' + RUN.MAP_ROWS + ' 段 ・ ライフ ' + normalRun.life + (normalRun.heat ? ' ・ HEAT ' + normalRun.heat : '') + '</em>'
+        ? '<em class="now">' + (pilotOf(normalRun) ? pilotOf(normalRun).name + ' ・ ' : '') + (rowNow(normalRun) + 1) + ' / ' + RUN.MAP_ROWS + ' 段 ・ ライフ ' + normalRun.life + (normalRun.heat ? ' ・ HEAT ' + normalRun.heat : '') + '</em>'
         : best ? '<em>最高記録: ' + bestText(best) + '</em>' : '<em>まだ挑戦していません</em>';
       /* HEAT: クリアするたびに1段ずつ解放。上の段は下の段の条件を全部含む */
       const heatPick = !active && top > 0
@@ -275,6 +287,7 @@ export function openRun(protocols, cardsOf, opts) {
           /* 一度でも挑戦した人には、ルールはたたんでおく (読まずにすぐ始められるように) */
           (best ? '<details class="rn-rules"><summary>ルールを見る</summary>' : '') + '<ul>' +
           '<li>地図を下から登り、頂上の BOSS を倒す (自分も相手も ' + (3 - RUN.RUN_WIN_COMPILES) + ' つコンパイル済みから始まり、残りの ' + RUN.RUN_WIN_COMPILES + ' つを先にコンパイルした方の勝ち。序盤は2つ済みから)</li>' +
+          '<li>ストーリーの4人から<b>挑む子</b>を選べる (はじめのプロトコルは弱いもの。専用パッチ付き)</li>' +
           '<li>道は自分で選ぶ: 戦闘・精鋭・イベント・休憩所・ショップ・宝箱</li>' +
           '<li>ライフ ' + RUN.RUN_LIFE + '。コンパイルされるたびに 1 減る</li>' +
           '<li>勝つたびにカードの報酬 (強化・β カード・除去) を選ぶ。パッチ (改造) は系統をそろえるとボーナス</li>' +
@@ -293,12 +306,31 @@ export function openRun(protocols, cardsOf, opts) {
       '</div>';
     };
 
+    /* 挑む子を選ぶ (Slay the Spire のキャラ選び)。選ばずに、いままでどおりのドラフトで始めてもよい */
+    const pilotHtml = () => '<h2>挑む子を選ぶ</h2>' +
+      '<p class="rn-lead">選んだ子の<b>はじめのプロトコル</b>が、デッキに入っています。どれも<b>弱いプロトコル</b>で、外せません。ドラフトで残りの2つを選んで、弱さを補ってください。<br>' +
+        'その子だけの<b>専用パッチ</b>が1つ付き、地図はその子が歩きます。</p>' +
+      '<div class="rn-pilots">' + PILOTS.map(P => {
+        const proto = byName[P.start] || { name: P.start, color: P.color };
+        return '<button type="button" class="rn-pilot" style="--pc:' + esc(P.color) + '" data-pilot="' + esc(P.id) + '">' +
+          '<img class="rn-pilotart" alt="" src="' + chibiArt(P.id) + '" draggable="false">' +
+          '<b>' + esc(P.name) + '</b><small>' + esc(P.bio) + '</small>' +
+          '<span class="rn-pilotproto"><img alt="" src="' + emblemDataURL(proto.name, proto.color, 40, true) + '">' + esc(P.start) + '</span>' +
+          '<span class="rn-pilotperk"><i>' + esc(P.perk.name) + '</i>' + esc(P.perk.text) + '</span></button>';
+      }).join('') + '</div>' +
+      '<div class="rn-btns"><button type="button" data-pilot="">選ばずに始める (3つともドラフト)</button>' +
+        '<button type="button" data-act="unpilot">戻る</button></div>';
+
     const phaseBody = () => {
       const node = RUN.nodeById(run, run.pos);
       switch (run.phase) {
         case 'draft': {
           /* はじめの1つを選ぶときだけ、何をするモードなのかを書いておく */
-          const intro = !run.deck.length
+          const P = pilotOf(run);
+          const intro = P && run.deck.length === 1
+            ? '<p class="rn-lead"><b>' + esc(P.name) + '</b> で挑みます。はじめのプロトコル <b>' + esc(P.start) + '</b> はもうデッキに入っています。残りの<b>プロトコルを2つ</b>選んでください。<br>' +
+              'そのあと<b>地図を下から登り</b>、頂上の <b>BOSS</b> を倒せばクリア。専用パッチ <b>' + esc(P.perk.name) + '</b>: ' + esc(P.perk.text) + '</p>'
+            : !run.deck.length
             ? '<p class="rn-lead">まず<b>プロトコルを3つ</b>、1つずつ選んでデッキを作ります。そのあと<b>地図を下から登り</b>、頂上の <b>BOSS</b> を倒せばクリア。<br>' +
               '<b>LIFE</b> は相手にコンパイルされるたびに 1 減り、0 で終わり。負けても同じ相手とやり直せます。<br>' +
               '道の途中で<b>パッチ</b> (改造) を集め、<b>カードを外して</b>デッキを研ぎ、自分だけのビルドを作ってください。</p>'
@@ -422,7 +454,8 @@ export function openRun(protocols, cardsOf, opts) {
             chaosNotes() +
 (swapAdd
             ? '<p class="rn-note"><b>' + esc(swapAdd) + '</b> を入れる代わりに、外すプロトコルを選ぶ</p>' +
-              '<div class="rn-offers">' + run.deck.map(n => protoChip(byName[n], 'data-remove="' + esc(n) + '"')).join('') + '</div>' +
+              '<div class="rn-offers">' + run.deck.filter(n => n !== lockedProto(run)).map(n => protoChip(byName[n], 'data-remove="' + esc(n) + '"')).join('') + '</div>' +
+              (lockedProto(run) ? '<p class="rn-note">' + esc(lockedProto(run)) + ' は ' + esc(pilotOf(run).name) + ' のはじめのプロトコルなので外せません</p>' : '') +
               '<div class="rn-btns"><button type="button" data-act="unswap">戻る</button></div>'
             : !run.offers.length
               ? '<p class="rn-note">今のデッキ ' + deckLine(run.deck, byName) + '</p>' +
@@ -451,7 +484,7 @@ export function openRun(protocols, cardsOf, opts) {
             (run.swapped ? '<p class="rn-note">転送装置: <b>' + esc(run.swapped.out) + '</b> が <b>' + esc(run.swapped.add) + '</b> に入れ替わった</p>' : '') +
             (RUN.runWinCompiles(run) === 1 ? '<p class="rn-note">序盤なので、どちらもはじめから2つコンパイル済み — 残りの1つを先にコンパイルしたら ' + (RUN.mutatorsOf(run).includes('misere') ? '<b>負け</b>' : '勝ち') + '</p>' : '') +
             (run.opp.elite ? '<p class="rn-note rn-elite">ELITE — 勝つとクレジット多めとパッチを1つ</p>' : run.route === 'alarm' ? '<p class="rn-warn">警報が鳴っている — 相手が1段強い</p>' : '') +
-            '<div class="rn-vs"><div><small>あなた' + ((run.removed || []).length ? ' (除去 ' + run.removed.length + ' 枚)' : '') + '</small>' + deckLine(run.deck, byName) + '</div><b>VS</b>' +
+            '<div class="rn-vs"><div><small>' + (pilotOf(run) ? esc(pilotOf(run).name) : 'あなた') + ((run.removed || []).length ? ' (除去 ' + run.removed.length + ' 枚)' : '') + '</small>' + deckLine(run.deck, byName) + '</div><b>VS</b>' +
             /* 勝ち抜き戦では CPU の難易度名 (かんたん・ふつう…) は出さない */
             '<div><small>' + (run.opp.boss ? 'BOSS' : run.opp.elite ? '精鋭' : '相手') + '</small>' + deckLine(run.opp.deck, byName) + '</div></div>' +
             (confirmQuit ? '' : '<div class="rn-btns"><button type="button" class="rn-go rn-cta" data-act="fight">戦う</button>' +
@@ -463,6 +496,10 @@ export function openRun(protocols, cardsOf, opts) {
 
     const render = (prev) => {
       const active = run && run.phase !== 'over' && run.phase !== 'clear';
+      if (pickPilot) {
+        el.innerHTML = '<div class="rn-card rn-ph-pilot"><div class="rn-head"><b>// RUN</b><span>勝ち抜き戦' + (heatSel ? ' ・ HEAT ' + heatSel : '') + '</span></div>' + pilotHtml() + '</div>';
+        return;
+      }
       if ((hub && active) || !active) {
         el.innerHTML = '<div class="rn-card"><div class="rn-head"><b>// RUN</b><span>' + (CHAOS_OPEN ? 3 : 2) + 'つのモード</span></div>' + hubHtml() + '</div>';
         return;
@@ -493,7 +530,18 @@ export function openRun(protocols, cardsOf, opts) {
       if (t.dataset.heat) { heatSel = +t.dataset.heat; render(); return; }
       if (t.closest('.fx-busy')) return;
       /* 選ぶボタンは、弾ませてから進める (選んだ手応え) */
-      if (t.dataset.node) { const id = t.dataset.node; pressThen(t, () => set(RUN.chooseNode(run, id, names))); return; }
+      if (t.dataset.pilot !== undefined) {
+        const id = t.dataset.pilot || null;
+        pressThen(t, () => { pickPilot = false; hub = false; RUN.switchRun('normal'); set(RUN.newRun(names, Math.random, heatSel, 'normal', id)); });
+        return;
+      }
+      if (t.dataset.node) {
+        const id = t.dataset.node;
+        const go = () => set(RUN.chooseNode(run, id, names));
+        /* 挑む子がいれば、ちびがそのマスまで歩いてから進む */
+        if (!walkThen(el, id, go)) pressThen(t, go);
+        return;
+      }
       if (t.dataset.patch) { const id = t.dataset.patch; pressThen(t, () => set(RUN.choosePatch(run, id, names))); return; }
       if (t.dataset.star) { const id = t.dataset.star; pressThen(t, () => set(RUN.chooseStar(run, id))); return; }
       if (t.dataset.card !== undefined) { const i = +t.dataset.card; showDeck = false; pressThen(t, () => set(RUN.chooseCardReward(run, i))); return; }
@@ -506,7 +554,8 @@ export function openRun(protocols, cardsOf, opts) {
       if (t.dataset.add) { swapAdd = t.dataset.add; render(); return; }
       if (t.dataset.remove) { const add = swapAdd; swapAdd = null; set(RUN.applyReward(run, { type: 'swap', add, remove: t.dataset.remove }, names)); return; }
       switch (t.dataset.act) {
-        case 'start': hub = false; RUN.switchRun('normal'); set(RUN.newRun(names, Math.random, heatSel)); break;
+        case 'start': pickPilot = true; render(); break;
+        case 'unpilot': pickPilot = false; render(); break;
         case 'chaosStart': hub = false; RUN.switchRun('chaos'); set(RUN.newRun(names, Math.random, 0, 'chaos')); break;
         case 'chaosResume': hub = false; run = RUN.switchRun('chaos'); render(); break;
         case 'nopatch': set(RUN.choosePatch(run, null, names)); break;
