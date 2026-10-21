@@ -21,5 +21,6 @@ _shots/
 scripts/fuzz_out/
 _valnet/
 _combo/
+_paupuru/
 _combo_log.txt
 _forge/
