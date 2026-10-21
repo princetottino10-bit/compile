@@ -18,7 +18,9 @@ export const TILE = {
   /* 屋敷: N 茜の立つ所 (床) / G 柱時計 / Z 食卓 */
   'N': 'floor', 'G': 'solid', 'Z': 'solid',
   /* 倉庫: Y 杏の立つ所 (床) / w 夜に杏が見張る所 (床) / V 古い救助機体の棚 / u 空いた棚 (3955 の場所) / O 本部の指令の盤 / B 修理の台 */
-  'Y': 'floor', 'w': 'floor', 'V': 'solid', 'u': 'solid', 'O': 'solid', 'B': 'solid'
+  'Y': 'floor', 'w': 'floor', 'V': 'solid', 'u': 'solid', 'O': 'solid', 'B': 'solid',
+  /* 駅: = 線路 / D 発車標 / P 駅の管理機体「聖域」/ L ベンチ / k 改札の窓口 (ほかの改札は X、通り道は g。待つ機体の列は Q) */
+  '=': 'solid', 'D': 'solid', 'P': 'solid', 'L': 'solid', 'k': 'solid'
 };
 
 /* 序章「起動」: 研究所。左から A 判定室 / B 端末室 / C 廊下 / D 正面ホール / E 外 */
@@ -365,11 +367,113 @@ export const WAREHOUSE = {
   ],
   goals: { 'c3-arrive': '倉庫に入る', 'c3-anzu': '声のする方へ', 'c3-collector': '茜と一緒に、回収機と向き合う',
     'c3-order': '4097を助けてもらう', 'c3-command': '杏と一緒に、本部の指令と向き合う', 'c3-rescue': '杏の救助を見る',
-    'c3-night': 'シャッターの前の杏に話しかける', done: '3章「順番」　完。4章「終点」は準備中' }
+    'c3-night': 'シャッターの前の杏に話しかける', done: '3章「順番」　完' }
+};
+
+/* 4章「終点」: 中央駅。南の入口 → コンコース → 改札 (4097 だけ通れない) → 北の外行きのホーム (線路の手前に、待つ機体の列)。
+   仕掛け: コンコースでは、聖域の「まもなく、最終便が参ります」が流れる。2つ聞くと、瑠璃が放送係の耳で「録音ではない」と気づく
+   (前の仲間の技能が鍵。research/10)。聖域は改札を抜けてすぐの所に立つ (ホームの話のすぐあとに「向き合う」の確認が出る)。
+   紫苑が研究所へ戻ったあと (c4-root) は、紫苑はついてこない。ホームの西の端のベンチ (区画 B) へひとりで歩く */
+export const STATION = {
+  look: 'station',
+  rows: [
+    '##############################',
+    '#============================#',
+    '#============================#',
+    '#.LL.....QQQ..D..QQQ.........#',
+    '#........QQQP.1..QQQ.........#',
+    '#4.....................f.....#',
+    '#.....h......................#',
+    '#XXXXXXXXXXXkgggXXXXXXXXXXXXX#',
+    '#............................#',
+    '#.2........................3.#',
+    '#............................#',
+    '##########.....S....##########',
+    '##########..........##########',
+    '##############################'
+  ],
+  rects: [
+    { z: 'B', x0: 1, y0: 3, x1: 5, y1: 6 },
+    { z: 'P', x0: 1, y0: 3, x1: 28, y1: 6 },
+    { z: 'W', x0: 1, y0: 8, x1: 14, y1: 10 },
+    { z: 'C', x0: 15, y0: 8, x1: 28, y1: 10 },
+    { z: 'A', x0: 10, y0: 11, x1: 19, y1: 12 }
+  ],
+  zones: [['A', Infinity]],
+  zoneNames: { A: '入口', W: 'コンコース', C: 'コンコース', P: '外行きのホーム', B: 'ベンチ' },
+  opens: { g: 'c4-wicket' },
+  /* 紫苑はこの場面のあと、ついてこない (研究所へ戻った) */
+  shionLeaves: 'c4-root',
+  /* 名札だけ出す物 (調べられない) */
+  names: [{ at: 'P', name: '聖域' }, { at: 'k', name: '改札' }],
+  events: {
+    arrive: { node: 'c4-arrive', kind: 'auto' },
+    gate: { node: 'c4-gate', kind: 'inspect', at: 'k', label: '改札を通る' },
+    wicket: { node: 'c4-wicket', kind: 'inspect', at: 'k', label: '改札と向き合う' },
+    platform: { node: 'c4-platform', kind: 'zone', zone: 'P' },
+    seiiki: { node: 'c4-seiiki', kind: 'inspect', at: 'P', label: '聖域と向き合う' },
+    root: { node: 'c4-root', kind: 'auto' },
+    night: { node: 'c4-night', kind: 'zone', zone: 'B' }
+  },
+  /* 区画に入ると聞こえる放送 (聖域)。改札に着くまで */
+  ambient: {
+    after: 'c4-arrive', until: 'c4-gate',
+    zones: {
+      A: [{ who: 'seiiki', text: '〔聖域〕まもなく、外行きの最終便が参ります。' }],
+      W: [{ who: 'seiiki', text: '〔聖域〕まもなく、外行きの、最終便が参ります。' },
+        { who: 'akane', text: '床に、列の印が引いてあります。きれいに消えずに残っています。' }],
+      C: [{ who: 'seiiki', text: '〔聖域〕まもなく、外行きの最終便が、参ります。' },
+        { who: 'anzu', text: '「まもなく」って、いつだよ。' }]
+    },
+    hint: [
+      { who: 'ruri', text: '今の放送、録音じゃありません。毎回、読み方が少し違います。' },
+      { who: 'ruri', text: '誰かが、39年、毎朝「まもなく」って読んでるんです。' },
+      { who: 'shion', text: '……改札の向こうに、いるんだね。行ってみよう。' }
+    ]
+  },
+  spawn: { 'c4-arrive': [15, 11], 'c4-gate': [15, 11], 'c4-wicket': [12, 8], 'c4-platform': [14, 8], 'c4-seiiki': [13, 6],
+    'c4-root': [13, 6], 'c4-night': [13, 6], done: [3, 5] },
+  guides: { 'c4-platform': [14, 6], 'c4-night': [3, 5] },
+  looks: [
+    { at: '1', name: '発車標', lines: [
+      { who: 'sys', text: '> 外行き 最終便　遅延' },
+      { who: 'sys', text: '> 遅れ: 14,207日' },
+      { who: 'sys', text: '> 次の便 …… 未定' }
+    ] },
+    { at: '2', name: '掲示', lines: [
+      { who: 'sys', text: '> 掲示:「列を乱さず、お待ちください」' },
+      { who: 'sys', text: '> 「列を乱した方は、聖域がお預かりします」' }
+    ] },
+    { at: '3', name: '落とし物の棚', lines: [
+      { who: 'sys', text: '> 落とし物: 傘 31本、手袋 9組' },
+      { who: 'sys', text: '> 受け取り …… なし' }
+    ] },
+    { at: '4', name: '線路の先', lines: [
+      { who: 'sys', text: '> 線路の先: 研究所の方角' },
+      { who: 'sys', text: '> 外へ続く線路 …… 見つかりません' }
+    ] }
+  ],
+  fragments: [
+    { at: 'f', id: 'u3690', unit: 3690, lines: [
+      { who: 'sys', text: '> 記録の断片: 機体3690' },
+      { who: 'sys', text: '> もとの持ち場: 駅 (改札)' },
+      { who: 'sys', text: '> 最後の一手 …… 読めない' },
+      { who: 'shion', text: '……3690。ここで、改札をしてた子。', face: 'sad' }
+    ] },
+    { at: 'h', id: 'u4058', unit: 4058, lines: [
+      { who: 'sys', text: '> 記録の断片: 機体4058' },
+      { who: 'sys', text: '> もとの持ち場: 駅 (外行きのホーム)' },
+      { who: 'sys', text: '> 最後の一手 …… 読めない' },
+      { who: 'shion', text: '……4058。ここで、便を待ってた子だ。', face: 'sad' }
+    ] }
+  ],
+  goals: { 'c4-arrive': '駅に入る', 'c4-gate': '改札を通る', 'c4-wicket': '杏と一緒に、改札と向き合う',
+    'c4-platform': '外行きのホームへ', 'c4-seiiki': '紫苑と瑠璃で、聖域と向き合う', 'c4-root': '……',
+    'c4-night': 'ホームの端のベンチへ', done: '4章「終点」　完。5章「判定」は準備中' }
 };
 
 /* 章ごとの地図 */
-export const MAPS = { ch0: PROLOGUE, ch1: AQUARIUM, ch2: MANSION, ch3: WAREHOUSE };
+export const MAPS = { ch0: PROLOGUE, ch1: AQUARIUM, ch2: MANSION, ch3: WAREHOUSE, ch4: STATION };
 export const mapFor = (chapterId) => MAPS[chapterId] || PROLOGUE;
 
 export const width = (map) => map.rows[0].length;

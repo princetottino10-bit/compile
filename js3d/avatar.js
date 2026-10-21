@@ -83,6 +83,9 @@ AVATARS.story_collector = { name: '回収機', color: '#8a93b8', boss: true, sin
 AVATARS.story_clock = { name: '時計', color: '#c9a25a', boss: true, single: true, lines: null };
 /* 3章: 倉庫に残った救助の本部の読み上げ機 (39年前の名簿の順番を読み上げる) */
 AVATARS.story_order = { name: '指令', color: '#ff7a3c', boss: true, single: true, lines: null };
+/* 4章: 駅の改札と、駅の管理機体「聖域」 */
+AVATARS.story_wicket = { name: '改札', color: '#9fb4c8', boss: true, single: true, lines: null };
+AVATARS.story_seiiki = { name: '聖域', color: '#e6f2ff', boss: true, single: true, lines: null };
 for (const [id, def] of Object.entries(AVATARS)) { def.lines = LINES[id] || BOSS_LINES[id] || {}; def.fav = FAVORITE[id] || null; }
 
 /* 1本目のコンパイルでだけ言うひとこと (「まずは一つ目」など)。2本目からは選ばない */
