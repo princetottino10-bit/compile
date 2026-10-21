@@ -220,6 +220,7 @@ body.calm #hype .hp-slam, body.calm #hype .hp-slam b { animation: hpFade 1.2s ea
 #runOv .rn-pilot > small { font: 600 11px/1.45 "M PLUS 1", system-ui; color: var(--ink, #ddd); }
 #runOv .rn-pilotproto { display: inline-flex; align-items: center; gap: 4px; font: 800 12px/1 var(--font-ui); letter-spacing: .08em; }
 #runOv .rn-pilotproto img { width: 22px; height: 22px; }
+#runOv .rn-pilotproto em { font-style: normal; color: #ff8fa8; }
 #runOv .rn-pilotperk { display: flex; flex-direction: column; gap: 2px; width: 100%; margin-top: auto; padding: 6px 6px 0; border-top: 1px dashed rgba(255,255,255,.18);
   font: 600 11px/1.4 "M PLUS 1", system-ui; color: #f2ecff; }
 #runOv .rn-pilotperk i { font: 900 11px/1 var(--font-ui); font-style: normal; letter-spacing: .12em; color: #ffd86a; }

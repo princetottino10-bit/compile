@@ -248,13 +248,15 @@ function cardValue(st, uid) {
   let v = c.faceUp ? DEFS[c.def].value : 2;
   /* 勝ち抜き戦の極端なパッチ (newGame の perks)。その側の場のカードの値を変える:
      doubleProto (そのプロトコルの表向きの値は2倍) / otherMinus (ほかのプロトコルの表向きの値を引く) /
-     faceUpMinus (表向きの値を全部引く) / faceDownValue (裏向きの値) */
+     faceUpMinus (表向きの値を全部引く) / faceDownValue (裏向きの値) /
+     minusProto + protoMinus (そのプロトコルの表向きの値を引く。挑む子の得意プロトコルの重し) */
   const pk = st.perks && st.perks[c.owner];
   if (pk) {
     if (c.faceUp) {
       if (pk.doubleProto && DEFS[c.def].proto === pk.doubleProto) v *= 2;
       else if (pk.doubleProto && pk.otherMinus) v -= pk.otherMinus;
       if (pk.faceUpMinus) v -= pk.faceUpMinus;
+      if (pk.minusProto && pk.protoMinus && DEFS[c.def].proto === pk.minusProto) v -= pk.protoMinus;
       v = Math.max(0, v);
     } else if (pk.faceDownValue) v = pk.faceDownValue;
   }

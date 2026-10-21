@@ -19,7 +19,7 @@
  * ========================================================================= */
 import { STRONGEST_AI, CHALLENGERS, CHALLENGER_BASE } from './aidecks.js';
 import { UP, isStar, baseOf, starOf, STAR_CARDS, ORACLE_CARDS, isOracleCard } from './runcards.js';
-import { pilotPerk, lockedProto, pilotInfo } from './run-pilots.js';
+import { pilotPerk, lockedProto, pilotInfo, FAVORITE_MINUS } from './run-pilots.js';
 import { CHAOS_LIFE, CHAOS_CREDITS, CHAOS_MAX_ADDED, mutatorCount, rollMutators, ROULETTE, RULE_MUTATORS } from './run-chaos.js';
 
 const KEY = 'compileRun';
@@ -1010,6 +1010,8 @@ export function battleOpts(run, me) {
   const pk = {};
   if (hasPatch(run, 'nocost')) pk.freeDiscard = true;
   if (hasPatch(run, 'double') && run.deck[0]) { pk.doubleProto = run.deck[0]; pk.otherMinus = 1; }
+  /* 挑む子の得意プロトコルは、はじめから入っているぶん表向きの値 −1 (2026-10-21 ユーザー「最初のプロトコル弱くしといて全員」) */
+  if (lockedProto(run)) { pk.minusProto = lockedProto(run); pk.protoMinus = FAVORITE_MINUS; }
   if (hasPatch(run, 'shadow')) { pk.faceDownValue = 4; pk.faceUpMinus = 1; }
   const perks = [null, null];
   if (Object.keys(pk).length) perks[me] = pk;
