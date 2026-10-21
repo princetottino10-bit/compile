@@ -59,6 +59,8 @@ import { equipNow, canEquip, isEquipped, itemLabel } from './equip.js';
 import { recordSoloResult, localRecords } from './stats.js';
 import { conquered, newlyConquered, conquerable } from './stats-data.js';
 import * as STORY from './story.js';
+import * as SS from './story-stars.js';
+import * as EL from './endless.js';
 import { showStoryResult } from './story-ui.js';
 import { openWorld } from './story-world.js';
 import { cardStats, cardTier, playerLevel, protocolSummary } from './stats-data.js';
@@ -318,12 +320,16 @@ let runMode = false;             // 勝ち抜き戦・週替わり3連戦の1戦
 const realProtos = () => Object.values(protoIndex).filter(p => !p.mob);
 const realProtoNames = () => realProtos().map(p => p.name);
 let storyNode = null;            // ストーリーの対戦の場面 (story.js)。決着したら ?story=1 で地図に戻る
+let storyEasy = false;           // その場面を「かんたんで挑む」で始めた (★2・★3 は付かない。story-stars.js)
 let resumed = null;              // 中断した対戦を続きから遊ぶ (resume.js): { rec, built }
 let runKind = 'run';             // 'run' (勝ち抜き戦) / 'weekly' (週替わり3連戦)
 let quickGame = false;           // おまかせで1戦 (?quick=1)
 let runEnded = false;
 const mpShown = { mp: false, dg: false };   // MATCH POINT / DANGER を出したか (1試合で1回ずつ)            // 勝ち抜き戦の結果を出したか (ライフが尽きたらその場で出す)
 let setupNote = '';
+/* GATEKEEPER 連勝 (endless.js) の1戦: 始めたときの連勝の数 (ルールの強さ)。ふつうの対戦は null */
+let endlessStreak = null;
+let endlessUsed = false;         // ?endless=1 は最初の1回だけ (戻ったら、ふつうに相手選びから)
 let lastSetup = null;
 let firstGameHintShown = false;    // はじめの数戦の操作の案内 (1戦に1回)              // いまの CPU 戦のプロトコル { p0, p1 } (もう1戦で同じ組み合わせにする)
 /* 対戦のそばのキャラ (avatar.js)。自分 (左下)・タッグの味方 (その後ろ)・相手 (右上)。
@@ -1146,6 +1152,7 @@ async function boot() {
       : joinCode ? 'online'
       : params.get('online') === '1' ? 'online'      // オンラインの対戦のあと「LOBBY」で戻るとき
       : Number.isInteger(parseInt(params.get('redeck'), 10)) ? 'single'      // 終わった画面の「デッキを変える」
+      : params.get('endless') === '1' ? 'challenge'                          // GATEKEEPER 連勝の「次の1戦へ」
       : params.get('run') === '1' ? 'run'
       : params.get('story') === '1' ? 'story'
       : params.get('tsume') ? 'tsume'
@@ -1258,6 +1265,7 @@ async function boot() {
           /* 何度も負けたあとの「かんたんで挑む」: この1戦だけ CPU を かんたん に (話の進み方は同じ) */
           let easy = false;
           try { easy = sessionStorage.getItem('compileStoryEasy') === node.id; sessionStorage.removeItem('compileStoryEasy'); } catch (e) { /* private mode */ }
+          storyEasy = easy;
           applyAiDifficulty(easy ? 0 : node.level);
         }
         history.replaceState(null, '', location.pathname + '?story=1');
@@ -1289,7 +1297,11 @@ async function boot() {
       let opp = null;
       /* 終わった画面の「デッキを変える」(?redeck=強さ): 同じ強さの相手で、プロトコル選びから (相手選びは飛ばす) */
       const redeck = parseInt(params.get('redeck'), 10);
-      if (nextMode !== 'training' && Number.isInteger(redeck) && !redeckUsed) {
+      if (nextMode === 'challenge' && params.get('endless') === '1' && !endlessUsed) {
+        endlessUsed = true;
+        history.replaceState(null, '', location.pathname);
+        opp = { endless: true, level: EL.ENDLESS_LEVEL };
+      } else if (nextMode !== 'training' && Number.isInteger(redeck) && !redeckUsed) {
         redeckUsed = true;
         history.replaceState(null, '', location.pathname);
         opp = { level: redeck };
@@ -1312,6 +1324,12 @@ async function boot() {
           applyAiDifficulty(UNDERDOG_TAG_LEVEL);
           setupNote = '下剋上タッグ: あなた ' + p0.join(' / ') + ' ＋ かんたんの味方 ' + tagMates.p0.join(' / ') + '　vs GATEKEEPER タッグ ' + p1.join(' / ') + ' ＋ ' + tagMates.p1.join(' / ');
           break;
+        }
+        if (opp.endless) {
+          /* 対戦の途中で閉じていたら、1回目はやり直し・2回目は負け (endless.js の reopen) */
+          const r = EL.reopen(EL.loadEndless());
+          EL.saveEndless(r.state);
+          if (r.note) UI.toast(r.note, 4200);
         }
         if (opp.underdog) {
           document.body.classList.remove('pregame');
@@ -1345,6 +1363,13 @@ async function boot() {
         tagMates = { p0: shuffled(all.filter(n => !p0.includes(n))).slice(0, 3), p1: shuffled(all.filter(n => !p1.includes(n))).slice(0, 3) };
       }
       applyAiDifficulty(chosen.level);
+      if (opp && opp.endless) {
+        const es = EL.loadEndless();
+        endlessStreak = es.streak;
+        EL.saveEndless(EL.startMatch(es));
+        const rules = EL.activeRules(es.streak);
+        setupNote = 'GATEKEEPER 連勝 ' + (es.streak ? es.streak + '連勝中' : '1戦目') + (rules.length ? ': ' + rules.join(' / ') : '');
+      }
       /* ドラフトは先手後攻もドラフトの先手に合わせる。ランダム編成は中身を知らせる */
       if (chosen.first) chosenFirst = chosen.first === 'me' ? ME : AI;
       if (chosen.random) setupNote = 'ランダム: あなた ' + p0.join(' / ') + '　相手 ' + p1.join(' / ');
@@ -1362,7 +1387,9 @@ async function boot() {
   pruneFaceCache(keepIds);
   /* 先攻・後攻はコイントスで決める (トレーニングと問題は自分から。ドラフトはドラフトの先手) */
   /* 勝ち抜き戦のパッチ (先攻・はじめの手札・コントロール) */
-  const runOpts = runMode && runKind === 'run' ? battleOpts(loadRun() || { patches: [] }, ME) : null;
+  /* GATEKEEPER 連勝のルール (手札・Ω・先攻・強化・コントロール)。勝ち抜き戦のパッチと同じ形で engine に渡す */
+  const runOpts = runMode && runKind === 'run' ? battleOpts(loadRun() || { patches: [] }, ME)
+    : endlessStreak !== null && !resumed ? EL.endlessOpts(endlessStreak, ME) : null;
   const firstPlayer = trainingMode || puzzle || tutorial || demoMode || storyNode ? ME
     : runOpts && runOpts.first !== undefined ? runOpts.first
       : chosenFirst !== null ? chosenFirst : (Math.random() < 0.5 ? ME : AI);
@@ -5958,9 +5985,30 @@ async function afterTurn() {
       finishLiveGame();
       return;
     }
+    if (endlessStreak !== null) await endlessAfterGame(win);
     finishLiveGame();
     showEndActions(win);
   }
+}
+
+/* GATEKEEPER 連勝の決着: 連勝を数え、節目なら経験値。結果の欄 (endlessResult) は showEndActions が出す */
+let endlessResult = null;
+async function endlessAfterGame(win) {
+  const before = EL.loadEndless();
+  const r = EL.finishMatch(before, win, cur && cur.state ? ownProtos(cur.state, ME) : null);
+  EL.saveEndless(r.state);
+  endlessResult = { win, streak: r.state.streak, lost: win ? 0 : before.streak, best: r.state.best, newBest: win && r.state.streak > before.best, next: win ? EL.ruleAt(r.state.streak) : null };
+  if (r.milestone) {
+    UI.toast('GATEKEEPER ' + r.milestone + '連勝！  +' + EL.MILESTONES[r.milestone] + ' XP', 3600);
+    await gainXp('endless', EL.MILESTONES[r.milestone], EL.milestoneKey(r.milestone));
+  }
+}
+function endlessHtml() {
+  const e = endlessResult;
+  if (!e) return '';
+  const head = e.win ? (e.newBest ? 'GATEKEEPER ' + e.streak + '連勝 (最高記録)' : 'GATEKEEPER ' + e.streak + '連勝') : '連勝は ' + e.lost + ' で止まりました';
+  return '<div class="end-endless' + (e.win ? ' win' : '') + '"><b>' + head + '</b><small>最高 ' + e.best + '連勝</small>' +
+    (e.win ? '<p>' + (e.next ? '次の1戦から: ' + e.next : 'GATEKEEPER のルールは全部そろいました。このまま続きます') + '</p>' : '') + '</div>';
 }
 
 /* 決着の演出と結果 (戦績・ストーリー・勝ち抜き戦の進み具合) を書き終えた: 落ちたかを見る印と、中断の記録を消す */
@@ -5977,6 +6025,15 @@ async function storyAfterGame(win) {
   if (win && !had) {
     await gainXp('story', XP_GAIN.storyBattle, 'st:' + node.id);
     if (STORY.chapterCleared(after, node.chapter)) await gainXp('story', XP_GAIN.storyChapter, 'stc:' + node.chapter);
+  }
+  /* ★3: この1戦で届いた★を帳簿に残す (★ごとに初回だけ経験値)。詰めコンパイルの場面には★が無い */
+  let stars = null;
+  if (node.kind === 'battle' && SS.STAR_RULES[node.id] && cur && cur.state) {
+    const prevStars = SS.earnedStars(node.id, xpLog(), after);
+    const now = SS.judgeStars(node.id, gameSummary(cur.state, ME, win, aiDifficulty, false), storyEasy);
+    for (let i = 0; i < 3; i++) if (now[i]) await gainXp('story', SS.STAR_XP, SS.starKey(node.id, i + 1), true);
+    stars = { texts: SS.starTexts(node.id), had: prevStars, got: now, easy: storyEasy };
+    await checkTrophies(null);
   }
   const go = (q) => { location.href = location.pathname + q; };
   /* 同じ対戦で続けて負けた数 (2回目から「かんたんで挑む」を出す)。勝ったら数え直す */
@@ -5997,7 +6054,8 @@ async function storyAfterGame(win) {
     map: () => go('?story=1'),
     retry: () => retry(false),
     ...(!win && losses >= 2 && node.level > 0 ? { retryEasy: () => retry(true) } : {}),
-    title: () => go('')
+    title: () => go(''),
+    stars
   });
 }
 
@@ -6014,7 +6072,7 @@ function onlineEndHtml(win) {
 }
 
 function canRedeck() {
-  return !roomMode && !runMode && !storyNode && !tutorial && !puzzle && !trainingMode && !demoMode && !tagMates && !replayMode
+  return !roomMode && !runMode && !storyNode && !tutorial && !puzzle && !trainingMode && !demoMode && !tagMates && !replayMode && endlessStreak === null
     && Number.isInteger(aiDifficulty) && aiDifficulty !== UNDERDOG_LEVEL;   // 下剋上はデッキが決まっている
 }
 
@@ -6159,10 +6217,11 @@ function showEndActions(win) {
     gainsHtml() +
     matchSummaryHtml() +
     nextGoalsHtml() +
+    endlessHtml() +
     (underdogWin ? '<div class="end-sub">最弱のデッキで GATEKEEPER に勝ちました。称号 GIANT SLAYER・専用スリーブとマーカー・+' + UNDERDOG_XP + ' XP</div>' : '') +
     '<div class="end-btns">' +
       /* オンラインは同じ部屋で再戦できない (部屋は閉じている) ので、ロビーへ戻る (前は REMATCH でタイトルに戻っていた) */
-      '<button class="arr-btn ok" id="endAgain" type="button">' + (roomMode ? 'LOBBY' : 'REMATCH') + '</button>' +
+      '<button class="arr-btn ok" id="endAgain" type="button">' + (roomMode ? 'LOBBY' : endlessResult ? (endlessResult.win ? '次の1戦へ' : 'はじめから挑む') : 'REMATCH') + '</button>' +
       /* 同じ強さの相手と、プロトコルを選び直して (ふつうの CPU 戦だけ。負けたあとに3つを変えたい人向け) */
       (canRedeck() ? '<button class="arr-btn" id="endRedeck" type="button">デッキを変える</button>' : '') +
       '<button class="arr-btn" id="endTop" type="button">TITLE</button>' +
@@ -6198,6 +6257,8 @@ function showEndActions(win) {
   /* もう1戦: 同じ組み合わせ・同じ強さで、タイトルと準備を飛ばして始め直す (勝ち抜き戦・オンラインは除く) */
   el.querySelector('#endAgain').onclick = () => {
     if (roomMode) { location.href = location.pathname + '?online=1'; return; }
+    /* GATEKEEPER 連勝: 同じ組み合わせの再戦ではなく、3つを選び直して次の1戦へ (負けたら 0 から) */
+    if (endlessResult) { location.href = location.pathname + '?endless=1'; return; }
     const st0 = cur && cur.state;
     if (!roomMode && !runMode && lastSetup && st0) {
       const q = new URLSearchParams({ me: lastSetup.p0.join(','), ai: lastSetup.p1.join(','), lv: String(aiDifficulty ?? 0) });

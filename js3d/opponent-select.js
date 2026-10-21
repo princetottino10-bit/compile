@@ -2,7 +2,8 @@
  * 相手を選ぶ画面
  *   SINGLE GAME: おまかせ (プロトコルも相手も自動) / CPU (かんたん / ふつう / つよい。次の画面で公式のドラフトで取り合う) / タッグ
  *   CHALLENGE (opts.challenge): 強敵 (最強・本気の4人・ORACLE・神。相手のデッキは決まっている。ロック特化・挑戦者は「自由に選ぶ」にだけ残す) / 下剋上 (最弱のデッキで最強に挑む。勝つと称号)
- *   → { level } / { underdog: true } / { quick: true } / { watch: true } / null (タイトルへ)
+ *   CHALLENGE の「連勝」: GATEKEEPER 連勝 (endless.js)。負けるまで GATEKEEPER と戦い、勝つたびに相手のルールが足される
+ *   → { level } / { underdog: true } / { endless: true, level } / { quick: true } / { watch: true } / null (タイトルへ)
  * ========================================================================= */
 import { showTitleBack, hideTitleBack } from './titleback.js';
 import { gearSvg, eyeSvg } from './deus.js';
@@ -11,6 +12,7 @@ import { localRecords } from './stats.js';
 import { conquered, conquerable } from './stats-data.js';
 import { settings } from './settings.js';
 import { accountState } from './account.js';
+import { loadEndless, activeRules, ruleAt, MAX_STAGE } from './endless.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const LAST_KEY = 'compileOppLast';
@@ -69,7 +71,10 @@ export function openOpponentSelect(protocols, opts = {}) {
   const tabKey = 'compileChallengeTab';
   let ctab = (() => { try { return localStorage.getItem(tabKey) || ''; } catch (e) { return ''; } })();
   if (last === 'underdog' || last === 'udtag') ctab = ctab || 'ud';
-  if (ctab !== 'ud') ctab = 'boss';
+  if (last === 'endless') ctab = ctab || 'endless';
+  if (ctab !== 'ud' && ctab !== 'endless') ctab = 'boss';
+  const es = loadEndless();
+  const esRules = activeRules(es.streak), esNext = ruleAt(es.streak + 1);
   const sumChip = (label, value, ok) => '<span class="op-sumc' + (ok ? ' ok' : '') + '"><small>' + label + '</small><b>' + value + '</b></span>';
   el.innerHTML = '<div class="op-wrap' + (challenge ? ' op-challenge' : '') + '">' +
     (challenge
@@ -77,10 +82,12 @@ export function openOpponentSelect(protocols, opts = {}) {
       /* 進み具合のまとめ */
       '<div class="op-sum">' + sumChip('強敵に勝った', beaten + '/' + bossLevels.length, beaten === bossLevels.length) +
         sumChip('制覇', conq + '/' + total, conq >= total) +
-        sumChip('下剋上', cleared ? '✓' : '—', cleared) + sumChip('タッグ', tagCleared ? '✓' : '—', tagCleared) + '</div>' +
+        sumChip('下剋上', cleared ? '✓' : '—', cleared) + sumChip('タッグ', tagCleared ? '✓' : '—', tagCleared) +
+        sumChip('最高連勝', es.best ? String(es.best) : '—', es.best >= MAX_STAGE) + '</div>' +
       '<div class="op-tabs" role="tablist">' +
         '<button type="button" role="tab" data-ctab="boss" aria-selected="' + (ctab === 'boss') + '" class="' + (ctab === 'boss' ? 'on' : '') + '">強敵 <small>' + bossLevels.length + '</small></button>' +
-        '<button type="button" role="tab" data-ctab="ud" aria-selected="' + (ctab === 'ud') + '" class="' + (ctab === 'ud' ? 'on' : '') + '">下剋上 <small>2</small></button></div>' +
+        '<button type="button" role="tab" data-ctab="ud" aria-selected="' + (ctab === 'ud') + '" class="' + (ctab === 'ud' ? 'on' : '') + '">下剋上 <small>2</small></button>' +
+        '<button type="button" role="tab" data-ctab="endless" aria-selected="' + (ctab === 'endless') + '" class="' + (ctab === 'endless' ? 'on' : '') + '">連勝</button></div>' +
       '<section data-cpane="boss"' + (ctab === 'boss' ? '' : ' hidden') + '><h3><small>相手のデッキは決まっている。次の画面で自分の3つを選ぶ</small></h3>' +
       '<div class="op-row boss">' +
         (peekOpen ? card(String(PEEK_LEVEL), '<span class="op-deus op-peek">' + eyeSvg() + esc(PEEK_NAME) + '</span>' + rec(PEEK_LEVEL),
@@ -102,7 +109,13 @@ export function openOpponentSelect(protocols, opts = {}) {
         '<span class="op-vs">' + deck(UNDERDOG_DECK) + '<i>VS</i>' + deck(STRONGEST_AI) + '</span>', ' wide') + '</div>' +
       '<div class="op-row">' + card('udtag', '下剋上タッグ' + (tagCleared ? ' <em>✓ TITLE — UNDERDOG DUO</em>' : ''),
         'あなた (好きな3つ) ＋ かんたんの味方 vs GATEKEEPER のタッグ。手番は あなた → 相手1 → 味方 → 相手2。勝つと 称号 UNDERDOG DUO',
-        '<span class="op-vs"><span class="op-any">好きな3つ</span><i>VS</i>' + deck(STRONGEST_AI) + deck(UNDERDOG_TAG_RIVAL_MATE) + '</span>', ' wide') + '</div></section>'
+        '<span class="op-vs"><span class="op-any">好きな3つ</span><i>VS</i>' + deck(STRONGEST_AI) + deck(UNDERDOG_TAG_RIVAL_MATE) + '</span>', ' wide') + '</div></section>' +
+      /* GATEKEEPER 連勝: 今の連勝・最高記録・かかっているルール・次に勝つと足されるルール */
+      '<section data-cpane="endless"' + (ctab === 'endless' ? '' : ' hidden') + '><h3><small>負けるまで GATEKEEPER と戦い続ける。勝つたびに GATEKEEPER にルールが1つ足される。1戦ごとに自分の3つを選び直せる</small></h3>' +
+      '<div class="op-row">' + card('endless', 'GATEKEEPER 連勝' + ' <span class="op-rec' + (es.best ? ' won' : ' none') + '">最高 ' + es.best + '連勝</span>',
+        (es.streak ? 'いま ' + es.streak + '連勝中。' : '') + (esNext ? '次に勝つと: ' + esNext : 'ルールは全部そろっている。このまま続く') + '。3・5・7・10連勝で経験値',
+        '<span class="op-vs"><span class="op-any">好きな3つ</span><i>VS</i>' + deck(STRONGEST_AI) + '</span>' +
+        (esRules.length ? '<ul class="op-rules">' + esRules.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul>' : ''), ' wide') + '</div></section>'
       : '<div class="op-head"><b>// SINGLE GAME</b><span>SELECT OPPONENT</span></div>' +
       /* 迷ったらこれ: 選ぶものを全部おまかせにして、すぐ始める */
       '<button type="button" class="op-quick" data-opp="quick"><b>おまかせで今すぐ始める</b>' +
@@ -139,6 +152,7 @@ export function openOpponentSelect(protocols, opts = {}) {
       try { localStorage.setItem(LAST_KEY, key); } catch (e) { /* private mode */ }
       if (/^tag\d$/.test(key)) { resolve({ tag: true, level: +key.slice(3) }); return; }
       if (key === 'udtag') { resolve({ underdogTag: true, level: UNDERDOG_TAG_LEVEL }); return; }
+      if (key === 'endless') { resolve({ endless: true, level: 3 }); return; }
       resolve(key === 'underdog' ? { underdog: true, level: UNDERDOG_LEVEL } : { level: +key });
     };
   });

@@ -335,7 +335,17 @@ export async function playNode(n) {
 
 /* ---------- 対戦の前の確認 ---------- */
 /* 対戦の中身 (自分と相手のデッキ・強さ・勝ちの条件) を見せて、対戦するか聞く。true = 対戦する */
-export function askBattle(n, protocols) {
+/* ★3 の並び (story-stars.js)。have: 前から持っている★、got: この1戦で届いた★ (決着のあとだけ) */
+function starList(texts, have, got) {
+  return '<ul class="sm-stars">' + texts.map((t, i) => {
+    const on = !!(have[i] || (got && got[i])), fresh = !!(got && got[i] && !have[i]);
+    return '<li class="' + (on ? 'on' : '') + (fresh ? ' new' : '') + '"><i aria-hidden="true">★</i><span>' + esc(t) + '</span>' +
+      (fresh ? '<em>NEW</em>' : '') + '<span class="sr">' + (on ? '取った' : 'まだ') + '</span></li>';
+  }).join('') + '</ul>';
+}
+
+/* stars: { texts: ★3つの文, have: 取った★ } (★の無い場面は渡さない) */
+export function askBattle(n, protocols, stars) {
   const byName = Object.fromEntries(protocols.concat(MOB_PROTOCOLS).map(p => [p.name, p]));
   const chips = (names) => '<span class="sm-deck">' + names.map(x =>
     '<i style="--pc:' + esc((byName[x] || {}).color || '#b9a4ff') + '">' + esc(x) + '</i>').join('') + '</span>';
@@ -351,6 +361,7 @@ export function askBattle(n, protocols) {
         ? '<div class="sm-vs"><div><em>あなた</em>' + chips(n.me) + '<em>' + esc(n.tag.mateName) + '</em>' + chips(n.tag.mate) + '</div><i>VS</i>' +
           '<div><em>' + esc(n.oppName) + '</em>' + chips(n.opp) + '<em>' + esc(n.tag.oppMateName) + '</em>' + chips(n.tag.oppMate) + '</div></div>'
         : '<div class="sm-vs"><div><em>' + esc(n.meName || 'あなた') + '</em>' + chips(n.me) + '</div><i>VS</i><div><em>' + esc(n.oppName) + '</em>' + chips(n.opp) + '</div></div>') +
+    (stars ? starList(stars.texts, stars.have) : '') +
     '<div class="sm-btns"><button type="button" class="sm-go">' + (tsume ? '書き換える' : 'コンパイルを始める') + '</button>' +
     (admin ? '<button type="button" class="sm-skip">飛ばす (ADMIN)</button>' : '') +
     '<button type="button" class="sm-back">戻る</button></div></div>';
@@ -372,6 +383,8 @@ export async function showStoryResult(win, node, actions) {
   const el = overlay('storyResult', win ? '先へ' : 'もう一度');
   el.innerHTML = '<div class="sty-res ' + (win ? 'win' : 'lose') + '"><small>' + esc(node.title) + '</small>' +
     '<b>' + (win ? 'COMPILED' : 'OVERWRITTEN') + '</b>' +
+    (actions.stars ? starList(actions.stars.texts, actions.stars.had, actions.stars.got) +
+      (win && actions.stars.easy ? '<p class="sty-tip">「かんたんで挑む」で勝ったときは ★1 だけです。★2・★3 はふだんの強さで</p>' : '') : '') +
     (!win && actions.retryEasy ? '<p class="sty-tip">続けて負けています。「かんたんで挑む」で、この1戦だけ CPU を弱くできます (話の進み方は同じ)</p>' : '') +
     '<div class="sm-btns">' + (win
       ? '<button type="button" data-a="next" class="sm-go">次へ</button>'

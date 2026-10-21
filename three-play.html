@@ -941,6 +941,12 @@
   #endBar.show{display:flex;opacity:1;transform:translateX(-50%) translateY(0);}
   #endBar .end-title{font:900 16px/1 "M PLUS 1",system-ui;letter-spacing:.16em;color:var(--ink);}
   #endBar .end-sub{font:700 12px/1.5 "M PLUS 1",system-ui;color:var(--gold);}
+  /* GATEKEEPER 連勝 (endless.js) の結果 */
+  #endBar .end-endless{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 14px;border-radius:8px;border:1px solid rgba(255,79,163,.35);background:rgba(255,79,163,.07);}
+  #endBar .end-endless.win{border-color:rgba(255,198,92,.45);background:rgba(255,198,92,.07);}
+  #endBar .end-endless b{font:900 15px/1.3 "M PLUS 1",system-ui;color:#fff;}
+  #endBar .end-endless small{font:700 11px/1.3 "M PLUS 1",system-ui;color:var(--dim);}
+  #endBar .end-endless p{margin:2px 0 0;font:600 12px/1.5 "M PLUS 1",system-ui;color:var(--gold);text-align:center;}
   #endBar .end-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
   /* 報酬の行が多いと板が画面の上へはみ出し、「あなたの勝ち」や経験値が見えず戻せなかった。
      板の高さを画面の中に収め、中をスクロールできるように。下のボタンの段はいつも見えるよう、板の下端に貼りつける */
@@ -1600,6 +1606,7 @@
   .sw-recall-list p{margin:0;font:600 12px/1.5 "M PLUS 1",system-ui;color:#cfd6e0;}
   .sw-recall-list button{text-align:left;padding:8px 10px;border-radius:4px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:#fff;font:700 13px/1.3 "M PLUS 1",system-ui;cursor:pointer;}
   .sw-recall-list button:hover,.sw-recall-list button:focus-visible{border-color:#ffc65c;outline:0;}
+  .sw-recall-list .sw-st{display:inline-block;min-width:3.4em;margin-right:6px;color:#ffc65c;letter-spacing:.05em;}
   body:has(#storyScene.show) .sw-recall,body:has(#storyScene.show) .sw-recall-list{visibility:hidden;}
   .sw-reset.armed{border-color:#ff6b6b;color:#ffd0d0;background:rgba(80,10,10,.7);}
   .sw-stick{position:absolute;width:96px;height:96px;margin:-48px 0 0 -48px;border-radius:50%;border:2px solid rgba(255,255,255,.35);background:rgba(10,14,22,.25);pointer-events:none;}
@@ -1651,6 +1658,16 @@
   .sm-card>small,.sty-res>small{font:800 10px/1 var(--font-hud),"M PLUS 1",system-ui;letter-spacing:.2em;color:var(--pink);}
   .sm-card h3{margin:0;font:900 22px/1.2 "M PLUS 1",system-ui;color:#fff;}
   .sm-note{margin:0;font:600 13px/1.5 "M PLUS 1",system-ui;color:var(--dim);}
+  /* ストーリーの★3 (story-stars.js): 取った★は金、この1戦で取った★には NEW */
+  .sm-stars{list-style:none;margin:0;padding:10px 12px;display:flex;flex-direction:column;gap:6px;border-radius:9px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);text-align:left;width:100%;box-sizing:border-box;}
+  .sm-stars li{display:flex;align-items:center;gap:8px;font:600 13px/1.4 "M PLUS 1",system-ui;color:var(--dim);}
+  .sm-stars li i{font-style:normal;font-size:16px;line-height:1;color:#3b4254;}
+  .sm-stars li.on{color:#fff;} .sm-stars li.on i{color:#ffc65c;text-shadow:0 0 10px rgba(255,198,92,.55);}
+  .sm-stars li em{margin-left:auto;font:800 10px/1 var(--font-hud),"M PLUS 1",system-ui;font-style:normal;letter-spacing:.12em;color:var(--pink);}
+  .sm-stars li.new i{animation:smStarPop .5s cubic-bezier(.3,1.6,.5,1) both;}
+  @keyframes smStarPop{from{transform:scale(0) rotate(-60deg);}to{transform:none;}}
+  @media (prefers-reduced-motion:reduce){ .sm-stars li.new i{animation:none;} }
+  .sm-stars .sr,.sw-recall-list .sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;}
   .sm-vs{display:flex;flex-direction:column;gap:8px;}
   .sm-vs>div{display:flex;flex-direction:column;gap:5px;} .sm-vs em{font:700 11px/1 "M PLUS 1",system-ui;font-style:normal;color:var(--dim);}
   .sm-vs>i{font:900 13px/1 var(--font-hud),"M PLUS 1",system-ui;color:var(--pink);font-style:normal;letter-spacing:.1em;}
@@ -2179,6 +2196,7 @@
   /* RECORD の上に重ねて開く */
   #trophyOv{z-index:80;}
   .rn-perk{display:block;margin-top:4px;font:700 11px/1.4 system-ui;color:var(--gold);}
+  .op-rules{margin:6px 0 0;padding:0 0 0 1.1em;letter-spacing:0;display:flex;flex-direction:column;gap:2px;font:600 11px/1.4 "M PLUS 1",system-ui;color:var(--dim);text-align:left;}
   .op-any{padding:4px 10px;border:1px dashed rgba(255,255,255,.35);border-radius:999px;font:800 11px/1.2 "M PLUS 1",system-ui;color:var(--ink);}
   .cp-tier{font:800 10px/1 "M PLUS 1",system-ui;padding:3px 6px;border-radius:999px;text-align:center;}
   .cp-tier.t-bronze{color:#1a0d04;background:#d98b52;}
@@ -4817,7 +4835,7 @@
       "./vendor/three.module.js": "./vendor/three.module.js?v=985eb92490",
       "./js3d/account.js": "./js3d/account.js?v=6cf36078ae",
       "./js3d/achievements-ui.js": "./js3d/achievements-ui.js?v=37fe12aa73",
-      "./js3d/achievements.js": "./js3d/achievements.js?v=c596ffc129",
+      "./js3d/achievements.js": "./js3d/achievements.js?v=612cd5503d",
       "./js3d/admin-ui.js": "./js3d/admin-ui.js?v=ea6be0ef14",
       "./js3d/ai-worker.js": "./js3d/ai-worker.js?v=462073cba5",
       "./js3d/aiclient.js": "./js3d/aiclient.js?v=f88eb8a3b5",
@@ -4851,6 +4869,7 @@
       "./js3d/dialogs.js": "./js3d/dialogs.js?v=eb84fac39f",
       "./js3d/displayname.js": "./js3d/displayname.js?v=613e18bf95",
       "./js3d/emblems.js": "./js3d/emblems.js?v=7b77a0b2df",
+      "./js3d/endless.js": "./js3d/endless.js?v=7f45b07d75",
       "./js3d/envcheck.js": "./js3d/envcheck.js?v=bc6dd95a06",
       "./js3d/equip.js": "./js3d/equip.js?v=51faa70a25",
       "./js3d/errorreport.js": "./js3d/errorreport.js?v=2a83f561e2",
@@ -4871,14 +4890,14 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=2b4dbc6066",
       "./js3d/logformat.js": "./js3d/logformat.js?v=e3548c74d1",
-      "./js3d/main.js": "./js3d/main.js?v=be2b1b850b",
+      "./js3d/main.js": "./js3d/main.js?v=404d72aea8",
       "./js3d/mobcards.js": "./js3d/mobcards.js?v=2a6bc79376",
       "./js3d/motion.js": "./js3d/motion.js?v=71cd68f8ff",
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
       "./js3d/net.js": "./js3d/net.js?v=3134839bca",
-      "./js3d/news.js": "./js3d/news.js?v=7e6c969584",
+      "./js3d/news.js": "./js3d/news.js?v=bf582b90c0",
       "./js3d/notice.js": "./js3d/notice.js?v=029a81acaa",
-      "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=fee989c0b5",
+      "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=44959abcba",
       "./js3d/panel.js": "./js3d/panel.js?v=994ec047da",
       "./js3d/pickaid.js": "./js3d/pickaid.js?v=fd33e4bc87",
       "./js3d/plates.js": "./js3d/plates.js?v=02563e1cf1",
@@ -4920,8 +4939,9 @@
       "./js3d/story-scenery-aquarium.js": "./js3d/story-scenery-aquarium.js?v=0140f6873e",
       "./js3d/story-scenery-mansion.js": "./js3d/story-scenery-mansion.js?v=c47d97ebb0",
       "./js3d/story-scenery.js": "./js3d/story-scenery.js?v=9fa267bcf9",
-      "./js3d/story-ui.js": "./js3d/story-ui.js?v=10c3ec65fb",
-      "./js3d/story-world.js": "./js3d/story-world.js?v=b988efe4ec",
+      "./js3d/story-stars.js": "./js3d/story-stars.js?v=ecd7c6dd94",
+      "./js3d/story-ui.js": "./js3d/story-ui.js?v=4790a035fc",
+      "./js3d/story-world.js": "./js3d/story-world.js?v=3ebedb8d3a",
       "./js3d/story.js": "./js3d/story.js?v=9e17bf47a8",
       "./js3d/support.js": "./js3d/support.js?v=efb00a908c",
       "./js3d/theme.js": "./js3d/theme.js?v=932e1d5eb8",
@@ -4961,7 +4981,7 @@
   <link rel="modulepreload" href="js3d/gacha.js?v=ecda5be85c">
   <link rel="modulepreload" href="js3d/chips.js?v=e67e280b76">
   <link rel="modulepreload" href="js3d/crashwatch.js?v=8b4bdaa28f">
-  <link rel="modulepreload" href="js3d/achievements.js?v=c596ffc129">
+  <link rel="modulepreload" href="js3d/achievements.js?v=612cd5503d">
   <link rel="modulepreload" href="js3d/replays.js?v=1d048a5dcc">
   <link rel="modulepreload" href="js3d/resume.js?v=6be1546ea7">
   <link rel="modulepreload" href="js3d/replayshare.js?v=dedb1ad773">
@@ -4986,8 +5006,10 @@
   <link rel="modulepreload" href="js3d/stats.js?v=5e9acbdde6">
   <link rel="modulepreload" href="js3d/stats-data.js?v=61334c9347">
   <link rel="modulepreload" href="js3d/story.js?v=9e17bf47a8">
-  <link rel="modulepreload" href="js3d/story-ui.js?v=10c3ec65fb">
-  <link rel="modulepreload" href="js3d/story-world.js?v=b988efe4ec">
+  <link rel="modulepreload" href="js3d/story-stars.js?v=ecd7c6dd94">
+  <link rel="modulepreload" href="js3d/endless.js?v=7f45b07d75">
+  <link rel="modulepreload" href="js3d/story-ui.js?v=4790a035fc">
+  <link rel="modulepreload" href="js3d/story-world.js?v=3ebedb8d3a">
   <link rel="modulepreload" href="js3d/rewards.js?v=ef3a012bdb">
   <link rel="modulepreload" href="js3d/gachafx.js?v=24484640c3">
   <link rel="modulepreload" href="js3d/cosmetics-ui.js?v=4f9c9e5f98">
@@ -4996,7 +5018,7 @@
   <link rel="modulepreload" href="js3d/plates.js?v=02563e1cf1">
   <link rel="modulepreload" href="js3d/playmat.js?v=cfc563a42a">
   <link rel="modulepreload" href="js3d/cardlist-ov.js?v=47bc96bbb6">
-  <link rel="modulepreload" href="js3d/opponent-select.js?v=fee989c0b5">
+  <link rel="modulepreload" href="js3d/opponent-select.js?v=44959abcba">
   <link rel="modulepreload" href="js3d/aidecks.js?v=574c2e942b">
   <link rel="modulepreload" href="js3d/run-ui.js?v=28f3bd728f">
   <link rel="modulepreload" href="js3d/weekly-ui.js?v=97a2e533b4">
@@ -5056,7 +5078,7 @@
   <link rel="modulepreload" href="js3d/backdrops.js?v=90faf9612d">
   <link rel="modulepreload" href="js3d/profile.js?v=704205fbfe">
   <link rel="modulepreload" href="js3d/gacha-ui.js?v=b5bf4956cc">
-  <link rel="modulepreload" href="js3d/news.js?v=7e6c969584">
+  <link rel="modulepreload" href="js3d/news.js?v=bf582b90c0">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/ShaderPass.js">
   <link rel="modulepreload" href="js3d/story-map.js?v=18e79132eb">
   <link rel="modulepreload" href="js3d/story-scenery.js?v=9fa267bcf9">
@@ -5083,6 +5105,6 @@
   <link rel="stylesheet" href="js3d/run-fx.css?v=d32d7cd9b0">
   <link rel="stylesheet" href="js3d/deus.css?v=3e6919eb01">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=be2b1b850b"></script>
+  <script type="module" src="js3d/main.js?v=404d72aea8"></script>
 </body>
 </html>

@@ -16,6 +16,15 @@ export const KINDS = {
 
 export const NEWS = [
   {
+    id: '2026-10-21-endless', date: '2026-10-21', kind: 'new',
+    title: 'CHALLENGE に「GATEKEEPER 連勝」',
+    body: [
+      'CHALLENGE に「連勝」のタブを足しました。負けるまで GATEKEEPER と戦い続け、勝つたびに GATEKEEPER にルールが1つ足されていきます (手札が増える、Ω カードが入る、いつも先攻 など)。',
+      '1戦ごとに自分の3つを選び直せます。3・5・7・10連勝で経験値、3連勝と7連勝で実績が取れます。'
+    ],
+    go: 'challenge'
+  },
+  {
     id: '2026-10-19-run-pilot', date: '2026-10-19', kind: 'new',
     img: 'art/news/run-pilot.webp', alt: '勝ち抜き戦で挑む子を選ぶ画面。紫苑・茜・瑠璃・杏のちびが並んでいる',
     title: '勝ち抜き戦を、ストーリーの4人で',

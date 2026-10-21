@@ -13,7 +13,9 @@ import { UnrealBloomPass } from '../vendor/jsm/postprocessing/UnrealBloomPass.js
 import { OutputPass } from '../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../vendor/jsm/postprocessing/ShaderPass.js';
 import { showTitleBack, hideTitleBack } from './titleback.js';
-import { loadStory, saveStory, blankStory, currentNode, clearNode, startBattle, nodeById, isCleared, chapterCleared, chapterOf, addFound } from './story.js';
+import { loadStory, saveStory, blankStory, currentNode, clearNode, startBattle, nodeById, isCleared, chapterCleared, chapterOf, addFound, CHAPTERS } from './story.js';
+import { starNodes, starTexts, earnedStars, starTotals } from './story-stars.js';
+import { xpLog } from './xp.js';
 import { accountState } from './account.js';
 import * as M from './story-map.js';
 import { playNode, playScene, askBattle } from './story-ui.js';
@@ -78,8 +80,8 @@ export function openWorld(protocols, opts = {}) {
   const recallBtn = document.createElement('button');
   recallBtn.type = 'button';
   recallBtn.className = 'sw-recall';
-  recallBtn.textContent = '記録';
-  recallBtn.title = 'この章で見た会話をもう一度見る';
+  recallBtn.textContent = '記録・★';
+  recallBtn.title = 'この章で見た会話をもう一度見る・クリアした対戦に★を集めにもう一度挑む';
   root.appendChild(recallBtn);
   recallBtn.onclick = () => {
     if (busy) return;
@@ -91,11 +93,24 @@ export function openWorld(protocols, opts = {}) {
     const frags = (map.fragments || []).filter(f => (state.found || []).includes(f.id));
     const fragHtml = (map.fragments || []).length ? '<b>拾った記録 ' + frags.length + ' / ' + map.fragments.length + '</b>' +
       frags.map(f => '<p>機体' + (f.unit | 0) + ' の最後の一手</p>').join('') : '';
-    box.innerHTML = fragHtml + (seen.length
+    /* ★3: クリアした対戦は、どの章のものでもここからもう一度挑める (話の進み方は変わらない) */
+    const log = xpLog();
+    const tot = starTotals(log, state);
+    const again = starNodes().filter(n => isCleared(state, n.id));
+    const chName = (id) => { const c = CHAPTERS.find(x => x.id === id); return c ? c.title : ''; };
+    const starHtml = '<b>★ ' + tot.got + ' / ' + tot.total + '</b>' + (again.length
+      ? again.map(n => { const e = earnedStars(n.id, log, state);
+        return '<button type="button" class="sw-again" data-battle="' + String(n.id).replace(/[<>&"]/g, '') + '"><span class="sw-st">' +
+          e.map(x => (x ? '★' : '☆')).join('') + '</span>' + chName(n.chapter) + ' ' + String(n.title || n.id).replace(/[<>&"]/g, '') +
+          '<span class="sr">' + e.filter(Boolean).length + ' / 3</span></button>'; }).join('')
+      : '<p>対戦に勝つと、ここから★を集めにもう一度挑めます</p>');
+    box.innerHTML = starHtml + fragHtml + (seen.length
       ? '<b>見た会話</b>' + seen.map(n => '<button type="button" data-node="' + String(n.id).replace(/[<>&"]/g, '') + '">' + String(n.title || n.id).replace(/[<>&"]/g, '') + '</button>').join('')
       : '<b>見た会話</b><p>まだありません。この章で話を進めると、ここから見直せます</p>');
     root.appendChild(box);
     box.onclick = async (ev) => {
+      const a = ev.target.closest('[data-battle]');
+      if (a && !busy) { box.remove(); await runBattle(a.dataset.battle); return; }
       const b = ev.target.closest('[data-node]');
       if (!b || busy) return;
       box.remove();
@@ -575,7 +590,7 @@ export function openWorld(protocols, opts = {}) {
     nearby = null;
     actBtn.hidden = true;
     keys.clear(); path = null;
-    const ok = await askBattle(nodeById(id), protocols);
+    const ok = await askBattle(nodeById(id), protocols, starTexts(id).length ? { texts: starTexts(id), have: earnedStars(id, xpLog(), state) } : null);
     busy = false;
     if (!ok) return;
     /* 管理者の「飛ばす」: 勝った扱いにして地図に残る (決着の会話は出ない) */
