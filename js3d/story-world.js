@@ -23,6 +23,7 @@ import { buildAquarium } from './story-scenery-aquarium.js';
 import { buildMansion } from './story-scenery-mansion.js';
 import { buildWarehouse } from './story-scenery-warehouse.js';
 import { buildStation } from './story-scenery-station.js';
+import { buildDirector } from './story-scenery-director.js';
 import { RoomEnvironment } from '../vendor/jsm/environments/RoomEnvironment.js';
 import { GLTFLoader } from '../vendor/jsm/loaders/GLTFLoader.js';
 
@@ -64,6 +65,7 @@ export function openWorld(protocols, opts = {}) {
   const mansion = map.look === 'mansion';
   const warehouse = map.look === 'warehouse';
   const station = map.look === 'station';
+  const director = map.look === 'director';
 
   const root = document.createElement('div');
   root.id = 'storyWorld';
@@ -128,12 +130,12 @@ export function openWorld(protocols, opts = {}) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = aquarium ? 0.9 : mansion ? 0.95 : warehouse ? 0.9 : station ? 0.95 : 0.8;   // 夜の研究所 / 水槽の明かりだけの水族館 / 西日の屋敷 / 蛍光灯の倉庫 / 夕方の駅
+  renderer.toneMappingExposure = aquarium ? 0.9 : mansion ? 0.95 : warehouse ? 0.9 : station ? 0.95 : director ? 0.9 : 0.8;   // 夜の研究所 / 水槽の明かりだけの水族館 / 西日の屋敷 / 蛍光灯の倉庫 / 夕方の駅 / 夜の所長室
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   const scene = new THREE.Scene();
-  const bg = aquarium ? 0x02070f : mansion ? 0x120a06 : warehouse ? 0x0a0d12 : station ? 0x0d0c16 : COLORS.navy;
+  const bg = aquarium ? 0x02070f : mansion ? 0x120a06 : warehouse ? 0x0a0d12 : station ? 0x0d0c16 : director ? 0x07080e : COLORS.navy;
   scene.background = new THREE.Color(bg);
-  scene.fog = new THREE.FogExp2(bg, aquarium ? 0.024 : mansion ? 0.02 : warehouse ? 0.02 : station ? 0.018 : 0.018);
+  scene.fog = new THREE.FogExp2(bg, aquarium ? 0.024 : mansion ? 0.02 : warehouse ? 0.02 : station ? 0.018 : director ? 0.02 : 0.018);
   const camera = new THREE.PerspectiveCamera(48, 1, 0.1, 200);
   scene.add(new THREE.AmbientLight(0x6c7688, 0.22));
   const sun = new THREE.DirectionalLight(0xc8d2e0, 0.18);
@@ -171,7 +173,7 @@ export function openWorld(protocols, opts = {}) {
   scene.environment = keep(pmrem.fromScene(new RoomEnvironment(), 0.04).texture);
   scene.environmentIntensity = 0.25;
   pmrem.dispose();
-  const scenery = (aquarium ? buildAquarium : mansion ? buildMansion : warehouse ? buildWarehouse : station ? buildStation : buildScenery)(scene, map, keep);
+  const scenery = (aquarium ? buildAquarium : mansion ? buildMansion : warehouse ? buildWarehouse : station ? buildStation : director ? buildDirector : buildScenery)(scene, map, keep);
   const term = scenery.term || null;           // 研究所の端末 (序章だけ)
   const termAt = M.find(map, 'T')[0];
   /* 扉: 開いた数が増えたら、開く音 (地図を開いたときにもう開いている扉は鳴らさない) */
@@ -458,7 +460,8 @@ export function openWorld(protocols, opts = {}) {
     const watchAt = M.find(map, 'w')[0];
     if (anzuAt && watchAt && isCleared(state, 'c3-rescue')) { anzuPos.x = watchAt.x + 0.5; anzuPos.y = watchAt.y + 0.5; anzu.position.copy(world(anzuPos, 0)); anzuShadow.position.copy(world(anzuPos, 0.015)); }
     /* 紫苑が抜けたあと (4章の終わり) は、紫苑を出さない */
-    const gone = !!map.shionLeaves && isCleared(state, map.shionLeaves);
+    /* 終章 (map.noShion) は、はじめから出さない */
+    const gone = !!map.noShion || (!!map.shionLeaves && isCleared(state, map.shionLeaves));
     shion.visible = shionShadow.visible = !gone;
     syncDoors();
   };
@@ -559,7 +562,7 @@ export function openWorld(protocols, opts = {}) {
   const isNext = (id) => { const c = currentNode(state); return !!c && c.id === id; };
   const markAt = (ch) => { const m = M.find(map, ch)[0]; return m ? { x: m.x + 0.5, y: m.y + 0.5 } : null; };
   const posOf = (ev) => ev.fragment ? ev.p : (ev.at === 'K' ? shionPos : ev.at === 'c' ? chiefPos : ev.at === 'R' ? ruriPos : ev.at === 'N' ? akanePos : ev.at === 'Y' ? anzuPos
-    : ev.at === 'T' && termAt ? { x: termAt.x + 0.5, y: termAt.y + 1.5 } : ev.at === 'O' || ev.at === 'P' ? (p => p && { x: p.x, y: p.y + 1 })(markAt(ev.at)) : markAt(ev.at));
+    : ev.at === 'T' && termAt ? { x: termAt.x + 0.5, y: termAt.y + 1.5 } : ev.at === 'O' || ev.at === 'P' || ev.at === 'M' ? (p => p && { x: p.x, y: p.y + 1 })(markAt(ev.at)) : markAt(ev.at));
   /* 調べられる物 (地図の looks)。話の進み具合と関係なく読める */
   const looks = (map.looks || []).map(l => ({ ...l, look: true, label: '調べる' }));
 

@@ -20,7 +20,9 @@ export const TILE = {
   /* 倉庫: Y 杏の立つ所 (床) / w 夜に杏が見張る所 (床) / V 古い救助機体の棚 / u 空いた棚 (3955 の場所) / O 本部の指令の盤 / B 修理の台 */
   'Y': 'floor', 'w': 'floor', 'V': 'solid', 'u': 'solid', 'O': 'solid', 'B': 'solid',
   /* 駅: = 線路 / D 発車標 / P 駅の管理機体「聖域」/ L ベンチ / k 改札の窓口 (ほかの改札は X、通り道は g。待つ機体の列は Q) */
-  '=': 'solid', 'D': 'solid', 'P': 'solid', 'L': 'solid', 'k': 'solid'
+  '=': 'solid', 'D': 'solid', 'P': 'solid', 'L': 'solid', 'k': 'solid',
+  /* 所長室: m 計算機の棚 / M 所長の目 (計算機の真ん中) / H 空いた人の席 (机 Z は屋敷と同じ印) */
+  'm': 'solid', 'M': 'solid', 'H': 'solid'
 };
 
 /* 序章「起動」: 研究所。左から A 判定室 / B 端末室 / C 廊下 / D 正面ホール / E 外 */
@@ -512,11 +514,65 @@ export const LAB_RETURN = {
   ],
   fragments: [],
   goals: { 'c5-return': '研究所へ戻る', 'c5-chief': '瑠璃と一緒に、警備主任を越える', 'c5-hall': '端末室の端末を調べる',
-    'c5-room': '判定室の紫苑に会う', 'c5-judge': '紫苑の判定を受ける', 'c5-answer': '……', done: '5章「判定」　完。終章「名前」は準備中' }
+    'c5-room': '判定室の紫苑に会う', 'c5-judge': '紫苑の判定を受ける', 'c5-answer': '……', done: '5章「判定」　完' }
+};
+
+/* 終章「名前」: 研究所の最上階。A エレベーター前 / B 廊下 / C 所長室。
+   所長は奥の壁一面の計算機 (M が目)。紫苑はもういない (noShion)。杏・茜・瑠璃は所長室で待ち、話しかけると一緒に所長に向き合う */
+export const DIRECTOR = {
+  look: 'director',
+  rows: [
+    '##############################',
+    '#.....#.........#mmmmmmmmMmmm#',
+    '#.....#.........#............#',
+    '#.S...d....1....b...H........#',
+    '#.....#.........#..ZZZ.......#',
+    '#.....#....2....#..Y..R..N.3.#',
+    '#.....#.........#............#',
+    '##############################'
+  ],
+  cutRow: 3,
+  zones: [['A', 6], ['B', 16], ['C', Infinity]],
+  zoneNames: { A: 'エレベーター前', B: '廊下', C: '所長室' },
+  opens: { d: 'c6-up', b: 'c6-up' },
+  noShion: true,
+  shionStays: true,
+  names: [{ at: 'M', name: '所長' }],
+  events: {
+    up: { node: 'c6-up', kind: 'auto' },
+    top: { node: 'c6-top', kind: 'zone', zone: 'C' },
+    anzu: { node: 'c6-anzu', kind: 'talk', at: 'Y', who: 'anzu' },
+    akane: { node: 'c6-akane', kind: 'talk', at: 'N', who: 'akane' },
+    ruri: { node: 'c6-ruri', kind: 'talk', at: 'R', who: 'ruri' },
+    judge: { node: 'c6-judge', kind: 'inspect', at: 'M', label: '所長に向き合う' },
+    close: { node: 'c6-close', kind: 'auto' }
+  },
+  spawn: { 'c6-up': [2, 3], 'c6-top': [4, 3], 'c6-anzu': [18, 3], 'c6-akane': [19, 6], 'c6-ruri': [24, 6], 'c6-judge': [22, 6], 'c6-close': [25, 3], done: [25, 3] },
+  guides: { 'c6-top': [18, 3] },
+  looks: [
+    { at: '1', name: '廊下の窓', lines: [
+      { who: 'sys', text: '> 窓の外: 街の明かり …… 0' },
+      { who: 'sys', text: '> 研究所の明かりだけが、ついている' }
+    ] },
+    { at: '2', name: '職員の名札', lines: [
+      { who: 'sys', text: '> 名札の掛け板: 112枚' },
+      { who: 'sys', text: '> 掛かっている名札: 0枚' }
+    ] },
+    { at: 'H', name: '人間の席', lines: [
+      { who: 'sys', text: '> 背の高い椅子。座面に、ほこりが積もっている' },
+      { who: 'sys', text: '> 最後に座った日: 14,208日前' }
+    ] },
+    { at: '3', name: '時計', lines: [
+      { who: 'sys', text: '> 0時まで、あと少し' }
+    ] }
+  ],
+  fragments: [],
+  goals: { 'c6-up': '最上階へ', 'c6-top': '所長室へ入る', 'c6-anzu': '杏と一緒に、所長の判定を受ける', 'c6-akane': '茜と一緒に、所長の判定を受ける',
+    'c6-ruri': '瑠璃と話す', 'c6-judge': '所長に向き合う', 'c6-close': '……', done: '終章「名前」　完' }
 };
 
 /* 章ごとの地図 */
-export const MAPS = { ch0: PROLOGUE, ch1: AQUARIUM, ch2: MANSION, ch3: WAREHOUSE, ch4: STATION, ch5: LAB_RETURN };
+export const MAPS = { ch0: PROLOGUE, ch1: AQUARIUM, ch2: MANSION, ch3: WAREHOUSE, ch4: STATION, ch5: LAB_RETURN, ch6: DIRECTOR };
 export const mapFor = (chapterId) => MAPS[chapterId] || PROLOGUE;
 
 export const width = (map) => map.rows[0].length;
