@@ -183,7 +183,6 @@ test('地図に立っている人 (cast): 印が地図にあり、ちびの絵�
     for (const [ch, c] of Object.entries(map.cast || {})) {
       assert.equal(M.find(map, ch).length, 1, id + ': 印 ' + ch);
       assert.ok(S.SPEAKERS[c.who] && S.SPEAKERS[c.who].portrait, id + ': ' + c.who);
-      if (c.named) assert.ok(S.nodeById(c.named), id + ': ' + c.named);
       for (const [n, [x, y]] of Object.entries(c.moves || {})) {
         assert.ok(S.nodeById(n), n);
         let s = S.blankStory(); for (const k of S.CHAPTERS.flatMap(q => q.nodes)) s = S.clearNode(s, k.id);

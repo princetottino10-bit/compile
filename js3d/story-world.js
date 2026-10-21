@@ -26,7 +26,7 @@ import { GLTFLoader } from '../vendor/jsm/loaders/GLTFLoader.js';
 
 const T = 2;
 const HERO_VER = 2;            // 主人公の glb を作り直したら上げる (古いモデルがしばらく出るのを防ぐ)
-const CHIBI_VER = 2;           // ちびの絵 (art/chibi) を描き直したら上げる
+const CHIBI_VER = 3;           // ちびの絵 (art/chibi) を描き直したら上げる
 const TOUCH = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;   // タッチの端末 (キーの印を出さない)                 // 1マスの大きさ (three.js の単位)
 const SPEED = 3.4;           // 歩く速さ (マス / 秒)
 const RUN = 1.65;            // Shift / スティックを大きく倒すと走る (倍)
@@ -291,7 +291,7 @@ export function openWorld(protocols, opts = {}) {
   };
   const cellPos = (m) => (m ? { x: m.x + 0.5, y: m.y + 0.5 } : null);
   const inParty = (p) => isCleared(state, p.after);
-  /* 地図に立っている人 (cast: 印 → { who, alias?, named?, moves? })。仲間になっていれば立たせず、後ろにつく */
+  /* 地図に立っている人 (cast: 印 → { who, moves? })。仲間になっていれば立たせず、後ろにつく */
   for (const [ch, c] of Object.entries(map.cast || {})) {
     const at = cellPos(M.find(map, ch)[0]);
     if (!at || !SPEAKERS[c.who]) continue;
@@ -424,10 +424,8 @@ export function openWorld(protocols, opts = {}) {
   let lastZone = null;
   const heard = new Set();
 
-  /* 名前の札 (画面の上に重ねる) */
+  /* 名前の札 (画面の上に重ねる)。ちびは絵で分かるので札を出さない */
   const labels = [
-    ...Object.values(actors).map(a => ({ el: document.createElement('span'), text: SPEAKERS[a.who].name, obj: a.sp, y: 2.05, show: () => true,
-      name: () => (a.cast && a.cast.alias && !isCleared(state, a.cast.named) ? a.cast.alias : SPEAKERS[a.who].name) })),
     { el: document.createElement('span'), text: '巡回の警備機体', obj: patrol, y: 1.6, show: () => patrol.visible },
     { el: document.createElement('span'), text: '警備主任', obj: chief, y: 2.4, show: () => chief.visible },
     { el: document.createElement('span'), text: '端末', obj: term, y: 1.8, show: () => true },
