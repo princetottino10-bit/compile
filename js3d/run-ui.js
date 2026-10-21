@@ -287,7 +287,7 @@ export function openRun(protocols, cardsOf, opts) {
           /* 一度でも挑戦した人には、ルールはたたんでおく (読まずにすぐ始められるように) */
           (best ? '<details class="rn-rules"><summary>ルールを見る</summary>' : '') + '<ul>' +
           '<li>地図を下から登り、頂上の BOSS を倒す (自分も相手も ' + (3 - RUN.RUN_WIN_COMPILES) + ' つコンパイル済みから始まり、残りの ' + RUN.RUN_WIN_COMPILES + ' つを先にコンパイルした方の勝ち。序盤は2つ済みから)</li>' +
-          '<li>ストーリーの4人から<b>挑む子</b>を選べる (はじめのプロトコルは弱いもの。専用パッチ付き)</li>' +
+          '<li>ストーリーの4人から<b>挑む子</b>を選べる (得意プロトコルを持って始め、残りの2つは弱いプロトコルから。専用パッチ付き)</li>' +
           '<li>道は自分で選ぶ: 戦闘・精鋭・イベント・休憩所・ショップ・宝箱</li>' +
           '<li>ライフ ' + RUN.RUN_LIFE + '。コンパイルされるたびに 1 減る</li>' +
           '<li>勝つたびにカードの報酬 (強化・β カード・除去) を選ぶ。パッチ (改造) は系統をそろえるとボーナス</li>' +
@@ -308,7 +308,7 @@ export function openRun(protocols, cardsOf, opts) {
 
     /* 挑む子を選ぶ (Slay the Spire のキャラ選び)。選ばずに、いままでどおりのドラフトで始めてもよい */
     const pilotHtml = () => '<h2>挑む子を選ぶ</h2>' +
-      '<p class="rn-lead">選んだ子の<b>はじめのプロトコル</b>が、デッキに入っています。どれも<b>弱いプロトコル</b>で、外せません。ドラフトで残りの2つを選んで、弱さを補ってください。<br>' +
+      '<p class="rn-lead">選んだ子の<b>得意プロトコル</b>が、はじめからデッキに入っています (外れません)。残りの2つは<b>弱いプロトコル</b>の中からドラフトで選びます。精鋭に勝てば、強いプロトコルと入れ替えられます。<br>' +
         'その子だけの<b>専用パッチ</b>が1つ付き、地図はその子が歩きます。</p>' +
       '<div class="rn-pilots">' + PILOTS.map(P => {
         const proto = byName[P.start] || { name: P.start, color: P.color };
@@ -328,7 +328,7 @@ export function openRun(protocols, cardsOf, opts) {
           /* はじめの1つを選ぶときだけ、何をするモードなのかを書いておく */
           const P = pilotOf(run);
           const intro = P && run.deck.length === 1
-            ? '<p class="rn-lead"><b>' + esc(P.name) + '</b> で挑みます。はじめのプロトコル <b>' + esc(P.start) + '</b> はもうデッキに入っています。残りの<b>プロトコルを2つ</b>選んでください。<br>' +
+            ? '<p class="rn-lead"><b>' + esc(P.name) + '</b> で挑みます。得意の <b>' + esc(P.start) + '</b> はもうデッキに入っています。残りの<b>2つを弱いプロトコル</b>から選んでください。<br>' +
               'そのあと<b>地図を下から登り</b>、頂上の <b>BOSS</b> を倒せばクリア。専用パッチ <b>' + esc(P.perk.name) + '</b>: ' + esc(P.perk.text) + '</p>'
             : !run.deck.length
             ? '<p class="rn-lead">まず<b>プロトコルを3つ</b>、1つずつ選んでデッキを作ります。そのあと<b>地図を下から登り</b>、頂上の <b>BOSS</b> を倒せばクリア。<br>' +
@@ -455,7 +455,7 @@ export function openRun(protocols, cardsOf, opts) {
 (swapAdd
             ? '<p class="rn-note"><b>' + esc(swapAdd) + '</b> を入れる代わりに、外すプロトコルを選ぶ</p>' +
               '<div class="rn-offers">' + run.deck.filter(n => n !== lockedProto(run)).map(n => protoChip(byName[n], 'data-remove="' + esc(n) + '"')).join('') + '</div>' +
-              (lockedProto(run) ? '<p class="rn-note">' + esc(lockedProto(run)) + ' は ' + esc(pilotOf(run).name) + ' のはじめのプロトコルなので外せません</p>' : '') +
+              (lockedProto(run) ? '<p class="rn-note">' + esc(lockedProto(run)) + ' は ' + esc(pilotOf(run).name) + ' の得意プロトコルなので外せません</p>' : '') +
               '<div class="rn-btns"><button type="button" data-act="unswap">戻る</button></div>'
             : !run.offers.length
               ? '<p class="rn-note">今のデッキ ' + deckLine(run.deck, byName) + '</p>' +

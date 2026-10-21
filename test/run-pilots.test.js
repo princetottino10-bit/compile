@@ -1,4 +1,4 @@
-/* 勝ち抜き戦の挑む子 (run-pilots.js): はじめのプロトコル (弱いもの) が固定でドラフトは2回・外れない・専用パッチが効く */
+/* 勝ち抜き戦の挑む子 (run-pilots.js): 得意プロトコルが固定・残り2つは弱いプロトコルからドラフト・外れない・専用パッチが効く */
 const test = require('node:test');
 const assert = require('node:assert');
 
@@ -9,35 +9,35 @@ globalThis.localStorage = {
   removeItem: (k) => store.delete(k)
 };
 const load = async () => ({ R: await import('../js3d/run.js'), P: await import('../js3d/run-pilots.js') });
-const NAMES = ['FIRE', 'WATER', 'SPEED', 'DARKNESS', 'HATE', 'SMOKE', 'LIFE', 'LIGHT', 'PLAGUE', 'METAL', 'LOVE', 'DEATH', 'PSYCHIC', 'ASSIMILATION', 'APATHY', 'UNITY'];
+const NAMES = ['FIRE', 'WATER', 'SPEED', 'DARKNESS', 'HATE', 'SMOKE', 'LIFE', 'LIGHT', 'PLAGUE', 'METAL', 'LOVE', 'DEATH', 'PSYCHIC', 'ASSIMILATION', 'APATHY', 'UNITY', 'CHAOS'];
 const seq = () => { let i = 0; return () => ((i++ * 0.37) % 1); };
 
-test('4人のはじめのプロトコルは、どれも弱いプロトコル (勝率 0.44 未満) で重ならない', async () => {
+test('4人の得意プロトコルは本気の4人と同じ', async () => {
   const { P } = await load();
-  const { PROTOCOL_STRENGTH } = await import('../js3d/protocol-strength.js');
-  const starts = P.PILOTS.map(p => p.start);
-  assert.strictEqual(new Set(starts).size, 4);
-  for (const n of starts) assert.ok(PROTOCOL_STRENGTH[n] < 0.44, n);
+  assert.deepStrictEqual(Object.fromEntries(P.PILOTS.map(p => [p.id, p.start])),
+    { shion: 'PSYCHIC', nadeshiko: 'HATE', asagi: 'WATER', yamabuki: 'FIRE' });
+  assert.deepStrictEqual(P.WEAK_PROTOCOLS.slice().sort(), ['APATHY', 'ASSIMILATION', 'CHAOS', 'LIGHT', 'METAL', 'UNITY']);
 });
 
-test('挑む子は値を下げない (弱いプロトコルに替えたので)', async () => {
+test('挑む子は値を下げない', async () => {
   const { R } = await load();
-  const run = { ...R.newRun(NAMES, seq(), 0, 'normal', 'asagi'), deck: ['LIGHT', 'SPEED', 'FIRE'], phase: 'battle', opp: { deck: ['DEATH', 'LOVE', 'METAL'], level: 1 } };
+  const run = { ...R.newRun(NAMES, seq(), 0, 'normal', 'asagi'), deck: ['WATER', 'METAL', 'CHAOS'], phase: 'battle', opp: { deck: ['DEATH', 'LOVE', 'SMOKE'], level: 1 } };
   assert.strictEqual(R.battleOpts(run, 0).perks, undefined);
 });
 
-test('挑む子を選ぶと、はじめのプロトコルが左に入っていてドラフトは2回', async () => {
-  const { R } = await load();
+test('挑む子を選ぶと、得意プロトコルが左に入っていて、残りの2つは弱いプロトコルからドラフト', async () => {
+  const { R, P } = await load();
   let run = R.newRun(NAMES, seq(), 0, 'normal', 'asagi');
   assert.strictEqual(run.pilot, 'asagi');
-  assert.deepStrictEqual(run.deck, ['LIGHT']);
-  assert.ok(!run.offers.includes('LIGHT'));
+  assert.deepStrictEqual(run.deck, ['WATER']);
+  assert.ok(run.offers.length === 3 && run.offers.every(n => P.WEAK_PROTOCOLS.includes(n)), run.offers.join());
   run = R.draftPick(run, run.offers[0], NAMES, seq());
   assert.strictEqual(run.phase, 'draft');
+  assert.ok(run.offers.every(n => P.WEAK_PROTOCOLS.includes(n) && !run.deck.includes(n)));
   run = R.draftPick(run, run.offers[0], NAMES, seq());
   assert.strictEqual(run.phase, 'patch');
-  assert.strictEqual(run.deck.length, 3);
-  assert.strictEqual(run.deck[0], 'LIGHT');
+  assert.strictEqual(run.deck[0], 'WATER');
+  assert.ok(run.deck.slice(1).every(n => P.WEAK_PROTOCOLS.includes(n)));
 });
 
 test('選ばなければいままでどおり / カオスでは挑む子は付かない', async () => {
@@ -49,11 +49,11 @@ test('選ばなければいままでどおり / カオスでは挑む子は付�
   assert.strictEqual(chaos.pilot, undefined);
 });
 
-test('はじめのプロトコルは精鋭の入れ替えで外せない', async () => {
+test('得意プロトコルは精鋭の入れ替えで外せない', async () => {
   const { R } = await load();
-  const run = { ...R.newRun(NAMES, seq(), 0, 'normal', 'yamabuki'), deck: ['UNITY', 'SPEED', 'LIFE'], phase: 'reward', offers: ['DEATH'] };
-  assert.deepStrictEqual(R.applyReward(run, { type: 'swap', add: 'DEATH', remove: 'UNITY' }, NAMES, seq()).deck, ['UNITY', 'SPEED', 'LIFE']);
-  assert.deepStrictEqual(R.applyReward(run, { type: 'swap', add: 'DEATH', remove: 'SPEED' }, NAMES, seq()).deck, ['UNITY', 'DEATH', 'LIFE']);
+  const run = { ...R.newRun(NAMES, seq(), 0, 'normal', 'yamabuki'), deck: ['FIRE', 'METAL', 'CHAOS'], phase: 'reward', offers: ['DEATH'] };
+  assert.deepStrictEqual(R.applyReward(run, { type: 'swap', add: 'DEATH', remove: 'FIRE' }, NAMES, seq()).deck, ['FIRE', 'METAL', 'CHAOS']);
+  assert.deepStrictEqual(R.applyReward(run, { type: 'swap', add: 'DEATH', remove: 'METAL' }, NAMES, seq()).deck, ['FIRE', 'DEATH', 'CHAOS']);
 });
 
 test('専用パッチ: 紫苑は相手の手札 −1、杏は先攻、瑠璃は休憩の回復 +3、茜は除去が安い', async () => {
