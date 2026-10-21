@@ -1,7 +1,7 @@
 /* =========================================================================
  * 勝ち抜き戦 (ローグライク。Slay the Spire のような地図を登る形) の進行と保存。画面は run-ui.js
  *   ・3回のドラフト (3つの候補から1つ) でデッキを作り、はじめのパッチを1つ選ぶ
- *     挑む子 (run-pilots.js) を選んだときは、その子の得意プロトコルが固定でドラフトは2回。専用パッチが付く
+ *     挑む子 (run-pilots.js) を選んだときは、その子のはじめのプロトコル (弱いもの) が固定でドラフトは2回。専用パッチが付く
  *   ・地図は下から上へ 12 段。最初から全部見えていて、つながっている道を1段ずつ選んで登る
  *       ⚔ 戦闘 / ☠ 精鋭 (強い。勝つとパッチ) / ? イベント / ✚ 休憩所 (回復かカード除去) /
  *       $ ショップ (パッチ・★ カード・強化・カード除去・回復) / ◆ 宝箱 (パッチ) / ♛ BOSS (最上段)
@@ -19,7 +19,7 @@
  * ========================================================================= */
 import { STRONGEST_AI, CHALLENGERS, CHALLENGER_BASE } from './aidecks.js';
 import { UP, isStar, baseOf, starOf, STAR_CARDS, ORACLE_CARDS, isOracleCard } from './runcards.js';
-import { pilotPerk, lockedProto, pilotInfo, FAVORITE_MINUS } from './run-pilots.js';
+import { pilotPerk, lockedProto, pilotInfo } from './run-pilots.js';
 import { CHAOS_LIFE, CHAOS_CREDITS, CHAOS_MAX_ADDED, mutatorCount, rollMutators, ROULETTE, RULE_MUTATORS } from './run-chaos.js';
 
 const KEY = 'compileRun';
@@ -511,7 +511,7 @@ function gainRandomPatch(run, rnd, any = false) {
 }
 function randomSwap(run, c) {
   const pool = c.names.filter(n => !run.deck.includes(n));
-  /* 挑む子の得意プロトコルは飛ばさない */
+  /* 挑む子のはじめのプロトコルは飛ばさない */
   const outs = run.deck.filter(n => n !== lockedProto(run));
   if (!pool.length || !outs.length) return run;
   const out = outs[Math.floor(c.rnd() * outs.length)];
@@ -633,7 +633,7 @@ export function cancelRemove(run) {
 
 /* ---------- 進行 (すべて新しい状態を返す) ---------- */
 /* mode: 'normal' / 'chaos' (カオス勝ち抜き戦。HEAT は無し)。
-   pilot: 挑む子の id (run-pilots.js。ふつうの勝ち抜き戦だけ)。得意プロトコルがはじめからデッキに入り、ドラフトは残りの2つ */
+   pilot: 挑む子の id (run-pilots.js。ふつうの勝ち抜き戦だけ)。はじめのプロトコルがデッキに入り、ドラフトは残りの2つ */
 export function newRun(names, rnd = Math.random, heat = 0, mode = 'normal', pilot = null) {
   const chaos = mode === 'chaos';
   const h = chaos ? 0 : Math.max(0, Math.min(MAX_HEAT, heat | 0));
@@ -646,8 +646,8 @@ export function newRun(names, rnd = Math.random, heat = 0, mode = 'normal', pilo
 }
 function withPilot(run, names, rnd, pilot) {
   const P = pilotInfo(pilot);
-  if (!P || isChaos(run) || !names.includes(P.favorite)) return run;
-  return { ...run, pilot: P.id, deck: [P.favorite], offers: sample(names.filter(n => n !== P.favorite), 3, rnd) };
+  if (!P || isChaos(run) || !names.includes(P.start)) return run;
+  return { ...run, pilot: P.id, deck: [P.start], offers: sample(names.filter(n => n !== P.start), 3, rnd) };
 }
 
 export function draftPick(run, name, names, rnd = Math.random) {
@@ -1010,8 +1010,6 @@ export function battleOpts(run, me) {
   const pk = {};
   if (hasPatch(run, 'nocost')) pk.freeDiscard = true;
   if (hasPatch(run, 'double') && run.deck[0]) { pk.doubleProto = run.deck[0]; pk.otherMinus = 1; }
-  /* 挑む子の得意プロトコルは、はじめから入っているぶん表向きの値 −1 (2026-10-21 ユーザー「最初のプロトコル弱くしといて全員」) */
-  if (lockedProto(run)) { pk.minusProto = lockedProto(run); pk.protoMinus = FAVORITE_MINUS; }
   if (hasPatch(run, 'shadow')) { pk.faceDownValue = 4; pk.faceUpMinus = 1; }
   const perks = [null, null];
   if (Object.keys(pk).length) perks[me] = pk;

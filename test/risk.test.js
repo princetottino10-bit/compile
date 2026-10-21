@@ -87,15 +87,3 @@ test('RISK: パッチを全部付けた試合も CPU どうしで最後まで遊
   }
   assert.notEqual(res.state.winner, null);
 });
-
-test('挑む子: 得意プロトコルの表向きの値が −1 (エンジンの minusProto)。ほかのプロトコルはそのまま', () => {
-  const opts = battleOpts({ ...newRun(['FIRE', 'WATER', 'SPEED', 'HATE', 'DEATH', 'LIFE'], () => 0.3, 0, 'normal', 'yamabuki'), deck: ['FIRE', 'WATER', 'SPEED'], phase: 'battle', opp: { deck: ['DEATH', 'METAL', 'LIFE'], level: 1 } }, 0);
-  assert.deepEqual(opts.perks[0], { minusProto: 'FIRE', protoMinus: 1 });
-  const printed = (id) => cards.protocols.flatMap(p => p.cards).find(c => c.id === id).value;
-  const st = Engine.newGame({ seed: 3, p0: ['FIRE', 'WATER', 'SPEED'], p1: ['DEATH', 'METAL', 'LIFE'], perks: opts.perks }).state;
-  st.cards['p0:FIRE_5'].faceUp = true;
-  assert.equal(valueOf(st, 'p0:FIRE_5'), printed('FIRE_5') - 1);
-  const st2 = Engine.newGame({ seed: 3, p0: ['FIRE', 'WATER', 'SPEED'], p1: ['DEATH', 'METAL', 'LIFE'], perks: opts.perks }).state;
-  st2.cards['p0:WATER_5'].faceUp = true;
-  assert.equal(valueOf(st2, 'p0:WATER_5'), printed('WATER_5'));
-});
