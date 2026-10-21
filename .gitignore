@@ -24,3 +24,4 @@ _combo/
 _combo_log.txt
 _forge/
 _policy/
+scripts/__pycache__/

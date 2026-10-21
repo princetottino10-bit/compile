@@ -19,7 +19,7 @@ const { PROTOCOLS } = require('./valnet_features.js');
 const ROOT = path.join(__dirname, '..');
 
 function parseArgs(argv) {
-  const o = { games: 100, budget: 600, seed: 2000001, out: '_policy/data', workers: 0, valnet: 'data/valnet.json', weight: 400 };
+  const o = { games: 100, budget: 600, seed: 2000001, out: '_policy/data', workers: 0, valnet: 'data/valnet.json', weight: 400, student: false };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--games') o.games = +argv[++i];
@@ -29,6 +29,7 @@ function parseArgs(argv) {
     else if (a === '--workers') o.workers = +argv[++i];
     else if (a === '--valnet') o.valnet = argv[++i];
     else if (a === '--weight') o.weight = +argv[++i];
+    else if (a === '--student') o.student = true;   // 見えない側の CPU が同じ盤面で選ぶ手も記録する (s、比べる用)
     else { console.error('未知の引数: ' + a); process.exit(1); }
   }
   return o;
@@ -45,9 +46,16 @@ function decks(seed) {
 
 const key = (a) => JSON.stringify([a.type, a.card, a.line, !!a.faceUp, a.side === 0 || a.side === 1 ? a.side : -1]);
 const r3 = (v) => Math.round(v * 1000) / 1000;
+/* 見えない側の CPU (方策なし) が同じ盤面で選ぶ手 s と、根の各候補の値 sv。方策の重みを対戦なしで当たりをつける用 */
+function studentPick(S, st, keys) {
+  const rv = S.ai.rootValues(st);
+  const vals = new Map(rv.candidates.map(c => [key(c.a), c]));
+  return { s: rv.best ? keys.indexOf(key(rv.best)) : -1,
+    sv: keys.map(k => (vals.has(k) ? [Math.round(vals.get(k).val), vals.get(k).val2 !== undefined ? 1 : 0] : null)) };
+}
 
 if (!isMainThread) {
-  const { src, cards, effects, jobs, budget, valnet, weight, file } = workerData;
+  const { src, cards, effects, jobs, budget, valnet, weight, file, student } = workerData;
   const load = () => {
     const ctx = { module: { exports: {} }, exports: {}, console, structuredClone, performance };
     ctx.globalThis = ctx;
@@ -86,7 +94,8 @@ if (!isMainThread) {
               for (let i = 0; i < c.after.length; i++) { const v = r3(c.after[i] - pc.before[i]); if (v !== 0) d.push([i, v]); }
               return [d, c.flags.reduce((m, f, i) => m | (f ? 1 << i : 0), 0), c.def];
             }),
-            y, v: keys.map(k => (vals.has(k) ? Math.round(vals.get(k)) : null)) });
+            y, v: keys.map(k => (vals.has(k) ? Math.round(vals.get(k)) : null)),
+            ...(student ? studentPick(S, st, keys) : {}) });
         }
         res = T.apply(st, rv.best);
       }
@@ -114,7 +123,7 @@ fs.mkdirSync(path.dirname(path.join(ROOT, opt.out)), { recursive: true });
 const t0 = Date.now();
 Promise.all(chunks.map((c, wi) => c.length ? new Promise((resolve, reject) => {
   const file = path.join(ROOT, opt.out + '.w' + wi + '.jsonl');
-  const w = new Worker(__filename, { workerData: { src, cards, effects, jobs: c, budget: opt.budget, valnet, weight: opt.weight, file } });
+  const w = new Worker(__filename, { workerData: { src, cards, effects, jobs: c, budget: opt.budget, valnet, weight: opt.weight, file, student: opt.student } });
   w.on('message', resolve); w.on('error', reject);
 }) : 0)).then(parts => {
   const n = parts.reduce((s, v) => s + v, 0);
