@@ -9,6 +9,7 @@ import { mutatorInfo, MUTATORS } from './run-chaos.js';
 import { sfx } from './audio.js';
 import { confetti, RAR_COLORS } from './gachafx.js';
 import { calm } from './prefs.js';
+import { chibiArt } from './run-pilots.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -159,7 +160,7 @@ export function walkThen(el, id, fn) {
   to.classList.add('fx-picked');
   const who = img.dataset.chibi;
   let k = 0;
-  const step = () => { img.src = 'art/chibi/' + who + '_back_walk' + (1 + (k++ % 2)) + '.webp'; };
+  const step = () => { img.src = chibiArt(who, 'back', 'walk' + (1 + (k++ % 2))); };
   step();
   const tick = setInterval(step, 140);
   img.classList.add('walking');

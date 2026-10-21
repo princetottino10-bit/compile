@@ -14,6 +14,7 @@ import { OutputPass } from '../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../vendor/jsm/postprocessing/ShaderPass.js';
 import { showTitleBack, hideTitleBack } from './titleback.js';
 import { loadStory, saveStory, blankStory, currentNode, clearNode, startBattle, nodeById, isCleared, chapterCleared, chapterOf, addFound, SPEAKERS, PARTY } from './story.js';
+import { chibiArt } from './run-pilots.js';
 import { accountState } from './account.js';
 import * as M from './story-map.js';
 import { playNode, playScene, askBattle } from './story-ui.js';
@@ -26,7 +27,6 @@ import { GLTFLoader } from '../vendor/jsm/loaders/GLTFLoader.js';
 
 const T = 2;
 const HERO_VER = 2;            // 主人公の glb を作り直したら上げる (古いモデルがしばらく出るのを防ぐ)
-const CHIBI_VER = 3;           // ちびの絵 (art/chibi) を描き直したら上げる
 const TOUCH = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;   // タッチの端末 (キーの印を出さない)                 // 1マスの大きさ (three.js の単位)
 const SPEED = 3.4;           // 歩く速さ (マス / 秒)
 const RUN = 1.65;            // Shift / スティックを大きく倒すと走る (倍)
@@ -257,7 +257,7 @@ export function openWorld(protocols, opts = {}) {
     const set = {};
     for (const dir of ['front', 'side', 'back']) {
       for (const fr of ['stand', 'walk1', 'walk2']) {
-        const tex = keep(loader.load('art/chibi/' + id + '_' + dir + '_' + fr + '.webp?v=' + CHIBI_VER));
+        const tex = keep(loader.load(chibiArt(id, dir, fr)));
         tex.colorSpace = THREE.SRGBColorSpace;
         set[dir + '_' + fr] = tex;
         if (dir === 'side') {
