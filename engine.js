@@ -3920,6 +3920,78 @@ function aiValnetLogit(st, me) {
   return h[0];
 }
 
+/* ---------- 方策モデル (手の選び方) ----------
+   のぞき見の CPU (ALL-SEEING と同じ読み) が実際に選んだ手を、見えている情報だけから当てるように学んだネット
+   (scripts/policy_selfplay.js → scripts/policy_train.py)。入力は「打つ前の盤面・打った後の盤面との差・手の種類・表で出すカード」。
+   setAiPolicyNet(model, weight) で渡すと、読みの根の各手に weight × log(選ばれる確率) を足す。渡さなければ何もしない */
+let AI_POLICY = null, AI_POLICY_W = 0;
+function setAiPolicyNet(model, weight) {
+  if (!model || !Array.isArray(model.layers)) { AI_POLICY = null; AI_POLICY_W = 0; return; }
+  const defIndex = new Map();
+  (model.defs || []).forEach((d, i) => defIndex.set(d, i));
+  AI_POLICY = { layers: model.layers.map(L => ({ w: L.w.map(row => Float64Array.from(row)), b: Float64Array.from(L.b) })), defIndex };
+  AI_POLICY_W = +weight || 0;
+}
+/* 手の種類: 表で出す・裏で出す・リフレッシュ・その他・相手の側に出す */
+function aiPolicyFlags(a, me) {
+  const play = a.type === 'play';
+  return [play && a.faceUp ? 1 : 0, play && !a.faceUp ? 1 : 0, a.type === 'refresh' ? 1 : 0, play || a.type === 'refresh' ? 0 : 1,
+    play && (a.side === 0 || a.side === 1) && a.side !== me ? 1 : 0];
+}
+function aiPolicyDef(view, a) {
+  return a.type === 'play' && a.faceUp && view.cards[a.card] ? view.cards[a.card].def : null;
+}
+function aiPolicyLogit(before, after, flags, def) {
+  const nDefs = AI_POLICY.defIndex.size;
+  let h = new Array(before.length * 2 + flags.length + nDefs).fill(0);
+  let k = 0;
+  for (let i = 0; i < before.length; i++) h[k++] = before[i];
+  for (let i = 0; i < before.length; i++) h[k++] = after[i] - before[i];
+  for (let i = 0; i < flags.length; i++) h[k++] = flags[i];
+  const di = def !== null && AI_POLICY.defIndex.has(def) ? AI_POLICY.defIndex.get(def) : -1;
+  if (di >= 0) h[k + di] = 1;
+  const Ls = AI_POLICY.layers;
+  for (let i = 0; i < Ls.length; i++) {
+    const L = Ls[i], out = new Array(L.b.length);
+    for (let j = 0; j < L.b.length; j++) {
+      const w = L.w[j];
+      let v = L.b[j];
+      for (let q = 0; q < h.length; q++) if (h[q] !== 0) v += w[q] * h[q];
+      out[j] = i < Ls.length - 1 && v < 0 ? 0 : v;
+    }
+    h = out;
+  }
+  return h[0];
+}
+/* 根の候補 (item.res が解決済み) に weight × log 確率を足す。val1 と bias の両方に入れるので、2手読みの値にも乗る */
+function aiApplyPolicy(view, me, items) {
+  if (!AI_POLICY || !AI_POLICY_W || items.length < 2) return;
+  const before = aiValnetFeatures(view, me);
+  const logits = items.map(it => aiPolicyLogit(before, aiValnetFeatures(it.res.state, me), aiPolicyFlags(it.a, me), aiPolicyDef(view, it.a)));
+  const mx = Math.max.apply(null, logits);
+  const lse = mx + Math.log(logits.reduce((s, v) => s + Math.exp(v - mx), 0));
+  items.forEach((it, i) => { const add = AI_POLICY_W * (logits[i] - lse); it.bias += add; it.val1 += add; it.policy = logits[i] - lse; });
+}
+/* 学習データ用: 手番の側から見た盤面で、読みと同じ手順で各手を解決し、方策モデルの入力の材料を返す */
+function aiPolicyCandidates(state) {
+  const me = state.turn;
+  const view = aiInformationState(state, me);
+  const wasTrace = TRACE, previousDeadline = AI_SEARCH_DEADLINE; TRACE = false;
+  try {
+    AI_SEARCH_DEADLINE = aiNow() + 60000;
+    AI_REPLAY_CACHE = new WeakMap();
+    AI_SCORE_CACHE = new WeakMap();
+    const before = aiValnetFeatures(view, me);
+    const cands = [];
+    for (const a of aiDecisionActions(view)) {
+      const res = applyAndResolve(view, a, smartPicks);
+      if (!res || res.error || res.requests.length) continue;
+      cands.push({ a, after: aiValnetFeatures(res.state, me), flags: aiPolicyFlags(a, me), def: aiPolicyDef(view, a) });
+    }
+    return { before, cands };
+  } finally { TRACE = wasTrace; AI_SEARCH_DEADLINE = previousDeadline; }
+}
+
 /* ---------- コンボ学習 (組み合わせの値) ----------
    CPU 同士の対戦から「自分の持ち札のどの2枚が同時にあると勝ちやすいか」を学んだ表 (scripts/combo_train.py)。
    札は「手札 H / 一番上の表 T / 覆われた表 C / 裏向き D」+ 内部 ID (scripts/combo_features.js と同じ)。
@@ -5390,6 +5462,10 @@ function aiActionHard(state, collect) {
       if (val > bestVal) { bestVal = val; best = item.a; }
     }
     if (!viable.length) return best;
+    if (AI_POLICY) {
+      aiApplyPolicy(state, me, viable);
+      best = viable.reduce((x, y) => (y.val1 > x.val1 ? y : x)).a;
+    }
     /* --- depth 2: 時間が残っていれば、1-plyで有望な手から順に相手手番を読む。
        途中で時間切れになっても depth1 の best が残るので劣化しない --- */
     viable.sort((a, b) => b.val1 - a.val1);
@@ -5832,9 +5908,9 @@ function aiAnswer(state, req) {
 /* ---------- 公開 API ---------- */
 
 const Engine = {
-  init, newGame, newPuzzle, apply, legalActions, setTrace, setAiPeek, setAiValueNet, setAiComboNet, setAiLevel, setAiBlunder, setAiThinkBudget, setAiBreadth, setAiPimc, setAiWeights, setAiSpecialist, setAiSpecialistWeights, setAiOracle,
+  init, newGame, newPuzzle, apply, legalActions, setTrace, setAiPeek, setAiValueNet, setAiPolicyNet, setAiComboNet, setAiLevel, setAiBlunder, setAiThinkBudget, setAiBreadth, setAiPimc, setAiWeights, setAiSpecialist, setAiSpecialistWeights, setAiOracle,
   lineTotal, cardValue, compilableLines, canPlay, playBlockReason, locate,
-  ai: { action: aiAction, answer: aiAnswer, score: aiScore, valnetFeatures: aiValnetFeatures, comboLogit: aiComboLogit, middleFizzles: aiMiddleFizzles, transitionScore: aiTransitionScore, compilePassChance: aiCompilePassChance, informationState: aiInformationState, rootValues: aiRootValues, vetoOrder: aiVetoOrder, actionBias: aiActionBias, opsValue: aiOpsValue, boardEffect: aiBoardEffectScore, randomPicks, smartPicks },
+  ai: { action: aiAction, answer: aiAnswer, score: aiScore, valnetFeatures: aiValnetFeatures, policyCandidates: aiPolicyCandidates, comboLogit: aiComboLogit, middleFizzles: aiMiddleFizzles, transitionScore: aiTransitionScore, compilePassChance: aiCompilePassChance, informationState: aiInformationState, rootValues: aiRootValues, vetoOrder: aiVetoOrder, actionBias: aiActionBias, opsValue: aiOpsValue, boardEffect: aiBoardEffectScore, randomPicks, smartPicks },
   get defs() { return DEFS; },
   get protos() { return PROTOS; }
 };
