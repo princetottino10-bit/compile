@@ -4,6 +4,7 @@
  * 編成は種から決めたランダム (valnet_selfplay.js と同じ作り方、種は学習に使っていない範囲)。同じ種を候補の先手・後手で1回ずつ。
  *
  *   node scripts/valnet_arena.js --model _valnet/model.json --weight 150 --games 400 --budget 600
+ * --base data/valnet.json を付けると、基準の側にも学習モデル (同じ重み) を入れる (世代どうしの対戦)。--save で1局ずつの結果を書き出す
  */
 const fs = require('node:fs');
 const path = require('node:path');
@@ -14,7 +15,7 @@ const { PROTOCOLS } = require('./valnet_features.js');
 
 const ROOT = path.join(__dirname, '..');
 function parseArgs(argv) {
-  const o = { model: '_valnet/model.json', weight: 150, games: 400, budget: 600, seed: 500001, workers: 0 };
+  const o = { model: '_valnet/model.json', weight: 150, games: 400, budget: 600, seed: 500001, workers: 0, base: '', save: '' };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--model') o.model = argv[++i];
@@ -23,6 +24,8 @@ function parseArgs(argv) {
     else if (a === '--budget') o.budget = +argv[++i];
     else if (a === '--seed') o.seed = +argv[++i];
     else if (a === '--workers') o.workers = +argv[++i];
+    else if (a === '--base') o.base = argv[++i];
+    else if (a === '--save') o.save = argv[++i];
     else if (a === '--by-proto') o.byProto = true;   // プロトコルごとの勝率も出す
     else { console.error('未知の引数: ' + a); process.exit(1); }
   }
@@ -38,7 +41,7 @@ function decks(seed) {
 }
 
 if (!isMainThread) {
-  const { src, cards, effects, jobs, budget, model, weight } = workerData;
+  const { src, cards, effects, jobs, budget, model, weight, base } = workerData;
   const load = () => {
     const ctx = { module: { exports: {} }, exports: {}, console, structuredClone, performance };
     ctx.globalThis = ctx;
@@ -50,6 +53,7 @@ if (!isMainThread) {
   };
   const C = load(), B = load();
   C.setAiValueNet(model, weight);
+  if (base) B.setAiValueNet(base, weight);
   const out = [];
   for (const job of jobs) {
     const cs = job.cs;
@@ -76,15 +80,17 @@ const cards = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'cards.json'), 
 const effects = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'effects.json'), 'utf8'));
 const src = fs.readFileSync(path.join(ROOT, 'engine.js'), 'utf8');
 const model = JSON.parse(fs.readFileSync(path.join(ROOT, opt.model), 'utf8'));
+const base = opt.base ? JSON.parse(fs.readFileSync(path.join(ROOT, opt.base), 'utf8')) : null;
 const jobs = Array.from({ length: opt.games }, (_, i) => ({ seed: opt.seed + Math.floor(i / 2), cs: i % 2 }));
 const nW = opt.workers || Math.max(1, Math.min(os.cpus().length - 1, 12));
 const chunks = Array.from({ length: nW }, () => []);
 jobs.forEach((j, i) => chunks[i % nW].push(j));
 const t0 = Date.now();
 Promise.all(chunks.filter(c => c.length).map(c => new Promise((resolve, reject) => {
-  const w = new Worker(__filename, { workerData: { src, cards, effects, jobs: c, budget: opt.budget, model, weight: opt.weight } });
+  const w = new Worker(__filename, { workerData: { src, cards, effects, jobs: c, budget: opt.budget, model, weight: opt.weight, base } });
   w.on('message', resolve); w.on('error', reject);
 }))).then(parts => {
+  if (opt.save) fs.writeFileSync(path.join(ROOT, opt.save), parts.flat().map(g => JSON.stringify(g)).join('\n') + '\n');
   const all = parts.flat().filter(g => g.decided);
   const n = all.length, w = all.filter(g => g.won).length, p = w / n, z = 1.96;
   const d = 1 + z * z / n, c = (p + z * z / (2 * n)) / d, h = z * Math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d;
