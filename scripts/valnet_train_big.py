@@ -20,6 +20,7 @@ def load(paths, cache):
     if cache and os.path.exists(cache):
         z = np.load(cache)
         return z["X"], z["Y"], z["G"], z["T"]
+    # 1行ずつ float32 の配列にしてから最後に積む (Python の数の並びのまま持つと数百万局面でメモリが足りない)
     X, Y, G, T = [], [], [], []
     files = sorted({f for p in paths for f in glob.glob(p)})
     for fi, p in enumerate(files):
@@ -29,12 +30,12 @@ def load(paths, cache):
                 continue
             r = json.loads(line)
             if "b" in r:
-                X.append(r["b"]); Y.append(r["w"])
+                X.append(np.asarray(r["b"], np.float32)); Y.append(r["w"])
             else:
-                X.append(r["x"][:NB]); Y.append(r["y"])
+                X.append(np.asarray(r["x"][:NB], np.float32)); Y.append(r["y"])
             G.append(fi * 10_000_000 + r["g"] % 10_000_000); T.append(r["t"])
         print(f"  {os.path.basename(p)}: {len(Y) - n0} 局面", flush=True)
-    X, Y, G, T = np.array(X, np.float32), np.array(Y, np.float32), np.array(G), np.array(T)
+    X, Y, G, T = np.stack(X), np.array(Y, np.float32), np.array(G), np.array(T)
     if cache:
         np.savez(cache, X=X, Y=Y, G=G, T=T)
     return X, Y, G, T
