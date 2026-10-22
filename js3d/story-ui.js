@@ -39,7 +39,7 @@ function makeVoice(onSettle = () => {}) {
   const halt = () => { seq++; endsAt = 0; pending = false; if (stop) { stop(); stop = null; } };
   const play = (id, text, pa = false) => {
     halt();
-    if (!id || isMuted()) return;
+    if (!id || isMuted() || !/[^…。、！？!?\s]/.test(text)) return;   // 「……。」だけの行は声を作っていない (間として文字だけ)
     const vol = Math.max(0, Math.min(1, ((settings().voiceVol ?? 80) | 0) / 100)) * voiceGain(id);
     if (!vol) return;
     const my = seq;

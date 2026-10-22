@@ -10,6 +10,7 @@ import { COLOR, FONT } from './theme.js';
 import * as LAYOUT from './layout.js';
 import * as TW from './tween.js';
 import { drawEmblem } from './emblems.js';
+import { isMobProto } from './mobcards.js';
 
 /* 板は大きめに (ラインの間隔 1.62 と、スタックの1枚目の手前まで)。
    テクスチャは 2 倍の解像度で描き、斜めから見ても文字がつぶれないようにする */
@@ -340,6 +341,7 @@ export function createPanels(stage, me, hooks) {
     if (!ART_SETS.has(info.set)) return;
     const want = info.name;
     names.forEach((n, k) => {
+      if (isMobProto(n)) return;           // 量産プロトコルにはカードの絵が無い (取りに行くと 404 になるだけ)
       for (const face of ['loading', 'compiled']) {
         if (p.art[face][k]) continue;
         loadArt(protoArtUrl(n, face === 'compiled'), (img) => {

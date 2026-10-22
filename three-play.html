@@ -68,6 +68,9 @@
   @media (max-width:860px) and (orientation:portrait){
     #oppOv,#watchOv,#storyMap{padding-bottom:calc(84px + env(safe-area-inset-bottom));}
     .ts-card,.rn-card,.cm-list{padding-bottom:calc(72px + env(safe-area-inset-bottom));}
+  }
+  /* 横持ちのスマホや狭い窓でも、会話の枠 (幅 820px まで) に音のボタンが重なるので、枠の上へ逃がす */
+  @media (max-width:940px){
     body:has(#storyScene.show) #muteAll{bottom:calc(152px + env(safe-area-inset-bottom));}
   }
   #muteAll.off{color:#ff4fa3;border-color:rgba(255,79,163,.6);}
@@ -1658,7 +1661,7 @@
   .sm-deck i{font:800 11px/1 var(--font-hud),"M PLUS 1",system-ui;font-style:normal;letter-spacing:.06em;padding:5px 8px;border-radius:5px;
     color:#fff;background:color-mix(in srgb,var(--pc) 30%,#0b0f1d);border:1px solid color-mix(in srgb,var(--pc) 70%,transparent);}
   .sm-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;}
-  .sm-btns button{flex:1;min-height:46px;padding:0 16px;border-radius:9px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05);
+  .sm-btns button{flex:1;white-space:nowrap;min-height:46px;padding:0 16px;border-radius:9px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05);
     color:#fff;font:800 14px/1 "M PLUS 1",system-ui;cursor:pointer;}
   .sm-btns .sm-go{background:linear-gradient(90deg,var(--pink),#8b5cf6);border-color:transparent;}
   .sm-btns button:hover,.sm-btns button:focus-visible{outline:2px solid #7ff3ff;outline-offset:2px;}
@@ -4879,7 +4882,7 @@
       "./js3d/news.js": "./js3d/news.js?v=107df38a33",
       "./js3d/notice.js": "./js3d/notice.js?v=029a81acaa",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=fee989c0b5",
-      "./js3d/panel.js": "./js3d/panel.js?v=994ec047da",
+      "./js3d/panel.js": "./js3d/panel.js?v=fe55c120c1",
       "./js3d/pickaid.js": "./js3d/pickaid.js?v=fd33e4bc87",
       "./js3d/plates.js": "./js3d/plates.js?v=02563e1cf1",
       "./js3d/playchoices.js": "./js3d/playchoices.js?v=b461cb2bb3",
@@ -4922,7 +4925,7 @@
       "./js3d/story-scenery-station.js": "./js3d/story-scenery-station.js?v=6675390494",
       "./js3d/story-scenery-warehouse.js": "./js3d/story-scenery-warehouse.js?v=c524a114c0",
       "./js3d/story-scenery.js": "./js3d/story-scenery.js?v=9fa267bcf9",
-      "./js3d/story-ui.js": "./js3d/story-ui.js?v=0c960382c8",
+      "./js3d/story-ui.js": "./js3d/story-ui.js?v=d75059f411",
       "./js3d/story-world.js": "./js3d/story-world.js?v=1b6a3369d0",
       "./js3d/story.js": "./js3d/story.js?v=cb9c3242eb",
       "./js3d/support.js": "./js3d/support.js?v=efb00a908c",
@@ -4973,7 +4976,7 @@
   <link rel="modulepreload" href="js3d/stage.js?v=f4cae41c31">
   <link rel="modulepreload" href="js3d/board.js?v=ddbba82776">
   <link rel="modulepreload" href="js3d/control.js?v=c1b87ebc63">
-  <link rel="modulepreload" href="js3d/panel.js?v=994ec047da">
+  <link rel="modulepreload" href="js3d/panel.js?v=fe55c120c1">
   <link rel="modulepreload" href="js3d/setup.js?v=e17da5ca65">
   <link rel="modulepreload" href="js3d/title.js?v=5421a14eb7">
   <link rel="modulepreload" href="js3d/training.js?v=3018b4399e">
@@ -4988,7 +4991,7 @@
   <link rel="modulepreload" href="js3d/stats.js?v=5e9acbdde6">
   <link rel="modulepreload" href="js3d/stats-data.js?v=61334c9347">
   <link rel="modulepreload" href="js3d/story.js?v=cb9c3242eb">
-  <link rel="modulepreload" href="js3d/story-ui.js?v=0c960382c8">
+  <link rel="modulepreload" href="js3d/story-ui.js?v=d75059f411">
   <link rel="modulepreload" href="js3d/story-world.js?v=1b6a3369d0">
   <link rel="modulepreload" href="js3d/rewards.js?v=ef3a012bdb">
   <link rel="modulepreload" href="js3d/gachafx.js?v=24484640c3">
