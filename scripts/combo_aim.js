@@ -34,6 +34,12 @@ const COMBOS = {
   psyPlague: { name: '覆われた PSYCHIC 1 + PLAGUE 0', protos: ['PSYCHIC', 'PLAGUE'], pieces: { PSYCHIC_2: 'cov', PLAGUE_1: 'top' } },
   spiritClarity: { name: 'SPIRIT 0 + CLARITY 0', protos: ['SPIRIT', 'CLARITY'], pieces: { SPIRIT_1: 'top', CLARITY_1: 'up' } },
   warAssim: { name: 'WAR 0 + ASSIMILATION 4', protos: ['WAR', 'ASSIMILATION'], pieces: { WAR_1: 'top', ASSIMILATION_5: 'play' } },
+  plagueCourage: { name: 'PLAGUE 1 + COURAGE 0 + CORRUPTION 2', protos: ['PLAGUE', 'COURAGE', 'CORRUPTION'], pieces: { PLAGUE_2: 'up', COURAGE_1: 'top', CORRUPTION_3: 'up' } },
+  warCourage: { name: 'WAR 3 + COURAGE 0', protos: ['WAR', 'COURAGE'], pieces: { WAR_4: 'top', COURAGE_1: 'top' } },
+  war3Fear: { name: 'WAR 3 + FEAR 1', protos: ['WAR', 'FEAR'], pieces: { WAR_4: 'top', FEAR_2: 'play' } },
+  spiritCorr: { name: 'SPIRIT 3 + CORRUPTION 2', protos: ['SPIRIT', 'CORRUPTION'], pieces: { SPIRIT_4: 'up', CORRUPTION_3: 'play' } },
+  spiritPeace: { name: 'SPIRIT 3 + PEACE 1', protos: ['SPIRIT', 'PEACE'], pieces: { SPIRIT_4: 'up', PEACE_1: 'top' } },
+  timeClarity: { name: 'TIME 2 + CLARITY 3', protos: ['TIME', 'CLARITY'], pieces: { TIME_3: 'up', CLARITY_4: 'play' } },
   /* SPEED 2 は1枚で効く: コンパイルするラインに表で居れば、削除されずに別のラインへ移る。数えるのは自分のコンパイルと生き残り */
   speed2: { name: 'SPEED 2 (コンパイルで生き残る)', protos: ['SPEED'], pieces: { SPEED_3: 'up' }, solo: true }
 };

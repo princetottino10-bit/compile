@@ -3470,7 +3470,16 @@ const AI_AIM_COMBOS = [
   { pieces: { PSYCHIC_2: 'cov', METAL_3: 'up' } },
   { pieces: { PSYCHIC_2: 'cov', PLAGUE_1: 'top' } },
   /* SPIRIT 0 でキャッシュの確認を飛ばして手札を溜め、CLARITY 0 で手札1枚ごとに +1。SPIRIT 0 を自分で18回覆っていた */
-  { pieces: { SPIRIT_1: 'top', CLARITY_1: 'up' } }
+  { pieces: { SPIRIT_1: 'top', CLARITY_1: 'up' } },
+  /* COURAGE 0 の終了で1枚捨てると相手が2枚捨て (COURAGE 0・CORRUPTION 2)、PLAGUE 1 で2枚引く */
+  { pieces: { PLAGUE_2: 'up', COURAGE_1: 'top', CORRUPTION_3: 'up' } },
+  /* WAR 3 の下段「相手が捨てたあと: 裏で1枚出せる」に、相手に捨てさせる札を足す */
+  { pieces: { WAR_4: 'top', COURAGE_1: 'top' } },
+  { pieces: { WAR_4: 'top', FEAR_2: 'play' } },
+  /* SPIRIT 3 は引いたあとに覆われていても動ける。引く札を足して、どいた下の札をもう一度起こす */
+  { pieces: { SPIRIT_4: 'up', CORRUPTION_3: 'play' } },
+  { pieces: { SPIRIT_4: 'up', PEACE_1: 'top' } },
+  { pieces: { TIME_3: 'up', CLARITY_4: 'play' } }
 ];
 function aiAimPlace(st, side, uid) {
   const c = st.cards[uid];
@@ -4339,7 +4348,7 @@ const AI_COMBO_PAIRS = [
   ['WAR_1', 'CHAOS_1'],       // CHAOS 0 の開始で相手が引くたびに WAR 0 で削除 (docs/combos.md)
   ['WAR_1', 'LOVE_6'],        // LOVE 6・LOVE 2・FEAR 1 で相手に引かせて WAR 0 で削除
   ['WAR_1', 'LOVE_2'],
-  ['WAR_1', 'FEAR_2'], ['WAR_1', 'ASSIMILATION_5'], ['PSYCHIC_2', 'METAL_3'], ['PSYCHIC_2', 'PLAGUE_1'], ['SPIRIT_1', 'CLARITY_1']
+  ['WAR_1', 'FEAR_2'], ['WAR_1', 'ASSIMILATION_5'], ['PSYCHIC_2', 'METAL_3'], ['PSYCHIC_2', 'PLAGUE_1'], ['SPIRIT_1', 'CLARITY_1'], ['PLAGUE_2', 'COURAGE_1'], ['COURAGE_1', 'CORRUPTION_3'], ['WAR_4', 'COURAGE_1'], ['WAR_4', 'FEAR_2'], ['SPIRIT_4', 'CORRUPTION_3'], ['SPIRIT_4', 'PEACE_1'], ['TIME_3', 'CLARITY_4']
 ];
 const AI_COMBO_KEEP = { hand: 60, field: 40, deck: 15 };
 /* ORACLE が手放したがらない札: ウォーター① (山札の上を他の各ラインに裏で) とファイア③ (終了時に捨てて反転) */

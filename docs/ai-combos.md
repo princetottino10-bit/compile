@@ -273,6 +273,12 @@ AI は相手の手札を推測し直した世界で試算するが、その世�
 | 覆われた PSYCHIC 1 + METAL 2 | 1 → 8 | — |
 | 覆われた PSYCHIC 1 + PLAGUE 0 | 0 → 5 | — |
 | SPIRIT 0 + CLARITY 0 | 9 → 16 | — |
+| PLAGUE 1 + COURAGE 0 + CORRUPTION 2 | 1 → 12 | — |
+| WAR 3 + COURAGE 0 | 3 → 13 | — |
+| WAR 3 + FEAR 1 | 37 → 44 | 9 → 14 |
+| SPIRIT 3 + CORRUPTION 2 | 29 → 42 | 4 → 7 |
+| SPIRIT 3 + PEACE 1 | 8 → 30 | — |
+| TIME 2 + CLARITY 3 | 28 → 37 | 5 → 7 |
 
 PSYCHIC 1 のロックは「覆われた表」で効くので、一番上で表に出した形も片方が効く形として数える (aiAimNear)。
 入れる前は METAL 2・PLAGUE 0 を 60局で35〜38回手札から捨てていた。
