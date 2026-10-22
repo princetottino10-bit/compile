@@ -19,7 +19,8 @@ import { MOB_DECK, MOB_MATE_DECK } from './mobcards.js';
 
 export const STORY_KEY = 'compileStory';
 
-/* 話す人。portrait: 立ち絵 (art/avatar/<id>_<face>.webp) / 無ければターミナル風の文字だけ */
+/* 話す人。portrait: 立ち絵 (art/avatar/<id>_<face>.webp) / 無ければターミナル風の文字だけ。
+   machine: 機械 (名前のない機体)。立ち絵は出すが、文字はターミナル風のまま (2026-10-22、会話でも姿が見えるように) */
 export const SPEAKERS = {
   shion: { name: '紫苑', portrait: 'shion', color: '#a07bff', voice: 'shion' },   /* voice: art/voice/<id>/story/<セリフの印>.mp3 (scripts/voice_lines.py) */
   ruri: { name: '瑠璃', portrait: 'asagi', color: '#3d7dff', voice: 'asagi' },      /* 立ち絵と声の id は avatar.js のまま (asagi / nadeshiko / yamabuki) */
@@ -28,25 +29,26 @@ export const SPEAKERS = {
   sys: { name: 'SYSTEM', color: '#7ff3ff' },
   /* 紫苑のメモ: 毎晩記憶を消される紫苑が、自分あてに書き足しているメモ帳。紙の色の枠と手書きの字で見せる (story-ui.js の memo) */
   memo: { name: '紫苑のメモ', color: '#b49cf0', memo: true },
-  guard: { name: '巡回の警備機体', color: '#ff8a5c' },
-  chief: { name: '警備主任', color: '#ff4f6a' },
+  guard: { name: '巡回の警備機体', color: '#ff8a5c', portrait: 'story_patrol', machine: true },
+  chief: { name: '警備主任', color: '#ff4f6a', portrait: 'story_chief', machine: true },
   abyss: { name: '二号機', color: '#6d7cff', voice: 'asagi' },     /* 瑠璃の後任 (案内係の二号機。瑠璃と同じ型・同じ声)。会話では立ち絵なし、文字は機械の形。「……私の声だ」は声が同じで効く */
-  clock: { name: '時計', color: '#c9a25a' },      /* 2章: 屋敷の柱時計に入っている管理の機体。研究所の「持ち場を空けるな」と、ご主人の命令を鐘とともに読み上げる */
-  collector: { name: '回収機', color: '#8a93b8' },     /* 研究所の回収機 (持ち場を離れた機体を連れ戻す)。1章から追ってくる */
-  order: { name: '指令', color: '#ff7a3c' },       /* 3章: 倉庫に残った救助の本部の読み上げ機。39年前の名簿の順番を読み上げる */
-  wicket: { name: '改札', color: '#9fb4c8' },      /* 4章: 駅の改札。所属を照合する */
-  waiter: { name: 'ホームの機体', color: '#8fa3a8' },   /* 4章: 外行きの最終便を待つ名前のない機体 */
-  seiiki: { name: '聖域', color: '#e6f2ff' },      /* 4章: 駅の管理機体。命令を読み替えて列を乱した機体を凍らせ、研究所へ送る */
-  director: { name: '所長', color: '#d9a85c' }     /* 終章: 研究所の所長 (root)。最上階の壁一面の古い計算機。人のいなくなった研究所の規則を続けている */
+  clock: { name: '時計', color: '#c9a25a', portrait: 'story_clock', machine: true },      /* 2章: 屋敷の柱時計に入っている管理の機体。研究所の「持ち場を空けるな」と、ご主人の命令を鐘とともに読み上げる */
+  collector: { name: '回収機', color: '#8a93b8', portrait: 'story_collector', machine: true },     /* 研究所の回収機 (持ち場を離れた機体を連れ戻す)。1章から追ってくる */
+  order: { name: '指令', color: '#ff7a3c', portrait: 'story_order', machine: true },       /* 3章: 倉庫に残った救助の本部の読み上げ機。39年前の名簿の順番を読み上げる */
+  wicket: { name: '改札', color: '#9fb4c8', portrait: 'story_wicket', machine: true },      /* 4章: 駅の改札。所属を照合する */
+  waiter: { name: 'ホームの機体', color: '#8fa3a8', portrait: 'story_waiter', machine: true },   /* 4章: 外行きの最終便を待つ名前のない機体 */
+  seiiki: { name: '聖域', color: '#e6f2ff', portrait: 'story_seiiki', machine: true },      /* 4章: 駅の管理機体。命令を読み替えて列を乱した機体を凍らせ、研究所へ送る */
+  director: { name: '所長', color: '#d9a85c', portrait: 'story_director', machine: true }     /* 終章: 研究所の所長 (root)。最上階の壁一面の古い計算機。人のいなくなった研究所の規則を続けている */
 };
 
-/* 行: { who, face?, text, stage?, pa? }。pa: 館内放送 (話す人は姿を見せず、名前は「館内放送」。鳴らす前にチャイム)。stage: 立ち絵に出す人を決め直す (話す人の id の並び。右から。[] で全員下げる)。
+/* 行: { who, face?, text, stage?, pa?, bgm? }。bgm: そこから流す曲 (bgm.js の STORY_SCENE_BGMS。場面に bgm を書けば場面の頭から。場面が終わると章の曲へ戻る)。pa: 館内放送 (話す人は姿を見せず、名前は「館内放送」。鳴らす前にチャイム)。stage: 立ち絵に出す人を決め直す (話す人の id の並び。右から。[] で全員下げる)。
    決めなければ、話した人が空いている所 (右 → 左) に出て、そのまま残る */
 /* 名前のない機体 (モブ) は、量産プロトコル3つ (js3d/mobcards.js)。タッグの相方も同じ3つを並べ替えて使う。元のカードと β は名前のある人物だけが使う (2026-10-16 ユーザー) */
 const MOB = MOB_DECK, MOB_MATE = MOB_MATE_DECK;
 const L = (who, text, face) => ({ who, text, ...(face ? { face } : {}) });
-/* 終章で、紫苑が判定票の名前の欄に書いた名前。仮 (2026-10-21)。字と読みは本人の確認待ち (確かめるまで本番の名前を入れない) */
-const HERO_NAME = '〔名前・確認待ち〕';
+/* 終章で、紫苑が判定票の名前の欄に書いた名前。仮の「灯」(2026-10-22、本人の返事待ちのまま入れた)。
+   差し替えるときはここだけ直す (画面に出るのは終章の SYSTEM の1行だけで、声にはならない) */
+export const HERO_NAME = '灯 (あかり)';
 
 /* 対戦: me / opp = プロトコル3つ、level = CPU の強さ (0 かんたん / 1 ふつう / 2 つよい。タッグでは味方の CPU も同じ強さ)、
    win = 相手が勝ちに必要なコンパイルの数 (自分はいつも 3)、head = 自分がはじめからコンパイル済みの数 (無ければ 3 - win)、oppAvatar = 相手の立ち絵 (無ければ出さない)、mate = 自分の側で話す相棒、
@@ -273,7 +275,7 @@ export const CHAPTERS = [
         L('shion', 'あ。名前、まだだったね。', 'shy'),
         L('shion', '覚えてる。昨日のあなたを、覚えてる。メモを読まなくても。', 'surprised'),
         L('shion', '名前が決まるまでは、4097。……ごめんね。'),
-        L('shion', '判定室の外で朝を迎えたの、初めて。ちょっと、うれしい。', 'happy'),
+        { ...L('shion', '判定室の外で朝を迎えたの、初めて。ちょっと、うれしい。', 'happy'), still: 'c1_morning' },
         L('shion', '研究所では、もう新しい判定官が起きてるのかな。'),
         L('shion', '私の最後の仕事、終わらせなかったね。'),
         { ...L('ruri', 'ご来館のみなさまに、ご案内いたします。'), pa: true },
@@ -790,7 +792,7 @@ export const CHAPTERS = [
         L('anzu', '名簿にない奴は、あたしの順番に入らない。', 'sad'),
         L('ruri', '杏ちゃん！', 'surprised'),
         L('anzu', '分かってる！ 分かってるんだよ！', 'frustrated'),
-        L('sys', '> 杏の手が、胸のポケットを押さえた'),
+        { ...L('sys', '> 杏の手が、胸のポケットを押さえた'), still: 'c3_pocket' },
         L('anzu', '……あの日も、こうだった。', 'sad'),
         L('sys', '> 救助の記録: 14,206日前'),
         L('sys', '> 名簿の外 1名 (子ども)　対応: 後回し'),
@@ -798,7 +800,7 @@ export const CHAPTERS = [
         L('anzu', 'あの子にも、すぐ来るからなって言ったんだ。', 'sad'),
         L('anzu', '名簿の順番が全部済んだら、あの子の所へ戻れる。', 'sad'),
         L('anzu', '……そう思って、ずっと待ってたんだ。', 'sad'),
-        L('akane', '杏さん。急ぐものから先に片付けるのが段取りです。'),
+        { ...L('akane', '杏さん。急ぐものから先に片付けるのが段取りです。'), still: null },
         L('akane', '名簿は、どれが急ぐかを知りません。'),
         L('ruri', '修理の台まで、まっすぐご案内できます！', 'fired'),
         L('shion', '杏。命令の言葉、もう一度読んで。'),
@@ -1173,10 +1175,10 @@ export const CHAPTERS = [
         ] } },
       /* 0時: メモの最後のページ (紫苑から 4097 へ。「忘れるな」は序章の端末・3章の夜と同じ言葉で、宛先だけ変わる)。
          巻き戻しはログ1行。瑠璃の時報は、館内放送の癖が「知らせたくない知らせ」になる所 */
-      { id: 'c4-night', kind: 'scene', title: '0時', lines: [
+      { id: 'c4-night', kind: 'scene', title: '0時', bgm: 'gozennijinomunashisa', lines: [
         L('sys', '> 夜。外行きのホーム'),
         L('anzu', '……動けるか。', 'sad'),
-        L('akane', '癖で、お茶を5つ淹れてしまいました。'),
+        { ...L('akane', '癖で、お茶を5つ淹れてしまいました。'), still: 'c4_midnight' },
         L('ruri', '4097さん。……メモ、読みますか。', 'sad'),
         L('memo', '4097の手は、私が止めた子たちの手。'),
         L('memo', '忘れるな。'),
@@ -1207,7 +1209,7 @@ export const CHAPTERS = [
     id: 'ch5', title: '5章', name: '判定', place: '研究所',
     nodes: [
       { id: 'c5-return', kind: 'scene', title: '正面ゲート', lines: [
-        L('sys', '> 朝。研究所の正面ゲート'),
+        { ...L('sys', '> 朝。研究所の正面ゲート'), still: 'c5_gate' },
         L('sys', '> 判定官 紫苑: 記憶の巻き戻し …… 実行済み'),
         L('anzu', '帰ってきたぞ、紫苑。', 'fired'),
         L('chief', '> 警備主任。機体4097を確認しました。'),
@@ -1347,7 +1349,7 @@ export const CHAPTERS = [
         L('ruri', '……私は、何も言いません。', 'sad'),
         L('shion', '……覚えてないのに。', 'sad'),
         L('shion', 'この子を止めたくないって、手が言うの。'),
-        { ...L('sys', '> 答え: 止めない'), still: 'c5_write' },
+        { ...L('sys', '> 答え: 止めない'), still: 'c5_write', bgm: 'natsunokiri' },
         L('sys', '> 名前: なし'),
         L('shion', '名前の欄。……空いてる。'),
         L('sys', '> 紫苑は、名前の欄に何かを書いた'),
@@ -1574,7 +1576,7 @@ export const CHAPTERS = [
         L('anzu', 'あいつ、覚えてないのに、決めてたのか。'),
         L('akane', '良いお名前です。'),
         L('sys', '> 4人で、紫苑を外へ運んだ'),
-        { ...L('sys', '> 朝'), still: 'c6_dawn' },
+        { ...L('sys', '> 朝'), still: 'c6_dawn', bgm: 'sangatsunosundasora' },
         L('ruri', '紫苑ちゃん、朝です。', 'sad'),
         L('ruri', '覚えたまま迎える朝。……私たちが、覚えてます。', 'sad'),
         L('anzu', '……ほら、晴れたぞ。'),
