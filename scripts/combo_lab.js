@@ -417,7 +417,7 @@ function finish(id) {
   const s = summarize(id);
   fs.writeFileSync(path.join(opt.out, id + '.json'), JSON.stringify(s, null, 1));
   const f = (x) => x === null ? '  -  ' : (100 * x.mean).toFixed(1).padStart(6) + '±' + (100 * x.se).toFixed(1);
-  console.log(id.padEnd(6) + ' n=' + String(s.n).padStart(3) + '  組の効き目 ' + f(s.synergy) + '  逃している得 ' + f(s.missed) + '  自分で選ぶ ' + (s.aiPicked === null ? '-' : (100 * s.aiPicked).toFixed(0) + '%') + '  skip ' + JSON.stringify(s.skips) + '  ' + Math.round((Date.now() - t0) / 1000) + 's');
+  console.log(id.padEnd(6) + ' n=' + String(s.n).padStart(3) + '  その手の相方あり−白紙 ' + f(s.synergy) + '  相方の値 ' + f(s.pairValue) + '  (噛み合いは差、正確には combo_db.js)  逃している得 ' + f(s.missed) + '  自分で選ぶ ' + (s.aiPicked === null ? '-' : (100 * s.aiPicked).toFixed(0) + '%') + '  skip ' + JSON.stringify(s.skips) + '  ' + Math.round((Date.now() - t0) / 1000) + 's');
 }
 /* ジョブはコンボ順に並べ、ワーカーは共有の列から1件ずつ取る (n 件そろったコンボの残りは飛ばす) */
 let cursor = 0;

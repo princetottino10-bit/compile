@@ -289,6 +289,37 @@ module.exports = [
     how: 'CORRUPTION 6 の終了で1枚捨てると、CORRUPTION 2 の上段で相手が1枚捨て、PLAGUE 1 の上段で1枚引く。3枚とも上段なので覆われていても効く。',
     setup: { mine: [{ card: 'CORRUPTION_6', at: 'field' }, { card: 'PLAGUE_2', at: 'field' }, { card: 'CORRUPTION_3', at: 'hand' }] },
     act: { play: 'CORRUPTION_3' }, partner: ['PLAGUE_2']
+  },
+  /* ---------- PSYCHIC 1 のロックで相手が裏向きしか出せない間の取り立て ---------- */
+  {
+    id: 'C043', name: '覆われた PSYCHIC 1 + PLAGUE 4: 出させた裏向きを毎手番消させる', kind: 'lock', protos: ['PSYCHIC', 'PLAGUE'],
+    how: '覆われた PSYCHIC 1 で相手は裏向きでしか出せない。PLAGUE 4 の終了「相手は自分の裏向きを1枚削除」で、出した札を毎手番1枚ずつ失わせる。',
+    setup: { mine: [{ card: 'PSYCHIC_2', at: 'field', cover: true }, { card: 'PLAGUE_5', at: 'hand' }] },
+    act: { play: 'PLAGUE_5' }, partner: ['PSYCHIC_2']
+  },
+  {
+    id: 'C044', name: '覆われた PSYCHIC 1 + ASSIMILATION 0: 裏向きを奪う', kind: 'lock', protos: ['PSYCHIC', 'ASSIMILATION'],
+    how: 'ロックの間は相手の札がみな裏向きなので、ASSIMILATION 0 (相手の裏向きを1枚手札に加える) の的が増える。',
+    setup: { mine: [{ card: 'PSYCHIC_2', at: 'field', cover: true }, { card: 'ASSIMILATION_1', at: 'hand' }] },
+    act: { play: 'ASSIMILATION_1' }, partner: ['PSYCHIC_2']
+  },
+  {
+    id: 'C045', name: '覆われた PSYCHIC 1 + WATER 3: 裏向き (値2) をまとめて戻す', kind: 'lock', protos: ['PSYCHIC', 'WATER'],
+    how: '裏向きの札は値2。ロックで相手の札が裏向きばかりになったラインに WATER 3 (値2の札をすべて戻す) を撃つ。',
+    setup: { mine: [{ card: 'PSYCHIC_2', at: 'field', cover: true }, { card: 'WATER_4', at: 'hand' }] },
+    act: { play: 'WATER_4' }, partner: ['PSYCHIC_2'], late: true
+  },
+  {
+    id: 'C046', name: '覆われた PSYCHIC 1 + DEATH 2: 裏向き (値2) をまとめて消す', kind: 'lock', protos: ['PSYCHIC', 'DEATH'],
+    how: 'ロックで相手の札が裏向き (値2) ばかりのラインに DEATH 2 (値1か2の札をすべて削除) を撃つ。',
+    setup: { mine: [{ card: 'PSYCHIC_2', at: 'field', cover: true }, { card: 'DEATH_3', at: 'hand' }] },
+    act: { play: 'DEATH_3' }, partner: ['PSYCHIC_2'], late: true
+  },
+  {
+    id: 'C047', name: 'SMOKE 2 + LIGHT 3: 裏向きを寄せて点にする', kind: 'burst', protos: ['SMOKE', 'LIGHT'],
+    how: 'LIGHT 3 (このラインの裏向きをすべて他の1ラインへ) で、SMOKE 2 (このラインの裏向き1枚ごとに +1) のラインに裏向きを寄せる。',
+    setup: { mine: [{ card: 'SMOKE_3', at: 'field' }, { card: 'LIGHT_4', at: 'hand' }] },
+    act: { play: 'LIGHT_4' }, partner: ['SMOKE_3'], late: true
   }
 ];
 

@@ -274,18 +274,18 @@
    "verdict": "weak",
    "verdictLabel": "相方が強い (噛み合いは小さい)",
    "lab": {
-    "n": 62,
+    "n": 153,
     "horizon": 2,
     "playout": false,
-    "interaction": -0.2,
-    "interactionSe": 1.7,
-    "partnerValue": 10.2,
-    "partnerValueSe": 1.4,
+    "interaction": 1.2,
+    "interactionSe": 0.9,
+    "partnerValue": 8.8,
+    "partnerValueSe": 1,
     "synergy": 10,
-    "synergySe": 1.9,
-    "missed": -0.8,
-    "missedSe": 1.2,
-    "aiPicked": 65
+    "synergySe": 1,
+    "missed": -0.1,
+    "missedSe": 0.5,
+    "aiPicked": 80
    },
    "note": null
   },
@@ -465,18 +465,18 @@
    "verdict": "weak",
    "verdictLabel": "相方が強い (噛み合いは小さい)",
    "lab": {
-    "n": 63,
+    "n": 153,
     "horizon": 2,
     "playout": false,
-    "interaction": 1,
-    "interactionSe": 1.7,
-    "partnerValue": 14.8,
-    "partnerValueSe": 1.5,
-    "synergy": 15.8,
-    "synergySe": 1.4,
-    "missed": -4.3,
-    "missedSe": 1.4,
-    "aiPicked": 3
+    "interaction": -0.1,
+    "interactionSe": 0.8,
+    "partnerValue": 14,
+    "partnerValueSe": 0.9,
+    "synergy": 13.9,
+    "synergySe": 0.8,
+    "missed": -3.6,
+    "missedSe": 0.7,
+    "aiPicked": 54
    },
    "note": null
   },
@@ -494,21 +494,21 @@
     "PLAGUE"
    ],
    "how": "PLAGUE 0 の下段「相手はこのラインにプレイできない」と覆われた PSYCHIC 1 (裏向きでしか出せない) で、相手の置き場が2ラインの裏向きだけになる。",
-   "verdict": "weak",
-   "verdictLabel": "相方が強い (噛み合いは小さい)",
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
    "lab": {
-    "n": 63,
+    "n": 153,
     "horizon": 2,
     "playout": false,
-    "interaction": -0.3,
-    "interactionSe": 1.8,
-    "partnerValue": 15.7,
-    "partnerValueSe": 1.4,
-    "synergy": 15.4,
-    "synergySe": 1.4,
-    "missed": -7.9,
-    "missedSe": 1.6,
-    "aiPicked": 3
+    "interaction": -2.1,
+    "interactionSe": 0.9,
+    "partnerValue": 13.9,
+    "partnerValueSe": 0.9,
+    "synergy": 11.8,
+    "synergySe": 0.7,
+    "missed": -4.6,
+    "missedSe": 0.7,
+    "aiPicked": 41
    },
    "note": null
   },
@@ -1346,6 +1346,166 @@
     "missed": 1.6,
     "missedSe": 0.8,
     "aiPicked": 56
+   },
+   "note": null
+  },
+  {
+   "id": "C043",
+   "name": "覆われた PSYCHIC 1 + PLAGUE 4: 出させた裏向きを毎手番消させる",
+   "kind": "lock",
+   "source": "lab",
+   "cards": [
+    "PSYCHIC_2",
+    "PLAGUE_5"
+   ],
+   "protocols": [
+    "PSYCHIC",
+    "PLAGUE"
+   ],
+   "how": "覆われた PSYCHIC 1 で相手は裏向きでしか出せない。PLAGUE 4 の終了「相手は自分の裏向きを1枚削除」で、出した札を毎手番1枚ずつ失わせる。",
+   "verdict": "weak",
+   "verdictLabel": "相方が強い (噛み合いは小さい)",
+   "lab": {
+    "n": 153,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.3,
+    "interactionSe": 0.7,
+    "partnerValue": 15.1,
+    "partnerValueSe": 0.8,
+    "synergy": 14.8,
+    "synergySe": 0.8,
+    "missed": -1,
+    "missedSe": 0.6,
+    "aiPicked": 73
+   },
+   "note": null
+  },
+  {
+   "id": "C044",
+   "name": "覆われた PSYCHIC 1 + ASSIMILATION 0: 裏向きを奪う",
+   "kind": "lock",
+   "source": "lab",
+   "cards": [
+    "PSYCHIC_2",
+    "ASSIMILATION_1"
+   ],
+   "protocols": [
+    "PSYCHIC",
+    "ASSIMILATION"
+   ],
+   "how": "ロックの間は相手の札がみな裏向きなので、ASSIMILATION 0 (相手の裏向きを1枚手札に加える) の的が増える。",
+   "verdict": "weak",
+   "verdictLabel": "相方が強い (噛み合いは小さい)",
+   "lab": {
+    "n": 153,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.3,
+    "interactionSe": 0.9,
+    "partnerValue": 15.1,
+    "partnerValueSe": 0.8,
+    "synergy": 14.8,
+    "synergySe": 0.9,
+    "missed": -5.7,
+    "missedSe": 0.8,
+    "aiPicked": 5
+   },
+   "note": null
+  },
+  {
+   "id": "C045",
+   "name": "覆われた PSYCHIC 1 + WATER 3: 裏向き (値2) をまとめて戻す",
+   "kind": "lock",
+   "source": "lab",
+   "cards": [
+    "PSYCHIC_2",
+    "WATER_4"
+   ],
+   "protocols": [
+    "PSYCHIC",
+    "WATER"
+   ],
+   "how": "裏向きの札は値2。ロックで相手の札が裏向きばかりになったラインに WATER 3 (値2の札をすべて戻す) を撃つ。",
+   "verdict": "weak",
+   "verdictLabel": "相方が強い (噛み合いは小さい)",
+   "lab": {
+    "n": 123,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1,
+    "interactionSe": 1.4,
+    "partnerValue": 12.5,
+    "partnerValueSe": 1.3,
+    "synergy": 13.5,
+    "synergySe": 1.2,
+    "missed": -5.1,
+    "missedSe": 1.4,
+    "aiPicked": 20
+   },
+   "note": null
+  },
+  {
+   "id": "C046",
+   "name": "覆われた PSYCHIC 1 + DEATH 2: 裏向き (値2) をまとめて消す",
+   "kind": "lock",
+   "source": "lab",
+   "cards": [
+    "PSYCHIC_2",
+    "DEATH_3"
+   ],
+   "protocols": [
+    "PSYCHIC",
+    "DEATH"
+   ],
+   "how": "ロックで相手の札が裏向き (値2) ばかりのラインに DEATH 2 (値1か2の札をすべて削除) を撃つ。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 123,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -2.5,
+    "interactionSe": 1.3,
+    "partnerValue": 16.1,
+    "partnerValueSe": 1.3,
+    "synergy": 13.6,
+    "synergySe": 1.2,
+    "missed": -6.7,
+    "missedSe": 1.2,
+    "aiPicked": 15
+   },
+   "note": null
+  },
+  {
+   "id": "C047",
+   "name": "SMOKE 2 + LIGHT 3: 裏向きを寄せて点にする",
+   "kind": "burst",
+   "source": "lab",
+   "cards": [
+    "SMOKE_3",
+    "LIGHT_4"
+   ],
+   "protocols": [
+    "SMOKE",
+    "LIGHT"
+   ],
+   "how": "LIGHT 3 (このラインの裏向きをすべて他の1ラインへ) で、SMOKE 2 (このラインの裏向き1枚ごとに +1) のラインに裏向きを寄せる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 123,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.3,
+    "interactionSe": 1.1,
+    "partnerValue": -0.1,
+    "partnerValueSe": 1.1,
+    "synergy": 1.2,
+    "synergySe": 0.6,
+    "missed": -4.9,
+    "missedSe": 1.3,
+    "aiPicked": 18
    },
    "note": null
   },
@@ -5099,21 +5259,21 @@
     "CLARITY"
    ],
    "how": "TIME 2 (あなたがデッキをシャッフルしたあと：カードを1枚引き、このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる) を場に置き、CLARITY 3 (あなたのデッキのカードをすべて公開する。公開した中から値が5のカードを1枚引く。あなたのデッキをシャッフルする) を出す。出した手番に1回起きる。",
-   "verdict": "weak",
-   "verdictLabel": "相方が強い (噛み合いは小さい)",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
    "lab": {
-    "n": 43,
-    "horizon": 3,
+    "n": 153,
+    "horizon": 2,
     "playout": false,
-    "interaction": -0.5,
-    "interactionSe": 2.4,
-    "partnerValue": 9.8,
-    "partnerValueSe": 2.2,
-    "synergy": 9.3,
-    "synergySe": 2.2,
-    "missed": -4.9,
-    "missedSe": 1.9,
-    "aiPicked": 47
+    "interaction": 2.9,
+    "interactionSe": 0.8,
+    "partnerValue": 4,
+    "partnerValueSe": 0.8,
+    "synergy": 6.8,
+    "synergySe": 0.9,
+    "missed": 0.8,
+    "missedSe": 0.8,
+    "aiPicked": 24
    },
    "note": null
   },
@@ -5389,17 +5549,17 @@
    "verdictLabel": "相方が強い (噛み合いは小さい)",
    "lab": {
     "n": 153,
-    "horizon": 3,
+    "horizon": 2,
     "playout": false,
-    "interaction": 1.5,
-    "interactionSe": 1,
-    "partnerValue": 10.1,
-    "partnerValueSe": 1.1,
-    "synergy": 11.7,
+    "interaction": 1.3,
+    "interactionSe": 1.1,
+    "partnerValue": 11,
+    "partnerValueSe": 1,
+    "synergy": 12.2,
     "synergySe": 1.2,
-    "missed": 0.2,
-    "missedSe": 0.4,
-    "aiPicked": 76
+    "missed": 0.6,
+    "missedSe": 0.6,
+    "aiPicked": 51
    },
    "note": null
   },
@@ -5673,21 +5833,21 @@
     "FEAR"
    ],
    "how": "WAR 3 (相手が手札を捨て札にしたあと：あなたはカードを裏向きで1枚プレイすることができる) を場に置き、FEAR 1 (カードを2枚引く。相手は自身の手札をすべて捨て札にして、捨て札にした枚数-1枚のカードを引く) を出す。出した手番に1回起きる。",
-   "verdict": "weak",
-   "verdictLabel": "相方が強い (噛み合いは小さい)",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
    "lab": {
-    "n": 43,
-    "horizon": 3,
+    "n": 153,
+    "horizon": 2,
     "playout": false,
-    "interaction": 0.5,
-    "interactionSe": 1.4,
-    "partnerValue": 9.9,
-    "partnerValueSe": 2.1,
-    "synergy": 10.4,
-    "synergySe": 2,
-    "missed": -0.2,
-    "missedSe": 1.2,
-    "aiPicked": 72
+    "interaction": 3.4,
+    "interactionSe": 0.9,
+    "partnerValue": 6.8,
+    "partnerValueSe": 0.8,
+    "synergy": 10.2,
+    "synergySe": 0.8,
+    "missed": 1.8,
+    "missedSe": 0.7,
+    "aiPicked": 44
    },
    "note": null
   },
@@ -6297,128 +6457,6 @@
    }
   },
   {
-   "id": "M05",
-   "name": "覆われた PSYCHIC 1 + METAL 2",
-   "kind": "aim",
-   "source": "aimed",
-   "cards": [
-    "PSYCHIC_2",
-    "METAL_3"
-   ],
-   "protocols": [
-    "PSYCHIC",
-    "METAL"
-   ],
-   "how": "覆われた表の PSYCHIC 1 は開始で裏返らず、相手は裏向きでしか出せない。METAL 2 (このラインに裏向きで出せない) と重ねると、相手は METAL 2 のラインに何も出せない。PSYCHIC 1 を表で出してから覆う。METAL 2 は捨てずに持つ。",
-   "verdict": "aimed",
-   "verdictLabel": "揃えに行く手筋 (AI に入っている)",
-   "lab": null,
-   "labId": "C015",
-   "aim": {
-    "games": 60,
-    "base": {
-     "assembled": 1,
-     "wins": 22
-    },
-    "now": {
-     "assembled": 8,
-     "wins": 26
-    }
-   }
-  },
-  {
-   "id": "M06",
-   "name": "覆われた PSYCHIC 1 + PLAGUE 0",
-   "kind": "aim",
-   "source": "aimed",
-   "cards": [
-    "PSYCHIC_2",
-    "PLAGUE_1"
-   ],
-   "protocols": [
-    "PSYCHIC",
-    "PLAGUE"
-   ],
-   "how": "PLAGUE 0 の下段 (相手はこのラインに出せない) と覆われた PSYCHIC 1 で、相手の置き場は2ラインの裏向きだけになる。",
-   "verdict": "aimed",
-   "verdictLabel": "揃えに行く手筋 (AI に入っている)",
-   "lab": null,
-   "labId": "C016",
-   "aim": {
-    "games": 60,
-    "base": {
-     "assembled": 0,
-     "wins": 27
-    },
-    "now": {
-     "assembled": 5,
-     "wins": 34
-    }
-   }
-  },
-  {
-   "id": "M07",
-   "name": "SPIRIT 0 + CLARITY 0",
-   "kind": "aim",
-   "source": "aimed",
-   "cards": [
-    "SPIRIT_1",
-    "CLARITY_1"
-   ],
-   "protocols": [
-    "SPIRIT",
-    "CLARITY"
-   ],
-   "how": "SPIRIT 0 の下段でキャッシュの確認を飛ばして手札を溜め、CLARITY 0 の上段で手札1枚ごとにそのラインを +1。SPIRIT 0 を一番上に残す。",
-   "verdict": "aimed",
-   "verdictLabel": "揃えに行く手筋 (AI に入っている)",
-   "lab": null,
-   "labId": "C009",
-   "aim": {
-    "games": 60,
-    "base": {
-     "assembled": 9,
-     "wins": 22
-    },
-    "now": {
-     "assembled": 16,
-     "wins": 25
-    }
-   }
-  },
-  {
-   "id": "M08",
-   "name": "WAR 0 + ASSIMILATION 4",
-   "kind": "aim",
-   "source": "aimed",
-   "cards": [
-    "WAR_1",
-    "ASSIMILATION_4"
-   ],
-   "protocols": [
-    "WAR",
-    "ASSIMILATION"
-   ],
-   "how": "WAR 0 を一番上で表に置いてから ASSIMILATION 4 (相手はあなたのデッキの一番上を引く) を出し、引かせた分を削除する。",
-   "verdict": "aimed",
-   "verdictLabel": "揃えに行く手筋 (AI に入っている)",
-   "lab": null,
-   "labId": "A127",
-   "aim": {
-    "games": 60,
-    "base": {
-     "assembled": 4,
-     "fired": 1,
-     "wins": 23
-    },
-    "now": {
-     "assembled": 11,
-     "fired": 6,
-     "wins": 27
-    }
-   }
-  },
-  {
    "id": "M09",
    "name": "PLAGUE 1 + COURAGE 0 + CORRUPTION 2",
    "kind": "aim",
@@ -6634,40 +6672,6 @@
     "now": {
      "assembled": 3,
      "wins": 28
-    }
-   }
-  },
-  {
-   "id": "M16",
-   "name": "CORRUPTION 1 + FEAR 2 + LOVE 1",
-   "kind": "aim",
-   "source": "aimed",
-   "cards": [
-    "CORRUPTION_2",
-    "FEAR_3",
-    "LOVE_1"
-   ],
-   "protocols": [
-    "CORRUPTION",
-    "FEAR",
-    "LOVE"
-   ],
-   "how": "CORRUPTION 1 を一番上に置いたまま FEAR 2 で相手の札を戻すと、その札は相手の山札の上に乗る。続けて LOVE 1 で引いて奪う。LOVE 1 を捨てずに持つ。",
-   "verdict": "aimed",
-   "verdictLabel": "揃えに行く手筋 (AI に入っている)",
-   "lab": null,
-   "labId": "C038",
-   "aim": {
-    "games": 60,
-    "base": {
-     "fired": 22,
-     "discarded": 37,
-     "wins": 24
-    },
-    "now": {
-     "fired": 26,
-     "discarded": 23,
-     "wins": 24
     }
    }
   },

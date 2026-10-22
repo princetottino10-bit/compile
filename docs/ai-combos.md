@@ -269,10 +269,6 @@ AI は相手の手札を推測し直した世界で試算するが、その世�
 | WAR 0 + CHAOS 0 | 0 → 7 | — |
 | WAR 0 + LOVE 6 / LOVE 2 | 12 → 22 | 3 → 20 |
 | WAR 0 + FEAR 1 | 6 → 19 | 0 → 9 |
-| WAR 0 + ASSIMILATION 4 | 4 → 11 | 1 → 6 |
-| 覆われた PSYCHIC 1 + METAL 2 | 1 → 8 | — |
-| 覆われた PSYCHIC 1 + PLAGUE 0 | 0 → 5 | — |
-| SPIRIT 0 + CLARITY 0 | 9 → 16 | — |
 | PLAGUE 1 + COURAGE 0 + CORRUPTION 2 | 1 → 12 | — |
 | WAR 3 + COURAGE 0 | 3 → 13 | — |
 | WAR 3 + FEAR 1 | 37 → 44 | 9 → 14 |
@@ -280,10 +276,20 @@ AI は相手の手札を推測し直した世界で試算するが、その世�
 | SPIRIT 3 + PEACE 1 | 8 → 30 | — |
 | TIME 2 + CLARITY 3 | 28 → 37 | 5 → 7 |
 | CORRUPTION 6 + CORRUPTION 2 + PLAGUE 1 | 1 → 3 | — |
-| CORRUPTION 1 + FEAR 2 + LOVE 1 | — (LOVE 1 を捨てた 37 → 23) | 22 → 26 |
 
-PSYCHIC 1 のロックは「覆われた表」で効くので、一番上で表に出した形も片方が効く形として数える (aiAimNear)。
-入れる前は METAL 2・PLAGUE 0 を 60局で35〜38回手札から捨てていた。
+**外した組 (噛み合いが確かでなかった)。** combo_lab.js の画面表示は「その手の相方あり−白紙」で、相方そのものの値も含んでいた。
+噛み合い (相方の値を引いたもの、combo_db.js) で 153盤面測り直すと、次の組は 0 から 2SE 離れなかったので、揃えに行く手筋から外した。
+PSYCHIC 1 のロックは相方なしでも +14〜15pt と強いが、METAL 2 / PLAGUE 0 / PLAGUE 4 / ASSIMILATION 0 を重ねても上乗せは見えない (−2.1〜−0.1)。
+
+| 組 | 噛み合い |
+|---|---|
+| SPIRIT 0 + CLARITY 0 | +1.2 ±0.9 |
+| WAR 0 + ASSIMILATION 4 | +1.3 ±1.1 |
+| 覆われた PSYCHIC 1 + METAL 2 / PLAGUE 0 | −0.1 ±0.8 / −2.1 ±0.9 |
+| 覆われた PSYCHIC 1 + PLAGUE 4 / ASSIMILATION 0 | −0.3 ±0.7 / −0.3 ±0.9 |
+| CORRUPTION 1 + FEAR 2 + LOVE 1 | +0.2 ±0.5 |
+
+残した組の噛み合いは、TIME 2 + CLARITY 3 +2.9 ±0.8、WAR 3 + FEAR 1 +3.4 ±0.9 (どちらも 153盤面で測り直し)、CORRUPTION 6 + CORRUPTION 2 + PLAGUE 1 +4.2 ±1.1 など。
 
 ### SPEED 2 (2026-10-22)
 ユーザー「speed2 の重要性って理解してる？」。SPEED 2 (SPEED_3) は表で場に居れば、そのラインをコンパイルしても削除されず別のラインへ移る

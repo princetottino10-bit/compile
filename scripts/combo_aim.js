@@ -42,6 +42,8 @@ const COMBOS = {
   timeClarity: { name: 'TIME 2 + CLARITY 3', protos: ['TIME', 'CLARITY'], pieces: { TIME_3: 'up', CLARITY_4: 'play' } },
   corrPlague: { name: 'CORRUPTION 6 + CORRUPTION 2 + PLAGUE 1', protos: ['CORRUPTION', 'PLAGUE'], pieces: { CORRUPTION_6: 'up', CORRUPTION_3: 'up', PLAGUE_2: 'up' } },
   corrFearLove: { name: 'CORRUPTION 1 + FEAR 2 + LOVE 1', protos: ['CORRUPTION', 'FEAR', 'LOVE'], pieces: { CORRUPTION_2: 'top', FEAR_3: 'play', LOVE_1: 'play' } },
+  psyPlague4: { name: '覆われた PSYCHIC 1 + PLAGUE 4', protos: ['PSYCHIC', 'PLAGUE'], pieces: { PSYCHIC_2: 'cov', PLAGUE_5: 'top' } },
+  psyAssim: { name: '覆われた PSYCHIC 1 + ASSIMILATION 0', protos: ['PSYCHIC', 'ASSIMILATION'], pieces: { PSYCHIC_2: 'cov', ASSIMILATION_1: 'play' } },
   /* SPEED 2 は1枚で効く: コンパイルするラインに表で居れば、削除されずに別のラインへ移る。数えるのは自分のコンパイルと生き残り */
   speed2: { name: 'SPEED 2 (コンパイルで生き残る)', protos: ['SPEED'], pieces: { SPEED_3: 'up' }, solo: true }
 };
