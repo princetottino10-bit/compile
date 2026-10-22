@@ -17,7 +17,7 @@ const { loadGames } = require('./paupuru_load.js');
 const ROOT = path.join(__dirname, '..');
 
 function parseArgs(argv) {
-  const o = { dir: '_paupuru', input: '_paupuru/compare.jsonl', out: '_paupuru/rollout.jsonl', rollouts: 16, budget: 200, top: 200, workers: 0, pick: null };
+  const o = { dir: '_paupuru', input: '_paupuru/compare.jsonl', out: '_paupuru/rollout.jsonl', rollouts: 16, budget: 200, top: 200, workers: 0, pick: null, follow: 0 };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--dir') o.dir = argv[++i];
@@ -27,6 +27,7 @@ function parseArgs(argv) {
     else if (a === '--budget') o.budget = +argv[++i];
     else if (a === '--top') o.top = +argv[++i];
     else if (a === '--workers') o.workers = +argv[++i];
+    else if (a === '--follow') o.follow = +argv[++i];   // ぱうぷるの手のあと、実際に指した続きを何手番ぶん指すか
     else if (a === '--pick') o.pick = new Set(argv[++i].split(','));   // 局:手番 を並べて、その手番だけ打ち直す
     else { console.error('未知の引数: ' + a); process.exit(1); }
   }
@@ -45,7 +46,7 @@ function newGame(E, g) {
 }
 
 if (!isMainThread) {
-  const { src, cards, effects, jobs, rollouts, budget, valnet } = workerData;
+  const { src, cards, effects, jobs, rollouts, budget, valnet, follow } = workerData;
   const ctx = { module: { exports: {} }, exports: {}, console, structuredClone, performance };
   ctx.globalThis = ctx;
   vm.runInNewContext(src, ctx, { filename: 'engine.js' });
@@ -58,9 +59,19 @@ if (!isMainThread) {
   E.setAiSpecialist(false); E.setAiOracle(false); E.setAiValueNet(valnet, 400);
 
   /* 選択待ちを含めて最後まで打つ。手数が尽きたら引き分け扱い */
-  function playout(res) {
+  /* plan: ぱうぷるが実際にこのあと指した手 (--follow 手番ぶん)。指せるうちはそれを指し、指せなければ AI に任せる。
+     仕込みの手は続きを指してはじめて活きるので、続きを知らない AI に任せると仕込みが過小に出る */
+  function playout(res, plan, side) {
     let guard = 0;
+    plan = plan ? plan.slice() : [];
     while (res.winner === null && guard++ < 600) {
+      const st = res.state;
+      if (plan.length && !(res.requests && res.requests.length) && !st.pending && st.turn === side) {
+        const p = plan.shift();
+        const mv = E.legalActions(st).find(x => x.type === p.type &&
+          (x.type !== 'play' || (st.cards[x.card].def === p.def && x.line === p.line && !!x.faceUp === p.faceUp)));
+        if (mv) { res = E.apply(st, mv); if (res.error) return null; continue; }
+      }
       if (res.requests && res.requests.length) {
         const req = res.requests[0];
         res = E.apply(res.state, { type: 'choose', id: req.id, picks: E.ai.answer(res.state, req) });
@@ -77,6 +88,18 @@ if (!isMainThread) {
   for (const job of jobs) {
     const { g, rows } = job;
     const want = new Map(rows.map(r => [r.turn, r]));
+    const own = [null];   // own[手番] = ぱうぷるがその手番に指した手 (カードは def で持つ。振り直すと uid の中身が変わるため)
+    if (follow) {
+      let rs = newGame(E, g);
+      for (const a of g.actions) {
+        const st = rs.state;
+        if ((a.type === 'play' || a.type === 'refresh') && st.turn === g.side && !st.pending)
+          own.push(a.type === 'play' ? { type: 'play', def: st.cards[a.card].def, line: a.line, faceUp: !!a.faceUp } : { type: a.type });
+        const nx = E.apply(st, a);
+        if (nx.error) break;
+        rs = nx;
+      }
+    }
     let res = newGame(E, g), turnNo = 0;
     for (const a of g.actions) {
       const st = res.state;
@@ -96,7 +119,7 @@ if (!isMainThread) {
               [human, oracle].forEach((mv, j) => {
                 const after = E.apply(world, mv);
                 if (after.error) return;
-                const w = playout(after);
+                const w = playout(after, j === 0 ? own.slice(turnNo + 1, turnNo + 1 + follow) : null, g.side);
                 if (w === null) return;
                 done[j]++; if (w === g.side) wins[j]++;
               });
@@ -137,7 +160,7 @@ if (!isMainThread) {
   for (const b of buckets) {
     if (!b.length) continue;
     alive++;
-    const w = new Worker(__filename, { workerData: { src, cards, effects, jobs: b, rollouts: o.rollouts, budget: o.budget, valnet } });
+    const w = new Worker(__filename, { workerData: { src, cards, effects, jobs: b, rollouts: o.rollouts, budget: o.budget, valnet, follow: o.follow } });
     w.on('message', (m) => {
       if (m.row) {
         n++;
