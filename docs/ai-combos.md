@@ -269,7 +269,7 @@ AI は相手の手札を推測し直した世界で試算するが、その世�
 | WAR 0 + CHAOS 0 | 0 → 7 | — |
 | WAR 0 + LOVE 6 / LOVE 2 | 12 → 22 | 3 → 20 |
 | WAR 0 + FEAR 1 | 6 → 19 | 0 → 9 |
-| WAR 0 + ASSIMILATION 4 | 4 → 16 | — |
+| WAR 0 + ASSIMILATION 4 | 4 → 11 | 1 → 6 |
 | 覆われた PSYCHIC 1 + METAL 2 | 1 → 8 | — |
 | 覆われた PSYCHIC 1 + PLAGUE 0 | 0 → 5 | — |
 | SPIRIT 0 + CLARITY 0 | 9 → 16 | — |

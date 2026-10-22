@@ -33,7 +33,7 @@ const COMBOS = {
   psyMetal: { name: '覆われた PSYCHIC 1 + METAL 2', protos: ['PSYCHIC', 'METAL'], pieces: { PSYCHIC_2: 'cov', METAL_3: 'up' } },
   psyPlague: { name: '覆われた PSYCHIC 1 + PLAGUE 0', protos: ['PSYCHIC', 'PLAGUE'], pieces: { PSYCHIC_2: 'cov', PLAGUE_1: 'top' } },
   spiritClarity: { name: 'SPIRIT 0 + CLARITY 0', protos: ['SPIRIT', 'CLARITY'], pieces: { SPIRIT_1: 'top', CLARITY_1: 'up' } },
-  warAssim: { name: 'WAR 0 + ASSIMILATION 4', protos: ['WAR', 'ASSIMILATION'], pieces: { WAR_1: 'top', ASSIMILATION_5: 'play' } },
+  warAssim: { name: 'WAR 0 + ASSIMILATION 4', protos: ['WAR', 'ASSIMILATION'], pieces: { WAR_1: 'top', ASSIMILATION_4: 'play' } },
   plagueCourage: { name: 'PLAGUE 1 + COURAGE 0 + CORRUPTION 2', protos: ['PLAGUE', 'COURAGE', 'CORRUPTION'], pieces: { PLAGUE_2: 'up', COURAGE_1: 'top', CORRUPTION_3: 'up' } },
   warCourage: { name: 'WAR 3 + COURAGE 0', protos: ['WAR', 'COURAGE'], pieces: { WAR_4: 'top', COURAGE_1: 'top' } },
   war3Fear: { name: 'WAR 3 + FEAR 1', protos: ['WAR', 'FEAR'], pieces: { WAR_4: 'top', FEAR_2: 'play' } },

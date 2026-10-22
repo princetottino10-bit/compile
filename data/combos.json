@@ -6166,7 +6166,7 @@
    "source": "aimed",
    "cards": [
     "WAR_1",
-    "ASSIMILATION_5"
+    "ASSIMILATION_4"
    ],
    "protocols": [
     "WAR",
@@ -6181,11 +6181,13 @@
     "games": 60,
     "base": {
      "assembled": 4,
-     "wins": 28
+     "fired": 1,
+     "wins": 23
     },
     "now": {
-     "assembled": 16,
-     "wins": 31
+     "assembled": 11,
+     "fired": 6,
+     "wins": 27
     }
    }
   },
