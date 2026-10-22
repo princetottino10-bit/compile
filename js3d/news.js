@@ -16,6 +16,15 @@ export const KINDS = {
 
 export const NEWS = [
   {
+    id: '2026-10-23-story', date: '2026-10-23', kind: 'new',
+    img: 'art/news/story.webp', alt: 'ストーリー1章の一枚絵。朝の光が差す、空っぽの水族館の水槽を見上げる紫苑',
+    title: 'ストーリーが遊べるようになりました',
+    body: [
+      '人のいなくなった街で、命令を続けるアンドロイドたちに会いに行く物語です。序章から終章まで、MORE の STORY から遊べます。',
+      '歩ける地図・一枚絵・キャラクターの声・場面ごとの音楽つきです。進み具合は端末 (ログインしていればアカウント) に残ります。'
+    ]
+  },
+  {
     id: '2026-10-16-honki', date: '2026-10-16', kind: 'new',
     img: 'art/news/honki.webp', alt: 'CHALLENGE の強敵の一覧。本気紫苑・本気瑠璃・本気杏・本気茜が並ぶ',
     title: 'CHALLENGE に「本気の4人」が登場',
