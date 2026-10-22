@@ -1510,6 +1510,197 @@
    "note": null
   },
   {
+   "id": "C048",
+   "name": "PLAGUE 2 + WAR 1: 相手の手札を枯らしてこちらも引き直す",
+   "kind": "burst",
+   "source": "lab",
+   "cards": [
+    "WAR_2",
+    "PLAGUE_3"
+   ],
+   "protocols": [
+    "PLAGUE",
+    "WAR"
+   ],
+   "how": "PLAGUE 2 で相手の手札を空にすると相手は次の手番にリフレッシュするしかない。WAR 1 の下段「相手がリフレッシュしたあと: 任意の枚数捨ててリフレッシュ」でこちらも手札を5枚に戻す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 153,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1,
+    "interactionSe": 0.6,
+    "partnerValue": 1.9,
+    "partnerValueSe": 0.5,
+    "synergy": 2.9,
+    "synergySe": 0.5,
+    "missed": -2.2,
+    "missedSe": 0.7,
+    "aiPicked": 24
+   },
+   "note": null
+  },
+  {
+   "id": "C049",
+   "name": "PLAGUE 2 + ASSIMILATION 1: 相手にリフレッシュさせて奪う",
+   "kind": "burst",
+   "source": "lab",
+   "cards": [
+    "ASSIMILATION_2",
+    "PLAGUE_3"
+   ],
+   "protocols": [
+    "PLAGUE",
+    "ASSIMILATION"
+   ],
+   "how": "PLAGUE 2 で相手にリフレッシュを強いると、ASSIMILATION 1 の下段 (誰かがリフレッシュしたあと: 相手のデッキの一番上を引き、1枚を相手の捨て札へ) が起きる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 153,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.6,
+    "interactionSe": 0.5,
+    "partnerValue": 0.3,
+    "partnerValueSe": 0.5,
+    "synergy": 0.8,
+    "synergySe": 0.3,
+    "missed": -4,
+    "missedSe": 0.8,
+    "aiPicked": 21
+   },
+   "note": null
+  },
+  {
+   "id": "C050",
+   "name": "CLARITY 2 + PSYCHIC 1: ロックの札を探して出す",
+   "kind": "setup",
+   "source": "lab",
+   "cards": [
+    "PSYCHIC_2",
+    "CLARITY_3"
+   ],
+   "protocols": [
+    "CLARITY",
+    "PSYCHIC"
+   ],
+   "how": "CLARITY 2 はデッキから値1の札を引き、値1の札を1枚プレイする。PSYCHIC 1 を引いて出せば、ロックの入口を1手で作れる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 153,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.3,
+    "interactionSe": 0.5,
+    "partnerValue": 1.9,
+    "partnerValueSe": 0.6,
+    "synergy": 2.3,
+    "synergySe": 0.7,
+    "missed": -0.4,
+    "missedSe": 0.5,
+    "aiPicked": 75
+   },
+   "note": null
+  },
+  {
+   "id": "C051",
+   "name": "DARKNESS 2 + SMOKE 4: 裏向きを寄せて4点にする",
+   "kind": "burst",
+   "source": "lab",
+   "cards": [
+    "DARKNESS_3",
+    "SMOKE_5"
+   ],
+   "protocols": [
+    "DARKNESS",
+    "SMOKE"
+   ],
+   "how": "DARKNESS 2 のスタックの裏向きは各4点。SMOKE 4 (覆われている裏向きを1枚移動) でその裏向きを DARKNESS 2 のスタックに寄せる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 152,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.6,
+    "interactionSe": 1,
+    "partnerValue": 2.5,
+    "partnerValueSe": 1,
+    "synergy": 2,
+    "synergySe": 1,
+    "missed": -2.8,
+    "missedSe": 1,
+    "aiPicked": 41
+   },
+   "note": null
+  },
+  {
+   "id": "C052",
+   "name": "SPEED 3 + DEATH 0: 覆いをどけて撃ち直す",
+   "kind": "burst",
+   "source": "lab",
+   "cards": [
+    "DEATH_1",
+    "SPEED_4"
+   ],
+   "protocols": [
+    "SPEED",
+    "DEATH"
+   ],
+   "how": "SPEED 3 の中段「あなたの他のカードを1枚移動」で、覆われた DEATH 0 の上の札をどけると DEATH 0 の中段 (他の各ラインを1枚ずつ削除) がもう一度撃てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 153,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.4,
+    "interactionSe": 1.2,
+    "partnerValue": 3.4,
+    "partnerValueSe": 0.9,
+    "synergy": 3.8,
+    "synergySe": 1.1,
+    "missed": 0.2,
+    "missedSe": 1.1,
+    "aiPicked": 14
+   },
+   "note": null
+  },
+  {
+   "id": "C053",
+   "name": "ICE 1 + ICE 2: 重ねてすぐどき、下を撃ち直す",
+   "kind": "burst",
+   "source": "lab",
+   "cards": [
+    "ICE_2",
+    "ICE_1"
+   ],
+   "protocols": [
+    "ICE"
+   ],
+   "how": "ICE 1 の中段「このカードを移動できる」。ICE 2 の上に出してすぐ別のラインへ動けば、ICE 2 の中段 (他のカードを1枚移動) がもう一度撃てる。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 153,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.2,
+    "interactionSe": 1,
+    "partnerValue": 0.9,
+    "partnerValueSe": 0.8,
+    "synergy": 3.1,
+    "synergySe": 0.8,
+    "missed": -2.8,
+    "missedSe": 0.8,
+    "aiPicked": 31
+   },
+   "note": null
+  },
+  {
    "id": "A001",
    "name": "PLAGUE 1 + PLAGUE 0",
    "kind": "burst",

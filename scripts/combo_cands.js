@@ -320,6 +320,43 @@ module.exports = [
     how: 'LIGHT 3 (このラインの裏向きをすべて他の1ラインへ) で、SMOKE 2 (このラインの裏向き1枚ごとに +1) のラインに裏向きを寄せる。',
     setup: { mine: [{ card: 'SMOKE_3', at: 'field' }, { card: 'LIGHT_4', at: 'hand' }] },
     act: { play: 'LIGHT_4' }, partner: ['SMOKE_3'], late: true
+  },
+  /* ---------- 相手にリフレッシュさせる・覆いをどけて撃ち直す (2026-10-22) ---------- */
+  {
+    id: 'C048', name: 'PLAGUE 2 + WAR 1: 相手の手札を枯らしてこちらも引き直す', kind: 'burst', protos: ['PLAGUE', 'WAR'],
+    how: 'PLAGUE 2 で相手の手札を空にすると相手は次の手番にリフレッシュするしかない。WAR 1 の下段「相手がリフレッシュしたあと: 任意の枚数捨ててリフレッシュ」でこちらも手札を5枚に戻す。',
+    setup: { mine: [{ card: 'WAR_2', at: 'field' }, { card: 'PLAGUE_3', at: 'hand' }] },
+    act: { play: 'PLAGUE_3' }, partner: ['WAR_2']
+  },
+  {
+    id: 'C049', name: 'PLAGUE 2 + ASSIMILATION 1: 相手にリフレッシュさせて奪う', kind: 'burst', protos: ['PLAGUE', 'ASSIMILATION'],
+    how: 'PLAGUE 2 で相手にリフレッシュを強いると、ASSIMILATION 1 の下段 (誰かがリフレッシュしたあと: 相手のデッキの一番上を引き、1枚を相手の捨て札へ) が起きる。',
+    setup: { mine: [{ card: 'ASSIMILATION_2', at: 'field' }, { card: 'PLAGUE_3', at: 'hand' }] },
+    act: { play: 'PLAGUE_3' }, partner: ['ASSIMILATION_2']
+  },
+  {
+    id: 'C050', name: 'CLARITY 2 + PSYCHIC 1: ロックの札を探して出す', kind: 'setup', protos: ['CLARITY', 'PSYCHIC'],
+    how: 'CLARITY 2 はデッキから値1の札を引き、値1の札を1枚プレイする。PSYCHIC 1 を引いて出せば、ロックの入口を1手で作れる。',
+    setup: { mine: [{ card: 'PSYCHIC_2', at: 'deckTop' }, { card: 'CLARITY_3', at: 'hand' }] },
+    act: { play: 'CLARITY_3' }, partner: ['PSYCHIC_2']
+  },
+  {
+    id: 'C051', name: 'DARKNESS 2 + SMOKE 4: 裏向きを寄せて4点にする', kind: 'burst', protos: ['DARKNESS', 'SMOKE'],
+    how: 'DARKNESS 2 のスタックの裏向きは各4点。SMOKE 4 (覆われている裏向きを1枚移動) でその裏向きを DARKNESS 2 のスタックに寄せる。',
+    setup: { mine: [{ card: 'DARKNESS_3', at: 'field' }, { card: 'SMOKE_5', at: 'hand' }] },
+    act: { play: 'SMOKE_5' }, partner: ['DARKNESS_3'], late: true
+  },
+  {
+    id: 'C052', name: 'SPEED 3 + DEATH 0: 覆いをどけて撃ち直す', kind: 'burst', protos: ['SPEED', 'DEATH'],
+    how: 'SPEED 3 の中段「あなたの他のカードを1枚移動」で、覆われた DEATH 0 の上の札をどけると DEATH 0 の中段 (他の各ラインを1枚ずつ削除) がもう一度撃てる。',
+    setup: { mine: [{ card: 'DEATH_1', at: 'field', cover: true }, { card: 'SPEED_4', at: 'hand' }] },
+    act: { play: 'SPEED_4' }, partner: ['DEATH_1']
+  },
+  {
+    id: 'C053', name: 'ICE 1 + ICE 2: 重ねてすぐどき、下を撃ち直す', kind: 'burst', protos: ['ICE'],
+    how: 'ICE 1 の中段「このカードを移動できる」。ICE 2 の上に出してすぐ別のラインへ動けば、ICE 2 の中段 (他のカードを1枚移動) がもう一度撃てる。',
+    setup: { mine: [{ card: 'ICE_2', at: 'field' }, { card: 'ICE_1', at: 'hand' }] },
+    act: { play: 'ICE_1', line: 'onto:ICE_2' }, partner: ['ICE_2']
   }
 ];
 
