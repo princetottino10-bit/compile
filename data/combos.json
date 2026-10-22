@@ -19,18 +19,18 @@
    "verdict": "strong",
    "verdictLabel": "噛み合う",
    "lab": {
-    "n": 153,
+    "n": 303,
     "horizon": 3,
     "playout": false,
-    "interaction": 6.7,
-    "interactionSe": 1.2,
-    "partnerValue": 6.2,
-    "partnerValueSe": 1,
-    "synergy": 12.8,
-    "synergySe": 1.1,
-    "missed": -0.5,
-    "missedSe": 0.9,
-    "aiPicked": 12
+    "interaction": 5.6,
+    "interactionSe": 0.9,
+    "partnerValue": 7.3,
+    "partnerValueSe": 0.8,
+    "synergy": 12.9,
+    "synergySe": 0.9,
+    "missed": 1.1,
+    "missedSe": 0.8,
+    "aiPicked": 18
    },
    "note": "決着まで打った勝ち負けでも、その手で相方あり−白紙 = 勝率 +8.9 ±3.8pt (289盤面)。ORACLE が自分で CHAOS 0 を出すのは1割だが、選ばない手も同じくらい良い (−1.7 ±3.7)。"
   },
@@ -949,6 +949,176 @@
     "missed": -4.7,
     "missedSe": 2.1,
     "aiPicked": 8
+   },
+   "note": null
+  },
+  {
+   "id": "C031",
+   "name": "WAR 0 + CHAOS 0 + HATE 3: 開始のたびに削除して引く",
+   "kind": "engine",
+   "source": "lab",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "HATE_4"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "HATE"
+   ],
+   "how": "WAR 0 と CHAOS 0 が場にあると毎手番の開始で削除が起きる。HATE 3 の上段「削除したあと1枚引く」を足すと、その削除ごとに1枚引く。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 303,
+    "horizon": 3,
+    "playout": false,
+    "interaction": 3.6,
+    "interactionSe": 0.9,
+    "partnerValue": 10.3,
+    "partnerValueSe": 0.8,
+    "synergy": 13.9,
+    "synergySe": 0.8,
+    "missed": 2.3,
+    "missedSe": 0.8,
+    "aiPicked": 45
+   },
+   "note": "入れる前 (master) の ORACLE は逃している得 +4.1 ±0.8 (303盤面): 自分の札で WAR 0・CHAOS 0 を覆って回しを潰していた。揃えに行く手筋 (M01) を入れて +2.3 ±0.8"
+  },
+  {
+   "id": "C032",
+   "name": "WAR 0 + CHAOS 0 + MIRROR 4: 開始のたびに削除と2枚",
+   "kind": "engine",
+   "source": "lab",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "MIRROR_5"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "MIRROR"
+   ],
+   "how": "CHAOS 0 の開始で相手が引くたび、WAR 0 で1枚削除、MIRROR 4 (相手が引いたあと1枚引く) で1枚引く。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 303,
+    "horizon": 3,
+    "playout": false,
+    "interaction": 2.2,
+    "interactionSe": 1,
+    "partnerValue": 11.5,
+    "partnerValueSe": 0.9,
+    "synergy": 13.7,
+    "synergySe": 1,
+    "missed": 0.9,
+    "missedSe": 0.7,
+    "aiPicked": 47
+   },
+   "note": "入れる前 (master) の ORACLE は逃している得 +5.0 ±0.8 (303盤面)。揃えに行く手筋 (M01) を入れて +0.9 ±0.7"
+  },
+  {
+   "id": "C033",
+   "name": "PLAGUE 1 + COURAGE 0 + CORRUPTION 2: 終了のたびに2枚捨てさせて2枚引く",
+   "kind": "engine",
+   "source": "lab",
+   "cards": [
+    "PLAGUE_2",
+    "COURAGE_1",
+    "CORRUPTION_3"
+   ],
+   "protocols": [
+    "PLAGUE",
+    "COURAGE",
+    "CORRUPTION"
+   ],
+   "how": "COURAGE 0 の終了で1枚捨てると、COURAGE 0 自身と CORRUPTION 2 の上段で相手が2枚捨て、PLAGUE 1 の上段でこちらが2枚引く。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 123,
+    "horizon": 3,
+    "playout": false,
+    "interaction": 2.6,
+    "interactionSe": 1.2,
+    "partnerValue": 9,
+    "partnerValueSe": 1.1,
+    "synergy": 11.6,
+    "synergySe": 1.2,
+    "missed": 1.8,
+    "missedSe": 1,
+    "aiPicked": 49
+   },
+   "note": null
+  },
+  {
+   "id": "C034",
+   "name": "ICE 1 + PLAGUE 1 + WAR 3: 置かせるたびに引いて置き返す",
+   "kind": "engine",
+   "source": "lab",
+   "cards": [
+    "ICE_1",
+    "PLAGUE_2",
+    "WAR_4"
+   ],
+   "protocols": [
+    "ICE",
+    "PLAGUE",
+    "WAR"
+   ],
+   "how": "ICE 1 のラインに相手が出すと相手が1枚捨て、PLAGUE 1 で1枚引き、WAR 3 で裏で1枚出せる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 123,
+    "horizon": 3,
+    "playout": false,
+    "interaction": -0.8,
+    "interactionSe": 1.2,
+    "partnerValue": 2.4,
+    "partnerValueSe": 0.8,
+    "synergy": 1.6,
+    "synergySe": 1.2,
+    "missed": -0.4,
+    "missedSe": 1.1,
+    "aiPicked": 31
+   },
+   "note": null
+  },
+  {
+   "id": "C035",
+   "name": "WAR 0 + LOVE 2 + HATE 3: 引かせて消して引く",
+   "kind": "burst",
+   "source": "lab",
+   "cards": [
+    "WAR_1",
+    "HATE_4",
+    "LOVE_2"
+   ],
+   "protocols": [
+    "WAR",
+    "LOVE",
+    "HATE"
+   ],
+   "how": "LOVE 2 で相手が引き、WAR 0 で削除、HATE 3 で1枚引く。LOVE 2 のリフレッシュとあわせて手札が大きく増える。",
+   "verdict": "weak",
+   "verdictLabel": "相方が強い (噛み合いは小さい)",
+   "lab": {
+    "n": 123,
+    "horizon": 3,
+    "playout": false,
+    "interaction": 2.4,
+    "interactionSe": 1.3,
+    "partnerValue": 12,
+    "partnerValueSe": 1.2,
+    "synergy": 14.4,
+    "synergySe": 1.3,
+    "missed": 1.8,
+    "missedSe": 0.8,
+    "aiPicked": 60
    },
    "note": null
   },
@@ -5803,6 +5973,133 @@
    "verdict": "taught",
    "verdictLabel": "教わった手筋 (AI に入っている)",
    "lab": null
+  },
+  {
+   "id": "M01",
+   "name": "WAR 0 + CHAOS 0",
+   "kind": "aim",
+   "source": "aimed",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS"
+   ],
+   "how": "WAR 0 を一番上で表のまま、CHAOS 0 も一番上で表に揃える。CHAOS 0 の開始で相手が引くたびに WAR 0 で1枚削除できる。HATE 3 (削除で1枚引く) と MIRROR 4 が乗る。WAR 0・CHAOS 0 を自分の札で覆わない。",
+   "verdict": "aimed",
+   "verdictLabel": "揃えに行く手筋 (AI に入っている)",
+   "lab": null,
+   "labId": "C001",
+   "aim": {
+    "games": 60,
+    "base": {
+     "assembled": 0,
+     "wins": 25
+    },
+    "now": {
+     "assembled": 7,
+     "wins": 24
+    }
+   }
+  },
+  {
+   "id": "M02",
+   "name": "WAR 0 + LOVE 6 / LOVE 2",
+   "kind": "aim",
+   "source": "aimed",
+   "cards": [
+    "WAR_1",
+    "LOVE_6",
+    "LOVE_2"
+   ],
+   "protocols": [
+    "WAR",
+    "LOVE"
+   ],
+   "how": "WAR 0 を一番上で表に置いてから LOVE 6 (相手は2枚引く) / LOVE 2 (相手は1枚引く) を表で出し、引かせた分を削除で取り返す。LOVE は WAR 0 が場で効くまで手札に残す。",
+   "verdict": "aimed",
+   "verdictLabel": "揃えに行く手筋 (AI に入っている)",
+   "lab": null,
+   "labId": "C014",
+   "aim": {
+    "games": 60,
+    "base": {
+     "assembled": 12,
+     "fired": 3,
+     "wins": 32
+    },
+    "now": {
+     "assembled": 22,
+     "fired": 20,
+     "wins": 26
+    }
+   }
+  },
+  {
+   "id": "M03",
+   "name": "WAR 0 + FEAR 1",
+   "kind": "aim",
+   "source": "aimed",
+   "cards": [
+    "WAR_1",
+    "FEAR_2"
+   ],
+   "protocols": [
+    "WAR",
+    "FEAR"
+   ],
+   "how": "WAR 0 を一番上で表に置いてから FEAR 1 (相手は手札を捨てて引き直す) を出し、引き直しで削除する。",
+   "verdict": "aimed",
+   "verdictLabel": "揃えに行く手筋 (AI に入っている)",
+   "lab": null,
+   "labId": "A126",
+   "aim": {
+    "games": 60,
+    "base": {
+     "assembled": 6,
+     "fired": 0,
+     "wins": 27
+    },
+    "now": {
+     "assembled": 19,
+     "fired": 9,
+     "wins": 33
+    }
+   }
+  },
+  {
+   "id": "M04",
+   "name": "SPEED 2 をコンパイルに持ち込む",
+   "kind": "aim",
+   "source": "aimed",
+   "cards": [
+    "SPEED_3"
+   ],
+   "protocols": [
+    "SPEED"
+   ],
+   "how": "SPEED 2 は表で場に居れば、そのラインをコンパイルしても削除されず別のラインへ移る (値2と札を次のラインへ持ち越す)。手札から捨てず、コンパイルが近いラインに表で置く。",
+   "verdict": "aimed",
+   "verdictLabel": "揃えに行く手筋 (AI に入っている)",
+   "lab": null,
+   "labId": null,
+   "aim": {
+    "games": 40,
+    "base": {
+     "compiles": 100,
+     "survived": 13,
+     "discarded": 27,
+     "wins": 20
+    },
+    "now": {
+     "compiles": 101,
+     "survived": 32,
+     "discarded": 7,
+     "wins": 19
+    }
+   }
   }
  ]
 }

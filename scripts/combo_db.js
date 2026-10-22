@@ -19,6 +19,7 @@ const proto = {}, value = {};
 for (const p of cards.protocols) for (const c of p.cards) { proto[c.id] = p.name; value[c.id] = c.value; }
 const CANDS = require('./combo_cands.js');
 const TAUGHT = require('./combo_taught.js');
+const AIMED = require('./combo_aimed.js');
 
 const results = {};
 for (const d of resDirs) {
@@ -73,6 +74,8 @@ for (const c of CANDS) {
   });
 }
 for (const t of TAUGHT) combos.push({ ...t, source: 'taught', verdict: 'taught', verdictLabel: '教わった手筋 (AI に入っている)', lab: null });
+for (const a of AIMED) combos.push({ id: a.id, name: a.name, kind: 'aim', source: 'aimed', cards: a.cards, protocols: a.protocols, how: a.how,
+  verdict: 'aimed', verdictLabel: '揃えに行く手筋 (AI に入っている)', lab: null, labId: a.lab || null, aim: { games: a.games, base: a.base, now: a.now } });
 
 const KIND = { engine: '毎手番効く', burst: 'その手番で得', setup: '次の手番の仕込み', lock: '相手を縛る' };
 const out = {
@@ -87,8 +90,10 @@ const out = {
 fs.writeFileSync(path.join(ROOT, 'data', 'combos.json'), JSON.stringify(out, null, 1) + '\n');
 
 /* ---------- docs/combos.md ---------- */
-const order = ['missed', 'strong', 'weak', 'taught', 'none', 'negative', 'untested'];
+const order = ['aimed', 'missed', 'strong', 'weak', 'taught', 'none', 'negative', 'untested'];
 const head = {
+  aimed: '## 揃えに行く手筋\n見つけたコンボのうち、AI が揃えに行くように評価へ入れたもの (engine.js の AI_AIM_COMBOS・aiSpeed2Score)。' +
+    '数字は ORACLE 同士で決着まで打った実戦 (scripts/combo_aim.js)。基準 = 入れる前、いま = 入れたあと。',
   missed: '## AI が逃しているコンボ\nその手を打つと、ORACLE が自分で選ぶ手より勝つ見込みが上がる。AI の手筋に入れる候補。',
   strong: '## 噛み合うコンボ\n相方があると、その手が他の手より余分に良くなる (平均 2pt 以上で、0 から 2SE 以上離れている)。',
   weak: '## 相方が強いもの\n相方の札そのものは強い (4pt 以上) が、この手との噛み合いは見えるほどではない。',
@@ -112,7 +117,13 @@ for (const k of order) {
   const list = combos.filter(c => c.verdict === k);
   if (!list.length) continue;
   md += head[k] + '\n\n';
-  if (k === 'taught') {
+  if (k === 'aimed') {
+    const AIMK = { assembled: '揃った局', fired: '撃った', compiles: '自分のコンパイル', survived: '生き残った', discarded: '手札から捨てた', wins: '勝ち' };
+    for (const c of list) {
+      md += '### ' + c.id + ' ' + c.name + '\n' + c.how + '\n\n- ' + c.aim.games + '局: ' +
+        Object.keys(c.aim.now).map(f => AIMK[f] + ' ' + c.aim.base[f] + ' → ' + c.aim.now[f]).join(' / ') + (c.labId ? ' (盤面の検証は ' + c.labId + ')' : '') + '\n\n';
+    }
+  } else if (k === 'taught') {
     md += '| 手筋 | 内容 |\n|---|---|\n';
     for (const c of list) md += '| ' + c.name + ' | ' + c.how + ' |\n';
   } else {

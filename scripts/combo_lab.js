@@ -46,6 +46,7 @@ function parseArgs(argv) {
     else if (a === '--seed') o.seed = +argv[++i];
     else if (a === '--out') o.out = argv[++i];
     else if (a === '--verbose') o.verbose = true;
+    else if (a === '--cpu') o.cpu = argv[++i];
     else if (a === '--reps') o.reps = +argv[++i];   // 1つの腕の続きを何回打って平均するか (続きの打ち方のブレを減らす)
     else if (a === '--playout') o.playout = true;
     else if (a === '--demo') o.demo = argv[++i];   // 1盤面だけ植えて、コンボの手と続きのログを出す   // 見込みではなく決着まで打って勝ち負けで比べる (遅い)
@@ -64,7 +65,7 @@ function loadEngine(src, cards, effects) {
   const blanks = [];
   for (const p of cards.protocols) for (const c of p.cards) blanks.push({ id: 'BL_' + c.id, proto: p.name, value: c.value, eff: {} });
   E.init(cards, effects, blanks);
-  E.setAiLevel(2); E.setAiBlunder(0); E.setAiOracle(true);
+  E.setAiLevel(2); E.setAiBlunder(0); E.setAiOracle(CPU === 'oracle');
   return E;
 }
 function valnetLogit(E, model, st, me) {
@@ -81,13 +82,16 @@ function valnetLogit(E, model, st, me) {
   }
   return h[0];
 }
+/* 打たせる CPU: oracle (既定、最強の ORACLE) / strong (つよい: 探索だけ、特化の重みなし) */
+let CPU = 'oracle';
+function SPEC(E, side) { if (CPU === 'oracle') E.setAiSpecialist(true, side, 'dsh'); else E.setAiSpecialist(false, -1); }
 const sigmoid = (x) => 1 / (1 + Math.exp(-x));
 
 /* 選択要求を ORACLE の答えで解決しきる。picker(q) が配列を返したらそれを使う (コンボの選択を決め打つとき) */
 function resolveAll(E, res, picker) {
   for (let g = 0; g < 80 && res && !res.error && res.winner === null && res.requests.length; g++) {
     const q = res.requests[0];
-    E.setAiSpecialist(true, q.player, 'dsh');
+    SPEC(E, q.player);
     let picks = picker ? picker(res.state, q) : null;
     let nx = null;
     if (picks) { try { nx = E.apply(res.state, { type: 'choose', id: q.id, picks }); } catch (e) { nx = null; } if (nx && nx.error) nx = null; }
@@ -112,7 +116,7 @@ function continueAndValue(E, model, st, me, horizon, playout, trace, picker) {
   while (res.winner === null && guard++ < 400) {
     const s = res.state;
     if (!playout && myStarts >= horizon && s.turn === me) break;
-    E.setAiSpecialist(true, s.turn, 'dsh');
+    SPEC(E, s.turn);
     const a = E.ai.action(s);
     if (!a) break;
     const r = step(E, s, a, picker);
@@ -257,7 +261,7 @@ function snapshot(E, combo, seed, budget) {
       if (myTurn >= stopAt) return { st: s, me, rnd };
     }
     prev = s.phase === 'action' ? s.turn : prev;
-    E.setAiSpecialist(true, s.turn, 'dsh');
+    SPEC(E, s.turn);
     const a = E.ai.action(s);
     if (!a) return null;
     const nx = step(E, s, a);
@@ -300,7 +304,7 @@ function trial(E, model, combo, seed, opt) {
     const startsInStep = r.log.filter(l => l === '--- P' + (me + 1) + ' のターン ---').length;
     return continueAndValue(E, model, r.state, me, opt.horizon - startsInStep, opt.playout, null, usePicker ? picker : null);
   };
-  E.setAiSpecialist(true, me, 'dsh');
+  SPEC(E, me);
   const freeAct = E.ai.action(structuredClone(base));
   out.aiPicked = sameAct(freeAct, forcedAct);
   out.freeAct = freeAct && (freeAct.type === 'play' ? base.cards[freeAct.card].def + '@' + freeAct.line + (freeAct.faceUp ? '↑' : '↓') : freeAct.type);
@@ -309,7 +313,7 @@ function trial(E, model, combo, seed, opt) {
   if (partners.length) {
     const b = blanked(base);
     out.forcedA0 = arm(b, forcedAct, true);
-    E.setAiSpecialist(true, me, 'dsh');
+    SPEC(E, me);
     const fa = E.ai.action(structuredClone(b));
     out.freeA0 = fa ? arm(b, fa, false) : null;
   }
@@ -319,6 +323,7 @@ function trial(E, model, combo, seed, opt) {
 /* ---------- 実行 ---------- */
 if (!isMainThread) {
   const w = workerData;
+  CPU = w.opt.cpu || 'oracle';
   const E = loadEngine(w.src, w.cards, w.effects);
   E.setAiValueNet(w.model, 400);
   DEF_PROTO = w.defProto; DEF_VALUE = w.defValue;
@@ -400,7 +405,7 @@ function summarize(id) {
     forced: mean('forced'), free: mean('free'), forcedA0: mean('forcedA0'), freeA0: mean('freeA0'),
     synergy: diff('forced', 'forcedA0'), missed: diff('forced', 'free'), pairValue: diff('free', 'freeA0'),
     aiPicked: rows.length ? rows.filter(r => r.aiPicked).length / rows.length : null,
-    opt: { horizon: opt.horizon, budget: opt.budget, playout: opt.playout, reps: opt.reps }, rows
+    opt: { horizon: opt.horizon, budget: opt.budget, playout: opt.playout, reps: opt.reps, cpu: opt.cpu || 'oracle' }, rows
   };
 }
 const pending = {};

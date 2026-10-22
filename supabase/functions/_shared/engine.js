@@ -2750,6 +2750,9 @@ const AI_W = {
   refreshRecompile: 260, comboDiscard: 3,
   /* 教えた手筋 (aiUsesCombos のとき): SPEED 0 と 3 を揃えて使う・FIRE 0 + WATER 4 の構え。値は最強の特化と同じ */
   speedPairStrategy: 1, speedPairKeep: 40, fire0Water4Ready: 60,
+  /* 見つけたコンボを揃えに行く (AI_AIM_COMBOS、docs/combos.md)。aimLive: 回しが動いている / aimHalf: 片方が場で効く形、残りが手札 /
+     aimHold: 相方が生きている手札の札 / aimExtra: 回しに乗って引く札 (HATE 3・MIRROR 4) */
+  aimLive: 500, aimHalf: 150, aimHold: 30, aimExtra: 80, s2Hold: 25, s2Up: 30, s2Compile: 60,
   /* 「〜できる」の任意コストを、払わない選択も込みで見る (0 で従来どおり必ず払う扱い)。
      anyLineBase/anyLineGain: 「プロトコルを対応させずに表向きでプレイできる」(SPIRIT 1) の価値。
      ライン制限を外したときの手札評価の増分を上乗せする。0 で従来どおり常時効果の一律10点 */
@@ -2892,6 +2895,7 @@ const AI_DSH_W = {
      WATER 4 が手札にあれば、毎手番 WATER 4 を重ねて自分を戻す (2枚反転・3枚ドロー) を繰り返せる。
      1手先の読みでは次の手番の得が見えないので、構えを作る手 (WATER 2 の並べ替え・SPEED 3 の移動) のために置く */
   fire0Water4Ready: 60,
+  aimLive: 500, aimHalf: 150, aimHold: 30, aimExtra: 80, s2Hold: 25, s2Up: 30, s2Compile: 60,
   recompile: 160, midUp: 0.35, refreshRecompile: 260, comboDiscard: 3,
   optionalCost: 1, anyLineBase: 26, anyLineGain: 0.9,
   uncoverBase: 22, uncoverMid: 0.8,
@@ -3451,6 +3455,66 @@ function aiFire0Water4Ready(st, side) {
     if (top && st.cards[top].def === 'FIRE_1' && st.cards[top].faceUp && canPlay(st, side, water4, line, true)) return true;
   }
   return false;
+}
+
+/* 揃えに行くコンボ (docs/combos.md)。札ごとに場でどう居れば効くか: top = 一番上で表 / up = 表なら覆われていても / play = 表で出して撃つ札。
+   1手先の読みでは次の手番より先の得が見えないので、揃う前の形にも値打ちを置く (ユーザー 2026-10-22「狙いに行ってるかどうか」)。
+   実戦 60局で、手筋なしの ORACLE は WAR 0 + CHAOS 0 を一度も揃えず、相方が生きているのに WAR 0 を40回・CHAOS 0 を31回捨てていた */
+const AI_AIM_COMBOS = [
+  { pieces: { WAR_1: 'top', CHAOS_1: 'top' }, extra: { HATE_4: 'up', MIRROR_5: 'top' } },
+  { pieces: { WAR_1: 'top', LOVE_6: 'play' } },
+  { pieces: { WAR_1: 'top', LOVE_2: 'play' } },
+  { pieces: { WAR_1: 'top', FEAR_2: 'play' } }
+];
+function aiAimPlace(st, side, uid) {
+  const c = st.cards[uid];
+  if (!c) return 'gone';
+  for (let l = 0; l < 3; l++) {
+    const k = st.lines[l][side].indexOf(uid);
+    if (k >= 0) return !c.faceUp ? 'down' : k === st.lines[l][side].length - 1 ? 'top' : 'covUp';
+    if (st.lines[l][1 - side].indexOf(uid) >= 0) return 'gone';
+  }
+  const P = st.players[side];
+  return P.hand.includes(uid) ? 'hand' : P.deck.includes(uid) ? 'deck' : 'gone';
+}
+const aiAimLive = (need, w) => (need === 'up' ? w === 'top' || w === 'covUp' : w === 'top');
+/* side のコンボの形の値打ち (W.aimLive: 回しが動いている / aimHalf: 場の札が効く形で、残りが手札 / aimHold: 相方が生きている手札の札1枚 /
+   aimExtra: 回しに乗る札1枚) */
+function aiAimScore(st, side, W) {
+  let sc = 0;
+  for (const cb of AI_AIM_COMBOS) {
+    const ids = Object.keys(cb.pieces);
+    const at = ids.map(d => aiAimPlace(st, side, 'p' + side + ':' + d));
+    if (at.some(w => w === 'gone')) continue;
+    const eng = ids.filter((d, i) => cb.pieces[d] !== 'play');
+    const liveAll = eng.every(d => aiAimLive(cb.pieces[d], at[ids.indexOf(d)]));
+    const hasPlay = ids.some(d => cb.pieces[d] === 'play');
+    if (liveAll && !hasPlay) {
+      sc += W.aimLive || 0;
+      for (const [d, need] of Object.entries(cb.extra || {})) if (aiAimLive(need, aiAimPlace(st, side, 'p' + side + ':' + d))) sc += W.aimExtra || 0;
+      continue;
+    }
+    const rest = ids.filter((d, i) => !(cb.pieces[d] !== 'play' && aiAimLive(cb.pieces[d], at[i])));
+    if (ids.some((d, i) => cb.pieces[d] !== 'play' && aiAimLive(cb.pieces[d], at[i])) && rest.every(d => at[ids.indexOf(d)] === 'hand')) sc += W.aimHalf || 0;
+    for (let i = 0; i < ids.length; i++) if (at[i] === 'hand' && at.some((w, j) => j !== i && w !== 'down')) sc += W.aimHold || 0;
+  }
+  return sc;
+}
+
+/* SPEED 2 (SPEED_3) は表で場に居れば、そのラインをコンパイルしても削除されずに別のラインへ移る (値2と札を次のラインへ持ち越す)。
+   評価は値2の札としか数えず、実戦 40局で手札から27回捨て、7回裏で出していた (ユーザー 2026-10-22「speed2 の重要性」)。
+   s2Hold: 手札に持っている / s2Up: 場で表 / s2Compile: 表で居るラインが7点以上 (コンパイルが近い) */
+function aiSpeed2Score(st, side, W) {
+  const uid = 'p' + side + ':SPEED_3';
+  const c = st.cards[uid];
+  if (!c) return 0;
+  if (st.players[side].hand.includes(uid)) return W.s2Hold || 0;
+  for (let l = 0; l < 3; l++) {
+    if (!st.lines[l][side].includes(uid)) continue;
+    if (!c.faceUp) return 0;
+    return (W.s2Up || 0) + (lineTotal(st, l, side) >= 7 && !st.players[side].protocols[l].compiled ? W.s2Compile || 0 : 0);
+  }
+  return 0;
 }
 
 /* ぱうぷるのファイア③の回し方 (AI_LOCK_W.fire3Psy / fire3Other)。一番上で表のファイア③があり、手札がある (捨てて反転する) とき:
@@ -4111,6 +4175,9 @@ function aiHeuristic(st, me) {
   }
   /* 特化 (DSH): FIRE 0 + WATER 4 の構え。WATER 4 は自分を戻すので、撃ったあとも構えは残る */
   if (aiUsesCombos(st, me) && W.fire0Water4Ready && aiFire0Water4Ready(st, me)) sc += W.fire0Water4Ready;
+  /* 見つけたコンボを揃えに行く・相手の回しは割る (つよい以上と特化) */
+  if (aiTaughtTactics(st, me) && W.aimLive) sc += aiAimScore(st, me, W) - aiAimScore(st, 1 - me, { aimLive: W.aimLive, aimExtra: W.aimExtra });
+  if (aiTaughtTactics(st, me)) sc += aiSpeed2Score(st, me, W);
   sc += aiBoardEffectScore(st, me);
   sc += aiLockScore(st, me);
   /* 対戦者から教わった手筋 (docs/ai-combos.md のぱうぷるの節) は、つよい以上とロック特化だけ。ふつう・かんたんには入れない
@@ -4260,7 +4327,11 @@ const AI_COMBO_PAIRS = [
   ['HATE_2', 'HATE_1'],       // HATE 1 の上に HATE 0、自分を消して HATE 1 をもう一度起動
   ['HATE_2', 'ICE_2'],        // ICE 1 で HATE 1 の上をどかす / HATE 1 を動かして起動し直す
   ['HATE_2', 'FEAR_1'],       // FEAR 0 で同じく (裏の HATE 1 なら表に返す)
-  ['HATE_2', 'FEAR_2']        // FEAR 1 で2枚引いて、HATE 1 の「3枚捨てる」の手札を作る
+  ['HATE_2', 'FEAR_2'],       // FEAR 1 で2枚引いて、HATE 1 の「3枚捨てる」の手札を作る
+  ['WAR_1', 'CHAOS_1'],       // CHAOS 0 の開始で相手が引くたびに WAR 0 で削除 (docs/combos.md)
+  ['WAR_1', 'LOVE_6'],        // LOVE 6・LOVE 2・FEAR 1 で相手に引かせて WAR 0 で削除
+  ['WAR_1', 'LOVE_2'],
+  ['WAR_1', 'FEAR_2']
 ];
 const AI_COMBO_KEEP = { hand: 60, field: 40, deck: 15 };
 /* ORACLE が手放したがらない札: ウォーター① (山札の上を他の各ラインに裏で) とファイア③ (終了時に捨てて反転) */

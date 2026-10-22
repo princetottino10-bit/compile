@@ -213,6 +213,40 @@ module.exports = [
     setup: { mine: [{ card: 'MIRROR_3', at: 'hand' }] },
     act: { play: 'MIRROR_3' }, partner: [], late: true
   }
+  ,
+  /* ---------- 3枚の組: 噛み合いが見えた2枚に、もう1枚を足す ---------- */
+  {
+    id: 'C031', name: 'WAR 0 + CHAOS 0 + HATE 3: 開始のたびに削除して引く', kind: 'engine', protos: ['WAR', 'CHAOS', 'HATE'],
+    how: 'WAR 0 と CHAOS 0 が場にあると毎手番の開始で削除が起きる。HATE 3 の上段「削除したあと1枚引く」を足すと、その削除ごとに1枚引く。',
+    setup: { mine: [{ card: 'WAR_1', at: 'field' }, { card: 'CHAOS_1', at: 'field' }, { card: 'HATE_4', at: 'hand' }] },
+    act: { play: 'HATE_4' }, partner: ['WAR_1', 'CHAOS_1'],
+    note: '入れる前 (master) の ORACLE は逃している得 +4.1 ±0.8 (303盤面): 自分の札で WAR 0・CHAOS 0 を覆って回しを潰していた。揃えに行く手筋 (M01) を入れて +2.3 ±0.8'
+  },
+  {
+    id: 'C032', name: 'WAR 0 + CHAOS 0 + MIRROR 4: 開始のたびに削除と2枚', kind: 'engine', protos: ['WAR', 'CHAOS', 'MIRROR'],
+    how: 'CHAOS 0 の開始で相手が引くたび、WAR 0 で1枚削除、MIRROR 4 (相手が引いたあと1枚引く) で1枚引く。',
+    setup: { mine: [{ card: 'WAR_1', at: 'field' }, { card: 'CHAOS_1', at: 'field' }, { card: 'MIRROR_5', at: 'hand' }] },
+    act: { play: 'MIRROR_5' }, partner: ['WAR_1', 'CHAOS_1'],
+    note: '入れる前 (master) の ORACLE は逃している得 +5.0 ±0.8 (303盤面)。揃えに行く手筋 (M01) を入れて +0.9 ±0.7'
+  },
+  {
+    id: 'C033', name: 'PLAGUE 1 + COURAGE 0 + CORRUPTION 2: 終了のたびに2枚捨てさせて2枚引く', kind: 'engine', protos: ['PLAGUE', 'COURAGE', 'CORRUPTION'],
+    how: 'COURAGE 0 の終了で1枚捨てると、COURAGE 0 自身と CORRUPTION 2 の上段で相手が2枚捨て、PLAGUE 1 の上段でこちらが2枚引く。',
+    setup: { mine: [{ card: 'PLAGUE_2', at: 'field' }, { card: 'COURAGE_1', at: 'field' }, { card: 'CORRUPTION_3', at: 'hand' }] },
+    act: { play: 'CORRUPTION_3' }, partner: ['PLAGUE_2', 'COURAGE_1']
+  },
+  {
+    id: 'C034', name: 'ICE 1 + PLAGUE 1 + WAR 3: 置かせるたびに引いて置き返す', kind: 'engine', protos: ['ICE', 'PLAGUE', 'WAR'],
+    how: 'ICE 1 のラインに相手が出すと相手が1枚捨て、PLAGUE 1 で1枚引き、WAR 3 で裏で1枚出せる。',
+    setup: { mine: [{ card: 'ICE_1', at: 'field' }, { card: 'PLAGUE_2', at: 'field' }, { card: 'WAR_4', at: 'hand' }] },
+    act: { play: 'WAR_4' }, partner: ['ICE_1', 'PLAGUE_2']
+  },
+  {
+    id: 'C035', name: 'WAR 0 + LOVE 2 + HATE 3: 引かせて消して引く', kind: 'burst', protos: ['WAR', 'LOVE', 'HATE'],
+    how: 'LOVE 2 で相手が引き、WAR 0 で削除、HATE 3 で1枚引く。LOVE 2 のリフレッシュとあわせて手札が大きく増える。',
+    setup: { mine: [{ card: 'WAR_1', at: 'field' }, { card: 'HATE_4', at: 'field' }, { card: 'LOVE_2', at: 'hand' }] },
+    act: { play: 'LOVE_2' }, partner: ['WAR_1', 'HATE_4']
+  }
 ];
 
 /* ---------- 自動で挙げる候補: 「〜したあと」の札 × その出来事を起こす札 ----------
