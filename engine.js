@@ -3464,7 +3464,13 @@ const AI_AIM_COMBOS = [
   { pieces: { WAR_1: 'top', CHAOS_1: 'top' }, extra: { HATE_4: 'up', MIRROR_5: 'top' } },
   { pieces: { WAR_1: 'top', LOVE_6: 'play' } },
   { pieces: { WAR_1: 'top', LOVE_2: 'play' } },
-  { pieces: { WAR_1: 'top', FEAR_2: 'play' } }
+  { pieces: { WAR_1: 'top', FEAR_2: 'play' } },
+  { pieces: { WAR_1: 'top', ASSIMILATION_5: 'play' } },
+  /* 覆われた表の PSYCHIC 1 (開始で裏返らない) + METAL 2 / PLAGUE 0 で相手は1ラインに何も出せない。60局で1度しか揃えず、METAL 2・PLAGUE 0 を35〜38回捨てていた */
+  { pieces: { PSYCHIC_2: 'cov', METAL_3: 'up' } },
+  { pieces: { PSYCHIC_2: 'cov', PLAGUE_1: 'top' } },
+  /* SPIRIT 0 でキャッシュの確認を飛ばして手札を溜め、CLARITY 0 で手札1枚ごとに +1。SPIRIT 0 を自分で18回覆っていた */
+  { pieces: { SPIRIT_1: 'top', CLARITY_1: 'up' } }
 ];
 function aiAimPlace(st, side, uid) {
   const c = st.cards[uid];
@@ -3477,7 +3483,9 @@ function aiAimPlace(st, side, uid) {
   const P = st.players[side];
   return P.hand.includes(uid) ? 'hand' : P.deck.includes(uid) ? 'deck' : 'gone';
 }
-const aiAimLive = (need, w) => (need === 'up' ? w === 'top' || w === 'covUp' : w === 'top');
+const aiAimLive = (need, w) => (need === 'up' ? w === 'top' || w === 'covUp' : need === 'cov' ? w === 'covUp' : w === 'top');
+/* 'cov' の札は一番上で表に出せば、あとは覆うだけ (片方が場で効く形と同じに数える) */
+const aiAimNear = (need, w) => aiAimLive(need, w) || (need === 'cov' && w === 'top');
 /* side のコンボの形の値打ち (W.aimLive: 回しが動いている / aimHalf: 場の札が効く形で、残りが手札 / aimHold: 相方が生きている手札の札1枚 /
    aimExtra: 回しに乗る札1枚) */
 function aiAimScore(st, side, W) {
@@ -3494,8 +3502,8 @@ function aiAimScore(st, side, W) {
       for (const [d, need] of Object.entries(cb.extra || {})) if (aiAimLive(need, aiAimPlace(st, side, 'p' + side + ':' + d))) sc += W.aimExtra || 0;
       continue;
     }
-    const rest = ids.filter((d, i) => !(cb.pieces[d] !== 'play' && aiAimLive(cb.pieces[d], at[i])));
-    if (ids.some((d, i) => cb.pieces[d] !== 'play' && aiAimLive(cb.pieces[d], at[i])) && rest.every(d => at[ids.indexOf(d)] === 'hand')) sc += W.aimHalf || 0;
+    const rest = ids.filter((d, i) => !(cb.pieces[d] !== 'play' && aiAimNear(cb.pieces[d], at[i])));
+    if (ids.some((d, i) => cb.pieces[d] !== 'play' && aiAimNear(cb.pieces[d], at[i])) && rest.every(d => at[ids.indexOf(d)] === 'hand')) sc += W.aimHalf || 0;
     for (let i = 0; i < ids.length; i++) if (at[i] === 'hand' && at.some((w, j) => j !== i && w !== 'down')) sc += W.aimHold || 0;
   }
   return sc;
@@ -4331,7 +4339,7 @@ const AI_COMBO_PAIRS = [
   ['WAR_1', 'CHAOS_1'],       // CHAOS 0 の開始で相手が引くたびに WAR 0 で削除 (docs/combos.md)
   ['WAR_1', 'LOVE_6'],        // LOVE 6・LOVE 2・FEAR 1 で相手に引かせて WAR 0 で削除
   ['WAR_1', 'LOVE_2'],
-  ['WAR_1', 'FEAR_2']
+  ['WAR_1', 'FEAR_2'], ['WAR_1', 'ASSIMILATION_5'], ['PSYCHIC_2', 'METAL_3'], ['PSYCHIC_2', 'PLAGUE_1'], ['SPIRIT_1', 'CLARITY_1']
 ];
 const AI_COMBO_KEEP = { hand: 60, field: 40, deck: 15 };
 /* ORACLE が手放したがらない札: ウォーター① (山札の上を他の各ラインに裏で) とファイア③ (終了時に捨てて反転) */

@@ -804,3 +804,16 @@ test('つよい以上: SPEED 2 を捨てず、表で場に置いてコンパイ�
   trash(drop, 'SPEED_3', 0);
   assert.ok(Engine.ai.score(hold, 0) > Engine.ai.score(drop, 0), 'SPEED 2 を手札に残す');
 }));
+test('つよい以上: PSYCHIC 1 を表で覆った形があるとき、METAL 2 を手札に残す方を高く見る', () => withDsh(() => {
+  Engine.setAiLevel(2);
+  const keep = game(['PSYCHIC', 'METAL', 'FIRE'], ['LIGHT', 'LIFE', 'HATE']);
+  place(keep, 'PSYCHIC_2', 0, 0, true);
+  place(keep, 'PSYCHIC_4', 0, 0, false);
+  setHand(keep, 0, ['METAL_3', 'FIRE_3']);
+  const drop = game(['PSYCHIC', 'METAL', 'FIRE'], ['LIGHT', 'LIFE', 'HATE']);
+  place(drop, 'PSYCHIC_2', 0, 0, true);
+  place(drop, 'PSYCHIC_4', 0, 0, false);
+  setHand(drop, 0, ['METAL_2', 'FIRE_3']);
+  trash(drop, 'METAL_3', 0);
+  assert.ok(Engine.ai.score(keep, 0) > Engine.ai.score(drop, 0) + 100, 'METAL 2 を捨てない');
+}));

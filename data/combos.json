@@ -1,6 +1,6 @@
 {
  "about": "Compile のコンボのデータベース。生成: node scripts/combo_db.js (候補 scripts/combo_cands.js / 検証 scripts/combo_lab.js / 教わった手筋 scripts/combo_taught.js)。lab.interaction = 噛み合い (その手で相方あり−相方白紙) − (ORACLE の手で相方あり−相方白紙) (pt)。lab.partnerValue = ORACLE が自由に打つときの相方あり−相方白紙 (相方そのものの値)。lab.synergy = その手で相方あり−相方白紙 (噛み合い+相方の値)。lab.missed = その手を打ったときと ORACLE が自分で選んだ手の差。lab.aiPicked = ORACLE が自分でその手を選んだ割合 (%)。勝つ見込みは自分の手番を horizon 回進めたあとの data/valnet.json の読み (playout なら決着まで打った勝ち負け)。",
- "updated": "2026-10-21",
+ "updated": "2026-10-22",
  "combos": [
   {
    "id": "C001",
@@ -6066,6 +6066,126 @@
      "assembled": 19,
      "fired": 9,
      "wins": 33
+    }
+   }
+  },
+  {
+   "id": "M05",
+   "name": "覆われた PSYCHIC 1 + METAL 2",
+   "kind": "aim",
+   "source": "aimed",
+   "cards": [
+    "PSYCHIC_2",
+    "METAL_3"
+   ],
+   "protocols": [
+    "PSYCHIC",
+    "METAL"
+   ],
+   "how": "覆われた表の PSYCHIC 1 は開始で裏返らず、相手は裏向きでしか出せない。METAL 2 (このラインに裏向きで出せない) と重ねると、相手は METAL 2 のラインに何も出せない。PSYCHIC 1 を表で出してから覆う。METAL 2 は捨てずに持つ。",
+   "verdict": "aimed",
+   "verdictLabel": "揃えに行く手筋 (AI に入っている)",
+   "lab": null,
+   "labId": "C015",
+   "aim": {
+    "games": 60,
+    "base": {
+     "assembled": 1,
+     "wins": 22
+    },
+    "now": {
+     "assembled": 8,
+     "wins": 26
+    }
+   }
+  },
+  {
+   "id": "M06",
+   "name": "覆われた PSYCHIC 1 + PLAGUE 0",
+   "kind": "aim",
+   "source": "aimed",
+   "cards": [
+    "PSYCHIC_2",
+    "PLAGUE_1"
+   ],
+   "protocols": [
+    "PSYCHIC",
+    "PLAGUE"
+   ],
+   "how": "PLAGUE 0 の下段 (相手はこのラインに出せない) と覆われた PSYCHIC 1 で、相手の置き場は2ラインの裏向きだけになる。",
+   "verdict": "aimed",
+   "verdictLabel": "揃えに行く手筋 (AI に入っている)",
+   "lab": null,
+   "labId": "C016",
+   "aim": {
+    "games": 60,
+    "base": {
+     "assembled": 0,
+     "wins": 27
+    },
+    "now": {
+     "assembled": 5,
+     "wins": 34
+    }
+   }
+  },
+  {
+   "id": "M07",
+   "name": "SPIRIT 0 + CLARITY 0",
+   "kind": "aim",
+   "source": "aimed",
+   "cards": [
+    "SPIRIT_1",
+    "CLARITY_1"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "CLARITY"
+   ],
+   "how": "SPIRIT 0 の下段でキャッシュの確認を飛ばして手札を溜め、CLARITY 0 の上段で手札1枚ごとにそのラインを +1。SPIRIT 0 を一番上に残す。",
+   "verdict": "aimed",
+   "verdictLabel": "揃えに行く手筋 (AI に入っている)",
+   "lab": null,
+   "labId": "C009",
+   "aim": {
+    "games": 60,
+    "base": {
+     "assembled": 9,
+     "wins": 22
+    },
+    "now": {
+     "assembled": 16,
+     "wins": 25
+    }
+   }
+  },
+  {
+   "id": "M08",
+   "name": "WAR 0 + ASSIMILATION 4",
+   "kind": "aim",
+   "source": "aimed",
+   "cards": [
+    "WAR_1",
+    "ASSIMILATION_5"
+   ],
+   "protocols": [
+    "WAR",
+    "ASSIMILATION"
+   ],
+   "how": "WAR 0 を一番上で表に置いてから ASSIMILATION 4 (相手はあなたのデッキの一番上を引く) を出し、引かせた分を削除する。",
+   "verdict": "aimed",
+   "verdictLabel": "揃えに行く手筋 (AI に入っている)",
+   "lab": null,
+   "labId": "A127",
+   "aim": {
+    "games": 60,
+    "base": {
+     "assembled": 4,
+     "wins": 28
+    },
+    "now": {
+     "assembled": 16,
+     "wins": 31
     }
    }
   },
