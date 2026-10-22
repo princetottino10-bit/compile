@@ -42,6 +42,12 @@ module.exports = [
   { id: 'M14', lab: 'A118', name: 'TIME 2 + CLARITY 3', cards: ['TIME_3', 'CLARITY_4'], protocols: ['TIME', 'CLARITY'], combo: 'timeClarity', games: 60,
     how: 'TIME 2 (シャッフルしたあと: 1枚引いて動ける) を場に置き、CLARITY 3 のシャッフルで起こす。',
     base: { assembled: 28, fired: 5, wins: 37 }, now: { assembled: 37, fired: 7, wins: 36 } },
+  { id: 'M15', lab: 'C042', name: 'CORRUPTION 6 + CORRUPTION 2 + PLAGUE 1', cards: ['CORRUPTION_6', 'CORRUPTION_3', 'PLAGUE_2'], protocols: ['CORRUPTION', 'PLAGUE'], combo: 'corrPlague', games: 60,
+    how: 'CORRUPTION 6 の終了で1枚捨てると、CORRUPTION 2 の上段で相手が1枚捨て、PLAGUE 1 の上段で1枚引く。3枚とも上段なので覆われていても効く。3枚揃うのはまれ。',
+    base: { assembled: 1, wins: 27 }, now: { assembled: 3, wins: 28 } },
+  { id: 'M16', lab: 'C038', name: 'CORRUPTION 1 + FEAR 2 + LOVE 1', cards: ['CORRUPTION_2', 'FEAR_3', 'LOVE_1'], protocols: ['CORRUPTION', 'FEAR', 'LOVE'], combo: 'corrFearLove', games: 60,
+    how: 'CORRUPTION 1 を一番上に置いたまま FEAR 2 で相手の札を戻すと、その札は相手の山札の上に乗る。続けて LOVE 1 で引いて奪う。LOVE 1 を捨てずに持つ。',
+    base: { fired: 22, discarded: 37, wins: 24 }, now: { fired: 26, discarded: 23, wins: 24 } },
   { id: 'M04', name: 'SPEED 2 をコンパイルに持ち込む', cards: ['SPEED_3'], protocols: ['SPEED'], combo: 'speed2', games: 40,
     how: 'SPEED 2 は表で場に居れば、そのラインをコンパイルしても削除されず別のラインへ移る (値2と札を次のラインへ持ち越す)。手札から捨てず、コンパイルが近いラインに表で置く。',
     base: { compiles: 100, survived: 13, discarded: 27, wins: 20 }, now: { compiles: 101, survived: 32, discarded: 7, wins: 19 } }

@@ -3479,7 +3479,11 @@ const AI_AIM_COMBOS = [
   /* SPIRIT 3 は引いたあとに覆われていても動ける。引く札を足して、どいた下の札をもう一度起こす */
   { pieces: { SPIRIT_4: 'up', CORRUPTION_3: 'play' } },
   { pieces: { SPIRIT_4: 'up', PEACE_1: 'top' } },
-  { pieces: { TIME_3: 'up', CLARITY_4: 'play' } }
+  { pieces: { TIME_3: 'up', CLARITY_4: 'play' } },
+  /* CORRUPTION 6 の終了で捨てると CORRUPTION 2 で相手も捨て、PLAGUE 1 で引く (どれも上段) */
+  { pieces: { CORRUPTION_6: 'up', CORRUPTION_3: 'up', PLAGUE_2: 'up' } },
+  /* CORRUPTION 1 の下で FEAR 2 が戻した札は相手の山札の上に乗り、LOVE 1 で奪える */
+  { pieces: { CORRUPTION_2: 'top', FEAR_3: 'play', LOVE_1: 'play' } }
 ];
 function aiAimPlace(st, side, uid) {
   const c = st.cards[uid];
@@ -4348,7 +4352,7 @@ const AI_COMBO_PAIRS = [
   ['WAR_1', 'CHAOS_1'],       // CHAOS 0 の開始で相手が引くたびに WAR 0 で削除 (docs/combos.md)
   ['WAR_1', 'LOVE_6'],        // LOVE 6・LOVE 2・FEAR 1 で相手に引かせて WAR 0 で削除
   ['WAR_1', 'LOVE_2'],
-  ['WAR_1', 'FEAR_2'], ['WAR_1', 'ASSIMILATION_4'], ['PSYCHIC_2', 'METAL_3'], ['PSYCHIC_2', 'PLAGUE_1'], ['SPIRIT_1', 'CLARITY_1'], ['PLAGUE_2', 'COURAGE_1'], ['COURAGE_1', 'CORRUPTION_3'], ['WAR_4', 'COURAGE_1'], ['WAR_4', 'FEAR_2'], ['SPIRIT_4', 'CORRUPTION_3'], ['SPIRIT_4', 'PEACE_1'], ['TIME_3', 'CLARITY_4']
+  ['WAR_1', 'FEAR_2'], ['WAR_1', 'ASSIMILATION_4'], ['PSYCHIC_2', 'METAL_3'], ['PSYCHIC_2', 'PLAGUE_1'], ['SPIRIT_1', 'CLARITY_1'], ['PLAGUE_2', 'COURAGE_1'], ['COURAGE_1', 'CORRUPTION_3'], ['WAR_4', 'COURAGE_1'], ['WAR_4', 'FEAR_2'], ['SPIRIT_4', 'CORRUPTION_3'], ['SPIRIT_4', 'PEACE_1'], ['TIME_3', 'CLARITY_4'], ['CORRUPTION_6', 'CORRUPTION_3'], ['CORRUPTION_6', 'PLAGUE_2'], ['CORRUPTION_2', 'FEAR_3'], ['FEAR_3', 'LOVE_1']
 ];
 const AI_COMBO_KEEP = { hand: 60, field: 40, deck: 15 };
 /* ORACLE が手放したがらない札: ウォーター① (山札の上を他の各ラインに裏で) とファイア③ (終了時に捨てて反転) */

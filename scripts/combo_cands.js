@@ -246,6 +246,49 @@ module.exports = [
     how: 'LOVE 2 で相手が引き、WAR 0 で削除、HATE 3 で1枚引く。LOVE 2 のリフレッシュとあわせて手札が大きく増える。',
     setup: { mine: [{ card: 'WAR_1', at: 'field' }, { card: 'HATE_4', at: 'field' }, { card: 'LOVE_2', at: 'hand' }] },
     act: { play: 'LOVE_2' }, partner: ['WAR_1', 'HATE_4']
+  },
+  /* ---------- 4回目: まだ挙げていなかった札の組 (2026-10-22) ---------- */
+  {
+    id: 'C036', name: 'FEAR 0 + LIGHT 0: 相手の札を起こさずに引く', kind: 'burst', protos: ['FEAR', 'LIGHT'],
+    how: 'FEAR 0 の上段「あなたの手番中、相手の中段はないものとして扱う」の間に LIGHT 0 で相手の裏向きを反転させると、相手の中段を撃たせずに、その値の枚数を引ける。',
+    setup: { mine: [{ card: 'FEAR_1', at: 'field' }, { card: 'LIGHT_1', at: 'hand' }] },
+    act: { play: 'LIGHT_1' }, partner: ['FEAR_1']
+  },
+  {
+    id: 'C037', name: 'CORRUPTION 1 + FEAR 2: 戻した札を山札の上へ', kind: 'burst', protos: ['CORRUPTION', 'FEAR'],
+    how: 'CORRUPTION 1 の下段で、相手の手札に戻る札は代わりに相手のデッキの一番上に裏向きで置かれる。FEAR 2 で相手の札を戻すと、相手は手札を増やせず、次のドローがその札になる。',
+    setup: { mine: [{ card: 'CORRUPTION_2', at: 'field' }, { card: 'FEAR_3', at: 'hand' }] },
+    act: { play: 'FEAR_3' }, partner: ['CORRUPTION_2']
+  },
+  {
+    id: 'C038', name: 'CORRUPTION 1 + FEAR 2 + LOVE 1: 相手の札を奪う', kind: 'burst', protos: ['CORRUPTION', 'FEAR', 'LOVE'],
+    how: 'CORRUPTION 1 の下で FEAR 2 が戻した相手の札は、相手のデッキの一番上に乗る。続けて LOVE 1 (相手のデッキの一番上を引く) でその札を自分の手札にする。',
+    setup: { mine: [{ card: 'CORRUPTION_2', at: 'field' }, { card: 'FEAR_3', at: 'hand' }, { card: 'LOVE_1', at: 'hand' }] },
+    act: { play: 'FEAR_3' }, partner: ['CORRUPTION_2']
+  },
+  {
+    id: 'C039', name: 'WAR 1 + PEACE 4: 相手のリフレッシュで引き直す', kind: 'engine', protos: ['WAR', 'PEACE'],
+    how: 'WAR 1 の下段「相手がリフレッシュしたあと: 任意の枚数捨ててリフレッシュ」。相手の手番中に捨てるので PEACE 4 の下段で1枚多く引ける。',
+    setup: { mine: [{ card: 'WAR_2', at: 'field' }, { card: 'PEACE_4', at: 'hand' }] },
+    act: { play: 'PEACE_4' }, partner: ['WAR_2']
+  },
+  {
+    id: 'C040', name: 'ASSIMILATION 1 + LOVE 2: リフレッシュで相手の山札を引く', kind: 'burst', protos: ['ASSIMILATION', 'LOVE'],
+    how: 'ASSIMILATION 1 の下段「誰かがリフレッシュしたあと: 相手のデッキの一番上を引き、手札1枚を相手の捨て札へ」。LOVE 2 のリフレッシュで起こす。',
+    setup: { mine: [{ card: 'ASSIMILATION_2', at: 'field' }, { card: 'LOVE_2', at: 'hand' }] },
+    act: { play: 'LOVE_2' }, partner: ['ASSIMILATION_2']
+  },
+  {
+    id: 'C041', name: 'ASSIMILATION 1 + WAR 1: 相手のリフレッシュで2回奪う', kind: 'engine', protos: ['ASSIMILATION', 'WAR'],
+    how: '相手がリフレッシュすると ASSIMILATION 1 が起き、WAR 1 でこちらもリフレッシュしてもう一度起きる。',
+    setup: { mine: [{ card: 'WAR_2', at: 'field' }, { card: 'ASSIMILATION_2', at: 'hand' }] },
+    act: { play: 'ASSIMILATION_2' }, partner: ['WAR_2']
+  },
+  {
+    id: 'C042', name: 'CORRUPTION 6 + CORRUPTION 2 + PLAGUE 1: 終了のたびに捨てさせて引く', kind: 'engine', protos: ['CORRUPTION', 'PLAGUE'],
+    how: 'CORRUPTION 6 の終了で1枚捨てると、CORRUPTION 2 の上段で相手が1枚捨て、PLAGUE 1 の上段で1枚引く。3枚とも上段なので覆われていても効く。',
+    setup: { mine: [{ card: 'CORRUPTION_6', at: 'field' }, { card: 'PLAGUE_2', at: 'field' }, { card: 'CORRUPTION_3', at: 'hand' }] },
+    act: { play: 'CORRUPTION_3' }, partner: ['PLAGUE_2']
   }
 ];
 

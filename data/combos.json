@@ -1123,6 +1123,233 @@
    "note": null
   },
   {
+   "id": "C036",
+   "name": "FEAR 0 + LIGHT 0: 相手の札を起こさずに引く",
+   "kind": "burst",
+   "source": "lab",
+   "cards": [
+    "FEAR_1",
+    "LIGHT_1"
+   ],
+   "protocols": [
+    "FEAR",
+    "LIGHT"
+   ],
+   "how": "FEAR 0 の上段「あなたの手番中、相手の中段はないものとして扱う」の間に LIGHT 0 で相手の裏向きを反転させると、相手の中段を撃たせずに、その値の枚数を引ける。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 123,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.9,
+    "interactionSe": 0.6,
+    "partnerValue": 0.1,
+    "partnerValueSe": 0.4,
+    "synergy": 1,
+    "synergySe": 0.6,
+    "missed": -0.3,
+    "missedSe": 0.5,
+    "aiPicked": 43
+   },
+   "note": null
+  },
+  {
+   "id": "C037",
+   "name": "CORRUPTION 1 + FEAR 2: 戻した札を山札の上へ",
+   "kind": "burst",
+   "source": "lab",
+   "cards": [
+    "CORRUPTION_2",
+    "FEAR_3"
+   ],
+   "protocols": [
+    "CORRUPTION",
+    "FEAR"
+   ],
+   "how": "CORRUPTION 1 の下段で、相手の手札に戻る札は代わりに相手のデッキの一番上に裏向きで置かれる。FEAR 2 で相手の札を戻すと、相手は手札を増やせず、次のドローがその札になる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 123,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.8,
+    "interactionSe": 0.8,
+    "partnerValue": 2.5,
+    "partnerValueSe": 0.8,
+    "synergy": 1.8,
+    "synergySe": 0.7,
+    "missed": -0.8,
+    "missedSe": 0.6,
+    "aiPicked": 63
+   },
+   "note": null
+  },
+  {
+   "id": "C038",
+   "name": "CORRUPTION 1 + FEAR 2 + LOVE 1: 相手の札を奪う",
+   "kind": "burst",
+   "source": "lab",
+   "cards": [
+    "CORRUPTION_2",
+    "FEAR_3",
+    "LOVE_1"
+   ],
+   "protocols": [
+    "CORRUPTION",
+    "FEAR",
+    "LOVE"
+   ],
+   "how": "CORRUPTION 1 の下で FEAR 2 が戻した相手の札は、相手のデッキの一番上に乗る。続けて LOVE 1 (相手のデッキの一番上を引く) でその札を自分の手札にする。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 123,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.2,
+    "interactionSe": 0.5,
+    "partnerValue": 3.2,
+    "partnerValueSe": 0.7,
+    "synergy": 3.4,
+    "synergySe": 0.6,
+    "missed": 0.1,
+    "missedSe": 0.4,
+    "aiPicked": 69
+   },
+   "note": null
+  },
+  {
+   "id": "C039",
+   "name": "WAR 1 + PEACE 4: 相手のリフレッシュで引き直す",
+   "kind": "engine",
+   "source": "lab",
+   "cards": [
+    "WAR_2",
+    "PEACE_4"
+   ],
+   "protocols": [
+    "WAR",
+    "PEACE"
+   ],
+   "how": "WAR 1 の下段「相手がリフレッシュしたあと: 任意の枚数捨ててリフレッシュ」。相手の手番中に捨てるので PEACE 4 の下段で1枚多く引ける。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 123,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.7,
+    "interactionSe": 0.8,
+    "partnerValue": 2.7,
+    "partnerValueSe": 0.8,
+    "synergy": 2.1,
+    "synergySe": 0.6,
+    "missed": -3.7,
+    "missedSe": 0.9,
+    "aiPicked": 30
+   },
+   "note": null
+  },
+  {
+   "id": "C040",
+   "name": "ASSIMILATION 1 + LOVE 2: リフレッシュで相手の山札を引く",
+   "kind": "burst",
+   "source": "lab",
+   "cards": [
+    "ASSIMILATION_2",
+    "LOVE_2"
+   ],
+   "protocols": [
+    "ASSIMILATION",
+    "LOVE"
+   ],
+   "how": "ASSIMILATION 1 の下段「誰かがリフレッシュしたあと: 相手のデッキの一番上を引き、手札1枚を相手の捨て札へ」。LOVE 2 のリフレッシュで起こす。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 123,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.5,
+    "interactionSe": 0.8,
+    "partnerValue": -0.6,
+    "partnerValueSe": 0.7,
+    "synergy": -0.1,
+    "synergySe": 0.5,
+    "missed": -1.4,
+    "missedSe": 1,
+    "aiPicked": 33
+   },
+   "note": null
+  },
+  {
+   "id": "C041",
+   "name": "ASSIMILATION 1 + WAR 1: 相手のリフレッシュで2回奪う",
+   "kind": "engine",
+   "source": "lab",
+   "cards": [
+    "WAR_2",
+    "ASSIMILATION_2"
+   ],
+   "protocols": [
+    "ASSIMILATION",
+    "WAR"
+   ],
+   "how": "相手がリフレッシュすると ASSIMILATION 1 が起き、WAR 1 でこちらもリフレッシュしてもう一度起きる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 123,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.5,
+    "interactionSe": 0.7,
+    "partnerValue": 0.8,
+    "partnerValueSe": 0.6,
+    "synergy": 1.2,
+    "synergySe": 0.4,
+    "missed": -2.1,
+    "missedSe": 1,
+    "aiPicked": 32
+   },
+   "note": null
+  },
+  {
+   "id": "C042",
+   "name": "CORRUPTION 6 + CORRUPTION 2 + PLAGUE 1: 終了のたびに捨てさせて引く",
+   "kind": "engine",
+   "source": "lab",
+   "cards": [
+    "CORRUPTION_6",
+    "PLAGUE_2",
+    "CORRUPTION_3"
+   ],
+   "protocols": [
+    "CORRUPTION",
+    "PLAGUE"
+   ],
+   "how": "CORRUPTION 6 の終了で1枚捨てると、CORRUPTION 2 の上段で相手が1枚捨て、PLAGUE 1 の上段で1枚引く。3枚とも上段なので覆われていても効く。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 123,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 4.2,
+    "interactionSe": 1.1,
+    "partnerValue": 3.5,
+    "partnerValueSe": 0.9,
+    "synergy": 7.7,
+    "synergySe": 1,
+    "missed": 1.6,
+    "missedSe": 0.8,
+    "aiPicked": 56
+   },
+   "note": null
+  },
+  {
    "id": "A001",
    "name": "PLAGUE 1 + PLAGUE 0",
    "kind": "burst",
@@ -6376,6 +6603,71 @@
      "assembled": 37,
      "fired": 7,
      "wins": 36
+    }
+   }
+  },
+  {
+   "id": "M15",
+   "name": "CORRUPTION 6 + CORRUPTION 2 + PLAGUE 1",
+   "kind": "aim",
+   "source": "aimed",
+   "cards": [
+    "CORRUPTION_6",
+    "CORRUPTION_3",
+    "PLAGUE_2"
+   ],
+   "protocols": [
+    "CORRUPTION",
+    "PLAGUE"
+   ],
+   "how": "CORRUPTION 6 の終了で1枚捨てると、CORRUPTION 2 の上段で相手が1枚捨て、PLAGUE 1 の上段で1枚引く。3枚とも上段なので覆われていても効く。3枚揃うのはまれ。",
+   "verdict": "aimed",
+   "verdictLabel": "揃えに行く手筋 (AI に入っている)",
+   "lab": null,
+   "labId": "C042",
+   "aim": {
+    "games": 60,
+    "base": {
+     "assembled": 1,
+     "wins": 27
+    },
+    "now": {
+     "assembled": 3,
+     "wins": 28
+    }
+   }
+  },
+  {
+   "id": "M16",
+   "name": "CORRUPTION 1 + FEAR 2 + LOVE 1",
+   "kind": "aim",
+   "source": "aimed",
+   "cards": [
+    "CORRUPTION_2",
+    "FEAR_3",
+    "LOVE_1"
+   ],
+   "protocols": [
+    "CORRUPTION",
+    "FEAR",
+    "LOVE"
+   ],
+   "how": "CORRUPTION 1 を一番上に置いたまま FEAR 2 で相手の札を戻すと、その札は相手の山札の上に乗る。続けて LOVE 1 で引いて奪う。LOVE 1 を捨てずに持つ。",
+   "verdict": "aimed",
+   "verdictLabel": "揃えに行く手筋 (AI に入っている)",
+   "lab": null,
+   "labId": "C038",
+   "aim": {
+    "games": 60,
+    "base": {
+     "fired": 22,
+     "discarded": 37,
+     "wins": 24
+    },
+    "now": {
+     "fired": 26,
+     "discarded": 23,
+     "wins": 24
     }
    }
   },
