@@ -403,7 +403,9 @@ function syncAvatar() {
   /* オンライン: 相手は相手が着けているキャラ。観戦は手前 (作った人) と奥 (参加した人) が着けているキャラ */
   const roomLooks = roomMode && roomRm && Array.isArray(roomRm.looks) ? roomRm.looks.map(cleanLook) : null;
   const storyTag = !!(storyNode && storyNode.tag);
-  let me = sp ? sp.a : tutorial ? 'zundamon' : storyNode ? (storyTag ? null : storyNode.mate || null)
+  /* ストーリーのタッグで主人公でなく仲間を動かす一戦 (4章の紫苑) は、自分の側の立ち絵をその子 (meAvatar) にする。
+     ほかは主人公 (hero4097、しゃべらない)。タッグでない一戦で付き添いの子がいれば、これまでどおりその子が自分の側に立って話す */
+  let me = sp ? sp.a : tutorial ? 'zundamon' : storyNode ? (storyTag ? storyNode.meAvatar || 'hero4097' : storyNode.mate || 'hero4097')
     : roomWatching && roomLooks ? roomLooks[0].avatar || 'shion' : myAvatarId();
   if (udTag && UD_OPP.includes(me)) me = avatarIds().find(i => !UD_OPP.includes(i) && i !== 'asagi') || me;
   /* ORACLE の相手は紫苑 (本気の4人はその子) で決まり。自分が同じ子なら、自分はほかの子にする */
@@ -428,7 +430,7 @@ function syncAvatar() {
   }
   avatars = {
     me: me ? mountAvatar(me, { side: 'me', avoid: storyAvoid(), lines: storyNode && storyNode.talk ? storyNode.talk.me : undefined }) : null,
-    mate: mate ? mountAvatar(mate, { side: 'me', back: true, avoid: storyAvoid(), lines: storyTag && storyNode.talk ? storyNode.talk.me : undefined }) : null,
+    mate: mate ? mountAvatar(mate, { side: 'me', back: true, avoid: storyAvoid(), lines: storyTag && storyNode.talk ? storyNode.talk.mate || storyNode.talk.me : undefined }) : null,
     opp: tutorial || !oppIds[0] ? null : mountAvatar(oppIds[0], { side: 'opp', voice: settings().oppVoice !== false, avoid: storyAvoid(),
       lines: storyNode && storyNode.talk ? storyNode.talk.opp : undefined }),
     oppIds
@@ -437,7 +439,7 @@ function syncAvatar() {
   /* ストーリーのタッグ: 主人公は話さないので、相棒が挨拶する */
   if (storyTag && avatars.mate) setTimeout(() => { if (avatars && avatars.mate) avatars.mate.react('hello'); }, 3200);
   /* タッグ: 前にいる子が、後ろの相方に声をかける (相方ごとのセリフ。avatar-lines.js の tag_hello_*) */
-  if (avatars.me && avatars.mate) setTimeout(() => avatarTagSay('tag_hello'), 5200);
+  if (avatars.me && avatars.mate && !storyNode) setTimeout(() => avatarTagSay('tag_hello'), 5200);
   /* 自分のキャラも、相手が言い終わるころに挨拶を返す。自分が先攻のときは「私の番」のひとことがすぐ出るので言わない
      (チュートリアルの案内役は別のひとことを言う) */
   if (avatars.me && !tutorial) setTimeout(() => { if (avatars && avatars.me && cur && (cur.state.turns | 0) <= 1 && cur.state.turn !== ME) avatarSay(ME, 'hello'); }, 3200);
@@ -450,7 +452,8 @@ function avatarOf(side, st) {
   if (!avatars) return null;
   if (side !== ME) return avatars.opp;
   const s = st || (cur && cur.state);
-  return avatars.mate && (!avatars.me || (s && s.tag && s.tag.pilot[ME] === 1)) ? avatars.mate : avatars.me;
+  /* 主人公はしゃべらないので、主人公の番も相棒が話す (主人公は avatarSay で表情だけ変える) */
+  return avatars.mate && (!avatars.me || avatars.me.silent || (s && s.tag && s.tag.pilot[ME] === 1)) ? avatars.mate : avatars.me;
 }
 /* 大事な場面 (コンパイル・勝敗など)。話している途中でも捨てずに、言い終わったらすぐ言う */
 const AVATAR_MUST_KINDS = new Set(['compile', 'compiled', 'win', 'lose', 'almost', 'reach', 'hurt', 'crushed', 'hello', 'lesson', 'good', 'retry', 'turn', 'lead', 'sure', 'doomed']);
@@ -490,6 +493,11 @@ function avatarHush(st) {
 function avatarSay(side, kind, vars, st, gapMs, chance, retried) {
   if (Date.now() < avatarHushUntil) return;
   const a = avatarOf(side, st);
+  /* しゃべらない主人公は、自分の番の手に表情だけで応える */
+  if (side === ME && avatars && avatars.me && avatars.me.silent && avatars.me !== a) {
+    const s = st || (cur && cur.state);
+    if (!(s && s.tag && s.tag.pilot[ME] === 1)) avatars.me.react(kind, vars);
+  }
   /* キャラがまだ出ていない (対戦の始まりの最初の番の合図など) ときは、大事なセリフだけ少し待って言い直す */
   if (!a) {
     if (!retried && AVATAR_MUST.has(kind) && cur) setTimeout(() => avatarSay(side, kind, vars, st, gapMs, chance, true), 1500);
@@ -3456,7 +3464,8 @@ function tagPlates(st) {
   const short = shortLevel(aiDifficulty);
   /* ストーリーのタッグは、ほかのストーリーの対戦と同じく難易度でなく STORY と出す */
   showPlates({
-    me: mine ? { name: mateName, sub: storyNode ? 'STORY' : 'PARTNER' + (short ? ' · ' + short : ''), icon: iconOf(ME, 1) } : myPlate(),
+    me: mine ? { name: mateName, sub: storyNode ? 'STORY' : 'PARTNER' + (short ? ' · ' + short : ''), icon: iconOf(ME, 1) }
+      : storyNode && storyNode.meName ? { ...myPlate(), name: storyNode.meName, sub: 'STORY', icon: iconOf(ME, 0) } : myPlate(),
     opp: { name: oppCallName(shownOpp), sub: storyNode ? 'STORY' : 'RIVAL ' + (shownOpp + 1) + (short ? ' · ' + short : ''), icon: iconOf(AI, shownOpp) }
   });
 }
@@ -6890,7 +6899,7 @@ function logParts(msg) {
       /* 観戦: 「あなた」「相手」ではなく2人の名前 */
       seatNames: () => (roomWatching && roomRm && Array.isArray(roomRm.names) ? roomRm.names : null),
       /* タッグ (CPU 戦): 何人目かから、あなた / 味方・相手のキャラの名前 */
-      tagName: (side, k) => (!tagMates || roomMode ? '' : side === 0 ? (k ? avatarName(avatars && avatars.mate && avatars.mate.id) || '味方' : 'あなた') : oppCallName(k))
+      tagName: (side, k) => (!tagMates || roomMode ? '' : side === 0 ? (k ? avatarName(avatars && avatars.mate && avatars.mate.id) || '味方' : (storyNode && storyNode.meName) || 'あなた') : oppCallName(k))
     });
   }
   return logFormat(msg);

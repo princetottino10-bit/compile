@@ -13,9 +13,9 @@ import { LINES, FAVORITE, ACE_CARDS, OWN_LATE } from './avatar-lines.js';
 import { BOSS_LINES } from './avatar-boss-lines.js';
 
 export const FACES = ['normal', 'blink', 'happy', 'fired', 'frustrated', 'surprised'];
-/* 照れ (shy)・しょんぼり (sad)。絵があるのはオリジナルの4人だけ。ほかの子は近い表情で代わりに出す */
+/* 照れ (shy)・しょんぼり (sad)。絵があるのはオリジナルの4人と主人公 (hero4097) だけ。ほかの子は近い表情で代わりに出す */
 export const EXTRA_FACES = ['shy', 'sad'];
-const EXTRA_OWNERS = new Set(['shion', 'nadeshiko', 'asagi', 'yamabuki']);
+const EXTRA_OWNERS = new Set(['shion', 'nadeshiko', 'asagi', 'yamabuki', 'hero4097']);
 const EXTRA_FALLBACK = { shy: 'happy', sad: 'frustrated' };
 export const facesOf = (id) => (EXTRA_OWNERS.has(id) ? FACES.concat(EXTRA_FACES) : FACES);
 /** その子に絵がある表情に直す (無い表情は近いものへ) */
@@ -83,6 +83,15 @@ AVATARS.story_collector = { name: '回収機', color: '#8a93b8', boss: true, sin
 AVATARS.story_clock = { name: '時計', color: '#c9a25a', boss: true, single: true, lines: null };
 /* 3章: 倉庫に残った救助の本部の読み上げ機 (39年前の名簿の順番を読み上げる) */
 AVATARS.story_order = { name: '指令', color: '#ff7a3c', boss: true, single: true, lines: null };
+/* 4章: 駅の改札と、駅の管理機体「聖域」 */
+AVATARS.story_wicket = { name: '改札', color: '#9fb4c8', boss: true, single: true, lines: null };
+/* 4章: ホームで外行きの最終便を待つ名前のない機体 (会話だけ。対戦はしない) */
+AVATARS.story_waiter = { name: 'ホームの機体', color: '#8fa3a8', boss: true, single: true, lines: null };
+AVATARS.story_seiiki = { name: '聖域', color: '#e6f2ff', boss: true, single: true, lines: null };
+/* 終章: 研究所の所長 (最上階の壁一面の古い計算機) */
+AVATARS.story_director = { name: '所長', color: '#d9a85c', boss: true, single: true, lines: null };
+/* ストーリーの主人公 (機体4097、案C)。しゃべらない (silent): 吹き出しは出さず、手に合わせて表情だけ変える */
+AVATARS.hero4097 = { name: '4097', color: '#6ff0ff', boss: true, silent: true, lines: null };
 for (const [id, def] of Object.entries(AVATARS)) { def.lines = LINES[id] || BOSS_LINES[id] || {}; def.fav = FAVORITE[id] || null; }
 
 /* 1本目のコンパイルでだけ言うひとこと (「まずは一つ目」など)。2本目からは選ばない */
@@ -222,6 +231,7 @@ export function mountAvatar(id, opts = {}) {
     /* そのキャラに無い種類 (チュートリアルの案内など) は紫苑のセリフを借りる (声は無し) */
     /* タッグの相方へのひとこと (tag_hello / tag_in): 相方ごとのセリフ (tag_in_asagi など) があればそれを言う。
        無いキャラは言わない (ほかの子のセリフを借りると、相方との関係が合わない) */
+    if (def.silent) { const f = faceOf(kind); if (f) setFace(f, 2400); return; }
     if (opts.lines) return reactStory(kind, vars);
     if (/^tag_/.test(kind)) {
       const mk = vars && vars.mate ? kind + '_' + vars.mate : null;
@@ -318,5 +328,5 @@ export function mountAvatar(id, opts = {}) {
   function destroy() { clearTimeout(faceTimer); clearTimeout(sayTimer); clearTimeout(blinkTimer); clearTimeout(speakTimer); stopVoice(); el.remove(); }
   /** 言い終わるまでの残り (ミリ秒)。0 なら話していない */
   const idleIn = () => Math.max(0, speakEnd - Date.now());
-  return { react, say, setFace, setBack, setVoice, destroy, idleIn, id, el };
+  return { react, say, setFace, setBack, setVoice, destroy, idleIn, id, el, silent: !!def.silent };
 }
