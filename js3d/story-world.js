@@ -16,7 +16,8 @@ import { showTitleBack, hideTitleBack } from './titleback.js';
 import { loadStory, saveStory, blankStory, currentNode, clearNode, startBattle, nodeById, isCleared, chapterCleared, chapterOf, addFound } from './story.js';
 import { accountState } from './account.js';
 import * as M from './story-map.js';
-import { playNode, playScene, askBattle } from './story-ui.js';
+import { playNode, playScene, askBattle, setStoryBgm } from './story-ui.js';
+import { storyBgm } from './bgm.js';
 import { sfx } from './audio.js';
 import { buildScenery } from './story-scenery.js';
 import { buildAquarium } from './story-scenery-aquarium.js';
@@ -64,6 +65,7 @@ export function openWorld(protocols, opts = {}) {
   const warehouse = map.look === 'warehouse';
   const station = map.look === 'station';
   const director = map.look === 'director';
+  setStoryBgm(storyBgm(chapter.id));          // 章の地図の曲 (会話の山場では場面の曲に替わり、終わると戻る)
 
   const root = document.createElement('div');
   root.id = 'storyWorld';

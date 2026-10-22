@@ -85,6 +85,8 @@ AVATARS.story_clock = { name: '時計', color: '#c9a25a', boss: true, single: tr
 AVATARS.story_order = { name: '指令', color: '#ff7a3c', boss: true, single: true, lines: null };
 /* 4章: 駅の改札と、駅の管理機体「聖域」 */
 AVATARS.story_wicket = { name: '改札', color: '#9fb4c8', boss: true, single: true, lines: null };
+/* 4章: ホームで外行きの最終便を待つ名前のない機体 (会話だけ。対戦はしない) */
+AVATARS.story_waiter = { name: 'ホームの機体', color: '#8fa3a8', boss: true, single: true, lines: null };
 AVATARS.story_seiiki = { name: '聖域', color: '#e6f2ff', boss: true, single: true, lines: null };
 /* 終章: 研究所の所長 (最上階の壁一面の古い計算機) */
 AVATARS.story_director = { name: '所長', color: '#d9a85c', boss: true, single: true, lines: null };
