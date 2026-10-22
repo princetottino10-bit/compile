@@ -357,6 +357,37 @@ module.exports = [
     how: 'ICE 1 の中段「このカードを移動できる」。ICE 2 の上に出してすぐ別のラインへ動けば、ICE 2 の中段 (他のカードを1枚移動) がもう一度撃てる。',
     setup: { mine: [{ card: 'ICE_2', at: 'field' }, { card: 'ICE_1', at: 'hand' }] },
     act: { play: 'ICE_1', line: 'onto:ICE_2' }, partner: ['ICE_2']
+  },
+  /* ---------- 噛み合いが確かな組に3枚目を足す (partner = 足した札) ---------- */
+  {
+    id: 'C054', name: 'WAR 0 + LOVE 6 + MIRROR 4: 引かせて消して引く', kind: 'burst', protos: ['WAR', 'LOVE', 'MIRROR'],
+    how: 'LOVE 6 で相手が2枚引くと、WAR 0 で削除、MIRROR 4 (相手が引いたあと: 1枚引く) でこちらも引く。',
+    setup: { mine: [{ card: 'WAR_1', at: 'field' }, { card: 'MIRROR_5', at: 'field' }, { card: 'LOVE_6', at: 'hand' }] },
+    act: { play: 'LOVE_6' }, partner: ['MIRROR_5']
+  },
+  {
+    id: 'C055', name: 'WAR 0 + LOVE 6 + HATE 3: 引かせて消して引く', kind: 'burst', protos: ['WAR', 'LOVE', 'HATE'],
+    how: 'LOVE 6 で相手が引き、WAR 0 で削除、HATE 3 (削除したあと: 1枚引く) で1枚引く。',
+    setup: { mine: [{ card: 'WAR_1', at: 'field' }, { card: 'HATE_4', at: 'field' }, { card: 'LOVE_6', at: 'hand' }] },
+    act: { play: 'LOVE_6' }, partner: ['HATE_4']
+  },
+  {
+    id: 'C056', name: 'WAR 0 + FEAR 1 + HATE 3', kind: 'burst', protos: ['WAR', 'FEAR', 'HATE'],
+    how: 'FEAR 1 の引き直しで WAR 0 の削除が起き、HATE 3 で1枚引く。',
+    setup: { mine: [{ card: 'WAR_1', at: 'field' }, { card: 'HATE_4', at: 'field' }, { card: 'FEAR_2', at: 'hand' }] },
+    act: { play: 'FEAR_2' }, partner: ['HATE_4']
+  },
+  {
+    id: 'C057', name: 'PLAGUE 1 + COURAGE 0 + WAR 3: 捨てさせるたびに裏で出す', kind: 'engine', protos: ['PLAGUE', 'COURAGE', 'WAR'],
+    how: 'COURAGE 0 の終了で相手に捨てさせると、PLAGUE 1 で1枚引き、WAR 3 の下段で裏向きを1枚出せる。',
+    setup: { mine: [{ card: 'PLAGUE_2', at: 'field' }, { card: 'COURAGE_1', at: 'field' }, { card: 'WAR_4', at: 'hand' }] },
+    act: { play: 'WAR_4' }, partner: ['COURAGE_1']
+  },
+  {
+    id: 'C058', name: 'CORRUPTION 6 + CORRUPTION 2 + WAR 3: 終了のたびに捨てさせて裏で出す', kind: 'engine', protos: ['CORRUPTION', 'WAR'],
+    how: 'CORRUPTION 6 の終了で捨てると CORRUPTION 2 で相手も捨て、WAR 3 の下段で裏向きを1枚出せる。',
+    setup: { mine: [{ card: 'CORRUPTION_6', at: 'field' }, { card: 'CORRUPTION_3', at: 'field' }, { card: 'WAR_4', at: 'hand' }] },
+    act: { play: 'WAR_4' }, partner: ['CORRUPTION_6']
   }
 ];
 

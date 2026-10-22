@@ -433,18 +433,18 @@
    "verdict": "strong",
    "verdictLabel": "噛み合う",
    "lab": {
-    "n": 153,
-    "horizon": 3,
+    "n": 152,
+    "horizon": 2,
     "playout": false,
-    "interaction": 3.7,
+    "interaction": 3.9,
     "interactionSe": 1.1,
-    "partnerValue": 10.2,
-    "partnerValueSe": 1.3,
-    "synergy": 13.9,
-    "synergySe": 1.3,
+    "partnerValue": 9.6,
+    "partnerValueSe": 1.1,
+    "synergy": 13.5,
+    "synergySe": 1.2,
     "missed": 0.7,
-    "missedSe": 0.6,
-    "aiPicked": 72
+    "missedSe": 0.7,
+    "aiPicked": 74
    },
    "note": "決着まで打った勝ち負けでも、その手で相方あり−白紙 = 勝率 +11.0 ±3.8pt (292盤面)。"
   },
@@ -1697,6 +1697,175 @@
     "missed": -2.8,
     "missedSe": 0.8,
     "aiPicked": 31
+   },
+   "note": null
+  },
+  {
+   "id": "C054",
+   "name": "WAR 0 + LOVE 6 + MIRROR 4: 引かせて消して引く",
+   "kind": "burst",
+   "source": "lab",
+   "cards": [
+    "WAR_1",
+    "MIRROR_5",
+    "LOVE_6"
+   ],
+   "protocols": [
+    "WAR",
+    "LOVE",
+    "MIRROR"
+   ],
+   "how": "LOVE 6 で相手が2枚引くと、WAR 0 で削除、MIRROR 4 (相手が引いたあと: 1枚引く) でこちらも引く。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 153,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.5,
+    "interactionSe": 0.5,
+    "partnerValue": 1.2,
+    "partnerValueSe": 0.7,
+    "synergy": 1.6,
+    "synergySe": 0.7,
+    "missed": 1.5,
+    "missedSe": 0.6,
+    "aiPicked": 78
+   },
+   "note": null
+  },
+  {
+   "id": "C055",
+   "name": "WAR 0 + LOVE 6 + HATE 3: 引かせて消して引く",
+   "kind": "burst",
+   "source": "lab",
+   "cards": [
+    "WAR_1",
+    "HATE_4",
+    "LOVE_6"
+   ],
+   "protocols": [
+    "WAR",
+    "LOVE",
+    "HATE"
+   ],
+   "how": "LOVE 6 で相手が引き、WAR 0 で削除、HATE 3 (削除したあと: 1枚引く) で1枚引く。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 153,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.4,
+    "interactionSe": 0.5,
+    "partnerValue": 2.8,
+    "partnerValueSe": 0.6,
+    "synergy": 3.2,
+    "synergySe": 0.6,
+    "missed": 1.5,
+    "missedSe": 0.7,
+    "aiPicked": 68
+   },
+   "note": null
+  },
+  {
+   "id": "C056",
+   "name": "WAR 0 + FEAR 1 + HATE 3",
+   "kind": "burst",
+   "source": "lab",
+   "cards": [
+    "WAR_1",
+    "HATE_4",
+    "FEAR_2"
+   ],
+   "protocols": [
+    "WAR",
+    "FEAR",
+    "HATE"
+   ],
+   "how": "FEAR 1 の引き直しで WAR 0 の削除が起き、HATE 3 で1枚引く。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 153,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.7,
+    "interactionSe": 0.6,
+    "partnerValue": 0.6,
+    "partnerValueSe": 0.5,
+    "synergy": 1.4,
+    "synergySe": 0.4,
+    "missed": 1.5,
+    "missedSe": 0.7,
+    "aiPicked": 34
+   },
+   "note": null
+  },
+  {
+   "id": "C057",
+   "name": "PLAGUE 1 + COURAGE 0 + WAR 3: 捨てさせるたびに裏で出す",
+   "kind": "engine",
+   "source": "lab",
+   "cards": [
+    "PLAGUE_2",
+    "COURAGE_1",
+    "WAR_4"
+   ],
+   "protocols": [
+    "PLAGUE",
+    "COURAGE",
+    "WAR"
+   ],
+   "how": "COURAGE 0 の終了で相手に捨てさせると、PLAGUE 1 で1枚引き、WAR 3 の下段で裏向きを1枚出せる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 153,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.3,
+    "interactionSe": 0.5,
+    "partnerValue": 3.9,
+    "partnerValueSe": 0.9,
+    "synergy": 5.2,
+    "synergySe": 0.9,
+    "missed": 0.7,
+    "missedSe": 0.4,
+    "aiPicked": 84
+   },
+   "note": null
+  },
+  {
+   "id": "C058",
+   "name": "CORRUPTION 6 + CORRUPTION 2 + WAR 3: 終了のたびに捨てさせて裏で出す",
+   "kind": "engine",
+   "source": "lab",
+   "cards": [
+    "CORRUPTION_6",
+    "CORRUPTION_3",
+    "WAR_4"
+   ],
+   "protocols": [
+    "CORRUPTION",
+    "WAR"
+   ],
+   "how": "CORRUPTION 6 の終了で捨てると CORRUPTION 2 で相手も捨て、WAR 3 の下段で裏向きを1枚出せる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 152,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1,
+    "interactionSe": 1.1,
+    "partnerValue": 2.7,
+    "partnerValueSe": 1,
+    "synergy": 1.7,
+    "synergySe": 1,
+    "missed": 0.7,
+    "missedSe": 0.8,
+    "aiPicked": 51
    },
    "note": null
   },
@@ -5613,17 +5782,17 @@
    "verdictLabel": "噛み合う",
    "lab": {
     "n": 153,
-    "horizon": 3,
+    "horizon": 2,
     "playout": false,
-    "interaction": 3.2,
-    "interactionSe": 1.1,
-    "partnerValue": 11.1,
-    "partnerValueSe": 1.3,
-    "synergy": 14.2,
-    "synergySe": 1.3,
-    "missed": -0.9,
-    "missedSe": 0.6,
-    "aiPicked": 78
+    "interaction": 4.4,
+    "interactionSe": 0.9,
+    "partnerValue": 9.3,
+    "partnerValueSe": 0.8,
+    "synergy": 13.7,
+    "synergySe": 1,
+    "missed": 1.5,
+    "missedSe": 0.5,
+    "aiPicked": 68
    },
    "note": null
   },
@@ -5708,17 +5877,17 @@
    "verdictLabel": "噛み合う",
    "lab": {
     "n": 153,
-    "horizon": 3,
+    "horizon": 2,
     "playout": false,
-    "interaction": 2.6,
-    "interactionSe": 1,
-    "partnerValue": 12.1,
-    "partnerValueSe": 1.1,
-    "synergy": 14.7,
-    "synergySe": 1.1,
-    "missed": 0.4,
+    "interaction": 2.2,
+    "interactionSe": 0.9,
+    "partnerValue": 11.1,
+    "partnerValueSe": 1,
+    "synergy": 13.3,
+    "synergySe": 1,
+    "missed": -0.5,
     "missedSe": 0.7,
-    "aiPicked": 75
+    "aiPicked": 72
    },
    "note": null
   },
@@ -6024,21 +6193,21 @@
     "FEAR"
    ],
    "how": "WAR 3 (相手が手札を捨て札にしたあと：あなたはカードを裏向きで1枚プレイすることができる) を場に置き、FEAR 1 (カードを2枚引く。相手は自身の手札をすべて捨て札にして、捨て札にした枚数-1枚のカードを引く) を出す。出した手番に1回起きる。",
-   "verdict": "strong",
-   "verdictLabel": "噛み合う",
+   "verdict": "weak",
+   "verdictLabel": "相方が強い (噛み合いは小さい)",
    "lab": {
-    "n": 153,
+    "n": 152,
     "horizon": 2,
     "playout": false,
-    "interaction": 3.4,
-    "interactionSe": 0.9,
-    "partnerValue": 6.8,
+    "interaction": 1.4,
+    "interactionSe": 0.7,
+    "partnerValue": 8,
     "partnerValueSe": 0.8,
-    "synergy": 10.2,
+    "synergy": 9.4,
     "synergySe": 0.8,
-    "missed": 1.8,
-    "missedSe": 0.7,
-    "aiPicked": 44
+    "missed": -0.2,
+    "missedSe": 0.3,
+    "aiPicked": 80
    },
    "note": null
   },

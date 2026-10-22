@@ -3507,9 +3507,11 @@ function aiAimScore(st, side, W) {
       for (const [d, need] of Object.entries(cb.extra || {})) if (aiAimLive(need, aiAimPlace(st, side, 'p' + side + ':' + d))) sc += W.aimExtra || 0;
       continue;
     }
+    /* 出した瞬間に撃つ札は、表で場に出したあとも手札と同じに数える (撃つと加点が減って、持ち続ける方が得に見えてしまうため) */
+    const held = ids.map((d, i) => at[i] === 'hand' || (cb.pieces[d] === 'play' && (at[i] === 'top' || at[i] === 'covUp')));
     const rest = ids.filter((d, i) => !(cb.pieces[d] !== 'play' && aiAimNear(cb.pieces[d], at[i])));
-    if (ids.some((d, i) => cb.pieces[d] !== 'play' && aiAimNear(cb.pieces[d], at[i])) && rest.every(d => at[ids.indexOf(d)] === 'hand')) sc += W.aimHalf || 0;
-    for (let i = 0; i < ids.length; i++) if (at[i] === 'hand' && at.some((w, j) => j !== i && w !== 'down')) sc += W.aimHold || 0;
+    if (ids.some((d, i) => cb.pieces[d] !== 'play' && aiAimNear(cb.pieces[d], at[i])) && rest.every(d => held[ids.indexOf(d)])) sc += W.aimHalf || 0;
+    for (let i = 0; i < ids.length; i++) if (held[i] && at.some((w, j) => j !== i && w !== 'down')) sc += W.aimHold || 0;
   }
   return sc;
 }

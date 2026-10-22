@@ -804,3 +804,15 @@ test('つよい以上: SPEED 2 を捨てず、表で場に置いてコンパイ�
   trash(drop, 'SPEED_3', 0);
   assert.ok(Engine.ai.score(hold, 0) > Engine.ai.score(drop, 0), 'SPEED 2 を手札に残す');
 }));
+test('つよい以上: WAR 0 が場で効くとき、LOVE 6 を撃っても揃えに行く加点は減らない (持ち続ける方が得に見えない)', () => withDsh(() => {
+  Engine.setAiLevel(2);
+  const WL = ['WAR', 'LOVE', 'HATE'];
+  const hold = game(WL, ['METAL', 'LIGHT', 'LIFE']);
+  place(hold, 'WAR_1', 0, 0, true);
+  setHand(hold, 0, ['LOVE_6', 'HATE_2']);
+  const fired = game(WL, ['METAL', 'LIGHT', 'LIFE']);
+  place(fired, 'WAR_1', 0, 0, true);
+  place(fired, 'LOVE_6', 0, 1, true);
+  setHand(fired, 0, ['HATE_2']);
+  assert.ok(Engine.ai.score(fired, 0) > Engine.ai.score(hold, 0) - 60, '撃ったあとの形を大きく下に見ない');
+}));
