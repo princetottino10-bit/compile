@@ -10966,6 +10966,774 @@
    "note": null
   },
   {
+   "id": "U001",
+   "name": "SPIRIT 3 (覆われて動く) → LIFE 3 (覆われると効く)",
+   "kind": "engine",
+   "source": "upper",
+   "cards": [
+    "SPIRIT_4",
+    "LIFE_4"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "LIFE"
+   ],
+   "how": "SPIRIT 3 (あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) は覆われていても動ける。LIFE 3 (このカードが覆われることになったとき：先にあなたのデッキの一番上のカードを他の1ラインに裏向きで1枚プレイする。) の上へ動けば、覆われたときの下段が起きる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0,
+    "interactionSe": 2,
+    "partnerValue": 3.7,
+    "partnerValueSe": 2,
+    "synergy": 3.7,
+    "synergySe": 1.9,
+    "missed": -1,
+    "missedSe": 2.2,
+    "aiPicked": 6
+   },
+   "note": null
+  },
+  {
+   "id": "U002",
+   "name": "SPIRIT 3 (覆われて動く) → HATE 4 (覆われると効く)",
+   "kind": "engine",
+   "source": "upper",
+   "cards": [
+    "SPIRIT_4",
+    "HATE_5"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "HATE"
+   ],
+   "how": "SPIRIT 3 (あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) は覆われていても動ける。HATE 4 (このカードが覆われることになったとき：先に、このラインにある値が最も小さく覆われているカードを１枚削除する。) の上へ動けば、覆われたときの下段が起きる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.3,
+    "interactionSe": 1.3,
+    "partnerValue": 2.6,
+    "partnerValueSe": 1.4,
+    "synergy": 2.3,
+    "synergySe": 1,
+    "missed": -0.4,
+    "missedSe": 1.5,
+    "aiPicked": 21
+   },
+   "note": null
+  },
+  {
+   "id": "U003",
+   "name": "SPIRIT 3 (覆われて動く) → APATHY 2 (覆われると効く)",
+   "kind": "engine",
+   "source": "upper",
+   "cards": [
+    "SPIRIT_4",
+    "APATHY_3"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "APATHY"
+   ],
+   "how": "SPIRIT 3 (あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) は覆われていても動ける。APATHY 2 (このラインにあるカードのすべての中段コマンドを無視する。 / このカードが覆われることになったとき：先に、このカードを反転させる。) の上へ動けば、覆われたときの下段が起きる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -3.3,
+    "interactionSe": 1.9,
+    "partnerValue": 4.5,
+    "partnerValueSe": 1.5,
+    "synergy": 1.2,
+    "synergySe": 1,
+    "missed": -4.7,
+    "missedSe": 2.2,
+    "aiPicked": 8
+   },
+   "note": null
+  },
+  {
+   "id": "U004",
+   "name": "TIME 2 (覆われて動く) → FIRE 0 (覆われると効く)",
+   "kind": "engine",
+   "source": "upper",
+   "cards": [
+    "TIME_3",
+    "FIRE_1"
+   ],
+   "protocols": [
+    "TIME",
+    "FIRE"
+   ],
+   "how": "TIME 2 (あなたがデッキをシャッフルしたあと：カードを1枚引き、このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。 / あなたの捨て札置き場にカードがある場合、あなたは捨て札置き場にあるすべてのカードをデッキに戻してシャッフルすることができる。) は覆われていても動ける。FIRE 0 (他のカードを1枚反転させる。カードを2枚引く。 / このカードが覆われることになったとき：先にカードを1枚引き、他のカードを1枚反転させる。) の上へ動けば、覆われたときの下段が起きる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 151,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.7,
+    "interactionSe": 1,
+    "partnerValue": 0.4,
+    "partnerValueSe": 0.7,
+    "synergy": 1.1,
+    "synergySe": 0.7,
+    "missed": 1.1,
+    "missedSe": 0.9,
+    "aiPicked": 45
+   },
+   "note": null
+  },
+  {
+   "id": "U005",
+   "name": "TIME 2 (覆われて動く) → LIFE 3 (覆われると効く)",
+   "kind": "engine",
+   "source": "upper",
+   "cards": [
+    "TIME_3",
+    "LIFE_4"
+   ],
+   "protocols": [
+    "TIME",
+    "LIFE"
+   ],
+   "how": "TIME 2 (あなたがデッキをシャッフルしたあと：カードを1枚引き、このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。 / あなたの捨て札置き場にカードがある場合、あなたは捨て札置き場にあるすべてのカードをデッキに戻してシャッフルすることができる。) は覆われていても動ける。LIFE 3 (このカードが覆われることになったとき：先にあなたのデッキの一番上のカードを他の1ラインに裏向きで1枚プレイする。) の上へ動けば、覆われたときの下段が起きる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.4,
+    "interactionSe": 1.5,
+    "partnerValue": 0.1,
+    "partnerValueSe": 1.2,
+    "synergy": 0.5,
+    "synergySe": 1.2,
+    "missed": -1.7,
+    "missedSe": 1.5,
+    "aiPicked": 5
+   },
+   "note": null
+  },
+  {
+   "id": "U006",
+   "name": "TIME 2 (覆われて動く) → HATE 4 (覆われると効く)",
+   "kind": "engine",
+   "source": "upper",
+   "cards": [
+    "TIME_3",
+    "HATE_5"
+   ],
+   "protocols": [
+    "TIME",
+    "HATE"
+   ],
+   "how": "TIME 2 (あなたがデッキをシャッフルしたあと：カードを1枚引き、このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。 / あなたの捨て札置き場にカードがある場合、あなたは捨て札置き場にあるすべてのカードをデッキに戻してシャッフルすることができる。) は覆われていても動ける。HATE 4 (このカードが覆われることになったとき：先に、このラインにある値が最も小さく覆われているカードを１枚削除する。) の上へ動けば、覆われたときの下段が起きる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1,
+    "interactionSe": 1.5,
+    "partnerValue": 0,
+    "partnerValueSe": 1.2,
+    "synergy": 0.9,
+    "synergySe": 0.9,
+    "missed": -1.1,
+    "missedSe": 1.6,
+    "aiPicked": 37
+   },
+   "note": null
+  },
+  {
+   "id": "U007",
+   "name": "TIME 2 (覆われて動く) → CLARITY 1 (覆われると効く)",
+   "kind": "engine",
+   "source": "upper",
+   "cards": [
+    "TIME_3",
+    "CLARITY_2"
+   ],
+   "protocols": [
+    "TIME",
+    "CLARITY"
+   ],
+   "how": "TIME 2 (あなたがデッキをシャッフルしたあと：カードを1枚引き、このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。 / あなたの捨て札置き場にカードがある場合、あなたは捨て札置き場にあるすべてのカードをデッキに戻してシャッフルすることができる。) は覆われていても動ける。CLARITY 1 (開始：あなたのデッキの一番上のカードを公開する。そのカードを捨て札にすることができる。 / 相手は自身の手札をすべて公開する。 / このカードが覆われることになったとき：先にカードを3枚引く。) の上へ動けば、覆われたときの下段が起きる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 61,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -2.4,
+    "interactionSe": 1.9,
+    "partnerValue": 2.7,
+    "partnerValueSe": 1.7,
+    "synergy": 0.3,
+    "synergySe": 1,
+    "missed": -6,
+    "missedSe": 1.9,
+    "aiPicked": 5
+   },
+   "note": null
+  },
+  {
+   "id": "U008",
+   "name": "TIME 2 (覆われて動く) → APATHY 2 (覆われると効く)",
+   "kind": "engine",
+   "source": "upper",
+   "cards": [
+    "TIME_3",
+    "APATHY_3"
+   ],
+   "protocols": [
+    "TIME",
+    "APATHY"
+   ],
+   "how": "TIME 2 (あなたがデッキをシャッフルしたあと：カードを1枚引き、このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。 / あなたの捨て札置き場にカードがある場合、あなたは捨て札置き場にあるすべてのカードをデッキに戻してシャッフルすることができる。) は覆われていても動ける。APATHY 2 (このラインにあるカードのすべての中段コマンドを無視する。 / このカードが覆われることになったとき：先に、このカードを反転させる。) の上へ動けば、覆われたときの下段が起きる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.5,
+    "interactionSe": 1.4,
+    "partnerValue": 1.8,
+    "partnerValueSe": 1.3,
+    "synergy": 0.3,
+    "synergySe": 0.9,
+    "missed": -5.5,
+    "missedSe": 2.1,
+    "aiPicked": 10
+   },
+   "note": null
+  },
+  {
+   "id": "U009",
+   "name": "ICE 3 (覆われて動く) → FIRE 0 (覆われると効く)",
+   "kind": "engine",
+   "source": "upper",
+   "cards": [
+    "ICE_3",
+    "FIRE_1"
+   ],
+   "protocols": [
+    "ICE",
+    "FIRE"
+   ],
+   "how": "ICE 3 (終了：このカードが覆われている場合、このカードを移動させることができる。) は覆われていても動ける。FIRE 0 (他のカードを1枚反転させる。カードを2枚引く。 / このカードが覆われることになったとき：先にカードを1枚引き、他のカードを1枚反転させる。) の上へ動けば、覆われたときの下段が起きる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 150,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.6,
+    "interactionSe": 1.2,
+    "partnerValue": 2.6,
+    "partnerValueSe": 1.1,
+    "synergy": 4.2,
+    "synergySe": 1,
+    "missed": 1,
+    "missedSe": 1,
+    "aiPicked": 40
+   },
+   "note": null
+  },
+  {
+   "id": "U010",
+   "name": "ICE 3 (覆われて動く) → LIFE 3 (覆われると効く)",
+   "kind": "engine",
+   "source": "upper",
+   "cards": [
+    "ICE_3",
+    "LIFE_4"
+   ],
+   "protocols": [
+    "ICE",
+    "LIFE"
+   ],
+   "how": "ICE 3 (終了：このカードが覆われている場合、このカードを移動させることができる。) は覆われていても動ける。LIFE 3 (このカードが覆われることになったとき：先にあなたのデッキの一番上のカードを他の1ラインに裏向きで1枚プレイする。) の上へ動けば、覆われたときの下段が起きる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.6,
+    "interactionSe": 2.5,
+    "partnerValue": 4,
+    "partnerValueSe": 1.9,
+    "synergy": 4.6,
+    "synergySe": 2.1,
+    "missed": -2.6,
+    "missedSe": 2.1,
+    "aiPicked": 23
+   },
+   "note": null
+  },
+  {
+   "id": "U011",
+   "name": "ICE 3 (覆われて動く) → HATE 4 (覆われると効く)",
+   "kind": "engine",
+   "source": "upper",
+   "cards": [
+    "ICE_3",
+    "HATE_5"
+   ],
+   "protocols": [
+    "ICE",
+    "HATE"
+   ],
+   "how": "ICE 3 (終了：このカードが覆われている場合、このカードを移動させることができる。) は覆われていても動ける。HATE 4 (このカードが覆われることになったとき：先に、このラインにある値が最も小さく覆われているカードを１枚削除する。) の上へ動けば、覆われたときの下段が起きる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1,
+    "interactionSe": 2.2,
+    "partnerValue": 4.5,
+    "partnerValueSe": 1.4,
+    "synergy": 5.5,
+    "synergySe": 2,
+    "missed": -2.7,
+    "missedSe": 1.7,
+    "aiPicked": 19
+   },
+   "note": null
+  },
+  {
+   "id": "U012",
+   "name": "ICE 3 (覆われて動く) → CLARITY 1 (覆われると効く)",
+   "kind": "engine",
+   "source": "upper",
+   "cards": [
+    "ICE_3",
+    "CLARITY_2"
+   ],
+   "protocols": [
+    "ICE",
+    "CLARITY"
+   ],
+   "how": "ICE 3 (終了：このカードが覆われている場合、このカードを移動させることができる。) は覆われていても動ける。CLARITY 1 (開始：あなたのデッキの一番上のカードを公開する。そのカードを捨て札にすることができる。 / 相手は自身の手札をすべて公開する。 / このカードが覆われることになったとき：先にカードを3枚引く。) の上へ動けば、覆われたときの下段が起きる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -2.3,
+    "interactionSe": 2.8,
+    "partnerValue": 7.2,
+    "partnerValueSe": 2.6,
+    "synergy": 4.9,
+    "synergySe": 2.4,
+    "missed": -5,
+    "missedSe": 2,
+    "aiPicked": 13
+   },
+   "note": null
+  },
+  {
+   "id": "U013",
+   "name": "ICE 3 (覆われて動く) → APATHY 2 (覆われると効く)",
+   "kind": "engine",
+   "source": "upper",
+   "cards": [
+    "ICE_3",
+    "APATHY_3"
+   ],
+   "protocols": [
+    "ICE",
+    "APATHY"
+   ],
+   "how": "ICE 3 (終了：このカードが覆われている場合、このカードを移動させることができる。) は覆われていても動ける。APATHY 2 (このラインにあるカードのすべての中段コマンドを無視する。 / このカードが覆われることになったとき：先に、このカードを反転させる。) の上へ動けば、覆われたときの下段が起きる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1,
+    "interactionSe": 2.5,
+    "partnerValue": 4.3,
+    "partnerValueSe": 2.3,
+    "synergy": 5.3,
+    "synergySe": 2,
+    "missed": -2.5,
+    "missedSe": 1.7,
+    "aiPicked": 11
+   },
+   "note": null
+  },
+  {
+   "id": "U014",
+   "name": "UNITY 1 (覆われて動く) → FIRE 0 (覆われると効く)",
+   "kind": "engine",
+   "source": "upper",
+   "cards": [
+    "UNITY_2",
+    "FIRE_1"
+   ],
+   "protocols": [
+    "UNITY",
+    "FIRE"
+   ],
+   "how": "UNITY 1 (開始：このカードが覆われている場合、あなたはこのカードを移動させることができる。 / フィールド「UNITY」カードが5枚以上ある場合、「UNITY」プロトコルカードのコンパイル完了面を表向きにし、そのラインにあるすべてのカードを削除する。 / このラインには「UNITY」カードを表向きでプレイすることができる。) は覆われていても動ける。FIRE 0 (他のカードを1枚反転させる。カードを2枚引く。 / このカードが覆われることになったとき：先にカードを1枚引き、他のカードを1枚反転させる。) の上へ動けば、覆われたときの下段が起きる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.6,
+    "interactionSe": 1.4,
+    "partnerValue": 1.8,
+    "partnerValueSe": 0.9,
+    "synergy": 1.2,
+    "synergySe": 1.1,
+    "missed": 0.2,
+    "missedSe": 1.6,
+    "aiPicked": 44
+   },
+   "note": null
+  },
+  {
+   "id": "U015",
+   "name": "UNITY 1 (覆われて動く) → LIFE 3 (覆われると効く)",
+   "kind": "engine",
+   "source": "upper",
+   "cards": [
+    "UNITY_2",
+    "LIFE_4"
+   ],
+   "protocols": [
+    "UNITY",
+    "LIFE"
+   ],
+   "how": "UNITY 1 (開始：このカードが覆われている場合、あなたはこのカードを移動させることができる。 / フィールド「UNITY」カードが5枚以上ある場合、「UNITY」プロトコルカードのコンパイル完了面を表向きにし、そのラインにあるすべてのカードを削除する。 / このラインには「UNITY」カードを表向きでプレイすることができる。) は覆われていても動ける。LIFE 3 (このカードが覆われることになったとき：先にあなたのデッキの一番上のカードを他の1ラインに裏向きで1枚プレイする。) の上へ動けば、覆われたときの下段が起きる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 61,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.9,
+    "interactionSe": 1.9,
+    "partnerValue": 5.7,
+    "partnerValueSe": 1.5,
+    "synergy": 6.5,
+    "synergySe": 1.2,
+    "missed": -4.8,
+    "missedSe": 2.8,
+    "aiPicked": 11
+   },
+   "note": null
+  },
+  {
+   "id": "U016",
+   "name": "UNITY 1 (覆われて動く) → HATE 4 (覆われると効く)",
+   "kind": "engine",
+   "source": "upper",
+   "cards": [
+    "UNITY_2",
+    "HATE_5"
+   ],
+   "protocols": [
+    "UNITY",
+    "HATE"
+   ],
+   "how": "UNITY 1 (開始：このカードが覆われている場合、あなたはこのカードを移動させることができる。 / フィールド「UNITY」カードが5枚以上ある場合、「UNITY」プロトコルカードのコンパイル完了面を表向きにし、そのラインにあるすべてのカードを削除する。 / このラインには「UNITY」カードを表向きでプレイすることができる。) は覆われていても動ける。HATE 4 (このカードが覆われることになったとき：先に、このラインにある値が最も小さく覆われているカードを１枚削除する。) の上へ動けば、覆われたときの下段が起きる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.3,
+    "interactionSe": 1.4,
+    "partnerValue": 1.5,
+    "partnerValueSe": 0.9,
+    "synergy": 2.9,
+    "synergySe": 1.3,
+    "missed": -2.3,
+    "missedSe": 1.5,
+    "aiPicked": 23
+   },
+   "note": null
+  },
+  {
+   "id": "U017",
+   "name": "UNITY 1 (覆われて動く) → CLARITY 1 (覆われると効く)",
+   "kind": "engine",
+   "source": "upper",
+   "cards": [
+    "UNITY_2",
+    "CLARITY_2"
+   ],
+   "protocols": [
+    "UNITY",
+    "CLARITY"
+   ],
+   "how": "UNITY 1 (開始：このカードが覆われている場合、あなたはこのカードを移動させることができる。 / フィールド「UNITY」カードが5枚以上ある場合、「UNITY」プロトコルカードのコンパイル完了面を表向きにし、そのラインにあるすべてのカードを削除する。 / このラインには「UNITY」カードを表向きでプレイすることができる。) は覆われていても動ける。CLARITY 1 (開始：あなたのデッキの一番上のカードを公開する。そのカードを捨て札にすることができる。 / 相手は自身の手札をすべて公開する。 / このカードが覆われることになったとき：先にカードを3枚引く。) の上へ動けば、覆われたときの下段が起きる。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 153,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 4.7,
+    "interactionSe": 1.7,
+    "partnerValue": 4,
+    "partnerValueSe": 1.1,
+    "synergy": 8.7,
+    "synergySe": 1.2,
+    "missed": -1.2,
+    "missedSe": 1.5,
+    "aiPicked": 3
+   },
+   "note": null
+  },
+  {
+   "id": "U018",
+   "name": "UNITY 1 (覆われて動く) → APATHY 2 (覆われると効く)",
+   "kind": "engine",
+   "source": "upper",
+   "cards": [
+    "UNITY_2",
+    "APATHY_3"
+   ],
+   "protocols": [
+    "UNITY",
+    "APATHY"
+   ],
+   "how": "UNITY 1 (開始：このカードが覆われている場合、あなたはこのカードを移動させることができる。 / フィールド「UNITY」カードが5枚以上ある場合、「UNITY」プロトコルカードのコンパイル完了面を表向きにし、そのラインにあるすべてのカードを削除する。 / このラインには「UNITY」カードを表向きでプレイすることができる。) は覆われていても動ける。APATHY 2 (このラインにあるカードのすべての中段コマンドを無視する。 / このカードが覆われることになったとき：先に、このカードを反転させる。) の上へ動けば、覆われたときの下段が起きる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.7,
+    "interactionSe": 2.5,
+    "partnerValue": 7.8,
+    "partnerValueSe": 2.2,
+    "synergy": 6.1,
+    "synergySe": 1.4,
+    "missed": -5.1,
+    "missedSe": 2.3,
+    "aiPicked": 10
+   },
+   "note": null
+  },
+  {
+   "id": "U019",
+   "name": "MIRROR 0 (上段) + ASSIMILATION 6",
+   "kind": "engine",
+   "source": "upper",
+   "cards": [
+    "MIRROR_1",
+    "ASSIMILATION_6"
+   ],
+   "protocols": [
+    "MIRROR",
+    "ASSIMILATION"
+   ],
+   "how": "MIRROR 0 (このラインのあなたの合計値は、このラインにある相手のカード1枚ごとに1増える。)。終了時に相手側のスタックへ裏向きを置くので、MIRROR 0 のラインに置けば相手の札が増えて +1 ずつ。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.1,
+    "interactionSe": 1.8,
+    "partnerValue": 5.8,
+    "partnerValueSe": 1.7,
+    "synergy": 5.7,
+    "synergySe": 1.9,
+    "missed": -4.8,
+    "missedSe": 2.2,
+    "aiPicked": 52
+   },
+   "note": null
+  },
+  {
+   "id": "U020",
+   "name": "DIVERSITY 3 (上段) + CHAOS 3",
+   "kind": "engine",
+   "source": "upper",
+   "cards": [
+    "DIVERSITY_3",
+    "CHAOS_4"
+   ],
+   "protocols": [
+    "DIVERSITY",
+    "CHAOS"
+   ],
+   "how": "DIVERSITY 3 (このスタックに「DIVERSITY」以外の表向きのカードがある場合、このラインのあなたの合計値は2増える。)。CHAOS 3 は対応なしで出せるので、DIVERSITY 3 のスタックに別のプロトコルの表向きを置ける (+2)。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.3,
+    "interactionSe": 1.9,
+    "partnerValue": 5.3,
+    "partnerValueSe": 2,
+    "synergy": 4,
+    "synergySe": 1.8,
+    "missed": -6.9,
+    "missedSe": 2.1,
+    "aiPicked": 27
+   },
+   "note": null
+  },
+  {
+   "id": "U021",
+   "name": "FEAR 0 (上段) + DEATH 0",
+   "kind": "engine",
+   "source": "upper",
+   "cards": [
+    "FEAR_1",
+    "DEATH_1"
+   ],
+   "protocols": [
+    "FEAR",
+    "DEATH"
+   ],
+   "how": "FEAR 0 (あなたの手番中、相手のカードの中段コマンドはないものとして扱う。 / カードを1枚移動させるか反転させる。)。DEATH 0 で一番上を消すと相手の下の札が現れるが、FEAR 0 の上段で自分の手番中は相手の中段が起きない。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.9,
+    "interactionSe": 1,
+    "partnerValue": 1.9,
+    "partnerValueSe": 1,
+    "synergy": 1,
+    "synergySe": 0.6,
+    "missed": -7.8,
+    "missedSe": 2,
+    "aiPicked": 35
+   },
+   "note": null
+  },
+  {
+   "id": "U022",
+   "name": "FEAR 0 (上段) + HATE 2",
+   "kind": "engine",
+   "source": "upper",
+   "cards": [
+    "FEAR_1",
+    "HATE_3"
+   ],
+   "protocols": [
+    "FEAR",
+    "HATE"
+   ],
+   "how": "FEAR 0 (あなたの手番中、相手のカードの中段コマンドはないものとして扱う。 / カードを1枚移動させるか反転させる。)。HATE 2 で相手の一番上を消しても、FEAR 0 の上段で現れた札の中段が起きない。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.7,
+    "interactionSe": 0.9,
+    "partnerValue": 0.2,
+    "partnerValueSe": 0.8,
+    "synergy": 0.9,
+    "synergySe": 0.5,
+    "missed": -8.8,
+    "missedSe": 1.5,
+    "aiPicked": 16
+   },
+   "note": null
+  },
+  {
+   "id": "U023",
+   "name": "FEAR 0 (上段) + HATE 0",
+   "kind": "engine",
+   "source": "upper",
+   "cards": [
+    "FEAR_1",
+    "HATE_1"
+   ],
+   "protocols": [
+    "FEAR",
+    "HATE"
+   ],
+   "how": "FEAR 0 (あなたの手番中、相手のカードの中段コマンドはないものとして扱う。 / カードを1枚移動させるか反転させる。)。HATE 0 で相手の一番上を消しても、FEAR 0 の上段で現れた札の中段が起きない。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.9,
+    "interactionSe": 0.8,
+    "partnerValue": 0.1,
+    "partnerValueSe": 0.8,
+    "synergy": 1,
+    "synergySe": 0.9,
+    "missed": -0.7,
+    "missedSe": 0.9,
+    "aiPicked": 41
+   },
+   "note": null
+  },
+  {
+   "id": "U024",
+   "name": "COURAGE 0 (上段) + PEACE 1",
+   "kind": "engine",
+   "source": "upper",
+   "cards": [
+    "COURAGE_1",
+    "PEACE_1"
+   ],
+   "protocols": [
+    "COURAGE",
+    "PEACE"
+   ],
+   "how": "COURAGE 0 (開始：あなたの手札が1枚もない場合、カードを1枚引く。 / カードを1枚引く。 / 終了：あなたは手札を1枚捨て札にすることができる。そうした場合、相手は手札を1枚捨て札にする。)。PEACE 1 で両者の手札を捨てると、COURAGE 0 の上段 (開始: 手札が無ければ1枚引く) と PEACE 1 の終了で引ける。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.4,
+    "interactionSe": 1,
+    "partnerValue": 0.9,
+    "partnerValueSe": 1,
+    "synergy": 1.3,
+    "synergySe": 0.5,
+    "missed": -3,
+    "missedSe": 1.3,
+    "aiPicked": 29
+   },
+   "note": null
+  },
+  {
    "id": "T01",
    "name": "WATER 1 + WATER 4",
    "kind": "burst",

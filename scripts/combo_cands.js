@@ -512,3 +512,44 @@ module.exports = [
     });
   }
 })();
+
+/* ---------- 上段を活かす組 (U001〜、2026-10-22) ----------
+   ユーザー「上段効果を活かしたコンボは？」。上段は覆われても表なら効く。
+   (1) 覆われていても動ける上段 (SPIRIT 3・TIME 2・ICE 3・UNITY 1) で、覆われることになったときに効く札の上へ動いて下段を起こす
+   (2) 効き続ける上段 (MIRROR 0・DIVERSITY 3・FEAR 0・COURAGE 0) と、その条件を満たす札 */
+(function upperCandidates() {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const cards = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'cards.json'), 'utf8'));
+  const proto = {}, value = {}, text = {};
+  for (const p of cards.protocols) for (const c of p.cards) { proto[c.id] = p.name; value[c.id] = c.value; text[c.id] = [c.upper, c.middle, c.lower].filter(Boolean).join(' / '); }
+  const name = (id) => proto[id] + ' ' + value[id];
+  const seen = new Set(module.exports.map(c => c.setup.mine.map(p => p.card).sort().join('+')));
+  let n = 0;
+  const push = (c) => {
+    const key = c.setup.mine.map(p => p.card).sort().join('+');
+    if (seen.has(key)) return;
+    seen.add(key);
+    module.exports.push({ id: 'U' + String(++n).padStart(3, '0'), auto: true, source: 'upper', late: true, ...c });
+  };
+  for (const M of ['SPIRIT_4', 'TIME_3', 'ICE_3', 'UNITY_2']) for (const T of ['FIRE_1', 'LIFE_4', 'HATE_5', 'CLARITY_2', 'APATHY_3']) {
+    push({
+      name: name(M) + ' (覆われて動く) → ' + name(T) + ' (覆われると効く)', kind: 'engine', protos: [...new Set([proto[M], proto[T]])],
+      how: name(M) + ' (' + text[M] + ') は覆われていても動ける。' + name(T) + ' (' + text[T] + ') の上へ動けば、覆われたときの下段が起きる。',
+      setup: { mine: [{ card: M, at: 'field', cover: true }, { card: T, at: 'hand' }] }, act: { play: T }, partner: [M]
+    });
+  }
+  const PASSIVE = [
+    ['MIRROR_1', 'ASSIMILATION_6', '終了時に相手側のスタックへ裏向きを置くので、MIRROR 0 のラインに置けば相手の札が増えて +1 ずつ'],
+    ['DIVERSITY_3', 'CHAOS_4', 'CHAOS 3 は対応なしで出せるので、DIVERSITY 3 のスタックに別のプロトコルの表向きを置ける (+2)'],
+    ['FEAR_1', 'DEATH_1', 'DEATH 0 で一番上を消すと相手の下の札が現れるが、FEAR 0 の上段で自分の手番中は相手の中段が起きない'],
+    ['FEAR_1', 'HATE_3', 'HATE 2 で相手の一番上を消しても、FEAR 0 の上段で現れた札の中段が起きない'],
+    ['FEAR_1', 'HATE_1', 'HATE 0 で相手の一番上を消しても、FEAR 0 の上段で現れた札の中段が起きない'],
+    ['COURAGE_1', 'PEACE_1', 'PEACE 1 で両者の手札を捨てると、COURAGE 0 の上段 (開始: 手札が無ければ1枚引く) と PEACE 1 の終了で引ける']
+  ];
+  for (const [U, P, why] of PASSIVE) push({
+    name: name(U) + ' (上段) + ' + name(P), kind: 'engine', protos: [...new Set([proto[U], proto[P]])],
+    how: name(U) + ' (' + text[U] + ')。' + why + '。',
+    setup: { mine: [{ card: U, at: 'field' }, { card: P, at: 'hand' }] }, act: { play: P, ...(P === 'CHAOS_4' ? { line: 'DIVERSITY' } : {}) }, partner: [U]
+  });
+})();
