@@ -1,7 +1,7 @@
 /* =========================================================================
  * ストーリーの歩ける世界 (three.js)。章ごとの地図 (story-map.js の MAPS) を歩く。
  *   序章「起動」= 夜の、人のいない研究所 / 1章「順路」= 閉館した水族館 (案8)
- *   あなた = 機体4097 (顔のない人型。胸の青い灯)。紫苑 = ちびキャラ。警備 = 車輪で動く警備ロボット。
+ *   あなた = 機体4097 (白い髪の男の子のアンドロイドのちび。胸の水色の灯)。紫苑 = ちびキャラ。警備 = 車輪で動く警備ロボット。
  *   動かし方: WASD / 矢印キー、または床をタップ (クリック) した所へ歩く。E / Enter / Space か「話す」ボタンで話しかける。
  *   出来事 (story-map.js の events) で会話 (story-ui.js の playNode) や対戦の確認を出す。
  *   openWorld(protocols, opts) → { battle: 場面 } (対戦を始める) / { reopen: true } (章が終わり、次の章の地図を開き直す) / null (タイトルへ)
@@ -16,7 +16,8 @@ import { showTitleBack, hideTitleBack } from './titleback.js';
 import { loadStory, saveStory, blankStory, currentNode, clearNode, startBattle, nodeById, isCleared, chapterCleared, chapterOf, addFound } from './story.js';
 import { accountState } from './account.js';
 import * as M from './story-map.js';
-import { playNode, playScene, askBattle } from './story-ui.js';
+import { playNode, playScene, askBattle, setStoryBgm } from './story-ui.js';
+import { storyBgm } from './bgm.js';
 import { sfx } from './audio.js';
 import { buildScenery } from './story-scenery.js';
 import { buildAquarium } from './story-scenery-aquarium.js';
@@ -25,10 +26,8 @@ import { buildWarehouse } from './story-scenery-warehouse.js';
 import { buildStation } from './story-scenery-station.js';
 import { buildDirector } from './story-scenery-director.js';
 import { RoomEnvironment } from '../vendor/jsm/environments/RoomEnvironment.js';
-import { GLTFLoader } from '../vendor/jsm/loaders/GLTFLoader.js';
 
 const T = 2;
-const HERO_VER = 2;            // 主人公の glb を作り直したら上げる (古いモデルがしばらく出るのを防ぐ)
 const TOUCH = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;   // タッチの端末 (キーの印を出さない)                 // 1マスの大きさ (three.js の単位)
 const SPEED = 3.4;           // 歩く速さ (マス / 秒)
 const RUN = 1.65;            // Shift / スティックを大きく倒すと走る (倍)
@@ -66,6 +65,7 @@ export function openWorld(protocols, opts = {}) {
   const warehouse = map.look === 'warehouse';
   const station = map.look === 'station';
   const director = map.look === 'director';
+  setStoryBgm(storyBgm(chapter.id));          // 章の地図の曲 (会話の山場では場面の曲に替わり、終わると戻る)
 
   const root = document.createElement('div');
   root.id = 'storyWorld';
@@ -220,31 +220,16 @@ export function openWorld(protocols, opts = {}) {
   scene.add(dots);
   let guideT = 0;
 
-  /* あなた: 機体4097。顔のない白い人型と、胸の青い灯。足もとの輪は「あなた」の印 */
+  /* あなた: 機体4097。白い髪・水色の目の男の子のアンドロイド (案C、2026-10-22)。絵は紫苑たちと同じちび9枚 (下の chibiSet で読む)。
+     胸の灯の光と、足もとの輪は「あなた」の印 */
   const me = new THREE.Group();
-  const suit = keep(new THREE.MeshStandardMaterial({ color: 0xb8bec6, roughness: 0.5, metalness: 0.25 }));
-  const joint = keep(new THREE.MeshStandardMaterial({ color: 0x5a616b, roughness: 0.5, metalness: 0.5 }));
-  const body = new THREE.Group();
-  const torso = new THREE.Mesh(keep(new THREE.CapsuleGeometry(0.22, 0.42, 6, 16)), suit);
-  torso.position.y = 1.0;
-  const head = new THREE.Mesh(keep(new THREE.SphereGeometry(0.17, 20, 14)), suit);
-  head.position.y = 1.52;
-  const visor = new THREE.Mesh(keep(new THREE.BoxGeometry(0.22, 0.05, 0.05)), keep(new THREE.MeshBasicMaterial({ color: 0x2a3038 })));
-  visor.position.set(0, 1.54, 0.15);
-  const neck = new THREE.Mesh(keep(new THREE.CylinderGeometry(0.06, 0.07, 0.12, 10)), joint);
-  neck.position.y = 1.36;
-  const legs = [-0.1, 0.1].map((x) => { const l = new THREE.Mesh(keep(new THREE.CapsuleGeometry(0.075, 0.42, 4, 10)), suit); l.position.set(x, 0.36, 0); return l; });
-  const arms = [-0.3, 0.3].map((x) => { const a = new THREE.Mesh(keep(new THREE.CapsuleGeometry(0.06, 0.4, 4, 10)), suit); a.position.set(x, 1.0, 0); return a; });
-  const core = new THREE.Mesh(keep(new THREE.SphereGeometry(0.05, 12, 8)), keep(new THREE.MeshBasicMaterial({ color: COLORS.cyan })));
-  core.position.set(0, 1.12, 0.21);
-  body.add(torso, head, visor, neck, core, ...legs, ...arms);
-  const meLight = new THREE.PointLight(COLORS.cyan, 0.8, 2.5);
-  meLight.position.set(0, 1.12, 0.35);
+  const meLight = new THREE.PointLight(COLORS.cyan, 0.25, 2.5);   // 白い外套が胸の灯で白く飛ばないよう弱く
+  meLight.position.set(0, 0.9, 0.35);
   const ring = new THREE.Mesh(keep(new THREE.TorusGeometry(0.5, 0.02, 8, 40)), keep(new THREE.MeshBasicMaterial({ color: COLORS.cyan, transparent: true, opacity: 0.7 })));
   ring.rotation.x = Math.PI / 2;
   ring.position.y = 0.03;
-  me.add(body, meLight, ring);
-  let meFacing = 0, meStep = 0;
+  me.add(meLight, ring);
+  let meDir = 'front', meStep = 0;
   let vel = { x: 0, y: 0 };
   const meShadow = blob(1.3);
   scene.add(me);
@@ -305,41 +290,15 @@ export function openWorld(protocols, opts = {}) {
     if (sp.userData.mat.map !== tex) { sp.userData.mat.map = tex; sp.userData.mat.needsUpdate = true; }
   };
 
-  /* あなた (機体4097) の3Dモデル: Blender で作った art/models/hero4097.glb (scripts/blender/chibi_rig.py。見た目の決まりは
-     .claude/skills/compile-cast/hero-4097.md)。読めたら、仮の人型と入れ替える。読めなければ仮の人型のまま。
-     アニメ調に見せるため、色はトゥーン (3段の陰)、外側に黒い縁 (裏返した殻) を付ける。腕と足は付け根で振る */
-  let heroModel = null;
-  const heroLimbs = {};
-  const toonRamp = keep(new THREE.DataTexture(new Uint8Array([90, 170, 255]), 3, 1, THREE.RedFormat));
-  toonRamp.minFilter = toonRamp.magFilter = THREE.NearestFilter;
-  toonRamp.needsUpdate = true;
-  const outlineMat = keep(new THREE.MeshBasicMaterial({ color: 0x0b0f18, side: THREE.BackSide }));
-  new GLTFLoader().load('art/models/hero4097.glb?v=' + HERO_VER, (gltf) => {
-    const g = gltf.scene;
-    if (closed) { g.traverse((o) => { if (o.isMesh) { o.geometry.dispose(); o.material.dispose(); } }); return; }   // 閉じたあとに読み終えた
-    const meshes = [];
-    g.traverse((o) => { if (o.isMesh) meshes.push(o); });    // 先に集める (縁を足しながらたどると、足した縁もたどってしまう)
-    meshes.forEach((o) => {
-      keep(o.geometry);
-      const src = o.material;
-      src.dispose && setTimeout(() => src.dispose(), 0);     // 元の材質は置き換えたら要らない
-      const core = src.name === 'Core';
-      o.material = keep(core ? new THREE.MeshBasicMaterial({ color: 0x6ff0ff })
-        : new THREE.MeshToonMaterial({ color: src.color, gradientMap: toonRamp, emissive: src.color.clone().multiplyScalar(0.32) }));   // 紫苑の絵 (光を受けない) と明るさをそろえる
-      if (!core) {
-        const hull = new THREE.Mesh(o.geometry, outlineMat);     // 縁: 同じ形を少し大きく、裏側だけ描く
-        hull.scale.setScalar(1.035);
-        o.add(hull);
-      }
-    });
-    for (const n of ['LegL', 'LegR', 'ArmL', 'ArmR']) heroLimbs[n] = g.getObjectByName(n);
-    heroModel = new THREE.Group();
-    g.scale.setScalar(1.12);                  // 紫苑のちびと背丈をそろえる
-    heroModel.add(g);
-    me.add(heroModel);
-    body.visible = false;
-    meLight.intensity = 0.25;                 // 白い外套が胸の灯で白く飛ばないように
-  }, undefined, () => { /* 読めなければ仮の人型のまま */ });
+  /* あなた (機体4097) のちび。紫苑と同じ大きさ・同じ明るさ */
+  const heroSet = chibiSet('hero4097');
+  /* alphaTest: 透明な所で奥行きを書かない (書くと、あとで描く床の光が絵の四角の形に欠けて、黒い四角が出た) */
+  const heroMat = keep(new THREE.SpriteMaterial({ map: heroSet.front_stand, transparent: true, toneMapped: false, alphaTest: 0.1 }));
+  heroMat.color.setScalar(0.7);
+  const hero = new THREE.Sprite(heroMat);
+  hero.center.set(0.5, 0.02);
+  hero.scale.set(CHIBI, CHIBI, 1);
+  me.add(hero);
   /* 5章の研究所では、紫苑は判定室 (K) で待っていて、ついてこない (map.shionStays) */
   const joined = () => !map.shionStays && (chapter.id !== 'ch0' || isCleared(state, 'c0-practice'));
   /* 相棒になったあとは、あなたの少し後ろ (左が壁なら同じ所) に立つ */
@@ -779,23 +738,19 @@ export function openWorld(protocols, opts = {}) {
         if (before.y === pos.y) vel.y *= 0.5;
       } else vel = { x: 0, y: 0 };
     } else vel = { x: 0, y: 0 };
-    /* 機体4097: 進む向きを向き、歩くと手足を振る */
+    /* 機体4097: 進む向きの絵 (紫苑と同じ決まり。左は反転した絵) と、歩きの2コマ */
     const prev = me.userData.prev || { ...pos };
     const mvx = pos.x - prev.x, mvy = pos.y - prev.y;
     me.userData.prev = { ...pos };
     const stepping = Math.hypot(mvx, mvy) > dt * 0.3;
-    if (stepping) { meFacing = Math.atan2(mvx, mvy); meStep += dt * (6 + Math.hypot(vel.x, vel.y) * 1.2); } else meStep = 0;
-    body.rotation.y += ((meFacing - body.rotation.y + Math.PI * 3) % (Math.PI * 2) - Math.PI) * Math.min(1, dt * 12);
-    const swing = stepping ? Math.sin(meStep) * 0.5 : 0;
-    legs[0].rotation.x = swing; legs[1].rotation.x = -swing;
-    arms[0].rotation.x = -swing * 0.8; arms[1].rotation.x = swing * 0.8;
-    if (heroModel) {
-      heroModel.rotation.y = body.rotation.y;
-      const sw = stepping ? Math.sin(meStep) * 0.5 : 0;
-      if (heroLimbs.LegL) { heroLimbs.LegL.rotation.x = sw; heroLimbs.LegR.rotation.x = -sw; }
-      if (heroLimbs.ArmL) { heroLimbs.ArmL.rotation.x = -sw * 0.8; heroLimbs.ArmR.rotation.x = sw * 0.8; }
-    }
-    me.position.copy(world(pos, stepping ? Math.abs(Math.sin(meStep)) * (heroModel ? 0.06 : 0.04) : 0));
+    if (stepping) {
+      meDir = Math.abs(mvx) >= Math.abs(mvy) ? (mvx < 0 ? 'left' : 'side') : mvy < 0 ? 'back' : 'front';
+      meStep += dt * (6 + Math.hypot(vel.x, vel.y) * 1.2) / Math.PI * 2;
+    } else meStep = 0;
+    const mePhase = Math.floor(meStep) % 4;
+    const meTex = heroSet[meDir + '_' + (!stepping ? 'stand' : mePhase === 0 ? 'walk1' : mePhase === 2 ? 'walk2' : 'stand')];
+    if (heroMat.map !== meTex) { heroMat.map = meTex; heroMat.needsUpdate = true; }
+    me.position.copy(world(pos, stepping ? Math.abs(Math.sin(meStep * Math.PI / 2)) * 0.07 : Math.sin(t * 2) * 0.015));
     meShadow.position.copy(world(pos, 0.015));
     ring.scale.setScalar(1 + Math.sin(t * 3) * 0.05);
 
