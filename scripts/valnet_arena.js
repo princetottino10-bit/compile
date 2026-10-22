@@ -5,6 +5,7 @@
  *
  *   node scripts/valnet_arena.js --model _valnet/model.json --weight 150 --games 400 --budget 600
  * --oracle で両者を ORACLE の設定 (自分の側だけ dsh 特化 + ORACLE の手筋) にする (思考時間は --budget 2400 と組む)。
+ * --cweights _spsa/run.theta.json で候補の側だけ ai_spsa.js の重み (特化・ORACLE の o*・学習モデルの重み vnw) にする。
  * --base data/valnet.json を付けると、基準の側にも学習モデル (同じ重み) を入れる (世代どうしの対戦)。--save で1局ずつの結果を書き出す
  */
 const fs = require('node:fs');
@@ -16,7 +17,7 @@ const { PROTOCOLS } = require('./valnet_features.js');
 
 const ROOT = path.join(__dirname, '..');
 function parseArgs(argv) {
-  const o = { model: '_valnet/model.json', weight: 150, games: 400, budget: 600, seed: 500001, workers: 0, base: '', save: '', pimc: 1, cweight: 0, oracle: false };
+  const o = { model: '_valnet/model.json', weight: 150, games: 400, budget: 600, seed: 500001, workers: 0, base: '', save: '', pimc: 1, cweight: 0, oracle: false, cweights: '' };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--model') o.model = argv[++i];
@@ -30,6 +31,7 @@ function parseArgs(argv) {
     else if (a === '--cweight') o.cweight = +argv[++i];  // 候補の側だけ学習モデルの重みを変える (0 なら --weight と同じ)
     else if (a === '--save') o.save = argv[++i];
     else if (a === '--oracle') o.oracle = true;
+    else if (a === '--cweights') o.cweights = argv[++i];
     else if (a === '--by-proto') o.byProto = true;   // プロトコルごとの勝率も出す
     else { console.error('未知の引数: ' + a); process.exit(1); }
   }
@@ -45,7 +47,7 @@ function decks(seed) {
 }
 
 if (!isMainThread) {
-  const { src, cards, effects, jobs, budget, model, weight, base, pimc, cweight, oracle } = workerData;
+  const { src, cards, effects, jobs, budget, model, weight, base, pimc, cweight, oracle, cweights } = workerData;
   const load = () => {
     const ctx = { module: { exports: {} }, exports: {}, console, structuredClone, performance };
     ctx.globalThis = ctx;
@@ -60,6 +62,11 @@ if (!isMainThread) {
   if (pimc > 1) C.setAiPimc(pimc);
   if (base) B.setAiValueNet(base, weight);
   if (oracle) { C.setAiOracle(true); B.setAiOracle(true); }
+  if (cweights) {
+    const { vnw, ...w } = cweights.theta;
+    C.setAiSpecialistWeights(w); C.setAiWeights(w);   // それぞれ知らない名前は飛ばす
+    if (vnw) C.setAiValueNet(model, vnw);
+  }
   const out = [];
   for (const job of jobs) {
     const cs = job.cs;
@@ -95,7 +102,7 @@ const chunks = Array.from({ length: nW }, () => []);
 jobs.forEach((j, i) => chunks[i % nW].push(j));
 const t0 = Date.now();
 Promise.all(chunks.filter(c => c.length).map(c => new Promise((resolve, reject) => {
-  const w = new Worker(__filename, { workerData: { src, cards, effects, jobs: c, budget: opt.budget, model, weight: opt.weight, base, pimc: opt.pimc, cweight: opt.cweight, oracle: opt.oracle } });
+  const w = new Worker(__filename, { workerData: { src, cards, effects, jobs: c, budget: opt.budget, model, weight: opt.weight, base, pimc: opt.pimc, cweight: opt.cweight, oracle: opt.oracle, cweights: opt.cweights ? JSON.parse(fs.readFileSync(path.join(ROOT, opt.cweights), 'utf8')) : null } });
   w.on('message', resolve); w.on('error', reject);
 }))).then(parts => {
   if (opt.save) fs.writeFileSync(path.join(ROOT, opt.save), parts.flat().map(g => JSON.stringify(g)).join('\n') + '\n');
