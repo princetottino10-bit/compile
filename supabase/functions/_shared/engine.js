@@ -3475,7 +3475,9 @@ const AI_AIM_COMBOS = [
   { pieces: { SPIRIT_4: 'up', PEACE_1: 'top' } },
   { pieces: { TIME_3: 'up', CLARITY_4: 'play' } },
   /* CORRUPTION 6 の終了で捨てると CORRUPTION 2 で相手も捨て、PLAGUE 1 で引く (どれも上段) */
-  { pieces: { CORRUPTION_6: 'up', CORRUPTION_3: 'up', PLAGUE_2: 'up' } }
+  { pieces: { CORRUPTION_6: 'up', CORRUPTION_3: 'up', PLAGUE_2: 'up' } },
+  /* 教わった FIRE 3 + PLAGUE 4 (終了時に FIRE 3 で相手を裏にし、PLAGUE 4 で消させる)。状態を作る札 × 取り立てる札 145組の総当たりで、測り直して残ったのはこれだけ */
+  { pieces: { FIRE_4: 'top', PLAGUE_5: 'top' } }
 ];
 function aiAimPlace(st, side, uid) {
   const c = st.cards[uid];
@@ -4346,7 +4348,7 @@ const AI_COMBO_PAIRS = [
   ['WAR_1', 'CHAOS_1'],       // CHAOS 0 の開始で相手が引くたびに WAR 0 で削除 (docs/combos.md)
   ['WAR_1', 'LOVE_6'],        // LOVE 6・LOVE 2・FEAR 1 で相手に引かせて WAR 0 で削除
   ['WAR_1', 'LOVE_2'],
-  ['WAR_1', 'FEAR_2'], ['PLAGUE_2', 'COURAGE_1'], ['COURAGE_1', 'CORRUPTION_3'], ['WAR_4', 'COURAGE_1'], ['WAR_4', 'FEAR_2'], ['SPIRIT_4', 'CORRUPTION_3'], ['SPIRIT_4', 'PEACE_1'], ['TIME_3', 'CLARITY_4'], ['CORRUPTION_6', 'CORRUPTION_3'], ['CORRUPTION_6', 'PLAGUE_2']
+  ['WAR_1', 'FEAR_2'], ['PLAGUE_2', 'COURAGE_1'], ['COURAGE_1', 'CORRUPTION_3'], ['WAR_4', 'COURAGE_1'], ['WAR_4', 'FEAR_2'], ['SPIRIT_4', 'CORRUPTION_3'], ['SPIRIT_4', 'PEACE_1'], ['TIME_3', 'CLARITY_4'], ['CORRUPTION_6', 'CORRUPTION_3'], ['CORRUPTION_6', 'PLAGUE_2'], ['FIRE_4', 'PLAGUE_5']
 ];
 const AI_COMBO_KEEP = { hand: 60, field: 40, deck: 15 };
 /* ORACLE が手放したがらない札: ウォーター① (山札の上を他の各ラインに裏で) とファイア③ (終了時に捨てて反転) */

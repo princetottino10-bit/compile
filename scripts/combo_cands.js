@@ -469,3 +469,46 @@ module.exports = [
     });
   }
 })();
+
+/* ---------- 状態を作る札 × その状態で得する札 (S001〜、2026-10-22) ----------
+   ユーザー「fire3 と plague4 みたいなのは見つけれないんか？」。「〜したあと」の誘発 (A001〜) では拾えない、
+   盤面の状態 (相手の裏向き・自分のラインの裏向き) を作る札と、その状態を取り立てる札の組を総当たりにする */
+(function stateCandidates() {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const cards = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'cards.json'), 'utf8'));
+  const proto = {}, value = {}, text = {};
+  for (const p of cards.protocols) for (const c of p.cards) { proto[c.id] = p.name; value[c.id] = c.value; text[c.id] = [c.upper, c.middle, c.lower].filter(Boolean).join(' / '); }
+  const name = (id) => proto[id] + ' ' + value[id];
+  /* end: 終了時に効く札 (場に置いておく)。それ以外は出した手番の中段で効く */
+  const GROUPS = [
+    { state: '相手の裏向き',
+      makers: ['FIRE_4', 'APATHY_4', 'DARKNESS_2', 'METAL_1', 'LIFE_2', 'WATER_1', 'GRAVITY_3', 'PLAGUE_4', 'MIRROR_4', 'LOVE_4', 'PEACE_3', 'WAR_3', 'LIGHT_1', 'SPIRIT_3', 'FEAR_1', 'ASSIMILATION_6', 'GRAVITY_6'],
+      payoffs: ['PLAGUE_5', 'DEATH_4', 'ASSIMILATION_1', 'SPEED_5', 'DARKNESS_5', 'WATER_4', 'DEATH_3'] },
+    { state: '自分のラインの裏向き',
+      makers: ['WATER_2', 'LIFE_1', 'SMOKE_1', 'SMOKE_4', 'DARKNESS_4', 'PEACE_2', 'TIME_4', 'ASSIMILATION_3', 'LIGHT_4', 'GRAVITY_4', 'DARKNESS_5', 'SMOKE_5'],
+      payoffs: ['APATHY_1', 'SMOKE_3', 'DARKNESS_3'] }
+  ];
+  const END = new Set(['FIRE_4', 'ASSIMILATION_6', 'PLAGUE_5', 'ASSIMILATION_3']);
+  const FIELD = new Set(['PLAGUE_5', 'APATHY_1', 'SMOKE_3', 'DARKNESS_3']);
+  const seen = new Set(module.exports.map(c => c.setup.mine.map(p => p.card).sort().join('+')));
+  let n = 0;
+  for (const g of GROUPS) for (const P of g.payoffs) for (const M of g.makers) {
+    if (M === P) continue;
+    const key = [M, P].sort().join('+');
+    if (seen.has(key)) continue;
+    seen.add(key);
+    /* 終了時に作る札は場に置いて、取り立てる札を出す。それ以外は作る札を出す (取り立てる札は場か手札) */
+    const makerOnField = END.has(M);
+    const mine = makerOnField
+      ? [{ card: M, at: 'field' }, { card: P, at: FIELD.has(P) && P !== 'PLAGUE_5' ? 'field' : 'hand' }]
+      : [{ card: P, at: FIELD.has(P) ? 'field' : 'hand' }, { card: M, at: 'hand' }];
+    const act = makerOnField && mine[1].at === 'hand' ? P : M;
+    module.exports.push({
+      id: 'S' + String(++n).padStart(3, '0'), name: name(M) + ' → ' + name(P), kind: END.has(M) || FIELD.has(P) ? 'engine' : 'burst', auto: true, source: 'state',
+      protos: [...new Set([proto[M], proto[P]])],
+      how: name(M) + ' (' + text[M] + ') で' + g.state + 'を作り、' + name(P) + ' (' + text[P] + ') で取り立てる。',
+      setup: { mine }, act: { play: act }, partner: [act === M ? P : M], late: true
+    });
+  }
+})();

@@ -6276,6 +6276,4696 @@
    "note": null
   },
   {
+   "id": "S001",
+   "name": "FIRE 3 → PLAGUE 4",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE"
+   ],
+   "how": "FIRE 3 (終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。) で相手の裏向きを作り、PLAGUE 4 (終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。) で取り立てる。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 151,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.5,
+    "interactionSe": 0.9,
+    "partnerValue": 3.1,
+    "partnerValueSe": 1,
+    "synergy": 5.5,
+    "synergySe": 1,
+    "missed": 0.8,
+    "missedSe": 0.8,
+    "aiPicked": 50
+   },
+   "note": null
+  },
+  {
+   "id": "S002",
+   "name": "APATHY 3 → PLAGUE 4",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "PLAGUE_5",
+    "APATHY_4"
+   ],
+   "protocols": [
+    "APATHY",
+    "PLAGUE"
+   ],
+   "how": "APATHY 3 (相手の表向きのカードを１枚反転させる。) で相手の裏向きを作り、PLAGUE 4 (終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.3,
+    "interactionSe": 1.7,
+    "partnerValue": 4.5,
+    "partnerValueSe": 2.1,
+    "synergy": 6.8,
+    "synergySe": 1.6,
+    "missed": 0.4,
+    "missedSe": 1.1,
+    "aiPicked": 54
+   },
+   "note": null
+  },
+  {
+   "id": "S003",
+   "name": "DARKNESS 1 → PLAGUE 4",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "PLAGUE_5",
+    "DARKNESS_2"
+   ],
+   "protocols": [
+    "DARKNESS",
+    "PLAGUE"
+   ],
+   "how": "DARKNESS 1 (相手のカードを1枚反転させる。あなたはそのカードを移動させることができる。) で相手の裏向きを作り、PLAGUE 4 (終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.7,
+    "interactionSe": 2.3,
+    "partnerValue": 0.7,
+    "partnerValueSe": 1.7,
+    "synergy": 3.4,
+    "synergySe": 1.9,
+    "missed": -0.7,
+    "missedSe": 1.3,
+    "aiPicked": 37
+   },
+   "note": null
+  },
+  {
+   "id": "S004",
+   "name": "METAL 0 → PLAGUE 4",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "PLAGUE_5",
+    "METAL_1"
+   ],
+   "protocols": [
+    "METAL",
+    "PLAGUE"
+   ],
+   "how": "METAL 0 (このラインでの相手の合計値は2減る。 / カードを1枚反転させる。) で相手の裏向きを作り、PLAGUE 4 (終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.7,
+    "interactionSe": 1.7,
+    "partnerValue": 4.6,
+    "partnerValueSe": 1.5,
+    "synergy": 6.3,
+    "synergySe": 1.6,
+    "missed": -1.8,
+    "missedSe": 1.7,
+    "aiPicked": 37
+   },
+   "note": null
+  },
+  {
+   "id": "S005",
+   "name": "LIFE 1 → PLAGUE 4",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "PLAGUE_5",
+    "LIFE_2"
+   ],
+   "protocols": [
+    "LIFE",
+    "PLAGUE"
+   ],
+   "how": "LIFE 1 (カード1枚を反転させる。カード1枚を反転させる。) で相手の裏向きを作り、PLAGUE 4 (終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 61,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.1,
+    "interactionSe": 2,
+    "partnerValue": 3.3,
+    "partnerValueSe": 1.4,
+    "synergy": 3.2,
+    "synergySe": 1.9,
+    "missed": -1.8,
+    "missedSe": 1.3,
+    "aiPicked": 38
+   },
+   "note": null
+  },
+  {
+   "id": "S006",
+   "name": "WATER 0 → PLAGUE 4",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "PLAGUE_5",
+    "WATER_1"
+   ],
+   "protocols": [
+    "WATER",
+    "PLAGUE"
+   ],
+   "how": "WATER 0 (他のカードを1枚反転させる。このカードを反転させる。) で相手の裏向きを作り、PLAGUE 4 (終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.7,
+    "interactionSe": 2.3,
+    "partnerValue": 3.9,
+    "partnerValueSe": 1.6,
+    "synergy": 5.5,
+    "synergySe": 1.6,
+    "missed": -4.3,
+    "missedSe": 2,
+    "aiPicked": 40
+   },
+   "note": null
+  },
+  {
+   "id": "S007",
+   "name": "GRAVITY 2 → PLAGUE 4",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "PLAGUE_5",
+    "GRAVITY_3"
+   ],
+   "protocols": [
+    "GRAVITY",
+    "PLAGUE"
+   ],
+   "how": "GRAVITY 2 (カードを1枚反転させる。そのカードをこのラインへと移動させる。) で相手の裏向きを作り、PLAGUE 4 (終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 151,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.8,
+    "interactionSe": 1.3,
+    "partnerValue": 2.8,
+    "partnerValueSe": 1.2,
+    "synergy": 4.6,
+    "synergySe": 1,
+    "missed": 0.2,
+    "missedSe": 1.1,
+    "aiPicked": 40
+   },
+   "note": null
+  },
+  {
+   "id": "S008",
+   "name": "PLAGUE 3 → PLAGUE 4",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "PLAGUE_5",
+    "PLAGUE_4"
+   ],
+   "protocols": [
+    "PLAGUE"
+   ],
+   "how": "PLAGUE 3 (覆われていない、表向きの他のカードを反転させる。) で相手の裏向きを作り、PLAGUE 4 (終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.6,
+    "interactionSe": 0.9,
+    "partnerValue": 1.5,
+    "partnerValueSe": 0.9,
+    "synergy": -0.1,
+    "synergySe": 0.6,
+    "missed": -4.5,
+    "missedSe": 1.2,
+    "aiPicked": 40
+   },
+   "note": null
+  },
+  {
+   "id": "S009",
+   "name": "MIRROR 3 → PLAGUE 4",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "PLAGUE_5",
+    "MIRROR_4"
+   ],
+   "protocols": [
+    "MIRROR",
+    "PLAGUE"
+   ],
+   "how": "MIRROR 3 (あなたのカードを1枚反転させる。そのカードと同じラインにある相手のカードを1枚反転させる。) で相手の裏向きを作り、PLAGUE 4 (終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.3,
+    "interactionSe": 1.3,
+    "partnerValue": 4,
+    "partnerValueSe": 1.6,
+    "synergy": 4.3,
+    "synergySe": 1.7,
+    "missed": -6.4,
+    "missedSe": 1.5,
+    "aiPicked": 37
+   },
+   "note": null
+  },
+  {
+   "id": "S010",
+   "name": "LOVE 4 → PLAGUE 4",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "PLAGUE_5",
+    "LOVE_4"
+   ],
+   "protocols": [
+    "LOVE",
+    "PLAGUE"
+   ],
+   "how": "LOVE 4 (あなたの手札１枚を公開する。カードを１枚反転させる。) で相手の裏向きを作り、PLAGUE 4 (終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.7,
+    "interactionSe": 2.2,
+    "partnerValue": 3,
+    "partnerValueSe": 1.5,
+    "synergy": 5.7,
+    "synergySe": 1.8,
+    "missed": 1.7,
+    "missedSe": 1.8,
+    "aiPicked": 65
+   },
+   "note": null
+  },
+  {
+   "id": "S011",
+   "name": "PEACE 3 → PLAGUE 4",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "PLAGUE_5",
+    "PEACE_3"
+   ],
+   "protocols": [
+    "PEACE",
+    "PLAGUE"
+   ],
+   "how": "PEACE 3 (あなたは手札を1枚捨て札にすることができる。あなたの手札の枚数より値が大きいカードを1枚反転させる。) で相手の裏向きを作り、PLAGUE 4 (終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.7,
+    "interactionSe": 2.5,
+    "partnerValue": 5.9,
+    "partnerValueSe": 1.8,
+    "synergy": 6.6,
+    "synergySe": 2.1,
+    "missed": -2.4,
+    "missedSe": 1.5,
+    "aiPicked": 35
+   },
+   "note": null
+  },
+  {
+   "id": "S012",
+   "name": "WAR 2 → PLAGUE 4",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "PLAGUE_5",
+    "WAR_3"
+   ],
+   "protocols": [
+    "WAR",
+    "PLAGUE"
+   ],
+   "how": "WAR 2 (カードを1枚反転させる。 / 相手がコンパイルしたあと：相手は手札をすべて捨て札にする。) で相手の裏向きを作り、PLAGUE 4 (終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.8,
+    "interactionSe": 1.1,
+    "partnerValue": 2.7,
+    "partnerValueSe": 1.3,
+    "synergy": 4.6,
+    "synergySe": 1.2,
+    "missed": -0.1,
+    "missedSe": 0.8,
+    "aiPicked": 50
+   },
+   "note": null
+  },
+  {
+   "id": "S013",
+   "name": "LIGHT 0 → PLAGUE 4",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "PLAGUE_5",
+    "LIGHT_1"
+   ],
+   "protocols": [
+    "LIGHT",
+    "PLAGUE"
+   ],
+   "how": "LIGHT 0 (カードを1枚反転させる。そのカードの値に等しい枚数のカードを引く。) で相手の裏向きを作り、PLAGUE 4 (終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 61,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.8,
+    "interactionSe": 1,
+    "partnerValue": 3.1,
+    "partnerValueSe": 1.2,
+    "synergy": 5,
+    "synergySe": 1,
+    "missed": -0.1,
+    "missedSe": 1.7,
+    "aiPicked": 38
+   },
+   "note": null
+  },
+  {
+   "id": "S014",
+   "name": "SPIRIT 2 → PLAGUE 4",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "PLAGUE_5",
+    "SPIRIT_3"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PLAGUE"
+   ],
+   "how": "SPIRIT 2 (あなたはカードを1枚反転させることができる。) で相手の裏向きを作り、PLAGUE 4 (終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 153,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.2,
+    "interactionSe": 0.9,
+    "partnerValue": 4.5,
+    "partnerValueSe": 0.9,
+    "synergy": 4.3,
+    "synergySe": 1.1,
+    "missed": -1.1,
+    "missedSe": 1,
+    "aiPicked": 39
+   },
+   "note": null
+  },
+  {
+   "id": "S015",
+   "name": "FEAR 0 → PLAGUE 4",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "PLAGUE_5",
+    "FEAR_1"
+   ],
+   "protocols": [
+    "FEAR",
+    "PLAGUE"
+   ],
+   "how": "FEAR 0 (あなたの手番中、相手のカードの中段コマンドはないものとして扱う。 / カードを1枚移動させるか反転させる。) で相手の裏向きを作り、PLAGUE 4 (終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 61,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.4,
+    "interactionSe": 1.7,
+    "partnerValue": 3.6,
+    "partnerValueSe": 1.4,
+    "synergy": 4,
+    "synergySe": 1.4,
+    "missed": -0.2,
+    "missedSe": 1.5,
+    "aiPicked": 28
+   },
+   "note": null
+  },
+  {
+   "id": "S016",
+   "name": "ASSIMILATION 6 → PLAGUE 4",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "ASSIMILATION_6",
+    "PLAGUE_5"
+   ],
+   "protocols": [
+    "ASSIMILATION",
+    "PLAGUE"
+   ],
+   "how": "ASSIMILATION 6 (終了：あなたのデッキの一番上のカードを、相手側の任意のスタックに裏向きでプレイする。) で相手の裏向きを作り、PLAGUE 4 (終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.7,
+    "interactionSe": 1.7,
+    "partnerValue": 0.6,
+    "partnerValueSe": 1.9,
+    "synergy": 3.2,
+    "synergySe": 1.4,
+    "missed": -2.1,
+    "missedSe": 1.4,
+    "aiPicked": 52
+   },
+   "note": null
+  },
+  {
+   "id": "S017",
+   "name": "GRAVITY 6 → PLAGUE 4",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "PLAGUE_5",
+    "GRAVITY_6"
+   ],
+   "protocols": [
+    "GRAVITY",
+    "PLAGUE"
+   ],
+   "how": "GRAVITY 6 (相手は自分のデッキの一番上のカードをこのラインに裏向きで1枚プレイする。) で相手の裏向きを作り、PLAGUE 4 (終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.3,
+    "interactionSe": 1.4,
+    "partnerValue": 3.7,
+    "partnerValueSe": 1.6,
+    "synergy": 5.1,
+    "synergySe": 1.8,
+    "missed": -3,
+    "missedSe": 1.4,
+    "aiPicked": 30
+   },
+   "note": null
+  },
+  {
+   "id": "S018",
+   "name": "FIRE 3 → DEATH 3",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "FIRE_4",
+    "DEATH_4"
+   ],
+   "protocols": [
+    "FIRE",
+    "DEATH"
+   ],
+   "how": "FIRE 3 (終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。) で相手の裏向きを作り、DEATH 3 (裏向きのカードを1枚削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.7,
+    "interactionSe": 1.8,
+    "partnerValue": 3.1,
+    "partnerValueSe": 1.5,
+    "synergy": 2.4,
+    "synergySe": 1.1,
+    "missed": -3.6,
+    "missedSe": 1.8,
+    "aiPicked": 29
+   },
+   "note": null
+  },
+  {
+   "id": "S019",
+   "name": "APATHY 3 → DEATH 3",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DEATH_4",
+    "APATHY_4"
+   ],
+   "protocols": [
+    "APATHY",
+    "DEATH"
+   ],
+   "how": "APATHY 3 (相手の表向きのカードを１枚反転させる。) で相手の裏向きを作り、DEATH 3 (裏向きのカードを1枚削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.1,
+    "interactionSe": 0.8,
+    "partnerValue": 1.5,
+    "partnerValueSe": 0.8,
+    "synergy": 1.5,
+    "synergySe": 0.5,
+    "missed": -2.6,
+    "missedSe": 0.9,
+    "aiPicked": 54
+   },
+   "note": null
+  },
+  {
+   "id": "S020",
+   "name": "DARKNESS 1 → DEATH 3",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DEATH_4",
+    "DARKNESS_2"
+   ],
+   "protocols": [
+    "DARKNESS",
+    "DEATH"
+   ],
+   "how": "DARKNESS 1 (相手のカードを1枚反転させる。あなたはそのカードを移動させることができる。) で相手の裏向きを作り、DEATH 3 (裏向きのカードを1枚削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.6,
+    "interactionSe": 0.9,
+    "partnerValue": 1.2,
+    "partnerValueSe": 0.7,
+    "synergy": 0.6,
+    "synergySe": 0.7,
+    "missed": -4.6,
+    "missedSe": 1.6,
+    "aiPicked": 41
+   },
+   "note": null
+  },
+  {
+   "id": "S021",
+   "name": "METAL 0 → DEATH 3",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DEATH_4",
+    "METAL_1"
+   ],
+   "protocols": [
+    "METAL",
+    "DEATH"
+   ],
+   "how": "METAL 0 (このラインでの相手の合計値は2減る。 / カードを1枚反転させる。) で相手の裏向きを作り、DEATH 3 (裏向きのカードを1枚削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.4,
+    "interactionSe": 0.7,
+    "partnerValue": 1.5,
+    "partnerValueSe": 0.6,
+    "synergy": 1.1,
+    "synergySe": 0.6,
+    "missed": -2,
+    "missedSe": 0.9,
+    "aiPicked": 50
+   },
+   "note": null
+  },
+  {
+   "id": "S022",
+   "name": "LIFE 1 → DEATH 3",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DEATH_4",
+    "LIFE_2"
+   ],
+   "protocols": [
+    "LIFE",
+    "DEATH"
+   ],
+   "how": "LIFE 1 (カード1枚を反転させる。カード1枚を反転させる。) で相手の裏向きを作り、DEATH 3 (裏向きのカードを1枚削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.1,
+    "interactionSe": 0.5,
+    "partnerValue": 2.5,
+    "partnerValueSe": 0.8,
+    "synergy": 2.4,
+    "synergySe": 0.7,
+    "missed": -2.2,
+    "missedSe": 0.8,
+    "aiPicked": 60
+   },
+   "note": null
+  },
+  {
+   "id": "S023",
+   "name": "WATER 0 → DEATH 3",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DEATH_4",
+    "WATER_1"
+   ],
+   "protocols": [
+    "WATER",
+    "DEATH"
+   ],
+   "how": "WATER 0 (他のカードを1枚反転させる。このカードを反転させる。) で相手の裏向きを作り、DEATH 3 (裏向きのカードを1枚削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.1,
+    "interactionSe": 0.9,
+    "partnerValue": 1.6,
+    "partnerValueSe": 0.9,
+    "synergy": 1.5,
+    "synergySe": 0.5,
+    "missed": -3.5,
+    "missedSe": 1.4,
+    "aiPicked": 29
+   },
+   "note": null
+  },
+  {
+   "id": "S024",
+   "name": "GRAVITY 2 → DEATH 3",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DEATH_4",
+    "GRAVITY_3"
+   ],
+   "protocols": [
+    "GRAVITY",
+    "DEATH"
+   ],
+   "how": "GRAVITY 2 (カードを1枚反転させる。そのカードをこのラインへと移動させる。) で相手の裏向きを作り、DEATH 3 (裏向きのカードを1枚削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1,
+    "interactionSe": 1.1,
+    "partnerValue": 1.7,
+    "partnerValueSe": 1,
+    "synergy": 0.7,
+    "synergySe": 0.6,
+    "missed": -1.3,
+    "missedSe": 1.3,
+    "aiPicked": 44
+   },
+   "note": null
+  },
+  {
+   "id": "S025",
+   "name": "PLAGUE 3 → DEATH 3",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DEATH_4",
+    "PLAGUE_4"
+   ],
+   "protocols": [
+    "PLAGUE",
+    "DEATH"
+   ],
+   "how": "PLAGUE 3 (覆われていない、表向きの他のカードを反転させる。) で相手の裏向きを作り、DEATH 3 (裏向きのカードを1枚削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.4,
+    "interactionSe": 1.2,
+    "partnerValue": 1,
+    "partnerValueSe": 1.2,
+    "synergy": 1.4,
+    "synergySe": 0.7,
+    "missed": -0.6,
+    "missedSe": 1.5,
+    "aiPicked": 57
+   },
+   "note": null
+  },
+  {
+   "id": "S026",
+   "name": "MIRROR 3 → DEATH 3",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DEATH_4",
+    "MIRROR_4"
+   ],
+   "protocols": [
+    "MIRROR",
+    "DEATH"
+   ],
+   "how": "MIRROR 3 (あなたのカードを1枚反転させる。そのカードと同じラインにある相手のカードを1枚反転させる。) で相手の裏向きを作り、DEATH 3 (裏向きのカードを1枚削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.2,
+    "interactionSe": 0.9,
+    "partnerValue": 2.1,
+    "partnerValueSe": 0.9,
+    "synergy": 0.9,
+    "synergySe": 0.5,
+    "missed": -4.8,
+    "missedSe": 1.6,
+    "aiPicked": 35
+   },
+   "note": null
+  },
+  {
+   "id": "S027",
+   "name": "LOVE 4 → DEATH 3",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DEATH_4",
+    "LOVE_4"
+   ],
+   "protocols": [
+    "LOVE",
+    "DEATH"
+   ],
+   "how": "LOVE 4 (あなたの手札１枚を公開する。カードを１枚反転させる。) で相手の裏向きを作り、DEATH 3 (裏向きのカードを1枚削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.3,
+    "interactionSe": 0.7,
+    "partnerValue": 1.5,
+    "partnerValueSe": 0.9,
+    "synergy": 1.2,
+    "synergySe": 0.8,
+    "missed": -1.1,
+    "missedSe": 0.9,
+    "aiPicked": 63
+   },
+   "note": null
+  },
+  {
+   "id": "S028",
+   "name": "PEACE 3 → DEATH 3",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DEATH_4",
+    "PEACE_3"
+   ],
+   "protocols": [
+    "PEACE",
+    "DEATH"
+   ],
+   "how": "PEACE 3 (あなたは手札を1枚捨て札にすることができる。あなたの手札の枚数より値が大きいカードを1枚反転させる。) で相手の裏向きを作り、DEATH 3 (裏向きのカードを1枚削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.4,
+    "interactionSe": 0.9,
+    "partnerValue": 1.9,
+    "partnerValueSe": 1,
+    "synergy": 0.4,
+    "synergySe": 0.7,
+    "missed": -2,
+    "missedSe": 1.1,
+    "aiPicked": 38
+   },
+   "note": null
+  },
+  {
+   "id": "S029",
+   "name": "WAR 2 → DEATH 3",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DEATH_4",
+    "WAR_3"
+   ],
+   "protocols": [
+    "WAR",
+    "DEATH"
+   ],
+   "how": "WAR 2 (カードを1枚反転させる。 / 相手がコンパイルしたあと：相手は手札をすべて捨て札にする。) で相手の裏向きを作り、DEATH 3 (裏向きのカードを1枚削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.2,
+    "interactionSe": 0.8,
+    "partnerValue": 2,
+    "partnerValueSe": 0.8,
+    "synergy": 1.8,
+    "synergySe": 0.7,
+    "missed": -2.1,
+    "missedSe": 1.7,
+    "aiPicked": 42
+   },
+   "note": null
+  },
+  {
+   "id": "S030",
+   "name": "LIGHT 0 → DEATH 3",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DEATH_4",
+    "LIGHT_1"
+   ],
+   "protocols": [
+    "LIGHT",
+    "DEATH"
+   ],
+   "how": "LIGHT 0 (カードを1枚反転させる。そのカードの値に等しい枚数のカードを引く。) で相手の裏向きを作り、DEATH 3 (裏向きのカードを1枚削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.4,
+    "interactionSe": 1,
+    "partnerValue": 1.1,
+    "partnerValueSe": 0.9,
+    "synergy": -0.4,
+    "synergySe": 0.5,
+    "missed": -2.7,
+    "missedSe": 1.1,
+    "aiPicked": 41
+   },
+   "note": null
+  },
+  {
+   "id": "S031",
+   "name": "SPIRIT 2 → DEATH 3",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DEATH_4",
+    "SPIRIT_3"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "DEATH"
+   ],
+   "how": "SPIRIT 2 (あなたはカードを1枚反転させることができる。) で相手の裏向きを作り、DEATH 3 (裏向きのカードを1枚削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.9,
+    "interactionSe": 1.2,
+    "partnerValue": 1.6,
+    "partnerValueSe": 0.9,
+    "synergy": 0.8,
+    "synergySe": 0.7,
+    "missed": -1,
+    "missedSe": 1.1,
+    "aiPicked": 48
+   },
+   "note": null
+  },
+  {
+   "id": "S032",
+   "name": "FEAR 0 → DEATH 3",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DEATH_4",
+    "FEAR_1"
+   ],
+   "protocols": [
+    "FEAR",
+    "DEATH"
+   ],
+   "how": "FEAR 0 (あなたの手番中、相手のカードの中段コマンドはないものとして扱う。 / カードを1枚移動させるか反転させる。) で相手の裏向きを作り、DEATH 3 (裏向きのカードを1枚削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0,
+    "interactionSe": 0.8,
+    "partnerValue": 1.1,
+    "partnerValueSe": 0.7,
+    "synergy": 1.1,
+    "synergySe": 0.5,
+    "missed": -2.4,
+    "missedSe": 1,
+    "aiPicked": 29
+   },
+   "note": null
+  },
+  {
+   "id": "S033",
+   "name": "ASSIMILATION 6 → DEATH 3",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "ASSIMILATION_6",
+    "DEATH_4"
+   ],
+   "protocols": [
+    "ASSIMILATION",
+    "DEATH"
+   ],
+   "how": "ASSIMILATION 6 (終了：あなたのデッキの一番上のカードを、相手側の任意のスタックに裏向きでプレイする。) で相手の裏向きを作り、DEATH 3 (裏向きのカードを1枚削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 61,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.1,
+    "interactionSe": 1.1,
+    "partnerValue": -4.4,
+    "partnerValueSe": 1.5,
+    "synergy": -3.4,
+    "synergySe": 1.7,
+    "missed": -4.6,
+    "missedSe": 1.5,
+    "aiPicked": 18
+   },
+   "note": null
+  },
+  {
+   "id": "S034",
+   "name": "GRAVITY 6 → DEATH 3",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DEATH_4",
+    "GRAVITY_6"
+   ],
+   "protocols": [
+    "GRAVITY",
+    "DEATH"
+   ],
+   "how": "GRAVITY 6 (相手は自分のデッキの一番上のカードをこのラインに裏向きで1枚プレイする。) で相手の裏向きを作り、DEATH 3 (裏向きのカードを1枚削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.6,
+    "interactionSe": 1,
+    "partnerValue": 1.6,
+    "partnerValueSe": 1,
+    "synergy": 0,
+    "synergySe": 0.7,
+    "missed": -4.6,
+    "missedSe": 1.5,
+    "aiPicked": 33
+   },
+   "note": null
+  },
+  {
+   "id": "S035",
+   "name": "FIRE 3 → ASSIMILATION 0",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "FIRE_4",
+    "ASSIMILATION_1"
+   ],
+   "protocols": [
+    "FIRE",
+    "ASSIMILATION"
+   ],
+   "how": "FIRE 3 (終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。) で相手の裏向きを作り、ASSIMILATION 0 (覆われているか覆われていない、相手の裏向きカードのうち1枚をあなたの手札に加える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.9,
+    "interactionSe": 2.2,
+    "partnerValue": 2.4,
+    "partnerValueSe": 2,
+    "synergy": 5.3,
+    "synergySe": 1.7,
+    "missed": -1.9,
+    "missedSe": 1.8,
+    "aiPicked": 11
+   },
+   "note": null
+  },
+  {
+   "id": "S036",
+   "name": "APATHY 3 → ASSIMILATION 0",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "ASSIMILATION_1",
+    "APATHY_4"
+   ],
+   "protocols": [
+    "APATHY",
+    "ASSIMILATION"
+   ],
+   "how": "APATHY 3 (相手の表向きのカードを１枚反転させる。) で相手の裏向きを作り、ASSIMILATION 0 (覆われているか覆われていない、相手の裏向きカードのうち1枚をあなたの手札に加える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.8,
+    "interactionSe": 0.8,
+    "partnerValue": 1.5,
+    "partnerValueSe": 0.8,
+    "synergy": 0.6,
+    "synergySe": 0.5,
+    "missed": -3,
+    "missedSe": 1.2,
+    "aiPicked": 49
+   },
+   "note": null
+  },
+  {
+   "id": "S037",
+   "name": "DARKNESS 1 → ASSIMILATION 0",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "ASSIMILATION_1",
+    "DARKNESS_2"
+   ],
+   "protocols": [
+    "DARKNESS",
+    "ASSIMILATION"
+   ],
+   "how": "DARKNESS 1 (相手のカードを1枚反転させる。あなたはそのカードを移動させることができる。) で相手の裏向きを作り、ASSIMILATION 0 (覆われているか覆われていない、相手の裏向きカードのうち1枚をあなたの手札に加える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.2,
+    "interactionSe": 1.1,
+    "partnerValue": -0.2,
+    "partnerValueSe": 1.2,
+    "synergy": 1,
+    "synergySe": 0.5,
+    "missed": -1.2,
+    "missedSe": 1.6,
+    "aiPicked": 43
+   },
+   "note": null
+  },
+  {
+   "id": "S038",
+   "name": "METAL 0 → ASSIMILATION 0",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "ASSIMILATION_1",
+    "METAL_1"
+   ],
+   "protocols": [
+    "METAL",
+    "ASSIMILATION"
+   ],
+   "how": "METAL 0 (このラインでの相手の合計値は2減る。 / カードを1枚反転させる。) で相手の裏向きを作り、ASSIMILATION 0 (覆われているか覆われていない、相手の裏向きカードのうち1枚をあなたの手札に加える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1,
+    "interactionSe": 1,
+    "partnerValue": -0.1,
+    "partnerValueSe": 1,
+    "synergy": 0.9,
+    "synergySe": 0.4,
+    "missed": -1.5,
+    "missedSe": 1.3,
+    "aiPicked": 40
+   },
+   "note": null
+  },
+  {
+   "id": "S039",
+   "name": "LIFE 1 → ASSIMILATION 0",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "ASSIMILATION_1",
+    "LIFE_2"
+   ],
+   "protocols": [
+    "LIFE",
+    "ASSIMILATION"
+   ],
+   "how": "LIFE 1 (カード1枚を反転させる。カード1枚を反転させる。) で相手の裏向きを作り、ASSIMILATION 0 (覆われているか覆われていない、相手の裏向きカードのうち1枚をあなたの手札に加える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.4,
+    "interactionSe": 0.7,
+    "partnerValue": 1.4,
+    "partnerValueSe": 1.2,
+    "synergy": 1.8,
+    "synergySe": 1.1,
+    "missed": 0.2,
+    "missedSe": 1.2,
+    "aiPicked": 49
+   },
+   "note": null
+  },
+  {
+   "id": "S040",
+   "name": "WATER 0 → ASSIMILATION 0",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "ASSIMILATION_1",
+    "WATER_1"
+   ],
+   "protocols": [
+    "WATER",
+    "ASSIMILATION"
+   ],
+   "how": "WATER 0 (他のカードを1枚反転させる。このカードを反転させる。) で相手の裏向きを作り、ASSIMILATION 0 (覆われているか覆われていない、相手の裏向きカードのうち1枚をあなたの手札に加える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.7,
+    "interactionSe": 1.4,
+    "partnerValue": 0.7,
+    "partnerValueSe": 1.5,
+    "synergy": 1.4,
+    "synergySe": 0.6,
+    "missed": -1.9,
+    "missedSe": 1.6,
+    "aiPicked": 38
+   },
+   "note": null
+  },
+  {
+   "id": "S041",
+   "name": "GRAVITY 2 → ASSIMILATION 0",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "ASSIMILATION_1",
+    "GRAVITY_3"
+   ],
+   "protocols": [
+    "GRAVITY",
+    "ASSIMILATION"
+   ],
+   "how": "GRAVITY 2 (カードを1枚反転させる。そのカードをこのラインへと移動させる。) で相手の裏向きを作り、ASSIMILATION 0 (覆われているか覆われていない、相手の裏向きカードのうち1枚をあなたの手札に加える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.4,
+    "interactionSe": 0.7,
+    "partnerValue": 1.6,
+    "partnerValueSe": 0.5,
+    "synergy": 1.2,
+    "synergySe": 0.7,
+    "missed": 0.2,
+    "missedSe": 1.1,
+    "aiPicked": 52
+   },
+   "note": null
+  },
+  {
+   "id": "S042",
+   "name": "PLAGUE 3 → ASSIMILATION 0",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "ASSIMILATION_1",
+    "PLAGUE_4"
+   ],
+   "protocols": [
+    "PLAGUE",
+    "ASSIMILATION"
+   ],
+   "how": "PLAGUE 3 (覆われていない、表向きの他のカードを反転させる。) で相手の裏向きを作り、ASSIMILATION 0 (覆われているか覆われていない、相手の裏向きカードのうち1枚をあなたの手札に加える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.1,
+    "interactionSe": 0.7,
+    "partnerValue": 1.4,
+    "partnerValueSe": 0.8,
+    "synergy": 0.3,
+    "synergySe": 0.3,
+    "missed": -8.2,
+    "missedSe": 2.2,
+    "aiPicked": 46
+   },
+   "note": null
+  },
+  {
+   "id": "S043",
+   "name": "MIRROR 3 → ASSIMILATION 0",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "ASSIMILATION_1",
+    "MIRROR_4"
+   ],
+   "protocols": [
+    "MIRROR",
+    "ASSIMILATION"
+   ],
+   "how": "MIRROR 3 (あなたのカードを1枚反転させる。そのカードと同じラインにある相手のカードを1枚反転させる。) で相手の裏向きを作り、ASSIMILATION 0 (覆われているか覆われていない、相手の裏向きカードのうち1枚をあなたの手札に加える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -2.1,
+    "interactionSe": 1,
+    "partnerValue": 2.6,
+    "partnerValueSe": 1,
+    "synergy": 0.5,
+    "synergySe": 0.6,
+    "missed": -4.9,
+    "missedSe": 1.6,
+    "aiPicked": 42
+   },
+   "note": null
+  },
+  {
+   "id": "S044",
+   "name": "LOVE 4 → ASSIMILATION 0",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "ASSIMILATION_1",
+    "LOVE_4"
+   ],
+   "protocols": [
+    "LOVE",
+    "ASSIMILATION"
+   ],
+   "how": "LOVE 4 (あなたの手札１枚を公開する。カードを１枚反転させる。) で相手の裏向きを作り、ASSIMILATION 0 (覆われているか覆われていない、相手の裏向きカードのうち1枚をあなたの手札に加える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.5,
+    "interactionSe": 1.5,
+    "partnerValue": 0,
+    "partnerValueSe": 1.4,
+    "synergy": 1.5,
+    "synergySe": 0.7,
+    "missed": -0.9,
+    "missedSe": 1.2,
+    "aiPicked": 60
+   },
+   "note": null
+  },
+  {
+   "id": "S045",
+   "name": "PEACE 3 → ASSIMILATION 0",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "ASSIMILATION_1",
+    "PEACE_3"
+   ],
+   "protocols": [
+    "PEACE",
+    "ASSIMILATION"
+   ],
+   "how": "PEACE 3 (あなたは手札を1枚捨て札にすることができる。あなたの手札の枚数より値が大きいカードを1枚反転させる。) で相手の裏向きを作り、ASSIMILATION 0 (覆われているか覆われていない、相手の裏向きカードのうち1枚をあなたの手札に加える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.4,
+    "interactionSe": 1.2,
+    "partnerValue": 2.5,
+    "partnerValueSe": 0.8,
+    "synergy": 1,
+    "synergySe": 1.2,
+    "missed": -3.3,
+    "missedSe": 1,
+    "aiPicked": 44
+   },
+   "note": null
+  },
+  {
+   "id": "S046",
+   "name": "WAR 2 → ASSIMILATION 0",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "ASSIMILATION_1",
+    "WAR_3"
+   ],
+   "protocols": [
+    "WAR",
+    "ASSIMILATION"
+   ],
+   "how": "WAR 2 (カードを1枚反転させる。 / 相手がコンパイルしたあと：相手は手札をすべて捨て札にする。) で相手の裏向きを作り、ASSIMILATION 0 (覆われているか覆われていない、相手の裏向きカードのうち1枚をあなたの手札に加える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.5,
+    "interactionSe": 1.1,
+    "partnerValue": 1.2,
+    "partnerValueSe": 0.6,
+    "synergy": 1.7,
+    "synergySe": 0.8,
+    "missed": -1.4,
+    "missedSe": 1.3,
+    "aiPicked": 46
+   },
+   "note": null
+  },
+  {
+   "id": "S047",
+   "name": "LIGHT 0 → ASSIMILATION 0",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "ASSIMILATION_1",
+    "LIGHT_1"
+   ],
+   "protocols": [
+    "LIGHT",
+    "ASSIMILATION"
+   ],
+   "how": "LIGHT 0 (カードを1枚反転させる。そのカードの値に等しい枚数のカードを引く。) で相手の裏向きを作り、ASSIMILATION 0 (覆われているか覆われていない、相手の裏向きカードのうち1枚をあなたの手札に加える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.8,
+    "interactionSe": 0.6,
+    "partnerValue": 0.7,
+    "partnerValueSe": 0.7,
+    "synergy": -0.1,
+    "synergySe": 0.7,
+    "missed": -1.1,
+    "missedSe": 1.2,
+    "aiPicked": 38
+   },
+   "note": null
+  },
+  {
+   "id": "S048",
+   "name": "SPIRIT 2 → ASSIMILATION 0",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "ASSIMILATION_1",
+    "SPIRIT_3"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "ASSIMILATION"
+   ],
+   "how": "SPIRIT 2 (あなたはカードを1枚反転させることができる。) で相手の裏向きを作り、ASSIMILATION 0 (覆われているか覆われていない、相手の裏向きカードのうち1枚をあなたの手札に加える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.7,
+    "interactionSe": 1.5,
+    "partnerValue": 2.3,
+    "partnerValueSe": 1.5,
+    "synergy": 0.6,
+    "synergySe": 0.4,
+    "missed": -4.9,
+    "missedSe": 2.4,
+    "aiPicked": 48
+   },
+   "note": null
+  },
+  {
+   "id": "S049",
+   "name": "FEAR 0 → ASSIMILATION 0",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "ASSIMILATION_1",
+    "FEAR_1"
+   ],
+   "protocols": [
+    "FEAR",
+    "ASSIMILATION"
+   ],
+   "how": "FEAR 0 (あなたの手番中、相手のカードの中段コマンドはないものとして扱う。 / カードを1枚移動させるか反転させる。) で相手の裏向きを作り、ASSIMILATION 0 (覆われているか覆われていない、相手の裏向きカードのうち1枚をあなたの手札に加える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.1,
+    "interactionSe": 1.3,
+    "partnerValue": 1.1,
+    "partnerValueSe": 1.1,
+    "synergy": 1.2,
+    "synergySe": 0.6,
+    "missed": -1.5,
+    "missedSe": 1,
+    "aiPicked": 32
+   },
+   "note": null
+  },
+  {
+   "id": "S050",
+   "name": "ASSIMILATION 6 → ASSIMILATION 0",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "ASSIMILATION_6",
+    "ASSIMILATION_1"
+   ],
+   "protocols": [
+    "ASSIMILATION"
+   ],
+   "how": "ASSIMILATION 6 (終了：あなたのデッキの一番上のカードを、相手側の任意のスタックに裏向きでプレイする。) で相手の裏向きを作り、ASSIMILATION 0 (覆われているか覆われていない、相手の裏向きカードのうち1枚をあなたの手札に加える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 153,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.9,
+    "interactionSe": 1.1,
+    "partnerValue": -1,
+    "partnerValueSe": 1,
+    "synergy": 0.8,
+    "synergySe": 0.5,
+    "missed": -4.9,
+    "missedSe": 1.4,
+    "aiPicked": 21
+   },
+   "note": null
+  },
+  {
+   "id": "S051",
+   "name": "GRAVITY 6 → ASSIMILATION 0",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "ASSIMILATION_1",
+    "GRAVITY_6"
+   ],
+   "protocols": [
+    "GRAVITY",
+    "ASSIMILATION"
+   ],
+   "how": "GRAVITY 6 (相手は自分のデッキの一番上のカードをこのラインに裏向きで1枚プレイする。) で相手の裏向きを作り、ASSIMILATION 0 (覆われているか覆われていない、相手の裏向きカードのうち1枚をあなたの手札に加える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.6,
+    "interactionSe": 1.2,
+    "partnerValue": 0.4,
+    "partnerValueSe": 1.1,
+    "synergy": 1,
+    "synergySe": 0.4,
+    "missed": -4.4,
+    "missedSe": 1.5,
+    "aiPicked": 32
+   },
+   "note": null
+  },
+  {
+   "id": "S052",
+   "name": "FIRE 3 → SPEED 4",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "FIRE_4",
+    "SPEED_5"
+   ],
+   "protocols": [
+    "FIRE",
+    "SPEED"
+   ],
+   "how": "FIRE 3 (終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。) で相手の裏向きを作り、SPEED 4 (相手の裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 151,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.8,
+    "interactionSe": 1.3,
+    "partnerValue": 3.3,
+    "partnerValueSe": 1.2,
+    "synergy": 4,
+    "synergySe": 1.1,
+    "missed": -3.2,
+    "missedSe": 1.1,
+    "aiPicked": 26
+   },
+   "note": null
+  },
+  {
+   "id": "S053",
+   "name": "APATHY 3 → SPEED 4",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "SPEED_5",
+    "APATHY_4"
+   ],
+   "protocols": [
+    "APATHY",
+    "SPEED"
+   ],
+   "how": "APATHY 3 (相手の表向きのカードを１枚反転させる。) で相手の裏向きを作り、SPEED 4 (相手の裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.6,
+    "interactionSe": 2.4,
+    "partnerValue": 1.3,
+    "partnerValueSe": 1.6,
+    "synergy": 0.6,
+    "synergySe": 1.5,
+    "missed": -1.8,
+    "missedSe": 1.7,
+    "aiPicked": 44
+   },
+   "note": null
+  },
+  {
+   "id": "S054",
+   "name": "DARKNESS 1 → SPEED 4",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "SPEED_5",
+    "DARKNESS_2"
+   ],
+   "protocols": [
+    "DARKNESS",
+    "SPEED"
+   ],
+   "how": "DARKNESS 1 (相手のカードを1枚反転させる。あなたはそのカードを移動させることができる。) で相手の裏向きを作り、SPEED 4 (相手の裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.2,
+    "interactionSe": 1.4,
+    "partnerValue": 0.5,
+    "partnerValueSe": 0.8,
+    "synergy": 1.8,
+    "synergySe": 1.1,
+    "missed": -1.8,
+    "missedSe": 1.4,
+    "aiPicked": 49
+   },
+   "note": null
+  },
+  {
+   "id": "S055",
+   "name": "METAL 0 → SPEED 4",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "SPEED_5",
+    "METAL_1"
+   ],
+   "protocols": [
+    "METAL",
+    "SPEED"
+   ],
+   "how": "METAL 0 (このラインでの相手の合計値は2減る。 / カードを1枚反転させる。) で相手の裏向きを作り、SPEED 4 (相手の裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.6,
+    "interactionSe": 0.9,
+    "partnerValue": 1.7,
+    "partnerValueSe": 1.4,
+    "synergy": 1.1,
+    "synergySe": 1.2,
+    "missed": -1,
+    "missedSe": 1.2,
+    "aiPicked": 34
+   },
+   "note": null
+  },
+  {
+   "id": "S056",
+   "name": "LIFE 1 → SPEED 4",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "SPEED_5",
+    "LIFE_2"
+   ],
+   "protocols": [
+    "LIFE",
+    "SPEED"
+   ],
+   "how": "LIFE 1 (カード1枚を反転させる。カード1枚を反転させる。) で相手の裏向きを作り、SPEED 4 (相手の裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.3,
+    "interactionSe": 0.9,
+    "partnerValue": 0.3,
+    "partnerValueSe": 0.9,
+    "synergy": 0.6,
+    "synergySe": 0.7,
+    "missed": -1.3,
+    "missedSe": 1.7,
+    "aiPicked": 46
+   },
+   "note": null
+  },
+  {
+   "id": "S057",
+   "name": "WATER 0 → SPEED 4",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "SPEED_5",
+    "WATER_1"
+   ],
+   "protocols": [
+    "WATER",
+    "SPEED"
+   ],
+   "how": "WATER 0 (他のカードを1枚反転させる。このカードを反転させる。) で相手の裏向きを作り、SPEED 4 (相手の裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.8,
+    "interactionSe": 1.1,
+    "partnerValue": -1.9,
+    "partnerValueSe": 1.2,
+    "synergy": -1.1,
+    "synergySe": 1,
+    "missed": -4.3,
+    "missedSe": 1.6,
+    "aiPicked": 40
+   },
+   "note": null
+  },
+  {
+   "id": "S058",
+   "name": "GRAVITY 2 → SPEED 4",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "SPEED_5",
+    "GRAVITY_3"
+   ],
+   "protocols": [
+    "GRAVITY",
+    "SPEED"
+   ],
+   "how": "GRAVITY 2 (カードを1枚反転させる。そのカードをこのラインへと移動させる。) で相手の裏向きを作り、SPEED 4 (相手の裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.9,
+    "interactionSe": 1.4,
+    "partnerValue": 2.1,
+    "partnerValueSe": 1.2,
+    "synergy": 1.2,
+    "synergySe": 1.2,
+    "missed": -2.1,
+    "missedSe": 1.6,
+    "aiPicked": 51
+   },
+   "note": null
+  },
+  {
+   "id": "S059",
+   "name": "PLAGUE 3 → SPEED 4",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "SPEED_5",
+    "PLAGUE_4"
+   ],
+   "protocols": [
+    "PLAGUE",
+    "SPEED"
+   ],
+   "how": "PLAGUE 3 (覆われていない、表向きの他のカードを反転させる。) で相手の裏向きを作り、SPEED 4 (相手の裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.6,
+    "interactionSe": 1.7,
+    "partnerValue": -1.5,
+    "partnerValueSe": 1.6,
+    "synergy": 0.1,
+    "synergySe": 0.7,
+    "missed": -4.2,
+    "missedSe": 2,
+    "aiPicked": 40
+   },
+   "note": null
+  },
+  {
+   "id": "S060",
+   "name": "MIRROR 3 → SPEED 4",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "SPEED_5",
+    "MIRROR_4"
+   ],
+   "protocols": [
+    "MIRROR",
+    "SPEED"
+   ],
+   "how": "MIRROR 3 (あなたのカードを1枚反転させる。そのカードと同じラインにある相手のカードを1枚反転させる。) で相手の裏向きを作り、SPEED 4 (相手の裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.4,
+    "interactionSe": 1.4,
+    "partnerValue": 1.6,
+    "partnerValueSe": 1.3,
+    "synergy": 1.2,
+    "synergySe": 1.1,
+    "missed": -3.3,
+    "missedSe": 1.2,
+    "aiPicked": 48
+   },
+   "note": null
+  },
+  {
+   "id": "S061",
+   "name": "LOVE 4 → SPEED 4",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "SPEED_5",
+    "LOVE_4"
+   ],
+   "protocols": [
+    "LOVE",
+    "SPEED"
+   ],
+   "how": "LOVE 4 (あなたの手札１枚を公開する。カードを１枚反転させる。) で相手の裏向きを作り、SPEED 4 (相手の裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.5,
+    "interactionSe": 0.7,
+    "partnerValue": 0.2,
+    "partnerValueSe": 0.9,
+    "synergy": -0.3,
+    "synergySe": 1.1,
+    "missed": -1,
+    "missedSe": 0.9,
+    "aiPicked": 57
+   },
+   "note": null
+  },
+  {
+   "id": "S062",
+   "name": "PEACE 3 → SPEED 4",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "SPEED_5",
+    "PEACE_3"
+   ],
+   "protocols": [
+    "PEACE",
+    "SPEED"
+   ],
+   "how": "PEACE 3 (あなたは手札を1枚捨て札にすることができる。あなたの手札の枚数より値が大きいカードを1枚反転させる。) で相手の裏向きを作り、SPEED 4 (相手の裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -3.4,
+    "interactionSe": 2.2,
+    "partnerValue": 2.7,
+    "partnerValueSe": 2.3,
+    "synergy": -0.7,
+    "synergySe": 0.8,
+    "missed": -5.3,
+    "missedSe": 1.9,
+    "aiPicked": 38
+   },
+   "note": null
+  },
+  {
+   "id": "S063",
+   "name": "WAR 2 → SPEED 4",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "SPEED_5",
+    "WAR_3"
+   ],
+   "protocols": [
+    "WAR",
+    "SPEED"
+   ],
+   "how": "WAR 2 (カードを1枚反転させる。 / 相手がコンパイルしたあと：相手は手札をすべて捨て札にする。) で相手の裏向きを作り、SPEED 4 (相手の裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.8,
+    "interactionSe": 1.1,
+    "partnerValue": 0.3,
+    "partnerValueSe": 1.3,
+    "synergy": 2.1,
+    "synergySe": 1.2,
+    "missed": -1.2,
+    "missedSe": 1.2,
+    "aiPicked": 40
+   },
+   "note": null
+  },
+  {
+   "id": "S064",
+   "name": "LIGHT 0 → SPEED 4",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "SPEED_5",
+    "LIGHT_1"
+   ],
+   "protocols": [
+    "LIGHT",
+    "SPEED"
+   ],
+   "how": "LIGHT 0 (カードを1枚反転させる。そのカードの値に等しい枚数のカードを引く。) で相手の裏向きを作り、SPEED 4 (相手の裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.4,
+    "interactionSe": 0.9,
+    "partnerValue": 0,
+    "partnerValueSe": 1,
+    "synergy": 0.4,
+    "synergySe": 0.6,
+    "missed": -2.8,
+    "missedSe": 1.1,
+    "aiPicked": 49
+   },
+   "note": null
+  },
+  {
+   "id": "S065",
+   "name": "SPIRIT 2 → SPEED 4",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "SPEED_5",
+    "SPIRIT_3"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "SPEED"
+   ],
+   "how": "SPIRIT 2 (あなたはカードを1枚反転させることができる。) で相手の裏向きを作り、SPEED 4 (相手の裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.1,
+    "interactionSe": 1.6,
+    "partnerValue": 0.4,
+    "partnerValueSe": 0.9,
+    "synergy": 0.4,
+    "synergySe": 1.4,
+    "missed": -1,
+    "missedSe": 2.1,
+    "aiPicked": 35
+   },
+   "note": null
+  },
+  {
+   "id": "S066",
+   "name": "FEAR 0 → SPEED 4",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "SPEED_5",
+    "FEAR_1"
+   ],
+   "protocols": [
+    "FEAR",
+    "SPEED"
+   ],
+   "how": "FEAR 0 (あなたの手番中、相手のカードの中段コマンドはないものとして扱う。 / カードを1枚移動させるか反転させる。) で相手の裏向きを作り、SPEED 4 (相手の裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.6,
+    "interactionSe": 0.8,
+    "partnerValue": 2.1,
+    "partnerValueSe": 1.1,
+    "synergy": 1.5,
+    "synergySe": 1.1,
+    "missed": -3.6,
+    "missedSe": 0.9,
+    "aiPicked": 31
+   },
+   "note": null
+  },
+  {
+   "id": "S067",
+   "name": "ASSIMILATION 6 → SPEED 4",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "ASSIMILATION_6",
+    "SPEED_5"
+   ],
+   "protocols": [
+    "ASSIMILATION",
+    "SPEED"
+   ],
+   "how": "ASSIMILATION 6 (終了：あなたのデッキの一番上のカードを、相手側の任意のスタックに裏向きでプレイする。) で相手の裏向きを作り、SPEED 4 (相手の裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.4,
+    "interactionSe": 2.3,
+    "partnerValue": -2.2,
+    "partnerValueSe": 1.4,
+    "synergy": -2.6,
+    "synergySe": 1.7,
+    "missed": -4.7,
+    "missedSe": 2.2,
+    "aiPicked": 23
+   },
+   "note": null
+  },
+  {
+   "id": "S068",
+   "name": "GRAVITY 6 → SPEED 4",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "SPEED_5",
+    "GRAVITY_6"
+   ],
+   "protocols": [
+    "GRAVITY",
+    "SPEED"
+   ],
+   "how": "GRAVITY 6 (相手は自分のデッキの一番上のカードをこのラインに裏向きで1枚プレイする。) で相手の裏向きを作り、SPEED 4 (相手の裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1,
+    "interactionSe": 1.7,
+    "partnerValue": 0.8,
+    "partnerValueSe": 1.4,
+    "synergy": 1.8,
+    "synergySe": 1.2,
+    "missed": -8.4,
+    "missedSe": 2.5,
+    "aiPicked": 23
+   },
+   "note": null
+  },
+  {
+   "id": "S069",
+   "name": "FIRE 3 → DARKNESS 4",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "FIRE_4",
+    "DARKNESS_5"
+   ],
+   "protocols": [
+    "FIRE",
+    "DARKNESS"
+   ],
+   "how": "FIRE 3 (終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。) で相手の裏向きを作り、DARKNESS 4 (裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 153,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2,
+    "interactionSe": 1.1,
+    "partnerValue": 1,
+    "partnerValueSe": 1.1,
+    "synergy": 3,
+    "synergySe": 0.7,
+    "missed": -0.8,
+    "missedSe": 0.9,
+    "aiPicked": 29
+   },
+   "note": null
+  },
+  {
+   "id": "S070",
+   "name": "APATHY 3 → DARKNESS 4",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DARKNESS_5",
+    "APATHY_4"
+   ],
+   "protocols": [
+    "APATHY",
+    "DARKNESS"
+   ],
+   "how": "APATHY 3 (相手の表向きのカードを１枚反転させる。) で相手の裏向きを作り、DARKNESS 4 (裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 152,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.4,
+    "interactionSe": 0.8,
+    "partnerValue": 1.6,
+    "partnerValueSe": 0.9,
+    "synergy": 1.1,
+    "synergySe": 0.7,
+    "missed": -1.8,
+    "missedSe": 0.8,
+    "aiPicked": 45
+   },
+   "note": null
+  },
+  {
+   "id": "S071",
+   "name": "DARKNESS 1 → DARKNESS 4",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DARKNESS_5",
+    "DARKNESS_2"
+   ],
+   "protocols": [
+    "DARKNESS"
+   ],
+   "how": "DARKNESS 1 (相手のカードを1枚反転させる。あなたはそのカードを移動させることができる。) で相手の裏向きを作り、DARKNESS 4 (裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.4,
+    "interactionSe": 1.2,
+    "partnerValue": 1.8,
+    "partnerValueSe": 1.1,
+    "synergy": 0.4,
+    "synergySe": 0.7,
+    "missed": -5.7,
+    "missedSe": 1.4,
+    "aiPicked": 38
+   },
+   "note": null
+  },
+  {
+   "id": "S072",
+   "name": "METAL 0 → DARKNESS 4",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DARKNESS_5",
+    "METAL_1"
+   ],
+   "protocols": [
+    "METAL",
+    "DARKNESS"
+   ],
+   "how": "METAL 0 (このラインでの相手の合計値は2減る。 / カードを1枚反転させる。) で相手の裏向きを作り、DARKNESS 4 (裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.2,
+    "interactionSe": 1,
+    "partnerValue": 0,
+    "partnerValueSe": 0.7,
+    "synergy": 1.2,
+    "synergySe": 0.9,
+    "missed": -1.8,
+    "missedSe": 1.4,
+    "aiPicked": 35
+   },
+   "note": null
+  },
+  {
+   "id": "S073",
+   "name": "LIFE 1 → DARKNESS 4",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DARKNESS_5",
+    "LIFE_2"
+   ],
+   "protocols": [
+    "LIFE",
+    "DARKNESS"
+   ],
+   "how": "LIFE 1 (カード1枚を反転させる。カード1枚を反転させる。) で相手の裏向きを作り、DARKNESS 4 (裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2,
+    "interactionSe": 2.1,
+    "partnerValue": 1.1,
+    "partnerValueSe": 1.7,
+    "synergy": 3.1,
+    "synergySe": 1.2,
+    "missed": 0.1,
+    "missedSe": 1.7,
+    "aiPicked": 35
+   },
+   "note": null
+  },
+  {
+   "id": "S074",
+   "name": "WATER 0 → DARKNESS 4",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DARKNESS_5",
+    "WATER_1"
+   ],
+   "protocols": [
+    "WATER",
+    "DARKNESS"
+   ],
+   "how": "WATER 0 (他のカードを1枚反転させる。このカードを反転させる。) で相手の裏向きを作り、DARKNESS 4 (裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.6,
+    "interactionSe": 1.6,
+    "partnerValue": 4.4,
+    "partnerValueSe": 1.6,
+    "synergy": 3.8,
+    "synergySe": 1.2,
+    "missed": -1,
+    "missedSe": 1.4,
+    "aiPicked": 41
+   },
+   "note": null
+  },
+  {
+   "id": "S075",
+   "name": "GRAVITY 2 → DARKNESS 4",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DARKNESS_5",
+    "GRAVITY_3"
+   ],
+   "protocols": [
+    "GRAVITY",
+    "DARKNESS"
+   ],
+   "how": "GRAVITY 2 (カードを1枚反転させる。そのカードをこのラインへと移動させる。) で相手の裏向きを作り、DARKNESS 4 (裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.9,
+    "interactionSe": 1.2,
+    "partnerValue": 2.6,
+    "partnerValueSe": 0.9,
+    "synergy": 3.4,
+    "synergySe": 1.1,
+    "missed": -3.8,
+    "missedSe": 1.8,
+    "aiPicked": 33
+   },
+   "note": null
+  },
+  {
+   "id": "S076",
+   "name": "PLAGUE 3 → DARKNESS 4",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DARKNESS_5",
+    "PLAGUE_4"
+   ],
+   "protocols": [
+    "PLAGUE",
+    "DARKNESS"
+   ],
+   "how": "PLAGUE 3 (覆われていない、表向きの他のカードを反転させる。) で相手の裏向きを作り、DARKNESS 4 (裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.8,
+    "interactionSe": 1.1,
+    "partnerValue": 2.3,
+    "partnerValueSe": 1,
+    "synergy": 1.6,
+    "synergySe": 0.6,
+    "missed": -3.7,
+    "missedSe": 1.3,
+    "aiPicked": 43
+   },
+   "note": null
+  },
+  {
+   "id": "S077",
+   "name": "MIRROR 3 → DARKNESS 4",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DARKNESS_5",
+    "MIRROR_4"
+   ],
+   "protocols": [
+    "MIRROR",
+    "DARKNESS"
+   ],
+   "how": "MIRROR 3 (あなたのカードを1枚反転させる。そのカードと同じラインにある相手のカードを1枚反転させる。) で相手の裏向きを作り、DARKNESS 4 (裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.4,
+    "interactionSe": 1.4,
+    "partnerValue": 1.4,
+    "partnerValueSe": 1.1,
+    "synergy": 1,
+    "synergySe": 0.8,
+    "missed": -3.6,
+    "missedSe": 1.5,
+    "aiPicked": 32
+   },
+   "note": null
+  },
+  {
+   "id": "S078",
+   "name": "LOVE 4 → DARKNESS 4",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DARKNESS_5",
+    "LOVE_4"
+   ],
+   "protocols": [
+    "LOVE",
+    "DARKNESS"
+   ],
+   "how": "LOVE 4 (あなたの手札１枚を公開する。カードを１枚反転させる。) で相手の裏向きを作り、DARKNESS 4 (裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.1,
+    "interactionSe": 1.9,
+    "partnerValue": -0.5,
+    "partnerValueSe": 1.6,
+    "synergy": 1.6,
+    "synergySe": 1.4,
+    "missed": -1,
+    "missedSe": 0.9,
+    "aiPicked": 57
+   },
+   "note": null
+  },
+  {
+   "id": "S079",
+   "name": "PEACE 3 → DARKNESS 4",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DARKNESS_5",
+    "PEACE_3"
+   ],
+   "protocols": [
+    "PEACE",
+    "DARKNESS"
+   ],
+   "how": "PEACE 3 (あなたは手札を1枚捨て札にすることができる。あなたの手札の枚数より値が大きいカードを1枚反転させる。) で相手の裏向きを作り、DARKNESS 4 (裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -2,
+    "interactionSe": 1.2,
+    "partnerValue": 1.4,
+    "partnerValueSe": 1.1,
+    "synergy": -0.6,
+    "synergySe": 0.9,
+    "missed": -3.7,
+    "missedSe": 1.5,
+    "aiPicked": 25
+   },
+   "note": null
+  },
+  {
+   "id": "S080",
+   "name": "WAR 2 → DARKNESS 4",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DARKNESS_5",
+    "WAR_3"
+   ],
+   "protocols": [
+    "WAR",
+    "DARKNESS"
+   ],
+   "how": "WAR 2 (カードを1枚反転させる。 / 相手がコンパイルしたあと：相手は手札をすべて捨て札にする。) で相手の裏向きを作り、DARKNESS 4 (裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.9,
+    "interactionSe": 1.7,
+    "partnerValue": -0.4,
+    "partnerValueSe": 1.7,
+    "synergy": 0.6,
+    "synergySe": 0.8,
+    "missed": -0.8,
+    "missedSe": 1.5,
+    "aiPicked": 33
+   },
+   "note": null
+  },
+  {
+   "id": "S081",
+   "name": "LIGHT 0 → DARKNESS 4",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DARKNESS_5",
+    "LIGHT_1"
+   ],
+   "protocols": [
+    "LIGHT",
+    "DARKNESS"
+   ],
+   "how": "LIGHT 0 (カードを1枚反転させる。そのカードの値に等しい枚数のカードを引く。) で相手の裏向きを作り、DARKNESS 4 (裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.2,
+    "interactionSe": 0.9,
+    "partnerValue": -0.7,
+    "partnerValueSe": 0.8,
+    "synergy": 0.5,
+    "synergySe": 0.4,
+    "missed": -3.4,
+    "missedSe": 1.4,
+    "aiPicked": 37
+   },
+   "note": null
+  },
+  {
+   "id": "S082",
+   "name": "SPIRIT 2 → DARKNESS 4",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DARKNESS_5",
+    "SPIRIT_3"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "DARKNESS"
+   ],
+   "how": "SPIRIT 2 (あなたはカードを1枚反転させることができる。) で相手の裏向きを作り、DARKNESS 4 (裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1,
+    "interactionSe": 0.9,
+    "partnerValue": 1.6,
+    "partnerValueSe": 0.9,
+    "synergy": 0.5,
+    "synergySe": 0.9,
+    "missed": -1.3,
+    "missedSe": 1.3,
+    "aiPicked": 32
+   },
+   "note": null
+  },
+  {
+   "id": "S083",
+   "name": "FEAR 0 → DARKNESS 4",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DARKNESS_5",
+    "FEAR_1"
+   ],
+   "protocols": [
+    "FEAR",
+    "DARKNESS"
+   ],
+   "how": "FEAR 0 (あなたの手番中、相手のカードの中段コマンドはないものとして扱う。 / カードを1枚移動させるか反転させる。) で相手の裏向きを作り、DARKNESS 4 (裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.5,
+    "interactionSe": 1.7,
+    "partnerValue": 0.7,
+    "partnerValueSe": 1.6,
+    "synergy": 2.2,
+    "synergySe": 1,
+    "missed": -0.3,
+    "missedSe": 1.3,
+    "aiPicked": 30
+   },
+   "note": null
+  },
+  {
+   "id": "S084",
+   "name": "ASSIMILATION 6 → DARKNESS 4",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "ASSIMILATION_6",
+    "DARKNESS_5"
+   ],
+   "protocols": [
+    "ASSIMILATION",
+    "DARKNESS"
+   ],
+   "how": "ASSIMILATION 6 (終了：あなたのデッキの一番上のカードを、相手側の任意のスタックに裏向きでプレイする。) で相手の裏向きを作り、DARKNESS 4 (裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.3,
+    "interactionSe": 2.4,
+    "partnerValue": -4.3,
+    "partnerValueSe": 2.3,
+    "synergy": -4.6,
+    "synergySe": 2.1,
+    "missed": -1,
+    "missedSe": 2,
+    "aiPicked": 33
+   },
+   "note": null
+  },
+  {
+   "id": "S085",
+   "name": "GRAVITY 6 → DARKNESS 4",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DARKNESS_5",
+    "GRAVITY_6"
+   ],
+   "protocols": [
+    "GRAVITY",
+    "DARKNESS"
+   ],
+   "how": "GRAVITY 6 (相手は自分のデッキの一番上のカードをこのラインに裏向きで1枚プレイする。) で相手の裏向きを作り、DARKNESS 4 (裏向きのカードを1枚移動させる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.4,
+    "interactionSe": 2.2,
+    "partnerValue": 1.9,
+    "partnerValueSe": 2,
+    "synergy": 1.4,
+    "synergySe": 0.9,
+    "missed": -10.3,
+    "missedSe": 2.6,
+    "aiPicked": 16
+   },
+   "note": null
+  },
+  {
+   "id": "S086",
+   "name": "FIRE 3 → WATER 3",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "FIRE_4",
+    "WATER_4"
+   ],
+   "protocols": [
+    "FIRE",
+    "WATER"
+   ],
+   "how": "FIRE 3 (終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。) で相手の裏向きを作り、WATER 3 (1ラインを選び、そのラインの値が2のすべてのカードを戻す。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.4,
+    "interactionSe": 1.9,
+    "partnerValue": 4.6,
+    "partnerValueSe": 1.7,
+    "synergy": 5,
+    "synergySe": 1.5,
+    "missed": -0.6,
+    "missedSe": 1.6,
+    "aiPicked": 25
+   },
+   "note": null
+  },
+  {
+   "id": "S087",
+   "name": "APATHY 3 → WATER 3",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "WATER_4",
+    "APATHY_4"
+   ],
+   "protocols": [
+    "APATHY",
+    "WATER"
+   ],
+   "how": "APATHY 3 (相手の表向きのカードを１枚反転させる。) で相手の裏向きを作り、WATER 3 (1ラインを選び、そのラインの値が2のすべてのカードを戻す。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.6,
+    "interactionSe": 1.7,
+    "partnerValue": 2.4,
+    "partnerValueSe": 1.8,
+    "synergy": 1.8,
+    "synergySe": 0.6,
+    "missed": -2.5,
+    "missedSe": 1.8,
+    "aiPicked": 52
+   },
+   "note": null
+  },
+  {
+   "id": "S088",
+   "name": "DARKNESS 1 → WATER 3",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "WATER_4",
+    "DARKNESS_2"
+   ],
+   "protocols": [
+    "DARKNESS",
+    "WATER"
+   ],
+   "how": "DARKNESS 1 (相手のカードを1枚反転させる。あなたはそのカードを移動させることができる。) で相手の裏向きを作り、WATER 3 (1ラインを選び、そのラインの値が2のすべてのカードを戻す。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.8,
+    "interactionSe": 1.1,
+    "partnerValue": 1.3,
+    "partnerValueSe": 1,
+    "synergy": 0.5,
+    "synergySe": 0.6,
+    "missed": -1.1,
+    "missedSe": 1.2,
+    "aiPicked": 40
+   },
+   "note": null
+  },
+  {
+   "id": "S089",
+   "name": "METAL 0 → WATER 3",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "WATER_4",
+    "METAL_1"
+   ],
+   "protocols": [
+    "METAL",
+    "WATER"
+   ],
+   "how": "METAL 0 (このラインでの相手の合計値は2減る。 / カードを1枚反転させる。) で相手の裏向きを作り、WATER 3 (1ラインを選び、そのラインの値が2のすべてのカードを戻す。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.6,
+    "interactionSe": 0.9,
+    "partnerValue": 1.8,
+    "partnerValueSe": 0.9,
+    "synergy": 2.4,
+    "synergySe": 0.8,
+    "missed": -0.2,
+    "missedSe": 1.4,
+    "aiPicked": 25
+   },
+   "note": null
+  },
+  {
+   "id": "S090",
+   "name": "LIFE 1 → WATER 3",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "WATER_4",
+    "LIFE_2"
+   ],
+   "protocols": [
+    "LIFE",
+    "WATER"
+   ],
+   "how": "LIFE 1 (カード1枚を反転させる。カード1枚を反転させる。) で相手の裏向きを作り、WATER 3 (1ラインを選び、そのラインの値が2のすべてのカードを戻す。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.3,
+    "interactionSe": 2,
+    "partnerValue": 1.3,
+    "partnerValueSe": 1.7,
+    "synergy": 1.7,
+    "synergySe": 1.1,
+    "missed": -2.3,
+    "missedSe": 1.4,
+    "aiPicked": 33
+   },
+   "note": null
+  },
+  {
+   "id": "S091",
+   "name": "WATER 0 → WATER 3",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "WATER_4",
+    "WATER_1"
+   ],
+   "protocols": [
+    "WATER"
+   ],
+   "how": "WATER 0 (他のカードを1枚反転させる。このカードを反転させる。) で相手の裏向きを作り、WATER 3 (1ラインを選び、そのラインの値が2のすべてのカードを戻す。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.1,
+    "interactionSe": 1.2,
+    "partnerValue": 1.6,
+    "partnerValueSe": 1.3,
+    "synergy": 2.7,
+    "synergySe": 0.9,
+    "missed": -2.6,
+    "missedSe": 1,
+    "aiPicked": 37
+   },
+   "note": null
+  },
+  {
+   "id": "S092",
+   "name": "GRAVITY 2 → WATER 3",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "WATER_4",
+    "GRAVITY_3"
+   ],
+   "protocols": [
+    "GRAVITY",
+    "WATER"
+   ],
+   "how": "GRAVITY 2 (カードを1枚反転させる。そのカードをこのラインへと移動させる。) で相手の裏向きを作り、WATER 3 (1ラインを選び、そのラインの値が2のすべてのカードを戻す。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.7,
+    "interactionSe": 1.2,
+    "partnerValue": 2,
+    "partnerValueSe": 0.9,
+    "synergy": 1.2,
+    "synergySe": 0.9,
+    "missed": -1.1,
+    "missedSe": 1.5,
+    "aiPicked": 43
+   },
+   "note": null
+  },
+  {
+   "id": "S093",
+   "name": "MIRROR 3 → WATER 3",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "WATER_4",
+    "MIRROR_4"
+   ],
+   "protocols": [
+    "MIRROR",
+    "WATER"
+   ],
+   "how": "MIRROR 3 (あなたのカードを1枚反転させる。そのカードと同じラインにある相手のカードを1枚反転させる。) で相手の裏向きを作り、WATER 3 (1ラインを選び、そのラインの値が2のすべてのカードを戻す。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2,
+    "interactionSe": 1.1,
+    "partnerValue": -0.2,
+    "partnerValueSe": 1,
+    "synergy": 1.8,
+    "synergySe": 1,
+    "missed": -2.4,
+    "missedSe": 1.2,
+    "aiPicked": 45
+   },
+   "note": null
+  },
+  {
+   "id": "S094",
+   "name": "LOVE 4 → WATER 3",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "WATER_4",
+    "LOVE_4"
+   ],
+   "protocols": [
+    "LOVE",
+    "WATER"
+   ],
+   "how": "LOVE 4 (あなたの手札１枚を公開する。カードを１枚反転させる。) で相手の裏向きを作り、WATER 3 (1ラインを選び、そのラインの値が2のすべてのカードを戻す。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.7,
+    "interactionSe": 1.2,
+    "partnerValue": 1.2,
+    "partnerValueSe": 1,
+    "synergy": 0.5,
+    "synergySe": 0.9,
+    "missed": -3.5,
+    "missedSe": 1.7,
+    "aiPicked": 54
+   },
+   "note": null
+  },
+  {
+   "id": "S095",
+   "name": "PEACE 3 → WATER 3",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "WATER_4",
+    "PEACE_3"
+   ],
+   "protocols": [
+    "PEACE",
+    "WATER"
+   ],
+   "how": "PEACE 3 (あなたは手札を1枚捨て札にすることができる。あなたの手札の枚数より値が大きいカードを1枚反転させる。) で相手の裏向きを作り、WATER 3 (1ラインを選び、そのラインの値が2のすべてのカードを戻す。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -2.8,
+    "interactionSe": 1.7,
+    "partnerValue": 3.7,
+    "partnerValueSe": 1.5,
+    "synergy": 0.8,
+    "synergySe": 0.7,
+    "missed": -3.6,
+    "missedSe": 1.8,
+    "aiPicked": 32
+   },
+   "note": null
+  },
+  {
+   "id": "S096",
+   "name": "WAR 2 → WATER 3",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "WATER_4",
+    "WAR_3"
+   ],
+   "protocols": [
+    "WAR",
+    "WATER"
+   ],
+   "how": "WAR 2 (カードを1枚反転させる。 / 相手がコンパイルしたあと：相手は手札をすべて捨て札にする。) で相手の裏向きを作り、WATER 3 (1ラインを選び、そのラインの値が2のすべてのカードを戻す。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.6,
+    "interactionSe": 1,
+    "partnerValue": 1.9,
+    "partnerValueSe": 1,
+    "synergy": 3.6,
+    "synergySe": 1,
+    "missed": -0.2,
+    "missedSe": 1,
+    "aiPicked": 46
+   },
+   "note": null
+  },
+  {
+   "id": "S097",
+   "name": "LIGHT 0 → WATER 3",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "WATER_4",
+    "LIGHT_1"
+   ],
+   "protocols": [
+    "LIGHT",
+    "WATER"
+   ],
+   "how": "LIGHT 0 (カードを1枚反転させる。そのカードの値に等しい枚数のカードを引く。) で相手の裏向きを作り、WATER 3 (1ラインを選び、そのラインの値が2のすべてのカードを戻す。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.4,
+    "interactionSe": 0.9,
+    "partnerValue": 1.6,
+    "partnerValueSe": 1,
+    "synergy": 0.3,
+    "synergySe": 0.5,
+    "missed": -3.1,
+    "missedSe": 0.9,
+    "aiPicked": 41
+   },
+   "note": null
+  },
+  {
+   "id": "S098",
+   "name": "SPIRIT 2 → WATER 3",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "WATER_4",
+    "SPIRIT_3"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "WATER"
+   ],
+   "how": "SPIRIT 2 (あなたはカードを1枚反転させることができる。) で相手の裏向きを作り、WATER 3 (1ラインを選び、そのラインの値が2のすべてのカードを戻す。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.9,
+    "interactionSe": 0.7,
+    "partnerValue": 0.8,
+    "partnerValueSe": 0.8,
+    "synergy": -0.1,
+    "synergySe": 0.7,
+    "missed": -1.5,
+    "missedSe": 1.2,
+    "aiPicked": 44
+   },
+   "note": null
+  },
+  {
+   "id": "S099",
+   "name": "FEAR 0 → WATER 3",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "WATER_4",
+    "FEAR_1"
+   ],
+   "protocols": [
+    "FEAR",
+    "WATER"
+   ],
+   "how": "FEAR 0 (あなたの手番中、相手のカードの中段コマンドはないものとして扱う。 / カードを1枚移動させるか反転させる。) で相手の裏向きを作り、WATER 3 (1ラインを選び、そのラインの値が2のすべてのカードを戻す。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.2,
+    "interactionSe": 0.8,
+    "partnerValue": 0.2,
+    "partnerValueSe": 0.8,
+    "synergy": 0.4,
+    "synergySe": 0.7,
+    "missed": -0.8,
+    "missedSe": 1.1,
+    "aiPicked": 44
+   },
+   "note": null
+  },
+  {
+   "id": "S100",
+   "name": "ASSIMILATION 6 → WATER 3",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "ASSIMILATION_6",
+    "WATER_4"
+   ],
+   "protocols": [
+    "ASSIMILATION",
+    "WATER"
+   ],
+   "how": "ASSIMILATION 6 (終了：あなたのデッキの一番上のカードを、相手側の任意のスタックに裏向きでプレイする。) で相手の裏向きを作り、WATER 3 (1ラインを選び、そのラインの値が2のすべてのカードを戻す。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -3.4,
+    "interactionSe": 2,
+    "partnerValue": -1.5,
+    "partnerValueSe": 1.1,
+    "synergy": -4.9,
+    "synergySe": 1.7,
+    "missed": -6.4,
+    "missedSe": 1.7,
+    "aiPicked": 22
+   },
+   "note": null
+  },
+  {
+   "id": "S101",
+   "name": "GRAVITY 6 → WATER 3",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "WATER_4",
+    "GRAVITY_6"
+   ],
+   "protocols": [
+    "GRAVITY",
+    "WATER"
+   ],
+   "how": "GRAVITY 6 (相手は自分のデッキの一番上のカードをこのラインに裏向きで1枚プレイする。) で相手の裏向きを作り、WATER 3 (1ラインを選び、そのラインの値が2のすべてのカードを戻す。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.3,
+    "interactionSe": 1.5,
+    "partnerValue": 1.9,
+    "partnerValueSe": 1.1,
+    "synergy": 2.2,
+    "synergySe": 0.8,
+    "missed": -7.7,
+    "missedSe": 2.3,
+    "aiPicked": 26
+   },
+   "note": null
+  },
+  {
+   "id": "S102",
+   "name": "FIRE 3 → DEATH 2",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "FIRE_4",
+    "DEATH_3"
+   ],
+   "protocols": [
+    "FIRE",
+    "DEATH"
+   ],
+   "how": "FIRE 3 (終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。) で相手の裏向きを作り、DEATH 2 (1ラインを選び、そのラインの値が1か2どちらかのすべてのカードを削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 153,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.3,
+    "interactionSe": 0.8,
+    "partnerValue": 1.2,
+    "partnerValueSe": 0.7,
+    "synergy": 2.5,
+    "synergySe": 0.8,
+    "missed": -3,
+    "missedSe": 0.8,
+    "aiPicked": 30
+   },
+   "note": null
+  },
+  {
+   "id": "S103",
+   "name": "APATHY 3 → DEATH 2",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DEATH_3",
+    "APATHY_4"
+   ],
+   "protocols": [
+    "APATHY",
+    "DEATH"
+   ],
+   "how": "APATHY 3 (相手の表向きのカードを１枚反転させる。) で相手の裏向きを作り、DEATH 2 (1ラインを選び、そのラインの値が1か2どちらかのすべてのカードを削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.3,
+    "interactionSe": 1.3,
+    "partnerValue": 3.8,
+    "partnerValueSe": 1,
+    "synergy": 2.4,
+    "synergySe": 0.8,
+    "missed": -1.7,
+    "missedSe": 1,
+    "aiPicked": 54
+   },
+   "note": null
+  },
+  {
+   "id": "S104",
+   "name": "DARKNESS 1 → DEATH 2",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DEATH_3",
+    "DARKNESS_2"
+   ],
+   "protocols": [
+    "DARKNESS",
+    "DEATH"
+   ],
+   "how": "DARKNESS 1 (相手のカードを1枚反転させる。あなたはそのカードを移動させることができる。) で相手の裏向きを作り、DEATH 2 (1ラインを選び、そのラインの値が1か2どちらかのすべてのカードを削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.8,
+    "interactionSe": 1,
+    "partnerValue": 4.9,
+    "partnerValueSe": 1,
+    "synergy": 3,
+    "synergySe": 0.8,
+    "missed": -3.8,
+    "missedSe": 1.4,
+    "aiPicked": 33
+   },
+   "note": null
+  },
+  {
+   "id": "S105",
+   "name": "METAL 0 → DEATH 2",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DEATH_3",
+    "METAL_1"
+   ],
+   "protocols": [
+    "METAL",
+    "DEATH"
+   ],
+   "how": "METAL 0 (このラインでの相手の合計値は2減る。 / カードを1枚反転させる。) で相手の裏向きを作り、DEATH 2 (1ラインを選び、そのラインの値が1か2どちらかのすべてのカードを削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.3,
+    "interactionSe": 0.9,
+    "partnerValue": 2.5,
+    "partnerValueSe": 1.1,
+    "synergy": 2.8,
+    "synergySe": 1.1,
+    "missed": -2,
+    "missedSe": 1.1,
+    "aiPicked": 29
+   },
+   "note": null
+  },
+  {
+   "id": "S106",
+   "name": "LIFE 1 → DEATH 2",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DEATH_3",
+    "LIFE_2"
+   ],
+   "protocols": [
+    "LIFE",
+    "DEATH"
+   ],
+   "how": "LIFE 1 (カード1枚を反転させる。カード1枚を反転させる。) で相手の裏向きを作り、DEATH 2 (1ラインを選び、そのラインの値が1か2どちらかのすべてのカードを削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.3,
+    "interactionSe": 1.2,
+    "partnerValue": 2.7,
+    "partnerValueSe": 1.2,
+    "synergy": 1.5,
+    "synergySe": 0.8,
+    "missed": -2.9,
+    "missedSe": 1.3,
+    "aiPicked": 46
+   },
+   "note": null
+  },
+  {
+   "id": "S107",
+   "name": "WATER 0 → DEATH 2",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DEATH_3",
+    "WATER_1"
+   ],
+   "protocols": [
+    "WATER",
+    "DEATH"
+   ],
+   "how": "WATER 0 (他のカードを1枚反転させる。このカードを反転させる。) で相手の裏向きを作り、DEATH 2 (1ラインを選び、そのラインの値が1か2どちらかのすべてのカードを削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1,
+    "interactionSe": 1.2,
+    "partnerValue": 2.6,
+    "partnerValueSe": 1.4,
+    "synergy": 1.6,
+    "synergySe": 0.8,
+    "missed": -2.6,
+    "missedSe": 1.2,
+    "aiPicked": 42
+   },
+   "note": null
+  },
+  {
+   "id": "S108",
+   "name": "GRAVITY 2 → DEATH 2",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DEATH_3",
+    "GRAVITY_3"
+   ],
+   "protocols": [
+    "GRAVITY",
+    "DEATH"
+   ],
+   "how": "GRAVITY 2 (カードを1枚反転させる。そのカードをこのラインへと移動させる。) で相手の裏向きを作り、DEATH 2 (1ラインを選び、そのラインの値が1か2どちらかのすべてのカードを削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.2,
+    "interactionSe": 1.6,
+    "partnerValue": 1.8,
+    "partnerValueSe": 1.4,
+    "synergy": 2,
+    "synergySe": 1.1,
+    "missed": -3.5,
+    "missedSe": 1.5,
+    "aiPicked": 54
+   },
+   "note": null
+  },
+  {
+   "id": "S109",
+   "name": "PLAGUE 3 → DEATH 2",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DEATH_3",
+    "PLAGUE_4"
+   ],
+   "protocols": [
+    "PLAGUE",
+    "DEATH"
+   ],
+   "how": "PLAGUE 3 (覆われていない、表向きの他のカードを反転させる。) で相手の裏向きを作り、DEATH 2 (1ラインを選び、そのラインの値が1か2どちらかのすべてのカードを削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.3,
+    "interactionSe": 0.7,
+    "partnerValue": 2.3,
+    "partnerValueSe": 0.9,
+    "synergy": 1.9,
+    "synergySe": 0.7,
+    "missed": -4.1,
+    "missedSe": 1.3,
+    "aiPicked": 43
+   },
+   "note": null
+  },
+  {
+   "id": "S110",
+   "name": "MIRROR 3 → DEATH 2",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DEATH_3",
+    "MIRROR_4"
+   ],
+   "protocols": [
+    "MIRROR",
+    "DEATH"
+   ],
+   "how": "MIRROR 3 (あなたのカードを1枚反転させる。そのカードと同じラインにある相手のカードを1枚反転させる。) で相手の裏向きを作り、DEATH 2 (1ラインを選び、そのラインの値が1か2どちらかのすべてのカードを削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.7,
+    "interactionSe": 1.1,
+    "partnerValue": 3.4,
+    "partnerValueSe": 1,
+    "synergy": 1.7,
+    "synergySe": 0.8,
+    "missed": -4.9,
+    "missedSe": 1.4,
+    "aiPicked": 24
+   },
+   "note": null
+  },
+  {
+   "id": "S111",
+   "name": "LOVE 4 → DEATH 2",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DEATH_3",
+    "LOVE_4"
+   ],
+   "protocols": [
+    "LOVE",
+    "DEATH"
+   ],
+   "how": "LOVE 4 (あなたの手札１枚を公開する。カードを１枚反転させる。) で相手の裏向きを作り、DEATH 2 (1ラインを選び、そのラインの値が1か2どちらかのすべてのカードを削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.7,
+    "interactionSe": 1.2,
+    "partnerValue": 4.3,
+    "partnerValueSe": 1.4,
+    "synergy": 3.6,
+    "synergySe": 1.2,
+    "missed": -2.6,
+    "missedSe": 1.5,
+    "aiPicked": 68
+   },
+   "note": null
+  },
+  {
+   "id": "S112",
+   "name": "PEACE 3 → DEATH 2",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DEATH_3",
+    "PEACE_3"
+   ],
+   "protocols": [
+    "PEACE",
+    "DEATH"
+   ],
+   "how": "PEACE 3 (あなたは手札を1枚捨て札にすることができる。あなたの手札の枚数より値が大きいカードを1枚反転させる。) で相手の裏向きを作り、DEATH 2 (1ラインを選び、そのラインの値が1か2どちらかのすべてのカードを削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2,
+    "interactionSe": 1.4,
+    "partnerValue": 0.1,
+    "partnerValueSe": 1,
+    "synergy": 2.1,
+    "synergySe": 0.8,
+    "missed": -1.6,
+    "missedSe": 1.4,
+    "aiPicked": 30
+   },
+   "note": null
+  },
+  {
+   "id": "S113",
+   "name": "WAR 2 → DEATH 2",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DEATH_3",
+    "WAR_3"
+   ],
+   "protocols": [
+    "WAR",
+    "DEATH"
+   ],
+   "how": "WAR 2 (カードを1枚反転させる。 / 相手がコンパイルしたあと：相手は手札をすべて捨て札にする。) で相手の裏向きを作り、DEATH 2 (1ラインを選び、そのラインの値が1か2どちらかのすべてのカードを削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.3,
+    "interactionSe": 0.8,
+    "partnerValue": 2.2,
+    "partnerValueSe": 0.8,
+    "synergy": 0.9,
+    "synergySe": 0.6,
+    "missed": -3,
+    "missedSe": 1.1,
+    "aiPicked": 44
+   },
+   "note": null
+  },
+  {
+   "id": "S114",
+   "name": "LIGHT 0 → DEATH 2",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DEATH_3",
+    "LIGHT_1"
+   ],
+   "protocols": [
+    "LIGHT",
+    "DEATH"
+   ],
+   "how": "LIGHT 0 (カードを1枚反転させる。そのカードの値に等しい枚数のカードを引く。) で相手の裏向きを作り、DEATH 2 (1ラインを選び、そのラインの値が1か2どちらかのすべてのカードを削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.5,
+    "interactionSe": 1.1,
+    "partnerValue": 3.8,
+    "partnerValueSe": 1.2,
+    "synergy": 2.3,
+    "synergySe": 1,
+    "missed": -3.9,
+    "missedSe": 1.4,
+    "aiPicked": 33
+   },
+   "note": null
+  },
+  {
+   "id": "S115",
+   "name": "SPIRIT 2 → DEATH 2",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DEATH_3",
+    "SPIRIT_3"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "DEATH"
+   ],
+   "how": "SPIRIT 2 (あなたはカードを1枚反転させることができる。) で相手の裏向きを作り、DEATH 2 (1ラインを選び、そのラインの値が1か2どちらかのすべてのカードを削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.7,
+    "interactionSe": 1,
+    "partnerValue": 2.6,
+    "partnerValueSe": 1.3,
+    "synergy": 3.2,
+    "synergySe": 1.2,
+    "missed": 0.5,
+    "missedSe": 1.3,
+    "aiPicked": 37
+   },
+   "note": null
+  },
+  {
+   "id": "S116",
+   "name": "FEAR 0 → DEATH 2",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DEATH_3",
+    "FEAR_1"
+   ],
+   "protocols": [
+    "FEAR",
+    "DEATH"
+   ],
+   "how": "FEAR 0 (あなたの手番中、相手のカードの中段コマンドはないものとして扱う。 / カードを1枚移動させるか反転させる。) で相手の裏向きを作り、DEATH 2 (1ラインを選び、そのラインの値が1か2どちらかのすべてのカードを削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.1,
+    "interactionSe": 1,
+    "partnerValue": 1.3,
+    "partnerValueSe": 0.8,
+    "synergy": 2.4,
+    "synergySe": 0.8,
+    "missed": -2,
+    "missedSe": 1.1,
+    "aiPicked": 29
+   },
+   "note": null
+  },
+  {
+   "id": "S117",
+   "name": "ASSIMILATION 6 → DEATH 2",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "ASSIMILATION_6",
+    "DEATH_3"
+   ],
+   "protocols": [
+    "ASSIMILATION",
+    "DEATH"
+   ],
+   "how": "ASSIMILATION 6 (終了：あなたのデッキの一番上のカードを、相手側の任意のスタックに裏向きでプレイする。) で相手の裏向きを作り、DEATH 2 (1ラインを選び、そのラインの値が1か2どちらかのすべてのカードを削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.2,
+    "interactionSe": 1.4,
+    "partnerValue": 0.2,
+    "partnerValueSe": 1.4,
+    "synergy": -1,
+    "synergySe": 1.1,
+    "missed": -8.6,
+    "missedSe": 2.1,
+    "aiPicked": 21
+   },
+   "note": null
+  },
+  {
+   "id": "S118",
+   "name": "GRAVITY 6 → DEATH 2",
+   "kind": "burst",
+   "source": "state",
+   "cards": [
+    "DEATH_3",
+    "GRAVITY_6"
+   ],
+   "protocols": [
+    "GRAVITY",
+    "DEATH"
+   ],
+   "how": "GRAVITY 6 (相手は自分のデッキの一番上のカードをこのラインに裏向きで1枚プレイする。) で相手の裏向きを作り、DEATH 2 (1ラインを選び、そのラインの値が1か2どちらかのすべてのカードを削除する。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.7,
+    "interactionSe": 2,
+    "partnerValue": 3.4,
+    "partnerValueSe": 1.3,
+    "synergy": 1.8,
+    "synergySe": 1.7,
+    "missed": -2.7,
+    "missedSe": 1.9,
+    "aiPicked": 29
+   },
+   "note": null
+  },
+  {
+   "id": "S119",
+   "name": "WATER 1 → APATHY 0",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "APATHY_1",
+    "WATER_2"
+   ],
+   "protocols": [
+    "WATER",
+    "APATHY"
+   ],
+   "how": "WATER 1 (あなたのデッキの一番上のカードを、他の各ラインに裏向きで1枚ずつプレイする。) で自分のラインの裏向きを作り、APATHY 0 (このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。) で取り立てる。",
+   "verdict": "weak",
+   "verdictLabel": "相方が強い (噛み合いは小さい)",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.8,
+    "interactionSe": 1.7,
+    "partnerValue": 8.3,
+    "partnerValueSe": 2.1,
+    "synergy": 9.1,
+    "synergySe": 2.3,
+    "missed": -2.3,
+    "missedSe": 1.8,
+    "aiPicked": 60
+   },
+   "note": null
+  },
+  {
+   "id": "S120",
+   "name": "LIFE 0 → APATHY 0",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "APATHY_1",
+    "LIFE_1"
+   ],
+   "protocols": [
+    "LIFE",
+    "APATHY"
+   ],
+   "how": "LIFE 0 (終了：このカードが覆われている場合、このカードを削除する。 / あなたのデッキの一番上のカードを、あなたのカードがある各ラインに裏向きで1枚ずつプレイする。) で自分のラインの裏向きを作り、APATHY 0 (このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.2,
+    "interactionSe": 1.2,
+    "partnerValue": 4.4,
+    "partnerValueSe": 1.4,
+    "synergy": 4.1,
+    "synergySe": 1.3,
+    "missed": -1.1,
+    "missedSe": 1,
+    "aiPicked": 56
+   },
+   "note": null
+  },
+  {
+   "id": "S121",
+   "name": "SMOKE 0 → APATHY 0",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "APATHY_1",
+    "SMOKE_1"
+   ],
+   "protocols": [
+    "SMOKE",
+    "APATHY"
+   ],
+   "how": "SMOKE 0 (裏向きのカードが1枚以上ある各ラインに、あなたのデッキの一番上のカードを裏向きでプレイする。) で自分のラインの裏向きを作り、APATHY 0 (このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.1,
+    "interactionSe": 1.3,
+    "partnerValue": 4.2,
+    "partnerValueSe": 1.4,
+    "synergy": 3.1,
+    "synergySe": 1.5,
+    "missed": -5,
+    "missedSe": 1.5,
+    "aiPicked": 32
+   },
+   "note": null
+  },
+  {
+   "id": "S122",
+   "name": "SMOKE 3 → APATHY 0",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "APATHY_1",
+    "SMOKE_4"
+   ],
+   "protocols": [
+    "SMOKE",
+    "APATHY"
+   ],
+   "how": "SMOKE 3 (裏向きのカードが1枚以上あるライン１つに、カードを裏向きで1枚プレイする。) で自分のラインの裏向きを作り、APATHY 0 (このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 153,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.2,
+    "interactionSe": 1,
+    "partnerValue": 3.4,
+    "partnerValueSe": 1,
+    "synergy": 2.2,
+    "synergySe": 0.8,
+    "missed": -3.7,
+    "missedSe": 1.1,
+    "aiPicked": 35
+   },
+   "note": null
+  },
+  {
+   "id": "S123",
+   "name": "DARKNESS 3 → APATHY 0",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "APATHY_1",
+    "DARKNESS_4"
+   ],
+   "protocols": [
+    "DARKNESS",
+    "APATHY"
+   ],
+   "how": "DARKNESS 3 (他の1ラインにカードを裏向きで1枚プレイする。) で自分のラインの裏向きを作り、APATHY 0 (このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.2,
+    "interactionSe": 2.1,
+    "partnerValue": 3.3,
+    "partnerValueSe": 1.7,
+    "synergy": 3.5,
+    "synergySe": 2,
+    "missed": -3.2,
+    "missedSe": 1.8,
+    "aiPicked": 48
+   },
+   "note": null
+  },
+  {
+   "id": "S124",
+   "name": "PEACE 2 → APATHY 0",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "APATHY_1",
+    "PEACE_2"
+   ],
+   "protocols": [
+    "PEACE",
+    "APATHY"
+   ],
+   "how": "PEACE 2 (カードを1枚引く。カードを1枚裏向きでプレイする。) で自分のラインの裏向きを作り、APATHY 0 (このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.1,
+    "interactionSe": 1.9,
+    "partnerValue": 4.7,
+    "partnerValueSe": 1.4,
+    "synergy": 4.8,
+    "synergySe": 1.9,
+    "missed": -0.6,
+    "missedSe": 1.5,
+    "aiPicked": 61
+   },
+   "note": null
+  },
+  {
+   "id": "S125",
+   "name": "TIME 3 → APATHY 0",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "APATHY_1",
+    "TIME_4"
+   ],
+   "protocols": [
+    "TIME",
+    "APATHY"
+   ],
+   "how": "TIME 3 (あなたの捨て札置き場にあるカードを1枚公開する。そのカードをこのカードとは別のラインに裏向きでプレイする。) で自分のラインの裏向きを作り、APATHY 0 (このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.6,
+    "interactionSe": 1,
+    "partnerValue": 2.3,
+    "partnerValueSe": 1.3,
+    "synergy": 2.9,
+    "synergySe": 1,
+    "missed": -4.7,
+    "missedSe": 1.7,
+    "aiPicked": 62
+   },
+   "note": null
+  },
+  {
+   "id": "S126",
+   "name": "ASSIMILATION 2 → APATHY 0",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "ASSIMILATION_3",
+    "APATHY_1"
+   ],
+   "protocols": [
+    "ASSIMILATION",
+    "APATHY"
+   ],
+   "how": "ASSIMILATION 2 (終了：相手のデッキの一番上のカードを、このスタックに裏向きでプレイする。) で自分のラインの裏向きを作り、APATHY 0 (このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。) で取り立てる。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "S127",
+   "name": "LIGHT 3 → APATHY 0",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "APATHY_1",
+    "LIGHT_4"
+   ],
+   "protocols": [
+    "LIGHT",
+    "APATHY"
+   ],
+   "how": "LIGHT 3 (このラインにある裏向きのすべてのカードを、他の1ラインへと移動させる。) で自分のラインの裏向きを作り、APATHY 0 (このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.7,
+    "interactionSe": 1.1,
+    "partnerValue": 1.1,
+    "partnerValueSe": 1.1,
+    "synergy": 1.7,
+    "synergySe": 1.2,
+    "missed": -3.3,
+    "missedSe": 1.2,
+    "aiPicked": 25
+   },
+   "note": null
+  },
+  {
+   "id": "S128",
+   "name": "GRAVITY 4 → APATHY 0",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "APATHY_1",
+    "GRAVITY_4"
+   ],
+   "protocols": [
+    "GRAVITY",
+    "APATHY"
+   ],
+   "how": "GRAVITY 4 (裏向きのカードを1枚、このラインへと移動させる。) で自分のラインの裏向きを作り、APATHY 0 (このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.5,
+    "interactionSe": 1.6,
+    "partnerValue": 1.4,
+    "partnerValueSe": 1.4,
+    "synergy": 2.9,
+    "synergySe": 1.1,
+    "missed": -2.7,
+    "missedSe": 1.9,
+    "aiPicked": 29
+   },
+   "note": null
+  },
+  {
+   "id": "S129",
+   "name": "DARKNESS 4 → APATHY 0",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "APATHY_1",
+    "DARKNESS_5"
+   ],
+   "protocols": [
+    "DARKNESS",
+    "APATHY"
+   ],
+   "how": "DARKNESS 4 (裏向きのカードを1枚移動させる。) で自分のラインの裏向きを作り、APATHY 0 (このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.1,
+    "interactionSe": 1.6,
+    "partnerValue": 2.3,
+    "partnerValueSe": 1.5,
+    "synergy": 2.4,
+    "synergySe": 1.4,
+    "missed": -0.3,
+    "missedSe": 2.3,
+    "aiPicked": 33
+   },
+   "note": null
+  },
+  {
+   "id": "S130",
+   "name": "SMOKE 4 → APATHY 0",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "APATHY_1",
+    "SMOKE_5"
+   ],
+   "protocols": [
+    "SMOKE",
+    "APATHY"
+   ],
+   "how": "SMOKE 4 (覆われている裏向きのカードを1枚移動させる。) で自分のラインの裏向きを作り、APATHY 0 (このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.5,
+    "interactionSe": 0.9,
+    "partnerValue": 1.8,
+    "partnerValueSe": 1.5,
+    "synergy": 2.3,
+    "synergySe": 1.6,
+    "missed": -2.5,
+    "missedSe": 1.9,
+    "aiPicked": 40
+   },
+   "note": null
+  },
+  {
+   "id": "S131",
+   "name": "WATER 1 → SMOKE 2",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "SMOKE_3",
+    "WATER_2"
+   ],
+   "protocols": [
+    "WATER",
+    "SMOKE"
+   ],
+   "how": "WATER 1 (あなたのデッキの一番上のカードを、他の各ラインに裏向きで1枚ずつプレイする。) で自分のラインの裏向きを作り、SMOKE 2 (このラインのあなたの合計値は、このラインにある裏向きのカード1枚ごとに1増える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.9,
+    "interactionSe": 1.6,
+    "partnerValue": 1.6,
+    "partnerValueSe": 2.2,
+    "synergy": 4.5,
+    "synergySe": 2.1,
+    "missed": -0.2,
+    "missedSe": 1.3,
+    "aiPicked": 59
+   },
+   "note": null
+  },
+  {
+   "id": "S132",
+   "name": "LIFE 0 → SMOKE 2",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "SMOKE_3",
+    "LIFE_1"
+   ],
+   "protocols": [
+    "LIFE",
+    "SMOKE"
+   ],
+   "how": "LIFE 0 (終了：このカードが覆われている場合、このカードを削除する。 / あなたのデッキの一番上のカードを、あなたのカードがある各ラインに裏向きで1枚ずつプレイする。) で自分のラインの裏向きを作り、SMOKE 2 (このラインのあなたの合計値は、このラインにある裏向きのカード1枚ごとに1増える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.8,
+    "interactionSe": 2.1,
+    "partnerValue": 2.7,
+    "partnerValueSe": 1.9,
+    "synergy": 4.5,
+    "synergySe": 2.4,
+    "missed": -1.1,
+    "missedSe": 1.4,
+    "aiPicked": 45
+   },
+   "note": null
+  },
+  {
+   "id": "S133",
+   "name": "SMOKE 3 → SMOKE 2",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "SMOKE_3",
+    "SMOKE_4"
+   ],
+   "protocols": [
+    "SMOKE"
+   ],
+   "how": "SMOKE 3 (裏向きのカードが1枚以上あるライン１つに、カードを裏向きで1枚プレイする。) で自分のラインの裏向きを作り、SMOKE 2 (このラインのあなたの合計値は、このラインにある裏向きのカード1枚ごとに1増える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 153,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.3,
+    "interactionSe": 1,
+    "partnerValue": 2.4,
+    "partnerValueSe": 1,
+    "synergy": 1.1,
+    "synergySe": 0.9,
+    "missed": -4.9,
+    "missedSe": 1.1,
+    "aiPicked": 42
+   },
+   "note": null
+  },
+  {
+   "id": "S134",
+   "name": "DARKNESS 3 → SMOKE 2",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "SMOKE_3",
+    "DARKNESS_4"
+   ],
+   "protocols": [
+    "DARKNESS",
+    "SMOKE"
+   ],
+   "how": "DARKNESS 3 (他の1ラインにカードを裏向きで1枚プレイする。) で自分のラインの裏向きを作り、SMOKE 2 (このラインのあなたの合計値は、このラインにある裏向きのカード1枚ごとに1増える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.6,
+    "interactionSe": 1.2,
+    "partnerValue": 3.7,
+    "partnerValueSe": 1.7,
+    "synergy": 4.4,
+    "synergySe": 1.8,
+    "missed": -1.9,
+    "missedSe": 1.8,
+    "aiPicked": 37
+   },
+   "note": null
+  },
+  {
+   "id": "S135",
+   "name": "PEACE 2 → SMOKE 2",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "SMOKE_3",
+    "PEACE_2"
+   ],
+   "protocols": [
+    "PEACE",
+    "SMOKE"
+   ],
+   "how": "PEACE 2 (カードを1枚引く。カードを1枚裏向きでプレイする。) で自分のラインの裏向きを作り、SMOKE 2 (このラインのあなたの合計値は、このラインにある裏向きのカード1枚ごとに1増える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.1,
+    "interactionSe": 1,
+    "partnerValue": 2.1,
+    "partnerValueSe": 1.3,
+    "synergy": 1.1,
+    "synergySe": 1.3,
+    "missed": -0.6,
+    "missedSe": 1.4,
+    "aiPicked": 56
+   },
+   "note": null
+  },
+  {
+   "id": "S136",
+   "name": "TIME 3 → SMOKE 2",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "SMOKE_3",
+    "TIME_4"
+   ],
+   "protocols": [
+    "TIME",
+    "SMOKE"
+   ],
+   "how": "TIME 3 (あなたの捨て札置き場にあるカードを1枚公開する。そのカードをこのカードとは別のラインに裏向きでプレイする。) で自分のラインの裏向きを作り、SMOKE 2 (このラインのあなたの合計値は、このラインにある裏向きのカード1枚ごとに1増える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0,
+    "interactionSe": 1.6,
+    "partnerValue": 3.4,
+    "partnerValueSe": 1.7,
+    "synergy": 3.4,
+    "synergySe": 1.2,
+    "missed": -3.2,
+    "missedSe": 2,
+    "aiPicked": 60
+   },
+   "note": null
+  },
+  {
+   "id": "S137",
+   "name": "ASSIMILATION 2 → SMOKE 2",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "ASSIMILATION_3",
+    "SMOKE_3"
+   ],
+   "protocols": [
+    "ASSIMILATION",
+    "SMOKE"
+   ],
+   "how": "ASSIMILATION 2 (終了：相手のデッキの一番上のカードを、このスタックに裏向きでプレイする。) で自分のラインの裏向きを作り、SMOKE 2 (このラインのあなたの合計値は、このラインにある裏向きのカード1枚ごとに1増える。) で取り立てる。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "S138",
+   "name": "GRAVITY 4 → SMOKE 2",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "SMOKE_3",
+    "GRAVITY_4"
+   ],
+   "protocols": [
+    "GRAVITY",
+    "SMOKE"
+   ],
+   "how": "GRAVITY 4 (裏向きのカードを1枚、このラインへと移動させる。) で自分のラインの裏向きを作り、SMOKE 2 (このラインのあなたの合計値は、このラインにある裏向きのカード1枚ごとに1増える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.2,
+    "interactionSe": 1.6,
+    "partnerValue": 0.5,
+    "partnerValueSe": 1.4,
+    "synergy": 1.7,
+    "synergySe": 1,
+    "missed": -2.9,
+    "missedSe": 1.7,
+    "aiPicked": 30
+   },
+   "note": null
+  },
+  {
+   "id": "S139",
+   "name": "DARKNESS 4 → SMOKE 2",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "SMOKE_3",
+    "DARKNESS_5"
+   ],
+   "protocols": [
+    "DARKNESS",
+    "SMOKE"
+   ],
+   "how": "DARKNESS 4 (裏向きのカードを1枚移動させる。) で自分のラインの裏向きを作り、SMOKE 2 (このラインのあなたの合計値は、このラインにある裏向きのカード1枚ごとに1増える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.4,
+    "interactionSe": 1.8,
+    "partnerValue": 3.1,
+    "partnerValueSe": 1.5,
+    "synergy": 2.7,
+    "synergySe": 1.1,
+    "missed": -1.9,
+    "missedSe": 1.4,
+    "aiPicked": 23
+   },
+   "note": null
+  },
+  {
+   "id": "S140",
+   "name": "SMOKE 4 → SMOKE 2",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "SMOKE_3",
+    "SMOKE_5"
+   ],
+   "protocols": [
+    "SMOKE"
+   ],
+   "how": "SMOKE 4 (覆われている裏向きのカードを1枚移動させる。) で自分のラインの裏向きを作り、SMOKE 2 (このラインのあなたの合計値は、このラインにある裏向きのカード1枚ごとに1増える。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 153,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.8,
+    "interactionSe": 0.9,
+    "partnerValue": 4.9,
+    "partnerValueSe": 1.2,
+    "synergy": 4.1,
+    "synergySe": 1,
+    "missed": -2.9,
+    "missedSe": 1.3,
+    "aiPicked": 42
+   },
+   "note": null
+  },
+  {
+   "id": "S141",
+   "name": "SMOKE 0 → DARKNESS 2",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "DARKNESS_3",
+    "SMOKE_1"
+   ],
+   "protocols": [
+    "SMOKE",
+    "DARKNESS"
+   ],
+   "how": "SMOKE 0 (裏向きのカードが1枚以上ある各ラインに、あなたのデッキの一番上のカードを裏向きでプレイする。) で自分のラインの裏向きを作り、DARKNESS 2 (このスタックにあるすべての裏向きのカードの値はそれぞれ4になる。 / このラインにある、覆われているカードを1枚反転させることができる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.2,
+    "interactionSe": 1.4,
+    "partnerValue": 2.8,
+    "partnerValueSe": 1.6,
+    "synergy": 3,
+    "synergySe": 2,
+    "missed": -2.5,
+    "missedSe": 1.4,
+    "aiPicked": 17
+   },
+   "note": null
+  },
+  {
+   "id": "S142",
+   "name": "SMOKE 3 → DARKNESS 2",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "DARKNESS_3",
+    "SMOKE_4"
+   ],
+   "protocols": [
+    "SMOKE",
+    "DARKNESS"
+   ],
+   "how": "SMOKE 3 (裏向きのカードが1枚以上あるライン１つに、カードを裏向きで1枚プレイする。) で自分のラインの裏向きを作り、DARKNESS 2 (このスタックにあるすべての裏向きのカードの値はそれぞれ4になる。 / このラインにある、覆われているカードを1枚反転させることができる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.9,
+    "interactionSe": 1.2,
+    "partnerValue": 3.2,
+    "partnerValueSe": 1.5,
+    "synergy": 2.3,
+    "synergySe": 1.3,
+    "missed": -1.5,
+    "missedSe": 1.5,
+    "aiPicked": 37
+   },
+   "note": null
+  },
+  {
+   "id": "S143",
+   "name": "DARKNESS 3 → DARKNESS 2",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "DARKNESS_3",
+    "DARKNESS_4"
+   ],
+   "protocols": [
+    "DARKNESS"
+   ],
+   "how": "DARKNESS 3 (他の1ラインにカードを裏向きで1枚プレイする。) で自分のラインの裏向きを作り、DARKNESS 2 (このスタックにあるすべての裏向きのカードの値はそれぞれ4になる。 / このラインにある、覆われているカードを1枚反転させることができる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.2,
+    "interactionSe": 0.9,
+    "partnerValue": 0.5,
+    "partnerValueSe": 0.9,
+    "synergy": 0.7,
+    "synergySe": 0.9,
+    "missed": -2.1,
+    "missedSe": 1.3,
+    "aiPicked": 40
+   },
+   "note": null
+  },
+  {
+   "id": "S144",
+   "name": "PEACE 2 → DARKNESS 2",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "DARKNESS_3",
+    "PEACE_2"
+   ],
+   "protocols": [
+    "PEACE",
+    "DARKNESS"
+   ],
+   "how": "PEACE 2 (カードを1枚引く。カードを1枚裏向きでプレイする。) で自分のラインの裏向きを作り、DARKNESS 2 (このスタックにあるすべての裏向きのカードの値はそれぞれ4になる。 / このラインにある、覆われているカードを1枚反転させることができる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 153,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.2,
+    "interactionSe": 1,
+    "partnerValue": 2.6,
+    "partnerValueSe": 1.1,
+    "synergy": 2.8,
+    "synergySe": 1.1,
+    "missed": -0.2,
+    "missedSe": 1,
+    "aiPicked": 67
+   },
+   "note": null
+  },
+  {
+   "id": "S145",
+   "name": "TIME 3 → DARKNESS 2",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "DARKNESS_3",
+    "TIME_4"
+   ],
+   "protocols": [
+    "TIME",
+    "DARKNESS"
+   ],
+   "how": "TIME 3 (あなたの捨て札置き場にあるカードを1枚公開する。そのカードをこのカードとは別のラインに裏向きでプレイする。) で自分のラインの裏向きを作り、DARKNESS 2 (このスタックにあるすべての裏向きのカードの値はそれぞれ4になる。 / このラインにある、覆われているカードを1枚反転させることができる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1,
+    "interactionSe": 1.5,
+    "partnerValue": 4.9,
+    "partnerValueSe": 1.6,
+    "synergy": 3.8,
+    "synergySe": 1.7,
+    "missed": -1.6,
+    "missedSe": 1.8,
+    "aiPicked": 52
+   },
+   "note": null
+  },
+  {
+   "id": "S146",
+   "name": "ASSIMILATION 2 → DARKNESS 2",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "ASSIMILATION_3",
+    "DARKNESS_3"
+   ],
+   "protocols": [
+    "ASSIMILATION",
+    "DARKNESS"
+   ],
+   "how": "ASSIMILATION 2 (終了：相手のデッキの一番上のカードを、このスタックに裏向きでプレイする。) で自分のラインの裏向きを作り、DARKNESS 2 (このスタックにあるすべての裏向きのカードの値はそれぞれ4になる。 / このラインにある、覆われているカードを1枚反転させることができる。) で取り立てる。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "S147",
+   "name": "LIGHT 3 → DARKNESS 2",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "DARKNESS_3",
+    "LIGHT_4"
+   ],
+   "protocols": [
+    "LIGHT",
+    "DARKNESS"
+   ],
+   "how": "LIGHT 3 (このラインにある裏向きのすべてのカードを、他の1ラインへと移動させる。) で自分のラインの裏向きを作り、DARKNESS 2 (このスタックにあるすべての裏向きのカードの値はそれぞれ4になる。 / このラインにある、覆われているカードを1枚反転させることができる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -3.2,
+    "interactionSe": 1.6,
+    "partnerValue": 6.1,
+    "partnerValueSe": 1.5,
+    "synergy": 2.9,
+    "synergySe": 1.7,
+    "missed": -5.5,
+    "missedSe": 2.2,
+    "aiPicked": 14
+   },
+   "note": null
+  },
+  {
+   "id": "S148",
+   "name": "GRAVITY 4 → DARKNESS 2",
+   "kind": "engine",
+   "source": "state",
+   "cards": [
+    "DARKNESS_3",
+    "GRAVITY_4"
+   ],
+   "protocols": [
+    "GRAVITY",
+    "DARKNESS"
+   ],
+   "how": "GRAVITY 4 (裏向きのカードを1枚、このラインへと移動させる。) で自分のラインの裏向きを作り、DARKNESS 2 (このスタックにあるすべての裏向きのカードの値はそれぞれ4になる。 / このラインにある、覆われているカードを1枚反転させることができる。) で取り立てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.5,
+    "interactionSe": 1.8,
+    "partnerValue": 1.4,
+    "partnerValueSe": 1.5,
+    "synergy": 1,
+    "synergySe": 0.9,
+    "missed": -2.5,
+    "missedSe": 1.7,
+    "aiPicked": 25
+   },
+   "note": null
+  },
+  {
    "id": "T01",
    "name": "WATER 1 + WATER 4",
    "kind": "burst",
@@ -7032,6 +11722,36 @@
     "now": {
      "assembled": 3,
      "wins": 28
+    }
+   }
+  },
+  {
+   "id": "M19",
+   "name": "FIRE 3 + PLAGUE 4",
+   "kind": "aim",
+   "source": "aimed",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE"
+   ],
+   "how": "教わった手筋 (T13)。終了時に FIRE 3 で相手の表を裏にし、PLAGUE 4 で相手にその裏向きを消させる。2枚とも一番上に表で残す。状態を作る札 × 取り立てる札 145組の総当たりで、測り直して残ったのはこの組だけ (噛み合い +2.5 ±0.9、151盤面)。",
+   "verdict": "aimed",
+   "verdictLabel": "揃えに行く手筋 (AI に入っている)",
+   "lab": null,
+   "labId": "S001",
+   "aim": {
+    "games": 60,
+    "base": {
+     "assembled": 17,
+     "wins": 42
+    },
+    "now": {
+     "assembled": 27,
+     "wins": 42
     }
    }
   },
