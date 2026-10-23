@@ -25,6 +25,23 @@ export const STRONG_BGM = 'zero';
 export const MENU_BGMS = ['planetarium', 'madoromu_neon', 'nine_jack'];
 /* 勝ち抜き戦 (RUN) の対戦以外の画面 (入口・地図・ショップ・休憩所など): 沈殿するイルカ */
 export const RUN_BGM = 'iruka';
+/* ストーリー (2026-10-23): 章の地図の曲と、会話の山場で替える曲。甘茶の音楽工房 (https://amachamusic.chagasi.com/) の曲。
+   規約: ゲームの BGM として商用も可、曲だけの再配布は不可、表記は任意 (設定のクレジットに出す)。OpenTracks と同じく m4a に変換して置く */
+export const STORY_BGMS = {
+  ch0: 'genjitsunosukima',        // 序章 研究所 (夜): 現実の隙間
+  ch1: 'mizunishizumupiano',      // 1章 水族館: 水に沈むピアノ
+  ch2: 'janegreynoshouzou',       // 2章 屋敷: ジェーン・グレイの肖像
+  ch3: 'rokugatsunoamaoto',       // 3章 倉庫: 6月の雨音
+  ch4: 'kanatanikasumujoukisen',  // 4章 駅 (夕方): 彼方に霞む蒸気船
+  ch5: 'elegyfourstrings2',       // 5章 研究所 (朝): エレジー・フォー・ストリングスⅡ
+  ch6: 'inishienohiseki'          // 終章 所長室: 古の碑石
+};
+/* 会話の中で替える曲 (story.js の行の bgm / 場面の bgm に書く名前) */
+export const STORY_SCENE_BGMS = ['gozennijinomunashisa', 'natsunokiri', 'sangatsunosundasora'];   // 午前2時の虚しさ・夏の霧・3月の澄んだ空
+const STORY_TRACKS = [...Object.values(STORY_BGMS), ...STORY_SCENE_BGMS];
+export const STORY_BGM_CREDIT = '甘茶の音楽工房';
+/** その章の地図の曲 */
+export const storyBgm = (chapterId) => STORY_BGMS[chapterId] || STORY_BGMS.ch0;
 /* COLLECTION の BGM で「メニューで流す」を選んでいればその曲、おまかせならシャッフル */
 export const menuBgm = () => chosenTrack(settings(), 'bgmMenu') || shuffleMenuBgm();
 /** ふつうの対戦の曲: 「対戦で流す」を選んでいればその曲、おまかせならシャッフル (持っている曲から無作為に。1曲ごとに替える) */
@@ -53,7 +70,7 @@ export function pickTenseBgm(rnd = Math.random) {
   return pick;
 }
 /* 曲のファイル (無ければ <key>.mp3) */
-const FILES = { cho_zunou: 'cho_zunou.m4a', reflect: 'reflect.m4a', kaidoku: 'kaidoku.m4a', crescendo_jitter: 'crescendo_jitter.m4a',
+const FILES = { ...Object.fromEntries(STORY_TRACKS.map(k => [k, k + '.m4a'])), cho_zunou: 'cho_zunou.m4a', reflect: 'reflect.m4a', kaidoku: 'kaidoku.m4a', crescendo_jitter: 'crescendo_jitter.m4a',
   planetarium: 'planetarium.m4a', madoromu_neon: 'madoromu_neon.m4a', nine_jack: 'nine_jack.m4a', iruka: 'iruka.m4a',
   /* COLLECTION の BGM で交換する曲 (bgm-shop.js) */
   ...Object.fromEntries(['noesis', 'sagittarius', 'engram', 'objective_point', 'virus_entry', 'uso_ni_naru', 'siege_buster', 'electric_highway', 'grenade',
@@ -71,7 +88,10 @@ const LOUDNESS = {
   noesis: -5.5, sagittarius: -6.9, engram: -6.1, objective_point: -7.1, virus_entry: -8.0, uso_ni_naru: -11.4, siege_buster: -7.0,
   electric_highway: -9.3, grenade: -7.8, midnight_breaker: -9.9, rapid4: -6.8, irregular: -8.3, rapid5: -8.2, under_world: -9.7, cyber10: -6.5, cyber_prisoner: -6.9,
   interception: -4.3, strike_despair: -6.5, lobelia: -5.6, will_you_cry: -6.2, tactical_encounter: -6.4, hangeki: -5.8,
-  switcheroo: -6.2, monolith_black: -6.4, particle_tones: -5.6, tsuisekisha: -8.5, clock_jitter: -6.2, joudou_catharsis: -5.4, blaze_a_trail: -8.1, killer_roll: -6.4
+  switcheroo: -6.2, monolith_black: -6.4, particle_tones: -5.6, tsuisekisha: -8.5, clock_jitter: -6.2, joudou_catharsis: -5.4, blaze_a_trail: -8.1, killer_roll: -6.4,
+  /* ストーリー (甘茶の音楽工房)。静かな曲が多く、上げられるのは 1.6 倍までなので、対戦の曲より少し小さく鳴る (会話の後ろに置く曲なのでそのまま) */
+  genjitsunosukima: -19.3, mizunishizumupiano: -16.9, janegreynoshouzou: -14.2, rokugatsunoamaoto: -15.2, kanatanikasumujoukisen: -16.1,
+  elegyfourstrings2: -14.3, inishienohiseki: -14.3, gozennijinomunashisa: -15.9, natsunokiri: -17.7, sangatsunosundasora: -17.4
 };
 const LOUD_TARGET = -11;              // 曲の真ん中あたり (全体の大きさは今までと同じくらいに)
 /** その曲を LOUD_TARGET にそろえる倍率 (上げるのは 1.6 倍まで。測っていない曲は 1) */
@@ -167,7 +187,7 @@ function ensure() {
 /** 曲を鳴らす (同じ曲なら続きから)。key が無い・'off' なら止める */
 export function playBgm(key) {
   /* COLLECTION の BGM をしまっている間は、対戦の2曲だけ鳴らす (タイトルの曲・選んだ曲は鳴らさない) */
-  if (!BGM_RELEASED && !(BATTLE_BGM_ON && key && (isTrack(key) || NORMAL_BGMS.includes(key) || MENU_BGMS.includes(key) || key === RUN_BGM || key === STRONG_BGM || key === BOSS_BGM || key === DEUS_BGM || key === PEEK_BGM || TENSE_BGMS.includes(key)))) { stopBgm(); return; }
+  if (!BGM_RELEASED && !(BATTLE_BGM_ON && key && (isTrack(key) || NORMAL_BGMS.includes(key) || MENU_BGMS.includes(key) || key === RUN_BGM || key === STRONG_BGM || key === BOSS_BGM || key === DEUS_BGM || key === PEEK_BGM || TENSE_BGMS.includes(key) || STORY_TRACKS.includes(key)))) { stopBgm(); return; }
   clearTimeout(previewTimer);
   want = key && key !== 'off' ? key : null;
   if (!want) { stopBgm(); return; }

@@ -3,7 +3,7 @@
     "C:\\Program Files\\Blender Foundation\\Blender 4.5\\blender.exe" -b --python scripts/blender/chibi_rig.py -- <やること>
 
 やること:
-    hero      主人公の3Dモデルを art/models/hero4097.glb に書き出す (歩ける地図で使う。js3d/story-world.js)
+    hero      (2026-10-22 から使っていない。主人公は案Cのちび9枚 art/chibi/hero4097_*.webp になった) 主人公の3Dモデルを art/models/hero4097.glb に書き出す
     preview   主人公を4方向からレンダリングして、見た目を確かめる絵を出す
     base      ちびキャラの下絵 (素の人形の線画と陰影) を 9枚 (正面・横・後ろ × 立ち・歩き2コマ) 書き出す。
               イラスト用セッションが ControlNet の下絵にして、5体の体型と歩きのコマをそろえる
