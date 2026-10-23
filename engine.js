@@ -5490,6 +5490,22 @@ function aiActionHard(state, collect) {
       item.val2 = val;
       if (val > alpha) { alpha = val; best2 = item.a; }
     }
+    /* 深読み (AI_DEEP.k > 0、計測用): 2手読みで上位 k 手を、自分の次の手のあとの相手の応手までもう一段読み直す。
+       2手読みの順に読み直し、読み切れた手が2つ以上あればその中で選び直す (読めた手と読めなかった手は段数が違って比べられない) */
+    if (AI_DEEP.k > 0 && specialist && best2 && aiNow() < deadline) {
+      const top = viable.filter(x => x.val2 !== undefined && x.val2 > -1e8).sort((x, y) => y.val2 - x.val2).slice(0, AI_DEEP.k);
+      const read = [];
+      for (const item of top) {
+        const s1 = item.res.state;
+        if (s1.winner !== null || s1.phase === 'finished' || s1.turn === me) item.val3 = item.val2;
+        else {
+          item.val3 = minimaxMin(s1, me, -Infinity, Infinity, deadline, 1, true) + item.bias;
+          if (aiNow() > deadline) break;
+        }
+        read.push(item);
+      }
+      if (read.length > 1) best2 = read.reduce((x, y) => (y.val3 > x.val3 ? y : x)).a;
+    }
     /* 読んだ手がすべて負け確定なら、まだ読んでいない手の方がましな可能性がある */
     if (best2 && alpha <= -1e8) {
       const unread = viable.find(item => item.val2 === undefined);
@@ -5541,7 +5557,7 @@ function aiVetoOrder(viable) {
   return [pick('val2'), pick('val1')];
 }
 
-function minimaxMin(state, me, alpha, beta, deadline) {
+function minimaxMin(state, me, alpha, beta, deadline, deep, narrow) {
   if (state.turn === me || state.winner !== null) return aiScore(state, me);
   const op = 1 - me;
   const fairOpponent = aiIsDshSpecialist(state, me) && AI_DSH_W.opponentInfo > 0;
@@ -5549,7 +5565,7 @@ function minimaxMin(state, me, alpha, beta, deadline) {
   const acts = legalActions(searchState);
   if (!acts.length) return aiScore(state, me);
   const ordered = orderMovesStatic(acts, searchState, op);
-  const reply = aiIsDshSpecialist(state, me) ? AI_DSH_W.reply : AI_BREADTH.reply;
+  const reply = narrow ? AI_DEEP.reply : aiIsDshSpecialist(state, me) ? AI_DSH_W.reply : AI_BREADTH.reply;
   const limit = Math.min(ordered.length, reply);
   let val = Infinity;
   for (let i = 0; i < limit; i++) {
@@ -5564,8 +5580,8 @@ function minimaxMin(state, me, alpha, beta, deadline) {
       /* 自分の次の手まで読んだ値は、相手の手番を1つ挟んだ先の話。
          満額で数えるとリフレッシュのような「溜める手」が強く見えすぎる */
       const base = aiScore(s2, me);
-      const deep = minimaxMaxShallow(s2, me, alpha, beta, deadline);
-      sc = base + (deep - base) * aiWeightsFor(s2, me).futureDiscount;
+      const ahead = minimaxMaxShallow(s2, me, alpha, beta, deadline, deep, narrow);
+      sc = base + (ahead - base) * aiWeightsFor(s2, me).futureDiscount;
     } else sc = aiScore(s2, me);
     const tactical = sc + aiTransitionScore(searchState, res, me);
     if (tactical < val) val = tactical;
@@ -5575,20 +5591,26 @@ function minimaxMin(state, me, alpha, beta, deadline) {
   return val === Infinity ? aiScore(state, me) : val;
 }
 
-function minimaxMaxShallow(state, me, alpha, beta, deadline) {
+function minimaxMaxShallow(state, me, alpha, beta, deadline, deep, narrow) {
   if (state.winner !== null || state.turn !== me) return aiScore(state, me);
   const acts = legalActions(state);
   if (!acts.length) return aiScore(state, me);
   const ordered = acts.map(a => ({ a, bias: aiActionBias(state, a, me) }))
     .sort((a, b) => b.bias - a.bias);
   let val = -Infinity;
-  const shallow = aiIsDshSpecialist(state, me) ? AI_DSH_W.shallow : AI_BREADTH.shallow;
+  const shallow = narrow ? AI_DEEP.shallow : aiIsDshSpecialist(state, me) ? AI_DSH_W.shallow : AI_BREADTH.shallow;
   for (let i = 0; i < Math.min(ordered.length, shallow); i++) {
     if (deadline && aiNow() > deadline) break;
     const item = ordered[i];
     const res = applyAndResolve(state, item.a, smartPicks);
     if (!res || res.error || res.requests.length) continue;
-    const sc = aiScore(res.state, me) + item.bias + aiTransitionScore(state, res, me);
+    let after = aiScore(res.state, me);
+    /* 深読み: 自分の次の手のあと、相手の応手をもう一度 (細い幅で) 読む。窓は混ぜた値と合わないので開けて読む */
+    if (deep > 0 && res.state.winner === null && res.state.turn !== me) {
+      const reply = minimaxMin(res.state, me, -Infinity, Infinity, deadline, deep - 1, true);
+      after += (reply - after) * aiWeightsFor(res.state, me).futureDiscount;
+    }
+    const sc = after + item.bias + aiTransitionScore(state, res, me);
     if (sc > val) val = sc;
     if (val >= beta) return val;
     if (val > alpha) alpha = val;
@@ -5759,6 +5781,13 @@ function aiInformationState(state, side, salt) {
    各世界で探索した最善手の多数決を取る。1つの決定化に過剰適応した
    「読み切ったつもりの手」を避けられる。思考予算は K 等分する */
 let AI_PIMC = 1;
+/* 深読み (計測用、既定は切): k = 読み直す根の手の数、reply / shallow = 深い段の幅 */
+const AI_DEEP = { k: 0, reply: 6, shallow: 4 };
+function setAiDeep(k, reply, shallow) {
+  AI_DEEP.k = Math.max(0, k | 0);
+  if (reply) AI_DEEP.reply = reply | 0;
+  if (shallow) AI_DEEP.shallow = shallow | 0;
+}
 function setAiPimc(k) { AI_PIMC = Math.max(1, Math.min(9, k | 0)); }
 
 function aiActionPimc(state) {
@@ -5908,7 +5937,7 @@ function aiAnswer(state, req) {
 /* ---------- 公開 API ---------- */
 
 const Engine = {
-  init, newGame, newPuzzle, apply, legalActions, setTrace, setAiPeek, setAiValueNet, setAiPolicyNet, setAiComboNet, setAiLevel, setAiBlunder, setAiThinkBudget, setAiBreadth, setAiPimc, setAiWeights, setAiSpecialist, setAiSpecialistWeights, setAiOracle,
+  init, newGame, newPuzzle, apply, legalActions, setTrace, setAiPeek, setAiValueNet, setAiPolicyNet, setAiComboNet, setAiLevel, setAiBlunder, setAiThinkBudget, setAiBreadth, setAiPimc, setAiDeep, setAiWeights, setAiSpecialist, setAiSpecialistWeights, setAiOracle,
   lineTotal, cardValue, compilableLines, canPlay, playBlockReason, locate,
   ai: { action: aiAction, answer: aiAnswer, score: aiScore, valnetFeatures: aiValnetFeatures, policyCandidates: aiPolicyCandidates, policyLogit: (before, after, flags, def) => aiPolicyLogit(before, after, flags, def), comboLogit: aiComboLogit, middleFizzles: aiMiddleFizzles, transitionScore: aiTransitionScore, compilePassChance: aiCompilePassChance, informationState: aiInformationState, rootValues: aiRootValues, vetoOrder: aiVetoOrder, actionBias: aiActionBias, opsValue: aiOpsValue, boardEffect: aiBoardEffectScore, randomPicks, smartPicks },
   get defs() { return DEFS; },

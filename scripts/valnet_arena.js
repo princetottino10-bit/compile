@@ -17,7 +17,7 @@ const { PROTOCOLS } = require('./valnet_features.js');
 
 const ROOT = path.join(__dirname, '..');
 function parseArgs(argv) {
-  const o = { model: '_valnet/model.json', weight: 150, games: 400, budget: 600, seed: 500001, workers: 0, base: '', save: '', pimc: 1, cweight: 0, oracle: false, cweights: '', cbudget: 0 };
+  const o = { model: '_valnet/model.json', weight: 150, games: 400, budget: 600, seed: 500001, workers: 0, base: '', save: '', pimc: 1, cweight: 0, oracle: false, cweights: '', cbudget: 0, deep: 0 };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--model') o.model = argv[++i];
@@ -32,6 +32,7 @@ function parseArgs(argv) {
     else if (a === '--save') o.save = argv[++i];
     else if (a === '--oracle') o.oracle = true;
     else if (a === '--cweights') o.cweights = argv[++i];
+    else if (a === '--deep') o.deep = +argv[++i];   // 候補の側だけ深読み (setAiDeep、上位何手を読み直すか)
     else if (a === '--cbudget') o.cbudget = +argv[++i];   // 候補の側だけ思考時間を変える (読みの時間が強さにどれだけ効くか)
     else if (a === '--by-proto') o.byProto = true;   // プロトコルごとの勝率も出す
     else { console.error('未知の引数: ' + a); process.exit(1); }
@@ -48,7 +49,7 @@ function decks(seed) {
 }
 
 if (!isMainThread) {
-  const { src, cards, effects, jobs, budget, model, weight, base, pimc, cweight, oracle, cweights, cbudget } = workerData;
+  const { src, cards, effects, jobs, budget, model, weight, base, pimc, cweight, oracle, cweights, cbudget, deep } = workerData;
   const load = () => {
     const ctx = { module: { exports: {} }, exports: {}, console, structuredClone, performance };
     ctx.globalThis = ctx;
@@ -64,6 +65,7 @@ if (!isMainThread) {
   if (base) B.setAiValueNet(base, weight);
   if (oracle) { C.setAiOracle(true); B.setAiOracle(true); }
   if (cbudget) C.setAiThinkBudget(cbudget);
+  if (deep) C.setAiDeep(deep);
   if (cweights) {
     const { vnw, ...w } = cweights.theta;
     C.setAiSpecialistWeights(w); C.setAiWeights(w);   // それぞれ知らない名前は飛ばす
@@ -104,7 +106,7 @@ const chunks = Array.from({ length: nW }, () => []);
 jobs.forEach((j, i) => chunks[i % nW].push(j));
 const t0 = Date.now();
 Promise.all(chunks.filter(c => c.length).map(c => new Promise((resolve, reject) => {
-  const w = new Worker(__filename, { workerData: { src, cards, effects, jobs: c, budget: opt.budget, model, weight: opt.weight, base, pimc: opt.pimc, cweight: opt.cweight, oracle: opt.oracle, cbudget: opt.cbudget, cweights: opt.cweights ? JSON.parse(fs.readFileSync(path.join(ROOT, opt.cweights), 'utf8')) : null } });
+  const w = new Worker(__filename, { workerData: { src, cards, effects, jobs: c, budget: opt.budget, model, weight: opt.weight, base, pimc: opt.pimc, cweight: opt.cweight, oracle: opt.oracle, cbudget: opt.cbudget, deep: opt.deep, cweights: opt.cweights ? JSON.parse(fs.readFileSync(path.join(ROOT, opt.cweights), 'utf8')) : null } });
   w.on('message', resolve); w.on('error', reject);
 }))).then(parts => {
   if (opt.save) fs.writeFileSync(path.join(ROOT, opt.save), parts.flat().map(g => JSON.stringify(g)).join('\n') + '\n');
