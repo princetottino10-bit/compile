@@ -2105,8 +2105,10 @@ function thinking(p) {
 let autoPlay = false;
 /* valnet: 学習モデル (data/valnet.json) を読みに混ぜる重み。強くしている途中は AUTO だけで使う (2026-10-12)。
    400 → 1000 (2026-10-22): 第1世代入り同士 (つよい・読み 0.6 秒・ランダム編成) で、重み 1000 の側が 2,399戦 52.9% (95%: 50.9〜54.9%)。
-   700 は 1,200戦 51.7% で届かなかった。ロック用のモデルは 400 のまま測ったので ORACLE_LOCK_AI (aidecks.js) で 400 に戻す */
-const AUTO_AI = { level: 2, blunder: 0, budget: 2400, specialist: true, kind: 'dsh', specSide: 0, valnet: 1000, oracle: true };
+   700 は 1,200戦 51.7% で届かなかった。ロック用のモデルは 400 のまま測ったので ORACLE_LOCK_AI (aidecks.js) で 400 に戻す
+   deep: 3 (2026-10-23): 2手読みの上位3手を、自分の次の手のあと相手の応手まで細く読み直す (engine の setAiDeep)。
+   本番の ORACLE の設定 (2.4 秒) 同士で 2,327戦 52.2% (95%: 50.2〜54.2%)。考える時間は延びるが締め切りは同じ */
+const AUTO_AI = { level: 2, blunder: 0, budget: 2400, specialist: true, kind: 'dsh', specSide: 0, valnet: 1000, oracle: true, deep: 3 };
 /* オンラインでも使える (2026-10-14)。ただし 1対1 で、レート戦ではない部屋だけ (レートに CPU の指した対戦を混ぜない)。
    タッグ・観戦では使わない */
 const roomAutoOk = () => roomMode && !!roomRm && !roomWatching && !roomTag && roomRm.mode !== 'tag' && !roomRm.rated;

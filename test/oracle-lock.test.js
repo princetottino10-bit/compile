@@ -9,7 +9,7 @@ const Engine = require('../engine.js');
 Engine.init(require('../data/cards.json'), require('../data/effects.json'));
 const { FEATURE_SIZE } = require('../scripts/valnet_features.js');
 
-const AUTO = { level: 2, blunder: 0, budget: 2400, specialist: true, kind: 'dsh', specSide: 0, valnet: 1000, oracle: true };
+const AUTO = { level: 2, blunder: 0, budget: 2400, specialist: true, kind: 'dsh', specSide: 0, valnet: 1000, oracle: true, deep: 3 };
 const game = (p0, p1) => Engine.newGame({ p0, p1, seed: 3, useControl: true }).state;
 
 test('特化の側のデッキに PSYCHIC があるときだけ、ロックの読みとロック用のモデルに切り替える', async () => {
