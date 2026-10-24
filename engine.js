@@ -589,6 +589,16 @@ function fireUncover(ctx, info) {
   if (info && info.uncoverUid) resolveMiddle(ctx, info.uncoverUid, 'uncover');
 }
 
+/* 着地で新たに覆われるカード。移動中に後からプレイ・移動されて先に着いたカード
+   (自分より後にcommittedになったカード) が一番上なら、着地はその下になり、何も新しく覆わない。
+   (例: MIRROR 1 を移動 → 移動元で SPEED 0 が uncover して METAL 6 を移動先へプレイ →
+    MIRROR 1 は METAL 6 の下に入るので METAL 6 は覆われない。ルール: 複数 committed はコミット順に着地) */
+function landingCovers(st, uid, stack) {
+  if (!stack.length) return null;
+  const top = stack[stack.length - 1];
+  return (st.cards[top].commitSeq || 0) > (st.cards[uid].commitSeq || 0) ? null : top;
+}
+
 /* ラインへの着地: 自分より後にcommittedになったカードの下へ挿入する。
    これで複数カードが移動中でも「移動中になった順番」でスタックに入る */
 function landLine(ctx, uid, line, side) {
@@ -709,8 +719,8 @@ function doShift(ctx, uid, destLine) {
   const info = extractCard(ctx, uid);
   st.cards[uid].commitDest = 'line' + destLine;
   fireUncover(ctx, info);
-  const dest = st.lines[destLine][side];
-  if (dest.length) fireWouldBeCovered(ctx, dest[dest.length - 1], uid);
+  const covered = landingCovers(st, uid, st.lines[destLine][side]);
+  if (covered) fireWouldBeCovered(ctx, covered, uid);
   landLine(ctx, uid, destLine, side);
   // E2: 覆われた状態から移動し、移動先で表向き・uncovered になったら中段が場に入る
   const nloc = locate(st, uid);
@@ -1007,7 +1017,8 @@ function doCompile(ctx, side, line) {
         const dstack = st.lines[ans[0]][s];
         markCommitted(st, uid);
         st.cards[uid].commitDest = 'line' + ans[0];
-        if (dstack.length) fireWouldBeCovered(ctx, dstack[dstack.length - 1], uid);
+        const covered = landingCovers(st, uid, dstack);
+        if (covered) fireWouldBeCovered(ctx, covered, uid);
         landLine(ctx, uid, ans[0], s);
         log(ctx, `${DEFS[c.def].id} は削除の代わりにライン${ans[0] + 1}へ移動`);
       }
@@ -2020,7 +2031,8 @@ function performMass(ctx, fr, op, cands) {
       const moving = movingBySide[s];
       if (!moving.length) continue;
       const dstack = st.lines[dest][s];
-      if (dstack.length) fireWouldBeCovered(ctx, dstack[dstack.length - 1], moving[0]);
+      const covered = landingCovers(st, moving[0], dstack);
+      if (covered) fireWouldBeCovered(ctx, covered, moving[0]);
     }
     for (let s = 0; s < 2; s++) {
       for (const u of movingBySide[s]) landLine(ctx, u, dest, s);
