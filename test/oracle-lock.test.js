@@ -9,7 +9,7 @@ const Engine = require('../engine.js');
 Engine.init(require('../data/cards.json'), require('../data/effects.json'));
 const { FEATURE_SIZE } = require('../scripts/valnet_features.js');
 
-const AUTO = { level: 2, blunder: 0, budget: 2400, specialist: true, kind: 'dsh', specSide: 0, valnet: 400, oracle: true };
+const AUTO = { level: 2, blunder: 0, budget: 2400, specialist: true, kind: 'dsh', specSide: 0, valnet: 1000, oracle: true, deep: 3 };
 const game = (p0, p1) => Engine.newGame({ p0, p1, seed: 3, useControl: true }).state;
 
 test('特化の側のデッキに PSYCHIC があるときだけ、ロックの読みとロック用のモデルに切り替える', async () => {
@@ -18,6 +18,8 @@ test('特化の側のデッキに PSYCHIC があるときだけ、ロックの�
   assert.equal(lock.kind, 'psylock');
   assert.equal(lock.valnetModel, 'lock');
   assert.equal(lock.budget, 3600);
+  /* ロック用のモデルは重み 400 で測ったので、ORACLE の重み (1000) を引き継がない */
+  assert.equal(lock.valnet, 400);
   assert.equal(lock.specSide, 0);
   /* 相手だけが PSYCHIC: 切り替えない */
   assert.equal(oracleAi(AUTO, game(['FIRE', 'WATER', 'SPEED'], ['PSYCHIC', 'DARKNESS', 'FIRE'])), AUTO);
