@@ -4,6 +4,9 @@
  * 編成は種から決めたランダム (valnet_selfplay.js と同じ作り方、種は学習に使っていない範囲)。同じ種を候補の先手・後手で1回ずつ。
  *
  *   node scripts/valnet_arena.js --model _valnet/model.json --weight 150 --games 400 --budget 600
+ * --oracle で両者を ORACLE の設定 (自分の側だけ dsh 特化 + ORACLE の手筋) にする (思考時間は --budget 2400 と組む)。
+ * --cweights _spsa/run.theta.json で候補の側だけ ai_spsa.js の重み (特化・ORACLE の o*・学習モデルの重み vnw) にする。
+ * --base data/valnet.json を付けると、基準の側にも学習モデル (同じ重み) を入れる (世代どうしの対戦)。--save で1局ずつの結果を書き出す
  */
 const fs = require('node:fs');
 const path = require('node:path');
@@ -14,7 +17,7 @@ const { PROTOCOLS } = require('./valnet_features.js');
 
 const ROOT = path.join(__dirname, '..');
 function parseArgs(argv) {
-  const o = { model: '_valnet/model.json', weight: 150, games: 400, budget: 600, seed: 500001, workers: 0 };
+  const o = { model: '_valnet/model.json', weight: 150, games: 400, budget: 600, seed: 500001, workers: 0, base: '', save: '', pimc: 1, cweight: 0, oracle: false, cweights: '', cbudget: 0, deep: 0, bdeep: 0, dreply: 0, dshallow: 0 };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--model') o.model = argv[++i];
@@ -23,6 +26,17 @@ function parseArgs(argv) {
     else if (a === '--budget') o.budget = +argv[++i];
     else if (a === '--seed') o.seed = +argv[++i];
     else if (a === '--workers') o.workers = +argv[++i];
+    else if (a === '--base') o.base = argv[++i];
+    else if (a === '--pimc') o.pimc = +argv[++i];        // 候補の側だけ、見えないカードの並びを何通りも振って多数決 (setAiPimc)
+    else if (a === '--cweight') o.cweight = +argv[++i];  // 候補の側だけ学習モデルの重みを変える (0 なら --weight と同じ)
+    else if (a === '--save') o.save = argv[++i];
+    else if (a === '--oracle') o.oracle = true;
+    else if (a === '--cweights') o.cweights = argv[++i];
+    else if (a === '--deep') o.deep = +argv[++i];   // 候補の側だけ深読み (setAiDeep、上位何手を読み直すか)
+    else if (a === '--bdeep') o.bdeep = +argv[++i];   // 基準の側の深読み (今の ORACLE と比べるとき)
+    else if (a === '--dreply') o.dreply = +argv[++i]; // 候補の深読みの幅 (相手の応手 / 自分の手)
+    else if (a === '--dshallow') o.dshallow = +argv[++i];
+    else if (a === '--cbudget') o.cbudget = +argv[++i];   // 候補の側だけ思考時間を変える (読みの時間が強さにどれだけ効くか)
     else if (a === '--by-proto') o.byProto = true;   // プロトコルごとの勝率も出す
     else { console.error('未知の引数: ' + a); process.exit(1); }
   }
@@ -38,7 +52,7 @@ function decks(seed) {
 }
 
 if (!isMainThread) {
-  const { src, cards, effects, jobs, budget, model, weight } = workerData;
+  const { src, cards, effects, jobs, budget, model, weight, base, pimc, cweight, oracle, cweights, cbudget, deep, bdeep, dreply, dshallow } = workerData;
   const load = () => {
     const ctx = { module: { exports: {} }, exports: {}, console, structuredClone, performance };
     ctx.globalThis = ctx;
@@ -49,11 +63,24 @@ if (!isMainThread) {
     return e;
   };
   const C = load(), B = load();
-  C.setAiValueNet(model, weight);
+  C.setAiValueNet(model, cweight || weight);
+  if (pimc > 1) C.setAiPimc(pimc);
+  if (base) B.setAiValueNet(base, weight);
+  if (oracle) { C.setAiOracle(true); B.setAiOracle(true); }
+  if (cbudget) C.setAiThinkBudget(cbudget);
+  if (deep) C.setAiDeep(deep, dreply, dshallow);
+  if (bdeep) B.setAiDeep(bdeep);
+  if (cweights) {
+    const { vnw, ...w } = cweights.theta;
+    C.setAiSpecialistWeights(w); C.setAiWeights(w);   // それぞれ知らない名前は飛ばす
+    if (vnw) C.setAiValueNet(model, vnw);
+  }
   const out = [];
   for (const job of jobs) {
     const cs = job.cs;
     const ais = cs === 0 ? [C, B] : [B, C];
+    /* 特化は「どちらの側か」を持つので、局ごとに自分の側へ向け直す */
+    if (oracle) { C.setAiSpecialist(true, cs, 'dsh'); B.setAiSpecialist(true, 1 - cs, 'dsh'); }
     const [p0, p1] = decks(job.seed);
     let res = C.newGame({ p0, p1, seed: job.seed, useControl: true });
     let guard = 0;
@@ -76,15 +103,17 @@ const cards = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'cards.json'), 
 const effects = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'effects.json'), 'utf8'));
 const src = fs.readFileSync(path.join(ROOT, 'engine.js'), 'utf8');
 const model = JSON.parse(fs.readFileSync(path.join(ROOT, opt.model), 'utf8'));
+const base = opt.base ? JSON.parse(fs.readFileSync(path.join(ROOT, opt.base), 'utf8')) : null;
 const jobs = Array.from({ length: opt.games }, (_, i) => ({ seed: opt.seed + Math.floor(i / 2), cs: i % 2 }));
 const nW = opt.workers || Math.max(1, Math.min(os.cpus().length - 1, 12));
 const chunks = Array.from({ length: nW }, () => []);
 jobs.forEach((j, i) => chunks[i % nW].push(j));
 const t0 = Date.now();
 Promise.all(chunks.filter(c => c.length).map(c => new Promise((resolve, reject) => {
-  const w = new Worker(__filename, { workerData: { src, cards, effects, jobs: c, budget: opt.budget, model, weight: opt.weight } });
+  const w = new Worker(__filename, { workerData: { src, cards, effects, jobs: c, budget: opt.budget, model, weight: opt.weight, base, pimc: opt.pimc, cweight: opt.cweight, oracle: opt.oracle, cbudget: opt.cbudget, deep: opt.deep, bdeep: opt.bdeep, dreply: opt.dreply, dshallow: opt.dshallow, cweights: opt.cweights ? JSON.parse(fs.readFileSync(path.join(ROOT, opt.cweights), 'utf8')) : null } });
   w.on('message', resolve); w.on('error', reject);
 }))).then(parts => {
+  if (opt.save) fs.writeFileSync(path.join(ROOT, opt.save), parts.flat().map(g => JSON.stringify(g)).join('\n') + '\n');
   const all = parts.flat().filter(g => g.decided);
   const n = all.length, w = all.filter(g => g.won).length, p = w / n, z = 1.96;
   const d = 1 + z * z / n, c = (p + z * z / (2 * n)) / d, h = z * Math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d;

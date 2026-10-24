@@ -23,3 +23,7 @@ _valnet/
 _combo/
 _combo_log.txt
 _forge/
+_policy/
+scripts/__pycache__/
+_big/
+_spsa/
