@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<!-- SNS やチャットにリンクを貼ったときに出る画像 (og.jpg、1200x630) の型。
+     scripts/make_og_image.mjs が Chromium でこのページを撮って og.jpg にする。
+     抱かせたい感情は「この子に、勝ってみたい」。1位は茜の顔、2位は試合中のひとこと、
+     ロゴと遊び方は小さく下に (design-tenken の点検、2026-10-25)。
+     文字は 21px × 1.333 の段 (21・28・37・50・66・88) だけを使う。 -->
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Oxanium:wght@600&family=M+PLUS+1:wght@700&family=Klee+One:wght@600&display=block" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1200px; height: 630px; overflow: hidden; background: #0a0712; }
+  .stage { position: relative; width: 1200px; height: 630px; overflow: hidden;
+    background:
+      radial-gradient(ellipse 60% 80% at 78% 40%, rgba(139, 92, 246, .35), transparent 70%),
+      linear-gradient(180deg, #120c22 0%, #0a0712 100%); }
+
+  /* 茜が出てくる大きな札。名札の赤 (avatar.js の茜の色) と目の赤だけを差し色にし、札は白と紫で抑える。黒い髪と服が暗い地に沈まないよう、明るい札を背に立たせる */
+  .card { position: absolute; left: 690px; top: 22px; width: 450px; height: 720px;
+    transform: rotate(7deg); border-radius: 28px;
+    background:
+      radial-gradient(circle at 45% 30%, #ffffff 0%, #e6dcff 30%, #b9a4ff 66%, #7c4ddf 100%);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, .55), 0 0 80px rgba(255, 79, 163, .45); }
+  .card::before { content: ""; position: absolute; inset: 18px; border-radius: 16px;
+    border: 2px solid rgba(10, 7, 18, .25); }
+  /* 札の盤目: 3つのラインを薄く */
+  .card::after { content: ""; position: absolute; inset: 18px; border-radius: 16px;
+    background:
+      linear-gradient(90deg, transparent 33.1%, rgba(10,7,18,.12) 33.1% 33.6%, transparent 33.6% 66.4%, rgba(10,7,18,.12) 66.4% 66.9%, transparent 66.9%); }
+
+  /* 札の枠からはみ出す (左の肩と顔が札の外へ) */
+  .akane { position: absolute; left: 545px; top: -34px; height: 880px;
+    filter: drop-shadow(-14px 10px 24px rgba(10, 7, 18, .55)); }
+
+  /* 左の文字を読ませる影 */
+  .shade { position: absolute; inset: 0;
+    background: linear-gradient(90deg, rgba(10,7,18,.92) 0%, rgba(10,7,18,.7) 34%, rgba(10,7,18,0) 50%); }
+
+  .copy { position: absolute; left: 64px; top: 96px; }
+  .plate { display: inline-block; font: 700 28px/1 "M PLUS 1", sans-serif; color: #fff;
+    background: #e0283c; padding: 7px 16px 9px; border-radius: 6px; letter-spacing: .08em; }
+  .line { margin-top: 26px; font-family: "Klee One", serif; font-weight: 600; color: #fff;
+    text-shadow: 0 2px 18px rgba(10, 7, 18, .8); font-feature-settings: "palt"; }
+  .l1 { position: relative; font-size: 50px; line-height: 1.15; letter-spacing: .02em; }
+  /* 行頭のカギ括弧はぶら下げて、次の行の「終」と左端をそろえる */
+  .l1 .q { position: absolute; transform: translateX(-100%); }
+  .l2 { font-size: 88px; line-height: 1.12; letter-spacing: -.02em; margin-top: 6px; }
+
+  .foot { position: absolute; left: 64px; bottom: 54px; }
+  .logo { display: flex; align-items: baseline; gap: 16px; }
+  .logo b { font: 900 50px/1 Orbitron, sans-serif; color: #fff; letter-spacing: .02em; }
+  .logo b i { font-style: normal; color: #ff4fa3; margin-right: 8px; }
+  .logo span { font: 600 21px/1 Oxanium, sans-serif; color: #b9a4ff; letter-spacing: .32em; }
+  .how { margin-top: 18px; font: 700 28px/1 "M PLUS 1", sans-serif; color: #e9e3f7; letter-spacing: .02em; }
+  .fan { position: absolute; right: 26px; bottom: 22px; font: 700 21px/1 "M PLUS 1", sans-serif;
+    color: rgba(255, 255, 255, .85); background: rgba(10, 7, 18, .55); padding: 6px 12px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="card"></div>
+  <img class="akane" src="../../art/avatar/nadeshiko_fired.webp" alt="">
+  <div class="shade"></div>
+  <div class="copy">
+    <div class="plate">茜</div>
+    <div class="line">
+      <div class="l1"><span class="q">「</span>お茶が冷める前に、</div>
+      <div class="l2">終わらせます」</div>
+    </div>
+  </div>
+  <div class="foot">
+    <div class="logo"><b><i>//</i>COMPILE</b><span>3D ARENA</span></div>
+    <div class="how">ブラウザで無料・登録なし。すぐ1戦。</div>
+  </div>
+  <div class="fan">非公式ファンメイド</div>
+</div>
+</body>
+</html>
