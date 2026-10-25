@@ -35,7 +35,10 @@ function protoNamesOf(p) { return p && Array.isArray(p.names) ? p.names : [p && 
 function protoHas(p, name) { return protoNamesOf(p).indexOf(name) >= 0; }
 /* そのラインにある (両者の) プロトコルの名前をすべて */
 function lineProtoNames(st, line) {
-  return protoNamesOf(st.players[0].protocols[line]).concat(protoNamesOf(st.players[1].protocols[line]));
+  const a = st.players[0].protocols[line], b = st.players[1].protocols[line];
+  /* 複合プロトコルが無いふつうの場合は配列を1つだけ作る (AI の評価でラインごと・カードごとに何度も呼ばれる) */
+  if (a && b && !a.names && !b.names) return [a.name, b.name];
+  return protoNamesOf(a).concat(protoNamesOf(b));
 }
 
 function knowCard(st, uid, side) {
@@ -245,6 +248,12 @@ function cardValue(st, uid) {
     // 場外: trash は表向き=印刷値、それ以外(deck/hand)は非公開=2 (Light 0 裁定)
     return (c.zone.indexOf('trash') === 0) ? DEFS[c.def].value : 2;
   }
+  return fieldCardValue(st, uid, loc.line, loc.side, activeStatics(st));
+}
+/* 場のカードの値。statics は activeStatics(st) を渡す。
+   lineTotal は AI の試算でいちばん多く呼ばれるので、常在効果の一覧をカードごとに作り直さず1回で済ませる */
+function fieldCardValue(st, uid, line, side, statics) {
+  const c = st.cards[uid];
   let v = c.faceUp ? DEFS[c.def].value : 2;
   /* 勝ち抜き戦の極端なパッチ (newGame の perks)。その側の場のカードの値を変える:
      doubleProto (そのプロトコルの表向きの値は2倍) / otherMinus (ほかのプロトコルの表向きの値を引く) /
@@ -258,9 +267,9 @@ function cardValue(st, uid) {
       v = Math.max(0, v);
     } else if (pk.faceDownValue) v = pk.faceDownValue;
   }
-  for (const s of activeStatics(st)) {
+  for (const s of statics) {
     if (s.kind === 'setValue' && s.filter.zone === 'thisStack'
-        && s.line === loc.line && s.sideIdx === loc.side
+        && s.line === line && s.sideIdx === side
         && (s.filter.facing === 'any' || (s.filter.facing === 'down') === !c.faceUp)) {
       v = s.value;
     }
@@ -268,10 +277,11 @@ function cardValue(st, uid) {
   return v;
 }
 
-function lineTotal(st, line, side) {
+/* statics: 同じ盤面で何度も数えるときは activeStatics(st) を1回作って渡す */
+function lineTotal(st, line, side, statics = activeStatics(st)) {
   let t = 0;
-  for (const uid of st.lines[line][side]) t += cardValue(st, uid);
-  for (const s of activeStatics(st)) {
+  for (const uid of st.lines[line][side]) t += fieldCardValue(st, uid, line, side, statics);
+  for (const s of statics) {
     if (s.kind !== 'modifyLineTotal' || s.line !== line) continue;
     const affect = (s.side === 'self') ? s.sideIdx : 1 - s.sideIdx;
     if (affect !== side) continue;
@@ -964,8 +974,9 @@ function doRefresh(ctx, side) {
 
 function compilableLines(st, side) {
   const out = [];
+  const sts = activeStatics(st);
   for (let l = 0; l < 3; l++) {
-    const mine = lineTotal(st, l, side), theirs = lineTotal(st, l, 1 - side);
+    const mine = lineTotal(st, l, side, sts), theirs = lineTotal(st, l, 1 - side, sts);
     if (mine >= 10 && mine > theirs) out.push(l);
   }
   return out;
@@ -974,7 +985,8 @@ function compilableLines(st, side) {
 /* いまのラインの合計値で、最高の記録を更新する (実績 OVERKILL)。コンパイルで消える前と、1手の終わりに呼ぶ */
 function tallyLines(st) {
   const m = tallyOf(st).maxLine;
-  for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++) m[s] = Math.max(m[s], lineTotal(st, l, s));
+  const sts = activeStatics(st);
+  for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++) m[s] = Math.max(m[s], lineTotal(st, l, s, sts));
 }
 
 function doCompile(ctx, side, line) {
@@ -2168,7 +2180,8 @@ function runTurnLoop(ctx) {
       case 'checkControl': {
         if (st.useControl) {
           let wins = 0;
-          for (let l = 0; l < 3; l++) if (lineTotal(st, l, st.turn) > lineTotal(st, l, 1 - st.turn)) wins++;
+          const sts = activeStatics(st);
+          for (let l = 0; l < 3; l++) if (lineTotal(st, l, st.turn, sts) > lineTotal(st, l, 1 - st.turn, sts)) wins++;
           if (wins >= 2 && st.control !== st.turn) {
             st.control = st.turn;
             log(ctx, `P${st.turn + 1}: コントロールを獲得`);
@@ -3008,7 +3021,8 @@ function aiTriggerValue(def, slot) {
 function aiLineLeadCount(st, side) {
   const op = 1 - side;
   let wins = 0;
-  for (let l = 0; l < 3; l++) if (lineTotal(st, l, side) > lineTotal(st, l, op)) wins++;
+  const sts = activeStatics(st);
+  for (let l = 0; l < 3; l++) if (lineTotal(st, l, side, sts) > lineTotal(st, l, op, sts)) wins++;
   return wins;
 }
 
@@ -3017,9 +3031,10 @@ function aiControlLeverage(st, side) {
   const op = 1 - side;
   const myComp = aiCompiledTowardWin(st, side);
   const opComp = aiCompiledTowardWin(st, op);
+  const sts = activeStatics(st);
   let v = 20 + myComp * 16 + opComp * 22;
   for (let l = 0; l < 3; l++) {
-    const mine = lineTotal(st, l, side), theirs = lineTotal(st, l, op);
+    const mine = lineTotal(st, l, side, sts), theirs = lineTotal(st, l, op, sts);
     if (!st.players[side].protocols[l].compiled && mine >= 10 && mine > theirs) v += 18;
     if (!st.players[op].protocols[l].compiled && theirs >= 10 && theirs > mine) v += 28;
   }
@@ -3028,6 +3043,7 @@ function aiControlLeverage(st, side) {
 
 function aiHandPotential(st, side, anyLine) {
   const op = 1 - side;
+  const sts = activeStatics(st);
   const vals = [];
   for (const uid of st.players[side].hand) {
     const c = st.cards[uid], d = DEFS[c.def];
@@ -3036,7 +3052,7 @@ function aiHandPotential(st, side, anyLine) {
       if (st.players[side].protocols[l].compiled) continue;
       const names = lineProtoNames(st, l);
       if (!anyLine && names.indexOf(d.proto) < 0) continue;
-      const mine = lineTotal(st, l, side), theirs = lineTotal(st, l, op);
+      const mine = lineTotal(st, l, side, sts), theirs = lineTotal(st, l, op, sts);
       const face = d.value + Math.max(0, aiMiddleValue(d)) * 0.18;
       const down = 2 + (d.value < 2 ? 2 : 0);
       let s = Math.max(face, down);
@@ -3872,10 +3888,11 @@ function aiValnetFeatures(st, me) {
     }
     return [perm, temp];
   };
+  const sts = activeStatics(st);
   for (let l = 0; l < 3; l++) {
     for (const s of [me, op]) {
       const stack = st.lines[l][s];
-      const mine = lineTotal(st, l, s), theirs = lineTotal(st, l, 1 - s);
+      const mine = lineTotal(st, l, s, sts), theirs = lineTotal(st, l, 1 - s, sts);
       const top = stack.length ? st.cards[stack[stack.length - 1]] : null;
       x[k++] = mine / 10;
       x[k++] = stack.length / 6;
@@ -4059,8 +4076,9 @@ function aiHeuristic(st, me) {
   sc -= opComp * 410;
 
   const lineInfo = [];
+  const sts = activeStatics(st);
   for (let l = 0; l < 3; l++) {
-    const mine = lineTotal(st, l, me), theirs = lineTotal(st, l, op);
+    const mine = lineTotal(st, l, me, sts), theirs = lineTotal(st, l, op, sts);
     const myProt = st.players[me].protocols[l], opProt = st.players[op].protocols[l];
     lineInfo.push({ mine, theirs, myComp: myProt.compiled, opComp: opProt.compiled });
   }
