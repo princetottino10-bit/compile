@@ -5517,7 +5517,7 @@ function aiActionHard(state, collect) {
         const s1 = item.res.state;
         if (s1.winner !== null || s1.phase === 'finished' || s1.turn === me) item.val3 = item.val2;
         else {
-          item.val3 = minimaxMin(s1, me, -Infinity, Infinity, deadline, 1, true) + item.bias;
+          item.val3 = minimaxMin(s1, me, -Infinity, Infinity, deadline, AI_DEEP.depth, true) + item.bias;
           if (aiNow() > deadline) break;
         }
         read.push(item);
@@ -5799,12 +5799,13 @@ function aiInformationState(state, side, salt) {
    各世界で探索した最善手の多数決を取る。1つの決定化に過剰適応した
    「読み切ったつもりの手」を避けられる。思考予算は K 等分する */
 let AI_PIMC = 1;
-/* 深読み (計測用、既定は切): k = 読み直す根の手の数、reply / shallow = 深い段の幅 */
-const AI_DEEP = { k: 0, reply: 6, shallow: 4 };
-function setAiDeep(k, reply, shallow) {
+/* 深読み (計測用、既定は切): k = 読み直す根の手の数、reply / shallow = 深い段の幅、depth = 自分の手と相手の応手を何組読み足すか */
+const AI_DEEP = { k: 0, reply: 6, shallow: 4, depth: 1 };
+function setAiDeep(k, reply, shallow, depth) {
   AI_DEEP.k = Math.max(0, k | 0);
   if (reply) AI_DEEP.reply = reply | 0;
   if (shallow) AI_DEEP.shallow = shallow | 0;
+  if (depth) AI_DEEP.depth = depth | 0;
 }
 function setAiPimc(k) { AI_PIMC = Math.max(1, Math.min(9, k | 0)); }
 
