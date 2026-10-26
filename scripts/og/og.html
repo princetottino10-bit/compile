@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!-- SNS やチャットにリンクを貼ったときに出る画像 (og.jpg、1200x630) の型。
      scripts/make_og_image.mjs が Chromium でこのページを撮って og.jpg にする。
-     抱かせたい感情は「この子に、勝ってみたい」。1位は茜の顔、2位は試合中のひとこと、
+     抱かせたい感情は「この子に、勝ってみたい」。1位は茜の顔、2位は試合中のひとこと (名札でセリフと分かるので鉤括弧は付けない)、
      ロゴと遊び方は小さく下に (design-tenken の点検、2026-10-25)。
      文字は 21px × 1.333 の段 (21・28・37・50・66・88) だけを使う。 -->
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Oxanium:wght@600&family=M+PLUS+1:wght@700&family=Klee+One:wght@600&display=block" rel="stylesheet">
@@ -42,9 +42,7 @@
     background: #e0283c; padding: 7px 16px 9px; border-radius: 6px; letter-spacing: .08em; }
   .line { margin-top: 26px; font-family: "Klee One", serif; font-weight: 600; color: #fff;
     text-shadow: 0 2px 18px rgba(10, 7, 18, .8); font-feature-settings: "palt"; }
-  .l1 { position: relative; font-size: 50px; line-height: 1.15; letter-spacing: .02em; }
-  /* 行頭のカギ括弧はぶら下げて、次の行の「終」と左端をそろえる */
-  .l1 .q { position: absolute; transform: translateX(-100%); }
+  .l1 { font-size: 50px; line-height: 1.15; letter-spacing: .02em; }
   .l2 { font-size: 88px; line-height: 1.12; letter-spacing: -.02em; margin-top: 6px; }
 
   .foot { position: absolute; left: 64px; bottom: 54px; }
@@ -65,8 +63,8 @@
   <div class="copy">
     <div class="plate">茜</div>
     <div class="line">
-      <div class="l1"><span class="q">「</span>お茶が冷める前に、</div>
-      <div class="l2">終わらせます」</div>
+      <div class="l1">お茶が冷める前に、</div>
+      <div class="l2">終わらせます</div>
     </div>
   </div>
   <div class="foot">
