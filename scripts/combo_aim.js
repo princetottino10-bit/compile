@@ -36,6 +36,7 @@ const COMBOS = {
   warAssim: { name: 'WAR 0 + ASSIMILATION 4', protos: ['WAR', 'ASSIMILATION'], pieces: { WAR_1: 'top', ASSIMILATION_4: 'play' } },
   plagueCourage: { name: 'PLAGUE 1 + COURAGE 0 + CORRUPTION 2', protos: ['PLAGUE', 'COURAGE', 'CORRUPTION'], pieces: { PLAGUE_2: 'up', COURAGE_1: 'top', CORRUPTION_3: 'up' } },
   warCourage: { name: 'WAR 3 + COURAGE 0', protos: ['WAR', 'COURAGE'], pieces: { WAR_4: 'top', COURAGE_1: 'top' } },
+  warCourageCorr: { name: 'WAR 3 + COURAGE 0 + CORRUPTION 2', protos: ['WAR', 'COURAGE', 'CORRUPTION'], pieces: { WAR_4: 'top', COURAGE_1: 'top', CORRUPTION_3: 'up' } },
   war3Fear: { name: 'WAR 3 + FEAR 1', protos: ['WAR', 'FEAR'], pieces: { WAR_4: 'top', FEAR_2: 'play' } },
   spiritCorr: { name: 'SPIRIT 3 + CORRUPTION 2', protos: ['SPIRIT', 'CORRUPTION'], pieces: { SPIRIT_4: 'up', CORRUPTION_3: 'play' } },
   spiritPeace: { name: 'SPIRIT 3 + PEACE 1', protos: ['SPIRIT', 'PEACE'], pieces: { SPIRIT_4: 'up', PEACE_1: 'top' } },

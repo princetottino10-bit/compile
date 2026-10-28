@@ -27074,6 +27074,221 @@
    "note": null
   },
   {
+   "id": "E001",
+   "name": "WAR 0 + CHAOS 0 に SPIRIT 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "SPIRIT_4"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "SPIRIT"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに SPIRIT 3 (あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を足す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 102,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1,
+    "interactionSe": 1,
+    "partnerValue": -0.2,
+    "partnerValueSe": 0.7,
+    "synergy": 0.9,
+    "synergySe": 1.1,
+    "missed": -3.8,
+    "missedSe": 1.3,
+    "aiPicked": 29
+   },
+   "note": null
+  },
+  {
+   "id": "E002",
+   "name": "FIRE 3 + PLAGUE 4 に CORRUPTION 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "CORRUPTION_3"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "CORRUPTION"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに CORRUPTION 2 (あなたが手札を捨て札にしたあと：相手は手札を1枚捨て札にする。 / カードを1枚引く。あなたは手札を1枚捨て札にする。) を足す。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 153,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.5,
+    "interactionSe": 0.8,
+    "partnerValue": 1.6,
+    "partnerValueSe": 0.6,
+    "synergy": 4.1,
+    "synergySe": 0.7,
+    "missed": 0.5,
+    "missedSe": 0.7,
+    "aiPicked": 42
+   },
+   "note": null
+  },
+  {
+   "id": "E003",
+   "name": "PLAGUE 1 + COURAGE 0 + CORRUPTION 2 に SPIRIT 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "PLAGUE_2",
+    "COURAGE_1",
+    "CORRUPTION_3",
+    "SPIRIT_4"
+   ],
+   "protocols": [
+    "PLAGUE",
+    "COURAGE",
+    "CORRUPTION",
+    "SPIRIT"
+   ],
+   "how": "PLAGUE 1 + COURAGE 0 + CORRUPTION 2 が回っているところに SPIRIT 3 (あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "E004",
+   "name": "PLAGUE 1 + COURAGE 0 + CORRUPTION 2 に WAR 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "PLAGUE_2",
+    "COURAGE_1",
+    "CORRUPTION_3",
+    "WAR_4"
+   ],
+   "protocols": [
+    "PLAGUE",
+    "COURAGE",
+    "CORRUPTION",
+    "WAR"
+   ],
+   "how": "PLAGUE 1 + COURAGE 0 + CORRUPTION 2 が回っているところに WAR 3 (カードを1枚引く。 / 相手が手札を捨て札にしたあと：あなたはカードを裏向きで1枚プレイすることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "E005",
+   "name": "WAR 3 + COURAGE 0 に CORRUPTION 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "CORRUPTION_3"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "CORRUPTION"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに CORRUPTION 2 (あなたが手札を捨て札にしたあと：相手は手札を1枚捨て札にする。 / カードを1枚引く。あなたは手札を1枚捨て札にする。) を足す。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 152,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 3.5,
+    "interactionSe": 1,
+    "partnerValue": 3.2,
+    "partnerValueSe": 1,
+    "synergy": 6.7,
+    "synergySe": 1.1,
+    "missed": -1.3,
+    "missedSe": 0.9,
+    "aiPicked": 43
+   },
+   "note": null
+  },
+  {
+   "id": "E006",
+   "name": "TIME 2 + CLARITY 3 に SPIRIT 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "TIME_3",
+    "CLARITY_4",
+    "SPIRIT_4"
+   ],
+   "protocols": [
+    "TIME",
+    "CLARITY",
+    "SPIRIT"
+   ],
+   "how": "TIME 2 + CLARITY 3 が回っているところに SPIRIT 3 (あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を足す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 152,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1,
+    "interactionSe": 0.9,
+    "partnerValue": -0.2,
+    "partnerValueSe": 0.7,
+    "synergy": 0.7,
+    "synergySe": 0.8,
+    "missed": -4.7,
+    "missedSe": 1.3,
+    "aiPicked": 16
+   },
+   "note": null
+  },
+  {
+   "id": "E007",
+   "name": "CORRUPTION 6 + CORRUPTION 2 に SPIRIT 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "CORRUPTION_6",
+    "CORRUPTION_3",
+    "SPIRIT_4"
+   ],
+   "protocols": [
+    "CORRUPTION",
+    "SPIRIT"
+   ],
+   "how": "CORRUPTION 6 + CORRUPTION 2 が回っているところに SPIRIT 3 (あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を足す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 101,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.1,
+    "interactionSe": 1.3,
+    "partnerValue": -0.6,
+    "partnerValueSe": 0.8,
+    "synergy": 0.5,
+    "synergySe": 1.2,
+    "missed": -3.9,
+    "missedSe": 1.8,
+    "aiPicked": 32
+   },
+   "note": null
+  },
+  {
    "id": "T01",
    "name": "WATER 1 + WATER 4",
    "kind": "burst",

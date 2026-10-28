@@ -935,3 +935,56 @@ module.exports = [
     });
   }
 })();
+
+/* ---------- 回っている組に3枚目を足す (E001〜、2026-10-28) ----------
+   確かめた組を場に植え、その組が毎手番起こす出来事 (引く・捨てる・削除・シャッフル) を聞く札を3枚目に出す。
+   聞く札は A 型と同じく effects.json の「〜したあと」から拾う。相方 = 3枚目 */
+(function engineTriples() {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const effects = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'effects.json'), 'utf8'));
+  const cards = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'cards.json'), 'utf8'));
+  const proto = {}, value = {}, text = {}, byName = {};
+  for (const p of cards.protocols) for (const c of p.cards) {
+    proto[c.id] = p.name; value[c.id] = c.value; byName[p.name + ' ' + c.value] = c.id;
+    text[c.id] = [c.upper, c.middle, c.lower].filter(Boolean).join(' / ');
+  }
+  const id = (n) => { if (!byName[n]) throw new Error('no card ' + n); return byName[n]; };
+  const name = (d) => proto[d] + ' ' + value[d];
+  const ENGINES = [
+    ['WAR 0 + CHAOS 0', ['WAR 0', 'CHAOS 0'], ['afterOppDraw', 'afterYouDraw', 'afterYouDelete']],
+    ['FIRE 3 + PLAGUE 4', ['FIRE 3', 'PLAGUE 4'], ['afterYouDiscard']],
+    ['PLAGUE 1 + COURAGE 0 + CORRUPTION 2', ['PLAGUE 1', 'COURAGE 0', 'CORRUPTION 2'], ['afterYouDiscard', 'afterOppDiscard', 'afterYouDraw']],
+    ['WAR 3 + COURAGE 0', ['WAR 3', 'COURAGE 0'], ['afterYouDiscard', 'afterOppDiscard']],
+    ['SPIRIT 3 + PEACE 1', ['SPIRIT 3', 'PEACE 1'], ['afterYouDraw']],
+    ['TIME 2 + CLARITY 3', ['TIME 2', 'CLARITY 3'], ['afterYouShuffle', 'afterYouDraw']],
+    ['CORRUPTION 6 + CORRUPTION 2', ['CORRUPTION 6', 'CORRUPTION 2'], ['afterYouDiscard', 'afterOppDiscard', 'afterYouDraw']]
+  ];
+  const listeners = [];
+  for (const [d, eff] of Object.entries(effects)) {
+    if (!proto[d]) continue;
+    for (const slot of ['upper', 'lower']) {
+      const tr = eff[slot] && eff[slot].trigger;
+      if (tr && /^after/.test(tr.on)) listeners.push({ id: d, slot, on: tr.on });
+    }
+  }
+  const seen = new Set(module.exports.map(c => c.setup.mine.map(p => p.card).sort().join('+')));
+  let n = 0;
+  for (const [en, pieces, evs] of ENGINES) {
+    const ps = pieces.map(id);
+    for (const L of listeners) {
+      if (!evs.includes(L.on) || ps.includes(L.id)) continue;
+      const mine = [...ps.map(x => ({ card: x, at: 'field' })), { card: L.id, at: 'hand' }];
+      const key = mine.map(p => p.card).sort().join('+');
+      if (seen.has(key)) continue;
+      seen.add(key);
+      module.exports.push({
+        id: 'E' + String(++n).padStart(3, '0'), auto: true, source: 'triple', late: true,
+        name: en + ' に ' + name(L.id), kind: 'engine', protos: [...new Set([...ps.map(x => proto[x]), proto[L.id]])],
+        how: en + ' が回っているところに ' + name(L.id) + ' (' + text[L.id] + ') を足す。',
+        /* 3枚目は組の札を覆わないラインに出す (下段の組は覆うと止まる) */
+        setup: { mine }, act: { play: L.id, line: L.slot === 'lower' ? 'other' : undefined }, partner: [L.id]
+      });
+    }
+  }
+})();

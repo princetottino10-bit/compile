@@ -3484,7 +3484,8 @@ const AI_AIM_COMBOS = [
   /* COURAGE 0 の終了で1枚捨てると相手が2枚捨て (COURAGE 0・CORRUPTION 2)、PLAGUE 1 で2枚引く */
   { pieces: { PLAGUE_2: 'up', COURAGE_1: 'top', CORRUPTION_3: 'up' } },
   /* WAR 3 の下段「相手が捨てたあと: 裏で1枚出せる」に、相手に捨てさせる札を足す */
-  { pieces: { WAR_4: 'top', COURAGE_1: 'top' } },
+  /* CORRUPTION 2 の上段で、COURAGE 0 の終了で捨てるたびに相手がもう1枚捨て、WAR 3 がもう1回起きる (E005、150盤面2回で +3.5 / +2.6) */
+  { pieces: { WAR_4: 'top', COURAGE_1: 'top' }, extra: { CORRUPTION_3: 'up' } },
   { pieces: { WAR_4: 'top', FEAR_2: 'play' } },
   /* SPIRIT 3 は引いたあとに覆われていても動ける。引く札を足して、どいた下の札をもう一度起こす */
   { pieces: { SPIRIT_4: 'up', CORRUPTION_3: 'play' } },
