@@ -3540,13 +3540,23 @@ function aiAimScore(st, side, W) {
    flipStore: 自分の一番上の裏向きが撃つ札で、手札に表にする札がある */
 const AI_FLIP_PAYLOAD = new Set(['LIFE_1', 'LIGHT_1', 'LUCK_1', 'SPEED_1', 'FIRE_1', 'HATE_1', 'GRAVITY_2', 'DARKNESS_1', 'WATER_2']);
 const AI_FLIP_ENABLER = new Set(['LOVE_4', 'WATER_1', 'SPIRIT_3', 'WAR_3', 'LIFE_2', 'SMOKE_2', 'METAL_1', 'GRAVITY_3', 'FEAR_1']);
+/* 一番上で表の FIRE 3 (FIRE_4) は終了ごとに表にする札。自分で裏返る SPIRIT 1 (開始に裏返る)・WATER 0 (中段で自分も裏返る) は、
+   FIRE 3 で毎手番表に戻すと中段 (2枚引く / 1枚反転) を毎手番撃てる (L001・L002、150盤面で +6.0 / +6.1) */
+const AI_FLIP_SELF = new Set(['SPIRIT_2', 'WATER_1']);
 function aiFlipStoreScore(st, side, W) {
-  if (!W.flipStore || !st.players[side].hand.some(u => AI_FLIP_ENABLER.has(st.cards[u].def))) return 0;
+  if (!W.flipStore) return 0;
+  let fire3 = false;
+  for (let l = 0; l < 3; l++) {
+    const stack = st.lines[l][side];
+    const top = stack[stack.length - 1];
+    if (top && st.cards[top].def === 'FIRE_4' && st.cards[top].faceUp) fire3 = true;
+  }
+  if (!fire3 && !st.players[side].hand.some(u => AI_FLIP_ENABLER.has(st.cards[u].def))) return 0;
   let n = 0;
   for (let l = 0; l < 3; l++) {
     const stack = st.lines[l][side];
     const top = stack[stack.length - 1];
-    if (top && !st.cards[top].faceUp && AI_FLIP_PAYLOAD.has(st.cards[top].def)) n++;
+    if (top && !st.cards[top].faceUp && (AI_FLIP_PAYLOAD.has(st.cards[top].def) || (fire3 && AI_FLIP_SELF.has(st.cards[top].def)))) n++;
   }
   return Math.min(n, 2) * W.flipStore;
 }

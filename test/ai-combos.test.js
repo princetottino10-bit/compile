@@ -816,3 +816,16 @@ test('つよい以上: WAR 0 が場で効くとき、LOVE 6 を撃っても揃�
   setHand(fired, 0, ['HATE_2']);
   assert.ok(Engine.ai.score(fired, 0) > Engine.ai.score(hold, 0) - 60, '撃ったあとの形を大きく下に見ない');
 }));
+test('つよい以上: 一番上で表の FIRE 3 があれば、裏で一番上の SPIRIT 1 を覆わずに残す方を高く見る (毎手番起こし直す)', () => withDsh(() => {
+  Engine.setAiLevel(2);
+  const FS = ['FIRE', 'SPIRIT', 'HATE'];
+  const live = game(FS, ['METAL', 'LIGHT', 'LIFE']);
+  place(live, 'FIRE_4', 0, 0, true);
+  place(live, 'HATE_2', 0, 2, true);
+  place(live, 'SPIRIT_2', 0, 1, false);
+  const cov = game(FS, ['METAL', 'LIGHT', 'LIFE']);
+  place(cov, 'FIRE_4', 0, 0, true);
+  place(cov, 'SPIRIT_2', 0, 1, false);
+  place(cov, 'HATE_2', 0, 1, true);
+  assert.ok(Engine.ai.score(live, 0) > Engine.ai.score(cov, 0) + 40, 'SPIRIT 1 の上に重ねない');
+}));

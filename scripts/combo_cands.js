@@ -654,3 +654,85 @@ module.exports = [
     });
   }
 })();
+
+/* ---------- FIRE 3 で毎手番起こし直す組 (L001〜、2026-10-28) ----------
+   FIRE 3 の終了「1枚捨てて1枚反転」は毎手番使える、表にする札。
+   (1) 自分で裏返る札 (WATER 0: 中段で自分も裏返る / SPIRIT 1: 開始に捨てるか裏返る / SPEED 3: 終了に動かしたら裏返る) を毎手番表に戻し、中段を毎手番撃つ
+   (2) 裏で置いた中段の強い札 (撃ち直しの型) を FIRE 3 で起こす
+   対象は決め打ち: FIRE 3 は一番小さい手札を捨てて相方を表にし、SPIRIT 1 の開始は裏返る方を選ぶ */
+(function fire3Candidates() {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const cards = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'cards.json'), 'utf8'));
+  const proto = {}, value = {}, text = {}, byName = {};
+  for (const p of cards.protocols) for (const c of p.cards) {
+    proto[c.id] = p.name; value[c.id] = c.value; byName[p.name + ' ' + c.value] = c.id;
+    text[c.id] = [c.upper, c.middle, c.lower].filter(Boolean).join(' / ');
+  }
+  const id = (n) => { if (!byName[n]) throw new Error('no card ' + n); return byName[n]; };
+  const seen = new Set(module.exports.map(c => c.setup.mine.map(p => p.card).sort().join('+')));
+  const F3 = id('FIRE 3');
+  let n = 0;
+  const targets = [['WATER 0', 'self'], ['SPIRIT 1', 'self'], ['SPEED 3', 'self'],
+    ...['LIFE 0', 'LIGHT 0', 'LUCK 0', 'SPEED 0', 'HATE 0', 'GRAVITY 1', 'DARKNESS 0', 'WATER 1', 'DEATH 0'].map(x => [x, 'once'])];
+  for (const [tn, how] of targets) {
+    const T = id(tn);
+    const key = [F3, T].sort().join('+');
+    if (seen.has(key)) continue;
+    seen.add(key);
+    module.exports.push({
+      id: 'L' + String(++n).padStart(3, '0'), auto: true, source: 'fire3', late: true,
+      name: 'FIRE 3 で ' + tn + ' を' + (how === 'self' ? '毎手番起こし直す' : '裏から起こす'), kind: how === 'self' ? 'engine' : 'burst', protos: [...new Set(['FIRE', proto[T]])],
+      how: 'FIRE 3 (' + text[F3] + ') の終了の反転で、裏の ' + tn + ' (' + text[T] + ') を表にする。' + (how === 'self' ? tn + ' は自分で裏返るので、毎手番中段を撃ち直せる。' : ''),
+      setup: { mine: [{ card: T, at: 'field', faceUp: false }, { card: F3, at: 'hand' }] }, act: { play: F3 }, partner: [T],
+      picks: (s, q, P) => {
+        const t = P.planted[T];
+        if (!t || !s.cards[t]) return null;
+        if (q.context === T && q.kind === 'option') { const i = q.options.indexOf('flip'); return i >= 0 ? [i] : null; }
+        if (q.context !== F3 || s.cards[t].faceUp || !s.lines.some(L => L[P.me][L[P.me].length - 1] === t)) return null;
+        if (q.kind === 'yesNo') return ['yes'];
+        if (q.kind === 'pickHand') { const c = q.candidates.slice().sort((a, b) => P.val(s, a) - P.val(s, b)); return c.length ? [c[0]] : null; }
+        if (q.kind === 'pickCard' && q.candidates.includes(t)) return [t];
+        return null;
+      }
+    });
+  }
+})();
+
+/* ---------- 覆われると効く札 × 札を置く札 (K001〜、2026-10-28) ----------
+   FIRE 0・LIFE 3・HATE 4・CLARITY 1 は覆われることになったときに下段が入る。
+   1手で自分の札を上に置ける札 (山札の上を裏で撒く LIFE 0・WATER 1、手札から追加で置く SPEED 0・PEACE 2・DARKNESS 3、捨て札から置く TIME 3、山札の上を置く LUCK 1) で覆う。
+   置く先を選べるときは、覆われると効く札のラインに決め打つ */
+(function coverCandidates() {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const cards = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'cards.json'), 'utf8'));
+  const proto = {}, value = {}, text = {}, byName = {};
+  for (const p of cards.protocols) for (const c of p.cards) {
+    proto[c.id] = p.name; value[c.id] = c.value; byName[p.name + ' ' + c.value] = c.id;
+    text[c.id] = [c.upper, c.middle, c.lower].filter(Boolean).join(' / ');
+  }
+  const id = (n) => { if (!byName[n]) throw new Error('no card ' + n); return byName[n]; };
+  const seen = new Set(module.exports.map(c => c.setup.mine.map(p => p.card).sort().join('+')));
+  let n = 0;
+  for (const tn of ['FIRE 0', 'LIFE 3', 'HATE 4', 'CLARITY 1']) for (const pn of ['LIFE 0', 'WATER 1', 'SPEED 0', 'PEACE 2', 'DARKNESS 3', 'TIME 3', 'LUCK 1']) {
+    const T = id(tn), P0 = id(pn);
+    if (proto[T] === proto[P0]) continue;
+    const key = [T, P0].sort().join('+');
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const mine = [{ card: T, at: 'field' }, { card: P0, at: 'hand' }];
+    module.exports.push({
+      id: 'K' + String(++n).padStart(3, '0'), auto: true, source: 'cover', late: true,
+      name: pn + ' で ' + tn + ' を覆う', kind: 'burst', protos: [...new Set([proto[T], proto[P0]])],
+      how: tn + ' (' + text[T] + ') を一番上に表で置いておき、' + pn + ' (' + text[P0] + ') で上に札を置いて下段を起こす。',
+      setup: { mine }, act: { play: P0, line: 'other' }, partner: [T],
+      picks: (s, q, P) => {
+        const t = P.planted[T];
+        if (!t || q.context !== P0 || q.kind !== 'pickLine') return null;
+        const l = s.lines.findIndex(L => L[P.me].includes(t));
+        return l >= 0 && q.lines.includes(l) ? [l] : null;
+      }
+    });
+  }
+})();

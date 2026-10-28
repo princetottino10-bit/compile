@@ -20662,6 +20662,1254 @@
    "note": null
   },
   {
+   "id": "L001",
+   "name": "FIRE 3 で WATER 0 を毎手番起こし直す",
+   "kind": "engine",
+   "source": "fire3",
+   "cards": [
+    "WATER_1",
+    "FIRE_4"
+   ],
+   "protocols": [
+    "FIRE",
+    "WATER"
+   ],
+   "how": "FIRE 3 (終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。) の終了の反転で、裏の WATER 0 (他のカードを1枚反転させる。このカードを反転させる。) を表にする。WATER 0 は自分で裏返るので、毎手番中段を撃ち直せる。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 149,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 6,
+    "interactionSe": 1.2,
+    "partnerValue": 0.5,
+    "partnerValueSe": 0.6,
+    "synergy": 6.4,
+    "synergySe": 1,
+    "missed": -3.3,
+    "missedSe": 1.1,
+    "aiPicked": 28
+   },
+   "note": null
+  },
+  {
+   "id": "L002",
+   "name": "FIRE 3 で SPIRIT 1 を毎手番起こし直す",
+   "kind": "engine",
+   "source": "fire3",
+   "cards": [
+    "SPIRIT_2",
+    "FIRE_4"
+   ],
+   "protocols": [
+    "FIRE",
+    "SPIRIT"
+   ],
+   "how": "FIRE 3 (終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。) の終了の反転で、裏の SPIRIT 1 (あなたがカードを表向きでプレイするときには、プロトコルを対応させずにプレイすることができる。 / カードを2枚引く。 / 開始：あなたは手札を1枚捨て札にするか、このカードを反転させる。) を表にする。SPIRIT 1 は自分で裏返るので、毎手番中段を撃ち直せる。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 153,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 6.1,
+    "interactionSe": 0.9,
+    "partnerValue": -1.3,
+    "partnerValueSe": 0.7,
+    "synergy": 4.8,
+    "synergySe": 0.7,
+    "missed": -1.1,
+    "missedSe": 0.8,
+    "aiPicked": 33
+   },
+   "note": null
+  },
+  {
+   "id": "L003",
+   "name": "FIRE 3 で SPEED 3 を毎手番起こし直す",
+   "kind": "engine",
+   "source": "fire3",
+   "cards": [
+    "SPEED_4",
+    "FIRE_4"
+   ],
+   "protocols": [
+    "FIRE",
+    "SPEED"
+   ],
+   "how": "FIRE 3 (終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。) の終了の反転で、裏の SPEED 3 (あなたの他のカードを1枚移動させる。 / 終了：あなたは自分のカードを1枚移動させることができる。そうした場合、このカードを反転させる。) を表にする。SPEED 3 は自分で裏返るので、毎手番中段を撃ち直せる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.4,
+    "interactionSe": 1.5,
+    "partnerValue": 3.4,
+    "partnerValueSe": 1,
+    "synergy": 3,
+    "synergySe": 1.6,
+    "missed": -0.8,
+    "missedSe": 1.2,
+    "aiPicked": 52
+   },
+   "note": null
+  },
+  {
+   "id": "L004",
+   "name": "FIRE 3 で LIFE 0 を裏から起こす",
+   "kind": "burst",
+   "source": "fire3",
+   "cards": [
+    "LIFE_1",
+    "FIRE_4"
+   ],
+   "protocols": [
+    "FIRE",
+    "LIFE"
+   ],
+   "how": "FIRE 3 (終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。) の終了の反転で、裏の LIFE 0 (終了：このカードが覆われている場合、このカードを削除する。 / あなたのデッキの一番上のカードを、あなたのカードがある各ラインに裏向きで1枚ずつプレイする。) を表にする。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 152,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 4.3,
+    "interactionSe": 1,
+    "partnerValue": 2.5,
+    "partnerValueSe": 0.8,
+    "synergy": 6.8,
+    "synergySe": 0.9,
+    "missed": -2.8,
+    "missedSe": 0.8,
+    "aiPicked": 33
+   },
+   "note": null
+  },
+  {
+   "id": "L005",
+   "name": "FIRE 3 で LIGHT 0 を裏から起こす",
+   "kind": "burst",
+   "source": "fire3",
+   "cards": [
+    "LIGHT_1",
+    "FIRE_4"
+   ],
+   "protocols": [
+    "FIRE",
+    "LIGHT"
+   ],
+   "how": "FIRE 3 (終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。) の終了の反転で、裏の LIGHT 0 (カードを1枚反転させる。そのカードの値に等しい枚数のカードを引く。) を表にする。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 61,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 5.4,
+    "interactionSe": 2,
+    "partnerValue": 2.2,
+    "partnerValueSe": 1.3,
+    "synergy": 7.6,
+    "synergySe": 1.4,
+    "missed": -2.1,
+    "missedSe": 1.9,
+    "aiPicked": 20
+   },
+   "note": null
+  },
+  {
+   "id": "L006",
+   "name": "FIRE 3 で LUCK 0 を裏から起こす",
+   "kind": "burst",
+   "source": "fire3",
+   "cards": [
+    "LUCK_1",
+    "FIRE_4"
+   ],
+   "protocols": [
+    "FIRE",
+    "LUCK"
+   ],
+   "how": "FIRE 3 (終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。) の終了の反転で、裏の LUCK 0 (値を1つ宣言する。カードを3枚引く。その中から、表面に宣言した値を持つカードを1枚公開する。そのカードをプレイすることができる。) を表にする。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 146,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 8.2,
+    "interactionSe": 1.4,
+    "partnerValue": 0.5,
+    "partnerValueSe": 1.1,
+    "synergy": 8.7,
+    "synergySe": 1.3,
+    "missed": -0.2,
+    "missedSe": 1.1,
+    "aiPicked": 40
+   },
+   "note": null
+  },
+  {
+   "id": "L007",
+   "name": "FIRE 3 で SPEED 0 を裏から起こす",
+   "kind": "burst",
+   "source": "fire3",
+   "cards": [
+    "SPEED_1",
+    "FIRE_4"
+   ],
+   "protocols": [
+    "FIRE",
+    "SPEED"
+   ],
+   "how": "FIRE 3 (終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。) の終了の反転で、裏の SPEED 0 (カードを1枚プレイする。) を表にする。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 9.2,
+    "interactionSe": 2.6,
+    "partnerValue": -1.6,
+    "partnerValueSe": 1.5,
+    "synergy": 7.6,
+    "synergySe": 2.2,
+    "missed": -1.5,
+    "missedSe": 1.4,
+    "aiPicked": 29
+   },
+   "note": null
+  },
+  {
+   "id": "L008",
+   "name": "FIRE 3 で HATE 0 を裏から起こす",
+   "kind": "burst",
+   "source": "fire3",
+   "cards": [
+    "HATE_1",
+    "FIRE_4"
+   ],
+   "protocols": [
+    "FIRE",
+    "HATE"
+   ],
+   "how": "FIRE 3 (終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。) の終了の反転で、裏の HATE 0 (カードを１枚削除する。) を表にする。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 151,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 7.1,
+    "interactionSe": 0.9,
+    "partnerValue": -0.5,
+    "partnerValueSe": 0.7,
+    "synergy": 6.6,
+    "synergySe": 0.9,
+    "missed": -0.4,
+    "missedSe": 0.7,
+    "aiPicked": 38
+   },
+   "note": null
+  },
+  {
+   "id": "L009",
+   "name": "FIRE 3 で GRAVITY 1 を裏から起こす",
+   "kind": "burst",
+   "source": "fire3",
+   "cards": [
+    "GRAVITY_2",
+    "FIRE_4"
+   ],
+   "protocols": [
+    "FIRE",
+    "GRAVITY"
+   ],
+   "how": "FIRE 3 (終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。) の終了の反転で、裏の GRAVITY 1 (カードを2枚引く。このラインから、またはこのラインへとカードを1枚移動させる。) を表にする。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 5.1,
+    "interactionSe": 2.1,
+    "partnerValue": 3.5,
+    "partnerValueSe": 1.5,
+    "synergy": 8.5,
+    "synergySe": 1.7,
+    "missed": -0.7,
+    "missedSe": 1.4,
+    "aiPicked": 35
+   },
+   "note": null
+  },
+  {
+   "id": "L010",
+   "name": "FIRE 3 で DARKNESS 0 を裏から起こす",
+   "kind": "burst",
+   "source": "fire3",
+   "cards": [
+    "DARKNESS_1",
+    "FIRE_4"
+   ],
+   "protocols": [
+    "FIRE",
+    "DARKNESS"
+   ],
+   "how": "FIRE 3 (終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。) の終了の反転で、裏の DARKNESS 0 (カードを3枚引く。相手の覆われているカードを1枚移動させる。) を表にする。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 5.9,
+    "interactionSe": 1.6,
+    "partnerValue": 0,
+    "partnerValueSe": 1,
+    "synergy": 5.9,
+    "synergySe": 1.4,
+    "missed": -1.4,
+    "missedSe": 1,
+    "aiPicked": 24
+   },
+   "note": null
+  },
+  {
+   "id": "L011",
+   "name": "FIRE 3 で WATER 1 を裏から起こす",
+   "kind": "burst",
+   "source": "fire3",
+   "cards": [
+    "WATER_2",
+    "FIRE_4"
+   ],
+   "protocols": [
+    "FIRE",
+    "WATER"
+   ],
+   "how": "FIRE 3 (終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。) の終了の反転で、裏の WATER 1 (あなたのデッキの一番上のカードを、他の各ラインに裏向きで1枚ずつプレイする。) を表にする。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 57,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 6.1,
+    "interactionSe": 1.3,
+    "partnerValue": 0.7,
+    "partnerValueSe": 0.7,
+    "synergy": 6.8,
+    "synergySe": 1.4,
+    "missed": -1.3,
+    "missedSe": 1.3,
+    "aiPicked": 42
+   },
+   "note": null
+  },
+  {
+   "id": "L012",
+   "name": "FIRE 3 で DEATH 0 を裏から起こす",
+   "kind": "burst",
+   "source": "fire3",
+   "cards": [
+    "DEATH_1",
+    "FIRE_4"
+   ],
+   "protocols": [
+    "FIRE",
+    "DEATH"
+   ],
+   "how": "FIRE 3 (終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。) の終了の反転で、裏の DEATH 0 (他の各ラインにあるカードを1枚ずつ削除する。) を表にする。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 5,
+    "interactionSe": 1.5,
+    "partnerValue": 1.2,
+    "partnerValueSe": 0.7,
+    "synergy": 6.2,
+    "synergySe": 1.6,
+    "missed": -2.5,
+    "missedSe": 1.1,
+    "aiPicked": 27
+   },
+   "note": null
+  },
+  {
+   "id": "K001",
+   "name": "LIFE 0 で FIRE 0 を覆う",
+   "kind": "burst",
+   "source": "cover",
+   "cards": [
+    "FIRE_1",
+    "LIFE_1"
+   ],
+   "protocols": [
+    "FIRE",
+    "LIFE"
+   ],
+   "how": "FIRE 0 (他のカードを1枚反転させる。カードを2枚引く。 / このカードが覆われることになったとき：先にカードを1枚引き、他のカードを1枚反転させる。) を一番上に表で置いておき、LIFE 0 (終了：このカードが覆われている場合、このカードを削除する。 / あなたのデッキの一番上のカードを、あなたのカードがある各ラインに裏向きで1枚ずつプレイする。) で上に札を置いて下段を起こす。",
+   "verdict": "weak",
+   "verdictLabel": "相方が強い (噛み合いは小さい)",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1,
+    "interactionSe": 2.3,
+    "partnerValue": 8.9,
+    "partnerValueSe": 2.1,
+    "synergy": 9.9,
+    "synergySe": 2.3,
+    "missed": 0.5,
+    "missedSe": 1.3,
+    "aiPicked": 56
+   },
+   "note": null
+  },
+  {
+   "id": "K002",
+   "name": "WATER 1 で FIRE 0 を覆う",
+   "kind": "burst",
+   "source": "cover",
+   "cards": [
+    "FIRE_1",
+    "WATER_2"
+   ],
+   "protocols": [
+    "FIRE",
+    "WATER"
+   ],
+   "how": "FIRE 0 (他のカードを1枚反転させる。カードを2枚引く。 / このカードが覆われることになったとき：先にカードを1枚引き、他のカードを1枚反転させる。) を一番上に表で置いておき、WATER 1 (あなたのデッキの一番上のカードを、他の各ラインに裏向きで1枚ずつプレイする。) で上に札を置いて下段を起こす。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 40,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 5.9,
+    "interactionSe": 3.1,
+    "partnerValue": 3.4,
+    "partnerValueSe": 2.6,
+    "synergy": 9.3,
+    "synergySe": 2.6,
+    "missed": 1.7,
+    "missedSe": 1.7,
+    "aiPicked": 68
+   },
+   "note": null
+  },
+  {
+   "id": "K003",
+   "name": "SPEED 0 で FIRE 0 を覆う",
+   "kind": "burst",
+   "source": "cover",
+   "cards": [
+    "FIRE_1",
+    "SPEED_1"
+   ],
+   "protocols": [
+    "FIRE",
+    "SPEED"
+   ],
+   "how": "FIRE 0 (他のカードを1枚反転させる。カードを2枚引く。 / このカードが覆われることになったとき：先にカードを1枚引き、他のカードを1枚反転させる。) を一番上に表で置いておき、SPEED 0 (カードを1枚プレイする。) で上に札を置いて下段を起こす。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 45,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.7,
+    "interactionSe": 1.2,
+    "partnerValue": 4.6,
+    "partnerValueSe": 1.4,
+    "synergy": 3.8,
+    "synergySe": 1.4,
+    "missed": -2.6,
+    "missedSe": 1.6,
+    "aiPicked": 13
+   },
+   "note": null
+  },
+  {
+   "id": "K004",
+   "name": "PEACE 2 で FIRE 0 を覆う",
+   "kind": "burst",
+   "source": "cover",
+   "cards": [
+    "FIRE_1",
+    "PEACE_2"
+   ],
+   "protocols": [
+    "FIRE",
+    "PEACE"
+   ],
+   "how": "FIRE 0 (他のカードを1枚反転させる。カードを2枚引く。 / このカードが覆われることになったとき：先にカードを1枚引き、他のカードを1枚反転させる。) を一番上に表で置いておき、PEACE 2 (カードを1枚引く。カードを1枚裏向きでプレイする。) で上に札を置いて下段を起こす。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.5,
+    "interactionSe": 2,
+    "partnerValue": 4.9,
+    "partnerValueSe": 1.8,
+    "synergy": 6.5,
+    "synergySe": 1.6,
+    "missed": 0.2,
+    "missedSe": 1.6,
+    "aiPicked": 60
+   },
+   "note": null
+  },
+  {
+   "id": "K005",
+   "name": "DARKNESS 3 で FIRE 0 を覆う",
+   "kind": "burst",
+   "source": "cover",
+   "cards": [
+    "FIRE_1",
+    "DARKNESS_4"
+   ],
+   "protocols": [
+    "FIRE",
+    "DARKNESS"
+   ],
+   "how": "FIRE 0 (他のカードを1枚反転させる。カードを2枚引く。 / このカードが覆われることになったとき：先にカードを1枚引き、他のカードを1枚反転させる。) を一番上に表で置いておき、DARKNESS 3 (他の1ラインにカードを裏向きで1枚プレイする。) で上に札を置いて下段を起こす。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 3.1,
+    "interactionSe": 1.6,
+    "partnerValue": 3,
+    "partnerValueSe": 1.3,
+    "synergy": 6.1,
+    "synergySe": 1.6,
+    "missed": 0.1,
+    "missedSe": 1.1,
+    "aiPicked": 48
+   },
+   "note": null
+  },
+  {
+   "id": "K006",
+   "name": "TIME 3 で FIRE 0 を覆う",
+   "kind": "burst",
+   "source": "cover",
+   "cards": [
+    "FIRE_1",
+    "TIME_4"
+   ],
+   "protocols": [
+    "FIRE",
+    "TIME"
+   ],
+   "how": "FIRE 0 (他のカードを1枚反転させる。カードを2枚引く。 / このカードが覆われることになったとき：先にカードを1枚引き、他のカードを1枚反転させる。) を一番上に表で置いておき、TIME 3 (あなたの捨て札置き場にあるカードを1枚公開する。そのカードをこのカードとは別のラインに裏向きでプレイする。) で上に札を置いて下段を起こす。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.6,
+    "interactionSe": 1,
+    "partnerValue": 5.3,
+    "partnerValueSe": 1.3,
+    "synergy": 6.9,
+    "synergySe": 1.3,
+    "missed": -0.4,
+    "missedSe": 0.9,
+    "aiPicked": 63
+   },
+   "note": null
+  },
+  {
+   "id": "K007",
+   "name": "LUCK 1 で FIRE 0 を覆う",
+   "kind": "burst",
+   "source": "cover",
+   "cards": [
+    "FIRE_1",
+    "LUCK_2"
+   ],
+   "protocols": [
+    "FIRE",
+    "LUCK"
+   ],
+   "how": "FIRE 0 (他のカードを1枚反転させる。カードを2枚引く。 / このカードが覆われることになったとき：先にカードを1枚引き、他のカードを1枚反転させる。) を一番上に表で置いておき、LUCK 1 (あなたのデッキの一番上のカードを裏向きでプレイする。そのカードを反転させる（その中段コマンドは無視する）。) で上に札を置いて下段を起こす。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 60,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.6,
+    "interactionSe": 1.9,
+    "partnerValue": 4.4,
+    "partnerValueSe": 1.6,
+    "synergy": 6.8,
+    "synergySe": 1.6,
+    "missed": -0.2,
+    "missedSe": 1.3,
+    "aiPicked": 52
+   },
+   "note": null
+  },
+  {
+   "id": "K008",
+   "name": "WATER 1 で LIFE 3 を覆う",
+   "kind": "burst",
+   "source": "cover",
+   "cards": [
+    "LIFE_4",
+    "WATER_2"
+   ],
+   "protocols": [
+    "LIFE",
+    "WATER"
+   ],
+   "how": "LIFE 3 (このカードが覆われることになったとき：先にあなたのデッキの一番上のカードを他の1ラインに裏向きで1枚プレイする。) を一番上に表で置いておき、WATER 1 (あなたのデッキの一番上のカードを、他の各ラインに裏向きで1枚ずつプレイする。) で上に札を置いて下段を起こす。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 60,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.9,
+    "interactionSe": 2,
+    "partnerValue": 5.7,
+    "partnerValueSe": 1.5,
+    "synergy": 4.8,
+    "synergySe": 1.1,
+    "missed": -4.3,
+    "missedSe": 1.8,
+    "aiPicked": 37
+   },
+   "note": null
+  },
+  {
+   "id": "K009",
+   "name": "SPEED 0 で LIFE 3 を覆う",
+   "kind": "burst",
+   "source": "cover",
+   "cards": [
+    "LIFE_4",
+    "SPEED_1"
+   ],
+   "protocols": [
+    "LIFE",
+    "SPEED"
+   ],
+   "how": "LIFE 3 (このカードが覆われることになったとき：先にあなたのデッキの一番上のカードを他の1ラインに裏向きで1枚プレイする。) を一番上に表で置いておき、SPEED 0 (カードを1枚プレイする。) で上に札を置いて下段を起こす。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 60,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.2,
+    "interactionSe": 1.4,
+    "partnerValue": 4.5,
+    "partnerValueSe": 1.8,
+    "synergy": 4.3,
+    "synergySe": 1.4,
+    "missed": -1.3,
+    "missedSe": 1.5,
+    "aiPicked": 12
+   },
+   "note": null
+  },
+  {
+   "id": "K010",
+   "name": "PEACE 2 で LIFE 3 を覆う",
+   "kind": "burst",
+   "source": "cover",
+   "cards": [
+    "LIFE_4",
+    "PEACE_2"
+   ],
+   "protocols": [
+    "LIFE",
+    "PEACE"
+   ],
+   "how": "LIFE 3 (このカードが覆われることになったとき：先にあなたのデッキの一番上のカードを他の1ラインに裏向きで1枚プレイする。) を一番上に表で置いておき、PEACE 2 (カードを1枚引く。カードを1枚裏向きでプレイする。) で上に札を置いて下段を起こす。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 60,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.7,
+    "interactionSe": 2.1,
+    "partnerValue": 7.8,
+    "partnerValueSe": 2.4,
+    "synergy": 9.5,
+    "synergySe": 2.5,
+    "missed": -1.3,
+    "missedSe": 1.7,
+    "aiPicked": 55
+   },
+   "note": null
+  },
+  {
+   "id": "K011",
+   "name": "DARKNESS 3 で LIFE 3 を覆う",
+   "kind": "burst",
+   "source": "cover",
+   "cards": [
+    "LIFE_4",
+    "DARKNESS_4"
+   ],
+   "protocols": [
+    "LIFE",
+    "DARKNESS"
+   ],
+   "how": "LIFE 3 (このカードが覆われることになったとき：先にあなたのデッキの一番上のカードを他の1ラインに裏向きで1枚プレイする。) を一番上に表で置いておき、DARKNESS 3 (他の1ラインにカードを裏向きで1枚プレイする。) で上に札を置いて下段を起こす。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.8,
+    "interactionSe": 1.8,
+    "partnerValue": 7.2,
+    "partnerValueSe": 1.6,
+    "synergy": 6.4,
+    "synergySe": 2,
+    "missed": -3.2,
+    "missedSe": 1,
+    "aiPicked": 32
+   },
+   "note": null
+  },
+  {
+   "id": "K012",
+   "name": "TIME 3 で LIFE 3 を覆う",
+   "kind": "burst",
+   "source": "cover",
+   "cards": [
+    "LIFE_4",
+    "TIME_4"
+   ],
+   "protocols": [
+    "LIFE",
+    "TIME"
+   ],
+   "how": "LIFE 3 (このカードが覆われることになったとき：先にあなたのデッキの一番上のカードを他の1ラインに裏向きで1枚プレイする。) を一番上に表で置いておき、TIME 3 (あなたの捨て札置き場にあるカードを1枚公開する。そのカードをこのカードとは別のラインに裏向きでプレイする。) で上に札を置いて下段を起こす。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 61,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.7,
+    "interactionSe": 1.3,
+    "partnerValue": 6.3,
+    "partnerValueSe": 2,
+    "synergy": 7,
+    "synergySe": 1.9,
+    "missed": 2.3,
+    "missedSe": 1.3,
+    "aiPicked": 54
+   },
+   "note": null
+  },
+  {
+   "id": "K013",
+   "name": "LUCK 1 で LIFE 3 を覆う",
+   "kind": "burst",
+   "source": "cover",
+   "cards": [
+    "LIFE_4",
+    "LUCK_2"
+   ],
+   "protocols": [
+    "LIFE",
+    "LUCK"
+   ],
+   "how": "LIFE 3 (このカードが覆われることになったとき：先にあなたのデッキの一番上のカードを他の1ラインに裏向きで1枚プレイする。) を一番上に表で置いておき、LUCK 1 (あなたのデッキの一番上のカードを裏向きでプレイする。そのカードを反転させる（その中段コマンドは無視する）。) で上に札を置いて下段を起こす。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.2,
+    "interactionSe": 2.2,
+    "partnerValue": 5.5,
+    "partnerValueSe": 1.8,
+    "synergy": 5.3,
+    "synergySe": 1.7,
+    "missed": -2.8,
+    "missedSe": 1.8,
+    "aiPicked": 34
+   },
+   "note": null
+  },
+  {
+   "id": "K014",
+   "name": "LIFE 0 で HATE 4 を覆う",
+   "kind": "burst",
+   "source": "cover",
+   "cards": [
+    "HATE_5",
+    "LIFE_1"
+   ],
+   "protocols": [
+    "HATE",
+    "LIFE"
+   ],
+   "how": "HATE 4 (このカードが覆われることになったとき：先に、このラインにある値が最も小さく覆われているカードを１枚削除する。) を一番上に表で置いておき、LIFE 0 (終了：このカードが覆われている場合、このカードを削除する。 / あなたのデッキの一番上のカードを、あなたのカードがある各ラインに裏向きで1枚ずつプレイする。) で上に札を置いて下段を起こす。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 61,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.3,
+    "interactionSe": 1.2,
+    "partnerValue": -1.6,
+    "partnerValueSe": 1.6,
+    "synergy": -1.3,
+    "synergySe": 1.4,
+    "missed": -0.3,
+    "missedSe": 1,
+    "aiPicked": 49
+   },
+   "note": null
+  },
+  {
+   "id": "K015",
+   "name": "WATER 1 で HATE 4 を覆う",
+   "kind": "burst",
+   "source": "cover",
+   "cards": [
+    "HATE_5",
+    "WATER_2"
+   ],
+   "protocols": [
+    "HATE",
+    "WATER"
+   ],
+   "how": "HATE 4 (このカードが覆われることになったとき：先に、このラインにある値が最も小さく覆われているカードを１枚削除する。) を一番上に表で置いておき、WATER 1 (あなたのデッキの一番上のカードを、他の各ラインに裏向きで1枚ずつプレイする。) で上に札を置いて下段を起こす。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.3,
+    "interactionSe": 0.9,
+    "partnerValue": 0.4,
+    "partnerValueSe": 1.6,
+    "synergy": -0.9,
+    "synergySe": 1.5,
+    "missed": -2.5,
+    "missedSe": 1,
+    "aiPicked": 52
+   },
+   "note": null
+  },
+  {
+   "id": "K016",
+   "name": "SPEED 0 で HATE 4 を覆う",
+   "kind": "burst",
+   "source": "cover",
+   "cards": [
+    "HATE_5",
+    "SPEED_1"
+   ],
+   "protocols": [
+    "HATE",
+    "SPEED"
+   ],
+   "how": "HATE 4 (このカードが覆われることになったとき：先に、このラインにある値が最も小さく覆われているカードを１枚削除する。) を一番上に表で置いておき、SPEED 0 (カードを1枚プレイする。) で上に札を置いて下段を起こす。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 58,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.5,
+    "interactionSe": 1.8,
+    "partnerValue": -0.3,
+    "partnerValueSe": 1.5,
+    "synergy": -0.8,
+    "synergySe": 1,
+    "missed": -1.1,
+    "missedSe": 1.6,
+    "aiPicked": 14
+   },
+   "note": null
+  },
+  {
+   "id": "K017",
+   "name": "PEACE 2 で HATE 4 を覆う",
+   "kind": "burst",
+   "source": "cover",
+   "cards": [
+    "HATE_5",
+    "PEACE_2"
+   ],
+   "protocols": [
+    "HATE",
+    "PEACE"
+   ],
+   "how": "HATE 4 (このカードが覆われることになったとき：先に、このラインにある値が最も小さく覆われているカードを１枚削除する。) を一番上に表で置いておき、PEACE 2 (カードを1枚引く。カードを1枚裏向きでプレイする。) で上に札を置いて下段を起こす。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 61,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1,
+    "interactionSe": 1.2,
+    "partnerValue": -1,
+    "partnerValueSe": 1.4,
+    "synergy": -2,
+    "synergySe": 1.2,
+    "missed": -0.7,
+    "missedSe": 1,
+    "aiPicked": 51
+   },
+   "note": null
+  },
+  {
+   "id": "K018",
+   "name": "DARKNESS 3 で HATE 4 を覆う",
+   "kind": "burst",
+   "source": "cover",
+   "cards": [
+    "HATE_5",
+    "DARKNESS_4"
+   ],
+   "protocols": [
+    "HATE",
+    "DARKNESS"
+   ],
+   "how": "HATE 4 (このカードが覆われることになったとき：先に、このラインにある値が最も小さく覆われているカードを１枚削除する。) を一番上に表で置いておき、DARKNESS 3 (他の1ラインにカードを裏向きで1枚プレイする。) で上に札を置いて下段を起こす。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 60,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -2,
+    "interactionSe": 1,
+    "partnerValue": 1,
+    "partnerValueSe": 0.8,
+    "synergy": -1,
+    "synergySe": 0.9,
+    "missed": -2.7,
+    "missedSe": 1.4,
+    "aiPicked": 35
+   },
+   "note": null
+  },
+  {
+   "id": "K019",
+   "name": "TIME 3 で HATE 4 を覆う",
+   "kind": "burst",
+   "source": "cover",
+   "cards": [
+    "HATE_5",
+    "TIME_4"
+   ],
+   "protocols": [
+    "HATE",
+    "TIME"
+   ],
+   "how": "HATE 4 (このカードが覆われることになったとき：先に、このラインにある値が最も小さく覆われているカードを１枚削除する。) を一番上に表で置いておき、TIME 3 (あなたの捨て札置き場にあるカードを1枚公開する。そのカードをこのカードとは別のラインに裏向きでプレイする。) で上に札を置いて下段を起こす。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.5,
+    "interactionSe": 1.1,
+    "partnerValue": 1.4,
+    "partnerValueSe": 1.1,
+    "synergy": 0.9,
+    "synergySe": 0.8,
+    "missed": -0.5,
+    "missedSe": 1.1,
+    "aiPicked": 47
+   },
+   "note": null
+  },
+  {
+   "id": "K020",
+   "name": "LUCK 1 で HATE 4 を覆う",
+   "kind": "burst",
+   "source": "cover",
+   "cards": [
+    "HATE_5",
+    "LUCK_2"
+   ],
+   "protocols": [
+    "HATE",
+    "LUCK"
+   ],
+   "how": "HATE 4 (このカードが覆われることになったとき：先に、このラインにある値が最も小さく覆われているカードを１枚削除する。) を一番上に表で置いておき、LUCK 1 (あなたのデッキの一番上のカードを裏向きでプレイする。そのカードを反転させる（その中段コマンドは無視する）。) で上に札を置いて下段を起こす。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.6,
+    "interactionSe": 1.7,
+    "partnerValue": 0.1,
+    "partnerValueSe": 1.3,
+    "synergy": 1.2,
+    "synergySe": 1.5,
+    "missed": -2.8,
+    "missedSe": 1,
+    "aiPicked": 48
+   },
+   "note": null
+  },
+  {
+   "id": "K021",
+   "name": "LIFE 0 で CLARITY 1 を覆う",
+   "kind": "burst",
+   "source": "cover",
+   "cards": [
+    "CLARITY_2",
+    "LIFE_1"
+   ],
+   "protocols": [
+    "CLARITY",
+    "LIFE"
+   ],
+   "how": "CLARITY 1 (開始：あなたのデッキの一番上のカードを公開する。そのカードを捨て札にすることができる。 / 相手は自身の手札をすべて公開する。 / このカードが覆われることになったとき：先にカードを3枚引く。) を一番上に表で置いておき、LIFE 0 (終了：このカードが覆われている場合、このカードを削除する。 / あなたのデッキの一番上のカードを、あなたのカードがある各ラインに裏向きで1枚ずつプレイする。) で上に札を置いて下段を起こす。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 61,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.3,
+    "interactionSe": 1.7,
+    "partnerValue": 6.1,
+    "partnerValueSe": 2.1,
+    "synergy": 6.5,
+    "synergySe": 1.8,
+    "missed": -0.8,
+    "missedSe": 2,
+    "aiPicked": 51
+   },
+   "note": null
+  },
+  {
+   "id": "K022",
+   "name": "WATER 1 で CLARITY 1 を覆う",
+   "kind": "burst",
+   "source": "cover",
+   "cards": [
+    "CLARITY_2",
+    "WATER_2"
+   ],
+   "protocols": [
+    "CLARITY",
+    "WATER"
+   ],
+   "how": "CLARITY 1 (開始：あなたのデッキの一番上のカードを公開する。そのカードを捨て札にすることができる。 / 相手は自身の手札をすべて公開する。 / このカードが覆われることになったとき：先にカードを3枚引く。) を一番上に表で置いておき、WATER 1 (あなたのデッキの一番上のカードを、他の各ラインに裏向きで1枚ずつプレイする。) で上に札を置いて下段を起こす。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.1,
+    "interactionSe": 1.4,
+    "partnerValue": 4.9,
+    "partnerValueSe": 1.5,
+    "synergy": 5.1,
+    "synergySe": 1.2,
+    "missed": -2,
+    "missedSe": 1.3,
+    "aiPicked": 51
+   },
+   "note": null
+  },
+  {
+   "id": "K023",
+   "name": "SPEED 0 で CLARITY 1 を覆う",
+   "kind": "burst",
+   "source": "cover",
+   "cards": [
+    "CLARITY_2",
+    "SPEED_1"
+   ],
+   "protocols": [
+    "CLARITY",
+    "SPEED"
+   ],
+   "how": "CLARITY 1 (開始：あなたのデッキの一番上のカードを公開する。そのカードを捨て札にすることができる。 / 相手は自身の手札をすべて公開する。 / このカードが覆われることになったとき：先にカードを3枚引く。) を一番上に表で置いておき、SPEED 0 (カードを1枚プレイする。) で上に札を置いて下段を起こす。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 48,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.4,
+    "interactionSe": 2.5,
+    "partnerValue": 4,
+    "partnerValueSe": 2.6,
+    "synergy": 3.6,
+    "synergySe": 1.3,
+    "missed": -1.7,
+    "missedSe": 2.5,
+    "aiPicked": 6
+   },
+   "note": null
+  },
+  {
+   "id": "K024",
+   "name": "PEACE 2 で CLARITY 1 を覆う",
+   "kind": "burst",
+   "source": "cover",
+   "cards": [
+    "CLARITY_2",
+    "PEACE_2"
+   ],
+   "protocols": [
+    "CLARITY",
+    "PEACE"
+   ],
+   "how": "CLARITY 1 (開始：あなたのデッキの一番上のカードを公開する。そのカードを捨て札にすることができる。 / 相手は自身の手札をすべて公開する。 / このカードが覆われることになったとき：先にカードを3枚引く。) を一番上に表で置いておき、PEACE 2 (カードを1枚引く。カードを1枚裏向きでプレイする。) で上に札を置いて下段を起こす。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 61,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.4,
+    "interactionSe": 1.5,
+    "partnerValue": 5.7,
+    "partnerValueSe": 1.6,
+    "synergy": 7.1,
+    "synergySe": 1.6,
+    "missed": -1.1,
+    "missedSe": 1,
+    "aiPicked": 48
+   },
+   "note": null
+  },
+  {
+   "id": "K025",
+   "name": "DARKNESS 3 で CLARITY 1 を覆う",
+   "kind": "burst",
+   "source": "cover",
+   "cards": [
+    "CLARITY_2",
+    "DARKNESS_4"
+   ],
+   "protocols": [
+    "CLARITY",
+    "DARKNESS"
+   ],
+   "how": "CLARITY 1 (開始：あなたのデッキの一番上のカードを公開する。そのカードを捨て札にすることができる。 / 相手は自身の手札をすべて公開する。 / このカードが覆われることになったとき：先にカードを3枚引く。) を一番上に表で置いておき、DARKNESS 3 (他の1ラインにカードを裏向きで1枚プレイする。) で上に札を置いて下段を起こす。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 61,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.7,
+    "interactionSe": 1.3,
+    "partnerValue": 7.2,
+    "partnerValueSe": 1.9,
+    "synergy": 7.8,
+    "synergySe": 1.8,
+    "missed": -4.4,
+    "missedSe": 1.6,
+    "aiPicked": 44
+   },
+   "note": null
+  },
+  {
+   "id": "K026",
+   "name": "TIME 3 で CLARITY 1 を覆う",
+   "kind": "burst",
+   "source": "cover",
+   "cards": [
+    "CLARITY_2",
+    "TIME_4"
+   ],
+   "protocols": [
+    "CLARITY",
+    "TIME"
+   ],
+   "how": "CLARITY 1 (開始：あなたのデッキの一番上のカードを公開する。そのカードを捨て札にすることができる。 / 相手は自身の手札をすべて公開する。 / このカードが覆われることになったとき：先にカードを3枚引く。) を一番上に表で置いておき、TIME 3 (あなたの捨て札置き場にあるカードを1枚公開する。そのカードをこのカードとは別のラインに裏向きでプレイする。) で上に札を置いて下段を起こす。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1,
+    "interactionSe": 0.8,
+    "partnerValue": 4.9,
+    "partnerValueSe": 1.6,
+    "synergy": 5.7,
+    "synergySe": 1.7,
+    "missed": 0.2,
+    "missedSe": 0.9,
+    "aiPicked": 56
+   },
+   "note": null
+  },
+  {
+   "id": "K027",
+   "name": "LUCK 1 で CLARITY 1 を覆う",
+   "kind": "burst",
+   "source": "cover",
+   "cards": [
+    "CLARITY_2",
+    "LUCK_2"
+   ],
+   "protocols": [
+    "CLARITY",
+    "LUCK"
+   ],
+   "how": "CLARITY 1 (開始：あなたのデッキの一番上のカードを公開する。そのカードを捨て札にすることができる。 / 相手は自身の手札をすべて公開する。 / このカードが覆われることになったとき：先にカードを3枚引く。) を一番上に表で置いておき、LUCK 1 (あなたのデッキの一番上のカードを裏向きでプレイする。そのカードを反転させる（その中段コマンドは無視する）。) で上に札を置いて下段を起こす。",
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -5.6,
+    "interactionSe": 2.5,
+    "partnerValue": 9.5,
+    "partnerValueSe": 2.3,
+    "synergy": 3.9,
+    "synergySe": 2.1,
+    "missed": -4.8,
+    "missedSe": 1.6,
+    "aiPicked": 44
+   },
+   "note": null
+  },
+  {
    "id": "T01",
    "name": "WATER 1 + WATER 4",
    "kind": "burst",
