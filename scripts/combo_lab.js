@@ -56,9 +56,11 @@ function parseArgs(argv) {
 }
 
 /* ---------- エンジンと評価 ---------- */
+let LAB_CTX = null;
 function loadEngine(src, cards, effects) {
   const ctx = { module: { exports: {} }, exports: {}, console, structuredClone, performance, Math };
   ctx.globalThis = ctx;
+  LAB_CTX = ctx;
   vm.runInNewContext(src, ctx, { filename: 'engine.js' });
   const E = ctx.module.exports;
   /* 効果を消した同じ値の札 (BL_<id>)。組の効き目を測るときに相方をこれに差し替える */
@@ -358,6 +360,14 @@ if (opt.demo) {
     const show = (s) => [0, 1, 2].map(l => 'L' + l + '(' + s.players[me].protocols[l].name + ') 自分[' + s.lines[l][me].map(u => s.cards[u].def + (s.cards[u].faceUp ? '' : '↓')).join(' ') + '] 相手[' + s.lines[l][1 - me].map(u => s.cards[u].def + (s.cards[u].faceUp ? '' : '↓')).join(' ') + ']').join('\n');
     console.log('seed ' + (opt.seed + k) + ' me=P' + (me + 1) + '\n' + show(base) + '\n手札 ' + base.players[me].hand.map(u => base.cards[u].def).join(' ') + ' / 相手 ' + base.players[1 - me].hand.map(u => base.cards[u].def).join(' '));
     console.log('手: ' + JSON.stringify(act));
+    /* LAB_WHY=1: ORACLE が根で比べた手の値 (上位10) */
+    if (process.env.LAB_WHY) {
+      SPEC(E, me);
+      LAB_CTX.__DBG = true;
+      const rv = E.ai.rootValues(base);
+      const lab = (a) => a.type === 'play' ? base.cards[a.card].def + '@' + a.line + (a.faceUp ? '↑' : '↓') : a.type;
+      console.log(rv.candidates.slice().sort((x, y) => y.val - x.val).slice(0, 10).map(c => lab(c.a) + ' ' + Math.round(c.val)).join(' / '));
+    }
     const P = { planted, me, val: (s, u) => (s.cards[u].faceUp || String(s.cards[u].zone).startsWith('hand') ? (DEF_VALUE[s.cards[u].def] || 0) : 2) };
     const picker = combo.picks ? (s, q) => (q.player === me ? combo.picks(s, q, P) : null) : null;
     const r = step(E, base, act, picker);

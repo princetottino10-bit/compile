@@ -5587,7 +5587,13 @@ function aiActionHard(state, collect) {
     const evalLimit = Math.min(ordered.length, AI_BREADTH.rootEval);
     for (let i = 0; i < evalLimit; i++) {
       const item = ordered[i];
-      const res = resolveOrdered(item, state);
+      /* 選択の要る手 (LIFE 1 の「反転を2回」など) は、締め切りを過ぎると resolveRequests が途中で止まり、
+         候補から黙って落ちていた。depth 1 は必ず完走させる約束なので、ここだけ締め切りを外して解決しきる
+         (予算の小さい計測で、相手の WAR 0 + CHAOS 0 を裏返す手を一度も比べていなかった。2026-10-28) */
+      const dl = AI_SEARCH_DEADLINE;
+      AI_SEARCH_DEADLINE = 0;
+      let res;
+      try { res = resolveOrdered(item, state); } finally { AI_SEARCH_DEADLINE = dl; }
       if (!res || res.error || res.requests.length) continue;
       const bias = aiActionBias(state, item.a, me) + aiTransitionScore(state, res, me);
       const val = aiScore(res.state, me) + bias;

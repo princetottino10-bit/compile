@@ -829,3 +829,15 @@ test('つよい以上: 一番上で表の FIRE 3 があれば、裏で一番上�
   place(cov, 'HATE_2', 0, 1, true);
   assert.ok(Engine.ai.score(live, 0) > Engine.ai.score(cov, 0) + 40, 'SPIRIT 1 の上に重ねない');
 }));
+test('考える時間が切れても、選択の要る手 (LIFE 1 の反転) を1手目の比較から落とさない', () => withDsh(() => {
+  Engine.setAiLevel(2);
+  const st = game(['LIFE', 'METAL', 'HATE'], ['WAR', 'CHAOS', 'LIGHT']);
+  place(st, 'WAR_1', 1, 0, true);
+  place(st, 'CHAOS_1', 1, 1, true);
+  setHand(st, 0, ['LIFE_2', 'METAL_6', 'HATE_6', 'LIFE_6']);
+  Engine.setAiThinkBudget(1);
+  try {
+    const rv = Engine.ai.rootValues(st);
+    assert.ok(rv.candidates.some(c => c.a.type === 'play' && st.cards[c.a.card] && st.cards[c.a.card].def === 'LIFE_2'), 'LIFE 1 を比べている');
+  } finally { Engine.setAiThinkBudget(900); }
+}));
