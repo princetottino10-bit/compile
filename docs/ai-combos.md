@@ -357,7 +357,7 @@ FIRE 3 の終了「1枚捨てて1枚反転」は、毎手番使える「表に�
 - SPEED 3 (終了に動かすと自分を裏返す): -0.4 ±1.5 で効かない
 - 裏の撃つ札を FIRE 3 で起こす形も、撃ち直しの型と同じく効く (LUCK 0 +8.2 ±1.4、HATE 0 +7.1 ±0.9、LIFE 0 +4.3 ±1.0、150盤面)
 
-aiFlipStoreScore で、一番上で表の FIRE 3 も表にする札に数え、FIRE 3 があるときは裏で一番上の SPIRIT 1・WATER 0 も撃つ札に数える。
+aiFlipStoreScore で、一番上で表の FIRE 3 も表にする札に数え、FIRE 3 があるときは裏で一番上の SPIRIT 1・WATER 0 も撃つ札に数える。つよい同士 300戦で HEAD 比 50.0% (判定不能、落ちてはいない)。
 
 覆われると効く札 (FIRE 0・LIFE 3・HATE 4・CLARITY 1) × 札を置く札 (LIFE 0・WATER 1・SPEED 0・PEACE 2・DARKNESS 3・TIME 3・LUCK 1) の 27件 (K001〜) も測った。
 覆われると効く札はどれも単独で強いが、置く札との噛み合いは見えなかった (一番大きい DARKNESS 3 → FIRE 0 でも +3.1 ±1.6)。何で覆っても同じだけ得をする。
