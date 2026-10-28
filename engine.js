@@ -35,7 +35,10 @@ function protoNamesOf(p) { return p && Array.isArray(p.names) ? p.names : [p && 
 function protoHas(p, name) { return protoNamesOf(p).indexOf(name) >= 0; }
 /* そのラインにある (両者の) プロトコルの名前をすべて */
 function lineProtoNames(st, line) {
-  return protoNamesOf(st.players[0].protocols[line]).concat(protoNamesOf(st.players[1].protocols[line]));
+  const a = st.players[0].protocols[line], b = st.players[1].protocols[line];
+  /* 複合プロトコルが無いふつうの場合は配列を1つだけ作る (AI の評価でラインごと・カードごとに何度も呼ばれる) */
+  if (a && b && !a.names && !b.names) return [a.name, b.name];
+  return protoNamesOf(a).concat(protoNamesOf(b));
 }
 
 function knowCard(st, uid, side) {
@@ -245,6 +248,12 @@ function cardValue(st, uid) {
     // 場外: trash は表向き=印刷値、それ以外(deck/hand)は非公開=2 (Light 0 裁定)
     return (c.zone.indexOf('trash') === 0) ? DEFS[c.def].value : 2;
   }
+  return fieldCardValue(st, uid, loc.line, loc.side, activeStatics(st));
+}
+/* 場のカードの値。statics は activeStatics(st) を渡す。
+   lineTotal は AI の試算でいちばん多く呼ばれるので、常在効果の一覧をカードごとに作り直さず1回で済ませる */
+function fieldCardValue(st, uid, line, side, statics) {
+  const c = st.cards[uid];
   let v = c.faceUp ? DEFS[c.def].value : 2;
   /* 勝ち抜き戦の極端なパッチ (newGame の perks)。その側の場のカードの値を変える:
      doubleProto (そのプロトコルの表向きの値は2倍) / otherMinus (ほかのプロトコルの表向きの値を引く) /
@@ -258,9 +267,9 @@ function cardValue(st, uid) {
       v = Math.max(0, v);
     } else if (pk.faceDownValue) v = pk.faceDownValue;
   }
-  for (const s of activeStatics(st)) {
+  for (const s of statics) {
     if (s.kind === 'setValue' && s.filter.zone === 'thisStack'
-        && s.line === loc.line && s.sideIdx === loc.side
+        && s.line === line && s.sideIdx === side
         && (s.filter.facing === 'any' || (s.filter.facing === 'down') === !c.faceUp)) {
       v = s.value;
     }
@@ -268,10 +277,11 @@ function cardValue(st, uid) {
   return v;
 }
 
-function lineTotal(st, line, side) {
+/* statics: 同じ盤面で何度も数えるときは activeStatics(st) を1回作って渡す */
+function lineTotal(st, line, side, statics = activeStatics(st)) {
   let t = 0;
-  for (const uid of st.lines[line][side]) t += cardValue(st, uid);
-  for (const s of activeStatics(st)) {
+  for (const uid of st.lines[line][side]) t += fieldCardValue(st, uid, line, side, statics);
+  for (const s of statics) {
     if (s.kind !== 'modifyLineTotal' || s.line !== line) continue;
     const affect = (s.side === 'self') ? s.sideIdx : 1 - s.sideIdx;
     if (affect !== side) continue;
@@ -964,8 +974,9 @@ function doRefresh(ctx, side) {
 
 function compilableLines(st, side) {
   const out = [];
+  const sts = activeStatics(st);
   for (let l = 0; l < 3; l++) {
-    const mine = lineTotal(st, l, side), theirs = lineTotal(st, l, 1 - side);
+    const mine = lineTotal(st, l, side, sts), theirs = lineTotal(st, l, 1 - side, sts);
     if (mine >= 10 && mine > theirs) out.push(l);
   }
   return out;
@@ -974,7 +985,8 @@ function compilableLines(st, side) {
 /* いまのラインの合計値で、最高の記録を更新する (実績 OVERKILL)。コンパイルで消える前と、1手の終わりに呼ぶ */
 function tallyLines(st) {
   const m = tallyOf(st).maxLine;
-  for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++) m[s] = Math.max(m[s], lineTotal(st, l, s));
+  const sts = activeStatics(st);
+  for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++) m[s] = Math.max(m[s], lineTotal(st, l, s, sts));
 }
 
 function doCompile(ctx, side, line) {
@@ -2168,7 +2180,8 @@ function runTurnLoop(ctx) {
       case 'checkControl': {
         if (st.useControl) {
           let wins = 0;
-          for (let l = 0; l < 3; l++) if (lineTotal(st, l, st.turn) > lineTotal(st, l, 1 - st.turn)) wins++;
+          const sts = activeStatics(st);
+          for (let l = 0; l < 3; l++) if (lineTotal(st, l, st.turn, sts) > lineTotal(st, l, 1 - st.turn, sts)) wins++;
           if (wins >= 2 && st.control !== st.turn) {
             st.control = st.turn;
             log(ctx, `P${st.turn + 1}: コントロールを獲得`);
@@ -3012,7 +3025,8 @@ function aiTriggerValue(def, slot) {
 function aiLineLeadCount(st, side) {
   const op = 1 - side;
   let wins = 0;
-  for (let l = 0; l < 3; l++) if (lineTotal(st, l, side) > lineTotal(st, l, op)) wins++;
+  const sts = activeStatics(st);
+  for (let l = 0; l < 3; l++) if (lineTotal(st, l, side, sts) > lineTotal(st, l, op, sts)) wins++;
   return wins;
 }
 
@@ -3021,9 +3035,10 @@ function aiControlLeverage(st, side) {
   const op = 1 - side;
   const myComp = aiCompiledTowardWin(st, side);
   const opComp = aiCompiledTowardWin(st, op);
+  const sts = activeStatics(st);
   let v = 20 + myComp * 16 + opComp * 22;
   for (let l = 0; l < 3; l++) {
-    const mine = lineTotal(st, l, side), theirs = lineTotal(st, l, op);
+    const mine = lineTotal(st, l, side, sts), theirs = lineTotal(st, l, op, sts);
     if (!st.players[side].protocols[l].compiled && mine >= 10 && mine > theirs) v += 18;
     if (!st.players[op].protocols[l].compiled && theirs >= 10 && theirs > mine) v += 28;
   }
@@ -3032,6 +3047,7 @@ function aiControlLeverage(st, side) {
 
 function aiHandPotential(st, side, anyLine) {
   const op = 1 - side;
+  const sts = activeStatics(st);
   const vals = [];
   for (const uid of st.players[side].hand) {
     const c = st.cards[uid], d = DEFS[c.def];
@@ -3040,7 +3056,7 @@ function aiHandPotential(st, side, anyLine) {
       if (st.players[side].protocols[l].compiled) continue;
       const names = lineProtoNames(st, l);
       if (!anyLine && names.indexOf(d.proto) < 0) continue;
-      const mine = lineTotal(st, l, side), theirs = lineTotal(st, l, op);
+      const mine = lineTotal(st, l, side, sts), theirs = lineTotal(st, l, op, sts);
       const face = d.value + Math.max(0, aiMiddleValue(d)) * 0.18;
       const down = 2 + (d.value < 2 ? 2 : 0);
       let s = Math.max(face, down);
@@ -3953,10 +3969,11 @@ function aiValnetFeatures(st, me) {
     }
     return [perm, temp];
   };
+  const sts = activeStatics(st);
   for (let l = 0; l < 3; l++) {
     for (const s of [me, op]) {
       const stack = st.lines[l][s];
-      const mine = lineTotal(st, l, s), theirs = lineTotal(st, l, 1 - s);
+      const mine = lineTotal(st, l, s, sts), theirs = lineTotal(st, l, 1 - s, sts);
       const top = stack.length ? st.cards[stack[stack.length - 1]] : null;
       x[k++] = mine / 10;
       x[k++] = stack.length / 6;
@@ -3999,6 +4016,78 @@ function aiValnetLogit(st, me) {
     h = out;
   }
   return h[0];
+}
+
+/* ---------- 方策モデル (手の選び方) ----------
+   のぞき見の CPU (ALL-SEEING と同じ読み) が実際に選んだ手を、見えている情報だけから当てるように学んだネット
+   (scripts/policy_selfplay.js → scripts/policy_train.py)。入力は「打つ前の盤面・打った後の盤面との差・手の種類・表で出すカード」。
+   setAiPolicyNet(model, weight) で渡すと、読みの根の各手に weight × log(選ばれる確率) を足す。渡さなければ何もしない */
+let AI_POLICY = null, AI_POLICY_W = 0;
+function setAiPolicyNet(model, weight) {
+  if (!model || !Array.isArray(model.layers)) { AI_POLICY = null; AI_POLICY_W = 0; return; }
+  const defIndex = new Map();
+  (model.defs || []).forEach((d, i) => defIndex.set(d, i));
+  AI_POLICY = { layers: model.layers.map(L => ({ w: L.w.map(row => Float64Array.from(row)), b: Float64Array.from(L.b) })), defIndex };
+  AI_POLICY_W = +weight || 0;
+}
+/* 手の種類: 表で出す・裏で出す・リフレッシュ・その他・相手の側に出す */
+function aiPolicyFlags(a, me) {
+  const play = a.type === 'play';
+  return [play && a.faceUp ? 1 : 0, play && !a.faceUp ? 1 : 0, a.type === 'refresh' ? 1 : 0, play || a.type === 'refresh' ? 0 : 1,
+    play && (a.side === 0 || a.side === 1) && a.side !== me ? 1 : 0];
+}
+function aiPolicyDef(view, a) {
+  return a.type === 'play' && a.faceUp && view.cards[a.card] ? view.cards[a.card].def : null;
+}
+function aiPolicyLogit(before, after, flags, def) {
+  const nDefs = AI_POLICY.defIndex.size;
+  let h = new Array(before.length * 2 + flags.length + nDefs).fill(0);
+  let k = 0;
+  for (let i = 0; i < before.length; i++) h[k++] = before[i];
+  for (let i = 0; i < before.length; i++) h[k++] = after[i] - before[i];
+  for (let i = 0; i < flags.length; i++) h[k++] = flags[i];
+  const di = def !== null && AI_POLICY.defIndex.has(def) ? AI_POLICY.defIndex.get(def) : -1;
+  if (di >= 0) h[k + di] = 1;
+  const Ls = AI_POLICY.layers;
+  for (let i = 0; i < Ls.length; i++) {
+    const L = Ls[i], out = new Array(L.b.length);
+    for (let j = 0; j < L.b.length; j++) {
+      const w = L.w[j];
+      let v = L.b[j];
+      for (let q = 0; q < h.length; q++) if (h[q] !== 0) v += w[q] * h[q];
+      out[j] = i < Ls.length - 1 && v < 0 ? 0 : v;
+    }
+    h = out;
+  }
+  return h[0];
+}
+/* 根の候補 (item.res が解決済み) に weight × log 確率を足す。val1 と bias の両方に入れるので、2手読みの値にも乗る */
+function aiApplyPolicy(view, me, items) {
+  if (!AI_POLICY || !AI_POLICY_W || items.length < 2) return;
+  const before = aiValnetFeatures(view, me);
+  const logits = items.map(it => aiPolicyLogit(before, aiValnetFeatures(it.res.state, me), aiPolicyFlags(it.a, me), aiPolicyDef(view, it.a)));
+  const mx = Math.max.apply(null, logits);
+  const lse = mx + Math.log(logits.reduce((s, v) => s + Math.exp(v - mx), 0));
+  items.forEach((it, i) => { const add = AI_POLICY_W * (logits[i] - lse); it.bias += add; it.val1 += add; it.policy = logits[i] - lse; });
+}
+/* 学習データ用: 手番の側から見た盤面で、読みと同じ手順で各手を解決し、方策モデルの入力の材料を返す */
+function aiPolicyCandidates(state) {
+  const me = state.turn;
+  const view = aiInformationState(state, me);
+  const wasTrace = TRACE, previousDeadline = AI_SEARCH_DEADLINE; TRACE = false;
+  try {
+    AI_SEARCH_DEADLINE = aiNow() + 60000;
+    AI_REPLAY_CACHE = new WeakMap();
+    AI_SCORE_CACHE = new WeakMap();
+    const before = aiValnetFeatures(view, me);
+    const cands = [];
+    for (const a of aiDecisionActions(view)) {
+      const res = applyAndResolve(view, a, smartPicks);
+      if (!res || res.error || res.requests.length) continue;
+      cands.push({ a, after: aiValnetFeatures(res.state, me), flags: aiPolicyFlags(a, me), def: aiPolicyDef(view, a) });
+    }
+    return { before, cands };
+  } finally { TRACE = wasTrace; AI_SEARCH_DEADLINE = previousDeadline; }
 }
 
 /* ---------- コンボ学習 (組み合わせの値) ----------
@@ -4068,8 +4157,9 @@ function aiHeuristic(st, me) {
   sc -= opComp * 410;
 
   const lineInfo = [];
+  const sts = activeStatics(st);
   for (let l = 0; l < 3; l++) {
-    const mine = lineTotal(st, l, me), theirs = lineTotal(st, l, op);
+    const mine = lineTotal(st, l, me, sts), theirs = lineTotal(st, l, op, sts);
     const myProt = st.players[me].protocols[l], opProt = st.players[op].protocols[l];
     lineInfo.push({ mine, theirs, myComp: myProt.compiled, opComp: opProt.compiled });
   }
@@ -5478,6 +5568,10 @@ function aiActionHard(state, collect) {
       if (val > bestVal) { bestVal = val; best = item.a; }
     }
     if (!viable.length) return best;
+    if (AI_POLICY) {
+      aiApplyPolicy(state, me, viable);
+      best = viable.reduce((x, y) => (y.val1 > x.val1 ? y : x)).a;
+    }
     /* --- depth 2: 時間が残っていれば、1-plyで有望な手から順に相手手番を読む。
        途中で時間切れになっても depth1 の best が残るので劣化しない --- */
     viable.sort((a, b) => b.val1 - a.val1);
@@ -5501,6 +5595,22 @@ function aiActionHard(state, collect) {
       val += item.bias;
       item.val2 = val;
       if (val > alpha) { alpha = val; best2 = item.a; }
+    }
+    /* 深読み (AI_DEEP.k > 0、計測用): 2手読みで上位 k 手を、自分の次の手のあとの相手の応手までもう一段読み直す。
+       2手読みの順に読み直し、読み切れた手が2つ以上あればその中で選び直す (読めた手と読めなかった手は段数が違って比べられない) */
+    if (AI_DEEP.k > 0 && specialist && best2 && aiNow() < deadline) {
+      const top = viable.filter(x => x.val2 !== undefined && x.val2 > -1e8).sort((x, y) => y.val2 - x.val2).slice(0, AI_DEEP.k);
+      const read = [];
+      for (const item of top) {
+        const s1 = item.res.state;
+        if (s1.winner !== null || s1.phase === 'finished' || s1.turn === me) item.val3 = item.val2;
+        else {
+          item.val3 = minimaxMin(s1, me, -Infinity, Infinity, deadline, AI_DEEP.depth, true) + item.bias;
+          if (aiNow() > deadline) break;
+        }
+        read.push(item);
+      }
+      if (read.length > 1) best2 = read.reduce((x, y) => (y.val3 > x.val3 ? y : x)).a;
     }
     /* 読んだ手がすべて負け確定なら、まだ読んでいない手の方がましな可能性がある */
     if (best2 && alpha <= -1e8) {
@@ -5553,7 +5663,7 @@ function aiVetoOrder(viable) {
   return [pick('val2'), pick('val1')];
 }
 
-function minimaxMin(state, me, alpha, beta, deadline) {
+function minimaxMin(state, me, alpha, beta, deadline, deep, narrow) {
   if (state.turn === me || state.winner !== null) return aiScore(state, me);
   const op = 1 - me;
   const fairOpponent = aiIsDshSpecialist(state, me) && AI_DSH_W.opponentInfo > 0;
@@ -5561,7 +5671,7 @@ function minimaxMin(state, me, alpha, beta, deadline) {
   const acts = legalActions(searchState);
   if (!acts.length) return aiScore(state, me);
   const ordered = orderMovesStatic(acts, searchState, op);
-  const reply = aiIsDshSpecialist(state, me) ? AI_DSH_W.reply : AI_BREADTH.reply;
+  const reply = narrow ? AI_DEEP.reply : aiIsDshSpecialist(state, me) ? AI_DSH_W.reply : AI_BREADTH.reply;
   const limit = Math.min(ordered.length, reply);
   let val = Infinity;
   for (let i = 0; i < limit; i++) {
@@ -5576,8 +5686,8 @@ function minimaxMin(state, me, alpha, beta, deadline) {
       /* 自分の次の手まで読んだ値は、相手の手番を1つ挟んだ先の話。
          満額で数えるとリフレッシュのような「溜める手」が強く見えすぎる */
       const base = aiScore(s2, me);
-      const deep = minimaxMaxShallow(s2, me, alpha, beta, deadline);
-      sc = base + (deep - base) * aiWeightsFor(s2, me).futureDiscount;
+      const ahead = minimaxMaxShallow(s2, me, alpha, beta, deadline, deep, narrow);
+      sc = base + (ahead - base) * aiWeightsFor(s2, me).futureDiscount;
     } else sc = aiScore(s2, me);
     const tactical = sc + aiTransitionScore(searchState, res, me);
     if (tactical < val) val = tactical;
@@ -5587,20 +5697,26 @@ function minimaxMin(state, me, alpha, beta, deadline) {
   return val === Infinity ? aiScore(state, me) : val;
 }
 
-function minimaxMaxShallow(state, me, alpha, beta, deadline) {
+function minimaxMaxShallow(state, me, alpha, beta, deadline, deep, narrow) {
   if (state.winner !== null || state.turn !== me) return aiScore(state, me);
   const acts = legalActions(state);
   if (!acts.length) return aiScore(state, me);
   const ordered = acts.map(a => ({ a, bias: aiActionBias(state, a, me) }))
     .sort((a, b) => b.bias - a.bias);
   let val = -Infinity;
-  const shallow = aiIsDshSpecialist(state, me) ? AI_DSH_W.shallow : AI_BREADTH.shallow;
+  const shallow = narrow ? AI_DEEP.shallow : aiIsDshSpecialist(state, me) ? AI_DSH_W.shallow : AI_BREADTH.shallow;
   for (let i = 0; i < Math.min(ordered.length, shallow); i++) {
     if (deadline && aiNow() > deadline) break;
     const item = ordered[i];
     const res = applyAndResolve(state, item.a, smartPicks);
     if (!res || res.error || res.requests.length) continue;
-    const sc = aiScore(res.state, me) + item.bias + aiTransitionScore(state, res, me);
+    let after = aiScore(res.state, me);
+    /* 深読み: 自分の次の手のあと、相手の応手をもう一度 (細い幅で) 読む。窓は混ぜた値と合わないので開けて読む */
+    if (deep > 0 && res.state.winner === null && res.state.turn !== me) {
+      const reply = minimaxMin(res.state, me, -Infinity, Infinity, deadline, deep - 1, true);
+      after += (reply - after) * aiWeightsFor(res.state, me).futureDiscount;
+    }
+    const sc = after + item.bias + aiTransitionScore(state, res, me);
     if (sc > val) val = sc;
     if (val >= beta) return val;
     if (val > alpha) alpha = val;
@@ -5771,6 +5887,14 @@ function aiInformationState(state, side, salt) {
    各世界で探索した最善手の多数決を取る。1つの決定化に過剰適応した
    「読み切ったつもりの手」を避けられる。思考予算は K 等分する */
 let AI_PIMC = 1;
+/* 深読み (計測用、既定は切): k = 読み直す根の手の数、reply / shallow = 深い段の幅、depth = 自分の手と相手の応手を何組読み足すか */
+const AI_DEEP = { k: 0, reply: 6, shallow: 4, depth: 1 };
+function setAiDeep(k, reply, shallow, depth) {
+  AI_DEEP.k = Math.max(0, k | 0);
+  if (reply) AI_DEEP.reply = reply | 0;
+  if (shallow) AI_DEEP.shallow = shallow | 0;
+  if (depth) AI_DEEP.depth = depth | 0;
+}
 function setAiPimc(k) { AI_PIMC = Math.max(1, Math.min(9, k | 0)); }
 
 function aiActionPimc(state) {
@@ -5920,9 +6044,9 @@ function aiAnswer(state, req) {
 /* ---------- 公開 API ---------- */
 
 const Engine = {
-  init, newGame, newPuzzle, apply, legalActions, setTrace, setAiPeek, setAiValueNet, setAiComboNet, setAiLevel, setAiBlunder, setAiThinkBudget, setAiBreadth, setAiPimc, setAiWeights, setAiSpecialist, setAiSpecialistWeights, setAiOracle,
+  init, newGame, newPuzzle, apply, legalActions, setTrace, setAiPeek, setAiValueNet, setAiPolicyNet, setAiComboNet, setAiLevel, setAiBlunder, setAiThinkBudget, setAiBreadth, setAiPimc, setAiDeep, setAiWeights, setAiSpecialist, setAiSpecialistWeights, setAiOracle,
   lineTotal, cardValue, compilableLines, canPlay, playBlockReason, locate,
-  ai: { action: aiAction, answer: aiAnswer, score: aiScore, valnetFeatures: aiValnetFeatures, comboLogit: aiComboLogit, middleFizzles: aiMiddleFizzles, transitionScore: aiTransitionScore, compilePassChance: aiCompilePassChance, informationState: aiInformationState, rootValues: aiRootValues, vetoOrder: aiVetoOrder, actionBias: aiActionBias, opsValue: aiOpsValue, boardEffect: aiBoardEffectScore, randomPicks, smartPicks },
+  ai: { action: aiAction, answer: aiAnswer, score: aiScore, valnetFeatures: aiValnetFeatures, policyCandidates: aiPolicyCandidates, policyLogit: (before, after, flags, def) => aiPolicyLogit(before, after, flags, def), comboLogit: aiComboLogit, middleFizzles: aiMiddleFizzles, transitionScore: aiTransitionScore, compilePassChance: aiCompilePassChance, informationState: aiInformationState, rootValues: aiRootValues, vetoOrder: aiVetoOrder, actionBias: aiActionBias, opsValue: aiOpsValue, boardEffect: aiBoardEffectScore, randomPicks, smartPicks },
   get defs() { return DEFS; },
   get protos() { return PROTOS; }
 };
