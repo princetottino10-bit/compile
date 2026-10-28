@@ -844,3 +844,94 @@ module.exports = [
     });
   }
 })();
+
+/* ---------- 裏向きを数える札 × 裏向きを足す札 (D001〜、2026-10-28) ----------
+   DARKNESS 2 (このスタックの裏向きは値4)・APATHY 0・SMOKE 2 (このラインの裏向き1枚ごとに +1) は上段なので覆われても効く。
+   そのラインに裏向きを足す札 (山札の上を撒く・裏で出す・裏向きを動かして寄せる) と、
+   そのラインの覆われた表の札を裏にする札 (下に低い札を敷いておく) を組ませる。
+   置く先・動かす先を選べるときは数える札のラインに、動かす札は他のラインの自分の裏向きを決め打つ */
+(function facedownValueCandidates() {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const cards = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'cards.json'), 'utf8'));
+  const proto = {}, value = {}, text = {}, byName = {}, low = {};
+  for (const p of cards.protocols) for (const c of p.cards) {
+    proto[c.id] = p.name; value[c.id] = c.value; byName[p.name + ' ' + c.value] = c.id;
+    text[c.id] = [c.upper, c.middle, c.lower].filter(Boolean).join(' / ');
+  }
+  const id = (n) => { if (!byName[n]) throw new Error('no card ' + n); return byName[n]; };
+  const seen = new Set(module.exports.map(c => c.setup.mine.map(p => p.card).sort().join('+')));
+  const BOOST = { 'DARKNESS 2': 'DARKNESS 0', 'APATHY 0': 'APATHY 1', 'SMOKE 2': 'SMOKE 1' };
+  const ADD = ['LIFE 0', 'WATER 1', 'SMOKE 0', 'SMOKE 3', 'DARKNESS 3', 'PEACE 2', 'TIME 3'];
+  const MOVE = ['DARKNESS 4', 'SMOKE 4'];
+  const FLIP = ['SPIRIT 2', 'LOVE 4', 'METAL 0', 'WATER 0'];
+  let n = 0;
+  for (const [bn, under] of Object.entries(BOOST)) for (const pn of [...ADD, ...MOVE, ...FLIP]) {
+    const B = id(bn), P0 = id(pn), U = id(under);
+    if (proto[B] === proto[P0] && !MOVE.includes(pn)) continue;
+    const key = [B, P0].sort().join('+');
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const isFlip = FLIP.includes(pn), isMove = MOVE.includes(pn);
+    const mine = isFlip ? [{ card: U, at: 'field' }, { card: B, at: 'field', over: U }, { card: P0, at: 'hand' }]
+      : [{ card: B, at: 'field' }, { card: P0, at: 'hand' }];
+    if (isMove) mine.splice(1, 0, { card: U, at: 'field', faceUp: false, line: 'other' });
+    module.exports.push({
+      id: 'D' + String(++n).padStart(3, '0'), auto: true, source: 'facedown', late: true,
+      name: bn + ' のラインに ' + pn + ' で裏向きを' + (isFlip ? '作る' : isMove ? '寄せる' : '足す'), kind: 'burst', protos: [...new Set([proto[B], proto[P0]])],
+      how: bn + ' (' + text[B] + ') のラインに、' + pn + ' (' + text[P0] + ') で裏向きを' + (isFlip ? '作る (覆われた ' + under + ' を裏にする)' : isMove ? '寄せる' : '足す') + '。',
+      setup: { mine }, act: { play: P0, ...(['WATER 1', 'DARKNESS 3', 'TIME 3'].includes(pn) ? { line: 'other' } : {}) }, partner: [B],
+      picks: (s, q, P) => {
+        const b = P.planted[B];
+        if (!b || !s.cards[b]) return null;
+        const bl = s.lines.findIndex(L => L[P.me].includes(b));
+        if (bl < 0 || q.player !== P.me) return null;
+        if (q.kind === 'pickLine' && (q.context === P0 || /play-dest|shift-dest|choose-line/.test(q.prompt || '')) && q.lines.includes(bl)) return [bl];
+        if (q.kind !== 'pickCard' || q.context !== P0 || q.prompt === 'trigger-order') return null;
+        if (isMove) {
+          const c = q.candidates.filter(u => !s.cards[u].faceUp && s.lines.some((L, i) => i !== bl && L[P.me].includes(u)));
+          return c.length ? [c[0]] : null;
+        }
+        if (isFlip) { const u = P.planted[U]; return u && q.candidates.includes(u) ? [u] : null; }
+        return null;
+      }
+    });
+  }
+})();
+
+/* ---------- 自分の撃つ札を手札に戻して出し直す (B001〜、2026-10-28) ----------
+   中段の強い札を表で一番上に置いておき、戻す札 (FIRE 2: 1枚捨てて1枚戻す / WATER 4: 自分の札を1枚戻す / CORRUPTION 1: 1枚戻す) で手札へ戻す。
+   次の手番にもう一度出せば中段がまた入る。相方 = 戻した札 (白紙なら戻しても出し直す得がない)。
+   撃ち直しの X 型と同じ札の組になるが、覆いをどけるのではなく戻すので別に測る */
+(function bounceCandidates() {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const cards = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'cards.json'), 'utf8'));
+  const proto = {}, value = {}, text = {}, byName = {};
+  for (const p of cards.protocols) for (const c of p.cards) {
+    proto[c.id] = p.name; value[c.id] = c.value; byName[p.name + ' ' + c.value] = c.id;
+    text[c.id] = [c.upper, c.middle, c.lower].filter(Boolean).join(' / ');
+  }
+  const id = (n) => { if (!byName[n]) throw new Error('no card ' + n); return byName[n]; };
+  const name = (d) => proto[d] + ' ' + value[d];
+  const PAYLOAD = ['DEATH 0', 'FIRE 0', 'DARKNESS 0', 'LIGHT 0', 'GRAVITY 1', 'SPIRIT 1', 'FEAR 1', 'PSYCHIC 2', 'WATER 1', 'LIFE 0', 'HATE 0', 'METAL 1', 'SPEED 0', 'LUCK 0'].map(id);
+  const BOUNCE = ['FIRE 2', 'WATER 4', 'CORRUPTION 1'].map(id);
+  let n = 0;
+  for (const R of BOUNCE) for (const T of PAYLOAD) {
+    if (proto[R] === proto[T]) continue;
+    module.exports.push({
+      id: 'B' + String(++n).padStart(3, '0'), auto: true, source: 'bounce', late: true,
+      name: name(R) + ' で ' + name(T) + ' を手札に戻して出し直す', kind: 'setup', protos: [proto[R], proto[T]],
+      how: name(T) + ' (' + text[T] + ') を撃ったあと、' + name(R) + ' (' + text[R] + ') で手札に戻し、次の手番にもう一度出す。',
+      setup: { mine: [{ card: T, at: 'field' }, { card: R, at: 'hand' }] }, act: { play: R, line: 'other' }, partner: [T],
+      picks: (s, q, P) => {
+        const t = P.planted[T];
+        if (q.context !== R || !t || !s.cards[t] || s.cards[t].zone !== 'field') return null;
+        if (q.kind === 'yesNo') return ['yes'];
+        if (q.kind === 'pickHand') { const c = q.candidates.filter(u => u !== t).sort((a, b) => P.val(s, a) - P.val(s, b)); return c.length ? [c[0]] : null; }
+        if (q.kind === 'pickCard' && q.candidates.includes(t)) return [t];
+        return null;
+      }
+    });
+  }
+})();

@@ -25398,6 +25398,1682 @@
    "note": null
   },
   {
+   "id": "D001",
+   "name": "DARKNESS 2 のラインに SPIRIT 2 で裏向きを作る",
+   "kind": "burst",
+   "source": "facedown",
+   "cards": [
+    "DARKNESS_1",
+    "DARKNESS_3",
+    "SPIRIT_3"
+   ],
+   "protocols": [
+    "DARKNESS",
+    "SPIRIT"
+   ],
+   "how": "DARKNESS 2 (このスタックにあるすべての裏向きのカードの値はそれぞれ4になる。 / このラインにある、覆われているカードを1枚反転させることができる。) のラインに、SPIRIT 2 (あなたはカードを1枚反転させることができる。) で裏向きを作る (覆われた DARKNESS 0 を裏にする)。",
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -2.2,
+    "interactionSe": 1,
+    "partnerValue": 4.3,
+    "partnerValueSe": 1.1,
+    "synergy": 2.1,
+    "synergySe": 1.1,
+    "missed": -3.3,
+    "missedSe": 1.1,
+    "aiPicked": 34
+   },
+   "note": null
+  },
+  {
+   "id": "D002",
+   "name": "DARKNESS 2 のラインに LOVE 4 で裏向きを作る",
+   "kind": "burst",
+   "source": "facedown",
+   "cards": [
+    "DARKNESS_1",
+    "DARKNESS_3",
+    "LOVE_4"
+   ],
+   "protocols": [
+    "DARKNESS",
+    "LOVE"
+   ],
+   "how": "DARKNESS 2 (このスタックにあるすべての裏向きのカードの値はそれぞれ4になる。 / このラインにある、覆われているカードを1枚反転させることができる。) のラインに、LOVE 4 (あなたの手札１枚を公開する。カードを１枚反転させる。) で裏向きを作る (覆われた DARKNESS 0 を裏にする)。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.1,
+    "interactionSe": 0.6,
+    "partnerValue": 1.3,
+    "partnerValueSe": 0.8,
+    "synergy": 1.2,
+    "synergySe": 0.7,
+    "missed": -1.1,
+    "missedSe": 0.9,
+    "aiPicked": 69
+   },
+   "note": null
+  },
+  {
+   "id": "D003",
+   "name": "DARKNESS 2 のラインに METAL 0 で裏向きを作る",
+   "kind": "burst",
+   "source": "facedown",
+   "cards": [
+    "DARKNESS_1",
+    "DARKNESS_3",
+    "METAL_1"
+   ],
+   "protocols": [
+    "DARKNESS",
+    "METAL"
+   ],
+   "how": "DARKNESS 2 (このスタックにあるすべての裏向きのカードの値はそれぞれ4になる。 / このラインにある、覆われているカードを1枚反転させることができる。) のラインに、METAL 0 (このラインでの相手の合計値は2減る。 / カードを1枚反転させる。) で裏向きを作る (覆われた DARKNESS 0 を裏にする)。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0,
+    "interactionSe": 1.3,
+    "partnerValue": 2.4,
+    "partnerValueSe": 1.2,
+    "synergy": 2.4,
+    "synergySe": 1.1,
+    "missed": -1.4,
+    "missedSe": 0.9,
+    "aiPicked": 41
+   },
+   "note": null
+  },
+  {
+   "id": "D004",
+   "name": "DARKNESS 2 のラインに WATER 0 で裏向きを作る",
+   "kind": "burst",
+   "source": "facedown",
+   "cards": [
+    "DARKNESS_1",
+    "DARKNESS_3",
+    "WATER_1"
+   ],
+   "protocols": [
+    "DARKNESS",
+    "WATER"
+   ],
+   "how": "DARKNESS 2 (このスタックにあるすべての裏向きのカードの値はそれぞれ4になる。 / このラインにある、覆われているカードを1枚反転させることができる。) のラインに、WATER 0 (他のカードを1枚反転させる。このカードを反転させる。) で裏向きを作る (覆われた DARKNESS 0 を裏にする)。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 102,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.1,
+    "interactionSe": 1.3,
+    "partnerValue": 1.5,
+    "partnerValueSe": 1.1,
+    "synergy": 1.5,
+    "synergySe": 1,
+    "missed": -3.8,
+    "missedSe": 1.2,
+    "aiPicked": 25
+   },
+   "note": null
+  },
+  {
+   "id": "D005",
+   "name": "APATHY 0 のラインに SPIRIT 2 で裏向きを作る",
+   "kind": "burst",
+   "source": "facedown",
+   "cards": [
+    "APATHY_2",
+    "APATHY_1",
+    "SPIRIT_3"
+   ],
+   "protocols": [
+    "APATHY",
+    "SPIRIT"
+   ],
+   "how": "APATHY 0 (このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。) のラインに、SPIRIT 2 (あなたはカードを1枚反転させることができる。) で裏向きを作る (覆われた APATHY 1 を裏にする)。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.7,
+    "interactionSe": 1.1,
+    "partnerValue": 4.2,
+    "partnerValueSe": 1.2,
+    "synergy": 2.5,
+    "synergySe": 1.1,
+    "missed": -3.8,
+    "missedSe": 1.1,
+    "aiPicked": 31
+   },
+   "note": null
+  },
+  {
+   "id": "D006",
+   "name": "APATHY 0 のラインに LOVE 4 で裏向きを作る",
+   "kind": "burst",
+   "source": "facedown",
+   "cards": [
+    "APATHY_2",
+    "APATHY_1",
+    "LOVE_4"
+   ],
+   "protocols": [
+    "APATHY",
+    "LOVE"
+   ],
+   "how": "APATHY 0 (このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。) のラインに、LOVE 4 (あなたの手札１枚を公開する。カードを１枚反転させる。) で裏向きを作る (覆われた APATHY 1 を裏にする)。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 101,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.2,
+    "interactionSe": 0.7,
+    "partnerValue": 1.9,
+    "partnerValueSe": 1,
+    "synergy": 1.7,
+    "synergySe": 0.8,
+    "missed": -1.2,
+    "missedSe": 0.9,
+    "aiPicked": 67
+   },
+   "note": null
+  },
+  {
+   "id": "D007",
+   "name": "APATHY 0 のラインに METAL 0 で裏向きを作る",
+   "kind": "burst",
+   "source": "facedown",
+   "cards": [
+    "APATHY_2",
+    "APATHY_1",
+    "METAL_1"
+   ],
+   "protocols": [
+    "APATHY",
+    "METAL"
+   ],
+   "how": "APATHY 0 (このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。) のラインに、METAL 0 (このラインでの相手の合計値は2減る。 / カードを1枚反転させる。) で裏向きを作る (覆われた APATHY 1 を裏にする)。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 102,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.5,
+    "interactionSe": 0.9,
+    "partnerValue": 2.8,
+    "partnerValueSe": 0.7,
+    "synergy": 1.3,
+    "synergySe": 0.7,
+    "missed": -2,
+    "missedSe": 1.1,
+    "aiPicked": 34
+   },
+   "note": null
+  },
+  {
+   "id": "D008",
+   "name": "APATHY 0 のラインに WATER 0 で裏向きを作る",
+   "kind": "burst",
+   "source": "facedown",
+   "cards": [
+    "APATHY_2",
+    "APATHY_1",
+    "WATER_1"
+   ],
+   "protocols": [
+    "APATHY",
+    "WATER"
+   ],
+   "how": "APATHY 0 (このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。) のラインに、WATER 0 (他のカードを1枚反転させる。このカードを反転させる。) で裏向きを作る (覆われた APATHY 1 を裏にする)。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.1,
+    "interactionSe": 1.2,
+    "partnerValue": 2.5,
+    "partnerValueSe": 1.1,
+    "synergy": 2.6,
+    "synergySe": 0.8,
+    "missed": -3.8,
+    "missedSe": 1.6,
+    "aiPicked": 29
+   },
+   "note": null
+  },
+  {
+   "id": "D009",
+   "name": "SMOKE 2 のラインに SPIRIT 2 で裏向きを作る",
+   "kind": "burst",
+   "source": "facedown",
+   "cards": [
+    "SMOKE_2",
+    "SMOKE_3",
+    "SPIRIT_3"
+   ],
+   "protocols": [
+    "SMOKE",
+    "SPIRIT"
+   ],
+   "how": "SMOKE 2 (このラインのあなたの合計値は、このラインにある裏向きのカード1枚ごとに1増える。) のラインに、SPIRIT 2 (あなたはカードを1枚反転させることができる。) で裏向きを作る (覆われた SMOKE 1 を裏にする)。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 102,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.9,
+    "interactionSe": 1.1,
+    "partnerValue": 0.6,
+    "partnerValueSe": 1.3,
+    "synergy": 1.5,
+    "synergySe": 1.2,
+    "missed": 0.6,
+    "missedSe": 1.2,
+    "aiPicked": 38
+   },
+   "note": null
+  },
+  {
+   "id": "D010",
+   "name": "SMOKE 2 のラインに LOVE 4 で裏向きを作る",
+   "kind": "burst",
+   "source": "facedown",
+   "cards": [
+    "SMOKE_2",
+    "SMOKE_3",
+    "LOVE_4"
+   ],
+   "protocols": [
+    "SMOKE",
+    "LOVE"
+   ],
+   "how": "SMOKE 2 (このラインのあなたの合計値は、このラインにある裏向きのカード1枚ごとに1増える。) のラインに、LOVE 4 (あなたの手札１枚を公開する。カードを１枚反転させる。) で裏向きを作る (覆われた SMOKE 1 を裏にする)。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 102,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.7,
+    "interactionSe": 1.6,
+    "partnerValue": 2.6,
+    "partnerValueSe": 1.4,
+    "synergy": 1.9,
+    "synergySe": 0.9,
+    "missed": -0.7,
+    "missedSe": 1.4,
+    "aiPicked": 55
+   },
+   "note": null
+  },
+  {
+   "id": "D011",
+   "name": "SMOKE 2 のラインに METAL 0 で裏向きを作る",
+   "kind": "burst",
+   "source": "facedown",
+   "cards": [
+    "SMOKE_2",
+    "SMOKE_3",
+    "METAL_1"
+   ],
+   "protocols": [
+    "SMOKE",
+    "METAL"
+   ],
+   "how": "SMOKE 2 (このラインのあなたの合計値は、このラインにある裏向きのカード1枚ごとに1増える。) のラインに、METAL 0 (このラインでの相手の合計値は2減る。 / カードを1枚反転させる。) で裏向きを作る (覆われた SMOKE 1 を裏にする)。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.5,
+    "interactionSe": 1.2,
+    "partnerValue": 2.1,
+    "partnerValueSe": 1.2,
+    "synergy": 3.6,
+    "synergySe": 1.1,
+    "missed": -3.3,
+    "missedSe": 1.3,
+    "aiPicked": 42
+   },
+   "note": null
+  },
+  {
+   "id": "D012",
+   "name": "SMOKE 2 のラインに WATER 0 で裏向きを作る",
+   "kind": "burst",
+   "source": "facedown",
+   "cards": [
+    "SMOKE_2",
+    "SMOKE_3",
+    "WATER_1"
+   ],
+   "protocols": [
+    "SMOKE",
+    "WATER"
+   ],
+   "how": "SMOKE 2 (このラインのあなたの合計値は、このラインにある裏向きのカード1枚ごとに1増える。) のラインに、WATER 0 (他のカードを1枚反転させる。このカードを反転させる。) で裏向きを作る (覆われた SMOKE 1 を裏にする)。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.5,
+    "interactionSe": 1.1,
+    "partnerValue": 1.4,
+    "partnerValueSe": 1.3,
+    "synergy": 0,
+    "synergySe": 0.8,
+    "missed": -5.1,
+    "missedSe": 1.5,
+    "aiPicked": 34
+   },
+   "note": null
+  },
+  {
+   "id": "B001",
+   "name": "FIRE 2 で DEATH 0 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "DEATH_1",
+    "FIRE_3"
+   ],
+   "protocols": [
+    "FIRE",
+    "DEATH"
+   ],
+   "how": "DEATH 0 (他の各ラインにあるカードを1枚ずつ削除する。) を撃ったあと、FIRE 2 (あなたは手札を1枚捨て札にする。そうした場合、カードを1枚戻す。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.4,
+    "interactionSe": 1.2,
+    "partnerValue": 1.1,
+    "partnerValueSe": 0.7,
+    "synergy": 1.5,
+    "synergySe": 1,
+    "missed": -9.3,
+    "missedSe": 1.8,
+    "aiPicked": 27
+   },
+   "note": null
+  },
+  {
+   "id": "B002",
+   "name": "FIRE 2 で DARKNESS 0 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "DARKNESS_1",
+    "FIRE_3"
+   ],
+   "protocols": [
+    "FIRE",
+    "DARKNESS"
+   ],
+   "how": "DARKNESS 0 (カードを3枚引く。相手の覆われているカードを1枚移動させる。) を撃ったあと、FIRE 2 (あなたは手札を1枚捨て札にする。そうした場合、カードを1枚戻す。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 61,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.1,
+    "interactionSe": 1.5,
+    "partnerValue": 1.1,
+    "partnerValueSe": 1.4,
+    "synergy": 1,
+    "synergySe": 0.3,
+    "missed": -6.8,
+    "missedSe": 1.5,
+    "aiPicked": 11
+   },
+   "note": null
+  },
+  {
+   "id": "B003",
+   "name": "FIRE 2 で LIGHT 0 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "LIGHT_1",
+    "FIRE_3"
+   ],
+   "protocols": [
+    "FIRE",
+    "LIGHT"
+   ],
+   "how": "LIGHT 0 (カードを1枚反転させる。そのカードの値に等しい枚数のカードを引く。) を撃ったあと、FIRE 2 (あなたは手札を1枚捨て札にする。そうした場合、カードを1枚戻す。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.7,
+    "interactionSe": 1.2,
+    "partnerValue": -1.9,
+    "partnerValueSe": 0.8,
+    "synergy": -0.3,
+    "synergySe": 0.8,
+    "missed": -4.9,
+    "missedSe": 1.8,
+    "aiPicked": 29
+   },
+   "note": null
+  },
+  {
+   "id": "B004",
+   "name": "FIRE 2 で GRAVITY 1 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "GRAVITY_2",
+    "FIRE_3"
+   ],
+   "protocols": [
+    "FIRE",
+    "GRAVITY"
+   ],
+   "how": "GRAVITY 1 (カードを2枚引く。このラインから、またはこのラインへとカードを1枚移動させる。) を撃ったあと、FIRE 2 (あなたは手札を1枚捨て札にする。そうした場合、カードを1枚戻す。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 61,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.9,
+    "interactionSe": 0.8,
+    "partnerValue": -0.1,
+    "partnerValueSe": 0.6,
+    "synergy": 1.8,
+    "synergySe": 0.7,
+    "missed": -8.1,
+    "missedSe": 1.7,
+    "aiPicked": 18
+   },
+   "note": null
+  },
+  {
+   "id": "B005",
+   "name": "FIRE 2 で SPIRIT 1 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "SPIRIT_2",
+    "FIRE_3"
+   ],
+   "protocols": [
+    "FIRE",
+    "SPIRIT"
+   ],
+   "how": "SPIRIT 1 (あなたがカードを表向きでプレイするときには、プロトコルを対応させずにプレイすることができる。 / カードを2枚引く。 / 開始：あなたは手札を1枚捨て札にするか、このカードを反転させる。) を撃ったあと、FIRE 2 (あなたは手札を1枚捨て札にする。そうした場合、カードを1枚戻す。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 61,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.5,
+    "interactionSe": 2.5,
+    "partnerValue": 2.2,
+    "partnerValueSe": 1.2,
+    "synergy": 1.3,
+    "synergySe": 1.7,
+    "missed": -9.3,
+    "missedSe": 1.5,
+    "aiPicked": 8
+   },
+   "note": null
+  },
+  {
+   "id": "B006",
+   "name": "FIRE 2 で FEAR 1 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "FEAR_2",
+    "FIRE_3"
+   ],
+   "protocols": [
+    "FIRE",
+    "FEAR"
+   ],
+   "how": "FEAR 1 (カードを2枚引く。相手は自身の手札をすべて捨て札にして、捨て札にした枚数-1枚のカードを引く。) を撃ったあと、FIRE 2 (あなたは手札を1枚捨て札にする。そうした場合、カードを1枚戻す。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 61,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.2,
+    "interactionSe": 1.2,
+    "partnerValue": -0.4,
+    "partnerValueSe": 1,
+    "synergy": 0.1,
+    "synergySe": 0.7,
+    "missed": -7.5,
+    "missedSe": 2.7,
+    "aiPicked": 25
+   },
+   "note": null
+  },
+  {
+   "id": "B007",
+   "name": "FIRE 2 で PSYCHIC 2 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "PSYCHIC_3",
+    "FIRE_3"
+   ],
+   "protocols": [
+    "FIRE",
+    "PSYCHIC"
+   ],
+   "how": "PSYCHIC 2 (相手は自分の手札を2枚捨て札にする。あなたは相手のプロトコルを並べ替える。) を撃ったあと、FIRE 2 (あなたは手札を1枚捨て札にする。そうした場合、カードを1枚戻す。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 60,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.3,
+    "interactionSe": 0.8,
+    "partnerValue": 0,
+    "partnerValueSe": 0.5,
+    "synergy": 1.3,
+    "synergySe": 0.6,
+    "missed": -9.3,
+    "missedSe": 1.7,
+    "aiPicked": 25
+   },
+   "note": null
+  },
+  {
+   "id": "B008",
+   "name": "FIRE 2 で WATER 1 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "WATER_2",
+    "FIRE_3"
+   ],
+   "protocols": [
+    "FIRE",
+    "WATER"
+   ],
+   "how": "WATER 1 (あなたのデッキの一番上のカードを、他の各ラインに裏向きで1枚ずつプレイする。) を撃ったあと、FIRE 2 (あなたは手札を1枚捨て札にする。そうした場合、カードを1枚戻す。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 57,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.5,
+    "interactionSe": 1.1,
+    "partnerValue": -1.2,
+    "partnerValueSe": 1.2,
+    "synergy": 1.3,
+    "synergySe": 0.9,
+    "missed": -8.4,
+    "missedSe": 1.8,
+    "aiPicked": 19
+   },
+   "note": null
+  },
+  {
+   "id": "B009",
+   "name": "FIRE 2 で LIFE 0 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "LIFE_1",
+    "FIRE_3"
+   ],
+   "protocols": [
+    "FIRE",
+    "LIFE"
+   ],
+   "how": "LIFE 0 (終了：このカードが覆われている場合、このカードを削除する。 / あなたのデッキの一番上のカードを、あなたのカードがある各ラインに裏向きで1枚ずつプレイする。) を撃ったあと、FIRE 2 (あなたは手札を1枚捨て札にする。そうした場合、カードを1枚戻す。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 61,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.8,
+    "interactionSe": 1.6,
+    "partnerValue": -1.4,
+    "partnerValueSe": 0.7,
+    "synergy": 1.4,
+    "synergySe": 1.4,
+    "missed": -4,
+    "missedSe": 2.3,
+    "aiPicked": 26
+   },
+   "note": null
+  },
+  {
+   "id": "B010",
+   "name": "FIRE 2 で HATE 0 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "HATE_1",
+    "FIRE_3"
+   ],
+   "protocols": [
+    "FIRE",
+    "HATE"
+   ],
+   "how": "HATE 0 (カードを１枚削除する。) を撃ったあと、FIRE 2 (あなたは手札を1枚捨て札にする。そうした場合、カードを1枚戻す。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 59,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.6,
+    "interactionSe": 1.1,
+    "partnerValue": 0.5,
+    "partnerValueSe": 0.8,
+    "synergy": 1,
+    "synergySe": 0.8,
+    "missed": -5.6,
+    "missedSe": 1.2,
+    "aiPicked": 10
+   },
+   "note": null
+  },
+  {
+   "id": "B011",
+   "name": "FIRE 2 で METAL 1 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "METAL_2",
+    "FIRE_3"
+   ],
+   "protocols": [
+    "FIRE",
+    "METAL"
+   ],
+   "how": "METAL 1 (カードを2枚引く。相手は次の手番でコンパイルすることはできない。) を撃ったあと、FIRE 2 (あなたは手札を1枚捨て札にする。そうした場合、カードを1枚戻す。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 52,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.3,
+    "interactionSe": 1.2,
+    "partnerValue": 0,
+    "partnerValueSe": 1.1,
+    "synergy": -0.3,
+    "synergySe": 0.5,
+    "missed": -10.9,
+    "missedSe": 1.8,
+    "aiPicked": 25
+   },
+   "note": null
+  },
+  {
+   "id": "B012",
+   "name": "FIRE 2 で SPEED 0 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "SPEED_1",
+    "FIRE_3"
+   ],
+   "protocols": [
+    "FIRE",
+    "SPEED"
+   ],
+   "how": "SPEED 0 (カードを1枚プレイする。) を撃ったあと、FIRE 2 (あなたは手札を1枚捨て札にする。そうした場合、カードを1枚戻す。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 55,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -2.2,
+    "interactionSe": 1.4,
+    "partnerValue": 2.6,
+    "partnerValueSe": 1.2,
+    "synergy": 0.5,
+    "synergySe": 0.8,
+    "missed": -14.6,
+    "missedSe": 2.2,
+    "aiPicked": 24
+   },
+   "note": null
+  },
+  {
+   "id": "B013",
+   "name": "FIRE 2 で LUCK 0 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "LUCK_1",
+    "FIRE_3"
+   ],
+   "protocols": [
+    "FIRE",
+    "LUCK"
+   ],
+   "how": "LUCK 0 (値を1つ宣言する。カードを3枚引く。その中から、表面に宣言した値を持つカードを1枚公開する。そのカードをプレイすることができる。) を撃ったあと、FIRE 2 (あなたは手札を1枚捨て札にする。そうした場合、カードを1枚戻す。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 55,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0,
+    "interactionSe": 1.1,
+    "partnerValue": 0.5,
+    "partnerValueSe": 1.6,
+    "synergy": 0.5,
+    "synergySe": 1.2,
+    "missed": -3.3,
+    "missedSe": 1.5,
+    "aiPicked": 35
+   },
+   "note": null
+  },
+  {
+   "id": "B014",
+   "name": "WATER 4 で DEATH 0 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "DEATH_1",
+    "WATER_5"
+   ],
+   "protocols": [
+    "WATER",
+    "DEATH"
+   ],
+   "how": "DEATH 0 (他の各ラインにあるカードを1枚ずつ削除する。) を撃ったあと、WATER 4 (あなたのカードを1枚戻す。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.5,
+    "interactionSe": 1.7,
+    "partnerValue": 3.3,
+    "partnerValueSe": 1.5,
+    "synergy": 3.7,
+    "synergySe": 1.6,
+    "missed": -4.5,
+    "missedSe": 1.9,
+    "aiPicked": 32
+   },
+   "note": null
+  },
+  {
+   "id": "B015",
+   "name": "WATER 4 で FIRE 0 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "FIRE_1",
+    "WATER_5"
+   ],
+   "protocols": [
+    "WATER",
+    "FIRE"
+   ],
+   "how": "FIRE 0 (他のカードを1枚反転させる。カードを2枚引く。 / このカードが覆われることになったとき：先にカードを1枚引き、他のカードを1枚反転させる。) を撃ったあと、WATER 4 (あなたのカードを1枚戻す。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 105,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.8,
+    "interactionSe": 1,
+    "partnerValue": 3.6,
+    "partnerValueSe": 0.9,
+    "synergy": 1.8,
+    "synergySe": 0.7,
+    "missed": -4.1,
+    "missedSe": 1,
+    "aiPicked": 19
+   },
+   "note": null
+  },
+  {
+   "id": "B016",
+   "name": "WATER 4 で DARKNESS 0 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "DARKNESS_1",
+    "WATER_5"
+   ],
+   "protocols": [
+    "WATER",
+    "DARKNESS"
+   ],
+   "how": "DARKNESS 0 (カードを3枚引く。相手の覆われているカードを1枚移動させる。) を撃ったあと、WATER 4 (あなたのカードを1枚戻す。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 47,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.7,
+    "interactionSe": 1.6,
+    "partnerValue": 0.3,
+    "partnerValueSe": 1.3,
+    "synergy": 1,
+    "synergySe": 1.1,
+    "missed": -3,
+    "missedSe": 1.6,
+    "aiPicked": 40
+   },
+   "note": null
+  },
+  {
+   "id": "B017",
+   "name": "WATER 4 で LIGHT 0 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "LIGHT_1",
+    "WATER_5"
+   ],
+   "protocols": [
+    "WATER",
+    "LIGHT"
+   ],
+   "how": "LIGHT 0 (カードを1枚反転させる。そのカードの値に等しい枚数のカードを引く。) を撃ったあと、WATER 4 (あなたのカードを1枚戻す。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.8,
+    "interactionSe": 0.8,
+    "partnerValue": 1,
+    "partnerValueSe": 0.8,
+    "synergy": 1.8,
+    "synergySe": 0.7,
+    "missed": -2.3,
+    "missedSe": 1.3,
+    "aiPicked": 40
+   },
+   "note": null
+  },
+  {
+   "id": "B018",
+   "name": "WATER 4 で GRAVITY 1 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "GRAVITY_2",
+    "WATER_5"
+   ],
+   "protocols": [
+    "WATER",
+    "GRAVITY"
+   ],
+   "how": "GRAVITY 1 (カードを2枚引く。このラインから、またはこのラインへとカードを1枚移動させる。) を撃ったあと、WATER 4 (あなたのカードを1枚戻す。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 32,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -2.9,
+    "interactionSe": 3,
+    "partnerValue": 1.1,
+    "partnerValueSe": 2.5,
+    "synergy": -1.9,
+    "synergySe": 1.8,
+    "missed": -10.2,
+    "missedSe": 3.3,
+    "aiPicked": 19
+   },
+   "note": null
+  },
+  {
+   "id": "B019",
+   "name": "WATER 4 で SPIRIT 1 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "SPIRIT_2",
+    "WATER_5"
+   ],
+   "protocols": [
+    "WATER",
+    "SPIRIT"
+   ],
+   "how": "SPIRIT 1 (あなたがカードを表向きでプレイするときには、プロトコルを対応させずにプレイすることができる。 / カードを2枚引く。 / 開始：あなたは手札を1枚捨て札にするか、このカードを反転させる。) を撃ったあと、WATER 4 (あなたのカードを1枚戻す。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 153,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1,
+    "interactionSe": 1.9,
+    "partnerValue": 3.4,
+    "partnerValueSe": 1,
+    "synergy": 1.3,
+    "synergySe": 0.7,
+    "missed": -8.3,
+    "missedSe": 1.3,
+    "aiPicked": 16
+   },
+   "note": null
+  },
+  {
+   "id": "B020",
+   "name": "WATER 4 で FEAR 1 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "FEAR_2",
+    "WATER_5"
+   ],
+   "protocols": [
+    "WATER",
+    "FEAR"
+   ],
+   "how": "FEAR 1 (カードを2枚引く。相手は自身の手札をすべて捨て札にして、捨て札にした枚数-1枚のカードを引く。) を撃ったあと、WATER 4 (あなたのカードを1枚戻す。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 41,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.4,
+    "interactionSe": 2.1,
+    "partnerValue": 3.9,
+    "partnerValueSe": 1.6,
+    "synergy": 3.6,
+    "synergySe": 1.4,
+    "missed": -7.7,
+    "missedSe": 1.9,
+    "aiPicked": 32
+   },
+   "note": null
+  },
+  {
+   "id": "B021",
+   "name": "WATER 4 で PSYCHIC 2 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "PSYCHIC_3",
+    "WATER_5"
+   ],
+   "protocols": [
+    "WATER",
+    "PSYCHIC"
+   ],
+   "how": "PSYCHIC 2 (相手は自分の手札を2枚捨て札にする。あなたは相手のプロトコルを並べ替える。) を撃ったあと、WATER 4 (あなたのカードを1枚戻す。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 38,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2,
+    "interactionSe": 1.5,
+    "partnerValue": -0.3,
+    "partnerValueSe": 1.8,
+    "synergy": 1.7,
+    "synergySe": 1.6,
+    "missed": -1.7,
+    "missedSe": 2.4,
+    "aiPicked": 34
+   },
+   "note": null
+  },
+  {
+   "id": "B022",
+   "name": "WATER 4 で LIFE 0 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "LIFE_1",
+    "WATER_5"
+   ],
+   "protocols": [
+    "WATER",
+    "LIFE"
+   ],
+   "how": "LIFE 0 (終了：このカードが覆われている場合、このカードを削除する。 / あなたのデッキの一番上のカードを、あなたのカードがある各ラインに裏向きで1枚ずつプレイする。) を撃ったあと、WATER 4 (あなたのカードを1枚戻す。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 148,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2,
+    "interactionSe": 0.8,
+    "partnerValue": -1.1,
+    "partnerValueSe": 0.7,
+    "synergy": 0.9,
+    "synergySe": 0.6,
+    "missed": -3.3,
+    "missedSe": 1.4,
+    "aiPicked": 39
+   },
+   "note": null
+  },
+  {
+   "id": "B023",
+   "name": "WATER 4 で HATE 0 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "HATE_1",
+    "WATER_5"
+   ],
+   "protocols": [
+    "WATER",
+    "HATE"
+   ],
+   "how": "HATE 0 (カードを１枚削除する。) を撃ったあと、WATER 4 (あなたのカードを1枚戻す。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.7,
+    "interactionSe": 1.5,
+    "partnerValue": 1.6,
+    "partnerValueSe": 1.3,
+    "synergy": 2.3,
+    "synergySe": 0.8,
+    "missed": -3,
+    "missedSe": 1.4,
+    "aiPicked": 37
+   },
+   "note": null
+  },
+  {
+   "id": "B024",
+   "name": "WATER 4 で METAL 1 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "METAL_2",
+    "WATER_5"
+   ],
+   "protocols": [
+    "WATER",
+    "METAL"
+   ],
+   "how": "METAL 1 (カードを2枚引く。相手は次の手番でコンパイルすることはできない。) を撃ったあと、WATER 4 (あなたのカードを1枚戻す。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.2,
+    "interactionSe": 1.1,
+    "partnerValue": -0.7,
+    "partnerValueSe": 0.9,
+    "synergy": 0.5,
+    "synergySe": 1,
+    "missed": -2,
+    "missedSe": 1.8,
+    "aiPicked": 31
+   },
+   "note": null
+  },
+  {
+   "id": "B025",
+   "name": "WATER 4 で SPEED 0 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "SPEED_1",
+    "WATER_5"
+   ],
+   "protocols": [
+    "WATER",
+    "SPEED"
+   ],
+   "how": "SPEED 0 (カードを1枚プレイする。) を撃ったあと、WATER 4 (あなたのカードを1枚戻す。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 41,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -3.3,
+    "interactionSe": 1.9,
+    "partnerValue": 2.5,
+    "partnerValueSe": 1.5,
+    "synergy": -0.8,
+    "synergySe": 1.1,
+    "missed": -8.4,
+    "missedSe": 2.6,
+    "aiPicked": 34
+   },
+   "note": null
+  },
+  {
+   "id": "B026",
+   "name": "WATER 4 で LUCK 0 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "LUCK_1",
+    "WATER_5"
+   ],
+   "protocols": [
+    "WATER",
+    "LUCK"
+   ],
+   "how": "LUCK 0 (値を1つ宣言する。カードを3枚引く。その中から、表面に宣言した値を持つカードを1枚公開する。そのカードをプレイすることができる。) を撃ったあと、WATER 4 (あなたのカードを1枚戻す。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 52,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.4,
+    "interactionSe": 2.1,
+    "partnerValue": -0.4,
+    "partnerValueSe": 2.1,
+    "synergy": 1,
+    "synergySe": 0.9,
+    "missed": -5.8,
+    "missedSe": 2,
+    "aiPicked": 38
+   },
+   "note": null
+  },
+  {
+   "id": "B027",
+   "name": "CORRUPTION 1 で DEATH 0 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "DEATH_1",
+    "CORRUPTION_2"
+   ],
+   "protocols": [
+    "CORRUPTION",
+    "DEATH"
+   ],
+   "how": "DEATH 0 (他の各ラインにあるカードを1枚ずつ削除する。) を撃ったあと、CORRUPTION 1 (カードを1枚戻す。 / カードが相手の手札に戻るとき：そうする代わりに、そのカードを相手のデッキの一番上に裏向きで置く。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 152,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.8,
+    "interactionSe": 0.8,
+    "partnerValue": -0.8,
+    "partnerValueSe": 0.6,
+    "synergy": 2,
+    "synergySe": 0.5,
+    "missed": -9.2,
+    "missedSe": 1.1,
+    "aiPicked": 47
+   },
+   "note": null
+  },
+  {
+   "id": "B028",
+   "name": "CORRUPTION 1 で FIRE 0 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "FIRE_1",
+    "CORRUPTION_2"
+   ],
+   "protocols": [
+    "CORRUPTION",
+    "FIRE"
+   ],
+   "how": "FIRE 0 (他のカードを1枚反転させる。カードを2枚引く。 / このカードが覆われることになったとき：先にカードを1枚引き、他のカードを1枚反転させる。) を撃ったあと、CORRUPTION 1 (カードを1枚戻す。 / カードが相手の手札に戻るとき：そうする代わりに、そのカードを相手のデッキの一番上に裏向きで置く。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 61,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.4,
+    "interactionSe": 1.5,
+    "partnerValue": -0.1,
+    "partnerValueSe": 1.3,
+    "synergy": 0.4,
+    "synergySe": 0.7,
+    "missed": -6.3,
+    "missedSe": 1.1,
+    "aiPicked": 44
+   },
+   "note": null
+  },
+  {
+   "id": "B029",
+   "name": "CORRUPTION 1 で DARKNESS 0 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "DARKNESS_1",
+    "CORRUPTION_2"
+   ],
+   "protocols": [
+    "CORRUPTION",
+    "DARKNESS"
+   ],
+   "how": "DARKNESS 0 (カードを3枚引く。相手の覆われているカードを1枚移動させる。) を撃ったあと、CORRUPTION 1 (カードを1枚戻す。 / カードが相手の手札に戻るとき：そうする代わりに、そのカードを相手のデッキの一番上に裏向きで置く。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 61,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.4,
+    "interactionSe": 1.2,
+    "partnerValue": -1.9,
+    "partnerValueSe": 1,
+    "synergy": 0.5,
+    "synergySe": 0.8,
+    "missed": -11.6,
+    "missedSe": 2,
+    "aiPicked": 59
+   },
+   "note": null
+  },
+  {
+   "id": "B030",
+   "name": "CORRUPTION 1 で LIGHT 0 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "LIGHT_1",
+    "CORRUPTION_2"
+   ],
+   "protocols": [
+    "CORRUPTION",
+    "LIGHT"
+   ],
+   "how": "LIGHT 0 (カードを1枚反転させる。そのカードの値に等しい枚数のカードを引く。) を撃ったあと、CORRUPTION 1 (カードを1枚戻す。 / カードが相手の手札に戻るとき：そうする代わりに、そのカードを相手のデッキの一番上に裏向きで置く。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 60,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 4.1,
+    "interactionSe": 2.6,
+    "partnerValue": -1.2,
+    "partnerValueSe": 1.5,
+    "synergy": 2.9,
+    "synergySe": 1.3,
+    "missed": -7.8,
+    "missedSe": 2,
+    "aiPicked": 55
+   },
+   "note": null
+  },
+  {
+   "id": "B031",
+   "name": "CORRUPTION 1 で GRAVITY 1 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "GRAVITY_2",
+    "CORRUPTION_2"
+   ],
+   "protocols": [
+    "CORRUPTION",
+    "GRAVITY"
+   ],
+   "how": "GRAVITY 1 (カードを2枚引く。このラインから、またはこのラインへとカードを1枚移動させる。) を撃ったあと、CORRUPTION 1 (カードを1枚戻す。 / カードが相手の手札に戻るとき：そうする代わりに、そのカードを相手のデッキの一番上に裏向きで置く。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 149,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.2,
+    "interactionSe": 0.8,
+    "partnerValue": -0.2,
+    "partnerValueSe": 0.4,
+    "synergy": 1.1,
+    "synergySe": 0.7,
+    "missed": -11.6,
+    "missedSe": 1.2,
+    "aiPicked": 58
+   },
+   "note": null
+  },
+  {
+   "id": "B032",
+   "name": "CORRUPTION 1 で SPIRIT 1 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "SPIRIT_2",
+    "CORRUPTION_2"
+   ],
+   "protocols": [
+    "CORRUPTION",
+    "SPIRIT"
+   ],
+   "how": "SPIRIT 1 (あなたがカードを表向きでプレイするときには、プロトコルを対応させずにプレイすることができる。 / カードを2枚引く。 / 開始：あなたは手札を1枚捨て札にするか、このカードを反転させる。) を撃ったあと、CORRUPTION 1 (カードを1枚戻す。 / カードが相手の手札に戻るとき：そうする代わりに、そのカードを相手のデッキの一番上に裏向きで置く。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 61,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -2.9,
+    "interactionSe": 2,
+    "partnerValue": 2.8,
+    "partnerValueSe": 1.5,
+    "synergy": 0.6,
+    "synergySe": 0.5,
+    "missed": -17.2,
+    "missedSe": 1.9,
+    "aiPicked": 18
+   },
+   "note": null
+  },
+  {
+   "id": "B033",
+   "name": "CORRUPTION 1 で FEAR 1 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "FEAR_2",
+    "CORRUPTION_2"
+   ],
+   "protocols": [
+    "CORRUPTION",
+    "FEAR"
+   ],
+   "how": "FEAR 1 (カードを2枚引く。相手は自身の手札をすべて捨て札にして、捨て札にした枚数-1枚のカードを引く。) を撃ったあと、CORRUPTION 1 (カードを1枚戻す。 / カードが相手の手札に戻るとき：そうする代わりに、そのカードを相手のデッキの一番上に裏向きで置く。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 61,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.2,
+    "interactionSe": 1,
+    "partnerValue": -0.6,
+    "partnerValueSe": 0.7,
+    "synergy": 1.7,
+    "synergySe": 0.6,
+    "missed": -11.3,
+    "missedSe": 2,
+    "aiPicked": 56
+   },
+   "note": null
+  },
+  {
+   "id": "B034",
+   "name": "CORRUPTION 1 で PSYCHIC 2 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "PSYCHIC_3",
+    "CORRUPTION_2"
+   ],
+   "protocols": [
+    "CORRUPTION",
+    "PSYCHIC"
+   ],
+   "how": "PSYCHIC 2 (相手は自分の手札を2枚捨て札にする。あなたは相手のプロトコルを並べ替える。) を撃ったあと、CORRUPTION 1 (カードを1枚戻す。 / カードが相手の手札に戻るとき：そうする代わりに、そのカードを相手のデッキの一番上に裏向きで置く。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 61,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.9,
+    "interactionSe": 1.3,
+    "partnerValue": -0.5,
+    "partnerValueSe": 1.1,
+    "synergy": 0.4,
+    "synergySe": 0.5,
+    "missed": -13.6,
+    "missedSe": 1.8,
+    "aiPicked": 48
+   },
+   "note": null
+  },
+  {
+   "id": "B035",
+   "name": "CORRUPTION 1 で WATER 1 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "WATER_2",
+    "CORRUPTION_2"
+   ],
+   "protocols": [
+    "CORRUPTION",
+    "WATER"
+   ],
+   "how": "WATER 1 (あなたのデッキの一番上のカードを、他の各ラインに裏向きで1枚ずつプレイする。) を撃ったあと、CORRUPTION 1 (カードを1枚戻す。 / カードが相手の手札に戻るとき：そうする代わりに、そのカードを相手のデッキの一番上に裏向きで置く。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 151,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.4,
+    "interactionSe": 0.8,
+    "partnerValue": -0.3,
+    "partnerValueSe": 0.6,
+    "synergy": 2.1,
+    "synergySe": 0.6,
+    "missed": -10.8,
+    "missedSe": 1.2,
+    "aiPicked": 53
+   },
+   "note": null
+  },
+  {
+   "id": "B036",
+   "name": "CORRUPTION 1 で LIFE 0 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "LIFE_1",
+    "CORRUPTION_2"
+   ],
+   "protocols": [
+    "CORRUPTION",
+    "LIFE"
+   ],
+   "how": "LIFE 0 (終了：このカードが覆われている場合、このカードを削除する。 / あなたのデッキの一番上のカードを、あなたのカードがある各ラインに裏向きで1枚ずつプレイする。) を撃ったあと、CORRUPTION 1 (カードを1枚戻す。 / カードが相手の手札に戻るとき：そうする代わりに、そのカードを相手のデッキの一番上に裏向きで置く。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 58,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.6,
+    "interactionSe": 0.7,
+    "partnerValue": 0,
+    "partnerValueSe": 0.4,
+    "synergy": 0.6,
+    "synergySe": 0.6,
+    "missed": -8.2,
+    "missedSe": 1.3,
+    "aiPicked": 67
+   },
+   "note": null
+  },
+  {
+   "id": "B037",
+   "name": "CORRUPTION 1 で HATE 0 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "HATE_1",
+    "CORRUPTION_2"
+   ],
+   "protocols": [
+    "CORRUPTION",
+    "HATE"
+   ],
+   "how": "HATE 0 (カードを１枚削除する。) を撃ったあと、CORRUPTION 1 (カードを1枚戻す。 / カードが相手の手札に戻るとき：そうする代わりに、そのカードを相手のデッキの一番上に裏向きで置く。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 58,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.4,
+    "interactionSe": 0.8,
+    "partnerValue": -0.4,
+    "partnerValueSe": 0.5,
+    "synergy": 0,
+    "synergySe": 0.6,
+    "missed": -7.7,
+    "missedSe": 1.4,
+    "aiPicked": 47
+   },
+   "note": null
+  },
+  {
+   "id": "B038",
+   "name": "CORRUPTION 1 で METAL 1 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "METAL_2",
+    "CORRUPTION_2"
+   ],
+   "protocols": [
+    "CORRUPTION",
+    "METAL"
+   ],
+   "how": "METAL 1 (カードを2枚引く。相手は次の手番でコンパイルすることはできない。) を撃ったあと、CORRUPTION 1 (カードを1枚戻す。 / カードが相手の手札に戻るとき：そうする代わりに、そのカードを相手のデッキの一番上に裏向きで置く。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 61,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.4,
+    "interactionSe": 0.8,
+    "partnerValue": -1.2,
+    "partnerValueSe": 0.6,
+    "synergy": 0.2,
+    "synergySe": 0.6,
+    "missed": -10.4,
+    "missedSe": 1.4,
+    "aiPicked": 57
+   },
+   "note": null
+  },
+  {
+   "id": "B039",
+   "name": "CORRUPTION 1 で SPEED 0 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "SPEED_1",
+    "CORRUPTION_2"
+   ],
+   "protocols": [
+    "CORRUPTION",
+    "SPEED"
+   ],
+   "how": "SPEED 0 (カードを1枚プレイする。) を撃ったあと、CORRUPTION 1 (カードを1枚戻す。 / カードが相手の手札に戻るとき：そうする代わりに、そのカードを相手のデッキの一番上に裏向きで置く。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.5,
+    "interactionSe": 1.7,
+    "partnerValue": 1.8,
+    "partnerValueSe": 1.7,
+    "synergy": 0.3,
+    "synergySe": 0.5,
+    "missed": -12,
+    "missedSe": 2,
+    "aiPicked": 48
+   },
+   "note": null
+  },
+  {
+   "id": "B040",
+   "name": "CORRUPTION 1 で LUCK 0 を手札に戻して出し直す",
+   "kind": "setup",
+   "source": "bounce",
+   "cards": [
+    "LUCK_1",
+    "CORRUPTION_2"
+   ],
+   "protocols": [
+    "CORRUPTION",
+    "LUCK"
+   ],
+   "how": "LUCK 0 (値を1つ宣言する。カードを3枚引く。その中から、表面に宣言した値を持つカードを1枚公開する。そのカードをプレイすることができる。) を撃ったあと、CORRUPTION 1 (カードを1枚戻す。 / カードが相手の手札に戻るとき：そうする代わりに、そのカードを相手のデッキの一番上に裏向きで置く。) で手札に戻し、次の手番にもう一度出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 59,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.2,
+    "interactionSe": 2.5,
+    "partnerValue": -2.1,
+    "partnerValueSe": 1.8,
+    "synergy": 0.1,
+    "synergySe": 1.8,
+    "missed": -9.5,
+    "missedSe": 2.2,
+    "aiPicked": 44
+   },
+   "note": null
+  },
+  {
    "id": "T01",
    "name": "WATER 1 + WATER 4",
    "kind": "burst",

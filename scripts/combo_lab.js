@@ -311,7 +311,9 @@ function trial(E, model, combo, seed, opt) {
   out.aiPicked = sameAct(freeAct, forcedAct);
   out.freeAct = freeAct && (freeAct.type === 'play' ? base.cards[freeAct.card].def + '@' + freeAct.line + (freeAct.faceUp ? '↑' : '↓') : freeAct.type);
   out.forced = arm(base, forcedAct, true);
-  out.free = out.aiPicked ? out.forced : (freeAct ? arm(base, freeAct, false) : null);
+  /* 同じ手でも、picks で決め打った対象と ORACLE の対象は違うことがある (CORRUPTION 1 で自分の札を戻すか相手の札を戻すか)。
+     free を forced で代用すると free − freeA0 がずれて噛み合いが膨らむので、picks がある候補は打ち直す */
+  out.free = out.aiPicked && !combo.picks ? out.forced : (freeAct ? arm(base, freeAct, false) : null);
   if (partners.length) {
     const b = blanked(base);
     out.forcedA0 = arm(b, forcedAct, true);
