@@ -44,7 +44,8 @@ const pt = (x) => (x === null || x === undefined ? null : Math.round(1000 * x) /
 /* 判定: 組の効き目 (forced − forcedA0) と、ORACLE が逃している得 (forced − free)。
    2SE を超えたものだけを数える */
 function verdict(r) {
-  if (!r || !r.missed) return { key: 'untested', label: '未計測' };
+  /* 植えられた盤面が少ない候補 (出せないラインに出そうとしたなど) は数えない */
+  if (!r || !r.missed || (r.n || 0) < 20) return { key: 'untested', label: '未計測' };
   const it = interaction(r), m = r.missed;
   const sig = (x, th) => x && x.mean - 2 * x.se > th;
   if (sig(m, 0.02)) return { key: 'missed', label: 'AI が逃している' };

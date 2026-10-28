@@ -553,3 +553,104 @@ module.exports = [
     setup: { mine: [{ card: U, at: 'field' }, { card: P, at: 'hand' }] }, act: { play: P, ...(P === 'CHAOS_4' ? { line: 'DIVERSITY' } : {}) }, partner: [U]
   });
 })();
+
+/* ---------- 中段を撃ち直す組 (F001〜・X001〜、2026-10-28) ----------
+   中段は表になったとき・覆いが外れたときにもう一度入る。
+   (F) 自分の裏向きの札を表にする札 × 中段の強い札 (裏で置いておき、表にして撃つ)
+   (X) 自分の一番上の札をどける札 × 覆われた中段の強い札 (覆いをどけて撃ち直す)
+   どちらも、効果の対象は撃つ札 (F) / その覆い (X) に決め打つ。白紙の腕も同じ札を選ぶ */
+(function retriggerCandidates() {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const cards = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'cards.json'), 'utf8'));
+  const proto = {}, value = {}, text = {}, byName = {};
+  for (const p of cards.protocols) for (const c of p.cards) {
+    proto[c.id] = p.name; value[c.id] = c.value; byName[p.name + ' ' + c.value] = c.id;
+    text[c.id] = [c.upper, c.middle, c.lower].filter(Boolean).join(' / ');
+  }
+  const id = (n) => { if (!byName[n]) throw new Error('no card ' + n); return byName[n]; };
+  const name = (d) => proto[d] + ' ' + value[d];
+  const seen = new Set(module.exports.map(c => c.setup.mine.map(p => p.card).sort().join('+')));
+  const PAYLOAD = ['DEATH 0', 'FIRE 0', 'DARKNESS 0', 'LIGHT 0', 'GRAVITY 1', 'SPIRIT 1', 'FEAR 1', 'PSYCHIC 2', 'WATER 1', 'LIFE 0', 'HATE 0', 'METAL 1', 'SPEED 0', 'LUCK 0'].map(id);
+  const FLIP = ['LIFE 2', 'LIFE 1', 'SPIRIT 2', 'METAL 0', 'WATER 0', 'GRAVITY 2', 'LIGHT 2', 'SMOKE 1', 'MIRROR 3', 'WAR 2', 'LOVE 4', 'FEAR 0'].map(id);
+  const UNCOVER = ['SPEED 3', 'HATE 2', 'WATER 4', 'CHAOS 2', 'DARKNESS 4', 'SMOKE 4', 'ICE 2', 'GRAVITY 1'].map(id);
+  let nf = 0, nx = 0;
+  const push = (pre, n, c) => {
+    const key = c.setup.mine.map(p => p.card).sort().join('+');
+    if (seen.has(key)) return false;
+    seen.add(key);
+    module.exports.push({ id: pre + String(n).padStart(3, '0'), auto: true, source: 'retrigger', late: true, ...c });
+    return true;
+  };
+  for (const E of FLIP) for (const T of PAYLOAD) {
+    if (proto[E] === proto[T]) continue;
+    const ok = push('F', nf + 1, {
+      name: name(E) + ' で裏の ' + name(T) + ' を表にして撃つ', kind: 'burst', protos: [proto[E], proto[T]],
+      how: name(T) + ' (' + text[T] + ') を裏で置いておき、' + name(E) + ' (' + text[E] + ') で表にすると中段が入る。',
+      setup: { mine: [{ card: T, at: 'field', faceUp: false }, { card: E, at: 'hand' }] }, act: { play: E }, partner: [T],
+      picks: (s, q, P) => {
+        const t = P.planted[T];
+        if (q.context !== E || !t || !s.cards[t] || s.cards[t].faceUp) return null;
+        if (q.kind === 'yesNo') return ['yes'];
+        if (q.kind === 'pickCard' && q.candidates.includes(t)) return [t];
+        return null;
+      }
+    });
+    if (ok) nf++;
+  }
+  for (const R of UNCOVER) for (const T of PAYLOAD) {
+    if (proto[R] === proto[T]) continue;
+    const ok = push('X', nx + 1, {
+      name: name(R) + ' で覆いをどけて ' + name(T) + ' を撃ち直す', kind: 'burst', protos: [proto[R], proto[T]],
+      how: name(T) + ' (' + text[T] + ') の覆いを ' + name(R) + ' (' + text[R] + ') でどけると、中段がもう一度入る。',
+      setup: { mine: [{ card: T, at: 'field', cover: true }, { card: R, at: 'hand' }] }, act: { play: R, line: 'other' }, partner: [T],
+      picks: (s, q, P) => {
+        const t = P.planted[T];
+        if (q.context !== R || !t || !s.cards[t] || q.kind !== 'pickCard') return null;
+        const L = s.lines.find(x => x[P.me].includes(t));
+        if (!L) return null;
+        const st = L[P.me], i = st.indexOf(t);
+        const cover = i >= 0 && i < st.length - 1 ? st[i + 1] : null;
+        if (cover && q.candidates.includes(cover)) return [cover];
+        if (q.candidates.includes(t)) return [t];
+        return null;
+      }
+    });
+    if (ok) nx++;
+  }
+})();
+
+/* ---------- 点を数える上段 × その数を増やす札 (V001〜、2026-10-28) ----------
+   CLARITY 0 (手札1枚ごとに +1) に大きく引く札、MIRROR 0 (このラインの相手の札1枚ごとに +1) に相手の札をこのラインへ寄せる札 */
+(function valueCandidates() {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const cards = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'cards.json'), 'utf8'));
+  const proto = {}, value = {}, text = {}, byName = {};
+  for (const p of cards.protocols) for (const c of p.cards) {
+    proto[c.id] = p.name; value[c.id] = c.value; byName[p.name + ' ' + c.value] = c.id;
+    text[c.id] = [c.upper, c.middle, c.lower].filter(Boolean).join(' / ');
+  }
+  const id = (n) => { if (!byName[n]) throw new Error('no card ' + n); return byName[n]; };
+  const name = (d) => proto[d] + ' ' + value[d];
+  const seen = new Set(module.exports.map(c => c.setup.mine.map(p => p.card).sort().join('+')));
+  let n = 0;
+  const G = [
+    ['CLARITY 0', ['DARKNESS 0', 'SPIRIT 1', 'FIRE 4', 'METAL 1', 'GRAVITY 1', 'SPEED 1', 'LIGHT 2', 'WATER 2', 'FEAR 1', 'UNITY 2'], '手札が増えるほど CLARITY 0 のラインが伸びる'],
+    ['MIRROR 0', ['GRAVITY 6', 'CORRUPTION 0', 'DARKNESS 1', 'PSYCHIC 3', 'SPEED 4', 'DARKNESS 0', 'GRAVITY 2'], '相手の札を MIRROR 0 のラインに増やすと +1 ずつ']
+  ];
+  for (const [U, list, why] of G) for (const pn of list) {
+    const u = id(U), p = id(pn);
+    const key = [u, p].sort().join('+');
+    if (seen.has(key)) continue;
+    seen.add(key);
+    /* MIRROR 0 のラインへ寄せる札は MIRROR のラインに出す (GRAVITY 2・GRAVITY 6 は「このライン」) */
+    const act = { play: p, ...(U === 'MIRROR 0' && /GRAVITY/.test(pn) ? { line: 'MIRROR' } : {}), ...(pn === 'CORRUPTION 0' ? { line: 'MIRROR', side: 'opp' } : {}) };
+    module.exports.push({
+      id: 'V' + String(++n).padStart(3, '0'), auto: true, source: 'value', late: true,
+      name: U + ' (上段) + ' + pn, kind: 'burst', protos: [...new Set([proto[u], proto[p]])],
+      how: U + ' (' + text[u] + ')。' + pn + ' (' + text[p] + ')。' + why + '。',
+      setup: { mine: [{ card: u, at: 'field' }, { card: p, at: 'hand' }] }, act, partner: [u]
+    });
+  }
+})();

@@ -2765,7 +2765,7 @@ const AI_W = {
   speedPairStrategy: 1, speedPairKeep: 40, fire0Water4Ready: 60,
   /* 見つけたコンボを揃えに行く (AI_AIM_COMBOS、docs/combos.md)。aimLive: 回しが動いている / aimHalf: 片方が場で効く形、残りが手札 /
      aimHold: 相方が生きている手札の札 / aimExtra: 回しに乗って引く札 (HATE 3・MIRROR 4) */
-  aimLive: 500, aimHalf: 150, aimHold: 30, aimExtra: 80, s2Hold: 25, s2Up: 30, s2Compile: 60,
+  aimLive: 500, aimHalf: 150, aimHold: 30, aimExtra: 80, s2Hold: 25, s2Up: 30, s2Compile: 60, flipStore: 60,
   /* 「〜できる」の任意コストを、払わない選択も込みで見る (0 で従来どおり必ず払う扱い)。
      anyLineBase/anyLineGain: 「プロトコルを対応させずに表向きでプレイできる」(SPIRIT 1) の価値。
      ライン制限を外したときの手札評価の増分を上乗せする。0 で従来どおり常時効果の一律10点 */
@@ -2908,7 +2908,7 @@ const AI_DSH_W = {
      WATER 4 が手札にあれば、毎手番 WATER 4 を重ねて自分を戻す (2枚反転・3枚ドロー) を繰り返せる。
      1手先の読みでは次の手番の得が見えないので、構えを作る手 (WATER 2 の並べ替え・SPEED 3 の移動) のために置く */
   fire0Water4Ready: 60,
-  aimLive: 500, aimHalf: 150, aimHold: 30, aimExtra: 80, s2Hold: 25, s2Up: 30, s2Compile: 60,
+  aimLive: 500, aimHalf: 150, aimHold: 30, aimExtra: 80, s2Hold: 25, s2Up: 30, s2Compile: 60, flipStore: 60,
   recompile: 160, midUp: 0.35, refreshRecompile: 260, comboDiscard: 3,
   optionalCost: 1, anyLineBase: 26, anyLineGain: 0.9,
   uncoverBase: 22, uncoverMid: 0.8,
@@ -3532,6 +3532,23 @@ function aiAimScore(st, side, W) {
     for (let i = 0; i < ids.length; i++) if (held[i] && at.some((w, j) => j !== i && w !== 'down')) sc += W.aimHold || 0;
   }
   return sc;
+}
+
+/* 裏で置いた中段の強い札を、表にする札で起こす (docs/ai-combos.md「中段を撃ち直す組」)。
+   中段は表になったときにも入る。262組の総当たりで、表にする札 × 中段の強い札は 154組で噛み合い、上位12組は 150盤面で測り直しても +8〜12pt。
+   揃った盤面では ORACLE も表にして撃てている (逃している得 ±1) が、1手先の読みでは「裏で置いておく」値打ちが見えない。
+   flipStore: 自分の一番上の裏向きが撃つ札で、手札に表にする札がある */
+const AI_FLIP_PAYLOAD = new Set(['LIFE_1', 'LIGHT_1', 'LUCK_1', 'SPEED_1', 'FIRE_1', 'HATE_1', 'GRAVITY_2', 'DARKNESS_1', 'WATER_2']);
+const AI_FLIP_ENABLER = new Set(['LOVE_4', 'WATER_1', 'SPIRIT_3', 'WAR_3', 'LIFE_2', 'SMOKE_2', 'METAL_1', 'GRAVITY_3', 'FEAR_1']);
+function aiFlipStoreScore(st, side, W) {
+  if (!W.flipStore || !st.players[side].hand.some(u => AI_FLIP_ENABLER.has(st.cards[u].def))) return 0;
+  let n = 0;
+  for (let l = 0; l < 3; l++) {
+    const stack = st.lines[l][side];
+    const top = stack[stack.length - 1];
+    if (top && !st.cards[top].faceUp && AI_FLIP_PAYLOAD.has(st.cards[top].def)) n++;
+  }
+  return Math.min(n, 2) * W.flipStore;
 }
 
 /* SPEED 2 (SPEED_3) は表で場に居れば、そのラインをコンパイルしても削除されずに別のラインへ移る (値2と札を次のラインへ持ち越す)。
@@ -4285,6 +4302,7 @@ function aiHeuristic(st, me) {
   /* 見つけたコンボを揃えに行く・相手の回しは割る (つよい以上と特化) */
   if (aiTaughtTactics(st, me) && W.aimLive) sc += aiAimScore(st, me, W) - aiAimScore(st, 1 - me, { aimLive: W.aimLive, aimExtra: W.aimExtra });
   if (aiTaughtTactics(st, me)) sc += aiSpeed2Score(st, me, W);
+  if (aiTaughtTactics(st, me)) sc += aiFlipStoreScore(st, me, W);
   sc += aiBoardEffectScore(st, me);
   sc += aiLockScore(st, me);
   /* 対戦者から教わった手筋 (docs/ai-combos.md のぱうぷるの節) は、つよい以上とロック特化だけ。ふつう・かんたんには入れない

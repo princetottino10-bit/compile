@@ -46,6 +46,12 @@ const COMBOS = {
   psyAssim: { name: '覆われた PSYCHIC 1 + ASSIMILATION 0', protos: ['PSYCHIC', 'ASSIMILATION'], pieces: { PSYCHIC_2: 'cov', ASSIMILATION_1: 'play' } },
   fire3Plague4: { name: 'FIRE 3 + PLAGUE 4', protos: ['FIRE', 'PLAGUE'], pieces: { FIRE_4: 'top', PLAGUE_5: 'top' } },
   /* SPEED 2 は1枚で効く: コンパイルするラインに表で居れば、削除されずに別のラインへ移る。数えるのは自分のコンパイルと生き残り */
+  /* 裏で置いた中段の強い札を表にして撃つ。数えるのは、自分の手で自分の裏向きの撃つ札が表になった回数 (撃った) と、
+     一番上に裏の撃つ札があり手札に表にする札がある手番 (揃った手番) */
+  flipSpiritFire: { name: 'SPIRIT 2 で裏の FIRE 0 を表に', protos: ['SPIRIT', 'FIRE'], pieces: {}, flip: true },
+  flipLoveLife: { name: 'LOVE 4 で裏の LIFE 0 を表に', protos: ['LOVE', 'LIFE'], pieces: {}, flip: true },
+  flipWarGravity: { name: 'WAR 2 で裏の GRAVITY 1 を表に', protos: ['WAR', 'GRAVITY'], pieces: {}, flip: true },
+  flipSmokeLuck: { name: 'SMOKE 1 で裏の LUCK 0 を表に', protos: ['SMOKE', 'LUCK'], pieces: {}, flip: true },
   speed2: { name: 'SPEED 2 (コンパイルで生き残る)', protos: ['SPEED'], pieces: { SPEED_3: 'up' }, solo: true }
 };
 
@@ -93,6 +99,13 @@ function where(st, uid, me) {
 }
 const live = (need, w) => need === 'top' ? w === 'top' : need === 'up' ? (w === 'top' || w === 'covUp') : need === 'cov' ? w === 'covUp' : false;
 const alive = (w) => w !== 'trash' && w !== 'gone';
+const FLIP_PAYLOAD = new Set(['LIFE_1', 'LIGHT_1', 'LUCK_1', 'SPEED_1', 'FIRE_1', 'HATE_1', 'GRAVITY_2', 'DARKNESS_1', 'WATER_2']);
+const FLIP_ENABLER = new Set(['LOVE_4', 'WATER_1', 'SPIRIT_3', 'WAR_3', 'LIFE_2', 'SMOKE_2', 'METAL_1', 'GRAVITY_3', 'FEAR_1']);
+function flipDown(st, me) {
+  const out = [];
+  for (let l = 0; l < 3; l++) for (const u of st.lines[l][me]) if (!st.cards[u].faceUp && FLIP_PAYLOAD.has(st.cards[u].def)) out.push(u);
+  return out;
+}
 
 function playGame(E, combo, seed, budget) {
   let r = seed >>> 0;
@@ -117,7 +130,13 @@ function playGame(E, combo, seed, budget) {
     E.setAiSpecialist(true, st.turn, 'dsh');
     const mover = res.requests.length ? null : st.turn;
     const before = Object.fromEntries(ids.map(d => [d, where(st, uid(d), me)]));
-    if (mover === me && st.phase === 'action') {
+    const downBefore = combo.flip ? flipDown(st, me) : [];
+    if (combo.flip && mover === me && st.phase === 'action') {
+      out.myTurns++;
+      const tops = [0, 1, 2].map(l => st.lines[l][me][st.lines[l][me].length - 1]).filter(Boolean);
+      if (downBefore.length) out.readyTurns++;
+      if (tops.some(u => downBefore.includes(u)) && st.players[me].hand.some(u => FLIP_ENABLER.has(st.cards[u].def))) out.liveTurns++;
+    } else if (mover === me && st.phase === 'action') {
       out.myTurns++;
       /* 揃えられた手番: どの札も手札にあるか効く形で場にある (山札・捨て札・裏・覆われていない) */
       if (ids.every(d => before[d] === 'hand' || live(combo.pieces[d], before[d]))) out.readyTurns++;
@@ -143,6 +162,12 @@ function playGame(E, combo, seed, budget) {
       if (/^SPEED_3 は削除の代わりに/.test(l)) out.survived++;
     }
     if (combo.solo && mover === me && st.phase === 'action' && alive(before.SPEED_3) && (before.SPEED_3 === 'top' || before.SPEED_3 === 'covUp')) out.s2Field++;
+    if (combo.flip) {
+      if (process.env.FLIP_DEBUG && mover === me && downBefore.length && a) console.error('seed', seed, 'down', downBefore.map(u => st.cards[u].def + (st.lines.some(L => L[me][L[me].length - 1] === u) ? '(top)' : '')), 'hand', st.players[me].hand.map(u => st.cards[u].def).join(','), '->', a.type === 'play' ? st.cards[a.card].def + '@' + a.line + (a.faceUp ? 'U' : 'D') : a.type, (nx.log || []).filter(l => /反転/.test(l)).join(' | '));
+      if (mover === me) { const defs = new Set(downBefore.map(u => st.cards[u].def)); out.fired += (nx.log || []).filter(l => { const m = /^\[(\w+)\] 中段コマンド解決 \(flip\)/.exec(l); return m && defs.has(m[1]); }).length; }
+      res = nx;
+      continue;
+    }
     if (mover === me) {
       const after = Object.fromEntries(ids.map(d => [d, where(nx.state, uid(d), me)]));
       /* 撃った: 回しの札が効く形で、撃つ札を表で出した */
