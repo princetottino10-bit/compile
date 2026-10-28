@@ -21910,6 +21910,2886 @@
    "note": null
   },
   {
+   "id": "Z001",
+   "name": "HATE 0 で相手の WAR 0 + CHAOS 0 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "HATE_1"
+   ],
+   "protocols": [
+    "HATE"
+   ],
+   "how": "相手の WAR 0 + CHAOS 0 が回っているときに HATE 0 (カードを１枚削除する。) を出す。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 152,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.9,
+    "interactionSe": 1,
+    "partnerValue": -5.3,
+    "partnerValueSe": 1.2,
+    "synergy": -2.4,
+    "synergySe": 1,
+    "missed": 0.8,
+    "missedSe": 0.8,
+    "aiPicked": 63
+   },
+   "note": null
+  },
+  {
+   "id": "Z002",
+   "name": "HATE 2 で相手の WAR 0 + CHAOS 0 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "HATE_3"
+   ],
+   "protocols": [
+    "HATE"
+   ],
+   "how": "相手の WAR 0 + CHAOS 0 が回っているときに HATE 2 (値が最も大きく覆われていないあなたのカードを１枚削除する。値が最も大きく覆われていない相手のカードを１枚削除する。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.6,
+    "interactionSe": 1.7,
+    "partnerValue": -10.9,
+    "partnerValueSe": 1.8,
+    "synergy": -9.3,
+    "synergySe": 1.6,
+    "missed": -3.8,
+    "missedSe": 1.9,
+    "aiPicked": 19
+   },
+   "note": null
+  },
+  {
+   "id": "Z003",
+   "name": "DEATH 0 で相手の WAR 0 + CHAOS 0 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "DEATH_1"
+   ],
+   "protocols": [
+    "DEATH"
+   ],
+   "how": "相手の WAR 0 + CHAOS 0 が回っているときに DEATH 0 (他の各ラインにあるカードを1枚ずつ削除する。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2,
+    "interactionSe": 1.4,
+    "partnerValue": -3.5,
+    "partnerValueSe": 1.8,
+    "synergy": -1.5,
+    "synergySe": 1.3,
+    "missed": -2.3,
+    "missedSe": 1.3,
+    "aiPicked": 72
+   },
+   "note": null
+  },
+  {
+   "id": "Z004",
+   "name": "DEATH 4 で相手の WAR 0 + CHAOS 0 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "DEATH_5"
+   ],
+   "protocols": [
+    "DEATH"
+   ],
+   "how": "相手の WAR 0 + CHAOS 0 が回っているときに DEATH 4 (値が0か1のカードを1枚削除する。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.3,
+    "interactionSe": 1.6,
+    "partnerValue": -4,
+    "partnerValueSe": 1.9,
+    "synergy": -1.7,
+    "synergySe": 1.2,
+    "missed": 1.3,
+    "missedSe": 1,
+    "aiPicked": 91
+   },
+   "note": null
+  },
+  {
+   "id": "Z005",
+   "name": "FIRE 2 で相手の WAR 0 + CHAOS 0 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "FIRE_3"
+   ],
+   "protocols": [
+    "FIRE"
+   ],
+   "how": "相手の WAR 0 + CHAOS 0 が回っているときに FIRE 2 (あなたは手札を1枚捨て札にする。そうした場合、カードを1枚戻す。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.9,
+    "interactionSe": 2.3,
+    "partnerValue": -8.8,
+    "partnerValueSe": 2.2,
+    "synergy": -5.9,
+    "synergySe": 1.6,
+    "missed": 1.2,
+    "missedSe": 1.6,
+    "aiPicked": 19
+   },
+   "note": null
+  },
+  {
+   "id": "Z006",
+   "name": "FEAR 2 で相手の WAR 0 + CHAOS 0 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "FEAR_3"
+   ],
+   "protocols": [
+    "FEAR"
+   ],
+   "how": "相手の WAR 0 + CHAOS 0 が回っているときに FEAR 2 (相手のカードを1枚戻す。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.5,
+    "interactionSe": 1.5,
+    "partnerValue": -8.4,
+    "partnerValueSe": 1.8,
+    "synergy": -5.8,
+    "synergySe": 1.7,
+    "missed": 0.3,
+    "missedSe": 1.7,
+    "aiPicked": 60
+   },
+   "note": null
+  },
+  {
+   "id": "Z007",
+   "name": "CORRUPTION 1 で相手の WAR 0 + CHAOS 0 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "CORRUPTION_2"
+   ],
+   "protocols": [
+    "CORRUPTION"
+   ],
+   "how": "相手の WAR 0 + CHAOS 0 が回っているときに CORRUPTION 1 (カードを1枚戻す。 / カードが相手の手札に戻るとき：そうする代わりに、そのカードを相手のデッキの一番上に裏向きで置く。) を出す。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.1,
+    "interactionSe": 0.9,
+    "partnerValue": -7.9,
+    "partnerValueSe": 1.5,
+    "synergy": -5.8,
+    "synergySe": 1.3,
+    "missed": 0.7,
+    "missedSe": 0.9,
+    "aiPicked": 68
+   },
+   "note": null
+  },
+  {
+   "id": "Z008",
+   "name": "APATHY 3 で相手の WAR 0 + CHAOS 0 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "APATHY_4"
+   ],
+   "protocols": [
+    "APATHY"
+   ],
+   "how": "相手の WAR 0 + CHAOS 0 が回っているときに APATHY 3 (相手の表向きのカードを１枚反転させる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 153,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.6,
+    "interactionSe": 0.9,
+    "partnerValue": -4.9,
+    "partnerValueSe": 1.2,
+    "synergy": -3.3,
+    "synergySe": 1.1,
+    "missed": -0.3,
+    "missedSe": 0.6,
+    "aiPicked": 75
+   },
+   "note": null
+  },
+  {
+   "id": "Z009",
+   "name": "DARKNESS 1 で相手の WAR 0 + CHAOS 0 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "DARKNESS_2"
+   ],
+   "protocols": [
+    "DARKNESS"
+   ],
+   "how": "相手の WAR 0 + CHAOS 0 が回っているときに DARKNESS 1 (相手のカードを1枚反転させる。あなたはそのカードを移動させることができる。) を出す。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 153,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 5.3,
+    "interactionSe": 1.1,
+    "partnerValue": -7.7,
+    "partnerValueSe": 1.1,
+    "synergy": -2.4,
+    "synergySe": 0.8,
+    "missed": 1,
+    "missedSe": 0.9,
+    "aiPicked": 61
+   },
+   "note": null
+  },
+  {
+   "id": "Z010",
+   "name": "METAL 0 で相手の WAR 0 + CHAOS 0 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "METAL_1"
+   ],
+   "protocols": [
+    "METAL"
+   ],
+   "how": "相手の WAR 0 + CHAOS 0 が回っているときに METAL 0 (このラインでの相手の合計値は2減る。 / カードを1枚反転させる。) を出す。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 153,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 6.6,
+    "interactionSe": 1.4,
+    "partnerValue": -10.6,
+    "partnerValueSe": 1.4,
+    "synergy": -3.9,
+    "synergySe": 0.9,
+    "missed": 2.7,
+    "missedSe": 1.2,
+    "aiPicked": 50
+   },
+   "note": null
+  },
+  {
+   "id": "Z011",
+   "name": "WAR 2 で相手の WAR 0 + CHAOS 0 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "WAR_3"
+   ],
+   "protocols": [
+    "WAR"
+   ],
+   "how": "相手の WAR 0 + CHAOS 0 が回っているときに WAR 2 (カードを1枚反転させる。 / 相手がコンパイルしたあと：相手は手札をすべて捨て札にする。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 3,
+    "interactionSe": 2.4,
+    "partnerValue": -3.6,
+    "partnerValueSe": 2,
+    "synergy": -0.6,
+    "synergySe": 1.4,
+    "missed": -1.2,
+    "missedSe": 2.1,
+    "aiPicked": 49
+   },
+   "note": null
+  },
+  {
+   "id": "Z012",
+   "name": "LOVE 4 で相手の WAR 0 + CHAOS 0 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "LOVE_4"
+   ],
+   "protocols": [
+    "LOVE"
+   ],
+   "how": "相手の WAR 0 + CHAOS 0 が回っているときに LOVE 4 (あなたの手札１枚を公開する。カードを１枚反転させる。) を出す。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 153,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 4,
+    "interactionSe": 1.1,
+    "partnerValue": -8,
+    "partnerValueSe": 1.3,
+    "synergy": -4,
+    "synergySe": 1.1,
+    "missed": 2.2,
+    "missedSe": 0.9,
+    "aiPicked": 81
+   },
+   "note": null
+  },
+  {
+   "id": "Z013",
+   "name": "FEAR 3 で相手の WAR 0 + CHAOS 0 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "FEAR_4"
+   ],
+   "protocols": [
+    "FEAR"
+   ],
+   "how": "相手の WAR 0 + CHAOS 0 が回っているときに FEAR 3 (このラインにある、相手の覆われているか覆われていないカードを1枚移動させる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.6,
+    "interactionSe": 1.9,
+    "partnerValue": -7.3,
+    "partnerValueSe": 2.1,
+    "synergy": -4.7,
+    "synergySe": 2.1,
+    "missed": 1,
+    "missedSe": 1.3,
+    "aiPicked": 64
+   },
+   "note": null
+  },
+  {
+   "id": "Z014",
+   "name": "PSYCHIC 3 で相手の WAR 0 + CHAOS 0 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "PSYCHIC_4"
+   ],
+   "protocols": [
+    "PSYCHIC"
+   ],
+   "how": "相手の WAR 0 + CHAOS 0 が回っているときに PSYCHIC 3 (相手は手札を1枚捨て札にする。あなたは相手のカードを1枚移動させる。) を出す。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 153,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 3,
+    "interactionSe": 1.1,
+    "partnerValue": -8.7,
+    "partnerValueSe": 1.2,
+    "synergy": -5.6,
+    "synergySe": 1,
+    "missed": 1.3,
+    "missedSe": 0.7,
+    "aiPicked": 78
+   },
+   "note": null
+  },
+  {
+   "id": "Z015",
+   "name": "GRAVITY 2 で相手の WAR 0 + CHAOS 0 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "GRAVITY_3"
+   ],
+   "protocols": [
+    "GRAVITY"
+   ],
+   "how": "相手の WAR 0 + CHAOS 0 が回っているときに GRAVITY 2 (カードを1枚反転させる。そのカードをこのラインへと移動させる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 5.1,
+    "interactionSe": 2.6,
+    "partnerValue": -11.5,
+    "partnerValueSe": 2.8,
+    "synergy": -6.4,
+    "synergySe": 2.1,
+    "missed": 0.9,
+    "missedSe": 1.8,
+    "aiPicked": 64
+   },
+   "note": null
+  },
+  {
+   "id": "Z016",
+   "name": "LIFE 1 で相手の WAR 0 + CHAOS 0 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "LIFE_2"
+   ],
+   "protocols": [
+    "LIFE"
+   ],
+   "how": "相手の WAR 0 + CHAOS 0 が回っているときに LIFE 1 (カード1枚を反転させる。カード1枚を反転させる。) を出す。",
+   "verdict": "missed",
+   "verdictLabel": "AI が逃している",
+   "lab": {
+    "n": 152,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 6.2,
+    "interactionSe": 1.4,
+    "partnerValue": -9,
+    "partnerValueSe": 1.5,
+    "synergy": -2.7,
+    "synergySe": 1.1,
+    "missed": 4.4,
+    "missedSe": 1.1,
+    "aiPicked": 57
+   },
+   "note": null
+  },
+  {
+   "id": "Z017",
+   "name": "HATE 0 で相手の FIRE 3 + PLAGUE 4 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "HATE_1"
+   ],
+   "protocols": [
+    "HATE"
+   ],
+   "how": "相手の FIRE 3 + PLAGUE 4 が回っているときに HATE 0 (カードを１枚削除する。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.2,
+    "interactionSe": 0.9,
+    "partnerValue": -1.2,
+    "partnerValueSe": 0.6,
+    "synergy": -1.4,
+    "synergySe": 0.7,
+    "missed": -1,
+    "missedSe": 1.3,
+    "aiPicked": 75
+   },
+   "note": null
+  },
+  {
+   "id": "Z018",
+   "name": "HATE 2 で相手の FIRE 3 + PLAGUE 4 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "HATE_3"
+   ],
+   "protocols": [
+    "HATE"
+   ],
+   "how": "相手の FIRE 3 + PLAGUE 4 が回っているときに HATE 2 (値が最も大きく覆われていないあなたのカードを１枚削除する。値が最も大きく覆われていない相手のカードを１枚削除する。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.9,
+    "interactionSe": 0.7,
+    "partnerValue": -1.5,
+    "partnerValueSe": 0.7,
+    "synergy": 0.4,
+    "synergySe": 0.5,
+    "missed": -1.4,
+    "missedSe": 1.1,
+    "aiPicked": 43
+   },
+   "note": null
+  },
+  {
+   "id": "Z019",
+   "name": "DEATH 0 で相手の FIRE 3 + PLAGUE 4 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "DEATH_1"
+   ],
+   "protocols": [
+    "DEATH"
+   ],
+   "how": "相手の FIRE 3 + PLAGUE 4 が回っているときに DEATH 0 (他の各ラインにあるカードを1枚ずつ削除する。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.2,
+    "interactionSe": 1.1,
+    "partnerValue": 0.9,
+    "partnerValueSe": 0.9,
+    "synergy": 1.1,
+    "synergySe": 1.2,
+    "missed": -0.9,
+    "missedSe": 0.9,
+    "aiPicked": 85
+   },
+   "note": null
+  },
+  {
+   "id": "Z020",
+   "name": "DEATH 4 で相手の FIRE 3 + PLAGUE 4 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "DEATH_5"
+   ],
+   "protocols": [
+    "DEATH"
+   ],
+   "how": "相手の FIRE 3 + PLAGUE 4 が回っているときに DEATH 4 (値が0か1のカードを1枚削除する。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.3,
+    "interactionSe": 1.1,
+    "partnerValue": -3.8,
+    "partnerValueSe": 1.1,
+    "synergy": -3.6,
+    "synergySe": 0.7,
+    "missed": -1.6,
+    "missedSe": 1,
+    "aiPicked": 15
+   },
+   "note": null
+  },
+  {
+   "id": "Z021",
+   "name": "FIRE 2 で相手の FIRE 3 + PLAGUE 4 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "FIRE_3"
+   ],
+   "protocols": [
+    "FIRE"
+   ],
+   "how": "相手の FIRE 3 + PLAGUE 4 が回っているときに FIRE 2 (あなたは手札を1枚捨て札にする。そうした場合、カードを1枚戻す。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.7,
+    "interactionSe": 1.2,
+    "partnerValue": -1.1,
+    "partnerValueSe": 1.1,
+    "synergy": -2.8,
+    "synergySe": 0.7,
+    "missed": -3,
+    "missedSe": 1.3,
+    "aiPicked": 25
+   },
+   "note": null
+  },
+  {
+   "id": "Z022",
+   "name": "FEAR 2 で相手の FIRE 3 + PLAGUE 4 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "FEAR_3"
+   ],
+   "protocols": [
+    "FEAR"
+   ],
+   "how": "相手の FIRE 3 + PLAGUE 4 が回っているときに FEAR 2 (相手のカードを1枚戻す。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.1,
+    "interactionSe": 0.7,
+    "partnerValue": -2.3,
+    "partnerValueSe": 1.1,
+    "synergy": -2.4,
+    "synergySe": 1.1,
+    "missed": -0.3,
+    "missedSe": 0.5,
+    "aiPicked": 77
+   },
+   "note": null
+  },
+  {
+   "id": "Z023",
+   "name": "CORRUPTION 1 で相手の FIRE 3 + PLAGUE 4 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "CORRUPTION_2"
+   ],
+   "protocols": [
+    "CORRUPTION"
+   ],
+   "how": "相手の FIRE 3 + PLAGUE 4 が回っているときに CORRUPTION 1 (カードを1枚戻す。 / カードが相手の手札に戻るとき：そうする代わりに、そのカードを相手のデッキの一番上に裏向きで置く。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.5,
+    "interactionSe": 0.6,
+    "partnerValue": -0.6,
+    "partnerValueSe": 0.6,
+    "synergy": -1.1,
+    "synergySe": 0.5,
+    "missed": -0.3,
+    "missedSe": 0.5,
+    "aiPicked": 92
+   },
+   "note": null
+  },
+  {
+   "id": "Z024",
+   "name": "APATHY 3 で相手の FIRE 3 + PLAGUE 4 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "APATHY_4"
+   ],
+   "protocols": [
+    "APATHY"
+   ],
+   "how": "相手の FIRE 3 + PLAGUE 4 が回っているときに APATHY 3 (相手の表向きのカードを１枚反転させる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.8,
+    "interactionSe": 0.4,
+    "partnerValue": -0.9,
+    "partnerValueSe": 0.8,
+    "synergy": -0.1,
+    "synergySe": 0.8,
+    "missed": -0.1,
+    "missedSe": 0.2,
+    "aiPicked": 74
+   },
+   "note": null
+  },
+  {
+   "id": "Z025",
+   "name": "DARKNESS 1 で相手の FIRE 3 + PLAGUE 4 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "DARKNESS_2"
+   ],
+   "protocols": [
+    "DARKNESS"
+   ],
+   "how": "相手の FIRE 3 + PLAGUE 4 が回っているときに DARKNESS 1 (相手のカードを1枚反転させる。あなたはそのカードを移動させることができる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1,
+    "interactionSe": 1,
+    "partnerValue": -0.4,
+    "partnerValueSe": 1.1,
+    "synergy": 0.6,
+    "synergySe": 1.1,
+    "missed": -0.7,
+    "missedSe": 0.8,
+    "aiPicked": 60
+   },
+   "note": null
+  },
+  {
+   "id": "Z026",
+   "name": "METAL 0 で相手の FIRE 3 + PLAGUE 4 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "METAL_1"
+   ],
+   "protocols": [
+    "METAL"
+   ],
+   "how": "相手の FIRE 3 + PLAGUE 4 が回っているときに METAL 0 (このラインでの相手の合計値は2減る。 / カードを1枚反転させる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0,
+    "interactionSe": 1,
+    "partnerValue": -2.9,
+    "partnerValueSe": 1,
+    "synergy": -2.8,
+    "synergySe": 0.8,
+    "missed": 0.3,
+    "missedSe": 0.9,
+    "aiPicked": 70
+   },
+   "note": null
+  },
+  {
+   "id": "Z027",
+   "name": "WAR 2 で相手の FIRE 3 + PLAGUE 4 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "WAR_3"
+   ],
+   "protocols": [
+    "WAR"
+   ],
+   "how": "相手の FIRE 3 + PLAGUE 4 が回っているときに WAR 2 (カードを1枚反転させる。 / 相手がコンパイルしたあと：相手は手札をすべて捨て札にする。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.1,
+    "interactionSe": 1.4,
+    "partnerValue": -1.7,
+    "partnerValueSe": 1.3,
+    "synergy": -2.8,
+    "synergySe": 1.8,
+    "missed": -0.9,
+    "missedSe": 0.7,
+    "aiPicked": 72
+   },
+   "note": null
+  },
+  {
+   "id": "Z028",
+   "name": "LOVE 4 で相手の FIRE 3 + PLAGUE 4 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "LOVE_4"
+   ],
+   "protocols": [
+    "LOVE"
+   ],
+   "how": "相手の FIRE 3 + PLAGUE 4 が回っているときに LOVE 4 (あなたの手札１枚を公開する。カードを１枚反転させる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.6,
+    "interactionSe": 0.6,
+    "partnerValue": -2.7,
+    "partnerValueSe": 1,
+    "synergy": -3.3,
+    "synergySe": 1.1,
+    "missed": -0.4,
+    "missedSe": 0.5,
+    "aiPicked": 77
+   },
+   "note": null
+  },
+  {
+   "id": "Z029",
+   "name": "FEAR 3 で相手の FIRE 3 + PLAGUE 4 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "FEAR_4"
+   ],
+   "protocols": [
+    "FEAR"
+   ],
+   "how": "相手の FIRE 3 + PLAGUE 4 が回っているときに FEAR 3 (このラインにある、相手の覆われているか覆われていないカードを1枚移動させる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.8,
+    "interactionSe": 1.3,
+    "partnerValue": -2.5,
+    "partnerValueSe": 1.1,
+    "synergy": -0.7,
+    "synergySe": 0.6,
+    "missed": -0.8,
+    "missedSe": 0.6,
+    "aiPicked": 66
+   },
+   "note": null
+  },
+  {
+   "id": "Z030",
+   "name": "PSYCHIC 3 で相手の FIRE 3 + PLAGUE 4 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "PSYCHIC_4"
+   ],
+   "protocols": [
+    "PSYCHIC"
+   ],
+   "how": "相手の FIRE 3 + PLAGUE 4 が回っているときに PSYCHIC 3 (相手は手札を1枚捨て札にする。あなたは相手のカードを1枚移動させる。) を出す。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.5,
+    "interactionSe": 1.1,
+    "partnerValue": -1.9,
+    "partnerValueSe": 1.1,
+    "synergy": 0.6,
+    "synergySe": 1,
+    "missed": 0.5,
+    "missedSe": 0.7,
+    "aiPicked": 77
+   },
+   "note": null
+  },
+  {
+   "id": "Z031",
+   "name": "GRAVITY 2 で相手の FIRE 3 + PLAGUE 4 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "GRAVITY_3"
+   ],
+   "protocols": [
+    "GRAVITY"
+   ],
+   "how": "相手の FIRE 3 + PLAGUE 4 が回っているときに GRAVITY 2 (カードを1枚反転させる。そのカードをこのラインへと移動させる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.2,
+    "interactionSe": 0.9,
+    "partnerValue": -0.6,
+    "partnerValueSe": 1.3,
+    "synergy": -1.7,
+    "synergySe": 1.3,
+    "missed": -1.8,
+    "missedSe": 1,
+    "aiPicked": 66
+   },
+   "note": null
+  },
+  {
+   "id": "Z032",
+   "name": "LIFE 1 で相手の FIRE 3 + PLAGUE 4 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "LIFE_2"
+   ],
+   "protocols": [
+    "LIFE"
+   ],
+   "how": "相手の FIRE 3 + PLAGUE 4 が回っているときに LIFE 1 (カード1枚を反転させる。カード1枚を反転させる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.6,
+    "interactionSe": 1,
+    "partnerValue": -2.5,
+    "partnerValueSe": 2.1,
+    "synergy": -1.9,
+    "synergySe": 2.1,
+    "missed": 0.4,
+    "missedSe": 0.6,
+    "aiPicked": 74
+   },
+   "note": null
+  },
+  {
+   "id": "Z033",
+   "name": "HATE 0 で相手の WAR 3 + COURAGE 0 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "HATE_1"
+   ],
+   "protocols": [
+    "HATE"
+   ],
+   "how": "相手の WAR 3 + COURAGE 0 が回っているときに HATE 0 (カードを１枚削除する。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.2,
+    "interactionSe": 1.8,
+    "partnerValue": -4,
+    "partnerValueSe": 1.7,
+    "synergy": -1.8,
+    "synergySe": 0.9,
+    "missed": 1.8,
+    "missedSe": 1.9,
+    "aiPicked": 72
+   },
+   "note": null
+  },
+  {
+   "id": "Z034",
+   "name": "HATE 2 で相手の WAR 3 + COURAGE 0 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "HATE_3"
+   ],
+   "protocols": [
+    "HATE"
+   ],
+   "how": "相手の WAR 3 + COURAGE 0 が回っているときに HATE 2 (値が最も大きく覆われていないあなたのカードを１枚削除する。値が最も大きく覆われていない相手のカードを１枚削除する。) を出す。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 3.1,
+    "interactionSe": 1.3,
+    "partnerValue": -5.6,
+    "partnerValueSe": 1.3,
+    "synergy": -2.5,
+    "synergySe": 1.2,
+    "missed": -3.4,
+    "missedSe": 1.4,
+    "aiPicked": 30
+   },
+   "note": null
+  },
+  {
+   "id": "Z035",
+   "name": "DEATH 0 で相手の WAR 3 + COURAGE 0 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "DEATH_1"
+   ],
+   "protocols": [
+    "DEATH"
+   ],
+   "how": "相手の WAR 3 + COURAGE 0 が回っているときに DEATH 0 (他の各ラインにあるカードを1枚ずつ削除する。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.7,
+    "interactionSe": 1.1,
+    "partnerValue": -2,
+    "partnerValueSe": 1.2,
+    "synergy": -0.3,
+    "synergySe": 1.2,
+    "missed": -2.5,
+    "missedSe": 1.2,
+    "aiPicked": 60
+   },
+   "note": null
+  },
+  {
+   "id": "Z036",
+   "name": "DEATH 4 で相手の WAR 3 + COURAGE 0 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "DEATH_5"
+   ],
+   "protocols": [
+    "DEATH"
+   ],
+   "how": "相手の WAR 3 + COURAGE 0 が回っているときに DEATH 4 (値が0か1のカードを1枚削除する。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.8,
+    "interactionSe": 1,
+    "partnerValue": -4.1,
+    "partnerValueSe": 1.2,
+    "synergy": -2.3,
+    "synergySe": 0.9,
+    "missed": -1.5,
+    "missedSe": 1.2,
+    "aiPicked": 79
+   },
+   "note": null
+  },
+  {
+   "id": "Z037",
+   "name": "FIRE 2 で相手の WAR 3 + COURAGE 0 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "FIRE_3"
+   ],
+   "protocols": [
+    "FIRE"
+   ],
+   "how": "相手の WAR 3 + COURAGE 0 が回っているときに FIRE 2 (あなたは手札を1枚捨て札にする。そうした場合、カードを1枚戻す。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.5,
+    "interactionSe": 2.4,
+    "partnerValue": -10,
+    "partnerValueSe": 2.2,
+    "synergy": -9.5,
+    "synergySe": 1.8,
+    "missed": -2.9,
+    "missedSe": 2.1,
+    "aiPicked": 25
+   },
+   "note": null
+  },
+  {
+   "id": "Z038",
+   "name": "FEAR 2 で相手の WAR 3 + COURAGE 0 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "FEAR_3"
+   ],
+   "protocols": [
+    "FEAR"
+   ],
+   "how": "相手の WAR 3 + COURAGE 0 が回っているときに FEAR 2 (相手のカードを1枚戻す。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1,
+    "interactionSe": 1.5,
+    "partnerValue": -2.8,
+    "partnerValueSe": 1.4,
+    "synergy": -3.7,
+    "synergySe": 1.6,
+    "missed": 0.4,
+    "missedSe": 1.1,
+    "aiPicked": 66
+   },
+   "note": null
+  },
+  {
+   "id": "Z039",
+   "name": "CORRUPTION 1 で相手の WAR 3 + COURAGE 0 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "CORRUPTION_2"
+   ],
+   "protocols": [
+    "CORRUPTION"
+   ],
+   "how": "相手の WAR 3 + COURAGE 0 が回っているときに CORRUPTION 1 (カードを1枚戻す。 / カードが相手の手札に戻るとき：そうする代わりに、そのカードを相手のデッキの一番上に裏向きで置く。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.4,
+    "interactionSe": 1.5,
+    "partnerValue": -2.6,
+    "partnerValueSe": 2,
+    "synergy": -1.2,
+    "synergySe": 1.4,
+    "missed": -0.1,
+    "missedSe": 1.1,
+    "aiPicked": 62
+   },
+   "note": null
+  },
+  {
+   "id": "Z040",
+   "name": "APATHY 3 で相手の WAR 3 + COURAGE 0 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "APATHY_4"
+   ],
+   "protocols": [
+    "APATHY"
+   ],
+   "how": "相手の WAR 3 + COURAGE 0 が回っているときに APATHY 3 (相手の表向きのカードを１枚反転させる。) を出す。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 3.5,
+    "interactionSe": 1.3,
+    "partnerValue": -4.6,
+    "partnerValueSe": 1.5,
+    "synergy": -1.2,
+    "synergySe": 1,
+    "missed": -1,
+    "missedSe": 1,
+    "aiPicked": 66
+   },
+   "note": null
+  },
+  {
+   "id": "Z041",
+   "name": "DARKNESS 1 で相手の WAR 3 + COURAGE 0 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "DARKNESS_2"
+   ],
+   "protocols": [
+    "DARKNESS"
+   ],
+   "how": "相手の WAR 3 + COURAGE 0 が回っているときに DARKNESS 1 (相手のカードを1枚反転させる。あなたはそのカードを移動させることができる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 153,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2,
+    "interactionSe": 1.1,
+    "partnerValue": -3.5,
+    "partnerValueSe": 1.1,
+    "synergy": -1.5,
+    "synergySe": 1,
+    "missed": -0.2,
+    "missedSe": 1,
+    "aiPicked": 67
+   },
+   "note": null
+  },
+  {
+   "id": "Z042",
+   "name": "METAL 0 で相手の WAR 3 + COURAGE 0 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "METAL_1"
+   ],
+   "protocols": [
+    "METAL"
+   ],
+   "how": "相手の WAR 3 + COURAGE 0 が回っているときに METAL 0 (このラインでの相手の合計値は2減る。 / カードを1枚反転させる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 52,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.4,
+    "interactionSe": 1.1,
+    "partnerValue": -2.1,
+    "partnerValueSe": 1.4,
+    "synergy": -0.7,
+    "synergySe": 1.2,
+    "missed": -0.5,
+    "missedSe": 0.7,
+    "aiPicked": 75
+   },
+   "note": null
+  },
+  {
+   "id": "Z043",
+   "name": "WAR 2 で相手の WAR 3 + COURAGE 0 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "WAR_3"
+   ],
+   "protocols": [
+    "WAR"
+   ],
+   "how": "相手の WAR 3 + COURAGE 0 が回っているときに WAR 2 (カードを1枚反転させる。 / 相手がコンパイルしたあと：相手は手札をすべて捨て札にする。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 52,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.2,
+    "interactionSe": 1.8,
+    "partnerValue": -0.7,
+    "partnerValueSe": 1.5,
+    "synergy": -0.9,
+    "synergySe": 1.3,
+    "missed": -2.4,
+    "missedSe": 1.5,
+    "aiPicked": 42
+   },
+   "note": null
+  },
+  {
+   "id": "Z044",
+   "name": "LOVE 4 で相手の WAR 3 + COURAGE 0 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "LOVE_4"
+   ],
+   "protocols": [
+    "LOVE"
+   ],
+   "how": "相手の WAR 3 + COURAGE 0 が回っているときに LOVE 4 (あなたの手札１枚を公開する。カードを１枚反転させる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.5,
+    "interactionSe": 1.9,
+    "partnerValue": -3.8,
+    "partnerValueSe": 2.1,
+    "synergy": -2.3,
+    "synergySe": 1.7,
+    "missed": -1,
+    "missedSe": 1.2,
+    "aiPicked": 81
+   },
+   "note": null
+  },
+  {
+   "id": "Z045",
+   "name": "FEAR 3 で相手の WAR 3 + COURAGE 0 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "FEAR_4"
+   ],
+   "protocols": [
+    "FEAR"
+   ],
+   "how": "相手の WAR 3 + COURAGE 0 が回っているときに FEAR 3 (このラインにある、相手の覆われているか覆われていないカードを1枚移動させる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.1,
+    "interactionSe": 1.4,
+    "partnerValue": -2.1,
+    "partnerValueSe": 2,
+    "synergy": -0.1,
+    "synergySe": 1.4,
+    "missed": -1,
+    "missedSe": 1.6,
+    "aiPicked": 64
+   },
+   "note": null
+  },
+  {
+   "id": "Z046",
+   "name": "PSYCHIC 3 で相手の WAR 3 + COURAGE 0 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "PSYCHIC_4"
+   ],
+   "protocols": [
+    "PSYCHIC"
+   ],
+   "how": "相手の WAR 3 + COURAGE 0 が回っているときに PSYCHIC 3 (相手は手札を1枚捨て札にする。あなたは相手のカードを1枚移動させる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.7,
+    "interactionSe": 1.3,
+    "partnerValue": -1.3,
+    "partnerValueSe": 1.7,
+    "synergy": -0.6,
+    "synergySe": 1.1,
+    "missed": -0.1,
+    "missedSe": 1.3,
+    "aiPicked": 83
+   },
+   "note": null
+  },
+  {
+   "id": "Z047",
+   "name": "GRAVITY 2 で相手の WAR 3 + COURAGE 0 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "GRAVITY_3"
+   ],
+   "protocols": [
+    "GRAVITY"
+   ],
+   "how": "相手の WAR 3 + COURAGE 0 が回っているときに GRAVITY 2 (カードを1枚反転させる。そのカードをこのラインへと移動させる。) を出す。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 52,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 4.1,
+    "interactionSe": 1.7,
+    "partnerValue": -4.2,
+    "partnerValueSe": 2,
+    "synergy": 0,
+    "synergySe": 1.8,
+    "missed": 1.1,
+    "missedSe": 1.3,
+    "aiPicked": 62
+   },
+   "note": null
+  },
+  {
+   "id": "Z048",
+   "name": "LIFE 1 で相手の WAR 3 + COURAGE 0 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "LIFE_2"
+   ],
+   "protocols": [
+    "LIFE"
+   ],
+   "how": "相手の WAR 3 + COURAGE 0 が回っているときに LIFE 1 (カード1枚を反転させる。カード1枚を反転させる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 52,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.1,
+    "interactionSe": 1.1,
+    "partnerValue": -4.9,
+    "partnerValueSe": 1.3,
+    "synergy": -3.8,
+    "synergySe": 1.1,
+    "missed": -1.4,
+    "missedSe": 1.1,
+    "aiPicked": 67
+   },
+   "note": null
+  },
+  {
+   "id": "Z049",
+   "name": "HATE 0 で相手の FIRE 3 + SPIRIT 1 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "HATE_1"
+   ],
+   "protocols": [
+    "HATE"
+   ],
+   "how": "相手の FIRE 3 + SPIRIT 1 が回っているときに HATE 0 (カードを１枚削除する。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.6,
+    "interactionSe": 2.1,
+    "partnerValue": -3.5,
+    "partnerValueSe": 1.9,
+    "synergy": -1.9,
+    "synergySe": 1,
+    "missed": -1.2,
+    "missedSe": 1.2,
+    "aiPicked": 42
+   },
+   "note": null
+  },
+  {
+   "id": "Z050",
+   "name": "HATE 2 で相手の FIRE 3 + SPIRIT 1 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "HATE_3"
+   ],
+   "protocols": [
+    "HATE"
+   ],
+   "how": "相手の FIRE 3 + SPIRIT 1 が回っているときに HATE 2 (値が最も大きく覆われていないあなたのカードを１枚削除する。値が最も大きく覆われていない相手のカードを１枚削除する。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.4,
+    "interactionSe": 1.6,
+    "partnerValue": -2.4,
+    "partnerValueSe": 1.2,
+    "synergy": -1,
+    "synergySe": 0.9,
+    "missed": -3.3,
+    "missedSe": 1.7,
+    "aiPicked": 23
+   },
+   "note": null
+  },
+  {
+   "id": "Z051",
+   "name": "DEATH 0 で相手の FIRE 3 + SPIRIT 1 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "DEATH_1"
+   ],
+   "protocols": [
+    "DEATH"
+   ],
+   "how": "相手の FIRE 3 + SPIRIT 1 が回っているときに DEATH 0 (他の各ラインにあるカードを1枚ずつ削除する。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1,
+    "interactionSe": 1,
+    "partnerValue": -0.4,
+    "partnerValueSe": 0.9,
+    "synergy": -1.4,
+    "synergySe": 0.8,
+    "missed": -4,
+    "missedSe": 1.6,
+    "aiPicked": 53
+   },
+   "note": null
+  },
+  {
+   "id": "Z052",
+   "name": "DEATH 4 で相手の FIRE 3 + SPIRIT 1 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "DEATH_5"
+   ],
+   "protocols": [
+    "DEATH"
+   ],
+   "how": "相手の FIRE 3 + SPIRIT 1 が回っているときに DEATH 4 (値が0か1のカードを1枚削除する。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.1,
+    "interactionSe": 1.3,
+    "partnerValue": -0.7,
+    "partnerValueSe": 1.1,
+    "synergy": -0.8,
+    "synergySe": 0.8,
+    "missed": -0.7,
+    "missedSe": 0.9,
+    "aiPicked": 57
+   },
+   "note": null
+  },
+  {
+   "id": "Z053",
+   "name": "FIRE 2 で相手の FIRE 3 + SPIRIT 1 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "FIRE_3"
+   ],
+   "protocols": [
+    "FIRE"
+   ],
+   "how": "相手の FIRE 3 + SPIRIT 1 が回っているときに FIRE 2 (あなたは手札を1枚捨て札にする。そうした場合、カードを1枚戻す。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.2,
+    "interactionSe": 1.5,
+    "partnerValue": -2.8,
+    "partnerValueSe": 1.2,
+    "synergy": -0.6,
+    "synergySe": 1.2,
+    "missed": 0.2,
+    "missedSe": 1.7,
+    "aiPicked": 25
+   },
+   "note": null
+  },
+  {
+   "id": "Z054",
+   "name": "FEAR 2 で相手の FIRE 3 + SPIRIT 1 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "FEAR_3"
+   ],
+   "protocols": [
+    "FEAR"
+   ],
+   "how": "相手の FIRE 3 + SPIRIT 1 が回っているときに FEAR 2 (相手のカードを1枚戻す。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.6,
+    "interactionSe": 1.3,
+    "partnerValue": -3.9,
+    "partnerValueSe": 1.2,
+    "synergy": -1.3,
+    "synergySe": 0.7,
+    "missed": -0.4,
+    "missedSe": 1.5,
+    "aiPicked": 38
+   },
+   "note": null
+  },
+  {
+   "id": "Z055",
+   "name": "CORRUPTION 1 で相手の FIRE 3 + SPIRIT 1 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "CORRUPTION_2"
+   ],
+   "protocols": [
+    "CORRUPTION"
+   ],
+   "how": "相手の FIRE 3 + SPIRIT 1 が回っているときに CORRUPTION 1 (カードを1枚戻す。 / カードが相手の手札に戻るとき：そうする代わりに、そのカードを相手のデッキの一番上に裏向きで置く。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 51,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.3,
+    "interactionSe": 1.4,
+    "partnerValue": -2.9,
+    "partnerValueSe": 1.1,
+    "synergy": -2.6,
+    "synergySe": 1.1,
+    "missed": -2.1,
+    "missedSe": 1.5,
+    "aiPicked": 37
+   },
+   "note": null
+  },
+  {
+   "id": "Z056",
+   "name": "APATHY 3 で相手の FIRE 3 + SPIRIT 1 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "APATHY_4"
+   ],
+   "protocols": [
+    "APATHY"
+   ],
+   "how": "相手の FIRE 3 + SPIRIT 1 が回っているときに APATHY 3 (相手の表向きのカードを１枚反転させる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.6,
+    "interactionSe": 0.6,
+    "partnerValue": -2.6,
+    "partnerValueSe": 0.8,
+    "synergy": -2,
+    "synergySe": 0.8,
+    "missed": 0.1,
+    "missedSe": 0.9,
+    "aiPicked": 53
+   },
+   "note": null
+  },
+  {
+   "id": "Z057",
+   "name": "DARKNESS 1 で相手の FIRE 3 + SPIRIT 1 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "DARKNESS_2"
+   ],
+   "protocols": [
+    "DARKNESS"
+   ],
+   "how": "相手の FIRE 3 + SPIRIT 1 が回っているときに DARKNESS 1 (相手のカードを1枚反転させる。あなたはそのカードを移動させることができる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.2,
+    "interactionSe": 1.5,
+    "partnerValue": -4.1,
+    "partnerValueSe": 1.4,
+    "synergy": -1.9,
+    "synergySe": 1.2,
+    "missed": 0.3,
+    "missedSe": 1.3,
+    "aiPicked": 23
+   },
+   "note": null
+  },
+  {
+   "id": "Z058",
+   "name": "METAL 0 で相手の FIRE 3 + SPIRIT 1 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "METAL_1"
+   ],
+   "protocols": [
+    "METAL"
+   ],
+   "how": "相手の FIRE 3 + SPIRIT 1 が回っているときに METAL 0 (このラインでの相手の合計値は2減る。 / カードを1枚反転させる。) を出す。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2,
+    "interactionSe": 0.8,
+    "partnerValue": -4.2,
+    "partnerValueSe": 1,
+    "synergy": -2.1,
+    "synergySe": 1,
+    "missed": 0.7,
+    "missedSe": 0.6,
+    "aiPicked": 32
+   },
+   "note": null
+  },
+  {
+   "id": "Z059",
+   "name": "WAR 2 で相手の FIRE 3 + SPIRIT 1 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "WAR_3"
+   ],
+   "protocols": [
+    "WAR"
+   ],
+   "how": "相手の FIRE 3 + SPIRIT 1 が回っているときに WAR 2 (カードを1枚反転させる。 / 相手がコンパイルしたあと：相手は手札をすべて捨て札にする。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.3,
+    "interactionSe": 1.3,
+    "partnerValue": -2.7,
+    "partnerValueSe": 1.3,
+    "synergy": -4,
+    "synergySe": 1.2,
+    "missed": -1.4,
+    "missedSe": 1.2,
+    "aiPicked": 53
+   },
+   "note": null
+  },
+  {
+   "id": "Z060",
+   "name": "LOVE 4 で相手の FIRE 3 + SPIRIT 1 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "LOVE_4"
+   ],
+   "protocols": [
+    "LOVE"
+   ],
+   "how": "相手の FIRE 3 + SPIRIT 1 が回っているときに LOVE 4 (あなたの手札１枚を公開する。カードを１枚反転させる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 51,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.1,
+    "interactionSe": 1.4,
+    "partnerValue": -5.9,
+    "partnerValueSe": 1.6,
+    "synergy": -4.8,
+    "synergySe": 1.3,
+    "missed": 0.9,
+    "missedSe": 1.1,
+    "aiPicked": 63
+   },
+   "note": null
+  },
+  {
+   "id": "Z061",
+   "name": "FEAR 3 で相手の FIRE 3 + SPIRIT 1 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "FEAR_4"
+   ],
+   "protocols": [
+    "FEAR"
+   ],
+   "how": "相手の FIRE 3 + SPIRIT 1 が回っているときに FEAR 3 (このラインにある、相手の覆われているか覆われていないカードを1枚移動させる。) を出す。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 4.2,
+    "interactionSe": 1.8,
+    "partnerValue": -4.7,
+    "partnerValueSe": 1.3,
+    "synergy": -0.5,
+    "synergySe": 1.3,
+    "missed": 0.2,
+    "missedSe": 1.6,
+    "aiPicked": 26
+   },
+   "note": null
+  },
+  {
+   "id": "Z062",
+   "name": "PSYCHIC 3 で相手の FIRE 3 + SPIRIT 1 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "PSYCHIC_4"
+   ],
+   "protocols": [
+    "PSYCHIC"
+   ],
+   "how": "相手の FIRE 3 + SPIRIT 1 が回っているときに PSYCHIC 3 (相手は手札を1枚捨て札にする。あなたは相手のカードを1枚移動させる。) を出す。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.8,
+    "interactionSe": 1.1,
+    "partnerValue": -4.2,
+    "partnerValueSe": 1.3,
+    "synergy": -1.3,
+    "synergySe": 1.2,
+    "missed": -1.1,
+    "missedSe": 1.3,
+    "aiPicked": 55
+   },
+   "note": null
+  },
+  {
+   "id": "Z063",
+   "name": "GRAVITY 2 で相手の FIRE 3 + SPIRIT 1 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "GRAVITY_3"
+   ],
+   "protocols": [
+    "GRAVITY"
+   ],
+   "how": "相手の FIRE 3 + SPIRIT 1 が回っているときに GRAVITY 2 (カードを1枚反転させる。そのカードをこのラインへと移動させる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 3.2,
+    "interactionSe": 1.7,
+    "partnerValue": -4.1,
+    "partnerValueSe": 1.2,
+    "synergy": -1,
+    "synergySe": 1.3,
+    "missed": -0.1,
+    "missedSe": 1.3,
+    "aiPicked": 40
+   },
+   "note": null
+  },
+  {
+   "id": "Z064",
+   "name": "LIFE 1 で相手の FIRE 3 + SPIRIT 1 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "LIFE_2"
+   ],
+   "protocols": [
+    "LIFE"
+   ],
+   "how": "相手の FIRE 3 + SPIRIT 1 が回っているときに LIFE 1 (カード1枚を反転させる。カード1枚を反転させる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.3,
+    "interactionSe": 1.2,
+    "partnerValue": -4.7,
+    "partnerValueSe": 1.3,
+    "synergy": -3.4,
+    "synergySe": 1.2,
+    "missed": -1.5,
+    "missedSe": 1.3,
+    "aiPicked": 49
+   },
+   "note": null
+  },
+  {
+   "id": "Z065",
+   "name": "HATE 0 で相手の SPIRIT 3 + PEACE 1 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "HATE_1"
+   ],
+   "protocols": [
+    "HATE"
+   ],
+   "how": "相手の SPIRIT 3 + PEACE 1 が回っているときに HATE 0 (カードを１枚削除する。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.7,
+    "interactionSe": 0.5,
+    "partnerValue": -0.1,
+    "partnerValueSe": 0.5,
+    "synergy": -0.9,
+    "synergySe": 0.6,
+    "missed": -1.7,
+    "missedSe": 0.8,
+    "aiPicked": 68
+   },
+   "note": null
+  },
+  {
+   "id": "Z066",
+   "name": "HATE 2 で相手の SPIRIT 3 + PEACE 1 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "HATE_3"
+   ],
+   "protocols": [
+    "HATE"
+   ],
+   "how": "相手の SPIRIT 3 + PEACE 1 が回っているときに HATE 2 (値が最も大きく覆われていないあなたのカードを１枚削除する。値が最も大きく覆われていない相手のカードを１枚削除する。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.3,
+    "interactionSe": 1.1,
+    "partnerValue": -0.3,
+    "partnerValueSe": 0.9,
+    "synergy": 0,
+    "synergySe": 0.8,
+    "missed": -3.9,
+    "missedSe": 1.5,
+    "aiPicked": 40
+   },
+   "note": null
+  },
+  {
+   "id": "Z067",
+   "name": "DEATH 0 で相手の SPIRIT 3 + PEACE 1 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "DEATH_1"
+   ],
+   "protocols": [
+    "DEATH"
+   ],
+   "how": "相手の SPIRIT 3 + PEACE 1 が回っているときに DEATH 0 (他の各ラインにあるカードを1枚ずつ削除する。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.6,
+    "interactionSe": 1,
+    "partnerValue": -0.9,
+    "partnerValueSe": 1.1,
+    "synergy": -0.3,
+    "synergySe": 0.5,
+    "missed": -1.2,
+    "missedSe": 0.7,
+    "aiPicked": 72
+   },
+   "note": null
+  },
+  {
+   "id": "Z068",
+   "name": "DEATH 4 で相手の SPIRIT 3 + PEACE 1 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "DEATH_5"
+   ],
+   "protocols": [
+    "DEATH"
+   ],
+   "how": "相手の SPIRIT 3 + PEACE 1 が回っているときに DEATH 4 (値が0か1のカードを1枚削除する。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.1,
+    "interactionSe": 0.6,
+    "partnerValue": -2.9,
+    "partnerValueSe": 1.9,
+    "synergy": -2.7,
+    "synergySe": 2,
+    "missed": -1.9,
+    "missedSe": 1.1,
+    "aiPicked": 62
+   },
+   "note": null
+  },
+  {
+   "id": "Z069",
+   "name": "FIRE 2 で相手の SPIRIT 3 + PEACE 1 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "FIRE_3"
+   ],
+   "protocols": [
+    "FIRE"
+   ],
+   "how": "相手の SPIRIT 3 + PEACE 1 が回っているときに FIRE 2 (あなたは手札を1枚捨て札にする。そうした場合、カードを1枚戻す。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 52,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.1,
+    "interactionSe": 1.1,
+    "partnerValue": -1.5,
+    "partnerValueSe": 1.1,
+    "synergy": -1.6,
+    "synergySe": 1,
+    "missed": -2.4,
+    "missedSe": 1.2,
+    "aiPicked": 29
+   },
+   "note": null
+  },
+  {
+   "id": "Z070",
+   "name": "FEAR 2 で相手の SPIRIT 3 + PEACE 1 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "FEAR_3"
+   ],
+   "protocols": [
+    "FEAR"
+   ],
+   "how": "相手の SPIRIT 3 + PEACE 1 が回っているときに FEAR 2 (相手のカードを1枚戻す。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.5,
+    "interactionSe": 1.4,
+    "partnerValue": -2,
+    "partnerValueSe": 0.8,
+    "synergy": -1.5,
+    "synergySe": 1.6,
+    "missed": -0.6,
+    "missedSe": 0.7,
+    "aiPicked": 64
+   },
+   "note": null
+  },
+  {
+   "id": "Z071",
+   "name": "CORRUPTION 1 で相手の SPIRIT 3 + PEACE 1 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "CORRUPTION_2"
+   ],
+   "protocols": [
+    "CORRUPTION"
+   ],
+   "how": "相手の SPIRIT 3 + PEACE 1 が回っているときに CORRUPTION 1 (カードを1枚戻す。 / カードが相手の手札に戻るとき：そうする代わりに、そのカードを相手のデッキの一番上に裏向きで置く。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0,
+    "interactionSe": 0.7,
+    "partnerValue": -1.1,
+    "partnerValueSe": 1.1,
+    "synergy": -1.1,
+    "synergySe": 1.1,
+    "missed": -0.9,
+    "missedSe": 0.7,
+    "aiPicked": 75
+   },
+   "note": null
+  },
+  {
+   "id": "Z072",
+   "name": "APATHY 3 で相手の SPIRIT 3 + PEACE 1 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "APATHY_4"
+   ],
+   "protocols": [
+    "APATHY"
+   ],
+   "how": "相手の SPIRIT 3 + PEACE 1 が回っているときに APATHY 3 (相手の表向きのカードを１枚反転させる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.3,
+    "interactionSe": 1.2,
+    "partnerValue": -3.4,
+    "partnerValueSe": 1.5,
+    "synergy": -1.1,
+    "synergySe": 0.7,
+    "missed": -1.3,
+    "missedSe": 0.9,
+    "aiPicked": 83
+   },
+   "note": null
+  },
+  {
+   "id": "Z073",
+   "name": "DARKNESS 1 で相手の SPIRIT 3 + PEACE 1 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "DARKNESS_2"
+   ],
+   "protocols": [
+    "DARKNESS"
+   ],
+   "how": "相手の SPIRIT 3 + PEACE 1 が回っているときに DARKNESS 1 (相手のカードを1枚反転させる。あなたはそのカードを移動させることができる。) を出す。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.9,
+    "interactionSe": 1.2,
+    "partnerValue": -3.6,
+    "partnerValueSe": 1.5,
+    "synergy": -0.7,
+    "synergySe": 1.2,
+    "missed": 0.5,
+    "missedSe": 0.7,
+    "aiPicked": 70
+   },
+   "note": null
+  },
+  {
+   "id": "Z074",
+   "name": "METAL 0 で相手の SPIRIT 3 + PEACE 1 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "METAL_1"
+   ],
+   "protocols": [
+    "METAL"
+   ],
+   "how": "相手の SPIRIT 3 + PEACE 1 が回っているときに METAL 0 (このラインでの相手の合計値は2減る。 / カードを1枚反転させる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.9,
+    "interactionSe": 1.5,
+    "partnerValue": -1.6,
+    "partnerValueSe": 1.5,
+    "synergy": -0.8,
+    "synergySe": 0.4,
+    "missed": -1.8,
+    "missedSe": 1.1,
+    "aiPicked": 72
+   },
+   "note": null
+  },
+  {
+   "id": "Z075",
+   "name": "WAR 2 で相手の SPIRIT 3 + PEACE 1 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "WAR_3"
+   ],
+   "protocols": [
+    "WAR"
+   ],
+   "how": "相手の SPIRIT 3 + PEACE 1 が回っているときに WAR 2 (カードを1枚反転させる。 / 相手がコンパイルしたあと：相手は手札をすべて捨て札にする。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.4,
+    "interactionSe": 1.4,
+    "partnerValue": -2.1,
+    "partnerValueSe": 1.4,
+    "synergy": -1.7,
+    "synergySe": 0.9,
+    "missed": -3.9,
+    "missedSe": 1.8,
+    "aiPicked": 68
+   },
+   "note": null
+  },
+  {
+   "id": "Z076",
+   "name": "LOVE 4 で相手の SPIRIT 3 + PEACE 1 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "LOVE_4"
+   ],
+   "protocols": [
+    "LOVE"
+   ],
+   "how": "相手の SPIRIT 3 + PEACE 1 が回っているときに LOVE 4 (あなたの手札１枚を公開する。カードを１枚反転させる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.1,
+    "interactionSe": 0.9,
+    "partnerValue": 0.4,
+    "partnerValueSe": 1.4,
+    "synergy": 0.5,
+    "synergySe": 1.2,
+    "missed": 0,
+    "missedSe": 0.6,
+    "aiPicked": 74
+   },
+   "note": null
+  },
+  {
+   "id": "Z077",
+   "name": "FEAR 3 で相手の SPIRIT 3 + PEACE 1 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "FEAR_4"
+   ],
+   "protocols": [
+    "FEAR"
+   ],
+   "how": "相手の SPIRIT 3 + PEACE 1 が回っているときに FEAR 3 (このラインにある、相手の覆われているか覆われていないカードを1枚移動させる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 52,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.6,
+    "interactionSe": 1.5,
+    "partnerValue": -1.4,
+    "partnerValueSe": 1.5,
+    "synergy": 0.2,
+    "synergySe": 1.6,
+    "missed": -2.8,
+    "missedSe": 1.5,
+    "aiPicked": 42
+   },
+   "note": null
+  },
+  {
+   "id": "Z078",
+   "name": "PSYCHIC 3 で相手の SPIRIT 3 + PEACE 1 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "PSYCHIC_4"
+   ],
+   "protocols": [
+    "PSYCHIC"
+   ],
+   "how": "相手の SPIRIT 3 + PEACE 1 が回っているときに PSYCHIC 3 (相手は手札を1枚捨て札にする。あなたは相手のカードを1枚移動させる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.5,
+    "interactionSe": 1.4,
+    "partnerValue": -1,
+    "partnerValueSe": 1.6,
+    "synergy": -0.5,
+    "synergySe": 1.8,
+    "missed": 0.8,
+    "missedSe": 1,
+    "aiPicked": 66
+   },
+   "note": null
+  },
+  {
+   "id": "Z079",
+   "name": "GRAVITY 2 で相手の SPIRIT 3 + PEACE 1 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "GRAVITY_3"
+   ],
+   "protocols": [
+    "GRAVITY"
+   ],
+   "how": "相手の SPIRIT 3 + PEACE 1 が回っているときに GRAVITY 2 (カードを1枚反転させる。そのカードをこのラインへと移動させる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.4,
+    "interactionSe": 1.2,
+    "partnerValue": -1.6,
+    "partnerValueSe": 1.1,
+    "synergy": -1.9,
+    "synergySe": 1,
+    "missed": -1.6,
+    "missedSe": 1.1,
+    "aiPicked": 66
+   },
+   "note": null
+  },
+  {
+   "id": "Z080",
+   "name": "LIFE 1 で相手の SPIRIT 3 + PEACE 1 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "LIFE_2"
+   ],
+   "protocols": [
+    "LIFE"
+   ],
+   "how": "相手の SPIRIT 3 + PEACE 1 が回っているときに LIFE 1 (カード1枚を反転させる。カード1枚を反転させる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 52,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.9,
+    "interactionSe": 1.3,
+    "partnerValue": 0.1,
+    "partnerValueSe": 0.9,
+    "synergy": -0.7,
+    "synergySe": 1.6,
+    "missed": -2.2,
+    "missedSe": 1.8,
+    "aiPicked": 73
+   },
+   "note": null
+  },
+  {
+   "id": "Z081",
+   "name": "HATE 0 で相手の PLAGUE 1 + COURAGE 0 + CORRUPTION 2 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "HATE_1"
+   ],
+   "protocols": [
+    "HATE"
+   ],
+   "how": "相手の PLAGUE 1 + COURAGE 0 + CORRUPTION 2 が回っているときに HATE 0 (カードを１枚削除する。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 52,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.1,
+    "interactionSe": 1.1,
+    "partnerValue": -3.5,
+    "partnerValueSe": 0.9,
+    "synergy": -1.3,
+    "synergySe": 0.9,
+    "missed": 0.2,
+    "missedSe": 0.6,
+    "aiPicked": 75
+   },
+   "note": null
+  },
+  {
+   "id": "Z082",
+   "name": "HATE 2 で相手の PLAGUE 1 + COURAGE 0 + CORRUPTION 2 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "HATE_3"
+   ],
+   "protocols": [
+    "HATE"
+   ],
+   "how": "相手の PLAGUE 1 + COURAGE 0 + CORRUPTION 2 が回っているときに HATE 2 (値が最も大きく覆われていないあなたのカードを１枚削除する。値が最も大きく覆われていない相手のカードを１枚削除する。) を出す。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 52,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.6,
+    "interactionSe": 1.2,
+    "partnerValue": -5.9,
+    "partnerValueSe": 1.3,
+    "synergy": -3.3,
+    "synergySe": 1,
+    "missed": -2.4,
+    "missedSe": 1,
+    "aiPicked": 60
+   },
+   "note": null
+  },
+  {
+   "id": "Z083",
+   "name": "DEATH 0 で相手の PLAGUE 1 + COURAGE 0 + CORRUPTION 2 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "DEATH_1"
+   ],
+   "protocols": [
+    "DEATH"
+   ],
+   "how": "相手の PLAGUE 1 + COURAGE 0 + CORRUPTION 2 が回っているときに DEATH 0 (他の各ラインにあるカードを1枚ずつ削除する。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.5,
+    "interactionSe": 1.2,
+    "partnerValue": -2,
+    "partnerValueSe": 1,
+    "synergy": -0.5,
+    "synergySe": 1.1,
+    "missed": -2.6,
+    "missedSe": 1.4,
+    "aiPicked": 79
+   },
+   "note": null
+  },
+  {
+   "id": "Z084",
+   "name": "DEATH 4 で相手の PLAGUE 1 + COURAGE 0 + CORRUPTION 2 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "DEATH_5"
+   ],
+   "protocols": [
+    "DEATH"
+   ],
+   "how": "相手の PLAGUE 1 + COURAGE 0 + CORRUPTION 2 が回っているときに DEATH 4 (値が0か1のカードを1枚削除する。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.4,
+    "interactionSe": 1.3,
+    "partnerValue": -4.9,
+    "partnerValueSe": 1.6,
+    "synergy": -3.5,
+    "synergySe": 1.1,
+    "missed": -1,
+    "missedSe": 1.5,
+    "aiPicked": 75
+   },
+   "note": null
+  },
+  {
+   "id": "Z085",
+   "name": "FIRE 2 で相手の PLAGUE 1 + COURAGE 0 + CORRUPTION 2 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "FIRE_3"
+   ],
+   "protocols": [
+    "FIRE"
+   ],
+   "how": "相手の PLAGUE 1 + COURAGE 0 + CORRUPTION 2 が回っているときに FIRE 2 (あなたは手札を1枚捨て札にする。そうした場合、カードを1枚戻す。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.1,
+    "interactionSe": 1.5,
+    "partnerValue": -8.2,
+    "partnerValueSe": 1.3,
+    "synergy": -6.1,
+    "synergySe": 1.3,
+    "missed": 0.3,
+    "missedSe": 1.7,
+    "aiPicked": 26
+   },
+   "note": null
+  },
+  {
+   "id": "Z086",
+   "name": "FEAR 2 で相手の PLAGUE 1 + COURAGE 0 + CORRUPTION 2 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "FEAR_3"
+   ],
+   "protocols": [
+    "FEAR"
+   ],
+   "how": "相手の PLAGUE 1 + COURAGE 0 + CORRUPTION 2 が回っているときに FEAR 2 (相手のカードを1枚戻す。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.5,
+    "interactionSe": 1,
+    "partnerValue": -7.3,
+    "partnerValueSe": 1.4,
+    "synergy": -8.7,
+    "synergySe": 1.6,
+    "missed": -1.3,
+    "missedSe": 0.8,
+    "aiPicked": 72
+   },
+   "note": null
+  },
+  {
+   "id": "Z087",
+   "name": "CORRUPTION 1 で相手の PLAGUE 1 + COURAGE 0 + CORRUPTION 2 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "CORRUPTION_2"
+   ],
+   "protocols": [
+    "CORRUPTION"
+   ],
+   "how": "相手の PLAGUE 1 + COURAGE 0 + CORRUPTION 2 が回っているときに CORRUPTION 1 (カードを1枚戻す。 / カードが相手の手札に戻るとき：そうする代わりに、そのカードを相手のデッキの一番上に裏向きで置く。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.1,
+    "interactionSe": 1.2,
+    "partnerValue": -4.5,
+    "partnerValueSe": 1.5,
+    "synergy": -4.6,
+    "synergySe": 1,
+    "missed": -2.5,
+    "missedSe": 1.3,
+    "aiPicked": 57
+   },
+   "note": null
+  },
+  {
+   "id": "Z088",
+   "name": "APATHY 3 で相手の PLAGUE 1 + COURAGE 0 + CORRUPTION 2 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "APATHY_4"
+   ],
+   "protocols": [
+    "APATHY"
+   ],
+   "how": "相手の PLAGUE 1 + COURAGE 0 + CORRUPTION 2 が回っているときに APATHY 3 (相手の表向きのカードを１枚反転させる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0,
+    "interactionSe": 0.5,
+    "partnerValue": -1.2,
+    "partnerValueSe": 0.7,
+    "synergy": -1.2,
+    "synergySe": 0.6,
+    "missed": -0.5,
+    "missedSe": 0.6,
+    "aiPicked": 70
+   },
+   "note": null
+  },
+  {
+   "id": "Z089",
+   "name": "DARKNESS 1 で相手の PLAGUE 1 + COURAGE 0 + CORRUPTION 2 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "DARKNESS_2"
+   ],
+   "protocols": [
+    "DARKNESS"
+   ],
+   "how": "相手の PLAGUE 1 + COURAGE 0 + CORRUPTION 2 が回っているときに DARKNESS 1 (相手のカードを1枚反転させる。あなたはそのカードを移動させることができる。) を出す。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 3.1,
+    "interactionSe": 1.4,
+    "partnerValue": -7.3,
+    "partnerValueSe": 1.8,
+    "synergy": -4.2,
+    "synergySe": 1.6,
+    "missed": -2.4,
+    "missedSe": 1.8,
+    "aiPicked": 58
+   },
+   "note": null
+  },
+  {
+   "id": "Z090",
+   "name": "METAL 0 で相手の PLAGUE 1 + COURAGE 0 + CORRUPTION 2 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "METAL_1"
+   ],
+   "protocols": [
+    "METAL"
+   ],
+   "how": "相手の PLAGUE 1 + COURAGE 0 + CORRUPTION 2 が回っているときに METAL 0 (このラインでの相手の合計値は2減る。 / カードを1枚反転させる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.2,
+    "interactionSe": 1,
+    "partnerValue": -2.9,
+    "partnerValueSe": 1,
+    "synergy": -2.7,
+    "synergySe": 0.7,
+    "missed": -1.9,
+    "missedSe": 0.9,
+    "aiPicked": 79
+   },
+   "note": null
+  },
+  {
+   "id": "Z091",
+   "name": "WAR 2 で相手の PLAGUE 1 + COURAGE 0 + CORRUPTION 2 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "WAR_3"
+   ],
+   "protocols": [
+    "WAR"
+   ],
+   "how": "相手の PLAGUE 1 + COURAGE 0 + CORRUPTION 2 が回っているときに WAR 2 (カードを1枚反転させる。 / 相手がコンパイルしたあと：相手は手札をすべて捨て札にする。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.1,
+    "interactionSe": 1.8,
+    "partnerValue": -3.2,
+    "partnerValueSe": 1.3,
+    "synergy": -3.2,
+    "synergySe": 1.6,
+    "missed": -0.7,
+    "missedSe": 1.6,
+    "aiPicked": 64
+   },
+   "note": null
+  },
+  {
+   "id": "Z092",
+   "name": "LOVE 4 で相手の PLAGUE 1 + COURAGE 0 + CORRUPTION 2 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "LOVE_4"
+   ],
+   "protocols": [
+    "LOVE"
+   ],
+   "how": "相手の PLAGUE 1 + COURAGE 0 + CORRUPTION 2 が回っているときに LOVE 4 (あなたの手札１枚を公開する。カードを１枚反転させる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.7,
+    "interactionSe": 1.9,
+    "partnerValue": -5.4,
+    "partnerValueSe": 2,
+    "synergy": -3.7,
+    "synergySe": 0.9,
+    "missed": -1.9,
+    "missedSe": 0.7,
+    "aiPicked": 72
+   },
+   "note": null
+  },
+  {
+   "id": "Z093",
+   "name": "FEAR 3 で相手の PLAGUE 1 + COURAGE 0 + CORRUPTION 2 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "FEAR_4"
+   ],
+   "protocols": [
+    "FEAR"
+   ],
+   "how": "相手の PLAGUE 1 + COURAGE 0 + CORRUPTION 2 が回っているときに FEAR 3 (このラインにある、相手の覆われているか覆われていないカードを1枚移動させる。) を出す。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 52,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 3.5,
+    "interactionSe": 1.6,
+    "partnerValue": -9,
+    "partnerValueSe": 2,
+    "synergy": -5.5,
+    "synergySe": 1.2,
+    "missed": 2.7,
+    "missedSe": 1.4,
+    "aiPicked": 50
+   },
+   "note": null
+  },
+  {
+   "id": "Z094",
+   "name": "PSYCHIC 3 で相手の PLAGUE 1 + COURAGE 0 + CORRUPTION 2 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "PSYCHIC_4"
+   ],
+   "protocols": [
+    "PSYCHIC"
+   ],
+   "how": "相手の PLAGUE 1 + COURAGE 0 + CORRUPTION 2 が回っているときに PSYCHIC 3 (相手は手札を1枚捨て札にする。あなたは相手のカードを1枚移動させる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.7,
+    "interactionSe": 1.1,
+    "partnerValue": -8.2,
+    "partnerValueSe": 1.8,
+    "synergy": -6.5,
+    "synergySe": 1.7,
+    "missed": -2.3,
+    "missedSe": 1.3,
+    "aiPicked": 68
+   },
+   "note": null
+  },
+  {
+   "id": "Z095",
+   "name": "GRAVITY 2 で相手の PLAGUE 1 + COURAGE 0 + CORRUPTION 2 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "GRAVITY_3"
+   ],
+   "protocols": [
+    "GRAVITY"
+   ],
+   "how": "相手の PLAGUE 1 + COURAGE 0 + CORRUPTION 2 が回っているときに GRAVITY 2 (カードを1枚反転させる。そのカードをこのラインへと移動させる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.3,
+    "interactionSe": 1.2,
+    "partnerValue": -6.2,
+    "partnerValueSe": 1.5,
+    "synergy": -4.8,
+    "synergySe": 1.4,
+    "missed": -0.2,
+    "missedSe": 1.1,
+    "aiPicked": 64
+   },
+   "note": null
+  },
+  {
+   "id": "Z096",
+   "name": "LIFE 1 で相手の PLAGUE 1 + COURAGE 0 + CORRUPTION 2 を崩す",
+   "kind": "counter",
+   "source": "counter",
+   "cards": [
+    "LIFE_2"
+   ],
+   "protocols": [
+    "LIFE"
+   ],
+   "how": "相手の PLAGUE 1 + COURAGE 0 + CORRUPTION 2 が回っているときに LIFE 1 (カード1枚を反転させる。カード1枚を反転させる。) を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 53,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.5,
+    "interactionSe": 1.3,
+    "partnerValue": -4.9,
+    "partnerValueSe": 1.3,
+    "synergy": -3.5,
+    "synergySe": 1.1,
+    "missed": -1.9,
+    "missedSe": 1.1,
+    "aiPicked": 75
+   },
+   "note": null
+  },
+  {
    "id": "T01",
    "name": "WATER 1 + WATER 4",
    "kind": "burst",

@@ -736,3 +736,41 @@ module.exports = [
     });
   }
 })();
+
+/* ---------- 相手のコンボを崩す札 (Z001〜、2026-10-28) ----------
+   相手の場に、確かめたコンボ (回しが動いている形) を植え、こちらは崩す札 (削除・戻す・裏返す・動かす) を1枚出す。
+   相方 = 相手のコンボの札 (白紙にすると、ただの同じ値の札に向けて同じ手を打つ)。
+   噛み合い = その札がコンボ相手に「ほかの手より余分に」効く分。人が「この組にはこれを当てる」と覚えるためのもの */
+(function counterCandidates() {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const cards = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'cards.json'), 'utf8'));
+  const proto = {}, value = {}, text = {}, byName = {};
+  for (const p of cards.protocols) for (const c of p.cards) {
+    proto[c.id] = p.name; value[c.id] = c.value; byName[p.name + ' ' + c.value] = c.id;
+    text[c.id] = [c.upper, c.middle, c.lower].filter(Boolean).join(' / ');
+  }
+  const id = (n) => { if (!byName[n]) throw new Error('no card ' + n); return byName[n]; };
+  const COMBOS = [
+    ['WAR 0 + CHAOS 0', ['WAR 0', 'CHAOS 0']],
+    ['FIRE 3 + PLAGUE 4', ['FIRE 3', 'PLAGUE 4']],
+    ['WAR 3 + COURAGE 0', ['WAR 3', 'COURAGE 0']],
+    ['FIRE 3 + SPIRIT 1', ['FIRE 3', 'SPIRIT 1']],
+    ['SPIRIT 3 + PEACE 1', ['SPIRIT 3', 'PEACE 1']],
+    ['PLAGUE 1 + COURAGE 0 + CORRUPTION 2', ['PLAGUE 1', 'COURAGE 0', 'CORRUPTION 2']]
+  ];
+  const ANSWERS = ['HATE 0', 'HATE 2', 'DEATH 0', 'DEATH 4', 'FIRE 2', 'FEAR 2', 'CORRUPTION 1', 'APATHY 3', 'DARKNESS 1', 'METAL 0', 'WAR 2', 'LOVE 4', 'FEAR 3', 'PSYCHIC 3', 'GRAVITY 2', 'LIFE 1'];
+  let n = 0;
+  for (const [cn, pieces] of COMBOS) for (const an of ANSWERS) {
+    const A = id(an), ps = pieces.map(id);
+    if (pieces.includes(an)) continue;
+    const oppProtos = [...new Set(ps.map(x => proto[x]))];
+    module.exports.push({
+      id: 'Z' + String(++n).padStart(3, '0'), auto: true, source: 'counter', late: true,
+      name: an + ' で相手の ' + cn + ' を崩す', kind: 'counter', protos: [proto[A]], oppProtos,
+      how: '相手の ' + cn + ' が回っているときに ' + an + ' (' + text[A] + ') を出す。',
+      setup: { mine: [{ card: A, at: 'hand' }], opp: ps.map(x => ({ card: x, at: 'field' })) },
+      act: { play: A }, partner: ps.map(x => x + '@opp')
+    });
+  }
+})();
