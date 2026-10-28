@@ -3484,8 +3484,7 @@ const AI_AIM_COMBOS = [
   /* COURAGE 0 の終了で1枚捨てると相手が2枚捨て (COURAGE 0・CORRUPTION 2)、PLAGUE 1 で2枚引く */
   { pieces: { PLAGUE_2: 'up', COURAGE_1: 'top', CORRUPTION_3: 'up' } },
   /* WAR 3 の下段「相手が捨てたあと: 裏で1枚出せる」に、相手に捨てさせる札を足す */
-  /* CORRUPTION 2 の上段で、COURAGE 0 の終了で捨てるたびに相手がもう1枚捨て、WAR 3 がもう1回起きる (E005、150盤面2回で +3.5 / +2.6) */
-  { pieces: { WAR_4: 'top', COURAGE_1: 'top' }, extra: { CORRUPTION_3: 'up' } },
+  { pieces: { WAR_4: 'top', COURAGE_1: 'top' } },
   { pieces: { WAR_4: 'top', FEAR_2: 'play' } },
   /* SPIRIT 3 は引いたあとに覆われていても動ける。引く札を足して、どいた下の札をもう一度起こす */
   { pieces: { SPIRIT_4: 'up', CORRUPTION_3: 'play' } },
@@ -3495,11 +3494,10 @@ const AI_AIM_COMBOS = [
   { pieces: { CORRUPTION_6: 'up', CORRUPTION_3: 'up', PLAGUE_2: 'up' } },
   /* 教わった FIRE 3 + PLAGUE 4 (終了時に FIRE 3 で相手を裏にし、PLAGUE 4 で消させる)。状態を作る札 × 取り立てる札 145組の総当たりで、測り直して残ったのはこれだけ */
   { pieces: { FIRE_4: 'top', PLAGUE_5: 'top' } },
-  /* FIRE 3 で SPIRIT 1 を毎手番起こし直す回し (aiFlipStoreScore) は、毎手番 FIRE 3 で1枚捨てる。CORRUPTION 2 の上段で相手も1枚捨てる。
-     FIRE 3 + CORRUPTION 2 だけでは噛み合わず (A074)、回しに足すと 150盤面2回で +3.4 / +3.1。SPIRIT 1 は表でも裏でも回る ('loop')。
-     回しそのもの (+6.1) も揃えに行く手筋に入れ、FIRE 3 を自分で覆わないようにする (入れる前は 60局で FIRE 3 を24回覆っていた) */
-  { pieces: { FIRE_4: 'top', SPIRIT_2: 'loop' } },
-  { pieces: { FIRE_4: 'top', SPIRIT_2: 'loop', CORRUPTION_3: 'up' } }
+  /* FIRE 3 で SPIRIT 1 を毎手番起こし直す回し (aiFlipStoreScore、+6.1)。SPIRIT 1 は表でも裏でも回る ('loop')。
+     揃えに行く手筋に入れ、FIRE 3 を自分で覆わないようにする (入れる前は 60局で FIRE 3 を24回覆っていた)。
+     CORRUPTION 2 を3枚目に足す形は、回しの2枚を白紙にして測り直すと噛み合いが消えた (−0.8、docs/ai-combos.md) ので入れない */
+  { pieces: { FIRE_4: 'top', SPIRIT_2: 'loop' } }
 ];
 function aiAimPlace(st, side, uid) {
   const c = st.cards[uid];
@@ -4473,7 +4471,7 @@ const AI_COMBO_PAIRS = [
   ['WAR_1', 'LOVE_6'],        // LOVE 6・LOVE 2・FEAR 1 で相手に引かせて WAR 0 で削除
   ['WAR_1', 'LOVE_2'],
   ['WAR_1', 'FEAR_2'], ['PLAGUE_2', 'COURAGE_1'], ['COURAGE_1', 'CORRUPTION_3'], ['WAR_4', 'COURAGE_1'], ['WAR_4', 'FEAR_2'], ['SPIRIT_4', 'CORRUPTION_3'], ['SPIRIT_4', 'PEACE_1'], ['TIME_3', 'CLARITY_4'], ['CORRUPTION_6', 'CORRUPTION_3'], ['CORRUPTION_6', 'PLAGUE_2'], ['FIRE_4', 'PLAGUE_5'],
-  ['FIRE_4', 'SPIRIT_2'], ['FIRE_4', 'WATER_1'], ['SPIRIT_2', 'CORRUPTION_3']
+  ['FIRE_4', 'SPIRIT_2'], ['FIRE_4', 'WATER_1']
 ];
 const AI_COMBO_KEEP = { hand: 60, field: 40, deck: 15 };
 /* ORACLE が手放したがらない札: ウォーター① (山札の上を他の各ラインに裏で) とファイア③ (終了時に捨てて反転) */

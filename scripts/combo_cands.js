@@ -817,7 +817,8 @@ module.exports = [
 })();
 
 /* ---------- FIRE 3 + SPIRIT 1 の回しに3枚目 (L101〜、2026-10-28) ----------
-   回しは毎手番「FIRE 3 で1枚捨てる」「SPIRIT 1 で2枚引く」。引いたあとに動く SPIRIT 3、捨てたあとに相手も捨てる CORRUPTION 2 を足す。相方 = 3枚目 */
+   回しは毎手番「FIRE 3 で1枚捨てる」「SPIRIT 1 で2枚引く」。引いたあとに動く SPIRIT 3、捨てたあとに相手も捨てる CORRUPTION 2 を足す。
+   相方 = 回しの2枚 (最初は3枚目にしていたが、それだと3枚目そのものの効果の値打ちを測ってしまう) */
 (function fire3Triples() {
   const seen = new Set(module.exports.map(c => c.setup.mine.map(p => p.card).sort().join('+')));
   const T3 = [['SPIRIT_4', 'SPIRIT 3 (引いたあと: 覆われていても動ける)'], ['CORRUPTION_3', 'CORRUPTION 2 (捨てたあと: 相手も1枚捨てる)']];
@@ -830,7 +831,7 @@ module.exports = [
       id: 'L' + (++n), auto: true, source: 'fire3', late: true,
       name: 'FIRE 3 + SPIRIT 1 の回しに ' + label.split(' (')[0], kind: 'engine', protos: ['FIRE', 'SPIRIT', ...(d === 'CORRUPTION_3' ? ['CORRUPTION'] : [])],
       how: 'FIRE 3 で毎手番 SPIRIT 1 を表に戻す回しに、' + label + ' を足す。',
-      setup: { mine }, act: { play: d }, partner: [d],
+      setup: { mine }, act: { play: d }, partner: ['FIRE_4', 'SPIRIT_2'],
       picks: (s, q, P) => {
         const t = P.planted.SPIRIT_2;
         if (!t || !s.cards[t]) return null;
@@ -938,7 +939,8 @@ module.exports = [
 
 /* ---------- 回っている組に3枚目を足す (E001〜、2026-10-28) ----------
    確かめた組を場に植え、その組が毎手番起こす出来事 (引く・捨てる・削除・シャッフル) を聞く札を3枚目に出す。
-   聞く札は A 型と同じく effects.json の「〜したあと」から拾う。相方 = 3枚目 */
+   聞く札は A 型と同じく effects.json の「〜したあと」から拾う。
+   相方 = 組の札 (3枚目を白紙にすると、3枚目そのものの効果の値打ちを測ってしまう。組を白紙にして、3枚目が組にどれだけ乗るかを測る) */
 (function engineTriples() {
   const fs = require('node:fs');
   const path = require('node:path');
@@ -983,7 +985,47 @@ module.exports = [
         name: en + ' に ' + name(L.id), kind: 'engine', protos: [...new Set([...ps.map(x => proto[x]), proto[L.id]])],
         how: en + ' が回っているところに ' + name(L.id) + ' (' + text[L.id] + ') を足す。',
         /* 3枚目は組の札を覆わないラインに出す (下段の組は覆うと止まる) */
-        setup: { mine }, act: { play: L.id, line: L.slot === 'lower' ? 'other' : undefined }, partner: [L.id]
+        setup: { mine }, act: { play: L.id, line: L.slot === 'lower' ? 'other' : undefined }, partner: ps
+      });
+    }
+  }
+})();
+
+/* ---------- 回っている組に、場に残って効く札を総当たりで3枚目に (G001〜、2026-10-28) ----------
+   E 型は「〜したあと」を聞く札だけだった。上段か下段 (開始・終了・常に効く) を持つ札を、組と別のプロトコルからすべて試す */
+(function engineAnyThird() {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const cards = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'cards.json'), 'utf8'));
+  const proto = {}, value = {}, text = {}, byName = {}, persist = [];
+  for (const p of cards.protocols) for (const c of p.cards) {
+    proto[c.id] = p.name; value[c.id] = c.value; byName[p.name + ' ' + c.value] = c.id;
+    text[c.id] = [c.upper, c.middle, c.lower].filter(Boolean).join(' / ');
+    if (c.upper || c.lower) persist.push(c.id);
+  }
+  const id = (n) => { if (!byName[n]) throw new Error('no card ' + n); return byName[n]; };
+  const name = (d) => proto[d] + ' ' + value[d];
+  const ENGINES = [
+    ['WAR 0 + CHAOS 0', ['WAR 0', 'CHAOS 0']],
+    ['FIRE 3 + PLAGUE 4', ['FIRE 3', 'PLAGUE 4']],
+    ['WAR 3 + COURAGE 0', ['WAR 3', 'COURAGE 0']],
+    ['SPIRIT 3 + PEACE 1', ['SPIRIT 3', 'PEACE 1']]
+  ];
+  const seen = new Set(module.exports.map(c => c.setup.mine.map(p => p.card).sort().join('+')));
+  let n = 0;
+  for (const [en, pieces] of ENGINES) {
+    const ps = pieces.map(id), pp = new Set(ps.map(x => proto[x]));
+    for (const T of persist) {
+      if (pp.has(proto[T])) continue;
+      const mine = [...ps.map(x => ({ card: x, at: 'field' })), { card: T, at: 'hand' }];
+      const key = mine.map(p => p.card).sort().join('+');
+      if (seen.has(key)) continue;
+      seen.add(key);
+      module.exports.push({
+        id: 'G' + String(++n).padStart(3, '0'), auto: true, source: 'triple', late: true,
+        name: en + ' に ' + name(T), kind: 'engine', protos: [...pp, proto[T]],
+        how: en + ' が回っているところに ' + name(T) + ' (' + text[T] + ') を足す。',
+        setup: { mine }, act: { play: T }, partner: ps
       });
     }
   }

@@ -700,6 +700,12 @@ GRAVITY 1 (カードを2枚引く。このラインから、またはこのラ�
 - 種類: その手番で得 / プロトコル: CHAOS・GRAVITY
 - 噛み合い +6.7 ±2.7pt / 相方の値 +1.7 ±2.3pt / 逃している得 -0.3 ±1.6pt / 自分で選ぶ 62% (42盤面、自分の手番 2 回先)
 
+### E002 FIRE 3 + PLAGUE 4 に CORRUPTION 2
+FIRE 3 + PLAGUE 4 が回っているところに CORRUPTION 2 (あなたが手札を捨て札にしたあと：相手は手札を1枚捨て札にする。 / カードを1枚引く。あなたは手札を1枚捨て札にする。) を足す。
+
+- 種類: 毎手番効く / プロトコル: FIRE・PLAGUE・CORRUPTION
+- 噛み合い +2.1 ±0.8pt / 相方の値 +6.3 ±0.8pt / 逃している得 -1.0 ±0.7pt / 自分で選ぶ 36% (153盤面、自分の手番 2 回先)
+
 ### F067 GRAVITY 2 で裏の FIRE 0 を表にして撃つ
 FIRE 0 (他のカードを1枚反転させる。カードを2枚引く。 / このカードが覆われることになったとき：先にカードを1枚引き、他のカードを1枚反転させる。) を裏で置いておき、GRAVITY 2 (カードを1枚反転させる。そのカードをこのラインへと移動させる。) で表にすると中段が入る。
 
@@ -861,12 +867,6 @@ SPEED 0 (カードを1枚プレイする。) を裏で置いておき、FEAR 0 (
 
 - 種類: その手番で得 / プロトコル: FEAR・SPEED
 - 噛み合い +9.5 ±3.0pt / 相方の値 -2.8 ±1.4pt / 逃している得 -5.3 ±3.0pt / 自分で選ぶ 26% (42盤面、自分の手番 2 回先)
-
-### E005 WAR 3 + COURAGE 0 に CORRUPTION 2
-WAR 3 + COURAGE 0 が回っているところに CORRUPTION 2 (あなたが手札を捨て札にしたあと：相手は手札を1枚捨て札にする。 / カードを1枚引く。あなたは手札を1枚捨て札にする。) を足す。
-
-- 種類: 毎手番効く / プロトコル: WAR・COURAGE・CORRUPTION
-- 噛み合い +3.5 ±1.0pt / 相方の値 +3.2 ±1.0pt / 逃している得 -1.3 ±0.9pt / 自分で選ぶ 43% (152盤面、自分の手番 2 回先)
 
 ### F150 FEAR 0 で裏の GRAVITY 1 を表にして撃つ
 GRAVITY 1 (カードを2枚引く。このラインから、またはこのラインへとカードを1枚移動させる。) を裏で置いておき、FEAR 0 (あなたの手番中、相手のカードの中段コマンドはないものとして扱う。 / カードを1枚移動させるか反転させる。) で表にすると中段が入る。
@@ -1078,12 +1078,6 @@ PSYCHIC 2 (相手は自分の手札を2枚捨て札にする。あなたは相�
 - 種類: その手番で得 / プロトコル: ICE・PSYCHIC
 - 噛み合い +4.5 ±1.9pt / 相方の値 +0.1 ±1.7pt / 逃している得 -0.5 ±1.0pt / 自分で選ぶ 64% (42盤面、自分の手番 2 回先)
 
-### L102 FIRE 3 + SPIRIT 1 の回しに CORRUPTION 2
-FIRE 3 で毎手番 SPIRIT 1 を表に戻す回しに、CORRUPTION 2 (捨てたあと: 相手も1枚捨てる) を足す。
-
-- 種類: 毎手番効く / プロトコル: FIRE・SPIRIT・CORRUPTION
-- 噛み合い +3.1 ±0.8pt / 相方の値 +1.4 ±0.6pt / 逃している得 -2.8 ±1.0pt / 自分で選ぶ 15% (147盤面、自分の手番 2 回先)
-
 ### A034 SPIRIT 3 + CORRUPTION 2
 SPIRIT 3 (あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる) を場に置き、CORRUPTION 2 (カードを1枚引く。あなたは手札を1枚捨て札にする) を出す。出した手番に1回起きる。
 
@@ -1095,12 +1089,6 @@ LIFE 0 (終了：このカードが覆われている場合、このカードを
 
 - 種類: その手番で得 / プロトコル: HATE・LIFE
 - 噛み合い +2.4 ±1.2pt / 相方の値 +1.7 ±0.9pt / 逃している得 +0.7 ±1.6pt / 自分で選ぶ 45% (38盤面、自分の手番 2 回先)
-
-### E002 FIRE 3 + PLAGUE 4 に CORRUPTION 2
-FIRE 3 + PLAGUE 4 が回っているところに CORRUPTION 2 (あなたが手札を捨て札にしたあと：相手は手札を1枚捨て札にする。 / カードを1枚引く。あなたは手札を1枚捨て札にする。) を足す。
-
-- 種類: 毎手番効く / プロトコル: FIRE・PLAGUE・CORRUPTION
-- 噛み合い +2.5 ±0.8pt / 相方の値 +1.6 ±0.6pt / 逃している得 +0.5 ±0.7pt / 自分で選ぶ 42% (153盤面、自分の手番 2 回先)
 
 ### F092 SMOKE 1 で裏の DEATH 0 を表にして撃つ
 DEATH 0 (他の各ラインにあるカードを1枚ずつ削除する。) を裏で置いておき、SMOKE 1 (あなたのカードを1枚反転させる。あなたはそのカードを移動させることができる。) で表にすると中段が入る。
@@ -1357,6 +1345,12 @@ WAR 0 を一番上に置いたまま ASSIMILATION 4 を出す。「相手はあ�
 
 - 種類: その手番で得 / プロトコル: WAR・ASSIMILATION
 - 噛み合い +1.3 ±1.1pt / 相方の値 +11.0 ±1.0pt / 逃している得 +0.6 ±0.6pt / 自分で選ぶ 51% (153盤面、自分の手番 2 回先)
+
+### E005 WAR 3 + COURAGE 0 に CORRUPTION 2
+WAR 3 + COURAGE 0 が回っているところに CORRUPTION 2 (あなたが手札を捨て札にしたあと：相手は手札を1枚捨て札にする。 / カードを1枚引く。あなたは手札を1枚捨て札にする。) を足す。
+
+- 種類: 毎手番効く / プロトコル: WAR・COURAGE・CORRUPTION
+- 噛み合い +0.7 ±1.1pt / 相方の値 +9.4 ±1.2pt / 逃している得 -1.8 ±0.9pt / 自分で選ぶ 55% (152盤面、自分の手番 2 回先)
 
 ### C009 SPIRIT 0 + CLARITY 0: 手札を溜めて点にする
 SPIRIT 0 の下段でキャッシュの確認 (手札5枚超を捨てる) を飛ばし、手札を溜める。CLARITY 0 の上段は手札1枚ごとにそのラインの合計 +1。
@@ -2003,7 +1997,8 @@ CLARITY 0 (このラインのあなたの合計値は、あなたの手札1枚�
 | T009 | TIME 1 で捨て札を増やして TIME 3 で出す | 次の手番の仕込み | -3.0 ±1.7 | +2.8 ±1.1 | -4.9 ±1.5 | 3% |
 | T010 | LUCK 2 で捨て札を増やして TIME 3 で出す | 次の手番の仕込み | +1.2 ±2.1 | +2.7 ±1.7 | +0.3 ±2.6 | 13% |
 | T016 | PEACE 1 で捨て札を増やして TIME 3 で出す | 次の手番の仕込み | +0.5 ±1.4 | -0.2 ±1.4 | -7.2 ±1.7 | 20% |
-| L101 | FIRE 3 + SPIRIT 1 の回しに SPIRIT 3 | 毎手番効く | +0.8 ±0.9 | +0.0 ±0.7 | -2.8 ±0.9 | 21% |
+| L101 | FIRE 3 + SPIRIT 1 の回しに SPIRIT 3 | 毎手番効く | -0.3 ±1.1 | +2.9 ±0.8 | -2.0 ±0.9 | 23% |
+| L102 | FIRE 3 + SPIRIT 1 の回しに CORRUPTION 2 | 毎手番効く | -0.8 ±0.8 | +4.9 ±0.9 | -1.9 ±0.7 | 74% |
 | D002 | DARKNESS 2 のラインに LOVE 4 で裏向きを作る | その手番で得 | -0.1 ±0.6 | +1.3 ±0.8 | -1.1 ±0.9 | 69% |
 | D003 | DARKNESS 2 のラインに METAL 0 で裏向きを作る | その手番で得 | +0.0 ±1.3 | +2.4 ±1.2 | -1.4 ±0.9 | 41% |
 | D004 | DARKNESS 2 のラインに WATER 0 で裏向きを作る | その手番で得 | +0.1 ±1.3 | +1.5 ±1.1 | -3.8 ±1.2 | 25% |
@@ -2051,9 +2046,6 @@ CLARITY 0 (このラインのあなたの合計値は、あなたの手札1枚�
 | B038 | CORRUPTION 1 で METAL 1 を手札に戻して出し直す | 次の手番の仕込み | +1.4 ±0.8 | -1.2 ±0.6 | -10.4 ±1.4 | 57% |
 | B039 | CORRUPTION 1 で SPEED 0 を手札に戻して出し直す | 次の手番の仕込み | -1.5 ±1.7 | +1.8 ±1.7 | -12.0 ±2.0 | 48% |
 | B040 | CORRUPTION 1 で LUCK 0 を手札に戻して出し直す | 次の手番の仕込み | +2.2 ±2.5 | -2.1 ±1.8 | -9.5 ±2.2 | 44% |
-| E001 | WAR 0 + CHAOS 0 に SPIRIT 3 | 毎手番効く | +1.0 ±1.0 | -0.2 ±0.7 | -3.8 ±1.3 | 29% |
-| E006 | TIME 2 + CLARITY 3 に SPIRIT 3 | 毎手番効く | +1.0 ±0.9 | -0.2 ±0.7 | -4.7 ±1.3 | 16% |
-| E007 | CORRUPTION 6 + CORRUPTION 2 に SPIRIT 3 | 毎手番効く | +1.1 ±1.3 | -0.6 ±0.8 | -3.9 ±1.8 | 32% |
 
 ## 逆効果だったもの
 
@@ -2087,6 +2079,234 @@ CLARITY 0 (このラインのあなたの合計値は、あなたの手札1枚�
 | X033 | WATER 4 で覆いをどけて PSYCHIC 2 を撃ち直す | その手番で得 | +1.3 ±5.4 | +4.7 ±5.3 | -12.1 ±6.3 | 39% |
 | V011 | MIRROR 0 (上段) + GRAVITY 6 | その手番で得 | -4.1 ±15.1 | +13.3 ±9.5 | -15.1 ±9.7 | 14% |
 | V017 | MIRROR 0 (上段) + GRAVITY 2 | その手番で得 | - | -3.3 ±12.6 | +12.2 ±0.3 | 0% |
+| E001 | WAR 0 + CHAOS 0 に SPIRIT 3 | 毎手番効く | - | - | - | - |
 | E003 | PLAGUE 1 + COURAGE 0 + CORRUPTION 2 に SPIRIT 3 | 毎手番効く | - | - | - | - |
 | E004 | PLAGUE 1 + COURAGE 0 + CORRUPTION 2 に WAR 3 | 毎手番効く | - | - | - | - |
+| E006 | TIME 2 + CLARITY 3 に SPIRIT 3 | 毎手番効く | - | - | - | - |
+| E007 | CORRUPTION 6 + CORRUPTION 2 に SPIRIT 3 | 毎手番効く | - | - | - | - |
+| G001 | WAR 0 + CHAOS 0 に DARKNESS 2 | 毎手番効く | - | - | - | - |
+| G002 | WAR 0 + CHAOS 0 に DEATH 1 | 毎手番効く | - | - | - | - |
+| G003 | WAR 0 + CHAOS 0 に FIRE 0 | 毎手番効く | - | - | - | - |
+| G004 | WAR 0 + CHAOS 0 に FIRE 3 | 毎手番効く | - | - | - | - |
+| G005 | WAR 0 + CHAOS 0 に LIFE 0 | 毎手番効く | - | - | - | - |
+| G006 | WAR 0 + CHAOS 0 に LIFE 3 | 毎手番効く | - | - | - | - |
+| G007 | WAR 0 + CHAOS 0 に LIGHT 1 | 毎手番効く | - | - | - | - |
+| G008 | WAR 0 + CHAOS 0 に METAL 0 | 毎手番効く | - | - | - | - |
+| G009 | WAR 0 + CHAOS 0 に METAL 2 | 毎手番効く | - | - | - | - |
+| G010 | WAR 0 + CHAOS 0 に METAL 6 | 毎手番効く | - | - | - | - |
+| G011 | WAR 0 + CHAOS 0 に PLAGUE 0 | 毎手番効く | - | - | - | - |
+| G012 | WAR 0 + CHAOS 0 に PLAGUE 1 | 毎手番効く | - | - | - | - |
+| G013 | WAR 0 + CHAOS 0 に PLAGUE 4 | 毎手番効く | - | - | - | - |
+| G014 | WAR 0 + CHAOS 0 に PSYCHIC 1 | 毎手番効く | - | - | - | - |
+| G015 | WAR 0 + CHAOS 0 に PSYCHIC 4 | 毎手番効く | - | - | - | - |
+| G016 | WAR 0 + CHAOS 0 に SPEED 1 | 毎手番効く | - | - | - | - |
+| G017 | WAR 0 + CHAOS 0 に SPEED 2 | 毎手番効く | - | - | - | - |
+| G018 | WAR 0 + CHAOS 0 に SPEED 3 | 毎手番効く | - | - | - | - |
+| G019 | WAR 0 + CHAOS 0 に SPIRIT 0 | 毎手番効く | - | - | - | - |
+| G020 | WAR 0 + CHAOS 0 に SPIRIT 1 | 毎手番効く | - | - | - | - |
+| G021 | WAR 0 + CHAOS 0 に APATHY 0 | 毎手番効く | - | - | - | - |
+| G022 | WAR 0 + CHAOS 0 に APATHY 2 | 毎手番効く | - | - | - | - |
+| G023 | WAR 0 + CHAOS 0 に HATE 4 | 毎手番効く | - | - | - | - |
+| G024 | WAR 0 + CHAOS 0 に LOVE 1 | 毎手番効く | - | - | - | - |
+| G025 | WAR 0 + CHAOS 0 に CLARITY 0 | 毎手番効く | - | - | - | - |
+| G026 | WAR 0 + CHAOS 0 に CLARITY 1 | 毎手番効く | - | - | - | - |
+| G027 | WAR 0 + CHAOS 0 に CORRUPTION 0 | 毎手番効く | - | - | - | - |
+| G028 | WAR 0 + CHAOS 0 に CORRUPTION 1 | 毎手番効く | - | - | - | - |
+| G029 | WAR 0 + CHAOS 0 に CORRUPTION 2 | 毎手番効く | - | - | - | - |
+| G030 | WAR 0 + CHAOS 0 に CORRUPTION 6 | 毎手番効く | - | - | - | - |
+| G031 | WAR 0 + CHAOS 0 に COURAGE 0 | 毎手番効く | - | - | - | - |
+| G032 | WAR 0 + CHAOS 0 に COURAGE 2 | 毎手番効く | - | - | - | - |
+| G033 | WAR 0 + CHAOS 0 に COURAGE 3 | 毎手番効く | - | - | - | - |
+| G034 | WAR 0 + CHAOS 0 に COURAGE 6 | 毎手番効く | - | - | - | - |
+| G035 | WAR 0 + CHAOS 0 に FEAR 0 | 毎手番効く | - | - | - | - |
+| G036 | WAR 0 + CHAOS 0 に ICE 1 | 毎手番効く | - | - | - | - |
+| G037 | WAR 0 + CHAOS 0 に ICE 3 | 毎手番効く | - | - | - | - |
+| G038 | WAR 0 + CHAOS 0 に ICE 4 | 毎手番効く | - | - | - | - |
+| G039 | WAR 0 + CHAOS 0 に ICE 6 | 毎手番効く | - | - | - | - |
+| G040 | WAR 0 + CHAOS 0 に MIRROR 0 | 毎手番効く | - | - | - | - |
+| G041 | WAR 0 + CHAOS 0 に MIRROR 1 | 毎手番効く | - | - | - | - |
+| G042 | WAR 0 + CHAOS 0 に PEACE 1 | 毎手番効く | - | - | - | - |
+| G043 | WAR 0 + CHAOS 0 に PEACE 4 | 毎手番効く | - | - | - | - |
+| G044 | WAR 0 + CHAOS 0 に SMOKE 2 | 毎手番効く | - | - | - | - |
+| G045 | WAR 0 + CHAOS 0 に TIME 2 | 毎手番効く | - | - | - | - |
+| G046 | WAR 0 + CHAOS 0 に ASSIMILATION 1 | 毎手番効く | - | - | - | - |
+| G047 | WAR 0 + CHAOS 0 に ASSIMILATION 2 | 毎手番効く | - | - | - | - |
+| G048 | WAR 0 + CHAOS 0 に ASSIMILATION 6 | 毎手番効く | - | - | - | - |
+| G049 | WAR 0 + CHAOS 0 に DIVERSITY 0 | 毎手番効く | - | - | - | - |
+| G050 | WAR 0 + CHAOS 0 に DIVERSITY 3 | 毎手番効く | - | - | - | - |
+| G051 | WAR 0 + CHAOS 0 に DIVERSITY 6 | 毎手番効く | - | - | - | - |
+| G052 | WAR 0 + CHAOS 0 に UNITY 0 | 毎手番効く | - | - | - | - |
+| G053 | WAR 0 + CHAOS 0 に UNITY 1 | 毎手番効く | - | - | - | - |
+| G054 | WAR 0 + CHAOS 0 に UNITY 4 | 毎手番効く | - | - | - | - |
+| G055 | FIRE 3 + PLAGUE 4 に DARKNESS 2 | 毎手番効く | - | - | - | - |
+| G056 | FIRE 3 + PLAGUE 4 に DEATH 1 | 毎手番効く | - | - | - | - |
+| G057 | FIRE 3 + PLAGUE 4 に LIFE 0 | 毎手番効く | - | - | - | - |
+| G058 | FIRE 3 + PLAGUE 4 に LIFE 3 | 毎手番効く | - | - | - | - |
+| G059 | FIRE 3 + PLAGUE 4 に LIGHT 1 | 毎手番効く | - | - | - | - |
+| G060 | FIRE 3 + PLAGUE 4 に METAL 0 | 毎手番効く | - | - | - | - |
+| G061 | FIRE 3 + PLAGUE 4 に METAL 2 | 毎手番効く | - | - | - | - |
+| G062 | FIRE 3 + PLAGUE 4 に METAL 6 | 毎手番効く | - | - | - | - |
+| G063 | FIRE 3 + PLAGUE 4 に PSYCHIC 1 | 毎手番効く | - | - | - | - |
+| G064 | FIRE 3 + PLAGUE 4 に PSYCHIC 4 | 毎手番効く | - | - | - | - |
+| G065 | FIRE 3 + PLAGUE 4 に SPEED 1 | 毎手番効く | - | - | - | - |
+| G066 | FIRE 3 + PLAGUE 4 に SPEED 2 | 毎手番効く | - | - | - | - |
+| G067 | FIRE 3 + PLAGUE 4 に SPEED 3 | 毎手番効く | - | - | - | - |
+| G068 | FIRE 3 + PLAGUE 4 に SPIRIT 0 | 毎手番効く | - | - | - | - |
+| G069 | FIRE 3 + PLAGUE 4 に SPIRIT 1 | 毎手番効く | - | - | - | - |
+| G070 | FIRE 3 + PLAGUE 4 に SPIRIT 3 | 毎手番効く | - | - | - | - |
+| G071 | FIRE 3 + PLAGUE 4 に APATHY 0 | 毎手番効く | - | - | - | - |
+| G072 | FIRE 3 + PLAGUE 4 に APATHY 2 | 毎手番効く | - | - | - | - |
+| G073 | FIRE 3 + PLAGUE 4 に HATE 3 | 毎手番効く | - | - | - | - |
+| G074 | FIRE 3 + PLAGUE 4 に HATE 4 | 毎手番効く | - | - | - | - |
+| G075 | FIRE 3 + PLAGUE 4 に LOVE 1 | 毎手番効く | - | - | - | - |
+| G076 | FIRE 3 + PLAGUE 4 に CHAOS 0 | 毎手番効く | - | - | - | - |
+| G077 | FIRE 3 + PLAGUE 4 に CHAOS 3 | 毎手番効く | - | - | - | - |
+| G078 | FIRE 3 + PLAGUE 4 に CHAOS 4 | 毎手番効く | - | - | - | - |
+| G079 | FIRE 3 + PLAGUE 4 に CLARITY 0 | 毎手番効く | - | - | - | - |
+| G080 | FIRE 3 + PLAGUE 4 に CLARITY 1 | 毎手番効く | - | - | - | - |
+| G081 | FIRE 3 + PLAGUE 4 に CORRUPTION 0 | 毎手番効く | - | - | - | - |
+| G082 | FIRE 3 + PLAGUE 4 に CORRUPTION 1 | 毎手番効く | - | - | - | - |
+| G083 | FIRE 3 + PLAGUE 4 に CORRUPTION 6 | 毎手番効く | - | - | - | - |
+| G084 | FIRE 3 + PLAGUE 4 に COURAGE 0 | 毎手番効く | - | - | - | - |
+| G085 | FIRE 3 + PLAGUE 4 に COURAGE 2 | 毎手番効く | - | - | - | - |
+| G086 | FIRE 3 + PLAGUE 4 に COURAGE 3 | 毎手番効く | - | - | - | - |
+| G087 | FIRE 3 + PLAGUE 4 に COURAGE 6 | 毎手番効く | - | - | - | - |
+| G088 | FIRE 3 + PLAGUE 4 に FEAR 0 | 毎手番効く | - | - | - | - |
+| G089 | FIRE 3 + PLAGUE 4 に ICE 1 | 毎手番効く | - | - | - | - |
+| G090 | FIRE 3 + PLAGUE 4 に ICE 3 | 毎手番効く | - | - | - | - |
+| G091 | FIRE 3 + PLAGUE 4 に ICE 4 | 毎手番効く | - | - | - | - |
+| G092 | FIRE 3 + PLAGUE 4 に ICE 6 | 毎手番効く | - | - | - | - |
+| G093 | FIRE 3 + PLAGUE 4 に MIRROR 0 | 毎手番効く | - | - | - | - |
+| G094 | FIRE 3 + PLAGUE 4 に MIRROR 1 | 毎手番効く | - | - | - | - |
+| G095 | FIRE 3 + PLAGUE 4 に MIRROR 4 | 毎手番効く | - | - | - | - |
+| G096 | FIRE 3 + PLAGUE 4 に PEACE 1 | 毎手番効く | - | - | - | - |
+| G097 | FIRE 3 + PLAGUE 4 に PEACE 4 | 毎手番効く | - | - | - | - |
+| G098 | FIRE 3 + PLAGUE 4 に SMOKE 2 | 毎手番効く | - | - | - | - |
+| G099 | FIRE 3 + PLAGUE 4 に TIME 2 | 毎手番効く | - | - | - | - |
+| G100 | FIRE 3 + PLAGUE 4 に WAR 0 | 毎手番効く | - | - | - | - |
+| G101 | FIRE 3 + PLAGUE 4 に WAR 1 | 毎手番効く | - | - | - | - |
+| G102 | FIRE 3 + PLAGUE 4 に WAR 2 | 毎手番効く | - | - | - | - |
+| G103 | FIRE 3 + PLAGUE 4 に WAR 3 | 毎手番効く | - | - | - | - |
+| G104 | FIRE 3 + PLAGUE 4 に ASSIMILATION 1 | 毎手番効く | - | - | - | - |
+| G105 | FIRE 3 + PLAGUE 4 に ASSIMILATION 2 | 毎手番効く | - | - | - | - |
+| G106 | FIRE 3 + PLAGUE 4 に ASSIMILATION 6 | 毎手番効く | - | - | - | - |
+| G107 | FIRE 3 + PLAGUE 4 に DIVERSITY 0 | 毎手番効く | - | - | - | - |
+| G108 | FIRE 3 + PLAGUE 4 に DIVERSITY 3 | 毎手番効く | - | - | - | - |
+| G109 | FIRE 3 + PLAGUE 4 に DIVERSITY 6 | 毎手番効く | - | - | - | - |
+| G110 | FIRE 3 + PLAGUE 4 に UNITY 0 | 毎手番効く | - | - | - | - |
+| G111 | FIRE 3 + PLAGUE 4 に UNITY 1 | 毎手番効く | - | - | - | - |
+| G112 | FIRE 3 + PLAGUE 4 に UNITY 4 | 毎手番効く | - | - | - | - |
+| G113 | WAR 3 + COURAGE 0 に DARKNESS 2 | 毎手番効く | - | - | - | - |
+| G114 | WAR 3 + COURAGE 0 に DEATH 1 | 毎手番効く | - | - | - | - |
+| G115 | WAR 3 + COURAGE 0 に FIRE 0 | 毎手番効く | - | - | - | - |
+| G116 | WAR 3 + COURAGE 0 に FIRE 3 | 毎手番効く | - | - | - | - |
+| G117 | WAR 3 + COURAGE 0 に LIFE 0 | 毎手番効く | - | - | - | - |
+| G118 | WAR 3 + COURAGE 0 に LIFE 3 | 毎手番効く | - | - | - | - |
+| G119 | WAR 3 + COURAGE 0 に LIGHT 1 | 毎手番効く | - | - | - | - |
+| G120 | WAR 3 + COURAGE 0 に METAL 0 | 毎手番効く | - | - | - | - |
+| G121 | WAR 3 + COURAGE 0 に METAL 2 | 毎手番効く | - | - | - | - |
+| G122 | WAR 3 + COURAGE 0 に METAL 6 | 毎手番効く | - | - | - | - |
+| G123 | WAR 3 + COURAGE 0 に PLAGUE 0 | 毎手番効く | - | - | - | - |
+| G124 | WAR 3 + COURAGE 0 に PLAGUE 4 | 毎手番効く | - | - | - | - |
+| G125 | WAR 3 + COURAGE 0 に PSYCHIC 1 | 毎手番効く | - | - | - | - |
+| G126 | WAR 3 + COURAGE 0 に PSYCHIC 4 | 毎手番効く | - | - | - | - |
+| G127 | WAR 3 + COURAGE 0 に SPEED 1 | 毎手番効く | - | - | - | - |
+| G128 | WAR 3 + COURAGE 0 に SPEED 2 | 毎手番効く | - | - | - | - |
+| G129 | WAR 3 + COURAGE 0 に SPEED 3 | 毎手番効く | - | - | - | - |
+| G130 | WAR 3 + COURAGE 0 に SPIRIT 0 | 毎手番効く | - | - | - | - |
+| G131 | WAR 3 + COURAGE 0 に SPIRIT 1 | 毎手番効く | - | - | - | - |
+| G132 | WAR 3 + COURAGE 0 に SPIRIT 3 | 毎手番効く | - | - | - | - |
+| G133 | WAR 3 + COURAGE 0 に APATHY 0 | 毎手番効く | - | - | - | - |
+| G134 | WAR 3 + COURAGE 0 に APATHY 2 | 毎手番効く | - | - | - | - |
+| G135 | WAR 3 + COURAGE 0 に HATE 3 | 毎手番効く | - | - | - | - |
+| G136 | WAR 3 + COURAGE 0 に HATE 4 | 毎手番効く | - | - | - | - |
+| G137 | WAR 3 + COURAGE 0 に LOVE 1 | 毎手番効く | - | - | - | - |
+| G138 | WAR 3 + COURAGE 0 に CHAOS 0 | 毎手番効く | - | - | - | - |
+| G139 | WAR 3 + COURAGE 0 に CHAOS 3 | 毎手番効く | - | - | - | - |
+| G140 | WAR 3 + COURAGE 0 に CHAOS 4 | 毎手番効く | - | - | - | - |
+| G141 | WAR 3 + COURAGE 0 に CLARITY 0 | 毎手番効く | - | - | - | - |
+| G142 | WAR 3 + COURAGE 0 に CLARITY 1 | 毎手番効く | - | - | - | - |
+| G143 | WAR 3 + COURAGE 0 に CORRUPTION 0 | 毎手番効く | - | - | - | - |
+| G144 | WAR 3 + COURAGE 0 に CORRUPTION 1 | 毎手番効く | - | - | - | - |
+| G145 | WAR 3 + COURAGE 0 に CORRUPTION 6 | 毎手番効く | - | - | - | - |
+| G146 | WAR 3 + COURAGE 0 に FEAR 0 | 毎手番効く | - | - | - | - |
+| G147 | WAR 3 + COURAGE 0 に ICE 1 | 毎手番効く | - | - | - | - |
+| G148 | WAR 3 + COURAGE 0 に ICE 3 | 毎手番効く | - | - | - | - |
+| G149 | WAR 3 + COURAGE 0 に ICE 4 | 毎手番効く | - | - | - | - |
+| G150 | WAR 3 + COURAGE 0 に ICE 6 | 毎手番効く | - | - | - | - |
+| G151 | WAR 3 + COURAGE 0 に MIRROR 0 | 毎手番効く | - | - | - | - |
+| G152 | WAR 3 + COURAGE 0 に MIRROR 1 | 毎手番効く | - | - | - | - |
+| G153 | WAR 3 + COURAGE 0 に MIRROR 4 | 毎手番効く | - | - | - | - |
+| G154 | WAR 3 + COURAGE 0 に PEACE 1 | 毎手番効く | - | - | - | - |
+| G155 | WAR 3 + COURAGE 0 に PEACE 4 | 毎手番効く | - | - | - | - |
+| G156 | WAR 3 + COURAGE 0 に SMOKE 2 | 毎手番効く | - | - | - | - |
+| G157 | WAR 3 + COURAGE 0 に TIME 2 | 毎手番効く | - | - | - | - |
+| G158 | WAR 3 + COURAGE 0 に ASSIMILATION 1 | 毎手番効く | - | - | - | - |
+| G159 | WAR 3 + COURAGE 0 に ASSIMILATION 2 | 毎手番効く | - | - | - | - |
+| G160 | WAR 3 + COURAGE 0 に ASSIMILATION 6 | 毎手番効く | - | - | - | - |
+| G161 | WAR 3 + COURAGE 0 に DIVERSITY 0 | 毎手番効く | - | - | - | - |
+| G162 | WAR 3 + COURAGE 0 に DIVERSITY 3 | 毎手番効く | - | - | - | - |
+| G163 | WAR 3 + COURAGE 0 に DIVERSITY 6 | 毎手番効く | - | - | - | - |
+| G164 | WAR 3 + COURAGE 0 に UNITY 0 | 毎手番効く | - | - | - | - |
+| G165 | WAR 3 + COURAGE 0 に UNITY 1 | 毎手番効く | - | - | - | - |
+| G166 | WAR 3 + COURAGE 0 に UNITY 4 | 毎手番効く | - | - | - | - |
+| G167 | SPIRIT 3 + PEACE 1 に DARKNESS 2 | 毎手番効く | - | - | - | - |
+| G168 | SPIRIT 3 + PEACE 1 に DEATH 1 | 毎手番効く | - | - | - | - |
+| G169 | SPIRIT 3 + PEACE 1 に FIRE 0 | 毎手番効く | - | - | - | - |
+| G170 | SPIRIT 3 + PEACE 1 に FIRE 3 | 毎手番効く | - | - | - | - |
+| G171 | SPIRIT 3 + PEACE 1 に LIFE 0 | 毎手番効く | - | - | - | - |
+| G172 | SPIRIT 3 + PEACE 1 に LIFE 3 | 毎手番効く | - | - | - | - |
+| G173 | SPIRIT 3 + PEACE 1 に LIGHT 1 | 毎手番効く | - | - | - | - |
+| G174 | SPIRIT 3 + PEACE 1 に METAL 0 | 毎手番効く | - | - | - | - |
+| G175 | SPIRIT 3 + PEACE 1 に METAL 2 | 毎手番効く | - | - | - | - |
+| G176 | SPIRIT 3 + PEACE 1 に METAL 6 | 毎手番効く | - | - | - | - |
+| G177 | SPIRIT 3 + PEACE 1 に PLAGUE 0 | 毎手番効く | - | - | - | - |
+| G178 | SPIRIT 3 + PEACE 1 に PLAGUE 1 | 毎手番効く | - | - | - | - |
+| G179 | SPIRIT 3 + PEACE 1 に PLAGUE 4 | 毎手番効く | - | - | - | - |
+| G180 | SPIRIT 3 + PEACE 1 に PSYCHIC 1 | 毎手番効く | - | - | - | - |
+| G181 | SPIRIT 3 + PEACE 1 に PSYCHIC 4 | 毎手番効く | - | - | - | - |
+| G182 | SPIRIT 3 + PEACE 1 に SPEED 1 | 毎手番効く | - | - | - | - |
+| G183 | SPIRIT 3 + PEACE 1 に SPEED 2 | 毎手番効く | - | - | - | - |
+| G184 | SPIRIT 3 + PEACE 1 に SPEED 3 | 毎手番効く | - | - | - | - |
+| G185 | SPIRIT 3 + PEACE 1 に APATHY 0 | 毎手番効く | - | - | - | - |
+| G186 | SPIRIT 3 + PEACE 1 に APATHY 2 | 毎手番効く | - | - | - | - |
+| G187 | SPIRIT 3 + PEACE 1 に HATE 3 | 毎手番効く | - | - | - | - |
+| G188 | SPIRIT 3 + PEACE 1 に HATE 4 | 毎手番効く | - | - | - | - |
+| G189 | SPIRIT 3 + PEACE 1 に LOVE 1 | 毎手番効く | - | - | - | - |
+| G190 | SPIRIT 3 + PEACE 1 に CHAOS 0 | 毎手番効く | - | - | - | - |
+| G191 | SPIRIT 3 + PEACE 1 に CHAOS 3 | 毎手番効く | - | - | - | - |
+| G192 | SPIRIT 3 + PEACE 1 に CHAOS 4 | 毎手番効く | - | - | - | - |
+| G193 | SPIRIT 3 + PEACE 1 に CLARITY 0 | 毎手番効く | - | - | - | - |
+| G194 | SPIRIT 3 + PEACE 1 に CLARITY 1 | 毎手番効く | - | - | - | - |
+| G195 | SPIRIT 3 + PEACE 1 に CORRUPTION 0 | 毎手番効く | - | - | - | - |
+| G196 | SPIRIT 3 + PEACE 1 に CORRUPTION 1 | 毎手番効く | - | - | - | - |
+| G197 | SPIRIT 3 + PEACE 1 に CORRUPTION 2 | 毎手番効く | - | - | - | - |
+| G198 | SPIRIT 3 + PEACE 1 に CORRUPTION 6 | 毎手番効く | - | - | - | - |
+| G199 | SPIRIT 3 + PEACE 1 に COURAGE 0 | 毎手番効く | - | - | - | - |
+| G200 | SPIRIT 3 + PEACE 1 に COURAGE 2 | 毎手番効く | - | - | - | - |
+| G201 | SPIRIT 3 + PEACE 1 に COURAGE 3 | 毎手番効く | - | - | - | - |
+| G202 | SPIRIT 3 + PEACE 1 に COURAGE 6 | 毎手番効く | - | - | - | - |
+| G203 | SPIRIT 3 + PEACE 1 に FEAR 0 | 毎手番効く | - | - | - | - |
+| G204 | SPIRIT 3 + PEACE 1 に ICE 1 | 毎手番効く | - | - | - | - |
+| G205 | SPIRIT 3 + PEACE 1 に ICE 3 | 毎手番効く | - | - | - | - |
+| G206 | SPIRIT 3 + PEACE 1 に ICE 4 | 毎手番効く | - | - | - | - |
+| G207 | SPIRIT 3 + PEACE 1 に ICE 6 | 毎手番効く | - | - | - | - |
+| G208 | SPIRIT 3 + PEACE 1 に MIRROR 0 | 毎手番効く | - | - | - | - |
+| G209 | SPIRIT 3 + PEACE 1 に MIRROR 1 | 毎手番効く | - | - | - | - |
+| G210 | SPIRIT 3 + PEACE 1 に MIRROR 4 | 毎手番効く | - | - | - | - |
+| G211 | SPIRIT 3 + PEACE 1 に SMOKE 2 | 毎手番効く | - | - | - | - |
+| G212 | SPIRIT 3 + PEACE 1 に TIME 2 | 毎手番効く | - | - | - | - |
+| G213 | SPIRIT 3 + PEACE 1 に WAR 0 | 毎手番効く | - | - | - | - |
+| G214 | SPIRIT 3 + PEACE 1 に WAR 1 | 毎手番効く | - | - | - | - |
+| G215 | SPIRIT 3 + PEACE 1 に WAR 2 | 毎手番効く | - | - | - | - |
+| G216 | SPIRIT 3 + PEACE 1 に WAR 3 | 毎手番効く | - | - | - | - |
+| G217 | SPIRIT 3 + PEACE 1 に ASSIMILATION 1 | 毎手番効く | - | - | - | - |
+| G218 | SPIRIT 3 + PEACE 1 に ASSIMILATION 2 | 毎手番効く | - | - | - | - |
+| G219 | SPIRIT 3 + PEACE 1 に ASSIMILATION 6 | 毎手番効く | - | - | - | - |
+| G220 | SPIRIT 3 + PEACE 1 に DIVERSITY 0 | 毎手番効く | - | - | - | - |
+| G221 | SPIRIT 3 + PEACE 1 に DIVERSITY 3 | 毎手番効く | - | - | - | - |
+| G222 | SPIRIT 3 + PEACE 1 に DIVERSITY 6 | 毎手番効く | - | - | - | - |
+| G223 | SPIRIT 3 + PEACE 1 に UNITY 0 | 毎手番効く | - | - | - | - |
+| G224 | SPIRIT 3 + PEACE 1 に UNITY 1 | 毎手番効く | - | - | - | - |
+| G225 | SPIRIT 3 + PEACE 1 に UNITY 4 | 毎手番効く | - | - | - | - |
 

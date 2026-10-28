@@ -25348,18 +25348,18 @@
    "verdict": "none",
    "verdictLabel": "効き目が見えない",
    "lab": {
-    "n": 149,
+    "n": 148,
     "horizon": 2,
     "playout": false,
-    "interaction": 0.8,
-    "interactionSe": 0.9,
-    "partnerValue": 0,
-    "partnerValueSe": 0.7,
-    "synergy": 0.7,
+    "interaction": -0.3,
+    "interactionSe": 1.1,
+    "partnerValue": 2.9,
+    "partnerValueSe": 0.8,
+    "synergy": 2.6,
     "synergySe": 0.9,
-    "missed": -2.8,
+    "missed": -2,
     "missedSe": 0.9,
-    "aiPicked": 21
+    "aiPicked": 23
    },
    "note": null
   },
@@ -25379,21 +25379,21 @@
     "CORRUPTION"
    ],
    "how": "FIRE 3 で毎手番 SPIRIT 1 を表に戻す回しに、CORRUPTION 2 (捨てたあと: 相手も1枚捨てる) を足す。",
-   "verdict": "strong",
-   "verdictLabel": "噛み合う",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
    "lab": {
-    "n": 147,
+    "n": 149,
     "horizon": 2,
     "playout": false,
-    "interaction": 3.1,
+    "interaction": -0.8,
     "interactionSe": 0.8,
-    "partnerValue": 1.4,
-    "partnerValueSe": 0.6,
-    "synergy": 4.5,
-    "synergySe": 0.8,
-    "missed": -2.8,
-    "missedSe": 1,
-    "aiPicked": 15
+    "partnerValue": 4.9,
+    "partnerValueSe": 0.9,
+    "synergy": 4.1,
+    "synergySe": 1.1,
+    "missed": -1.9,
+    "missedSe": 0.7,
+    "aiPicked": 74
    },
    "note": null
   },
@@ -27089,22 +27089,9 @@
     "SPIRIT"
    ],
    "how": "WAR 0 + CHAOS 0 が回っているところに SPIRIT 3 (あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を足す。",
-   "verdict": "none",
-   "verdictLabel": "効き目が見えない",
-   "lab": {
-    "n": 102,
-    "horizon": 2,
-    "playout": false,
-    "interaction": 1,
-    "interactionSe": 1,
-    "partnerValue": -0.2,
-    "partnerValueSe": 0.7,
-    "synergy": 0.9,
-    "synergySe": 1.1,
-    "missed": -3.8,
-    "missedSe": 1.3,
-    "aiPicked": 29
-   },
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
    "note": null
   },
   {
@@ -27129,15 +27116,15 @@
     "n": 153,
     "horizon": 2,
     "playout": false,
-    "interaction": 2.5,
+    "interaction": 2.1,
     "interactionSe": 0.8,
-    "partnerValue": 1.6,
-    "partnerValueSe": 0.6,
-    "synergy": 4.1,
-    "synergySe": 0.7,
-    "missed": 0.5,
+    "partnerValue": 6.3,
+    "partnerValueSe": 0.8,
+    "synergy": 8.4,
+    "synergySe": 0.9,
+    "missed": -1,
     "missedSe": 0.7,
-    "aiPicked": 42
+    "aiPicked": 36
    },
    "note": null
   },
@@ -27203,21 +27190,21 @@
     "CORRUPTION"
    ],
    "how": "WAR 3 + COURAGE 0 が回っているところに CORRUPTION 2 (あなたが手札を捨て札にしたあと：相手は手札を1枚捨て札にする。 / カードを1枚引く。あなたは手札を1枚捨て札にする。) を足す。",
-   "verdict": "strong",
-   "verdictLabel": "噛み合う",
+   "verdict": "weak",
+   "verdictLabel": "相方が強い (噛み合いは小さい)",
    "lab": {
     "n": 152,
     "horizon": 2,
     "playout": false,
-    "interaction": 3.5,
-    "interactionSe": 1,
-    "partnerValue": 3.2,
-    "partnerValueSe": 1,
-    "synergy": 6.7,
+    "interaction": 0.7,
+    "interactionSe": 1.1,
+    "partnerValue": 9.4,
+    "partnerValueSe": 1.2,
+    "synergy": 10.1,
     "synergySe": 1.1,
-    "missed": -1.3,
+    "missed": -1.8,
     "missedSe": 0.9,
-    "aiPicked": 43
+    "aiPicked": 55
    },
    "note": null
   },
@@ -27237,22 +27224,9 @@
     "SPIRIT"
    ],
    "how": "TIME 2 + CLARITY 3 が回っているところに SPIRIT 3 (あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を足す。",
-   "verdict": "none",
-   "verdictLabel": "効き目が見えない",
-   "lab": {
-    "n": 152,
-    "horizon": 2,
-    "playout": false,
-    "interaction": 1,
-    "interactionSe": 0.9,
-    "partnerValue": -0.2,
-    "partnerValueSe": 0.7,
-    "synergy": 0.7,
-    "synergySe": 0.8,
-    "missed": -4.7,
-    "missedSe": 1.3,
-    "aiPicked": 16
-   },
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
    "note": null
   },
   {
@@ -27270,22 +27244,4734 @@
     "SPIRIT"
    ],
    "how": "CORRUPTION 6 + CORRUPTION 2 が回っているところに SPIRIT 3 (あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を足す。",
-   "verdict": "none",
-   "verdictLabel": "効き目が見えない",
-   "lab": {
-    "n": 101,
-    "horizon": 2,
-    "playout": false,
-    "interaction": 1.1,
-    "interactionSe": 1.3,
-    "partnerValue": -0.6,
-    "partnerValueSe": 0.8,
-    "synergy": 0.5,
-    "synergySe": 1.2,
-    "missed": -3.9,
-    "missedSe": 1.8,
-    "aiPicked": 32
-   },
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G001",
+   "name": "WAR 0 + CHAOS 0 に DARKNESS 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "DARKNESS_3"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "DARKNESS"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに DARKNESS 2 (このスタックにあるすべての裏向きのカードの値はそれぞれ4になる。 / このラインにある、覆われているカードを1枚反転させることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G002",
+   "name": "WAR 0 + CHAOS 0 に DEATH 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "DEATH_2"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "DEATH"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに DEATH 1 (開始：カードを1枚引くことができる。そうした場合、他のカードを1枚削除し、そのあとこのカードを削除する。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G003",
+   "name": "WAR 0 + CHAOS 0 に FIRE 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "FIRE_1"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "FIRE"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに FIRE 0 (他のカードを1枚反転させる。カードを2枚引く。 / このカードが覆われることになったとき：先にカードを1枚引き、他のカードを1枚反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G004",
+   "name": "WAR 0 + CHAOS 0 に FIRE 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "FIRE_4"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "FIRE"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに FIRE 3 (終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G005",
+   "name": "WAR 0 + CHAOS 0 に LIFE 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "LIFE_1"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "LIFE"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに LIFE 0 (終了：このカードが覆われている場合、このカードを削除する。 / あなたのデッキの一番上のカードを、あなたのカードがある各ラインに裏向きで1枚ずつプレイする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G006",
+   "name": "WAR 0 + CHAOS 0 に LIFE 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "LIFE_4"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "LIFE"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに LIFE 3 (このカードが覆われることになったとき：先にあなたのデッキの一番上のカードを他の1ラインに裏向きで1枚プレイする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G007",
+   "name": "WAR 0 + CHAOS 0 に LIGHT 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "LIGHT_2"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "LIGHT"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに LIGHT 1 (終了：カードを1枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G008",
+   "name": "WAR 0 + CHAOS 0 に METAL 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "METAL_1"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "METAL"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに METAL 0 (このラインでの相手の合計値は2減る。 / カードを1枚反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G009",
+   "name": "WAR 0 + CHAOS 0 に METAL 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "METAL_3"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "METAL"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに METAL 2 (相手はこのラインにカードを裏向きでプレイすることはできない。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G010",
+   "name": "WAR 0 + CHAOS 0 に METAL 6",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "METAL_6"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "METAL"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに METAL 6 (このカードが覆われるか反転することになったとき：先にこのカードを削除する。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G011",
+   "name": "WAR 0 + CHAOS 0 に PLAGUE 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "PLAGUE_1"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "PLAGUE"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに PLAGUE 0 (相手は手札を1枚捨て札にする。 / 相手はこのラインにカードをプレイすることはできない。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G012",
+   "name": "WAR 0 + CHAOS 0 に PLAGUE 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "PLAGUE_2"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "PLAGUE"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに PLAGUE 1 (相手が手札を捨て札にしたあと：カードを1枚引く。 / 相手は手札を1枚捨て札にする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G013",
+   "name": "WAR 0 + CHAOS 0 に PLAGUE 4",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "PLAGUE_5"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "PLAGUE"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに PLAGUE 4 (終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G014",
+   "name": "WAR 0 + CHAOS 0 に PSYCHIC 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "PSYCHIC_2"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "PSYCHIC"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに PSYCHIC 1 (相手はカードを裏向きでのみプレイすることができる。 / 開始：このカードを反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G015",
+   "name": "WAR 0 + CHAOS 0 に PSYCHIC 4",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "PSYCHIC_5"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "PSYCHIC"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに PSYCHIC 4 (終了：あなたは相手のカードを1枚戻すことができる。そうした場合、このカードを反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G016",
+   "name": "WAR 0 + CHAOS 0 に SPEED 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "SPEED_2"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "SPEED"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに SPEED 1 (あなたがキャッシュをクリアしたあと：カードを1枚引く。 / カードを2枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G017",
+   "name": "WAR 0 + CHAOS 0 に SPEED 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "SPEED_3"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "SPEED"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに SPEED 2 (このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G018",
+   "name": "WAR 0 + CHAOS 0 に SPEED 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "SPEED_4"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "SPEED"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに SPEED 3 (あなたの他のカードを1枚移動させる。 / 終了：あなたは自分のカードを1枚移動させることができる。そうした場合、このカードを反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G019",
+   "name": "WAR 0 + CHAOS 0 に SPIRIT 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "SPIRIT_1"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "SPIRIT"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに SPIRIT 0 (リフレッシュする。カードを1枚引く。 / あなたのキャッシュの確認フェイズを省略する。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G020",
+   "name": "WAR 0 + CHAOS 0 に SPIRIT 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "SPIRIT_2"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "SPIRIT"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに SPIRIT 1 (あなたがカードを表向きでプレイするときには、プロトコルを対応させずにプレイすることができる。 / カードを2枚引く。 / 開始：あなたは手札を1枚捨て札にするか、このカードを反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G021",
+   "name": "WAR 0 + CHAOS 0 に APATHY 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "APATHY_1"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "APATHY"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに APATHY 0 (このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G022",
+   "name": "WAR 0 + CHAOS 0 に APATHY 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "APATHY_3"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "APATHY"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに APATHY 2 (このラインにあるカードのすべての中段コマンドを無視する。 / このカードが覆われることになったとき：先に、このカードを反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G023",
+   "name": "WAR 0 + CHAOS 0 に HATE 4",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "HATE_5"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "HATE"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに HATE 4 (このカードが覆われることになったとき：先に、このラインにある値が最も小さく覆われているカードを１枚削除する。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G024",
+   "name": "WAR 0 + CHAOS 0 に LOVE 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "LOVE_1"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "LOVE"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに LOVE 1 (あなたは相手のデッキの一番上のカードを引く。 / 終了：あなたの手札一枚を相手に与えることができる。そうした場合、カードを２枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G025",
+   "name": "WAR 0 + CHAOS 0 に CLARITY 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "CLARITY_1"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "CLARITY"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに CLARITY 0 (このラインのあなたの合計値は、あなたの手札1枚ごとに1枚増える。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G026",
+   "name": "WAR 0 + CHAOS 0 に CLARITY 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "CLARITY_2"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "CLARITY"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに CLARITY 1 (開始：あなたのデッキの一番上のカードを公開する。そのカードを捨て札にすることができる。 / 相手は自身の手札をすべて公開する。 / このカードが覆われることになったとき：先にカードを3枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G027",
+   "name": "WAR 0 + CHAOS 0 に CORRUPTION 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "CORRUPTION_1"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "CORRUPTION"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに CORRUPTION 0 (開始：このスタック内の、覆われているか覆われていない他の表向きのカードを1枚反転させる。 / このカードは、プロトコルに対応させずに、どちらかのプレイヤー側でプレイすることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G028",
+   "name": "WAR 0 + CHAOS 0 に CORRUPTION 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "CORRUPTION_2"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "CORRUPTION"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに CORRUPTION 1 (カードを1枚戻す。 / カードが相手の手札に戻るとき：そうする代わりに、そのカードを相手のデッキの一番上に裏向きで置く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G029",
+   "name": "WAR 0 + CHAOS 0 に CORRUPTION 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "CORRUPTION_3"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "CORRUPTION"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに CORRUPTION 2 (あなたが手札を捨て札にしたあと：相手は手札を1枚捨て札にする。 / カードを1枚引く。あなたは手札を1枚捨て札にする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G030",
+   "name": "WAR 0 + CHAOS 0 に CORRUPTION 6",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "CORRUPTION_6"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "CORRUPTION"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに CORRUPTION 6 (終了：あなたは手札を1枚捨て札にするか、このカードを削除する。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G031",
+   "name": "WAR 0 + CHAOS 0 に COURAGE 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "COURAGE_1"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "COURAGE"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに COURAGE 0 (開始：あなたの手札が1枚もない場合、カードを1枚引く。 / カードを1枚引く。 / 終了：あなたは手札を1枚捨て札にすることができる。そうした場合、相手は手札を1枚捨て札にする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G032",
+   "name": "WAR 0 + CHAOS 0 に COURAGE 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "COURAGE_3"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "COURAGE"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに COURAGE 2 (カードを1枚引く。 / 終了：このラインで、あなたの合計値より相手の合計値が大きい場合、カードを1枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G033",
+   "name": "WAR 0 + CHAOS 0 に COURAGE 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "COURAGE_4"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "COURAGE"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに COURAGE 3 (終了：相手の最も大きい合計値のラインに、このカードを移動させることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G034",
+   "name": "WAR 0 + CHAOS 0 に COURAGE 6",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "COURAGE_6"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "COURAGE"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに COURAGE 6 (終了：このラインで、あなたの合計値より相手の合計値が大きい場合、このカードを反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G035",
+   "name": "WAR 0 + CHAOS 0 に FEAR 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "FEAR_1"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "FEAR"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに FEAR 0 (あなたの手番中、相手のカードの中段コマンドはないものとして扱う。 / カードを1枚移動させるか反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G036",
+   "name": "WAR 0 + CHAOS 0 に ICE 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "ICE_1"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "ICE"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに ICE 1 (あなたはこのカードを移動させることができる。 / 相手がこのラインにカードを1枚プレイしたあと：相手は自身の手札を1枚捨て札にする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G037",
+   "name": "WAR 0 + CHAOS 0 に ICE 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "ICE_3"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "ICE"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに ICE 3 (終了：このカードが覆われている場合、このカードを移動させることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G038",
+   "name": "WAR 0 + CHAOS 0 に ICE 4",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "ICE_4"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "ICE"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに ICE 4 (このカードを反転させることはできない。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G039",
+   "name": "WAR 0 + CHAOS 0 に ICE 6",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "ICE_6"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "ICE"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに ICE 6 (あなたの手札が1枚以上ある場合、あなたはカードを引くことはできない。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G040",
+   "name": "WAR 0 + CHAOS 0 に MIRROR 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "MIRROR_1"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "MIRROR"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに MIRROR 0 (このラインのあなたの合計値は、このラインにある相手のカード1枚ごとに1増える。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G041",
+   "name": "WAR 0 + CHAOS 0 に MIRROR 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "MIRROR_2"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "MIRROR"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに MIRROR 1 (終了：あなたは相手のカードのうち1枚の中段コマンドを、そのコマンドがこのカード上にあるかのように解決できる) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G042",
+   "name": "WAR 0 + CHAOS 0 に PEACE 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "PEACE_1"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "PEACE"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに PEACE 1 (両プレイヤーはすべての手札を捨て札にする。 / 終了：あなたの手札が1枚もない場合、カードを1枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G043",
+   "name": "WAR 0 + CHAOS 0 に PEACE 4",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "PEACE_4"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "PEACE"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに PEACE 4 (相手の手番中にあなたが捨て札にしたあと：カードを1枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G044",
+   "name": "WAR 0 + CHAOS 0 に SMOKE 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "SMOKE_3"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "SMOKE"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに SMOKE 2 (このラインのあなたの合計値は、このラインにある裏向きのカード1枚ごとに1増える。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G045",
+   "name": "WAR 0 + CHAOS 0 に TIME 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "TIME_3"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "TIME"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに TIME 2 (あなたがデッキをシャッフルしたあと：カードを1枚引き、このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。 / あなたの捨て札置き場にカードがある場合、あなたは捨て札置き場にあるすべてのカードをデッキに戻してシャッフルすることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G046",
+   "name": "WAR 0 + CHAOS 0 に ASSIMILATION 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "ASSIMILATION_2"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "ASSIMILATION"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに ASSIMILATION 1 (あなたの手札を1枚捨て札にする。リフレッシュする。 / 誰かがリフレッシュしたあと：相手のデッキの一番上のカードを引く。あなたは手札を1枚捨て札にし、それを相手の捨て札置き場に置く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G047",
+   "name": "WAR 0 + CHAOS 0 に ASSIMILATION 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "ASSIMILATION_3"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "ASSIMILATION"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに ASSIMILATION 2 (終了：相手のデッキの一番上のカードを、このスタックに裏向きでプレイする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G048",
+   "name": "WAR 0 + CHAOS 0 に ASSIMILATION 6",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "ASSIMILATION_6"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "ASSIMILATION"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに ASSIMILATION 6 (終了：あなたのデッキの一番上のカードを、相手側の任意のスタックに裏向きでプレイする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G049",
+   "name": "WAR 0 + CHAOS 0 に DIVERSITY 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "DIVERSITY_1"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "DIVERSITY"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに DIVERSITY 0 (フィールドに6種類のプロトコルのコマンドカードがある場合、「DIVERSITY」プロトコルカードをコンパイル完了面にする。 / 終了：あなたはこのラインに「DIVERSITY」以外のカードをプレイすることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G050",
+   "name": "WAR 0 + CHAOS 0 に DIVERSITY 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "DIVERSITY_3"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "DIVERSITY"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに DIVERSITY 3 (このスタックに「DIVERSITY」以外の表向きのカードがある場合、このラインのあなたの合計値は2増える。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G051",
+   "name": "WAR 0 + CHAOS 0 に DIVERSITY 6",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "DIVERSITY_6"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "DIVERSITY"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに DIVERSITY 6 (終了：フィールドにあるコマンドカードの、プロトコルの種類数が3以下の場合、このカードを削除する。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G052",
+   "name": "WAR 0 + CHAOS 0 に UNITY 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "UNITY_1"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "UNITY"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに UNITY 0 (フィールドに他の「UNITY」カードがある場合、カードを1枚反転させるか、カードを1枚引く。 / このカードが「UNITY」カードによって覆われることになったとき：先に、カードを1枚反転させるか、カードを1枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G053",
+   "name": "WAR 0 + CHAOS 0 に UNITY 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "UNITY_2"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "UNITY"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに UNITY 1 (開始：このカードが覆われている場合、あなたはこのカードを移動させることができる。 / フィールド「UNITY」カードが5枚以上ある場合、「UNITY」プロトコルカードのコンパイル完了面を表向きにし、そのラインにあるすべてのカードを削除する。 / このラインには「UNITY」カードを表向きでプレイすることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G054",
+   "name": "WAR 0 + CHAOS 0 に UNITY 4",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_1",
+    "CHAOS_1",
+    "UNITY_5"
+   ],
+   "protocols": [
+    "WAR",
+    "CHAOS",
+    "UNITY"
+   ],
+   "how": "WAR 0 + CHAOS 0 が回っているところに UNITY 4 (終了：あなたの手札が1枚もない場合、あなたのデッキのカードをすべて公開し、そこからすべての「UNITY」カードを引いて、あなたのデッキをシャッフルする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G055",
+   "name": "FIRE 3 + PLAGUE 4 に DARKNESS 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "DARKNESS_3"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "DARKNESS"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに DARKNESS 2 (このスタックにあるすべての裏向きのカードの値はそれぞれ4になる。 / このラインにある、覆われているカードを1枚反転させることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G056",
+   "name": "FIRE 3 + PLAGUE 4 に DEATH 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "DEATH_2"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "DEATH"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに DEATH 1 (開始：カードを1枚引くことができる。そうした場合、他のカードを1枚削除し、そのあとこのカードを削除する。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G057",
+   "name": "FIRE 3 + PLAGUE 4 に LIFE 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "LIFE_1"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "LIFE"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに LIFE 0 (終了：このカードが覆われている場合、このカードを削除する。 / あなたのデッキの一番上のカードを、あなたのカードがある各ラインに裏向きで1枚ずつプレイする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G058",
+   "name": "FIRE 3 + PLAGUE 4 に LIFE 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "LIFE_4"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "LIFE"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに LIFE 3 (このカードが覆われることになったとき：先にあなたのデッキの一番上のカードを他の1ラインに裏向きで1枚プレイする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G059",
+   "name": "FIRE 3 + PLAGUE 4 に LIGHT 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "LIGHT_2"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "LIGHT"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに LIGHT 1 (終了：カードを1枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G060",
+   "name": "FIRE 3 + PLAGUE 4 に METAL 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "METAL_1"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "METAL"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに METAL 0 (このラインでの相手の合計値は2減る。 / カードを1枚反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G061",
+   "name": "FIRE 3 + PLAGUE 4 に METAL 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "METAL_3"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "METAL"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに METAL 2 (相手はこのラインにカードを裏向きでプレイすることはできない。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G062",
+   "name": "FIRE 3 + PLAGUE 4 に METAL 6",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "METAL_6"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "METAL"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに METAL 6 (このカードが覆われるか反転することになったとき：先にこのカードを削除する。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G063",
+   "name": "FIRE 3 + PLAGUE 4 に PSYCHIC 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "PSYCHIC_2"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "PSYCHIC"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに PSYCHIC 1 (相手はカードを裏向きでのみプレイすることができる。 / 開始：このカードを反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G064",
+   "name": "FIRE 3 + PLAGUE 4 に PSYCHIC 4",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "PSYCHIC_5"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "PSYCHIC"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに PSYCHIC 4 (終了：あなたは相手のカードを1枚戻すことができる。そうした場合、このカードを反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G065",
+   "name": "FIRE 3 + PLAGUE 4 に SPEED 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "SPEED_2"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "SPEED"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに SPEED 1 (あなたがキャッシュをクリアしたあと：カードを1枚引く。 / カードを2枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G066",
+   "name": "FIRE 3 + PLAGUE 4 に SPEED 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "SPEED_3"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "SPEED"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに SPEED 2 (このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G067",
+   "name": "FIRE 3 + PLAGUE 4 に SPEED 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "SPEED_4"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "SPEED"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに SPEED 3 (あなたの他のカードを1枚移動させる。 / 終了：あなたは自分のカードを1枚移動させることができる。そうした場合、このカードを反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G068",
+   "name": "FIRE 3 + PLAGUE 4 に SPIRIT 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "SPIRIT_1"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "SPIRIT"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに SPIRIT 0 (リフレッシュする。カードを1枚引く。 / あなたのキャッシュの確認フェイズを省略する。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G069",
+   "name": "FIRE 3 + PLAGUE 4 に SPIRIT 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "SPIRIT_2"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "SPIRIT"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに SPIRIT 1 (あなたがカードを表向きでプレイするときには、プロトコルを対応させずにプレイすることができる。 / カードを2枚引く。 / 開始：あなたは手札を1枚捨て札にするか、このカードを反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G070",
+   "name": "FIRE 3 + PLAGUE 4 に SPIRIT 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "SPIRIT_4"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "SPIRIT"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに SPIRIT 3 (あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G071",
+   "name": "FIRE 3 + PLAGUE 4 に APATHY 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "APATHY_1"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "APATHY"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに APATHY 0 (このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G072",
+   "name": "FIRE 3 + PLAGUE 4 に APATHY 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "APATHY_3"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "APATHY"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに APATHY 2 (このラインにあるカードのすべての中段コマンドを無視する。 / このカードが覆われることになったとき：先に、このカードを反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G073",
+   "name": "FIRE 3 + PLAGUE 4 に HATE 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "HATE_4"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "HATE"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに HATE 3 (あなたがカードを１枚削除したあと：カードを１枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G074",
+   "name": "FIRE 3 + PLAGUE 4 に HATE 4",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "HATE_5"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "HATE"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに HATE 4 (このカードが覆われることになったとき：先に、このラインにある値が最も小さく覆われているカードを１枚削除する。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G075",
+   "name": "FIRE 3 + PLAGUE 4 に LOVE 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "LOVE_1"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "LOVE"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに LOVE 1 (あなたは相手のデッキの一番上のカードを引く。 / 終了：あなたの手札一枚を相手に与えることができる。そうした場合、カードを２枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G076",
+   "name": "FIRE 3 + PLAGUE 4 に CHAOS 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "CHAOS_1"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "CHAOS"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに CHAOS 0 (各ラインで、覆われているカードを1枚ずつ反転させる。 / 開始：あなたは相手のデッキの一番上のカードを引く。相手はあなたのデッキの一番上のカードを引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G077",
+   "name": "FIRE 3 + PLAGUE 4 に CHAOS 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "CHAOS_4"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "CHAOS"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに CHAOS 3 (このカードはプロトコルを対応させずプレイすることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G078",
+   "name": "FIRE 3 + PLAGUE 4 に CHAOS 4",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "CHAOS_5"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "CHAOS"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに CHAOS 4 (終了：あなたのすべての手札を捨て札にする。捨て札にした枚数と同じ枚数のカードを引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G079",
+   "name": "FIRE 3 + PLAGUE 4 に CLARITY 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "CLARITY_1"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "CLARITY"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに CLARITY 0 (このラインのあなたの合計値は、あなたの手札1枚ごとに1枚増える。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G080",
+   "name": "FIRE 3 + PLAGUE 4 に CLARITY 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "CLARITY_2"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "CLARITY"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに CLARITY 1 (開始：あなたのデッキの一番上のカードを公開する。そのカードを捨て札にすることができる。 / 相手は自身の手札をすべて公開する。 / このカードが覆われることになったとき：先にカードを3枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G081",
+   "name": "FIRE 3 + PLAGUE 4 に CORRUPTION 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "CORRUPTION_1"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "CORRUPTION"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに CORRUPTION 0 (開始：このスタック内の、覆われているか覆われていない他の表向きのカードを1枚反転させる。 / このカードは、プロトコルに対応させずに、どちらかのプレイヤー側でプレイすることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G082",
+   "name": "FIRE 3 + PLAGUE 4 に CORRUPTION 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "CORRUPTION_2"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "CORRUPTION"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに CORRUPTION 1 (カードを1枚戻す。 / カードが相手の手札に戻るとき：そうする代わりに、そのカードを相手のデッキの一番上に裏向きで置く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G083",
+   "name": "FIRE 3 + PLAGUE 4 に CORRUPTION 6",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "CORRUPTION_6"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "CORRUPTION"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに CORRUPTION 6 (終了：あなたは手札を1枚捨て札にするか、このカードを削除する。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G084",
+   "name": "FIRE 3 + PLAGUE 4 に COURAGE 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "COURAGE_1"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "COURAGE"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに COURAGE 0 (開始：あなたの手札が1枚もない場合、カードを1枚引く。 / カードを1枚引く。 / 終了：あなたは手札を1枚捨て札にすることができる。そうした場合、相手は手札を1枚捨て札にする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G085",
+   "name": "FIRE 3 + PLAGUE 4 に COURAGE 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "COURAGE_3"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "COURAGE"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに COURAGE 2 (カードを1枚引く。 / 終了：このラインで、あなたの合計値より相手の合計値が大きい場合、カードを1枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G086",
+   "name": "FIRE 3 + PLAGUE 4 に COURAGE 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "COURAGE_4"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "COURAGE"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに COURAGE 3 (終了：相手の最も大きい合計値のラインに、このカードを移動させることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G087",
+   "name": "FIRE 3 + PLAGUE 4 に COURAGE 6",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "COURAGE_6"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "COURAGE"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに COURAGE 6 (終了：このラインで、あなたの合計値より相手の合計値が大きい場合、このカードを反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G088",
+   "name": "FIRE 3 + PLAGUE 4 に FEAR 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "FEAR_1"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "FEAR"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに FEAR 0 (あなたの手番中、相手のカードの中段コマンドはないものとして扱う。 / カードを1枚移動させるか反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G089",
+   "name": "FIRE 3 + PLAGUE 4 に ICE 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "ICE_1"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "ICE"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに ICE 1 (あなたはこのカードを移動させることができる。 / 相手がこのラインにカードを1枚プレイしたあと：相手は自身の手札を1枚捨て札にする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G090",
+   "name": "FIRE 3 + PLAGUE 4 に ICE 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "ICE_3"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "ICE"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに ICE 3 (終了：このカードが覆われている場合、このカードを移動させることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G091",
+   "name": "FIRE 3 + PLAGUE 4 に ICE 4",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "ICE_4"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "ICE"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに ICE 4 (このカードを反転させることはできない。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G092",
+   "name": "FIRE 3 + PLAGUE 4 に ICE 6",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "ICE_6"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "ICE"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに ICE 6 (あなたの手札が1枚以上ある場合、あなたはカードを引くことはできない。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G093",
+   "name": "FIRE 3 + PLAGUE 4 に MIRROR 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "MIRROR_1"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "MIRROR"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに MIRROR 0 (このラインのあなたの合計値は、このラインにある相手のカード1枚ごとに1増える。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G094",
+   "name": "FIRE 3 + PLAGUE 4 に MIRROR 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "MIRROR_2"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "MIRROR"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに MIRROR 1 (終了：あなたは相手のカードのうち1枚の中段コマンドを、そのコマンドがこのカード上にあるかのように解決できる) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G095",
+   "name": "FIRE 3 + PLAGUE 4 に MIRROR 4",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "MIRROR_5"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "MIRROR"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに MIRROR 4 (相手がカードを引いたあと：カードを1枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G096",
+   "name": "FIRE 3 + PLAGUE 4 に PEACE 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "PEACE_1"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "PEACE"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに PEACE 1 (両プレイヤーはすべての手札を捨て札にする。 / 終了：あなたの手札が1枚もない場合、カードを1枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G097",
+   "name": "FIRE 3 + PLAGUE 4 に PEACE 4",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "PEACE_4"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "PEACE"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに PEACE 4 (相手の手番中にあなたが捨て札にしたあと：カードを1枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G098",
+   "name": "FIRE 3 + PLAGUE 4 に SMOKE 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "SMOKE_3"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "SMOKE"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに SMOKE 2 (このラインのあなたの合計値は、このラインにある裏向きのカード1枚ごとに1増える。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G099",
+   "name": "FIRE 3 + PLAGUE 4 に TIME 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "TIME_3"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "TIME"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに TIME 2 (あなたがデッキをシャッフルしたあと：カードを1枚引き、このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。 / あなたの捨て札置き場にカードがある場合、あなたは捨て札置き場にあるすべてのカードをデッキに戻してシャッフルすることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G100",
+   "name": "FIRE 3 + PLAGUE 4 に WAR 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "WAR_1"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "WAR"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに WAR 0 (あなたがリフレッシュしたあと：あなたはこのカードを反転させることができる。 / 相手がカードを引いたあと：あなたはカードを1枚削除することができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G101",
+   "name": "FIRE 3 + PLAGUE 4 に WAR 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "WAR_2"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "WAR"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに WAR 1 (相手がリフレッシュしたあと：任意の枚数の手札を捨て札にする。リフレッシュする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G102",
+   "name": "FIRE 3 + PLAGUE 4 に WAR 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "WAR_3"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "WAR"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに WAR 2 (カードを1枚反転させる。 / 相手がコンパイルしたあと：相手は手札をすべて捨て札にする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G103",
+   "name": "FIRE 3 + PLAGUE 4 に WAR 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "WAR_4"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "WAR"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに WAR 3 (カードを1枚引く。 / 相手が手札を捨て札にしたあと：あなたはカードを裏向きで1枚プレイすることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G104",
+   "name": "FIRE 3 + PLAGUE 4 に ASSIMILATION 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "ASSIMILATION_2"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "ASSIMILATION"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに ASSIMILATION 1 (あなたの手札を1枚捨て札にする。リフレッシュする。 / 誰かがリフレッシュしたあと：相手のデッキの一番上のカードを引く。あなたは手札を1枚捨て札にし、それを相手の捨て札置き場に置く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G105",
+   "name": "FIRE 3 + PLAGUE 4 に ASSIMILATION 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "ASSIMILATION_3"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "ASSIMILATION"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに ASSIMILATION 2 (終了：相手のデッキの一番上のカードを、このスタックに裏向きでプレイする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G106",
+   "name": "FIRE 3 + PLAGUE 4 に ASSIMILATION 6",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "ASSIMILATION_6"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "ASSIMILATION"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに ASSIMILATION 6 (終了：あなたのデッキの一番上のカードを、相手側の任意のスタックに裏向きでプレイする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G107",
+   "name": "FIRE 3 + PLAGUE 4 に DIVERSITY 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "DIVERSITY_1"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "DIVERSITY"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに DIVERSITY 0 (フィールドに6種類のプロトコルのコマンドカードがある場合、「DIVERSITY」プロトコルカードをコンパイル完了面にする。 / 終了：あなたはこのラインに「DIVERSITY」以外のカードをプレイすることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G108",
+   "name": "FIRE 3 + PLAGUE 4 に DIVERSITY 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "DIVERSITY_3"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "DIVERSITY"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに DIVERSITY 3 (このスタックに「DIVERSITY」以外の表向きのカードがある場合、このラインのあなたの合計値は2増える。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G109",
+   "name": "FIRE 3 + PLAGUE 4 に DIVERSITY 6",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "DIVERSITY_6"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "DIVERSITY"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに DIVERSITY 6 (終了：フィールドにあるコマンドカードの、プロトコルの種類数が3以下の場合、このカードを削除する。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G110",
+   "name": "FIRE 3 + PLAGUE 4 に UNITY 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "UNITY_1"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "UNITY"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに UNITY 0 (フィールドに他の「UNITY」カードがある場合、カードを1枚反転させるか、カードを1枚引く。 / このカードが「UNITY」カードによって覆われることになったとき：先に、カードを1枚反転させるか、カードを1枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G111",
+   "name": "FIRE 3 + PLAGUE 4 に UNITY 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "UNITY_2"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "UNITY"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに UNITY 1 (開始：このカードが覆われている場合、あなたはこのカードを移動させることができる。 / フィールド「UNITY」カードが5枚以上ある場合、「UNITY」プロトコルカードのコンパイル完了面を表向きにし、そのラインにあるすべてのカードを削除する。 / このラインには「UNITY」カードを表向きでプレイすることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G112",
+   "name": "FIRE 3 + PLAGUE 4 に UNITY 4",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "FIRE_4",
+    "PLAGUE_5",
+    "UNITY_5"
+   ],
+   "protocols": [
+    "FIRE",
+    "PLAGUE",
+    "UNITY"
+   ],
+   "how": "FIRE 3 + PLAGUE 4 が回っているところに UNITY 4 (終了：あなたの手札が1枚もない場合、あなたのデッキのカードをすべて公開し、そこからすべての「UNITY」カードを引いて、あなたのデッキをシャッフルする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G113",
+   "name": "WAR 3 + COURAGE 0 に DARKNESS 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "DARKNESS_3"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "DARKNESS"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに DARKNESS 2 (このスタックにあるすべての裏向きのカードの値はそれぞれ4になる。 / このラインにある、覆われているカードを1枚反転させることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G114",
+   "name": "WAR 3 + COURAGE 0 に DEATH 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "DEATH_2"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "DEATH"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに DEATH 1 (開始：カードを1枚引くことができる。そうした場合、他のカードを1枚削除し、そのあとこのカードを削除する。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G115",
+   "name": "WAR 3 + COURAGE 0 に FIRE 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "FIRE_1"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "FIRE"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに FIRE 0 (他のカードを1枚反転させる。カードを2枚引く。 / このカードが覆われることになったとき：先にカードを1枚引き、他のカードを1枚反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G116",
+   "name": "WAR 3 + COURAGE 0 に FIRE 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "FIRE_4"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "FIRE"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに FIRE 3 (終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G117",
+   "name": "WAR 3 + COURAGE 0 に LIFE 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "LIFE_1"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "LIFE"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに LIFE 0 (終了：このカードが覆われている場合、このカードを削除する。 / あなたのデッキの一番上のカードを、あなたのカードがある各ラインに裏向きで1枚ずつプレイする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G118",
+   "name": "WAR 3 + COURAGE 0 に LIFE 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "LIFE_4"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "LIFE"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに LIFE 3 (このカードが覆われることになったとき：先にあなたのデッキの一番上のカードを他の1ラインに裏向きで1枚プレイする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G119",
+   "name": "WAR 3 + COURAGE 0 に LIGHT 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "LIGHT_2"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "LIGHT"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに LIGHT 1 (終了：カードを1枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G120",
+   "name": "WAR 3 + COURAGE 0 に METAL 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "METAL_1"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "METAL"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに METAL 0 (このラインでの相手の合計値は2減る。 / カードを1枚反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G121",
+   "name": "WAR 3 + COURAGE 0 に METAL 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "METAL_3"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "METAL"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに METAL 2 (相手はこのラインにカードを裏向きでプレイすることはできない。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G122",
+   "name": "WAR 3 + COURAGE 0 に METAL 6",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "METAL_6"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "METAL"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに METAL 6 (このカードが覆われるか反転することになったとき：先にこのカードを削除する。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G123",
+   "name": "WAR 3 + COURAGE 0 に PLAGUE 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "PLAGUE_1"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "PLAGUE"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに PLAGUE 0 (相手は手札を1枚捨て札にする。 / 相手はこのラインにカードをプレイすることはできない。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G124",
+   "name": "WAR 3 + COURAGE 0 に PLAGUE 4",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "PLAGUE_5"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "PLAGUE"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに PLAGUE 4 (終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G125",
+   "name": "WAR 3 + COURAGE 0 に PSYCHIC 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "PSYCHIC_2"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "PSYCHIC"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに PSYCHIC 1 (相手はカードを裏向きでのみプレイすることができる。 / 開始：このカードを反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G126",
+   "name": "WAR 3 + COURAGE 0 に PSYCHIC 4",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "PSYCHIC_5"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "PSYCHIC"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに PSYCHIC 4 (終了：あなたは相手のカードを1枚戻すことができる。そうした場合、このカードを反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G127",
+   "name": "WAR 3 + COURAGE 0 に SPEED 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "SPEED_2"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "SPEED"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに SPEED 1 (あなたがキャッシュをクリアしたあと：カードを1枚引く。 / カードを2枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G128",
+   "name": "WAR 3 + COURAGE 0 に SPEED 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "SPEED_3"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "SPEED"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに SPEED 2 (このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G129",
+   "name": "WAR 3 + COURAGE 0 に SPEED 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "SPEED_4"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "SPEED"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに SPEED 3 (あなたの他のカードを1枚移動させる。 / 終了：あなたは自分のカードを1枚移動させることができる。そうした場合、このカードを反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G130",
+   "name": "WAR 3 + COURAGE 0 に SPIRIT 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "SPIRIT_1"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "SPIRIT"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに SPIRIT 0 (リフレッシュする。カードを1枚引く。 / あなたのキャッシュの確認フェイズを省略する。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G131",
+   "name": "WAR 3 + COURAGE 0 に SPIRIT 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "SPIRIT_2"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "SPIRIT"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに SPIRIT 1 (あなたがカードを表向きでプレイするときには、プロトコルを対応させずにプレイすることができる。 / カードを2枚引く。 / 開始：あなたは手札を1枚捨て札にするか、このカードを反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G132",
+   "name": "WAR 3 + COURAGE 0 に SPIRIT 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "SPIRIT_4"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "SPIRIT"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに SPIRIT 3 (あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G133",
+   "name": "WAR 3 + COURAGE 0 に APATHY 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "APATHY_1"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "APATHY"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに APATHY 0 (このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G134",
+   "name": "WAR 3 + COURAGE 0 に APATHY 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "APATHY_3"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "APATHY"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに APATHY 2 (このラインにあるカードのすべての中段コマンドを無視する。 / このカードが覆われることになったとき：先に、このカードを反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G135",
+   "name": "WAR 3 + COURAGE 0 に HATE 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "HATE_4"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "HATE"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに HATE 3 (あなたがカードを１枚削除したあと：カードを１枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G136",
+   "name": "WAR 3 + COURAGE 0 に HATE 4",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "HATE_5"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "HATE"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに HATE 4 (このカードが覆われることになったとき：先に、このラインにある値が最も小さく覆われているカードを１枚削除する。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G137",
+   "name": "WAR 3 + COURAGE 0 に LOVE 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "LOVE_1"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "LOVE"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに LOVE 1 (あなたは相手のデッキの一番上のカードを引く。 / 終了：あなたの手札一枚を相手に与えることができる。そうした場合、カードを２枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G138",
+   "name": "WAR 3 + COURAGE 0 に CHAOS 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "CHAOS_1"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "CHAOS"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに CHAOS 0 (各ラインで、覆われているカードを1枚ずつ反転させる。 / 開始：あなたは相手のデッキの一番上のカードを引く。相手はあなたのデッキの一番上のカードを引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G139",
+   "name": "WAR 3 + COURAGE 0 に CHAOS 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "CHAOS_4"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "CHAOS"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに CHAOS 3 (このカードはプロトコルを対応させずプレイすることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G140",
+   "name": "WAR 3 + COURAGE 0 に CHAOS 4",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "CHAOS_5"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "CHAOS"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに CHAOS 4 (終了：あなたのすべての手札を捨て札にする。捨て札にした枚数と同じ枚数のカードを引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G141",
+   "name": "WAR 3 + COURAGE 0 に CLARITY 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "CLARITY_1"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "CLARITY"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに CLARITY 0 (このラインのあなたの合計値は、あなたの手札1枚ごとに1枚増える。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G142",
+   "name": "WAR 3 + COURAGE 0 に CLARITY 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "CLARITY_2"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "CLARITY"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに CLARITY 1 (開始：あなたのデッキの一番上のカードを公開する。そのカードを捨て札にすることができる。 / 相手は自身の手札をすべて公開する。 / このカードが覆われることになったとき：先にカードを3枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G143",
+   "name": "WAR 3 + COURAGE 0 に CORRUPTION 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "CORRUPTION_1"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "CORRUPTION"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに CORRUPTION 0 (開始：このスタック内の、覆われているか覆われていない他の表向きのカードを1枚反転させる。 / このカードは、プロトコルに対応させずに、どちらかのプレイヤー側でプレイすることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G144",
+   "name": "WAR 3 + COURAGE 0 に CORRUPTION 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "CORRUPTION_2"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "CORRUPTION"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに CORRUPTION 1 (カードを1枚戻す。 / カードが相手の手札に戻るとき：そうする代わりに、そのカードを相手のデッキの一番上に裏向きで置く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G145",
+   "name": "WAR 3 + COURAGE 0 に CORRUPTION 6",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "CORRUPTION_6"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "CORRUPTION"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに CORRUPTION 6 (終了：あなたは手札を1枚捨て札にするか、このカードを削除する。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G146",
+   "name": "WAR 3 + COURAGE 0 に FEAR 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "FEAR_1"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "FEAR"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに FEAR 0 (あなたの手番中、相手のカードの中段コマンドはないものとして扱う。 / カードを1枚移動させるか反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G147",
+   "name": "WAR 3 + COURAGE 0 に ICE 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "ICE_1"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "ICE"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに ICE 1 (あなたはこのカードを移動させることができる。 / 相手がこのラインにカードを1枚プレイしたあと：相手は自身の手札を1枚捨て札にする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G148",
+   "name": "WAR 3 + COURAGE 0 に ICE 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "ICE_3"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "ICE"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに ICE 3 (終了：このカードが覆われている場合、このカードを移動させることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G149",
+   "name": "WAR 3 + COURAGE 0 に ICE 4",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "ICE_4"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "ICE"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに ICE 4 (このカードを反転させることはできない。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G150",
+   "name": "WAR 3 + COURAGE 0 に ICE 6",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "ICE_6"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "ICE"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに ICE 6 (あなたの手札が1枚以上ある場合、あなたはカードを引くことはできない。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G151",
+   "name": "WAR 3 + COURAGE 0 に MIRROR 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "MIRROR_1"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "MIRROR"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに MIRROR 0 (このラインのあなたの合計値は、このラインにある相手のカード1枚ごとに1増える。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G152",
+   "name": "WAR 3 + COURAGE 0 に MIRROR 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "MIRROR_2"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "MIRROR"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに MIRROR 1 (終了：あなたは相手のカードのうち1枚の中段コマンドを、そのコマンドがこのカード上にあるかのように解決できる) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G153",
+   "name": "WAR 3 + COURAGE 0 に MIRROR 4",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "MIRROR_5"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "MIRROR"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに MIRROR 4 (相手がカードを引いたあと：カードを1枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G154",
+   "name": "WAR 3 + COURAGE 0 に PEACE 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "PEACE_1"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "PEACE"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに PEACE 1 (両プレイヤーはすべての手札を捨て札にする。 / 終了：あなたの手札が1枚もない場合、カードを1枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G155",
+   "name": "WAR 3 + COURAGE 0 に PEACE 4",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "PEACE_4"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "PEACE"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに PEACE 4 (相手の手番中にあなたが捨て札にしたあと：カードを1枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G156",
+   "name": "WAR 3 + COURAGE 0 に SMOKE 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "SMOKE_3"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "SMOKE"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに SMOKE 2 (このラインのあなたの合計値は、このラインにある裏向きのカード1枚ごとに1増える。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G157",
+   "name": "WAR 3 + COURAGE 0 に TIME 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "TIME_3"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "TIME"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに TIME 2 (あなたがデッキをシャッフルしたあと：カードを1枚引き、このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。 / あなたの捨て札置き場にカードがある場合、あなたは捨て札置き場にあるすべてのカードをデッキに戻してシャッフルすることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G158",
+   "name": "WAR 3 + COURAGE 0 に ASSIMILATION 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "ASSIMILATION_2"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "ASSIMILATION"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに ASSIMILATION 1 (あなたの手札を1枚捨て札にする。リフレッシュする。 / 誰かがリフレッシュしたあと：相手のデッキの一番上のカードを引く。あなたは手札を1枚捨て札にし、それを相手の捨て札置き場に置く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G159",
+   "name": "WAR 3 + COURAGE 0 に ASSIMILATION 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "ASSIMILATION_3"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "ASSIMILATION"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに ASSIMILATION 2 (終了：相手のデッキの一番上のカードを、このスタックに裏向きでプレイする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G160",
+   "name": "WAR 3 + COURAGE 0 に ASSIMILATION 6",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "ASSIMILATION_6"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "ASSIMILATION"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに ASSIMILATION 6 (終了：あなたのデッキの一番上のカードを、相手側の任意のスタックに裏向きでプレイする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G161",
+   "name": "WAR 3 + COURAGE 0 に DIVERSITY 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "DIVERSITY_1"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "DIVERSITY"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに DIVERSITY 0 (フィールドに6種類のプロトコルのコマンドカードがある場合、「DIVERSITY」プロトコルカードをコンパイル完了面にする。 / 終了：あなたはこのラインに「DIVERSITY」以外のカードをプレイすることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G162",
+   "name": "WAR 3 + COURAGE 0 に DIVERSITY 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "DIVERSITY_3"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "DIVERSITY"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに DIVERSITY 3 (このスタックに「DIVERSITY」以外の表向きのカードがある場合、このラインのあなたの合計値は2増える。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G163",
+   "name": "WAR 3 + COURAGE 0 に DIVERSITY 6",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "DIVERSITY_6"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "DIVERSITY"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに DIVERSITY 6 (終了：フィールドにあるコマンドカードの、プロトコルの種類数が3以下の場合、このカードを削除する。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G164",
+   "name": "WAR 3 + COURAGE 0 に UNITY 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "UNITY_1"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "UNITY"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに UNITY 0 (フィールドに他の「UNITY」カードがある場合、カードを1枚反転させるか、カードを1枚引く。 / このカードが「UNITY」カードによって覆われることになったとき：先に、カードを1枚反転させるか、カードを1枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G165",
+   "name": "WAR 3 + COURAGE 0 に UNITY 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "UNITY_2"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "UNITY"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに UNITY 1 (開始：このカードが覆われている場合、あなたはこのカードを移動させることができる。 / フィールド「UNITY」カードが5枚以上ある場合、「UNITY」プロトコルカードのコンパイル完了面を表向きにし、そのラインにあるすべてのカードを削除する。 / このラインには「UNITY」カードを表向きでプレイすることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G166",
+   "name": "WAR 3 + COURAGE 0 に UNITY 4",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "WAR_4",
+    "COURAGE_1",
+    "UNITY_5"
+   ],
+   "protocols": [
+    "WAR",
+    "COURAGE",
+    "UNITY"
+   ],
+   "how": "WAR 3 + COURAGE 0 が回っているところに UNITY 4 (終了：あなたの手札が1枚もない場合、あなたのデッキのカードをすべて公開し、そこからすべての「UNITY」カードを引いて、あなたのデッキをシャッフルする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G167",
+   "name": "SPIRIT 3 + PEACE 1 に DARKNESS 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "DARKNESS_3"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "DARKNESS"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに DARKNESS 2 (このスタックにあるすべての裏向きのカードの値はそれぞれ4になる。 / このラインにある、覆われているカードを1枚反転させることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G168",
+   "name": "SPIRIT 3 + PEACE 1 に DEATH 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "DEATH_2"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "DEATH"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに DEATH 1 (開始：カードを1枚引くことができる。そうした場合、他のカードを1枚削除し、そのあとこのカードを削除する。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G169",
+   "name": "SPIRIT 3 + PEACE 1 に FIRE 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "FIRE_1"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "FIRE"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに FIRE 0 (他のカードを1枚反転させる。カードを2枚引く。 / このカードが覆われることになったとき：先にカードを1枚引き、他のカードを1枚反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G170",
+   "name": "SPIRIT 3 + PEACE 1 に FIRE 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "FIRE_4"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "FIRE"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに FIRE 3 (終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G171",
+   "name": "SPIRIT 3 + PEACE 1 に LIFE 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "LIFE_1"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "LIFE"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに LIFE 0 (終了：このカードが覆われている場合、このカードを削除する。 / あなたのデッキの一番上のカードを、あなたのカードがある各ラインに裏向きで1枚ずつプレイする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G172",
+   "name": "SPIRIT 3 + PEACE 1 に LIFE 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "LIFE_4"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "LIFE"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに LIFE 3 (このカードが覆われることになったとき：先にあなたのデッキの一番上のカードを他の1ラインに裏向きで1枚プレイする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G173",
+   "name": "SPIRIT 3 + PEACE 1 に LIGHT 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "LIGHT_2"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "LIGHT"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに LIGHT 1 (終了：カードを1枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G174",
+   "name": "SPIRIT 3 + PEACE 1 に METAL 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "METAL_1"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "METAL"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに METAL 0 (このラインでの相手の合計値は2減る。 / カードを1枚反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G175",
+   "name": "SPIRIT 3 + PEACE 1 に METAL 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "METAL_3"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "METAL"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに METAL 2 (相手はこのラインにカードを裏向きでプレイすることはできない。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G176",
+   "name": "SPIRIT 3 + PEACE 1 に METAL 6",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "METAL_6"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "METAL"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに METAL 6 (このカードが覆われるか反転することになったとき：先にこのカードを削除する。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G177",
+   "name": "SPIRIT 3 + PEACE 1 に PLAGUE 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "PLAGUE_1"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "PLAGUE"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに PLAGUE 0 (相手は手札を1枚捨て札にする。 / 相手はこのラインにカードをプレイすることはできない。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G178",
+   "name": "SPIRIT 3 + PEACE 1 に PLAGUE 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "PLAGUE_2"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "PLAGUE"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに PLAGUE 1 (相手が手札を捨て札にしたあと：カードを1枚引く。 / 相手は手札を1枚捨て札にする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G179",
+   "name": "SPIRIT 3 + PEACE 1 に PLAGUE 4",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "PLAGUE_5"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "PLAGUE"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに PLAGUE 4 (終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G180",
+   "name": "SPIRIT 3 + PEACE 1 に PSYCHIC 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "PSYCHIC_2"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "PSYCHIC"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに PSYCHIC 1 (相手はカードを裏向きでのみプレイすることができる。 / 開始：このカードを反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G181",
+   "name": "SPIRIT 3 + PEACE 1 に PSYCHIC 4",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "PSYCHIC_5"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "PSYCHIC"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに PSYCHIC 4 (終了：あなたは相手のカードを1枚戻すことができる。そうした場合、このカードを反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G182",
+   "name": "SPIRIT 3 + PEACE 1 に SPEED 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "SPEED_2"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "SPEED"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに SPEED 1 (あなたがキャッシュをクリアしたあと：カードを1枚引く。 / カードを2枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G183",
+   "name": "SPIRIT 3 + PEACE 1 に SPEED 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "SPEED_3"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "SPEED"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに SPEED 2 (このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G184",
+   "name": "SPIRIT 3 + PEACE 1 に SPEED 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "SPEED_4"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "SPEED"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに SPEED 3 (あなたの他のカードを1枚移動させる。 / 終了：あなたは自分のカードを1枚移動させることができる。そうした場合、このカードを反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G185",
+   "name": "SPIRIT 3 + PEACE 1 に APATHY 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "APATHY_1"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "APATHY"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに APATHY 0 (このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G186",
+   "name": "SPIRIT 3 + PEACE 1 に APATHY 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "APATHY_3"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "APATHY"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに APATHY 2 (このラインにあるカードのすべての中段コマンドを無視する。 / このカードが覆われることになったとき：先に、このカードを反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G187",
+   "name": "SPIRIT 3 + PEACE 1 に HATE 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "HATE_4"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "HATE"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに HATE 3 (あなたがカードを１枚削除したあと：カードを１枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G188",
+   "name": "SPIRIT 3 + PEACE 1 に HATE 4",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "HATE_5"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "HATE"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに HATE 4 (このカードが覆われることになったとき：先に、このラインにある値が最も小さく覆われているカードを１枚削除する。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G189",
+   "name": "SPIRIT 3 + PEACE 1 に LOVE 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "LOVE_1"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "LOVE"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに LOVE 1 (あなたは相手のデッキの一番上のカードを引く。 / 終了：あなたの手札一枚を相手に与えることができる。そうした場合、カードを２枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G190",
+   "name": "SPIRIT 3 + PEACE 1 に CHAOS 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "CHAOS_1"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "CHAOS"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに CHAOS 0 (各ラインで、覆われているカードを1枚ずつ反転させる。 / 開始：あなたは相手のデッキの一番上のカードを引く。相手はあなたのデッキの一番上のカードを引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G191",
+   "name": "SPIRIT 3 + PEACE 1 に CHAOS 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "CHAOS_4"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "CHAOS"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに CHAOS 3 (このカードはプロトコルを対応させずプレイすることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G192",
+   "name": "SPIRIT 3 + PEACE 1 に CHAOS 4",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "CHAOS_5"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "CHAOS"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに CHAOS 4 (終了：あなたのすべての手札を捨て札にする。捨て札にした枚数と同じ枚数のカードを引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G193",
+   "name": "SPIRIT 3 + PEACE 1 に CLARITY 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "CLARITY_1"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "CLARITY"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに CLARITY 0 (このラインのあなたの合計値は、あなたの手札1枚ごとに1枚増える。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G194",
+   "name": "SPIRIT 3 + PEACE 1 に CLARITY 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "CLARITY_2"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "CLARITY"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに CLARITY 1 (開始：あなたのデッキの一番上のカードを公開する。そのカードを捨て札にすることができる。 / 相手は自身の手札をすべて公開する。 / このカードが覆われることになったとき：先にカードを3枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G195",
+   "name": "SPIRIT 3 + PEACE 1 に CORRUPTION 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "CORRUPTION_1"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "CORRUPTION"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに CORRUPTION 0 (開始：このスタック内の、覆われているか覆われていない他の表向きのカードを1枚反転させる。 / このカードは、プロトコルに対応させずに、どちらかのプレイヤー側でプレイすることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G196",
+   "name": "SPIRIT 3 + PEACE 1 に CORRUPTION 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "CORRUPTION_2"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "CORRUPTION"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに CORRUPTION 1 (カードを1枚戻す。 / カードが相手の手札に戻るとき：そうする代わりに、そのカードを相手のデッキの一番上に裏向きで置く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G197",
+   "name": "SPIRIT 3 + PEACE 1 に CORRUPTION 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "CORRUPTION_3"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "CORRUPTION"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに CORRUPTION 2 (あなたが手札を捨て札にしたあと：相手は手札を1枚捨て札にする。 / カードを1枚引く。あなたは手札を1枚捨て札にする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G198",
+   "name": "SPIRIT 3 + PEACE 1 に CORRUPTION 6",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "CORRUPTION_6"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "CORRUPTION"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに CORRUPTION 6 (終了：あなたは手札を1枚捨て札にするか、このカードを削除する。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G199",
+   "name": "SPIRIT 3 + PEACE 1 に COURAGE 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "COURAGE_1"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "COURAGE"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに COURAGE 0 (開始：あなたの手札が1枚もない場合、カードを1枚引く。 / カードを1枚引く。 / 終了：あなたは手札を1枚捨て札にすることができる。そうした場合、相手は手札を1枚捨て札にする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G200",
+   "name": "SPIRIT 3 + PEACE 1 に COURAGE 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "COURAGE_3"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "COURAGE"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに COURAGE 2 (カードを1枚引く。 / 終了：このラインで、あなたの合計値より相手の合計値が大きい場合、カードを1枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G201",
+   "name": "SPIRIT 3 + PEACE 1 に COURAGE 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "COURAGE_4"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "COURAGE"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに COURAGE 3 (終了：相手の最も大きい合計値のラインに、このカードを移動させることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G202",
+   "name": "SPIRIT 3 + PEACE 1 に COURAGE 6",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "COURAGE_6"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "COURAGE"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに COURAGE 6 (終了：このラインで、あなたの合計値より相手の合計値が大きい場合、このカードを反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G203",
+   "name": "SPIRIT 3 + PEACE 1 に FEAR 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "FEAR_1"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "FEAR"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに FEAR 0 (あなたの手番中、相手のカードの中段コマンドはないものとして扱う。 / カードを1枚移動させるか反転させる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G204",
+   "name": "SPIRIT 3 + PEACE 1 に ICE 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "ICE_1"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "ICE"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに ICE 1 (あなたはこのカードを移動させることができる。 / 相手がこのラインにカードを1枚プレイしたあと：相手は自身の手札を1枚捨て札にする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G205",
+   "name": "SPIRIT 3 + PEACE 1 に ICE 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "ICE_3"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "ICE"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに ICE 3 (終了：このカードが覆われている場合、このカードを移動させることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G206",
+   "name": "SPIRIT 3 + PEACE 1 に ICE 4",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "ICE_4"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "ICE"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに ICE 4 (このカードを反転させることはできない。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G207",
+   "name": "SPIRIT 3 + PEACE 1 に ICE 6",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "ICE_6"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "ICE"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに ICE 6 (あなたの手札が1枚以上ある場合、あなたはカードを引くことはできない。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G208",
+   "name": "SPIRIT 3 + PEACE 1 に MIRROR 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "MIRROR_1"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "MIRROR"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに MIRROR 0 (このラインのあなたの合計値は、このラインにある相手のカード1枚ごとに1増える。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G209",
+   "name": "SPIRIT 3 + PEACE 1 に MIRROR 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "MIRROR_2"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "MIRROR"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに MIRROR 1 (終了：あなたは相手のカードのうち1枚の中段コマンドを、そのコマンドがこのカード上にあるかのように解決できる) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G210",
+   "name": "SPIRIT 3 + PEACE 1 に MIRROR 4",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "MIRROR_5"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "MIRROR"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに MIRROR 4 (相手がカードを引いたあと：カードを1枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G211",
+   "name": "SPIRIT 3 + PEACE 1 に SMOKE 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "SMOKE_3"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "SMOKE"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに SMOKE 2 (このラインのあなたの合計値は、このラインにある裏向きのカード1枚ごとに1増える。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G212",
+   "name": "SPIRIT 3 + PEACE 1 に TIME 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "TIME_3"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "TIME"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに TIME 2 (あなたがデッキをシャッフルしたあと：カードを1枚引き、このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。 / あなたの捨て札置き場にカードがある場合、あなたは捨て札置き場にあるすべてのカードをデッキに戻してシャッフルすることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G213",
+   "name": "SPIRIT 3 + PEACE 1 に WAR 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "WAR_1"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "WAR"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに WAR 0 (あなたがリフレッシュしたあと：あなたはこのカードを反転させることができる。 / 相手がカードを引いたあと：あなたはカードを1枚削除することができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G214",
+   "name": "SPIRIT 3 + PEACE 1 に WAR 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "WAR_2"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "WAR"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに WAR 1 (相手がリフレッシュしたあと：任意の枚数の手札を捨て札にする。リフレッシュする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G215",
+   "name": "SPIRIT 3 + PEACE 1 に WAR 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "WAR_3"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "WAR"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに WAR 2 (カードを1枚反転させる。 / 相手がコンパイルしたあと：相手は手札をすべて捨て札にする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G216",
+   "name": "SPIRIT 3 + PEACE 1 に WAR 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "WAR_4"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "WAR"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに WAR 3 (カードを1枚引く。 / 相手が手札を捨て札にしたあと：あなたはカードを裏向きで1枚プレイすることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G217",
+   "name": "SPIRIT 3 + PEACE 1 に ASSIMILATION 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "ASSIMILATION_2"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "ASSIMILATION"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに ASSIMILATION 1 (あなたの手札を1枚捨て札にする。リフレッシュする。 / 誰かがリフレッシュしたあと：相手のデッキの一番上のカードを引く。あなたは手札を1枚捨て札にし、それを相手の捨て札置き場に置く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G218",
+   "name": "SPIRIT 3 + PEACE 1 に ASSIMILATION 2",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "ASSIMILATION_3"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "ASSIMILATION"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに ASSIMILATION 2 (終了：相手のデッキの一番上のカードを、このスタックに裏向きでプレイする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G219",
+   "name": "SPIRIT 3 + PEACE 1 に ASSIMILATION 6",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "ASSIMILATION_6"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "ASSIMILATION"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに ASSIMILATION 6 (終了：あなたのデッキの一番上のカードを、相手側の任意のスタックに裏向きでプレイする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G220",
+   "name": "SPIRIT 3 + PEACE 1 に DIVERSITY 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "DIVERSITY_1"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "DIVERSITY"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに DIVERSITY 0 (フィールドに6種類のプロトコルのコマンドカードがある場合、「DIVERSITY」プロトコルカードをコンパイル完了面にする。 / 終了：あなたはこのラインに「DIVERSITY」以外のカードをプレイすることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G221",
+   "name": "SPIRIT 3 + PEACE 1 に DIVERSITY 3",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "DIVERSITY_3"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "DIVERSITY"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに DIVERSITY 3 (このスタックに「DIVERSITY」以外の表向きのカードがある場合、このラインのあなたの合計値は2増える。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G222",
+   "name": "SPIRIT 3 + PEACE 1 に DIVERSITY 6",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "DIVERSITY_6"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "DIVERSITY"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに DIVERSITY 6 (終了：フィールドにあるコマンドカードの、プロトコルの種類数が3以下の場合、このカードを削除する。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G223",
+   "name": "SPIRIT 3 + PEACE 1 に UNITY 0",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "UNITY_1"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "UNITY"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに UNITY 0 (フィールドに他の「UNITY」カードがある場合、カードを1枚反転させるか、カードを1枚引く。 / このカードが「UNITY」カードによって覆われることになったとき：先に、カードを1枚反転させるか、カードを1枚引く。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G224",
+   "name": "SPIRIT 3 + PEACE 1 に UNITY 1",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "UNITY_2"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "UNITY"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに UNITY 1 (開始：このカードが覆われている場合、あなたはこのカードを移動させることができる。 / フィールド「UNITY」カードが5枚以上ある場合、「UNITY」プロトコルカードのコンパイル完了面を表向きにし、そのラインにあるすべてのカードを削除する。 / このラインには「UNITY」カードを表向きでプレイすることができる。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "G225",
+   "name": "SPIRIT 3 + PEACE 1 に UNITY 4",
+   "kind": "engine",
+   "source": "triple",
+   "cards": [
+    "SPIRIT_4",
+    "PEACE_1",
+    "UNITY_5"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PEACE",
+    "UNITY"
+   ],
+   "how": "SPIRIT 3 + PEACE 1 が回っているところに UNITY 4 (終了：あなたの手札が1枚もない場合、あなたのデッキのカードをすべて公開し、そこからすべての「UNITY」カードを引いて、あなたのデッキをシャッフルする。) を足す。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
    "note": null
   },
   {
