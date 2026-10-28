@@ -774,3 +774,73 @@ module.exports = [
     });
   }
 })();
+
+/* ---------- 捨て札・山札の上を使う組 (T001〜、2026-10-28) ----------
+   (1) 捨て札を増やす札 × 捨て札から出す札 (TIME 0: 捨て札の1枚をプレイ / TIME 3: 捨て札の1枚を別のラインに裏で)。相方 = 捨て札から出す札 (手札)
+   (2) 山札の上をふるう CLARITY 1 (開始: 一番上を公開して捨てられる) × 山札の上の値で効く札 (LUCK 2: 捨てた札の値だけ引く / LUCK 4: 同じ値の札を削除 / LUCK 1: 一番上を裏で出して表にする) */
+(function trashCandidates() {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const cards = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'cards.json'), 'utf8'));
+  const proto = {}, value = {}, text = {}, byName = {};
+  for (const p of cards.protocols) for (const c of p.cards) {
+    proto[c.id] = p.name; value[c.id] = c.value; byName[p.name + ' ' + c.value] = c.id;
+    text[c.id] = [c.upper, c.middle, c.lower].filter(Boolean).join(' / ');
+  }
+  const id = (n) => { if (!byName[n]) throw new Error('no card ' + n); return byName[n]; };
+  const seen = new Set(module.exports.map(c => c.setup.mine.map(p => p.card).sort().join('+')));
+  let n = 0;
+  const push = (c) => {
+    const key = c.setup.mine.map(p => p.card).sort().join('+');
+    if (seen.has(key)) return;
+    seen.add(key);
+    module.exports.push({ id: 'T' + String(++n).padStart(3, '0'), auto: true, source: 'trash', late: true, ...c });
+  };
+  for (const pn of ['TIME 0', 'TIME 3']) for (const fn of ['TIME 1', 'LUCK 2', 'LUCK 4', 'FIRE 4', 'HATE 1', 'CHAOS 4', 'TIME 4', 'PEACE 1', 'PLAGUE 2']) {
+    const P0 = id(pn), F = id(fn);
+    if (P0 === F) continue;
+    push({
+      name: fn + ' で捨て札を増やして ' + pn + ' で出す', kind: 'setup', protos: [...new Set([proto[F], proto[P0]])],
+      how: fn + ' (' + text[F] + ') で捨て札を増やし、' + pn + ' (' + text[P0] + ') で捨て札から強い札を出す。',
+      setup: { mine: [{ card: P0, at: 'hand' }, { card: F, at: 'hand' }] }, act: { play: F }, partner: [P0]
+    });
+  }
+  const C1 = id('CLARITY 1');
+  for (const pn of ['LUCK 2', 'LUCK 4', 'LUCK 1']) {
+    const P0 = id(pn);
+    push({
+      name: 'CLARITY 1 で山札の上をふるって ' + pn, kind: 'engine', protos: ['CLARITY', 'LUCK'],
+      how: 'CLARITY 1 (' + text[C1] + ') の開始で山札の一番上を選り分け、' + pn + ' (' + text[P0] + ') で使う。',
+      setup: { mine: [{ card: C1, at: 'field' }, { card: P0, at: 'hand' }] }, act: { play: P0 }, partner: [C1]
+    });
+  }
+})();
+
+/* ---------- FIRE 3 + SPIRIT 1 の回しに3枚目 (L101〜、2026-10-28) ----------
+   回しは毎手番「FIRE 3 で1枚捨てる」「SPIRIT 1 で2枚引く」。引いたあとに動く SPIRIT 3、捨てたあとに相手も捨てる CORRUPTION 2 を足す。相方 = 3枚目 */
+(function fire3Triples() {
+  const seen = new Set(module.exports.map(c => c.setup.mine.map(p => p.card).sort().join('+')));
+  const T3 = [['SPIRIT_4', 'SPIRIT 3 (引いたあと: 覆われていても動ける)'], ['CORRUPTION_3', 'CORRUPTION 2 (捨てたあと: 相手も1枚捨てる)']];
+  let n = 100;
+  for (const [d, label] of T3) {
+    const mine = [{ card: 'FIRE_4', at: 'field' }, { card: 'SPIRIT_2', at: 'field', faceUp: false, line: 'other' }, { card: d, at: 'hand' }];
+    const key = mine.map(p => p.card).sort().join('+');
+    if (seen.has(key)) continue;
+    module.exports.push({
+      id: 'L' + (++n), auto: true, source: 'fire3', late: true,
+      name: 'FIRE 3 + SPIRIT 1 の回しに ' + label.split(' (')[0], kind: 'engine', protos: ['FIRE', 'SPIRIT', ...(d === 'CORRUPTION_3' ? ['CORRUPTION'] : [])],
+      how: 'FIRE 3 で毎手番 SPIRIT 1 を表に戻す回しに、' + label + ' を足す。',
+      setup: { mine }, act: { play: d }, partner: [d],
+      picks: (s, q, P) => {
+        const t = P.planted.SPIRIT_2;
+        if (!t || !s.cards[t]) return null;
+        if (q.context === 'SPIRIT_2' && q.kind === 'option') { const i = q.options.indexOf('flip'); return i >= 0 ? [i] : null; }
+        if (q.context !== 'FIRE_4' || s.cards[t].faceUp) return null;
+        if (q.kind === 'yesNo') return ['yes'];
+        if (q.kind === 'pickHand') { const c = q.candidates.slice().sort((a, b) => P.val(s, a) - P.val(s, b)); return c.length ? [c[0]] : null; }
+        if (q.kind === 'pickCard' && q.candidates.includes(t)) return [t];
+        return null;
+      }
+    });
+  }
+})();

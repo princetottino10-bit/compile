@@ -46,6 +46,8 @@ const COMBOS = {
   psyAssim: { name: '覆われた PSYCHIC 1 + ASSIMILATION 0', protos: ['PSYCHIC', 'ASSIMILATION'], pieces: { PSYCHIC_2: 'cov', ASSIMILATION_1: 'play' } },
   fire3Plague4: { name: 'FIRE 3 + PLAGUE 4', protos: ['FIRE', 'PLAGUE'], pieces: { FIRE_4: 'top', PLAGUE_5: 'top' } },
   /* SPEED 2 は1枚で効く: コンパイルするラインに表で居れば、削除されずに別のラインへ移る。数えるのは自分のコンパイルと生き残り */
+  fire3Spirit: { name: 'FIRE 3 + SPIRIT 1 の回し', protos: ['FIRE', 'SPIRIT'], pieces: { FIRE_4: 'top', SPIRIT_2: 'loop' } },
+  fire3SpiritCorr: { name: 'FIRE 3 + SPIRIT 1 + CORRUPTION 2', protos: ['FIRE', 'SPIRIT', 'CORRUPTION'], pieces: { FIRE_4: 'top', SPIRIT_2: 'loop', CORRUPTION_3: 'up' } },
   /* 裏で置いた中段の強い札を表にして撃つ。数えるのは、自分の手で自分の裏向きの撃つ札が表になった回数 (撃った) と、
      一番上に裏の撃つ札があり手札に表にする札がある手番 (揃った手番) */
   flipSpiritFire: { name: 'SPIRIT 2 で裏の FIRE 0 を表に', protos: ['SPIRIT', 'FIRE'], pieces: {}, flip: true },
@@ -97,7 +99,7 @@ function where(st, uid, me) {
   if (P.trash.includes(uid)) return 'trash';
   return 'gone';
 }
-const live = (need, w) => need === 'top' ? w === 'top' : need === 'up' ? (w === 'top' || w === 'covUp') : need === 'cov' ? w === 'covUp' : false;
+const live = (need, w) => need === 'top' ? w === 'top' : need === 'up' ? (w === 'top' || w === 'covUp') : need === 'cov' ? w === 'covUp' : need === 'loop' ? (w === 'top' || w === 'down') : false;
 const alive = (w) => w !== 'trash' && w !== 'gone';
 const FLIP_PAYLOAD = new Set(['LIFE_1', 'LIGHT_1', 'LUCK_1', 'SPEED_1', 'FIRE_1', 'HATE_1', 'GRAVITY_2', 'DARKNESS_1', 'WATER_2']);
 const FLIP_ENABLER = new Set(['LOVE_4', 'WATER_1', 'SPIRIT_3', 'WAR_3', 'LIFE_2', 'SMOKE_2', 'METAL_1', 'GRAVITY_3', 'FEAR_1']);

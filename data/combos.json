@@ -22197,15 +22197,15 @@
     "n": 153,
     "horizon": 2,
     "playout": false,
-    "interaction": 6.6,
-    "interactionSe": 1.4,
-    "partnerValue": -10.6,
-    "partnerValueSe": 1.4,
-    "synergy": -3.9,
+    "interaction": 4.2,
+    "interactionSe": 1,
+    "partnerValue": -6.3,
+    "partnerValueSe": 1.2,
+    "synergy": -2.1,
     "synergySe": 0.9,
-    "missed": 2.7,
-    "missedSe": 1.2,
-    "aiPicked": 50
+    "missed": -0.5,
+    "missedSe": 0.6,
+    "aiPicked": 76
    },
    "note": null
   },
@@ -22254,18 +22254,18 @@
    "verdict": "strong",
    "verdictLabel": "噛み合う",
    "lab": {
-    "n": 153,
+    "n": 152,
     "horizon": 2,
     "playout": false,
-    "interaction": 4,
-    "interactionSe": 1.1,
-    "partnerValue": -8,
-    "partnerValueSe": 1.3,
-    "synergy": -4,
-    "synergySe": 1.1,
-    "missed": 2.2,
-    "missedSe": 0.9,
-    "aiPicked": 81
+    "interaction": 2.6,
+    "interactionSe": 0.7,
+    "partnerValue": -6.8,
+    "partnerValueSe": 1.2,
+    "synergy": -4.2,
+    "synergySe": 1,
+    "missed": 0,
+    "missedSe": 0.4,
+    "aiPicked": 86
    },
    "note": null
   },
@@ -22371,21 +22371,21 @@
     "LIFE"
    ],
    "how": "相手の WAR 0 + CHAOS 0 が回っているときに LIFE 1 (カード1枚を反転させる。カード1枚を反転させる。) を出す。",
-   "verdict": "missed",
-   "verdictLabel": "AI が逃している",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
    "lab": {
     "n": 152,
     "horizon": 2,
     "playout": false,
-    "interaction": 6.2,
-    "interactionSe": 1.4,
-    "partnerValue": -9,
-    "partnerValueSe": 1.5,
-    "synergy": -2.7,
-    "synergySe": 1.1,
-    "missed": 4.4,
-    "missedSe": 1.1,
-    "aiPicked": 57
+    "interaction": 1,
+    "interactionSe": 1,
+    "partnerValue": -4.6,
+    "partnerValueSe": 1.4,
+    "synergy": -3.5,
+    "synergySe": 1.2,
+    "missed": -1.1,
+    "missedSe": 0.5,
+    "aiPicked": 79
    },
    "note": null
   },
@@ -24786,6 +24786,614 @@
     "missed": -1.9,
     "missedSe": 1.1,
     "aiPicked": 75
+   },
+   "note": null
+  },
+  {
+   "id": "T001",
+   "name": "LUCK 2 で捨て札を増やして TIME 0 で出す",
+   "kind": "setup",
+   "source": "trash",
+   "cards": [
+    "TIME_1",
+    "LUCK_3"
+   ],
+   "protocols": [
+    "LUCK",
+    "TIME"
+   ],
+   "how": "LUCK 2 (あなたのデッキの一番上のカードを捨て札にする。そのカードの表面の値に等しい枚数のカードを引く。) で捨て札を増やし、TIME 0 (あなたの捨て札置き場にあるカードを1枚プレイする。あなたの捨て札置き場にあるすべてのカードをデッキに戻してシャッフルする。) で捨て札から強い札を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 59,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.3,
+    "interactionSe": 1.6,
+    "partnerValue": 4.3,
+    "partnerValueSe": 1.6,
+    "synergy": 3.6,
+    "synergySe": 1,
+    "missed": -2.7,
+    "missedSe": 2,
+    "aiPicked": 14
+   },
+   "note": null
+  },
+  {
+   "id": "T002",
+   "name": "LUCK 4 で捨て札を増やして TIME 0 で出す",
+   "kind": "setup",
+   "source": "trash",
+   "cards": [
+    "TIME_1",
+    "LUCK_5"
+   ],
+   "protocols": [
+    "LUCK",
+    "TIME"
+   ],
+   "how": "LUCK 4 (あなたのデッキの一番上のカードを捨て札にする。そのカードの表面の値と同じ値を持つ、覆われているか覆われていないカードを1枚削除する。) で捨て札を増やし、TIME 0 (あなたの捨て札置き場にあるカードを1枚プレイする。あなたの捨て札置き場にあるすべてのカードをデッキに戻してシャッフルする。) で捨て札から強い札を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 61,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.3,
+    "interactionSe": 1.8,
+    "partnerValue": 2.9,
+    "partnerValueSe": 2.1,
+    "synergy": 4.2,
+    "synergySe": 1.9,
+    "missed": 2.4,
+    "missedSe": 2,
+    "aiPicked": 28
+   },
+   "note": null
+  },
+  {
+   "id": "T003",
+   "name": "FIRE 4 で捨て札を増やして TIME 0 で出す",
+   "kind": "setup",
+   "source": "trash",
+   "cards": [
+    "TIME_1",
+    "FIRE_5"
+   ],
+   "protocols": [
+    "FIRE",
+    "TIME"
+   ],
+   "how": "FIRE 4 (あなたは手札があれば1枚以上捨て札にする。捨て札にした枚数＋1枚のカードを引く。) で捨て札を増やし、TIME 0 (あなたの捨て札置き場にあるカードを1枚プレイする。あなたの捨て札置き場にあるすべてのカードをデッキに戻してシャッフルする。) で捨て札から強い札を出す。",
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 61,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -2.1,
+    "interactionSe": 0.9,
+    "partnerValue": 1.9,
+    "partnerValueSe": 0.9,
+    "synergy": -0.2,
+    "synergySe": 0.4,
+    "missed": -5.1,
+    "missedSe": 1.5,
+    "aiPicked": 28
+   },
+   "note": null
+  },
+  {
+   "id": "T004",
+   "name": "HATE 1 で捨て札を増やして TIME 0 で出す",
+   "kind": "setup",
+   "source": "trash",
+   "cards": [
+    "TIME_1",
+    "HATE_2"
+   ],
+   "protocols": [
+    "HATE",
+    "TIME"
+   ],
+   "how": "HATE 1 (あなたは手札を３枚捨て札にする。カードを１枚削除する。カードを１枚削除する。) で捨て札を増やし、TIME 0 (あなたの捨て札置き場にあるカードを1枚プレイする。あなたの捨て札置き場にあるすべてのカードをデッキに戻してシャッフルする。) で捨て札から強い札を出す。",
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -2.1,
+    "interactionSe": 0.7,
+    "partnerValue": 1.9,
+    "partnerValueSe": 0.7,
+    "synergy": -0.3,
+    "synergySe": 0.4,
+    "missed": -3.2,
+    "missedSe": 1.4,
+    "aiPicked": 44
+   },
+   "note": null
+  },
+  {
+   "id": "T005",
+   "name": "CHAOS 4 で捨て札を増やして TIME 0 で出す",
+   "kind": "setup",
+   "source": "trash",
+   "cards": [
+    "TIME_1",
+    "CHAOS_5"
+   ],
+   "protocols": [
+    "CHAOS",
+    "TIME"
+   ],
+   "how": "CHAOS 4 (終了：あなたのすべての手札を捨て札にする。捨て札にした枚数と同じ枚数のカードを引く。) で捨て札を増やし、TIME 0 (あなたの捨て札置き場にあるカードを1枚プレイする。あなたの捨て札置き場にあるすべてのカードをデッキに戻してシャッフルする。) で捨て札から強い札を出す。",
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -5.1,
+    "interactionSe": 1.6,
+    "partnerValue": 5.1,
+    "partnerValueSe": 1.6,
+    "synergy": 0,
+    "synergySe": 0.1,
+    "missed": -5.6,
+    "missedSe": 1.9,
+    "aiPicked": 24
+   },
+   "note": null
+  },
+  {
+   "id": "T006",
+   "name": "TIME 4 で捨て札を増やして TIME 0 で出す",
+   "kind": "setup",
+   "source": "trash",
+   "cards": [
+    "TIME_1",
+    "TIME_5"
+   ],
+   "protocols": [
+    "TIME"
+   ],
+   "how": "TIME 4 (カードを2枚引く。あなたは手札を2枚捨て札にする。) で捨て札を増やし、TIME 0 (あなたの捨て札置き場にあるカードを1枚プレイする。あなたの捨て札置き場にあるすべてのカードをデッキに戻してシャッフルする。) で捨て札から強い札を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -2.2,
+    "interactionSe": 1.7,
+    "partnerValue": 3.5,
+    "partnerValueSe": 1.4,
+    "synergy": 1.3,
+    "synergySe": 0.8,
+    "missed": -5.3,
+    "missedSe": 2.6,
+    "aiPicked": 23
+   },
+   "note": null
+  },
+  {
+   "id": "T007",
+   "name": "PEACE 1 で捨て札を増やして TIME 0 で出す",
+   "kind": "setup",
+   "source": "trash",
+   "cards": [
+    "TIME_1",
+    "PEACE_1"
+   ],
+   "protocols": [
+    "PEACE",
+    "TIME"
+   ],
+   "how": "PEACE 1 (両プレイヤーはすべての手札を捨て札にする。 / 終了：あなたの手札が1枚もない場合、カードを1枚引く。) で捨て札を増やし、TIME 0 (あなたの捨て札置き場にあるカードを1枚プレイする。あなたの捨て札置き場にあるすべてのカードをデッキに戻してシャッフルする。) で捨て札から強い札を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -3.4,
+    "interactionSe": 1.7,
+    "partnerValue": 3.1,
+    "partnerValueSe": 1.8,
+    "synergy": -0.3,
+    "synergySe": 0.3,
+    "missed": -9,
+    "missedSe": 2.1,
+    "aiPicked": 19
+   },
+   "note": null
+  },
+  {
+   "id": "T008",
+   "name": "PLAGUE 2 で捨て札を増やして TIME 0 で出す",
+   "kind": "setup",
+   "source": "trash",
+   "cards": [
+    "TIME_1",
+    "PLAGUE_3"
+   ],
+   "protocols": [
+    "PLAGUE",
+    "TIME"
+   ],
+   "how": "PLAGUE 2 (あなたは手札があれば1枚以上捨て札にする。相手はあなたが捨て札にした枚数＋1枚の手札を捨て札にする。) で捨て札を増やし、TIME 0 (あなたの捨て札置き場にあるカードを1枚プレイする。あなたの捨て札置き場にあるすべてのカードをデッキに戻してシャッフルする。) で捨て札から強い札を出す。",
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -5.1,
+    "interactionSe": 1.4,
+    "partnerValue": 5.7,
+    "partnerValueSe": 1.4,
+    "synergy": 0.6,
+    "synergySe": 0.4,
+    "missed": -9.9,
+    "missedSe": 1.9,
+    "aiPicked": 16
+   },
+   "note": null
+  },
+  {
+   "id": "T009",
+   "name": "TIME 1 で捨て札を増やして TIME 3 で出す",
+   "kind": "setup",
+   "source": "trash",
+   "cards": [
+    "TIME_4",
+    "TIME_2"
+   ],
+   "protocols": [
+    "TIME"
+   ],
+   "how": "TIME 1 (覆われているカードを1枚反転させる。あなたのデッキのカードをすべて捨て札にする。) で捨て札を増やし、TIME 3 (あなたの捨て札置き場にあるカードを1枚公開する。そのカードをこのカードとは別のラインに裏向きでプレイする。) で捨て札から強い札を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -3,
+    "interactionSe": 1.7,
+    "partnerValue": 2.8,
+    "partnerValueSe": 1.1,
+    "synergy": -0.2,
+    "synergySe": 1.4,
+    "missed": -4.9,
+    "missedSe": 1.5,
+    "aiPicked": 3
+   },
+   "note": null
+  },
+  {
+   "id": "T010",
+   "name": "LUCK 2 で捨て札を増やして TIME 3 で出す",
+   "kind": "setup",
+   "source": "trash",
+   "cards": [
+    "TIME_4",
+    "LUCK_3"
+   ],
+   "protocols": [
+    "LUCK",
+    "TIME"
+   ],
+   "how": "LUCK 2 (あなたのデッキの一番上のカードを捨て札にする。そのカードの表面の値に等しい枚数のカードを引く。) で捨て札を増やし、TIME 3 (あなたの捨て札置き場にあるカードを1枚公開する。そのカードをこのカードとは別のラインに裏向きでプレイする。) で捨て札から強い札を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.2,
+    "interactionSe": 2.1,
+    "partnerValue": 2.7,
+    "partnerValueSe": 1.7,
+    "synergy": 3.8,
+    "synergySe": 1.2,
+    "missed": 0.3,
+    "missedSe": 2.6,
+    "aiPicked": 13
+   },
+   "note": null
+  },
+  {
+   "id": "T011",
+   "name": "LUCK 4 で捨て札を増やして TIME 3 で出す",
+   "kind": "setup",
+   "source": "trash",
+   "cards": [
+    "TIME_4",
+    "LUCK_5"
+   ],
+   "protocols": [
+    "LUCK",
+    "TIME"
+   ],
+   "how": "LUCK 4 (あなたのデッキの一番上のカードを捨て札にする。そのカードの表面の値と同じ値を持つ、覆われているか覆われていないカードを1枚削除する。) で捨て札を増やし、TIME 3 (あなたの捨て札置き場にあるカードを1枚公開する。そのカードをこのカードとは別のラインに裏向きでプレイする。) で捨て札から強い札を出す。",
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -6.4,
+    "interactionSe": 1.5,
+    "partnerValue": 5.3,
+    "partnerValueSe": 2,
+    "synergy": -1,
+    "synergySe": 1.7,
+    "missed": -7.4,
+    "missedSe": 2,
+    "aiPicked": 34
+   },
+   "note": null
+  },
+  {
+   "id": "T012",
+   "name": "FIRE 4 で捨て札を増やして TIME 3 で出す",
+   "kind": "setup",
+   "source": "trash",
+   "cards": [
+    "TIME_4",
+    "FIRE_5"
+   ],
+   "protocols": [
+    "FIRE",
+    "TIME"
+   ],
+   "how": "FIRE 4 (あなたは手札があれば1枚以上捨て札にする。捨て札にした枚数＋1枚のカードを引く。) で捨て札を増やし、TIME 3 (あなたの捨て札置き場にあるカードを1枚公開する。そのカードをこのカードとは別のラインに裏向きでプレイする。) で捨て札から強い札を出す。",
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -4,
+    "interactionSe": 1.5,
+    "partnerValue": 3.5,
+    "partnerValueSe": 1.1,
+    "synergy": -0.5,
+    "synergySe": 0.8,
+    "missed": -4.1,
+    "missedSe": 1.5,
+    "aiPicked": 35
+   },
+   "note": null
+  },
+  {
+   "id": "T013",
+   "name": "HATE 1 で捨て札を増やして TIME 3 で出す",
+   "kind": "setup",
+   "source": "trash",
+   "cards": [
+    "TIME_4",
+    "HATE_2"
+   ],
+   "protocols": [
+    "HATE",
+    "TIME"
+   ],
+   "how": "HATE 1 (あなたは手札を３枚捨て札にする。カードを１枚削除する。カードを１枚削除する。) で捨て札を増やし、TIME 3 (あなたの捨て札置き場にあるカードを1枚公開する。そのカードをこのカードとは別のラインに裏向きでプレイする。) で捨て札から強い札を出す。",
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -2.1,
+    "interactionSe": 0.9,
+    "partnerValue": 1.5,
+    "partnerValueSe": 0.8,
+    "synergy": -0.6,
+    "synergySe": 0.4,
+    "missed": -3,
+    "missedSe": 1.1,
+    "aiPicked": 60
+   },
+   "note": null
+  },
+  {
+   "id": "T014",
+   "name": "CHAOS 4 で捨て札を増やして TIME 3 で出す",
+   "kind": "setup",
+   "source": "trash",
+   "cards": [
+    "TIME_4",
+    "CHAOS_5"
+   ],
+   "protocols": [
+    "CHAOS",
+    "TIME"
+   ],
+   "how": "CHAOS 4 (終了：あなたのすべての手札を捨て札にする。捨て札にした枚数と同じ枚数のカードを引く。) で捨て札を増やし、TIME 3 (あなたの捨て札置き場にあるカードを1枚公開する。そのカードをこのカードとは別のラインに裏向きでプレイする。) で捨て札から強い札を出す。",
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 63,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -4.7,
+    "interactionSe": 1.4,
+    "partnerValue": 5.1,
+    "partnerValueSe": 1.4,
+    "synergy": 0.3,
+    "synergySe": 0.2,
+    "missed": -4.5,
+    "missedSe": 1.8,
+    "aiPicked": 11
+   },
+   "note": null
+  },
+  {
+   "id": "T015",
+   "name": "TIME 4 で捨て札を増やして TIME 3 で出す",
+   "kind": "setup",
+   "source": "trash",
+   "cards": [
+    "TIME_4",
+    "TIME_5"
+   ],
+   "protocols": [
+    "TIME"
+   ],
+   "how": "TIME 4 (カードを2枚引く。あなたは手札を2枚捨て札にする。) で捨て札を増やし、TIME 3 (あなたの捨て札置き場にあるカードを1枚公開する。そのカードをこのカードとは別のラインに裏向きでプレイする。) で捨て札から強い札を出す。",
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -4.3,
+    "interactionSe": 2.1,
+    "partnerValue": 4.2,
+    "partnerValueSe": 1.6,
+    "synergy": -0.1,
+    "synergySe": 1.5,
+    "missed": -4.9,
+    "missedSe": 1.9,
+    "aiPicked": 27
+   },
+   "note": null
+  },
+  {
+   "id": "T016",
+   "name": "PEACE 1 で捨て札を増やして TIME 3 で出す",
+   "kind": "setup",
+   "source": "trash",
+   "cards": [
+    "TIME_4",
+    "PEACE_1"
+   ],
+   "protocols": [
+    "PEACE",
+    "TIME"
+   ],
+   "how": "PEACE 1 (両プレイヤーはすべての手札を捨て札にする。 / 終了：あなたの手札が1枚もない場合、カードを1枚引く。) で捨て札を増やし、TIME 3 (あなたの捨て札置き場にあるカードを1枚公開する。そのカードをこのカードとは別のラインに裏向きでプレイする。) で捨て札から強い札を出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 61,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.5,
+    "interactionSe": 1.4,
+    "partnerValue": -0.2,
+    "partnerValueSe": 1.4,
+    "synergy": 0.3,
+    "synergySe": 0.3,
+    "missed": -7.2,
+    "missedSe": 1.7,
+    "aiPicked": 20
+   },
+   "note": null
+  },
+  {
+   "id": "T017",
+   "name": "PLAGUE 2 で捨て札を増やして TIME 3 で出す",
+   "kind": "setup",
+   "source": "trash",
+   "cards": [
+    "TIME_4",
+    "PLAGUE_3"
+   ],
+   "protocols": [
+    "PLAGUE",
+    "TIME"
+   ],
+   "how": "PLAGUE 2 (あなたは手札があれば1枚以上捨て札にする。相手はあなたが捨て札にした枚数＋1枚の手札を捨て札にする。) で捨て札を増やし、TIME 3 (あなたの捨て札置き場にあるカードを1枚公開する。そのカードをこのカードとは別のラインに裏向きでプレイする。) で捨て札から強い札を出す。",
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 62,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -6.6,
+    "interactionSe": 1.5,
+    "partnerValue": 6.8,
+    "partnerValueSe": 1.5,
+    "synergy": 0.1,
+    "synergySe": 0.4,
+    "missed": -10.8,
+    "missedSe": 2.1,
+    "aiPicked": 13
+   },
+   "note": null
+  },
+  {
+   "id": "L101",
+   "name": "FIRE 3 + SPIRIT 1 の回しに SPIRIT 3",
+   "kind": "engine",
+   "source": "fire3",
+   "cards": [
+    "FIRE_4",
+    "SPIRIT_2",
+    "SPIRIT_4"
+   ],
+   "protocols": [
+    "FIRE",
+    "SPIRIT"
+   ],
+   "how": "FIRE 3 で毎手番 SPIRIT 1 を表に戻す回しに、SPIRIT 3 (引いたあと: 覆われていても動ける) を足す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 149,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.8,
+    "interactionSe": 0.9,
+    "partnerValue": 0,
+    "partnerValueSe": 0.7,
+    "synergy": 0.7,
+    "synergySe": 0.9,
+    "missed": -2.8,
+    "missedSe": 0.9,
+    "aiPicked": 21
+   },
+   "note": null
+  },
+  {
+   "id": "L102",
+   "name": "FIRE 3 + SPIRIT 1 の回しに CORRUPTION 2",
+   "kind": "engine",
+   "source": "fire3",
+   "cards": [
+    "FIRE_4",
+    "SPIRIT_2",
+    "CORRUPTION_3"
+   ],
+   "protocols": [
+    "FIRE",
+    "SPIRIT",
+    "CORRUPTION"
+   ],
+   "how": "FIRE 3 で毎手番 SPIRIT 1 を表に戻す回しに、CORRUPTION 2 (捨てたあと: 相手も1枚捨てる) を足す。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 147,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 3.1,
+    "interactionSe": 0.8,
+    "partnerValue": 1.4,
+    "partnerValueSe": 0.6,
+    "synergy": 4.5,
+    "synergySe": 0.8,
+    "missed": -2.8,
+    "missedSe": 1,
+    "aiPicked": 15
    },
    "note": null
   },
