@@ -1690,6 +1690,8 @@
   .ss-still{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%;opacity:0;transition:opacity .45s;}
   .ss-still.on{opacity:1;}
   #storyScene.with-still .ss-veil{background:linear-gradient(180deg,transparent 45%,rgba(3,4,10,.8) 88%);}
+  /* 会話の途中で地図のちびが歩く行: 幕を下だけにして、歩く姿を見せる */
+  #storyScene.walking .ss-veil{background:linear-gradient(180deg,transparent 50%,rgba(3,4,10,.78) 86%);}
   @media (prefers-reduced-motion: reduce){ .ss-still{transition:none;} }
   .ss-portrait{position:absolute;right:max(4vw,8px);bottom:0;height:min(78vh,720px);max-width:70vw;object-fit:contain;object-position:bottom;
     opacity:0;transform:translateY(12px);transition:opacity .25s,transform .25s;filter:drop-shadow(0 0 18px rgba(160,123,255,.35));pointer-events:none;}
@@ -4904,8 +4906,8 @@
       "./js3d/roombet.js": "./js3d/roombet.js?v=cc2e51d3f4",
       "./js3d/roomui.js": "./js3d/roomui.js?v=9ceaa14fce",
       "./js3d/run-chaos.js": "./js3d/run-chaos.js?v=43c0c4c4c8",
-      "./js3d/run-fx.js": "./js3d/run-fx.js?v=d91d559206",
-      "./js3d/run-pilots.js": "./js3d/run-pilots.js?v=d6379041c1",
+      "./js3d/run-fx.js": "./js3d/run-fx.js?v=db84784a02",
+      "./js3d/run-pilots.js": "./js3d/run-pilots.js?v=4b54f3c10f",
       "./js3d/run-score.js": "./js3d/run-score.js?v=8359a3008a",
       "./js3d/run-ui.js": "./js3d/run-ui.js?v=3a8f22f535",
       "./js3d/run.js": "./js3d/run.js?v=20998c91d9",
@@ -4919,16 +4921,16 @@
       "./js3d/stats-data.js": "./js3d/stats-data.js?v=61334c9347",
       "./js3d/stats.js": "./js3d/stats.js?v=5e9acbdde6",
       "./js3d/steps.js": "./js3d/steps.js?v=13e73b20fe",
-      "./js3d/story-map.js": "./js3d/story-map.js?v=a71db70a40",
+      "./js3d/story-map.js": "./js3d/story-map.js?v=ed5ef482a6",
       "./js3d/story-scenery-aquarium.js": "./js3d/story-scenery-aquarium.js?v=0140f6873e",
       "./js3d/story-scenery-director.js": "./js3d/story-scenery-director.js?v=3492908ba0",
       "./js3d/story-scenery-mansion.js": "./js3d/story-scenery-mansion.js?v=c47d97ebb0",
       "./js3d/story-scenery-station.js": "./js3d/story-scenery-station.js?v=6675390494",
       "./js3d/story-scenery-warehouse.js": "./js3d/story-scenery-warehouse.js?v=c524a114c0",
       "./js3d/story-scenery.js": "./js3d/story-scenery.js?v=9fa267bcf9",
-      "./js3d/story-ui.js": "./js3d/story-ui.js?v=d75059f411",
-      "./js3d/story-world.js": "./js3d/story-world.js?v=1b6a3369d0",
-      "./js3d/story.js": "./js3d/story.js?v=822a429f33",
+      "./js3d/story-ui.js": "./js3d/story-ui.js?v=b234ce9684",
+      "./js3d/story-world.js": "./js3d/story-world.js?v=3f0f8426d6",
+      "./js3d/story.js": "./js3d/story.js?v=77c3f2c713",
       "./js3d/support.js": "./js3d/support.js?v=efb00a908c",
       "./js3d/theme.js": "./js3d/theme.js?v=932e1d5eb8",
       "./js3d/tips.js": "./js3d/tips.js?v=3faae17957",
@@ -4991,9 +4993,9 @@
   <link rel="modulepreload" href="js3d/equip.js?v=51faa70a25">
   <link rel="modulepreload" href="js3d/stats.js?v=5e9acbdde6">
   <link rel="modulepreload" href="js3d/stats-data.js?v=61334c9347">
-  <link rel="modulepreload" href="js3d/story.js?v=822a429f33">
-  <link rel="modulepreload" href="js3d/story-ui.js?v=d75059f411">
-  <link rel="modulepreload" href="js3d/story-world.js?v=1b6a3369d0">
+  <link rel="modulepreload" href="js3d/story.js?v=77c3f2c713">
+  <link rel="modulepreload" href="js3d/story-ui.js?v=b234ce9684">
+  <link rel="modulepreload" href="js3d/story-world.js?v=3f0f8426d6">
   <link rel="modulepreload" href="js3d/rewards.js?v=ef3a012bdb">
   <link rel="modulepreload" href="js3d/gachafx.js?v=24484640c3">
   <link rel="modulepreload" href="js3d/cosmetics-ui.js?v=4f9c9e5f98">
@@ -5064,7 +5066,8 @@
   <link rel="modulepreload" href="js3d/gacha-ui.js?v=b5bf4956cc">
   <link rel="modulepreload" href="js3d/news.js?v=e23958debf">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/ShaderPass.js">
-  <link rel="modulepreload" href="js3d/story-map.js?v=a71db70a40">
+  <link rel="modulepreload" href="js3d/run-pilots.js?v=4b54f3c10f">
+  <link rel="modulepreload" href="js3d/story-map.js?v=ed5ef482a6">
   <link rel="modulepreload" href="js3d/story-scenery.js?v=9fa267bcf9">
   <link rel="modulepreload" href="js3d/story-scenery-aquarium.js?v=0140f6873e">
   <link rel="modulepreload" href="js3d/story-scenery-mansion.js?v=c47d97ebb0">
@@ -5073,8 +5076,7 @@
   <link rel="modulepreload" href="js3d/story-scenery-director.js?v=3492908ba0">
   <link rel="modulepreload" href="js3d/cos-rarity.js?v=55e65b53fa">
   <link rel="modulepreload" href="js3d/run-chaos.js?v=43c0c4c4c8">
-  <link rel="modulepreload" href="js3d/run-pilots.js?v=d6379041c1">
-  <link rel="modulepreload" href="js3d/run-fx.js?v=d91d559206">
+  <link rel="modulepreload" href="js3d/run-fx.js?v=db84784a02">
   <link rel="modulepreload" href="js3d/prompts.js?v=513817485c">
   <link rel="modulepreload" href="js3d/icons.js?v=15bacde80c">
   <link rel="modulepreload" href="js3d/cardtext.js?v=4cf5529855">
