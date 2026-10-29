@@ -1144,3 +1144,39 @@ module.exports = [
     });
   }
 })();
+
+/* ---------- 3枚の組に4枚目 (Q001〜、2026-10-29) ----------
+   デッキは3プロトコルなので、4枚目は組と同じプロトコルの札に限る。組を植え、同じプロトコルの、場に残って効く札を出す。相方 = 組の札 */
+(function engineFourth() {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const cards = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'cards.json'), 'utf8'));
+  const proto = {}, value = {}, byName = {}, persist = [];
+  for (const p of cards.protocols) for (const c of p.cards) {
+    proto[c.id] = p.name; value[c.id] = c.value; byName[p.name + ' ' + c.value] = c.id;
+    if (c.upper || c.lower) persist.push(c.id);
+  }
+  const id = (n) => { if (!byName[n]) throw new Error('no card ' + n); return byName[n]; };
+  const name = (d) => proto[d] + ' ' + value[d];
+  const ENGINES = [
+    ['WAR 0 + CHAOS 0 + HATE 3', ['WAR 0', 'CHAOS 0', 'HATE 3']],
+    ['WAR 0 + CHAOS 0 + MIRROR 4', ['WAR 0', 'CHAOS 0', 'MIRROR 4']],
+    ['WAR 0 + CHAOS 0 + PLAGUE 0', ['WAR 0', 'CHAOS 0', 'PLAGUE 0']],
+    ['SPIRIT 3 + PEACE 1 + CORRUPTION 6', ['SPIRIT 3', 'PEACE 1', 'CORRUPTION 6']],
+    ['PLAGUE 1 + COURAGE 0 + CORRUPTION 2', ['PLAGUE 1', 'COURAGE 0', 'CORRUPTION 2']],
+    ['CORRUPTION 6 + CORRUPTION 2 + PLAGUE 1', ['CORRUPTION 6', 'CORRUPTION 2', 'PLAGUE 1']]
+  ];
+  let n = 0;
+  for (const [en, pieces] of ENGINES) {
+    const ps = pieces.map(id), pp = new Set(ps.map(x => proto[x]));
+    for (const T of persist) {
+      if (!pp.has(proto[T]) || ps.includes(T)) continue;
+      module.exports.push({
+        id: 'Q' + String(++n).padStart(3, '0'), auto: true, source: 'fourth', late: true,
+        name: en + ' に ' + name(T), kind: 'engine', protos: [...pp],
+        how: en + ' が回っているところに ' + name(T) + ' を足す。',
+        setup: { mine: [...ps.map(x => ({ card: x, at: 'field' })), { card: T, at: 'hand' }] }, act: { play: T }, partner: ps
+      });
+    }
+  }
+})();

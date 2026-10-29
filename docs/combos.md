@@ -1240,6 +1240,12 @@ WATER 1 (あなたのデッキの一番上のカードを、他の各ライン�
 - 種類: 次の手番の仕込み / プロトコル: FIRE・WATER
 - 噛み合い +2.5 ±1.1pt / 相方の値 -1.2 ±1.2pt / 逃している得 -8.4 ±1.8pt / 自分で選ぶ 19% (57盤面、自分の手番 2 回先)
 
+### Q025 SPIRIT 3 + PEACE 1 + CORRUPTION 6 に CORRUPTION 2
+SPIRIT 3 + PEACE 1 + CORRUPTION 6 が回っているところに CORRUPTION 2 を足す。
+
+- 種類: 毎手番効く / プロトコル: SPIRIT・PEACE・CORRUPTION
+- 噛み合い +3.8 ±1.4pt / 相方の値 -2.9 ±1.3pt / 逃している得 -1.5 ±1.1pt / 自分で選ぶ 59% (153盤面、自分の手番 2 回先)
+
 ### Z030 PSYCHIC 3 で相手の FIRE 3 + PLAGUE 4 を崩す
 相手の FIRE 3 + PLAGUE 4 が回っているときに PSYCHIC 3 (相手は手札を1枚捨て札にする。あなたは相手のカードを1枚移動させる。) を出す。
 
@@ -1370,11 +1376,23 @@ WAR 0 + CHAOS 0 が回っているところに CORRUPTION 6 (終了：あなた�
 - 種類: 毎手番効く / プロトコル: WAR・CHAOS・CORRUPTION
 - 噛み合い +2.7 ±2.0pt / 相方の値 +12.7 ±2.1pt / 逃している得 -3.7 ±1.4pt / 自分で選ぶ 55% (42盤面、自分の手番 2 回先)
 
+### Q010 WAR 0 + CHAOS 0 + MIRROR 4 に MIRROR 1
+WAR 0 + CHAOS 0 + MIRROR 4 が回っているところに MIRROR 1 を足す。
+
+- 種類: 毎手番効く / プロトコル: WAR・CHAOS・MIRROR
+- 噛み合い -0.9 ±3.1pt / 相方の値 +16.1 ±3.2pt / 逃している得 -2.5 ±2.9pt / 自分で選ぶ 26% (42盤面、自分の手番 2 回先)
+
 ### G015 WAR 0 + CHAOS 0 に PSYCHIC 4
 WAR 0 + CHAOS 0 が回っているところに PSYCHIC 4 (終了：あなたは相手のカードを1枚戻すことができる。そうした場合、このカードを反転させる。) を足す。
 
 - 種類: 毎手番効く / プロトコル: WAR・CHAOS・PSYCHIC
 - 噛み合い +1.2 ±1.3pt / 相方の値 +14.0 ±2.6pt / 逃している得 +1.5 ±1.1pt / 自分で選ぶ 63% (43盤面、自分の手番 2 回先)
+
+### Q009 WAR 0 + CHAOS 0 + MIRROR 4 に MIRROR 0
+WAR 0 + CHAOS 0 + MIRROR 4 が回っているところに MIRROR 0 を足す。
+
+- 種類: 毎手番効く / プロトコル: WAR・CHAOS・MIRROR
+- 噛み合い +1.5 ±3.8pt / 相方の値 +13.5 ±3.3pt / 逃している得 -5.7 ±3.2pt / 自分で選ぶ 14% (42盤面、自分の手番 2 回先)
 
 ### C043 覆われた PSYCHIC 1 + PLAGUE 4: 出させた裏向きを毎手番消させる
 覆われた PSYCHIC 1 で相手は裏向きでしか出せない。PLAGUE 4 の終了「相手は自分の裏向きを1枚削除」で、出した札を毎手番1枚ずつ失わせる。
@@ -1460,6 +1478,12 @@ WAR 0 + CHAOS 0 が回っているところに MIRROR 1 (終了：あなたは�
 - 種類: 相手を縛る / プロトコル: PSYCHIC・WATER
 - 噛み合い +1.0 ±1.4pt / 相方の値 +12.5 ±1.3pt / 逃している得 -5.1 ±1.4pt / 自分で選ぶ 20% (123盤面、自分の手番 2 回先)
 
+### Q031 PLAGUE 1 + COURAGE 0 + CORRUPTION 2 に CORRUPTION 6
+PLAGUE 1 + COURAGE 0 + CORRUPTION 2 が回っているところに CORRUPTION 6 を足す。
+
+- 種類: 毎手番効く / プロトコル: PLAGUE・COURAGE・CORRUPTION
+- 噛み合い +1.5 ±2.0pt / 相方の値 +11.9 ±2.5pt / 逃している得 -4.4 ±1.9pt / 自分で選ぶ 62% (42盤面、自分の手番 2 回先)
+
 ### G044 WAR 0 + CHAOS 0 に SMOKE 2
 WAR 0 + CHAOS 0 が回っているところに SMOKE 2 (このラインのあなたの合計値は、このラインにある裏向きのカード1枚ごとに1増える。) を足す。
 
@@ -1520,6 +1544,12 @@ SPIRIT 3 + CORRUPTION 2 が回っているところに COURAGE 2 (カードを1�
 - 種類: 毎手番効く / プロトコル: SPIRIT・CORRUPTION・COURAGE
 - 噛み合い +3.3 ±2.6pt / 相方の値 +8.7 ±2.3pt / 逃している得 +0.6 ±1.8pt / 自分で選ぶ 26% (43盤面、自分の手番 2 回先)
 
+### Q028 PLAGUE 1 + COURAGE 0 + CORRUPTION 2 に PLAGUE 4
+PLAGUE 1 + COURAGE 0 + CORRUPTION 2 が回っているところに PLAGUE 4 を足す。
+
+- 種類: 毎手番効く / プロトコル: PLAGUE・COURAGE・CORRUPTION
+- 噛み合い +1.1 ±3.3pt / 相方の値 +10.6 ±3.1pt / 逃している得 -0.1 ±2.8pt / 自分で選ぶ 31% (42盤面、自分の手番 2 回先)
+
 ### G014 WAR 0 + CHAOS 0 に PSYCHIC 1
 WAR 0 + CHAOS 0 が回っているところに PSYCHIC 1 (相手はカードを裏向きでのみプレイすることができる。 / 開始：このカードを反転させる。) を足す。
 
@@ -1556,6 +1586,12 @@ FIRE 3 + PLAGUE 4 が回っているところに SPIRIT 0 (リフレッシュす
 - 種類: 毎手番効く / プロトコル: FIRE・PLAGUE・SPIRIT
 - 噛み合い +2.1 ±2.1pt / 相方の値 +8.8 ±1.9pt / 逃している得 +0.2 ±0.6pt / 自分で選ぶ 53% (43盤面、自分の手番 2 回先)
 
+### Q015 WAR 0 + CHAOS 0 + PLAGUE 0 に PLAGUE 4
+WAR 0 + CHAOS 0 + PLAGUE 0 が回っているところに PLAGUE 4 を足す。
+
+- 種類: 毎手番効く / プロトコル: WAR・CHAOS・PLAGUE
+- 噛み合い -0.4 ±1.4pt / 相方の値 +11.3 ±2.1pt / 逃している得 -2.7 ±1.3pt / 自分で選ぶ 47% (43盤面、自分の手番 2 回先)
+
 ### G005 WAR 0 + CHAOS 0 に LIFE 0
 WAR 0 + CHAOS 0 が回っているところに LIFE 0 (終了：このカードが覆われている場合、このカードを削除する。 / あなたのデッキの一番上のカードを、あなたのカードがある各ラインに裏向きで1枚ずつプレイする。) を足す。
 
@@ -1567,6 +1603,12 @@ WAR 0 + CHAOS 0 が回っているところに PLAGUE 1 (相手が手札を捨�
 
 - 種類: 毎手番効く / プロトコル: WAR・CHAOS・PLAGUE
 - 噛み合い +0.8 ±2.6pt / 相方の値 +10.0 ±2.3pt / 逃している得 -0.9 ±2.2pt / 自分で選ぶ 43% (42盤面、自分の手番 2 回先)
+
+### Q002 WAR 0 + CHAOS 0 + HATE 3 に CHAOS 3
+WAR 0 + CHAOS 0 + HATE 3 が回っているところに CHAOS 3 を足す。
+
+- 種類: 毎手番効く / プロトコル: WAR・CHAOS・HATE
+- 噛み合い -0.6 ±3.9pt / 相方の値 +11.2 ±2.9pt / 逃している得 -3.4 ±2.7pt / 自分で選ぶ 0% (43盤面、自分の手番 2 回先)
 
 ### G009 WAR 0 + CHAOS 0 に METAL 2
 WAR 0 + CHAOS 0 が回っているところに METAL 2 (相手はこのラインにカードを裏向きでプレイすることはできない。) を足す。
@@ -2857,6 +2899,24 @@ CLARITY 0 (このラインのあなたの合計値は、あなたの手札1枚�
 | R005 | ASSIMILATION 1 + FEAR 1 (リフレッシュで起きる) | 次の手番の仕込み | +1.4 ±1.1 | -0.7 ±0.9 | -1.0 ±1.5 | 24% |
 | R006 | ASSIMILATION 1 + HATE 1 (リフレッシュで起きる) | 次の手番の仕込み | +0.4 ±0.8 | -0.2 ±0.5 | +0.3 ±1.0 | 62% |
 | R007 | ASSIMILATION 1 + SPIRIT 0 (リフレッシュで起きる) | その手番で得 | +0.2 ±0.9 | +0.5 ±0.7 | -0.2 ±1.0 | 32% |
+| Q001 | WAR 0 + CHAOS 0 + HATE 3 に HATE 4 | 毎手番効く | -1.0 ±1.6 | +10.5 ±2.5 | -3.6 ±2.0 | 43% |
+| Q005 | WAR 0 + CHAOS 0 + HATE 3 に WAR 2 | 毎手番効く | -3.6 ±2.7 | +6.8 ±2.5 | -4.0 ±2.3 | 9% |
+| Q007 | WAR 0 + CHAOS 0 + MIRROR 4 に CHAOS 3 | 毎手番効く | -3.3 ±3.0 | +13.3 ±2.2 | -7.8 ±2.7 | 0% |
+| Q008 | WAR 0 + CHAOS 0 + MIRROR 4 に CHAOS 4 | 毎手番効く | -2.2 ±2.6 | +6.5 ±2.0 | -7.2 ±2.3 | 2% |
+| Q013 | WAR 0 + CHAOS 0 + MIRROR 4 に WAR 3 | 毎手番効く | -2.3 ±2.2 | +6.4 ±2.3 | -3.3 ±2.3 | 5% |
+| Q014 | WAR 0 + CHAOS 0 + PLAGUE 0 に PLAGUE 1 | 毎手番効く | -2.2 ±2.6 | +11.2 ±2.5 | -5.5 ±2.2 | 23% |
+| Q016 | WAR 0 + CHAOS 0 + PLAGUE 0 に CHAOS 3 | 毎手番効く | -2.1 ±2.1 | +10.5 ±1.9 | -11.4 ±2.5 | 7% |
+| Q017 | WAR 0 + CHAOS 0 + PLAGUE 0 に CHAOS 4 | 毎手番効く | -2.1 ±3.0 | +10.4 ±2.6 | -7.5 ±3.4 | 0% |
+| Q021 | SPIRIT 3 + PEACE 1 + CORRUPTION 6 に SPIRIT 0 | 毎手番効く | +2.1 ±1.8 | -2.9 ±2.3 | -2.5 ±1.6 | 56% |
+| Q023 | SPIRIT 3 + PEACE 1 + CORRUPTION 6 に CORRUPTION 0 | 毎手番効く | +4.1 ±2.7 | -4.4 ±2.0 | -9.7 ±2.9 | 2% |
+| Q024 | SPIRIT 3 + PEACE 1 + CORRUPTION 6 に CORRUPTION 1 | 毎手番効く | -4.0 ±2.8 | +0.9 ±2.7 | -1.7 ±2.3 | 43% |
+| Q026 | SPIRIT 3 + PEACE 1 + CORRUPTION 6 に PEACE 4 | 毎手番効く | -3.4 ±3.2 | -1.2 ±2.8 | -1.9 ±3.7 | 2% |
+| Q027 | PLAGUE 1 + COURAGE 0 + CORRUPTION 2 に PLAGUE 0 | 毎手番効く | -5.3 ±4.2 | +15.8 ±3.7 | -12.1 ±3.2 | 5% |
+| Q029 | PLAGUE 1 + COURAGE 0 + CORRUPTION 2 に CORRUPTION 0 | 毎手番効く | -2.1 ±2.3 | +12.4 ±2.5 | -10.2 ±2.1 | 2% |
+| Q030 | PLAGUE 1 + COURAGE 0 + CORRUPTION 2 に CORRUPTION 1 | 毎手番効く | -1.9 ±1.7 | +7.8 ±2.2 | -3.2 ±1.6 | 35% |
+| Q035 | CORRUPTION 6 + CORRUPTION 2 + PLAGUE 1 に PLAGUE 0 | 毎手番効く | +2.3 ±2.1 | +3.3 ±1.4 | -2.3 ±2.8 | 5% |
+| Q036 | CORRUPTION 6 + CORRUPTION 2 + PLAGUE 1 に PLAGUE 4 | 毎手番効く | -2.9 ±2.9 | +4.8 ±1.6 | -4.3 ±3.3 | 33% |
+| Q038 | CORRUPTION 6 + CORRUPTION 2 + PLAGUE 1 に CORRUPTION 1 | 毎手番効く | +0.2 ±2.1 | +3.8 ±2.5 | -0.8 ±2.6 | 28% |
 
 ## 逆効果だったもの
 
@@ -2907,6 +2967,19 @@ CLARITY 0 (このラインのあなたの合計値は、あなたの手札1枚�
 | P039 | PSYCHIC 1 でふさいで GRAVITY 6 で崩す | その手番で得 | -4.9 ±1.6 | +11.0 ±1.4 | -10.6 ±2.2 | 27% |
 | H003 | WAR 0 + ASSIMILATION 4 に PLAGUE 0 | その手番で得 | -3.4 ±1.4 | +13.0 ±1.2 | -9.3 ±1.3 | 1% |
 | M005 | SPIRIT 3 を APATHY 2 の上へ動かす | 毎手番効く | -1.4 ±0.6 | +1.1 ±0.7 | -6.2 ±1.4 | 26% |
+| Q003 | WAR 0 + CHAOS 0 + HATE 3 に CHAOS 4 | 毎手番効く | -4.5 ±1.9 | +12.9 ±1.8 | -7.1 ±1.7 | 2% |
+| Q004 | WAR 0 + CHAOS 0 + HATE 3 に WAR 1 | 毎手番効く | -6.6 ±2.5 | +10.7 ±2.0 | -13.7 ±2.4 | 0% |
+| Q006 | WAR 0 + CHAOS 0 + HATE 3 に WAR 3 | 毎手番効く | -8.7 ±3.3 | +11.6 ±2.8 | -10.4 ±3.0 | 0% |
+| Q011 | WAR 0 + CHAOS 0 + MIRROR 4 に WAR 1 | 毎手番効く | -6.3 ±2.4 | +10.8 ±1.9 | -12.8 ±1.8 | 0% |
+| Q012 | WAR 0 + CHAOS 0 + MIRROR 4 に WAR 2 | 毎手番効く | -11.5 ±3.1 | +9.1 ±2.4 | -10.5 ±3.3 | 12% |
+| Q018 | WAR 0 + CHAOS 0 + PLAGUE 0 に WAR 1 | 毎手番効く | -8.4 ±2.1 | +10.7 ±1.6 | -14.4 ±2.2 | 0% |
+| Q019 | WAR 0 + CHAOS 0 + PLAGUE 0 に WAR 2 | 毎手番効く | -8.9 ±3.7 | +13.5 ±2.7 | -13.0 ±3.0 | 17% |
+| Q020 | WAR 0 + CHAOS 0 + PLAGUE 0 に WAR 3 | 毎手番効く | -7.1 ±2.9 | +10.6 ±2.9 | -7.0 ±3.1 | 2% |
+| Q022 | SPIRIT 3 + PEACE 1 + CORRUPTION 6 に SPIRIT 1 | 毎手番効く | -3.3 ±1.4 | -1.3 ±1.2 | -4.1 ±1.3 | 24% |
+| Q032 | PLAGUE 1 + COURAGE 0 + CORRUPTION 2 に COURAGE 2 | 毎手番効く | -8.4 ±2.3 | +11.7 ±2.2 | -10.2 ±2.5 | 5% |
+| Q033 | PLAGUE 1 + COURAGE 0 + CORRUPTION 2 に COURAGE 3 | 毎手番効く | -4.0 ±1.7 | +8.9 ±1.6 | -10.4 ±2.5 | 9% |
+| Q034 | PLAGUE 1 + COURAGE 0 + CORRUPTION 2 に COURAGE 6 | 毎手番効く | -5.7 ±1.4 | +8.0 ±1.7 | -6.3 ±2.1 | 9% |
+| Q037 | CORRUPTION 6 + CORRUPTION 2 + PLAGUE 1 に CORRUPTION 0 | 毎手番効く | -9.0 ±2.6 | +5.3 ±2.1 | -20.7 ±3.4 | 0% |
 
 ## まだ測っていないもの
 
