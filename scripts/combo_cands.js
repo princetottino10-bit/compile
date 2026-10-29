@@ -1069,3 +1069,18 @@ module.exports = [
     });
   }
 })();
+
+/* ---------- PLAGUE 0 でふさいで WAR 0 で消す、をほかの引かせ方で (H001〜、2026-10-29) ----------
+   G011 (CHAOS 0)・G353 (LOVE 2) で残った形を、WAR 0 を起こすほかの札 (LOVE 6・FEAR 1・ASSIMILATION 4) でも確かめる。相方 = WAR 0 */
+(function plague0Candidates() {
+  let n = 0;
+  for (const [d, label] of [['LOVE_6', 'LOVE 6'], ['FEAR_2', 'FEAR 1'], ['ASSIMILATION_4', 'ASSIMILATION 4']]) {
+    module.exports.push({
+      id: 'H' + String(++n).padStart(3, '0'), auto: true, source: 'triple', late: true,
+      name: 'WAR 0 + ' + label + ' に PLAGUE 0', kind: 'burst', protos: ['WAR', label.split(' ')[0], 'PLAGUE'],
+      how: 'WAR 0 を一番上に置き、PLAGUE 0 で相手の置き場を1本ふさいでから、' + label + ' で相手に引かせて WAR 0 の削除を起こす。',
+      setup: { mine: [{ card: 'WAR_1', at: 'field' }, { card: d, at: 'hand' }, { card: 'PLAGUE_1', at: 'hand' }] },
+      act: { play: 'PLAGUE_1' }, partner: ['WAR_1']
+    });
+  }
+})();
