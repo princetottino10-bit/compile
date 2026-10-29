@@ -414,3 +414,7 @@ WAR 0 + CHAOS 0・FIRE 3 + PLAGUE 4・WAR 3 + COURAGE 0・SPIRIT 3 + PEACE 1 を
 - 相手の置き場をふさぐ札 (PLAGUE 0・METAL 2・PSYCHIC 1) × 崩す札 (削除・戻す) の2枚 39件 (P001〜) は噛み合いなし。PLAGUE 0 が効くのは、CHAOS 0 で毎手番相手に引かせて WAR 0 で消す回しの上だけ。
 - 3巡目 (G343〜515): WAR 0 + LOVE 2・WAR 3 + FEAR 1・SPIRIT 3 + CORRUPTION 2 に3枚目。WAR 0 + LOVE 2 に PLAGUE 0 (G353) が +4.0 / +3.3 と出て一度 AI の extra に入れたが、外した。LOVE 2 は出したら終わりの札なので、場の形は WAR 0 + PLAGUE 0 と同じ。WAR 0 だけを相方にして PLAGUE 0 を出す形 (H001〜003、LOVE 6・FEAR 1・ASSIMILATION 4 を手札に、150盤面) は −1.6 / −2.3 / −3.4 で、PLAGUE 0 が効くのは CHAOS 0 で毎手番引かせる回しの上だけと見る。WAR 0 + LOVE 2 に PEACE 1 (+4.8 / +2.9) は境目。
 - PLAGUE 0 を足した版は、つよい300戦で前のコミット比 48.7% (判定不能)。上のとおり外した。
+
+### 裏の撃つ札を残す重みを倍にしても (2026-10-29)
+
+aiFlipStoreScore の flipStore を 60 → 120 にして ORACLE 同士 60局を打った。LOVE 4 で裏の LIFE 0 を表にする形は揃った局 6 → 6、SPIRIT 2 で裏の FIRE 0 は 3 → 3 で変わらず、60 のまま。揃わないのは、表にする札と裏の撃つ札が同じ手番に手元に来ること自体がまれなため。
