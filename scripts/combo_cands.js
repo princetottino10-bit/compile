@@ -1084,3 +1084,39 @@ module.exports = [
     });
   }
 })();
+
+/* ---------- 動ける札で、覆われると効く札を覆い直す (M001〜、2026-10-29) ----------
+   SPIRIT 3 (引いたあと: 覆われていても動ける)・TIME 2 (シャッフルしたあと: 1枚引いて動ける) を、覆われると効く札
+   (FIRE 0: 先に1枚引いて1枚反転 / LIFE 3 / HATE 4 / CLARITY 1: 先に3枚引く / APATHY 2) の上へ動かす。
+   FIRE 0・CLARITY 1 は覆われるときに引くので、引いたあとにまた SPIRIT 3 が動ける (どいてもう一度乗れば、もう一度起きる)。
+   動く先は覆われると効く札のラインに決め打つ。相方 = 覆われると効く札 */
+(function moverCoverCandidates() {
+  const seen = new Set(module.exports.map(c => c.setup.mine.map(p => p.card).sort().join('+')));
+  const T = [['FIRE_1', 'FIRE 0'], ['LIFE_4', 'LIFE 3'], ['HATE_5', 'HATE 4'], ['CLARITY_2', 'CLARITY 1'], ['APATHY_3', 'APATHY 2']];
+  const MOVERS = [['SPIRIT_4', 'SPIRIT 3', 'METAL_2', 'METAL 1 (2枚引く)'], ['TIME_3', 'TIME 2', 'CLARITY_4', 'CLARITY 3 (シャッフル)']];
+  let n = 0;
+  for (const [m, mn, d, dn] of MOVERS) for (const [t, tn] of T) {
+    if (m.split('_')[0] === t.split('_')[0] || d.split('_')[0] === t.split('_')[0]) continue;
+    const mine = [{ card: t, at: 'field' }, { card: m, at: 'field', line: 'other' }, { card: d, at: 'hand' }];
+    const key = mine.map(p => p.card).sort().join('+');
+    if (seen.has(key)) continue;
+    seen.add(key);
+    module.exports.push({
+      id: 'M' + String(++n).padStart(3, '0'), auto: true, source: 'mover', late: true,
+      name: mn + ' を ' + tn + ' の上へ動かす', kind: 'engine', protos: [...new Set([m, t, d].map(x => x.split('_')[0]))],
+      how: dn + ' で ' + mn + ' を起こし、' + tn + ' の上へ動かして覆われたときの効果を起こす。',
+      setup: { mine }, act: { play: d, line: 'other' }, partner: [t],
+      picks: (s, q, P) => {
+        const tu = P.planted[t], mu = P.planted[m];
+        if (!tu || !mu || !s.cards[tu] || !s.cards[mu] || q.player !== P.me) return null;
+        const tl = s.lines.findIndex(L => L[P.me].includes(tu));
+        const ml = s.lines.findIndex(L => L[P.me].includes(mu));
+        if (tl < 0) return null;
+        const tTop = s.lines[tl][P.me][s.lines[tl][P.me].length - 1] === tu;
+        if (q.context === m && q.kind === 'yesNo') return [tTop && ml !== tl ? 'yes' : 'no'];
+        if (q.kind === 'pickLine' && /shift-dest/.test(q.prompt || '') && q.focus === mu) return q.lines.includes(tl) ? [tl] : null;
+        return null;
+      }
+    });
+  }
+})();

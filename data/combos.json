@@ -46074,6 +46074,176 @@
    "note": null
   },
   {
+   "id": "M001",
+   "name": "SPIRIT 3 を FIRE 0 の上へ動かす",
+   "kind": "engine",
+   "source": "mover",
+   "cards": [
+    "FIRE_1",
+    "SPIRIT_4",
+    "METAL_2"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "FIRE",
+    "METAL"
+   ],
+   "how": "METAL 1 (2枚引く) で SPIRIT 3 を起こし、FIRE 0 の上へ動かして覆われたときの効果を起こす。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 142,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.1,
+    "interactionSe": 1.5,
+    "partnerValue": 4.9,
+    "partnerValueSe": 1.2,
+    "synergy": 7.1,
+    "synergySe": 1,
+    "missed": -5,
+    "missedSe": 1.2,
+    "aiPicked": 10
+   },
+   "note": null
+  },
+  {
+   "id": "M002",
+   "name": "SPIRIT 3 を LIFE 3 の上へ動かす",
+   "kind": "engine",
+   "source": "mover",
+   "cards": [
+    "LIFE_4",
+    "SPIRIT_4",
+    "METAL_2"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "LIFE",
+    "METAL"
+   ],
+   "how": "METAL 1 (2枚引く) で SPIRIT 3 を起こし、LIFE 3 の上へ動かして覆われたときの効果を起こす。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 137,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.6,
+    "interactionSe": 1.7,
+    "partnerValue": 3.7,
+    "partnerValueSe": 1,
+    "synergy": 6.3,
+    "synergySe": 1.4,
+    "missed": -3,
+    "missedSe": 1.5,
+    "aiPicked": 15
+   },
+   "note": null
+  },
+  {
+   "id": "M003",
+   "name": "SPIRIT 3 を HATE 4 の上へ動かす",
+   "kind": "engine",
+   "source": "mover",
+   "cards": [
+    "HATE_5",
+    "SPIRIT_4",
+    "METAL_2"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "HATE",
+    "METAL"
+   ],
+   "how": "METAL 1 (2枚引く) で SPIRIT 3 を起こし、HATE 4 の上へ動かして覆われたときの効果を起こす。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 151,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.2,
+    "interactionSe": 1.1,
+    "partnerValue": 0.2,
+    "partnerValueSe": 0.9,
+    "synergy": 0,
+    "synergySe": 0.8,
+    "missed": -5,
+    "missedSe": 1,
+    "aiPicked": 14
+   },
+   "note": null
+  },
+  {
+   "id": "M004",
+   "name": "SPIRIT 3 を CLARITY 1 の上へ動かす",
+   "kind": "engine",
+   "source": "mover",
+   "cards": [
+    "CLARITY_2",
+    "SPIRIT_4",
+    "METAL_2"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "CLARITY",
+    "METAL"
+   ],
+   "how": "METAL 1 (2枚引く) で SPIRIT 3 を起こし、CLARITY 1 の上へ動かして覆われたときの効果を起こす。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 134,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.4,
+    "interactionSe": 1.4,
+    "partnerValue": 3.7,
+    "partnerValueSe": 1,
+    "synergy": 2.3,
+    "synergySe": 1,
+    "missed": -5.3,
+    "missedSe": 1.4,
+    "aiPicked": 10
+   },
+   "note": null
+  },
+  {
+   "id": "M005",
+   "name": "SPIRIT 3 を APATHY 2 の上へ動かす",
+   "kind": "engine",
+   "source": "mover",
+   "cards": [
+    "APATHY_3",
+    "SPIRIT_4",
+    "METAL_2"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "APATHY",
+    "METAL"
+   ],
+   "how": "METAL 1 (2枚引く) で SPIRIT 3 を起こし、APATHY 2 の上へ動かして覆われたときの効果を起こす。",
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 145,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.4,
+    "interactionSe": 0.6,
+    "partnerValue": 1.1,
+    "partnerValueSe": 0.7,
+    "synergy": -0.6,
+    "synergySe": 0.3,
+    "missed": -6.2,
+    "missedSe": 1.4,
+    "aiPicked": 26
+   },
+   "note": null
+  },
+  {
    "id": "T01",
    "name": "WATER 1 + WATER 4",
    "kind": "burst",
