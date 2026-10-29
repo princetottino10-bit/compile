@@ -1120,3 +1120,27 @@ module.exports = [
     });
   }
 })();
+
+/* ---------- 相手のリフレッシュで起きる札 × 相手の手札を空にする札 (R001〜、2026-10-29) ----------
+   WAR 1 (相手がリフレッシュしたあと: 好きなだけ捨ててリフレッシュ)・ASSIMILATION 1 (誰かがリフレッシュしたあと: 相手の山札の上を引き、1枚を相手の捨て札へ) は
+   A 型の「〜したあと」に入っていなかった。相手の手札を減らす札 (相手はやがてリフレッシュする) と、自分でリフレッシュする札を組ませる。相方 = 聞く札 */
+(function refreshCandidates() {
+  const seen = new Set(module.exports.map(c => c.setup.mine.map(p => p.card).sort().join('+')));
+  const L = [['WAR_2', 'WAR 1', false], ['ASSIMILATION_2', 'ASSIMILATION 1', true]];
+  const P = [['PLAGUE_3', 'PLAGUE 2', false], ['PEACE_1', 'PEACE 1', false], ['FEAR_2', 'FEAR 1', false], ['HATE_2', 'HATE 1', false],
+    ['LOVE_2', 'LOVE 2', true], ['SPIRIT_1', 'SPIRIT 0', true]];
+  let n = 0;
+  for (const [l, ln, any] of L) for (const [p, pn, own] of P) {
+    if (own && !any) continue;
+    const mine = [{ card: l, at: 'field' }, { card: p, at: 'hand' }];
+    const key = mine.map(x => x.card).sort().join('+');
+    if (seen.has(key)) continue;
+    seen.add(key);
+    module.exports.push({
+      id: 'R' + String(++n).padStart(3, '0'), auto: true, source: 'refresh', late: true,
+      name: ln + ' + ' + pn + ' (リフレッシュで起きる)', kind: own ? 'burst' : 'setup', protos: [l.split('_')[0], p.split('_')[0]],
+      how: ln + ' を一番上に置いておき、' + pn + (own ? ' で自分がリフレッシュして起こす。' : ' で相手の手札を減らし、相手のリフレッシュで起こす。'),
+      setup: { mine }, act: { play: p, line: 'other' }, partner: [l]
+    });
+  }
+})();

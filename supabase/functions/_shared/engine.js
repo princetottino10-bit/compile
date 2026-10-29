@@ -3482,6 +3482,9 @@ const AI_AIM_COMBOS = [
   { pieces: { WAR_1: 'top', LOVE_6: 'play' } },
   { pieces: { WAR_1: 'top', LOVE_2: 'play' } },
   { pieces: { WAR_1: 'top', FEAR_2: 'play' } },
+  /* PEACE 1 で両者の手札を空にすると、相手は次の手番にリフレッシュし、WAR 1 の下段でこちらもリフレッシュして手札が戻る
+     (R001、150盤面2回で +5.7 / +5.3。PLAGUE 2 で相手だけ空にする C048 は噛み合わない) */
+  { pieces: { WAR_2: 'top', PEACE_1: 'play' } },
   /* COURAGE 0 の終了で1枚捨てると相手が2枚捨て (COURAGE 0・CORRUPTION 2)、PLAGUE 1 で2枚引く */
   { pieces: { PLAGUE_2: 'up', COURAGE_1: 'top', CORRUPTION_3: 'up' } },
   /* WAR 3 の下段「相手が捨てたあと: 裏で1枚出せる」に、相手に捨てさせる札を足す */
