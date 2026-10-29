@@ -1009,7 +1009,14 @@ module.exports = [
     ['WAR 0 + CHAOS 0', ['WAR 0', 'CHAOS 0']],
     ['FIRE 3 + PLAGUE 4', ['FIRE 3', 'PLAGUE 4']],
     ['WAR 3 + COURAGE 0', ['WAR 3', 'COURAGE 0']],
-    ['SPIRIT 3 + PEACE 1', ['SPIRIT 3', 'PEACE 1']]
+    ['SPIRIT 3 + PEACE 1', ['SPIRIT 3', 'PEACE 1']],
+    /* 2巡目 (G226〜): 1巡目の4組のあとに足した */
+    ['FIRE 3 + SPIRIT 1', ['FIRE 3', 'SPIRIT 1']],
+    ['TIME 2 + CLARITY 3', ['TIME 2', 'CLARITY 3']],
+    /* 3巡目 (G343〜) */
+    ['WAR 0 + LOVE 2', ['WAR 0', 'LOVE 2']],
+    ['WAR 3 + FEAR 1', ['WAR 3', 'FEAR 1']],
+    ['SPIRIT 3 + CORRUPTION 2', ['SPIRIT 3', 'CORRUPTION 2']]
   ];
   const seen = new Set(module.exports.map(c => c.setup.mine.map(p => p.card).sort().join('+')));
   let n = 0;
@@ -1028,5 +1035,37 @@ module.exports = [
         setup: { mine }, act: { play: T }, partner: ps
       });
     }
+  }
+})();
+
+/* ---------- 相手の置き場をふさぐ札 × 崩す札 (P001〜、2026-10-29) ----------
+   G011 (WAR 0 + CHAOS 0 に PLAGUE 0) で、PLAGUE 0 の下段「相手はこのラインにプレイできない」と削除が噛み合った。
+   ふさぐ札 (PLAGUE 0・METAL 2: 裏向きを出させない・PSYCHIC 1: 表で出させない) を場に置き、崩す札を出す2枚の組。相方 = ふさぐ札 */
+(function blockCandidates() {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const cards = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'cards.json'), 'utf8'));
+  const proto = {}, value = {}, text = {}, byName = {};
+  for (const p of cards.protocols) for (const c of p.cards) {
+    proto[c.id] = p.name; value[c.id] = c.value; byName[p.name + ' ' + c.value] = c.id;
+    text[c.id] = [c.upper, c.middle, c.lower].filter(Boolean).join(' / ');
+  }
+  const id = (n) => { if (!byName[n]) throw new Error('no card ' + n); return byName[n]; };
+  const seen = new Set(module.exports.map(c => c.setup.mine.map(p => p.card).sort().join('+')));
+  let n = 0;
+  for (const bn of ['PLAGUE 0', 'METAL 2', 'PSYCHIC 1']) for (const rn of ['WAR 0', 'HATE 0', 'HATE 2', 'DEATH 0', 'DEATH 2', 'DEATH 3', 'DEATH 4', 'WATER 3', 'FEAR 2', 'FIRE 2', 'LUCK 4', 'COURAGE 1', 'GRAVITY 6', 'ASSIMILATION 0']) {
+    const B = id(bn), R = id(rn);
+    if (proto[B] === proto[R]) continue;
+    const key = [B, R].sort().join('+');
+    if (seen.has(key)) continue;
+    seen.add(key);
+    module.exports.push({
+      id: 'P' + String(++n).padStart(3, '0'), auto: true, source: 'block', late: true,
+      name: bn + ' でふさいで ' + rn + ' で崩す', kind: 'burst', protos: [proto[B], proto[R]],
+      how: bn + ' (' + text[B] + ') で相手の出し方をふさいだうえで、' + rn + ' (' + text[R] + ') で相手の場を崩す。',
+      /* WAR 0 は場に置き、LOVE 2 (相手に1枚引かせる) で削除を起こす */
+      setup: { mine: [{ card: B, at: 'field' }, ...(rn === 'WAR 0' ? [{ card: R, at: 'field' }, { card: 'LOVE_2', at: 'hand' }] : [{ card: R, at: 'hand' }])] },
+      act: rn === 'WAR 0' ? { play: 'LOVE_2' } : { play: R }, partner: [B]
+    });
   }
 })();

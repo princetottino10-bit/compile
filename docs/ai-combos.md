@@ -410,3 +410,5 @@ WAR 0 + CHAOS 0・FIRE 3 + PLAGUE 4・WAR 3 + COURAGE 0・SPIRIT 3 + PEACE 1 を
 - **SPIRIT 3 + PEACE 1 に CORRUPTION 6 (G198):** +5.3 / +3.0。CORRUPTION 6 の終了で最後の手札を捨てると、PEACE 1 の終了「手札0枚なら1枚引く」が入り、SPIRIT 3 が動ける。
 - どちらも AI_AIM_COMBOS の extra に足した。WAR 3 + COURAGE 0 に UNITY 4 (+2.3 / +2.6)・WAR 0 + CHAOS 0 に PSYCHIC 1 (+3.8 / +1.8) は境目。
 - つよい300戦で HEAD 比 49.0% (判定不能)。
+- 2巡目 (G226〜342): FIRE 3 + SPIRIT 1・TIME 2 + CLARITY 3 に3枚目。上位3件 (SMOKE 2・PSYCHIC 1・LIFE 0) は測り直すと 0 前後で、残った組は無い。
+- 相手の置き場をふさぐ札 (PLAGUE 0・METAL 2・PSYCHIC 1) × 崩す札 (削除・戻す) の2枚 39件 (P001〜) は噛み合いなし。PLAGUE 0 が効くのは、CHAOS 0 で毎手番相手に引かせて WAR 0 で消す回しの上だけ。
