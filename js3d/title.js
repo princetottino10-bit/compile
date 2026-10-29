@@ -262,6 +262,8 @@ export function runTitle(protocols, opts) {
             (resumeRec ? '<button data-mode="resumeGame" type="button" class="tt-resume">CONTINUE <small>' + resumeLabel(resumeRec).replace(/[&<>"]/g, '') + '</small></button>' : '') +
             /* オンラインの対戦の途中で落ちた・閉じたときも、すぐ戻れるように (前はロビーまで行かないと戻れず、その間も持ち時間が減っていた) */
             (roomLast ? '<button data-mode="resumeRoom" type="button" class="tt-resume">CONTINUE ONLINE <small>部屋 ' + roomLast + ' の対戦に戻る</small></button>' : '') +
+            /* ストーリーは 2026-10-23 に全員へ開いたが MORE の奥で見つけにくかったので、2026-10-29 に上の列へ出した。小見出しは物語の進み具合 */
+            '<button data-mode="story" type="button">STORY <small>' + storyLabel() + '</small></button>' +
             '<button data-mode="single" type="button">SINGLE GAME <small>VS CPU</small></button>' +
             '<button data-mode="challenge" type="button">CHALLENGE <small>BOSS · UNDERDOG</small>' + badge(challengeBadge(protocols)) + '</button>' +
             '<button data-mode="run" type="button">RUN <small>ROGUELIKE · WEEKLY</small>' + badge(runBadge()) + '</button>' +
@@ -277,9 +279,6 @@ export function runTitle(protocols, opts) {
             '<button data-mode="record" type="button">RECORD</button>' +
             '<button data-mode="more" type="button" class="tt-morebtn" aria-expanded="false">MORE</button>' +
             '<div class="tt-morepop" hidden>' +
-              /* ストーリーは作り直しの間 (案8。2026-10-05〜) 管理者だけだった。2026-10-23 に序章〜終章が仕上がったので全員に開いた */
-              /* 物語の進み具合 (前はいつも「序章「起動」」のまま) */
-              '<button data-mode="story" type="button">STORY <small>' + storyLabel() + '</small></button>' +
               '<button data-mode="tutorial" type="button">TUTORIAL <small>遊び方</small></button>' +
               '<button data-mode="training" type="button">TRAINING <small>盤面を自由に</small></button>' +
               '<button data-mode="cards" type="button">CARDS <small>カード一覧</small></button>' +
