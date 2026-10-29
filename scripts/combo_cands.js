@@ -1180,3 +1180,34 @@ module.exports = [
     }
   }
 })();
+
+/* ---------- A 型に入っていなかった誘発 (Y001〜、2026-10-29) ----------
+   SPEED 1 の上段「キャッシュをクリアしたあと: 1枚引く」(手番の終わりに手札が多すぎて捨てたあと) × 大きく引く札。
+   PEACE 4 の下段「相手の手番中にあなたが捨てたあと: 1枚引く」× WAR 1 (相手のリフレッシュで捨てる)。相方 = 聞く札 */
+(function otherTriggerCandidates() {
+  const seen = new Set(module.exports.map(c => c.setup.mine.map(p => p.card).sort().join('+')));
+  let n = 0;
+  const push = (c) => {
+    const key = c.setup.mine.map(p => p.card).sort().join('+');
+    if (seen.has(key)) return;
+    seen.add(key);
+    module.exports.push({ id: 'Y' + String(++n).padStart(3, '0'), auto: true, source: 'trigger2', late: true, ...c });
+  };
+  for (const [d, dn] of [['FIRE_1', 'FIRE 0'], ['GRAVITY_2', 'GRAVITY 1'], ['METAL_2', 'METAL 1'], ['LIGHT_3', 'LIGHT 2'], ['FEAR_2', 'FEAR 1'], ['DARKNESS_1', 'DARKNESS 0'], ['WATER_3', 'WATER 2'], ['CHAOS_5', 'CHAOS 4']]) {
+    push({
+      name: 'SPEED 1 + ' + dn + ' (キャッシュのクリアで引く)', kind: 'engine', protos: ['SPEED', d.split('_')[0]],
+      how: 'SPEED 1 を場に置き (上段なので覆われてよい)、' + dn + ' で手札を増やす。手番の終わりに捨てたあと、SPEED 1 で1枚引く。',
+      setup: { mine: [{ card: 'SPEED_2', at: 'field' }, { card: d, at: 'hand' }] }, act: { play: d }, partner: ['SPEED_2']
+    });
+  }
+  push({
+    name: 'PEACE 4 + WAR 1 (相手の手番に捨てて引く)', kind: 'engine', protos: ['PEACE', 'WAR'],
+    how: 'PEACE 4 と WAR 1 を一番上に置く。相手がリフレッシュすると WAR 1 で捨ててリフレッシュし、PEACE 4 で1枚引く。',
+    setup: { mine: [{ card: 'WAR_2', at: 'field' }, { card: 'PEACE_4', at: 'hand' }] }, act: { play: 'PEACE_4' }, partner: ['WAR_2']
+  });
+  push({
+    name: 'WAR 1 + PEACE 1 に PEACE 4', kind: 'engine', protos: ['PEACE', 'WAR'],
+    how: 'WAR 1 + PEACE 1 の回しに PEACE 4 を足す。',
+    setup: { mine: [{ card: 'WAR_2', at: 'field' }, { card: 'PEACE_4', at: 'field', line: 'other' }, { card: 'PEACE_1', at: 'hand' }] }, act: { play: 'PEACE_1', line: 'other' }, partner: ['PEACE_4']
+  });
+})();

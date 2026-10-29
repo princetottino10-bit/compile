@@ -47794,6 +47794,295 @@
    "note": null
   },
   {
+   "id": "Y001",
+   "name": "SPEED 1 + FIRE 0 (キャッシュのクリアで引く)",
+   "kind": "engine",
+   "source": "trigger2",
+   "cards": [
+    "SPEED_2",
+    "FIRE_1"
+   ],
+   "protocols": [
+    "SPEED",
+    "FIRE"
+   ],
+   "how": "SPEED 1 を場に置き (上段なので覆われてよい)、FIRE 0 で手札を増やす。手番の終わりに捨てたあと、SPEED 1 で1枚引く。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 102,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.8,
+    "interactionSe": 0.6,
+    "partnerValue": 0.6,
+    "partnerValueSe": 0.5,
+    "synergy": 1.4,
+    "synergySe": 0.5,
+    "missed": 0,
+    "missedSe": 1.2,
+    "aiPicked": 33
+   },
+   "note": null
+  },
+  {
+   "id": "Y002",
+   "name": "SPEED 1 + GRAVITY 1 (キャッシュのクリアで引く)",
+   "kind": "engine",
+   "source": "trigger2",
+   "cards": [
+    "SPEED_2",
+    "GRAVITY_2"
+   ],
+   "protocols": [
+    "SPEED",
+    "GRAVITY"
+   ],
+   "how": "SPEED 1 を場に置き (上段なので覆われてよい)、GRAVITY 1 で手札を増やす。手番の終わりに捨てたあと、SPEED 1 で1枚引く。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.3,
+    "interactionSe": 1,
+    "partnerValue": 1.2,
+    "partnerValueSe": 1.1,
+    "synergy": 1.5,
+    "synergySe": 1.2,
+    "missed": -0.4,
+    "missedSe": 1.2,
+    "aiPicked": 62
+   },
+   "note": null
+  },
+  {
+   "id": "Y003",
+   "name": "SPEED 1 + METAL 1 (キャッシュのクリアで引く)",
+   "kind": "engine",
+   "source": "trigger2",
+   "cards": [
+    "SPEED_2",
+    "METAL_2"
+   ],
+   "protocols": [
+    "SPEED",
+    "METAL"
+   ],
+   "how": "SPEED 1 を場に置き (上段なので覆われてよい)、METAL 1 で手札を増やす。手番の終わりに捨てたあと、SPEED 1 で1枚引く。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 102,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.3,
+    "interactionSe": 1.1,
+    "partnerValue": 2.3,
+    "partnerValueSe": 1.1,
+    "synergy": 1.1,
+    "synergySe": 0.9,
+    "missed": -0.3,
+    "missedSe": 1.2,
+    "aiPicked": 28
+   },
+   "note": null
+  },
+  {
+   "id": "Y004",
+   "name": "SPEED 1 + LIGHT 2 (キャッシュのクリアで引く)",
+   "kind": "engine",
+   "source": "trigger2",
+   "cards": [
+    "SPEED_2",
+    "LIGHT_3"
+   ],
+   "protocols": [
+    "SPEED",
+    "LIGHT"
+   ],
+   "how": "SPEED 1 を場に置き (上段なので覆われてよい)、LIGHT 2 で手札を増やす。手番の終わりに捨てたあと、SPEED 1 で1枚引く。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 102,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1,
+    "interactionSe": 1.1,
+    "partnerValue": 1.7,
+    "partnerValueSe": 0.8,
+    "synergy": 0.7,
+    "synergySe": 0.9,
+    "missed": -0.8,
+    "missedSe": 1.4,
+    "aiPicked": 44
+   },
+   "note": null
+  },
+  {
+   "id": "Y005",
+   "name": "SPEED 1 + FEAR 1 (キャッシュのクリアで引く)",
+   "kind": "engine",
+   "source": "trigger2",
+   "cards": [
+    "SPEED_2",
+    "FEAR_2"
+   ],
+   "protocols": [
+    "SPEED",
+    "FEAR"
+   ],
+   "how": "SPEED 1 を場に置き (上段なので覆われてよい)、FEAR 1 で手札を増やす。手番の終わりに捨てたあと、SPEED 1 で1枚引く。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.2,
+    "interactionSe": 1,
+    "partnerValue": 0,
+    "partnerValueSe": 1,
+    "synergy": 0.2,
+    "synergySe": 0.5,
+    "missed": -2.8,
+    "missedSe": 1.6,
+    "aiPicked": 31
+   },
+   "note": null
+  },
+  {
+   "id": "Y006",
+   "name": "SPEED 1 + DARKNESS 0 (キャッシュのクリアで引く)",
+   "kind": "engine",
+   "source": "trigger2",
+   "cards": [
+    "SPEED_2",
+    "DARKNESS_1"
+   ],
+   "protocols": [
+    "SPEED",
+    "DARKNESS"
+   ],
+   "how": "SPEED 1 を場に置き (上段なので覆われてよい)、DARKNESS 0 で手札を増やす。手番の終わりに捨てたあと、SPEED 1 で1枚引く。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 102,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.4,
+    "interactionSe": 0.9,
+    "partnerValue": 1.9,
+    "partnerValueSe": 0.9,
+    "synergy": 2.3,
+    "synergySe": 0.8,
+    "missed": -3.7,
+    "missedSe": 1.4,
+    "aiPicked": 40
+   },
+   "note": null
+  },
+  {
+   "id": "Y007",
+   "name": "SPEED 1 + WATER 2 (キャッシュのクリアで引く)",
+   "kind": "engine",
+   "source": "trigger2",
+   "cards": [
+    "SPEED_2",
+    "WATER_3"
+   ],
+   "protocols": [
+    "SPEED",
+    "WATER"
+   ],
+   "how": "SPEED 1 を場に置き (上段なので覆われてよい)、WATER 2 で手札を増やす。手番の終わりに捨てたあと、SPEED 1 で1枚引く。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 98,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.1,
+    "interactionSe": 1.2,
+    "partnerValue": 0.4,
+    "partnerValueSe": 1.5,
+    "synergy": 0.4,
+    "synergySe": 1.3,
+    "missed": -3.5,
+    "missedSe": 1.1,
+    "aiPicked": 47
+   },
+   "note": null
+  },
+  {
+   "id": "Y008",
+   "name": "SPEED 1 + CHAOS 4 (キャッシュのクリアで引く)",
+   "kind": "engine",
+   "source": "trigger2",
+   "cards": [
+    "SPEED_2",
+    "CHAOS_5"
+   ],
+   "protocols": [
+    "SPEED",
+    "CHAOS"
+   ],
+   "how": "SPEED 1 を場に置き (上段なので覆われてよい)、CHAOS 4 で手札を増やす。手番の終わりに捨てたあと、SPEED 1 で1枚引く。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.3,
+    "interactionSe": 1.2,
+    "partnerValue": 1.4,
+    "partnerValueSe": 1.4,
+    "synergy": 1.7,
+    "synergySe": 1,
+    "missed": -0.7,
+    "missedSe": 1.7,
+    "aiPicked": 30
+   },
+   "note": null
+  },
+  {
+   "id": "Y009",
+   "name": "WAR 1 + PEACE 1 に PEACE 4",
+   "kind": "engine",
+   "source": "trigger2",
+   "cards": [
+    "WAR_2",
+    "PEACE_4",
+    "PEACE_1"
+   ],
+   "protocols": [
+    "PEACE",
+    "WAR"
+   ],
+   "how": "WAR 1 + PEACE 1 の回しに PEACE 4 を足す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 97,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.3,
+    "interactionSe": 0.8,
+    "partnerValue": 0.3,
+    "partnerValueSe": 0.7,
+    "synergy": 0,
+    "synergySe": 0.5,
+    "missed": -2.7,
+    "missedSe": 1.4,
+    "aiPicked": 46
+   },
+   "note": null
+  },
+  {
    "id": "T01",
    "name": "WATER 1 + WATER 4",
    "kind": "burst",
