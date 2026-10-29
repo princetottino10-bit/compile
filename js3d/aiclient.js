@@ -90,6 +90,8 @@ export function createAiClient(Engine, { cards, effects, extra, engineUrl }) {
     if (Engine.setAiValueNet) Engine.setAiValueNet(cfg.valnet ? model : null, cfg.valnet || 0);
     /* ORACLE だけの手筋 (サイキック①の仕込みへの備え・ロックを割りに行く・ウォーター①とファイア③を手放さない) */
     if (Engine.setAiOracle) Engine.setAiOracle(!!cfg.oracle);
+    if (Engine.setAiOracle) /* 深読み: 2手読みの上位 deep 手だけ、自分の次の手のあとの相手の応手まで読み直す (ORACLE、2026-10-23 の計測で 2,327戦 52.2%) */
+    if (Engine.setAiOracle) if (Engine.setAiDeep) Engine.setAiDeep(cfg.deep || 0);
   }
   async function localWith(over, fn) {
     if (!over) return local(fn);

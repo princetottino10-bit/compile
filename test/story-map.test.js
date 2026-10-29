@@ -192,3 +192,113 @@ test('地図に立っている人 (cast): 印が地図にあり、ちびの絵�
   }
   for (const p of S.PARTY) { assert.ok(S.SPEAKERS[p.id] && S.SPEAKERS[p.id].portrait, p.id); assert.ok(S.nodeById(p.after), p.after); }
 });
+
+test('3章の地図: 出来事は3章の場面をすべて使い、杏と指令の盤の前まで歩ける。対戦のあとに盤の前で確認が出る', () => {
+  const map = M.WAREHOUSE;
+  for (const r of map.rows) assert.equal(r.length, map.rows[0].length);
+  for (const ch of map.rows.join('')) assert.ok(M.TILE[ch] !== undefined, '知らない印: ' + ch);
+  const used = new Set(Object.values(map.events).map(e => e.node));
+  for (const n of S.CHAPTERS[3].nodes) assert.ok(used.has(n.id), n.id + ' を使う出来事がない');
+  for (const e of Object.values(map.events)) { assert.ok(S.nodeById(e.node), e.node); if (e.at) assert.ok(M.find(map, e.at)[0], e.node + ' の置き場所'); }
+  assert.equal(M.mapFor('ch3'), map);
+  let s = S.blankStory();
+  for (const c of S.CHAPTERS.slice(0, 3)) for (const n of c.nodes) s = S.clearNode(s, n.id);
+  const start = M.spawnFor(map, s);
+  assert.equal(M.zoneAt(map, start), 'A');
+  assert.equal(M.objective(s), map.goals['c3-arrive']);
+  for (const ch of ['Y', 'w', 'f', 'h', '1', '2', '4']) { const m = M.find(map, ch)[0]; assert.ok(M.findPath(map, s, start, { x: m.x + 0.5, y: m.y + 0.5 }), ch); }
+  const o = M.find(map, 'O')[0];
+  assert.ok(M.findPath(map, s, start, { x: o.x + 0.5, y: o.y + 1.5 }), '指令の盤の前まで道がある');
+  /* 順番の会話のあと、立っている所から盤まで近い (話のすぐあとに「向き合う」の確認が出る。story-world.js の REACH + 1.5) */
+  const [sx, sy] = map.spawn['c3-command'];
+  assert.ok(Math.hypot(o.x - sx, o.y - sy) < 3, '盤の近くに立つ');
+  for (const id of Object.keys(map.spawn)) { const [x, y] = map.spawn[id]; assert.ok(M.walkable(map, s, x, y), '立つ所は歩ける: ' + id); }
+  for (const f of map.fragments) assert.ok(f.unit >= 3584 && f.unit <= 4096, '513 体の範囲の番号: ' + f.unit);
+  const ids = [M.AQUARIUM, M.MANSION, map].flatMap(m => m.fragments.map(f => f.id));
+  assert.equal(new Set(ids).size, ids.length, '記録の断片の id は章をまたいでも重ならない');
+  for (const l of map.looks) assert.ok(l.lines.every(x => [...x.text].length <= 40), l.name);
+  for (const z of Object.values(map.ambient.zones)) assert.ok(z.every(x => [...x.text].length <= 40));
+});
+
+test('4章の地図: 出来事は4章の場面をすべて使い、改札と聖域の前まで歩ける。改札の扉は改札を越えるまで閉じている', () => {
+  const map = M.STATION;
+  for (const r of map.rows) assert.equal(r.length, map.rows[0].length);
+  for (const ch of map.rows.join('')) assert.ok(M.TILE[ch] !== undefined, '知らない印: ' + ch);
+  const used = new Set(Object.values(map.events).map(e => e.node));
+  for (const n of S.CHAPTERS[4].nodes) assert.ok(used.has(n.id), n.id + ' を使う出来事がない');
+  for (const e of Object.values(map.events)) { assert.ok(S.nodeById(e.node), e.node); if (e.at) assert.ok(M.find(map, e.at)[0], e.node + ' の置き場所'); }
+  assert.equal(M.mapFor('ch4'), map);
+  let s = S.blankStory();
+  for (const c of S.CHAPTERS.slice(0, 4)) for (const n of c.nodes) s = S.clearNode(s, n.id);
+  const start = M.spawnFor(map, s);
+  assert.equal(M.zoneAt(map, start), 'A');
+  assert.equal(M.objective(s), map.goals['c4-arrive']);
+  const k = M.find(map, 'k')[0];
+  assert.ok(M.findPath(map, s, start, { x: k.x + 0.5, y: k.y + 1.5 }), '改札の窓口の前まで道がある');
+  const plat = { x: 14.5, y: 5.5 };
+  assert.equal(M.findPath(map, s, start, plat), null, '改札を越えるまでホームへは行けない');
+  for (const id of ['c4-arrive', 'c4-gate', 'c4-wicket']) s = S.clearNode(s, id);
+  assert.ok(M.findPath(map, s, start, plat), '改札を越えたらホームへ行ける');
+  for (const ch of ['f', 'h', '1', '2', '3', '4']) { const m = M.find(map, ch)[0]; assert.ok(M.findPath(map, s, start, { x: m.x + 0.5, y: m.y + 0.5 }), ch); }
+  /* ホームの話のあと、立っている所から聖域まで近い (話のすぐあとに「向き合う」の確認が出る) */
+  const p = M.find(map, 'P')[0];
+  const [sx, sy] = map.spawn['c4-seiiki'];
+  assert.ok(Math.hypot(p.x + 0.5 - (sx + 0.5), p.y + 1.5 - (sy + 0.5)) < 3, '聖域の近くに立つ');
+  assert.equal(M.zoneAt(map, { x: sx + 0.5, y: sy + 0.5 }), 'P');
+  assert.notEqual(M.zoneAt(map, { x: sx + 0.5, y: sy + 0.5 }), map.events.night.zone, '聖域の前はベンチの区画の外 (0時の話がすぐ始まらない)');
+  for (const id of Object.keys(map.spawn)) { const [x, y] = map.spawn[id]; assert.ok(M.walkable(map, s, x, y), '立つ所は歩ける: ' + id); }
+  for (const f of map.fragments) assert.ok(f.unit >= 3584 && f.unit <= 4096, '513 体の範囲の番号: ' + f.unit);
+  const ids = [M.AQUARIUM, M.MANSION, M.WAREHOUSE, map].flatMap(m => m.fragments.map(f => f.id));
+  assert.equal(new Set(ids).size, ids.length, '記録の断片の id は章をまたいでも重ならない');
+  for (const l of map.looks) assert.ok(l.lines.every(x => [...x.text].length <= 40), l.name);
+  for (const ls of [...Object.values(map.ambient.zones), map.ambient.hint]) for (const l of ls) assert.ok([...l.text].length <= 40 && S.SPEAKERS[l.who], l.text);
+});
+
+test('5章の地図: 出来事は5章の場面をすべて使う。主任を越えるまで奥へ行けず、端末を調べるまで判定室へ入れない', () => {
+  const map = M.LAB_RETURN;
+  for (const r of map.rows) assert.equal(r.length, map.rows[0].length);
+  for (const ch of map.rows.join('')) assert.ok(M.TILE[ch] !== undefined, '知らない印: ' + ch);
+  const used = new Set(Object.values(map.events).map(e => e.node));
+  for (const n of S.CHAPTERS[5].nodes) assert.ok(used.has(n.id), n.id + ' を使う出来事がない');
+  for (const e of Object.values(map.events)) { assert.ok(S.nodeById(e.node), e.node); if (e.at) assert.ok(M.find(map, e.at)[0], e.node + ' の置き場所'); }
+  assert.equal(M.mapFor('ch5'), map);
+  let s = S.blankStory();
+  for (const c of S.CHAPTERS.slice(0, 5)) for (const n of c.nodes) s = S.clearNode(s, n.id);
+  const start = M.spawnFor(map, s);
+  assert.equal(M.zoneAt(map, start), 'E');
+  assert.equal(M.objective(s), map.goals['c5-return']);
+  s = S.clearNode(s, 'c5-return');
+  const c = M.find(map, 'c')[0], t = M.find(map, 'T')[0], k = M.find(map, 'K')[0];
+  assert.ok(M.findPath(map, s, start, { x: c.x + 1.5, y: c.y + 0.5 }), '主任の前まで行ける');
+  assert.equal(M.findPath(map, s, start, { x: t.x + 0.5, y: t.y + 1.5 }), null, '主任を越えるまで端末へは行けない');
+  s = S.clearNode(s, 'c5-chief');
+  assert.ok(M.findPath(map, s, start, { x: t.x + 0.5, y: t.y + 1.5 }), '主任を越えたら端末へ行ける');
+  assert.equal(M.findPath(map, s, start, { x: k.x + 0.5, y: k.y + 0.5 }), null, '端末を調べるまで判定室へは入れない');
+  s = S.clearNode(s, 'c5-hall');
+  assert.ok(M.findPath(map, s, start, { x: k.x + 1.5, y: k.y + 0.5 }), '判定室の紫苑の前まで行ける');
+  for (const id of Object.keys(map.spawn)) { const [x, y] = map.spawn[id]; assert.ok(M.walkable(map, s, x, y), '立つ所は歩ける: ' + id); }
+  for (const l of map.looks) assert.ok(l.lines.every(x => [...x.text].length <= 40), l.name);
+});
+
+test('終章の地図: 出来事は終章の場面をすべて使う。最上階に着くまで扉は閉じ、所長室の3人と所長の前まで歩ける', () => {
+  const map = M.DIRECTOR;
+  for (const r of map.rows) assert.equal(r.length, map.rows[0].length);
+  for (const ch of map.rows.join('')) assert.ok(M.TILE[ch] !== undefined, '知らない印: ' + ch);
+  const used = new Set(Object.values(map.events).map(e => e.node));
+  for (const n of S.CHAPTERS[6].nodes) assert.ok(used.has(n.id), n.id + ' を使う出来事がない');
+  for (const e of Object.values(map.events)) { assert.ok(S.nodeById(e.node), e.node); if (e.at) assert.ok(M.find(map, e.at)[0], e.node + ' の置き場所'); }
+  assert.equal(M.mapFor('ch6'), map);
+  let s = S.blankStory();
+  for (const c of S.CHAPTERS.slice(0, 6)) for (const n of c.nodes) s = S.clearNode(s, n.id);
+  const start = M.spawnFor(map, s);
+  assert.equal(M.zoneAt(map, start), 'A');
+  assert.equal(M.objective(s), map.goals['c6-up']);
+  const y = M.find(map, 'Y')[0], eye = M.find(map, 'M')[0];
+  assert.equal(M.findPath(map, s, start, { x: y.x + 0.5, y: y.y + 0.5 }), null, '最上階に着くまで所長室へは行けない');
+  s = S.clearNode(s, 'c6-up');
+  for (const ch of ['Y', 'N', 'R', '1', '2', '3']) { const m = M.find(map, ch)[0]; assert.ok(M.findPath(map, s, start, { x: m.x + 0.5, y: m.y + 0.5 }), ch); }
+  assert.ok(M.findPath(map, s, start, { x: eye.x + 0.5, y: eye.y + 1.5 }), '所長の目の前まで行ける');
+  assert.equal(M.zoneAt(map, { x: y.x + 0.5, y: y.y + 0.5 }), map.events.top.zone, '3人は所長室にいる');
+  for (const id of Object.keys(map.spawn)) { const [x, yy] = map.spawn[id]; assert.ok(M.walkable(map, s, x, yy), '立つ所は歩ける: ' + id); }
+  for (const l of map.looks) assert.ok(l.lines.every(x => [...x.text].length <= 40), l.name);
+});

@@ -50,13 +50,17 @@ def dump(js):
 
 
 def story_lines(who):
-    """その声で読む会話の行。話す人 (who) は SPEAKERS の voice で声の id に直す (瑠璃は who が ruri、声は asagi。深淵も瑠璃の声)。
+    """その声で読む会話の行 (章の会話と、地図の一言)。話す人 (who) は SPEAKERS の voice で声の id に直す (瑠璃は who が ruri、声は asagi。深淵も瑠璃の声)。
     選択肢の中の行 (choice.options[].lines と ifAgain) も拾う (2026-10-10。前は拾っておらず、選択肢のあとの会話が声なしだった)。
     「……。」のように記号だけの行は声にしない (間として、文字だけで見せる)"""
     js = ("import('./js3d/story.js').then(S=>{const o=[];const v=w=>(S.SPEAKERS[w]||{}).voice;"
           "for(const c of S.CHAPTERS)for(const n of c.nodes){const ls=[...(n.lines||[]),...(n.winLines||[]),...(n.loseLines||[])];"
           "if(n.choice){for(const op of n.choice.options)ls.push(...(op.ifAgain||[]),...(op.lines||[]));ls.push(...(n.choice.after||[]))}"
-          "for(const l of ls)if(v(l.who)==='%s')o.push({text:l.text,face:l.face||'normal',pa:!!l.pa})}console.log(JSON.stringify(o))})" % who)
+          "for(const l of ls)if(v(l.who)==='%s')o.push({text:l.text,face:l.face||'normal',pa:!!l.pa})}"
+          # 地図で話しかけたときの一言・調べたときの会話 (story-map.js の {who, text})。2026-10-23: 拾っておらず声が無かった
+          "return import('./js3d/story-map.js').then(M=>{const w=x=>{if(Array.isArray(x))return x.forEach(w);if(x&&typeof x==='object'){"
+          "if(typeof x.who==='string'&&typeof x.text==='string'&&v(x.who)==='%s')o.push({text:x.text,face:x.face||'normal',pa:!!x.pa});for(const k in x)w(x[k])}};"
+          "for(const k of Object.keys(M))w(M[k]);console.log(JSON.stringify(o))})})" % (who, who))
     return [l for l in dump(js) if re.sub(r'[…。、・！？!?\s]', '', l['text'])]
 
 

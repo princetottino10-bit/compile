@@ -277,9 +277,9 @@ export function runTitle(protocols, opts) {
             '<button data-mode="record" type="button">RECORD</button>' +
             '<button data-mode="more" type="button" class="tt-morebtn" aria-expanded="false">MORE</button>' +
             '<div class="tt-morepop" hidden>' +
-              /* ストーリーは作り直しの間 (案8。2026-10-05〜) 管理者だけ。仕上がったら全員に戻す */
+              /* ストーリーは作り直しの間 (案8。2026-10-05〜) 管理者だけだった。2026-10-23 に序章〜終章が仕上がったので全員に開いた */
               /* 物語の進み具合 (前はいつも「序章「起動」」のまま) */
-              '<button data-mode="story" type="button"' + (accountState().admin ? '' : ' hidden') + '>STORY <small>' + storyLabel() + '</small></button>' +
+              '<button data-mode="story" type="button">STORY <small>' + storyLabel() + '</small></button>' +
               '<button data-mode="tutorial" type="button">TUTORIAL <small>遊び方</small></button>' +
               '<button data-mode="training" type="button">TRAINING <small>盤面を自由に</small></button>' +
               '<button data-mode="cards" type="button">CARDS <small>カード一覧</small></button>' +
@@ -301,8 +301,6 @@ export function runTitle(protocols, opts) {
         label.parentElement.classList.toggle('nudge', nudge);
         if (cap && nudge) cap.textContent = '記録はこのブラウザだけ！';
         root.querySelector('#ttCorner button[data-mode="admin"]').hidden = !accountState().admin;
-        const story = root.querySelector('button[data-mode="story"]');
-        if (story) story.hidden = !accountState().admin;
         return true;
       };
       /* メニューを出す前にログイン状態が読み終わっていることがある (そのときの知らせは聞き逃している)。

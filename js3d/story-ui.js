@@ -3,14 +3,21 @@
  *   playScene(lines)          会話 (ノベル風)。タップ・Enter・Space で1行ずつ。勝手には進まない
  *   playNode(node)            場面の会話と、あれば選択肢 (node.choice)。again の選択肢は、その会話のあと選び直し
  *   showStoryResult(win, node, actions)  決着のあと: 勝ち負けの会話 → ボタン (次へ・もう一度・地図・タイトル)
+ *   setStoryBgm(key)          章の地図の曲を流す。会話の山場では、場面の bgm / 行の bgm でほかの曲に替え、場面が終わったら地図の曲へ戻す
  * ========================================================================= */
 import { faceFor, faceURL, VOICE_VER, voiceGain } from './avatar.js';
 import { accountState } from './account.js';
 import { playClip, isMuted, sfx } from './audio.js';
-import { duckBgm } from './bgm.js';
+import { duckBgm, crossBgm, playBgm } from './bgm.js';
 import { settings } from './settings.js';
 import { SPEAKERS } from './story.js';
 import { MOB_PROTOCOLS } from './mobcards.js';
+
+/* 章の地図の曲 (story-world.js が地図を開くたびに決める)。山場の曲から戻る先 */
+let baseBgm = null, sceneBgm = null;
+export function setStoryBgm(key) { baseBgm = key; sceneBgm = null; playBgm(key); }
+const switchBgm = (key) => { const k = key || baseBgm; if (k && k !== sceneBgm) { sceneBgm = k; crossBgm(k, 1600); } };
+const restoreBgm = () => { if (sceneBgm && sceneBgm !== baseBgm) switchBgm(baseBgm); sceneBgm = null; };
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const TYPE_MS = 26;       // 1文字の間
@@ -32,7 +39,7 @@ function makeVoice(onSettle = () => {}) {
   const halt = () => { seq++; endsAt = 0; pending = false; if (stop) { stop(); stop = null; } };
   const play = (id, text, pa = false) => {
     halt();
-    if (!id || isMuted()) return;
+    if (!id || isMuted() || !/[^…。、！？!?\s]/.test(text)) return;   // 「……。」だけの行は声を作っていない (間として文字だけ)
     const vol = Math.max(0, Math.min(1, ((settings().voiceVol ?? 80) | 0) / 100)) * voiceGain(id);
     if (!vol) return;
     const my = seq;
@@ -170,7 +177,7 @@ export function playScene(lines, opts = {}) {
       const pa = !!line.pa;
       /* 紫苑のメモ: 紙の色の枠と、手書きの字。立ち絵は出したまま (紫苑が読んでいる) */
       const memo = !!sp.memo;
-      const terminal = !sp.portrait && !pa && !memo;
+      const terminal = (!sp.portrait || sp.machine) && !pa && !memo;
       box.classList.toggle('terminal', terminal);
       box.classList.toggle('pa', pa);
       box.classList.toggle('memo', memo);
@@ -193,6 +200,7 @@ export function playScene(lines, opts = {}) {
         still.classList.toggle('on', stillOn);
         el.classList.toggle('with-still', stillOn);
       }
+      if (line.bgm !== undefined) switchBgm(line.bgm);    // 山場の曲 (null で地図の曲へ戻す)
       if (Array.isArray(line.stage)) setStage(line.stage);
       const walking = !!(line.walk && opts.stage);
       if (walking) opts.stage.walk(line.walk);
@@ -322,7 +330,10 @@ export function askChoice(options) {
 
 /* 場面の会話 → 選択肢。again の選択肢は、その会話のあとにもう一度選ぶ (記録が無い道。話は先へ進まない) */
 export async function playNode(n, opts = {}) {
-  const stage = opts.stage;
+  if (n.bgm) switchBgm(n.bgm);
+  try { await playNodeLines(n, opts.stage); } finally { restoreBgm(); }
+}
+async function playNodeLines(n, stage) {
   await playScene(n.lines, { title: n.title, stage });
   if (!n.choice) return;
   let wavered = false;                 // 選び直しの道を一度選んだ
@@ -353,7 +364,7 @@ export function askBattle(n, protocols) {
     '<p class="sm-note">' + esc(n.note || '') + '</p>' +
     (tsume ? '<div class="sm-vs"><div><em>あなた</em></div><i>VS</i><div><em>' + esc(n.oppName) + '</em></div></div>'
       : n.tag
-        ? '<div class="sm-vs"><div><em>あなた</em>' + chips(n.me) + '<em>' + esc(n.tag.mateName) + '</em>' + chips(n.tag.mate) + '</div><i>VS</i>' +
+        ? '<div class="sm-vs"><div><em>' + esc(n.meName || 'あなた') + '</em>' + chips(n.me) + '<em>' + esc(n.tag.mateName) + '</em>' + chips(n.tag.mate) + '</div><i>VS</i>' +
           '<div><em>' + esc(n.oppName) + '</em>' + chips(n.opp) + '<em>' + esc(n.tag.oppMateName) + '</em>' + chips(n.tag.oppMate) + '</div></div>'
         : '<div class="sm-vs"><div><em>' + esc(n.meName || 'あなた') + '</em>' + chips(n.me) + '</div><i>VS</i><div><em>' + esc(n.oppName) + '</em>' + chips(n.opp) + '</div></div>') +
     '<div class="sm-btns"><button type="button" class="sm-go">' + (tsume ? '書き換える' : 'コンパイルを始める') + '</button>' +
