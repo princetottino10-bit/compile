@@ -1,0 +1,42 @@
+'use strict';
+/* 揃えに行く手筋 (engine.js の AI_AIM_COMBOS / aiSpeed2Score) と、scripts/combo_aim.js で数えた実戦の結果。
+   base = master の ORACLE、now = 手筋を入れた ORACLE。どちらも ORACLE 同士・同じ種の games 局。
+   assembled: 揃った局 / fired: 撃った回数 (出した瞬間に撃つ札) / survived: SPEED 2 がコンパイルで生き残った回数 */
+module.exports = [
+  { id: 'M01', lab: 'C001', name: 'WAR 0 + CHAOS 0', cards: ['WAR_1', 'CHAOS_1'], protocols: ['WAR', 'CHAOS'], combo: 'warChaos', games: 60,
+    how: 'WAR 0 を一番上で表のまま、CHAOS 0 も一番上で表に揃える。CHAOS 0 の開始で相手が引くたびに WAR 0 で1枚削除できる。HATE 3 (削除で1枚引く) と MIRROR 4 が乗る。WAR 0・CHAOS 0 を自分の札で覆わない。',
+    base: { assembled: 0, wins: 25 }, now: { assembled: 7, wins: 24 } },
+  { id: 'M02', lab: 'C014', name: 'WAR 0 + LOVE 6 / LOVE 2', cards: ['WAR_1', 'LOVE_6', 'LOVE_2'], protocols: ['WAR', 'LOVE'], combo: 'warLove', games: 60,
+    how: 'WAR 0 を一番上で表に置いてから LOVE 6 (相手は2枚引く) / LOVE 2 (相手は1枚引く) を表で出し、引かせた分を削除で取り返す。LOVE は WAR 0 が場で効くまで手札に残す。',
+    base: { assembled: 12, fired: 3, wins: 32 }, now: { assembled: 22, fired: 20, wins: 26 } },
+  { id: 'M03', lab: 'A126', name: 'WAR 0 + FEAR 1', cards: ['WAR_1', 'FEAR_2'], protocols: ['WAR', 'FEAR'], combo: 'warFear', games: 60,
+    how: 'WAR 0 を一番上で表に置いてから FEAR 1 (相手は手札を捨てて引き直す) を出し、引き直しで削除する。',
+    base: { assembled: 6, fired: 0, wins: 27 }, now: { assembled: 19, fired: 9, wins: 33 } },
+  { id: 'M09', lab: 'C033', name: 'PLAGUE 1 + COURAGE 0 + CORRUPTION 2', cards: ['PLAGUE_2', 'COURAGE_1', 'CORRUPTION_3'], protocols: ['PLAGUE', 'COURAGE', 'CORRUPTION'], combo: 'plagueCourage', games: 60,
+    how: 'COURAGE 0 の終了で1枚捨てると、COURAGE 0 自身と CORRUPTION 2 の上段で相手が2枚捨て、PLAGUE 1 の上段でこちらが2枚引く。3枚とも場に表で残す。',
+    base: { assembled: 1, wins: 31 }, now: { assembled: 12, wins: 32 } },
+  { id: 'M10', lab: 'A135', name: 'WAR 3 + COURAGE 0', cards: ['WAR_4', 'COURAGE_1'], protocols: ['WAR', 'COURAGE'], combo: 'warCourage', games: 60,
+    how: 'WAR 3 (相手が捨てたあと: 裏で1枚出せる) を一番上に置き、COURAGE 0 の終了で捨てさせるたびに追加で1枚出す。',
+    base: { assembled: 3, wins: 32 }, now: { assembled: 13, wins: 29 } },
+  { id: 'M11', lab: 'A136', name: 'WAR 3 + FEAR 1', cards: ['WAR_4', 'FEAR_2'], protocols: ['WAR', 'FEAR'], combo: 'war3Fear', games: 60,
+    how: 'WAR 3 を一番上に置いてから FEAR 1 で相手の手札を全部捨てさせ、追加で1枚出す。',
+    base: { assembled: 37, fired: 9, wins: 29 }, now: { assembled: 44, fired: 14, wins: 28 } },
+  { id: 'M12', lab: 'A034', name: 'SPIRIT 3 + CORRUPTION 2', cards: ['SPIRIT_4', 'CORRUPTION_3'], protocols: ['SPIRIT', 'CORRUPTION'], combo: 'spiritCorr', games: 60,
+    how: 'SPIRIT 3 (引いたあと: 覆われていても動ける) を場に置き、CORRUPTION 2 で引いて SPIRIT 3 を動かす。',
+    base: { assembled: 29, fired: 4, wins: 31 }, now: { assembled: 42, fired: 7, wins: 25 } },
+  { id: 'M13', lab: 'A040', name: 'SPIRIT 3 + PEACE 1', cards: ['SPIRIT_4', 'PEACE_1'], protocols: ['SPIRIT', 'PEACE'], combo: 'spiritPeace', games: 60,
+    how: 'SPIRIT 3 を場に置き、PEACE 1 の終了「手札が0枚なら1枚引く」で毎手番 SPIRIT 3 を動かす。',
+    base: { assembled: 8, wins: 30 }, now: { assembled: 30, wins: 36 } },
+  { id: 'M14', lab: 'A118', name: 'TIME 2 + CLARITY 3', cards: ['TIME_3', 'CLARITY_4'], protocols: ['TIME', 'CLARITY'], combo: 'timeClarity', games: 60,
+    how: 'TIME 2 (シャッフルしたあと: 1枚引いて動ける) を場に置き、CLARITY 3 のシャッフルで起こす。',
+    base: { assembled: 28, fired: 5, wins: 37 }, now: { assembled: 37, fired: 7, wins: 36 } },
+  { id: 'M15', lab: 'C042', name: 'CORRUPTION 6 + CORRUPTION 2 + PLAGUE 1', cards: ['CORRUPTION_6', 'CORRUPTION_3', 'PLAGUE_2'], protocols: ['CORRUPTION', 'PLAGUE'], combo: 'corrPlague', games: 60,
+    how: 'CORRUPTION 6 の終了で1枚捨てると、CORRUPTION 2 の上段で相手が1枚捨て、PLAGUE 1 の上段で1枚引く。3枚とも上段なので覆われていても効く。3枚揃うのはまれ。',
+    base: { assembled: 1, wins: 27 }, now: { assembled: 3, wins: 28 } },
+  { id: 'M19', lab: 'S001', name: 'FIRE 3 + PLAGUE 4', cards: ['FIRE_4', 'PLAGUE_5'], protocols: ['FIRE', 'PLAGUE'], combo: 'fire3Plague4', games: 60,
+    how: '教わった手筋 (T13)。終了時に FIRE 3 で相手の表を裏にし、PLAGUE 4 で相手にその裏向きを消させる。2枚とも一番上に表で残す。状態を作る札 × 取り立てる札 145組の総当たりで、測り直して残ったのはこの組だけ (噛み合い +2.5 ±0.9、151盤面)。',
+    base: { assembled: 17, wins: 42 }, now: { assembled: 27, wins: 42 } },
+  { id: 'M04', name: 'SPEED 2 をコンパイルに持ち込む', cards: ['SPEED_3'], protocols: ['SPEED'], combo: 'speed2', games: 40,
+    how: 'SPEED 2 は表で場に居れば、そのラインをコンパイルしても削除されず別のラインへ移る (値2と札を次のラインへ持ち越す)。手札から捨てず、コンパイルが近いラインに表で置く。',
+    base: { compiles: 100, survived: 13, discarded: 27, wins: 20 }, now: { compiles: 101, survived: 32, discarded: 7, wins: 19 } }
+];

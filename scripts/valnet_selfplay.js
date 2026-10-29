@@ -18,7 +18,7 @@ const { features, FEATURE_SIZE, PROTOCOLS } = require('./valnet_features.js');
 const ROOT = path.join(__dirname, '..');
 
 function parseArgs(argv) {
-  const o = { games: 200, budget: 300, seed: 1, out: '_valnet/data.jsonl', workers: 0 };
+  const o = { games: 200, budget: 300, seed: 1, out: '_valnet/data.jsonl', workers: 0, oracle: false };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--games') o.games = +argv[++i];
@@ -26,6 +26,7 @@ function parseArgs(argv) {
     else if (a === '--seed') o.seed = +argv[++i];
     else if (a === '--out') o.out = argv[++i];
     else if (a === '--workers') o.workers = +argv[++i];
+    else if (a === '--oracle') o.oracle = true;   // 両側を ORACLE の読み (特化・学習モデル 1000・深読み3) にする
     else { console.error('未知の引数: ' + a); process.exit(1); }
   }
   return o;
@@ -42,15 +43,22 @@ function decks(seed) {
 }
 
 if (!isMainThread) {
-  const { src, cards, effects, jobs, budget } = workerData;
-  const ctx = { module: { exports: {} }, exports: {}, console, structuredClone, performance };
-  ctx.globalThis = ctx;
-  vm.runInNewContext(src, ctx, { filename: 'engine.js' });
-  const E = ctx.module.exports;
-  E.init(cards, effects);
-  E.setAiLevel(2);
-  E.setAiThinkBudget(budget);
-  if (E.setAiSpecialist) E.setAiSpecialist(false, -1);
+  const { src, cards, effects, jobs, budget, oracle, valnet } = workerData;
+  const load = (side) => {
+    const ctx = { module: { exports: {} }, exports: {}, console, structuredClone, performance };
+    ctx.globalThis = ctx;
+    vm.runInNewContext(src, ctx, { filename: 'engine.js' });
+    const e = ctx.module.exports;
+    e.init(cards, effects);
+    e.setAiLevel(2);
+    e.setAiThinkBudget(budget);
+    /* ORACLE は特化を当てる側が決まっているので、側ごとに別のエンジンを持つ */
+    if (oracle) { e.setAiSpecialist(true, side, 'dsh'); e.setAiOracle(true); e.setAiValueNet(valnet, 1000); e.setAiDeep(3); }
+    else if (e.setAiSpecialist) e.setAiSpecialist(false, -1);
+    return e;
+  };
+  const E = load(0);
+  const ais = oracle ? [E, load(1)] : [E, E];
   const out = [];
   for (const job of jobs) {
     const [p0, p1] = decks(job.seed);
@@ -65,9 +73,9 @@ if (!isMainThread) {
       }
       if (res.requests.length) {
         const req = res.requests[0];
-        res = E.apply(st, { type: 'choose', id: req.id, picks: E.ai.answer(st, req) });
+        res = E.apply(st, { type: 'choose', id: req.id, picks: ais[req.player].ai.answer(st, req) });
       } else {
-        const a = E.ai.action(st);
+        const a = ais[st.turn].ai.action(st);
         if (!a) break;
         res = E.apply(st, a);
       }
@@ -85,13 +93,14 @@ const opt = parseArgs(process.argv);
 const cards = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'cards.json'), 'utf8'));
 const effects = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'effects.json'), 'utf8'));
 const src = fs.readFileSync(path.join(ROOT, 'engine.js'), 'utf8');
+const valnet = opt.oracle ? JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'valnet.json'), 'utf8')) : null;
 const jobs = Array.from({ length: opt.games }, (_, i) => ({ seed: opt.seed + i }));
 const nW = opt.workers || Math.max(1, Math.min(os.cpus().length - 1, 12));
 const chunks = Array.from({ length: nW }, () => []);
 jobs.forEach((j, i) => chunks[i % nW].push(j));
 const t0 = Date.now();
 Promise.all(chunks.filter(c => c.length).map(c => new Promise((resolve, reject) => {
-  const w = new Worker(__filename, { workerData: { src, cards, effects, jobs: c, budget: opt.budget } });
+  const w = new Worker(__filename, { workerData: { src, cards, effects, jobs: c, budget: opt.budget, oracle: opt.oracle, valnet } });
   w.on('message', resolve); w.on('error', reject);
 }))).then(parts => {
   const lines = parts.flat();

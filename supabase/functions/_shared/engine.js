@@ -35,7 +35,10 @@ function protoNamesOf(p) { return p && Array.isArray(p.names) ? p.names : [p && 
 function protoHas(p, name) { return protoNamesOf(p).indexOf(name) >= 0; }
 /* そのラインにある (両者の) プロトコルの名前をすべて */
 function lineProtoNames(st, line) {
-  return protoNamesOf(st.players[0].protocols[line]).concat(protoNamesOf(st.players[1].protocols[line]));
+  const a = st.players[0].protocols[line], b = st.players[1].protocols[line];
+  /* 複合プロトコルが無いふつうの場合は配列を1つだけ作る (AI の評価でラインごと・カードごとに何度も呼ばれる) */
+  if (a && b && !a.names && !b.names) return [a.name, b.name];
+  return protoNamesOf(a).concat(protoNamesOf(b));
 }
 
 function knowCard(st, uid, side) {
@@ -245,6 +248,12 @@ function cardValue(st, uid) {
     // 場外: trash は表向き=印刷値、それ以外(deck/hand)は非公開=2 (Light 0 裁定)
     return (c.zone.indexOf('trash') === 0) ? DEFS[c.def].value : 2;
   }
+  return fieldCardValue(st, uid, loc.line, loc.side, activeStatics(st));
+}
+/* 場のカードの値。statics は activeStatics(st) を渡す。
+   lineTotal は AI の試算でいちばん多く呼ばれるので、常在効果の一覧をカードごとに作り直さず1回で済ませる */
+function fieldCardValue(st, uid, line, side, statics) {
+  const c = st.cards[uid];
   let v = c.faceUp ? DEFS[c.def].value : 2;
   /* 勝ち抜き戦の極端なパッチ (newGame の perks)。その側の場のカードの値を変える:
      doubleProto (そのプロトコルの表向きの値は2倍) / otherMinus (ほかのプロトコルの表向きの値を引く) /
@@ -258,9 +267,9 @@ function cardValue(st, uid) {
       v = Math.max(0, v);
     } else if (pk.faceDownValue) v = pk.faceDownValue;
   }
-  for (const s of activeStatics(st)) {
+  for (const s of statics) {
     if (s.kind === 'setValue' && s.filter.zone === 'thisStack'
-        && s.line === loc.line && s.sideIdx === loc.side
+        && s.line === line && s.sideIdx === side
         && (s.filter.facing === 'any' || (s.filter.facing === 'down') === !c.faceUp)) {
       v = s.value;
     }
@@ -268,10 +277,11 @@ function cardValue(st, uid) {
   return v;
 }
 
-function lineTotal(st, line, side) {
+/* statics: 同じ盤面で何度も数えるときは activeStatics(st) を1回作って渡す */
+function lineTotal(st, line, side, statics = activeStatics(st)) {
   let t = 0;
-  for (const uid of st.lines[line][side]) t += cardValue(st, uid);
-  for (const s of activeStatics(st)) {
+  for (const uid of st.lines[line][side]) t += fieldCardValue(st, uid, line, side, statics);
+  for (const s of statics) {
     if (s.kind !== 'modifyLineTotal' || s.line !== line) continue;
     const affect = (s.side === 'self') ? s.sideIdx : 1 - s.sideIdx;
     if (affect !== side) continue;
@@ -974,8 +984,9 @@ function doRefresh(ctx, side) {
 
 function compilableLines(st, side) {
   const out = [];
+  const sts = activeStatics(st);
   for (let l = 0; l < 3; l++) {
-    const mine = lineTotal(st, l, side), theirs = lineTotal(st, l, 1 - side);
+    const mine = lineTotal(st, l, side, sts), theirs = lineTotal(st, l, 1 - side, sts);
     if (mine >= 10 && mine > theirs) out.push(l);
   }
   return out;
@@ -984,7 +995,8 @@ function compilableLines(st, side) {
 /* いまのラインの合計値で、最高の記録を更新する (実績 OVERKILL)。コンパイルで消える前と、1手の終わりに呼ぶ */
 function tallyLines(st) {
   const m = tallyOf(st).maxLine;
-  for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++) m[s] = Math.max(m[s], lineTotal(st, l, s));
+  const sts = activeStatics(st);
+  for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++) m[s] = Math.max(m[s], lineTotal(st, l, s, sts));
 }
 
 function doCompile(ctx, side, line) {
@@ -2180,7 +2192,8 @@ function runTurnLoop(ctx) {
       case 'checkControl': {
         if (st.useControl) {
           let wins = 0;
-          for (let l = 0; l < 3; l++) if (lineTotal(st, l, st.turn) > lineTotal(st, l, 1 - st.turn)) wins++;
+          const sts = activeStatics(st);
+          for (let l = 0; l < 3; l++) if (lineTotal(st, l, st.turn, sts) > lineTotal(st, l, 1 - st.turn, sts)) wins++;
           if (wins >= 2 && st.control !== st.turn) {
             st.control = st.turn;
             log(ctx, `P${st.turn + 1}: コントロールを獲得`);
@@ -2762,6 +2775,9 @@ const AI_W = {
   refreshRecompile: 260, comboDiscard: 3,
   /* 教えた手筋 (aiUsesCombos のとき): SPEED 0 と 3 を揃えて使う・FIRE 0 + WATER 4 の構え。値は最強の特化と同じ */
   speedPairStrategy: 1, speedPairKeep: 40, fire0Water4Ready: 60,
+  /* 見つけたコンボを揃えに行く (AI_AIM_COMBOS、docs/combos.md)。aimLive: 回しが動いている / aimHalf: 片方が場で効く形、残りが手札 /
+     aimHold: 相方が生きている手札の札 / aimExtra: 回しに乗って引く札 (HATE 3・MIRROR 4) */
+  aimLive: 500, aimHalf: 150, aimHold: 30, aimExtra: 80, s2Hold: 25, s2Up: 30, s2Compile: 60, flipStore: 60,
   /* 「〜できる」の任意コストを、払わない選択も込みで見る (0 で従来どおり必ず払う扱い)。
      anyLineBase/anyLineGain: 「プロトコルを対応させずに表向きでプレイできる」(SPIRIT 1) の価値。
      ライン制限を外したときの手札評価の増分を上乗せする。0 で従来どおり常時効果の一律10点 */
@@ -2904,6 +2920,7 @@ const AI_DSH_W = {
      WATER 4 が手札にあれば、毎手番 WATER 4 を重ねて自分を戻す (2枚反転・3枚ドロー) を繰り返せる。
      1手先の読みでは次の手番の得が見えないので、構えを作る手 (WATER 2 の並べ替え・SPEED 3 の移動) のために置く */
   fire0Water4Ready: 60,
+  aimLive: 500, aimHalf: 150, aimHold: 30, aimExtra: 80, s2Hold: 25, s2Up: 30, s2Compile: 60, flipStore: 60,
   recompile: 160, midUp: 0.35, refreshRecompile: 260, comboDiscard: 3,
   optionalCost: 1, anyLineBase: 26, anyLineGain: 0.9,
   uncoverBase: 22, uncoverMid: 0.8,
@@ -3020,7 +3037,8 @@ function aiTriggerValue(def, slot) {
 function aiLineLeadCount(st, side) {
   const op = 1 - side;
   let wins = 0;
-  for (let l = 0; l < 3; l++) if (lineTotal(st, l, side) > lineTotal(st, l, op)) wins++;
+  const sts = activeStatics(st);
+  for (let l = 0; l < 3; l++) if (lineTotal(st, l, side, sts) > lineTotal(st, l, op, sts)) wins++;
   return wins;
 }
 
@@ -3029,9 +3047,10 @@ function aiControlLeverage(st, side) {
   const op = 1 - side;
   const myComp = aiCompiledTowardWin(st, side);
   const opComp = aiCompiledTowardWin(st, op);
+  const sts = activeStatics(st);
   let v = 20 + myComp * 16 + opComp * 22;
   for (let l = 0; l < 3; l++) {
-    const mine = lineTotal(st, l, side), theirs = lineTotal(st, l, op);
+    const mine = lineTotal(st, l, side, sts), theirs = lineTotal(st, l, op, sts);
     if (!st.players[side].protocols[l].compiled && mine >= 10 && mine > theirs) v += 18;
     if (!st.players[op].protocols[l].compiled && theirs >= 10 && theirs > mine) v += 28;
   }
@@ -3040,6 +3059,7 @@ function aiControlLeverage(st, side) {
 
 function aiHandPotential(st, side, anyLine) {
   const op = 1 - side;
+  const sts = activeStatics(st);
   const vals = [];
   for (const uid of st.players[side].hand) {
     const c = st.cards[uid], d = DEFS[c.def];
@@ -3048,7 +3068,7 @@ function aiHandPotential(st, side, anyLine) {
       if (st.players[side].protocols[l].compiled) continue;
       const names = lineProtoNames(st, l);
       if (!anyLine && names.indexOf(d.proto) < 0) continue;
-      const mine = lineTotal(st, l, side), theirs = lineTotal(st, l, op);
+      const mine = lineTotal(st, l, side, sts), theirs = lineTotal(st, l, op, sts);
       const face = d.value + Math.max(0, aiMiddleValue(d)) * 0.18;
       const down = 2 + (d.value < 2 ? 2 : 0);
       let s = Math.max(face, down);
@@ -3463,6 +3483,116 @@ function aiFire0Water4Ready(st, side) {
     if (top && st.cards[top].def === 'FIRE_1' && st.cards[top].faceUp && canPlay(st, side, water4, line, true)) return true;
   }
   return false;
+}
+
+/* 揃えに行くコンボ (docs/combos.md)。札ごとに場でどう居れば効くか: top = 一番上で表 / up = 表なら覆われていても / play = 表で出して撃つ札。
+   1手先の読みでは次の手番より先の得が見えないので、揃う前の形にも値打ちを置く (ユーザー 2026-10-22「狙いに行ってるかどうか」)。
+   実戦 60局で、手筋なしの ORACLE は WAR 0 + CHAOS 0 を一度も揃えず、相方が生きているのに WAR 0 を40回・CHAOS 0 を31回捨てていた */
+const AI_AIM_COMBOS = [
+  /* PLAGUE 0 の下段で相手は1ライン出せなくなり、残りのラインは WAR 0 の削除で崩す (G011、3枚目の総当たり225件から 150盤面2回で +5.6 / +6.0) */
+  { pieces: { WAR_1: 'top', CHAOS_1: 'top' }, extra: { HATE_4: 'up', MIRROR_5: 'top', PLAGUE_1: 'top' } },
+  { pieces: { WAR_1: 'top', LOVE_6: 'play' } },
+  { pieces: { WAR_1: 'top', LOVE_2: 'play' } },
+  { pieces: { WAR_1: 'top', FEAR_2: 'play' } },
+  /* COURAGE 0 の終了で1枚捨てると相手が2枚捨て (COURAGE 0・CORRUPTION 2)、PLAGUE 1 で2枚引く */
+  { pieces: { PLAGUE_2: 'up', COURAGE_1: 'top', CORRUPTION_3: 'up' } },
+  /* WAR 3 の下段「相手が捨てたあと: 裏で1枚出せる」に、相手に捨てさせる札を足す */
+  { pieces: { WAR_4: 'top', COURAGE_1: 'top' } },
+  { pieces: { WAR_4: 'top', FEAR_2: 'play' } },
+  /* SPIRIT 3 は引いたあとに覆われていても動ける。引く札を足して、どいた下の札をもう一度起こす */
+  { pieces: { SPIRIT_4: 'up', CORRUPTION_3: 'play' } },
+  /* CORRUPTION 6 の終了で手札を捨てて0枚にすると、PEACE 1 の終了で引いて SPIRIT 3 が動く (G198、+5.3 / +3.0) */
+  { pieces: { SPIRIT_4: 'up', PEACE_1: 'top' }, extra: { CORRUPTION_6: 'up' } },
+  { pieces: { TIME_3: 'up', CLARITY_4: 'play' } },
+  /* CORRUPTION 6 の終了で捨てると CORRUPTION 2 で相手も捨て、PLAGUE 1 で引く (どれも上段) */
+  { pieces: { CORRUPTION_6: 'up', CORRUPTION_3: 'up', PLAGUE_2: 'up' } },
+  /* 教わった FIRE 3 + PLAGUE 4 (終了時に FIRE 3 で相手を裏にし、PLAGUE 4 で消させる)。状態を作る札 × 取り立てる札 145組の総当たりで、測り直して残ったのはこれだけ */
+  { pieces: { FIRE_4: 'top', PLAGUE_5: 'top' } },
+  /* FIRE 3 で SPIRIT 1 を毎手番起こし直す回し (aiFlipStoreScore、+6.1)。SPIRIT 1 は表でも裏でも回る ('loop')。
+     揃えに行く手筋に入れ、FIRE 3 を自分で覆わないようにする (入れる前は 60局で FIRE 3 を24回覆っていた)。
+     CORRUPTION 2 を3枚目に足す形は、回しの2枚を白紙にして測り直すと噛み合いが消えた (−0.8、docs/ai-combos.md) ので入れない */
+  { pieces: { FIRE_4: 'top', SPIRIT_2: 'loop' } }
+];
+function aiAimPlace(st, side, uid) {
+  const c = st.cards[uid];
+  if (!c) return 'gone';
+  for (let l = 0; l < 3; l++) {
+    const k = st.lines[l][side].indexOf(uid);
+    if (k >= 0) return !c.faceUp ? 'down' : k === st.lines[l][side].length - 1 ? 'top' : 'covUp';
+    if (st.lines[l][1 - side].indexOf(uid) >= 0) return 'gone';
+  }
+  const P = st.players[side];
+  return P.hand.includes(uid) ? 'hand' : P.deck.includes(uid) ? 'deck' : 'gone';
+}
+const aiAimLive = (need, w) => (need === 'up' ? w === 'top' || w === 'covUp' : need === 'cov' ? w === 'covUp' : need === 'loop' ? w === 'top' || w === 'down' : w === 'top');
+/* 'cov' の札は一番上で表に出せば、あとは覆うだけ (片方が場で効く形と同じに数える) */
+const aiAimNear = (need, w) => aiAimLive(need, w) || (need === 'cov' && w === 'top');
+/* side のコンボの形の値打ち (W.aimLive: 回しが動いている / aimHalf: 場の札が効く形で、残りが手札 / aimHold: 相方が生きている手札の札1枚 /
+   aimExtra: 回しに乗る札1枚) */
+function aiAimScore(st, side, W) {
+  let sc = 0;
+  for (const cb of AI_AIM_COMBOS) {
+    const ids = Object.keys(cb.pieces);
+    const at = ids.map(d => aiAimPlace(st, side, 'p' + side + ':' + d));
+    if (at.some(w => w === 'gone')) continue;
+    const eng = ids.filter((d, i) => cb.pieces[d] !== 'play');
+    const liveAll = eng.every(d => aiAimLive(cb.pieces[d], at[ids.indexOf(d)]));
+    const hasPlay = ids.some(d => cb.pieces[d] === 'play');
+    if (liveAll && !hasPlay) {
+      sc += W.aimLive || 0;
+      for (const [d, need] of Object.entries(cb.extra || {})) if (aiAimLive(need, aiAimPlace(st, side, 'p' + side + ':' + d))) sc += W.aimExtra || 0;
+      continue;
+    }
+    /* 出した瞬間に撃つ札は、表で場に出したあとも手札と同じに数える (撃つと加点が減って、持ち続ける方が得に見えてしまうため) */
+    const held = ids.map((d, i) => at[i] === 'hand' || (cb.pieces[d] === 'play' && (at[i] === 'top' || at[i] === 'covUp')));
+    const rest = ids.filter((d, i) => !(cb.pieces[d] !== 'play' && aiAimNear(cb.pieces[d], at[i])));
+    if (ids.some((d, i) => cb.pieces[d] !== 'play' && aiAimNear(cb.pieces[d], at[i])) && rest.every(d => held[ids.indexOf(d)])) sc += W.aimHalf || 0;
+    for (let i = 0; i < ids.length; i++) if (held[i] && at.some((w, j) => j !== i && w !== 'down')) sc += W.aimHold || 0;
+  }
+  return sc;
+}
+
+/* 裏で置いた中段の強い札を、表にする札で起こす (docs/ai-combos.md「中段を撃ち直す組」)。
+   中段は表になったときにも入る。262組の総当たりで、表にする札 × 中段の強い札は 154組で噛み合い、上位12組は 150盤面で測り直しても +8〜12pt。
+   揃った盤面では ORACLE も表にして撃てている (逃している得 ±1) が、1手先の読みでは「裏で置いておく」値打ちが見えない。
+   flipStore: 自分の一番上の裏向きが撃つ札で、手札に表にする札がある */
+const AI_FLIP_PAYLOAD = new Set(['LIFE_1', 'LIGHT_1', 'LUCK_1', 'SPEED_1', 'FIRE_1', 'HATE_1', 'GRAVITY_2', 'DARKNESS_1', 'WATER_2']);
+const AI_FLIP_ENABLER = new Set(['LOVE_4', 'WATER_1', 'SPIRIT_3', 'WAR_3', 'LIFE_2', 'SMOKE_2', 'METAL_1', 'GRAVITY_3', 'FEAR_1']);
+/* 一番上で表の FIRE 3 (FIRE_4) は終了ごとに表にする札。自分で裏返る SPIRIT 1 (開始に裏返る)・WATER 0 (中段で自分も裏返る) は、
+   FIRE 3 で毎手番表に戻すと中段 (2枚引く / 1枚反転) を毎手番撃てる (L001・L002、150盤面で +6.0 / +6.1) */
+const AI_FLIP_SELF = new Set(['SPIRIT_2', 'WATER_1']);
+function aiFlipStoreScore(st, side, W) {
+  if (!W.flipStore) return 0;
+  let fire3 = false;
+  for (let l = 0; l < 3; l++) {
+    const stack = st.lines[l][side];
+    const top = stack[stack.length - 1];
+    if (top && st.cards[top].def === 'FIRE_4' && st.cards[top].faceUp) fire3 = true;
+  }
+  if (!fire3 && !st.players[side].hand.some(u => AI_FLIP_ENABLER.has(st.cards[u].def))) return 0;
+  let n = 0;
+  for (let l = 0; l < 3; l++) {
+    const stack = st.lines[l][side];
+    const top = stack[stack.length - 1];
+    if (top && !st.cards[top].faceUp && (AI_FLIP_PAYLOAD.has(st.cards[top].def) || (fire3 && AI_FLIP_SELF.has(st.cards[top].def)))) n++;
+  }
+  return Math.min(n, 2) * W.flipStore;
+}
+
+/* SPEED 2 (SPEED_3) は表で場に居れば、そのラインをコンパイルしても削除されずに別のラインへ移る (値2と札を次のラインへ持ち越す)。
+   評価は値2の札としか数えず、実戦 40局で手札から27回捨て、7回裏で出していた (ユーザー 2026-10-22「speed2 の重要性」)。
+   s2Hold: 手札に持っている / s2Up: 場で表 / s2Compile: 表で居るラインが7点以上 (コンパイルが近い) */
+function aiSpeed2Score(st, side, W) {
+  const uid = 'p' + side + ':SPEED_3';
+  const c = st.cards[uid];
+  if (!c) return 0;
+  if (st.players[side].hand.includes(uid)) return W.s2Hold || 0;
+  for (let l = 0; l < 3; l++) {
+    if (!st.lines[l][side].includes(uid)) continue;
+    if (!c.faceUp) return 0;
+    return (W.s2Up || 0) + (lineTotal(st, l, side) >= 7 && !st.players[side].protocols[l].compiled ? W.s2Compile || 0 : 0);
+  }
+  return 0;
 }
 
 /* ぱうぷるのファイア③の回し方 (AI_LOCK_W.fire3Psy / fire3Other)。一番上で表のファイア③があり、手札がある (捨てて反転する) とき:
@@ -3884,10 +4014,11 @@ function aiValnetFeatures(st, me) {
     }
     return [perm, temp];
   };
+  const sts = activeStatics(st);
   for (let l = 0; l < 3; l++) {
     for (const s of [me, op]) {
       const stack = st.lines[l][s];
-      const mine = lineTotal(st, l, s), theirs = lineTotal(st, l, 1 - s);
+      const mine = lineTotal(st, l, s, sts), theirs = lineTotal(st, l, 1 - s, sts);
       const top = stack.length ? st.cards[stack[stack.length - 1]] : null;
       x[k++] = mine / 10;
       x[k++] = stack.length / 6;
@@ -4071,8 +4202,9 @@ function aiHeuristic(st, me) {
   sc -= opComp * 410;
 
   const lineInfo = [];
+  const sts = activeStatics(st);
   for (let l = 0; l < 3; l++) {
-    const mine = lineTotal(st, l, me), theirs = lineTotal(st, l, op);
+    const mine = lineTotal(st, l, me, sts), theirs = lineTotal(st, l, op, sts);
     const myProt = st.players[me].protocols[l], opProt = st.players[op].protocols[l];
     lineInfo.push({ mine, theirs, myComp: myProt.compiled, opComp: opProt.compiled });
   }
@@ -4195,6 +4327,10 @@ function aiHeuristic(st, me) {
   }
   /* 特化 (DSH): FIRE 0 + WATER 4 の構え。WATER 4 は自分を戻すので、撃ったあとも構えは残る */
   if (aiUsesCombos(st, me) && W.fire0Water4Ready && aiFire0Water4Ready(st, me)) sc += W.fire0Water4Ready;
+  /* 見つけたコンボを揃えに行く・相手の回しは割る (つよい以上と特化) */
+  if (aiTaughtTactics(st, me) && W.aimLive) sc += aiAimScore(st, me, W) - aiAimScore(st, 1 - me, { aimLive: W.aimLive, aimExtra: W.aimExtra });
+  if (aiTaughtTactics(st, me)) sc += aiSpeed2Score(st, me, W);
+  if (aiTaughtTactics(st, me)) sc += aiFlipStoreScore(st, me, W);
   sc += aiBoardEffectScore(st, me);
   sc += aiLockScore(st, me);
   /* 対戦者から教わった手筋 (docs/ai-combos.md のぱうぷるの節) は、つよい以上とロック特化だけ。ふつう・かんたんには入れない
@@ -4344,7 +4480,12 @@ const AI_COMBO_PAIRS = [
   ['HATE_2', 'HATE_1'],       // HATE 1 の上に HATE 0、自分を消して HATE 1 をもう一度起動
   ['HATE_2', 'ICE_2'],        // ICE 1 で HATE 1 の上をどかす / HATE 1 を動かして起動し直す
   ['HATE_2', 'FEAR_1'],       // FEAR 0 で同じく (裏の HATE 1 なら表に返す)
-  ['HATE_2', 'FEAR_2']        // FEAR 1 で2枚引いて、HATE 1 の「3枚捨てる」の手札を作る
+  ['HATE_2', 'FEAR_2'],       // FEAR 1 で2枚引いて、HATE 1 の「3枚捨てる」の手札を作る
+  ['WAR_1', 'CHAOS_1'],       // CHAOS 0 の開始で相手が引くたびに WAR 0 で削除 (docs/combos.md)
+  ['WAR_1', 'LOVE_6'],        // LOVE 6・LOVE 2・FEAR 1 で相手に引かせて WAR 0 で削除
+  ['WAR_1', 'LOVE_2'],
+  ['WAR_1', 'FEAR_2'], ['PLAGUE_2', 'COURAGE_1'], ['COURAGE_1', 'CORRUPTION_3'], ['WAR_4', 'COURAGE_1'], ['WAR_4', 'FEAR_2'], ['SPIRIT_4', 'CORRUPTION_3'], ['SPIRIT_4', 'PEACE_1'], ['TIME_3', 'CLARITY_4'], ['CORRUPTION_6', 'CORRUPTION_3'], ['CORRUPTION_6', 'PLAGUE_2'], ['FIRE_4', 'PLAGUE_5'],
+  ['FIRE_4', 'SPIRIT_2'], ['FIRE_4', 'WATER_1']
 ];
 const AI_COMBO_KEEP = { hand: 60, field: 40, deck: 15 };
 /* ORACLE が手放したがらない札: ウォーター① (山札の上を他の各ラインに裏で) とファイア③ (終了時に捨てて反転) */
@@ -5465,7 +5606,13 @@ function aiActionHard(state, collect) {
     const evalLimit = Math.min(ordered.length, AI_BREADTH.rootEval);
     for (let i = 0; i < evalLimit; i++) {
       const item = ordered[i];
-      const res = resolveOrdered(item, state);
+      /* 選択の要る手 (LIFE 1 の「反転を2回」など) は、締め切りを過ぎると resolveRequests が途中で止まり、
+         候補から黙って落ちていた。depth 1 は必ず完走させる約束なので、ここだけ締め切りを外して解決しきる
+         (予算の小さい計測で、相手の WAR 0 + CHAOS 0 を裏返す手を一度も比べていなかった。2026-10-28) */
+      const dl = AI_SEARCH_DEADLINE;
+      AI_SEARCH_DEADLINE = 0;
+      let res;
+      try { res = resolveOrdered(item, state); } finally { AI_SEARCH_DEADLINE = dl; }
       if (!res || res.error || res.requests.length) continue;
       const bias = aiActionBias(state, item.a, me) + aiTransitionScore(state, res, me);
       const val = aiScore(res.state, me) + bias;
@@ -5511,7 +5658,7 @@ function aiActionHard(state, collect) {
         const s1 = item.res.state;
         if (s1.winner !== null || s1.phase === 'finished' || s1.turn === me) item.val3 = item.val2;
         else {
-          item.val3 = minimaxMin(s1, me, -Infinity, Infinity, deadline, 1, true) + item.bias;
+          item.val3 = minimaxMin(s1, me, -Infinity, Infinity, deadline, AI_DEEP.depth, true) + item.bias;
           if (aiNow() > deadline) break;
         }
         read.push(item);
@@ -5793,12 +5940,13 @@ function aiInformationState(state, side, salt) {
    各世界で探索した最善手の多数決を取る。1つの決定化に過剰適応した
    「読み切ったつもりの手」を避けられる。思考予算は K 等分する */
 let AI_PIMC = 1;
-/* 深読み (計測用、既定は切): k = 読み直す根の手の数、reply / shallow = 深い段の幅 */
-const AI_DEEP = { k: 0, reply: 6, shallow: 4 };
-function setAiDeep(k, reply, shallow) {
+/* 深読み (計測用、既定は切): k = 読み直す根の手の数、reply / shallow = 深い段の幅、depth = 自分の手と相手の応手を何組読み足すか */
+const AI_DEEP = { k: 0, reply: 6, shallow: 4, depth: 1 };
+function setAiDeep(k, reply, shallow, depth) {
   AI_DEEP.k = Math.max(0, k | 0);
   if (reply) AI_DEEP.reply = reply | 0;
   if (shallow) AI_DEEP.shallow = shallow | 0;
+  if (depth) AI_DEEP.depth = depth | 0;
 }
 function setAiPimc(k) { AI_PIMC = Math.max(1, Math.min(9, k | 0)); }
 
