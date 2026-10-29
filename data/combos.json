@@ -38867,9 +38867,22 @@
     "DARKNESS"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに DARKNESS 2 (このスタックにあるすべての裏向きのカードの値はそれぞれ4になる。 / このラインにある、覆われているカードを1枚反転させることができる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.5,
+    "interactionSe": 3.4,
+    "partnerValue": 3.6,
+    "partnerValueSe": 3.3,
+    "synergy": 4.1,
+    "synergySe": 1.9,
+    "missed": 0.3,
+    "missedSe": 3.3,
+    "aiPicked": 30
+   },
    "note": null
   },
   {
@@ -38888,9 +38901,22 @@
     "DEATH"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに DEATH 1 (開始：カードを1枚引くことができる。そうした場合、他のカードを1枚削除し、そのあとこのカードを削除する。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 3.1,
+    "interactionSe": 1.6,
+    "partnerValue": 5,
+    "partnerValueSe": 1.4,
+    "synergy": 8.2,
+    "synergySe": 2.1,
+    "missed": -0.8,
+    "missedSe": 2.1,
+    "aiPicked": 7
+   },
    "note": null
   },
   {
@@ -38909,9 +38935,22 @@
     "FIRE"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに FIRE 0 (他のカードを1枚反転させる。カードを2枚引く。 / このカードが覆われることになったとき：先にカードを1枚引き、他のカードを1枚反転させる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.1,
+    "interactionSe": 1.8,
+    "partnerValue": 2.9,
+    "partnerValueSe": 1.4,
+    "synergy": 5,
+    "synergySe": 2.1,
+    "missed": -1.6,
+    "missedSe": 1.7,
+    "aiPicked": 29
+   },
    "note": null
   },
   {
@@ -38930,9 +38969,22 @@
     "FIRE"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに FIRE 3 (終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0,
+    "interactionSe": 1.5,
+    "partnerValue": 4.7,
+    "partnerValueSe": 1.9,
+    "synergy": 4.7,
+    "synergySe": 1.9,
+    "missed": -1.6,
+    "missedSe": 1.8,
+    "aiPicked": 28
+   },
    "note": null
   },
   {
@@ -38951,9 +39003,22 @@
     "LIFE"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに LIFE 0 (終了：このカードが覆われている場合、このカードを削除する。 / あなたのデッキの一番上のカードを、あなたのカードがある各ラインに裏向きで1枚ずつプレイする。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 41,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.8,
+    "interactionSe": 1.6,
+    "partnerValue": 4.1,
+    "partnerValueSe": 1.7,
+    "synergy": 3.3,
+    "synergySe": 1.5,
+    "missed": -2.5,
+    "missedSe": 1.8,
+    "aiPicked": 22
+   },
    "note": null
   },
   {
@@ -38972,9 +39037,22 @@
     "LIFE"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに LIFE 3 (このカードが覆われることになったとき：先にあなたのデッキの一番上のカードを他の1ラインに裏向きで1枚プレイする。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.1,
+    "interactionSe": 2.4,
+    "partnerValue": 5.3,
+    "partnerValueSe": 1.9,
+    "synergy": 5.2,
+    "synergySe": 2.1,
+    "missed": -2.9,
+    "missedSe": 2.4,
+    "aiPicked": 12
+   },
    "note": null
   },
   {
@@ -38993,9 +39071,22 @@
     "LIGHT"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに LIGHT 1 (終了：カードを1枚引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.8,
+    "interactionSe": 2.5,
+    "partnerValue": 7.7,
+    "partnerValueSe": 2.1,
+    "synergy": 9.5,
+    "synergySe": 2.3,
+    "missed": -0.7,
+    "missedSe": 2.3,
+    "aiPicked": 9
+   },
    "note": null
   },
   {
@@ -39014,9 +39105,22 @@
     "METAL"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに METAL 0 (このラインでの相手の合計値は2減る。 / カードを1枚反転させる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.8,
+    "interactionSe": 2,
+    "partnerValue": 5.7,
+    "partnerValueSe": 2.1,
+    "synergy": 6.5,
+    "synergySe": 1.6,
+    "missed": -0.4,
+    "missedSe": 2.2,
+    "aiPicked": 23
+   },
    "note": null
   },
   {
@@ -39035,9 +39139,22 @@
     "METAL"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに METAL 2 (相手はこのラインにカードを裏向きでプレイすることはできない。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.7,
+    "interactionSe": 2.9,
+    "partnerValue": 7.4,
+    "partnerValueSe": 2.9,
+    "synergy": 6.7,
+    "synergySe": 2.1,
+    "missed": -5.1,
+    "missedSe": 2.4,
+    "aiPicked": 9
+   },
    "note": null
   },
   {
@@ -39056,9 +39173,22 @@
     "METAL"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに METAL 6 (このカードが覆われるか反転することになったとき：先にこのカードを削除する。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.8,
+    "interactionSe": 2.1,
+    "partnerValue": 7.7,
+    "partnerValueSe": 2,
+    "synergy": 6.9,
+    "synergySe": 1.7,
+    "missed": -1.6,
+    "missedSe": 2,
+    "aiPicked": 51
+   },
    "note": null
   },
   {
@@ -39077,9 +39207,22 @@
     "PLAGUE"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに PLAGUE 0 (相手は手札を1枚捨て札にする。 / 相手はこのラインにカードをプレイすることはできない。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 153,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 3.3,
+    "interactionSe": 1.3,
+    "partnerValue": 6.3,
+    "partnerValueSe": 1.1,
+    "synergy": 9.5,
+    "synergySe": 1,
+    "missed": -4.1,
+    "missedSe": 1.5,
+    "aiPicked": 5
+   },
    "note": null
   },
   {
@@ -39098,9 +39241,22 @@
     "PLAGUE"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに PLAGUE 1 (相手が手札を捨て札にしたあと：カードを1枚引く。 / 相手は手札を1枚捨て札にする。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 3.3,
+    "interactionSe": 3.2,
+    "partnerValue": 6.6,
+    "partnerValueSe": 2.7,
+    "synergy": 9.8,
+    "synergySe": 2.8,
+    "missed": -0.7,
+    "missedSe": 2.4,
+    "aiPicked": 21
+   },
    "note": null
   },
   {
@@ -39119,9 +39275,22 @@
     "PLAGUE"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに PLAGUE 4 (終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 41,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.3,
+    "interactionSe": 2.8,
+    "partnerValue": 7,
+    "partnerValueSe": 2.6,
+    "synergy": 7.2,
+    "synergySe": 2.1,
+    "missed": 0.1,
+    "missedSe": 2.5,
+    "aiPicked": 41
+   },
    "note": null
   },
   {
@@ -39140,9 +39309,22 @@
     "PSYCHIC"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに PSYCHIC 1 (相手はカードを裏向きでのみプレイすることができる。 / 開始：このカードを反転させる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -2.5,
+    "interactionSe": 1.7,
+    "partnerValue": 4.4,
+    "partnerValueSe": 1.9,
+    "synergy": 2,
+    "synergySe": 1.2,
+    "missed": -3.6,
+    "missedSe": 1.9,
+    "aiPicked": 19
+   },
    "note": null
   },
   {
@@ -39161,9 +39343,22 @@
     "PSYCHIC"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに PSYCHIC 4 (終了：あなたは相手のカードを1枚戻すことができる。そうした場合、このカードを反転させる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.2,
+    "interactionSe": 1.8,
+    "partnerValue": 5.7,
+    "partnerValueSe": 1.7,
+    "synergy": 5.5,
+    "synergySe": 1.9,
+    "missed": 0.1,
+    "missedSe": 1.3,
+    "aiPicked": 49
+   },
    "note": null
   },
   {
@@ -39182,9 +39377,22 @@
     "SPEED"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに SPEED 1 (あなたがキャッシュをクリアしたあと：カードを1枚引く。 / カードを2枚引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.5,
+    "interactionSe": 1.8,
+    "partnerValue": 6.9,
+    "partnerValueSe": 2.1,
+    "synergy": 7.5,
+    "synergySe": 2,
+    "missed": -1.7,
+    "missedSe": 1.3,
+    "aiPicked": 29
+   },
    "note": null
   },
   {
@@ -39203,9 +39411,22 @@
     "SPEED"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに SPEED 2 (このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "weak",
+   "verdictLabel": "相方が強い (噛み合いは小さい)",
+   "lab": {
+    "n": 153,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.1,
+    "interactionSe": 1.6,
+    "partnerValue": 8.7,
+    "partnerValueSe": 1.3,
+    "synergy": 8.9,
+    "synergySe": 1.3,
+    "missed": -2.1,
+    "missedSe": 1.6,
+    "aiPicked": 12
+   },
    "note": null
   },
   {
@@ -39224,9 +39445,22 @@
     "SPEED"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに SPEED 3 (あなたの他のカードを1枚移動させる。 / 終了：あなたは自分のカードを1枚移動させることができる。そうした場合、このカードを反転させる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "weak",
+   "verdictLabel": "相方が強い (噛み合いは小さい)",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 3.6,
+    "interactionSe": 3.3,
+    "partnerValue": 9.6,
+    "partnerValueSe": 2.4,
+    "synergy": 13.1,
+    "synergySe": 3.6,
+    "missed": 2.1,
+    "missedSe": 2,
+    "aiPicked": 23
+   },
    "note": null
   },
   {
@@ -39245,9 +39479,22 @@
     "SPIRIT"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに SPIRIT 0 (リフレッシュする。カードを1枚引く。 / あなたのキャッシュの確認フェイズを省略する。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.5,
+    "interactionSe": 3,
+    "partnerValue": 9,
+    "partnerValueSe": 2.9,
+    "synergy": 7.4,
+    "synergySe": 1.9,
+    "missed": -2.6,
+    "missedSe": 1.7,
+    "aiPicked": 33
+   },
    "note": null
   },
   {
@@ -39266,9 +39513,22 @@
     "SPIRIT"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに SPIRIT 1 (あなたがカードを表向きでプレイするときには、プロトコルを対応させずにプレイすることができる。 / カードを2枚引く。 / 開始：あなたは手札を1枚捨て札にするか、このカードを反転させる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.3,
+    "interactionSe": 2.3,
+    "partnerValue": 7.2,
+    "partnerValueSe": 2.8,
+    "synergy": 9.5,
+    "synergySe": 1.7,
+    "missed": 2,
+    "missedSe": 1.9,
+    "aiPicked": 26
+   },
    "note": null
   },
   {
@@ -39287,9 +39547,22 @@
     "SPIRIT"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに SPIRIT 3 (あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1,
+    "interactionSe": 3.3,
+    "partnerValue": 5.4,
+    "partnerValueSe": 1.8,
+    "synergy": 6.3,
+    "synergySe": 2.7,
+    "missed": -2.4,
+    "missedSe": 2.8,
+    "aiPicked": 12
+   },
    "note": null
   },
   {
@@ -39308,9 +39581,22 @@
     "APATHY"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに APATHY 0 (このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 152,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.4,
+    "interactionSe": 1.4,
+    "partnerValue": 5.4,
+    "partnerValueSe": 1.1,
+    "synergy": 5.8,
+    "synergySe": 0.9,
+    "missed": -6,
+    "missedSe": 1.4,
+    "aiPicked": 3
+   },
    "note": null
   },
   {
@@ -39329,9 +39615,22 @@
     "APATHY"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに APATHY 2 (このラインにあるカードのすべての中段コマンドを無視する。 / このカードが覆われることになったとき：先に、このカードを反転させる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.1,
+    "interactionSe": 2.2,
+    "partnerValue": 5.6,
+    "partnerValueSe": 1.9,
+    "synergy": 6.7,
+    "synergySe": 2,
+    "missed": -3,
+    "missedSe": 2.2,
+    "aiPicked": 5
+   },
    "note": null
   },
   {
@@ -39350,9 +39649,22 @@
     "HATE"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに HATE 4 (このカードが覆われることになったとき：先に、このラインにある値が最も小さく覆われているカードを１枚削除する。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.4,
+    "interactionSe": 2.5,
+    "partnerValue": 4.8,
+    "partnerValueSe": 2.1,
+    "synergy": 6.2,
+    "synergySe": 1.7,
+    "missed": -0.2,
+    "missedSe": 2.1,
+    "aiPicked": 21
+   },
    "note": null
   },
   {
@@ -39371,9 +39683,22 @@
     "CHAOS"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに CHAOS 0 (各ラインで、覆われているカードを1枚ずつ反転させる。 / 開始：あなたは相手のデッキの一番上のカードを引く。相手はあなたのデッキの一番上のカードを引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "weak",
+   "verdictLabel": "相方が強い (噛み合いは小さい)",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.3,
+    "interactionSe": 2.4,
+    "partnerValue": 15.9,
+    "partnerValueSe": 3.1,
+    "synergy": 18.3,
+    "synergySe": 2.5,
+    "missed": -2.8,
+    "missedSe": 1.9,
+    "aiPicked": 60
+   },
    "note": null
   },
   {
@@ -39392,9 +39717,22 @@
     "CHAOS"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに CHAOS 3 (このカードはプロトコルを対応させずプレイすることができる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.1,
+    "interactionSe": 1.8,
+    "partnerValue": 7.2,
+    "partnerValueSe": 1.9,
+    "synergy": 6.2,
+    "synergySe": 1.7,
+    "missed": -2.1,
+    "missedSe": 2.5,
+    "aiPicked": 21
+   },
    "note": null
   },
   {
@@ -39413,9 +39751,22 @@
     "CHAOS"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに CHAOS 4 (終了：あなたのすべての手札を捨て札にする。捨て札にした枚数と同じ枚数のカードを引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.2,
+    "interactionSe": 2.5,
+    "partnerValue": 3.7,
+    "partnerValueSe": 2.6,
+    "synergy": 5.9,
+    "synergySe": 2.3,
+    "missed": 1.3,
+    "missedSe": 2.6,
+    "aiPicked": 42
+   },
    "note": null
   },
   {
@@ -39434,9 +39785,22 @@
     "CLARITY"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに CLARITY 0 (このラインのあなたの合計値は、あなたの手札1枚ごとに1枚増える。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.2,
+    "interactionSe": 2.6,
+    "partnerValue": 8.9,
+    "partnerValueSe": 3.2,
+    "synergy": 8.7,
+    "synergySe": 2.5,
+    "missed": -4.3,
+    "missedSe": 3.1,
+    "aiPicked": 9
+   },
    "note": null
   },
   {
@@ -39455,9 +39819,22 @@
     "CLARITY"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに CLARITY 1 (開始：あなたのデッキの一番上のカードを公開する。そのカードを捨て札にすることができる。 / 相手は自身の手札をすべて公開する。 / このカードが覆われることになったとき：先にカードを3枚引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.1,
+    "interactionSe": 2,
+    "partnerValue": 4.7,
+    "partnerValueSe": 1.7,
+    "synergy": 3.6,
+    "synergySe": 1.8,
+    "missed": -3.8,
+    "missedSe": 1.9,
+    "aiPicked": 0
+   },
    "note": null
   },
   {
@@ -39476,9 +39853,22 @@
     "CORRUPTION"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに CORRUPTION 0 (開始：このスタック内の、覆われているか覆われていない他の表向きのカードを1枚反転させる。 / このカードは、プロトコルに対応させずに、どちらかのプレイヤー側でプレイすることができる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.2,
+    "interactionSe": 2.9,
+    "partnerValue": 6.7,
+    "partnerValueSe": 2.2,
+    "synergy": 6.5,
+    "synergySe": 1.9,
+    "missed": -12.8,
+    "missedSe": 3.1,
+    "aiPicked": 2
+   },
    "note": null
   },
   {
@@ -39497,9 +39887,22 @@
     "CORRUPTION"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに CORRUPTION 1 (カードを1枚戻す。 / カードが相手の手札に戻るとき：そうする代わりに、そのカードを相手のデッキの一番上に裏向きで置く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.3,
+    "interactionSe": 1.8,
+    "partnerValue": 8.3,
+    "partnerValueSe": 2.1,
+    "synergy": 6.9,
+    "synergySe": 1.7,
+    "missed": -3,
+    "missedSe": 1.2,
+    "aiPicked": 43
+   },
    "note": null
   },
   {
@@ -39518,9 +39921,22 @@
     "CORRUPTION"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに CORRUPTION 2 (あなたが手札を捨て札にしたあと：相手は手札を1枚捨て札にする。 / カードを1枚引く。あなたは手札を1枚捨て札にする。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "weak",
+   "verdictLabel": "相方が強い (噛み合いは小さい)",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.7,
+    "interactionSe": 1.7,
+    "partnerValue": 7.9,
+    "partnerValueSe": 1.9,
+    "synergy": 8.6,
+    "synergySe": 1.2,
+    "missed": 0.2,
+    "missedSe": 2.1,
+    "aiPicked": 16
+   },
    "note": null
   },
   {
@@ -39539,9 +39955,22 @@
     "CORRUPTION"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに CORRUPTION 6 (終了：あなたは手札を1枚捨て札にするか、このカードを削除する。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0,
+    "interactionSe": 1.5,
+    "partnerValue": 4.8,
+    "partnerValueSe": 2.4,
+    "synergy": 4.8,
+    "synergySe": 2.3,
+    "missed": -1.8,
+    "missedSe": 1.5,
+    "aiPicked": 48
+   },
    "note": null
   },
   {
@@ -39560,9 +39989,22 @@
     "COURAGE"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに COURAGE 0 (開始：あなたの手札が1枚もない場合、カードを1枚引く。 / カードを1枚引く。 / 終了：あなたは手札を1枚捨て札にすることができる。そうした場合、相手は手札を1枚捨て札にする。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1,
+    "interactionSe": 2.4,
+    "partnerValue": 7.1,
+    "partnerValueSe": 2.4,
+    "synergy": 6.1,
+    "synergySe": 1.8,
+    "missed": -5.7,
+    "missedSe": 2.8,
+    "aiPicked": 0
+   },
    "note": null
   },
   {
@@ -39581,9 +40023,22 @@
     "COURAGE"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに COURAGE 2 (カードを1枚引く。 / 終了：このラインで、あなたの合計値より相手の合計値が大きい場合、カードを1枚引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.4,
+    "interactionSe": 2.1,
+    "partnerValue": 7,
+    "partnerValueSe": 1.9,
+    "synergy": 7.4,
+    "synergySe": 1.6,
+    "missed": -0.1,
+    "missedSe": 2.6,
+    "aiPicked": 16
+   },
    "note": null
   },
   {
@@ -39602,9 +40057,22 @@
     "COURAGE"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに COURAGE 3 (終了：相手の最も大きい合計値のラインに、このカードを移動させることができる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "weak",
+   "verdictLabel": "相方が強い (噛み合いは小さい)",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.6,
+    "interactionSe": 2.5,
+    "partnerValue": 9.3,
+    "partnerValueSe": 1.9,
+    "synergy": 8.7,
+    "synergySe": 2.1,
+    "missed": -5.7,
+    "missedSe": 2.3,
+    "aiPicked": 21
+   },
    "note": null
   },
   {
@@ -39623,9 +40091,22 @@
     "COURAGE"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに COURAGE 6 (終了：このラインで、あなたの合計値より相手の合計値が大きい場合、このカードを反転させる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -3.8,
+    "interactionSe": 1.8,
+    "partnerValue": 8,
+    "partnerValueSe": 1.9,
+    "synergy": 4.2,
+    "synergySe": 1.3,
+    "missed": -6.3,
+    "missedSe": 2.1,
+    "aiPicked": 40
+   },
    "note": null
   },
   {
@@ -39644,9 +40125,22 @@
     "FEAR"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに FEAR 0 (あなたの手番中、相手のカードの中段コマンドはないものとして扱う。 / カードを1枚移動させるか反転させる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -2.7,
+    "interactionSe": 2.3,
+    "partnerValue": 12.1,
+    "partnerValueSe": 2.5,
+    "synergy": 9.1,
+    "synergySe": 1.7,
+    "missed": -5.6,
+    "missedSe": 1.8,
+    "aiPicked": 40
+   },
    "note": null
   },
   {
@@ -39665,9 +40159,22 @@
     "ICE"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに ICE 1 (あなたはこのカードを移動させることができる。 / 相手がこのラインにカードを1枚プレイしたあと：相手は自身の手札を1枚捨て札にする。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -4,
+    "interactionSe": 2.8,
+    "partnerValue": 10,
+    "partnerValueSe": 2.1,
+    "synergy": 6,
+    "synergySe": 2.6,
+    "missed": -9.2,
+    "missedSe": 2.7,
+    "aiPicked": 10
+   },
    "note": null
   },
   {
@@ -39686,9 +40193,22 @@
     "ICE"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに ICE 3 (終了：このカードが覆われている場合、このカードを移動させることができる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -3.7,
+    "interactionSe": 2.3,
+    "partnerValue": 8.3,
+    "partnerValueSe": 2,
+    "synergy": 4.6,
+    "synergySe": 1.9,
+    "missed": -2.4,
+    "missedSe": 2.3,
+    "aiPicked": 19
+   },
    "note": null
   },
   {
@@ -39707,9 +40227,22 @@
     "ICE"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに ICE 4 (このカードを反転させることはできない。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.2,
+    "interactionSe": 2.1,
+    "partnerValue": 4,
+    "partnerValueSe": 1.8,
+    "synergy": 5.2,
+    "synergySe": 1.6,
+    "missed": -3.2,
+    "missedSe": 1.7,
+    "aiPicked": 51
+   },
    "note": null
   },
   {
@@ -39728,9 +40261,22 @@
     "ICE"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに ICE 6 (あなたの手札が1枚以上ある場合、あなたはカードを引くことはできない。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.3,
+    "interactionSe": 1.3,
+    "partnerValue": 4.4,
+    "partnerValueSe": 1.4,
+    "synergy": 4.7,
+    "synergySe": 1.4,
+    "missed": -2.2,
+    "missedSe": 2.2,
+    "aiPicked": 56
+   },
    "note": null
   },
   {
@@ -39749,9 +40295,22 @@
     "MIRROR"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに MIRROR 0 (このラインのあなたの合計値は、このラインにある相手のカード1枚ごとに1増える。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.2,
+    "interactionSe": 2.9,
+    "partnerValue": 8.4,
+    "partnerValueSe": 3,
+    "synergy": 8.2,
+    "synergySe": 2.2,
+    "missed": -3.6,
+    "missedSe": 2.8,
+    "aiPicked": 0
+   },
    "note": null
   },
   {
@@ -39770,9 +40329,22 @@
     "MIRROR"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに MIRROR 1 (終了：あなたは相手のカードのうち1枚の中段コマンドを、そのコマンドがこのカード上にあるかのように解決できる) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.9,
+    "interactionSe": 2.1,
+    "partnerValue": 7.6,
+    "partnerValueSe": 1.9,
+    "synergy": 6.7,
+    "synergySe": 2.1,
+    "missed": -5,
+    "missedSe": 2.2,
+    "aiPicked": 21
+   },
    "note": null
   },
   {
@@ -39791,9 +40363,22 @@
     "MIRROR"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに MIRROR 4 (相手がカードを引いたあと：カードを1枚引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.4,
+    "interactionSe": 1.8,
+    "partnerValue": 7.5,
+    "partnerValueSe": 2.2,
+    "synergy": 7.9,
+    "synergySe": 1.7,
+    "missed": -3.2,
+    "missedSe": 2.4,
+    "aiPicked": 26
+   },
    "note": null
   },
   {
@@ -39812,9 +40397,22 @@
     "PEACE"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに PEACE 1 (両プレイヤーはすべての手札を捨て札にする。 / 終了：あなたの手札が1枚もない場合、カードを1枚引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 152,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.9,
+    "interactionSe": 1.2,
+    "partnerValue": 9.8,
+    "partnerValueSe": 1.2,
+    "synergy": 12.7,
+    "synergySe": 1.2,
+    "missed": -1.7,
+    "missedSe": 1.1,
+    "aiPicked": 37
+   },
    "note": null
   },
   {
@@ -39833,9 +40431,22 @@
     "PEACE"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに PEACE 4 (相手の手番中にあなたが捨て札にしたあと：カードを1枚引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2,
+    "interactionSe": 3.4,
+    "partnerValue": 6,
+    "partnerValueSe": 2.8,
+    "synergy": 7.9,
+    "synergySe": 2.1,
+    "missed": -0.8,
+    "missedSe": 2.7,
+    "aiPicked": 26
+   },
    "note": null
   },
   {
@@ -39854,9 +40465,22 @@
     "SMOKE"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに SMOKE 2 (このラインのあなたの合計値は、このラインにある裏向きのカード1枚ごとに1増える。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "weak",
+   "verdictLabel": "相方が強い (噛み合いは小さい)",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0,
+    "interactionSe": 2.2,
+    "partnerValue": 11.4,
+    "partnerValueSe": 2.5,
+    "synergy": 11.4,
+    "synergySe": 2.5,
+    "missed": -1.2,
+    "missedSe": 2.5,
+    "aiPicked": 26
+   },
    "note": null
   },
   {
@@ -39875,9 +40499,22 @@
     "TIME"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに TIME 2 (あなたがデッキをシャッフルしたあと：カードを1枚引き、このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。 / あなたの捨て札置き場にカードがある場合、あなたは捨て札置き場にあるすべてのカードをデッキに戻してシャッフルすることができる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.3,
+    "interactionSe": 2.2,
+    "partnerValue": 6.8,
+    "partnerValueSe": 1.9,
+    "synergy": 7.1,
+    "synergySe": 2.1,
+    "missed": -4.2,
+    "missedSe": 2.1,
+    "aiPicked": 38
+   },
    "note": null
   },
   {
@@ -39896,9 +40533,22 @@
     "ASSIMILATION"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに ASSIMILATION 1 (あなたの手札を1枚捨て札にする。リフレッシュする。 / 誰かがリフレッシュしたあと：相手のデッキの一番上のカードを引く。あなたは手札を1枚捨て札にし、それを相手の捨て札置き場に置く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 39,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -3.1,
+    "interactionSe": 2.8,
+    "partnerValue": 9.5,
+    "partnerValueSe": 2.5,
+    "synergy": 6.4,
+    "synergySe": 1.6,
+    "missed": -8.6,
+    "missedSe": 3.7,
+    "aiPicked": 33
+   },
    "note": null
   },
   {
@@ -39917,9 +40567,22 @@
     "ASSIMILATION"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに ASSIMILATION 2 (終了：相手のデッキの一番上のカードを、このスタックに裏向きでプレイする。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.9,
+    "interactionSe": 2.4,
+    "partnerValue": 6.9,
+    "partnerValueSe": 2.3,
+    "synergy": 7.8,
+    "synergySe": 2.1,
+    "missed": -2.9,
+    "missedSe": 2.9,
+    "aiPicked": 31
+   },
    "note": null
   },
   {
@@ -39938,9 +40601,22 @@
     "ASSIMILATION"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに ASSIMILATION 6 (終了：あなたのデッキの一番上のカードを、相手側の任意のスタックに裏向きでプレイする。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.4,
+    "interactionSe": 1.6,
+    "partnerValue": -0.7,
+    "partnerValueSe": 1.9,
+    "synergy": 1.7,
+    "synergySe": 1.8,
+    "missed": -0.1,
+    "missedSe": 2.2,
+    "aiPicked": 42
+   },
    "note": null
   },
   {
@@ -39959,9 +40635,22 @@
     "DIVERSITY"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに DIVERSITY 0 (フィールドに6種類のプロトコルのコマンドカードがある場合、「DIVERSITY」プロトコルカードをコンパイル完了面にする。 / 終了：あなたはこのラインに「DIVERSITY」以外のカードをプレイすることができる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 151,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.3,
+    "interactionSe": 1.7,
+    "partnerValue": 6.4,
+    "partnerValueSe": 1.3,
+    "synergy": 7.7,
+    "synergySe": 1.5,
+    "missed": 0.2,
+    "missedSe": 1.6,
+    "aiPicked": 19
+   },
    "note": null
   },
   {
@@ -39980,9 +40669,22 @@
     "DIVERSITY"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに DIVERSITY 3 (このスタックに「DIVERSITY」以外の表向きのカードがある場合、このラインのあなたの合計値は2増える。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.6,
+    "interactionSe": 2.3,
+    "partnerValue": 6.6,
+    "partnerValueSe": 1.8,
+    "synergy": 5,
+    "synergySe": 1.9,
+    "missed": -7.7,
+    "missedSe": 2.8,
+    "aiPicked": 21
+   },
    "note": null
   },
   {
@@ -40001,9 +40703,22 @@
     "DIVERSITY"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに DIVERSITY 6 (終了：フィールドにあるコマンドカードの、プロトコルの種類数が3以下の場合、このカードを削除する。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -3.6,
+    "interactionSe": 3.5,
+    "partnerValue": 6.6,
+    "partnerValueSe": 2.6,
+    "synergy": 3,
+    "synergySe": 1.8,
+    "missed": -5.8,
+    "missedSe": 3.2,
+    "aiPicked": 29
+   },
    "note": null
   },
   {
@@ -40022,9 +40737,22 @@
     "UNITY"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに UNITY 0 (フィールドに他の「UNITY」カードがある場合、カードを1枚反転させるか、カードを1枚引く。 / このカードが「UNITY」カードによって覆われることになったとき：先に、カードを1枚反転させるか、カードを1枚引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 41,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0,
+    "interactionSe": 1.9,
+    "partnerValue": 7.4,
+    "partnerValueSe": 1.9,
+    "synergy": 7.4,
+    "synergySe": 1.6,
+    "missed": -4.9,
+    "missedSe": 2,
+    "aiPicked": 12
+   },
    "note": null
   },
   {
@@ -40043,9 +40771,22 @@
     "UNITY"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに UNITY 1 (開始：このカードが覆われている場合、あなたはこのカードを移動させることができる。 / フィールド「UNITY」カードが5枚以上ある場合、「UNITY」プロトコルカードのコンパイル完了面を表向きにし、そのラインにあるすべてのカードを削除する。 / このラインには「UNITY」カードを表向きでプレイすることができる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.5,
+    "interactionSe": 2.2,
+    "partnerValue": 5.4,
+    "partnerValueSe": 2,
+    "synergy": 6.6,
+    "synergySe": 2.1,
+    "missed": -6.8,
+    "missedSe": 2.7,
+    "aiPicked": 2
+   },
    "note": null
   },
   {
@@ -40064,9 +40805,22 @@
     "UNITY"
    ],
    "how": "WAR 0 + LOVE 2 が回っているところに UNITY 4 (終了：あなたの手札が1枚もない場合、あなたのデッキのカードをすべて公開し、そこからすべての「UNITY」カードを引いて、あなたのデッキをシャッフルする。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.2,
+    "interactionSe": 1.3,
+    "partnerValue": 4,
+    "partnerValueSe": 1.4,
+    "synergy": 5.1,
+    "synergySe": 1.5,
+    "missed": 1.3,
+    "missedSe": 2.1,
+    "aiPicked": 37
+   },
    "note": null
   },
   {
@@ -40085,9 +40839,22 @@
     "DARKNESS"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに DARKNESS 2 (このスタックにあるすべての裏向きのカードの値はそれぞれ4になる。 / このラインにある、覆われているカードを1枚反転させることができる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.2,
+    "interactionSe": 0.8,
+    "partnerValue": 1.5,
+    "partnerValueSe": 1.2,
+    "synergy": 1.3,
+    "synergySe": 1.2,
+    "missed": -3.6,
+    "missedSe": 1.7,
+    "aiPicked": 40
+   },
    "note": null
   },
   {
@@ -40106,9 +40873,22 @@
     "DEATH"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに DEATH 1 (開始：カードを1枚引くことができる。そうした場合、他のカードを1枚削除し、そのあとこのカードを削除する。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.8,
+    "interactionSe": 1.6,
+    "partnerValue": 1.2,
+    "partnerValueSe": 1.4,
+    "synergy": 2,
+    "synergySe": 1.3,
+    "missed": -1.4,
+    "missedSe": 2.5,
+    "aiPicked": 2
+   },
    "note": null
   },
   {
@@ -40127,9 +40907,22 @@
     "FIRE"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに FIRE 0 (他のカードを1枚反転させる。カードを2枚引く。 / このカードが覆われることになったとき：先にカードを1枚引き、他のカードを1枚反転させる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0,
+    "interactionSe": 1.2,
+    "partnerValue": 3,
+    "partnerValueSe": 1.2,
+    "synergy": 3,
+    "synergySe": 1.1,
+    "missed": -2.7,
+    "missedSe": 1.2,
+    "aiPicked": 30
+   },
    "note": null
   },
   {
@@ -40148,9 +40941,22 @@
     "FIRE"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに FIRE 3 (終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.5,
+    "interactionSe": 2,
+    "partnerValue": 0.9,
+    "partnerValueSe": 1.7,
+    "synergy": 2.4,
+    "synergySe": 1.5,
+    "missed": 1.3,
+    "missedSe": 1.4,
+    "aiPicked": 29
+   },
    "note": null
   },
   {
@@ -40169,9 +40975,22 @@
     "LIFE"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに LIFE 0 (終了：このカードが覆われている場合、このカードを削除する。 / あなたのデッキの一番上のカードを、あなたのカードがある各ラインに裏向きで1枚ずつプレイする。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.8,
+    "interactionSe": 2.7,
+    "partnerValue": 1.3,
+    "partnerValueSe": 1.9,
+    "synergy": 0.5,
+    "synergySe": 2.8,
+    "missed": -2.3,
+    "missedSe": 3.1,
+    "aiPicked": 40
+   },
    "note": null
   },
   {
@@ -40190,9 +41009,22 @@
     "LIFE"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに LIFE 3 (このカードが覆われることになったとき：先にあなたのデッキの一番上のカードを他の1ラインに裏向きで1枚プレイする。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.1,
+    "interactionSe": 1.9,
+    "partnerValue": 2.9,
+    "partnerValueSe": 1.2,
+    "synergy": 2.8,
+    "synergySe": 1.5,
+    "missed": -3.2,
+    "missedSe": 2.5,
+    "aiPicked": 19
+   },
    "note": null
   },
   {
@@ -40211,9 +41043,22 @@
     "LIGHT"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに LIGHT 1 (終了：カードを1枚引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.1,
+    "interactionSe": 2.7,
+    "partnerValue": 1.5,
+    "partnerValueSe": 1.7,
+    "synergy": 2.6,
+    "synergySe": 1.6,
+    "missed": -1,
+    "missedSe": 2.5,
+    "aiPicked": 7
+   },
    "note": null
   },
   {
@@ -40232,9 +41077,22 @@
     "METAL"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに METAL 0 (このラインでの相手の合計値は2減る。 / カードを1枚反転させる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.8,
+    "interactionSe": 1.4,
+    "partnerValue": 0.6,
+    "partnerValueSe": 1.2,
+    "synergy": 2.4,
+    "synergySe": 0.8,
+    "missed": -1.9,
+    "missedSe": 1,
+    "aiPicked": 51
+   },
    "note": null
   },
   {
@@ -40253,9 +41111,22 @@
     "METAL"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに METAL 2 (相手はこのラインにカードを裏向きでプレイすることはできない。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.7,
+    "interactionSe": 2.5,
+    "partnerValue": 2.4,
+    "partnerValueSe": 1.8,
+    "synergy": 0.7,
+    "synergySe": 1.3,
+    "missed": -3.9,
+    "missedSe": 2.1,
+    "aiPicked": 12
+   },
    "note": null
   },
   {
@@ -40274,9 +41145,22 @@
     "METAL"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに METAL 6 (このカードが覆われるか反転することになったとき：先にこのカードを削除する。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.1,
+    "interactionSe": 1.4,
+    "partnerValue": 2.7,
+    "partnerValueSe": 1.4,
+    "synergy": 2.6,
+    "synergySe": 0.8,
+    "missed": -4.9,
+    "missedSe": 2.1,
+    "aiPicked": 49
+   },
    "note": null
   },
   {
@@ -40295,9 +41179,22 @@
     "PLAGUE"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに PLAGUE 0 (相手は手札を1枚捨て札にする。 / 相手はこのラインにカードをプレイすることはできない。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.3,
+    "interactionSe": 2.5,
+    "partnerValue": 7.9,
+    "partnerValueSe": 2.1,
+    "synergy": 8.2,
+    "synergySe": 1.9,
+    "missed": 1,
+    "missedSe": 2.2,
+    "aiPicked": 21
+   },
    "note": null
   },
   {
@@ -40316,9 +41213,22 @@
     "PLAGUE"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに PLAGUE 1 (相手が手札を捨て札にしたあと：カードを1枚引く。 / 相手は手札を1枚捨て札にする。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.2,
+    "interactionSe": 1.1,
+    "partnerValue": 5.5,
+    "partnerValueSe": 1.4,
+    "synergy": 5.7,
+    "synergySe": 1.7,
+    "missed": -1,
+    "missedSe": 1.3,
+    "aiPicked": 42
+   },
    "note": null
   },
   {
@@ -40337,9 +41247,22 @@
     "PLAGUE"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに PLAGUE 4 (終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.7,
+    "interactionSe": 1.5,
+    "partnerValue": 1.6,
+    "partnerValueSe": 1.4,
+    "synergy": 2.3,
+    "synergySe": 0.8,
+    "missed": -1.6,
+    "missedSe": 2.2,
+    "aiPicked": 37
+   },
    "note": null
   },
   {
@@ -40358,9 +41281,22 @@
     "PSYCHIC"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに PSYCHIC 1 (相手はカードを裏向きでのみプレイすることができる。 / 開始：このカードを反転させる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.2,
+    "interactionSe": 1.5,
+    "partnerValue": 2.9,
+    "partnerValueSe": 1.6,
+    "synergy": 1.8,
+    "synergySe": 1,
+    "missed": -3.7,
+    "missedSe": 1.6,
+    "aiPicked": 19
+   },
    "note": null
   },
   {
@@ -40379,9 +41315,22 @@
     "PSYCHIC"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに PSYCHIC 4 (終了：あなたは相手のカードを1枚戻すことができる。そうした場合、このカードを反転させる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.3,
+    "interactionSe": 1.7,
+    "partnerValue": 2.2,
+    "partnerValueSe": 1.5,
+    "synergy": 1.9,
+    "synergySe": 1.2,
+    "missed": -1.3,
+    "missedSe": 1.6,
+    "aiPicked": 36
+   },
    "note": null
   },
   {
@@ -40400,9 +41349,22 @@
     "SPEED"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに SPEED 1 (あなたがキャッシュをクリアしたあと：カードを1枚引く。 / カードを2枚引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -2.6,
+    "interactionSe": 1.8,
+    "partnerValue": 6.8,
+    "partnerValueSe": 2.3,
+    "synergy": 4.3,
+    "synergySe": 1.8,
+    "missed": -3.2,
+    "missedSe": 2.1,
+    "aiPicked": 30
+   },
    "note": null
   },
   {
@@ -40421,9 +41383,22 @@
     "SPEED"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに SPEED 2 (このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.4,
+    "interactionSe": 1.7,
+    "partnerValue": 2,
+    "partnerValueSe": 1.1,
+    "synergy": 0.6,
+    "synergySe": 1.2,
+    "missed": -4.6,
+    "missedSe": 1.8,
+    "aiPicked": 9
+   },
    "note": null
   },
   {
@@ -40442,9 +41417,22 @@
     "SPEED"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに SPEED 3 (あなたの他のカードを1枚移動させる。 / 終了：あなたは自分のカードを1枚移動させることができる。そうした場合、このカードを反転させる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.4,
+    "interactionSe": 2,
+    "partnerValue": 4.6,
+    "partnerValueSe": 1.7,
+    "synergy": 5,
+    "synergySe": 1.8,
+    "missed": 0.1,
+    "missedSe": 2.3,
+    "aiPicked": 19
+   },
    "note": null
   },
   {
@@ -40463,9 +41451,22 @@
     "SPIRIT"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに SPIRIT 0 (リフレッシュする。カードを1枚引く。 / あなたのキャッシュの確認フェイズを省略する。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.8,
+    "interactionSe": 2.6,
+    "partnerValue": 0.9,
+    "partnerValueSe": 2.7,
+    "synergy": 0.1,
+    "synergySe": 2,
+    "missed": -2.4,
+    "missedSe": 2.9,
+    "aiPicked": 31
+   },
    "note": null
   },
   {
@@ -40484,9 +41485,22 @@
     "SPIRIT"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに SPIRIT 1 (あなたがカードを表向きでプレイするときには、プロトコルを対応させずにプレイすることができる。 / カードを2枚引く。 / 開始：あなたは手札を1枚捨て札にするか、このカードを反転させる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.1,
+    "interactionSe": 1.8,
+    "partnerValue": 0.8,
+    "partnerValueSe": 1.3,
+    "synergy": 0.7,
+    "synergySe": 1.1,
+    "missed": -4,
+    "missedSe": 1.8,
+    "aiPicked": 12
+   },
    "note": null
   },
   {
@@ -40505,9 +41519,22 @@
     "SPIRIT"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに SPIRIT 3 (あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.7,
+    "interactionSe": 1.4,
+    "partnerValue": 2.8,
+    "partnerValueSe": 1,
+    "synergy": 3.5,
+    "synergySe": 1.3,
+    "missed": -2.9,
+    "missedSe": 2.4,
+    "aiPicked": 19
+   },
    "note": null
   },
   {
@@ -40526,9 +41553,22 @@
     "APATHY"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに APATHY 0 (このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.1,
+    "interactionSe": 1.6,
+    "partnerValue": 4.9,
+    "partnerValueSe": 1.4,
+    "synergy": 3.8,
+    "synergySe": 1.3,
+    "missed": -10.8,
+    "missedSe": 2.5,
+    "aiPicked": 5
+   },
    "note": null
   },
   {
@@ -40547,9 +41587,22 @@
     "APATHY"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに APATHY 2 (このラインにあるカードのすべての中段コマンドを無視する。 / このカードが覆われることになったとき：先に、このカードを反転させる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.4,
+    "interactionSe": 1.9,
+    "partnerValue": 0.4,
+    "partnerValueSe": 1.8,
+    "synergy": 0,
+    "synergySe": 1.1,
+    "missed": -6.9,
+    "missedSe": 2.9,
+    "aiPicked": 7
+   },
    "note": null
   },
   {
@@ -40568,9 +41621,22 @@
     "HATE"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに HATE 3 (あなたがカードを１枚削除したあと：カードを１枚引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -3.3,
+    "interactionSe": 1.2,
+    "partnerValue": 3,
+    "partnerValueSe": 1.2,
+    "synergy": -0.3,
+    "synergySe": 1,
+    "missed": -5.6,
+    "missedSe": 1.9,
+    "aiPicked": 0
+   },
    "note": null
   },
   {
@@ -40589,9 +41655,22 @@
     "HATE"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに HATE 4 (このカードが覆われることになったとき：先に、このラインにある値が最も小さく覆われているカードを１枚削除する。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.6,
+    "interactionSe": 2,
+    "partnerValue": 3.4,
+    "partnerValueSe": 1.7,
+    "synergy": 1.8,
+    "synergySe": 1.2,
+    "missed": -4.6,
+    "missedSe": 1.8,
+    "aiPicked": 21
+   },
    "note": null
   },
   {
@@ -40610,9 +41689,22 @@
     "LOVE"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに LOVE 1 (あなたは相手のデッキの一番上のカードを引く。 / 終了：あなたの手札一枚を相手に与えることができる。そうした場合、カードを２枚引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.7,
+    "interactionSe": 1.8,
+    "partnerValue": 1.1,
+    "partnerValueSe": 1.9,
+    "synergy": 0.4,
+    "synergySe": 2,
+    "missed": -4.6,
+    "missedSe": 2.1,
+    "aiPicked": 16
+   },
    "note": null
   },
   {
@@ -40631,9 +41723,22 @@
     "CHAOS"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに CHAOS 0 (各ラインで、覆われているカードを1枚ずつ反転させる。 / 開始：あなたは相手のデッキの一番上のカードを引く。相手はあなたのデッキの一番上のカードを引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -4.6,
+    "interactionSe": 1.6,
+    "partnerValue": 3.2,
+    "partnerValueSe": 1.4,
+    "synergy": -1.4,
+    "synergySe": 1.3,
+    "missed": -10.7,
+    "missedSe": 2.3,
+    "aiPicked": 26
+   },
    "note": null
   },
   {
@@ -40652,9 +41757,22 @@
     "CHAOS"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに CHAOS 3 (このカードはプロトコルを対応させずプレイすることができる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -3.7,
+    "interactionSe": 2.8,
+    "partnerValue": 7.1,
+    "partnerValueSe": 3,
+    "synergy": 3.4,
+    "synergySe": 1.6,
+    "missed": -3.3,
+    "missedSe": 1.9,
+    "aiPicked": 16
+   },
    "note": null
   },
   {
@@ -40673,9 +41791,22 @@
     "CHAOS"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに CHAOS 4 (終了：あなたのすべての手札を捨て札にする。捨て札にした枚数と同じ枚数のカードを引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.2,
+    "interactionSe": 1.7,
+    "partnerValue": -1,
+    "partnerValueSe": 1.7,
+    "synergy": -0.8,
+    "synergySe": 1.2,
+    "missed": -3,
+    "missedSe": 2.1,
+    "aiPicked": 21
+   },
    "note": null
   },
   {
@@ -40694,9 +41825,22 @@
     "CLARITY"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに CLARITY 0 (このラインのあなたの合計値は、あなたの手札1枚ごとに1枚増える。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.2,
+    "interactionSe": 1.5,
+    "partnerValue": 1.9,
+    "partnerValueSe": 1.7,
+    "synergy": 4.2,
+    "synergySe": 1.9,
+    "missed": -3.8,
+    "missedSe": 2.2,
+    "aiPicked": 16
+   },
    "note": null
   },
   {
@@ -40715,9 +41859,22 @@
     "CLARITY"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに CLARITY 1 (開始：あなたのデッキの一番上のカードを公開する。そのカードを捨て札にすることができる。 / 相手は自身の手札をすべて公開する。 / このカードが覆われることになったとき：先にカードを3枚引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -4.7,
+    "interactionSe": 3.1,
+    "partnerValue": 6.3,
+    "partnerValueSe": 2,
+    "synergy": 1.6,
+    "synergySe": 1.7,
+    "missed": -6,
+    "missedSe": 2.1,
+    "aiPicked": 5
+   },
    "note": null
   },
   {
@@ -40736,9 +41893,22 @@
     "CORRUPTION"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに CORRUPTION 0 (開始：このスタック内の、覆われているか覆われていない他の表向きのカードを1枚反転させる。 / このカードは、プロトコルに対応させずに、どちらかのプレイヤー側でプレイすることができる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.4,
+    "interactionSe": 2.2,
+    "partnerValue": 2.3,
+    "partnerValueSe": 1.7,
+    "synergy": 3.6,
+    "synergySe": 1.1,
+    "missed": -8.4,
+    "missedSe": 2.7,
+    "aiPicked": 0
+   },
    "note": null
   },
   {
@@ -40757,9 +41927,22 @@
     "CORRUPTION"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに CORRUPTION 1 (カードを1枚戻す。 / カードが相手の手札に戻るとき：そうする代わりに、そのカードを相手のデッキの一番上に裏向きで置く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1,
+    "interactionSe": 1.9,
+    "partnerValue": 2.3,
+    "partnerValueSe": 2,
+    "synergy": 1.3,
+    "synergySe": 1,
+    "missed": -0.5,
+    "missedSe": 1.9,
+    "aiPicked": 51
+   },
    "note": null
   },
   {
@@ -40778,9 +41961,22 @@
     "CORRUPTION"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに CORRUPTION 2 (あなたが手札を捨て札にしたあと：相手は手札を1枚捨て札にする。 / カードを1枚引く。あなたは手札を1枚捨て札にする。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.6,
+    "interactionSe": 2.1,
+    "partnerValue": 5.2,
+    "partnerValueSe": 1.7,
+    "synergy": 3.7,
+    "synergySe": 1.5,
+    "missed": -3.7,
+    "missedSe": 1.6,
+    "aiPicked": 26
+   },
    "note": null
   },
   {
@@ -40799,9 +41995,22 @@
     "CORRUPTION"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに CORRUPTION 6 (終了：あなたは手札を1枚捨て札にするか、このカードを削除する。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.5,
+    "interactionSe": 1.7,
+    "partnerValue": 1.9,
+    "partnerValueSe": 1.7,
+    "synergy": 1.4,
+    "synergySe": 1.1,
+    "missed": -6.4,
+    "missedSe": 2.3,
+    "aiPicked": 33
+   },
    "note": null
   },
   {
@@ -40820,9 +42029,22 @@
     "COURAGE"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに COURAGE 0 (開始：あなたの手札が1枚もない場合、カードを1枚引く。 / カードを1枚引く。 / 終了：あなたは手札を1枚捨て札にすることができる。そうした場合、相手は手札を1枚捨て札にする。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.3,
+    "interactionSe": 1.1,
+    "partnerValue": 4.1,
+    "partnerValueSe": 1.2,
+    "synergy": 4.4,
+    "synergySe": 1.1,
+    "missed": -5.3,
+    "missedSe": 2.4,
+    "aiPicked": 53
+   },
    "note": null
   },
   {
@@ -40841,9 +42063,22 @@
     "COURAGE"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに COURAGE 2 (カードを1枚引く。 / 終了：このラインで、あなたの合計値より相手の合計値が大きい場合、カードを1枚引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.5,
+    "interactionSe": 2.4,
+    "partnerValue": -0.1,
+    "partnerValueSe": 1.8,
+    "synergy": -1.6,
+    "synergySe": 1.2,
+    "missed": -0.3,
+    "missedSe": 2.3,
+    "aiPicked": 19
+   },
    "note": null
   },
   {
@@ -40862,9 +42097,22 @@
     "COURAGE"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに COURAGE 3 (終了：相手の最も大きい合計値のラインに、このカードを移動させることができる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.6,
+    "interactionSe": 1.6,
+    "partnerValue": 1.4,
+    "partnerValueSe": 1.7,
+    "synergy": -0.2,
+    "synergySe": 1.7,
+    "missed": -7.5,
+    "missedSe": 2,
+    "aiPicked": 28
+   },
    "note": null
   },
   {
@@ -40883,9 +42131,22 @@
     "COURAGE"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに COURAGE 6 (終了：このラインで、あなたの合計値より相手の合計値が大きい場合、このカードを反転させる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.3,
+    "interactionSe": 1.8,
+    "partnerValue": 3.3,
+    "partnerValueSe": 1.7,
+    "synergy": 3.6,
+    "synergySe": 1.5,
+    "missed": -1.1,
+    "missedSe": 2,
+    "aiPicked": 40
+   },
    "note": null
   },
   {
@@ -40904,9 +42165,22 @@
     "ICE"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに ICE 1 (あなたはこのカードを移動させることができる。 / 相手がこのラインにカードを1枚プレイしたあと：相手は自身の手札を1枚捨て札にする。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.2,
+    "interactionSe": 2.4,
+    "partnerValue": 1.8,
+    "partnerValueSe": 1.5,
+    "synergy": 1.6,
+    "synergySe": 2,
+    "missed": -7.1,
+    "missedSe": 2,
+    "aiPicked": 7
+   },
    "note": null
   },
   {
@@ -40925,9 +42199,22 @@
     "ICE"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに ICE 3 (終了：このカードが覆われている場合、このカードを移動させることができる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.9,
+    "interactionSe": 1.4,
+    "partnerValue": 4.1,
+    "partnerValueSe": 1.2,
+    "synergy": 2.2,
+    "synergySe": 0.9,
+    "missed": -5.3,
+    "missedSe": 2.2,
+    "aiPicked": 21
+   },
    "note": null
   },
   {
@@ -40946,9 +42233,22 @@
     "ICE"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに ICE 4 (このカードを反転させることはできない。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.1,
+    "interactionSe": 1.6,
+    "partnerValue": 2.1,
+    "partnerValueSe": 1.1,
+    "synergy": 1,
+    "synergySe": 1.6,
+    "missed": -6.3,
+    "missedSe": 2.3,
+    "aiPicked": 42
+   },
    "note": null
   },
   {
@@ -40967,9 +42267,22 @@
     "ICE"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに ICE 6 (あなたの手札が1枚以上ある場合、あなたはカードを引くことはできない。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -2.6,
+    "interactionSe": 2.5,
+    "partnerValue": 3.9,
+    "partnerValueSe": 2.5,
+    "synergy": 1.2,
+    "synergySe": 1,
+    "missed": -2.5,
+    "missedSe": 3,
+    "aiPicked": 56
+   },
    "note": null
   },
   {
@@ -40988,9 +42301,22 @@
     "MIRROR"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに MIRROR 0 (このラインのあなたの合計値は、このラインにある相手のカード1枚ごとに1増える。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.7,
+    "interactionSe": 1.8,
+    "partnerValue": 1.1,
+    "partnerValueSe": 1.6,
+    "synergy": 0.4,
+    "synergySe": 1.1,
+    "missed": -4,
+    "missedSe": 1.6,
+    "aiPicked": 2
+   },
    "note": null
   },
   {
@@ -41009,9 +42335,22 @@
     "MIRROR"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに MIRROR 1 (終了：あなたは相手のカードのうち1枚の中段コマンドを、そのコマンドがこのカード上にあるかのように解決できる) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.2,
+    "interactionSe": 1.7,
+    "partnerValue": 1.2,
+    "partnerValueSe": 1.4,
+    "synergy": 1.1,
+    "synergySe": 1.2,
+    "missed": -4.3,
+    "missedSe": 2.6,
+    "aiPicked": 17
+   },
    "note": null
   },
   {
@@ -41030,9 +42369,22 @@
     "MIRROR"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに MIRROR 4 (相手がカードを引いたあと：カードを1枚引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.7,
+    "interactionSe": 1.2,
+    "partnerValue": -0.1,
+    "partnerValueSe": 1.3,
+    "synergy": 0.6,
+    "synergySe": 1.2,
+    "missed": -2.9,
+    "missedSe": 2.6,
+    "aiPicked": 31
+   },
    "note": null
   },
   {
@@ -41051,9 +42403,22 @@
     "PEACE"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに PEACE 1 (両プレイヤーはすべての手札を捨て札にする。 / 終了：あなたの手札が1枚もない場合、カードを1枚引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -2.5,
+    "interactionSe": 1.5,
+    "partnerValue": 6.7,
+    "partnerValueSe": 1.7,
+    "synergy": 4.2,
+    "synergySe": 1.4,
+    "missed": -6.2,
+    "missedSe": 1.8,
+    "aiPicked": 55
+   },
    "note": null
   },
   {
@@ -41072,9 +42437,22 @@
     "PEACE"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに PEACE 4 (相手の手番中にあなたが捨て札にしたあと：カードを1枚引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.2,
+    "interactionSe": 1.5,
+    "partnerValue": 2.3,
+    "partnerValueSe": 1.5,
+    "synergy": 2.2,
+    "synergySe": 1.8,
+    "missed": -3.8,
+    "missedSe": 1.4,
+    "aiPicked": 19
+   },
    "note": null
   },
   {
@@ -41093,9 +42471,22 @@
     "SMOKE"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに SMOKE 2 (このラインのあなたの合計値は、このラインにある裏向きのカード1枚ごとに1増える。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1,
+    "interactionSe": 2,
+    "partnerValue": 2.5,
+    "partnerValueSe": 2.2,
+    "synergy": 1.6,
+    "synergySe": 1.2,
+    "missed": -2.8,
+    "missedSe": 2.1,
+    "aiPicked": 23
+   },
    "note": null
   },
   {
@@ -41114,9 +42505,22 @@
     "TIME"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに TIME 2 (あなたがデッキをシャッフルしたあと：カードを1枚引き、このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。 / あなたの捨て札置き場にカードがある場合、あなたは捨て札置き場にあるすべてのカードをデッキに戻してシャッフルすることができる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.1,
+    "interactionSe": 1.8,
+    "partnerValue": 2.5,
+    "partnerValueSe": 1.6,
+    "synergy": 1.4,
+    "synergySe": 0.8,
+    "missed": -6,
+    "missedSe": 2.3,
+    "aiPicked": 26
+   },
    "note": null
   },
   {
@@ -41135,9 +42539,22 @@
     "ASSIMILATION"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに ASSIMILATION 1 (あなたの手札を1枚捨て札にする。リフレッシュする。 / 誰かがリフレッシュしたあと：相手のデッキの一番上のカードを引く。あなたは手札を1枚捨て札にし、それを相手の捨て札置き場に置く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.2,
+    "interactionSe": 1.7,
+    "partnerValue": 0.2,
+    "partnerValueSe": 1.5,
+    "synergy": 0,
+    "synergySe": 1.8,
+    "missed": -3.9,
+    "missedSe": 1.8,
+    "aiPicked": 26
+   },
    "note": null
   },
   {
@@ -41156,9 +42573,22 @@
     "ASSIMILATION"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに ASSIMILATION 2 (終了：相手のデッキの一番上のカードを、このスタックに裏向きでプレイする。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.8,
+    "interactionSe": 1.7,
+    "partnerValue": 0.1,
+    "partnerValueSe": 1.8,
+    "synergy": 0.9,
+    "synergySe": 1,
+    "missed": -3.9,
+    "missedSe": 1.6,
+    "aiPicked": 33
+   },
    "note": null
   },
   {
@@ -41177,9 +42607,22 @@
     "ASSIMILATION"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに ASSIMILATION 6 (終了：あなたのデッキの一番上のカードを、相手側の任意のスタックに裏向きでプレイする。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -2.7,
+    "interactionSe": 1.3,
+    "partnerValue": 5.5,
+    "partnerValueSe": 1.9,
+    "synergy": 2.8,
+    "synergySe": 1.6,
+    "missed": -3.9,
+    "missedSe": 2.3,
+    "aiPicked": 48
+   },
    "note": null
   },
   {
@@ -41198,9 +42641,22 @@
     "DIVERSITY"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに DIVERSITY 0 (フィールドに6種類のプロトコルのコマンドカードがある場合、「DIVERSITY」プロトコルカードをコンパイル完了面にする。 / 終了：あなたはこのラインに「DIVERSITY」以外のカードをプレイすることができる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.5,
+    "interactionSe": 2.6,
+    "partnerValue": 0.5,
+    "partnerValueSe": 1.9,
+    "synergy": 3,
+    "synergySe": 1.6,
+    "missed": -1.3,
+    "missedSe": 2.6,
+    "aiPicked": 12
+   },
    "note": null
   },
   {
@@ -41219,9 +42675,22 @@
     "DIVERSITY"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに DIVERSITY 3 (このスタックに「DIVERSITY」以外の表向きのカードがある場合、このラインのあなたの合計値は2増える。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.9,
+    "interactionSe": 1.8,
+    "partnerValue": 1.2,
+    "partnerValueSe": 1.5,
+    "synergy": 0.3,
+    "synergySe": 1.1,
+    "missed": -5.5,
+    "missedSe": 2.1,
+    "aiPicked": 19
+   },
    "note": null
   },
   {
@@ -41240,9 +42709,22 @@
     "DIVERSITY"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに DIVERSITY 6 (終了：フィールドにあるコマンドカードの、プロトコルの種類数が3以下の場合、このカードを削除する。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.1,
+    "interactionSe": 1.9,
+    "partnerValue": 3,
+    "partnerValueSe": 2,
+    "synergy": 2.9,
+    "synergySe": 1.9,
+    "missed": -3.8,
+    "missedSe": 2.1,
+    "aiPicked": 49
+   },
    "note": null
   },
   {
@@ -41261,9 +42743,22 @@
     "UNITY"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに UNITY 0 (フィールドに他の「UNITY」カードがある場合、カードを1枚反転させるか、カードを1枚引く。 / このカードが「UNITY」カードによって覆われることになったとき：先に、カードを1枚反転させるか、カードを1枚引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -5.7,
+    "interactionSe": 2.6,
+    "partnerValue": 5.3,
+    "partnerValueSe": 2.5,
+    "synergy": -0.4,
+    "synergySe": 0.6,
+    "missed": -10.6,
+    "missedSe": 2.8,
+    "aiPicked": 10
+   },
    "note": null
   },
   {
@@ -41282,9 +42777,22 @@
     "UNITY"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに UNITY 1 (開始：このカードが覆われている場合、あなたはこのカードを移動させることができる。 / フィールド「UNITY」カードが5枚以上ある場合、「UNITY」プロトコルカードのコンパイル完了面を表向きにし、そのラインにあるすべてのカードを削除する。 / このラインには「UNITY」カードを表向きでプレイすることができる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0,
+    "interactionSe": 1.6,
+    "partnerValue": 0.5,
+    "partnerValueSe": 1.3,
+    "synergy": 0.5,
+    "synergySe": 0.8,
+    "missed": -5.3,
+    "missedSe": 2.5,
+    "aiPicked": 9
+   },
    "note": null
   },
   {
@@ -41303,9 +42811,22 @@
     "UNITY"
    ],
    "how": "WAR 3 + FEAR 1 が回っているところに UNITY 4 (終了：あなたの手札が1枚もない場合、あなたのデッキのカードをすべて公開し、そこからすべての「UNITY」カードを引いて、あなたのデッキをシャッフルする。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -4.2,
+    "interactionSe": 2,
+    "partnerValue": 6.6,
+    "partnerValueSe": 2.3,
+    "synergy": 2.4,
+    "synergySe": 1.5,
+    "missed": -6.9,
+    "missedSe": 2.5,
+    "aiPicked": 24
+   },
    "note": null
   },
   {
@@ -41324,9 +42845,22 @@
     "DARKNESS"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに DARKNESS 2 (このスタックにあるすべての裏向きのカードの値はそれぞれ4になる。 / このラインにある、覆われているカードを1枚反転させることができる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -3.4,
+    "interactionSe": 2.5,
+    "partnerValue": 5,
+    "partnerValueSe": 2.6,
+    "synergy": 1.6,
+    "synergySe": 1.2,
+    "missed": -5.9,
+    "missedSe": 2.1,
+    "aiPicked": 16
+   },
    "note": null
   },
   {
@@ -41345,9 +42879,22 @@
     "DEATH"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに DEATH 1 (開始：カードを1枚引くことができる。そうした場合、他のカードを1枚削除し、そのあとこのカードを削除する。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 41,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.1,
+    "interactionSe": 2,
+    "partnerValue": 4.9,
+    "partnerValueSe": 1.4,
+    "synergy": 5,
+    "synergySe": 1.6,
+    "missed": 1.1,
+    "missedSe": 2.6,
+    "aiPicked": 2
+   },
    "note": null
   },
   {
@@ -41366,9 +42913,22 @@
     "FIRE"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに FIRE 0 (他のカードを1枚反転させる。カードを2枚引く。 / このカードが覆われることになったとき：先にカードを1枚引き、他のカードを1枚反転させる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.4,
+    "interactionSe": 1.2,
+    "partnerValue": 4.2,
+    "partnerValueSe": 1.5,
+    "synergy": 5.6,
+    "synergySe": 1.7,
+    "missed": -1.6,
+    "missedSe": 1,
+    "aiPicked": 38
+   },
    "note": null
   },
   {
@@ -41387,9 +42947,22 @@
     "FIRE"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに FIRE 3 (終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.2,
+    "interactionSe": 1.5,
+    "partnerValue": 5.2,
+    "partnerValueSe": 1.3,
+    "synergy": 5.1,
+    "synergySe": 1.2,
+    "missed": 0.7,
+    "missedSe": 1.2,
+    "aiPicked": 35
+   },
    "note": null
   },
   {
@@ -41408,9 +42981,22 @@
     "LIFE"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに LIFE 0 (終了：このカードが覆われている場合、このカードを削除する。 / あなたのデッキの一番上のカードを、あなたのカードがある各ラインに裏向きで1枚ずつプレイする。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 41,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.1,
+    "interactionSe": 2.2,
+    "partnerValue": 3.3,
+    "partnerValueSe": 2,
+    "synergy": 4.4,
+    "synergySe": 1.5,
+    "missed": -3,
+    "missedSe": 2.2,
+    "aiPicked": 20
+   },
    "note": null
   },
   {
@@ -41429,9 +43015,22 @@
     "LIFE"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに LIFE 3 (このカードが覆われることになったとき：先にあなたのデッキの一番上のカードを他の1ラインに裏向きで1枚プレイする。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.9,
+    "interactionSe": 3,
+    "partnerValue": 3.4,
+    "partnerValueSe": 2.1,
+    "synergy": 6.3,
+    "synergySe": 2,
+    "missed": 1.9,
+    "missedSe": 2.5,
+    "aiPicked": 9
+   },
    "note": null
   },
   {
@@ -41450,9 +43049,22 @@
     "LIGHT"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに LIGHT 1 (終了：カードを1枚引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "weak",
+   "verdictLabel": "相方が強い (噛み合いは小さい)",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0,
+    "interactionSe": 2.3,
+    "partnerValue": 8.5,
+    "partnerValueSe": 2.2,
+    "synergy": 8.5,
+    "synergySe": 2.4,
+    "missed": 0.3,
+    "missedSe": 2.4,
+    "aiPicked": 5
+   },
    "note": null
   },
   {
@@ -41471,9 +43083,22 @@
     "METAL"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに METAL 0 (このラインでの相手の合計値は2減る。 / カードを1枚反転させる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -2.7,
+    "interactionSe": 1.9,
+    "partnerValue": 3.9,
+    "partnerValueSe": 1.7,
+    "synergy": 1.2,
+    "synergySe": 1.4,
+    "missed": -3.3,
+    "missedSe": 1.9,
+    "aiPicked": 19
+   },
    "note": null
   },
   {
@@ -41492,9 +43117,22 @@
     "METAL"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに METAL 2 (相手はこのラインにカードを裏向きでプレイすることはできない。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.5,
+    "interactionSe": 2.5,
+    "partnerValue": 2.3,
+    "partnerValueSe": 2.1,
+    "synergy": 4.8,
+    "synergySe": 1.5,
+    "missed": -7.4,
+    "missedSe": 2.9,
+    "aiPicked": 2
+   },
    "note": null
   },
   {
@@ -41513,9 +43151,22 @@
     "METAL"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに METAL 6 (このカードが覆われるか反転することになったとき：先にこのカードを削除する。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.5,
+    "interactionSe": 2.3,
+    "partnerValue": 6.6,
+    "partnerValueSe": 2.4,
+    "synergy": 5.1,
+    "synergySe": 1.6,
+    "missed": -2.4,
+    "missedSe": 2.2,
+    "aiPicked": 38
+   },
    "note": null
   },
   {
@@ -41534,9 +43185,22 @@
     "PLAGUE"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに PLAGUE 0 (相手は手札を1枚捨て札にする。 / 相手はこのラインにカードをプレイすることはできない。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.2,
+    "interactionSe": 1.5,
+    "partnerValue": 3.9,
+    "partnerValueSe": 1.8,
+    "synergy": 4.1,
+    "synergySe": 1.3,
+    "missed": -11.2,
+    "missedSe": 2.1,
+    "aiPicked": 0
+   },
    "note": null
   },
   {
@@ -41555,9 +43219,22 @@
     "PLAGUE"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに PLAGUE 1 (相手が手札を捨て札にしたあと：カードを1枚引く。 / 相手は手札を1枚捨て札にする。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 4.1,
+    "interactionSe": 2.5,
+    "partnerValue": 2.1,
+    "partnerValueSe": 1.6,
+    "synergy": 6.3,
+    "synergySe": 2.7,
+    "missed": -2.8,
+    "missedSe": 1.9,
+    "aiPicked": 21
+   },
    "note": null
   },
   {
@@ -41576,9 +43253,22 @@
     "PLAGUE"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに PLAGUE 4 (終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.4,
+    "interactionSe": 1.4,
+    "partnerValue": 2.5,
+    "partnerValueSe": 1.5,
+    "synergy": 1.1,
+    "synergySe": 0.9,
+    "missed": -5.8,
+    "missedSe": 2.1,
+    "aiPicked": 35
+   },
    "note": null
   },
   {
@@ -41597,9 +43287,22 @@
     "PSYCHIC"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに PSYCHIC 1 (相手はカードを裏向きでのみプレイすることができる。 / 開始：このカードを反転させる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -3.8,
+    "interactionSe": 2.9,
+    "partnerValue": 6.7,
+    "partnerValueSe": 2.8,
+    "synergy": 2.9,
+    "synergySe": 0.6,
+    "missed": -6.8,
+    "missedSe": 2.9,
+    "aiPicked": 7
+   },
    "note": null
   },
   {
@@ -41618,9 +43321,22 @@
     "PSYCHIC"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに PSYCHIC 4 (終了：あなたは相手のカードを1枚戻すことができる。そうした場合、このカードを反転させる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 41,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.5,
+    "interactionSe": 1.9,
+    "partnerValue": 4.9,
+    "partnerValueSe": 1.3,
+    "synergy": 4.3,
+    "synergySe": 2.1,
+    "missed": 0,
+    "missedSe": 1.8,
+    "aiPicked": 27
+   },
    "note": null
   },
   {
@@ -41639,9 +43355,22 @@
     "SPEED"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに SPEED 1 (あなたがキャッシュをクリアしたあと：カードを1枚引く。 / カードを2枚引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 3.5,
+    "interactionSe": 3,
+    "partnerValue": 6.1,
+    "partnerValueSe": 2.4,
+    "synergy": 9.6,
+    "synergySe": 2.7,
+    "missed": -2.3,
+    "missedSe": 1.8,
+    "aiPicked": 33
+   },
    "note": null
   },
   {
@@ -41660,9 +43389,22 @@
     "SPEED"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに SPEED 2 (このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.5,
+    "interactionSe": 2.4,
+    "partnerValue": 3,
+    "partnerValueSe": 2.2,
+    "synergy": 2.5,
+    "synergySe": 1.8,
+    "missed": -6.3,
+    "missedSe": 2.6,
+    "aiPicked": 7
+   },
    "note": null
   },
   {
@@ -41681,9 +43423,22 @@
     "SPEED"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに SPEED 3 (あなたの他のカードを1枚移動させる。 / 終了：あなたは自分のカードを1枚移動させることができる。そうした場合、このカードを反転させる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -7.2,
+    "interactionSe": 3.1,
+    "partnerValue": 8.8,
+    "partnerValueSe": 3.3,
+    "synergy": 1.6,
+    "synergySe": 1.7,
+    "missed": -3.3,
+    "missedSe": 2.8,
+    "aiPicked": 9
+   },
    "note": null
   },
   {
@@ -41702,9 +43457,22 @@
     "APATHY"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに APATHY 0 (このラインでのあなたの合計値は、このラインにある裏向きのカード1枚ごとに１増える。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -2.3,
+    "interactionSe": 2,
+    "partnerValue": 4.3,
+    "partnerValueSe": 1.8,
+    "synergy": 1.9,
+    "synergySe": 1,
+    "missed": -14.3,
+    "missedSe": 2.8,
+    "aiPicked": 2
+   },
    "note": null
   },
   {
@@ -41723,9 +43491,22 @@
     "APATHY"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに APATHY 2 (このラインにあるカードのすべての中段コマンドを無視する。 / このカードが覆われることになったとき：先に、このカードを反転させる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.5,
+    "interactionSe": 1.9,
+    "partnerValue": 2.8,
+    "partnerValueSe": 1.5,
+    "synergy": 1.1,
+    "synergySe": 1.5,
+    "missed": -5.6,
+    "missedSe": 2.4,
+    "aiPicked": 0
+   },
    "note": null
   },
   {
@@ -41744,9 +43525,22 @@
     "HATE"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに HATE 3 (あなたがカードを１枚削除したあと：カードを１枚引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.9,
+    "interactionSe": 1.7,
+    "partnerValue": 5,
+    "partnerValueSe": 1.5,
+    "synergy": 3.1,
+    "synergySe": 1.2,
+    "missed": -0.2,
+    "missedSe": 2.3,
+    "aiPicked": 12
+   },
    "note": null
   },
   {
@@ -41765,9 +43559,22 @@
     "HATE"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに HATE 4 (このカードが覆われることになったとき：先に、このラインにある値が最も小さく覆われているカードを１枚削除する。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.8,
+    "interactionSe": 2,
+    "partnerValue": 4.1,
+    "partnerValueSe": 1.7,
+    "synergy": 3.3,
+    "synergySe": 1.1,
+    "missed": -4.9,
+    "missedSe": 2.4,
+    "aiPicked": 7
+   },
    "note": null
   },
   {
@@ -41786,9 +43593,22 @@
     "LOVE"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに LOVE 1 (あなたは相手のデッキの一番上のカードを引く。 / 終了：あなたの手札一枚を相手に与えることができる。そうした場合、カードを２枚引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 3.5,
+    "interactionSe": 2.5,
+    "partnerValue": 3.2,
+    "partnerValueSe": 1.8,
+    "synergy": 6.7,
+    "synergySe": 1.9,
+    "missed": -2.9,
+    "missedSe": 2.5,
+    "aiPicked": 12
+   },
    "note": null
   },
   {
@@ -41807,9 +43627,22 @@
     "CHAOS"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに CHAOS 0 (各ラインで、覆われているカードを1枚ずつ反転させる。 / 開始：あなたは相手のデッキの一番上のカードを引く。相手はあなたのデッキの一番上のカードを引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 41,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.5,
+    "interactionSe": 2.8,
+    "partnerValue": 6.4,
+    "partnerValueSe": 2.1,
+    "synergy": 4.9,
+    "synergySe": 1.5,
+    "missed": -6.7,
+    "missedSe": 2.7,
+    "aiPicked": 5
+   },
    "note": null
   },
   {
@@ -41828,9 +43661,22 @@
     "CHAOS"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに CHAOS 3 (このカードはプロトコルを対応させずプレイすることができる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.4,
+    "interactionSe": 1.8,
+    "partnerValue": 3.2,
+    "partnerValueSe": 1.4,
+    "synergy": 3.5,
+    "synergySe": 1.6,
+    "missed": -3.4,
+    "missedSe": 3.6,
+    "aiPicked": 0
+   },
    "note": null
   },
   {
@@ -41849,9 +43695,22 @@
     "CHAOS"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに CHAOS 4 (終了：あなたのすべての手札を捨て札にする。捨て札にした枚数と同じ枚数のカードを引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.1,
+    "interactionSe": 2.1,
+    "partnerValue": 8.3,
+    "partnerValueSe": 2.3,
+    "synergy": 8.7,
+    "synergySe": 2.2,
+    "missed": -3.3,
+    "missedSe": 2,
+    "aiPicked": 42
+   },
    "note": null
   },
   {
@@ -41870,9 +43729,22 @@
     "CLARITY"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに CLARITY 0 (このラインのあなたの合計値は、あなたの手札1枚ごとに1枚増える。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.6,
+    "interactionSe": 2.8,
+    "partnerValue": 6.3,
+    "partnerValueSe": 2.2,
+    "synergy": 4.8,
+    "synergySe": 2,
+    "missed": -5.2,
+    "missedSe": 2.7,
+    "aiPicked": 2
+   },
    "note": null
   },
   {
@@ -41891,9 +43763,22 @@
     "CLARITY"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに CLARITY 1 (開始：あなたのデッキの一番上のカードを公開する。そのカードを捨て札にすることができる。 / 相手は自身の手札をすべて公開する。 / このカードが覆われることになったとき：先にカードを3枚引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.4,
+    "interactionSe": 2.2,
+    "partnerValue": 1,
+    "partnerValueSe": 1.3,
+    "synergy": 2.5,
+    "synergySe": 1.7,
+    "missed": -4.2,
+    "missedSe": 1.8,
+    "aiPicked": 2
+   },
    "note": null
   },
   {
@@ -41912,9 +43797,22 @@
     "COURAGE"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに COURAGE 0 (開始：あなたの手札が1枚もない場合、カードを1枚引く。 / カードを1枚引く。 / 終了：あなたは手札を1枚捨て札にすることができる。そうした場合、相手は手札を1枚捨て札にする。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.3,
+    "interactionSe": 2.2,
+    "partnerValue": 3.8,
+    "partnerValueSe": 1.8,
+    "synergy": 6,
+    "synergySe": 1.9,
+    "missed": -5.8,
+    "missedSe": 1.9,
+    "aiPicked": 7
+   },
    "note": null
   },
   {
@@ -41933,9 +43831,22 @@
     "COURAGE"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに COURAGE 2 (カードを1枚引く。 / 終了：このラインで、あなたの合計値より相手の合計値が大きい場合、カードを1枚引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "weak",
+   "verdictLabel": "相方が強い (噛み合いは小さい)",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 3.3,
+    "interactionSe": 2.6,
+    "partnerValue": 8.7,
+    "partnerValueSe": 2.3,
+    "synergy": 12,
+    "synergySe": 2.7,
+    "missed": 0.6,
+    "missedSe": 1.8,
+    "aiPicked": 26
+   },
    "note": null
   },
   {
@@ -41954,9 +43865,22 @@
     "COURAGE"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに COURAGE 3 (終了：相手の最も大きい合計値のラインに、このカードを移動させることができる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -3.3,
+    "interactionSe": 2,
+    "partnerValue": 5.6,
+    "partnerValueSe": 1.6,
+    "synergy": 2.2,
+    "synergySe": 1.2,
+    "missed": -6.1,
+    "missedSe": 1.8,
+    "aiPicked": 21
+   },
    "note": null
   },
   {
@@ -41975,9 +43899,22 @@
     "COURAGE"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに COURAGE 6 (終了：このラインで、あなたの合計値より相手の合計値が大きい場合、このカードを反転させる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -3.5,
+    "interactionSe": 1.7,
+    "partnerValue": 2.7,
+    "partnerValueSe": 1.7,
+    "synergy": -0.7,
+    "synergySe": 1.6,
+    "missed": -4.6,
+    "missedSe": 2.1,
+    "aiPicked": 30
+   },
    "note": null
   },
   {
@@ -41996,9 +43933,22 @@
     "FEAR"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに FEAR 0 (あなたの手番中、相手のカードの中段コマンドはないものとして扱う。 / カードを1枚移動させるか反転させる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.1,
+    "interactionSe": 1.8,
+    "partnerValue": 1.9,
+    "partnerValueSe": 1.8,
+    "synergy": 1.7,
+    "synergySe": 1.1,
+    "missed": -1,
+    "missedSe": 2.1,
+    "aiPicked": 14
+   },
    "note": null
   },
   {
@@ -42017,9 +43967,22 @@
     "ICE"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに ICE 1 (あなたはこのカードを移動させることができる。 / 相手がこのラインにカードを1枚プレイしたあと：相手は自身の手札を1枚捨て札にする。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -4.2,
+    "interactionSe": 1.6,
+    "partnerValue": 4.2,
+    "partnerValueSe": 1.3,
+    "synergy": 0,
+    "synergySe": 1,
+    "missed": -9.3,
+    "missedSe": 1.5,
+    "aiPicked": 7
+   },
    "note": null
   },
   {
@@ -42038,9 +44001,22 @@
     "ICE"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに ICE 3 (終了：このカードが覆われている場合、このカードを移動させることができる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -3.8,
+    "interactionSe": 2.1,
+    "partnerValue": 6.8,
+    "partnerValueSe": 2.4,
+    "synergy": 3,
+    "synergySe": 2.2,
+    "missed": -6.3,
+    "missedSe": 2.3,
+    "aiPicked": 2
+   },
    "note": null
   },
   {
@@ -42059,9 +44035,22 @@
     "ICE"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに ICE 4 (このカードを反転させることはできない。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -2,
+    "interactionSe": 1.5,
+    "partnerValue": 3,
+    "partnerValueSe": 1.4,
+    "synergy": 1,
+    "synergySe": 1.2,
+    "missed": -1.9,
+    "missedSe": 2.3,
+    "aiPicked": 26
+   },
    "note": null
   },
   {
@@ -42080,9 +44069,22 @@
     "ICE"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに ICE 6 (あなたの手札が1枚以上ある場合、あなたはカードを引くことはできない。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 3,
+    "interactionSe": 1.9,
+    "partnerValue": 2.1,
+    "partnerValueSe": 1.7,
+    "synergy": 5.1,
+    "synergySe": 2.1,
+    "missed": 1,
+    "missedSe": 1.9,
+    "aiPicked": 40
+   },
    "note": null
   },
   {
@@ -42101,9 +44103,22 @@
     "MIRROR"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに MIRROR 0 (このラインのあなたの合計値は、このラインにある相手のカード1枚ごとに1増える。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.3,
+    "interactionSe": 2.3,
+    "partnerValue": 2.9,
+    "partnerValueSe": 1.7,
+    "synergy": 3.2,
+    "synergySe": 1.1,
+    "missed": -8.6,
+    "missedSe": 2.6,
+    "aiPicked": 0
+   },
    "note": null
   },
   {
@@ -42122,9 +44137,22 @@
     "MIRROR"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに MIRROR 1 (終了：あなたは相手のカードのうち1枚の中段コマンドを、そのコマンドがこのカード上にあるかのように解決できる) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 41,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.9,
+    "interactionSe": 1.4,
+    "partnerValue": 4.6,
+    "partnerValueSe": 1.6,
+    "synergy": 3.7,
+    "synergySe": 1.7,
+    "missed": -4.7,
+    "missedSe": 1.9,
+    "aiPicked": 12
+   },
    "note": null
   },
   {
@@ -42143,9 +44171,22 @@
     "MIRROR"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに MIRROR 4 (相手がカードを引いたあと：カードを1枚引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.9,
+    "interactionSe": 2.4,
+    "partnerValue": 2.5,
+    "partnerValueSe": 2.1,
+    "synergy": 1.7,
+    "synergySe": 1.5,
+    "missed": -3.9,
+    "missedSe": 2.3,
+    "aiPicked": 12
+   },
    "note": null
   },
   {
@@ -42164,9 +44205,22 @@
     "PEACE"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに PEACE 4 (相手の手番中にあなたが捨て札にしたあと：カードを1枚引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.9,
+    "interactionSe": 1.8,
+    "partnerValue": 3.7,
+    "partnerValueSe": 2.1,
+    "synergy": 2.9,
+    "synergySe": 1.6,
+    "missed": -1.3,
+    "missedSe": 2.1,
+    "aiPicked": 5
+   },
    "note": null
   },
   {
@@ -42185,9 +44239,22 @@
     "SMOKE"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに SMOKE 2 (このラインのあなたの合計値は、このラインにある裏向きのカード1枚ごとに1増える。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.6,
+    "interactionSe": 1.6,
+    "partnerValue": 4.3,
+    "partnerValueSe": 1.7,
+    "synergy": 2.7,
+    "synergySe": 1.2,
+    "missed": -4.5,
+    "missedSe": 2.2,
+    "aiPicked": 16
+   },
    "note": null
   },
   {
@@ -42206,9 +44273,22 @@
     "TIME"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに TIME 2 (あなたがデッキをシャッフルしたあと：カードを1枚引き、このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。 / あなたの捨て札置き場にカードがある場合、あなたは捨て札置き場にあるすべてのカードをデッキに戻してシャッフルすることができる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.2,
+    "interactionSe": 2.5,
+    "partnerValue": 3,
+    "partnerValueSe": 2.4,
+    "synergy": 4.2,
+    "synergySe": 2.3,
+    "missed": -0.8,
+    "missedSe": 1.4,
+    "aiPicked": 33
+   },
    "note": null
   },
   {
@@ -42227,9 +44307,22 @@
     "WAR"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに WAR 0 (あなたがリフレッシュしたあと：あなたはこのカードを反転させることができる。 / 相手がカードを引いたあと：あなたはカードを1枚削除することができる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -3.8,
+    "interactionSe": 2.6,
+    "partnerValue": 8.4,
+    "partnerValueSe": 1.6,
+    "synergy": 4.6,
+    "synergySe": 2,
+    "missed": -9.6,
+    "missedSe": 2.4,
+    "aiPicked": 0
+   },
    "note": null
   },
   {
@@ -42248,9 +44341,22 @@
     "WAR"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに WAR 1 (相手がリフレッシュしたあと：任意の枚数の手札を捨て札にする。リフレッシュする。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.4,
+    "interactionSe": 2.3,
+    "partnerValue": 7.3,
+    "partnerValueSe": 2.2,
+    "synergy": 6.9,
+    "synergySe": 2.3,
+    "missed": -6.1,
+    "missedSe": 2.1,
+    "aiPicked": 5
+   },
    "note": null
   },
   {
@@ -42269,9 +44375,22 @@
     "WAR"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに WAR 2 (カードを1枚反転させる。 / 相手がコンパイルしたあと：相手は手札をすべて捨て札にする。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -2.1,
+    "interactionSe": 2.8,
+    "partnerValue": 5.7,
+    "partnerValueSe": 2.9,
+    "synergy": 3.7,
+    "synergySe": 2.1,
+    "missed": -4.8,
+    "missedSe": 2.6,
+    "aiPicked": 16
+   },
    "note": null
   },
   {
@@ -42290,9 +44409,22 @@
     "WAR"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに WAR 3 (カードを1枚引く。 / 相手が手札を捨て札にしたあと：あなたはカードを裏向きで1枚プレイすることができる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 3.2,
+    "interactionSe": 2.1,
+    "partnerValue": 7.5,
+    "partnerValueSe": 2.3,
+    "synergy": 10.7,
+    "synergySe": 2.9,
+    "missed": -2,
+    "missedSe": 2,
+    "aiPicked": 50
+   },
    "note": null
   },
   {
@@ -42311,9 +44443,22 @@
     "ASSIMILATION"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに ASSIMILATION 1 (あなたの手札を1枚捨て札にする。リフレッシュする。 / 誰かがリフレッシュしたあと：相手のデッキの一番上のカードを引く。あなたは手札を1枚捨て札にし、それを相手の捨て札置き場に置く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "weak",
+   "verdictLabel": "相方が強い (噛み合いは小さい)",
+   "lab": {
+    "n": 41,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.6,
+    "interactionSe": 1.6,
+    "partnerValue": 9,
+    "partnerValueSe": 2.1,
+    "synergy": 9.7,
+    "synergySe": 2,
+    "missed": 1.2,
+    "missedSe": 1.7,
+    "aiPicked": 59
+   },
    "note": null
   },
   {
@@ -42332,9 +44477,22 @@
     "ASSIMILATION"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに ASSIMILATION 2 (終了：相手のデッキの一番上のカードを、このスタックに裏向きでプレイする。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.8,
+    "interactionSe": 1.8,
+    "partnerValue": 4.6,
+    "partnerValueSe": 1.7,
+    "synergy": 2.7,
+    "synergySe": 0.9,
+    "missed": -0.9,
+    "missedSe": 2.1,
+    "aiPicked": 5
+   },
    "note": null
   },
   {
@@ -42353,9 +44511,22 @@
     "ASSIMILATION"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに ASSIMILATION 6 (終了：あなたのデッキの一番上のカードを、相手側の任意のスタックに裏向きでプレイする。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.2,
+    "interactionSe": 2.1,
+    "partnerValue": 1.5,
+    "partnerValueSe": 1.4,
+    "synergy": 1.5,
+    "synergySe": 2,
+    "missed": -7.3,
+    "missedSe": 2.7,
+    "aiPicked": 31
+   },
    "note": null
   },
   {
@@ -42374,9 +44545,22 @@
     "DIVERSITY"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに DIVERSITY 0 (フィールドに6種類のプロトコルのコマンドカードがある場合、「DIVERSITY」プロトコルカードをコンパイル完了面にする。 / 終了：あなたはこのラインに「DIVERSITY」以外のカードをプレイすることができる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.2,
+    "interactionSe": 2.5,
+    "partnerValue": 3.5,
+    "partnerValueSe": 1.9,
+    "synergy": 2.3,
+    "synergySe": 1.7,
+    "missed": -1.1,
+    "missedSe": 2.4,
+    "aiPicked": 5
+   },
    "note": null
   },
   {
@@ -42395,9 +44579,22 @@
     "DIVERSITY"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに DIVERSITY 3 (このスタックに「DIVERSITY」以外の表向きのカードがある場合、このラインのあなたの合計値は2増える。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.4,
+    "interactionSe": 2,
+    "partnerValue": 3.5,
+    "partnerValueSe": 2,
+    "synergy": 2.1,
+    "synergySe": 1.3,
+    "missed": -2,
+    "missedSe": 2.4,
+    "aiPicked": 5
+   },
    "note": null
   },
   {
@@ -42416,9 +44613,22 @@
     "DIVERSITY"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに DIVERSITY 6 (終了：フィールドにあるコマンドカードの、プロトコルの種類数が3以下の場合、このカードを削除する。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.9,
+    "interactionSe": 1.7,
+    "partnerValue": 3.6,
+    "partnerValueSe": 1.4,
+    "synergy": 2.7,
+    "synergySe": 1.4,
+    "missed": -3.2,
+    "missedSe": 1.7,
+    "aiPicked": 37
+   },
    "note": null
   },
   {
@@ -42437,9 +44647,22 @@
     "UNITY"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに UNITY 0 (フィールドに他の「UNITY」カードがある場合、カードを1枚反転させるか、カードを1枚引く。 / このカードが「UNITY」カードによって覆われることになったとき：先に、カードを1枚反転させるか、カードを1枚引く。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0,
+    "interactionSe": 2.1,
+    "partnerValue": 0.8,
+    "partnerValueSe": 2.2,
+    "synergy": 0.8,
+    "synergySe": 1.8,
+    "missed": -6.6,
+    "missedSe": 2.6,
+    "aiPicked": 7
+   },
    "note": null
   },
   {
@@ -42458,9 +44681,22 @@
     "UNITY"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに UNITY 1 (開始：このカードが覆われている場合、あなたはこのカードを移動させることができる。 / フィールド「UNITY」カードが5枚以上ある場合、「UNITY」プロトコルカードのコンパイル完了面を表向きにし、そのラインにあるすべてのカードを削除する。 / このラインには「UNITY」カードを表向きでプレイすることができる。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.8,
+    "interactionSe": 2.4,
+    "partnerValue": 5.9,
+    "partnerValueSe": 2,
+    "synergy": 4.1,
+    "synergySe": 1.3,
+    "missed": -9.3,
+    "missedSe": 2.5,
+    "aiPicked": 5
+   },
    "note": null
   },
   {
@@ -42479,9 +44715,22 @@
     "UNITY"
    ],
    "how": "SPIRIT 3 + CORRUPTION 2 が回っているところに UNITY 4 (終了：あなたの手札が1枚もない場合、あなたのデッキのカードをすべて公開し、そこからすべての「UNITY」カードを引いて、あなたのデッキをシャッフルする。) を足す。",
-   "verdict": "untested",
-   "verdictLabel": "未計測",
-   "lab": null,
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 43,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.3,
+    "interactionSe": 1.8,
+    "partnerValue": 2,
+    "partnerValueSe": 1.9,
+    "synergy": 1.8,
+    "synergySe": 1.6,
+    "missed": -0.4,
+    "missedSe": 1.6,
+    "aiPicked": 28
+   },
    "note": null
   },
   {

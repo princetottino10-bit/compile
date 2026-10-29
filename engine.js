@@ -3480,7 +3480,8 @@ const AI_AIM_COMBOS = [
   /* PLAGUE 0 の下段で相手は1ライン出せなくなり、残りのラインは WAR 0 の削除で崩す (G011、3枚目の総当たり225件から 150盤面2回で +5.6 / +6.0) */
   { pieces: { WAR_1: 'top', CHAOS_1: 'top' }, extra: { HATE_4: 'up', MIRROR_5: 'top', PLAGUE_1: 'top' } },
   { pieces: { WAR_1: 'top', LOVE_6: 'play' } },
-  { pieces: { WAR_1: 'top', LOVE_2: 'play' } },
+  /* PLAGUE 0 でふさぐと、LOVE 2 で引かせた分の削除が効く (G353、+4.0 / +3.3。CHAOS 0 の回しの G011 と同じ仕組み) */
+  { pieces: { WAR_1: 'top', LOVE_2: 'play' }, extra: { PLAGUE_1: 'top' } },
   { pieces: { WAR_1: 'top', FEAR_2: 'play' } },
   /* COURAGE 0 の終了で1枚捨てると相手が2枚捨て (COURAGE 0・CORRUPTION 2)、PLAGUE 1 で2枚引く */
   { pieces: { PLAGUE_2: 'up', COURAGE_1: 'top', CORRUPTION_3: 'up' } },
