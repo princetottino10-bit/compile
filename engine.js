@@ -3477,7 +3477,8 @@ function aiFire0Water4Ready(st, side) {
    1手先の読みでは次の手番より先の得が見えないので、揃う前の形にも値打ちを置く (ユーザー 2026-10-22「狙いに行ってるかどうか」)。
    実戦 60局で、手筋なしの ORACLE は WAR 0 + CHAOS 0 を一度も揃えず、相方が生きているのに WAR 0 を40回・CHAOS 0 を31回捨てていた */
 const AI_AIM_COMBOS = [
-  { pieces: { WAR_1: 'top', CHAOS_1: 'top' }, extra: { HATE_4: 'up', MIRROR_5: 'top' } },
+  /* PLAGUE 0 の下段で相手は1ライン出せなくなり、残りのラインは WAR 0 の削除で崩す (G011、3枚目の総当たり225件から 150盤面2回で +5.6 / +6.0) */
+  { pieces: { WAR_1: 'top', CHAOS_1: 'top' }, extra: { HATE_4: 'up', MIRROR_5: 'top', PLAGUE_1: 'top' } },
   { pieces: { WAR_1: 'top', LOVE_6: 'play' } },
   { pieces: { WAR_1: 'top', LOVE_2: 'play' } },
   { pieces: { WAR_1: 'top', FEAR_2: 'play' } },
@@ -3488,7 +3489,8 @@ const AI_AIM_COMBOS = [
   { pieces: { WAR_4: 'top', FEAR_2: 'play' } },
   /* SPIRIT 3 は引いたあとに覆われていても動ける。引く札を足して、どいた下の札をもう一度起こす */
   { pieces: { SPIRIT_4: 'up', CORRUPTION_3: 'play' } },
-  { pieces: { SPIRIT_4: 'up', PEACE_1: 'top' } },
+  /* CORRUPTION 6 の終了で手札を捨てて0枚にすると、PEACE 1 の終了で引いて SPIRIT 3 が動く (G198、+5.3 / +3.0) */
+  { pieces: { SPIRIT_4: 'up', PEACE_1: 'top' }, extra: { CORRUPTION_6: 'up' } },
   { pieces: { TIME_3: 'up', CLARITY_4: 'play' } },
   /* CORRUPTION 6 の終了で捨てると CORRUPTION 2 で相手も捨て、PLAGUE 1 で引く (どれも上段) */
   { pieces: { CORRUPTION_6: 'up', CORRUPTION_3: 'up', PLAGUE_2: 'up' } },
