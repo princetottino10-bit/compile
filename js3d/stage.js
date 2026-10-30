@@ -7,6 +7,7 @@ import { EffectComposer } from '../vendor/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from '../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../vendor/jsm/postprocessing/OutputPass.js';
+import { bloomGuardPass } from './bloom-guard.js';
 import { RoomEnvironment } from '../vendor/jsm/environments/RoomEnvironment.js';
 import { COLOR, CAMERA, BOARD, CARD, TIMING, VIEW, IOS } from './theme.js';
 import * as TW from './tween.js';
@@ -194,6 +195,9 @@ export function createStage(container) {
   }));
   composer.setSize(container.clientWidth, container.clientHeight);
   composer.addPass(new RenderPass(scene, camera));
+  /* スマホで壊れた1点がブルームで四角く広がらないように (bloom-guard.js)。発光を切った段では要らない */
+  const bloomGuard = bloomGuardPass();
+  composer.addPass(bloomGuard);
   const bloom = new UnrealBloomPass(
     new THREE.Vector2(container.clientWidth, container.clientHeight),
     0.4,    // strength
@@ -209,7 +213,7 @@ export function createStage(container) {
      20 秒続けて 58 以上出ていたら1段戻す。段は端末に覚えておき、次に開いたときもそこから始める。
      iPhone の低電力モードなどで 30 FPS に揃えられているときは、重さのせいではないので下げない */
   function applyGfx() {
-    bloom.enabled = gfxLevel < 2;
+    bloom.enabled = bloomGuard.enabled = gfxLevel < 2;
     key.castShadow = gfxLevel < 3;
     shadowCatcher.visible = gfxLevel < 3;
     renderer.setPixelRatio(pixelRatio());
