@@ -1616,6 +1616,7 @@
   @keyframes swAct{50%{box-shadow:0 4px 16px rgba(0,0,0,.45),0 0 0 8px rgba(255,198,92,0);}}
   .sw-help{position:absolute;left:0;right:0;bottom:calc(16px + env(safe-area-inset-bottom));margin:0;text-align:center;pointer-events:none;
     font:600 12px/1.4 "M PLUS 1",system-ui;color:rgba(255,255,255,.72);letter-spacing:.04em;padding:0 64px;}
+  .sw-help span{display:inline-block;white-space:nowrap;margin:0 .6em;}
   @media (prefers-reduced-motion: reduce){ .sw-act{animation:none;} }
   /* ---------- ストーリー (story-ui.js) ---------- */
   #storyMap{position:fixed;inset:0;z-index:57;display:none;overflow-y:auto;padding:calc(56px + env(safe-area-inset-top)) 16px 32px;
@@ -4835,6 +4836,7 @@
       "./js3d/backdrops.js": "./js3d/backdrops.js?v=90faf9612d",
       "./js3d/bgm-shop.js": "./js3d/bgm-shop.js?v=da2eff66b8",
       "./js3d/bgm.js": "./js3d/bgm.js?v=1a95645bdd",
+      "./js3d/bloom-guard.js": "./js3d/bloom-guard.js?v=607df41849",
       "./js3d/board.js": "./js3d/board.js?v=ddbba82776",
       "./js3d/bootui.js": "./js3d/bootui.js?v=15220963bc",
       "./js3d/broken.js": "./js3d/broken.js?v=943ae15321",
@@ -4881,7 +4883,7 @@
       "./js3d/motion.js": "./js3d/motion.js?v=71cd68f8ff",
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
       "./js3d/net.js": "./js3d/net.js?v=3134839bca",
-      "./js3d/news.js": "./js3d/news.js?v=e23958debf",
+      "./js3d/news.js": "./js3d/news.js?v=37ba31091c",
       "./js3d/notice.js": "./js3d/notice.js?v=029a81acaa",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=fee989c0b5",
       "./js3d/panel.js": "./js3d/panel.js?v=fe55c120c1",
@@ -4917,7 +4919,7 @@
       "./js3d/setup.js": "./js3d/setup.js?v=e17da5ca65",
       "./js3d/solodraft.js": "./js3d/solodraft.js?v=33f32f2481",
       "./js3d/spectate.js": "./js3d/spectate.js?v=ed159bd7b8",
-      "./js3d/stage.js": "./js3d/stage.js?v=f4cae41c31",
+      "./js3d/stage.js": "./js3d/stage.js?v=026b6eae08",
       "./js3d/stats-data.js": "./js3d/stats-data.js?v=61334c9347",
       "./js3d/stats.js": "./js3d/stats.js?v=5e9acbdde6",
       "./js3d/steps.js": "./js3d/steps.js?v=13e73b20fe",
@@ -4929,12 +4931,12 @@
       "./js3d/story-scenery-warehouse.js": "./js3d/story-scenery-warehouse.js?v=c524a114c0",
       "./js3d/story-scenery.js": "./js3d/story-scenery.js?v=9fa267bcf9",
       "./js3d/story-ui.js": "./js3d/story-ui.js?v=b234ce9684",
-      "./js3d/story-world.js": "./js3d/story-world.js?v=3f0f8426d6",
+      "./js3d/story-world.js": "./js3d/story-world.js?v=91dcc44de3",
       "./js3d/story.js": "./js3d/story.js?v=77c3f2c713",
       "./js3d/support.js": "./js3d/support.js?v=efb00a908c",
       "./js3d/theme.js": "./js3d/theme.js?v=932e1d5eb8",
       "./js3d/tips.js": "./js3d/tips.js?v=3faae17957",
-      "./js3d/title.js": "./js3d/title.js?v=1d2d40da2d",
+      "./js3d/title.js": "./js3d/title.js?v=8decfe1739",
       "./js3d/titleback.js": "./js3d/titleback.js?v=5663d0b7a4",
       "./js3d/training.js": "./js3d/training.js?v=3018b4399e",
       "./js3d/tsume.js": "./js3d/tsume.js?v=2d63bf0cd7",
@@ -4976,12 +4978,12 @@
   <link rel="modulepreload" href="js3d/turning.js?v=9c7f79654e">
   <link rel="modulepreload" href="js3d/achievements-ui.js?v=37fe12aa73">
   <link rel="modulepreload" href="vendor/three.module.js?v=985eb92490">
-  <link rel="modulepreload" href="js3d/stage.js?v=f4cae41c31">
+  <link rel="modulepreload" href="js3d/stage.js?v=026b6eae08">
   <link rel="modulepreload" href="js3d/board.js?v=ddbba82776">
   <link rel="modulepreload" href="js3d/control.js?v=c1b87ebc63">
   <link rel="modulepreload" href="js3d/panel.js?v=fe55c120c1">
   <link rel="modulepreload" href="js3d/setup.js?v=e17da5ca65">
-  <link rel="modulepreload" href="js3d/title.js?v=1d2d40da2d">
+  <link rel="modulepreload" href="js3d/title.js?v=8decfe1739">
   <link rel="modulepreload" href="js3d/training.js?v=3018b4399e">
   <link rel="modulepreload" href="js3d/room.js?v=918fccde40">
   <link rel="modulepreload" href="js3d/roombet.js?v=cc2e51d3f4">
@@ -4995,7 +4997,7 @@
   <link rel="modulepreload" href="js3d/stats-data.js?v=61334c9347">
   <link rel="modulepreload" href="js3d/story.js?v=77c3f2c713">
   <link rel="modulepreload" href="js3d/story-ui.js?v=b234ce9684">
-  <link rel="modulepreload" href="js3d/story-world.js?v=3f0f8426d6">
+  <link rel="modulepreload" href="js3d/story-world.js?v=91dcc44de3">
   <link rel="modulepreload" href="js3d/rewards.js?v=ef3a012bdb">
   <link rel="modulepreload" href="js3d/gachafx.js?v=24484640c3">
   <link rel="modulepreload" href="js3d/cosmetics-ui.js?v=4f9c9e5f98">
@@ -5057,6 +5059,7 @@
   <link rel="modulepreload" href="vendor/jsm/postprocessing/RenderPass.js">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/UnrealBloomPass.js">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/OutputPass.js">
+  <link rel="modulepreload" href="js3d/bloom-guard.js?v=607df41849">
   <link rel="modulepreload" href="vendor/jsm/environments/RoomEnvironment.js">
   <link rel="modulepreload" href="js3d/card.js?v=88ebb0dbcb">
   <link rel="modulepreload" href="js3d/fx-compile.js?v=2fbcc8e763">
@@ -5064,7 +5067,7 @@
   <link rel="modulepreload" href="js3d/backdrops.js?v=90faf9612d">
   <link rel="modulepreload" href="js3d/profile.js?v=704205fbfe">
   <link rel="modulepreload" href="js3d/gacha-ui.js?v=b5bf4956cc">
-  <link rel="modulepreload" href="js3d/news.js?v=e23958debf">
+  <link rel="modulepreload" href="js3d/news.js?v=37ba31091c">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/ShaderPass.js">
   <link rel="modulepreload" href="js3d/run-pilots.js?v=4b54f3c10f">
   <link rel="modulepreload" href="js3d/story-map.js?v=ed5ef482a6">

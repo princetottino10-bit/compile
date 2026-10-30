@@ -12,6 +12,7 @@ import { RenderPass } from '../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../vendor/jsm/postprocessing/OutputPass.js';
 import { ShaderPass } from '../vendor/jsm/postprocessing/ShaderPass.js';
+import { bloomGuardPass } from './bloom-guard.js';
 import { showTitleBack, hideTitleBack } from './titleback.js';
 import { loadStory, saveStory, blankStory, currentNode, clearNode, startBattle, nodeById, isCleared, chapterCleared, chapterOf, addFound, SPEAKERS, PARTY } from './story.js';
 import { chibiArt } from './run-pilots.js';
@@ -74,9 +75,10 @@ export function openWorld(protocols, opts = {}) {
     '<div class="sw-hud"><b>' + chapter.title + '「' + chapter.name + '」</b><span class="sw-zone"></span><p class="sw-goal"></p></div>' +
     '<div class="sw-labels"></div>' +
     '<button type="button" class="sw-act" hidden></button>' +
+    /* 説明は句ごとに折り返す (スマホの縦で「〜そこへ歩 / く」と語の途中で切れていた) */
     '<p class="sw-help">' + (window.matchMedia && matchMedia('(pointer: coarse)').matches
-      ? '画面を押して動かす / 床をタップでそこへ歩く　2本指で寄る・引く'
-      : 'WASD・矢印キーで歩く (Shift で走る) / 床をクリックでそこへ歩く　E・Enter で話す　ホイールで寄る・引く') + '</p>';
+      ? ['画面を押して動かす', '床をタップでそこへ歩く', '2本指で寄る・引く']
+      : ['WASD・矢印キーで歩く (Shift で走る)', '床をクリックでそこへ歩く', 'E・Enter で話す', 'ホイールで寄る・引く']).map(t => '<span>' + t + '</span>').join(' ') + '</p>';
   document.body.appendChild(root);
   const canvas = root.querySelector('canvas');
   const actBtn = root.querySelector('.sw-act');
@@ -145,6 +147,7 @@ export function openWorld(protocols, opts = {}) {
 
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
+  composer.addPass(bloomGuardPass());          // スマホで壊れた1点がブルームで四角く広がらないように (bloom-guard.js)
   const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.35, 0.4, 0.85);   // 研究所の明かり。光りすぎない
   composer.addPass(bloom);
   composer.addPass(new OutputPass());
