@@ -91,6 +91,7 @@ const LOUDNESS = {
   electric_highway: -9.3, grenade: -7.8, midnight_breaker: -9.9, rapid4: -6.8, irregular: -8.3, rapid5: -8.2, under_world: -9.7, cyber10: -6.5, cyber_prisoner: -6.9,
   interception: -4.3, strike_despair: -6.5, lobelia: -5.6, will_you_cry: -6.2, tactical_encounter: -6.4, hangeki: -5.8,
   switcheroo: -6.2, monolith_black: -6.4, particle_tones: -5.6, tsuisekisha: -8.5, clock_jitter: -6.2, joudou_catharsis: -5.4, blaze_a_trail: -8.1, killer_roll: -6.4,
+  iron_meridian: -12.1,
   /* ストーリー (甘茶の音楽工房)。静かな曲が多く、上げられるのは 1.6 倍までなので、対戦の曲より少し小さく鳴る (会話の後ろに置く曲なのでそのまま) */
   genjitsunosukima: -19.3, mizunishizumupiano: -16.9, janegreynoshouzou: -14.2, rokugatsunoamaoto: -15.2, kanatanikasumujoukisen: -16.1,
   elegyfourstrings2: -14.3, inishienohiseki: -14.3, gozennijinomunashisa: -15.9, natsunokiri: -17.7, sangatsunosundasora: -17.4
