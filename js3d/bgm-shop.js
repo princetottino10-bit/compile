@@ -35,6 +35,8 @@ const ROWS = [
   /* 本人が Musio Studio で作った曲 (2026-11-01) */
   ['iron_meridian', 'Iron Meridian', 'Ryunosuke', '', true],
   ['kidou', '起動', 'Ryunosuke', '', true],
+  ['protocol_drive', 'Protocol Drive', 'Ryunosuke', '', true],
+  ['overclock', 'Overclock', 'Ryunosuke', '', true],
   /* CHIP で交換 (2026-10-04 に足した) */
   ['noesis', 'Noesis', 'まんぼう二等兵 (OpenTracks)', '', false],
   ['sagittarius', 'Sagittarius', 'まんぼう二等兵 (OpenTracks)', '', false],
