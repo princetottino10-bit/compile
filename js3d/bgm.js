@@ -16,10 +16,10 @@ export const BGM_CREDIT = '煉獄庭園';
 /* 対戦で流す曲 (COLLECTION で選ぶ仕組み BGM_RELEASED とは別)。2026-09-28: ボスは「彷徨いの言葉は天に導かれ」、
    強敵は Z･E･R･O。タイトルは無音 */
 export const BATTLE_BGM_ON = true;
-/* ふつうの対戦のいつもの12曲 (2026-10-15 からおまかせはシャッフルで、持っている曲すべてから選ぶ。この12曲は鳴らせる曲の印と、iPhone の下準備に使う): OpenTracks (旧 DOVA-SYNDROME) (2026-10-13 に、まんぼう二等兵の BPM 135〜165 の8曲を足した。
+/* ふつうの対戦のいつもの13曲 (2026-10-15 からおまかせはシャッフルで、持っている曲すべてから選ぶ。この13曲は鳴らせる曲の印と、iPhone の下準備に使う): OpenTracks (旧 DOVA-SYNDROME) (2026-10-13 に、まんぼう二等兵の BPM 135〜165 の8曲を足した。2026-11-01 に本人が Musio Studio で作った Iron Meridian (176 BPM) を足した。
    あと1本の曲 TENSE_BGMS より遅くして、切り替わったときの差を残す)。
    OpenTracks の規約 (ファイルのまま取り出せる形で置かない) に合わせて m4a に変換して置いている */
-export const NORMAL_BGMS = ['cho_zunou', 'reflect', 'kaidoku', 'crescendo_jitter', 'switcheroo', 'monolith_black', 'particle_tones', 'tsuisekisha', 'clock_jitter', 'joudou_catharsis', 'blaze_a_trail', 'killer_roll'];
+export const NORMAL_BGMS = ['cho_zunou', 'reflect', 'kaidoku', 'crescendo_jitter', 'switcheroo', 'monolith_black', 'particle_tones', 'tsuisekisha', 'clock_jitter', 'joudou_catharsis', 'blaze_a_trail', 'killer_roll', 'iron_meridian'];
 export const STRONG_BGM = 'zero';
 /* タイトル・メニュー (対戦以外) の落ち着いた3曲。2026-10-15 からおまかせはシャッフルになったので、選ぶのには使っていない (鳴らせる曲の印) */
 export const MENU_BGMS = ['planetarium', 'madoromu_neon', 'nine_jack'];
@@ -76,7 +76,9 @@ const FILES = { ...Object.fromEntries(STORY_TRACKS.map(k => [k, k + '.m4a'])), c
   ...Object.fromEntries(['noesis', 'sagittarius', 'engram', 'objective_point', 'virus_entry', 'uso_ni_naru', 'siege_buster', 'electric_highway', 'grenade',
     'midnight_breaker', 'rapid4', 'irregular', 'rapid5', 'under_world', 'cyber10', 'cyber_prisoner'].map(k => [k, k + '.m4a'])),
   /* ふつうの対戦に足した曲と、あと1本の曲 */
-  ...Object.fromEntries(['switcheroo', 'monolith_black', 'particle_tones', 'tsuisekisha', 'clock_jitter', 'joudou_catharsis', 'blaze_a_trail', 'killer_roll', 'interception', 'strike_despair', 'lobelia', 'will_you_cry', 'tactical_encounter', 'hangeki'].map(k => [k, k + '.m4a'])) };
+  ...Object.fromEntries(['switcheroo', 'monolith_black', 'particle_tones', 'tsuisekisha', 'clock_jitter', 'joudou_catharsis', 'blaze_a_trail', 'killer_roll', 'interception', 'strike_despair', 'lobelia', 'will_you_cry', 'tactical_encounter', 'hangeki'].map(k => [k, k + '.m4a'])),
+  /* 本人が Musio Studio で作った曲 (2026-11-01) */
+  iron_meridian: 'iron_meridian.m4a' };
 export const bgmFile = (key) => 'art/bgm/' + (FILES[key] || key + '.mp3');
 /* 曲ごとの大きさ (ラウドネス、LUFS。ffmpeg の ebur128 で測った値)。曲によって 10 dB 近く違ったので、
    鳴らすときに LOUD_TARGET へそろえる (大きい曲は下げ、小さい曲は少しだけ上げる)。曲を足したら測って書き足す:
@@ -89,6 +91,7 @@ const LOUDNESS = {
   electric_highway: -9.3, grenade: -7.8, midnight_breaker: -9.9, rapid4: -6.8, irregular: -8.3, rapid5: -8.2, under_world: -9.7, cyber10: -6.5, cyber_prisoner: -6.9,
   interception: -4.3, strike_despair: -6.5, lobelia: -5.6, will_you_cry: -6.2, tactical_encounter: -6.4, hangeki: -5.8,
   switcheroo: -6.2, monolith_black: -6.4, particle_tones: -5.6, tsuisekisha: -8.5, clock_jitter: -6.2, joudou_catharsis: -5.4, blaze_a_trail: -8.1, killer_roll: -6.4,
+  iron_meridian: -12.1,
   /* ストーリー (甘茶の音楽工房)。静かな曲が多く、上げられるのは 1.6 倍までなので、対戦の曲より少し小さく鳴る (会話の後ろに置く曲なのでそのまま) */
   genjitsunosukima: -19.3, mizunishizumupiano: -16.9, janegreynoshouzou: -14.2, rokugatsunoamaoto: -15.2, kanatanikasumujoukisen: -16.1,
   elegyfourstrings2: -14.3, inishienohiseki: -14.3, gozennijinomunashisa: -15.9, natsunokiri: -17.7, sangatsunosundasora: -17.4
