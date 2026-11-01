@@ -1426,7 +1426,7 @@ export const CHAPTERS = [
         L('anzu', '上等だ。4097、組むぞ。', 'fired')
       ] },
       /* 一人目: 杏とのタッグ (4章の改札と同じ組)。判定官の規則には期限が無い。序章の紫苑の「どこで、とは言われてない」と同じ読み */
-      { id: 'c6-anzu', kind: 'battle', battleBgm: 'halt_shocho', title: '判定 (杏)', me: ['WATER', 'LIFE', 'MIRROR'], opp: ['TIME', 'DEATH', 'PEACE'],
+      { id: 'c6-anzu', kind: 'battle', title: '判定 (杏)', me: ['WATER', 'LIFE', 'MIRROR'], opp: ['TIME', 'DEATH', 'PEACE'],
         level: 2, win: 3, head: 0, oppName: '所長', mate: 'yamabuki', oppAvatar: 'story_director', boss: true,
         note: '杏と2人で、所長と回収機に挑む。あと2つを先に書き上げる',
         tag: { mate: ['FIRE', 'SPEED', 'SPIRIT'], mateName: '杏', oppMate: MOB_MATE, oppMateName: '回収機', oppMateAvatar: 'story_collector' },
@@ -1472,7 +1472,7 @@ export const CHAPTERS = [
         loseLines: [L('sys', '> commit —— 所長の書き方が残りました'),
           L('anzu', 'まだ書くな。もう一回だ。', 'frustrated')] },
       /* 二人目: 茜とのタッグ。同じ「保留」。所長は前の判定官 (紫苑) が毎朝そう書いていたのを知っている */
-      { id: 'c6-akane', kind: 'battle', battleBgm: 'halt_shocho', title: '判定 (茜)', me: ['FIRE', 'WATER', 'LIFE'], opp: ['TIME', 'DEATH', 'PEACE'],
+      { id: 'c6-akane', kind: 'battle', title: '判定 (茜)', me: ['FIRE', 'WATER', 'LIFE'], opp: ['TIME', 'DEATH', 'PEACE'],
         level: 2, win: 3, head: 0, oppName: '所長', mate: 'nadeshiko', oppAvatar: 'story_director', boss: true,
         note: '茜と2人で、所長と回収機に挑む。あと2つを先に書き上げる',
         tag: { mate: ['HATE', 'ICE', 'FEAR'], mateName: '茜', oppMate: MOB_MATE, oppMateName: '回収機', oppMateAvatar: 'story_collector' },
@@ -1540,6 +1540,8 @@ export const CHAPTERS = [
       ] },
       /* 最後の判定は済み1つを残す: 外すと ふつう腕前でも 20% まで落ちる (残すと 58%)。
          最後の判定: 紫苑から預かった CLARITY・MIRROR で、所長を判定する。答えは「止める」でも「止めない」でもない「止めていい」 */
+      /* 曲: 「止めていい」はこの最後の判定だけ (2026-11-01)。前の2戦は機体戦と同じ「判定」。3連戦すべてだと1曲が何周もして、
+         答えの「止めていい」と曲名が重なる最後の1戦の山が立たなかった */
       { id: 'c6-judge', kind: 'battle', battleBgm: 'halt_shocho', title: '判定 (所長)', me: ['FIRE', 'CLARITY', 'MIRROR'], opp: ['TIME', 'DEATH', 'PEACE'],
         level: 2, win: 3, head: 1, oppName: '所長', oppAvatar: 'story_director', boss: true,
         note: '所長を判定する。所長より先に、あと2つを書き上げる',

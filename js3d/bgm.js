@@ -26,7 +26,7 @@ export const STRONG_BGM = 'overclock';
 /* タイトル・メニュー (対戦以外) の落ち着いた4曲。2026-10-15 からおまかせはシャッフルになったので、選ぶのには使っていない (鳴らせる曲の印) */
 export const MENU_BGMS = ['planetarium', 'madoromu_neon', 'nine_jack', 'kidou'];
 /* 本人が Musio Studio で作った曲 (2026-11-01)。依頼書は project-files の bgm-requests/song-requests-2026-11-01.md。
-   起動: メニューのシャッフルに入れる (COLLECTION の BGM にも)。判定: ストーリーの機体戦 (boss の付いた対戦)。止めていい: 終章の所長との3連戦。
+   起動: メニューのシャッフルに入れる (COLLECTION の BGM にも)。判定: ストーリーの機体戦 (boss の付いた対戦)。止めていい: 終章の所長との最後の判定 (前の2戦は判定)。
    2026-11-01 の2回目に3曲とも作り直した版へ差し替え、対戦の3曲 (Protocol Drive: ふつうの対戦 / Last Compile: あと1本 / Overclock: 強敵) を足した。
    依頼書は bgm-requests/battle-song-requests-2026-11-01.md */
 export const STORY_BATTLE_BGM = 'hantei';
