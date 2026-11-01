@@ -9,6 +9,7 @@
 import { routeMedia, isMuted, initAudio, onMuteChange, kickAudio } from './audio.js';
 import { settings, onSettings } from './settings.js';
 import { BGM_RELEASED } from './rewards.js';
+import { LoopPlayer } from './bgm-loop.js';
 import { isTrack, chosenTrack, TRACKS, ownsTrack } from './bgm-shop.js';
 
 export const TITLE_BGM = 'orange_tunnel';
@@ -21,8 +22,15 @@ export const BATTLE_BGM_ON = true;
    OpenTracks の規約 (ファイルのまま取り出せる形で置かない) に合わせて m4a に変換して置いている */
 export const NORMAL_BGMS = ['cho_zunou', 'reflect', 'kaidoku', 'crescendo_jitter', 'switcheroo', 'monolith_black', 'particle_tones', 'tsuisekisha', 'clock_jitter', 'joudou_catharsis', 'blaze_a_trail', 'killer_roll', 'iron_meridian'];
 export const STRONG_BGM = 'zero';
-/* タイトル・メニュー (対戦以外) の落ち着いた3曲。2026-10-15 からおまかせはシャッフルになったので、選ぶのには使っていない (鳴らせる曲の印) */
-export const MENU_BGMS = ['planetarium', 'madoromu_neon', 'nine_jack'];
+/* タイトル・メニュー (対戦以外) の落ち着いた4曲。2026-10-15 からおまかせはシャッフルになったので、選ぶのには使っていない (鳴らせる曲の印) */
+export const MENU_BGMS = ['planetarium', 'madoromu_neon', 'nine_jack', 'kidou'];
+/* 本人が Musio Studio で作った曲 (2026-11-01)。依頼書は project-files の bgm-requests/song-requests-2026-11-01.md。
+   起動: メニューのシャッフルに入れる (COLLECTION の BGM にも)。判定: ストーリーの機体戦 (boss の付いた対戦)。止めていい: 終章の所長との3連戦 */
+export const STORY_BATTLE_BGM = 'hantei';
+export const DIRECTOR_BGM = 'halt_shocho';
+/* つなぎ目なしで繰り返す曲と、その長さ (秒。元の WAV のサンプル数から)。末尾の余韻を冒頭に重ねたループ素材なので、
+   <audio loop> の一瞬の途切れを避けて Web Audio で鳴らす (bgm-loop.js) */
+const LOOP_SECONDS = { kidou: 4712727 / 48000, hantei: 5501538 / 48000, halt_shocho: 128 };
 /* 勝ち抜き戦 (RUN) の対戦以外の画面 (入口・地図・ショップ・休憩所など): 沈殿するイルカ */
 export const RUN_BGM = 'iruka';
 /* ストーリー (2026-10-23): 章の地図の曲と、会話の山場で替える曲。甘茶の音楽工房 (https://amachamusic.chagasi.com/) の曲。
@@ -40,6 +48,8 @@ export const STORY_BGMS = {
 export const STORY_SCENE_BGMS = ['gozennijinomunashisa', 'natsunokiri', 'sangatsunosundasora'];   // 午前2時の虚しさ・夏の霧・3月の澄んだ空
 const STORY_TRACKS = [...Object.values(STORY_BGMS), ...STORY_SCENE_BGMS];
 export const STORY_BGM_CREDIT = '甘茶の音楽工房';
+/** ストーリーの対戦の曲: 場面に battleBgm があればそれ (終章の所長戦)、boss の付いた対戦 (機体戦) は判定。ほかは null (ふつうの対戦の曲) */
+export const storyBattleBgm = (node) => (node && node.battleBgm) || (node && node.boss ? STORY_BATTLE_BGM : null);
 /** その章の地図の曲 */
 export const storyBgm = (chapterId) => STORY_BGMS[chapterId] || STORY_BGMS.ch0;
 /* COLLECTION の BGM で「メニューで流す」を選んでいればその曲、おまかせならシャッフル */
@@ -75,6 +85,8 @@ const FILES = { ...Object.fromEntries(STORY_TRACKS.map(k => [k, k + '.m4a'])), c
   /* COLLECTION の BGM で交換する曲 (bgm-shop.js) */
   ...Object.fromEntries(['noesis', 'sagittarius', 'engram', 'objective_point', 'virus_entry', 'uso_ni_naru', 'siege_buster', 'electric_highway', 'grenade',
     'midnight_breaker', 'rapid4', 'irregular', 'rapid5', 'under_world', 'cyber10', 'cyber_prisoner'].map(k => [k, k + '.m4a'])),
+  /* 本人が Musio Studio で作った曲 */
+  ...Object.fromEntries(Object.keys(LOOP_SECONDS).map(k => [k, k + '.m4a'])),
   /* ふつうの対戦に足した曲と、あと1本の曲 */
   ...Object.fromEntries(['switcheroo', 'monolith_black', 'particle_tones', 'tsuisekisha', 'clock_jitter', 'joudou_catharsis', 'blaze_a_trail', 'killer_roll', 'interception', 'strike_despair', 'lobelia', 'will_you_cry', 'tactical_encounter', 'hangeki'].map(k => [k, k + '.m4a'])),
   /* 本人が Musio Studio で作った曲 (2026-11-01) */
@@ -91,7 +103,7 @@ const LOUDNESS = {
   electric_highway: -9.3, grenade: -7.8, midnight_breaker: -9.9, rapid4: -6.8, irregular: -8.3, rapid5: -8.2, under_world: -9.7, cyber10: -6.5, cyber_prisoner: -6.9,
   interception: -4.3, strike_despair: -6.5, lobelia: -5.6, will_you_cry: -6.2, tactical_encounter: -6.4, hangeki: -5.8,
   switcheroo: -6.2, monolith_black: -6.4, particle_tones: -5.6, tsuisekisha: -8.5, clock_jitter: -6.2, joudou_catharsis: -5.4, blaze_a_trail: -8.1, killer_roll: -6.4,
-  iron_meridian: -12.1,
+  iron_meridian: -12.1, kidou: -15.1, hantei: -16.3, halt_shocho: -14.7,   // 本人作 (起動は WAV を +5.5 dB してから変換。判定は上げ幅の上限で -12.2 くらいで鳴る)
   /* ストーリー (甘茶の音楽工房)。静かな曲が多く、上げられるのは 1.6 倍までなので、対戦の曲より少し小さく鳴る (会話の後ろに置く曲なのでそのまま) */
   genjitsunosukima: -19.3, mizunishizumupiano: -16.9, janegreynoshouzou: -14.2, rokugatsunoamaoto: -15.2, kanatanikasumujoukisen: -16.1,
   elegyfourstrings2: -14.3, inishienohiseki: -14.3, gozennijinomunashisa: -15.9, natsunokiri: -17.7, sangatsunosundasora: -17.4
@@ -170,32 +182,53 @@ function nextShuffle() {
   if (onShuffleTrack) onShuffleTrack(next);
 }
 
-let el = null;
+let el = null;                   // いま使っている再生器 (<audio> か LoopPlayer)
 let route = null;
+let audioEl = null, audioRoute = null;
+let loopEl = null, loopRoute = null;
 let want = null;                 // 鳴らしたい曲 (null なら止める)
 
 /* 音量: 設定の「BGM」(はじめは 30。キャラの声が聞き取りやすいよう控えめに) */
 const level = () => (isMuted() ? 0 : Math.max(0, Math.min(1, (settings().bgmVol ?? 30) / 100)) * 0.7 * (want ? trackGain(want) : 1));
 
 function ensure() {
-  if (el) return;
+  if (audioEl) return;
   initAudio();                   // まだ触れていなくても作っておく (触れたときに再開する)
-  el = new Audio();
-  el.loop = true;
-  el.preload = 'auto';
-  el.addEventListener('ended', () => { if (shuffling()) nextShuffle(); });
-  route = routeMedia(el, level());
+  audioEl = new Audio();
+  audioEl.loop = true;
+  audioEl.preload = 'auto';
+  audioEl.addEventListener('ended', () => { if (shuffling()) nextShuffle(); });
+  audioRoute = routeMedia(audioEl, level());
+  if (!el) { el = audioEl; route = audioRoute; }
+}
+/* その曲を鳴らす再生器に切り替える (つなぎ目なしの曲は LoopPlayer。Web Audio が使えなければ <audio> のまま) */
+function usePlayer(key) {
+  let p = audioEl, r = audioRoute;
+  if (LOOP_SECONDS[key]) {
+    if (!loopEl) {
+      const lp = new LoopPlayer();
+      const lr = lp.route(0);
+      if (lr) { lp.addEventListener('ended', () => { if (shuffling()) nextShuffle(); }); loopEl = lp; loopRoute = lr; }
+    }
+    if (loopEl) { p = loopEl; r = loopRoute; p.length = LOOP_SECONDS[key]; }
+  }
+  if (el !== p && el) {
+    el.pause(); route.set(0);
+    if (el === loopEl) el.currentTime = 0;     // <audio> と同じく、別の曲を挟んで戻ったら頭から (読んだ曲はそのまま持っておく)
+  }
+  el = p; route = r;
 }
 
 /** 曲を鳴らす (同じ曲なら続きから)。key が無い・'off' なら止める */
 export function playBgm(key) {
   /* COLLECTION の BGM をしまっている間は、対戦の2曲だけ鳴らす (タイトルの曲・選んだ曲は鳴らさない) */
-  if (!BGM_RELEASED && !(BATTLE_BGM_ON && key && (isTrack(key) || NORMAL_BGMS.includes(key) || MENU_BGMS.includes(key) || key === RUN_BGM || key === STRONG_BGM || key === BOSS_BGM || key === DEUS_BGM || key === PEEK_BGM || TENSE_BGMS.includes(key) || STORY_TRACKS.includes(key)))) { stopBgm(); return; }
+  if (!BGM_RELEASED && !(BATTLE_BGM_ON && key && (isTrack(key) || NORMAL_BGMS.includes(key) || MENU_BGMS.includes(key) || key === RUN_BGM || key === STRONG_BGM || key === BOSS_BGM || key === DEUS_BGM || key === PEEK_BGM || TENSE_BGMS.includes(key) || STORY_TRACKS.includes(key) || LOOP_SECONDS[key]))) { stopBgm(); return; }
   clearTimeout(previewTimer);
   want = key && key !== 'off' ? key : null;
   if (!want) { stopBgm(); return; }
   try {
     ensure();
+    usePlayer(want);
     const url = bgmFile(want);
     if (!el.src.endsWith(url)) el.src = url;
     refreshBgm();
@@ -255,6 +288,7 @@ onMuteChange(() => refreshBgm());
 export function refreshBgm() {
   if (!el) return;
   el.loop = !shuffling();          // シャッフルの曲は1回で終わらせて次へ (設定を切り替えたらすぐ合わせる)
+  if (el.syncLoop) el.syncLoop();
   const v = level();
   route.set(v);
   if (!v || !want) { el.pause(); return; }
@@ -274,10 +308,10 @@ function prime() {
   primed = true;
   try {
     ensure();
-    route.set(0);
-    el.src = bgmFile(NORMAL_BGMS[0]);
-    const p = el.play();
-    if (p && p.then) p.then(() => { if (!want) el.pause(); }, () => { primed = false; });
+    audioRoute.set(0);
+    audioEl.src = bgmFile(NORMAL_BGMS[0]);
+    const p = audioEl.play();
+    if (p && p.then) p.then(() => { if (!want || el !== audioEl) audioEl.pause(); }, () => { primed = false; });
   } catch (e) { primed = false; }
 }
 const inBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';   // テスト (node) では見張らない
