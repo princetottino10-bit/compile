@@ -1,0 +1,101 @@
+{
+ "CHAOS": {
+  "face": "chaos_face_s600001.png",
+  "c0": "chaos_c0_s600010.png",
+  "c1": "chaos_c1_s600020.png",
+  "c2": "chaos_c2_s600030.png",
+  "c3": "chaos_c3_s600040.png",
+  "c4": "chaos_c4_s600050.png",
+  "c5": "chaos_c5_s600060.png"
+ },
+ "CLARITY": {
+  "face": "clarity_face_s601000.png",
+  "c0": "clarity_c0_s601011.png",
+  "c1": "clarity_c1_s601021.png",
+  "c2": "clarity_c2_s601030.png",
+  "c3": "clarity_c3_s601041.png",
+  "c4": "clarity_c4_s601051.png",
+  "c5": "clarity_c5_s601060.png"
+ },
+ "CORRUPTION": {
+  "face": "corruption_face_s602001.png",
+  "c0": "corruption_c0_s602011.png",
+  "c1": "corruption_c1_s602020.png",
+  "c2": "corruption_c2_s602030.png",
+  "c3": "corruption_c3_s602040.png",
+  "c4": "corruption_c4_s602051.png",
+  "c5": "corruption_c5_s602060.png"
+ },
+ "FEAR": {
+  "face": "fear_face_s603001.png",
+  "c0": "fear_c0_s603010.png",
+  "c1": "fear_c1_s603021.png",
+  "c2": "fear_c2_s603030.png",
+  "c3": "fear_c3_s603040.png",
+  "c4": "fear_c4_s603050.png",
+  "c5": "fear_c5_s603061.png"
+ },
+ "ICE": {
+  "face": "ice_face_s604000.png",
+  "c0": "ice_c0_s604010.png",
+  "c1": "ice_c1_s604021.png",
+  "c2": "ice_c2_s604030.png",
+  "c3": "ice_c3_s604041.png",
+  "c4": "ice_c4_s604050.png",
+  "c5": "ice_c5_s604060.png"
+ },
+ "LUCK": {
+  "face": "luck_face_s605000.png",
+  "c0": "luck_c0_s605011.png",
+  "c1": "luck_c1_s605020.png",
+  "c2": "luck_c2_s605030.png",
+  "c3": "luck_c3_s605041.png",
+  "c4": "luck_c4_s605051.png",
+  "c5": "luck_c5_s605060.png"
+ },
+ "MIRROR": {
+  "face": "mirror_face_s606001.png",
+  "c0": "mirror_c0_s606011.png",
+  "c1": "mirror_c1_s606021.png",
+  "c2": "mirror_c2_s606030.png",
+  "c3": "mirror_c3_s606041.png",
+  "c4": "mirror_c4_s606051.png",
+  "c5": "mirror_c5_s606061.png"
+ },
+ "PEACE": {
+  "face": "peace_face_s607000.png",
+  "c0": "peace_c0_s607010.png",
+  "c1": "peace_c1_s607020.png",
+  "c2": "peace_c2_s607030.png",
+  "c3": "peace_c3_s607041.png",
+  "c4": "peace_c4_s607050.png",
+  "c5": "peace_c5_s607060.png"
+ },
+ "SMOKE": {
+  "face": "smoke_face_s608001.png",
+  "c0": "smoke_c0_s608010.png",
+  "c1": "smoke_c1_s608021.png",
+  "c2": "smoke_c2_s608030.png",
+  "c3": "smoke_c3_s608041.png",
+  "c4": "smoke_c4_s608050.png",
+  "c5": "smoke_c5_s608060.png"
+ },
+ "TIME": {
+  "face": "time_face_s609001.png",
+  "c0": "time_c0_s609010.png",
+  "c1": "time_c1_s609020.png",
+  "c2": "time_c2_s609030.png",
+  "c3": "time_c3_s609040.png",
+  "c4": "time_c4_s609050.png",
+  "c5": "time_c5_s609060.png"
+ },
+ "WAR": {
+  "face": "war_face_s610001.png",
+  "c0": "war_c0_s610010.png",
+  "c1": "war_c1_s610020.png",
+  "c2": "war_c2_s610030.png",
+  "c3": "war_c3_s610040.png",
+  "c4": "war_c4_s610051.png",
+  "c5": "war_c5_fix_s690003.png"
+ }
+}
