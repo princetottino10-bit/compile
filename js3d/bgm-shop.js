@@ -37,6 +37,14 @@ const ROWS = [
   ['kidou', '起動', 'Ryunosuke', '', true],
   ['protocol_drive', 'Protocol Drive', 'Ryunosuke', '', true],
   ['overclock', 'Overclock', 'Ryunosuke', '', true],
+  ['last_compile', 'Last Compile', 'Ryunosuke', '', true],
+  ['hantei', '判定', 'Ryunosuke', '', true],
+  ['halt_shocho', '止めていい', 'Ryunosuke', '', true],
+  /* Main 3 に合わせて足した本人作の曲 (2026-11-03) */
+  ['circuit_red', 'Circuit Red', 'Ryunosuke', '', true],
+  ['bot_routine', 'Bot Routine', 'Ryunosuke', '', true],
+  ['third_gate', 'Third Gate', 'Ryunosuke', '', true],
+  ['last_line', 'Last Line', 'Ryunosuke', '', true],
   /* CHIP で交換 (2026-10-04 に足した) */
   ['noesis', 'Noesis', 'まんぼう二等兵 (OpenTracks)', '', false],
   ['sagittarius', 'Sagittarius', 'まんぼう二等兵 (OpenTracks)', '', false],

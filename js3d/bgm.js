@@ -24,13 +24,17 @@ export const NORMAL_BGMS = ['cho_zunou', 'reflect', 'kaidoku', 'crescendo_jitter
 /* 強敵の曲: 本人作の Overclock (2026-11-01 に Z･E･R･O から替えた。Z･E･R･O は COLLECTION でいまも選べる) */
 export const STRONG_BGM = 'overclock';
 /* タイトル・メニュー (対戦以外) の落ち着いた4曲。2026-10-15 からおまかせはシャッフルになったので、選ぶのには使っていない (鳴らせる曲の印) */
-export const MENU_BGMS = ['planetarium', 'madoromu_neon', 'nine_jack', 'kidou'];
+export const MENU_BGMS = ['planetarium', 'madoromu_neon', 'nine_jack', 'kidou', 'circuit_red'];
 /* 本人が Musio Studio で作った曲 (2026-11-01)。依頼書は project-files の bgm-requests/song-requests-2026-11-01.md。
    起動: メニューのシャッフルに入れる (COLLECTION の BGM にも)。判定: ストーリーの機体戦 (boss の付いた対戦)。止めていい: 終章の所長との最後の判定 (前の2戦は判定)。
    2026-11-01 の2回目に3曲とも作り直した版へ差し替え、対戦の3曲 (Protocol Drive: ふつうの対戦 / Last Compile: あと1本 / Overclock: 強敵) を足した。
    依頼書は bgm-requests/battle-song-requests-2026-11-01.md */
 export const STORY_BATTLE_BGM = 'hantei';
 export const DIRECTOR_BGM = 'halt_shocho';
+/* Main 3 に合わせて足した本人作の3曲 (2026-11-03)。Bot Routine: 公式ソロモード (BOT) の対戦。Third Gate: 勝ち抜き戦のボスと
+   週替わり3連戦の3戦目 (前は彷徨いの言葉は天に導かれ)。Circuit Red: メニューのシャッフル (COLLECTION の BGM にも) */
+export const BOT_BGM = 'bot_routine';
+export const GATE_BGM = 'third_gate';
 /* つなぎ目なしで繰り返す曲と、その長さ (秒。元の WAV のサンプル数から)。末尾の余韻を冒頭に重ねたループ素材なので、
    <audio loop> の一瞬の途切れを避けて Web Audio で鳴らす (bgm-loop.js) */
 const LOOP_SECONDS = { kidou: 4712727 / 48000, hantei: 5501538 / 48000, halt_shocho: 128,
@@ -78,17 +82,20 @@ export const PEEK_BGM = 'final_2sec';
 /* どちらかが勝ちまであと1本になったら (ふつうの3本勝負なら2本目のコンパイルのあと) 切り替える曲。
    まんぼう二等兵 (OpenTracks) の速くて緊張感のある6曲 (BPM 162〜216。ふつうの対戦の曲は 140〜170) から、試合ごとにランダム */
 export const TENSE_BGMS = ['interception', 'strike_despair', 'lobelia', 'will_you_cry', 'tactical_encounter', 'hangeki',
-  'last_compile'];   // 本人作の Last Compile (190 BPM、2026-11-01)
-/* Last Compile は半分の確率で選ぶ (7曲で同じ重みだと7試合に1回しか流れない。本人の専用曲を「あと1本」の合図にする。2026-11-03) */
-export const OWN_TENSE_BGM = 'last_compile';
+  'last_compile', 'last_line'];   // 本人作の Last Compile (190 BPM、2026-11-01) と Last Line (2026-11-03)
+/* 本人作の曲は合わせて半分の確率で選ぶ (8曲で同じ重みだと4試合に1回しか流れない。本人の専用曲を「あと1本」の合図にする。2026-11-03) */
+export const OWN_TENSE_BGMS = ['last_compile', 'last_line'];
 const OWN_TENSE_RATE = 0.5;
-/** あと1本の曲を1つ選ぶ (前の試合と同じ曲は選ばない。Last Compile は前の試合と同じでも選ぶ: 合図の曲なので続いてよい) */
+/** あと1本の曲を1つ選ぶ。avoid (いま流している曲) は選ばない。前の試合と同じ既製曲も選ばない
+    (本人作は前の試合と同じでも選ぶ: 合図の曲なので続いてよい) */
 const LAST_TENSE_KEY = 'compileLastTenseBgm';
-export function pickTenseBgm(rnd = Math.random) {
+export function pickTenseBgm(rnd = Math.random, avoid = null) {
   let last = null;
   try { last = localStorage.getItem(LAST_TENSE_KEY); } catch (e) { /* private mode */ }
-  const others = TENSE_BGMS.filter(k => k !== OWN_TENSE_BGM && k !== last);
-  const pick = rnd() < OWN_TENSE_RATE ? OWN_TENSE_BGM : others[Math.floor(rnd() * others.length)];
+  const own = OWN_TENSE_BGMS.filter(k => k !== avoid);
+  let others = TENSE_BGMS.filter(k => !OWN_TENSE_BGMS.includes(k) && k !== last && k !== avoid);
+  if (!others.length) others = TENSE_BGMS.filter(k => !OWN_TENSE_BGMS.includes(k) && k !== avoid);
+  const pick = own.length && rnd() < OWN_TENSE_RATE ? own[Math.floor(rnd() * own.length)] : others[Math.floor(rnd() * others.length)];
   try { localStorage.setItem(LAST_TENSE_KEY, pick); } catch (e) { /* private mode */ }
   return pick;
 }
