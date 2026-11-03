@@ -103,3 +103,18 @@ test('実績の褒美の実績は、どれも achievements.js にある', async 
   const A = await import('../js3d/achievements.js');
   for (const it of R.TROPHY_ITEMS) assert.ok(A.TROPHIES.some(t => t.id === it.trophy), it.trophy);
 });
+
+test('勝ちの演出・コンパイルの光・マーカー・名札は、どれも描き方がある (2026-11-03 の追加分も)', async () => {
+  const R = await load();
+  const { VICTORY_FX } = await import('../js3d/backdrops.js');
+  for (const [key] of R.COSMETICS.victory) assert.ok(VICTORY_FX[key], 'victory ' + key);
+  const fs = require('node:fs');
+  const ctrl = fs.readFileSync(require.resolve('../js3d/control.js'), 'utf8');
+  const styles = ctrl.slice(ctrl.indexOf('export const MARKER_STYLES'), ctrl.indexOf('const PATTERN_DRAW'));
+  for (const [key] of R.COSMETICS.marker) assert.ok(new RegExp('\\b' + key + ':').test(styles), 'marker ' + key);
+  const fx = fs.readFileSync(require.resolve('../js3d/fx-compile.js'), 'utf8');
+  const signs = /const SIGNS = \{([^}]*)\}/.exec(fx)[1];
+  for (const [key] of R.COSMETICS.ccolor.slice(1)) assert.ok(signs.split(',').map(x => x.trim()).includes(key), 'ccolor ' + key);
+  const html = fs.readFileSync(require.resolve('../three-play.html'), 'utf8');
+  for (const [key] of R.COSMETICS.plate.slice(1)) if (!/^p_/.test(key)) assert.ok(html.includes('[data-frame="' + key + '"]'), 'plate ' + key);
+});

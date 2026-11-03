@@ -3569,6 +3569,9 @@
   .cm-burst b{position:relative;font:900 28px/1 var(--font-hud,var(--font-ui));letter-spacing:.2em;color:#fff;text-shadow:0 0 18px rgba(0,0,0,.6);}
   @keyframes cmPulse{50%{transform:scale(1.15);opacity:1;}}
   .cm-vicview b{font:900 clamp(34px,6vw,58px)/1 var(--font-hud,var(--font-ui));letter-spacing:.12em;color:#fff;text-shadow:0 0 24px rgba(232,32,63,.7);}
+  .cm-vicview{position:relative;width:min(420px,100%);aspect-ratio:16/9;display:grid;place-items:center;overflow:hidden;border-radius:8px;background:#050505 center/cover no-repeat;box-shadow:0 18px 40px rgba(0,0,0,.6);}
+  .cm-vicview b{position:relative;text-shadow:0 0 6px #fff,0 0 22px var(--vac,#a07bff),0 0 50px var(--vac,#a07bff);}
+  .cm-vic{display:grid;place-items:center;width:100%;height:100%;background:#050505 center/cover no-repeat;text-shadow:0 0 8px var(--vac,#a07bff);}
   .cm-vicview.aurora b{background:linear-gradient(100deg,#7cf0d0,#9d7bff,#e8203f,#ffc85a,#7cf0d0);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rnHolo 3s linear infinite;text-shadow:none;}
   .cm-plate{display:flex;align-items:center;gap:14px;padding:14px 22px;border:1px solid rgba(255,194,180,.4);background:rgba(12,9,10,.85);clip-path:var(--cut);}
   .cm-plate img{width:64px;height:64px;}
@@ -3646,7 +3649,6 @@
   .cm-grid.mat .cm-th img,.cm-grid.mat .cm-neon{width:100%;height:100%;object-fit:cover;}
   .cm-glow{width:50px;height:50px;border-radius:50%;background:var(--gc);box-shadow:0 0 18px rgba(255,255,255,.2);}
   .cm-vic{font:900 20px/1 var(--font-hud,var(--font-ui));color:#fff;letter-spacing:.1em;}
-  .cm-vic.aurora{background:linear-gradient(100deg,#7cf0d0,#9d7bff,#e8203f);-webkit-background-clip:text;background-clip:text;color:transparent;}
   .cm-none{font:900 22px/1 "M PLUS 1",system-ui;color:var(--dim);}
   .cm-item b{font:800 11px/1.3 var(--font-ui);letter-spacing:.04em;}
   .cm-item em{font:900 9.5px/1 var(--font-ui);font-style:normal;color:var(--mint);letter-spacing:.1em;}
@@ -4289,6 +4291,43 @@
     conic-gradient(from 45deg at 50% 50%,#e6c86a 25%,transparent 0) 100% 0/8px 8px no-repeat,
     conic-gradient(from 45deg at 50% 50%,#e6c86a 25%,transparent 0) 0 100%/8px 8px no-repeat,
     conic-gradient(from 45deg at 50% 50%,#e6c86a 25%,transparent 0) 100% 100%/8px 8px no-repeat;}
+  /* 2026-11-03 の追加。CIRCUIT: 黒い基板に赤い配線 (MAIN 3) */
+  [data-frame="circuit"],.pf-circuit{--pf-bg:linear-gradient(120deg,#140608,#050505 65%);--pf-edge:inset 0 0 0 1px #e8203f,inset 0 0 14px rgba(232,32,63,.35);
+    --pf-name:#fff;--pf-sub:#ff5a6e;--pf-deco:
+    linear-gradient(#e8203f,#e8203f) right 8px top 50%/22px 1.5px no-repeat,
+    linear-gradient(#e8203f,#e8203f) right 30px top 30%/1.5px 20% no-repeat,
+    linear-gradient(#e8203f,#e8203f) right 30px top 30%/18px 1.5px no-repeat,
+    radial-gradient(circle,#ffd0d6 2px,#e8203f 2.5px 3.5px,transparent 4px) right 2px top calc(50% - 4px)/10px 10px no-repeat,
+    radial-gradient(circle,#ffd0d6 1.5px,#e8203f 2px 3px,transparent 3.5px) right 44px top calc(30% - 3px)/8px 8px no-repeat,
+    linear-gradient(90deg,#e8203f,transparent) 0 0/4px 100% no-repeat;}
+  /* FROST: 薄い氷と、右上の霜 */
+  [data-frame="frost"],.pf-frost{--pf-bg:linear-gradient(120deg,#16303f,#0a1620 60%,#1d3a4a);--pf-edge:inset 0 0 0 1px #cff0ff,inset 0 0 16px rgba(190,235,255,.35);
+    --pf-name:#f2fbff;--pf-sub:#9fdcff;--pf-deco:
+    radial-gradient(circle at 100% 0,rgba(230,248,255,.45),transparent 40%),
+    repeating-linear-gradient(60deg,rgba(255,255,255,.08) 0 1px,transparent 1px 9px),
+    repeating-linear-gradient(-60deg,rgba(255,255,255,.06) 0 1px,transparent 1px 11px);}
+  /* EMBER: 溶けた溶岩のひびと、下から火の色 */
+  [data-frame="ember"],.pf-ember{--pf-bg:linear-gradient(0deg,rgba(255,110,30,.4),transparent 60%),linear-gradient(120deg,#1a0a05,#0a0402);
+    --pf-edge:inset 0 0 0 1px #ff7a2e,inset 0 -8px 16px rgba(255,90,20,.35);--pf-name:#fff2e0;--pf-sub:#ffa060;--pf-deco:
+    linear-gradient(115deg,transparent 48%,rgba(255,150,60,.7) 48% 49.5%,transparent 49.5%) right 0 top 0/40% 100% no-repeat,
+    linear-gradient(65deg,transparent 60%,rgba(255,120,40,.55) 60% 61.5%,transparent 61.5%) right 0 top 0/30% 100% no-repeat,
+    radial-gradient(circle at calc(100% - 12px) 20%,#ffd27a 1.2px,transparent 2px) no-repeat,
+    radial-gradient(circle at calc(100% - 26px) 70%,#ffb060 1px,transparent 1.8px) no-repeat;}
+  /* GALAXY: 星空と渦の雲 */
+  [data-frame="galaxy"],.pf-galaxy{--pf-bg:radial-gradient(ellipse at 80% 40%,rgba(185,140,255,.55),transparent 55%),radial-gradient(ellipse at 30% 80%,rgba(99,180,255,.35),transparent 50%),linear-gradient(120deg,#0c0620,#040210);
+    --pf-edge:inset 0 0 0 1px rgba(200,170,255,.8),inset 0 0 18px rgba(160,120,255,.35);--pf-name:#fff;--pf-sub:#d0b8ff;--pf-deco:
+    radial-gradient(circle at 18% 30%,#fff .8px,transparent 1.4px),radial-gradient(circle at 46% 70%,#fff .7px,transparent 1.3px),
+    radial-gradient(circle at 62% 22%,#fff 1px,transparent 1.6px),radial-gradient(circle at 84% 78%,#fff .8px,transparent 1.4px),
+    radial-gradient(circle at 92% 30%,#fff 1.1px,transparent 1.8px),radial-gradient(circle at 34% 50%,#e8dcff .6px,transparent 1.2px);}
+  /* GLITCH: 赤と青にずれた走査線。ときどき跳ねる */
+  [data-frame="glitch"],.pf-glitch{--pf-bg:#07070b;--pf-edge:inset 2px 0 0 #63f3ff,inset -2px 0 0 #e8203f,inset 0 0 0 1px rgba(255,255,255,.25);
+    --pf-name:#fff;--pf-sub:#63f3ff;--pf-deco:
+    linear-gradient(rgba(232,32,63,.5),rgba(232,32,63,.5)) right 0 top 22%/45% 2px no-repeat,
+    linear-gradient(rgba(99,243,255,.5),rgba(99,243,255,.5)) right 12px top 64%/30% 3px no-repeat,
+    repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0 1px,transparent 1px 3px);}
+  :is([data-frame="glitch"],.pf-glitch) b{text-shadow:1.5px 0 rgba(232,32,63,.85),-1.5px 0 rgba(99,243,255,.85);}
+  :is([data-frame="glitch"],.pf-glitch)::after{background:linear-gradient(rgba(255,255,255,.18),rgba(255,255,255,.18)) 0 40%/100% 3px no-repeat;animation:pf-flicker 4s steps(1) infinite;}
+  :is([data-frame="galaxy"],.pf-galaxy)::after{background:linear-gradient(105deg,transparent 35%,rgba(220,200,255,.2) 50%,transparent 65%) -150% 0/60% 100% no-repeat;animation:pf-sheen 7s ease-in-out infinite;}
   /* プロトコルの習熟度: 右にそのプロトコルの色の斜線、左に光の帯 */
   [data-frame^="p_"],[class*="pf-p_"]{--pf-deco:
     repeating-linear-gradient(-55deg,color-mix(in srgb,var(--pfc,#cdc7d4) 45%,transparent) 0 2px,transparent 2px 7px) right 0 top 0/34% 100% no-repeat,
@@ -4892,7 +4931,7 @@
       "./js3d/avatar-boss-lines.js": "./js3d/avatar-boss-lines.js?v=507ebedfac",
       "./js3d/avatar-lines.js": "./js3d/avatar-lines.js?v=1a9e812365",
       "./js3d/avatar.js": "./js3d/avatar.js?v=fe207f6a1a",
-      "./js3d/backdrops.js": "./js3d/backdrops.js?v=62f4fe6736",
+      "./js3d/backdrops.js": "./js3d/backdrops.js?v=78f67f4758",
       "./js3d/bgm-loop.js": "./js3d/bgm-loop.js?v=92eef374d1",
       "./js3d/bgm-shop.js": "./js3d/bgm-shop.js?v=4a3a2c42df",
       "./js3d/bgm.js": "./js3d/bgm.js?v=d098330267",
@@ -4909,9 +4948,9 @@
       "./js3d/chips.js": "./js3d/chips.js?v=e67e280b76",
       "./js3d/cloudsave.js": "./js3d/cloudsave.js?v=9d3a90691c",
       "./js3d/control-emblem.js": "./js3d/control-emblem.js?v=9d17796d0f",
-      "./js3d/control.js": "./js3d/control.js?v=691f892377",
+      "./js3d/control.js": "./js3d/control.js?v=aebfff9c0f",
       "./js3d/cos-rarity.js": "./js3d/cos-rarity.js?v=3dcc6f580c",
-      "./js3d/cosmetics-mode.js": "./js3d/cosmetics-mode.js?v=f65a152b59",
+      "./js3d/cosmetics-mode.js": "./js3d/cosmetics-mode.js?v=edf384308a",
       "./js3d/cosmetics-ui.js": "./js3d/cosmetics-ui.js?v=c3df1d4a44",
       "./js3d/crashwatch.js": "./js3d/crashwatch.js?v=8b4bdaa28f",
       "./js3d/daily.js": "./js3d/daily.js?v=f56dabdf65",
@@ -4927,7 +4966,7 @@
       "./js3d/face-icons.js": "./js3d/face-icons.js?v=94447182ad",
       "./js3d/feel.js": "./js3d/feel.js?v=9f679966cc",
       "./js3d/firstrun.js": "./js3d/firstrun.js?v=5c6561b6b0",
-      "./js3d/fx-compile.js": "./js3d/fx-compile.js?v=2fbcc8e763",
+      "./js3d/fx-compile.js": "./js3d/fx-compile.js?v=d48f971a42",
       "./js3d/fx-protocols.js": "./js3d/fx-protocols.js?v=944b662cc1",
       "./js3d/fx.js": "./js3d/fx.js?v=c9a77d2533",
       "./js3d/gacha-ui.js": "./js3d/gacha-ui.js?v=b5bf4956cc",
@@ -4940,12 +4979,12 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=2b4dbc6066",
       "./js3d/logformat.js": "./js3d/logformat.js?v=e3548c74d1",
-      "./js3d/main.js": "./js3d/main.js?v=ff4c3f4ae9",
+      "./js3d/main.js": "./js3d/main.js?v=378a0ec5bd",
       "./js3d/mobcards.js": "./js3d/mobcards.js?v=2a6bc79376",
       "./js3d/motion.js": "./js3d/motion.js?v=71cd68f8ff",
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
       "./js3d/net.js": "./js3d/net.js?v=3134839bca",
-      "./js3d/news.js": "./js3d/news.js?v=168590303c",
+      "./js3d/news.js": "./js3d/news.js?v=5ce935f542",
       "./js3d/notice.js": "./js3d/notice.js?v=029a81acaa",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=d0204e8847",
       "./js3d/panel.js": "./js3d/panel.js?v=b07699d2a4",
@@ -4965,7 +5004,7 @@
       "./js3d/replayshare.js": "./js3d/replayshare.js?v=dedb1ad773",
       "./js3d/resume.js": "./js3d/resume.js?v=6be1546ea7",
       "./js3d/review.js": "./js3d/review.js?v=f2069b69f8",
-      "./js3d/rewards.js": "./js3d/rewards.js?v=bda27058f4",
+      "./js3d/rewards.js": "./js3d/rewards.js?v=0e8e1e0ca0",
       "./js3d/room.js": "./js3d/room.js?v=918fccde40",
       "./js3d/roombet.js": "./js3d/roombet.js?v=cc2e51d3f4",
       "./js3d/roomui.js": "./js3d/roomui.js?v=2fda6726d7",
@@ -5005,7 +5044,7 @@
       "./js3d/turning.js": "./js3d/turning.js?v=9c7f79654e",
       "./js3d/tutorial.js": "./js3d/tutorial.js?v=a2ad20f672",
       "./js3d/tween.js": "./js3d/tween.js?v=6fe8c0fb03",
-      "./js3d/ui.js": "./js3d/ui.js?v=64a044942f",
+      "./js3d/ui.js": "./js3d/ui.js?v=3ff8d9c333",
       "./js3d/watchtools.js": "./js3d/watchtools.js?v=ad10da8d17",
       "./js3d/weekly-ui.js": "./js3d/weekly-ui.js?v=ec0ddcd27a",
       "./js3d/weekly.js": "./js3d/weekly.js?v=255159dac0",
@@ -5042,7 +5081,7 @@
   <link rel="modulepreload" href="vendor/three.module.js?v=985eb92490">
   <link rel="modulepreload" href="js3d/stage.js?v=f4cae41c31">
   <link rel="modulepreload" href="js3d/board.js?v=fd9b31ba0a">
-  <link rel="modulepreload" href="js3d/control.js?v=691f892377">
+  <link rel="modulepreload" href="js3d/control.js?v=aebfff9c0f">
   <link rel="modulepreload" href="js3d/panel.js?v=b07699d2a4">
   <link rel="modulepreload" href="js3d/setup.js?v=a65d1f9f90">
   <link rel="modulepreload" href="js3d/title.js?v=2353aed59f">
@@ -5060,10 +5099,10 @@
   <link rel="modulepreload" href="js3d/story.js?v=a6e591a848">
   <link rel="modulepreload" href="js3d/story-ui.js?v=ccd0b9db62">
   <link rel="modulepreload" href="js3d/story-world.js?v=3f0f8426d6">
-  <link rel="modulepreload" href="js3d/rewards.js?v=bda27058f4">
+  <link rel="modulepreload" href="js3d/rewards.js?v=0e8e1e0ca0">
   <link rel="modulepreload" href="js3d/gachafx.js?v=274272f746">
   <link rel="modulepreload" href="js3d/cosmetics-ui.js?v=c3df1d4a44">
-  <link rel="modulepreload" href="js3d/cosmetics-mode.js?v=f65a152b59">
+  <link rel="modulepreload" href="js3d/cosmetics-mode.js?v=edf384308a">
   <link rel="modulepreload" href="js3d/displayname.js?v=613e18bf95">
   <link rel="modulepreload" href="js3d/plates.js?v=8ec9490f46">
   <link rel="modulepreload" href="js3d/playmat.js?v=c9653bebf8">
@@ -5090,7 +5129,9 @@
   <link rel="modulepreload" href="js3d/layout.js?v=2b4dbc6066">
   <link rel="modulepreload" href="js3d/theme.js?v=f923617cfc">
   <link rel="modulepreload" href="js3d/tween.js?v=6fe8c0fb03">
-  <link rel="modulepreload" href="js3d/ui.js?v=64a044942f">
+  <link rel="modulepreload" href="js3d/ui.js?v=3ff8d9c333">
+  <link rel="modulepreload" href="js3d/backdrops.js?v=78f67f4758">
+  <link rel="modulepreload" href="js3d/fx-compile.js?v=d48f971a42">
   <link rel="modulepreload" href="js3d/input.js?v=cc29feddd4">
   <link rel="modulepreload" href="js3d/playchoices.js?v=b461cb2bb3">
   <link rel="modulepreload" href="js3d/aiclient.js?v=33d95b224c">
@@ -5125,12 +5166,10 @@
   <link rel="modulepreload" href="vendor/jsm/postprocessing/OutputPass.js">
   <link rel="modulepreload" href="vendor/jsm/environments/RoomEnvironment.js">
   <link rel="modulepreload" href="js3d/card.js?v=71f8503f87">
-  <link rel="modulepreload" href="js3d/fx-compile.js?v=2fbcc8e763">
   <link rel="modulepreload" href="js3d/protocards.js?v=79426a5f07">
-  <link rel="modulepreload" href="js3d/backdrops.js?v=62f4fe6736">
   <link rel="modulepreload" href="js3d/profile.js?v=704205fbfe">
   <link rel="modulepreload" href="js3d/gacha-ui.js?v=b5bf4956cc">
-  <link rel="modulepreload" href="js3d/news.js?v=168590303c">
+  <link rel="modulepreload" href="js3d/news.js?v=5ce935f542">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/ShaderPass.js">
   <link rel="modulepreload" href="js3d/run-pilots.js?v=4b54f3c10f">
   <link rel="modulepreload" href="js3d/story-map.js?v=ed5ef482a6">
@@ -5160,6 +5199,6 @@
   <link rel="stylesheet" href="js3d/run-fx.css?v=76f975b9ad">
   <link rel="stylesheet" href="js3d/deus.css?v=676148021b">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=ff4c3f4ae9"></script>
+  <script type="module" src="js3d/main.js?v=378a0ec5bd"></script>
 </body>
 </html>

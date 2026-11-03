@@ -3,6 +3,7 @@
  *   光の柱・衝撃波は共通。その上に、色ごとに違う動きを重ねて見分けられるようにする。
  *   gold: 金貨が降る / cyan: 稲妻が落ちる / rainbow: 虹の輪が順に広がる
  *   lime: 泡が昇って弾ける / violet: 渦を巻いて昇る / ember: 火の粉が舞い上がる
+ *   crimson: 赤いデータの欠片が昇る / frost: 氷の刃が落ちて砕ける / sakura: 花びらが舞い降りる / solar: 光の環が回りながら昇る
  * ========================================================================= */
 import * as THREE from '../vendor/three.module.js';
 import * as TW from './tween.js';
@@ -147,7 +148,83 @@ function ember(scene, x) {
   }, 2000);
 }
 
-const SIGNS = { gold, cyan, rainbow, lime, violet, ember };
+/* 赤いデータの欠片 (MAIN 3): 四角い欠片が瞬きながら真上へ昇り、ときどき横へずれる */
+function crimson(scene, x) {
+  const geo = new THREE.BoxGeometry(1, 1, 1);
+  return swarm(scene, 90, (i) => {
+    const obj = new THREE.Mesh(geo.clone(), add(i % 5 ? 0xe8203f : 0xffd0d6, 0));
+    return { obj, x: x + rand(-1.2, 1.2), z: rand(-4.6, 4.6), s: rand(0.06, 0.22), sp: rand(3, 7), at: rand(0, 0.45), ph: rand(0, 9) };
+  }, (it, t) => {
+    const k = Math.max(0, (t - it.at) / (1 - it.at));
+    const glitch = Math.sin(k * 30 + it.ph) > 0.92 ? 0.3 : 0;
+    it.obj.position.set(it.x + glitch, 0.1 + k * it.sp, it.z);
+    it.obj.scale.set(it.s * (1 + glitch * 3), it.s, it.s);
+    it.obj.material.opacity = k > 0 ? (1 - k) * (Math.sin(k * 50 + it.ph) > -0.6 ? 1 : 0.2) : 0;
+  }, 1900);
+}
+
+/* 氷の刃: 細長い結晶が空から突き刺さり、床で砕けて欠片が散る */
+function frost(scene, x) {
+  const geo = new THREE.OctahedronGeometry(1, 0);
+  return swarm(scene, 60, (i) => {
+    const big = i < 16;
+    const obj = new THREE.Mesh(geo.clone(), add(i % 3 ? 0xbfeaff : 0xffffff, 0));
+    return { obj, big, x: x + rand(-1.3, 1.3), z: rand(-4.5, 4.5), at: big ? i * 0.035 : rand(0.15, 0.6),
+      vx: rand(-2, 2), vz: rand(-2, 2), vy: rand(1.5, 3.5) };
+  }, (it, t) => {
+    const k = Math.max(0, (t - it.at) / (1 - it.at));
+    if (it.big) {
+      const fall = Math.min(1, k * 3);
+      it.obj.position.set(it.x, 6 * (1 - fall) + 0.35, it.z);
+      it.obj.scale.set(0.09, 0.45, 0.09);
+      it.obj.material.opacity = k > 0 ? (fall < 1 ? 0.9 : Math.max(0, 0.9 - (k - 0.33) * 2)) : 0;
+    } else {
+      const tt = k * 0.9;
+      it.obj.position.set(it.x + it.vx * tt, Math.max(0.03, 0.2 + it.vy * tt - 4.5 * tt * tt), it.z + it.vz * tt);
+      it.obj.rotation.set(k * 9, k * 7, 0);
+      it.obj.scale.setScalar(0.06);
+      it.obj.material.opacity = k > 0 ? 0.85 * (1 - k) : 0;
+    }
+  }, 1800);
+}
+
+/* 花びら: 桃色の花びらがひらひらと回りながら舞い降りる */
+function sakura(scene, x) {
+  const geo = new THREE.CircleGeometry(1, 10);
+  geo.scale(1, 0.6, 1);
+  return swarm(scene, 110, (i) => {
+    const obj = new THREE.Mesh(geo.clone(), add(i % 3 ? 0xffa8c8 : 0xffe0ec, 0));
+    return { obj, x: x + rand(-2.2, 2.2), z: rand(-4.8, 4.8), y0: rand(3.5, 7), at: rand(0, 0.4), ph: rand(0, 6), s: rand(0.14, 0.24), sw: rand(0.4, 1.1) };
+  }, (it, t) => {
+    const k = Math.max(0, (t - it.at) / (1 - it.at));
+    it.obj.position.set(it.x + Math.sin(k * 5 + it.ph) * it.sw, Math.max(0.05, it.y0 * (1 - k)), it.z + Math.cos(k * 4 + it.ph) * 0.3);
+    it.obj.rotation.set(k * 6 + it.ph, k * 4, k * 3);
+    it.obj.scale.setScalar(it.s);
+    it.obj.material.opacity = k > 0 ? Math.min(1, k * 6) * (k > 0.85 ? (1 - k) / 0.15 : 1) * 0.9 : 0;
+  }, 2100);
+}
+
+/* 光の環: 白金の輪が何重にも、回りながらラインの上へ昇って広がる */
+function solar(scene, x) {
+  const geo = new THREE.TorusGeometry(1, 0.035, 6, 72);
+  geo.rotateX(Math.PI / 2);
+  return swarm(scene, 9, (i) => {
+    const obj = new THREE.Mesh(geo.clone(), add(i % 2 ? 0xfff1c4 : 0xffd86a, 0));
+    obj.position.set(x, 0.1, 0);
+    return { obj, at: i * 0.07, tilt: rand(-0.35, 0.35) };
+  }, (it, t) => {
+    const k = Math.max(0, (t - it.at) / (1 - it.at));
+    const e = 1 - Math.pow(1 - k, 3);
+    it.obj.position.y = 0.1 + e * 5;
+    it.obj.scale.set(0.4 + e * 2.6, 1, 0.4 + e * 2.6);
+    it.obj.rotation.set(it.tilt, k * 4, it.tilt * 0.5);
+    it.obj.material.opacity = k > 0 ? 0.9 * (1 - k) : 0;
+  }, 1800);
+}
+
+const SIGNS = { gold, cyan, rainbow, lime, violet, ember, crimson, frost, sakura, solar };
+/** 追加分の光の柱の色 (main.js の compileColor が使う) */
+export const CC_HEX = { crimson: '#e8203f', frost: '#bfeaff', sakura: '#ffa8c8', solar: '#fff1c4' };
 
 /** コンパイルの光のしるし。key は見た目の ccolor (default は何もしない) */
 export function compileSignature(scene, laneX, key) {
