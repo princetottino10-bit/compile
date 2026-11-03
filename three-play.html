@@ -4112,6 +4112,11 @@
   .plate.turn .pl-top::after{content:"TURN";flex:none;align-self:center;padding:3px 7px 2px;background:var(--pink);color:#12060e;
     font:900 10px/1 var(--font-hud,var(--font-ui));letter-spacing:.16em;animation:plTurn 1.6s ease-in-out infinite;}
   @keyframes plTurn{50%{opacity:.55;}}
+  /* Main 3 で桃が赤になり、両方の名札の TURN が同じ赤だった。自分の番は紫、相手の番は赤に分け、文字は白で読ませる */
+  #meTag.turn{background:rgba(26,16,40,.92);box-shadow:inset 4px 0 0 #a07bff;}
+  #meTag.turn .pl-top::after{background:#8b5cf6;color:#fff;}
+  #vsTag.turn{background:rgba(40,8,14,.92);box-shadow:inset 4px 0 0 #e8203f;}
+  #vsTag.turn .pl-top::after{background:#e8203f;color:#fff;}
   @media (prefers-reduced-motion:reduce){ .plate.turn .pl-top::after{animation:none;} }
   #vsTag:not([hidden]) ~ #topRight{margin-left:0;}
   @media (orientation:portrait) and (max-width:860px){
