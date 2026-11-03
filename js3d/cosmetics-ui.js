@@ -20,7 +20,7 @@ const DEFAULT_KEY = { mat: 'neon', sleeve: 'default', marker: 'default', ccolor:
 
 /* 条件で取る称号 (レベル以外) */
 /* 実績を取ると付けられる称号 (実績の id → 称号の key) */
-export const TROPHY_TITLES = { flawless: 'flawless', mastery10: 'grandmaster', tsume_mid: 'puzzler', tsume_all: 'compuzzler', conqueror: 'conqueror', underdog_tag: 'underdogduo', tag_all: 'tagmaster', tag_flawless: 'perfectsync' };
+export const TROPHY_TITLES = { flawless: 'flawless', mastery10: 'grandmaster', tsume_mid: 'puzzler', tsume_all: 'compuzzler', conqueror: 'conqueror', underdog_tag: 'underdogduo', tag_all: 'tagmaster', tag_flawless: 'perfectsync', solo_regular: 'botbreaker', solo_advanced: 'rootaccess', sins7: 'sevensins', tristate: 'tristate' };
 export function extraTitles(records) {
   const out = records.some(r => r.win && r.level === UNDERDOG_LEVEL) ? ['underdog'] : [];
   /* 機械仕掛けの神・すべてを見る者 (CHALLENGE の CPU 戦で勝ったとき) */

@@ -13,6 +13,7 @@ const BOSS_LEVELS = [3, ...HONKI.map((_, i) => HONKI_BASE + i)];
 import { XP_GAIN } from './xp.js';
 import { protocolSummary, conquered, CONQUER_TOTAL } from './stats-data.js';
 import { GACHA_ITEMS } from './rewards.js';
+import { BOT_SCENARIOS } from './bot-scenarios.js';
 
 const onlineWin = (e) => e.src === 'online' && e.xp > XP_GAIN.onlinePlay;   // 勝ったときだけ多く入る
 
@@ -45,6 +46,11 @@ const g = (c) => (c.game && !c.game.short ? c.game : null);
 const masteries = (c) => Array.from(protocolSummary(every(c)).values()).map(t => t.mastery.level);
 const bestMastery = (c) => Math.max(0, ...masteries(c));
 const playedProtos = (c) => new Set(every(c).flatMap(r => r.me || [])).size;
+/* 公式ソロモード (VS BOT) で勝ったシナリオの数 (REGULAR / ADVANCED それぞれ6つ) */
+const botCleared = (c, mode) => BOT_SCENARIOS.filter(s => s.mode === mode && every(c).some(r => r.win && r.level === s.level)).length;
+/* Main 3 の七つの大罪 (称号 SEVEN SINS) */
+export const SINS = ['ENVY', 'GLUTTONY', 'GREED', 'LUST', 'PRIDE', 'SLOTH', 'WRATH'];
+const sinWins = (c) => { const w = new Set(every(c).filter(r => r.win).flatMap(r => r.me || [])); return SINS.filter(p => w.has(p)).length; };
 const hour = (c) => new Date(g(c).at).getHours();
 /* COMPUZZLE (詰めコンパイル): 経験値の帳簿の k:ts:t2-03 (問題ごと) と k:dp:日 (今日の問題) で数える。
    問題の数は data/tsume.json と揃える (test/tsume.test.js で確かめる) */
@@ -115,7 +121,7 @@ export const TROPHIES = [
   { id: 'mastery10', tier: 'gold', name: 'GRANDMASTER', desc: 'どれかのプロトコルの習熟度を最大 (10) にする (称号 GRANDMASTER)',
     test: (c) => bestMastery(c) >= 10, progress: (c) => [bestMastery(c), 10] },
   { id: 'level30', tier: 'gold', name: 'LEGEND', desc: 'プレイヤーレベル30になる', test: (c) => c.level >= 30, progress: (c) => [Math.min(c.level, 30), 30] },
-  { id: 'cards180', tier: 'gold', name: 'ARCHIVIST', desc: '180種類すべてのカードを表で出す', test: (c) => playedKinds(c) >= 180, progress: (c) => [Math.min(180, playedKinds(c)), 180] },
+  { id: 'cards180', tier: 'gold', name: 'ARCHIVIST', desc: '270種類すべてのカードを表で出す', test: (c) => playedKinds(c) >= 270, progress: (c) => [Math.min(270, playedKinds(c)), 270] },   // Main 3 / Aux 3 で 180 → 270 (id はそのまま。取った実績は消えない)
   { id: 'tsume_all', tier: 'gold', name: 'COMPUZZLER', desc: 'COMPUZZLE を全部解く (称号 COMPUZZLER)',
     test: (c) => tsumeSolved(c, [1, 2, 3]) >= tsumeTotal([1, 2, 3]), progress: (c) => [tsumeSolved(c, [1, 2, 3]), tsumeTotal([1, 2, 3])] },
   { id: 'gacha_all', tier: 'gold', name: 'COLLECTOR SUPREME', desc: 'GACHA の見た目と称号を全部そろえる',
@@ -147,6 +153,15 @@ export const TROPHIES = [
   { id: 'untouchable', tier: 'gold', name: 'UNTOUCHABLE', desc: '自分のカードを一度も相手の効果で削除・反転・移動・手札に戻されずに勝つ',
     test: (c) => !!g(c) && g(c).win && g(c).touched === 0 },
   { id: 'flawless', tier: 'gold', hidden: true, name: 'FLAWLESS', desc: '相手に1回もコンパイルさせずに勝つ (称号 FLAWLESS)', test: (c) => !!g(c) && g(c).win && g(c).oppCompiles === 0 },
+  /* ---- Main 3 / Aux 3・公式ソロモード (2026-11-03) ---- */
+  { id: 'solo_regular', tier: 'silver', name: 'BOT BREAKER', desc: '公式ソロモードの REGULAR の6つのシナリオすべてに勝つ (称号 BOT BREAKER)',
+    test: (c) => botCleared(c, 'regular') >= 6, progress: (c) => [botCleared(c, 'regular'), 6] },
+  { id: 'solo_advanced', tier: 'gold', name: 'ROOT ACCESS', desc: '公式ソロモードの ADVANCED の6つのシナリオすべてに勝つ (称号 ROOT ACCESS)',
+    test: (c) => botCleared(c, 'advanced') >= 6, progress: (c) => [botCleared(c, 'advanced'), 6] },
+  { id: 'sins7', tier: 'gold', name: 'SEVEN SINS', desc: 'ENVY・GLUTTONY・GREED・LUST・PRIDE・SLOTH・WRATH の7つすべてで1勝する (称号 SEVEN SINS)',
+    test: (c) => sinWins(c) >= 7, progress: (c) => [sinWins(c), 7] },
+  { id: 'tristate', tier: 'silver', name: 'TRISTATE', desc: 'FLEXIBLE・INERT・RIGID の3つを組んだデッキで勝つ (称号 TRISTATE)',
+    test: (c) => every(c).some(r => r.win && ['FLEXIBLE', 'INERT', 'RIGID'].every(p => (r.me || []).includes(p))) },
   /* ---- 全部 ---- */
   { id: 'platinum', tier: 'platinum', name: 'PLATINUM', desc: 'ほかの実績をすべて取る (称号 DEUS EX MACHINA)', test: () => false }
 ];
