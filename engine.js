@@ -135,6 +135,36 @@ function locate(st, uid) {
 }
 function isTop(st, loc) { return loc.idx === st.lines[loc.line][loc.side].length - 1; }
 function defOf(st, uid) { return DEFS[st.cards[uid].def]; }
+/* 公式ソロモード (BOT) の通常モード: BOT のカードはコマンドが無いものとして扱う (値とプロトコルだけ)。
+   ルールの解決でカードの効果を読むところは、すべてこれを通す */
+const NO_EFF = Object.freeze({});
+function effOf(st, uid) {
+  const c = st.cards[uid];
+  if (st.bot && !st.bot.advanced && c.owner === st.bot.side) return NO_EFF;
+  if (st.psy1Swap && c.def === PSY1_ID) return psy1SwappedDef().eff;
+  return DEFS[c.def].eff;
+}
+/* 設定「PSYCHIC 1 の上段と下段を入れ替える」(ハウスルール。newGame({ psy1Swap: true }) で盤面に st.psy1Swap が立つ)。
+   入れ替えると上段が「開始：このカードを反転させる」になり、覆われても毎開始で裏返るので、覆って続ける永続ロックが組めない。
+   下段の「相手は裏向きでのみプレイできる」は一番上にいる間だけ効く。
+   カードの種類 (defId) は PSYCHIC_2 のまま変えない (絵・戦績・学習モデルの特徴はそのまま使える) */
+const PSY1_ID = 'PSYCHIC_2';
+let PSY1_SWAPPED = null;
+function psy1SwappedDef() {
+  const d = DEFS[PSY1_ID];
+  if (!PSY1_SWAPPED || PSY1_SWAPPED.base !== d) {
+    const eff = Object.assign({}, d.eff);
+    delete eff.upper; delete eff.lower;
+    if (d.eff.lower) eff.upper = d.eff.lower;
+    if (d.eff.upper) eff.lower = d.eff.upper;
+    PSY1_SWAPPED = { base: d, def: Object.assign({}, d, { eff }) };
+  }
+  return PSY1_SWAPPED.def;
+}
+/* CPU の読みでカードの定義を引くとき (盤面の入れ替えルールを反映する) */
+function defForAi(st, defId) {
+  return st && st.psy1Swap && defId === PSY1_ID ? psy1SwappedDef() : DEFS[defId];
+}
 /* 勝つのに要るコンパイルの本数 (通常 3。勝ち抜き戦は newGame({ winCompiles: 2 }) で短くする)。
    side を渡すと、その側の本数 (勝ち抜き戦のボス「聖域」のように側ごとに違うとき: newGame({ winCompilesBySide: [a, b] })) */
 function winCompilesOf(st, side) {
@@ -233,7 +263,7 @@ function activeStatics(st) {
       for (let i = 0; i < stack.length; i++) {
         const uid = stack[i], c = st.cards[uid];
         if (!c.faceUp) continue;
-        const eff = DEFS[c.def].eff, top = i === stack.length - 1;
+        const eff = effOf(st, uid), top = i === stack.length - 1;
         if (eff.upper && eff.upper.static && !negatedBy(neg, uid, 'upper', eff.upper.static)) out.push(Object.assign({}, eff.upper.static, { uid, line: l, sideIdx: s }));
         // middle の常在効果 (SMOKE_3等) は uncovered + 表向きのみ有効
         if (top && eff.middle && eff.middle.static) out.push(Object.assign({}, eff.middle.static, { uid, line: l, sideIdx: s }));
@@ -255,7 +285,7 @@ function lineNegators(st, l) {
     for (let i = 0; i < stack.length; i++) {
       const c = st.cards[stack[i]];
       if (!c.faceUp) continue;
-      const eff = DEFS[c.def].eff;
+      const eff = effOf(st, stack[i]);
       const up = eff.upper && eff.upper.static && NEGATE_KINDS[eff.upper.static.kind];
       const lo = i === stack.length - 1 && eff.lower && eff.lower.static && NEGATE_KINDS[eff.lower.static.kind];
       for (const slot of [up, lo]) if (slot) (out || (out = { upper: [], lower: [] }))[slot].push(stack[i]);
@@ -411,7 +441,7 @@ function canPlay(st, player, uid, line, faceUp, anyProto) {
           && defOf(st, uid).proto === DEFS[st.cards[s.uid].def].proto) needMatch = false;
     }
     // CHAOS_4/CORRUPTION_1 lower: このカード自体がプロトコル不問でプレイできる(手札で有効)
-    const selfEff = DEFS[st.cards[uid].def].eff;
+    const selfEff = effOf(st, uid);
     if (selfEff.lower && (selfEff.lower.handStatic === 'thisAnyLine' || selfEff.lower.handStatic === 'thisAnyLineEitherSide')) needMatch = false;
     if (needMatch) {
       const names = lineProtoNames(st, line);
@@ -545,7 +575,7 @@ function collectListeners(st, ev) {
     for (let i = 0; i < stack.length; i++) {
       const uid = stack[i], c = st.cards[uid];
       if (!c.faceUp) continue;
-      const eff = DEFS[c.def].eff, top = i === stack.length - 1;
+      const eff = effOf(st, uid), top = i === stack.length - 1;
       for (const slot of ['upper', 'lower']) {
         const tr = eff[slot] && eff[slot].trigger;
         if (!tr) continue;
@@ -594,7 +624,7 @@ function triggerVisible(st, uid, slot) {
 function execTrigger(ctx, uid, slot, locked, ev) {
   const loc = locate(st_of(ctx), uid);
   if (!loc) return;
-  const tr = defOf(ctx.st, uid).eff[slot].trigger;
+  const tr = effOf(ctx.st, uid)[slot].trigger;
   const fr = { source: uid, slot, controller: loc.side, line: loc.line, bind: {}, done: false, locked: !!locked, ev: ev || null };
   chainPush(ctx, uid, slot);
   try {
@@ -614,7 +644,7 @@ function fireWouldBeCovered(ctx, uid, coveringUid) {
 function collectWouldBeCovered(ctx, uid, coveringUid) {
   const c = ctx.st.cards[uid];
   if (!c || !c.faceUp) return [];
-  const eff = DEFS[c.def].eff;
+  const eff = effOf(ctx.st, uid);
   const out = [];
   for (const slot of ['upper', 'lower']) {
     const tr = eff[slot] && eff[slot].trigger;
@@ -635,7 +665,7 @@ function runWouldBeCovered(ctx, triggers) {
 function fireWouldBeFlipped(ctx, uid) {
   const c = ctx.st.cards[uid];
   if (!c.faceUp) return;
-  const eff = DEFS[c.def].eff;
+  const eff = effOf(ctx.st, uid);
   for (const slot of ['upper', 'lower']) {
     const tr = eff[slot] && eff[slot].trigger;
     if (!tr || tr.on !== 'wouldBeCoveredOrFlipped') continue;
@@ -871,7 +901,7 @@ function resolveMiddle(ctx, uid, why) {
   if (!loc) return;
   if (ignoreMiddleAt(st, loc.line)) { log(ctx, `${defOf(st, uid).id} の中段は無視された`); return; }
   if (middleSuppressed(st, uid)) { log(ctx, `${defOf(st, uid).id} の中段はないものとして扱われた`); return; }
-  const eff = DEFS[st.cards[uid].def].eff;
+  const eff = effOf(st, uid);
   if (!eff.middle || !eff.middle.ops) return;  // 中段が常在効果のみ(SMOKE_3)の場合はコマンドなし
   if (ctx.depth > 80) throw { __err: '解決の深さ上限を超過 (無限ループの疑い)' };
   ctx.depth++;
@@ -1021,6 +1051,7 @@ function useControlBenefit(ctx, side, reason, line, darknessPowered) {
   if (!st.useControl || st.control !== side) return;
   st.control = -1;
   log(ctx, `P${side + 1}: コントロールを消費`);
+  if (st.bot && side === st.bot.side) { botLoseControl(ctx, side, reason, line); return; }
   const ans = choose(ctx, {
     kind: 'option', player: side, optional: false, prompt: 'control-rearrange',
     options: ['自分のプロトコルを並べ替える', '相手のプロトコルを並べ替える', '並べ替えない'],
@@ -1102,7 +1133,7 @@ function doCompile(ctx, side, line) {
     for (const uid of st.lines[line][s].slice()) {
       const c = st.cards[uid];
       if (!c.faceUp) continue;
-      const eff = DEFS[c.def].eff;
+      const eff = effOf(st, uid);
       const tr = eff.upper && eff.upper.trigger;
       if (tr && tr.on === 'wouldBeDeletedByCompile' && !slotNegated(st, uid, 'upper')) {
         const dests = [0, 1, 2].filter(l2 => l2 !== line);
@@ -1149,6 +1180,11 @@ function doCompile(ctx, side, line) {
       st.winner = st.misere ? 1 - side : side;            // 負けるが勝ち (newGame の misere): 先に揃えた側の負け
       log(ctx, `P${st.winner + 1} の勝利！`);
     }
+  } else if (st.bot && side === st.bot.side) {
+    /* ソロモード: BOT が同じプロトコルを2度コンパイルしたら BOT の勝ち */
+    st.winner = side;
+    log(ctx, `BOT: ${prot.name} をもう一度コンパイル — BOT の勝利！`);
+    return;
   } else {
     log(ctx, `P${side + 1}: リコンパイル — 相手のデッキトップを獲得`);
     drawCards(ctx, side, 1, true);
@@ -1167,7 +1203,7 @@ function doStartEnd(ctx, phase) {
     for (let i = 0; i < stack.length; i++) {
       const uid = stack[i], c = st.cards[uid];
       if (!c.faceUp) continue;
-      const eff = DEFS[c.def].eff, top = i === stack.length - 1;
+      const eff = effOf(st, uid), top = i === stack.length - 1;
       for (const slot of ['upper', 'lower']) {
         const tr = eff[slot] && eff[slot].trigger;
         if (!tr || tr.on !== phase) continue;
@@ -1676,7 +1712,7 @@ function execOp(ctx, fr, op) {
           const c = st.cards[uid];
           /* 覆い指定のない効果は既定で「覆われていないカード」が対象 */
           /* 中段が「ない」ことになっているカード (FEAR 0 の上段: 自分の手番中、相手のカードに中段は無い) は写せない (codex の Mirror 1 の裁定) */
-          if (idx === stack.length - 1 && c.faceUp && DEFS[c.def].eff.middle && DEFS[c.def].eff.middle.ops && !middleSuppressed(st, uid)) cands.push(uid);
+          if (idx === stack.length - 1 && c.faceUp && effOf(st, uid).middle && effOf(st, uid).middle.ops && !middleSuppressed(st, uid)) cands.push(uid);
         });
       }
       if (!cands.length) { fr.done = false; return; }
@@ -1693,7 +1729,7 @@ function execOp(ctx, fr, op) {
       /* 写した効果の途中で聞く選択には、写した元のカードを添える (画面が「何の効果で選んでいるか」を出せるように) */
       const prevCopy = ctx.copying;
       ctx.copying = { source: srcId, def: copiedId };
-      try { execOps(ctx, sub, DEFS[st.cards[pick].def].eff.middle.ops); } finally { ctx.copying = prevCopy; }
+      try { execOps(ctx, sub, effOf(st, pick).middle.ops); } finally { ctx.copying = prevCopy; }
       fr.done = true;
       return;
     }
@@ -2467,6 +2503,67 @@ function execPlayOp(ctx, fr, op) {
   fr.done = true;
 }
 
+/* ---------- 公式ソロモード (BOT) ----------
+   出典: COMP-MN03 Rulesheet Solo Mode。st.bot = { side, advanced, plays, control, played }
+   - BOT の手札を「キュー」として扱う。前 (index 0) から出し、引いた札・戻った札は後ろに付く (drawCards / landHand の push のまま)
+   - アクション: キューに札があれば、シナリオの数だけ前の札から1枚ずつ出す ('up' 表向き・プロトコルの合うライン /
+     'low' 'high' 裏向き・BOT の合計がいちばん低い / 高いライン)。キューが空ならリフレッシュ
+   - BOT が決めることは、あなたに有利なように決める (AI 側の botAnswer / botAiAction)。捨てるのはキューの前から
+   - コントロールを使う (コンパイル・リフレッシュ) ときは並べ替えの代わりにシナリオの control ('none' 'draw' 'steal' 'rearrange')
+   - BOT がコンパイル済みのプロトコルをもう一度コンパイルしたら BOT の勝ち
+   - 通常モード (advanced でない) は BOT のカードにコマンドが無いものとして扱う (effOf) */
+const BOT_PLAYS = ['up', 'low', 'high'];
+const BOT_CONTROLS = ['none', 'draw', 'steal', 'rearrange'];
+function isBotTurn(st) { return !!st.bot && st.turn === st.bot.side; }
+function botPlaySpec(st) {
+  const p = st.bot.plays;
+  return p[Math.min(st.bot.played | 0, p.length - 1)];
+}
+/* BOT のいまの手の候補 (前の札の置き場所。同点のラインなど、複数あればあなたが選ぶ) */
+function botLegalActions(st) {
+  const side = st.bot.side, q = st.players[side].hand;
+  if (!q.length) return [{ type: 'refresh' }];
+  const uid = q[0], spec = botPlaySpec(st);
+  const play = (lines, faceUp) => lines.map(l => ({ type: 'play', card: uid, line: l, faceUp }));
+  const upLines = [0, 1, 2].filter(l => canPlay(st, side, uid, l, true));
+  const downLines = [0, 1, 2].filter(l => canPlay(st, side, uid, l, false));
+  /* 表向きで出せない (プロトコルが合わない・効果で止められた) ときは、あなたの選ぶラインに裏向き */
+  if (spec === 'up') return upLines.length ? play(upLines, true) : play(downLines, false);
+  if (!downLines.length) return play(upLines, true);
+  const sts = activeStatics(st);
+  const tot = downLines.map(l => lineTotal(st, l, side, sts));
+  const target = spec === 'high' ? Math.max.apply(null, tot) : Math.min.apply(null, tot);
+  return play(downLines.filter((l, i) => tot[i] === target), false);
+}
+/* BOT がコントロールを失うとき (コンパイル・リフレッシュの前): 並べ替えの代わりにシナリオの control を行う */
+function botLoseControl(ctx, side, reason, line) {
+  const st = ctx.st, kind = st.bot.control;
+  if (kind === 'draw') { log(ctx, 'BOT: コントロールの効果 — 自分のデッキから1枚引いてキューへ'); drawCards(ctx, side, 1); }
+  else if (kind === 'steal') { log(ctx, 'BOT: コントロールの効果 — あなたのデッキから1枚引いてキューへ'); drawCards(ctx, side, 1, true); }
+  else if (kind === 'rearrange') {
+    /* 並べ替えるのはあなた (あなたのプロトコルか BOT のプロトコル) */
+    const me = 1 - side;
+    const ans = choose(ctx, {
+      kind: 'option', player: me, optional: false, prompt: 'control-rearrange',
+      options: ['自分のプロトコルを並べ替える', 'BOT のプロトコルを並べ替える', '並べ替えない'],
+      controlReason: reason, controlLine: line, botControl: true,
+      protocols: st.players[me].protocols.map(protocol => ({ name: protocol.name, names: protocol.names, compiled: protocol.compiled }))
+    });
+    if (ans[0] === 0) doRearrange(ctx, me, me);
+    else if (ans[0] === 1) doRearrange(ctx, me, side);
+  }
+}
+function normalizeBot(b, sideDefault) {
+  const side = b.side === 0 || b.side === 1 ? b.side : sideDefault;
+  const plays = (Array.isArray(b.plays) ? b.plays : ['up']).filter(x => BOT_PLAYS.indexOf(x) >= 0).slice(0, 5);
+  return {
+    side, advanced: !!b.advanced,
+    plays: plays.length ? plays : ['up'],
+    control: BOT_CONTROLS.indexOf(b.control) >= 0 ? b.control : 'none',
+    played: 0
+  };
+}
+
 /* ---------- ターン進行 ---------- */
 
 function runTurnLoop(ctx) {
@@ -2477,6 +2574,7 @@ function runTurnLoop(ctx) {
     switch (st.phase) {
       case 'start':
         log(ctx, `--- P${st.turn + 1} のターン ---`);
+        if (st.bot) st.bot.played = 0;
         doStartEnd(ctx, 'start');
         st.phase = 'checkControl';
         break;
@@ -2569,12 +2667,13 @@ function turncoat(ctx) {
 
 /* CORRUPTION_1: どちらのプレイヤー側でもプレイできるカードか */
 function canPlayEitherSide(st, uid) {
-  const eff = DEFS[st.cards[uid].def].eff;
+  const eff = effOf(st, uid);
   return !!(eff.lower && eff.lower.handStatic === 'thisAnyLineEitherSide');
 }
 
 function legalActions(st) {
   if (st.winner !== null || st.phase !== 'action') return [];
+  if (isBotTurn(st)) return botLegalActions(st);
   const p = st.turn;
   const out = [];
   for (const uid of st.players[p].hand) {
@@ -2710,10 +2809,19 @@ function performAction(ctx, action) {
     if (destSide !== p && !canPlayEitherSide(st, action.card)) throw { __err: '相手側にはプレイできないカード' };
     /* 相手側に置くときも、プレイの制限 (PLAGUE 1 など) は守る */
     if (!canPlay(st, p, action.card, action.line, action.faceUp)) throw { __err: 'そのプレイは許可されていない' };
+    /* BOT はキューの前の札を、シナリオどおりの置き方でしか出さない */
+    if (isBotTurn(st) && !botLegalActions(st).some(a => a.type === 'play' && a.card === action.card && a.line === action.line && a.faceUp === !!action.faceUp && destSide === p)) {
+      throw { __err: 'BOT はシナリオどおりにしか出せない' };
+    }
     playToField(ctx, action.card, action.line, destSide, !!action.faceUp);
     /* RIGID_2: アクションで裏向きにプレイしたあと (効果でのプレイは数えない) */
     if (!action.faceUp && st.winner === null) fireEvent(ctx, { on: 'actionPlayDown', player: p, line: action.line, side: destSide, card: action.card });
     st.phase = 'checkCache';
+    /* BOT が1手番に何枚も出すシナリオ: 出し終えるかキューが尽きるまで、アクションを続ける */
+    if (st.bot && p === st.bot.side) {
+      st.bot.played = (st.bot.played | 0) + 1;
+      if (st.winner === null && st.turn === p && st.bot.played < st.bot.plays.length && st.players[p].hand.length) st.phase = 'action';
+    }
   } else if (action.type === 'refresh') {
     if (st.players[p].hand.length >= 5) throw { __err: '手札が5枚以上ではリフレッシュできない' };
     doRefresh(ctx, p);
@@ -2811,6 +2919,7 @@ function newGame(opts) {
     ...(Array.isArray(opts.perks) && opts.perks.some(Boolean) ? { perks: [opts.perks[0] || null, opts.perks[1] || null] } : {}),
     /* 勝ち抜き戦の異変: 負けるが勝ち (先にコンパイルし終えた側の負け) と、手札交換 (n 手番ごとに手札が入れ替わる) */
     ...(opts.misere ? { misere: true } : {}),
+    ...(opts.psy1Swap ? { psy1Swap: true } : {}),
     ...(opts.handSwap >= 2 ? { handSwap: opts.handSwap | 0 } : {}),
     ...(opts.turncoat >= 2 ? { turncoat: opts.turncoat | 0 } : {}),
     ...(Array.isArray(opts.winCompilesBySide) && opts.winCompilesBySide.length === 2 && opts.winCompilesBySide.every(n => n >= 1 && n <= 3)
@@ -2824,6 +2933,11 @@ function newGame(opts) {
     revealed: null,
     pending: null
   };
+  /* 公式ソロモード: opts.bot = { side (既定 1), advanced, plays: ['up'|'low'|'high', ...], control }。あなたがいつも先手 */
+  if (opts.bot && typeof opts.bot === 'object') {
+    st.bot = normalizeBot(opts.bot, 1);
+    st.turn = 1 - st.bot.side;
+  }
   const chosen = [opts.p0, opts.p1];
   /* exclude: [[P1 が外すカード (defId)], [P2 が外すカード]] (勝ち抜き戦のカード除去)。山札は最低 12 枚残す */
   const ex = Array.isArray(opts.exclude) ? opts.exclude : [];
@@ -2965,6 +3079,7 @@ function newPuzzle(spec, opts) {
   st.phase = 'start';
   st.pending = null;
   st.winner = null;
+  if (spec.psy1Swap || o.psy1Swap) st.psy1Swap = true;   // テスト用: PSYCHIC 1 の上下段を入れ替えた盤面
   for (let p = 0; p < 2; p++) {
     const sd = sides[p];
     const pl = st.players[p];
@@ -3457,6 +3572,8 @@ function aiLockEnablers() {
 }
 
 function aiLockThreat(st, side) {
+  /* 入れ替えルールでは覆われた PSYCHIC 1 は開始で裏返るので、裏向きの札が永続ロックに化ける心配は無い */
+  if (st.psy1Swap) return 0;
   const op = 1 - side;
   const E = aiLockEnablers();
   const opProtos = st.players[op].protocols.flatMap(protoNamesOf);
@@ -3526,7 +3643,7 @@ function aiBoardEffectScore(st, side) {
     for (let i = 0; i < stack.length; i++) {
       const uid = stack[i], c = st.cards[uid];
       if (!c.faceUp) continue;
-      const d = DEFS[c.def];
+      const d = defForAi(st, c.def);
       let cv = 0;
       if (d.eff.upper && d.eff.upper.static) {
         cv += d.eff.upper.static.rule === 'youFaceUpAnyLine'
@@ -3569,7 +3686,8 @@ function aiTaughtTactics(st, side) {
 }
 
 function aiIsLockSpecialist(st, side) {
-  return AI_SPECIALIST_ENABLED && AI_SPECIALIST_KIND === 'psylock' && !!st.players[side]
+  /* 入れ替えルールでは仕込む永続ロックが無いので、ロック特化の手筋は使わない */
+  return !st.psy1Swap && AI_SPECIALIST_ENABLED && AI_SPECIALIST_KIND === 'psylock' && !!st.players[side]
     && (AI_SPECIALIST_SIDE < 0 || AI_SPECIALIST_SIDE === side);
 }
 
@@ -4320,7 +4438,8 @@ function aiValnetFeatures(st, me) {
       const stack = st.lines[l][side];
       for (let j = 0; j < stack.length; j++) {
         const c = st.cards[stack[j]];
-        if (c.faceUp && c.def === 'PSYCHIC_2') { if (j < stack.length - 1) perm = 1; else temp = 1; }
+        /* 入れ替えルールでは覆われた PSYCHIC 1 はロックにならず、一番上のときだけ1ターンのロック */
+        if (c.faceUp && c.def === 'PSYCHIC_2') { if (j < stack.length - 1) { if (!st.psy1Swap) perm = 1; } else temp = 1; }
       }
     }
     return [perm, temp];
@@ -5085,6 +5204,7 @@ function aiPruneSelfReturn(st, req) {
 }
 
 function smartPicks(st, req) {
+  if (st.bot && req.player === st.bot.side && !req.__bot) return botAnswer(st, req);
   req = aiPruneSelfReturn(st, req);
   const me = req.player;
   const op = 1 - me;
@@ -6302,7 +6422,38 @@ function aiActionPimc(state) {
   } finally { TRACE = wasTrace; }
 }
 
+/* ソロモード: BOT の手。候補 (同点のライン・表で出せないときの置き場所) が複数あれば、あなたに有利なものを選ぶ */
+function botAiAction(state) {
+  const acts = legalActions(state);
+  if (acts.length <= 1) return acts[0] || null;
+  const me = 1 - state.bot.side;
+  const wasTrace = TRACE; TRACE = false;
+  try {
+    let best = acts[0], bestSc = -Infinity;
+    for (const a of acts) {
+      const res = applyAndResolve(state, a, smartPicks);
+      if (!res || res.error) continue;
+      const sc = res.state.winner === me ? 1e9 : res.state.winner === state.bot.side ? -1e9 : aiScore(res.state, me);
+      if (sc > bestSc) { bestSc = sc; best = a; }
+    }
+    return best;
+  } finally { TRACE = wasTrace; }
+}
+/* ソロモード: BOT が決めること。手札 (キュー) から選ぶものは前から、それ以外はあなたに有利なように */
+function botAnswer(state, req) {
+  const side = state.bot.side;
+  if (req.kind === 'pickHand') {
+    const min = Math.min(req.min !== undefined ? req.min : 1, req.candidates.length);
+    const hand = state.players[side].hand;
+    /* キューの前から。キューに無い候補 (山札の上など) は候補の並びのまま後ろへ */
+    const order = hand.filter(u => req.candidates.indexOf(u) >= 0).concat(req.candidates.filter(u => hand.indexOf(u) < 0));
+    return order.slice(0, min);
+  }
+  return smartPicks(state, Object.assign({}, req, { player: 1 - side, __bot: true }));
+}
+
 function aiAction(state) {
+  if (state.bot && state.turn === state.bot.side) return botAiAction(state);
   if (AI_BLUNDER > 0 && Math.random() < AI_BLUNDER) {
     const acts = aiDecisionActions(aiInformationState(state, state.turn));
     if (acts.length) return acts[Math.floor(Math.random() * acts.length)];
@@ -6381,6 +6532,7 @@ function aiPicksByVote(state, req, baseView) {
 }
 
 function aiAnswer(state, req) {
+  if (state.bot && req.player === state.bot.side) return botAnswer(state, req);
   const view = aiInformationState(state, req.player);
   const forcedControlWin = aiForcedControlWinPicks(req);
   if (forcedControlWin) return forcedControlWin;
@@ -6408,7 +6560,7 @@ function aiAnswer(state, req) {
 /* ---------- 公開 API ---------- */
 
 const Engine = {
-  init, newGame, newPuzzle, apply, legalActions, setTrace, setAiPeek, setAiValueNet, setAiPolicyNet, setAiComboNet, setAiLevel, setAiBlunder, setAiThinkBudget, setAiBreadth, setAiPimc, setAiDeep, setAiWeights, setAiSpecialist, setAiSpecialistWeights, setAiOracle,
+  init, newGame, newPuzzle, apply, legalActions, botAnswer, botAction: botAiAction, setTrace, setAiPeek, setAiValueNet, setAiPolicyNet, setAiComboNet, setAiLevel, setAiBlunder, setAiThinkBudget, setAiBreadth, setAiPimc, setAiDeep, setAiWeights, setAiSpecialist, setAiSpecialistWeights, setAiOracle,
   lineTotal, cardValue, compilableLines, canPlay, playBlockReason, locate,
   ai: { action: aiAction, answer: aiAnswer, score: aiScore, valnetFeatures: aiValnetFeatures, policyCandidates: aiPolicyCandidates, policyLogit: (before, after, flags, def) => aiPolicyLogit(before, after, flags, def), comboLogit: aiComboLogit, middleFizzles: aiMiddleFizzles, transitionScore: aiTransitionScore, compilePassChance: aiCompilePassChance, informationState: aiInformationState, rootValues: aiRootValues, vetoOrder: aiVetoOrder, actionBias: aiActionBias, opsValue: aiOpsValue, boardEffect: aiBoardEffectScore, randomPicks, smartPicks },
   get defs() { return DEFS; },

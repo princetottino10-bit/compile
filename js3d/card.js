@@ -133,7 +133,7 @@ export function makeCard(def) {
 
   /* 縁は控えめな金属に。強い映り込みだと、持ち上げた手札の縁が発光して見えた */
   const frame = new THREE.Mesh(frameGeometry(), new THREE.MeshStandardMaterial({
-    color: new THREE.Color(def.color || '#b9a4ff').multiplyScalar(0.55),
+    color: new THREE.Color(def.color || '#cdc7d4').multiplyScalar(0.55),
     roughness: 0.45,
     metalness: 0.5,
     envMapIntensity: 0.3,
@@ -189,14 +189,14 @@ export function setSelected(card, on, colorHex) {
     const geo = planeGeometry();
     const tint = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
       /* 面は照明を受けない (絵そのままの明るさ) ので、加算の色は薄めにする */
-      color: 0xffb3da, transparent: true, opacity: 0.08, depthWrite: false,
+      color: 0xffc2b4, transparent: true, opacity: 0.08, depthWrite: false,
       blending: THREE.AdditiveBlending, toneMapped: false
     }));
     tint.position.y = CARD.thickness / 2 + 0.002;
     tint.renderOrder = 3;
     const edges = new THREE.EdgesGeometry(new THREE.PlaneGeometry(CARD.w * 1.06, CARD.h * 1.05).rotateX(-Math.PI / 2));
     const outline = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({
-      color: 0xffb3da, transparent: true, opacity: 0.95, linewidth: 2
+      color: 0xffc2b4, transparent: true, opacity: 0.95, linewidth: 2
     }));
     outline.position.y = CARD.thickness / 2 + 0.003;
     /* 装飾は入力を受けない。Line の標準判定幅はカード幅ほどあり、
@@ -208,7 +208,7 @@ export function setSelected(card, on, colorHex) {
     ud.selectOutline = outline;
     tint.visible = false; outline.visible = false;
   }
-  const c = new THREE.Color(colorHex || 0xffb3da);
+  const c = new THREE.Color(colorHex || 0xffc2b4);
   ud.selectTint.material.color.copy(c);
   ud.selectOutline.material.color.copy(c);
   ud.selectTint.visible = !!on;
@@ -219,7 +219,7 @@ export function setSelected(card, on, colorHex) {
 /* 選べる候補: 面は光らせず (アートが白く褪せて、候補外より目立たなくなる)、
    選択と同じ縁取りだけを水色で出す。選んだ札は setSelected の金色が上書きする */
 export function setCandidate(card, on) {
-  setSelected(card, !!on, 0xb9a4ff);
+  setSelected(card, !!on, 0xcdc7d4);
   if (card.userData.selectTint) card.userData.selectTint.visible = false;
   card.userData.selected = false;
 }
@@ -256,7 +256,7 @@ export function retexture(card, def) {
   }
   if (card.userData.frame) {
     card.userData.frame.material.color
-      .set(def.color || '#b9a4ff').multiplyScalar(0.55);
+      .set(def.color || '#cdc7d4').multiplyScalar(0.55);
   }
 }
 

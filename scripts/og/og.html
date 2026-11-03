@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<!-- SNS やチャットにリンクを貼ったときに出る画像 (og.jpg、1200x630) の型。
+     scripts/make_og_image.mjs が Chromium でこのページを撮って og.jpg にする。
+     2026-11-03 Main 3・Aux 3 の大型アップデート版。見た目はタイトル画面 (PR #108) と同じ
+     「つやのない黒い基板・赤い一閃・白いかすれ文字」。主役は新しいプロトコルの絵、2位は「MAIN 3 + AUX 3」。
+     Discord や X では 400px 前後に縮むので、読ませる文字は大きな見出しと一行だけにする。
+     公式ロゴは写さない (書体は Black Ops One、かすれは SVG のノイズのマスク)。 -->
+<link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Oxanium:wght@700&family=M+PLUS+1:wght@800&display=block" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1200px; height: 630px; overflow: hidden; background: #060606; }
+  .stage { position: relative; width: 1200px; height: 630px; overflow: hidden;
+    background: radial-gradient(ellipse 70% 90% at 30% 40%, #161616 0%, #060606 75%); }
+  #pcb { position: absolute; inset: 0; }
+
+  /* 箱と同じ赤い一閃。左下から右上へ、まわりの札を斬って PRIDE の後ろを抜ける。左は影に沈めて文字とぶつけない */
+  .slash { position: absolute; z-index: 1; left: -200px; top: 480px; width: 1700px; height: 46px;
+    transform: rotate(-17deg); transform-origin: 0 0;
+    background: linear-gradient(180deg, #ff4a5f 0%, #e8203f 30%, #b3122c 100%);
+    box-shadow: 0 0 40px rgba(232, 32, 63, .55), 0 0 4px rgba(255, 120, 130, .9); }
+  .slash.thin { top: 540px; height: 5px; opacity: .8; box-shadow: 0 0 14px rgba(232, 32, 63, .6); }
+
+  /* 新プロトコルの絵 (COMPILED 面と同じ横長)。右半分に重ねて扇に */
+  .card { position: absolute; width: 330px; height: 236px; border-radius: 10px; overflow: hidden;
+    background: #111 center / cover no-repeat;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, .78), 0 18px 40px rgba(0, 0, 0, .8); }
+  .card i { position: absolute; left: 0; right: 0; bottom: 0; height: 40px; padding: 0 14px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: linear-gradient(180deg, rgba(6,6,6,.6), rgba(6,6,6,.92));
+    border-top: 1px solid rgba(255, 255, 255, .35);
+    font: 400 24px/1 "Black Ops One", sans-serif; color: #fff; font-style: normal; letter-spacing: .06em; }
+  .card i small { font: 700 13px/1 Oxanium, sans-serif; letter-spacing: .2em; color: #cdc7d4; }
+  .c1 { left: 610px; top: 48px;  transform: rotate(-9deg); background-image: url(../../art/Greed.webp); }
+  .c2 { left: 870px; top: 20px;  transform: rotate(6deg);  background-image: url(../../art/Lust.webp); }
+  .c3 { left: 735px; top: 305px; transform: rotate(5deg);  background-image: url(../../art/Wrath.webp); }
+  .c4 { left: 900px; top: 260px; transform: rotate(-7deg); background-image: url(../../art/Gluttony.webp); }
+  .c5 { left: 790px; top: 150px; width: 380px; height: 272px; transform: rotate(-2deg); z-index: 2;
+    background-image: url(../../art/Pride.webp);
+    box-shadow: 0 0 0 3px #fff, 0 0 0 7px #e8203f, 0 24px 60px rgba(0, 0, 0, .9); }
+  .c5 i { height: 46px; font-size: 30px; }
+
+  /* 左の文字を読ませる影 */
+  .shade { position: absolute; inset: 0; z-index: 2;
+    background: linear-gradient(90deg, rgba(6,6,6,.94) 0%, rgba(6,6,6,.78) 40%, rgba(6,6,6,0) 56%); }
+
+  /* 刷りのかすれ (タイトル画面のロゴと同じマスク) */
+  .grit { -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.035 .22' numOctaves='3' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -26 18.6'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.035 .22' numOctaves='3' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -26 18.6'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+
+  .copy { position: absolute; left: 60px; top: 58px; z-index: 3; }
+  .logo { display: flex; align-items: baseline; gap: 14px; }
+  .logo b { font: 400 44px/1 "Black Ops One", sans-serif; color: #fff; letter-spacing: .03em; }
+  .logo span { font: 700 18px/1 Oxanium, sans-serif; color: #cdc7d4; letter-spacing: .32em; }
+  .plate { display: inline-block; margin-top: 44px; font: 800 26px/1 "M PLUS 1", sans-serif; color: #fff;
+    background: #e8203f; padding: 8px 16px 10px; letter-spacing: .1em;
+    clip-path: polygon(0 0, 100% 0, calc(100% - 12px) 100%, 0 100%); padding-right: 26px; }
+  .head { margin-top: 14px; font: 400 118px/.9 "Black Ops One", sans-serif; color: #fff; letter-spacing: .01em;
+    text-shadow: 6px 0 0 rgba(232, 32, 63, .55); }
+  .head em { font-style: normal; color: #e8203f; }
+  .sub { margin-top: 20px; font: 800 40px/1.2 "M PLUS 1", sans-serif; color: #fff; letter-spacing: .02em;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, .9); }
+  .sub b { color: #ffc2b4; }
+
+  .foot { position: absolute; left: 60px; bottom: 44px; z-index: 3;
+    font: 800 26px/1 "M PLUS 1", sans-serif; color: #e6e1ea; letter-spacing: .02em; }
+  .fan { position: absolute; right: 22px; bottom: 18px; z-index: 3; font: 800 18px/1 "M PLUS 1", sans-serif;
+    color: rgba(255, 255, 255, .85); background: rgba(6, 6, 6, .7); padding: 6px 12px; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <svg id="pcb" width="1200" height="630"></svg>
+  <div class="slash"></div><div class="slash thin"></div>
+  <div class="card c1"><i>GREED<small>MAIN 3</small></i></div>
+  <div class="card c2"><i>LUST<small>MAIN 3</small></i></div>
+  <div class="card c3"><i>WRATH<small>MAIN 3</small></i></div>
+  <div class="card c4"><i>GLUTTONY<small>MAIN 3</small></i></div>
+  <div class="card c5"><i>PRIDE<small>MAIN 3</small></i></div>
+  <div class="shade"></div>
+  <div class="copy">
+    <div class="logo"><b class="grit">COMPILE</b><span>3D ARENA</span></div>
+    <div class="plate">大型アップデート</div>
+    <div class="head grit">MAIN 3<br><em>+</em>AUX 3</div>
+    <div class="sub">新プロトコル<b>15種・90枚</b>、参戦。</div>
+  </div>
+  <div class="foot">ブラウザで無料・登録なし。すぐ1戦。</div>
+  <div class="fan">非公式ファンメイド</div>
+</div>
+<script>
+  // 基板の配線: 縦横と45度だけで折れる線と、端の丸いパッド。種を固定して毎回同じ絵にする
+  (() => {
+    let s = 20261103;
+    const rnd = () => (s = (s * 1103515245 + 12345) % 2147483648) / 2147483648;
+    const svg = document.getElementById('pcb'), NS = 'http://www.w3.org/2000/svg';
+    const add = (tag, attrs) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); svg.appendChild(e); };
+    const G = 18, dirs = [[1,0],[0,1],[-1,0],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+    for (let n = 0; n < 90; n++) {
+      let x = Math.round(rnd() * 1200 / G) * G, y = Math.round(rnd() * 630 / G) * G;
+      let d = dirs[Math.floor(rnd() * 4)];
+      const pts = [[x, y]];
+      const segs = 2 + Math.floor(rnd() * 3);
+      for (let k = 0; k < segs; k++) {
+        const len = (2 + Math.floor(rnd() * 7)) * G;
+        x += d[0] * len; y += d[1] * len; pts.push([x, y]);
+        // 直角ではなく45度で折る (基板の配線の手癖)
+        const i = dirs.indexOf(d); d = dirs[[4,5,6,7].includes(i) ? Math.floor(rnd() * 4) : 4 + Math.floor(rnd() * 4)];
+      }
+      const a = (.09 + rnd() * .12).toFixed(2);
+      add('polyline', { points: pts.map(p => p.join(',')).join(' '), fill: 'none', stroke: `rgba(205,199,212,${a})`, 'stroke-width': rnd() < .3 ? 3 : 1.6 });
+      const [ex, ey] = pts[pts.length - 1];
+      add('circle', { cx: ex, cy: ey, r: 4.5, fill: 'none', stroke: `rgba(205,199,212,${a})`, 'stroke-width': 1.6 });
+    }
+  })();
+</script>
+</body>
+</html>

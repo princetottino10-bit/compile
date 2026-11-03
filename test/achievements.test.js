@@ -185,3 +185,62 @@ test('BLITZ は戦績からもさかのぼって付く (CPU 戦・クイック�
   assert.ok(!ids(newlyEarned({}, ctx({ records: [rec({ mode: 'run', turns: 12 }), rec({ mode: 'weekly', turns: 14 })] }))).includes('blitz'));
   assert.ok(!ids(newlyEarned({}, ctx({ records: [rec({ mode: 'cpu', turns: 29 }), rec({ mode: 'cpu', win: false, turns: 20 })] }))).includes('blitz'));
 });
+
+test('Main 3 / Aux 3・公式ソロモードの実績: BOT BREAKER・ROOT ACCESS・SEVEN SINS・TRISTATE', async () => {
+  const { BOT_SCENARIOS } = await import('../js3d/bot-scenarios.js');
+  const reg = BOT_SCENARIOS.filter(s => s.mode === 'regular');
+  const five = reg.slice(0, 5).map(s => ({ win: true, level: s.level, me: ['ENVY', 'GREED', 'LUST'] }));
+  assert.ok(!ids(newlyEarned({}, ctx({ records: five }))).includes('solo_regular'));
+  const six = five.concat({ win: true, level: reg[5].level, me: ['PRIDE', 'SLOTH', 'WRATH'] });
+  const got = ids(newlyEarned({}, ctx({ records: six })));
+  assert.ok(got.includes('solo_regular'));
+  assert.ok(!got.includes('solo_advanced'));
+  assert.ok(!got.includes('sins7'));     // GLUTTONY がまだ
+  const sins = six.concat({ win: true, level: 1, me: ['GLUTTONY', 'FIRE', 'WATER'] });
+  assert.ok(ids(newlyEarned({}, ctx({ records: sins }))).includes('sins7'));
+  assert.ok(!ids(newlyEarned({}, ctx({ records: [{ win: false, level: 1, me: ['FLEXIBLE', 'INERT', 'RIGID'] }] }))).includes('tristate'));
+  assert.ok(ids(newlyEarned({}, ctx({ records: [{ win: true, level: 1, me: ['RIGID', 'FLEXIBLE', 'INERT'] }] }))).includes('tristate'));
+});
+
+test('やりこみの実績 (2026-11-03): Main 3・Aux 3・ソロモード・GATEKEEPER', async () => {
+  const { STRONGEST_AI } = await import('../js3d/aidecks.js');
+  const { BOT_SCENARIOS } = await import('../js3d/bot-scenarios.js');
+  const T = (id) => TROPHIES.find(x => x.id === id);
+  const apex = (me) => ({ win: true, level: 3, me, opp: STRONGEST_AI.slice() });
+  /* Main 3 の12種で1勝 */
+  const m3 = ['AMBUSH', 'ENVY', 'FULCRUM', 'GLUTTONY', 'GREED', 'LUST', 'MOMENTUM', 'NOVA', 'OVERWHELM', 'PRIDE', 'SLOTH', 'WRATH'];
+  const m3decks = [0, 3, 6, 9].map(i => m3.slice(i, i + 3));
+  assert.equal(T('m3_all').test(ctx({ records: m3decks.map(d => rec(true, 1, d)) })), true);
+  assert.deepEqual(T('m3_all').progress(ctx({ records: m3decks.slice(0, 2).map(d => rec(true, 1, d)) })), [6, 12]);
+  /* GATEKEEPER: 本物の最強のデッキだけ数える */
+  assert.equal(T('m3_conquer').test(ctx({ records: m3decks.map(apex) })), true);
+  assert.equal(T('m3_conquer').test(ctx({ records: m3decks.map(d => ({ ...apex(d), opp: ['A', 'B', 'C'] })) })), false);
+  assert.equal(T('sins_apex').test(ctx({ records: [apex(['PRIDE', 'GREED', 'WRATH'])] })), true);
+  assert.equal(T('sins_apex').test(ctx({ records: [apex(['PRIDE', 'GREED', 'NOVA'])] })), false, 'NOVA は大罪ではない');
+  assert.equal(T('aux3_apex').test(ctx({ records: [apex(['INERT', 'RIGID', 'FLEXIBLE'])] })), true);
+  /* Main 3 だけのデッキで10勝 */
+  assert.equal(T('m3_pure').test(ctx({ records: Array(10).fill(rec(true, 1, ['NOVA', 'SLOTH', 'LUST'])) })), true);
+  assert.equal(T('m3_pure').test(ctx({ records: Array(10).fill(rec(true, 1, ['NOVA', 'SLOTH', 'FIRE'])) })), false);
+  /* 90枚 */
+  const cards = [...m3, 'FLEXIBLE', 'INERT', 'RIGID'].flatMap(p => [1, 2, 3, 4, 5, 6].map(n => p + '_' + n));
+  assert.equal(T('m3_cards').test(ctx({ records: [{ ...rec(true), cards }] })), true);
+  assert.deepEqual(T('m3_cards').progress(ctx({ records: [{ ...rec(true), cards: cards.slice(0, 30).concat('FIRE_1') }] })), [30, 90]);
+  /* ソロモード: ADVANCED の6つを新しい15種だけのデッキで */
+  const adv = BOT_SCENARIOS.filter(s => s.mode === 'advanced');
+  assert.equal(T('solo_m3').test(ctx({ records: adv.map(s => rec(true, s.level, ['NOVA', 'RIGID', 'ENVY'])) })), true);
+  assert.equal(T('solo_m3').test(ctx({ records: adv.map(s => rec(true, s.level, ['NOVA', 'RIGID', 'FIRE'])) })), false);
+  assert.equal(T('solo_first').test(ctx({ records: [rec(true, adv[0].level)] })), true);
+  /* その1試合 */
+  const game = { win: true, level: adv[0].level, oppCompiles: 0, winCompiles: 3, effectsMap: {}, faceUpIds: [] };
+  assert.equal(T('solo_flawless').test(ctx({ game })), true);
+  assert.equal(T('solo_flawless').test(ctx({ game: { ...game, level: 1 } })), false);
+  assert.equal(T('apex_shutout').test(ctx({ game: { ...game, level: 3 } })), true);
+  /* 「つよい」以上に10連勝 (かんたんは並びに入れない) */
+  const strong = Array(10).fill(rec(true, 2));
+  assert.equal(T('streak10').test(ctx({ records: strong })), true);
+  assert.equal(T('streak10').test(ctx({ records: strong.slice(0, 5).concat(rec(false, 2), strong.slice(0, 5)) })), false);
+  /* やりこみの称号はどれもオンラインで見せられる称号の一覧にある */
+  const { TITLES } = await import('../js3d/rewards.js');
+  const { TROPHY_TITLES } = await import('../js3d/cosmetics-ui.js').catch(() => ({ TROPHY_TITLES: null }));
+  if (TROPHY_TITLES) for (const [id, key] of Object.entries(TROPHY_TITLES)) { assert.ok(T(id), id); assert.ok(TITLES[key], key); }
+});

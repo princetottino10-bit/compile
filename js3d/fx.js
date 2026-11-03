@@ -765,7 +765,7 @@ export function fxOrderBadge(scene, pos, n, colorHex) {
   cv.width = cv.height = 64;
   const g = cv.getContext('2d');
   const col = '#' + new THREE.Color(colorHex).getHexString();
-  g.fillStyle = 'rgba(8,6,15,.88)';
+  g.fillStyle = 'rgba(10,8,9,.88)';
   g.beginPath(); g.arc(32, 32, 27, 0, Math.PI * 2); g.fill();
   g.lineWidth = 4; g.strokeStyle = col; g.stroke();
   g.fillStyle = '#fff';

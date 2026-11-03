@@ -15,6 +15,7 @@ import { CARD, FONT, IOS } from './theme.js';
 import { drawIcon } from './icons.js';
 import { condChars } from './cardtext.js';
 import { fillEmblem } from './control-emblem.js';
+import { drawEmblem } from './emblems.js';
 
 /* 座標は 512x716 のデザイン空間で書き、実テクスチャへは拡大して描く */
 const DW = 512, DH = 716;
@@ -408,12 +409,19 @@ const maskCache = new Map();   // defId -> THREE.CanvasTexture
 export function foilMaskTexture(def) {
   if (maskCache.has(def.id)) return maskCache.get(def.id);
   faceTexture(def);                                  // 枠の位置 (faceZones) を用意する
-  const rects = faceZones.get(def.id) || {};
   const S = 0.25;
   const cv = document.createElement('canvas');
   cv.width = Math.round(DW * S); cv.height = Math.round(DH * S);
+  paintMask(cv, def.id);
+  const tex = new THREE.CanvasTexture(cv);
+  maskCache.set(def.id, tex);
+  return tex;
+}
+function paintMask(cv, id) {
+  const S = 0.25;
+  const rects = faceZones.get(id) || {};
   const ctx = cv.getContext('2d');
-  ctx.scale(S, S);
+  ctx.setTransform(S, 0, 0, S, 0, 0);
   ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, DW, DH);
   ctx.fillStyle = '#000';
@@ -421,9 +429,18 @@ export function foilMaskTexture(def) {
   for (const r of Object.values(rects)) {
     if (Array.isArray(r)) ctx.fillRect(r[0] - 8, r[1] - 8, r[2] + 16, r[3] + 16);
   }
-  const tex = new THREE.CanvasTexture(cv);
-  maskCache.set(def.id, tex);
-  return tex;
+}
+
+/* 1種類のカードの面だけ描き直す (def の文を書き換えたとき。PSYCHIC 1 の上下段を入れ替えるハウスルール)。
+   作ってあるテクスチャはそのまま使い回すので、盤面のカードもその場で変わる */
+export function repaintFace(id) {
+  const fd = faceDefs.get(id), cv = faceCanvas.get(id), tex = faceCache.get(id);
+  if (!fd || !cv || !tex) return;
+  faceZones.set(id, paintFace(cv.getContext('2d'), fd.def, fd.art));
+  tex.needsUpdate = true;
+  faceVersion.set(id, (faceVersion.get(id) || 0) + 1);
+  const mask = maskCache.get(id);
+  if (mask && mask.image) { paintMask(mask.image, id); mask.needsUpdate = true; }
 }
 
 /* 対局の切り替わりで、次の対局に不要な分のテクスチャを解放する。
@@ -501,6 +518,14 @@ const SLEEVES = {
   /* 標準: Main 3 の公式の裏面に寄せた灰色のグリッチの街並み (drawOfficialBack) */
   default: { official: true, a: '#1b1030', b: '#08060f', grid: 'rgba(255,255,255,.035)', halo: '255,79,163', ring: 'rgba(255,79,163,.9)',
     ring2: 'rgba(139,92,246,.7)', strip: '200,200,205', glitch: true },
+  /* CLASSIC: Main 3 の公式の裏面に替える前の標準 (桃と紫のグリッチ、真ん中に //)。はじめから選べる */
+  classic: { a: '#1b1030', b: '#08060f', grid: 'rgba(255,255,255,.035)', halo: '255,79,163', ring: 'rgba(255,79,163,.9)',
+    ring2: 'rgba(139,92,246,.7)', strip: '255,79,163', glitch: true },
+  /* 実績の褒美 (Main 3 / Aux 3・公式ソロモード、2026-11-03)。つやのない黒に基板の配線と赤い一閃 (Main 3 の見た目) */
+  sins: { a: '#121014', b: '#040305', grid: 'rgba(255,255,255,.02)', halo: '232,32,63', ring: 'rgba(0,0,0,0)',
+    ring2: 'rgba(0,0,0,0)', strip: '232,32,63', sins: true, noLogo: true },
+  rootaccess: { a: '#0d0f10', b: '#030404', grid: 'rgba(255,255,255,.025)', halo: '232,32,63', ring: 'rgba(0,0,0,0)',
+    ring2: 'rgba(0,0,0,0)', strip: '205,199,212', root: true, noLogo: true },
   crimson: { art: 'art/sleeves/crimson.webp', pattern: 'scales', a: '#4a0f1c', b: '#1a0509', grid: 'rgba(255,120,120,.14)', halo: '255,176,64', ring: 'rgba(255,212,120,.85)',
     ring2: 'rgba(255,120,120,.5)', strip: '255,120,120' },
   circuit: { a: '#0b2a22', b: '#04120e', grid: 'rgba(160,123,255,.08)', halo: '99,243,255', ring: 'rgba(160,123,255,.85)',
@@ -1109,6 +1134,107 @@ const PATTERNS = {
 /* GIANT SLAYER の裏面 (下剋上の褒美)。
    背景に王冠をかぶった巨人の影。その王冠ごと、金の一太刀が斜めに断ち切っている。
    中央には挑んだ側の小さな剣、周りに金の二重の縁と飾り、下に GIANT SLAYER の文字 */
+/* Main 3 の見た目の地: 基板の配線 (灰) と、斜めの赤い一閃 */
+function drawMain3Ground(ctx, seed0) {
+  ctx.save();
+  roundRect(ctx, 0, 0, DW, DH, 30); ctx.clip();
+  let seed = seed0;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  ctx.strokeStyle = 'rgba(205,199,212,.13)'; ctx.fillStyle = 'rgba(205,199,212,.2)'; ctx.lineWidth = 2;
+  for (let k = 0; k < 30; k++) {
+    let x = 20 + Math.round(rnd() * 23) * 20, y = 140 + Math.round(rnd() * 28) * 20;
+    ctx.beginPath(); ctx.moveTo(x, y);
+    for (let t = 0; t < 3; t++) {
+      const d = (rnd() < 0.5 ? -1 : 1) * (40 + Math.round(rnd() * 4) * 20);
+      /* 縦と横を交互に (基板の配線らしく直角に曲げる) */
+      if (t % 2) x = Math.max(16, Math.min(DW - 16, x + d));
+      else y = Math.max(130, Math.min(DH - 16, y + d));
+      ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fill();
+  }
+  /* 赤い一閃: 左下から右上へ細く鋭い帯と、その光 */
+  ctx.translate(DW / 2, DH * 0.58); ctx.rotate(-0.62);
+  const g = ctx.createLinearGradient(-DW, 0, DW, 0);
+  g.addColorStop(0, 'rgba(232,32,63,0)'); g.addColorStop(0.35, 'rgba(232,32,63,.55)'); g.addColorStop(0.65, 'rgba(232,32,63,.55)'); g.addColorStop(1, 'rgba(232,32,63,0)');
+  ctx.fillStyle = g; ctx.fillRect(-DW, -26, DW * 2, 52);
+  ctx.fillStyle = 'rgba(255,90,110,.9)';
+  ctx.beginPath(); ctx.moveTo(-DW, 0); ctx.quadraticCurveTo(0, -5, DW, 0); ctx.quadraticCurveTo(0, 3, -DW, 0); ctx.fill();
+  ctx.restore();
+}
+/* 白いかすれ文字 (細い横の欠けを入れる) */
+function scratchText(ctx, text, x, y, font, color, seed0) {
+  ctx.save();
+  ctx.font = font; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = color; ctx.fillText(text, x, y);
+  ctx.globalCompositeOperation = 'destination-out';
+  let seed = seed0;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const w = ctx.measureText(text).width;
+  for (let k = 0; k < 26; k++) ctx.fillRect(x - w / 2 + rnd() * w, y - 30 + rnd() * 60, 4 + rnd() * 26, 1 + rnd() * 2);
+  ctx.restore();
+}
+/* SEVEN SINS (実績 SEVEN SINS): 七つの大罪のプロトコルの紋章を七角の星に並べる。色はそれぞれのプロトコルの色 */
+const SIN_COLORS = [['PRIDE', '#D9A21E'], ['GREED', '#9C3FB5'], ['LUST', '#E0533C'], ['ENVY', '#26A6C9'],
+  ['GLUTTONY', '#C9B22B'], ['WRATH', '#C62A2A'], ['SLOTH', '#8A8F98']];
+function drawSins(ctx) {
+  drawMain3Ground(ctx, 77);
+  const cx = DW / 2, cy = 410, R = 152;
+  const pt = (i, r) => { const a = -Math.PI / 2 + i * Math.PI * 2 / 7; return [cx + Math.cos(a) * r, cy + Math.sin(a) * r]; };
+  ctx.save();
+  /* 七芒星 {7/3} を細い赤で */
+  ctx.strokeStyle = 'rgba(232,32,63,.75)'; ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  for (let k = 0; k <= 7; k++) { const [x, y] = pt((k * 3) % 7, R); if (k) ctx.lineTo(x, y); else ctx.moveTo(x, y); }
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(205,199,212,.35)'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx, cy, R + 46, 0, Math.PI * 2); ctx.stroke();
+  /* 紋章: 暗い円に、プロトコルの色で */
+  SIN_COLORS.forEach(([name, color], i) => {
+    const [x, y] = pt(i, R);
+    ctx.fillStyle = '#060507';
+    ctx.beginPath(); ctx.arc(x, y, 40, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = color; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(x, y, 40, 0, Math.PI * 2); ctx.stroke();
+    ctx.shadowColor = color; ctx.shadowBlur = 10;
+    drawEmblem(ctx, name, x - 30, y - 30, 60, color, 5);
+    ctx.shadowBlur = 0;
+  });
+  ctx.restore();
+  scratchText(ctx, 'VII', cx, cy + 4, '900 64px ' + FONT.logo, 'rgba(240,236,244,.95)', 5);
+  scratchText(ctx, 'S E V E N   S I N S', cx, 662, '800 20px ' + FONT.logo, 'rgba(233,230,240,.7)', 9);
+}
+/* ROOT ACCESS (実績 ROOT ACCESS): 端末の画面。灰色の記録の行と、白いかすれ文字の # ROOT */
+function drawRootAccess(ctx) {
+  drawMain3Ground(ctx, 31);
+  ctx.save();
+  roundRect(ctx, 0, 0, DW, DH, 30); ctx.clip();
+  let seed = 19;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const LINES = ['> handshake ......... ok', '> scenario 06 ....... cleared', '> bot.override ...... ok', '> mount /protocol', '> sudo compile --all',
+    '> kernel: line 0 1 2', '> access level ...... 0', '> elevate ........... ok', '> unlock /root', '> session granted'];
+  ctx.font = '600 15px ui-monospace, Menlo, Consolas, monospace';
+  ctx.textBaseline = 'alphabetic';
+  for (let i = 0; i < 18; i++) {
+    const y = 158 + i * 30;
+    ctx.fillStyle = 'rgba(205,199,212,' + (0.16 + rnd() * 0.16) + ')';
+    ctx.fillText(LINES[(i * 7 + 3) % LINES.length], 30, y);
+    ctx.fillStyle = 'rgba(205,199,212,.08)';
+    ctx.fillText(Array.from({ length: 6 }, () => Math.floor(rnd() * 256).toString(16).padStart(2, '0')).join(' '), 300, y);
+  }
+  /* 真ん中の帯: 黒い窓に # ROOT と、点滅する入力の印 */
+  const y0 = 352, h = 128;
+  ctx.fillStyle = 'rgba(4,4,6,.92)'; ctx.fillRect(28, y0, DW - 56, h);
+  ctx.strokeStyle = 'rgba(205,199,212,.55)'; ctx.lineWidth = 2; ctx.strokeRect(28, y0, DW - 56, h);
+  ctx.fillStyle = 'rgba(232,32,63,.95)'; ctx.fillRect(28, y0, 10, h);
+  ctx.restore();
+  scratchText(ctx, '# ROOT', DW / 2 - 6, y0 + 58, '900 62px ' + FONT.logo, 'rgba(244,240,248,.96)', 11);
+  ctx.fillStyle = 'rgba(232,32,63,.95)'; ctx.fillRect(DW / 2 + 128, y0 + 80, 26, 8);
+  scratchText(ctx, 'A C C E S S   G R A N T E D', DW / 2, y0 + h - 18, '700 14px ' + FONT.logo, 'rgba(233,230,240,.75)', 4);
+  scratchText(ctx, 'C O M P I L E', DW / 2, 662, '800 20px ' + FONT.logo, 'rgba(233,230,240,.6)', 13);
+}
 function drawSlayer(ctx) {
   const cx = DW / 2;
   ctx.save();
@@ -1444,6 +1570,8 @@ export function backTex(variant) {
     if (P.pattern && PATTERNS[P.pattern]) { ctx.save(); roundRect(ctx, 0, 0, DW, DH, 30); ctx.clip(); PATTERNS[P.pattern](ctx); ctx.restore(); }
     /* 下剋上の褒美: 巨人と、それを断ち切った一太刀 (中央の紋章も専用) */
     if (P.slayer) drawSlayer(ctx);
+    if (P.sins) drawSins(ctx);
+    if (P.root) drawRootAccess(ctx);
 
     /* 中央の紋章 */
     const cx = DW / 2, cy = DH / 2;

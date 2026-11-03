@@ -64,7 +64,9 @@ const SEEN_WRITE_MS = 8_000;
 /* 相手に見せる称号 (見た目だけ)。決まった一覧にあるものだけ。無ければ null */
 const BADGES = ["compiler", "veteran", "tactician", "expert", "architect", "master", "legend", "ascended", "underdog", "underdogduo", "tagmaster", "perfectsync",
   "chainer", "flawless", "grandmaster", "platinum", "puzzler", "compuzzler", "gambler", "highroller", "fortune",
-  "regular", "weeklylegend", "conqueror", "deicide", "blindspot",
+  "regular", "weeklylegend", "conqueror", "deicide", "blindspot", "botbreaker", "rootaccess", "sevensins", "tristate",
+  /* やりこみの実績の称号 (2026-11-03) */
+  "thirdwave", "vanguard", "debugger", "unbroken", "neworder", "deadlysin", "hardstate", "sineater", "dataminer", "zeroday", "gatecrasher", "legion", "immortal", "pantheon", "omniprotocol", "kernelpanic", "shutdown", "overflow", "singularity",
   /* プロトコルの習熟度 6 の称号 (m_ + 小文字のプロトコル名) */
   "m_darkness", "m_death", "m_fire", "m_gravity", "m_life", "m_light", "m_metal", "m_plague", "m_psychic", "m_speed", "m_spirit", "m_water", "m_apathy", "m_hate", "m_love", "m_chaos", "m_clarity", "m_corruption", "m_courage", "m_fear", "m_ice", "m_luck", "m_mirror", "m_peace", "m_smoke", "m_time", "m_war", "m_assimilation", "m_diversity", "m_unity",
   "m_ambush", "m_envy", "m_fulcrum", "m_gluttony", "m_greed", "m_lust", "m_momentum", "m_nova", "m_overwhelm", "m_pride", "m_sloth", "m_wrath", "m_flexible", "m_inert", "m_rigid"];

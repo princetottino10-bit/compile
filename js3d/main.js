@@ -62,7 +62,7 @@ import * as STORY from './story.js';
 import { showStoryResult } from './story-ui.js';
 import { openWorld } from './story-world.js';
 import { cardStats, cardTier, playerLevel, protocolSummary } from './stats-data.js';
-import { isUnlocked, rewardsBetween, TITLES, UNDERDOG_XP, underdogCleared, AVATAR_RELEASED, COSMETICS, MASTERY_ITEMS, protoMastery as masteryOf } from './rewards.js';
+import { isUnlocked, rewardsBetween, TITLES, UNDERDOG_XP, underdogCleared, AVATAR_RELEASED, COSMETICS, MASTERY_ITEMS, TROPHY_ITEMS, protoMastery as masteryOf } from './rewards.js';
 import { confetti } from './gachafx.js';
 import { setCosmeticProtocols, profileOf, myLook, TROPHY_TITLES } from './cosmetics-ui.js';
 import { setCosmeticsProtocols, cosmeticsProtocols } from './cosmetics-mode.js';
@@ -72,6 +72,8 @@ import { matUnlocked, MAT_W, MAT_D } from './playmat.js';
 import { initAccount, openAccount, takeAccountResume, accountState, onAccountChange } from './account.js';
 import { openCardList } from './cardlist-ov.js';
 import { openOpponentSelect } from './opponent-select.js';
+import { openBotSelect } from './bot-select.js';
+import { botScenarioOf, botOpts, botLabel } from './bot-scenarios.js';
 import { UNDERDOG_DECK, STRONGEST_AI, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL, UNDERDOG_TAG_RIVAL_MATE, levelLabel, fixedDeck, DEUS_LEVEL, DEUS_NAME, DEUS_BUDGET, PEEK_LEVEL, PEEK_NAME, ORACLE_LEVEL, oracleAi, isHonki, honkiOf, honkiAi } from './aidecks.js';
 import { openRun, runHud, showRunAfterGame } from './run-ui.js';
 import { openWeekly, weeklyHud, showWeeklyAfterGame } from './weekly-ui.js';
@@ -80,7 +82,7 @@ import { loadWeekly, loadStoredWeekly, weekKey } from './weekly.js';
 import { openReview } from './review.js';
 import { runRoomLobby } from './roomui.js';
 import { bindSelectHead, questionText } from './selectui.js';
-import { faceImageURL, backImageURL, pruneFaceCache, ART_SETS, setMaxAnisotropy, faceCacheSize, repaintFaces } from './cardtex.js';
+import { faceImageURL, backImageURL, pruneFaceCache, ART_SETS, setMaxAnisotropy, faceCacheSize, repaintFaces, repaintFace } from './cardtex.js';
 import * as FX from './fx.js';
 import { buildArena } from './arena.js';
 import { initAudio, sfx, setMuted, isMuted, setSfxVolume, onMuteChange } from './audio.js';
@@ -93,6 +95,8 @@ import * as LAYOUT from './layout.js';
 import { BOARD, CARD, COLOR, TIMING, VIEW, IOS } from './theme.js';
 import * as TW from './tween.js';
 import * as UI from './ui.js';
+import { victoryFx } from './backdrops.js';
+import { CC_HEX } from './fx-compile.js';
 import { pickCard, placementPad } from './input.js';
 import { placementChoices, renderPlayChoices } from './playchoices.js';
 import { createAiClient } from './aiclient.js';
@@ -291,6 +295,8 @@ async function checkTrophies(game) {
         matchGains.trophies.push(...got.map(t => t.name));
         /* 称号がもらえる実績は、終わったあとの欄で「着ける」を出す */
         matchGains.titles.push(...got.map(t => (t.id === 'platinum' ? 'platinum' : TROPHY_TITLES[t.id])).filter(Boolean));
+        /* 称号のほかにもらえる見た目 (Main 3 の実績のスリーブ・マーカー) も、同じ欄で「着ける」 */
+        matchGains.items.push(...TROPHY_ITEMS.filter(it => got.some(t => t.id === it.trophy)));
       }
       for (const t of got) grantXp('trophy', TROPHY_XP[t.tier], 'ach:' + t.id);
       refreshCardGlow();
@@ -355,6 +361,7 @@ function oppAvatarPlan() {
   if (plannedOpp !== undefined) return plannedOpp;
   if (storyNode) return (plannedOpp = storyNode.oppAvatar || null);
   if (machineMatch()) return (plannedOpp = null);   // 人のキャラは出さない (相手は機械の神・目)
+  if (botScenario) return (plannedOpp = null);       // ソロモードの相手は BOT (人のキャラは出さない)
   if (oracleMatch()) return (plannedOpp = oracleAvatar());
   /* 勝ち抜き戦のボス戦は、ボス本人 (avatar.js の boss_<id>) */
   if (runMode && runKind === 'run') {
@@ -698,6 +705,8 @@ let spectate = null;
 
 /* タッグデュエル (2 対 2): 味方と相手の味方のプロトコル { p0: [3], p1: [3] }。null ならふつうの対戦 */
 let tagMates = null;
+/* 公式ソロモード (BOT) のシナリオ (bot-scenarios.js)。BOT と対戦しないときは null */
+let botScenario = null;
 /* タッグで、自分の側を味方が指している (次に指すのが味方)。CPU 戦の味方は CPU、オンラインは味方の人 */
 function partnerMove(st) {
   const s = st || (cur && cur.state);
@@ -756,6 +765,18 @@ let shortMatch = false;               // いまの対戦が短縮マッチか (3
 let oppTurn = null;
 
 /* 合法手: ソロはエンジン、ルームはサーバー提供値 */
+
+/* ハウスルール「PSYCHIC 1 の上下段を入れ替える」: 盤面 (st.psy1Swap) に合わせて、画面のカードの文 (defIndex の上段・下段) を
+   入れ替えて面を描き直す。エンジンは盤面の印で効果を入れ替えるので、文だけ合わせる。発動の表示 (上段・下段) もこの文を読む */
+let psy1TextSwapped = false;
+function syncPsy1Text(st) {
+  const on = !!(st && st.psy1Swap);
+  const d = defIndex.PSYCHIC_2;
+  if (on === psy1TextSwapped || !d) return;
+  const t = d.upper; d.upper = d.lower; d.lower = t;
+  psy1TextSwapped = on;
+  repaintFace('PSYCHIC_2');
+}
 
 function legalNow() {
   if (roomMode) {
@@ -909,6 +930,7 @@ async function boot() {
       if (c === 'lime') return '#b6ff4a';
       if (c === 'violet') return '#b07bff';
       if (c === 'ember') return '#ff7a2e';
+      if (CC_HEX[c]) return CC_HEX[c];
       return null;
     },
     /* 自分のカードが着地した瞬間に震わせる (飛び立つ前ではなく、音と光に合わせる)。表で値が大きいほど強く */
@@ -1025,7 +1047,7 @@ async function boot() {
   }
   /* もう1戦 (REMATCH が ?me=&ai=&lv= を付けて開き直す): 同じ組み合わせ・同じ強さで、タイトルと準備を飛ばす */
   const lvParam = parseInt(params.get('lv'), 10);
-  if (p0 && p1 && params.get('training') !== '1' && Number.isInteger(lvParam)) applyAiDifficulty(lvParam);
+  if (p0 && p1 && params.get('training') !== '1' && Number.isInteger(lvParam)) { applyAiDifficulty(lvParam); botScenario = botScenarioOf(lvParam); }
   /* おまかせ (?quick=1): 基本セットから両者のプロトコルを選び、すぐ始める (はじめての人向け)。
      相手の強さは設定の「おまかせで対戦する強さ」、デイリーのプロトコルを入れる設定なら自分の1つ目にそれを入れる */
   if (params.get('quick') === '1' && !p0) {
@@ -1186,6 +1208,7 @@ async function boot() {
         if (m.story) storyNode = STORY.nodeById(m.story);
         if (m.run) { runMode = true; runKind = m.run; if (runKind === 'weekly') weeklyHud(); else runHud(0); }
         quickGame = !!m.quick;
+        botScenario = resumeRec.init.bot ? botScenarioOf(m.level) : null;
         if (m.oppAvatar !== undefined) plannedOpp = m.oppAvatar;
         applyAiDifficulty(m.level);
         if (storyNode) history.replaceState(null, '', location.pathname + '?story=1');
@@ -1301,11 +1324,20 @@ async function boot() {
         redeckUsed = true;
         history.replaceState(null, '', location.pathname);
         opp = { level: redeck };
+        botScenario = botScenarioOf(redeck);
       } else if (nextMode !== 'training') {
+        botScenario = null;
         opp = await openOpponentSelect(cards.protocols, { challenge: nextMode === 'challenge' });
         if (!opp) { deckPreset = null; nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
         if (opp.quick) { location.href = location.pathname + '?quick=1'; return; }
         if (opp.watch) { nextMode = 'watch'; continue; }
+        /* 公式ソロモード: シナリオを選ぶ (戻ったら相手選びへ)。BOT のデッキはシナリオで決まり、自分の3つは残りから選ぶ */
+        if (opp.bot) {
+          const sc = await openBotSelect(cards.protocols);
+          if (!sc) continue;
+          botScenario = sc;
+          opp = { level: sc.level };
+        }
         if (opp.underdogTag) {
           /* 自分の3つは選べる。相手の最強タッグの6つは選べない。何を選んでも勝てば実績 */
           const pick = await runSetup(cards.protocols, { allowOnline: false, cardsOf: protocolCards, level: UNDERDOG_TAG_LEVEL,
@@ -1355,6 +1387,8 @@ async function boot() {
       applyAiDifficulty(chosen.level);
       /* ドラフトは先手後攻もドラフトの先手に合わせる。ランダム編成は中身を知らせる */
       if (chosen.first) chosenFirst = chosen.first === 'me' ? ME : AI;
+      /* ソロモードはあなたがいつも先手 */
+      if (botScenario) { chosenFirst = ME; setupNote = 'SOLO MODE: ' + botLabel(botScenario) + '　あなた ' + p0.join(' / ') + '　BOT ' + p1.join(' / '); }
       if (chosen.random) setupNote = 'ランダム: あなた ' + p0.join(' / ') + '　相手 ' + p1.join(' / ');
       if (chosen.partial) setupNote = 'あなた ' + p0.map(n => chosen.partial.includes(n) ? n : n + ' (ランダム)').join(' / ') + '　相手 ' + p1.join(' / ');
       if (tagMates) setupNote = 'タッグ: あなた ' + p0.join(' / ') + ' ＋ 味方 ' + tagMates.p0.join(' / ') + '　相手 ' + p1.join(' / ') + ' ＋ ' + tagMates.p1.join(' / ');
@@ -1371,7 +1405,7 @@ async function boot() {
   /* 先攻・後攻はコイントスで決める (トレーニングと問題は自分から。ドラフトはドラフトの先手) */
   /* 勝ち抜き戦のパッチ (先攻・はじめの手札・コントロール) */
   const runOpts = runMode && runKind === 'run' ? battleOpts(loadRun() || { patches: [] }, ME) : null;
-  const firstPlayer = trainingMode || puzzle || tutorial || demoMode || storyNode ? ME
+  const firstPlayer = trainingMode || puzzle || tutorial || demoMode || storyNode || botScenario ? ME
     : runOpts && runOpts.first !== undefined ? runOpts.first
       : chosenFirst !== null ? chosenFirst : (Math.random() < 0.5 ? ME : AI);
   const seed = (Math.random() * 1e9) | 0;
@@ -1394,6 +1428,9 @@ async function boot() {
       document.body.classList.remove('replay');
     }
   }
+  /* ハウスルール「PSYCHIC 1 の上下段を入れ替える」(設定)。CPU 戦だけ。ウィークリーは点数を比べるので公式のまま。
+     リプレイ・続きからは棋譜のはじめ (init.psy1Swap) に従う */
+  const psy1Swap = !!settings().psy1Swap && !(runMode && runKind === 'weekly');
   const res = replayBuilt
     ? replayBuilt.res
     : resumed
@@ -1405,8 +1442,12 @@ async function boot() {
         : Engine.newGame({ seed, p0, p1, first: firstPlayer, training: trainingMode, winCompiles,
           ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods, winCompilesBySide: runOpts.winCompilesBySide, perks: runOpts.perks, startCompiled: runOpts.startCompiled, misere: runOpts.misere, handSwap: runOpts.handSwap, turncoat: runOpts.turncoat } : {}),
           ...(storyOpts || {}),
-          ...(tagMates ? { tag: tagMates } : {}) });
+          ...(botScenario ? { bot: botOpts(botScenario) } : {}),
+          ...(tagMates ? { tag: tagMates } : {}),
+          ...(psy1Swap ? { psy1Swap: true } : {}) });
   cur = res;
+  syncPsy1Text(cur.state);
+  if (cur.state.psy1Swap && !replayBuilt && p0.concat(p1).includes('PSYCHIC')) setTimeout(() => UI.toast('ハウスルール: PSYCHIC 1 の上段と下段を入れ替えています', 3800), 1400);
   chaosRules = runMode && runKind === 'run' && !replayMode && !reviewView ? runRules(loadRun()) : {};
   board.setBlind(!!chaosRules.blind);
   stage.setFlip(!!chaosRules.flip);
@@ -1440,7 +1481,9 @@ async function boot() {
   /* タッグはリプレイに残さない (棋譜の形が 1 対 1 のため) */
   const gameInit = resumed ? resumed.rec.init : { seed, p0: p0.slice(), p1: p1.slice(), first: firstPlayer, winCompiles: winCompiles || null,
     ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods, winCompilesBySide: runOpts.winCompilesBySide, perks: runOpts.perks, startCompiled: runOpts.startCompiled, misere: runOpts.misere, handSwap: runOpts.handSwap, turncoat: runOpts.turncoat } : {}),
-    ...(storyOpts || {}) };
+    ...(storyOpts || {}),
+    ...(botScenario ? { bot: botOpts(botScenario) } : {}),
+    ...(psy1Swap ? { psy1Swap: true } : {}) };
   const priorActions = resumed ? resumed.rec.actions : [];
   /* CPU どうしの観戦も残す (RECORD のリプレイの「観戦」の枠。?demo=1 の流しっぱなしは残さない) */
   replayLog = !replayMode && !trainingMode && !puzzle && !tutorial && (!demoMode || !!spectate) && !tagMates && !storyNode
@@ -1545,7 +1588,8 @@ async function boot() {
     UI.toast('カードを選んで、光っている枠をタップすると置けます', 3200);
   } else {
     if (!puzzle && !tutorial && !demoMode) {
-      const turnNote = chosenFirst !== null
+      const turnNote = botScenario ? 'ソロモード: あなたが先攻です'
+        : chosenFirst !== null
         ? (firstPlayer === ME ? 'ドラフトの先手: あなたが先攻です' : 'ドラフトの後手: あなたは後攻です')
         : (firstPlayer === ME ? 'コイントス: あなたが先攻です' : 'コイントス: あなたは後攻です');
       UI.toast(resumed ? (cur && cur.state.winner !== null ? '前の対戦は決着していました。結果を記録します' : '中断した対戦の続きから') : setupNote ? setupNote + '　' + turnNote : turnNote, setupNote ? 4200 : 2600);
@@ -1968,7 +2012,7 @@ function mountTraining() {
     reset: () => {
       if (busy) return;
       const [a, b] = training.protos;
-      cur = Engine.newGame({ seed: (Math.random() * 1e9) | 0, p0: a, p1: b, training: true });
+      cur = Engine.newGame({ seed: (Math.random() * 1e9) | 0, p0: a, p1: b, training: true, psy1Swap: !!(cur && cur.state.psy1Swap) });
       training.undo = [];
       resync();
       UI.toast('盤面をリセットしました');
@@ -3107,8 +3151,8 @@ function select(uid) {
     sfx('pick');
     raiseHandCard(uid);
     const card = board.cardOf(shown(), uid);
-    board.setHighlight(card, 0xffb3da, 0.22, 0.85);
-    board.setSelected(card, true, 0xffb3da);      // 選んだ札は金色に染める
+    board.setHighlight(card, 0xffc2b4, 0.22, 0.85);
+    board.setSelected(card, true, 0xffc2b4);      // 選んだ札は金色に染める
   }
   updatePads();
   if (tutorial) coachUpdate();
@@ -3432,7 +3476,7 @@ function showCpuPlates(p1) {
   /* 機械仕掛けの神の名札は名前と「機械仕掛けの神」(称号の DEUS EX MACHINA は書かない。書くと称号の降臨がもう一度出る) */
   /* ストーリーで、主人公でなく仲間を動かす一戦 (2章の茜) は、自分の名札もその子の名前にする */
   const mine = storyNode && storyNode.meName ? { ...myPlate(), name: storyNode.meName, sub: 'STORY', icon: null } : myPlate();
-  showPlates({ me: mine, opp: { name: storyNode ? storyNode.oppName : deusMatch() ? DEUS_NAME : peekMatch() ? PEEK_NAME : (showAv && avatarName(oppAvatarPlan())) || 'CPU',
+  showPlates({ me: mine, opp: { name: storyNode ? storyNode.oppName : deusMatch() ? DEUS_NAME : peekMatch() ? PEEK_NAME : botScenario ? 'BOT' : (showAv && avatarName(oppAvatarPlan())) || 'CPU',
     sub: storyNode ? 'STORY' : runMode ? '' : deusMatch() ? '機械仕掛けの神' : peekMatch() ? 'すべてを見る者' : shortLevel(aiDifficulty),
     icon: first ? { name: first.name, color: first.color } : null } });
 }
@@ -3583,6 +3627,7 @@ async function roomApplyView(rm, instant) {
   const st = ROOM.buildRoomState(rm, roomValOf);
   const nq = ROOM.normRequest(rm);
   cur = { state: st, requests: nq ? [nq] : [], log: rm.log || [], trace: entries, winner: st.winner, error: null };
+  syncPsy1Text(st);                              // オンラインは公式のルール (盤面に psy1Swap が無い) なので元の文に戻す
   syncAssist();                                  // 取り消せるか (canUndo) が変わる
   /* last_log はサーバーが直近の解決分だけ公開している。ポーリングのたびに
      同じ内容を積まないよう、ルームの版番号ごとに一度だけ表示する。 */
@@ -3934,7 +3979,7 @@ async function roomMaybeFinish() {
   const win = st.winner === ME;
   UI.setPrompt(win ? 'あなたの勝ち' : '敗北', 'end');
   const victory = cosmetic('victory', 'default');
-  sfx(win ? (victory === 'aurora' ? 'winAurora' : 'win') : 'lose');
+  sfx(win ? victoryFx(victory).sfx : 'lose');
   await finaleFx(win);
   FEEL.buzz(win ? [40, 70, 40, 70, 120] : [160]);
   await UI.resultCutIn(win, { victory, deus: win && myPlate().sub === TITLES.platinum });
@@ -4079,6 +4124,8 @@ async function roomEnterGame(rm) {
   lastTurn = null;
   tenseBgmOn = false;
   tenseNext = null;
+  tenseNow = null;
+  tenseBoth = false;
   roomLoggedVersion = null;
   roomTracker = ROOM.createTraceTracker();
   await roomApplyView(rm, true);
@@ -4111,7 +4158,7 @@ async function finaleFx(win) {
     FX.compilePillar(stage.scene, BOARD.laneX[i], accent, 1800);
   }
   FX.shockwave(stage.scene, new THREE.Vector3(0, 0, 0), accent, 9, 1200);
-  FX.screenFlash(stage, win ? 0xffffff : 0xff4fa3, 760, 0.92);
+  FX.screenFlash(stage, win ? 0xffffff : 0xe8203f, 760, 0.92);
   stage.shake(0.3, 900);
   await TW.wait(320);
 }
@@ -4591,26 +4638,44 @@ function stackCount(line, side) {
   return st && st.lines && st.lines[line] && st.lines[line][side] ? st.lines[line][side].length : 0;
 }
 /* どちらかが勝ちまであと1本 (ふつうの3本勝負なら2本コンパイル済み) になったら、曲を速い曲 (bgm.js の TENSE_BGMS からランダム) に替えて緊迫感を出す。
-   手番が替わるとき (ターンの表示と同じとき) に一度だけ。ボス・機械仕掛けの神・すべてを見る者は専用の曲のまま。
+   手番が替わるとき (ターンの表示と同じとき) に替え、その後も途中で次の曲へ替える (下の TENSE_ROTATE_MS)。ボス・機械仕掛けの神・すべてを見る者は専用の曲のまま。
    練習・問題・チュートリアル・ストーリー・リプレイでは替えない */
 let tenseBgmOn = false;
 let tenseNext = null;            // 先に選んで読んでおく、あと1本の曲 (切り替えたときに読み込みで無音が挟まらないように)
+let tenseNow = null;             // いま流している、あと1本の曲
+let tenseSince = 0;              // その曲に替えた時刻
+let tenseBoth = false;           // 両方があと1本になって曲を替えたか
+/* あと1本の曲は、流れの途中でも替える (2026-11-03 本人の希望): 両方があと1本になったときと、同じ曲が TENSE_ROTATE_MS 続いたとき。
+   替えるのは手番の替わり目だけ (演出の途中で曲が替わらないように) */
+const TENSE_ROTATE_MS = 100000;
+function switchTense(avoid) {
+  const key = tenseNext && tenseNext !== avoid ? tenseNext : pickTenseBgm(Math.random, avoid);
+  crossBgm(key);
+  tenseNow = key;
+  tenseSince = Date.now();
+  prepareBgm(tenseNext = pickTenseBgm(Math.random, key), false);   // 次に替える曲を先に読んでおく
+}
 function maybeTenseBgm(st) {
-  if (tenseBgmOn || !st || st.winner !== null || !Array.isArray(st.players)) return;
+  if (!st || st.winner !== null || !Array.isArray(st.players)) return;
   if (tutorial || puzzle || trainingMode || demoMode || replayMode || storyNode) return;
   if (!roomMode && (deusMatch() || peekMatch() || battleTier() === 'boss')) return;
-  const oneLeft = [0, 1].some(side => {
+  const left = [0, 1].map(side => {
     const need = Array.isArray(st.winBySide) ? st.winBySide[side] : (st.winCompiles || 3);
-    return need - st.players[side].protocols.filter(p => p.compiled).length === 1;
+    return need - st.players[side].protocols.filter(p => p.compiled).length;
   });
-  if (!oneLeft) {
+  if (tenseBgmOn) {
+    if (!tenseBoth && left.every(n => n === 1)) { tenseBoth = true; switchTense(tenseNow); }
+    else if (Date.now() - tenseSince >= TENSE_ROTATE_MS) switchTense(tenseNow);
+    return;
+  }
+  if (!left.some(n => n === 1)) {
     /* 1本目のコンパイルが済んだら、あと1本の曲を選んでファイルだけ読んでおく (音にするのは切り替えのとき) */
     if (!tenseNext && st.players.some(p => p.protocols.some(q => q.compiled))) prepareBgm(tenseNext = pickTenseBgm(), false);
     return;
   }
   tenseBgmOn = true;
-  crossBgm(tenseNext || pickTenseBgm());
-  tenseNext = null;
+  tenseBoth = left.every(n => n === 1);
+  switchTense(null);
 }
 /* 対戦の BGM: ボスと強敵は専用の曲。ふつうの対戦はシャッフル (COLLECTION の BGM を出したら選んだ曲) */
 function battleBgm() {
@@ -5060,7 +5125,7 @@ function pickRibbon(req, m) {
   const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   return '<button type="button" class="rb-peek" aria-pressed="false" title="帯を透かして盤面を見る" aria-label="盤面を見る">&#128065;</button>' +
     (s
-      ? '<button type="button" class="rb-src" data-def="' + esc(s.def) + '" style="--accent:' + esc(s.color || '#b9a4ff') + '" title="効果を読む">' +
+      ? '<button type="button" class="rb-src" data-def="' + esc(s.def) + '" style="--accent:' + esc(s.color || '#cdc7d4') + '" title="効果を読む">' +
           (d ? '<img alt="" src="' + faceImageURL(d) + '">' : '') + '<b>' + esc(s.name) + '</b></button>'
       : '') +
     '<span class="rb-q">' + esc(handDiscardQuestion(req, m.max) || questionText(req)) + (m.max > 1 ? ' <em>' + (m.count || 0) + '/' + m.max + '</em>' : '') + '</span>' +
@@ -5679,7 +5744,7 @@ function arrangeOnBoard(req, opts) {
       ov.innerHTML =
         '<div class="pick-ribbon' + (arrPeek ? ' peek' : '') + '">' +
           '<button type="button" class="rb-peek" aria-pressed="' + arrPeek + '" title="帯を透かして盤面を見る" aria-label="盤面を見る">&#128065;</button>' +
-          (s ? '<button type="button" class="rb-src" data-def="' + esc(s.def) + '" style="--accent:' + esc(s.color || '#b9a4ff') + '" title="効果を読む">' +
+          (s ? '<button type="button" class="rb-src" data-def="' + esc(s.def) + '" style="--accent:' + esc(s.color || '#cdc7d4') + '" title="効果を読む">' +
             (d ? '<img alt="" src="' + faceImageURL(d) + '">' : '') + '<b>' + esc(s.name) + '</b></button>' : '') +
           '<span class="rb-q">' + esc(text) + '</span>' +
           ribbonActs((targetSide === null || isIdentity ? '' : '<button type="button" class="rb-btn" id="arrReset">やり直し</button>') +
@@ -5882,7 +5947,7 @@ async function afterTurn() {
     const levelBefore = myLevel;
     let newConq = [];     // この1戦で新しく制覇した (最強に初めて勝った) プロトコル
     if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial && !storyNode) {
-      matchGains = { xp0: playerLevel(localRecords(), bonusXp()).xp, chip0: earnedChips(), lv0: myLevel, daily: [], trophies: [], titles: [],
+      matchGains = { xp0: playerLevel(localRecords(), bonusXp()).xp, chip0: earnedChips(), lv0: myLevel, daily: [], trophies: [], titles: [], items: [],
         /* 習熟度で手に入る見た目 (名札・称号・盤面) を、この試合の前の習熟度で覚えておく。終わったら越えたものを出す */
         mastery0: Object.fromEntries([...new Set(MASTERY_ITEMS.map(it => it.proto))].map(p => [p, masteryOf(p)])) };
     }
@@ -5925,7 +5990,7 @@ async function afterTurn() {
     }
     UI.setPrompt(win ? 'あなたの勝ち' : '敗北', 'end');
     const victory = cosmetic('victory', 'default');
-    sfx(win ? (victory === 'aurora' ? 'winAurora' : 'win') : 'lose');
+    sfx(win ? victoryFx(victory).sfx : 'lose');
     /* iPhone: 決着の演出の間も、すりガラスの効果を切っておく (コンパイルの演出が終わると戻していた。結果の画面を出すときに戻す) */
     document.body.classList.add('compiling');
     if (!recordedBefore) {
@@ -6075,7 +6140,7 @@ function matchSummaryHtml() {
     const turns = (st.turns || 0) + 1;
     const esc = (t) => String(t).replace(/[<>&"]/g, '');
     const rows = order.map((o, i) => {
-      const color = (protoIndex[o.name] && protoIndex[o.name].color) || '#b9a4ff';
+      const color = (protoIndex[o.name] && protoIndex[o.name].color) || '#cdc7d4';
       return '<li class="' + (o.side === ME ? 'me' : 'opp') + (o.re ? ' re' : '') + '">' +
         '<i>' + (i + 1) + '</i>' +
         '<span class="cs-who">' + (o.side === ME ? 'あなた' : '相手') + '</span>' +
@@ -6107,7 +6172,7 @@ function gainsHtml() {
   if (!matchGains) return '';
   const xp = playerLevel(localRecords(), bonusXp()).xp - matchGains.xp0;
   const unlocked = masteryUnlocks();
-  if (xp <= 0 && !matchGains.daily.length && !matchGains.trophies.length && !matchGains.titles.length && !unlocked.length) return '';
+  if (xp <= 0 && !matchGains.daily.length && !matchGains.trophies.length && !matchGains.titles.length && !(matchGains.items || []).length && !unlocked.length) return '';
   const chips = chipsOf(loadGacha(), earnedChips());
   const gotChips = earnedChips() - matchGains.chip0;
   const esc = (t) => String(t).replace(/[<>&"]/g, '');
@@ -6125,6 +6190,13 @@ function gainsHtml() {
   for (const it of unlocked) {
     if (!canEquip(it.kind, it.key)) continue;
     rows.push('<li class="eg-title"><small>' + (KIND[it.kind] || '見た目') + '</small><span>' + esc(itemLabel(it.kind, it.key)) + ' <em class="eg-why">' + esc(it.proto) + ' 習熟度 ' + it.mastery + '</em></span>' +
+      (isEquipped(it.kind, it.key) ? '<em class="eg-on">着けています</em>' : '<button type="button" class="eg-equip" data-kind="' + esc(it.kind) + '" data-key="' + esc(it.key) + '">着ける</button>') + '</li>');
+  }
+  /* 実績でもらった見た目 (スリーブ・マーカー): その場で着ける */
+  const KIND2 = { sleeve: 'スリーブ', marker: 'マーカー' };
+  for (const it of (matchGains.items || [])) {
+    if (!canEquip(it.kind, it.key)) continue;
+    rows.push('<li class="eg-title"><small>' + (KIND2[it.kind] || '見た目') + '</small><span>' + esc(itemLabel(it.kind, it.key)) + '</span>' +
       (isEquipped(it.kind, it.key) ? '<em class="eg-on">着けています</em>' : '<button type="button" class="eg-equip" data-kind="' + esc(it.kind) + '" data-key="' + esc(it.key) + '">着ける</button>') + '</li>');
   }
   /* もらった称号: その場で着ける */
@@ -6784,9 +6856,9 @@ function panelRows(st) {
       const meta = protoIndex[parts[0]] || {};
       return {
         name: proto.name,
-        parts: parts.length > 1 ? parts.map(n => ({ name: n, color: (protoIndex[n] || {}).color || '#b9a4ff' })) : null,
+        parts: parts.length > 1 ? parts.map(n => ({ name: n, color: (protoIndex[n] || {}).color || '#cdc7d4' })) : null,
         total: totalOf(st, line, side),
-        color: meta.color || '#b9a4ff',
+        color: meta.color || '#cdc7d4',
         set: meta.set,
         compiled: proto.compiled,
         /* 次のその側の手番の開始でコンパイル (済みならリコンパイル) が起きる */

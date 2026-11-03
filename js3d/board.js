@@ -720,7 +720,7 @@ export function createBoard(stage, defIndex, me, hooks) {
   /* 光の色は「対象に何が起きたか」で分ける (元のカードは自分のプロトコル色で脈打つ)。
      引く=シアン / 動かす=金 / 裏返す=紫 / 削除=赤 / 手札に戻す=緑 / 場に出す=ピンク */
   const BEAM_KIND_COLOR = {
-    draw: 0x63f3ff, shift: 0xffc857, flip: 0xb388ff, delete: 0xff4d5e, bounce: 0x6dffc2, play: 0xff4fa3
+    draw: 0x63f3ff, shift: 0xffc857, flip: 0xb388ff, delete: 0xff4d5e, bounce: 0x6dffc2, play: 0xe8203f
   };
   function beamKind(prev, next, uid, a, b) {
     if (a && a.zone === 'deck' && b && (b.zone === 'field' || b.zone === 'transit')) return 'play';   // 山札から場へ直接
@@ -913,11 +913,11 @@ export function createBoard(stage, defIndex, me, hooks) {
       for (const [uid, card] of cards) {
         if (!card.visible) continue;
         if (chset.has(uid)) {
-          setHighlight(card, new THREE.Color(0xffb3da), 0.14, 1.0);
-          setSelected(card, true, 0xffb3da);          // 選んだ札は金色に染める
+          setHighlight(card, new THREE.Color(0xffc2b4), 0.14, 1.0);
+          setSelected(card, true, 0xffc2b4);          // 選んだ札は金色に染める
           setDim(card, false);
         } else if (cset.has(uid)) {
-          setHighlight(card, new THREE.Color(0xb9a4ff), 0.12, 1.0);
+          setHighlight(card, new THREE.Color(0xcdc7d4), 0.12, 1.0);
           setCandidate(card, true);
           setDim(card, false);
         } else {
@@ -940,8 +940,8 @@ export function createBoard(stage, defIndex, me, hooks) {
       for (const [uid, card] of cards) {
         if (!card.visible) continue;
         if (focus.has(uid)) {
-          setHighlight(card, new THREE.Color(0xffb3da), 0.52, 1.0);
-          setSelected(card, true, 0xffb3da);
+          setHighlight(card, new THREE.Color(0xffc2b4), 0.52, 1.0);
+          setSelected(card, true, 0xffc2b4);
         }
       }
     },

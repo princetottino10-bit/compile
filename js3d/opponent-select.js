@@ -25,7 +25,7 @@ export function openOpponentSelect(protocols, opts = {}) {
   const challenge = !!opts.challenge;
   const byName = Object.fromEntries(protocols.map(p => [p.name, p]));
   const deck = (names) => '<span class="rn-deck">' + names.map(n =>
-    '<i style="--pc:' + esc((byName[n] || {}).color || '#b9a4ff') + '">' + esc(n) + '</i>').join('') + '</span>';
+    '<i style="--pc:' + esc((byName[n] || {}).color || '#cdc7d4') + '">' + esc(n) + '</i>').join('') + '</span>';
   let last = null;
   try { last = localStorage.getItem(LAST_KEY); } catch (e) { /* private mode */ }
 
@@ -109,6 +109,9 @@ export function openOpponentSelect(protocols, opts = {}) {
       '<small>プロトコルも相手も自動で決めて、' + LEVEL_LABELS[Math.min(2, Math.max(0, settings().quickLevel | 0))] + 'の CPU と対戦します (強さは ⚙ の設定で変えられる)</small></button>' +
       '<section><h3>CPU <small>次の画面で、公式ルールのドラフトで CPU とプロトコルを取り合う (自由に選ぶ・ランダムにも変えられる)</small></h3>' +
       '<div class="op-row">' + [0, 1, 2].map(i => card(String(i), LEVEL_LABELS[i], CPU_NOTES[i])).join('') + '</div></section>' +
+      /* 公式ソロモード (Main 3 のルールシート): 自動で動く BOT と、12 のシナリオで対戦する */
+      '<section><h3>公式ソロモード <small>Main 3 のソロルール。自動で動く BOT と、REGULAR・ADVANCED の 12 シナリオで対戦する (次の画面でシナリオを選ぶ)</small></h3>' +
+      '<div class="op-row">' + card('bot', 'VS BOT · 12 SCENARIOS', 'BOT はキューの前の札から決まった置き方で出す。BOT が同じプロトコルを2度コンパイルしたら負け', '', ' wide') + '</div></section>' +
       '<section><h3>タッグデュエル <small>あなたと CPU の味方 vs CPU 2人。盤面は共有、手札と山札は1人ずつ。ラインは2人のプロトコルを合わせた複合プロトコル (次の画面で自分の3つを選び、味方は残りから)</small></h3>' +
       '<div class="op-row">' + [0, 1, 2].map(i => card('tag' + i, 'TAG · ' + LEVEL_LABELS[i], '手番は あなた → 相手1 → 味方 → 相手2')).join('') + '</div></section>' +
       '<section><h3>観戦 <small>CPU どうしの対戦を見る。どちらが勝つかに CHIP を賭けることも、組み合わせを自由に選ぶこともできる</small></h3>' +
@@ -136,6 +139,7 @@ export function openOpponentSelect(protocols, opts = {}) {
       if (key === 'back') { resolve(null); return; }
       if (key === 'quick') { resolve({ quick: true }); return; }
       if (key === 'watch') { resolve({ watch: true }); return; }
+      if (key === 'bot') { try { localStorage.setItem(LAST_KEY, key); } catch (e) { /* private mode */ } resolve({ bot: true }); return; }
       try { localStorage.setItem(LAST_KEY, key); } catch (e) { /* private mode */ }
       if (/^tag\d$/.test(key)) { resolve({ tag: true, level: +key.slice(3) }); return; }
       if (key === 'udtag') { resolve({ underdogTag: true, level: UNDERDOG_TAG_LEVEL }); return; }

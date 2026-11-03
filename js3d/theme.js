@@ -62,22 +62,22 @@ export const CAMERA = {
   focus: { height: 6.2, pull: 4.3, swing: 0.32, lookSwing: 0.5 }
 };
 
-/* --- 配色 (既存プロトタイプのサイバーパンク暗色を踏襲) --- */
+/* --- 配色 (Main 3 の箱に合わせた、黒い基板と赤。自分は紫、相手は赤) --- */
 export const COLOR = {
-  bg: 0x03040a,
-  fog: 0x05060f,
-  floor: 0x070a16,
-  grid: 0x2b4a63,
-  gridHot: 0xb9a4ff,
-  pink: 0xff4fa3,
-  cyan: 0xb9a4ff,
+  bg: 0x050505,
+  fog: 0x060505,
+  floor: 0x0a0909,
+  grid: 0x3b3036,
+  gridHot: 0xcdc7d4,
+  pink: 0xe8203f,
+  cyan: 0xcdc7d4,
   mint: 0xa07bff,
-  gold: 0xffb3da,
+  gold: 0xffc2b4,
   cardEdge: 0x0a0c16,
-  cardBackA: '#0a0f1e',
-  cardBackB: '#04060e',
+  cardBackA: '#0e0b0c',
+  cardBackB: '#060505',
   self: 0xa07bff,
-  opp: 0xff4fa3
+  opp: 0xe8203f
 };
 
 /* --- 演出タイミング (ms) --- */

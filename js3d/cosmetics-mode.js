@@ -5,7 +5,8 @@
  *   まだ持っていないものも並べ、手に入れ方を書く (押すとプレビューだけ見られる)。
  *   新しく手に入れたものには NEW (見た印は compileCosSeen、このブラウザだけ)
  * ========================================================================= */
-import { COSMETICS, TITLES, REWARDS, GACHA_ITEMS, UNDERDOG_ITEMS, WEEKLY_ITEMS, masteryItem, protoMastery, unlockLevel, ownedTitles, AVATAR_RELEASED, BGM_RELEASED, weeklyClears } from './rewards.js';
+import { victoryFx, victoryPreviewURL } from './backdrops.js';
+import { COSMETICS, TITLES, REWARDS, GACHA_ITEMS, UNDERDOG_ITEMS, WEEKLY_ITEMS, FREE_ITEMS, trophyItem, masteryItem, protoMastery, unlockLevel, ownedTitles, AVATAR_RELEASED, BGM_RELEASED, weeklyClears } from './rewards.js';
 import { AVATARS, faceURL } from './avatar.js';
 import { accountState } from './account.js';
 import { extraTitles, TROPHY_TITLES } from './cosmetics-ui.js';
@@ -55,13 +56,22 @@ const DEFAULT_KEY = { mat: 'neon', sleeve: 'default', marker: 'default', ccolor:
 const RAR_NAME = { C: 'COMMON', R: 'RARE', E: 'EPIC', L: 'LEGENDARY' };
 /* 実績の名前は achievements.js から (前はここに手で写していて、ずれていた) */
 const trophyName = (id) => (TROPHIES.find(t => t.id === id) || {}).name || id;
-const CCOLOR = { default: 'linear-gradient(90deg,#ff5c5c,#b9a4ff,#a07bff)', gold: '#ffd86a', cyan: '#7ff3ff', rainbow: 'conic-gradient(#ff5f7a,#ffc05a,#7df28c,#5ab8ff,#b98cff,#ff5f7a)',
-  lime: '#b6ff4a', violet: '#b07bff', ember: '#ff7a2e' };
+const CCOLOR = { default: 'linear-gradient(90deg,#ff5c5c,#cdc7d4,#a07bff)', gold: '#ffd86a', cyan: '#7ff3ff', rainbow: 'conic-gradient(#ff5f7a,#ffc05a,#7df28c,#5ab8ff,#b98cff,#ff5f7a)',
+  lime: '#b6ff4a', violet: '#b07bff', ember: '#ff7a2e', crimson: '#e8203f', frost: '#bfeaff', sakura: '#ffa8c8',
+  solar: 'radial-gradient(circle,#fff 0 20%,#fff1c4 35%,#ffd86a 60%)' };
 
 /* コンパイルの光ごとの演出 (fx-compile.js)。色だけでなく動きも違う */
 const CC_DESC = { default: 'プロトコルの色の光の柱', gold: '金色の光の柱 + 金貨が降る', cyan: '水色の光の柱 + 稲妻が落ちる',
   rainbow: '毎回ちがう色の光の柱 + 虹の輪が広がる', lime: '黄緑の光の柱 + 泡が昇って弾ける', violet: '紫の光の柱 + 光の粒が渦を巻いて昇る',
-  ember: '橙の光の柱 + 火の粉が舞い上がる' };
+  ember: '橙の光の柱 + 火の粉が舞い上がる', crimson: '赤い光の柱 + データの欠片が瞬きながら昇る',
+  frost: '氷色の光の柱 + 氷の刃が突き刺さって砕ける', sakura: '桜色の光の柱 + 花びらが舞い降りる', solar: '白金の光の柱 + 光の環が回りながら昇る' };
+/* 勝ちの演出 (backdrops.js の VICTORY_FX)。見本は本物の背景を小さく描いたもの */
+const VIC_DESC = { default: '金と紫の光条が左右へ弾ける', aurora: '夜空にオーロラの幕が揺れる', circuit: '黒い基板に赤い信号が走り、一閃が横切る',
+  sakura: '月夜の桜。花びらが舞う', matrix: '緑の文字の雨が降る', supernova: '中心が白く爆ぜ、衝撃の輪が広がる', eclipse: '黒い太陽と金のコロナ' };
+function vicStyle(key, w, h) {
+  const url = victoryPreviewURL(key, w, h);
+  return '--vac:' + victoryFx(key).accent + (url ? ';background-image:url(' + url + ')' : '');
+}
 
 let protoList = [];
 /* プロトコルの習熟度の名札 (p_fire) は、そのプロトコルの色を --pfc に渡す */
@@ -104,7 +114,7 @@ const lvLeft = (lv) => { const n = xpForLevel(lv) - xpNow(); return n > 0 ? ' (�
 
 /* 手に入れ方。[まだのときの言い方, 持っているときの言い方 (どうやって手に入れたか)] */
 function sourceInfo(kind, key) {
-  if (key === '' || key === DEFAULT_KEY[kind]) return ['はじめから', 'はじめから持っている'];
+  if (key === '' || key === DEFAULT_KEY[kind] || FREE_ITEMS.some(x => x.kind === kind && x.key === key)) return ['はじめから', 'はじめから持っている'];
   if (shopPrice(kind, key)) return ['CHIP ' + shopPrice(kind, key) + ' で交換', 'CHIP ' + shopPrice(kind, key) + ' で交換した'];
   if (kind === 'icon') return ['LV ' + unlockLevel('icon', 'icon') + ' で解放' + lvLeft(unlockLevel('icon', 'icon')), 'LV ' + unlockLevel('icon', 'icon') + ' になって解放'];
   const g = GACHA_ITEMS.find(x => x.kind === kind && x.key === key);
@@ -112,6 +122,8 @@ function sourceInfo(kind, key) {
   if (UNDERDOG_ITEMS.some(x => x.kind === kind && x.key === key) || (kind === 'title' && key === 'underdog')) return ['下剋上に勝つ', '下剋上に勝ってもらった'];
   if (kind === 'title' && key === 'deicide') return ['機械仕掛けの神 (CHALLENGE) に勝つ', '機械仕掛けの神に勝ってもらった'];
   if (kind === 'title' && key === 'blindspot') return ['？？？', 'すべてを見る者に勝ってもらった'];
+  const ti = trophyItem(kind, key);
+  if (ti) return ['実績 ' + trophyName(ti.trophy), '実績「' + trophyName(ti.trophy) + '」を取ってもらった'];
   const m = masteryItem(kind, key);
   if (m) return [m.proto + ' の習熟度 ' + m.mastery + ' (いま ' + protoMastery(m.proto) + ')', m.proto + ' の習熟度が ' + m.mastery + ' になってもらった'];
   const w = WEEKLY_ITEMS.find(x => x.kind === kind && x.key === key);
@@ -131,6 +143,8 @@ function sourceLink(kind, key) {
     const t = Object.entries(TROPHY_TITLES).find(([, k]) => k === key);
     if (t || key === 'platinum') return '<button type="button" class="cm-src" data-src="trophy" data-id="' + esc(t ? t[0] : 'platinum') + '">実績を見る ▸</button>';
   }
+  const ti = trophyItem(kind, key);
+  if (ti) return '<button type="button" class="cm-src" data-src="trophy" data-id="' + esc(ti.trophy) + '">実績を見る ▸</button>';
   if (masteryItem(kind, key)) return '<button type="button" class="cm-src" data-src="mastery">習熟度を見る ▸</button>';
   if (!GACHA_ITEMS.some(x => x.kind === kind && x.key === key) && REWARDS.some(x => x.kind === kind && x.key === key)) {
     return '<button type="button" class="cm-src" data-src="level">レベルの報酬を見る ▸</button>';
@@ -212,11 +226,11 @@ function thumb(kind, key) {
     case 'mat': return matURL(key) ? '<img alt="" src="' + matURL(key) + '">' : '<span class="cm-neon"></span>';
     case 'marker': return '<img alt="" src="' + markerURL(key) + '">';
     case 'ccolor': return '<span class="cm-glow" style="--gc:' + (CCOLOR[key] || CCOLOR.default) + '"></span>';
-    case 'victory': return '<span class="cm-vic ' + esc(key) + '">WIN</span>';
+    case 'victory': return '<span class="cm-vic ' + esc(key) + '" style="' + vicStyle(key, 192, 108) + '">WIN</span>';
     case 'icon': {
       if (isFaceIcon(key)) return '<img class="cm-face" alt="" src="' + faceIconURL(key) + '">';
       const p = protoList.find(x => x.name === key);
-      return p ? '<img alt="" src="' + emblemDataURL(p.name, p.color || '#b9a4ff', 64, true) + '">' : '<span class="cm-none">—</span>';
+      return p ? '<img alt="" src="' + emblemDataURL(p.name, p.color || '#cdc7d4', 64, true) + '">' : '<span class="cm-none">—</span>';
     }
     case 'plate': return '<span class="cm-pf pf-' + esc(key) + '"' + pfcStyle(key) + '><b>' + esc((displayName() || 'YOU').slice(0, 8)) + '</b></span>';
     case 'avatar': return '<img class="cm-av" alt="" src="' + faceURL(key, 'normal') + '">';
@@ -239,7 +253,8 @@ function preview(kind, key, name, isOwned, src) {
     case 'marker': art = '<div class="cm-markerview"><img alt="" src="' + markerURL(key) + '"></div>'; break;
     case 'ccolor': art = '<div class="cm-burst" style="--gc:' + (CCOLOR[key] || CCOLOR.default) + '"><b>COMPILE</b></div>' +
       '<p class="cm-desc">' + esc(CC_DESC[key] || '') + '</p>'; break;
-    case 'victory': art = '<div class="cm-vicview ' + esc(key) + '"><b>YOU WIN</b></div>'; break;
+    case 'victory': art = '<div class="cm-vicview ' + esc(key) + '" style="' + vicStyle(key, 640, 360) + '"><b>YOU WIN</b></div>' +
+      '<p class="cm-desc">' + esc(VIC_DESC[key] || '') + '</p>'; break;
     case 'plate': {
       const ia = iconArt(s.icon, protoList, 96);
       art = '<div class="cm-plate pf-' + esc(key) + '"' + pfcStyle(key) + '>' + (ia ? '<img alt="" class="' + (ia.face ? 'face' : '') + '" src="' + ia.src + '">' : '<span>//</span>') +
@@ -251,10 +266,10 @@ function preview(kind, key, name, isOwned, src) {
       const d = AVATARS[key] || {};
       const line = d.lines && d.lines.hello ? d.lines.hello[0] : '';
       const text = Array.isArray(line) ? line[0] : line;
-      art = '<div class="cm-avview" style="--av-c:' + esc(d.color || '#b9a4ff') + '"><img alt="" src="' + faceURL(key, 'happy') + '">' +
+      art = '<div class="cm-avview" style="--av-c:' + esc(d.color || '#cdc7d4') + '"><img alt="" src="' + faceURL(key, 'happy') + '">' +
         (text ? '<p><b>' + esc(d.name || '') + '</b>' + esc(text) + '</p>' : '') +
         /* 得意プロトコル (そのカードを表で出すと専用のセリフ) */
-        (d.fav ? '<em class="cm-fav" style="--pc:' + esc((protoList.find(x => x.name === d.fav) || {}).color || '#b9a4ff') + '">得意 ' + esc(d.fav) + '</em>' : '') +
+        (d.fav ? '<em class="cm-fav" style="--pc:' + esc((protoList.find(x => x.name === d.fav) || {}).color || '#cdc7d4') + '">得意 ' + esc(d.fav) + '</em>' : '') +
         /* ゲストは声と立ち絵のクレジットを添える */
         (d.guest ? '<small class="cm-credit">' + esc(d.credit || '') + '　立ち絵：坂本アヒル</small>' : '') + '</div>';
       break;

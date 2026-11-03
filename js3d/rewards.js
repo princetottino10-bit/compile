@@ -13,6 +13,8 @@ export const BGM_RELEASED = false;
 const ALL_REWARDS = [
   { lv: 2, kind: 'sleeve', key: 'crimson', name: 'SLEEVE — CRIMSON' },
   { lv: 1, kind: 'bgm', key: 'orange_tunnel', name: 'BGM — オレンジトンネルを抜ける' },
+  /* Main 3 の大型アップデート記念 (2026-11-03)。だれでもはじめから使える */
+  { lv: 1, kind: 'mat', key: 'main3', name: 'PLAYMAT — MAIN 3' },
   { lv: 3, kind: 'mat', key: 'nebula', name: 'PLAYMAT — NEBULA' },
   { lv: 3, kind: 'bgm', key: 'crazy_cat', name: 'BGM — Crazy Cat' },
   { lv: 4, kind: 'marker', key: 'gold', name: 'CONTROL MARKER — GOLD' },
@@ -42,7 +44,11 @@ const ALL_REWARDS = [
   { lv: 22, kind: 'mat', key: 'eclipse', name: 'PLAYMAT — ECLIPSE' },
   { lv: 24, kind: 'marker', key: 'prism', name: 'CONTROL MARKER — PRISM' },
   { lv: 25, kind: 'title', key: 'legend', name: 'TITLE — LEGEND' },
+  { lv: 21, kind: 'victory', key: 'circuit', name: 'VICTORY FX — MAIN 3' },
+  { lv: 23, kind: 'marker', key: 'redline', name: 'CONTROL MARKER — REDLINE' },
+  { lv: 26, kind: 'plate', key: 'circuit', name: 'NAMEPLATE — CIRCUIT' },
   { lv: 27, kind: 'sleeve', key: 'aurum', name: 'SLEEVE — AURUM' },
+  { lv: 25, kind: 'ccolor', key: 'crimson', name: 'COMPILE FX — CRIMSON' },
   { lv: 30, kind: 'title', key: 'ascended', name: 'TITLE — ASCENDED' }
 ];
 /* BGM をしまっている間は、レベルの報酬にも出さない */
@@ -71,18 +77,21 @@ const pkey = (p) => 'p_' + p.toLowerCase();
 const mkey = (p) => 'm_' + p.toLowerCase();
 
 export const COSMETICS = {
-  mat: [['neon', 'NEON GRID'], ['nebula', 'NEBULA'], ['vortex', 'VORTEX'], ['biomech', 'BIOMECH'], ['prism', 'PRISM'], ['eclipse', 'ECLIPSE'],
+  mat: [['neon', 'NEON GRID'], ['nebula', 'NEBULA'], ['vortex', 'VORTEX'], ['biomech', 'BIOMECH'], ['main3', 'MAIN 3'], ['prism', 'PRISM'], ['eclipse', 'ECLIPSE'],
     ['celestial', 'CELESTIAL'], ['hokusai', 'FUJI'], ['seigaiha', 'GREAT WAVE'], ['sakura', 'YOZAKURA'], ['garden', 'ROSE GARDEN'], ['library', 'LIBRARY'], ['nerinzu_shion', 'SHION'], ['nerinzu_asagi', 'RURI'], ['nerinzu_nadeshiko', 'AKANE'], ['nerinzu_yamabuki', 'ANZU'],
     ...MASTERY_PROTOS.map(p => [pkey(p), p])],
-  sleeve: [['default', 'STANDARD'], ['crimson', 'CRIMSON'], ['circuit', 'CIRCUIT'], ['void', 'VOID'], ['holo', 'HOLO'], ['sakura', 'SAKURA'], ['aurum', 'AURUM'],
+  sleeve: [['default', 'STANDARD'], ['classic', 'CLASSIC'], ['crimson', 'CRIMSON'], ['circuit', 'CIRCUIT'], ['void', 'VOID'], ['holo', 'HOLO'], ['sakura', 'SAKURA'], ['aurum', 'AURUM'],
     ['mint', 'MINT'], ['ocean', 'OCEAN'], ['ember', 'EMBER'], ['glacier', 'GLACIER'], ['toxic', 'TOXIC'], ['galaxy', 'GALAXY'],
     ['tiger', 'TIGER'], ['pixel', 'PIXEL'], ['koi', 'KOI'], ['aurora', 'AURORA'], ['nyanko', 'NYANKO'], ['sweets', 'SWEETS'], ['bunny', 'BUNNY'], ['rose', 'ROSE'], ['butterfly', 'GOLDEN BUTTERFLY'], ['momiji', 'MOMIJI'], ['pumpkin', 'PUMPKIN'], ['sprout', 'SPROUT'], ['konpairu', 'KONPAIRU'], ['teaparty', 'TEA PARTY'], ['nerinzu_shion', 'SHION'], ['nerinzu_asagi', 'RURI'], ['nerinzu_nadeshiko', 'AKANE'], ['nerinzu_yamabuki', 'ANZU'],
-    ['slayer', 'GIANT SLAYER'], ['laurel', 'LAUREL']],
+    ['slayer', 'GIANT SLAYER'], ['laurel', 'LAUREL'], ['sins', 'SEVEN SINS'], ['rootaccess', 'ROOT ACCESS']],
   marker: [['default', 'STANDARD'], ['gold', 'GOLD'], ['crystal', 'CRYSTAL'], ['crimson', 'CRIMSON'], ['prism', 'PRISM'],
     ['emerald', 'EMERALD'], ['amber', 'AMBER'], ['sapphire', 'SAPPHIRE'], ['obsidian', 'OBSIDIAN'], ['nova', 'NOVA'],
-    ['slayer', 'GIANT SLAYER'], ['laurel', 'LAUREL']],
-  ccolor: [['default', 'PROTOCOL'], ['gold', 'GOLD'], ['cyan', 'CYAN'], ['rainbow', 'RAINBOW'], ['lime', 'LIME'], ['violet', 'VIOLET'], ['ember', 'EMBER']],
-  victory: [['default', 'STANDARD'], ['aurora', 'AURORA']],
+    ['slayer', 'GIANT SLAYER'], ['laurel', 'LAUREL'], ['tristate', 'TRISTATE'],
+    ['redline', 'REDLINE'], ['sakura', 'SAKURA'], ['frost', 'FROST'], ['toxic', 'TOXIC'], ['regalia', 'REGALIA']],
+  ccolor: [['default', 'PROTOCOL'], ['gold', 'GOLD'], ['cyan', 'CYAN'], ['rainbow', 'RAINBOW'], ['lime', 'LIME'], ['violet', 'VIOLET'], ['ember', 'EMBER'],
+    ['crimson', 'CRIMSON'], ['frost', 'FROST'], ['sakura', 'SAKURA'], ['solar', 'SOLAR']],
+  victory: [['default', 'STANDARD'], ['aurora', 'AURORA'], ['circuit', 'MAIN 3'], ['sakura', 'YOZAKURA'], ['matrix', 'CODE RAIN'],
+    ['supernova', 'SUPERNOVA'], ['eclipse', 'ECLIPSE']],
   /* 対戦のそばのキャラ (avatar.js)。オリジナルの4人ははじめから、VOICEVOX の4人はガチャ */
   avatar: [['shion', '紫苑'], ['asagi', '瑠璃'], ['yamabuki', '杏'], ['nadeshiko', '茜'],
     /* ゲスト (VOICEVOX のキャラ・声つき) */
@@ -93,7 +102,8 @@ export const COSMETICS = {
     ['zero', 'Z･E･R･O'], ['samayoi', '彷徨いの言葉は天に導かれ']],
   /* 対戦中の名札の枠 (相手にも見える) */
   plate: [['default', 'STANDARD'], ['gold', 'GOLD'], ['sakura', 'SAKURA'], ['washi', 'WASHI'], ['neon', 'NEON'], ['urushi', 'URUSHI'],
-    ['crystal', 'CRYSTAL'], ['royal', 'ROYAL'], ...MASTERY_PROTOS.map(p => [pkey(p), p])]
+    ['crystal', 'CRYSTAL'], ['royal', 'ROYAL'], ['circuit', 'CIRCUIT'], ['frost', 'FROST'], ['ember', 'EMBER'], ['galaxy', 'GALAXY'], ['glitch', 'GLITCH'],
+    ...MASTERY_PROTOS.map(p => [pkey(p), p])]
 };
 
 /* ガチャ (COSMETICS の GACHA) でしか出ない見た目と称号。rar: C / R / E / L。
@@ -128,7 +138,12 @@ export const GACHA_ITEMS = [
   /* ねりんず4人のスリーブとマット */
   { kind: 'sleeve', key: 'nerinzu_shion', rar: 'E' }, { kind: 'sleeve', key: 'nerinzu_asagi', rar: 'E' }, { kind: 'sleeve', key: 'nerinzu_nadeshiko', rar: 'E' }, { kind: 'sleeve', key: 'nerinzu_yamabuki', rar: 'E' },
   { kind: 'mat', key: 'nerinzu_shion', rar: 'E' }, { kind: 'mat', key: 'nerinzu_asagi', rar: 'E' }, { kind: 'mat', key: 'nerinzu_nadeshiko', rar: 'E' }, { kind: 'mat', key: 'nerinzu_yamabuki', rar: 'E' },
-  { kind: 'sleeve', key: 'tiger', rar: 'R' }, { kind: 'sleeve', key: 'pixel', rar: 'R' }, { kind: 'sleeve', key: 'koi', rar: 'E' }, { kind: 'sleeve', key: 'aurora', rar: 'L' }
+  { kind: 'sleeve', key: 'tiger', rar: 'R' }, { kind: 'sleeve', key: 'pixel', rar: 'R' }, { kind: 'sleeve', key: 'koi', rar: 'E' }, { kind: 'sleeve', key: 'aurora', rar: 'L' },
+  /* 2026-11-03 の追加 (勝ちの演出・コンパイルの光・マーカー・名札) */
+  { kind: 'victory', key: 'sakura', rar: 'R' }, { kind: 'victory', key: 'matrix', rar: 'R' }, { kind: 'victory', key: 'supernova', rar: 'E' }, { kind: 'victory', key: 'eclipse', rar: 'L' },
+  { kind: 'ccolor', key: 'frost', rar: 'R' }, { kind: 'ccolor', key: 'sakura', rar: 'R' }, { kind: 'ccolor', key: 'solar', rar: 'L' },
+  { kind: 'marker', key: 'toxic', rar: 'C' }, { kind: 'marker', key: 'sakura', rar: 'R' }, { kind: 'marker', key: 'frost', rar: 'E' }, { kind: 'marker', key: 'regalia', rar: 'L' },
+  { kind: 'plate', key: 'frost', rar: 'C' }, { kind: 'plate', key: 'ember', rar: 'R' }, { kind: 'plate', key: 'galaxy', rar: 'E' }, { kind: 'plate', key: 'glitch', rar: 'E' }
 ];
 /* 下剋上 (最弱のデッキで最強に勝つ) の褒美。勝った記録 (compileSoloRecords に level 20 の勝ち) があれば使える */
 export const UNDERDOG_ITEMS = [{ kind: 'sleeve', key: 'slayer' }, { kind: 'marker', key: 'slayer' }];
@@ -188,6 +203,27 @@ export function weeklyClears() {
 }
 const weeklyItem = (kind, key) => WEEKLY_ITEMS.find(g => g.kind === kind && g.key === key);
 
+/* はじめから使える見た目 (標準のほか)。CLASSIC は Main 3 の公式の裏面に替える前の標準の裏面 (2026-11-03) */
+export const FREE_ITEMS = [{ kind: 'sleeve', key: 'classic' }];
+const isFreeItem = (kind, key) => FREE_ITEMS.some(g => g.kind === kind && g.key === key);
+
+/* 実績を取ると使える見た目 (称号のほか)。Main 3 / Aux 3・公式ソロモードの実績の褒美 (2026-11-03)。
+   achievements.js はこのファイルを読むので、取った実績は保存 (compileTrophies) を直に見る (外した「~id」は除く) */
+export const TROPHY_ITEMS = [
+  { kind: 'sleeve', key: 'sins', trophy: 'sins7' },
+  { kind: 'sleeve', key: 'rootaccess', trophy: 'solo_advanced' },
+  { kind: 'marker', key: 'tristate', trophy: 'tristate' }
+];
+export const trophyItem = (kind, key) => TROPHY_ITEMS.find(g => g.kind === kind && g.key === key) || null;
+export function trophyHeld(id) {
+  try {
+    const m = JSON.parse(localStorage.getItem('compileTrophies') || '{}');
+    return !!(m && m[id] && !(m['~' + id] > 0));
+  } catch (e) {
+    return false;
+  }
+}
+
 const GACHA_KEY = 'compileGacha';
 export const gachaId = (kind, key) => kind + ':' + key;
 const isGachaItem = (kind, key) => GACHA_ITEMS.some(g => g.kind === kind && g.key === key);
@@ -219,11 +255,15 @@ export const TITLES = {
   flawless: 'FLAWLESS', grandmaster: 'GRANDMASTER',
   puzzler: 'PUZZLER', compuzzler: 'COMPUZZLER',       // COMPUZZLE の中級を全部 / 全部
   platinum: 'DEUS EX MACHINA',    // 実績をすべて取る (achievements.js)。鍵は platinum のまま (サーバーの一覧・持っている人の印が変わらないように)
-  conqueror: 'CONQUEROR',  // 「最強」に30のプロトコルすべてで勝つ (achievements.js)
+  conqueror: 'CONQUEROR',  // 「最強」に、最強のデッキ以外のすべてのプロトコルで勝つ (achievements.js)
   tagmaster: 'TAG MASTER', perfectsync: 'PERFECT SYNC',   // タッグデュエルの実績 ALL ROUND / PERFECT SYNC (2026-10-04)
   underdogduo: 'UNDERDOG DUO',   // 下剋上タッグに勝つ (achievements.js)
   deicide: 'DEICIDE',            // 機械仕掛けの神 CODE:PURPLE に勝つ (cosmetics-ui.js の extraTitles)
   blindspot: 'BLIND SPOT',       // 隠し: すべてを見る者 ALL-SEEING に勝つ。取るまで COLLECTION にも出さない
+  /* Main 3 / Aux 3・公式ソロモードの実績で取る (2026-11-03) */
+  botbreaker: 'BOT BREAKER', rootaccess: 'ROOT ACCESS', sevensins: 'SEVEN SINS', tristate: 'TRISTATE',
+  /* やりこみの実績で取る (2026-11-03、achievements.js の「やりこみ」) */
+  thirdwave: 'THIRD WAVE', vanguard: 'VANGUARD', debugger: 'DEBUGGER', unbroken: 'UNBROKEN', neworder: 'NEW WORLD ORDER', deadlysin: 'DEADLY SIN', hardstate: 'HARD STATE', sineater: 'SIN EATER', dataminer: 'DATA MINER', zeroday: 'ZERO DAY', gatecrasher: 'GATECRASHER', legion: 'LEGION', immortal: 'IMMORTAL', pantheon: 'PANTHEON', omniprotocol: 'OMNIPROTOCOL', kernelpanic: 'KERNEL PANIC', shutdown: 'SHUTDOWN', overflow: 'OVERFLOW', singularity: 'SINGULARITY',
   /* ガチャで取る (GACHA_ITEMS) */
   gambler: 'GAMBLER', highroller: 'HIGH ROLLER', fortune: 'FORTUNE',
   /* 週替わり3連戦の称号 (3週・10週) は外した (時間のかかるものは置かない。2026-10-04) */
@@ -250,6 +290,8 @@ export function unlockLevel(kind, key) {
   const m = masteryItem(kind, key);
   if (m) return protoMastery(m.proto) >= m.mastery ? 1 : 9999;
   if (weeklyItem(kind, key)) return weeklyClears() >= weeklyItem(kind, key).weeks ? 1 : 9999;
+  if (trophyItem(kind, key)) return trophyHeld(trophyItem(kind, key).trophy) ? 1 : 9999;
+  if (isFreeItem(kind, key)) return 1;
   const r = REWARDS.find(x => x.kind === kind && x.key === key);
   return r ? r.lv : 1;
 }

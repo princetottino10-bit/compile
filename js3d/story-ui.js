@@ -354,7 +354,7 @@ async function playNodeLines(n, stage) {
 export function askBattle(n, protocols) {
   const byName = Object.fromEntries(protocols.concat(MOB_PROTOCOLS).map(p => [p.name, p]));
   const chips = (names) => '<span class="sm-deck">' + names.map(x =>
-    '<i style="--pc:' + esc((byName[x] || {}).color || '#b9a4ff') + '">' + esc(x) + '</i>').join('') + '</span>';
+    '<i style="--pc:' + esc((byName[x] || {}).color || '#cdc7d4') + '">' + esc(x) + '</i>').join('') + '</span>';
   const box = overlay('storyConfirm', '確認');
   box.className = 'sm-confirm';
   const tsume = n.kind === 'tsume';
