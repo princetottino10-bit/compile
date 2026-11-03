@@ -82,7 +82,7 @@ import { loadWeekly, loadStoredWeekly, weekKey } from './weekly.js';
 import { openReview } from './review.js';
 import { runRoomLobby } from './roomui.js';
 import { bindSelectHead, questionText } from './selectui.js';
-import { faceImageURL, backImageURL, pruneFaceCache, ART_SETS, setMaxAnisotropy, faceCacheSize, repaintFaces } from './cardtex.js';
+import { faceImageURL, backImageURL, pruneFaceCache, ART_SETS, setMaxAnisotropy, faceCacheSize, repaintFaces, repaintFace } from './cardtex.js';
 import * as FX from './fx.js';
 import { buildArena } from './arena.js';
 import { initAudio, sfx, setMuted, isMuted, setSfxVolume, onMuteChange } from './audio.js';
@@ -764,6 +764,18 @@ let oppTurn = null;
 
 /* 合法手: ソロはエンジン、ルームはサーバー提供値 */
 
+/* ハウスルール「PSYCHIC 1 の上下段を入れ替える」: 盤面 (st.psy1Swap) に合わせて、画面のカードの文 (defIndex の上段・下段) を
+   入れ替えて面を描き直す。エンジンは盤面の印で効果を入れ替えるので、文だけ合わせる。発動の表示 (上段・下段) もこの文を読む */
+let psy1TextSwapped = false;
+function syncPsy1Text(st) {
+  const on = !!(st && st.psy1Swap);
+  const d = defIndex.PSYCHIC_2;
+  if (on === psy1TextSwapped || !d) return;
+  const t = d.upper; d.upper = d.lower; d.lower = t;
+  psy1TextSwapped = on;
+  repaintFace('PSYCHIC_2');
+}
+
 function legalNow() {
   if (roomMode) {
     return ROOM.normLegalActions(roomRm);
@@ -1413,6 +1425,9 @@ async function boot() {
       document.body.classList.remove('replay');
     }
   }
+  /* ハウスルール「PSYCHIC 1 の上下段を入れ替える」(設定)。CPU 戦だけ。ウィークリーは点数を比べるので公式のまま。
+     リプレイ・続きからは棋譜のはじめ (init.psy1Swap) に従う */
+  const psy1Swap = !!settings().psy1Swap && !(runMode && runKind === 'weekly');
   const res = replayBuilt
     ? replayBuilt.res
     : resumed
@@ -1425,8 +1440,11 @@ async function boot() {
           ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods, winCompilesBySide: runOpts.winCompilesBySide, perks: runOpts.perks, startCompiled: runOpts.startCompiled, misere: runOpts.misere, handSwap: runOpts.handSwap, turncoat: runOpts.turncoat } : {}),
           ...(storyOpts || {}),
           ...(botScenario ? { bot: botOpts(botScenario) } : {}),
-          ...(tagMates ? { tag: tagMates } : {}) });
+          ...(tagMates ? { tag: tagMates } : {}),
+          ...(psy1Swap ? { psy1Swap: true } : {}) });
   cur = res;
+  syncPsy1Text(cur.state);
+  if (cur.state.psy1Swap && !replayBuilt && p0.concat(p1).includes('PSYCHIC')) setTimeout(() => UI.toast('ハウスルール: PSYCHIC 1 の上段と下段を入れ替えています', 3800), 1400);
   chaosRules = runMode && runKind === 'run' && !replayMode && !reviewView ? runRules(loadRun()) : {};
   board.setBlind(!!chaosRules.blind);
   stage.setFlip(!!chaosRules.flip);
@@ -1461,7 +1479,8 @@ async function boot() {
   const gameInit = resumed ? resumed.rec.init : { seed, p0: p0.slice(), p1: p1.slice(), first: firstPlayer, winCompiles: winCompiles || null,
     ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods, winCompilesBySide: runOpts.winCompilesBySide, perks: runOpts.perks, startCompiled: runOpts.startCompiled, misere: runOpts.misere, handSwap: runOpts.handSwap, turncoat: runOpts.turncoat } : {}),
     ...(storyOpts || {}),
-    ...(botScenario ? { bot: botOpts(botScenario) } : {}) };
+    ...(botScenario ? { bot: botOpts(botScenario) } : {}),
+    ...(psy1Swap ? { psy1Swap: true } : {}) };
   const priorActions = resumed ? resumed.rec.actions : [];
   /* CPU どうしの観戦も残す (RECORD のリプレイの「観戦」の枠。?demo=1 の流しっぱなしは残さない) */
   replayLog = !replayMode && !trainingMode && !puzzle && !tutorial && (!demoMode || !!spectate) && !tagMates && !storyNode
@@ -1990,7 +2009,7 @@ function mountTraining() {
     reset: () => {
       if (busy) return;
       const [a, b] = training.protos;
-      cur = Engine.newGame({ seed: (Math.random() * 1e9) | 0, p0: a, p1: b, training: true });
+      cur = Engine.newGame({ seed: (Math.random() * 1e9) | 0, p0: a, p1: b, training: true, psy1Swap: !!(cur && cur.state.psy1Swap) });
       training.undo = [];
       resync();
       UI.toast('盤面をリセットしました');
@@ -3605,6 +3624,7 @@ async function roomApplyView(rm, instant) {
   const st = ROOM.buildRoomState(rm, roomValOf);
   const nq = ROOM.normRequest(rm);
   cur = { state: st, requests: nq ? [nq] : [], log: rm.log || [], trace: entries, winner: st.winner, error: null };
+  syncPsy1Text(st);                              // オンラインは公式のルール (盤面に psy1Swap が無い) なので元の文に戻す
   syncAssist();                                  // 取り消せるか (canUndo) が変わる
   /* last_log はサーバーが直近の解決分だけ公開している。ポーリングのたびに
      同じ内容を積まないよう、ルームの版番号ごとに一度だけ表示する。 */
