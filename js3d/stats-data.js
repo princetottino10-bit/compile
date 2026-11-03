@@ -52,10 +52,10 @@ export const isShortRecord = (r) => !!r && !!(r.short || (r.short === undefined 
 export function beatStrongest(r) {
   return !!r && !!r.win && (!isShortRecord(r) || r.mode === 'weekly') && r.level === STRONGEST && Array.isArray(r.opp) && r.opp.slice().sort().join('|') === STRONGEST_KEY;
 }
-/* 制覇できるプロトコル: 最強のデッキと同じプロトコルは自分では選べないので、それ以外 (42 - 3 = 39)。
-   Main 3 で 30 → 42 種になった (2026-11-03)。取った実績は保存済みなので、前に 27 で取った CONQUEROR は消えない */
+/* 制覇できるプロトコル: 最強のデッキと同じプロトコルは自分では選べないので、それ以外 (45 - 3 = 42)。
+   Main 3 / Aux 3 で 30 → 45 種になった (2026-11-03)。取った実績は保存済みなので、前に 27 で取った CONQUEROR は消えない */
 export const conquerable = (names) => names.filter(n => !STRONGEST_AI.includes(n));
-export const CONQUER_TOTAL = 42 - STRONGEST_AI.length;
+export const CONQUER_TOTAL = 45 - STRONGEST_AI.length;
 /* 制覇: 「最強」に勝ったことのあるプロトコル。CONQUER_TOTAL すべてで称号 CONQUEROR (achievements.js) */
 export function conquered(records) {
   const out = new Set();

@@ -91,7 +91,11 @@ export const STAR_CARDS = [
   { id: 'X_OVERWHELM', proto: 'OVERWHELM', value: 2, from: { middle: 1, lower: 3 } },
   { id: 'X_PRIDE', proto: 'PRIDE', value: 2, from: { middle: 2, lower: 2 } },
   { id: 'X_SLOTH', proto: 'SLOTH', value: 2, from: { middle: 1, lower: 1 } },
-  { id: 'X_WRATH', proto: 'WRATH', value: 2, from: { middle: [0, 3] } }
+  { id: 'X_WRATH', proto: 'WRATH', value: 2, from: { middle: [0, 3] } },
+  /* Aux 3 */
+  { id: 'X_FLEXIBLE', proto: 'FLEXIBLE', value: 2, from: { middle: [2, 1] } },
+  { id: 'X_INERT', proto: 'INERT', value: 2, from: { middle: 2 } },
+  { id: 'X_RIGID', proto: 'RIGID', value: 2, from: { middle: 1, lower: 4 } }
 ];
 /* Ω カード (2026-10-16): ORACLE が考えたカード。勝ち抜き戦の最終ボス「最強」(FIRE / WATER / SPEED) の山札にだけ入る (あなたは手に入れられない)。
    作り方: ORACLE 同士の対戦から拾った196盤面で、手番の側に候補を1枚足して表で出させ、学習モデルで勝つ見込みを読んだ

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Main 3 の12プロトコル (72枚) を data/cards.json と data/effects.json に書き込む。
+"""Main 3 の12プロトコル (72枚) と Aux 3 の3プロトコル (18枚) を data/cards.json と data/effects.json に書き込む。
 
 文面の出典: 公式のカード画像 (EN-COMP-MN03-Command-Cards*.png、2026-11-03 にユーザーが共有)。
 日本語は既存の Main 1/2 の書き方 (「開始：」「終了：」「反転させる」「移動させる」など) にそろえて訳した。
@@ -287,6 +287,72 @@ PROTOCOLS = [
 ]
 
 
+# Aux 3。文面の出典はカード一覧の書き起こし (公式画像は未入手。2026-11-03)
+AUX3 = [
+    # ------------------------------------------------------------------ FLEXIBLE
+    ('FLEXIBLE', '#D05FB8', '選択／移動／ドロー', [
+        card(0, middle='カードを1枚戻すか、移動させる。', types=['return', 'shift'],
+             eff=mid({'op': 'choice', 'options': [[{'op': 'return'}], [{'op': 'shift'}]]})),
+        card(1, middle='あなたのカードを1枚反転させるか、移動させる。', types=['flip', 'shift'],
+             eff=mid({'op': 'choice', 'options': [[{'op': 'flip', 'select': {'owner': 'self'}}],
+                                                  [{'op': 'shift', 'select': {'owner': 'self'}}]]})),
+        card(2, upper='終了：このカードが裏向きのカードに覆われている場合、あなたはそのカードを移動させることができる。',
+             middle='カードを1枚引く。', types=['shift', 'draw'],
+             eff={'upper': trig('end', {'op': 'bindCoverer', 'facing': 'down', 'bind': 'cov'},
+                                {'op': 'ifDone', 'ops': [{'op': 'shift', 'select': {'ref': 'cov'}, 'optional': True}]}),
+                  'middle': [draw(1)]}),
+        card(3, middle='相手のカードを1枚移動させるか、あなたのプロトコルのうち2枚の位置を入れ替える。', types=['shift', 'rearrange'],
+             eff=mid({'op': 'choice', 'options': [[{'op': 'shift', 'select': {'owner': 'opp'}}], [{'op': 'swapProtocols'}]]})),
+        card(4, lower='終了：あなたはカードを2枚引くことができる。そうした場合、このカードを反転させる。', types=['draw', 'flip'],
+             eff={'lower': trig('end', draw(2, optional=True), {'op': 'ifDone', 'ops': [{'op': 'flip', 'select': dict(THIS)}]})}),
+        five(5),
+    ]),
+    # ------------------------------------------------------------------ INERT
+    ('INERT', '#5E8C84', '表向きの打ち消し／おたがい', [
+        card(0, upper='このラインの他のすべてのカードは、上段を持たない。',
+             middle='他のラインにある、覆われているか覆われていない表向きのカードを1枚反転させる。', types=['other', 'flip'],
+             eff={'upper': {'static': {'kind': 'noUpperInLine'}},
+                  'middle': [{'op': 'flip', 'select': {'zone': 'otherLines', 'facing': 'up', 'coverage': 'any'}}]}),
+        card(1, middle='相手は手札を2枚捨て札にする。', lower='このラインの他のすべてのカードは、下段を持たない。',
+             types=['discard', 'other'],
+             eff={'middle': [{'op': 'discard', 'count': 2, 'player': 'opp'}],
+                  'lower': {'static': {'kind': 'noLowerInLine'}}}),
+        card(2, middle='1ラインを選び、そのラインで値が最も大きい表向きのカードをすべて反転させる。', types=['flip'],
+             eff=mid({'op': 'flip', 'select': {'zone': 'chosenLine', 'facing': 'up', 'value': 'highest', 'mode': 'all'}})),
+        card(3, middle='他の各ラインにカードを裏向きで1枚ずつプレイする。相手はこのラインにカードを裏向きで1枚プレイする。', types=['play'],
+             eff=mid({'op': 'forEachLine', 'lines': 'otherLines',
+                      'ops': [{'op': 'play', 'source': 'hand', 'facing': 'down', 'dest': 'currentLine'}]},
+                     {'op': 'play', 'player': 'opp', 'facing': 'down', 'dest': 'thisLine'})),
+        card(4, middle='あなたのデッキのカードをすべて捨て札にする。相手は自分のデッキのカードをすべて捨て札にする。', types=['discard'],
+             eff=mid({'op': 'discardDeck'}, {'op': 'discardDeck', 'player': 'opp'})),
+        five(5),
+    ]),
+    # ------------------------------------------------------------------ RIGID
+    ('RIGID', '#7A5FD0', '裏向きでプレイ／妨害', [
+        card(1, middle='相手の表向きのカードを1枚反転させる。',
+             lower='終了：相手の覆われていないカードが裏向きである他の各ラインに、カードを裏向きで1枚ずつプレイする。',
+             types=['flip', 'play'],
+             eff={'middle': [{'op': 'flip', 'select': {'owner': 'opp', 'facing': 'up'}}],
+                  'lower': trig('end', {'op': 'forEachLine', 'lines': 'otherLinesOppTopDown',
+                                        'ops': [{'op': 'play', 'source': 'hand', 'facing': 'down', 'dest': 'currentLine'}]})}),
+        card(2, lower='あなたがアクションでカードを裏向きでプレイしたあと：あなたのデッキの一番上のカードを同じスタックに裏向きでプレイする。',
+             types=['play'],
+             eff={'lower': trig('afterYouPlayDownAction', {'op': 'play', 'source': 'topDeck', 'facing': 'down', 'dest': 'eventStack'})}),
+        card(3, middle='このカードのすぐ下に、カードを裏向きで1枚プレイする。', types=['play'],
+             eff=mid({'op': 'play', 'source': 'hand', 'facing': 'down', 'dest': 'underThisCard'})),
+        card(4, lower='このカードが裏向きのカードに覆われることになったとき：先にカードを1枚引く。', types=['draw'],
+             eff={'lower': trig('wouldBeCovered', draw(1), byFacing='down')}),
+        five(5),
+        card(7, upper='終了：相手は、カードを1枚引くか、カードを1枚プレイするかを選ぶ。', middle=D1,
+             lower='このカードを反転させることはできず、移動させることもできない。', types=['other', 'five'],
+             eff={'upper': trig('end', {'op': 'choice', 'chooser': 'opp', 'options': [
+                      [draw(1, player='opp')], [{'op': 'play', 'player': 'opp'}]]}),
+                  'middle': DISCARD1,
+                  'lower': {'static': {'kind': 'cannotFlipOrShiftThis'}}}),
+    ]),
+]
+
+
 def slot_eff(text, spec):
     """effects.json の1スロット。spec は ops の配列か、static/trigger を持つ dict"""
     out = {'_text': text}
@@ -307,7 +373,12 @@ def main():
     for k in list(effects):
         if k.split('_')[0] in names:
             del effects[k]
-    for name, color, tags, cs in PROTOCOLS:
+    names |= {p[0] for p in AUX3}
+    cards['protocols'] = [p for p in cards['protocols'] if p['name'] not in names]
+    for k in list(effects):
+        if k.split('_')[0] in names:
+            del effects[k]
+    for (name, color, tags, cs), set_name in [(p, 'Main 3') for p in PROTOCOLS] + [(p, 'Aux 3') for p in AUX3]:
         assert len(cs) == 6, name
         out = []
         for n, c in enumerate(sorted(cs, key=lambda x: x['value']), start=1):
@@ -323,14 +394,14 @@ def main():
                 assert c[slot], (cid, slot, 'text missing')
             effects[cid] = e
         cards['protocols'].append({'name': name, 'displayName': name, 'tags': tags, 'color': color,
-                                   'set': 'Main 3', 'cards': out})
+                                   'set': set_name, 'cards': out})
     with open(cpath, 'w', encoding='utf-8') as f:
         json.dump(cards, f, ensure_ascii=False, indent=2)
         f.write('\n')
     with open(epath, 'w', encoding='utf-8') as f:
         json.dump(effects, f, ensure_ascii=False, indent=2)
         f.write('\n')
-    print('Main 3: {} protocols, {} cards'.format(len(PROTOCOLS), 6 * len(PROTOCOLS)))
+    print('Main 3 + Aux 3: {} protocols, {} cards'.format(len(PROTOCOLS) + len(AUX3), 6 * (len(PROTOCOLS) + len(AUX3))))
 
 
 if __name__ == '__main__':

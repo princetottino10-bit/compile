@@ -3252,6 +3252,240 @@
           ]
         }
       ]
+    },
+    {
+      "name": "FLEXIBLE",
+      "displayName": "FLEXIBLE",
+      "tags": "選択／移動／ドロー",
+      "color": "#D05FB8",
+      "set": "Aux 3",
+      "cards": [
+        {
+          "id": "FLEXIBLE_1",
+          "number": 1,
+          "value": 0,
+          "upper": "",
+          "middle": "カードを1枚戻すか、移動させる。",
+          "lower": "",
+          "effectTypes": [
+            "return",
+            "shift"
+          ]
+        },
+        {
+          "id": "FLEXIBLE_2",
+          "number": 2,
+          "value": 1,
+          "upper": "",
+          "middle": "あなたのカードを1枚反転させるか、移動させる。",
+          "lower": "",
+          "effectTypes": [
+            "flip",
+            "shift"
+          ]
+        },
+        {
+          "id": "FLEXIBLE_3",
+          "number": 3,
+          "value": 2,
+          "upper": "終了：このカードが裏向きのカードに覆われている場合、あなたはそのカードを移動させることができる。",
+          "middle": "カードを1枚引く。",
+          "lower": "",
+          "effectTypes": [
+            "shift",
+            "draw"
+          ]
+        },
+        {
+          "id": "FLEXIBLE_4",
+          "number": 4,
+          "value": 3,
+          "upper": "",
+          "middle": "相手のカードを1枚移動させるか、あなたのプロトコルのうち2枚の位置を入れ替える。",
+          "lower": "",
+          "effectTypes": [
+            "shift",
+            "rearrange"
+          ]
+        },
+        {
+          "id": "FLEXIBLE_5",
+          "number": 5,
+          "value": 4,
+          "upper": "",
+          "middle": "",
+          "lower": "終了：あなたはカードを2枚引くことができる。そうした場合、このカードを反転させる。",
+          "effectTypes": [
+            "draw",
+            "flip"
+          ]
+        },
+        {
+          "id": "FLEXIBLE_6",
+          "number": 6,
+          "value": 5,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "five"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "INERT",
+      "displayName": "INERT",
+      "tags": "表向きの打ち消し／おたがい",
+      "color": "#5E8C84",
+      "set": "Aux 3",
+      "cards": [
+        {
+          "id": "INERT_1",
+          "number": 1,
+          "value": 0,
+          "upper": "このラインの他のすべてのカードは、上段を持たない。",
+          "middle": "他のラインにある、覆われているか覆われていない表向きのカードを1枚反転させる。",
+          "lower": "",
+          "effectTypes": [
+            "other",
+            "flip"
+          ]
+        },
+        {
+          "id": "INERT_2",
+          "number": 2,
+          "value": 1,
+          "upper": "",
+          "middle": "相手は手札を2枚捨て札にする。",
+          "lower": "このラインの他のすべてのカードは、下段を持たない。",
+          "effectTypes": [
+            "discard",
+            "other"
+          ]
+        },
+        {
+          "id": "INERT_3",
+          "number": 3,
+          "value": 2,
+          "upper": "",
+          "middle": "1ラインを選び、そのラインで値が最も大きい表向きのカードをすべて反転させる。",
+          "lower": "",
+          "effectTypes": [
+            "flip"
+          ]
+        },
+        {
+          "id": "INERT_4",
+          "number": 4,
+          "value": 3,
+          "upper": "",
+          "middle": "他の各ラインにカードを裏向きで1枚ずつプレイする。相手はこのラインにカードを裏向きで1枚プレイする。",
+          "lower": "",
+          "effectTypes": [
+            "play"
+          ]
+        },
+        {
+          "id": "INERT_5",
+          "number": 5,
+          "value": 4,
+          "upper": "",
+          "middle": "あなたのデッキのカードをすべて捨て札にする。相手は自分のデッキのカードをすべて捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "discard"
+          ]
+        },
+        {
+          "id": "INERT_6",
+          "number": 6,
+          "value": 5,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "five"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RIGID",
+      "displayName": "RIGID",
+      "tags": "裏向きでプレイ／妨害",
+      "color": "#7A5FD0",
+      "set": "Aux 3",
+      "cards": [
+        {
+          "id": "RIGID_1",
+          "number": 1,
+          "value": 1,
+          "upper": "",
+          "middle": "相手の表向きのカードを1枚反転させる。",
+          "lower": "終了：相手の覆われていないカードが裏向きである他の各ラインに、カードを裏向きで1枚ずつプレイする。",
+          "effectTypes": [
+            "flip",
+            "play"
+          ]
+        },
+        {
+          "id": "RIGID_2",
+          "number": 2,
+          "value": 2,
+          "upper": "",
+          "middle": "",
+          "lower": "あなたがアクションでカードを裏向きでプレイしたあと：あなたのデッキの一番上のカードを同じスタックに裏向きでプレイする。",
+          "effectTypes": [
+            "play"
+          ]
+        },
+        {
+          "id": "RIGID_3",
+          "number": 3,
+          "value": 3,
+          "upper": "",
+          "middle": "このカードのすぐ下に、カードを裏向きで1枚プレイする。",
+          "lower": "",
+          "effectTypes": [
+            "play"
+          ]
+        },
+        {
+          "id": "RIGID_4",
+          "number": 4,
+          "value": 4,
+          "upper": "",
+          "middle": "",
+          "lower": "このカードが裏向きのカードに覆われることになったとき：先にカードを1枚引く。",
+          "effectTypes": [
+            "draw"
+          ]
+        },
+        {
+          "id": "RIGID_5",
+          "number": 5,
+          "value": 5,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "five"
+          ]
+        },
+        {
+          "id": "RIGID_6",
+          "number": 6,
+          "value": 7,
+          "upper": "終了：相手は、カードを1枚引くか、カードを1枚プレイするかを選ぶ。",
+          "middle": "あなたは手札を1枚捨て札にする。",
+          "lower": "このカードを反転させることはできず、移動させることもできない。",
+          "effectTypes": [
+            "other",
+            "five"
+          ]
+        }
+      ]
     }
   ]
 }

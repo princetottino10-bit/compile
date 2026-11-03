@@ -226,19 +226,51 @@ function log(ctx, msg, uid) {
    DSL の side("self"/"opp") はスタック側 index と衝突しないよう sideIdx を別に持つ */
 function activeStatics(st) {
   const out = [];
-  for (let l = 0; l < 3; l++) for (let s = 0; s < 2; s++) {
-    const stack = st.lines[l][s];
-    for (let i = 0; i < stack.length; i++) {
-      const uid = stack[i], c = st.cards[uid];
-      if (!c.faceUp) continue;
-      const eff = DEFS[c.def].eff, top = i === stack.length - 1;
-      if (eff.upper && eff.upper.static) out.push(Object.assign({}, eff.upper.static, { uid, line: l, sideIdx: s }));
-      // middle の常在効果 (SMOKE_3等) は uncovered + 表向きのみ有効
-      if (top && eff.middle && eff.middle.static) out.push(Object.assign({}, eff.middle.static, { uid, line: l, sideIdx: s }));
-      if (top && eff.lower && eff.lower.static) out.push(Object.assign({}, eff.lower.static, { uid, line: l, sideIdx: s }));
+  for (let l = 0; l < 3; l++) {
+    const neg = lineNegators(st, l);
+    for (let s = 0; s < 2; s++) {
+      const stack = st.lines[l][s];
+      for (let i = 0; i < stack.length; i++) {
+        const uid = stack[i], c = st.cards[uid];
+        if (!c.faceUp) continue;
+        const eff = DEFS[c.def].eff, top = i === stack.length - 1;
+        if (eff.upper && eff.upper.static && !negatedBy(neg, uid, 'upper', eff.upper.static)) out.push(Object.assign({}, eff.upper.static, { uid, line: l, sideIdx: s }));
+        // middle の常在効果 (SMOKE_3等) は uncovered + 表向きのみ有効
+        if (top && eff.middle && eff.middle.static) out.push(Object.assign({}, eff.middle.static, { uid, line: l, sideIdx: s }));
+        if (top && eff.lower && eff.lower.static && !negatedBy(neg, uid, 'lower', eff.lower.static)) out.push(Object.assign({}, eff.lower.static, { uid, line: l, sideIdx: s }));
+      }
     }
   }
   return out;
+}
+
+/* INERT_1「このラインの他のすべてのカードは、上段を持たない」/ INERT_2「…下段を持たない」。
+   打ち消す側 (表向き。INERT_1 は覆われていても、INERT_2 は覆われていないときだけ) をラインごとに集める。
+   打ち消しの常在効果どうしは打ち消し合わない (2枚並ぶと互いに消えて決まらなくなるため) */
+const NEGATE_KINDS = { noUpperInLine: 'upper', noLowerInLine: 'lower' };
+function lineNegators(st, l) {
+  let out = null;
+  for (let s = 0; s < 2; s++) {
+    const stack = st.lines[l][s];
+    for (let i = 0; i < stack.length; i++) {
+      const c = st.cards[stack[i]];
+      if (!c.faceUp) continue;
+      const eff = DEFS[c.def].eff;
+      const up = eff.upper && eff.upper.static && NEGATE_KINDS[eff.upper.static.kind];
+      const lo = i === stack.length - 1 && eff.lower && eff.lower.static && NEGATE_KINDS[eff.lower.static.kind];
+      for (const slot of [up, lo]) if (slot) (out || (out = { upper: [], lower: [] }))[slot].push(stack[i]);
+    }
+  }
+  return out;
+}
+function negatedBy(neg, uid, slot, eff) {
+  if (!neg || (eff && NEGATE_KINDS[eff.kind])) return false;
+  return neg[slot].some(u => u !== uid);
+}
+function slotNegated(st, uid, slot) {
+  if (slot === 'middle') return false;
+  const loc = locate(st, uid);
+  return !!loc && negatedBy(lineNegators(st, loc.line), uid, slot);
 }
 
 function cardValue(st, uid) {
@@ -414,7 +446,11 @@ function middleSuppressed(st, uid) {
 }
 /* ICE_4: このカードを反転させることはできない */
 function cannotFlip(st, uid) {
-  return activeStatics(st).some(s => s.kind === 'cannotFlipThis' && s.uid === uid);
+  return activeStatics(st).some(s => (s.kind === 'cannotFlipThis' || s.kind === 'cannotFlipOrShiftThis') && s.uid === uid);
+}
+/* RIGID_6: このカードは反転させられず、移動させられない */
+function cannotShift(st, uid) {
+  return activeStatics(st).some(s => s.kind === 'cannotFlipOrShiftThis' && s.uid === uid);
 }
 function skipCacheFor(st, side) {
   return activeStatics(st).some(s => s.kind === 'skipCheckCache' && s.sideIdx === side);
@@ -491,6 +527,8 @@ function eventMatches(on, ev, cardSide, st, uid) {
     case 'afterAnyRearrange':  return ev.on === 'rearrange';                                   // MOMENTUM_2
     case 'afterYouRearrange':  return ev.on === 'rearrange' && ev.chooser === cardSide;        // NOVA_3
     case 'afterOppGainControl': return ev.on === 'gainControl' && ev.player !== cardSide;      // LUST_4 / PRIDE_6
+    case 'afterYouPlayDownAction': // RIGID_2: あなたがアクションでカードを裏向きでプレイしたあと
+      return ev.on === 'actionPlayDown' && ev.player === cardSide;
     case 'afterOppPlayInThisLine': { // ICE_1: 相手がこのラインにプレイしたあと
       if (ev.on !== 'play' || ev.player === cardSide) return false;
       const loc = locate(st, uid);
@@ -538,7 +576,7 @@ function fireEvent(ctx, ev) {
         pick = pendings.find(p => p.uid === ans[0]);
       }
       fired.add(pick.uid + pick.slot);
-      execTrigger(ctx, pick.uid, pick.slot);
+      execTrigger(ctx, pick.uid, pick.slot, false, ev);
     }
   } finally { ctx.depth--; }
 }
@@ -549,14 +587,15 @@ function triggerVisible(st, uid, slot) {
   const c = st.cards[uid];
   if (!c.faceUp) return false;
   if (slot !== 'upper' && !isTop(st, loc)) return false;
+  if (slotNegated(st, uid, slot)) return false;   // INERT_1/2
   return true;
 }
 
-function execTrigger(ctx, uid, slot, locked) {
+function execTrigger(ctx, uid, slot, locked, ev) {
   const loc = locate(st_of(ctx), uid);
   if (!loc) return;
   const tr = defOf(ctx.st, uid).eff[slot].trigger;
-  const fr = { source: uid, slot, controller: loc.side, line: loc.line, bind: {}, done: false, locked: !!locked };
+  const fr = { source: uid, slot, controller: loc.side, line: loc.line, bind: {}, done: false, locked: !!locked, ev: ev || null };
   chainPush(ctx, uid, slot);
   try {
     log(ctx, `[${defOf(ctx.st, uid).id}] ${slot === 'upper' ? '上段' : '下段'}効果が発動`, uid);
@@ -583,6 +622,8 @@ function collectWouldBeCovered(ctx, uid, coveringUid) {
     if (tr.on !== 'wouldBeCovered' && tr.on !== 'wouldBeCoveredOrFlipped') continue;
     // UNITY_1: 特定プロトコルのカードで覆われるときのみ発動
     if (tr.byProto && (!coveringUid || DEFS[ctx.st.cards[coveringUid].def].proto !== tr.byProto)) continue;
+    // RIGID_4: 裏向きのカードに覆われるときのみ
+    if (tr.byFacing === 'down' && (!coveringUid || ctx.st.cards[coveringUid].faceUp)) continue;
     if (!triggerVisible(ctx.st, uid, slot)) continue;
     out.push({ uid, slot });
   }
@@ -754,6 +795,7 @@ function doShift(ctx, uid, destLine) {
   const st = ctx.st;
   const loc = locate(st, uid);
   if (!loc || loc.line === destLine) return false;
+  if (cannotShift(st, uid)) { log(ctx, `${cardLabel(st, uid)} は移動できない`); return false; }
   const side = loc.side;
   const label = cardLabel(st, uid);            // L1: 裏向きは伏せる
   const wasCovered = !isTop(st, loc);          // E2: 移動前に覆われていたか
@@ -1062,7 +1104,7 @@ function doCompile(ctx, side, line) {
       if (!c.faceUp) continue;
       const eff = DEFS[c.def].eff;
       const tr = eff.upper && eff.upper.trigger;
-      if (tr && tr.on === 'wouldBeDeletedByCompile') {
+      if (tr && tr.on === 'wouldBeDeletedByCompile' && !slotNegated(st, uid, 'upper')) {
         const dests = [0, 1, 2].filter(l2 => l2 !== line);
         /* SPEED 2 の置換は「消えなかった」だけでは発動元が伝わりにくい。
            ログ・盤面ハイライト・移動先選択を同じ uid で結ぶ。 */
@@ -1374,7 +1416,7 @@ function execOp(ctx, fr, op) {
       if (viable.length === 1 && !op.optional) { execOps(ctx, fr, viable[0]); fr.done = true; return; }
       const labels = viable.map((branch) => branch.map(o => o.op).join('+'));
       const ans = choose(ctx, {
-        kind: 'option', player: fr.controller, optional: !!op.optional,
+        kind: 'option', player: op.chooser === 'opp' ? 1 - fr.controller : fr.controller, optional: !!op.optional,   // RIGID_6: 相手が選ぶ
         options: labels, prompt: 'choice', context: defOf(st, fr.source).id
       });
       if (ans.length) { execOps(ctx, fr, viable[ans[0]]); fr.done = true; }
@@ -1396,6 +1438,12 @@ function execOp(ctx, fr, op) {
       else if (op.lines === 'linesYouLead') {                // OVERWHELM_1: あなたの合計値が相手より大きいライン (始めに決める)
         const sts = activeStatics(st);
         lines = [0, 1, 2].filter(l => lineTotal(st, l, fr.controller, sts) > lineTotal(st, l, 1 - fr.controller, sts));
+      }
+      else if (op.lines === 'otherLinesOppTopDown') {        // RIGID_1: 相手の覆われていないカードが裏向きの他のライン (始めに決める)
+        lines = [0, 1, 2].filter(l => {
+          const k = st.lines[l][1 - fr.controller];
+          return l !== fr.line && k.length > 0 && !st.cards[k[k.length - 1]].faceUp;
+        });
       }
       while (lines.length) {
         if (!slotActive(st, fr)) return;            // LIFE_1: 処理中に覆われたら中断
@@ -1511,13 +1559,14 @@ function execOp(ctx, fr, op) {
       return;
     }
 
-    case 'discardDeck': { // TIME_2: あなたのデッキのカードをすべて捨て札にする
-      const p = st.players[fr.controller];
+    case 'discardDeck': { // TIME_2: あなたのデッキのカードをすべて捨て札にする (INERT_5: player opp で相手のデッキ)
+      const who = actorOf(fr, op);
+      const p = st.players[who];
       const n = p.deck.length;
       while (p.deck.length) landTrash(ctx, p.deck.shift());
       if (n) {
-        log(ctx, `P${fr.controller + 1}: デッキ${n}枚をすべて捨て札`);
-        fireEvent(ctx, { on: 'discard', player: fr.controller, count: n });
+        log(ctx, `P${who + 1}: デッキ${n}枚をすべて捨て札`);
+        fireEvent(ctx, { on: 'discard', player: who, count: n });
       }
       fr.done = n > 0;
       return;
@@ -2014,6 +2063,11 @@ function opViable(st, fr, op) {
       return p.deck.length > 0 || p.trash.length > 0;
     }
     case 'flip': case 'delete': case 'return': case 'shift': return hasTarget(st, fr, op);
+    case 'play': {   // RIGID_6: 手札が無ければ「1枚プレイする」は選べない
+      const who = actorOf(fr, op);
+      if ((op.source || 'hand') === 'hand') return st.players[who].hand.length > 0;
+      return st.players[op.source === 'oppTopDeck' ? 1 - who : who].deck.length > 0;
+    }
     default: return true;
   }
 }
@@ -2052,6 +2106,7 @@ function matchesSel(st, fr, uid, sel) {
   if (sel.facing === 'down' && c.faceUp) return false;
   if (sel.exclude === 'thisCard' && uid === fr.source) return false;
   if (sel.zone === 'thisLine' && loc.line !== fr.line) return false;
+  if (sel.zone === 'otherLines' && loc.line === fr.line) return false;   // INERT_1: 他のラインにある
   if (sel.zone === 'thisStack' && (loc.line !== fr.line || loc.side !== fr.controller)) return false;   // スタック=片側
   if (sel.zone === 'currentLine' && loc.line !== fr.currentLine) return false;
   if (sel.zone === 'lineWhereOppLeads') { // COURAGE_2: 相手合計が自分より大きいライン
@@ -2127,6 +2182,7 @@ function collectCandidates(ctx, fr, op, sel, chooser) {
 
   /* ICE 3 のように反転できないカードは、反転の候補に入れない (選んで空振りにして、必須の反転を逃れられないように) */
   if (op.op === 'flip') cands = cands.filter(u => !cannotFlip(st, u));
+  if (op.op === 'shift') cands = cands.filter(u => !cannotShift(st, u));
 
   // highest / lowest
   if (sel.value === 'highest' || sel.value === 'lowest') {
@@ -2332,6 +2388,15 @@ function execPlayOp(ctx, fr, op) {
       fr.done = true;
       return;
     }
+    /* RIGID_2: 同じスタック (いまアクションでプレイしたカードのスタック) に裏向きでプレイする */
+    if (d === 'eventStack') {
+      const ev = fr.ev;
+      if (!ev || !canPlay(st, who, uid, ev.line, false)) { fr.done = false; return; }
+      deck.shift();
+      playToField(ctx, uid, ev.line, ev.side, false);
+      fr.done = true;
+      return;
+    }
     /* NOVA_1 lower: 覆われていないあなたの「NOVA」カードの下に裏向きでプレイする */
     if (d === 'underOwnProto') {
       const proto = defOf(st, fr.source).proto;
@@ -2380,7 +2445,8 @@ function execPlayOp(ctx, fr, op) {
       : choose(ctx, { kind: 'pickHand', player: who, candidates: hand.slice(), min: 1, max: 1, prompt: 'play-card', context: defOf(st, fr.source).id })[0];
     const l = validLines.length === 1 ? validLines[0]
       : choose(ctx, { kind: 'pickLine', player: who, lines: validLines, prompt: 'play-dest', context: defOf(st, fr.source).id })[0];
-    playToField(ctx, cu, l, who, false);
+    /* RIGID_3: このカードのすぐ下に */
+    playToField(ctx, cu, l, who, false, d === 'underThisCard' && locate(st, fr.source) ? fr.source : undefined);
     fr.done = true;
     return;
   }
@@ -2645,6 +2711,8 @@ function performAction(ctx, action) {
     /* 相手側に置くときも、プレイの制限 (PLAGUE 1 など) は守る */
     if (!canPlay(st, p, action.card, action.line, action.faceUp)) throw { __err: 'そのプレイは許可されていない' };
     playToField(ctx, action.card, action.line, destSide, !!action.faceUp);
+    /* RIGID_2: アクションで裏向きにプレイしたあと (効果でのプレイは数えない) */
+    if (!action.faceUp && st.winner === null) fireEvent(ctx, { on: 'actionPlayDown', player: p, line: action.line, side: destSide, card: action.card });
     st.phase = 'checkCache';
   } else if (action.type === 'refresh') {
     if (st.players[p].hand.length >= 5) throw { __err: '手札が5枚以上ではリフレッシュできない' };

@@ -33,6 +33,8 @@ STATIC_KINDS = {
     "suppressOppMiddle", "cannotFlipThis", "cannotDraw", "returnToDeckTop",
     # Main 3
     "excludeHighestInLine", "oppNoCompileIfControl",
+    # Aux 3
+    "noUpperInLine", "noLowerInLine", "cannotFlipOrShiftThis",
 }
 TRIGGER_EVENTS = {
     "start", "end", "afterOppDiscard", "afterYouClearCache", "afterYouDraw",
@@ -45,6 +47,8 @@ TRIGGER_EVENTS = {
     # Main 3
     "afterYouCompile", "afterAnyCompile", "afterAnyClearCache", "afterAnyRearrange",
     "afterYouRearrange", "afterOppGainControl",
+    # Aux 3
+    "afterYouPlayDownAction",
 }
 SELECT_KEYS = {
     "owner", "facing", "coverage", "zone", "value", "exclude", "count",
@@ -57,7 +61,7 @@ SELECT_VALUES = {
     "coverage": {"uncovered", "covered", "all", "any"},
     "zone": {"thisLine", "thisStack", "otherLine", "chosenLine",
              "otherLineWith8plus", "currentLine", "anywhere",
-             "lineWhereOppLeads", "sameLineAsRef"},
+             "lineWhereOppLeads", "sameLineAsRef", "otherLines"},
     "exclude": {"thisCard"},
     "mode": {"all", "each", "pick"},
     "lineCond": {"youHave5", "mostCards"},
@@ -66,6 +70,7 @@ PLAY_DESTS = {
     "otherLine", "thisLine", "anyLine", "underThisCard", "currentLine",
     "lineWithFaceDown", "thisStack", "oppStack",
     "underOwnProto",   # NOVA_1
+    "eventStack",      # RIGID_2
 }
 SHIFT_DESTS = {"anyOther", "thisLine", "fromOrToThisLine", "oneOtherLine", "oppHighestLine"}
 PERMISSION_RULES = {

@@ -109,7 +109,8 @@ export const PROTO_LINES = {
   DIVERSITY: 'いろいろ試そう、{card}！', UNITY: 'ひとつになって、{card}！',
   AMBUSH: '待ってたよ、{card}。', ENVY: 'それ、ちょうだい。{card}。', FULCRUM: '傾けるよ、{card}。', GLUTTONY: 'まだ食べ足りない、{card}！',
   GREED: '全部もらうよ、{card}。', LUST: '惹きつけて、{card}。', MOMENTUM: '止まらないよ、{card}！', NOVA: '弾けて、{card}！',
-  OVERWHELM: '押し切るよ、{card}！', PRIDE: 'ひれ伏して、{card}。', SLOTH: 'ふあ……{card}。', WRATH: '許さない、{card}！'
+  OVERWHELM: '押し切るよ、{card}！', PRIDE: 'ひれ伏して、{card}。', SLOTH: 'ふあ……{card}。', WRATH: '許さない、{card}！',
+  FLEXIBLE: '合わせるよ、{card}。', INERT: '止まってて、{card}。', RIGID: '動かないよ、{card}。'
 };
 
 /* 動きを減らすか (設定の「動きを減らす」→ 端末の設定。prefs.js) */
