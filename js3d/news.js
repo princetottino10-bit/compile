@@ -17,6 +17,13 @@ export const KINDS = {
 
 export const NEWS = [
   {
+    id: '2026-11-03-mat-main3', date: '2026-11-03', kind: 'info',
+    title: 'Main 3 のプレイマットが入りました',
+    body: [
+      'Main 3 の箱に合わせた、黒い基板に赤い一閃のプレイマット「MAIN 3」です。設定の COLLECTION の PLAYMAT で、はじめから選べます。'
+    ]
+  },
+  {
     id: '2026-11-03-main3', date: '2026-11-03', kind: 'new', featured: true,
     img: 'art/news/main3.webp', alt: 'Main 3 の12プロトコルの絵。AMBUSH・ENVY・FULCRUM・GLUTTONY・GREED・LUST・MOMENTUM・NOVA・OVERWHELM・PRIDE・SLOTH・WRATH',
     title: 'Main 3・Aux 3 が遊べるようになりました！ 新しい15プロトコル・90枚',
