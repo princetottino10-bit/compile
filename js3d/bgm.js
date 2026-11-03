@@ -78,14 +78,17 @@ export const PEEK_BGM = 'final_2sec';
 /* どちらかが勝ちまであと1本になったら (ふつうの3本勝負なら2本目のコンパイルのあと) 切り替える曲。
    まんぼう二等兵 (OpenTracks) の速くて緊張感のある6曲 (BPM 162〜216。ふつうの対戦の曲は 140〜170) から、試合ごとにランダム */
 export const TENSE_BGMS = ['interception', 'strike_despair', 'lobelia', 'will_you_cry', 'tactical_encounter', 'hangeki',
-  'last_compile'];   // 本人作の Last Compile (190 BPM、2026-11-01)。6曲のランダムに足した
-/** あと1本の曲を1つ選ぶ (前の試合と同じ曲は選ばない) */
+  'last_compile'];   // 本人作の Last Compile (190 BPM、2026-11-01)
+/* Last Compile は半分の確率で選ぶ (7曲で同じ重みだと7試合に1回しか流れない。本人の専用曲を「あと1本」の合図にする。2026-11-03) */
+export const OWN_TENSE_BGM = 'last_compile';
+const OWN_TENSE_RATE = 0.5;
+/** あと1本の曲を1つ選ぶ (前の試合と同じ曲は選ばない。Last Compile は前の試合と同じでも選ぶ: 合図の曲なので続いてよい) */
 const LAST_TENSE_KEY = 'compileLastTenseBgm';
 export function pickTenseBgm(rnd = Math.random) {
   let last = null;
   try { last = localStorage.getItem(LAST_TENSE_KEY); } catch (e) { /* private mode */ }
-  const pool = TENSE_BGMS.filter(k => k !== last);
-  const pick = pool[Math.floor(rnd() * pool.length)];
+  const others = TENSE_BGMS.filter(k => k !== OWN_TENSE_BGM && k !== last);
+  const pick = rnd() < OWN_TENSE_RATE ? OWN_TENSE_BGM : others[Math.floor(rnd() * others.length)];
   try { localStorage.setItem(LAST_TENSE_KEY, pick); } catch (e) { /* private mode */ }
   return pick;
 }
