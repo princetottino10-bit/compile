@@ -1298,13 +1298,18 @@ function drawOfficialBack(ctx) {
   /* 十字の目印 (文字の周り) */
   [[98, 476], [440, 464], [660, 486], [214, 600], [520, 610]].forEach(([x, y]) => { line(x - 14, y, x + 14, y); line(x, y - 14, x, y + 14); });
   line(0, 527, 60, 527); line(684, 572, 744, 572);
-  /* <|> と小さな紋章 */
+  /* <|> と小さな紋章。| は M の真ん中の谷から垂れて下へ伸びる (公式のロゴは M と | がつながっている)。
+     書体で M の位置が変わるので、測って M の中心に <|> ごとそろえる */
+  const left = 372 - ctx.measureText('COMPILE').width / 2;
+  const mx = left + ctx.measureText('CO').width + ctx.measureText('M').width / 2;
   ctx.lineWidth = 9; ctx.lineCap = 'butt'; ctx.lineJoin = 'miter';
-  ctx.beginPath(); ctx.moveTo(338, 645); ctx.lineTo(300, 667); ctx.lineTo(338, 689); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(406, 645); ctx.lineTo(444, 667); ctx.lineTo(406, 689); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(mx - 34, 645); ctx.lineTo(mx - 72, 667); ctx.lineTo(mx - 34, 689); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(mx + 34, 645); ctx.lineTo(mx + 72, 667); ctx.lineTo(mx + 34, 689); ctx.stroke();
   ctx.fillStyle = '#fff';
-  ctx.fillRect(364, 585, 16, 110);
-  fillEmblem(ctx, 372, 722, 70);
+  ctx.fillRect(mx - 8, 520, 16, 175);
+  /* 垂れの筋 (M の脚から細く落ちるしずく) */
+  ctx.fillRect(mx - 22, 560, 4, 26); ctx.fillRect(mx + 17, 560, 4, 18);
+  fillEmblem(ctx, mx, 722, 70);
   ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
   ctx.restore();
 }
