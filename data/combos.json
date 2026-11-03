@@ -66079,6 +66079,1358 @@
    "note": null
   },
   {
+   "id": "O013",
+   "name": "GREED 0 + WRATH 1 + LUST 0",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "GREED_1",
+    "WRATH_2",
+    "LUST_1"
+   ],
+   "protocols": [
+    "GREED",
+    "WRATH",
+    "LUST"
+   ],
+   "how": "WRATH 1 + LUST 0 の削除のたびに GREED 0 で1枚引く",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.8,
+    "interactionSe": 1,
+    "partnerValue": 4.2,
+    "partnerValueSe": 1,
+    "synergy": 3.4,
+    "synergySe": 1,
+    "missed": -11,
+    "missedSe": 1.7,
+    "aiPicked": 24
+   },
+   "note": null
+  },
+  {
+   "id": "O014",
+   "name": "GLUTTONY 4 + SLOTH 1 + GREED 4",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "GLUTTONY_5",
+    "SLOTH_2",
+    "GREED_5"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "SLOTH",
+    "GREED"
+   ],
+   "how": "GREED 4 で裏の SLOTH 1 を表にしてリフレッシュし、GLUTTONY 4 でもう1枚引く",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 102,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.9,
+    "interactionSe": 1.1,
+    "partnerValue": -1,
+    "partnerValueSe": 0.7,
+    "synergy": -0.1,
+    "synergySe": 0.8,
+    "missed": -1,
+    "missedSe": 1.5,
+    "aiPicked": 39
+   },
+   "note": null
+  },
+  {
+   "id": "O015",
+   "name": "RIGID 2 + APATHY 0 + OVERWHELM 2",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "RIGID_2",
+    "APATHY_1",
+    "OVERWHELM_2"
+   ],
+   "protocols": [
+    "RIGID",
+    "APATHY",
+    "OVERWHELM"
+   ],
+   "how": "OVERWHELM 2 の裏向きに RIGID 2 が1枚ずつ足し、APATHY 0 が数える",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.4,
+    "interactionSe": 1.3,
+    "partnerValue": 0.4,
+    "partnerValueSe": 1.1,
+    "synergy": 0.7,
+    "synergySe": 0.9,
+    "missed": -7.4,
+    "missedSe": 1.5,
+    "aiPicked": 32
+   },
+   "note": null
+  },
+  {
+   "id": "O016",
+   "name": "ENVY 3 + APATHY 0 + OVERWHELM 2",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "ENVY_4",
+    "APATHY_1",
+    "OVERWHELM_2"
+   ],
+   "protocols": [
+    "ENVY",
+    "APATHY",
+    "OVERWHELM"
+   ],
+   "how": "OVERWHELM 2 で相手が ENVY 3 のラインに出すと1枚おまけ、APATHY 0 が数える",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.9,
+    "interactionSe": 1.5,
+    "partnerValue": 3.9,
+    "partnerValueSe": 1.1,
+    "synergy": 4.8,
+    "synergySe": 1.6,
+    "missed": -4.1,
+    "missedSe": 1.9,
+    "aiPicked": 40
+   },
+   "note": null
+  },
+  {
+   "id": "O017",
+   "name": "FIRE 3 + FLEXIBLE 4",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "FIRE_4",
+    "FLEXIBLE_5"
+   ],
+   "protocols": [
+    "FIRE",
+    "FLEXIBLE"
+   ],
+   "how": "終了で FLEXIBLE 4 が2枚引いて裏になり、続けて FIRE 3 で1枚捨てて FLEXIBLE 4 を表に戻す (毎手番 +1枚)",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 101,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.3,
+    "interactionSe": 1,
+    "partnerValue": 2.6,
+    "partnerValueSe": 1,
+    "synergy": 3.9,
+    "synergySe": 1,
+    "missed": -1.1,
+    "missedSe": 0.8,
+    "aiPicked": 50
+   },
+   "note": null
+  },
+  {
+   "id": "O018",
+   "name": "FIRE 3 + OVERWHELM 2",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "FIRE_4",
+    "OVERWHELM_2"
+   ],
+   "protocols": [
+    "FIRE",
+    "OVERWHELM"
+   ],
+   "how": "終了で OVERWHELM 2 が各ラインに裏で出して裏になり、FIRE 3 で表に戻すと中段 (相手が各ラインに裏で出す) が入る",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 102,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -2.1,
+    "interactionSe": 1.1,
+    "partnerValue": 1.8,
+    "partnerValueSe": 1,
+    "synergy": -0.3,
+    "synergySe": 1,
+    "missed": -10.1,
+    "missedSe": 1.6,
+    "aiPicked": 23
+   },
+   "note": null
+  },
+  {
+   "id": "O019",
+   "name": "GREED 1 + OVERWHELM 2",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "GREED_2",
+    "OVERWHELM_2"
+   ],
+   "protocols": [
+    "GREED",
+    "OVERWHELM"
+   ],
+   "how": "終了で先に OVERWHELM 2 で各ラインに裏で出して合計を上げ、そのあと GREED 1 で10以上のラインをコンパイル",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -2.3,
+    "interactionSe": 1.5,
+    "partnerValue": 4.8,
+    "partnerValueSe": 1.6,
+    "synergy": 2.5,
+    "synergySe": 1.1,
+    "missed": -12.6,
+    "missedSe": 1.9,
+    "aiPicked": 21
+   },
+   "note": null
+  },
+  {
+   "id": "O020",
+   "name": "CLARITY 0 + GLUTTONY 2",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "CLARITY_1",
+    "GLUTTONY_3"
+   ],
+   "protocols": [
+    "CLARITY",
+    "GLUTTONY"
+   ],
+   "how": "GLUTTONY 2 で手札を倍にして、CLARITY 0 の上段 (手札1枚ごとに +1) を伸ばす",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0,
+    "interactionSe": 1.6,
+    "partnerValue": 6.1,
+    "partnerValueSe": 1.6,
+    "synergy": 6,
+    "synergySe": 1.4,
+    "missed": -2.2,
+    "missedSe": 1.6,
+    "aiPicked": 26
+   },
+   "note": null
+  },
+  {
+   "id": "O021",
+   "name": "INERT 0 + CORRUPTION 6",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "INERT_1",
+    "CORRUPTION_6"
+   ],
+   "protocols": [
+    "INERT",
+    "CORRUPTION"
+   ],
+   "how": "CORRUPTION 6 の上段 (終了に捨てるか自分を削除) を INERT 0 が消し、6点が残る",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.4,
+    "interactionSe": 0.5,
+    "partnerValue": 0.9,
+    "partnerValueSe": 0.3,
+    "synergy": 1.4,
+    "synergySe": 0.6,
+    "missed": -3.8,
+    "missedSe": 0.9,
+    "aiPicked": 43
+   },
+   "note": null
+  },
+  {
+   "id": "O022",
+   "name": "INERT 0 + RIGID 7",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "INERT_1",
+    "RIGID_6"
+   ],
+   "protocols": [
+    "INERT",
+    "RIGID"
+   ],
+   "how": "RIGID 7 の上段 (終了に相手が引くか出す) を INERT 0 が消し、7点が残る",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.1,
+    "interactionSe": 1.3,
+    "partnerValue": -0.3,
+    "partnerValueSe": 1.2,
+    "synergy": -0.2,
+    "synergySe": 0.5,
+    "missed": -13.8,
+    "missedSe": 2,
+    "aiPicked": 12
+   },
+   "note": null
+  },
+  {
+   "id": "O023",
+   "name": "INERT 0 + DIVERSITY 6",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "INERT_1",
+    "DIVERSITY_6"
+   ],
+   "protocols": [
+    "INERT",
+    "DIVERSITY"
+   ],
+   "how": "DIVERSITY 6 の上段 (プロトコルが3種以下なら自分を削除) を INERT 0 が消す",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 102,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.1,
+    "interactionSe": 0.8,
+    "partnerValue": -0.2,
+    "partnerValueSe": 1,
+    "synergy": -0.3,
+    "synergySe": 0.7,
+    "missed": -5.5,
+    "missedSe": 1.4,
+    "aiPicked": 42
+   },
+   "note": null
+  },
+  {
+   "id": "O024",
+   "name": "INERT 0 + MOMENTUM 6",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "INERT_1",
+    "MOMENTUM_6"
+   ],
+   "protocols": [
+    "INERT",
+    "MOMENTUM"
+   ],
+   "how": "MOMENTUM 6 の上段 (コンパイルのあと自分を削除) を INERT 0 が消す",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1,
+    "interactionSe": 1,
+    "partnerValue": 0.6,
+    "partnerValueSe": 0.7,
+    "synergy": -0.4,
+    "synergySe": 0.8,
+    "missed": -4,
+    "missedSe": 1.6,
+    "aiPicked": 42
+   },
+   "note": null
+  },
+  {
+   "id": "O025",
+   "name": "INERT 1 + SPIRIT 1",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "INERT_2",
+    "SPIRIT_2"
+   ],
+   "protocols": [
+    "INERT",
+    "SPIRIT"
+   ],
+   "how": "SPIRIT 1 の下段 (開始に捨てるか裏返る) を INERT 1 が消し、2枚引く札が表で残る",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.7,
+    "interactionSe": 0.7,
+    "partnerValue": 0.8,
+    "partnerValueSe": 0.4,
+    "synergy": 1.5,
+    "synergySe": 0.7,
+    "missed": -0.1,
+    "missedSe": 1.1,
+    "aiPicked": 20
+   },
+   "note": null
+  },
+  {
+   "id": "O026",
+   "name": "PEACE 1 + ICE 6",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "PEACE_1",
+    "ICE_6"
+   ],
+   "protocols": [
+    "PEACE",
+    "ICE"
+   ],
+   "how": "ICE 6 の上段 (手札があると引けない) は、PEACE 1 の「手札0枚なら引く」とぶつからない",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.9,
+    "interactionSe": 0.9,
+    "partnerValue": 1.3,
+    "partnerValueSe": 0.7,
+    "synergy": 2.2,
+    "synergySe": 0.9,
+    "missed": -1.8,
+    "missedSe": 1.2,
+    "aiPicked": 57
+   },
+   "note": null
+  },
+  {
+   "id": "O027",
+   "name": "INERT 0 + METAL 6",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "INERT_1",
+    "METAL_6"
+   ],
+   "protocols": [
+    "INERT",
+    "METAL"
+   ],
+   "how": "METAL 6 の上段 (覆われるか反転するとき先に自分を削除) を INERT 0 が消す",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.6,
+    "interactionSe": 0.7,
+    "partnerValue": 0.5,
+    "partnerValueSe": 0.8,
+    "synergy": -0.6,
+    "synergySe": 0.5,
+    "missed": -1.5,
+    "missedSe": 1,
+    "aiPicked": 50
+   },
+   "note": null
+  },
+  {
+   "id": "O028",
+   "name": "FIRE 3 + PSYCHIC 4",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "FIRE_4",
+    "PSYCHIC_5"
+   ],
+   "protocols": [
+    "FIRE",
+    "PSYCHIC"
+   ],
+   "how": "PSYCHIC 4 は終了に相手の札を戻すと裏になる。FIRE 3 で毎手番表に戻す",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.1,
+    "interactionSe": 0.9,
+    "partnerValue": 3.4,
+    "partnerValueSe": 1,
+    "synergy": 2.3,
+    "synergySe": 0.8,
+    "missed": -1.7,
+    "missedSe": 1.1,
+    "aiPicked": 37
+   },
+   "note": null
+  },
+  {
+   "id": "O029",
+   "name": "FIRE 3 + SPEED 3",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "FIRE_4",
+    "SPEED_4"
+   ],
+   "protocols": [
+    "FIRE",
+    "SPEED"
+   ],
+   "how": "SPEED 3 は終了に自分の札を動かすと裏になる。FIRE 3 で毎手番表に戻す",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.4,
+    "interactionSe": 1,
+    "partnerValue": 1.5,
+    "partnerValueSe": 0.9,
+    "synergy": 1.1,
+    "synergySe": 0.8,
+    "missed": -0.9,
+    "missedSe": 1.3,
+    "aiPicked": 22
+   },
+   "note": null
+  },
+  {
+   "id": "O030",
+   "name": "GREED 0 + DEATH 1",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "GREED_1",
+    "DEATH_2"
+   ],
+   "protocols": [
+    "GREED",
+    "DEATH"
+   ],
+   "how": "DEATH 1 の開始は他の札と自分を削除する。GREED 0 で削除1回ごとに1枚引く",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 102,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.4,
+    "interactionSe": 0.9,
+    "partnerValue": 2.7,
+    "partnerValueSe": 0.7,
+    "synergy": 3.1,
+    "synergySe": 0.7,
+    "missed": -2.1,
+    "missedSe": 1.5,
+    "aiPicked": 11
+   },
+   "note": null
+  },
+  {
+   "id": "O031",
+   "name": "CORRUPTION 2 + WATER 5",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "CORRUPTION_3",
+    "WATER_6"
+   ],
+   "protocols": [
+    "CORRUPTION",
+    "WATER"
+   ],
+   "how": "5 の札の「手札を1枚捨てる」で、CORRUPTION 2 の上段が相手にも1枚捨てさせる",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 102,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.1,
+    "interactionSe": 1,
+    "partnerValue": 2.1,
+    "partnerValueSe": 0.8,
+    "synergy": 2.2,
+    "synergySe": 0.8,
+    "missed": -2.7,
+    "missedSe": 1.5,
+    "aiPicked": 28
+   },
+   "note": null
+  },
+  {
+   "id": "O032",
+   "name": "ICE 1 + LUST 6",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "ICE_1",
+    "LUST_6"
+   ],
+   "protocols": [
+    "ICE",
+    "LUST"
+   ],
+   "how": "LUST 6 で相手に ICE 1 のラインへ裏で出させると、ICE 1 で相手が1枚捨てる",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.1,
+    "interactionSe": 1,
+    "partnerValue": 0.7,
+    "partnerValueSe": 0.9,
+    "synergy": 1.8,
+    "synergySe": 0.7,
+    "missed": -4.4,
+    "missedSe": 1.5,
+    "aiPicked": 40
+   },
+   "note": null
+  },
+  {
+   "id": "O033",
+   "name": "ICE 1 + GRAVITY 6",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "ICE_1",
+    "GRAVITY_6"
+   ],
+   "protocols": [
+    "ICE",
+    "GRAVITY"
+   ],
+   "how": "GRAVITY 6 で相手に ICE 1 のラインへ出させて捨てさせる",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.5,
+    "interactionSe": 0.9,
+    "partnerValue": 0.8,
+    "partnerValueSe": 0.6,
+    "synergy": 1.5,
+    "synergySe": 0.7,
+    "missed": -3.5,
+    "missedSe": 1.5,
+    "aiPicked": 31
+   },
+   "note": null
+  },
+  {
+   "id": "O034",
+   "name": "ICE 1 + INERT 3",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "ICE_1",
+    "INERT_4"
+   ],
+   "protocols": [
+    "ICE",
+    "INERT"
+   ],
+   "how": "INERT 3 で相手にこのラインへ出させて捨てさせる",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.7,
+    "interactionSe": 1,
+    "partnerValue": 0.8,
+    "partnerValueSe": 0.5,
+    "synergy": 1.5,
+    "synergySe": 0.9,
+    "missed": -4.2,
+    "missedSe": 1.3,
+    "aiPicked": 21
+   },
+   "note": null
+  },
+  {
+   "id": "O035",
+   "name": "SMOKE 2 + OVERWHELM 2",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "SMOKE_3",
+    "OVERWHELM_2"
+   ],
+   "protocols": [
+    "SMOKE",
+    "OVERWHELM"
+   ],
+   "how": "APATHY 0 と同じく、SMOKE 2 も裏向き1枚ごとに +1",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2.5,
+    "interactionSe": 1.7,
+    "partnerValue": 4.3,
+    "partnerValueSe": 1.4,
+    "synergy": 6.8,
+    "synergySe": 1.7,
+    "missed": -6,
+    "missedSe": 1.9,
+    "aiPicked": 18
+   },
+   "note": null
+  },
+  {
+   "id": "O036",
+   "name": "APATHY 0 + GRAVITY 6",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "APATHY_1",
+    "GRAVITY_6"
+   ],
+   "protocols": [
+    "APATHY",
+    "GRAVITY"
+   ],
+   "how": "GRAVITY 6 で相手に APATHY 0 のラインへ裏で出させる",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0,
+    "interactionSe": 1.3,
+    "partnerValue": 3.4,
+    "partnerValueSe": 1.3,
+    "synergy": 3.5,
+    "synergySe": 0.9,
+    "missed": -3.2,
+    "missedSe": 1.3,
+    "aiPicked": 29
+   },
+   "note": null
+  },
+  {
+   "id": "O037",
+   "name": "MIRROR 4 + LOVE 1",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "MIRROR_5",
+    "LOVE_1"
+   ],
+   "protocols": [
+    "MIRROR",
+    "LOVE"
+   ],
+   "how": "相手に引かせるたびに MIRROR 4 でこちらも1枚",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.4,
+    "interactionSe": 1.1,
+    "partnerValue": 1.5,
+    "partnerValueSe": 0.8,
+    "synergy": 0.2,
+    "synergySe": 1,
+    "missed": -5.3,
+    "missedSe": 1.8,
+    "aiPicked": 17
+   },
+   "note": null
+  },
+  {
+   "id": "O038",
+   "name": "MIRROR 4 + LOVE 6",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "MIRROR_5",
+    "LOVE_6"
+   ],
+   "protocols": [
+    "MIRROR",
+    "LOVE"
+   ],
+   "how": "LOVE 6 で相手が2枚引くと MIRROR 4 で引く",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 102,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 2,
+    "interactionSe": 1.5,
+    "partnerValue": 1.6,
+    "partnerValueSe": 1.2,
+    "synergy": 3.6,
+    "synergySe": 1.2,
+    "missed": -3.2,
+    "missedSe": 1.7,
+    "aiPicked": 51
+   },
+   "note": null
+  },
+  {
+   "id": "O039",
+   "name": "CLARITY 0 + AMBUSH 0",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "CLARITY_1",
+    "AMBUSH_1"
+   ],
+   "protocols": [
+    "CLARITY",
+    "AMBUSH"
+   ],
+   "how": "3枚引いて CLARITY 0 のラインを伸ばす",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 101,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.7,
+    "interactionSe": 1.8,
+    "partnerValue": 8.9,
+    "partnerValueSe": 1.6,
+    "synergy": 7.1,
+    "synergySe": 1.5,
+    "missed": -5.4,
+    "missedSe": 1.4,
+    "aiPicked": 16
+   },
+   "note": null
+  },
+  {
+   "id": "O040",
+   "name": "CLARITY 0 + ENVY 2",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "CLARITY_1",
+    "ENVY_3"
+   ],
+   "protocols": [
+    "CLARITY",
+    "ENVY"
+   ],
+   "how": "相手の手札の枚数だけ引いて CLARITY 0 を伸ばす",
+   "verdict": "weak",
+   "verdictLabel": "相方が強い (噛み合いは小さい)",
+   "lab": {
+    "n": 102,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.3,
+    "interactionSe": 1.5,
+    "partnerValue": 8.2,
+    "partnerValueSe": 1.7,
+    "synergy": 8,
+    "synergySe": 1.5,
+    "missed": -3.2,
+    "missedSe": 1.2,
+    "aiPicked": 39
+   },
+   "note": null
+  },
+  {
+   "id": "O041",
+   "name": "UNITY 4 + GREED 0",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "UNITY_5",
+    "GREED_1"
+   ],
+   "protocols": [
+    "UNITY",
+    "GREED"
+   ],
+   "how": "GREED 0 で手札を空にして、UNITY 4 の終了で UNITY を全部引く",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.9,
+    "interactionSe": 1.3,
+    "partnerValue": -0.4,
+    "partnerValueSe": 0.9,
+    "synergy": 0.5,
+    "synergySe": 0.9,
+    "missed": -3.2,
+    "missedSe": 1.4,
+    "aiPicked": 31
+   },
+   "note": null
+  },
+  {
+   "id": "O042",
+   "name": "PEACE 1 + GREED 4",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "PEACE_1",
+    "GREED_5"
+   ],
+   "protocols": [
+    "PEACE",
+    "GREED"
+   ],
+   "how": "GREED 4 で手札を空にして裏を起こし、PEACE 1 の終了で1枚引く",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0,
+    "interactionSe": 0.8,
+    "partnerValue": 1,
+    "partnerValueSe": 1,
+    "synergy": 1,
+    "synergySe": 1.1,
+    "missed": -0.7,
+    "missedSe": 1.2,
+    "aiPicked": 51
+   },
+   "note": null
+  },
+  {
+   "id": "O043",
+   "name": "COURAGE 0 + GREED 4",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "COURAGE_1",
+    "GREED_5"
+   ],
+   "protocols": [
+    "COURAGE",
+    "GREED"
+   ],
+   "how": "GREED 4 で手札を空にすると、COURAGE 0 の開始で1枚引く",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.4,
+    "interactionSe": 0.9,
+    "partnerValue": 0.9,
+    "partnerValueSe": 0.9,
+    "synergy": 1.3,
+    "synergySe": 0.7,
+    "missed": -0.9,
+    "missedSe": 0.7,
+    "aiPicked": 50
+   },
+   "note": null
+  },
+  {
+   "id": "O044",
+   "name": "SPEED 1 + GLUTTONY 2",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "SPEED_2",
+    "GLUTTONY_3"
+   ],
+   "protocols": [
+    "SPEED",
+    "GLUTTONY"
+   ],
+   "how": "手札をあふれさせて SPEED 1 で1枚引く",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.2,
+    "interactionSe": 0.9,
+    "partnerValue": 1.3,
+    "partnerValueSe": 1,
+    "synergy": 1.5,
+    "synergySe": 0.8,
+    "missed": -2.5,
+    "missedSe": 1.2,
+    "aiPicked": 33
+   },
+   "note": null
+  },
+  {
+   "id": "I001",
+   "name": "LIGHT 0 で裏の WATER 5 を起こす",
+   "kind": "burst",
+   "source": "bigflip",
+   "cards": [
+    "WATER_6",
+    "LIGHT_1"
+   ],
+   "protocols": [
+    "LIGHT",
+    "WATER"
+   ],
+   "how": "WATER 5 を裏で置いておき、LIGHT 0 で表にすると値の枚数だけ引ける。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 1.8,
+    "interactionSe": 1.2,
+    "partnerValue": -1.2,
+    "partnerValueSe": 0.5,
+    "synergy": 0.6,
+    "synergySe": 1,
+    "missed": -2.1,
+    "missedSe": 1.3,
+    "aiPicked": 57
+   },
+   "note": null
+  },
+  {
+   "id": "I002",
+   "name": "LIGHT 0 で裏の DEATH 5 を起こす",
+   "kind": "burst",
+   "source": "bigflip",
+   "cards": [
+    "DEATH_6",
+    "LIGHT_1"
+   ],
+   "protocols": [
+    "LIGHT",
+    "DEATH"
+   ],
+   "how": "DEATH 5 を裏で置いておき、LIGHT 0 で表にすると値の枚数だけ引ける。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.1,
+    "interactionSe": 0.7,
+    "partnerValue": -0.7,
+    "partnerValueSe": 0.5,
+    "synergy": -0.6,
+    "synergySe": 0.7,
+    "missed": -2.1,
+    "missedSe": 1,
+    "aiPicked": 58
+   },
+   "note": null
+  },
+  {
+   "id": "I003",
+   "name": "LIGHT 0 で裏の FIRE 5 を起こす",
+   "kind": "burst",
+   "source": "bigflip",
+   "cards": [
+    "FIRE_6",
+    "LIGHT_1"
+   ],
+   "protocols": [
+    "LIGHT",
+    "FIRE"
+   ],
+   "how": "FIRE 5 を裏で置いておき、LIGHT 0 で表にすると値の枚数だけ引ける。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.1,
+    "interactionSe": 0.7,
+    "partnerValue": -0.4,
+    "partnerValueSe": 0.7,
+    "synergy": -0.3,
+    "synergySe": 0.9,
+    "missed": -3.6,
+    "missedSe": 1.3,
+    "aiPicked": 45
+   },
+   "note": null
+  },
+  {
+   "id": "I004",
+   "name": "LIGHT 0 で裏の SPIRIT 5 を起こす",
+   "kind": "burst",
+   "source": "bigflip",
+   "cards": [
+    "SPIRIT_6",
+    "LIGHT_1"
+   ],
+   "protocols": [
+    "LIGHT",
+    "SPIRIT"
+   ],
+   "how": "SPIRIT 5 を裏で置いておき、LIGHT 0 で表にすると値の枚数だけ引ける。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 102,
+    "horizon": 2,
+    "playout": false,
+    "interaction": 0.5,
+    "interactionSe": 0.7,
+    "partnerValue": -0.2,
+    "partnerValueSe": 0.5,
+    "synergy": 0.2,
+    "synergySe": 0.7,
+    "missed": -1.9,
+    "missedSe": 1.2,
+    "aiPicked": 50
+   },
+   "note": null
+  },
+  {
+   "id": "I005",
+   "name": "LIGHT 0 で裏の LOVE 6 を起こす",
+   "kind": "burst",
+   "source": "bigflip",
+   "cards": [
+    "LOVE_6",
+    "LIGHT_1"
+   ],
+   "protocols": [
+    "LIGHT",
+    "LOVE"
+   ],
+   "how": "LOVE 6 を裏で置いておき、LIGHT 0 で表にすると値の枚数だけ引ける。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 101,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -1.9,
+    "interactionSe": 1.5,
+    "partnerValue": -2.2,
+    "partnerValueSe": 1.5,
+    "synergy": -4.2,
+    "synergySe": 1.5,
+    "missed": -6.1,
+    "missedSe": 1.6,
+    "aiPicked": 49
+   },
+   "note": null
+  },
+  {
+   "id": "I006",
+   "name": "LIGHT 0 で裏の ICE 6 を起こす",
+   "kind": "burst",
+   "source": "bigflip",
+   "cards": [
+    "ICE_6",
+    "LIGHT_1"
+   ],
+   "protocols": [
+    "LIGHT",
+    "ICE"
+   ],
+   "how": "ICE 6 を裏で置いておき、LIGHT 0 で表にすると値の枚数だけ引ける。",
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 103,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -5.2,
+    "interactionSe": 1.3,
+    "partnerValue": -0.6,
+    "partnerValueSe": 0.9,
+    "synergy": -5.8,
+    "synergySe": 1.1,
+    "missed": -8.7,
+    "missedSe": 1.6,
+    "aiPicked": 38
+   },
+   "note": null
+  },
+  {
+   "id": "I007",
+   "name": "LIGHT 0 で裏の CORRUPTION 6 を起こす",
+   "kind": "burst",
+   "source": "bigflip",
+   "cards": [
+    "CORRUPTION_6",
+    "LIGHT_1"
+   ],
+   "protocols": [
+    "LIGHT",
+    "CORRUPTION"
+   ],
+   "how": "CORRUPTION 6 を裏で置いておき、LIGHT 0 で表にすると値の枚数だけ引ける。",
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 100,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -2.1,
+    "interactionSe": 0.9,
+    "partnerValue": -1.8,
+    "partnerValueSe": 1,
+    "synergy": -4,
+    "synergySe": 1.1,
+    "missed": -3.8,
+    "missedSe": 1.3,
+    "aiPicked": 55
+   },
+   "note": null
+  },
+  {
+   "id": "I008",
+   "name": "LIGHT 0 で裏の MOMENTUM 6 を起こす",
+   "kind": "burst",
+   "source": "bigflip",
+   "cards": [
+    "MOMENTUM_6",
+    "LIGHT_1"
+   ],
+   "protocols": [
+    "LIGHT",
+    "MOMENTUM"
+   ],
+   "how": "MOMENTUM 6 を裏で置いておき、LIGHT 0 で表にすると値の枚数だけ引ける。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 102,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.6,
+    "interactionSe": 1.6,
+    "partnerValue": -1.4,
+    "partnerValueSe": 1,
+    "synergy": -1.9,
+    "synergySe": 1.6,
+    "missed": -6,
+    "missedSe": 1.7,
+    "aiPicked": 45
+   },
+   "note": null
+  },
+  {
+   "id": "I009",
+   "name": "LIGHT 0 で裏の DIVERSITY 6 を起こす",
+   "kind": "burst",
+   "source": "bigflip",
+   "cards": [
+    "DIVERSITY_6",
+    "LIGHT_1"
+   ],
+   "protocols": [
+    "LIGHT",
+    "DIVERSITY"
+   ],
+   "how": "DIVERSITY 6 を裏で置いておき、LIGHT 0 で表にすると値の枚数だけ引ける。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 97,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -0.5,
+    "interactionSe": 1.3,
+    "partnerValue": -1.1,
+    "partnerValueSe": 1.1,
+    "synergy": -1.7,
+    "synergySe": 1.5,
+    "missed": -8.1,
+    "missedSe": 1.8,
+    "aiPicked": 37
+   },
+   "note": null
+  },
+  {
+   "id": "I010",
+   "name": "LIGHT 0 で裏の RIGID 7 を起こす",
+   "kind": "burst",
+   "source": "bigflip",
+   "cards": [
+    "RIGID_6",
+    "LIGHT_1"
+   ],
+   "protocols": [
+    "LIGHT",
+    "RIGID"
+   ],
+   "how": "RIGID 7 を裏で置いておき、LIGHT 0 で表にすると値の枚数だけ引ける。",
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 102,
+    "horizon": 2,
+    "playout": false,
+    "interaction": -9.2,
+    "interactionSe": 1.8,
+    "partnerValue": -4,
+    "partnerValueSe": 1.6,
+    "synergy": -13.2,
+    "synergySe": 1.8,
+    "missed": -10.4,
+    "missedSe": 2,
+    "aiPicked": 31
+   },
+   "note": null
+  },
+  {
    "id": "T01",
    "name": "WATER 1 + WATER 4",
    "kind": "burst",

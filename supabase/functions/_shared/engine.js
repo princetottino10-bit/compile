@@ -3932,7 +3932,6 @@ const AI_AIM_COMBOS = [
      相手に引かせる LOVE は MIRROR 4 (相手が引いたあと1枚引く) で取り返す。相手にこのラインへ出させる札は ICE 1 (出したあと相手が1枚捨てる) が罰にする */
   { pieces: { SMOKE_3: 'up', OVERWHELM_2: 'play' } },
   { pieces: { MIRROR_5: 'top', LOVE_6: 'play' } },
-  { pieces: { MIRROR_5: 'top', LOVE_1: 'play' } },
   { pieces: { ICE_1: 'top', LUST_6: 'play' } },
   { pieces: { ICE_1: 'top', GRAVITY_6: 'play' } },
   { pieces: { ICE_1: 'top', INERT_4: 'play' } },
@@ -4013,7 +4012,8 @@ function aiFlipStoreScore(st, side, W) {
     const top = stack[stack.length - 1];
     if (top && st.cards[top].def === 'FIRE_4' && st.cards[top].faceUp) fire3 = true;
   }
-  /* LIGHT 0 (LIGHT_1) は表にした札の値だけ引く。裏の 5 以上を起こすと5枚以上引ける (ユーザー「裏向きの5を light0 で起こす」、計測なし) */
+  /* LIGHT 0 (LIGHT_1) は表にした札の値だけ引く。裏の 5 を起こすと5枚引ける (ユーザー「裏向きの5を light0 で起こす」)。
+     測ると 5 は ±0〜+1.8、6・7 (ICE 6 −5.2・RIGID 7 −9.2・CORRUPTION 6 −2.1・LOVE 6 −1.9、100盤面) は表になったデメリットで損をするので 5 だけにした */
   const light0 = st.players[side].hand.some(u => st.cards[u].def === 'LIGHT_1');
   if (!fire3 && !light0 && !st.players[side].hand.some(u => AI_FLIP_ENABLER.has(st.cards[u].def))) return 0;
   let n = 0;
@@ -4022,7 +4022,7 @@ function aiFlipStoreScore(st, side, W) {
     const top = stack[stack.length - 1];
     if (!top || st.cards[top].faceUp) continue;
     const d = st.cards[top].def;
-    if (AI_FLIP_PAYLOAD.has(d) || (fire3 && AI_FLIP_SELF.has(d)) || (light0 && DEFS[d].value >= 5)) n++;
+    if (AI_FLIP_PAYLOAD.has(d) || (fire3 && AI_FLIP_SELF.has(d)) || (light0 && DEFS[d].value === 5)) n++;
   }
   return Math.min(n, 2) * W.flipStore;
 }
