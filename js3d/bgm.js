@@ -17,20 +17,29 @@ export const BGM_CREDIT = '煉獄庭園';
 /* 対戦で流す曲 (COLLECTION で選ぶ仕組み BGM_RELEASED とは別)。2026-09-28: ボスは「彷徨いの言葉は天に導かれ」、
    強敵は Z･E･R･O。タイトルは無音 */
 export const BATTLE_BGM_ON = true;
-/* ふつうの対戦のいつもの13曲 (2026-10-15 からおまかせはシャッフルで、持っている曲すべてから選ぶ。この13曲は鳴らせる曲の印と、iPhone の下準備に使う): OpenTracks (旧 DOVA-SYNDROME) (2026-10-13 に、まんぼう二等兵の BPM 135〜165 の8曲を足した。2026-11-01 に本人が Musio Studio で作った Iron Meridian (176 BPM) を足した。
+/* ふつうの対戦のいつもの13曲 (2026-10-15 からおまかせはシャッフルで、持っている曲すべてから選ぶ。この13曲は鳴らせる曲の印と、iPhone の下準備に使う): OpenTracks (旧 DOVA-SYNDROME) (2026-10-13 に、まんぼう二等兵の BPM 135〜165 の8曲を足した。2026-11-01 に本人が Musio Studio で作った Iron Meridian (176 BPM) と Protocol Drive (154 BPM) を足した。
    あと1本の曲 TENSE_BGMS より遅くして、切り替わったときの差を残す)。
    OpenTracks の規約 (ファイルのまま取り出せる形で置かない) に合わせて m4a に変換して置いている */
-export const NORMAL_BGMS = ['cho_zunou', 'reflect', 'kaidoku', 'crescendo_jitter', 'switcheroo', 'monolith_black', 'particle_tones', 'tsuisekisha', 'clock_jitter', 'joudou_catharsis', 'blaze_a_trail', 'killer_roll', 'iron_meridian'];
-export const STRONG_BGM = 'zero';
+export const NORMAL_BGMS = ['cho_zunou', 'reflect', 'kaidoku', 'crescendo_jitter', 'switcheroo', 'monolith_black', 'particle_tones', 'tsuisekisha', 'clock_jitter', 'joudou_catharsis', 'blaze_a_trail', 'killer_roll', 'iron_meridian', 'protocol_drive'];
+/* 強敵の曲: 本人作の Overclock (2026-11-01 に Z･E･R･O から替えた。Z･E･R･O は COLLECTION でいまも選べる) */
+export const STRONG_BGM = 'overclock';
 /* タイトル・メニュー (対戦以外) の落ち着いた4曲。2026-10-15 からおまかせはシャッフルになったので、選ぶのには使っていない (鳴らせる曲の印) */
 export const MENU_BGMS = ['planetarium', 'madoromu_neon', 'nine_jack', 'kidou'];
 /* 本人が Musio Studio で作った曲 (2026-11-01)。依頼書は project-files の bgm-requests/song-requests-2026-11-01.md。
-   起動: メニューのシャッフルに入れる (COLLECTION の BGM にも)。判定: ストーリーの機体戦 (boss の付いた対戦)。止めていい: 終章の所長との3連戦 */
+   起動: メニューのシャッフルに入れる (COLLECTION の BGM にも)。判定: ストーリーの機体戦 (boss の付いた対戦)。止めていい: 終章の所長との最後の判定 (前の2戦は判定)。
+   2026-11-01 の2回目に3曲とも作り直した版へ差し替え、対戦の3曲 (Protocol Drive: ふつうの対戦 / Last Compile: あと1本 / Overclock: 強敵) を足した。
+   依頼書は bgm-requests/battle-song-requests-2026-11-01.md */
 export const STORY_BATTLE_BGM = 'hantei';
 export const DIRECTOR_BGM = 'halt_shocho';
 /* つなぎ目なしで繰り返す曲と、その長さ (秒。元の WAV のサンプル数から)。末尾の余韻を冒頭に重ねたループ素材なので、
    <audio loop> の一瞬の途切れを避けて Web Audio で鳴らす (bgm-loop.js) */
-const LOOP_SECONDS = { kidou: 4712727 / 48000, hantei: 5501538 / 48000, halt_shocho: 128 };
+const LOOP_SECONDS = { kidou: 4712727 / 48000, hantei: 5501538 / 48000, halt_shocho: 128,
+  protocol_drive: 8078961 / 48000, last_compile: 3789474 / 48000, overclock: 6020000 / 48000 };
+/* ループ素材の m4a は、曲の前後にループの続きを 2048 サンプル (44.1kHz) ずつ付けて符号化してある (bgm-loop.js の pad)。
+   作り方: WAV を3回つなげて 44.1kHz に直し、真ん中の1周とその前後 2048 サンプルを切り出して 96kbps の AAC に
+   ffmpeg -stream_loop 2 -i <wav> -af "aresample=44100:resampler=soxr:precision=28,atrim=start_sample=<S-2048>:end_sample=<2S+2048>" -c:a aac -b:a 96k <key>.m4a
+   (S = WAV のサンプル数 × 44100 / 48000 を丸めた値) */
+const LOOP_PAD = 2048 / 44100;
 /* 勝ち抜き戦 (RUN) の対戦以外の画面 (入口・地図・ショップ・休憩所など): 沈殿するイルカ */
 export const RUN_BGM = 'iruka';
 /* ストーリー (2026-10-23): 章の地図の曲と、会話の山場で替える曲。甘茶の音楽工房 (https://amachamusic.chagasi.com/) の曲。
@@ -68,14 +77,18 @@ export const DEUS_BGM = 'destroy_god';
 export const PEEK_BGM = 'final_2sec';
 /* どちらかが勝ちまであと1本になったら (ふつうの3本勝負なら2本目のコンパイルのあと) 切り替える曲。
    まんぼう二等兵 (OpenTracks) の速くて緊張感のある6曲 (BPM 162〜216。ふつうの対戦の曲は 140〜170) から、試合ごとにランダム */
-export const TENSE_BGMS = ['interception', 'strike_despair', 'lobelia', 'will_you_cry', 'tactical_encounter', 'hangeki'];
-/** あと1本の曲を1つ選ぶ (前の試合と同じ曲は選ばない) */
+export const TENSE_BGMS = ['interception', 'strike_despair', 'lobelia', 'will_you_cry', 'tactical_encounter', 'hangeki',
+  'last_compile'];   // 本人作の Last Compile (190 BPM、2026-11-01)
+/* Last Compile は半分の確率で選ぶ (7曲で同じ重みだと7試合に1回しか流れない。本人の専用曲を「あと1本」の合図にする。2026-11-03) */
+export const OWN_TENSE_BGM = 'last_compile';
+const OWN_TENSE_RATE = 0.5;
+/** あと1本の曲を1つ選ぶ (前の試合と同じ曲は選ばない。Last Compile は前の試合と同じでも選ぶ: 合図の曲なので続いてよい) */
 const LAST_TENSE_KEY = 'compileLastTenseBgm';
 export function pickTenseBgm(rnd = Math.random) {
   let last = null;
   try { last = localStorage.getItem(LAST_TENSE_KEY); } catch (e) { /* private mode */ }
-  const pool = TENSE_BGMS.filter(k => k !== last);
-  const pick = pool[Math.floor(rnd() * pool.length)];
+  const others = TENSE_BGMS.filter(k => k !== OWN_TENSE_BGM && k !== last);
+  const pick = rnd() < OWN_TENSE_RATE ? OWN_TENSE_BGM : others[Math.floor(rnd() * others.length)];
   try { localStorage.setItem(LAST_TENSE_KEY, pick); } catch (e) { /* private mode */ }
   return pick;
 }
@@ -87,6 +100,8 @@ const FILES = { ...Object.fromEntries(STORY_TRACKS.map(k => [k, k + '.m4a'])), c
     'midnight_breaker', 'rapid4', 'irregular', 'rapid5', 'under_world', 'cyber10', 'cyber_prisoner'].map(k => [k, k + '.m4a'])),
   /* 本人が Musio Studio で作った曲 */
   ...Object.fromEntries(Object.keys(LOOP_SECONDS).map(k => [k, k + '.m4a'])),
+  /* 作り直した版 (2026-11-01 の2回目)。前の版と名前を変え、端末に残った前の版 (前後のつなぎが無い) を読まないように */
+  kidou: 'kidou_v2.m4a', hantei: 'hantei_v2.m4a', halt_shocho: 'halt_shocho_v2.m4a',
   /* ふつうの対戦に足した曲と、あと1本の曲 */
   ...Object.fromEntries(['switcheroo', 'monolith_black', 'particle_tones', 'tsuisekisha', 'clock_jitter', 'joudou_catharsis', 'blaze_a_trail', 'killer_roll', 'interception', 'strike_despair', 'lobelia', 'will_you_cry', 'tactical_encounter', 'hangeki'].map(k => [k, k + '.m4a'])),
   /* 本人が Musio Studio で作った曲 (2026-11-01) */
@@ -103,7 +118,10 @@ const LOUDNESS = {
   electric_highway: -9.3, grenade: -7.8, midnight_breaker: -9.9, rapid4: -6.8, irregular: -8.3, rapid5: -8.2, under_world: -9.7, cyber10: -6.5, cyber_prisoner: -6.9,
   interception: -4.3, strike_despair: -6.5, lobelia: -5.6, will_you_cry: -6.2, tactical_encounter: -6.4, hangeki: -5.8,
   switcheroo: -6.2, monolith_black: -6.4, particle_tones: -5.6, tsuisekisha: -8.5, clock_jitter: -6.2, joudou_catharsis: -5.4, blaze_a_trail: -8.1, killer_roll: -6.4,
-  iron_meridian: -12.1, kidou: -15.1, hantei: -16.3, halt_shocho: -14.7,   // 本人作 (起動は WAV を +5.5 dB してから変換。判定は上げ幅の上限で -12.2 くらいで鳴る)
+  iron_meridian: -12.1,   // 本人作
+  /* 本人作の作り直し版と対戦の3曲 (2026-11-01 の2回目)。WAV の段階で -11 にそろえてある。起動だけ -14 (ピアノの立ち上がりを潰さないため)
+     で、ここで +3 dB 上げて鳴らす (上げ幅の上限 1.6 倍 = +4 dB の内側なので、前の版のように WAV を上げてから変換しなくてよい) */
+  kidou: -14.0, hantei: -11.1, halt_shocho: -11.2, protocol_drive: -11.1, last_compile: -11.0, overclock: -11.1,
   /* ストーリー (甘茶の音楽工房)。静かな曲が多く、上げられるのは 1.6 倍までなので、対戦の曲より少し小さく鳴る (会話の後ろに置く曲なのでそのまま) */
   genjitsunosukima: -19.3, mizunishizumupiano: -16.9, janegreynoshouzou: -14.2, rokugatsunoamaoto: -15.2, kanatanikasumujoukisen: -16.1,
   elegyfourstrings2: -14.3, inishienohiseki: -14.3, gozennijinomunashisa: -15.9, natsunokiri: -17.7, sangatsunosundasora: -17.4
@@ -202,15 +220,17 @@ function ensure() {
   if (!el) { el = audioEl; route = audioRoute; }
 }
 /* その曲を鳴らす再生器に切り替える (つなぎ目なしの曲は LoopPlayer。Web Audio が使えなければ <audio> のまま) */
+function ensureLoop() {
+  if (loopEl) return;
+  const lp = new LoopPlayer();
+  const lr = lp.route(0);
+  if (lr) { lp.addEventListener('ended', () => { if (shuffling()) nextShuffle(); }); loopEl = lp; loopRoute = lr; }
+}
 function usePlayer(key) {
   let p = audioEl, r = audioRoute;
   if (LOOP_SECONDS[key]) {
-    if (!loopEl) {
-      const lp = new LoopPlayer();
-      const lr = lp.route(0);
-      if (lr) { lp.addEventListener('ended', () => { if (shuffling()) nextShuffle(); }); loopEl = lp; loopRoute = lr; }
-    }
-    if (loopEl) { p = loopEl; r = loopRoute; p.length = LOOP_SECONDS[key]; }
+    ensureLoop();
+    if (loopEl) { p = loopEl; r = loopRoute; p.length = LOOP_SECONDS[key]; p.pad = LOOP_PAD; }
   }
   if (el !== p && el) {
     el.pause(); route.set(0);
@@ -246,10 +266,18 @@ export function previewBgm(key, back, ms = 15000) {
   }, ms);
 }
 
-/** 対戦の途中で曲を替える: いまの曲を ms かけて小さくしてから、次の曲を頭から (ぶつ切りにしない) */
+/** その曲を先に読んでおく (つなぎ目なしの曲だけ。decode: 音にするところまで。しないならファイルだけ) */
+export function prepareBgm(key, decode = true) {
+  if (!key || !LOOP_SECONDS[key]) return;
+  try { ensure(); ensureLoop(); if (loopEl) loopEl.prepare(bgmFile(key), decode); } catch (e) { /* 読めなくても切り替えのときに読む */ }
+}
+
+/** 対戦の途中で曲を替える: いまの曲を ms かけて小さくしてから、次の曲を頭から (ぶつ切りにしない)。
+    小さくしている間に次の曲を音にしておく (つなぎ目なしの曲は、読み終わるまで鳴らないため) */
 export function crossBgm(key, ms = 1100) {
   if (!el || !want || !route) { playBgm(key); return; }
   if (want === key) return;
+  prepareBgm(key);
   const was = want;
   route.set(0, ms / 1000 / 3);
   setTimeout(() => {

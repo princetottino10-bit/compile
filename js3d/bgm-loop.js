@@ -7,6 +7,10 @@
  *   (src・loop・paused・currentTime・play()・pause()・'ended')。
  *   AAC は頭に符号化の遅れ (ffmpeg の aac は 1024 サンプル) が付く。ブラウザが m4a の edit list を読んで外せば
  *   読んだ長さは曲の長さどおりになる。長ければ、その分は頭の遅れとみなして飛ばす (末尾の詰め物はループの外に置く)。
+ *   遅れは 44.1kHz のファイルでの 1024 サンプルなので、48kHz で読む端末 (iPhone など) では 1114 サンプル分になる
+ *   (1024 のまま飛ばすと頭が約 2ms ずれ、つなぎ目でぷつっと鳴った。2026-11-01 に直した)。
+ *   符号化は頭と末尾が崩れやすい (頭の 20ms ほどで元の波形との差が大きかった) ので、ファイルは曲の前後に
+ *   ループの続き (pad 秒、末尾の 2048 サンプルと冒頭の 2048 サンプル) を付けて符号化してある。鳴らすのはその内側だけ。
  * ========================================================================= */
 import { audioOut } from './audio.js';
 
@@ -18,6 +22,7 @@ export class LoopPlayer {
     this.loop = true;
     this.paused = true;
     this.length = 0;             // 曲の長さ (秒)。bgm.js の LOOP_SECONDS
+    this.pad = 0;                // 曲の前後に付けたループの続き (秒)。bgm.js の LOOP_PAD
     this._buf = null;
     this._bufUrl = '';
     this._loading = null;
@@ -26,6 +31,7 @@ export class LoopPlayer {
     this._t0 = 0;                // 鳴らし始めた ctx の時刻 - 鳴らし始めた位置
     this._ended = [];
     this._gain = null;
+    this._pre = null;            // 先に読んでいる曲 { url, bytes: ファイルの Promise, p: 音にした Promise | null }
   }
   /* 曲を替えたら止まる (<audio> と同じ。鳴らすのは play()) */
   get src() { return this._src; }
@@ -50,9 +56,10 @@ export class LoopPlayer {
     const b = this._buf;
     if (!b) return { start: 0, len: this.length || 0 };
     const want = Math.round((this.length || b.duration) * b.sampleRate);
-    const extra = b.length - want;
-    /* 長さどおり (edit list が効いた) なら頭から。長ければ頭の遅れを飛ばす */
-    const skip = extra > 64 ? Math.min(AAC_DELAY, extra) : 0;
+    const pad = Math.round(this.pad * b.sampleRate);
+    const extra = b.length - want - 2 * pad;
+    /* 長さどおり (edit list が効いた) なら前の pad だけ飛ばす。長ければ頭の遅れ (読んだ速さに換算) も飛ばす */
+    const skip = pad + (extra > 64 ? Math.min(Math.round(AAC_DELAY * b.sampleRate / 44100), extra) : 0);
     return { start: skip / b.sampleRate, len: Math.min(want, b.length - skip) / b.sampleRate };
   }
   get currentTime() {
@@ -78,6 +85,24 @@ export class LoopPlayer {
     this.paused = true;
     this._stop();
   }
+  /** 次の曲を先に読んでおく (いま鳴っている曲はそのまま)。decode: 音にするところまで (しないならファイルだけ)。
+      あと1本の曲は、切り替えのときに読み始めると、1MB の読み込みと音にする手間 (パソコンで 0.7 秒、iPhone はもっと) の分だけ
+      無音が挟まった。試合の途中でファイルを、切り替えの音を下げている間に音にするところまで済ませておく */
+  prepare(url, decode = true) {
+    if (this._buf && this._bufUrl === url) return;
+    const o = audioOut();
+    if (!o) return;
+    if (!this._pre || this._pre.url !== url) {
+      const pre = { url, bytes: fetch(url).then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); }), p: null };
+      pre.bytes.catch(() => { if (this._pre === pre) this._pre = null; });
+      this._pre = pre;
+    }
+    const pre = this._pre;
+    if (decode && !pre.p) {
+      pre.p = pre.bytes.then(a => new Promise((ok, ng) => o.ctx.decodeAudioData(a, ok, ng)));
+      pre.p.catch(() => { if (this._pre === pre) this._pre = null; });
+    }
+  }
   _load() {
     const url = this.src;
     if (this._buf && this._bufUrl === url) return Promise.resolve();
@@ -85,8 +110,12 @@ export class LoopPlayer {
     const o = audioOut();
     if (!o) return Promise.reject(new Error('no audio'));
     this._buf = null;
-    const p = fetch(url).then(r => r.arrayBuffer())
-      .then(a => new Promise((ok, ng) => o.ctx.decodeAudioData(a, ok, ng)))
+    /* 先に読んでいればそれを使う (decodeAudioData はファイルの中身を使い切るので、音にするのは1回だけ) */
+    const pre = this._pre && this._pre.url === url ? this._pre : null;
+    if (pre) this._pre = null;
+    const decoded = pre && pre.p ? pre.p
+      : (pre ? pre.bytes : fetch(url).then(r => r.arrayBuffer())).then(a => new Promise((ok, ng) => o.ctx.decodeAudioData(a, ok, ng)));
+    const p = decoded
       .then(buf => { if (this.src === url) { this._buf = buf; this._bufUrl = url; } });
     this._loading = { url, p };
     return p;
