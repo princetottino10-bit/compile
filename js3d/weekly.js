@@ -48,9 +48,15 @@ function sample(list, n, rnd) {
 }
 
 /* その週の9つと3人の相手。names は全プロトコル名 (並び順が同じなら全員同じ結果) */
+/* 途中で足したプロトコルと、週替わりに入れはじめる週 (2026-11-09 の週)。それより前の週は前のままの顔ぶれ */
+const LATE_FROM = 2967;
+const LATE_PROTOCOLS = ['AMBUSH', 'ENVY', 'FULCRUM', 'GLUTTONY', 'GREED', 'LUST', 'MOMENTUM', 'NOVA', 'OVERWHELM', 'PRIDE', 'SLOTH', 'WRATH',
+  'FLEXIBLE', 'INERT', 'RIGID'];
 export function weeklySet(key, names) {
   const rnd = seeded(key);
-  const pool = names.slice().sort();
+  /* Main 3 / Aux 3 は追加した週 (W2966) の途中から顔ぶれが変わらないよう、次の週から入れる */
+  const late = +String(key).slice(1) < LATE_FROM;
+  const pool = names.filter(n => !late || !LATE_PROTOCOLS.includes(n)).sort();
   const nine = sample(pool, 9, rnd);
   const strong = sample(pool.filter(n => !nine.includes(n)), 3, rnd);
   const ch = Math.floor(rnd() * CHALLENGERS.length);
