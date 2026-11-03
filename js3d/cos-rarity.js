@@ -39,7 +39,8 @@ export function rarityOf(kind, key, opt = {}) {
   const ti = trophyItem(kind, key);
   if (ti) { const t = TROPHIES.find(x => x.id === ti.trophy); return t ? TIER_RAR[t.tier] || 'E' : 'E'; }
   const w = WEEKLY_ITEMS.find(x => x.kind === kind && x.key === key);
-  if (w) return w.weeks >= 3 ? 'E' : 'R';
+  /* 週替わりの褒美は3連戦を勝ち抜いた証なので高め (2026-11-03 に R/E → E/L) */
+  if (w) return w.weeks >= 3 ? 'L' : 'E';
   if (kind === 'title') {
     if (key === 'platinum' || key === 'deicide' || key === 'blindspot') return 'L';
     const t = TROPHIES.find(x => x.id === TROPHY_OF_TITLE[key]);
