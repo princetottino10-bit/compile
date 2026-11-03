@@ -185,3 +185,19 @@ test('BLITZ は戦績からもさかのぼって付く (CPU 戦・クイック�
   assert.ok(!ids(newlyEarned({}, ctx({ records: [rec({ mode: 'run', turns: 12 }), rec({ mode: 'weekly', turns: 14 })] }))).includes('blitz'));
   assert.ok(!ids(newlyEarned({}, ctx({ records: [rec({ mode: 'cpu', turns: 29 }), rec({ mode: 'cpu', win: false, turns: 20 })] }))).includes('blitz'));
 });
+
+test('Main 3 / Aux 3・公式ソロモードの実績: BOT BREAKER・ROOT ACCESS・SEVEN SINS・TRISTATE', async () => {
+  const { BOT_SCENARIOS } = await import('../js3d/bot-scenarios.js');
+  const reg = BOT_SCENARIOS.filter(s => s.mode === 'regular');
+  const five = reg.slice(0, 5).map(s => ({ win: true, level: s.level, me: ['ENVY', 'GREED', 'LUST'] }));
+  assert.ok(!ids(newlyEarned({}, ctx({ records: five }))).includes('solo_regular'));
+  const six = five.concat({ win: true, level: reg[5].level, me: ['PRIDE', 'SLOTH', 'WRATH'] });
+  const got = ids(newlyEarned({}, ctx({ records: six })));
+  assert.ok(got.includes('solo_regular'));
+  assert.ok(!got.includes('solo_advanced'));
+  assert.ok(!got.includes('sins7'));     // GLUTTONY がまだ
+  const sins = six.concat({ win: true, level: 1, me: ['GLUTTONY', 'FIRE', 'WATER'] });
+  assert.ok(ids(newlyEarned({}, ctx({ records: sins }))).includes('sins7'));
+  assert.ok(!ids(newlyEarned({}, ctx({ records: [{ win: false, level: 1, me: ['FLEXIBLE', 'INERT', 'RIGID'] }] }))).includes('tristate'));
+  assert.ok(ids(newlyEarned({}, ctx({ records: [{ win: true, level: 1, me: ['RIGID', 'FLEXIBLE', 'INERT'] }] }))).includes('tristate'));
+});
