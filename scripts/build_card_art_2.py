@@ -26,6 +26,11 @@ Main 2:
     The game shows <Cap>.webp on the LOADING side and <Cap>_Glitched.webp on
     the COMPILED side (js3d/panel.js); for Main 2 the "Glitched" file is the
     clean one, because that is how the printed cards are.
+    COURAGE (2026-10-16) has only the flat sword, so its LOADING side is
+    glitch() of it: art/Courage.webp and Courage_Glitched.webp were swapped
+    by hand on 2026-11-03 to follow the side convention above.  The picks
+    (seed per slot) are in scripts/main2_flat_picks.json; WAR c5 came from
+    E:/SD/scripts/main2_flat_fix.py.
     Without flat/ art a protocol falls back to the 2026-10 behaviour (one
     shattered scene for everything); without any illustration, to the old
     procedural triangle mosaic in its data/cards.json color.
