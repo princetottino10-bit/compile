@@ -21,7 +21,8 @@ test('レベルの報酬は解放のレベルが高いほど上、習熟度・�
   assert.equal(rarityOf('title', 'puzzler'), 'E');                                // 銀の実績
   assert.equal(rarityOf('title', 'platinum'), 'L');
   assert.equal(rarityOf('icon', 'smile', { shopPrice: 150 }), 'E');
-  assert.equal(rarityOf('sleeve', 'laurel', { defaultKey: 'default' }), 'R');   // 週替わり 1 週
+  assert.equal(rarityOf('sleeve', 'laurel', { defaultKey: 'default' }), 'E');   // 週替わり 1 週
+  assert.equal(rarityOf('marker', 'laurel', { defaultKey: 'default' }), 'L');   // 週替わり 3 週
 });
 
 test('どの品物のレア度も C / R / E / L か null', async () => {

@@ -111,7 +111,7 @@ export const TROPHIES = [
   { id: 'lock', tier: 'silver', name: 'LOCKSMITH', desc: '「ロック特化」の CPU に勝つ', test: (c) => beat(c, 4) },
   { id: 'streak5', tier: 'silver', name: 'ON A ROLL', desc: 'CPU 戦で5連勝する', test: (c) => streak(c.records, true) >= 5, progress: (c) => [Math.min(5, streak(c.records, true)), 5] },
   { id: 'run', tier: 'silver', name: 'RUNNER', desc: 'RUN を全勝クリアする', test: (c) => xpHas(c, e => e.src === 'run') },
-  { id: 'weekly', tier: 'silver', name: 'WEEKLY CHAMP', desc: 'WEEKLY をクリアする (専用スリーブ LAUREL)', test: (c) => xpHas(c, e => e.src === 'weekly') },
+  { id: 'weekly', tier: 'gold', name: 'WEEKLY CHAMP', desc: 'WEEKLY をクリアする (専用スリーブ LAUREL)', test: (c) => xpHas(c, e => e.src === 'weekly') },
   { id: 'level10', tier: 'silver', name: 'VETERAN', desc: 'プレイヤーレベル10になる', test: (c) => c.level >= 10, progress: (c) => [Math.min(c.level, 10), 10] },
   { id: 'gold_card', tier: 'silver', name: 'GOLDEN TOUCH', desc: 'カードの縁を金にする (そのカードで25勝)', test: (c) => tierCards(c, 25) >= 1 },
   { id: 'turnfx10', tier: 'silver', name: 'COMBO BURST', desc: '1つの手番に、自分のカードの効果を10回発動させる', test: (c) => !!g(c) && (g(c).turnFxMax | 0) >= 10 },

@@ -8,7 +8,7 @@ import { keepBroken } from './broken.js';
 import { replaysTab, bindReplays } from './replays-ui.js';
 import { bonusXp } from './xp.js';
 import { levelLabel } from './aidecks.js';
-import { conquerable, conquered, beatStrongest, isShortRecord, protocolSummary, matchups, winTrend, fastestWin, masteryLevel, cardStats, cardTier, playerLevel, xpForLevel } from './stats-data.js';
+import { conquerable, conquered, BOSS_STAND_IN, beatStrongest, isShortRecord, protocolSummary, matchups, winTrend, fastestWin, masteryLevel, cardStats, cardTier, playerLevel, xpForLevel } from './stats-data.js';
 import { nextReward } from './rewards.js';
 import { raise } from './dialogs.js';
 
@@ -190,7 +190,7 @@ function summaryTab(list, protos) {
 function protocolTab(list, protos) {
   const sum = protocolSummary(list);
   return '<p class="pz-note">そのプロトコルを入れて戦うと習熟度が上がります (1戦 +1、勝ち +2、つよい以上に勝つと +1)。' +
-    '印は 勝った・つよいに勝った・GATEKEEPER に勝った。</p>' +
+    '印は 勝った・つよいに勝った・GATEKEEPER に勝った。GATEKEEPER と同じ FIRE・WATER・SPEED は GATEKEEPER と戦えないので、3つ目の印は強敵 (' + BOSS_STAND_IN + ') に勝つと付きます。</p>' +
     '<div class="sr-protos">' + protos.map(p => {
       const t = sum.get(p.name);
       const m = t ? t.mastery : masteryLevel(0);
@@ -199,7 +199,7 @@ function protocolTab(list, protos) {
         '<div class="sr-ph"><b>' + esc(p.name) + '</b><span>Lv' + m.level + '</span></div>' +
         '<div class="sr-xp"><i style="width:' + Math.round(m.progress * 100) + '%"></i></div>' +
         '<div class="sr-pf"><span class="sr-pips">' + pip(t && t.won, '勝った') + pip(t && t.wonStrong, 'つよいに勝った') +
-          pip(t && t.wonStrongest, 'GATEKEEPER に勝った') + '</span><small>' + (t ? t.wins + '勝' + (t.games - t.wins) + '敗' : '未使用') + '</small></div>' +
+          pip(t && t.wonStrongest, conquerable([p.name]).length ? 'GATEKEEPER に勝った' : 'GATEKEEPER とは戦えないので、強敵 (' + BOSS_STAND_IN + ') に勝った') + '</span><small>' + (t ? t.wins + '勝' + (t.games - t.wins) + '敗' : '未使用') + '</small></div>' +
       '</div>';
     }).join('') + '</div>';
 }
