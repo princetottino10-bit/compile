@@ -16,6 +16,7 @@ test('見た目の解放: はじめからのものは Lv1、報酬のものは�
       assert.ok(R.REWARDS.some(r => r.kind === kind && r.key === key) || R.GACHA_ITEMS.some(g => g.kind === kind && g.key === key) ||
         R.UNDERDOG_ITEMS.some(g => g.kind === kind && g.key === key) || R.WEEKLY_ITEMS.some(g => g.kind === kind && g.key === key) ||
         R.MASTERY_ITEMS.some(g => g.kind === kind && g.key === key) || R.AVATAR_GACHA.some(g => g.kind === kind && g.key === key) ||
+        R.FREE_ITEMS.some(g => g.kind === kind && g.key === key) || R.TROPHY_ITEMS.some(g => g.kind === kind && g.key === key) ||
         (kind === 'avatar' && R.AVATAR_FREE.includes(key)),
         kind + '/' + key + ' は報酬の一覧・ガチャ・下剋上・週替わりのどれかにある');
     }
@@ -78,4 +79,27 @@ test('プロトコルの習熟度: 3 で名札・6 で称号・9 でプレイマ
   setRecs(wins(39).map(r => ({ ...r, mode: 'tutorial' })));   // チュートリアルの対戦は数えない
   assert.equal(R.protoMastery('FIRE'), 0);
   delete globalThis.localStorage;
+});
+
+test('Main 3 の実績の褒美: 実績を取るとスリーブ・マーカーが開き、外した実績では閉じる。CLASSIC ははじめから', async () => {
+  const store = {};
+  global.localStorage = { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: (k) => { delete store[k]; } };
+  try {
+    const R = await load();
+    assert.equal(R.unlockLevel('sleeve', 'classic'), 1);
+    for (const it of R.TROPHY_ITEMS) {
+      assert.ok(R.COSMETICS[it.kind].some(([k]) => k === it.key), it.key + ' は COSMETICS にある');
+      assert.equal(R.unlockLevel(it.kind, it.key), 9999);
+    }
+    store.compileTrophies = JSON.stringify({ sins7: 1, tristate: 2, '~tristate': 3 });
+    assert.equal(R.unlockLevel('sleeve', 'sins'), 1);
+    assert.equal(R.unlockLevel('marker', 'tristate'), 9999, '外した実績では開かない');
+    assert.equal(R.unlockLevel('sleeve', 'rootaccess'), 9999);
+  } finally { delete global.localStorage; }
+});
+
+test('実績の褒美の実績は、どれも achievements.js にある', async () => {
+  const R = await load();
+  const A = await import('../js3d/achievements.js');
+  for (const it of R.TROPHY_ITEMS) assert.ok(A.TROPHIES.some(t => t.id === it.trophy), it.trophy);
 });

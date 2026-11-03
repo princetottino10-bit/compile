@@ -74,13 +74,13 @@ export const COSMETICS = {
   mat: [['neon', 'NEON GRID'], ['nebula', 'NEBULA'], ['vortex', 'VORTEX'], ['biomech', 'BIOMECH'], ['prism', 'PRISM'], ['eclipse', 'ECLIPSE'],
     ['celestial', 'CELESTIAL'], ['hokusai', 'FUJI'], ['seigaiha', 'GREAT WAVE'], ['sakura', 'YOZAKURA'], ['garden', 'ROSE GARDEN'], ['library', 'LIBRARY'], ['nerinzu_shion', 'SHION'], ['nerinzu_asagi', 'RURI'], ['nerinzu_nadeshiko', 'AKANE'], ['nerinzu_yamabuki', 'ANZU'],
     ...MASTERY_PROTOS.map(p => [pkey(p), p])],
-  sleeve: [['default', 'STANDARD'], ['crimson', 'CRIMSON'], ['circuit', 'CIRCUIT'], ['void', 'VOID'], ['holo', 'HOLO'], ['sakura', 'SAKURA'], ['aurum', 'AURUM'],
+  sleeve: [['default', 'STANDARD'], ['classic', 'CLASSIC'], ['crimson', 'CRIMSON'], ['circuit', 'CIRCUIT'], ['void', 'VOID'], ['holo', 'HOLO'], ['sakura', 'SAKURA'], ['aurum', 'AURUM'],
     ['mint', 'MINT'], ['ocean', 'OCEAN'], ['ember', 'EMBER'], ['glacier', 'GLACIER'], ['toxic', 'TOXIC'], ['galaxy', 'GALAXY'],
     ['tiger', 'TIGER'], ['pixel', 'PIXEL'], ['koi', 'KOI'], ['aurora', 'AURORA'], ['nyanko', 'NYANKO'], ['sweets', 'SWEETS'], ['bunny', 'BUNNY'], ['rose', 'ROSE'], ['butterfly', 'GOLDEN BUTTERFLY'], ['momiji', 'MOMIJI'], ['pumpkin', 'PUMPKIN'], ['sprout', 'SPROUT'], ['konpairu', 'KONPAIRU'], ['teaparty', 'TEA PARTY'], ['nerinzu_shion', 'SHION'], ['nerinzu_asagi', 'RURI'], ['nerinzu_nadeshiko', 'AKANE'], ['nerinzu_yamabuki', 'ANZU'],
-    ['slayer', 'GIANT SLAYER'], ['laurel', 'LAUREL']],
+    ['slayer', 'GIANT SLAYER'], ['laurel', 'LAUREL'], ['sins', 'SEVEN SINS'], ['rootaccess', 'ROOT ACCESS']],
   marker: [['default', 'STANDARD'], ['gold', 'GOLD'], ['crystal', 'CRYSTAL'], ['crimson', 'CRIMSON'], ['prism', 'PRISM'],
     ['emerald', 'EMERALD'], ['amber', 'AMBER'], ['sapphire', 'SAPPHIRE'], ['obsidian', 'OBSIDIAN'], ['nova', 'NOVA'],
-    ['slayer', 'GIANT SLAYER'], ['laurel', 'LAUREL']],
+    ['slayer', 'GIANT SLAYER'], ['laurel', 'LAUREL'], ['tristate', 'TRISTATE']],
   ccolor: [['default', 'PROTOCOL'], ['gold', 'GOLD'], ['cyan', 'CYAN'], ['rainbow', 'RAINBOW'], ['lime', 'LIME'], ['violet', 'VIOLET'], ['ember', 'EMBER']],
   victory: [['default', 'STANDARD'], ['aurora', 'AURORA']],
   /* 対戦のそばのキャラ (avatar.js)。オリジナルの4人ははじめから、VOICEVOX の4人はガチャ */
@@ -188,6 +188,27 @@ export function weeklyClears() {
 }
 const weeklyItem = (kind, key) => WEEKLY_ITEMS.find(g => g.kind === kind && g.key === key);
 
+/* はじめから使える見た目 (標準のほか)。CLASSIC は Main 3 の公式の裏面に替える前の標準の裏面 (2026-11-03) */
+export const FREE_ITEMS = [{ kind: 'sleeve', key: 'classic' }];
+const isFreeItem = (kind, key) => FREE_ITEMS.some(g => g.kind === kind && g.key === key);
+
+/* 実績を取ると使える見た目 (称号のほか)。Main 3 / Aux 3・公式ソロモードの実績の褒美 (2026-11-03)。
+   achievements.js はこのファイルを読むので、取った実績は保存 (compileTrophies) を直に見る (外した「~id」は除く) */
+export const TROPHY_ITEMS = [
+  { kind: 'sleeve', key: 'sins', trophy: 'sins7' },
+  { kind: 'sleeve', key: 'rootaccess', trophy: 'solo_advanced' },
+  { kind: 'marker', key: 'tristate', trophy: 'tristate' }
+];
+export const trophyItem = (kind, key) => TROPHY_ITEMS.find(g => g.kind === kind && g.key === key) || null;
+export function trophyHeld(id) {
+  try {
+    const m = JSON.parse(localStorage.getItem('compileTrophies') || '{}');
+    return !!(m && m[id] && !(m['~' + id] > 0));
+  } catch (e) {
+    return false;
+  }
+}
+
 const GACHA_KEY = 'compileGacha';
 export const gachaId = (kind, key) => kind + ':' + key;
 const isGachaItem = (kind, key) => GACHA_ITEMS.some(g => g.kind === kind && g.key === key);
@@ -219,7 +240,7 @@ export const TITLES = {
   flawless: 'FLAWLESS', grandmaster: 'GRANDMASTER',
   puzzler: 'PUZZLER', compuzzler: 'COMPUZZLER',       // COMPUZZLE の中級を全部 / 全部
   platinum: 'DEUS EX MACHINA',    // 実績をすべて取る (achievements.js)。鍵は platinum のまま (サーバーの一覧・持っている人の印が変わらないように)
-  conqueror: 'CONQUEROR',  // 「最強」に30のプロトコルすべてで勝つ (achievements.js)
+  conqueror: 'CONQUEROR',  // 「最強」に、最強のデッキ以外のすべてのプロトコルで勝つ (achievements.js)
   tagmaster: 'TAG MASTER', perfectsync: 'PERFECT SYNC',   // タッグデュエルの実績 ALL ROUND / PERFECT SYNC (2026-10-04)
   underdogduo: 'UNDERDOG DUO',   // 下剋上タッグに勝つ (achievements.js)
   deicide: 'DEICIDE',            // 機械仕掛けの神 CODE:PURPLE に勝つ (cosmetics-ui.js の extraTitles)
@@ -252,6 +273,8 @@ export function unlockLevel(kind, key) {
   const m = masteryItem(kind, key);
   if (m) return protoMastery(m.proto) >= m.mastery ? 1 : 9999;
   if (weeklyItem(kind, key)) return weeklyClears() >= weeklyItem(kind, key).weeks ? 1 : 9999;
+  if (trophyItem(kind, key)) return trophyHeld(trophyItem(kind, key).trophy) ? 1 : 9999;
+  if (isFreeItem(kind, key)) return 1;
   const r = REWARDS.find(x => x.kind === kind && x.key === key);
   return r ? r.lv : 1;
 }

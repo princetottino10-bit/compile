@@ -156,11 +156,11 @@ export const TROPHIES = [
   /* ---- Main 3 / Aux 3・公式ソロモード (2026-11-03) ---- */
   { id: 'solo_regular', tier: 'silver', name: 'BOT BREAKER', desc: '公式ソロモードの REGULAR の6つのシナリオすべてに勝つ (称号 BOT BREAKER)',
     test: (c) => botCleared(c, 'regular') >= 6, progress: (c) => [botCleared(c, 'regular'), 6] },
-  { id: 'solo_advanced', tier: 'gold', name: 'ROOT ACCESS', desc: '公式ソロモードの ADVANCED の6つのシナリオすべてに勝つ (称号 ROOT ACCESS)',
+  { id: 'solo_advanced', tier: 'gold', name: 'ROOT ACCESS', desc: '公式ソロモードの ADVANCED の6つのシナリオすべてに勝つ (称号・スリーブ ROOT ACCESS)',
     test: (c) => botCleared(c, 'advanced') >= 6, progress: (c) => [botCleared(c, 'advanced'), 6] },
-  { id: 'sins7', tier: 'gold', name: 'SEVEN SINS', desc: 'ENVY・GLUTTONY・GREED・LUST・PRIDE・SLOTH・WRATH の7つすべてで1勝する (称号 SEVEN SINS)',
+  { id: 'sins7', tier: 'gold', name: 'SEVEN SINS', desc: 'ENVY・GLUTTONY・GREED・LUST・PRIDE・SLOTH・WRATH の7つすべてで1勝する (称号・スリーブ SEVEN SINS)',
     test: (c) => sinWins(c) >= 7, progress: (c) => [sinWins(c), 7] },
-  { id: 'tristate', tier: 'silver', name: 'TRISTATE', desc: 'FLEXIBLE・INERT・RIGID の3つを組んだデッキで勝つ (称号 TRISTATE)',
+  { id: 'tristate', tier: 'silver', name: 'TRISTATE', desc: 'FLEXIBLE・INERT・RIGID の3つを組んだデッキで勝つ (称号・マーカー TRISTATE)',
     test: (c) => every(c).some(r => r.win && ['FLEXIBLE', 'INERT', 'RIGID'].every(p => (r.me || []).includes(p))) },
   /* ---- 全部 ---- */
   { id: 'platinum', tier: 'platinum', name: 'PLATINUM', desc: 'ほかの実績をすべて取る (称号 DEUS EX MACHINA)', test: () => false }

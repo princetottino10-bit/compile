@@ -4,7 +4,7 @@
  *   レベルの報酬は解放のレベル、習熟度は段階、実績の称号は実績の段階 (銀=EPIC / 金=LEGENDARY)。
  *   はじめから持っているものと、出す前のキャラは印なし (null)
  * ========================================================================= */
-import { REWARDS, GACHA_ITEMS, UNDERDOG_ITEMS, WEEKLY_ITEMS, masteryItem, MASTERY_STEP } from './rewards.js';
+import { REWARDS, GACHA_ITEMS, UNDERDOG_ITEMS, WEEKLY_ITEMS, FREE_ITEMS, trophyItem, masteryItem, MASTERY_STEP } from './rewards.js';
 import { TROPHIES } from './achievements.js';
 
 export const RARITIES = ['C', 'R', 'E', 'L'];
@@ -26,7 +26,7 @@ function levelRarity(lv) {
  * @param {{ defaultKey?: string, shopPrice?: number }} [opt] はじめからの品物のキー・CHIP の値段
  */
 export function rarityOf(kind, key, opt = {}) {
-  if (key === '' || key === opt.defaultKey) return null;
+  if (key === '' || key === opt.defaultKey || FREE_ITEMS.some(x => x.kind === kind && x.key === key)) return null;
   const g = GACHA_ITEMS.find(x => x.kind === kind && x.key === key);
   if (g) return g.rar;
   if (opt.shopPrice) return opt.shopPrice >= 150 ? 'E' : 'R';
@@ -34,6 +34,9 @@ export function rarityOf(kind, key, opt = {}) {
   const m = masteryItem(kind, key);
   /* 習熟度の品物はプロトコルの数だけある (27 枚の盤面を LEGENDARY にすると薄まる) ので、いちばん上の盤面でも EPIC */
   if (m) return m.mastery >= MASTERY_STEP.mat ? 'E' : 'R';
+  /* 実績の褒美の見た目は、称号と同じく実績の段階で決める */
+  const ti = trophyItem(kind, key);
+  if (ti) { const t = TROPHIES.find(x => x.id === ti.trophy); return t ? TIER_RAR[t.tier] || 'E' : 'E'; }
   const w = WEEKLY_ITEMS.find(x => x.kind === kind && x.key === key);
   if (w) return w.weeks >= 3 ? 'E' : 'R';
   if (kind === 'title') {

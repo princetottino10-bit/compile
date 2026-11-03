@@ -62,7 +62,7 @@ import * as STORY from './story.js';
 import { showStoryResult } from './story-ui.js';
 import { openWorld } from './story-world.js';
 import { cardStats, cardTier, playerLevel, protocolSummary } from './stats-data.js';
-import { isUnlocked, rewardsBetween, TITLES, UNDERDOG_XP, underdogCleared, AVATAR_RELEASED, COSMETICS, MASTERY_ITEMS, protoMastery as masteryOf } from './rewards.js';
+import { isUnlocked, rewardsBetween, TITLES, UNDERDOG_XP, underdogCleared, AVATAR_RELEASED, COSMETICS, MASTERY_ITEMS, TROPHY_ITEMS, protoMastery as masteryOf } from './rewards.js';
 import { confetti } from './gachafx.js';
 import { setCosmeticProtocols, profileOf, myLook, TROPHY_TITLES } from './cosmetics-ui.js';
 import { setCosmeticsProtocols, cosmeticsProtocols } from './cosmetics-mode.js';
@@ -293,6 +293,8 @@ async function checkTrophies(game) {
         matchGains.trophies.push(...got.map(t => t.name));
         /* 称号がもらえる実績は、終わったあとの欄で「着ける」を出す */
         matchGains.titles.push(...got.map(t => (t.id === 'platinum' ? 'platinum' : TROPHY_TITLES[t.id])).filter(Boolean));
+        /* 称号のほかにもらえる見た目 (Main 3 の実績のスリーブ・マーカー) も、同じ欄で「着ける」 */
+        matchGains.items.push(...TROPHY_ITEMS.filter(it => got.some(t => t.id === it.trophy)));
       }
       for (const t of got) grantXp('trophy', TROPHY_XP[t.tier], 'ach:' + t.id);
       refreshCardGlow();
@@ -5902,7 +5904,7 @@ async function afterTurn() {
     const levelBefore = myLevel;
     let newConq = [];     // この1戦で新しく制覇した (最強に初めて勝った) プロトコル
     if (!trainingMode && !puzzle && !demoMode && !roomMode && !tutorial && !storyNode) {
-      matchGains = { xp0: playerLevel(localRecords(), bonusXp()).xp, chip0: earnedChips(), lv0: myLevel, daily: [], trophies: [], titles: [],
+      matchGains = { xp0: playerLevel(localRecords(), bonusXp()).xp, chip0: earnedChips(), lv0: myLevel, daily: [], trophies: [], titles: [], items: [],
         /* 習熟度で手に入る見た目 (名札・称号・盤面) を、この試合の前の習熟度で覚えておく。終わったら越えたものを出す */
         mastery0: Object.fromEntries([...new Set(MASTERY_ITEMS.map(it => it.proto))].map(p => [p, masteryOf(p)])) };
     }
@@ -6127,7 +6129,7 @@ function gainsHtml() {
   if (!matchGains) return '';
   const xp = playerLevel(localRecords(), bonusXp()).xp - matchGains.xp0;
   const unlocked = masteryUnlocks();
-  if (xp <= 0 && !matchGains.daily.length && !matchGains.trophies.length && !matchGains.titles.length && !unlocked.length) return '';
+  if (xp <= 0 && !matchGains.daily.length && !matchGains.trophies.length && !matchGains.titles.length && !(matchGains.items || []).length && !unlocked.length) return '';
   const chips = chipsOf(loadGacha(), earnedChips());
   const gotChips = earnedChips() - matchGains.chip0;
   const esc = (t) => String(t).replace(/[<>&"]/g, '');
@@ -6145,6 +6147,13 @@ function gainsHtml() {
   for (const it of unlocked) {
     if (!canEquip(it.kind, it.key)) continue;
     rows.push('<li class="eg-title"><small>' + (KIND[it.kind] || '見た目') + '</small><span>' + esc(itemLabel(it.kind, it.key)) + ' <em class="eg-why">' + esc(it.proto) + ' 習熟度 ' + it.mastery + '</em></span>' +
+      (isEquipped(it.kind, it.key) ? '<em class="eg-on">着けています</em>' : '<button type="button" class="eg-equip" data-kind="' + esc(it.kind) + '" data-key="' + esc(it.key) + '">着ける</button>') + '</li>');
+  }
+  /* 実績でもらった見た目 (スリーブ・マーカー): その場で着ける */
+  const KIND2 = { sleeve: 'スリーブ', marker: 'マーカー' };
+  for (const it of (matchGains.items || [])) {
+    if (!canEquip(it.kind, it.key)) continue;
+    rows.push('<li class="eg-title"><small>' + (KIND2[it.kind] || '見た目') + '</small><span>' + esc(itemLabel(it.kind, it.key)) + '</span>' +
       (isEquipped(it.kind, it.key) ? '<em class="eg-on">着けています</em>' : '<button type="button" class="eg-equip" data-kind="' + esc(it.kind) + '" data-key="' + esc(it.key) + '">着ける</button>') + '</li>');
   }
   /* もらった称号: その場で着ける */

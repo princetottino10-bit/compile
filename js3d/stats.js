@@ -245,7 +245,7 @@ function effectTop(cs) {
   }).join('') + '</div>';
 }
 
-/* カード: 全180枚をプロトコルごとに。光り方 (表で出して勝った数) */
+/* カード: 全270枚をプロトコルごとに。光り方 (表で出して勝った数) */
 let cardsOnlyUnused = false;     // カードのタブ: まだ表で出していないカードだけ見る
 function cardsTab(list, protos) {
   const cs = cardStats(list);

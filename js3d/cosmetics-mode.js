@@ -5,7 +5,7 @@
  *   まだ持っていないものも並べ、手に入れ方を書く (押すとプレビューだけ見られる)。
  *   新しく手に入れたものには NEW (見た印は compileCosSeen、このブラウザだけ)
  * ========================================================================= */
-import { COSMETICS, TITLES, REWARDS, GACHA_ITEMS, UNDERDOG_ITEMS, WEEKLY_ITEMS, masteryItem, protoMastery, unlockLevel, ownedTitles, AVATAR_RELEASED, BGM_RELEASED, weeklyClears } from './rewards.js';
+import { COSMETICS, TITLES, REWARDS, GACHA_ITEMS, UNDERDOG_ITEMS, WEEKLY_ITEMS, FREE_ITEMS, trophyItem, masteryItem, protoMastery, unlockLevel, ownedTitles, AVATAR_RELEASED, BGM_RELEASED, weeklyClears } from './rewards.js';
 import { AVATARS, faceURL } from './avatar.js';
 import { accountState } from './account.js';
 import { extraTitles, TROPHY_TITLES } from './cosmetics-ui.js';
@@ -104,7 +104,7 @@ const lvLeft = (lv) => { const n = xpForLevel(lv) - xpNow(); return n > 0 ? ' (�
 
 /* 手に入れ方。[まだのときの言い方, 持っているときの言い方 (どうやって手に入れたか)] */
 function sourceInfo(kind, key) {
-  if (key === '' || key === DEFAULT_KEY[kind]) return ['はじめから', 'はじめから持っている'];
+  if (key === '' || key === DEFAULT_KEY[kind] || FREE_ITEMS.some(x => x.kind === kind && x.key === key)) return ['はじめから', 'はじめから持っている'];
   if (shopPrice(kind, key)) return ['CHIP ' + shopPrice(kind, key) + ' で交換', 'CHIP ' + shopPrice(kind, key) + ' で交換した'];
   if (kind === 'icon') return ['LV ' + unlockLevel('icon', 'icon') + ' で解放' + lvLeft(unlockLevel('icon', 'icon')), 'LV ' + unlockLevel('icon', 'icon') + ' になって解放'];
   const g = GACHA_ITEMS.find(x => x.kind === kind && x.key === key);
@@ -112,6 +112,8 @@ function sourceInfo(kind, key) {
   if (UNDERDOG_ITEMS.some(x => x.kind === kind && x.key === key) || (kind === 'title' && key === 'underdog')) return ['下剋上に勝つ', '下剋上に勝ってもらった'];
   if (kind === 'title' && key === 'deicide') return ['機械仕掛けの神 (CHALLENGE) に勝つ', '機械仕掛けの神に勝ってもらった'];
   if (kind === 'title' && key === 'blindspot') return ['？？？', 'すべてを見る者に勝ってもらった'];
+  const ti = trophyItem(kind, key);
+  if (ti) return ['実績 ' + trophyName(ti.trophy), '実績「' + trophyName(ti.trophy) + '」を取ってもらった'];
   const m = masteryItem(kind, key);
   if (m) return [m.proto + ' の習熟度 ' + m.mastery + ' (いま ' + protoMastery(m.proto) + ')', m.proto + ' の習熟度が ' + m.mastery + ' になってもらった'];
   const w = WEEKLY_ITEMS.find(x => x.kind === kind && x.key === key);
@@ -131,6 +133,8 @@ function sourceLink(kind, key) {
     const t = Object.entries(TROPHY_TITLES).find(([, k]) => k === key);
     if (t || key === 'platinum') return '<button type="button" class="cm-src" data-src="trophy" data-id="' + esc(t ? t[0] : 'platinum') + '">実績を見る ▸</button>';
   }
+  const ti = trophyItem(kind, key);
+  if (ti) return '<button type="button" class="cm-src" data-src="trophy" data-id="' + esc(ti.trophy) + '">実績を見る ▸</button>';
   if (masteryItem(kind, key)) return '<button type="button" class="cm-src" data-src="mastery">習熟度を見る ▸</button>';
   if (!GACHA_ITEMS.some(x => x.kind === kind && x.key === key) && REWARDS.some(x => x.kind === kind && x.key === key)) {
     return '<button type="button" class="cm-src" data-src="level">レベルの報酬を見る ▸</button>';
