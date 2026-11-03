@@ -95,6 +95,8 @@ import * as LAYOUT from './layout.js';
 import { BOARD, CARD, COLOR, TIMING, VIEW, IOS } from './theme.js';
 import * as TW from './tween.js';
 import * as UI from './ui.js';
+import { victoryFx } from './backdrops.js';
+import { CC_HEX } from './fx-compile.js';
 import { pickCard, placementPad } from './input.js';
 import { placementChoices, renderPlayChoices } from './playchoices.js';
 import { createAiClient } from './aiclient.js';
@@ -928,6 +930,7 @@ async function boot() {
       if (c === 'lime') return '#b6ff4a';
       if (c === 'violet') return '#b07bff';
       if (c === 'ember') return '#ff7a2e';
+      if (CC_HEX[c]) return CC_HEX[c];
       return null;
     },
     /* 自分のカードが着地した瞬間に震わせる (飛び立つ前ではなく、音と光に合わせる)。表で値が大きいほど強く */
@@ -3976,7 +3979,7 @@ async function roomMaybeFinish() {
   const win = st.winner === ME;
   UI.setPrompt(win ? 'あなたの勝ち' : '敗北', 'end');
   const victory = cosmetic('victory', 'default');
-  sfx(win ? (victory === 'aurora' ? 'winAurora' : 'win') : 'lose');
+  sfx(win ? victoryFx(victory).sfx : 'lose');
   await finaleFx(win);
   FEEL.buzz(win ? [40, 70, 40, 70, 120] : [160]);
   await UI.resultCutIn(win, { victory, deus: win && myPlate().sub === TITLES.platinum });
@@ -5987,7 +5990,7 @@ async function afterTurn() {
     }
     UI.setPrompt(win ? 'あなたの勝ち' : '敗北', 'end');
     const victory = cosmetic('victory', 'default');
-    sfx(win ? (victory === 'aurora' ? 'winAurora' : 'win') : 'lose');
+    sfx(win ? victoryFx(victory).sfx : 'lose');
     /* iPhone: 決着の演出の間も、すりガラスの効果を切っておく (コンパイルの演出が終わると戻していた。結果の画面を出すときに戻す) */
     document.body.classList.add('compiling');
     if (!recordedBefore) {

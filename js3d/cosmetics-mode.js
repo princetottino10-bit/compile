@@ -5,6 +5,7 @@
  *   まだ持っていないものも並べ、手に入れ方を書く (押すとプレビューだけ見られる)。
  *   新しく手に入れたものには NEW (見た印は compileCosSeen、このブラウザだけ)
  * ========================================================================= */
+import { victoryFx, victoryPreviewURL } from './backdrops.js';
 import { COSMETICS, TITLES, REWARDS, GACHA_ITEMS, UNDERDOG_ITEMS, WEEKLY_ITEMS, FREE_ITEMS, trophyItem, masteryItem, protoMastery, unlockLevel, ownedTitles, AVATAR_RELEASED, BGM_RELEASED, weeklyClears } from './rewards.js';
 import { AVATARS, faceURL } from './avatar.js';
 import { accountState } from './account.js';
@@ -56,12 +57,21 @@ const RAR_NAME = { C: 'COMMON', R: 'RARE', E: 'EPIC', L: 'LEGENDARY' };
 /* 実績の名前は achievements.js から (前はここに手で写していて、ずれていた) */
 const trophyName = (id) => (TROPHIES.find(t => t.id === id) || {}).name || id;
 const CCOLOR = { default: 'linear-gradient(90deg,#ff5c5c,#cdc7d4,#a07bff)', gold: '#ffd86a', cyan: '#7ff3ff', rainbow: 'conic-gradient(#ff5f7a,#ffc05a,#7df28c,#5ab8ff,#b98cff,#ff5f7a)',
-  lime: '#b6ff4a', violet: '#b07bff', ember: '#ff7a2e' };
+  lime: '#b6ff4a', violet: '#b07bff', ember: '#ff7a2e', crimson: '#e8203f', frost: '#bfeaff', sakura: '#ffa8c8',
+  solar: 'radial-gradient(circle,#fff 0 20%,#fff1c4 35%,#ffd86a 60%)' };
 
 /* コンパイルの光ごとの演出 (fx-compile.js)。色だけでなく動きも違う */
 const CC_DESC = { default: 'プロトコルの色の光の柱', gold: '金色の光の柱 + 金貨が降る', cyan: '水色の光の柱 + 稲妻が落ちる',
   rainbow: '毎回ちがう色の光の柱 + 虹の輪が広がる', lime: '黄緑の光の柱 + 泡が昇って弾ける', violet: '紫の光の柱 + 光の粒が渦を巻いて昇る',
-  ember: '橙の光の柱 + 火の粉が舞い上がる' };
+  ember: '橙の光の柱 + 火の粉が舞い上がる', crimson: '赤い光の柱 + データの欠片が瞬きながら昇る',
+  frost: '氷色の光の柱 + 氷の刃が突き刺さって砕ける', sakura: '桜色の光の柱 + 花びらが舞い降りる', solar: '白金の光の柱 + 光の環が回りながら昇る' };
+/* 勝ちの演出 (backdrops.js の VICTORY_FX)。見本は本物の背景を小さく描いたもの */
+const VIC_DESC = { default: '金と紫の光条が左右へ弾ける', aurora: '夜空にオーロラの幕が揺れる', circuit: '黒い基板に赤い信号が走り、一閃が横切る',
+  sakura: '月夜の桜。花びらが舞う', matrix: '緑の文字の雨が降る', supernova: '中心が白く爆ぜ、衝撃の輪が広がる', eclipse: '黒い太陽と金のコロナ' };
+function vicStyle(key, w, h) {
+  const url = victoryPreviewURL(key, w, h);
+  return '--vac:' + victoryFx(key).accent + (url ? ';background-image:url(' + url + ')' : '');
+}
 
 let protoList = [];
 /* プロトコルの習熟度の名札 (p_fire) は、そのプロトコルの色を --pfc に渡す */
@@ -216,7 +226,7 @@ function thumb(kind, key) {
     case 'mat': return matURL(key) ? '<img alt="" src="' + matURL(key) + '">' : '<span class="cm-neon"></span>';
     case 'marker': return '<img alt="" src="' + markerURL(key) + '">';
     case 'ccolor': return '<span class="cm-glow" style="--gc:' + (CCOLOR[key] || CCOLOR.default) + '"></span>';
-    case 'victory': return '<span class="cm-vic ' + esc(key) + '">WIN</span>';
+    case 'victory': return '<span class="cm-vic ' + esc(key) + '" style="' + vicStyle(key, 192, 108) + '">WIN</span>';
     case 'icon': {
       if (isFaceIcon(key)) return '<img class="cm-face" alt="" src="' + faceIconURL(key) + '">';
       const p = protoList.find(x => x.name === key);
@@ -243,7 +253,8 @@ function preview(kind, key, name, isOwned, src) {
     case 'marker': art = '<div class="cm-markerview"><img alt="" src="' + markerURL(key) + '"></div>'; break;
     case 'ccolor': art = '<div class="cm-burst" style="--gc:' + (CCOLOR[key] || CCOLOR.default) + '"><b>COMPILE</b></div>' +
       '<p class="cm-desc">' + esc(CC_DESC[key] || '') + '</p>'; break;
-    case 'victory': art = '<div class="cm-vicview ' + esc(key) + '"><b>YOU WIN</b></div>'; break;
+    case 'victory': art = '<div class="cm-vicview ' + esc(key) + '" style="' + vicStyle(key, 640, 360) + '"><b>YOU WIN</b></div>' +
+      '<p class="cm-desc">' + esc(VIC_DESC[key] || '') + '</p>'; break;
     case 'plate': {
       const ia = iconArt(s.icon, protoList, 96);
       art = '<div class="cm-plate pf-' + esc(key) + '"' + pfcStyle(key) + '>' + (ia ? '<img alt="" class="' + (ia.face ? 'face' : '') + '" src="' + ia.src + '">' : '<span>//</span>') +

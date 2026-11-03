@@ -4,7 +4,7 @@
  * ========================================================================= */
 
 import { selectHead, bindSelectHead, optionBody, choiceLabel } from './selectui.js';
-import { drawVictoryBackdrop, drawDefeatBackdrop, drawAuroraBackdrop } from './backdrops.js';
+import { drawDefeatBackdrop, victoryFx } from './backdrops.js';
 import { condHtml } from './cardtext.js';
 import { sfx } from './audio.js';
 import { gearSvg } from './deus.js';
@@ -864,7 +864,7 @@ export function conquerCutIn(protos, count, total, opts) {
 export function resultCutIn(win, opts) {
   const el = $('#resultCut');
   if (!el) return Promise.resolve();
-  el.style.setProperty('--accent', win ? '#a07bff' : '#e8203f');
+  el.style.setProperty('--accent', win ? victoryFx(opts && opts.victory).accent : '#e8203f');
   /* opts.title / opts.sub: 観戦の「A WINS」など、文字を変えるとき */
   const title = (opts && opts.title) || (win ? 'VICTORY' : 'DEFEAT');
   const sub = (opts && opts.sub) || (win ? 'ALL PROTOCOLS COMPILED' : 'SYSTEM OVERWRITTEN');
@@ -882,7 +882,7 @@ export function resultCutIn(win, opts) {
   el.classList.toggle('lose', !win);
   el.classList.add('show');
   const art = el.querySelector('.rc-art');
-  const drawWin = opts && opts.victory === 'aurora' ? drawAuroraBackdrop : drawVictoryBackdrop;
+  const drawWin = victoryFx(opts && opts.victory).draw;
   try { (win ? drawWin : drawDefeatBackdrop)(art); } catch (e) { art.remove(); }
   /* タップ・Enter・Space で飛ばせる (毎回 3.6 秒待たされていた)。最後の一手のタップで飛ばないよう、少しあとから */
   return new Promise((resolve) => {
