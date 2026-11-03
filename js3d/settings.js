@@ -19,7 +19,9 @@ let avatarList = () => [];
 export function setAvatarOptionsGate(shown, list) { avatarOptionsShown = shown; if (list) avatarList = list; }
 /* mat 以下は見た目 (レベルの報酬、cosmetics-ui.js) */
 /* autoPick: 選べるものが1つしかない選択は自動で選ぶ (最初はオフ。何が選ばれたか分からないまま進むことがあったので) / oppSummary: 相手の番のまとめ (最初はオフ。2026-10-07 から) / beginner: 初心者モード (おすすめの手の HINT を出す。最初はオフ) */
-const DEFAULTS = { speed: 1, masterVol: 100, sfx: 80, bgmVol: 30, voiceVol: 80, bgm: 'burst', bgmMenu: '', bgmBattle: '', pauses: true, autoPick: false, oppSummary: false, beginner: false, gamepad: false, foil: true, mat: 'neon', sleeve: 'default', marker: 'default', ccolor: 'default',
+const DEFAULTS = { speed: 1, masterVol: 100, sfx: 80, bgmVol: 30, voiceVol: 80, bgm: 'burst', bgmMenu: '', bgmBattle: '', pauses: true, autoPick: false, oppSummary: false, beginner: false, gamepad: false, foil: true,
+  /* psy1Swap: ハウスルール「PSYCHIC 1 の上段と下段を入れ替える」(CPU 戦だけ。オンライン・ウィークリー・問題は公式のまま) */
+  psy1Swap: false, mat: 'neon', sleeve: 'default', marker: 'default', ccolor: 'default',
   victory: 'default', title: '', icon: '',
   /* おまかせで今すぐ始める: 相手の強さ (0 かんたん / 1 ふつう / 2 つよい) と、今日のデイリーのプロトコルを自分に入れるか */
   quickLevel: 0, quickDaily: false,
@@ -29,7 +31,7 @@ const DEFAULTS = { speed: 1, masterVol: 100, sfx: 80, bgmVol: 30, voiceVol: 80, 
      文字の大きさ ('normal' / 'large')・くっきり表示 (板を濃く、薄い文字を明るく) */
   gfx: 'auto', powerSave: false, motion: 'auto', vibrate: true, textSize: 'normal', contrast: false };
 /* 「初期設定に戻す」で戻す項目 (この画面で変えられるもの。COLLECTION で選んだ見た目とキャラは戻さない) */
-const RESETTABLE = ['speed', 'masterVol', 'sfx', 'bgmVol', 'voiceVol', 'pauses', 'autoPick', 'oppSummary', 'beginner', 'gamepad', 'foil', 'quickLevel', 'quickDaily',
+const RESETTABLE = ['speed', 'masterVol', 'sfx', 'bgmVol', 'voiceVol', 'pauses', 'autoPick', 'oppSummary', 'beginner', 'gamepad', 'foil', 'psy1Swap', 'quickLevel', 'quickDaily',
   'oppVoice', 'avatarShow', 'oppAvatar', 'gfx', 'powerSave', 'motion', 'vibrate', 'textSize', 'contrast'];
 const GFX_MODES = [['auto', '自動'], ['high', '高'], ['normal', '標準'], ['light', '軽量']];
 const GFX_LEVEL_NAMES = ['高', '標準', '軽め', '軽量'];           // stage.js の段 (0〜3)
@@ -211,6 +213,9 @@ export function openSettings(extra) {
       '<input type="checkbox" id="stGamepad"' + (s.gamepad ? ' checked' : '') + '></label>' +
     /* キーボードの近道 (main.js)。どこにも書いていないと使われないので、ここに一覧 */
     '<div class="st-row st-keys"><span>キーボードの近道<small>Z 1手戻す ・ H ヒント ・ R 補充 (2回) ・ L ログ ・ I 詳細 ・ 1〜3 置く場所 (Shift で裏) ・ Esc 選び直す / 戻る</small></span></div>' +
+    '<h4 class="st-group">ルール</h4>' +
+    '<label class="st-row st-check"><span>PSYCHIC 1 の上段と下段を入れ替える<small>上段が「開始：このカードを反転させる」、下段が「相手はカードを裏向きでのみプレイすることができる」になります。覆って続けるロックは組めなくなります。次の CPU 戦から (オンライン対戦・ウィークリー・問題は公式のルールのまま)</small></span>' +
+      '<input type="checkbox" id="stPsy1Swap"' + (s.psy1Swap ? ' checked' : '') + '></label>' +
     '<h4 class="st-group">おまかせで対戦</h4>' +
     '<div class="st-row"><span>おまかせで対戦する強さ<small>「おまかせで今すぐ始める」の相手</small></span><div class="st-seg" role="group" aria-label="おまかせで対戦する強さ">' +
       QUICK_LEVELS.map((label, i) => '<button type="button" data-qlevel="' + i + '" class="' + ((s.quickLevel | 0) === i ? 'on' : '') + '">' + label + '</button>').join('') +
@@ -334,6 +339,7 @@ export function openSettings(extra) {
   el.querySelector('#stAutoPick').onchange = (ev) => setSetting('autoPick', ev.target.checked);
   el.querySelector('#stOppSummary').onchange = (ev) => setSetting('oppSummary', ev.target.checked);
   el.querySelector('#stBeginner').onchange = (ev) => setSetting('beginner', ev.target.checked);
+  el.querySelector('#stPsy1Swap').onchange = (ev) => setSetting('psy1Swap', ev.target.checked);
   el.querySelector('#stGamepad').onchange = (ev) => setSetting('gamepad', ev.target.checked);
   el.querySelector('#stFoil').onchange = (ev) => setSetting('foil', ev.target.checked);
   el.querySelector('#stQuickDaily').onchange = (ev) => setSetting('quickDaily', ev.target.checked);

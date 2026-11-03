@@ -409,12 +409,19 @@ const maskCache = new Map();   // defId -> THREE.CanvasTexture
 export function foilMaskTexture(def) {
   if (maskCache.has(def.id)) return maskCache.get(def.id);
   faceTexture(def);                                  // 枠の位置 (faceZones) を用意する
-  const rects = faceZones.get(def.id) || {};
   const S = 0.25;
   const cv = document.createElement('canvas');
   cv.width = Math.round(DW * S); cv.height = Math.round(DH * S);
+  paintMask(cv, def.id);
+  const tex = new THREE.CanvasTexture(cv);
+  maskCache.set(def.id, tex);
+  return tex;
+}
+function paintMask(cv, id) {
+  const S = 0.25;
+  const rects = faceZones.get(id) || {};
   const ctx = cv.getContext('2d');
-  ctx.scale(S, S);
+  ctx.setTransform(S, 0, 0, S, 0, 0);
   ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, DW, DH);
   ctx.fillStyle = '#000';
@@ -422,9 +429,18 @@ export function foilMaskTexture(def) {
   for (const r of Object.values(rects)) {
     if (Array.isArray(r)) ctx.fillRect(r[0] - 8, r[1] - 8, r[2] + 16, r[3] + 16);
   }
-  const tex = new THREE.CanvasTexture(cv);
-  maskCache.set(def.id, tex);
-  return tex;
+}
+
+/* 1種類のカードの面だけ描き直す (def の文を書き換えたとき。PSYCHIC 1 の上下段を入れ替えるハウスルール)。
+   作ってあるテクスチャはそのまま使い回すので、盤面のカードもその場で変わる */
+export function repaintFace(id) {
+  const fd = faceDefs.get(id), cv = faceCanvas.get(id), tex = faceCache.get(id);
+  if (!fd || !cv || !tex) return;
+  faceZones.set(id, paintFace(cv.getContext('2d'), fd.def, fd.art));
+  tex.needsUpdate = true;
+  faceVersion.set(id, (faceVersion.get(id) || 0) + 1);
+  const mask = maskCache.get(id);
+  if (mask && mask.image) { paintMask(mask.image, id); mask.needsUpdate = true; }
 }
 
 /* 対局の切り替わりで、次の対局に不要な分のテクスチャを解放する。

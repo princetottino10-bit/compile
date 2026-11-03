@@ -141,7 +141,29 @@ const NO_EFF = Object.freeze({});
 function effOf(st, uid) {
   const c = st.cards[uid];
   if (st.bot && !st.bot.advanced && c.owner === st.bot.side) return NO_EFF;
+  if (st.psy1Swap && c.def === PSY1_ID) return psy1SwappedDef().eff;
   return DEFS[c.def].eff;
+}
+/* 設定「PSYCHIC 1 の上段と下段を入れ替える」(ハウスルール。newGame({ psy1Swap: true }) で盤面に st.psy1Swap が立つ)。
+   入れ替えると上段が「開始：このカードを反転させる」になり、覆われても毎開始で裏返るので、覆って続ける永続ロックが組めない。
+   下段の「相手は裏向きでのみプレイできる」は一番上にいる間だけ効く。
+   カードの種類 (defId) は PSYCHIC_2 のまま変えない (絵・戦績・学習モデルの特徴はそのまま使える) */
+const PSY1_ID = 'PSYCHIC_2';
+let PSY1_SWAPPED = null;
+function psy1SwappedDef() {
+  const d = DEFS[PSY1_ID];
+  if (!PSY1_SWAPPED || PSY1_SWAPPED.base !== d) {
+    const eff = Object.assign({}, d.eff);
+    delete eff.upper; delete eff.lower;
+    if (d.eff.lower) eff.upper = d.eff.lower;
+    if (d.eff.upper) eff.lower = d.eff.upper;
+    PSY1_SWAPPED = { base: d, def: Object.assign({}, d, { eff }) };
+  }
+  return PSY1_SWAPPED.def;
+}
+/* CPU の読みでカードの定義を引くとき (盤面の入れ替えルールを反映する) */
+function defForAi(st, defId) {
+  return st && st.psy1Swap && defId === PSY1_ID ? psy1SwappedDef() : DEFS[defId];
 }
 /* 勝つのに要るコンパイルの本数 (通常 3。勝ち抜き戦は newGame({ winCompiles: 2 }) で短くする)。
    side を渡すと、その側の本数 (勝ち抜き戦のボス「聖域」のように側ごとに違うとき: newGame({ winCompilesBySide: [a, b] })) */
@@ -2897,6 +2919,7 @@ function newGame(opts) {
     ...(Array.isArray(opts.perks) && opts.perks.some(Boolean) ? { perks: [opts.perks[0] || null, opts.perks[1] || null] } : {}),
     /* 勝ち抜き戦の異変: 負けるが勝ち (先にコンパイルし終えた側の負け) と、手札交換 (n 手番ごとに手札が入れ替わる) */
     ...(opts.misere ? { misere: true } : {}),
+    ...(opts.psy1Swap ? { psy1Swap: true } : {}),
     ...(opts.handSwap >= 2 ? { handSwap: opts.handSwap | 0 } : {}),
     ...(opts.turncoat >= 2 ? { turncoat: opts.turncoat | 0 } : {}),
     ...(Array.isArray(opts.winCompilesBySide) && opts.winCompilesBySide.length === 2 && opts.winCompilesBySide.every(n => n >= 1 && n <= 3)
@@ -3056,6 +3079,7 @@ function newPuzzle(spec, opts) {
   st.phase = 'start';
   st.pending = null;
   st.winner = null;
+  if (spec.psy1Swap || o.psy1Swap) st.psy1Swap = true;   // テスト用: PSYCHIC 1 の上下段を入れ替えた盤面
   for (let p = 0; p < 2; p++) {
     const sd = sides[p];
     const pl = st.players[p];
@@ -3548,6 +3572,8 @@ function aiLockEnablers() {
 }
 
 function aiLockThreat(st, side) {
+  /* 入れ替えルールでは覆われた PSYCHIC 1 は開始で裏返るので、裏向きの札が永続ロックに化ける心配は無い */
+  if (st.psy1Swap) return 0;
   const op = 1 - side;
   const E = aiLockEnablers();
   const opProtos = st.players[op].protocols.flatMap(protoNamesOf);
@@ -3617,7 +3643,7 @@ function aiBoardEffectScore(st, side) {
     for (let i = 0; i < stack.length; i++) {
       const uid = stack[i], c = st.cards[uid];
       if (!c.faceUp) continue;
-      const d = DEFS[c.def];
+      const d = defForAi(st, c.def);
       let cv = 0;
       if (d.eff.upper && d.eff.upper.static) {
         cv += d.eff.upper.static.rule === 'youFaceUpAnyLine'
@@ -3660,7 +3686,8 @@ function aiTaughtTactics(st, side) {
 }
 
 function aiIsLockSpecialist(st, side) {
-  return AI_SPECIALIST_ENABLED && AI_SPECIALIST_KIND === 'psylock' && !!st.players[side]
+  /* 入れ替えルールでは仕込む永続ロックが無いので、ロック特化の手筋は使わない */
+  return !st.psy1Swap && AI_SPECIALIST_ENABLED && AI_SPECIALIST_KIND === 'psylock' && !!st.players[side]
     && (AI_SPECIALIST_SIDE < 0 || AI_SPECIALIST_SIDE === side);
 }
 
@@ -4401,7 +4428,8 @@ function aiValnetFeatures(st, me) {
       const stack = st.lines[l][side];
       for (let j = 0; j < stack.length; j++) {
         const c = st.cards[stack[j]];
-        if (c.faceUp && c.def === 'PSYCHIC_2') { if (j < stack.length - 1) perm = 1; else temp = 1; }
+        /* 入れ替えルールでは覆われた PSYCHIC 1 はロックにならず、一番上のときだけ1ターンのロック */
+        if (c.faceUp && c.def === 'PSYCHIC_2') { if (j < stack.length - 1) { if (!st.psy1Swap) perm = 1; } else temp = 1; }
       }
     }
     return [perm, temp];
