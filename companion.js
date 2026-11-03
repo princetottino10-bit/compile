@@ -7,7 +7,7 @@
 import { emblemDataURL } from './js3d/emblems.js';
 import { svgIcon } from './js3d/icons.js';
 
-export const SETS = ['Main 1', 'Aux 1', 'Main 2', 'Aux 2'];
+export const SETS = ['Main 1', 'Aux 1', 'Main 2', 'Aux 2', 'Main 3'];
 
 export const EFFECTS = ['draw', 'delete', 'flip', 'shift', 'return', 'rearrange', 'discard', 'play', 'five', 'other'];
 export const EFFECT_LABEL = {

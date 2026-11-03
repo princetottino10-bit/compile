@@ -17,8 +17,8 @@ import { isMobProto } from './mobcards.js';
 const TEX_W = 512, TEX_H = 262, TEX_SCALE = 2;
 const PANEL_W = 1.56, PANEL_D = 0.80;
 
-/* アートが存在するセット (Main 2 / Aux 2 は scripts/build_card_art_2.py で生成) */
-const ART_SETS = new Set(['Main 1', 'Aux 1', 'Main 2', 'Aux 2']);
+/* アートが存在するセット (Main 2 / Aux 2 は scripts/build_card_art_2.py、Main 3 は build_card_art_3.py で生成) */
+const ART_SETS = new Set(['Main 1', 'Aux 1', 'Main 2', 'Aux 2', 'Main 3']);
 const artCache = new Map();
 
 function loadArt(url, onReady) {

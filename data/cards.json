@@ -2321,6 +2321,937 @@
           ]
         }
       ]
+    },
+    {
+      "name": "AMBUSH",
+      "displayName": "AMBUSH",
+      "tags": "反転／ドロー／裏向き",
+      "color": "#4F7A8C",
+      "set": "Main 3",
+      "cards": [
+        {
+          "id": "AMBUSH_1",
+          "number": 1,
+          "value": 0,
+          "upper": "",
+          "middle": "カードを3枚引く。あなたの裏向きのカードを1枚反転させる。",
+          "lower": "",
+          "effectTypes": [
+            "draw",
+            "flip"
+          ]
+        },
+        {
+          "id": "AMBUSH_2",
+          "number": 2,
+          "value": 1,
+          "upper": "",
+          "middle": "値が0か1の、あなたの他のすべてのカードを反転させる。反転させた枚数と同じ枚数のカードを引く。",
+          "lower": "",
+          "effectTypes": [
+            "flip",
+            "draw"
+          ]
+        },
+        {
+          "id": "AMBUSH_3",
+          "number": 3,
+          "value": 2,
+          "upper": "",
+          "middle": "値が最も小さい、あなたの覆われているカードを1枚移動させる。",
+          "lower": "",
+          "effectTypes": [
+            "shift"
+          ]
+        },
+        {
+          "id": "AMBUSH_4",
+          "number": 4,
+          "value": 3,
+          "upper": "",
+          "middle": "値が最も大きい、相手の表向きで覆われているカードを1枚反転させる。",
+          "lower": "",
+          "effectTypes": [
+            "flip"
+          ]
+        },
+        {
+          "id": "AMBUSH_5",
+          "number": 5,
+          "value": 4,
+          "upper": "",
+          "middle": "あなたの覆われていない裏向きのカードがある場合、カードを1枚引く。",
+          "lower": "",
+          "effectTypes": [
+            "draw"
+          ]
+        },
+        {
+          "id": "AMBUSH_6",
+          "number": 6,
+          "value": 5,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "five"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ENVY",
+      "displayName": "ENVY",
+      "tags": "追い上げ／反転",
+      "color": "#26A6C9",
+      "set": "Main 3",
+      "cards": [
+        {
+          "id": "ENVY_1",
+          "number": 1,
+          "value": 0,
+          "upper": "このラインのあなたの合計値は、このラインにある値が最も大きい相手のカードの値だけ増える。",
+          "middle": "",
+          "lower": "",
+          "effectTypes": [
+            "other"
+          ]
+        },
+        {
+          "id": "ENVY_2",
+          "number": 2,
+          "value": 1,
+          "upper": "",
+          "middle": "相手がコントロールを持っている場合、あなたはカードを1枚反転させることができる。",
+          "lower": "開始：相手がコントロールを持っている場合、あなたはコントロールを得る。",
+          "effectTypes": [
+            "flip",
+            "other"
+          ]
+        },
+        {
+          "id": "ENVY_3",
+          "number": 3,
+          "value": 2,
+          "upper": "",
+          "middle": "相手の手札の枚数と同じ枚数のカードを引く。",
+          "lower": "",
+          "effectTypes": [
+            "draw"
+          ]
+        },
+        {
+          "id": "ENVY_4",
+          "number": 4,
+          "value": 3,
+          "upper": "",
+          "middle": "",
+          "lower": "相手がこのラインにカードをプレイしたあと：あなたのデッキの一番上のカードをこのラインに裏向きでプレイする。",
+          "effectTypes": [
+            "play"
+          ]
+        },
+        {
+          "id": "ENVY_5",
+          "number": 5,
+          "value": 4,
+          "upper": "",
+          "middle": "相手のコンパイル済みのプロトコルがあなたより多い場合、カードを1枚反転させる。",
+          "lower": "",
+          "effectTypes": [
+            "flip"
+          ]
+        },
+        {
+          "id": "ENVY_6",
+          "number": 6,
+          "value": 5,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "five"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "FULCRUM",
+      "displayName": "FULCRUM",
+      "tags": "ドロー／入れ替え／手札の枚数",
+      "color": "#5C8FA8",
+      "set": "Main 3",
+      "cards": [
+        {
+          "id": "FULCRUM_1",
+          "number": 1,
+          "value": 0,
+          "upper": "開始：あなたの手札がちょうど0枚の場合、相手は手札を2枚捨て札にする。",
+          "middle": "あなたの手札がちょうど0枚の場合、相手は手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "discard"
+          ]
+        },
+        {
+          "id": "FULCRUM_2",
+          "number": 2,
+          "value": 1,
+          "upper": "",
+          "middle": "他のすべての表向きのカードを反転させる。あなたの左のスタックと右のスタックを入れ替える。",
+          "lower": "",
+          "effectTypes": [
+            "flip",
+            "other"
+          ]
+        },
+        {
+          "id": "FULCRUM_3",
+          "number": 3,
+          "value": 2,
+          "upper": "",
+          "middle": "あなたの手札がちょうど2枚の場合、相手のカードを1枚削除する。",
+          "lower": "",
+          "effectTypes": [
+            "delete"
+          ]
+        },
+        {
+          "id": "FULCRUM_4",
+          "number": 4,
+          "value": 3,
+          "upper": "",
+          "middle": "カードを1枚引く。あなたの左のプロトコルと右のプロトコルの位置を入れ替える。",
+          "lower": "",
+          "effectTypes": [
+            "draw",
+            "rearrange"
+          ]
+        },
+        {
+          "id": "FULCRUM_5",
+          "number": 5,
+          "value": 4,
+          "upper": "",
+          "middle": "あなたの手札がちょうど4枚の場合、カードを1枚引く。",
+          "lower": "",
+          "effectTypes": [
+            "draw"
+          ]
+        },
+        {
+          "id": "FULCRUM_6",
+          "number": 6,
+          "value": 5,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "five"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "GLUTTONY",
+      "displayName": "GLUTTONY",
+      "tags": "ドロー／キャッシュ／削除",
+      "color": "#C9B22B",
+      "set": "Main 3",
+      "cards": [
+        {
+          "id": "GLUTTONY_1",
+          "number": 1,
+          "value": 0,
+          "upper": "あなたがキャッシュをクリアしたあと：あなたのデッキの一番上のカードを裏向きでプレイする。",
+          "middle": "他のカードを1枚戻す。カードを1枚引く。",
+          "lower": "",
+          "effectTypes": [
+            "play",
+            "return",
+            "draw"
+          ]
+        },
+        {
+          "id": "GLUTTONY_2",
+          "number": 2,
+          "value": 1,
+          "upper": "",
+          "middle": "カードを2枚引く。",
+          "lower": "いずれかのプレイヤーがキャッシュをクリアしたあと：カードを1枚削除する。",
+          "effectTypes": [
+            "draw",
+            "delete"
+          ]
+        },
+        {
+          "id": "GLUTTONY_3",
+          "number": 3,
+          "value": 2,
+          "upper": "",
+          "middle": "あなたの手札の枚数と同じ枚数のカードを引く。",
+          "lower": "",
+          "effectTypes": [
+            "draw"
+          ]
+        },
+        {
+          "id": "GLUTTONY_4",
+          "number": 4,
+          "value": 3,
+          "upper": "終了：このカードが表向きのカードに覆われている場合、そのカードを削除する。",
+          "middle": "カードを2枚引く。",
+          "lower": "",
+          "effectTypes": [
+            "delete",
+            "draw"
+          ]
+        },
+        {
+          "id": "GLUTTONY_5",
+          "number": 5,
+          "value": 4,
+          "upper": "",
+          "middle": "",
+          "lower": "あなたがリフレッシュしたあと：カードを1枚引く。",
+          "effectTypes": [
+            "draw"
+          ]
+        },
+        {
+          "id": "GLUTTONY_6",
+          "number": 6,
+          "value": 5,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "five"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "GREED",
+      "displayName": "GREED",
+      "tags": "捨て札／繰り返す効果",
+      "color": "#9C3FB5",
+      "set": "Main 3",
+      "cards": [
+        {
+          "id": "GREED_1",
+          "number": 1,
+          "value": 0,
+          "upper": "",
+          "middle": "あなたのすべての手札を捨て札にする。カードを1枚削除する。",
+          "lower": "あなたがカードを削除したあと：カードを1枚引く。",
+          "effectTypes": [
+            "discard",
+            "delete",
+            "draw"
+          ]
+        },
+        {
+          "id": "GREED_2",
+          "number": 2,
+          "value": 1,
+          "upper": "",
+          "middle": "",
+          "lower": "終了：あなたの合計値が10以上あり、相手より大きいラインを1つコンパイルする。",
+          "effectTypes": [
+            "other"
+          ]
+        },
+        {
+          "id": "GREED_3",
+          "number": 3,
+          "value": 2,
+          "upper": "",
+          "middle": "相手は手札を1枚捨て札にする。",
+          "lower": "開始：あなたは自分のカードを1枚戻すことができる。",
+          "effectTypes": [
+            "discard",
+            "return"
+          ]
+        },
+        {
+          "id": "GREED_4",
+          "number": 4,
+          "value": 3,
+          "upper": "",
+          "middle": "このスタックにある、あなたの覆われているカードを1枚移動させる。",
+          "lower": "",
+          "effectTypes": [
+            "shift"
+          ]
+        },
+        {
+          "id": "GREED_5",
+          "number": 5,
+          "value": 4,
+          "upper": "",
+          "middle": "あなたはすべての手札を捨て札にすることができる。そうした場合、カードを1枚反転させる。",
+          "lower": "",
+          "effectTypes": [
+            "discard",
+            "flip"
+          ]
+        },
+        {
+          "id": "GREED_6",
+          "number": 6,
+          "value": 5,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "five"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "LUST",
+      "displayName": "LUST",
+      "tags": "強制プレイ／コントロール",
+      "color": "#E0533C",
+      "set": "Main 3",
+      "cards": [
+        {
+          "id": "LUST_1",
+          "number": 1,
+          "value": 0,
+          "upper": "このラインの各プレイヤーの合計値は10増える。",
+          "middle": "コントロールを得る。",
+          "lower": "あなたがコントロールを持っている場合、相手はコンパイルすることができない。",
+          "effectTypes": [
+            "other"
+          ]
+        },
+        {
+          "id": "LUST_2",
+          "number": 2,
+          "value": 2,
+          "upper": "",
+          "middle": "あなたは相手の覆われているカードを1枚このラインへ移動させることができる。",
+          "lower": "このスタックには、プロトコルを対応させずにあなたのカードをプレイすることができる。",
+          "effectTypes": [
+            "shift",
+            "play"
+          ]
+        },
+        {
+          "id": "LUST_3",
+          "number": 3,
+          "value": 3,
+          "upper": "",
+          "middle": "相手は手札からランダムにカードを1枚公開する。そのカードを相手側に裏向きでプレイする。",
+          "lower": "終了：あなたはコントロールを失うことができる。そうした場合、カードを1枚反転させる。",
+          "effectTypes": [
+            "play",
+            "flip"
+          ]
+        },
+        {
+          "id": "LUST_4",
+          "number": 4,
+          "value": 4,
+          "upper": "",
+          "middle": "あなたは手札をすべて公開する。相手はコントロールを失う。",
+          "lower": "相手がコントロールを得たあと：カードを1枚引く。",
+          "effectTypes": [
+            "other",
+            "draw"
+          ]
+        },
+        {
+          "id": "LUST_5",
+          "number": 5,
+          "value": 5,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "five"
+          ]
+        },
+        {
+          "id": "LUST_6",
+          "number": 6,
+          "value": 6,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。相手はこのラインにカードを裏向きで1枚プレイする。",
+          "lower": "",
+          "effectTypes": [
+            "discard",
+            "play"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MOMENTUM",
+      "displayName": "MOMENTUM",
+      "tags": "コンパイル後／ドロー",
+      "color": "#E8892E",
+      "set": "Main 3",
+      "cards": [
+        {
+          "id": "MOMENTUM_1",
+          "number": 1,
+          "value": 0,
+          "upper": "",
+          "middle": "コンパイル済みのプロトコルがある各ラインに、あなたのデッキの一番上のカードを裏向きで1枚ずつプレイする。",
+          "lower": "",
+          "effectTypes": [
+            "play"
+          ]
+        },
+        {
+          "id": "MOMENTUM_2",
+          "number": 2,
+          "value": 1,
+          "upper": "いずれかのプレイヤーがコンパイルしたあと：あなたのデッキの一番上のカードをこのスタックに裏向きでプレイする。",
+          "middle": "",
+          "lower": "いずれかのプレイヤーがプロトコルを並べ替えたあと：あなたは手札を1枚捨て札にする。カードを1枚引く。",
+          "effectTypes": [
+            "play",
+            "discard",
+            "draw"
+          ]
+        },
+        {
+          "id": "MOMENTUM_3",
+          "number": 3,
+          "value": 3,
+          "upper": "",
+          "middle": "カードを2枚引く。",
+          "lower": "",
+          "effectTypes": [
+            "draw"
+          ]
+        },
+        {
+          "id": "MOMENTUM_4",
+          "number": 4,
+          "value": 4,
+          "upper": "",
+          "middle": "あなたのプロトコルを並べ替える。",
+          "lower": "",
+          "effectTypes": [
+            "rearrange"
+          ]
+        },
+        {
+          "id": "MOMENTUM_5",
+          "number": 5,
+          "value": 5,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "five"
+          ]
+        },
+        {
+          "id": "MOMENTUM_6",
+          "number": 6,
+          "value": 6,
+          "upper": "いずれかのプレイヤーがコンパイルしたあと：このカードを削除する。",
+          "middle": "あなたは手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "delete",
+            "discard"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "NOVA",
+      "displayName": "NOVA",
+      "tags": "スタックの枚数／移動／並べ替え",
+      "color": "#F07A1A",
+      "set": "Main 3",
+      "cards": [
+        {
+          "id": "NOVA_1",
+          "number": 1,
+          "value": 0,
+          "upper": "開始：あなたのカードがちょうど5枚あるラインを1つ選び、そのラインのすべての表向きのカードを削除する。",
+          "middle": "コントロールを持っているプレイヤーは、あなたのプロトコルのうち2枚の位置を入れ替える。",
+          "lower": "終了：覆われていないあなたの「NOVA」カードの下に、あなたのデッキの一番上のカードを裏向きでプレイする。",
+          "effectTypes": [
+            "delete",
+            "rearrange",
+            "play"
+          ]
+        },
+        {
+          "id": "NOVA_2",
+          "number": 2,
+          "value": 1,
+          "upper": "",
+          "middle": "相手は、このスタックにあるカードの枚数と同じ枚数の手札を捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "discard"
+          ]
+        },
+        {
+          "id": "NOVA_3",
+          "number": 3,
+          "value": 2,
+          "upper": "",
+          "middle": "このカードが「NOVA」カードを覆っている場合、あなたは自分のプロトコルを並べ替えることができる。そうでない場合、コントロールを得る。",
+          "lower": "あなたがプロトコルを並べ替えたあと：あなたは裏向きのカードを1枚移動させることができる。",
+          "effectTypes": [
+            "rearrange",
+            "shift"
+          ]
+        },
+        {
+          "id": "NOVA_4",
+          "number": 4,
+          "value": 3,
+          "upper": "",
+          "middle": "このスタックにあるカードの枚数より値が小さいカードを1枚移動させる。",
+          "lower": "",
+          "effectTypes": [
+            "shift"
+          ]
+        },
+        {
+          "id": "NOVA_5",
+          "number": 5,
+          "value": 4,
+          "upper": "",
+          "middle": "このスタックにあるカードの枚数より値が小さいカードを1枚反転させる。",
+          "lower": "",
+          "effectTypes": [
+            "flip"
+          ]
+        },
+        {
+          "id": "NOVA_6",
+          "number": 6,
+          "value": 5,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "five"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "OVERWHELM",
+      "displayName": "OVERWHELM",
+      "tags": "裏向きでプレイ／勝ち越し",
+      "color": "#6B7FA0",
+      "set": "Main 3",
+      "cards": [
+        {
+          "id": "OVERWHELM_1",
+          "number": 1,
+          "value": 1,
+          "upper": "",
+          "middle": "あなたの合計値が相手より大きい各ラインに、あなたのデッキの一番上のカードを裏向きで1枚ずつプレイする。",
+          "lower": "",
+          "effectTypes": [
+            "play"
+          ]
+        },
+        {
+          "id": "OVERWHELM_2",
+          "number": 2,
+          "value": 2,
+          "upper": "終了：あなたのデッキの一番上のカードを、各ラインに裏向きで1枚ずつプレイする。このカードを反転させる。",
+          "middle": "相手は自分のデッキの一番上のカードを、各ラインに裏向きで1枚ずつプレイする。",
+          "lower": "",
+          "effectTypes": [
+            "play",
+            "flip"
+          ]
+        },
+        {
+          "id": "OVERWHELM_3",
+          "number": 3,
+          "value": 3,
+          "upper": "",
+          "middle": "",
+          "lower": "終了：あなたの手札が5枚以上ある場合、あなたのデッキの一番上のカードをこのスタックに裏向きでプレイする。",
+          "effectTypes": [
+            "play"
+          ]
+        },
+        {
+          "id": "OVERWHELM_4",
+          "number": 4,
+          "value": 4,
+          "upper": "",
+          "middle": "場にあるあなたのカードが相手より多い場合、値が最も小さい相手の覆われているカードを1枚削除する。",
+          "lower": "",
+          "effectTypes": [
+            "delete"
+          ]
+        },
+        {
+          "id": "OVERWHELM_5",
+          "number": 5,
+          "value": 5,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "five"
+          ]
+        },
+        {
+          "id": "OVERWHELM_6",
+          "number": 6,
+          "value": 6,
+          "upper": "開始：このラインで相手の合計値があなたより大きい場合、このカードを反転させる。",
+          "middle": "",
+          "lower": "",
+          "effectTypes": [
+            "flip"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "PRIDE",
+      "displayName": "PRIDE",
+      "tags": "優位を保つ／移動／ドロー",
+      "color": "#D9A21E",
+      "set": "Main 3",
+      "cards": [
+        {
+          "id": "PRIDE_1",
+          "number": 1,
+          "value": 0,
+          "upper": "あなたがコンパイルしたあと：リフレッシュする。",
+          "middle": "あなたがコントロールを持っている場合、他のカードを1枚移動させる。そうでない場合、あなたのカードを1枚移動させる。",
+          "lower": "",
+          "effectTypes": [
+            "draw",
+            "shift"
+          ]
+        },
+        {
+          "id": "PRIDE_2",
+          "number": 2,
+          "value": 2,
+          "upper": "",
+          "middle": "あなたの合計値が相手より大きいラインの数と同じ枚数のカードを引く。",
+          "lower": "開始：このラインであなたの合計値が相手より大きい場合、カードを1枚引く。",
+          "effectTypes": [
+            "draw"
+          ]
+        },
+        {
+          "id": "PRIDE_3",
+          "number": 3,
+          "value": 3,
+          "upper": "",
+          "middle": "あなたの裏向きのカードを1枚反転させる。",
+          "lower": "",
+          "effectTypes": [
+            "flip"
+          ]
+        },
+        {
+          "id": "PRIDE_4",
+          "number": 4,
+          "value": 4,
+          "upper": "",
+          "middle": "あなたがコントロールを持っている場合、あなたは相手のカードを1枚このラインへ移動させることができる。",
+          "lower": "",
+          "effectTypes": [
+            "shift"
+          ]
+        },
+        {
+          "id": "PRIDE_5",
+          "number": 5,
+          "value": 5,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "five"
+          ]
+        },
+        {
+          "id": "PRIDE_6",
+          "number": 6,
+          "value": 6,
+          "upper": "相手がコントロールを得たあと：このカードを反転させる。",
+          "middle": "相手がコントロールを持っている場合、このカードを反転させる。",
+          "lower": "",
+          "effectTypes": [
+            "flip"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "SLOTH",
+      "displayName": "SLOTH",
+      "tags": "捨て札／反転",
+      "color": "#8A8F98",
+      "set": "Main 3",
+      "cards": [
+        {
+          "id": "SLOTH_1",
+          "number": 1,
+          "value": 0,
+          "upper": "このカードが「SLOTH」カードに覆われている場合、このラインのあなたの合計値は5増える。",
+          "middle": "あなたの合計値が相手より小さいラインの数と同じ枚数のカードを引く。",
+          "lower": "",
+          "effectTypes": [
+            "other",
+            "draw"
+          ]
+        },
+        {
+          "id": "SLOTH_2",
+          "number": 2,
+          "value": 1,
+          "upper": "",
+          "middle": "他のカードを1枚戻す。戻したカードがあなたのカードの場合、リフレッシュする。",
+          "lower": "あなたがリフレッシュしたあと：あなたのデッキの一番上のカードをこのスタックに裏向きでプレイする。",
+          "effectTypes": [
+            "return",
+            "draw",
+            "play"
+          ]
+        },
+        {
+          "id": "SLOTH_3",
+          "number": 3,
+          "value": 2,
+          "upper": "",
+          "middle": "あなたの覆われているカードを1枚反転させる。",
+          "lower": "開始：あなたは手札を1枚デッキの一番下に置くことができる。",
+          "effectTypes": [
+            "flip",
+            "other"
+          ]
+        },
+        {
+          "id": "SLOTH_4",
+          "number": 4,
+          "value": 3,
+          "upper": "",
+          "middle": "相手は手札を2枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "discard"
+          ]
+        },
+        {
+          "id": "SLOTH_5",
+          "number": 5,
+          "value": 4,
+          "upper": "",
+          "middle": "",
+          "lower": "このカードが覆われることになったとき：先に表向きのカードを1枚反転させる。",
+          "effectTypes": [
+            "flip"
+          ]
+        },
+        {
+          "id": "SLOTH_6",
+          "number": 6,
+          "value": 5,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "five"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "WRATH",
+      "displayName": "WRATH",
+      "tags": "削除／裏向き",
+      "color": "#C62A2A",
+      "set": "Main 3",
+      "cards": [
+        {
+          "id": "WRATH_1",
+          "number": 1,
+          "value": 0,
+          "upper": "このラインにある値が最も大きいすべてのカードは、合計値に加えない。",
+          "middle": "あなたのデッキの一番上のカードをこのスタックに裏向きでプレイする。",
+          "lower": "",
+          "effectTypes": [
+            "other",
+            "play"
+          ]
+        },
+        {
+          "id": "WRATH_2",
+          "number": 2,
+          "value": 1,
+          "upper": "",
+          "middle": "カードを1枚引く。",
+          "lower": "終了：コントロールを失う。そうした場合、表向きのカードを1枚削除する。",
+          "effectTypes": [
+            "draw",
+            "delete"
+          ]
+        },
+        {
+          "id": "WRATH_3",
+          "number": 3,
+          "value": 2,
+          "upper": "",
+          "middle": "カードが最も多いラインを1つ選び、そのラインのすべての表向きのカードを反転させる。",
+          "lower": "",
+          "effectTypes": [
+            "flip"
+          ]
+        },
+        {
+          "id": "WRATH_4",
+          "number": 4,
+          "value": 3,
+          "upper": "",
+          "middle": "表向きのカードを1枚反転させる。",
+          "lower": "",
+          "effectTypes": [
+            "flip"
+          ]
+        },
+        {
+          "id": "WRATH_5",
+          "number": 5,
+          "value": 4,
+          "upper": "",
+          "middle": "コントロールを失う。そうした場合、相手は手札を2枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "discard"
+          ]
+        },
+        {
+          "id": "WRATH_6",
+          "number": 6,
+          "value": 5,
+          "upper": "",
+          "middle": "あなたは手札を1枚捨て札にする。",
+          "lower": "",
+          "effectTypes": [
+            "five"
+          ]
+        }
+      ]
     }
   ]
 }

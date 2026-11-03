@@ -280,11 +280,32 @@ function fieldCardValue(st, uid, line, side, statics) {
 /* statics: 同じ盤面で何度も数えるときは activeStatics(st) を1回作って渡す */
 function lineTotal(st, line, side, statics = activeStatics(st)) {
   let t = 0;
-  for (const uid of st.lines[line][side]) t += fieldCardValue(st, uid, line, side, statics);
+  /* WRATH_1: このラインにある値が最も大きいすべてのカードは、合計値に加えない (両側のカードで最大を決める) */
+  let skipValue = null;
+  for (const s of statics) {
+    if (s.kind === 'excludeHighestInLine' && s.line === line) {
+      let mx = -Infinity;
+      for (let p = 0; p < 2; p++) for (const u of st.lines[line][p]) mx = Math.max(mx, fieldCardValue(st, u, line, p, statics));
+      skipValue = mx;
+      break;
+    }
+  }
+  for (const uid of st.lines[line][side]) {
+    const v = fieldCardValue(st, uid, line, side, statics);
+    if (skipValue === null || v !== skipValue) t += v;
+  }
   for (const s of statics) {
     if (s.kind !== 'modifyLineTotal' || s.line !== line) continue;
-    const affect = (s.side === 'self') ? s.sideIdx : 1 - s.sideIdx;
+    /* LUST_1: side 'both' は両プレイヤーの合計値を修正する */
+    const affect = s.side === 'both' ? side : (s.side === 'self') ? s.sideIdx : 1 - s.sideIdx;
     if (affect !== side) continue;
+    /* SLOTH_1: このカードが「SLOTH」カードに覆われている (すぐ上が表向きの同じプロトコル) ときだけ */
+    if (s.cond === 'coveredByOwnProto') {
+      const stk = st.lines[s.line][s.sideIdx];
+      const i = stk.indexOf(s.uid);
+      const above = i >= 0 && i + 1 < stk.length ? st.cards[stk[i + 1]] : null;
+      if (!above || !above.faceUp || DEFS[above.def].proto !== DEFS[st.cards[s.uid].def].proto) continue;
+    }
     if (typeof s.delta === 'number') {
       // 条件付き修正 (DIVERSITY_3: スタックに自プロトコル以外の表向きカードがある場合)
       if (s.cond === 'stackHasOtherProtoFaceUp') {
@@ -301,6 +322,9 @@ function lineTotal(st, line, side, statics = activeStatics(st)) {
         n = st.players[s.sideIdx].hand.length;
       } else if (s.deltaPer === 'oppCardsInLine') { // MIRROR_1: このラインの相手カード1枚ごとに+1
         n = st.lines[line][1 - s.sideIdx].length;
+      } else if (s.deltaPer === 'oppHighestInLine') { // ENVY_1: このラインの値が最も大きい相手のカードの値だけ増える
+        const os = 1 - s.sideIdx;
+        for (const u of st.lines[line][os]) n = Math.max(n, fieldCardValue(st, u, line, os, statics));
       } else {                                   // 既定(APATHY_1/SMOKE_3): ラインの裏向き1枚ごとに+1
         for (let p = 0; p < 2; p++) for (const uid of st.lines[line][p]) if (!st.cards[uid].faceUp) n++;
       }
@@ -348,6 +372,8 @@ function canPlay(st, player, uid, line, faceUp, anyProto) {
     let needMatch = !anyProto;   // DIVERSITY_1 下段: プロトコル不問で表向きプレイ可
     for (const s of activeStatics(st)) {
       if (s.kind === 'playPermission' && s.rule === 'youFaceUpAnyLine' && s.sideIdx === player) needMatch = false;
+      // LUST_2 lower: このスタックには、プロトコルを対応させずにあなたのカードをプレイできる
+      if (s.kind === 'playPermission' && s.rule === 'youAnyProtoThisStack' && s.sideIdx === player && s.line === line) needMatch = false;
       // UNITY_2 lower: このラインには UNITY カードを表向きでプレイできる
       if (s.kind === 'playPermission' && s.rule === 'protoFaceUpThisLine' && s.line === line
           && defOf(st, uid).proto === DEFS[st.cards[s.uid].def].proto) needMatch = false;
@@ -458,6 +484,13 @@ function eventMatches(on, ev, cardSide, st, uid) {
     case 'afterOppRefresh':    return ev.on === 'refresh' && ev.player !== cardSide;
     case 'afterAnyRefresh':    return ev.on === 'refresh';
     case 'afterOppCompile':    return ev.on === 'compile' && ev.player !== cardSide;
+    /* ---- Main 3 ---- */
+    case 'afterYouCompile':    return ev.on === 'compile' && ev.player === cardSide;          // PRIDE_1
+    case 'afterAnyCompile':    return ev.on === 'compile';                                     // MOMENTUM_2/6
+    case 'afterAnyClearCache': return ev.on === 'clearCache';                                  // GLUTTONY_2
+    case 'afterAnyRearrange':  return ev.on === 'rearrange';                                   // MOMENTUM_2
+    case 'afterYouRearrange':  return ev.on === 'rearrange' && ev.chooser === cardSide;        // NOVA_3
+    case 'afterOppGainControl': return ev.on === 'gainControl' && ev.player !== cardSide;      // LUST_4 / PRIDE_6
     case 'afterOppPlayInThisLine': { // ICE_1: 相手がこのラインにプレイしたあと
       if (ev.on !== 'play' || ev.player === cardSide) return false;
       const loc = locate(st, uid);
@@ -969,6 +1002,18 @@ function doRearrange(ctx, chooser, target, exact, controlContext) {
   });
   st.players[target].protocols = ans.map(i => cur[i]);
   log(ctx, `P${target + 1} のプロトコルを並べ替え: ` + st.players[target].protocols.map(p => p.name).join('/'));
+  /* MOMENTUM_2 / NOVA_3: 「プロトコルを並べ替えたあと」。2枚の位置の入れ替え (SPIRIT_5 など) は並べ替えに数えない */
+  if (exact !== 'transposition') fireEvent(ctx, { on: 'rearrange', chooser, target });
+}
+
+/* コントロールを得る (コントロールを使う試合だけ)。得たら「相手がコントロールを得たあと」(LUST_4・PRIDE_6) を起こす */
+function gainControl(ctx, side) {
+  const st = ctx.st;
+  if (!st.useControl || st.control === side) return false;
+  st.control = side;
+  log(ctx, `P${side + 1}: コントロールを獲得`);
+  fireEvent(ctx, { on: 'gainControl', player: side });
+  return true;
 }
 
 function doRefresh(ctx, side) {
@@ -985,6 +1030,8 @@ function doRefresh(ctx, side) {
 function compilableLines(st, side) {
   const out = [];
   const sts = activeStatics(st);
+  /* LUST_1 lower: あなたがコントロールを持っている場合、相手はコンパイルすることができない */
+  if (sts.some(s => s.kind === 'oppNoCompileIfControl' && s.sideIdx !== side && st.useControl && st.control === s.sideIdx)) return out;
   for (let l = 0; l < 3; l++) {
     const mine = lineTotal(st, l, side, sts), theirs = lineTotal(st, l, 1 - side, sts);
     if (mine >= 10 && mine > theirs) out.push(l);
@@ -1166,6 +1213,11 @@ function execOp(ctx, fr, op) {
         return;
       }
       if (op.countFrom) { const n = (fr.bind[op.countFrom.ref] || 0) + (op.countFrom.plus || 0); min = max = n; }
+      else if (op.count === 'thisStack') {   // NOVA_2: このスタックにあるカードの枚数
+        const loc = locate(st, fr.source);
+        min = max = loc ? st.lines[loc.line][loc.side].length : 0;
+        if (!max) { fr.done = false; return; }
+      }
       else if (op.count === 'all') { min = max = st.players[who].hand.length; }  // CHAOS_5/FEAR_2: 手札すべて
       else if (typeof op.count === 'object') { min = op.count.min; max = op.count.max === 'any' ? 99 : op.count.max; }
       else { min = max = op.count; }
@@ -1237,13 +1289,24 @@ function execOp(ctx, fr, op) {
 
     case 'rearrange': {
       const target = op.whose === 'opp' ? 1 - fr.controller : fr.controller;
+      if (op.optional) {   // NOVA_3: 「並べ替えることができる」
+        const ans = choose(ctx, { kind: 'yesNo', player: fr.controller, prompt: 'optional-rearrange', context: defOf(st, fr.source).id });
+        if (!ans.length) { fr.done = false; return; }
+      }
       doRearrange(ctx, fr.controller, target);
       fr.done = true;
       return;
     }
 
     case 'swapProtocols': {
-      doRearrange(ctx, fr.controller, fr.controller, 'transposition');
+      /* NOVA_1: 「コントロールを持っているプレイヤーは、あなたのプロトコルのうち2枚の位置を入れ替える」。
+         だれもコントロールを持っていなければ何も起きない */
+      let chooser = fr.controller;
+      if (op.chooser === 'controlHolder') {
+        if (!st.useControl || (st.control !== 0 && st.control !== 1)) { fr.done = false; return; }
+        chooser = st.control;
+      }
+      doRearrange(ctx, chooser, fr.controller, 'transposition');
       fr.done = true;
       return;
     }
@@ -1268,12 +1331,35 @@ function execOp(ctx, fr, op) {
       else if (op.cond === 'protoKindsLe3') ok = countProtoKinds(st) <= 3;
       else if (op.cond === 'otherProtoCardOnField') ok = countProtoOnField(st, defOf(st, fr.source).proto, fr.source) > 0;
       else if (op.cond === 'protoCountGe5') ok = countProtoOnField(st, defOf(st, fr.source).proto) >= 5;
+      /* ---- Main 3 ---- */
+      else if (op.cond === 'handEq') ok = st.players[fr.controller].hand.length === op.n;              // FULCRUM
+      else if (op.cond === 'handGe') ok = st.players[fr.controller].hand.length >= op.n;              // OVERWHELM_3
+      else if (op.cond === 'youHaveControl') ok = !!st.useControl && st.control === fr.controller;    // PRIDE_1/4
+      else if (op.cond === 'oppHasControl') ok = !!st.useControl && st.control === 1 - fr.controller; // ENVY_2, PRIDE_6
+      else if (op.cond === 'oppMoreCompiled') {                                                       // ENVY_5
+        const n = (s) => st.players[s].protocols.filter(p => p.compiled).length;
+        ok = n(1 - fr.controller) > n(fr.controller);
+      } else if (op.cond === 'youHaveUncoveredFaceDown') {                                            // AMBUSH_5
+        ok = [0, 1, 2].some(l => { const k = st.lines[l][fr.controller]; return k.length && !st.cards[k[k.length - 1]].faceUp; });
+      } else if (op.cond === 'moreCardsInPlay') {                                                    // OVERWHELM_4
+        const n = (s) => [0, 1, 2].reduce((a, l) => a + st.lines[l][s].length, 0);
+        ok = n(fr.controller) > n(1 - fr.controller);
+      } else if (op.cond === 'boundIsMine') {                                                         // SLOTH_2: 戻したのがあなたのカード
+        const u = fr.bind[op.ref || 'r'];
+        ok = u !== undefined && st.cards[u].owner === fr.controller;
+      }
       else if (loc) {
         if (op.cond === 'thisCovered') ok = !isTop(st, loc);
         if (op.cond === 'thisCovers') ok = loc.idx > 0;
         if (op.cond === 'oppLeadsThisLine') ok = lineTotal(st, loc.line, 1 - fr.controller) > lineTotal(st, loc.line, fr.controller);
+        if (op.cond === 'youLeadThisLine') ok = lineTotal(st, loc.line, fr.controller) > lineTotal(st, loc.line, 1 - fr.controller);   // PRIDE_2
+        if (op.cond === 'thisCoversOwnProto') {   // NOVA_3: このカードが同じプロトコルの表向きのカードを覆っている
+          const below = loc.idx > 0 ? st.cards[st.lines[loc.line][loc.side][loc.idx - 1]] : null;
+          ok = !!below && below.faceUp && DEFS[below.def].proto === defOf(st, fr.source).proto;
+        }
       }
       if (ok) execOps(ctx, fr, op.ops);
+      else if (op.else) execOps(ctx, fr, op.else);   // 「そうでない場合、〜」(NOVA_3・PRIDE_1)
       else fr.done = false;
       return;
     }
@@ -1304,6 +1390,13 @@ function execOp(ctx, fr, op) {
         lines = [0, 1, 2].filter(l => st.lines[l][0].length > 1 || st.lines[l][1].length > 1);
       else if (op.lines === 'linesWithFaceDown') // SMOKE_1: 裏向きカードが1枚以上ある各ライン
         lines = [0, 1, 2].filter(l => [0, 1].some(s => st.lines[l][s].some(u => !st.cards[u].faceUp)));
+      else if (op.lines === 'allLines') lines = [0, 1, 2];   // OVERWHELM_2
+      else if (op.lines === 'linesWithCompiled')             // MOMENTUM_1: どちらかのコンパイル済みのプロトコルがあるライン
+        lines = [0, 1, 2].filter(l => st.players[0].protocols[l].compiled || st.players[1].protocols[l].compiled);
+      else if (op.lines === 'linesYouLead') {                // OVERWHELM_1: あなたの合計値が相手より大きいライン (始めに決める)
+        const sts = activeStatics(st);
+        lines = [0, 1, 2].filter(l => lineTotal(st, l, fr.controller, sts) > lineTotal(st, l, 1 - fr.controller, sts));
+      }
       while (lines.length) {
         if (!slotActive(st, fr)) return;            // LIFE_1: 処理中に覆われたら中断
         let l;
@@ -1636,6 +1729,15 @@ function execOp(ctx, fr, op) {
       let n = 0;
       if (op.count === 'protoOnField') n = countProtoOnField(st, defOf(st, fr.source).proto);
       else if (op.count === 'protoKindsInThisLine') n = countProtoKindsInLine(st, fr.currentLine !== undefined ? fr.currentLine : fr.line);
+      else if (op.count === 'oppHand') n = st.players[1 - fr.controller].hand.length;    // ENVY_3
+      else if (op.count === 'yourHand') n = st.players[fr.controller].hand.length;       // GLUTTONY_3
+      else if (op.count === 'linesYouLead' || op.count === 'linesOppLeads') {             // PRIDE_2 / SLOTH_1
+        const sts = activeStatics(st), me = fr.controller;
+        n = [0, 1, 2].filter(l => {
+          const a = lineTotal(st, l, me, sts), b = lineTotal(st, l, 1 - me, sts);
+          return op.count === 'linesYouLead' ? a > b : a < b;
+        }).length;
+      }
       if (n > 0) drawCards(ctx, fr.controller, n);
       fr.done = n > 0;
       return;
@@ -1691,6 +1793,95 @@ function execOp(ctx, fr, op) {
       return;
     }
 
+    /* ---------- Main 3 拡張 ---------- */
+
+    case 'gainControl': { // LUST_1 / NOVA_3 / ENVY_2
+      fr.done = gainControl(ctx, fr.controller);
+      return;
+    }
+
+    case 'loseControl': { // WRATH_2/5, LUST_3 (自分) / LUST_4 (player: opp)
+      const who = actorOf(fr, op);
+      if (!st.useControl || st.control !== who) { fr.done = false; return; }
+      if (op.optional) {
+        const ans = choose(ctx, { kind: 'yesNo', player: who, prompt: 'optional-lose-control', context: defOf(st, fr.source).id });
+        if (!ans.length) { fr.done = false; return; }
+      }
+      st.control = -1;
+      log(ctx, `P${who + 1}: コントロールを失った`);
+      fr.done = true;
+      return;
+    }
+
+    case 'swapSides': { // FULCRUM_1: 左右のスタック (stacks) / FULCRUM_3: 左右のプロトコル (protocols) を入れ替える
+      const a = 0, b = 2, me = fr.controller;
+      if (op.what === 'protocols') {
+        const ps = st.players[me].protocols;
+        const t = ps[a]; ps[a] = ps[b]; ps[b] = t;
+        log(ctx, `P${me + 1}: 左右のプロトコルを入れ替え: ` + ps.map(p => p.name).join('/'));
+      } else {
+        const t = st.lines[a][me]; st.lines[a][me] = st.lines[b][me]; st.lines[b][me] = t;
+        log(ctx, `P${me + 1}: 左右のスタックを入れ替え`);
+      }
+      /* 入れ替えは移動ではないので、中段も「覆われる」も起きない (MIRROR_3 と同じ) */
+      fr.done = true;
+      return;
+    }
+
+    case 'bindCoverer': { // GLUTTONY_4: このカードのすぐ上に重なっているカード (facing で表/裏を絞る)
+      const loc = locate(st, fr.source);
+      const stk = loc ? st.lines[loc.line][loc.side] : [];
+      const u = loc && loc.idx + 1 < stk.length ? stk[loc.idx + 1] : undefined;
+      const ok = u !== undefined && (!op.facing || (op.facing === 'up') === !!st.cards[u].faceUp);
+      if (ok) fr.bind[op.bind || 'cov'] = u;
+      fr.done = ok;
+      return;
+    }
+
+    case 'compileLine': { // GREED_2: 値が10以上で相手より大きいラインを1つコンパイルする
+      const lines = compilableLines(st, fr.controller);
+      if (!lines.length) { fr.done = false; return; }
+      const l = lines.length === 1 ? lines[0]
+        : choose(ctx, { kind: 'pickLine', player: fr.controller, lines, prompt: 'compile-line', context: defOf(st, fr.source).id })[0];
+      doCompile(ctx, fr.controller, l);
+      fr.done = true;
+      return;
+    }
+
+    case 'oppRandomPlayDown': { // LUST_3: 相手は手札からランダムに1枚公開し、そのカードを相手側に裏向きでプレイする
+      const opp = 1 - fr.controller;
+      const hand = st.players[opp].hand;
+      if (!hand.length) { fr.done = false; return; }
+      const u = hand[Math.floor(rand(st) * hand.length)];
+      st.revealed = { seq: (st.actionLog || []).length, kind: 'card', uid: u, player: opp, cards: [DEFS[st.cards[u].def].id] };
+      rememberCard(st, u, 3);
+      log(ctx, `P${opp + 1}: 手札の ${DEFS[st.cards[u].def].id} を公開`, u);
+      /* どのラインに置くかは書かれていない。効果の持ち主が選ぶ (プレイの制限は相手のプレイとして守る) */
+      const lines = [0, 1, 2].filter(l => canPlay(st, opp, u, l, false));
+      if (!lines.length) { fr.done = false; return; }
+      const l = lines.length === 1 ? lines[0]
+        : choose(ctx, { kind: 'pickLine', player: fr.controller, lines, side: opp, prompt: 'play-dest', context: defOf(st, fr.source).id })[0];
+      playToField(ctx, u, l, opp, false);
+      fr.done = true;
+      return;
+    }
+
+    case 'handToDeckBottom': { // SLOTH_3 lower: 手札を1枚デッキの一番下に置くことができる
+      const p = st.players[fr.controller];
+      if (!p.hand.length) { fr.done = false; return; }
+      const picks = choose(ctx, { kind: 'pickHand', player: fr.controller, candidates: p.hand.slice(),
+        min: op.optional ? 0 : 1, max: 1, prompt: 'hand-to-deck-bottom', context: defOf(st, fr.source).id });
+      if (!picks.length) { fr.done = false; return; }
+      const u = picks[0];
+      removeFrom(p.hand, u);
+      const c = st.cards[u];
+      c.zone = 'deck' + fr.controller; c.faceUp = false; c.commitDest = null;
+      p.deck.push(u);
+      log(ctx, `P${fr.controller + 1}: 手札を1枚デッキの一番下に置いた`);
+      fr.done = true;
+      return;
+    }
+
     case 'noCompileNextTurn': {
       st.players[1 - fr.controller].cannotCompile = true;
       log(ctx, `P${2 - fr.controller}: 次のターンはコンパイル不可`);
@@ -1719,6 +1910,13 @@ function execTargetedOp(ctx, fr, op) {
       st.revealed = { seq: (st.actionLog || []).length, kind: 'hand', player: 1 - fr.controller, cards: oh.map(u => DEFS[st.cards[u].def].id) };
       for (const u of oh) rememberCard(st, u, 3);
       fr.done = true; return;
+    }
+    if (op.target === 'ownHand') {   // LUST_4: あなたは手札をすべて公開する
+      const h = st.players[fr.controller].hand;
+      log(ctx, `P${fr.controller + 1}: 手札を公開: ` + h.map(u => DEFS[st.cards[u].def].id).join(', '));
+      st.revealed = { seq: (st.actionLog || []).length, kind: 'hand', player: fr.controller, cards: h.map(u => DEFS[st.cards[u].def].id) };
+      for (const u of h) rememberCard(st, u, 3);
+      fr.done = h.length > 0; return;
     }
     if (op.target === 'ownHandCard') {
       const hand = st.players[fr.controller].hand;
@@ -1755,6 +1953,7 @@ function execTargetedOp(ctx, fr, op) {
 
   if (mode === 'all') {
     fr.done = performMass(ctx, fr, op, cands);
+    if (op.bind) fr.bind[op.bind] = fr.done ? cands.length : 0;   // AMBUSH_2: 反転させた枚数
     return;
   }
 
@@ -1871,6 +2070,11 @@ function matchesSel(st, fr, uid, sel) {
     if (sel.value.eq !== undefined && v !== sel.value.eq) return false;
     if (sel.value.ltProtoKinds && v >= countProtoKinds(st)) return false;                    // DIVERSITY_4
     if (sel.value.gtHandCount && v <= st.players[fr.controller].hand.length) return false;  // PEACE_3
+    if (sel.value.ltThisStack) {   // NOVA_4/5: このスタックにあるカードの枚数より値が小さい
+      const me = locate(st, fr.source);
+      const n = me ? st.lines[me.line][me.side].length : 0;
+      if (v >= n) return false;
+    }
     if (sel.value.eqBindPrinted) {  // LUCK_5: bindカードの印刷値と同値
       const ref = fr.bind[sel.value.eqBindPrinted];
       if (ref === undefined || v !== DEFS[st.cards[ref].def].value) return false;
@@ -1884,7 +2088,13 @@ function collectCandidates(ctx, fr, op, sel, chooser) {
   let zoneLines = null; // 制限ライン
 
   if (sel.zone === 'chosenLine') {
-    const valid = [0, 1, 2].filter(l => allInLine(l).some(u => matchesSel(st, fr, u, stripZone(sel))));
+    let valid = [0, 1, 2].filter(l => allInLine(l).some(u => matchesSel(st, fr, u, stripZone(sel))));
+    /* NOVA_1: あなたのカードがちょうど5枚あるライン / WRATH_3: カードが最も多いライン */
+    if (sel.lineCond === 'youHave5') valid = valid.filter(l => st.lines[l][fr.controller].length === 5);
+    else if (sel.lineCond === 'mostCards') {
+      const most = Math.max.apply(null, [0, 1, 2].map(l => allInLine(l).length));
+      valid = valid.filter(l => allInLine(l).length === most);
+    }
     if (!valid.length) return null;
     let l;
     if (valid.length === 1) l = valid[0];
@@ -2122,6 +2332,20 @@ function execPlayOp(ctx, fr, op) {
       fr.done = true;
       return;
     }
+    /* NOVA_1 lower: 覆われていないあなたの「NOVA」カードの下に裏向きでプレイする */
+    if (d === 'underOwnProto') {
+      const proto = defOf(st, fr.source).proto;
+      const targets = [0, 1, 2].map(l3 => st.lines[l3][who]).filter(k => k.length)
+        .map(k => k[k.length - 1]).filter(u => st.cards[u].faceUp && DEFS[st.cards[u].def].proto === proto);
+      const ok = targets.filter(u => canPlay(st, who, uid, locate(st, u).line, false));
+      if (!ok.length) { fr.done = false; return; }
+      const under = ok.length === 1 ? ok[0]
+        : choose(ctx, { kind: 'pickCard', player: who, candidates: ok, min: 1, max: 1, prompt: 'play-under', context: defOf(st, fr.source).id })[0];
+      deck.shift();
+      playToField(ctx, uid, locate(st, under).line, who, false, under);
+      fr.done = true;
+      return;
+    }
     let l = line;
     if (l === null || l === undefined) {
       if (typeof destChoices !== 'undefined') {
@@ -2148,7 +2372,8 @@ function execPlayOp(ctx, fr, op) {
 
   if (op.facing === 'down') {
     // 裏向き固定: カードとラインを選ぶ
-    const lines = (typeof destChoices !== 'undefined') ? destChoices : [0, 1, 2];
+    /* 行き先が決まっている (LUST_6「このラインに」) ならそのラインだけ */
+    const lines = (line !== undefined && line !== null) ? [line] : (typeof destChoices !== 'undefined') ? destChoices : [0, 1, 2];
     const validLines = lines.filter(l => canPlay(st, who, hand[0], l, false));
     if (!validLines.length) { fr.done = false; return; }
     const cu = hand.length === 1 ? hand[0]
@@ -2194,10 +2419,7 @@ function runTurnLoop(ctx) {
           let wins = 0;
           const sts = activeStatics(st);
           for (let l = 0; l < 3; l++) if (lineTotal(st, l, st.turn, sts) > lineTotal(st, l, 1 - st.turn, sts)) wins++;
-          if (wins >= 2 && st.control !== st.turn) {
-            st.control = st.turn;
-            log(ctx, `P${st.turn + 1}: コントロールを獲得`);
-          }
+          if (wins >= 2 && st.control !== st.turn) gainControl(ctx, st.turn);
         }
         st.phase = 'checkCompile';
         break;
@@ -3011,9 +3233,20 @@ function aiOpsValue(ops, depth) {
         }
         break;
       }
-      case 'ifDone': case 'ifState':
+      case 'ifDone':
         v += aiOpsValue(op.ops, depth + 1) * 0.8;
         break;
+      case 'ifState':   // 「そうでない場合」(else) があれば、どちらかは起きる
+        v += op.else ? Math.max(aiOpsValue(op.ops, depth + 1), aiOpsValue(op.else, depth + 1)) * 0.8
+          : aiOpsValue(op.ops, depth + 1) * 0.8;
+        break;
+      /* ---- Main 3 ---- */
+      case 'gainControl': v += 20; break;
+      case 'loseControl': v += actor < 0 ? 16 : -8; break;
+      case 'drawDynamic': v += 24; break;
+      case 'compileLine': v += 60; break;
+      case 'oppRandomPlayDown': v += 18; break;
+      case 'swapSides': v += 10; break;
       case 'forEachLine':
         v += aiOpsValue(op.ops, depth + 1) * 1.5;
         break;

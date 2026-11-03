@@ -16,6 +16,15 @@ export const KINDS = {
 
 export const NEWS = [
   {
+    id: '2026-11-03-main3', date: '2026-11-03', kind: 'new',
+    img: 'art/news/main3.webp', alt: 'Main 3 の12プロトコルの絵。AMBUSH・ENVY・FULCRUM・GLUTTONY・GREED・LUST・MOMENTUM・NOVA・OVERWHELM・PRIDE・SLOTH・WRATH',
+    title: '新しいプロトコル Main 3 の12種が加わりました',
+    body: [
+      'AMBUSH・ENVY・FULCRUM・GLUTTONY・GREED・LUST・MOMENTUM・NOVA・OVERWHELM・PRIDE・SLOTH・WRATH の72枚です。コントロールの取り合い、プロトコルの並べ替えやコンパイルに反応する効果、手札の枚数がちょうどのときに働く効果などが入っています。',
+      'ドラフトやプロトコル選びで使えます。シングルプレイの「使うプロトコル」では Main 3 を出し入れできます。CHALLENGE の制覇は 39 プロトコルになりました (前に取った CONQUEROR はそのままです)。'
+    ]
+  },
+  {
     id: '2026-10-23-story', date: '2026-10-23', kind: 'new',
     img: 'art/news/story.webp', alt: 'ストーリー1章の一枚絵。朝の光が差す、空っぽの水族館の水槽を見上げる紫苑',
     title: 'ストーリーが遊べるようになりました',

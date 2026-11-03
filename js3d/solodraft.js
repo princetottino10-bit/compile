@@ -11,7 +11,8 @@ export const SET_GROUPS = [
   { key: 'M1', label: 'Main 1', sets: ['Main 1'] },
   { key: 'A1', label: 'Aux 1', sets: ['Aux 1'] },
   { key: 'M2', label: 'Main 2', sets: ['Main 2'] },
-  { key: 'A2', label: 'Aux 2', sets: ['Aux 2'] }
+  { key: 'A2', label: 'Aux 2', sets: ['Aux 2'] },
+  { key: 'M3', label: 'Main 3', sets: ['Main 3'] }
 ];
 const OLD_KEYS = { set1: 'M1A1', set2: 'M2A2', main1: 'M1', main12: 'M1M2' };
 
