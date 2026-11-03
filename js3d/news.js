@@ -22,7 +22,8 @@ export const NEWS = [
     title: 'Main 3・Aux 3 が遊べるようになりました！ 新しい15プロトコル・90枚',
     body: [
       'Main 3 の AMBUSH・ENVY・FULCRUM・GLUTTONY・GREED・LUST・MOMENTUM・NOVA・OVERWHELM・PRIDE・SLOTH・WRATH と、Aux 3 の FLEXIBLE・INERT・RIGID の90枚です。コントロールの取り合い、プロトコルの並べ替えやコンパイルに反応する効果、手札の枚数がちょうどのときに働く効果などが入っています。',
-      'ドラフトやプロトコル選びで使えます。シングルプレイの「使うプロトコル」では Main 3 と Aux 3 を出し入れできます。CHALLENGE の制覇は 42 プロトコルになりました (前に取った CONQUEROR はそのままです)。'
+      'ドラフトやプロトコル選びで使えます。シングルプレイの「使うプロトコル」では Main 3 と Aux 3 を出し入れできます。CHALLENGE の制覇は 42 プロトコルになりました (前に取った CONQUEROR はそのままです)。',
+      '新しい称号も増えました。七つの大罪 (ENVY・GLUTTONY・GREED・LUST・PRIDE・SLOTH・WRATH) すべてで勝つと SEVEN SINS、FLEXIBLE・INERT・RIGID を組んで勝つと TRISTATE、公式ソロモードの REGULAR を全部勝つと BOT BREAKER、ADVANCED を全部勝つと ROOT ACCESS。15の新しいプロトコルにも、習熟度 6 で取れる称号があります。'
     ]
   },
   {

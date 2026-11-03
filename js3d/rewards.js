@@ -224,6 +224,8 @@ export const TITLES = {
   underdogduo: 'UNDERDOG DUO',   // 下剋上タッグに勝つ (achievements.js)
   deicide: 'DEICIDE',            // 機械仕掛けの神 CODE:PURPLE に勝つ (cosmetics-ui.js の extraTitles)
   blindspot: 'BLIND SPOT',       // 隠し: すべてを見る者 ALL-SEEING に勝つ。取るまで COLLECTION にも出さない
+  /* Main 3 / Aux 3・公式ソロモードの実績で取る (2026-11-03) */
+  botbreaker: 'BOT BREAKER', rootaccess: 'ROOT ACCESS', sevensins: 'SEVEN SINS', tristate: 'TRISTATE',
   /* ガチャで取る (GACHA_ITEMS) */
   gambler: 'GAMBLER', highroller: 'HIGH ROLLER', fortune: 'FORTUNE',
   /* 週替わり3連戦の称号 (3週・10週) は外した (時間のかかるものは置かない。2026-10-04) */
