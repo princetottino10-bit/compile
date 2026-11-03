@@ -13,6 +13,8 @@ export const BGM_RELEASED = false;
 const ALL_REWARDS = [
   { lv: 2, kind: 'sleeve', key: 'crimson', name: 'SLEEVE — CRIMSON' },
   { lv: 1, kind: 'bgm', key: 'orange_tunnel', name: 'BGM — オレンジトンネルを抜ける' },
+  /* Main 3 の大型アップデート記念 (2026-11-03)。だれでもはじめから使える */
+  { lv: 1, kind: 'mat', key: 'main3', name: 'PLAYMAT — MAIN 3' },
   { lv: 3, kind: 'mat', key: 'nebula', name: 'PLAYMAT — NEBULA' },
   { lv: 3, kind: 'bgm', key: 'crazy_cat', name: 'BGM — Crazy Cat' },
   { lv: 4, kind: 'marker', key: 'gold', name: 'CONTROL MARKER — GOLD' },
@@ -71,7 +73,7 @@ const pkey = (p) => 'p_' + p.toLowerCase();
 const mkey = (p) => 'm_' + p.toLowerCase();
 
 export const COSMETICS = {
-  mat: [['neon', 'NEON GRID'], ['nebula', 'NEBULA'], ['vortex', 'VORTEX'], ['biomech', 'BIOMECH'], ['prism', 'PRISM'], ['eclipse', 'ECLIPSE'],
+  mat: [['neon', 'NEON GRID'], ['nebula', 'NEBULA'], ['vortex', 'VORTEX'], ['biomech', 'BIOMECH'], ['main3', 'MAIN 3'], ['prism', 'PRISM'], ['eclipse', 'ECLIPSE'],
     ['celestial', 'CELESTIAL'], ['hokusai', 'FUJI'], ['seigaiha', 'GREAT WAVE'], ['sakura', 'YOZAKURA'], ['garden', 'ROSE GARDEN'], ['library', 'LIBRARY'], ['nerinzu_shion', 'SHION'], ['nerinzu_asagi', 'RURI'], ['nerinzu_nadeshiko', 'AKANE'], ['nerinzu_yamabuki', 'ANZU'],
     ...MASTERY_PROTOS.map(p => [pkey(p), p])],
   sleeve: [['default', 'STANDARD'], ['classic', 'CLASSIC'], ['crimson', 'CRIMSON'], ['circuit', 'CIRCUIT'], ['void', 'VOID'], ['holo', 'HOLO'], ['sakura', 'SAKURA'], ['aurum', 'AURUM'],

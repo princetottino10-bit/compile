@@ -2,6 +2,7 @@
  * 盤面の柄 (プレイマット)。公式プレイマットの配色を意識したオリジナルの柄を、canvas に描いて盤面に敷く。
  *   NEON GRID (はじめから) / NEBULA (マット1: 桃・紫・青の星雲) / VORTEX (マット2: 白地に橙・赤・青の渦)
  *   BIOMECH (マット3: 暗い青緑の有機的な柄と紫の光)
+ *   MAIN 3 (Compile Main 3 の箱に合わせた柄: つやのない黒・基板の配線・赤い一閃・白いかすれ文字。はじめから使える)
  *   プレイヤーレベルが上がると解放される (MATS)。選ぶのは設定の画面
  * ========================================================================= */
 import { bonusXp } from './xp.js';
@@ -10,6 +11,7 @@ import { BOARD, CARD, VIEW } from './theme.js';
 import { pilePos } from './layout.js';
 import { playerLevel } from './stats-data.js';
 import { COSMETICS, unlockLevel } from './rewards.js';
+import { circuit } from './backdrops.js';
 
 /* 盤面の範囲 (arena.js の枠と同じ): x ±5 / z ±5.4。1単位 = 100px */
 export const MAT_W = 10, MAT_D = 10.8;
@@ -210,6 +212,80 @@ function drawBiomech(ctx) {
   edgeTitle(ctx, 'rgba(230,255,250,.7)');
 }
 
+/* 白いかすれ文字: 一度別の面に書いてから、細い引っかき傷と粒で削る (箱の題字の刷りのかすれ。公式のロゴは写さない) */
+function scratchedText(ctx, text, font, x, y, rot, color, r) {
+  const c = document.createElement('canvas');
+  c.width = 640; c.height = 120;
+  const g = c.getContext('2d');
+  g.font = font;
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillStyle = color;
+  g.fillText(text, c.width / 2, c.height / 2);
+  g.globalCompositeOperation = 'destination-out';
+  g.lineCap = 'round';
+  for (let i = 0; i < 70; i++) {                                     // 横に走る傷
+    const sx = r() * c.width, sy = r() * c.height, len = 10 + r() * 70;
+    g.strokeStyle = 'rgba(0,0,0,' + (0.5 + r() * 0.5) + ')';
+    g.lineWidth = 0.6 + r() * 1.8;
+    g.beginPath(); g.moveTo(sx, sy); g.lineTo(sx + len, sy + (r() - 0.5) * 6); g.stroke();
+  }
+  for (let i = 0; i < 900; i++) {                                    // 粒
+    g.fillStyle = 'rgba(0,0,0,' + (0.4 + r() * 0.6) + ')';
+    g.fillRect(r() * c.width, r() * c.height, 1 + r() * 2.2, 1 + r() * 2.2);
+  }
+  ctx.save();
+  ctx.translate(x, y); ctx.rotate(rot);
+  ctx.drawImage(c, -c.width / 2, -c.height / 2);
+  ctx.restore();
+}
+
+/* MAIN 3: Main 3 の箱に寄せた柄。つやのない黒に少し明るい黒の基板の配線、盤面を斜めに切る赤い一閃が1本。
+   光らせるのは赤だけ。一閃は盤の真ん中を通すので、180度回しても同じ形 (相手の側から見ても同じ柄) */
+function drawMain3(ctx) {
+  const r = rng(303);
+  ctx.fillStyle = '#070707';
+  ctx.fillRect(0, 0, W, H);
+  blob(ctx, W * 0.08, H * 0.95, W * 0.6, 'rgba(150,10,24,A)', 0.3);   // 隅に赤い霧 (向かい合う2隅)
+  blob(ctx, W * 0.92, H * 0.05, W * 0.6, 'rgba(150,10,24,A)', 0.3);
+  circuit(ctx, W, H, r, { step: 30, base: 24, bg: '#070707' });
+  /* 赤い一閃: 左下から右上へ。下に黒い影、上に細い白のつや */
+  ctx.save();
+  ctx.translate(W / 2, H / 2);
+  ctx.rotate(-0.62);
+  const L = Math.hypot(W, H) * 1.1, t = 22;
+  ctx.fillStyle = 'rgba(0,0,0,.6)';
+  ctx.fillRect(-L / 2, -t / 2 - 8, L, t + 16);
+  ctx.shadowColor = 'rgba(255,30,60,.75)';
+  ctx.shadowBlur = 26;
+  const red = ctx.createLinearGradient(0, -t / 2, 0, t / 2);
+  red.addColorStop(0, '#ff3048'); red.addColorStop(0.5, '#d4122e'); red.addColorStop(1, '#8e0a1d');
+  ctx.fillStyle = red;
+  ctx.fillRect(-L / 2, -t / 2, L, t);
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = 'rgba(255,255,255,.22)';
+  ctx.fillRect(-L / 2, -t / 2, L, 1.5);
+  ctx.restore();
+  /* つやのない面の粒 */
+  for (let i = 0; i < 2600; i++) {
+    ctx.fillStyle = r() < 0.5 ? 'rgba(255,255,255,' + (0.015 + r() * 0.03) + ')' : 'rgba(0,0,0,' + (0.2 + r() * 0.3) + ')';
+    ctx.fillRect(r() * W, r() * H, 1.5, 1.5);
+  }
+  drawSlots(ctx, 'rgba(6,6,6,.74)', 'rgba(236,232,238,.62)', 2);
+  /* 両端の題字: 白いかすれ文字の COMPILE と、赤い札の MAIN 3 */
+  for (const [x, rot] of [[50, -Math.PI / 2], [W - 50, Math.PI / 2]]) {
+    scratchedText(ctx, 'COMPILE', '400 54px "Black Ops One", Orbitron, system-ui, sans-serif', x, H / 2, rot, 'rgba(240,238,242,.86)', r);
+    ctx.save();
+    ctx.translate(x, H / 2); ctx.rotate(rot);
+    ctx.fillStyle = 'rgba(232,32,63,.92)';
+    ctx.fillRect(-36, 34, 72, 22);
+    ctx.fillStyle = '#fff';
+    ctx.font = '800 15px Oxanium, system-ui, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('MAIN 3', 0, 46);
+    ctx.restore();
+  }
+}
+
 /* レベル20: 黒地に金の細い線と、中央から射す虹色の光 */
 function drawPrism(ctx) {
   const r = rng(44);
@@ -335,7 +411,9 @@ function drawArtMat(key, img, full) {
 }
 const artImages = new Map();       // key -> Image (読み込み済みなら complete)
 
-const DRAW = { nebula: drawNebula, vortex: drawVortex, biomech: drawBiomech, prism: drawPrism, eclipse: drawEclipse };
+const DRAW = { nebula: drawNebula, vortex: drawVortex, biomech: drawBiomech, main3: drawMain3, prism: drawPrism, eclipse: drawEclipse };
+/* 題字に読み込み待ちの書体を使う柄。書体が届いたら描き直す (届く前に描くと代わりの書体のまま残る) */
+const MAT_FONTS = { main3: '400 54px "Black Ops One"' };
 for (const key of Object.keys(ART_MATS)) DRAW[key] = null;          // 絵のマットは playmatTexture で描く
 const cache = new Map();
 const MAT_KEEP = 4;
@@ -363,6 +441,10 @@ export function playmatTexture(key, full) {
     if (!img.complete) img.addEventListener('load', paint, { once: true });
   } else {
     DRAW[key](cv.getContext('2d'));
+    const font = MAT_FONTS[key];
+    if (font && document.fonts && !document.fonts.check(font)) {
+      document.fonts.load(font).then(() => { DRAW[key](cv.getContext('2d')); tex.needsUpdate = true; }).catch(() => { /* 代わりの書体のまま */ });
+    }
   }
   cache.set(ck, tex);
   /* 置いておくのは新しいほうから MAT_KEEP 枚まで。1枚が大きい (約 4MB の描画面 + GPU 側) うえ、画面の向きや大きさが変わるたびに
