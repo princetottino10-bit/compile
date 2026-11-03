@@ -131,9 +131,9 @@ async function protocols() {
   if (protoList) return protoList;
   try {
     const data = await fetch('data/cards.json').then(r => r.json());
-    protoList = data.protocols.map(p => ({ name: p.name, color: p.color || '#b9a4ff' }));
+    protoList = data.protocols.map(p => ({ name: p.name, color: p.color || '#cdc7d4' }));
     cardIndex = {};
-    for (const p of data.protocols) for (const c of p.cards) cardIndex[c.id] = { proto: p.name, value: c.value, color: p.color || '#b9a4ff' };
+    for (const p of data.protocols) for (const c of p.cards) cardIndex[c.id] = { proto: p.name, value: c.value, color: p.color || '#cdc7d4' };
   } catch (e) {
     protoList = [];
   }
@@ -241,7 +241,7 @@ function effectTop(cs) {
   if (!top.length) return '';
   return '<div class="sr-fxtop"><small>効果をよく使ったカード</small>' + top.map(t => {
     const d = cardIndex[t.id] || { proto: t.id, value: '' };
-    return '<span style="--pc:' + esc(d.color || '#b9a4ff') + '"><b>' + esc(d.proto + ' ' + d.value) + '</b>' + t.effects + '回</span>';
+    return '<span style="--pc:' + esc(d.color || '#cdc7d4') + '"><b>' + esc(d.proto + ' ' + d.value) + '</b>' + t.effects + '回</span>';
   }).join('') + '</div>';
 }
 

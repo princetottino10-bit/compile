@@ -116,7 +116,7 @@ export function showCardNote(o) {
     el.id = 'cardNote';
     document.body.appendChild(el);
   }
-  el.style.setProperty('--accent', o.color || '#b9a4ff');
+  el.style.setProperty('--accent', o.color || '#cdc7d4');
   /* place: 'top' | 'bottom'。触ったカード自身を隠さない側に出す */
   el.dataset.place = o.place || 'bottom';
   el.classList.toggle('large', !!o.large);
@@ -342,7 +342,7 @@ function ccPips(remaining, total) {
 export function compileCutIn(info) {
   const el = $('#compileCut');
   if (!el) return Promise.resolve();
-  const accent = info.color || '#b9a4ff';
+  const accent = info.color || '#cdc7d4';
   el.style.setProperty('--accent', accent);
   el.innerHTML =
     '<div class="cc-veil"></div>' +
@@ -389,7 +389,7 @@ export function showPhase(phase, mine) {
     el.id = 'phaseChip';
     document.body.appendChild(el);
   }
-  el.style.setProperty('--accent', mine ? '#a07bff' : '#ff4fa3');
+  el.style.setProperty('--accent', mine ? '#a07bff' : '#e8203f');
   el.dataset.side = mine ? 'me' : 'opp';
   /* アニメーションを毎回頭から流すため、作り直してから show を付ける */
   el.classList.remove('show');
@@ -437,7 +437,7 @@ export function declareCutIn(o) {
 export function turnCutIn(mine, label) {
   const el = $('#turnCut');
   if (!el) return Promise.resolve();
-  el.style.setProperty('--accent', mine ? '#a07bff' : '#ff4fa3');
+  el.style.setProperty('--accent', mine ? '#a07bff' : '#e8203f');
   el.style.setProperty('--from', mine ? 'left' : 'right');
   el.style.setProperty('--dir', mine ? '1' : '-1');
   el.classList.toggle('opp', !mine);
@@ -496,7 +496,7 @@ function fxSectionHtml(withCard) {
     const list = fxItems.filter(x => x.mine === mine);
     if (!list.length) return '';
     return '<div class="cp-fxg"><span class="cp-fxwho">' + (mine ? 'あなた' : '相手') + '</span>' + list.map(x =>
-      '<button type="button" class="cp-fxi z-' + x.zone + '" data-fxuid="' + x.uid + '" style="--fc:' + (x.color || '#b9a4ff') + '">' +
+      '<button type="button" class="cp-fxi z-' + x.zone + '" data-fxuid="' + x.uid + '" style="--fc:' + (x.color || '#cdc7d4') + '">' +
         '<span class="cp-fxn1"><b>' + x.name + '</b><em>' + PANEL_ZONE[x.zone] + '</em></span>' +
         '<span class="cp-fxt">' + condHtml(x.text) + '</span></button>').join('') + '</div>';
   };
@@ -518,7 +518,7 @@ function bindFx(el) {
 }
 /* 効果の一覧だけを出す (カードを選んでいないとき・縦持ちで INFO を開いたとき) */
 function showFxOnly(el) {
-  el.style.setProperty('--accent', '#b9a4ff');
+  el.style.setProperty('--accent', '#cdc7d4');
   el.innerHTML = '<div class="cp-head"><b>INFO</b></div>' + fxSectionHtml();
   el.classList.add('show', 'fxonly');
   bindFx(el);
@@ -551,7 +551,7 @@ export function showCardPanel(o, opts) {
   clearTimeout(hideTimer);
   lastCardO = o;
   el.classList.remove('fxonly');
-  el.style.setProperty('--accent', o.color || '#b9a4ff');
+  el.style.setProperty('--accent', o.color || '#cdc7d4');
   const rows = o.rows || [];
   el.innerHTML =
     '<div class="cp-head"><b>' + (o.proto || o.title) + '</b>' + favButton(o) +
@@ -631,13 +631,13 @@ export function showFxBanner(o, ms) {
     document.body.appendChild(el);
   }
   clearTimeout(fxBannerTimer);
-  el.style.setProperty('--pc', o.color || '#b9a4ff');
+  el.style.setProperty('--pc', o.color || '#cdc7d4');
   el.innerHTML =
     '<div class="fx-body">' +
       '<div class="fx-head"><b>' + o.name + '</b><span class="fx-tag">' + (o.tag || '発動') + '</span>' +
         '<span class="fx-who ' + (o.mine ? 'me' : 'opp') + '">' + (o.who ? String(o.who).replace(/[<>&]/g, '') : o.mine ? 'あなた' : '相手') + '</span></div>' +
       /* 写した効果 (MIRROR 1): どのカードの段を写したか */
-      (o.via ? '<div class="fx-via">相手の <b style="--vc:' + (o.via.color || '#b9a4ff') + '">' + o.via.name + '</b> の' + (FX_ZONE[o.zone] || '').replace(/^\S+\s/, '') + 'を写して使う</div>' : '') +
+      (o.via ? '<div class="fx-via">相手の <b style="--vc:' + (o.via.color || '#cdc7d4') + '">' + o.via.name + '</b> の' + (FX_ZONE[o.zone] || '').replace(/^\S+\s/, '') + 'を写して使う</div>' : '') +
       '<p><span class="fx-zone">' + (FX_ZONE[o.zone] || '') + '</span>' + condHtml(o.text) + '</p>' +
     '</div>' +
     '<i class="fx-sweep"></i>';
@@ -677,7 +677,7 @@ export function showChain(links) {
   el.innerHTML = links.map((k, i) =>
     '<div class="ch-link' + (i === links.length - 1 ? ' now' : '') + (grew && i === links.length - 1 ? ' enter' : '') + '"'
       + (k.def ? ' data-def="' + k.def + '" role="button" tabindex="0" aria-label="' + k.name + ' の効果を見る"' : '')
-      + ' style="--pc:' + (k.color || '#b9a4ff') + '">'
+      + ' style="--pc:' + (k.color || '#cdc7d4') + '">'
       + '<div class="ch-card">' + (k.img ? '<img alt="" src="' + k.img + '">' : '<i></i>') + '</div>'
       + '<b class="ch-no">' + (i + 1) + '</b>'
       + '<span class="ch-name">' + k.name + '<small>' + (CHAIN_ZONE[k.zone] || '') + '</small></span>'
@@ -847,7 +847,7 @@ export function conquerCutIn(protos, count, total, opts) {
   const done = count >= total;
   el.innerHTML = '<div class="lu-card conq"><div class="lu-kicker">CONQUERED — GATEKEEPER を制覇</div>' +
     '<div class="lu-lv" data-text="' + count + '">' + count + '<small>/' + total + '</small></div>' +
-    '<ul class="lu-rewards">' + protos.map((p, i) => '<li style="--i:' + i + ';--pc:' + (p.color || '#b9a4ff') + '"><b class="conq-p">' +
+    '<ul class="lu-rewards">' + protos.map((p, i) => '<li style="--i:' + i + ';--pc:' + (p.color || '#cdc7d4') + '"><b class="conq-p">' +
       String(p.name).replace(/[&<>"]/g, '') + '</b>で GATEKEEPER に勝った</li>').join('') + '</ul>' +
     '<p class="lu-note">' + (done ? total + 'のプロトコルすべてで GATEKEEPER に勝った。称号 CONQUEROR を手に入れた' : 'GATEKEEPER のデッキ以外の' + total + 'のプロトコルすべてで勝つと 称号 CONQUEROR') + '</p>' +
     '<p class="lu-hint">タップで閉じる</p></div>';
@@ -864,7 +864,7 @@ export function conquerCutIn(protos, count, total, opts) {
 export function resultCutIn(win, opts) {
   const el = $('#resultCut');
   if (!el) return Promise.resolve();
-  el.style.setProperty('--accent', win ? '#a07bff' : '#ff4fa3');
+  el.style.setProperty('--accent', win ? '#a07bff' : '#e8203f');
   /* opts.title / opts.sub: 観戦の「A WINS」など、文字を変えるとき */
   const title = (opts && opts.title) || (win ? 'VICTORY' : 'DEFEAT');
   const sub = (opts && opts.sub) || (win ? 'ALL PROTOCOLS COMPILED' : 'SYSTEM OVERWRITTEN');

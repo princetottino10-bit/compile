@@ -3127,8 +3127,8 @@ function select(uid) {
     sfx('pick');
     raiseHandCard(uid);
     const card = board.cardOf(shown(), uid);
-    board.setHighlight(card, 0xffb3da, 0.22, 0.85);
-    board.setSelected(card, true, 0xffb3da);      // 選んだ札は金色に染める
+    board.setHighlight(card, 0xffc2b4, 0.22, 0.85);
+    board.setSelected(card, true, 0xffc2b4);      // 選んだ札は金色に染める
   }
   updatePads();
   if (tutorial) coachUpdate();
@@ -4131,7 +4131,7 @@ async function finaleFx(win) {
     FX.compilePillar(stage.scene, BOARD.laneX[i], accent, 1800);
   }
   FX.shockwave(stage.scene, new THREE.Vector3(0, 0, 0), accent, 9, 1200);
-  FX.screenFlash(stage, win ? 0xffffff : 0xff4fa3, 760, 0.92);
+  FX.screenFlash(stage, win ? 0xffffff : 0xe8203f, 760, 0.92);
   stage.shake(0.3, 900);
   await TW.wait(320);
 }
@@ -5080,7 +5080,7 @@ function pickRibbon(req, m) {
   const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   return '<button type="button" class="rb-peek" aria-pressed="false" title="帯を透かして盤面を見る" aria-label="盤面を見る">&#128065;</button>' +
     (s
-      ? '<button type="button" class="rb-src" data-def="' + esc(s.def) + '" style="--accent:' + esc(s.color || '#b9a4ff') + '" title="効果を読む">' +
+      ? '<button type="button" class="rb-src" data-def="' + esc(s.def) + '" style="--accent:' + esc(s.color || '#cdc7d4') + '" title="効果を読む">' +
           (d ? '<img alt="" src="' + faceImageURL(d) + '">' : '') + '<b>' + esc(s.name) + '</b></button>'
       : '') +
     '<span class="rb-q">' + esc(handDiscardQuestion(req, m.max) || questionText(req)) + (m.max > 1 ? ' <em>' + (m.count || 0) + '/' + m.max + '</em>' : '') + '</span>' +
@@ -5699,7 +5699,7 @@ function arrangeOnBoard(req, opts) {
       ov.innerHTML =
         '<div class="pick-ribbon' + (arrPeek ? ' peek' : '') + '">' +
           '<button type="button" class="rb-peek" aria-pressed="' + arrPeek + '" title="帯を透かして盤面を見る" aria-label="盤面を見る">&#128065;</button>' +
-          (s ? '<button type="button" class="rb-src" data-def="' + esc(s.def) + '" style="--accent:' + esc(s.color || '#b9a4ff') + '" title="効果を読む">' +
+          (s ? '<button type="button" class="rb-src" data-def="' + esc(s.def) + '" style="--accent:' + esc(s.color || '#cdc7d4') + '" title="効果を読む">' +
             (d ? '<img alt="" src="' + faceImageURL(d) + '">' : '') + '<b>' + esc(s.name) + '</b></button>' : '') +
           '<span class="rb-q">' + esc(text) + '</span>' +
           ribbonActs((targetSide === null || isIdentity ? '' : '<button type="button" class="rb-btn" id="arrReset">やり直し</button>') +
@@ -6095,7 +6095,7 @@ function matchSummaryHtml() {
     const turns = (st.turns || 0) + 1;
     const esc = (t) => String(t).replace(/[<>&"]/g, '');
     const rows = order.map((o, i) => {
-      const color = (protoIndex[o.name] && protoIndex[o.name].color) || '#b9a4ff';
+      const color = (protoIndex[o.name] && protoIndex[o.name].color) || '#cdc7d4';
       return '<li class="' + (o.side === ME ? 'me' : 'opp') + (o.re ? ' re' : '') + '">' +
         '<i>' + (i + 1) + '</i>' +
         '<span class="cs-who">' + (o.side === ME ? 'あなた' : '相手') + '</span>' +
@@ -6804,9 +6804,9 @@ function panelRows(st) {
       const meta = protoIndex[parts[0]] || {};
       return {
         name: proto.name,
-        parts: parts.length > 1 ? parts.map(n => ({ name: n, color: (protoIndex[n] || {}).color || '#b9a4ff' })) : null,
+        parts: parts.length > 1 ? parts.map(n => ({ name: n, color: (protoIndex[n] || {}).color || '#cdc7d4' })) : null,
         total: totalOf(st, line, side),
-        color: meta.color || '#b9a4ff',
+        color: meta.color || '#cdc7d4',
         set: meta.set,
         compiled: proto.compiled,
         /* 次のその側の手番の開始でコンパイル (済みならリコンパイル) が起きる */

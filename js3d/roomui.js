@@ -726,8 +726,8 @@ export function runRoomLobby(protocols, opts = {}) {
         const isSel = sel.includes(n);
         return '<span class="ro-chipwrap"><button type="button" class="ro-chip' + (isSel ? ' on' : '') + (isTaken ? ' taken' : '') + '" data-name="' + esc(n) + '"' +
           ' aria-pressed="' + isSel + '"' + (isTaken ? ' aria-disabled="true"' : '') +
-          ' style="--accent:' + (p.color || '#b9a4ff') + '">' +
-          '<img alt="" src="' + emblemDataURL(n, p.color || '#b9a4ff', 48, true) + '">' + esc(n) + '</button>' +
+          ' style="--accent:' + (p.color || '#cdc7d4') + '">' +
+          '<img alt="" src="' + emblemDataURL(n, p.color || '#cdc7d4', 48, true) + '">' + esc(n) + '</button>' +
           (opts.cardsOf ? '<button type="button" class="ro-info" data-info="' + esc(n) + '" aria-label="' + esc(n) + ' のカードを見る" title="カードを見る">?</button>' : '') +
           '</span>';
       }).join('') + '</div>';

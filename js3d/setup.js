@@ -207,11 +207,11 @@ export function runSetup(protocols, options = {}) {
     const p = byName[name] || {};
     const me = mySummary.get(name);
     return '<div class="proto-wrap"><button type="button" class="proto' + (cls ? ' ' + cls : '') + '" data-name="' + esc(name) + '"' +
-      ' style="--accent:' + (p.color || '#b9a4ff') + '"' + (p.tags ? ' data-tip="' + esc(name + ': ' + p.tags) + '"' : '') + '>' +
+      ' style="--accent:' + (p.color || '#cdc7d4') + '"' + (p.tags ? ' data-tip="' + esc(name + ': ' + p.tags) + '"' : '') + '>' +
       (name === dailyProto ? '<span class="proto-daily" title="今日のミッション">DAILY</span>' : '') +
       (p.tags ? '<span class="proto-tags">' + esc(p.tags) + '</span>' : '') +
       '<span class="proto-art" style="background-image:url(&quot;art/' + name.charAt(0) + name.slice(1).toLowerCase() + '.webp&quot;)"></span>' +
-      '<img class="proto-emblem" alt="" src="' + emblemDataURL(name, p.color || '#b9a4ff', 96, true) + '">' +
+      '<img class="proto-emblem" alt="" src="' + emblemDataURL(name, p.color || '#cdc7d4', 96, true) + '">' +
       /* 最強のデッキ (FIRE / WATER / SPEED) は選べないので、制覇の数にも入らない。印も付けない */
       (level === 3 && !conq.has(name) && conquerable([name]).length ? '<span class="proto-conq" title="まだ GATEKEEPER に勝っていない">未制覇</span>' : '') +
       '<span class="proto-name">' + esc(name) + '</span>' +

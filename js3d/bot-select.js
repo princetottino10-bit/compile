@@ -24,7 +24,7 @@ const RULES = [
 export function openBotSelect(protocols) {
   const byName = Object.fromEntries(protocols.map(p => [p.name, p]));
   const deck = (names) => '<span class="rn-deck">' + names.map(n =>
-    '<i style="--pc:' + esc((byName[n] || {}).color || '#b9a4ff') + '">' + esc(n) + '</i>').join('') + '</span>';
+    '<i style="--pc:' + esc((byName[n] || {}).color || '#cdc7d4') + '">' + esc(n) + '</i>').join('') + '</span>';
   const recs = localRecords();
   const recOf = (lv) => {
     const g = recs.filter(r => r.level === lv);
