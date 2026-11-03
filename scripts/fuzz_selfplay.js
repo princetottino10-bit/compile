@@ -19,7 +19,7 @@ const N = Number(process.argv[2] || 200);
 const SEED0 = Number(process.argv[3] || 1);
 const MAX_STEPS = 4000;
 const OUT = path.join(__dirname, 'fuzz_out');
-const PROTOS = cards.protocols.map(p => p.name);
+const PROTOS = cards.protocols.filter(p => !process.env.FUZZ_SETS || process.env.FUZZ_SETS.split(',').includes(p.set)).map(p => p.name);
 
 function rng(seed) { let s = seed >>> 0 || 1; return () => (s = (s * 16807) % 2147483647) / 2147483647; }
 

@@ -272,7 +272,13 @@ export const BURST_FAMILY = {
   PSYCHIC: 'rings', PEACE: 'rings',
   SPIRIT: 'wisps', LIFE: 'bloom', LOVE: 'bloom', WATER: 'rain',
   SPEED: 'streaks', LIGHT: 'streaks',
-  UNITY: 'hex', ASSIMILATION: 'hex', DIVERSITY: 'prism', LUCK: 'sparkle'
+  UNITY: 'hex', ASSIMILATION: 'hex', DIVERSITY: 'prism', LUCK: 'sparkle',
+  /* Main 3 */
+  WRATH: 'lightning', NOVA: 'flame', PRIDE: 'crystal', GLUTTONY: 'vortex', SLOTH: 'ash',
+  ENVY: 'miasma', AMBUSH: 'mist', FULCRUM: 'rings', LUST: 'bloom', OVERWHELM: 'rain',
+  MOMENTUM: 'streaks', GREED: 'sparkle',
+  /* Aux 3 */
+  FLEXIBLE: 'prism', INERT: 'ash', RIGID: 'hex'
 };
 
 /* 丸い減衰スプライト (霧・火の粉で共用) */

@@ -56,7 +56,7 @@ test('全部解放 (管理者のテスト用) では、見た目も称号もレ�
 });
 
 
-test('プロトコルの習熟度: 3 で名札・6 で称号・9 でプレイマット (30 プロトコルそれぞれ)', async () => {
+test('プロトコルの習熟度: 3 で名札・6 で称号・9 でプレイマット (45 プロトコルそれぞれ)', async () => {
   const R = await load();
   const wins = (n) => Array.from({ length: n }, () => ({ win: true, level: 1, me: ['FIRE', 'WATER', 'SPEED'] }));
   const mem = new Map();
@@ -74,7 +74,7 @@ test('プロトコルの習熟度: 3 で名札・6 で称号・9 でプレイマ
   assert.equal(R.isUnlocked('mat', 'p_fire', 1), true);
   assert.equal(R.isUnlocked('mat', 'p_death', 99), false, '遊んでいないプロトコルは開かない');
   assert.equal(R.TITLES.m_fire, 'PYROMANCER');
-  assert.equal(R.MASTERY_ITEMS.filter(m => m.kind === 'title').length, 30);
+  assert.equal(R.MASTERY_ITEMS.filter(m => m.kind === 'title').length, 45);
   setRecs(wins(39).map(r => ({ ...r, mode: 'tutorial' })));   // チュートリアルの対戦は数えない
   assert.equal(R.protoMastery('FIRE'), 0);
   delete globalThis.localStorage;

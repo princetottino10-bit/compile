@@ -54,8 +54,8 @@ export function setMaxAnisotropy(n) {
   for (const tex of backTextures.values()) { tex.anisotropy = n; tex.needsUpdate = true; }
 }
 
-/* カードアートが存在するセット (Main 2 / Aux 2 は scripts/build_card_art_2.py で生成) */
-export const ART_SETS = new Set(['Main 1', 'Aux 1', 'Main 2', 'Aux 2']);
+/* カードアートが存在するセット (Main 2 / Aux 2 は scripts/build_card_art_2.py、Main 3 / Aux 3 は build_card_art_3.py で生成) */
+export const ART_SETS = new Set(['Main 1', 'Aux 1', 'Main 2', 'Aux 2', 'Main 3', 'Aux 3']);
 
 /* 覆われたときも見えている必要がある上端の割合 (theme.js の coverStep と連動) */
 export const REVEAL_RATIO = 0.334;
