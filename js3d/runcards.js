@@ -79,15 +79,15 @@ export const STAR_CARDS = [
   { id: 'X_ASSIMILATION', proto: 'ASSIMILATION', value: 4, from: { middle: 4, lower: 2 }, append: { text: 'カードを1枚プレイする。', ops: [{ op: 'play', source: 'hand' }] } },
   { id: 'X_DIVERSITY', proto: 'DIVERSITY', value: 2, from: { upper: 3, middle: 1 } },
   { id: 'X_UNITY', proto: 'UNITY', value: 4, from: { middle: [0, 2] }, append: { text: 'カードを1枚プレイする。', ops: [{ op: 'play', source: 'hand' }] } },
-  /* Main 3 (2026-11-03) */
+  /* Main 3 (2026-11-03)。LUST・NOVA は勝率 0.44 未満の弱いプロトコルなので、ほかの弱いものと同じく値 4 + 1枚プレイ */
   { id: 'X_AMBUSH', proto: 'AMBUSH', value: 2, from: { middle: [4, 3] } },
   { id: 'X_ENVY', proto: 'ENVY', value: 2, from: { middle: 2, lower: 1 } },
   { id: 'X_FULCRUM', proto: 'FULCRUM', value: 2, from: { upper: 0, middle: 2 } },
   { id: 'X_GLUTTONY', proto: 'GLUTTONY', value: 2, from: { middle: 1, lower: 1 } },
   { id: 'X_GREED', proto: 'GREED', value: 2, from: { middle: 2, lower: 2 } },
-  { id: 'X_LUST', proto: 'LUST', value: 3, from: { middle: 4, lower: 4 } },
+  { id: 'X_LUST', proto: 'LUST', value: 4, from: { middle: 4, lower: 4 }, append: { text: 'カードを1枚プレイする。', ops: [{ op: 'play', source: 'hand' }] } },
   { id: 'X_MOMENTUM', proto: 'MOMENTUM', value: 2, from: { upper: 1, middle: 3 } },
-  { id: 'X_NOVA', proto: 'NOVA', value: 2, from: { middle: 2, lower: 2 } },
+  { id: 'X_NOVA', proto: 'NOVA', value: 4, from: { middle: 2, lower: 2 }, append: { text: 'カードを1枚プレイする。', ops: [{ op: 'play', source: 'hand' }] } },
   { id: 'X_OVERWHELM', proto: 'OVERWHELM', value: 2, from: { middle: 1, lower: 3 } },
   { id: 'X_PRIDE', proto: 'PRIDE', value: 2, from: { middle: 2, lower: 2 } },
   { id: 'X_SLOTH', proto: 'SLOTH', value: 2, from: { middle: 1, lower: 1 } },
