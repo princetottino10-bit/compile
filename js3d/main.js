@@ -87,7 +87,7 @@ import * as FX from './fx.js';
 import { buildArena } from './arena.js';
 import { initAudio, sfx, setMuted, isMuted, setSfxVolume, onMuteChange } from './audio.js';
 import { mountMuteButton, muteIcon } from './mutebutton.js';
-import { playBgm, refreshBgm, fadeOutBgm, crossBgm, pickNormalBgm, normalBattleBgm, onlineBattleBgm, storyBattleBgm, STRONG_BGM, BOSS_BGM, DEUS_BGM, PEEK_BGM, pickTenseBgm, setShuffleNotify } from './bgm.js';
+import { playBgm, refreshBgm, fadeOutBgm, crossBgm, prepareBgm, pickNormalBgm, normalBattleBgm, onlineBattleBgm, storyBattleBgm, STRONG_BGM, BOSS_BGM, DEUS_BGM, PEEK_BGM, pickTenseBgm, setShuffleNotify } from './bgm.js';
 import { trackOf } from './bgm-shop.js';
 import { BGM_RELEASED } from './rewards.js';
 import { emblemDataURL } from './emblems.js';
@@ -4098,6 +4098,7 @@ async function roomEnterGame(rm) {
   roomResultShown = false;
   lastTurn = null;
   tenseBgmOn = false;
+  tenseNext = null;
   roomLoggedVersion = null;
   roomTracker = ROOM.createTraceTracker();
   await roomApplyView(rm, true);
@@ -4613,6 +4614,7 @@ function stackCount(line, side) {
    手番が替わるとき (ターンの表示と同じとき) に一度だけ。ボス・機械仕掛けの神・すべてを見る者は専用の曲のまま。
    練習・問題・チュートリアル・ストーリー・リプレイでは替えない */
 let tenseBgmOn = false;
+let tenseNext = null;            // 先に選んで読んでおく、あと1本の曲 (切り替えたときに読み込みで無音が挟まらないように)
 function maybeTenseBgm(st) {
   if (tenseBgmOn || !st || st.winner !== null || !Array.isArray(st.players)) return;
   if (tutorial || puzzle || trainingMode || demoMode || replayMode || storyNode) return;
@@ -4621,16 +4623,21 @@ function maybeTenseBgm(st) {
     const need = Array.isArray(st.winBySide) ? st.winBySide[side] : (st.winCompiles || 3);
     return need - st.players[side].protocols.filter(p => p.compiled).length === 1;
   });
-  if (!oneLeft) return;
+  if (!oneLeft) {
+    /* 1本目のコンパイルが済んだら、あと1本の曲を選んでファイルだけ読んでおく (音にするのは切り替えのとき) */
+    if (!tenseNext && st.players.some(p => p.protocols.some(q => q.compiled))) prepareBgm(tenseNext = pickTenseBgm(), false);
+    return;
+  }
   tenseBgmOn = true;
-  crossBgm(pickTenseBgm());
+  crossBgm(tenseNext || pickTenseBgm());
+  tenseNext = null;
 }
-/* 対戦の BGM: ボスと強敵は専用の曲。ふつうの対戦は12曲からランダム (COLLECTION の BGM を出したら選んだ曲) */
+/* 対戦の BGM: ボスと強敵は専用の曲。ふつうの対戦はシャッフル (COLLECTION の BGM を出したら選んだ曲) */
 function battleBgm() {
   if (roomMode) return onlineBattleBgm();      // オンラインは毎回ランダム (同じ曲ばかり流れないように)
   if (deusMatch()) return DEUS_BGM;            // 機械仕掛けの神: 「神を破壊せよ」
   if (peekMatch()) return PEEK_BGM;            // すべてを見る者: 「最終決戦２秒前」
-  if (storyNode && storyBattleBgm(storyNode)) return storyBattleBgm(storyNode);   // ストーリー: 機体戦は「判定」、終章の所長戦は「止めていい」 (本人作)
+  if (storyNode && storyBattleBgm(storyNode)) return storyBattleBgm(storyNode);   // ストーリー: 機体戦は「判定」、終章の最後の判定は「止めていい」 (本人作)
   const tier = battleTier();
   if (tier === 'boss') return BOSS_BGM;
   if (tier === 'strong') return STRONG_BGM;

@@ -34,6 +34,14 @@ export const NEWS = [
     ]
   },
   {
+    id: '2026-11-03-own-bgm', date: '2026-11-03', kind: 'info',
+    title: '新しい対戦の曲が入りました',
+    body: [
+      'ふつうの対戦に「Protocol Drive」、強敵との対戦に「Overclock」、どちらかがあと1本になったときに「Last Compile」が流れるようになりました。タイトル・メニューの曲には「起動」が加わっています。',
+      'Protocol Drive・Overclock・起動は、COLLECTION の BGM ではじめから選べます。'
+    ]
+  },
+  {
     id: '2026-10-23-story', date: '2026-10-23', kind: 'new',
     img: 'art/news/story.webp', alt: 'ストーリー1章の一枚絵。朝の光が差す、空っぽの水族館の水槽を見上げる紫苑',
     title: 'ストーリーが遊べるようになりました',
