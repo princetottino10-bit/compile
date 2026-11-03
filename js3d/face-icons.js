@@ -39,8 +39,8 @@ export function iconArt(key, protocols, size = 40) {
   if (!key) return null;
   if (isFaceIcon(key)) {
     const [c] = split(key);
-    return { src: faceIconURL(key), color: (AVATARS[c] && AVATARS[c].color) || '#b9a4ff', face: true };
+    return { src: faceIconURL(key), color: (AVATARS[c] && AVATARS[c].color) || '#cdc7d4', face: true };
   }
   const p = (protocols || []).find(x => x.name === key);
-  return p ? { src: emblemDataURL(p.name, p.color || '#b9a4ff', size, true), color: p.color || '#b9a4ff' } : null;
+  return p ? { src: emblemDataURL(p.name, p.color || '#cdc7d4', size, true), color: p.color || '#cdc7d4' } : null;
 }

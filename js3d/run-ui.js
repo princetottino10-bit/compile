@@ -163,7 +163,7 @@ function protoChip(p, attrs) {
 }
 
 function deckLine(names, byName) {
-  return '<span class="rn-deck">' + names.map(n => '<i style="--pc:' + esc((byName[n] || {}).color || '#b9a4ff') + '">' + esc(n) + '</i>').join('') + '</span>';
+  return '<span class="rn-deck">' + names.map(n => '<i style="--pc:' + esc((byName[n] || {}).color || '#cdc7d4') + '">' + esc(n) + '</i>').join('') + '</span>';
 }
 
 /* デッキのカード (外したものは打ち消し線、強化したものは ＋、β カードは各列の下)。

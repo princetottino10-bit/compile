@@ -5,8 +5,8 @@
  *   画像ファイルを持たないので、どの解像度でもにじまない。
  * ========================================================================= */
 
-const INK = '#03040a';
-const CYAN = '#b9a4ff', PINK = '#ff4fa3', MINT = '#a07bff', GOLD = '#ffb3da';
+const INK = '#050505';
+const CYAN = '#cdc7d4', PINK = '#e8203f', MINT = '#a07bff', GOLD = '#ffc2b4';
 
 /* 決まった種から同じ絵を描く (開くたびに星や破片が暴れないように) */
 function rng(seed) {
@@ -60,46 +60,91 @@ function gridFloor(ctx, w, h, horizon, color, alpha, fall) {
 
 /* タイトル: 暗い空間、グリッドの床、ネオンの縁取りをした3枚のカードの柱 */
 export function drawTitleBackdrop(canvas) {
-  /* 公式アート寄り: 暗い地に、桃→紫の太い斜めの帯と、グリッチの横線。浮いた札や床は描かない */
+  /* Main 3 の箱に合わせる: つやのない黒に、黒より少し明るい基板の配線を浮き彫りのように引き、
+     右上から左下へ赤い一閃を1本。光らせるのは赤だけにして、ほかは面と線で見せる */
   const { ctx, w, h } = prepare(canvas);
   const r = rng(7);
-  ctx.fillStyle = '#07050d';
+  ctx.fillStyle = '#060606';
   ctx.fillRect(0, 0, w, h);
-  /* 奥の色溜まり */
-  const glowA = ctx.createRadialGradient(w * 0.78, h * 0.35, 10, w * 0.78, h * 0.35, Math.max(w, h) * 0.7);
-  glowA.addColorStop(0, 'rgba(139,92,246,.32)');
-  glowA.addColorStop(1, 'rgba(139,92,246,0)');
-  ctx.fillStyle = glowA; ctx.fillRect(0, 0, w, h);
-  const glowB = ctx.createRadialGradient(w * 0.2, h * 0.9, 10, w * 0.2, h * 0.9, Math.max(w, h) * 0.6);
-  glowB.addColorStop(0, 'rgba(255,79,163,.22)');
-  glowB.addColorStop(1, 'rgba(255,79,163,0)');
-  ctx.fillStyle = glowB; ctx.fillRect(0, 0, w, h);
-  /* 太い斜めの帯 (右上から左下へ) */
+  /* 下からの赤い煙 (トレーラーの赤い霧)。薄くして文字の地を濁さない */
+  const smoke = ctx.createRadialGradient(w * 0.7, h * 1.05, 10, w * 0.7, h * 1.05, Math.max(w, h) * 0.75);
+  smoke.addColorStop(0, 'rgba(150,10,24,.38)');
+  smoke.addColorStop(1, 'rgba(150,10,24,0)');
+  ctx.fillStyle = smoke; ctx.fillRect(0, 0, w, h);
+  circuit(ctx, w, h, r);
+  /* 赤い一閃: 箱の蓋と身の境目の帯。太い面1本と、その上下の細い影 */
   ctx.save();
-  ctx.translate(w * 0.62, h * 0.5);
-  ctx.rotate(-0.42);
-  const band = ctx.createLinearGradient(-w, 0, w, 0);
-  band.addColorStop(0, 'rgba(255,79,163,0)');
-  band.addColorStop(0.35, 'rgba(255,79,163,.28)');
-  band.addColorStop(0.65, 'rgba(139,92,246,.3)');
-  band.addColorStop(1, 'rgba(139,92,246,0)');
-  ctx.fillStyle = band;
-  ctx.fillRect(-w * 1.2, -h * 0.13, w * 2.4, h * 0.26);
-  ctx.fillStyle = 'rgba(255,255,255,.05)';
-  ctx.fillRect(-w * 1.2, -h * 0.135, w * 2.4, 2);
-  ctx.fillRect(-w * 1.2, h * 0.13, w * 2.4, 1);
+  ctx.translate(w * 0.6, h * 0.52);
+  ctx.rotate(-0.36);
+  const L = Math.hypot(w, h) * 1.2, t = Math.max(10, Math.min(w, h) * 0.022);
+  ctx.fillStyle = 'rgba(0,0,0,.55)';
+  ctx.fillRect(-L / 2, -t / 2 - 6, L, t + 12);
+  const red = ctx.createLinearGradient(0, -t / 2, 0, t / 2);
+  red.addColorStop(0, '#ff3048'); red.addColorStop(0.5, '#d4122e'); red.addColorStop(1, '#8e0a1d');
+  ctx.fillStyle = red;
+  ctx.fillRect(-L / 2, -t / 2, L, t);
+  ctx.fillStyle = 'rgba(255,255,255,.18)';
+  ctx.fillRect(-L / 2, -t / 2, L, 1);
   ctx.restore();
-  /* グリッチの横線 (右に多め) */
-  for (let i = 0; i < 150; i++) {
-    const x = w * (0.35 + r() * 0.7) - 80, y = r() * h;
-    const len = 20 + r() * 220, th = 1 + r() * 6;
-    ctx.fillStyle = r() < 0.5 ? 'rgba(255,79,163,' + (0.05 + r() * 0.22) + ')' : 'rgba(185,164,255,' + (0.05 + r() * 0.2) + ')';
-    ctx.fillRect(x, y, len, th);
+  /* 火の粉 (少しだけ) */
+  for (let i = 0; i < 46; i++) {
+    const x = r() * w, y = h * (0.45 + r() * 0.55), s = 0.6 + r() * 1.8;
+    ctx.fillStyle = 'rgba(255,' + Math.floor(90 + r() * 110) + ',60,' + (0.18 + r() * 0.5) + ')';
+    ctx.beginPath(); ctx.arc(x, y, s, 0, Math.PI * 2); ctx.fill();
   }
   /* 走査線 */
-  ctx.fillStyle = 'rgba(255,255,255,.025)';
+  ctx.fillStyle = 'rgba(255,255,255,.018)';
   for (let y = 0; y < h; y += 3) ctx.fillRect(0, y, w, 1);
-  vignette(ctx, w, h, 0.75);
+  vignette(ctx, w, h, 0.8);
+}
+
+/* 基板の配線: 縦横と45度の折れ線に、丸い端子と四角い部品。黒の上に、ほんの少し明るい黒で */
+function circuit(ctx, w, h, r) {
+  const step = 26;
+  const cols = Math.ceil(w / step) + 2, rows = Math.ceil(h / step) + 2;
+  const used = new Set();
+  const key = (x, y) => x + ',' + y;
+  ctx.save();
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const traces = Math.round(cols * rows / 9);
+  const DIRS = [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]];
+  for (let n = 0; n < traces; n++) {
+    let x = Math.floor(r() * cols), y = Math.floor(r() * rows);
+    if (used.has(key(x, y))) continue;
+    let d = Math.floor(r() * 4);
+    const pts = [[x, y]]; used.add(key(x, y));
+    const len = 3 + Math.floor(r() * 10);
+    for (let k = 0; k < len; k++) {
+      if (r() < 0.28) d = r() < 0.5 ? (d + 4) % 8 : Math.floor(r() * 4);
+      const nx = x + DIRS[d][0], ny = y + DIRS[d][1];
+      if (used.has(key(nx, ny)) || nx < -1 || ny < -1 || nx > cols || ny > rows) break;
+      x = nx; y = ny; used.add(key(x, y)); pts.push([x, y]);
+    }
+    if (pts.length < 3) continue;
+    const lw = r() < 0.15 ? 5 : (r() < 0.5 ? 3 : 2);
+    const shade = 19 + Math.floor(r() * 10);
+    /* 浮き彫り: 下にずらした影の線と、上の明るい線 */
+    for (const [dy, col] of [[1.5, 'rgba(0,0,0,.9)'], [0, 'rgb(' + shade + ',' + shade + ',' + shade + ')']]) {
+      ctx.strokeStyle = col; ctx.lineWidth = lw;
+      ctx.beginPath();
+      pts.forEach(([px, py], i) => { const X = px * step, Y = py * step + dy; if (i) ctx.lineTo(X, Y); else ctx.moveTo(X, Y); });
+      ctx.stroke();
+    }
+    /* 端子 */
+    const [ex, ey] = pts[pts.length - 1];
+    ctx.fillStyle = 'rgb(' + (shade + 4) + ',' + (shade + 4) + ',' + (shade + 4) + ')';
+    ctx.beginPath(); ctx.arc(ex * step, ey * step, lw + 3, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#060606';
+    ctx.beginPath(); ctx.arc(ex * step, ey * step, lw, 0, Math.PI * 2); ctx.fill();
+  }
+  /* 四角い部品 */
+  for (let i = 0; i < Math.round(cols * rows / 60); i++) {
+    const x = Math.floor(r() * cols) * step, y = Math.floor(r() * rows) * step;
+    const bw = step * (1 + Math.floor(r() * 3)), bh = step * (1 + Math.floor(r() * 2));
+    ctx.strokeStyle = 'rgb(30,30,30)'; ctx.lineWidth = 2;
+    ctx.strokeRect(x - bw / 2, y - bh / 2, bw, bh);
+  }
+  ctx.restore();
 }
 
 /* 勝利: 中央の帯から金とミントの光条が左右へ弾け、六角の破片が飛ぶ */
@@ -110,9 +155,9 @@ export function drawVictoryBackdrop(canvas) {
   ctx.fillRect(0, 0, w, h);
   const cy = h / 2;
   const band = ctx.createLinearGradient(0, cy - h * 0.22, 0, cy + h * 0.22);
-  band.addColorStop(0, 'rgba(255,179,218,0)');
+  band.addColorStop(0, 'rgba(255,194,180,0)');
   band.addColorStop(0.5, 'rgba(255,240,190,.55)');
-  band.addColorStop(1, 'rgba(255,179,218,0)');
+  band.addColorStop(1, 'rgba(255,194,180,0)');
   ctx.fillStyle = band;
   ctx.fillRect(0, cy - h * 0.22, w, h * 0.44);
   ctx.save();
@@ -147,7 +192,7 @@ export function drawVictoryBackdrop(canvas) {
   ctx.restore();
   /* 中央の走査リング */
   ctx.save();
-  ctx.strokeStyle = 'rgba(185,164,255,.35)';
+  ctx.strokeStyle = 'rgba(205,199,212,.35)';
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   ctx.ellipse(w / 2, cy, Math.min(w, h) * 0.34, Math.min(w, h) * 0.34, 0, 0, Math.PI * 2);
@@ -171,24 +216,24 @@ export function drawDefeatBackdrop(canvas) {
     const y = cy + (r() - 0.5) * h * 0.26;
     const bh = 2 + r() * h * 0.05;
     const x = (r() - 0.5) * w * 0.1;
-    ctx.fillStyle = i % 3 ? 'rgba(255,79,163,.18)' : 'rgba(200,16,60,.35)';
+    ctx.fillStyle = i % 3 ? 'rgba(232,32,63,.18)' : 'rgba(200,16,60,.35)';
     ctx.fillRect(x, y, w, bh);
   }
   const band = ctx.createLinearGradient(0, cy - h * 0.16, 0, cy + h * 0.16);
-  band.addColorStop(0, 'rgba(255,79,163,0)');
+  band.addColorStop(0, 'rgba(232,32,63,0)');
   band.addColorStop(0.5, 'rgba(255,40,90,.42)');
-  band.addColorStop(1, 'rgba(255,79,163,0)');
+  band.addColorStop(1, 'rgba(232,32,63,0)');
   ctx.fillStyle = band;
   ctx.fillRect(0, cy - h * 0.16, w, h * 0.32);
   /* 色ずれ (シアンの影を少しずらす) */
-  ctx.fillStyle = 'rgba(185,164,255,.06)';
+  ctx.fillStyle = 'rgba(205,199,212,.06)';
   ctx.fillRect(6, cy - h * 0.1, w, h * 0.2);
   ctx.restore();
   /* 降ってくる画素の破片 */
   for (let i = 0; i < 140; i++) {
     const x = r() * w, y = cy + r() * (h - cy);
     const s = 1 + r() * 4;
-    ctx.fillStyle = r() < 0.7 ? 'rgba(255,79,163,.55)' : 'rgba(255,255,255,.35)';
+    ctx.fillStyle = r() < 0.7 ? 'rgba(232,32,63,.55)' : 'rgba(255,255,255,.35)';
     ctx.fillRect(x, y, s, s * (1 + r() * 3));
   }
   /* 走査線 */
@@ -209,8 +254,8 @@ function hexagon(ctx, x, y, s, rot) {
 
 function vignette(ctx, w, h, strength) {
   const g = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.25, w / 2, h / 2, Math.max(w, h) * 0.75);
-  g.addColorStop(0, 'rgba(3,4,10,0)');
-  g.addColorStop(1, 'rgba(3,4,10,' + strength + ')');
+  g.addColorStop(0, 'rgba(5,5,5,0)');
+  g.addColorStop(1, 'rgba(5,5,5,' + strength + ')');
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, h);
 }

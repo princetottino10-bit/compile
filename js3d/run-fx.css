@@ -32,14 +32,14 @@
 
 /* 勝った画面の見出しと、もらったクレジット */
 #runOv h2.rn-win { font: 900 34px/1 var(--font-logo), "M PLUS 1", system-ui; letter-spacing: .08em; color: #fff;
-  text-shadow: 0 0 18px rgba(255, 79, 163, .7), 3px 3px 0 var(--pink); animation: rnSlam .45s cubic-bezier(.2, 1.6, .4, 1) backwards; }
+  text-shadow: 0 0 18px rgba(232,32,63, .7), 3px 3px 0 var(--pink); animation: rnSlam .45s cubic-bezier(.2, 1.6, .4, 1) backwards; }
 #runOv h2.rn-win small { font: 800 15px/1 var(--font-hud), "M PLUS 1", system-ui; color: #ffd86a; text-shadow: none; letter-spacing: .1em; margin-left: 8px; }
 #runOv h2.rn-win .rn-gainnum, #runOv .rn-gainbig .rn-gainnum { display: inline-block; font-variant-numeric: tabular-nums; }
 @keyframes rnSlam { from { opacity: 0; transform: scale(2.2); } }
 
 /* 決着後の見出し: WIN! / BOSS 撃破！ は大きく叩きつける、負けは沈む */
 #runOv h2.rn-result { font: 900 44px/1 var(--font-logo), "M PLUS 1", system-ui; letter-spacing: .06em; position: relative; }
-#runOv h2.rn-result.win, #runOv h2.rn-result.clear { color: #fff; text-shadow: 0 0 24px rgba(255, 79, 163, .8), 4px 4px 0 var(--pink), -2px -2px 0 var(--cyan, #5ff3ff);
+#runOv h2.rn-result.win, #runOv h2.rn-result.clear { color: #fff; text-shadow: 0 0 24px rgba(232,32,63, .8), 4px 4px 0 var(--pink), -2px -2px 0 var(--cyan, #5ff3ff);
   animation: rnSlam .5s cubic-bezier(.2, 1.6, .4, 1) backwards; }
 #runOv h2.rn-result.clear { font-size: 40px; color: #ffe8a8; }
 #runOv h2.rn-result.lose { color: #b9b2d6; animation: rnSink .6s ease-out backwards; }
@@ -50,7 +50,7 @@
 
 /* 連勝 (2連勝から。続くほど熱く) */
 #runOv .rn-streak { margin-left: auto; font: 900 12px/1 var(--font-hud), "M PLUS 1", system-ui; font-style: normal; letter-spacing: .12em;
-  padding: 5px 10px; border-radius: 999px; color: #fff; background: linear-gradient(90deg, #ff6a3d, #ff4fa3); box-shadow: 0 0 14px rgba(255, 106, 61, .5);
+  padding: 5px 10px; border-radius: 999px; color: #fff; background: linear-gradient(90deg, #ff6a3d, #e8203f); box-shadow: 0 0 14px rgba(255, 106, 61, .5);
   animation: rnSlam .4s cubic-bezier(.2, 1.6, .4, 1) backwards; }
 #runOv .rn-streak.lv2 { background: linear-gradient(90deg, #ffb13d, #ff3d6a); box-shadow: 0 0 20px rgba(255, 140, 61, .7); }
 #runOv .rn-streak.lv3 { background: linear-gradient(90deg, #ffe066, #ff7a3d, #ff3d9a); box-shadow: 0 0 26px rgba(255, 200, 80, .8); animation: rnSlam .4s cubic-bezier(.2, 1.6, .4, 1) backwards, rnGlow 1s ease-in-out .4s infinite alternate; }
@@ -82,8 +82,8 @@
 #runOv .rn-bonusup span { font: 700 13px/1.4 "M PLUS 1", system-ui; color: #fff; }
 
 /* 戦う: いちばん押してほしいボタンだけ、縁を光が回る */
-#runOv .rn-btns .rn-cta { position: relative; box-shadow: 0 0 0 0 rgba(255, 79, 163, .6); animation: rnCall 1.4s ease-out infinite; }
-@keyframes rnCall { 70% { box-shadow: 0 0 0 12px rgba(255, 79, 163, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 79, 163, 0); } }
+#runOv .rn-btns .rn-cta { position: relative; box-shadow: 0 0 0 0 rgba(232,32,63, .6); animation: rnCall 1.4s ease-out infinite; }
+@keyframes rnCall { 70% { box-shadow: 0 0 0 12px rgba(232,32,63, 0); } 100% { box-shadow: 0 0 0 0 rgba(232,32,63, 0); } }
 
 /* たたんだルール */
 #runOv .rn-rules summary { cursor: pointer; font: 700 12px/1 "M PLUS 1", system-ui; color: var(--dim); padding: 4px 0; }
@@ -103,7 +103,7 @@ body.calm #runOv *, body.calm #runOv *::after { animation: none !important; }
 #runHud .rh-chip.perfect.broken { color: rgba(255, 255, 255, .3); border-color: rgba(255, 255, 255, .1); text-decoration: line-through; }
 #runHud .rh-chip.guard { color: #b9e2ff; border-color: rgba(124, 196, 255, .55); }
 #runHud .rh-chip.guard.used { opacity: .35; text-decoration: line-through; }
-#runHud .rh-chip.streak { background: linear-gradient(90deg, #ff6a3d, #ff4fa3); border-color: transparent; }
+#runHud .rh-chip.streak { background: linear-gradient(90deg, #ff6a3d, #e8203f); border-color: transparent; }
 #runHud.rh-hurt { animation: rhShake .45s ease-out; border-color: #ff4f7a; box-shadow: 0 0 26px rgba(255, 60, 100, .7); }
 #runHud.rh-block { animation: rhBlock .5s ease-out; }
 @keyframes rhShake { 15% { translate: -6px 0; } 35% { translate: 6px 0; } 55% { translate: -4px 0; } 75% { translate: 3px 0; } }
@@ -125,9 +125,9 @@ body.calm #runOv *, body.calm #runOv *::after { animation: none !important; }
 body.calm #runHud, body.calm #runHud * { animation: none !important; }
 
 /* 試合中ボーナスの札と、決着後の内訳 */
-#runHud .rh-chip.short { color: #05070f; background: #ffd86a; border-color: transparent; }
-#runHud .rh-chip.chaos { color: #05070f; background: linear-gradient(90deg, #ff4fa3, #7cf0ff); border-color: transparent; }
-#runHud .rh-chip.bonus { color: #fff; background: linear-gradient(90deg, #ffb13d, #ff4fa3); border-color: transparent; }
+#runHud .rh-chip.short { color: #070606; background: #ffd86a; border-color: transparent; }
+#runHud .rh-chip.chaos { color: #070606; background: linear-gradient(90deg, #e8203f, #7cf0ff); border-color: transparent; }
+#runHud .rh-chip.bonus { color: #fff; background: linear-gradient(90deg, #ffb13d, #e8203f); border-color: transparent; }
 #runHud .rh-chip.bump { animation: rnGet .6s cubic-bezier(.2, 1.6, .4, 1); }
 #runOv .rn-bonusof { font: 700 12px/1 "M PLUS 1", system-ui; color: #ffd0e6; letter-spacing: .02em; }
 
@@ -135,15 +135,15 @@ body.calm #runHud, body.calm #runHud * { animation: none !important; }
 #hype { position: fixed; left: 0; right: 0; top: 30%; z-index: 30; display: flex; justify-content: center; pointer-events: none; }
 #hype .hp-slam { display: flex; flex-direction: column; align-items: center; gap: 6px; animation: hpIn 1.7s cubic-bezier(.2, 1.5, .4, 1) forwards; }
 #hype .hp-slam b { position: relative; font: 900 clamp(40px, 9vw, 92px)/1 var(--font-logo), "M PLUS 1", system-ui; letter-spacing: .06em; font-style: italic;
-  color: #fff; -webkit-text-stroke: 2px rgba(0, 0, 0, .35); text-shadow: 0 0 24px var(--hc, #ff4fa3), 5px 5px 0 var(--hc, #ff4fa3); }
+  color: #fff; -webkit-text-stroke: 2px rgba(0, 0, 0, .35); text-shadow: 0 0 24px var(--hc, #e8203f), 5px 5px 0 var(--hc, #e8203f); }
 #hype .hp-slam small { font: 900 13px/1 var(--font-hud), "M PLUS 1", system-ui; letter-spacing: .18em; color: #fff;
-  padding: 6px 12px; border-radius: 999px; background: rgba(6, 8, 16, .78); border: 1px solid var(--hc, #ff4fa3); }
+  padding: 6px 12px; border-radius: 999px; background: rgba(6, 8, 16, .78); border: 1px solid var(--hc, #e8203f); }
 #hype .hp-slam small em { font-style: normal; color: #ffd86a; }
 #hype .r1 { --hc: #7cc4ff; }
-#hype .r2 { --hc: #ff4fa3; }
+#hype .r2 { --hc: #e8203f; }
 #hype .r3 { --hc: #ffb13d; }
 #hype .r4 { --hc: #c58bff; }
-#hype .r4 b { background: linear-gradient(90deg, #ffd86a, #ff4fa3, #7cf0d0, #9d7bff, #ffd86a); background-size: 200% 100%;
+#hype .r4 b { background: linear-gradient(90deg, #ffd86a, #e8203f, #7cf0d0, #9d7bff, #ffd86a); background-size: 200% 100%;
   -webkit-background-clip: text; background-clip: text; color: transparent; animation: hpRainbow .8s linear infinite;
   text-shadow: none; filter: drop-shadow(0 0 18px #c58bff) drop-shadow(5px 5px 0 #6a2bd6); }
 #hype .mp { --hc: #ffd86a; }
@@ -168,7 +168,7 @@ body.calm #hype .hp-slam, body.calm #hype .hp-slam b { animation: hpFade 1.2s ea
 #runHud .rs-num { display: inline-block; font: 900 20px/1 var(--font-hud), "M PLUS 1", system-ui; color: #fff; font-variant-numeric: tabular-nums;
   text-shadow: 0 0 12px rgba(255, 216, 106, .55); }
 #runHud .rs-mult { font: 900 12px/1 var(--font-hud), "M PLUS 1", system-ui; font-style: normal; padding: 3px 6px; border-radius: 6px;
-  color: #fff; background: linear-gradient(90deg, #ff6a3d, #ff4fa3); }
+  color: #fff; background: linear-gradient(90deg, #ff6a3d, #e8203f); }
 #runHud .rs-mult.lv1 { box-shadow: 0 0 10px rgba(255, 120, 60, .6); }
 #runHud .rs-mult.lv2 { box-shadow: 0 0 16px rgba(255, 160, 60, .8); animation: rnGlow .6s ease-in-out infinite alternate; }
 #runHud .rs-mult.lv3, #runHud .rs-mult.lv4 { background: linear-gradient(90deg, #ffe066, #ff7a3d, #ff3d9a); box-shadow: 0 0 22px rgba(255, 200, 80, .9);
@@ -186,7 +186,7 @@ body.calm #hype .hp-slam, body.calm #hype .hp-slam b { animation: hpFade 1.2s ea
 /* 動いたラインから飛び出して、スコアに吸い込まれる点 */
 .rs-pop { position: fixed; z-index: 29; pointer-events: none; white-space: nowrap; font: 900 22px/1 var(--font-hud), "M PLUS 1", system-ui; color: #ffd86a;
   text-shadow: 0 0 14px rgba(255, 200, 80, .9), 2px 2px 0 #4a2600; }
-.rs-pop.big { font-size: 30px; color: #fff; text-shadow: 0 0 18px #ff4fa3, 3px 3px 0 #ff4fa3; }
+.rs-pop.big { font-size: 30px; color: #fff; text-shadow: 0 0 18px #e8203f, 3px 3px 0 #e8203f; }
 /* 決着後のスコア */
 #runOv .rn-scoreline { margin: 0; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 #runOv .rn-scoreline small { font: 900 10px/1 var(--font-hud), "M PLUS 1", system-ui; letter-spacing: .2em; color: var(--dim); }

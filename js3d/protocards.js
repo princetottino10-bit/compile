@@ -39,11 +39,11 @@ export function showProtocolCards(name, color, getItems, list) {
     ov._opener = a && a !== document.body && !ov.contains(a) ? a : null;
   }
   const tabsOn = !!(list && list.length > 1);
-  ov.style.setProperty('--accent', color || '#b9a4ff');
+  ov.style.setProperty('--accent', color || '#cdc7d4');
   ov.setAttribute('aria-label', name + ' のカード');
   const tabs = tabsOn
     ? '<nav class="pc-tabs' + (list.length > 8 ? ' many' : '') + '" aria-label="プロトコル">' + list.map(p =>
-      '<button type="button" data-tab="' + esc(p.name) + '" style="--pc:' + esc(p.color || '#b9a4ff') + '"' +
+      '<button type="button" data-tab="' + esc(p.name) + '" style="--pc:' + esc(p.color || '#cdc7d4') + '"' +
         (p.name === name ? ' class="on" aria-current="true"' : '') + '>' + esc(p.name) + '</button>').join('') + '</nav>'
     : '';
   ov.innerHTML = tabs +

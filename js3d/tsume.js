@@ -237,7 +237,7 @@ export function showDeck(st, defs, me = 0) {
   const card = (uid, i) => {
     const d = defs[st.cards[uid].def] || {};
     const text = [d.upper, d.middle, d.lower].filter(Boolean).join(' / ');
-    return '<li style="--pc:' + esc(d.color || '#b9a4ff') + '">' + (i !== undefined ? '<em>' + (i + 1) + '</em>' : '') +
+    return '<li style="--pc:' + esc(d.color || '#cdc7d4') + '">' + (i !== undefined ? '<em>' + (i + 1) + '</em>' : '') +
       '<b>' + esc((d.proto || '') + ' ' + (d.value !== undefined ? d.value : '')) + '</b><span>' + esc(text) + '</span></li>';
   };
   const el = overlay(

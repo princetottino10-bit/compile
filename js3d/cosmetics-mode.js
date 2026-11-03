@@ -55,7 +55,7 @@ const DEFAULT_KEY = { mat: 'neon', sleeve: 'default', marker: 'default', ccolor:
 const RAR_NAME = { C: 'COMMON', R: 'RARE', E: 'EPIC', L: 'LEGENDARY' };
 /* 実績の名前は achievements.js から (前はここに手で写していて、ずれていた) */
 const trophyName = (id) => (TROPHIES.find(t => t.id === id) || {}).name || id;
-const CCOLOR = { default: 'linear-gradient(90deg,#ff5c5c,#b9a4ff,#a07bff)', gold: '#ffd86a', cyan: '#7ff3ff', rainbow: 'conic-gradient(#ff5f7a,#ffc05a,#7df28c,#5ab8ff,#b98cff,#ff5f7a)',
+const CCOLOR = { default: 'linear-gradient(90deg,#ff5c5c,#cdc7d4,#a07bff)', gold: '#ffd86a', cyan: '#7ff3ff', rainbow: 'conic-gradient(#ff5f7a,#ffc05a,#7df28c,#5ab8ff,#b98cff,#ff5f7a)',
   lime: '#b6ff4a', violet: '#b07bff', ember: '#ff7a2e' };
 
 /* コンパイルの光ごとの演出 (fx-compile.js)。色だけでなく動きも違う */
@@ -216,7 +216,7 @@ function thumb(kind, key) {
     case 'icon': {
       if (isFaceIcon(key)) return '<img class="cm-face" alt="" src="' + faceIconURL(key) + '">';
       const p = protoList.find(x => x.name === key);
-      return p ? '<img alt="" src="' + emblemDataURL(p.name, p.color || '#b9a4ff', 64, true) + '">' : '<span class="cm-none">—</span>';
+      return p ? '<img alt="" src="' + emblemDataURL(p.name, p.color || '#cdc7d4', 64, true) + '">' : '<span class="cm-none">—</span>';
     }
     case 'plate': return '<span class="cm-pf pf-' + esc(key) + '"' + pfcStyle(key) + '><b>' + esc((displayName() || 'YOU').slice(0, 8)) + '</b></span>';
     case 'avatar': return '<img class="cm-av" alt="" src="' + faceURL(key, 'normal') + '">';
@@ -251,10 +251,10 @@ function preview(kind, key, name, isOwned, src) {
       const d = AVATARS[key] || {};
       const line = d.lines && d.lines.hello ? d.lines.hello[0] : '';
       const text = Array.isArray(line) ? line[0] : line;
-      art = '<div class="cm-avview" style="--av-c:' + esc(d.color || '#b9a4ff') + '"><img alt="" src="' + faceURL(key, 'happy') + '">' +
+      art = '<div class="cm-avview" style="--av-c:' + esc(d.color || '#cdc7d4') + '"><img alt="" src="' + faceURL(key, 'happy') + '">' +
         (text ? '<p><b>' + esc(d.name || '') + '</b>' + esc(text) + '</p>' : '') +
         /* 得意プロトコル (そのカードを表で出すと専用のセリフ) */
-        (d.fav ? '<em class="cm-fav" style="--pc:' + esc((protoList.find(x => x.name === d.fav) || {}).color || '#b9a4ff') + '">得意 ' + esc(d.fav) + '</em>' : '') +
+        (d.fav ? '<em class="cm-fav" style="--pc:' + esc((protoList.find(x => x.name === d.fav) || {}).color || '#cdc7d4') + '">得意 ' + esc(d.fav) + '</em>' : '') +
         /* ゲストは声と立ち絵のクレジットを添える */
         (d.guest ? '<small class="cm-credit">' + esc(d.credit || '') + '　立ち絵：坂本アヒル</small>' : '') + '</div>';
       break;

@@ -25,7 +25,7 @@ export function openOpponentSelect(protocols, opts = {}) {
   const challenge = !!opts.challenge;
   const byName = Object.fromEntries(protocols.map(p => [p.name, p]));
   const deck = (names) => '<span class="rn-deck">' + names.map(n =>
-    '<i style="--pc:' + esc((byName[n] || {}).color || '#b9a4ff') + '">' + esc(n) + '</i>').join('') + '</span>';
+    '<i style="--pc:' + esc((byName[n] || {}).color || '#cdc7d4') + '">' + esc(n) + '</i>').join('') + '</span>';
   let last = null;
   try { last = localStorage.getItem(LAST_KEY); } catch (e) { /* private mode */ }
 

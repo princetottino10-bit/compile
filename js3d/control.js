@@ -18,7 +18,7 @@ const X = () => X_WIDE + (-2.52 - X_WIDE) * VIEW.k;
 const SCALE = () => 1 - 0.38 * VIEW.k;
 /* 横持ちのスマホは自分の捨て札を奥へ寄せる (layout.js の pilePos) ので、マーカーも板の側に寄せて捨て札に重ねない */
 const Z = { neutral: 0, get me() { return VIEW.short ? 0.72 : 1.35; }, get opp() { return VIEW.short ? -0.72 : -1.35; } };
-const MINT = 0xa07bff, PINK = 0xff4fa3, DIM = 0x44536e;
+const MINT = 0xa07bff, PINK = 0xe8203f, DIM = 0x44536e;
 /* 見た目 (レベルの報酬): 自分が持ったときの色と、中立のときの色 */
 /* pattern: 上の面の模様 (明るいところが光る) / metal・rough: 質感 / glass: 半透明 / extra: 飾り (orbit 回る光の粒・crown 王冠・halo 二重の輪・wreath 葉の冠) */
 export const MARKER_STYLES = {

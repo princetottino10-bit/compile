@@ -90,7 +90,7 @@ export function cosmeticsHtml(s, protocols) {
     (iconOpen
       ? '<div class="st-icons">' + '<button type="button" data-cos="icon" data-key="" class="st-ic' + (!s.icon ? ' on' : '') + '" aria-label="アイコンなし">—</button>' +
         (protocols || []).map(p => '<button type="button" data-cos="icon" data-key="' + esc(p.name) + '" class="st-ic' + (s.icon === p.name ? ' on' : '') +
-          '" title="' + esc(p.name) + '" aria-label="' + esc(p.name) + '"><img alt="" src="' + emblemDataURL(p.name, p.color || '#b9a4ff', 40, true) + '"></button>').join('') +
+          '" title="' + esc(p.name) + '" aria-label="' + esc(p.name) + '"><img alt="" src="' + emblemDataURL(p.name, p.color || '#cdc7d4', 40, true) + '"></button>').join('') +
         /* CHIP で交換した顔のアイコン (交換は COLLECTION のアイコン) */
         FACE_ICONS.filter(k => ownsFaceIcon(k)).map(k => '<button type="button" data-cos="icon" data-key="' + k + '" class="st-ic face' + (s.icon === k ? ' on' : '') +
           '" title="' + esc(faceIconName(k)) + '" aria-label="' + esc(faceIconName(k)) + '"><img alt="" src="' + faceIconURL(k) + '"></button>').join('') + '</div>'
