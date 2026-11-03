@@ -4391,6 +4391,12 @@
   .nw-tag{font:700 10.5px/1 system-ui;font-style:normal;padding:3px 7px;border:1px solid rgba(185,164,255,.35);color:var(--cyan);}
   .nw-item[data-kind="new"] .nw-tag{border-color:rgba(255,179,218,.5);color:var(--gold);}
   .nw-item[data-kind="fix"] .nw-tag,.nw-item[data-kind="info"] .nw-tag{border-color:rgba(255,255,255,.18);color:var(--dim);}
+  /* 大きな見出し (featured): 絵を一覧の幅いっぱいに、題も大きく。色の縁で他と分ける */
+  .nw-feature{margin:12px 0 6px;padding:10px 12px 2px;border:1px solid var(--pink);background:linear-gradient(180deg,rgba(255,79,163,.16),rgba(255,79,163,.03));box-shadow:0 0 18px rgba(255,79,163,.22);clip-path:var(--cut-s);}
+  .nw-feature summary{grid-template-columns:minmax(0,1fr);padding-top:0;}
+  .nw-banner{grid-column:1;display:block;width:min(100%,640px);height:auto;aspect-ratio:16/9;object-fit:cover;border:1px solid rgba(255,255,255,.18);background:#000;}
+  .nw-feature summary b{font-size:clamp(16px,2.4vw,20px);line-height:1.4;color:#fff;}
+  .nw-pick{font:800 10px/1 var(--font-hud);font-style:normal;letter-spacing:.12em;padding:3px 7px;background:var(--gold);color:#120a1c;}
   .nw-new{font:800 10px/1 var(--font-hud);font-style:normal;letter-spacing:.1em;padding:3px 6px;background:var(--pink);color:#fff;}
   .nw-body{padding:0 0 14px;display:flex;flex-direction:column;gap:8px;}
   .nw-body p{margin:0;font:400 13px/1.7 system-ui;color:rgba(233,238,248,.82);}
@@ -4885,7 +4891,7 @@
       "./js3d/motion.js": "./js3d/motion.js?v=71cd68f8ff",
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
       "./js3d/net.js": "./js3d/net.js?v=3134839bca",
-      "./js3d/news.js": "./js3d/news.js?v=70f2737b62",
+      "./js3d/news.js": "./js3d/news.js?v=97cf5c2bd5",
       "./js3d/notice.js": "./js3d/notice.js?v=029a81acaa",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=74251ffbb0",
       "./js3d/panel.js": "./js3d/panel.js?v=0c36c29c98",
@@ -5071,7 +5077,7 @@
   <link rel="modulepreload" href="js3d/backdrops.js?v=90faf9612d">
   <link rel="modulepreload" href="js3d/profile.js?v=704205fbfe">
   <link rel="modulepreload" href="js3d/gacha-ui.js?v=b5bf4956cc">
-  <link rel="modulepreload" href="js3d/news.js?v=70f2737b62">
+  <link rel="modulepreload" href="js3d/news.js?v=97cf5c2bd5">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/ShaderPass.js">
   <link rel="modulepreload" href="js3d/run-pilots.js?v=4b54f3c10f">
   <link rel="modulepreload" href="js3d/story-map.js?v=ed5ef482a6">

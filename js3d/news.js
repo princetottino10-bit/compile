@@ -2,6 +2,7 @@
  * お知らせ (更新情報)。タイトル画面の右上の「お知らせ」と、入口のページ (index.html) で見せる
  *   - 新しいお知らせは NEWS の先頭に足す。id は一度出したら変えない (読んだ印に使う)
  *   - img は art/news/ の 16:9 のスクショ (800×450 の webp)。無くてもよい
+ *   - featured: true は大きな見出し (絵を一覧で大きく出し、PICK UP を付けて先頭に置く)。大型の追加だけに使う
  *   - 書くのは遊ぶ人に見える変化だけ。管理者だけの機能 (STORY・ORACLE のオート操作) は書かない
  *   - ほかのモジュールを import しない (index.html からも素のまま読むため)
  * ========================================================================= */
@@ -16,21 +17,21 @@ export const KINDS = {
 
 export const NEWS = [
   {
+    id: '2026-11-03-main3', date: '2026-11-03', kind: 'new', featured: true,
+    img: 'art/news/main3.webp', alt: 'Main 3 の12プロトコルの絵。AMBUSH・ENVY・FULCRUM・GLUTTONY・GREED・LUST・MOMENTUM・NOVA・OVERWHELM・PRIDE・SLOTH・WRATH',
+    title: 'Main 3・Aux 3 が遊べるようになりました！ 新しい15プロトコル・90枚',
+    body: [
+      'Main 3 の AMBUSH・ENVY・FULCRUM・GLUTTONY・GREED・LUST・MOMENTUM・NOVA・OVERWHELM・PRIDE・SLOTH・WRATH と、Aux 3 の FLEXIBLE・INERT・RIGID の90枚です。コントロールの取り合い、プロトコルの並べ替えやコンパイルに反応する効果、手札の枚数がちょうどのときに働く効果などが入っています。',
+      'ドラフトやプロトコル選びで使えます。シングルプレイの「使うプロトコル」では Main 3 と Aux 3 を出し入れできます。CHALLENGE の制覇は 42 プロトコルになりました (前に取った CONQUEROR はそのままです)。'
+    ]
+  },
+  {
     id: '2026-11-03-solo', date: '2026-11-03', kind: 'new',
     img: 'art/news/solo.webp', alt: '公式ソロモードのシナリオを選ぶ画面。REGULAR の6つのシナリオが並んでいる',
     title: '公式ソロモード (VS BOT) が遊べるようになりました',
     body: [
       'Main 3 のソロルールです。自動で動く BOT と、REGULAR・ADVANCED あわせて12のシナリオで対戦します。SINGLE GAME の「公式ソロモード」から遊べます。',
       'BOT はキューの前の札から、シナリオで決まった置き方で出します。BOT が同じプロトコルを2度コンパイルしたら負け。遊び方は RULES の「ソロモード (BOT)」にあります。'
-    ]
-  },
-  {
-    id: '2026-11-03-main3', date: '2026-11-03', kind: 'new',
-    img: 'art/news/main3.webp', alt: 'Main 3 の12プロトコルの絵。AMBUSH・ENVY・FULCRUM・GLUTTONY・GREED・LUST・MOMENTUM・NOVA・OVERWHELM・PRIDE・SLOTH・WRATH',
-    title: '新しいプロトコル Main 3・Aux 3 の15種が加わりました',
-    body: [
-      'Main 3 の AMBUSH・ENVY・FULCRUM・GLUTTONY・GREED・LUST・MOMENTUM・NOVA・OVERWHELM・PRIDE・SLOTH・WRATH と、Aux 3 の FLEXIBLE・INERT・RIGID の90枚です。コントロールの取り合い、プロトコルの並べ替えやコンパイルに反応する効果、手札の枚数がちょうどのときに働く効果などが入っています。',
-      'ドラフトやプロトコル選びで使えます。シングルプレイの「使うプロトコル」では Main 3 と Aux 3 を出し入れできます。CHALLENGE の制覇は 42 プロトコルになりました (前に取った CONQUEROR はそのままです)。'
     ]
   },
   {
@@ -147,7 +148,10 @@ export const NEWS = [
 /* 「すべて」・未読の数・自動で開くのに使うお知らせ。直したことは「直したこと」のタブでだけ見せる
    (ソシャゲのお知らせと同じく、目に入る一覧は新しい遊びと調整に絞る) */
 export const isHeadline = (n) => n.kind !== 'fix';
-export const headlines = (list = NEWS) => list.filter(isHeadline);
+export const headlines = (list = NEWS) => {
+  const h = list.filter(isHeadline);
+  return h.filter(n => n.featured).concat(h.filter(n => !n.featured));
+};
 
 const SEEN_KEY = 'compileNewsSeen';      // 読んだお知らせの id (配列)
 const POPPED_KEY = 'compileNewsPopped';  // 自動で開いたときの、いちばん新しいお知らせの id
@@ -187,15 +191,18 @@ export const shortDate = (d) => String(d).replace(/^\d{4}-0?(\d+)-0?(\d+)$/, '$1
 export function newsListHtml(list, { unread = new Set(), open = null, goLabel = null, base = '' } = {}) {
   if (!list.length) return '<p class="nw-empty">このなかまのお知らせはまだありません</p>';
   return list.map(n =>
-    '<details class="nw-item" data-kind="' + esc(n.kind) + '"' + (n.id === open ? ' open' : '') + '>' +
-      '<summary><span class="nw-meta"><time datetime="' + esc(n.date) + '">' + shortDate(n.date) + '</time>' +
+    '<details class="nw-item' + (n.featured ? ' nw-feature' : '') + '" data-kind="' + esc(n.kind) + '"' + (n.id === open ? ' open' : '') + '>' +
+      '<summary>' +
+        /* 大きな見出し: 一覧でも絵を大きく出す (開いても同じ絵を2度出さない) */
+        (n.featured && n.img ? '<img class="nw-banner" loading="lazy" width="800" height="450" alt="' + esc(n.alt || '') + '" src="' + esc(base + n.img) + '">' : '') +
+        '<span class="nw-meta">' + (n.featured ? '<i class="nw-pick">PICK UP</i>' : '') + '<time datetime="' + esc(n.date) + '">' + shortDate(n.date) + '</time>' +
         '<i class="nw-tag">' + esc(KINDS[n.kind] || KINDS.info) + '</i>' +
         (unread.has(n.id) ? '<i class="nw-new">NEW</i>' : '') + '</span>' +
         '<b>' + esc(n.title) + '</b>' +
         /* 一覧では小さく、開くと大きく (ソシャゲのお知らせのバナーのように) */
-        (n.img ? '<img class="nw-thumb" alt="" loading="lazy" width="96" height="54" src="' + esc(base + n.img) + '">' : '') + '</summary>' +
+        (n.img && !n.featured ? '<img class="nw-thumb" alt="" loading="lazy" width="96" height="54" src="' + esc(base + n.img) + '">' : '') + '</summary>' +
       '<div class="nw-body">' +
-        (n.img ? '<img class="nw-shot" loading="lazy" width="800" height="450" alt="' + esc(n.alt || '') + '" src="' + esc(base + n.img) + '">' : '') + n.body.map(p => '<p>' + esc(p) + '</p>').join('') +
+        (n.img && !n.featured ? '<img class="nw-shot" loading="lazy" width="800" height="450" alt="' + esc(n.alt || '') + '" src="' + esc(base + n.img) + '">' : '') + n.body.map(p => '<p>' + esc(p) + '</p>').join('') +
         (n.go && goLabel && goLabel(n.go) ? '<button type="button" class="nw-go" data-news-go="' + esc(n.go) + '">' + esc(goLabel(n.go)) + '</button>' : '') +
       '</div></details>'
   ).join('');
