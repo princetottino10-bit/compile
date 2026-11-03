@@ -3928,6 +3928,14 @@ const AI_AIM_COMBOS = [
   { pieces: { INERT_1: 'up', DIVERSITY_6: 'play' } },
   { pieces: { INERT_1: 'up', MOMENTUM_6: 'play' } },
   { pieces: { INERT_1: 'up', METAL_6: 'play' } },
+  /* 出力と入力の突き合わせ (scripts/combo_textmatch.js) で出た、デメリットが相方の誘発になる組 (計測なし)。
+     相手に引かせる LOVE は MIRROR 4 (相手が引いたあと1枚引く) で取り返す。相手にこのラインへ出させる札は ICE 1 (出したあと相手が1枚捨てる) が罰にする */
+  { pieces: { SMOKE_3: 'up', OVERWHELM_2: 'play' } },
+  { pieces: { MIRROR_5: 'top', LOVE_6: 'play' } },
+  { pieces: { MIRROR_5: 'top', LOVE_1: 'play' } },
+  { pieces: { ICE_1: 'top', LUST_6: 'play' } },
+  { pieces: { ICE_1: 'top', GRAVITY_6: 'play' } },
+  { pieces: { ICE_1: 'top', INERT_4: 'play' } },
   /* COURAGE 0 の終了で1枚捨てると相手が2枚捨て (COURAGE 0・CORRUPTION 2)、PLAGUE 1 で2枚引く */
   { pieces: { PLAGUE_2: 'up', COURAGE_1: 'top', CORRUPTION_3: 'up' } },
   /* WAR 3 の下段「相手が捨てたあと: 裏で1枚出せる」に、相手に捨てさせる札を足す */

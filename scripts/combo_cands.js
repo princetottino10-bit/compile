@@ -1367,7 +1367,21 @@ module.exports = [
     [['FIRE 3'], 'PSYCHIC 4', 'PSYCHIC 4 は終了に相手の札を戻すと裏になる。FIRE 3 で毎手番表に戻す'],
     [['FIRE 3'], 'SPEED 3', 'SPEED 3 は終了に自分の札を動かすと裏になる。FIRE 3 で毎手番表に戻す'],
     [['GREED 0'], 'DEATH 1', 'DEATH 1 の開始は他の札と自分を削除する。GREED 0 で削除1回ごとに1枚引く'],
-    [['CORRUPTION 2'], 'WATER 5', '5 の札の「手札を1枚捨てる」で、CORRUPTION 2 の上段が相手にも1枚捨てさせる']
+    [['CORRUPTION 2'], 'WATER 5', '5 の札の「手札を1枚捨てる」で、CORRUPTION 2 の上段が相手にも1枚捨てさせる'],
+    /* 出力と入力の突き合わせ (scripts/combo_textmatch.js) で出た、まだ測っていない組 */
+    [['ICE 1'], 'LUST 6', 'LUST 6 で相手に ICE 1 のラインへ裏で出させると、ICE 1 で相手が1枚捨てる'],
+    [['ICE 1'], 'GRAVITY 6', 'GRAVITY 6 で相手に ICE 1 のラインへ出させて捨てさせる'],
+    [['ICE 1'], 'INERT 3', 'INERT 3 で相手にこのラインへ出させて捨てさせる'],
+    [['SMOKE 2'], 'OVERWHELM 2', 'APATHY 0 と同じく、SMOKE 2 も裏向き1枚ごとに +1'],
+    [['APATHY 0'], 'GRAVITY 6', 'GRAVITY 6 で相手に APATHY 0 のラインへ裏で出させる'],
+    [['MIRROR 4'], 'LOVE 1', '相手に引かせるたびに MIRROR 4 でこちらも1枚'],
+    [['MIRROR 4'], 'LOVE 6', 'LOVE 6 で相手が2枚引くと MIRROR 4 で引く'],
+    [['CLARITY 0'], 'AMBUSH 0', '3枚引いて CLARITY 0 のラインを伸ばす'],
+    [['CLARITY 0'], 'ENVY 2', '相手の手札の枚数だけ引いて CLARITY 0 を伸ばす'],
+    [['UNITY 4'], 'GREED 0', 'GREED 0 で手札を空にして、UNITY 4 の終了で UNITY を全部引く'],
+    [['PEACE 1'], 'GREED 4', 'GREED 4 で手札を空にして裏を起こし、PEACE 1 の終了で1枚引く'],
+    [['COURAGE 0'], 'GREED 4', 'GREED 4 で手札を空にすると、COURAGE 0 の開始で1枚引く'],
+    [['SPEED 1'], 'GLUTTONY 2', '手札をあふれさせて SPEED 1 で1枚引く']
   ];
   let n = 0;
   for (const [field, hand, how] of L) {
