@@ -34,6 +34,14 @@ export const NEWS = [
     ]
   },
   {
+    id: '2026-11-03-collection', date: '2026-11-03', kind: 'new',
+    title: 'COLLECTION に Main 3 のスリーブとマーカーが増えました',
+    body: [
+      '実績 SEVEN SINS を取るとスリーブ SEVEN SINS、ROOT ACCESS を取るとスリーブ ROOT ACCESS、TRISTATE を取るとマーカー TRISTATE が使えます。前に取った人はもう使えます。',
+      'カードの裏面を Main 3 の意匠に替える前の標準の裏面も、スリーブ CLASSIC としてはじめから選べます。'
+    ]
+  },
+  {
     id: '2026-11-03-solo', date: '2026-11-03', kind: 'new',
     img: 'art/news/solo.webp', alt: '公式ソロモードのシナリオを選ぶ画面。REGULAR の6つのシナリオが並んでいる',
     title: '公式ソロモード (VS BOT) が遊べるようになりました',

@@ -34,7 +34,8 @@ export const MARKER_STYLES = {
   obsidian: { me: 0xff6a2a, dim: 0x2a1410, metal: 0.9, rough: 0.05, pattern: 'cracks' },
   nova: { me: 0xfff4c8, dim: 0x6b5e3a, pattern: 'stars', extra: 'orbit' },
   slayer: { me: 0xf3e6c4, dim: 0x3a3548, pattern: 'skull', metal: 0.05, rough: 0.7 },                // 下剋上の褒美 (がしゃどくろ)
-  laurel: { me: 0x9be07a, dim: 0x3d5a24, pattern: 'leaves', extra: 'wreath' }                         // 週替わりの褒美 (3週クリア)
+  laurel: { me: 0x9be07a, dim: 0x3d5a24, pattern: 'leaves', extra: 'wreath' },                        // 週替わりの褒美 (3週クリア)
+  tristate: { me: 0xf07fd4, dim: 0x5a2f52, pattern: 'tristate', extra: 'halo' }                       // 実績 TRISTATE (FLEXIBLE・INERT・RIGID で勝つ)
 };
 
 /* ---------- マーカーの上の面の模様 (256px の正方形。外形の半径 0.42 が端) ---------- */
@@ -115,6 +116,23 @@ const PATTERN_DRAW = {
     /* ひびの線 */
     c.lineWidth = 2;
     c.beginPath(); c.moveTo(x + S * 0.05, y - S * 0.24); c.lineTo(x + S * 0.08, y - S * 0.15); c.lineTo(x + S * 0.04, y - S * 0.1); c.stroke();
+  },
+  /* 3つの状態の信号: 波 (FLEXIBLE)・まっすぐ (INERT)・角ばった矩形波 (RIGID) */
+  tristate(c, S) {
+    c.strokeStyle = '#fff'; c.lineWidth = 18; c.lineJoin = 'miter'; c.lineCap = 'butt';
+    const ys = [S * 0.22, S * 0.5, S * 0.78], amp = S * 0.09;
+    c.beginPath();
+    for (let x = 0; x <= S; x += 4) { const y = ys[0] + Math.sin(x / S * Math.PI * 4) * amp; if (x) c.lineTo(x, y); else c.moveTo(x, y); }
+    c.stroke();
+    c.beginPath(); c.moveTo(0, ys[1]); c.lineTo(S, ys[1]); c.stroke();
+    c.beginPath();
+    const step = S / 4;
+    for (let i = 0; i < 4; i++) {
+      const y = ys[2] + (i % 2 ? amp : -amp);
+      if (i) c.lineTo(i * step, y); else c.moveTo(0, y);
+      c.lineTo((i + 1) * step, y);
+    }
+    c.stroke();
   },
   leaves(c, S) {
     c.fillStyle = '#fff';
