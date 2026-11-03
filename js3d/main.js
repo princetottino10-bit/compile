@@ -87,7 +87,7 @@ import * as FX from './fx.js';
 import { buildArena } from './arena.js';
 import { initAudio, sfx, setMuted, isMuted, setSfxVolume, onMuteChange } from './audio.js';
 import { mountMuteButton, muteIcon } from './mutebutton.js';
-import { playBgm, refreshBgm, fadeOutBgm, crossBgm, prepareBgm, pickNormalBgm, normalBattleBgm, onlineBattleBgm, storyBattleBgm, STRONG_BGM, BOSS_BGM, BOT_BGM, GATE_BGM, DEUS_BGM, PEEK_BGM, pickTenseBgm, setShuffleNotify } from './bgm.js';
+import { playBgm, refreshBgm, fadeOutBgm, crossBgm, prepareBgm, pickNormalBgm, normalBattleBgm, onlineBattleBgm, storyBattleBgm, STRONG_BGM, BOSS_BGM, DEUS_BGM, PEEK_BGM, pickTenseBgm, setShuffleNotify } from './bgm.js';
 import { trackOf } from './bgm-shop.js';
 import { BGM_RELEASED } from './rewards.js';
 import { emblemDataURL } from './emblems.js';
@@ -4680,9 +4680,7 @@ function battleBgm() {
   if (deusMatch()) return DEUS_BGM;            // 機械仕掛けの神: 「神を破壊せよ」
   if (peekMatch()) return PEEK_BGM;            // すべてを見る者: 「最終決戦２秒前」
   if (storyNode && storyBattleBgm(storyNode)) return storyBattleBgm(storyNode);   // ストーリー: 機体戦は「判定」、終章の最後の判定は「止めていい」 (本人作)
-  if (botScenario) return BOT_BGM;              // 公式ソロモード: 「Bot Routine」 (本人作)
   const tier = battleTier();
-  if (tier === 'boss' && runMode) return GATE_BGM;   // 勝ち抜き戦のボス・週替わりの3戦目: 「Third Gate」 (本人作)
   if (tier === 'boss') return BOSS_BGM;
   if (tier === 'strong') return STRONG_BGM;
   return BGM_RELEASED ? (settings().bgm || normalBattleBgm()) : normalBattleBgm();
