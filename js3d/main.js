@@ -72,6 +72,8 @@ import { matUnlocked, MAT_W, MAT_D } from './playmat.js';
 import { initAccount, openAccount, takeAccountResume, accountState, onAccountChange } from './account.js';
 import { openCardList } from './cardlist-ov.js';
 import { openOpponentSelect } from './opponent-select.js';
+import { openBotSelect } from './bot-select.js';
+import { botScenarioOf, botOpts, botLabel } from './bot-scenarios.js';
 import { UNDERDOG_DECK, STRONGEST_AI, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL, UNDERDOG_TAG_RIVAL_MATE, levelLabel, fixedDeck, DEUS_LEVEL, DEUS_NAME, DEUS_BUDGET, PEEK_LEVEL, PEEK_NAME, ORACLE_LEVEL, oracleAi, isHonki, honkiOf, honkiAi } from './aidecks.js';
 import { openRun, runHud, showRunAfterGame } from './run-ui.js';
 import { openWeekly, weeklyHud, showWeeklyAfterGame } from './weekly-ui.js';
@@ -355,6 +357,7 @@ function oppAvatarPlan() {
   if (plannedOpp !== undefined) return plannedOpp;
   if (storyNode) return (plannedOpp = storyNode.oppAvatar || null);
   if (machineMatch()) return (plannedOpp = null);   // 人のキャラは出さない (相手は機械の神・目)
+  if (botScenario) return (plannedOpp = null);       // ソロモードの相手は BOT (人のキャラは出さない)
   if (oracleMatch()) return (plannedOpp = oracleAvatar());
   /* 勝ち抜き戦のボス戦は、ボス本人 (avatar.js の boss_<id>) */
   if (runMode && runKind === 'run') {
@@ -698,6 +701,8 @@ let spectate = null;
 
 /* タッグデュエル (2 対 2): 味方と相手の味方のプロトコル { p0: [3], p1: [3] }。null ならふつうの対戦 */
 let tagMates = null;
+/* 公式ソロモード (BOT) のシナリオ (bot-scenarios.js)。BOT と対戦しないときは null */
+let botScenario = null;
 /* タッグで、自分の側を味方が指している (次に指すのが味方)。CPU 戦の味方は CPU、オンラインは味方の人 */
 function partnerMove(st) {
   const s = st || (cur && cur.state);
@@ -1025,7 +1030,7 @@ async function boot() {
   }
   /* もう1戦 (REMATCH が ?me=&ai=&lv= を付けて開き直す): 同じ組み合わせ・同じ強さで、タイトルと準備を飛ばす */
   const lvParam = parseInt(params.get('lv'), 10);
-  if (p0 && p1 && params.get('training') !== '1' && Number.isInteger(lvParam)) applyAiDifficulty(lvParam);
+  if (p0 && p1 && params.get('training') !== '1' && Number.isInteger(lvParam)) { applyAiDifficulty(lvParam); botScenario = botScenarioOf(lvParam); }
   /* おまかせ (?quick=1): 基本セットから両者のプロトコルを選び、すぐ始める (はじめての人向け)。
      相手の強さは設定の「おまかせで対戦する強さ」、デイリーのプロトコルを入れる設定なら自分の1つ目にそれを入れる */
   if (params.get('quick') === '1' && !p0) {
@@ -1186,6 +1191,7 @@ async function boot() {
         if (m.story) storyNode = STORY.nodeById(m.story);
         if (m.run) { runMode = true; runKind = m.run; if (runKind === 'weekly') weeklyHud(); else runHud(0); }
         quickGame = !!m.quick;
+        botScenario = resumeRec.init.bot ? botScenarioOf(m.level) : null;
         if (m.oppAvatar !== undefined) plannedOpp = m.oppAvatar;
         applyAiDifficulty(m.level);
         if (storyNode) history.replaceState(null, '', location.pathname + '?story=1');
@@ -1301,11 +1307,20 @@ async function boot() {
         redeckUsed = true;
         history.replaceState(null, '', location.pathname);
         opp = { level: redeck };
+        botScenario = botScenarioOf(redeck);
       } else if (nextMode !== 'training') {
+        botScenario = null;
         opp = await openOpponentSelect(cards.protocols, { challenge: nextMode === 'challenge' });
         if (!opp) { deckPreset = null; nextMode = await runTitle(cards.protocols, { menuOnly: true }); continue; }
         if (opp.quick) { location.href = location.pathname + '?quick=1'; return; }
         if (opp.watch) { nextMode = 'watch'; continue; }
+        /* 公式ソロモード: シナリオを選ぶ (戻ったら相手選びへ)。BOT のデッキはシナリオで決まり、自分の3つは残りから選ぶ */
+        if (opp.bot) {
+          const sc = await openBotSelect(cards.protocols);
+          if (!sc) continue;
+          botScenario = sc;
+          opp = { level: sc.level };
+        }
         if (opp.underdogTag) {
           /* 自分の3つは選べる。相手の最強タッグの6つは選べない。何を選んでも勝てば実績 */
           const pick = await runSetup(cards.protocols, { allowOnline: false, cardsOf: protocolCards, level: UNDERDOG_TAG_LEVEL,
@@ -1355,6 +1370,8 @@ async function boot() {
       applyAiDifficulty(chosen.level);
       /* ドラフトは先手後攻もドラフトの先手に合わせる。ランダム編成は中身を知らせる */
       if (chosen.first) chosenFirst = chosen.first === 'me' ? ME : AI;
+      /* ソロモードはあなたがいつも先手 */
+      if (botScenario) { chosenFirst = ME; setupNote = 'SOLO MODE: ' + botLabel(botScenario) + '　あなた ' + p0.join(' / ') + '　BOT ' + p1.join(' / '); }
       if (chosen.random) setupNote = 'ランダム: あなた ' + p0.join(' / ') + '　相手 ' + p1.join(' / ');
       if (chosen.partial) setupNote = 'あなた ' + p0.map(n => chosen.partial.includes(n) ? n : n + ' (ランダム)').join(' / ') + '　相手 ' + p1.join(' / ');
       if (tagMates) setupNote = 'タッグ: あなた ' + p0.join(' / ') + ' ＋ 味方 ' + tagMates.p0.join(' / ') + '　相手 ' + p1.join(' / ') + ' ＋ ' + tagMates.p1.join(' / ');
@@ -1371,7 +1388,7 @@ async function boot() {
   /* 先攻・後攻はコイントスで決める (トレーニングと問題は自分から。ドラフトはドラフトの先手) */
   /* 勝ち抜き戦のパッチ (先攻・はじめの手札・コントロール) */
   const runOpts = runMode && runKind === 'run' ? battleOpts(loadRun() || { patches: [] }, ME) : null;
-  const firstPlayer = trainingMode || puzzle || tutorial || demoMode || storyNode ? ME
+  const firstPlayer = trainingMode || puzzle || tutorial || demoMode || storyNode || botScenario ? ME
     : runOpts && runOpts.first !== undefined ? runOpts.first
       : chosenFirst !== null ? chosenFirst : (Math.random() < 0.5 ? ME : AI);
   const seed = (Math.random() * 1e9) | 0;
@@ -1405,6 +1422,7 @@ async function boot() {
         : Engine.newGame({ seed, p0, p1, first: firstPlayer, training: trainingMode, winCompiles,
           ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods, winCompilesBySide: runOpts.winCompilesBySide, perks: runOpts.perks, startCompiled: runOpts.startCompiled, misere: runOpts.misere, handSwap: runOpts.handSwap, turncoat: runOpts.turncoat } : {}),
           ...(storyOpts || {}),
+          ...(botScenario ? { bot: botOpts(botScenario) } : {}),
           ...(tagMates ? { tag: tagMates } : {}) });
   cur = res;
   chaosRules = runMode && runKind === 'run' && !replayMode && !reviewView ? runRules(loadRun()) : {};
@@ -1440,7 +1458,8 @@ async function boot() {
   /* タッグはリプレイに残さない (棋譜の形が 1 対 1 のため) */
   const gameInit = resumed ? resumed.rec.init : { seed, p0: p0.slice(), p1: p1.slice(), first: firstPlayer, winCompiles: winCompiles || null,
     ...(runOpts ? { handSize: runOpts.handSize, startControl: runOpts.startControl, exclude: runOpts.exclude, deckMods: runOpts.deckMods, winCompilesBySide: runOpts.winCompilesBySide, perks: runOpts.perks, startCompiled: runOpts.startCompiled, misere: runOpts.misere, handSwap: runOpts.handSwap, turncoat: runOpts.turncoat } : {}),
-    ...(storyOpts || {}) };
+    ...(storyOpts || {}),
+    ...(botScenario ? { bot: botOpts(botScenario) } : {}) };
   const priorActions = resumed ? resumed.rec.actions : [];
   /* CPU どうしの観戦も残す (RECORD のリプレイの「観戦」の枠。?demo=1 の流しっぱなしは残さない) */
   replayLog = !replayMode && !trainingMode && !puzzle && !tutorial && (!demoMode || !!spectate) && !tagMates && !storyNode
@@ -1545,7 +1564,8 @@ async function boot() {
     UI.toast('カードを選んで、光っている枠をタップすると置けます', 3200);
   } else {
     if (!puzzle && !tutorial && !demoMode) {
-      const turnNote = chosenFirst !== null
+      const turnNote = botScenario ? 'ソロモード: あなたが先攻です'
+        : chosenFirst !== null
         ? (firstPlayer === ME ? 'ドラフトの先手: あなたが先攻です' : 'ドラフトの後手: あなたは後攻です')
         : (firstPlayer === ME ? 'コイントス: あなたが先攻です' : 'コイントス: あなたは後攻です');
       UI.toast(resumed ? (cur && cur.state.winner !== null ? '前の対戦は決着していました。結果を記録します' : '中断した対戦の続きから') : setupNote ? setupNote + '　' + turnNote : turnNote, setupNote ? 4200 : 2600);
@@ -3432,7 +3452,7 @@ function showCpuPlates(p1) {
   /* 機械仕掛けの神の名札は名前と「機械仕掛けの神」(称号の DEUS EX MACHINA は書かない。書くと称号の降臨がもう一度出る) */
   /* ストーリーで、主人公でなく仲間を動かす一戦 (2章の茜) は、自分の名札もその子の名前にする */
   const mine = storyNode && storyNode.meName ? { ...myPlate(), name: storyNode.meName, sub: 'STORY', icon: null } : myPlate();
-  showPlates({ me: mine, opp: { name: storyNode ? storyNode.oppName : deusMatch() ? DEUS_NAME : peekMatch() ? PEEK_NAME : (showAv && avatarName(oppAvatarPlan())) || 'CPU',
+  showPlates({ me: mine, opp: { name: storyNode ? storyNode.oppName : deusMatch() ? DEUS_NAME : peekMatch() ? PEEK_NAME : botScenario ? 'BOT' : (showAv && avatarName(oppAvatarPlan())) || 'CPU',
     sub: storyNode ? 'STORY' : runMode ? '' : deusMatch() ? '機械仕掛けの神' : peekMatch() ? 'すべてを見る者' : shortLevel(aiDifficulty),
     icon: first ? { name: first.name, color: first.color } : null } });
 }

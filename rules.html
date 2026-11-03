@@ -121,6 +121,15 @@
     dl.terms dt { margin-bottom: 4px; font: 900 13px/1.4 system-ui, sans-serif; letter-spacing: .06em; color: var(--cyan); }
     dl.terms dd { margin: 0; font: 500 13px/1.75 system-ui, sans-serif; }
 
+    /* ソロモードのシナリオ表 */
+    .scn-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--edge); background: var(--panel); }
+    table.scn { width: 100%; border-collapse: collapse; font: 500 12px/1.6 system-ui, sans-serif; min-width: 520px; }
+    table.scn caption { text-align: left; padding: 10px 14px 4px; font: 900 13px/1.4 system-ui, sans-serif; letter-spacing: .08em; color: var(--cyan); }
+    table.scn th, table.scn td { padding: 7px 12px; text-align: left; vertical-align: top; border-top: 1px solid var(--edge); }
+    table.scn th { font: 800 10px/1.4 system-ui, sans-serif; letter-spacing: .12em; color: var(--dim); }
+    table.scn td:first-child { font-weight: 900; font-variant-numeric: tabular-nums; }
+    .scn-gap { height: 10px; }
+
     .note {
       margin-top: 44px;
       padding: 14px 16px;
@@ -184,6 +193,7 @@
       <a class="lvl sm" href="#zones">カードの3つの段</a>
       <a class="lvl sm" href="#effects">効果の読み方</a>
       <a class="lvl sm" href="#info">見えている情報</a>
+      <a class="lvl sm" href="#solo">ソロモード (BOT)</a>
     </nav>
 
     <section id="setup">
@@ -295,6 +305,69 @@
         <div class="cp-panel"><h3>表向きのカード・プロトコル <small>全公開</small></h3><p>場の表向きのカードと、両者のプロトコル (コンパイル済みかどうかも) は誰でも見られる。</p></div>
         <div class="cp-panel"><h3>捨て札 <small>全公開</small></h3><p>いつも表向き。誰でも中身を確認できる。</p></div>
       </div>
+    </section>
+
+    <section id="solo">
+      <h2><i>09</i>ソロモード (BOT)</h2>
+      <p class="lead">1人で、自動で動く相手 <b class="hl">BOT</b> と対戦する公式のモード (Main 3 のルールシートより)。ふつうの対戦の決まりはすべてそのまま使い、BOT だけが下の決まりで動く。3D アリーナでは <b class="hl">SINGLE GAME → 公式ソロモード</b> から遊べる。</p>
+      <div class="win" style="margin-top:12px">
+        <small>勝ち負け</small>
+        <p>先に自分の3つを<b>すべてコンパイル</b>したら勝ち。BOT が3つコンパイルするか、<b>BOT がコンパイル済みのプロトコルをもう一度コンパイル</b>したら負け。</p>
+      </div>
+
+      <h3 style="margin-top:22px">準備</h3>
+      <ol>
+        <li>シナリオを選ぶ。シナリオが <b class="hl">BOT の3つのプロトコル</b> (並び順も) と、BOT の動き方を決める。はじめは REGULAR の Lv1 から順に。</li>
+        <li>残りのプロトコルから、自分の3つを好きな順に選ぶ。ドラフトはしない。</li>
+        <li>どちらも 18 枚の山札から 5 枚引く。BOT の5枚は裏向きのまま一列に並べて <b class="hl">キュー</b> (順番待ちの列) にする。</li>
+        <li><b class="hl">あなたがいつも先手</b>。</li>
+      </ol>
+
+      <h3 style="margin-top:22px">BOT の手番</h3>
+      <p class="lead">開始・コントロール確認・コンパイル確認・キャッシュ確認・終了は、ふつうの手番と同じ。違うのはアクションだけ。</p>
+      <div class="grid2">
+        <div class="cp-panel">
+          <h3>キューに札がある → 置く</h3>
+          <p>いつも<b class="hl">キューのいちばん前</b>の札から出す。シナリオによって 1〜3 枚を、順に1枚ずつ置く (1枚の効果を片付けてから次)。</p>
+          <p><b class="hl">表向き</b>: プロトコルの合うラインに置く。<b class="hl">裏向き・低い / 高い</b>: BOT の合計がいちばん低い / 高いラインに裏向きで置く。</p>
+          <p>キューが途中で尽きたら、あるだけ置いて終わり。</p>
+        </div>
+        <div class="cp-panel">
+          <h3>キューが空 → リフレッシュ</h3>
+          <p>ふつうのリフレッシュと同じく 5 枚まで引き、<b class="hl">引いた順にキューの後ろへ</b>並べる。</p>
+          <p>効果で引いた札・手札に戻った札も、キューの<b class="hl">後ろ</b>に付く。何枚も同時に戻ったときは混ぜてから1枚ずつ。</p>
+        </div>
+        <div class="cp-panel">
+          <h3>BOT が決めること</h3>
+          <p>効果の対象など、BOT が選ぶところは<b class="hl">あなたに一番有利なように</b>決める (BOT が損をしても)。同点のラインもあなたが選ぶ。3D アリーナでは自動で決まる。</p>
+          <p>表向きで置くはずの札が置けないときは、あなたの選ぶラインに裏向きで置く。</p>
+        </div>
+        <div class="cp-panel">
+          <h3>BOT が捨てるとき</h3>
+          <p>キューの<b class="hl">前から</b>順に捨てる。足りなければ全部。</p>
+        </div>
+      </div>
+
+      <h3 style="margin-top:22px">BOT とコントロール</h3>
+      <div class="cp-panel">
+        <p>BOT がコントロールを持ったままコンパイルかリフレッシュをするときは、まずコントロールを戻し、<b class="hl">並べ替えの代わりにシナリオの効果</b>を行ってから、コンパイルかリフレッシュをする。</p>
+        <p><b class="hl">なし</b>: 何もしない ・ <b class="hl">ドロー</b>: BOT の山札から1枚引いてキューへ ・ <b class="hl">スティール</b>: あなたの山札から1枚引いてキューへ ・ <b class="hl">並べ替え</b>: あなたが、自分か BOT のプロトコルを並べ替える。</p>
+      </div>
+
+      <h3 style="margin-top:22px">シナリオ</h3>
+      <p class="lead"><b class="hl">REGULAR</b> は BOT のカードに効果が無いものとして扱う (値とプロトコルだけ)。<b class="hl">ADVANCED</b> は BOT のカードの効果もふつうに使う。</p>
+      <div class="scn-wrap"><table class="scn"><caption>REGULAR — BOT のカードは効果なし</caption><thead><tr><th>LV</th><th>シナリオ</th><th>BOT のプロトコル</th><th>出す札 (順に)</th><th>コントロール</th></tr></thead><tbody><tr><td>1</td><td>Define Parameters</td><td>ENVY / GLUTTONY / GREED</td><td>1. 表向き</td><td>なし</td></tr><tr><td>2</td><td>Data Transfer</td><td>MOMENTUM / OVERWHELM / PRIDE</td><td>1. 表向き</td><td>ドロー</td></tr><tr><td>3</td><td>Merge Sort</td><td>AMBUSH / FULCRUM / OVERWHELM</td><td>1. 裏向き・いちばん低いライン<br>2. 表向き</td><td>スティール</td></tr><tr><td>4</td><td>Authentication</td><td>AMBUSH / FULCRUM / OVERWHELM</td><td>1. 表向き<br>2. 表向き</td><td>ドロー</td></tr><tr><td>5</td><td>Distributed Denial of Service</td><td>AMBUSH / FULCRUM / OVERWHELM</td><td>1. 裏向き・いちばん高いライン<br>2. 裏向き・いちばん低いライン<br>3. 裏向き・いちばん低いライン</td><td>ドロー</td></tr><tr><td>6</td><td>2-Factor Authentication</td><td>MOMENTUM / OVERWHELM / PRIDE</td><td>1. 表向き<br>2. 表向き</td><td>ドロー</td></tr></tbody></table></div>
+      <div class="scn-gap"></div>
+      <div class="scn-wrap"><table class="scn"><caption>ADVANCED — BOT のカードの効果も使う</caption><thead><tr><th>LV</th><th>シナリオ</th><th>BOT のプロトコル</th><th>出す札 (順に)</th><th>コントロール</th></tr></thead><tbody><tr><td>1</td><td>Handshake</td><td>FULCRUM / MOMENTUM / OVERWHELM</td><td>1. 表向き</td><td>なし</td></tr><tr><td>2</td><td>Encryption</td><td>FULCRUM / MOMENTUM / OVERWHELM</td><td>1. 裏向き・いちばん低いライン<br>2. 表向き</td><td>ドロー</td></tr><tr><td>3</td><td>Vulnerability Exploit</td><td>GLUTTONY / LUST / PRIDE</td><td>1. 表向き<br>2. 表向き</td><td>スティール</td></tr><tr><td>4</td><td>Benchmark</td><td>AMBUSH / FULCRUM / MOMENTUM</td><td>1. 表向き<br>2. 表向き</td><td>ドロー</td></tr><tr><td>5</td><td>Bottleneck</td><td>AMBUSH / MOMENTUM / OVERWHELM</td><td>1. 裏向き・いちばん低いライン<br>2. 表向き<br>3. 表向き</td><td>並べ替え</td></tr><tr><td>6</td><td>Root Access</td><td>AMBUSH / MOMENTUM / OVERWHELM</td><td>1. 表向き<br>2. 表向き<br>3. 表向き</td><td>ドロー</td></tr></tbody></table></div>
+
+      <h3 style="margin-top:22px">難しすぎる・易しすぎるとき <small>(紙で遊ぶとき)</small></h3>
+      <ul>
+        <li>楽に勝てたら、次のシナリオを飛ばす。</li>
+        <li>難しければ、BOT のプロトコルを 1〜3 つ好きなものに替える。</li>
+        <li>まだ難しければ、コントロールが戻るときに、あなたが持っていたならそのまま、BOT が持っていたならあなたがもらう。</li>
+        <li>それでも難しければ、はじめの手札を山札から好きな 5 枚にする。</li>
+      </ul>
+      <p class="lead">自分でシナリオを作ってもよい (REGULAR か ADVANCED、BOT の3つのプロトコル、出す枚数と置き方、コントロールの効果を決める)。</p>
     </section>
 
     <p class="note">この早見表は、3D アリーナが実装しているルールをもとに自分の言葉でまとめた非公式のものです。カードに書かれた効果は、ここに書いた一般的な決まりより優先されます。</p>
