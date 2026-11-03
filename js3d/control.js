@@ -35,7 +35,13 @@ export const MARKER_STYLES = {
   nova: { me: 0xfff4c8, dim: 0x6b5e3a, pattern: 'stars', extra: 'orbit' },
   slayer: { me: 0xf3e6c4, dim: 0x3a3548, pattern: 'skull', metal: 0.05, rough: 0.7 },                // 下剋上の褒美 (がしゃどくろ)
   laurel: { me: 0x9be07a, dim: 0x3d5a24, pattern: 'leaves', extra: 'wreath' },                        // 週替わりの褒美 (3週クリア)
-  tristate: { me: 0xf07fd4, dim: 0x5a2f52, pattern: 'tristate', extra: 'halo' }                       // 実績 TRISTATE (FLEXIBLE・INERT・RIGID で勝つ)
+  tristate: { me: 0xf07fd4, dim: 0x5a2f52, pattern: 'tristate', extra: 'halo' },                      // 実績 TRISTATE (FLEXIBLE・INERT・RIGID で勝つ)
+  /* 2026-11-03 の追加 */
+  redline: { me: 0xe8203f, dim: 0x3a0e16, metal: 0.7, rough: 0.2, pattern: 'slash' },                // MAIN 3 (レベルの報酬)
+  sakura: { me: 0xffa8c8, dim: 0x5e2c40, pattern: 'petals', extra: 'halo' },
+  frost: { me: 0xcff0ff, dim: 0x3a5866, glass: true, pattern: 'snow' },
+  toxic: { me: 0x9dff3a, dim: 0x2e4a12, pattern: 'hex' },
+  regalia: { me: 0xc9a2ff, dim: 0x3c2c5a, metal: 0.8, rough: 0.15, pattern: 'facets', extra: 'crown' }
 };
 
 /* ---------- マーカーの上の面の模様 (256px の正方形。外形の半径 0.42 が端) ---------- */
@@ -133,6 +139,49 @@ const PATTERN_DRAW = {
       c.lineTo((i + 1) * step, y);
     }
     c.stroke();
+  },
+  /* 桜の花 (5 枚の花びら) を散らす */
+  petals(c, S) {
+    const r = seeded(31);
+    c.fillStyle = '#fff';
+    const flower = (x, y, rad, rot) => {
+      for (let i = 0; i < 5; i++) {
+        const a = rot + i * Math.PI * 2 / 5;
+        c.save(); c.translate(x + Math.cos(a) * rad * 0.55, y + Math.sin(a) * rad * 0.55); c.rotate(a);
+        c.beginPath(); c.ellipse(0, 0, rad * 0.55, rad * 0.36, 0, 0, Math.PI * 2); c.fill(); c.restore();
+      }
+    };
+    flower(S / 2, S / 2, 46, 0.3);
+    for (let k = 0; k < 7; k++) flower(r() * S, r() * S, 12 + r() * 12, r() * 6);
+  },
+  /* 雪の結晶 */
+  snow(c, S) {
+    c.strokeStyle = '#fff'; c.lineCap = 'round';
+    const flake = (x, y, rad, lw) => {
+      c.lineWidth = lw;
+      for (let i = 0; i < 6; i++) {
+        const a = i * Math.PI / 3, ex = x + Math.cos(a) * rad, ey = y + Math.sin(a) * rad;
+        c.beginPath(); c.moveTo(x, y); c.lineTo(ex, ey); c.stroke();
+        for (const f of [0.5, 0.75]) {
+          const bx = x + Math.cos(a) * rad * f, by = y + Math.sin(a) * rad * f;
+          for (const d of [-0.6, 0.6]) { c.beginPath(); c.moveTo(bx, by); c.lineTo(bx + Math.cos(a + d) * rad * 0.22, by + Math.sin(a + d) * rad * 0.22); c.stroke(); }
+        }
+      }
+    };
+    flake(S / 2, S / 2, 70, 7);
+    const r = seeded(17);
+    for (let k = 0; k < 8; k++) flake(r() * S, r() * S, 10 + r() * 12, 2.5);
+  },
+  /* 蜂の巣の六角 */
+  hex(c, S) {
+    c.strokeStyle = '#fff'; c.lineWidth = 4;
+    const R = 20, hgt = R * Math.sqrt(3);
+    for (let row = -1; row < S / hgt + 1; row++) for (let col = -1; col < S / (R * 1.5) + 1; col++) {
+      const x = col * R * 1.5, y = row * hgt + (col % 2 ? hgt / 2 : 0);
+      c.beginPath();
+      for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; c.lineTo(x + Math.cos(a) * R, y + Math.sin(a) * R); }
+      c.closePath(); c.stroke();
+    }
   },
   leaves(c, S) {
     c.fillStyle = '#fff';

@@ -44,7 +44,11 @@ const ALL_REWARDS = [
   { lv: 22, kind: 'mat', key: 'eclipse', name: 'PLAYMAT — ECLIPSE' },
   { lv: 24, kind: 'marker', key: 'prism', name: 'CONTROL MARKER — PRISM' },
   { lv: 25, kind: 'title', key: 'legend', name: 'TITLE — LEGEND' },
+  { lv: 21, kind: 'victory', key: 'circuit', name: 'VICTORY FX — MAIN 3' },
+  { lv: 23, kind: 'marker', key: 'redline', name: 'CONTROL MARKER — REDLINE' },
+  { lv: 26, kind: 'plate', key: 'circuit', name: 'NAMEPLATE — CIRCUIT' },
   { lv: 27, kind: 'sleeve', key: 'aurum', name: 'SLEEVE — AURUM' },
+  { lv: 25, kind: 'ccolor', key: 'crimson', name: 'COMPILE FX — CRIMSON' },
   { lv: 30, kind: 'title', key: 'ascended', name: 'TITLE — ASCENDED' }
 ];
 /* BGM をしまっている間は、レベルの報酬にも出さない */
@@ -82,9 +86,12 @@ export const COSMETICS = {
     ['slayer', 'GIANT SLAYER'], ['laurel', 'LAUREL'], ['sins', 'SEVEN SINS'], ['rootaccess', 'ROOT ACCESS']],
   marker: [['default', 'STANDARD'], ['gold', 'GOLD'], ['crystal', 'CRYSTAL'], ['crimson', 'CRIMSON'], ['prism', 'PRISM'],
     ['emerald', 'EMERALD'], ['amber', 'AMBER'], ['sapphire', 'SAPPHIRE'], ['obsidian', 'OBSIDIAN'], ['nova', 'NOVA'],
-    ['slayer', 'GIANT SLAYER'], ['laurel', 'LAUREL'], ['tristate', 'TRISTATE']],
-  ccolor: [['default', 'PROTOCOL'], ['gold', 'GOLD'], ['cyan', 'CYAN'], ['rainbow', 'RAINBOW'], ['lime', 'LIME'], ['violet', 'VIOLET'], ['ember', 'EMBER']],
-  victory: [['default', 'STANDARD'], ['aurora', 'AURORA']],
+    ['slayer', 'GIANT SLAYER'], ['laurel', 'LAUREL'], ['tristate', 'TRISTATE'],
+    ['redline', 'REDLINE'], ['sakura', 'SAKURA'], ['frost', 'FROST'], ['toxic', 'TOXIC'], ['regalia', 'REGALIA']],
+  ccolor: [['default', 'PROTOCOL'], ['gold', 'GOLD'], ['cyan', 'CYAN'], ['rainbow', 'RAINBOW'], ['lime', 'LIME'], ['violet', 'VIOLET'], ['ember', 'EMBER'],
+    ['crimson', 'CRIMSON'], ['frost', 'FROST'], ['sakura', 'SAKURA'], ['solar', 'SOLAR']],
+  victory: [['default', 'STANDARD'], ['aurora', 'AURORA'], ['circuit', 'MAIN 3'], ['sakura', 'YOZAKURA'], ['matrix', 'CODE RAIN'],
+    ['supernova', 'SUPERNOVA'], ['eclipse', 'ECLIPSE']],
   /* 対戦のそばのキャラ (avatar.js)。オリジナルの4人ははじめから、VOICEVOX の4人はガチャ */
   avatar: [['shion', '紫苑'], ['asagi', '瑠璃'], ['yamabuki', '杏'], ['nadeshiko', '茜'],
     /* ゲスト (VOICEVOX のキャラ・声つき) */
@@ -95,7 +102,8 @@ export const COSMETICS = {
     ['zero', 'Z･E･R･O'], ['samayoi', '彷徨いの言葉は天に導かれ']],
   /* 対戦中の名札の枠 (相手にも見える) */
   plate: [['default', 'STANDARD'], ['gold', 'GOLD'], ['sakura', 'SAKURA'], ['washi', 'WASHI'], ['neon', 'NEON'], ['urushi', 'URUSHI'],
-    ['crystal', 'CRYSTAL'], ['royal', 'ROYAL'], ...MASTERY_PROTOS.map(p => [pkey(p), p])]
+    ['crystal', 'CRYSTAL'], ['royal', 'ROYAL'], ['circuit', 'CIRCUIT'], ['frost', 'FROST'], ['ember', 'EMBER'], ['galaxy', 'GALAXY'], ['glitch', 'GLITCH'],
+    ...MASTERY_PROTOS.map(p => [pkey(p), p])]
 };
 
 /* ガチャ (COSMETICS の GACHA) でしか出ない見た目と称号。rar: C / R / E / L。
@@ -130,7 +138,12 @@ export const GACHA_ITEMS = [
   /* ねりんず4人のスリーブとマット */
   { kind: 'sleeve', key: 'nerinzu_shion', rar: 'E' }, { kind: 'sleeve', key: 'nerinzu_asagi', rar: 'E' }, { kind: 'sleeve', key: 'nerinzu_nadeshiko', rar: 'E' }, { kind: 'sleeve', key: 'nerinzu_yamabuki', rar: 'E' },
   { kind: 'mat', key: 'nerinzu_shion', rar: 'E' }, { kind: 'mat', key: 'nerinzu_asagi', rar: 'E' }, { kind: 'mat', key: 'nerinzu_nadeshiko', rar: 'E' }, { kind: 'mat', key: 'nerinzu_yamabuki', rar: 'E' },
-  { kind: 'sleeve', key: 'tiger', rar: 'R' }, { kind: 'sleeve', key: 'pixel', rar: 'R' }, { kind: 'sleeve', key: 'koi', rar: 'E' }, { kind: 'sleeve', key: 'aurora', rar: 'L' }
+  { kind: 'sleeve', key: 'tiger', rar: 'R' }, { kind: 'sleeve', key: 'pixel', rar: 'R' }, { kind: 'sleeve', key: 'koi', rar: 'E' }, { kind: 'sleeve', key: 'aurora', rar: 'L' },
+  /* 2026-11-03 の追加 (勝ちの演出・コンパイルの光・マーカー・名札) */
+  { kind: 'victory', key: 'sakura', rar: 'R' }, { kind: 'victory', key: 'matrix', rar: 'R' }, { kind: 'victory', key: 'supernova', rar: 'E' }, { kind: 'victory', key: 'eclipse', rar: 'L' },
+  { kind: 'ccolor', key: 'frost', rar: 'R' }, { kind: 'ccolor', key: 'sakura', rar: 'R' }, { kind: 'ccolor', key: 'solar', rar: 'L' },
+  { kind: 'marker', key: 'toxic', rar: 'C' }, { kind: 'marker', key: 'sakura', rar: 'R' }, { kind: 'marker', key: 'frost', rar: 'E' }, { kind: 'marker', key: 'regalia', rar: 'L' },
+  { kind: 'plate', key: 'frost', rar: 'C' }, { kind: 'plate', key: 'ember', rar: 'R' }, { kind: 'plate', key: 'galaxy', rar: 'E' }, { kind: 'plate', key: 'glitch', rar: 'E' }
 ];
 /* 下剋上 (最弱のデッキで最強に勝つ) の褒美。勝った記録 (compileSoloRecords に level 20 の勝ち) があれば使える */
 export const UNDERDOG_ITEMS = [{ kind: 'sleeve', key: 'slayer' }, { kind: 'marker', key: 'slayer' }];

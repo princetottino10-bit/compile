@@ -16,9 +16,11 @@ function rng(seed) {
 
 /* canvas を表示サイズ × 画素密度 (上限2) に合わせ、描画用の context を返す */
 function prepare(canvas) {
-  const dpr = Math.min(2, window.devicePixelRatio || 1);
-  const w = Math.max(1, canvas.clientWidth || window.innerWidth);
-  const h = Math.max(1, canvas.clientHeight || window.innerHeight);
+  /* 図鑑の見本は画面に出さない canvas に描くので、大きさを canvas.dataset.w / h で渡す */
+  const fixed = canvas.dataset && canvas.dataset.w;
+  const dpr = fixed ? 1 : Math.min(2, window.devicePixelRatio || 1);
+  const w = Math.max(1, fixed ? +canvas.dataset.w : (canvas.clientWidth || window.innerWidth));
+  const h = Math.max(1, fixed ? +canvas.dataset.h : (canvas.clientHeight || window.innerHeight));
   canvas.width = Math.round(w * dpr);
   canvas.height = Math.round(h * dpr);
   const ctx = canvas.getContext('2d');
@@ -289,4 +291,227 @@ export function drawAuroraBackdrop(canvas) {
   });
   ctx.restore();
   vignette(ctx, w, h, 0.6);
+}
+
+/* ---------- 勝ちの演出の追加分 (2026-11-03) ---------- */
+
+/* MAIN 3 (レベルの報酬): 黒い基板の配線に赤い信号が走り、斜めの赤い一閃 */
+export function drawCircuitBackdrop(canvas) {
+  const { ctx, w, h } = prepare(canvas);
+  const r = rng(41);
+  ctx.fillStyle = '#060606';
+  ctx.fillRect(0, 0, w, h);
+  circuit(ctx, w, h, r, { step: Math.max(14, Math.round(Math.min(w, h) / 30)) });
+  const step = Math.max(14, Math.round(Math.min(w, h) / 30));
+  const cx = w / 2, cy = h / 2;
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  /* 中央から外へ、45 度で折れながら走る赤い信号 */
+  for (let i = 0; i < 34; i++) {
+    let x = cx + (r() - 0.5) * w * 0.2, y = cy + (r() - 0.5) * h * 0.2;
+    const a0 = Math.floor(r() * 8) * Math.PI / 4;
+    let a = a0;
+    ctx.strokeStyle = r() < 0.8 ? PINK : '#ff8a9a';
+    ctx.lineWidth = 1 + r() * 2.2;
+    ctx.shadowColor = PINK; ctx.shadowBlur = 10;
+    ctx.globalAlpha = 0.35 + r() * 0.6;
+    ctx.beginPath(); ctx.moveTo(x, y);
+    const n = 3 + Math.floor(r() * 5);
+    for (let k = 0; k < n; k++) {
+      const len = step * (1 + Math.floor(r() * 4));
+      x += Math.cos(a) * len; y += Math.sin(a) * len;
+      ctx.lineTo(x, y);
+      a = a0 + (r() < 0.5 ? Math.PI / 4 : -Math.PI / 4) * (k % 2 ? 0 : 1);
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#ffd0d6';
+    ctx.beginPath(); ctx.arc(x, y, 2.4, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+  /* 斜めの一閃 */
+  ctx.save();
+  ctx.translate(cx, cy); ctx.rotate(-0.42);
+  const slash = ctx.createLinearGradient(0, -h * 0.07, 0, h * 0.07);
+  slash.addColorStop(0, 'rgba(232,32,63,0)');
+  slash.addColorStop(0.5, 'rgba(232,32,63,.62)');
+  slash.addColorStop(1, 'rgba(232,32,63,0)');
+  ctx.fillStyle = slash;
+  ctx.fillRect(-w, -h * 0.07, w * 2, h * 0.14);
+  ctx.fillStyle = 'rgba(255,220,226,.85)';
+  ctx.fillRect(-w, -1, w * 2, 2);
+  ctx.restore();
+  ctx.fillStyle = 'rgba(0,0,0,.22)';
+  for (let y = 0; y < h; y += 3) ctx.fillRect(0, y, w, 1);
+  vignette(ctx, w, h, 0.75);
+}
+
+/* SAKURA: 夜桜。大きな月と、舞う花びら */
+export function drawSakuraBackdrop(canvas) {
+  const { ctx, w, h } = prepare(canvas);
+  const r = rng(53);
+  const sky = ctx.createLinearGradient(0, 0, 0, h);
+  sky.addColorStop(0, '#120a22'); sky.addColorStop(1, '#2a0f24');
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, w, h);
+  const m = Math.min(w, h);
+  const mx = w * 0.72, my = h * 0.3;
+  const halo = ctx.createRadialGradient(mx, my, m * 0.1, mx, my, m * 0.5);
+  halo.addColorStop(0, 'rgba(255,214,232,.35)'); halo.addColorStop(1, 'rgba(255,214,232,0)');
+  ctx.fillStyle = halo; ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = '#ffeef4';
+  ctx.beginPath(); ctx.arc(mx, my, m * 0.14, 0, Math.PI * 2); ctx.fill();
+  /* 枝の影 */
+  ctx.save();
+  ctx.strokeStyle = '#0a0510'; ctx.lineCap = 'round';
+  const branch = (x, y, a, len, wd, d) => {
+    if (d > 5 || len < 6) return;
+    const x2 = x + Math.cos(a) * len, y2 = y + Math.sin(a) * len;
+    ctx.lineWidth = wd;
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x2, y2); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,170,205,.75)';
+    if (d >= 3) for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.arc(x2 + (r() - 0.5) * 18, y2 + (r() - 0.5) * 18, 3 + r() * 5, 0, Math.PI * 2); ctx.fill(); }
+    branch(x2, y2, a - 0.3 - r() * 0.4, len * 0.72, wd * 0.65, d + 1);
+    branch(x2, y2, a + 0.2 + r() * 0.4, len * 0.68, wd * 0.65, d + 1);
+  };
+  branch(-10, h * 0.12, 0.25, m * 0.22, m * 0.03, 0);
+  ctx.restore();
+  /* 花びら */
+  for (let i = 0; i < 150; i++) {
+    const x = r() * w, y = r() * h, s = 3 + r() * 7;
+    ctx.save();
+    ctx.translate(x, y); ctx.rotate(r() * Math.PI);
+    ctx.globalAlpha = 0.45 + r() * 0.5;
+    ctx.fillStyle = r() < 0.5 ? '#ffc2d9' : '#ffe0ec';
+    ctx.beginPath(); ctx.ellipse(0, 0, s, s * 0.55, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+  vignette(ctx, w, h, 0.55);
+}
+
+/* MATRIX: 緑の文字の雨 */
+export function drawMatrixBackdrop(canvas) {
+  const { ctx, w, h } = prepare(canvas);
+  const r = rng(67);
+  ctx.fillStyle = '#020604'; ctx.fillRect(0, 0, w, h);
+  const fs = Math.max(10, Math.round(Math.min(w, h) / 34));
+  const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノ0123456789COMPILE';
+  ctx.font = '700 ' + fs + 'px monospace';
+  ctx.textAlign = 'center';
+  for (let x = fs / 2; x < w; x += fs) {
+    if (r() < 0.25) continue;
+    const head = r() * h * 1.2, len = 6 + Math.floor(r() * 22);
+    for (let k = 0; k < len; k++) {
+      const y = head - k * fs;
+      if (y < -fs || y > h + fs) continue;
+      const t = k / len;
+      ctx.fillStyle = k === 0 ? '#e6ffee' : 'rgba(77,255,136,' + (0.9 * (1 - t)) + ')';
+      ctx.fillText(chars[Math.floor(r() * chars.length)], x, y);
+    }
+  }
+  const band = ctx.createLinearGradient(0, h * 0.35, 0, h * 0.65);
+  band.addColorStop(0, 'rgba(0,0,0,0)'); band.addColorStop(0.5, 'rgba(0,0,0,.55)'); band.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = band; ctx.fillRect(0, h * 0.35, w, h * 0.3);
+  vignette(ctx, w, h, 0.7);
+}
+
+/* SUPERNOVA: 中心が白く爆ぜ、光条と衝撃の輪が広がる */
+export function drawSupernovaBackdrop(canvas) {
+  const { ctx, w, h } = prepare(canvas);
+  const r = rng(79);
+  ctx.fillStyle = '#04030a'; ctx.fillRect(0, 0, w, h);
+  for (let i = 0; i < 160; i++) {
+    ctx.fillStyle = 'rgba(255,255,255,' + (0.15 + r() * 0.5) + ')';
+    ctx.fillRect(r() * w, r() * h, 1 + r(), 1 + r());
+  }
+  const cx = w / 2, cy = h / 2, m = Math.max(w, h);
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < 120; i++) {
+    const a = r() * Math.PI * 2, len = m * (0.2 + r() * 0.5);
+    const g = ctx.createLinearGradient(cx, cy, cx + Math.cos(a) * len, cy + Math.sin(a) * len);
+    const col = r() < 0.5 ? '255,216,106' : (r() < 0.5 ? '255,120,190' : '120,200,255');
+    g.addColorStop(0, 'rgba(' + col + ',.8)'); g.addColorStop(1, 'rgba(' + col + ',0)');
+    ctx.strokeStyle = g; ctx.lineWidth = 0.8 + r() * 2.5;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(a) * len, cy + Math.sin(a) * len); ctx.stroke();
+  }
+  [0.16, 0.27, 0.4].forEach((k, i) => {
+    ctx.strokeStyle = ['rgba(255,240,200,.5)', 'rgba(255,140,200,.35)', 'rgba(140,200,255,.25)'][i];
+    ctx.lineWidth = 3 - i;
+    ctx.beginPath(); ctx.ellipse(cx, cy, m * k, m * k * 0.62, -0.2, 0, Math.PI * 2); ctx.stroke();
+  });
+  const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, m * 0.22);
+  core.addColorStop(0, 'rgba(255,255,255,1)'); core.addColorStop(0.25, 'rgba(255,230,160,.8)');
+  core.addColorStop(0.6, 'rgba(255,110,170,.25)'); core.addColorStop(1, 'rgba(255,110,170,0)');
+  ctx.fillStyle = core; ctx.fillRect(0, 0, w, h);
+  ctx.restore();
+  vignette(ctx, w, h, 0.6);
+}
+
+/* ECLIPSE: 黒い太陽と金のコロナ */
+export function drawEclipseBackdrop(canvas) {
+  const { ctx, w, h } = prepare(canvas);
+  const r = rng(97);
+  ctx.fillStyle = '#030303'; ctx.fillRect(0, 0, w, h);
+  for (let i = 0; i < 120; i++) {
+    ctx.fillStyle = 'rgba(255,240,220,' + (0.1 + r() * 0.4) + ')';
+    ctx.fillRect(r() * w, r() * h, 1, 1);
+  }
+  const cx = w / 2, cy = h / 2, R = Math.min(w, h) * 0.2;
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  const glow = ctx.createRadialGradient(cx, cy, R * 0.9, cx, cy, R * 3.2);
+  glow.addColorStop(0, 'rgba(255,200,90,.7)'); glow.addColorStop(0.3, 'rgba(255,140,50,.25)'); glow.addColorStop(1, 'rgba(255,140,50,0)');
+  ctx.fillStyle = glow; ctx.fillRect(0, 0, w, h);
+  for (let i = 0; i < 220; i++) {
+    const a = r() * Math.PI * 2, len = R * (0.3 + Math.pow(r(), 2) * 2.4);
+    ctx.strokeStyle = 'rgba(255,' + (190 + Math.floor(r() * 60)) + ',120,' + (0.15 + r() * 0.4) + ')';
+    ctx.lineWidth = 0.6 + r() * 1.4;
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(a) * R, cy + Math.sin(a) * R);
+    ctx.quadraticCurveTo(cx + Math.cos(a + 0.08) * (R + len * 0.6), cy + Math.sin(a + 0.08) * (R + len * 0.6), cx + Math.cos(a + 0.05) * (R + len), cy + Math.sin(a + 0.05) * (R + len));
+    ctx.stroke();
+  }
+  ctx.restore();
+  ctx.fillStyle = '#000';
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,236,190,.95)'; ctx.lineWidth = 2;
+  ctx.shadowColor = '#ffd27a'; ctx.shadowBlur = 18;
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke();
+  ctx.shadowBlur = 0;
+  /* ダイヤモンドリング */
+  const dx = cx + Math.cos(-0.7) * R, dy = cy + Math.sin(-0.7) * R;
+  const d = ctx.createRadialGradient(dx, dy, 0, dx, dy, R * 0.5);
+  d.addColorStop(0, 'rgba(255,255,255,1)'); d.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = d; ctx.fillRect(dx - R, dy - R, R * 2, R * 2);
+  vignette(ctx, w, h, 0.65);
+}
+
+/* 勝ちの演出ごとの背景・文字の色・音。key は見た目の victory */
+export const VICTORY_FX = {
+  default: { draw: drawVictoryBackdrop, accent: '#a07bff', sfx: 'win' },
+  aurora: { draw: drawAuroraBackdrop, accent: '#a07bff', sfx: 'winAurora' },
+  circuit: { draw: drawCircuitBackdrop, accent: '#e8203f', sfx: 'win' },
+  sakura: { draw: drawSakuraBackdrop, accent: '#ff9cc4', sfx: 'winAurora' },
+  matrix: { draw: drawMatrixBackdrop, accent: '#4dff88', sfx: 'win' },
+  supernova: { draw: drawSupernovaBackdrop, accent: '#ffd86a', sfx: 'winAurora' },
+  eclipse: { draw: drawEclipseBackdrop, accent: '#ffc85a', sfx: 'win' }
+};
+export const victoryFx = (key) => VICTORY_FX[key] || VICTORY_FX.default;
+
+/* 図鑑の見本 (画面に出さない canvas に描いて data URL)。同じ大きさは描き直さない */
+const vicCache = new Map();
+export function victoryPreviewURL(key, w, h) {
+  const id = key + ':' + w + 'x' + h;
+  if (!vicCache.has(id)) {
+    try {
+      const cv = document.createElement('canvas');
+      cv.dataset.w = w; cv.dataset.h = h;
+      victoryFx(key).draw(cv);
+      vicCache.set(id, cv.toDataURL('image/jpeg', 0.85));
+    } catch (e) {
+      vicCache.set(id, '');
+    }
+  }
+  return vicCache.get(id);
 }

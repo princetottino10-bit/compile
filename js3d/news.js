@@ -17,6 +17,15 @@ export const KINDS = {
 
 export const NEWS = [
   {
+    id: '2026-11-03-collection2', date: '2026-11-03', kind: 'new',
+    title: 'COLLECTION に勝ちの演出・コンパイルの光・マーカー・名札を19種足しました',
+    body: [
+      '勝ちの演出は5種 (MAIN 3・YOZAKURA・CODE RAIN・SUPERNOVA・ECLIPSE)、コンパイルの光は4種 (CRIMSON・FROST・SAKURA・SOLAR)、コントロールマーカーは5種、名札は5種です。',
+      'MAIN 3 の赤と黒の4つ (勝ちの演出・マーカー REDLINE・名札 CIRCUIT・コンパイルの光 CRIMSON) はレベル 21〜26 の報酬、ほかはガチャから出ます。レベルがすでに届いている人は、もう使えます。',
+      '勝ちの演出は COLLECTION の見本で、実際の背景を見られるようにしました。'
+    ]
+  },
+  {
     id: '2026-11-03-psy1-swap', date: '2026-11-03', kind: 'info',
     title: '設定に「PSYCHIC 1 の上段と下段を入れ替える」を足しました',
     body: [
