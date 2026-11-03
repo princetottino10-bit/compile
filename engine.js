@@ -3921,6 +3921,13 @@ const AI_AIM_COMBOS = [
   { pieces: { WRATH_2: 'top', LUST_1: 'play' } },
   /* OVERWHELM 2 は相手にも自分にも各ラインへ裏向きを出させ、APATHY 0 のラインは裏向き1枚ごとに +1 (N037、+4.5 / +3.7 / +2.8) */
   { pieces: { APATHY_1: 'up', OVERWHELM_2: 'play' } },
+  /* デメリット打ち消し (2026-11-03 ユーザー「そのレベルのシンプルなやつは普通に入れていいよ」、計測なし)。
+     INERT 0 (INERT_1) はこのラインの他の札の上段を消すので、上段が重い 6・7 がただの大きい札になる */
+  { pieces: { INERT_1: 'up', CORRUPTION_6: 'play' } },
+  { pieces: { INERT_1: 'up', RIGID_6: 'play' } },
+  { pieces: { INERT_1: 'up', DIVERSITY_6: 'play' } },
+  { pieces: { INERT_1: 'up', MOMENTUM_6: 'play' } },
+  { pieces: { INERT_1: 'up', METAL_6: 'play' } },
   /* COURAGE 0 の終了で1枚捨てると相手が2枚捨て (COURAGE 0・CORRUPTION 2)、PLAGUE 1 で2枚引く */
   { pieces: { PLAGUE_2: 'up', COURAGE_1: 'top', CORRUPTION_3: 'up' } },
   /* WAR 3 の下段「相手が捨てたあと: 裏で1枚出せる」に、相手に捨てさせる札を足す */
@@ -3998,12 +4005,16 @@ function aiFlipStoreScore(st, side, W) {
     const top = stack[stack.length - 1];
     if (top && st.cards[top].def === 'FIRE_4' && st.cards[top].faceUp) fire3 = true;
   }
-  if (!fire3 && !st.players[side].hand.some(u => AI_FLIP_ENABLER.has(st.cards[u].def))) return 0;
+  /* LIGHT 0 (LIGHT_1) は表にした札の値だけ引く。裏の 5 以上を起こすと5枚以上引ける (ユーザー「裏向きの5を light0 で起こす」、計測なし) */
+  const light0 = st.players[side].hand.some(u => st.cards[u].def === 'LIGHT_1');
+  if (!fire3 && !light0 && !st.players[side].hand.some(u => AI_FLIP_ENABLER.has(st.cards[u].def))) return 0;
   let n = 0;
   for (let l = 0; l < 3; l++) {
     const stack = st.lines[l][side];
     const top = stack[stack.length - 1];
-    if (top && !st.cards[top].faceUp && (AI_FLIP_PAYLOAD.has(st.cards[top].def) || (fire3 && AI_FLIP_SELF.has(st.cards[top].def)))) n++;
+    if (!top || st.cards[top].faceUp) continue;
+    const d = st.cards[top].def;
+    if (AI_FLIP_PAYLOAD.has(d) || (fire3 && AI_FLIP_SELF.has(d)) || (light0 && DEFS[d].value >= 5)) n++;
   }
   return Math.min(n, 2) * W.flipStore;
 }
