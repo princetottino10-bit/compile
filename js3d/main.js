@@ -4124,6 +4124,8 @@ async function roomEnterGame(rm) {
   lastTurn = null;
   tenseBgmOn = false;
   tenseNext = null;
+  tenseNow = null;
+  tenseBoth = false;
   roomLoggedVersion = null;
   roomTracker = ROOM.createTraceTracker();
   await roomApplyView(rm, true);
@@ -4636,26 +4638,44 @@ function stackCount(line, side) {
   return st && st.lines && st.lines[line] && st.lines[line][side] ? st.lines[line][side].length : 0;
 }
 /* どちらかが勝ちまであと1本 (ふつうの3本勝負なら2本コンパイル済み) になったら、曲を速い曲 (bgm.js の TENSE_BGMS からランダム) に替えて緊迫感を出す。
-   手番が替わるとき (ターンの表示と同じとき) に一度だけ。ボス・機械仕掛けの神・すべてを見る者は専用の曲のまま。
+   手番が替わるとき (ターンの表示と同じとき) に替え、その後も途中で次の曲へ替える (下の TENSE_ROTATE_MS)。ボス・機械仕掛けの神・すべてを見る者は専用の曲のまま。
    練習・問題・チュートリアル・ストーリー・リプレイでは替えない */
 let tenseBgmOn = false;
 let tenseNext = null;            // 先に選んで読んでおく、あと1本の曲 (切り替えたときに読み込みで無音が挟まらないように)
+let tenseNow = null;             // いま流している、あと1本の曲
+let tenseSince = 0;              // その曲に替えた時刻
+let tenseBoth = false;           // 両方があと1本になって曲を替えたか
+/* あと1本の曲は、流れの途中でも替える (2026-11-03 本人の希望): 両方があと1本になったときと、同じ曲が TENSE_ROTATE_MS 続いたとき。
+   替えるのは手番の替わり目だけ (演出の途中で曲が替わらないように) */
+const TENSE_ROTATE_MS = 100000;
+function switchTense(avoid) {
+  const key = tenseNext && tenseNext !== avoid ? tenseNext : pickTenseBgm(Math.random, avoid);
+  crossBgm(key);
+  tenseNow = key;
+  tenseSince = Date.now();
+  prepareBgm(tenseNext = pickTenseBgm(Math.random, key), false);   // 次に替える曲を先に読んでおく
+}
 function maybeTenseBgm(st) {
-  if (tenseBgmOn || !st || st.winner !== null || !Array.isArray(st.players)) return;
+  if (!st || st.winner !== null || !Array.isArray(st.players)) return;
   if (tutorial || puzzle || trainingMode || demoMode || replayMode || storyNode) return;
   if (!roomMode && (deusMatch() || peekMatch() || battleTier() === 'boss')) return;
-  const oneLeft = [0, 1].some(side => {
+  const left = [0, 1].map(side => {
     const need = Array.isArray(st.winBySide) ? st.winBySide[side] : (st.winCompiles || 3);
-    return need - st.players[side].protocols.filter(p => p.compiled).length === 1;
+    return need - st.players[side].protocols.filter(p => p.compiled).length;
   });
-  if (!oneLeft) {
+  if (tenseBgmOn) {
+    if (!tenseBoth && left.every(n => n === 1)) { tenseBoth = true; switchTense(tenseNow); }
+    else if (Date.now() - tenseSince >= TENSE_ROTATE_MS) switchTense(tenseNow);
+    return;
+  }
+  if (!left.some(n => n === 1)) {
     /* 1本目のコンパイルが済んだら、あと1本の曲を選んでファイルだけ読んでおく (音にするのは切り替えのとき) */
     if (!tenseNext && st.players.some(p => p.protocols.some(q => q.compiled))) prepareBgm(tenseNext = pickTenseBgm(), false);
     return;
   }
   tenseBgmOn = true;
-  crossBgm(tenseNext || pickTenseBgm());
-  tenseNext = null;
+  tenseBoth = left.every(n => n === 1);
+  switchTense(null);
 }
 /* 対戦の BGM: ボスと強敵は専用の曲。ふつうの対戦はシャッフル (COLLECTION の BGM を出したら選んだ曲) */
 function battleBgm() {
