@@ -45,6 +45,9 @@ export const PROLOGUE = {
   /* 扉の印 → 開く条件 (この場面をクリアしたら) */
   opens: { a: 'c0-practice', b: 'c0-lock', d: 'c0-lock', g: 'c0-chief' },
   /* 出来事。kind: auto (来たら始まる) / talk (人に話しかける) / inspect (物を調べる) / zone (区画に入る) */
+  /* 立っている人 (ちびの絵): 印 → { who: 話す人の id, moves?: { 場面: [x, y] }, stay? }。仲間 (story.js の PARTY) になれば後ろにつく。
+     stay: 仲間でも、この地図ではついてこないでそこに立つ。紫苑は shionLeaves の場面のあと、noShion の地図では出ない */
+  cast: { K: { who: 'shion' } },
   events: {
     wake: { node: 'c0-wake', kind: 'auto' },
     practice: { node: 'c0-practice', kind: 'talk', at: 'K', who: 'shion' },
@@ -104,6 +107,7 @@ export const AQUARIUM = {
   zones: [['A', Infinity]],
   zoneNames: { A: '入口ホール', H: '広場', B: '大水槽', C: 'クラゲの部屋', N: '職員通路', S: '職員室', E: '出口ホール' },
   opens: { d: 'c1-fork' },
+  cast: { R: { who: 'ruri' } },
   events: {
     arrive: { node: 'c1-arrive', kind: 'auto' },
     fork: { node: 'c1-fork', kind: 'zone', zone: 'N' },
@@ -207,6 +211,8 @@ export const MANSION = {
   zones: [['H', Infinity]],
   zoneNames: { H: '玄関ホール', D: '食堂', K: '台所', U: '階段の上', R: '寝室' },
   opens: { b: 'c2-akane' },
+  /* 茜は寝室の前の話を終えたら、玄関の柱時計のそばへ下りてくる (時計と向き合うのは茜) */
+  cast: { N: { who: 'akane', moves: { 'c2-room': [13.8, 6.6] } } },
   events: {
     arrive: { node: 'c2-arrive', kind: 'auto' },
     tea: { node: 'c2-tea', kind: 'talk', at: 'N', who: 'akane' },
@@ -280,6 +286,8 @@ export const MANSION = {
    夜は、杏がシャッターの前 (w) で見張っている */
 export const WAREHOUSE = {
   look: 'warehouse',
+  /* 杏は救助を終えたら、入口のシャッターの前 (w) で夜の見張りに立つ */
+  cast: { Y: { who: 'anzu', moves: { 'c3-rescue': [14.5, 11.5] } } },
   rows: [
     '##############################',
     '#VVVVVVVVuVVVV.#....3........#',
@@ -492,7 +500,8 @@ export const LAB_RETURN = {
   zones: [['A', 7], ['B', 15], ['C', 26], ['D', 33], ['E', Infinity]],
   zoneNames: { A: '判定室', B: '端末室', C: '廊下', D: '正面ホール', E: '外' },
   opens: { g: 'c5-return', d: 'c5-chief', b: 'c5-chief', a: 'c5-hall' },
-  shionStays: true,
+  /* 紫苑は判定室 (K) で待っていて、ついてこない */
+  cast: { K: { who: 'shion', stay: true } },
   shionLeaves: 'c5-answer',
   chiefUntil: 'c5-chief',
   events: {
@@ -536,7 +545,7 @@ export const DIRECTOR = {
   zoneNames: { A: 'エレベーター前', B: '廊下', C: '所長室' },
   opens: { d: 'c6-up', b: 'c6-up' },
   noShion: true,
-  shionStays: true,
+  cast: { Y: { who: 'anzu', stay: true }, R: { who: 'ruri', stay: true }, N: { who: 'akane', stay: true } },
   names: [{ at: 'M', name: '所長' }],
   events: {
     up: { node: 'c6-up', kind: 'auto' },

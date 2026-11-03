@@ -16,11 +16,28 @@ export const KINDS = {
 
 export const NEWS = [
   {
+    id: '2026-11-03-main3', date: '2026-11-03', kind: 'new',
+    img: 'art/news/main3.webp', alt: 'Main 3 の12プロトコルの絵。AMBUSH・ENVY・FULCRUM・GLUTTONY・GREED・LUST・MOMENTUM・NOVA・OVERWHELM・PRIDE・SLOTH・WRATH',
+    title: '新しいプロトコル Main 3・Aux 3 の15種が加わりました',
+    body: [
+      'Main 3 の AMBUSH・ENVY・FULCRUM・GLUTTONY・GREED・LUST・MOMENTUM・NOVA・OVERWHELM・PRIDE・SLOTH・WRATH と、Aux 3 の FLEXIBLE・INERT・RIGID の90枚です。コントロールの取り合い、プロトコルの並べ替えやコンパイルに反応する効果、手札の枚数がちょうどのときに働く効果などが入っています。',
+      'ドラフトやプロトコル選びで使えます。シングルプレイの「使うプロトコル」では Main 3 と Aux 3 を出し入れできます。CHALLENGE の制覇は 42 プロトコルになりました (前に取った CONQUEROR はそのままです)。'
+    ]
+  },
+  {
+    id: '2026-11-03-own-bgm', date: '2026-11-03', kind: 'info',
+    title: '新しい対戦の曲が入りました',
+    body: [
+      'ふつうの対戦に「Protocol Drive」、強敵との対戦に「Overclock」、どちらかがあと1本になったときに「Last Compile」が流れるようになりました。タイトル・メニューの曲には「起動」が加わっています。',
+      'Protocol Drive・Overclock・起動は、COLLECTION の BGM ではじめから選べます。'
+    ]
+  },
+  {
     id: '2026-10-23-story', date: '2026-10-23', kind: 'new',
     img: 'art/news/story.webp', alt: 'ストーリー1章の一枚絵。朝の光が差す、空っぽの水族館の水槽を見上げる紫苑',
     title: 'ストーリーが遊べるようになりました',
     body: [
-      '人のいなくなった街で、命令を続けるアンドロイドたちに会いに行く物語です。序章から終章まで、MORE の STORY から遊べます。',
+      '人のいなくなった街で、命令を続けるアンドロイドたちに会いに行く物語です。序章から終章まで、タイトルの STORY から遊べます。',
       '歩ける地図・一枚絵・キャラクターの声・場面ごとの音楽つきです。進み具合は端末 (ログインしていればアカウント) に残ります。'
     ]
   },

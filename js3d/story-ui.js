@@ -105,7 +105,8 @@ function overlay(id, label) {
 export function playScene(lines, opts = {}) {
   const el = overlay('storyScene', '会話');
   /* opts.title: 場面の題。上に出したままにする (字間が縮まって決まる)。
-     line.alert: その行のあいだだけ、警告の帯を出す (見つかった・止められた場面) */
+     line.alert: その行のあいだだけ、警告の帯を出す (見つかった・止められた場面)
+     line.walk + opts.stage: 地図のちびを歩かせる (story-world.js)。その行のあいだは立ち絵を下げ、暗い幕を薄くして、歩く姿を見せる */
   el.innerHTML = '<img class="ss-still" alt="">' + '<div class="ss-veil"></div>' +
     '<img class="ss-portrait" data-slot="l" alt=""><img class="ss-portrait" data-slot="r" alt="">' +
     (opts.title ? '<div class="ss-title"><b>' + esc(opts.title) + '</b></div>' : '') +
@@ -146,7 +147,7 @@ export function playScene(lines, opts = {}) {
       clearInterval(typing);
       voice.halt();
       window.removeEventListener('keydown', onKey);
-      el.classList.remove('show', 'with-still', 'hide-ui');
+      el.classList.remove('show', 'with-still', 'hide-ui', 'walking');
       el.innerHTML = '';
       resolve();
     };
@@ -201,10 +202,13 @@ export function playScene(lines, opts = {}) {
       }
       if (line.bgm !== undefined) switchBgm(line.bgm);    // 山場の曲 (null で地図の曲へ戻す)
       if (Array.isArray(line.stage)) setStage(line.stage);
+      const walking = !!(line.walk && opts.stage);
+      if (walking) opts.stage.walk(line.walk);
+      el.classList.toggle('walking', walking && !stillOn);
       const speaker = pa || memo ? null : line.who;
       if (sp.portrait && !pa) { enter(line.who); lastWho = line.who; }
       for (const s of slots) {
-        const on = !!s.who && !stillOn;
+        const on = !!s.who && !stillOn && !walking;
         if (on) {
           const pid = portraitOf(s.who);
           if (s.who === speaker) s.face = line.face || 'normal';
@@ -325,24 +329,24 @@ export function askChoice(options) {
 }
 
 /* 場面の会話 → 選択肢。again の選択肢は、その会話のあとにもう一度選ぶ (記録が無い道。話は先へ進まない) */
-export async function playNode(n) {
+export async function playNode(n, opts = {}) {
   if (n.bgm) switchBgm(n.bgm);
-  try { await playNodeLines(n); } finally { restoreBgm(); }
+  try { await playNodeLines(n, opts.stage); } finally { restoreBgm(); }
 }
-async function playNodeLines(n) {
-  await playScene(n.lines, { title: n.title });
+async function playNodeLines(n, stage) {
+  await playScene(n.lines, { title: n.title, stage });
   if (!n.choice) return;
   let wavered = false;                 // 選び直しの道を一度選んだ
   for (;;) {
     const o = n.choice.options[await askChoice(n.choice.options)];
     logChoice(o.label);
     const lines = [...(wavered && o.ifAgain ? o.ifAgain : []), ...(o.lines || [])];
-    if (lines.length) await playScene(lines);
+    if (lines.length) await playScene(lines, { stage });
     if (!o.again) break;
     wavered = true;
   }
   /* どれを選んでも流れる続き (気持ちを選ぶ選択肢: 話の行き先は変えず、そのあとの会話を共通にする) */
-  if (n.choice.after && n.choice.after.length) await playScene(n.choice.after);
+  if (n.choice.after && n.choice.after.length) await playScene(n.choice.after, { stage });
 }
 
 /* ---------- 対戦の前の確認 ---------- */

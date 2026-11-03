@@ -106,7 +106,11 @@ export const PROTO_LINES = {
   CLARITY: '見通すよ、{card}。', CORRUPTION: '染めてあげる、{card}。', COURAGE: '勇気を、{card}！', FEAR: '怯えなさい、{card}。',
   ICE: '凍らせて、{card}。', LUCK: '運を試すよ、{card}！', MIRROR: '映して返す、{card}。', PEACE: '静かに、{card}。',
   SMOKE: '煙に巻いて、{card}。', TIME: '時を刻んで、{card}。', WAR: '攻めるよ、{card}！', ASSIMILATION: '取り込んで、{card}。',
-  DIVERSITY: 'いろいろ試そう、{card}！', UNITY: 'ひとつになって、{card}！'
+  DIVERSITY: 'いろいろ試そう、{card}！', UNITY: 'ひとつになって、{card}！',
+  AMBUSH: '待ってたよ、{card}。', ENVY: 'それ、ちょうだい。{card}。', FULCRUM: '傾けるよ、{card}。', GLUTTONY: 'まだ食べ足りない、{card}！',
+  GREED: '全部もらうよ、{card}。', LUST: '惹きつけて、{card}。', MOMENTUM: '止まらないよ、{card}！', NOVA: '弾けて、{card}！',
+  OVERWHELM: '押し切るよ、{card}！', PRIDE: 'ひれ伏して、{card}。', SLOTH: 'ふあ……{card}。', WRATH: '許さない、{card}！',
+  FLEXIBLE: '合わせるよ、{card}。', INERT: '止まってて、{card}。', RIGID: '動かないよ、{card}。'
 };
 
 /* 動きを減らすか (設定の「動きを減らす」→ 端末の設定。prefs.js) */

@@ -23,11 +23,18 @@ OPS = {
     "ifBindMatches", "drawRevealPlay", "swapStacks", "mirrorMiddle",
     "randomDiscard", "bothDiscardAll", "stealToHand", "discardToOppTrash",
     "setProtocolCompiled", "drawDynamic", "playFromTrash",
+    # Main 3
+    "gainControl", "loseControl", "swapSides", "bindCoverer", "compileLine",
+    "oppRandomPlayDown", "handToDeckBottom",
 }
 STATIC_KINDS = {
     "setValue", "modifyLineTotal", "playPermission", "ignoreMiddle", "skipCheckCache",
     # Main 2 / Aux 2
     "suppressOppMiddle", "cannotFlipThis", "cannotDraw", "returnToDeckTop",
+    # Main 3
+    "excludeHighestInLine", "oppNoCompileIfControl",
+    # Aux 3
+    "noUpperInLine", "noLowerInLine", "cannotFlipOrShiftThis",
 }
 TRIGGER_EVENTS = {
     "start", "end", "afterOppDiscard", "afterYouClearCache", "afterYouDraw",
@@ -37,10 +44,16 @@ TRIGGER_EVENTS = {
     "afterYouDiscard", "afterYouDiscardOppTurn", "afterOppDraw",
     "afterYouShuffle", "afterYouRefresh", "afterOppRefresh", "afterAnyRefresh",
     "afterOppCompile", "afterOppPlayInThisLine",
+    # Main 3
+    "afterYouCompile", "afterAnyCompile", "afterAnyClearCache", "afterAnyRearrange",
+    "afterYouRearrange", "afterOppGainControl",
+    # Aux 3
+    "afterYouPlayDownAction",
 }
 SELECT_KEYS = {
     "owner", "facing", "coverage", "zone", "value", "exclude", "count",
     "mode", "ref", "refKey", "proto", "notProto",
+    "lineCond",   # Main 3: chosenLine の絞り込み (youHave5 / mostCards)
 }
 SELECT_VALUES = {
     "owner": {"self", "opp", "any"},
@@ -48,20 +61,24 @@ SELECT_VALUES = {
     "coverage": {"uncovered", "covered", "all", "any"},
     "zone": {"thisLine", "thisStack", "otherLine", "chosenLine",
              "otherLineWith8plus", "currentLine", "anywhere",
-             "lineWhereOppLeads", "sameLineAsRef"},
+             "lineWhereOppLeads", "sameLineAsRef", "otherLines"},
     "exclude": {"thisCard"},
     "mode": {"all", "each", "pick"},
+    "lineCond": {"youHave5", "mostCards"},
 }
 PLAY_DESTS = {
     "otherLine", "thisLine", "anyLine", "underThisCard", "currentLine",
     "lineWithFaceDown", "thisStack", "oppStack",
+    "underOwnProto",   # NOVA_1
+    "eventStack",      # RIGID_2
 }
 SHIFT_DESTS = {"anyOther", "thisLine", "fromOrToThisLine", "oneOtherLine", "oppHighestLine"}
 PERMISSION_RULES = {
     "oppNoFaceDownThisLine", "oppNoPlayThisLine", "oppFaceDownOnly",
     "youFaceUpAnyLine", "protoFaceUpThisLine",
+    "youAnyProtoThisStack",   # LUST_2
 }
-REVEAL_TARGETS = {"oppHand", "ownHandCard"}
+REVEAL_TARGETS = {"oppHand", "ownHandCard", "ownHand"}
 
 errors = []
 
@@ -83,7 +100,7 @@ def check_select(cid, sel):
             err(f"{cid}: select.{k} の未知の値 '{v}'")
     if "value" in sel:
         v = sel["value"]
-        ok = (isinstance(v, dict) and set(v) <= {"in", "eq", "ltProtoKinds", "gtHandCount", "eqBindPrinted"}) or v in ("highest", "lowest")
+        ok = (isinstance(v, dict) and set(v) <= {"in", "eq", "ltProtoKinds", "gtHandCount", "eqBindPrinted", "ltThisStack"}) or v in ("highest", "lowest")
         if not ok:
             err(f"{cid}: select.value が不正 {v!r}")
 
@@ -101,6 +118,8 @@ def check_ops(cid, ops):
             check_select(cid, o["select"])
         if name in ("ifDone", "ifState", "forEachLine", "repeatPer"):
             check_ops(cid, o.get("ops", []))
+        if name == "ifState" and "else" in o:
+            check_ops(cid, o["else"])
         if name == "choice":
             for branch in o.get("options", []):
                 check_ops(cid, branch)

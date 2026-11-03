@@ -10,18 +10,30 @@ Aux 2:
 
 Main 2:
     The publisher's toolkit contains no card illustrations.  The physical
-    product (see `Compile 2/Compile_ Main 2/Photo/`) uses painted scenes cut
-    into displaced rectangular blocks.  We paint one scene per protocol
-    locally (SwarmUI, oneObsession v2.4), break it up with
-    scripts/main2_shatter.py, pull its colours toward the printed card with
-    scripts/main2_grade.py, and drop the 2688x1920 result in
-    `Compile 2/Compile_ Main 2/Illustrations/<Proto>.png` (gitignored).
-    From that one image, like Aux 2:
-        protocol face   -> art/Chaos.webp
-        glitched face   -> art/Chaos_Glitched.webp (heavy glitch() on the face)
-        per-card art    -> six crops (art/1chaos.webp ..)
-    A protocol without an illustration falls back to the old procedural
-    triangle mosaic in its data/cards.json color.
+    product (see `Compile 2/Compile_ Main 2/Photo/`) uses two styles:
+      - protocol card, LOADING side: a painted scene cut into displaced
+        rectangular blocks (glitch).
+      - protocol card, COMPILED side, and every command card: a flat vector
+        painting built from small polygonal shards; each command card has
+        its own picture.
+    We paint both locally (SwarmUI) and drop them in
+    `Compile 2/Compile_ Main 2/Illustrations/` (gitignored):
+        <Proto>.png              shattered scene (oneObsession + main2_shatter.py
+                                 + main2_grade.py)  -> art/Chaos.webp (LOADING)
+        flat/<Proto>_face.png    flat shard art (anima turbo, E:/SD/scripts/
+                                 main2_flat.py)    -> art/Chaos_Glitched.webp (COMPILED)
+        flat/<Proto>_0..5.png    flat shard art     -> art/1chaos.webp .. 6chaos.webp
+    The game shows <Cap>.webp on the LOADING side and <Cap>_Glitched.webp on
+    the COMPILED side (js3d/panel.js); for Main 2 the "Glitched" file is the
+    clean one, because that is how the printed cards are.
+    COURAGE (2026-10-16) has only the flat sword, so its LOADING side is
+    glitch() of it: art/Courage.webp and Courage_Glitched.webp were swapped
+    by hand on 2026-11-03 to follow the side convention above.  The picks
+    (seed per slot) are in scripts/main2_flat_picks.json; WAR c5 came from
+    E:/SD/scripts/main2_flat_fix.py.
+    Without flat/ art a protocol falls back to the 2026-10 behaviour (one
+    shattered scene for everything); without any illustration, to the old
+    procedural triangle mosaic in its data/cards.json color.
 
 Deterministic: same seed -> same image, safe to re-run.
 """
@@ -244,6 +256,19 @@ def main():
         rgb = hex_rgb(colors[proto])
         capname = cap(proto)
         src = os.path.join(MAIN2_DIR, capname + '.png')
+        flat_face = os.path.join(MAIN2_DIR, 'flat', capname + '_face.png')
+        if os.path.exists(src) and os.path.exists(flat_face):
+            # LOADING = 割れとずれの絵、COMPILED とコマンド6枚 = 平塗りの絵 (実物と同じ分け方)
+            illust = Image.open(src).convert('RGB')
+            total += save_webp(crop_cover(illust, FACE_W, FACE_H), capname + '.webp')
+            flat = Image.open(flat_face).convert('RGB')
+            total += save_webp(crop_cover(flat, FACE_W, FACE_H), capname + '_Glitched.webp')
+            count += 2
+            for v in range(6):
+                card = Image.open(os.path.join(MAIN2_DIR, 'flat', '{}_{}.png'.format(capname, v))).convert('RGB')
+                total += save_webp(crop_cover(card, CARD_W, CARD_H), '{}{}.webp'.format(v + 1, proto.lower()))
+                count += 1
+            continue
         if os.path.exists(src):
             illust = Image.open(src).convert('RGB')
             face = crop_cover(illust, FACE_W, FACE_H)

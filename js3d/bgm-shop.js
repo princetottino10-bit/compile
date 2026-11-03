@@ -32,6 +32,11 @@ const ROWS = [
   ['joudou_catharsis', '情動カタルシス', 'まんぼう二等兵 (OpenTracks)', '', true],
   ['blaze_a_trail', 'Blaze a Trail', 'まんぼう二等兵 (OpenTracks)', '', true],
   ['killer_roll', 'Killer Roll', 'まんぼう二等兵 (OpenTracks)', '', true],
+  /* 本人が Musio Studio で作った曲 (2026-11-01) */
+  ['iron_meridian', 'Iron Meridian', 'Ryunosuke', '', true],
+  ['kidou', '起動', 'Ryunosuke', '', true],
+  ['protocol_drive', 'Protocol Drive', 'Ryunosuke', '', true],
+  ['overclock', 'Overclock', 'Ryunosuke', '', true],
   /* CHIP で交換 (2026-10-04 に足した) */
   ['noesis', 'Noesis', 'まんぼう二等兵 (OpenTracks)', '', false],
   ['sagittarius', 'Sagittarius', 'まんぼう二等兵 (OpenTracks)', '', false],

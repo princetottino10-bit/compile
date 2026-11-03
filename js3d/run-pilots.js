@@ -38,5 +38,7 @@ export const pilotPerk = (run, perkId) => { const p = pilotOf(run); return !!(p 
 /** 外せないプロトコル (挑む子の得意プロトコル。選んでいなければ null) */
 export const lockedProto = (run) => { const p = pilotOf(run); return p ? p.start : null; };
 
-/* ちびの絵 (art/chibi/<id>_<向き>_<足>.webp)。向き: front / back / side、足: stand / walk1 / walk2 */
-export const chibiArt = (id, dir = 'front', frame = 'stand') => 'art/chibi/' + id + '_' + dir + '_' + frame + '.webp';
+/* ちびの絵 (art/chibi/<id>_<向き>_<足>.webp)。向き: front / back / side、足: stand / walk1 / walk2。
+   ストーリーの地図も同じ絵を使う。描き直したら CHIBI_VER を上げる (古い絵がキャッシュに残るのを防ぐ) */
+const CHIBI_VER = 4;
+export const chibiArt = (id, dir = 'front', frame = 'stand') => 'art/chibi/' + id + '_' + dir + '_' + frame + '.webp?v=' + CHIBI_VER;

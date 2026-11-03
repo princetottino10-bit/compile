@@ -188,6 +188,22 @@ test('METAL_6 上段: 反転することになったとき、先にこのカー�
   assert.deepEqual(trashDefs(r.state, 0), ['METAL_6']);
 });
 
+test('METAL_6 上段: 移動中のカードより後からプレイされて先に着いた METAL_6 は、移動したカードに覆われない', () => {
+  /* SPEED_4 で MIRROR_2 を METAL のラインへ移動 → 移動元で SPEED_1 が uncover して METAL_6 を同じラインへプレイ。
+     MIRROR_2 はコミット順どおり METAL_6 の下に着地するので、METAL_6 は覆われず自己削除しない (今日の問題 d007) */
+  let r = puzzle(
+    { protos: ['SPEED', 'METAL', 'MIRROR'], lines: [[], [], [['SPEED_1', true], ['MIRROR_2', true]]], hand: ['SPEED_4', 'METAL_6'] },
+    { protos: ['PLAGUE', 'WATER', 'PSYCHIC'], lines: [[], [], []], hand: [] });
+  r = play(r, 'SPEED_4', 0);
+  r = answer(r, [
+    [1],
+    (req) => [req.candidates.find(c => String(c).startsWith(u0('METAL_6') + '|1|u'))],
+    [],   // 終了: SPEED_4 の任意の移動はしない
+  ]);
+  assert.deepEqual(stack(r.state, 1, 0), [['MIRROR_2', true], ['METAL_6', true]], 'MIRROR_2 は METAL_6 の下');
+  assert.deepEqual(trashDefs(r.state, 0), []);
+});
+
 /* ======================= PLAGUE ======================= */
 
 test('PLAGUE_1 中段: 相手は手札を1枚捨て札にする / 下段: 相手はこのラインにプレイできない', () => {

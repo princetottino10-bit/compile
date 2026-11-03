@@ -136,6 +136,10 @@ export function routeMedia(media, vol) {
     return plain;
   }
 }
+/** Web Audio で鳴らす音 (BGM のループ再生) の出口: 音量つまみと同じ道 (masterLevel の後) へつなぐ。Web Audio が無ければ null */
+export function audioOut() {
+  return actx && actx.state !== 'closed' ? { ctx: actx, out: outNode || actx.destination } : null;
+}
 export function isMuted() { return muted; }
 /** 音の土台の状態 (確かめる用): 'none' / 'suspended' / 'running' / 'interrupted' など */
 export const audioState = () => (actx ? actx.state : 'none');
