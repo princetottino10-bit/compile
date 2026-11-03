@@ -16,6 +16,15 @@ export const KINDS = {
 
 export const NEWS = [
   {
+    id: '2026-11-03-solo', date: '2026-11-03', kind: 'new',
+    img: 'art/news/solo.webp', alt: '公式ソロモードのシナリオを選ぶ画面。REGULAR の6つのシナリオが並んでいる',
+    title: '公式ソロモード (VS BOT) が遊べるようになりました',
+    body: [
+      'Main 3 のソロルールです。自動で動く BOT と、REGULAR・ADVANCED あわせて12のシナリオで対戦します。SINGLE GAME の「公式ソロモード」から遊べます。',
+      'BOT はキューの前の札から、シナリオで決まった置き方で出します。BOT が同じプロトコルを2度コンパイルしたら負け。遊び方は RULES の「ソロモード (BOT)」にあります。'
+    ]
+  },
+  {
     id: '2026-11-03-main3', date: '2026-11-03', kind: 'new',
     img: 'art/news/main3.webp', alt: 'Main 3 の12プロトコルの絵。AMBUSH・ENVY・FULCRUM・GLUTTONY・GREED・LUST・MOMENTUM・NOVA・OVERWHELM・PRIDE・SLOTH・WRATH',
     title: '新しいプロトコル Main 3・Aux 3 の15種が加わりました',
