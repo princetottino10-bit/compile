@@ -249,6 +249,8 @@ export const TITLES = {
   blindspot: 'BLIND SPOT',       // 隠し: すべてを見る者 ALL-SEEING に勝つ。取るまで COLLECTION にも出さない
   /* Main 3 / Aux 3・公式ソロモードの実績で取る (2026-11-03) */
   botbreaker: 'BOT BREAKER', rootaccess: 'ROOT ACCESS', sevensins: 'SEVEN SINS', tristate: 'TRISTATE',
+  /* やりこみの実績で取る (2026-11-03、achievements.js の「やりこみ」) */
+  thirdwave: 'THIRD WAVE', vanguard: 'VANGUARD', debugger: 'DEBUGGER', unbroken: 'UNBROKEN', neworder: 'NEW WORLD ORDER', deadlysin: 'DEADLY SIN', hardstate: 'HARD STATE', sineater: 'SIN EATER', dataminer: 'DATA MINER', zeroday: 'ZERO DAY', gatecrasher: 'GATECRASHER', legion: 'LEGION', immortal: 'IMMORTAL', pantheon: 'PANTHEON', omniprotocol: 'OMNIPROTOCOL', kernelpanic: 'KERNEL PANIC', shutdown: 'SHUTDOWN', overflow: 'OVERFLOW', singularity: 'SINGULARITY',
   /* ガチャで取る (GACHA_ITEMS) */
   gambler: 'GAMBLER', highroller: 'HIGH ROLLER', fortune: 'FORTUNE',
   /* 週替わり3連戦の称号 (3週・10週) は外した (時間のかかるものは置かない。2026-10-04) */

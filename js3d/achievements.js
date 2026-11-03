@@ -11,9 +11,9 @@ import { keepBroken } from './broken.js';
 import { HONKI_BASE, HONKI, UNDERDOG_LEVEL, UNDERDOG_TAG_LEVEL } from './aidecks.js';
 const BOSS_LEVELS = [3, ...HONKI.map((_, i) => HONKI_BASE + i)];
 import { XP_GAIN } from './xp.js';
-import { protocolSummary, conquered, CONQUER_TOTAL } from './stats-data.js';
+import { protocolSummary, conquered, beatStrongest, CONQUER_TOTAL } from './stats-data.js';
 import { GACHA_ITEMS } from './rewards.js';
-import { BOT_SCENARIOS } from './bot-scenarios.js';
+import { BOT_SCENARIOS, isBotLevel } from './bot-scenarios.js';
 
 const onlineWin = (e) => e.src === 'online' && e.xp > XP_GAIN.onlinePlay;   // 勝ったときだけ多く入る
 
@@ -51,6 +51,26 @@ const botCleared = (c, mode) => BOT_SCENARIOS.filter(s => s.mode === mode && eve
 /* Main 3 の七つの大罪 (称号 SEVEN SINS) */
 export const SINS = ['ENVY', 'GLUTTONY', 'GREED', 'LUST', 'PRIDE', 'SLOTH', 'WRATH'];
 const sinWins = (c) => { const w = new Set(every(c).filter(r => r.win).flatMap(r => r.me || [])); return SINS.filter(p => w.has(p)).length; };
+/* ---- やりこみの実績 (2026-11-03) の材料 ---- */
+export const MAIN3 = ['AMBUSH', 'ENVY', 'FULCRUM', 'GLUTTONY', 'GREED', 'LUST', 'MOMENTUM', 'NOVA', 'OVERWHELM', 'PRIDE', 'SLOTH', 'WRATH'];
+export const AUX3 = ['FLEXIBLE', 'INERT', 'RIGID'];
+const NEW15 = MAIN3.concat(AUX3);
+const winSet = (c) => new Set(every(c).filter(r => r.win).flatMap(r => r.me || []));
+const countIn = (set, names) => names.filter(n => set.has(n)).length;
+/* 習熟度 (プロトコル名 → レベル) */
+const masteryOf = (c) => { const m = new Map(); for (const t of protocolSummary(every(c)).values()) m.set(t.name, t.mastery.level); return m; };
+const masteryAtLeast = (c, names, lv) => { const m = masteryOf(c); return names.filter(n => (m.get(n) || 0) >= lv).length; };
+/* GATEKEEPER (最強のデッキそのもの) に勝った戦績 */
+const apexWins = (c) => every(c).filter(beatStrongest);
+const m3Conquered = (c) => countIn(conquered(every(c)), MAIN3);
+/* Main 3・Aux 3 の90枚のうち表で出したもの (カードの id は「プロトコル名_番号」) */
+const NEW_CARDS = NEW15.length * 6;
+const newCardsPlayed = (c) => new Set(every(c).flatMap(r => r.cards || []).filter(id => NEW15.includes(String(id).split('_')[0]))).size;
+/* 公式ソロモード */
+const botWins = (c) => every(c).filter(r => r.win && isBotLevel(r.level));
+const botAdvancedWith = (c, fn) => BOT_SCENARIOS.filter(s => s.mode === 'advanced' && every(c).some(r => r.win && r.level === s.level && fn(r))).length;
+/* 「つよい」以上 (つよい・GATEKEEPER・ロック特化・強敵) との CPU 戦だけを並べた連勝 */
+const hardStreak = (c) => streak(c.records.filter(r => (!r.mode || r.mode === 'cpu') && Number.isInteger(r.level) && r.level >= 2 && !isBotLevel(r.level)), true);
 const hour = (c) => new Date(g(c).at).getHours();
 /* COMPUZZLE (詰めコンパイル): 経験値の帳簿の k:ts:t2-03 (問題ごと) と k:dp:日 (今日の問題) で数える。
    問題の数は data/tsume.json と揃える (test/tsume.test.js で確かめる) */
@@ -162,6 +182,47 @@ export const TROPHIES = [
     test: (c) => sinWins(c) >= 7, progress: (c) => [sinWins(c), 7] },
   { id: 'tristate', tier: 'silver', name: 'TRISTATE', desc: 'FLEXIBLE・INERT・RIGID の3つを組んだデッキで勝つ (称号・マーカー TRISTATE)',
     test: (c) => every(c).some(r => r.win && ['FLEXIBLE', 'INERT', 'RIGID'].every(p => (r.me || []).includes(p))) },
+  /* ---- やりこみ (2026-11-03): Main 3 / Aux 3・公式ソロモード・長く遊んだ人へ ---- */
+  { id: 'aux3_each', tier: 'bronze', name: 'AUXILIARY', desc: 'FLEXIBLE・INERT・RIGID それぞれで1勝する',
+    test: (c) => countIn(winSet(c), AUX3) >= 3, progress: (c) => [countIn(winSet(c), AUX3), 3] },
+  { id: 'solo_first', tier: 'bronze', name: 'HELLO, BOT', desc: '公式ソロモードのシナリオに1つ勝つ', test: (c) => botWins(c).length >= 1 },
+  { id: 'm3_all', tier: 'silver', name: 'THIRD WAVE', desc: 'Main 3 の12のプロトコルすべてで1勝する (称号 THIRD WAVE)',
+    test: (c) => countIn(winSet(c), MAIN3) >= 12, progress: (c) => [countIn(winSet(c), MAIN3), 12] },
+  { id: 'm3_pure', tier: 'silver', name: 'VANGUARD', desc: 'Main 3 のプロトコルだけで組んだデッキで10勝する (称号 VANGUARD)',
+    test: (c) => every(c).filter(r => r.win && (r.me || []).length && r.me.every(p => MAIN3.includes(p))).length >= 10,
+    progress: (c) => [Math.min(10, every(c).filter(r => r.win && (r.me || []).length && r.me.every(p => MAIN3.includes(p))).length), 10] },
+  { id: 'solo_wins20', tier: 'silver', name: 'DEBUGGER', desc: '公式ソロモードで20勝する (称号 DEBUGGER)',
+    test: (c) => botWins(c).length >= 20, progress: (c) => [Math.min(20, botWins(c).length), 20] },
+  { id: 'streak10', tier: 'gold', name: 'UNBROKEN', desc: '「つよい」以上の CPU に10連勝する (称号 UNBROKEN)',
+    test: (c) => hardStreak(c) >= 10, progress: (c) => [Math.min(10, hardStreak(c)), 10] },
+  { id: 'm3_conquer', tier: 'gold', name: 'NEW WORLD ORDER', desc: '「GATEKEEPER」の CPU に、Main 3 の12のプロトコルすべてで勝つ (称号 NEW WORLD ORDER)',
+    test: (c) => m3Conquered(c) >= 12, progress: (c) => [m3Conquered(c), 12] },
+  { id: 'sins_apex', tier: 'gold', name: 'DEADLY SIN', desc: '七つの大罪だけで組んだデッキで「GATEKEEPER」の CPU に勝つ (称号 DEADLY SIN)',
+    test: (c) => apexWins(c).some(r => (r.me || []).length && r.me.every(p => SINS.includes(p))) },
+  { id: 'aux3_apex', tier: 'gold', name: 'HARD STATE', desc: 'FLEXIBLE・INERT・RIGID のデッキで「GATEKEEPER」の CPU に勝つ (称号 HARD STATE)',
+    test: (c) => apexWins(c).some(r => AUX3.every(p => (r.me || []).includes(p))) },
+  { id: 'sins_mastery', tier: 'gold', name: 'SIN EATER', desc: '七つの大罪すべての習熟度を6以上にする (称号 SIN EATER)',
+    test: (c) => masteryAtLeast(c, SINS, 6) >= 7, progress: (c) => [masteryAtLeast(c, SINS, 6), 7] },
+  { id: 'm3_cards', tier: 'gold', name: 'DATA MINER', desc: 'Main 3・Aux 3 の90枚すべてを表で出す (称号 DATA MINER)',
+    test: (c) => newCardsPlayed(c) >= NEW_CARDS, progress: (c) => [Math.min(NEW_CARDS, newCardsPlayed(c)), NEW_CARDS] },
+  { id: 'solo_m3', tier: 'gold', name: 'ZERO DAY', desc: '公式ソロモードの ADVANCED の6つのシナリオすべてに、Main 3 か Aux 3 だけで組んだデッキで勝つ (称号 ZERO DAY)',
+    test: (c) => botAdvancedWith(c, r => (r.me || []).length && r.me.every(p => NEW15.includes(p))) >= 6,
+    progress: (c) => [botAdvancedWith(c, r => (r.me || []).length && r.me.every(p => NEW15.includes(p))), 6] },
+  { id: 'apex50', tier: 'gold', name: 'GATECRASHER', desc: '「GATEKEEPER」の CPU に50勝する (称号 GATECRASHER)',
+    test: (c) => apexWins(c).length >= 50, progress: (c) => [Math.min(50, apexWins(c).length), 50] },
+  { id: 'wins300', tier: 'gold', name: 'LEGION', desc: '300勝する (称号 LEGION)', test: (c) => wins(c) >= 300, progress: (c) => [Math.min(300, wins(c)), 300] },
+  { id: 'wins1000', tier: 'gold', name: 'IMMORTAL', desc: '1000勝する (称号 IMMORTAL)', test: (c) => wins(c) >= 1000, progress: (c) => [Math.min(1000, wins(c)), 1000] },
+  { id: 'mastery10x5', tier: 'gold', name: 'PANTHEON', desc: '5つのプロトコルの習熟度を最大 (10) にする (称号 PANTHEON)',
+    test: (c) => masteries(c).filter(l => l >= 10).length >= 5, progress: (c) => [Math.min(5, masteries(c).filter(l => l >= 10).length), 5] },
+  { id: 'mastery6_all', tier: 'gold', name: 'OMNIPROTOCOL', desc: '45のプロトコルすべての習熟度を6以上にする (称号 OMNIPROTOCOL)',
+    test: (c) => masteries(c).filter(l => l >= 6).length >= 45, progress: (c) => [Math.min(45, masteries(c).filter(l => l >= 6).length), 45] },
+  /* 隠し: その1試合 */
+  { id: 'solo_flawless', tier: 'gold', hidden: true, name: 'KERNEL PANIC', desc: '公式ソロモードで、BOT に1回もコンパイルさせずに勝つ (称号 KERNEL PANIC)',
+    test: (c) => !!g(c) && g(c).win && isBotLevel(g(c).level) && g(c).oppCompiles === 0 },
+  { id: 'apex_shutout', tier: 'gold', hidden: true, name: 'SHUTDOWN', desc: '「GATEKEEPER」の CPU に、1回もコンパイルさせずに勝つ (称号 SHUTDOWN)',
+    test: (c) => !!g(c) && g(c).win && g(c).level === 3 && g(c).oppCompiles === 0 && !g(c).tag },
+  { id: 'maxline30', tier: 'gold', hidden: true, name: 'OVERFLOW', desc: '1つのラインの合計値を30以上にする (称号 OVERFLOW)', test: (c) => !!g(c) && (g(c).maxLine | 0) >= 30 },
+  { id: 'turnfx20', tier: 'gold', hidden: true, name: 'SINGULARITY', desc: '1つの手番に、自分のカードの効果を20回発動させる (称号 SINGULARITY)', test: (c) => !!g(c) && (g(c).turnFxMax | 0) >= 20 },
   /* ---- 全部 ---- */
   { id: 'platinum', tier: 'platinum', name: 'PLATINUM', desc: 'ほかの実績をすべて取る (称号 DEUS EX MACHINA)', test: () => false }
 ];

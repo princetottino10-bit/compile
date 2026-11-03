@@ -20,7 +20,8 @@ const DEFAULT_KEY = { mat: 'neon', sleeve: 'default', marker: 'default', ccolor:
 
 /* 条件で取る称号 (レベル以外) */
 /* 実績を取ると付けられる称号 (実績の id → 称号の key) */
-export const TROPHY_TITLES = { flawless: 'flawless', mastery10: 'grandmaster', tsume_mid: 'puzzler', tsume_all: 'compuzzler', conqueror: 'conqueror', underdog_tag: 'underdogduo', tag_all: 'tagmaster', tag_flawless: 'perfectsync', solo_regular: 'botbreaker', solo_advanced: 'rootaccess', sins7: 'sevensins', tristate: 'tristate' };
+export const TROPHY_TITLES = { flawless: 'flawless', mastery10: 'grandmaster', tsume_mid: 'puzzler', tsume_all: 'compuzzler', conqueror: 'conqueror', underdog_tag: 'underdogduo', tag_all: 'tagmaster', tag_flawless: 'perfectsync', solo_regular: 'botbreaker', solo_advanced: 'rootaccess', sins7: 'sevensins', tristate: 'tristate',
+  m3_all: 'thirdwave', m3_pure: 'vanguard', solo_wins20: 'debugger', streak10: 'unbroken', m3_conquer: 'neworder', sins_apex: 'deadlysin', aux3_apex: 'hardstate', sins_mastery: 'sineater', m3_cards: 'dataminer', solo_m3: 'zeroday', apex50: 'gatecrasher', wins300: 'legion', wins1000: 'immortal', mastery10x5: 'pantheon', mastery6_all: 'omniprotocol', solo_flawless: 'kernelpanic', apex_shutout: 'shutdown', maxline30: 'overflow', turnfx20: 'singularity' };
 export function extraTitles(records) {
   const out = records.some(r => r.win && r.level === UNDERDOG_LEVEL) ? ['underdog'] : [];
   /* 機械仕掛けの神・すべてを見る者 (CHALLENGE の CPU 戦で勝ったとき) */

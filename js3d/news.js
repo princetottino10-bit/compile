@@ -34,6 +34,14 @@ export const NEWS = [
     ]
   },
   {
+    id: '2026-11-03-yarikomi', date: '2026-11-03', kind: 'new',
+    title: '実績を23個、称号を19個足しました',
+    body: [
+      'Main 3 の12種すべてで勝つ THIRD WAVE、GATEKEEPER に Main 3 の12種すべてで勝つ NEW WORLD ORDER、七つの大罪だけのデッキで GATEKEEPER に勝つ DEADLY SIN、公式ソロモードの ADVANCED を Main 3・Aux 3 だけのデッキで全部勝つ ZERO DAY など、やりこむ人向けのものです。',
+      '1000勝の IMMORTAL、45のプロトコルすべての習熟度を6にする OMNIPROTOCOL、隠し実績も4つあります。実績の一覧は RECORD の「実績」から見られます。'
+    ]
+  },
+  {
     id: '2026-11-03-collection', date: '2026-11-03', kind: 'new',
     title: 'COLLECTION に Main 3 のスリーブとマーカーが増えました',
     body: [

@@ -13,7 +13,8 @@ export const RARITY_NAME = { C: 'COMMON', R: 'RARE', E: 'EPIC', L: 'LEGENDARY' }
 /* 実績の称号 (cosmetics-ui.js の TROPHY_TITLES と同じ対応。循環を避けてここでも持つ) */
 const TROPHY_OF_TITLE = { flawless: 'flawless', grandmaster: 'mastery10', puzzler: 'tsume_mid', compuzzler: 'tsume_all',
   conqueror: 'conqueror', underdogduo: 'underdog_tag', tagmaster: 'tag_all', perfectsync: 'tag_flawless',
-  botbreaker: 'solo_regular', rootaccess: 'solo_advanced', sevensins: 'sins7', tristate: 'tristate' };
+  botbreaker: 'solo_regular', rootaccess: 'solo_advanced', sevensins: 'sins7', tristate: 'tristate',
+  thirdwave: 'm3_all', vanguard: 'm3_pure', debugger: 'solo_wins20', unbroken: 'streak10', neworder: 'm3_conquer', deadlysin: 'sins_apex', hardstate: 'aux3_apex', sineater: 'sins_mastery', dataminer: 'm3_cards', zeroday: 'solo_m3', gatecrasher: 'apex50', legion: 'wins300', immortal: 'wins1000', pantheon: 'mastery10x5', omniprotocol: 'mastery6_all', kernelpanic: 'solo_flawless', shutdown: 'apex_shutout', overflow: 'maxline30', singularity: 'turnfx20' };
 const TIER_RAR = { bronze: 'R', silver: 'E', gold: 'L', platinum: 'L' };
 
 /* レベルの報酬: 低いほどありふれている */
