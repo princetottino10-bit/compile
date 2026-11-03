@@ -94,7 +94,7 @@ export const TROPHIES = [
   { id: 'gacha_legend', tier: 'silver', name: 'LUCKY STAR', desc: 'GACHA で LEGENDARY を引く', test: (c) => gachaHasRar(c, 'L') },
   { id: 'versatile', tier: 'silver', name: 'VERSATILE', desc: '5つのプロトコルの習熟度を3以上にする',
     test: (c) => masteries(c).filter(l => l >= 3).length >= 5, progress: (c) => [Math.min(5, masteries(c).filter(l => l >= 3).length), 5] },
-  { id: 'all30play', tier: 'silver', name: 'CARTOGRAPHER', desc: '30のプロトコルすべてで戦う', test: (c) => playedProtos(c) >= 30, progress: (c) => [playedProtos(c), 30] },
+  { id: 'all30play', tier: 'silver', name: 'CARTOGRAPHER', desc: '45のプロトコルすべてで戦う', test: (c) => playedProtos(c) >= 45, progress: (c) => [Math.min(45, playedProtos(c)), 45] },   // Main 3 / Aux 3 で 30 → 45 (id はそのまま。取った実績は消えない)
   { id: 'edge', tier: 'silver', hidden: true, name: 'ON THE EDGE', desc: '相手があと1回でコンパイルしきるところから勝つ', test: (c) => !!g(c) && g(c).win && g(c).oppCompiles >= g(c).winCompiles - 1 },
   { id: 'speed', tier: 'silver', hidden: true, name: 'SPEEDRUN', desc: '35手番以内 (両者合わせて) で勝つ', test: (c) => !!g(c) && g(c).win && g(c).turns > 0 && g(c).turns <= 35 },
   { id: 'onecard', tier: 'silver', hidden: true, name: 'ONE CARD SHOW', desc: '1試合で同じカードの効果を6回使う', test: (c) => !!g(c) && Object.values(g(c).effectsMap).some(n => n >= 6) },
@@ -109,7 +109,7 @@ export const TROPHIES = [
   { id: 'conqueror', tier: 'gold', name: 'CONQUEROR', desc: '「GATEKEEPER」の CPU に、GATEKEEPER のデッキ以外の' + CONQUER_TOTAL + 'のプロトコルすべてで勝つ (称号 CONQUEROR)',
     /* 数える試合は conquered が決める (週替わりの最強も入れるので、短縮マッチを除く前の全部の戦績を渡す) */
     test: (c) => conquered(every(c)).size >= CONQUER_TOTAL, progress: (c) => [Math.min(CONQUER_TOTAL, conquered(every(c)).size), CONQUER_TOTAL] },
-  { id: 'all30', tier: 'gold', name: 'OMNISCIENT', desc: '30のプロトコルすべてで1勝する', test: (c) => protoWins(c) >= 30, progress: (c) => [protoWins(c), 30] },
+  { id: 'all30', tier: 'gold', name: 'OMNISCIENT', desc: '45のプロトコルすべてで1勝する', test: (c) => protoWins(c) >= 45, progress: (c) => [Math.min(45, protoWins(c)), 45] },
   { id: 'holo_card', tier: 'gold', name: 'HOLOGRAM', desc: 'カードをホロにする (そのカードで50勝)', test: (c) => tierCards(c, 50) >= 1 },
   { id: 'level20', tier: 'gold', name: 'MASTER', desc: 'プレイヤーレベル20になる', test: (c) => c.level >= 20, progress: (c) => [Math.min(c.level, 20), 20] },
   { id: 'mastery10', tier: 'gold', name: 'GRANDMASTER', desc: 'どれかのプロトコルの習熟度を最大 (10) にする (称号 GRANDMASTER)',

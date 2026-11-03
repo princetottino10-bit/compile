@@ -7,7 +7,7 @@
   <!-- 3D アリーナの中で開いたとき (?embed=1) は、サイトの見出し (他ページへのリンク) を出さない -->
   <script>if (/[?&]embed=1(&|$)/.test(location.search)) document.documentElement.classList.add('embed');</script>
   <style>html.embed .cp-top { display: none; }</style>
-  <meta name="description" content="ボードゲーム『コンパイル』全30プロトコル・180枚のカードリスト。効果の検索、逆引き、デッキ分析。">
+  <meta name="description" content="ボードゲーム『コンパイル』全45プロトコル・270枚のカードリスト。効果の検索、逆引き、デッキ分析。">
   <meta name="theme-color" content="#03040a">
   <link rel="apple-touch-icon" href="icons/cardlist-180.png">
   <link rel="icon" href="icons/cardlist-180.png">
@@ -442,7 +442,7 @@
     const KEY = 'compile.cardlist.v2';
     const TABS = ['list', 'proto', 'lookup', 'ana'];
     const EMBED = document.documentElement.classList.contains('embed');
-    const VALS = [0, 1, 2, 3, 4, 5, 6];
+    const VALS = [0, 1, 2, 3, 4, 5, 6, 7];
     /* 絞り込み (プロトコル・効果・値)・開いていたタブ・分析の3つは、次に開いたときも残す。検索の文字は残さない */
     const S = Object.assign({ tab: 'list', view: 'tile', fx: 'all', val: null, sel: [], q: '', ana: [], anaFx: null }, store.get(KEY, {}));
     S.q = ''; S.anaFx = null;
@@ -749,7 +749,7 @@
       const mx = Math.max(1, ...Object.values(total));
       const byVal = {};
       cards.forEach(({ c }) => { byVal[c.value] = (byVal[c.value] || 0) + 1; });
-      const vals = [0, 1, 2, 3, 4, 5, 6];
+      const vals = [0, 1, 2, 3, 4, 5, 6, 7];
       const hmx = Math.max(1, ...Object.values(byVal));
       /* このデッキで対戦: 相手と強さは、ゲームの側でいつもどおり選ぶ (プロトコル選択にこの3つを選んだ状態で入る) */
       const go = '<div class="ana-go">' + (canPlay

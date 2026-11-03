@@ -2406,7 +2406,7 @@ function execOp(ctx, fr, op) {
 
     case 'declare': { // LUCK_1/4: 値またはプロトコルを宣言する
       if (op.what === 'value') {
-        const opts = [0, 1, 2, 3, 4, 5, 6];
+        const opts = [0, 1, 2, 3, 4, 5, 6, 7];   // RIGID には値 7 がある (Aux 3)
         const ans = choose(ctx, { kind: 'option', player: fr.controller, options: opts.map(String), prompt: 'declare-value', context: defOf(st, fr.source).id });
         fr.bind[op.bind || 'declared'] = opts[ans[0]];
         st.announce = { seq: (st.actionLog || []).length, kind: 'declare', player: fr.controller, what: 'value',
@@ -7846,9 +7846,12 @@ var PROMPT_TEXT = {
   'optional-discard-top':'公開したカードを捨て札にしますか?', 'optional-play':'このカードをプレイしますか?',
   'discard-order':'先に手札を捨てるのはどちら?', 'swap-stack-1':'入れ替えるスタック(1つ目)を選択',
   'swap-stack-2':'入れ替えるスタック(2つ目)を選択', 'mirror-middle':'コピーする相手の中段を選択',
-  'steal-to-hand':'手札に加える相手の裏向きカードを選択', 'play-from-trash':'プレイする捨て札のカードを選択'
+  'steal-to-hand':'手札に加える相手の裏向きカードを選択', 'play-from-trash':'プレイする捨て札のカードを選択',
+  // Main 3 / Aux 3
+  'optional-rearrange':'プロトコルを並べ替えますか?', 'optional-lose-control':'コントロールを失いますか?',
+  'hand-to-deck-bottom':'デッキの一番下に置く手札を選択', 'play-under':'下にプレイする「NOVA」カードを選択'
 };
-var OP_LABEL = { flip:'反転する', shift:'移動する', discard:'手札を捨てる', draw:'カードを引く', 'delete':'削除する', 'return':'戻す' };
+var OP_LABEL = { flip:'反転する', shift:'移動する', discard:'手札を捨てる', draw:'カードを引く', 'delete':'削除する', 'return':'戻す', play:'カードをプレイする', swapProtocols:'プロトコルを入れ替える' };
 
 function reqText(req){
   var t = PROMPT_TEXT[req.prompt] || '選択してください';

@@ -186,7 +186,7 @@ function summaryTab(list, protos) {
     '<button type="button" class="sr-tolink sr-rated" data-open="rated"><b>ONLINE RATED</b><small>オンラインのレート戦の戦績・順位表を見る</small><em>▸</em></button>';
 }
 
-/* 30プロトコルの習熟度と制覇 (勝った / つよいに勝った / 最強に勝った) */
+/* 全プロトコルの習熟度と制覇 (勝った / つよいに勝った / 最強に勝った) */
 function protocolTab(list, protos) {
   const sum = protocolSummary(list);
   return '<p class="pz-note">そのプロトコルを入れて戦うと習熟度が上がります (1戦 +1、勝ち +2、つよい以上に勝つと +1)。' +

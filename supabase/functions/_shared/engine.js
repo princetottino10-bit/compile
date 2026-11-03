@@ -1574,7 +1574,7 @@ function execOp(ctx, fr, op) {
 
     case 'declare': { // LUCK_1/4: 値またはプロトコルを宣言する
       if (op.what === 'value') {
-        const opts = [0, 1, 2, 3, 4, 5, 6];
+        const opts = [0, 1, 2, 3, 4, 5, 6, 7];   // RIGID には値 7 がある (Aux 3)
         const ans = choose(ctx, { kind: 'option', player: fr.controller, options: opts.map(String), prompt: 'declare-value', context: defOf(st, fr.source).id });
         fr.bind[op.bind || 'declared'] = opts[ans[0]];
         st.announce = { seq: (st.actionLog || []).length, kind: 'declare', player: fr.controller, what: 'value',
