@@ -98,9 +98,10 @@ export function drawTitleBackdrop(canvas) {
   vignette(ctx, w, h, 0.8);
 }
 
-/* 基板の配線: 縦横と45度の折れ線に、丸い端子と四角い部品。黒の上に、ほんの少し明るい黒で */
-function circuit(ctx, w, h, r) {
-  const step = 26;
+/* 基板の配線: 縦横と45度の折れ線に、丸い端子と四角い部品。黒の上に、ほんの少し明るい黒で。
+   盤面の柄 (playmat.js の MAIN 3) も同じ配線を使う。盤面は斜めから見て暗く沈むので、目を粗く・線を明るめに渡す */
+export function circuit(ctx, w, h, r, opt) {
+  const step = (opt && opt.step) || 26, base = (opt && opt.base) || 19, bg = (opt && opt.bg) || '#060606';
   const cols = Math.ceil(w / step) + 2, rows = Math.ceil(h / step) + 2;
   const used = new Set();
   const key = (x, y) => x + ',' + y;
@@ -122,7 +123,7 @@ function circuit(ctx, w, h, r) {
     }
     if (pts.length < 3) continue;
     const lw = r() < 0.15 ? 5 : (r() < 0.5 ? 3 : 2);
-    const shade = 19 + Math.floor(r() * 10);
+    const shade = base + Math.floor(r() * 10);
     /* 浮き彫り: 下にずらした影の線と、上の明るい線 */
     for (const [dy, col] of [[1.5, 'rgba(0,0,0,.9)'], [0, 'rgb(' + shade + ',' + shade + ',' + shade + ')']]) {
       ctx.strokeStyle = col; ctx.lineWidth = lw;
@@ -134,14 +135,14 @@ function circuit(ctx, w, h, r) {
     const [ex, ey] = pts[pts.length - 1];
     ctx.fillStyle = 'rgb(' + (shade + 4) + ',' + (shade + 4) + ',' + (shade + 4) + ')';
     ctx.beginPath(); ctx.arc(ex * step, ey * step, lw + 3, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#060606';
+    ctx.fillStyle = bg;
     ctx.beginPath(); ctx.arc(ex * step, ey * step, lw, 0, Math.PI * 2); ctx.fill();
   }
   /* 四角い部品 */
   for (let i = 0; i < Math.round(cols * rows / 60); i++) {
     const x = Math.floor(r() * cols) * step, y = Math.floor(r() * rows) * step;
     const bw = step * (1 + Math.floor(r() * 3)), bh = step * (1 + Math.floor(r() * 2));
-    ctx.strokeStyle = 'rgb(30,30,30)'; ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgb(' + (base + 11) + ',' + (base + 11) + ',' + (base + 11) + ')'; ctx.lineWidth = 2;
     ctx.strokeRect(x - bw / 2, y - bh / 2, bw, bh);
   }
   ctx.restore();
