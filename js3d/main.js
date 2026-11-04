@@ -87,7 +87,7 @@ import * as FX from './fx.js';
 import { buildArena } from './arena.js';
 import { initAudio, sfx, setMuted, isMuted, setSfxVolume, onMuteChange } from './audio.js';
 import { mountMuteButton, muteIcon } from './mutebutton.js';
-import { playBgm, refreshBgm, fadeOutBgm, crossBgm, prepareBgm, pickNormalBgm, normalBattleBgm, onlineBattleBgm, storyBattleBgm, STRONG_BGM, BOSS_BGM, BOT_BGM, GATE_BGM, DEUS_BGM, PEEK_BGM, pickTenseBgm, setShuffleNotify } from './bgm.js';
+import { playBgm, refreshBgm, fadeOutBgm, crossBgm, prepareBgm, pickNormalBgm, normalBattleBgm, onlineBattleBgm, storyBattleBgm, STRONG_BGM, BOSS_BGM, BOT_BGM, GATE_BGM, BOSS_THEMES, CHAR_THEMES, THEME_RATE, DEUS_BGM, PEEK_BGM, pickTenseBgm, setShuffleNotify, playJingle, prepareJingles } from './bgm.js';
 import { trackOf } from './bgm-shop.js';
 import { BGM_RELEASED } from './rewards.js';
 import { emblemDataURL } from './emblems.js';
@@ -3979,7 +3979,7 @@ async function roomMaybeFinish() {
   const win = st.winner === ME;
   UI.setPrompt(win ? 'あなたの勝ち' : '敗北', 'end');
   const victory = cosmetic('victory', 'default');
-  sfx(win ? victoryFx(victory).sfx : 'lose');
+  resultSound(win, victory);
   await finaleFx(win);
   FEEL.buzz(win ? [40, 70, 40, 70, 120] : [160]);
   await UI.resultCutIn(win, { victory, deus: win && myPlate().sub === TITLES.platinum });
@@ -4684,17 +4684,34 @@ function battleBgm() {
   if (peekMatch()) return PEEK_BGM;            // すべてを見る者: 「最終決戦２秒前」
   if (storyNode && storyBattleBgm(storyNode)) return storyBattleBgm(storyNode);   // ストーリー: 機体戦は「判定」、終章の最後の判定は「止めていい」 (本人作)
   if (botScenario) return BOT_BGM;              // 公式ソロモード: 「Bot Routine」 (本人作)
+  if (isHonki(aiDifficulty) && plainCpuMatch()) return CHAR_THEMES[honkiOf(aiDifficulty).avatar] || BOSS_BGM;   // 本気の4人: その子のテーマ (本人作)
+  if (aiDifficulty === 3 && plainCpuMatch()) return BOSS_THEMES.strongest;       // CHALLENGE の最強 (門番): 「GATEKEEPER」 (本人作)
   const tier = battleTier();
-  if (tier === 'boss' && runMode) return GATE_BGM;   // 勝ち抜き戦のボス・週替わりの3戦目: 「Third Gate」 (本人作)
+  if (tier === 'boss' && runMode && runKind === 'run') {                          // 勝ち抜き戦のボス: ボスごとの曲 (本人作)
+    const opp = oppAvatarPlan();
+    return (opp && opp.startsWith('boss_') && BOSS_THEMES[opp.slice(5)]) || GATE_BGM;
+  }
+  if (tier === 'boss' && runMode) return GATE_BGM;   // 週替わりの3戦目: 「Third Gate」 (本人作)
   if (tier === 'boss') return BOSS_BGM;
   if (tier === 'strong') return STRONG_BGM;
+  /* ふつうの CPU 戦で4人の誰かが相手: おまかせなら、ときどきその子のテーマ */
+  const theme = plainCpuMatch() && !(BGM_RELEASED && settings().bgm) && CHAR_THEMES[oppAvatarPlan()];
+  if (theme && Math.random() < THEME_RATE) return theme;
   return BGM_RELEASED ? (settings().bgm || normalBattleBgm()) : normalBattleBgm();
 }
 /* 対戦の曲を流す。表記の要る曲 (煉獄庭園・魔王魂・Senses Circuit など) は、流れている画面に曲名と表記を小さく出す */
 function playBattleBgm() {
+  prepareJingles();                      // 決着のジングルを先に音にしておく
   const key = battleBgm();
   playBgm(key);
   creditToast(key, 2400);
+}
+/* 決着の音: 勝ち・負けのジングル (本人作)。勝ちの演出 (COLLECTION の VICTORY) が専用の音を持つならそちらを鳴らす。
+   ジングルを鳴らせない (BGM の音量 0・読めていない) ときは今までの効果音 */
+function resultSound(win, victory) {
+  const fxSfx = win ? victoryFx(victory).sfx : 'lose';
+  if (fxSfx !== 'win' && fxSfx !== 'lose') { sfx(fxSfx); return; }
+  playJingle(win ? 'win' : 'lose').then(ok => { if (!ok) sfx(fxSfx); }, () => sfx(fxSfx));
 }
 function creditToast(key, wait) {
   const t = trackOf(key);
@@ -5992,7 +6009,7 @@ async function afterTurn() {
     }
     UI.setPrompt(win ? 'あなたの勝ち' : '敗北', 'end');
     const victory = cosmetic('victory', 'default');
-    sfx(win ? victoryFx(victory).sfx : 'lose');
+    resultSound(win, victory);
     /* iPhone: 決着の演出の間も、すりガラスの効果を切っておく (コンパイルの演出が終わると戻していた。結果の画面を出すときに戻す) */
     document.body.classList.add('compiling');
     if (!recordedBefore) {

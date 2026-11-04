@@ -6,7 +6,7 @@
  *   ブラウザの自動再生の制限で鳴らせなかったときは、次に画面に触れたときに鳴らし直す
  *   クレジット (必須): 煉獄庭園 (設定の画面と COLLECTION の BGM に出す)
  * ========================================================================= */
-import { routeMedia, isMuted, initAudio, onMuteChange, kickAudio } from './audio.js';
+import { routeMedia, isMuted, initAudio, onMuteChange, kickAudio, audioOut } from './audio.js';
 import { settings, onSettings } from './settings.js';
 import { BGM_RELEASED } from './rewards.js';
 import { LoopPlayer } from './bgm-loop.js';
@@ -30,6 +30,14 @@ export const MENU_BGMS = ['planetarium', 'madoromu_neon', 'nine_jack', 'kidou', 
    週替わり3連戦の3戦目 (前は彷徨いの言葉は天に導かれ)。Circuit Red・Far Shore: メニューのシャッフル (COLLECTION の BGM にも) */
 export const BOT_BGM = 'bot_routine';
 export const GATE_BGM = 'third_gate';
+/* 勝ち抜き戦のボスごとの曲 (本人作、2026-11-04)。キーは run.js の BOSSES / FINAL_BOSS の id。
+   GATEKEEPER は CHALLENGE の「最強」でも流す。週替わりの3戦目は Third Gate のまま */
+export const BOSS_THEMES = { inferno: 'boss_inferno', abyss: 'boss_abyss', clock: 'boss_clock', mirror: 'boss_mirror',
+  sanctuary: 'boss_sanctuary', glacier: 'boss_glacier', strongest: 'boss_gatekeeper' };
+/* 4人のテーマ曲 (本人作、2026-11-04)。キーは avatar.js の id。本気の4人 (CHALLENGE) ではその子の曲、
+   ふつうの CPU 戦でその子が相手なら THEME_RATE の確率で (おまかせのときだけ) */
+export const CHAR_THEMES = { shion: 'theme_shion', nadeshiko: 'theme_akane', asagi: 'theme_ruri', yamabuki: 'theme_anzu' };
+export const THEME_RATE = 0.3;
 /* 本人が Musio Studio で作った曲 (2026-11-01)。依頼書は project-files の bgm-requests/song-requests-2026-11-01.md。
    起動: メニューのシャッフルに入れる (COLLECTION の BGM にも)。判定: ストーリーの機体戦 (boss の付いた対戦)。止めていい: 終章の所長との最後の判定 (前の2戦は判定)。
    2026-11-01 の2回目に3曲とも作り直した版へ差し替え、対戦の3曲 (Protocol Drive: ふつうの対戦 / Last Compile: あと1本 / Overclock: 強敵) を足した。
@@ -43,7 +51,11 @@ const LOOP_SECONDS = { kidou: 4712727 / 48000, hantei: 5501538 / 48000, halt_sho
   /* 2026-11-04 に足した12曲 */
   bot_routine: 7920000 / 48000, third_gate: 7488000 / 48000, circuit_red: 6240000 / 48000, last_line: 5120000 / 48000,
   last_signal: 4822326 / 48000, deadlock: 5068800 / 48000, handshake: 7783784 / 48000, cold_boot: 7346087 / 48000,
-  far_shore: 5376000 / 48000, odd_protocol: 4803158 / 48000, kernel_march: 5934545 / 48000, zero_margin: 4411915 / 48000 };
+  far_shore: 5376000 / 48000, odd_protocol: 4803158 / 48000, kernel_march: 5934545 / 48000, zero_margin: 4411915 / 48000,
+  /* 4人のテーマとボスの曲 (2026-11-04) */
+  theme_shion: 4237714 / 48000, theme_akane: 4114286 / 48000, theme_ruri: 4369655 / 48000, theme_anzu: 3840000 / 48000,
+  boss_inferno: 4320000 / 48000, boss_abyss: 5068800 / 48000, boss_clock: 4224000 / 48000, boss_mirror: 3993600 / 48000,
+  boss_sanctuary: 4320000 / 48000, boss_glacier: 3756522 / 48000, boss_gatekeeper: 3793171 / 48000 };
 /* ループ素材の m4a は、曲の前後にループの続きを 2048 サンプル (44.1kHz) ずつ付けて符号化してある (bgm-loop.js の pad)。
    作り方: WAV を3回つなげて 44.1kHz に直し、真ん中の1周とその前後 2048 サンプルを切り出して 96kbps の AAC に
    ffmpeg -stream_loop 2 -i <wav> -af "aresample=44100:resampler=soxr:precision=28,atrim=start_sample=<S-2048>:end_sample=<2S+2048>" -c:a aac -b:a 96k <key>.m4a
@@ -138,6 +150,8 @@ const LOUDNESS = {
   /* 2026-11-04 に足した本人作の12曲。メニューの2曲は -14 (静かな曲) */
   bot_routine: -11.0, third_gate: -11.1, circuit_red: -14.1, last_line: -11.0, last_signal: -11.0, deadlock: -11.1,
   handshake: -11.1, cold_boot: -11.1, far_shore: -14.0, odd_protocol: -11.0, kernel_march: -11.1, zero_margin: -11.0,
+  theme_shion: -11.1, theme_akane: -11.1, theme_ruri: -11.0, theme_anzu: -11.1, boss_inferno: -11.1, boss_abyss: -11.1,
+  boss_clock: -11.1, boss_mirror: -11.1, boss_sanctuary: -11.1, boss_glacier: -11.1, boss_gatekeeper: -11.1,
   /* ストーリー (甘茶の音楽工房)。静かな曲が多く、上げられるのは 1.6 倍までなので、対戦の曲より少し小さく鳴る (会話の後ろに置く曲なのでそのまま) */
   genjitsunosukima: -19.3, mizunishizumupiano: -16.9, janegreynoshouzou: -14.2, rokugatsunoamaoto: -15.2, kanatanikasumujoukisen: -16.1,
   elegyfourstrings2: -14.3, inishienohiseki: -14.3, gozennijinomunashisa: -15.9, natsunokiri: -17.7, sangatsunosundasora: -17.4
@@ -318,6 +332,43 @@ export function duckBgm(ms) {
   route.set(level() * 0.4, 0.06);
   clearTimeout(duckTimer);
   duckTimer = setTimeout(() => { if (want) route.set(level(), 0.3); }, ms);
+}
+
+/* 決着のジングル (本人作、2026-11-04): 勝ち・負けで1回だけ鳴らす短い曲。Web Audio で音にしておいて鳴らす
+   (<audio> は iPhone で画面に触れた瞬間でないと初めの1回を鳴らせないため)。BGM の音量に合わせ、BGM が 0 なら鳴らさない */
+const JINGLES = { win: ['jingle_win.m4a', -12.2], lose: ['jingle_lose.m4a', -14.2] };
+const jingleBuf = {};
+/** 対戦の始まりに読んでおく (決着のときに読み込みを待たないように) */
+export function prepareJingles() {
+  const o = audioOut();
+  if (!o) return;
+  for (const [kind, [file]] of Object.entries(JINGLES)) {
+    if (jingleBuf[kind]) continue;
+    jingleBuf[kind] = fetch('art/bgm/' + file).then(r => (r.ok ? r.arrayBuffer() : Promise.reject(r.status)))
+      .then(b => new Promise((res, rej) => o.ctx.decodeAudioData(b, res, rej)))
+      .catch(() => { delete jingleBuf[kind]; return null; });
+  }
+}
+/** 'win' / 'lose' のジングルを鳴らす。鳴らせたら true (鳴らせないときは呼んだ側が効果音を鳴らす) */
+export async function playJingle(kind) {
+  const j = JINGLES[kind];
+  const o = audioOut();
+  if (!j || !o || isMuted() || !BATTLE_BGM_ON) return false;
+  const vol = Math.max(0, Math.min(1, (settings().bgmVol ?? 30) / 100)) * 0.7 * Math.min(1.6, Math.pow(10, (LOUD_TARGET - j[1]) / 20));
+  if (!vol) return false;
+  prepareJingles();
+  const buf = await jingleBuf[kind];
+  if (!buf || o.ctx.state !== 'running') return false;
+  try {
+    const src = o.ctx.createBufferSource();
+    const g = o.ctx.createGain();
+    src.buffer = buf;
+    g.gain.value = vol;
+    src.connect(g);
+    g.connect(o.out);
+    src.start();
+    return true;
+  } catch (e) { return false; }
 }
 
 export function stopBgm() {
