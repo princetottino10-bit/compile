@@ -53,6 +53,18 @@ const ROWS = [
   ['last_signal', 'Last Signal', 'Ryunosuke', '', true],
   ['deadlock', 'Deadlock', 'Ryunosuke', '', true],
   ['zero_margin', 'Zero Margin', 'Ryunosuke', '', true],
+  /* 4人のテーマと勝ち抜き戦のボスの曲 (2026-11-04) */
+  ['theme_shion', '紫苑のテーマ', 'Ryunosuke', '', true],
+  ['theme_akane', '茜のテーマ', 'Ryunosuke', '', true],
+  ['theme_ruri', '瑠璃のテーマ', 'Ryunosuke', '', true],
+  ['theme_anzu', '杏のテーマ', 'Ryunosuke', '', true],
+  ['boss_inferno', '業火の王', 'Ryunosuke', '', true],
+  ['boss_abyss', '深淵の主', 'Ryunosuke', '', true],
+  ['boss_clock', '時計塔の番人', 'Ryunosuke', '', true],
+  ['boss_mirror', '鏡の迷宮', 'Ryunosuke', '', true],
+  ['boss_sanctuary', '聖域の守り手', 'Ryunosuke', '', true],
+  ['boss_glacier', '氷結の女帝', 'Ryunosuke', '', true],
+  ['boss_gatekeeper', 'GATEKEEPER', 'Ryunosuke', '', true],
   /* CHIP で交換 (2026-10-04 に足した) */
   ['noesis', 'Noesis', 'まんぼう二等兵 (OpenTracks)', '', false],
   ['sagittarius', 'Sagittarius', 'まんぼう二等兵 (OpenTracks)', '', false],
