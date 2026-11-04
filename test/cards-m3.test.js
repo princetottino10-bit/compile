@@ -437,3 +437,18 @@ function pickAny(req, rnd) {
   if (k === 'arrange') return req.exact === 'transposition' ? [1, 0, 2] : [2, 0, 1];
   return [];
 }
+
+test('ENVY_2: 相手がコントロールを持っていなければ、開始で取らず「発動」とも出さない', () => {
+  for (const control of [-1, 0]) {
+    const res = pz({ protos: P0, lines: [[['ENVY_2', true]], [], []] }, { protos: P1 }, { useControl: true, control });
+    assert.equal(res.state.control, control);
+    assert.ok(!res.state.actionLog.some(m => /ENVY_2\] 下段効果が発動/.test(m)), '条件を満たさないのに発動と出た');
+  }
+});
+
+test('ふつうのコントロール確認で取ったときは、理由をログに書く (直前の誘発で取ったと見間違えない)', () => {
+  const res = pz({ protos: P0, lines: [[['ENVY_2', true]], [['ENVY_6', true]], []] }, { protos: P1 }, { useControl: true, control: -1 });
+  assert.equal(res.state.control, 0);
+  assert.ok(res.state.actionLog.some(m => m === 'P1: コントロールを獲得 (2ライン以上で上回った)'));
+  assert.ok(!res.state.actionLog.some(m => /ENVY_2\] 下段効果が発動/.test(m)));
+});
