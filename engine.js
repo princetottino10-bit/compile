@@ -621,11 +621,60 @@ function triggerVisible(st, uid, slot) {
   return true;
 }
 
+/* ifState の条件 (盤面を変えずに読むだけ)。開始・終了などの誘発が条件を満たさないときに、
+   「発動」と見せずに飛ばすのにも使う (execTrigger) */
+function stateCondOk(st, fr, op) {
+  const loc = locate(st, fr.source);
+  let ok = false;
+  if (op.cond === 'handEmpty') ok = st.players[fr.controller].hand.length === 0;
+  else if (op.cond === 'handGe2') ok = st.players[fr.controller].hand.length >= 2;
+  else if (op.cond === 'trashNonEmpty') ok = st.players[fr.controller].trash.length > 0;
+  else if (op.cond === 'protoKindsGe6') ok = countProtoKinds(st) >= 6;
+  else if (op.cond === 'protoKindsLe3') ok = countProtoKinds(st) <= 3;
+  else if (op.cond === 'otherProtoCardOnField') ok = countProtoOnField(st, defOf(st, fr.source).proto, fr.source) > 0;
+  else if (op.cond === 'protoCountGe5') ok = countProtoOnField(st, defOf(st, fr.source).proto) >= 5;
+  /* ---- Main 3 ---- */
+  else if (op.cond === 'handEq') ok = st.players[fr.controller].hand.length === op.n;              // FULCRUM
+  else if (op.cond === 'handGe') ok = st.players[fr.controller].hand.length >= op.n;              // OVERWHELM_3
+  else if (op.cond === 'youHaveControl') ok = !!st.useControl && st.control === fr.controller;    // PRIDE_1/4
+  else if (op.cond === 'oppHasControl') ok = !!st.useControl && st.control === 1 - fr.controller; // ENVY_2, PRIDE_6
+  else if (op.cond === 'oppMoreCompiled') {                                                       // ENVY_5
+    const n = (s) => st.players[s].protocols.filter(p => p.compiled).length;
+    ok = n(1 - fr.controller) > n(fr.controller);
+  } else if (op.cond === 'youHaveUncoveredFaceDown') {                                            // AMBUSH_5
+    ok = [0, 1, 2].some(l => { const k = st.lines[l][fr.controller]; return k.length && !st.cards[k[k.length - 1]].faceUp; });
+  } else if (op.cond === 'moreCardsInPlay') {                                                    // OVERWHELM_4
+    const n = (s) => [0, 1, 2].reduce((a, l) => a + st.lines[l][s].length, 0);
+    ok = n(fr.controller) > n(1 - fr.controller);
+  } else if (op.cond === 'boundIsMine') {                                                         // SLOTH_2: 戻したのがあなたのカード
+    const u = fr.bind[op.ref || 'r'];
+    ok = u !== undefined && st.cards[u].owner === fr.controller;
+  }
+  else if (loc) {
+    if (op.cond === 'thisCovered') ok = !isTop(st, loc);
+    if (op.cond === 'thisCovers') ok = loc.idx > 0;
+    if (op.cond === 'oppLeadsThisLine') ok = lineTotal(st, loc.line, 1 - fr.controller) > lineTotal(st, loc.line, fr.controller);
+    if (op.cond === 'youLeadThisLine') ok = lineTotal(st, loc.line, fr.controller) > lineTotal(st, loc.line, 1 - fr.controller);   // PRIDE_2
+    if (op.cond === 'thisCoversOwnProto') {   // NOVA_3: このカードが同じプロトコルの表向きのカードを覆っている
+      const below = loc.idx > 0 ? st.cards[st.lines[loc.line][loc.side][loc.idx - 1]] : null;
+      ok = !!below && below.faceUp && DEFS[below.def].proto === defOf(st, fr.source).proto;
+    }
+  }
+  return ok;
+}
+
 function execTrigger(ctx, uid, slot, locked, ev) {
   const loc = locate(st_of(ctx), uid);
   if (!loc) return;
   const tr = effOf(ctx.st, uid)[slot].trigger;
   const fr = { source: uid, slot, controller: loc.side, line: loc.line, bind: {}, done: false, locked: !!locked, ev: ev || null };
+  /* 「開始：相手がコントロールを持っている場合、〜」(ENVY 1・PRIDE 2 など) のように、効果の全体が
+     条件つきで条件を満たさないときは、発動として見せない。発動の帯のすぐあとにふつうのコントロール確認で
+     マーカーが動くと、その効果で取ったように見えてしまう */
+  if (tr.ops.length === 1 && tr.ops[0].op === 'ifState' && !tr.ops[0].else && !stateCondOk(ctx.st, fr, tr.ops[0])) {
+    log(ctx, `[${defOf(ctx.st, uid).id}] ${slot === 'upper' ? '上段' : '下段'}効果は条件を満たさない`);
+    return;
+  }
   chainPush(ctx, uid, slot);
   try {
     log(ctx, `[${defOf(ctx.st, uid).id}] ${slot === 'upper' ? '上段' : '下段'}効果が発動`, uid);
@@ -1080,11 +1129,11 @@ function doRearrange(ctx, chooser, target, exact, controlContext) {
 }
 
 /* コントロールを得る (コントロールを使う試合だけ)。得たら「相手がコントロールを得たあと」(LUST_4・PRIDE_6) を起こす */
-function gainControl(ctx, side) {
+function gainControl(ctx, side, why) {
   const st = ctx.st;
   if (!st.useControl || st.control === side) return false;
   st.control = side;
-  log(ctx, `P${side + 1}: コントロールを獲得`);
+  log(ctx, `P${side + 1}: コントロールを獲得` + (why ? ` (${why})` : ''));
   fireEvent(ctx, { on: 'gainControl', player: side });
   return true;
 }
@@ -1400,42 +1449,7 @@ function execOp(ctx, fr, op) {
     }
 
     case 'ifState': {
-      const loc = locate(st, fr.source);
-      let ok = false;
-      if (op.cond === 'handEmpty') ok = st.players[fr.controller].hand.length === 0;
-      else if (op.cond === 'handGe2') ok = st.players[fr.controller].hand.length >= 2;
-      else if (op.cond === 'trashNonEmpty') ok = st.players[fr.controller].trash.length > 0;
-      else if (op.cond === 'protoKindsGe6') ok = countProtoKinds(st) >= 6;
-      else if (op.cond === 'protoKindsLe3') ok = countProtoKinds(st) <= 3;
-      else if (op.cond === 'otherProtoCardOnField') ok = countProtoOnField(st, defOf(st, fr.source).proto, fr.source) > 0;
-      else if (op.cond === 'protoCountGe5') ok = countProtoOnField(st, defOf(st, fr.source).proto) >= 5;
-      /* ---- Main 3 ---- */
-      else if (op.cond === 'handEq') ok = st.players[fr.controller].hand.length === op.n;              // FULCRUM
-      else if (op.cond === 'handGe') ok = st.players[fr.controller].hand.length >= op.n;              // OVERWHELM_3
-      else if (op.cond === 'youHaveControl') ok = !!st.useControl && st.control === fr.controller;    // PRIDE_1/4
-      else if (op.cond === 'oppHasControl') ok = !!st.useControl && st.control === 1 - fr.controller; // ENVY_2, PRIDE_6
-      else if (op.cond === 'oppMoreCompiled') {                                                       // ENVY_5
-        const n = (s) => st.players[s].protocols.filter(p => p.compiled).length;
-        ok = n(1 - fr.controller) > n(fr.controller);
-      } else if (op.cond === 'youHaveUncoveredFaceDown') {                                            // AMBUSH_5
-        ok = [0, 1, 2].some(l => { const k = st.lines[l][fr.controller]; return k.length && !st.cards[k[k.length - 1]].faceUp; });
-      } else if (op.cond === 'moreCardsInPlay') {                                                    // OVERWHELM_4
-        const n = (s) => [0, 1, 2].reduce((a, l) => a + st.lines[l][s].length, 0);
-        ok = n(fr.controller) > n(1 - fr.controller);
-      } else if (op.cond === 'boundIsMine') {                                                         // SLOTH_2: 戻したのがあなたのカード
-        const u = fr.bind[op.ref || 'r'];
-        ok = u !== undefined && st.cards[u].owner === fr.controller;
-      }
-      else if (loc) {
-        if (op.cond === 'thisCovered') ok = !isTop(st, loc);
-        if (op.cond === 'thisCovers') ok = loc.idx > 0;
-        if (op.cond === 'oppLeadsThisLine') ok = lineTotal(st, loc.line, 1 - fr.controller) > lineTotal(st, loc.line, fr.controller);
-        if (op.cond === 'youLeadThisLine') ok = lineTotal(st, loc.line, fr.controller) > lineTotal(st, loc.line, 1 - fr.controller);   // PRIDE_2
-        if (op.cond === 'thisCoversOwnProto') {   // NOVA_3: このカードが同じプロトコルの表向きのカードを覆っている
-          const below = loc.idx > 0 ? st.cards[st.lines[loc.line][loc.side][loc.idx - 1]] : null;
-          ok = !!below && below.faceUp && DEFS[below.def].proto === defOf(st, fr.source).proto;
-        }
-      }
+      const ok = stateCondOk(st, fr, op);
       if (ok) execOps(ctx, fr, op.ops);
       else if (op.else) execOps(ctx, fr, op.else);   // 「そうでない場合、〜」(NOVA_3・PRIDE_1)
       else fr.done = false;
@@ -2583,7 +2597,7 @@ function runTurnLoop(ctx) {
           let wins = 0;
           const sts = activeStatics(st);
           for (let l = 0; l < 3; l++) if (lineTotal(st, l, st.turn, sts) > lineTotal(st, l, 1 - st.turn, sts)) wins++;
-          if (wins >= 2 && st.control !== st.turn) gainControl(ctx, st.turn);
+          if (wins >= 2 && st.control !== st.turn) gainControl(ctx, st.turn, '2ライン以上で上回った');
         }
         st.phase = 'checkCompile';
         break;
