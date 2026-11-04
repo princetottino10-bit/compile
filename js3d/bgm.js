@@ -20,11 +20,16 @@ export const BATTLE_BGM_ON = true;
 /* ふつうの対戦のいつもの13曲 (2026-10-15 からおまかせはシャッフルで、持っている曲すべてから選ぶ。この13曲は鳴らせる曲の印と、iPhone の下準備に使う): OpenTracks (旧 DOVA-SYNDROME) (2026-10-13 に、まんぼう二等兵の BPM 135〜165 の8曲を足した。2026-11-01 に本人が Musio Studio で作った Iron Meridian (176 BPM) と Protocol Drive (154 BPM) を足した。
    あと1本の曲 TENSE_BGMS より遅くして、切り替わったときの差を残す)。
    OpenTracks の規約 (ファイルのまま取り出せる形で置かない) に合わせて m4a に変換して置いている */
-export const NORMAL_BGMS = ['cho_zunou', 'reflect', 'kaidoku', 'crescendo_jitter', 'switcheroo', 'monolith_black', 'particle_tones', 'tsuisekisha', 'clock_jitter', 'joudou_catharsis', 'blaze_a_trail', 'killer_roll', 'iron_meridian', 'protocol_drive'];
+export const NORMAL_BGMS = ['cho_zunou', 'reflect', 'kaidoku', 'crescendo_jitter', 'switcheroo', 'monolith_black', 'particle_tones', 'tsuisekisha', 'clock_jitter', 'joudou_catharsis', 'blaze_a_trail', 'killer_roll', 'iron_meridian', 'protocol_drive',
+  'handshake', 'cold_boot', 'odd_protocol', 'kernel_march'];   // 本人作 (2026-11-04): Handshake・Cold Boot・Odd Protocol (7/8)・Kernel March
 /* 強敵の曲: 本人作の Overclock (2026-11-01 に Z･E･R･O から替えた。Z･E･R･O は COLLECTION でいまも選べる) */
 export const STRONG_BGM = 'overclock';
 /* タイトル・メニュー (対戦以外) の落ち着いた4曲。2026-10-15 からおまかせはシャッフルになったので、選ぶのには使っていない (鳴らせる曲の印) */
-export const MENU_BGMS = ['planetarium', 'madoromu_neon', 'nine_jack', 'kidou'];
+export const MENU_BGMS = ['planetarium', 'madoromu_neon', 'nine_jack', 'kidou', 'circuit_red', 'far_shore'];
+/* Main 3 に合わせて足した本人作の曲 (2026-11-04)。Bot Routine: 公式ソロモード (BOT) の対戦。Third Gate: 勝ち抜き戦のボスと
+   週替わり3連戦の3戦目 (前は彷徨いの言葉は天に導かれ)。Circuit Red・Far Shore: メニューのシャッフル (COLLECTION の BGM にも) */
+export const BOT_BGM = 'bot_routine';
+export const GATE_BGM = 'third_gate';
 /* 本人が Musio Studio で作った曲 (2026-11-01)。依頼書は project-files の bgm-requests/song-requests-2026-11-01.md。
    起動: メニューのシャッフルに入れる (COLLECTION の BGM にも)。判定: ストーリーの機体戦 (boss の付いた対戦)。止めていい: 終章の所長との最後の判定 (前の2戦は判定)。
    2026-11-01 の2回目に3曲とも作り直した版へ差し替え、対戦の3曲 (Protocol Drive: ふつうの対戦 / Last Compile: あと1本 / Overclock: 強敵) を足した。
@@ -34,7 +39,11 @@ export const DIRECTOR_BGM = 'halt_shocho';
 /* つなぎ目なしで繰り返す曲と、その長さ (秒。元の WAV のサンプル数から)。末尾の余韻を冒頭に重ねたループ素材なので、
    <audio loop> の一瞬の途切れを避けて Web Audio で鳴らす (bgm-loop.js) */
 const LOOP_SECONDS = { kidou: 4712727 / 48000, hantei: 5501538 / 48000, halt_shocho: 128,
-  protocol_drive: 8078961 / 48000, last_compile: 3789474 / 48000, overclock: 6020000 / 48000 };
+  protocol_drive: 8078961 / 48000, last_compile: 3789474 / 48000, overclock: 6020000 / 48000,
+  /* 2026-11-04 に足した12曲 */
+  bot_routine: 7920000 / 48000, third_gate: 7488000 / 48000, circuit_red: 6240000 / 48000, last_line: 5120000 / 48000,
+  last_signal: 4822326 / 48000, deadlock: 5068800 / 48000, handshake: 7783784 / 48000, cold_boot: 7346087 / 48000,
+  far_shore: 5376000 / 48000, odd_protocol: 4803158 / 48000, kernel_march: 5934545 / 48000, zero_margin: 4411915 / 48000 };
 /* ループ素材の m4a は、曲の前後にループの続きを 2048 サンプル (44.1kHz) ずつ付けて符号化してある (bgm-loop.js の pad)。
    作り方: WAV を3回つなげて 44.1kHz に直し、真ん中の1周とその前後 2048 サンプルを切り出して 96kbps の AAC に
    ffmpeg -stream_loop 2 -i <wav> -af "aresample=44100:resampler=soxr:precision=28,atrim=start_sample=<S-2048>:end_sample=<2S+2048>" -c:a aac -b:a 96k <key>.m4a
@@ -78,9 +87,10 @@ export const PEEK_BGM = 'final_2sec';
 /* どちらかが勝ちまであと1本になったら (ふつうの3本勝負なら2本目のコンパイルのあと) 切り替える曲。
    まんぼう二等兵 (OpenTracks) の速くて緊張感のある6曲 (BPM 162〜216。ふつうの対戦の曲は 140〜170) から、試合ごとにランダム */
 export const TENSE_BGMS = ['interception', 'strike_despair', 'lobelia', 'will_you_cry', 'tactical_encounter', 'hangeki',
-  'last_compile'];   // 本人作の Last Compile (190 BPM、2026-11-01)
+  'last_compile',    // 本人作の Last Compile (190 BPM、2026-11-01)
+  'last_line', 'last_signal', 'deadlock', 'zero_margin'];   // 本人作 (2026-11-04): 180・172・200・188 BPM
 /* 本人作の曲は合わせて半分の確率で選ぶ (7曲で同じ重みだと7試合に1回しか流れない。本人の専用曲を「あと1本」の合図にする。2026-11-03) */
-export const OWN_TENSE_BGMS = ['last_compile'];
+export const OWN_TENSE_BGMS = ['last_compile', 'last_line', 'last_signal', 'deadlock', 'zero_margin'];
 const OWN_TENSE_RATE = 0.5;
 /** あと1本の曲を1つ選ぶ。avoid (いま流している曲) は選ばない。前の試合と同じ既製曲も選ばない
     (本人作は前の試合と同じでも選ぶ: 合図の曲なので続いてよい) */
@@ -125,6 +135,9 @@ const LOUDNESS = {
   /* 本人作の作り直し版と対戦の3曲 (2026-11-01 の2回目)。WAV の段階で -11 にそろえてある。起動だけ -14 (ピアノの立ち上がりを潰さないため)
      で、ここで +3 dB 上げて鳴らす (上げ幅の上限 1.6 倍 = +4 dB の内側なので、前の版のように WAV を上げてから変換しなくてよい) */
   kidou: -14.0, hantei: -11.1, halt_shocho: -11.2, protocol_drive: -11.1, last_compile: -11.0, overclock: -11.1,
+  /* 2026-11-04 に足した本人作の12曲。メニューの2曲は -14 (静かな曲) */
+  bot_routine: -11.0, third_gate: -11.1, circuit_red: -14.1, last_line: -11.0, last_signal: -11.0, deadlock: -11.1,
+  handshake: -11.1, cold_boot: -11.1, far_shore: -14.0, odd_protocol: -11.0, kernel_march: -11.1, zero_margin: -11.0,
   /* ストーリー (甘茶の音楽工房)。静かな曲が多く、上げられるのは 1.6 倍までなので、対戦の曲より少し小さく鳴る (会話の後ろに置く曲なのでそのまま) */
   genjitsunosukima: -19.3, mizunishizumupiano: -16.9, janegreynoshouzou: -14.2, rokugatsunoamaoto: -15.2, kanatanikasumujoukisen: -16.1,
   elegyfourstrings2: -14.3, inishienohiseki: -14.3, gozennijinomunashisa: -15.9, natsunokiri: -17.7, sangatsunosundasora: -17.4
