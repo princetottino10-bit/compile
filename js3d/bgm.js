@@ -36,7 +36,8 @@ export const BOSS_THEMES = { inferno: 'boss_inferno', abyss: 'boss_abyss', clock
   sanctuary: 'boss_sanctuary', glacier: 'boss_glacier', strongest: 'boss_gatekeeper' };
 /* 4人のテーマ曲 (本人作、2026-11-04)。キーは avatar.js の id。本気の4人 (CHALLENGE) ではその子の曲、
    ふつうの CPU 戦でその子が相手なら THEME_RATE の確率で (おまかせのときだけ) */
-export const CHAR_THEMES = { shion: 'theme_shion', nadeshiko: 'theme_akane', asagi: 'theme_ruri', yamabuki: 'theme_anzu' };
+export const CHAR_THEMES = { shion: 'theme_shion', nadeshiko: 'theme_akane', asagi: 'theme_ruri', yamabuki: 'theme_anzu',
+  zundamon: 'theme_zundamon', metan: 'theme_metan', tsumugi: 'theme_tsumugi', whitecul: 'theme_whitecul' };   // ゲスト4人 (2026-11-04)
 export const THEME_RATE = 0.3;
 /* 本人が Musio Studio で作った曲 (2026-11-01)。依頼書は project-files の bgm-requests/song-requests-2026-11-01.md。
    起動: メニューのシャッフルに入れる (COLLECTION の BGM にも)。判定: ストーリーの機体戦 (boss の付いた対戦)。止めていい: 終章の所長との最後の判定 (前の2戦は判定)。
@@ -54,6 +55,7 @@ const LOOP_SECONDS = { kidou: 4712727 / 48000, hantei: 5501538 / 48000, halt_sho
   far_shore: 5376000 / 48000, odd_protocol: 4803158 / 48000, kernel_march: 5934545 / 48000, zero_margin: 4411915 / 48000,
   /* 4人のテーマとボスの曲 (2026-11-04) */
   theme_shion: 4237714 / 48000, theme_akane: 4114286 / 48000, theme_ruri: 4369655 / 48000, theme_anzu: 3840000 / 48000,
+  theme_zundamon: 4114286 / 48000, theme_metan: 4538182 / 48000, theme_tsumugi: 3927273 / 48000, theme_whitecul: 5280000 / 48000,
   boss_inferno: 4320000 / 48000, boss_abyss: 5068800 / 48000, boss_clock: 4224000 / 48000, boss_mirror: 3993600 / 48000,
   boss_sanctuary: 4320000 / 48000, boss_glacier: 3756522 / 48000, boss_gatekeeper: 3793171 / 48000 };
 /* ループ素材の m4a は、曲の前後にループの続きを 2048 サンプル (44.1kHz) ずつ付けて符号化してある (bgm-loop.js の pad)。
@@ -150,7 +152,7 @@ const LOUDNESS = {
   /* 2026-11-04 に足した本人作の12曲。メニューの2曲は -14 (静かな曲) */
   bot_routine: -11.0, third_gate: -11.1, circuit_red: -14.1, last_line: -11.0, last_signal: -11.0, deadlock: -11.1,
   handshake: -11.1, cold_boot: -11.1, far_shore: -14.0, odd_protocol: -11.0, kernel_march: -11.1, zero_margin: -11.0,
-  theme_shion: -11.1, theme_akane: -11.1, theme_ruri: -11.0, theme_anzu: -11.1, boss_inferno: -11.1, boss_abyss: -11.1,
+  theme_shion: -11.1, theme_akane: -11.1, theme_ruri: -11.0, theme_anzu: -11.1, theme_zundamon: -11.1, theme_metan: -11.1, theme_tsumugi: -11.1, theme_whitecul: -11.1, boss_inferno: -11.1, boss_abyss: -11.1,
   boss_clock: -11.1, boss_mirror: -11.1, boss_sanctuary: -11.1, boss_glacier: -11.1, boss_gatekeeper: -11.1,
   /* ストーリー (甘茶の音楽工房)。静かな曲が多く、上げられるのは 1.6 倍までなので、対戦の曲より少し小さく鳴る (会話の後ろに置く曲なのでそのまま) */
   genjitsunosukima: -19.3, mizunishizumupiano: -16.9, janegreynoshouzou: -14.2, rokugatsunoamaoto: -15.2, kanatanikasumujoukisen: -16.1,
