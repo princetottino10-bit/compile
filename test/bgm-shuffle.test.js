@@ -65,4 +65,20 @@ test('対戦の場面の曲 (ふつうの対戦・あと1本・強敵・ソロ�
   const keys = [...B.NORMAL_BGMS, ...B.TENSE_BGMS, B.STRONG_BGM, B.BOT_BGM, B.GATE_BGM, B.STORY_BATTLE_BGM, B.DIRECTOR_BGM];
   for (const k of keys) assert.ok(B.fastEnough(k), k + ' は ' + B.BPM[k] + ' BPM');
   assert.ok(!B.fastEnough('theme_ruri') && B.fastEnough('theme_shion'));
+test('次の曲ボタン (skipBgm): 止めているときは鳴らし始めず、流しているときは持っている別の曲へ替える', async () => {
+  const B = await load();
+  B.stopBgm();
+  assert.equal(B.skipBgm('battle'), null);
+  B.playBgm('cho_zunou');
+  const pool = B.shufflePool();
+  let prev = 'cho_zunou';
+  for (let i = 0; i < 10; i++) {
+    const k = B.skipBgm('battle');
+    assert.ok(pool.includes(k), '持っている曲: ' + k);
+    assert.ok(B.battlePool().includes(k), '対戦では速い曲へ: ' + k);
+    assert.notEqual(k, prev, '同じ曲には替えない');
+    assert.equal(B.bgmState().want, k);
+    prev = k;
+  }
+  B.stopBgm();
 });

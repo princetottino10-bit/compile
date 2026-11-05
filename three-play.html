@@ -57,7 +57,7 @@
   #brand{display:flex;align-items:center;gap:9px;font:800 13px/1 "M PLUS 1",system-ui;letter-spacing:.22em;}
   #topRight{display:flex;align-items:center;gap:6px;margin-left:auto;}
   #topRight .btn{width:auto;min-width:0;min-height:26px;padding:0 12px;font-size:10px;pointer-events:auto;}
-  #topRight #btnMute{padding:0 9px;font-size:12px;display:inline-flex;align-items:center;justify-content:center;}
+  #topRight #btnMute,#topRight #btnNextBgm{padding:0 9px;font-size:12px;display:inline-flex;align-items:center;justify-content:center;}
   #topRight #btnMute.on{color:var(--pink);}
   /* すべての音を消す (タイトル・待合室・ストーリー)。対戦中は右上の #btnMute */
   #muteAll{display:none;position:fixed;left:max(14px,env(safe-area-inset-left));bottom:calc(14px + env(safe-area-inset-bottom));z-index:72;
@@ -1620,6 +1620,7 @@
   @keyframes swAct{50%{box-shadow:0 4px 16px rgba(0,0,0,.45),0 0 0 8px rgba(255,198,92,0);}}
   .sw-help{position:absolute;left:0;right:0;bottom:calc(16px + env(safe-area-inset-bottom));margin:0;text-align:center;pointer-events:none;
     font:600 12px/1.4 "M PLUS 1",system-ui;color:rgba(255,255,255,.72);letter-spacing:.04em;padding:0 64px;}
+  .sw-help span{display:inline-block;white-space:nowrap;margin:0 .6em;}
   @media (prefers-reduced-motion: reduce){ .sw-act{animation:none;} }
   /* ---------- ストーリー (story-ui.js) ---------- */
   #storyMap{position:fixed;inset:0;z-index:57;display:none;overflow-y:auto;padding:calc(56px + env(safe-area-inset-top)) 16px 32px;
@@ -2593,9 +2594,9 @@
     #logDock{top:calc(100px + env(safe-area-inset-top));bottom:66px;width:min(260px,70vw);}
     #btnLog{top:48%;width:34px;height:88px;font-size:11px;}   /* 縦持ちは親指の届く高さに (上だと触りづらかった)。自分の山の枚数表示にはかけない。幅は指で押せるように (前は 22px) */
     /* 右上の CARDS・設定・音: 指で押せる高さに (前は 26px) */
-    #topRight{gap:8px;}
-    #topRight .btn{min-height:40px;padding:0 13px;font-size:11px;}
-    #topRight #btnMute{padding:0 12px;font-size:14px;}
+    #topRight{gap:6px;}
+    #topRight .btn{min-height:40px;padding:0 11px;font-size:11px;}
+    #topRight #btnMute,#topRight #btnNextBgm{padding:0 10px;font-size:14px;}   /* ⏭ を足した分、相手の名札を押しつぶさないよう少し詰める */
     /* 縦持ちの INFO: 左の端のつまみ (LOG と同じ形)。開くと効いている上段・下段の一覧を左に出す */
     #btnInfo{display:block;left:env(safe-area-inset-left)!important;width:34px;height:88px;font-size:11px;
       /* LOG のつまみと同じ高さに (LOG はログの枠 (上 100px・下 66px) の中の 48%。前は画面全体の 48% で、INFO が上にずれていた) */
@@ -4819,6 +4820,7 @@
     <div id="topRight">
       <button id="btnCards" class="btn" type="button" title="カードリスト" aria-label="カードリスト">CARDS</button>
       <button id="btnSettings" class="btn" type="button" title="設定・メニューに戻る" aria-label="設定・メニューに戻る">⚙</button>
+      <button id="btnNextBgm" class="btn" type="button" title="BGM を次の曲へ" aria-label="BGM を次の曲へ"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="currentColor"><path d="M4 6l8 6-8 6zM12 6l8 6-8 6z"/><rect x="19" y="6" width="2.4" height="12" rx=".6"/></svg></button>
       <button id="btnMute" class="btn" type="button" title="すべての音を消す" aria-label="すべての音を消す">🔊</button>
     </div>
   </div>
@@ -4934,7 +4936,8 @@
       "./js3d/backdrops.js": "./js3d/backdrops.js?v=78f67f4758",
       "./js3d/bgm-loop.js": "./js3d/bgm-loop.js?v=92eef374d1",
       "./js3d/bgm-shop.js": "./js3d/bgm-shop.js?v=a475d4d50d",
-      "./js3d/bgm.js": "./js3d/bgm.js?v=1f889584a9",
+      "./js3d/bgm.js": "./js3d/bgm.js?v=647fd8deea",
+      "./js3d/bloom-guard.js": "./js3d/bloom-guard.js?v=607df41849",
       "./js3d/board.js": "./js3d/board.js?v=fd9b31ba0a",
       "./js3d/bootui.js": "./js3d/bootui.js?v=15220963bc",
       "./js3d/bot-scenarios.js": "./js3d/bot-scenarios.js?v=914398f8fc",
@@ -4979,7 +4982,7 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=2b4dbc6066",
       "./js3d/logformat.js": "./js3d/logformat.js?v=e3548c74d1",
-      "./js3d/main.js": "./js3d/main.js?v=20290264a7",
+      "./js3d/main.js": "./js3d/main.js?v=841dc5a109",
       "./js3d/mobcards.js": "./js3d/mobcards.js?v=2a6bc79376",
       "./js3d/motion.js": "./js3d/motion.js?v=71cd68f8ff",
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
@@ -5020,7 +5023,7 @@
       "./js3d/setup.js": "./js3d/setup.js?v=a65d1f9f90",
       "./js3d/solodraft.js": "./js3d/solodraft.js?v=4c1693a5ab",
       "./js3d/spectate.js": "./js3d/spectate.js?v=96a7ee67d5",
-      "./js3d/stage.js": "./js3d/stage.js?v=f4cae41c31",
+      "./js3d/stage.js": "./js3d/stage.js?v=026b6eae08",
       "./js3d/stats-data.js": "./js3d/stats-data.js?v=a50201f1ab",
       "./js3d/stats.js": "./js3d/stats.js?v=a9074a3c8f",
       "./js3d/steps.js": "./js3d/steps.js?v=13e73b20fe",
@@ -5032,7 +5035,7 @@
       "./js3d/story-scenery-warehouse.js": "./js3d/story-scenery-warehouse.js?v=c524a114c0",
       "./js3d/story-scenery.js": "./js3d/story-scenery.js?v=9fa267bcf9",
       "./js3d/story-ui.js": "./js3d/story-ui.js?v=ccd0b9db62",
-      "./js3d/story-world.js": "./js3d/story-world.js?v=3f0f8426d6",
+      "./js3d/story-world.js": "./js3d/story-world.js?v=91dcc44de3",
       "./js3d/story.js": "./js3d/story.js?v=a6e591a848",
       "./js3d/support.js": "./js3d/support.js?v=efb00a908c",
       "./js3d/theme.js": "./js3d/theme.js?v=f923617cfc",
@@ -5079,7 +5082,7 @@
   <link rel="modulepreload" href="js3d/turning.js?v=9c7f79654e">
   <link rel="modulepreload" href="js3d/achievements-ui.js?v=fa1f8f5848">
   <link rel="modulepreload" href="vendor/three.module.js?v=985eb92490">
-  <link rel="modulepreload" href="js3d/stage.js?v=f4cae41c31">
+  <link rel="modulepreload" href="js3d/stage.js?v=026b6eae08">
   <link rel="modulepreload" href="js3d/board.js?v=fd9b31ba0a">
   <link rel="modulepreload" href="js3d/control.js?v=aebfff9c0f">
   <link rel="modulepreload" href="js3d/panel.js?v=b07699d2a4">
@@ -5098,7 +5101,7 @@
   <link rel="modulepreload" href="js3d/stats-data.js?v=a50201f1ab">
   <link rel="modulepreload" href="js3d/story.js?v=a6e591a848">
   <link rel="modulepreload" href="js3d/story-ui.js?v=ccd0b9db62">
-  <link rel="modulepreload" href="js3d/story-world.js?v=3f0f8426d6">
+  <link rel="modulepreload" href="js3d/story-world.js?v=91dcc44de3">
   <link rel="modulepreload" href="js3d/rewards.js?v=0e8e1e0ca0">
   <link rel="modulepreload" href="js3d/gachafx.js?v=274272f746">
   <link rel="modulepreload" href="js3d/cosmetics-ui.js?v=c3df1d4a44">
@@ -5123,7 +5126,7 @@
   <link rel="modulepreload" href="js3d/arena.js?v=ef66a1e5bb">
   <link rel="modulepreload" href="js3d/audio.js?v=76fc58cf1a">
   <link rel="modulepreload" href="js3d/mutebutton.js?v=1362dbc4d6">
-  <link rel="modulepreload" href="js3d/bgm.js?v=1f889584a9">
+  <link rel="modulepreload" href="js3d/bgm.js?v=647fd8deea">
   <link rel="modulepreload" href="js3d/bgm-shop.js?v=a475d4d50d">
   <link rel="modulepreload" href="js3d/emblems.js?v=c5a815fe49">
   <link rel="modulepreload" href="js3d/layout.js?v=2b4dbc6066">
@@ -5164,6 +5167,7 @@
   <link rel="modulepreload" href="vendor/jsm/postprocessing/RenderPass.js">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/UnrealBloomPass.js">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/OutputPass.js">
+  <link rel="modulepreload" href="js3d/bloom-guard.js?v=607df41849">
   <link rel="modulepreload" href="vendor/jsm/environments/RoomEnvironment.js">
   <link rel="modulepreload" href="js3d/card.js?v=71f8503f87">
   <link rel="modulepreload" href="js3d/protocards.js?v=79426a5f07">
@@ -5199,6 +5203,6 @@
   <link rel="stylesheet" href="js3d/run-fx.css?v=76f975b9ad">
   <link rel="stylesheet" href="js3d/deus.css?v=676148021b">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=20290264a7"></script>
+  <script type="module" src="js3d/main.js?v=841dc5a109"></script>
 </body>
 </html>

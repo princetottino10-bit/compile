@@ -333,16 +333,32 @@ export function prepareBgm(key, decode = true) {
 
 /** 対戦の途中で曲を替える: いまの曲を ms かけて小さくしてから、次の曲を頭から (ぶつ切りにしない)。
     小さくしている間に次の曲を音にしておく (つなぎ目なしの曲は、読み終わるまで鳴らないため) */
+let crossTimer = null;
 export function crossBgm(key, ms = 1100) {
   if (!el || !want || !route) { playBgm(key); return; }
   if (want === key) return;
   prepareBgm(key);
   const was = want;
   route.set(0, ms / 1000 / 3);
-  setTimeout(() => {
+  /* 小さくしている間にまた替えたら (次の曲ボタンを続けて押した)、あとの曲だけ鳴らす */
+  clearTimeout(crossTimer);
+  crossTimer = setTimeout(() => {
     if (want !== was) return;             // その間に止めた・別の曲にした (決着など)
     playBgm(key);
   }, ms);
+}
+
+/** 次の曲ボタン (2026-11-05 本人の希望): いま流している曲をやめて、持っている曲からシャッフルで次の曲へ替える。
+    ctx: 'battle' / 'online' / 'menu' (替えた曲が終わったら、その場のシャッフルを続ける)。
+    COLLECTION で曲を選んでいる場合は、替えた曲を繰り返す (選んだ曲には次の対戦で戻る)。替えた曲の key を返す (替えられなければ null) */
+export function skipBgm(ctx = 'battle', ms = 600) {
+  if (!want) return null;                          // 止めている (決着のあと・演出の前) ときは鳴らし始めない
+  const next = pickShuffleBgm(Math.random, (ctx === 'menu' ? shufflePool() : battlePool()).filter(k => k !== want && k !== shuffled));
+  if (!next) return null;
+  shuffleCtx = ctx;
+  shuffled = next;
+  crossBgm(next, ms);
+  return next;
 }
 
 /** 決着したときなど: 少しずつ小さくして止める (ms かけて) */
