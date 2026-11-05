@@ -3949,9 +3949,6 @@ const AI_AIM_COMBOS = [
   { pieces: { ICE_1: 'top', LUST_6: 'play' } },
   { pieces: { ICE_1: 'top', GRAVITY_6: 'play' } },
   { pieces: { ICE_1: 'top', INERT_4: 'play' } },
-  /* デメリットを得に変える (2026-11-05)。RIGID 7 の終了で相手が「1枚引く」を選ぶと、WAR 0 (相手が引いたあと1枚削除) が起きる。
-     「出す」を選ばれても相手は1手ぶん札を減らす (O050、100・150・150盤面で +6.1 / +7.8 / +2.4) */
-  { pieces: { WAR_1: 'top', RIGID_6: 'play' } },
   /* COURAGE 0 の終了で1枚捨てると相手が2枚捨て (COURAGE 0・CORRUPTION 2)、PLAGUE 1 で2枚引く */
   { pieces: { PLAGUE_2: 'up', COURAGE_1: 'top', CORRUPTION_3: 'up' } },
   /* WAR 3 の下段「相手が捨てたあと: 裏で1枚出せる」に、相手に捨てさせる札を足す */
@@ -5239,6 +5236,17 @@ function aiPruneSelfReturn(st, req) {
   return rest.length && rest.length < req.candidates.length ? { ...req, candidates: rest } : req;
 }
 
+/* 向こう側 (1 - me) に、me が引いたら起きる「相手が引いたあと」の札が見えているか */
+function aiOppPunishesDraw(st, me) {
+  for (let l = 0; l < 3; l++) for (const uid of st.lines[l][1 - me]) {
+    const eff = effOf(st, uid);
+    for (const slot of ['upper', 'middle', 'lower']) {
+      const tr = eff && eff[slot] && eff[slot].trigger;
+      if (tr && tr.on === 'afterOppDraw' && triggerVisible(st, uid, slot)) return true;
+    }
+  }
+  return false;
+}
 function smartPicks(st, req) {
   if (st.bot && req.player === st.bot.side && !req.__bot) return botAnswer(st, req);
   req = aiPruneSelfReturn(st, req);
@@ -5448,6 +5456,12 @@ function smartPicks(st, req) {
         const here = req.protocols[req.controlLine];
         const otherPending = req.protocols.some(protocol => !protoHas(protocol, 'DIVERSITY') && !protocol.compiled);
         if (here && protoHas(here, 'DIVERSITY') && otherPending) return [0];
+      }
+      /* RIGID 7 (RIGID_6) の「相手は1枚引くか1枚プレイするかを選ぶ」: 向こう側に「相手が引いたあと」の札 (WAR 0 / MIRROR 4 など)
+         が見えているのに引くのはアホすぎる。手札があるならプレイを選ぶ (ユーザー 2026-11-05「1枚出すを選べばいいだけ」「アホすぎるのは ng」) */
+      if (req.prompt === 'choice' && req.context === 'RIGID_6' && st.players[me].hand.length > 0) {
+        const playIdx = req.options.indexOf('play');
+        if (playIdx >= 0 && aiOppPunishesDraw(st, me)) return [playIdx];
       }
       if (req.options.length <= 1 && !req.optional) return [0];
       let best = [0], bestSc = -Infinity;
