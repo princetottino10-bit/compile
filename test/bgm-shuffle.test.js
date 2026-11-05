@@ -41,6 +41,32 @@ test('曲が1つしかなくても、曲が無くても止まらない', async (
   assert.equal(B.pickShuffleBgm(Math.random, []), null);
 });
 
+test('COLLECTION の曲はどれも BPM が書いてある (曲を足したら測って bgm.js の BPM に書く)', async () => {
+  const B = await load();
+  const { TRACKS } = await import('../js3d/bgm-shop.js');
+  const missing = TRACKS.map(t => t.key).filter(k => !(k in B.BPM));
+  assert.deepEqual(missing, []);
+});
+
+test('対戦のシャッフルは BATTLE_MIN_BPM 以上の曲だけ。メニューの曲・遅い曲は入らず、メニューのシャッフルには残る', async () => {
+  const B = await load();
+  const pool = B.battlePool();
+  assert.ok(pool.length >= 20, '対戦の曲が少なすぎる: ' + pool.length);
+  for (const k of pool) assert.ok(B.BPM[k] >= B.BATTLE_MIN_BPM, k + ' は ' + B.BPM[k] + ' BPM');
+  for (const k of [...B.MENU_BGMS, B.RUN_BGM, 'theme_ruri', 'theme_whitecul', 'boss_abyss']) {
+    assert.ok(!pool.includes(k), k + ' が対戦のシャッフルに入っている');
+  }
+  assert.ok(B.shufflePool().includes('circuit_red') && B.shufflePool().includes('theme_whitecul'), 'メニューのシャッフルからは外さない');
+  for (let i = 0; i < 50; i++) assert.ok(pool.includes(B.onlineBattleBgm()), 'オンラインも対戦の曲から');
+});
+
+test('対戦の場面の曲 (ふつうの対戦・あと1本・強敵・ソロ・勝ち抜き戦) は BATTLE_MIN_BPM 以上', async () => {
+  const B = await load();
+  const keys = [...B.NORMAL_BGMS, ...B.TENSE_BGMS, B.STRONG_BGM, B.BOT_BGM, B.GATE_BGM, B.STORY_BATTLE_BGM, B.DIRECTOR_BGM];
+  for (const k of keys) assert.ok(B.fastEnough(k), k + ' は ' + B.BPM[k] + ' BPM');
+  assert.ok(!B.fastEnough('theme_ruri') && B.fastEnough('theme_shion'));
+});
+
 test('次の曲ボタン (skipBgm): 止めているときは鳴らし始めず、流しているときは持っている別の曲へ替える', async () => {
   const B = await load();
   B.stopBgm();
@@ -51,6 +77,7 @@ test('次の曲ボタン (skipBgm): 止めているときは鳴らし始めず�
   for (let i = 0; i < 10; i++) {
     const k = B.skipBgm('battle');
     assert.ok(pool.includes(k), '持っている曲: ' + k);
+    assert.ok(B.battlePool().includes(k), '対戦では速い曲へ: ' + k);
     assert.notEqual(k, prev, '同じ曲には替えない');
     assert.equal(B.bgmState().want, k);
     prev = k;
