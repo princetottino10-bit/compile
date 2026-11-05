@@ -14,6 +14,7 @@ import { XP_GAIN } from './xp.js';
 import { protocolSummary, conquered, beatStrongest, CONQUER_TOTAL } from './stats-data.js';
 import { GACHA_ITEMS } from './rewards.js';
 import { BOT_SCENARIOS, isBotLevel } from './bot-scenarios.js';
+import { bestFromLedger, MAX_STAGE } from './endless.js';
 
 const onlineWin = (e) => e.src === 'online' && e.xp > XP_GAIN.onlinePlay;   // 勝ったときだけ多く入る
 
@@ -111,6 +112,9 @@ export const TROPHIES = [
   { id: 'lock', tier: 'silver', name: 'LOCKSMITH', desc: '「ロック特化」の CPU に勝つ', test: (c) => beat(c, 4) },
   { id: 'streak5', tier: 'silver', name: 'ON A ROLL', desc: 'CPU 戦で5連勝する', test: (c) => streak(c.records, true) >= 5, progress: (c) => [Math.min(5, streak(c.records, true)), 5] },
   { id: 'run', tier: 'silver', name: 'RUNNER', desc: 'RUN を全勝クリアする', test: (c) => xpHas(c, e => e.src === 'run') },
+  /* GATEKEEPER 連勝 (endless.js)。節目の経験値の帳簿 (ek:<数>) で数えるので、別の端末の記録も入る */
+  { id: 'endless3', tier: 'silver', name: 'HOLD THE GATE', desc: 'GATEKEEPER 連勝で3連勝する', test: (c) => bestFromLedger(c.xp) >= 3 },
+  { id: 'endless7', tier: 'gold', name: 'GATE CRASHER', desc: 'GATEKEEPER 連勝で' + (MAX_STAGE + 1) + '連勝する (ルールが全部そろった GATEKEEPER に勝つ)', test: (c) => bestFromLedger(c.xp) >= MAX_STAGE + 1 },
   { id: 'weekly', tier: 'gold', name: 'WEEKLY CHAMP', desc: 'WEEKLY をクリアする (専用スリーブ LAUREL)', test: (c) => xpHas(c, e => e.src === 'weekly') },
   { id: 'level10', tier: 'silver', name: 'VETERAN', desc: 'プレイヤーレベル10になる', test: (c) => c.level >= 10, progress: (c) => [Math.min(c.level, 10), 10] },
   { id: 'gold_card', tier: 'silver', name: 'GOLDEN TOUCH', desc: 'カードの縁を金にする (そのカードで25勝)', test: (c) => tierCards(c, 25) >= 1 },
