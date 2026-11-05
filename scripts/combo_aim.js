@@ -38,6 +38,7 @@ const COMBOS = {
   warCourage: { name: 'WAR 3 + COURAGE 0', protos: ['WAR', 'COURAGE'], pieces: { WAR_4: 'top', COURAGE_1: 'top' } },
   warCourageCorr: { name: 'WAR 3 + COURAGE 0 + CORRUPTION 2', protos: ['WAR', 'COURAGE', 'CORRUPTION'], pieces: { WAR_4: 'top', COURAGE_1: 'top', CORRUPTION_3: 'up' } },
   war1Peace: { name: 'WAR 1 + PEACE 1', protos: ['WAR', 'PEACE'], pieces: { WAR_2: 'top', PEACE_1: 'play' } },
+  warRigid: { name: 'WAR 0 + RIGID 7', protos: ['WAR', 'RIGID'], pieces: { WAR_1: 'top', RIGID_6: 'play' } },
   wrath1Lust: { name: 'WRATH 1 + LUST 0', protos: ['WRATH', 'LUST'], pieces: { WRATH_2: 'top', LUST_1: 'play' } },
   apathyOverwhelm: { name: 'APATHY 0 + OVERWHELM 2', protos: ['APATHY', 'OVERWHELM'], pieces: { APATHY_1: 'up', OVERWHELM_2: 'play' } },
   war3Fear: { name: 'WAR 3 + FEAR 1', protos: ['WAR', 'FEAR'], pieces: { WAR_4: 'top', FEAR_2: 'play' } },
