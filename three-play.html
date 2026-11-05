@@ -1620,6 +1620,7 @@
   @keyframes swAct{50%{box-shadow:0 4px 16px rgba(0,0,0,.45),0 0 0 8px rgba(255,198,92,0);}}
   .sw-help{position:absolute;left:0;right:0;bottom:calc(16px + env(safe-area-inset-bottom));margin:0;text-align:center;pointer-events:none;
     font:600 12px/1.4 "M PLUS 1",system-ui;color:rgba(255,255,255,.72);letter-spacing:.04em;padding:0 64px;}
+  .sw-help span{display:inline-block;white-space:nowrap;margin:0 .6em;}
   @media (prefers-reduced-motion: reduce){ .sw-act{animation:none;} }
   /* ---------- ストーリー (story-ui.js) ---------- */
   #storyMap{position:fixed;inset:0;z-index:57;display:none;overflow-y:auto;padding:calc(56px + env(safe-area-inset-top)) 16px 32px;
@@ -4936,6 +4937,7 @@
       "./js3d/bgm-loop.js": "./js3d/bgm-loop.js?v=92eef374d1",
       "./js3d/bgm-shop.js": "./js3d/bgm-shop.js?v=a475d4d50d",
       "./js3d/bgm.js": "./js3d/bgm.js?v=c4a526b567",
+      "./js3d/bloom-guard.js": "./js3d/bloom-guard.js?v=607df41849",
       "./js3d/board.js": "./js3d/board.js?v=fd9b31ba0a",
       "./js3d/bootui.js": "./js3d/bootui.js?v=15220963bc",
       "./js3d/bot-scenarios.js": "./js3d/bot-scenarios.js?v=914398f8fc",
@@ -5021,7 +5023,7 @@
       "./js3d/setup.js": "./js3d/setup.js?v=a65d1f9f90",
       "./js3d/solodraft.js": "./js3d/solodraft.js?v=4c1693a5ab",
       "./js3d/spectate.js": "./js3d/spectate.js?v=96a7ee67d5",
-      "./js3d/stage.js": "./js3d/stage.js?v=f4cae41c31",
+      "./js3d/stage.js": "./js3d/stage.js?v=026b6eae08",
       "./js3d/stats-data.js": "./js3d/stats-data.js?v=a50201f1ab",
       "./js3d/stats.js": "./js3d/stats.js?v=a9074a3c8f",
       "./js3d/steps.js": "./js3d/steps.js?v=13e73b20fe",
@@ -5033,7 +5035,7 @@
       "./js3d/story-scenery-warehouse.js": "./js3d/story-scenery-warehouse.js?v=c524a114c0",
       "./js3d/story-scenery.js": "./js3d/story-scenery.js?v=9fa267bcf9",
       "./js3d/story-ui.js": "./js3d/story-ui.js?v=ccd0b9db62",
-      "./js3d/story-world.js": "./js3d/story-world.js?v=3f0f8426d6",
+      "./js3d/story-world.js": "./js3d/story-world.js?v=91dcc44de3",
       "./js3d/story.js": "./js3d/story.js?v=a6e591a848",
       "./js3d/support.js": "./js3d/support.js?v=efb00a908c",
       "./js3d/theme.js": "./js3d/theme.js?v=f923617cfc",
@@ -5080,7 +5082,7 @@
   <link rel="modulepreload" href="js3d/turning.js?v=9c7f79654e">
   <link rel="modulepreload" href="js3d/achievements-ui.js?v=fa1f8f5848">
   <link rel="modulepreload" href="vendor/three.module.js?v=985eb92490">
-  <link rel="modulepreload" href="js3d/stage.js?v=f4cae41c31">
+  <link rel="modulepreload" href="js3d/stage.js?v=026b6eae08">
   <link rel="modulepreload" href="js3d/board.js?v=fd9b31ba0a">
   <link rel="modulepreload" href="js3d/control.js?v=aebfff9c0f">
   <link rel="modulepreload" href="js3d/panel.js?v=b07699d2a4">
@@ -5099,7 +5101,7 @@
   <link rel="modulepreload" href="js3d/stats-data.js?v=a50201f1ab">
   <link rel="modulepreload" href="js3d/story.js?v=a6e591a848">
   <link rel="modulepreload" href="js3d/story-ui.js?v=ccd0b9db62">
-  <link rel="modulepreload" href="js3d/story-world.js?v=3f0f8426d6">
+  <link rel="modulepreload" href="js3d/story-world.js?v=91dcc44de3">
   <link rel="modulepreload" href="js3d/rewards.js?v=0e8e1e0ca0">
   <link rel="modulepreload" href="js3d/gachafx.js?v=274272f746">
   <link rel="modulepreload" href="js3d/cosmetics-ui.js?v=c3df1d4a44">
@@ -5165,6 +5167,7 @@
   <link rel="modulepreload" href="vendor/jsm/postprocessing/RenderPass.js">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/UnrealBloomPass.js">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/OutputPass.js">
+  <link rel="modulepreload" href="js3d/bloom-guard.js?v=607df41849">
   <link rel="modulepreload" href="vendor/jsm/environments/RoomEnvironment.js">
   <link rel="modulepreload" href="js3d/card.js?v=71f8503f87">
   <link rel="modulepreload" href="js3d/protocards.js?v=79426a5f07">
