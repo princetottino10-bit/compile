@@ -17,6 +17,7 @@ import { watchGate, mountCpuWatchTools, mountRoomWatchTools, unmountWatchTools, 
 import { returnToReplays } from './replays-ui.js';
 import { mountAvatar, AVATARS, avatarIds } from './avatar.js';
 import { FAVORITE } from './avatar-lines.js';
+import { decidingLine as decidesMatch } from './deciding.js';
 import { countUp, dealIn } from './motion.js';
 import { loadGacha, chipsOf, giveChips } from './gacha.js';
 import { earnedChips } from './chips.js';
@@ -533,11 +534,9 @@ function reachLine(st, side, line) {
   const need = Array.isArray(st.winBySide) ? st.winBySide[side] : (st.winCompiles || 3);
   return ps.filter(p => p.compiled).length === need - 1;
 }
-/* その側に、コンパイルすれば決着するライン (reachLine) で、もう 10 以上で相手を上回っているものがあるか */
-function decidingLine(st, side) {
-  if (!st || !st.lines || st.winner !== null) return false;
-  return [0, 1, 2].some(l => reachLine(st, side, l) && totalOf(st, l, side) >= 10 && totalOf(st, l, side) > totalOf(st, l, 1 - side));
-}
+/* その側が、番の頭のコンパイルで決着をつけられるか (勝ち確) */
+/* コントロールで自分のプロトコルを並べ替えて、まだのプロトコルを持ってきて勝つ形も含む (deciding.js) */
+function decidingLine(st, side) { return decidesMatch(st, side, Engine); }
 /* 形勢: 済みのプロトコル1本を 10 点として、ラインの合計の差と足す。+8 以上で優勢、-8 以下で劣勢 */
 function standingOf(st, side) {
   if (!st || !st.players || typeof Engine.lineTotal !== 'function') return 0;
