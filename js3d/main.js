@@ -88,7 +88,7 @@ import * as FX from './fx.js';
 import { buildArena } from './arena.js';
 import { initAudio, sfx, setMuted, isMuted, setSfxVolume, onMuteChange } from './audio.js';
 import { mountMuteButton, muteIcon } from './mutebutton.js';
-import { playBgm, refreshBgm, fadeOutBgm, crossBgm, prepareBgm, pickNormalBgm, normalBattleBgm, onlineBattleBgm, storyBattleBgm, STRONG_BGM, BOSS_BGM, BOT_BGM, GATE_BGM, BOSS_THEMES, CHAR_THEMES, THEME_RATE, DEUS_BGM, PEEK_BGM, pickTenseBgm, setShuffleNotify, playJingle, prepareJingles, skipBgm } from './bgm.js';
+import { playBgm, refreshBgm, fadeOutBgm, crossBgm, prepareBgm, pickNormalBgm, normalBattleBgm, onlineBattleBgm, storyBattleBgm, STRONG_BGM, BOSS_BGM, BOT_BGM, GATE_BGM, BOSS_THEMES, CHAR_THEMES, THEME_RATE, DEUS_BGM, PEEK_BGM, pickTenseBgm, setShuffleNotify, playJingle, prepareJingles, skipBgm, fastEnough } from './bgm.js';
 import { trackOf } from './bgm-shop.js';
 import { BGM_RELEASED } from './rewards.js';
 import { emblemDataURL } from './emblems.js';
@@ -4686,18 +4686,20 @@ function battleBgm() {
   if (peekMatch()) return PEEK_BGM;            // すべてを見る者: 「最終決戦２秒前」
   if (storyNode && storyBattleBgm(storyNode)) return storyBattleBgm(storyNode);   // ストーリー: 機体戦は「判定」、終章の最後の判定は「止めていい」 (本人作)
   if (botScenario) return BOT_BGM;              // 公式ソロモード: 「Bot Routine」 (本人作)
-  if (isHonki(aiDifficulty) && plainCpuMatch()) return CHAR_THEMES[honkiOf(aiDifficulty).avatar] || BOSS_BGM;   // 本気の4人: その子のテーマ (本人作)
+  /* テーマ曲・ボスの曲は対戦に足る速さ (fastEnough、120 BPM 以上) のものだけ。遅い曲 (瑠璃 116・WhiteCUL 96・深淵の主 100) は代わりの曲にする (2026-11-05) */
+  const fast = (k) => (fastEnough(k) ? k : null);
+  if (isHonki(aiDifficulty) && plainCpuMatch()) return fast(CHAR_THEMES[honkiOf(aiDifficulty).avatar]) || STRONG_BGM;   // 本気の4人: その子のテーマ (本人作。遅い曲なら Overclock)
   if (aiDifficulty === 3 && plainCpuMatch()) return BOSS_THEMES.strongest;       // CHALLENGE の最強 (門番): 「GATEKEEPER」 (本人作)
   const tier = battleTier();
   if (tier === 'boss' && runMode && runKind === 'run') {                          // 勝ち抜き戦のボス: ボスごとの曲 (本人作)
     const opp = oppAvatarPlan();
-    return (opp && opp.startsWith('boss_') && BOSS_THEMES[opp.slice(5)]) || GATE_BGM;
+    return (opp && opp.startsWith('boss_') && fast(BOSS_THEMES[opp.slice(5)])) || GATE_BGM;
   }
   if (tier === 'boss' && runMode) return GATE_BGM;   // 週替わりの3戦目: 「Third Gate」 (本人作)
   if (tier === 'boss') return BOSS_BGM;
   if (tier === 'strong') return STRONG_BGM;
   /* ふつうの CPU 戦で4人の誰かが相手: おまかせなら、ときどきその子のテーマ */
-  const theme = plainCpuMatch() && !(BGM_RELEASED && settings().bgm) && CHAR_THEMES[oppAvatarPlan()];
+  const theme = plainCpuMatch() && !(BGM_RELEASED && settings().bgm) && fast(CHAR_THEMES[oppAvatarPlan()]);
   if (theme && Math.random() < THEME_RATE) return theme;
   return BGM_RELEASED ? (settings().bgm || normalBattleBgm()) : normalBattleBgm();
 }
