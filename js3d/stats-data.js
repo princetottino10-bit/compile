@@ -3,7 +3,7 @@
  *   記録: { id, me[3], opp[3], win, level, at, turns?, feats? }
  * ========================================================================= */
 
-import { STRONGEST_AI } from './aidecks.js';
+import { STRONGEST_AI, HONKI, HONKI_BASE, DEUS_LEVEL, PEEK_LEVEL } from './aidecks.js';
 
 /* 難易度の番号 (aidecks.js): 2 = つよい、3 以上 = 最強・ロック特化・挑戦者 */
 const STRONG = 2, STRONGEST = 3;
@@ -34,6 +34,8 @@ export function protocolSummary(records) {
         t.won = true;
         if (r.level >= STRONG) { t.xp += 1; t.wonStrong = true; }
         if (beatStrongest(r)) t.wonStrongest = true;     // 制覇は「最強」だけ (ロック特化・挑戦者・下剋上・勝ち抜き戦のボスは数えない)
+        /* GATEKEEPER のデッキと同じ FIRE / WATER / SPEED は GATEKEEPER と戦えないので、印は代わりに強敵に勝つと付く */
+        if (STRONGEST_AI.includes(name) && beatBoss(r)) t.wonStrongest = true;
       }
       map.set(name, t);
     }
@@ -42,6 +44,13 @@ export function protocolSummary(records) {
   return map;
 }
 
+/* 強敵 (GATEKEEPER と戦えないプロトコルの代わりの相手): ロック特化・本気の4人・機械仕掛けの神・すべてを見る者。
+   どれかが FIRE / WATER / SPEED をそれぞれ使わないので、3つとも取れる (2026-11-03 ユーザー「GATEKEEPERと戦えない組み合わせがあるのよくない」) */
+export const BOSS_STAND_IN = 'ロック特化・本気の4人・機械仕掛けの神・すべてを見る者';
+const BOSS_LEVELS = [4, DEUS_LEVEL, PEEK_LEVEL, ...HONKI.map((_, i) => HONKI_BASE + i)];
+export function beatBoss(r) {
+  return !!r && !!r.win && !isShortRecord(r) && BOSS_LEVELS.includes(r.level) && (!r.mode || r.mode === 'cpu');
+}
 /* 最強に勝った1戦か: 難易度 3 で、相手のデッキが最強のデッキそのもの (勝ち抜き戦のボスも難易度 3 だがデッキが違う) */
 const STRONGEST_KEY = STRONGEST_AI.slice().sort().join('|');
 /* 短縮マッチ (3本より少ないコンパイルで決着: 勝ち抜き戦・週替わりなど) か。印 (short) が無い前の戦績は、勝ち抜き戦と週替わりを短縮マッチとみなす
@@ -52,9 +61,10 @@ export const isShortRecord = (r) => !!r && !!(r.short || (r.short === undefined 
 export function beatStrongest(r) {
   return !!r && !!r.win && (!isShortRecord(r) || r.mode === 'weekly') && r.level === STRONGEST && Array.isArray(r.opp) && r.opp.slice().sort().join('|') === STRONGEST_KEY;
 }
-/* 制覇できるプロトコル: 最強のデッキと同じプロトコルは自分では選べないので、それ以外 (30 - 3 = 27) */
+/* 制覇できるプロトコル: 最強のデッキと同じプロトコルは自分では選べないので、それ以外 (45 - 3 = 42)。
+   Main 3 / Aux 3 で 30 → 45 種になった (2026-11-03)。取った実績は保存済みなので、前に 27 で取った CONQUEROR は消えない */
 export const conquerable = (names) => names.filter(n => !STRONGEST_AI.includes(n));
-export const CONQUER_TOTAL = 30 - STRONGEST_AI.length;
+export const CONQUER_TOTAL = 45 - STRONGEST_AI.length;
 /* 制覇: 「最強」に勝ったことのあるプロトコル。CONQUER_TOTAL すべてで称号 CONQUEROR (achievements.js) */
 export function conquered(records) {
   const out = new Set();

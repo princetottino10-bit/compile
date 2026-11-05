@@ -1,6 +1,7 @@
 /* =========================================================================
  * 3Dビュー: コントロールコンポーネント (実卓の物理マーカー)
- *   コントロールトラッカー (control-tracker.html) と同じ意匠のマーカー:
+ *   コントロールトラッカー (control-tracker.html) と同じ意匠のマーカー (2026-11-03 にカード型から戻した。
+ *   ユーザー「コントロールマーカー、カードじゃなくしよう」):
  *   角を落とした三角形の枠に、三方へ腕の伸びた窓と中心の丸。
  *   盤面左脇に置かれ、保持者の側へ滑って移動する。
  *   中立 (-1) は中央で淡く、保持中は保持者の色で強く光る。
@@ -17,7 +18,7 @@ const X = () => X_WIDE + (-2.52 - X_WIDE) * VIEW.k;
 const SCALE = () => 1 - 0.38 * VIEW.k;
 /* 横持ちのスマホは自分の捨て札を奥へ寄せる (layout.js の pilePos) ので、マーカーも板の側に寄せて捨て札に重ねない */
 const Z = { neutral: 0, get me() { return VIEW.short ? 0.72 : 1.35; }, get opp() { return VIEW.short ? -0.72 : -1.35; } };
-const MINT = 0xa07bff, PINK = 0xff4fa3, DIM = 0x44536e;
+const MINT = 0xa07bff, PINK = 0xe8203f, DIM = 0x44536e;
 /* 見た目 (レベルの報酬): 自分が持ったときの色と、中立のときの色 */
 /* pattern: 上の面の模様 (明るいところが光る) / metal・rough: 質感 / glass: 半透明 / extra: 飾り (orbit 回る光の粒・crown 王冠・halo 二重の輪・wreath 葉の冠) */
 export const MARKER_STYLES = {
@@ -33,7 +34,14 @@ export const MARKER_STYLES = {
   obsidian: { me: 0xff6a2a, dim: 0x2a1410, metal: 0.9, rough: 0.05, pattern: 'cracks' },
   nova: { me: 0xfff4c8, dim: 0x6b5e3a, pattern: 'stars', extra: 'orbit' },
   slayer: { me: 0xf3e6c4, dim: 0x3a3548, pattern: 'skull', metal: 0.05, rough: 0.7 },                // 下剋上の褒美 (がしゃどくろ)
-  laurel: { me: 0x9be07a, dim: 0x3d5a24, pattern: 'leaves', extra: 'wreath' }                         // 週替わりの褒美 (3週クリア)
+  laurel: { me: 0x9be07a, dim: 0x3d5a24, pattern: 'leaves', extra: 'wreath' },                        // 週替わりの褒美 (3週クリア)
+  tristate: { me: 0xf07fd4, dim: 0x5a2f52, pattern: 'tristate', extra: 'halo' },                      // 実績 TRISTATE (FLEXIBLE・INERT・RIGID で勝つ)
+  /* 2026-11-03 の追加 */
+  redline: { me: 0xe8203f, dim: 0x3a0e16, metal: 0.7, rough: 0.2, pattern: 'slash' },                // MAIN 3 (レベルの報酬)
+  sakura: { me: 0xffa8c8, dim: 0x5e2c40, pattern: 'petals', extra: 'halo' },
+  frost: { me: 0xcff0ff, dim: 0x3a5866, glass: true, pattern: 'snow' },
+  toxic: { me: 0x9dff3a, dim: 0x2e4a12, pattern: 'hex' },
+  regalia: { me: 0xc9a2ff, dim: 0x3c2c5a, metal: 0.8, rough: 0.15, pattern: 'facets', extra: 'crown' }
 };
 
 /* ---------- マーカーの上の面の模様 (256px の正方形。外形の半径 0.42 が端) ---------- */
@@ -114,6 +122,66 @@ const PATTERN_DRAW = {
     /* ひびの線 */
     c.lineWidth = 2;
     c.beginPath(); c.moveTo(x + S * 0.05, y - S * 0.24); c.lineTo(x + S * 0.08, y - S * 0.15); c.lineTo(x + S * 0.04, y - S * 0.1); c.stroke();
+  },
+  /* 3つの状態の信号: 波 (FLEXIBLE)・まっすぐ (INERT)・角ばった矩形波 (RIGID) */
+  tristate(c, S) {
+    c.strokeStyle = '#fff'; c.lineWidth = 18; c.lineJoin = 'miter'; c.lineCap = 'butt';
+    const ys = [S * 0.22, S * 0.5, S * 0.78], amp = S * 0.09;
+    c.beginPath();
+    for (let x = 0; x <= S; x += 4) { const y = ys[0] + Math.sin(x / S * Math.PI * 4) * amp; if (x) c.lineTo(x, y); else c.moveTo(x, y); }
+    c.stroke();
+    c.beginPath(); c.moveTo(0, ys[1]); c.lineTo(S, ys[1]); c.stroke();
+    c.beginPath();
+    const step = S / 4;
+    for (let i = 0; i < 4; i++) {
+      const y = ys[2] + (i % 2 ? amp : -amp);
+      if (i) c.lineTo(i * step, y); else c.moveTo(0, y);
+      c.lineTo((i + 1) * step, y);
+    }
+    c.stroke();
+  },
+  /* 桜の花 (5 枚の花びら) を散らす */
+  petals(c, S) {
+    const r = seeded(31);
+    c.fillStyle = '#fff';
+    const flower = (x, y, rad, rot) => {
+      for (let i = 0; i < 5; i++) {
+        const a = rot + i * Math.PI * 2 / 5;
+        c.save(); c.translate(x + Math.cos(a) * rad * 0.55, y + Math.sin(a) * rad * 0.55); c.rotate(a);
+        c.beginPath(); c.ellipse(0, 0, rad * 0.55, rad * 0.36, 0, 0, Math.PI * 2); c.fill(); c.restore();
+      }
+    };
+    flower(S / 2, S / 2, 46, 0.3);
+    for (let k = 0; k < 7; k++) flower(r() * S, r() * S, 12 + r() * 12, r() * 6);
+  },
+  /* 雪の結晶 */
+  snow(c, S) {
+    c.strokeStyle = '#fff'; c.lineCap = 'round';
+    const flake = (x, y, rad, lw) => {
+      c.lineWidth = lw;
+      for (let i = 0; i < 6; i++) {
+        const a = i * Math.PI / 3, ex = x + Math.cos(a) * rad, ey = y + Math.sin(a) * rad;
+        c.beginPath(); c.moveTo(x, y); c.lineTo(ex, ey); c.stroke();
+        for (const f of [0.5, 0.75]) {
+          const bx = x + Math.cos(a) * rad * f, by = y + Math.sin(a) * rad * f;
+          for (const d of [-0.6, 0.6]) { c.beginPath(); c.moveTo(bx, by); c.lineTo(bx + Math.cos(a + d) * rad * 0.22, by + Math.sin(a + d) * rad * 0.22); c.stroke(); }
+        }
+      }
+    };
+    flake(S / 2, S / 2, 70, 7);
+    const r = seeded(17);
+    for (let k = 0; k < 8; k++) flake(r() * S, r() * S, 10 + r() * 12, 2.5);
+  },
+  /* 蜂の巣の六角 */
+  hex(c, S) {
+    c.strokeStyle = '#fff'; c.lineWidth = 4;
+    const R = 20, hgt = R * Math.sqrt(3);
+    for (let row = -1; row < S / hgt + 1; row++) for (let col = -1; col < S / (R * 1.5) + 1; col++) {
+      const x = col * R * 1.5, y = row * hgt + (col % 2 ? hgt / 2 : 0);
+      c.beginPath();
+      for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; c.lineTo(x + Math.cos(a) * R, y + Math.sin(a) * R); }
+      c.closePath(); c.stroke();
+    }
   },
   leaves(c, S) {
     c.fillStyle = '#fff';
@@ -231,11 +299,11 @@ export function createControlMarker(scene) {
 
   /* 光るのは上面だけ。側面まで光らせると窓の縁がにじんで形が読めない */
   const face = new THREE.MeshStandardMaterial({
-    color: 0x0a0f1c, roughness: 0.35, metalness: 0.4,
+    color: 0x0d0c11, roughness: 0.35, metalness: 0.4,
     emissive: new THREE.Color(DIM), emissiveIntensity: 0.5
   });
   const side = new THREE.MeshStandardMaterial({
-    color: 0x0a0f1c, roughness: 0.4, metalness: 0.8,
+    color: 0x0d0c11, roughness: 0.4, metalness: 0.8,
     emissive: new THREE.Color(DIM), emissiveIntensity: 0.12
   });
   /* ExtrudeGeometry の材質グループ: 0 = 上下の面, 1 = 側面 */

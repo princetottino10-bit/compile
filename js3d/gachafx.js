@@ -11,8 +11,8 @@ import { sfx } from './audio.js';
 
 export const RAR_NAMES = { C: 'COMMON', R: 'RARE', E: 'EPIC', L: 'LEGENDARY' };
 export const RAR_COLORS = {
-  C: ['#cfd6e6', '#8a93a8'], R: ['#7cc4ff', '#b9e2ff', '#3f8cff'], E: ['#ffc85a', '#ff4fa3', '#fff1c2'],
-  L: ['#ff4fa3', '#ffc85a', '#7cf0d0', '#9d7bff', '#ffffff']
+  C: ['#cfd6e6', '#8a93a8'], R: ['#7cc4ff', '#b9e2ff', '#3f8cff'], E: ['#ffc85a', '#e8203f', '#fff1c2'],
+  L: ['#e8203f', '#ffc85a', '#7cf0d0', '#9d7bff', '#ffffff']
 };
 
 /* 紙吹雪 (画面いっぱいの canvas に一瞬だけ) */

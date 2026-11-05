@@ -2,6 +2,7 @@
  * お知らせ (更新情報)。タイトル画面の右上の「お知らせ」と、入口のページ (index.html) で見せる
  *   - 新しいお知らせは NEWS の先頭に足す。id は一度出したら変えない (読んだ印に使う)
  *   - img は art/news/ の 16:9 のスクショ (800×450 の webp)。無くてもよい
+ *   - featured: true は大きな見出し (絵を一覧で大きく出し、PICK UP を付けて先頭に置く)。大型の追加だけに使う
  *   - 書くのは遊ぶ人に見える変化だけ。管理者だけの機能 (STORY・ORACLE のオート操作) は書かない
  *   - ほかのモジュールを import しない (index.html からも素のまま読むため)
  * ========================================================================= */
@@ -15,6 +16,73 @@ export const KINDS = {
 };
 
 export const NEWS = [
+  {
+    id: '2026-11-03-collection2', date: '2026-11-03', kind: 'new',
+    title: 'COLLECTION に勝ちの演出・コンパイルの光・マーカー・名札を19種足しました',
+    body: [
+      '勝ちの演出は5種 (MAIN 3・YOZAKURA・CODE RAIN・SUPERNOVA・ECLIPSE)、コンパイルの光は4種 (CRIMSON・FROST・SAKURA・SOLAR)、コントロールマーカーは5種、名札は5種です。',
+      'MAIN 3 の赤と黒の4つ (勝ちの演出・マーカー REDLINE・名札 CIRCUIT・コンパイルの光 CRIMSON) はレベル 21〜26 の報酬、ほかはガチャから出ます。レベルがすでに届いている人は、もう使えます。',
+      '勝ちの演出は COLLECTION の見本で、実際の背景を見られるようにしました。'
+    ]
+  },
+  {
+    id: '2026-11-03-psy1-swap', date: '2026-11-03', kind: 'info',
+    title: '設定に「PSYCHIC 1 の上段と下段を入れ替える」を足しました',
+    body: [
+      '設定の「ルール」でオンにすると、PSYCHIC 1 の上段が「開始：このカードを反転させる」、下段が「相手はカードを裏向きでのみプレイすることができる」になります。覆って続けるロックが組めなくなるハウスルールです。',
+      'CPU 戦だけに効きます。オンライン対戦・ウィークリー・問題はこれまでどおり公式のルールです。'
+    ]
+  },
+  {
+    id: '2026-11-03-mat-main3', date: '2026-11-03', kind: 'info',
+    title: 'Main 3 のプレイマットが入りました',
+    body: [
+      'Main 3 の箱に合わせた、黒い基板に赤い一閃のプレイマット「MAIN 3」です。設定の COLLECTION の PLAYMAT で、はじめから選べます。'
+    ]
+  },
+  {
+    id: '2026-11-03-main3', date: '2026-11-03', kind: 'new', featured: true,
+    img: 'art/news/main3.webp', alt: 'Main 3 の12プロトコルの絵。AMBUSH・ENVY・FULCRUM・GLUTTONY・GREED・LUST・MOMENTUM・NOVA・OVERWHELM・PRIDE・SLOTH・WRATH',
+    title: 'Main 3・Aux 3 が遊べるようになりました！ 新しい15プロトコル・90枚',
+    body: [
+      'Main 3 の AMBUSH・ENVY・FULCRUM・GLUTTONY・GREED・LUST・MOMENTUM・NOVA・OVERWHELM・PRIDE・SLOTH・WRATH と、Aux 3 の FLEXIBLE・INERT・RIGID の90枚です。コントロールの取り合い、プロトコルの並べ替えやコンパイルに反応する効果、手札の枚数がちょうどのときに働く効果などが入っています。',
+      'ドラフトやプロトコル選びで使えます。シングルプレイの「使うプロトコル」では Main 3 と Aux 3 を出し入れできます。CHALLENGE の制覇は 42 プロトコルになりました (前に取った CONQUEROR はそのままです)。',
+      '新しい称号も増えました。七つの大罪 (ENVY・GLUTTONY・GREED・LUST・PRIDE・SLOTH・WRATH) すべてで勝つと SEVEN SINS、FLEXIBLE・INERT・RIGID を組んで勝つと TRISTATE、公式ソロモードの REGULAR を全部勝つと BOT BREAKER、ADVANCED を全部勝つと ROOT ACCESS。15の新しいプロトコルにも、習熟度 6 で取れる称号があります。'
+    ]
+  },
+  {
+    id: '2026-11-03-yarikomi', date: '2026-11-03', kind: 'new',
+    title: '実績を23個、称号を19個足しました',
+    body: [
+      'Main 3 の12種すべてで勝つ THIRD WAVE、GATEKEEPER に Main 3 の12種すべてで勝つ NEW WORLD ORDER、七つの大罪だけのデッキで GATEKEEPER に勝つ DEADLY SIN、公式ソロモードの ADVANCED を Main 3・Aux 3 だけのデッキで全部勝つ ZERO DAY など、やりこむ人向けのものです。',
+      '1000勝の IMMORTAL、45のプロトコルすべての習熟度を6にする OMNIPROTOCOL、隠し実績も4つあります。実績の一覧は RECORD の「実績」から見られます。'
+    ]
+  },
+  {
+    id: '2026-11-03-collection', date: '2026-11-03', kind: 'new',
+    title: 'COLLECTION に Main 3 のスリーブとマーカーが増えました',
+    body: [
+      '実績 SEVEN SINS を取るとスリーブ SEVEN SINS、ROOT ACCESS を取るとスリーブ ROOT ACCESS、TRISTATE を取るとマーカー TRISTATE が使えます。前に取った人はもう使えます。',
+      'カードの裏面を Main 3 の意匠に替える前の標準の裏面も、スリーブ CLASSIC としてはじめから選べます。'
+    ]
+  },
+  {
+    id: '2026-11-03-solo', date: '2026-11-03', kind: 'new',
+    img: 'art/news/solo.webp', alt: '公式ソロモードのシナリオを選ぶ画面。REGULAR の6つのシナリオが並んでいる',
+    title: '公式ソロモード (VS BOT) が遊べるようになりました',
+    body: [
+      'Main 3 のソロルールです。自動で動く BOT と、REGULAR・ADVANCED あわせて12のシナリオで対戦します。SINGLE GAME の「公式ソロモード」から遊べます。',
+      'BOT はキューの前の札から、シナリオで決まった置き方で出します。BOT が同じプロトコルを2度コンパイルしたら負け。遊び方は RULES の「ソロモード (BOT)」にあります。'
+    ]
+  },
+  {
+    id: '2026-11-03-own-bgm', date: '2026-11-03', kind: 'info',
+    title: '新しい対戦の曲が入りました',
+    body: [
+      'ふつうの対戦に「Protocol Drive」、強敵との対戦に「Overclock」、どちらかがあと1本になったときに「Last Compile」が流れるようになりました。タイトル・メニューの曲には「起動」が加わっています。',
+      'Protocol Drive・Overclock・起動は、COLLECTION の BGM ではじめから選べます。'
+    ]
+  },
   {
     id: '2026-10-23-story', date: '2026-10-23', kind: 'new',
     img: 'art/news/story.webp', alt: 'ストーリー1章の一枚絵。朝の光が差す、空っぽの水族館の水槽を見上げる紫苑',
@@ -121,7 +189,10 @@ export const NEWS = [
 /* 「すべて」・未読の数・自動で開くのに使うお知らせ。直したことは「直したこと」のタブでだけ見せる
    (ソシャゲのお知らせと同じく、目に入る一覧は新しい遊びと調整に絞る) */
 export const isHeadline = (n) => n.kind !== 'fix';
-export const headlines = (list = NEWS) => list.filter(isHeadline);
+export const headlines = (list = NEWS) => {
+  const h = list.filter(isHeadline);
+  return h.filter(n => n.featured).concat(h.filter(n => !n.featured));
+};
 
 const SEEN_KEY = 'compileNewsSeen';      // 読んだお知らせの id (配列)
 const POPPED_KEY = 'compileNewsPopped';  // 自動で開いたときの、いちばん新しいお知らせの id
@@ -161,15 +232,18 @@ export const shortDate = (d) => String(d).replace(/^\d{4}-0?(\d+)-0?(\d+)$/, '$1
 export function newsListHtml(list, { unread = new Set(), open = null, goLabel = null, base = '' } = {}) {
   if (!list.length) return '<p class="nw-empty">このなかまのお知らせはまだありません</p>';
   return list.map(n =>
-    '<details class="nw-item" data-kind="' + esc(n.kind) + '"' + (n.id === open ? ' open' : '') + '>' +
-      '<summary><span class="nw-meta"><time datetime="' + esc(n.date) + '">' + shortDate(n.date) + '</time>' +
+    '<details class="nw-item' + (n.featured ? ' nw-feature' : '') + '" data-kind="' + esc(n.kind) + '"' + (n.id === open ? ' open' : '') + '>' +
+      '<summary>' +
+        /* 大きな見出し: 一覧でも絵を大きく出す (開いても同じ絵を2度出さない) */
+        (n.featured && n.img ? '<img class="nw-banner" loading="lazy" width="800" height="450" alt="' + esc(n.alt || '') + '" src="' + esc(base + n.img) + '">' : '') +
+        '<span class="nw-meta">' + (n.featured ? '<i class="nw-pick">PICK UP</i>' : '') + '<time datetime="' + esc(n.date) + '">' + shortDate(n.date) + '</time>' +
         '<i class="nw-tag">' + esc(KINDS[n.kind] || KINDS.info) + '</i>' +
         (unread.has(n.id) ? '<i class="nw-new">NEW</i>' : '') + '</span>' +
         '<b>' + esc(n.title) + '</b>' +
         /* 一覧では小さく、開くと大きく (ソシャゲのお知らせのバナーのように) */
-        (n.img ? '<img class="nw-thumb" alt="" loading="lazy" width="96" height="54" src="' + esc(base + n.img) + '">' : '') + '</summary>' +
+        (n.img && !n.featured ? '<img class="nw-thumb" alt="" loading="lazy" width="96" height="54" src="' + esc(base + n.img) + '">' : '') + '</summary>' +
       '<div class="nw-body">' +
-        (n.img ? '<img class="nw-shot" loading="lazy" width="800" height="450" alt="' + esc(n.alt || '') + '" src="' + esc(base + n.img) + '">' : '') + n.body.map(p => '<p>' + esc(p) + '</p>').join('') +
+        (n.img && !n.featured ? '<img class="nw-shot" loading="lazy" width="800" height="450" alt="' + esc(n.alt || '') + '" src="' + esc(base + n.img) + '">' : '') + n.body.map(p => '<p>' + esc(p) + '</p>').join('') +
         (n.go && goLabel && goLabel(n.go) ? '<button type="button" class="nw-go" data-news-go="' + esc(n.go) + '">' + esc(goLabel(n.go)) + '</button>' : '') +
       '</div></details>'
   ).join('');

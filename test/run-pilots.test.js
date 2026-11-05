@@ -16,7 +16,7 @@ test('4人の得意プロトコルは本気の4人と同じ', async () => {
   const { P } = await load();
   assert.deepStrictEqual(Object.fromEntries(P.PILOTS.map(p => [p.id, p.start])),
     { shion: 'PSYCHIC', nadeshiko: 'HATE', asagi: 'WATER', yamabuki: 'FIRE' });
-  assert.deepStrictEqual(P.WEAK_PROTOCOLS.slice().sort(), ['APATHY', 'ASSIMILATION', 'CHAOS', 'LIGHT', 'METAL', 'UNITY']);
+  assert.deepStrictEqual(P.WEAK_PROTOCOLS.slice().sort(), ['APATHY', 'ASSIMILATION', 'CHAOS', 'LIGHT', 'LUST', 'METAL', 'NOVA', 'UNITY']);
 });
 
 test('挑む子は値を下げない', async () => {

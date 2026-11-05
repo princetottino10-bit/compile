@@ -17,8 +17,8 @@ import { isMobProto } from './mobcards.js';
 const TEX_W = 512, TEX_H = 262, TEX_SCALE = 2;
 const PANEL_W = 1.56, PANEL_D = 0.80;
 
-/* アートが存在するセット (Main 2 / Aux 2 は scripts/build_card_art_2.py で生成) */
-const ART_SETS = new Set(['Main 1', 'Aux 1', 'Main 2', 'Aux 2']);
+/* アートが存在するセット (Main 2 / Aux 2 は scripts/build_card_art_2.py、Main 3 / Aux 3 は build_card_art_3.py で生成) */
+const ART_SETS = new Set(['Main 1', 'Aux 1', 'Main 2', 'Aux 2', 'Main 3', 'Aux 3']);
 const artCache = new Map();
 
 function loadArt(url, onReady) {
@@ -49,7 +49,7 @@ function roundRect(ctx, x, y, w, h, r) {
 }
 
 function rgba(hex, a) {
-  const h = String(hex || '#b9a4ff').replace('#', '');
+  const h = String(hex || '#cdc7d4').replace('#', '');
   const n = parseInt(h.length === 3 ? h.replace(/./g, c => c + c) : h, 16);
   return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
 }
@@ -80,7 +80,7 @@ function paintBadge(ctx, bx, by, total, compiled, accent) {
     roundRect(ctx, bx, by, bw, bh, 16); ctx.stroke();
   }
   ctx.font = '800 80px ' + FONT.hud;
-  ctx.fillStyle = hot ? '#05070f' : '#ffffff';
+  ctx.fillStyle = hot ? '#070606' : '#ffffff';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(String(total), bx + bw / 2, by + bh / 2 + 2);
   ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
@@ -105,7 +105,7 @@ function paint(ctx, info, arts) {
   const list = Array.isArray(arts) ? arts : [arts];
   const art = list[0];
   const W = TEX_W, H = TEX_H;
-  const accent = info.color || '#b9a4ff';
+  const accent = info.color || '#cdc7d4';
   const compiled = !!info.compiled;
   ctx.setTransform(TEX_SCALE, 0, 0, TEX_SCALE, 0, 0);
   ctx.clearRect(0, 0, W, H);
@@ -146,9 +146,9 @@ function paint(ctx, info, arts) {
     g.addColorStop(0.4, 'rgba(10,6,20,.8)');
     g.addColorStop(1, 'rgba(10,6,20,.9)');
   } else {
-    g.addColorStop(0, 'rgba(6,9,18,.82)');
-    g.addColorStop(0.46, 'rgba(6,9,18,.34)');
-    g.addColorStop(1, 'rgba(6,9,18,.86)');
+    g.addColorStop(0, 'rgba(10,9,10,.82)');
+    g.addColorStop(0.46, 'rgba(10,9,10,.34)');
+    g.addColorStop(1, 'rgba(10,9,10,.86)');
   }
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, H);
@@ -431,7 +431,7 @@ export function createPanels(stage, me, hooks) {
     ctx.setTransform(TEX_SCALE, 0, 0, TEX_SCALE, 0, 0);
     ctx.fillStyle = '#070a14';
     roundRect(ctx, 0, 0, BADGE.w, BADGE.h, 16); ctx.fill();
-    paintBadge(ctx, 0, 0, info.total, !!info.compiled, info.color || '#b9a4ff');
+    paintBadge(ctx, 0, 0, info.total, !!info.compiled, info.color || '#cdc7d4');
     const tex = new THREE.CanvasTexture(cv);
     tex.colorSpace = THREE.SRGBColorSpace;
     /* 板が下をくぐっても隠れないよう、いつも一番上に描く */

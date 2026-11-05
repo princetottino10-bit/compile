@@ -70,7 +70,7 @@ export function openSpectate(protocols, opts = {}) {
   };
   const byName = Object.fromEntries(protocols.map(p => [p.name, p]));
   const names = protocols.map(p => p.name);
-  const colorOf = (n) => (byName[n] || {}).color || '#b9a4ff';
+  const colorOf = (n) => (byName[n] || {}).color || '#cdc7d4';
   const deckHtml = (d) => '<span class="wt-deck">' + d.map(n => '<i style="--pc:' + esc(colorOf(n)) + '">' +
     '<img alt="" src="' + emblemDataURL(n, colorOf(n), 40, true) + '">' + esc(n) + '</i>').join('') + '</span>';
 

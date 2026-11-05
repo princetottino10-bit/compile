@@ -56,8 +56,8 @@ export function hypePlay(info, bonus) {
   if (info.swing >= 6) parts.push('SWING +' + info.swing);
   if (bonus) parts.push('<em>+' + bonus + ' CR</em>');   // スコアがクレジットの区切りを越えた
   slam(r.name, parts.join(' ・ '), r.cls);
-  if (r.cls === 'r4') { sfx('boom'); confetti(['#ffd86a', '#ff4fa3', '#7cf0d0', '#9d7bff', '#ffffff'], 200); }
-  else if (r.cls === 'r3') { sfx('chain', 5); confetti(['#ffd86a', '#ff4fa3', '#ffffff'], 90); }
+  if (r.cls === 'r4') { sfx('boom'); confetti(['#ffd86a', '#e8203f', '#7cf0d0', '#9d7bff', '#ffffff'], 200); }
+  else if (r.cls === 'r3') { sfx('chain', 5); confetti(['#ffd86a', '#e8203f', '#ffffff'], 90); }
   else if (r.cls === 'r2') sfx('charge');
   else sfx('chain', 2);
   return r;

@@ -20,14 +20,15 @@
   <meta name="description" content="プロトコル・カードゲーム COMPILE を、ブラウザですぐ遊べるファンメイドの3D版。CPU 対戦・オンライン対戦・週替わり3連戦。登録なしで遊べます。">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="COMPILE 3D ARENA">
-  <meta property="og:title" content="COMPILE 3D ARENA — あのコンパイルを、本気で3Dにした。">
-  <meta property="og:description" content="声つきのキャラと戦う CPU 対戦・物語・タッグ・オンライン・詰めコンパイル。登録なし・無料で、ブラウザからすぐ1戦。">
+  <meta property="og:title" content="COMPILE 3D ARENA — Main 3・Aux 3 が遊べる大型アップデート">
+  <meta property="og:description" content="新しい15プロトコル・90枚 (七つの大罪ほか) と公式ソロモードを追加。CPU 対戦・物語・タッグ・オンライン・詰めコンパイル。登録なし・無料で、ブラウザからすぐ1戦。">
   <meta property="og:url" content="https://princetottino10-bit.github.io/compile/">
-  <meta property="og:image" content="https://princetottino10-bit.github.io/compile/og.jpg">
+  <meta property="og:image" content="https://princetottino10-bit.github.io/compile/og.jpg?v=3">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="COMPILE 3D ARENA 大型アップデート。MAIN 3 + AUX 3、新プロトコル15種・90枚。PRIDE・GREED・LUST・WRATH・GLUTTONY の絵">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:image" content="https://princetottino10-bit.github.io/compile/og.jpg">
+  <meta name="twitter:image" content="https://princetottino10-bit.github.io/compile/og.jpg?v=3">
   <link rel="apple-touch-icon" href="icons/compile-180.png">
   <link rel="icon" href="icons/compile-180.png">
   <meta name="theme-color" content="#08060f">
@@ -114,6 +115,11 @@
     .nw-body p{font-size:13px;color:rgba(241,237,248,.8)}
     .news-more{display:block;padding:12px 18px;font:700 13px/1.4 system-ui,sans-serif;text-decoration:none;color:var(--lav);border-top:1px solid rgba(255,255,255,.07)}
     .news-more:hover{color:#fff;background:rgba(255,79,163,.08)}
+    .nw-feature{margin:10px 12px;border:1px solid var(--pink);background:linear-gradient(180deg,rgba(255,79,163,.16),rgba(255,79,163,.03));box-shadow:0 0 18px rgba(255,79,163,.22)}
+    .nw-feature summary{grid-template-columns:minmax(0,1fr) !important;padding-top:12px}
+    .nw-banner{grid-column:1 / -1;display:block;width:min(100%,640px);height:auto;aspect-ratio:16/9;object-fit:cover;border:1px solid rgba(255,255,255,.18);background:#000}
+    .nw-feature summary b{font-size:clamp(16px,2.4vw,20px)}
+    .nw-pick{font:800 10px/1 system-ui;font-style:normal;letter-spacing:.12em;padding:3px 7px;background:#ffd36b;color:#120a1c}
     @media (max-width:560px){ .nw-item summary{grid-template-columns:minmax(0,1fr) auto;padding-left:14px} .nw-meta,.nw-item summary b{grid-column:1} .nw-thumb{grid-column:2;grid-row:1 / span 2;width:72px;height:41px} }
     @media (prefers-reduced-motion:reduce){ .nw-item summary::after{transition:none} }
     footer{text-align:center;padding:28px 20px 40px;font:600 11px/1.8 var(--ui);letter-spacing:.08em;color:var(--dim)}

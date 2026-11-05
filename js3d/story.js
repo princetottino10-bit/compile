@@ -14,6 +14,7 @@
  *   章 (CHAPTERS) は場面 (nodes) の並び。場面は会話 (scene) か対戦 (battle) か詰めコンパイル (tsume)。前から順に開く。
  *   進み具合は compileStory { v, cleared: [場面の id], pending: 始めた対戦の id | null }。場面の id は変えない (進み具合が壊れる)。
  *   対戦は画面を開き直して始め (勝ち抜き戦と同じ)、決着したら ?story=1 で地図に戻る。
+ *   対戦の場面の battleBgm: その対戦で流す曲 (bgm.js。無ければ boss の付いた機体戦は「判定」、ほかはふつうの対戦の曲)。
  * ========================================================================= */
 
 import { MOB_DECK, MOB_MATE_DECK } from './mobcards.js';
@@ -1539,7 +1540,9 @@ export const CHAPTERS = [
       ] },
       /* 最後の判定は済み1つを残す: 外すと ふつう腕前でも 20% まで落ちる (残すと 58%)。
          最後の判定: 紫苑から預かった CLARITY・MIRROR で、所長を判定する。答えは「止める」でも「止めない」でもない「止めていい」 */
-      { id: 'c6-judge', kind: 'battle', title: '判定 (所長)', me: ['FIRE', 'CLARITY', 'MIRROR'], opp: ['TIME', 'DEATH', 'PEACE'],
+      /* 曲: 「止めていい」はこの最後の判定だけ (2026-11-01)。前の2戦は機体戦と同じ「判定」。3連戦すべてだと1曲が何周もして、
+         答えの「止めていい」と曲名が重なる最後の1戦の山が立たなかった */
+      { id: 'c6-judge', kind: 'battle', battleBgm: 'halt_shocho', title: '判定 (所長)', me: ['FIRE', 'CLARITY', 'MIRROR'], opp: ['TIME', 'DEATH', 'PEACE'],
         level: 2, win: 3, head: 1, oppName: '所長', oppAvatar: 'story_director', boss: true,
         note: '所長を判定する。所長より先に、あと2つを書き上げる',
         talk: {

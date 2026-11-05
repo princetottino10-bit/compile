@@ -34,8 +34,9 @@ import { conquered, conquerable } from './stats-data.js';
 import { openNews, unreadNews, seenIds, markAllRead, shouldPop, markPopped } from './news.js';
 
 const BOOT_LINES = [
-  '> COMPILE OS v3.1 — boot sequence initiated',
-  '> loading protocols .......... 30/30 OK',
+  '> COMPILE OS v3.0 — MAIN 3 update installed',
+  '> loading protocols .......... 45/45 OK',
+  '> MAIN 3 + AUX 3 ............. 15 NEW',
   '> arena renderer ............. OK',
   '> audio synthesizer .......... OK',
   '> control component .......... NEUTRAL',
@@ -129,24 +130,27 @@ function helloHtml() {
 }
 
 /* ロゴ: 「//」と COMPILE。グリッチ用に同じ文字を data-text に持たせる (CSS の ::before/::after でずらす) */
-const LOGO = '<div class="tt-logo"><b>//</b><span data-text="COMPILE">COMPILE</span></div>' +
+const LOGO = '<div class="tt-logo"><b>// <i>MAIN 3</i> UPDATE</b><span data-text="COMPILE">COMPILE</span></div>' +
   '<div class="tt-sub">3D ARENA <i>·</i> PROTOCOL CARD BATTLE</div>';
 
 /* 右側: 公式カードの絵を3枚、斜めに切り抜いて並べる。数秒ごとにグリッチをかけて別のプロトコルへ */
 function startHero(el, protocols) {
   if (!el || !protocols.length) return () => {};
+  /* Main 3 のあいだは、1枚目を Main 3・Aux 3 の新しいプロトコルから出す */
+  const fresh = protocols.filter(p => /3$/.test(p.set || ''));
   const pick = () => {
     const pool = protocols.slice();
     const out = [];
+    if (fresh.length) { const f = fresh[Math.floor(Math.random() * fresh.length)]; out.push(f); pool.splice(pool.indexOf(f), 1); }
     while (out.length < 3 && pool.length) out.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
     return out;
   };
   const paint = () => {
     el.innerHTML = pick().map((p, i) => {
       const n = 1 + Math.floor(Math.random() * 6);
-      return '<figure class="th-panel" style="--i:' + i + ';--pc:' + (p.color || '#b9a4ff') + '">' +
+      return '<figure class="th-panel" style="--i:' + i + ';--pc:' + (p.color || '#cdc7d4') + '">' +
         '<img alt="" src="art/' + n + p.name.toLowerCase() + '.webp" loading="eager">' +
-        '<figcaption><img alt="" src="' + emblemDataURL(p.name, p.color || '#b9a4ff', 40, true) + '">' + p.name + '</figcaption></figure>';
+        '<figcaption><img alt="" src="' + emblemDataURL(p.name, p.color || '#cdc7d4', 40, true) + '">' + p.name + '</figcaption></figure>';
     }).join('');
   };
   paint();
@@ -195,7 +199,7 @@ export function runTitle(protocols, opts) {
   /* はじめての人には、これまでのお知らせを読んだことにしておく (遊ぶ前に昔の更新を並べても分からない) */
   if (seenIds() === null && isNewcomer()) markAllRead();
   const emblems = protocols
-    .map(p => '<img alt="" src="' + emblemDataURL(p.name, p.color || '#b9a4ff', 72, true) + '">')
+    .map(p => '<img alt="" src="' + emblemDataURL(p.name, p.color || '#cdc7d4', 72, true) + '">')
     .join('');
   root.innerHTML =
     '<canvas class="tt-art" aria-hidden="true"></canvas>' +
@@ -204,7 +208,7 @@ export function runTitle(protocols, opts) {
     '<div class="tt-center" id="ttCenter">' + LOGO +
       '<button class="tt-start" id="ttStart" type="button">PRESS START</button></div>' +
     '<div class="tt-marquee"><div class="tt-strip">' + emblems + emblems + '</div></div>' +
-    '<div class="tt-foot">30 PROTOCOLS · 180 CARDS</div>' +
+    '<div class="tt-foot">45 PROTOCOLS · 270 CARDS</div>' +
     /* 縦持ちのスマホだけに出す (CSS)。タイトル画面の部品なので、ほかの画面を開けば一緒に隠れて重ならない */
     /* 不具合・要望の入口は、メニュー画面にそのまま出しておく (MORE の中だと見つけにくい) */
     '<button type="button" class="tt-report" id="ttReport">不具合・要望</button>' +

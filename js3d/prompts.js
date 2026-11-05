@@ -26,12 +26,16 @@ export const PROMPT_TEXT = {
   'discard-order': '先に手札を捨てるのはどちら?', 'swap-stack-1': '入れ替えるスタック(1つ目)を選択',
   'swap-stack-2': '入れ替えるスタック(2つ目)を選択', 'mirror-middle': 'コピーする相手の中段を選択',
   'steal-to-hand': '手札に加える相手の裏向きカードを選択', 'play-from-trash': 'プレイする捨て札のカードを選択',
-  'search-pick': '手札に加えるカードを選択'
+  'search-pick': '手札に加えるカードを選択',
+  /* Main 3 / Aux 3 */
+  'optional-rearrange': 'プロトコルを並べ替えますか?', 'optional-lose-control': 'コントロールを失いますか?',
+  'hand-to-deck-bottom': 'デッキの一番下に置く手札を選択', 'play-under': '下にプレイする「NOVA」カードを選択'
 };
 
 export const OP_LABEL = {
   flip: '反転する', shift: '移動する', discard: '手札を捨てる',
-  draw: 'カードを引く', 'delete': '削除する', 'return': '戻す'
+  draw: 'カードを引く', 'delete': '削除する', 'return': '戻す',
+  play: 'カードをプレイする', swapProtocols: 'プロトコルを入れ替える'
 };
 
 /* request の見出し文を組み立てる (context にカード名が入る場合は前置き) */

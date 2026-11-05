@@ -14,6 +14,8 @@ import * as THREE from '../vendor/three.module.js';
 import { CARD, FONT, IOS } from './theme.js';
 import { drawIcon } from './icons.js';
 import { condChars } from './cardtext.js';
+import { fillEmblem } from './control-emblem.js';
+import { drawEmblem } from './emblems.js';
 
 /* 座標は 512x716 のデザイン空間で書き、実テクスチャへは拡大して描く */
 const DW = 512, DH = 716;
@@ -53,8 +55,8 @@ export function setMaxAnisotropy(n) {
   for (const tex of backTextures.values()) { tex.anisotropy = n; tex.needsUpdate = true; }
 }
 
-/* カードアートが存在するセット (Main 2 / Aux 2 は scripts/build_card_art_2.py で生成) */
-export const ART_SETS = new Set(['Main 1', 'Aux 1', 'Main 2', 'Aux 2']);
+/* カードアートが存在するセット (Main 2 / Aux 2 は scripts/build_card_art_2.py、Main 3 / Aux 3 は build_card_art_3.py で生成) */
+export const ART_SETS = new Set(['Main 1', 'Aux 1', 'Main 2', 'Aux 2', 'Main 3', 'Aux 3']);
 
 /* 覆われたときも見えている必要がある上端の割合 (theme.js の coverStep と連動) */
 export const REVEAL_RATIO = 0.334;
@@ -407,12 +409,19 @@ const maskCache = new Map();   // defId -> THREE.CanvasTexture
 export function foilMaskTexture(def) {
   if (maskCache.has(def.id)) return maskCache.get(def.id);
   faceTexture(def);                                  // 枠の位置 (faceZones) を用意する
-  const rects = faceZones.get(def.id) || {};
   const S = 0.25;
   const cv = document.createElement('canvas');
   cv.width = Math.round(DW * S); cv.height = Math.round(DH * S);
+  paintMask(cv, def.id);
+  const tex = new THREE.CanvasTexture(cv);
+  maskCache.set(def.id, tex);
+  return tex;
+}
+function paintMask(cv, id) {
+  const S = 0.25;
+  const rects = faceZones.get(id) || {};
   const ctx = cv.getContext('2d');
-  ctx.scale(S, S);
+  ctx.setTransform(S, 0, 0, S, 0, 0);
   ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, DW, DH);
   ctx.fillStyle = '#000';
@@ -420,9 +429,18 @@ export function foilMaskTexture(def) {
   for (const r of Object.values(rects)) {
     if (Array.isArray(r)) ctx.fillRect(r[0] - 8, r[1] - 8, r[2] + 16, r[3] + 16);
   }
-  const tex = new THREE.CanvasTexture(cv);
-  maskCache.set(def.id, tex);
-  return tex;
+}
+
+/* 1種類のカードの面だけ描き直す (def の文を書き換えたとき。PSYCHIC 1 の上下段を入れ替えるハウスルール)。
+   作ってあるテクスチャはそのまま使い回すので、盤面のカードもその場で変わる */
+export function repaintFace(id) {
+  const fd = faceDefs.get(id), cv = faceCanvas.get(id), tex = faceCache.get(id);
+  if (!fd || !cv || !tex) return;
+  faceZones.set(id, paintFace(cv.getContext('2d'), fd.def, fd.art));
+  tex.needsUpdate = true;
+  faceVersion.set(id, (faceVersion.get(id) || 0) + 1);
+  const mask = maskCache.get(id);
+  if (mask && mask.image) { paintMask(mask.image, id); mask.needsUpdate = true; }
 }
 
 /* 対局の切り替わりで、次の対局に不要な分のテクスチャを解放する。
@@ -497,9 +515,17 @@ export function backImageURL() {
 /* ---------- 裏面 ----------
    variant: 自分のカードの裏面の柄 (スリーブ、レベルの報酬)。相手のカードと一覧の画像は standard */
 const SLEEVES = {
-  /* 標準: 暗い紫の地に、桃→紫の斜めの帯とグリッチの線 (公式アート寄り) */
-  default: { a: '#1b1030', b: '#08060f', grid: 'rgba(255,255,255,.035)', halo: '255,79,163', ring: 'rgba(255,79,163,.9)',
+  /* 標準: Main 3 の公式の裏面に寄せた灰色のグリッチの街並み (drawOfficialBack) */
+  default: { official: true, a: '#1b1030', b: '#08060f', grid: 'rgba(255,255,255,.035)', halo: '255,79,163', ring: 'rgba(255,79,163,.9)',
+    ring2: 'rgba(139,92,246,.7)', strip: '200,200,205', glitch: true },
+  /* CLASSIC: Main 3 の公式の裏面に替える前の標準 (桃と紫のグリッチ、真ん中に //)。はじめから選べる */
+  classic: { a: '#1b1030', b: '#08060f', grid: 'rgba(255,255,255,.035)', halo: '255,79,163', ring: 'rgba(255,79,163,.9)',
     ring2: 'rgba(139,92,246,.7)', strip: '255,79,163', glitch: true },
+  /* 実績の褒美 (Main 3 / Aux 3・公式ソロモード、2026-11-03)。つやのない黒に基板の配線と赤い一閃 (Main 3 の見た目) */
+  sins: { a: '#121014', b: '#040305', grid: 'rgba(255,255,255,.02)', halo: '232,32,63', ring: 'rgba(0,0,0,0)',
+    ring2: 'rgba(0,0,0,0)', strip: '232,32,63', sins: true, noLogo: true },
+  rootaccess: { a: '#0d0f10', b: '#030404', grid: 'rgba(255,255,255,.025)', halo: '232,32,63', ring: 'rgba(0,0,0,0)',
+    ring2: 'rgba(0,0,0,0)', strip: '205,199,212', root: true, noLogo: true },
   crimson: { art: 'art/sleeves/crimson.webp', pattern: 'scales', a: '#4a0f1c', b: '#1a0509', grid: 'rgba(255,120,120,.14)', halo: '255,176,64', ring: 'rgba(255,212,120,.85)',
     ring2: 'rgba(255,120,120,.5)', strip: '255,120,120' },
   circuit: { a: '#0b2a22', b: '#04120e', grid: 'rgba(160,123,255,.08)', halo: '99,243,255', ring: 'rgba(160,123,255,.85)',
@@ -1108,6 +1134,107 @@ const PATTERNS = {
 /* GIANT SLAYER の裏面 (下剋上の褒美)。
    背景に王冠をかぶった巨人の影。その王冠ごと、金の一太刀が斜めに断ち切っている。
    中央には挑んだ側の小さな剣、周りに金の二重の縁と飾り、下に GIANT SLAYER の文字 */
+/* Main 3 の見た目の地: 基板の配線 (灰) と、斜めの赤い一閃 */
+function drawMain3Ground(ctx, seed0) {
+  ctx.save();
+  roundRect(ctx, 0, 0, DW, DH, 30); ctx.clip();
+  let seed = seed0;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  ctx.strokeStyle = 'rgba(205,199,212,.13)'; ctx.fillStyle = 'rgba(205,199,212,.2)'; ctx.lineWidth = 2;
+  for (let k = 0; k < 30; k++) {
+    let x = 20 + Math.round(rnd() * 23) * 20, y = 140 + Math.round(rnd() * 28) * 20;
+    ctx.beginPath(); ctx.moveTo(x, y);
+    for (let t = 0; t < 3; t++) {
+      const d = (rnd() < 0.5 ? -1 : 1) * (40 + Math.round(rnd() * 4) * 20);
+      /* 縦と横を交互に (基板の配線らしく直角に曲げる) */
+      if (t % 2) x = Math.max(16, Math.min(DW - 16, x + d));
+      else y = Math.max(130, Math.min(DH - 16, y + d));
+      ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fill();
+  }
+  /* 赤い一閃: 左下から右上へ細く鋭い帯と、その光 */
+  ctx.translate(DW / 2, DH * 0.58); ctx.rotate(-0.62);
+  const g = ctx.createLinearGradient(-DW, 0, DW, 0);
+  g.addColorStop(0, 'rgba(232,32,63,0)'); g.addColorStop(0.35, 'rgba(232,32,63,.55)'); g.addColorStop(0.65, 'rgba(232,32,63,.55)'); g.addColorStop(1, 'rgba(232,32,63,0)');
+  ctx.fillStyle = g; ctx.fillRect(-DW, -26, DW * 2, 52);
+  ctx.fillStyle = 'rgba(255,90,110,.9)';
+  ctx.beginPath(); ctx.moveTo(-DW, 0); ctx.quadraticCurveTo(0, -5, DW, 0); ctx.quadraticCurveTo(0, 3, -DW, 0); ctx.fill();
+  ctx.restore();
+}
+/* 白いかすれ文字 (細い横の欠けを入れる) */
+function scratchText(ctx, text, x, y, font, color, seed0) {
+  ctx.save();
+  ctx.font = font; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = color; ctx.fillText(text, x, y);
+  ctx.globalCompositeOperation = 'destination-out';
+  let seed = seed0;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const w = ctx.measureText(text).width;
+  for (let k = 0; k < 26; k++) ctx.fillRect(x - w / 2 + rnd() * w, y - 30 + rnd() * 60, 4 + rnd() * 26, 1 + rnd() * 2);
+  ctx.restore();
+}
+/* SEVEN SINS (実績 SEVEN SINS): 七つの大罪のプロトコルの紋章を七角の星に並べる。色はそれぞれのプロトコルの色 */
+const SIN_COLORS = [['PRIDE', '#D9A21E'], ['GREED', '#9C3FB5'], ['LUST', '#E0533C'], ['ENVY', '#26A6C9'],
+  ['GLUTTONY', '#C9B22B'], ['WRATH', '#C62A2A'], ['SLOTH', '#8A8F98']];
+function drawSins(ctx) {
+  drawMain3Ground(ctx, 77);
+  const cx = DW / 2, cy = 410, R = 152;
+  const pt = (i, r) => { const a = -Math.PI / 2 + i * Math.PI * 2 / 7; return [cx + Math.cos(a) * r, cy + Math.sin(a) * r]; };
+  ctx.save();
+  /* 七芒星 {7/3} を細い赤で */
+  ctx.strokeStyle = 'rgba(232,32,63,.75)'; ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  for (let k = 0; k <= 7; k++) { const [x, y] = pt((k * 3) % 7, R); if (k) ctx.lineTo(x, y); else ctx.moveTo(x, y); }
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(205,199,212,.35)'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx, cy, R + 46, 0, Math.PI * 2); ctx.stroke();
+  /* 紋章: 暗い円に、プロトコルの色で */
+  SIN_COLORS.forEach(([name, color], i) => {
+    const [x, y] = pt(i, R);
+    ctx.fillStyle = '#060507';
+    ctx.beginPath(); ctx.arc(x, y, 40, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = color; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(x, y, 40, 0, Math.PI * 2); ctx.stroke();
+    ctx.shadowColor = color; ctx.shadowBlur = 10;
+    drawEmblem(ctx, name, x - 30, y - 30, 60, color, 5);
+    ctx.shadowBlur = 0;
+  });
+  ctx.restore();
+  scratchText(ctx, 'VII', cx, cy + 4, '900 64px ' + FONT.logo, 'rgba(240,236,244,.95)', 5);
+  scratchText(ctx, 'S E V E N   S I N S', cx, 662, '800 20px ' + FONT.logo, 'rgba(233,230,240,.7)', 9);
+}
+/* ROOT ACCESS (実績 ROOT ACCESS): 端末の画面。灰色の記録の行と、白いかすれ文字の # ROOT */
+function drawRootAccess(ctx) {
+  drawMain3Ground(ctx, 31);
+  ctx.save();
+  roundRect(ctx, 0, 0, DW, DH, 30); ctx.clip();
+  let seed = 19;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const LINES = ['> handshake ......... ok', '> scenario 06 ....... cleared', '> bot.override ...... ok', '> mount /protocol', '> sudo compile --all',
+    '> kernel: line 0 1 2', '> access level ...... 0', '> elevate ........... ok', '> unlock /root', '> session granted'];
+  ctx.font = '600 15px ui-monospace, Menlo, Consolas, monospace';
+  ctx.textBaseline = 'alphabetic';
+  for (let i = 0; i < 18; i++) {
+    const y = 158 + i * 30;
+    ctx.fillStyle = 'rgba(205,199,212,' + (0.16 + rnd() * 0.16) + ')';
+    ctx.fillText(LINES[(i * 7 + 3) % LINES.length], 30, y);
+    ctx.fillStyle = 'rgba(205,199,212,.08)';
+    ctx.fillText(Array.from({ length: 6 }, () => Math.floor(rnd() * 256).toString(16).padStart(2, '0')).join(' '), 300, y);
+  }
+  /* 真ん中の帯: 黒い窓に # ROOT と、点滅する入力の印 */
+  const y0 = 352, h = 128;
+  ctx.fillStyle = 'rgba(4,4,6,.92)'; ctx.fillRect(28, y0, DW - 56, h);
+  ctx.strokeStyle = 'rgba(205,199,212,.55)'; ctx.lineWidth = 2; ctx.strokeRect(28, y0, DW - 56, h);
+  ctx.fillStyle = 'rgba(232,32,63,.95)'; ctx.fillRect(28, y0, 10, h);
+  ctx.restore();
+  scratchText(ctx, '# ROOT', DW / 2 - 6, y0 + 58, '900 62px ' + FONT.logo, 'rgba(244,240,248,.96)', 11);
+  ctx.fillStyle = 'rgba(232,32,63,.95)'; ctx.fillRect(DW / 2 + 128, y0 + 80, 26, 8);
+  scratchText(ctx, 'A C C E S S   G R A N T E D', DW / 2, y0 + h - 18, '700 14px ' + FONT.logo, 'rgba(233,230,240,.75)', 4);
+  scratchText(ctx, 'C O M P I L E', DW / 2, 662, '800 20px ' + FONT.logo, 'rgba(233,230,240,.6)', 13);
+}
 function drawSlayer(ctx) {
   const cx = DW / 2;
   ctx.save();
@@ -1226,6 +1353,107 @@ function drawSlayer(ctx) {
   ctx.restore();
 }
 
+/* 標準の裏面: Main 3 の公式の裏面に寄せた意匠。
+   灰色のグリッチの街並みの上に、角を落とした暗い枠と COMPILE のロゴ、<|> と紋章、上に値 2 の箱。
+   座標は公式画像 (744x1039) の px で書き、デザイン空間へ縮める。街並みは種つきの乱数で毎回同じ */
+function drawOfficialBack(ctx) {
+  ctx.save();
+  roundRect(ctx, 0, 0, DW, DH, 30); ctx.clip();
+  ctx.scale(DW / 744, DH / 1039);
+  const W = 744, H = 1039;
+  let seed = 31;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const gray = (v, a) => 'rgba(' + v + ',' + v + ',' + v + ',' + a + ')';
+  /* 地: 左上が明るく右下へ沈む灰色 */
+  const g = ctx.createLinearGradient(0, 0, W, H);
+  g.addColorStop(0, '#46464a'); g.addColorStop(0.5, '#222225'); g.addColorStop(1, '#2e2e31');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  /* 街並み: 横長の建物の塊と、横に走るグリッチの筋 */
+  const blocks = (n, lo, hi, aLo, aHi) => {
+    for (let k = 0; k < n; k++) {
+      const w = 20 + rnd() * 200, h = 4 + rnd() * rnd() * 90;
+      ctx.fillStyle = gray(Math.round(lo + rnd() * (hi - lo)), aLo + rnd() * (aHi - aLo));
+      ctx.fillRect(rnd() * W - 40, rnd() * H, w, h);
+    }
+  };
+  blocks(240, 5, 110, 0.3, 0.75);
+  blocks(70, 120, 200, 0.12, 0.35);
+  for (let k = 0; k < 60; k++) {
+    ctx.fillStyle = gray(200 + Math.round(rnd() * 55), 0.1 + rnd() * 0.35);
+    ctx.fillRect(rnd() * W - 60, rnd() * H, 30 + rnd() * 260, 1 + rnd() * 2.5);
+  }
+  /* 枠の中: 暗く沈めて文字を読ませる (上ほど少し透ける) */
+  const frame = [[80, 233], [682, 233], [700, 251], [700, 745], [690, 755], [700, 765], [700, 945], [682, 968],
+    [372, 968], [352, 998], [64, 998], [45, 980], [45, 270]];
+  const path = () => { ctx.beginPath(); frame.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath(); };
+  path();
+  const pg = ctx.createLinearGradient(0, 233, 0, 998);
+  pg.addColorStop(0, 'rgba(22,22,24,.78)'); pg.addColorStop(0.55, 'rgba(14,14,16,.86)'); pg.addColorStop(1, 'rgba(4,4,5,.94)');
+  ctx.fillStyle = pg; ctx.fill();
+  /* 枠の中の淡い街並み (ロゴの下の霞) */
+  ctx.save(); path(); ctx.clip();
+  const haze = ctx.createRadialGradient(372, 560, 20, 372, 560, 330);
+  haze.addColorStop(0, 'rgba(120,120,125,.32)'); haze.addColorStop(1, 'rgba(120,120,125,0)');
+  ctx.fillStyle = haze; ctx.fillRect(0, 0, W, H);
+  blocks(60, 0, 50, 0.25, 0.6);
+  ctx.restore();
+  /* 枠線と、外へ伸びる細い線・十字の目印 */
+  ctx.strokeStyle = 'rgba(255,255,255,.92)'; ctx.lineWidth = 3.5; path(); ctx.stroke();
+  ctx.lineWidth = 2.5;
+  const line = (x0, y0, x1, y1) => { ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke(); };
+  line(0, 242, 80, 242); line(0, 838, 48, 838); line(326, 968, 326, 1039); line(372, 968, 372, 1039);
+  line(700, 572, 744, 572); line(436, 0, 436, 40);
+  ctx.fillStyle = 'rgba(255,255,255,.95)';
+  /* 右下の段: 白い台形の帯 */
+  ctx.beginPath(); ctx.moveTo(535, 742); ctx.lineTo(590, 742); ctx.lineTo(612, 756); ctx.lineTo(700, 756); ctx.lineTo(700, 764);
+  ctx.lineTo(606, 764); ctx.lineTo(586, 750); ctx.lineTo(550, 750); ctx.closePath(); ctx.fill();
+  /* 値 2 の箱 (裏向きのカードの値。覆われても見える高さに置く) */
+  ctx.fillStyle = 'rgba(6,6,8,.94)'; ctx.fillRect(303, 40, 140, 175);
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.strokeRect(303, 40, 140, 175);
+  ctx.lineWidth = 2; line(298, 46, 310, 46); line(436, 209, 448, 209); line(309, 34, 309, 52); line(437, 203, 437, 220);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = '800 150px ' + FONT.hud;
+  glitchText(ctx, '2', 373, 135, [[112, 0], [124, 6]]);
+  /* COMPILE: 枠いっぱいの幅に合わせ、横の帯ごとにずらしてグリッチさせる */
+  ctx.font = '900 100px ' + FONT.logo;
+  const tw = ctx.measureText('COMPILE').width;
+  const fs = Math.min(140, 100 * 620 / tw);
+  ctx.font = '900 ' + fs.toFixed(1) + 'px ' + FONT.logo;
+  glitchText(ctx, 'COMPILE', 372, 527, [[500, 0], [510, -7], [540, 0], [549, 9], [570, 0], [576, -5]]);
+  ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 2;
+  /* 十字の目印 (文字の周り) */
+  [[98, 476], [440, 464], [660, 486], [214, 600], [520, 610]].forEach(([x, y]) => { line(x - 14, y, x + 14, y); line(x, y - 14, x, y + 14); });
+  line(0, 527, 60, 527); line(684, 572, 744, 572);
+  /* <|> と小さな紋章。| は M の真ん中の谷から垂れて下へ伸びる (公式のロゴは M と | がつながっている)。
+     書体で M の位置が変わるので、測って M の中心に <|> ごとそろえる */
+  const left = 372 - ctx.measureText('COMPILE').width / 2;
+  const mx = left + ctx.measureText('CO').width + ctx.measureText('M').width / 2;
+  ctx.lineWidth = 9; ctx.lineCap = 'butt'; ctx.lineJoin = 'miter';
+  ctx.beginPath(); ctx.moveTo(mx - 34, 645); ctx.lineTo(mx - 72, 667); ctx.lineTo(mx - 34, 689); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(mx + 34, 645); ctx.lineTo(mx + 72, 667); ctx.lineTo(mx + 34, 689); ctx.stroke();
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(mx - 8, 520, 16, 175);
+  /* 垂れの筋 (M の脚から細く落ちるしずく) */
+  ctx.fillRect(mx - 22, 560, 4, 26); ctx.fillRect(mx + 17, 560, 4, 18);
+  fillEmblem(ctx, mx, 722, 70);
+  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  ctx.restore();
+}
+
+/* 横の帯ごとに左右へずらした文字 (グリッチ)。bands: [帯の下端 y, ずらす px] を上から順に */
+function glitchText(ctx, text, x, y, bands) {
+  let top = 0;
+  for (const [bottom, dx] of bands) {
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, top, 2000, bottom - top); ctx.clip();
+    ctx.fillStyle = '#fff'; ctx.fillText(text, x + dx, y);
+    ctx.restore();
+    top = bottom;
+  }
+  ctx.save(); ctx.beginPath(); ctx.rect(0, top, 2000, 2000); ctx.clip();
+  ctx.fillStyle = '#fff'; ctx.fillText(text, x, y); ctx.restore();
+}
+
 /* 絵のスリーブの画像が読み込めたら知らせる (見た目の画面のプレビューを描き直すため) */
 const artListeners = new Set();
 export function onSleeveArt(fn) { artListeners.add(fn); return () => artListeners.delete(fn); }
@@ -1243,6 +1471,7 @@ export function backTex(variant) {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, cv.width, cv.height);
     ctx.scale(cv.width / DW, cv.height / DH);
+    if (P.official) { drawOfficialBack(ctx); return; }
     if (art) {
       ctx.save(); roundRect(ctx, 0, 0, DW, DH, 30); ctx.clip();
       ctx.fillStyle = P.b || '#000'; ctx.fillRect(0, 0, DW, DH);
@@ -1341,6 +1570,8 @@ export function backTex(variant) {
     if (P.pattern && PATTERNS[P.pattern]) { ctx.save(); roundRect(ctx, 0, 0, DW, DH, 30); ctx.clip(); PATTERNS[P.pattern](ctx); ctx.restore(); }
     /* 下剋上の褒美: 巨人と、それを断ち切った一太刀 (中央の紋章も専用) */
     if (P.slayer) drawSlayer(ctx);
+    if (P.sins) drawSins(ctx);
+    if (P.root) drawRootAccess(ctx);
 
     /* 中央の紋章 */
     const cx = DW / 2, cy = DH / 2;

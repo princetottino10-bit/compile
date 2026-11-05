@@ -16,6 +16,7 @@ test('見た目の解放: はじめからのものは Lv1、報酬のものは�
       assert.ok(R.REWARDS.some(r => r.kind === kind && r.key === key) || R.GACHA_ITEMS.some(g => g.kind === kind && g.key === key) ||
         R.UNDERDOG_ITEMS.some(g => g.kind === kind && g.key === key) || R.WEEKLY_ITEMS.some(g => g.kind === kind && g.key === key) ||
         R.MASTERY_ITEMS.some(g => g.kind === kind && g.key === key) || R.AVATAR_GACHA.some(g => g.kind === kind && g.key === key) ||
+        R.FREE_ITEMS.some(g => g.kind === kind && g.key === key) || R.TROPHY_ITEMS.some(g => g.kind === kind && g.key === key) ||
         (kind === 'avatar' && R.AVATAR_FREE.includes(key)),
         kind + '/' + key + ' は報酬の一覧・ガチャ・下剋上・週替わりのどれかにある');
     }
@@ -56,7 +57,7 @@ test('全部解放 (管理者のテスト用) では、見た目も称号もレ�
 });
 
 
-test('プロトコルの習熟度: 3 で名札・6 で称号・9 でプレイマット (30 プロトコルそれぞれ)', async () => {
+test('プロトコルの習熟度: 3 で名札・6 で称号・9 でプレイマット (45 プロトコルそれぞれ)', async () => {
   const R = await load();
   const wins = (n) => Array.from({ length: n }, () => ({ win: true, level: 1, me: ['FIRE', 'WATER', 'SPEED'] }));
   const mem = new Map();
@@ -74,8 +75,46 @@ test('プロトコルの習熟度: 3 で名札・6 で称号・9 でプレイマ
   assert.equal(R.isUnlocked('mat', 'p_fire', 1), true);
   assert.equal(R.isUnlocked('mat', 'p_death', 99), false, '遊んでいないプロトコルは開かない');
   assert.equal(R.TITLES.m_fire, 'PYROMANCER');
-  assert.equal(R.MASTERY_ITEMS.filter(m => m.kind === 'title').length, 30);
+  assert.equal(R.MASTERY_ITEMS.filter(m => m.kind === 'title').length, 45);
   setRecs(wins(39).map(r => ({ ...r, mode: 'tutorial' })));   // チュートリアルの対戦は数えない
   assert.equal(R.protoMastery('FIRE'), 0);
   delete globalThis.localStorage;
+});
+
+test('Main 3 の実績の褒美: 実績を取るとスリーブ・マーカーが開き、外した実績では閉じる。CLASSIC ははじめから', async () => {
+  const store = {};
+  global.localStorage = { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: (k) => { delete store[k]; } };
+  try {
+    const R = await load();
+    assert.equal(R.unlockLevel('sleeve', 'classic'), 1);
+    for (const it of R.TROPHY_ITEMS) {
+      assert.ok(R.COSMETICS[it.kind].some(([k]) => k === it.key), it.key + ' は COSMETICS にある');
+      assert.equal(R.unlockLevel(it.kind, it.key), 9999);
+    }
+    store.compileTrophies = JSON.stringify({ sins7: 1, tristate: 2, '~tristate': 3 });
+    assert.equal(R.unlockLevel('sleeve', 'sins'), 1);
+    assert.equal(R.unlockLevel('marker', 'tristate'), 9999, '外した実績では開かない');
+    assert.equal(R.unlockLevel('sleeve', 'rootaccess'), 9999);
+  } finally { delete global.localStorage; }
+});
+
+test('実績の褒美の実績は、どれも achievements.js にある', async () => {
+  const R = await load();
+  const A = await import('../js3d/achievements.js');
+  for (const it of R.TROPHY_ITEMS) assert.ok(A.TROPHIES.some(t => t.id === it.trophy), it.trophy);
+});
+
+test('勝ちの演出・コンパイルの光・マーカー・名札は、どれも描き方がある (2026-11-03 の追加分も)', async () => {
+  const R = await load();
+  const { VICTORY_FX } = await import('../js3d/backdrops.js');
+  for (const [key] of R.COSMETICS.victory) assert.ok(VICTORY_FX[key], 'victory ' + key);
+  const fs = require('node:fs');
+  const ctrl = fs.readFileSync(require.resolve('../js3d/control.js'), 'utf8');
+  const styles = ctrl.slice(ctrl.indexOf('export const MARKER_STYLES'), ctrl.indexOf('const PATTERN_DRAW'));
+  for (const [key] of R.COSMETICS.marker) assert.ok(new RegExp('\\b' + key + ':').test(styles), 'marker ' + key);
+  const fx = fs.readFileSync(require.resolve('../js3d/fx-compile.js'), 'utf8');
+  const signs = /const SIGNS = \{([^}]*)\}/.exec(fx)[1];
+  for (const [key] of R.COSMETICS.ccolor.slice(1)) assert.ok(signs.split(',').map(x => x.trim()).includes(key), 'ccolor ' + key);
+  const html = fs.readFileSync(require.resolve('../three-play.html'), 'utf8');
+  for (const [key] of R.COSMETICS.plate.slice(1)) if (!/^p_/.test(key)) assert.ok(html.includes('[data-frame="' + key + '"]'), 'plate ' + key);
 });

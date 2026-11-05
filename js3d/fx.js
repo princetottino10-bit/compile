@@ -272,7 +272,13 @@ export const BURST_FAMILY = {
   PSYCHIC: 'rings', PEACE: 'rings',
   SPIRIT: 'wisps', LIFE: 'bloom', LOVE: 'bloom', WATER: 'rain',
   SPEED: 'streaks', LIGHT: 'streaks',
-  UNITY: 'hex', ASSIMILATION: 'hex', DIVERSITY: 'prism', LUCK: 'sparkle'
+  UNITY: 'hex', ASSIMILATION: 'hex', DIVERSITY: 'prism', LUCK: 'sparkle',
+  /* Main 3 */
+  WRATH: 'lightning', NOVA: 'flame', PRIDE: 'crystal', GLUTTONY: 'vortex', SLOTH: 'ash',
+  ENVY: 'miasma', AMBUSH: 'mist', FULCRUM: 'rings', LUST: 'bloom', OVERWHELM: 'rain',
+  MOMENTUM: 'streaks', GREED: 'sparkle',
+  /* Aux 3 */
+  FLEXIBLE: 'prism', INERT: 'ash', RIGID: 'hex'
 };
 
 /* 丸い減衰スプライト (霧・火の粉で共用) */
@@ -759,7 +765,7 @@ export function fxOrderBadge(scene, pos, n, colorHex) {
   cv.width = cv.height = 64;
   const g = cv.getContext('2d');
   const col = '#' + new THREE.Color(colorHex).getHexString();
-  g.fillStyle = 'rgba(8,6,15,.88)';
+  g.fillStyle = 'rgba(10,8,9,.88)';
   g.beginPath(); g.arc(32, 32, 27, 0, Math.PI * 2); g.fill();
   g.lineWidth = 4; g.strokeStyle = col; g.stroke();
   g.fillStyle = '#fff';

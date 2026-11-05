@@ -16,9 +16,9 @@ function fill(el, plate, lead) {
     const img = document.createElement('img');
     img.alt = '';
     /* 顔のアイコン (CHIP で交換) は絵をそのまま、プロトコルは記号 */
-    img.src = plate.icon.src || emblemDataURL(plate.icon.name, plate.icon.color || '#b9a4ff', 40, true);
+    img.src = plate.icon.src || emblemDataURL(plate.icon.name, plate.icon.color || '#cdc7d4', 40, true);
     if (plate.icon.face) img.className = 'face';
-    ic.style.setProperty('--pc', plate.icon.color || '#b9a4ff');
+    ic.style.setProperty('--pc', plate.icon.color || '#cdc7d4');
     ic.append(img);
   } else {
     ic.textContent = plate.name.slice(0, 1).toUpperCase();

@@ -40,3 +40,20 @@ test('曲が1つしかなくても、曲が無くても止まらない', async (
   assert.equal(B.pickShuffleBgm(Math.random, ['only']), 'only');
   assert.equal(B.pickShuffleBgm(Math.random, []), null);
 });
+
+test('次の曲ボタン (skipBgm): 止めているときは鳴らし始めず、流しているときは持っている別の曲へ替える', async () => {
+  const B = await load();
+  B.stopBgm();
+  assert.equal(B.skipBgm('battle'), null);
+  B.playBgm('cho_zunou');
+  const pool = B.shufflePool();
+  let prev = 'cho_zunou';
+  for (let i = 0; i < 10; i++) {
+    const k = B.skipBgm('battle');
+    assert.ok(pool.includes(k), '持っている曲: ' + k);
+    assert.notEqual(k, prev, '同じ曲には替えない');
+    assert.equal(B.bgmState().want, k);
+    prev = k;
+  }
+  B.stopBgm();
+});

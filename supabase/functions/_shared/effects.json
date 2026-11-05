@@ -3220,5 +3220,1845 @@
         }
       ]
     }
+  },
+  "AMBUSH_1": {
+    "middle": {
+      "_text": "カードを3枚引く。あなたの裏向きのカードを1枚反転させる。",
+      "ops": [
+        {
+          "op": "draw",
+          "count": 3
+        },
+        {
+          "op": "flip",
+          "select": {
+            "owner": "self",
+            "facing": "down"
+          }
+        }
+      ]
+    }
+  },
+  "AMBUSH_2": {
+    "middle": {
+      "_text": "値が0か1の、あなたの他のすべてのカードを反転させる。反転させた枚数と同じ枚数のカードを引く。",
+      "ops": [
+        {
+          "op": "flip",
+          "select": {
+            "owner": "self",
+            "exclude": "thisCard",
+            "value": {
+              "in": [
+                0,
+                1
+              ]
+            },
+            "mode": "all"
+          },
+          "bind": "n"
+        },
+        {
+          "op": "drawByCount",
+          "ref": "n"
+        }
+      ]
+    }
+  },
+  "AMBUSH_3": {
+    "middle": {
+      "_text": "値が最も小さい、あなたの覆われているカードを1枚移動させる。",
+      "ops": [
+        {
+          "op": "shift",
+          "select": {
+            "owner": "self",
+            "coverage": "covered",
+            "value": "lowest"
+          }
+        }
+      ]
+    }
+  },
+  "AMBUSH_4": {
+    "middle": {
+      "_text": "値が最も大きい、相手の表向きで覆われているカードを1枚反転させる。",
+      "ops": [
+        {
+          "op": "flip",
+          "select": {
+            "owner": "opp",
+            "facing": "up",
+            "coverage": "covered",
+            "value": "highest"
+          }
+        }
+      ]
+    }
+  },
+  "AMBUSH_5": {
+    "middle": {
+      "_text": "あなたの覆われていない裏向きのカードがある場合、カードを1枚引く。",
+      "ops": [
+        {
+          "op": "ifState",
+          "cond": "youHaveUncoveredFaceDown",
+          "ops": [
+            {
+              "op": "draw",
+              "count": 1
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "AMBUSH_6": {
+    "middle": {
+      "_text": "あなたは手札を1枚捨て札にする。",
+      "ops": [
+        {
+          "op": "discard",
+          "count": 1
+        }
+      ]
+    }
+  },
+  "ENVY_1": {
+    "upper": {
+      "_text": "このラインのあなたの合計値は、このラインにある値が最も大きい相手のカードの値だけ増える。",
+      "static": {
+        "kind": "modifyLineTotal",
+        "side": "self",
+        "deltaPer": "oppHighestInLine"
+      }
+    }
+  },
+  "ENVY_2": {
+    "middle": {
+      "_text": "相手がコントロールを持っている場合、あなたはカードを1枚反転させることができる。",
+      "ops": [
+        {
+          "op": "ifState",
+          "cond": "oppHasControl",
+          "ops": [
+            {
+              "op": "flip",
+              "optional": true
+            }
+          ]
+        }
+      ]
+    },
+    "lower": {
+      "_text": "開始：相手がコントロールを持っている場合、あなたはコントロールを得る。",
+      "trigger": {
+        "on": "start",
+        "ops": [
+          {
+            "op": "ifState",
+            "cond": "oppHasControl",
+            "ops": [
+              {
+                "op": "gainControl"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "ENVY_3": {
+    "middle": {
+      "_text": "相手の手札の枚数と同じ枚数のカードを引く。",
+      "ops": [
+        {
+          "op": "drawDynamic",
+          "count": "oppHand"
+        }
+      ]
+    }
+  },
+  "ENVY_4": {
+    "lower": {
+      "_text": "相手がこのラインにカードをプレイしたあと：あなたのデッキの一番上のカードをこのラインに裏向きでプレイする。",
+      "trigger": {
+        "on": "afterOppPlayInThisLine",
+        "ops": [
+          {
+            "op": "play",
+            "source": "topDeck",
+            "facing": "down",
+            "dest": "thisLine"
+          }
+        ]
+      }
+    }
+  },
+  "ENVY_5": {
+    "middle": {
+      "_text": "相手のコンパイル済みのプロトコルがあなたより多い場合、カードを1枚反転させる。",
+      "ops": [
+        {
+          "op": "ifState",
+          "cond": "oppMoreCompiled",
+          "ops": [
+            {
+              "op": "flip"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "ENVY_6": {
+    "middle": {
+      "_text": "あなたは手札を1枚捨て札にする。",
+      "ops": [
+        {
+          "op": "discard",
+          "count": 1
+        }
+      ]
+    }
+  },
+  "FULCRUM_1": {
+    "upper": {
+      "_text": "開始：あなたの手札がちょうど0枚の場合、相手は手札を2枚捨て札にする。",
+      "trigger": {
+        "on": "start",
+        "ops": [
+          {
+            "op": "ifState",
+            "cond": "handEq",
+            "n": 0,
+            "ops": [
+              {
+                "op": "discard",
+                "count": 2,
+                "player": "opp"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "middle": {
+      "_text": "あなたの手札がちょうど0枚の場合、相手は手札を1枚捨て札にする。",
+      "ops": [
+        {
+          "op": "ifState",
+          "cond": "handEq",
+          "n": 0,
+          "ops": [
+            {
+              "op": "discard",
+              "count": 1,
+              "player": "opp"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "FULCRUM_2": {
+    "middle": {
+      "_text": "他のすべての表向きのカードを反転させる。あなたの左のスタックと右のスタックを入れ替える。",
+      "ops": [
+        {
+          "op": "flip",
+          "select": {
+            "facing": "up",
+            "exclude": "thisCard",
+            "mode": "all"
+          }
+        },
+        {
+          "op": "swapSides",
+          "what": "stacks"
+        }
+      ]
+    }
+  },
+  "FULCRUM_3": {
+    "middle": {
+      "_text": "あなたの手札がちょうど2枚の場合、相手のカードを1枚削除する。",
+      "ops": [
+        {
+          "op": "ifState",
+          "cond": "handEq",
+          "n": 2,
+          "ops": [
+            {
+              "op": "delete",
+              "select": {
+                "owner": "opp"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "FULCRUM_4": {
+    "middle": {
+      "_text": "カードを1枚引く。あなたの左のプロトコルと右のプロトコルの位置を入れ替える。",
+      "ops": [
+        {
+          "op": "draw",
+          "count": 1
+        },
+        {
+          "op": "swapSides",
+          "what": "protocols"
+        }
+      ]
+    }
+  },
+  "FULCRUM_5": {
+    "middle": {
+      "_text": "あなたの手札がちょうど4枚の場合、カードを1枚引く。",
+      "ops": [
+        {
+          "op": "ifState",
+          "cond": "handEq",
+          "n": 4,
+          "ops": [
+            {
+              "op": "draw",
+              "count": 1
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "FULCRUM_6": {
+    "middle": {
+      "_text": "あなたは手札を1枚捨て札にする。",
+      "ops": [
+        {
+          "op": "discard",
+          "count": 1
+        }
+      ]
+    }
+  },
+  "GLUTTONY_1": {
+    "upper": {
+      "_text": "あなたがキャッシュをクリアしたあと：あなたのデッキの一番上のカードを裏向きでプレイする。",
+      "trigger": {
+        "on": "afterYouClearCache",
+        "ops": [
+          {
+            "op": "play",
+            "source": "topDeck",
+            "facing": "down",
+            "dest": "anyLine"
+          }
+        ]
+      }
+    },
+    "middle": {
+      "_text": "他のカードを1枚戻す。カードを1枚引く。",
+      "ops": [
+        {
+          "op": "return",
+          "select": {
+            "exclude": "thisCard"
+          }
+        },
+        {
+          "op": "draw",
+          "count": 1
+        }
+      ]
+    }
+  },
+  "GLUTTONY_2": {
+    "middle": {
+      "_text": "カードを2枚引く。",
+      "ops": [
+        {
+          "op": "draw",
+          "count": 2
+        }
+      ]
+    },
+    "lower": {
+      "_text": "いずれかのプレイヤーがキャッシュをクリアしたあと：カードを1枚削除する。",
+      "trigger": {
+        "on": "afterAnyClearCache",
+        "ops": [
+          {
+            "op": "delete"
+          }
+        ]
+      }
+    }
+  },
+  "GLUTTONY_3": {
+    "middle": {
+      "_text": "あなたの手札の枚数と同じ枚数のカードを引く。",
+      "ops": [
+        {
+          "op": "drawDynamic",
+          "count": "yourHand"
+        }
+      ]
+    }
+  },
+  "GLUTTONY_4": {
+    "upper": {
+      "_text": "終了：このカードが表向きのカードに覆われている場合、そのカードを削除する。",
+      "trigger": {
+        "on": "end",
+        "ops": [
+          {
+            "op": "bindCoverer",
+            "facing": "up",
+            "bind": "cov"
+          },
+          {
+            "op": "ifDone",
+            "ops": [
+              {
+                "op": "delete",
+                "select": {
+                  "ref": "cov"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "middle": {
+      "_text": "カードを2枚引く。",
+      "ops": [
+        {
+          "op": "draw",
+          "count": 2
+        }
+      ]
+    }
+  },
+  "GLUTTONY_5": {
+    "lower": {
+      "_text": "あなたがリフレッシュしたあと：カードを1枚引く。",
+      "trigger": {
+        "on": "afterYouRefresh",
+        "ops": [
+          {
+            "op": "draw",
+            "count": 1
+          }
+        ]
+      }
+    }
+  },
+  "GLUTTONY_6": {
+    "middle": {
+      "_text": "あなたは手札を1枚捨て札にする。",
+      "ops": [
+        {
+          "op": "discard",
+          "count": 1
+        }
+      ]
+    }
+  },
+  "GREED_1": {
+    "middle": {
+      "_text": "あなたのすべての手札を捨て札にする。カードを1枚削除する。",
+      "ops": [
+        {
+          "op": "discard",
+          "count": "all"
+        },
+        {
+          "op": "delete"
+        }
+      ]
+    },
+    "lower": {
+      "_text": "あなたがカードを削除したあと：カードを1枚引く。",
+      "trigger": {
+        "on": "afterYouDelete",
+        "ops": [
+          {
+            "op": "draw",
+            "count": 1
+          }
+        ]
+      }
+    }
+  },
+  "GREED_2": {
+    "lower": {
+      "_text": "終了：あなたの合計値が10以上あり、相手より大きいラインを1つコンパイルする。",
+      "trigger": {
+        "on": "end",
+        "ops": [
+          {
+            "op": "compileLine"
+          }
+        ]
+      }
+    }
+  },
+  "GREED_3": {
+    "middle": {
+      "_text": "相手は手札を1枚捨て札にする。",
+      "ops": [
+        {
+          "op": "discard",
+          "count": 1,
+          "player": "opp"
+        }
+      ]
+    },
+    "lower": {
+      "_text": "開始：あなたは自分のカードを1枚戻すことができる。",
+      "trigger": {
+        "on": "start",
+        "ops": [
+          {
+            "op": "return",
+            "select": {
+              "owner": "self"
+            },
+            "optional": true
+          }
+        ]
+      }
+    }
+  },
+  "GREED_4": {
+    "middle": {
+      "_text": "このスタックにある、あなたの覆われているカードを1枚移動させる。",
+      "ops": [
+        {
+          "op": "shift",
+          "select": {
+            "owner": "self",
+            "coverage": "covered",
+            "zone": "thisStack"
+          }
+        }
+      ]
+    }
+  },
+  "GREED_5": {
+    "middle": {
+      "_text": "あなたはすべての手札を捨て札にすることができる。そうした場合、カードを1枚反転させる。",
+      "ops": [
+        {
+          "op": "discard",
+          "count": "all",
+          "optional": true
+        },
+        {
+          "op": "ifDone",
+          "ops": [
+            {
+              "op": "flip"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "GREED_6": {
+    "middle": {
+      "_text": "あなたは手札を1枚捨て札にする。",
+      "ops": [
+        {
+          "op": "discard",
+          "count": 1
+        }
+      ]
+    }
+  },
+  "LUST_1": {
+    "upper": {
+      "_text": "このラインの各プレイヤーの合計値は10増える。",
+      "static": {
+        "kind": "modifyLineTotal",
+        "side": "both",
+        "delta": 10
+      }
+    },
+    "middle": {
+      "_text": "コントロールを得る。",
+      "ops": [
+        {
+          "op": "gainControl"
+        }
+      ]
+    },
+    "lower": {
+      "_text": "あなたがコントロールを持っている場合、相手はコンパイルすることができない。",
+      "static": {
+        "kind": "oppNoCompileIfControl"
+      }
+    }
+  },
+  "LUST_2": {
+    "middle": {
+      "_text": "あなたは相手の覆われているカードを1枚このラインへ移動させることができる。",
+      "ops": [
+        {
+          "op": "shift",
+          "select": {
+            "owner": "opp",
+            "coverage": "covered"
+          },
+          "dest": "thisLine",
+          "optional": true
+        }
+      ]
+    },
+    "lower": {
+      "_text": "このスタックには、プロトコルを対応させずにあなたのカードをプレイすることができる。",
+      "static": {
+        "kind": "playPermission",
+        "rule": "youAnyProtoThisStack"
+      }
+    }
+  },
+  "LUST_3": {
+    "middle": {
+      "_text": "相手は手札からランダムにカードを1枚公開する。そのカードを相手側に裏向きでプレイする。",
+      "ops": [
+        {
+          "op": "oppRandomPlayDown"
+        }
+      ]
+    },
+    "lower": {
+      "_text": "終了：あなたはコントロールを失うことができる。そうした場合、カードを1枚反転させる。",
+      "trigger": {
+        "on": "end",
+        "ops": [
+          {
+            "op": "loseControl",
+            "optional": true
+          },
+          {
+            "op": "ifDone",
+            "ops": [
+              {
+                "op": "flip"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "LUST_4": {
+    "middle": {
+      "_text": "あなたは手札をすべて公開する。相手はコントロールを失う。",
+      "ops": [
+        {
+          "op": "reveal",
+          "target": "ownHand"
+        },
+        {
+          "op": "loseControl",
+          "player": "opp"
+        }
+      ]
+    },
+    "lower": {
+      "_text": "相手がコントロールを得たあと：カードを1枚引く。",
+      "trigger": {
+        "on": "afterOppGainControl",
+        "ops": [
+          {
+            "op": "draw",
+            "count": 1
+          }
+        ]
+      }
+    }
+  },
+  "LUST_5": {
+    "middle": {
+      "_text": "あなたは手札を1枚捨て札にする。",
+      "ops": [
+        {
+          "op": "discard",
+          "count": 1
+        }
+      ]
+    }
+  },
+  "LUST_6": {
+    "middle": {
+      "_text": "あなたは手札を1枚捨て札にする。相手はこのラインにカードを裏向きで1枚プレイする。",
+      "ops": [
+        {
+          "op": "discard",
+          "count": 1
+        },
+        {
+          "op": "play",
+          "player": "opp",
+          "facing": "down",
+          "dest": "thisLine"
+        }
+      ]
+    }
+  },
+  "MOMENTUM_1": {
+    "middle": {
+      "_text": "コンパイル済みのプロトコルがある各ラインに、あなたのデッキの一番上のカードを裏向きで1枚ずつプレイする。",
+      "ops": [
+        {
+          "op": "forEachLine",
+          "lines": "linesWithCompiled",
+          "ops": [
+            {
+              "op": "play",
+              "source": "topDeck",
+              "facing": "down",
+              "dest": "currentLine"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "MOMENTUM_2": {
+    "upper": {
+      "_text": "いずれかのプレイヤーがコンパイルしたあと：あなたのデッキの一番上のカードをこのスタックに裏向きでプレイする。",
+      "trigger": {
+        "on": "afterAnyCompile",
+        "ops": [
+          {
+            "op": "play",
+            "source": "topDeck",
+            "facing": "down",
+            "dest": "thisStack"
+          }
+        ]
+      }
+    },
+    "lower": {
+      "_text": "いずれかのプレイヤーがプロトコルを並べ替えたあと：あなたは手札を1枚捨て札にする。カードを1枚引く。",
+      "trigger": {
+        "on": "afterAnyRearrange",
+        "ops": [
+          {
+            "op": "discard",
+            "count": 1
+          },
+          {
+            "op": "draw",
+            "count": 1
+          }
+        ]
+      }
+    }
+  },
+  "MOMENTUM_3": {
+    "middle": {
+      "_text": "カードを2枚引く。",
+      "ops": [
+        {
+          "op": "draw",
+          "count": 2
+        }
+      ]
+    }
+  },
+  "MOMENTUM_4": {
+    "middle": {
+      "_text": "あなたのプロトコルを並べ替える。",
+      "ops": [
+        {
+          "op": "rearrange"
+        }
+      ]
+    }
+  },
+  "MOMENTUM_5": {
+    "middle": {
+      "_text": "あなたは手札を1枚捨て札にする。",
+      "ops": [
+        {
+          "op": "discard",
+          "count": 1
+        }
+      ]
+    }
+  },
+  "MOMENTUM_6": {
+    "upper": {
+      "_text": "いずれかのプレイヤーがコンパイルしたあと：このカードを削除する。",
+      "trigger": {
+        "on": "afterAnyCompile",
+        "ops": [
+          {
+            "op": "delete",
+            "select": {
+              "ref": "this"
+            }
+          }
+        ]
+      }
+    },
+    "middle": {
+      "_text": "あなたは手札を1枚捨て札にする。",
+      "ops": [
+        {
+          "op": "discard",
+          "count": 1
+        }
+      ]
+    }
+  },
+  "NOVA_1": {
+    "upper": {
+      "_text": "開始：あなたのカードがちょうど5枚あるラインを1つ選び、そのラインのすべての表向きのカードを削除する。",
+      "trigger": {
+        "on": "start",
+        "ops": [
+          {
+            "op": "delete",
+            "select": {
+              "zone": "chosenLine",
+              "lineCond": "youHave5",
+              "facing": "up",
+              "mode": "all"
+            }
+          }
+        ]
+      }
+    },
+    "middle": {
+      "_text": "コントロールを持っているプレイヤーは、あなたのプロトコルのうち2枚の位置を入れ替える。",
+      "ops": [
+        {
+          "op": "swapProtocols",
+          "chooser": "controlHolder"
+        }
+      ]
+    },
+    "lower": {
+      "_text": "終了：覆われていないあなたの「NOVA」カードの下に、あなたのデッキの一番上のカードを裏向きでプレイする。",
+      "trigger": {
+        "on": "end",
+        "ops": [
+          {
+            "op": "play",
+            "source": "topDeck",
+            "facing": "down",
+            "dest": "underOwnProto"
+          }
+        ]
+      }
+    }
+  },
+  "NOVA_2": {
+    "middle": {
+      "_text": "相手は、このスタックにあるカードの枚数と同じ枚数の手札を捨て札にする。",
+      "ops": [
+        {
+          "op": "discard",
+          "count": "thisStack",
+          "player": "opp"
+        }
+      ]
+    }
+  },
+  "NOVA_3": {
+    "middle": {
+      "_text": "このカードが「NOVA」カードを覆っている場合、あなたは自分のプロトコルを並べ替えることができる。そうでない場合、コントロールを得る。",
+      "ops": [
+        {
+          "op": "ifState",
+          "cond": "thisCoversOwnProto",
+          "ops": [
+            {
+              "op": "rearrange",
+              "optional": true
+            }
+          ],
+          "else": [
+            {
+              "op": "gainControl"
+            }
+          ]
+        }
+      ]
+    },
+    "lower": {
+      "_text": "あなたがプロトコルを並べ替えたあと：あなたは裏向きのカードを1枚移動させることができる。",
+      "trigger": {
+        "on": "afterYouRearrange",
+        "ops": [
+          {
+            "op": "shift",
+            "select": {
+              "facing": "down"
+            },
+            "optional": true
+          }
+        ]
+      }
+    }
+  },
+  "NOVA_4": {
+    "middle": {
+      "_text": "このスタックにあるカードの枚数より値が小さいカードを1枚移動させる。",
+      "ops": [
+        {
+          "op": "shift",
+          "select": {
+            "value": {
+              "ltThisStack": true
+            }
+          }
+        }
+      ]
+    }
+  },
+  "NOVA_5": {
+    "middle": {
+      "_text": "このスタックにあるカードの枚数より値が小さいカードを1枚反転させる。",
+      "ops": [
+        {
+          "op": "flip",
+          "select": {
+            "value": {
+              "ltThisStack": true
+            }
+          }
+        }
+      ]
+    }
+  },
+  "NOVA_6": {
+    "middle": {
+      "_text": "あなたは手札を1枚捨て札にする。",
+      "ops": [
+        {
+          "op": "discard",
+          "count": 1
+        }
+      ]
+    }
+  },
+  "OVERWHELM_1": {
+    "middle": {
+      "_text": "あなたの合計値が相手より大きい各ラインに、あなたのデッキの一番上のカードを裏向きで1枚ずつプレイする。",
+      "ops": [
+        {
+          "op": "forEachLine",
+          "lines": "linesYouLead",
+          "ops": [
+            {
+              "op": "play",
+              "source": "topDeck",
+              "facing": "down",
+              "dest": "currentLine"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "OVERWHELM_2": {
+    "upper": {
+      "_text": "終了：あなたのデッキの一番上のカードを、各ラインに裏向きで1枚ずつプレイする。このカードを反転させる。",
+      "trigger": {
+        "on": "end",
+        "ops": [
+          {
+            "op": "forEachLine",
+            "lines": "allLines",
+            "ops": [
+              {
+                "op": "play",
+                "source": "topDeck",
+                "facing": "down",
+                "dest": "currentLine"
+              }
+            ]
+          },
+          {
+            "op": "flip",
+            "select": {
+              "ref": "this"
+            }
+          }
+        ]
+      }
+    },
+    "middle": {
+      "_text": "相手は自分のデッキの一番上のカードを、各ラインに裏向きで1枚ずつプレイする。",
+      "ops": [
+        {
+          "op": "forEachLine",
+          "lines": "allLines",
+          "ops": [
+            {
+              "op": "play",
+              "source": "topDeck",
+              "facing": "down",
+              "dest": "currentLine",
+              "player": "opp"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "OVERWHELM_3": {
+    "lower": {
+      "_text": "終了：あなたの手札が5枚以上ある場合、あなたのデッキの一番上のカードをこのスタックに裏向きでプレイする。",
+      "trigger": {
+        "on": "end",
+        "ops": [
+          {
+            "op": "ifState",
+            "cond": "handGe",
+            "n": 5,
+            "ops": [
+              {
+                "op": "play",
+                "source": "topDeck",
+                "facing": "down",
+                "dest": "thisStack"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "OVERWHELM_4": {
+    "middle": {
+      "_text": "場にあるあなたのカードが相手より多い場合、値が最も小さい相手の覆われているカードを1枚削除する。",
+      "ops": [
+        {
+          "op": "ifState",
+          "cond": "moreCardsInPlay",
+          "ops": [
+            {
+              "op": "delete",
+              "select": {
+                "owner": "opp",
+                "coverage": "covered",
+                "value": "lowest"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "OVERWHELM_5": {
+    "middle": {
+      "_text": "あなたは手札を1枚捨て札にする。",
+      "ops": [
+        {
+          "op": "discard",
+          "count": 1
+        }
+      ]
+    }
+  },
+  "OVERWHELM_6": {
+    "upper": {
+      "_text": "開始：このラインで相手の合計値があなたより大きい場合、このカードを反転させる。",
+      "trigger": {
+        "on": "start",
+        "ops": [
+          {
+            "op": "ifState",
+            "cond": "oppLeadsThisLine",
+            "ops": [
+              {
+                "op": "flip",
+                "select": {
+                  "ref": "this"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "PRIDE_1": {
+    "upper": {
+      "_text": "あなたがコンパイルしたあと：リフレッシュする。",
+      "trigger": {
+        "on": "afterYouCompile",
+        "ops": [
+          {
+            "op": "refresh"
+          }
+        ]
+      }
+    },
+    "middle": {
+      "_text": "あなたがコントロールを持っている場合、他のカードを1枚移動させる。そうでない場合、あなたのカードを1枚移動させる。",
+      "ops": [
+        {
+          "op": "ifState",
+          "cond": "youHaveControl",
+          "ops": [
+            {
+              "op": "shift",
+              "select": {
+                "exclude": "thisCard"
+              }
+            }
+          ],
+          "else": [
+            {
+              "op": "shift",
+              "select": {
+                "owner": "self"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "PRIDE_2": {
+    "middle": {
+      "_text": "あなたの合計値が相手より大きいラインの数と同じ枚数のカードを引く。",
+      "ops": [
+        {
+          "op": "drawDynamic",
+          "count": "linesYouLead"
+        }
+      ]
+    },
+    "lower": {
+      "_text": "開始：このラインであなたの合計値が相手より大きい場合、カードを1枚引く。",
+      "trigger": {
+        "on": "start",
+        "ops": [
+          {
+            "op": "ifState",
+            "cond": "youLeadThisLine",
+            "ops": [
+              {
+                "op": "draw",
+                "count": 1
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "PRIDE_3": {
+    "middle": {
+      "_text": "あなたの裏向きのカードを1枚反転させる。",
+      "ops": [
+        {
+          "op": "flip",
+          "select": {
+            "owner": "self",
+            "facing": "down"
+          }
+        }
+      ]
+    }
+  },
+  "PRIDE_4": {
+    "middle": {
+      "_text": "あなたがコントロールを持っている場合、あなたは相手のカードを1枚このラインへ移動させることができる。",
+      "ops": [
+        {
+          "op": "ifState",
+          "cond": "youHaveControl",
+          "ops": [
+            {
+              "op": "shift",
+              "select": {
+                "owner": "opp"
+              },
+              "dest": "thisLine",
+              "optional": true
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "PRIDE_5": {
+    "middle": {
+      "_text": "あなたは手札を1枚捨て札にする。",
+      "ops": [
+        {
+          "op": "discard",
+          "count": 1
+        }
+      ]
+    }
+  },
+  "PRIDE_6": {
+    "upper": {
+      "_text": "相手がコントロールを得たあと：このカードを反転させる。",
+      "trigger": {
+        "on": "afterOppGainControl",
+        "ops": [
+          {
+            "op": "flip",
+            "select": {
+              "ref": "this"
+            }
+          }
+        ]
+      }
+    },
+    "middle": {
+      "_text": "相手がコントロールを持っている場合、このカードを反転させる。",
+      "ops": [
+        {
+          "op": "ifState",
+          "cond": "oppHasControl",
+          "ops": [
+            {
+              "op": "flip",
+              "select": {
+                "ref": "this"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "SLOTH_1": {
+    "upper": {
+      "_text": "このカードが「SLOTH」カードに覆われている場合、このラインのあなたの合計値は5増える。",
+      "static": {
+        "kind": "modifyLineTotal",
+        "side": "self",
+        "delta": 5,
+        "cond": "coveredByOwnProto"
+      }
+    },
+    "middle": {
+      "_text": "あなたの合計値が相手より小さいラインの数と同じ枚数のカードを引く。",
+      "ops": [
+        {
+          "op": "drawDynamic",
+          "count": "linesOppLeads"
+        }
+      ]
+    }
+  },
+  "SLOTH_2": {
+    "middle": {
+      "_text": "他のカードを1枚戻す。戻したカードがあなたのカードの場合、リフレッシュする。",
+      "ops": [
+        {
+          "op": "return",
+          "select": {
+            "exclude": "thisCard"
+          },
+          "bind": "r"
+        },
+        {
+          "op": "ifState",
+          "cond": "boundIsMine",
+          "ref": "r",
+          "ops": [
+            {
+              "op": "refresh"
+            }
+          ]
+        }
+      ]
+    },
+    "lower": {
+      "_text": "あなたがリフレッシュしたあと：あなたのデッキの一番上のカードをこのスタックに裏向きでプレイする。",
+      "trigger": {
+        "on": "afterYouRefresh",
+        "ops": [
+          {
+            "op": "play",
+            "source": "topDeck",
+            "facing": "down",
+            "dest": "thisStack"
+          }
+        ]
+      }
+    }
+  },
+  "SLOTH_3": {
+    "middle": {
+      "_text": "あなたの覆われているカードを1枚反転させる。",
+      "ops": [
+        {
+          "op": "flip",
+          "select": {
+            "owner": "self",
+            "coverage": "covered"
+          }
+        }
+      ]
+    },
+    "lower": {
+      "_text": "開始：あなたは手札を1枚デッキの一番下に置くことができる。",
+      "trigger": {
+        "on": "start",
+        "ops": [
+          {
+            "op": "handToDeckBottom",
+            "optional": true
+          }
+        ]
+      }
+    }
+  },
+  "SLOTH_4": {
+    "middle": {
+      "_text": "相手は手札を2枚捨て札にする。",
+      "ops": [
+        {
+          "op": "discard",
+          "count": 2,
+          "player": "opp"
+        }
+      ]
+    }
+  },
+  "SLOTH_5": {
+    "lower": {
+      "_text": "このカードが覆われることになったとき：先に表向きのカードを1枚反転させる。",
+      "trigger": {
+        "on": "wouldBeCovered",
+        "ops": [
+          {
+            "op": "flip",
+            "select": {
+              "facing": "up"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "SLOTH_6": {
+    "middle": {
+      "_text": "あなたは手札を1枚捨て札にする。",
+      "ops": [
+        {
+          "op": "discard",
+          "count": 1
+        }
+      ]
+    }
+  },
+  "WRATH_1": {
+    "upper": {
+      "_text": "このラインにある値が最も大きいすべてのカードは、合計値に加えない。",
+      "static": {
+        "kind": "excludeHighestInLine"
+      }
+    },
+    "middle": {
+      "_text": "あなたのデッキの一番上のカードをこのスタックに裏向きでプレイする。",
+      "ops": [
+        {
+          "op": "play",
+          "source": "topDeck",
+          "facing": "down",
+          "dest": "thisStack"
+        }
+      ]
+    }
+  },
+  "WRATH_2": {
+    "middle": {
+      "_text": "カードを1枚引く。",
+      "ops": [
+        {
+          "op": "draw",
+          "count": 1
+        }
+      ]
+    },
+    "lower": {
+      "_text": "終了：コントロールを失う。そうした場合、表向きのカードを1枚削除する。",
+      "trigger": {
+        "on": "end",
+        "ops": [
+          {
+            "op": "loseControl"
+          },
+          {
+            "op": "ifDone",
+            "ops": [
+              {
+                "op": "delete",
+                "select": {
+                  "facing": "up"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "WRATH_3": {
+    "middle": {
+      "_text": "カードが最も多いラインを1つ選び、そのラインのすべての表向きのカードを反転させる。",
+      "ops": [
+        {
+          "op": "flip",
+          "select": {
+            "zone": "chosenLine",
+            "lineCond": "mostCards",
+            "facing": "up",
+            "mode": "all"
+          }
+        }
+      ]
+    }
+  },
+  "WRATH_4": {
+    "middle": {
+      "_text": "表向きのカードを1枚反転させる。",
+      "ops": [
+        {
+          "op": "flip",
+          "select": {
+            "facing": "up"
+          }
+        }
+      ]
+    }
+  },
+  "WRATH_5": {
+    "middle": {
+      "_text": "コントロールを失う。そうした場合、相手は手札を2枚捨て札にする。",
+      "ops": [
+        {
+          "op": "loseControl"
+        },
+        {
+          "op": "ifDone",
+          "ops": [
+            {
+              "op": "discard",
+              "count": 2,
+              "player": "opp"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "WRATH_6": {
+    "middle": {
+      "_text": "あなたは手札を1枚捨て札にする。",
+      "ops": [
+        {
+          "op": "discard",
+          "count": 1
+        }
+      ]
+    }
+  },
+  "FLEXIBLE_1": {
+    "middle": {
+      "_text": "カードを1枚戻すか、移動させる。",
+      "ops": [
+        {
+          "op": "choice",
+          "options": [
+            [
+              {
+                "op": "return"
+              }
+            ],
+            [
+              {
+                "op": "shift"
+              }
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  "FLEXIBLE_2": {
+    "middle": {
+      "_text": "あなたのカードを1枚反転させるか、移動させる。",
+      "ops": [
+        {
+          "op": "choice",
+          "options": [
+            [
+              {
+                "op": "flip",
+                "select": {
+                  "owner": "self"
+                }
+              }
+            ],
+            [
+              {
+                "op": "shift",
+                "select": {
+                  "owner": "self"
+                }
+              }
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  "FLEXIBLE_3": {
+    "upper": {
+      "_text": "終了：このカードが裏向きのカードに覆われている場合、あなたはそのカードを移動させることができる。",
+      "trigger": {
+        "on": "end",
+        "ops": [
+          {
+            "op": "bindCoverer",
+            "facing": "down",
+            "bind": "cov"
+          },
+          {
+            "op": "ifDone",
+            "ops": [
+              {
+                "op": "shift",
+                "select": {
+                  "ref": "cov"
+                },
+                "optional": true
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "middle": {
+      "_text": "カードを1枚引く。",
+      "ops": [
+        {
+          "op": "draw",
+          "count": 1
+        }
+      ]
+    }
+  },
+  "FLEXIBLE_4": {
+    "middle": {
+      "_text": "相手のカードを1枚移動させるか、あなたのプロトコルのうち2枚の位置を入れ替える。",
+      "ops": [
+        {
+          "op": "choice",
+          "options": [
+            [
+              {
+                "op": "shift",
+                "select": {
+                  "owner": "opp"
+                }
+              }
+            ],
+            [
+              {
+                "op": "swapProtocols"
+              }
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  "FLEXIBLE_5": {
+    "lower": {
+      "_text": "終了：あなたはカードを2枚引くことができる。そうした場合、このカードを反転させる。",
+      "trigger": {
+        "on": "end",
+        "ops": [
+          {
+            "op": "draw",
+            "count": 2,
+            "optional": true
+          },
+          {
+            "op": "ifDone",
+            "ops": [
+              {
+                "op": "flip",
+                "select": {
+                  "ref": "this"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "FLEXIBLE_6": {
+    "middle": {
+      "_text": "あなたは手札を1枚捨て札にする。",
+      "ops": [
+        {
+          "op": "discard",
+          "count": 1
+        }
+      ]
+    }
+  },
+  "INERT_1": {
+    "upper": {
+      "_text": "このラインの他のすべてのカードは、上段を持たない。",
+      "static": {
+        "kind": "noUpperInLine"
+      }
+    },
+    "middle": {
+      "_text": "他のラインにある、覆われているか覆われていない表向きのカードを1枚反転させる。",
+      "ops": [
+        {
+          "op": "flip",
+          "select": {
+            "zone": "otherLines",
+            "facing": "up",
+            "coverage": "any"
+          }
+        }
+      ]
+    }
+  },
+  "INERT_2": {
+    "middle": {
+      "_text": "相手は手札を2枚捨て札にする。",
+      "ops": [
+        {
+          "op": "discard",
+          "count": 2,
+          "player": "opp"
+        }
+      ]
+    },
+    "lower": {
+      "_text": "このラインの他のすべてのカードは、下段を持たない。",
+      "static": {
+        "kind": "noLowerInLine"
+      }
+    }
+  },
+  "INERT_3": {
+    "middle": {
+      "_text": "1ラインを選び、そのラインで値が最も大きい表向きのカードをすべて反転させる。",
+      "ops": [
+        {
+          "op": "flip",
+          "select": {
+            "zone": "chosenLine",
+            "facing": "up",
+            "value": "highest",
+            "mode": "all"
+          }
+        }
+      ]
+    }
+  },
+  "INERT_4": {
+    "middle": {
+      "_text": "他の各ラインにカードを裏向きで1枚ずつプレイする。相手はこのラインにカードを裏向きで1枚プレイする。",
+      "ops": [
+        {
+          "op": "forEachLine",
+          "lines": "otherLines",
+          "ops": [
+            {
+              "op": "play",
+              "source": "hand",
+              "facing": "down",
+              "dest": "currentLine"
+            }
+          ]
+        },
+        {
+          "op": "play",
+          "player": "opp",
+          "facing": "down",
+          "dest": "thisLine"
+        }
+      ]
+    }
+  },
+  "INERT_5": {
+    "middle": {
+      "_text": "あなたのデッキのカードをすべて捨て札にする。相手は自分のデッキのカードをすべて捨て札にする。",
+      "ops": [
+        {
+          "op": "discardDeck"
+        },
+        {
+          "op": "discardDeck",
+          "player": "opp"
+        }
+      ]
+    }
+  },
+  "INERT_6": {
+    "middle": {
+      "_text": "あなたは手札を1枚捨て札にする。",
+      "ops": [
+        {
+          "op": "discard",
+          "count": 1
+        }
+      ]
+    }
+  },
+  "RIGID_1": {
+    "middle": {
+      "_text": "相手の表向きのカードを1枚反転させる。",
+      "ops": [
+        {
+          "op": "flip",
+          "select": {
+            "owner": "opp",
+            "facing": "up"
+          }
+        }
+      ]
+    },
+    "lower": {
+      "_text": "終了：相手の覆われていないカードが裏向きである他の各ラインに、カードを裏向きで1枚ずつプレイする。",
+      "trigger": {
+        "on": "end",
+        "ops": [
+          {
+            "op": "forEachLine",
+            "lines": "otherLinesOppTopDown",
+            "ops": [
+              {
+                "op": "play",
+                "source": "hand",
+                "facing": "down",
+                "dest": "currentLine"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "RIGID_2": {
+    "lower": {
+      "_text": "あなたがアクションでカードを裏向きでプレイしたあと：あなたのデッキの一番上のカードを同じスタックに裏向きでプレイする。",
+      "trigger": {
+        "on": "afterYouPlayDownAction",
+        "ops": [
+          {
+            "op": "play",
+            "source": "topDeck",
+            "facing": "down",
+            "dest": "eventStack"
+          }
+        ]
+      }
+    }
+  },
+  "RIGID_3": {
+    "middle": {
+      "_text": "このカードのすぐ下に、カードを裏向きで1枚プレイする。",
+      "ops": [
+        {
+          "op": "play",
+          "source": "hand",
+          "facing": "down",
+          "dest": "underThisCard"
+        }
+      ]
+    }
+  },
+  "RIGID_4": {
+    "lower": {
+      "_text": "このカードが裏向きのカードに覆われることになったとき：先にカードを1枚引く。",
+      "trigger": {
+        "on": "wouldBeCovered",
+        "ops": [
+          {
+            "op": "draw",
+            "count": 1
+          }
+        ],
+        "byFacing": "down"
+      }
+    }
+  },
+  "RIGID_5": {
+    "middle": {
+      "_text": "あなたは手札を1枚捨て札にする。",
+      "ops": [
+        {
+          "op": "discard",
+          "count": 1
+        }
+      ]
+    }
+  },
+  "RIGID_6": {
+    "upper": {
+      "_text": "終了：相手は、カードを1枚引くか、カードを1枚プレイするかを選ぶ。",
+      "trigger": {
+        "on": "end",
+        "ops": [
+          {
+            "op": "choice",
+            "chooser": "opp",
+            "options": [
+              [
+                {
+                  "op": "draw",
+                  "count": 1,
+                  "player": "opp"
+                }
+              ],
+              [
+                {
+                  "op": "play",
+                  "player": "opp"
+                }
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "middle": {
+      "_text": "あなたは手札を1枚捨て札にする。",
+      "ops": [
+        {
+          "op": "discard",
+          "count": 1
+        }
+      ]
+    },
+    "lower": {
+      "_text": "このカードを反転させることはできず、移動させることもできない。",
+      "static": {
+        "kind": "cannotFlipOrShiftThis"
+      }
+    }
   }
 }

@@ -68,7 +68,7 @@ export const AVATARS = {
 /* 勝ち抜き戦のボス (run.js の BOSSES)。ボス戦で相手のキャラの代わりに出る。絵は1枚 (表情は変わらない: single)、声は無し。
    ガチャ・COLLECTION・ランダムの相手には出ない (boss) */
 const BOSS_LOOK = { inferno: ['業火の王', '#ff5a3c'], abyss: ['深淵の主', '#8a4dff'], clock: ['時計塔の番人', '#ffc85a'],
-  mirror: ['鏡の迷宮', '#7cf0ff'], sanctuary: ['聖域の守り手', '#bfe8a0'], glacier: ['氷結の女帝', '#9fd8ff'], strongest: ['GATEKEEPER', '#ff4fa3'] };
+  mirror: ['鏡の迷宮', '#7cf0ff'], sanctuary: ['聖域の守り手', '#bfe8a0'], glacier: ['氷結の女帝', '#9fd8ff'], strongest: ['GATEKEEPER', '#e8203f'] };
 for (const [id, [name, color]] of Object.entries(BOSS_LOOK)) AVATARS['boss_' + id] = { name, color, boss: true, single: true, lines: null };
 
 /* セリフは avatar-lines.js (ボスは avatar-boss-lines.js)。得意プロトコル (fav) も */
@@ -106,7 +106,11 @@ export const PROTO_LINES = {
   CLARITY: '見通すよ、{card}。', CORRUPTION: '染めてあげる、{card}。', COURAGE: '勇気を、{card}！', FEAR: '怯えなさい、{card}。',
   ICE: '凍らせて、{card}。', LUCK: '運を試すよ、{card}！', MIRROR: '映して返す、{card}。', PEACE: '静かに、{card}。',
   SMOKE: '煙に巻いて、{card}。', TIME: '時を刻んで、{card}。', WAR: '攻めるよ、{card}！', ASSIMILATION: '取り込んで、{card}。',
-  DIVERSITY: 'いろいろ試そう、{card}！', UNITY: 'ひとつになって、{card}！'
+  DIVERSITY: 'いろいろ試そう、{card}！', UNITY: 'ひとつになって、{card}！',
+  AMBUSH: '待ってたよ、{card}。', ENVY: 'それ、ちょうだい。{card}。', FULCRUM: '傾けるよ、{card}。', GLUTTONY: 'まだ食べ足りない、{card}！',
+  GREED: '全部もらうよ、{card}。', LUST: '惹きつけて、{card}。', MOMENTUM: '止まらないよ、{card}！', NOVA: '弾けて、{card}！',
+  OVERWHELM: '押し切るよ、{card}！', PRIDE: 'ひれ伏して、{card}。', SLOTH: 'ふあ……{card}。', WRATH: '許さない、{card}！',
+  FLEXIBLE: '合わせるよ、{card}。', INERT: '止まってて、{card}。', RIGID: '動かないよ、{card}。'
 };
 
 /* 動きを減らすか (設定の「動きを減らす」→ 端末の設定。prefs.js) */

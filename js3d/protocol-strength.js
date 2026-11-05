@@ -1,5 +1,7 @@
 /* プロトコルごとの強さの目安 (CPU のドラフトが使う)。scripts/protocol_strength.js が書き出す。
    ランダムな編成どうしの通常 AI 対戦 1500 戦で、そのプロトコルが入ったデッキの勝率 */
+/* Main 3 の12種 (2026-11-03) は、42種で 2100 戦 (思考 30ms) を測り、同じ測り方での前の30種との関係 (相関 0.71) で
+   この表の目盛りに直した値。前の30種の値は変えていない (勝ち抜き戦の弱いプロトコルの線引きが動かないように) */
 export const PROTOCOL_STRENGTH = {
   "FIRE": 0.574,
   "WATER": 0.564,
@@ -10,7 +12,9 @@ export const PROTOCOL_STRENGTH = {
   "LIFE": 0.56,
   "TIME": 0.554,
   "FEAR": 0.552,
+  "GLUTTONY": 0.545,
   "PEACE": 0.537,
+  "OVERWHELM": 0.533,
   "LUCK": 0.528,
   "ICE": 0.527,
   "LOVE": 0.525,
@@ -18,15 +22,25 @@ export const PROTOCOL_STRENGTH = {
   "CORRUPTION": 0.514,
   "GRAVITY": 0.512,
   "DIVERSITY": 0.507,
+  "AMBUSH": 0.506,
+  "SLOTH": 0.5,
   "WAR": 0.497,
   "MIRROR": 0.483,
   "CLARITY": 0.482,
   "SPIRIT": 0.481,
+  "WRATH": 0.481,
   "SPEED": 0.477,
+  "ENVY": 0.477,
+  "PRIDE": 0.471,
   "PLAGUE": 0.467,
   "SMOKE": 0.467,
+  "FULCRUM": 0.453,
+  "MOMENTUM": 0.446,
+  "GREED": 0.445,
   "ASSIMILATION": 0.436,
+  "NOVA": 0.433,
   "UNITY": 0.43,
+  "LUST": 0.427,
   "LIGHT": 0.407,
   "METAL": 0.397,
   "CHAOS": 0.389,

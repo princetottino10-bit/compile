@@ -18,8 +18,8 @@
   <script type="importmap">
   {
     "imports": {
-      "./companion.js": "./companion.js?v=5e681c247a",
-      "./js3d/emblems.js": "./js3d/emblems.js?v=7b77a0b2df",
+      "./companion.js": "./companion.js?v=c92d39b023",
+      "./js3d/emblems.js": "./js3d/emblems.js?v=c5a815fe49",
       "./js3d/icons.js": "./js3d/icons.js?v=15bacde80c"
     }
   }
@@ -342,7 +342,7 @@
     /* ---------- 状態 (この端末に保存) ---------- */
     const defaults = () => ({
       mode: 'draftRatio', n: 3, p1Min: 7, p1Max: 8, p2Min: 7, p2Max: 8, side: 'P1',
-      sets: { 'Main 1': true, 'Aux 1': true, 'Main 2': true, 'Aux 2': true },
+      sets: { 'Main 1': true, 'Aux 1': true, 'Main 2': true, 'Aux 2': true, 'Main 3': true, 'Aux 3': true },
       off: [], ratio: { ...ORIGINAL_RATIO }
     });
     const S = Object.assign(defaults(), store.get(KEY, {}));

@@ -20,7 +20,8 @@ const DEFAULT_KEY = { mat: 'neon', sleeve: 'default', marker: 'default', ccolor:
 
 /* 条件で取る称号 (レベル以外) */
 /* 実績を取ると付けられる称号 (実績の id → 称号の key) */
-export const TROPHY_TITLES = { flawless: 'flawless', mastery10: 'grandmaster', tsume_mid: 'puzzler', tsume_all: 'compuzzler', conqueror: 'conqueror', underdog_tag: 'underdogduo', tag_all: 'tagmaster', tag_flawless: 'perfectsync' };
+export const TROPHY_TITLES = { flawless: 'flawless', mastery10: 'grandmaster', tsume_mid: 'puzzler', tsume_all: 'compuzzler', conqueror: 'conqueror', underdog_tag: 'underdogduo', tag_all: 'tagmaster', tag_flawless: 'perfectsync', solo_regular: 'botbreaker', solo_advanced: 'rootaccess', sins7: 'sevensins', tristate: 'tristate',
+  m3_all: 'thirdwave', m3_pure: 'vanguard', solo_wins20: 'debugger', streak10: 'unbroken', m3_conquer: 'neworder', sins_apex: 'deadlysin', aux3_apex: 'hardstate', sins_mastery: 'sineater', m3_cards: 'dataminer', solo_m3: 'zeroday', apex50: 'gatecrasher', wins300: 'legion', wins1000: 'immortal', mastery10x5: 'pantheon', mastery6_all: 'omniprotocol', solo_flawless: 'kernelpanic', apex_shutout: 'shutdown', maxline30: 'overflow', turnfx20: 'singularity' };
 export function extraTitles(records) {
   const out = records.some(r => r.win && r.level === UNDERDOG_LEVEL) ? ['underdog'] : [];
   /* 機械仕掛けの神・すべてを見る者 (CHALLENGE の CPU 戦で勝ったとき) */
@@ -90,7 +91,7 @@ export function cosmeticsHtml(s, protocols) {
     (iconOpen
       ? '<div class="st-icons">' + '<button type="button" data-cos="icon" data-key="" class="st-ic' + (!s.icon ? ' on' : '') + '" aria-label="アイコンなし">—</button>' +
         (protocols || []).map(p => '<button type="button" data-cos="icon" data-key="' + esc(p.name) + '" class="st-ic' + (s.icon === p.name ? ' on' : '') +
-          '" title="' + esc(p.name) + '" aria-label="' + esc(p.name) + '"><img alt="" src="' + emblemDataURL(p.name, p.color || '#b9a4ff', 40, true) + '"></button>').join('') +
+          '" title="' + esc(p.name) + '" aria-label="' + esc(p.name) + '"><img alt="" src="' + emblemDataURL(p.name, p.color || '#cdc7d4', 40, true) + '"></button>').join('') +
         /* CHIP で交換した顔のアイコン (交換は COLLECTION のアイコン) */
         FACE_ICONS.filter(k => ownsFaceIcon(k)).map(k => '<button type="button" data-cos="icon" data-key="' + k + '" class="st-ic face' + (s.icon === k ? ' on' : '') +
           '" title="' + esc(faceIconName(k)) + '" aria-label="' + esc(faceIconName(k)) + '"><img alt="" src="' + faceIconURL(k) + '"></button>').join('') + '</div>'
