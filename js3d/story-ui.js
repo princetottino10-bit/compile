@@ -102,7 +102,19 @@ function overlay(id, label) {
 }
 
 /* ---------- 会話 ---------- */
+/* 会話の途中で「← タイトル」を押したとき (story-world.js) に、流れている会話と選択肢をその場で終わらせる。
+   終わらせた場面は済みにしない (次に来たとき、はじめから流れる)。続けて呼ばれる会話も、同じ手番のうちは流さない */
+let stopping = false, endScene = null, endChoice = null;
+export const sceneActive = () => !!(endScene || endChoice);
+export function stopScenes() {
+  stopping = true;
+  if (endScene) endScene();
+  if (endChoice) endChoice(0);
+  setTimeout(() => { stopping = false; }, 0);   // 止めた会話の続き (選択肢のあとの行) が同じ流れで呼ばれ終わってから戻す
+}
+
 export function playScene(lines, opts = {}) {
+  if (stopping) return Promise.resolve();
   const el = overlay('storyScene', '会話');
   /* opts.title: 場面の題。上に出したままにする (字間が縮まって決まる)。
      line.alert: その行のあいだだけ、警告の帯を出す (見つかった・止められた場面)
@@ -142,6 +154,7 @@ export function playScene(lines, opts = {}) {
 
   return new Promise((resolve) => {
     const finish = () => {
+      endScene = null;
       clearTimeout(autoTimer);
       el.oncontextmenu = null; el.onwheel = null;
       clearInterval(typing);
@@ -151,6 +164,7 @@ export function playScene(lines, opts = {}) {
       el.innerHTML = '';
       resolve();
     };
+    endScene = finish;
     /* オート: 文字を出し終え、声も終えたら、少し待って次へ。
        読む時間と声の長さの長いほうを待つ。声を読み込んでいる途中なら、鳴り始めたとき (voice の onSettle) に計り直す */
     const scheduleAuto = () => {
@@ -315,12 +329,14 @@ export function playScene(lines, opts = {}) {
 /* ---------- 選択肢 ---------- */
 /* options: [{ label }]。選んだ番号を返す。数字キー (1, 2 …) でも選べる */
 export function askChoice(options) {
+  if (stopping) return Promise.resolve(0);
   const el = overlay('storyChoice', '選択');
   el.innerHTML = '<div class="sc-list">' + options.map((o, k) =>
     '<button type="button" data-k="' + k + '"><i>' + (k + 1) + '</i>' + esc(o.label) + '</button>').join('') + '</div>';
   el.classList.add('show');
   return new Promise((resolve) => {
-    const end = (k) => { window.removeEventListener('keydown', onKey); el.classList.remove('show'); el.innerHTML = ''; resolve(k); };
+    const end = (k) => { endChoice = null; window.removeEventListener('keydown', onKey); el.classList.remove('show'); el.innerHTML = ''; resolve(k); };
+    endChoice = end;
     const onKey = (ev) => { const k = parseInt(ev.key, 10) - 1; if (k >= 0 && k < options.length) { ev.preventDefault(); end(k); } };
     window.addEventListener('keydown', onKey);
     el.querySelectorAll('[data-k]').forEach(b => { b.onclick = () => end(+b.dataset.k); });
@@ -339,6 +355,7 @@ async function playNodeLines(n, stage) {
   let wavered = false;                 // 選び直しの道を一度選んだ
   for (;;) {
     const o = n.choice.options[await askChoice(n.choice.options)];
+    if (stopping) return;
     logChoice(o.label);
     const lines = [...(wavered && o.ifAgain ? o.ifAgain : []), ...(o.lines || [])];
     if (lines.length) await playScene(lines, { stage });

@@ -284,6 +284,8 @@ export function runTitle(protocols, opts) {
             '<button data-mode="more" type="button" class="tt-morebtn" aria-expanded="false">MORE</button>' +
             '<div class="tt-morepop" hidden>' +
               '<button data-mode="tutorial" type="button">TUTORIAL <small>遊び方</small></button>' +
+              /* ルールを読む場所 (Muse のレビュー 2026-11-05: 独立したルールの入口が無かった)。早見表は別のページなので新しいタブで */
+              '<button data-mode="rules" type="button">RULES <small>ルールの早見表</small></button>' +
               '<button data-mode="training" type="button">TRAINING <small>盤面を自由に</small></button>' +
               '<button data-mode="cards" type="button">CARDS <small>カード一覧</small></button>' +
             '</div>' +
@@ -331,6 +333,7 @@ export function runTitle(protocols, opts) {
         else if (button.dataset.mode === 'account') openAccount();
         else if (button.dataset.mode === 'admin') openAdmin();
         else if (button.dataset.mode === 'cards') openCardList();
+        else if (button.dataset.mode === 'rules') window.open('rules.html', '_blank', 'noopener');
         else if (button.dataset.mode === 'news') showNews();
         else if (button.dataset.mode === 'gacha') openGacha();
         else if (button.dataset.mode === 'more') {

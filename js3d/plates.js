@@ -97,7 +97,8 @@ export function setPlateHand(n) {
     h.className = 'pl-hand';
     text.append(h);
   }
-  const t = '手札 ' + n;
+  /* 「相手の」を付ける (Muse のレビュー 2026-11-05: 自分の枚数と読み違えた) */
+  const t = '相手の手札 ' + n;
   if (h.textContent !== t) h.textContent = t;
 }
 
