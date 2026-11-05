@@ -1381,7 +1381,22 @@ module.exports = [
     [['UNITY 4'], 'GREED 0', 'GREED 0 で手札を空にして、UNITY 4 の終了で UNITY を全部引く'],
     [['PEACE 1'], 'GREED 4', 'GREED 4 で手札を空にして裏を起こし、PEACE 1 の終了で1枚引く'],
     [['COURAGE 0'], 'GREED 4', 'GREED 4 で手札を空にすると、COURAGE 0 の開始で1枚引く'],
-    [['SPEED 1'], 'GLUTTONY 2', '手札をあふれさせて SPEED 1 で1枚引く']
+    [['SPEED 1'], 'GLUTTONY 2', '手札をあふれさせて SPEED 1 で1枚引く'],
+    /* デメリットを得に変える (2026-11-05 ユーザー「すべてよしなに進めて」、前回の結論「消すより得に変える組が強い」から) */
+    [['CORRUPTION 2'], 'CORRUPTION 6', 'CORRUPTION 6 の終了の「1枚捨てる」を、CORRUPTION 2 が「相手も1枚捨てる」に変える。6点を置いたまま毎手番1枚ずつ削り合う'],
+    [['CORRUPTION 2'], 'SPIRIT 1', 'SPIRIT 1 の開始の「1枚捨てる」で、CORRUPTION 2 が相手にも捨てさせる'],
+    [['CORRUPTION 2'], 'LUST 6', 'LUST 6 の「1枚捨てる」で相手も捨てる'],
+    [['CORRUPTION 2'], 'TIME 4', 'TIME 4 の「2枚捨てる」で相手も捨てる'],
+    [['CORRUPTION 2'], 'COURAGE 0', 'COURAGE 0 の終了の「1枚捨てて相手も1枚」が、CORRUPTION 2 で相手2枚になる'],
+    [['WAR 0'], 'RIGID 7', 'RIGID 7 の終了で相手が「引く」を選ぶと WAR 0 で削除。「出す」を選ばせても1手使わせる'],
+    [['MIRROR 4'], 'RIGID 7', 'RIGID 7 の終了で相手が引くと MIRROR 4 でこちらも引く'],
+    [['TIME 2'], 'INERT 4', 'INERT 4 で両者の山札を捨てる。次に引くときのシャッフルで TIME 2 が1枚引く'],
+    [['ICE 1'], 'OVERWHELM 2', 'OVERWHELM 2 で相手が各ラインに出すと、ICE 1 のラインでは相手が1枚捨てる'],
+    [['WAR 0'], 'LOVE 3', 'LOVE 3 で相手に引かせると WAR 0 で削除'],
+    [['MIRROR 4'], 'FEAR 1', 'FEAR 1 で相手が引き直すと MIRROR 4 でこちらも引く'],
+    [['ENVY 3'], 'GRAVITY 6', 'GRAVITY 6 で相手が ENVY 3 のラインに出すと、こちらも裏で1枚'],
+    [['PLAGUE 1', 'CORRUPTION 2'], 'CORRUPTION 6', 'CORRUPTION 6 の捨てで相手も捨て、相手が捨てると PLAGUE 1 で1枚引く'],
+    [['HATE 3', 'WAR 0'], 'RIGID 7', 'RIGID 7 の「相手が引く」で WAR 0 が削除し、削除で HATE 3 が1枚引く']
   ];
   let n = 0;
   for (const [field, hand, how] of L) {

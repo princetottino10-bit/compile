@@ -3949,6 +3949,9 @@ const AI_AIM_COMBOS = [
   { pieces: { ICE_1: 'top', LUST_6: 'play' } },
   { pieces: { ICE_1: 'top', GRAVITY_6: 'play' } },
   { pieces: { ICE_1: 'top', INERT_4: 'play' } },
+  /* デメリットを得に変える (2026-11-05)。RIGID 7 の終了で相手が「1枚引く」を選ぶと、WAR 0 (相手が引いたあと1枚削除) が起きる。
+     「出す」を選ばれても相手は1手ぶん札を減らす (O050、100・150・150盤面で +6.1 / +7.8 / +2.4) */
+  { pieces: { WAR_1: 'top', RIGID_6: 'play' } },
   /* COURAGE 0 の終了で1枚捨てると相手が2枚捨て (COURAGE 0・CORRUPTION 2)、PLAGUE 1 で2枚引く */
   { pieces: { PLAGUE_2: 'up', COURAGE_1: 'top', CORRUPTION_3: 'up' } },
   /* WAR 3 の下段「相手が捨てたあと: 裏で1枚出せる」に、相手に捨てさせる札を足す */
