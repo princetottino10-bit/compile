@@ -4828,6 +4828,7 @@ async function step(action) {
   }
   logAction(action);
   cur = res;
+  UI.clearToast('hint');      // 手を打ったら、前の「おすすめ」は古い (Muse のレビュー 2026-11-05: 打ったあとも残って見えた)
   syncAssist();
   await replayResolution(prev, res, action);
   avatarOwnAnswered(prev, shown(), answered);
@@ -6585,7 +6586,7 @@ async function showHint() {
     const d = st.cards[a.card] && defIndex[st.cards[a.card].def];
     board.pulse(a.card, d ? d.color : null, 900);
   }
-  UI.toast('おすすめ: ' + describeAction(a, cur.state, true), 4200);
+  UI.toast('おすすめ: ' + describeAction(a, cur.state, true), 4200, { tag: 'hint' });
 }
 /* 選べるものが1つしかない選択 (設定で切れる)。その答え (無ければ null) */
 function forcedPicks(req) {

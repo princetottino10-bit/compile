@@ -20,7 +20,7 @@ import { starNodes, starTexts, earnedStars, starTotals } from './story-stars.js'
 import { xpLog } from './xp.js';
 import { accountState } from './account.js';
 import * as M from './story-map.js';
-import { playNode, playScene, askBattle, setStoryBgm } from './story-ui.js';
+import { playNode, playScene, askBattle, setStoryBgm, sceneActive, stopScenes } from './story-ui.js';
 import { storyBgm } from './bgm.js';
 import { sfx } from './audio.js';
 import { buildScenery } from './story-scenery.js';
@@ -575,6 +575,7 @@ export function openWorld(protocols, opts = {}) {
     actBtn.hidden = true;                    // 会話のあいだは「話す・調べる」を隠す
     keys.clear(); path = null;
     try { await playNodeStaged(nodeById(id)); } catch (e) { busy = false; throw e; }
+    if (closed) return;                      // 会話の途中でタイトルへ戻った: 済みにしない
     state = clearNode(state, id);
     state = saveStory(state);
     syncActors();
@@ -920,8 +921,13 @@ export function openWorld(protocols, opts = {}) {
     root.remove();
     finish(result);
   }
-  /* 「タイトル」: 会話や確認の最中は戻らない。押されてもボタンは出したままにする (前は消えたまま戻せなかった) */
-  const onTitle = () => { if (busy) { showTitleBack(onTitle); return; } close(null); };
+  /* 「タイトル」: 会話の途中なら、会話を止めて戻る (その場面は済みにしないので、次に来たときはじめから流れる。
+     Muse のレビュー 2026-11-05: 会話中に押しても何も起きなかった)。対戦の確認や章の終わりの最中は戻らず、ボタンは出したままにする */
+  const onTitle = () => {
+    if (busy && !sceneActive()) { showTitleBack(onTitle); return; }
+    if (busy) stopScenes();
+    close(null);
+  };
   showTitleBack(onTitle);
 
   /* 来たら始まる会話 (目覚め・朝・決着のあとの会話) */

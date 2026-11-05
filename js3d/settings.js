@@ -213,7 +213,7 @@ export function openSettings(extra) {
       '<input type="checkbox" id="stGamepad"' + (s.gamepad ? ' checked' : '') + '></label>' +
     /* キーボードの近道 (main.js)。どこにも書いていないと使われないので、ここに一覧 */
     '<div class="st-row st-keys"><span>キーボードの近道<small>Z 1手戻す ・ H ヒント ・ R 補充 (2回) ・ L ログ ・ I 詳細 ・ 1〜3 置く場所 (Shift で裏) ・ Esc 選び直す / 戻る</small></span></div>' +
-    '<h4 class="st-group">ルール</h4>' +
+    '<h4 class="st-group">ハウスルール</h4>' +
     '<label class="st-row st-check"><span>PSYCHIC 1 の上段と下段を入れ替える<small>上段が「開始：このカードを反転させる」、下段が「相手はカードを裏向きでのみプレイすることができる」になります。覆って続けるロックは組めなくなります。次の CPU 戦から (オンライン対戦・ウィークリー・問題は公式のルールのまま)</small></span>' +
       '<input type="checkbox" id="stPsy1Swap"' + (s.psy1Swap ? ' checked' : '') + '></label>' +
     '<h4 class="st-group">おまかせで対戦</h4>' +

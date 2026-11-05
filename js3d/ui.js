@@ -41,6 +41,7 @@ export function toast(msg, ms, opts) {
     return;
   }
   el.textContent = msg;
+  el.dataset.tag = (opts && opts.tag) || '';
   el.classList.add('show');
   clearTimeout(el._t);
   el._t = setTimeout(() => {
@@ -48,6 +49,15 @@ export function toast(msg, ms, opts) {
     const next = lowQueue.shift();
     if (next) setTimeout(() => toast(next[0], next[1]), 250);
   }, ms || 1900);
+}
+
+/* tag を付けて出した知らせ (おすすめの手など) を、もう古くなったときに消す */
+export function clearToast(tag) {
+  const el = $('#toast');
+  if (!el || !el.classList.contains('show') || el.dataset.tag !== tag) return;
+  clearTimeout(el._t);
+  el.classList.remove('show');
+  el.dataset.tag = '';
 }
 
 export function setPrompt(text, tone) {
