@@ -91,7 +91,7 @@ export const normalBattleBgm = () => chosenTrack(settings(), 'bgmBattle') || shu
 /* オンライン対戦の曲: 選んだ曲に決めず、いつもシャッフル (同じ曲ばかり流れないように) */
 export function onlineBattleBgm() {
   shuffleCtx = 'online';
-  return (shuffled = pickShuffleBgm());
+  return (shuffled = pickShuffleBgm(Math.random, battlePool()));
 }
 export const BOSS_BGM = 'samayoi';
 /* 機械仕掛けの神 (CHALLENGE の CODE:PURPLE) の曲 */
@@ -119,6 +119,33 @@ export function pickTenseBgm(rnd = Math.random, avoid = null) {
   try { localStorage.setItem(LAST_TENSE_KEY, pick); } catch (e) { /* private mode */ }
   return pick;
 }
+/* 曲のテンポ (BPM。2026-11-05 に測った)。対戦のシャッフルとテーマ曲は BATTLE_MIN_BPM 以上の曲だけ (本人「対戦で使う曲はある程度 BPM 欲しい」)。
+   本人作は作曲の MIDI に書いた値 (正確)。ほかは音声解析 (librosa のオンセットの自己相関) で、倍・半分・3:2 の取り違えが出やすいので、
+   候補のうち曲の感じに合う方を取った推定値 (~ は自信がない値)。曲を足したらここにも書く (test/bgm-shuffle.test.js が確かめる) */
+export const BATTLE_MIN_BPM = 120;
+export const BPM = {
+  /* 本人作 (MIDI の値) */
+  iron_meridian: 176, protocol_drive: 154, overclock: 144, last_compile: 190, hantei: 156, halt_shocho: 120, kidou: 88,
+  bot_routine: 128, third_gate: 160, circuit_red: 96, far_shore: 90, handshake: 148, cold_boot: 138, odd_protocol: 152, kernel_march: 132,
+  last_line: 180, last_signal: 172, deadlock: 200, zero_margin: 188,
+  theme_shion: 140, theme_akane: 168, theme_ruri: 116, theme_anzu: 156, theme_zundamon: 168, theme_metan: 132, theme_tsumugi: 176, theme_whitecul: 96,
+  boss_inferno: 160, boss_abyss: 100, boss_clock: 150, boss_mirror: 150, boss_sanctuary: 128, boss_glacier: 138, boss_gatekeeper: 164,
+  /* 既製の曲 (推定) */
+  cho_zunou: 129, reflect: 172, kaidoku: 161, crescendo_jitter: 140, zero: 192,
+  samayoi: 100,   // ~ (倍の 199 も出る。ボスの曲 BOSS_BGM としてはそのまま。シャッフルからは外す)
+  switcheroo: 145, monolith_black: 136, particle_tones: 165, tsuisekisha: 140, clock_jitter: 144, joudou_catharsis: 148, blaze_a_trail: 144, killer_roll: 140,
+  interception: 215, strike_despair: 199, lobelia: 199, will_you_cry: 178, tactical_encounter: 172, hangeki: 161,
+  noesis: 91, sagittarius: 148, engram: 152, objective_point: 144, virus_entry: 156, uso_ni_naru: 88, siege_buster: 129, electric_highway: 157,
+  grenade: 152, midnight_breaker: 144, rapid4: 180, irregular: 166, rapid5: 144, under_world: 136, cyber10: 160, cyber_prisoner: 148,
+  destroy_god: 148, final_2sec: 120,
+  /* メニュー・勝ち抜き戦の画面の曲 (落ち着いた曲として選んだもの。解析では倍の値も出るが、聞いた感じは遅い方) */
+  planetarium: 80, madoromu_neon: 70, nine_jack: 92, iruka: 85
+};
+/** 対戦で流してよい速さの曲か (BPM の分からない曲は通す) */
+export const fastEnough = (key) => !!key && (BPM[key] ?? BATTLE_MIN_BPM) >= BATTLE_MIN_BPM;
+/** 対戦のシャッフルで選ぶ曲: 持っている曲のうち、メニュー・勝ち抜き戦の画面の曲と遅い曲を除いたもの
+    (外した曲はメニューのシャッフルには残る。COLLECTION で「対戦で流す」に選べば対戦でも流れる) */
+export const battlePool = () => shufflePool().filter(k => !MENU_BGMS.includes(k) && k !== RUN_BGM && fastEnough(k));
 /* 曲のファイル (無ければ <key>.mp3) */
 const FILES = { ...Object.fromEntries(STORY_TRACKS.map(k => [k, k + '.m4a'])), cho_zunou: 'cho_zunou.m4a', reflect: 'reflect.m4a', kaidoku: 'kaidoku.m4a', crescendo_jitter: 'crescendo_jitter.m4a',
   planetarium: 'planetarium.m4a', madoromu_neon: 'madoromu_neon.m4a', nine_jack: 'nine_jack.m4a', iruka: 'iruka.m4a',
@@ -215,7 +242,7 @@ function shuffleMenuBgm() {
 }
 function shuffleBattleBgm() {
   shuffleCtx = 'battle';
-  return (shuffled = pickShuffleBgm());
+  return (shuffled = pickShuffleBgm(Math.random, battlePool()));
 }
 /* シャッフルで流している曲か (この曲は繰り返さず、終わったら次の曲へ)。途中で曲を選んだら、その曲は繰り返す */
 const shuffling = () => !!want && want === shuffled
@@ -224,7 +251,7 @@ const shuffling = () => !!want && want === shuffled
 let onShuffleTrack = null;
 export const setShuffleNotify = (fn) => { onShuffleTrack = fn; };
 function nextShuffle() {
-  const next = pickShuffleBgm(Math.random, shufflePool().filter(k => k !== want));
+  const next = pickShuffleBgm(Math.random, (shuffleCtx === 'menu' ? shufflePool() : battlePool()).filter(k => k !== want));
   if (!next) return;
   shuffled = next;
   playBgm(next);
