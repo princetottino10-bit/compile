@@ -21,7 +21,7 @@ import { raise } from './dialogs.js';
 
 /* 経験値の入り方 (数は stats-data.js の playerXp と xp.js の XP_GAIN) */
 const EARN = [
-  ['CPU 戦', '+1 / 勝ち +2 (つよい以上 +1)'],
+  ['CPU 戦', '1戦 +1 / 勝ち +2 (「つよい」以上はさらに +1)'],
   ['ONLINE', '+' + XP_GAIN.onlinePlay + ' / 勝ち +' + XP_GAIN.onlineWin],
   ['TUTORIAL', 'レッスン +' + XP_GAIN.lesson + ' / 全部 +' + XP_GAIN.tutorialAll],
   ['PUZZLE', '解くと +' + XP_GAIN.puzzle],

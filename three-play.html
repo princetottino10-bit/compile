@@ -1308,6 +1308,8 @@
   #title.show{display:block;}
   #title.gone{opacity:0;}
   /* 背景の絵 (js3d/backdrops.js)。ゆっくり寄って奥行きを出す */
+  /* GPU の無い環境 (stage.js の SOFT_GL) では動きを止める。1コマごとの合成が重く、ページがずっと忙しくなる */
+  .soft-gl *, .soft-gl *::before, .soft-gl *::after{animation-duration:0s !important;animation-iteration-count:1 !important;}
   .tt-art{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.9;
     animation:ttArt 18s ease-in-out infinite alternate;}
   @keyframes ttArt{from{transform:scale(1)}to{transform:scale(1.06)}}
@@ -4957,7 +4959,7 @@
       "./js3d/cosmetics-mode.js": "./js3d/cosmetics-mode.js?v=edf384308a",
       "./js3d/cosmetics-ui.js": "./js3d/cosmetics-ui.js?v=c3df1d4a44",
       "./js3d/crashwatch.js": "./js3d/crashwatch.js?v=8b4bdaa28f",
-      "./js3d/daily.js": "./js3d/daily.js?v=f56dabdf65",
+      "./js3d/daily.js": "./js3d/daily.js?v=a93f7e7d16",
       "./js3d/deciding.js": "./js3d/deciding.js?v=4be7b80bba",
       "./js3d/deus.js": "./js3d/deus.js?v=6e42de4d36",
       "./js3d/device.js": "./js3d/device.js?v=b519fe2cae",
@@ -4965,7 +4967,7 @@
       "./js3d/displayname.js": "./js3d/displayname.js?v=613e18bf95",
       "./js3d/emblems.js": "./js3d/emblems.js?v=c5a815fe49",
       "./js3d/endless.js": "./js3d/endless.js?v=7f45b07d75",
-      "./js3d/envcheck.js": "./js3d/envcheck.js?v=bc6dd95a06",
+      "./js3d/envcheck.js": "./js3d/envcheck.js?v=9ff8ad8372",
       "./js3d/equip.js": "./js3d/equip.js?v=51faa70a25",
       "./js3d/errorreport.js": "./js3d/errorreport.js?v=2a83f561e2",
       "./js3d/errtext.js": "./js3d/errtext.js?v=b01e7e399f",
@@ -4990,7 +4992,7 @@
       "./js3d/motion.js": "./js3d/motion.js?v=71cd68f8ff",
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
       "./js3d/net.js": "./js3d/net.js?v=3134839bca",
-      "./js3d/news.js": "./js3d/news.js?v=d323e1eda7",
+      "./js3d/news.js": "./js3d/news.js?v=62707b6b85",
       "./js3d/notice.js": "./js3d/notice.js?v=029a81acaa",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=596315df8d",
       "./js3d/panel.js": "./js3d/panel.js?v=b07699d2a4",
@@ -5000,7 +5002,7 @@
       "./js3d/playlog.js": "./js3d/playlog.js?v=90aaffedee",
       "./js3d/playmat.js": "./js3d/playmat.js?v=c9653bebf8",
       "./js3d/prefs.js": "./js3d/prefs.js?v=0d92d36092",
-      "./js3d/profile.js": "./js3d/profile.js?v=de1bf0178f",
+      "./js3d/profile.js": "./js3d/profile.js?v=0461a3bf91",
       "./js3d/prompts.js": "./js3d/prompts.js?v=91fa3915a9",
       "./js3d/protocards.js": "./js3d/protocards.js?v=79426a5f07",
       "./js3d/protocol-strength.js": "./js3d/protocol-strength.js?v=7af34e14ee",
@@ -5023,10 +5025,10 @@
       "./js3d/runcards.js": "./js3d/runcards.js?v=fd837204cc",
       "./js3d/selectui.js": "./js3d/selectui.js?v=208abdaebc",
       "./js3d/settings.js": "./js3d/settings.js?v=c4bfc7b885",
-      "./js3d/setup.js": "./js3d/setup.js?v=e8261aa371",
+      "./js3d/setup.js": "./js3d/setup.js?v=a5caa76c3d",
       "./js3d/solodraft.js": "./js3d/solodraft.js?v=4c1693a5ab",
       "./js3d/spectate.js": "./js3d/spectate.js?v=96a7ee67d5",
-      "./js3d/stage.js": "./js3d/stage.js?v=026b6eae08",
+      "./js3d/stage.js": "./js3d/stage.js?v=603fbc7f79",
       "./js3d/stats-data.js": "./js3d/stats-data.js?v=a50201f1ab",
       "./js3d/stats.js": "./js3d/stats.js?v=a9074a3c8f",
       "./js3d/steps.js": "./js3d/steps.js?v=13e73b20fe",
@@ -5039,7 +5041,7 @@
       "./js3d/story-scenery.js": "./js3d/story-scenery.js?v=9fa267bcf9",
       "./js3d/story-stars.js": "./js3d/story-stars.js?v=f99c7692ec",
       "./js3d/story-ui.js": "./js3d/story-ui.js?v=a9ddafd684",
-      "./js3d/story-world.js": "./js3d/story-world.js?v=2a98de1838",
+      "./js3d/story-world.js": "./js3d/story-world.js?v=8dc9e12246",
       "./js3d/story.js": "./js3d/story.js?v=a6e591a848",
       "./js3d/support.js": "./js3d/support.js?v=efb00a908c",
       "./js3d/theme.js": "./js3d/theme.js?v=f923617cfc",
@@ -5049,7 +5051,7 @@
       "./js3d/training.js": "./js3d/training.js?v=016a739d2c",
       "./js3d/tsume.js": "./js3d/tsume.js?v=47493e34a2",
       "./js3d/turning.js": "./js3d/turning.js?v=9c7f79654e",
-      "./js3d/tutorial.js": "./js3d/tutorial.js?v=a2ad20f672",
+      "./js3d/tutorial.js": "./js3d/tutorial.js?v=f4a33e319b",
       "./js3d/tween.js": "./js3d/tween.js?v=6fe8c0fb03",
       "./js3d/ui.js": "./js3d/ui.js?v=2542eb29cf",
       "./js3d/watchtools.js": "./js3d/watchtools.js?v=ad10da8d17",
@@ -5062,7 +5064,7 @@
   <!-- modulepreload:start -->
   <link rel="modulepreload" href="js3d/solodraft.js?v=4c1693a5ab">
   <link rel="modulepreload" href="js3d/xp.js?v=e6b44f256a">
-  <link rel="modulepreload" href="js3d/daily.js?v=f56dabdf65">
+  <link rel="modulepreload" href="js3d/daily.js?v=a93f7e7d16">
   <link rel="modulepreload" href="js3d/account.js?v=6cf36078ae">
   <link rel="modulepreload" href="js3d/playlog.js?v=90aaffedee">
   <link rel="modulepreload" href="js3d/feel.js?v=9f679966cc">
@@ -5087,11 +5089,11 @@
   <link rel="modulepreload" href="js3d/turning.js?v=9c7f79654e">
   <link rel="modulepreload" href="js3d/achievements-ui.js?v=0c30003c62">
   <link rel="modulepreload" href="vendor/three.module.js?v=985eb92490">
-  <link rel="modulepreload" href="js3d/stage.js?v=026b6eae08">
+  <link rel="modulepreload" href="js3d/stage.js?v=603fbc7f79">
   <link rel="modulepreload" href="js3d/board.js?v=fd9b31ba0a">
   <link rel="modulepreload" href="js3d/control.js?v=aebfff9c0f">
   <link rel="modulepreload" href="js3d/panel.js?v=b07699d2a4">
-  <link rel="modulepreload" href="js3d/setup.js?v=e8261aa371">
+  <link rel="modulepreload" href="js3d/setup.js?v=a5caa76c3d">
   <link rel="modulepreload" href="js3d/title.js?v=b50dc1ad43">
   <link rel="modulepreload" href="js3d/training.js?v=016a739d2c">
   <link rel="modulepreload" href="js3d/room.js?v=918fccde40">
@@ -5099,7 +5101,7 @@
   <link rel="modulepreload" href="js3d/puzzle.js?v=65360765a2">
   <link rel="modulepreload" href="js3d/tsume.js?v=47493e34a2">
   <link rel="modulepreload" href="js3d/errorreport.js?v=2a83f561e2">
-  <link rel="modulepreload" href="js3d/tutorial.js?v=a2ad20f672">
+  <link rel="modulepreload" href="js3d/tutorial.js?v=f4a33e319b">
   <link rel="modulepreload" href="js3d/settings.js?v=c4bfc7b885">
   <link rel="modulepreload" href="js3d/equip.js?v=51faa70a25">
   <link rel="modulepreload" href="js3d/stats.js?v=a9074a3c8f">
@@ -5108,7 +5110,7 @@
   <link rel="modulepreload" href="js3d/story-stars.js?v=f99c7692ec">
   <link rel="modulepreload" href="js3d/endless.js?v=7f45b07d75">
   <link rel="modulepreload" href="js3d/story-ui.js?v=a9ddafd684">
-  <link rel="modulepreload" href="js3d/story-world.js?v=2a98de1838">
+  <link rel="modulepreload" href="js3d/story-world.js?v=8dc9e12246">
   <link rel="modulepreload" href="js3d/rewards.js?v=0e8e1e0ca0">
   <link rel="modulepreload" href="js3d/gachafx.js?v=274272f746">
   <link rel="modulepreload" href="js3d/cosmetics-ui.js?v=c3df1d4a44">
@@ -5156,7 +5158,7 @@
   <link rel="modulepreload" href="js3d/tips.js?v=3faae17957">
   <link rel="modulepreload" href="js3d/prefs.js?v=0d92d36092">
   <link rel="modulepreload" href="js3d/bootui.js?v=15220963bc">
-  <link rel="modulepreload" href="js3d/envcheck.js?v=bc6dd95a06">
+  <link rel="modulepreload" href="js3d/envcheck.js?v=9ff8ad8372">
   <link rel="modulepreload" href="js3d/errtext.js?v=b01e7e399f">
   <link rel="modulepreload" href="js3d/support.js?v=efb00a908c">
   <link rel="modulepreload" href="js3d/firstrun.js?v=5c6561b6b0">
@@ -5178,9 +5180,9 @@
   <link rel="modulepreload" href="vendor/jsm/environments/RoomEnvironment.js">
   <link rel="modulepreload" href="js3d/card.js?v=71f8503f87">
   <link rel="modulepreload" href="js3d/protocards.js?v=79426a5f07">
-  <link rel="modulepreload" href="js3d/profile.js?v=de1bf0178f">
+  <link rel="modulepreload" href="js3d/profile.js?v=0461a3bf91">
   <link rel="modulepreload" href="js3d/gacha-ui.js?v=b5bf4956cc">
-  <link rel="modulepreload" href="js3d/news.js?v=d323e1eda7">
+  <link rel="modulepreload" href="js3d/news.js?v=62707b6b85">
   <link rel="modulepreload" href="vendor/jsm/postprocessing/ShaderPass.js">
   <link rel="modulepreload" href="js3d/run-pilots.js?v=4b54f3c10f">
   <link rel="modulepreload" href="js3d/story-map.js?v=ed5ef482a6">

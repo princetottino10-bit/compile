@@ -8,6 +8,7 @@ import { RenderPass } from '../vendor/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from '../vendor/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../vendor/jsm/postprocessing/OutputPass.js';
 import { bloomGuardPass } from './bloom-guard.js';
+import { softwareGL } from './envcheck.js';
 import { RoomEnvironment } from '../vendor/jsm/environments/RoomEnvironment.js';
 import { COLOR, CAMERA, BOARD, CARD, TIMING, VIEW, IOS } from './theme.js';
 import * as TW from './tween.js';
@@ -98,6 +99,15 @@ export function createStage(container) {
   let autoLevel = GFX_MIN;              // 自動にしていたら、いまどの段か (設定の画面に「いまの自動: 標準」と出す)
   try { gfxLevel = Math.max(GFX_MIN, Math.min(GFX_CAP.length - 1, parseInt(localStorage.getItem(GFX_KEY), 10) || 0)); } catch (e) { /* 保存できない環境でも遊べる */ }
   autoLevel = gfxLevel;
+  /* GPU の無い環境 (ソフトウェアで描くブラウザ。AI のブラウザ操作の道具や仮想マシン) では、1コマ描くのに 1 秒近くかかり、
+     ページがずっと忙しいままになって、ボタンが押せない・画面が読めないと見えた (Muse のレビュー 2026-11-05)。
+     そういう環境では最初から一番軽い段にし、動きのない間は描かない (下の loop)。段は覚えない (GPU のある端末に持ち越さない) */
+  const SOFT_GL = softwareGL(renderer);
+  if (SOFT_GL) {
+    gfxLevel = autoLevel = GFX_CAP.length - 1;
+    /* 画面全体の合成もソフトウェアなので、繰り返す CSS の動き (タイトルの揺れ・点滅など) も止める (three-play.html の .soft-gl) */
+    document.documentElement.classList.add('soft-gl');
+  }
   const pixelRatio = () => Math.min(window.devicePixelRatio || 1, GFX_CAP[gfxLevel]);
   renderer.setPixelRatio(pixelRatio());
   renderer.setSize(container.clientWidth, container.clientHeight);
@@ -191,7 +201,7 @@ export function createStage(container) {
      カードの縁や盤面の線がすべてギザギザになったので、描画先をマルチサンプルにする */
   const drawSize = renderer.getDrawingBufferSize(new THREE.Vector2());
   const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(drawSize.x, drawSize.y, {
-    type: THREE.HalfFloatType, samples: lowPower ? 2 : 4
+    type: THREE.HalfFloatType, samples: SOFT_GL ? 0 : lowPower ? 2 : 4
   }));
   composer.setSize(container.clientWidth, container.clientHeight);
   composer.addPass(new RenderPass(scene, camera));
@@ -225,7 +235,7 @@ export function createStage(container) {
     if (gfxMode === 'auto') autoLevel = next;
     if (next === gfxLevel) return;
     gfxLevel = next;
-    if (gfxMode === 'auto') { try { localStorage.setItem(GFX_KEY, String(gfxLevel)); } catch (e) { /* 覚えられなくても今回は効く */ } }
+    if (gfxMode === 'auto' && !SOFT_GL) { try { localStorage.setItem(GFX_KEY, String(gfxLevel)); } catch (e) { /* 覚えられなくても今回は効く */ } }
     applyGfx();
   }
   /* 設定の「画質」: 高 = いちばんきれいな段、標準 = 解像度を少し下げる、軽量 = 発光と影を切って解像度 1 倍 */
@@ -408,6 +418,8 @@ export function createStage(container) {
      画面の書き換えが 120〜180Hz の端末で、止まっている画面もいっぱいに描き続けていた */
   const FRAME_MS = 1000 / 60, IDLE_FRAME_MS = 1000 / 30, IDLE_AFTER = 2500;
   let lastActive = 0, nextDue = 0, idleNow = false, frames = 0;
+  const SOFT_FRAME_MS = 1000 / 5;
+  let softDrawn = false;              // ソフトウェア描画で、止まってから1コマ描いたか
   const wake = () => { lastActive = performance.now(); };
   for (const ev of ['pointerdown', 'pointermove', 'wheel', 'keydown', 'touchstart']) window.addEventListener(ev, wake, { passive: true, capture: true });
   /* 止める (ストーリーの地図など、別の 3D 画面を出している間)。トゥイーンは進めるが描かない。
@@ -420,7 +432,9 @@ export function createStage(container) {
     now = now || performance.now();
     if (TW.activeCount() > 0 || camState.shake > 0.0001) lastActive = now;
     idleNow = now - lastActive > IDLE_AFTER;
-    const step = idleNow || powerSave ? IDLE_FRAME_MS : FRAME_MS;
+    /* ソフトウェア描画: 動いている間も 1 秒に 5 回まで、止まったら最後の1コマを残して描かない (ページを忙しくしない) */
+    if (SOFT_GL && idleNow && softDrawn) { lastTick = now; return; }   // 下の見張り (setInterval) にも描かせない
+    const step = SOFT_GL ? SOFT_FRAME_MS : idleNow || powerSave ? IDLE_FRAME_MS : FRAME_MS;
     /* 少し早めでも描く (2ms)。遅れたら次の予定を今に合わせる (まとめて描かない) */
     if (now < nextDue - 2) return;
     nextDue = Math.max(nextDue + step, now - step);
@@ -459,6 +473,7 @@ export function createStage(container) {
     /* 表示領域が 0 (たたまれた枠の中など) のときは描かない (大きさ 0 の描画先で警告が大量に出る) */
     if (!paused && container.clientWidth > 1 && container.clientHeight > 1) composer.render();
     if (!catchUp) { frames++; probeFps(lastTick, idleNow); }
+    softDrawn = idleNow;
   }
   applyGfx();
   loop();

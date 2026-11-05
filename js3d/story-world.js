@@ -28,6 +28,7 @@ import { buildAquarium } from './story-scenery-aquarium.js';
 import { buildMansion } from './story-scenery-mansion.js';
 import { buildWarehouse } from './story-scenery-warehouse.js';
 import { buildStation } from './story-scenery-station.js';
+import { softwareGL } from './envcheck.js';
 import { buildDirector } from './story-scenery-director.js';
 import { RoomEnvironment } from '../vendor/jsm/environments/RoomEnvironment.js';
 
@@ -165,6 +166,9 @@ export function openWorld(protocols, opts = {}) {
   composer.addPass(bloomGuardPass());          // スマホで壊れた1点がブルームで四角く広がらないように (bloom-guard.js)
   const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.35, 0.4, 0.85);   // 研究所の明かり。光りすぎない
   composer.addPass(bloom);
+  /* GPU の無いブラウザ (envcheck.js の softwareGL) では発光を切り、描くのは 1 秒に 5 回までにする (ページが忙しいままにならないように) */
+  const softGL = softwareGL(renderer);
+  if (softGL) { bloom.enabled = false; renderer.setPixelRatio(1); }
   composer.addPass(new OutputPass());
   /* 画面の縁を少し暗く、ごく薄い粒子 (夜の研究所の空気) */
   const grade = new ShaderPass({
@@ -740,7 +744,7 @@ export function openWorld(protocols, opts = {}) {
   camera.position.copy(camPos);
   const look = new THREE.Vector3();
   const tmp = new THREE.Vector3();
-  let last = performance.now(), raf = 0, t0 = last;
+  let last = performance.now(), raf = 0, t0 = last, lastDraw = 0;
 
   const frame = (now) => {
     raf = requestAnimationFrame(frame);
@@ -893,6 +897,7 @@ export function openWorld(protocols, opts = {}) {
 
     syncHud();
     checkEvents();
+    if (softGL) { if (now - lastDraw < 200) return; lastDraw = now; }
     composer.render();
   };
   look.copy(world(pos, 0.75));

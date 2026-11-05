@@ -99,7 +99,7 @@ export const LESSONS = [
   },
   {
     title: '裏向きで置いて、コンパイルする',
-    task: 'FIRE のラインの合計を 10 以上にして、コンパイルしよう',
+    task: 'FIRE のラインの合計を 10 以上にして、コンパイルしよう (コンパイルは次の自分の手番の始め)',
     spec: {
       sides: [
         { protos: ME_PROTOS, lines: [[], [up('FIRE_6'), up('FIRE_2'), up('FIRE_3')], []], hand: ['SPEED_6', 'LIFE_3', 'SPEED_3'] },
