@@ -3927,6 +3927,28 @@ const AI_AIM_COMBOS = [
   { pieces: { WAR_1: 'top', LOVE_6: 'play' } },
   { pieces: { WAR_1: 'top', LOVE_2: 'play' } },
   { pieces: { WAR_1: 'top', FEAR_2: 'play' } },
+  /* PEACE 1 で両者の手札を空にすると、相手は次の手番にリフレッシュし、WAR 1 の下段でこちらもリフレッシュして手札が戻る
+     (R001、150盤面2回で +5.7 / +5.3。PLAGUE 2 で相手だけ空にする C048 は噛み合わない) */
+  { pieces: { WAR_2: 'top', PEACE_1: 'play' } },
+  /* LUST 0 でコントロールを得て、WRATH 1 の終了でそれを手放す代わりに表の札を1枚削除する (N029、150盤面2回で +6.6 / +8.7)。
+     NOVA 2 で得るのは噛み合わない (N030) */
+  { pieces: { WRATH_2: 'top', LUST_1: 'play' } },
+  /* OVERWHELM 2 は相手にも自分にも各ラインへ裏向きを出させ、APATHY 0 のラインは裏向き1枚ごとに +1 (N037、+4.5 / +3.7 / +2.8) */
+  { pieces: { APATHY_1: 'up', OVERWHELM_2: 'play' } },
+  /* デメリット打ち消し (2026-11-03 ユーザー「そのレベルのシンプルなやつは普通に入れていいよ」、計測なし)。
+     INERT 0 (INERT_1) はこのラインの他の札の上段を消すので、上段が重い 6・7 がただの大きい札になる */
+  { pieces: { INERT_1: 'up', CORRUPTION_6: 'play' } },
+  { pieces: { INERT_1: 'up', RIGID_6: 'play' } },
+  { pieces: { INERT_1: 'up', DIVERSITY_6: 'play' } },
+  { pieces: { INERT_1: 'up', MOMENTUM_6: 'play' } },
+  { pieces: { INERT_1: 'up', METAL_6: 'play' } },
+  /* 出力と入力の突き合わせ (scripts/combo_textmatch.js) で出た、デメリットが相方の誘発になる組 (計測なし)。
+     相手に引かせる LOVE は MIRROR 4 (相手が引いたあと1枚引く) で取り返す。相手にこのラインへ出させる札は ICE 1 (出したあと相手が1枚捨てる) が罰にする */
+  { pieces: { SMOKE_3: 'up', OVERWHELM_2: 'play' } },
+  { pieces: { MIRROR_5: 'top', LOVE_6: 'play' } },
+  { pieces: { ICE_1: 'top', LUST_6: 'play' } },
+  { pieces: { ICE_1: 'top', GRAVITY_6: 'play' } },
+  { pieces: { ICE_1: 'top', INERT_4: 'play' } },
   /* COURAGE 0 の終了で1枚捨てると相手が2枚捨て (COURAGE 0・CORRUPTION 2)、PLAGUE 1 で2枚引く */
   { pieces: { PLAGUE_2: 'up', COURAGE_1: 'top', CORRUPTION_3: 'up' } },
   /* WAR 3 の下段「相手が捨てたあと: 裏で1枚出せる」に、相手に捨てさせる札を足す */
@@ -3989,8 +4011,10 @@ function aiAimScore(st, side, W) {
    中段は表になったときにも入る。262組の総当たりで、表にする札 × 中段の強い札は 154組で噛み合い、上位12組は 150盤面で測り直しても +8〜12pt。
    揃った盤面では ORACLE も表にして撃てている (逃している得 ±1) が、1手先の読みでは「裏で置いておく」値打ちが見えない。
    flipStore: 自分の一番上の裏向きが撃つ札で、手札に表にする札がある */
-const AI_FLIP_PAYLOAD = new Set(['LIFE_1', 'LIGHT_1', 'LUCK_1', 'SPEED_1', 'FIRE_1', 'HATE_1', 'GRAVITY_2', 'DARKNESS_1', 'WATER_2']);
-const AI_FLIP_ENABLER = new Set(['LOVE_4', 'WATER_1', 'SPIRIT_3', 'WAR_3', 'LIFE_2', 'SMOKE_2', 'METAL_1', 'GRAVITY_3', 'FEAR_1']);
+/* Main 3 の撃つ札 (J 型、150盤面で +6.6〜+10.9): SLOTH 1 (戻して自分の札ならリフレッシュ)・GLUTTONY 1 (2枚引く)・GREED 0 (手札を捨てて削除)。
+   表にする札は GREED 4 (手札を全部捨てて1枚反転、+8.9〜+10.9) と PRIDE 3 (自分の裏向きを1枚反転) */
+const AI_FLIP_PAYLOAD = new Set(['LIFE_1', 'LIGHT_1', 'LUCK_1', 'SPEED_1', 'FIRE_1', 'HATE_1', 'GRAVITY_2', 'DARKNESS_1', 'WATER_2', 'SLOTH_2', 'GLUTTONY_2', 'GREED_1']);
+const AI_FLIP_ENABLER = new Set(['LOVE_4', 'WATER_1', 'SPIRIT_3', 'WAR_3', 'LIFE_2', 'SMOKE_2', 'METAL_1', 'GRAVITY_3', 'FEAR_1', 'GREED_5', 'PRIDE_3']);
 /* 一番上で表の FIRE 3 (FIRE_4) は終了ごとに表にする札。自分で裏返る SPIRIT 1 (開始に裏返る)・WATER 0 (中段で自分も裏返る) は、
    FIRE 3 で毎手番表に戻すと中段 (2枚引く / 1枚反転) を毎手番撃てる (L001・L002、150盤面で +6.0 / +6.1) */
 const AI_FLIP_SELF = new Set(['SPIRIT_2', 'WATER_1']);
@@ -4002,12 +4026,17 @@ function aiFlipStoreScore(st, side, W) {
     const top = stack[stack.length - 1];
     if (top && st.cards[top].def === 'FIRE_4' && st.cards[top].faceUp) fire3 = true;
   }
-  if (!fire3 && !st.players[side].hand.some(u => AI_FLIP_ENABLER.has(st.cards[u].def))) return 0;
+  /* LIGHT 0 (LIGHT_1) は表にした札の値だけ引く。裏の 5 を起こすと5枚引ける (ユーザー「裏向きの5を light0 で起こす」)。
+     測ると 5 は ±0〜+1.8、6・7 (ICE 6 −5.2・RIGID 7 −9.2・CORRUPTION 6 −2.1・LOVE 6 −1.9、100盤面) は表になったデメリットで損をするので 5 だけにした */
+  const light0 = st.players[side].hand.some(u => st.cards[u].def === 'LIGHT_1');
+  if (!fire3 && !light0 && !st.players[side].hand.some(u => AI_FLIP_ENABLER.has(st.cards[u].def))) return 0;
   let n = 0;
   for (let l = 0; l < 3; l++) {
     const stack = st.lines[l][side];
     const top = stack[stack.length - 1];
-    if (top && !st.cards[top].faceUp && (AI_FLIP_PAYLOAD.has(st.cards[top].def) || (fire3 && AI_FLIP_SELF.has(st.cards[top].def)))) n++;
+    if (!top || st.cards[top].faceUp) continue;
+    const d = st.cards[top].def;
+    if (AI_FLIP_PAYLOAD.has(d) || (fire3 && AI_FLIP_SELF.has(d)) || (light0 && DEFS[d].value === 5)) n++;
   }
   return Math.min(n, 2) * W.flipStore;
 }

@@ -1120,3 +1120,317 @@ module.exports = [
     });
   }
 })();
+
+/* ---------- 相手のリフレッシュで起きる札 × 相手の手札を空にする札 (R001〜、2026-10-29) ----------
+   WAR 1 (相手がリフレッシュしたあと: 好きなだけ捨ててリフレッシュ)・ASSIMILATION 1 (誰かがリフレッシュしたあと: 相手の山札の上を引き、1枚を相手の捨て札へ) は
+   A 型の「〜したあと」に入っていなかった。相手の手札を減らす札 (相手はやがてリフレッシュする) と、自分でリフレッシュする札を組ませる。相方 = 聞く札 */
+(function refreshCandidates() {
+  const seen = new Set(module.exports.map(c => c.setup.mine.map(p => p.card).sort().join('+')));
+  const L = [['WAR_2', 'WAR 1', false], ['ASSIMILATION_2', 'ASSIMILATION 1', true]];
+  const P = [['PLAGUE_3', 'PLAGUE 2', false], ['PEACE_1', 'PEACE 1', false], ['FEAR_2', 'FEAR 1', false], ['HATE_2', 'HATE 1', false],
+    ['LOVE_2', 'LOVE 2', true], ['SPIRIT_1', 'SPIRIT 0', true]];
+  let n = 0;
+  for (const [l, ln, any] of L) for (const [p, pn, own] of P) {
+    if (own && !any) continue;
+    const mine = [{ card: l, at: 'field' }, { card: p, at: 'hand' }];
+    const key = mine.map(x => x.card).sort().join('+');
+    if (seen.has(key)) continue;
+    seen.add(key);
+    module.exports.push({
+      id: 'R' + String(++n).padStart(3, '0'), auto: true, source: 'refresh', late: true,
+      name: ln + ' + ' + pn + ' (リフレッシュで起きる)', kind: own ? 'burst' : 'setup', protos: [l.split('_')[0], p.split('_')[0]],
+      how: ln + ' を一番上に置いておき、' + pn + (own ? ' で自分がリフレッシュして起こす。' : ' で相手の手札を減らし、相手のリフレッシュで起こす。'),
+      setup: { mine }, act: { play: p, line: 'other' }, partner: [l]
+    });
+  }
+})();
+
+/* ---------- 3枚の組に4枚目 (Q001〜、2026-10-29) ----------
+   デッキは3プロトコルなので、4枚目は組と同じプロトコルの札に限る。組を植え、同じプロトコルの、場に残って効く札を出す。相方 = 組の札 */
+(function engineFourth() {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const cards = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'cards.json'), 'utf8'));
+  const proto = {}, value = {}, byName = {}, persist = [];
+  for (const p of cards.protocols) for (const c of p.cards) {
+    proto[c.id] = p.name; value[c.id] = c.value; byName[p.name + ' ' + c.value] = c.id;
+    if (c.upper || c.lower) persist.push(c.id);
+  }
+  const id = (n) => { if (!byName[n]) throw new Error('no card ' + n); return byName[n]; };
+  const name = (d) => proto[d] + ' ' + value[d];
+  const ENGINES = [
+    ['WAR 0 + CHAOS 0 + HATE 3', ['WAR 0', 'CHAOS 0', 'HATE 3']],
+    ['WAR 0 + CHAOS 0 + MIRROR 4', ['WAR 0', 'CHAOS 0', 'MIRROR 4']],
+    ['WAR 0 + CHAOS 0 + PLAGUE 0', ['WAR 0', 'CHAOS 0', 'PLAGUE 0']],
+    ['SPIRIT 3 + PEACE 1 + CORRUPTION 6', ['SPIRIT 3', 'PEACE 1', 'CORRUPTION 6']],
+    ['PLAGUE 1 + COURAGE 0 + CORRUPTION 2', ['PLAGUE 1', 'COURAGE 0', 'CORRUPTION 2']],
+    ['CORRUPTION 6 + CORRUPTION 2 + PLAGUE 1', ['CORRUPTION 6', 'CORRUPTION 2', 'PLAGUE 1']]
+  ];
+  let n = 0;
+  for (const [en, pieces] of ENGINES) {
+    const ps = pieces.map(id), pp = new Set(ps.map(x => proto[x]));
+    for (const T of persist) {
+      if (!pp.has(proto[T]) || ps.includes(T)) continue;
+      module.exports.push({
+        id: 'Q' + String(++n).padStart(3, '0'), auto: true, source: 'fourth', late: true,
+        name: en + ' に ' + name(T), kind: 'engine', protos: [...pp],
+        how: en + ' が回っているところに ' + name(T) + ' を足す。',
+        setup: { mine: [...ps.map(x => ({ card: x, at: 'field' })), { card: T, at: 'hand' }] }, act: { play: T }, partner: ps
+      });
+    }
+  }
+})();
+
+/* ---------- A 型に入っていなかった誘発 (Y001〜、2026-10-29) ----------
+   SPEED 1 の上段「キャッシュをクリアしたあと: 1枚引く」(手番の終わりに手札が多すぎて捨てたあと) × 大きく引く札。
+   PEACE 4 の下段「相手の手番中にあなたが捨てたあと: 1枚引く」× WAR 1 (相手のリフレッシュで捨てる)。相方 = 聞く札 */
+(function otherTriggerCandidates() {
+  const seen = new Set(module.exports.map(c => c.setup.mine.map(p => p.card).sort().join('+')));
+  let n = 0;
+  const push = (c) => {
+    const key = c.setup.mine.map(p => p.card).sort().join('+');
+    if (seen.has(key)) return;
+    seen.add(key);
+    module.exports.push({ id: 'Y' + String(++n).padStart(3, '0'), auto: true, source: 'trigger2', late: true, ...c });
+  };
+  for (const [d, dn] of [['FIRE_1', 'FIRE 0'], ['GRAVITY_2', 'GRAVITY 1'], ['METAL_2', 'METAL 1'], ['LIGHT_3', 'LIGHT 2'], ['FEAR_2', 'FEAR 1'], ['DARKNESS_1', 'DARKNESS 0'], ['WATER_3', 'WATER 2'], ['CHAOS_5', 'CHAOS 4']]) {
+    push({
+      name: 'SPEED 1 + ' + dn + ' (キャッシュのクリアで引く)', kind: 'engine', protos: ['SPEED', d.split('_')[0]],
+      how: 'SPEED 1 を場に置き (上段なので覆われてよい)、' + dn + ' で手札を増やす。手番の終わりに捨てたあと、SPEED 1 で1枚引く。',
+      setup: { mine: [{ card: 'SPEED_2', at: 'field' }, { card: d, at: 'hand' }] }, act: { play: d }, partner: ['SPEED_2']
+    });
+  }
+  push({
+    name: 'PEACE 4 + WAR 1 (相手の手番に捨てて引く)', kind: 'engine', protos: ['PEACE', 'WAR'],
+    how: 'PEACE 4 と WAR 1 を一番上に置く。相手がリフレッシュすると WAR 1 で捨ててリフレッシュし、PEACE 4 で1枚引く。',
+    setup: { mine: [{ card: 'WAR_2', at: 'field' }, { card: 'PEACE_4', at: 'hand' }] }, act: { play: 'PEACE_4' }, partner: ['WAR_2']
+  });
+  push({
+    name: 'WAR 1 + PEACE 1 に PEACE 4', kind: 'engine', protos: ['PEACE', 'WAR'],
+    how: 'WAR 1 + PEACE 1 の回しに PEACE 4 を足す。',
+    setup: { mine: [{ card: 'WAR_2', at: 'field' }, { card: 'PEACE_4', at: 'field', line: 'other' }, { card: 'PEACE_1', at: 'hand' }] }, act: { play: 'PEACE_1', line: 'other' }, partner: ['PEACE_4']
+  });
+})();
+
+/* ---------- Main 3・Aux 3 の札を読んで挙げた組 (N001〜、2026-11-03) ----------
+   [場に置く札 (先頭が相方), 手札から出す札, 仕組み]。場の札は一番上に表で置く (2枚目以降は別のライン) */
+(function main3Candidates() {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const cards = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'cards.json'), 'utf8'));
+  const proto = {}, value = {}, byName = {};
+  for (const p of cards.protocols) for (const c of p.cards) { proto[c.id] = p.name; value[c.id] = c.value; byName[p.name + ' ' + c.value] = c.id; }
+  const id = (n) => { if (!byName[n]) throw new Error('no card ' + n); return byName[n]; };
+  const L = [
+    [['LUST 0'], 'GREED 1', 'LUST 0 の上段でこのラインは両者 +10。GREED 1 の終了で、10以上で相手より大きいラインをコンパイルする'],
+    [['FULCRUM 0'], 'PEACE 1', '手札がちょうど0枚だと FULCRUM 0 で相手が捨てる。PEACE 1 で手札を空にする'],
+    [['FULCRUM 0'], 'GREED 0', 'GREED 0 で手札を全部捨てて、FULCRUM 0 の0枚の条件を満たす'],
+    [['FULCRUM 0'], 'HATE 1', 'HATE 1 で3枚捨てて手札を0枚にする'],
+    [['GLUTTONY 1'], 'ENVY 2', '相手の手札の枚数だけ引いて手札があふれると、キャッシュのクリアで GLUTTONY 1 が1枚削除する'],
+    [['GLUTTONY 1'], 'AMBUSH 0', '3枚引いてあふれさせ、GLUTTONY 1 で削除'],
+    [['GLUTTONY 1'], 'METAL 1', '2枚引いてあふれさせ、GLUTTONY 1 で削除'],
+    [['GLUTTONY 1'], 'FIRE 0', '2枚引いてあふれさせ、GLUTTONY 1 で削除'],
+    [['GLUTTONY 0'], 'ENVY 2', 'あふれてキャッシュをクリアすると、GLUTTONY 0 で山札の上を裏で出す'],
+    [['GLUTTONY 0'], 'AMBUSH 0', 'あふれさせて GLUTTONY 0 で裏で出す'],
+    [['SLOTH 1'], 'LOVE 2', 'LOVE 2 のリフレッシュで、SLOTH 1 の下段が山札の上をこのスタックに裏で出す'],
+    [['SLOTH 1'], 'SPIRIT 0', 'SPIRIT 0 のリフレッシュで SLOTH 1 が裏で出す'],
+    [['GLUTTONY 4'], 'LOVE 2', 'リフレッシュのあと GLUTTONY 4 で1枚引く'],
+    [['GLUTTONY 4'], 'SPIRIT 0', 'リフレッシュのあと GLUTTONY 4 で1枚引く'],
+    [['WAR 1', 'SLOTH 1'], 'PEACE 1', 'WAR 1 + PEACE 1 で相手の手番にリフレッシュし、SLOTH 1 でも裏で出す'],
+    [['WAR 1', 'GLUTTONY 4'], 'PEACE 1', 'WAR 1 + PEACE 1 のリフレッシュで GLUTTONY 4 も引く'],
+    [['MOMENTUM 1'], 'MOMENTUM 4', 'MOMENTUM 4 の並べ替えで MOMENTUM 1 の下段 (1枚捨てて1枚引く)'],
+    [['MOMENTUM 1'], 'WATER 2', 'WATER 2 の並べ替えで MOMENTUM 1 の下段'],
+    [['NOVA 2'], 'MOMENTUM 4', '並べ替えたあと NOVA 2 で裏向きを1枚動かせる'],
+    [['NOVA 2'], 'WATER 2', '並べ替えたあと NOVA 2 で裏向きを1枚動かせる'],
+    [['RIGID 2'], 'DARKNESS 3', 'DARKNESS 3 で裏で出すと、RIGID 2 で同じスタックに山札の上を裏で足す'],
+    [['RIGID 2'], 'PEACE 2', 'PEACE 2 で裏で出すと RIGID 2 が足す'],
+    [['RIGID 2'], 'INERT 3', 'INERT 3 で各ラインに裏で出すと、そのたびに RIGID 2 が足す'],
+    [['RIGID 2'], 'SMOKE 3', 'SMOKE 3 で裏で出すと RIGID 2 が足す'],
+    [['DARKNESS 2', 'RIGID 2'], 'PEACE 2', '裏向きが4点になるスタックに、RIGID 2 で裏向きを倍に積む'],
+    [['RIGID 4'], 'DARKNESS 3', 'RIGID 4 を裏向きで覆うと先に1枚引く'],
+    [['RIGID 4'], 'WATER 1', 'WATER 1 の裏向きで RIGID 4 を覆って引く'],
+    [['SLOTH 4'], 'WATER 1', 'SLOTH 4 を覆うと先に表の札を1枚裏返す'],
+    [['WRATH 1'], 'LUST 0', 'LUST 0 でコントロールを得て、WRATH 1 の終了でそれを失って表の札を1枚削除する'],
+    [['WRATH 1'], 'NOVA 2', 'NOVA 2 でコントロールを得て、WRATH 1 で削除'],
+    [['LUST 3'], 'NOVA 2', 'NOVA 2 でコントロールを得て、LUST 3 の終了で失って1枚反転'],
+    [['ENVY 0'], 'PRIDE 4', 'PRIDE 4 で相手の大きい札を ENVY 0 のラインへ寄せると、その値だけこちらも増える'],
+    [['ENVY 0'], 'LUST 2', 'LUST 2 で相手の覆われた札を ENVY 0 のラインへ寄せる'],
+    [['ENVY 0'], 'DARKNESS 1', 'DARKNESS 1 で相手の札を裏にして ENVY 0 のラインへ動かす'],
+    [['SLOTH 0'], 'SLOTH 3', 'SLOTH 0 を SLOTH の札で覆うと +5'],
+    [['DARKNESS 2'], 'OVERWHELM 2', 'OVERWHELM 2 の終了で各ラインに裏向きを足す。DARKNESS 2 のスタックでは4点'],
+    [['APATHY 0'], 'OVERWHELM 2', 'OVERWHELM 2 の裏向きで APATHY 0 のラインが伸びる'],
+    [['GREED 2'], 'FIRE 0', 'GREED 2 の開始で FIRE 0 を手札に戻して出し直す'],
+    [['GREED 2'], 'DEATH 0', 'GREED 2 の開始で DEATH 0 を戻して出し直す'],
+    [['GREED 0'], 'HATE 0', 'HATE 0 の削除のたびに GREED 0 の下段で1枚引く'],
+    [['GREED 0'], 'DEATH 0', 'DEATH 0 の削除のたびに GREED 0 で引く'],
+    [['PRIDE 0'], 'GREED 1', 'GREED 1 の終了でコンパイルすると、PRIDE 0 でリフレッシュ'],
+    [['FULCRUM 2'], 'PEACE 2', '手札がちょうど2枚で FULCRUM 2 が削除。手札の数をそろえる'],
+    [['ENVY 3'], 'LUST 6', 'LUST 6 で相手に ENVY 3 のラインへ裏で出させると、こちらも山札の上を裏で出す']
+  ];
+  let n = 0;
+  for (const [field, hand, how] of L) {
+    const fs_ = field.map(id), h = id(hand);
+    const mine = [...fs_.map((x, i) => ({ card: x, at: 'field', ...(i ? { line: 'other' } : {}) })), { card: h, at: 'hand' }];
+    module.exports.push({
+      id: 'N' + String(++n).padStart(3, '0'), auto: true, source: 'main3', late: true,
+      name: [...field, hand].join(' + '), kind: 'engine', protos: [...new Set([...fs_, h].map(x => proto[x]))],
+      how, setup: { mine }, act: { play: h }, partner: [fs_[fs_.length - 1]] /* 3枚の組は足した札を相方にする (回っている2枚の値を測らない) */
+    });
+  }
+})();
+
+/* ---------- Main 3 / Aux 3 の裏返し (J001〜、2026-11-03) ----------
+   F 型の続き。新しく入った「自分の裏向きを表にする札」(AMBUSH 0 / PRIDE 3 / FLEXIBLE 1 / GREED 4) × 中段の強い札と、
+   今までの表にする札 × Main 3 の中段の強い札。相方は裏で置いた中段の札 */
+(function main3FlipCandidates() {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const cards = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'cards.json'), 'utf8'));
+  const proto = {}, value = {}, text = {}, byName = {};
+  for (const p of cards.protocols) for (const c of p.cards) {
+    proto[c.id] = p.name; value[c.id] = c.value; byName[p.name + ' ' + c.value] = c.id;
+    text[c.id] = [c.upper, c.middle, c.lower].filter(Boolean).join(' / ');
+  }
+  const id = (n) => { if (!byName[n]) throw new Error('no card ' + n); return byName[n]; };
+  const name = (d) => proto[d] + ' ' + value[d];
+  const seen = new Set(module.exports.map(c => c.setup.mine.map(p => p.card).sort().join('+')));
+  const OLD_PAYLOAD = ['DEATH 0', 'FIRE 0', 'DARKNESS 0', 'LIGHT 0', 'GRAVITY 1', 'SPIRIT 1', 'FEAR 1', 'PSYCHIC 2', 'WATER 1', 'LIFE 0', 'HATE 0', 'METAL 1', 'SPEED 0', 'LUCK 0'].map(id);
+  const NEW_PAYLOAD = ['AMBUSH 0', 'GLUTTONY 1', 'GLUTTONY 2', 'MOMENTUM 3', 'SLOTH 3', 'INERT 1', 'GREED 0', 'SLOTH 1', 'ENVY 2', 'NOVA 1'].map(id);
+  const OLD_FLIP = ['LIFE 2', 'LIFE 1', 'SPIRIT 2', 'METAL 0', 'WATER 0', 'GRAVITY 2', 'LIGHT 2', 'SMOKE 1', 'MIRROR 3', 'WAR 2', 'LOVE 4', 'FEAR 0'].map(id);
+  const NEW_FLIP = ['AMBUSH 0', 'PRIDE 3', 'FLEXIBLE 1', 'GREED 4'].map(id);
+  const pairs = [];
+  for (const E of [...OLD_FLIP, ...NEW_FLIP]) for (const T of NEW_PAYLOAD) pairs.push([E, T]);
+  for (const E of NEW_FLIP) for (const T of OLD_PAYLOAD) pairs.push([E, T]);
+  let n = 0;
+  for (const [E, T] of pairs) {
+    if (proto[E] === proto[T]) continue;
+    const key = [T, E].sort().join('+');
+    if (seen.has(key)) continue;
+    seen.add(key);
+    module.exports.push({
+      id: 'J' + String(++n).padStart(3, '0'), auto: true, source: 'main3flip', late: true,
+      name: name(E) + ' で裏の ' + name(T) + ' を表にして撃つ', kind: 'burst', protos: [proto[E], proto[T]],
+      how: name(T) + ' (' + text[T] + ') を裏で置いておき、' + name(E) + ' (' + text[E] + ') で表にすると中段が入る。',
+      setup: { mine: [{ card: T, at: 'field', faceUp: false }, { card: E, at: 'hand' }] }, act: { play: E }, partner: [T],
+      picks: (s, q, P) => {
+        const t = P.planted[T];
+        if (q.context !== E || !t || !s.cards[t] || s.cards[t].faceUp) return null;
+        if (q.kind === 'yesNo') return ['yes'];
+        if (q.kind === 'pickCard' && q.candidates.includes(t)) return [t];
+        return null;
+      }
+    });
+  }
+})();
+
+/* ---------- カード文から読んだ組 (O001〜、2026-11-03) ----------
+   ユーザー「テキストだけでシナジーありそうなカード探して欲しい」で読んだ組のうち、まだ測っていないもの。
+   [場の札 (先頭が相方。'fd:' は裏で置く), 手札, 説明] */
+(function textReadCandidates() {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const cards = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'cards.json'), 'utf8'));
+  const proto = {}, byName = {};
+  for (const p of cards.protocols) for (const c of p.cards) { proto[c.id] = p.name; byName[p.name + ' ' + c.value] = c.id; }
+  const id = (n) => { if (!byName[n]) throw new Error('no card ' + n); return byName[n]; };
+  const L = [
+    [['ENVY 3'], 'OVERWHELM 2', 'OVERWHELM 2 で相手が ENVY 3 のラインに裏で出すと、こちらも裏で出す'],
+    [['ENVY 3'], 'INERT 3', 'INERT 3 で相手がこのラインに裏で出すと、ENVY 3 でこちらも出す'],
+    [['RIGID 2'], 'RIGID 3', 'RIGID 3 の裏向きのプレイで RIGID 2 がもう1枚積む'],
+    [['RIGID 2'], 'RIGID 1', 'RIGID 1 の終了の裏向きのプレイに RIGID 2 が足す'],
+    [['OVERWHELM 3'], 'AMBUSH 0', '3枚引いて手札を5枚以上にし、OVERWHELM 3 の終了で裏で積む'],
+    [['GLUTTONY 1'], 'GLUTTONY 2', '手札と同じ枚数を引いてあふれさせ、GLUTTONY 1 で削除'],
+    [['GLUTTONY 4', 'PRIDE 0'], 'GREED 1', 'GREED 1 でコンパイル → PRIDE 0 でリフレッシュ → GLUTTONY 4 で引く'],
+    [['MOMENTUM 1'], 'GREED 1', 'GREED 1 のコンパイルで MOMENTUM 1 が裏で積む'],
+    [['fd:FLEXIBLE 4'], 'PRIDE 3', '裏になった FLEXIBLE 4 を表に戻して、終了でまた2枚引く'],
+    [['fd:FLEXIBLE 4'], 'AMBUSH 0', '3枚引きつつ FLEXIBLE 4 を表に戻す'],
+    [['fd:OVERWHELM 2'], 'PRIDE 3', '裏になった OVERWHELM 2 を表に戻して中段をもう一度'],
+    [['fd:OVERWHELM 2'], 'LIGHT 2', 'LIGHT 2 で OVERWHELM 2 を表に戻す'],
+    /* 3枚の組 (2026-11-03 ユーザー「3枚の組み合わせ色々教えて」)。相方は足した3枚目 */
+    [['GREED 0', 'WRATH 1'], 'LUST 0', 'WRATH 1 + LUST 0 の削除のたびに GREED 0 で1枚引く'],
+    [['GLUTTONY 4', 'fd:SLOTH 1'], 'GREED 4', 'GREED 4 で裏の SLOTH 1 を表にしてリフレッシュし、GLUTTONY 4 でもう1枚引く'],
+    [['RIGID 2', 'APATHY 0'], 'OVERWHELM 2', 'OVERWHELM 2 の裏向きに RIGID 2 が1枚ずつ足し、APATHY 0 が数える'],
+    [['ENVY 3', 'APATHY 0'], 'OVERWHELM 2', 'OVERWHELM 2 で相手が ENVY 3 のラインに出すと1枚おまけ、APATHY 0 が数える'],
+    /* 終了の順番と上段 (2026-11-03 ユーザー「終了時のプレイ順うまく使ったり上段の効果をうまく組み合わせる」)。終了は好きな順に使える */
+    [['FIRE 3'], 'FLEXIBLE 4', '終了で FLEXIBLE 4 が2枚引いて裏になり、続けて FIRE 3 で1枚捨てて FLEXIBLE 4 を表に戻す (毎手番 +1枚)'],
+    [['FIRE 3'], 'OVERWHELM 2', '終了で OVERWHELM 2 が各ラインに裏で出して裏になり、FIRE 3 で表に戻すと中段 (相手が各ラインに裏で出す) が入る'],
+    [['GREED 1'], 'OVERWHELM 2', '終了で先に OVERWHELM 2 で各ラインに裏で出して合計を上げ、そのあと GREED 1 で10以上のラインをコンパイル'],
+    [['CLARITY 0'], 'GLUTTONY 2', 'GLUTTONY 2 で手札を倍にして、CLARITY 0 の上段 (手札1枚ごとに +1) を伸ばす'],
+    /* デメリットを打ち消す (2026-11-03 ユーザー「デメリット打ち消し系で考えたい」)。INERT 0 はこのラインの他の札の上段を、INERT 1 は下段を消す */
+    [['INERT 0'], 'CORRUPTION 6', 'CORRUPTION 6 の上段 (終了に捨てるか自分を削除) を INERT 0 が消し、6点が残る'],
+    [['INERT 0'], 'RIGID 7', 'RIGID 7 の上段 (終了に相手が引くか出す) を INERT 0 が消し、7点が残る'],
+    [['INERT 0'], 'DIVERSITY 6', 'DIVERSITY 6 の上段 (プロトコルが3種以下なら自分を削除) を INERT 0 が消す'],
+    [['INERT 0'], 'MOMENTUM 6', 'MOMENTUM 6 の上段 (コンパイルのあと自分を削除) を INERT 0 が消す'],
+    [['INERT 1'], 'SPIRIT 1', 'SPIRIT 1 の下段 (開始に捨てるか裏返る) を INERT 1 が消し、2枚引く札が表で残る'],
+    [['PEACE 1'], 'ICE 6', 'ICE 6 の上段 (手札があると引けない) は、PEACE 1 の「手札0枚なら引く」とぶつからない'],
+    [['INERT 0'], 'METAL 6', 'METAL 6 の上段 (覆われるか反転するとき先に自分を削除) を INERT 0 が消す'],
+    [['FIRE 3'], 'PSYCHIC 4', 'PSYCHIC 4 は終了に相手の札を戻すと裏になる。FIRE 3 で毎手番表に戻す'],
+    [['FIRE 3'], 'SPEED 3', 'SPEED 3 は終了に自分の札を動かすと裏になる。FIRE 3 で毎手番表に戻す'],
+    [['GREED 0'], 'DEATH 1', 'DEATH 1 の開始は他の札と自分を削除する。GREED 0 で削除1回ごとに1枚引く'],
+    [['CORRUPTION 2'], 'WATER 5', '5 の札の「手札を1枚捨てる」で、CORRUPTION 2 の上段が相手にも1枚捨てさせる'],
+    /* 出力と入力の突き合わせ (scripts/combo_textmatch.js) で出た、まだ測っていない組 */
+    [['ICE 1'], 'LUST 6', 'LUST 6 で相手に ICE 1 のラインへ裏で出させると、ICE 1 で相手が1枚捨てる'],
+    [['ICE 1'], 'GRAVITY 6', 'GRAVITY 6 で相手に ICE 1 のラインへ出させて捨てさせる'],
+    [['ICE 1'], 'INERT 3', 'INERT 3 で相手にこのラインへ出させて捨てさせる'],
+    [['SMOKE 2'], 'OVERWHELM 2', 'APATHY 0 と同じく、SMOKE 2 も裏向き1枚ごとに +1'],
+    [['APATHY 0'], 'GRAVITY 6', 'GRAVITY 6 で相手に APATHY 0 のラインへ裏で出させる'],
+    [['MIRROR 4'], 'LOVE 1', '相手に引かせるたびに MIRROR 4 でこちらも1枚'],
+    [['MIRROR 4'], 'LOVE 6', 'LOVE 6 で相手が2枚引くと MIRROR 4 で引く'],
+    [['CLARITY 0'], 'AMBUSH 0', '3枚引いて CLARITY 0 のラインを伸ばす'],
+    [['CLARITY 0'], 'ENVY 2', '相手の手札の枚数だけ引いて CLARITY 0 を伸ばす'],
+    [['UNITY 4'], 'GREED 0', 'GREED 0 で手札を空にして、UNITY 4 の終了で UNITY を全部引く'],
+    [['PEACE 1'], 'GREED 4', 'GREED 4 で手札を空にして裏を起こし、PEACE 1 の終了で1枚引く'],
+    [['COURAGE 0'], 'GREED 4', 'GREED 4 で手札を空にすると、COURAGE 0 の開始で1枚引く'],
+    [['SPEED 1'], 'GLUTTONY 2', '手札をあふれさせて SPEED 1 で1枚引く']
+  ];
+  let n = 0;
+  for (const [field, hand, how] of L) {
+    const fd = field.map(f => f.startsWith('fd:')), fs_ = field.map(f => id(f.replace('fd:', ''))), h = id(hand);
+    const mine = [...fs_.map((x, i) => ({ card: x, at: 'field', ...(fd[i] ? { faceUp: false } : {}), ...(i ? { line: 'other' } : {}) })), { card: h, at: 'hand' }];
+    const T = fs_[0], F = fs_[fd.indexOf(true)];
+    module.exports.push({
+      id: 'O' + String(++n).padStart(3, '0'), auto: true, source: 'textread', late: true,
+      name: [...field.map(f => f.replace('fd:', '')), hand].join(' + '), kind: 'engine', protos: [...new Set([...fs_, h].map(x => proto[x]))],
+      how, setup: { mine }, act: { play: h }, partner: [T],
+      ...(F ? {
+        picks: (s, q, P) => {
+          const t = P.planted[F];
+          if (q.context !== h || !t || !s.cards[t] || s.cards[t].faceUp) return null;
+          if (q.kind === 'yesNo') return ['yes'];
+          if (q.kind === 'pickCard' && q.candidates.includes(t)) return [t];
+          return null;
+        }
+      } : {})
+    });
+  }
+})();
+
+/* ---------- 大きい札を裏で置いて LIGHT 0 で起こす (I001〜、2026-11-03) ----------
+   ユーザー「裏向きの5を light0 で起こすみたいなやつ」。LIGHT 0 は反転させた札の値だけ引く (表にしたあとの値)。
+   5 の札の中段は「手札を1枚捨てる」だけなので、5枚引いたあとなら損にならない。6・7 は上段・中段に重いデメリットがある札 */
+(function lightZeroBigCandidates() {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const cards = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'cards.json'), 'utf8'));
+  const proto = {}, byName = {};
+  for (const p of cards.protocols) for (const c of p.cards) { proto[c.id] = p.name; byName[p.name + ' ' + c.value] = c.id; }
+  const id = (n) => { if (!byName[n]) throw new Error('no card ' + n); return byName[n]; };
+  const E = id('LIGHT 0');
+  const BIG = ['WATER 5', 'DEATH 5', 'FIRE 5', 'SPIRIT 5', 'LOVE 6', 'ICE 6', 'CORRUPTION 6', 'MOMENTUM 6', 'DIVERSITY 6', 'RIGID 7'];
+  let n = 0;
+  for (const tn of BIG) {
+    const T = id(tn);
+    module.exports.push({
+      id: 'I' + String(++n).padStart(3, '0'), auto: true, source: 'bigflip', late: true,
+      name: 'LIGHT 0 で裏の ' + tn + ' を起こす', kind: 'burst', protos: [proto[E], proto[T]],
+      how: tn + ' を裏で置いておき、LIGHT 0 で表にすると値の枚数だけ引ける。', setup: { mine: [{ card: T, at: 'field', faceUp: false }, { card: E, at: 'hand' }] },
+      act: { play: E }, partner: [T],
+      picks: (s, q, P) => {
+        const t = P.planted[T];
+        if (q.context !== E || !t || !s.cards[t] || s.cards[t].faceUp) return null;
+        if (q.kind === 'pickCard' && q.candidates.includes(t)) return [t];
+        return null;
+      }
+    });
+  }
+})();
