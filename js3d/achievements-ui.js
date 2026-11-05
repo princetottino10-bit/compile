@@ -99,7 +99,7 @@ export function trophyListHtml() {
   };
   const count = (tier) => v.list.filter(t => t.tier === tier && t.at).length + '/' + v.list.filter(t => t.tier === tier).length;
   return '<div class="tr-top"><b>' + v.rate + '<i>%</i></b><div><span class="tr-meter"><i style="width:' + v.rate + '%"></i></span>' +
-      '<small>' + v.done + ' / ' + v.total + ' ・ BRONZE ' + count('bronze') + ' ・ SILVER ' + count('silver') + ' ・ GOLD ' + count('gold') + '</small></div></div>' +
+      '<small>' + v.done + ' / ' + v.total + ' ・ BRONZE ' + count('bronze') + ' ・ SILVER ' + count('silver') + ' ・ GOLD ' + count('gold') + ' ・ PLATINUM ' + count('platinum') + '</small></div></div>' +
     '<ul class="tr-list">' + v.list.map(row).join('') + '</ul>' +
     '<p class="pz-note">すべて取ると PLATINUM と称号「PLATINUM」。隠し実績は取るまで条件も見えません。</p>';
 }

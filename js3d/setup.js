@@ -121,7 +121,9 @@ export function runSetup(protocols, options = {}) {
     rules.innerHTML =
       '<div class="sr-group"><span>使うプロトコル</span>' + SET_GROUPS.map(g => '<button type="button" class="lvl' +
         (groupsOf(poolKey)[g.key] ? ' on' : '') + '" data-pool="' + g.key + '" aria-pressed="' + !!groupsOf(poolKey)[g.key] + '">' + g.label + '</button>').join('') +
-        '<span>' + pool().length + '個</span></div>' +
+        '<span>' + pool().length + '個</span>' +
+        /* Main と Aux の違いを、選ぶ場所で一言 (Muse のレビュー 2026-11-05: 説明がお知らせにしか無かった) */
+        '<small class="sr-help">Main は基本の箱、Aux は追加の小さな箱 (数字は発売の順)。迷ったら全部入れたままでよい</small></div>' +
       (training || (presetLevel !== null && fixedDeck(presetLevel)) ? ''
         : '<div class="sr-group"><span>決め方</span>' + seg(MODES.map(m => [m.key, m.label]), mode, 'mode') + '</div>') +
       (mode === 'draft'

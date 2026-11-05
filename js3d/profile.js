@@ -38,7 +38,8 @@ function dailyHtml(protocols) {
   const puz = dailyPuzzleDone();
   const hard = dailyPuzzleDone(undefined, undefined, true);
   return '<div class="pf-daily"><div class="pf-daily-h"><small>DAILY MISSIONS</small><b>' + done + '/' + list.length + '</b>' +
-    '<em>3つ達成で +' + DAILY_XP.all + ' XP</em></div><ul>' + list.map(m =>
+    /* 下の「今日の問題」2つは数に入らない (Muse のレビュー 2026-11-05: 5つ並ぶのに 0/3 で数え方が分からなかった) */
+    '<em>上の3つをそろえると +' + DAILY_XP.all + ' XP (今日の問題は別)</em></div><ul>' + list.map(m =>
       '<li class="' + m.tier + (m.done ? ' done' : '') + '"><span>' + esc(m.text) +
         /* そのプロトコルを入れて、すぐ遊べる (相手を選んでから、そのプロトコルを選んだ状態でプロトコル選びへ) */
         (m.proto && !m.done ? ' <button type="button" class="pf-go" data-daily="' + esc(m.proto) + '">遊ぶ ▶</button>' : '') + '</span>' +
