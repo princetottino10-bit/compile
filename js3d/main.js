@@ -87,7 +87,7 @@ import * as FX from './fx.js';
 import { buildArena } from './arena.js';
 import { initAudio, sfx, setMuted, isMuted, setSfxVolume, onMuteChange } from './audio.js';
 import { mountMuteButton, muteIcon } from './mutebutton.js';
-import { playBgm, refreshBgm, fadeOutBgm, crossBgm, prepareBgm, pickNormalBgm, normalBattleBgm, onlineBattleBgm, storyBattleBgm, STRONG_BGM, BOSS_BGM, BOT_BGM, GATE_BGM, BOSS_THEMES, CHAR_THEMES, THEME_RATE, DEUS_BGM, PEEK_BGM, pickTenseBgm, setShuffleNotify, playJingle, prepareJingles } from './bgm.js';
+import { playBgm, refreshBgm, fadeOutBgm, crossBgm, prepareBgm, pickNormalBgm, normalBattleBgm, onlineBattleBgm, storyBattleBgm, STRONG_BGM, BOSS_BGM, BOT_BGM, GATE_BGM, BOSS_THEMES, CHAR_THEMES, THEME_RATE, DEUS_BGM, PEEK_BGM, pickTenseBgm, setShuffleNotify, playJingle, prepareJingles, skipBgm } from './bgm.js';
 import { trackOf } from './bgm-shop.js';
 import { BGM_RELEASED } from './rewards.js';
 import { emblemDataURL } from './emblems.js';
@@ -1453,6 +1453,7 @@ async function boot() {
   stage.setFlip(!!chaosRules.flip);
   /* 対戦の BGM (ボス戦は専用の曲)。機械仕掛けの神は、降臨の演出で着地したときに流す (それまでは静か) */
   const deusEntrance = machineMatch() && !resumed && !replayMode && !reviewView && !spectate;
+  tenseBgmOn = false; tenseNext = null; tenseNow = null; tenseBoth = false;   // 前の対戦のあと1本の曲を持ち越さない (次の曲ボタンが見る)
   if (deusEntrance) fadeOutBgm(); else playBattleBgm();
   gameStartedAt = Date.now();          // はじめの表示で合計値の演出が出ないように (feel.js)
   /* 勝ち抜き戦の短縮マッチ (序盤のふつうの戦闘): どちらも1本取れば勝ち。始めに大きく知らせる。
@@ -2851,6 +2852,8 @@ function bindInput() {
     onMuteChange(sync);
     sync();
   }
+  const nextBgmBtn = document.getElementById('btnNextBgm');
+  if (nextBgmBtn) nextBgmBtn.onclick = nextBgm;
   const undoBtn = document.getElementById('btnUndo');
   if (undoBtn) undoBtn.onclick = () => (roomMode ? roomUndo() : undoLastMove());
   const hintBtn = document.getElementById('btnHint');
@@ -4648,9 +4651,9 @@ let tenseBoth = false;           // 両方があと1本になって曲を替え�
 /* あと1本の曲は、流れの途中でも替える (2026-11-03 本人の希望): 両方があと1本になったときと、同じ曲が TENSE_ROTATE_MS 続いたとき。
    替えるのは手番の替わり目だけ (演出の途中で曲が替わらないように) */
 const TENSE_ROTATE_MS = 100000;
-function switchTense(avoid) {
+function switchTense(avoid, ms) {
   const key = tenseNext && tenseNext !== avoid ? tenseNext : pickTenseBgm(Math.random, avoid);
-  crossBgm(key);
+  crossBgm(key, ms);
   tenseNow = key;
   tenseSince = Date.now();
   prepareBgm(tenseNext = pickTenseBgm(Math.random, key), false);   // 次に替える曲を先に読んでおく
@@ -4716,6 +4719,17 @@ function resultSound(win, victory) {
 function creditToast(key, wait) {
   const t = trackOf(key);
   if (t && t.credit) setTimeout(() => UI.toast('♪ ' + t.title + ' — ' + t.credit, 2600, { low: true }), wait);
+}
+/* 右上の ⏭ (2026-11-05 本人の希望): いまの曲をやめて次の曲へ。あと1本の曲が流れているあいだは、次のあと1本の曲へ
+   (速い曲のまま替える)。それ以外は持っている曲からシャッフルで選び、その曲が終わったらシャッフルを続ける */
+function nextBgm() {
+  initAudio();
+  let key;
+  if (tenseBgmOn && tenseNow) { switchTense(tenseNow, 600); key = tenseNow; }
+  else key = skipBgm(roomMode ? 'online' : 'battle');
+  if (!key) { UI.toast('いまは BGM が止まっています', 1600, { low: true }); return; }
+  const t = trackOf(key);
+  UI.toast('♪ ' + (t ? t.title + (t.credit ? ' — ' + t.credit : '') : '次の曲'), 2200, { low: true });
 }
 /* BGM のシャッフルで次の曲に替わったときも、表記の要る曲なら出す */
 setShuffleNotify((key) => creditToast(key, 600));
@@ -6438,6 +6452,8 @@ function myMoment() {
   return cur.requests.length ? cur.requests[0].player === ME && !partnerMove() : humanTurn(cur.state);
 }
 function syncAssist() {
+  const nextBgmBtn = document.getElementById('btnNextBgm');
+  if (nextBgmBtn) nextBgmBtn.onclick = nextBgm;
   const undoBtn = document.getElementById('btnUndo');
   const hintBtn = document.getElementById('btnHint');
   const game = assistGame() && !!cur;
