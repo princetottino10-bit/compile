@@ -30,7 +30,7 @@ const POOL = {
     { id: 'protoCards3', goal: 3, proto: true, text: (p) => p + ' のカードを3種類、表で出す', add: (g, p) => g.faceUpIds.filter(id => id.startsWith(p + '_')).length }
   ],
   hard: [
-    { id: 'winStrong', goal: 1, text: () => '「つよい」以上の CPU に勝つ', add: (g) => (g.win && (g.online || g.level >= STRONG) ? 1 : 0) },
+    { id: 'winStrong', goal: 1, text: () => '「つよい」以上の CPU かオンライン対戦で勝つ', add: (g) => (g.win && (g.online || g.level >= STRONG) ? 1 : 0) },
     { id: 'protoWin', goal: 1, proto: true, text: (p) => p + ' を入れて1勝する', add: (g, p) => (g.win && g.protocols.includes(p) ? 1 : 0) },
     { id: 'fastWin', goal: 1, text: () => '45手番以内 (両者合わせて) で勝つ', add: (g) => (g.win && g.turns > 0 && g.turns <= 45 ? 1 : 0) },
     { id: 'cleanWin', goal: 1, text: () => '相手のコンパイルを2回以下に抑えて勝つ', add: (g) => (g.win && g.oppCompiles <= 2 ? 1 : 0) }

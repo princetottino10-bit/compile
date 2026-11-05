@@ -42,6 +42,11 @@ export function gpuName(renderer) {
   }
 }
 
+/** GPU が無く、ソフトウェアで描いているか (仮想マシン・AI のブラウザ操作の道具など)。1コマに 1 秒近くかかる */
+export function softwareGL(renderer) {
+  return /swiftshader|llvmpipe|softpipe|software|basic render/i.test(gpuName(renderer));
+}
+
 /** iPhone・iPad (iPad の Safari は Mac と名乗るので、触れる点の数で見分ける) */
 export function isIOSDevice() {
   if (typeof navigator === 'undefined') return false;

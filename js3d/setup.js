@@ -28,6 +28,8 @@ const MODES = [
   { key: 'free', label: '自由に選ぶ' },
   { key: 'random', label: 'ランダム' }
 ];
+/* はじめての人向けの組 (自由に選ぶで、最近のデッキがまだ無いときだけ出す) */
+const STARTER_DECKS = [['FIRE', 'WATER', 'LIFE'], ['DEATH', 'DARKNESS', 'GRAVITY']];
 const CANDIDATES = [[0, '全部'], [12, '12個'], [10, '10個'], [8, '8個']];
 const BANS = [[0, 'なし'], [1, '各1'], [2, '各2']];
 
@@ -168,7 +170,7 @@ export function runSetup(protocols, options = {}) {
     if (mode !== 'draft') items.push([CHALLENGER_BASE + challenger, '挑戦者']);
     const shown = mode === 'draft' ? items.slice(0, 3) : items;
     const lockedLevel = (i) => !choosingMode() && !!fixedDeck(i);
-    levelWrap.innerHTML = (mode === 'draft' ? '<span class="lv-lbl">CPU のドラフト</span>' : '') +
+    levelWrap.innerHTML = (mode === 'draft' ? '<span class="lv-lbl" title="対戦中の CPU の強さは「つよい」で固定。ここで選ぶのはドラフトの上手さだけ">CPU のドラフトの上手さ <small>(対戦は「つよい」固定)</small></span>' : '') +
       shown.map(([i, label]) => '<button type="button" class="lvl' + (i === level ? ' on' : '') +
       (lockedLevel(i) ? ' locked' : '') + '" data-level="' + i + '"' +
       (lockedLevel(i) ? ' aria-disabled="true" title="デッキの決まった相手は「自由に選ぶ」のときだけ選べます"' : '') + '>' + label + '</button>').join('') +
@@ -329,10 +331,16 @@ export function runSetup(protocols, options = {}) {
   }
   function renderRecent() {
     const ok = new Set(pool());
-    const decks = (mode === 'free' && !training && !draft) ? recentDecks().filter(d => d.every(n => ok.has(n))) : [];
-    recentRow.hidden = !decks.length;
+    const free = mode === 'free' && !training && !draft;
+    const decks = free ? recentDecks().filter(d => d.every(n => ok.has(n))) : [];
+    /* まだ自分のデッキが無い人には、はじめ向けの組を出す (Muse のレビュー 2026-11-05: 42種から3つを選ぶ所で迷う)。
+       Main 1 の効果が素直なもので、protocol-strength.js の勝率が高めの組 */
+    const starters = free && !decks.length ? STARTER_DECKS.filter(d => d.every(n => ok.has(n))) : [];
+    recentRow.hidden = !decks.length && !starters.length;
     recentRow.innerHTML = decks.length ? '<small>最近のデッキ</small>' + decks.map((d, i) =>
-      '<button type="button" class="lvl sr-deck" data-deck="' + esc(d.join(',')) + '">' + (i === 0 ? '<em>前回</em>' : '') + esc(d.join(' / ')) + '</button>').join('') : '';
+      '<button type="button" class="lvl sr-deck" data-deck="' + esc(d.join(',')) + '">' + (i === 0 ? '<em>前回</em>' : '') + esc(d.join(' / ')) + '</button>').join('')
+      : starters.length ? '<small>はじめてなら</small>' + starters.map(d =>
+        '<button type="button" class="lvl sr-deck" data-deck="' + esc(d.join(',')) + '">' + esc(d.join(' / ')) + '</button>').join('') : '';
     recentRow.querySelectorAll('[data-deck]').forEach(b => {
       b.onclick = () => { picked.length = 0; picked.push(...b.dataset.deck.split(',')); refresh(); };
     });
@@ -358,7 +366,7 @@ export function runSetup(protocols, options = {}) {
       steps: draftSteps(first, draftBans), at: 0,
       mine: [], theirs: [], banned: [[], []], sel: [], cpuFlash: []
     };
-    backBtn.textContent = '← ルールに戻る';
+    backBtn.textContent = '← 選び方に戻る';
     levelWrap.hidden = true;
     coinToss(draft);
   }
@@ -498,7 +506,7 @@ export function runSetup(protocols, options = {}) {
           backBtn.classList.add('armed');
           backBtn.textContent = 'ドラフトをやめる (もう一度押す)';
           clearTimeout(backBtn._t);
-          backBtn._t = setTimeout(() => { backBtn.classList.remove('armed'); if (draft) backBtn.textContent = '← ルールに戻る'; }, 3000);
+          backBtn._t = setTimeout(() => { backBtn.classList.remove('armed'); if (draft) backBtn.textContent = '← 選び方に戻る'; }, 3000);
           return;
         }
         clearTimeout(backBtn._t);
