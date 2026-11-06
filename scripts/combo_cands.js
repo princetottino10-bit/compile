@@ -1396,7 +1396,14 @@ module.exports = [
     [['MIRROR 4'], 'FEAR 1', 'FEAR 1 で相手が引き直すと MIRROR 4 でこちらも引く'],
     [['ENVY 3'], 'GRAVITY 6', 'GRAVITY 6 で相手が ENVY 3 のラインに出すと、こちらも裏で1枚'],
     [['PLAGUE 1', 'CORRUPTION 2'], 'CORRUPTION 6', 'CORRUPTION 6 の捨てで相手も捨て、相手が捨てると PLAGUE 1 で1枚引く'],
-    [['HATE 3', 'WAR 0'], 'RIGID 7', 'RIGID 7 の「相手が引く」で WAR 0 が削除し、削除で HATE 3 が1枚引く']
+    [['HATE 3', 'WAR 0'], 'RIGID 7', 'RIGID 7 の「相手が引く」で WAR 0 が削除し、削除で HATE 3 が1枚引く'],
+    /* コントロールを燃料にして、自分で裏返る札を表に戻す (2026-11-06)。LUST 3 の終了「コントロールを失える。そうしたら1枚反転」 */
+    [['FLEXIBLE 4'], 'LUST 3', '終了で FLEXIBLE 4 が2枚引いて裏になり、LUST 3 でコントロールを払って表に戻す'],
+    [['PSYCHIC 4'], 'LUST 3', '終了で PSYCHIC 4 が相手の札を戻して裏になり、LUST 3 でコントロールを払って表に戻す'],
+    [['SPEED 3'], 'LUST 3', '終了で SPEED 3 が札を動かして裏になり、LUST 3 で表に戻す'],
+    [['OVERWHELM 2'], 'LUST 3', '終了で OVERWHELM 2 が各ラインに裏で置いて裏になり、LUST 3 で表に戻す'],
+    [['LUST 3'], 'FLEXIBLE 4', 'LUST 3 を先に置き、FLEXIBLE 4 を足す (上と逆の順)'],
+    [['LUST 3'], 'PSYCHIC 4', 'LUST 3 を先に置き、PSYCHIC 4 を足す (上と逆の順)']
   ];
   let n = 0;
   for (const [field, hand, how] of L) {
@@ -1447,5 +1454,42 @@ module.exports = [
         return null;
       }
     });
+  }
+})();
+
+/* ---------- カード文の語でゆるく突き合わせた総当たり (W001〜、2026-11-06) ----------
+   ユーザー「コンボ1個も見つけられないの？」。読んで選ぶと読み手の想像の範囲しか出ないので、
+   場に残る札 X の上段・下段のうち条件や誘発の文 (したあと・場合・ごとに・開始・終了…) と、手札 Y の文に
+   同じ語 (削除・移動・コントロール・戻す… か、3語以上) があれば組にする。Main 3/Aux 3 を含む組だけ、測り済みは除く */
+(function keywordPairCandidates() {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const cards = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'cards.json'), 'utf8'));
+  const K = ['裏向き', 'コントロール', '手札', '捨て', '削除', '反転', 'リフレッシュ', '並べ替え', '移動', '戻', '引', 'キャッシュ', '覆', 'コンパイル', 'シャッフル', '公開'];
+  const RARE = new Set(['戻', 'キャッシュ', 'コンパイル', '公開', 'リフレッシュ', 'コントロール', '削除', '移動']);
+  const listen = (t) => /したあと|場合|ごとに|開始|終了|できない|ことができず|増える|減る/.test(t);
+  const all = [];
+  for (const p of cards.protocols) for (const c of p.cards) all.push({ id: c.id, n: p.name + ' ' + c.value, proto: p.name, m3: /3/.test(p.set), u: c.upper || '', m: c.middle || '', l: c.lower || '' });
+  const have = new Set(module.exports.map(c => c.setup.mine.map(p => p.card).sort().join('+')));
+  let n = 0;
+  for (const X of all) {
+    const xt = [X.u, X.l].filter(listen).join(' ');
+    if (!xt) continue;
+    for (const Y of all) {
+      if (Y.id === X.id || Y.proto === X.proto || !(X.m3 || Y.m3)) continue;
+      const yt = Y.u + ' ' + Y.m + ' ' + Y.l;
+      const ks = K.filter(k => xt.includes(k) && yt.includes(k));
+      if (!(ks.length >= 3 || ks.some(k => RARE.has(k)))) continue;
+      const key = [X.id, Y.id].sort().join('+');
+      if (have.has(key)) continue;
+      have.add(key);
+      module.exports.push({
+        id: 'W' + String(++n).padStart(3, '0'), auto: true, source: 'keyword', late: true,
+        name: X.n + ' + ' + Y.n, kind: 'engine', protos: [X.proto, Y.proto],
+        how: X.n + ' (' + xt + ') を場に置き、' + Y.n + ' を出す。共通の語: ' + ks.join('・'),
+        setup: { mine: [{ card: X.id, at: 'field' }, { card: Y.id, at: 'hand' }] },
+        act: { play: Y.id }, partner: [X.id]
+      });
+    }
   }
 })();
