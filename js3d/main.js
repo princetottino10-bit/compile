@@ -2802,13 +2802,14 @@ function bindInput() {
     const ok = legalNow().some(a => a.type === 'refresh');
     /* 補充できないのは手札が 5 枚以上のとき (ルール)。理由を言う */
     if (!ok) { UI.toast(shown().players[ME].hand.length >= 5 ? '手札が 5 枚以上のときは補充できません' : 'いまは補充できません', 2400); return; }
-    /* 押し間違え防止: 1回目は確かめ、3秒以内にもう一度押したら補充 (補充すると番が終わる) */
+    /* 押し間違え防止: 1回目は確かめ、5秒以内にもう一度押したら補充 (補充すると番が終わる)。
+       3秒だと、ゆっくり押す人には確かめの表示を読んでいる間に戻ってしまった (Muse のレビュー 2026-11-06) */
     if (!refreshBtn.classList.contains('armed')) {
       refreshBtn.classList.add('armed');
       refreshBtn.dataset.label = refreshBtn.dataset.label || refreshBtn.textContent;
       refreshBtn.textContent = 'もう一度押すと補充 (番が終わる)';
       clearTimeout(refreshBtn._t);
-      refreshBtn._t = setTimeout(() => { refreshBtn.classList.remove('armed'); refreshBtn.textContent = refreshBtn.dataset.label; }, 3000);
+      refreshBtn._t = setTimeout(() => { refreshBtn.classList.remove('armed'); refreshBtn.textContent = refreshBtn.dataset.label; }, 5000);
       return;
     }
     clearTimeout(refreshBtn._t);
@@ -5799,7 +5800,8 @@ function arrangeOnBoard(req, opts) {
       const d = s && defIndex[s.def];
       const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
       const text = control
-        ? (targetSide === null ? '並べ替えるなら、自分か相手のプロトコルをタップ'
+        /* 何が変わるかも書く (Muse のレビュー 2026-11-06: 合計が変わらないので、何のための入れ替えか分からなかった) */
+        ? (targetSide === null ? '並べ替えるなら、自分か相手のプロトコルをタップ (ラインのカードと合計はそのまま。どのプロトコルがコンパイルされるかが変わる)'
           : (targetSide === ME ? '自分' : '相手') + 'のプロトコルを2つタップして入れ替え (反対側をタップで切り替え)')
         : (targetSide === ME ? '自分' : '相手') + 'のプロトコルを2つタップして入れ替え' + (single ? ' (1回だけ)' : '');
       activeArrange.hint = targetSide === null ? '並べ替えるなら、自分か相手のプロトコルをタップ' : (targetSide === ME ? '自分' : '相手') + 'のプロトコルをタップしてください';
