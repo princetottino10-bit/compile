@@ -49,6 +49,7 @@ function parseArgs(argv) {
     else if (a === '--cpu') o.cpu = argv[++i];
     else if (a === '--reps') o.reps = +argv[++i];   // 1つの腕の続きを何回打って平均するか (続きの打ち方のブレを減らす)
     else if (a === '--playout') o.playout = true;
+    else if (a === '--still') o.still = true;
     else if (a === '--demo') o.demo = argv[++i];   // 1盤面だけ植えて、コンボの手と続きのログを出す   // 見込みではなく決着まで打って勝ち負けで比べる (遅い)
     else { console.error('未知の引数: ' + a); process.exit(1); }
   }
@@ -111,6 +112,31 @@ function step(E, st, action, picker) {
 }
 /* 盤面から、me の手番を horizon 回終えるまで (または決着まで) ORACLE 同士で進め、me の勝つ見込みを返す。
    playout なら決着まで進める */
+/* 物量 (ユーザー 2026-11-06「勝率で測るの無理ある」): 学習モデルの点ではなく、盤面の物を直接数える。
+   [札の枚数差 (手札+場), コンパイル数の差, ラインの点差 (各ライン ±10 で切る) の合計]。決着した盤面は勝ち +5 枚ぶん */
+let LAST_MAT = null;
+/* --still: コンボの手のあとは、両者とも「なにもしない」に近い手だけを指す (リフレッシュできればリフレッシュ、
+   できなければ組の札がいないラインに裏で1枚)。続きの打ち方のブレを消して、組が自分で回るぶんだけを数える */
+let STILL = false, STILL_KEEP = new Set();
+/* 既定は裏で1枚 (効果が無い)。リフレッシュは「相手が引いたあと」の札を毎手番起こしてしまうので、出せる札が無いときだけ
+   (2026-11-06: リフレッシュ優先だと WAR 0 + RIGID 7 などが膨らんだ) */
+function stillAction(E, st) {
+  const L = E.legalActions(st);
+  const p = st.turn;
+  const keepLine = (l) => st.lines[l][p].some(u => STILL_KEEP.has(u));
+  const down = L.filter(a => a.type === 'play' && !a.faceUp && a.side === undefined);
+  return down.find(a => !keepLine(a.line)) || L.find(a => a.type === 'refresh') || down[0] || L[0] || null;
+}
+function material(E, st, me) {
+  const op = 1 - me, P = st.players;
+  const field = (side) => { let n = 0; for (let l = 0; l < 3; l++) n += st.lines[l][side].length; return n; };
+  const cards = (P[me].hand.length + field(me)) - (P[op].hand.length + field(op));
+  const comp = P[me].protocols.filter(p => p.compiled).length - P[op].protocols.filter(p => p.compiled).length;
+  let lead = 0;
+  for (let l = 0; l < 3; l++) lead += Math.max(-10, Math.min(10, E.lineTotal(st, l, me) - E.lineTotal(st, l, op)));
+  if (st.winner !== null && st.winner !== undefined) { const w = st.winner === me ? 1 : -1; return [cards + 5 * w, 3 * w, lead]; }
+  return [cards, comp, lead];
+}
 function continueAndValue(E, model, st, me, horizon, playout, trace, picker) {
   /* 自分の手番が始まった回数はログの「--- P? のターン ---」で数える (コンパイルで手番が丸ごと過ぎることがある) */
   const mark = '--- P' + (me + 1) + ' のターン ---';
@@ -119,7 +145,7 @@ function continueAndValue(E, model, st, me, horizon, playout, trace, picker) {
     const s = res.state;
     if (!playout && myStarts >= horizon && s.turn === me) break;
     SPEC(E, s.turn);
-    const a = E.ai.action(s);
+    const a = STILL ? stillAction(E, s) : E.ai.action(s);
     if (!a) break;
     const r = step(E, s, a, picker);
     if (!r) return null;
@@ -127,6 +153,7 @@ function continueAndValue(E, model, st, me, horizon, playout, trace, picker) {
     myStarts += r.log.filter(l => l === mark).length;
     res = r;
   }
+  LAST_MAT = material(E, res.state, me);
   if (res.winner !== null) return res.winner === me ? 1 : 0;
   if (playout) return 0.5;
   return sigmoid(valnetLogit(E, model, res.state, me));
@@ -293,16 +320,23 @@ function trial(E, model, combo, seed, opt) {
   const blanked = (s) => { const t = structuredClone(s); for (const u of partners) t.cards[u].def = 'BL_' + t.cards[u].def; return t; };
 
   const out = { seed, me };
+  STILL = !!opt.still; STILL_KEEP = new Set(Object.values(planted));
   E.setAiThinkBudget(opt.budget);
-  const arm = (st, act, usePicker) => {
-    let sum = 0, k = 0;
-    for (let i = 0; i < (opt.reps || 1); i++) { const v = arm1(st, act, usePicker); if (v !== null) { sum += v; k++; } }
+  const mats = {};
+  const arm = (st, act, usePicker, tag) => {
+    let sum = 0, k = 0, ms = [0, 0, 0];
+    for (let i = 0; i < (opt.reps || 1); i++) {
+      LAST_MAT = null;
+      const v = arm1(st, act, usePicker);
+      if (v !== null) { sum += v; k++; if (LAST_MAT) ms = ms.map((x, j) => x + LAST_MAT[j]); }
+    }
+    if (tag && k) mats[tag] = ms.map(x => x / k);
     return k ? sum / k : null;
   };
   const arm1 = (st, act, usePicker) => {
     const r = step(E, structuredClone(st), act, usePicker ? picker : null);
     if (!r) return null;
-    if (r.winner !== null) return r.winner === me ? 1 : 0;
+    if (r.winner !== null) { LAST_MAT = material(E, r.state, me); return r.winner === me ? 1 : 0; }
     const startsInStep = r.log.filter(l => l === '--- P' + (me + 1) + ' のターン ---').length;
     return continueAndValue(E, model, r.state, me, opt.horizon - startsInStep, opt.playout, null, usePicker ? picker : null);
   };
@@ -310,17 +344,20 @@ function trial(E, model, combo, seed, opt) {
   const freeAct = E.ai.action(structuredClone(base));
   out.aiPicked = sameAct(freeAct, forcedAct);
   out.freeAct = freeAct && (freeAct.type === 'play' ? base.cards[freeAct.card].def + '@' + freeAct.line + (freeAct.faceUp ? '↑' : '↓') : freeAct.type);
-  out.forced = arm(base, forcedAct, true);
+  out.mat0 = material(E, base, me);
+  out.forced = arm(base, forcedAct, true, 'forced');
   /* 同じ手でも、picks で決め打った対象と ORACLE の対象は違うことがある (CORRUPTION 1 で自分の札を戻すか相手の札を戻すか)。
      free を forced で代用すると free − freeA0 がずれて噛み合いが膨らむので、picks がある候補は打ち直す */
-  out.free = out.aiPicked && !combo.picks ? out.forced : (freeAct ? arm(base, freeAct, false) : null);
+  out.free = out.aiPicked && !combo.picks ? out.forced : (freeAct ? arm(base, freeAct, false, 'free') : null);
+  if (out.aiPicked && !combo.picks) mats.free = mats.forced;
   if (partners.length) {
     const b = blanked(base);
-    out.forcedA0 = arm(b, forcedAct, true);
+    out.forcedA0 = arm(b, forcedAct, true, 'forcedA0');
     SPEC(E, me);
     const fa = E.ai.action(structuredClone(b));
-    out.freeA0 = fa ? arm(b, fa, false) : null;
+    out.freeA0 = fa ? arm(b, fa, false, 'freeA0') : null;
   }
+  out.mat = mats;
   return out;
 }
 
