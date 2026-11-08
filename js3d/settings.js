@@ -17,6 +17,18 @@ let avatarOptionsShown = () => false;
 let avatarList = () => [];
 /* shown: キャラの項目を見せるか。list: 相手に選べるキャラ [[id, 名前], ...] */
 export function setAvatarOptionsGate(shown, list) { avatarOptionsShown = shown; if (list) avatarList = list; }
+/* いま流れている曲 (2026-11-08 本人「今のBGMがなにか知りたい」)。{ title, by, own } か null。main.js が bgm.js から渡す
+   (bgm.js がこのファイルを読むので、ここからは bgm.js を読まない) */
+let nowSong = () => null;
+export function setNowSongSource(fn) { nowSong = fn; }
+const escHtml = (t) => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function nowSongRow() {
+  let s = null;
+  try { s = nowSong(); } catch (e) { /* 曲が分からなくても設定は開く */ }
+  if (!s) return '';
+  return '<div class="st-row st-now"><span>いま流れている曲</span><p><b>♪ ' + escHtml(s.title) + '</b><i' + (s.own ? ' class="own"' : '') + '>' +
+    escHtml(s.own ? '作曲 ' + s.by : s.by) + '</i></p></div>';
+}
 /* mat 以下は見た目 (レベルの報酬、cosmetics-ui.js) */
 /* autoPick: 選べるものが1つしかない選択は自動で選ぶ (最初はオフ。何が選ばれたか分からないまま進むことがあったので) / oppSummary: 相手の番のまとめ (最初はオフ。2026-10-07 から) / beginner: 初心者モード (おすすめの手の HINT を出す。最初はオフ) */
 const DEFAULTS = { speed: 1, masterVol: 100, sfx: 80, bgmVol: 30, voiceVol: 80, bgm: 'burst', bgmMenu: '', bgmBattle: '', pauses: true, autoPick: false, oppSummary: false, beginner: false, gamepad: false, foil: true,
@@ -174,6 +186,7 @@ export function openSettings(extra) {
   const s = current;
   el.innerHTML = '<div class="pz-card st-card" role="dialog" aria-modal="true" aria-label="設定">' +
     '<div class="pz-head"><b>SETTINGS<small>設定</small></b><button type="button" class="pz-x"><span>閉じる</span></button></div>' +
+    nowSongRow() +                  // どの項目を選んでいても見えるよう、項目の一覧より上に
     (signedIn() ? '<p class="st-synced">この設定はアカウントにも保存されます (別の端末でも同じ設定になります)</p>' : '') +
     (extra && extra.length
       ? '<h4 class="st-group">この対戦</h4>' + extra.map((x, i) => '<div class="st-row st-act"><span>' + x.label + (x.note ? '<small>' + x.note + '</small>' : '') + '</span>' +

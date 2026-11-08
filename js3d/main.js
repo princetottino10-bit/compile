@@ -55,7 +55,7 @@ import * as PZ from './puzzle.js';
 import * as TS from './tsume.js';
 import { watchErrors, reportError } from './errorreport.js';
 import * as TU from './tutorial.js';
-import { settings, onSettings, openSettings, setAvatarOptionsGate } from './settings.js';
+import { settings, onSettings, openSettings, setAvatarOptionsGate, setNowSongSource } from './settings.js';
 import { equipNow, canEquip, isEquipped, itemLabel } from './equip.js';
 import { recordSoloResult, localRecords } from './stats.js';
 import { conquered, newlyConquered, conquerable } from './stats-data.js';
@@ -90,7 +90,7 @@ import * as FX from './fx.js';
 import { buildArena } from './arena.js';
 import { initAudio, sfx, setMuted, isMuted, setSfxVolume, onMuteChange } from './audio.js';
 import { mountMuteButton, muteIcon } from './mutebutton.js';
-import { playBgm, refreshBgm, fadeOutBgm, crossBgm, prepareBgm, pickNormalBgm, normalBattleBgm, onlineBattleBgm, storyBattleBgm, STRONG_BGM, BOSS_BGM, BOT_BGM, GATE_BGM, BOSS_THEMES, CHAR_THEMES, THEME_RATE, DEUS_BGM, PEEK_BGM, pickTenseBgm, TENSE_BGMS, setSongNotify, playJingle, prepareJingles, skipBgm, fastEnough } from './bgm.js';
+import { playBgm, refreshBgm, fadeOutBgm, crossBgm, prepareBgm, pickNormalBgm, normalBattleBgm, onlineBattleBgm, storyBattleBgm, STRONG_BGM, BOSS_BGM, BOT_BGM, GATE_BGM, BOSS_THEMES, CHAR_THEMES, THEME_RATE, DEUS_BGM, PEEK_BGM, pickTenseBgm, TENSE_BGMS, setSongNotify, bgmState, songInfo, playJingle, prepareJingles, skipBgm, fastEnough } from './bgm.js';
 import { showSong } from './now-playing.js';
 import { BGM_RELEASED } from './rewards.js';
 import { emblemDataURL } from './emblems.js';
@@ -4754,6 +4754,8 @@ function nextBgm() {
 }
 /* 曲が替わったら (対戦の始まり・あと1本・⏭・シャッフルの次の曲・メニュー・ストーリー)、曲名と作者のカードを出す */
 setSongNotify(showSong);
+/* 設定 (⚙) に、いま流れている曲を出す (2026-11-08 本人「今のBGMがなにか知りたい」) */
+setNowSongSource(() => { const k = bgmState().want; return k ? songInfo(k) : null; });
 
 /* ---------- 進行 ---------- */
 let refreshSayFor = null;          // リフレッシュのひとことを、並べ替えの選択のあとまで待たせている { side, st } (null なら待っていない)
