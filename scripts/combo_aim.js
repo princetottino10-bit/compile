@@ -60,6 +60,12 @@ const COMBOS = {
   flipLoveLife: { name: 'LOVE 4 で裏の LIFE 0 を表に', protos: ['LOVE', 'LIFE'], pieces: {}, flip: true },
   flipWarGravity: { name: 'WAR 2 で裏の GRAVITY 1 を表に', protos: ['WAR', 'GRAVITY'], pieces: {}, flip: true },
   flipSmokeLuck: { name: 'SMOKE 1 で裏の LUCK 0 を表に', protos: ['SMOKE', 'LUCK'], pieces: {}, flip: true },
+  /* ぱうぷるの棋譜から (2026-11-08)。refire: 自分の手で、出した札とは別にこの札の中段がもう一度入った回数を「撃った」に数える */
+  hateWater4: { name: 'HATE 1 + WATER 4 (戻して起こし直す)', protos: ['HATE', 'WATER'], pieces: { HATE_2: 'up', WATER_5: 'play' }, refire: 'HATE_2' },
+  hate0Hate1: { name: 'HATE 1 + HATE 0 (自分を消して起こし直す)', protos: ['HATE'], pieces: { HATE_2: 'up', HATE_1: 'play' }, refire: 'HATE_2' },
+  hate2Hate1: { name: 'HATE 1 + HATE 2 (自分を消して起こし直す)', protos: ['HATE'], pieces: { HATE_2: 'up', HATE_3: 'play' }, refire: 'HATE_2' },
+  psyDark4: { name: 'PSYCHIC 0 + DARKNESS 4 (上の裏札をどかす)', protos: ['PSYCHIC', 'DARKNESS'], pieces: { PSYCHIC_1: 'cov', DARKNESS_5: 'play' }, refire: 'PSYCHIC_1' },
+  glutClear: { name: 'GLUTTONY 0 + GLUTTONY 2 (引きすぎてキャッシュクリア)', protos: ['GLUTTONY'], pieces: { GLUTTONY_1: 'up', GLUTTONY_3: 'play' }, clearWith: 'GLUTTONY_1' },
   speed2: { name: 'SPEED 2 (コンパイルで生き残る)', protos: ['SPEED'], pieces: { SPEED_3: 'up' }, solo: true }
 };
 
@@ -179,7 +185,15 @@ function playGame(E, combo, seed, budget) {
     if (mover === me) {
       const after = Object.fromEntries(ids.map(d => [d, where(nx.state, uid(d), me)]));
       /* 撃った: 回しの札が効く形で、撃つ札を表で出した */
-      if (a && a.type === 'play' && a.faceUp && burst.includes(nx.state.cards[a.card] && nx.state.cards[a.card].def)
+      if (combo.refire) {
+        const re = new RegExp('^\\[' + combo.refire + '\\] 中段コマンド解決');
+        const n = (nx.log || []).filter(l => re.test(l)).length - (a && a.type === 'play' && a.faceUp && st.cards[a.card].def === combo.refire ? 1 : 0);
+        if (n > 0) out.fired += n;
+      } else if (combo.clearWith) {
+        /* 撃った: 自分のキャッシュクリアのとき、その札が場で表 (上段が誘発する) */
+        const w = where(nx.state, uid(combo.clearWith), me);
+        if ((w === 'top' || w === 'covUp') && (nx.log || []).some(l => l === 'P' + (me + 1) + ': キャッシュクリア')) out.fired++;
+      } else if (a && a.type === 'play' && a.faceUp && burst.includes(nx.state.cards[a.card] && nx.state.cards[a.card].def)
         && engine.every(d => live(combo.pieces[d], before[d]))) out.fired++;
       /* 揃えに行った: 揃えられた手番に、手札のコンボの札を効く形で出した (撃つ札なら撃てる形で出した) */
       if (ids.every(d => before[d] === 'hand' || live(combo.pieces[d], before[d])) && ids.some(d => before[d] === 'hand'

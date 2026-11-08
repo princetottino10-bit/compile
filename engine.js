@@ -3969,7 +3969,18 @@ const AI_AIM_COMBOS = [
   /* FIRE 3 で SPIRIT 1 を毎手番起こし直す回し (aiFlipStoreScore、+6.1)。SPIRIT 1 は表でも裏でも回る ('loop')。
      揃えに行く手筋に入れ、FIRE 3 を自分で覆わないようにする (入れる前は 60局で FIRE 3 を24回覆っていた)。
      CORRUPTION 2 を3枚目に足す形は、回しの2枚を白紙にして測り直すと噛み合いが消えた (−0.8、docs/ai-combos.md) ので入れない */
-  { pieces: { FIRE_4: 'top', SPIRIT_2: 'loop' } }
+  { pieces: { FIRE_4: 'top', SPIRIT_2: 'loop' } },
+  /* ぱうぷるの棋譜から (2026-11-08、ユーザー「全部狙おう」、計測は aim 数のみ)。
+     WATER 4 を表の HATE 1 に重ねて WATER 4 自身を戻すと、覆いが外れて HATE 1 の中段 (2枚削除) がもう一度入り、WATER 4 は手札に帰る
+     (5局16回、ORACLE は16回中5回だけ同じ手で、WATER 4 を別のラインに置きがち)。'again' は出しても戻って使い回す札で、
+     場に残ったら手札と同じには数えない (別のラインに置いて場に残すと回しが切れる) */
+  { pieces: { HATE_2: 'up', WATER_5: 'again' }, extra: { HATE_4: 'up' } },
+  /* HATE 0・HATE 2 を表の HATE 1 の上に出して自分を消す手 (ORACLE 3/8・4/5) は、撃つと札が捨て札へ行って組の値打ちが消え、
+     持ち続ける方が得に見えてしまうので、ここには入れない。出す手は W.hate0Combo、手放さないのは AI_COMBO_PAIRS で持つ */
+  /* 表の PSYCHIC 0 に裏向きを重ねておき、DARKNESS 4 でその裏向きを別のラインへどかすと PSYCHIC 0 の中段 (2枚引く・相手が2枚捨てる) がもう一度入る (ORACLE 7/9) */
+  { pieces: { PSYCHIC_1: 'cov', DARKNESS_5: 'play' } },
+  /* GLUTTONY 2 で手札の枚数ぶん引いて上限を超え、終了のキャッシュクリアで GLUTTONY 0 の上段 (山札の上を裏でプレイ) が入る (1局2回) */
+  { pieces: { GLUTTONY_1: 'up', GLUTTONY_3: 'play' } }
 ];
 function aiAimPlace(st, side, uid) {
   const c = st.cards[uid];
@@ -3982,6 +3993,8 @@ function aiAimPlace(st, side, uid) {
   const P = st.players[side];
   return P.hand.includes(uid) ? 'hand' : P.deck.includes(uid) ? 'deck' : 'gone';
 }
+/* 表で出した瞬間に撃つ札 ('play': 場に残る / 'again': 自分を戻して手札に帰る) */
+const aiAimShot = (need) => need === 'play' || need === 'again';
 const aiAimLive = (need, w) => (need === 'up' ? w === 'top' || w === 'covUp' : need === 'cov' ? w === 'covUp' : need === 'loop' ? w === 'top' || w === 'down' : w === 'top');
 /* 'cov' の札は一番上で表に出せば、あとは覆うだけ (片方が場で効く形と同じに数える) */
 const aiAimNear = (need, w) => aiAimLive(need, w) || (need === 'cov' && w === 'top');
@@ -3993,9 +4006,9 @@ function aiAimScore(st, side, W) {
     const ids = Object.keys(cb.pieces);
     const at = ids.map(d => aiAimPlace(st, side, 'p' + side + ':' + d));
     if (at.some(w => w === 'gone')) continue;
-    const eng = ids.filter((d, i) => cb.pieces[d] !== 'play');
+    const eng = ids.filter((d, i) => !aiAimShot(cb.pieces[d]));
     const liveAll = eng.every(d => aiAimLive(cb.pieces[d], at[ids.indexOf(d)]));
-    const hasPlay = ids.some(d => cb.pieces[d] === 'play');
+    const hasPlay = ids.some(d => aiAimShot(cb.pieces[d]));
     if (liveAll && !hasPlay) {
       sc += W.aimLive || 0;
       for (const [d, need] of Object.entries(cb.extra || {})) if (aiAimLive(need, aiAimPlace(st, side, 'p' + side + ':' + d))) sc += W.aimExtra || 0;
@@ -4003,8 +4016,12 @@ function aiAimScore(st, side, W) {
     }
     /* 出した瞬間に撃つ札は、表で場に出したあとも手札と同じに数える (撃つと加点が減って、持ち続ける方が得に見えてしまうため) */
     const held = ids.map((d, i) => at[i] === 'hand' || (cb.pieces[d] === 'play' && (at[i] === 'top' || at[i] === 'covUp')));
-    const rest = ids.filter((d, i) => !(cb.pieces[d] !== 'play' && aiAimNear(cb.pieces[d], at[i])));
-    if (ids.some((d, i) => cb.pieces[d] !== 'play' && aiAimNear(cb.pieces[d], at[i])) && rest.every(d => held[ids.indexOf(d)])) sc += W.aimHalf || 0;
+    const rest = ids.filter((d, i) => !(!aiAimShot(cb.pieces[d]) && aiAimNear(cb.pieces[d], at[i])));
+    if (ids.some((d, i) => !aiAimShot(cb.pieces[d]) && aiAimNear(cb.pieces[d], at[i])) && rest.every(d => held[ids.indexOf(d)])) {
+      sc += W.aimHalf || 0;
+      /* 撃つ札の組は、撃つたびに回しに乗る札 (HATE 1 の削除で引く HATE 3) も、揃う形で場にあれば数える */
+      for (const [d, need] of Object.entries(cb.extra || {})) if (aiAimLive(need, aiAimPlace(st, side, 'p' + side + ':' + d))) sc += W.aimExtra || 0;
+    }
     for (let i = 0; i < ids.length; i++) if (held[i] && at.some((w, j) => j !== i && w !== 'down')) sc += W.aimHold || 0;
   }
   return sc;
@@ -4951,7 +4968,12 @@ const AI_COMBO_PAIRS = [
   ['WAR_1', 'LOVE_6'],        // LOVE 6・LOVE 2・FEAR 1 で相手に引かせて WAR 0 で削除
   ['WAR_1', 'LOVE_2'],
   ['WAR_1', 'FEAR_2'], ['PLAGUE_2', 'COURAGE_1'], ['COURAGE_1', 'CORRUPTION_3'], ['WAR_4', 'COURAGE_1'], ['WAR_4', 'FEAR_2'], ['SPIRIT_4', 'CORRUPTION_3'], ['SPIRIT_4', 'PEACE_1'], ['TIME_3', 'CLARITY_4'], ['CORRUPTION_6', 'CORRUPTION_3'], ['CORRUPTION_6', 'PLAGUE_2'], ['FIRE_4', 'PLAGUE_5'],
-  ['FIRE_4', 'SPIRIT_2'], ['FIRE_4', 'WATER_1']
+  ['FIRE_4', 'SPIRIT_2'], ['FIRE_4', 'WATER_1'],
+  /* ぱうぷるの棋譜から (2026-11-08) */
+  ['HATE_2', 'WATER_5'],      // 表の HATE 1 に WATER 4、自分を戻して HATE 1 を起こし直す
+  ['HATE_2', 'HATE_3'],       // HATE 2 で自分を消して HATE 1 を起こし直す
+  ['PSYCHIC_1', 'DARKNESS_5'], // PSYCHIC 0 の上の裏向きを DARKNESS 4 でどかして起こし直す
+  ['GLUTTONY_1', 'GLUTTONY_3'] // GLUTTONY 2 で引きすぎてキャッシュクリア、GLUTTONY 0 の上段
 ];
 const AI_COMBO_KEEP = { hand: 60, field: 40, deck: 15 };
 /* ORACLE が手放したがらない札: ウォーター① (山札の上を他の各ラインに裏で) とファイア③ (終了時に捨てて反転) */
