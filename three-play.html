@@ -1126,6 +1126,24 @@
     background:rgba(8,11,20,.94);border:1px solid rgba(232,32,63,.4);color:#ffd9ec;
     font:700 11px/1 "M PLUS 1",system-ui;letter-spacing:.05em;box-shadow:0 12px 40px rgba(0,0,0,.55);}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  /* 曲が替わったときの「いまの曲」カード (now-playing.js)。右上のボタンの下に、右から滑り込ませて数秒で引っ込める */
+  #nowPlaying{position:fixed;top:calc(48px + env(safe-area-inset-top));right:calc(14px + env(safe-area-inset-right));z-index:61;
+    display:flex;align-items:center;gap:10px;max-width:min(300px,calc(100vw - 28px));padding:8px 14px 8px 10px;
+    background:rgba(8,8,12,.9);border:1px solid rgba(255,255,255,.12);border-left:3px solid var(--pink);clip-path:var(--cut-s);
+    /* タイトル・メニュー (z 58) や読み込み (60) の上にも出す。押せないので何も隠さない */
+    box-shadow:0 10px 30px rgba(0,0,0,.5);pointer-events:none;opacity:0;transform:translateX(24px);
+    transition:opacity .3s,transform .42s cubic-bezier(.16,1,.3,1);}
+  #nowPlaying.show{opacity:1;transform:none;}
+  #nowPlaying .np-icon{flex:none;width:26px;height:26px;display:grid;place-items:center;font:700 14px/1 system-ui;color:#fff;
+    background:color-mix(in srgb,var(--pink) 30%,transparent);border:1px solid color-mix(in srgb,var(--pink) 65%,transparent);}
+  #nowPlaying .np-text{display:flex;flex-direction:column;gap:3px;min-width:0;}
+  #nowPlaying .np-kicker{font:700 8px/1 var(--font-hud,system-ui);letter-spacing:.24em;color:var(--pink);}
+  #nowPlaying .np-title{font:800 13px/1.2 "M PLUS 1",system-ui;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  #nowPlaying .np-by{font:600 10px/1.2 "M PLUS 1",system-ui;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  #nowPlaying.own .np-by{color:#ffc2b4;}
+  @media (prefers-reduced-motion:reduce){ #nowPlaying{transform:none;transition:opacity .2s;} }
+  body.hi-contrast #nowPlaying{background:#05060c;border-color:rgba(255,255,255,.6);}
+  body.hi-contrast #nowPlaying .np-by{color:#fff;}
 
   /* デモ中は操作系を隠す */
   body.demo #dock, body.demo #preview, body.demo #btnRefresh{display:none;}
@@ -4939,7 +4957,7 @@
       "./js3d/backdrops.js": "./js3d/backdrops.js?v=78f67f4758",
       "./js3d/bgm-loop.js": "./js3d/bgm-loop.js?v=92eef374d1",
       "./js3d/bgm-shop.js": "./js3d/bgm-shop.js?v=a475d4d50d",
-      "./js3d/bgm.js": "./js3d/bgm.js?v=647fd8deea",
+      "./js3d/bgm.js": "./js3d/bgm.js?v=458e8907da",
       "./js3d/bloom-guard.js": "./js3d/bloom-guard.js?v=607df41849",
       "./js3d/board.js": "./js3d/board.js?v=fd9b31ba0a",
       "./js3d/bootui.js": "./js3d/bootui.js?v=15220963bc",
@@ -4987,13 +5005,14 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=2b4dbc6066",
       "./js3d/logformat.js": "./js3d/logformat.js?v=e3548c74d1",
-      "./js3d/main.js": "./js3d/main.js?v=056b65f1f5",
+      "./js3d/main.js": "./js3d/main.js?v=798c867364",
       "./js3d/mobcards.js": "./js3d/mobcards.js?v=2a6bc79376",
       "./js3d/motion.js": "./js3d/motion.js?v=71cd68f8ff",
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
       "./js3d/net.js": "./js3d/net.js?v=3134839bca",
       "./js3d/news.js": "./js3d/news.js?v=62707b6b85",
       "./js3d/notice.js": "./js3d/notice.js?v=029a81acaa",
+      "./js3d/now-playing.js": "./js3d/now-playing.js?v=fc9abda187",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=596315df8d",
       "./js3d/panel.js": "./js3d/panel.js?v=b07699d2a4",
       "./js3d/pickaid.js": "./js3d/pickaid.js?v=fd33e4bc87",
@@ -5135,8 +5154,8 @@
   <link rel="modulepreload" href="js3d/arena.js?v=ef66a1e5bb">
   <link rel="modulepreload" href="js3d/audio.js?v=76fc58cf1a">
   <link rel="modulepreload" href="js3d/mutebutton.js?v=1362dbc4d6">
-  <link rel="modulepreload" href="js3d/bgm.js?v=647fd8deea">
-  <link rel="modulepreload" href="js3d/bgm-shop.js?v=a475d4d50d">
+  <link rel="modulepreload" href="js3d/bgm.js?v=458e8907da">
+  <link rel="modulepreload" href="js3d/now-playing.js?v=fc9abda187">
   <link rel="modulepreload" href="js3d/emblems.js?v=c5a815fe49">
   <link rel="modulepreload" href="js3d/layout.js?v=2b4dbc6066">
   <link rel="modulepreload" href="js3d/theme.js?v=f923617cfc">
@@ -5192,6 +5211,7 @@
   <link rel="modulepreload" href="js3d/story-scenery-warehouse.js?v=c524a114c0">
   <link rel="modulepreload" href="js3d/story-scenery-station.js?v=6675390494">
   <link rel="modulepreload" href="js3d/story-scenery-director.js?v=3492908ba0">
+  <link rel="modulepreload" href="js3d/bgm-shop.js?v=a475d4d50d">
   <link rel="modulepreload" href="js3d/cos-rarity.js?v=3dcc6f580c">
   <link rel="modulepreload" href="js3d/run-chaos.js?v=43c0c4c4c8">
   <link rel="modulepreload" href="js3d/run-fx.js?v=db84784a02">
@@ -5212,6 +5232,6 @@
   <link rel="stylesheet" href="js3d/run-fx.css?v=76f975b9ad">
   <link rel="stylesheet" href="js3d/deus.css?v=676148021b">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=056b65f1f5"></script>
+  <script type="module" src="js3d/main.js?v=798c867364"></script>
 </body>
 </html>

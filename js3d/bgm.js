@@ -8,9 +8,9 @@
  * ========================================================================= */
 import { routeMedia, isMuted, initAudio, onMuteChange, kickAudio, audioOut } from './audio.js';
 import { settings, onSettings } from './settings.js';
-import { BGM_RELEASED } from './rewards.js';
+import { BGM_RELEASED, COSMETICS } from './rewards.js';
 import { LoopPlayer } from './bgm-loop.js';
-import { isTrack, chosenTrack, TRACKS, ownsTrack } from './bgm-shop.js';
+import { isTrack, chosenTrack, TRACKS, ownsTrack, trackOf } from './bgm-shop.js';
 
 export const TITLE_BGM = 'orange_tunnel';
 export const BGM_CREDIT = '煉獄庭園';
@@ -80,6 +80,30 @@ export const STORY_BGMS = {
 export const STORY_SCENE_BGMS = ['gozennijinomunashisa', 'natsunokiri', 'sangatsunosundasora'];   // 午前2時の虚しさ・夏の霧・3月の澄んだ空
 const STORY_TRACKS = [...Object.values(STORY_BGMS), ...STORY_SCENE_BGMS];
 export const STORY_BGM_CREDIT = '甘茶の音楽工房';
+/* 曲が替わったときに出す曲名と作者 (songInfo)。COLLECTION の一覧 (bgm-shop.js) に無い曲だけここに書く */
+const OPENTRACKS_MANBOU = 'まんぼう二等兵 (OpenTracks)';
+const EXTRA_SONGS = {
+  /* あと1本の曲 (既製曲) */
+  interception: ['Interception', OPENTRACKS_MANBOU], strike_despair: ['Strike the Despair', OPENTRACKS_MANBOU],
+  lobelia: ['ロベリア', OPENTRACKS_MANBOU], will_you_cry: ['Will you still cry?', OPENTRACKS_MANBOU],
+  tactical_encounter: ['タクティカルエンカウンター', OPENTRACKS_MANBOU], hangeki: ['反撃の一矢', OPENTRACKS_MANBOU],
+  /* ストーリーの曲 */
+  genjitsunosukima: ['現実の隙間'], mizunishizumupiano: ['水に沈むピアノ'], janegreynoshouzou: ['ジェーン・グレイの肖像'],
+  rokugatsunoamaoto: ['6月の雨音'], kanatanikasumujoukisen: ['彼方に霞む蒸気船'], elegyfourstrings2: ['エレジー・フォー・ストリングスⅡ'],
+  inishienohiseki: ['古の碑石'], gozennijinomunashisa: ['午前2時の虚しさ'], natsunokiri: ['夏の霧'], sangatsunosundasora: ['3月の澄んだ空']
+};
+for (const k of STORY_TRACKS) if (EXTRA_SONGS[k]) EXTRA_SONGS[k][1] = STORY_BGM_CREDIT;
+/** 曲名と作者: { title, by, own }。by は表記の要る曲なら表記 (「BGM 煉獄庭園」など)、own は本人 (Ryunosuke) が作った曲。知らない曲は null */
+export function songInfo(key) {
+  const t = trackOf(key);
+  if (t) return { title: t.title, by: t.credit || t.by, own: t.by === OWN_COMPOSER };
+  const x = EXTRA_SONGS[key];
+  if (x) return { title: x[0], by: x[1], own: false };
+  const r = COSMETICS.bgm.find(([k]) => k === key);   // 煉獄庭園の曲 (mp3)
+  if (r) return { title: r[1], by: 'BGM ' + BGM_CREDIT, own: false };
+  return null;
+}
+export const OWN_COMPOSER = 'Ryunosuke';
 /** ストーリーの対戦の曲: 場面に battleBgm があればそれ (終章の所長戦)、boss の付いた対戦 (機体戦) は判定。ほかは null (ふつうの対戦の曲) */
 export const storyBattleBgm = (node) => (node && node.battleBgm) || (node && node.boss ? STORY_BATTLE_BGM : null);
 /** その章の地図の曲 */
@@ -247,16 +271,12 @@ function shuffleBattleBgm() {
 /* シャッフルで流している曲か (この曲は繰り返さず、終わったら次の曲へ)。途中で曲を選んだら、その曲は繰り返す */
 const shuffling = () => !!want && want === shuffled
   && (shuffleCtx === 'online' || !chosenTrack(settings(), shuffleCtx === 'menu' ? 'bgmMenu' : 'bgmBattle'));
-/* 次の曲に替わったら知らせる (main.js が、表記の要る曲の曲名と表記を出す) */
-let onShuffleTrack = null;
-export const setShuffleNotify = (fn) => { onShuffleTrack = fn; };
 function nextShuffle() {
   const next = pickShuffleBgm(Math.random, (shuffleCtx === 'menu' ? shufflePool() : battlePool()).filter(k => k !== want));
   if (!next) return;
   shuffled = next;
   playBgm(next);
   try { el.currentTime = 0; } catch (e) { /* 読み込み前 */ }
-  if (onShuffleTrack) onShuffleTrack(next);
 }
 
 let el = null;                   // いま使っている再生器 (<audio> か LoopPlayer)
@@ -312,16 +332,36 @@ export function playBgm(key) {
     if (!el.src.endsWith(url)) el.src = url;
     refreshBgm();
   } catch (e) { /* BGM が無くても遊べる */ }
+  announce();
+}
+
+/* 曲が替わったら知らせる (2026-11-08 本人「曲変えたら曲のタイトルと作者のカード出るようにして」。main.js が曲名と作者のカードを出す)。
+   対戦の始まり・あと1本の切り替え・次の曲ボタン・シャッフルの次の曲・ストーリーの場面の曲、どれも playBgm を通るのでここで1回だけ。
+   同じ曲の続き・試し聴き・音が出ていない (BGM 0・🔇) ときは出さない */
+let onSongChange = null;
+let announced = null;            // 最後に知らせた曲 (止めたら null。同じ曲でも止めたあとにまた流せば知らせる)
+let previewing = false;
+export const setSongNotify = (fn) => { onSongChange = fn; };
+function announce() {
+  if (!want || want === announced || previewing) return;
+  /* まだ画面に触れていない (自動再生の制限で音の土台が止まっている) ときは、鳴り始める最初のタップまで待つ (retry が呼び直す) */
+  const o = audioOut();
+  if (o && o.ctx.state !== 'running') return;
+  announced = want;
+  if (onSongChange && level() > 0) { try { onSongChange(want); } catch (e) { /* 出せなくても鳴らす */ } }
 }
 
 /** 試し聴き: 頭から ms だけ流し、小さくして back() の曲に戻す (曲を選ぶための短い試し聴き。最後まで・繰り返しは流さない) */
 let previewTimer = null;
 export function previewBgm(key, back, ms = 15000) {
+  const keep = announced;          // 試し聴きの曲は知らせない (一覧に曲名が出ている)。戻った曲が前と同じなら出し直さない
+  previewing = true;
   playBgm(key);
+  previewing = false;
   try { if (el) el.currentTime = 0; } catch (e) { /* 読み込み前 */ }
   previewTimer = setTimeout(() => {
     fadeOutBgm(1200);
-    previewTimer = setTimeout(() => playBgm(back ? back() : null), 1300);
+    previewTimer = setTimeout(() => { announced = keep; playBgm(back ? back() : null); }, 1300);
   }, ms);
 }
 
@@ -365,6 +405,7 @@ export function skipBgm(ctx = 'battle', ms = 600) {
 export function fadeOutBgm(ms = 1400) {
   if (!el || !want) return;
   want = null;
+  announced = null;
   route.set(0, ms / 1000 / 3);                    // 3 時定数でほぼ無音
   const e = el;
   setTimeout(() => { if (!want) e.pause(); }, ms);
@@ -418,6 +459,7 @@ export async function playJingle(kind) {
 
 export function stopBgm() {
   want = null;
+  announced = null;
   if (el) el.pause();
 }
 
@@ -438,7 +480,11 @@ export function refreshBgm() {
 /* 自動再生の制限: 画面に触れたときに鳴らし直す。iPhone の Safari は指を置いた瞬間 (pointerdown) では再生を許さず、
    指を離したとき (touchend)・タップ (click) だけ許すので、どれでも試す (ページを開き直して始まる対戦で鳴らなかった) */
 /* kickAudio: 裏から戻ったあとの最初の1回、音の土台を起こし直す (audio.js) */
-const retry = () => { initAudio(); kickAudio(); prime(); if (want && el && el.paused && level() > 0) el.play().catch(() => {}); };
+const retry = () => {
+  initAudio(); kickAudio(); prime();
+  if (want && el && el.paused && level() > 0) el.play().catch(() => {});
+  if (want && want !== announced) setTimeout(announce, 400);   // 触れて鳴り始めた曲のカード (音の土台が起きるのを少し待つ)
+};
 /* iPhone: 画面に触れた瞬間に一度も鳴らしていない <audio> は、あとからプログラムで鳴らせない。
    対戦は「戦う」を押してから読み込みを待って始まるので、そのときにはもう触れた瞬間ではなく、1戦目の BGM が鳴らなかった。
    最初に触れたときに、無音で一瞬だけ鳴らして止めておく (以後は対戦の始まりにすぐ鳴らせる) */

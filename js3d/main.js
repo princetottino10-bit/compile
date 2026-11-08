@@ -90,8 +90,8 @@ import * as FX from './fx.js';
 import { buildArena } from './arena.js';
 import { initAudio, sfx, setMuted, isMuted, setSfxVolume, onMuteChange } from './audio.js';
 import { mountMuteButton, muteIcon } from './mutebutton.js';
-import { playBgm, refreshBgm, fadeOutBgm, crossBgm, prepareBgm, pickNormalBgm, normalBattleBgm, onlineBattleBgm, storyBattleBgm, STRONG_BGM, BOSS_BGM, BOT_BGM, GATE_BGM, BOSS_THEMES, CHAR_THEMES, THEME_RATE, DEUS_BGM, PEEK_BGM, pickTenseBgm, setShuffleNotify, playJingle, prepareJingles, skipBgm, fastEnough } from './bgm.js';
-import { trackOf } from './bgm-shop.js';
+import { playBgm, refreshBgm, fadeOutBgm, crossBgm, prepareBgm, pickNormalBgm, normalBattleBgm, onlineBattleBgm, storyBattleBgm, STRONG_BGM, BOSS_BGM, BOT_BGM, GATE_BGM, BOSS_THEMES, CHAR_THEMES, THEME_RATE, DEUS_BGM, PEEK_BGM, pickTenseBgm, setSongNotify, playJingle, prepareJingles, skipBgm, fastEnough } from './bgm.js';
+import { showSong } from './now-playing.js';
 import { BGM_RELEASED } from './rewards.js';
 import { emblemDataURL } from './emblems.js';
 import * as LAYOUT from './layout.js';
@@ -4731,12 +4731,10 @@ function battleBgm() {
   if (theme && Math.random() < THEME_RATE) return theme;
   return BGM_RELEASED ? (settings().bgm || normalBattleBgm()) : normalBattleBgm();
 }
-/* 対戦の曲を流す。表記の要る曲 (煉獄庭園・魔王魂・Senses Circuit など) は、流れている画面に曲名と表記を小さく出す */
+/* 対戦の曲を流す。曲名と作者 (表記の要る曲は表記) は now-playing.js のカードが出す */
 function playBattleBgm() {
   prepareJingles();                      // 決着のジングルを先に音にしておく
-  const key = battleBgm();
-  playBgm(key);
-  creditToast(key, 2400);
+  playBgm(battleBgm());              // 曲名と作者は、曲が替わったときのカード (now-playing.js) が出す
 }
 /* 決着の音: 勝ち・負けのジングル (本人作)。勝ちの演出 (COLLECTION の VICTORY) が専用の音を持つならそちらを鳴らす。
    ジングルを鳴らせない (BGM の音量 0・読めていない) ときは今までの効果音 */
@@ -4745,10 +4743,6 @@ function resultSound(win, victory) {
   if (fxSfx !== 'win' && fxSfx !== 'lose') { sfx(fxSfx); return; }
   playJingle(win ? 'win' : 'lose').then(ok => { if (!ok) sfx(fxSfx); }, () => sfx(fxSfx));
 }
-function creditToast(key, wait) {
-  const t = trackOf(key);
-  if (t && t.credit) setTimeout(() => UI.toast('♪ ' + t.title + ' — ' + t.credit, 2600, { low: true }), wait);
-}
 /* 右上の ⏭ (2026-11-05 本人の希望): いまの曲をやめて次の曲へ。あと1本の曲が流れているあいだは、次のあと1本の曲へ
    (速い曲のまま替える)。それ以外は持っている曲からシャッフルで選び、その曲が終わったらシャッフルを続ける */
 function nextBgm() {
@@ -4756,12 +4750,10 @@ function nextBgm() {
   let key;
   if (tenseBgmOn && tenseNow) { switchTense(tenseNow, 600); key = tenseNow; }
   else key = skipBgm(roomMode ? 'online' : 'battle');
-  if (!key) { UI.toast('いまは BGM が止まっています', 1600, { low: true }); return; }
-  const t = trackOf(key);
-  UI.toast('♪ ' + (t ? t.title + (t.credit ? ' — ' + t.credit : '') : '次の曲'), 2200, { low: true });
+  if (!key) UI.toast('いまは BGM が止まっています', 1600, { low: true });   // 替えた曲はカードが出る
 }
-/* BGM のシャッフルで次の曲に替わったときも、表記の要る曲なら出す */
-setShuffleNotify((key) => creditToast(key, 600));
+/* 曲が替わったら (対戦の始まり・あと1本・⏭・シャッフルの次の曲・メニュー・ストーリー)、曲名と作者のカードを出す */
+setSongNotify(showSong);
 
 /* ---------- 進行 ---------- */
 let refreshSayFor = null;          // リフレッシュのひとことを、並べ替えの選択のあとまで待たせている { side, st } (null なら待っていない)
