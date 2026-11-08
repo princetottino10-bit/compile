@@ -391,9 +391,11 @@ export function crossBgm(key, ms = 1100) {
 /** 次の曲ボタン (2026-11-05 本人の希望): いま流している曲をやめて、持っている曲からシャッフルで次の曲へ替える。
     ctx: 'battle' / 'online' / 'menu' (替えた曲が終わったら、その場のシャッフルを続ける)。
     COLLECTION で曲を選んでいる場合は、替えた曲を繰り返す (選んだ曲には次の対戦で戻る)。替えた曲の key を返す (替えられなければ null) */
-export function skipBgm(ctx = 'battle', ms = 600) {
+export function skipBgm(ctx = 'battle', ms = 600, extra = []) {
   if (!want) return null;                          // 止めている (決着のあと・演出の前) ときは鳴らし始めない
-  const next = pickShuffleBgm(Math.random, (ctx === 'menu' ? shufflePool() : battlePool()).filter(k => k !== want && k !== shuffled));
+  /* extra: 持っている曲のほかに混ぜる曲 (対戦では、あと1本の曲も。2026-11-08 本人「曲送りはランダムで」) */
+  const pool = [...new Set([...(ctx === 'menu' ? shufflePool() : battlePool()), ...extra])];
+  const next = pickShuffleBgm(Math.random, pool.filter(k => k !== want && k !== shuffled));
   if (!next) return null;
   shuffleCtx = ctx;
   shuffled = next;

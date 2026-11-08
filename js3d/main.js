@@ -90,7 +90,7 @@ import * as FX from './fx.js';
 import { buildArena } from './arena.js';
 import { initAudio, sfx, setMuted, isMuted, setSfxVolume, onMuteChange } from './audio.js';
 import { mountMuteButton, muteIcon } from './mutebutton.js';
-import { playBgm, refreshBgm, fadeOutBgm, crossBgm, prepareBgm, pickNormalBgm, normalBattleBgm, onlineBattleBgm, storyBattleBgm, STRONG_BGM, BOSS_BGM, BOT_BGM, GATE_BGM, BOSS_THEMES, CHAR_THEMES, THEME_RATE, DEUS_BGM, PEEK_BGM, pickTenseBgm, setSongNotify, playJingle, prepareJingles, skipBgm, fastEnough } from './bgm.js';
+import { playBgm, refreshBgm, fadeOutBgm, crossBgm, prepareBgm, pickNormalBgm, normalBattleBgm, onlineBattleBgm, storyBattleBgm, STRONG_BGM, BOSS_BGM, BOT_BGM, GATE_BGM, BOSS_THEMES, CHAR_THEMES, THEME_RATE, DEUS_BGM, PEEK_BGM, pickTenseBgm, TENSE_BGMS, setSongNotify, playJingle, prepareJingles, skipBgm, fastEnough } from './bgm.js';
 import { showSong } from './now-playing.js';
 import { BGM_RELEASED } from './rewards.js';
 import { emblemDataURL } from './emblems.js';
@@ -4743,13 +4743,13 @@ function resultSound(win, victory) {
   if (fxSfx !== 'win' && fxSfx !== 'lose') { sfx(fxSfx); return; }
   playJingle(win ? 'win' : 'lose').then(ok => { if (!ok) sfx(fxSfx); }, () => sfx(fxSfx));
 }
-/* 右上の ⏭ (2026-11-05 本人の希望): いまの曲をやめて次の曲へ。あと1本の曲が流れているあいだは、次のあと1本の曲へ
-   (速い曲のまま替える)。それ以外は持っている曲からシャッフルで選び、その曲が終わったらシャッフルを続ける */
+/* 右上の ⏭ (2026-11-05 本人の希望): いまの曲をやめて、ランダムに選んだ次の曲へ。その曲が終わったらシャッフルを続ける */
 function nextBgm() {
   initAudio();
-  let key;
-  if (tenseBgmOn && tenseNow) { switchTense(tenseNow, 600); key = tenseNow; }
-  else key = skipBgm(roomMode ? 'online' : 'battle');
+  /* 2026-11-08 本人「曲送りはランダムで」: あと1本の間も、持っている対戦の曲とあと1本の曲すべてからランダムに選ぶ
+     (前はあと1本の曲の中だけで替えていた)。選んだ曲は TENSE_ROTATE_MS のあいだ続ける */
+  const key = skipBgm(roomMode ? 'online' : 'battle', 600, TENSE_BGMS);
+  if (key && tenseBgmOn) { tenseNow = key; tenseSince = Date.now(); }
   if (!key) UI.toast('いまは BGM が止まっています', 1600, { low: true });   // 替えた曲はカードが出る
 }
 /* 曲が替わったら (対戦の始まり・あと1本・⏭・シャッフルの次の曲・メニュー・ストーリー)、曲名と作者のカードを出す */
