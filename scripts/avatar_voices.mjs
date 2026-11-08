@@ -11,25 +11,26 @@ import { AVATARS } from '../js3d/avatar.js';
 const ENGINE = 'http://127.0.0.1:50021';
 /* キャラごとの声 (VOICEVOX の speaker id)。種類によって声色を変える */
 const SPEAKER = {
-  zundamon: { base: 3, happy: 1, angry: 7, sad: 76, whisper: 22, hiso: 38, tired: 75 },   // ノーマル / あまあま / ツンツン / なみだめ / ささやき / ヒソヒソ / ヘロヘロ
-  metan: { base: 2, happy: 0, angry: 6, whisper: 36, hiso: 37 },                           // ノーマル / あまあま / ツンツン / ささやき / ヒソヒソ
-  tsumugi: { base: 8, happy: 8, angry: 8 },
-  whitecul: { base: 23, happy: 24, angry: 25, sad: 25, cry: 26 }      // ノーマル / たのしい / かなしい / びえーん
+  zundamon: { base: 3, happy: 1, sad: 76, whisper: 22, hiso: 38, tired: 75 },   // ノーマル / あまあま / なみだめ / ささやき / ヒソヒソ / ヘロヘロ
+  metan: { base: 2, happy: 0, whisper: 36, hiso: 37 },                           // ノーマル / あまあま / ささやき / ヒソヒソ
+  tsumugi: { base: 8, happy: 8 },
+  whitecul: { base: 23, happy: 24, sad: 25, cry: 26 }      // ノーマル / たのしい / かなしい / びえーん
 };
+/* 怒った声 (ツンツン) は使わない (2026-11-08 本人「怒った声は必要ない」)。やられた場面は、悲しい声のあるキャラは悲しい声、無いキャラはふつうの声 */
 /* セリフごとの演技指導 (scripts/voice_directions/<id>.json。{声の文: { style, speed, pitch, intonation }})。
    場面の種類で一律に決めず、セリフの中身に合わせて決めたもの (2026-10-04)。無いセリフは下の TONE で決める */
 const directionsOf = (id) => {
   const p = path.join('scripts', 'voice_directions', id + '.json');
   return fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, 'utf8')) : {};
 };
-const TONE = { compile: 'happy', win: 'happy', good: 'happy', hello: 'happy', chain: 'happy', control: 'happy', fav: 'happy', reach: 'happy', lead: 'happy', recompile: 'happy', sure: 'happy', doomed: 'angry', compiled: 'angry', hurt: 'angry', handes: 'angry', behind: 'angry', crushed: 'angry' };
+const TONE = { compile: 'happy', win: 'happy', good: 'happy', hello: 'happy', chain: 'happy', control: 'happy', fav: 'happy', reach: 'happy', lead: 'happy', recompile: 'happy', sure: 'happy', doomed: 'sad', compiled: 'sad', hurt: 'sad', handes: 'sad', behind: 'sad', crushed: 'sad' };
 /* キャラごとの声色の差し替え (ずんだもんは、やられたときに怒るより泣く) */
 const TONE_OF = { zundamon: { compiled: 'sad', hurt: 'sad', handes: 'sad', lose: 'sad', behind: 'sad', crushed: 'sad', doomed: 'sad' } };
 
 import { fixReading } from './voice_fix.mjs';
 
 /* ずんだもんは「あまあま」だと元気がなく聞こえた (2026-10-04)。ふつう・明るいセリフはノーマルの声で、
-   基本は抑揚強め (B)、気合いの入ったセリフ (「！」で盛り上がる場面) はさらに元気に (C)。泣く・怒るの声色はそのまま */
+   基本は抑揚強め (B)、気合いの入ったセリフ (「！」で盛り上がる場面) はさらに元気に (C)。泣く声色はそのまま */
 const ZUN_VOICE = { base: { speed: 1.1, intonation: 1.35 }, hype: { speed: 1.15, intonation: 1.5, pitch: 0.04 } };
 const BRIGHT = { zundamon: { base: 3, happy: 3 }, metan: { base: 2, happy: 2 }, tsumugi: { base: 8, happy: 8 }, whitecul: { base: 23, happy: 24 } };
 const ZUN_HYPE_KINDS = new Set(['compile', 'win', 'chain', 'reach', 'fav', 'ace', 'sure', 'recompile', 'lead', 'boost', 'control', 'good', 'wipe', 'tag_in']);
