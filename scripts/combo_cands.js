@@ -1574,5 +1574,53 @@ module.exports = [
     setup: { mine: [{ card: 'NOVA_6', at: 'field', faceUp: false }, { card: 'NOVA_5', at: 'field', faceUp: false }, { card: 'NOVA_4', at: 'field', faceUp: false }, { card: 'NOVA_2', at: 'hand' }] },
     cond: (s, me, P) => { const l = P.lineOf(s, P.planted.NOVA_6); return !s.players[me].protocols[l].compiled && P.total(s, l, me) < 9; },
     act: { play: 'NOVA_2' }, partner: ['NOVA_2'] });
+  /* ---- 2巡目: 1手でコンパイルまで届く形 (1巡目で、毎手番の回しより1手で届く形が効くと分かった) ---- */
+  const lineOk = (s, me, P, u, lo, hi) => { const l = P.lineOf(s, u); const t = P.total(s, l, me); return !s.players[me].protocols[l].compiled && t >= lo && t <= hi && t > P.total(s, l, 1 - me) - 0.5; };
+  /* LUST 0 だけ: 勝っているラインに出すと次の開始でコンパイル (相手はコントロールを取り返すか追い越すしかない) */
+  T.push({ name: 'LUST 0: 勝っているラインに出して次の開始でコンパイル', kind: 'burst', protos: ['LUST'],
+    how: '自分が1点でも勝っている LUST のラインに LUST 0 を出す。両者 +10 で、コントロールを持っている間は相手はコンパイルできない。次の自分の開始でコンパイルする。',
+    setup: { mine: [{ card: 'LUST_5', at: 'field', faceUp: false }, { card: 'LUST_1', at: 'hand' }] },
+    cond: (s, me, P) => { const l = P.lineOf(s, P.planted.LUST_5); return !s.players[me].protocols[l].compiled && P.total(s, l, me) > P.total(s, l, 1 - me) && P.total(s, l, me) < 10; },
+    act: { play: 'LUST_1' }, partner: ['LUST_1'] });
+  /* SLOTH 0 を SLOTH 5 で覆うと 0+5+5 = 10 */
+  T.push({ name: 'SLOTH 0 + SLOTH 5: 2枚で10点', kind: 'burst', protos: ['SLOTH'],
+    how: 'SLOTH 0 (SLOTH の札に覆われていると +5) の上に SLOTH 5 を出すと、2枚で10点になる。',
+    setup: { mine: [{ card: 'SLOTH_1', at: 'field' }, { card: 'SLOTH_6', at: 'hand' }] },
+    cond: (s, me, P) => { const l = P.lineOf(s, P.planted.SLOTH_1); return !s.players[me].protocols[l].compiled && P.total(s, l, me) < 5 && P.total(s, l, 1 - me) < 9; },
+    act: { play: 'SLOTH_6' }, partner: ['SLOTH_1'] });
+  T.push({ name: 'GREED 1 + SLOTH 0 + SLOTH 5: 2枚で10点にしてその手番にコンパイル', kind: 'burst', protos: ['SLOTH', 'GREED'],
+    how: 'GREED 1 が一番上にあるとき、SLOTH 0 の上に SLOTH 5 を出して10点にすると、その終了でコンパイルする。',
+    setup: { mine: [{ card: 'GREED_2', at: 'field' }, { card: 'SLOTH_1', at: 'field' }, { card: 'SLOTH_6', at: 'hand' }] },
+    cond: (s, me, P) => { const l = P.lineOf(s, P.planted.SLOTH_1); return !s.players[me].protocols[l].compiled && P.total(s, l, me) < 5 && P.total(s, l, 1 - me) < 9; },
+    act: { play: 'SLOTH_6' }, partner: ['GREED_2'] });
+  /* DARKNESS 2 を裏向き2枚の上に: 2 + 4 + 4 = 10 */
+  T.push({ name: 'DARKNESS 2: 裏向き2枚の上に出して10点', kind: 'burst', protos: ['DARKNESS'],
+    how: 'DARKNESS のラインに裏向きを2枚置いてから DARKNESS 2 を出す。裏向きが各4点になり、3枚で10点になる。',
+    setup: { mine: [{ card: 'DARKNESS_6', at: 'field', faceUp: false }, { card: 'DARKNESS_5', at: 'field', faceUp: false }, { card: 'DARKNESS_3', at: 'hand' }] },
+    cond: (s, me, P) => { const l = P.lineOf(s, P.planted.DARKNESS_6); return !s.players[me].protocols[l].compiled && s.lines[l][me].length === 2 && P.total(s, l, 1 - me) < 9; },
+    act: { play: 'DARKNESS_3' }, partner: ['DARKNESS_3'] });
+  T.push({ name: 'GREED 1 + DARKNESS 2: 裏向き2枚の上に出してその手番にコンパイル', kind: 'burst', protos: ['DARKNESS', 'GREED'],
+    how: 'GREED 1 が一番上にあるとき、裏向き2枚の上に DARKNESS 2 を出して10点にすると、その終了でコンパイルする。',
+    setup: { mine: [{ card: 'GREED_2', at: 'field' }, { card: 'DARKNESS_6', at: 'field', faceUp: false }, { card: 'DARKNESS_5', at: 'field', faceUp: false }, { card: 'DARKNESS_3', at: 'hand' }] },
+    cond: (s, me, P) => { const l = P.lineOf(s, P.planted.DARKNESS_6); return !s.players[me].protocols[l].compiled && s.lines[l][me].length === 2 && P.total(s, l, 1 - me) < 9; },
+    act: { play: 'DARKNESS_3' }, partner: ['GREED_2'] });
+  /* GREED 1 そのもの: 8〜9点のラインに1枚足してその手番にコンパイル (相手に1手番を渡さない) */
+  T.push({ name: 'GREED 1: 届く1枚を出したその手番にコンパイル', kind: 'engine', protos: ['GREED', 'FIRE'],
+    how: 'GREED 1 が一番上にあると、10点に届く1枚を出したその手番の終了でコンパイルする。相手は手を挟めない。',
+    setup: { mine: [{ card: 'GREED_2', at: 'field' }, { card: 'FIRE_5', at: 'field' }, { card: 'FIRE_3', at: 'field', faceUp: false, over: 'FIRE_5' }, { card: 'FIRE_6', at: 'hand' }] },
+    cond: (s, me, P) => { const l = P.lineOf(s, P.planted.FIRE_5); const t = P.total(s, l, me); return !s.players[me].protocols[l].compiled && t >= 5 && t < 10 && t + 5 > P.total(s, l, 1 - me); },
+    act: { play: 'FIRE_6' }, partner: ['GREED_2'] });
+  /* NOVA 0: 毎手番、自分の下に山札の上を裏で足す */
+  T.push({ name: 'NOVA 0: 毎手番ただで裏向きを1枚足す', kind: 'engine', protos: ['NOVA'],
+    how: 'NOVA 0 を一番上に置いておくと、終了のたびに山札の上が NOVA 0 の下に裏で入る (毎手番 +2)。5枚になると開始で表の札が消える。',
+    setup: { mine: [{ card: 'NOVA_1', at: 'hand' }] },
+    cond: (s, me, P) => { const l = s.players[me].protocols.findIndex(p => p.name === 'NOVA'); return !s.players[me].protocols[l].compiled && s.lines[l][me].length <= 1; },
+    act: { play: 'NOVA_1' }, partner: ['NOVA_1'] });
+  /* PRIDE 0: コンパイルのたびにリフレッシュ */
+  T.push({ name: 'PRIDE 0 + GREED 1: コンパイルしてすぐ手札を戻す', kind: 'engine', protos: ['PRIDE', 'GREED', 'FIRE'],
+    how: 'PRIDE 0 の上段「あなたがコンパイルしたあと: リフレッシュする」は覆われていても効く。GREED 1 の終了のコンパイルのあと、手札が5枚に戻る。',
+    setup: { mine: [{ card: 'PRIDE_1', at: 'field' }, { card: 'GREED_2', at: 'field' }, { card: 'FIRE_5', at: 'field' }, { card: 'FIRE_3', at: 'field', faceUp: false, over: 'FIRE_5' }, { card: 'FIRE_6', at: 'hand' }] },
+    cond: (s, me, P) => { const l = P.lineOf(s, P.planted.FIRE_5); const t = P.total(s, l, me); return !s.players[me].protocols[l].compiled && t >= 5 && t < 10 && t + 5 > P.total(s, l, 1 - me); },
+    act: { play: 'FIRE_6' }, partner: ['PRIDE_1'] });
   T.forEach((c, i) => module.exports.push({ id: 'TX' + String(i + 1).padStart(2, '0'), source: 'text-hypothesis', late: true, ...c }));
 })();
