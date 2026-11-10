@@ -1493,3 +1493,86 @@ module.exports = [
     }
   }
 })();
+
+/* ---------- 効果文から立てた仮説を、前提条件とくり返しの回しまで書いて測る (TX01〜、2026-11-10) ----------
+   これまでの候補は「相方を場に置いて1手打つ」形だけで、前提 (自分が勝っているライン・手札の枚数・アクションで裏向きに出す) や
+   毎手番くり返す回しを書けなかった。prep / cond / plan (scripts/combo_lab.js) で書く */
+(function textHypotheses() {
+  const yes = ['yes'];
+  const lowLine = (s, P) => {
+    const me = P.me; let best = -1, bv = 1e9;
+    for (let l = 0; l < 3; l++) { if (s.players[me].protocols[l].compiled) continue; const v = P.total(s, l, me); if (v < bv) { bv = v; best = l; } }
+    return best < 0 ? 0 : best;
+  };
+  const T = [];
+  /* GREED 1 が場にあり、自分が勝っているラインに LUST 0 を出す → 両者 +10、その終了で即コンパイル */
+  T.push({ name: 'GREED 1 + LUST 0: 勝っているラインに出してその手番にコンパイル', kind: 'burst', protos: ['GREED', 'LUST'],
+    how: 'GREED 1 (終了: 10以上で相手より大きいラインを1つコンパイル) が一番上にあるとき、自分が1点でも勝っている LUST のラインに LUST 0 (両者 +10) を出す。相手の手番を挟まずにコンパイルする。',
+    setup: { mine: [{ card: 'GREED_2', at: 'field' }, { card: 'LUST_5', at: 'field', faceUp: false }, { card: 'LUST_1', at: 'hand' }] },
+    cond: (s, me, P) => { const l = P.lineOf(s, P.planted.LUST_5); return !s.players[me].protocols[l].compiled && P.total(s, l, me) > P.total(s, l, 1 - me) && P.total(s, l, me) < 10; },
+    act: { play: 'LUST_1' }, partner: ['GREED_2'] });
+  /* RIGID 2 はアクションで裏向きに出したときだけ足す。裏向きが増えるほど点になるスタックに手札から裏で出す */
+  for (const [X, five, nm, why] of [['DARKNESS_3', 'DARKNESS_6', 'DARKNESS 2', '裏向きが各4点'], ['SMOKE_3', 'SMOKE_6', 'SMOKE 2', '裏向き1枚ごとに +1'], ['APATHY_1', 'APATHY_6', 'APATHY 0', '裏向き1枚ごとに +1']]) {
+    const proto = X.split('_')[0];
+    T.push({ name: 'RIGID 2 + ' + nm + ': 手札から裏で出すと2枚積む', kind: 'engine', protos: ['RIGID', proto],
+      how: nm + ' (' + why + ') のスタックに、手札からアクションで裏向きに1枚出す。RIGID 2 の下段が山札の上を同じスタックに裏で足す。',
+      setup: { mine: [{ card: X, at: 'field' }, { card: 'RIGID_2', at: 'field' }, { card: five, at: 'hand' }] },
+      cond: (s, me, P) => P.total(s, P.lineOf(s, P.planted[X]), me) < 8,
+      act: { play: five, faceUp: false, line: proto }, partner: ['RIGID_2'] });
+  }
+  /* GREED 2 の開始で自分の札を戻し、毎手番出し直す */
+  for (const [X, nm, eff] of [['METAL_2', 'METAL 1', '2枚引く・相手は次の手番コンパイルできない'], ['PSYCHIC_1', 'PSYCHIC 0', '2枚引く・相手は2枚捨てる'],
+    ['HATE_1', 'HATE 0', '1枚削除'], ['INERT_2', 'INERT 1', '相手は2枚捨てる'], ['SLOTH_4', 'SLOTH 3', '相手は2枚捨てる'], ['DARKNESS_1', 'DARKNESS 0', '3枚引く・相手の覆われた札を動かす'],
+    ['FEAR_2', 'FEAR 1', '2枚引く・相手は手札を全部捨てて1枚少なく引く'], ['FIRE_1', 'FIRE 0', '1枚反転・2枚引く'], ['AMBUSH_1', 'AMBUSH 0', '3枚引く・自分の裏向きを表に']]) {
+    const proto = X.split('_')[0];
+    T.push({ name: 'GREED 2 + ' + nm + ': 毎手番戻して出し直す', kind: 'engine', protos: ['GREED', proto],
+      how: 'GREED 2 の開始「自分のカードを1枚戻すことができる」で ' + nm + ' を戻し、毎手番出し直して中段 (' + eff + ') を撃つ。',
+      setup: { mine: [{ card: 'GREED_3', at: 'field' }, { card: X, at: 'hand' }] },
+      act: { play: X }, partner: ['GREED_3'],
+      picks: (s, q, P) => {
+        if (q.context !== 'GREED_3') return null;
+        if (q.kind === 'yesNo') return yes;
+        if (q.kind === 'pickCard' && q.candidates.includes(P.planted[X])) return [P.planted[X]];
+        return null;
+      },
+      plan: (s, P) => {
+        const u = P.planted[X];
+        if (!s.players[P.me].hand.includes(u)) return null;
+        return { type: 'play', card: u, line: s.players[P.me].protocols.findIndex(p => p.name === proto), faceUp: true };
+      } });
+  }
+  /* FULCRUM 0 + COURAGE 0: 手札0枚で手番を始め、相手に2枚捨てさせて、COURAGE 0 で引いた1枚を出す */
+  for (const partner of ['COURAGE_1', 'FULCRUM_1']) {
+    T.push({ name: 'FULCRUM 0 + COURAGE 0: 手札0枚で回す (' + (partner === 'COURAGE_1' ? 'COURAGE 0 の分' : 'FULCRUM 0 の分') + ')', kind: 'lock', protos: ['FULCRUM', 'COURAGE'],
+      how: '手札を出し切って0枚で手番を始めると、FULCRUM 0 の開始で相手が2枚捨て、COURAGE 0 の開始で1枚引く。引いた1枚を出して、また0枚で終える。',
+      setup: { mine: [{ card: 'FULCRUM_1', at: 'field' }, { card: 'COURAGE_1', at: 'field' }, { card: 'FULCRUM_6', at: 'hand' }] },
+      prep: (s, me, P) => { P.setHand(s, me, 1); },
+      act: { play: 'FULCRUM_6', faceUp: false, line: 'other' }, partner: [partner],
+      picks: (s, q, P) => (q.context === 'COURAGE_1' && q.kind === 'yesNo' ? [] : null),
+      plan: (s, P) => {
+        const h = s.players[P.me].hand;
+        if (h.length !== 1) return null;
+        return { type: 'play', card: h[0], line: lowLine(s, P), faceUp: false };
+      } });
+  }
+  /* GLUTTONY 1: 相手の手札が5枚のときに引かせると、相手は次の終了であふれてキャッシュをクリアする */
+  T.push({ name: 'GLUTTONY 1 + LOVE 6: 相手をあふれさせて削除', kind: 'burst', protos: ['GLUTTONY', 'LOVE'],
+    how: '相手の手札が5枚のときに LOVE 6 で2枚引かせる。相手は1枚出しても6枚で、終了のキャッシュのクリアで GLUTTONY 1 の下段が1枚削除する。',
+    setup: { mine: [{ card: 'GLUTTONY_2', at: 'field' }, { card: 'LOVE_6', at: 'hand' }] },
+    prep: (s, me, P) => { P.setHand(s, 1 - me, 5); },
+    act: { play: 'LOVE_6' }, partner: ['GLUTTONY_2'] });
+  /* RIGID 1: 相手の一番上が裏のラインごとに、終了で手札から裏で1枚出せる */
+  for (const [Y, nm, why] of [['FIRE_4', 'FIRE 3', '終了で相手の一番上を裏にする'], ['PSYCHIC_2', 'PSYCHIC 1', '相手は裏向きでしか出せない'], ['APATHY_4', 'APATHY 3', '相手の表向きを裏にする']]) {
+    T.push({ name: 'RIGID 1 + ' + nm + ': 相手の一番上を裏にして、ただで出す', kind: 'engine', protos: ['RIGID', Y.split('_')[0]],
+      how: nm + ' (' + why + ') で相手の一番上を裏向きにしておくと、RIGID 1 の終了でそのラインごとに裏で1枚出せる。',
+      setup: { mine: [{ card: 'RIGID_1', at: 'field' }, { card: Y, at: 'hand' }] },
+      act: { play: Y }, partner: ['RIGID_1'] });
+  }
+  /* 裏向きを積んだ NOVA のラインに NOVA 1 */
+  T.push({ name: 'NOVA 1: 4枚目に出して相手の手札を4枚捨てさせる', kind: 'burst', protos: ['NOVA'],
+    how: 'NOVA のラインに裏向きを3枚積んでから NOVA 1 を出す。相手はスタックの枚数 (4枚) だけ捨てる。',
+    setup: { mine: [{ card: 'NOVA_6', at: 'field', faceUp: false }, { card: 'NOVA_5', at: 'field', faceUp: false }, { card: 'NOVA_4', at: 'field', faceUp: false }, { card: 'NOVA_2', at: 'hand' }] },
+    cond: (s, me, P) => { const l = P.lineOf(s, P.planted.NOVA_6); return !s.players[me].protocols[l].compiled && P.total(s, l, me) < 9; },
+    act: { play: 'NOVA_2' }, partner: ['NOVA_2'] });
+  T.forEach((c, i) => module.exports.push({ id: 'TX' + String(i + 1).padStart(2, '0'), source: 'text-hypothesis', late: true, ...c }));
+})();

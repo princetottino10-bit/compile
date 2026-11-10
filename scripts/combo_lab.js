@@ -118,6 +118,7 @@ let LAST_MAT = null;
 /* --still: コンボの手のあとは、両者とも「なにもしない」に近い手だけを指す (リフレッシュできればリフレッシュ、
    できなければ組の札がいないラインに裏で1枚)。続きの打ち方のブレを消して、組が自分で回るぶんだけを数える */
 let STILL = false, STILL_KEEP = new Set();
+let PLAN = null;
 /* 既定は裏で1枚 (効果が無い)。リフレッシュは「相手が引いたあと」の札を毎手番起こしてしまうので、出せる札が無いときだけ
    (2026-11-06: リフレッシュ優先だと WAR 0 + RIGID 7 などが膨らんだ) */
 function stillAction(E, st) {
@@ -145,7 +146,10 @@ function continueAndValue(E, model, st, me, horizon, playout, trace, picker) {
     const s = res.state;
     if (!playout && myStarts >= horizon && s.turn === me) break;
     SPEC(E, s.turn);
-    const a = STILL ? stillAction(E, s) : E.ai.action(s);
+    /* combo.plan: 回す側の続きの手番の手を決め打つ (毎手番くり返す回し)。null なら既定の打ち方 */
+    let a = null;
+    if (PLAN && s.turn === me) { const pa = PLAN(s); if (pa && E.legalActions(s).some(x => sameAct(x, pa))) a = pa; }
+    if (!a) a = STILL ? stillAction(E, s) : E.ai.action(s);
     if (!a) break;
     const r = step(E, s, a, picker);
     if (!r) return null;
@@ -300,6 +304,14 @@ function snapshot(E, combo, seed, budget) {
   return null;
 }
 
+function mkP0(E, planted, me, rnd) {
+  return { planted, me, E, total: (s, l, side) => E.lineTotal(s, l, side), lineOf: (s, u) => s.lines.findIndex(L => L[0].includes(u) || L[1].includes(u)),
+    setHand: (s, side, n) => {
+      const keep = new Set(Object.values(planted)); const hand = s.players[side].hand, deck = s.players[side].deck;
+      while (hand.length > n) { const c = hand.filter(u => !keep.has(u)); if (!c.length) break; const u = c[Math.floor(rnd() * c.length)]; rm(hand, u); Object.assign(s.cards[u], { zone: 'deck' + side, faceUp: false, knownTo: 0 }); deck.push(u); }
+      while (hand.length < n && deck.length) { const u = deck.shift(); Object.assign(s.cards[u], { zone: 'hand' + side, faceUp: false, knownTo: 1 << side }); hand.push(u); }
+    } };
+}
 /* ---------- 1盤面ぶんの実験 ---------- */
 function trial(E, model, combo, seed, opt) {
   const snap = snapshot(E, combo, seed, opt.budget);
@@ -311,10 +323,14 @@ function trial(E, model, combo, seed, opt) {
   for (let l = 0; l < 3; l++) for (const s of [0, 1]) {
     /* 植えた盤面で既に 10 点を超えたラインがあると、コンボと関係なくコンパイルが起きる */
   }
+  /* combo.prep: 植えたあとの盤面を前提条件に合わせて直す (手札の枚数など)。combo.cond: 前提を満たさない盤面を外す */
+  const P0 = mkP0(E, planted, me, rnd);
+  if (combo.prep && combo.prep(base, me, P0) === false) return { skip: 'prep' };
+  if (combo.cond && !combo.cond(base, me, P0)) return { skip: 'cond' };
   const forcedAct = resolveAct(E, base, me, combo.act, planted);
   if (!forcedAct) return { skip: 'illegal' };
   /* combo.picks: コンボを回す側の選択を決め打つ (null を返せば ORACLE に任せる)。forced の腕では続きの手番でも使う */
-  const P = { planted, me, val: (s, u) => (s.cards[u].faceUp || String(s.cards[u].zone).startsWith('hand') ? (DEF_VALUE[String(s.cards[u].def).replace(/^BL_/, '')] || 0) : 2), def: (s, u) => s.cards[u].def };
+  const P = { planted, me, E, total: P0.total, lineOf: P0.lineOf, val: (s, u) => (s.cards[u].faceUp || String(s.cards[u].zone).startsWith('hand') ? (DEF_VALUE[String(s.cards[u].def).replace(/^BL_/, '')] || 0) : 2), def: (s, u) => s.cards[u].def };
   const picker = combo.picks ? (s, q) => (q.player === me ? combo.picks(s, q, P) : null) : null;
   const partners = (combo.partner || []).map(c => planted[c]).filter(Boolean);
   const blanked = (s) => { const t = structuredClone(s); for (const u of partners) t.cards[u].def = 'BL_' + t.cards[u].def; return t; };
@@ -334,6 +350,7 @@ function trial(E, model, combo, seed, opt) {
     return k ? sum / k : null;
   };
   const arm1 = (st, act, usePicker) => {
+    PLAN = usePicker && combo.plan ? (s) => combo.plan(s, P, E) : null;
     const r = step(E, structuredClone(st), act, usePicker ? picker : null);
     if (!r) return null;
     if (r.winner !== null) { LAST_MAT = material(E, r.state, me); return r.winner === me ? 1 : 0; }
@@ -393,7 +410,11 @@ if (opt.demo) {
     if (!snap) continue;
     const base = structuredClone(snap.st);
     const planted = plant(base, snap.me, combo.setup, snap.rnd);
-    const act = planted && resolveAct(E, base, snap.me, combo.act, planted);
+    if (!planted) continue;
+    const P0 = mkP0(E, planted, snap.me, snap.rnd);
+    if (combo.prep && combo.prep(base, snap.me, P0) === false) continue;
+    if (combo.cond && !combo.cond(base, snap.me, P0)) continue;
+    const act = resolveAct(E, base, snap.me, combo.act, planted);
     if (!act) continue;
     const me = snap.me;
     const show = (s) => [0, 1, 2].map(l => 'L' + l + '(' + s.players[me].protocols[l].name + ') 自分[' + s.lines[l][me].map(u => s.cards[u].def + (s.cards[u].faceUp ? '' : '↓')).join(' ') + '] 相手[' + s.lines[l][1 - me].map(u => s.cards[u].def + (s.cards[u].faceUp ? '' : '↓')).join(' ') + ']').join('\n');
@@ -407,8 +428,9 @@ if (opt.demo) {
       const lab = (a) => a.type === 'play' ? base.cards[a.card].def + '@' + a.line + (a.faceUp ? '↑' : '↓') : a.type;
       console.log(rv.candidates.slice().sort((x, y) => y.val - x.val).slice(0, 10).map(c => lab(c.a) + ' ' + Math.round(c.val)).join(' / '));
     }
-    const P = { planted, me, val: (s, u) => (s.cards[u].faceUp || String(s.cards[u].zone).startsWith('hand') ? (DEF_VALUE[s.cards[u].def] || 0) : 2) };
+    const P = { planted, me, E, total: P0.total, lineOf: P0.lineOf, val: (s, u) => (s.cards[u].faceUp || String(s.cards[u].zone).startsWith('hand') ? (DEF_VALUE[s.cards[u].def] || 0) : 2) };
     const picker = combo.picks ? (s, q) => (q.player === me ? combo.picks(s, q, P) : null) : null;
+    PLAN = combo.plan ? (s) => combo.plan(s, P, E) : null;
     const r = step(E, base, act, picker);
     console.log(r.log.join('\n'));
     const trace = [];
