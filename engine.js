@@ -3980,7 +3980,18 @@ const AI_AIM_COMBOS = [
   /* 表の PSYCHIC 0 に裏向きを重ねておき、DARKNESS 4 でその裏向きを別のラインへどかすと PSYCHIC 0 の中段 (2枚引く・相手が2枚捨てる) がもう一度入る (ORACLE 7/9) */
   { pieces: { PSYCHIC_1: 'cov', DARKNESS_5: 'play' } },
   /* GLUTTONY 2 で手札の枚数ぶん引いて上限を超え、終了のキャッシュクリアで GLUTTONY 0 の上段 (山札の上を裏でプレイ) が入る (1局2回) */
-  { pieces: { GLUTTONY_1: 'up', GLUTTONY_3: 'play' } }
+  { pieces: { GLUTTONY_1: 'up', GLUTTONY_3: 'play' } },
+  /* 効果文からの仮説 (2026-11-10、docs/ai-combos.md の最後の節)。
+     GREED 1 が一番上にあると、10点に届いたその手番の終了でコンパイルする。1点でも勝っているラインに LUST 0 (両者 +10) を出すと
+     相手の手番を挟まずにコンパイルになる (87盤面で +21.5 ±2.5、コンパイル +0.8)。SLOTH 0 を SLOTH 5 で覆う (2枚で10点)・
+     裏向き2枚の上の DARKNESS 2 も同じ手番に届く (+15.4 / +14.4) */
+  { pieces: { GREED_2: 'top', LUST_1: 'play' } },
+  { pieces: { GREED_2: 'top', SLOTH_1: 'top', SLOTH_6: 'play' } },
+  { pieces: { GREED_2: 'top', DARKNESS_3: 'play' } },
+  /* RIGID 2 が一番上にあると、手札から裏で出すたびに山札の上も同じスタックに入る。APATHY 0・SMOKE 2 のラインは裏向き1枚ごとに +1
+     (APATHY 0: 101盤面で +12.3 ±2.5、SMOKE 2: 103盤面で +5.2 ±2.0)。裏で出す手は aiDownIsRich で読みに入れる */
+  { pieces: { RIGID_2: 'top', APATHY_1: 'up' } },
+  { pieces: { RIGID_2: 'top', SMOKE_3: 'up' } }
 ];
 function aiAimPlace(st, side, uid) {
   const c = st.cards[uid];
@@ -5600,6 +5611,17 @@ function aiWouldWasteHate4(state, action, side) {
    2. コンボ: 自分の一番上の札の「覆われることになったとき」を起こす (FIRE 0 など)
    3. コンパイル: 裏の2点でそのラインがコンパイル圏 (10以上で相手より上) に届き、表で届く手が無い
    4. コントロール: 裏の2点で自分が2ラインのリードを取る / 相手の2ラインのリードを崩す。表で同じことができる手が無い */
+const AI_DOWN_BONUS = new Set(['APATHY_1', 'SMOKE_3']);
+function aiDownIsRich(st, side, line) {
+  let rigid2 = false;
+  for (let l = 0; l < 3; l++) {
+    const stack = st.lines[l][side];
+    const top = stack[stack.length - 1];
+    if (top && st.cards[top].faceUp && st.cards[top].def === 'RIGID_2') rigid2 = true;
+  }
+  if (!rigid2) return false;
+  return st.lines[line][side].some(u => st.cards[u].faceUp && AI_DOWN_BONUS.has(st.cards[u].def));
+}
 function aiFaceDownAllowed(st, side, action, acts) {
   const ups = acts.filter(a => a.type === 'play' && a.faceUp);
   if (!ups.length) return true;
@@ -5618,6 +5640,10 @@ function aiFaceDownAllowed(st, side, action, acts) {
     if (tc && tc.faceUp && tc.def === 'FIRE_1' && aiTaughtTactics(st, side) && aiHasDefInHand(st, side, 'DARKNESS_5') && !aiLockLive(st, side)
         && (aiHasDefInHand(st, side, AI_LOCK_CARD) || [0, 1, 2].some(l => st.lines[l][side].some(u => st.cards[u].def === AI_LOCK_CARD)))) return true;
   }
+  /* 裏向きが2点より値打ちのある場所 (docs/ai-combos.md「効果文からの仮説」TX02〜04): 一番上で表の RIGID 2 があるとアクションの裏向きは2枚になり、
+     APATHY 0・SMOKE 2 のラインは裏向き1枚ごとに +1。RIGID 2 + APATHY 0 に手札から裏で出す手は 101盤面で +12.3 ±2.5 だったが、
+     裏向きの手を根で落としていたので ORACLE は一度も選ばなかった */
+  if (destSide === side && aiTaughtTactics(st, side) && aiDownIsRich(st, side, action.line)) return true;
   if (destSide !== side) return false;
   const total = (l, s) => lineTotal(st, l, s);
   const addFor = (a) => (a.faceUp ? DEFS[st.cards[a.card].def].value : 2);

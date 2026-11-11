@@ -1,6 +1,6 @@
 {
  "about": "Compile のコンボのデータベース。生成: node scripts/combo_db.js (候補 scripts/combo_cands.js / 検証 scripts/combo_lab.js / 教わった手筋 scripts/combo_taught.js)。lab.interaction = 噛み合い (その手で相方あり−相方白紙) − (ORACLE の手で相方あり−相方白紙) (pt)。lab.partnerValue = ORACLE が自由に打つときの相方あり−相方白紙 (相方そのものの値)。lab.synergy = その手で相方あり−相方白紙 (噛み合い+相方の値)。lab.missed = その手を打ったときと ORACLE が自分で選んだ手の差。lab.aiPicked = ORACLE が自分でその手を選んだ割合 (%)。勝つ見込みは自分の手番を horizon 回進めたあとの data/valnet.json の読み (playout なら決着まで打った勝ち負け)。",
- "updated": "2026-11-05",
+ "updated": "2026-11-11",
  "combos": [
   {
    "id": "C001",
@@ -67881,6 +67881,1138 @@
    "note": null
   },
   {
+   "id": "TX01",
+   "name": "GREED 1 + LUST 0: 勝っているラインに出してその手番にコンパイル",
+   "kind": "burst",
+   "source": "text-hypothesis",
+   "cards": [
+    "GREED_2",
+    "LUST_5",
+    "LUST_1"
+   ],
+   "protocols": [
+    "GREED",
+    "LUST"
+   ],
+   "how": "GREED 1 (終了: 10以上で相手より大きいラインを1つコンパイル) が一番上にあるとき、自分が1点でも勝っている LUST のラインに LUST 0 (両者 +10) を出す。相手の手番を挟まずにコンパイルする。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 87,
+    "horizon": 4,
+    "playout": false,
+    "interaction": 4.6,
+    "interactionSe": 2.2,
+    "partnerValue": 16.9,
+    "partnerValueSe": 2.3,
+    "synergy": 21.5,
+    "synergySe": 2.5,
+    "missed": 1.2,
+    "missedSe": 1,
+    "aiPicked": 72
+   },
+   "note": null
+  },
+  {
+   "id": "TX02",
+   "name": "RIGID 2 + DARKNESS 2: 手札から裏で出すと2枚積む",
+   "kind": "engine",
+   "source": "text-hypothesis",
+   "cards": [
+    "DARKNESS_3",
+    "RIGID_2",
+    "DARKNESS_6"
+   ],
+   "protocols": [
+    "RIGID",
+    "DARKNESS"
+   ],
+   "how": "DARKNESS 2 (裏向きが各4点) のスタックに、手札からアクションで裏向きに1枚出す。RIGID 2 の下段が山札の上を同じスタックに裏で足す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 102,
+    "horizon": 4,
+    "playout": false,
+    "interaction": 1.7,
+    "interactionSe": 3.5,
+    "partnerValue": 1.9,
+    "partnerValueSe": 1.9,
+    "synergy": 3.6,
+    "synergySe": 2.9,
+    "missed": -5.5,
+    "missedSe": 3,
+    "aiPicked": 1
+   },
+   "note": null
+  },
+  {
+   "id": "TX03",
+   "name": "RIGID 2 + SMOKE 2: 手札から裏で出すと2枚積む",
+   "kind": "engine",
+   "source": "text-hypothesis",
+   "cards": [
+    "SMOKE_3",
+    "RIGID_2",
+    "SMOKE_6"
+   ],
+   "protocols": [
+    "RIGID",
+    "SMOKE"
+   ],
+   "how": "SMOKE 2 (裏向き1枚ごとに +1) のスタックに、手札からアクションで裏向きに1枚出す。RIGID 2 の下段が山札の上を同じスタックに裏で足す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 4,
+    "playout": false,
+    "interaction": 2.8,
+    "interactionSe": 2.9,
+    "partnerValue": 2.4,
+    "partnerValueSe": 1.8,
+    "synergy": 5.2,
+    "synergySe": 2,
+    "missed": -0.3,
+    "missedSe": 2.1,
+    "aiPicked": 1
+   },
+   "note": null
+  },
+  {
+   "id": "TX04",
+   "name": "RIGID 2 + APATHY 0: 手札から裏で出すと2枚積む",
+   "kind": "engine",
+   "source": "text-hypothesis",
+   "cards": [
+    "APATHY_1",
+    "RIGID_2",
+    "APATHY_6"
+   ],
+   "protocols": [
+    "RIGID",
+    "APATHY"
+   ],
+   "how": "APATHY 0 (裏向き1枚ごとに +1) のスタックに、手札からアクションで裏向きに1枚出す。RIGID 2 の下段が山札の上を同じスタックに裏で足す。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 101,
+    "horizon": 4,
+    "playout": false,
+    "interaction": 10.9,
+    "interactionSe": 3.1,
+    "partnerValue": 1.4,
+    "partnerValueSe": 1.6,
+    "synergy": 12.3,
+    "synergySe": 2.5,
+    "missed": 4.4,
+    "missedSe": 3.3,
+    "aiPicked": 0
+   },
+   "note": null
+  },
+  {
+   "id": "TX05",
+   "name": "GREED 2 + METAL 1: 毎手番戻して出し直す",
+   "kind": "engine",
+   "source": "text-hypothesis",
+   "cards": [
+    "GREED_3",
+    "METAL_2"
+   ],
+   "protocols": [
+    "GREED",
+    "METAL"
+   ],
+   "how": "GREED 2 の開始「自分のカードを1枚戻すことができる」で METAL 1 を戻し、毎手番出し直して中段 (2枚引く・相手は次の手番コンパイルできない) を撃つ。",
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 42,
+    "horizon": 4,
+    "playout": false,
+    "interaction": -12,
+    "interactionSe": 3.9,
+    "partnerValue": 1,
+    "partnerValueSe": 2.5,
+    "synergy": -11,
+    "synergySe": 3,
+    "missed": -15.3,
+    "missedSe": 4,
+    "aiPicked": 21
+   },
+   "note": null
+  },
+  {
+   "id": "TX06",
+   "name": "GREED 2 + PSYCHIC 0: 毎手番戻して出し直す",
+   "kind": "engine",
+   "source": "text-hypothesis",
+   "cards": [
+    "GREED_3",
+    "PSYCHIC_1"
+   ],
+   "protocols": [
+    "GREED",
+    "PSYCHIC"
+   ],
+   "how": "GREED 2 の開始「自分のカードを1枚戻すことができる」で PSYCHIC 0 を戻し、毎手番出し直して中段 (2枚引く・相手は2枚捨てる) を撃つ。",
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 42,
+    "horizon": 4,
+    "playout": false,
+    "interaction": -10.6,
+    "interactionSe": 3,
+    "partnerValue": 4,
+    "partnerValueSe": 1.9,
+    "synergy": -6.7,
+    "synergySe": 3,
+    "missed": -9.4,
+    "missedSe": 3.3,
+    "aiPicked": 19
+   },
+   "note": null
+  },
+  {
+   "id": "TX07",
+   "name": "GREED 2 + HATE 0: 毎手番戻して出し直す",
+   "kind": "engine",
+   "source": "text-hypothesis",
+   "cards": [
+    "GREED_3",
+    "HATE_1"
+   ],
+   "protocols": [
+    "GREED",
+    "HATE"
+   ],
+   "how": "GREED 2 の開始「自分のカードを1枚戻すことができる」で HATE 0 を戻し、毎手番出し直して中段 (1枚削除) を撃つ。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 4,
+    "playout": false,
+    "interaction": -3.4,
+    "interactionSe": 2.7,
+    "partnerValue": 2.3,
+    "partnerValueSe": 2.1,
+    "synergy": -1,
+    "synergySe": 2.2,
+    "missed": -5.8,
+    "missedSe": 2.3,
+    "aiPicked": 31
+   },
+   "note": null
+  },
+  {
+   "id": "TX08",
+   "name": "GREED 2 + INERT 1: 毎手番戻して出し直す",
+   "kind": "engine",
+   "source": "text-hypothesis",
+   "cards": [
+    "GREED_3",
+    "INERT_2"
+   ],
+   "protocols": [
+    "GREED",
+    "INERT"
+   ],
+   "how": "GREED 2 の開始「自分のカードを1枚戻すことができる」で INERT 1 を戻し、毎手番出し直して中段 (相手は2枚捨てる) を撃つ。",
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 41,
+    "horizon": 4,
+    "playout": false,
+    "interaction": -10,
+    "interactionSe": 3.1,
+    "partnerValue": 2,
+    "partnerValueSe": 2.7,
+    "synergy": -7.9,
+    "synergySe": 2.7,
+    "missed": -15.3,
+    "missedSe": 2.8,
+    "aiPicked": 12
+   },
+   "note": null
+  },
+  {
+   "id": "TX09",
+   "name": "GREED 2 + SLOTH 3: 毎手番戻して出し直す",
+   "kind": "engine",
+   "source": "text-hypothesis",
+   "cards": [
+    "GREED_3",
+    "SLOTH_4"
+   ],
+   "protocols": [
+    "GREED",
+    "SLOTH"
+   ],
+   "how": "GREED 2 の開始「自分のカードを1枚戻すことができる」で SLOTH 3 を戻し、毎手番出し直して中段 (相手は2枚捨てる) を撃つ。",
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 41,
+    "horizon": 4,
+    "playout": false,
+    "interaction": -11.4,
+    "interactionSe": 3.5,
+    "partnerValue": 1.1,
+    "partnerValueSe": 1.7,
+    "synergy": -10.3,
+    "synergySe": 3.3,
+    "missed": -12.6,
+    "missedSe": 3.8,
+    "aiPicked": 37
+   },
+   "note": null
+  },
+  {
+   "id": "TX10",
+   "name": "GREED 2 + DARKNESS 0: 毎手番戻して出し直す",
+   "kind": "engine",
+   "source": "text-hypothesis",
+   "cards": [
+    "GREED_3",
+    "DARKNESS_1"
+   ],
+   "protocols": [
+    "GREED",
+    "DARKNESS"
+   ],
+   "how": "GREED 2 の開始「自分のカードを1枚戻すことができる」で DARKNESS 0 を戻し、毎手番出し直して中段 (3枚引く・相手の覆われた札を動かす) を撃つ。",
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 41,
+    "horizon": 4,
+    "playout": false,
+    "interaction": -14.6,
+    "interactionSe": 3.7,
+    "partnerValue": 4.1,
+    "partnerValueSe": 3.3,
+    "synergy": -10.5,
+    "synergySe": 2.6,
+    "missed": -16.1,
+    "missedSe": 3.5,
+    "aiPicked": 15
+   },
+   "note": null
+  },
+  {
+   "id": "TX11",
+   "name": "GREED 2 + FEAR 1: 毎手番戻して出し直す",
+   "kind": "engine",
+   "source": "text-hypothesis",
+   "cards": [
+    "GREED_3",
+    "FEAR_2"
+   ],
+   "protocols": [
+    "GREED",
+    "FEAR"
+   ],
+   "how": "GREED 2 の開始「自分のカードを1枚戻すことができる」で FEAR 1 を戻し、毎手番出し直して中段 (2枚引く・相手は手札を全部捨てて1枚少なく引く) を撃つ。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 4,
+    "playout": false,
+    "interaction": -4.4,
+    "interactionSe": 3.1,
+    "partnerValue": 0.1,
+    "partnerValueSe": 1.6,
+    "synergy": -4.2,
+    "synergySe": 3.2,
+    "missed": -9.8,
+    "missedSe": 3.6,
+    "aiPicked": 17
+   },
+   "note": null
+  },
+  {
+   "id": "TX12",
+   "name": "GREED 2 + FIRE 0: 毎手番戻して出し直す",
+   "kind": "engine",
+   "source": "text-hypothesis",
+   "cards": [
+    "GREED_3",
+    "FIRE_1"
+   ],
+   "protocols": [
+    "GREED",
+    "FIRE"
+   ],
+   "how": "GREED 2 の開始「自分のカードを1枚戻すことができる」で FIRE 0 を戻し、毎手番出し直して中段 (1枚反転・2枚引く) を撃つ。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 4,
+    "playout": false,
+    "interaction": -4.1,
+    "interactionSe": 2.5,
+    "partnerValue": 0.5,
+    "partnerValueSe": 1.3,
+    "synergy": -3.6,
+    "synergySe": 2.4,
+    "missed": -4.1,
+    "missedSe": 2.3,
+    "aiPicked": 26
+   },
+   "note": null
+  },
+  {
+   "id": "TX13",
+   "name": "GREED 2 + AMBUSH 0: 毎手番戻して出し直す",
+   "kind": "engine",
+   "source": "text-hypothesis",
+   "cards": [
+    "GREED_3",
+    "AMBUSH_1"
+   ],
+   "protocols": [
+    "GREED",
+    "AMBUSH"
+   ],
+   "how": "GREED 2 の開始「自分のカードを1枚戻すことができる」で AMBUSH 0 を戻し、毎手番出し直して中段 (3枚引く・自分の裏向きを表に) を撃つ。",
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 42,
+    "horizon": 4,
+    "playout": false,
+    "interaction": -9.5,
+    "interactionSe": 2.9,
+    "partnerValue": 2.8,
+    "partnerValueSe": 1.9,
+    "synergy": -6.7,
+    "synergySe": 2.8,
+    "missed": -13.9,
+    "missedSe": 3.1,
+    "aiPicked": 10
+   },
+   "note": null
+  },
+  {
+   "id": "TX14",
+   "name": "FULCRUM 0 + COURAGE 0: 手札0枚で回す (COURAGE 0 の分)",
+   "kind": "lock",
+   "source": "text-hypothesis",
+   "cards": [
+    "FULCRUM_1",
+    "COURAGE_1",
+    "FULCRUM_6"
+   ],
+   "protocols": [
+    "FULCRUM",
+    "COURAGE"
+   ],
+   "how": "手札を出し切って0枚で手番を始めると、FULCRUM 0 の開始で相手が2枚捨て、COURAGE 0 の開始で1枚引く。引いた1枚を出して、また0枚で終える。",
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 42,
+    "horizon": 4,
+    "playout": false,
+    "interaction": -15.3,
+    "interactionSe": 4.3,
+    "partnerValue": 4.2,
+    "partnerValueSe": 2.9,
+    "synergy": -11.1,
+    "synergySe": 3.7,
+    "missed": -20.7,
+    "missedSe": 3.1,
+    "aiPicked": 2
+   },
+   "note": null
+  },
+  {
+   "id": "TX15",
+   "name": "FULCRUM 0 + COURAGE 0: 手札0枚で回す (FULCRUM 0 の分)",
+   "kind": "lock",
+   "source": "text-hypothesis",
+   "cards": [
+    "FULCRUM_1",
+    "COURAGE_1",
+    "FULCRUM_6"
+   ],
+   "protocols": [
+    "FULCRUM",
+    "COURAGE"
+   ],
+   "how": "手札を出し切って0枚で手番を始めると、FULCRUM 0 の開始で相手が2枚捨て、COURAGE 0 の開始で1枚引く。引いた1枚を出して、また0枚で終える。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 4,
+    "playout": false,
+    "interaction": 5,
+    "interactionSe": 3.3,
+    "partnerValue": -0.2,
+    "partnerValueSe": 2.2,
+    "synergy": 4.8,
+    "synergySe": 2.1,
+    "missed": -15,
+    "missedSe": 3.5,
+    "aiPicked": 5
+   },
+   "note": null
+  },
+  {
+   "id": "TX16",
+   "name": "GLUTTONY 1 + LOVE 6: 相手をあふれさせて削除",
+   "kind": "burst",
+   "source": "text-hypothesis",
+   "cards": [
+    "GLUTTONY_2",
+    "LOVE_6"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "LOVE"
+   ],
+   "how": "相手の手札が5枚のときに LOVE 6 で2枚引かせる。相手は1枚出しても6枚で、終了のキャッシュのクリアで GLUTTONY 1 の下段が1枚削除する。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 103,
+    "horizon": 4,
+    "playout": false,
+    "interaction": 2.5,
+    "interactionSe": 2.2,
+    "partnerValue": 4.5,
+    "partnerValueSe": 1.8,
+    "synergy": 7,
+    "synergySe": 1.7,
+    "missed": -2,
+    "missedSe": 2.1,
+    "aiPicked": 33
+   },
+   "note": null
+  },
+  {
+   "id": "TX17",
+   "name": "RIGID 1 + FIRE 3: 相手の一番上を裏にして、ただで出す",
+   "kind": "engine",
+   "source": "text-hypothesis",
+   "cards": [
+    "RIGID_1",
+    "FIRE_4"
+   ],
+   "protocols": [
+    "RIGID",
+    "FIRE"
+   ],
+   "how": "FIRE 3 (終了で相手の一番上を裏にする) で相手の一番上を裏向きにしておくと、RIGID 1 の終了でそのラインごとに裏で1枚出せる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 4,
+    "playout": false,
+    "interaction": -2,
+    "interactionSe": 3.3,
+    "partnerValue": 7.6,
+    "partnerValueSe": 2.6,
+    "synergy": 5.6,
+    "synergySe": 3.4,
+    "missed": -3.8,
+    "missedSe": 2.2,
+    "aiPicked": 31
+   },
+   "note": null
+  },
+  {
+   "id": "TX18",
+   "name": "RIGID 1 + PSYCHIC 1: 相手の一番上を裏にして、ただで出す",
+   "kind": "engine",
+   "source": "text-hypothesis",
+   "cards": [
+    "RIGID_1",
+    "PSYCHIC_2"
+   ],
+   "protocols": [
+    "RIGID",
+    "PSYCHIC"
+   ],
+   "how": "PSYCHIC 1 (相手は裏向きでしか出せない) で相手の一番上を裏向きにしておくと、RIGID 1 の終了でそのラインごとに裏で1枚出せる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 41,
+    "horizon": 4,
+    "playout": false,
+    "interaction": -6.4,
+    "interactionSe": 3.7,
+    "partnerValue": 8.6,
+    "partnerValueSe": 3.4,
+    "synergy": 2.2,
+    "synergySe": 2,
+    "missed": -7.3,
+    "missedSe": 3.4,
+    "aiPicked": 27
+   },
+   "note": null
+  },
+  {
+   "id": "TX19",
+   "name": "RIGID 1 + APATHY 3: 相手の一番上を裏にして、ただで出す",
+   "kind": "engine",
+   "source": "text-hypothesis",
+   "cards": [
+    "RIGID_1",
+    "APATHY_4"
+   ],
+   "protocols": [
+    "RIGID",
+    "APATHY"
+   ],
+   "how": "APATHY 3 (相手の表向きを裏にする) で相手の一番上を裏向きにしておくと、RIGID 1 の終了でそのラインごとに裏で1枚出せる。",
+   "verdict": "weak",
+   "verdictLabel": "相方が強い (噛み合いは小さい)",
+   "lab": {
+    "n": 41,
+    "horizon": 4,
+    "playout": false,
+    "interaction": 1.4,
+    "interactionSe": 3,
+    "partnerValue": 11.1,
+    "partnerValueSe": 3.2,
+    "synergy": 12.5,
+    "synergySe": 3.4,
+    "missed": 1.6,
+    "missedSe": 2.3,
+    "aiPicked": 56
+   },
+   "note": null
+  },
+  {
+   "id": "TX20",
+   "name": "NOVA 1: 4枚目に出して相手の手札を4枚捨てさせる",
+   "kind": "burst",
+   "source": "text-hypothesis",
+   "cards": [
+    "NOVA_6",
+    "NOVA_5",
+    "NOVA_4",
+    "NOVA_2"
+   ],
+   "protocols": [
+    "NOVA"
+   ],
+   "how": "NOVA のラインに裏向きを3枚積んでから NOVA 1 を出す。相手はスタックの枚数 (4枚) だけ捨てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 42,
+    "horizon": 4,
+    "playout": false,
+    "interaction": 3.8,
+    "interactionSe": 4.4,
+    "partnerValue": -0.6,
+    "partnerValueSe": 2.9,
+    "synergy": 3.2,
+    "synergySe": 2.4,
+    "missed": -1.2,
+    "missedSe": 2.5,
+    "aiPicked": 26
+   },
+   "note": null
+  },
+  {
+   "id": "TX21",
+   "name": "LUST 0: 勝っているラインに出して次の開始でコンパイル",
+   "kind": "burst",
+   "source": "text-hypothesis",
+   "cards": [
+    "LUST_5",
+    "LUST_1"
+   ],
+   "protocols": [
+    "LUST"
+   ],
+   "how": "自分が1点でも勝っている LUST のラインに LUST 0 を出す。両者 +10 で、コントロールを持っている間は相手はコンパイルできない。次の自分の開始でコンパイルする。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 40,
+    "horizon": 4,
+    "playout": false,
+    "interaction": 3.7,
+    "interactionSe": 3.9,
+    "partnerValue": 3.7,
+    "partnerValueSe": 2.5,
+    "synergy": 7.4,
+    "synergySe": 4.5,
+    "missed": -6.1,
+    "missedSe": 3.1,
+    "aiPicked": 20
+   },
+   "note": null
+  },
+  {
+   "id": "TX22",
+   "name": "SLOTH 0 + SLOTH 5: 2枚で10点",
+   "kind": "burst",
+   "source": "text-hypothesis",
+   "cards": [
+    "SLOTH_1",
+    "SLOTH_6"
+   ],
+   "protocols": [
+    "SLOTH"
+   ],
+   "how": "SLOTH 0 (SLOTH の札に覆われていると +5) の上に SLOTH 5 を出すと、2枚で10点になる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 61,
+    "horizon": 4,
+    "playout": false,
+    "interaction": 1.8,
+    "interactionSe": 2.6,
+    "partnerValue": 6.5,
+    "partnerValueSe": 2.6,
+    "synergy": 8.3,
+    "synergySe": 2.1,
+    "missed": -4.3,
+    "missedSe": 1.9,
+    "aiPicked": 67
+   },
+   "note": null
+  },
+  {
+   "id": "TX23",
+   "name": "GREED 1 + SLOTH 0 + SLOTH 5: 2枚で10点にしてその手番にコンパイル",
+   "kind": "burst",
+   "source": "text-hypothesis",
+   "cards": [
+    "GREED_2",
+    "SLOTH_1",
+    "SLOTH_6"
+   ],
+   "protocols": [
+    "SLOTH",
+    "GREED"
+   ],
+   "how": "GREED 1 が一番上にあるとき、SLOTH 0 の上に SLOTH 5 を出して10点にすると、その終了でコンパイルする。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 4,
+    "playout": false,
+    "interaction": -1,
+    "interactionSe": 1.8,
+    "partnerValue": 16.5,
+    "partnerValueSe": 2.5,
+    "synergy": 15.4,
+    "synergySe": 2.1,
+    "missed": -1.9,
+    "missedSe": 1.2,
+    "aiPicked": 69
+   },
+   "note": null
+  },
+  {
+   "id": "TX24",
+   "name": "DARKNESS 2: 裏向き2枚の上に出して10点",
+   "kind": "burst",
+   "source": "text-hypothesis",
+   "cards": [
+    "DARKNESS_6",
+    "DARKNESS_5",
+    "DARKNESS_3"
+   ],
+   "protocols": [
+    "DARKNESS"
+   ],
+   "how": "DARKNESS のラインに裏向きを2枚置いてから DARKNESS 2 を出す。裏向きが各4点になり、3枚で10点になる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 28,
+    "horizon": 4,
+    "playout": false,
+    "interaction": 2.6,
+    "interactionSe": 3.1,
+    "partnerValue": -1,
+    "partnerValueSe": 2.1,
+    "synergy": 1.6,
+    "synergySe": 2.8,
+    "missed": -3.4,
+    "missedSe": 2.7,
+    "aiPicked": 75
+   },
+   "note": null
+  },
+  {
+   "id": "TX25",
+   "name": "GREED 1 + DARKNESS 2: 裏向き2枚の上に出してその手番にコンパイル",
+   "kind": "burst",
+   "source": "text-hypothesis",
+   "cards": [
+    "GREED_2",
+    "DARKNESS_6",
+    "DARKNESS_5",
+    "DARKNESS_3"
+   ],
+   "protocols": [
+    "DARKNESS",
+    "GREED"
+   ],
+   "how": "GREED 1 が一番上にあるとき、裏向き2枚の上に DARKNESS 2 を出して10点にすると、その終了でコンパイルする。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 33,
+    "horizon": 4,
+    "playout": false,
+    "interaction": -5.5,
+    "interactionSe": 3.2,
+    "partnerValue": 19.9,
+    "partnerValueSe": 4,
+    "synergy": 14.4,
+    "synergySe": 2.7,
+    "missed": -2.1,
+    "missedSe": 2.1,
+    "aiPicked": 85
+   },
+   "note": null
+  },
+  {
+   "id": "TX26",
+   "name": "GREED 1: 届く1枚を出したその手番にコンパイル",
+   "kind": "engine",
+   "source": "text-hypothesis",
+   "cards": [
+    "GREED_2",
+    "FIRE_5",
+    "FIRE_3",
+    "FIRE_6"
+   ],
+   "protocols": [
+    "GREED",
+    "FIRE"
+   ],
+   "how": "GREED 1 が一番上にあると、10点に届く1枚を出したその手番の終了でコンパイルする。相手は手を挟めない。",
+   "verdict": "weak",
+   "verdictLabel": "相方が強い (噛み合いは小さい)",
+   "lab": {
+    "n": 62,
+    "horizon": 4,
+    "playout": false,
+    "interaction": 0.8,
+    "interactionSe": 1.5,
+    "partnerValue": 12.1,
+    "partnerValueSe": 2.3,
+    "synergy": 12.9,
+    "synergySe": 2.5,
+    "missed": -0.9,
+    "missedSe": 0.5,
+    "aiPicked": 84
+   },
+   "note": null
+  },
+  {
+   "id": "TX27",
+   "name": "NOVA 0: 毎手番ただで裏向きを1枚足す",
+   "kind": "engine",
+   "source": "text-hypothesis",
+   "cards": [
+    "NOVA_1"
+   ],
+   "protocols": [
+    "NOVA"
+   ],
+   "how": "NOVA 0 を一番上に置いておくと、終了のたびに山札の上が NOVA 0 の下に裏で入る (毎手番 +2)。5枚になると開始で表の札が消える。",
+   "verdict": "strong",
+   "verdictLabel": "噛み合う",
+   "lab": {
+    "n": 59,
+    "horizon": 4,
+    "playout": false,
+    "interaction": 7.3,
+    "interactionSe": 2.8,
+    "partnerValue": 6.4,
+    "partnerValueSe": 2.4,
+    "synergy": 13.7,
+    "synergySe": 2.8,
+    "missed": -1.6,
+    "missedSe": 2.6,
+    "aiPicked": 25
+   },
+   "note": null
+  },
+  {
+   "id": "TX28",
+   "name": "PRIDE 0 + GREED 1: コンパイルしてすぐ手札を戻す",
+   "kind": "engine",
+   "source": "text-hypothesis",
+   "cards": [
+    "PRIDE_1",
+    "GREED_2",
+    "FIRE_5",
+    "FIRE_3",
+    "FIRE_6"
+   ],
+   "protocols": [
+    "PRIDE",
+    "GREED",
+    "FIRE"
+   ],
+   "how": "PRIDE 0 の上段「あなたがコンパイルしたあと: リフレッシュする」は覆われていても効く。GREED 1 の終了のコンパイルのあと、手札が5枚に戻る。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 62,
+    "horizon": 4,
+    "playout": false,
+    "interaction": -1.4,
+    "interactionSe": 0.9,
+    "partnerValue": 4.9,
+    "partnerValueSe": 1.3,
+    "synergy": 3.5,
+    "synergySe": 1.4,
+    "missed": -1.7,
+    "missedSe": 0.8,
+    "aiPicked": 77
+   },
+   "note": null
+  },
+  {
+   "id": "TX29",
+   "name": "CLARITY 2 → GREED 1: 山札から呼んでそのまま出す",
+   "kind": "setup",
+   "source": "text-hypothesis",
+   "cards": [
+    "GREED_2",
+    "CLARITY_3"
+   ],
+   "protocols": [
+    "CLARITY",
+    "GREED"
+   ],
+   "how": "CLARITY 2 で山札から値1の札を引き、続けて値1の札を1枚出せる。GREED 1 (届いた手番にコンパイル) を呼んで同じ手番に置く。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 4,
+    "playout": false,
+    "interaction": 2.7,
+    "interactionSe": 1.8,
+    "partnerValue": 2.9,
+    "partnerValueSe": 1.5,
+    "synergy": 5.6,
+    "synergySe": 1.7,
+    "missed": -2,
+    "missedSe": 2.2,
+    "aiPicked": 60
+   },
+   "note": null
+  },
+  {
+   "id": "TX30",
+   "name": "CLARITY 2 → METAL 1: 山札から呼んでそのまま出す",
+   "kind": "setup",
+   "source": "text-hypothesis",
+   "cards": [
+    "METAL_2",
+    "CLARITY_3"
+   ],
+   "protocols": [
+    "CLARITY",
+    "METAL"
+   ],
+   "how": "CLARITY 2 で山札から値1の札を引き、続けて値1の札を1枚出せる。METAL 1 (2枚引く・相手は次の手番コンパイルできない) を呼んで同じ手番に置く。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 4,
+    "playout": false,
+    "interaction": 4.5,
+    "interactionSe": 2.5,
+    "partnerValue": -0.4,
+    "partnerValueSe": 2.1,
+    "synergy": 4.1,
+    "synergySe": 2.6,
+    "missed": -0.8,
+    "missedSe": 1.7,
+    "aiPicked": 71
+   },
+   "note": null
+  },
+  {
+   "id": "TX31",
+   "name": "CLARITY 2 → WRATH 1: 山札から呼んでそのまま出す",
+   "kind": "setup",
+   "source": "text-hypothesis",
+   "cards": [
+    "WRATH_2",
+    "CLARITY_3"
+   ],
+   "protocols": [
+    "CLARITY",
+    "WRATH"
+   ],
+   "how": "CLARITY 2 で山札から値1の札を引き、続けて値1の札を1枚出せる。WRATH 1 (1枚引く・終了でコントロールを手放して削除) を呼んで同じ手番に置く。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 4,
+    "playout": false,
+    "interaction": -0.3,
+    "interactionSe": 2.9,
+    "partnerValue": 1.5,
+    "partnerValueSe": 2.1,
+    "synergy": 1.2,
+    "synergySe": 2.1,
+    "missed": -5.1,
+    "missedSe": 2.8,
+    "aiPicked": 63
+   },
+   "note": null
+  },
+  {
+   "id": "TX32",
+   "name": "WRATH 1: コントロールを持っているときに出す",
+   "kind": "engine",
+   "source": "text-hypothesis",
+   "cards": [
+    "WRATH_2"
+   ],
+   "protocols": [
+    "WRATH"
+   ],
+   "how": "2ラインで勝ってコントロールを持っているときに WRATH 1 を出す。終了でコントロールを手放して表の札を1枚削除し、勝っていれば次の開始でまた取り返す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 25,
+    "horizon": 4,
+    "playout": false,
+    "interaction": 1.7,
+    "interactionSe": 4.2,
+    "partnerValue": 1.8,
+    "partnerValueSe": 2.3,
+    "synergy": 3.5,
+    "synergySe": 4.4,
+    "missed": 1.7,
+    "missedSe": 3.9,
+    "aiPicked": 12
+   },
+   "note": null
+  },
+  {
+   "id": "TX33",
+   "name": "SPIRIT 0 + CLARITY 0 + GLUTTONY 2: 手札を捨てずに点にする",
+   "kind": "burst",
+   "source": "text-hypothesis",
+   "cards": [
+    "SPIRIT_1",
+    "CLARITY_1",
+    "GLUTTONY_3"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "CLARITY",
+    "GLUTTONY"
+   ],
+   "how": "SPIRIT 0 が一番上にあるとキャッシュの確認を飛ばすので、手札が5枚を超えても捨てない。GLUTTONY 2 で手札を倍にすると、CLARITY 0 のラインが手札の枚数ぶん増える。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 63,
+    "horizon": 4,
+    "playout": false,
+    "interaction": 1.7,
+    "interactionSe": 1.8,
+    "partnerValue": 5.3,
+    "partnerValueSe": 2.7,
+    "synergy": 6.9,
+    "synergySe": 2.6,
+    "missed": -1.7,
+    "missedSe": 1,
+    "aiPicked": 73
+   },
+   "note": null
+  },
+  {
+   "id": "TX34",
+   "name": "相手にリコンパイルを踏ませる GRAVITY 6 + WAR 2",
+   "kind": "lock",
+   "source": "text-hypothesis",
+   "cards": [
+    "WAR_3",
+    "GRAVITY_6"
+   ],
+   "protocols": [
+    "GRAVITY",
+    "WAR"
+   ],
+   "how": "相手のコンパイル済みのラインが8〜9点のとき、GRAVITY 6 で相手にそのラインへ裏向きを1枚出させる。10点になって相手は次の開始でリコンパイルし、その手番を失う。WAR 2 の下段で相手は手札も全部捨てる。",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": {
+    "n": 17,
+    "horizon": 4,
+    "playout": false,
+    "interaction": 5.7,
+    "interactionSe": 2.8,
+    "partnerValue": 3,
+    "partnerValueSe": 2.2,
+    "synergy": 8.7,
+    "synergySe": 3.5,
+    "missed": 2,
+    "missedSe": 2.9,
+    "aiPicked": 59
+   },
+   "note": null
+  },
+  {
+   "id": "TX35",
+   "name": "相手にリコンパイルを踏ませる GRAVITY 6",
+   "kind": "lock",
+   "source": "text-hypothesis",
+   "cards": [
+    "WAR_3",
+    "GRAVITY_6"
+   ],
+   "protocols": [
+    "GRAVITY",
+    "WAR"
+   ],
+   "how": "相手のコンパイル済みのラインが8〜9点のとき、GRAVITY 6 で相手にそのラインへ裏向きを1枚出させる。10点になって相手は次の開始でリコンパイルし、その手番を失う。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 21,
+    "horizon": 4,
+    "playout": false,
+    "interaction": -5.6,
+    "interactionSe": 5.4,
+    "partnerValue": 4.2,
+    "partnerValueSe": 4.5,
+    "synergy": -1.4,
+    "synergySe": 5.8,
+    "missed": -4.5,
+    "missedSe": 4,
+    "aiPicked": 57
+   },
+   "note": null
+  },
+  {
    "id": "T01",
    "name": "WATER 1 + WATER 4",
    "kind": "burst",
@@ -68699,6 +69831,98 @@
      "survived": 32,
      "discarded": 7,
      "wins": 19
+    }
+   }
+  },
+  {
+   "id": "M20",
+   "name": "GREED 1 + LUST 0",
+   "kind": "aim",
+   "source": "aimed",
+   "cards": [
+    "GREED_2",
+    "LUST_1"
+   ],
+   "protocols": [
+    "GREED",
+    "LUST"
+   ],
+   "how": "GREED 1 (終了: 自分の合計が10以上で相手より大きいラインを1つコンパイルする) を一番上で表に置く。自分が勝っている LUST のラインに LUST 0 を出すと両者 +10 で、その手番の終了にコンパイルできる。同じ形で SLOTH 0 の上の SLOTH 5、裏向き2枚の上の DARKNESS 2 も狙う。LUST 0 は GREED 1 が場で効くまで手札に残す。",
+   "verdict": "aimed",
+   "verdictLabel": "揃えに行く手筋 (AI に入っている)",
+   "lab": null,
+   "labId": "TX01",
+   "aim": {
+    "games": 60,
+    "base": {
+     "assembled": 13,
+     "fired": 0,
+     "wins": 29
+    },
+    "now": {
+     "assembled": 20,
+     "fired": 4,
+     "wins": 23
+    }
+   }
+  },
+  {
+   "id": "M21",
+   "name": "RIGID 2 + APATHY 0",
+   "kind": "aim",
+   "source": "aimed",
+   "cards": [
+    "RIGID_2",
+    "APATHY_1"
+   ],
+   "protocols": [
+    "RIGID",
+    "APATHY"
+   ],
+   "how": "RIGID 2 (アクションで裏向きに出したあと: デッキの一番上を同じスタックに裏で出す) を一番上で表に、APATHY 0 (このラインの裏向き1枚ごとに +1) を表で置く。APATHY 0 のラインへ手札から裏で1枚出すと裏向きが2枚積まれ、1手で 2+2+2 = 6点ぶん伸びる。",
+   "verdict": "aimed",
+   "verdictLabel": "揃えに行く手筋 (AI に入っている)",
+   "lab": null,
+   "labId": "TX04",
+   "aim": {
+    "games": 60,
+    "base": {
+     "assembled": 0,
+     "wins": 24
+    },
+    "now": {
+     "assembled": 11,
+     "wins": 19
+    }
+   }
+  },
+  {
+   "id": "M22",
+   "name": "RIGID 2 + SMOKE 2",
+   "kind": "aim",
+   "source": "aimed",
+   "cards": [
+    "RIGID_2",
+    "SMOKE_3"
+   ],
+   "protocols": [
+    "RIGID",
+    "SMOKE"
+   ],
+   "how": "RIGID 2 を一番上で表に、SMOKE 2 (このラインの裏向き1枚ごとに +1) を表で置き、SMOKE 2 のラインへ手札から裏で出して2枚積む。",
+   "verdict": "aimed",
+   "verdictLabel": "揃えに行く手筋 (AI に入っている)",
+   "lab": null,
+   "labId": "TX03",
+   "aim": {
+    "games": 60,
+    "base": {
+     "assembled": 4,
+     "wins": 25
+    },
+    "now": {
+     "assembled": 11,
+     "wins": 17
     }
    }
   }

@@ -55,9 +55,22 @@ function verdict(r) {
   return { key: 'none', label: '効き目が見えない' };
 }
 
+/* 結果のファイルが手元に無い候補 (計測の出力は git に入れていない) は、前に書いた data/combos.json の判定と数字を引き継ぐ */
+const prev = {}, prevIds = new Set();
+try { for (const c of JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'combos.json'), 'utf8')).combos) { prevIds.add(c.id); if (c.lab) prev[c.id] = c; } } catch (e) { /* 初回 */ }
+
 const combos = [];
 for (const c of CANDS) {
   const r = results[c.id];
+  /* 前の本に無く結果も手元に無い候補は、別の場所で測った結果があるかもしれないので「未計測」とは書かずに載せない */
+  if (!r && prevIds.size && !prevIds.has(c.id)) continue;
+  if (!r && prev[c.id]) {
+    const o = prev[c.id];
+    combos.push({ id: c.id, name: c.name, kind: c.kind, source: c.source || (c.auto ? 'auto' : 'lab'),
+      cards: c.setup.mine.map(p => p.card), protocols: c.protos, how: c.how,
+      verdict: o.verdict, verdictLabel: o.verdictLabel, lab: o.lab, note: c.note || null });
+    continue;
+  }
   const v = verdict(r);
   combos.push({
     id: c.id, name: c.name, kind: c.kind, source: c.source || (c.auto ? 'auto' : 'lab'),

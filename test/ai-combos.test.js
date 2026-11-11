@@ -841,3 +841,38 @@ test('考える時間が切れても、選択の要る手 (LIFE 1 の反転) を
     assert.ok(rv.candidates.some(c => c.a.type === 'play' && st.cards[c.a.card] && st.cards[c.a.card].def === 'LIFE_2'), 'LIFE 1 を比べている');
   } finally { Engine.setAiThinkBudget(900); }
 }));
+
+/* ---------- 効果文からの仮説で当たった組 (docs/ai-combos.md、TX01・TX04) ---------- */
+const GLM = ['GREED', 'LUST', 'METAL'];
+test('つよい以上: GREED 1 が場で効くとき、LUST 0 を手札に残す方を高く見る', () => withDsh(() => {
+  Engine.setAiLevel(2);
+  const keep = game(GLM, ['WATER', 'LIGHT', 'LIFE']);
+  place(keep, 'GREED_2', 0, 0, true);
+  setHand(keep, 0, ['LUST_1', 'METAL_3']);
+  const drop = game(GLM, ['WATER', 'LIGHT', 'LIFE']);
+  place(drop, 'GREED_2', 0, 0, true);
+  setHand(drop, 0, ['LUST_4', 'METAL_3']);
+  trash(drop, 'LUST_1', 0);
+  assert.ok(Engine.ai.score(keep, 0) > Engine.ai.score(drop, 0) + 100, 'LUST 0 を捨てない');
+}));
+const RAS = ['RIGID', 'APATHY', 'SMOKE'];
+test('つよい以上: RIGID 2 と APATHY 0 を表で揃えた形を、RIGID 2 を自分で覆った形より高く見る', () => withDsh(() => {
+  Engine.setAiLevel(2);
+  const live = game(RAS, ['METAL', 'LIGHT', 'LIFE']);
+  place(live, 'RIGID_2', 0, 0, true);
+  place(live, 'APATHY_1', 0, 1, true);
+  place(live, 'SMOKE_5', 0, 2, true);
+  const cov = game(RAS, ['METAL', 'LIGHT', 'LIFE']);
+  place(cov, 'RIGID_2', 0, 0, true);
+  place(cov, 'SMOKE_5', 0, 0, true);
+  place(cov, 'APATHY_1', 0, 1, true);
+  assert.ok(Engine.ai.score(live, 0) > Engine.ai.score(cov, 0) + 200, 'RIGID 2 を覆わない');
+}));
+test('つよい以上: RIGID 2 が一番上で効くとき、APATHY 0 のラインへ手札から裏で出す手を候補から落とさない', () => {
+  const st = game(RAS, ['METAL', 'LIGHT', 'LIFE']);
+  place(st, 'RIGID_2', 0, 0, true);
+  place(st, 'APATHY_1', 0, 1, true);
+  setHand(st, 0, ['SMOKE_5', 'RIGID_5', 'APATHY_5', 'SMOKE_6', 'RIGID_6']);
+  const act = aiAct(st);
+  assert.ok(act && act.type === 'play' && !act.faceUp && act.line === 1, 'APATHY 0 のラインへ裏で出す (実際: ' + JSON.stringify(act) + ')');
+});
