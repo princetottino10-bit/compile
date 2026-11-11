@@ -255,7 +255,9 @@ if (opt.specialist && ['dsh', 'psylock'].indexOf(opt.specialist) < 0) {
 if (opt.opponent && ['normal', 'dsh', 'psylock', 'same'].indexOf(opt.opponent) < 0) {
   console.error('--opponent は normal / dsh / psylock / same'); process.exit(1);
 }
-const ALL_PROTOCOLS = [...new Set(MATCHUPS.flat(2))].sort();
+/* 対戦表に無いプロトコル (Main 3 など) も --deck で指定できるように、カードの正本からも拾う */
+const ALL_PROTOCOLS = [...new Set(MATCHUPS.flat(2).concat(
+  JSON.parse(require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'data', 'cards.json'), 'utf8')).protocols.map(p => p.name)))].sort();
 const candidateDeck = opt.deck || (opt.specialist ? DEFAULT_DECK[opt.specialist] : null);
 if (candidateDeck) {
   const bad = candidateDeck.filter(p => ALL_PROTOCOLS.indexOf(p) < 0);

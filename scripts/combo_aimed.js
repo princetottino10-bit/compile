@@ -38,5 +38,15 @@ module.exports = [
     base: { assembled: 17, wins: 42 }, now: { assembled: 27, wins: 42 } },
   { id: 'M04', name: 'SPEED 2 をコンパイルに持ち込む', cards: ['SPEED_3'], protocols: ['SPEED'], combo: 'speed2', games: 40,
     how: 'SPEED 2 は表で場に居れば、そのラインをコンパイルしても削除されず別のラインへ移る (値2と札を次のラインへ持ち越す)。手札から捨てず、コンパイルが近いラインに表で置く。',
-    base: { compiles: 100, survived: 13, discarded: 27, wins: 20 }, now: { compiles: 101, survived: 32, discarded: 7, wins: 19 } }
+    base: { compiles: 100, survived: 13, discarded: 27, wins: 20 }, now: { compiles: 101, survived: 32, discarded: 7, wins: 19 } },
+  /* 効果文からの仮説で当たった組 (TX、2026-11-10)。同じ編成どうしで master と打った 600戦は 303勝 297敗 (docs/ai-combos.md) */
+  { id: 'M20', lab: 'TX01', name: 'GREED 1 + LUST 0', cards: ['GREED_2', 'LUST_1'], protocols: ['GREED', 'LUST'], combo: 'greedLust', games: 60,
+    how: 'GREED 1 (終了: 自分の合計が10以上で相手より大きいラインを1つコンパイルする) を一番上で表に置く。自分が勝っている LUST のラインに LUST 0 を出すと両者 +10 で、その手番の終了にコンパイルできる。同じ形で SLOTH 0 の上の SLOTH 5、裏向き2枚の上の DARKNESS 2 も狙う。LUST 0 は GREED 1 が場で効くまで手札に残す。',
+    base: { assembled: 13, fired: 0, wins: 29 }, now: { assembled: 20, fired: 4, wins: 23 } },
+  { id: 'M21', lab: 'TX04', name: 'RIGID 2 + APATHY 0', cards: ['RIGID_2', 'APATHY_1'], protocols: ['RIGID', 'APATHY'], combo: 'rigidApathy', games: 60,
+    how: 'RIGID 2 (アクションで裏向きに出したあと: デッキの一番上を同じスタックに裏で出す) を一番上で表に、APATHY 0 (このラインの裏向き1枚ごとに +1) を表で置く。APATHY 0 のラインへ手札から裏で1枚出すと裏向きが2枚積まれ、1手で 2+2+2 = 6点ぶん伸びる。',
+    base: { assembled: 0, wins: 24 }, now: { assembled: 11, wins: 19 } },
+  { id: 'M22', lab: 'TX03', name: 'RIGID 2 + SMOKE 2', cards: ['RIGID_2', 'SMOKE_3'], protocols: ['RIGID', 'SMOKE'], combo: 'rigidSmoke', games: 60,
+    how: 'RIGID 2 を一番上で表に、SMOKE 2 (このラインの裏向き1枚ごとに +1) を表で置き、SMOKE 2 のラインへ手札から裏で出して2枚積む。',
+    base: { assembled: 4, wins: 25 }, now: { assembled: 11, wins: 17 } }
 ];

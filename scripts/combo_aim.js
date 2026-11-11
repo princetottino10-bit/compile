@@ -65,6 +65,10 @@ const COMBOS = {
   hate0Hate1: { name: 'HATE 1 + HATE 0 (自分を消して起こし直す)', protos: ['HATE'], pieces: { HATE_2: 'up', HATE_1: 'play' }, refire: 'HATE_2' },
   hate2Hate1: { name: 'HATE 1 + HATE 2 (自分を消して起こし直す)', protos: ['HATE'], pieces: { HATE_2: 'up', HATE_3: 'play' }, refire: 'HATE_2' },
   psyDark4: { name: 'PSYCHIC 0 + DARKNESS 4 (上の裏札をどかす)', protos: ['PSYCHIC', 'DARKNESS'], pieces: { PSYCHIC_1: 'cov', DARKNESS_5: 'play' }, refire: 'PSYCHIC_1' },
+  /* 効果文からの仮説 (2026-11-10) */
+  greedLust: { name: 'GREED 1 + LUST 0 (勝っているラインに出して即コンパイル)', protos: ['GREED', 'LUST'], pieces: { GREED_2: 'top', LUST_1: 'play' } },
+  rigidApathy: { name: 'RIGID 2 + APATHY 0 (裏で出すと2枚)', protos: ['RIGID', 'APATHY'], pieces: { RIGID_2: 'top', APATHY_1: 'up' } },
+  rigidSmoke: { name: 'RIGID 2 + SMOKE 2 (裏で出すと2枚)', protos: ['RIGID', 'SMOKE'], pieces: { RIGID_2: 'top', SMOKE_3: 'up' } },
   glutClear: { name: 'GLUTTONY 0 + GLUTTONY 2 (引きすぎてキャッシュクリア)', protos: ['GLUTTONY'], pieces: { GLUTTONY_1: 'up', GLUTTONY_3: 'play' }, clearWith: 'GLUTTONY_1' },
   speed2: { name: 'SPEED 2 (コンパイルで生き残る)', protos: ['SPEED'], pieces: { SPEED_3: 'up' }, solo: true }
 };

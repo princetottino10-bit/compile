@@ -1622,5 +1622,56 @@ module.exports = [
     setup: { mine: [{ card: 'PRIDE_1', at: 'field' }, { card: 'GREED_2', at: 'field' }, { card: 'FIRE_5', at: 'field' }, { card: 'FIRE_3', at: 'field', faceUp: false, over: 'FIRE_5' }, { card: 'FIRE_6', at: 'hand' }] },
     cond: (s, me, P) => { const l = P.lineOf(s, P.planted.FIRE_5); const t = P.total(s, l, me); return !s.players[me].protocols[l].compiled && t >= 5 && t < 10 && t + 5 > P.total(s, l, 1 - me); },
     act: { play: 'FIRE_6' }, partner: ['PRIDE_1'] });
+  /* ---- 3巡目 (2026-11-11): 残りの仮説 ---- */
+  /* CLARITY 2 で値1の札を山札から呼んで、そのまま出す */
+  for (const [X, nm, why] of [['GREED_2', 'GREED 1', '届いた手番にコンパイル'], ['METAL_2', 'METAL 1', '2枚引く・相手は次の手番コンパイルできない'], ['WRATH_2', 'WRATH 1', '1枚引く・終了でコントロールを手放して削除']]) {
+    const proto = X.split('_')[0];
+    T.push({ name: 'CLARITY 2 → ' + nm + ': 山札から呼んでそのまま出す', kind: 'setup', protos: ['CLARITY', proto],
+      how: 'CLARITY 2 で山札から値1の札を引き、続けて値1の札を1枚出せる。' + nm + ' (' + why + ') を呼んで同じ手番に置く。',
+      setup: { mine: [{ card: X, at: 'deckTop' }, { card: 'CLARITY_3', at: 'hand' }] },
+      act: { play: 'CLARITY_3' }, partner: [X],
+      picks: (s, q, P) => {
+        if (q.context !== 'CLARITY_3') return null;
+        const u = P.planted[X];
+        if (q.kind === 'pickCard' && q.candidates && q.candidates.includes(u)) return [u];
+        if (q.kind === 'pickHand' && q.candidates && q.candidates.includes(u)) return [u];
+        if (q.prompt === 'play-free' && q.candidates) { const c = q.candidates.find(x => String(x).startsWith(u + '|') && String(x).endsWith('|u')); if (c) return [c]; }
+        return null;
+      } });
+  }
+  /* WRATH 1: コントロールを持っている (2ラインで勝っている) ときに出すと、終了で手放して表の札を1枚削除 */
+  T.push({ name: 'WRATH 1: コントロールを持っているときに出す', kind: 'engine', protos: ['WRATH'],
+    how: '2ラインで勝ってコントロールを持っているときに WRATH 1 を出す。終了でコントロールを手放して表の札を1枚削除し、勝っていれば次の開始でまた取り返す。',
+    setup: { mine: [{ card: 'WRATH_2', at: 'hand' }] },
+    cond: (s, me) => s.control === me,
+    act: { play: 'WRATH_2' }, partner: ['WRATH_2'] });
+  /* SPIRIT 0 でキャッシュの確認を飛ばし、増やした手札を CLARITY 0 の点にする */
+  T.push({ name: 'SPIRIT 0 + CLARITY 0 + GLUTTONY 2: 手札を捨てずに点にする', kind: 'burst', protos: ['SPIRIT', 'CLARITY', 'GLUTTONY'],
+    how: 'SPIRIT 0 が一番上にあるとキャッシュの確認を飛ばすので、手札が5枚を超えても捨てない。GLUTTONY 2 で手札を倍にすると、CLARITY 0 のラインが手札の枚数ぶん増える。',
+    setup: { mine: [{ card: 'SPIRIT_1', at: 'field' }, { card: 'CLARITY_1', at: 'field' }, { card: 'GLUTTONY_3', at: 'hand' }] },
+    prep: (s, me, P) => { P.setHand(s, me, 4); },
+    cond: (s, me, P) => { const l = P.lineOf(s, P.planted.CLARITY_1); return !s.players[me].protocols[l].compiled && P.total(s, l, me) < 10; },
+    act: { play: 'GLUTTONY_3' }, partner: ['SPIRIT_1'] });
+  /* 相手のコンパイル済みのラインを10点にして、リコンパイルで手番を使わせる。WAR 2 があれば手札も全部捨てさせる */
+  for (const partner of ['WAR_3', 'GRAVITY_6']) {
+    T.push({ name: '相手にリコンパイルを踏ませる GRAVITY 6' + (partner === 'WAR_3' ? ' + WAR 2' : ''), kind: 'lock', protos: ['GRAVITY', 'WAR'],
+      how: '相手のコンパイル済みのラインが8〜9点のとき、GRAVITY 6 で相手にそのラインへ裏向きを1枚出させる。10点になって相手は次の開始でリコンパイルし、その手番を失う。' + (partner === 'WAR_3' ? 'WAR 2 の下段で相手は手札も全部捨てる。' : ''),
+      setup: { mine: [{ card: 'WAR_3', at: 'field' }, { card: 'GRAVITY_6', at: 'hand' }] },
+      prep: (s, me, P) => {
+        const op = 1 - me, l = s.players[me].protocols.findIndex(p => p.name === 'GRAVITY');
+        if (l < 0 || s.players[me].protocols[l].compiled) return false;
+        if (s.players[op].protocols.filter(p => p.compiled).length >= 2 || (s.players[op].protocols.filter(p => p.compiled).length >= 1 && !s.players[op].protocols[l].compiled)) return false;
+        if (s.control === op) return false;
+        s.players[op].protocols[l].compiled = true;
+        const deck = s.players[op].deck;
+        while (P.total(s, l, op) < 8 && deck.length) { const u = deck.shift(); Object.assign(s.cards[u], { zone: 'field', faceUp: false, knownTo: 1 << op }); s.lines[l][op].push(u); }
+        const t = P.total(s, l, op);
+        /* 相手がコントロールを取ると、並べ替えてリコンパイルを本物のコンパイルに変えられる。出したあと相手が2ラインで勝たない盤面だけ */
+        let lead = 0;
+        for (let k = 0; k < 3; k++) if (P.total(s, k, op) + (k === l ? 2 : 0) > P.total(s, k, me) + (k === l ? 6 : 0)) lead++;
+        return t >= 8 && t <= 9 && lead < 2;
+      },
+      act: { play: 'GRAVITY_6' }, partner: [partner] });
+  }
   T.forEach((c, i) => module.exports.push({ id: 'TX' + String(i + 1).padStart(2, '0'), source: 'text-hypothesis', late: true, ...c }));
 })();
