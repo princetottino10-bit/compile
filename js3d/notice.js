@@ -2,6 +2,8 @@
  * 小さなお知らせのカード (画面の下に重ねる。× で閉じるまで消えない)
  *   「横持ちがおすすめ」「ホーム画面に追加」「コントローラーを検出」などの、遊びを止めない知らせに使う。
  *   読む前に勝手に消えないよう、時間では閉じない。1回きりの知らせは once() で覚えておく
+ *   一度に出すのは1枚だけ。ほかは待たせて、前のカードを閉じたら次を出す
+ *   (2026-11-13 点検: スマホ縦の最初の対戦で2枚が重なり、盤面と手札を隠していた。桜井流 #252)
  * ========================================================================= */
 
 const ONCE_KEY = 'compileOnce';
@@ -36,6 +38,14 @@ function stack() {
   return el;
 }
 
+const waiting = [];                          // まだ出していないカード ({ o, handle })
+function showNext() {
+  const host = stack();
+  if (host.querySelector('.sn-card') || !waiting.length) return;
+  const { o, handle } = waiting.shift();
+  handle.close = render(o, host);
+}
+
 /**
  * お知らせを出す。同じ id がもう出ていれば出し直さない。
  * @param {{ id: string, title?: string, text: string, actions?: Array<{label: string, onClick?: Function, main?: boolean}>, tone?: string }} o
@@ -45,7 +55,14 @@ function stack() {
 export function notice(o) {
   if (typeof document === 'undefined' || !o || !o.id) return null;
   const host = stack();
-  if (host.querySelector('[data-nid="' + o.id + '"]')) return null;
+  if (host.querySelector('[data-nid="' + o.id + '"]') || waiting.some(w => w.o.id === o.id)) return null;
+  const handle = { close: () => { const i = waiting.findIndex(w => w.handle === handle); if (i >= 0) waiting.splice(i, 1); } };
+  waiting.push({ o, handle });
+  showNext();
+  return { close: () => handle.close() };
+}
+
+function render(o, host) {
   const card = document.createElement('div');
   card.className = 'sn-card' + (o.tone ? ' ' + o.tone : '');
   card.dataset.nid = o.id;
@@ -53,7 +70,7 @@ export function notice(o) {
   card.innerHTML = '<div class="sn-text">' + (o.title ? '<b>' + esc(o.title) + '</b>' : '') + '<span>' + esc(o.text) + '</span></div>' +
     '<div class="sn-acts">' + (o.actions || []).map((a, i) => '<button type="button" data-a="' + i + '"' + (a.main ? ' class="go"' : '') + '>' + esc(a.label) + '</button>').join('') +
     '<button type="button" class="sn-x" data-a="x" aria-label="閉じる">×</button></div>';
-  const close = () => { card.remove(); };
+  const close = () => { if (!card.isConnected) return; card.remove(); showNext(); };
   card.onclick = (ev) => {
     const b = ev.target.closest('button[data-a]');
     if (!b) return;
@@ -63,11 +80,13 @@ export function notice(o) {
     if (a && a.onClick) a.onClick(b);
   };
   host.appendChild(card);
-  return { close };
+  return close;
 }
 
 /** 出ているお知らせを閉じる */
 export function closeNotice(id) {
+  const i = waiting.findIndex(w => w.o.id === id);
+  if (i >= 0) waiting.splice(i, 1);
   const el = document.querySelector('#noticeStack [data-nid="' + id + '"]');
-  if (el) el.remove();
+  if (el) { el.remove(); showNext(); }
 }

@@ -4779,6 +4779,10 @@ async function step(action) {
     }
   }
   const res = Engine.apply(cur.state, action);
+  /* 自分の手が通ったことを知らせる (firstrun.js が、対戦の始まりに控えていた案内をここで出す) */
+  if (!res.error && !demoMode && !spectate && before.turn === ME && (action.type === 'play' || action.type === 'refresh')) {
+    try { window.dispatchEvent(new Event('compile:my-move')); } catch (e) { /* 案内が出なくても遊べる */ }
+  }
   if (res.error) {
     UI.toast(res.error);
     /* 画面は打てる手しか出さないので、ここに来るのはエンジンか画面の食い違い */
