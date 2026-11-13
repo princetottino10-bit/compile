@@ -320,21 +320,21 @@
     transform:skewY(-4deg);transform-origin:center;clip-path:inset(0 100% 0 0);
     background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 22%,rgba(4,6,14,.94)) 0%,rgba(4,6,14,.92) 22%,rgba(4,6,14,.92) 78%,color-mix(in srgb,var(--accent) 22%,rgba(4,6,14,.94)) 100%);
     box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 70%,transparent),0 0 46px color-mix(in srgb,var(--accent) 35%,transparent);
-    animation:tcBand 1.25s cubic-bezier(.16,1,.3,1) forwards;}
+    animation:tcBand var(--tc-dur,1.25s) cubic-bezier(.16,1,.3,1) forwards;}
   .tc-glow{position:absolute;left:50%;top:50%;width:min(760px,90vw);height:220px;transform:translate(-50%,-50%);
     background:radial-gradient(ellipse at center,color-mix(in srgb,var(--accent) 40%,transparent),transparent 65%);
-    opacity:0;animation:tcGlow 1.25s ease-out forwards;}
+    opacity:0;animation:tcGlow var(--tc-dur,1.25s) ease-out forwards;}
   .tc-line{position:absolute;left:-10%;right:-10%;height:3px;
     background:linear-gradient(90deg,transparent,var(--accent),#fff,var(--accent),transparent);
     transform:skewY(-4deg);transform-origin:center;clip-path:inset(0 100% 0 0);
-    animation:tcLine 1.25s cubic-bezier(.16,1,.3,1) forwards;}
+    animation:tcLine var(--tc-dur,1.25s) cubic-bezier(.16,1,.3,1) forwards;}
   #turnCut.opp .tc-band{clip-path:inset(0 0 0 100%);animation-name:tcBandR;}
   #turnCut.opp .tc-line{clip-path:inset(0 0 0 100%);animation-name:tcLineR;}
   .tc-line.a{top:calc(50% - 68px);}
   .tc-line.b{top:calc(50% + 72px);animation-delay:.06s;}
   .tc-chev{position:absolute;top:calc(50% - 16px);height:32px;display:flex;gap:6px;
     font:900 30px/32px var(--font-hud);color:var(--accent);opacity:0;
-    text-shadow:0 0 14px var(--accent);animation:tcChev 1.25s cubic-bezier(.16,1,.3,1) forwards;}
+    text-shadow:0 0 14px var(--accent);animation:tcChev var(--tc-dur,1.25s) cubic-bezier(.16,1,.3,1) forwards;}
   .tc-chev.l{left:6vw;}
   .tc-chev.r{right:6vw;}
   .tc-chev i{font-style:normal;animation:tcChevBlink .5s linear infinite;}
@@ -346,11 +346,11 @@
     background-size:250% 100%;background-position:100% 0;
     filter:drop-shadow(0 0 18px var(--accent)) drop-shadow(0 4px 20px rgba(0,0,0,.8));
     clip-path:inset(0 100% 0 0);
-    animation:tcText 1.25s cubic-bezier(.16,1,.3,1) forwards,tcGlint 1.25s ease-in-out forwards;}
+    animation:tcText var(--tc-dur,1.25s) cubic-bezier(.16,1,.3,1) forwards,tcGlint var(--tc-dur,1.25s) ease-in-out forwards;}
   #turnCut.opp .tc-text{clip-path:inset(0 0 0 100%);animation-name:tcTextR,tcGlint;}
   .tc-sub{position:absolute;left:0;right:0;top:calc(50% + 48px);transform:skewY(-4deg);text-align:center;
     font:700 12px/1 var(--font-hud);letter-spacing:.6em;text-indent:.6em;color:var(--accent);
-    opacity:0;animation:tcSub 1.25s cubic-bezier(.16,1,.3,1) .1s forwards;}
+    opacity:0;animation:tcSub var(--tc-dur,1.25s) cubic-bezier(.16,1,.3,1) .1s forwards;}
   @keyframes tcBand{0%{clip-path:inset(0 100% 0 0);opacity:0}
     18%{clip-path:inset(0 0 0 0);opacity:1}
     72%{clip-path:inset(0 0 0 0);opacity:1}100%{clip-path:inset(0 0 0 0);opacity:0}}
@@ -377,7 +377,7 @@
   @media (prefers-reduced-motion: reduce){
     .tc-band,.tc-line,#turnCut.opp .tc-band,#turnCut.opp .tc-line{transform:skewY(-4deg);clip-path:none;}
     .tc-text,#turnCut.opp .tc-text{clip-path:none;background-position:50% 0;}
-    .tc-band,.tc-line,.tc-text,#turnCut.opp .tc-text,.tc-chev,.tc-glow{animation:tcSub 1.25s linear forwards!important;}
+    .tc-band,.tc-line,.tc-text,#turnCut.opp .tc-text,.tc-chev,.tc-glow{animation:tcSub var(--tc-dur,1.25s) linear forwards!important;}
     .tc-chev i{animation:none;}
   }
 
@@ -2900,6 +2900,9 @@
   #title .tt-main .tt-resume small{color:var(--mint);text-transform:none;letter-spacing:.02em;}
   #title .tt-main button small{display:inline;margin:0;font:700 10px/1 var(--font-ui);letter-spacing:.2em;color:var(--dim);}
   #title .tt-main button:hover,#title .tt-main button:focus-visible{border-left-color:var(--pink);}
+  /* はじめての人には一段小さく (title.js の tt-later。1戦すると消える) */
+  #title .tt-main button.tt-later{padding-top:10px;padding-bottom:10px;font-size:clamp(13px,1.3vw,16px);opacity:.62;}
+  #title .tt-main button.tt-later:hover,#title .tt-main button.tt-later:focus-visible{opacity:1;}
   #title .tt-more{justify-content:flex-start;gap:6px;flex-wrap:wrap;}
   #title .tt-menu .tt-more button{flex:none;padding:10px 14px;font:700 11px/1 var(--font-ui);letter-spacing:.16em;background:rgba(16,12,13,.6);}
   #title .tt-menu .tt-more button small{display:none;}
@@ -4997,7 +5000,7 @@
       "./js3d/errtext.js": "./js3d/errtext.js?v=b01e7e399f",
       "./js3d/face-icons.js": "./js3d/face-icons.js?v=94447182ad",
       "./js3d/feel.js": "./js3d/feel.js?v=9f679966cc",
-      "./js3d/firstrun.js": "./js3d/firstrun.js?v=5c6561b6b0",
+      "./js3d/firstrun.js": "./js3d/firstrun.js?v=6e0b16cc46",
       "./js3d/fx-compile.js": "./js3d/fx-compile.js?v=d48f971a42",
       "./js3d/fx-protocols.js": "./js3d/fx-protocols.js?v=944b662cc1",
       "./js3d/fx.js": "./js3d/fx.js?v=c9a77d2533",
@@ -5011,13 +5014,13 @@
       "./js3d/input.js": "./js3d/input.js?v=cc29feddd4",
       "./js3d/layout.js": "./js3d/layout.js?v=2b4dbc6066",
       "./js3d/logformat.js": "./js3d/logformat.js?v=e3548c74d1",
-      "./js3d/main.js": "./js3d/main.js?v=4eae42e275",
+      "./js3d/main.js": "./js3d/main.js?v=898f9b6134",
       "./js3d/mobcards.js": "./js3d/mobcards.js?v=2a6bc79376",
       "./js3d/motion.js": "./js3d/motion.js?v=71cd68f8ff",
       "./js3d/mutebutton.js": "./js3d/mutebutton.js?v=1362dbc4d6",
       "./js3d/net.js": "./js3d/net.js?v=3134839bca",
       "./js3d/news.js": "./js3d/news.js?v=62707b6b85",
-      "./js3d/notice.js": "./js3d/notice.js?v=029a81acaa",
+      "./js3d/notice.js": "./js3d/notice.js?v=4d30bcb849",
       "./js3d/now-playing.js": "./js3d/now-playing.js?v=fc9abda187",
       "./js3d/opponent-select.js": "./js3d/opponent-select.js?v=596315df8d",
       "./js3d/panel.js": "./js3d/panel.js?v=b07699d2a4",
@@ -5053,7 +5056,7 @@
       "./js3d/setup.js": "./js3d/setup.js?v=a5caa76c3d",
       "./js3d/solodraft.js": "./js3d/solodraft.js?v=4c1693a5ab",
       "./js3d/spectate.js": "./js3d/spectate.js?v=96a7ee67d5",
-      "./js3d/stage.js": "./js3d/stage.js?v=603fbc7f79",
+      "./js3d/stage.js": "./js3d/stage.js?v=1ae45c7b19",
       "./js3d/stats-data.js": "./js3d/stats-data.js?v=a50201f1ab",
       "./js3d/stats.js": "./js3d/stats.js?v=a9074a3c8f",
       "./js3d/steps.js": "./js3d/steps.js?v=13e73b20fe",
@@ -5071,14 +5074,14 @@
       "./js3d/support.js": "./js3d/support.js?v=efb00a908c",
       "./js3d/theme.js": "./js3d/theme.js?v=f923617cfc",
       "./js3d/tips.js": "./js3d/tips.js?v=3faae17957",
-      "./js3d/title.js": "./js3d/title.js?v=b50dc1ad43",
+      "./js3d/title.js": "./js3d/title.js?v=140187eade",
       "./js3d/titleback.js": "./js3d/titleback.js?v=5663d0b7a4",
       "./js3d/training.js": "./js3d/training.js?v=016a739d2c",
       "./js3d/tsume.js": "./js3d/tsume.js?v=47493e34a2",
       "./js3d/turning.js": "./js3d/turning.js?v=9c7f79654e",
       "./js3d/tutorial.js": "./js3d/tutorial.js?v=f4a33e319b",
       "./js3d/tween.js": "./js3d/tween.js?v=6fe8c0fb03",
-      "./js3d/ui.js": "./js3d/ui.js?v=2542eb29cf",
+      "./js3d/ui.js": "./js3d/ui.js?v=88ab61a560",
       "./js3d/watchtools.js": "./js3d/watchtools.js?v=ad10da8d17",
       "./js3d/weekly-ui.js": "./js3d/weekly-ui.js?v=ec0ddcd27a",
       "./js3d/weekly.js": "./js3d/weekly.js?v=255159dac0",
@@ -5114,12 +5117,12 @@
   <link rel="modulepreload" href="js3d/turning.js?v=9c7f79654e">
   <link rel="modulepreload" href="js3d/achievements-ui.js?v=0c30003c62">
   <link rel="modulepreload" href="vendor/three.module.js?v=985eb92490">
-  <link rel="modulepreload" href="js3d/stage.js?v=603fbc7f79">
+  <link rel="modulepreload" href="js3d/stage.js?v=1ae45c7b19">
   <link rel="modulepreload" href="js3d/board.js?v=fd9b31ba0a">
   <link rel="modulepreload" href="js3d/control.js?v=aebfff9c0f">
   <link rel="modulepreload" href="js3d/panel.js?v=b07699d2a4">
   <link rel="modulepreload" href="js3d/setup.js?v=a5caa76c3d">
-  <link rel="modulepreload" href="js3d/title.js?v=b50dc1ad43">
+  <link rel="modulepreload" href="js3d/title.js?v=140187eade">
   <link rel="modulepreload" href="js3d/training.js?v=016a739d2c">
   <link rel="modulepreload" href="js3d/room.js?v=918fccde40">
   <link rel="modulepreload" href="js3d/roombet.js?v=cc2e51d3f4">
@@ -5166,7 +5169,7 @@
   <link rel="modulepreload" href="js3d/layout.js?v=2b4dbc6066">
   <link rel="modulepreload" href="js3d/theme.js?v=f923617cfc">
   <link rel="modulepreload" href="js3d/tween.js?v=6fe8c0fb03">
-  <link rel="modulepreload" href="js3d/ui.js?v=2542eb29cf">
+  <link rel="modulepreload" href="js3d/ui.js?v=88ab61a560">
   <link rel="modulepreload" href="js3d/backdrops.js?v=78f67f4758">
   <link rel="modulepreload" href="js3d/fx-compile.js?v=d48f971a42">
   <link rel="modulepreload" href="js3d/input.js?v=cc29feddd4">
@@ -5186,9 +5189,9 @@
   <link rel="modulepreload" href="js3d/envcheck.js?v=9ff8ad8372">
   <link rel="modulepreload" href="js3d/errtext.js?v=b01e7e399f">
   <link rel="modulepreload" href="js3d/support.js?v=efb00a908c">
-  <link rel="modulepreload" href="js3d/firstrun.js?v=5c6561b6b0">
+  <link rel="modulepreload" href="js3d/firstrun.js?v=6e0b16cc46">
   <link rel="modulepreload" href="js3d/net.js?v=3134839bca">
-  <link rel="modulepreload" href="js3d/notice.js?v=029a81acaa">
+  <link rel="modulepreload" href="js3d/notice.js?v=4d30bcb849">
   <link rel="modulepreload" href="js3d/broken.js?v=943ae15321">
   <link rel="modulepreload" href="js3d/cloudsave.js?v=9d3a90691c">
   <link rel="modulepreload" href="js3d/admin-ui.js?v=ea6be0ef14">
@@ -5238,6 +5241,6 @@
   <link rel="stylesheet" href="js3d/run-fx.css?v=76f975b9ad">
   <link rel="stylesheet" href="js3d/deus.css?v=676148021b">
   <div id="playChoices" hidden aria-label="選んだカードの配置先"></div>
-  <script type="module" src="js3d/main.js?v=4eae42e275"></script>
+  <script type="module" src="js3d/main.js?v=898f9b6134"></script>
 </body>
 </html>

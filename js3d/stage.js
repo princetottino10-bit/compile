@@ -451,8 +451,10 @@ export function createStage(container) {
     lastTick = performance.now();
     /* 最後の砦: イベントを全部取りこぼしても、大きさがずれていたらここで合わせる */
     if (container.clientWidth !== appliedW || container.clientHeight !== appliedH) resize();
-    /* 通常フレームは 50ms で頭打ち。ウォッチドッグ経由は間隔が長いので緩める */
-    const dt = Math.min(catchUp ? 1.2 : 0.05, clock.getDelta());
+    /* 通常フレームは 100ms で頭打ち。ウォッチドッグ経由は間隔が長いので緩める。
+       前は 50ms で、20fps を下回る端末では動きが全部スローになっていた (10fps だと、札を置く 0.8 秒が 1.6 秒)。
+       2026-11-13 点検、桜井流 #139 */
+    const dt = Math.min(catchUp ? 1.2 : 0.1, clock.getDelta());
     elapsed += dt;
     floorMat.uniforms.uTime.value = elapsed;
 

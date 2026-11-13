@@ -247,11 +247,15 @@ export function runTitle(protocols, opts) {
     const showMenu = () => {
       const back = takeRecordReturn();
       const center = root.querySelector('#ttCenter');
+      /* はじめての人には、まずチュートリアルとおまかせを見せたい。腕前が要る入口 (CHALLENGE・RUN・ONLINE) は1戦するまで一段小さく
+         (2026-11-13 点検: 入口が15ほど同じ重さで並んでいた。桜井流 #145 大事なものを大きく) */
+      const fresh = isNewcomer();
+      const later = fresh ? ' class="tt-later"' : '';
       center.innerHTML = LOGO + helloHtml() +
         /* 遊ぶ入口は大きく2つだけ。練習・記録は小さく下に、アカウントと設定は右上の隅に置く */
         '<nav class="tt-menu" aria-label="ゲームモード">' +
           /* はじめての人 (まだ1戦もせず、チュートリアルも触っていない) にだけ、最初の一歩を大きく出す */
-          (isNewcomer()
+          (fresh
             ? '<div class="tt-first"><b>はじめての方へ</b><span>遊び方は TUTORIAL で5分ほど。すぐ遊びたいなら「おまかせで1戦」</span>' +
               '<div><button data-mode="tutorial" type="button" class="go">TUTORIAL</button>' +
               '<button data-mode="quick" type="button">おまかせで1戦</button></div>' +
@@ -269,9 +273,9 @@ export function runTitle(protocols, opts) {
             /* ストーリーは 2026-10-23 に全員へ開いたが MORE の奥で見つけにくかったので、2026-10-29 に上の列へ出した。小見出しは物語の進み具合 */
             '<button data-mode="story" type="button">STORY <small>' + storyLabel() + '</small></button>' +
             '<button data-mode="single" type="button">SINGLE GAME <small>VS CPU</small></button>' +
-            '<button data-mode="challenge" type="button">CHALLENGE <small>BOSS · UNDERDOG</small>' + badge(challengeBadge(protocols)) + '</button>' +
-            '<button data-mode="run" type="button">RUN <small>ROGUELIKE · WEEKLY</small>' + badge(runBadge()) + '</button>' +
-            '<button data-mode="online" type="button">ONLINE GAME <small>ROOMS · RATED</small></button>' +
+            '<button data-mode="challenge" type="button"' + later + '>CHALLENGE <small>BOSS · UNDERDOG</small>' + badge(challengeBadge(protocols)) + '</button>' +
+            '<button data-mode="run" type="button"' + later + '>RUN <small>ROGUELIKE · WEEKLY</small>' + badge(runBadge()) + '</button>' +
+            '<button data-mode="online" type="button"' + later + '>ONLINE GAME <small>ROOMS · RATED</small></button>' +
           '</div>' +
           /* 下の段は4つだけ (ごちゃつかせない)。GACHA は COLLECTION の中、TUTORIAL・TRAINING・CARDS は MORE の中 */
           '<div class="tt-more">' +
@@ -293,6 +297,12 @@ export function runTitle(protocols, opts) {
         '</nav>';
       root.querySelector('#ttCorner').hidden = false;
       root.classList.add('menu');                    // 起動ログを隠し、左の列にメニューを出す
+      /* 決定キーを押せばそのまま始まるように、最初のボタンにフォーカスを置く (前はどこにも無く、Enter で何も起きなかった。
+         桜井流 #238)。はじめての人は TUTORIAL、続きがあれば CONTINUE、ほかは SINGLE GAME。
+         マウスやタッチで来た人に枠が出ないよう focusVisible は付けない (枠は :focus-visible がキーボードのときだけ出す) */
+      const first = root.querySelector('.tt-first button.go') || root.querySelector('.tt-resume') ||
+        root.querySelector('.tt-tutcont button') || root.querySelector('.tt-main button[data-mode="single"]');
+      if (first) { try { first.focus({ preventScroll: true }); } catch (e) { /* フォーカスできなくても押せば始まる */ } }
       /* ログイン状態は裏で読むので、分かったら表示を差し替える */
       const refreshAccount = () => {
         const label = root.querySelector('#ttCorner button[data-mode="account"] span');

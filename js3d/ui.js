@@ -444,9 +444,13 @@ export function declareCutIn(o) {
 }
 
 /* label: 真ん中の文字を変えるとき (タッグの PARTNER TURN など) */
-export function turnCutIn(mine, label) {
+/* brief: 2巡目からは短く (2026-11-13 点検: 毎手番 1.25 秒 × 両者で、1局に 40 回ほど操作できない間があった。桜井流 #073 #244)。
+   帯の動き (CSS) の長さも、待つ長さと設定の「演出の速さ」に合わせる (前は速くしても帯だけ 1.25 秒のままで、途中で切れていた) */
+export function turnCutIn(mine, label, brief) {
   const el = $('#turnCut');
   if (!el) return Promise.resolve();
+  const ms = brief ? 800 : 1250;
+  el.style.setProperty('--tc-dur', Math.round(ms / speedNow()) + 'ms');
   el.style.setProperty('--accent', mine ? '#a07bff' : '#e8203f');
   el.style.setProperty('--from', mine ? 'left' : 'right');
   el.style.setProperty('--dir', mine ? '1' : '-1');
@@ -462,7 +466,7 @@ export function turnCutIn(mine, label) {
     '<div class="tc-sub">' + (mine ? 'COMMAND READY' : 'STAND BY') + '</div>';
   el.classList.add('show');
   /* 手番の演出は押すと飛ばせる */
-  return cutWait(el, 1250, true).then(() => {
+  return cutWait(el, ms, true).then(() => {
     el.classList.remove('show');
     el.innerHTML = '';
   });

@@ -8,7 +8,7 @@
  *   ・設定がオフのときにコントローラーをつないだ → 「使う?」(このタブで1回)
  *   ・オフラインでも開けるように、控えめなサービスワーカー (sw.js) を登録する
  * ========================================================================= */
-import { notice, once, seen, markSeen } from './notice.js';
+import { notice, closeNotice, once, seen, markSeen } from './notice.js';
 import { inAppBrowser, isIOSDevice, isPhoneLike } from './envcheck.js';
 import { settings, setSetting } from './settings.js';
 
@@ -47,18 +47,37 @@ export function initFirstRun({ newcomer }) {
   });
 }
 
+/* 自分の最初の1手 (main.js が compile:my-move を出す) を待っている案内。出したときに「出した」と覚える */
+let pendingTips = [];
+let shownTips = [];                    // 出した案内の id。次に自分が打つたびに古いものから1枚しまう (盤面の上に残り続けないように)
+function afterFirstMove(key, id, show) { pendingTips.push({ key, id, show }); }
+if (typeof window !== 'undefined') {
+  window.addEventListener('compile:my-move', () => {
+    if (shownTips.length) closeNotice(shownTips.shift());
+    const tips = pendingTips;
+    pendingTips = [];
+    for (const t of tips) { if (!seen(t.key)) { markSeen(t.key); t.show(); shownTips.push(t.id); } }
+  });
+}
+
 /** 対戦を始めたとき (main.js)。kind: 'cpu' (ふつうの CPU 戦など) / 'tutorial' / 'other' (問題・観戦・リプレイ) */
 export function onMatchStart(kind) {
   if (kind === 'other') return;
   let n = 0;
   try { n = (parseInt(localStorage.getItem(COUNT_KEY), 10) || 0) + 1; localStorage.setItem(COUNT_KEY, String(n)); } catch (e) { /* 数えられなければ追加の案内は出さない */ }
   /* 初心者モードを自分で入れたのではないことを、最初の CPU 戦で伝える (HINT ボタンが出る対戦) */
-  if (kind === 'cpu' && seen('beginnerAuto') && settings().beginner && once('beginnerTold')) {
-    notice({ id: 'beginner', title: '初心者モード: オン', text: '困ったら HINT を押すと、CPU ならどう打つかが光ります。慣れたら設定の「対戦の進み方」でオフにできます' });
+  /* 対戦の始まりの案内は、自分の最初の1手が済んでから出す (2026-11-13 点検: 最初の画面で盤面と手札に重なっていた。
+     桜井流 #233 最初の3分で面白さを見せる / #252 HUD は状況で出し入れ)。1手も打たずにやめたら、次の対戦でまた出す */
+  pendingTips = [];
+  shownTips = [];
+  if (kind === 'cpu' && seen('beginnerAuto') && settings().beginner && !seen('beginnerTold')) {
+    afterFirstMove('beginnerTold', 'beginner', () => notice({ id: 'beginner', title: '初心者モード: オン', text: '困ったら HINT を押すと、CPU ならどう打つかが光ります。慣れたら設定の「対戦の進み方」でオフにできます' }));
   }
   /* 縦持ちのスマホ: 盤面が小さくなるので横持ちを勧める (遊ぶのは止めない) */
-  if (isPhoneLike() && window.innerHeight > window.innerWidth && once('landscapeTip')) {
-    notice({ id: 'landscape', title: '横持ちがおすすめ', text: 'スマホを横にすると、盤面とカードが大きく見えます。縦のままでも遊べます' });
+  if (isPhoneLike() && window.innerHeight > window.innerWidth && !seen('landscapeTip')) {
+    afterFirstMove('landscapeTip', 'landscape', () => {
+      if (window.innerHeight > window.innerWidth) notice({ id: 'landscape', title: '横持ちがおすすめ', text: 'スマホを横にすると、盤面とカードが大きく見えます。縦のままでも遊べます' });
+    });
   }
   if (n >= INSTALL_AFTER && isPhoneLike() && !standalone() && !seen('installHint')) showInstallHint();
 }
