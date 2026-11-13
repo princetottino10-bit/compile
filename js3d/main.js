@@ -4176,6 +4176,7 @@ async function roomEnterGame(rm) {
 
 /* ---------- ターン / 効果の演出 ---------- */
 let lastTurn = null;
+let turnCuts = 0;                 // この対戦で出した手番のカットインの数 (それぞれの最初の1回のあとは短くする)
 let resultShown = false;
 let gameStartedAt = 0;             // 対戦を始めた時刻 (手触りの演出を、はじめの盤面合わせで出さないため)
 
@@ -4196,7 +4197,9 @@ async function finaleFx(win) {
 async function announceTurnFor(turn, atState) {
   if (trainingMode) return;                         // 検証盤面に手番はない
   if (turn === undefined || turn === null || turn === lastTurn) return;
+  if (lastTurn === null) turnCuts = 0;              // 新しい対戦 (lastTurn を消したところ) から数え直す
   lastTurn = turn;
+  const briefCut = turnCuts++ >= 2;
   maybeTenseBgm(atState || (cur && cur.state));
   /* 前の手番の効果の帯が残っていると、効果がまだ終わっていないように見えるのでしまう */
   UI.hideFxBanner();
@@ -4219,8 +4222,8 @@ async function announceTurnFor(turn, atState) {
     const mine = tagSt.tag.online ? tagSt.tag.mine : 0;
     /* 観戦は「YOUR / PARTNER / RIVAL」ではなく、指すキャラの名前で */
     await UI.turnCutIn(turn === ME, spectate ? specName(turn, pilot) + ' TURN'
-      : turn === ME ? (pilot === mine ? 'YOUR TURN' : 'PARTNER TURN') : (tagSt.tag.online ? 'RIVAL ' + (pilot + 1) : oppCallName(pilot)) + ' TURN');
-  } else await UI.turnCutIn(turn === ME, spectate ? specName(turn) + ' TURN' : undefined);
+      : turn === ME ? (pilot === mine ? 'YOUR TURN' : 'PARTNER TURN') : (tagSt.tag.online ? 'RIVAL ' + (pilot + 1) : oppCallName(pilot)) + ' TURN', briefCut);
+  } else await UI.turnCutIn(turn === ME, spectate ? specName(turn) + ' TURN' : undefined, briefCut);
   /* 番を終えた側が劣勢なら、ひとこと (タッグフォースの「ターンエンド……」)。番が来た側は、優勢なら強気に、ふだんはいつものひとこと */
   const standSt = tagSt || (cur && cur.state);
   /* 番が来た側が、このままコンパイルすれば決着する (勝ちが決まるラインが 10 以上で相手を上回っている):
