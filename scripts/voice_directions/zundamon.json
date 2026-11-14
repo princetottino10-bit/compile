@@ -112,7 +112,7 @@
   "style": "base"
  },
  "くらえなのだ！": {
-  "style": "angry"
+  "style": "base"
  },
  "ずんだパワーをこめるのだ！": {
   "style": "happy",
@@ -161,10 +161,10 @@
   "intonation": 1.1
  },
  "むむっ、手ごわいのだ。": {
-  "style": "angry"
+  "style": "base"
  },
  "ずるい手なのだ！": {
-  "style": "angry"
+  "style": "base"
  },
  "ぼくも負けないのだ。": {
   "style": "base",
@@ -277,7 +277,7 @@
   "speed": 0.92
  },
  "な、泣いてないのだ……": {
-  "style": "angry"
+  "style": "sad"
  },
  "ぐすん……次は取り返すのだ……": {
   "style": "sad",
@@ -367,7 +367,7 @@
   "style": "tired"
  },
  "な、泣いてないのだ！ リベンジするのだ！": {
-  "style": "angry",
+  "style": "sad",
   "speed": 1.12
  },
  "ぴえん、ぼくの手札が……": {

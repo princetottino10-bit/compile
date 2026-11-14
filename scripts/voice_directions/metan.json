@@ -7,7 +7,7 @@
   "speed": 1.05
  },
  "わたくしの相手、光栄に思いなさい。": {
-  "style": "angry"
+  "style": "base"
  },
  "優雅にお相手いたしますわ。": {
   "style": "base",
@@ -40,7 +40,7 @@
   "intonation": 1.2
  },
  "わたくしの闇の力、見せてさしあげますわ。": {
-  "style": "angry"
+  "style": "base"
  },
  "次の一手は……こちらですわ。": {
   "style": "base",
@@ -55,10 +55,10 @@
   "intonation": 1.2
  },
  "さて、どう料理しましょうか。": {
-  "style": "angry"
+  "style": "base"
  },
  "これで、おしまいですわ。": {
-  "style": "angry",
+  "style": "base",
   "speed": 0.95
  },
  "チェックメイトですわね。": {
@@ -70,7 +70,7 @@
   "style": "base"
  },
  "くっ……止められませんわ。": {
-  "style": "angry",
+  "style": "base",
   "speed": 0.95
  },
  "ここまで、ですのね……。": {
@@ -83,7 +83,7 @@
   "speed": 0.9
  },
  "切り札ですわ！": {
-  "style": "angry",
+  "style": "base",
   "intonation": 1.3
  },
  "とくとご覧あそばせ！": {
@@ -92,14 +92,14 @@
   "intonation": 1.4
  },
  "ここで決めますわ！": {
-  "style": "angry"
+  "style": "base"
  },
  "闇に伏せたものほど、強いのですわ！": {
-  "style": "angry",
+  "style": "base",
   "intonation": 1.3
  },
  "伏せたカードこそ、わたくしの牙ですわ！": {
-  "style": "angry"
+  "style": "base"
  },
  "おいきなさい！": {
   "style": "base",
@@ -109,10 +109,10 @@
   "style": "base"
  },
  "これで決めますわ。": {
-  "style": "angry"
+  "style": "base"
  },
  "ひれふしなさい！": {
-  "style": "angry",
+  "style": "base",
   "intonation": 1.3
  },
  "かれいにまいなさい。": {
@@ -124,17 +124,17 @@
   "intonation": 1.3
  },
  "やみよ、やどりなさい！": {
-  "style": "angry"
+  "style": "base"
  },
  "しっこくのちから、ごらんあれ！": {
-  "style": "angry"
+  "style": "base"
  },
  "やみはわたくしのにわですわ！": {
   "style": "base",
   "intonation": 1.2
  },
  "やみにしずみなさい！": {
-  "style": "angry"
+  "style": "base"
  },
  "伏せておきますわ。": {
   "style": "base"
@@ -162,10 +162,10 @@
   "intonation": 1.2
  },
  "その程度、想定内ですわ。": {
-  "style": "angry"
+  "style": "base"
  },
  "……少しは骨がありますわね。": {
-  "style": "angry",
+  "style": "base",
   "speed": 0.95
  },
  "まだ続きますわよ！": {
@@ -215,7 +215,7 @@
   "speed": 0.95
  },
  "わたくし、待つのは得意ではありませんのよ？": {
-  "style": "angry"
+  "style": "base"
  },
  "主導権はいただきましたわ。": {
   "style": "base"
@@ -224,7 +224,7 @@
   "style": "base"
  },
  "この場を支配するのは、わたくしですわ。": {
-  "style": "angry"
+  "style": "base"
  },
  "ふふ、思い通りですわ。": {
   "style": "happy"
@@ -264,10 +264,10 @@
   "style": "happy"
  },
  "くっ……やりますわね。": {
-  "style": "angry"
+  "style": "base"
  },
  "まだ終わっていませんわ！": {
-  "style": "angry",
+  "style": "base",
   "speed": 1.1
  },
  "わたくしとしたことが……": {
@@ -275,7 +275,7 @@
   "speed": 0.92
  },
  "このくらい、なんともありませんわ！": {
-  "style": "angry",
+  "style": "base",
   "speed": 1.12
  },
  "……少し油断しましたわ。": {
@@ -289,26 +289,26 @@
   "style": "happy"
  },
  "なっ……！": {
-  "style": "angry",
+  "style": "base",
   "speed": 1.12,
   "intonation": 1.4
  },
  "ちょっと、ずいぶんですわね！": {
-  "style": "angry"
+  "style": "base"
  },
  "わたくしの盤面が……！": {
-  "style": "angry",
+  "style": "base",
   "intonation": 1.3
  },
  "なんて無作法な！": {
-  "style": "angry"
+  "style": "base"
  },
  "やってくれましたわね……": {
-  "style": "angry",
+  "style": "base",
   "speed": 0.95
  },
  "な、な、なんてことを……！": {
-  "style": "angry",
+  "style": "base",
   "speed": 1.1,
   "intonation": 1.4
  },
@@ -318,7 +318,7 @@
   "intonation": 1.3
  },
  "ゆ、許しませんわよ！！": {
-  "style": "angry",
+  "style": "base",
   "speed": 1.15,
   "intonation": 1.4
  },
@@ -336,7 +336,7 @@
   "style": "base"
  },
  "もう逃がしませんわよ。": {
-  "style": "angry"
+  "style": "base"
  },
  "わたくしの勝ちですわ！": {
   "style": "happy",
@@ -360,31 +360,31 @@
   "speed": 0.92
  },
  "次は負けませんわよ！": {
-  "style": "angry",
+  "style": "base",
   "speed": 1.12
  },
  "くっ……覚えていらっしゃい！": {
-  "style": "angry"
+  "style": "base"
  },
  "なかなかやりますわね……": {
   "style": "base",
   "speed": 0.95
  },
  "今日のところは引き分け、ということにしておきますわ。": {
-  "style": "angry",
+  "style": "base",
   "speed": 0.95
  },
  "わたくしの手札に、なんてことを！": {
-  "style": "angry"
+  "style": "base"
  },
  "お行儀が悪いですわ！": {
-  "style": "angry"
+  "style": "base"
  },
  "淑女の手札を奪うなんて！": {
-  "style": "angry"
+  "style": "base"
  },
  "なんて品のない！": {
-  "style": "angry"
+  "style": "base"
  },
  "一掃いたしましたわ。": {
   "style": "base"
@@ -393,7 +393,7 @@
   "style": "base"
  },
  "邪魔者は退場ですわ。": {
-  "style": "angry"
+  "style": "base"
  },
  "並びを整えますわ。": {
   "style": "base"
@@ -430,11 +430,11 @@
   "speed": 0.92
  },
  "こ、この程度で終わりませんわ！": {
-  "style": "angry",
+  "style": "base",
   "speed": 1.12
  },
  "次の一手で、ひっくり返しますわ。": {
-  "style": "angry"
+  "style": "base"
  },
  "わたくしが教えてさしあげますわ。": {
   "style": "base"
