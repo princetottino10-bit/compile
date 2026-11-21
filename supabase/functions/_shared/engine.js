@@ -4973,7 +4973,12 @@ const AI_COMBO_PAIRS = [
   ['HATE_2', 'WATER_5'],      // 表の HATE 1 に WATER 4、自分を戻して HATE 1 を起こし直す
   ['HATE_2', 'HATE_3'],       // HATE 2 で自分を消して HATE 1 を起こし直す
   ['PSYCHIC_1', 'DARKNESS_5'], // PSYCHIC 0 の上の裏向きを DARKNESS 4 でどかして起こし直す
-  ['GLUTTONY_1', 'GLUTTONY_3'] // GLUTTONY 2 で引きすぎてキャッシュクリア、GLUTTONY 0 の上段
+  ['GLUTTONY_1', 'GLUTTONY_3'], // GLUTTONY 2 で引きすぎてキャッシュクリア、GLUTTONY 0 の上段
+  /* aMidA の棋譜から (2026-11-21)。覆われた表の AMBUSH 0 を AMBUSH 2 (値が最も小さい自分の覆われた札を移動) でどかすと、
+     AMBUSH 0 の中段 (3枚引く・自分の裏向きを反転) がもう一度入る。揃えば ORACLE も打てるので、組の札を捨てないことだけ足す。
+     AI_AIM_COMBOS に入れて揃えに行かせると撃つ回数は 25→67 に増えたが勝ちが 100→86 (180局) に減ったので入れない
+     (捨てないだけなら撃つ 25→40・勝ち 100→98、scripts/combo_aim.js --combo ambush02) */
+  ['AMBUSH_1', 'AMBUSH_3']
 ];
 const AI_COMBO_KEEP = { hand: 60, field: 40, deck: 15 };
 /* ORACLE が手放したがらない札: ウォーター① (山札の上を他の各ラインに裏で) とファイア③ (終了時に捨てて反転) */

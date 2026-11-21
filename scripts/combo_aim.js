@@ -65,6 +65,8 @@ const COMBOS = {
   hate0Hate1: { name: 'HATE 1 + HATE 0 (自分を消して起こし直す)', protos: ['HATE'], pieces: { HATE_2: 'up', HATE_1: 'play' }, refire: 'HATE_2' },
   hate2Hate1: { name: 'HATE 1 + HATE 2 (自分を消して起こし直す)', protos: ['HATE'], pieces: { HATE_2: 'up', HATE_3: 'play' }, refire: 'HATE_2' },
   psyDark4: { name: 'PSYCHIC 0 + DARKNESS 4 (上の裏札をどかす)', protos: ['PSYCHIC', 'DARKNESS'], pieces: { PSYCHIC_1: 'cov', DARKNESS_5: 'play' }, refire: 'PSYCHIC_1' },
+  /* aMidA の棋譜から (2026-11-21): 覆われた表の AMBUSH 0 を AMBUSH 2 でどかして起こし直す */
+  ambush02: { name: 'AMBUSH 0 + AMBUSH 2 (覆われた AMBUSH 0 をどかす)', protos: ['AMBUSH'], pieces: { AMBUSH_1: 'cov', AMBUSH_3: 'play' }, refire: 'AMBUSH_1' },
   glutClear: { name: 'GLUTTONY 0 + GLUTTONY 2 (引きすぎてキャッシュクリア)', protos: ['GLUTTONY'], pieces: { GLUTTONY_1: 'up', GLUTTONY_3: 'play' }, clearWith: 'GLUTTONY_1' },
   speed2: { name: 'SPEED 2 (コンパイルで生き残る)', protos: ['SPEED'], pieces: { SPEED_3: 'up' }, solo: true }
 };
