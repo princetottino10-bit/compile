@@ -86,7 +86,9 @@ test('ORACLE は WATER 4 を表の HATE 1 に重ね、自分を戻して HATE 1 
 const KEEP = [
   { name: 'HATE 1 が表なら WATER 4', protos: ['HATE', 'SPIRIT', 'WATER'], field: ['HATE_2', 0], keep: 'WATER_5', fodder: ['SPIRIT_3', 'HATE_5'] },
   { name: 'PSYCHIC 0 が表なら DARKNESS 4', protos: ['PSYCHIC', 'DARKNESS', 'WATER'], field: ['PSYCHIC_1', 0], keep: 'DARKNESS_5', fodder: ['PSYCHIC_4', 'WATER_4'] },
-  { name: 'GLUTTONY 0 が表なら GLUTTONY 2', protos: ['GLUTTONY', 'PRIDE', 'WATER'], field: ['GLUTTONY_1', 0], keep: 'GLUTTONY_3', fodder: ['PRIDE_4', 'WATER_4'] }
+  { name: 'GLUTTONY 0 が表なら GLUTTONY 2', protos: ['GLUTTONY', 'PRIDE', 'WATER'], field: ['GLUTTONY_1', 0], keep: 'GLUTTONY_3', fodder: ['PRIDE_4', 'WATER_4'] },
+  /* aMidA の棋譜から (2026-11-21) */
+  { name: 'AMBUSH 0 が表なら AMBUSH 2', protos: ['AMBUSH', 'OVERWHELM', 'WATER'], field: ['AMBUSH_1', 0], keep: 'AMBUSH_3', fodder: ['OVERWHELM_4', 'WATER_4'] }
 ];
 for (const k of KEEP) {
   test('捨てる札に組の札を選ばない: ' + k.name, () => withOracle(() => {
@@ -117,3 +119,24 @@ test('HATE 1 が表なら、WATER 4 を場に残すより手札に持つ形を�
   const gainNoHate = Engine.ai.score(noHate(hateBoard(['WATER_5', 'SPIRIT_3'])), 0) - Engine.ai.score((() => { const s = noHate(hateBoard(['SPIRIT_3'])); place(s, 'WATER_5', 0, 2, true); return s; })(), 0);
   assert.ok(gain - gainNoHate >= 100, 'HATE 1 が表のときだけ手札の WATER 4 に回しの値打ちが付く (差 ' + (gain - gainNoHate).toFixed(1) + ')');
 });
+
+/* aMidA の棋譜から (2026-11-21): 表の AMBUSH 0 を覆っておき、AMBUSH 2 でどかして AMBUSH 0 の中段 (3枚引く・自分の裏向きを反転) をもう一度入れる */
+function ambushBoard(hand) {
+  const st = game(['AMBUSH', 'OVERWHELM', 'INERT'], ['WRATH', 'LOVE', 'LIGHT']);
+  place(st, 'AMBUSH_1', 0, 0, true);
+  place(st, 'INERT_3', 0, 0, false);
+  place(st, 'WRATH_4', 1, 0, true);
+  place(st, 'LOVE_5', 1, 1, true);
+  place(st, 'LIGHT_4', 1, 2, true);
+  setHand(st, 0, hand);
+  return st;
+}
+
+test('AMBUSH 2 は覆われた表の AMBUSH 0 をどかし、AMBUSH 0 がもう一度起動する', () => withOracle(() => {
+  const st = ambushBoard(['AMBUSH_3', 'AMBUSH_6', 'INERT_6']);
+  Engine.setAiThinkBudget(1500);
+  const act = Engine.ai.action(st);
+  assert.deepEqual(act, { type: 'play', card: uidOf('AMBUSH_3', 0), line: 0, faceUp: true }, '実際: ' + JSON.stringify(act));
+  const res = resolveWithAi(Engine.apply(st, act));
+  assert.ok(res.log.some(l => /^\[AMBUSH_1\] 中段コマンド解決/.test(l)), 'AMBUSH 0 が起き直す: ' + res.log.filter(l => /AMBUSH/.test(l)).join(' / '));
+}));
