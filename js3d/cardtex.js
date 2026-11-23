@@ -111,6 +111,8 @@ function wrapRich(ctx, chars, maxW, weight, px) {
     const cw = ctx.measureText(c.ch).width;
     if (w + cw > maxW && line.length) { lines.push(line); line = []; w = 0; }
     line.push(c); w += cw;
+    /* 1文ごとに改行する (小さいカードでは文の切れ目が見えるほうが読みやすい) */
+    if (c.ch === '。') { lines.push(line); line = []; w = 0; }
   }
   if (line.length) lines.push(line);
   return lines;
