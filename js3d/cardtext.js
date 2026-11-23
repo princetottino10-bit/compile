@@ -8,7 +8,8 @@ const esc = (s) => String(s == null ? '' : s)
 
 /* HTML 用: 本文をエスケープし、トリガーを <b class="cond"> で囲む */
 export function condHtml(text) {
-  return esc(text).replace(COND_RE, '<b class="cond">$1</b>');
+  /* 1文ごとに改行する (カードリストの cardText と同じ) */
+  return esc(text).replace(COND_RE, '<b class="cond">$1</b>').replace(/。(?!$)/g, '。<br>');
 }
 
 /* canvas 用: 1文字ずつ、トリガーの中かどうかを返す ({ ch, cond }[]) */
