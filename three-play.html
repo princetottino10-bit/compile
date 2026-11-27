@@ -3339,6 +3339,43 @@
     #reviewBar .rv-tool,#reviewBar .rv-speed button{padding:5px 9px;}
   }
   @media (prefers-reduced-motion:reduce){ #reviewBar .rv-g-tp:hover,#reviewBar .rv-g-tp:focus-visible{transform:none;} }
+  /* 感想戦の帯の置き場所 (2026-11-27 「たたんでも邪魔」):
+     手札の上 (--hand-gap) に出すと自分の場の列にまるごと乗っていた。感想戦では手札は触らないので、
+     開いた帯は画面のいちばん下 (手札の上) へ寄せて薄くする。たたんだ帯は左上の隅の「◀ n手目 ▶ ▲」だけにする */
+  #reviewBar{bottom:calc(6px + env(safe-area-inset-bottom));width:min(700px,calc(100vw - 16px));gap:6px 10px;padding:6px 10px;
+    background:rgba(10,9,10,.9);box-shadow:0 10px 30px rgba(0,0,0,.55);z-index:34;}
+  #reviewBar .rv-graph{height:30px;}
+  #reviewBar .rv-nav{gap:5px;}
+  #reviewBar .rv-nav button{height:30px;min-width:32px;padding:0 7px;font-size:11.5px;}
+  #reviewBar .rv-info{gap:2px;}
+  #reviewBar .rv-info p{font-size:11.5px;line-height:1.35;}
+  #reviewBar .rv-tool,#reviewBar .rv-speed button{padding:5px 9px;font-size:10.5px;}
+  #reviewBar .rv-exit{padding:6px 11px;font-size:10.5px;}
+  #reviewBar.mini{left:calc(8px + env(safe-area-inset-left));right:auto;top:calc(40px + env(safe-area-inset-top));bottom:auto;transform:none;
+    width:auto;gap:4px;padding:4px;border-radius:999px;background:rgba(10,9,10,.82);box-shadow:0 4px 14px rgba(0,0,0,.5);}
+  #reviewBar.mini #rvFirst,#reviewBar.mini #rvLast,#reviewBar.mini #rvPrevTp,#reviewBar.mini #rvNextTp,#reviewBar.mini .rv-exit{display:none;}
+  #reviewBar.mini .rv-nav{gap:2px;flex:none;}
+  #reviewBar.mini .rv-nav button{height:28px;min-width:30px;border-radius:999px;}
+  #reviewBar.mini .rv-nav b{min-width:0;padding:0 4px;font-size:12px;}
+  #reviewBar.mini .rv-mini-btn{margin-left:2px;}
+  @media (pointer:coarse){
+    #reviewBar .rv-graph{height:36px;}
+    #reviewBar.mini .rv-nav button{height:34px;min-width:36px;}
+  }
+  @media (max-width:600px){
+    #reviewBar{gap:5px 6px;}
+    #reviewBar .rv-nav button{min-width:30px;padding:0 5px;font-size:11px;}
+    #reviewBar .rv-tools{gap:4px;}
+    #reviewBar.mini .rv-nav{flex:none;}
+    /* 縦持ちは左上に YOU の札があるので、その下へ */
+    #reviewBar.mini{top:calc(102px + env(safe-area-inset-top));}
+  }
+  /* PC: 左上の詳細 (#preview) と重ならないよう、たたんだ帯のぶん下げる */
+  @media (min-width:601px){ body:has(#reviewBar.mini.show) #preview{margin-top:44px;} }
+  @media (orientation:landscape) and (max-height:500px){
+    #reviewBar .rv-graph{height:20px;}
+    #reviewBar.mini{top:calc(6px + env(safe-area-inset-top));}
+  }
 
   /* RECORD のリプレイ: 絞り込みの札・名前・印 */
   .rp-filter{display:flex;flex-wrap:wrap;gap:4px;margin:2px 0 6px;}
