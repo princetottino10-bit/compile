@@ -7,6 +7,8 @@
  *   node scripts/combo_db.js --res _combo2/r1,_combo2/r2
  *
  * 同じコンボの結果が複数のディレクトリにあれば、後ろに書いたほうを使う (読みを長くした測り直しなど)。
+ * 結果のファイルが無い候補は、いまの data/combos.json に載っている判定と数字をそのまま引き継ぐ
+ * (結果のファイルはリポジトリに入れていないので、足した分だけ測って足せるように)。
  */
 const fs = require('node:fs');
 const path = require('node:path');
@@ -55,9 +57,13 @@ function verdict(r) {
   return { key: 'none', label: '効き目が見えない' };
 }
 
+const PREV = {};
+try { for (const c of JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'combos.json'), 'utf8')).combos) if (c.lab) PREV[c.id] = c; } catch (e) { /* はじめて作るとき */ }
 const combos = [];
 for (const c of CANDS) {
   const r = results[c.id];
+  const old = !r && PREV[c.id];
+  if (old) { combos.push({ ...old, name: c.name, kind: c.kind, how: c.how, note: c.note || null }); continue; }
   const v = verdict(r);
   combos.push({
     id: c.id, name: c.name, kind: c.kind, source: c.source || (c.auto ? 'auto' : 'lab'),

@@ -1493,3 +1493,57 @@ module.exports = [
     }
   }
 })();
+
+/* ---------- COMPILE: Central (公式 Discord) の strategy-chat で挙がっていた組のうち、まだ測っていなかったもの (DC001〜、2026-11-27) ----------
+   ユーザー「全部伝聞だねえ」「まだ測ってないやつは測ってみなよ」。書き込みの回し方をそのまま植える (場の札 X、手札の札 Y を出す)。
+   onto: 手札の札を場の札の上に重ねる / down: 場の札を裏で置く / dline: 場の札を置くライン */
+(function discordCandidates() {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const cards = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'cards.json'), 'utf8'));
+  const proto = {}, byName = {};
+  for (const p of cards.protocols) for (const c of p.cards) { proto[c.id] = p.name; byName[p.name + ' ' + c.value] = c.id; }
+  const id = (n) => { if (!byName[n]) throw new Error('no card ' + n); return byName[n]; };
+  const L = [
+    ['GREED 2', 'PEACE 1', 'lock', 'GREED 2 の開始で PEACE 1 を手札に戻し、毎手番出し直して両者の手札を全部捨てさせる。'],
+    ['GREED 0', 'GREED 2', 'engine', 'GREED 0 の上に GREED 2 を重ね、開始で GREED 2 を戻して GREED 0 (手札を全部捨てて1枚削除) を撃ち直す。', { onto: true }],
+    ['GREED 2', 'HATE 0', 'engine', 'GREED 2 の開始で HATE 0 を戻し、毎手番出し直して削除する。'],
+    ['GREED 2', 'HATE 1', 'engine', 'GREED 2 の開始で HATE 1 を戻し、出し直して削除する。'],
+    ['GREED 2', 'LUCK 0', 'engine', 'GREED 2 の開始で LUCK 0 を戻し、毎手番出し直す。'],
+    ['GREED 2', 'SPEED 0', 'engine', 'GREED 2 の開始で SPEED 0 を戻し、出し直してもう1枚出す (手札を早く使い切る)。'],
+    ['GREED 2', 'ASSIMILATION 2', 'engine', 'GREED 2 で ASSIMILATION 2 の上の札を戻し、ASSIMILATION 2 の終了を毎手番起こす。'],
+    ['GLUTTONY 3', 'SPEED 0', 'burst', 'GLUTTONY 3 の上に SPEED 0 を重ねて1枚出し、終了で GLUTTONY 3 が上の表の札を削除して SPEED 0 を撃ち直す。', { onto: true }],
+    ['GLUTTONY 0', 'SPEED 3', 'engine', 'GLUTTONY (キャッシュのクリアで得をする) と SPEED を組む。'],
+    ['LIFE 0', 'AMBUSH 1', 'burst', '裏の LIFE 0 を AMBUSH 1 で表にして撃ち、反転した枚数だけ引く。', { down: true }],
+    ['WATER 1', 'AMBUSH 1', 'burst', '裏の WATER 1 を AMBUSH 1 で表にして撃ち、反転した枚数だけ引く。', { down: true }],
+    ['ASSIMILATION 2', 'SMOKE 1', 'burst', 'ASSIMILATION 2 が奪って裏で置いた札を SMOKE 1 で表にして撃つ。'],
+    ['ASSIMILATION 2', 'SPEED 3', 'engine', 'SPEED 3 の移動で ASSIMILATION 2 の覆いをどけ、終了の奪う効果を繰り返す。'],
+    ['PSYCHIC 1', 'DARKNESS 2', 'lock', '裏で置いた PSYCHIC 1 の上に DARKNESS 2 を重ね、覆われたまま表にして相手を裏でしか出せなくする。', { down: true, dline: 'DARKNESS', onto: true }],
+    ['APATHY 2', 'DARKNESS 2', 'lock', '裏で置いた APATHY 2 の上に DARKNESS 2 を重ね、覆われたまま表にする。', { down: true, dline: 'DARKNESS', onto: true }],
+    ['DEATH 0', 'DEATH 1', 'engine', 'DEATH 0 の上に DEATH 1 を重ね、DEATH 1 が自分を削除して DEATH 0 を撃ち直す。', { onto: true }],
+    ['PLAGUE 0', 'ICE 1', 'lock', 'PLAGUE 0 と ICE 1 で2つのラインを止める。'],
+    ['ASSIMILATION 6', 'TIME 1', 'setup', '裏返された 6 を TIME 1 で表に戻す。', { down: true }],
+    ['UNITY 4', 'HATE 1', 'burst', 'HATE 1 で手札を捨てて UNITY 4 で引き直す。'],
+    ['LUCK 3', 'CORRUPTION 1', 'burst', 'CORRUPTION 1 で相手のデッキの上に札を戻し、LUCK 3 で当てる。'],
+    ['SPIRIT 1', 'GRAVITY 0', 'burst', 'SPIRIT 1 でラインの縛りを外し、GRAVITY 0 を札の多いラインに出す。', { other: true }],
+    ['LUCK 0', 'SLOTH 2', 'burst', 'SLOTH 2 で覆われた LUCK 0 を起こす。', { cover: true }],
+    ['FULCRUM 0', 'COURAGE 0', 'engine', 'COURAGE 0 の終了で1枚ずつ捨てて手札を0にし、次の開始で FULCRUM 0 が相手に2枚捨てさせ、COURAGE 0 が1枚引く。'],
+    ['GREED 1', 'LOVE 6', 'burst', 'GREED 1 を置き、LOVE 6 で 10 に届かせて終了でコンパイルする。'],
+    ['FIRE 0', 'SPIRIT 4', 'engine', 'SPIRIT 4 で FIRE 0 の上の札を入れ替えて撃ち直す。', { cover: true }]
+    ,
+    /* 測り直し: ASSIMILATION 2 は奪った札を自分の上に裏で置く。裏の札が乗った形から始める */
+    ['ASSIMILATION 2', 'SMOKE 1', 'burst', 'ASSIMILATION 2 の上に乗った裏の札を SMOKE 1 で表にして撃ち、動かして ASSIMILATION 2 の覆いを外す。', { cover: true, tag: ' (裏の札が乗った形)' }],
+    ['ASSIMILATION 2', 'SPEED 3', 'engine', 'ASSIMILATION 2 の上に乗った裏の札を SPEED 3 の移動でどけ、終了の奪う効果を繰り返す。', { cover: true, other: true, tag: ' (裏の札が乗った形)' }],
+    ['GLUTTONY 3', 'SPEED 0', 'burst', 'GLUTTONY 3 の上に SPEED 0 を重ねる (ラインは問わず SPEED 0 のプロトコルのラインに GLUTTONY 3 を置く)。', { onto: true, dline: 'SPEED', tag: ' (SPEED のライン)' }]
+  ];
+  let n = 0;
+  for (const [xn, yn, kind, how, o = {}] of L) {
+    const X = id(xn), Y = id(yn);
+    module.exports.push({
+      id: 'DC' + String(++n).padStart(3, '0'), source: 'discord', late: true,
+      name: xn + ' + ' + yn + (o.tag || ''), kind, protos: [...new Set([proto[X], proto[Y]])], how,
+      setup: { mine: [{ card: X, at: 'field', ...(o.down ? { faceUp: false } : {}), ...(o.dline ? { line: o.dline } : {}), ...(o.cover ? { cover: true } : {}) }, { card: Y, at: 'hand' }] },
+      act: { play: Y, ...(o.onto ? { line: 'onto:' + X } : {}), ...(o.other ? { line: 'other' } : {}) }, partner: [X]
+    });
+  }
+})();

@@ -2228,6 +2228,12 @@ TIME 2 + CLARITY 3 が回っているところに CORRUPTION 2 (あなたが手�
 - 種類: 毎手番効く / プロトコル: TIME・CLARITY・CORRUPTION
 - 噛み合い +0.6 ±1.6pt / 相方の値 +9.0 ±2.1pt / 逃している得 +1.2 ±1.7pt / 自分で選ぶ 59% (41盤面、自分の手番 2 回先)
 
+### DC024 GREED 1 + LOVE 6
+GREED 1 を置き、LOVE 6 で 10 に届かせて終了でコンパイルする。
+
+- 種類: その手番で得 / プロトコル: GREED・LOVE
+- 噛み合い +1.2 ±1.5pt / 相方の値 +8.4 ±1.7pt / 逃している得 -4.1 ±1.7pt / 自分で選ぶ 38% (132盤面、自分の手番 3 回先)
+
 ### A136 CORRUPTION 2 + LUCK 5
 CORRUPTION 2 (あなたが手札を捨て札にしたあと：相手は手札を1枚捨て札にする) を場に置き、LUCK 5 (あなたは手札を1枚捨て札にする) を出す。出した手番に1回起きる。
 
@@ -3737,6 +3743,31 @@ CLARITY 0 (このラインのあなたの合計値は、あなたの手札1枚�
 | I005 | LIGHT 0 で裏の LOVE 6 を起こす | その手番で得 | -1.9 ±1.5 | -2.2 ±1.5 | -6.1 ±1.6 | 49% |
 | I008 | LIGHT 0 で裏の MOMENTUM 6 を起こす | その手番で得 | -0.6 ±1.6 | -1.4 ±1.0 | -6.0 ±1.7 | 45% |
 | I009 | LIGHT 0 で裏の DIVERSITY 6 を起こす | その手番で得 | -0.5 ±1.3 | -1.1 ±1.1 | -8.1 ±1.8 | 37% |
+| DC001 | GREED 2 + PEACE 1 | 相手を縛る | -0.7 ±1.0 | +2.9 ±0.9 | -5.3 ±1.3 | 35% |
+| DC002 | GREED 0 + GREED 2 | 毎手番効く | -1.5 ±1.4 | +2.6 ±1.0 | -3.5 ±1.7 | 15% |
+| DC003 | GREED 2 + HATE 0 | 毎手番効く | -0.4 ±0.8 | +1.0 ±0.9 | -1.2 ±0.9 | 39% |
+| DC004 | GREED 2 + HATE 1 | 毎手番効く | -0.6 ±0.7 | -0.2 ±0.7 | -2.2 ±0.7 | 61% |
+| DC005 | GREED 2 + LUCK 0 | 毎手番効く | -0.8 ±1.1 | +1.2 ±1.6 | -1.2 ±1.0 | 78% |
+| DC006 | GREED 2 + SPEED 0 | 毎手番効く | -0.6 ±1.0 | +0.9 ±0.8 | +0.3 ±1.0 | 15% |
+| DC007 | GREED 2 + ASSIMILATION 2 | 毎手番効く | +0.4 ±1.2 | +0.5 ±1.1 | -1.7 ±1.6 | 27% |
+| DC008 | GLUTTONY 3 + SPEED 0 | その手番で得 | +0.3 ±4.0 | -0.1 ±2.5 | +1.0 ±3.6 | 32% |
+| DC009 | GLUTTONY 0 + SPEED 3 | 毎手番効く | -0.4 ±1.5 | +3.7 ±1.7 | -0.9 ±1.7 | 26% |
+| DC011 | WATER 1 + AMBUSH 1 | その手番で得 | -0.8 ±1.1 | +2.3 ±0.8 | -8.2 ±1.6 | 5% |
+| DC012 | ASSIMILATION 2 + SMOKE 1 | その手番で得 | +2.0 ±1.7 | +4.0 ±1.4 | -3.6 ±1.7 | 28% |
+| DC013 | ASSIMILATION 2 + SPEED 3 | 毎手番効く | -2.8 ±2.0 | +7.0 ±1.5 | +0.0 ±1.9 | 16% |
+| DC014 | PSYCHIC 1 + DARKNESS 2 | 相手を縛る | +1.8 ±1.7 | +4.9 ±1.1 | +0.0 ±1.5 | 55% |
+| DC015 | APATHY 2 + DARKNESS 2 | 相手を縛る | +0.3 ±0.7 | -0.6 ±0.7 | -3.2 ±1.2 | 55% |
+| DC016 | DEATH 0 + DEATH 1 | 毎手番効く | +2.3 ±1.5 | +0.8 ±0.8 | -1.1 ±1.8 | 4% |
+| DC017 | PLAGUE 0 + ICE 1 | 相手を縛る | +0.2 ±1.2 | +0.6 ±1.0 | -3.0 ±1.4 | 11% |
+| DC018 | ASSIMILATION 6 + TIME 1 | 次の手番の仕込み | -0.1 ±0.6 | -0.1 ±0.6 | -2.6 ±0.9 | 24% |
+| DC019 | UNITY 4 + HATE 1 | その手番で得 | -0.6 ±0.9 | -0.1 ±0.7 | -1.4 ±1.0 | 65% |
+| DC020 | LUCK 3 + CORRUPTION 1 | その手番で得 | +0.2 ±0.6 | -0.1 ±1.2 | +0.6 ±0.9 | 60% |
+| DC021 | SPIRIT 1 + GRAVITY 0 | その手番で得 | +0.8 ±2.4 | +1.0 ±1.6 | -6.4 ±2.0 | 6% |
+| DC022 | LUCK 0 + SLOTH 2 | その手番で得 | -0.6 ±1.4 | +0.1 ±1.4 | -2.4 ±1.4 | 22% |
+| DC023 | FULCRUM 0 + COURAGE 0 | 毎手番効く | -0.7 ±1.0 | +0.4 ±0.7 | -9.6 ±1.6 | 4% |
+| DC025 | FIRE 0 + SPIRIT 4 | 毎手番効く | -0.1 ±1.0 | +1.0 ±0.8 | -2.4 ±1.2 | 29% |
+| DC026 | ASSIMILATION 2 + SMOKE 1 (裏の札が乗った形) | その手番で得 | -1.7 ±1.5 | +5.0 ±1.4 | -4.0 ±1.2 | 46% |
+| DC027 | ASSIMILATION 2 + SPEED 3 (裏の札が乗った形) | 毎手番効く | -2.0 ±2.7 | +3.4 ±1.6 | +2.8 ±2.6 | 17% |
 
 ## 逆効果だったもの
 
@@ -3804,6 +3835,8 @@ CLARITY 0 (このラインのあなたの合計値は、あなたの手札1枚�
 | I006 | LIGHT 0 で裏の ICE 6 を起こす | その手番で得 | -5.2 ±1.3 | -0.6 ±0.9 | -8.7 ±1.6 | 38% |
 | I007 | LIGHT 0 で裏の CORRUPTION 6 を起こす | その手番で得 | -2.1 ±0.9 | -1.8 ±1.0 | -3.8 ±1.3 | 55% |
 | I010 | LIGHT 0 で裏の RIGID 7 を起こす | その手番で得 | -9.2 ±1.8 | -4.0 ±1.6 | -10.4 ±2.0 | 31% |
+| DC010 | LIFE 0 + AMBUSH 1 | その手番で得 | -3.4 ±1.2 | +4.2 ±1.0 | -6.9 ±1.6 | 7% |
+| DC028 | GLUTTONY 3 + SPEED 0 (SPEED のライン) | その手番で得 | -3.5 ±1.6 | +1.5 ±1.0 | -1.8 ±1.3 | 30% |
 
 ## まだ測っていないもの
 
@@ -4282,4 +4315,398 @@ CLARITY 0 (このラインのあなたの合計値は、あなたの手札1枚�
 | P001 | PLAGUE 0 でふさいで WAR 0 で崩す | その手番で得 | - | - | - | - |
 | P015 | METAL 2 でふさいで WAR 0 で崩す | その手番で得 | -1.4 ±5.6 | +1.7 ±4.7 | -0.8 ±3.6 | 77% |
 | P029 | PSYCHIC 1 でふさいで WAR 0 で崩す | その手番で得 | - | +12.0 ±0.0 | -14.6 ±0.0 | 0% |
+| O059 | FLEXIBLE 4 + LUST 3 | 毎手番効く | - | - | - | - |
+| O060 | PSYCHIC 4 + LUST 3 | 毎手番効く | - | - | - | - |
+| O061 | SPEED 3 + LUST 3 | 毎手番効く | - | - | - | - |
+| O062 | OVERWHELM 2 + LUST 3 | 毎手番効く | - | - | - | - |
+| O063 | LUST 3 + FLEXIBLE 4 | 毎手番効く | - | - | - | - |
+| O064 | LUST 3 + PSYCHIC 4 | 毎手番効く | - | - | - | - |
+| W001 | DEATH 1 + FULCRUM 2 | 毎手番効く | - | - | - | - |
+| W002 | DEATH 1 + GLUTTONY 1 | 毎手番効く | - | - | - | - |
+| W003 | DEATH 1 + GLUTTONY 3 | 毎手番効く | - | - | - | - |
+| W004 | DEATH 1 + MOMENTUM 6 | 毎手番効く | - | - | - | - |
+| W005 | DEATH 1 + NOVA 0 | 毎手番効く | - | - | - | - |
+| W006 | DEATH 1 + OVERWHELM 4 | 毎手番効く | - | - | - | - |
+| W007 | DEATH 1 + WRATH 1 | 毎手番効く | - | - | - | - |
+| W008 | FIRE 3 + GREED 4 | 毎手番効く | - | - | - | - |
+| W009 | FIRE 3 + RIGID 7 | 毎手番効く | - | - | - | - |
+| W010 | LIFE 0 + FULCRUM 2 | 毎手番効く | - | - | - | - |
+| W011 | LIFE 0 + GLUTTONY 1 | 毎手番効く | - | - | - | - |
+| W012 | LIFE 0 + GLUTTONY 3 | 毎手番効く | - | - | - | - |
+| W013 | LIFE 0 + MOMENTUM 6 | 毎手番効く | - | - | - | - |
+| W014 | LIFE 0 + NOVA 0 | 毎手番効く | - | - | - | - |
+| W015 | LIFE 0 + OVERWHELM 4 | 毎手番効く | - | - | - | - |
+| W016 | LIFE 0 + WRATH 1 | 毎手番効く | - | - | - | - |
+| W017 | PLAGUE 1 + GREED 0 | 毎手番効く | - | - | - | - |
+| W018 | PLAGUE 1 + MOMENTUM 1 | 毎手番効く | - | - | - | - |
+| W019 | PLAGUE 1 + RIGID 7 | 毎手番効く | - | - | - | - |
+| W020 | PLAGUE 4 + FULCRUM 2 | 毎手番効く | - | - | - | - |
+| W021 | PLAGUE 4 + GLUTTONY 1 | 毎手番効く | - | - | - | - |
+| W022 | PLAGUE 4 + GLUTTONY 3 | 毎手番効く | - | - | - | - |
+| W023 | PLAGUE 4 + MOMENTUM 6 | 毎手番効く | - | - | - | - |
+| W024 | PLAGUE 4 + NOVA 0 | 毎手番効く | - | - | - | - |
+| W025 | PLAGUE 4 + OVERWHELM 4 | 毎手番効く | - | - | - | - |
+| W026 | PLAGUE 4 + WRATH 1 | 毎手番効く | - | - | - | - |
+| W027 | PSYCHIC 4 + GLUTTONY 0 | 毎手番効く | - | - | - | - |
+| W028 | PSYCHIC 4 + GREED 2 | 毎手番効く | - | - | - | - |
+| W029 | PSYCHIC 4 + SLOTH 1 | 毎手番効く | - | - | - | - |
+| W030 | PSYCHIC 4 + FLEXIBLE 0 | 毎手番効く | - | - | - | - |
+| W031 | SPEED 1 + GLUTTONY 0 | 毎手番効く | - | - | - | - |
+| W032 | SPEED 1 + GLUTTONY 1 | 毎手番効く | - | - | - | - |
+| W033 | SPEED 2 + AMBUSH 2 | 毎手番効く | - | - | - | - |
+| W034 | SPEED 2 + ENVY 4 | 毎手番効く | - | - | - | - |
+| W035 | SPEED 2 + FULCRUM 2 | 毎手番効く | - | - | - | - |
+| W036 | SPEED 2 + GLUTTONY 1 | 毎手番効く | - | - | - | - |
+| W037 | SPEED 2 + GLUTTONY 3 | 毎手番効く | - | - | - | - |
+| W038 | SPEED 2 + GREED 0 | 毎手番効く | - | - | - | - |
+| W039 | SPEED 2 + GREED 1 | 毎手番効く | - | - | - | - |
+| W040 | SPEED 2 + GREED 3 | 毎手番効く | - | - | - | - |
+| W041 | SPEED 2 + LUST 0 | 毎手番効く | - | - | - | - |
+| W042 | SPEED 2 + LUST 2 | 毎手番効く | - | - | - | - |
+| W043 | SPEED 2 + MOMENTUM 0 | 毎手番効く | - | - | - | - |
+| W044 | SPEED 2 + MOMENTUM 1 | 毎手番効く | - | - | - | - |
+| W045 | SPEED 2 + MOMENTUM 6 | 毎手番効く | - | - | - | - |
+| W046 | SPEED 2 + NOVA 0 | 毎手番効く | - | - | - | - |
+| W047 | SPEED 2 + NOVA 2 | 毎手番効く | - | - | - | - |
+| W048 | SPEED 2 + NOVA 3 | 毎手番効く | - | - | - | - |
+| W049 | SPEED 2 + OVERWHELM 4 | 毎手番効く | - | - | - | - |
+| W050 | SPEED 2 + PRIDE 0 | 毎手番効く | - | - | - | - |
+| W051 | SPEED 2 + PRIDE 4 | 毎手番効く | - | - | - | - |
+| W052 | SPEED 2 + WRATH 1 | 毎手番効く | - | - | - | - |
+| W053 | SPEED 2 + FLEXIBLE 0 | 毎手番効く | - | - | - | - |
+| W054 | SPEED 2 + FLEXIBLE 1 | 毎手番効く | - | - | - | - |
+| W055 | SPEED 2 + FLEXIBLE 2 | 毎手番効く | - | - | - | - |
+| W056 | SPEED 2 + FLEXIBLE 3 | 毎手番効く | - | - | - | - |
+| W057 | SPEED 2 + RIGID 7 | 毎手番効く | - | - | - | - |
+| W058 | SPEED 3 + AMBUSH 2 | 毎手番効く | - | - | - | - |
+| W059 | SPEED 3 + GREED 3 | 毎手番効く | - | - | - | - |
+| W060 | SPEED 3 + LUST 2 | 毎手番効く | - | - | - | - |
+| W061 | SPEED 3 + NOVA 2 | 毎手番効く | - | - | - | - |
+| W062 | SPEED 3 + NOVA 3 | 毎手番効く | - | - | - | - |
+| W063 | SPEED 3 + PRIDE 0 | 毎手番効く | - | - | - | - |
+| W064 | SPEED 3 + PRIDE 4 | 毎手番効く | - | - | - | - |
+| W065 | SPEED 3 + FLEXIBLE 0 | 毎手番効く | - | - | - | - |
+| W066 | SPEED 3 + FLEXIBLE 1 | 毎手番効く | - | - | - | - |
+| W067 | SPEED 3 + FLEXIBLE 2 | 毎手番効く | - | - | - | - |
+| W068 | SPEED 3 + FLEXIBLE 3 | 毎手番効く | - | - | - | - |
+| W069 | SPEED 3 + RIGID 7 | 毎手番効く | - | - | - | - |
+| W070 | SPIRIT 1 + RIGID 7 | 毎手番効く | - | - | - | - |
+| W071 | SPIRIT 3 + AMBUSH 2 | 毎手番効く | - | - | - | - |
+| W072 | SPIRIT 3 + GREED 3 | 毎手番効く | - | - | - | - |
+| W073 | SPIRIT 3 + LUST 2 | 毎手番効く | - | - | - | - |
+| W074 | SPIRIT 3 + NOVA 2 | 毎手番効く | - | - | - | - |
+| W075 | SPIRIT 3 + NOVA 3 | 毎手番効く | - | - | - | - |
+| W076 | SPIRIT 3 + PRIDE 4 | 毎手番効く | - | - | - | - |
+| W077 | SPIRIT 3 + FLEXIBLE 0 | 毎手番効く | - | - | - | - |
+| W078 | SPIRIT 3 + FLEXIBLE 1 | 毎手番効く | - | - | - | - |
+| W079 | SPIRIT 3 + FLEXIBLE 3 | 毎手番効く | - | - | - | - |
+| W080 | SPIRIT 3 + RIGID 7 | 毎手番効く | - | - | - | - |
+| W081 | CHAOS 4 + GREED 0 | 毎手番効く | - | - | - | - |
+| W082 | CHAOS 4 + MOMENTUM 1 | 毎手番効く | - | - | - | - |
+| W083 | CHAOS 4 + RIGID 7 | 毎手番効く | - | - | - | - |
+| W084 | CLARITY 1 + LUST 3 | 毎手番効く | - | - | - | - |
+| W085 | CLARITY 1 + LUST 4 | 毎手番効く | - | - | - | - |
+| W086 | CORRUPTION 6 + FULCRUM 2 | 毎手番効く | - | - | - | - |
+| W087 | CORRUPTION 6 + GLUTTONY 1 | 毎手番効く | - | - | - | - |
+| W088 | CORRUPTION 6 + GLUTTONY 3 | 毎手番効く | - | - | - | - |
+| W089 | CORRUPTION 6 + MOMENTUM 6 | 毎手番効く | - | - | - | - |
+| W090 | CORRUPTION 6 + NOVA 0 | 毎手番効く | - | - | - | - |
+| W091 | CORRUPTION 6 + OVERWHELM 4 | 毎手番効く | - | - | - | - |
+| W092 | CORRUPTION 6 + WRATH 1 | 毎手番効く | - | - | - | - |
+| W093 | COURAGE 0 + GREED 0 | 毎手番効く | - | - | - | - |
+| W094 | COURAGE 0 + MOMENTUM 1 | 毎手番効く | - | - | - | - |
+| W095 | COURAGE 0 + RIGID 7 | 毎手番効く | - | - | - | - |
+| W096 | COURAGE 3 + AMBUSH 2 | 毎手番効く | - | - | - | - |
+| W097 | COURAGE 3 + GREED 3 | 毎手番効く | - | - | - | - |
+| W098 | COURAGE 3 + LUST 2 | 毎手番効く | - | - | - | - |
+| W099 | COURAGE 3 + NOVA 2 | 毎手番効く | - | - | - | - |
+| W100 | COURAGE 3 + NOVA 3 | 毎手番効く | - | - | - | - |
+| W101 | COURAGE 3 + PRIDE 0 | 毎手番効く | - | - | - | - |
+| W102 | COURAGE 3 + PRIDE 4 | 毎手番効く | - | - | - | - |
+| W103 | COURAGE 3 + FLEXIBLE 0 | 毎手番効く | - | - | - | - |
+| W104 | COURAGE 3 + FLEXIBLE 1 | 毎手番効く | - | - | - | - |
+| W105 | COURAGE 3 + FLEXIBLE 2 | 毎手番効く | - | - | - | - |
+| W106 | COURAGE 3 + FLEXIBLE 3 | 毎手番効く | - | - | - | - |
+| W107 | COURAGE 3 + RIGID 7 | 毎手番効く | - | - | - | - |
+| W108 | ICE 3 + AMBUSH 2 | 毎手番効く | - | - | - | - |
+| W109 | ICE 3 + GREED 3 | 毎手番効く | - | - | - | - |
+| W110 | ICE 3 + LUST 2 | 毎手番効く | - | - | - | - |
+| W111 | ICE 3 + NOVA 2 | 毎手番効く | - | - | - | - |
+| W112 | ICE 3 + NOVA 3 | 毎手番効く | - | - | - | - |
+| W113 | ICE 3 + PRIDE 0 | 毎手番効く | - | - | - | - |
+| W114 | ICE 3 + PRIDE 4 | 毎手番効く | - | - | - | - |
+| W115 | ICE 3 + FLEXIBLE 0 | 毎手番効く | - | - | - | - |
+| W116 | ICE 3 + FLEXIBLE 1 | 毎手番効く | - | - | - | - |
+| W117 | ICE 3 + FLEXIBLE 2 | 毎手番効く | - | - | - | - |
+| W118 | ICE 3 + FLEXIBLE 3 | 毎手番効く | - | - | - | - |
+| W119 | ICE 3 + RIGID 7 | 毎手番効く | - | - | - | - |
+| W120 | TIME 2 + AMBUSH 2 | 毎手番効く | - | - | - | - |
+| W121 | TIME 2 + GREED 3 | 毎手番効く | - | - | - | - |
+| W122 | TIME 2 + LUST 2 | 毎手番効く | - | - | - | - |
+| W123 | TIME 2 + NOVA 2 | 毎手番効く | - | - | - | - |
+| W124 | TIME 2 + NOVA 3 | 毎手番効く | - | - | - | - |
+| W125 | TIME 2 + PRIDE 0 | 毎手番効く | - | - | - | - |
+| W126 | TIME 2 + PRIDE 4 | 毎手番効く | - | - | - | - |
+| W127 | TIME 2 + FLEXIBLE 0 | 毎手番効く | - | - | - | - |
+| W128 | TIME 2 + FLEXIBLE 1 | 毎手番効く | - | - | - | - |
+| W129 | TIME 2 + FLEXIBLE 2 | 毎手番効く | - | - | - | - |
+| W130 | TIME 2 + FLEXIBLE 3 | 毎手番効く | - | - | - | - |
+| W131 | TIME 2 + RIGID 7 | 毎手番効く | - | - | - | - |
+| W132 | WAR 0 + GLUTTONY 4 | 毎手番効く | - | - | - | - |
+| W133 | WAR 1 + PRIDE 0 | 毎手番効く | - | - | - | - |
+| W134 | WAR 2 + ENVY 4 | 毎手番効く | - | - | - | - |
+| W135 | WAR 2 + GREED 1 | 毎手番効く | - | - | - | - |
+| W136 | WAR 2 + LUST 0 | 毎手番効く | - | - | - | - |
+| W137 | WAR 2 + MOMENTUM 0 | 毎手番効く | - | - | - | - |
+| W138 | WAR 2 + MOMENTUM 1 | 毎手番効く | - | - | - | - |
+| W139 | WAR 2 + MOMENTUM 6 | 毎手番効く | - | - | - | - |
+| W140 | WAR 2 + PRIDE 0 | 毎手番効く | - | - | - | - |
+| W141 | WAR 3 + LUST 6 | 毎手番効く | - | - | - | - |
+| W142 | WAR 3 + MOMENTUM 1 | 毎手番効く | - | - | - | - |
+| W143 | ASSIMILATION 1 + GREED 0 | 毎手番効く | - | - | - | - |
+| W144 | ASSIMILATION 1 + MOMENTUM 1 | 毎手番効く | - | - | - | - |
+| W145 | ASSIMILATION 1 + PRIDE 0 | 毎手番効く | - | - | - | - |
+| W146 | ASSIMILATION 1 + RIGID 7 | 毎手番効く | - | - | - | - |
+| W147 | DIVERSITY 6 + FULCRUM 2 | 毎手番効く | - | - | - | - |
+| W148 | DIVERSITY 6 + GLUTTONY 1 | 毎手番効く | - | - | - | - |
+| W149 | DIVERSITY 6 + GLUTTONY 3 | 毎手番効く | - | - | - | - |
+| W150 | DIVERSITY 6 + MOMENTUM 6 | 毎手番効く | - | - | - | - |
+| W151 | DIVERSITY 6 + NOVA 0 | 毎手番効く | - | - | - | - |
+| W152 | DIVERSITY 6 + OVERWHELM 4 | 毎手番効く | - | - | - | - |
+| W153 | DIVERSITY 6 + WRATH 1 | 毎手番効く | - | - | - | - |
+| W154 | UNITY 1 + AMBUSH 2 | 毎手番効く | - | - | - | - |
+| W155 | UNITY 1 + GREED 3 | 毎手番効く | - | - | - | - |
+| W156 | UNITY 1 + LUST 2 | 毎手番効く | - | - | - | - |
+| W157 | UNITY 1 + NOVA 2 | 毎手番効く | - | - | - | - |
+| W158 | UNITY 1 + NOVA 3 | 毎手番効く | - | - | - | - |
+| W159 | UNITY 1 + PRIDE 0 | 毎手番効く | - | - | - | - |
+| W160 | UNITY 1 + PRIDE 4 | 毎手番効く | - | - | - | - |
+| W161 | UNITY 1 + FLEXIBLE 0 | 毎手番効く | - | - | - | - |
+| W162 | UNITY 1 + FLEXIBLE 1 | 毎手番効く | - | - | - | - |
+| W163 | UNITY 1 + FLEXIBLE 2 | 毎手番効く | - | - | - | - |
+| W164 | UNITY 1 + FLEXIBLE 3 | 毎手番効く | - | - | - | - |
+| W165 | UNITY 1 + RIGID 7 | 毎手番効く | - | - | - | - |
+| W166 | UNITY 4 + LUST 3 | 毎手番効く | - | - | - | - |
+| W167 | UNITY 4 + LUST 4 | 毎手番効く | - | - | - | - |
+| W168 | ENVY 1 + LUST 0 | 毎手番効く | - | - | - | - |
+| W169 | ENVY 1 + LUST 3 | 毎手番効く | - | - | - | - |
+| W170 | ENVY 1 + LUST 4 | 毎手番効く | - | - | - | - |
+| W171 | ENVY 1 + NOVA 0 | 毎手番効く | - | - | - | - |
+| W172 | ENVY 1 + NOVA 2 | 毎手番効く | - | - | - | - |
+| W173 | ENVY 1 + PRIDE 0 | 毎手番効く | - | - | - | - |
+| W174 | ENVY 1 + PRIDE 4 | 毎手番効く | - | - | - | - |
+| W175 | ENVY 1 + PRIDE 6 | 毎手番効く | - | - | - | - |
+| W176 | ENVY 1 + WRATH 1 | 毎手番効く | - | - | - | - |
+| W177 | ENVY 1 + WRATH 4 | 毎手番効く | - | - | - | - |
+| W178 | GLUTTONY 0 + SPIRIT 0 | 毎手番効く | - | - | - | - |
+| W179 | GLUTTONY 1 + DEATH 0 | 毎手番効く | - | - | - | - |
+| W180 | GLUTTONY 1 + DEATH 2 | 毎手番効く | - | - | - | - |
+| W181 | GLUTTONY 1 + DEATH 3 | 毎手番効く | - | - | - | - |
+| W182 | GLUTTONY 1 + DEATH 4 | 毎手番効く | - | - | - | - |
+| W183 | GLUTTONY 1 + FIRE 1 | 毎手番効く | - | - | - | - |
+| W184 | GLUTTONY 1 + METAL 3 | 毎手番効く | - | - | - | - |
+| W185 | GLUTTONY 1 + METAL 6 | 毎手番効く | - | - | - | - |
+| W186 | GLUTTONY 1 + SPIRIT 0 | 毎手番効く | - | - | - | - |
+| W187 | GLUTTONY 1 + HATE 0 | 毎手番効く | - | - | - | - |
+| W188 | GLUTTONY 1 + HATE 1 | 毎手番効く | - | - | - | - |
+| W189 | GLUTTONY 1 + HATE 2 | 毎手番効く | - | - | - | - |
+| W190 | GLUTTONY 1 + HATE 4 | 毎手番効く | - | - | - | - |
+| W191 | GLUTTONY 1 + COURAGE 1 | 毎手番効く | - | - | - | - |
+| W192 | GLUTTONY 1 + LUCK 3 | 毎手番効く | - | - | - | - |
+| W193 | GLUTTONY 1 + LUCK 4 | 毎手番効く | - | - | - | - |
+| W194 | GLUTTONY 1 + WAR 0 | 毎手番効く | - | - | - | - |
+| W195 | GLUTTONY 1 + UNITY 1 | 毎手番効く | - | - | - | - |
+| W196 | GLUTTONY 1 + FULCRUM 2 | 毎手番効く | - | - | - | - |
+| W197 | GLUTTONY 1 + MOMENTUM 6 | 毎手番効く | - | - | - | - |
+| W198 | GLUTTONY 1 + NOVA 0 | 毎手番効く | - | - | - | - |
+| W199 | GLUTTONY 1 + OVERWHELM 4 | 毎手番効く | - | - | - | - |
+| W200 | GLUTTONY 1 + WRATH 1 | 毎手番効く | - | - | - | - |
+| W201 | GLUTTONY 3 + DEATH 0 | 毎手番効く | - | - | - | - |
+| W202 | GLUTTONY 3 + DEATH 2 | 毎手番効く | - | - | - | - |
+| W203 | GLUTTONY 3 + DEATH 3 | 毎手番効く | - | - | - | - |
+| W204 | GLUTTONY 3 + DEATH 4 | 毎手番効く | - | - | - | - |
+| W205 | GLUTTONY 3 + FIRE 1 | 毎手番効く | - | - | - | - |
+| W206 | GLUTTONY 3 + METAL 3 | 毎手番効く | - | - | - | - |
+| W207 | GLUTTONY 3 + METAL 6 | 毎手番効く | - | - | - | - |
+| W208 | GLUTTONY 3 + HATE 0 | 毎手番効く | - | - | - | - |
+| W209 | GLUTTONY 3 + HATE 1 | 毎手番効く | - | - | - | - |
+| W210 | GLUTTONY 3 + HATE 2 | 毎手番効く | - | - | - | - |
+| W211 | GLUTTONY 3 + HATE 4 | 毎手番効く | - | - | - | - |
+| W212 | GLUTTONY 3 + COURAGE 1 | 毎手番効く | - | - | - | - |
+| W213 | GLUTTONY 3 + LUCK 3 | 毎手番効く | - | - | - | - |
+| W214 | GLUTTONY 3 + LUCK 4 | 毎手番効く | - | - | - | - |
+| W215 | GLUTTONY 3 + WAR 0 | 毎手番効く | - | - | - | - |
+| W216 | GLUTTONY 3 + UNITY 1 | 毎手番効く | - | - | - | - |
+| W217 | GLUTTONY 3 + FULCRUM 2 | 毎手番効く | - | - | - | - |
+| W218 | GLUTTONY 3 + MOMENTUM 6 | 毎手番効く | - | - | - | - |
+| W219 | GLUTTONY 3 + NOVA 0 | 毎手番効く | - | - | - | - |
+| W220 | GLUTTONY 3 + OVERWHELM 4 | 毎手番効く | - | - | - | - |
+| W221 | GLUTTONY 3 + WRATH 1 | 毎手番効く | - | - | - | - |
+| W222 | GREED 0 + UNITY 1 | 毎手番効く | - | - | - | - |
+| W223 | GREED 1 + METAL 1 | 毎手番効く | - | - | - | - |
+| W224 | GREED 1 + DIVERSITY 0 | 毎手番効く | - | - | - | - |
+| W225 | GREED 1 + UNITY 1 | 毎手番効く | - | - | - | - |
+| W226 | GREED 1 + ENVY 4 | 毎手番効く | - | - | - | - |
+| W227 | GREED 1 + MOMENTUM 0 | 毎手番効く | - | - | - | - |
+| W228 | GREED 1 + MOMENTUM 6 | 毎手番効く | - | - | - | - |
+| W229 | GREED 2 + FIRE 2 | 毎手番効く | - | - | - | - |
+| W230 | GREED 2 + WATER 3 | 毎手番効く | - | - | - | - |
+| W231 | GREED 2 + WATER 4 | 毎手番効く | - | - | - | - |
+| W232 | GREED 2 + CLARITY 4 | 毎手番効く | - | - | - | - |
+| W233 | GREED 2 + CORRUPTION 1 | 毎手番効く | - | - | - | - |
+| W234 | GREED 2 + FEAR 2 | 毎手番効く | - | - | - | - |
+| W235 | GREED 2 + TIME 0 | 毎手番効く | - | - | - | - |
+| W236 | GREED 2 + TIME 2 | 毎手番効く | - | - | - | - |
+| W237 | GREED 2 + GLUTTONY 0 | 毎手番効く | - | - | - | - |
+| W238 | GREED 2 + SLOTH 1 | 毎手番効く | - | - | - | - |
+| W239 | GREED 2 + FLEXIBLE 0 | 毎手番効く | - | - | - | - |
+| W240 | LUST 0 + METAL 1 | 毎手番効く | - | - | - | - |
+| W241 | LUST 0 + DIVERSITY 0 | 毎手番効く | - | - | - | - |
+| W242 | LUST 0 + UNITY 1 | 毎手番効く | - | - | - | - |
+| W243 | LUST 0 + ENVY 4 | 毎手番効く | - | - | - | - |
+| W244 | LUST 0 + MOMENTUM 0 | 毎手番効く | - | - | - | - |
+| W245 | LUST 0 + MOMENTUM 1 | 毎手番効く | - | - | - | - |
+| W246 | LUST 0 + MOMENTUM 6 | 毎手番効く | - | - | - | - |
+| W247 | LUST 0 + NOVA 0 | 毎手番効く | - | - | - | - |
+| W248 | LUST 0 + NOVA 2 | 毎手番効く | - | - | - | - |
+| W249 | LUST 0 + PRIDE 0 | 毎手番効く | - | - | - | - |
+| W250 | LUST 0 + PRIDE 4 | 毎手番効く | - | - | - | - |
+| W251 | LUST 0 + PRIDE 6 | 毎手番効く | - | - | - | - |
+| W252 | LUST 0 + WRATH 4 | 毎手番効く | - | - | - | - |
+| W253 | LUST 3 + NOVA 0 | 毎手番効く | - | - | - | - |
+| W254 | LUST 3 + PRIDE 0 | 毎手番効く | - | - | - | - |
+| W255 | LUST 3 + PRIDE 4 | 毎手番効く | - | - | - | - |
+| W256 | LUST 3 + PRIDE 6 | 毎手番効く | - | - | - | - |
+| W257 | LUST 3 + WRATH 1 | 毎手番効く | - | - | - | - |
+| W258 | LUST 3 + WRATH 4 | 毎手番効く | - | - | - | - |
+| W259 | MOMENTUM 1 + METAL 1 | 毎手番効く | - | - | - | - |
+| W260 | MOMENTUM 1 + DIVERSITY 0 | 毎手番効く | - | - | - | - |
+| W261 | MOMENTUM 1 + UNITY 1 | 毎手番効く | - | - | - | - |
+| W262 | MOMENTUM 1 + ENVY 4 | 毎手番効く | - | - | - | - |
+| W263 | MOMENTUM 1 + PRIDE 0 | 毎手番効く | - | - | - | - |
+| W264 | MOMENTUM 6 + DEATH 0 | 毎手番効く | - | - | - | - |
+| W265 | MOMENTUM 6 + DEATH 2 | 毎手番効く | - | - | - | - |
+| W266 | MOMENTUM 6 + DEATH 3 | 毎手番効く | - | - | - | - |
+| W267 | MOMENTUM 6 + DEATH 4 | 毎手番効く | - | - | - | - |
+| W268 | MOMENTUM 6 + FIRE 1 | 毎手番効く | - | - | - | - |
+| W269 | MOMENTUM 6 + METAL 1 | 毎手番効く | - | - | - | - |
+| W270 | MOMENTUM 6 + METAL 3 | 毎手番効く | - | - | - | - |
+| W271 | MOMENTUM 6 + METAL 6 | 毎手番効く | - | - | - | - |
+| W272 | MOMENTUM 6 + HATE 0 | 毎手番効く | - | - | - | - |
+| W273 | MOMENTUM 6 + HATE 1 | 毎手番効く | - | - | - | - |
+| W274 | MOMENTUM 6 + HATE 2 | 毎手番効く | - | - | - | - |
+| W275 | MOMENTUM 6 + HATE 4 | 毎手番効く | - | - | - | - |
+| W276 | MOMENTUM 6 + COURAGE 1 | 毎手番効く | - | - | - | - |
+| W277 | MOMENTUM 6 + LUCK 3 | 毎手番効く | - | - | - | - |
+| W278 | MOMENTUM 6 + LUCK 4 | 毎手番効く | - | - | - | - |
+| W279 | MOMENTUM 6 + WAR 0 | 毎手番効く | - | - | - | - |
+| W280 | MOMENTUM 6 + DIVERSITY 0 | 毎手番効く | - | - | - | - |
+| W281 | MOMENTUM 6 + UNITY 1 | 毎手番効く | - | - | - | - |
+| W282 | MOMENTUM 6 + ENVY 4 | 毎手番効く | - | - | - | - |
+| W283 | MOMENTUM 6 + FULCRUM 2 | 毎手番効く | - | - | - | - |
+| W284 | MOMENTUM 6 + NOVA 0 | 毎手番効く | - | - | - | - |
+| W285 | MOMENTUM 6 + OVERWHELM 4 | 毎手番効く | - | - | - | - |
+| W286 | MOMENTUM 6 + PRIDE 0 | 毎手番効く | - | - | - | - |
+| W287 | MOMENTUM 6 + WRATH 1 | 毎手番効く | - | - | - | - |
+| W288 | NOVA 0 + DEATH 0 | 毎手番効く | - | - | - | - |
+| W289 | NOVA 0 + DEATH 2 | 毎手番効く | - | - | - | - |
+| W290 | NOVA 0 + DEATH 3 | 毎手番効く | - | - | - | - |
+| W291 | NOVA 0 + DEATH 4 | 毎手番効く | - | - | - | - |
+| W292 | NOVA 0 + FIRE 1 | 毎手番効く | - | - | - | - |
+| W293 | NOVA 0 + METAL 3 | 毎手番効く | - | - | - | - |
+| W294 | NOVA 0 + METAL 6 | 毎手番効く | - | - | - | - |
+| W295 | NOVA 0 + HATE 0 | 毎手番効く | - | - | - | - |
+| W296 | NOVA 0 + HATE 1 | 毎手番効く | - | - | - | - |
+| W297 | NOVA 0 + HATE 2 | 毎手番効く | - | - | - | - |
+| W298 | NOVA 0 + HATE 4 | 毎手番効く | - | - | - | - |
+| W299 | NOVA 0 + COURAGE 1 | 毎手番効く | - | - | - | - |
+| W300 | NOVA 0 + LUCK 3 | 毎手番効く | - | - | - | - |
+| W301 | NOVA 0 + LUCK 4 | 毎手番効く | - | - | - | - |
+| W302 | NOVA 0 + WAR 0 | 毎手番効く | - | - | - | - |
+| W303 | NOVA 0 + UNITY 1 | 毎手番効く | - | - | - | - |
+| W304 | NOVA 0 + FULCRUM 2 | 毎手番効く | - | - | - | - |
+| W305 | NOVA 0 + OVERWHELM 4 | 毎手番効く | - | - | - | - |
+| W306 | NOVA 0 + WRATH 1 | 毎手番効く | - | - | - | - |
+| W307 | PRIDE 0 + METAL 1 | 毎手番効く | - | - | - | - |
+| W308 | PRIDE 0 + SPIRIT 0 | 毎手番効く | - | - | - | - |
+| W309 | PRIDE 0 + LOVE 2 | 毎手番効く | - | - | - | - |
+| W310 | PRIDE 0 + DIVERSITY 0 | 毎手番効く | - | - | - | - |
+| W311 | PRIDE 0 + ENVY 4 | 毎手番効く | - | - | - | - |
+| W312 | PRIDE 0 + MOMENTUM 0 | 毎手番効く | - | - | - | - |
+| W313 | WRATH 1 + DEATH 0 | 毎手番効く | - | - | - | - |
+| W314 | WRATH 1 + DEATH 2 | 毎手番効く | - | - | - | - |
+| W315 | WRATH 1 + DEATH 3 | 毎手番効く | - | - | - | - |
+| W316 | WRATH 1 + DEATH 4 | 毎手番効く | - | - | - | - |
+| W317 | WRATH 1 + FIRE 1 | 毎手番効く | - | - | - | - |
+| W318 | WRATH 1 + METAL 3 | 毎手番効く | - | - | - | - |
+| W319 | WRATH 1 + METAL 6 | 毎手番効く | - | - | - | - |
+| W320 | WRATH 1 + HATE 0 | 毎手番効く | - | - | - | - |
+| W321 | WRATH 1 + HATE 1 | 毎手番効く | - | - | - | - |
+| W322 | WRATH 1 + HATE 2 | 毎手番効く | - | - | - | - |
+| W323 | WRATH 1 + HATE 4 | 毎手番効く | - | - | - | - |
+| W324 | WRATH 1 + COURAGE 1 | 毎手番効く | - | - | - | - |
+| W325 | WRATH 1 + LUCK 3 | 毎手番効く | - | - | - | - |
+| W326 | WRATH 1 + LUCK 4 | 毎手番効く | - | - | - | - |
+| W327 | WRATH 1 + WAR 0 | 毎手番効く | - | - | - | - |
+| W328 | WRATH 1 + UNITY 1 | 毎手番効く | - | - | - | - |
+| W329 | WRATH 1 + FULCRUM 2 | 毎手番効く | - | - | - | - |
+| W330 | WRATH 1 + LUST 4 | 毎手番効く | - | - | - | - |
+| W331 | WRATH 1 + OVERWHELM 4 | 毎手番効く | - | - | - | - |
+| W332 | WRATH 1 + PRIDE 0 | 毎手番効く | - | - | - | - |
+| W333 | WRATH 1 + PRIDE 4 | 毎手番効く | - | - | - | - |
+| W334 | WRATH 1 + PRIDE 6 | 毎手番効く | - | - | - | - |
+| W335 | FLEXIBLE 2 + DARKNESS 0 | 毎手番効く | - | - | - | - |
+| W336 | FLEXIBLE 2 + DARKNESS 1 | 毎手番効く | - | - | - | - |
+| W337 | FLEXIBLE 2 + DARKNESS 4 | 毎手番効く | - | - | - | - |
+| W338 | FLEXIBLE 2 + GRAVITY 1 | 毎手番効く | - | - | - | - |
+| W339 | FLEXIBLE 2 + GRAVITY 2 | 毎手番効く | - | - | - | - |
+| W340 | FLEXIBLE 2 + GRAVITY 4 | 毎手番効く | - | - | - | - |
+| W341 | FLEXIBLE 2 + LIGHT 2 | 毎手番効く | - | - | - | - |
+| W342 | FLEXIBLE 2 + LIGHT 3 | 毎手番効く | - | - | - | - |
+| W343 | FLEXIBLE 2 + PSYCHIC 3 | 毎手番効く | - | - | - | - |
+| W344 | FLEXIBLE 2 + SPEED 4 | 毎手番効く | - | - | - | - |
+| W345 | FLEXIBLE 2 + CHAOS 2 | 毎手番効く | - | - | - | - |
+| W346 | FLEXIBLE 2 + FEAR 0 | 毎手番効く | - | - | - | - |
+| W347 | FLEXIBLE 2 + FEAR 3 | 毎手番効く | - | - | - | - |
+| W348 | FLEXIBLE 2 + ICE 1 | 毎手番効く | - | - | - | - |
+| W349 | FLEXIBLE 2 + ICE 2 | 毎手番効く | - | - | - | - |
+| W350 | FLEXIBLE 2 + SMOKE 1 | 毎手番効く | - | - | - | - |
+| W351 | FLEXIBLE 2 + SMOKE 4 | 毎手番効く | - | - | - | - |
+| W352 | FLEXIBLE 2 + DIVERSITY 1 | 毎手番効く | - | - | - | - |
+| W353 | FLEXIBLE 2 + AMBUSH 2 | 毎手番効く | - | - | - | - |
+| W354 | FLEXIBLE 2 + GREED 3 | 毎手番効く | - | - | - | - |
+| W355 | FLEXIBLE 2 + LUST 2 | 毎手番効く | - | - | - | - |
+| W356 | FLEXIBLE 2 + NOVA 2 | 毎手番効く | - | - | - | - |
+| W357 | FLEXIBLE 2 + NOVA 3 | 毎手番効く | - | - | - | - |
+| W358 | FLEXIBLE 2 + PRIDE 0 | 毎手番効く | - | - | - | - |
+| W359 | FLEXIBLE 2 + PRIDE 4 | 毎手番効く | - | - | - | - |
+| W360 | FLEXIBLE 2 + RIGID 7 | 毎手番効く | - | - | - | - |
+| W361 | RIGID 7 + DARKNESS 0 | 毎手番効く | - | - | - | - |
+| W362 | RIGID 7 + DARKNESS 1 | 毎手番効く | - | - | - | - |
+| W363 | RIGID 7 + DARKNESS 4 | 毎手番効く | - | - | - | - |
+| W364 | RIGID 7 + GRAVITY 1 | 毎手番効く | - | - | - | - |
+| W365 | RIGID 7 + GRAVITY 2 | 毎手番効く | - | - | - | - |
+| W366 | RIGID 7 + GRAVITY 4 | 毎手番効く | - | - | - | - |
+| W367 | RIGID 7 + LIGHT 2 | 毎手番効く | - | - | - | - |
+| W368 | RIGID 7 + LIGHT 3 | 毎手番効く | - | - | - | - |
+| W369 | RIGID 7 + PSYCHIC 3 | 毎手番効く | - | - | - | - |
+| W370 | RIGID 7 + SPEED 4 | 毎手番効く | - | - | - | - |
+| W371 | RIGID 7 + CHAOS 2 | 毎手番効く | - | - | - | - |
+| W372 | RIGID 7 + FEAR 0 | 毎手番効く | - | - | - | - |
+| W373 | RIGID 7 + FEAR 3 | 毎手番効く | - | - | - | - |
+| W374 | RIGID 7 + ICE 1 | 毎手番効く | - | - | - | - |
+| W375 | RIGID 7 + ICE 2 | 毎手番効く | - | - | - | - |
+| W376 | RIGID 7 + SMOKE 1 | 毎手番効く | - | - | - | - |
+| W377 | RIGID 7 + SMOKE 4 | 毎手番効く | - | - | - | - |
+| W378 | RIGID 7 + DIVERSITY 1 | 毎手番効く | - | - | - | - |
+| W379 | RIGID 7 + AMBUSH 2 | 毎手番効く | - | - | - | - |
+| W380 | RIGID 7 + GREED 3 | 毎手番効く | - | - | - | - |
+| W381 | RIGID 7 + LUST 2 | 毎手番効く | - | - | - | - |
+| W382 | RIGID 7 + NOVA 2 | 毎手番効く | - | - | - | - |
+| W383 | RIGID 7 + NOVA 3 | 毎手番効く | - | - | - | - |
+| W384 | RIGID 7 + PRIDE 0 | 毎手番効く | - | - | - | - |
+| W385 | RIGID 7 + PRIDE 4 | 毎手番効く | - | - | - | - |
+| W386 | RIGID 7 + FLEXIBLE 0 | 毎手番効く | - | - | - | - |
+| W387 | RIGID 7 + FLEXIBLE 1 | 毎手番効く | - | - | - | - |
+| W388 | RIGID 7 + FLEXIBLE 3 | 毎手番効く | - | - | - | - |
 

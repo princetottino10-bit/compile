@@ -1,6 +1,6 @@
 {
  "about": "Compile のコンボのデータベース。生成: node scripts/combo_db.js (候補 scripts/combo_cands.js / 検証 scripts/combo_lab.js / 教わった手筋 scripts/combo_taught.js)。lab.interaction = 噛み合い (その手で相方あり−相方白紙) − (ORACLE の手で相方あり−相方白紙) (pt)。lab.partnerValue = ORACLE が自由に打つときの相方あり−相方白紙 (相方そのものの値)。lab.synergy = その手で相方あり−相方白紙 (噛み合い+相方の値)。lab.missed = その手を打ったときと ORACLE が自分で選んだ手の差。lab.aiPicked = ORACLE が自分でその手を選んだ割合 (%)。勝つ見込みは自分の手番を horizon 回進めたあとの data/valnet.json の読み (playout なら決着まで打った勝ち負け)。",
- "updated": "2026-11-05",
+ "updated": "2026-11-27",
  "combos": [
   {
    "id": "C001",
@@ -67561,6 +67561,120 @@
    "note": null
   },
   {
+   "id": "O059",
+   "name": "FLEXIBLE 4 + LUST 3",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "FLEXIBLE_5",
+    "LUST_3"
+   ],
+   "protocols": [
+    "FLEXIBLE",
+    "LUST"
+   ],
+   "how": "終了で FLEXIBLE 4 が2枚引いて裏になり、LUST 3 でコントロールを払って表に戻す",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "O060",
+   "name": "PSYCHIC 4 + LUST 3",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "PSYCHIC_5",
+    "LUST_3"
+   ],
+   "protocols": [
+    "PSYCHIC",
+    "LUST"
+   ],
+   "how": "終了で PSYCHIC 4 が相手の札を戻して裏になり、LUST 3 でコントロールを払って表に戻す",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "O061",
+   "name": "SPEED 3 + LUST 3",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "SPEED_4",
+    "LUST_3"
+   ],
+   "protocols": [
+    "SPEED",
+    "LUST"
+   ],
+   "how": "終了で SPEED 3 が札を動かして裏になり、LUST 3 で表に戻す",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "O062",
+   "name": "OVERWHELM 2 + LUST 3",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "OVERWHELM_2",
+    "LUST_3"
+   ],
+   "protocols": [
+    "OVERWHELM",
+    "LUST"
+   ],
+   "how": "終了で OVERWHELM 2 が各ラインに裏で置いて裏になり、LUST 3 で表に戻す",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "O063",
+   "name": "LUST 3 + FLEXIBLE 4",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "LUST_3",
+    "FLEXIBLE_5"
+   ],
+   "protocols": [
+    "LUST",
+    "FLEXIBLE"
+   ],
+   "how": "LUST 3 を先に置き、FLEXIBLE 4 を足す (上と逆の順)",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "O064",
+   "name": "LUST 3 + PSYCHIC 4",
+   "kind": "engine",
+   "source": "textread",
+   "cards": [
+    "LUST_3",
+    "PSYCHIC_5"
+   ],
+   "protocols": [
+    "LUST",
+    "PSYCHIC"
+   ],
+   "how": "LUST 3 を先に置き、PSYCHIC 4 を足す (上と逆の順)",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
    "id": "I001",
    "name": "LIGHT 0 で裏の WATER 5 を起こす",
    "kind": "burst",
@@ -67877,6 +67991,8272 @@
     "missed": -10.4,
     "missedSe": 2,
     "aiPicked": 31
+   },
+   "note": null
+  },
+  {
+   "id": "W001",
+   "name": "DEATH 1 + FULCRUM 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "DEATH_2",
+    "FULCRUM_3"
+   ],
+   "protocols": [
+    "DEATH",
+    "FULCRUM"
+   ],
+   "how": "DEATH 1 (開始：カードを1枚引くことができる。そうした場合、他のカードを1枚削除し、そのあとこのカードを削除する。) を場に置き、FULCRUM 2 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W002",
+   "name": "DEATH 1 + GLUTTONY 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "DEATH_2",
+    "GLUTTONY_2"
+   ],
+   "protocols": [
+    "DEATH",
+    "GLUTTONY"
+   ],
+   "how": "DEATH 1 (開始：カードを1枚引くことができる。そうした場合、他のカードを1枚削除し、そのあとこのカードを削除する。) を場に置き、GLUTTONY 1 を出す。共通の語: 削除・引",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W003",
+   "name": "DEATH 1 + GLUTTONY 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "DEATH_2",
+    "GLUTTONY_4"
+   ],
+   "protocols": [
+    "DEATH",
+    "GLUTTONY"
+   ],
+   "how": "DEATH 1 (開始：カードを1枚引くことができる。そうした場合、他のカードを1枚削除し、そのあとこのカードを削除する。) を場に置き、GLUTTONY 3 を出す。共通の語: 削除・引",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W004",
+   "name": "DEATH 1 + MOMENTUM 6",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "DEATH_2",
+    "MOMENTUM_6"
+   ],
+   "protocols": [
+    "DEATH",
+    "MOMENTUM"
+   ],
+   "how": "DEATH 1 (開始：カードを1枚引くことができる。そうした場合、他のカードを1枚削除し、そのあとこのカードを削除する。) を場に置き、MOMENTUM 6 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W005",
+   "name": "DEATH 1 + NOVA 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "DEATH_2",
+    "NOVA_1"
+   ],
+   "protocols": [
+    "DEATH",
+    "NOVA"
+   ],
+   "how": "DEATH 1 (開始：カードを1枚引くことができる。そうした場合、他のカードを1枚削除し、そのあとこのカードを削除する。) を場に置き、NOVA 0 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W006",
+   "name": "DEATH 1 + OVERWHELM 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "DEATH_2",
+    "OVERWHELM_4"
+   ],
+   "protocols": [
+    "DEATH",
+    "OVERWHELM"
+   ],
+   "how": "DEATH 1 (開始：カードを1枚引くことができる。そうした場合、他のカードを1枚削除し、そのあとこのカードを削除する。) を場に置き、OVERWHELM 4 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W007",
+   "name": "DEATH 1 + WRATH 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "DEATH_2",
+    "WRATH_2"
+   ],
+   "protocols": [
+    "DEATH",
+    "WRATH"
+   ],
+   "how": "DEATH 1 (開始：カードを1枚引くことができる。そうした場合、他のカードを1枚削除し、そのあとこのカードを削除する。) を場に置き、WRATH 1 を出す。共通の語: 削除・引",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W008",
+   "name": "FIRE 3 + GREED 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "FIRE_4",
+    "GREED_5"
+   ],
+   "protocols": [
+    "FIRE",
+    "GREED"
+   ],
+   "how": "FIRE 3 (終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。) を場に置き、GREED 4 を出す。共通の語: 手札・捨て・反転",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W009",
+   "name": "FIRE 3 + RIGID 7",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "FIRE_4",
+    "RIGID_6"
+   ],
+   "protocols": [
+    "FIRE",
+    "RIGID"
+   ],
+   "how": "FIRE 3 (終了：あなたは手札を1枚捨て札にすることができる。そうした場合、カードを1枚反転させる。) を場に置き、RIGID 7 を出す。共通の語: 手札・捨て・反転",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W010",
+   "name": "LIFE 0 + FULCRUM 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "LIFE_1",
+    "FULCRUM_3"
+   ],
+   "protocols": [
+    "LIFE",
+    "FULCRUM"
+   ],
+   "how": "LIFE 0 (終了：このカードが覆われている場合、このカードを削除する。) を場に置き、FULCRUM 2 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W011",
+   "name": "LIFE 0 + GLUTTONY 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "LIFE_1",
+    "GLUTTONY_2"
+   ],
+   "protocols": [
+    "LIFE",
+    "GLUTTONY"
+   ],
+   "how": "LIFE 0 (終了：このカードが覆われている場合、このカードを削除する。) を場に置き、GLUTTONY 1 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W012",
+   "name": "LIFE 0 + GLUTTONY 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "LIFE_1",
+    "GLUTTONY_4"
+   ],
+   "protocols": [
+    "LIFE",
+    "GLUTTONY"
+   ],
+   "how": "LIFE 0 (終了：このカードが覆われている場合、このカードを削除する。) を場に置き、GLUTTONY 3 を出す。共通の語: 削除・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W013",
+   "name": "LIFE 0 + MOMENTUM 6",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "LIFE_1",
+    "MOMENTUM_6"
+   ],
+   "protocols": [
+    "LIFE",
+    "MOMENTUM"
+   ],
+   "how": "LIFE 0 (終了：このカードが覆われている場合、このカードを削除する。) を場に置き、MOMENTUM 6 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W014",
+   "name": "LIFE 0 + NOVA 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "LIFE_1",
+    "NOVA_1"
+   ],
+   "protocols": [
+    "LIFE",
+    "NOVA"
+   ],
+   "how": "LIFE 0 (終了：このカードが覆われている場合、このカードを削除する。) を場に置き、NOVA 0 を出す。共通の語: 削除・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W015",
+   "name": "LIFE 0 + OVERWHELM 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "LIFE_1",
+    "OVERWHELM_4"
+   ],
+   "protocols": [
+    "LIFE",
+    "OVERWHELM"
+   ],
+   "how": "LIFE 0 (終了：このカードが覆われている場合、このカードを削除する。) を場に置き、OVERWHELM 4 を出す。共通の語: 削除・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W016",
+   "name": "LIFE 0 + WRATH 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "LIFE_1",
+    "WRATH_2"
+   ],
+   "protocols": [
+    "LIFE",
+    "WRATH"
+   ],
+   "how": "LIFE 0 (終了：このカードが覆われている場合、このカードを削除する。) を場に置き、WRATH 1 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W017",
+   "name": "PLAGUE 1 + GREED 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "PLAGUE_2",
+    "GREED_1"
+   ],
+   "protocols": [
+    "PLAGUE",
+    "GREED"
+   ],
+   "how": "PLAGUE 1 (相手が手札を捨て札にしたあと：カードを1枚引く。) を場に置き、GREED 0 を出す。共通の語: 手札・捨て・引",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W018",
+   "name": "PLAGUE 1 + MOMENTUM 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "PLAGUE_2",
+    "MOMENTUM_2"
+   ],
+   "protocols": [
+    "PLAGUE",
+    "MOMENTUM"
+   ],
+   "how": "PLAGUE 1 (相手が手札を捨て札にしたあと：カードを1枚引く。) を場に置き、MOMENTUM 1 を出す。共通の語: 手札・捨て・引",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W019",
+   "name": "PLAGUE 1 + RIGID 7",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "PLAGUE_2",
+    "RIGID_6"
+   ],
+   "protocols": [
+    "PLAGUE",
+    "RIGID"
+   ],
+   "how": "PLAGUE 1 (相手が手札を捨て札にしたあと：カードを1枚引く。) を場に置き、RIGID 7 を出す。共通の語: 手札・捨て・引",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W020",
+   "name": "PLAGUE 4 + FULCRUM 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "PLAGUE_5",
+    "FULCRUM_3"
+   ],
+   "protocols": [
+    "PLAGUE",
+    "FULCRUM"
+   ],
+   "how": "PLAGUE 4 (終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。) を場に置き、FULCRUM 2 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W021",
+   "name": "PLAGUE 4 + GLUTTONY 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "PLAGUE_5",
+    "GLUTTONY_2"
+   ],
+   "protocols": [
+    "PLAGUE",
+    "GLUTTONY"
+   ],
+   "how": "PLAGUE 4 (終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。) を場に置き、GLUTTONY 1 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W022",
+   "name": "PLAGUE 4 + GLUTTONY 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "PLAGUE_5",
+    "GLUTTONY_4"
+   ],
+   "protocols": [
+    "PLAGUE",
+    "GLUTTONY"
+   ],
+   "how": "PLAGUE 4 (終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。) を場に置き、GLUTTONY 3 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W023",
+   "name": "PLAGUE 4 + MOMENTUM 6",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "PLAGUE_5",
+    "MOMENTUM_6"
+   ],
+   "protocols": [
+    "PLAGUE",
+    "MOMENTUM"
+   ],
+   "how": "PLAGUE 4 (終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。) を場に置き、MOMENTUM 6 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W024",
+   "name": "PLAGUE 4 + NOVA 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "PLAGUE_5",
+    "NOVA_1"
+   ],
+   "protocols": [
+    "PLAGUE",
+    "NOVA"
+   ],
+   "how": "PLAGUE 4 (終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。) を場に置き、NOVA 0 を出す。共通の語: 裏向き・削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W025",
+   "name": "PLAGUE 4 + OVERWHELM 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "PLAGUE_5",
+    "OVERWHELM_4"
+   ],
+   "protocols": [
+    "PLAGUE",
+    "OVERWHELM"
+   ],
+   "how": "PLAGUE 4 (終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。) を場に置き、OVERWHELM 4 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W026",
+   "name": "PLAGUE 4 + WRATH 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "PLAGUE_5",
+    "WRATH_2"
+   ],
+   "protocols": [
+    "PLAGUE",
+    "WRATH"
+   ],
+   "how": "PLAGUE 4 (終了：相手は自分の裏向きのカードを1枚削除する。あなたはこのカードを反転させることができる。) を場に置き、WRATH 1 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W027",
+   "name": "PSYCHIC 4 + GLUTTONY 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "PSYCHIC_5",
+    "GLUTTONY_1"
+   ],
+   "protocols": [
+    "PSYCHIC",
+    "GLUTTONY"
+   ],
+   "how": "PSYCHIC 4 (終了：あなたは相手のカードを1枚戻すことができる。そうした場合、このカードを反転させる。) を場に置き、GLUTTONY 0 を出す。共通の語: 戻",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W028",
+   "name": "PSYCHIC 4 + GREED 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "PSYCHIC_5",
+    "GREED_3"
+   ],
+   "protocols": [
+    "PSYCHIC",
+    "GREED"
+   ],
+   "how": "PSYCHIC 4 (終了：あなたは相手のカードを1枚戻すことができる。そうした場合、このカードを反転させる。) を場に置き、GREED 2 を出す。共通の語: 戻",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W029",
+   "name": "PSYCHIC 4 + SLOTH 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "PSYCHIC_5",
+    "SLOTH_2"
+   ],
+   "protocols": [
+    "PSYCHIC",
+    "SLOTH"
+   ],
+   "how": "PSYCHIC 4 (終了：あなたは相手のカードを1枚戻すことができる。そうした場合、このカードを反転させる。) を場に置き、SLOTH 1 を出す。共通の語: 戻",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W030",
+   "name": "PSYCHIC 4 + FLEXIBLE 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "PSYCHIC_5",
+    "FLEXIBLE_1"
+   ],
+   "protocols": [
+    "PSYCHIC",
+    "FLEXIBLE"
+   ],
+   "how": "PSYCHIC 4 (終了：あなたは相手のカードを1枚戻すことができる。そうした場合、このカードを反転させる。) を場に置き、FLEXIBLE 0 を出す。共通の語: 戻",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W031",
+   "name": "SPEED 1 + GLUTTONY 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_2",
+    "GLUTTONY_1"
+   ],
+   "protocols": [
+    "SPEED",
+    "GLUTTONY"
+   ],
+   "how": "SPEED 1 (あなたがキャッシュをクリアしたあと：カードを1枚引く。) を場に置き、GLUTTONY 0 を出す。共通の語: 引・キャッシュ",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W032",
+   "name": "SPEED 1 + GLUTTONY 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_2",
+    "GLUTTONY_2"
+   ],
+   "protocols": [
+    "SPEED",
+    "GLUTTONY"
+   ],
+   "how": "SPEED 1 (あなたがキャッシュをクリアしたあと：カードを1枚引く。) を場に置き、GLUTTONY 1 を出す。共通の語: 引・キャッシュ",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W033",
+   "name": "SPEED 2 + AMBUSH 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_3",
+    "AMBUSH_3"
+   ],
+   "protocols": [
+    "SPEED",
+    "AMBUSH"
+   ],
+   "how": "SPEED 2 (このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。) を場に置き、AMBUSH 2 を出す。共通の語: 移動・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W034",
+   "name": "SPEED 2 + ENVY 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_3",
+    "ENVY_5"
+   ],
+   "protocols": [
+    "SPEED",
+    "ENVY"
+   ],
+   "how": "SPEED 2 (このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。) を場に置き、ENVY 4 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W035",
+   "name": "SPEED 2 + FULCRUM 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_3",
+    "FULCRUM_3"
+   ],
+   "protocols": [
+    "SPEED",
+    "FULCRUM"
+   ],
+   "how": "SPEED 2 (このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。) を場に置き、FULCRUM 2 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W036",
+   "name": "SPEED 2 + GLUTTONY 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_3",
+    "GLUTTONY_2"
+   ],
+   "protocols": [
+    "SPEED",
+    "GLUTTONY"
+   ],
+   "how": "SPEED 2 (このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。) を場に置き、GLUTTONY 1 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W037",
+   "name": "SPEED 2 + GLUTTONY 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_3",
+    "GLUTTONY_4"
+   ],
+   "protocols": [
+    "SPEED",
+    "GLUTTONY"
+   ],
+   "how": "SPEED 2 (このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。) を場に置き、GLUTTONY 3 を出す。共通の語: 削除・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W038",
+   "name": "SPEED 2 + GREED 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_3",
+    "GREED_1"
+   ],
+   "protocols": [
+    "SPEED",
+    "GREED"
+   ],
+   "how": "SPEED 2 (このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。) を場に置き、GREED 0 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W039",
+   "name": "SPEED 2 + GREED 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_3",
+    "GREED_2"
+   ],
+   "protocols": [
+    "SPEED",
+    "GREED"
+   ],
+   "how": "SPEED 2 (このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。) を場に置き、GREED 1 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W040",
+   "name": "SPEED 2 + GREED 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_3",
+    "GREED_4"
+   ],
+   "protocols": [
+    "SPEED",
+    "GREED"
+   ],
+   "how": "SPEED 2 (このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。) を場に置き、GREED 3 を出す。共通の語: 移動・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W041",
+   "name": "SPEED 2 + LUST 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_3",
+    "LUST_1"
+   ],
+   "protocols": [
+    "SPEED",
+    "LUST"
+   ],
+   "how": "SPEED 2 (このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。) を場に置き、LUST 0 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W042",
+   "name": "SPEED 2 + LUST 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_3",
+    "LUST_2"
+   ],
+   "protocols": [
+    "SPEED",
+    "LUST"
+   ],
+   "how": "SPEED 2 (このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。) を場に置き、LUST 2 を出す。共通の語: 移動・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W043",
+   "name": "SPEED 2 + MOMENTUM 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_3",
+    "MOMENTUM_1"
+   ],
+   "protocols": [
+    "SPEED",
+    "MOMENTUM"
+   ],
+   "how": "SPEED 2 (このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。) を場に置き、MOMENTUM 0 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W044",
+   "name": "SPEED 2 + MOMENTUM 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_3",
+    "MOMENTUM_2"
+   ],
+   "protocols": [
+    "SPEED",
+    "MOMENTUM"
+   ],
+   "how": "SPEED 2 (このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。) を場に置き、MOMENTUM 1 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W045",
+   "name": "SPEED 2 + MOMENTUM 6",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_3",
+    "MOMENTUM_6"
+   ],
+   "protocols": [
+    "SPEED",
+    "MOMENTUM"
+   ],
+   "how": "SPEED 2 (このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。) を場に置き、MOMENTUM 6 を出す。共通の語: 削除・コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W046",
+   "name": "SPEED 2 + NOVA 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_3",
+    "NOVA_1"
+   ],
+   "protocols": [
+    "SPEED",
+    "NOVA"
+   ],
+   "how": "SPEED 2 (このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。) を場に置き、NOVA 0 を出す。共通の語: 削除・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W047",
+   "name": "SPEED 2 + NOVA 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_3",
+    "NOVA_3"
+   ],
+   "protocols": [
+    "SPEED",
+    "NOVA"
+   ],
+   "how": "SPEED 2 (このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。) を場に置き、NOVA 2 を出す。共通の語: 移動・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W048",
+   "name": "SPEED 2 + NOVA 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_3",
+    "NOVA_4"
+   ],
+   "protocols": [
+    "SPEED",
+    "NOVA"
+   ],
+   "how": "SPEED 2 (このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。) を場に置き、NOVA 3 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W049",
+   "name": "SPEED 2 + OVERWHELM 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_3",
+    "OVERWHELM_4"
+   ],
+   "protocols": [
+    "SPEED",
+    "OVERWHELM"
+   ],
+   "how": "SPEED 2 (このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。) を場に置き、OVERWHELM 4 を出す。共通の語: 削除・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W050",
+   "name": "SPEED 2 + PRIDE 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_3",
+    "PRIDE_1"
+   ],
+   "protocols": [
+    "SPEED",
+    "PRIDE"
+   ],
+   "how": "SPEED 2 (このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。) を場に置き、PRIDE 0 を出す。共通の語: 移動・コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W051",
+   "name": "SPEED 2 + PRIDE 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_3",
+    "PRIDE_4"
+   ],
+   "protocols": [
+    "SPEED",
+    "PRIDE"
+   ],
+   "how": "SPEED 2 (このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。) を場に置き、PRIDE 4 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W052",
+   "name": "SPEED 2 + WRATH 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_3",
+    "WRATH_2"
+   ],
+   "protocols": [
+    "SPEED",
+    "WRATH"
+   ],
+   "how": "SPEED 2 (このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。) を場に置き、WRATH 1 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W053",
+   "name": "SPEED 2 + FLEXIBLE 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_3",
+    "FLEXIBLE_1"
+   ],
+   "protocols": [
+    "SPEED",
+    "FLEXIBLE"
+   ],
+   "how": "SPEED 2 (このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。) を場に置き、FLEXIBLE 0 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W054",
+   "name": "SPEED 2 + FLEXIBLE 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_3",
+    "FLEXIBLE_2"
+   ],
+   "protocols": [
+    "SPEED",
+    "FLEXIBLE"
+   ],
+   "how": "SPEED 2 (このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。) を場に置き、FLEXIBLE 1 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W055",
+   "name": "SPEED 2 + FLEXIBLE 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_3",
+    "FLEXIBLE_3"
+   ],
+   "protocols": [
+    "SPEED",
+    "FLEXIBLE"
+   ],
+   "how": "SPEED 2 (このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。) を場に置き、FLEXIBLE 2 を出す。共通の語: 移動・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W056",
+   "name": "SPEED 2 + FLEXIBLE 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_3",
+    "FLEXIBLE_4"
+   ],
+   "protocols": [
+    "SPEED",
+    "FLEXIBLE"
+   ],
+   "how": "SPEED 2 (このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。) を場に置き、FLEXIBLE 3 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W057",
+   "name": "SPEED 2 + RIGID 7",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_3",
+    "RIGID_6"
+   ],
+   "protocols": [
+    "SPEED",
+    "RIGID"
+   ],
+   "how": "SPEED 2 (このカードがコンパイルによって削除されることになったとき：このカードが覆われている場合でさえ、削除する代わりにこのカードを移動させる。) を場に置き、RIGID 7 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W058",
+   "name": "SPEED 3 + AMBUSH 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_4",
+    "AMBUSH_3"
+   ],
+   "protocols": [
+    "SPEED",
+    "AMBUSH"
+   ],
+   "how": "SPEED 3 (終了：あなたは自分のカードを1枚移動させることができる。そうした場合、このカードを反転させる。) を場に置き、AMBUSH 2 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W059",
+   "name": "SPEED 3 + GREED 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_4",
+    "GREED_4"
+   ],
+   "protocols": [
+    "SPEED",
+    "GREED"
+   ],
+   "how": "SPEED 3 (終了：あなたは自分のカードを1枚移動させることができる。そうした場合、このカードを反転させる。) を場に置き、GREED 3 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W060",
+   "name": "SPEED 3 + LUST 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_4",
+    "LUST_2"
+   ],
+   "protocols": [
+    "SPEED",
+    "LUST"
+   ],
+   "how": "SPEED 3 (終了：あなたは自分のカードを1枚移動させることができる。そうした場合、このカードを反転させる。) を場に置き、LUST 2 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W061",
+   "name": "SPEED 3 + NOVA 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_4",
+    "NOVA_3"
+   ],
+   "protocols": [
+    "SPEED",
+    "NOVA"
+   ],
+   "how": "SPEED 3 (終了：あなたは自分のカードを1枚移動させることができる。そうした場合、このカードを反転させる。) を場に置き、NOVA 2 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W062",
+   "name": "SPEED 3 + NOVA 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_4",
+    "NOVA_4"
+   ],
+   "protocols": [
+    "SPEED",
+    "NOVA"
+   ],
+   "how": "SPEED 3 (終了：あなたは自分のカードを1枚移動させることができる。そうした場合、このカードを反転させる。) を場に置き、NOVA 3 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W063",
+   "name": "SPEED 3 + PRIDE 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_4",
+    "PRIDE_1"
+   ],
+   "protocols": [
+    "SPEED",
+    "PRIDE"
+   ],
+   "how": "SPEED 3 (終了：あなたは自分のカードを1枚移動させることができる。そうした場合、このカードを反転させる。) を場に置き、PRIDE 0 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W064",
+   "name": "SPEED 3 + PRIDE 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_4",
+    "PRIDE_4"
+   ],
+   "protocols": [
+    "SPEED",
+    "PRIDE"
+   ],
+   "how": "SPEED 3 (終了：あなたは自分のカードを1枚移動させることができる。そうした場合、このカードを反転させる。) を場に置き、PRIDE 4 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W065",
+   "name": "SPEED 3 + FLEXIBLE 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_4",
+    "FLEXIBLE_1"
+   ],
+   "protocols": [
+    "SPEED",
+    "FLEXIBLE"
+   ],
+   "how": "SPEED 3 (終了：あなたは自分のカードを1枚移動させることができる。そうした場合、このカードを反転させる。) を場に置き、FLEXIBLE 0 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W066",
+   "name": "SPEED 3 + FLEXIBLE 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_4",
+    "FLEXIBLE_2"
+   ],
+   "protocols": [
+    "SPEED",
+    "FLEXIBLE"
+   ],
+   "how": "SPEED 3 (終了：あなたは自分のカードを1枚移動させることができる。そうした場合、このカードを反転させる。) を場に置き、FLEXIBLE 1 を出す。共通の語: 反転・移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W067",
+   "name": "SPEED 3 + FLEXIBLE 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_4",
+    "FLEXIBLE_3"
+   ],
+   "protocols": [
+    "SPEED",
+    "FLEXIBLE"
+   ],
+   "how": "SPEED 3 (終了：あなたは自分のカードを1枚移動させることができる。そうした場合、このカードを反転させる。) を場に置き、FLEXIBLE 2 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W068",
+   "name": "SPEED 3 + FLEXIBLE 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_4",
+    "FLEXIBLE_4"
+   ],
+   "protocols": [
+    "SPEED",
+    "FLEXIBLE"
+   ],
+   "how": "SPEED 3 (終了：あなたは自分のカードを1枚移動させることができる。そうした場合、このカードを反転させる。) を場に置き、FLEXIBLE 3 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W069",
+   "name": "SPEED 3 + RIGID 7",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPEED_4",
+    "RIGID_6"
+   ],
+   "protocols": [
+    "SPEED",
+    "RIGID"
+   ],
+   "how": "SPEED 3 (終了：あなたは自分のカードを1枚移動させることができる。そうした場合、このカードを反転させる。) を場に置き、RIGID 7 を出す。共通の語: 反転・移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W070",
+   "name": "SPIRIT 1 + RIGID 7",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPIRIT_2",
+    "RIGID_6"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "RIGID"
+   ],
+   "how": "SPIRIT 1 (開始：あなたは手札を1枚捨て札にするか、このカードを反転させる。) を場に置き、RIGID 7 を出す。共通の語: 手札・捨て・反転",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W071",
+   "name": "SPIRIT 3 + AMBUSH 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPIRIT_4",
+    "AMBUSH_3"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "AMBUSH"
+   ],
+   "how": "SPIRIT 3 (あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を場に置き、AMBUSH 2 を出す。共通の語: 移動・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W072",
+   "name": "SPIRIT 3 + GREED 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPIRIT_4",
+    "GREED_4"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "GREED"
+   ],
+   "how": "SPIRIT 3 (あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を場に置き、GREED 3 を出す。共通の語: 移動・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W073",
+   "name": "SPIRIT 3 + LUST 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPIRIT_4",
+    "LUST_2"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "LUST"
+   ],
+   "how": "SPIRIT 3 (あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を場に置き、LUST 2 を出す。共通の語: 移動・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W074",
+   "name": "SPIRIT 3 + NOVA 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPIRIT_4",
+    "NOVA_3"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "NOVA"
+   ],
+   "how": "SPIRIT 3 (あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を場に置き、NOVA 2 を出す。共通の語: 移動・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W075",
+   "name": "SPIRIT 3 + NOVA 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPIRIT_4",
+    "NOVA_4"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "NOVA"
+   ],
+   "how": "SPIRIT 3 (あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を場に置き、NOVA 3 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W076",
+   "name": "SPIRIT 3 + PRIDE 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPIRIT_4",
+    "PRIDE_4"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "PRIDE"
+   ],
+   "how": "SPIRIT 3 (あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を場に置き、PRIDE 4 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W077",
+   "name": "SPIRIT 3 + FLEXIBLE 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPIRIT_4",
+    "FLEXIBLE_1"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "FLEXIBLE"
+   ],
+   "how": "SPIRIT 3 (あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を場に置き、FLEXIBLE 0 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W078",
+   "name": "SPIRIT 3 + FLEXIBLE 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPIRIT_4",
+    "FLEXIBLE_2"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "FLEXIBLE"
+   ],
+   "how": "SPIRIT 3 (あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を場に置き、FLEXIBLE 1 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W079",
+   "name": "SPIRIT 3 + FLEXIBLE 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPIRIT_4",
+    "FLEXIBLE_4"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "FLEXIBLE"
+   ],
+   "how": "SPIRIT 3 (あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を場に置き、FLEXIBLE 3 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W080",
+   "name": "SPIRIT 3 + RIGID 7",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "SPIRIT_4",
+    "RIGID_6"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "RIGID"
+   ],
+   "how": "SPIRIT 3 (あなたがカードを引いたあと：このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を場に置き、RIGID 7 を出す。共通の語: 移動・引",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W081",
+   "name": "CHAOS 4 + GREED 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "CHAOS_5",
+    "GREED_1"
+   ],
+   "protocols": [
+    "CHAOS",
+    "GREED"
+   ],
+   "how": "CHAOS 4 (終了：あなたのすべての手札を捨て札にする。捨て札にした枚数と同じ枚数のカードを引く。) を場に置き、GREED 0 を出す。共通の語: 手札・捨て・引",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W082",
+   "name": "CHAOS 4 + MOMENTUM 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "CHAOS_5",
+    "MOMENTUM_2"
+   ],
+   "protocols": [
+    "CHAOS",
+    "MOMENTUM"
+   ],
+   "how": "CHAOS 4 (終了：あなたのすべての手札を捨て札にする。捨て札にした枚数と同じ枚数のカードを引く。) を場に置き、MOMENTUM 1 を出す。共通の語: 手札・捨て・引",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W083",
+   "name": "CHAOS 4 + RIGID 7",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "CHAOS_5",
+    "RIGID_6"
+   ],
+   "protocols": [
+    "CHAOS",
+    "RIGID"
+   ],
+   "how": "CHAOS 4 (終了：あなたのすべての手札を捨て札にする。捨て札にした枚数と同じ枚数のカードを引く。) を場に置き、RIGID 7 を出す。共通の語: 手札・捨て・引",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W084",
+   "name": "CLARITY 1 + LUST 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "CLARITY_2",
+    "LUST_3"
+   ],
+   "protocols": [
+    "CLARITY",
+    "LUST"
+   ],
+   "how": "CLARITY 1 (開始：あなたのデッキの一番上のカードを公開する。そのカードを捨て札にすることができる。) を場に置き、LUST 3 を出す。共通の語: 公開",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W085",
+   "name": "CLARITY 1 + LUST 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "CLARITY_2",
+    "LUST_4"
+   ],
+   "protocols": [
+    "CLARITY",
+    "LUST"
+   ],
+   "how": "CLARITY 1 (開始：あなたのデッキの一番上のカードを公開する。そのカードを捨て札にすることができる。) を場に置き、LUST 4 を出す。共通の語: 公開",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W086",
+   "name": "CORRUPTION 6 + FULCRUM 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "CORRUPTION_6",
+    "FULCRUM_3"
+   ],
+   "protocols": [
+    "CORRUPTION",
+    "FULCRUM"
+   ],
+   "how": "CORRUPTION 6 (終了：あなたは手札を1枚捨て札にするか、このカードを削除する。) を場に置き、FULCRUM 2 を出す。共通の語: 手札・削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W087",
+   "name": "CORRUPTION 6 + GLUTTONY 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "CORRUPTION_6",
+    "GLUTTONY_2"
+   ],
+   "protocols": [
+    "CORRUPTION",
+    "GLUTTONY"
+   ],
+   "how": "CORRUPTION 6 (終了：あなたは手札を1枚捨て札にするか、このカードを削除する。) を場に置き、GLUTTONY 1 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W088",
+   "name": "CORRUPTION 6 + GLUTTONY 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "CORRUPTION_6",
+    "GLUTTONY_4"
+   ],
+   "protocols": [
+    "CORRUPTION",
+    "GLUTTONY"
+   ],
+   "how": "CORRUPTION 6 (終了：あなたは手札を1枚捨て札にするか、このカードを削除する。) を場に置き、GLUTTONY 3 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W089",
+   "name": "CORRUPTION 6 + MOMENTUM 6",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "CORRUPTION_6",
+    "MOMENTUM_6"
+   ],
+   "protocols": [
+    "CORRUPTION",
+    "MOMENTUM"
+   ],
+   "how": "CORRUPTION 6 (終了：あなたは手札を1枚捨て札にするか、このカードを削除する。) を場に置き、MOMENTUM 6 を出す。共通の語: 手札・捨て・削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W090",
+   "name": "CORRUPTION 6 + NOVA 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "CORRUPTION_6",
+    "NOVA_1"
+   ],
+   "protocols": [
+    "CORRUPTION",
+    "NOVA"
+   ],
+   "how": "CORRUPTION 6 (終了：あなたは手札を1枚捨て札にするか、このカードを削除する。) を場に置き、NOVA 0 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W091",
+   "name": "CORRUPTION 6 + OVERWHELM 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "CORRUPTION_6",
+    "OVERWHELM_4"
+   ],
+   "protocols": [
+    "CORRUPTION",
+    "OVERWHELM"
+   ],
+   "how": "CORRUPTION 6 (終了：あなたは手札を1枚捨て札にするか、このカードを削除する。) を場に置き、OVERWHELM 4 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W092",
+   "name": "CORRUPTION 6 + WRATH 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "CORRUPTION_6",
+    "WRATH_2"
+   ],
+   "protocols": [
+    "CORRUPTION",
+    "WRATH"
+   ],
+   "how": "CORRUPTION 6 (終了：あなたは手札を1枚捨て札にするか、このカードを削除する。) を場に置き、WRATH 1 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W093",
+   "name": "COURAGE 0 + GREED 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "COURAGE_1",
+    "GREED_1"
+   ],
+   "protocols": [
+    "COURAGE",
+    "GREED"
+   ],
+   "how": "COURAGE 0 (開始：あなたの手札が1枚もない場合、カードを1枚引く。 終了：あなたは手札を1枚捨て札にすることができる。そうした場合、相手は手札を1枚捨て札にする。) を場に置き、GREED 0 を出す。共通の語: 手札・捨て・引",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W094",
+   "name": "COURAGE 0 + MOMENTUM 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "COURAGE_1",
+    "MOMENTUM_2"
+   ],
+   "protocols": [
+    "COURAGE",
+    "MOMENTUM"
+   ],
+   "how": "COURAGE 0 (開始：あなたの手札が1枚もない場合、カードを1枚引く。 終了：あなたは手札を1枚捨て札にすることができる。そうした場合、相手は手札を1枚捨て札にする。) を場に置き、MOMENTUM 1 を出す。共通の語: 手札・捨て・引",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W095",
+   "name": "COURAGE 0 + RIGID 7",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "COURAGE_1",
+    "RIGID_6"
+   ],
+   "protocols": [
+    "COURAGE",
+    "RIGID"
+   ],
+   "how": "COURAGE 0 (開始：あなたの手札が1枚もない場合、カードを1枚引く。 終了：あなたは手札を1枚捨て札にすることができる。そうした場合、相手は手札を1枚捨て札にする。) を場に置き、RIGID 7 を出す。共通の語: 手札・捨て・引",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W096",
+   "name": "COURAGE 3 + AMBUSH 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "COURAGE_4",
+    "AMBUSH_3"
+   ],
+   "protocols": [
+    "COURAGE",
+    "AMBUSH"
+   ],
+   "how": "COURAGE 3 (終了：相手の最も大きい合計値のラインに、このカードを移動させることができる。) を場に置き、AMBUSH 2 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W097",
+   "name": "COURAGE 3 + GREED 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "COURAGE_4",
+    "GREED_4"
+   ],
+   "protocols": [
+    "COURAGE",
+    "GREED"
+   ],
+   "how": "COURAGE 3 (終了：相手の最も大きい合計値のラインに、このカードを移動させることができる。) を場に置き、GREED 3 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W098",
+   "name": "COURAGE 3 + LUST 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "COURAGE_4",
+    "LUST_2"
+   ],
+   "protocols": [
+    "COURAGE",
+    "LUST"
+   ],
+   "how": "COURAGE 3 (終了：相手の最も大きい合計値のラインに、このカードを移動させることができる。) を場に置き、LUST 2 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W099",
+   "name": "COURAGE 3 + NOVA 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "COURAGE_4",
+    "NOVA_3"
+   ],
+   "protocols": [
+    "COURAGE",
+    "NOVA"
+   ],
+   "how": "COURAGE 3 (終了：相手の最も大きい合計値のラインに、このカードを移動させることができる。) を場に置き、NOVA 2 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W100",
+   "name": "COURAGE 3 + NOVA 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "COURAGE_4",
+    "NOVA_4"
+   ],
+   "protocols": [
+    "COURAGE",
+    "NOVA"
+   ],
+   "how": "COURAGE 3 (終了：相手の最も大きい合計値のラインに、このカードを移動させることができる。) を場に置き、NOVA 3 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W101",
+   "name": "COURAGE 3 + PRIDE 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "COURAGE_4",
+    "PRIDE_1"
+   ],
+   "protocols": [
+    "COURAGE",
+    "PRIDE"
+   ],
+   "how": "COURAGE 3 (終了：相手の最も大きい合計値のラインに、このカードを移動させることができる。) を場に置き、PRIDE 0 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W102",
+   "name": "COURAGE 3 + PRIDE 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "COURAGE_4",
+    "PRIDE_4"
+   ],
+   "protocols": [
+    "COURAGE",
+    "PRIDE"
+   ],
+   "how": "COURAGE 3 (終了：相手の最も大きい合計値のラインに、このカードを移動させることができる。) を場に置き、PRIDE 4 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W103",
+   "name": "COURAGE 3 + FLEXIBLE 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "COURAGE_4",
+    "FLEXIBLE_1"
+   ],
+   "protocols": [
+    "COURAGE",
+    "FLEXIBLE"
+   ],
+   "how": "COURAGE 3 (終了：相手の最も大きい合計値のラインに、このカードを移動させることができる。) を場に置き、FLEXIBLE 0 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W104",
+   "name": "COURAGE 3 + FLEXIBLE 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "COURAGE_4",
+    "FLEXIBLE_2"
+   ],
+   "protocols": [
+    "COURAGE",
+    "FLEXIBLE"
+   ],
+   "how": "COURAGE 3 (終了：相手の最も大きい合計値のラインに、このカードを移動させることができる。) を場に置き、FLEXIBLE 1 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W105",
+   "name": "COURAGE 3 + FLEXIBLE 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "COURAGE_4",
+    "FLEXIBLE_3"
+   ],
+   "protocols": [
+    "COURAGE",
+    "FLEXIBLE"
+   ],
+   "how": "COURAGE 3 (終了：相手の最も大きい合計値のラインに、このカードを移動させることができる。) を場に置き、FLEXIBLE 2 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W106",
+   "name": "COURAGE 3 + FLEXIBLE 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "COURAGE_4",
+    "FLEXIBLE_4"
+   ],
+   "protocols": [
+    "COURAGE",
+    "FLEXIBLE"
+   ],
+   "how": "COURAGE 3 (終了：相手の最も大きい合計値のラインに、このカードを移動させることができる。) を場に置き、FLEXIBLE 3 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W107",
+   "name": "COURAGE 3 + RIGID 7",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "COURAGE_4",
+    "RIGID_6"
+   ],
+   "protocols": [
+    "COURAGE",
+    "RIGID"
+   ],
+   "how": "COURAGE 3 (終了：相手の最も大きい合計値のラインに、このカードを移動させることができる。) を場に置き、RIGID 7 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W108",
+   "name": "ICE 3 + AMBUSH 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "ICE_3",
+    "AMBUSH_3"
+   ],
+   "protocols": [
+    "ICE",
+    "AMBUSH"
+   ],
+   "how": "ICE 3 (終了：このカードが覆われている場合、このカードを移動させることができる。) を場に置き、AMBUSH 2 を出す。共通の語: 移動・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W109",
+   "name": "ICE 3 + GREED 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "ICE_3",
+    "GREED_4"
+   ],
+   "protocols": [
+    "ICE",
+    "GREED"
+   ],
+   "how": "ICE 3 (終了：このカードが覆われている場合、このカードを移動させることができる。) を場に置き、GREED 3 を出す。共通の語: 移動・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W110",
+   "name": "ICE 3 + LUST 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "ICE_3",
+    "LUST_2"
+   ],
+   "protocols": [
+    "ICE",
+    "LUST"
+   ],
+   "how": "ICE 3 (終了：このカードが覆われている場合、このカードを移動させることができる。) を場に置き、LUST 2 を出す。共通の語: 移動・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W111",
+   "name": "ICE 3 + NOVA 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "ICE_3",
+    "NOVA_3"
+   ],
+   "protocols": [
+    "ICE",
+    "NOVA"
+   ],
+   "how": "ICE 3 (終了：このカードが覆われている場合、このカードを移動させることができる。) を場に置き、NOVA 2 を出す。共通の語: 移動・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W112",
+   "name": "ICE 3 + NOVA 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "ICE_3",
+    "NOVA_4"
+   ],
+   "protocols": [
+    "ICE",
+    "NOVA"
+   ],
+   "how": "ICE 3 (終了：このカードが覆われている場合、このカードを移動させることができる。) を場に置き、NOVA 3 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W113",
+   "name": "ICE 3 + PRIDE 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "ICE_3",
+    "PRIDE_1"
+   ],
+   "protocols": [
+    "ICE",
+    "PRIDE"
+   ],
+   "how": "ICE 3 (終了：このカードが覆われている場合、このカードを移動させることができる。) を場に置き、PRIDE 0 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W114",
+   "name": "ICE 3 + PRIDE 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "ICE_3",
+    "PRIDE_4"
+   ],
+   "protocols": [
+    "ICE",
+    "PRIDE"
+   ],
+   "how": "ICE 3 (終了：このカードが覆われている場合、このカードを移動させることができる。) を場に置き、PRIDE 4 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W115",
+   "name": "ICE 3 + FLEXIBLE 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "ICE_3",
+    "FLEXIBLE_1"
+   ],
+   "protocols": [
+    "ICE",
+    "FLEXIBLE"
+   ],
+   "how": "ICE 3 (終了：このカードが覆われている場合、このカードを移動させることができる。) を場に置き、FLEXIBLE 0 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W116",
+   "name": "ICE 3 + FLEXIBLE 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "ICE_3",
+    "FLEXIBLE_2"
+   ],
+   "protocols": [
+    "ICE",
+    "FLEXIBLE"
+   ],
+   "how": "ICE 3 (終了：このカードが覆われている場合、このカードを移動させることができる。) を場に置き、FLEXIBLE 1 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W117",
+   "name": "ICE 3 + FLEXIBLE 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "ICE_3",
+    "FLEXIBLE_3"
+   ],
+   "protocols": [
+    "ICE",
+    "FLEXIBLE"
+   ],
+   "how": "ICE 3 (終了：このカードが覆われている場合、このカードを移動させることができる。) を場に置き、FLEXIBLE 2 を出す。共通の語: 移動・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W118",
+   "name": "ICE 3 + FLEXIBLE 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "ICE_3",
+    "FLEXIBLE_4"
+   ],
+   "protocols": [
+    "ICE",
+    "FLEXIBLE"
+   ],
+   "how": "ICE 3 (終了：このカードが覆われている場合、このカードを移動させることができる。) を場に置き、FLEXIBLE 3 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W119",
+   "name": "ICE 3 + RIGID 7",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "ICE_3",
+    "RIGID_6"
+   ],
+   "protocols": [
+    "ICE",
+    "RIGID"
+   ],
+   "how": "ICE 3 (終了：このカードが覆われている場合、このカードを移動させることができる。) を場に置き、RIGID 7 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W120",
+   "name": "TIME 2 + AMBUSH 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "TIME_3",
+    "AMBUSH_3"
+   ],
+   "protocols": [
+    "TIME",
+    "AMBUSH"
+   ],
+   "how": "TIME 2 (あなたがデッキをシャッフルしたあと：カードを1枚引き、このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を場に置き、AMBUSH 2 を出す。共通の語: 移動・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W121",
+   "name": "TIME 2 + GREED 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "TIME_3",
+    "GREED_4"
+   ],
+   "protocols": [
+    "TIME",
+    "GREED"
+   ],
+   "how": "TIME 2 (あなたがデッキをシャッフルしたあと：カードを1枚引き、このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を場に置き、GREED 3 を出す。共通の語: 移動・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W122",
+   "name": "TIME 2 + LUST 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "TIME_3",
+    "LUST_2"
+   ],
+   "protocols": [
+    "TIME",
+    "LUST"
+   ],
+   "how": "TIME 2 (あなたがデッキをシャッフルしたあと：カードを1枚引き、このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を場に置き、LUST 2 を出す。共通の語: 移動・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W123",
+   "name": "TIME 2 + NOVA 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "TIME_3",
+    "NOVA_3"
+   ],
+   "protocols": [
+    "TIME",
+    "NOVA"
+   ],
+   "how": "TIME 2 (あなたがデッキをシャッフルしたあと：カードを1枚引き、このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を場に置き、NOVA 2 を出す。共通の語: 移動・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W124",
+   "name": "TIME 2 + NOVA 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "TIME_3",
+    "NOVA_4"
+   ],
+   "protocols": [
+    "TIME",
+    "NOVA"
+   ],
+   "how": "TIME 2 (あなたがデッキをシャッフルしたあと：カードを1枚引き、このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を場に置き、NOVA 3 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W125",
+   "name": "TIME 2 + PRIDE 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "TIME_3",
+    "PRIDE_1"
+   ],
+   "protocols": [
+    "TIME",
+    "PRIDE"
+   ],
+   "how": "TIME 2 (あなたがデッキをシャッフルしたあと：カードを1枚引き、このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を場に置き、PRIDE 0 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W126",
+   "name": "TIME 2 + PRIDE 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "TIME_3",
+    "PRIDE_4"
+   ],
+   "protocols": [
+    "TIME",
+    "PRIDE"
+   ],
+   "how": "TIME 2 (あなたがデッキをシャッフルしたあと：カードを1枚引き、このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を場に置き、PRIDE 4 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W127",
+   "name": "TIME 2 + FLEXIBLE 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "TIME_3",
+    "FLEXIBLE_1"
+   ],
+   "protocols": [
+    "TIME",
+    "FLEXIBLE"
+   ],
+   "how": "TIME 2 (あなたがデッキをシャッフルしたあと：カードを1枚引き、このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を場に置き、FLEXIBLE 0 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W128",
+   "name": "TIME 2 + FLEXIBLE 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "TIME_3",
+    "FLEXIBLE_2"
+   ],
+   "protocols": [
+    "TIME",
+    "FLEXIBLE"
+   ],
+   "how": "TIME 2 (あなたがデッキをシャッフルしたあと：カードを1枚引き、このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を場に置き、FLEXIBLE 1 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W129",
+   "name": "TIME 2 + FLEXIBLE 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "TIME_3",
+    "FLEXIBLE_3"
+   ],
+   "protocols": [
+    "TIME",
+    "FLEXIBLE"
+   ],
+   "how": "TIME 2 (あなたがデッキをシャッフルしたあと：カードを1枚引き、このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を場に置き、FLEXIBLE 2 を出す。共通の語: 移動・引・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W130",
+   "name": "TIME 2 + FLEXIBLE 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "TIME_3",
+    "FLEXIBLE_4"
+   ],
+   "protocols": [
+    "TIME",
+    "FLEXIBLE"
+   ],
+   "how": "TIME 2 (あなたがデッキをシャッフルしたあと：カードを1枚引き、このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を場に置き、FLEXIBLE 3 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W131",
+   "name": "TIME 2 + RIGID 7",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "TIME_3",
+    "RIGID_6"
+   ],
+   "protocols": [
+    "TIME",
+    "RIGID"
+   ],
+   "how": "TIME 2 (あなたがデッキをシャッフルしたあと：カードを1枚引き、このカードが覆われている場合でさえ、あなたはこのカードを移動させることができる。) を場に置き、RIGID 7 を出す。共通の語: 移動・引",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W132",
+   "name": "WAR 0 + GLUTTONY 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WAR_1",
+    "GLUTTONY_5"
+   ],
+   "protocols": [
+    "WAR",
+    "GLUTTONY"
+   ],
+   "how": "WAR 0 (あなたがリフレッシュしたあと：あなたはこのカードを反転させることができる。) を場に置き、GLUTTONY 4 を出す。共通の語: リフレッシュ",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W133",
+   "name": "WAR 1 + PRIDE 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WAR_2",
+    "PRIDE_1"
+   ],
+   "protocols": [
+    "WAR",
+    "PRIDE"
+   ],
+   "how": "WAR 1 (相手がリフレッシュしたあと：任意の枚数の手札を捨て札にする。リフレッシュする。) を場に置き、PRIDE 0 を出す。共通の語: リフレッシュ",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W134",
+   "name": "WAR 2 + ENVY 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WAR_3",
+    "ENVY_5"
+   ],
+   "protocols": [
+    "WAR",
+    "ENVY"
+   ],
+   "how": "WAR 2 (相手がコンパイルしたあと：相手は手札をすべて捨て札にする。) を場に置き、ENVY 4 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W135",
+   "name": "WAR 2 + GREED 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WAR_3",
+    "GREED_2"
+   ],
+   "protocols": [
+    "WAR",
+    "GREED"
+   ],
+   "how": "WAR 2 (相手がコンパイルしたあと：相手は手札をすべて捨て札にする。) を場に置き、GREED 1 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W136",
+   "name": "WAR 2 + LUST 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WAR_3",
+    "LUST_1"
+   ],
+   "protocols": [
+    "WAR",
+    "LUST"
+   ],
+   "how": "WAR 2 (相手がコンパイルしたあと：相手は手札をすべて捨て札にする。) を場に置き、LUST 0 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W137",
+   "name": "WAR 2 + MOMENTUM 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WAR_3",
+    "MOMENTUM_1"
+   ],
+   "protocols": [
+    "WAR",
+    "MOMENTUM"
+   ],
+   "how": "WAR 2 (相手がコンパイルしたあと：相手は手札をすべて捨て札にする。) を場に置き、MOMENTUM 0 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W138",
+   "name": "WAR 2 + MOMENTUM 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WAR_3",
+    "MOMENTUM_2"
+   ],
+   "protocols": [
+    "WAR",
+    "MOMENTUM"
+   ],
+   "how": "WAR 2 (相手がコンパイルしたあと：相手は手札をすべて捨て札にする。) を場に置き、MOMENTUM 1 を出す。共通の語: 手札・捨て・コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W139",
+   "name": "WAR 2 + MOMENTUM 6",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WAR_3",
+    "MOMENTUM_6"
+   ],
+   "protocols": [
+    "WAR",
+    "MOMENTUM"
+   ],
+   "how": "WAR 2 (相手がコンパイルしたあと：相手は手札をすべて捨て札にする。) を場に置き、MOMENTUM 6 を出す。共通の語: 手札・捨て・コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W140",
+   "name": "WAR 2 + PRIDE 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WAR_3",
+    "PRIDE_1"
+   ],
+   "protocols": [
+    "WAR",
+    "PRIDE"
+   ],
+   "how": "WAR 2 (相手がコンパイルしたあと：相手は手札をすべて捨て札にする。) を場に置き、PRIDE 0 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W141",
+   "name": "WAR 3 + LUST 6",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WAR_4",
+    "LUST_6"
+   ],
+   "protocols": [
+    "WAR",
+    "LUST"
+   ],
+   "how": "WAR 3 (相手が手札を捨て札にしたあと：あなたはカードを裏向きで1枚プレイすることができる。) を場に置き、LUST 6 を出す。共通の語: 裏向き・手札・捨て",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W142",
+   "name": "WAR 3 + MOMENTUM 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WAR_4",
+    "MOMENTUM_2"
+   ],
+   "protocols": [
+    "WAR",
+    "MOMENTUM"
+   ],
+   "how": "WAR 3 (相手が手札を捨て札にしたあと：あなたはカードを裏向きで1枚プレイすることができる。) を場に置き、MOMENTUM 1 を出す。共通の語: 裏向き・手札・捨て",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W143",
+   "name": "ASSIMILATION 1 + GREED 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "ASSIMILATION_2",
+    "GREED_1"
+   ],
+   "protocols": [
+    "ASSIMILATION",
+    "GREED"
+   ],
+   "how": "ASSIMILATION 1 (誰かがリフレッシュしたあと：相手のデッキの一番上のカードを引く。あなたは手札を1枚捨て札にし、それを相手の捨て札置き場に置く。) を場に置き、GREED 0 を出す。共通の語: 手札・捨て・引",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W144",
+   "name": "ASSIMILATION 1 + MOMENTUM 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "ASSIMILATION_2",
+    "MOMENTUM_2"
+   ],
+   "protocols": [
+    "ASSIMILATION",
+    "MOMENTUM"
+   ],
+   "how": "ASSIMILATION 1 (誰かがリフレッシュしたあと：相手のデッキの一番上のカードを引く。あなたは手札を1枚捨て札にし、それを相手の捨て札置き場に置く。) を場に置き、MOMENTUM 1 を出す。共通の語: 手札・捨て・引",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W145",
+   "name": "ASSIMILATION 1 + PRIDE 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "ASSIMILATION_2",
+    "PRIDE_1"
+   ],
+   "protocols": [
+    "ASSIMILATION",
+    "PRIDE"
+   ],
+   "how": "ASSIMILATION 1 (誰かがリフレッシュしたあと：相手のデッキの一番上のカードを引く。あなたは手札を1枚捨て札にし、それを相手の捨て札置き場に置く。) を場に置き、PRIDE 0 を出す。共通の語: リフレッシュ",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W146",
+   "name": "ASSIMILATION 1 + RIGID 7",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "ASSIMILATION_2",
+    "RIGID_6"
+   ],
+   "protocols": [
+    "ASSIMILATION",
+    "RIGID"
+   ],
+   "how": "ASSIMILATION 1 (誰かがリフレッシュしたあと：相手のデッキの一番上のカードを引く。あなたは手札を1枚捨て札にし、それを相手の捨て札置き場に置く。) を場に置き、RIGID 7 を出す。共通の語: 手札・捨て・引",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W147",
+   "name": "DIVERSITY 6 + FULCRUM 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "DIVERSITY_6",
+    "FULCRUM_3"
+   ],
+   "protocols": [
+    "DIVERSITY",
+    "FULCRUM"
+   ],
+   "how": "DIVERSITY 6 (終了：フィールドにあるコマンドカードの、プロトコルの種類数が3以下の場合、このカードを削除する。) を場に置き、FULCRUM 2 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W148",
+   "name": "DIVERSITY 6 + GLUTTONY 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "DIVERSITY_6",
+    "GLUTTONY_2"
+   ],
+   "protocols": [
+    "DIVERSITY",
+    "GLUTTONY"
+   ],
+   "how": "DIVERSITY 6 (終了：フィールドにあるコマンドカードの、プロトコルの種類数が3以下の場合、このカードを削除する。) を場に置き、GLUTTONY 1 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W149",
+   "name": "DIVERSITY 6 + GLUTTONY 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "DIVERSITY_6",
+    "GLUTTONY_4"
+   ],
+   "protocols": [
+    "DIVERSITY",
+    "GLUTTONY"
+   ],
+   "how": "DIVERSITY 6 (終了：フィールドにあるコマンドカードの、プロトコルの種類数が3以下の場合、このカードを削除する。) を場に置き、GLUTTONY 3 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W150",
+   "name": "DIVERSITY 6 + MOMENTUM 6",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "DIVERSITY_6",
+    "MOMENTUM_6"
+   ],
+   "protocols": [
+    "DIVERSITY",
+    "MOMENTUM"
+   ],
+   "how": "DIVERSITY 6 (終了：フィールドにあるコマンドカードの、プロトコルの種類数が3以下の場合、このカードを削除する。) を場に置き、MOMENTUM 6 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W151",
+   "name": "DIVERSITY 6 + NOVA 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "DIVERSITY_6",
+    "NOVA_1"
+   ],
+   "protocols": [
+    "DIVERSITY",
+    "NOVA"
+   ],
+   "how": "DIVERSITY 6 (終了：フィールドにあるコマンドカードの、プロトコルの種類数が3以下の場合、このカードを削除する。) を場に置き、NOVA 0 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W152",
+   "name": "DIVERSITY 6 + OVERWHELM 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "DIVERSITY_6",
+    "OVERWHELM_4"
+   ],
+   "protocols": [
+    "DIVERSITY",
+    "OVERWHELM"
+   ],
+   "how": "DIVERSITY 6 (終了：フィールドにあるコマンドカードの、プロトコルの種類数が3以下の場合、このカードを削除する。) を場に置き、OVERWHELM 4 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W153",
+   "name": "DIVERSITY 6 + WRATH 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "DIVERSITY_6",
+    "WRATH_2"
+   ],
+   "protocols": [
+    "DIVERSITY",
+    "WRATH"
+   ],
+   "how": "DIVERSITY 6 (終了：フィールドにあるコマンドカードの、プロトコルの種類数が3以下の場合、このカードを削除する。) を場に置き、WRATH 1 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W154",
+   "name": "UNITY 1 + AMBUSH 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "UNITY_2",
+    "AMBUSH_3"
+   ],
+   "protocols": [
+    "UNITY",
+    "AMBUSH"
+   ],
+   "how": "UNITY 1 (開始：このカードが覆われている場合、あなたはこのカードを移動させることができる。) を場に置き、AMBUSH 2 を出す。共通の語: 移動・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W155",
+   "name": "UNITY 1 + GREED 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "UNITY_2",
+    "GREED_4"
+   ],
+   "protocols": [
+    "UNITY",
+    "GREED"
+   ],
+   "how": "UNITY 1 (開始：このカードが覆われている場合、あなたはこのカードを移動させることができる。) を場に置き、GREED 3 を出す。共通の語: 移動・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W156",
+   "name": "UNITY 1 + LUST 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "UNITY_2",
+    "LUST_2"
+   ],
+   "protocols": [
+    "UNITY",
+    "LUST"
+   ],
+   "how": "UNITY 1 (開始：このカードが覆われている場合、あなたはこのカードを移動させることができる。) を場に置き、LUST 2 を出す。共通の語: 移動・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W157",
+   "name": "UNITY 1 + NOVA 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "UNITY_2",
+    "NOVA_3"
+   ],
+   "protocols": [
+    "UNITY",
+    "NOVA"
+   ],
+   "how": "UNITY 1 (開始：このカードが覆われている場合、あなたはこのカードを移動させることができる。) を場に置き、NOVA 2 を出す。共通の語: 移動・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W158",
+   "name": "UNITY 1 + NOVA 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "UNITY_2",
+    "NOVA_4"
+   ],
+   "protocols": [
+    "UNITY",
+    "NOVA"
+   ],
+   "how": "UNITY 1 (開始：このカードが覆われている場合、あなたはこのカードを移動させることができる。) を場に置き、NOVA 3 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W159",
+   "name": "UNITY 1 + PRIDE 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "UNITY_2",
+    "PRIDE_1"
+   ],
+   "protocols": [
+    "UNITY",
+    "PRIDE"
+   ],
+   "how": "UNITY 1 (開始：このカードが覆われている場合、あなたはこのカードを移動させることができる。) を場に置き、PRIDE 0 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W160",
+   "name": "UNITY 1 + PRIDE 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "UNITY_2",
+    "PRIDE_4"
+   ],
+   "protocols": [
+    "UNITY",
+    "PRIDE"
+   ],
+   "how": "UNITY 1 (開始：このカードが覆われている場合、あなたはこのカードを移動させることができる。) を場に置き、PRIDE 4 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W161",
+   "name": "UNITY 1 + FLEXIBLE 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "UNITY_2",
+    "FLEXIBLE_1"
+   ],
+   "protocols": [
+    "UNITY",
+    "FLEXIBLE"
+   ],
+   "how": "UNITY 1 (開始：このカードが覆われている場合、あなたはこのカードを移動させることができる。) を場に置き、FLEXIBLE 0 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W162",
+   "name": "UNITY 1 + FLEXIBLE 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "UNITY_2",
+    "FLEXIBLE_2"
+   ],
+   "protocols": [
+    "UNITY",
+    "FLEXIBLE"
+   ],
+   "how": "UNITY 1 (開始：このカードが覆われている場合、あなたはこのカードを移動させることができる。) を場に置き、FLEXIBLE 1 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W163",
+   "name": "UNITY 1 + FLEXIBLE 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "UNITY_2",
+    "FLEXIBLE_3"
+   ],
+   "protocols": [
+    "UNITY",
+    "FLEXIBLE"
+   ],
+   "how": "UNITY 1 (開始：このカードが覆われている場合、あなたはこのカードを移動させることができる。) を場に置き、FLEXIBLE 2 を出す。共通の語: 移動・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W164",
+   "name": "UNITY 1 + FLEXIBLE 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "UNITY_2",
+    "FLEXIBLE_4"
+   ],
+   "protocols": [
+    "UNITY",
+    "FLEXIBLE"
+   ],
+   "how": "UNITY 1 (開始：このカードが覆われている場合、あなたはこのカードを移動させることができる。) を場に置き、FLEXIBLE 3 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W165",
+   "name": "UNITY 1 + RIGID 7",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "UNITY_2",
+    "RIGID_6"
+   ],
+   "protocols": [
+    "UNITY",
+    "RIGID"
+   ],
+   "how": "UNITY 1 (開始：このカードが覆われている場合、あなたはこのカードを移動させることができる。) を場に置き、RIGID 7 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W166",
+   "name": "UNITY 4 + LUST 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "UNITY_5",
+    "LUST_3"
+   ],
+   "protocols": [
+    "UNITY",
+    "LUST"
+   ],
+   "how": "UNITY 4 (終了：あなたの手札が1枚もない場合、あなたのデッキのカードをすべて公開し、そこからすべての「UNITY」カードを引いて、あなたのデッキをシャッフルする。) を場に置き、LUST 3 を出す。共通の語: 手札・公開",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W167",
+   "name": "UNITY 4 + LUST 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "UNITY_5",
+    "LUST_4"
+   ],
+   "protocols": [
+    "UNITY",
+    "LUST"
+   ],
+   "how": "UNITY 4 (終了：あなたの手札が1枚もない場合、あなたのデッキのカードをすべて公開し、そこからすべての「UNITY」カードを引いて、あなたのデッキをシャッフルする。) を場に置き、LUST 4 を出す。共通の語: 手札・引・公開",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W168",
+   "name": "ENVY 1 + LUST 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "ENVY_2",
+    "LUST_1"
+   ],
+   "protocols": [
+    "ENVY",
+    "LUST"
+   ],
+   "how": "ENVY 1 (開始：相手がコントロールを持っている場合、あなたはコントロールを得る。) を場に置き、LUST 0 を出す。共通の語: コントロール",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W169",
+   "name": "ENVY 1 + LUST 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "ENVY_2",
+    "LUST_3"
+   ],
+   "protocols": [
+    "ENVY",
+    "LUST"
+   ],
+   "how": "ENVY 1 (開始：相手がコントロールを持っている場合、あなたはコントロールを得る。) を場に置き、LUST 3 を出す。共通の語: コントロール",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W170",
+   "name": "ENVY 1 + LUST 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "ENVY_2",
+    "LUST_4"
+   ],
+   "protocols": [
+    "ENVY",
+    "LUST"
+   ],
+   "how": "ENVY 1 (開始：相手がコントロールを持っている場合、あなたはコントロールを得る。) を場に置き、LUST 4 を出す。共通の語: コントロール",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W171",
+   "name": "ENVY 1 + NOVA 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "ENVY_2",
+    "NOVA_1"
+   ],
+   "protocols": [
+    "ENVY",
+    "NOVA"
+   ],
+   "how": "ENVY 1 (開始：相手がコントロールを持っている場合、あなたはコントロールを得る。) を場に置き、NOVA 0 を出す。共通の語: コントロール",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W172",
+   "name": "ENVY 1 + NOVA 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "ENVY_2",
+    "NOVA_3"
+   ],
+   "protocols": [
+    "ENVY",
+    "NOVA"
+   ],
+   "how": "ENVY 1 (開始：相手がコントロールを持っている場合、あなたはコントロールを得る。) を場に置き、NOVA 2 を出す。共通の語: コントロール",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W173",
+   "name": "ENVY 1 + PRIDE 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "ENVY_2",
+    "PRIDE_1"
+   ],
+   "protocols": [
+    "ENVY",
+    "PRIDE"
+   ],
+   "how": "ENVY 1 (開始：相手がコントロールを持っている場合、あなたはコントロールを得る。) を場に置き、PRIDE 0 を出す。共通の語: コントロール",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W174",
+   "name": "ENVY 1 + PRIDE 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "ENVY_2",
+    "PRIDE_4"
+   ],
+   "protocols": [
+    "ENVY",
+    "PRIDE"
+   ],
+   "how": "ENVY 1 (開始：相手がコントロールを持っている場合、あなたはコントロールを得る。) を場に置き、PRIDE 4 を出す。共通の語: コントロール",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W175",
+   "name": "ENVY 1 + PRIDE 6",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "ENVY_2",
+    "PRIDE_6"
+   ],
+   "protocols": [
+    "ENVY",
+    "PRIDE"
+   ],
+   "how": "ENVY 1 (開始：相手がコントロールを持っている場合、あなたはコントロールを得る。) を場に置き、PRIDE 6 を出す。共通の語: コントロール",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W176",
+   "name": "ENVY 1 + WRATH 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "ENVY_2",
+    "WRATH_2"
+   ],
+   "protocols": [
+    "ENVY",
+    "WRATH"
+   ],
+   "how": "ENVY 1 (開始：相手がコントロールを持っている場合、あなたはコントロールを得る。) を場に置き、WRATH 1 を出す。共通の語: コントロール",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W177",
+   "name": "ENVY 1 + WRATH 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "ENVY_2",
+    "WRATH_5"
+   ],
+   "protocols": [
+    "ENVY",
+    "WRATH"
+   ],
+   "how": "ENVY 1 (開始：相手がコントロールを持っている場合、あなたはコントロールを得る。) を場に置き、WRATH 4 を出す。共通の語: コントロール",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W178",
+   "name": "GLUTTONY 0 + SPIRIT 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_1",
+    "SPIRIT_1"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "SPIRIT"
+   ],
+   "how": "GLUTTONY 0 (あなたがキャッシュをクリアしたあと：あなたのデッキの一番上のカードを裏向きでプレイする。) を場に置き、SPIRIT 0 を出す。共通の語: キャッシュ",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W179",
+   "name": "GLUTTONY 1 + DEATH 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_2",
+    "DEATH_1"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "DEATH"
+   ],
+   "how": "GLUTTONY 1 (いずれかのプレイヤーがキャッシュをクリアしたあと：カードを1枚削除する。) を場に置き、DEATH 0 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W180",
+   "name": "GLUTTONY 1 + DEATH 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_2",
+    "DEATH_3"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "DEATH"
+   ],
+   "how": "GLUTTONY 1 (いずれかのプレイヤーがキャッシュをクリアしたあと：カードを1枚削除する。) を場に置き、DEATH 2 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W181",
+   "name": "GLUTTONY 1 + DEATH 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_2",
+    "DEATH_4"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "DEATH"
+   ],
+   "how": "GLUTTONY 1 (いずれかのプレイヤーがキャッシュをクリアしたあと：カードを1枚削除する。) を場に置き、DEATH 3 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W182",
+   "name": "GLUTTONY 1 + DEATH 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_2",
+    "DEATH_5"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "DEATH"
+   ],
+   "how": "GLUTTONY 1 (いずれかのプレイヤーがキャッシュをクリアしたあと：カードを1枚削除する。) を場に置き、DEATH 4 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W183",
+   "name": "GLUTTONY 1 + FIRE 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_2",
+    "FIRE_2"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "FIRE"
+   ],
+   "how": "GLUTTONY 1 (いずれかのプレイヤーがキャッシュをクリアしたあと：カードを1枚削除する。) を場に置き、FIRE 1 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W184",
+   "name": "GLUTTONY 1 + METAL 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_2",
+    "METAL_4"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "METAL"
+   ],
+   "how": "GLUTTONY 1 (いずれかのプレイヤーがキャッシュをクリアしたあと：カードを1枚削除する。) を場に置き、METAL 3 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W185",
+   "name": "GLUTTONY 1 + METAL 6",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_2",
+    "METAL_6"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "METAL"
+   ],
+   "how": "GLUTTONY 1 (いずれかのプレイヤーがキャッシュをクリアしたあと：カードを1枚削除する。) を場に置き、METAL 6 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W186",
+   "name": "GLUTTONY 1 + SPIRIT 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_2",
+    "SPIRIT_1"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "SPIRIT"
+   ],
+   "how": "GLUTTONY 1 (いずれかのプレイヤーがキャッシュをクリアしたあと：カードを1枚削除する。) を場に置き、SPIRIT 0 を出す。共通の語: キャッシュ",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W187",
+   "name": "GLUTTONY 1 + HATE 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_2",
+    "HATE_1"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "HATE"
+   ],
+   "how": "GLUTTONY 1 (いずれかのプレイヤーがキャッシュをクリアしたあと：カードを1枚削除する。) を場に置き、HATE 0 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W188",
+   "name": "GLUTTONY 1 + HATE 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_2",
+    "HATE_2"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "HATE"
+   ],
+   "how": "GLUTTONY 1 (いずれかのプレイヤーがキャッシュをクリアしたあと：カードを1枚削除する。) を場に置き、HATE 1 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W189",
+   "name": "GLUTTONY 1 + HATE 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_2",
+    "HATE_3"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "HATE"
+   ],
+   "how": "GLUTTONY 1 (いずれかのプレイヤーがキャッシュをクリアしたあと：カードを1枚削除する。) を場に置き、HATE 2 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W190",
+   "name": "GLUTTONY 1 + HATE 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_2",
+    "HATE_5"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "HATE"
+   ],
+   "how": "GLUTTONY 1 (いずれかのプレイヤーがキャッシュをクリアしたあと：カードを1枚削除する。) を場に置き、HATE 4 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W191",
+   "name": "GLUTTONY 1 + COURAGE 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_2",
+    "COURAGE_2"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "COURAGE"
+   ],
+   "how": "GLUTTONY 1 (いずれかのプレイヤーがキャッシュをクリアしたあと：カードを1枚削除する。) を場に置き、COURAGE 1 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W192",
+   "name": "GLUTTONY 1 + LUCK 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_2",
+    "LUCK_4"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "LUCK"
+   ],
+   "how": "GLUTTONY 1 (いずれかのプレイヤーがキャッシュをクリアしたあと：カードを1枚削除する。) を場に置き、LUCK 3 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W193",
+   "name": "GLUTTONY 1 + LUCK 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_2",
+    "LUCK_5"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "LUCK"
+   ],
+   "how": "GLUTTONY 1 (いずれかのプレイヤーがキャッシュをクリアしたあと：カードを1枚削除する。) を場に置き、LUCK 4 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W194",
+   "name": "GLUTTONY 1 + WAR 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_2",
+    "WAR_1"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "WAR"
+   ],
+   "how": "GLUTTONY 1 (いずれかのプレイヤーがキャッシュをクリアしたあと：カードを1枚削除する。) を場に置き、WAR 0 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W195",
+   "name": "GLUTTONY 1 + UNITY 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_2",
+    "UNITY_2"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "UNITY"
+   ],
+   "how": "GLUTTONY 1 (いずれかのプレイヤーがキャッシュをクリアしたあと：カードを1枚削除する。) を場に置き、UNITY 1 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W196",
+   "name": "GLUTTONY 1 + FULCRUM 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_2",
+    "FULCRUM_3"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "FULCRUM"
+   ],
+   "how": "GLUTTONY 1 (いずれかのプレイヤーがキャッシュをクリアしたあと：カードを1枚削除する。) を場に置き、FULCRUM 2 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W197",
+   "name": "GLUTTONY 1 + MOMENTUM 6",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_2",
+    "MOMENTUM_6"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "MOMENTUM"
+   ],
+   "how": "GLUTTONY 1 (いずれかのプレイヤーがキャッシュをクリアしたあと：カードを1枚削除する。) を場に置き、MOMENTUM 6 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W198",
+   "name": "GLUTTONY 1 + NOVA 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_2",
+    "NOVA_1"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "NOVA"
+   ],
+   "how": "GLUTTONY 1 (いずれかのプレイヤーがキャッシュをクリアしたあと：カードを1枚削除する。) を場に置き、NOVA 0 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W199",
+   "name": "GLUTTONY 1 + OVERWHELM 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_2",
+    "OVERWHELM_4"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "OVERWHELM"
+   ],
+   "how": "GLUTTONY 1 (いずれかのプレイヤーがキャッシュをクリアしたあと：カードを1枚削除する。) を場に置き、OVERWHELM 4 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W200",
+   "name": "GLUTTONY 1 + WRATH 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_2",
+    "WRATH_2"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "WRATH"
+   ],
+   "how": "GLUTTONY 1 (いずれかのプレイヤーがキャッシュをクリアしたあと：カードを1枚削除する。) を場に置き、WRATH 1 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W201",
+   "name": "GLUTTONY 3 + DEATH 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_4",
+    "DEATH_1"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "DEATH"
+   ],
+   "how": "GLUTTONY 3 (終了：このカードが表向きのカードに覆われている場合、そのカードを削除する。) を場に置き、DEATH 0 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W202",
+   "name": "GLUTTONY 3 + DEATH 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_4",
+    "DEATH_3"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "DEATH"
+   ],
+   "how": "GLUTTONY 3 (終了：このカードが表向きのカードに覆われている場合、そのカードを削除する。) を場に置き、DEATH 2 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W203",
+   "name": "GLUTTONY 3 + DEATH 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_4",
+    "DEATH_4"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "DEATH"
+   ],
+   "how": "GLUTTONY 3 (終了：このカードが表向きのカードに覆われている場合、そのカードを削除する。) を場に置き、DEATH 3 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W204",
+   "name": "GLUTTONY 3 + DEATH 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_4",
+    "DEATH_5"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "DEATH"
+   ],
+   "how": "GLUTTONY 3 (終了：このカードが表向きのカードに覆われている場合、そのカードを削除する。) を場に置き、DEATH 4 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W205",
+   "name": "GLUTTONY 3 + FIRE 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_4",
+    "FIRE_2"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "FIRE"
+   ],
+   "how": "GLUTTONY 3 (終了：このカードが表向きのカードに覆われている場合、そのカードを削除する。) を場に置き、FIRE 1 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W206",
+   "name": "GLUTTONY 3 + METAL 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_4",
+    "METAL_4"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "METAL"
+   ],
+   "how": "GLUTTONY 3 (終了：このカードが表向きのカードに覆われている場合、そのカードを削除する。) を場に置き、METAL 3 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W207",
+   "name": "GLUTTONY 3 + METAL 6",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_4",
+    "METAL_6"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "METAL"
+   ],
+   "how": "GLUTTONY 3 (終了：このカードが表向きのカードに覆われている場合、そのカードを削除する。) を場に置き、METAL 6 を出す。共通の語: 削除・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W208",
+   "name": "GLUTTONY 3 + HATE 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_4",
+    "HATE_1"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "HATE"
+   ],
+   "how": "GLUTTONY 3 (終了：このカードが表向きのカードに覆われている場合、そのカードを削除する。) を場に置き、HATE 0 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W209",
+   "name": "GLUTTONY 3 + HATE 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_4",
+    "HATE_2"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "HATE"
+   ],
+   "how": "GLUTTONY 3 (終了：このカードが表向きのカードに覆われている場合、そのカードを削除する。) を場に置き、HATE 1 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W210",
+   "name": "GLUTTONY 3 + HATE 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_4",
+    "HATE_3"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "HATE"
+   ],
+   "how": "GLUTTONY 3 (終了：このカードが表向きのカードに覆われている場合、そのカードを削除する。) を場に置き、HATE 2 を出す。共通の語: 削除・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W211",
+   "name": "GLUTTONY 3 + HATE 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_4",
+    "HATE_5"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "HATE"
+   ],
+   "how": "GLUTTONY 3 (終了：このカードが表向きのカードに覆われている場合、そのカードを削除する。) を場に置き、HATE 4 を出す。共通の語: 削除・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W212",
+   "name": "GLUTTONY 3 + COURAGE 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_4",
+    "COURAGE_2"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "COURAGE"
+   ],
+   "how": "GLUTTONY 3 (終了：このカードが表向きのカードに覆われている場合、そのカードを削除する。) を場に置き、COURAGE 1 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W213",
+   "name": "GLUTTONY 3 + LUCK 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_4",
+    "LUCK_4"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "LUCK"
+   ],
+   "how": "GLUTTONY 3 (終了：このカードが表向きのカードに覆われている場合、そのカードを削除する。) を場に置き、LUCK 3 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W214",
+   "name": "GLUTTONY 3 + LUCK 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_4",
+    "LUCK_5"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "LUCK"
+   ],
+   "how": "GLUTTONY 3 (終了：このカードが表向きのカードに覆われている場合、そのカードを削除する。) を場に置き、LUCK 4 を出す。共通の語: 削除・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W215",
+   "name": "GLUTTONY 3 + WAR 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_4",
+    "WAR_1"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "WAR"
+   ],
+   "how": "GLUTTONY 3 (終了：このカードが表向きのカードに覆われている場合、そのカードを削除する。) を場に置き、WAR 0 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W216",
+   "name": "GLUTTONY 3 + UNITY 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_4",
+    "UNITY_2"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "UNITY"
+   ],
+   "how": "GLUTTONY 3 (終了：このカードが表向きのカードに覆われている場合、そのカードを削除する。) を場に置き、UNITY 1 を出す。共通の語: 削除・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W217",
+   "name": "GLUTTONY 3 + FULCRUM 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_4",
+    "FULCRUM_3"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "FULCRUM"
+   ],
+   "how": "GLUTTONY 3 (終了：このカードが表向きのカードに覆われている場合、そのカードを削除する。) を場に置き、FULCRUM 2 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W218",
+   "name": "GLUTTONY 3 + MOMENTUM 6",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_4",
+    "MOMENTUM_6"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "MOMENTUM"
+   ],
+   "how": "GLUTTONY 3 (終了：このカードが表向きのカードに覆われている場合、そのカードを削除する。) を場に置き、MOMENTUM 6 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W219",
+   "name": "GLUTTONY 3 + NOVA 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_4",
+    "NOVA_1"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "NOVA"
+   ],
+   "how": "GLUTTONY 3 (終了：このカードが表向きのカードに覆われている場合、そのカードを削除する。) を場に置き、NOVA 0 を出す。共通の語: 削除・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W220",
+   "name": "GLUTTONY 3 + OVERWHELM 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_4",
+    "OVERWHELM_4"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "OVERWHELM"
+   ],
+   "how": "GLUTTONY 3 (終了：このカードが表向きのカードに覆われている場合、そのカードを削除する。) を場に置き、OVERWHELM 4 を出す。共通の語: 削除・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W221",
+   "name": "GLUTTONY 3 + WRATH 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GLUTTONY_4",
+    "WRATH_2"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "WRATH"
+   ],
+   "how": "GLUTTONY 3 (終了：このカードが表向きのカードに覆われている場合、そのカードを削除する。) を場に置き、WRATH 1 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W222",
+   "name": "GREED 0 + UNITY 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GREED_1",
+    "UNITY_2"
+   ],
+   "protocols": [
+    "GREED",
+    "UNITY"
+   ],
+   "how": "GREED 0 (あなたがカードを削除したあと：カードを1枚引く。) を場に置き、UNITY 1 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W223",
+   "name": "GREED 1 + METAL 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GREED_2",
+    "METAL_2"
+   ],
+   "protocols": [
+    "GREED",
+    "METAL"
+   ],
+   "how": "GREED 1 (終了：あなたの合計値が10以上あり、相手より大きいラインを1つコンパイルする。) を場に置き、METAL 1 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W224",
+   "name": "GREED 1 + DIVERSITY 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GREED_2",
+    "DIVERSITY_1"
+   ],
+   "protocols": [
+    "GREED",
+    "DIVERSITY"
+   ],
+   "how": "GREED 1 (終了：あなたの合計値が10以上あり、相手より大きいラインを1つコンパイルする。) を場に置き、DIVERSITY 0 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W225",
+   "name": "GREED 1 + UNITY 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GREED_2",
+    "UNITY_2"
+   ],
+   "protocols": [
+    "GREED",
+    "UNITY"
+   ],
+   "how": "GREED 1 (終了：あなたの合計値が10以上あり、相手より大きいラインを1つコンパイルする。) を場に置き、UNITY 1 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W226",
+   "name": "GREED 1 + ENVY 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GREED_2",
+    "ENVY_5"
+   ],
+   "protocols": [
+    "GREED",
+    "ENVY"
+   ],
+   "how": "GREED 1 (終了：あなたの合計値が10以上あり、相手より大きいラインを1つコンパイルする。) を場に置き、ENVY 4 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W227",
+   "name": "GREED 1 + MOMENTUM 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GREED_2",
+    "MOMENTUM_1"
+   ],
+   "protocols": [
+    "GREED",
+    "MOMENTUM"
+   ],
+   "how": "GREED 1 (終了：あなたの合計値が10以上あり、相手より大きいラインを1つコンパイルする。) を場に置き、MOMENTUM 0 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W228",
+   "name": "GREED 1 + MOMENTUM 6",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GREED_2",
+    "MOMENTUM_6"
+   ],
+   "protocols": [
+    "GREED",
+    "MOMENTUM"
+   ],
+   "how": "GREED 1 (終了：あなたの合計値が10以上あり、相手より大きいラインを1つコンパイルする。) を場に置き、MOMENTUM 6 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W229",
+   "name": "GREED 2 + FIRE 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GREED_3",
+    "FIRE_3"
+   ],
+   "protocols": [
+    "GREED",
+    "FIRE"
+   ],
+   "how": "GREED 2 (開始：あなたは自分のカードを1枚戻すことができる。) を場に置き、FIRE 2 を出す。共通の語: 戻",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W230",
+   "name": "GREED 2 + WATER 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GREED_3",
+    "WATER_4"
+   ],
+   "protocols": [
+    "GREED",
+    "WATER"
+   ],
+   "how": "GREED 2 (開始：あなたは自分のカードを1枚戻すことができる。) を場に置き、WATER 3 を出す。共通の語: 戻",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W231",
+   "name": "GREED 2 + WATER 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GREED_3",
+    "WATER_5"
+   ],
+   "protocols": [
+    "GREED",
+    "WATER"
+   ],
+   "how": "GREED 2 (開始：あなたは自分のカードを1枚戻すことができる。) を場に置き、WATER 4 を出す。共通の語: 戻",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W232",
+   "name": "GREED 2 + CLARITY 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GREED_3",
+    "CLARITY_5"
+   ],
+   "protocols": [
+    "GREED",
+    "CLARITY"
+   ],
+   "how": "GREED 2 (開始：あなたは自分のカードを1枚戻すことができる。) を場に置き、CLARITY 4 を出す。共通の語: 戻",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W233",
+   "name": "GREED 2 + CORRUPTION 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GREED_3",
+    "CORRUPTION_2"
+   ],
+   "protocols": [
+    "GREED",
+    "CORRUPTION"
+   ],
+   "how": "GREED 2 (開始：あなたは自分のカードを1枚戻すことができる。) を場に置き、CORRUPTION 1 を出す。共通の語: 戻",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W234",
+   "name": "GREED 2 + FEAR 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GREED_3",
+    "FEAR_3"
+   ],
+   "protocols": [
+    "GREED",
+    "FEAR"
+   ],
+   "how": "GREED 2 (開始：あなたは自分のカードを1枚戻すことができる。) を場に置き、FEAR 2 を出す。共通の語: 戻",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W235",
+   "name": "GREED 2 + TIME 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GREED_3",
+    "TIME_1"
+   ],
+   "protocols": [
+    "GREED",
+    "TIME"
+   ],
+   "how": "GREED 2 (開始：あなたは自分のカードを1枚戻すことができる。) を場に置き、TIME 0 を出す。共通の語: 戻",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W236",
+   "name": "GREED 2 + TIME 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GREED_3",
+    "TIME_3"
+   ],
+   "protocols": [
+    "GREED",
+    "TIME"
+   ],
+   "how": "GREED 2 (開始：あなたは自分のカードを1枚戻すことができる。) を場に置き、TIME 2 を出す。共通の語: 戻",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W237",
+   "name": "GREED 2 + GLUTTONY 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GREED_3",
+    "GLUTTONY_1"
+   ],
+   "protocols": [
+    "GREED",
+    "GLUTTONY"
+   ],
+   "how": "GREED 2 (開始：あなたは自分のカードを1枚戻すことができる。) を場に置き、GLUTTONY 0 を出す。共通の語: 戻",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W238",
+   "name": "GREED 2 + SLOTH 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GREED_3",
+    "SLOTH_2"
+   ],
+   "protocols": [
+    "GREED",
+    "SLOTH"
+   ],
+   "how": "GREED 2 (開始：あなたは自分のカードを1枚戻すことができる。) を場に置き、SLOTH 1 を出す。共通の語: 戻",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W239",
+   "name": "GREED 2 + FLEXIBLE 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "GREED_3",
+    "FLEXIBLE_1"
+   ],
+   "protocols": [
+    "GREED",
+    "FLEXIBLE"
+   ],
+   "how": "GREED 2 (開始：あなたは自分のカードを1枚戻すことができる。) を場に置き、FLEXIBLE 0 を出す。共通の語: 戻",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W240",
+   "name": "LUST 0 + METAL 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "LUST_1",
+    "METAL_2"
+   ],
+   "protocols": [
+    "LUST",
+    "METAL"
+   ],
+   "how": "LUST 0 (このラインの各プレイヤーの合計値は10増える。 あなたがコントロールを持っている場合、相手はコンパイルすることができない。) を場に置き、METAL 1 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W241",
+   "name": "LUST 0 + DIVERSITY 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "LUST_1",
+    "DIVERSITY_1"
+   ],
+   "protocols": [
+    "LUST",
+    "DIVERSITY"
+   ],
+   "how": "LUST 0 (このラインの各プレイヤーの合計値は10増える。 あなたがコントロールを持っている場合、相手はコンパイルすることができない。) を場に置き、DIVERSITY 0 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W242",
+   "name": "LUST 0 + UNITY 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "LUST_1",
+    "UNITY_2"
+   ],
+   "protocols": [
+    "LUST",
+    "UNITY"
+   ],
+   "how": "LUST 0 (このラインの各プレイヤーの合計値は10増える。 あなたがコントロールを持っている場合、相手はコンパイルすることができない。) を場に置き、UNITY 1 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W243",
+   "name": "LUST 0 + ENVY 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "LUST_1",
+    "ENVY_5"
+   ],
+   "protocols": [
+    "LUST",
+    "ENVY"
+   ],
+   "how": "LUST 0 (このラインの各プレイヤーの合計値は10増える。 あなたがコントロールを持っている場合、相手はコンパイルすることができない。) を場に置き、ENVY 4 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W244",
+   "name": "LUST 0 + MOMENTUM 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "LUST_1",
+    "MOMENTUM_1"
+   ],
+   "protocols": [
+    "LUST",
+    "MOMENTUM"
+   ],
+   "how": "LUST 0 (このラインの各プレイヤーの合計値は10増える。 あなたがコントロールを持っている場合、相手はコンパイルすることができない。) を場に置き、MOMENTUM 0 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W245",
+   "name": "LUST 0 + MOMENTUM 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "LUST_1",
+    "MOMENTUM_2"
+   ],
+   "protocols": [
+    "LUST",
+    "MOMENTUM"
+   ],
+   "how": "LUST 0 (このラインの各プレイヤーの合計値は10増える。 あなたがコントロールを持っている場合、相手はコンパイルすることができない。) を場に置き、MOMENTUM 1 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W246",
+   "name": "LUST 0 + MOMENTUM 6",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "LUST_1",
+    "MOMENTUM_6"
+   ],
+   "protocols": [
+    "LUST",
+    "MOMENTUM"
+   ],
+   "how": "LUST 0 (このラインの各プレイヤーの合計値は10増える。 あなたがコントロールを持っている場合、相手はコンパイルすることができない。) を場に置き、MOMENTUM 6 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W247",
+   "name": "LUST 0 + NOVA 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "LUST_1",
+    "NOVA_1"
+   ],
+   "protocols": [
+    "LUST",
+    "NOVA"
+   ],
+   "how": "LUST 0 (このラインの各プレイヤーの合計値は10増える。 あなたがコントロールを持っている場合、相手はコンパイルすることができない。) を場に置き、NOVA 0 を出す。共通の語: コントロール",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W248",
+   "name": "LUST 0 + NOVA 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "LUST_1",
+    "NOVA_3"
+   ],
+   "protocols": [
+    "LUST",
+    "NOVA"
+   ],
+   "how": "LUST 0 (このラインの各プレイヤーの合計値は10増える。 あなたがコントロールを持っている場合、相手はコンパイルすることができない。) を場に置き、NOVA 2 を出す。共通の語: コントロール",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W249",
+   "name": "LUST 0 + PRIDE 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "LUST_1",
+    "PRIDE_1"
+   ],
+   "protocols": [
+    "LUST",
+    "PRIDE"
+   ],
+   "how": "LUST 0 (このラインの各プレイヤーの合計値は10増える。 あなたがコントロールを持っている場合、相手はコンパイルすることができない。) を場に置き、PRIDE 0 を出す。共通の語: コントロール・コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W250",
+   "name": "LUST 0 + PRIDE 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "LUST_1",
+    "PRIDE_4"
+   ],
+   "protocols": [
+    "LUST",
+    "PRIDE"
+   ],
+   "how": "LUST 0 (このラインの各プレイヤーの合計値は10増える。 あなたがコントロールを持っている場合、相手はコンパイルすることができない。) を場に置き、PRIDE 4 を出す。共通の語: コントロール",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W251",
+   "name": "LUST 0 + PRIDE 6",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "LUST_1",
+    "PRIDE_6"
+   ],
+   "protocols": [
+    "LUST",
+    "PRIDE"
+   ],
+   "how": "LUST 0 (このラインの各プレイヤーの合計値は10増える。 あなたがコントロールを持っている場合、相手はコンパイルすることができない。) を場に置き、PRIDE 6 を出す。共通の語: コントロール",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W252",
+   "name": "LUST 0 + WRATH 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "LUST_1",
+    "WRATH_5"
+   ],
+   "protocols": [
+    "LUST",
+    "WRATH"
+   ],
+   "how": "LUST 0 (このラインの各プレイヤーの合計値は10増える。 あなたがコントロールを持っている場合、相手はコンパイルすることができない。) を場に置き、WRATH 4 を出す。共通の語: コントロール",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W253",
+   "name": "LUST 3 + NOVA 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "LUST_3",
+    "NOVA_1"
+   ],
+   "protocols": [
+    "LUST",
+    "NOVA"
+   ],
+   "how": "LUST 3 (終了：あなたはコントロールを失うことができる。そうした場合、カードを1枚反転させる。) を場に置き、NOVA 0 を出す。共通の語: コントロール",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W254",
+   "name": "LUST 3 + PRIDE 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "LUST_3",
+    "PRIDE_1"
+   ],
+   "protocols": [
+    "LUST",
+    "PRIDE"
+   ],
+   "how": "LUST 3 (終了：あなたはコントロールを失うことができる。そうした場合、カードを1枚反転させる。) を場に置き、PRIDE 0 を出す。共通の語: コントロール",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W255",
+   "name": "LUST 3 + PRIDE 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "LUST_3",
+    "PRIDE_4"
+   ],
+   "protocols": [
+    "LUST",
+    "PRIDE"
+   ],
+   "how": "LUST 3 (終了：あなたはコントロールを失うことができる。そうした場合、カードを1枚反転させる。) を場に置き、PRIDE 4 を出す。共通の語: コントロール",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W256",
+   "name": "LUST 3 + PRIDE 6",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "LUST_3",
+    "PRIDE_6"
+   ],
+   "protocols": [
+    "LUST",
+    "PRIDE"
+   ],
+   "how": "LUST 3 (終了：あなたはコントロールを失うことができる。そうした場合、カードを1枚反転させる。) を場に置き、PRIDE 6 を出す。共通の語: コントロール・反転",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W257",
+   "name": "LUST 3 + WRATH 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "LUST_3",
+    "WRATH_2"
+   ],
+   "protocols": [
+    "LUST",
+    "WRATH"
+   ],
+   "how": "LUST 3 (終了：あなたはコントロールを失うことができる。そうした場合、カードを1枚反転させる。) を場に置き、WRATH 1 を出す。共通の語: コントロール",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W258",
+   "name": "LUST 3 + WRATH 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "LUST_3",
+    "WRATH_5"
+   ],
+   "protocols": [
+    "LUST",
+    "WRATH"
+   ],
+   "how": "LUST 3 (終了：あなたはコントロールを失うことができる。そうした場合、カードを1枚反転させる。) を場に置き、WRATH 4 を出す。共通の語: コントロール",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W259",
+   "name": "MOMENTUM 1 + METAL 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "MOMENTUM_2",
+    "METAL_2"
+   ],
+   "protocols": [
+    "MOMENTUM",
+    "METAL"
+   ],
+   "how": "MOMENTUM 1 (いずれかのプレイヤーがコンパイルしたあと：あなたのデッキの一番上のカードをこのスタックに裏向きでプレイする。) を場に置き、METAL 1 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W260",
+   "name": "MOMENTUM 1 + DIVERSITY 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "MOMENTUM_2",
+    "DIVERSITY_1"
+   ],
+   "protocols": [
+    "MOMENTUM",
+    "DIVERSITY"
+   ],
+   "how": "MOMENTUM 1 (いずれかのプレイヤーがコンパイルしたあと：あなたのデッキの一番上のカードをこのスタックに裏向きでプレイする。) を場に置き、DIVERSITY 0 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W261",
+   "name": "MOMENTUM 1 + UNITY 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "MOMENTUM_2",
+    "UNITY_2"
+   ],
+   "protocols": [
+    "MOMENTUM",
+    "UNITY"
+   ],
+   "how": "MOMENTUM 1 (いずれかのプレイヤーがコンパイルしたあと：あなたのデッキの一番上のカードをこのスタックに裏向きでプレイする。) を場に置き、UNITY 1 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W262",
+   "name": "MOMENTUM 1 + ENVY 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "MOMENTUM_2",
+    "ENVY_5"
+   ],
+   "protocols": [
+    "MOMENTUM",
+    "ENVY"
+   ],
+   "how": "MOMENTUM 1 (いずれかのプレイヤーがコンパイルしたあと：あなたのデッキの一番上のカードをこのスタックに裏向きでプレイする。) を場に置き、ENVY 4 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W263",
+   "name": "MOMENTUM 1 + PRIDE 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "MOMENTUM_2",
+    "PRIDE_1"
+   ],
+   "protocols": [
+    "MOMENTUM",
+    "PRIDE"
+   ],
+   "how": "MOMENTUM 1 (いずれかのプレイヤーがコンパイルしたあと：あなたのデッキの一番上のカードをこのスタックに裏向きでプレイする。) を場に置き、PRIDE 0 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W264",
+   "name": "MOMENTUM 6 + DEATH 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "MOMENTUM_6",
+    "DEATH_1"
+   ],
+   "protocols": [
+    "MOMENTUM",
+    "DEATH"
+   ],
+   "how": "MOMENTUM 6 (いずれかのプレイヤーがコンパイルしたあと：このカードを削除する。) を場に置き、DEATH 0 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W265",
+   "name": "MOMENTUM 6 + DEATH 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "MOMENTUM_6",
+    "DEATH_3"
+   ],
+   "protocols": [
+    "MOMENTUM",
+    "DEATH"
+   ],
+   "how": "MOMENTUM 6 (いずれかのプレイヤーがコンパイルしたあと：このカードを削除する。) を場に置き、DEATH 2 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W266",
+   "name": "MOMENTUM 6 + DEATH 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "MOMENTUM_6",
+    "DEATH_4"
+   ],
+   "protocols": [
+    "MOMENTUM",
+    "DEATH"
+   ],
+   "how": "MOMENTUM 6 (いずれかのプレイヤーがコンパイルしたあと：このカードを削除する。) を場に置き、DEATH 3 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W267",
+   "name": "MOMENTUM 6 + DEATH 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "MOMENTUM_6",
+    "DEATH_5"
+   ],
+   "protocols": [
+    "MOMENTUM",
+    "DEATH"
+   ],
+   "how": "MOMENTUM 6 (いずれかのプレイヤーがコンパイルしたあと：このカードを削除する。) を場に置き、DEATH 4 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W268",
+   "name": "MOMENTUM 6 + FIRE 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "MOMENTUM_6",
+    "FIRE_2"
+   ],
+   "protocols": [
+    "MOMENTUM",
+    "FIRE"
+   ],
+   "how": "MOMENTUM 6 (いずれかのプレイヤーがコンパイルしたあと：このカードを削除する。) を場に置き、FIRE 1 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W269",
+   "name": "MOMENTUM 6 + METAL 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "MOMENTUM_6",
+    "METAL_2"
+   ],
+   "protocols": [
+    "MOMENTUM",
+    "METAL"
+   ],
+   "how": "MOMENTUM 6 (いずれかのプレイヤーがコンパイルしたあと：このカードを削除する。) を場に置き、METAL 1 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W270",
+   "name": "MOMENTUM 6 + METAL 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "MOMENTUM_6",
+    "METAL_4"
+   ],
+   "protocols": [
+    "MOMENTUM",
+    "METAL"
+   ],
+   "how": "MOMENTUM 6 (いずれかのプレイヤーがコンパイルしたあと：このカードを削除する。) を場に置き、METAL 3 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W271",
+   "name": "MOMENTUM 6 + METAL 6",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "MOMENTUM_6",
+    "METAL_6"
+   ],
+   "protocols": [
+    "MOMENTUM",
+    "METAL"
+   ],
+   "how": "MOMENTUM 6 (いずれかのプレイヤーがコンパイルしたあと：このカードを削除する。) を場に置き、METAL 6 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W272",
+   "name": "MOMENTUM 6 + HATE 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "MOMENTUM_6",
+    "HATE_1"
+   ],
+   "protocols": [
+    "MOMENTUM",
+    "HATE"
+   ],
+   "how": "MOMENTUM 6 (いずれかのプレイヤーがコンパイルしたあと：このカードを削除する。) を場に置き、HATE 0 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W273",
+   "name": "MOMENTUM 6 + HATE 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "MOMENTUM_6",
+    "HATE_2"
+   ],
+   "protocols": [
+    "MOMENTUM",
+    "HATE"
+   ],
+   "how": "MOMENTUM 6 (いずれかのプレイヤーがコンパイルしたあと：このカードを削除する。) を場に置き、HATE 1 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W274",
+   "name": "MOMENTUM 6 + HATE 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "MOMENTUM_6",
+    "HATE_3"
+   ],
+   "protocols": [
+    "MOMENTUM",
+    "HATE"
+   ],
+   "how": "MOMENTUM 6 (いずれかのプレイヤーがコンパイルしたあと：このカードを削除する。) を場に置き、HATE 2 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W275",
+   "name": "MOMENTUM 6 + HATE 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "MOMENTUM_6",
+    "HATE_5"
+   ],
+   "protocols": [
+    "MOMENTUM",
+    "HATE"
+   ],
+   "how": "MOMENTUM 6 (いずれかのプレイヤーがコンパイルしたあと：このカードを削除する。) を場に置き、HATE 4 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W276",
+   "name": "MOMENTUM 6 + COURAGE 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "MOMENTUM_6",
+    "COURAGE_2"
+   ],
+   "protocols": [
+    "MOMENTUM",
+    "COURAGE"
+   ],
+   "how": "MOMENTUM 6 (いずれかのプレイヤーがコンパイルしたあと：このカードを削除する。) を場に置き、COURAGE 1 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W277",
+   "name": "MOMENTUM 6 + LUCK 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "MOMENTUM_6",
+    "LUCK_4"
+   ],
+   "protocols": [
+    "MOMENTUM",
+    "LUCK"
+   ],
+   "how": "MOMENTUM 6 (いずれかのプレイヤーがコンパイルしたあと：このカードを削除する。) を場に置き、LUCK 3 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W278",
+   "name": "MOMENTUM 6 + LUCK 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "MOMENTUM_6",
+    "LUCK_5"
+   ],
+   "protocols": [
+    "MOMENTUM",
+    "LUCK"
+   ],
+   "how": "MOMENTUM 6 (いずれかのプレイヤーがコンパイルしたあと：このカードを削除する。) を場に置き、LUCK 4 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W279",
+   "name": "MOMENTUM 6 + WAR 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "MOMENTUM_6",
+    "WAR_1"
+   ],
+   "protocols": [
+    "MOMENTUM",
+    "WAR"
+   ],
+   "how": "MOMENTUM 6 (いずれかのプレイヤーがコンパイルしたあと：このカードを削除する。) を場に置き、WAR 0 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W280",
+   "name": "MOMENTUM 6 + DIVERSITY 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "MOMENTUM_6",
+    "DIVERSITY_1"
+   ],
+   "protocols": [
+    "MOMENTUM",
+    "DIVERSITY"
+   ],
+   "how": "MOMENTUM 6 (いずれかのプレイヤーがコンパイルしたあと：このカードを削除する。) を場に置き、DIVERSITY 0 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W281",
+   "name": "MOMENTUM 6 + UNITY 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "MOMENTUM_6",
+    "UNITY_2"
+   ],
+   "protocols": [
+    "MOMENTUM",
+    "UNITY"
+   ],
+   "how": "MOMENTUM 6 (いずれかのプレイヤーがコンパイルしたあと：このカードを削除する。) を場に置き、UNITY 1 を出す。共通の語: 削除・コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W282",
+   "name": "MOMENTUM 6 + ENVY 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "MOMENTUM_6",
+    "ENVY_5"
+   ],
+   "protocols": [
+    "MOMENTUM",
+    "ENVY"
+   ],
+   "how": "MOMENTUM 6 (いずれかのプレイヤーがコンパイルしたあと：このカードを削除する。) を場に置き、ENVY 4 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W283",
+   "name": "MOMENTUM 6 + FULCRUM 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "MOMENTUM_6",
+    "FULCRUM_3"
+   ],
+   "protocols": [
+    "MOMENTUM",
+    "FULCRUM"
+   ],
+   "how": "MOMENTUM 6 (いずれかのプレイヤーがコンパイルしたあと：このカードを削除する。) を場に置き、FULCRUM 2 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W284",
+   "name": "MOMENTUM 6 + NOVA 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "MOMENTUM_6",
+    "NOVA_1"
+   ],
+   "protocols": [
+    "MOMENTUM",
+    "NOVA"
+   ],
+   "how": "MOMENTUM 6 (いずれかのプレイヤーがコンパイルしたあと：このカードを削除する。) を場に置き、NOVA 0 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W285",
+   "name": "MOMENTUM 6 + OVERWHELM 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "MOMENTUM_6",
+    "OVERWHELM_4"
+   ],
+   "protocols": [
+    "MOMENTUM",
+    "OVERWHELM"
+   ],
+   "how": "MOMENTUM 6 (いずれかのプレイヤーがコンパイルしたあと：このカードを削除する。) を場に置き、OVERWHELM 4 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W286",
+   "name": "MOMENTUM 6 + PRIDE 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "MOMENTUM_6",
+    "PRIDE_1"
+   ],
+   "protocols": [
+    "MOMENTUM",
+    "PRIDE"
+   ],
+   "how": "MOMENTUM 6 (いずれかのプレイヤーがコンパイルしたあと：このカードを削除する。) を場に置き、PRIDE 0 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W287",
+   "name": "MOMENTUM 6 + WRATH 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "MOMENTUM_6",
+    "WRATH_2"
+   ],
+   "protocols": [
+    "MOMENTUM",
+    "WRATH"
+   ],
+   "how": "MOMENTUM 6 (いずれかのプレイヤーがコンパイルしたあと：このカードを削除する。) を場に置き、WRATH 1 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W288",
+   "name": "NOVA 0 + DEATH 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "NOVA_1",
+    "DEATH_1"
+   ],
+   "protocols": [
+    "NOVA",
+    "DEATH"
+   ],
+   "how": "NOVA 0 (開始：あなたのカードがちょうど5枚あるラインを1つ選び、そのラインのすべての表向きのカードを削除する。 終了：覆われていないあなたの「NOVA」カードの下に、あなたのデッキの一番上のカードを裏向きでプレイする。) を場に置き、DEATH 0 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W289",
+   "name": "NOVA 0 + DEATH 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "NOVA_1",
+    "DEATH_3"
+   ],
+   "protocols": [
+    "NOVA",
+    "DEATH"
+   ],
+   "how": "NOVA 0 (開始：あなたのカードがちょうど5枚あるラインを1つ選び、そのラインのすべての表向きのカードを削除する。 終了：覆われていないあなたの「NOVA」カードの下に、あなたのデッキの一番上のカードを裏向きでプレイする。) を場に置き、DEATH 2 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W290",
+   "name": "NOVA 0 + DEATH 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "NOVA_1",
+    "DEATH_4"
+   ],
+   "protocols": [
+    "NOVA",
+    "DEATH"
+   ],
+   "how": "NOVA 0 (開始：あなたのカードがちょうど5枚あるラインを1つ選び、そのラインのすべての表向きのカードを削除する。 終了：覆われていないあなたの「NOVA」カードの下に、あなたのデッキの一番上のカードを裏向きでプレイする。) を場に置き、DEATH 3 を出す。共通の語: 裏向き・削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W291",
+   "name": "NOVA 0 + DEATH 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "NOVA_1",
+    "DEATH_5"
+   ],
+   "protocols": [
+    "NOVA",
+    "DEATH"
+   ],
+   "how": "NOVA 0 (開始：あなたのカードがちょうど5枚あるラインを1つ選び、そのラインのすべての表向きのカードを削除する。 終了：覆われていないあなたの「NOVA」カードの下に、あなたのデッキの一番上のカードを裏向きでプレイする。) を場に置き、DEATH 4 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W292",
+   "name": "NOVA 0 + FIRE 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "NOVA_1",
+    "FIRE_2"
+   ],
+   "protocols": [
+    "NOVA",
+    "FIRE"
+   ],
+   "how": "NOVA 0 (開始：あなたのカードがちょうど5枚あるラインを1つ選び、そのラインのすべての表向きのカードを削除する。 終了：覆われていないあなたの「NOVA」カードの下に、あなたのデッキの一番上のカードを裏向きでプレイする。) を場に置き、FIRE 1 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W293",
+   "name": "NOVA 0 + METAL 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "NOVA_1",
+    "METAL_4"
+   ],
+   "protocols": [
+    "NOVA",
+    "METAL"
+   ],
+   "how": "NOVA 0 (開始：あなたのカードがちょうど5枚あるラインを1つ選び、そのラインのすべての表向きのカードを削除する。 終了：覆われていないあなたの「NOVA」カードの下に、あなたのデッキの一番上のカードを裏向きでプレイする。) を場に置き、METAL 3 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W294",
+   "name": "NOVA 0 + METAL 6",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "NOVA_1",
+    "METAL_6"
+   ],
+   "protocols": [
+    "NOVA",
+    "METAL"
+   ],
+   "how": "NOVA 0 (開始：あなたのカードがちょうど5枚あるラインを1つ選び、そのラインのすべての表向きのカードを削除する。 終了：覆われていないあなたの「NOVA」カードの下に、あなたのデッキの一番上のカードを裏向きでプレイする。) を場に置き、METAL 6 を出す。共通の語: 削除・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W295",
+   "name": "NOVA 0 + HATE 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "NOVA_1",
+    "HATE_1"
+   ],
+   "protocols": [
+    "NOVA",
+    "HATE"
+   ],
+   "how": "NOVA 0 (開始：あなたのカードがちょうど5枚あるラインを1つ選び、そのラインのすべての表向きのカードを削除する。 終了：覆われていないあなたの「NOVA」カードの下に、あなたのデッキの一番上のカードを裏向きでプレイする。) を場に置き、HATE 0 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W296",
+   "name": "NOVA 0 + HATE 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "NOVA_1",
+    "HATE_2"
+   ],
+   "protocols": [
+    "NOVA",
+    "HATE"
+   ],
+   "how": "NOVA 0 (開始：あなたのカードがちょうど5枚あるラインを1つ選び、そのラインのすべての表向きのカードを削除する。 終了：覆われていないあなたの「NOVA」カードの下に、あなたのデッキの一番上のカードを裏向きでプレイする。) を場に置き、HATE 1 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W297",
+   "name": "NOVA 0 + HATE 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "NOVA_1",
+    "HATE_3"
+   ],
+   "protocols": [
+    "NOVA",
+    "HATE"
+   ],
+   "how": "NOVA 0 (開始：あなたのカードがちょうど5枚あるラインを1つ選び、そのラインのすべての表向きのカードを削除する。 終了：覆われていないあなたの「NOVA」カードの下に、あなたのデッキの一番上のカードを裏向きでプレイする。) を場に置き、HATE 2 を出す。共通の語: 削除・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W298",
+   "name": "NOVA 0 + HATE 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "NOVA_1",
+    "HATE_5"
+   ],
+   "protocols": [
+    "NOVA",
+    "HATE"
+   ],
+   "how": "NOVA 0 (開始：あなたのカードがちょうど5枚あるラインを1つ選び、そのラインのすべての表向きのカードを削除する。 終了：覆われていないあなたの「NOVA」カードの下に、あなたのデッキの一番上のカードを裏向きでプレイする。) を場に置き、HATE 4 を出す。共通の語: 削除・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W299",
+   "name": "NOVA 0 + COURAGE 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "NOVA_1",
+    "COURAGE_2"
+   ],
+   "protocols": [
+    "NOVA",
+    "COURAGE"
+   ],
+   "how": "NOVA 0 (開始：あなたのカードがちょうど5枚あるラインを1つ選び、そのラインのすべての表向きのカードを削除する。 終了：覆われていないあなたの「NOVA」カードの下に、あなたのデッキの一番上のカードを裏向きでプレイする。) を場に置き、COURAGE 1 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W300",
+   "name": "NOVA 0 + LUCK 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "NOVA_1",
+    "LUCK_4"
+   ],
+   "protocols": [
+    "NOVA",
+    "LUCK"
+   ],
+   "how": "NOVA 0 (開始：あなたのカードがちょうど5枚あるラインを1つ選び、そのラインのすべての表向きのカードを削除する。 終了：覆われていないあなたの「NOVA」カードの下に、あなたのデッキの一番上のカードを裏向きでプレイする。) を場に置き、LUCK 3 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W301",
+   "name": "NOVA 0 + LUCK 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "NOVA_1",
+    "LUCK_5"
+   ],
+   "protocols": [
+    "NOVA",
+    "LUCK"
+   ],
+   "how": "NOVA 0 (開始：あなたのカードがちょうど5枚あるラインを1つ選び、そのラインのすべての表向きのカードを削除する。 終了：覆われていないあなたの「NOVA」カードの下に、あなたのデッキの一番上のカードを裏向きでプレイする。) を場に置き、LUCK 4 を出す。共通の語: 削除・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W302",
+   "name": "NOVA 0 + WAR 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "NOVA_1",
+    "WAR_1"
+   ],
+   "protocols": [
+    "NOVA",
+    "WAR"
+   ],
+   "how": "NOVA 0 (開始：あなたのカードがちょうど5枚あるラインを1つ選び、そのラインのすべての表向きのカードを削除する。 終了：覆われていないあなたの「NOVA」カードの下に、あなたのデッキの一番上のカードを裏向きでプレイする。) を場に置き、WAR 0 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W303",
+   "name": "NOVA 0 + UNITY 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "NOVA_1",
+    "UNITY_2"
+   ],
+   "protocols": [
+    "NOVA",
+    "UNITY"
+   ],
+   "how": "NOVA 0 (開始：あなたのカードがちょうど5枚あるラインを1つ選び、そのラインのすべての表向きのカードを削除する。 終了：覆われていないあなたの「NOVA」カードの下に、あなたのデッキの一番上のカードを裏向きでプレイする。) を場に置き、UNITY 1 を出す。共通の語: 削除・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W304",
+   "name": "NOVA 0 + FULCRUM 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "NOVA_1",
+    "FULCRUM_3"
+   ],
+   "protocols": [
+    "NOVA",
+    "FULCRUM"
+   ],
+   "how": "NOVA 0 (開始：あなたのカードがちょうど5枚あるラインを1つ選び、そのラインのすべての表向きのカードを削除する。 終了：覆われていないあなたの「NOVA」カードの下に、あなたのデッキの一番上のカードを裏向きでプレイする。) を場に置き、FULCRUM 2 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W305",
+   "name": "NOVA 0 + OVERWHELM 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "NOVA_1",
+    "OVERWHELM_4"
+   ],
+   "protocols": [
+    "NOVA",
+    "OVERWHELM"
+   ],
+   "how": "NOVA 0 (開始：あなたのカードがちょうど5枚あるラインを1つ選び、そのラインのすべての表向きのカードを削除する。 終了：覆われていないあなたの「NOVA」カードの下に、あなたのデッキの一番上のカードを裏向きでプレイする。) を場に置き、OVERWHELM 4 を出す。共通の語: 削除・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W306",
+   "name": "NOVA 0 + WRATH 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "NOVA_1",
+    "WRATH_2"
+   ],
+   "protocols": [
+    "NOVA",
+    "WRATH"
+   ],
+   "how": "NOVA 0 (開始：あなたのカードがちょうど5枚あるラインを1つ選び、そのラインのすべての表向きのカードを削除する。 終了：覆われていないあなたの「NOVA」カードの下に、あなたのデッキの一番上のカードを裏向きでプレイする。) を場に置き、WRATH 1 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W307",
+   "name": "PRIDE 0 + METAL 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "PRIDE_1",
+    "METAL_2"
+   ],
+   "protocols": [
+    "PRIDE",
+    "METAL"
+   ],
+   "how": "PRIDE 0 (あなたがコンパイルしたあと：リフレッシュする。) を場に置き、METAL 1 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W308",
+   "name": "PRIDE 0 + SPIRIT 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "PRIDE_1",
+    "SPIRIT_1"
+   ],
+   "protocols": [
+    "PRIDE",
+    "SPIRIT"
+   ],
+   "how": "PRIDE 0 (あなたがコンパイルしたあと：リフレッシュする。) を場に置き、SPIRIT 0 を出す。共通の語: リフレッシュ",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W309",
+   "name": "PRIDE 0 + LOVE 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "PRIDE_1",
+    "LOVE_2"
+   ],
+   "protocols": [
+    "PRIDE",
+    "LOVE"
+   ],
+   "how": "PRIDE 0 (あなたがコンパイルしたあと：リフレッシュする。) を場に置き、LOVE 2 を出す。共通の語: リフレッシュ",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W310",
+   "name": "PRIDE 0 + DIVERSITY 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "PRIDE_1",
+    "DIVERSITY_1"
+   ],
+   "protocols": [
+    "PRIDE",
+    "DIVERSITY"
+   ],
+   "how": "PRIDE 0 (あなたがコンパイルしたあと：リフレッシュする。) を場に置き、DIVERSITY 0 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W311",
+   "name": "PRIDE 0 + ENVY 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "PRIDE_1",
+    "ENVY_5"
+   ],
+   "protocols": [
+    "PRIDE",
+    "ENVY"
+   ],
+   "how": "PRIDE 0 (あなたがコンパイルしたあと：リフレッシュする。) を場に置き、ENVY 4 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W312",
+   "name": "PRIDE 0 + MOMENTUM 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "PRIDE_1",
+    "MOMENTUM_1"
+   ],
+   "protocols": [
+    "PRIDE",
+    "MOMENTUM"
+   ],
+   "how": "PRIDE 0 (あなたがコンパイルしたあと：リフレッシュする。) を場に置き、MOMENTUM 0 を出す。共通の語: コンパイル",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W313",
+   "name": "WRATH 1 + DEATH 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WRATH_2",
+    "DEATH_1"
+   ],
+   "protocols": [
+    "WRATH",
+    "DEATH"
+   ],
+   "how": "WRATH 1 (終了：コントロールを失う。そうした場合、表向きのカードを1枚削除する。) を場に置き、DEATH 0 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W314",
+   "name": "WRATH 1 + DEATH 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WRATH_2",
+    "DEATH_3"
+   ],
+   "protocols": [
+    "WRATH",
+    "DEATH"
+   ],
+   "how": "WRATH 1 (終了：コントロールを失う。そうした場合、表向きのカードを1枚削除する。) を場に置き、DEATH 2 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W315",
+   "name": "WRATH 1 + DEATH 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WRATH_2",
+    "DEATH_4"
+   ],
+   "protocols": [
+    "WRATH",
+    "DEATH"
+   ],
+   "how": "WRATH 1 (終了：コントロールを失う。そうした場合、表向きのカードを1枚削除する。) を場に置き、DEATH 3 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W316",
+   "name": "WRATH 1 + DEATH 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WRATH_2",
+    "DEATH_5"
+   ],
+   "protocols": [
+    "WRATH",
+    "DEATH"
+   ],
+   "how": "WRATH 1 (終了：コントロールを失う。そうした場合、表向きのカードを1枚削除する。) を場に置き、DEATH 4 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W317",
+   "name": "WRATH 1 + FIRE 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WRATH_2",
+    "FIRE_2"
+   ],
+   "protocols": [
+    "WRATH",
+    "FIRE"
+   ],
+   "how": "WRATH 1 (終了：コントロールを失う。そうした場合、表向きのカードを1枚削除する。) を場に置き、FIRE 1 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W318",
+   "name": "WRATH 1 + METAL 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WRATH_2",
+    "METAL_4"
+   ],
+   "protocols": [
+    "WRATH",
+    "METAL"
+   ],
+   "how": "WRATH 1 (終了：コントロールを失う。そうした場合、表向きのカードを1枚削除する。) を場に置き、METAL 3 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W319",
+   "name": "WRATH 1 + METAL 6",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WRATH_2",
+    "METAL_6"
+   ],
+   "protocols": [
+    "WRATH",
+    "METAL"
+   ],
+   "how": "WRATH 1 (終了：コントロールを失う。そうした場合、表向きのカードを1枚削除する。) を場に置き、METAL 6 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W320",
+   "name": "WRATH 1 + HATE 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WRATH_2",
+    "HATE_1"
+   ],
+   "protocols": [
+    "WRATH",
+    "HATE"
+   ],
+   "how": "WRATH 1 (終了：コントロールを失う。そうした場合、表向きのカードを1枚削除する。) を場に置き、HATE 0 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W321",
+   "name": "WRATH 1 + HATE 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WRATH_2",
+    "HATE_2"
+   ],
+   "protocols": [
+    "WRATH",
+    "HATE"
+   ],
+   "how": "WRATH 1 (終了：コントロールを失う。そうした場合、表向きのカードを1枚削除する。) を場に置き、HATE 1 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W322",
+   "name": "WRATH 1 + HATE 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WRATH_2",
+    "HATE_3"
+   ],
+   "protocols": [
+    "WRATH",
+    "HATE"
+   ],
+   "how": "WRATH 1 (終了：コントロールを失う。そうした場合、表向きのカードを1枚削除する。) を場に置き、HATE 2 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W323",
+   "name": "WRATH 1 + HATE 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WRATH_2",
+    "HATE_5"
+   ],
+   "protocols": [
+    "WRATH",
+    "HATE"
+   ],
+   "how": "WRATH 1 (終了：コントロールを失う。そうした場合、表向きのカードを1枚削除する。) を場に置き、HATE 4 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W324",
+   "name": "WRATH 1 + COURAGE 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WRATH_2",
+    "COURAGE_2"
+   ],
+   "protocols": [
+    "WRATH",
+    "COURAGE"
+   ],
+   "how": "WRATH 1 (終了：コントロールを失う。そうした場合、表向きのカードを1枚削除する。) を場に置き、COURAGE 1 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W325",
+   "name": "WRATH 1 + LUCK 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WRATH_2",
+    "LUCK_4"
+   ],
+   "protocols": [
+    "WRATH",
+    "LUCK"
+   ],
+   "how": "WRATH 1 (終了：コントロールを失う。そうした場合、表向きのカードを1枚削除する。) を場に置き、LUCK 3 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W326",
+   "name": "WRATH 1 + LUCK 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WRATH_2",
+    "LUCK_5"
+   ],
+   "protocols": [
+    "WRATH",
+    "LUCK"
+   ],
+   "how": "WRATH 1 (終了：コントロールを失う。そうした場合、表向きのカードを1枚削除する。) を場に置き、LUCK 4 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W327",
+   "name": "WRATH 1 + WAR 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WRATH_2",
+    "WAR_1"
+   ],
+   "protocols": [
+    "WRATH",
+    "WAR"
+   ],
+   "how": "WRATH 1 (終了：コントロールを失う。そうした場合、表向きのカードを1枚削除する。) を場に置き、WAR 0 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W328",
+   "name": "WRATH 1 + UNITY 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WRATH_2",
+    "UNITY_2"
+   ],
+   "protocols": [
+    "WRATH",
+    "UNITY"
+   ],
+   "how": "WRATH 1 (終了：コントロールを失う。そうした場合、表向きのカードを1枚削除する。) を場に置き、UNITY 1 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W329",
+   "name": "WRATH 1 + FULCRUM 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WRATH_2",
+    "FULCRUM_3"
+   ],
+   "protocols": [
+    "WRATH",
+    "FULCRUM"
+   ],
+   "how": "WRATH 1 (終了：コントロールを失う。そうした場合、表向きのカードを1枚削除する。) を場に置き、FULCRUM 2 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W330",
+   "name": "WRATH 1 + LUST 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WRATH_2",
+    "LUST_4"
+   ],
+   "protocols": [
+    "WRATH",
+    "LUST"
+   ],
+   "how": "WRATH 1 (終了：コントロールを失う。そうした場合、表向きのカードを1枚削除する。) を場に置き、LUST 4 を出す。共通の語: コントロール",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W331",
+   "name": "WRATH 1 + OVERWHELM 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WRATH_2",
+    "OVERWHELM_4"
+   ],
+   "protocols": [
+    "WRATH",
+    "OVERWHELM"
+   ],
+   "how": "WRATH 1 (終了：コントロールを失う。そうした場合、表向きのカードを1枚削除する。) を場に置き、OVERWHELM 4 を出す。共通の語: 削除",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W332",
+   "name": "WRATH 1 + PRIDE 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WRATH_2",
+    "PRIDE_1"
+   ],
+   "protocols": [
+    "WRATH",
+    "PRIDE"
+   ],
+   "how": "WRATH 1 (終了：コントロールを失う。そうした場合、表向きのカードを1枚削除する。) を場に置き、PRIDE 0 を出す。共通の語: コントロール",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W333",
+   "name": "WRATH 1 + PRIDE 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WRATH_2",
+    "PRIDE_4"
+   ],
+   "protocols": [
+    "WRATH",
+    "PRIDE"
+   ],
+   "how": "WRATH 1 (終了：コントロールを失う。そうした場合、表向きのカードを1枚削除する。) を場に置き、PRIDE 4 を出す。共通の語: コントロール",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W334",
+   "name": "WRATH 1 + PRIDE 6",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "WRATH_2",
+    "PRIDE_6"
+   ],
+   "protocols": [
+    "WRATH",
+    "PRIDE"
+   ],
+   "how": "WRATH 1 (終了：コントロールを失う。そうした場合、表向きのカードを1枚削除する。) を場に置き、PRIDE 6 を出す。共通の語: コントロール",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W335",
+   "name": "FLEXIBLE 2 + DARKNESS 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "FLEXIBLE_3",
+    "DARKNESS_1"
+   ],
+   "protocols": [
+    "FLEXIBLE",
+    "DARKNESS"
+   ],
+   "how": "FLEXIBLE 2 (終了：このカードが裏向きのカードに覆われている場合、あなたはそのカードを移動させることができる。) を場に置き、DARKNESS 0 を出す。共通の語: 移動・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W336",
+   "name": "FLEXIBLE 2 + DARKNESS 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "FLEXIBLE_3",
+    "DARKNESS_2"
+   ],
+   "protocols": [
+    "FLEXIBLE",
+    "DARKNESS"
+   ],
+   "how": "FLEXIBLE 2 (終了：このカードが裏向きのカードに覆われている場合、あなたはそのカードを移動させることができる。) を場に置き、DARKNESS 1 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W337",
+   "name": "FLEXIBLE 2 + DARKNESS 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "FLEXIBLE_3",
+    "DARKNESS_5"
+   ],
+   "protocols": [
+    "FLEXIBLE",
+    "DARKNESS"
+   ],
+   "how": "FLEXIBLE 2 (終了：このカードが裏向きのカードに覆われている場合、あなたはそのカードを移動させることができる。) を場に置き、DARKNESS 4 を出す。共通の語: 裏向き・移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W338",
+   "name": "FLEXIBLE 2 + GRAVITY 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "FLEXIBLE_3",
+    "GRAVITY_2"
+   ],
+   "protocols": [
+    "FLEXIBLE",
+    "GRAVITY"
+   ],
+   "how": "FLEXIBLE 2 (終了：このカードが裏向きのカードに覆われている場合、あなたはそのカードを移動させることができる。) を場に置き、GRAVITY 1 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W339",
+   "name": "FLEXIBLE 2 + GRAVITY 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "FLEXIBLE_3",
+    "GRAVITY_3"
+   ],
+   "protocols": [
+    "FLEXIBLE",
+    "GRAVITY"
+   ],
+   "how": "FLEXIBLE 2 (終了：このカードが裏向きのカードに覆われている場合、あなたはそのカードを移動させることができる。) を場に置き、GRAVITY 2 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W340",
+   "name": "FLEXIBLE 2 + GRAVITY 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "FLEXIBLE_3",
+    "GRAVITY_4"
+   ],
+   "protocols": [
+    "FLEXIBLE",
+    "GRAVITY"
+   ],
+   "how": "FLEXIBLE 2 (終了：このカードが裏向きのカードに覆われている場合、あなたはそのカードを移動させることができる。) を場に置き、GRAVITY 4 を出す。共通の語: 裏向き・移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W341",
+   "name": "FLEXIBLE 2 + LIGHT 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "FLEXIBLE_3",
+    "LIGHT_3"
+   ],
+   "protocols": [
+    "FLEXIBLE",
+    "LIGHT"
+   ],
+   "how": "FLEXIBLE 2 (終了：このカードが裏向きのカードに覆われている場合、あなたはそのカードを移動させることができる。) を場に置き、LIGHT 2 を出す。共通の語: 裏向き・移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W342",
+   "name": "FLEXIBLE 2 + LIGHT 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "FLEXIBLE_3",
+    "LIGHT_4"
+   ],
+   "protocols": [
+    "FLEXIBLE",
+    "LIGHT"
+   ],
+   "how": "FLEXIBLE 2 (終了：このカードが裏向きのカードに覆われている場合、あなたはそのカードを移動させることができる。) を場に置き、LIGHT 3 を出す。共通の語: 裏向き・移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W343",
+   "name": "FLEXIBLE 2 + PSYCHIC 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "FLEXIBLE_3",
+    "PSYCHIC_4"
+   ],
+   "protocols": [
+    "FLEXIBLE",
+    "PSYCHIC"
+   ],
+   "how": "FLEXIBLE 2 (終了：このカードが裏向きのカードに覆われている場合、あなたはそのカードを移動させることができる。) を場に置き、PSYCHIC 3 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W344",
+   "name": "FLEXIBLE 2 + SPEED 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "FLEXIBLE_3",
+    "SPEED_5"
+   ],
+   "protocols": [
+    "FLEXIBLE",
+    "SPEED"
+   ],
+   "how": "FLEXIBLE 2 (終了：このカードが裏向きのカードに覆われている場合、あなたはそのカードを移動させることができる。) を場に置き、SPEED 4 を出す。共通の語: 裏向き・移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W345",
+   "name": "FLEXIBLE 2 + CHAOS 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "FLEXIBLE_3",
+    "CHAOS_3"
+   ],
+   "protocols": [
+    "FLEXIBLE",
+    "CHAOS"
+   ],
+   "how": "FLEXIBLE 2 (終了：このカードが裏向きのカードに覆われている場合、あなたはそのカードを移動させることができる。) を場に置き、CHAOS 2 を出す。共通の語: 移動・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W346",
+   "name": "FLEXIBLE 2 + FEAR 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "FLEXIBLE_3",
+    "FEAR_1"
+   ],
+   "protocols": [
+    "FLEXIBLE",
+    "FEAR"
+   ],
+   "how": "FLEXIBLE 2 (終了：このカードが裏向きのカードに覆われている場合、あなたはそのカードを移動させることができる。) を場に置き、FEAR 0 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W347",
+   "name": "FLEXIBLE 2 + FEAR 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "FLEXIBLE_3",
+    "FEAR_4"
+   ],
+   "protocols": [
+    "FLEXIBLE",
+    "FEAR"
+   ],
+   "how": "FLEXIBLE 2 (終了：このカードが裏向きのカードに覆われている場合、あなたはそのカードを移動させることができる。) を場に置き、FEAR 3 を出す。共通の語: 移動・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W348",
+   "name": "FLEXIBLE 2 + ICE 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "FLEXIBLE_3",
+    "ICE_1"
+   ],
+   "protocols": [
+    "FLEXIBLE",
+    "ICE"
+   ],
+   "how": "FLEXIBLE 2 (終了：このカードが裏向きのカードに覆われている場合、あなたはそのカードを移動させることができる。) を場に置き、ICE 1 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W349",
+   "name": "FLEXIBLE 2 + ICE 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "FLEXIBLE_3",
+    "ICE_2"
+   ],
+   "protocols": [
+    "FLEXIBLE",
+    "ICE"
+   ],
+   "how": "FLEXIBLE 2 (終了：このカードが裏向きのカードに覆われている場合、あなたはそのカードを移動させることができる。) を場に置き、ICE 2 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W350",
+   "name": "FLEXIBLE 2 + SMOKE 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "FLEXIBLE_3",
+    "SMOKE_2"
+   ],
+   "protocols": [
+    "FLEXIBLE",
+    "SMOKE"
+   ],
+   "how": "FLEXIBLE 2 (終了：このカードが裏向きのカードに覆われている場合、あなたはそのカードを移動させることができる。) を場に置き、SMOKE 1 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W351",
+   "name": "FLEXIBLE 2 + SMOKE 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "FLEXIBLE_3",
+    "SMOKE_5"
+   ],
+   "protocols": [
+    "FLEXIBLE",
+    "SMOKE"
+   ],
+   "how": "FLEXIBLE 2 (終了：このカードが裏向きのカードに覆われている場合、あなたはそのカードを移動させることができる。) を場に置き、SMOKE 4 を出す。共通の語: 裏向き・移動・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W352",
+   "name": "FLEXIBLE 2 + DIVERSITY 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "FLEXIBLE_3",
+    "DIVERSITY_2"
+   ],
+   "protocols": [
+    "FLEXIBLE",
+    "DIVERSITY"
+   ],
+   "how": "FLEXIBLE 2 (終了：このカードが裏向きのカードに覆われている場合、あなたはそのカードを移動させることができる。) を場に置き、DIVERSITY 1 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W353",
+   "name": "FLEXIBLE 2 + AMBUSH 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "FLEXIBLE_3",
+    "AMBUSH_3"
+   ],
+   "protocols": [
+    "FLEXIBLE",
+    "AMBUSH"
+   ],
+   "how": "FLEXIBLE 2 (終了：このカードが裏向きのカードに覆われている場合、あなたはそのカードを移動させることができる。) を場に置き、AMBUSH 2 を出す。共通の語: 移動・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W354",
+   "name": "FLEXIBLE 2 + GREED 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "FLEXIBLE_3",
+    "GREED_4"
+   ],
+   "protocols": [
+    "FLEXIBLE",
+    "GREED"
+   ],
+   "how": "FLEXIBLE 2 (終了：このカードが裏向きのカードに覆われている場合、あなたはそのカードを移動させることができる。) を場に置き、GREED 3 を出す。共通の語: 移動・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W355",
+   "name": "FLEXIBLE 2 + LUST 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "FLEXIBLE_3",
+    "LUST_2"
+   ],
+   "protocols": [
+    "FLEXIBLE",
+    "LUST"
+   ],
+   "how": "FLEXIBLE 2 (終了：このカードが裏向きのカードに覆われている場合、あなたはそのカードを移動させることができる。) を場に置き、LUST 2 を出す。共通の語: 移動・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W356",
+   "name": "FLEXIBLE 2 + NOVA 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "FLEXIBLE_3",
+    "NOVA_3"
+   ],
+   "protocols": [
+    "FLEXIBLE",
+    "NOVA"
+   ],
+   "how": "FLEXIBLE 2 (終了：このカードが裏向きのカードに覆われている場合、あなたはそのカードを移動させることができる。) を場に置き、NOVA 2 を出す。共通の語: 裏向き・移動・覆",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W357",
+   "name": "FLEXIBLE 2 + NOVA 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "FLEXIBLE_3",
+    "NOVA_4"
+   ],
+   "protocols": [
+    "FLEXIBLE",
+    "NOVA"
+   ],
+   "how": "FLEXIBLE 2 (終了：このカードが裏向きのカードに覆われている場合、あなたはそのカードを移動させることができる。) を場に置き、NOVA 3 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W358",
+   "name": "FLEXIBLE 2 + PRIDE 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "FLEXIBLE_3",
+    "PRIDE_1"
+   ],
+   "protocols": [
+    "FLEXIBLE",
+    "PRIDE"
+   ],
+   "how": "FLEXIBLE 2 (終了：このカードが裏向きのカードに覆われている場合、あなたはそのカードを移動させることができる。) を場に置き、PRIDE 0 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W359",
+   "name": "FLEXIBLE 2 + PRIDE 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "FLEXIBLE_3",
+    "PRIDE_4"
+   ],
+   "protocols": [
+    "FLEXIBLE",
+    "PRIDE"
+   ],
+   "how": "FLEXIBLE 2 (終了：このカードが裏向きのカードに覆われている場合、あなたはそのカードを移動させることができる。) を場に置き、PRIDE 4 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W360",
+   "name": "FLEXIBLE 2 + RIGID 7",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "FLEXIBLE_3",
+    "RIGID_6"
+   ],
+   "protocols": [
+    "FLEXIBLE",
+    "RIGID"
+   ],
+   "how": "FLEXIBLE 2 (終了：このカードが裏向きのカードに覆われている場合、あなたはそのカードを移動させることができる。) を場に置き、RIGID 7 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W361",
+   "name": "RIGID 7 + DARKNESS 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "RIGID_6",
+    "DARKNESS_1"
+   ],
+   "protocols": [
+    "RIGID",
+    "DARKNESS"
+   ],
+   "how": "RIGID 7 (終了：相手は、カードを1枚引くか、カードを1枚プレイするかを選ぶ。 このカードを反転させることはできず、移動させることもできない。) を場に置き、DARKNESS 0 を出す。共通の語: 移動・引",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W362",
+   "name": "RIGID 7 + DARKNESS 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "RIGID_6",
+    "DARKNESS_2"
+   ],
+   "protocols": [
+    "RIGID",
+    "DARKNESS"
+   ],
+   "how": "RIGID 7 (終了：相手は、カードを1枚引くか、カードを1枚プレイするかを選ぶ。 このカードを反転させることはできず、移動させることもできない。) を場に置き、DARKNESS 1 を出す。共通の語: 反転・移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W363",
+   "name": "RIGID 7 + DARKNESS 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "RIGID_6",
+    "DARKNESS_5"
+   ],
+   "protocols": [
+    "RIGID",
+    "DARKNESS"
+   ],
+   "how": "RIGID 7 (終了：相手は、カードを1枚引くか、カードを1枚プレイするかを選ぶ。 このカードを反転させることはできず、移動させることもできない。) を場に置き、DARKNESS 4 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W364",
+   "name": "RIGID 7 + GRAVITY 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "RIGID_6",
+    "GRAVITY_2"
+   ],
+   "protocols": [
+    "RIGID",
+    "GRAVITY"
+   ],
+   "how": "RIGID 7 (終了：相手は、カードを1枚引くか、カードを1枚プレイするかを選ぶ。 このカードを反転させることはできず、移動させることもできない。) を場に置き、GRAVITY 1 を出す。共通の語: 移動・引",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W365",
+   "name": "RIGID 7 + GRAVITY 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "RIGID_6",
+    "GRAVITY_3"
+   ],
+   "protocols": [
+    "RIGID",
+    "GRAVITY"
+   ],
+   "how": "RIGID 7 (終了：相手は、カードを1枚引くか、カードを1枚プレイするかを選ぶ。 このカードを反転させることはできず、移動させることもできない。) を場に置き、GRAVITY 2 を出す。共通の語: 反転・移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W366",
+   "name": "RIGID 7 + GRAVITY 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "RIGID_6",
+    "GRAVITY_4"
+   ],
+   "protocols": [
+    "RIGID",
+    "GRAVITY"
+   ],
+   "how": "RIGID 7 (終了：相手は、カードを1枚引くか、カードを1枚プレイするかを選ぶ。 このカードを反転させることはできず、移動させることもできない。) を場に置き、GRAVITY 4 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W367",
+   "name": "RIGID 7 + LIGHT 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "RIGID_6",
+    "LIGHT_3"
+   ],
+   "protocols": [
+    "RIGID",
+    "LIGHT"
+   ],
+   "how": "RIGID 7 (終了：相手は、カードを1枚引くか、カードを1枚プレイするかを選ぶ。 このカードを反転させることはできず、移動させることもできない。) を場に置き、LIGHT 2 を出す。共通の語: 反転・移動・引",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W368",
+   "name": "RIGID 7 + LIGHT 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "RIGID_6",
+    "LIGHT_4"
+   ],
+   "protocols": [
+    "RIGID",
+    "LIGHT"
+   ],
+   "how": "RIGID 7 (終了：相手は、カードを1枚引くか、カードを1枚プレイするかを選ぶ。 このカードを反転させることはできず、移動させることもできない。) を場に置き、LIGHT 3 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W369",
+   "name": "RIGID 7 + PSYCHIC 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "RIGID_6",
+    "PSYCHIC_4"
+   ],
+   "protocols": [
+    "RIGID",
+    "PSYCHIC"
+   ],
+   "how": "RIGID 7 (終了：相手は、カードを1枚引くか、カードを1枚プレイするかを選ぶ。 このカードを反転させることはできず、移動させることもできない。) を場に置き、PSYCHIC 3 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W370",
+   "name": "RIGID 7 + SPEED 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "RIGID_6",
+    "SPEED_5"
+   ],
+   "protocols": [
+    "RIGID",
+    "SPEED"
+   ],
+   "how": "RIGID 7 (終了：相手は、カードを1枚引くか、カードを1枚プレイするかを選ぶ。 このカードを反転させることはできず、移動させることもできない。) を場に置き、SPEED 4 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W371",
+   "name": "RIGID 7 + CHAOS 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "RIGID_6",
+    "CHAOS_3"
+   ],
+   "protocols": [
+    "RIGID",
+    "CHAOS"
+   ],
+   "how": "RIGID 7 (終了：相手は、カードを1枚引くか、カードを1枚プレイするかを選ぶ。 このカードを反転させることはできず、移動させることもできない。) を場に置き、CHAOS 2 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W372",
+   "name": "RIGID 7 + FEAR 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "RIGID_6",
+    "FEAR_1"
+   ],
+   "protocols": [
+    "RIGID",
+    "FEAR"
+   ],
+   "how": "RIGID 7 (終了：相手は、カードを1枚引くか、カードを1枚プレイするかを選ぶ。 このカードを反転させることはできず、移動させることもできない。) を場に置き、FEAR 0 を出す。共通の語: 反転・移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W373",
+   "name": "RIGID 7 + FEAR 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "RIGID_6",
+    "FEAR_4"
+   ],
+   "protocols": [
+    "RIGID",
+    "FEAR"
+   ],
+   "how": "RIGID 7 (終了：相手は、カードを1枚引くか、カードを1枚プレイするかを選ぶ。 このカードを反転させることはできず、移動させることもできない。) を場に置き、FEAR 3 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W374",
+   "name": "RIGID 7 + ICE 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "RIGID_6",
+    "ICE_1"
+   ],
+   "protocols": [
+    "RIGID",
+    "ICE"
+   ],
+   "how": "RIGID 7 (終了：相手は、カードを1枚引くか、カードを1枚プレイするかを選ぶ。 このカードを反転させることはできず、移動させることもできない。) を場に置き、ICE 1 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W375",
+   "name": "RIGID 7 + ICE 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "RIGID_6",
+    "ICE_2"
+   ],
+   "protocols": [
+    "RIGID",
+    "ICE"
+   ],
+   "how": "RIGID 7 (終了：相手は、カードを1枚引くか、カードを1枚プレイするかを選ぶ。 このカードを反転させることはできず、移動させることもできない。) を場に置き、ICE 2 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W376",
+   "name": "RIGID 7 + SMOKE 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "RIGID_6",
+    "SMOKE_2"
+   ],
+   "protocols": [
+    "RIGID",
+    "SMOKE"
+   ],
+   "how": "RIGID 7 (終了：相手は、カードを1枚引くか、カードを1枚プレイするかを選ぶ。 このカードを反転させることはできず、移動させることもできない。) を場に置き、SMOKE 1 を出す。共通の語: 反転・移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W377",
+   "name": "RIGID 7 + SMOKE 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "RIGID_6",
+    "SMOKE_5"
+   ],
+   "protocols": [
+    "RIGID",
+    "SMOKE"
+   ],
+   "how": "RIGID 7 (終了：相手は、カードを1枚引くか、カードを1枚プレイするかを選ぶ。 このカードを反転させることはできず、移動させることもできない。) を場に置き、SMOKE 4 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W378",
+   "name": "RIGID 7 + DIVERSITY 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "RIGID_6",
+    "DIVERSITY_2"
+   ],
+   "protocols": [
+    "RIGID",
+    "DIVERSITY"
+   ],
+   "how": "RIGID 7 (終了：相手は、カードを1枚引くか、カードを1枚プレイするかを選ぶ。 このカードを反転させることはできず、移動させることもできない。) を場に置き、DIVERSITY 1 を出す。共通の語: 移動・引",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W379",
+   "name": "RIGID 7 + AMBUSH 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "RIGID_6",
+    "AMBUSH_3"
+   ],
+   "protocols": [
+    "RIGID",
+    "AMBUSH"
+   ],
+   "how": "RIGID 7 (終了：相手は、カードを1枚引くか、カードを1枚プレイするかを選ぶ。 このカードを反転させることはできず、移動させることもできない。) を場に置き、AMBUSH 2 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W380",
+   "name": "RIGID 7 + GREED 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "RIGID_6",
+    "GREED_4"
+   ],
+   "protocols": [
+    "RIGID",
+    "GREED"
+   ],
+   "how": "RIGID 7 (終了：相手は、カードを1枚引くか、カードを1枚プレイするかを選ぶ。 このカードを反転させることはできず、移動させることもできない。) を場に置き、GREED 3 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W381",
+   "name": "RIGID 7 + LUST 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "RIGID_6",
+    "LUST_2"
+   ],
+   "protocols": [
+    "RIGID",
+    "LUST"
+   ],
+   "how": "RIGID 7 (終了：相手は、カードを1枚引くか、カードを1枚プレイするかを選ぶ。 このカードを反転させることはできず、移動させることもできない。) を場に置き、LUST 2 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W382",
+   "name": "RIGID 7 + NOVA 2",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "RIGID_6",
+    "NOVA_3"
+   ],
+   "protocols": [
+    "RIGID",
+    "NOVA"
+   ],
+   "how": "RIGID 7 (終了：相手は、カードを1枚引くか、カードを1枚プレイするかを選ぶ。 このカードを反転させることはできず、移動させることもできない。) を場に置き、NOVA 2 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W383",
+   "name": "RIGID 7 + NOVA 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "RIGID_6",
+    "NOVA_4"
+   ],
+   "protocols": [
+    "RIGID",
+    "NOVA"
+   ],
+   "how": "RIGID 7 (終了：相手は、カードを1枚引くか、カードを1枚プレイするかを選ぶ。 このカードを反転させることはできず、移動させることもできない。) を場に置き、NOVA 3 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W384",
+   "name": "RIGID 7 + PRIDE 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "RIGID_6",
+    "PRIDE_1"
+   ],
+   "protocols": [
+    "RIGID",
+    "PRIDE"
+   ],
+   "how": "RIGID 7 (終了：相手は、カードを1枚引くか、カードを1枚プレイするかを選ぶ。 このカードを反転させることはできず、移動させることもできない。) を場に置き、PRIDE 0 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W385",
+   "name": "RIGID 7 + PRIDE 4",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "RIGID_6",
+    "PRIDE_4"
+   ],
+   "protocols": [
+    "RIGID",
+    "PRIDE"
+   ],
+   "how": "RIGID 7 (終了：相手は、カードを1枚引くか、カードを1枚プレイするかを選ぶ。 このカードを反転させることはできず、移動させることもできない。) を場に置き、PRIDE 4 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W386",
+   "name": "RIGID 7 + FLEXIBLE 0",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "RIGID_6",
+    "FLEXIBLE_1"
+   ],
+   "protocols": [
+    "RIGID",
+    "FLEXIBLE"
+   ],
+   "how": "RIGID 7 (終了：相手は、カードを1枚引くか、カードを1枚プレイするかを選ぶ。 このカードを反転させることはできず、移動させることもできない。) を場に置き、FLEXIBLE 0 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W387",
+   "name": "RIGID 7 + FLEXIBLE 1",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "RIGID_6",
+    "FLEXIBLE_2"
+   ],
+   "protocols": [
+    "RIGID",
+    "FLEXIBLE"
+   ],
+   "how": "RIGID 7 (終了：相手は、カードを1枚引くか、カードを1枚プレイするかを選ぶ。 このカードを反転させることはできず、移動させることもできない。) を場に置き、FLEXIBLE 1 を出す。共通の語: 反転・移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "W388",
+   "name": "RIGID 7 + FLEXIBLE 3",
+   "kind": "engine",
+   "source": "keyword",
+   "cards": [
+    "RIGID_6",
+    "FLEXIBLE_4"
+   ],
+   "protocols": [
+    "RIGID",
+    "FLEXIBLE"
+   ],
+   "how": "RIGID 7 (終了：相手は、カードを1枚引くか、カードを1枚プレイするかを選ぶ。 このカードを反転させることはできず、移動させることもできない。) を場に置き、FLEXIBLE 3 を出す。共通の語: 移動",
+   "verdict": "untested",
+   "verdictLabel": "未計測",
+   "lab": null,
+   "note": null
+  },
+  {
+   "id": "DC001",
+   "name": "GREED 2 + PEACE 1",
+   "kind": "lock",
+   "source": "discord",
+   "cards": [
+    "GREED_3",
+    "PEACE_1"
+   ],
+   "protocols": [
+    "GREED",
+    "PEACE"
+   ],
+   "how": "GREED 2 の開始で PEACE 1 を手札に戻し、毎手番出し直して両者の手札を全部捨てさせる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 135,
+    "horizon": 3,
+    "playout": false,
+    "interaction": -0.7,
+    "interactionSe": 1,
+    "partnerValue": 2.9,
+    "partnerValueSe": 0.9,
+    "synergy": 2.2,
+    "synergySe": 0.9,
+    "missed": -5.3,
+    "missedSe": 1.3,
+    "aiPicked": 35
+   },
+   "note": null
+  },
+  {
+   "id": "DC002",
+   "name": "GREED 0 + GREED 2",
+   "kind": "engine",
+   "source": "discord",
+   "cards": [
+    "GREED_1",
+    "GREED_3"
+   ],
+   "protocols": [
+    "GREED"
+   ],
+   "how": "GREED 0 の上に GREED 2 を重ね、開始で GREED 2 を戻して GREED 0 (手札を全部捨てて1枚削除) を撃ち直す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 135,
+    "horizon": 3,
+    "playout": false,
+    "interaction": -1.5,
+    "interactionSe": 1.4,
+    "partnerValue": 2.6,
+    "partnerValueSe": 1,
+    "synergy": 1.1,
+    "synergySe": 0.8,
+    "missed": -3.5,
+    "missedSe": 1.7,
+    "aiPicked": 15
+   },
+   "note": null
+  },
+  {
+   "id": "DC003",
+   "name": "GREED 2 + HATE 0",
+   "kind": "engine",
+   "source": "discord",
+   "cards": [
+    "GREED_3",
+    "HATE_1"
+   ],
+   "protocols": [
+    "GREED",
+    "HATE"
+   ],
+   "how": "GREED 2 の開始で HATE 0 を戻し、毎手番出し直して削除する。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 132,
+    "horizon": 3,
+    "playout": false,
+    "interaction": -0.4,
+    "interactionSe": 0.8,
+    "partnerValue": 1,
+    "partnerValueSe": 0.9,
+    "synergy": 0.6,
+    "synergySe": 1,
+    "missed": -1.2,
+    "missedSe": 0.9,
+    "aiPicked": 39
+   },
+   "note": null
+  },
+  {
+   "id": "DC004",
+   "name": "GREED 2 + HATE 1",
+   "kind": "engine",
+   "source": "discord",
+   "cards": [
+    "GREED_3",
+    "HATE_2"
+   ],
+   "protocols": [
+    "GREED",
+    "HATE"
+   ],
+   "how": "GREED 2 の開始で HATE 1 を戻し、出し直して削除する。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 132,
+    "horizon": 3,
+    "playout": false,
+    "interaction": -0.6,
+    "interactionSe": 0.7,
+    "partnerValue": -0.2,
+    "partnerValueSe": 0.7,
+    "synergy": -0.8,
+    "synergySe": 0.9,
+    "missed": -2.2,
+    "missedSe": 0.7,
+    "aiPicked": 61
+   },
+   "note": null
+  },
+  {
+   "id": "DC005",
+   "name": "GREED 2 + LUCK 0",
+   "kind": "engine",
+   "source": "discord",
+   "cards": [
+    "GREED_3",
+    "LUCK_1"
+   ],
+   "protocols": [
+    "GREED",
+    "LUCK"
+   ],
+   "how": "GREED 2 の開始で LUCK 0 を戻し、毎手番出し直す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 130,
+    "horizon": 3,
+    "playout": false,
+    "interaction": -0.8,
+    "interactionSe": 1.1,
+    "partnerValue": 1.2,
+    "partnerValueSe": 1.6,
+    "synergy": 0.5,
+    "synergySe": 1.8,
+    "missed": -1.2,
+    "missedSe": 1,
+    "aiPicked": 78
+   },
+   "note": null
+  },
+  {
+   "id": "DC006",
+   "name": "GREED 2 + SPEED 0",
+   "kind": "engine",
+   "source": "discord",
+   "cards": [
+    "GREED_3",
+    "SPEED_1"
+   ],
+   "protocols": [
+    "GREED",
+    "SPEED"
+   ],
+   "how": "GREED 2 の開始で SPEED 0 を戻し、出し直してもう1枚出す (手札を早く使い切る)。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 311,
+    "horizon": 3,
+    "playout": false,
+    "interaction": -0.6,
+    "interactionSe": 1,
+    "partnerValue": 0.9,
+    "partnerValueSe": 0.8,
+    "synergy": 0.4,
+    "synergySe": 0.8,
+    "missed": 0.3,
+    "missedSe": 1,
+    "aiPicked": 15
+   },
+   "note": null
+  },
+  {
+   "id": "DC007",
+   "name": "GREED 2 + ASSIMILATION 2",
+   "kind": "engine",
+   "source": "discord",
+   "cards": [
+    "GREED_3",
+    "ASSIMILATION_3"
+   ],
+   "protocols": [
+    "GREED",
+    "ASSIMILATION"
+   ],
+   "how": "GREED 2 で ASSIMILATION 2 の上の札を戻し、ASSIMILATION 2 の終了を毎手番起こす。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 132,
+    "horizon": 3,
+    "playout": false,
+    "interaction": 0.4,
+    "interactionSe": 1.2,
+    "partnerValue": 0.5,
+    "partnerValueSe": 1.1,
+    "synergy": 0.9,
+    "synergySe": 1,
+    "missed": -1.7,
+    "missedSe": 1.6,
+    "aiPicked": 27
+   },
+   "note": null
+  },
+  {
+   "id": "DC008",
+   "name": "GLUTTONY 3 + SPEED 0",
+   "kind": "burst",
+   "source": "discord",
+   "cards": [
+    "GLUTTONY_4",
+    "SPEED_1"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "SPEED"
+   ],
+   "how": "GLUTTONY 3 の上に SPEED 0 を重ねて1枚出し、終了で GLUTTONY 3 が上の表の札を削除して SPEED 0 を撃ち直す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 28,
+    "horizon": 3,
+    "playout": false,
+    "interaction": 0.3,
+    "interactionSe": 4,
+    "partnerValue": -0.1,
+    "partnerValueSe": 2.5,
+    "synergy": 0.2,
+    "synergySe": 2.9,
+    "missed": 1,
+    "missedSe": 3.6,
+    "aiPicked": 32
+   },
+   "note": null
+  },
+  {
+   "id": "DC009",
+   "name": "GLUTTONY 0 + SPEED 3",
+   "kind": "engine",
+   "source": "discord",
+   "cards": [
+    "GLUTTONY_1",
+    "SPEED_4"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "SPEED"
+   ],
+   "how": "GLUTTONY (キャッシュのクリアで得をする) と SPEED を組む。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 135,
+    "horizon": 3,
+    "playout": false,
+    "interaction": -0.4,
+    "interactionSe": 1.5,
+    "partnerValue": 3.7,
+    "partnerValueSe": 1.7,
+    "synergy": 3.4,
+    "synergySe": 1.3,
+    "missed": -0.9,
+    "missedSe": 1.7,
+    "aiPicked": 26
+   },
+   "note": null
+  },
+  {
+   "id": "DC010",
+   "name": "LIFE 0 + AMBUSH 1",
+   "kind": "burst",
+   "source": "discord",
+   "cards": [
+    "LIFE_1",
+    "AMBUSH_2"
+   ],
+   "protocols": [
+    "LIFE",
+    "AMBUSH"
+   ],
+   "how": "裏の LIFE 0 を AMBUSH 1 で表にして撃ち、反転した枚数だけ引く。",
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 135,
+    "horizon": 3,
+    "playout": false,
+    "interaction": -3.4,
+    "interactionSe": 1.2,
+    "partnerValue": 4.2,
+    "partnerValueSe": 1,
+    "synergy": 0.9,
+    "synergySe": 0.7,
+    "missed": -6.9,
+    "missedSe": 1.6,
+    "aiPicked": 7
+   },
+   "note": null
+  },
+  {
+   "id": "DC011",
+   "name": "WATER 1 + AMBUSH 1",
+   "kind": "burst",
+   "source": "discord",
+   "cards": [
+    "WATER_2",
+    "AMBUSH_2"
+   ],
+   "protocols": [
+    "WATER",
+    "AMBUSH"
+   ],
+   "how": "裏の WATER 1 を AMBUSH 1 で表にして撃ち、反転した枚数だけ引く。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 135,
+    "horizon": 3,
+    "playout": false,
+    "interaction": -0.8,
+    "interactionSe": 1.1,
+    "partnerValue": 2.3,
+    "partnerValueSe": 0.8,
+    "synergy": 1.5,
+    "synergySe": 0.9,
+    "missed": -8.2,
+    "missedSe": 1.6,
+    "aiPicked": 5
+   },
+   "note": null
+  },
+  {
+   "id": "DC012",
+   "name": "ASSIMILATION 2 + SMOKE 1",
+   "kind": "burst",
+   "source": "discord",
+   "cards": [
+    "ASSIMILATION_3",
+    "SMOKE_2"
+   ],
+   "protocols": [
+    "ASSIMILATION",
+    "SMOKE"
+   ],
+   "how": "ASSIMILATION 2 が奪って裏で置いた札を SMOKE 1 で表にして撃つ。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 135,
+    "horizon": 3,
+    "playout": false,
+    "interaction": 2,
+    "interactionSe": 1.7,
+    "partnerValue": 4,
+    "partnerValueSe": 1.4,
+    "synergy": 6.1,
+    "synergySe": 1.5,
+    "missed": -3.6,
+    "missedSe": 1.7,
+    "aiPicked": 28
+   },
+   "note": null
+  },
+  {
+   "id": "DC013",
+   "name": "ASSIMILATION 2 + SPEED 3",
+   "kind": "engine",
+   "source": "discord",
+   "cards": [
+    "ASSIMILATION_3",
+    "SPEED_4"
+   ],
+   "protocols": [
+    "ASSIMILATION",
+    "SPEED"
+   ],
+   "how": "SPEED 3 の移動で ASSIMILATION 2 の覆いをどけ、終了の奪う効果を繰り返す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 131,
+    "horizon": 3,
+    "playout": false,
+    "interaction": -2.8,
+    "interactionSe": 2,
+    "partnerValue": 7,
+    "partnerValueSe": 1.5,
+    "synergy": 4.3,
+    "synergySe": 1.7,
+    "missed": 0,
+    "missedSe": 1.9,
+    "aiPicked": 16
+   },
+   "note": null
+  },
+  {
+   "id": "DC014",
+   "name": "PSYCHIC 1 + DARKNESS 2",
+   "kind": "lock",
+   "source": "discord",
+   "cards": [
+    "PSYCHIC_2",
+    "DARKNESS_3"
+   ],
+   "protocols": [
+    "PSYCHIC",
+    "DARKNESS"
+   ],
+   "how": "裏で置いた PSYCHIC 1 の上に DARKNESS 2 を重ね、覆われたまま表にして相手を裏でしか出せなくする。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 135,
+    "horizon": 3,
+    "playout": false,
+    "interaction": 1.8,
+    "interactionSe": 1.7,
+    "partnerValue": 4.9,
+    "partnerValueSe": 1.1,
+    "synergy": 6.8,
+    "synergySe": 1.5,
+    "missed": 0,
+    "missedSe": 1.5,
+    "aiPicked": 55
+   },
+   "note": null
+  },
+  {
+   "id": "DC015",
+   "name": "APATHY 2 + DARKNESS 2",
+   "kind": "lock",
+   "source": "discord",
+   "cards": [
+    "APATHY_3",
+    "DARKNESS_3"
+   ],
+   "protocols": [
+    "APATHY",
+    "DARKNESS"
+   ],
+   "how": "裏で置いた APATHY 2 の上に DARKNESS 2 を重ね、覆われたまま表にする。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 134,
+    "horizon": 3,
+    "playout": false,
+    "interaction": 0.3,
+    "interactionSe": 0.7,
+    "partnerValue": -0.6,
+    "partnerValueSe": 0.7,
+    "synergy": -0.3,
+    "synergySe": 0.3,
+    "missed": -3.2,
+    "missedSe": 1.2,
+    "aiPicked": 55
+   },
+   "note": null
+  },
+  {
+   "id": "DC016",
+   "name": "DEATH 0 + DEATH 1",
+   "kind": "engine",
+   "source": "discord",
+   "cards": [
+    "DEATH_1",
+    "DEATH_2"
+   ],
+   "protocols": [
+    "DEATH"
+   ],
+   "how": "DEATH 0 の上に DEATH 1 を重ね、DEATH 1 が自分を削除して DEATH 0 を撃ち直す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 135,
+    "horizon": 3,
+    "playout": false,
+    "interaction": 2.3,
+    "interactionSe": 1.5,
+    "partnerValue": 0.8,
+    "partnerValueSe": 0.8,
+    "synergy": 3.1,
+    "synergySe": 1.3,
+    "missed": -1.1,
+    "missedSe": 1.8,
+    "aiPicked": 4
+   },
+   "note": null
+  },
+  {
+   "id": "DC017",
+   "name": "PLAGUE 0 + ICE 1",
+   "kind": "lock",
+   "source": "discord",
+   "cards": [
+    "PLAGUE_1",
+    "ICE_1"
+   ],
+   "protocols": [
+    "PLAGUE",
+    "ICE"
+   ],
+   "how": "PLAGUE 0 と ICE 1 で2つのラインを止める。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 133,
+    "horizon": 3,
+    "playout": false,
+    "interaction": 0.2,
+    "interactionSe": 1.2,
+    "partnerValue": 0.6,
+    "partnerValueSe": 1,
+    "synergy": 0.8,
+    "synergySe": 0.9,
+    "missed": -3,
+    "missedSe": 1.4,
+    "aiPicked": 11
+   },
+   "note": null
+  },
+  {
+   "id": "DC018",
+   "name": "ASSIMILATION 6 + TIME 1",
+   "kind": "setup",
+   "source": "discord",
+   "cards": [
+    "ASSIMILATION_6",
+    "TIME_2"
+   ],
+   "protocols": [
+    "ASSIMILATION",
+    "TIME"
+   ],
+   "how": "裏返された 6 を TIME 1 で表に戻す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 309,
+    "horizon": 3,
+    "playout": false,
+    "interaction": -0.1,
+    "interactionSe": 0.6,
+    "partnerValue": -0.1,
+    "partnerValueSe": 0.6,
+    "synergy": -0.2,
+    "synergySe": 0.3,
+    "missed": -2.6,
+    "missedSe": 0.9,
+    "aiPicked": 24
+   },
+   "note": null
+  },
+  {
+   "id": "DC019",
+   "name": "UNITY 4 + HATE 1",
+   "kind": "burst",
+   "source": "discord",
+   "cards": [
+    "UNITY_5",
+    "HATE_2"
+   ],
+   "protocols": [
+    "UNITY",
+    "HATE"
+   ],
+   "how": "HATE 1 で手札を捨てて UNITY 4 で引き直す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 131,
+    "horizon": 3,
+    "playout": false,
+    "interaction": -0.6,
+    "interactionSe": 0.9,
+    "partnerValue": -0.1,
+    "partnerValueSe": 0.7,
+    "synergy": -0.7,
+    "synergySe": 1,
+    "missed": -1.4,
+    "missedSe": 1,
+    "aiPicked": 65
+   },
+   "note": null
+  },
+  {
+   "id": "DC020",
+   "name": "LUCK 3 + CORRUPTION 1",
+   "kind": "burst",
+   "source": "discord",
+   "cards": [
+    "LUCK_4",
+    "CORRUPTION_2"
+   ],
+   "protocols": [
+    "LUCK",
+    "CORRUPTION"
+   ],
+   "how": "CORRUPTION 1 で相手のデッキの上に札を戻し、LUCK 3 で当てる。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 134,
+    "horizon": 3,
+    "playout": false,
+    "interaction": 0.2,
+    "interactionSe": 0.6,
+    "partnerValue": -0.1,
+    "partnerValueSe": 1.2,
+    "synergy": 0.1,
+    "synergySe": 1.1,
+    "missed": 0.6,
+    "missedSe": 0.9,
+    "aiPicked": 60
+   },
+   "note": null
+  },
+  {
+   "id": "DC021",
+   "name": "SPIRIT 1 + GRAVITY 0",
+   "kind": "burst",
+   "source": "discord",
+   "cards": [
+    "SPIRIT_2",
+    "GRAVITY_1"
+   ],
+   "protocols": [
+    "SPIRIT",
+    "GRAVITY"
+   ],
+   "how": "SPIRIT 1 でラインの縛りを外し、GRAVITY 0 を札の多いラインに出す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 131,
+    "horizon": 3,
+    "playout": false,
+    "interaction": 0.8,
+    "interactionSe": 2.4,
+    "partnerValue": 1,
+    "partnerValueSe": 1.6,
+    "synergy": 0,
+    "synergySe": 1.4,
+    "missed": -6.4,
+    "missedSe": 2,
+    "aiPicked": 6
+   },
+   "note": null
+  },
+  {
+   "id": "DC022",
+   "name": "LUCK 0 + SLOTH 2",
+   "kind": "burst",
+   "source": "discord",
+   "cards": [
+    "LUCK_1",
+    "SLOTH_3"
+   ],
+   "protocols": [
+    "LUCK",
+    "SLOTH"
+   ],
+   "how": "SLOTH 2 で覆われた LUCK 0 を起こす。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 129,
+    "horizon": 3,
+    "playout": false,
+    "interaction": -0.6,
+    "interactionSe": 1.4,
+    "partnerValue": 0.1,
+    "partnerValueSe": 1.4,
+    "synergy": -0.5,
+    "synergySe": 1.2,
+    "missed": -2.4,
+    "missedSe": 1.4,
+    "aiPicked": 22
+   },
+   "note": null
+  },
+  {
+   "id": "DC023",
+   "name": "FULCRUM 0 + COURAGE 0",
+   "kind": "engine",
+   "source": "discord",
+   "cards": [
+    "FULCRUM_1",
+    "COURAGE_1"
+   ],
+   "protocols": [
+    "FULCRUM",
+    "COURAGE"
+   ],
+   "how": "COURAGE 0 の終了で1枚ずつ捨てて手札を0にし、次の開始で FULCRUM 0 が相手に2枚捨てさせ、COURAGE 0 が1枚引く。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 131,
+    "horizon": 3,
+    "playout": false,
+    "interaction": -0.7,
+    "interactionSe": 1,
+    "partnerValue": 0.4,
+    "partnerValueSe": 0.7,
+    "synergy": 0,
+    "synergySe": 0.9,
+    "missed": -9.6,
+    "missedSe": 1.6,
+    "aiPicked": 4
+   },
+   "note": null
+  },
+  {
+   "id": "DC024",
+   "name": "GREED 1 + LOVE 6",
+   "kind": "burst",
+   "source": "discord",
+   "cards": [
+    "GREED_2",
+    "LOVE_6"
+   ],
+   "protocols": [
+    "GREED",
+    "LOVE"
+   ],
+   "how": "GREED 1 を置き、LOVE 6 で 10 に届かせて終了でコンパイルする。",
+   "verdict": "weak",
+   "verdictLabel": "相方が強い (噛み合いは小さい)",
+   "lab": {
+    "n": 132,
+    "horizon": 3,
+    "playout": false,
+    "interaction": 1.2,
+    "interactionSe": 1.5,
+    "partnerValue": 8.4,
+    "partnerValueSe": 1.7,
+    "synergy": 9.6,
+    "synergySe": 1.7,
+    "missed": -4.1,
+    "missedSe": 1.7,
+    "aiPicked": 38
+   },
+   "note": null
+  },
+  {
+   "id": "DC025",
+   "name": "FIRE 0 + SPIRIT 4",
+   "kind": "engine",
+   "source": "discord",
+   "cards": [
+    "FIRE_1",
+    "SPIRIT_5"
+   ],
+   "protocols": [
+    "FIRE",
+    "SPIRIT"
+   ],
+   "how": "SPIRIT 4 で FIRE 0 の上の札を入れ替えて撃ち直す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 127,
+    "horizon": 3,
+    "playout": false,
+    "interaction": -0.1,
+    "interactionSe": 1,
+    "partnerValue": 1,
+    "partnerValueSe": 0.8,
+    "synergy": 0.9,
+    "synergySe": 0.6,
+    "missed": -2.4,
+    "missedSe": 1.2,
+    "aiPicked": 29
+   },
+   "note": null
+  },
+  {
+   "id": "DC026",
+   "name": "ASSIMILATION 2 + SMOKE 1 (裏の札が乗った形)",
+   "kind": "burst",
+   "source": "discord",
+   "cards": [
+    "ASSIMILATION_3",
+    "SMOKE_2"
+   ],
+   "protocols": [
+    "ASSIMILATION",
+    "SMOKE"
+   ],
+   "how": "ASSIMILATION 2 の上に乗った裏の札を SMOKE 1 で表にして撃ち、動かして ASSIMILATION 2 の覆いを外す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 135,
+    "horizon": 3,
+    "playout": false,
+    "interaction": -1.7,
+    "interactionSe": 1.5,
+    "partnerValue": 5,
+    "partnerValueSe": 1.4,
+    "synergy": 3.3,
+    "synergySe": 1.6,
+    "missed": -4,
+    "missedSe": 1.2,
+    "aiPicked": 46
+   },
+   "note": null
+  },
+  {
+   "id": "DC027",
+   "name": "ASSIMILATION 2 + SPEED 3 (裏の札が乗った形)",
+   "kind": "engine",
+   "source": "discord",
+   "cards": [
+    "ASSIMILATION_3",
+    "SPEED_4"
+   ],
+   "protocols": [
+    "ASSIMILATION",
+    "SPEED"
+   ],
+   "how": "ASSIMILATION 2 の上に乗った裏の札を SPEED 3 の移動でどけ、終了の奪う効果を繰り返す。",
+   "verdict": "none",
+   "verdictLabel": "効き目が見えない",
+   "lab": {
+    "n": 84,
+    "horizon": 3,
+    "playout": false,
+    "interaction": -2,
+    "interactionSe": 2.7,
+    "partnerValue": 3.4,
+    "partnerValueSe": 1.6,
+    "synergy": 1.4,
+    "synergySe": 2.2,
+    "missed": 2.8,
+    "missedSe": 2.6,
+    "aiPicked": 17
+   },
+   "note": null
+  },
+  {
+   "id": "DC028",
+   "name": "GLUTTONY 3 + SPEED 0 (SPEED のライン)",
+   "kind": "burst",
+   "source": "discord",
+   "cards": [
+    "GLUTTONY_4",
+    "SPEED_1"
+   ],
+   "protocols": [
+    "GLUTTONY",
+    "SPEED"
+   ],
+   "how": "GLUTTONY 3 の上に SPEED 0 を重ねる (ラインは問わず SPEED 0 のプロトコルのラインに GLUTTONY 3 を置く)。",
+   "verdict": "negative",
+   "verdictLabel": "逆効果",
+   "lab": {
+    "n": 134,
+    "horizon": 3,
+    "playout": false,
+    "interaction": -3.5,
+    "interactionSe": 1.6,
+    "partnerValue": 1.5,
+    "partnerValueSe": 1,
+    "synergy": -2,
+    "synergySe": 1.5,
+    "missed": -1.8,
+    "missedSe": 1.3,
+    "aiPicked": 30
    },
    "note": null
   },
